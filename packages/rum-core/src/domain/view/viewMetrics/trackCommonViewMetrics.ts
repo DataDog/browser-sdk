@@ -1,11 +1,10 @@
 import type { ClocksState, Duration, Observable } from '@datadog/browser-core'
-import { noop } from '@datadog/browser-core'
 import type { ViewLoadingType } from '../../../rawRumEvent.types'
 import type { RumConfiguration } from '../../configuration'
 import type { LifeCycle } from '../../lifeCycle'
 import type { WebVitalTelemetryDebug } from '../startWebVitalTelemetryDebug'
 import type { CumulativeLayoutShift } from './trackCumulativeLayoutShift'
-import { isLayoutShiftSupported, trackCumulativeLayoutShift } from './trackCumulativeLayoutShift'
+import { trackCumulativeLayoutShift } from './trackCumulativeLayoutShift'
 import type { InteractionToNextPaint } from './trackInteractionToNextPaint'
 import { trackInteractionToNextPaint } from './trackInteractionToNextPaint'
 import { trackLoadingTime } from './trackLoadingTime'
@@ -46,21 +45,15 @@ export function trackCommonViewMetrics(
     commonViewMetrics.scroll = newScrollMetrics
   })
 
-  let stopCLSTracking: () => void
-  if (isLayoutShiftSupported()) {
-    commonViewMetrics.cumulativeLayoutShift = { value: 0 }
-    ;({ stop: stopCLSTracking } = trackCumulativeLayoutShift(
-      configuration,
-      lifeCycle,
-      webVitalTelemetryDebug,
-      (cumulativeLayoutShift) => {
-        commonViewMetrics.cumulativeLayoutShift = cumulativeLayoutShift
-        scheduleViewUpdate()
-      }
-    ))
-  } else {
-    stopCLSTracking = noop
-  }
+  const { stop: stopCLSTracking } = trackCumulativeLayoutShift(
+    configuration,
+    lifeCycle,
+    webVitalTelemetryDebug,
+    (cumulativeLayoutShift) => {
+      commonViewMetrics.cumulativeLayoutShift = cumulativeLayoutShift
+      scheduleViewUpdate()
+    }
+  )
 
   const { stop: stopINPTracking, getInteractionToNextPaint } = trackInteractionToNextPaint(
     configuration,

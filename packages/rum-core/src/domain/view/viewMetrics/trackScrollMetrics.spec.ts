@@ -1,13 +1,10 @@
-import type { RelativeTime, Subscription, TimeStamp } from '@datadog/browser-core'
+import type { Duration, RelativeTime, Subscription, TimeStamp } from '@datadog/browser-core'
 import { DOM_EVENT, Observable, isIE } from '@datadog/browser-core'
-import type { Clock } from '@datadog/browser-core/test'
-import { createNewEvent, mockClock } from '@datadog/browser-core/test'
+import { createNewEvent } from '@datadog/browser-core/test'
 import type { TestSetupBuilder } from '../../../../test'
 import { setup } from '../../../../test'
 import type { RumConfiguration } from '../../configuration'
-import type { ViewTest } from '../setupViewTest.specHelper'
-import { setupViewTest } from '../setupViewTest.specHelper'
-import type { ScrollValues } from './trackScrollMetrics'
+import type { ScrollMetrics, ScrollValues } from './trackScrollMetrics'
 import { createScrollValuesObservable, trackScrollMetrics } from './trackScrollMetrics'
 
 describe('createScrollValuesObserver', () => {
@@ -52,69 +49,64 @@ describe('createScrollValuesObserver', () => {
 
 describe('trackScrollMetrics', () => {
   let setupBuilder: TestSetupBuilder
-  let viewTest: ViewTest
-  let stopTrackScrollMetrics: () => void
-  let callbackSpy: jasmine.Spy
-  let clock: Clock
+  let scrollMetricsCallback: jasmine.Spy<(metrics: ScrollMetrics) => void>
 
   const scrollObservable = new Observable<ScrollValues>()
 
   beforeEach(() => {
+    scrollMetricsCallback = jasmine.createSpy()
     setupBuilder = setup()
-      .withFakeLocation('/foo')
-      .beforeBuild((buildContext) => {
-        viewTest = setupViewTest(buildContext)
-        return viewTest
-      })
-    callbackSpy = jasmine.createSpy('callback')
-    stopTrackScrollMetrics = trackScrollMetrics(
-      {} as RumConfiguration,
-      { relative: 0 as RelativeTime, timeStamp: 0 as TimeStamp },
-      callbackSpy,
-      scrollObservable
-    ).stop
-    clock = mockClock()
+      .withFakeClock()
+      .beforeBuild(({ configuration }) =>
+        trackScrollMetrics(
+          configuration,
+          { relative: 0 as RelativeTime, timeStamp: 0 as TimeStamp },
+          scrollMetricsCallback,
+          scrollObservable
+        )
+      )
   })
 
   afterEach(() => {
-    stopTrackScrollMetrics()
     document.body.innerHTML = ''
     setupBuilder.cleanup()
-    clock.cleanup()
   })
 
   const updateScrollValues = (scrollValues: ScrollValues) => {
-    clock.tick(100)
+    setupBuilder.clock!.tick(100)
     scrollObservable.notify(scrollValues)
   }
 
   it('should update scroll height and scroll depth', () => {
+    setupBuilder.build()
     updateScrollValues({ scrollDepth: 700, scrollHeight: 2000, scrollTop: 100 })
-    expect(callbackSpy).toHaveBeenCalledOnceWith({
+    expect(scrollMetricsCallback).toHaveBeenCalledOnceWith({
       maxDepth: 700,
       maxDepthScrollHeight: 2000,
-      maxDepthTime: 100,
+      maxDepthTime: 100 as Duration,
       maxDepthScrollTop: 100,
     })
   })
   it('should update time and scroll height only if it has increased', () => {
+    setupBuilder.build()
     updateScrollValues({ scrollDepth: 700, scrollHeight: 2000, scrollTop: 100 })
     updateScrollValues({ scrollDepth: 700, scrollHeight: 1900, scrollTop: 100 })
-    expect(callbackSpy).toHaveBeenCalledOnceWith({
+    expect(scrollMetricsCallback).toHaveBeenCalledOnceWith({
       maxDepth: 700,
       maxDepthScrollHeight: 2000,
-      maxDepthTime: 100,
+      maxDepthTime: 100 as Duration,
       maxDepthScrollTop: 100,
     })
   })
 
   it('should update max depth only if it has increased', () => {
+    setupBuilder.build()
     updateScrollValues({ scrollDepth: 700, scrollHeight: 2000, scrollTop: 100 })
     updateScrollValues({ scrollDepth: 600, scrollHeight: 2000, scrollTop: 0 })
-    expect(callbackSpy).toHaveBeenCalledOnceWith({
+    expect(scrollMetricsCallback).toHaveBeenCalledOnceWith({
       maxDepth: 700,
       maxDepthScrollHeight: 2000,
-      maxDepthTime: 100,
+      maxDepthTime: 100 as Duration,
       maxDepthScrollTop: 100,
     })
   })
