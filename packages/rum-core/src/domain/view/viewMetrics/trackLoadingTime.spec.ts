@@ -1,12 +1,11 @@
 import type { RelativeTime, Duration } from '@datadog/browser-core'
-import { addDuration, clocksNow } from '@datadog/browser-core'
+import { addDuration, clocksNow, clocksOrigin } from '@datadog/browser-core'
 import { ViewLoadingType } from '../../../rawRumEvent.types'
 import type { TestSetupBuilder } from '../../../../test'
 import { createPerformanceEntry, setup } from '../../../../test'
 import { RumPerformanceEntryType } from '../../../browser/performanceCollection'
 import { PAGE_ACTIVITY_END_DELAY, PAGE_ACTIVITY_VALIDATION_DELAY } from '../../waitPageActivityEnd'
 import { THROTTLE_VIEW_UPDATE_PERIOD } from '../trackViews'
-import { LifeCycleEventType } from '../../lifeCycle'
 import { trackLoadingTime } from './trackLoadingTime'
 
 const BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY = (PAGE_ACTIVITY_VALIDATION_DELAY * 0.8) as Duration
@@ -33,7 +32,7 @@ describe('trackLoadingTime', () => {
           domMutationObservable,
           configuration,
           loadType,
-          clocksNow(),
+          clocksOrigin(),
           loadingTimeCallback
         )
         setLoadEvent = loadingTimeTracking.setLoadEvent
@@ -59,16 +58,16 @@ describe('trackLoadingTime', () => {
     domMutationObservable.notify()
     clock.tick(AFTER_PAGE_ACTIVITY_END_DELAY)
 
-    expect(loadingTimeCallback).toHaveBeenCalledTimes(1)
-    expect(loadingTimeCallback).toHaveBeenCalledWith(BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY)
+    expect(loadingTimeCallback).toHaveBeenCalledOnceWith(BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY)
   })
 
   it('should use loadEventEnd for initial view when having no activity', () => {
     loadType = ViewLoadingType.INITIAL_LOAD
-    const { clock, lifeCycle } = setupBuilder.build()
+    const { clock } = setupBuilder.build()
 
     const entry = createPerformanceEntry(RumPerformanceEntryType.NAVIGATION)
-    lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [entry])
+
+    setLoadEvent(entry.loadEventEnd)
     clock.tick(PAGE_ACTIVITY_END_DELAY)
 
     expect(loadingTimeCallback).toHaveBeenCalledOnceWith(entry.loadEventEnd)
@@ -83,8 +82,7 @@ describe('trackLoadingTime', () => {
     domMutationObservable.notify()
     clock.tick(AFTER_PAGE_ACTIVITY_END_DELAY)
 
-    expect(loadingTimeCallback).toHaveBeenCalledTimes(1)
-    expect(loadingTimeCallback).toHaveBeenCalledWith(LOAD_EVENT_AFTER_ACTIVITY_TIMING)
+    expect(loadingTimeCallback).toHaveBeenCalledOnceWith(LOAD_EVENT_AFTER_ACTIVITY_TIMING)
   })
 
   it('should use computed loading time for initial view when load event is smaller than computed loading time', () => {
@@ -96,20 +94,20 @@ describe('trackLoadingTime', () => {
     domMutationObservable.notify()
     clock.tick(AFTER_PAGE_ACTIVITY_END_DELAY)
 
-    expect(loadingTimeCallback).toHaveBeenCalledTimes(1)
-    expect(loadingTimeCallback).toHaveBeenCalledWith(BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY)
+    expect(loadingTimeCallback).toHaveBeenCalledOnceWith(BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY)
   })
 
   it('should use computed loading time from time origin for initial view', () => {
     loadType = ViewLoadingType.INITIAL_LOAD
-    const { domMutationObservable, clock } = setupBuilder.build()
 
     // introduce a gap between time origin and tracking start
     // ensure that `load event > activity delay` and `load event < activity delay + clock gap`
     // to make the test fail if the clock gap is not correctly taken into account
     const CLOCK_GAP = (LOAD_EVENT_AFTER_ACTIVITY_TIMING - BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY + 1) as Duration
 
-    clock.tick(CLOCK_GAP)
+    setupBuilder.clock!.tick(CLOCK_GAP)
+
+    const { domMutationObservable, clock } = setupBuilder.build()
 
     clock.tick(BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY)
 
@@ -119,7 +117,6 @@ describe('trackLoadingTime', () => {
     clock.tick(AFTER_PAGE_ACTIVITY_END_DELAY)
     clock.tick(THROTTLE_VIEW_UPDATE_PERIOD)
 
-    expect(loadingTimeCallback).toHaveBeenCalledTimes(1)
-    expect(loadingTimeCallback).toHaveBeenCalledWith(addDuration(BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY, CLOCK_GAP))
+    expect(loadingTimeCallback).toHaveBeenCalledOnceWith(addDuration(BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY, CLOCK_GAP))
   })
 })

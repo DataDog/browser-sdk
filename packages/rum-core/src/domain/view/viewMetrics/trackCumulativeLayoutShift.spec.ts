@@ -46,8 +46,7 @@ describe('trackCumulativeLayoutShift', () => {
   it('should be initialized to 0', () => {
     setupBuilder.build()
 
-    expect(clsCallback).toHaveBeenCalledTimes(1)
-    expect(clsCallback).toHaveBeenCalledWith({ value: 0 })
+    expect(clsCallback).toHaveBeenCalledOnceWith({ value: 0 })
   })
 
   it('should be initialized to undefined if layout-shift is not supported', () => {

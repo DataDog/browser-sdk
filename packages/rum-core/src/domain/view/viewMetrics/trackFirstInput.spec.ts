@@ -57,8 +57,7 @@ describe('firstInputTimings', () => {
       createPerformanceEntry(RumPerformanceEntryType.FIRST_INPUT),
     ])
 
-    expect(fitCallback).toHaveBeenCalledTimes(1)
-    expect(fitCallback).toHaveBeenCalledWith({
+    expect(fitCallback).toHaveBeenCalledOnceWith({
       delay: 100 as Duration,
       time: 1000 as RelativeTime,
       targetSelector: undefined,
@@ -76,7 +75,7 @@ describe('firstInputTimings', () => {
     ])
 
     expect(fitCallback).toHaveBeenCalledTimes(1)
-    expect(fitCallback).toHaveBeenCalledWith(
+    expect(fitCallback).toHaveBeenCalledOnceWith(
       jasmine.objectContaining({
         targetSelector: '#fid-target-element',
       })
@@ -93,8 +92,7 @@ describe('firstInputTimings', () => {
       }),
     ])
 
-    expect(fitCallback).toHaveBeenCalledTimes(1)
-    expect(fitCallback).toHaveBeenCalledWith(
+    expect(fitCallback).toHaveBeenCalledOnceWith(
       jasmine.objectContaining({
         targetSelector: undefined,
       })
@@ -123,8 +121,7 @@ describe('firstInputTimings', () => {
       }),
     ])
 
-    expect(fitCallback).toHaveBeenCalledTimes(1)
-    expect(fitCallback).toHaveBeenCalledWith(
+    expect(fitCallback).toHaveBeenCalledOnceWith(
       jasmine.objectContaining({
         delay: 0,
         time: 1000,
