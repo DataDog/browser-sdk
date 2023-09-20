@@ -17,6 +17,7 @@ import type { ViewEvent } from './trackViews'
 import { SESSION_KEEP_ALIVE_INTERVAL, THROTTLE_VIEW_UPDATE_PERIOD, KEEP_TRACKING_AFTER_VIEW_DELAY } from './trackViews'
 import type { ViewTest } from './setupViewTest.specHelper'
 import { setupViewTest } from './setupViewTest.specHelper'
+import { isLayoutShiftSupported } from './viewMetrics/trackCumulativeLayoutShift'
 
 describe('track views automatically', () => {
   let setupBuilder: TestSetupBuilder
@@ -380,6 +381,9 @@ describe('view metrics', () => {
 
   describe('common view metrics', () => {
     it('should be updated when notified with a PERFORMANCE_ENTRY_COLLECTED event (throttled)', () => {
+      if (!isLayoutShiftSupported()) {
+        pending('CLS web vital not supported')
+      }
       const { lifeCycle, clock } = setupBuilder.withFakeClock().build()
       const { getViewUpdateCount, getViewUpdate } = viewTest
 
@@ -402,6 +406,9 @@ describe('view metrics', () => {
     })
 
     it('should not be updated after view end', () => {
+      if (!isLayoutShiftSupported()) {
+        pending('CLS web vital not supported')
+      }
       const { lifeCycle, clock } = setupBuilder.withFakeClock().build()
       const { getViewUpdate, getViewUpdateCount, getViewCreateCount, startView } = viewTest
       startView()
