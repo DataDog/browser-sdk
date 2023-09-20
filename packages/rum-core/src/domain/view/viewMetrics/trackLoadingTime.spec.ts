@@ -4,7 +4,6 @@ import { ViewLoadingType } from '../../../rawRumEvent.types'
 import type { TestSetupBuilder } from '../../../../test'
 import { createPerformanceEntry, setup } from '../../../../test'
 import { PAGE_ACTIVITY_END_DELAY, PAGE_ACTIVITY_VALIDATION_DELAY } from '../../waitPageActivityEnd'
-import { THROTTLE_VIEW_UPDATE_PERIOD } from '../trackViews'
 import { RumPerformanceEntryType } from '../../../browser/performanceCollection'
 import { trackLoadingTime } from './trackLoadingTime'
 
@@ -118,7 +117,6 @@ describe('trackLoadingTime', () => {
 
     domMutationObservable.notify()
     clock.tick(AFTER_PAGE_ACTIVITY_END_DELAY)
-    clock.tick(THROTTLE_VIEW_UPDATE_PERIOD)
 
     expect(loadingTimeCallback).toHaveBeenCalledOnceWith(addDuration(BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY, CLOCK_GAP))
   })
