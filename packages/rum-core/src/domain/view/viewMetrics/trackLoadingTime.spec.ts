@@ -1,5 +1,5 @@
 import type { RelativeTime, Duration } from '@datadog/browser-core'
-import { addDuration, clocksNow } from '@datadog/browser-core'
+import { addDuration, clocksOrigin } from '@datadog/browser-core'
 import { ViewLoadingType } from '../../../rawRumEvent.types'
 import type { TestSetupBuilder } from '../../../../test'
 import { createPerformanceEntry, setup } from '../../../../test'
@@ -32,7 +32,7 @@ describe('trackLoadingTime', () => {
           domMutationObservable,
           configuration,
           loadType,
-          clocksNow(),
+          clocksOrigin(),
           loadingTimeCallback
         )
         setLoadEvent = loadingTimeTracking.setLoadEvent
@@ -102,18 +102,19 @@ describe('trackLoadingTime', () => {
 
   it('should use computed loading time from time origin for initial view', () => {
     loadType = ViewLoadingType.INITIAL_LOAD
-    const { domMutationObservable, clock } = setupBuilder.build()
 
     // introduce a gap between time origin and tracking start
     // ensure that `load event > activity delay` and `load event < activity delay + clock gap`
     // to make the test fail if the clock gap is not correctly taken into account
     const CLOCK_GAP = (LOAD_EVENT_AFTER_ACTIVITY_TIMING - BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY + 1) as Duration
 
-    clock.tick(CLOCK_GAP)
+    setupBuilder.clock!.tick(CLOCK_GAP)
+
+    const { domMutationObservable, clock } = setupBuilder.build()
 
     clock.tick(BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY)
 
-    setLoadEvent(LOAD_EVENT_AFTER_ACTIVITY_TIMING)
+    setLoadEvent(LOAD_EVENT_BEFORE_ACTIVITY_TIMING)
 
     domMutationObservable.notify()
     clock.tick(AFTER_PAGE_ACTIVITY_END_DELAY)
