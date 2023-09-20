@@ -1,5 +1,14 @@
 import type { ClocksState, Duration } from '@datadog/browser-core'
-import { ONE_SECOND, elapsed, relativeNow, throttle, addEventListener, DOM_EVENT } from '@datadog/browser-core'
+import {
+  Observable,
+  ONE_SECOND,
+  elapsed,
+  relativeNow,
+  throttle,
+  addEventListener,
+  DOM_EVENT,
+  monitor,
+} from '@datadog/browser-core'
 import type { RumConfiguration } from '../../configuration'
 import { getScrollY } from '../../../browser/scroll'
 import { getViewportDimension } from '../../../browser/viewportObservable'
@@ -18,39 +27,48 @@ export function trackScrollMetrics(
   configuration: RumConfiguration,
   viewStart: ClocksState,
   callback: (scrollMetrics: ScrollMetrics) => void,
-  getScrollValues = computeScrollValues
+  scrollValues = createScrollValuesObservable(configuration)
 ) {
-  let maxDepth = 0
-  const handleScrollEvent = throttle(
-    () => {
-      const { scrollHeight, scrollDepth, scrollTop } = getScrollValues()
+  let maxScrollDepth = 0
+  let maxScrollHeight = 0
+  let maxScrollTime = 0 as Duration
 
-      if (scrollDepth > maxDepth) {
-        const now = relativeNow()
-        const maxDepthTime = elapsed(viewStart.relative, now)
-        maxDepth = scrollDepth
-        callback({
-          maxDepth,
-          maxDepthScrollHeight: scrollHeight,
-          maxDepthTime,
-          maxDepthScrollTop: scrollTop,
-        })
-      }
-    },
-    THROTTLE_SCROLL_DURATION,
-    { leading: false, trailing: true }
-  )
+  const subscription = scrollValues.subscribe(({ scrollDepth, scrollTop, scrollHeight }) => {
+    let shouldUpdate = false
 
-  const { stop } = addEventListener(configuration, window, DOM_EVENT.SCROLL, handleScrollEvent.throttled, {
-    passive: true,
+    if (scrollDepth > maxScrollDepth) {
+      maxScrollDepth = scrollDepth
+      shouldUpdate = true
+    }
+
+    if (scrollHeight > maxScrollHeight) {
+      maxScrollHeight = scrollHeight
+      const now = relativeNow()
+      maxScrollTime = elapsed(viewStart.relative, now)
+      shouldUpdate = true
+    }
+
+    if (shouldUpdate) {
+      callback({
+        maxDepth: Math.min(maxScrollDepth, maxScrollHeight),
+        // TODO: This should be renamed to maxScrollHeight in the next major release
+        maxDepthScrollHeight: maxScrollHeight,
+        // TODO: This should be renamed to maxScrollTime in the next major release
+        maxDepthTime: maxScrollTime,
+        maxDepthScrollTop: scrollTop,
+      })
+    }
   })
 
   return {
-    stop: () => {
-      handleScrollEvent.cancel()
-      stop()
-    },
+    stop: () => subscription.unsubscribe(),
   }
+}
+
+export interface ScrollValues {
+  scrollDepth: number
+  scrollTop: number
+  scrollHeight: number
 }
 
 export function computeScrollValues() {
@@ -59,6 +77,7 @@ export function computeScrollValues() {
   const { height } = getViewportDimension()
 
   const scrollHeight = Math.round((document.scrollingElement || document.documentElement).scrollHeight)
+
   const scrollDepth = Math.round(height + scrollTop)
 
   return {
@@ -66,4 +85,37 @@ export function computeScrollValues() {
     scrollDepth,
     scrollTop,
   }
+}
+
+export function createScrollValuesObservable(
+  configuration: RumConfiguration,
+  throttleDuration = THROTTLE_SCROLL_DURATION
+): Observable<ScrollValues> {
+  const observable = new Observable<ScrollValues>(() => {
+    function notify() {
+      observable.notify(computeScrollValues())
+    }
+
+    if (window.ResizeObserver) {
+      const throttledNotify = throttle(notify, throttleDuration, {
+        leading: false,
+        trailing: true,
+      })
+
+      const observerTarget = document.scrollingElement || document.documentElement
+      const resizeObserver = new ResizeObserver(monitor(throttledNotify.throttled))
+      resizeObserver.observe(observerTarget)
+      const eventListener = addEventListener(configuration, window, DOM_EVENT.SCROLL, throttledNotify.throttled, {
+        passive: true,
+      })
+
+      return () => {
+        throttledNotify.cancel()
+        resizeObserver.unobserve(observerTarget)
+        eventListener.stop()
+      }
+    }
+  })
+
+  return observable
 }

@@ -66,6 +66,7 @@ export interface RumPerformanceResourceTiming {
   redirectEnd: RelativeTime
   decodedBodySize: number
   traceId?: string
+  toJSON(): PerformanceEntryRepresentation
 }
 
 export interface RumPerformanceLongTaskTiming {
@@ -138,7 +139,7 @@ function supportPerformanceObject() {
   return window.performance !== undefined && 'getEntries' in performance
 }
 
-export function supportPerformanceTimingEvent(entryType: string) {
+export function supportPerformanceTimingEvent(entryType: RumPerformanceEntryType) {
   return (
     window.PerformanceObserver &&
     PerformanceObserver.supportedEntryTypes !== undefined &&
@@ -205,12 +206,12 @@ export function startPerformanceCollection(lifeCycle: LifeCycle, configuration: 
       })
     }
   }
-  if (!supportPerformanceTimingEvent('navigation')) {
+  if (!supportPerformanceTimingEvent(RumPerformanceEntryType.NAVIGATION)) {
     retrieveNavigationTiming(configuration, (timing) => {
       handleRumPerformanceEntries(lifeCycle, configuration, [timing])
     })
   }
-  if (!supportPerformanceTimingEvent('first-input')) {
+  if (!supportPerformanceTimingEvent(RumPerformanceEntryType.FIRST_INPUT)) {
     retrieveFirstInputTiming(configuration, (timing) => {
       handleRumPerformanceEntries(lifeCycle, configuration, [timing])
     })
@@ -228,6 +229,7 @@ export function retrieveInitialDocumentResourceTiming(
       entryType: RumPerformanceEntryType.RESOURCE as const,
       initiatorType: FAKE_INITIAL_DOCUMENT,
       traceId: getDocumentTraceId(document),
+      toJSON: () => assign({}, timing, { toJSON: undefined }),
     }
     if (
       supportPerformanceTimingEvent(RumPerformanceEntryType.NAVIGATION) &&
@@ -367,7 +369,7 @@ function handleRumPerformanceEntries(
   entries: Array<PerformanceEntry | RumPerformanceEntry>
 ) {
   const rumPerformanceEntries = entries.filter((entry): entry is RumPerformanceEntry =>
-    objectHasValue(RumPerformanceEntryType, entry)
+    objectHasValue(RumPerformanceEntryType, entry.entryType)
   )
 
   const rumAllowedPerformanceEntries = rumPerformanceEntries.filter(

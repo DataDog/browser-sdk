@@ -16,12 +16,7 @@ import { RumPerformanceEntryType } from '../../browser/performanceCollection'
 import type { ViewEvent } from './trackViews'
 import { SESSION_KEEP_ALIVE_INTERVAL, THROTTLE_VIEW_UPDATE_PERIOD, KEEP_TRACKING_AFTER_VIEW_DELAY } from './trackViews'
 import type { ViewTest } from './setupViewTest.specHelper'
-import {
-  FAKE_LARGEST_CONTENTFUL_PAINT_ENTRY,
-  FAKE_NAVIGATION_ENTRY,
-  FAKE_PAINT_ENTRY,
-  setupViewTest,
-} from './setupViewTest.specHelper'
+import { setupViewTest } from './setupViewTest.specHelper'
 
 describe('track views automatically', () => {
   let setupBuilder: TestSetupBuilder
@@ -428,12 +423,13 @@ describe('view metrics', () => {
     it('should be updated when notified with a PERFORMANCE_ENTRY_COLLECTED event (throttled)', () => {
       const { lifeCycle, clock } = setupBuilder.withFakeClock().build()
       const { getViewUpdateCount, getViewUpdate } = viewTest
+      const performanceEntry = createPerformanceEntry(RumPerformanceEntryType.NAVIGATION)
 
       expect(getViewUpdateCount()).toEqual(1)
       expect(getViewUpdate(0).initialViewMetrics).toEqual({})
 
-      clock.tick(FAKE_NAVIGATION_ENTRY.responseStart) // ensure now > responseStart
-      lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [FAKE_NAVIGATION_ENTRY])
+      clock.tick(performanceEntry.responseStart) // ensure now > responseStart
+      lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [performanceEntry])
 
       expect(getViewUpdateCount()).toEqual(1)
 
@@ -455,20 +451,19 @@ describe('view metrics', () => {
       startView()
       expect(getViewCreateCount()).toEqual(2)
 
+      const lcpEntry = createPerformanceEntry(RumPerformanceEntryType.LARGEST_CONTENTFUL_PAINT)
       clock.tick(KEEP_TRACKING_AFTER_VIEW_DELAY - 1)
       lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [
-        FAKE_PAINT_ENTRY,
-        FAKE_LARGEST_CONTENTFUL_PAINT_ENTRY,
-        FAKE_NAVIGATION_ENTRY,
+        createPerformanceEntry(RumPerformanceEntryType.PAINT),
+        lcpEntry,
+        createPerformanceEntry(RumPerformanceEntryType.NAVIGATION),
       ])
       clock.tick(THROTTLE_VIEW_UPDATE_PERIOD)
 
       const latestUpdate = getViewUpdate(getViewUpdateCount() - 1)
       const firstView = getViewUpdate(0)
       expect(latestUpdate.id).toBe(firstView.id)
-      expect(latestUpdate.initialViewMetrics.largestContentfulPaint?.value).toEqual(
-        FAKE_LARGEST_CONTENTFUL_PAINT_ENTRY.startTime
-      )
+      expect(latestUpdate.initialViewMetrics.largestContentfulPaint?.value).toEqual(lcpEntry.startTime)
     })
 
     it('should not be updated 5 min after view end', () => {
@@ -479,9 +474,9 @@ describe('view metrics', () => {
 
       clock.tick(KEEP_TRACKING_AFTER_VIEW_DELAY)
       lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [
-        FAKE_PAINT_ENTRY,
-        FAKE_LARGEST_CONTENTFUL_PAINT_ENTRY,
-        FAKE_NAVIGATION_ENTRY,
+        createPerformanceEntry(RumPerformanceEntryType.PAINT),
+        createPerformanceEntry(RumPerformanceEntryType.LARGEST_CONTENTFUL_PAINT),
+        createPerformanceEntry(RumPerformanceEntryType.NAVIGATION),
       ])
       clock.tick(THROTTLE_VIEW_UPDATE_PERIOD)
 
@@ -510,9 +505,9 @@ describe('view metrics', () => {
         expect(getViewUpdateCount()).toEqual(3)
 
         lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [
-          FAKE_PAINT_ENTRY,
-          FAKE_LARGEST_CONTENTFUL_PAINT_ENTRY,
-          FAKE_NAVIGATION_ENTRY,
+          createPerformanceEntry(RumPerformanceEntryType.PAINT),
+          createPerformanceEntry(RumPerformanceEntryType.LARGEST_CONTENTFUL_PAINT),
+          createPerformanceEntry(RumPerformanceEntryType.NAVIGATION),
         ])
 
         clock.tick(THROTTLE_VIEW_UPDATE_PERIOD)
@@ -556,7 +551,7 @@ describe('view metrics', () => {
       })
 
       it('should update the initial view loadingTime following the loadEventEnd value', () => {
-        expect(initialView.last.commonViewMetrics.loadingTime).toBe(FAKE_NAVIGATION_ENTRY.loadEventEnd)
+        expect(initialView.last.commonViewMetrics.loadingTime).toBe(567 as Duration)
       })
     })
   })

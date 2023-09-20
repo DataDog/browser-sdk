@@ -91,12 +91,17 @@ describe('trackCumulativeLayoutShift', () => {
   it('should create a new session window if the gap is more than 1 second', () => {
     const { lifeCycle, clock } = setupBuilder.withFakeClock().build()
     // first session window
-    newLayoutShift(lifeCycle, { value: 0.1 })
+    lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [
+      createPerformanceEntry(RumPerformanceEntryType.LAYOUT_SHIFT, { value: 0.1 }),
+    ])
     clock.tick(100)
-    newLayoutShift(lifeCycle, { value: 0.2 })
-    // second session window
+    lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [
+      createPerformanceEntry(RumPerformanceEntryType.LAYOUT_SHIFT, { value: 0.2 }),
+    ]) // second session window
     clock.tick(1001)
-    newLayoutShift(lifeCycle, { value: 0.1 })
+    lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [
+      createPerformanceEntry(RumPerformanceEntryType.LAYOUT_SHIFT, { value: 0.1 }),
+    ])
 
     expect(clsCallback).toHaveBeenCalledTimes(3)
     expect(clsCallback.calls.mostRecent().args[0].value).toEqual(0.3)
@@ -108,7 +113,9 @@ describe('trackCumulativeLayoutShift', () => {
     newLayoutShift(lifeCycle, { value: 0 })
     for (let i = 0; i < 6; i += 1) {
       clock.tick(999)
-      newLayoutShift(lifeCycle, { value: 0.1 })
+      lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [
+        createPerformanceEntry(RumPerformanceEntryType.LAYOUT_SHIFT, { value: 0.1 }),
+      ])
     } // window 1: 0.5 | window 2: 0.1
 
     expect(clsCallback).toHaveBeenCalledTimes(6)
@@ -119,17 +126,31 @@ describe('trackCumulativeLayoutShift', () => {
     const { lifeCycle, clock } = setupBuilder.withFakeClock().build()
 
     // first session window
-    newLayoutShift(lifeCycle, { value: 0.1 })
-    newLayoutShift(lifeCycle, { value: 0.2 })
+    lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [
+      createPerformanceEntry(RumPerformanceEntryType.LAYOUT_SHIFT, { value: 0.1 }),
+    ])
+    lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [
+      createPerformanceEntry(RumPerformanceEntryType.LAYOUT_SHIFT, { value: 0.2 }),
+    ])
     // second session window
     clock.tick(5001)
-    newLayoutShift(lifeCycle, { value: 0.1 })
-    newLayoutShift(lifeCycle, { value: 0.2 })
-    newLayoutShift(lifeCycle, { value: 0.2 })
+    lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [
+      createPerformanceEntry(RumPerformanceEntryType.LAYOUT_SHIFT, { value: 0.1 }),
+    ])
+    lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [
+      createPerformanceEntry(RumPerformanceEntryType.LAYOUT_SHIFT, { value: 0.2 }),
+    ])
+    lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [
+      createPerformanceEntry(RumPerformanceEntryType.LAYOUT_SHIFT, { value: 0.2 }),
+    ])
     // third session window
     clock.tick(5001)
-    newLayoutShift(lifeCycle, { value: 0.2 })
-    newLayoutShift(lifeCycle, { value: 0.2 })
+    lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [
+      createPerformanceEntry(RumPerformanceEntryType.LAYOUT_SHIFT, { value: 0.2 }),
+    ])
+    lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [
+      createPerformanceEntry(RumPerformanceEntryType.LAYOUT_SHIFT, { value: 0.2 }),
+    ])
 
     expect(clsCallback).toHaveBeenCalledTimes(4)
     expect(clsCallback.calls.mostRecent().args[0]).toEqual({ value: 0.5, targetSelector: undefined })
@@ -147,8 +168,11 @@ describe('trackCumulativeLayoutShift', () => {
       const textNode = appendTextNode('')
       const divElement = appendElement('div', { id: 'div-element' })
 
-      newLayoutShift(lifeCycle, { sources: [{ node: textNode }, { node: divElement }, { node: textNode }] })
-
+      lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [
+        createPerformanceEntry(RumPerformanceEntryType.LAYOUT_SHIFT, {
+          sources: [{ node: textNode }, { node: divElement }, { node: textNode }],
+        }),
+      ])
       expect(clsCallback).toHaveBeenCalledTimes(2)
       expect(clsCallback.calls.mostRecent().args[0].targetSelector).toEqual('#div-element')
     })
@@ -158,8 +182,11 @@ describe('trackCumulativeLayoutShift', () => {
 
       const divElement = appendElement('div', { id: 'div-element' })
 
-      newLayoutShift(lifeCycle, { sources: [{ node: divElement }] })
-
+      lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [
+        createPerformanceEntry(RumPerformanceEntryType.LAYOUT_SHIFT, {
+          sources: [{ node: divElement }],
+        }),
+      ])
       expect(clsCallback).toHaveBeenCalledTimes(2)
       expect(clsCallback.calls.mostRecent().args[0].targetSelector).toEqual(undefined)
     })

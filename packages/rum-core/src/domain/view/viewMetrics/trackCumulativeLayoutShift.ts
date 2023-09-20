@@ -147,5 +147,5 @@ function slidingSessionWindow() {
  * Check whether `layout-shift` is supported by the browser.
  */
 export function isLayoutShiftSupported() {
-  return supportPerformanceTimingEvent('layout-shift')
+  return supportPerformanceTimingEvent(RumPerformanceEntryType.LAYOUT_SHIFT)
 }
