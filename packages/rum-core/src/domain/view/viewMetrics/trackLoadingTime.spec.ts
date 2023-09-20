@@ -6,7 +6,6 @@ import { createPerformanceEntry, setup } from '../../../../test'
 import { PAGE_ACTIVITY_END_DELAY, PAGE_ACTIVITY_VALIDATION_DELAY } from '../../waitPageActivityEnd'
 import { THROTTLE_VIEW_UPDATE_PERIOD } from '../trackViews'
 import { RumPerformanceEntryType } from '../../../browser/performanceCollection'
-import { LifeCycleEventType } from '../../lifeCycle'
 import { trackLoadingTime } from './trackLoadingTime'
 
 const BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY = (PAGE_ACTIVITY_VALIDATION_DELAY * 0.8) as Duration
@@ -59,22 +58,19 @@ describe('trackLoadingTime', () => {
     domMutationObservable.notify()
     clock.tick(AFTER_PAGE_ACTIVITY_END_DELAY)
 
-    expect(loadingTimeCallback).toHaveBeenCalledTimes(1)
-    expect(loadingTimeCallback).toHaveBeenCalledWith(BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY)
+    expect(loadingTimeCallback).toHaveBeenCalledOnceWith(BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY)
   })
 
   it('should use loadEventEnd for initial view when having no activity', () => {
     loadType = ViewLoadingType.INITIAL_LOAD
-    const { lifeCycle, clock } = setupBuilder.build()
+    const { clock } = setupBuilder.build()
 
     const entry = createPerformanceEntry(RumPerformanceEntryType.NAVIGATION)
-    lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [entry])
 
     setLoadEvent(entry.loadEventEnd)
     clock.tick(PAGE_ACTIVITY_END_DELAY)
 
-    expect(loadingTimeCallback).toHaveBeenCalledTimes(1)
-    expect(loadingTimeCallback).toHaveBeenCalledWith(entry.loadEventEnd)
+    expect(loadingTimeCallback).toHaveBeenCalledOnceWith(entry.loadEventEnd)
   })
 
   it('should use loadEventEnd for initial view when load event is bigger than computed loading time', () => {
@@ -87,8 +83,7 @@ describe('trackLoadingTime', () => {
     domMutationObservable.notify()
     clock.tick(AFTER_PAGE_ACTIVITY_END_DELAY)
 
-    expect(loadingTimeCallback).toHaveBeenCalledTimes(1)
-    expect(loadingTimeCallback).toHaveBeenCalledWith(LOAD_EVENT_AFTER_ACTIVITY_TIMING)
+    expect(loadingTimeCallback).toHaveBeenCalledOnceWith(LOAD_EVENT_AFTER_ACTIVITY_TIMING)
   })
 
   it('should use computed loading time for initial view when load event is smaller than computed loading time', () => {
@@ -102,8 +97,7 @@ describe('trackLoadingTime', () => {
     domMutationObservable.notify()
     clock.tick(AFTER_PAGE_ACTIVITY_END_DELAY)
 
-    expect(loadingTimeCallback).toHaveBeenCalledTimes(1)
-    expect(loadingTimeCallback).toHaveBeenCalledWith(BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY)
+    expect(loadingTimeCallback).toHaveBeenCalledOnceWith(BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY)
   })
 
   it('should use computed loading time from time origin for initial view', () => {
@@ -125,7 +119,6 @@ describe('trackLoadingTime', () => {
     clock.tick(AFTER_PAGE_ACTIVITY_END_DELAY)
     clock.tick(THROTTLE_VIEW_UPDATE_PERIOD)
 
-    expect(loadingTimeCallback).toHaveBeenCalledTimes(1)
-    expect(loadingTimeCallback).toHaveBeenCalledWith(addDuration(BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY, CLOCK_GAP))
+    expect(loadingTimeCallback).toHaveBeenCalledOnceWith(addDuration(BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY, CLOCK_GAP))
   })
 })
