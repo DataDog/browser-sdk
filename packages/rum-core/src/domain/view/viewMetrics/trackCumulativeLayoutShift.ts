@@ -5,6 +5,7 @@ import {
   ONE_SECOND,
   isExperimentalFeatureEnabled,
   ExperimentalFeature,
+  noop,
 } from '@datadog/browser-core'
 import { isElementNode } from '../../../browser/htmlDomUtils'
 import type { LifeCycle } from '../../lifeCycle'
@@ -43,7 +44,18 @@ export function trackCumulativeLayoutShift(
   webVitalTelemetryDebug: WebVitalTelemetryDebug,
   callback: (cumulativeLayoutShift: CumulativeLayoutShift) => void
 ) {
+  if (!isLayoutShiftSupported()) {
+    return {
+      stop: noop,
+    }
+  }
+
   let maxClsValue = 0
+
+  // if no layout shift happen the value should be reported as 0
+  callback({
+    value: 0,
+  })
 
   const window = slidingSessionWindow()
   let clsAttributionCollected = false
