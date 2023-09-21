@@ -28,7 +28,7 @@ export interface LargestContentfulPaint {
  * Track the largest contentful paint (LCP) occurring during the initial View.  This can yield
  * multiple values, only the most recent one should be used.
  * Documentation: https://web.dev/lcp/
- * Reference implementation: https://github.com/GoogleChrome/web-vitals/blob/master/src/getLCP.ts
+ * Reference implementation: https://github.com/GoogleChrome/web-vitals/blob/master/src/onLCP.ts
  */
 export function trackLargestContentfulPaint(
   lifeCycle: LifeCycle,
