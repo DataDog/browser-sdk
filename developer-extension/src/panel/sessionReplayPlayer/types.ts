@@ -97,14 +97,14 @@ export type MessageBridgeUp = {
 } & RawMessageBridgeUp
 
 /**
- * Message send by the sanboxing when iframe is ready
+ * Message sent by the sandboxing when iframe is ready
  */
 export type MessageBridgeUpReady = {
   type: MessageBridgeUpType.READY
 }
 
 /**
- * Message send by the sanboxing when a record has been applied
+ * `Message sent by the sandboxing when a record has been applied`
  */
 export type MessageBridgeUpRecordApplied = {
   type: MessageBridgeUpType.RECORD_APPLIED
@@ -115,7 +115,7 @@ export type MessageBridgeUpRecordApplied = {
 }
 
 /**
- * Message send by the sanboxing when a log is sent
+ * Message sent by the sandboxing when a log is sent
  */
 export type MessageBridgeUpLog = {
   type: MessageBridgeUpType.LOG
@@ -125,7 +125,7 @@ export type MessageBridgeUpLog = {
 }
 
 /**
- * Message send by the sanboxing iframe when there is an error
+ * Message sent by the sandboxing iframe when there is an error
  */
 export type MessageBridgeUpError = {
   type: MessageBridgeUpType.ERROR
@@ -134,7 +134,7 @@ export type MessageBridgeUpError = {
 }
 
 /**
- * Message send by the sanboxing iframe with a custom timing
+ * Message sent by the sandboxing iframe with a custom timing
  */
 export type MessageBridgeUpTiming = {
   type: MessageBridgeUpType.METRIC_TIMING
@@ -144,7 +144,7 @@ export type MessageBridgeUpTiming = {
 }
 
 /**
- * Message send by the sanboxing iframe with a custom count
+ * Message sent by the sandboxing iframe with a custom count
  */
 export type MessageBridgeUpIncrement = {
   type: MessageBridgeUpType.METRIC_INCREMENT
