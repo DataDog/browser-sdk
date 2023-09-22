@@ -263,13 +263,12 @@ describe('getActionNameFromElement', () => {
 
     it('considers any parent', () => {
       const target = append(`
-        <form>
+        <form data-dd-action-name="foo">
           <i><i><i><i><i><i><i><i><i><i><i><i>
             <span target>ignored</span>
           </i></i></i></i></i></i></i></i></i></i></i></i>
         </form>
       `)
-      target.closest('form')!.setAttribute('data-dd-action-name', 'foo')
       expect(getActionNameFromElement(target)).toBe('foo')
     })
 
