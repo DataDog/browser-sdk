@@ -1,7 +1,6 @@
 import type { Duration } from '@datadog/browser-core'
 import type { RumConfiguration } from '../../configuration'
 import type { LifeCycle } from '../../lifeCycle'
-import type { WebVitalTelemetryDebug } from '../startWebVitalTelemetryDebug'
 import { trackFirstContentfulPaint } from './trackFirstContentfulPaint'
 import type { FirstInput } from './trackFirstInput'
 import { trackFirstInput } from './trackFirstInput'
@@ -21,7 +20,6 @@ export interface InitialViewMetrics {
 export function trackInitialViewMetrics(
   lifeCycle: LifeCycle,
   configuration: RumConfiguration,
-  webVitalTelemetryDebug: WebVitalTelemetryDebug,
   setLoadEvent: (loadEnd: Duration) => void,
   scheduleViewUpdate: () => void
 ) {
@@ -42,7 +40,6 @@ export function trackInitialViewMetrics(
   const { stop: stopLCPTracking } = trackLargestContentfulPaint(
     lifeCycle,
     configuration,
-    webVitalTelemetryDebug,
     firstHidden,
     window,
     (largestContentfulPaint) => {
@@ -51,16 +48,10 @@ export function trackInitialViewMetrics(
     }
   )
 
-  const { stop: stopFIDTracking } = trackFirstInput(
-    lifeCycle,
-    configuration,
-    webVitalTelemetryDebug,
-    firstHidden,
-    (firstInput) => {
-      initialViewMetrics.firstInput = firstInput
-      scheduleViewUpdate()
-    }
-  )
+  const { stop: stopFIDTracking } = trackFirstInput(lifeCycle, configuration, firstHidden, (firstInput) => {
+    initialViewMetrics.firstInput = firstInput
+    scheduleViewUpdate()
+  })
 
   function stop() {
     stopNavigationTracking()
