@@ -68,7 +68,7 @@ describe('trackLargestContentfulPaint', () => {
 
     lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [
       createPerformanceEntry(RumPerformanceEntryType.LARGEST_CONTENTFUL_PAINT, {
-        element: append('<button id="lcp-target-element"></button>'),
+        element: append<Element>('<button id="lcp-target-element"></button>'),
       }),
     ])
 
@@ -81,7 +81,7 @@ describe('trackLargestContentfulPaint', () => {
 
     lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [
       createPerformanceEntry(RumPerformanceEntryType.LARGEST_CONTENTFUL_PAINT, {
-        element: append('<button id="lcp-target-element"></button>'),
+        element: append<Element>('<button id="lcp-target-element"></button>'),
       }),
     ])
 

@@ -160,7 +160,7 @@ describe('isDead', () => {
         isDead(
           createFakeClick({
             hasPageActivity: false,
-            event: { target: append(element) },
+            event: { target: append<Element>(element) },
           })
         )
       ).toBe(expected)

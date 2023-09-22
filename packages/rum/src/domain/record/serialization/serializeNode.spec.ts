@@ -149,7 +149,7 @@ describe('serializeNodeWithId', () => {
       let elementsScrollPositions: ElementsScrollPositions
 
       beforeEach(() => {
-        element = append<HTMLDivElement>(
+        element = append(
           '<div style="width: 100px; height: 100px; overflow: scroll"><div style="width: 200px; height: 200px"></div></div>'
         )
         element.scrollBy(10, 20)

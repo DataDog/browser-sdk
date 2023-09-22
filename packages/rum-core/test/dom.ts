@@ -1,6 +1,9 @@
 import { registerCleanupTask } from '@datadog/browser-core/test'
 
-export function append<E extends Element>(html: string, container = document.body): E {
+export function append<E extends Element | Text = Element>(
+  html: string,
+  container: Element | ShadowRoot = document.body
+): E {
   const tmp = document.createElement('div')
   tmp.innerHTML = html.trim()
 
