@@ -5,12 +5,7 @@ import { initCookieStrategy } from './storeStrategies/sessionInCookie'
 import { initLocalStorageStrategy } from './storeStrategies/sessionInLocalStorage'
 import type { SessionState } from './sessionState'
 import { expandSessionState, toSessionString } from './sessionState'
-import {
-  processSessionStoreOperations,
-  isLockEnabled,
-  LOCK_MAX_TRIES,
-  LOCK_RETRY_DELAY,
-} from './sessionStoreOperations'
+import { processSessionStoreOperations, LOCK_MAX_TRIES, LOCK_RETRY_DELAY } from './sessionStoreOperations'
 import { SESSION_STORE_KEY } from './storeStrategies/sessionStoreStrategy'
 
 const cookieOptions: CookieOptions = {}
@@ -49,7 +44,7 @@ const cookieOptions: CookieOptions = {}
 
     describe('with lock access disabled', () => {
       beforeEach(() => {
-        isLockEnabled() && pending('lock-access required')
+        sessionStoreStrategy.isLockEnabled && pending('lock-access required')
       })
 
       it('should persist session when process returns a value', () => {
@@ -102,7 +97,7 @@ const cookieOptions: CookieOptions = {}
 
     describe('with lock access enabled', () => {
       beforeEach(() => {
-        !isLockEnabled() && pending('lock-access not enabled')
+        !sessionStoreStrategy.isLockEnabled && pending('lock-access not enabled')
       })
 
       it('should persist session when process returns a value', () => {
@@ -236,8 +231,8 @@ const cookieOptions: CookieOptions = {}
         stubStorage.getSpy.and.returnValue(buildSessionString({ ...initialSession, lock: 'locked' }))
         processSessionStoreOperations({ process: processSpy, after: afterSpy }, sessionStoreStrategy)
 
-        const lockMaxTries = isLockEnabled() ? LOCK_MAX_TRIES : 0
-        const lockRetryDelay = isLockEnabled() ? LOCK_RETRY_DELAY : 0
+        const lockMaxTries = sessionStoreStrategy.isLockEnabled ? LOCK_MAX_TRIES : 0
+        const lockRetryDelay = sessionStoreStrategy.isLockEnabled ? LOCK_RETRY_DELAY : 0
 
         clock.tick(lockMaxTries * lockRetryDelay)
         expect(processSpy).not.toHaveBeenCalled()
