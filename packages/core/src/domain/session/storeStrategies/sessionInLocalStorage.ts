@@ -1,3 +1,4 @@
+import { isChromium } from '../../../tools/utils/browserDetection'
 import { generateUUID } from '../../../tools/utils/stringUtils'
 import type { SessionState } from '../sessionState'
 import { toSessionString, toSessionState } from '../sessionState'
@@ -21,6 +22,8 @@ export function selectLocalStorageStrategy(): SessionStoreStrategyType | undefin
 
 export function initLocalStorageStrategy(): SessionStoreStrategy {
   return {
+    // synchronizationLatency: 7ms determined as a safe value from a minimum of 5ms.
+    lockOptions: { enabled: isChromium(), synchronizationLatency: 7 },
     persistSession: persistInLocalStorage,
     retrieveSession: retrieveSessionFromLocalStorage,
     clearSession: clearSessionFromLocalStorage,

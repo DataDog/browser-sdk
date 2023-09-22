@@ -5,6 +5,7 @@ import { tryOldCookiesMigration } from '../oldCookiesMigration'
 import { SESSION_EXPIRATION_DELAY } from '../sessionConstants'
 import type { SessionState } from '../sessionState'
 import { toSessionString, toSessionState } from '../sessionState'
+import { isChromium } from '../../../tools/utils/browserDetection'
 import type { SessionStoreStrategy, SessionStoreStrategyType } from './sessionStoreStrategy'
 import { SESSION_STORE_KEY } from './sessionStoreStrategy'
 
@@ -15,6 +16,7 @@ export function selectCookieStrategy(initConfiguration: InitConfiguration): Sess
 
 export function initCookieStrategy(cookieOptions: CookieOptions): SessionStoreStrategy {
   const cookieStore = {
+    lockOptions: { enabled: isChromium(), synchronizationLatency: 0 },
     persistSession: persistSessionCookie(cookieOptions),
     retrieveSession: retrieveSessionCookie,
     clearSession: deleteSessionCookie(cookieOptions),
