@@ -18,9 +18,9 @@ export const THROTTLE_SCROLL_DURATION = ONE_SECOND
 
 export interface ScrollMetrics {
   maxDepth: number
-  maxDepthScrollHeight: number
+  maxScrollHeight: number
   maxDepthScrollTop: number
-  maxDepthTime: Duration
+  maxScrollHeightTime: Duration
 }
 
 export function trackScrollMetrics(
@@ -31,7 +31,7 @@ export function trackScrollMetrics(
 ) {
   let maxScrollDepth = 0
   let maxScrollHeight = 0
-  let maxScrollTime = 0 as Duration
+  let maxScrollHeightTime = 0 as Duration
 
   const subscription = scrollValues.subscribe(({ scrollDepth, scrollTop, scrollHeight }) => {
     let shouldUpdate = false
@@ -44,18 +44,16 @@ export function trackScrollMetrics(
     if (scrollHeight > maxScrollHeight) {
       maxScrollHeight = scrollHeight
       const now = relativeNow()
-      maxScrollTime = elapsed(viewStart.relative, now)
+      maxScrollHeightTime = elapsed(viewStart.relative, now)
       shouldUpdate = true
     }
 
     if (shouldUpdate) {
       callback({
         maxDepth: Math.min(maxScrollDepth, maxScrollHeight),
-        // TODO: This should be renamed to maxScrollHeight in the next major release
-        maxDepthScrollHeight: maxScrollHeight,
-        // TODO: This should be renamed to maxScrollTime in the next major release
-        maxDepthTime: maxScrollTime,
         maxDepthScrollTop: scrollTop,
+        maxScrollHeight,
+        maxScrollHeightTime,
       })
     }
   })

@@ -114,9 +114,9 @@ function processViewUpdate(
       ? {
           scroll: {
             max_depth: view.commonViewMetrics.scroll.maxDepth,
-            max_depth_scroll_height: view.commonViewMetrics.scroll.maxDepthScrollHeight,
             max_depth_scroll_top: view.commonViewMetrics.scroll.maxDepthScrollTop,
-            max_depth_time: toServerDuration(view.commonViewMetrics.scroll.maxDepthTime),
+            max_scroll_height: view.commonViewMetrics.scroll.maxScrollHeight,
+            max_scroll_height_time: toServerDuration(view.commonViewMetrics.scroll.maxScrollHeightTime),
           },
         }
       : undefined,

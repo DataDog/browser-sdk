@@ -51,8 +51,8 @@ const VIEW: ViewEvent = {
     interactionToNextPaint: { value: 10 as Duration },
     scroll: {
       maxDepth: 2000,
-      maxDepthScrollHeight: 3000,
-      maxDepthTime: 4000000000 as Duration,
+      maxScrollHeight: 3000,
+      maxScrollHeightTime: 4000000000 as Duration,
       maxDepthScrollTop: 1000,
     },
   },
@@ -167,9 +167,9 @@ describe('viewCollection', () => {
       display: {
         scroll: {
           max_depth: 2000,
-          max_depth_scroll_height: 3000,
-          max_depth_time: 4000000000000000 as ServerDuration,
           max_depth_scroll_top: 1000,
+          max_scroll_height: 3000,
+          max_scroll_height_time: 4000000000000000 as ServerDuration,
         },
       },
       privacy: { replay_level: 'mask-user-input' },
