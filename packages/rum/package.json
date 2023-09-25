@@ -30,7 +30,7 @@
     "directory": "packages/rum"
   },
   "devDependencies": {
-    "@types/pako": "2.0.0",
+    "@types/pako": "2.0.1",
     "pako": "2.1.0"
   },
   "volta": {
