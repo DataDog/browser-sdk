@@ -1,4 +1,4 @@
-import { ExperimentalFeature, addExperimentalFeatures, noop, resetExperimentalFeatures } from '@datadog/browser-core'
+import { ExperimentalFeature, addExperimentalFeatures, resetExperimentalFeatures } from '@datadog/browser-core'
 import type { TestSetupBuilder } from '../../../../test'
 import { appendElement, appendTextNode, createPerformanceEntry, setup } from '../../../../test'
 import { LifeCycleEventType } from '../../lifeCycle'
@@ -19,7 +19,7 @@ describe('trackCumulativeLayoutShift', () => {
 
     clsCallback = jasmine.createSpy()
     setupBuilder = setup().beforeBuild(({ lifeCycle, configuration }) =>
-      trackCumulativeLayoutShift(configuration, lifeCycle, { addWebVitalTelemetryDebug: noop }, clsCallback)
+      trackCumulativeLayoutShift(configuration, lifeCycle, clsCallback)
     )
 
     originalSupportedEntryTypes = Object.getOwnPropertyDescriptor(PerformanceObserver, 'supportedEntryTypes')

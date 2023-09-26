@@ -1,4 +1,3 @@
-import { noopWebVitalTelemetryDebug } from '../../../test'
 import type { BuildContext } from '../../../test'
 import { LifeCycleEventType } from '../lifeCycle'
 import type { ViewEvent, ViewOptions } from './trackViews'
@@ -34,7 +33,6 @@ export function setupViewTest(
     configuration,
     locationChangeObservable,
     !configuration.trackViewsManually,
-    noopWebVitalTelemetryDebug,
     initialViewOptions
   )
   return {

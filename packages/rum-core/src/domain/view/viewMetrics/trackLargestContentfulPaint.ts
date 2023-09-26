@@ -12,7 +12,6 @@ import type { LifeCycle } from '../../lifeCycle'
 import type { RumConfiguration } from '../../configuration'
 import { RumPerformanceEntryType } from '../../../browser/performanceCollection'
 import type { RumLargestContentfulPaintTiming } from '../../../browser/performanceCollection'
-import type { WebVitalTelemetryDebug } from '../startWebVitalTelemetryDebug'
 import { getSelectorFromElement } from '../../getSelectorFromElement'
 import type { FirstHidden } from './trackFirstHidden'
 
@@ -33,7 +32,6 @@ export interface LargestContentfulPaint {
 export function trackLargestContentfulPaint(
   lifeCycle: LifeCycle,
   configuration: RumConfiguration,
-  webVitalTelemetryDebug: WebVitalTelemetryDebug,
   firstHidden: FirstHidden,
   eventTarget: Window,
   callback: (largestContentfulPaint: LargestContentfulPaint) => void
@@ -74,8 +72,6 @@ export function trackLargestContentfulPaint(
           value: lcpEntry.startTime,
           targetSelector: lcpTargetSelector,
         })
-
-        webVitalTelemetryDebug.addWebVitalTelemetryDebug('LCP', lcpEntry.element, lcpEntry.startTime)
       }
     }
   )

@@ -1,5 +1,4 @@
 import {
-  noop,
   type Duration,
   type RelativeTime,
   resetExperimentalFeatures,
@@ -27,13 +26,7 @@ describe('firstInputTimings', () => {
 
     setupBuilder = setup().beforeBuild(({ lifeCycle }) => {
       const firstHidden = trackFirstHidden(configuration)
-      const firstInputTimings = trackFirstInput(
-        lifeCycle,
-        configuration,
-        { addWebVitalTelemetryDebug: noop },
-        firstHidden,
-        fitCallback
-      )
+      const firstInputTimings = trackFirstInput(lifeCycle, configuration, firstHidden, fitCallback)
 
       return {
         stop() {

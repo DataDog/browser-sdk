@@ -3,7 +3,6 @@ import {
   DOM_EVENT,
   ExperimentalFeature,
   addExperimentalFeatures,
-  noop,
   resetExperimentalFeatures,
 } from '@datadog/browser-core'
 import { restorePageVisibility, setPageVisibility, createNewEvent } from '@datadog/browser-core/test'
@@ -31,7 +30,6 @@ describe('trackLargestContentfulPaint', () => {
       const largestContentfulPaint = trackLargestContentfulPaint(
         lifeCycle,
         configuration,
-        { addWebVitalTelemetryDebug: noop },
         firstHidden,
         eventTarget,
         lcpCallback

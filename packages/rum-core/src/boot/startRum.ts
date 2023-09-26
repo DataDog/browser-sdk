@@ -36,7 +36,6 @@ import { startCustomerDataTelemetry } from '../domain/startCustomerDataTelemetry
 import { startPageStateHistory } from '../domain/contexts/pageStateHistory'
 import type { CommonContext } from '../domain/contexts/commonContext'
 import { buildCommonContext } from '../domain/contexts/commonContext'
-import { startWebVitalTelemetryDebug } from '../domain/view/startWebVitalTelemetryDebug'
 import { startDisplayContext } from '../domain/contexts/displayContext'
 import type { RecorderApi } from './rumPublicApi'
 
@@ -132,7 +131,6 @@ export function startRum(
   startLongTaskCollection(lifeCycle, session)
   startResourceCollection(lifeCycle, configuration, session, pageStateHistory)
 
-  const webVitalTelemetryDebug = startWebVitalTelemetryDebug(configuration, telemetry, recorderApi, session)
   const {
     addTiming,
     startView,
@@ -146,7 +144,6 @@ export function startRum(
     featureFlagContexts,
     pageStateHistory,
     recorderApi,
-    webVitalTelemetryDebug,
     initialViewOptions
   )
   cleanupTasks.push(stopViewCollection)

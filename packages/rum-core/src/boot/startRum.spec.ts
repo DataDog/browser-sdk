@@ -17,13 +17,7 @@ import {
   deleteEventBridgeStub,
 } from '@datadog/browser-core/test'
 import type { RumSessionManagerMock, TestSetupBuilder } from '../../test'
-import {
-  createPerformanceEntry,
-  createRumSessionManagerMock,
-  noopRecorderApi,
-  noopWebVitalTelemetryDebug,
-  setup,
-} from '../../test'
+import { createPerformanceEntry, createRumSessionManagerMock, noopRecorderApi, setup } from '../../test'
 import { RumPerformanceEntryType } from '../browser/performanceCollection'
 import type { LifeCycle } from '../domain/lifeCycle'
 import { LifeCycleEventType } from '../domain/lifeCycle'
@@ -79,8 +73,7 @@ function startRumStub(
     locationChangeObservable,
     startFeatureFlagContexts(lifeCycle),
     pageStateHistory,
-    noopRecorderApi,
-    noopWebVitalTelemetryDebug
+    noopRecorderApi
   )
 
   startLongTaskCollection(lifeCycle, sessionManager)

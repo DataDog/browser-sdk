@@ -1,5 +1,4 @@
-import type { RelativeTime } from '@datadog/browser-core'
-import { Observable, canUseEventBridge, noop, runOnReadyState, relativeNow } from '@datadog/browser-core'
+import { canUseEventBridge, noop, runOnReadyState } from '@datadog/browser-core'
 import type {
   LifeCycle,
   ViewContexts,
@@ -19,7 +18,6 @@ import {
   getDeflateWorkerStatus,
 } from '../domain/deflate'
 
-import { getSerializedNodeId } from '../domain/record'
 import type { startRecording } from './startRecording'
 import { isBrowserSupported } from './isBrowserSupported'
 
@@ -55,8 +53,6 @@ export function makeRecorderApi(
   startRecordingImpl: StartRecording,
   createDeflateWorkerImpl?: CreateDeflateWorker
 ): RecorderApi {
-  const recorderStartObservable = new Observable<RelativeTime>()
-
   if (canUseEventBridge() || !isBrowserSupported()) {
     return {
       start: noop,
@@ -65,8 +61,6 @@ export function makeRecorderApi(
       onRumStart: noop,
       isRecording: () => false,
       getSessionReplayLink: () => undefined,
-      getSerializedNodeId: () => undefined,
-      recorderStartObservable,
     }
   }
 
@@ -85,8 +79,6 @@ export function makeRecorderApi(
     stop: () => stopStrategy(),
     getSessionReplayLink: (configuration, sessionManager, viewContexts) =>
       getSessionReplayLink(configuration, sessionManager, viewContexts, state.status !== RecorderStatus.Stopped),
-    recorderStartObservable,
-    getSerializedNodeId,
     onRumStart: (
       lifeCycle: LifeCycle,
       configuration: RumConfiguration,
@@ -147,7 +139,6 @@ export function makeRecorderApi(
             viewContexts,
             createDeflateEncoder(configuration, worker, DeflateEncoderStreamId.REPLAY)
           )
-          recorderStartObservable.notify(relativeNow())
           state = {
             status: RecorderStatus.Started,
             stopRecording,

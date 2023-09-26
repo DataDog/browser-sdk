@@ -6,7 +6,6 @@ import type { LifeCycle } from '../../lifeCycle'
 import { LifeCycleEventType } from '../../lifeCycle'
 import { RumPerformanceEntryType } from '../../../browser/performanceCollection'
 import type { RumFirstInputTiming } from '../../../browser/performanceCollection'
-import type { WebVitalTelemetryDebug } from '../startWebVitalTelemetryDebug'
 import { getSelectorFromElement } from '../../getSelectorFromElement'
 import type { FirstHidden } from './trackFirstHidden'
 
@@ -27,7 +26,6 @@ export interface FirstInput {
 export function trackFirstInput(
   lifeCycle: LifeCycle,
   configuration: RumConfiguration,
-  webVitalTelemetryDebug: WebVitalTelemetryDebug,
   firstHidden: FirstHidden,
   callback: (firstInput: FirstInput) => void
 ) {
@@ -58,8 +56,6 @@ export function trackFirstInput(
           time: firstInputEntry.startTime,
           targetSelector: firstInputTargetSelector,
         })
-
-        webVitalTelemetryDebug.addWebVitalTelemetryDebug('FID', firstInputEntry.target, firstInputEntry.startTime)
       }
     }
   )
