@@ -140,6 +140,7 @@ export function getCssRulesString(cssStyleSheet: CSSStyleSheet | undefined | nul
 
 function getCssRuleString(rule: CSSRule): string {
   // Safari does not escape attribute selectors containing : properly
+  // https://bugs.webkit.org/show_bug.cgi?id=184604
   if (isCSSStyleRule(rule) && rule.selectorText.includes(':')) {
     // This regex replaces [foo:bar] by [foo\\:bar]
     const escapeColon = /(\[[\w-]+[^\\])(:[^\]]+\])/g
