@@ -21,6 +21,7 @@ export function selectLocalStorageStrategy(): SessionStoreStrategyType | undefin
 
 export function initLocalStorageStrategy(): SessionStoreStrategy {
   return {
+    isLockEnabled: false,
     persistSession: persistInLocalStorage,
     retrieveSession: retrieveSessionFromLocalStorage,
     clearSession: clearSessionFromLocalStorage,
