@@ -16,6 +16,23 @@
 
 ---
 
+## v4.50.0
+
+- ✨ [RUM-1062] add a prefix to all console message displayed by the SDK ([#2432](https://github.com/DataDog/browser-sdk/pull/2432))
+- ✨ [extension] add columns to the event list ([#2372](https://github.com/DataDog/browser-sdk/pull/2372))
+- ✨ [extension] revamp event description and JSON viz ([#2371](https://github.com/DataDog/browser-sdk/pull/2371))
+- ✨ [extension] revamp filter UI ([#2370](https://github.com/DataDog/browser-sdk/pull/2370))
+- ✨ [extension] filter outdated events ([#2369](https://github.com/DataDog/browser-sdk/pull/2369))
+- 🐛 [RUM-1085] Remove lock usage from Local Storage strategy ([#2435](https://github.com/DataDog/browser-sdk/pull/2435))
+- ♻️ rename scroll fields ([#2439](https://github.com/DataDog/browser-sdk/pull/2439))
+- 🔇 Remove cwv attribution telemetry
+- ♻️ [RUM-1039] Harmonize view tests ([#2430](https://github.com/DataDog/browser-sdk/pull/2430))
+- Report scroll metrics when page is resized ([#2399](https://github.com/DataDog/browser-sdk/pull/2399))
+- ♻️ [RUM-253] adapt transport to send encoded data ([#2415](https://github.com/DataDog/browser-sdk/pull/2415))
+- 🔊 [RUM-253] customize deflate worker failure logs ([#2414](https://github.com/DataDog/browser-sdk/pull/2414))
+- ♻️ Use performance entry fixtures in tests ([#2428](https://github.com/DataDog/browser-sdk/pull/2428))
+- ⚗️ [RUM-1020] Collect core web vitals target selectors ([#2418](https://github.com/DataDog/browser-sdk/pull/2418))
+
 ## v4.49.0
 
 - ✨[RUM-265] Store contexts across pages ([#2378](https://github.com/DataDog/browser-sdk/pull/2378))
