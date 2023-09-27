@@ -133,7 +133,7 @@ describe('initInputObserver', () => {
     const host = document.createElement('div')
     host.attachShadow({ mode: 'open' })
     const event = createNewEvent('input', { target: host, composed: true })
-    event.composedPath = () => [input]
+    event.composedPath = () => [input, host, input.parentElement!, document.body]
     input.dispatchEvent(event)
   }
 })

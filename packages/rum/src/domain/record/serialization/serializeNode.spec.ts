@@ -134,7 +134,9 @@ describe('serializeNodeWithId', () => {
     })
 
     it('serializes attributes', () => {
-      const element = append('<div foo="bar" data-foo="data-bar" class="zog" style="width: 10px;"></div>')
+      const element = append<HTMLDivElement>('<div foo="bar" data-foo="data-bar"></div>')
+      element.className = 'zog'
+      element.style.width = '10px'
 
       expect(serializeElement(element)!.attributes).toEqual({
         foo: 'bar',
@@ -557,13 +559,9 @@ describe('serializeNodeWithId', () => {
     })
 
     describe('<link rel="stylesheet"> elements', () => {
-      let originalStyleSheets: StyleSheetList
-
-      beforeEach(() => {
-        originalStyleSheets = document.styleSheets
-      })
       afterEach(() => {
-        Object.defineProperty(document, 'styleSheets', { value: originalStyleSheets, configurable: true })
+        // styleSheets is part of the document prototype so we can safely delete it
+        delete (document as { styleSheets?: StyleSheetList }).styleSheets
       })
 
       it('does not inline external CSS if it cannot be fetched', () => {
