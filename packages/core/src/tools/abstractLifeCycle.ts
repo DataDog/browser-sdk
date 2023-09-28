@@ -20,7 +20,7 @@ export class AbstractLifeCycle<EventMap> {
   private callbacks: { [key in keyof EventMap]?: Array<(data: any) => void> } = {}
 
   notify<EventType extends EventTypesWithoutData<EventMap>>(eventType: EventType): void
-  notify<EventType extends keyof EventMap>(eventType: EventType, data: EventMap[EventType]): void
+  notify<EventType extends keyof EventMap>(eventType: EventType, data?: EventMap[EventType]): void
   notify(eventType: keyof EventMap, data?: unknown) {
     const eventCallbacks = this.callbacks[eventType]
     if (eventCallbacks) {

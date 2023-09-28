@@ -8,6 +8,7 @@ import type {
   TimeStamp,
   RawErrorCause,
   DefaultPrivacyLevel,
+  SessionStartPrecondition,
 } from '@datadog/browser-core'
 import type { PageState } from './domain/contexts/pageStateHistory'
 import type { RumSessionPlan } from './domain/rumSessionManager'
@@ -109,6 +110,7 @@ export interface RawRumViewEvent {
     in_foreground_periods?: InForegroundPeriod[]
   }
   session: {
+    start_precondition?: SessionStartPrecondition
     has_replay: true | undefined
     is_active: false | undefined
   }

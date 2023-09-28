@@ -1,4 +1,4 @@
-import type { Context, PageExitEvent, RawError, RelativeTime } from '@datadog/browser-core'
+import type { Context, PageExitEvent, RawError, RelativeTime, SessionStartPrecondition } from '@datadog/browser-core'
 import { AbstractLifeCycle } from '@datadog/browser-core'
 import type { RumPerformanceEntry } from '../browser/performanceCollection'
 import type { RumEventDomainContext } from '../domainContext.types'
@@ -77,7 +77,7 @@ export interface LifeCycleEventMap {
   [LifeCycleEventTypeAsConst.REQUEST_STARTED]: RequestStartEvent
   [LifeCycleEventTypeAsConst.REQUEST_COMPLETED]: RequestCompleteEvent
   [LifeCycleEventTypeAsConst.SESSION_EXPIRED]: void
-  [LifeCycleEventTypeAsConst.SESSION_RENEWED]: void
+  [LifeCycleEventTypeAsConst.SESSION_RENEWED]: SessionStartPrecondition | undefined
   [LifeCycleEventTypeAsConst.PAGE_EXITED]: PageExitEvent
   [LifeCycleEventTypeAsConst.RAW_RUM_EVENT_COLLECTED]: RawRumEventCollectedData
   [LifeCycleEventTypeAsConst.RUM_EVENT_COLLECTED]: RumEvent & Context

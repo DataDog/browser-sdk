@@ -11,11 +11,18 @@ import type { SessionState } from './sessionState'
 import { initLocalStorageStrategy, selectLocalStorageStrategy } from './storeStrategies/sessionInLocalStorage'
 import { processSessionStoreOperations } from './sessionStoreOperations'
 
+export const enum SessionStartPrecondition {
+  AppLaunch = 'app_launch',
+  InactivityTimeout = 'inactivity_timeout',
+  MaxDuration = 'max_duration',
+  ExplicitStop = 'explicit_stop',
+}
+
 export interface SessionStore {
   expandOrRenewSession: () => void
   expandSession: () => void
   getSession: () => SessionState
-  renewObservable: Observable<void>
+  renewObservable: Observable<SessionStartPrecondition | undefined>
   expireObservable: Observable<void>
   expire: () => void
   stop: () => void
@@ -53,7 +60,7 @@ export function startSessionStore<TrackingType extends string>(
   productKey: string,
   computeSessionState: (rawTrackingType?: string) => { trackingType: TrackingType; isTracked: boolean }
 ): SessionStore {
-  const renewObservable = new Observable<void>()
+  const renewObservable = new Observable<SessionStartPrecondition | undefined>()
   const expireObservable = new Observable<void>()
 
   const sessionStoreStrategy =
@@ -141,14 +148,28 @@ export function startSessionStore<TrackingType extends string>(
     return sessionCache.id !== sessionState.id || sessionCache[productKey] !== sessionState[productKey]
   }
 
+  function computeSessionStartPrecondition() {
+    if (isSessionTimedOut(sessionCache)) {
+      return SessionStartPrecondition.MaxDuration
+    } else if (isSessionExpired(sessionCache)) {
+      return SessionStartPrecondition.InactivityTimeout
+    }
+    return SessionStartPrecondition.ExplicitStop
+  }
+
+  let sessionStartPrecondition: SessionStartPrecondition | undefined
   function expireSessionInCache() {
+    const { isTracked } = computeSessionState(sessionCache[productKey])
+    if (isTracked) {
+      sessionStartPrecondition = computeSessionStartPrecondition()
+    }
     sessionCache = {}
     expireObservable.notify()
   }
 
   function renewSessionInCache(sessionState: SessionState) {
     sessionCache = sessionState
-    renewObservable.notify()
+    renewObservable.notify(sessionStartPrecondition)
   }
 
   function retrieveActiveSession(): SessionState {
@@ -163,9 +184,17 @@ export function startSessionStore<TrackingType extends string>(
     // created and expire can be undefined for versions which was not storing them
     // these checks could be removed when older versions will not be available/live anymore
     return (
-      (sessionState.created === undefined || dateNow() - Number(sessionState.created) < SESSION_TIME_OUT_DELAY) &&
-      (sessionState.expire === undefined || dateNow() < Number(sessionState.expire))
+      (sessionState.created === undefined || !isSessionTimedOut(sessionState)) &&
+      (sessionState.expire === undefined || !isSessionExpired(sessionState))
     )
+  }
+
+  function isSessionTimedOut(sessionState: SessionState) {
+    return dateNow() - Number(sessionState.created) >= SESSION_TIME_OUT_DELAY
+  }
+
+  function isSessionExpired(sessionState: SessionState) {
+    return dateNow() >= Number(sessionState.expire)
   }
 
   return {

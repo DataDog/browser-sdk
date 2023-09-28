@@ -11,7 +11,7 @@ import { startSessionManager, stopSessionManager, VISIBILITY_CHECK_DELAY } from 
 import { SESSION_EXPIRATION_DELAY, SESSION_TIME_OUT_DELAY } from './sessionConstants'
 import type { SessionStoreStrategyType } from './storeStrategies/sessionStoreStrategy'
 import { SESSION_STORE_KEY } from './storeStrategies/sessionStoreStrategy'
-import { STORAGE_POLL_DELAY } from './sessionStore'
+import { STORAGE_POLL_DELAY, SessionStartPrecondition } from './sessionStore'
 
 const enum FakeTrackingType {
   NOT_TRACKED = 'not-tracked',
@@ -293,6 +293,21 @@ describe('startSessionManager', () => {
       expect(sessionManager.findActiveSession()!.id).toBe('abcde')
       expect(getCookie(SESSION_STORE_KEY)).not.toContain('created=')
     })
+
+    it('after a session timeout, the renewed session precondition should be "max_duration"', () => {
+      const sessionManager = startSessionManager(configuration, FIRST_PRODUCT_KEY, () => TRACKED_SESSION_STATE)
+      const renewSessionSpy = jasmine.createSpy()
+      sessionManager.renewObservable.subscribe(renewSessionSpy)
+
+      expect(sessionManager.findActiveSession()).toBeDefined()
+      clock.setDate(new Date(Date.now() + SESSION_TIME_OUT_DELAY))
+      clock.tick(STORAGE_POLL_DELAY)
+
+      expect(sessionManager.findActiveSession()).toBeUndefined()
+      document.dispatchEvent(createNewEvent(DOM_EVENT.CLICK))
+
+      expect(renewSessionSpy).toHaveBeenCalledOnceWith(SessionStartPrecondition.MaxDuration)
+    })
   })
 
   describe('automatic session expiration', () => {
@@ -395,6 +410,19 @@ describe('startSessionManager', () => {
       expectTrackingTypeToNotBeDefined(sessionManager, FIRST_PRODUCT_KEY)
       expect(expireSessionSpy).toHaveBeenCalled()
     })
+
+    it('after a session expired, the renewed session precondition should be "inactivity_timeout"', () => {
+      const sessionManager = startSessionManager(configuration, FIRST_PRODUCT_KEY, () => TRACKED_SESSION_STATE)
+      const renewSessionSpy = jasmine.createSpy()
+      sessionManager.renewObservable.subscribe(renewSessionSpy)
+
+      expect(sessionManager.findActiveSession()).toBeDefined()
+      clock.tick(SESSION_EXPIRATION_DELAY)
+      expect(sessionManager.findActiveSession()).toBeUndefined()
+      document.dispatchEvent(createNewEvent(DOM_EVENT.CLICK))
+
+      expect(renewSessionSpy).toHaveBeenCalledOnceWith(SessionStartPrecondition.InactivityTimeout)
+    })
   })
 
   describe('manual session expiration', () => {
@@ -442,6 +470,19 @@ describe('startSessionManager', () => {
       document.dispatchEvent(createNewEvent(DOM_EVENT.CLICK))
 
       expectSessionIdToBeDefined(sessionManager)
+    })
+
+    it('after a manual expiration, the renewed session precondition should be "explicit_stop"', () => {
+      const sessionManager = startSessionManager(configuration, FIRST_PRODUCT_KEY, () => TRACKED_SESSION_STATE)
+      const renewSessionSpy = jasmine.createSpy()
+      sessionManager.renewObservable.subscribe(renewSessionSpy)
+      clock.tick(STORAGE_POLL_DELAY)
+
+      sessionManager.expire()
+
+      document.dispatchEvent(createNewEvent(DOM_EVENT.CLICK))
+
+      expect(renewSessionSpy).toHaveBeenCalledOnceWith(SessionStartPrecondition.ExplicitStop)
     })
   })
 

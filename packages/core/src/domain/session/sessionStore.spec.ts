@@ -2,7 +2,12 @@ import type { Clock } from '../../../test'
 import { mockClock } from '../../../test'
 import { getCookie, setCookie } from '../../browser/cookie'
 import type { SessionStore } from './sessionStore'
-import { STORAGE_POLL_DELAY, startSessionStore, selectSessionStoreStrategyType } from './sessionStore'
+import {
+  SessionStartPrecondition,
+  STORAGE_POLL_DELAY,
+  startSessionStore,
+  selectSessionStoreStrategyType,
+} from './sessionStore'
 import { SESSION_EXPIRATION_DELAY, SESSION_TIME_OUT_DELAY } from './sessionConstants'
 import { SESSION_STORE_KEY } from './storeStrategies/sessionStoreStrategy'
 
@@ -15,6 +20,7 @@ const DURATION = 123456
 const PRODUCT_KEY = 'product'
 const FIRST_ID = 'first'
 const SECOND_ID = 'second'
+const THIRD_ID = 'third'
 
 function setSessionInStore(trackingType: FakeTrackingType = FakeTrackingType.TRACKED, id?: string, expire?: number) {
   setCookie(
@@ -42,6 +48,13 @@ function getStoreExpiration() {
 
 function resetSessionInStore() {
   setCookie(SESSION_STORE_KEY, '', DURATION)
+}
+
+function computeFakeSessionState(rawTrackingType: string = FakeTrackingType.TRACKED) {
+  return {
+    isTracked: (rawTrackingType as FakeTrackingType) === FakeTrackingType.TRACKED,
+    trackingType: rawTrackingType as FakeTrackingType,
+  }
 }
 
 describe('session store', () => {
@@ -85,7 +98,7 @@ describe('session store', () => {
 
   describe('session lifecyle mechanism', () => {
     let expireSpy: () => void
-    let renewSpy: () => void
+    let renewSpy: (sessionStartPrecondition: SessionStartPrecondition | undefined) => void
     let sessionStoreManager: SessionStore
     let clock: Clock
 
@@ -93,10 +106,7 @@ describe('session store', () => {
       computeSessionState: (rawTrackingType?: string) => {
         trackingType: FakeTrackingType
         isTracked: boolean
-      } = () => ({
-        isTracked: true,
-        trackingType: FakeTrackingType.TRACKED,
-      })
+      } = computeFakeSessionState
     ) {
       const sessionStoreStrategyType = selectSessionStoreStrategyType({
         clientToken: 'abc',
@@ -394,5 +404,111 @@ describe('session store', () => {
         expect(expireSpy).toHaveBeenCalled()
       })
     })
+  })
+})
+
+describe('session start_precondition', () => {
+  let expireSpy: () => void
+  let renewSpy: (sessionStartPrecondition: SessionStartPrecondition | undefined) => void
+  let sessionStoreManager: SessionStore
+  let clock: Clock
+
+  function setupSessionStore() {
+    const sessionStoreStrategyType = selectSessionStoreStrategyType({
+      clientToken: 'abc',
+      allowFallbackToLocalStorage: false,
+    })
+    if (sessionStoreStrategyType?.type !== 'Cookie') {
+      fail('Unable to initialize cookie storage')
+      return
+    }
+    sessionStoreManager = startSessionStore(sessionStoreStrategyType, PRODUCT_KEY, computeFakeSessionState)
+    sessionStoreManager.expireObservable.subscribe(expireSpy)
+    sessionStoreManager.renewObservable.subscribe(renewSpy)
+  }
+
+  beforeEach(() => {
+    expireSpy = jasmine.createSpy('expire session')
+    renewSpy = jasmine.createSpy('renew session')
+    clock = mockClock()
+  })
+
+  afterEach(() => {
+    resetSessionInStore()
+    clock.cleanup()
+    sessionStoreManager.stop()
+  })
+
+  it('when no session in cache, different session in store tracked, renewed session should no have a precondition', () => {
+    setupSessionStore()
+    setSessionInStore(FakeTrackingType.TRACKED, FIRST_ID)
+
+    sessionStoreManager.expandOrRenewSession()
+
+    expect(expireSpy).not.toHaveBeenCalled()
+    expect(renewSpy).toHaveBeenCalledOnceWith(undefined)
+  })
+
+  it('when session in cache not tracked, different session in store tracked, renewed session should not have a precondition', () => {
+    setSessionInStore(FakeTrackingType.NOT_TRACKED, FIRST_ID)
+    setupSessionStore()
+    setSessionInStore(FakeTrackingType.TRACKED, SECOND_ID)
+
+    sessionStoreManager.expandOrRenewSession()
+
+    expect(expireSpy).toHaveBeenCalled()
+    expect(renewSpy).toHaveBeenCalledOnceWith(undefined)
+  })
+
+  it('when session in cache expired, different session in store tracked, renewed session should have "inactivity_timeout" precondition', () => {
+    setSessionInStore(FakeTrackingType.TRACKED, FIRST_ID)
+    setupSessionStore()
+    clock.setDate(new Date(Date.now() + SESSION_EXPIRATION_DELAY))
+    setSessionInStore(FakeTrackingType.TRACKED, SECOND_ID)
+
+    sessionStoreManager.expandOrRenewSession()
+
+    expect(expireSpy).toHaveBeenCalled()
+    expect(renewSpy).toHaveBeenCalledOnceWith(SessionStartPrecondition.InactivityTimeout)
+  })
+
+  it('when session in cache timed out, different session in store tracked, renewed session should have "max_duration" precondition', () => {
+    setSessionInStore(FakeTrackingType.TRACKED, FIRST_ID)
+    setupSessionStore()
+    clock.setDate(new Date(Date.now() + SESSION_TIME_OUT_DELAY))
+    setSessionInStore(FakeTrackingType.TRACKED, SECOND_ID)
+
+    sessionStoreManager.expandOrRenewSession()
+
+    expect(expireSpy).toHaveBeenCalled()
+    expect(renewSpy).toHaveBeenCalledOnceWith(SessionStartPrecondition.MaxDuration)
+  })
+
+  it('when session in cache active, different session in store tracked, renewed session should have "explicit_stop" precondition', () => {
+    setSessionInStore(FakeTrackingType.TRACKED, FIRST_ID)
+    setupSessionStore()
+    setSessionInStore(FakeTrackingType.TRACKED, THIRD_ID)
+
+    sessionStoreManager.expandOrRenewSession()
+
+    expect(expireSpy).toHaveBeenCalled()
+    expect(renewSpy).toHaveBeenCalledOnceWith(SessionStartPrecondition.ExplicitStop)
+  })
+
+  it('renewed session should have the start_precondition of the last tracked session', () => {
+    setSessionInStore(FakeTrackingType.TRACKED, FIRST_ID)
+    setupSessionStore()
+    clock.setDate(new Date(Date.now() + SESSION_EXPIRATION_DELAY))
+    setSessionInStore(FakeTrackingType.NOT_TRACKED, SECOND_ID)
+
+    sessionStoreManager.expandOrRenewSession()
+
+    setSessionInStore(FakeTrackingType.TRACKED, THIRD_ID)
+
+    clock.tick(STORAGE_POLL_DELAY) // needed because expandOrRenewSession() is throttled
+    sessionStoreManager.expandOrRenewSession()
+
+    expect(expireSpy).toHaveBeenCalled()
+    expect(renewSpy).toHaveBeenCalledOnceWith(SessionStartPrecondition.InactivityTimeout)
   })
 })

@@ -1,4 +1,11 @@
-import type { Duration, ClocksState, TimeStamp, Subscription, RelativeTime } from '@datadog/browser-core'
+import type {
+  Duration,
+  ClocksState,
+  TimeStamp,
+  Subscription,
+  RelativeTime,
+  SessionStartPrecondition,
+} from '@datadog/browser-core'
 import {
   noop,
   PageExitReason,
@@ -48,6 +55,7 @@ export interface ViewEvent {
   duration: Duration
   isActive: boolean
   sessionIsActive: boolean
+  sessionStartPrecondition?: SessionStartPrecondition
   loadingType: ViewLoadingType
 }
 
@@ -100,7 +108,12 @@ export function trackViews(
     locationChangeSubscription = renewViewOnLocationChange(locationChangeObservable)
   }
 
-  function startNewView(loadingType: ViewLoadingType, startClocks?: ClocksState, viewOptions?: ViewOptions) {
+  function startNewView(
+    loadingType: ViewLoadingType,
+    startClocks?: ClocksState,
+    viewOptions?: ViewOptions,
+    sessionStartPrecondition?: SessionStartPrecondition
+  ) {
     const newlyCreatedView = newView(
       lifeCycle,
       domMutationObservable,
@@ -109,7 +122,8 @@ export function trackViews(
       loadingType,
       webVitalTelemetryDebug,
       startClocks,
-      viewOptions
+      viewOptions,
+      sessionStartPrecondition
     )
     activeViews.add(newlyCreatedView)
     newlyCreatedView.stopObservable.subscribe(() => {
@@ -119,13 +133,18 @@ export function trackViews(
   }
 
   function startViewLifeCycle() {
-    lifeCycle.subscribe(LifeCycleEventType.SESSION_RENEWED, () => {
+    lifeCycle.subscribe(LifeCycleEventType.SESSION_RENEWED, (sessionStartPrecondition) => {
       // Renew view on session renewal
-      currentView = startNewView(ViewLoadingType.ROUTE_CHANGE, undefined, {
-        name: currentView.name,
-        service: currentView.service,
-        version: currentView.version,
-      })
+      currentView = startNewView(
+        ViewLoadingType.ROUTE_CHANGE,
+        undefined,
+        {
+          name: currentView.name,
+          service: currentView.service,
+          version: currentView.version,
+        },
+        sessionStartPrecondition
+      )
     })
 
     lifeCycle.subscribe(LifeCycleEventType.SESSION_EXPIRED, () => {
@@ -173,7 +192,8 @@ function newView(
   loadingType: ViewLoadingType,
   webVitalTelemetryDebug: WebVitalTelemetryDebug,
   startClocks: ClocksState = clocksNow(),
-  viewOptions?: ViewOptions
+  viewOptions?: ViewOptions,
+  sessionStartPrecondition?: SessionStartPrecondition
 ) {
   // Setup initial values
   const id = generateUUID()
@@ -258,6 +278,7 @@ function newView(
       isActive: endClocks === undefined,
       sessionIsActive,
       eventCounts,
+      sessionStartPrecondition,
     })
   }
 

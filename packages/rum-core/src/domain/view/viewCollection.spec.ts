@@ -162,6 +162,7 @@ describe('viewCollection', () => {
       session: {
         has_replay: undefined,
         is_active: undefined,
+        start_precondition: undefined,
       },
       feature_flags: undefined,
       display: {

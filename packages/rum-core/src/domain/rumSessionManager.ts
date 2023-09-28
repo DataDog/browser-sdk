@@ -43,8 +43,8 @@ export function startRumSessionManager(configuration: RumConfiguration, lifeCycl
     lifeCycle.notify(LifeCycleEventType.SESSION_EXPIRED)
   })
 
-  sessionManager.renewObservable.subscribe(() => {
-    lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED)
+  sessionManager.renewObservable.subscribe((sessionStartPrecondition) => {
+    lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED, sessionStartPrecondition)
   })
 
   return {

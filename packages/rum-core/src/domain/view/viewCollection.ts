@@ -123,6 +123,7 @@ function processViewUpdate(
     session: {
       has_replay: replayStats ? true : undefined,
       is_active: view.sessionIsActive ? undefined : false,
+      start_precondition: view.sessionStartPrecondition,
     },
     privacy: {
       replay_level: configuration.defaultPrivacyLevel,

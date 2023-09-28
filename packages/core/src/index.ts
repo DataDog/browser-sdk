@@ -47,6 +47,7 @@ export {
   // Exposed for tests
   stopSessionManager,
 } from './domain/session/sessionManager'
+export { SessionStartPrecondition } from './domain/session/sessionStore'
 export {
   SESSION_TIME_OUT_DELAY, // Exposed for tests
 } from './domain/session/sessionConstants'

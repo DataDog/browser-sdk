@@ -7,11 +7,12 @@ import { DOM_EVENT, addEventListener, addEventListeners } from '../../browser/ad
 import { clearInterval, setInterval } from '../../tools/timer'
 import type { Configuration } from '../configuration'
 import { SESSION_TIME_OUT_DELAY } from './sessionConstants'
+import type { SessionStartPrecondition } from './sessionStore'
 import { startSessionStore } from './sessionStore'
 
 export interface SessionManager<TrackingType extends string> {
   findActiveSession: (startTime?: RelativeTime) => SessionContext<TrackingType> | undefined
-  renewObservable: Observable<void>
+  renewObservable: Observable<SessionStartPrecondition | undefined>
   expireObservable: Observable<void>
   expire: () => void
 }
