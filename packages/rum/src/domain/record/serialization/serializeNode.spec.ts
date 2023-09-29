@@ -18,7 +18,7 @@ import {
 } from '../../../constants'
 import type { ElementNode, SerializedNodeWithId } from '../../../types'
 import { NodeType } from '../../../types'
-import { append } from '../../../../../rum-core/test'
+import { appendElement } from '../../../../../rum-core/test'
 import type { ElementsScrollPositions } from '../elementsScrollPositions'
 import { createElementsScrollPositions } from '../elementsScrollPositions'
 import type { ShadowRootCallBack, ShadowRootsController } from '../shadowRootsController'
@@ -134,7 +134,7 @@ describe('serializeNodeWithId', () => {
     })
 
     it('serializes attributes', () => {
-      const element = append<HTMLDivElement>('<div foo="bar" data-foo="data-bar"></div>')
+      const element = appendElement('<div foo="bar" data-foo="data-bar"></div>')
       element.className = 'zog'
       element.style.width = '10px'
 
@@ -147,11 +147,11 @@ describe('serializeNodeWithId', () => {
     })
 
     describe('rr scroll attributes', () => {
-      let element: HTMLDivElement
+      let element: HTMLElement
       let elementsScrollPositions: ElementsScrollPositions
 
       beforeEach(() => {
-        element = append(
+        element = appendElement(
           '<div style="width: 100px; height: 100px; overflow: scroll"><div style="width: 200px; height: 200px"></div></div>'
         )
         element.scrollBy(10, 20)
@@ -517,7 +517,7 @@ describe('serializeNodeWithId', () => {
 
     describe('<style> elements', () => {
       it('serializes a node with dynamically edited CSS rules', () => {
-        const styleNode = append<HTMLStyleElement>('<style></style>', document.head)
+        const styleNode = appendElement('<style></style>', document.head) as HTMLStyleElement
         styleNode.sheet!.insertRule('body { width: 100%; }')
 
         expect(serializeElement(styleNode)).toEqual({
@@ -531,7 +531,7 @@ describe('serializeNodeWithId', () => {
       })
 
       it('serializes a node with CSS rules specified as inner text', () => {
-        const styleNode = append<HTMLStyleElement>('<style>body { width: 100%; }</style>', document.head)
+        const styleNode = appendElement('<style>body { width: 100%; }</style>', document.head) as HTMLStyleElement
 
         expect(serializeElement(styleNode)).toEqual({
           type: NodeType.Element,
@@ -544,7 +544,7 @@ describe('serializeNodeWithId', () => {
       })
 
       it('serializes a node with CSS rules specified as inner text then dynamically edited', () => {
-        const styleNode = append<HTMLStyleElement>('<style>body { width: 100%; }</style>', document.head)
+        const styleNode = appendElement('<style>body { width: 100%; }</style>', document.head) as HTMLStyleElement
         styleNode.sheet!.insertRule('body { color: red; }')
 
         expect(serializeElement(styleNode)).toEqual({
@@ -565,7 +565,10 @@ describe('serializeNodeWithId', () => {
       })
 
       it('does not inline external CSS if it cannot be fetched', () => {
-        const linkNode = append("<link rel='stylesheet' href='https://datadoghq.com/some/style.css' />", document.head)
+        const linkNode = appendElement(
+          "<link rel='stylesheet' href='https://datadoghq.com/some/style.css' />",
+          document.head
+        )
         expect(serializeNodeWithId(linkNode, DEFAULT_OPTIONS)).toEqual({
           type: NodeType.Element,
           tagName: 'link',
@@ -577,7 +580,10 @@ describe('serializeNodeWithId', () => {
       })
 
       it('inlines external CSS it can be fetched', () => {
-        const linkNode = append("<link rel='stylesheet' href='https://datadoghq.com/some/style.css' />", document.head)
+        const linkNode = appendElement(
+          "<link rel='stylesheet' href='https://datadoghq.com/some/style.css' />",
+          document.head
+        )
         Object.defineProperty(document, 'styleSheets', {
           value: [
             {
@@ -604,7 +610,10 @@ describe('serializeNodeWithId', () => {
 
       it('does not inline external CSS when DISABLE_REPLAY_INLINE_CSS is enabled', () => {
         addExperimentalFeatures([ExperimentalFeature.DISABLE_REPLAY_INLINE_CSS])
-        const linkNode = append("<link rel='stylesheet' href='https://datadoghq.com/some/style.css' />", document.head)
+        const linkNode = appendElement(
+          "<link rel='stylesheet' href='https://datadoghq.com/some/style.css' />",
+          document.head
+        )
         Object.defineProperty(document, 'styleSheets', {
           value: [
             {
@@ -619,7 +628,10 @@ describe('serializeNodeWithId', () => {
       })
 
       it('does not inline external CSS if the style sheet is behind CORS', () => {
-        const linkNode = append("<link rel='stylesheet' href='https://datadoghq.com/some/style.css' />", document.head)
+        const linkNode = appendElement(
+          "<link rel='stylesheet' href='https://datadoghq.com/some/style.css' />",
+          document.head
+        )
         class FakeCSSStyleSheet {
           get cssRules() {
             return []

@@ -1,4 +1,4 @@
-import { append } from '../../test'
+import { appendElement } from '../../test'
 import { getSelectorFromElement, supportScopeSelector } from './getSelectorFromElement'
 
 describe('getSelectorFromElement', () => {
@@ -35,7 +35,7 @@ describe('getSelectorFromElement', () => {
     })
 
     it('should not use the class selector for body elements', () => {
-      const element = append('<div></div>')
+      const element = appendElement('<div></div>')
       document.body.classList.add('foo')
       expect(getSelector(element)).toBe('BODY>DIV')
     })
@@ -159,7 +159,7 @@ describe('getSelectorFromElement', () => {
 
   function getSelector(htmlOrElement: string | Element, actionNameAttribute?: string): string {
     return getSelectorFromElement(
-      typeof htmlOrElement === 'string' ? append(htmlOrElement) : htmlOrElement,
+      typeof htmlOrElement === 'string' ? appendElement(htmlOrElement) : htmlOrElement,
       actionNameAttribute
     )
   }

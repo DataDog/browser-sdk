@@ -2,7 +2,7 @@ import { DefaultPrivacyLevel, isIE } from '@datadog/browser-core'
 import type { Clock } from '@datadog/browser-core/test'
 import { createNewEvent, mockClock } from '@datadog/browser-core/test'
 import type { RumConfiguration } from '@datadog/browser-rum-core'
-import { append } from '../../../../../rum-core/test'
+import { appendElement } from '../../../../../rum-core/test'
 import { PRIVACY_ATTR_NAME, PRIVACY_ATTR_VALUE_MASK_USER_INPUT } from '../../../constants'
 import { serializeDocument, SerializationContextStatus } from '../serialization'
 import { createElementsScrollPositions } from '../elementsScrollPositions'
@@ -23,7 +23,7 @@ describe('initInputObserver', () => {
     }
     configuration = { defaultPrivacyLevel: DefaultPrivacyLevel.ALLOW } as RumConfiguration
     inputCallbackSpy = jasmine.createSpy()
-    input = append('<div><input target /></div>')
+    input = appendElement('<div><input target /></div>') as HTMLInputElement
 
     serializeDocument(document, DEFAULT_CONFIGURATION, {
       shadowRootsController: DEFAULT_SHADOW_ROOT_CONTROLLER,

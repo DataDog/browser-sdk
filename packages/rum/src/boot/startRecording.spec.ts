@@ -5,7 +5,7 @@ import { LifeCycleEventType } from '@datadog/browser-rum-core'
 import type { Clock } from '@datadog/browser-core/test'
 import { collectAsyncCalls, createNewEvent, mockClock } from '@datadog/browser-core/test'
 import type { RumSessionManagerMock, TestSetupBuilder } from '../../../rum-core/test'
-import { append, createRumSessionManagerMock, setup } from '../../../rum-core/test'
+import { appendElement, createRumSessionManagerMock, setup } from '../../../rum-core/test'
 
 import { recordsPerFullSnapshot, readReplayPayload } from '../../test'
 import { setSegmentBytesLimit } from '../domain/segmentCollection'
@@ -41,7 +41,7 @@ describe('startRecording', () => {
     sessionManager = createRumSessionManagerMock()
     viewId = 'view-id'
 
-    textField = append('<input />')
+    textField = appendElement('<input />') as HTMLInputElement
 
     const worker = startDeflateWorker(configuration, 'Session Replay', noop)
 
@@ -208,7 +208,7 @@ describe('startRecording', () => {
   it('flushes pending mutations before ending the view', async () => {
     const { lifeCycle } = setupBuilder.build()
 
-    append('<hr/>')
+    appendElement('<hr/>')
     changeView(lifeCycle)
     flushSegment(lifeCycle)
 

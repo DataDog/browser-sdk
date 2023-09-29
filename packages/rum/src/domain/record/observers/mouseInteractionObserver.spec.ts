@@ -1,7 +1,7 @@
 import { DOM_EVENT, DefaultPrivacyLevel, isIE } from '@datadog/browser-core'
 import { createNewEvent } from '@datadog/browser-core/test'
 import type { RumConfiguration } from '@datadog/browser-rum-core'
-import { append } from '../../../../../rum-core/test'
+import { appendElement } from '../../../../../rum-core/test'
 import { IncrementalSource, MouseInteractionType, RecordType } from '../../../types'
 import { serializeDocument, SerializationContextStatus } from '../serialization'
 import { createElementsScrollPositions } from '../elementsScrollPositions'
@@ -24,7 +24,7 @@ describe('initMouseInteractionObserver', () => {
     }
 
     configuration = { defaultPrivacyLevel: DefaultPrivacyLevel.ALLOW } as RumConfiguration
-    a = append('<a tabindex="0"></a>') // tabindex 0 makes the element focusable
+    a = appendElement('<a tabindex="0"></a>') as HTMLAnchorElement // tabindex 0 makes the element focusable
     a.dispatchEvent(createNewEvent(DOM_EVENT.FOCUS))
 
     serializeDocument(document, DEFAULT_CONFIGURATION, {

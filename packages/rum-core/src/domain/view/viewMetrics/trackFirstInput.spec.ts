@@ -8,7 +8,7 @@ import {
 } from '@datadog/browser-core'
 import { restorePageVisibility, setPageVisibility } from '@datadog/browser-core/test'
 import type { TestSetupBuilder } from '../../../../test'
-import { append, createPerformanceEntry, setup } from '../../../../test'
+import { appendElement, createPerformanceEntry, setup } from '../../../../test'
 import { LifeCycleEventType } from '../../lifeCycle'
 import type { RumConfiguration } from '../../configuration'
 import { RumPerformanceEntryType } from '../../../browser/performanceCollection'
@@ -70,7 +70,7 @@ describe('firstInputTimings', () => {
 
     lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [
       createPerformanceEntry(RumPerformanceEntryType.FIRST_INPUT, {
-        target: append('<button id="fid-target-element"></button>'),
+        target: appendElement('<button id="fid-target-element"></button>'),
       }),
     ])
 
@@ -87,7 +87,7 @@ describe('firstInputTimings', () => {
 
     lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [
       createPerformanceEntry(RumPerformanceEntryType.FIRST_INPUT, {
-        target: append('text'),
+        target: appendElement('text'),
       }),
     ])
 

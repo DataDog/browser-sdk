@@ -3,7 +3,7 @@ import type { Clock } from '@datadog/browser-core/test'
 import { mockClock } from '@datadog/browser-core/test'
 import { FrustrationType } from '../../rawRumEvent.types'
 import type { FakeClick } from '../../../test'
-import { append, createFakeClick } from '../../../test'
+import { appendElement, createFakeClick } from '../../../test'
 import { computeFrustration, isRage, isDead } from './computeFrustration'
 
 describe('computeFrustration', () => {
@@ -160,7 +160,7 @@ describe('isDead', () => {
         isDead(
           createFakeClick({
             hasPageActivity: false,
-            event: { target: append<Element>(element) },
+            event: { target: appendElement(element) },
           })
         )
       ).toBe(expected)
