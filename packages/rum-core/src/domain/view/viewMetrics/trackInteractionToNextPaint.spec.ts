@@ -1,7 +1,7 @@
 import type { Duration } from '@datadog/browser-core'
 import { ExperimentalFeature, addExperimentalFeatures, resetExperimentalFeatures } from '@datadog/browser-core'
 import type { TestSetupBuilder } from '../../../../test'
-import { appendElement, createPerformanceEntry, setup } from '../../../../test'
+import { appendElement, appendText, createPerformanceEntry, setup } from '../../../../test'
 import { RumPerformanceEntryType } from '../../../browser/performanceCollection'
 import type {
   BrowserWindow,
@@ -140,7 +140,7 @@ describe('trackInteractionToNextPaint', () => {
 
       newInteraction(lifeCycle, {
         interactionId: 2,
-        target: appendElement('text'),
+        target: appendText('text'),
       })
 
       expect(getInteractionToNextPaint()?.targetSelector).toEqual(undefined)

@@ -788,7 +788,7 @@ describe('startMutationCollection', () => {
       })
 
       it('when adding a known child node', () => {
-        const textNode = appendElement('function foo() {}', sandbox)
+        const textNode = appendText('function foo() {}', sandbox)
         const serializedDocument = serializeDocumentWithDefaults()
 
         const { getLatestMutationPayload } = startMutationCollection()

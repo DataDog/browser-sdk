@@ -6,7 +6,7 @@ export function appendText(text: string, container: Element | ShadowRoot = docum
   container.appendChild(textNode)
 
   registerCleanupTask(() => {
-    container.removeChild(textNode)
+    textNode.parentElement?.removeChild(textNode)
   })
 
   return textNode
@@ -16,7 +16,7 @@ export function appendElement(html: string, container: Element | ShadowRoot = do
   const tmp = document.createElement('div')
   tmp.innerHTML = html.trim()
 
-  const target = tmp.querySelector('[target]') || tmp.childNodes[0]
+  const target = tmp.querySelector('[target]') || tmp.children[0]
   const nodes = arrayFrom(tmp.childNodes)
 
   nodes.forEach((node) => container.appendChild(node))
