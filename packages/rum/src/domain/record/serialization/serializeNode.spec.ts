@@ -816,7 +816,9 @@ describe('serializeDocumentNode handles', function testAllowDomTree() {
 
   describe('with dynamic stylesheet', () => {
     afterEach(() => {
-      document.adoptedStyleSheets = []
+      if (isAdoptedStyleSheetsSupported()) {
+        document.adoptedStyleSheets = []
+      }
     })
 
     it('serializes a document with adoptedStyleSheets', () => {
