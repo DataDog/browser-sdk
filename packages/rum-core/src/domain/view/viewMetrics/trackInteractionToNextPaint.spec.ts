@@ -48,124 +48,105 @@ describe('trackInteractionToNextPaint', () => {
   })
 
   afterEach(() => {
+    resetExperimentalFeatures()
     interactionCountStub.clear()
   })
 
-  describe('if feature flag enabled', () => {
-    beforeEach(() => {
-      addExperimentalFeatures([ExperimentalFeature.INTERACTION_TO_NEXT_PAINT])
-    })
+  it('should return undefined when there are no interactions', () => {
+    setupBuilder.build()
+    expect(getInteractionToNextPaint()).toEqual(undefined)
+  })
 
-    afterEach(() => {
-      resetExperimentalFeatures()
+  it('should ignore entries without interactionId', () => {
+    const { lifeCycle } = setupBuilder.build()
+    createPerformanceEntry(RumPerformanceEntryType.EVENT)
+    newInteraction(lifeCycle, {
+      interactionId: undefined,
     })
+    expect(getInteractionToNextPaint()).toEqual(undefined)
+  })
 
-    it('should return undefined when there are no interactions', () => {
-      setupBuilder.build()
-      expect(getInteractionToNextPaint()).toEqual(undefined)
-    })
-
-    it('should ignore entries without interactionId', () => {
-      const { lifeCycle } = setupBuilder.build()
-      createPerformanceEntry(RumPerformanceEntryType.EVENT)
+  it('should return the p98 worst interaction', () => {
+    const { lifeCycle } = setupBuilder.build()
+    for (let index = 1; index <= 100; index++) {
       newInteraction(lifeCycle, {
-        interactionId: undefined,
+        duration: index as Duration,
+        interactionId: index,
       })
-      expect(getInteractionToNextPaint()).toEqual(undefined)
-    })
-
-    it('should return the p98 worst interaction', () => {
-      const { lifeCycle } = setupBuilder.build()
-      for (let index = 1; index <= 100; index++) {
-        newInteraction(lifeCycle, {
-          duration: index as Duration,
-          interactionId: index,
-        })
-      }
-      expect(getInteractionToNextPaint()).toEqual({
-        value: 98 as Duration,
-        targetSelector: undefined,
-      })
-    })
-
-    it('should return 0 when an interaction happened without generating a performance event (interaction duration below 40ms)', () => {
-      setupBuilder.build()
-      interactionCountStub.setInteractionCount(1 as Duration) // assumes an interaction happened but no PERFORMANCE_ENTRIES_COLLECTED have been triggered
-      expect(getInteractionToNextPaint()).toEqual({ value: 0 as Duration })
-    })
-
-    it('should take first-input entry into account', () => {
-      const { lifeCycle } = setupBuilder.build()
-      newInteraction(lifeCycle, {
-        interactionId: 1,
-        entryType: RumPerformanceEntryType.FIRST_INPUT,
-      })
-      expect(getInteractionToNextPaint()).toEqual({
-        value: 40 as Duration,
-        targetSelector: undefined,
-      })
-    })
-
-    it('should replace the entry in the list of worst interactions when an entry with the same interactionId exist', () => {
-      const { lifeCycle } = setupBuilder.build()
-
-      for (let index = 1; index <= 100; index++) {
-        newInteraction(lifeCycle, {
-          duration: index as Duration,
-          interactionId: 1,
-        })
-      }
-      // the p98 return 100 which shows that the entry has been updated
-      expect(getInteractionToNextPaint()).toEqual({
-        value: 100 as Duration,
-        targetSelector: undefined,
-      })
-    })
-
-    it('should return the target selector when FF web_vital_attribution is enabled', () => {
-      addExperimentalFeatures([ExperimentalFeature.WEB_VITALS_ATTRIBUTION])
-      const { lifeCycle } = setupBuilder.build()
-
-      newInteraction(lifeCycle, {
-        interactionId: 2,
-        target: appendElement('<button id="inp-target-element"></button>'),
-      })
-
-      expect(getInteractionToNextPaint()?.targetSelector).toEqual('#inp-target-element')
-    })
-
-    it("should not return the target selector if it's not a DOM element when FF web_vital_attribution is enabled", () => {
-      addExperimentalFeatures([ExperimentalFeature.WEB_VITALS_ATTRIBUTION])
-      const { lifeCycle } = setupBuilder.build()
-
-      newInteraction(lifeCycle, {
-        interactionId: 2,
-        target: appendText('text'),
-      })
-
-      expect(getInteractionToNextPaint()?.targetSelector).toEqual(undefined)
-    })
-
-    it('should not return the target selector when FF web_vital_attribution is disabled', () => {
-      const { lifeCycle } = setupBuilder.build()
-
-      newInteraction(lifeCycle, {
-        interactionId: 2,
-        target: appendElement('<button id="inp-target-element"></button>'),
-      })
-
-      expect(getInteractionToNextPaint()?.targetSelector).toEqual(undefined)
+    }
+    expect(getInteractionToNextPaint()).toEqual({
+      value: 98 as Duration,
+      targetSelector: undefined,
     })
   })
 
-  describe('if feature flag disabled', () => {
-    it('should return undefined', () => {
-      const { lifeCycle } = setupBuilder.build()
+  it('should return 0 when an interaction happened without generating a performance event (interaction duration below 40ms)', () => {
+    setupBuilder.build()
+    interactionCountStub.setInteractionCount(1 as Duration) // assumes an interaction happened but no PERFORMANCE_ENTRIES_COLLECTED have been triggered
+    expect(getInteractionToNextPaint()).toEqual({ value: 0 as Duration })
+  })
+
+  it('should take first-input entry into account', () => {
+    const { lifeCycle } = setupBuilder.build()
+    newInteraction(lifeCycle, {
+      interactionId: 1,
+      entryType: RumPerformanceEntryType.FIRST_INPUT,
+    })
+    expect(getInteractionToNextPaint()).toEqual({
+      value: 40 as Duration,
+      targetSelector: undefined,
+    })
+  })
+
+  it('should replace the entry in the list of worst interactions when an entry with the same interactionId exist', () => {
+    const { lifeCycle } = setupBuilder.build()
+
+    for (let index = 1; index <= 100; index++) {
       newInteraction(lifeCycle, {
+        duration: index as Duration,
         interactionId: 1,
       })
-      expect(getInteractionToNextPaint()).toEqual(undefined)
+    }
+    // the p98 return 100 which shows that the entry has been updated
+    expect(getInteractionToNextPaint()).toEqual({
+      value: 100 as Duration,
+      targetSelector: undefined,
     })
+  })
+
+  it('should return the target selector when FF web_vital_attribution is enabled', () => {
+    addExperimentalFeatures([ExperimentalFeature.WEB_VITALS_ATTRIBUTION])
+    const { lifeCycle } = setupBuilder.build()
+
+    newInteraction(lifeCycle, {
+      interactionId: 2,
+      target: appendElement('<button id="inp-target-element"></button>'),
+    })
+
+    expect(getInteractionToNextPaint()?.targetSelector).toEqual('#inp-target-element')
+  })
+
+  it("should not return the target selector if it's not a DOM element when FF web_vital_attribution is enabled", () => {
+    addExperimentalFeatures([ExperimentalFeature.WEB_VITALS_ATTRIBUTION])
+    const { lifeCycle } = setupBuilder.build()
+
+    newInteraction(lifeCycle, {
+      interactionId: 2,
+      target: appendText('text'),
+    })
+
+    expect(getInteractionToNextPaint()?.targetSelector).toEqual(undefined)
+  })
+
+  it('should not return the target selector when FF web_vital_attribution is disabled', () => {
+    const { lifeCycle } = setupBuilder.build()
+
+    newInteraction(lifeCycle, {
+      interactionId: 2,
+      target: appendElement('<button id="inp-target-element"></button>'),
+    })
+
+    expect(getInteractionToNextPaint()?.targetSelector).toEqual(undefined)
   })
 })
 

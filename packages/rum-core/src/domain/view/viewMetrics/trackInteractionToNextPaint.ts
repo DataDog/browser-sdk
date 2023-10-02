@@ -28,10 +28,7 @@ export function trackInteractionToNextPaint(
   viewLoadingType: ViewLoadingType,
   lifeCycle: LifeCycle
 ) {
-  if (
-    !isInteractionToNextPaintSupported() ||
-    !isExperimentalFeatureEnabled(ExperimentalFeature.INTERACTION_TO_NEXT_PAINT)
-  ) {
+  if (!isInteractionToNextPaintSupported()) {
     return {
       getInteractionToNextPaint: () => undefined,
       stop: noop,
