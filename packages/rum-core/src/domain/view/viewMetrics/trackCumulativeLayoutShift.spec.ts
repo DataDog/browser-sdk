@@ -1,6 +1,6 @@
 import { ExperimentalFeature, addExperimentalFeatures, resetExperimentalFeatures } from '@datadog/browser-core'
 import type { TestSetupBuilder } from '../../../../test'
-import { appendElement, appendTextNode, createPerformanceEntry, setup } from '../../../../test'
+import { appendElement, appendText, createPerformanceEntry, setup } from '../../../../test'
 import { LifeCycleEventType } from '../../lifeCycle'
 import { RumPerformanceEntryType } from '../../../browser/performanceCollection'
 import type { CumulativeLayoutShift } from './trackCumulativeLayoutShift'
@@ -170,8 +170,8 @@ describe('trackCumulativeLayoutShift', () => {
       addExperimentalFeatures([ExperimentalFeature.WEB_VITALS_ATTRIBUTION])
       const { lifeCycle } = setupBuilder.build()
 
-      const textNode = appendTextNode('')
-      const divElement = appendElement('div', { id: 'div-element' })
+      const textNode = appendText('text')
+      const divElement = appendElement('<div id="div-element"></div>')
 
       lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [
         createPerformanceEntry(RumPerformanceEntryType.LAYOUT_SHIFT, {
@@ -186,7 +186,7 @@ describe('trackCumulativeLayoutShift', () => {
     it('should not return the target element selector when FF disabled', () => {
       const { lifeCycle } = setupBuilder.build()
 
-      const divElement = appendElement('div', { id: 'div-element' })
+      const divElement = appendElement('<div id="div-element"></div>')
 
       lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [
         createPerformanceEntry(RumPerformanceEntryType.LAYOUT_SHIFT, {
