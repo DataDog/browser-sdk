@@ -16,7 +16,7 @@ import type { RumEvent } from '../rumEvent.types'
 import { isTracingOption } from './tracing/tracer'
 import type { PropagatorType, TracingOption } from './tracing/tracer.types'
 
-export const DEFAULT_PROPAGATOR_TYPE: PropagatorType = 'tracecontext'
+export const DEFAULT_PROPAGATOR_TYPES: PropagatorType[] = ['tracecontext', 'datadog']
 
 export interface RumInitConfiguration extends InitConfiguration {
   // global options
@@ -146,7 +146,7 @@ function validateAndBuildTracingOptions(initConfiguration: RumInitConfiguration)
     const tracingOptions: TracingOption[] = []
     initConfiguration.allowedTracingUrls.forEach((option) => {
       if (isMatchOption(option)) {
-        tracingOptions.push({ match: option, propagatorTypes: [DEFAULT_PROPAGATOR_TYPE] })
+        tracingOptions.push({ match: option, propagatorTypes: DEFAULT_PROPAGATOR_TYPES })
       } else if (isTracingOption(option)) {
         tracingOptions.push(option)
       } else {
@@ -172,7 +172,7 @@ function getSelectedTracingPropagators(configuration: RumInitConfiguration): Pro
   if (Array.isArray(configuration.allowedTracingUrls) && configuration.allowedTracingUrls.length > 0) {
     configuration.allowedTracingUrls.forEach((option) => {
       if (isMatchOption(option)) {
-        usedTracingPropagators.add(DEFAULT_PROPAGATOR_TYPE)
+        DEFAULT_PROPAGATOR_TYPES.forEach((propagatorType) => usedTracingPropagators.add(propagatorType))
       } else if (getType(option) === 'object' && Array.isArray(option.propagatorTypes)) {
         // Ensure we have an array, as we cannot rely on types yet (configuration is provided by users)
         option.propagatorTypes.forEach((propagatorType) => usedTracingPropagators.add(propagatorType))

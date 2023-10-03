@@ -56,8 +56,11 @@ describe('tracing', () => {
       checkTraceAssociatedToRumEvent(intakeRegistry)
     })
 
+  // By default, we send both Datadog and W3C tracecontext headers
   function checkRequestHeaders(rawHeaders: string) {
     const headers: { [key: string]: string } = JSON.parse(rawHeaders)
+    expect(headers['x-datadog-trace-id']).toMatch(/\d+/)
+    expect(headers['x-datadog-origin']).toBe('rum')
     expect(headers['traceparent']).toMatch(/^[0-9a-f]{2}-[0-9a-f]{32}-[0-9a-f]{16}-01$/)
     expect(headers['x-foo']).toBe('bar, baz')
   }
