@@ -48,7 +48,8 @@ export function trackInteractionToNextPaint(
   const longestInteractions = trackLongestInteractions(getViewInteractionCount)
   let interactionToNextPaint = -1 as Duration
   let interactionToNextPaintTargetSelector: string | undefined
-  let inpInteraction: RumPerformanceEventTiming | RumFirstInputTiming | undefined
+  let telemetryCollected = false
+
   const { unsubscribe: stop } = lifeCycle.subscribe(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, (entries) => {
     for (const entry of entries) {
       if (
@@ -60,30 +61,12 @@ export function trackInteractionToNextPaint(
       }
     }
 
-    inpInteraction = longestInteractions.estimateP98Interaction()
+    const inpInteraction = longestInteractions.estimateP98Interaction()
     if (inpInteraction) {
       interactionToNextPaint = inpInteraction.duration
-      if (
-        isExperimentalFeatureEnabled(ExperimentalFeature.WEB_VITALS_ATTRIBUTION) &&
-        inpInteraction.target &&
-        isElementNode(inpInteraction.target)
-      ) {
-        interactionToNextPaintTargetSelector = getSelectorFromElement(
-          inpInteraction.target,
-          configuration.actionNameAttribute
-        )
-      } else {
-        interactionToNextPaintTargetSelector = undefined
-      }
-    }
-  })
-
-  let telemetryCollected = false
-  return {
-    getInteractionToNextPaint: (): InteractionToNextPaint | undefined => {
       if (interactionToNextPaint > 10 * ONE_MINUTE && !telemetryCollected) {
         telemetryCollected = true
-        addTelemetryDebug('INP > 5 min', {
+        addTelemetryDebug('INP outlier', {
           inp: interactionToNextPaint,
           interaction: inpInteraction
             ? {
@@ -99,6 +82,23 @@ export function trackInteractionToNextPaint(
         })
       }
 
+      if (
+        isExperimentalFeatureEnabled(ExperimentalFeature.WEB_VITALS_ATTRIBUTION) &&
+        inpInteraction.target &&
+        isElementNode(inpInteraction.target)
+      ) {
+        interactionToNextPaintTargetSelector = getSelectorFromElement(
+          inpInteraction.target,
+          configuration.actionNameAttribute
+        )
+      } else {
+        interactionToNextPaintTargetSelector = undefined
+      }
+    }
+  })
+
+  return {
+    getInteractionToNextPaint: (): InteractionToNextPaint | undefined => {
       if (interactionToNextPaint >= 0) {
         return {
           value: interactionToNextPaint,
@@ -155,7 +155,6 @@ function trackLongestInteractions(getViewInteractionCount: () => number) {
       const interactionIndex = Math.min(longestInteractions.length - 1, Math.floor(getViewInteractionCount() / 50))
       return longestInteractions[interactionIndex]
     },
-    longestInteractions,
   }
 }
 
