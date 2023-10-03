@@ -1,4 +1,10 @@
-import { noop, isExperimentalFeatureEnabled, ExperimentalFeature } from '@datadog/browser-core'
+import {
+  noop,
+  isExperimentalFeatureEnabled,
+  ExperimentalFeature,
+  ONE_MINUTE,
+  addTelemetryDebug,
+} from '@datadog/browser-core'
 import type { Duration } from '@datadog/browser-core'
 import { RumPerformanceEntryType, supportPerformanceTimingEvent } from '../../../browser/performanceCollection'
 import type { RumFirstInputTiming, RumPerformanceEventTiming } from '../../../browser/performanceCollection'
@@ -42,7 +48,7 @@ export function trackInteractionToNextPaint(
   const longestInteractions = trackLongestInteractions(getViewInteractionCount)
   let interactionToNextPaint = -1 as Duration
   let interactionToNextPaintTargetSelector: string | undefined
-
+  let inpInteraction: RumPerformanceEventTiming | RumFirstInputTiming | undefined
   const { unsubscribe: stop } = lifeCycle.subscribe(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, (entries) => {
     for (const entry of entries) {
       if (
@@ -54,16 +60,16 @@ export function trackInteractionToNextPaint(
       }
     }
 
-    const newInteraction = longestInteractions.estimateP98Interaction()
-    if (newInteraction) {
-      interactionToNextPaint = newInteraction.duration
+    inpInteraction = longestInteractions.estimateP98Interaction()
+    if (inpInteraction) {
+      interactionToNextPaint = inpInteraction.duration
       if (
         isExperimentalFeatureEnabled(ExperimentalFeature.WEB_VITALS_ATTRIBUTION) &&
-        newInteraction.target &&
-        isElementNode(newInteraction.target)
+        inpInteraction.target &&
+        isElementNode(inpInteraction.target)
       ) {
         interactionToNextPaintTargetSelector = getSelectorFromElement(
-          newInteraction.target,
+          inpInteraction.target,
           configuration.actionNameAttribute
         )
       } else {
@@ -72,10 +78,27 @@ export function trackInteractionToNextPaint(
     }
   })
 
+  let telemetryCollected = false
   return {
     getInteractionToNextPaint: (): InteractionToNextPaint | undefined => {
-      // If no INP duration where captured because of the performanceObserver 40ms threshold
-      // but the view interaction count > 0 then report 0
+      if (interactionToNextPaint > 10 * ONE_MINUTE && !telemetryCollected) {
+        telemetryCollected = true
+        addTelemetryDebug('INP > 5 min', {
+          inp: interactionToNextPaint,
+          interaction: inpInteraction
+            ? {
+                duration: inpInteraction.duration,
+                startTime: inpInteraction.startTime,
+                processingStart: inpInteraction.processingStart,
+                processingEnd: inpInteraction.processingEnd,
+                interactionId: inpInteraction.interactionId,
+                name: inpInteraction.name,
+                targetNodeName: inpInteraction.target?.nodeName,
+              }
+            : undefined,
+        })
+      }
+
       if (interactionToNextPaint >= 0) {
         return {
           value: interactionToNextPaint,
@@ -132,6 +155,7 @@ function trackLongestInteractions(getViewInteractionCount: () => number) {
       const interactionIndex = Math.min(longestInteractions.length - 1, Math.floor(getViewInteractionCount() / 50))
       return longestInteractions[interactionIndex]
     },
+    longestInteractions,
   }
 }
 
