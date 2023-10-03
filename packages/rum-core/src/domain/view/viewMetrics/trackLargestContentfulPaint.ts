@@ -12,7 +12,6 @@ import type { LifeCycle } from '../../lifeCycle'
 import type { RumConfiguration } from '../../configuration'
 import { RumPerformanceEntryType } from '../../../browser/performanceCollection'
 import type { RumLargestContentfulPaintTiming } from '../../../browser/performanceCollection'
-import type { WebVitalTelemetryDebug } from '../startWebVitalTelemetryDebug'
 import { getSelectorFromElement } from '../../getSelectorFromElement'
 import type { FirstHidden } from './trackFirstHidden'
 
@@ -28,12 +27,11 @@ export interface LargestContentfulPaint {
  * Track the largest contentful paint (LCP) occurring during the initial View.  This can yield
  * multiple values, only the most recent one should be used.
  * Documentation: https://web.dev/lcp/
- * Reference implementation: https://github.com/GoogleChrome/web-vitals/blob/master/src/getLCP.ts
+ * Reference implementation: https://github.com/GoogleChrome/web-vitals/blob/master/src/onLCP.ts
  */
 export function trackLargestContentfulPaint(
   lifeCycle: LifeCycle,
   configuration: RumConfiguration,
-  webVitalTelemetryDebug: WebVitalTelemetryDebug,
   firstHidden: FirstHidden,
   eventTarget: Window,
   callback: (largestContentfulPaint: LargestContentfulPaint) => void
@@ -74,8 +72,6 @@ export function trackLargestContentfulPaint(
           value: lcpEntry.startTime,
           targetSelector: lcpTargetSelector,
         })
-
-        webVitalTelemetryDebug.addWebVitalTelemetryDebug('LCP', lcpEntry.element, lcpEntry.startTime)
       }
     }
   )

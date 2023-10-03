@@ -2,8 +2,8 @@ import { ONE_SECOND } from '@datadog/browser-core'
 import type { Clock } from '@datadog/browser-core/test'
 import { mockClock } from '@datadog/browser-core/test'
 import { FrustrationType } from '../../rawRumEvent.types'
-import type { FakeClick, IsolatedDom } from '../../../test'
-import { createFakeClick, createIsolatedDom } from '../../../test'
+import type { FakeClick } from '../../../test'
+import { appendElement, createFakeClick } from '../../../test'
 import { computeFrustration, isRage, isDead } from './computeFrustration'
 
 describe('computeFrustration', () => {
@@ -131,16 +131,6 @@ describe('isRage', () => {
 })
 
 describe('isDead', () => {
-  let isolatedDom: IsolatedDom
-
-  beforeEach(() => {
-    isolatedDom = createIsolatedDom()
-  })
-
-  afterEach(() => {
-    isolatedDom.clear()
-  })
-
   it('considers as dead when the click has no page activity', () => {
     expect(isDead(createFakeClick({ hasPageActivity: false }))).toBe(true)
   })
@@ -170,7 +160,7 @@ describe('isDead', () => {
         isDead(
           createFakeClick({
             hasPageActivity: false,
-            event: { target: isolatedDom.append(element) },
+            event: { target: appendElement(element) },
           })
         )
       ).toBe(expected)
