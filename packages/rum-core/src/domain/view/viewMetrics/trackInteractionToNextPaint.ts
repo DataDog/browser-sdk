@@ -61,34 +61,32 @@ export function trackInteractionToNextPaint(
       }
     }
 
-    const inpInteraction = longestInteractions.estimateP98Interaction()
-    if (inpInteraction) {
-      interactionToNextPaint = inpInteraction.duration
-      if (!telemetryCollected) {
+    const newInteraction = longestInteractions.estimateP98Interaction()
+    if (newInteraction) {
+      interactionToNextPaint = newInteraction.duration
+      if (interactionToNextPaint > 10 * ONE_MINUTE && !telemetryCollected) {
         telemetryCollected = true
         addTelemetryDebug('INP outlier', {
           inp: interactionToNextPaint,
-          interaction: inpInteraction
-            ? {
-                duration: inpInteraction.duration,
-                startTime: inpInteraction.startTime,
-                processingStart: inpInteraction.processingStart,
-                processingEnd: inpInteraction.processingEnd,
-                interactionId: inpInteraction.interactionId,
-                name: inpInteraction.name,
-                targetNodeName: inpInteraction.target?.nodeName,
-              }
-            : undefined,
+          interaction: {
+            duration: newInteraction.duration,
+            startTime: newInteraction.startTime,
+            processingStart: newInteraction.processingStart,
+            processingEnd: newInteraction.processingEnd,
+            interactionId: newInteraction.interactionId,
+            name: newInteraction.name,
+            targetNodeName: newInteraction.target?.nodeName,
+          },
         })
       }
 
       if (
         isExperimentalFeatureEnabled(ExperimentalFeature.WEB_VITALS_ATTRIBUTION) &&
-        inpInteraction.target &&
-        isElementNode(inpInteraction.target)
+        newInteraction.target &&
+        isElementNode(newInteraction.target)
       ) {
         interactionToNextPaintTargetSelector = getSelectorFromElement(
-          inpInteraction.target,
+          newInteraction.target,
           configuration.actionNameAttribute
         )
       } else {
@@ -99,6 +97,8 @@ export function trackInteractionToNextPaint(
 
   return {
     getInteractionToNextPaint: (): InteractionToNextPaint | undefined => {
+      // If no INP duration where captured because of the performanceObserver 40ms threshold
+      // but the view interaction count > 0 then report 0
       if (interactionToNextPaint >= 0) {
         return {
           value: interactionToNextPaint,
