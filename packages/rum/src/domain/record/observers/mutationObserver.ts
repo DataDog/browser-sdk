@@ -77,8 +77,7 @@ export function initMutationObserver(
       mutations.concat(observer.takeRecords() as RumMutationRecord[]),
       mutationCallback,
       configuration,
-      shadowRootsController,
-      target
+      shadowRootsController
     )
   })
 
@@ -108,8 +107,7 @@ function processMutations(
   mutations: RumMutationRecord[],
   mutationCallback: MutationCallBack,
   configuration: RumConfiguration,
-  shadowRootsController: ShadowRootsController,
-  target: Node
+  shadowRootsController: ShadowRootsController
 ) {
   mutations
     .filter((mutation): mutation is RumChildListMutationRecord => mutation.type === 'childList')
@@ -125,7 +123,7 @@ function processMutations(
   // * should be hidden or ignored
   const filteredMutations = mutations.filter(
     (mutation): mutation is WithSerializedTarget<RumMutationRecord> =>
-      target.contains(mutation.target) &&
+      mutation.target.isConnected &&
       nodeAndAncestorsHaveSerializedNode(mutation.target) &&
       getNodePrivacyLevel(mutation.target, configuration.defaultPrivacyLevel) !== NodePrivacyLevel.HIDDEN
   )
