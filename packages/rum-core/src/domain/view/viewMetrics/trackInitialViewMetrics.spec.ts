@@ -1,7 +1,7 @@
 import type { Duration, RelativeTime } from '@datadog/browser-core'
 import { RumPerformanceEntryType } from '../../../browser/performanceCollection'
 import type { TestSetupBuilder } from '../../../../test'
-import { createPerformanceEntry, noopWebVitalTelemetryDebug, setup } from '../../../../test'
+import { createPerformanceEntry, setup } from '../../../../test'
 import { LifeCycleEventType } from '../../lifeCycle'
 import type { RumConfiguration } from '../../configuration'
 import { trackInitialViewMetrics } from './trackInitialViewMetrics'
@@ -22,7 +22,6 @@ describe('trackInitialViewMetrics', () => {
       trackInitialViewMetricsResult = trackInitialViewMetrics(
         lifeCycle,
         configuration,
-        noopWebVitalTelemetryDebug,
         setLoadEventSpy,
         scheduleViewUpdateSpy
       )

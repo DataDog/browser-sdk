@@ -1,6 +1,7 @@
 import { DOM_EVENT, DefaultPrivacyLevel, isIE } from '@datadog/browser-core'
 import { createNewEvent } from '@datadog/browser-core/test'
 import type { RumConfiguration } from '@datadog/browser-rum-core'
+import { appendElement } from '../../../../../rum-core/test'
 import { IncrementalSource, MouseInteractionType, RecordType } from '../../../types'
 import { serializeDocument, SerializationContextStatus } from '../serialization'
 import { createElementsScrollPositions } from '../elementsScrollPositions'
@@ -14,7 +15,6 @@ describe('initMouseInteractionObserver', () => {
   let mouseInteractionCallbackSpy: jasmine.Spy<MouseInteractionCallBack>
   let stopObserver: () => void
   let recordIds: RecordIds
-  let sandbox: HTMLDivElement
   let a: HTMLAnchorElement
   let configuration: RumConfiguration
 
@@ -24,11 +24,7 @@ describe('initMouseInteractionObserver', () => {
     }
 
     configuration = { defaultPrivacyLevel: DefaultPrivacyLevel.ALLOW } as RumConfiguration
-    sandbox = document.createElement('div')
-    a = document.createElement('a')
-    a.setAttribute('tabindex', '0') // make the element focusable
-    sandbox.appendChild(a)
-    document.body.appendChild(sandbox)
+    a = appendElement('<a tabindex="0"></a>') as HTMLAnchorElement // tabindex 0 makes the element focusable
     a.dispatchEvent(createNewEvent(DOM_EVENT.FOCUS))
 
     serializeDocument(document, DEFAULT_CONFIGURATION, {
@@ -43,7 +39,6 @@ describe('initMouseInteractionObserver', () => {
   })
 
   afterEach(() => {
-    sandbox.remove()
     stopObserver()
   })
 

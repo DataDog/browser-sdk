@@ -13,11 +13,11 @@ import type {
   FocusRecord,
 } from '../../types'
 import { NodeType, RecordType, IncrementalSource } from '../../types'
+import { appendElement } from '../../../../rum-core/test'
 import type { RecordAPI } from './record'
 import { record } from './record'
 
 describe('record', () => {
-  let sandbox: HTMLElement
   let recordApi: RecordAPI
   let emitSpy: jasmine.Spy<(record: BrowserRecord) => void>
   let clock: Clock | undefined
@@ -28,18 +28,15 @@ describe('record', () => {
     }
 
     emitSpy = jasmine.createSpy()
-    sandbox = createDOMSandbox()
   })
 
   afterEach(() => {
     clock?.cleanup()
-    sandbox.remove()
     recordApi?.stop()
   })
 
   it('captures stylesheet rules', (done) => {
-    const styleElement = document.createElement('style')
-    sandbox.appendChild(styleElement)
+    const styleElement = appendElement('<style></style>') as HTMLStyleElement
 
     startRecording()
 
@@ -119,7 +116,7 @@ describe('record', () => {
   it('flushes pending mutation records before taking a full snapshot', (done) => {
     startRecording()
 
-    sandbox.appendChild(document.createElement('div'))
+    appendElement('<hr/>')
 
     recordApi.takeSubsequentFullSnapshot()
 
@@ -201,26 +198,12 @@ describe('record', () => {
   })
 
   describe('Shadow dom', () => {
-    let sandbox: HTMLElement
-
-    beforeEach(() => {
-      sandbox = document.createElement('div')
-      sandbox.id = 'sandbox'
-      document.body.appendChild(sandbox)
-    })
-
-    afterEach(() => {
-      sandbox.remove()
-    })
-
     it('should record a simple mutation inside a shadow root', () => {
-      const div = document.createElement('div')
-      div.className = 'toto'
-      createShadow([div])
+      const element = appendElement('<hr class="toto" />', createShadow())
       startRecording()
       expect(getEmittedRecords().length).toBe(recordsPerFullSnapshot())
 
-      div.className = 'titi'
+      element.className = 'titi'
 
       recordApi.flushMutations()
       expect(getEmittedRecords().length).toBe(recordsPerFullSnapshot() + 1)
@@ -232,12 +215,11 @@ describe('record', () => {
     })
 
     it('should record a direct removal inside a shadow root', () => {
-      const span = document.createElement('span')
-      createShadow([span])
+      const element = appendElement('<hr/>', createShadow())
       startRecording()
       expect(getEmittedRecords().length).toBe(recordsPerFullSnapshot())
 
-      span.remove()
+      element.remove()
 
       recordApi.flushMutations()
       const fs = findFullSnapshot({ records: getEmittedRecords() })!
@@ -256,12 +238,12 @@ describe('record', () => {
     })
 
     it('should record a direct addition inside a shadow root', () => {
-      const span = document.createElement('span')
-      const shadowRoot = createShadow([span])
+      const shadowRoot = createShadow()
+      appendElement('<hr/>', shadowRoot)
       startRecording()
       expect(getEmittedRecords().length).toBe(recordsPerFullSnapshot())
 
-      shadowRoot.appendChild(document.createElement('span'))
+      appendElement('<span></span>', shadowRoot)
 
       recordApi.flushMutations()
       expect(getEmittedRecords().length).toBe(recordsPerFullSnapshot() + 1)
@@ -287,9 +269,7 @@ describe('record', () => {
       expect(getEmittedRecords().length).toBe(recordsPerFullSnapshot())
 
       // shadow DOM mutation
-      const span = document.createElement('span')
-      span.className = 'toto'
-      createShadow([span])
+      const span = appendElement('<span class="toto"></span>', createShadow())
       recordApi.flushMutations()
       expect(getEmittedRecords().length).toBe(recordsPerFullSnapshot() + 1)
       const hostMutationData = getLastIncrementalSnapshotData<BrowserMutationData>(
@@ -315,9 +295,7 @@ describe('record', () => {
     })
 
     it('should record the change event inside a shadow root', () => {
-      const radio = document.createElement('input')
-      radio.setAttribute('type', 'radio')
-      createShadow([radio])
+      const radio = appendElement('<input type="radio"/>', createShadow()) as HTMLInputElement
       startRecording()
       expect(getEmittedRecords().length).toBe(recordsPerFullSnapshot())
 
@@ -334,9 +312,8 @@ describe('record', () => {
     })
 
     it('should clean the state once the shadow dom is removed to avoid memory leak', () => {
-      const div = document.createElement('div')
-      div.className = 'toto'
-      const shadowRoot = createShadow([div])
+      const shadowRoot = createShadow()
+      appendElement('<div class="toto"></div>', shadowRoot)
       startRecording()
       spyOn(recordApi.shadowRootsController, 'removeShadowRoot')
 
@@ -354,13 +331,17 @@ describe('record', () => {
     })
 
     it('should clean the state when both the parent and the shadow host is removed to avoid memory leak', () => {
-      const grandParent = document.createElement('div')
-      const parent = document.createElement('div')
-      grandParent.appendChild(parent)
-      const child = document.createElement('div')
-      child.className = 'toto'
-      createShadow([child], parent)
-      sandbox.appendChild(grandParent)
+      const host = appendElement(`
+      <div id="grand-parent">
+        <div id="parent">
+          <div class="host" target></div>
+        </div>
+      </div>`)
+      host.attachShadow({ mode: 'open' })
+      const parent = host.parentElement!
+      const grandParent = parent.parentElement!
+      appendElement('<div></div>', host.shadowRoot!)
+
       startRecording()
       spyOn(recordApi.shadowRootsController, 'removeShadowRoot')
       expect(getEmittedRecords().length).toBe(recordsPerFullSnapshot())
@@ -378,12 +359,9 @@ describe('record', () => {
       expect(mutationData.removes.length).toBe(1)
     })
 
-    function createShadow(children: Element[], parent = sandbox) {
-      const host = document.createElement('div')
-      host.setAttribute('id', 'host')
+    function createShadow() {
+      const host = appendElement('<div></div>')
       const shadowRoot = host.attachShadow({ mode: 'open' })
-      children.forEach((child) => shadowRoot.appendChild(child))
-      parent.append(host)
       return shadowRoot
     }
   })
@@ -400,13 +378,6 @@ describe('record', () => {
     return emitSpy.calls.allArgs().map(([record]) => record)
   }
 })
-
-function createDOMSandbox() {
-  const sandbox = document.createElement('div')
-  sandbox.id = 'sandbox'
-  document.body.appendChild(sandbox)
-  return sandbox
-}
 
 export function getLastIncrementalSnapshotData<T extends BrowserIncrementalSnapshotRecord['data']>(
   records: BrowserRecord[],

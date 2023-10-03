@@ -14,6 +14,7 @@ import { NodeType } from '../../../types'
 import { serializeDocument, SerializationContextStatus } from '../serialization'
 import { createElementsScrollPositions } from '../elementsScrollPositions'
 import type { ShadowRootCallBack } from '../shadowRootsController'
+import { appendElement, appendText } from '../../../../../rum-core/test'
 import { sortAddedAndMovedNodes, initMutationObserver } from './mutationObserver'
 import type { MutationCallBack } from './mutationObserver'
 import { DEFAULT_SHADOW_ROOT_CONTROLLER } from './observers.specHelper'
@@ -68,14 +69,11 @@ describe('startMutationCollection', () => {
       pending('IE not supported')
     }
 
-    sandbox = document.createElement('div')
-    sandbox.id = 'sandbox'
-    document.body.appendChild(sandbox)
+    sandbox = appendElement('<div id="sandbox"></div>')
   })
 
   afterEach(() => {
     stopMutationCollection()
-    sandbox.remove()
   })
 
   describe('childList mutation records', () => {
@@ -83,7 +81,7 @@ describe('startMutationCollection', () => {
       const serializedDocument = serializeDocumentWithDefaults()
       const { mutationCallbackSpy, getLatestMutationPayload } = startMutationCollection()
 
-      sandbox.appendChild(document.createElement('div'))
+      appendElement('<div></div>', sandbox)
       flushMutations()
 
       expect(mutationCallbackSpy).toHaveBeenCalledTimes(1)
@@ -103,7 +101,7 @@ describe('startMutationCollection', () => {
       serializeDocumentWithDefaults()
       const { mutationCallbackSpy } = startMutationCollection()
 
-      sandbox.appendChild(document.createElement('div'))
+      appendElement('<div></div>', sandbox)
 
       expect(mutationCallbackSpy).not.toHaveBeenCalled()
 
@@ -114,7 +112,7 @@ describe('startMutationCollection', () => {
       // Here, we don't call serializeDocument(), so the sandbox is 'unknown'.
       const { mutationCallbackSpy } = startMutationCollection()
 
-      sandbox.appendChild(document.createElement('div'))
+      appendElement('<div></div>', sandbox)
       flushMutations()
 
       expect(mutationCallbackSpy).not.toHaveBeenCalled()
@@ -124,7 +122,7 @@ describe('startMutationCollection', () => {
       serializeDocumentWithDefaults()
       const { mutationCallbackSpy } = startMutationCollection()
 
-      sandbox.appendChild(document.createElement('div'))
+      appendElement('<div></div>', sandbox)
 
       expect(mutationCallbackSpy).toHaveBeenCalledTimes(0)
 
@@ -135,8 +133,7 @@ describe('startMutationCollection', () => {
 
     describe('does not emit mutations on removed nodes and their descendants', () => {
       it('attribute mutations', () => {
-        const element = document.createElement('div')
-        sandbox.appendChild(element)
+        const element = appendElement('<div></div>', sandbox)
         serializeDocumentWithDefaults()
 
         const { getLatestMutationPayload } = startMutationCollection()
@@ -149,8 +146,8 @@ describe('startMutationCollection', () => {
       })
 
       it('text mutations', () => {
-        const textNode = document.createTextNode('foo')
-        sandbox.appendChild(textNode)
+        const textNode = appendText('text', sandbox)
+
         serializeDocumentWithDefaults()
 
         const { getLatestMutationPayload } = startMutationCollection()
@@ -167,7 +164,7 @@ describe('startMutationCollection', () => {
 
         const { getLatestMutationPayload } = startMutationCollection()
 
-        sandbox.appendChild(document.createElement('div'))
+        appendElement('<div><hr /></div>', sandbox)
         sandbox.remove()
         flushMutations()
 
@@ -175,8 +172,7 @@ describe('startMutationCollection', () => {
       })
 
       it('remove mutations', () => {
-        const element = document.createElement('div')
-        sandbox.appendChild(element)
+        const element = appendElement('<div></div>', sandbox)
         const serializedDocument = serializeDocumentWithDefaults()
 
         const { getLatestMutationPayload } = startMutationCollection()
@@ -204,8 +200,7 @@ describe('startMutationCollection', () => {
       // document) during the processed mutation batched.
 
       it('attribute mutations', () => {
-        const element = document.createElement('div')
-        sandbox.appendChild(element)
+        const element = appendElement('<div></div>', sandbox)
         serializeDocumentWithDefaults()
 
         const { getLatestMutationPayload } = startMutationCollection()
@@ -220,8 +215,7 @@ describe('startMutationCollection', () => {
       })
 
       it('text mutations', () => {
-        const textNode = document.createTextNode('foo')
-        sandbox.appendChild(textNode)
+        const textNode = appendText('foo', sandbox)
         serializeDocumentWithDefaults()
 
         const { getLatestMutationPayload } = startMutationCollection()
@@ -236,10 +230,8 @@ describe('startMutationCollection', () => {
       })
 
       it('add mutations', () => {
-        const parent = document.createElement('a')
-        const child = document.createElement('b')
-        sandbox.appendChild(parent)
-        parent.appendChild(child)
+        const child = appendElement('<a><b target/></a>', sandbox)
+        const parent = child.parentElement!
         const serializedDocument = serializeDocumentWithDefaults()
 
         const { getLatestMutationPayload } = startMutationCollection()
@@ -281,10 +273,7 @@ describe('startMutationCollection', () => {
 
         const { getLatestMutationPayload } = startMutationCollection()
 
-        const parent = document.createElement('a')
-        const child = document.createElement('b')
-        parent.appendChild(child)
-        sandbox.appendChild(parent)
+        const child = appendElement('<a><b target/></a>', sandbox)
 
         child.remove()
         flushMutations()
@@ -302,12 +291,12 @@ describe('startMutationCollection', () => {
     })
 
     it('emits only an "add" mutation when adding, removing then re-adding a child', () => {
-      const element = document.createElement('a')
       const serializedDocument = serializeDocumentWithDefaults()
 
       const { getLatestMutationPayload } = startMutationCollection()
 
-      sandbox.appendChild(element)
+      const element = appendElement('<a></a>', sandbox)
+
       element.remove()
       sandbox.appendChild(element)
 
@@ -325,16 +314,13 @@ describe('startMutationCollection', () => {
     })
 
     it('emits an "add" and a "remove" mutation when moving a node', () => {
-      const elementA = document.createElement('a')
-      const elementB = document.createElement('b')
-      sandbox.appendChild(elementA)
-      sandbox.appendChild(elementB)
+      const a = appendElement('<a></a><b/>', sandbox)
       const serializedDocument = serializeDocumentWithDefaults()
 
       const { getLatestMutationPayload } = startMutationCollection()
 
       // Moves 'a' after 'b'
-      sandbox.appendChild(elementA)
+      sandbox.appendChild(a)
 
       flushMutations()
 
@@ -356,18 +342,20 @@ describe('startMutationCollection', () => {
     })
 
     it('uses the initial parent id when removing a node from multiple places', () => {
-      const container1 = document.createElement('a')
-      const container2 = document.createElement('b')
-      const element = document.createElement('span')
-      sandbox.appendChild(element)
-      sandbox.appendChild(container1)
-      sandbox.appendChild(container2)
+      const span = appendElement(
+        `<span></span>
+         <a></a>
+         <b></b>`,
+        sandbox
+      )
+      const a = span.nextElementSibling!
+      const b = a.nextElementSibling!
       const serializedDocument = serializeDocumentWithDefaults()
 
       const { getLatestMutationPayload } = startMutationCollection()
 
-      container1.appendChild(element)
-      container2.appendChild(element)
+      a.appendChild(span)
+      b.appendChild(span)
 
       flushMutations()
 
@@ -393,9 +381,7 @@ describe('startMutationCollection', () => {
 
       const { getLatestMutationPayload } = startMutationCollection()
 
-      sandbox.appendChild(document.createElement('a'))
-      sandbox.appendChild(document.createElement('b'))
-      sandbox.appendChild(document.createElement('c'))
+      appendElement('<a></a><b></b><c></c>', sandbox)
 
       flushMutations()
 
@@ -448,10 +434,9 @@ describe('startMutationCollection', () => {
       it('should call addShadowRoot when host is added', () => {
         const serializedDocument = serializeDocumentWithDefaults()
         const { mutationCallbackSpy, getLatestMutationPayload } = startMutationCollection()
-        const host = document.createElement('div')
+        const host = appendElement('<div></div>', sandbox)
         const shadowRoot = host.attachShadow({ mode: 'open' })
-        shadowRoot.appendChild(document.createElement('span'))
-        sandbox.appendChild(host)
+        appendElement('<span></span>', shadowRoot)
         flushMutations()
 
         expect(mutationCallbackSpy).toHaveBeenCalledTimes(1)
@@ -475,11 +460,9 @@ describe('startMutationCollection', () => {
       })
 
       it('should call removeShadowRoot when host is removed', () => {
-        const host = document.createElement('div')
-        host.id = 'host'
+        const host = appendElement('<div id="host"></div>', sandbox)
         const shadowRoot = host.attachShadow({ mode: 'open' })
-        shadowRoot.appendChild(document.createElement('span'))
-        sandbox.appendChild(host)
+        appendElement('<span></span>', shadowRoot)
         const serializedDocument = serializeDocumentWithDefaults()
         const { mutationCallbackSpy, getLatestMutationPayload } = startMutationCollection()
         host.remove()
@@ -500,17 +483,13 @@ describe('startMutationCollection', () => {
       })
 
       it('should call removeShadowRoot when parent of host is removed', () => {
-        const parent = document.createElement('div')
-        parent.id = 'parent'
-        const host = document.createElement('div')
-        host.id = 'host'
-        parent.appendChild(host)
+        const host = appendElement('<div id="parent"><div id="host" target></div></div>', sandbox)
         const shadowRoot = host.attachShadow({ mode: 'open' })
-        shadowRoot.appendChild(document.createElement('span'))
-        sandbox.appendChild(parent)
+        appendElement('<span></span>', shadowRoot)
+
         const serializedDocument = serializeDocumentWithDefaults()
         const { mutationCallbackSpy, getLatestMutationPayload } = startMutationCollection()
-        parent.remove()
+        host.parentElement!.remove()
         flushMutations()
         expect(mutationCallbackSpy).toHaveBeenCalledTimes(1)
 
@@ -533,8 +512,7 @@ describe('startMutationCollection', () => {
     let textNode: Text
 
     beforeEach(() => {
-      textNode = document.createTextNode('foo')
-      sandbox.appendChild(textNode)
+      textNode = appendText('foo', sandbox)
     })
 
     it('emits a mutation when a text node is changed', () => {
@@ -598,13 +576,8 @@ describe('startMutationCollection', () => {
     })
 
     it('respects the parent privacy level when emitting a text node mutation', () => {
-      const wrapper = document.createElement('div')
-      wrapper.setAttribute('data-dd-privacy', 'allow')
-      document.body.appendChild(wrapper)
-
-      const div = document.createElement('div')
-      div.innerText = 'foo 81'
-      wrapper.appendChild(div)
+      sandbox.setAttribute('data-dd-privacy', 'allow')
+      const div = appendElement('<div>foo 81</div>', sandbox)
 
       const serializedDocument = serializeDocumentWithDefaults()
       const { mutationCallbackSpy, getLatestMutationPayload } = startMutationCollection(DefaultPrivacyLevel.MASK)
@@ -738,8 +711,7 @@ describe('startMutationCollection', () => {
     let ignoredElement: HTMLElement
 
     beforeEach(() => {
-      ignoredElement = document.createElement('script')
-      sandbox.appendChild(ignoredElement)
+      ignoredElement = appendElement('<script></script>', sandbox)
     })
 
     it('skips ignored nodes when looking for the next id', () => {
@@ -793,7 +765,7 @@ describe('startMutationCollection', () => {
 
         const { mutationCallbackSpy } = startMutationCollection()
 
-        ignoredElement.appendChild(document.createTextNode('function foo() {}'))
+        appendElement("'function foo() {}'", ignoredElement)
 
         flushMutations()
 
@@ -801,8 +773,8 @@ describe('startMutationCollection', () => {
       })
 
       it('when mutating a known child node', () => {
-        const textNode = document.createTextNode('function foo() {}')
-        sandbox.appendChild(textNode)
+        const textNode = appendText('function foo() {}', sandbox)
+
         serializeDocumentWithDefaults()
         ignoredElement.appendChild(textNode)
 
@@ -816,8 +788,7 @@ describe('startMutationCollection', () => {
       })
 
       it('when adding a known child node', () => {
-        const textNode = document.createTextNode('function foo() {}')
-        sandbox.appendChild(textNode)
+        const textNode = appendText('function foo() {}', sandbox)
         const serializedDocument = serializeDocumentWithDefaults()
 
         const { getLatestMutationPayload } = startMutationCollection()
@@ -838,13 +809,8 @@ describe('startMutationCollection', () => {
       })
 
       it('when moving an ignored node', () => {
-        const a = document.createElement('a')
-        const b = document.createElement('b')
-        const script = document.createElement('script')
+        const script = appendElement('<a></a><script target></script><b><b/>', sandbox)
 
-        sandbox.appendChild(a)
-        sandbox.appendChild(script)
-        sandbox.appendChild(b)
         serializeDocumentWithDefaults()
 
         const { mutationCallbackSpy } = startMutationCollection()
@@ -860,9 +826,7 @@ describe('startMutationCollection', () => {
   describe('hidden nodes', () => {
     let hiddenElement: HTMLElement
     beforeEach(() => {
-      hiddenElement = document.createElement('div')
-      hiddenElement.setAttribute('data-dd-privacy', 'hidden')
-      sandbox.appendChild(hiddenElement)
+      hiddenElement = appendElement("<div data-dd-privacy='hidden'></div>", sandbox)
     })
 
     it('does not emit attribute mutations on hidden nodes', () => {
@@ -883,7 +847,7 @@ describe('startMutationCollection', () => {
 
         const { mutationCallbackSpy } = startMutationCollection()
 
-        hiddenElement.appendChild(document.createTextNode('function foo() {}'))
+        appendElement('function foo() {}', hiddenElement)
 
         flushMutations()
 
@@ -891,8 +855,8 @@ describe('startMutationCollection', () => {
       })
 
       it('when mutating a known child node', () => {
-        const textNode = document.createTextNode('function foo() {}')
-        sandbox.appendChild(textNode)
+        const textNode = appendText('function foo() {}', sandbox)
+
         serializeDocumentWithDefaults()
         hiddenElement.appendChild(textNode)
 
@@ -906,8 +870,7 @@ describe('startMutationCollection', () => {
       })
 
       it('when moving a known node into an hidden node', () => {
-        const textNode = document.createTextNode('function foo() {}')
-        sandbox.appendChild(textNode)
+        const textNode = appendText('function foo() {}', sandbox)
         const serializedDocument = serializeDocumentWithDefaults()
 
         const { getLatestMutationPayload } = startMutationCollection()

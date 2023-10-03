@@ -82,8 +82,8 @@ describe('trackScrollMetrics', () => {
     updateScrollValues({ scrollDepth: 700, scrollHeight: 2000, scrollTop: 100 })
     expect(scrollMetricsCallback).toHaveBeenCalledOnceWith({
       maxDepth: 700,
-      maxDepthScrollHeight: 2000,
-      maxDepthTime: 100 as Duration,
+      maxScrollHeight: 2000,
+      maxScrollHeightTime: 100 as Duration,
       maxDepthScrollTop: 100,
     })
   })
@@ -93,8 +93,8 @@ describe('trackScrollMetrics', () => {
     updateScrollValues({ scrollDepth: 700, scrollHeight: 1900, scrollTop: 100 })
     expect(scrollMetricsCallback).toHaveBeenCalledOnceWith({
       maxDepth: 700,
-      maxDepthScrollHeight: 2000,
-      maxDepthTime: 100 as Duration,
+      maxScrollHeight: 2000,
+      maxScrollHeightTime: 100 as Duration,
       maxDepthScrollTop: 100,
     })
   })
@@ -105,8 +105,8 @@ describe('trackScrollMetrics', () => {
     updateScrollValues({ scrollDepth: 600, scrollHeight: 2000, scrollTop: 0 })
     expect(scrollMetricsCallback).toHaveBeenCalledOnceWith({
       maxDepth: 700,
-      maxDepthScrollHeight: 2000,
-      maxDepthTime: 100 as Duration,
+      maxScrollHeight: 2000,
+      maxScrollHeightTime: 100 as Duration,
       maxDepthScrollTop: 100,
     })
   })

@@ -5,7 +5,7 @@ import { LifeCycleEventType } from '@datadog/browser-rum-core'
 import type { Clock } from '@datadog/browser-core/test'
 import { collectAsyncCalls, createNewEvent, mockClock } from '@datadog/browser-core/test'
 import type { RumSessionManagerMock, TestSetupBuilder } from '../../../rum-core/test'
-import { createRumSessionManagerMock, setup } from '../../../rum-core/test'
+import { appendElement, createRumSessionManagerMock, setup } from '../../../rum-core/test'
 
 import { recordsPerFullSnapshot, readReplayPayload } from '../../test'
 import { setSegmentBytesLimit } from '../domain/segmentCollection'
@@ -26,7 +26,6 @@ describe('startRecording', () => {
   let setupBuilder: TestSetupBuilder
   let sessionManager: RumSessionManagerMock
   let viewId: string
-  let sandbox: HTMLElement
   let textField: HTMLInputElement
   let requestSendSpy: jasmine.Spy<HttpRequest['sendOnExit']>
   let stopRecording: () => void
@@ -42,10 +41,7 @@ describe('startRecording', () => {
     sessionManager = createRumSessionManagerMock()
     viewId = 'view-id'
 
-    sandbox = document.createElement('div')
-    document.body.appendChild(sandbox)
-    textField = document.createElement('input')
-    sandbox.appendChild(textField)
+    textField = appendElement('<input />') as HTMLInputElement
 
     const worker = startDeflateWorker(configuration, 'Session Replay', noop)
 
@@ -86,7 +82,6 @@ describe('startRecording', () => {
   })
 
   afterEach(() => {
-    sandbox.remove()
     setSegmentBytesLimit()
     setupBuilder.cleanup()
     clock?.cleanup()
@@ -213,7 +208,7 @@ describe('startRecording', () => {
   it('flushes pending mutations before ending the view', async () => {
     const { lifeCycle } = setupBuilder.build()
 
-    sandbox.appendChild(document.createElement('hr'))
+    appendElement('<hr/>')
     changeView(lifeCycle)
     flushSegment(lifeCycle)
 

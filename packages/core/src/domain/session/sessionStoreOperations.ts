@@ -1,6 +1,5 @@
 import { setTimeout } from '../../tools/timer'
 import { generateUUID } from '../../tools/utils/stringUtils'
-import { isChromium } from '../../tools/utils/browserDetection'
 import type { SessionStoreStrategy } from './storeStrategies/sessionStoreStrategy'
 import type { SessionState } from './sessionState'
 import { expandSessionState, isSessionInExpiredState } from './sessionState'
@@ -20,8 +19,7 @@ export function processSessionStoreOperations(
   sessionStoreStrategy: SessionStoreStrategy,
   numberOfRetries = 0
 ) {
-  const { retrieveSession, persistSession, clearSession } = sessionStoreStrategy
-  const lockEnabled = isLockEnabled()
+  const { isLockEnabled, retrieveSession, persistSession, clearSession } = sessionStoreStrategy
 
   if (!ongoingOperations) {
     ongoingOperations = operations
@@ -30,13 +28,13 @@ export function processSessionStoreOperations(
     bufferedOperations.push(operations)
     return
   }
-  if (lockEnabled && numberOfRetries >= LOCK_MAX_TRIES) {
+  if (isLockEnabled && numberOfRetries >= LOCK_MAX_TRIES) {
     next(sessionStoreStrategy)
     return
   }
   let currentLock: string
   let currentSession = retrieveSession()
-  if (lockEnabled) {
+  if (isLockEnabled) {
     // if someone has lock, retry later
     if (currentSession.lock) {
       retryLater(operations, sessionStoreStrategy, numberOfRetries)
@@ -54,7 +52,7 @@ export function processSessionStoreOperations(
     }
   }
   let processedSession = operations.process(currentSession)
-  if (lockEnabled) {
+  if (isLockEnabled) {
     // if lock corrupted after process, retry later
     currentSession = retrieveSession()
     if (currentSession.lock !== currentLock!) {
@@ -70,7 +68,7 @@ export function processSessionStoreOperations(
       persistSession(processedSession)
     }
   }
-  if (lockEnabled) {
+  if (isLockEnabled) {
     // correctly handle lock around expiration would require to handle this case properly at several levels
     // since we don't have evidence of lock issues around expiration, let's just not do the corruption check for it
     if (!(processedSession && isSessionInExpiredState(processedSession))) {
@@ -90,12 +88,6 @@ export function processSessionStoreOperations(
   operations.after?.(processedSession || currentSession)
   next(sessionStoreStrategy)
 }
-
-/**
- * Lock strategy allows mitigating issues due to concurrent access to cookie.
- * This issue concerns only chromium browsers and enabling this on firefox increases cookie write failures.
- */
-export const isLockEnabled = () => isChromium()
 
 function retryLater(operations: Operations, sessionStore: SessionStoreStrategy, currentNumberOfRetries: number) {
   setTimeout(() => {

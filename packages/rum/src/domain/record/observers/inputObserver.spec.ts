@@ -2,6 +2,7 @@ import { DefaultPrivacyLevel, isIE } from '@datadog/browser-core'
 import type { Clock } from '@datadog/browser-core/test'
 import { createNewEvent, mockClock } from '@datadog/browser-core/test'
 import type { RumConfiguration } from '@datadog/browser-rum-core'
+import { appendElement } from '../../../../../rum-core/test'
 import { PRIVACY_ATTR_NAME, PRIVACY_ATTR_VALUE_MASK_USER_INPUT } from '../../../constants'
 import { serializeDocument, SerializationContextStatus } from '../serialization'
 import { createElementsScrollPositions } from '../elementsScrollPositions'
@@ -12,7 +13,6 @@ import { DEFAULT_CONFIGURATION, DEFAULT_SHADOW_ROOT_CONTROLLER } from './observe
 describe('initInputObserver', () => {
   let stopInputObserver: () => void
   let inputCallbackSpy: jasmine.Spy<InputCallback>
-  let sandbox: HTMLElement
   let input: HTMLInputElement
   let clock: Clock | undefined
   let configuration: RumConfiguration
@@ -23,11 +23,7 @@ describe('initInputObserver', () => {
     }
     configuration = { defaultPrivacyLevel: DefaultPrivacyLevel.ALLOW } as RumConfiguration
     inputCallbackSpy = jasmine.createSpy()
-
-    sandbox = document.createElement('div')
-    input = document.createElement('input')
-    sandbox.appendChild(input)
-    document.body.appendChild(sandbox)
+    input = appendElement('<div><input target /></div>') as HTMLInputElement
 
     serializeDocument(document, DEFAULT_CONFIGURATION, {
       shadowRootsController: DEFAULT_SHADOW_ROOT_CONTROLLER,
@@ -38,7 +34,6 @@ describe('initInputObserver', () => {
 
   afterEach(() => {
     stopInputObserver()
-    sandbox.remove()
     clock?.cleanup()
   })
 
@@ -102,7 +97,7 @@ describe('initInputObserver', () => {
   it('masks input values according to the element privacy level', () => {
     configuration.defaultPrivacyLevel = DefaultPrivacyLevel.ALLOW
     stopInputObserver = initInputObserver(configuration, inputCallbackSpy)
-    sandbox.setAttribute(PRIVACY_ATTR_NAME, PRIVACY_ATTR_VALUE_MASK_USER_INPUT)
+    input.setAttribute(PRIVACY_ATTR_NAME, PRIVACY_ATTR_VALUE_MASK_USER_INPUT)
 
     dispatchInputEvent('foo')
 
@@ -112,7 +107,7 @@ describe('initInputObserver', () => {
   it('masks input values according to a parent element privacy level', () => {
     configuration.defaultPrivacyLevel = DefaultPrivacyLevel.ALLOW
     stopInputObserver = initInputObserver(configuration, inputCallbackSpy)
-    input.setAttribute(PRIVACY_ATTR_NAME, PRIVACY_ATTR_VALUE_MASK_USER_INPUT)
+    input.parentElement!.setAttribute(PRIVACY_ATTR_NAME, PRIVACY_ATTR_VALUE_MASK_USER_INPUT)
 
     dispatchInputEvent('foo')
 
@@ -138,7 +133,7 @@ describe('initInputObserver', () => {
     const host = document.createElement('div')
     host.attachShadow({ mode: 'open' })
     const event = createNewEvent('input', { target: host, composed: true })
-    event.composedPath = () => [input, host, sandbox, document.body]
+    event.composedPath = () => [input, host, input.parentElement!, document.body]
     input.dispatchEvent(event)
   }
 })
