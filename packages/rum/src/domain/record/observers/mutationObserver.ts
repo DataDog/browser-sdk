@@ -1,10 +1,10 @@
 import { monitor, noop } from '@datadog/browser-core'
 import type { RumConfiguration } from '@datadog/browser-rum-core'
 import {
-  getChildNodes,
   isNodeShadowHost,
   getMutationObserverConstructor,
   getParentNode,
+  forEachChildNodes,
 } from '@datadog/browser-rum-core'
 import { NodePrivacyLevel } from '../../../constants'
 import type {
@@ -389,9 +389,10 @@ export function sortAddedAndMovedNodes(nodes: Node[]) {
     return 0
   })
 }
+
 function traverseRemovedShadowDom(removedNode: Node, shadowDomRemovedCallback: ShadowRootCallBack) {
   if (isNodeShadowHost(removedNode)) {
     shadowDomRemovedCallback(removedNode.shadowRoot)
   }
-  getChildNodes(removedNode).forEach((child) => traverseRemovedShadowDom(child, shadowDomRemovedCallback))
+  forEachChildNodes(removedNode, (childNode) => traverseRemovedShadowDom(childNode, shadowDomRemovedCallback))
 }

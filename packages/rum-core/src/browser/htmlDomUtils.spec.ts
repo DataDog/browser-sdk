@@ -1,12 +1,13 @@
 import { isIE } from '@datadog/browser-core'
+import { appendElement } from '../../test'
 import {
   isTextNode,
   isCommentNode,
   isElementNode,
   isNodeShadowRoot,
-  getChildNodes,
   getParentNode,
   isNodeShadowHost,
+  forEachChildNodes,
 } from './htmlDomUtils'
 
 describe('isTextNode', () => {
@@ -124,43 +125,44 @@ if (!isIE()) {
   })
 }
 
-describe('getChildNodes', () => {
-  it('should return the direct children for a normal node', () => {
-    if (isIE()) {
-      pending('IE not supported')
-    }
+describe('forEachChildNodes', () => {
+  it('should iterate over the direct children for a normal node', () => {
+    const container = appendElement(`
+      <div>toto<span></span><!-- --></div>
+    `)
 
-    const children: Node[] = [
-      document.createTextNode('toto'),
-      document.createElement('span'),
-      document.createComment('oops'),
-    ]
-    const container = document.createElement('div')
-    children.forEach((node) => {
-      container.appendChild(node)
-    })
-
-    expect(getChildNodes(container).length).toBe(children.length)
+    const spy = jasmine.createSpy()
+    forEachChildNodes(container, spy)
+    expect(spy).toHaveBeenCalledTimes(3)
   })
 
-  it('should return the children of the shadow root for a node that is a host', () => {
+  it('should iterate over the the shadow root for a node that is a host', () => {
     if (isIE()) {
       pending('IE not supported')
     }
 
-    const children: Node[] = [
-      document.createTextNode('toto'),
-      document.createElement('span'),
-      document.createComment('oops'),
-    ]
-    const container = document.createElement('div')
-    container.attachShadow({ mode: 'open' })
+    const container = appendElement('<div></div>')
+    const shadowRoot = container.attachShadow({ mode: 'open' })
 
-    children.forEach((node) => {
-      container.shadowRoot!.appendChild(node)
-    })
+    const spy = jasmine.createSpy()
+    forEachChildNodes(container, spy)
+    expect(spy).toHaveBeenCalledTimes(1)
+    expect(spy.calls.argsFor(0)[0]).toBe(shadowRoot)
+  })
 
-    expect(getChildNodes(container).length).toBe(children.length)
+  it('should iterate over the the shadow root and direct children for a node that is a host', () => {
+    if (isIE()) {
+      pending('IE not supported')
+    }
+
+    const container = appendElement('<div><span></span></div>')
+    const shadowRoot = container.attachShadow({ mode: 'open' })
+
+    const spy = jasmine.createSpy()
+    forEachChildNodes(container, spy)
+    expect(spy).toHaveBeenCalledTimes(2)
+    expect(spy.calls.argsFor(0)[0]).toBe(container.childNodes[0])
+    expect(spy.calls.argsFor(1)[0]).toBe(shadowRoot)
   })
 })
 
