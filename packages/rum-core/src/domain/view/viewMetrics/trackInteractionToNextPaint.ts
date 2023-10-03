@@ -64,7 +64,7 @@ export function trackInteractionToNextPaint(
     const inpInteraction = longestInteractions.estimateP98Interaction()
     if (inpInteraction) {
       interactionToNextPaint = inpInteraction.duration
-      if (interactionToNextPaint > 10 * ONE_MINUTE && !telemetryCollected) {
+      if (!telemetryCollected) {
         telemetryCollected = true
         addTelemetryDebug('INP outlier', {
           inp: interactionToNextPaint,
