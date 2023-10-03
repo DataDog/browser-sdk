@@ -474,7 +474,7 @@ __metadata:
   dependencies:
     "@datadog/browser-core": 5.0.0-alpha.0
     "@datadog/browser-rum-core": 5.0.0-alpha.0
-    "@types/pako": 2.0.0
+    "@types/pako": 2.0.1
     pako: 2.1.0
   peerDependencies:
     "@datadog/browser-logs": 5.0.0-alpha.0
