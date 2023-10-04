@@ -1,4 +1,3 @@
-import { computeStackTrace } from '../tracekit'
 import { createHandlingStack, formatErrorMessage, toStackTraceString, tryToGetFingerprint } from '../error/error'
 import { mergeObservables, Observable } from '../../tools/observable'
 import { ConsoleApiName, globalConsole } from '../../tools/display'
@@ -6,6 +5,7 @@ import { callMonitored } from '../../tools/monitor'
 import { sanitize } from '../../tools/serialisation/sanitize'
 import { find } from '../../tools/utils/polyfills'
 import { jsonStringify } from '../../tools/serialisation/jsonStringify'
+import { computeStackTrace } from '../error/computeStackTrace'
 
 export interface ConsoleLog {
   message: string
