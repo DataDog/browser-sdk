@@ -127,6 +127,10 @@ if (!isIE()) {
 
 describe('forEachChildNodes', () => {
   it('should iterate over the direct children for a normal node', () => {
+    if (isIE()) {
+      pending('IE not supported')
+    }
+
     const container = appendElement(`
       <div>toto<span></span><!-- --></div>
     `)
