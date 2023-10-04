@@ -1,6 +1,6 @@
 import { DefaultPrivacyLevel, display } from '@datadog/browser-core'
 import type { RumInitConfiguration } from './configuration'
-import { serializeRumConfiguration, validateAndBuildRumConfiguration } from './configuration'
+import { DEFAULT_PROPAGATOR_TYPES, serializeRumConfiguration, validateAndBuildRumConfiguration } from './configuration'
 
 const DEFAULT_INIT_CONFIGURATION = { clientToken: 'xxx', applicationId: 'xxx' }
 
@@ -90,7 +90,7 @@ describe('validateAndBuildRumConfiguration', () => {
           allowedTracingUrls: ['foo'],
           service: 'bar',
         })!.allowedTracingUrls
-      ).toEqual([{ match: 'foo', propagatorTypes: ['datadog'] }])
+      ).toEqual([{ match: 'foo', propagatorTypes: DEFAULT_PROPAGATOR_TYPES }])
     })
 
     it('accepts functions', () => {
@@ -102,7 +102,7 @@ describe('validateAndBuildRumConfiguration', () => {
           allowedTracingUrls: [customOriginFunction],
           service: 'bar',
         })!.allowedTracingUrls
-      ).toEqual([{ match: customOriginFunction, propagatorTypes: ['datadog'] }])
+      ).toEqual([{ match: customOriginFunction, propagatorTypes: DEFAULT_PROPAGATOR_TYPES }])
     })
 
     it('accepts RegExp', () => {
@@ -112,7 +112,7 @@ describe('validateAndBuildRumConfiguration', () => {
           allowedTracingUrls: [/az/i],
           service: 'bar',
         })!.allowedTracingUrls
-      ).toEqual([{ match: /az/i, propagatorTypes: ['datadog'] }])
+      ).toEqual([{ match: /az/i, propagatorTypes: DEFAULT_PROPAGATOR_TYPES }])
     })
 
     it('keeps headers', () => {
@@ -341,12 +341,14 @@ describe('validateAndBuildRumConfiguration', () => {
         expect(serializeRumConfiguration(DEFAULT_INIT_CONFIGURATION).selected_tracing_propagators).toEqual([])
       })
 
-      it('should return Datadog propagator type', () => {
+      it('should return the default propagator types', () => {
         const simpleTracingConfig: RumInitConfiguration = {
           ...DEFAULT_INIT_CONFIGURATION,
           allowedTracingUrls: ['foo'],
         }
-        expect(serializeRumConfiguration(simpleTracingConfig).selected_tracing_propagators).toEqual(['datadog'])
+        expect(serializeRumConfiguration(simpleTracingConfig).selected_tracing_propagators).toEqual(
+          DEFAULT_PROPAGATOR_TYPES
+        )
       })
 
       it('should return all propagator types', () => {
