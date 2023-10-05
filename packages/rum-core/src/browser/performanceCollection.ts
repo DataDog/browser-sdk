@@ -102,17 +102,22 @@ export interface RumFirstInputTiming {
   entryType: RumPerformanceEntryType.FIRST_INPUT
   startTime: RelativeTime
   processingStart: RelativeTime
+  processingEnd: RelativeTime
   duration: Duration
   target?: Node
   interactionId?: number
+  name: string
 }
 
 export interface RumPerformanceEventTiming {
   entryType: RumPerformanceEntryType.EVENT
   startTime: RelativeTime
+  processingStart: RelativeTime
+  processingEnd: RelativeTime
   duration: Duration
   interactionId?: number
   target?: Node
+  name: string
 }
 
 export interface RumLayoutShiftTiming {
@@ -296,8 +301,10 @@ function retrieveFirstInputTiming(configuration: RumConfiguration, callback: (ti
       const timing: RumFirstInputTiming = {
         entryType: RumPerformanceEntryType.FIRST_INPUT,
         processingStart: relativeNow(),
+        processingEnd: relativeNow(),
         startTime: evt.timeStamp as RelativeTime,
         duration: 0 as Duration, // arbitrary value to avoid nullable duration and simplify INP logic
+        name: '',
       }
 
       if (evt.type === DOM_EVENT.POINTER_DOWN) {
