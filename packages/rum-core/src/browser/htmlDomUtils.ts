@@ -19,8 +19,11 @@ export function isNodeShadowRoot(node: Node): node is ShadowRoot {
   return !!shadowRoot.host && shadowRoot.nodeType === Node.DOCUMENT_FRAGMENT_NODE && isElementNode(shadowRoot.host)
 }
 
-export function getChildNodes(node: Node) {
-  return isNodeShadowHost(node) ? node.shadowRoot.childNodes : node.childNodes
+export function forEachChildNodes(node: Node, callback: (child: Node) => void) {
+  node.childNodes.forEach(callback)
+  if (isNodeShadowHost(node)) {
+    callback(node.shadowRoot)
+  }
 }
 
 /**
