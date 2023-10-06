@@ -15,6 +15,24 @@ describe('logs', () => {
       expect(intakeRegistry.logsEvents[0].message).toBe('hello')
     })
 
+  createTest('display logs in the console')
+    .withLogs()
+    .run(async ({ intakeRegistry }) => {
+      await browserExecute(() => {
+        window.DD_LOGS!.logger.setHandler('console')
+        window.DD_LOGS!.logger.warn('hello')
+      })
+      await flushEvents()
+      expect(intakeRegistry.logsEvents.length).toBe(0)
+
+      await withBrowserLogs((logs) => {
+        expect(logs.length).toBe(1)
+        expect(logs[0].level).toBe('WARNING')
+        expect(logs[0].message).not.toEqual(jasmine.stringContaining('Datadog Browser SDK'))
+        expect(logs[0].message).toEqual(jasmine.stringContaining('hello'))
+      })
+    })
+
   createTest('send console errors')
     .withLogs({ forwardErrorsToLogs: true })
     .run(async ({ intakeRegistry }) => {
