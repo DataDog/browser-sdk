@@ -4,8 +4,9 @@ import {
   ExperimentalFeature,
   ONE_MINUTE,
   addTelemetryDebug,
+  elapsed,
 } from '@datadog/browser-core'
-import type { Duration } from '@datadog/browser-core'
+import type { ClocksState, Duration } from '@datadog/browser-core'
 import { RumPerformanceEntryType, supportPerformanceTimingEvent } from '../../../browser/performanceCollection'
 import type { RumFirstInputTiming, RumPerformanceEventTiming } from '../../../browser/performanceCollection'
 import { LifeCycleEventType } from '../../lifeCycle'
@@ -31,6 +32,7 @@ export interface InteractionToNextPaint {
  */
 export function trackInteractionToNextPaint(
   configuration: RumConfiguration,
+  viewStart: ClocksState,
   viewLoadingType: ViewLoadingType,
   lifeCycle: LifeCycle
 ) {
@@ -69,6 +71,7 @@ export function trackInteractionToNextPaint(
         addTelemetryDebug('INP outlier', {
           inp: interactionToNextPaint,
           interaction: {
+            timeFromViewStart: elapsed(viewStart.relative, newInteraction.startTime),
             duration: newInteraction.duration,
             startTime: newInteraction.startTime,
             processingStart: newInteraction.processingStart,
