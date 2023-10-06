@@ -60,9 +60,5 @@ export function isAuthorized(status: StatusType, handlerType: HandlerType, logge
 }
 
 function displayInConsole(logsMessage: LogsMessage, messageContext: Context | undefined) {
-  const consoleMethod = Object.prototype.hasOwnProperty.call(originalConsoleMethods, logsMessage.status)
-    ? originalConsoleMethods[logsMessage.status]
-    : originalConsoleMethods.log
-
-  consoleMethod.call(globalConsole, logsMessage.message, messageContext)
+  originalConsoleMethods[logsMessage.status].call(globalConsole, logsMessage.message, messageContext)
 }
