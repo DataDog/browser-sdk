@@ -33,7 +33,6 @@ export function startReportCollection(configuration: LogsConfiguration, lifeCycl
       if (status === StatusType.error) {
         error = {
           kind: report.subtype,
-          origin: ErrorSource.REPORT, // Todo: Remove in the next major release
           stack: report.stack,
         }
       } else if (report.stack) {

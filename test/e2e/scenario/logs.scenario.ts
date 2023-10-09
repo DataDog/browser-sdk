@@ -41,7 +41,7 @@ describe('logs', () => {
       })
       await flushEvents()
       expect(intakeRegistry.logsEvents.length).toBe(1)
-      expect(intakeRegistry.logsEvents[0].message).toBe('console error: oh snap')
+      expect(intakeRegistry.logsEvents[0].message).toBe('oh snap')
       await withBrowserLogs((browserLogs) => {
         expect(browserLogs.length).toEqual(1)
       })
@@ -60,7 +60,7 @@ describe('logs', () => {
       await flushEvents()
       expect(intakeRegistry.logsEvents.length).toBe(1)
       expect(intakeRegistry.logsEvents[0].message).toBe(`XHR error GET ${UNREACHABLE_URL}`)
-      expect(intakeRegistry.logsEvents[0].error?.origin).toBe('network')
+      expect(intakeRegistry.logsEvents[0].origin).toBe('network')
 
       await withBrowserLogs((browserLogs) => {
         // Some browser report two errors:
@@ -82,7 +82,7 @@ describe('logs', () => {
       await flushEvents()
       expect(intakeRegistry.logsEvents.length).toBe(1)
       expect(intakeRegistry.logsEvents[0].message).toBe(`Fetch error GET ${UNREACHABLE_URL}`)
-      expect(intakeRegistry.logsEvents[0].error?.origin).toBe('network')
+      expect(intakeRegistry.logsEvents[0].origin).toBe('network')
 
       await withBrowserLogs((browserLogs) => {
         // Some browser report two errors:
@@ -102,7 +102,7 @@ describe('logs', () => {
       await flushEvents()
       expect(intakeRegistry.logsEvents.length).toBe(1)
       expect(intakeRegistry.logsEvents[0].message).toBe(`Fetch error GET ${baseUrl}/throw-large-response`)
-      expect(intakeRegistry.logsEvents[0].error?.origin).toBe('network')
+      expect(intakeRegistry.logsEvents[0].origin).toBe('network')
 
       const ellipsisSize = 3
       expect(intakeRegistry.logsEvents[0].error?.stack?.length).toBe(
@@ -179,6 +179,7 @@ describe('logs', () => {
     .withLogs({
       beforeSend: (event) => {
         event.foo = 'bar'
+        return true
       },
     })
     .run(async ({ intakeRegistry }) => {

@@ -124,6 +124,7 @@ describe('beforeSend', () => {
     .withRum({
       beforeSend: (event: any) => {
         event.context!.foo = 'bar'
+        return true
       },
     })
     .withRumSlim()
@@ -140,13 +141,14 @@ describe('beforeSend', () => {
     .withRum({
       beforeSend: (event) => {
         event.context = { foo: 'bar' }
+        return true
       },
     })
     .withRumSlim()
     .withRumInit((configuration) => {
       window.DD_RUM!.init(configuration)
-      window.DD_RUM!.addRumGlobalContext('foo', 'baz')
-      window.DD_RUM!.addRumGlobalContext('zig', 'zag')
+      window.DD_RUM!.setGlobalContextProperty('foo', 'baz')
+      window.DD_RUM!.setGlobalContextProperty('zig', 'zag')
     })
     .run(async ({ intakeRegistry }) => {
       await flushEvents()

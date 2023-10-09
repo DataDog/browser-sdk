@@ -17,6 +17,8 @@ describe('bridge present', () => {
     .run(async ({ intakeRegistry }) => {
       const button = await $('button')
       await button.click()
+      // wait for click chain to close
+      await browser.pause(1000)
       await flushEvents()
 
       expect(intakeRegistry.rumActionEvents.length).toBe(1)

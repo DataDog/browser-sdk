@@ -42,7 +42,7 @@ function computeEndpointBuilders(initConfiguration: InitConfiguration, tags: str
   return {
     logsEndpointBuilder: createEndpointBuilder(initConfiguration, 'logs', tags),
     rumEndpointBuilder: createEndpointBuilder(initConfiguration, 'rum', tags),
-    sessionReplayEndpointBuilder: createEndpointBuilder(initConfiguration, 'sessionReplay', tags),
+    sessionReplayEndpointBuilder: createEndpointBuilder(initConfiguration, 'replay', tags),
   }
 }
 

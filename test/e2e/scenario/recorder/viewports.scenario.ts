@@ -5,7 +5,6 @@ import { findAllIncrementalSnapshots, findAllVisualViewports } from '@datadog/br
 import type { IntakeRegistry } from '../../lib/framework'
 import { flushEvents, createTest, bundleSetup, html } from '../../lib/framework'
 import { browserExecute, getBrowserName, getPlatformName } from '../../lib/helpers/browser'
-import { initRumAndStartRecording } from '../../lib/helpers/replay'
 
 const NAVBAR_HEIGHT_CHANGE_UPPER_BOUND = 30
 const VIEWPORT_META_TAGS = `
@@ -26,7 +25,6 @@ describe('recorder', () => {
   describe('layout viewport properties', () => {
     createTest('getWindowWidth/Height should not be affected by pinch zoom')
       .withRum()
-      .withRumInit(initRumAndStartRecording)
       .withSetup(bundleSetup)
       .withBody(html`${VIEWPORT_META_TAGS}`)
       .run(async ({ intakeRegistry }) => {
@@ -57,7 +55,6 @@ describe('recorder', () => {
      */
     createTest('getScrollX/Y should not be affected by pinch scroll')
       .withRum()
-      .withRumInit(initRumAndStartRecording)
       .withSetup(bundleSetup)
       .withBody(html`${VIEWPORT_META_TAGS}`)
       .run(async ({ intakeRegistry }) => {
@@ -101,7 +98,6 @@ describe('recorder', () => {
   describe('visual viewport properties', () => {
     createTest('pinch zoom "scroll" event reports visual viewport position')
       .withRum()
-      .withRumInit(initRumAndStartRecording)
       .withSetup(bundleSetup)
       .withBody(html`${VIEWPORT_META_TAGS}`)
       .run(async ({ intakeRegistry }) => {
@@ -116,7 +112,6 @@ describe('recorder', () => {
 
     createTest('pinch zoom "resize" event reports visual viewport scale')
       .withRum()
-      .withRumInit(initRumAndStartRecording)
       .withSetup(bundleSetup)
       .withBody(html`${VIEWPORT_META_TAGS}`)
       .run(async ({ intakeRegistry }) => {

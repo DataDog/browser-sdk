@@ -9,12 +9,15 @@ import { startLongTaskCollection } from './longTaskCollection'
 describe('long task collection', () => {
   let setupBuilder: TestSetupBuilder
   let sessionManager: RumSessionManagerMock
+  let trackLongTasks: boolean
+
   beforeEach(() => {
+    trackLongTasks = true
     sessionManager = createRumSessionManagerMock()
     setupBuilder = setup()
       .withSessionManager(sessionManager)
-      .beforeBuild(({ lifeCycle, sessionManager }) => {
-        startLongTaskCollection(lifeCycle, sessionManager)
+      .beforeBuild(({ lifeCycle, sessionManager, configuration }) => {
+        startLongTaskCollection(lifeCycle, { ...configuration, trackLongTasks }, sessionManager)
       })
   })
 
@@ -34,20 +37,24 @@ describe('long task collection', () => {
     expect(rawRumEvents.length).toBe(1)
   })
 
-  it('should only collect when session allows long tasks', () => {
+  it('should collect when trackLongTasks=true', () => {
+    trackLongTasks = true
     const { lifeCycle, rawRumEvents } = setupBuilder.build()
 
-    sessionManager.setLongTaskAllowed(true)
     lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [
       createPerformanceEntry(RumPerformanceEntryType.LONG_TASK),
     ])
     expect(rawRumEvents.length).toBe(1)
+  })
 
-    sessionManager.setLongTaskAllowed(false)
+  it('should not collect when trackLongTasks=false', () => {
+    trackLongTasks = false
+    const { lifeCycle, rawRumEvents } = setupBuilder.build()
+
     lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [
       createPerformanceEntry(RumPerformanceEntryType.LONG_TASK),
     ])
-    expect(rawRumEvents.length).toBe(1)
+    expect(rawRumEvents.length).toBe(0)
   })
 
   it('should create raw rum event from performance entry', () => {
@@ -69,7 +76,13 @@ describe('long task collection', () => {
       },
     })
     expect(rawRumEvents[0].domainContext).toEqual({
-      performanceEntry: { name: 'self', duration: 100, entryType: 'longtask', startTime: 1234 },
+      performanceEntry: {
+        name: 'self',
+        duration: 100,
+        entryType: 'longtask',
+        startTime: 1234,
+        toJSON: jasmine.any(Function),
+      },
     })
   })
 })
