@@ -1,5 +1,5 @@
 import { isIE } from '@datadog/browser-core'
-import { appendElement } from '../../test'
+import { appendElement, appendText } from '../../test'
 import {
   isTextNode,
   isCommentNode,
@@ -8,6 +8,7 @@ import {
   getParentNode,
   isNodeShadowHost,
   forEachChildNodes,
+  hasChildNodes,
 } from './htmlDomUtils'
 
 describe('isTextNode', () => {
@@ -124,6 +125,31 @@ if (!isIE()) {
     })
   })
 }
+
+describe('hasChildNode', () => {
+  beforeEach(() => {
+    if (isIE()) {
+      pending('IE not supported')
+    }
+  })
+
+  it('should return `true` if the element has a direct child node', () => {
+    expect(hasChildNodes(appendElement('<div>foo</div>'))).toBe(true)
+    expect(hasChildNodes(appendElement('<div><hr /></div>'))).toBe(true)
+    expect(hasChildNodes(appendElement('<div><!--  --></div>'))).toBe(true)
+  })
+
+  it('should return `true` if the element is a shadow host', () => {
+    const container = appendElement('<div></div>')
+    container.attachShadow({ mode: 'open' })
+    expect(hasChildNodes(container)).toBe(true)
+  })
+
+  it('should return `false` otherwise', () => {
+    expect(hasChildNodes(appendElement('<div></div>'))).toBe(false)
+    expect(hasChildNodes(appendText('foo'))).toBe(false)
+  })
+})
 
 describe('forEachChildNodes', () => {
   it('should iterate over the direct children for a normal node', () => {
