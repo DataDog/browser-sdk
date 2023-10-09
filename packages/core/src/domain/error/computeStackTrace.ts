@@ -1,34 +1,23 @@
+/**
+ *
+ * Cross-browser stack trace computation.
+ *
+ * Reference implementation: https://github.com/csnover/TraceKit/blob/04530298073c3823de72deb0b97e7b38ca7bcb59/tracekit.js
+ */
+
 import { startsWith } from '../../tools/utils/polyfills'
 
-/**
- * An object representing a single stack frame.
- * @typedef {Object} StackFrame
- * @property {string=} url The JavaScript or HTML file URL.
- * @property {string=} func The function name, or empty for anonymous functions (if guessing did not work).
- * @property {string[]=} args The arguments passed to the function, if known.
- * @property {number=} line The line number, if known.
- * @property {number=} column The column number, if known.
- * @property {string[]=} context An array of source code lines; the middle element corresponds to the correct line#.
- * @memberof TraceKit
- */
 export interface StackFrame {
   url?: string
   func?: string
+  /** The arguments passed to the function, if known. */
   args?: string[]
   line?: number
   column?: number
+  /** An array of source code lines; the middle element corresponds to the correct line. */
   context?: string[]
 }
 
-/**
- * An object representing a JavaScript stack trace.
- * @typedef {Object} StackTrace
- * @property {string=} name The name of the thrown exception.
- * @property {string} message The exception error message.
- * @property {StackFrame[]} stack An array of stack frames.
- * -- method used to collect the stack trace.
- * @memberof TraceKit
- */
 export interface StackTrace {
   name?: string
   message?: string
@@ -40,9 +29,6 @@ export interface StackTrace {
 
 const UNKNOWN_FUNCTION = '?'
 
-/**
- * Computes a stack trace for an exception.
- */
 export function computeStackTrace(ex: unknown): StackTrace {
   const stack: StackFrame[] = []
 
@@ -175,4 +161,27 @@ function tryToGetString(candidate: unknown, property: string) {
   }
   const value = (candidate as { [k: string]: unknown })[property]
   return typeof value === 'string' ? value : undefined
+}
+
+export function computeStackTraceFromOnErrorMessage(messageObj: unknown, url?: string, line?: number, column?: number) {
+  const stack = [{ url, column, line }]
+  const { name, message } = tryToParseMessage(messageObj)
+  return {
+    name,
+    message,
+    stack,
+  }
+}
+
+// https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Error#Error_types
+const ERROR_TYPES_RE =
+  /^(?:[Uu]ncaught (?:exception: )?)?(?:((?:Eval|Internal|Range|Reference|Syntax|Type|URI|)Error): )?([\s\S]*)$/
+
+function tryToParseMessage(messageObj: unknown) {
+  let name
+  let message
+  if ({}.toString.call(messageObj) === '[object String]') {
+    ;[, name, message] = ERROR_TYPES_RE.exec(messageObj as string)!
+  }
+  return { name, message }
 }
