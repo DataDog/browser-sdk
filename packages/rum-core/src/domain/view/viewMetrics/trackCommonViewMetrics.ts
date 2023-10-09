@@ -50,6 +50,7 @@ export function trackCommonViewMetrics(
 
   const { stop: stopINPTracking, getInteractionToNextPaint } = trackInteractionToNextPaint(
     configuration,
+    viewStart,
     loadingType,
     lifeCycle
   )

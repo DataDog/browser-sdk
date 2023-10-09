@@ -39,6 +39,14 @@
 - 🔥 [RUMF-1555] Remove `startTime` in xhr start context ([#2287](https://github.com/DataDog/browser-sdk/pull/2287))
 - ♻️ [RUMF-1555] Remove deprecated context manager APIs ([#2284](https://github.com/DataDog/browser-sdk/pull/2284))
 
+## v4.50.1
+
+- 🐛 [RUM-1325] fix memory leak when using shadow dom ([#2451](https://github.com/DataDog/browser-sdk/pull/2451))
+- 🐛 [RUM-1325] propagate privacy defined on shadow hosts ([#2454](https://github.com/DataDog/browser-sdk/pull/2454))
+- 🐛 [RUM-1196] escape CSS rules containing a colon for Safari compatibility ([#2440](https://github.com/DataDog/browser-sdk/pull/2440))
+- 🐛 [RUM-1062] remove message prefix when using the console handler ([#2452](https://github.com/DataDog/browser-sdk/pull/2452))
+- 🐛 [RUM-1211] fix compatibility with TS4.6/4.7 using ES2022 ([#2455](https://github.com/DataDog/browser-sdk/pull/2455))
+
 ## v4.50.0
 
 - ✨ [RUM-1062] add a prefix to all console message displayed by the SDK ([#2432](https://github.com/DataDog/browser-sdk/pull/2432))

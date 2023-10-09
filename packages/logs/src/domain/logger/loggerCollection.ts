@@ -1,5 +1,12 @@
-import type { TimeStamp } from '@datadog/browser-core'
-import { includes, display, combine, ErrorSource, timeStampNow } from '@datadog/browser-core'
+import type { Context, TimeStamp } from '@datadog/browser-core'
+import {
+  includes,
+  combine,
+  ErrorSource,
+  timeStampNow,
+  originalConsoleMethods,
+  globalConsole,
+} from '@datadog/browser-core'
 import type { CommonContext } from '../../rawLogsEvent.types'
 import type { LifeCycle } from '../lifeCycle'
 import { LifeCycleEventType } from '../lifeCycle'
@@ -23,7 +30,7 @@ export function startLoggerCollection(lifeCycle: LifeCycle) {
     const messageContext = combine(logger.getContext(), logsMessage.context)
 
     if (isAuthorized(logsMessage.status, HandlerType.console, logger)) {
-      display(logsMessage.status, logsMessage.message, messageContext)
+      displayInConsole(logsMessage, messageContext)
     }
 
     if (isAuthorized(logsMessage.status, HandlerType.http, logger)) {
@@ -51,4 +58,8 @@ export function isAuthorized(status: StatusType, handlerType: HandlerType, logge
   return (
     STATUS_PRIORITIES[status] >= STATUS_PRIORITIES[logger.getLevel()] && includes(sanitizedHandlerType, handlerType)
   )
+}
+
+function displayInConsole(logsMessage: LogsMessage, messageContext: Context | undefined) {
+  originalConsoleMethods[logsMessage.status].call(globalConsole, logsMessage.message, messageContext)
 }
