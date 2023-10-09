@@ -96,6 +96,7 @@ check_typescript_3_compatibility () {
 check_typescript_latest_compatibility () {
   # Add typescript options only supported in newer versions
   insert_line_in_file tsconfig.json 3 '"exactOptionalPropertyTypes": true,'
+  sed -i '' 's/es2015/esnext/i' tsconfig.json
 
   yarn add --dev typescript@latest
   local succeeded=true
