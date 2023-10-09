@@ -301,31 +301,19 @@ deploy-prod-canary:
     - node ./scripts/deploy/deploy.js prod v${VERSION%%.*} $UPLOAD_PATH
     - node ./scripts/deploy/upload-source-maps.js v${VERSION%%.*} $UPLOAD_PATH
 
-step-1_deploy-prod-minor-dcs:
+step-1_deploy-prod-all-dcs:
   extends:
     - .deploy-prod
   variables:
-    UPLOAD_PATH: us3,us5,ap1
+    UPLOAD_PATH: us3,us5,ap1,eu1,us1
 
-step-2_deploy-prod-eu1:
-  extends:
-    - .deploy-prod
-  variables:
-    UPLOAD_PATH: eu1
-
-step-3_deploy-prod-us1:
-  extends:
-    - .deploy-prod
-  variables:
-    UPLOAD_PATH: us1
-
-step-4_deploy-prod-root:
+step-2_deploy-prod-gov:
   extends:
     - .deploy-prod
   variables:
     UPLOAD_PATH: root
 
-step-5_publish-npm:
+step-3_publish-npm:
   stage: deploy
   extends:
     - .base-configuration
@@ -336,7 +324,7 @@ step-5_publish-npm:
     - yarn
     - node ./scripts/deploy/publish-npm.js
 
-step-6_publish-developer-extension:
+step-4_publish-developer-extension:
   stage: deploy
   extends:
     - .base-configuration
