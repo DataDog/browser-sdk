@@ -1,5 +1,10 @@
 import type { Duration } from '@datadog/browser-core'
-import { ExperimentalFeature, addExperimentalFeatures, resetExperimentalFeatures } from '@datadog/browser-core'
+import {
+  ExperimentalFeature,
+  addExperimentalFeatures,
+  clocksNow,
+  resetExperimentalFeatures,
+} from '@datadog/browser-core'
 import type { TestSetupBuilder } from '../../../../test'
 import { appendElement, appendText, createPerformanceEntry, setup } from '../../../../test'
 import { RumPerformanceEntryType } from '../../../browser/performanceCollection'
@@ -39,6 +44,7 @@ describe('trackInteractionToNextPaint', () => {
     setupBuilder = setup().beforeBuild(({ lifeCycle, configuration }) => {
       const interactionToNextPaintTracking = trackInteractionToNextPaint(
         configuration,
+        clocksNow(),
         ViewLoadingType.INITIAL_LOAD,
         lifeCycle
       )
