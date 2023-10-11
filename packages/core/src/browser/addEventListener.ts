@@ -3,7 +3,11 @@ import { getZoneJsOriginalValue } from '../tools/getZoneJsOriginalValue'
 import type { Configuration } from '../domain/configuration'
 import type { VisualViewport, VisualViewportEventMap } from './types'
 
-export const enum DOM_EVENT {
+export type TrustableEvent<E extends Event = Event> = E & { __ddIsTrusted?: boolean }
+
+// We want to use a real enum (i.e. not a const enum) here, to be able to iterate over it to automatically add _ddIsTrusted in e2e tests
+// eslint-disable-next-line no-restricted-syntax
+export enum DOM_EVENT {
   BEFORE_UNLOAD = 'beforeunload',
   CLICK = 'click',
   DBL_CLICK = 'dblclick',
@@ -106,20 +110,21 @@ export function addEventListener<Target extends EventTarget, EventName extends k
  * * with `once: true`, the listener will be called at most once, even if different events are listened
  */
 export function addEventListeners<Target extends EventTarget, EventName extends keyof EventMapFor<Target> & string>(
-  _: Configuration,
+  configuration: Configuration,
   eventTarget: Target,
   eventNames: EventName[],
   listener: (event: EventMapFor<Target>[EventName] & { type: EventName }) => void,
   { once, capture, passive }: AddEventListenerOptions = {}
 ) {
-  const listenerWithMonitor = monitor(
-    once
-      ? (event: Event) => {
-          stop()
-          listener(event as unknown as EventMapFor<Target>[EventName] & { type: EventName })
-        }
-      : (listener as unknown as (event: Event) => void)
-  )
+  const listenerWithMonitor = monitor((event: TrustableEvent) => {
+    if (!event.isTrusted && !event.__ddIsTrusted && !configuration.allowUntrustedEvents) {
+      return
+    }
+    if (once) {
+      stop()
+    }
+    listener(event as unknown as EventMapFor<Target>[EventName] & { type: EventName })
+  })
 
   const options = passive ? { capture, passive } : capture
 

@@ -1,5 +1,5 @@
-import { MouseInteractionType, NodeType } from '@datadog/browser-rum/src/types'
 import type { DocumentFragmentNode, MouseInteractionData, SerializedNodeWithId } from '@datadog/browser-rum/src/types'
+import { MouseInteractionType, NodeType } from '@datadog/browser-rum/src/types'
 
 import {
   createMutationPayloadValidatorFromSegment,
@@ -14,7 +14,6 @@ import {
 
 import { flushEvents, createTest, bundleSetup, html } from '../../lib/framework'
 import { browserExecute } from '../../lib/helpers/browser'
-import { initRumAndStartRecording } from '../../lib/helpers/replay'
 
 /** Will generate the following HTML
  * ```html
@@ -112,7 +111,6 @@ class DivWithStyle extends HTMLElement {
 describe('recorder with shadow DOM', () => {
   createTest('can record fullsnapshot with the detail inside the shadow root')
     .withRum({ defaultPrivacyLevel: 'allow' })
-    .withRumInit(initRumAndStartRecording)
     .withSetup(bundleSetup)
     .withBody(html`
       ${divShadowDom}
@@ -133,7 +131,6 @@ describe('recorder with shadow DOM', () => {
 
   createTest('can record fullsnapshot with adoptedStylesheet')
     .withRum()
-    .withRumInit(initRumAndStartRecording)
     .withSetup(bundleSetup)
     .withBody(html`
       ${divWithStyleShadowDom}
@@ -159,7 +156,6 @@ describe('recorder with shadow DOM', () => {
 
   createTest('can apply privacy level set from outside or inside the shadow DOM')
     .withRum({ defaultPrivacyLevel: 'allow' })
-    .withRumInit(initRumAndStartRecording)
     .withSetup(bundleSetup)
     .withBody(html`
       ${inputShadowDom}
@@ -195,7 +191,6 @@ describe('recorder with shadow DOM', () => {
 
   createTest('can record click with target from inside the shadow root')
     .withRum()
-    .withRumInit(initRumAndStartRecording)
     .withSetup(bundleSetup)
     .withBody(html`
       ${divShadowDom}
@@ -218,7 +213,6 @@ describe('recorder with shadow DOM', () => {
 
   createTest('can record mutation from inside the shadow root')
     .withRum({ defaultPrivacyLevel: 'allow' })
-    .withRumInit(initRumAndStartRecording)
     .withSetup(bundleSetup)
     .withBody(html`
       ${divShadowDom}

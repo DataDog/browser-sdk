@@ -451,68 +451,94 @@ describe('serializeNodeWithId', () => {
       })
     })
 
-    it('serializes a shadow host', () => {
-      const div = document.createElement('div')
-      div.attachShadow({ mode: 'open' })
-      expect(serializeElement(div, DEFAULT_OPTIONS)).toEqual({
-        type: NodeType.Element,
-        tagName: 'div',
-        attributes: {},
-        isSVG: undefined,
-        childNodes: [
-          {
-            type: NodeType.DocumentFragment,
-            isShadowRoot: true,
-            childNodes: [],
-            id: jasmine.any(Number) as unknown as number,
-            adoptedStyleSheets: undefined,
-          },
-        ],
-        id: jasmine.any(Number) as unknown as number,
+    describe('shadow dom', () => {
+      it('serializes a shadow host', () => {
+        const div = document.createElement('div')
+        div.attachShadow({ mode: 'open' })
+        expect(serializeElement(div, DEFAULT_OPTIONS)).toEqual({
+          type: NodeType.Element,
+          tagName: 'div',
+          attributes: {},
+          isSVG: undefined,
+          childNodes: [
+            {
+              type: NodeType.DocumentFragment,
+              isShadowRoot: true,
+              childNodes: [],
+              id: jasmine.any(Number) as unknown as number,
+              adoptedStyleSheets: undefined,
+            },
+          ],
+          id: jasmine.any(Number) as unknown as number,
+        })
       })
-    })
 
-    it('serializes a shadow host with children', () => {
-      const div = document.createElement('div')
-      div.attachShadow({ mode: 'open' })
-      div.shadowRoot!.appendChild(document.createElement('hr'))
+      it('serializes a shadow host with children', () => {
+        const div = document.createElement('div')
+        div.attachShadow({ mode: 'open' })
+        div.shadowRoot!.appendChild(document.createElement('hr'))
 
-      const options: SerializeOptions = {
-        ...DEFAULT_OPTIONS,
-        serializationContext: {
-          ...DEFAULT_SERIALIZATION_CONTEXT,
-          shadowRootsController: {
-            ...DEFAULT_SHADOW_ROOT_CONTROLLER,
-            addShadowRoot: addShadowRootSpy,
+        const options: SerializeOptions = {
+          ...DEFAULT_OPTIONS,
+          serializationContext: {
+            ...DEFAULT_SERIALIZATION_CONTEXT,
+            shadowRootsController: {
+              ...DEFAULT_SHADOW_ROOT_CONTROLLER,
+              addShadowRoot: addShadowRootSpy,
+            },
           },
-        },
-      }
-      expect(serializeElement(div, options)).toEqual({
-        type: NodeType.Element,
-        tagName: 'div',
-        attributes: {},
-        isSVG: undefined,
-        childNodes: [
-          {
-            type: NodeType.DocumentFragment,
-            isShadowRoot: true,
-            adoptedStyleSheets: undefined,
+        }
+        expect(serializeElement(div, options)).toEqual({
+          type: NodeType.Element,
+          tagName: 'div',
+          attributes: {},
+          isSVG: undefined,
+          childNodes: [
+            {
+              type: NodeType.DocumentFragment,
+              isShadowRoot: true,
+              adoptedStyleSheets: undefined,
+              childNodes: [
+                {
+                  type: NodeType.Element,
+                  tagName: 'hr',
+                  attributes: {},
+                  isSVG: undefined,
+                  childNodes: [],
+                  id: jasmine.any(Number) as unknown as number,
+                },
+              ],
+              id: jasmine.any(Number) as unknown as number,
+            },
+          ],
+          id: jasmine.any(Number) as unknown as number,
+        })
+        expect(addShadowRootSpy).toHaveBeenCalledWith(div.shadowRoot!)
+      })
+
+      it('propagates the privacy mode to the shadow root children', () => {
+        const div = document.createElement('div')
+        div.setAttribute(PRIVACY_ATTR_NAME, PRIVACY_ATTR_VALUE_MASK)
+        div.attachShadow({ mode: 'open' })
+        div.shadowRoot!.appendChild(document.createTextNode('foo'))
+
+        expect(serializeElement(div, DEFAULT_OPTIONS)).toEqual(
+          jasmine.objectContaining({
+            attributes: {
+              [PRIVACY_ATTR_NAME]: PRIVACY_ATTR_VALUE_MASK,
+            },
             childNodes: [
-              {
-                type: NodeType.Element,
-                tagName: 'hr',
-                attributes: {},
-                isSVG: undefined,
-                childNodes: [],
-                id: jasmine.any(Number) as unknown as number,
-              },
+              jasmine.objectContaining({
+                childNodes: [
+                  jasmine.objectContaining({
+                    textContent: 'xxx',
+                  }),
+                ],
+              }),
             ],
-            id: jasmine.any(Number) as unknown as number,
-          },
-        ],
-        id: jasmine.any(Number) as unknown as number,
+          })
+        )
       })
-      expect(addShadowRootSpy).toHaveBeenCalledWith(div.shadowRoot!)
     })
 
     describe('<style> elements', () => {

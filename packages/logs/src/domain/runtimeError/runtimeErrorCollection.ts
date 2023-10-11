@@ -28,7 +28,6 @@ export function startRuntimeErrorCollection(configuration: LogsConfiguration, li
         date: rawError.startClocks.timeStamp,
         error: {
           kind: rawError.type,
-          origin: ErrorSource.SOURCE, // Todo: Remove in the next major release
           stack: rawError.stack,
         },
         origin: ErrorSource.SOURCE,

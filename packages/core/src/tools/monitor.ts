@@ -1,4 +1,4 @@
-import { ConsoleApiName, display } from './display'
+import { display } from './display'
 
 let onMonitorErrorCollected: undefined | ((error: unknown) => void)
 let debugMode = false
@@ -50,19 +50,19 @@ export function callMonitored<T extends (...args: any[]) => any>(
     // eslint-disable-next-line @typescript-eslint/no-unsafe-return
     return fn.apply(context, args)
   } catch (e) {
-    displayIfDebugEnabled(ConsoleApiName.error, e)
+    displayIfDebugEnabled(e)
     if (onMonitorErrorCollected) {
       try {
         onMonitorErrorCollected(e)
       } catch (e) {
-        displayIfDebugEnabled(ConsoleApiName.error, e)
+        displayIfDebugEnabled(e)
       }
     }
   }
 }
 
-export function displayIfDebugEnabled(api: ConsoleApiName, ...args: any[]) {
+export function displayIfDebugEnabled(...args: any[]) {
   if (debugMode) {
-    display(api, '[MONITOR]', ...args)
+    display.error('[MONITOR]', ...args)
   }
 }

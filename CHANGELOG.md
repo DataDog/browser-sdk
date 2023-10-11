@@ -16,6 +16,37 @@
 
 ---
 
+## v5.0.0-alpha.0
+
+- 💥 [RUMF-1577] Stop collecting foreground periods ([#2311](https://github.com/DataDog/browser-sdk/pull/2311))
+- 💥 [RUMF-1473] Ignore untrusted event ([#2308](https://github.com/DataDog/browser-sdk/pull/2308))
+- 💥 [RUMF-1564] remove intake subdomains ([#2309](https://github.com/DataDog/browser-sdk/pull/2309))
+- 💥 [RUMF-1557] beforeSend domain context: use PerformanceEntry ([#2300](https://github.com/DataDog/browser-sdk/pull/2300))
+- 💥 [RUMF-1556] Typings: consistent beforeSend return type ([#2303](https://github.com/DataDog/browser-sdk/pull/2303))
+- 💥 [RUMF-1230] Only apply main logger configuration to its own logs ([#2298](https://github.com/DataDog/browser-sdk/pull/2298))
+- 💥 [RUMF-1229] Logs: remove `error.origin` attribute ([#2294](https://github.com/DataDog/browser-sdk/pull/2294))
+- 💥 [RUMF-1228] Remove console error message prefix ([#2289](https://github.com/DataDog/browser-sdk/pull/2289))
+- 💥 [RUMF-1555] Rework logger context APIs ([#2285](https://github.com/DataDog/browser-sdk/pull/2285))
+- 💥 [RUMF-1152] sanitize resource method names ([#2288](https://github.com/DataDog/browser-sdk/pull/2288))
+- 💥 [RUMF-1555] Remove `event` in action domain context ([#2286](https://github.com/DataDog/browser-sdk/pull/2286))
+- 💥 [RUMF-1589] automatically start recording ([#2275](https://github.com/DataDog/browser-sdk/pull/2275))
+- 💥 [RUMF-1588] Update default session replay behaviour ([#2257](https://github.com/DataDog/browser-sdk/pull/2257))
+- 💥 [RUMF-1587] Remove `premiumSampleRate` and `replaySampleRate` ([#2256](https://github.com/DataDog/browser-sdk/pull/2256))
+- 💥 [RUMF-1554] Drop some deprecated public APIs ([#2241](https://github.com/DataDog/browser-sdk/pull/2241))
+- 💥 [RUMF-1554] Drop some deprecated config parameters ([#2238](https://github.com/DataDog/browser-sdk/pull/2238))
+- 💥 [RUMF-1578] Promote track frustration as default action behaviour ([#2232](https://github.com/DataDog/browser-sdk/pull/2232))
+- 🐛 [RUMF-1499] Don't send duration for resources crossing a page frozen state ([#2271](https://github.com/DataDog/browser-sdk/pull/2271))
+- 🔥 [RUMF-1555] Remove `startTime` in xhr start context ([#2287](https://github.com/DataDog/browser-sdk/pull/2287))
+- ♻️ [RUMF-1555] Remove deprecated context manager APIs ([#2284](https://github.com/DataDog/browser-sdk/pull/2284))
+
+## v4.50.1
+
+- 🐛 [RUM-1325] fix memory leak when using shadow dom ([#2451](https://github.com/DataDog/browser-sdk/pull/2451))
+- 🐛 [RUM-1325] propagate privacy defined on shadow hosts ([#2454](https://github.com/DataDog/browser-sdk/pull/2454))
+- 🐛 [RUM-1196] escape CSS rules containing a colon for Safari compatibility ([#2440](https://github.com/DataDog/browser-sdk/pull/2440))
+- 🐛 [RUM-1062] remove message prefix when using the console handler ([#2452](https://github.com/DataDog/browser-sdk/pull/2452))
+- 🐛 [RUM-1211] fix compatibility with TS4.6/4.7 using ES2022 ([#2455](https://github.com/DataDog/browser-sdk/pull/2455))
+
 ## v4.50.0
 
 - ✨ [RUM-1062] add a prefix to all console message displayed by the SDK ([#2432](https://github.com/DataDog/browser-sdk/pull/2432))

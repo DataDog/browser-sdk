@@ -4,7 +4,7 @@ import { deepClone } from '../../tools/mergeInto'
 import { getType } from '../../tools/utils/typeUtils'
 import { jsonStringify } from '../../tools/serialisation/jsonStringify'
 import { sanitize } from '../../tools/serialisation/sanitize'
-import type { Context, ContextValue } from '../../tools/serialisation/context'
+import type { Context } from '../../tools/serialisation/context'
 import { Observable } from '../../tools/observable'
 import { warnIfCustomerDataLimitReached } from './heavyCustomerDataWarning'
 import type { CustomerDataType } from './contextConstants'
@@ -30,29 +30,6 @@ export function createContextManager(customerDataType: CustomerDataType, compute
 
   const contextManager = {
     getBytesCount: () => bytesCountCache,
-    /** @deprecated use getContext instead */
-    get: () => context,
-
-    /** @deprecated use setContextProperty instead */
-    add: (key: string, value: any) => {
-      context[key] = value as ContextValue
-      computeBytesCountThrottled(context)
-      changeObservable.notify()
-    },
-
-    /** @deprecated renamed to removeContextProperty */
-    remove: (key: string) => {
-      delete context[key]
-      computeBytesCountThrottled(context)
-      changeObservable.notify()
-    },
-
-    /** @deprecated use setContext instead */
-    set: (newContext: object) => {
-      context = newContext as Context
-      computeBytesCountThrottled(context)
-      changeObservable.notify()
-    },
 
     getContext: () => deepClone(context),
 

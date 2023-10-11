@@ -5,7 +5,6 @@ import {
   ErrorHandling,
   computeStackTrace,
   CustomerDataType,
-  assign,
   combine,
   createContextManager,
   ErrorSource,
@@ -50,17 +49,15 @@ export class Logger {
     private level: StatusType = StatusType.debug,
     loggerContext: object = {}
   ) {
-    this.contextManager.set(assign({}, loggerContext, name ? { logger: { name } } : undefined))
+    this.contextManager.setContext(loggerContext as Context)
+    if (name) {
+      this.contextManager.setContextProperty('logger', { name })
+    }
   }
 
   @monitored
   log(message: string, messageContext?: object, status: StatusType = StatusType.info, error?: Error) {
     let errorContext: LogsEvent['error']
-
-    if (status === StatusType.error) {
-      // Always add origin if status is error (backward compatibility - Remove in next major)
-      errorContext = { origin: ErrorSource.LOGGER }
-    }
 
     if (error !== undefined && error !== null) {
       const stackTrace = error instanceof Error ? computeStackTrace(error) : undefined
@@ -74,7 +71,6 @@ export class Logger {
       })
 
       errorContext = {
-        origin: ErrorSource.LOGGER, // Remove in next major
         stack: rawError.stack,
         kind: rawError.type,
         message: rawError.message,
@@ -114,19 +110,23 @@ export class Logger {
   }
 
   setContext(context: object) {
-    this.contextManager.set(context)
+    this.contextManager.setContext(context as Context)
   }
 
   getContext() {
-    return this.contextManager.get()
+    return this.contextManager.getContext()
   }
 
-  addContext(key: string, value: any) {
-    this.contextManager.add(key, value)
+  setContextProperty(key: string, value: any) {
+    this.contextManager.setContextProperty(key, value)
   }
 
-  removeContext(key: string) {
-    this.contextManager.remove(key)
+  removeContextProperty(key: string) {
+    this.contextManager.removeContextProperty(key)
+  }
+
+  clearContext() {
+    this.contextManager.clearContext()
   }
 
   setHandler(handler: HandlerType | HandlerType[]) {

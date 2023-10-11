@@ -51,19 +51,6 @@ describe('storedContextManager', () => {
       expect(manager.getContext()).toEqual({})
     })
 
-    it('updates the context (deprecated APIs)', () => {
-      const manager = createStoredContextManager(configuration, PRODUCT_KEY, CUSTOMER_DATA_TYPE)
-
-      manager.set({ bar: 'foo' })
-      expect(manager.get()).toEqual({ bar: 'foo' })
-
-      manager.add('qux', 'qix')
-      expect(manager.get()).toEqual({ bar: 'foo', qux: 'qix' })
-
-      manager.remove('qux')
-      expect(manager.get()).toEqual({ bar: 'foo' })
-    })
-
     it('should warn if the context bytes limit is reached', () => {
       const computeBytesCountStub = jasmine
         .createSpy('computeBytesCountStub')
@@ -115,19 +102,6 @@ describe('storedContextManager', () => {
 
       manager.clearContext()
       expect(localStorage.getItem(STORAGE_KEY)).toBe('{}')
-    })
-
-    it('should update local storage on context updates (deprecated APIs)', () => {
-      const manager = createStoredContextManager(configuration, PRODUCT_KEY, CUSTOMER_DATA_TYPE)
-
-      manager.set({ bar: 'foo' })
-      expect(localStorage.getItem(STORAGE_KEY)).toBe('{"bar":"foo"}')
-
-      manager.add('qux', 'qix')
-      expect(localStorage.getItem(STORAGE_KEY)).toBe('{"bar":"foo","qux":"qix"}')
-
-      manager.remove('qux')
-      expect(localStorage.getItem(STORAGE_KEY)).toBe('{"bar":"foo"}')
     })
 
     it('should store different product data in different storage key', () => {
