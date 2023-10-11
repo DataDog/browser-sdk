@@ -1,5 +1,4 @@
 /**
- *
  * Cross-browser stack trace computation.
  *
  * Reference implementation: https://github.com/csnover/TraceKit/blob/04530298073c3823de72deb0b97e7b38ca7bcb59/tracekit.js
