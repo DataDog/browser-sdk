@@ -19,6 +19,7 @@ export enum ExperimentalFeature {
   INTERACTION_TO_NEXT_PAINT = 'interaction_to_next_paint',
   WEB_VITALS_ATTRIBUTION = 'web_vitals_attribution',
   DISABLE_REPLAY_INLINE_CSS = 'disable_replay_inline_css',
+  DETACHED_ELEMENT_SELECTOR = 'detached_element_selector',
 }
 
 const enabledExperimentalFeatures: Set<ExperimentalFeature> = new Set()

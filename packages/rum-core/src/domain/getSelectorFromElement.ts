@@ -1,4 +1,4 @@
-import { cssEscape } from '@datadog/browser-core'
+import { cssEscape, isExperimentalFeatureEnabled, ExperimentalFeature } from '@datadog/browser-core'
 import { DEFAULT_PROGRAMMATIC_ACTION_NAME_ATTRIBUTE } from './action/getActionNameFromElement'
 
 /**
@@ -52,6 +52,10 @@ export function getSelectorFromElement(targetElement: Element, actionNameAttribu
     )
     if (globallyUniqueSelector) {
       return globallyUniqueSelector
+    }
+
+    if (isExperimentalFeatureEnabled(ExperimentalFeature.DETACHED_ELEMENT_SELECTOR) && !element.parentElement) {
+      return getSelectorFromDetachedElement(element, targetElementSelector)
     }
 
     const uniqueSelectorAmongChildren = findSelector(
@@ -142,6 +146,10 @@ function getPositionSelector(element: Element): string {
   }
 
   return `${cssEscape(element.tagName)}:nth-of-type(${elementIndex})`
+}
+
+function getSelectorFromDetachedElement(element: Element, targetElementSelector: string) {
+  return combineSelector(`DETACHED>${cssEscape(element.tagName)}`, targetElementSelector)
 }
 
 function findSelector(

@@ -1,3 +1,4 @@
+import { addExperimentalFeatures, resetExperimentalFeatures, ExperimentalFeature } from '@datadog/browser-core'
 import { appendElement } from '../../test'
 import { getSelectorFromElement, supportScopeSelector } from './getSelectorFromElement'
 
@@ -154,6 +155,29 @@ describe('getSelectorFromElement', () => {
             // chances of matching a completely unrelated element.
             'BODY>BUTTON:nth-of-type(1)'
       )
+    })
+  })
+
+  describe('detached element', () => {
+    let button: HTMLButtonElement
+
+    beforeEach(() => {
+      const div = document.createElement('div')
+      button = document.createElement('button')
+      div.append(button)
+    })
+
+    afterEach(() => {
+      resetExperimentalFeatures()
+    })
+
+    it('should be supported with FF enabled', () => {
+      addExperimentalFeatures([ExperimentalFeature.DETACHED_ELEMENT_SELECTOR])
+      expect(getSelectorFromElement(button, undefined)).toEqual('DETACHED>DIV>BUTTON')
+    })
+
+    it('should not be supported with FF disabled', () => {
+      expect(() => getSelectorFromElement(button, undefined)).toThrow()
     })
   })
 
