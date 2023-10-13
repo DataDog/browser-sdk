@@ -6,7 +6,7 @@ import {
   addTelemetryDebug,
   elapsed,
 } from '@datadog/browser-core'
-import type { ClocksState, Duration } from '@datadog/browser-core'
+import type { Duration, RelativeTime } from '@datadog/browser-core'
 import { RumPerformanceEntryType, supportPerformanceTimingEvent } from '../../../browser/performanceCollection'
 import type { RumFirstInputTiming, RumPerformanceEventTiming } from '../../../browser/performanceCollection'
 import { LifeCycleEventType } from '../../lifeCycle'
@@ -15,6 +15,7 @@ import { ViewLoadingType } from '../../../rawRumEvent.types'
 import { getSelectorFromElement } from '../../getSelectorFromElement'
 import { isElementNode } from '../../../browser/htmlDomUtils'
 import type { RumConfiguration } from '../../configuration'
+import type { ViewEndedEvent } from '../trackViews'
 import { getInteractionCount, initInteractionCountPolyfill } from './interactionCountPolyfill'
 
 // Arbitrary value to prevent unnecessary memory usage on views with lots of interactions.
@@ -32,7 +33,7 @@ export interface InteractionToNextPaint {
  */
 export function trackInteractionToNextPaint(
   configuration: RumConfiguration,
-  viewStart: ClocksState,
+  viewStart: RelativeTime,
   viewLoadingType: ViewLoadingType,
   lifeCycle: LifeCycle
 ) {
@@ -46,7 +47,14 @@ export function trackInteractionToNextPaint(
     }
   }
 
-  const { getViewInteractionCount } = trackViewInteractionCount(viewLoadingType)
+  const { getViewInteractionCount, stopViewInteractionCount } = trackViewInteractionCount(viewLoadingType)
+
+  let viewEnd = Infinity as RelativeTime
+  lifeCycle.subscribe(LifeCycleEventType.VIEW_ENDED, (data: ViewEndedEvent) => {
+    viewEnd = data.endClocks.relative
+    stopViewInteractionCount()
+  })
+
   const longestInteractions = trackLongestInteractions(getViewInteractionCount)
   let interactionToNextPaint = -1 as Duration
   let interactionToNextPaintTargetSelector: string | undefined
@@ -57,7 +65,10 @@ export function trackInteractionToNextPaint(
       if (
         (entry.entryType === RumPerformanceEntryType.EVENT ||
           entry.entryType === RumPerformanceEntryType.FIRST_INPUT) &&
-        entry.interactionId
+        entry.interactionId &&
+        // Check the entry start time is inside the view bounds because some view interactions can be reported after the view end (if long duration).
+        entry.startTime >= viewStart &&
+        entry.startTime <= viewEnd
       ) {
         longestInteractions.process(entry)
       }
@@ -164,8 +175,25 @@ function trackLongestInteractions(getViewInteractionCount: () => number) {
 export function trackViewInteractionCount(viewLoadingType: ViewLoadingType) {
   initInteractionCountPolyfill()
   const previousInteractionCount = viewLoadingType === ViewLoadingType.INITIAL_LOAD ? 0 : getInteractionCount()
+  let viewInteractionCount = 0
+  let stopped = false
+
+  function computeViewInteractionCount() {
+    viewInteractionCount = getInteractionCount()! - previousInteractionCount
+  }
+
   return {
-    getViewInteractionCount: () => getInteractionCount()! - previousInteractionCount,
+    getViewInteractionCount: () => {
+      if (!stopped) {
+        computeViewInteractionCount()
+      }
+
+      return viewInteractionCount
+    },
+    stopViewInteractionCount: () => {
+      computeViewInteractionCount()
+      stopped = true
+    },
   }
 }
 
