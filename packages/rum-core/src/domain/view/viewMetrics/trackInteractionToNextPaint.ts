@@ -20,6 +20,8 @@ import { getInteractionCount, initInteractionCountPolyfill } from './interaction
 
 // Arbitrary value to prevent unnecessary memory usage on views with lots of interactions.
 const MAX_INTERACTION_ENTRIES = 10
+// Arbitrary value to cap INP outliers
+export const MAX_INP_VALUE = (1 * ONE_MINUTE) as Duration
 
 export interface InteractionToNextPaint {
   value: Duration
@@ -82,7 +84,7 @@ export function trackInteractionToNextPaint(
         addTelemetryDebug('INP outlier', {
           inp: interactionToNextPaint,
           interaction: {
-            timeFromViewStart: elapsed(viewStart.relative, newInteraction.startTime),
+            timeFromViewStart: elapsed(viewStart, newInteraction.startTime),
             duration: newInteraction.duration,
             startTime: newInteraction.startTime,
             processingStart: newInteraction.processingStart,
@@ -115,7 +117,7 @@ export function trackInteractionToNextPaint(
       // but the view interaction count > 0 then report 0
       if (interactionToNextPaint >= 0) {
         return {
-          value: interactionToNextPaint,
+          value: Math.min(interactionToNextPaint, MAX_INP_VALUE) as Duration,
           targetSelector: interactionToNextPaintTargetSelector,
         }
       } else if (getViewInteractionCount()) {

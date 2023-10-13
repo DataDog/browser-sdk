@@ -22,6 +22,7 @@ import {
   trackInteractionToNextPaint,
   trackViewInteractionCount,
   isInteractionToNextPaintSupported,
+  MAX_INP_VALUE,
 } from './trackInteractionToNextPaint'
 
 describe('trackInteractionToNextPaint', () => {
@@ -115,7 +116,23 @@ describe('trackInteractionToNextPaint', () => {
         duration: 100 as Duration,
         startTime: 1 as RelativeTime,
       })
-      expect(getInteractionToNextPaint()?.value).toEqual(100 as Duration)
+      expect(getInteractionToNextPaint()).toEqual({
+        value: 100 as Duration,
+        targetSelector: undefined,
+      })
+    })
+
+    it('should cap INP value', () => {
+      const { lifeCycle } = setupBuilder.build()
+      newInteraction(lifeCycle, {
+        interactionId: 1,
+        duration: (MAX_INP_VALUE + 1) as Duration,
+      })
+
+      expect(getInteractionToNextPaint()).toEqual({
+        value: MAX_INP_VALUE,
+        targetSelector: undefined,
+      })
     })
 
     it('should return the p98 worst interaction', () => {
