@@ -3,7 +3,6 @@ import {
   ExperimentalFeature,
   addExperimentalFeatures,
   relativeNow,
-  relativeToClocks,
   resetExperimentalFeatures,
 } from '@datadog/browser-core'
 import type { TestSetupBuilder } from '../../../../test'
@@ -17,7 +16,6 @@ import type {
 import { ViewLoadingType } from '../../../rawRumEvent.types'
 import type { LifeCycle } from '../../lifeCycle'
 import { LifeCycleEventType } from '../../lifeCycle'
-import type { ViewEndedEvent } from '../trackViews'
 import {
   trackInteractionToNextPaint,
   trackViewInteractionCount,
@@ -29,6 +27,8 @@ describe('trackInteractionToNextPaint', () => {
   let setupBuilder: TestSetupBuilder
   let interactionCountStub: ReturnType<typeof subInteractionCount>
   let getInteractionToNextPaint: ReturnType<typeof trackInteractionToNextPaint>['getInteractionToNextPaint']
+  let setViewEnd: ReturnType<typeof trackInteractionToNextPaint>['setViewEnd']
+
   function newInteraction(lifeCycle: LifeCycle, overrides: Partial<RumPerformanceEventTiming | RumFirstInputTiming>) {
     if (overrides.interactionId) {
       interactionCountStub.incrementInteractionCount()
@@ -53,6 +53,8 @@ describe('trackInteractionToNextPaint', () => {
           lifeCycle
         )
         getInteractionToNextPaint = interactionToNextPaintTracking.getInteractionToNextPaint
+        setViewEnd = interactionToNextPaintTracking.setViewEnd
+
         return interactionToNextPaintTracking
       })
   })
@@ -87,9 +89,7 @@ describe('trackInteractionToNextPaint', () => {
     it('should ignore entries that starts out of the view time bounds', () => {
       const { lifeCycle } = setupBuilder.build()
 
-      lifeCycle.notify(LifeCycleEventType.VIEW_ENDED, {
-        endClocks: relativeToClocks(10 as RelativeTime),
-      } as ViewEndedEvent)
+      setViewEnd(10 as RelativeTime)
 
       newInteraction(lifeCycle, {
         interactionId: 1,
@@ -107,9 +107,7 @@ describe('trackInteractionToNextPaint', () => {
     it('should take into account entries that starts in view time bounds but finish after view end', () => {
       const { lifeCycle } = setupBuilder.build()
 
-      lifeCycle.notify(LifeCycleEventType.VIEW_ENDED, {
-        endClocks: relativeToClocks(10 as RelativeTime),
-      } as ViewEndedEvent)
+      setViewEnd(10 as RelativeTime)
 
       newInteraction(lifeCycle, {
         interactionId: 1,

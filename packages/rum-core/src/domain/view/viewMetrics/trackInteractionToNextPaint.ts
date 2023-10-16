@@ -15,7 +15,6 @@ import { ViewLoadingType } from '../../../rawRumEvent.types'
 import { getSelectorFromElement } from '../../getSelectorFromElement'
 import { isElementNode } from '../../../browser/htmlDomUtils'
 import type { RumConfiguration } from '../../configuration'
-import type { ViewEndedEvent } from '../trackViews'
 import { getInteractionCount, initInteractionCountPolyfill } from './interactionCountPolyfill'
 
 // Arbitrary value to prevent unnecessary memory usage on views with lots of interactions.
@@ -45,6 +44,7 @@ export function trackInteractionToNextPaint(
   ) {
     return {
       getInteractionToNextPaint: () => undefined,
+      setViewEnd: noop,
       stop: noop,
     }
   }
@@ -52,10 +52,6 @@ export function trackInteractionToNextPaint(
   const { getViewInteractionCount, stopViewInteractionCount } = trackViewInteractionCount(viewLoadingType)
 
   let viewEnd = Infinity as RelativeTime
-  lifeCycle.subscribe(LifeCycleEventType.VIEW_ENDED, (data: ViewEndedEvent) => {
-    viewEnd = data.endClocks.relative
-    stopViewInteractionCount()
-  })
 
   const longestInteractions = trackLongestInteractions(getViewInteractionCount)
   let interactionToNextPaint = -1 as Duration
@@ -126,7 +122,10 @@ export function trackInteractionToNextPaint(
         }
       }
     },
-    setViewEnd: () => {},
+    setViewEnd: (viewEndTime: RelativeTime) => {
+      viewEnd = viewEndTime
+      stopViewInteractionCount()
+    },
     stop,
   }
 }

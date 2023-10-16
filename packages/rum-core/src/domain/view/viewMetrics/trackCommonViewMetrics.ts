@@ -48,12 +48,11 @@ export function trackCommonViewMetrics(
     scheduleViewUpdate()
   })
 
-  const { stop: stopINPTracking, getInteractionToNextPaint } = trackInteractionToNextPaint(
-    configuration,
-    viewStart.relative,
-    loadingType,
-    lifeCycle
-  )
+  const {
+    stop: stopINPTracking,
+    getInteractionToNextPaint,
+    setViewEnd,
+  } = trackInteractionToNextPaint(configuration, viewStart.relative, loadingType, lifeCycle)
 
   return {
     stop: () => {
@@ -63,6 +62,7 @@ export function trackCommonViewMetrics(
     },
     stopINPTracking,
     setLoadEvent,
+    setViewEnd,
     getCommonViewMetrics: () => {
       commonViewMetrics.interactionToNextPaint = getInteractionToNextPaint()
       return commonViewMetrics

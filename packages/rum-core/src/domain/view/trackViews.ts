@@ -208,6 +208,7 @@ function newView(
 
   const {
     setLoadEvent,
+    setViewEnd,
     stop: stopCommonViewMetricsTracking,
     stopINPTracking,
     getCommonViewMetrics,
@@ -272,6 +273,7 @@ function newView(
 
       lifeCycle.notify(LifeCycleEventType.VIEW_ENDED, { endClocks })
       clearInterval(keepAliveIntervalId)
+      setViewEnd(endClocks.relative)
       stopCommonViewMetricsTracking()
       triggerViewUpdate()
       setTimeout(() => {
