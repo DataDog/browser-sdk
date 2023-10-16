@@ -126,6 +126,7 @@ export function trackInteractionToNextPaint(
         }
       }
     },
+    setViewEnd: () => {},
     stop,
   }
 }
@@ -177,24 +178,22 @@ function trackLongestInteractions(getViewInteractionCount: () => number) {
 export function trackViewInteractionCount(viewLoadingType: ViewLoadingType) {
   initInteractionCountPolyfill()
   const previousInteractionCount = viewLoadingType === ViewLoadingType.INITIAL_LOAD ? 0 : getInteractionCount()
-  let viewInteractionCount = 0
-  let stopped = false
+  let state: { stopped: false } | { stopped: true; interactionCount: number } = { stopped: false }
 
   function computeViewInteractionCount() {
-    viewInteractionCount = getInteractionCount()! - previousInteractionCount
+    return getInteractionCount()! - previousInteractionCount
   }
 
   return {
     getViewInteractionCount: () => {
-      if (!stopped) {
-        computeViewInteractionCount()
+      if (state.stopped) {
+        return state.interactionCount
       }
 
-      return viewInteractionCount
+      return computeViewInteractionCount()
     },
     stopViewInteractionCount: () => {
-      computeViewInteractionCount()
-      stopped = true
+      state = { stopped: true, interactionCount: computeViewInteractionCount() }
     },
   }
 }
