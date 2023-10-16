@@ -27,11 +27,15 @@ const siteByDatacenter = {
   us5: 'us5.datadoghq.com',
   ap1: 'ap1.datadoghq.com',
 }
-const sitesByVersion = {
-  staging: ['datad0g.com', 'datadoghq.com'],
-  canary: ['datadoghq.com'],
-  // TODO remove in next major
-  v4: Object.values(siteByDatacenter),
+function getSitesByVersion(version) {
+  switch (version) {
+    case 'staging':
+      return ['datad0g.com', 'datadoghq.com']
+    case 'canary':
+      return ['datadoghq.com']
+    default:
+      return Object.values(siteByDatacenter)
+  }
 }
 
 runMain(() => {
@@ -41,7 +45,7 @@ runMain(() => {
       let sites
       let uploadPath
       if (uploadPathType === 'root') {
-        sites = sitesByVersion[version]
+        sites = getSitesByVersion(version)
         uploadPath = buildRootUploadPath(packageName, version)
         renameFilesWithVersionSuffix(packageName, bundleFolder)
       } else {
