@@ -1,9 +1,9 @@
 import type { Duration, RelativeTime } from '@datadog/browser-core'
+import { RumPerformanceEntryType } from '../../../browser/performanceCollection'
 import type { TestSetupBuilder } from '../../../../test'
-import { noopWebVitalTelemetryDebug, setup } from '../../../../test'
+import { createPerformanceEntry, setup } from '../../../../test'
 import { LifeCycleEventType } from '../../lifeCycle'
 import type { RumConfiguration } from '../../configuration'
-import { FAKE_FIRST_INPUT_ENTRY, FAKE_NAVIGATION_ENTRY, FAKE_PAINT_ENTRY } from '../setupViewTest.specHelper'
 import { trackInitialViewMetrics } from './trackInitialViewMetrics'
 
 describe('trackInitialViewMetrics', () => {
@@ -22,7 +22,6 @@ describe('trackInitialViewMetrics', () => {
       trackInitialViewMetricsResult = trackInitialViewMetrics(
         lifeCycle,
         configuration,
-        noopWebVitalTelemetryDebug,
         setLoadEventSpy,
         scheduleViewUpdateSpy
       )
@@ -36,11 +35,10 @@ describe('trackInitialViewMetrics', () => {
 
   it('should merge metrics from various sources', () => {
     const { lifeCycle } = setupBuilder.build()
-
     lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [
-      FAKE_NAVIGATION_ENTRY,
-      FAKE_PAINT_ENTRY,
-      FAKE_FIRST_INPUT_ENTRY,
+      createPerformanceEntry(RumPerformanceEntryType.NAVIGATION),
+      createPerformanceEntry(RumPerformanceEntryType.PAINT),
+      createPerformanceEntry(RumPerformanceEntryType.FIRST_INPUT),
     ])
 
     expect(scheduleViewUpdateSpy).toHaveBeenCalledTimes(3)
@@ -65,9 +63,9 @@ describe('trackInitialViewMetrics', () => {
     const { lifeCycle } = setupBuilder.build()
 
     lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [
-      FAKE_NAVIGATION_ENTRY,
-      FAKE_PAINT_ENTRY,
-      FAKE_FIRST_INPUT_ENTRY,
+      createPerformanceEntry(RumPerformanceEntryType.NAVIGATION),
+      createPerformanceEntry(RumPerformanceEntryType.PAINT),
+      createPerformanceEntry(RumPerformanceEntryType.FIRST_INPUT),
     ])
 
     expect(setLoadEventSpy).toHaveBeenCalledOnceWith(567 as Duration)

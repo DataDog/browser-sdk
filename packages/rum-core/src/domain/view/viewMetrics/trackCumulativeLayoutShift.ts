@@ -5,6 +5,7 @@ import {
   ONE_SECOND,
   isExperimentalFeatureEnabled,
   ExperimentalFeature,
+  noop,
 } from '@datadog/browser-core'
 import { isElementNode } from '../../../browser/htmlDomUtils'
 import type { LifeCycle } from '../../lifeCycle'
@@ -12,7 +13,6 @@ import { LifeCycleEventType } from '../../lifeCycle'
 import type { RumLayoutShiftTiming } from '../../../browser/performanceCollection'
 import { supportPerformanceTimingEvent, RumPerformanceEntryType } from '../../../browser/performanceCollection'
 import { getSelectorFromElement } from '../../getSelectorFromElement'
-import type { WebVitalTelemetryDebug } from '../startWebVitalTelemetryDebug'
 import type { RumConfiguration } from '../../configuration'
 
 export interface CumulativeLayoutShift {
@@ -40,13 +40,22 @@ export interface CumulativeLayoutShift {
 export function trackCumulativeLayoutShift(
   configuration: RumConfiguration,
   lifeCycle: LifeCycle,
-  webVitalTelemetryDebug: WebVitalTelemetryDebug,
   callback: (cumulativeLayoutShift: CumulativeLayoutShift) => void
 ) {
+  if (!isLayoutShiftSupported()) {
+    return {
+      stop: noop,
+    }
+  }
+
   let maxClsValue = 0
 
+  // if no layout shift happen the value should be reported as 0
+  callback({
+    value: 0,
+  })
+
   const window = slidingSessionWindow()
-  let clsAttributionCollected = false
 
   const { unsubscribe: stop } = lifeCycle.subscribe(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, (entries) => {
     for (const entry of entries) {
@@ -67,15 +76,6 @@ export function trackCumulativeLayoutShift(
             value: cls,
             targetSelector: cslTargetSelector,
           })
-
-          if (!clsAttributionCollected) {
-            clsAttributionCollected = true
-            webVitalTelemetryDebug.addWebVitalTelemetryDebug(
-              'CLS',
-              window.largestLayoutShiftTarget(),
-              window.largestLayoutShiftTime()
-            )
-          }
         }
       }
     }

@@ -1,3 +1,4 @@
+import { isChromium } from '../../../tools/utils/browserDetection'
 import type { CookieOptions } from '../../../browser/cookie'
 import { getCurrentSite, areCookiesAuthorized, deleteCookie, getCookie, setCookie } from '../../../browser/cookie'
 import type { InitConfiguration } from '../../configuration'
@@ -15,6 +16,11 @@ export function selectCookieStrategy(initConfiguration: InitConfiguration): Sess
 
 export function initCookieStrategy(cookieOptions: CookieOptions): SessionStoreStrategy {
   const cookieStore = {
+    /**
+     * Lock strategy allows mitigating issues due to concurrent access to cookie.
+     * This issue concerns only chromium browsers and enabling this on firefox increases cookie write failures.
+     */
+    isLockEnabled: isChromium(),
     persistSession: persistSessionCookie(cookieOptions),
     retrieveSession: retrieveSessionCookie,
     clearSession: deleteSessionCookie(cookieOptions),

@@ -1,54 +1,29 @@
+import { arrayFrom } from '@datadog/browser-core'
 import { registerCleanupTask } from '@datadog/browser-core/test'
 
-export type IsolatedDom = ReturnType<typeof createIsolatedDom>
+export function appendText(text: string, container: Element | ShadowRoot = document.body): Text {
+  const textNode = document.createTextNode(text)
+  container.appendChild(textNode)
 
-export function createIsolatedDom() {
-  // Simply using a DOMParser does not fit here, because script tags created this way are
-  // considered as normal markup, so they are not ignored when getting the textual content of the
-  // target via innerText
-  const iframe = document.createElement('iframe')
-  document.body.appendChild(iframe)
-  const doc = iframe.contentDocument!
-  doc.open()
-  doc.write('<html><body></body></html>')
-  doc.close()
+  registerCleanupTask(() => {
+    textNode.parentElement?.removeChild(textNode)
+  })
 
-  function append(html: string) {
-    iframe.contentDocument!.body.innerHTML = html
-    return doc.querySelector('[target]') || doc.body.children[0]
-  }
-
-  return {
-    element(s: TemplateStringsArray) {
-      return append(s[0])
-    },
-    document: doc,
-    window: iframe.contentWindow! as Window & { CSSStyleSheet: typeof CSSStyleSheet },
-    append,
-    clear() {
-      iframe.parentNode!.removeChild(iframe)
-    },
-  }
+  return textNode
 }
 
-export function appendElement(tagName: string, attributes: { [key: string]: string }) {
-  const element = document.createElement(tagName)
+export function appendElement(html: string, container: Element | ShadowRoot = document.body): HTMLElement {
+  const tmp = document.createElement('div')
+  tmp.innerHTML = html.trim()
 
-  for (const key in attributes) {
-    if (Object.prototype.hasOwnProperty.call(attributes, key)) {
-      element.setAttribute(key, attributes[key])
-    }
-  }
+  const target = tmp.querySelector('[target]') || tmp.children[0]
+  const nodes = arrayFrom(tmp.childNodes)
 
-  return append(element)
-}
+  nodes.forEach((node) => container.appendChild(node))
 
-export function appendTextNode(text: string) {
-  return append(document.createTextNode(text))
-}
+  registerCleanupTask(() => {
+    nodes.forEach((node) => node.parentElement?.removeChild(node))
+  })
 
-function append<T extends Node = Node>(node: T): T {
-  document.body.appendChild(node)
-  registerCleanupTask(() => node.parentNode!.removeChild(node))
-  return node
+  return target as HTMLElement
 }

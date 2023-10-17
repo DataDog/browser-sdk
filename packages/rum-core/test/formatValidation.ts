@@ -27,6 +27,15 @@ export function validateRumFormat(rumEvent: Context) {
     .validate('rum-events-schema.json', rumEvent)
 
   if (instance.errors) {
-    instance.errors.map((error) => fail(`${error.dataPath || 'event'} ${error.message!}`))
+    const errors = instance.errors
+      .map((error) => {
+        let message = error.message
+        if (error.keyword === 'const') {
+          message += ` '${(error.params as { allowedValue: string }).allowedValue}'`
+        }
+        return `  ${error.dataPath || 'event'} ${message}`
+      })
+      .join('\n')
+    fail(`Invalid RUM event format:\n${errors}`)
   }
 }

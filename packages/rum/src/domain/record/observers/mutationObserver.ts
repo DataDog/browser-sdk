@@ -1,10 +1,10 @@
 import { monitor, noop } from '@datadog/browser-core'
 import type { RumConfiguration } from '@datadog/browser-rum-core'
 import {
-  getChildNodes,
   isNodeShadowHost,
   getMutationObserverConstructor,
   getParentNode,
+  forEachChildNodes,
 } from '@datadog/browser-rum-core'
 import { NodePrivacyLevel } from '../../../constants'
 import type {
@@ -77,8 +77,7 @@ export function initMutationObserver(
       mutations.concat(observer.takeRecords() as RumMutationRecord[]),
       mutationCallback,
       configuration,
-      shadowRootsController,
-      target
+      shadowRootsController
     )
   })
 
@@ -108,8 +107,7 @@ function processMutations(
   mutations: RumMutationRecord[],
   mutationCallback: MutationCallBack,
   configuration: RumConfiguration,
-  shadowRootsController: ShadowRootsController,
-  target: Node
+  shadowRootsController: ShadowRootsController
 ) {
   mutations
     .filter((mutation): mutation is RumChildListMutationRecord => mutation.type === 'childList')
@@ -125,7 +123,7 @@ function processMutations(
   // * should be hidden or ignored
   const filteredMutations = mutations.filter(
     (mutation): mutation is WithSerializedTarget<RumMutationRecord> =>
-      target.contains(mutation.target) &&
+      mutation.target.isConnected &&
       nodeAndAncestorsHaveSerializedNode(mutation.target) &&
       getNodePrivacyLevel(mutation.target, configuration.defaultPrivacyLevel) !== NodePrivacyLevel.HIDDEN
   )
@@ -389,9 +387,10 @@ export function sortAddedAndMovedNodes(nodes: Node[]) {
     return 0
   })
 }
+
 function traverseRemovedShadowDom(removedNode: Node, shadowDomRemovedCallback: ShadowRootCallBack) {
   if (isNodeShadowHost(removedNode)) {
     shadowDomRemovedCallback(removedNode.shadowRoot)
   }
-  getChildNodes(removedNode).forEach((child) => traverseRemovedShadowDom(child, shadowDomRemovedCallback))
+  forEachChildNodes(removedNode, (childNode) => traverseRemovedShadowDom(childNode, shadowDomRemovedCallback))
 }

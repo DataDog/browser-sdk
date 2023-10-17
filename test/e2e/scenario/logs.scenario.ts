@@ -15,6 +15,24 @@ describe('logs', () => {
       expect(intakeRegistry.logsEvents[0].message).toBe('hello')
     })
 
+  createTest('display logs in the console')
+    .withLogs()
+    .run(async ({ intakeRegistry }) => {
+      await browserExecute(() => {
+        window.DD_LOGS!.logger.setHandler('console')
+        window.DD_LOGS!.logger.warn('hello')
+      })
+      await flushEvents()
+      expect(intakeRegistry.logsEvents.length).toBe(0)
+
+      await withBrowserLogs((logs) => {
+        expect(logs.length).toBe(1)
+        expect(logs[0].level).toBe('WARNING')
+        expect(logs[0].message).not.toEqual(jasmine.stringContaining('Datadog Browser SDK'))
+        expect(logs[0].message).toEqual(jasmine.stringContaining('hello'))
+      })
+    })
+
   createTest('send console errors')
     .withLogs({ forwardErrorsToLogs: true })
     .run(async ({ intakeRegistry }) => {
@@ -23,7 +41,7 @@ describe('logs', () => {
       })
       await flushEvents()
       expect(intakeRegistry.logsEvents.length).toBe(1)
-      expect(intakeRegistry.logsEvents[0].message).toBe('console error: oh snap')
+      expect(intakeRegistry.logsEvents[0].message).toBe('oh snap')
       await withBrowserLogs((browserLogs) => {
         expect(browserLogs.length).toEqual(1)
       })
@@ -42,7 +60,7 @@ describe('logs', () => {
       await flushEvents()
       expect(intakeRegistry.logsEvents.length).toBe(1)
       expect(intakeRegistry.logsEvents[0].message).toBe(`XHR error GET ${UNREACHABLE_URL}`)
-      expect(intakeRegistry.logsEvents[0].error?.origin).toBe('network')
+      expect(intakeRegistry.logsEvents[0].origin).toBe('network')
 
       await withBrowserLogs((browserLogs) => {
         // Some browser report two errors:
@@ -64,7 +82,7 @@ describe('logs', () => {
       await flushEvents()
       expect(intakeRegistry.logsEvents.length).toBe(1)
       expect(intakeRegistry.logsEvents[0].message).toBe(`Fetch error GET ${UNREACHABLE_URL}`)
-      expect(intakeRegistry.logsEvents[0].error?.origin).toBe('network')
+      expect(intakeRegistry.logsEvents[0].origin).toBe('network')
 
       await withBrowserLogs((browserLogs) => {
         // Some browser report two errors:
@@ -84,7 +102,7 @@ describe('logs', () => {
       await flushEvents()
       expect(intakeRegistry.logsEvents.length).toBe(1)
       expect(intakeRegistry.logsEvents[0].message).toBe(`Fetch error GET ${baseUrl}/throw-large-response`)
-      expect(intakeRegistry.logsEvents[0].error?.origin).toBe('network')
+      expect(intakeRegistry.logsEvents[0].origin).toBe('network')
 
       const ellipsisSize = 3
       expect(intakeRegistry.logsEvents[0].error?.stack?.length).toBe(
@@ -161,6 +179,7 @@ describe('logs', () => {
     .withLogs({
       beforeSend: (event) => {
         event.foo = 'bar'
+        return true
       },
     })
     .run(async ({ intakeRegistry }) => {

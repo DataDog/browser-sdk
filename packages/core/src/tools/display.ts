@@ -18,19 +18,11 @@ export const ConsoleApiName = {
 export type ConsoleApiName = (typeof ConsoleApiName)[keyof typeof ConsoleApiName]
 
 interface Display {
-  (api: ConsoleApiName, ...args: any[]): void
   debug: typeof console.debug
   log: typeof console.log
   info: typeof console.info
   warn: typeof console.warn
   error: typeof console.error
-}
-
-export const display: Display = (api, ...args) => {
-  if (!Object.prototype.hasOwnProperty.call(ConsoleApiName, api)) {
-    api = ConsoleApiName.log
-  }
-  display[api](...args)
 }
 
 /**
@@ -44,8 +36,17 @@ export const display: Display = (api, ...args) => {
  */
 export const globalConsole = console
 
-display.debug = globalConsole.debug.bind(globalConsole)
-display.log = globalConsole.log.bind(globalConsole)
-display.info = globalConsole.info.bind(globalConsole)
-display.warn = globalConsole.warn.bind(globalConsole)
-display.error = globalConsole.error.bind(globalConsole)
+export const originalConsoleMethods = {} as Display
+Object.keys(ConsoleApiName).forEach((name) => {
+  originalConsoleMethods[name as ConsoleApiName] = globalConsole[name as ConsoleApiName]
+})
+
+const PREFIX = 'Datadog Browser SDK:'
+
+export const display: Display = {
+  debug: originalConsoleMethods.debug.bind(globalConsole, PREFIX),
+  log: originalConsoleMethods.log.bind(globalConsole, PREFIX),
+  info: originalConsoleMethods.info.bind(globalConsole, PREFIX),
+  warn: originalConsoleMethods.warn.bind(globalConsole, PREFIX),
+  error: originalConsoleMethods.error.bind(globalConsole, PREFIX),
+}

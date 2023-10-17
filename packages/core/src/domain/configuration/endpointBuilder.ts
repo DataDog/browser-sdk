@@ -1,51 +1,32 @@
-import type { RetryInfo, FlushReason } from '../../transport'
+import type { Payload } from '../../transport'
 import { timeStampNow } from '../../tools/utils/timeUtils'
 import { normalizeUrl } from '../../tools/utils/urlPolyfill'
 import { ExperimentalFeature, isExperimentalFeatureEnabled } from '../../tools/experimentalFeatures'
 import { generateUUID } from '../../tools/utils/stringUtils'
 import type { InitConfiguration } from './configuration'
-import { INTAKE_SITE_AP1, INTAKE_SITE_US1 } from './intakeSites'
+import { INTAKE_SITE_US1 } from './intakeSites'
 
 // replaced at build time
 declare const __BUILD_ENV__SDK_VERSION__: string
 
-export const ENDPOINTS = {
-  logs: 'logs',
-  rum: 'rum',
-  sessionReplay: 'session-replay',
-} as const
-
-const INTAKE_TRACKS = {
-  logs: 'logs',
-  rum: 'rum',
-  sessionReplay: 'replay',
-}
-
-export type EndpointType = keyof typeof ENDPOINTS
+export type TrackType = 'logs' | 'rum' | 'replay'
 
 export type EndpointBuilder = ReturnType<typeof createEndpointBuilder>
 
 export function createEndpointBuilder(
   initConfiguration: InitConfiguration,
-  endpointType: EndpointType,
+  trackType: TrackType,
   configurationTags: string[]
 ) {
-  const buildUrlWithParameters = createEndpointUrlWithParametersBuilder(initConfiguration, endpointType)
+  const buildUrlWithParameters = createEndpointUrlWithParametersBuilder(initConfiguration, trackType)
 
   return {
-    build(api: 'xhr' | 'fetch' | 'beacon', flushReason?: FlushReason, retry?: RetryInfo) {
-      const parameters = buildEndpointParameters(
-        initConfiguration,
-        endpointType,
-        configurationTags,
-        api,
-        flushReason,
-        retry
-      )
+    build(api: 'xhr' | 'fetch' | 'beacon', payload: Payload) {
+      const parameters = buildEndpointParameters(initConfiguration, trackType, configurationTags, api, payload)
       return buildUrlWithParameters(parameters)
     },
     urlPrefix: buildUrlWithParameters(''),
-    endpointType,
+    trackType,
   }
 }
 
@@ -56,37 +37,29 @@ export function createEndpointBuilder(
  */
 function createEndpointUrlWithParametersBuilder(
   initConfiguration: InitConfiguration,
-  endpointType: EndpointType
+  trackType: TrackType
 ): (parameters: string) => string {
-  const path = `/api/v2/${INTAKE_TRACKS[endpointType]}`
+  const path = `/api/v2/${trackType}`
+  const { proxy, proxyUseSuffix } = initConfiguration
 
-  const { proxy, proxyUrl } = initConfiguration
-  if (proxy && proxyUseSuffix) {
-    // Allow suffix routing (make the destination path the suffix of the proxy url instead of using ddforward).
-    const normalizedProxyUrl = normalizeUrl(proxy).replace(/\/$/, "");
-    if (normalizedProxyUrl.indexOf("?") >= 0) {
-      throw new Error("proxyUseSuffix requires the proxy url to be clear of query parameters");
-    }
-    return (parameters) => `${normalizedProxyUrl}${path}?${parameters}`
-  }
   if (proxy) {
-    const normalizedProxyUrl = normalizeUrl(proxy)
+    const normalizedProxyUrl = normalizeUrl(proxy).replace(/\/$/, "")
+
+    // Allow suffix routing (make the destination path the suffix of the proxy url instead of using ddforward).
+    if (proxyUseSuffix) {
+      if (normalizedProxyUrl.indexOf("?") >= 0) {
+        throw new Error("proxyUseSuffix requires the proxy url to be clear of query parameters");
+      }
+      return (parameters) => `${normalizedProxyUrl}${path}?${parameters}`
+    }
+
     return (parameters) => `${normalizedProxyUrl}?ddforward=${encodeURIComponent(`${path}?${parameters}`)}`
   }
-
-  const host = buildEndpointHost(initConfiguration, endpointType)
-
-  if (proxy === undefined && proxyUrl) {
-    // TODO: remove this in a future major.
-    const normalizedProxyUrl = normalizeUrl(proxyUrl)
-    return (parameters) =>
-      `${normalizedProxyUrl}?ddforward=${encodeURIComponent(`https://${host}${path}?${parameters}`)}`
-  }
-
+  const host = buildEndpointHost(initConfiguration)
   return (parameters) => `https://${host}${path}?${parameters}`
 }
 
-function buildEndpointHost(initConfiguration: InitConfiguration, endpointType: EndpointType) {
+function buildEndpointHost(initConfiguration: InitConfiguration) {
   const { site = INTAKE_SITE_US1, internalAnalyticsSubdomain } = initConfiguration
 
   if (internalAnalyticsSubdomain && site === INTAKE_SITE_US1) {
@@ -95,8 +68,7 @@ function buildEndpointHost(initConfiguration: InitConfiguration, endpointType: E
 
   const domainParts = site.split('.')
   const extension = domainParts.pop()
-  const subdomain = site !== INTAKE_SITE_AP1 ? `${ENDPOINTS[endpointType]}.` : ''
-  return `${subdomain}browser-intake-${domainParts.join('-')}.${extension!}`
+  return `browser-intake-${domainParts.join('-')}.${extension!}`
 }
 
 /**
@@ -105,11 +77,10 @@ function buildEndpointHost(initConfiguration: InitConfiguration, endpointType: E
  */
 function buildEndpointParameters(
   { clientToken, internalAnalyticsSubdomain }: InitConfiguration,
-  endpointType: EndpointType,
+  trackType: TrackType,
   configurationTags: string[],
   api: 'xhr' | 'fetch' | 'beacon',
-  flushReason: FlushReason | undefined,
-  retry: RetryInfo | undefined
+  { retry, flushReason, encoding }: Payload
 ) {
   const tags = [`sdk_version:${__BUILD_ENV__SDK_VERSION__}`, `api:${api}`].concat(configurationTags)
   if (flushReason && isExperimentalFeatureEnabled(ExperimentalFeature.COLLECT_FLUSH_REASON)) {
@@ -118,6 +89,7 @@ function buildEndpointParameters(
   if (retry) {
     tags.push(`retry_count:${retry.count}`, `retry_after:${retry.lastFailureStatus}`)
   }
+
   const parameters = [
     'ddsource=browser',
     `ddtags=${encodeURIComponent(tags.join(','))}`,
@@ -127,9 +99,14 @@ function buildEndpointParameters(
     `dd-request-id=${generateUUID()}`,
   ]
 
-  if (endpointType === 'rum') {
+  if (encoding) {
+    parameters.push(`dd-evp-encoding=${encoding}`)
+  }
+
+  if (trackType === 'rum') {
     parameters.push(`batch_time=${timeStampNow()}`)
   }
+
   if (internalAnalyticsSubdomain) {
     parameters.reverse()
   }

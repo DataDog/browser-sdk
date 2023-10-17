@@ -22,6 +22,12 @@ describe('rum initial document resource', () => {
     retrieveInitialDocumentResourceTiming(configuration, (timing) => {
       expect(timing.entryType).toBe('resource')
       expect(timing.duration).toBeGreaterThan(0)
+
+      // generate a performance entry like structure
+      const toJsonTiming = timing.toJSON()
+      expect(toJsonTiming.entryType).toEqual(timing.entryType)
+      expect(toJsonTiming.duration).toEqual(timing.duration)
+      expect((toJsonTiming as any).toJSON).toBeUndefined()
       done()
     })
   })

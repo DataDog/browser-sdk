@@ -1,6 +1,6 @@
 import { DefaultPrivacyLevel, display } from '@datadog/browser-core'
 import type { RumInitConfiguration } from './configuration'
-import { serializeRumConfiguration, validateAndBuildRumConfiguration } from './configuration'
+import { DEFAULT_PROPAGATOR_TYPES, serializeRumConfiguration, validateAndBuildRumConfiguration } from './configuration'
 
 const DEFAULT_INIT_CONFIGURATION = { clientToken: 'xxx', applicationId: 'xxx' }
 
@@ -25,46 +25,14 @@ describe('validateAndBuildRumConfiguration', () => {
   })
 
   describe('sessionReplaySampleRate', () => {
-    it('defaults to 100 if the option is not provided', () => {
-      expect(validateAndBuildRumConfiguration(DEFAULT_INIT_CONFIGURATION)!.sessionReplaySampleRate).toBe(100)
+    it('defaults to 0 if the option is not provided', () => {
+      expect(validateAndBuildRumConfiguration(DEFAULT_INIT_CONFIGURATION)!.sessionReplaySampleRate).toBe(0)
     })
 
     it('is set to `sessionReplaySampleRate` provided value', () => {
       expect(
         validateAndBuildRumConfiguration({ ...DEFAULT_INIT_CONFIGURATION, sessionReplaySampleRate: 50 })!
           .sessionReplaySampleRate
-      ).toBe(50)
-    })
-
-    it('is set to `premiumSampleRate` provided value', () => {
-      expect(
-        validateAndBuildRumConfiguration({ ...DEFAULT_INIT_CONFIGURATION, premiumSampleRate: 50 })!
-          .sessionReplaySampleRate
-      ).toBe(50)
-    })
-
-    it('is set to `replaySampleRate` provided value', () => {
-      expect(
-        validateAndBuildRumConfiguration({ ...DEFAULT_INIT_CONFIGURATION, replaySampleRate: 50 })!
-          .sessionReplaySampleRate
-      ).toBe(50)
-    })
-
-    it('is set with precedence `sessionReplaySampleRate` > `premiumSampleRate` > `replaySampleRate`', () => {
-      expect(
-        validateAndBuildRumConfiguration({
-          ...DEFAULT_INIT_CONFIGURATION,
-          replaySampleRate: 25,
-          premiumSampleRate: 50,
-          sessionReplaySampleRate: 75,
-        })!.sessionReplaySampleRate
-      ).toBe(75)
-      expect(
-        validateAndBuildRumConfiguration({
-          ...DEFAULT_INIT_CONFIGURATION,
-          replaySampleRate: 25,
-          premiumSampleRate: 50,
-        })!.sessionReplaySampleRate
       ).toBe(50)
     })
 
@@ -84,85 +52,6 @@ describe('validateAndBuildRumConfiguration', () => {
       expect(displayErrorSpy).toHaveBeenCalledOnceWith(
         'Session Replay Sample Rate should be a number between 0 and 100'
       )
-
-      displayErrorSpy.calls.reset()
-
-      expect(
-        validateAndBuildRumConfiguration({ ...DEFAULT_INIT_CONFIGURATION, premiumSampleRate: 'foo' as any })
-      ).toBeUndefined()
-      expect(displayErrorSpy).toHaveBeenCalledOnceWith('Premium Sample Rate should be a number between 0 and 100')
-
-      displayErrorSpy.calls.reset()
-
-      expect(
-        validateAndBuildRumConfiguration({ ...DEFAULT_INIT_CONFIGURATION, premiumSampleRate: 200 })
-      ).toBeUndefined()
-      expect(displayErrorSpy).toHaveBeenCalledOnceWith('Premium Sample Rate should be a number between 0 and 100')
-
-      displayErrorSpy.calls.reset()
-
-      expect(
-        validateAndBuildRumConfiguration({ ...DEFAULT_INIT_CONFIGURATION, replaySampleRate: 'foo' as any })
-      ).toBeUndefined()
-      expect(displayErrorSpy).toHaveBeenCalledOnceWith('Premium Sample Rate should be a number between 0 and 100')
-
-      displayErrorSpy.calls.reset()
-
-      expect(validateAndBuildRumConfiguration({ ...DEFAULT_INIT_CONFIGURATION, replaySampleRate: 200 })).toBeUndefined()
-      expect(displayErrorSpy).toHaveBeenCalledOnceWith('Premium Sample Rate should be a number between 0 and 100')
-
-      displayErrorSpy.calls.reset()
-    })
-
-    it('should validate and display a warn if both `sessionReplaySampleRate` and `premiumSampleRate` are set', () => {
-      expect(
-        validateAndBuildRumConfiguration({
-          ...DEFAULT_INIT_CONFIGURATION,
-          sessionReplaySampleRate: 100,
-          premiumSampleRate: 100,
-        })
-      ).toBeDefined()
-      expect(displayWarnSpy).toHaveBeenCalledOnceWith(
-        'Ignoring Premium Sample Rate because Session Replay Sample Rate is set'
-      )
-    })
-  })
-
-  describe('oldPlansBehavior', () => {
-    it('should be true by default', () => {
-      expect(validateAndBuildRumConfiguration(DEFAULT_INIT_CONFIGURATION)!.oldPlansBehavior).toBeTrue()
-    })
-
-    it('should be false if `sessionReplaySampleRate` is set', () => {
-      expect(
-        validateAndBuildRumConfiguration({ ...DEFAULT_INIT_CONFIGURATION, sessionReplaySampleRate: 100 })!
-          .oldPlansBehavior
-      ).toBeFalse()
-    })
-  })
-
-  describe('deprecated tracingSampleRate', () => {
-    it('defaults to undefined if the option is not provided', () => {
-      expect(validateAndBuildRumConfiguration(DEFAULT_INIT_CONFIGURATION)!.traceSampleRate).toBeUndefined()
-    })
-
-    it('is set to provided value', () => {
-      expect(
-        validateAndBuildRumConfiguration({ ...DEFAULT_INIT_CONFIGURATION, tracingSampleRate: 50 })!.traceSampleRate
-      ).toBe(50)
-    })
-
-    it('does not validate the configuration if an incorrect value is provided', () => {
-      expect(
-        validateAndBuildRumConfiguration({ ...DEFAULT_INIT_CONFIGURATION, tracingSampleRate: 'foo' as any })
-      ).toBeUndefined()
-      expect(displayErrorSpy).toHaveBeenCalledOnceWith('Trace Sample Rate should be a number between 0 and 100')
-
-      displayErrorSpy.calls.reset()
-      expect(
-        validateAndBuildRumConfiguration({ ...DEFAULT_INIT_CONFIGURATION, tracingSampleRate: 200 })
-      ).toBeUndefined()
-      expect(displayErrorSpy).toHaveBeenCalledOnceWith('Trace Sample Rate should be a number between 0 and 100')
     })
   })
 
@@ -189,47 +78,6 @@ describe('validateAndBuildRumConfiguration', () => {
     })
   })
 
-  describe('allowedTracingOrigins', () => {
-    it('is set to provided value', () => {
-      expect(
-        validateAndBuildRumConfiguration({
-          ...DEFAULT_INIT_CONFIGURATION,
-          allowedTracingOrigins: ['foo'],
-          service: 'bar',
-        })!.allowedTracingUrls
-      ).toEqual([{ match: 'foo', propagatorTypes: ['datadog'] }])
-    })
-
-    it('accepts functions', () => {
-      const originMatchSpy = jasmine.createSpy<(origin: string) => boolean>()
-
-      const tracingUrlOptionMatch = validateAndBuildRumConfiguration({
-        ...DEFAULT_INIT_CONFIGURATION,
-        allowedTracingOrigins: [originMatchSpy],
-        service: 'bar',
-      })!.allowedTracingUrls[0].match as (url: string) => boolean
-
-      expect(typeof tracingUrlOptionMatch).toBe('function')
-      // Replicating behavior from allowedTracingOrigins, new function will treat the origin part of the URL
-      tracingUrlOptionMatch('https://my.origin.com/api')
-      expect(originMatchSpy).toHaveBeenCalledWith('https://my.origin.com')
-    })
-
-    it('does not validate the configuration if a value is provided and service is undefined', () => {
-      expect(
-        validateAndBuildRumConfiguration({ ...DEFAULT_INIT_CONFIGURATION, allowedTracingOrigins: ['foo'] })
-      ).toBeUndefined()
-      expect(displayErrorSpy).toHaveBeenCalledOnceWith('Service needs to be configured when tracing is enabled')
-    })
-
-    it('does not validate the configuration if an incorrect value is provided', () => {
-      expect(
-        validateAndBuildRumConfiguration({ ...DEFAULT_INIT_CONFIGURATION, allowedTracingOrigins: 'foo' as any })
-      ).toBeUndefined()
-      expect(displayErrorSpy).toHaveBeenCalledOnceWith('Allowed Tracing Origins should be an array')
-    })
-  })
-
   describe('allowedTracingUrls', () => {
     it('defaults to an empty array', () => {
       expect(validateAndBuildRumConfiguration(DEFAULT_INIT_CONFIGURATION)!.allowedTracingUrls).toEqual([])
@@ -242,7 +90,7 @@ describe('validateAndBuildRumConfiguration', () => {
           allowedTracingUrls: ['foo'],
           service: 'bar',
         })!.allowedTracingUrls
-      ).toEqual([{ match: 'foo', propagatorTypes: ['datadog'] }])
+      ).toEqual([{ match: 'foo', propagatorTypes: DEFAULT_PROPAGATOR_TYPES }])
     })
 
     it('accepts functions', () => {
@@ -254,7 +102,7 @@ describe('validateAndBuildRumConfiguration', () => {
           allowedTracingUrls: [customOriginFunction],
           service: 'bar',
         })!.allowedTracingUrls
-      ).toEqual([{ match: customOriginFunction, propagatorTypes: ['datadog'] }])
+      ).toEqual([{ match: customOriginFunction, propagatorTypes: DEFAULT_PROPAGATOR_TYPES }])
     })
 
     it('accepts RegExp', () => {
@@ -264,7 +112,7 @@ describe('validateAndBuildRumConfiguration', () => {
           allowedTracingUrls: [/az/i],
           service: 'bar',
         })!.allowedTracingUrls
-      ).toEqual([{ match: /az/i, propagatorTypes: ['datadog'] }])
+      ).toEqual([{ match: /az/i, propagatorTypes: DEFAULT_PROPAGATOR_TYPES }])
     })
 
     it('keeps headers', () => {
@@ -344,30 +192,6 @@ describe('validateAndBuildRumConfiguration', () => {
     })
   })
 
-  describe('deprecated trackInteractions', () => {
-    it('defaults to false', () => {
-      expect(validateAndBuildRumConfiguration(DEFAULT_INIT_CONFIGURATION)!.trackUserInteractions).toBeFalse()
-    })
-
-    it('is set to provided value', () => {
-      expect(
-        validateAndBuildRumConfiguration({ ...DEFAULT_INIT_CONFIGURATION, trackInteractions: true })!
-          .trackUserInteractions
-      ).toBeTrue()
-      expect(
-        validateAndBuildRumConfiguration({ ...DEFAULT_INIT_CONFIGURATION, trackInteractions: false })!
-          .trackUserInteractions
-      ).toBeFalse()
-    })
-
-    it('the provided value is cast to boolean', () => {
-      expect(
-        validateAndBuildRumConfiguration({ ...DEFAULT_INIT_CONFIGURATION, trackInteractions: 'foo' as any })!
-          .trackUserInteractions
-      ).toBeTrue()
-    })
-  })
-
   describe('trackUserInteractions', () => {
     it('defaults to false', () => {
       expect(validateAndBuildRumConfiguration(DEFAULT_INIT_CONFIGURATION)!.trackUserInteractions).toBeFalse()
@@ -387,35 +211,6 @@ describe('validateAndBuildRumConfiguration', () => {
     it('the provided value is cast to boolean', () => {
       expect(
         validateAndBuildRumConfiguration({ ...DEFAULT_INIT_CONFIGURATION, trackUserInteractions: 'foo' as any })!
-          .trackUserInteractions
-      ).toBeTrue()
-    })
-  })
-
-  describe('trackFrustrations', () => {
-    it('defaults to false', () => {
-      expect(validateAndBuildRumConfiguration(DEFAULT_INIT_CONFIGURATION)!.trackFrustrations).toBeFalse()
-    })
-
-    it('the initialization parameter is set to provided value', () => {
-      expect(
-        validateAndBuildRumConfiguration({ ...DEFAULT_INIT_CONFIGURATION, trackFrustrations: true })!.trackFrustrations
-      ).toBeTrue()
-      expect(
-        validateAndBuildRumConfiguration({ ...DEFAULT_INIT_CONFIGURATION, trackFrustrations: false })!.trackFrustrations
-      ).toBeFalse()
-    })
-
-    it('the initialization parameter the provided value is cast to boolean', () => {
-      expect(
-        validateAndBuildRumConfiguration({ ...DEFAULT_INIT_CONFIGURATION, trackFrustrations: 'foo' as any })!
-          .trackFrustrations
-      ).toBeTrue()
-    })
-
-    it('implies "trackUserInteractions"', () => {
-      expect(
-        validateAndBuildRumConfiguration({ ...DEFAULT_INIT_CONFIGURATION, trackFrustrations: true })!
           .trackUserInteractions
       ).toBeTrue()
     })
@@ -445,6 +240,34 @@ describe('validateAndBuildRumConfiguration', () => {
     })
   })
 
+  describe('startSessionReplayRecordingManually', () => {
+    it('defaults to false', () => {
+      expect(
+        validateAndBuildRumConfiguration(DEFAULT_INIT_CONFIGURATION)!.startSessionReplayRecordingManually
+      ).toBeFalse()
+    })
+
+    it('is set to provided value', () => {
+      expect(
+        validateAndBuildRumConfiguration({ ...DEFAULT_INIT_CONFIGURATION, startSessionReplayRecordingManually: true })!
+          .startSessionReplayRecordingManually
+      ).toBeTrue()
+      expect(
+        validateAndBuildRumConfiguration({ ...DEFAULT_INIT_CONFIGURATION, startSessionReplayRecordingManually: false })!
+          .startSessionReplayRecordingManually
+      ).toBeFalse()
+    })
+
+    it('the provided value is cast to boolean', () => {
+      expect(
+        validateAndBuildRumConfiguration({
+          ...DEFAULT_INIT_CONFIGURATION,
+          startSessionReplayRecordingManually: 'foo' as any,
+        })!.startSessionReplayRecordingManually
+      ).toBeTrue()
+    })
+  })
+
   describe('actionNameAttribute', () => {
     it('defaults to undefined', () => {
       expect(validateAndBuildRumConfiguration(DEFAULT_INIT_CONFIGURATION)!.actionNameAttribute).toBeUndefined()
@@ -459,9 +282,9 @@ describe('validateAndBuildRumConfiguration', () => {
   })
 
   describe('defaultPrivacyLevel', () => {
-    it('defaults to MASK_USER_INPUT', () => {
+    it('defaults to MASK', () => {
       expect(validateAndBuildRumConfiguration(DEFAULT_INIT_CONFIGURATION)!.defaultPrivacyLevel).toBe(
-        DefaultPrivacyLevel.MASK_USER_INPUT
+        DefaultPrivacyLevel.MASK
       )
     })
 
@@ -478,13 +301,13 @@ describe('validateAndBuildRumConfiguration', () => {
       expect(
         validateAndBuildRumConfiguration({ ...DEFAULT_INIT_CONFIGURATION, defaultPrivacyLevel: 'foo' as any })!
           .defaultPrivacyLevel
-      ).toBe(DefaultPrivacyLevel.MASK_USER_INPUT)
+      ).toBe(DefaultPrivacyLevel.MASK)
     })
   })
 
   describe('trackResources', () => {
-    it('defaults to undefined', () => {
-      expect(validateAndBuildRumConfiguration(DEFAULT_INIT_CONFIGURATION)!.trackResources).toBeUndefined()
+    it('defaults to false', () => {
+      expect(validateAndBuildRumConfiguration(DEFAULT_INIT_CONFIGURATION)!.trackResources).toBeFalse()
     })
 
     it('is set to provided value', () => {
@@ -498,8 +321,8 @@ describe('validateAndBuildRumConfiguration', () => {
   })
 
   describe('trackLongTasks', () => {
-    it('defaults to undefined', () => {
-      expect(validateAndBuildRumConfiguration(DEFAULT_INIT_CONFIGURATION)!.trackLongTasks).toBeUndefined()
+    it('defaults to false', () => {
+      expect(validateAndBuildRumConfiguration(DEFAULT_INIT_CONFIGURATION)!.trackLongTasks).toBeFalse()
     })
 
     it('is set to provided value', () => {
@@ -518,12 +341,14 @@ describe('validateAndBuildRumConfiguration', () => {
         expect(serializeRumConfiguration(DEFAULT_INIT_CONFIGURATION).selected_tracing_propagators).toEqual([])
       })
 
-      it('should return Datadog propagator type', () => {
+      it('should return the default propagator types', () => {
         const simpleTracingConfig: RumInitConfiguration = {
           ...DEFAULT_INIT_CONFIGURATION,
           allowedTracingUrls: ['foo'],
         }
-        expect(serializeRumConfiguration(simpleTracingConfig).selected_tracing_propagators).toEqual(['datadog'])
+        expect(serializeRumConfiguration(simpleTracingConfig).selected_tracing_propagators).toEqual(
+          DEFAULT_PROPAGATOR_TYPES
+        )
       })
 
       it('should return all propagator types', () => {

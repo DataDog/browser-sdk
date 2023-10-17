@@ -1,7 +1,12 @@
 import type { Duration } from '@datadog/browser-core'
-import { ExperimentalFeature, addExperimentalFeatures, resetExperimentalFeatures } from '@datadog/browser-core'
+import {
+  ExperimentalFeature,
+  addExperimentalFeatures,
+  clocksNow,
+  resetExperimentalFeatures,
+} from '@datadog/browser-core'
 import type { TestSetupBuilder } from '../../../../test'
-import { appendElement, appendTextNode, createPerformanceEntry, setup } from '../../../../test'
+import { appendElement, appendText, createPerformanceEntry, setup } from '../../../../test'
 import { RumPerformanceEntryType } from '../../../browser/performanceCollection'
 import type {
   BrowserWindow,
@@ -37,11 +42,14 @@ describe('trackInteractionToNextPaint', () => {
     interactionCountStub = subInteractionCount()
 
     setupBuilder = setup().beforeBuild(({ lifeCycle, configuration }) => {
-      ;({ getInteractionToNextPaint } = trackInteractionToNextPaint(
+      const interactionToNextPaintTracking = trackInteractionToNextPaint(
         configuration,
+        clocksNow(),
         ViewLoadingType.INITIAL_LOAD,
         lifeCycle
-      ))
+      )
+      getInteractionToNextPaint = interactionToNextPaintTracking.getInteractionToNextPaint
+      return interactionToNextPaintTracking
     })
   })
 
@@ -126,7 +134,7 @@ describe('trackInteractionToNextPaint', () => {
 
       newInteraction(lifeCycle, {
         interactionId: 2,
-        target: appendElement('button', { id: 'inp-target-element' }),
+        target: appendElement('<button id="inp-target-element"></button>'),
       })
 
       expect(getInteractionToNextPaint()?.targetSelector).toEqual('#inp-target-element')
@@ -138,7 +146,7 @@ describe('trackInteractionToNextPaint', () => {
 
       newInteraction(lifeCycle, {
         interactionId: 2,
-        target: appendTextNode(''),
+        target: appendText('text'),
       })
 
       expect(getInteractionToNextPaint()?.targetSelector).toEqual(undefined)
@@ -149,7 +157,7 @@ describe('trackInteractionToNextPaint', () => {
 
       newInteraction(lifeCycle, {
         interactionId: 2,
-        target: appendElement('button', { id: 'inp-target-element' }),
+        target: appendElement('<button id="inp-target-element"></button>'),
       })
 
       expect(getInteractionToNextPaint()?.targetSelector).toEqual(undefined)

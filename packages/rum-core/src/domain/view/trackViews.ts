@@ -27,9 +27,8 @@ import type { EventCounts } from '../trackEventCounts'
 import type { LocationChange } from '../../browser/locationChangeObservable'
 import type { RumConfiguration } from '../configuration'
 import { trackViewEventCounts } from './trackViewEventCounts'
-import type { WebVitalTelemetryDebug } from './startWebVitalTelemetryDebug'
-import type { InitialViewMetrics } from './viewMetrics/trackInitialViewMetrics'
 import { trackInitialViewMetrics } from './viewMetrics/trackInitialViewMetrics'
+import type { InitialViewMetrics } from './viewMetrics/trackInitialViewMetrics'
 import type { CommonViewMetrics } from './viewMetrics/trackCommonViewMetrics'
 import { trackCommonViewMetrics } from './viewMetrics/trackCommonViewMetrics'
 
@@ -87,7 +86,6 @@ export function trackViews(
   configuration: RumConfiguration,
   locationChangeObservable: Observable<LocationChange>,
   areViewsTrackedAutomatically: boolean,
-  webVitalTelemetryDebug: WebVitalTelemetryDebug,
   initialViewOptions?: ViewOptions
 ) {
   const activeViews: Set<ReturnType<typeof newView>> = new Set()
@@ -107,7 +105,6 @@ export function trackViews(
       configuration,
       location,
       loadingType,
-      webVitalTelemetryDebug,
       startClocks,
       viewOptions
     )
@@ -171,7 +168,6 @@ function newView(
   configuration: RumConfiguration,
   initialLocation: Location,
   loadingType: ViewLoadingType,
-  webVitalTelemetryDebug: WebVitalTelemetryDebug,
   startClocks: ClocksState = clocksNow(),
   viewOptions?: ViewOptions
 ) {
@@ -220,13 +216,12 @@ function newView(
     configuration,
     scheduleViewUpdate,
     loadingType,
-    startClocks,
-    webVitalTelemetryDebug
+    startClocks
   )
 
   const { stop: stopInitialViewMetricsTracking, initialViewMetrics } =
     loadingType === ViewLoadingType.INITIAL_LOAD
-      ? trackInitialViewMetrics(lifeCycle, configuration, webVitalTelemetryDebug, setLoadEvent, scheduleViewUpdate)
+      ? trackInitialViewMetrics(lifeCycle, configuration, setLoadEvent, scheduleViewUpdate)
       : { stop: noop, initialViewMetrics: {} as InitialViewMetrics }
 
   const { stop: stopEventCountsTracking, eventCounts } = trackViewEventCounts(lifeCycle, id, scheduleViewUpdate)

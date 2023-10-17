@@ -1,5 +1,12 @@
-import type { TimeStamp } from '@datadog/browser-core'
-import { includes, display, combine, ErrorSource, timeStampNow } from '@datadog/browser-core'
+import type { Context, TimeStamp } from '@datadog/browser-core'
+import {
+  includes,
+  combine,
+  ErrorSource,
+  timeStampNow,
+  originalConsoleMethods,
+  globalConsole,
+} from '@datadog/browser-core'
 import type { CommonContext } from '../../rawLogsEvent.types'
 import type { LifeCycle } from '../lifeCycle'
 import { LifeCycleEventType } from '../lifeCycle'
@@ -20,23 +27,24 @@ export function startLoggerCollection(lifeCycle: LifeCycle) {
     savedCommonContext?: CommonContext,
     savedDate?: TimeStamp
   ) {
-    const messageContext = logsMessage.context
+    const messageContext = combine(logger.getContext(), logsMessage.context)
 
     if (isAuthorized(logsMessage.status, HandlerType.console, logger)) {
-      display(logsMessage.status, logsMessage.message, combine(logger.getContext(), messageContext))
+      displayInConsole(logsMessage, messageContext)
     }
 
-    lifeCycle.notify(LifeCycleEventType.RAW_LOG_COLLECTED, {
-      rawLogsEvent: {
-        date: savedDate || timeStampNow(),
-        message: logsMessage.message,
-        status: logsMessage.status,
-        origin: ErrorSource.LOGGER,
-      },
-      messageContext,
-      savedCommonContext,
-      logger,
-    })
+    if (isAuthorized(logsMessage.status, HandlerType.http, logger)) {
+      lifeCycle.notify(LifeCycleEventType.RAW_LOG_COLLECTED, {
+        rawLogsEvent: {
+          date: savedDate || timeStampNow(),
+          message: logsMessage.message,
+          status: logsMessage.status,
+          origin: ErrorSource.LOGGER,
+        },
+        messageContext,
+        savedCommonContext,
+      })
+    }
   }
 
   return {
@@ -50,4 +58,8 @@ export function isAuthorized(status: StatusType, handlerType: HandlerType, logge
   return (
     STATUS_PRIORITIES[status] >= STATUS_PRIORITIES[logger.getLevel()] && includes(sanitizedHandlerType, handlerType)
   )
+}
+
+function displayInConsole(logsMessage: LogsMessage, messageContext: Context | undefined) {
+  originalConsoleMethods[logsMessage.status].call(globalConsole, logsMessage.message, messageContext)
 }

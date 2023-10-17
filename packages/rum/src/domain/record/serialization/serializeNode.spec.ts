@@ -18,8 +18,7 @@ import {
 } from '../../../constants'
 import type { ElementNode, SerializedNodeWithId } from '../../../types'
 import { NodeType } from '../../../types'
-import type { IsolatedDom } from '../../../../../rum-core/test'
-import { createIsolatedDom } from '../../../../../rum-core/test'
+import { appendElement } from '../../../../../rum-core/test'
 import type { ElementsScrollPositions } from '../elementsScrollPositions'
 import { createElementsScrollPositions } from '../elementsScrollPositions'
 import type { ShadowRootCallBack, ShadowRootsController } from '../shadowRootsController'
@@ -59,7 +58,6 @@ const DEFAULT_OPTIONS: SerializeOptions = {
 }
 
 describe('serializeNodeWithId', () => {
-  let sandbox: HTMLElement
   let addShadowRootSpy: jasmine.Spy<ShadowRootCallBack>
 
   beforeEach(() => {
@@ -70,13 +68,9 @@ describe('serializeNodeWithId', () => {
     if (isIE()) {
       pending('IE not supported')
     }
-    sandbox = document.createElement('div')
-    sandbox.id = 'sandbox'
-    document.body.appendChild(sandbox)
   })
 
   afterEach(() => {
-    sandbox.remove()
     resetExperimentalFeatures()
   })
 
@@ -96,16 +90,6 @@ describe('serializeNodeWithId', () => {
   })
 
   describe('elements serialization', () => {
-    let isolatedDom: IsolatedDom
-
-    beforeEach(() => {
-      isolatedDom = createIsolatedDom()
-    })
-
-    afterEach(() => {
-      isolatedDom.clear()
-    })
-
     function serializeElement(
       node: Element,
       options: SerializeOptions = DEFAULT_OPTIONS
@@ -150,9 +134,7 @@ describe('serializeNodeWithId', () => {
     })
 
     it('serializes attributes', () => {
-      const element = document.createElement('div')
-      element.setAttribute('foo', 'bar')
-      element.setAttribute('data-foo', 'data-bar')
+      const element = appendElement('<div foo="bar" data-foo="data-bar"></div>')
       element.className = 'zog'
       element.style.width = '10px'
 
@@ -165,18 +147,14 @@ describe('serializeNodeWithId', () => {
     })
 
     describe('rr scroll attributes', () => {
-      let element: HTMLDivElement
+      let element: HTMLElement
       let elementsScrollPositions: ElementsScrollPositions
 
       beforeEach(() => {
-        element = document.createElement('div')
-        Object.assign(element.style, { width: '100px', height: '100px', overflow: 'scroll' })
-        const inner = document.createElement('div')
-        Object.assign(inner.style, { width: '200px', height: '200px' })
-        element.appendChild(inner)
-        sandbox.appendChild(element)
+        element = appendElement(
+          '<div style="width: 100px; height: 100px; overflow: scroll"><div style="width: 200px; height: 200px"></div></div>'
+        )
         element.scrollBy(10, 20)
-
         elementsScrollPositions = createElementsScrollPositions()
       })
 
@@ -473,74 +451,99 @@ describe('serializeNodeWithId', () => {
       })
     })
 
-    it('serializes a shadow host', () => {
-      const div = document.createElement('div')
-      div.attachShadow({ mode: 'open' })
-      expect(serializeElement(div, DEFAULT_OPTIONS)).toEqual({
-        type: NodeType.Element,
-        tagName: 'div',
-        attributes: {},
-        isSVG: undefined,
-        childNodes: [
-          {
-            type: NodeType.DocumentFragment,
-            isShadowRoot: true,
-            childNodes: [],
-            id: jasmine.any(Number) as unknown as number,
-            adoptedStyleSheets: undefined,
-          },
-        ],
-        id: jasmine.any(Number) as unknown as number,
+    describe('shadow dom', () => {
+      it('serializes a shadow host', () => {
+        const div = document.createElement('div')
+        div.attachShadow({ mode: 'open' })
+        expect(serializeElement(div, DEFAULT_OPTIONS)).toEqual({
+          type: NodeType.Element,
+          tagName: 'div',
+          attributes: {},
+          isSVG: undefined,
+          childNodes: [
+            {
+              type: NodeType.DocumentFragment,
+              isShadowRoot: true,
+              childNodes: [],
+              id: jasmine.any(Number) as unknown as number,
+              adoptedStyleSheets: undefined,
+            },
+          ],
+          id: jasmine.any(Number) as unknown as number,
+        })
       })
-    })
 
-    it('serializes a shadow host with children', () => {
-      const div = document.createElement('div')
-      div.attachShadow({ mode: 'open' })
-      div.shadowRoot!.appendChild(document.createElement('hr'))
+      it('serializes a shadow host with children', () => {
+        const div = document.createElement('div')
+        div.attachShadow({ mode: 'open' })
+        div.shadowRoot!.appendChild(document.createElement('hr'))
 
-      const options: SerializeOptions = {
-        ...DEFAULT_OPTIONS,
-        serializationContext: {
-          ...DEFAULT_SERIALIZATION_CONTEXT,
-          shadowRootsController: {
-            ...DEFAULT_SHADOW_ROOT_CONTROLLER,
-            addShadowRoot: addShadowRootSpy,
+        const options: SerializeOptions = {
+          ...DEFAULT_OPTIONS,
+          serializationContext: {
+            ...DEFAULT_SERIALIZATION_CONTEXT,
+            shadowRootsController: {
+              ...DEFAULT_SHADOW_ROOT_CONTROLLER,
+              addShadowRoot: addShadowRootSpy,
+            },
           },
-        },
-      }
-      expect(serializeElement(div, options)).toEqual({
-        type: NodeType.Element,
-        tagName: 'div',
-        attributes: {},
-        isSVG: undefined,
-        childNodes: [
-          {
-            type: NodeType.DocumentFragment,
-            isShadowRoot: true,
-            adoptedStyleSheets: undefined,
+        }
+        expect(serializeElement(div, options)).toEqual({
+          type: NodeType.Element,
+          tagName: 'div',
+          attributes: {},
+          isSVG: undefined,
+          childNodes: [
+            {
+              type: NodeType.DocumentFragment,
+              isShadowRoot: true,
+              adoptedStyleSheets: undefined,
+              childNodes: [
+                {
+                  type: NodeType.Element,
+                  tagName: 'hr',
+                  attributes: {},
+                  isSVG: undefined,
+                  childNodes: [],
+                  id: jasmine.any(Number) as unknown as number,
+                },
+              ],
+              id: jasmine.any(Number) as unknown as number,
+            },
+          ],
+          id: jasmine.any(Number) as unknown as number,
+        })
+        expect(addShadowRootSpy).toHaveBeenCalledWith(div.shadowRoot!)
+      })
+
+      it('propagates the privacy mode to the shadow root children', () => {
+        const div = document.createElement('div')
+        div.setAttribute(PRIVACY_ATTR_NAME, PRIVACY_ATTR_VALUE_MASK)
+        div.attachShadow({ mode: 'open' })
+        div.shadowRoot!.appendChild(document.createTextNode('foo'))
+
+        expect(serializeElement(div, DEFAULT_OPTIONS)).toEqual(
+          jasmine.objectContaining({
+            attributes: {
+              [PRIVACY_ATTR_NAME]: PRIVACY_ATTR_VALUE_MASK,
+            },
             childNodes: [
-              {
-                type: NodeType.Element,
-                tagName: 'hr',
-                attributes: {},
-                isSVG: undefined,
-                childNodes: [],
-                id: jasmine.any(Number) as unknown as number,
-              },
+              jasmine.objectContaining({
+                childNodes: [
+                  jasmine.objectContaining({
+                    textContent: 'xxx',
+                  }),
+                ],
+              }),
             ],
-            id: jasmine.any(Number) as unknown as number,
-          },
-        ],
-        id: jasmine.any(Number) as unknown as number,
+          })
+        )
       })
-      expect(addShadowRootSpy).toHaveBeenCalledWith(div.shadowRoot!)
     })
 
     describe('<style> elements', () => {
       it('serializes a node with dynamically edited CSS rules', () => {
-        const styleNode = document.createElement('style')
-        isolatedDom.document.head.appendChild(styleNode)
+        const styleNode = appendElement('<style></style>', document.head) as HTMLStyleElement
         styleNode.sheet!.insertRule('body { width: 100%; }')
 
         expect(serializeElement(styleNode)).toEqual({
@@ -554,9 +557,7 @@ describe('serializeNodeWithId', () => {
       })
 
       it('serializes a node with CSS rules specified as inner text', () => {
-        const styleNode = document.createElement('style')
-        styleNode.textContent = 'body { width: 100%; }'
-        isolatedDom.document.head.appendChild(styleNode)
+        const styleNode = appendElement('<style>body { width: 100%; }</style>', document.head) as HTMLStyleElement
 
         expect(serializeElement(styleNode)).toEqual({
           type: NodeType.Element,
@@ -569,9 +570,7 @@ describe('serializeNodeWithId', () => {
       })
 
       it('serializes a node with CSS rules specified as inner text then dynamically edited', () => {
-        const styleNode = document.createElement('style')
-        styleNode.textContent = 'body { width: 100%; }'
-        isolatedDom.document.head.appendChild(styleNode)
+        const styleNode = appendElement('<style>body { width: 100%; }</style>', document.head) as HTMLStyleElement
         styleNode.sheet!.insertRule('body { color: red; }')
 
         expect(serializeElement(styleNode)).toEqual({
@@ -586,11 +585,16 @@ describe('serializeNodeWithId', () => {
     })
 
     describe('<link rel="stylesheet"> elements', () => {
+      afterEach(() => {
+        // styleSheets is part of the document prototype so we can safely delete it
+        delete (document as { styleSheets?: StyleSheetList }).styleSheets
+      })
+
       it('does not inline external CSS if it cannot be fetched', () => {
-        const linkNode = document.createElement('link')
-        linkNode.setAttribute('rel', 'stylesheet')
-        linkNode.setAttribute('href', 'https://datadoghq.com/some/style.css')
-        isolatedDom.document.head.appendChild(linkNode)
+        const linkNode = appendElement(
+          "<link rel='stylesheet' href='https://datadoghq.com/some/style.css' />",
+          document.head
+        )
         expect(serializeNodeWithId(linkNode, DEFAULT_OPTIONS)).toEqual({
           type: NodeType.Element,
           tagName: 'link',
@@ -602,17 +606,18 @@ describe('serializeNodeWithId', () => {
       })
 
       it('inlines external CSS it can be fetched', () => {
-        const linkNode = document.createElement('link')
-        linkNode.setAttribute('rel', 'stylesheet')
-        linkNode.setAttribute('href', 'https://datadoghq.com/some/style.css')
-        isolatedDom.document.head.appendChild(linkNode)
-        Object.defineProperty(isolatedDom.document, 'styleSheets', {
+        const linkNode = appendElement(
+          "<link rel='stylesheet' href='https://datadoghq.com/some/style.css' />",
+          document.head
+        )
+        Object.defineProperty(document, 'styleSheets', {
           value: [
             {
               href: 'https://datadoghq.com/some/style.css',
               cssRules: [{ cssText: 'body { width: 100%; }' }],
             },
           ],
+          configurable: true,
         })
 
         expect(serializeNodeWithId(linkNode, DEFAULT_OPTIONS)).toEqual({
@@ -631,27 +636,28 @@ describe('serializeNodeWithId', () => {
 
       it('does not inline external CSS when DISABLE_REPLAY_INLINE_CSS is enabled', () => {
         addExperimentalFeatures([ExperimentalFeature.DISABLE_REPLAY_INLINE_CSS])
-        const linkNode = document.createElement('link')
-        linkNode.setAttribute('rel', 'stylesheet')
-        linkNode.setAttribute('href', 'https://datadoghq.com/some/style.css')
-        isolatedDom.document.head.appendChild(linkNode)
-        Object.defineProperty(isolatedDom.document, 'styleSheets', {
+        const linkNode = appendElement(
+          "<link rel='stylesheet' href='https://datadoghq.com/some/style.css' />",
+          document.head
+        )
+        Object.defineProperty(document, 'styleSheets', {
           value: [
             {
               href: 'https://datadoghq.com/some/style.css',
               cssRules: [{ cssText: 'body { width: 100%; }' }],
             },
           ],
+          configurable: true,
         })
 
         expect((serializeNodeWithId(linkNode, DEFAULT_OPTIONS) as ElementNode).attributes._cssText).toBeUndefined()
       })
 
       it('does not inline external CSS if the style sheet is behind CORS', () => {
-        const linkNode = document.createElement('link')
-        linkNode.setAttribute('rel', 'stylesheet')
-        linkNode.setAttribute('href', 'https://datadoghq.com/some/style.css')
-        isolatedDom.document.head.appendChild(linkNode)
+        const linkNode = appendElement(
+          "<link rel='stylesheet' href='https://datadoghq.com/some/style.css' />",
+          document.head
+        )
         class FakeCSSStyleSheet {
           get cssRules() {
             return []
@@ -660,8 +666,9 @@ describe('serializeNodeWithId', () => {
         const styleSheet = new FakeCSSStyleSheet()
         spyOnProperty(styleSheet, 'cssRules', 'get').and.throwError(new DOMException('cors issue', 'SecurityError'))
 
-        Object.defineProperty(isolatedDom.document, 'styleSheets', {
+        Object.defineProperty(document, 'styleSheets', {
           value: [styleSheet],
+          configurable: true,
         })
 
         expect(serializeNodeWithId(linkNode, DEFAULT_OPTIONS)).toEqual({
@@ -834,26 +841,25 @@ describe('serializeDocumentNode handles', function testAllowDomTree() {
   })
 
   describe('with dynamic stylesheet', () => {
-    let isolatedDom: IsolatedDom
-
-    beforeEach(() => {
-      isolatedDom = createIsolatedDom()
-    })
-
     afterEach(() => {
-      isolatedDom.clear()
+      if (isAdoptedStyleSheetsSupported()) {
+        document.adoptedStyleSheets = []
+      }
     })
 
     it('serializes a document with adoptedStyleSheets', () => {
       if (!isAdoptedStyleSheetsSupported()) {
         pending('no adoptedStyleSheets support')
       }
-      const styleSheet = new isolatedDom.window.CSSStyleSheet()
+      const styleSheet = new window.CSSStyleSheet()
       styleSheet.insertRule('div { width: 100%; }')
-      isolatedDom.document.adoptedStyleSheets = [styleSheet]
-      expect(serializeDocument(isolatedDom.document, DEFAULT_CONFIGURATION, DEFAULT_SERIALIZATION_CONTEXT)).toEqual({
+      document.adoptedStyleSheets = [styleSheet]
+      expect(serializeDocument(document, DEFAULT_CONFIGURATION, DEFAULT_SERIALIZATION_CONTEXT)).toEqual({
         type: NodeType.Document,
-        childNodes: [jasmine.objectContaining({ type: NodeType.Element, tagName: 'html' })],
+        childNodes: [
+          jasmine.objectContaining({ type: NodeType.DocumentType }),
+          jasmine.objectContaining({ type: NodeType.Element, tagName: 'html' }),
+        ],
         adoptedStyleSheets: [
           {
             cssRules: ['div { width: 100%; }'],

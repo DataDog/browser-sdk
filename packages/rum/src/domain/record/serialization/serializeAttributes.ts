@@ -1,4 +1,4 @@
-import { ExperimentalFeature, isExperimentalFeatureEnabled } from '@datadog/browser-core'
+import { ExperimentalFeature, isExperimentalFeatureEnabled, isSafari } from '@datadog/browser-core'
 
 import { NodePrivacyLevel } from '../../../constants'
 import { shouldMaskNode } from '../privacy'
@@ -134,19 +134,33 @@ export function getCssRulesString(cssStyleSheet: CSSStyleSheet | undefined | nul
   if (!rules) {
     return null
   }
-  const styleSheetCssText = Array.from(rules, getCssRuleString).join('')
+  const styleSheetCssText = Array.from(rules, isSafari() ? getCssRuleStringForSafari : getCssRuleString).join('')
   return switchToAbsoluteUrl(styleSheetCssText, cssStyleSheet.href)
 }
 
+function getCssRuleStringForSafari(rule: CSSRule): string {
+  // Safari does not escape attribute selectors containing : properly
+  // https://bugs.webkit.org/show_bug.cgi?id=184604
+  if (isCSSStyleRule(rule) && rule.selectorText.includes(':')) {
+    // This regex replaces [foo:bar] by [foo\\:bar]
+    const escapeColon = /(\[[\w-]+[^\\])(:[^\]]+\])/g
+    return rule.cssText.replace(escapeColon, '$1\\$2')
+  }
+
+  return getCssRuleString(rule)
+}
+
 function getCssRuleString(rule: CSSRule): string {
-  return (
-    // If it's an @import rule, try to inline sub-rules recursively with `getCssRulesString`. This
-    // operation can fail if the imported stylesheet is protected by CORS, in which case we fallback
-    // to the @import rule CSS text.
-    (isCSSImportRule(rule) && getCssRulesString(rule.styleSheet)) || rule.cssText
-  )
+  // If it's an @import rule, try to inline sub-rules recursively with `getCssRulesString`. This
+  // operation can fail if the imported stylesheet is protected by CORS, in which case we fallback
+  // to the @import rule CSS text.
+  return (isCSSImportRule(rule) && getCssRulesString(rule.styleSheet)) || rule.cssText
 }
 
 function isCSSImportRule(rule: CSSRule): rule is CSSImportRule {
   return 'styleSheet' in rule
+}
+
+function isCSSStyleRule(rule: CSSRule): rule is CSSStyleRule {
+  return 'selectorText' in rule
 }

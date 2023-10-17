@@ -3,7 +3,6 @@ import {
   DOM_EVENT,
   ExperimentalFeature,
   addExperimentalFeatures,
-  noop,
   resetExperimentalFeatures,
 } from '@datadog/browser-core'
 import { restorePageVisibility, setPageVisibility, createNewEvent } from '@datadog/browser-core/test'
@@ -31,7 +30,6 @@ describe('trackLargestContentfulPaint', () => {
       const largestContentfulPaint = trackLargestContentfulPaint(
         lifeCycle,
         configuration,
-        { addWebVitalTelemetryDebug: noop },
         firstHidden,
         eventTarget,
         lcpCallback
@@ -68,7 +66,7 @@ describe('trackLargestContentfulPaint', () => {
 
     lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [
       createPerformanceEntry(RumPerformanceEntryType.LARGEST_CONTENTFUL_PAINT, {
-        element: appendElement('button', { id: 'lcp-target-element' }),
+        element: appendElement('<button id="lcp-target-element"></button>'),
       }),
     ])
 
@@ -81,7 +79,7 @@ describe('trackLargestContentfulPaint', () => {
 
     lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [
       createPerformanceEntry(RumPerformanceEntryType.LARGEST_CONTENTFUL_PAINT, {
-        element: appendElement('button', { id: 'lcp-target-element' }),
+        element: appendElement('<button id="lcp-target-element"></button>'),
       }),
     ])
 

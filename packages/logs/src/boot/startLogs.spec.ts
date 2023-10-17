@@ -1,3 +1,4 @@
+import type { Payload } from '@datadog/browser-core'
 import { ErrorSource, display, stopSessionManager, getCookie, SESSION_STORE_KEY } from '@datadog/browser-core'
 import type { Request } from '@datadog/browser-core/test'
 import {
@@ -37,6 +38,7 @@ const COMMON_CONTEXT = {
   context: {},
   user: {},
 }
+const DEFAULT_PAYLOAD = {} as Payload
 
 describe('logs', () => {
   const initConfiguration = { clientToken: 'xxx', service: 'service', telemetrySampleRate: 0 }
@@ -71,13 +73,13 @@ describe('logs', () => {
 
   describe('request', () => {
     it('should send the needed data', () => {
-      ;({ handleLog, stop: stopLogs } = startLogs(initConfiguration, baseConfiguration, () => COMMON_CONTEXT, logger))
+      ;({ handleLog, stop: stopLogs } = startLogs(initConfiguration, baseConfiguration, () => COMMON_CONTEXT))
       registerCleanupTask(stopLogs)
 
       handleLog({ message: 'message', status: StatusType.warn, context: { foo: 'bar' } }, logger, COMMON_CONTEXT)
 
       expect(requests.length).toEqual(1)
-      expect(requests[0].url).toContain(baseConfiguration.logsEndpointBuilder.build('xhr'))
+      expect(requests[0].url).toContain(baseConfiguration.logsEndpointBuilder.build('xhr', DEFAULT_PAYLOAD))
       expect(getLoggedMessage(requests, 0)).toEqual({
         date: jasmine.any(Number),
         foo: 'bar',
@@ -97,8 +99,7 @@ describe('logs', () => {
       ;({ handleLog, stop: stopLogs } = startLogs(
         initConfiguration,
         { ...baseConfiguration, batchMessagesLimit: 3 },
-        () => COMMON_CONTEXT,
-        logger
+        () => COMMON_CONTEXT
       ))
       registerCleanupTask(stopLogs)
 
@@ -111,7 +112,7 @@ describe('logs', () => {
 
     it('should send bridge event when bridge is present', () => {
       const sendSpy = spyOn(initEventBridgeStub(), 'send')
-      ;({ handleLog, stop: stopLogs } = startLogs(initConfiguration, baseConfiguration, () => COMMON_CONTEXT, logger))
+      ;({ handleLog, stop: stopLogs } = startLogs(initConfiguration, baseConfiguration, () => COMMON_CONTEXT))
       registerCleanupTask(stopLogs)
 
       handleLog(DEFAULT_MESSAGE, logger)
@@ -131,14 +132,14 @@ describe('logs', () => {
       const sendSpy = spyOn(initEventBridgeStub(), 'send')
 
       let configuration = { ...baseConfiguration, sessionSampleRate: 0 }
-      ;({ handleLog, stop: stopLogs } = startLogs(initConfiguration, configuration, () => COMMON_CONTEXT, logger))
+      ;({ handleLog, stop: stopLogs } = startLogs(initConfiguration, configuration, () => COMMON_CONTEXT))
       registerCleanupTask(stopLogs)
       handleLog(DEFAULT_MESSAGE, logger)
 
       expect(sendSpy).not.toHaveBeenCalled()
 
       configuration = { ...baseConfiguration, sessionSampleRate: 100 }
-      ;({ handleLog, stop: stopLogs } = startLogs(initConfiguration, configuration, () => COMMON_CONTEXT, logger))
+      ;({ handleLog, stop: stopLogs } = startLogs(initConfiguration, configuration, () => COMMON_CONTEXT))
       registerCleanupTask(stopLogs)
       handleLog(DEFAULT_MESSAGE, logger)
 
@@ -151,8 +152,7 @@ describe('logs', () => {
     ;({ handleLog, stop: stopLogs } = startLogs(
       initConfiguration,
       { ...baseConfiguration, forwardConsoleLogs: ['log'] },
-      () => COMMON_CONTEXT,
-      logger
+      () => COMMON_CONTEXT
     ))
     registerCleanupTask(stopLogs)
 
@@ -169,7 +169,7 @@ describe('logs', () => {
     })
 
     it('creates a session on normal conditions', () => {
-      ;({ handleLog, stop: stopLogs } = startLogs(initConfiguration, baseConfiguration, () => COMMON_CONTEXT, logger))
+      ;({ handleLog, stop: stopLogs } = startLogs(initConfiguration, baseConfiguration, () => COMMON_CONTEXT))
       registerCleanupTask(stopLogs)
 
       expect(getCookie(SESSION_STORE_KEY)).not.toBeUndefined()
@@ -177,7 +177,7 @@ describe('logs', () => {
 
     it('does not create a session if event bridge is present', () => {
       initEventBridgeStub()
-      ;({ handleLog, stop: stopLogs } = startLogs(initConfiguration, baseConfiguration, () => COMMON_CONTEXT, logger))
+      ;({ handleLog, stop: stopLogs } = startLogs(initConfiguration, baseConfiguration, () => COMMON_CONTEXT))
       registerCleanupTask(stopLogs)
 
       expect(getCookie(SESSION_STORE_KEY)).toBeUndefined()
@@ -185,7 +185,7 @@ describe('logs', () => {
 
     it('does not create a session if synthetics worker will inject RUM', () => {
       mockSyntheticsWorkerValues({ injectsRum: true })
-      ;({ handleLog, stop: stopLogs } = startLogs(initConfiguration, baseConfiguration, () => COMMON_CONTEXT, logger))
+      ;({ handleLog, stop: stopLogs } = startLogs(initConfiguration, baseConfiguration, () => COMMON_CONTEXT))
       registerCleanupTask(stopLogs)
 
       expect(getCookie(SESSION_STORE_KEY)).toBeUndefined()

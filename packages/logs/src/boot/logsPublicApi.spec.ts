@@ -219,9 +219,9 @@ describe('logs entry', () => {
       })
 
       it('stores a deep copy of the global context', () => {
-        LOGS.addLoggerGlobalContext('foo', 'bar')
+        LOGS.setGlobalContextProperty('foo', 'bar')
         LOGS.logger.log('message')
-        LOGS.addLoggerGlobalContext('foo', 'baz')
+        LOGS.setGlobalContextProperty('foo', 'baz')
 
         LOGS.init(DEFAULT_INIT_CONFIGURATION)
 
@@ -328,7 +328,7 @@ describe('logs entry', () => {
         LOGS = makeLogsPublicApi(startLogs)
       })
 
-      it('should return undefined if not initalized', () => {
+      it('should return undefined if not initialized', () => {
         expect(LOGS.getInternalContext()).toBeUndefined()
       })
 
@@ -543,22 +543,6 @@ describe('logs entry', () => {
       logsPublicApi.clearGlobalContext()
       expect(logsPublicApi.getGlobalContext()).toEqual({})
       expect(localStorage.getItem('_dd_c_logs_2')).toBe('{}')
-    })
-
-    it('when enabled, should maintain global context in local storage (deprecated APIs) ', () => {
-      logsPublicApi.init({ ...DEFAULT_INIT_CONFIGURATION, storeContextsAcrossPages: true })
-
-      logsPublicApi.setLoggerGlobalContext({ qux: 'qix' })
-      expect(logsPublicApi.getLoggerGlobalContext()).toEqual({ qux: 'qix' })
-      expect(localStorage.getItem('_dd_c_logs_2')).toBe('{"qux":"qix"}')
-
-      logsPublicApi.addLoggerGlobalContext('foo', 'bar')
-      expect(logsPublicApi.getLoggerGlobalContext()).toEqual({ qux: 'qix', foo: 'bar' })
-      expect(localStorage.getItem('_dd_c_logs_2')).toBe('{"qux":"qix","foo":"bar"}')
-
-      logsPublicApi.removeLoggerGlobalContext('foo')
-      expect(logsPublicApi.getLoggerGlobalContext()).toEqual({ qux: 'qix' })
-      expect(localStorage.getItem('_dd_c_logs_2')).toBe('{"qux":"qix"}')
     })
 
     // TODO in next major, buffer context calls to correctly apply before init set/remove/clear

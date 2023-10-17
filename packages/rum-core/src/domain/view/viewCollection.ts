@@ -1,25 +1,16 @@
 import type { Duration, ServerDuration, Observable } from '@datadog/browser-core'
-import {
-  isExperimentalFeatureEnabled,
-  ExperimentalFeature,
-  isEmptyObject,
-  mapValues,
-  toServerDuration,
-  isNumber,
-} from '@datadog/browser-core'
+import { isEmptyObject, mapValues, toServerDuration, isNumber } from '@datadog/browser-core'
 import type { RecorderApi } from '../../boot/rumPublicApi'
 import type { RawRumViewEvent } from '../../rawRumEvent.types'
 import { RumEventType } from '../../rawRumEvent.types'
 import type { LifeCycle, RawRumEventCollectedData } from '../lifeCycle'
 import { LifeCycleEventType } from '../lifeCycle'
-import { mapToForegroundPeriods } from '../contexts/foregroundContexts'
 import type { LocationChange } from '../../browser/locationChangeObservable'
 import type { RumConfiguration } from '../configuration'
 import type { FeatureFlagContexts } from '../contexts/featureFlagContext'
 import type { PageStateHistory } from '../contexts/pageStateHistory'
 import type { ViewEvent, ViewOptions } from './trackViews'
 import { trackViews } from './trackViews'
-import type { WebVitalTelemetryDebug } from './startWebVitalTelemetryDebug'
 
 export function startViewCollection(
   lifeCycle: LifeCycle,
@@ -30,7 +21,6 @@ export function startViewCollection(
   featureFlagContexts: FeatureFlagContexts,
   pageStateHistory: PageStateHistory,
   recorderApi: RecorderApi,
-  webVitalTelemetryDebug: WebVitalTelemetryDebug,
   initialViewOptions?: ViewOptions
 ) {
   lifeCycle.subscribe(LifeCycleEventType.VIEW_UPDATED, (view) =>
@@ -46,7 +36,6 @@ export function startViewCollection(
     configuration,
     locationChangeObservable,
     !configuration.trackViewsManually,
-    webVitalTelemetryDebug,
     initialViewOptions
   )
 }
@@ -60,13 +49,12 @@ function processViewUpdate(
 ): RawRumEventCollectedData<RawRumViewEvent> {
   const replayStats = recorderApi.getReplayStats(view.id)
   const featureFlagContext = featureFlagContexts.findFeatureFlagEvaluations(view.startClocks.relative)
-  const pageStatesEnabled = isExperimentalFeatureEnabled(ExperimentalFeature.PAGE_STATES)
   const pageStates = pageStateHistory.findAll(view.startClocks.relative, view.duration)
   const viewEvent: RawRumViewEvent = {
     _dd: {
       document_version: view.documentVersion,
       replay_stats: replayStats,
-      page_states: pageStatesEnabled ? pageStates : undefined,
+      page_states: pageStates,
     },
     date: view.startClocks.timeStamp,
     type: RumEventType.VIEW,
@@ -106,17 +94,15 @@ function processViewUpdate(
         count: view.eventCounts.resourceCount,
       },
       time_spent: toServerDuration(view.duration),
-      in_foreground_periods:
-        !pageStatesEnabled && pageStates ? mapToForegroundPeriods(pageStates, view.duration) : undefined, // Todo: Remove in the next major release
     },
     feature_flags: featureFlagContext && !isEmptyObject(featureFlagContext) ? featureFlagContext : undefined,
     display: view.commonViewMetrics.scroll
       ? {
           scroll: {
             max_depth: view.commonViewMetrics.scroll.maxDepth,
-            max_depth_scroll_height: view.commonViewMetrics.scroll.maxDepthScrollHeight,
             max_depth_scroll_top: view.commonViewMetrics.scroll.maxDepthScrollTop,
-            max_depth_time: toServerDuration(view.commonViewMetrics.scroll.maxDepthTime),
+            max_scroll_height: view.commonViewMetrics.scroll.maxScrollHeight,
+            max_scroll_height_time: toServerDuration(view.commonViewMetrics.scroll.maxScrollHeightTime),
           },
         }
       : undefined,

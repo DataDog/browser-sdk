@@ -10,7 +10,6 @@ import type {
   DefaultPrivacyLevel,
 } from '@datadog/browser-core'
 import type { PageState } from './domain/contexts/pageStateHistory'
-import type { RumSessionPlan } from './domain/rumSessionManager'
 
 export const enum RumEventType {
   ACTION = 'action',
@@ -106,7 +105,6 @@ export interface RawRumViewEvent {
     long_task: Count
     resource: Count
     frustration: Count
-    in_foreground_periods?: InForegroundPeriod[]
   }
   session: {
     has_replay: true | undefined
@@ -127,15 +125,10 @@ export interface RawRumViewEvent {
 interface ViewDisplay {
   scroll: {
     max_depth?: number
-    max_depth_scroll_height?: number
     max_depth_scroll_top?: number
-    max_depth_time?: ServerDuration
+    max_scroll_height?: number
+    max_scroll_height_time?: ServerDuration
   }
-}
-
-export interface InForegroundPeriod {
-  start: ServerDuration
-  duration: ServerDuration
 }
 
 export type PageStateServerEntry = { state: PageState; start: ServerDuration }
@@ -263,9 +256,6 @@ export interface RumContext {
   _dd: {
     format_version: 2
     drift: number
-    session: {
-      plan: RumSessionPlan
-    }
     configuration: {
       session_sample_rate: number
       session_replay_sample_rate: number

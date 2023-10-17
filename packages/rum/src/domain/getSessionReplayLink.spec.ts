@@ -52,7 +52,7 @@ describe('getReplayLink', () => {
   })
 
   it('return a param if replay is sampled out', () => {
-    const sessionManager = createRumSessionManagerMock().setId('session-id-1').setPlanWithoutSessionReplay()
+    const sessionManager = createRumSessionManagerMock().setId('session-id-1').setTrackedWithoutSessionReplay()
     const viewContexts = {
       findView: () => ({
         id: 'view-id-1',
