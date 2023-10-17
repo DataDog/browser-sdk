@@ -30,11 +30,11 @@ Datadog provides one CDN bundle per [site][60]:
 
 | Site    | logs                                                           | rum                                                           | rum-slim                                                           |
 | ------- | -------------------------------------------------------------- | ------------------------------------------------------------- | ------------------------------------------------------------------ |
-| US1     | https://www.datadoghq-browser-agent.com/us1/v4/datadog-logs.js | https://www.datadoghq-browser-agent.com/us1/v4/datadog-rum.js | https://www.datadoghq-browser-agent.com/us1/v4/datadog-rum-slim.js |
-| US3     | https://www.datadoghq-browser-agent.com/us3/v4/datadog-logs.js | https://www.datadoghq-browser-agent.com/us3/v4/datadog-rum.js | https://www.datadoghq-browser-agent.com/us3/v4/datadog-rum-slim.js |
-| US5     | https://www.datadoghq-browser-agent.com/us5/v4/datadog-logs.js | https://www.datadoghq-browser-agent.com/us5/v4/datadog-rum.js | https://www.datadoghq-browser-agent.com/us5/v4/datadog-rum-slim.js |
-| EU1     | https://www.datadoghq-browser-agent.com/eu1/v4/datadog-logs.js | https://www.datadoghq-browser-agent.com/eu1/v4/datadog-rum.js | https://www.datadoghq-browser-agent.com/eu1/v4/datadog-rum-slim.js |
-| US1-FED | https://www.datadoghq-browser-agent.com/datadog-logs-v4.js     | https://www.datadoghq-browser-agent.com/datadog-rum-v4.js     | https://www.datadoghq-browser-agent.com/datadog-rum-slim-v4.js     |
+| US1     | https://www.datadoghq-browser-agent.com/us1/v5/datadog-logs.js | https://www.datadoghq-browser-agent.com/us1/v5/datadog-rum.js | https://www.datadoghq-browser-agent.com/us1/v5/datadog-rum-slim.js |
+| US3     | https://www.datadoghq-browser-agent.com/us3/v5/datadog-logs.js | https://www.datadoghq-browser-agent.com/us3/v5/datadog-rum.js | https://www.datadoghq-browser-agent.com/us3/v5/datadog-rum-slim.js |
+| US5     | https://www.datadoghq-browser-agent.com/us5/v5/datadog-logs.js | https://www.datadoghq-browser-agent.com/us5/v5/datadog-rum.js | https://www.datadoghq-browser-agent.com/us5/v5/datadog-rum-slim.js |
+| EU1     | https://www.datadoghq-browser-agent.com/eu1/v5/datadog-logs.js | https://www.datadoghq-browser-agent.com/eu1/v5/datadog-rum.js | https://www.datadoghq-browser-agent.com/eu1/v5/datadog-rum-slim.js |
+| US1-FED | https://www.datadoghq-browser-agent.com/datadog-logs-v5.js     | https://www.datadoghq-browser-agent.com/datadog-rum-v5.js     | https://www.datadoghq-browser-agent.com/datadog-rum-slim-v5.js     |
 
 [1]: https://github.githubassets.com/favicons/favicon.png
 [2]: https://imgix.datadoghq.com/img/favicons/favicon-32x32.png
