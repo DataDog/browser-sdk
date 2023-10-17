@@ -43,14 +43,14 @@ function createEndpointUrlWithParametersBuilder(
   const { proxy, proxyUseSuffix } = initConfiguration
 
   if (proxy) {
-    const normalizedProxyUrl = normalizeUrl(proxy).replace(/\/$/, "")
+    const normalizedProxyUrl = normalizeUrl(proxy)
 
     // Allow suffix routing (make the destination path the suffix of the proxy url instead of using ddforward).
     if (proxyUseSuffix) {
       if (normalizedProxyUrl.indexOf("?") >= 0) {
         throw new Error("proxyUseSuffix requires the proxy url to be clear of query parameters");
       }
-      return (parameters) => `${normalizedProxyUrl}${path}?${parameters}`
+      return (parameters) => `${normalizedProxyUrl.replace(/\/$/, "")}${path}?${parameters}`
     }
 
     return (parameters) => `${normalizedProxyUrl}?ddforward=${encodeURIComponent(`${path}?${parameters}`)}`
