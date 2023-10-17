@@ -6,7 +6,7 @@ import {
   addTelemetryDebug,
   elapsed,
 } from '@datadog/browser-core'
-import type { ClocksState, Duration } from '@datadog/browser-core'
+import type { Duration, RelativeTime } from '@datadog/browser-core'
 import { RumPerformanceEntryType, supportPerformanceTimingEvent } from '../../../browser/performanceCollection'
 import type { RumFirstInputTiming, RumPerformanceEventTiming } from '../../../browser/performanceCollection'
 import { LifeCycleEventType } from '../../lifeCycle'
@@ -19,6 +19,8 @@ import { getInteractionCount, initInteractionCountPolyfill } from './interaction
 
 // Arbitrary value to prevent unnecessary memory usage on views with lots of interactions.
 const MAX_INTERACTION_ENTRIES = 10
+// Arbitrary value to cap INP outliers
+export const MAX_INP_VALUE = (1 * ONE_MINUTE) as Duration
 
 export interface InteractionToNextPaint {
   value: Duration
@@ -32,7 +34,7 @@ export interface InteractionToNextPaint {
  */
 export function trackInteractionToNextPaint(
   configuration: RumConfiguration,
-  viewStart: ClocksState,
+  viewStart: RelativeTime,
   viewLoadingType: ViewLoadingType,
   lifeCycle: LifeCycle
 ) {
@@ -42,11 +44,15 @@ export function trackInteractionToNextPaint(
   ) {
     return {
       getInteractionToNextPaint: () => undefined,
+      setViewEnd: noop,
       stop: noop,
     }
   }
 
-  const { getViewInteractionCount } = trackViewInteractionCount(viewLoadingType)
+  const { getViewInteractionCount, stopViewInteractionCount } = trackViewInteractionCount(viewLoadingType)
+
+  let viewEnd = Infinity as RelativeTime
+
   const longestInteractions = trackLongestInteractions(getViewInteractionCount)
   let interactionToNextPaint = -1 as Duration
   let interactionToNextPaintTargetSelector: string | undefined
@@ -57,7 +63,10 @@ export function trackInteractionToNextPaint(
       if (
         (entry.entryType === RumPerformanceEntryType.EVENT ||
           entry.entryType === RumPerformanceEntryType.FIRST_INPUT) &&
-        entry.interactionId
+        entry.interactionId &&
+        // Check the entry start time is inside the view bounds because some view interactions can be reported after the view end (if long duration).
+        entry.startTime >= viewStart &&
+        entry.startTime <= viewEnd
       ) {
         longestInteractions.process(entry)
       }
@@ -71,7 +80,7 @@ export function trackInteractionToNextPaint(
         addTelemetryDebug('INP outlier', {
           inp: interactionToNextPaint,
           interaction: {
-            timeFromViewStart: elapsed(viewStart.relative, newInteraction.startTime),
+            timeFromViewStart: elapsed(viewStart, newInteraction.startTime),
             duration: newInteraction.duration,
             startTime: newInteraction.startTime,
             processingStart: newInteraction.processingStart,
@@ -104,7 +113,7 @@ export function trackInteractionToNextPaint(
       // but the view interaction count > 0 then report 0
       if (interactionToNextPaint >= 0) {
         return {
-          value: interactionToNextPaint,
+          value: Math.min(interactionToNextPaint, MAX_INP_VALUE) as Duration,
           targetSelector: interactionToNextPaintTargetSelector,
         }
       } else if (getViewInteractionCount()) {
@@ -112,6 +121,10 @@ export function trackInteractionToNextPaint(
           value: 0 as Duration,
         }
       }
+    },
+    setViewEnd: (viewEndTime: RelativeTime) => {
+      viewEnd = viewEndTime
+      stopViewInteractionCount()
     },
     stop,
   }
@@ -164,8 +177,23 @@ function trackLongestInteractions(getViewInteractionCount: () => number) {
 export function trackViewInteractionCount(viewLoadingType: ViewLoadingType) {
   initInteractionCountPolyfill()
   const previousInteractionCount = viewLoadingType === ViewLoadingType.INITIAL_LOAD ? 0 : getInteractionCount()
+  let state: { stopped: false } | { stopped: true; interactionCount: number } = { stopped: false }
+
+  function computeViewInteractionCount() {
+    return getInteractionCount()! - previousInteractionCount
+  }
+
   return {
-    getViewInteractionCount: () => getInteractionCount()! - previousInteractionCount,
+    getViewInteractionCount: () => {
+      if (state.stopped) {
+        return state.interactionCount
+      }
+
+      return computeViewInteractionCount()
+    },
+    stopViewInteractionCount: () => {
+      state = { stopped: true, interactionCount: computeViewInteractionCount() }
+    },
   }
 }
 
