@@ -317,8 +317,8 @@ function areDifferentLocation(currentLocation: Location, otherLocation: Location
 }
 
 function isHashAnAnchor(hash: string) {
-  const correspondingId = hash.substr(1)
-  return !!document.getElementById(correspondingId)
+  const correspondingId = hash.substring(1)
+  return correspondingId !== '' && !!document.getElementById(correspondingId)
 }
 
 function getPathFromHash(hash: string) {
