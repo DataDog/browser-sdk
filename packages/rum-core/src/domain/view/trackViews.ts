@@ -317,8 +317,9 @@ function areDifferentLocation(currentLocation: Location, otherLocation: Location
 }
 
 function isHashAnAnchor(hash: string) {
-  const correspondingId = hash.substr(1)
-  return !!document.getElementById(correspondingId)
+  const correspondingId = hash.substring(1)
+  // check if the correspondingId is empty because on Firefox an empty string passed to getElementById() prints a consol warning
+  return correspondingId !== '' && !!document.getElementById(correspondingId)
 }
 
 function getPathFromHash(hash: string) {
