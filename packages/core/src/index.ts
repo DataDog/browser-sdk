@@ -18,7 +18,7 @@ export {
   ExperimentalFeature,
 } from './tools/experimentalFeatures'
 export { trackRuntimeError } from './domain/error/trackRuntimeError'
-export { computeStackTrace, StackTrace } from './domain/tracekit'
+export { computeStackTrace, StackTrace } from './domain/error/computeStackTrace'
 export { defineGlobal, makePublicApi } from './boot/init'
 export { initReportObservable, RawReport, RawReportType } from './domain/report/reportObservable'
 export {

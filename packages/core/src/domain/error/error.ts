@@ -1,11 +1,11 @@
-import type { StackTrace } from '../tracekit'
-import { computeStackTrace } from '../tracekit'
 import { callMonitored } from '../../tools/monitor'
 import { sanitize } from '../../tools/serialisation/sanitize'
 import type { ClocksState } from '../../tools/utils/timeUtils'
 import { noop } from '../../tools/utils/functionUtils'
 import { jsonStringify } from '../../tools/serialisation/jsonStringify'
 import type { ErrorSource, ErrorHandling, RawError, RawErrorCause, ErrorWithCause, NonErrorPrefix } from './error.types'
+import type { StackTrace } from './computeStackTrace'
+import { computeStackTrace } from './computeStackTrace'
 
 export const NO_ERROR_STACK_PRESENT_MESSAGE = 'No stack, consider using an instance of Error'
 
