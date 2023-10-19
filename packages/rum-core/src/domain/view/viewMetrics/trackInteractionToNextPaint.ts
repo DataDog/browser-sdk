@@ -1,5 +1,12 @@
-import { noop, isExperimentalFeatureEnabled, ExperimentalFeature } from '@datadog/browser-core'
-import type { Duration } from '@datadog/browser-core'
+import {
+  noop,
+  isExperimentalFeatureEnabled,
+  ExperimentalFeature,
+  ONE_MINUTE,
+  addTelemetryDebug,
+  elapsed,
+} from '@datadog/browser-core'
+import type { Duration, RelativeTime } from '@datadog/browser-core'
 import { RumPerformanceEntryType, supportPerformanceTimingEvent } from '../../../browser/performanceCollection'
 import type { RumFirstInputTiming, RumPerformanceEventTiming } from '../../../browser/performanceCollection'
 import { LifeCycleEventType } from '../../lifeCycle'
@@ -12,6 +19,8 @@ import { getInteractionCount, initInteractionCountPolyfill } from './interaction
 
 // Arbitrary value to prevent unnecessary memory usage on views with lots of interactions.
 const MAX_INTERACTION_ENTRIES = 10
+// Arbitrary value to cap INP outliers
+export const MAX_INP_VALUE = (1 * ONE_MINUTE) as Duration
 
 export interface InteractionToNextPaint {
   value: Duration
@@ -25,27 +34,36 @@ export interface InteractionToNextPaint {
  */
 export function trackInteractionToNextPaint(
   configuration: RumConfiguration,
+  viewStart: RelativeTime,
   viewLoadingType: ViewLoadingType,
   lifeCycle: LifeCycle
 ) {
   if (!isInteractionToNextPaintSupported()) {
     return {
       getInteractionToNextPaint: () => undefined,
+      setViewEnd: noop,
       stop: noop,
     }
   }
 
-  const { getViewInteractionCount } = trackViewInteractionCount(viewLoadingType)
+  const { getViewInteractionCount, stopViewInteractionCount } = trackViewInteractionCount(viewLoadingType)
+
+  let viewEnd = Infinity as RelativeTime
+
   const longestInteractions = trackLongestInteractions(getViewInteractionCount)
   let interactionToNextPaint = -1 as Duration
   let interactionToNextPaintTargetSelector: string | undefined
+  let telemetryCollected = false
 
   const { unsubscribe: stop } = lifeCycle.subscribe(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, (entries) => {
     for (const entry of entries) {
       if (
         (entry.entryType === RumPerformanceEntryType.EVENT ||
           entry.entryType === RumPerformanceEntryType.FIRST_INPUT) &&
-        entry.interactionId
+        entry.interactionId &&
+        // Check the entry start time is inside the view bounds because some view interactions can be reported after the view end (if long duration).
+        entry.startTime >= viewStart &&
+        entry.startTime <= viewEnd
       ) {
         longestInteractions.process(entry)
       }
@@ -54,6 +72,23 @@ export function trackInteractionToNextPaint(
     const newInteraction = longestInteractions.estimateP98Interaction()
     if (newInteraction) {
       interactionToNextPaint = newInteraction.duration
+      if (interactionToNextPaint > 10 * ONE_MINUTE && !telemetryCollected) {
+        telemetryCollected = true
+        addTelemetryDebug('INP outlier', {
+          inp: interactionToNextPaint,
+          interaction: {
+            timeFromViewStart: elapsed(viewStart, newInteraction.startTime),
+            duration: newInteraction.duration,
+            startTime: newInteraction.startTime,
+            processingStart: newInteraction.processingStart,
+            processingEnd: newInteraction.processingEnd,
+            interactionId: newInteraction.interactionId,
+            name: newInteraction.name,
+            targetNodeName: newInteraction.target?.nodeName,
+          },
+        })
+      }
+
       if (
         isExperimentalFeatureEnabled(ExperimentalFeature.WEB_VITALS_ATTRIBUTION) &&
         newInteraction.target &&
@@ -75,7 +110,7 @@ export function trackInteractionToNextPaint(
       // but the view interaction count > 0 then report 0
       if (interactionToNextPaint >= 0) {
         return {
-          value: interactionToNextPaint,
+          value: Math.min(interactionToNextPaint, MAX_INP_VALUE) as Duration,
           targetSelector: interactionToNextPaintTargetSelector,
         }
       } else if (getViewInteractionCount()) {
@@ -83,6 +118,10 @@ export function trackInteractionToNextPaint(
           value: 0 as Duration,
         }
       }
+    },
+    setViewEnd: (viewEndTime: RelativeTime) => {
+      viewEnd = viewEndTime
+      stopViewInteractionCount()
     },
     stop,
   }
@@ -135,8 +174,23 @@ function trackLongestInteractions(getViewInteractionCount: () => number) {
 export function trackViewInteractionCount(viewLoadingType: ViewLoadingType) {
   initInteractionCountPolyfill()
   const previousInteractionCount = viewLoadingType === ViewLoadingType.INITIAL_LOAD ? 0 : getInteractionCount()
+  let state: { stopped: false } | { stopped: true; interactionCount: number } = { stopped: false }
+
+  function computeViewInteractionCount() {
+    return getInteractionCount()! - previousInteractionCount
+  }
+
   return {
-    getViewInteractionCount: () => getInteractionCount()! - previousInteractionCount,
+    getViewInteractionCount: () => {
+      if (state.stopped) {
+        return state.interactionCount
+      }
+
+      return computeViewInteractionCount()
+    },
+    stopViewInteractionCount: () => {
+      state = { stopped: true, interactionCount: computeViewInteractionCount() }
+    },
   }
 }
 

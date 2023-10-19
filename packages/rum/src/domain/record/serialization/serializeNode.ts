@@ -1,4 +1,4 @@
-import { isNodeShadowRoot, isNodeShadowHost } from '@datadog/browser-rum-core'
+import { isNodeShadowRoot, hasChildNodes, forEachChildNodes } from '@datadog/browser-rum-core'
 import { assign } from '@datadog/browser-core'
 import type {
   DocumentFragmentNode,
@@ -42,7 +42,7 @@ export function generateNextId(): number {
 
 export function serializeChildNodes(node: Node, options: SerializeOptions): SerializedNodeWithId[] {
   const result: SerializedNodeWithId[] = []
-  node.childNodes.forEach((childNode) => {
+  forEachChildNodes(node, (childNode) => {
     const serializedChildNode = serializeNodeWithId(childNode, options)
     if (serializedChildNode) {
       result.push(serializedChildNode)
@@ -80,11 +80,6 @@ function serializeDocumentFragmentNode(
   element: DocumentFragment,
   options: SerializeOptions
 ): DocumentFragmentNode | undefined {
-  let childNodes: SerializedNodeWithId[] = []
-  if (element.childNodes.length) {
-    childNodes = serializeChildNodes(element, options)
-  }
-
   const isShadowRoot = isNodeShadowRoot(element)
   if (isShadowRoot) {
     options.serializationContext.shadowRootsController.addShadowRoot(element)
@@ -92,7 +87,7 @@ function serializeDocumentFragmentNode(
 
   return {
     type: NodeType.DocumentFragment,
-    childNodes,
+    childNodes: serializeChildNodes(element, options),
     isShadowRoot,
     adoptedStyleSheets: isShadowRoot ? serializeStyleSheets(element.adoptedStyleSheets) : undefined,
   }
@@ -157,7 +152,7 @@ function serializeElementNode(element: Element, options: SerializeOptions): Elem
 
   let childNodes: SerializedNodeWithId[] = []
   if (
-    element.childNodes.length &&
+    hasChildNodes(element) &&
     // Do not serialize style children as the css rules are already in the _cssText attribute
     tagName !== 'style'
   ) {
@@ -174,13 +169,6 @@ function serializeElementNode(element: Element, options: SerializeOptions): Elem
       })
     }
     childNodes = serializeChildNodes(element, childNodesSerializationOptions)
-  }
-
-  if (isNodeShadowHost(element)) {
-    const shadowRoot = serializeNodeWithId(element.shadowRoot, options)
-    if (shadowRoot !== null) {
-      childNodes.push(shadowRoot)
-    }
   }
 
   return {

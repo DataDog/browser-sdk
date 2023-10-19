@@ -2,7 +2,6 @@ import { RecordType } from '@datadog/browser-rum/src/types'
 import { expireSession, findSessionCookie, renewSession } from '../../lib/helpers/session'
 import { bundleSetup, createTest, flushEvents, waitForRequests } from '../../lib/framework'
 import { browserExecute, browserExecuteAsync, sendXhr } from '../../lib/helpers/browser'
-import { initRumAndStartRecording } from '../../lib/helpers/replay'
 
 describe('rum sessions', () => {
   describe('session renewal', () => {
@@ -23,7 +22,6 @@ describe('rum sessions', () => {
 
     createTest('a single fullSnapshot is taken when the session is renewed')
       .withRum()
-      .withRumInit(initRumAndStartRecording)
       .withSetup(bundleSetup)
       .run(async ({ intakeRegistry }) => {
         await renewSession()
@@ -43,7 +41,8 @@ describe('rum sessions', () => {
 
   describe('session expiration', () => {
     createTest("don't send events when session is expired")
-      .withRum()
+      // prevent recording start to generate late events
+      .withRum({ startSessionReplayRecordingManually: true })
       .run(async ({ intakeRegistry }) => {
         await expireSession()
         intakeRegistry.empty()
@@ -98,7 +97,6 @@ describe('rum sessions', () => {
     createTest('flush events when the session expires')
       .withRum()
       .withLogs()
-      .withRumInit(initRumAndStartRecording)
       .run(async ({ intakeRegistry }) => {
         expect(intakeRegistry.rumViewEvents.length).toBe(0)
         expect(intakeRegistry.logsEvents.length).toBe(0)

@@ -23,6 +23,12 @@ describe('getCssRulesString', () => {
     expect(getCssRulesString(styleNode.sheet)).toBe('body { color: red; }')
   })
 
+  it('properly escapes CSS rules selectors containing a colon', () => {
+    styleNode.sheet!.insertRule('[foo\\:bar] { display: none; }')
+
+    expect(getCssRulesString(styleNode.sheet)).toBe('[foo\\:bar] { display: none; }')
+  })
+
   it('inlines imported external stylesheets', () => {
     styleNode.sheet!.insertRule(`@import url("${CSS_FILE_URL}");`)
 

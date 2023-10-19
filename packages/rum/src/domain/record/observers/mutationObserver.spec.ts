@@ -505,6 +505,36 @@ describe('startMutationCollection', () => {
         expect(addShadowRootSpy).not.toHaveBeenCalled()
         expect(removeShadowRootSpy).toHaveBeenCalledOnceWith(shadowRoot)
       })
+
+      it('should call removeShadowRoot when removing a host containing other hosts in its children', () => {
+        const parentHost = appendElement('<div id="host"><p></p></div>', sandbox)
+        const parentShadowRoot = parentHost.attachShadow({ mode: 'open' })
+        const childHost = appendElement('<span></span>', parentHost.querySelector('p')!)
+        const childShadowRoot = childHost.attachShadow({ mode: 'open' })
+
+        const serializedDocument = serializeDocumentWithDefaults()
+        const { mutationCallbackSpy, getLatestMutationPayload } = startMutationCollection()
+        parentHost.remove()
+        flushMutations()
+        expect(mutationCallbackSpy).toHaveBeenCalledTimes(1)
+
+        const { validate, expectInitialNode } = createMutationPayloadValidator(serializedDocument)
+        validate(getLatestMutationPayload(), {
+          removes: [
+            {
+              parent: expectInitialNode({ idAttribute: 'sandbox' }),
+              node: expectInitialNode({ idAttribute: 'host' }),
+            },
+          ],
+        })
+        expect(addShadowRootSpy).not.toHaveBeenCalled()
+        expect(removeShadowRootSpy).toHaveBeenCalledTimes(2)
+        // Note: `toHaveBeenCalledWith` does not assert strict equality, we need to actually
+        // retrieve the argument and using `toBe` to make sure the spy has been called with both
+        // shadow roots.
+        expect(removeShadowRootSpy.calls.argsFor(0)[0]).toBe(parentShadowRoot)
+        expect(removeShadowRootSpy.calls.argsFor(1)[0]).toBe(childShadowRoot)
+      })
     })
   })
 

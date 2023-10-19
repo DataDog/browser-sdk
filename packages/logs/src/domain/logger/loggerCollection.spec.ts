@@ -1,5 +1,5 @@
 import type { TimeStamp } from '@datadog/browser-core'
-import { ConsoleApiName, timeStampNow, display, ErrorSource } from '@datadog/browser-core'
+import { ConsoleApiName, timeStampNow, ErrorSource, originalConsoleMethods } from '@datadog/browser-core'
 import type { Clock } from '@datadog/browser-core/test'
 import { mockClock } from '@datadog/browser-core/test'
 import type { CommonContext, RawLoggerLogsEvent } from '../../rawLogsEvent.types'
@@ -34,47 +34,29 @@ describe('logger collection', () => {
     clock.cleanup()
   })
 
-  it('should send logger logs', () => {
-    handleLog({ message: 'message', status: StatusType.error }, logger, COMMON_CONTEXT)
-
-    expect(rawLogsEvents[0].rawLogsEvent).toEqual({
-      date: timeStampNow(),
-      origin: ErrorSource.LOGGER,
-      message: 'message',
-      status: StatusType.error,
-    })
-  })
-
-  it('should send the saved date when present', () => {
-    handleLog({ message: 'message', status: StatusType.error }, logger, COMMON_CONTEXT, FAKE_DATE)
-
-    expect(rawLogsEvents[0].rawLogsEvent.date).toEqual(FAKE_DATE)
-  })
-
   describe('when handle type is set to "console"', () => {
     beforeEach(() => {
       logger.setHandler(HandlerType.console)
-      spyOn(display, 'debug')
-      spyOn(display, 'info')
-      spyOn(display, 'warn')
-      spyOn(display, 'error')
-      spyOn(display, 'log')
+      spyOn(originalConsoleMethods, 'debug')
+      spyOn(originalConsoleMethods, 'info')
+      spyOn(originalConsoleMethods, 'warn')
+      spyOn(originalConsoleMethods, 'error')
+      spyOn(originalConsoleMethods, 'log')
     })
 
     it('should print the log message and context to the console', () => {
-      logger.setContext({ 'logger-context': 'foo' })
+      logger.setContext({ foo: 'from-logger', bar: 'from-logger' })
 
       handleLog(
-        { message: 'message', status: StatusType.error, context: { 'log-context': 'bar' } },
+        { message: 'message', status: StatusType.error, context: { bar: 'from-message' } },
         logger,
         COMMON_CONTEXT
       )
 
-      expect(display.error).toHaveBeenCalledOnceWith('message', {
-        'logger-context': 'foo',
-        'log-context': 'bar',
+      expect(originalConsoleMethods.error).toHaveBeenCalledOnceWith('message', {
+        foo: 'from-logger',
+        bar: 'from-message',
       })
-      expect(rawLogsEvents.length).toEqual(1)
     })
 
     for (const { status, api } of [
@@ -83,10 +65,10 @@ describe('logger collection', () => {
       { status: StatusType.warn, api: ConsoleApiName.warn },
       { status: StatusType.error, api: ConsoleApiName.error },
     ]) {
-      it(`should use display.${api} to log messages with status ${status}`, () => {
+      it(`should use console.${api} to log messages with status ${status}`, () => {
         handleLog({ message: 'message', status }, logger, COMMON_CONTEXT)
 
-        expect(display[api]).toHaveBeenCalled()
+        expect(originalConsoleMethods[api]).toHaveBeenCalled()
       })
     }
 
@@ -94,17 +76,66 @@ describe('logger collection', () => {
       logger.setLevel(StatusType.warn)
       handleLog({ message: 'message', status: StatusType.info }, logger, COMMON_CONTEXT)
 
-      expect(display.info).not.toHaveBeenCalled()
+      expect(originalConsoleMethods.info).not.toHaveBeenCalled()
     })
 
     it('does not print the log and does not crash if its status is unknown', () => {
       handleLog({ message: 'message', status: 'unknown' as StatusType }, logger, COMMON_CONTEXT)
 
-      expect(display.info).not.toHaveBeenCalled()
-      expect(display.log).not.toHaveBeenCalled()
-      expect(display.error).not.toHaveBeenCalled()
-      expect(display.warn).not.toHaveBeenCalled()
-      expect(display.debug).not.toHaveBeenCalled()
+      expect(originalConsoleMethods.info).not.toHaveBeenCalled()
+      expect(originalConsoleMethods.log).not.toHaveBeenCalled()
+      expect(originalConsoleMethods.error).not.toHaveBeenCalled()
+      expect(originalConsoleMethods.warn).not.toHaveBeenCalled()
+      expect(originalConsoleMethods.debug).not.toHaveBeenCalled()
+    })
+  })
+
+  describe('when handle type is set to "http"', () => {
+    beforeEach(() => {
+      logger.setHandler(HandlerType.http)
+    })
+
+    it('should send the log message and context', () => {
+      logger.setContext({ foo: 'from-logger', bar: 'from-logger' })
+
+      handleLog(
+        { message: 'message', status: StatusType.error, context: { bar: 'from-message' } },
+        logger,
+        COMMON_CONTEXT
+      )
+
+      expect(rawLogsEvents[0]).toEqual({
+        rawLogsEvent: {
+          date: timeStampNow(),
+          origin: ErrorSource.LOGGER,
+          message: 'message',
+          status: StatusType.error,
+        },
+        messageContext: {
+          foo: 'from-logger',
+          bar: 'from-message',
+        },
+        savedCommonContext: COMMON_CONTEXT,
+      })
+    })
+
+    it('should send the saved date when present', () => {
+      handleLog({ message: 'message', status: StatusType.error }, logger, COMMON_CONTEXT, FAKE_DATE)
+
+      expect(rawLogsEvents[0].rawLogsEvent.date).toEqual(FAKE_DATE)
+    })
+
+    it('does not send the log if its status is below the logger level', () => {
+      logger.setLevel(StatusType.warn)
+      handleLog({ message: 'message', status: StatusType.info }, logger, COMMON_CONTEXT)
+
+      expect(rawLogsEvents.length).toBe(0)
+    })
+
+    it('does not send the log and does not crash if its status is unknown', () => {
+      handleLog({ message: 'message', status: 'unknown' as StatusType }, logger, COMMON_CONTEXT)
+
+      expect(rawLogsEvents.length).toBe(0)
     })
   })
 })

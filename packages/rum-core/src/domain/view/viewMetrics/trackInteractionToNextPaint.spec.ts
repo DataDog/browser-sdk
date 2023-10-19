@@ -1,5 +1,5 @@
-import type { Duration } from '@datadog/browser-core'
-import { ExperimentalFeature, addExperimentalFeatures, resetExperimentalFeatures } from '@datadog/browser-core'
+import type { Duration, RelativeTime } from '@datadog/browser-core'
+import { ExperimentalFeature, addExperimentalFeatures, relativeNow } from '@datadog/browser-core'
 import type { TestSetupBuilder } from '../../../../test'
 import { appendElement, appendText, createPerformanceEntry, setup } from '../../../../test'
 import { RumPerformanceEntryType } from '../../../browser/performanceCollection'
@@ -15,12 +15,14 @@ import {
   trackInteractionToNextPaint,
   trackViewInteractionCount,
   isInteractionToNextPaintSupported,
+  MAX_INP_VALUE,
 } from './trackInteractionToNextPaint'
 
 describe('trackInteractionToNextPaint', () => {
   let setupBuilder: TestSetupBuilder
   let interactionCountStub: ReturnType<typeof subInteractionCount>
   let getInteractionToNextPaint: ReturnType<typeof trackInteractionToNextPaint>['getInteractionToNextPaint']
+  let setViewEnd: ReturnType<typeof trackInteractionToNextPaint>['setViewEnd']
 
   function newInteraction(lifeCycle: LifeCycle, overrides: Partial<RumPerformanceEventTiming | RumFirstInputTiming>) {
     if (overrides.interactionId) {
@@ -36,19 +38,24 @@ describe('trackInteractionToNextPaint', () => {
     }
     interactionCountStub = subInteractionCount()
 
-    setupBuilder = setup().beforeBuild(({ lifeCycle, configuration }) => {
-      const interactionToNextPaintTracking = trackInteractionToNextPaint(
-        configuration,
-        ViewLoadingType.INITIAL_LOAD,
-        lifeCycle
-      )
-      getInteractionToNextPaint = interactionToNextPaintTracking.getInteractionToNextPaint
-      return interactionToNextPaintTracking
-    })
+    setupBuilder = setup()
+      .withFakeClock()
+      .beforeBuild(({ lifeCycle, configuration }) => {
+        const interactionToNextPaintTracking = trackInteractionToNextPaint(
+          configuration,
+          relativeNow(),
+          ViewLoadingType.INITIAL_LOAD,
+          lifeCycle
+        )
+        getInteractionToNextPaint = interactionToNextPaintTracking.getInteractionToNextPaint
+        setViewEnd = interactionToNextPaintTracking.setViewEnd
+
+        return interactionToNextPaintTracking
+      })
   })
 
   afterEach(() => {
-    resetExperimentalFeatures()
+    setupBuilder.cleanup()
     interactionCountStub.clear()
   })
 
@@ -59,11 +66,57 @@ describe('trackInteractionToNextPaint', () => {
 
   it('should ignore entries without interactionId', () => {
     const { lifeCycle } = setupBuilder.build()
-    createPerformanceEntry(RumPerformanceEntryType.EVENT)
     newInteraction(lifeCycle, {
       interactionId: undefined,
     })
     expect(getInteractionToNextPaint()).toEqual(undefined)
+  })
+
+  it('should ignore entries that starts out of the view time bounds', () => {
+    const { lifeCycle } = setupBuilder.build()
+
+    setViewEnd(10 as RelativeTime)
+
+    newInteraction(lifeCycle, {
+      interactionId: 1,
+      duration: 10 as Duration,
+      startTime: -1 as RelativeTime,
+    })
+    newInteraction(lifeCycle, {
+      interactionId: 2,
+      duration: 10 as Duration,
+      startTime: 11 as RelativeTime,
+    })
+    expect(getInteractionToNextPaint()).toEqual(undefined)
+  })
+
+  it('should take into account entries that starts in view time bounds but finish after view end', () => {
+    const { lifeCycle } = setupBuilder.build()
+
+    setViewEnd(10 as RelativeTime)
+
+    newInteraction(lifeCycle, {
+      interactionId: 1,
+      duration: 100 as Duration,
+      startTime: 1 as RelativeTime,
+    })
+    expect(getInteractionToNextPaint()).toEqual({
+      value: 100 as Duration,
+      targetSelector: undefined,
+    })
+  })
+
+  it('should cap INP value', () => {
+    const { lifeCycle } = setupBuilder.build()
+    newInteraction(lifeCycle, {
+      interactionId: 1,
+      duration: (MAX_INP_VALUE + 1) as Duration,
+    })
+
+    expect(getInteractionToNextPaint()).toEqual({
+      value: MAX_INP_VALUE,
+      targetSelector: undefined,
+    })
   })
 
   it('should return the p98 worst interaction', () => {
@@ -171,6 +224,16 @@ describe('trackViewInteractionCount', () => {
     const { getViewInteractionCount } = trackViewInteractionCount(ViewLoadingType.ROUTE_CHANGE)
 
     expect(getViewInteractionCount()).toEqual(0)
+  })
+
+  it('should return the the last interaction count once stopped', () => {
+    const { getViewInteractionCount, stopViewInteractionCount } = trackViewInteractionCount(
+      ViewLoadingType.ROUTE_CHANGE
+    )
+    interactionCountStub.incrementInteractionCount()
+    stopViewInteractionCount()
+    interactionCountStub.incrementInteractionCount()
+    expect(getViewInteractionCount()).toEqual(1)
   })
 })
 

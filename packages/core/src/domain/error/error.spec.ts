@@ -1,8 +1,8 @@
-import type { StackTrace } from '../tracekit'
 import { clocksNow } from '../../tools/utils/timeUtils'
 import { createHandlingStack, computeRawError, getFileFromStackTraceString, flattenErrorCauses } from './error'
 import type { RawErrorCause, ErrorWithCause } from './error.types'
 import { ErrorHandling, ErrorSource, NonErrorPrefix } from './error.types'
+import type { StackTrace } from './computeStackTrace'
 
 describe('computeRawError', () => {
   const ERROR_INSTANCE = new TypeError('oh snap!')

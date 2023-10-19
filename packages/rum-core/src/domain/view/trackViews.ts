@@ -208,7 +208,9 @@ function newView(
 
   const {
     setLoadEvent,
+    setViewEnd,
     stop: stopCommonViewMetricsTracking,
+    stopINPTracking,
     getCommonViewMetrics,
   } = trackCommonViewMetrics(
     lifeCycle,
@@ -271,6 +273,7 @@ function newView(
 
       lifeCycle.notify(LifeCycleEventType.VIEW_ENDED, { endClocks })
       clearInterval(keepAliveIntervalId)
+      setViewEnd(endClocks.relative)
       stopCommonViewMetricsTracking()
       triggerViewUpdate()
       setTimeout(() => {
@@ -280,6 +283,7 @@ function newView(
     stop() {
       stopInitialViewMetricsTracking()
       stopEventCountsTracking()
+      stopINPTracking()
       stopObservable.notify()
     },
     addTiming(name: string, time: RelativeTime | TimeStamp) {
@@ -313,8 +317,9 @@ function areDifferentLocation(currentLocation: Location, otherLocation: Location
 }
 
 function isHashAnAnchor(hash: string) {
-  const correspondingId = hash.substr(1)
-  return !!document.getElementById(correspondingId)
+  const correspondingId = hash.substring(1)
+  // check if the correspondingId is empty because on Firefox an empty string passed to getElementById() prints a consol warning
+  return correspondingId !== '' && !!document.getElementById(correspondingId)
 }
 
 function getPathFromHash(hash: string) {

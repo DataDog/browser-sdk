@@ -286,9 +286,9 @@ describe('rum public api', () => {
       })
 
       it('stores a deep copy of the global context', () => {
-        rumPublicApi.addRumGlobalContext('foo', 'bar')
+        rumPublicApi.setGlobalContextProperty('foo', 'bar')
         rumPublicApi.addAction('message')
-        rumPublicApi.addRumGlobalContext('foo', 'baz')
+        rumPublicApi.setGlobalContextProperty('foo', 'baz')
 
         rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
 
@@ -388,9 +388,9 @@ describe('rum public api', () => {
       })
 
       it('stores a deep copy of the global context', () => {
-        rumPublicApi.addRumGlobalContext('foo', 'bar')
+        rumPublicApi.setGlobalContextProperty('foo', 'bar')
         rumPublicApi.addError(new Error('message'))
-        rumPublicApi.addRumGlobalContext('foo', 'baz')
+        rumPublicApi.setGlobalContextProperty('foo', 'baz')
 
         rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
 
@@ -483,7 +483,7 @@ describe('rum public api', () => {
     it('should remove the user', () => {
       const user = { id: 'foo', name: 'bar', email: 'qux' }
       rumPublicApi.setUser(user)
-      rumPublicApi.removeUser()
+      rumPublicApi.clearUser()
       rumPublicApi.addAction('message')
 
       rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
@@ -852,10 +852,12 @@ describe('rum public api', () => {
     let recorderApiOnRumStartSpy: jasmine.Spy<RecorderApi['onRumStart']>
     let setupBuilder: TestSetupBuilder
     let rumPublicApi: RumPublicApi
+    let recorderApi: RecorderApi
 
     beforeEach(() => {
       recorderApiOnRumStartSpy = jasmine.createSpy('recorderApiOnRumStart')
-      rumPublicApi = makeRumPublicApi(noopStartRum, { ...noopRecorderApi, onRumStart: recorderApiOnRumStartSpy })
+      recorderApi = { ...noopRecorderApi, onRumStart: recorderApiOnRumStartSpy }
+      rumPublicApi = makeRumPublicApi(noopStartRum, recorderApi)
       setupBuilder = setup()
     })
 
@@ -863,19 +865,46 @@ describe('rum public api', () => {
       setupBuilder.cleanup()
     })
 
-    it('recording is started with the default defaultPrivacyLevel', () => {
+    it('is started with the default defaultPrivacyLevel', () => {
       rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
+      expect(recorderApiOnRumStartSpy.calls.mostRecent().args[1].defaultPrivacyLevel).toBe(DefaultPrivacyLevel.MASK)
+    })
+
+    it('is started with the configured defaultPrivacyLevel', () => {
+      rumPublicApi.init({
+        ...DEFAULT_INIT_CONFIGURATION,
+        defaultPrivacyLevel: DefaultPrivacyLevel.MASK_USER_INPUT,
+      })
       expect(recorderApiOnRumStartSpy.calls.mostRecent().args[1].defaultPrivacyLevel).toBe(
         DefaultPrivacyLevel.MASK_USER_INPUT
       )
     })
 
-    it('recording is started with the configured defaultPrivacyLevel', () => {
+    it('api calls before init are performed after onRumStart', () => {
+      // in order to let recording initial state to be defined by init configuration
+      const callOrders: string[] = []
+      spyOn(recorderApi, 'start').and.callFake(() => callOrders.push('start'))
+      spyOn(recorderApi, 'stop').and.callFake(() => callOrders.push('stop'))
+      recorderApiOnRumStartSpy.and.callFake(() => callOrders.push('onRumStart'))
+
+      rumPublicApi.startSessionReplayRecording()
+      rumPublicApi.stopSessionReplayRecording()
+      rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
+
+      expect(callOrders).toEqual(['onRumStart', 'start', 'stop'])
+    })
+
+    it('is started with the default startSessionReplayRecordingManually', () => {
+      rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
+      expect(recorderApiOnRumStartSpy.calls.mostRecent().args[1].startSessionReplayRecordingManually).toBe(false)
+    })
+
+    it('is started with the configured startSessionReplayRecordingManually', () => {
       rumPublicApi.init({
         ...DEFAULT_INIT_CONFIGURATION,
-        defaultPrivacyLevel: DefaultPrivacyLevel.MASK,
+        startSessionReplayRecordingManually: true,
       })
-      expect(recorderApiOnRumStartSpy.calls.mostRecent().args[1].defaultPrivacyLevel).toBe(DefaultPrivacyLevel.MASK)
+      expect(recorderApiOnRumStartSpy.calls.mostRecent().args[1].startSessionReplayRecordingManually).toBe(true)
     })
   })
 
@@ -923,18 +952,6 @@ describe('rum public api', () => {
       expect(localStorage.getItem('_dd_c_rum_1')).toBe('{}')
     })
 
-    it('when enabled, should maintain user context in local storage (deprecated APIs)', () => {
-      rumPublicApi.init({ ...DEFAULT_INIT_CONFIGURATION, storeContextsAcrossPages: true })
-
-      rumPublicApi.setUser({ qux: 'qix' })
-      expect(rumPublicApi.getUser()).toEqual({ qux: 'qix' })
-      expect(localStorage.getItem('_dd_c_rum_1')).toBe('{"qux":"qix"}')
-
-      rumPublicApi.removeUser()
-      expect(rumPublicApi.getUser()).toEqual({})
-      expect(localStorage.getItem('_dd_c_rum_1')).toBe('{}')
-    })
-
     it('when enabled, should maintain global context in local storage', () => {
       rumPublicApi.init({ ...DEFAULT_INIT_CONFIGURATION, storeContextsAcrossPages: true })
 
@@ -953,22 +970,6 @@ describe('rum public api', () => {
       rumPublicApi.clearGlobalContext()
       expect(rumPublicApi.getGlobalContext()).toEqual({})
       expect(localStorage.getItem('_dd_c_rum_2')).toBe('{}')
-    })
-
-    it('when enabled, should maintain global context in local storage (deprecated APIs) ', () => {
-      rumPublicApi.init({ ...DEFAULT_INIT_CONFIGURATION, storeContextsAcrossPages: true })
-
-      rumPublicApi.setRumGlobalContext({ qux: 'qix' })
-      expect(rumPublicApi.getRumGlobalContext()).toEqual({ qux: 'qix' })
-      expect(localStorage.getItem('_dd_c_rum_2')).toBe('{"qux":"qix"}')
-
-      rumPublicApi.addRumGlobalContext('foo', 'bar')
-      expect(rumPublicApi.getRumGlobalContext()).toEqual({ qux: 'qix', foo: 'bar' })
-      expect(localStorage.getItem('_dd_c_rum_2')).toBe('{"qux":"qix","foo":"bar"}')
-
-      rumPublicApi.removeRumGlobalContext('foo')
-      expect(rumPublicApi.getRumGlobalContext()).toEqual({ qux: 'qix' })
-      expect(localStorage.getItem('_dd_c_rum_2')).toBe('{"qux":"qix"}')
     })
 
     // TODO in next major, buffer context calls to correctly apply before init set/remove/clear
