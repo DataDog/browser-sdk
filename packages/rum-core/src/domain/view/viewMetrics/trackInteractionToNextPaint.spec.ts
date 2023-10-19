@@ -1,5 +1,10 @@
 import type { Duration, RelativeTime } from '@datadog/browser-core'
-import { ExperimentalFeature, addExperimentalFeatures, relativeNow } from '@datadog/browser-core'
+import {
+  ExperimentalFeature,
+  addExperimentalFeatures,
+  relativeNow,
+  resetExperimentalFeatures,
+} from '@datadog/browser-core'
 import type { TestSetupBuilder } from '../../../../test'
 import { appendElement, appendText, createPerformanceEntry, setup } from '../../../../test'
 import { RumPerformanceEntryType } from '../../../browser/performanceCollection'
@@ -55,6 +60,7 @@ describe('trackInteractionToNextPaint', () => {
   })
 
   afterEach(() => {
+    resetExperimentalFeatures()
     setupBuilder.cleanup()
     interactionCountStub.clear()
   })
