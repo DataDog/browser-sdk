@@ -1,11 +1,4 @@
-import {
-  noop,
-  isExperimentalFeatureEnabled,
-  ExperimentalFeature,
-  ONE_MINUTE,
-  addTelemetryDebug,
-  elapsed,
-} from '@datadog/browser-core'
+import { noop, isExperimentalFeatureEnabled, ExperimentalFeature, ONE_MINUTE } from '@datadog/browser-core'
 import type { Duration, RelativeTime } from '@datadog/browser-core'
 import { RumPerformanceEntryType, supportPerformanceTimingEvent } from '../../../browser/performanceCollection'
 import type { RumFirstInputTiming, RumPerformanceEventTiming } from '../../../browser/performanceCollection'
@@ -38,10 +31,7 @@ export function trackInteractionToNextPaint(
   viewLoadingType: ViewLoadingType,
   lifeCycle: LifeCycle
 ) {
-  if (
-    !isInteractionToNextPaintSupported() ||
-    !isExperimentalFeatureEnabled(ExperimentalFeature.INTERACTION_TO_NEXT_PAINT)
-  ) {
+  if (!isInteractionToNextPaintSupported()) {
     return {
       getInteractionToNextPaint: () => undefined,
       setViewEnd: noop,
@@ -56,7 +46,6 @@ export function trackInteractionToNextPaint(
   const longestInteractions = trackLongestInteractions(getViewInteractionCount)
   let interactionToNextPaint = -1 as Duration
   let interactionToNextPaintTargetSelector: string | undefined
-  let telemetryCollected = false
 
   const { unsubscribe: stop } = lifeCycle.subscribe(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, (entries) => {
     for (const entry of entries) {
@@ -75,22 +64,6 @@ export function trackInteractionToNextPaint(
     const newInteraction = longestInteractions.estimateP98Interaction()
     if (newInteraction) {
       interactionToNextPaint = newInteraction.duration
-      if (interactionToNextPaint > 10 * ONE_MINUTE && !telemetryCollected) {
-        telemetryCollected = true
-        addTelemetryDebug('INP outlier', {
-          inp: interactionToNextPaint,
-          interaction: {
-            timeFromViewStart: elapsed(viewStart, newInteraction.startTime),
-            duration: newInteraction.duration,
-            startTime: newInteraction.startTime,
-            processingStart: newInteraction.processingStart,
-            processingEnd: newInteraction.processingEnd,
-            interactionId: newInteraction.interactionId,
-            name: newInteraction.name,
-            targetNodeName: newInteraction.target?.nodeName,
-          },
-        })
-      }
 
       if (
         isExperimentalFeatureEnabled(ExperimentalFeature.WEB_VITALS_ATTRIBUTION) &&
