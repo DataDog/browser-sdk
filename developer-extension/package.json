@@ -7,13 +7,13 @@
     "dev": "webpack --mode development --watch"
   },
   "devDependencies": {
-    "@types/chrome": "0.0.246",
-    "@types/react": "18.2.24",
-    "@types/react-dom": "18.2.8",
+    "@types/chrome": "0.0.248",
+    "@types/react": "18.2.30",
+    "@types/react-dom": "18.2.14",
     "@webextension-toolbox/webpack-webextension-plugin": "3.1.0",
     "copy-webpack-plugin": "11.0.0",
     "html-webpack-plugin": "5.5.3",
-    "webpack": "5.88.2"
+    "webpack": "5.89.0"
   },
   "dependencies": {
     "@datadog/browser-logs": "workspace:*",
