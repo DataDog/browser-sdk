@@ -16,6 +16,13 @@
 
 ---
 
+## v5.1.0
+
+- ✨ [RUM-1215] Collect INP #2355 ([#2448](https://github.com/DataDog/browser-sdk/pull/2448))
+- 🐛 Prevent console warning on Firefox on route change ([#2469](https://github.com/DataDog/browser-sdk/pull/2469))
+- 🐛 [RUM-1360] Cap INP outliers ([#2466](https://github.com/DataDog/browser-sdk/pull/2466))
+- ♻️ [RUM-1329] Merge tracekit into error folder ([#2450](https://github.com/DataDog/browser-sdk/pull/2450))
+
 ## v5.0.0
 
 See our [upgrade guide](https://docs.datadoghq.com/real_user_monitoring/guide/browser-sdk-upgrade/#from-v4-to-v5) for a comprehensive list of breaking changes introduced by this major version.
