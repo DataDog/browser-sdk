@@ -4,7 +4,7 @@ import { normalizeUrl } from '../../tools/utils/urlPolyfill'
 import { ExperimentalFeature, isExperimentalFeatureEnabled } from '../../tools/experimentalFeatures'
 import { generateUUID } from '../../tools/utils/stringUtils'
 import type { InitConfiguration } from './configuration'
-import { INTAKE_SITE_US1 } from './intakeSites'
+import { INTAKE_SITE_US1, INTAKE_SITE_FED_STAGING } from './intakeSites'
 
 // replaced at build time
 declare const __BUILD_ENV__SDK_VERSION__: string
@@ -64,6 +64,10 @@ function buildEndpointHost(initConfiguration: InitConfiguration) {
 
   if (internalAnalyticsSubdomain && site === INTAKE_SITE_US1) {
     return `${internalAnalyticsSubdomain}.${INTAKE_SITE_US1}`
+  }
+
+  if (site === INTAKE_SITE_FED_STAGING) {
+    return `http-intake.logs.${site}`
   }
 
   const domainParts = site.split('.')
