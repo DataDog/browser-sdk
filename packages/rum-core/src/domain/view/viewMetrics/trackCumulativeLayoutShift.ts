@@ -76,7 +76,7 @@ export function trackCumulativeLayoutShift(
           if (
             isExperimentalFeatureEnabled(ExperimentalFeature.WEB_VITALS_ATTRIBUTION) &&
             clsTarget &&
-            clsTarget.parentElement
+            clsTarget.isConnected
           ) {
             const selectorComputationStart = relativeNow()
             cslTargetSelector = getSelectorFromElement(clsTarget, configuration.actionNameAttribute)
