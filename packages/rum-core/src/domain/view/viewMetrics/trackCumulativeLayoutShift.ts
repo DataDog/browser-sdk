@@ -73,7 +73,11 @@ export function trackCumulativeLayoutShift(
           const clsTarget = window.largestLayoutShiftTarget()
           let cslTargetSelector
 
-          if (isExperimentalFeatureEnabled(ExperimentalFeature.WEB_VITALS_ATTRIBUTION) && clsTarget) {
+          if (
+            isExperimentalFeatureEnabled(ExperimentalFeature.WEB_VITALS_ATTRIBUTION) &&
+            clsTarget &&
+            clsTarget.parentElement
+          ) {
             const selectorComputationStart = relativeNow()
             cslTargetSelector = getSelectorFromElement(clsTarget, configuration.actionNameAttribute)
             const selectorComputationEnd = relativeNow()
@@ -139,7 +143,6 @@ function slidingSessionWindow() {
         largestLayoutShiftTarget = undefined
         maxEntriesAtOnceCount = 0
         updateCount = 0
-
         targetUpdates = []
       } else {
         value += entry.value
