@@ -712,7 +712,7 @@ describe('rum assembly', () => {
     it('should include the configured sample rates', () => {
       const { lifeCycle } = setupBuilder.build()
       notifyRawRumEvent(lifeCycle, {
-        rawRumEvent: createRawRumEvent(RumEventType.VIEW),
+        rawRumEvent: createRawRumEvent(RumEventType.ACTION),
       })
       expect(serverRumEvents[0]._dd.configuration).toEqual({
         session_replay_sample_rate: 0,
@@ -728,7 +728,7 @@ describe('rum assembly', () => {
         })
         .build()
       notifyRawRumEvent(lifeCycle, {
-        rawRumEvent: createRawRumEvent(RumEventType.VIEW),
+        rawRumEvent: createRawRumEvent(RumEventType.ACTION),
       })
       expect(serverRumEvents[0]._dd.configuration).toEqual({
         session_sample_rate: 1.234,

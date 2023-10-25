@@ -116,6 +116,9 @@ describe('viewCollection', () => {
           { start: 0 as ServerDuration, state: PageState.ACTIVE },
           { start: 10 as ServerDuration, state: PageState.PASSIVE },
         ],
+        configuration: {
+          start_session_replay_recording_manually: jasmine.any(Boolean),
+        },
       },
       date: jasmine.any(Number),
       type: RumEventType.VIEW,
@@ -227,5 +230,24 @@ describe('viewCollection', () => {
     const rawRumViewEvent = rawRumEvents[rawRumEvents.length - 1].rawRumEvent as RawRumViewEvent
 
     expect(rawRumViewEvent.display?.scroll).toBeUndefined()
+  })
+
+  it('should include configuration.start_session_replay_recording_manually value', () => {
+    let { lifeCycle, rawRumEvents } = setupBuilder
+      .withConfiguration({ startSessionReplayRecordingManually: false })
+      .build()
+    lifeCycle.notify(LifeCycleEventType.VIEW_UPDATED, VIEW)
+    expect(
+      (rawRumEvents[rawRumEvents.length - 1].rawRumEvent as RawRumViewEvent)._dd.configuration
+        .start_session_replay_recording_manually
+    ).toBe(false)
+    ;({ lifeCycle, rawRumEvents } = setupBuilder
+      .withConfiguration({ startSessionReplayRecordingManually: true })
+      .build())
+    lifeCycle.notify(LifeCycleEventType.VIEW_UPDATED, VIEW)
+    expect(
+      (rawRumEvents[rawRumEvents.length - 1].rawRumEvent as RawRumViewEvent)._dd.configuration
+        .start_session_replay_recording_manually
+    ).toBe(true)
   })
 })

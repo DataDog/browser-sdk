@@ -55,6 +55,9 @@ function processViewUpdate(
       document_version: view.documentVersion,
       replay_stats: replayStats,
       page_states: pageStates,
+      configuration: {
+        start_session_replay_recording_manually: configuration.startSessionReplayRecordingManually,
+      },
     },
     date: view.startClocks.timeStamp,
     type: RumEventType.VIEW,
