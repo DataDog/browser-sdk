@@ -233,6 +233,7 @@ describe('viewCollection', () => {
   })
 
   it('should include configuration.start_session_replay_recording_manually value', () => {
+    // when configured to false
     let { lifeCycle, rawRumEvents } = setupBuilder
       .withConfiguration({ startSessionReplayRecordingManually: false })
       .build()
@@ -241,6 +242,8 @@ describe('viewCollection', () => {
       (rawRumEvents[rawRumEvents.length - 1].rawRumEvent as RawRumViewEvent)._dd.configuration
         .start_session_replay_recording_manually
     ).toBe(false)
+
+    // when configured to true
     ;({ lifeCycle, rawRumEvents } = setupBuilder
       .withConfiguration({ startSessionReplayRecordingManually: true })
       .build())
