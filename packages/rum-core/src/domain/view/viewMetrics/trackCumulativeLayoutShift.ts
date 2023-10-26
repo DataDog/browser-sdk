@@ -76,7 +76,8 @@ export function trackCumulativeLayoutShift(
           if (
             isExperimentalFeatureEnabled(ExperimentalFeature.WEB_VITALS_ATTRIBUTION) &&
             clsTarget &&
-            clsTarget.parentElement
+            // Check if the CLS target have been removed from the DOM between the time we collect the target reference and when we compute the selector
+            clsTarget.isConnected
           ) {
             const selectorComputationStart = relativeNow()
             cslTargetSelector = getSelectorFromElement(clsTarget, configuration.actionNameAttribute)
