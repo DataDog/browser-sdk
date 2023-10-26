@@ -133,6 +133,11 @@ export function addEventListeners<Target extends EventTarget, EventName extends 
 
   function stop() {
     const remove = getZoneJsOriginalValue(eventTarget, 'removeEventListener')
+    if (!remove) {
+      // In Salesforce, XMLHttpRequest is patched with an entirely custom object and does not have
+      // removeEventListener.
+      return
+    }
     eventNames.forEach((eventName) => remove.call(eventTarget, eventName, listenerWithMonitor, options))
   }
 

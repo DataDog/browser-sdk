@@ -12,6 +12,14 @@ export function instrumentMethod<OBJECT extends { [key: string]: any }, METHOD e
   const original = object[method]
 
   let instrumentation = instrumentationFactory(original)
+  if (Object.getOwnPropertyDescriptor(object, method)?.writable === false) {
+    // In Salesforce, a few methods are read only:
+    // * history.pushState
+    // * history.replaceState
+    // * window.fetch
+    // console.log('Readonly method:', method, 'on', object)
+    return { stop: () => {} }
+  }
 
   const instrumentationWrapper = function (this: OBJECT): ReturnType<OBJECT[METHOD]> | undefined {
     if (typeof instrumentation !== 'function') {

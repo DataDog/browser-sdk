@@ -6,6 +6,13 @@ export function getGlobalObject<T = typeof globalThis>(): T {
   if (typeof globalThis === 'object') {
     return globalThis as unknown as T
   }
+
+  // In Salesforce, `globalThis` is returning undefined, and the alternative below doesn't work
+  // because `Object.prototype` is sealed.
+  if (typeof window === 'object') {
+    return window as unknown as T
+  }
+
   Object.defineProperty(Object.prototype, '_dd_temp_', {
     get() {
       return this as object
