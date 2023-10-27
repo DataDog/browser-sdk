@@ -197,5 +197,39 @@ describe('trackCumulativeLayoutShift', () => {
       expect(clsCallback).toHaveBeenCalledTimes(2)
       expect(clsCallback.calls.mostRecent().args[0].targetSelector).toEqual(undefined)
     })
+
+    it('should not return the target element when the element is detached from the DOM', () => {
+      addExperimentalFeatures([ExperimentalFeature.WEB_VITALS_ATTRIBUTION])
+      const { lifeCycle, clock } = setupBuilder.withFakeClock().build()
+
+      // first session window
+      lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [
+        createPerformanceEntry(RumPerformanceEntryType.LAYOUT_SHIFT, {
+          value: 0.2,
+        }),
+      ])
+
+      expect(clsCallback.calls.mostRecent().args[0].value).toEqual(0.2)
+
+      clock.tick(1001)
+
+      // second session window
+      // first shift with an element
+      const divElement = appendElement('<div id="div-element"></div>')
+      lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [
+        createPerformanceEntry(RumPerformanceEntryType.LAYOUT_SHIFT, {
+          value: 0.2,
+          sources: [{ node: divElement }],
+        }),
+      ])
+      divElement.remove()
+      // second shift that makes this window the maximum CLS
+      lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [
+        createPerformanceEntry(RumPerformanceEntryType.LAYOUT_SHIFT, { value: 0.1 }),
+      ])
+
+      expect(clsCallback.calls.mostRecent().args[0].value).toEqual(0.3)
+      expect(clsCallback.calls.mostRecent().args[0].targetSelector).toEqual(undefined)
+    })
   })
 })
