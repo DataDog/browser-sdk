@@ -1,4 +1,4 @@
-import { cssEscape, addTelemetryDebug } from '@datadog/browser-core'
+import { cssEscape } from '@datadog/browser-core'
 import { DEFAULT_PROGRAMMATIC_ACTION_NAME_ATTRIBUTE } from './action/getActionNameFromElement'
 
 /**
@@ -52,15 +52,6 @@ export function getSelectorFromElement(targetElement: Element, actionNameAttribu
     )
     if (globallyUniqueSelector) {
       return globallyUniqueSelector
-    }
-
-    if (!element.parentElement) {
-      addTelemetryDebug('selector from element without parent', {
-        debug: {
-          selector: combineSelector(cssEscape(element.tagName), targetElementSelector),
-          isConnected: element.isConnected,
-        },
-      })
     }
 
     const uniqueSelectorAmongChildren = findSelector(
