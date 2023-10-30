@@ -52,7 +52,9 @@ function createFetchObservable() {
 
           const context = callMonitored(beforeSend, null, [observable, input, init])
           if (context) {
-            responsePromise = originalFetch.call(this, context.input as RequestInfo, context.init)
+            // casting should be `RequestInfo` but node types are ahead of DOM types, making `typecheck test/e2e` fail.
+            // it should be resolved with https://github.com/microsoft/TypeScript-DOM-lib-generator/issues/1483
+            responsePromise = originalFetch.call(this, context.input as any, context.init)
             callMonitored(afterSend, null, [observable, responsePromise, context])
           } else {
             responsePromise = originalFetch.call(this, input, init)
