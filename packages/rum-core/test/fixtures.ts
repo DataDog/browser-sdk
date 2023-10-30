@@ -93,6 +93,9 @@ export function createRawRumEvent(type: RumEventType, overrides?: Context): RawR
           type,
           _dd: {
             document_version: 0,
+            configuration: {
+              start_session_replay_recording_manually: false,
+            },
           },
           date: 0 as TimeStamp,
           view: {
