@@ -2581,9 +2581,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@wdio/cli@npm:8.20.0":
-  version: 8.20.0
-  resolution: "@wdio/cli@npm:8.20.0"
+"@wdio/cli@npm:8.20.2":
+  version: 8.20.2
+  resolution: "@wdio/cli@npm:8.20.2"
   dependencies:
     "@types/node": ^20.1.1
     "@wdio/config": 8.20.0
@@ -2596,6 +2596,7 @@ __metadata:
     chalk: ^5.2.0
     chokidar: ^3.5.3
     cli-spinners: ^2.9.0
+    detect-package-manager: ^3.0.1
     dotenv: ^16.3.1
     ejs: ^3.1.9
     execa: ^8.0.1
@@ -2610,7 +2611,7 @@ __metadata:
     yargs: ^17.7.2
   bin:
     wdio: bin/wdio.js
-  checksum: 2e39de390ffd1a40efbbc17342743b577b590dbca325c376b286a67819e28aeebce90be34d8d26a667f6b0309ec939858057adb9d637325c1d2e0c0ca03b27ec
+  checksum: 2f25682a3b288461fe727f720f3f456d2f723c6e4526c28beeed2ce541812a543239f35db70c80ade479210681552a46eb1d7a0a5fc6f7b03c7aedd0df5327a8
   languageName: node
   linkType: hard
 
@@ -3880,7 +3881,7 @@ __metadata:
     "@typescript-eslint/eslint-plugin": 6.9.0
     "@typescript-eslint/parser": 6.9.0
     "@wdio/browserstack-service": 8.20.0
-    "@wdio/cli": 8.20.0
+    "@wdio/cli": 8.20.2
     "@wdio/jasmine-framework": 8.20.0
     "@wdio/junit-reporter": 8.20.0
     "@wdio/local-runner": 8.20.0
@@ -5386,6 +5387,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"detect-package-manager@npm:^3.0.1":
+  version: 3.0.1
+  resolution: "detect-package-manager@npm:3.0.1"
+  dependencies:
+    execa: ^5.1.1
+  checksum: 3a203ba269183baea9969b89f18dd93a9bb451a51280b39ea2ee392f44bada0f79b676425fcd1e7fca6b8c8f03a048a5cc1d3b39bb9c0ebd0300337ae00a0b14
+  languageName: node
+  linkType: hard
+
 "devtools-protocol@npm:0.0.1120988":
   version: 0.0.1120988
   resolution: "devtools-protocol@npm:0.0.1120988"
@@ -6457,6 +6467,23 @@ __metadata:
     signal-exit: ^3.0.3
     strip-final-newline: ^2.0.0
   checksum: a044367ebdcc68ca019810cb134510fc77bbc55c799122258ee0e00e289c132941ab48c2a331a036699c42bc8d479d451ae67c105fce5ce5cc813e7dd92d642b
+  languageName: node
+  linkType: hard
+
+"execa@npm:^5.1.1":
+  version: 5.1.1
+  resolution: "execa@npm:5.1.1"
+  dependencies:
+    cross-spawn: ^7.0.3
+    get-stream: ^6.0.0
+    human-signals: ^2.1.0
+    is-stream: ^2.0.0
+    merge-stream: ^2.0.0
+    npm-run-path: ^4.0.1
+    onetime: ^5.1.2
+    signal-exit: ^3.0.3
+    strip-final-newline: ^2.0.0
+  checksum: fba9022c8c8c15ed862847e94c252b3d946036d7547af310e344a527e59021fd8b6bb0723883ea87044dc4f0201f949046993124a42ccb0855cae5bf8c786343
   languageName: node
   linkType: hard
 
