@@ -30,7 +30,10 @@ export function detectBrowser(browserWindow: Window = window) {
     return Browser.CHROMIUM
   }
 
-  if (/safari/i.test(userAgent) && !/chrome|android/i.test(userAgent)) {
+  if (
+    (/safari/i.test(userAgent) && !/chrome|android/i.test(userAgent)) ||
+    browserWindow.navigator.vendor?.indexOf('Apple') === 0
+  ) {
     return Browser.SAFARI
   }
 

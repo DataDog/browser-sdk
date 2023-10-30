@@ -28,6 +28,31 @@ describe('browserDetection', () => {
         })
       )
     ).toBe(Browser.SAFARI)
+
+    // Emulates Safari detection if 'navigator.vendor' is removed one day
+    expect(
+      detectBrowser(
+        fakeWindowWithDefaults({
+          navigator: {
+            userAgent:
+              'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.6 Safari/605.1.15',
+          },
+        })
+      )
+    ).toBe(Browser.SAFARI)
+
+    // Webview on iOS
+    expect(
+      detectBrowser(
+        fakeWindowWithDefaults({
+          navigator: {
+            userAgent:
+              'Mozilla/5.0 (iPhone; CPU iPhone OS 16_1_2 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/20B110 [FBAN/FBIOS;FBDV/iPhone14,5;FBMD/iPhone;FBSN/iOS;FBSV/16.1.2;FBSS/3;FBID/phone;FBLC/en_US;FBOP/5]',
+            vendor: 'Apple Computer, Inc.',
+          },
+        })
+      )
+    ).toBe(Browser.SAFARI)
   })
 
   it('detects Chromium', () => {
