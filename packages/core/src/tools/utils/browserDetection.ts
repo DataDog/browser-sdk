@@ -31,8 +31,11 @@ export function detectBrowser(browserWindow: Window = window) {
   }
 
   if (
-    (/safari/i.test(userAgent) && !/chrome|android/i.test(userAgent)) ||
-    browserWindow.navigator.vendor?.indexOf('Apple') === 0
+    // navigator.vendor is deprecated, but it is the most resilient way we found to detect
+    // "Apple maintained browsers" (AKA Safari). If one day it gets removed, we still have the
+    // useragent test as a semi-working fallback.
+    browserWindow.navigator.vendor?.indexOf('Apple') === 0 ||
+    (/safari/i.test(userAgent) && !/chrome|android/i.test(userAgent))
   ) {
     return Browser.SAFARI
   }
