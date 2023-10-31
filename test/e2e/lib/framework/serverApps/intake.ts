@@ -1,4 +1,4 @@
-import { createInflate } from 'zlib'
+import { createInflate, inflateSync } from 'zlib'
 import https from 'https'
 import connectBusboy from 'connect-busboy'
 import express from 'express'
@@ -6,11 +6,18 @@ import express from 'express'
 import cors from 'cors'
 import type { BrowserSegmentMetadataAndSegmentSizes } from '@datadog/browser-rum/src/domain/segmentCollection'
 import type { BrowserSegment } from '@datadog/browser-rum/src/types'
-import type { IntakeRegistry, IntakeRequest, ReplayIntakeRequest } from '../intakeRegistry'
+import type {
+  IntakeRegistry,
+  IntakeRequest,
+  LogsIntakeRequest,
+  ReplayIntakeRequest,
+  RumIntakeRequest,
+} from '../intakeRegistry'
 
 interface IntakeRequestInfos {
   isBridge: boolean
   intakeType: IntakeRequest['intakeType']
+  encoding: string | null
 }
 
 export function createIntakeServerApp(intakeRegistry: IntakeRegistry) {
@@ -42,18 +49,22 @@ function computeIntakeRequestInfos(req: express.Request): IntakeRequestInfos {
   if (!ddforward) {
     throw new Error('ddforward is missing')
   }
+  const { pathname, searchParams } = new URL(ddforward, 'https://example.org')
+
+  const encoding = req.headers['content-encoding'] || searchParams.get('dd-evp-encoding')
 
   if (req.query.bridge === 'true') {
     const eventType = req.query.event_type
     return {
       isBridge: true,
+      encoding,
       intakeType: eventType === 'log' ? 'logs' : 'rum',
     }
   }
 
   let intakeType: IntakeRequest['intakeType']
-  // ddforward = /api/v2/rum?key=value
-  const endpoint = ddforward.split(/[/?]/)[3]
+  // pathname = /api/v2/rum
+  const endpoint = pathname.split(/[/?]/)[3]
   if (endpoint === 'logs' || endpoint === 'rum' || endpoint === 'replay') {
     intakeType = endpoint
   } else {
@@ -61,26 +72,37 @@ function computeIntakeRequestInfos(req: express.Request): IntakeRequestInfos {
   }
   return {
     isBridge: false,
+    encoding,
     intakeType,
   }
 }
 
-async function readIntakeRequest(req: express.Request, infos: IntakeRequestInfos): Promise<IntakeRequest> {
-  if (infos.intakeType === 'replay') {
-    return readReplayIntakeRequest(req)
-  }
+function readIntakeRequest(req: express.Request, infos: IntakeRequestInfos): Promise<IntakeRequest> {
+  return infos.intakeType === 'replay'
+    ? readReplayIntakeRequest(req, infos as IntakeRequestInfos & { intakeType: 'replay' })
+    : readRumOrLogsIntakeRequest(req, infos as IntakeRequestInfos & { intakeType: 'rum' | 'logs' })
+}
+
+async function readRumOrLogsIntakeRequest(
+  req: express.Request,
+  infos: IntakeRequestInfos & { intakeType: 'rum' | 'logs' }
+): Promise<RumIntakeRequest | LogsIntakeRequest> {
+  const rawBody = await readStream(req)
+  const encodedBody = infos.encoding === 'deflate' ? inflateSync(rawBody) : rawBody
 
   return {
-    intakeType: infos.intakeType,
-    isBridge: infos.isBridge,
-    events: (await readStream(req))
+    ...infos,
+    events: encodedBody
       .toString('utf-8')
       .split('\n')
       .map((line): any => JSON.parse(line)),
   }
 }
 
-function readReplayIntakeRequest(req: express.Request): Promise<ReplayIntakeRequest> {
+function readReplayIntakeRequest(
+  req: express.Request,
+  infos: IntakeRequestInfos & { intakeType: 'replay' }
+): Promise<ReplayIntakeRequest> {
   return new Promise((resolve, reject) => {
     let segmentPromise: Promise<{
       encoding: string
@@ -108,11 +130,11 @@ function readReplayIntakeRequest(req: express.Request): Promise<ReplayIntakeRequ
 
     req.busboy.on('finish', () => {
       Promise.all([segmentPromise, metadataPromise])
-        .then(([segmentEntry, metadata]) => ({
-          intakeType: 'replay' as const,
-          isBridge: false as const,
+        .then(([{ segment, ...segmentFile }, metadata]) => ({
+          ...infos,
+          segmentFile,
           metadata,
-          ...segmentEntry,
+          segment,
         }))
         .then(resolve, reject)
     })
