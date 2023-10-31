@@ -1,12 +1,12 @@
-import type { TimeStamp } from '@datadog/browser-core'
-import { noop, setDebugMode, isIE } from '@datadog/browser-core'
+import type { DeflateEncoder, TimeStamp } from '@datadog/browser-core'
+import { noop, setDebugMode, isIE, DeflateEncoderStreamId } from '@datadog/browser-core'
 import type { RumConfiguration } from '@datadog/browser-rum-core'
 import { MockWorker } from '../../../test'
 import type { CreationReason, BrowserRecord, SegmentContext, BrowserSegment, BrowserSegmentMetadata } from '../../types'
 import { RecordType } from '../../types'
 import { getReplayStats, resetReplayStats } from '../replayStats'
-import type { DeflateEncoder } from '../deflate'
-import { DeflateEncoderStreamId, createDeflateEncoder } from '../deflate'
+import { createDeflateEncoder } from '../deflate'
+import type { AddRecordCallback, FlushCallback } from './segment'
 import { Segment } from './segment'
 
 const CONTEXT: SegmentContext = { application: { id: 'a' }, view: { id: 'b' }, session: { id: 'c' } }
@@ -19,8 +19,7 @@ const FULL_SNAPSHOT_RECORD: BrowserRecord = {
 }
 const ENCODED_SEGMENT_HEADER_BYTES_COUNT = 12 // {"records":[
 const ENCODED_RECORD_BYTES_COUNT = 25
-const ENCODED_FULL_SNAPSHOT_RECORD_BYTES_COUNT = 35
-const ENCODED_META_BYTES_COUNT = 192 // this should stay accurate as long as less than 10 records are added
+const ENCODED_META_BYTES_COUNT = 193 // this should stay accurate as long as less than 10 records are added
 const TRAILER_BYTES_COUNT = 1
 
 describe('Segment', () => {
@@ -44,8 +43,8 @@ describe('Segment', () => {
   })
 
   it('writes a segment', () => {
-    const addRecordCallbackSpy = jasmine.createSpy<() => void>()
-    const flushCallbackSpy = jasmine.createSpy<(metadata: BrowserSegmentMetadata) => void>()
+    const addRecordCallbackSpy = jasmine.createSpy<AddRecordCallback>()
+    const flushCallbackSpy = jasmine.createSpy<FlushCallback>()
     const segment = createSegment()
     segment.addRecord(RECORD, addRecordCallbackSpy)
 
@@ -58,7 +57,7 @@ describe('Segment', () => {
     expect(addRecordCallbackSpy).toHaveBeenCalledTimes(1)
     expect(flushCallbackSpy).toHaveBeenCalledTimes(1)
 
-    expect(parseSegment(encoder.encodedBytes)).toEqual({
+    expect(parseSegment(flushCallbackSpy.calls.mostRecent().args[1].output)).toEqual({
       source: 'browser' as const,
       creation_reason: 'init' as const,
       end: 10,
@@ -77,48 +76,59 @@ describe('Segment', () => {
   })
 
   it('compressed bytes count is updated when a record is added', () => {
+    const addRecordCallbackSpy = jasmine.createSpy<AddRecordCallback>()
     const segment = createSegment()
-    segment.addRecord(RECORD, noop)
+    segment.addRecord(RECORD, addRecordCallbackSpy)
     worker.processAllMessages()
-    expect(encoder.encodedBytesCount).toBe(
-      ENCODED_SEGMENT_HEADER_BYTES_COUNT + ENCODED_RECORD_BYTES_COUNT + TRAILER_BYTES_COUNT
+    expect(addRecordCallbackSpy).toHaveBeenCalledOnceWith(
+      ENCODED_SEGMENT_HEADER_BYTES_COUNT + ENCODED_RECORD_BYTES_COUNT
     )
   })
 
-  it('calls the flush callback with metadata as argument', () => {
-    const flushCallbackSpy = jasmine.createSpy<(metadata: BrowserSegmentMetadata) => void>()
+  it('calls the flush callback with metadata and encoder output as argument', () => {
+    const flushCallbackSpy = jasmine.createSpy<FlushCallback>()
     const segment = createSegment()
     segment.addRecord(RECORD, noop)
     segment.flush(flushCallbackSpy)
     worker.processAllMessages()
-    expect(flushCallbackSpy).toHaveBeenCalledOnceWith({
-      start: 10,
-      end: 10,
-      creation_reason: 'init',
-      has_full_snapshot: false,
-      index_in_view: 0,
-      source: 'browser',
-      records_count: 1,
-      ...CONTEXT,
-    })
+    expect(flushCallbackSpy).toHaveBeenCalledOnceWith(
+      {
+        start: 10,
+        end: 10,
+        creation_reason: 'init',
+        has_full_snapshot: false,
+        index_in_view: 0,
+        source: 'browser',
+        records_count: 1,
+        ...CONTEXT,
+      },
+      {
+        output: jasmine.any(Uint8Array) as unknown as Uint8Array,
+        outputBytesCount:
+          ENCODED_SEGMENT_HEADER_BYTES_COUNT +
+          ENCODED_RECORD_BYTES_COUNT +
+          ENCODED_META_BYTES_COUNT +
+          TRAILER_BYTES_COUNT,
+        rawBytesCount: ENCODED_SEGMENT_HEADER_BYTES_COUNT + ENCODED_RECORD_BYTES_COUNT + ENCODED_META_BYTES_COUNT,
+        encoding: 'deflate',
+      }
+    )
   })
 
   it('resets the encoder when a segment is flushed', () => {
-    const encodedBytesCounts: number[] = []
+    const flushCallbackSpy = jasmine.createSpy<FlushCallback>()
 
     const segment1 = createSegment({ creationReason: 'init' })
-    segment1.addRecord(RECORD, () => encodedBytesCounts.push(encoder.encodedBytesCount))
-    segment1.flush(noop)
+    segment1.addRecord(RECORD, noop)
+    segment1.flush(flushCallbackSpy)
 
     const segment2 = createSegment({ creationReason: 'segment_duration_limit' })
-    segment2.addRecord(FULL_SNAPSHOT_RECORD, () => encodedBytesCounts.push(encoder.encodedBytesCount))
-    segment2.flush(noop)
+    segment2.addRecord(FULL_SNAPSHOT_RECORD, noop)
+    segment2.flush(flushCallbackSpy)
 
     worker.processAllMessages()
-    expect(encodedBytesCounts).toEqual([
-      ENCODED_SEGMENT_HEADER_BYTES_COUNT + ENCODED_RECORD_BYTES_COUNT + TRAILER_BYTES_COUNT,
-      ENCODED_SEGMENT_HEADER_BYTES_COUNT + ENCODED_FULL_SNAPSHOT_RECORD_BYTES_COUNT + TRAILER_BYTES_COUNT,
-    ])
+    expect(parseSegment(flushCallbackSpy.calls.argsFor(0)[1].output).records.length).toBe(1)
+    expect(parseSegment(flushCallbackSpy.calls.argsFor(1)[1].output).records.length).toBe(1)
   })
 
   it('throws when trying to flush an empty segment', () => {
@@ -244,14 +254,14 @@ describe('Segment', () => {
 
     it('when flushing a segment', () => {
       const segment = createSegment()
-      segment.addRecord(FULL_SNAPSHOT_RECORD, noop)
+      segment.addRecord(RECORD, noop)
       segment.flush(noop)
       worker.processAllMessages()
       expect(getReplayStats('b')).toEqual({
         segments_count: 1,
         records_count: 1,
         segments_total_raw_size:
-          ENCODED_SEGMENT_HEADER_BYTES_COUNT + ENCODED_FULL_SNAPSHOT_RECORD_BYTES_COUNT + ENCODED_META_BYTES_COUNT,
+          ENCODED_SEGMENT_HEADER_BYTES_COUNT + ENCODED_RECORD_BYTES_COUNT + ENCODED_META_BYTES_COUNT,
       })
     })
   })

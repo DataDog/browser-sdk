@@ -1,10 +1,12 @@
 import { stubEndpointBuilder } from '../../test'
 import type { PageExitEvent } from '../browser/pageExitObservable'
-import type { Configuration, EndpointBuilder } from '../domain/configuration'
+import type { Configuration } from '../domain/configuration'
 import type { RawError } from '../domain/error/error.types'
+import { createIdentityEncoder } from '../tools/encoder'
 import { Observable } from '../tools/observable'
 import { noop } from '../tools/utils/functionUtils'
 import { Batch } from './batch'
+import type { BatchConfiguration } from './startBatchWithReplica'
 import { startBatchWithReplica } from './startBatchWithReplica'
 
 describe('startBatchWithReplica', () => {
@@ -12,12 +14,15 @@ describe('startBatchWithReplica', () => {
   const reportError: (error: RawError) => void = noop
   let pageExitObservable: Observable<PageExitEvent>
   let sessionExpireObservable: Observable<void>
-  let endpoint: EndpointBuilder
+  let batchConfiguration: BatchConfiguration
 
   beforeEach(() => {
     pageExitObservable = new Observable()
     sessionExpireObservable = new Observable()
-    endpoint = stubEndpointBuilder('https://example.com')
+    batchConfiguration = {
+      endpoint: stubEndpointBuilder('https://example.com'),
+      encoder: createIdentityEncoder(),
+    }
   })
 
   it('adds a message to a batch and its replica', () => {
@@ -25,8 +30,8 @@ describe('startBatchWithReplica', () => {
 
     const batch = startBatchWithReplica(
       DEFAULT_CONFIGURATION,
-      { endpoint },
-      { endpoint },
+      batchConfiguration,
+      batchConfiguration,
       reportError,
       pageExitObservable,
       sessionExpireObservable
@@ -43,7 +48,7 @@ describe('startBatchWithReplica', () => {
 
     const batch = startBatchWithReplica(
       DEFAULT_CONFIGURATION,
-      { endpoint },
+      batchConfiguration,
       undefined,
       reportError,
       pageExitObservable,
@@ -58,8 +63,8 @@ describe('startBatchWithReplica', () => {
 
     const batch = startBatchWithReplica(
       DEFAULT_CONFIGURATION,
-      { endpoint },
-      { endpoint },
+      batchConfiguration,
+      batchConfiguration,
       reportError,
       pageExitObservable,
       sessionExpireObservable
@@ -73,8 +78,8 @@ describe('startBatchWithReplica', () => {
 
     const batch = startBatchWithReplica(
       DEFAULT_CONFIGURATION,
-      { endpoint },
-      { endpoint },
+      batchConfiguration,
+      batchConfiguration,
       reportError,
       pageExitObservable,
       sessionExpireObservable
@@ -91,9 +96,9 @@ describe('startBatchWithReplica', () => {
 
     const batch = startBatchWithReplica(
       DEFAULT_CONFIGURATION,
-      { endpoint },
+      batchConfiguration,
       {
-        endpoint,
+        ...batchConfiguration,
         transformMessage: (message) => ({ ...message, bar: true }),
       },
       reportError,
@@ -108,11 +113,11 @@ describe('startBatchWithReplica', () => {
   it('transforms a message when upserting it to the replica', () => {
     const batchUpsertSpy = spyOn(Batch.prototype, 'upsert')
 
-    const batch = startBatchWithReplica(
+    const batch = startBatchWithReplica<{ foo?: boolean; bar?: boolean }>(
       DEFAULT_CONFIGURATION,
-      { endpoint },
+      batchConfiguration,
       {
-        endpoint,
+        ...batchConfiguration,
         transformMessage: (message) => ({ ...message, bar: true }),
       },
       reportError,

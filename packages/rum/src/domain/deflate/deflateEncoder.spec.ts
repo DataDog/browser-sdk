@@ -1,8 +1,8 @@
-import type { RawTelemetryEvent } from '@datadog/browser-core'
+import type { RawTelemetryEvent, EncoderResult } from '@datadog/browser-core'
 import type { RumConfiguration } from '@datadog/browser-rum-core'
-import { noop, startFakeTelemetry } from '@datadog/browser-core'
+import { noop, startFakeTelemetry, DeflateEncoderStreamId } from '@datadog/browser-core'
 import { MockWorker } from '../../../test'
-import { DeflateEncoderStreamId, createDeflateEncoder } from './deflateEncoder'
+import { createDeflateEncoder } from './deflateEncoder'
 
 const OTHER_STREAM_ID = 10 as DeflateEncoderStreamId
 
@@ -20,28 +20,165 @@ describe('createDeflateEncoder', () => {
     telemetryEvents = startFakeTelemetry()
   })
 
-  it('initializes the encoder with correct initial state', () => {
-    const encoder = createDeflateEncoder(configuration, worker, DeflateEncoderStreamId.REPLAY)
+  describe('write()', () => {
+    it('invokes write callbacks', () => {
+      const encoder = createDeflateEncoder(configuration, worker, DeflateEncoderStreamId.REPLAY)
+      const writeCallbackSpy = jasmine.createSpy()
+      encoder.write('foo', writeCallbackSpy)
+      encoder.write('bar', writeCallbackSpy)
 
-    expect(encoder.encodedBytes).toEqual(new Uint8Array(0))
-    expect(encoder.encodedBytesCount).toBe(0)
-    expect(encoder.rawBytesCount).toBe(0)
+      expect(writeCallbackSpy).not.toHaveBeenCalled()
+
+      worker.processAllMessages()
+
+      expect(writeCallbackSpy).toHaveBeenCalledTimes(2)
+      expect(writeCallbackSpy.calls.argsFor(0)).toEqual([3])
+      expect(writeCallbackSpy.calls.argsFor(1)).toEqual([3])
+    })
+
+    it('marks the encoder as not empty', () => {
+      const encoder = createDeflateEncoder(configuration, worker, DeflateEncoderStreamId.REPLAY)
+      encoder.write('foo')
+      expect(encoder.isEmpty).toBe(false)
+    })
   })
 
-  it('encodes data correctly', () => {
-    const encoder = createDeflateEncoder(configuration, worker, DeflateEncoderStreamId.REPLAY)
-    const writeCallbackSpy = jasmine.createSpy()
-    encoder.write('foo', writeCallbackSpy)
-    encoder.write('bar', writeCallbackSpy)
+  describe('finish()', () => {
+    it('invokes the callback with the encoded data', () => {
+      const encoder = createDeflateEncoder(configuration, worker, DeflateEncoderStreamId.REPLAY)
+      const finishCallbackSpy = jasmine.createSpy<(result: EncoderResult<Uint8Array>) => void>()
+      encoder.write('foo')
+      encoder.write('bar')
+      encoder.finish(finishCallbackSpy)
 
-    expect(writeCallbackSpy).not.toHaveBeenCalled()
+      worker.processAllMessages()
 
-    worker.processAllMessages()
+      expect(finishCallbackSpy).toHaveBeenCalledOnceWith({
+        output: new Uint8Array([...ENCODED_FOO, ...ENCODED_BAR, ...TRAILER]),
+        outputBytesCount: 7,
+        rawBytesCount: 6,
+        encoding: 'deflate',
+      })
+    })
 
-    expect(writeCallbackSpy).toHaveBeenCalledTimes(2)
-    expect(encoder.encodedBytes).toEqual(new Uint8Array([...ENCODED_FOO, ...ENCODED_BAR, ...TRAILER]))
-    expect(encoder.encodedBytesCount).toBe(7)
-    expect(encoder.rawBytesCount).toBe(6)
+    it('invokes the callback even if nothing has been written', () => {
+      const encoder = createDeflateEncoder(configuration, worker, DeflateEncoderStreamId.REPLAY)
+      const finishCallbackSpy = jasmine.createSpy<(result: EncoderResult<Uint8Array>) => void>()
+      encoder.finish(finishCallbackSpy)
+
+      expect(finishCallbackSpy).toHaveBeenCalledOnceWith({
+        output: new Uint8Array(0),
+        outputBytesCount: 0,
+        rawBytesCount: 0,
+        encoding: 'deflate',
+      })
+    })
+
+    it('cancels pending write callbacks', () => {
+      const encoder = createDeflateEncoder(configuration, worker, DeflateEncoderStreamId.REPLAY)
+      const writeCallbackSpy = jasmine.createSpy()
+      encoder.write('foo', writeCallbackSpy)
+      encoder.write('bar', writeCallbackSpy)
+      encoder.finish(noop)
+
+      worker.processAllMessages()
+
+      expect(writeCallbackSpy).not.toHaveBeenCalled()
+    })
+
+    it('marks the encoder as empty', () => {
+      const encoder = createDeflateEncoder(configuration, worker, DeflateEncoderStreamId.REPLAY)
+      encoder.write('foo')
+      encoder.finish(noop)
+      expect(encoder.isEmpty).toBe(true)
+    })
+
+    it('supports calling finish() while another finish() call is pending', () => {
+      const encoder = createDeflateEncoder(configuration, worker, DeflateEncoderStreamId.REPLAY)
+      const finishCallbackSpy = jasmine.createSpy<(result: EncoderResult<Uint8Array>) => void>()
+      encoder.write('foo')
+      encoder.finish(finishCallbackSpy)
+      encoder.write('bar')
+      encoder.finish(finishCallbackSpy)
+
+      worker.processAllMessages()
+
+      expect(finishCallbackSpy).toHaveBeenCalledTimes(2)
+      expect(finishCallbackSpy.calls.allArgs()).toEqual([
+        [
+          {
+            output: new Uint8Array([...ENCODED_FOO, ...TRAILER]),
+            outputBytesCount: 4,
+            rawBytesCount: 3,
+            encoding: 'deflate',
+          },
+        ],
+        [
+          {
+            output: new Uint8Array([...ENCODED_BAR, ...TRAILER]),
+            outputBytesCount: 4,
+            rawBytesCount: 3,
+            encoding: 'deflate',
+          },
+        ],
+      ])
+    })
+  })
+
+  describe('finishSync()', () => {
+    it('returns the encoded data up to this point and any pending data', () => {
+      const encoder = createDeflateEncoder(configuration, worker, DeflateEncoderStreamId.REPLAY)
+      encoder.write('foo')
+      encoder.write('bar')
+
+      worker.processNextMessage()
+
+      expect(encoder.finishSync()).toEqual({
+        output: new Uint8Array([...ENCODED_FOO, ...TRAILER]),
+        outputBytesCount: 4,
+        rawBytesCount: 3,
+        pendingData: 'bar',
+        encoding: 'deflate',
+      })
+    })
+
+    it('cancels pending write callbacks', () => {
+      const encoder = createDeflateEncoder(configuration, worker, DeflateEncoderStreamId.REPLAY)
+      const writeCallbackSpy = jasmine.createSpy()
+      encoder.write('foo', writeCallbackSpy)
+      encoder.write('bar', writeCallbackSpy)
+      encoder.finishSync()
+
+      worker.processAllMessages()
+
+      expect(writeCallbackSpy).not.toHaveBeenCalled()
+    })
+
+    it('marks the encoder as empty', () => {
+      const encoder = createDeflateEncoder(configuration, worker, DeflateEncoderStreamId.REPLAY)
+      encoder.write('foo')
+      encoder.finishSync()
+      expect(encoder.isEmpty).toBe(true)
+    })
+
+    it('supports calling finishSync() while another finish() call is pending', () => {
+      const encoder = createDeflateEncoder(configuration, worker, DeflateEncoderStreamId.REPLAY)
+      const finishCallbackSpy = jasmine.createSpy<(result: EncoderResult<Uint8Array>) => void>()
+      encoder.write('foo')
+      encoder.finish(finishCallbackSpy)
+      encoder.write('bar')
+      expect(encoder.finishSync()).toEqual({
+        output: new Uint8Array(0),
+        outputBytesCount: 0,
+        rawBytesCount: 0,
+        pendingData: 'foobar',
+        encoding: 'deflate',
+      })
+
+      worker.processAllMessages()
+
+      expect(finishCallbackSpy).not.toHaveBeenCalled()
+    })
   })
 
   it('ignores messages destined to other streams', () => {
@@ -56,33 +193,6 @@ describe('createDeflateEncoder', () => {
     worker.processNextMessage()
 
     expect(writeCallbackSpy).not.toHaveBeenCalled()
-  })
-
-  it('resets the stream', () => {
-    const encoder = createDeflateEncoder(configuration, worker, DeflateEncoderStreamId.REPLAY)
-    const writeCallbackSpy = jasmine.createSpy()
-    encoder.write('foo', writeCallbackSpy)
-    encoder.reset()
-    encoder.write('bar', writeCallbackSpy)
-
-    worker.processAllMessages()
-
-    expect(writeCallbackSpy).toHaveBeenCalledTimes(2)
-    expect(encoder.encodedBytes).toEqual(new Uint8Array([...ENCODED_BAR, ...TRAILER]))
-    expect(encoder.encodedBytesCount).toBe(4)
-    expect(encoder.rawBytesCount).toBe(3)
-  })
-
-  it('the encoder state stays available when the write callback is invoked', () => {
-    const encoder = createDeflateEncoder(configuration, worker, DeflateEncoderStreamId.REPLAY)
-    encoder.write('foo', () => {
-      expect(encoder.encodedBytes).toEqual(new Uint8Array([...ENCODED_FOO, ...TRAILER]))
-      expect(encoder.encodedBytesCount).toBe(4)
-      expect(encoder.rawBytesCount).toBe(3)
-    })
-    encoder.reset()
-
-    worker.processAllMessages()
   })
 
   it('unsubscribes from the worker responses come out of order', () => {

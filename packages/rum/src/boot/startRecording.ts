@@ -1,4 +1,4 @@
-import type { RawError, HttpRequest } from '@datadog/browser-core'
+import type { RawError, HttpRequest, DeflateEncoder } from '@datadog/browser-core'
 import { timeStampNow, createHttpRequest, addTelemetryDebug } from '@datadog/browser-core'
 import type {
   LifeCycle,
@@ -10,7 +10,6 @@ import type {
 import { LifeCycleEventType } from '@datadog/browser-rum-core'
 
 import { record } from '../domain/record'
-import type { DeflateEncoder } from '../domain/deflate'
 import { startSegmentCollection, SEGMENT_BYTES_LIMIT } from '../domain/segmentCollection'
 import { RecordType } from '../types'
 

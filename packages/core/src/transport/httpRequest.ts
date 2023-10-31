@@ -24,7 +24,7 @@ export interface HttpResponse extends Context {
 }
 
 export interface Payload {
-  data: string | FormData
+  data: string | FormData | Blob
   bytesCount: number
   retry?: RetryInfo
   flushReason?: FlushReason
@@ -134,6 +134,12 @@ export function sendXHR(
 ) {
   const request = new XMLHttpRequest()
   request.open('POST', url, true)
+  if (data instanceof Blob) {
+    // When using a Blob instance, IE does not use its 'type' to define the 'Content-Type' header
+    // automatically, so the intake request ends up being rejected with an HTTP status 415
+    // Defining the header manually fixes this issue.
+    request.setRequestHeader('Content-Type', data.type)
+  }
   addEventListener(
     configuration,
     request,

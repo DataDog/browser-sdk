@@ -1,4 +1,4 @@
-import { canUseEventBridge, noop, runOnReadyState } from '@datadog/browser-core'
+import { DeflateEncoderStreamId, canUseEventBridge, noop, runOnReadyState } from '@datadog/browser-core'
 import type {
   LifeCycle,
   ViewContexts,
@@ -11,7 +11,6 @@ import { getReplayStats as getReplayStatsImpl } from '../domain/replayStats'
 import { getSessionReplayLink } from '../domain/getSessionReplayLink'
 import type { CreateDeflateWorker } from '../domain/deflate'
 import {
-  DeflateEncoderStreamId,
   createDeflateEncoder,
   startDeflateWorker,
   DeflateWorkerStatus,
@@ -83,7 +82,8 @@ export function makeRecorderApi(
       lifeCycle: LifeCycle,
       configuration: RumConfiguration,
       sessionManager: RumSessionManager,
-      viewContexts: ViewContexts
+      viewContexts: ViewContexts,
+      worker
     ) => {
       if (configuration.startSessionReplayRecordingManually) {
         state = { status: RecorderStatus.Stopped }
@@ -119,20 +119,22 @@ export function makeRecorderApi(
             return
           }
 
-          const worker = startDeflateWorker(
-            configuration,
-            'Datadog Session Replay',
-            () => {
-              stopStrategy()
-            },
-            createDeflateWorkerImpl
-          )
-
           if (!worker) {
-            state = {
-              status: RecorderStatus.Stopped,
+            worker = startDeflateWorker(
+              configuration,
+              'Datadog Session Replay',
+              () => {
+                stopStrategy()
+              },
+              createDeflateWorkerImpl
+            )
+
+            if (!worker) {
+              state = {
+                status: RecorderStatus.Stopped,
+              }
+              return
             }
-            return
           }
 
           const { stop: stopRecording } = startRecordingImpl(

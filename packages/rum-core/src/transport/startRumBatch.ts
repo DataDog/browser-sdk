@@ -1,5 +1,10 @@
-import type { Context, TelemetryEvent, Observable, RawError, PageExitEvent } from '@datadog/browser-core'
-import { combine, isTelemetryReplicationAllowed, startBatchWithReplica } from '@datadog/browser-core'
+import type { Context, TelemetryEvent, Observable, RawError, PageExitEvent, Encoder } from '@datadog/browser-core'
+import {
+  DeflateEncoderStreamId,
+  combine,
+  isTelemetryReplicationAllowed,
+  startBatchWithReplica,
+} from '@datadog/browser-core'
 import type { RumConfiguration } from '../domain/configuration'
 import type { LifeCycle } from '../domain/lifeCycle'
 import { LifeCycleEventType } from '../domain/lifeCycle'
@@ -12,7 +17,8 @@ export function startRumBatch(
   telemetryEventObservable: Observable<TelemetryEvent & Context>,
   reportError: (error: RawError) => void,
   pageExitObservable: Observable<PageExitEvent>,
-  sessionExpireObservable: Observable<void>
+  sessionExpireObservable: Observable<void>,
+  createEncoder: (streamId: DeflateEncoderStreamId) => Encoder
 ) {
   const replica = configuration.replica
 
@@ -20,10 +26,12 @@ export function startRumBatch(
     configuration,
     {
       endpoint: configuration.rumEndpointBuilder,
+      encoder: createEncoder(DeflateEncoderStreamId.RUM),
     },
     replica && {
       endpoint: replica.rumEndpointBuilder,
       transformMessage: (message) => combine(message, { application: { id: replica.applicationId } }),
+      encoder: createEncoder(DeflateEncoderStreamId.RUM_REPLICA),
     },
     reportError,
     pageExitObservable,

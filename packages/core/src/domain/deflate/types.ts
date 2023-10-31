@@ -1,3 +1,5 @@
+import type { Encoder } from '../../tools/encoder'
+
 export type DeflateWorkerAction =
   // Action to send when creating the worker to check if the communication is working correctly.
   // The worker should respond with a 'initialized' response.
@@ -39,3 +41,15 @@ export type DeflateWorkerResponse =
       streamId?: number
       error: Error | string
     }
+
+export interface DeflateWorker extends Worker {
+  postMessage(message: DeflateWorkerAction): void
+}
+
+export type DeflateEncoder = Encoder<Uint8Array> & { stop: () => void }
+
+export const enum DeflateEncoderStreamId {
+  REPLAY = 1,
+  RUM = 2,
+  RUM_REPLICA = 3,
+}

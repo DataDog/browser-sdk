@@ -1,5 +1,15 @@
-import type { RelativeTime, TimeStamp, Context } from '@datadog/browser-core'
-import { ONE_SECOND, getTimeStamp, display, DefaultPrivacyLevel, removeStorageListeners } from '@datadog/browser-core'
+import type { RelativeTime, TimeStamp, Context, DeflateWorker } from '@datadog/browser-core'
+import {
+  ONE_SECOND,
+  getTimeStamp,
+  display,
+  DefaultPrivacyLevel,
+  removeStorageListeners,
+  noop,
+  resetExperimentalFeatures,
+  ExperimentalFeature,
+  createIdentityEncoder,
+} from '@datadog/browser-core'
 import {
   initEventBridgeStub,
   deleteEventBridgeStub,
@@ -117,7 +127,7 @@ describe('rum public api', () => {
     let startRumSpy: jasmine.Spy<StartRum>
 
     beforeEach(() => {
-      startRumSpy = jasmine.createSpy()
+      startRumSpy = jasmine.createSpy().and.callFake(noopStartRum)
     })
 
     afterEach(() => {
@@ -154,6 +164,87 @@ describe('rum public api', () => {
         rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
 
         expect(startRumSpy).toHaveBeenCalled()
+      })
+    })
+
+    describe('deflate worker', () => {
+      let rumPublicApi: RumPublicApi
+      let startDeflateWorkerSpy: jasmine.Spy
+      let recorderApiOnRumStartSpy: jasmine.Spy<RecorderApi['onRumStart']>
+      const FAKE_WORKER = {} as DeflateWorker
+
+      beforeEach(() => {
+        startDeflateWorkerSpy = jasmine.createSpy().and.returnValue(FAKE_WORKER)
+        recorderApiOnRumStartSpy = jasmine.createSpy()
+
+        rumPublicApi = makeRumPublicApi(
+          startRumSpy,
+          {
+            ...noopRecorderApi,
+            onRumStart: recorderApiOnRumStartSpy,
+          },
+          {
+            startDeflateWorker: startDeflateWorkerSpy,
+            createDeflateEncoder: noop as any,
+          }
+        )
+      })
+
+      afterEach(() => {
+        resetExperimentalFeatures()
+        deleteEventBridgeStub()
+      })
+
+      describe('without the COMPRESS_BATCH experimental flag', () => {
+        it('does not create a deflate worker', () => {
+          rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
+
+          expect(startDeflateWorkerSpy).not.toHaveBeenCalled()
+          expect(startRumSpy.calls.mostRecent().args[6]).toBe(createIdentityEncoder)
+        })
+      })
+
+      describe('with the COMPRESS_BATCH experimental flag', () => {
+        it('creates a deflate worker instance', () => {
+          rumPublicApi.init({
+            ...DEFAULT_INIT_CONFIGURATION,
+            enableExperimentalFeatures: [ExperimentalFeature.COMPRESS_BATCH],
+          })
+
+          expect(startDeflateWorkerSpy).toHaveBeenCalledTimes(1)
+          expect(startRumSpy.calls.mostRecent().args[6]).not.toBe(createIdentityEncoder)
+        })
+
+        it('aborts the initialization if it fails to create a deflate worker', () => {
+          startDeflateWorkerSpy.and.returnValue(undefined)
+
+          rumPublicApi.init({
+            ...DEFAULT_INIT_CONFIGURATION,
+            enableExperimentalFeatures: [ExperimentalFeature.COMPRESS_BATCH],
+          })
+
+          expect(startRumSpy).not.toHaveBeenCalled()
+        })
+
+        it('if message bridge is present, does not create a deflate worker instance', () => {
+          initEventBridgeStub()
+
+          rumPublicApi.init({
+            ...DEFAULT_INIT_CONFIGURATION,
+            enableExperimentalFeatures: [ExperimentalFeature.COMPRESS_BATCH],
+          })
+
+          expect(startDeflateWorkerSpy).not.toHaveBeenCalled()
+          expect(startRumSpy).toHaveBeenCalledTimes(1)
+        })
+
+        it('pass the worker to the recorder API', () => {
+          rumPublicApi.init({
+            ...DEFAULT_INIT_CONFIGURATION,
+            enableExperimentalFeatures: [ExperimentalFeature.COMPRESS_BATCH],
+          })
+          expect(recorderApiOnRumStartSpy.calls.mostRecent().args[4]).toBe(FAKE_WORKER)
+        })
       })
     })
   })

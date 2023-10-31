@@ -9,6 +9,7 @@ import {
   noop,
   isIE,
   relativeNow,
+  createIdentityEncoder,
 } from '@datadog/browser-core'
 import {
   createNewEvent,
@@ -332,7 +333,9 @@ describe('view events', () => {
         configuration,
         noopRecorderApi,
         createContextManager(CustomerDataType.GlobalContext),
-        createContextManager(CustomerDataType.User)
+        createContextManager(CustomerDataType.User),
+        undefined,
+        createIdentityEncoder
       )
     )
     interceptor = interceptRequests()
