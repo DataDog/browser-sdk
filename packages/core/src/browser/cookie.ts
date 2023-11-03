@@ -1,6 +1,6 @@
 import { display } from '../tools/display'
 import { ONE_MINUTE, ONE_SECOND } from '../tools/utils/timeUtils'
-import { findCommaSeparatedValue, generateUUID } from '../tools/utils/stringUtils'
+import { findCommaSeparatedValue, findCommaSeparatedValues, generateUUID } from '../tools/utils/stringUtils'
 
 export interface CookieOptions {
   secure?: boolean
@@ -20,6 +20,23 @@ export function setCookie(name: string, value: string, expireDelay: number, opti
 
 export function getCookie(name: string) {
   return findCommaSeparatedValue(document.cookie, name)
+}
+
+let initCookieParsed: Map<string, string> | undefined
+
+/**
+ * Returns a cached value of the cookie. Use this during SDK initialization (and whenever possible)
+ * to avoid parsing the document.cookie multiple times.
+ */
+export function getInitCookie(name: string) {
+  if (!initCookieParsed) {
+    initCookieParsed = findCommaSeparatedValues(document.cookie)
+  }
+  return initCookieParsed.get(name)
+}
+
+export function resetInitCookies() {
+  initCookieParsed = undefined
 }
 
 export function deleteCookie(name: string, options?: CookieOptions) {

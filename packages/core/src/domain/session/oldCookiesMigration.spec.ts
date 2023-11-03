@@ -1,4 +1,4 @@
-import { getCookie, setCookie } from '../../browser/cookie'
+import { getCookie, resetInitCookies, setCookie } from '../../browser/cookie'
 import {
   OLD_LOGS_COOKIE_NAME,
   OLD_RUM_COOKIE_NAME,
@@ -7,10 +7,20 @@ import {
 } from './oldCookiesMigration'
 import { SESSION_EXPIRATION_DELAY } from './sessionConstants'
 import { initCookieStrategy } from './storeStrategies/sessionInCookie'
+import type { SessionStoreStrategy } from './storeStrategies/sessionStoreStrategy'
 import { SESSION_STORE_KEY } from './storeStrategies/sessionStoreStrategy'
 
 describe('old cookies migration', () => {
-  const sessionStoreStrategy = initCookieStrategy({})
+  let sessionStoreStrategy: SessionStoreStrategy
+
+  beforeEach(() => {
+    sessionStoreStrategy = initCookieStrategy({})
+    resetInitCookies()
+  })
+
+  afterEach(() => {
+    resetInitCookies()
+  })
 
   it('should not touch current cookie', () => {
     setCookie(SESSION_STORE_KEY, 'id=abcde&rum=0&logs=1&expire=1234567890', SESSION_EXPIRATION_DELAY)

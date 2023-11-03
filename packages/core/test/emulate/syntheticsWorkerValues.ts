@@ -1,5 +1,5 @@
 import { ONE_MINUTE } from '../../src/tools/utils/timeUtils'
-import { deleteCookie, setCookie } from '../../src/browser/cookie'
+import { deleteCookie, resetInitCookies, setCookie } from '../../src/browser/cookie'
 import type { BrowserWindow } from '../../src/domain/synthetics/syntheticsWorkerValues'
 import {
   SYNTHETICS_INJECTS_RUM_COOKIE_NAME,
@@ -36,6 +36,7 @@ export function mockSyntheticsWorkerValues(
       }
       break
   }
+  resetInitCookies()
 }
 
 export function cleanupSyntheticsWorkerValues() {
@@ -45,4 +46,5 @@ export function cleanupSyntheticsWorkerValues() {
   deleteCookie(SYNTHETICS_TEST_ID_COOKIE_NAME)
   deleteCookie(SYNTHETICS_RESULT_ID_COOKIE_NAME)
   deleteCookie(SYNTHETICS_INJECTS_RUM_COOKIE_NAME)
+  resetInitCookies()
 }
