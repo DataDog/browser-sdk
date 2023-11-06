@@ -31,6 +31,19 @@ describe('stringUtils', () => {
       expect(findCommaSeparatedValue('foo=a;bar=b', 'bar')).toBe('b')
     })
 
+    it('is white-spaces tolerant', () => {
+      expect(findCommaSeparatedValue('   foo  =   a;  bar  =   b', 'foo')).toBe('a')
+      expect(findCommaSeparatedValue('   foo  =   a;  bar  =   b', 'bar')).toBe('b')
+    })
+
+    it('supports values containing an = character', () => {
+      expect(findCommaSeparatedValue('foo=a=b', 'foo')).toBe('a=b')
+    })
+
+    it('supports keys containing `-`', () => {
+      expect(findCommaSeparatedValue('foo-bar=baz', 'foo-bar')).toBe('baz')
+    })
+
     it('returns undefined if the value is not found', () => {
       expect(findCommaSeparatedValue('foo=a;bar=b', 'baz')).toBe(undefined)
     })
