@@ -39,19 +39,19 @@ export function startResourceCollection(
   pageStateHistory: PageStateHistory
 ) {
   lifeCycle.subscribe(LifeCycleEventType.REQUEST_COMPLETED, (request: RequestCompleteEvent) => {
-    lifeCycle.notify(
-      LifeCycleEventType.RAW_RUM_EVENT_COLLECTED,
-      processRequest(request, configuration, sessionManager, pageStateHistory)
-    )
+    const rawEvent = processRequest(request, configuration, sessionManager, pageStateHistory)
+    if (rawEvent) {
+      lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, rawEvent)
+    }
   })
 
   lifeCycle.subscribe(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, (entries) => {
     for (const entry of entries) {
       if (entry.entryType === RumPerformanceEntryType.RESOURCE && !isRequestKind(entry)) {
-        lifeCycle.notify(
-          LifeCycleEventType.RAW_RUM_EVENT_COLLECTED,
-          processResourceEntry(entry, configuration, sessionManager, pageStateHistory)
-        )
+        const rawEvent = processResourceEntry(entry, configuration, sessionManager, pageStateHistory)
+        if (rawEvent) {
+          lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, rawEvent)
+        }
       }
     }
   })
@@ -62,15 +62,18 @@ function processRequest(
   configuration: RumConfiguration,
   sessionManager: RumSessionManager,
   pageStateHistory: PageStateHistory
-): RawRumEventCollectedData<RawRumResourceEvent> {
-  const type = request.type === RequestType.XHR ? ResourceType.XHR : ResourceType.FETCH
-
+): RawRumEventCollectedData<RawRumResourceEvent> | undefined {
   const matchingTiming = matchRequestTiming(request)
   const startClocks = matchingTiming ? relativeToClocks(matchingTiming.startTime) : request.startClocks
-  const correspondingTimingOverrides = matchingTiming ? computePerformanceEntryMetrics(matchingTiming) : undefined
-
+  const shouldIndex = shouldIndexResource(configuration, sessionManager, startClocks)
   const tracingInfo = computeRequestTracingInfo(request, configuration)
-  const indexingInfo = computeIndexingInfo(configuration, sessionManager, startClocks)
+  if (!shouldIndex && !tracingInfo) {
+    return
+  }
+
+  const type = request.type === RequestType.XHR ? ResourceType.XHR : ResourceType.FETCH
+
+  const correspondingTimingOverrides = matchingTiming ? computePerformanceEntryMetrics(matchingTiming) : undefined
 
   const duration = computeRequestDuration(pageStateHistory, startClocks, request.duration)
   const pageStateInfo = computePageStateInfo(
@@ -91,10 +94,12 @@ function processRequest(
         url: request.url,
       },
       type: RumEventType.RESOURCE as const,
+      _dd: {
+        discarded: !shouldIndex,
+      },
     },
     tracingInfo,
     correspondingTimingOverrides,
-    indexingInfo,
     pageStateInfo
   )
 
@@ -117,13 +122,17 @@ function processResourceEntry(
   configuration: RumConfiguration,
   sessionManager: RumSessionManager,
   pageStateHistory: PageStateHistory
-): RawRumEventCollectedData<RawRumResourceEvent> {
+): RawRumEventCollectedData<RawRumResourceEvent> | undefined {
+  const startClocks = relativeToClocks(entry.startTime)
+  const shouldIndex = shouldIndexResource(configuration, sessionManager, startClocks)
+  const tracingInfo = computeEntryTracingInfo(entry, configuration)
+  if (!shouldIndex && !tracingInfo) {
+    return
+  }
+
   const type = computeResourceKind(entry)
   const entryMetrics = computePerformanceEntryMetrics(entry)
-  const startClocks = relativeToClocks(entry.startTime)
 
-  const tracingInfo = computeEntryTracingInfo(entry, configuration)
-  const indexingInfo = computeIndexingInfo(configuration, sessionManager, startClocks)
   const pageStateInfo = computePageStateInfo(pageStateHistory, startClocks, entry.duration)
 
   const resourceEvent = combine(
@@ -135,10 +144,12 @@ function processResourceEntry(
         url: entry.name,
       },
       type: RumEventType.RESOURCE as const,
+      _dd: {
+        discarded: !shouldIndex,
+      },
     },
     tracingInfo,
     entryMetrics,
-    indexingInfo,
     pageStateInfo
   )
   return {
@@ -148,6 +159,14 @@ function processResourceEntry(
       performanceEntry: entry,
     },
   }
+}
+
+function shouldIndexResource(
+  configuration: RumConfiguration,
+  sessionManager: RumSessionManager,
+  resourceStart: ClocksState
+) {
+  return configuration.trackResources && sessionManager.findTrackedSession(resourceStart.relative)
 }
 
 function computePerformanceEntryMetrics(timing: RumPerformanceResourceTiming) {
@@ -194,19 +213,6 @@ function computeEntryTracingInfo(entry: RumPerformanceResourceTiming, configurat
  */
 function getRulePsr(configuration: RumConfiguration) {
   return isNumber(configuration.traceSampleRate) ? configuration.traceSampleRate / 100 : undefined
-}
-
-function computeIndexingInfo(
-  configuration: RumConfiguration,
-  sessionManager: RumSessionManager,
-  resourceStart: ClocksState
-) {
-  const session = sessionManager.findTrackedSession(resourceStart.relative)
-  return {
-    _dd: {
-      discarded: !session || !configuration.trackResources,
-    },
-  }
 }
 
 function computePageStateInfo(pageStateHistory: PageStateHistory, startClocks: ClocksState, duration: Duration) {

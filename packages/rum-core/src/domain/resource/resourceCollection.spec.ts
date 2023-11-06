@@ -108,6 +108,80 @@ describe('resourceCollection', () => {
     })
   })
 
+  //
+  ;[
+    {
+      title: 'when trackResource is false',
+      trackResources: false,
+      session: createRumSessionManagerMock(),
+    },
+    {
+      title: 'when the session is not tracked',
+      trackResources: true,
+      session: createRumSessionManagerMock().setNotTracked(),
+    },
+  ].forEach((options) => {
+    describe(options.title, () => {
+      beforeEach(() => {
+        trackResources = options.trackResources
+        setupBuilder.withSessionManager(options.session)
+      })
+
+      describe('and resource is not traced', () => {
+        it('should not collect a resource from a performance entry', () => {
+          const { lifeCycle, rawRumEvents } = setupBuilder.build()
+
+          lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [
+            createPerformanceEntry(RumPerformanceEntryType.RESOURCE),
+          ])
+
+          expect(rawRumEvents.length).toBe(0)
+        })
+
+        it('should not collect a resource from a completed XHR request', () => {
+          const { lifeCycle, rawRumEvents } = setupBuilder.build()
+          lifeCycle.notify(
+            LifeCycleEventType.REQUEST_COMPLETED,
+            createCompletedRequest({
+              type: RequestType.XHR,
+            })
+          )
+
+          expect(rawRumEvents.length).toBe(0)
+        })
+      })
+
+      describe('and resource is traced', () => {
+        it('should collect a resource from a performance entry', () => {
+          const { lifeCycle, rawRumEvents } = setupBuilder.build()
+
+          lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [
+            createPerformanceEntry(RumPerformanceEntryType.RESOURCE, { traceId: '1234' }),
+          ])
+
+          expect(rawRumEvents.length).toBe(1)
+          expect((rawRumEvents[0].rawRumEvent as RawRumResourceEvent)._dd.discarded).toBeTrue()
+        })
+
+        it('should collect a resource from a completed XHR request', () => {
+          const { lifeCycle, rawRumEvents } = setupBuilder.build()
+          lifeCycle.notify(
+            LifeCycleEventType.REQUEST_COMPLETED,
+            createCompletedRequest({
+              type: RequestType.XHR,
+              traceId: new TraceIdentifier(),
+              spanId: new TraceIdentifier(),
+              traceSampled: true,
+            })
+          )
+
+          expect(rawRumEvents.length).toBe(1)
+          expect((rawRumEvents[0].rawRumEvent as RawRumResourceEvent)._dd.discarded).toBeTrue()
+        })
+      })
+    })
+  })
+
   it('should collect page states on resources when ff resource_page_states enabled', () => {
     addExperimentalFeatures([ExperimentalFeature.RESOURCE_PAGE_STATES])
     const { lifeCycle, rawRumEvents } = setupBuilder.build()
@@ -361,41 +435,6 @@ describe('resourceCollection', () => {
       )
       const privateFields = (rawRumEvents[0].rawRumEvent as RawRumResourceEvent)._dd
       expect(privateFields.rule_psr).toEqual(0)
-    })
-  })
-
-  describe('indexing info', () => {
-    it('should be discarded=true if session is not tracked', () => {
-      setupBuilder.withSessionManager(createRumSessionManagerMock().setNotTracked())
-      const { lifeCycle, rawRumEvents } = setupBuilder.build()
-
-      lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [
-        createPerformanceEntry(RumPerformanceEntryType.RESOURCE),
-      ])
-
-      expect((rawRumEvents[0].rawRumEvent as RawRumResourceEvent)._dd.discarded).toBeTrue()
-    })
-
-    it('should be discarded=true when trackResources is disabled', () => {
-      trackResources = false
-      const { lifeCycle, rawRumEvents } = setupBuilder.build()
-
-      lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [
-        createPerformanceEntry(RumPerformanceEntryType.RESOURCE),
-      ])
-
-      expect((rawRumEvents[0].rawRumEvent as RawRumResourceEvent)._dd.discarded).toBeTrue()
-    })
-
-    it('should be discarded=false when trackResources is enabled', () => {
-      trackResources = true
-      const { lifeCycle, rawRumEvents } = setupBuilder.build()
-
-      lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [
-        createPerformanceEntry(RumPerformanceEntryType.RESOURCE),
-      ])
-
-      expect((rawRumEvents[0].rawRumEvent as RawRumResourceEvent)._dd.discarded).toBeFalse()
     })
   })
 })
