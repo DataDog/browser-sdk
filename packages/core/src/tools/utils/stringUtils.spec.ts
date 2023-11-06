@@ -51,12 +51,10 @@ describe('stringUtils', () => {
 
   describe('findCommaSeparatedValues', () => {
     it('returns the values from a comma separated hash', () => {
-      expect(findCommaSeparatedValues('foo=a;bar=b')).toEqual(
-        new Map([
-          ['foo', 'a'],
-          ['bar', 'b'],
-        ])
-      )
+      const expectedValues = new Map<string, string>()
+      expectedValues.set('foo', 'a')
+      expectedValues.set('bar', 'b')
+      expect(findCommaSeparatedValues('foo=a;bar=b')).toEqual(expectedValues)
     })
   })
 })
