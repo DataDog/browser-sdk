@@ -16,6 +16,16 @@
 
 ---
 
+## v5.2.0
+
+- 🐛 [RUM-2016] don't collect useless resources events ([#2493](https://github.com/DataDog/browser-sdk/pull/2493))
+- 🐛 [RUM-1863] fix iOS webview detection ([#2486](https://github.com/DataDog/browser-sdk/pull/2486))
+- ⚡️[RUM-2017] optimize cookie accesses ([#2497](https://github.com/DataDog/browser-sdk/pull/2497))
+- ✅ [RUM-253] add E2E tests related to compression ([#2416](https://github.com/DataDog/browser-sdk/pull/2416))
+- ⚗️✨ [RUM-253] compress RUM data ([#2400](https://github.com/DataDog/browser-sdk/pull/2400))
+- 🔉 [RUM-1658] Add extra field to identify sessions recorded manually ([#2479](https://github.com/DataDog/browser-sdk/pull/2479))
+- 🔊 Add CLS target selector telemetry ([#2477](https://github.com/DataDog/browser-sdk/pull/2477))
+
 ## v5.1.0
 
 - ✨ [RUM-1215] Collect INP #2355 ([#2448](https://github.com/DataDog/browser-sdk/pull/2448))
