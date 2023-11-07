@@ -26,7 +26,7 @@ let initCookieParsed: Map<string, string> | undefined
 
 /**
  * Returns a cached value of the cookie. Use this during SDK initialization (and whenever possible)
- * to avoid parsing the document.cookie multiple times.
+ * to avoid accessing document.cookie multiple times.
  */
 export function getInitCookie(name: string) {
   if (!initCookieParsed) {

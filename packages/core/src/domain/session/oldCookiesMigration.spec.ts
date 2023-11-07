@@ -57,4 +57,18 @@ describe('old cookies migration', () => {
     tryOldCookiesMigration(sessionStoreStrategy)
     expect(getCookie(SESSION_STORE_KEY)).toBeUndefined()
   })
+
+  it('should behave correctly when performing the migration multiple times', () => {
+    setCookie(OLD_SESSION_COOKIE_NAME, 'abcde', SESSION_EXPIRATION_DELAY)
+    setCookie(OLD_LOGS_COOKIE_NAME, '1', SESSION_EXPIRATION_DELAY)
+    setCookie(OLD_RUM_COOKIE_NAME, '0', SESSION_EXPIRATION_DELAY)
+
+    tryOldCookiesMigration(sessionStoreStrategy)
+    tryOldCookiesMigration(sessionStoreStrategy)
+
+    expect(getCookie(SESSION_STORE_KEY)).toContain('id=abcde')
+    expect(getCookie(SESSION_STORE_KEY)).toContain('rum=0')
+    expect(getCookie(SESSION_STORE_KEY)).toContain('logs=1')
+    expect(getCookie(SESSION_STORE_KEY)).toMatch(/expire=\d+/)
+  })
 })
