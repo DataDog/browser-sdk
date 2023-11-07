@@ -7,7 +7,6 @@ import {
   removeStorageListeners,
   noop,
   resetExperimentalFeatures,
-  ExperimentalFeature,
   createIdentityEncoder,
 } from '@datadog/browser-core'
 import {
@@ -195,7 +194,7 @@ describe('rum public api', () => {
         deleteEventBridgeStub()
       })
 
-      describe('without the COMPRESS_BATCH experimental flag', () => {
+      describe('with compressIntakeRequests: false', () => {
         it('does not create a deflate worker', () => {
           rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
 
@@ -204,11 +203,11 @@ describe('rum public api', () => {
         })
       })
 
-      describe('with the COMPRESS_BATCH experimental flag', () => {
+      describe('with compressIntakeRequests: true', () => {
         it('creates a deflate worker instance', () => {
           rumPublicApi.init({
             ...DEFAULT_INIT_CONFIGURATION,
-            enableExperimentalFeatures: [ExperimentalFeature.COMPRESS_BATCH],
+            compressIntakeRequests: true,
           })
 
           expect(startDeflateWorkerSpy).toHaveBeenCalledTimes(1)
@@ -220,7 +219,7 @@ describe('rum public api', () => {
 
           rumPublicApi.init({
             ...DEFAULT_INIT_CONFIGURATION,
-            enableExperimentalFeatures: [ExperimentalFeature.COMPRESS_BATCH],
+            compressIntakeRequests: true,
           })
 
           expect(startRumSpy).not.toHaveBeenCalled()
@@ -231,7 +230,7 @@ describe('rum public api', () => {
 
           rumPublicApi.init({
             ...DEFAULT_INIT_CONFIGURATION,
-            enableExperimentalFeatures: [ExperimentalFeature.COMPRESS_BATCH],
+            compressIntakeRequests: true,
           })
 
           expect(startDeflateWorkerSpy).not.toHaveBeenCalled()
@@ -241,7 +240,7 @@ describe('rum public api', () => {
         it('pass the worker to the recorder API', () => {
           rumPublicApi.init({
             ...DEFAULT_INIT_CONFIGURATION,
-            enableExperimentalFeatures: [ExperimentalFeature.COMPRESS_BATCH],
+            compressIntakeRequests: true,
           })
           expect(recorderApiOnRumStartSpy.calls.mostRecent().args[4]).toBe(FAKE_WORKER)
         })

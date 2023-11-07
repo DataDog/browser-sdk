@@ -1,4 +1,3 @@
-import { ExperimentalFeature } from '@datadog/browser-core'
 import { createTest, flushEvents } from '../lib/framework'
 import { getBrowserName, getPlatformName, withBrowserLogs } from '../lib/helpers/browser'
 
@@ -6,7 +5,7 @@ describe('transport', () => {
   describe('data compression', () => {
     createTest('send RUM data compressed')
       .withRum({
-        enableExperimentalFeatures: [ExperimentalFeature.COMPRESS_BATCH],
+        compressIntakeRequests: true,
       })
       .run(async ({ intakeRegistry }) => {
         await flushEvents()
@@ -33,7 +32,7 @@ describe('transport', () => {
     if (!((getBrowserName() === 'safari' && getPlatformName() === 'macos') || getBrowserName() === 'firefox')) {
       createTest("displays a message if the worker can't be started")
         .withRum({
-          enableExperimentalFeatures: [ExperimentalFeature.COMPRESS_BATCH],
+          compressIntakeRequests: true,
         })
         .withBasePath('/no-blob-worker-csp')
         .run(async ({ intakeRegistry }) => {
