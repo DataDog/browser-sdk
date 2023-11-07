@@ -1,4 +1,4 @@
-import { getCookie } from '../../browser/cookie'
+import { getInitCookie } from '../../browser/cookie'
 import type { SessionStoreStrategy } from './storeStrategies/sessionStoreStrategy'
 import { SESSION_STORE_KEY } from './storeStrategies/sessionStoreStrategy'
 import type { SessionState } from './sessionState'
@@ -17,11 +17,11 @@ export const LOGS_SESSION_KEY = 'logs'
  * to allow older sdk versions to be upgraded to newer versions without compatibility issues.
  */
 export function tryOldCookiesMigration(cookieStoreStrategy: SessionStoreStrategy) {
-  const sessionString = getCookie(SESSION_STORE_KEY)
+  const sessionString = getInitCookie(SESSION_STORE_KEY)
   if (!sessionString) {
-    const oldSessionId = getCookie(OLD_SESSION_COOKIE_NAME)
-    const oldRumType = getCookie(OLD_RUM_COOKIE_NAME)
-    const oldLogsType = getCookie(OLD_LOGS_COOKIE_NAME)
+    const oldSessionId = getInitCookie(OLD_SESSION_COOKIE_NAME)
+    const oldRumType = getInitCookie(OLD_RUM_COOKIE_NAME)
+    const oldLogsType = getInitCookie(OLD_LOGS_COOKIE_NAME)
     const session: SessionState = {}
 
     if (oldSessionId) {
