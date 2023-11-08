@@ -29,8 +29,6 @@ import {
   sanitize,
   createStoredContextManager,
   combine,
-  isExperimentalFeatureEnabled,
-  ExperimentalFeature,
   createIdentityEncoder,
 } from '@datadog/browser-core'
 import type { LifeCycle } from '../domain/lifeCycle'
@@ -168,11 +166,7 @@ export function makeRumPublicApi(
       return
     }
 
-    if (
-      isExperimentalFeatureEnabled(ExperimentalFeature.COMPRESS_BATCH) &&
-      !eventBridgeAvailable &&
-      startDeflateWorker
-    ) {
+    if (configuration.compressIntakeRequests && !eventBridgeAvailable && startDeflateWorker) {
       deflateWorker = startDeflateWorker(
         configuration,
         'Datadog RUM',
@@ -182,6 +176,7 @@ export function makeRumPublicApi(
         noop
       )
       if (!deflateWorker) {
+        // `startDeflateWorker` should have logged an error message explaining the issue
         return
       }
     }
