@@ -40,19 +40,14 @@ function createEndpointUrlWithParametersBuilder(
   trackType: TrackType
 ): (parameters: string) => string {
   const path = `/api/v2/${trackType}`
-  const { proxy, proxyUseSuffix } = initConfiguration
-
+  const { proxy, proxyUrlFn } = initConfiguration
+  // proxyUrlFn allows users to fully customize the proxy url / routing
+  if (proxyUrlFn) {
+    return proxyUrlFn(path, parameters);
+  }
+  // ddforward-param based proxy routing
   if (proxy) {
     const normalizedProxyUrl = normalizeUrl(proxy)
-
-    // Allow suffix routing (make the destination path the suffix of the proxy url instead of using ddforward).
-    if (proxyUseSuffix) {
-      if (normalizedProxyUrl.indexOf("?") >= 0) {
-        throw new Error("proxyUseSuffix requires the proxy url to be clear of query parameters");
-      }
-      return (parameters) => `${normalizedProxyUrl.replace(/\/$/, "")}${path}?${parameters}`
-    }
-
     return (parameters) => `${normalizedProxyUrl}?ddforward=${encodeURIComponent(`${path}?${parameters}`)}`
   }
   const host = buildEndpointHost(initConfiguration)
