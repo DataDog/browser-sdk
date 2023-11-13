@@ -64,8 +64,8 @@ function computeMessage(
   return stackTrace?.message && stackTrace?.name
     ? stackTrace.message
     : !isErrorInstance
-    ? `${nonErrorPrefix} ${jsonStringify(sanitize(originalError))!}`
-    : 'Empty message'
+      ? `${nonErrorPrefix} ${jsonStringify(sanitize(originalError))!}`
+      : 'Empty message'
 }
 
 function hasUsableStack(isErrorInstance: boolean, stackTrace?: StackTrace): stackTrace is StackTrace {

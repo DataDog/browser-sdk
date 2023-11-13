@@ -33,8 +33,8 @@ export function getColumnTitle(column: EventListColumn) {
   return column.type === 'date'
     ? 'Date'
     : column.type === 'description'
-    ? 'Description'
-    : column.type === 'type'
-    ? 'Type'
-    : column.path
+      ? 'Description'
+      : column.type === 'type'
+        ? 'Type'
+        : column.path
 }

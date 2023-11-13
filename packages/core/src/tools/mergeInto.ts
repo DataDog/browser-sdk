@@ -5,22 +5,22 @@ type Merged<TDestination, TSource> =
   TSource extends undefined
     ? TDestination
     : // case 2 - destination is undefined - return source
-    TDestination extends undefined
-    ? TSource
-    : // case 3 - source is an array - see if it merges or overwrites
-    TSource extends any[]
-    ? TDestination extends any[]
-      ? TDestination & TSource
-      : TSource
-    : // case 4 - source is an object - see if it merges or overwrites
-    TSource extends object
-    ? TDestination extends object
-      ? TDestination extends any[]
-        ? TSource
-        : TDestination & TSource
-      : TSource
-    : // case 5 - cannot merge - return source
-      TSource
+      TDestination extends undefined
+      ? TSource
+      : // case 3 - source is an array - see if it merges or overwrites
+        TSource extends any[]
+        ? TDestination extends any[]
+          ? TDestination & TSource
+          : TSource
+        : // case 4 - source is an object - see if it merges or overwrites
+          TSource extends object
+          ? TDestination extends object
+            ? TDestination extends any[]
+              ? TSource
+              : TDestination & TSource
+            : TSource
+          : // case 5 - cannot merge - return source
+            TSource
 
 /**
  * Iterate over source and affect its sub values into destination, recursively.
