@@ -59,23 +59,23 @@ type EventMapFor<T> = T extends Window
       visibilitychange: Event
     }
   : T extends Document
-  ? DocumentEventMap
-  : T extends HTMLElement
-  ? HTMLElementEventMap
-  : T extends VisualViewport
-  ? VisualViewportEventMap
-  : T extends ShadowRoot
-  ? // ShadowRootEventMap is not yet defined in our supported TS version. Instead, use
-    // GlobalEventHandlersEventMap which is more than enough as we only need to listen for events bubbling
-    // through the ShadowRoot like "change" or "input"
-    GlobalEventHandlersEventMap
-  : T extends XMLHttpRequest
-  ? XMLHttpRequestEventMap
-  : T extends Performance
-  ? PerformanceEventMap
-  : T extends Worker
-  ? WorkerEventMap
-  : Record<never, never>
+    ? DocumentEventMap
+    : T extends HTMLElement
+      ? HTMLElementEventMap
+      : T extends VisualViewport
+        ? VisualViewportEventMap
+        : T extends ShadowRoot
+          ? // ShadowRootEventMap is not yet defined in our supported TS version. Instead, use
+            // GlobalEventHandlersEventMap which is more than enough as we only need to listen for events bubbling
+            // through the ShadowRoot like "change" or "input"
+            GlobalEventHandlersEventMap
+          : T extends XMLHttpRequest
+            ? XMLHttpRequestEventMap
+            : T extends Performance
+              ? PerformanceEventMap
+              : T extends Worker
+                ? WorkerEventMap
+                : Record<never, never>
 
 /**
  * Add an event listener to an event target object (Window, Element, mock object...).  This provides

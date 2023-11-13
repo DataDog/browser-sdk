@@ -172,12 +172,12 @@ function JsonValue({ descriptor }: { descriptor: JsonValueDescriptor }) {
     descriptor.value === null
       ? themeColors.null
       : typeof descriptor.value === 'number'
-      ? themeColors.number
-      : typeof descriptor.value === 'string'
-      ? themeColors.string
-      : typeof descriptor.value === 'boolean'
-      ? themeColors.boolean
-      : undefined
+        ? themeColors.number
+        : typeof descriptor.value === 'string'
+          ? themeColors.string
+          : typeof descriptor.value === 'boolean'
+            ? themeColors.boolean
+            : undefined
 
   return (
     <JsonLine descriptor={descriptor}>

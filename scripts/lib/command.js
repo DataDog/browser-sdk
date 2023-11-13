@@ -55,8 +55,8 @@ function command(...templateArguments) {
           commandResult.signal !== null
             ? ` due to signal ${commandResult.signal}`
             : commandResult.status !== null
-            ? ` with exit status ${commandResult.status}`
-            : ''
+              ? ` with exit status ${commandResult.status}`
+              : ''
         const error = new Error(`Command failed${exitCause}: ${formattedCommand}${formattedStderr}${formattedStdout}`)
         error.cause = commandResult.error
         throw error
