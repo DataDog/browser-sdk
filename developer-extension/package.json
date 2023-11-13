@@ -7,9 +7,9 @@
     "dev": "webpack --mode development --watch"
   },
   "devDependencies": {
-    "@types/chrome": "0.0.248",
-    "@types/react": "18.2.33",
-    "@types/react-dom": "18.2.14",
+    "@types/chrome": "0.0.251",
+    "@types/react": "18.2.37",
+    "@types/react-dom": "18.2.15",
     "@webextension-toolbox/webpack-webextension-plugin": "3.2.1",
     "copy-webpack-plugin": "11.0.0",
     "html-webpack-plugin": "5.5.3",
