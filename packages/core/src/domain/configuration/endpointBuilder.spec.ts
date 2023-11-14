@@ -82,6 +82,15 @@ describe('endpointBuilder', () => {
         )
       ).toBeTrue()
     })
+
+    it('should allow to fully control the proxy url', () => {
+      const proxyFn = (path: string, parameters: string) => `https://proxy.io/prefix${path}/suffix?${parameters}`
+      expect(
+        createEndpointBuilder({ ...initConfiguration, proxy: proxyFn }, 'rum', []).build('xhr', DEFAULT_PAYLOAD)
+      ).toMatch(
+        `https://proxy.io/prefix/api/v2/rum/suffix\\?ddsource=(.*)&ddtags=(.*)&dd-api-key=${clientToken}&dd-evp-origin-version=(.*)&dd-evp-origin=browser&dd-request-id=(.*)&batch_time=(.*)`
+      )
+    })
   })
 
   describe('tags', () => {
