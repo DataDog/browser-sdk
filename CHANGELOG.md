@@ -16,6 +16,11 @@
 
 ---
 
+## v5.3.0
+
+- ✨ [RUM-253] enable compression via the compressIntakeRequests parameter ([#2500](https://github.com/DataDog/browser-sdk/pull/2500))
+- 🐛 [RUM-1561] Fix CLS selector computation on detached node ([#2480](https://github.com/DataDog/browser-sdk/pull/2480))
+
 ## v5.2.0
 
 - 🐛 [RUM-2016] don't collect useless resources events ([#2493](https://github.com/DataDog/browser-sdk/pull/2493))
