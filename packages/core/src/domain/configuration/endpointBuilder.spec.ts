@@ -84,7 +84,8 @@ describe('endpointBuilder', () => {
     })
 
     it('should allow to fully control the proxy url', () => {
-      const proxyFn = (path: string, parameters: string) => `https://proxy.io/prefix${path}/suffix?${parameters}`
+      const proxyFn = (options: { path: string; parameters: string }) =>
+        `https://proxy.io/prefix${options.path}/suffix?${options.parameters}`
       expect(
         createEndpointBuilder({ ...initConfiguration, proxy: proxyFn }, 'rum', []).build('xhr', DEFAULT_PAYLOAD)
       ).toMatch(

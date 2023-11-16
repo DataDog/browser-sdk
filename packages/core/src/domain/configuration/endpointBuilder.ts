@@ -46,7 +46,7 @@ function createEndpointUrlWithParametersBuilder(
     return (parameters) => `${normalizedProxyUrl}?ddforward=${encodeURIComponent(`${path}?${parameters}`)}`
   }
   if (typeof proxy === 'function') {
-    return (parameters) => proxy(path, parameters)
+    return (parameters) => proxy({ path, parameters })
   }
   const host = buildEndpointHost(initConfiguration)
   return (parameters) => `https://${host}${path}?${parameters}`

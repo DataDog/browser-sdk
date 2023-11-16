@@ -63,7 +63,7 @@ type GenericBeforeSendCallback = (event: any, context?: any) => unknown
  * path: /api/vX/product
  * parameters: xxx=yyy&zzz=aaa
  */
-type ProxyFn = (path: string, parameters: string) => string
+type ProxyFn = (options: { path: string; parameters: string }) => string
 
 interface ReplicaUserConfiguration {
   applicationId?: string
