@@ -16,8 +16,7 @@
     {
       "groupName": "all non-major dependencies",
       "groupSlug": "all-minor-patch",
-      "matchUpdateTypes": ["minor", "patch"],
-      "excludePackagePatterns": ["@wdio", "webdriverio"]
+      "matchUpdateTypes": ["minor", "patch"]
     }
   ]
 }
