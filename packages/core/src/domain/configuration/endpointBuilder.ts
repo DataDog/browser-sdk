@@ -41,9 +41,12 @@ function createEndpointUrlWithParametersBuilder(
 ): (parameters: string) => string {
   const path = `/api/v2/${trackType}`
   const proxy = initConfiguration.proxy
-  if (proxy) {
+  if (typeof proxy === 'string') {
     const normalizedProxyUrl = normalizeUrl(proxy)
     return (parameters) => `${normalizedProxyUrl}?ddforward=${encodeURIComponent(`${path}?${parameters}`)}`
+  }
+  if (typeof proxy === 'function') {
+    return (parameters) => proxy({ path, parameters })
   }
   const host = buildEndpointHost(initConfiguration)
   return (parameters) => `https://${host}${path}?${parameters}`

@@ -32,7 +32,7 @@ export interface InitConfiguration {
   storeContextsAcrossPages?: boolean | undefined
 
   // transport options
-  proxy?: string | undefined
+  proxy?: string | ProxyFn | undefined
   site?: string | undefined
 
   // tag and context options
@@ -49,6 +49,7 @@ export interface InitConfiguration {
   enableExperimentalFeatures?: string[] | undefined
   replica?: ReplicaUserConfiguration | undefined
   datacenter?: string
+  // TODO next major: remove this option and replace usages by proxyFn
   internalAnalyticsSubdomain?: string
 
   telemetryConfigurationSampleRate?: number
@@ -57,6 +58,12 @@ export interface InitConfiguration {
 // This type is only used to build the core configuration. Logs and RUM SDKs are using a proper type
 // for this option.
 type GenericBeforeSendCallback = (event: any, context?: any) => unknown
+
+/**
+ * path: /api/vX/product
+ * parameters: xxx=yyy&zzz=aaa
+ */
+type ProxyFn = (options: { path: string; parameters: string }) => string
 
 interface ReplicaUserConfiguration {
   applicationId?: string
