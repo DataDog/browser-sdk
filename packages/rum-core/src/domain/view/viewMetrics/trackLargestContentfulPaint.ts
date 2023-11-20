@@ -1,12 +1,5 @@
 import type { RelativeTime } from '@datadog/browser-core'
-import {
-  DOM_EVENT,
-  ExperimentalFeature,
-  ONE_MINUTE,
-  addEventListeners,
-  findLast,
-  isExperimentalFeatureEnabled,
-} from '@datadog/browser-core'
+import { DOM_EVENT, ONE_MINUTE, addEventListeners, findLast } from '@datadog/browser-core'
 import { LifeCycleEventType } from '../../lifeCycle'
 import type { LifeCycle } from '../../lifeCycle'
 import type { RumConfiguration } from '../../configuration'
@@ -64,7 +57,7 @@ export function trackLargestContentfulPaint(
 
       if (lcpEntry) {
         let lcpTargetSelector
-        if (isExperimentalFeatureEnabled(ExperimentalFeature.WEB_VITALS_ATTRIBUTION) && lcpEntry.element) {
+        if (lcpEntry.element) {
           lcpTargetSelector = getSelectorFromElement(lcpEntry.element, configuration.actionNameAttribute)
         }
 

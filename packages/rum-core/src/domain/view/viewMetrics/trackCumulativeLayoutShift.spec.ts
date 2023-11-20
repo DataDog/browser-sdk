@@ -1,4 +1,4 @@
-import { ExperimentalFeature, addExperimentalFeatures, resetExperimentalFeatures } from '@datadog/browser-core'
+import { resetExperimentalFeatures } from '@datadog/browser-core'
 import type { TestSetupBuilder } from '../../../../test'
 import { appendElement, appendText, createPerformanceEntry, setup } from '../../../../test'
 import { LifeCycleEventType } from '../../lifeCycle'
@@ -166,8 +166,7 @@ describe('trackCumulativeLayoutShift', () => {
       resetExperimentalFeatures()
     })
 
-    it('should return the first target element selector amongst all the shifted nodes when FF enabled', () => {
-      addExperimentalFeatures([ExperimentalFeature.WEB_VITALS_ATTRIBUTION])
+    it('should return the first target element selector amongst all the shifted nodes', () => {
       const { lifeCycle } = setupBuilder.build()
 
       const textNode = appendText('text')
@@ -183,23 +182,7 @@ describe('trackCumulativeLayoutShift', () => {
       expect(clsCallback.calls.mostRecent().args[0].targetSelector).toEqual('#div-element')
     })
 
-    it('should not return the target element selector when FF disabled', () => {
-      const { lifeCycle } = setupBuilder.build()
-
-      const divElement = appendElement('<div id="div-element"></div>')
-
-      lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [
-        createPerformanceEntry(RumPerformanceEntryType.LAYOUT_SHIFT, {
-          sources: [{ node: divElement }],
-        }),
-      ])
-
-      expect(clsCallback).toHaveBeenCalledTimes(2)
-      expect(clsCallback.calls.mostRecent().args[0].targetSelector).toEqual(undefined)
-    })
-
     it('should not return the target element when the element is detached from the DOM', () => {
-      addExperimentalFeatures([ExperimentalFeature.WEB_VITALS_ATTRIBUTION])
       const { lifeCycle, clock } = setupBuilder.withFakeClock().build()
 
       // first session window

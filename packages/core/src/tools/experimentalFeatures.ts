@@ -16,7 +16,6 @@ export enum ExperimentalFeature {
   RESOURCE_PAGE_STATES = 'resource_page_states',
   COLLECT_FLUSH_REASON = 'collect_flush_reason',
   SCROLLMAP = 'scrollmap',
-  WEB_VITALS_ATTRIBUTION = 'web_vitals_attribution',
   DISABLE_REPLAY_INLINE_CSS = 'disable_replay_inline_css',
 }
 

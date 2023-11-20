@@ -1,10 +1,5 @@
 import type { RelativeTime } from '@datadog/browser-core'
-import {
-  DOM_EVENT,
-  ExperimentalFeature,
-  addExperimentalFeatures,
-  resetExperimentalFeatures,
-} from '@datadog/browser-core'
+import { DOM_EVENT, resetExperimentalFeatures } from '@datadog/browser-core'
 import { restorePageVisibility, setPageVisibility, createNewEvent } from '@datadog/browser-core/test'
 import { RumPerformanceEntryType } from '../../../browser/performanceCollection'
 import type { TestSetupBuilder } from '../../../../test'
@@ -60,8 +55,7 @@ describe('trackLargestContentfulPaint', () => {
     expect(lcpCallback).toHaveBeenCalledWith({ value: 789 as RelativeTime, targetSelector: undefined })
   })
 
-  it('should provide the largest contentful paint target selector if FF enabled', () => {
-    addExperimentalFeatures([ExperimentalFeature.WEB_VITALS_ATTRIBUTION])
+  it('should provide the largest contentful paint target selector', () => {
     const { lifeCycle } = setupBuilder.build()
 
     lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [
@@ -72,19 +66,6 @@ describe('trackLargestContentfulPaint', () => {
 
     expect(lcpCallback).toHaveBeenCalledTimes(1 as RelativeTime)
     expect(lcpCallback).toHaveBeenCalledWith({ value: 789 as RelativeTime, targetSelector: '#lcp-target-element' })
-  })
-
-  it('should not provide the largest contentful paint target selector if FF disabled', () => {
-    const { lifeCycle } = setupBuilder.build()
-
-    lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [
-      createPerformanceEntry(RumPerformanceEntryType.LARGEST_CONTENTFUL_PAINT, {
-        element: appendElement('<button id="lcp-target-element"></button>'),
-      }),
-    ])
-
-    expect(lcpCallback).toHaveBeenCalledTimes(1 as RelativeTime)
-    expect(lcpCallback).toHaveBeenCalledWith({ value: 789 as RelativeTime, targetSelector: undefined })
   })
 
   it('should be discarded if it is reported after a user interaction', () => {
