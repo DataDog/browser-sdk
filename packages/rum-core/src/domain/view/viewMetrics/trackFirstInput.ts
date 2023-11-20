@@ -1,5 +1,5 @@
 import type { Duration, RelativeTime } from '@datadog/browser-core'
-import { elapsed, find, ExperimentalFeature, isExperimentalFeatureEnabled } from '@datadog/browser-core'
+import { elapsed, find } from '@datadog/browser-core'
 import { isElementNode } from '../../../browser/htmlDomUtils'
 import type { RumConfiguration } from '../../configuration'
 import type { LifeCycle } from '../../lifeCycle'
@@ -41,11 +41,7 @@ export function trackFirstInput(
         const firstInputDelay = elapsed(firstInputEntry.startTime, firstInputEntry.processingStart)
         let firstInputTargetSelector
 
-        if (
-          isExperimentalFeatureEnabled(ExperimentalFeature.WEB_VITALS_ATTRIBUTION) &&
-          firstInputEntry.target &&
-          isElementNode(firstInputEntry.target)
-        ) {
+        if (firstInputEntry.target && isElementNode(firstInputEntry.target)) {
           firstInputTargetSelector = getSelectorFromElement(firstInputEntry.target, configuration.actionNameAttribute)
         }
 

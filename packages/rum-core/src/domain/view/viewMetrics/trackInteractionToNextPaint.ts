@@ -1,4 +1,4 @@
-import { noop, isExperimentalFeatureEnabled, ExperimentalFeature, ONE_MINUTE } from '@datadog/browser-core'
+import { noop, ONE_MINUTE } from '@datadog/browser-core'
 import type { Duration, RelativeTime } from '@datadog/browser-core'
 import { RumPerformanceEntryType, supportPerformanceTimingEvent } from '../../../browser/performanceCollection'
 import type { RumFirstInputTiming, RumPerformanceEventTiming } from '../../../browser/performanceCollection'
@@ -65,11 +65,7 @@ export function trackInteractionToNextPaint(
     if (newInteraction) {
       interactionToNextPaint = newInteraction.duration
 
-      if (
-        isExperimentalFeatureEnabled(ExperimentalFeature.WEB_VITALS_ATTRIBUTION) &&
-        newInteraction.target &&
-        isElementNode(newInteraction.target)
-      ) {
+      if (newInteraction.target && isElementNode(newInteraction.target)) {
         interactionToNextPaintTargetSelector = getSelectorFromElement(
           newInteraction.target,
           configuration.actionNameAttribute

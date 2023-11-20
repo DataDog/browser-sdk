@@ -1,10 +1,5 @@
 import type { Duration, RelativeTime } from '@datadog/browser-core'
-import {
-  ExperimentalFeature,
-  addExperimentalFeatures,
-  relativeNow,
-  resetExperimentalFeatures,
-} from '@datadog/browser-core'
+import { relativeNow, resetExperimentalFeatures } from '@datadog/browser-core'
 import type { TestSetupBuilder } from '../../../../test'
 import { appendElement, appendText, createPerformanceEntry, setup } from '../../../../test'
 import { RumPerformanceEntryType } from '../../../browser/performanceCollection'
@@ -173,8 +168,7 @@ describe('trackInteractionToNextPaint', () => {
     })
   })
 
-  it('should return the target selector when FF web_vital_attribution is enabled', () => {
-    addExperimentalFeatures([ExperimentalFeature.WEB_VITALS_ATTRIBUTION])
+  it('should return the target selector', () => {
     const { lifeCycle } = setupBuilder.build()
 
     newInteraction(lifeCycle, {
@@ -185,24 +179,12 @@ describe('trackInteractionToNextPaint', () => {
     expect(getInteractionToNextPaint()?.targetSelector).toEqual('#inp-target-element')
   })
 
-  it("should not return the target selector if it's not a DOM element when FF web_vital_attribution is enabled", () => {
-    addExperimentalFeatures([ExperimentalFeature.WEB_VITALS_ATTRIBUTION])
+  it("should not return the target selector if it's not a DOM element", () => {
     const { lifeCycle } = setupBuilder.build()
 
     newInteraction(lifeCycle, {
       interactionId: 2,
       target: appendText('text'),
-    })
-
-    expect(getInteractionToNextPaint()?.targetSelector).toEqual(undefined)
-  })
-
-  it('should not return the target selector when FF web_vital_attribution is disabled', () => {
-    const { lifeCycle } = setupBuilder.build()
-
-    newInteraction(lifeCycle, {
-      interactionId: 2,
-      target: appendElement('<button id="inp-target-element"></button>'),
     })
 
     expect(getInteractionToNextPaint()?.targetSelector).toEqual(undefined)

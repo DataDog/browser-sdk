@@ -1,10 +1,4 @@
-import {
-  type Duration,
-  type RelativeTime,
-  resetExperimentalFeatures,
-  ExperimentalFeature,
-  addExperimentalFeatures,
-} from '@datadog/browser-core'
+import { type Duration, type RelativeTime, resetExperimentalFeatures } from '@datadog/browser-core'
 import { restorePageVisibility, setPageVisibility } from '@datadog/browser-core/test'
 import type { TestSetupBuilder } from '../../../../test'
 import { appendElement, appendText, createPerformanceEntry, setup } from '../../../../test'
@@ -57,8 +51,7 @@ describe('firstInputTimings', () => {
     })
   })
 
-  it('should provide the first input target selector when FF web_vital_attribution is enabled', () => {
-    addExperimentalFeatures([ExperimentalFeature.WEB_VITALS_ATTRIBUTION])
+  it('should provide the first input target selector', () => {
     const { lifeCycle } = setupBuilder.build()
 
     lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [
@@ -74,8 +67,7 @@ describe('firstInputTimings', () => {
     )
   })
 
-  it("should not provide the first input target if it's not a DOM element when FF web_vital_attribution is enabled", () => {
-    addExperimentalFeatures([ExperimentalFeature.WEB_VITALS_ATTRIBUTION])
+  it("should not provide the first input target if it's not a DOM element", () => {
     const { lifeCycle } = setupBuilder.build()
 
     lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [

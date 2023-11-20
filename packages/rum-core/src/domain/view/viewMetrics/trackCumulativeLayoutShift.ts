@@ -1,4 +1,4 @@
-import { round, find, ONE_SECOND, isExperimentalFeatureEnabled, ExperimentalFeature, noop } from '@datadog/browser-core'
+import { round, find, ONE_SECOND, noop } from '@datadog/browser-core'
 import type { RelativeTime } from '@datadog/browser-core'
 import { isElementNode } from '../../../browser/htmlDomUtils'
 import type { LifeCycle } from '../../lifeCycle'
@@ -61,7 +61,6 @@ export function trackCumulativeLayoutShift(
           let cslTargetSelector
 
           if (
-            isExperimentalFeatureEnabled(ExperimentalFeature.WEB_VITALS_ATTRIBUTION) &&
             clsTarget &&
             // Check if the CLS target have been removed from the DOM between the time we collect the target reference and when we compute the selector
             clsTarget.isConnected
