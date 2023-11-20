@@ -16,6 +16,11 @@
 
 ---
 
+## v5.4.0
+
+- ✨ [RUM-1214] Collect core web vitals target selectors ([#2506](https://github.com/DataDog/browser-sdk/pull/2506))
+- ✨ [RUM-2158] Allow more flexible proxy URL ([#2502](https://github.com/DataDog/browser-sdk/pull/2502))
+
 ## v5.3.0
 
 - ✨ [RUM-253] enable compression via the compressIntakeRequests parameter ([#2500](https://github.com/DataDog/browser-sdk/pull/2500))
