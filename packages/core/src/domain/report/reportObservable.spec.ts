@@ -1,4 +1,4 @@
-import { stubReportingObserver, stubCspEventListener } from '../../../test'
+import { stubReportingObserver, stubCspEventListener, FAKE_CSP_VIOLATION_EVENT } from '../../../test'
 import type { Subscription } from '../../tools/observable'
 import type { Configuration } from '../configuration'
 import { initReportObservable, RawReportType } from './reportObservable'
@@ -56,6 +56,7 @@ describe('report observable', () => {
       message: "csp_violation: 'blob' blocked by 'worker-src' directive",
       type: 'csp_violation',
       subtype: 'worker-src',
+      originalReport: FAKE_CSP_VIOLATION_EVENT,
       stack: `worker-src: 'blob' blocked by 'worker-src' directive of the policy "worker-src 'none'"
   at <anonymous> @ http://foo.bar/index.js:17:8`,
     })
