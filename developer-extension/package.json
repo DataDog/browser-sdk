@@ -18,9 +18,8 @@
   "dependencies": {
     "@datadog/browser-logs": "workspace:*",
     "@datadog/browser-rum": "workspace:*",
-    "@emotion/react": "11.11.1",
-    "@mantine/core": "6.0.21",
-    "@mantine/hooks": "6.0.21",
+    "@mantine/core": "7.2.2",
+    "@mantine/hooks": "7.2.2",
     "react": "18.2.0",
     "react-dom": "18.2.0"
   },
