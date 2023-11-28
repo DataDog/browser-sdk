@@ -1,5 +1,5 @@
 import type { OptionsFilter } from '@mantine/core'
-import { Popover, Box, Text, Button, Flex, Autocomplete, Table, CloseButton } from '@mantine/core'
+import { Popover, Text, Button, Flex, Autocomplete, Table, CloseButton } from '@mantine/core'
 import React, { useMemo, useRef, useState } from 'react'
 import type { EventFilters, FacetRegistry } from '../../../hooks/useEvents'
 import type { SdkEvent } from '../../../sdkEvent'
@@ -26,8 +26,8 @@ export function EventsList({
   const headerRowRef = useRef<HTMLTableRowElement>(null)
 
   return (
-    <Box className={classes.root}>
-      <Table>
+    <div className={classes.root}>
+      <Table stickyHeader>
         <Table.Thead>
           <Table.Tr ref={headerRowRef}>
             {columns.map((column) => (
@@ -58,7 +58,7 @@ export function EventsList({
       </Table>
 
       <ColumnDrag columns={columns} onColumnsChange={onColumnsChange} headerRowRef={headerRowRef} />
-    </Box>
+    </div>
   )
 }
 

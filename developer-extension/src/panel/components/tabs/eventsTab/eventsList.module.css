@@ -1,7 +1,23 @@
 .root {
   margin: 0 var(--mantine-spacing-md) var(--mantine-spacing-md) var(--mantine-spacing-md);
-  border: 1px solid var(--dd-border-color);
-  border-radius: var(--mantine-radius-md);
+}
+
+.root thead {
+  z-index: var(--dd-events-list-header-z-index);
+}
+
+/*
+  When the header is positioned as 'sticky', its bottom border disappears when scrolled down,
+  making difficult to differentiate the header from the rows. This pseudo-element is used to
+  draw a border at the bottom of the header, so that it is always visible.
+*/
+.root thead::after {
+  content: '';
+  border-bottom: 1px solid var(--dd-border-color);
+  width: 100%;
+  display: block;
+  position: absolute;
+  margin-top: -1px;
 }
 
 .addColumnCell {

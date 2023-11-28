@@ -6,6 +6,9 @@
   --vertical-padding: 7px;
 
   position: fixed;
+
+  z-index: var(--dd-column-drag-ghost-z-index);
+
   opacity: 0.5;
   border-radius: var(--mantine-radius-sm);
   top: var(--drag-target-top);
