@@ -5,6 +5,7 @@ import { useSettings } from '../../hooks/useSettings'
 import type { EventCollectionStrategy } from '../../hooks/useEvents'
 import { Columns } from '../columns'
 import { TabBase } from '../tabBase'
+import css from './settingsTab.module.css'
 
 export function SettingsTab() {
   const devServerStatus = useDevServerStatus()
@@ -96,7 +97,7 @@ export function SettingsTab() {
                     value={eventCollectionStrategy}
                     onChange={(value) => setSetting('eventCollectionStrategy', value as EventCollectionStrategy)}
                     color="violet"
-                    sx={{ flex: 1 }}
+                    className={css.select}
                   />
                 </Group>
               }

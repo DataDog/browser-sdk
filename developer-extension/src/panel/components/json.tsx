@@ -1,8 +1,11 @@
-import type { BoxProps, MantineColor, Sx } from '@mantine/core'
-import { useMantineTheme, Box, Collapse, Menu, Text } from '@mantine/core'
+import type { BoxProps, MantineColor } from '@mantine/core'
+import { Box, Collapse, Menu, Text } from '@mantine/core'
+import { useColorScheme } from '@mantine/hooks'
 import type { ForwardedRef, ReactNode } from 'react'
 import React, { forwardRef, useContext, createContext, useState } from 'react'
 import { formatNumber } from '../formatNumber'
+
+import classes from './json.module.css'
 
 interface JsonProps {
   value: unknown
@@ -14,8 +17,6 @@ interface JsonProps {
 type GetMenuItemsForPath = (path: string, value: unknown) => ReactNode
 type FormatValue = (path: string, value: unknown) => ReactNode
 
-const LINE_HEIGHT = '20px'
-const INDENT = 18
 const COLORS = {
   dark: {
     null: 'gray',
@@ -76,39 +77,28 @@ export const Json = forwardRef(
       ...boxProps
     }: JsonProps & BoxProps,
     ref: ForwardedRef<HTMLDivElement | HTMLSpanElement>
-  ) => {
-    const theme = useMantineTheme()
-    return (
-      <Box
-        ref={
-          // setting a HTMLDivElement | HTMLSpanElement ref messes with TS types as the component prop is also div | span
-          ref as any
-        }
-        {...boxProps}
-        component={doesValueHasChildren(value) ? 'div' : 'span'}
-        className="JSON"
-        sx={{
-          ...boxProps.sx,
-          lineHeight: LINE_HEIGHT,
-          wordBreak: 'break-word',
-          fontFamily: theme.fontFamilyMonospace,
-          fontSize: theme.other.fontSizeMonospace,
-          WebkitFontSmoothing: 'auto',
-        }}
-      >
-        <JsonContext.Provider value={{ defaultCollapseLevel, getMenuItemsForPath, formatValue }}>
-          <JsonValue
-            descriptor={{
-              parentType: 'root',
-              value,
-              depth: 0,
-              path: '',
-            }}
-          />
-        </JsonContext.Provider>
-      </Box>
-    )
-  }
+  ) => (
+    <Box
+      ref={
+        // setting a HTMLDivElement | HTMLSpanElement ref messes with TS types as the component prop is also div | span
+        ref as any
+      }
+      {...boxProps}
+      component={doesValueHasChildren(value) ? 'div' : 'span'}
+      className={classes.root}
+    >
+      <JsonContext.Provider value={{ defaultCollapseLevel, getMenuItemsForPath, formatValue }}>
+        <JsonValue
+          descriptor={{
+            parentType: 'root',
+            value,
+            depth: 0,
+            path: '',
+          }}
+        />
+      </JsonContext.Provider>
+    </Box>
+  )
 )
 
 export function defaultFormatValue(_path: string, value: unknown) {
@@ -116,7 +106,7 @@ export function defaultFormatValue(_path: string, value: unknown) {
 }
 
 function JsonValue({ descriptor }: { descriptor: JsonValueDescriptor }) {
-  const theme = useMantineTheme()
+  const colorScheme = useColorScheme()
   const { formatValue } = useContext(JsonContext)!
 
   if (Array.isArray(descriptor.value)) {
@@ -166,8 +156,7 @@ function JsonValue({ descriptor }: { descriptor: JsonValueDescriptor }) {
       </JsonValueChildren>
     )
   }
-
-  const themeColors = COLORS[theme.colorScheme]
+  const themeColors = COLORS[colorScheme]
   const color =
     descriptor.value === null
       ? themeColors.null
@@ -195,59 +184,31 @@ function JsonValueChildren({ children, descriptor }: { children: ReactNode; desc
   const isCollapsible = descriptor.parentType !== 'root'
 
   const [isCollapsed, setIsCollapsed] = useState(isCollapsible && descriptor.depth >= defaultCollapseLevel)
-  const theme = useMantineTheme()
+  const colorScheme = useColorScheme()
 
   function toggleIsCollapsed() {
     setIsCollapsed((previous) => !previous)
   }
 
   return (
-    <Box
-      sx={{
-        position: 'relative',
-        minHeight: LINE_HEIGHT,
-      }}
-    >
+    <div className={classes.valueChildren}>
       <Box
-        bg={`gray.${theme.colorScheme === 'dark' ? 8 - descriptor.depth : descriptor.depth + 1}`}
-        sx={{
-          position: 'absolute',
-          top: 1,
-          left: 0,
-          width: INDENT,
-          bottom: 1,
-          lineHeight: `${INDENT}px`,
-          textAlign: 'center',
-          borderRadius: 4,
-          userSelect: 'none',
-          cursor: isCollapsible ? 'pointer' : undefined,
-        }}
+        bg={`gray.${colorScheme === 'dark' ? 8 - descriptor.depth : descriptor.depth + 1}`}
+        className={classes.valueChildrenIndent}
+        data-collapsible={isCollapsible}
         onClick={isCollapsible ? toggleIsCollapsed : undefined}
       >
         {isCollapsible && (isCollapsed ? '▸' : '▾')}
       </Box>
-      <JsonLine
-        sx={{
-          ...(descriptor.parentType === 'array' && {
-            position: 'absolute',
-          }),
-        }}
-        descriptor={descriptor}
-      >
+      <JsonLine descriptor={descriptor} isFloating={descriptor.parentType === 'array'}>
         {isCollapsed && (
-          <Box
-            component="span"
-            sx={{
-              cursor: 'pointer',
-            }}
-            onClick={toggleIsCollapsed}
-          >
+          <span className={classes.valueChildrenCollapsedEllipsis} onClick={toggleIsCollapsed}>
             ...
-          </Box>
+          </span>
         )}
       </JsonLine>
       <Collapse in={!isCollapsed}>{children}</Collapse>
-    </Box>
+    </div>
   )
 }
 
@@ -300,7 +261,7 @@ function JsonText({
   return (
     <Menu shadow="md" width={200}>
       <Menu.Target>
-        <Text component="span" color={color} sx={{ fontFamily: 'inherit', cursor: 'pointer' }}>
+        <Text component="span" c={color} className={classes.jsonTextTarget}>
           {children}
         </Text>
       </Menu.Target>
@@ -314,14 +275,14 @@ function JsonText({
 
 function JsonLine({
   children,
-  sx,
   onClick,
   descriptor,
+  isFloating,
 }: {
   children: ReactNode
-  sx?: Sx
   onClick?: () => void
   descriptor: JsonValueDescriptor
+  isFloating?: boolean
 }) {
   let prefix
   if (descriptor.parentType === 'array') {
@@ -331,21 +292,14 @@ function JsonLine({
   }
 
   const isTopLevel = descriptor.parentType === 'root'
+
   return (
     <Box
       component={isTopLevel ? 'span' : 'div'}
-      sx={{
-        ...(!isTopLevel && {
-          marginLeft: INDENT * descriptor.depth + 4,
-
-          // This indents wrapping lines.
-          // https://stackoverflow.com/questions/480567/what-is-the-best-way-to-indent-text-in-a-div-when-it-wraps
-          paddingLeft: INDENT,
-          textIndent: -INDENT,
-        }),
-
-        ...sx,
-      }}
+      className={classes.jsonLine}
+      data-top-level={isTopLevel || undefined}
+      data-floating={isFloating || undefined}
+      style={{ '--depth': descriptor.depth }}
       onClick={onClick}
     >
       {prefix}

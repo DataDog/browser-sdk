@@ -1,0 +1,11 @@
+/*
+ * Define the main border color to be used across the extension. It should match the color used by
+ * Mantine, for example in the tabs component:
+ * https://github.com/mantinedev/mantine/blob/4b62fcc54bcacdf30c2795dc04034df1e999e51d/src/mantine-core/src/components/Tabs/Tabs.module.css#L72-L78
+ */
+:root[data-mantine-color-scheme='dark'] {
+  --dd-border-color: var(--mantine-color-dark-4);
+}
+:root[data-mantine-color-scheme='light'] {
+  --dd-border-color: var(--mantine-color-dark-4);
+}

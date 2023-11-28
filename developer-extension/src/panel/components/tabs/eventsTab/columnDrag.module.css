@@ -1,0 +1,35 @@
+.dragGhost {
+  /** Horizontal padding used by the Mantine Table in pixels */
+  --horizontal-padding: 10px;
+
+  /** Vertical padding used by the Mantine Table in pixels */
+  --vertical-padding: 7px;
+
+  position: fixed;
+  opacity: 0.5;
+  border-radius: var(--mantine-radius-sm);
+  top: var(--drag-target-top);
+  height: var(--drag-target-height);
+  transform: translateX(-50%);
+  left: var(--drag-x);
+  background: grey;
+  padding-top: var(--vertical-padding);
+  padding-bottom: var(--vertical-padding);
+  padding-left: var(--horizontal-padding);
+  padding-right: var(--horizontal-padding);
+  cursor: grabbing;
+}
+
+.dragGhost[data-action='insert'] {
+  width: 0;
+  left: var(--drag-insert-x);
+  background: green;
+  color: transparent;
+  padding-right: 3px;
+  padding-left: 3px;
+}
+
+.dragGhost[data-action='delete'] {
+  top: calc(var(--drag-target-y) + var(--drag-y) - var(--drag-start-y));
+  background: red;
+}

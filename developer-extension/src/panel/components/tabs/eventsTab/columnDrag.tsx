@@ -1,17 +1,11 @@
 import type { RefObject } from 'react'
 import React, { useState, useEffect } from 'react'
-import { Box, Text } from '@mantine/core'
-import { BORDER_RADIUS } from '../../../uiUtils'
+import { Text } from '@mantine/core'
 import type { Coordinates } from './drag'
 import { initDrag } from './drag'
 import type { EventListColumn } from './columnUtils'
 import { moveColumn, removeColumn, getColumnTitle } from './columnUtils'
-
-/** Horizontal padding used by the Mantine Table in pixels */
-const HORIZONTAL_PADDING = 10
-
-/** Vertical padding used by the Mantine Table in pixels */
-const VERTICAL_PADDING = 7
+import classes from './columnDrag.module.css'
 
 /** Number of pixel to determine if the cursor is close enough of a position to trigger an action */
 const ACTION_DISTANCE_THRESHOLD = 20
@@ -39,41 +33,23 @@ export function ColumnDrag({
 
 function DragGhost({ drag }: { drag: DragState }) {
   return (
-    <Box
-      sx={{
-        position: 'fixed',
-        opacity: 0.5,
-        borderRadius: BORDER_RADIUS,
-
-        top: drag.targetRect.top,
-        height: drag.targetRect.height,
-        transform: 'translateX(-50%)',
-        left: drag.position.x,
-        background: 'grey',
-
-        paddingTop: VERTICAL_PADDING,
-        paddingBottom: VERTICAL_PADDING,
-        paddingLeft: HORIZONTAL_PADDING,
-        paddingRight: HORIZONTAL_PADDING,
-        cursor: 'grabbing',
-
-        ...(drag.action?.type === 'insert' && {
-          width: 0,
-          left: drag.action.place.xPosition,
-          background: 'green',
-          color: 'transparent',
-          paddingRight: 3,
-          paddingLeft: 3,
-        }),
-
-        ...(drag.action?.type === 'delete' && {
-          top: drag.targetRect.y + (drag.position.y - drag.startPosition.y),
-          background: 'red',
-        }),
-      }}
+    <div
+      className={classes.dragGhost}
+      data-action={drag.action?.type}
+      style={
+        {
+          '--drag-x': `${drag.position.x}px`,
+          '--drag-y': `${drag.position.y}px`,
+          '--drag-start-y': `${drag.startPosition.y}px`,
+          '--drag-target-top': `${drag.targetRect.top}px`,
+          '--drag-target-height': `${drag.targetRect.height}px`,
+          '--drag-target-y': `${drag.targetRect.y}px`,
+          '--drag-insert-x': drag.action?.type === 'insert' ? `${drag.action.place.xPosition}px` : '0',
+        } as React.CSSProperties
+      }
     >
-      <Text weight="bold">{getColumnTitle(drag.column)}</Text>
-    </Box>
+      <Text w="bold">{getColumnTitle(drag.column)}</Text>
+    </div>
   )
 }
 

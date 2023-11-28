@@ -34,7 +34,7 @@ export function EventsTab({
     >
       {events.length === 0 || !facetRegistry ? (
         <Center>
-          <Text size="xl" color="dimmed" weight="bold">
+          <Text size="xl" c="dimmed" fw="bold">
             No events
           </Text>
         </Center>

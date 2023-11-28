@@ -2,6 +2,7 @@ import { Button, Group, TextInput } from '@mantine/core'
 import React from 'react'
 import { flushEvents } from '../../../flushEvents'
 import type { EventFilters } from '../../../hooks/useEvents'
+import classes from './eventsTabTop.module.css'
 
 export function EventsTabTop({
   filters,
@@ -17,9 +18,9 @@ export function EventsTabTop({
       <TextInput
         placeholder="Filter your events, syntax: 'type:view application.id:40d8ca4b'"
         value={filters.query}
-        style={{ flexGrow: 1 }}
+        className={classes.textInput}
         onChange={(event) => onFiltersChange({ ...filters, query: event.currentTarget.value })}
-        className="dd-privacy-mask"
+        data-dd-privacy="mask"
       />
 
       <Button color="violet" variant="light" onClick={flushEvents}>

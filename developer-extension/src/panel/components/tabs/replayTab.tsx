@@ -1,4 +1,4 @@
-import { Box, Button } from '@mantine/core'
+import { Button } from '@mantine/core'
 import React, { useEffect, useRef, useState } from 'react'
 import { TabBase } from '../tabBase'
 import type { SessionReplayPlayerStatus } from '../../sessionReplayPlayer/startSessionReplayPlayer'
@@ -7,6 +7,7 @@ import { evalInWindow } from '../../evalInWindow'
 import { createLogger } from '../../../common/logger'
 import { Alert } from '../alert'
 import { useSdkInfos } from '../../hooks/useSdkInfos'
+import classes from './replayTab.module.css'
 
 const logger = createLogger('replayTab')
 
@@ -41,16 +42,7 @@ function Player() {
 
   return (
     <TabBase>
-      <Box
-        component="iframe"
-        ref={frameRef}
-        sx={{
-          height: '100%',
-          width: '100%',
-          display: playerStatus === 'ready' ? 'block' : 'none',
-          border: 'none',
-        }}
-      ></Box>
+      <iframe ref={frameRef} className={classes.iframe} data-status={playerStatus} />
       {playerStatus === 'waiting-for-full-snapshot' && <WaitingForFullSnapshot />}
     </TabBase>
   )

@@ -21,8 +21,8 @@ export function Alert({
         {button && (
           <>
             <Space h="sm" />
-            <MantineProvider theme={{ components: { Button: { defaultProps: { color } } } }}>
-              <Group position="right">{button}</Group>
+            <MantineProvider defaultColorScheme="auto" theme={{ components: { Button: { defaultProps: { color } } } }}>
+              <Group justify="flex-end">{button}</Group>
             </MantineProvider>
           </>
         )}

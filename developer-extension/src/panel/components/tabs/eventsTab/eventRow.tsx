@@ -1,7 +1,7 @@
-import type { BoxProps } from '@mantine/core'
-import { Badge, Box, Menu } from '@mantine/core'
+import { Table, Badge, Menu } from '@mantine/core'
 import type { ComponentPropsWithoutRef, ReactNode } from 'react'
 import React, { useRef, useState } from 'react'
+import clsx from 'clsx'
 import type { TelemetryEvent } from '../../../../../../packages/core/src/domain/telemetry'
 import type { LogsEvent } from '../../../../../../packages/logs/src/logsEvent.types'
 import type {
@@ -19,6 +19,7 @@ import { LazyCollapse } from '../../lazyCollapse'
 import type { FacetRegistry } from '../../../hooks/useEvents'
 import type { EventListColumn } from './columnUtils'
 import { addColumn, includesColumn } from './columnUtils'
+import classes from './eventRow.module.css'
 
 const RUM_EVENT_TYPE_COLOR = {
   action: 'violet',
@@ -83,7 +84,7 @@ export const EventRow = React.memo(
     }
 
     return (
-      <tr>
+      <Table.Tr>
         {columns.map((column, index): React.ReactElement => {
           const isLast = index === columns.length - 1
           switch (column.type) {
@@ -98,9 +99,7 @@ export const EventRow = React.memo(
                 <Cell
                   key="description"
                   isLast={isLast}
-                  sx={{
-                    cursor: 'pointer',
-                  }}
+                  className={classes.descriptionCell}
                   onClick={(event) => {
                     if (jsonRef.current?.contains(event.target as Node)) {
                       // Ignore clicks on the collapsible area
@@ -118,7 +117,6 @@ export const EventRow = React.memo(
                       getMenuItemsForPath={getMenuItemsForPath}
                       formatValue={formatValue}
                       mt="xs"
-                      sx={{ display: 'block' }}
                     />
                   </LazyCollapse>
                 </Cell>
@@ -154,24 +152,26 @@ export const EventRow = React.memo(
             }
           }
         })}
-      </tr>
+      </Table.Tr>
     )
   }
 )
 
-function Cell({ isLast, ...props }: BoxProps & ComponentPropsWithoutRef<'div'> & { isLast: boolean }) {
+function Cell({
+  isLast,
+  children,
+  className,
+  onClick,
+}: {
+  isLast: boolean
+  children: ReactNode
+  className?: string
+  onClick?: ComponentPropsWithoutRef<'td'>['onClick']
+}) {
   return (
-    <Box
-      {...props}
-      component="td"
-      colSpan={isLast ? 2 : 1}
-      sx={[
-        {
-          verticalAlign: 'top',
-        },
-        ...(Array.isArray(props.sx) ? props.sx : [props.sx]),
-      ]}
-    />
+    <Table.Td colSpan={isLast ? 2 : 1} className={clsx(className, classes.cell)} onClick={onClick}>
+      {children}
+    </Table.Td>
   )
 }
 
@@ -306,11 +306,7 @@ function ResourceDescription({ event }: { event: RumResourceEvent }) {
 }
 
 function Emphasis({ children }: { children: ReactNode }) {
-  return (
-    <Box component="span" sx={{ fontWeight: 'bold' }}>
-      {children}
-    </Box>
-  )
+  return <strong>{children}</strong>
 }
 
 function getViewName(view: { name?: string; url: string }) {
