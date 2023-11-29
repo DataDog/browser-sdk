@@ -398,7 +398,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@datadog/browser-core@5.4.0, @datadog/browser-core@workspace:packages/core":
+"@datadog/browser-core@5.4.0, @datadog/browser-core@workspace:*, @datadog/browser-core@workspace:packages/core":
   version: 0.0.0-use.local
   resolution: "@datadog/browser-core@workspace:packages/core"
   languageName: unknown
@@ -460,6 +460,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@datadog/browser-sdk-developer-extension@workspace:developer-extension"
   dependencies:
+    "@datadog/browser-core": "workspace:*"
     "@datadog/browser-logs": "workspace:*"
     "@datadog/browser-rum": "workspace:*"
     "@mantine/core": 7.2.2

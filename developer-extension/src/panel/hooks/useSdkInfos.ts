@@ -6,7 +6,7 @@ const logger = createLogger('useSdkInfos')
 
 const REFRESH_INFOS_INTERVAL = 2000
 
-interface SdkInfos {
+export interface SdkInfos {
   rum?: {
     version?: string
     config?: object & { site?: string }

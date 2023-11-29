@@ -19,6 +19,7 @@
     "webpack": "5.89.0"
   },
   "dependencies": {
+    "@datadog/browser-core": "workspace:*",
     "@datadog/browser-logs": "workspace:*",
     "@datadog/browser-rum": "workspace:*",
     "@mantine/core": "7.2.2",

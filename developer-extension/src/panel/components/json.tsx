@@ -4,6 +4,7 @@ import { useColorScheme } from '@mantine/hooks'
 import { IconCopy } from '@tabler/icons-react'
 import type { ForwardedRef, ReactNode } from 'react'
 import React, { forwardRef, useContext, createContext, useState } from 'react'
+import { copy } from '../copy'
 import { formatNumber } from '../formatNumber'
 
 import classes from './json.module.css'
@@ -320,16 +321,6 @@ function CopyMenuItem({ value, children }: { value: unknown; children: ReactNode
       {children}
     </Menu.Item>
   )
-}
-
-function copy(text: string) {
-  // Unfortunately, navigator.clipboard.writeText does not seem to work in extensions
-  const container = document.createElement('textarea')
-  container.innerHTML = text
-  document.body.appendChild(container)
-  container.select()
-  document.execCommand('copy')
-  document.body.removeChild(container)
 }
 
 function doesValueHasChildren(value: unknown) {
