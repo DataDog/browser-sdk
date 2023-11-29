@@ -93,7 +93,11 @@ export const EventRow = React.memo(
         {columns.map((column): React.ReactElement => {
           switch (column.type) {
             case 'date':
-              return <Cell key="date">{formatDate(event.date)}</Cell>
+              return (
+                <Cell key="date" noWrap>
+                  {formatDate(event.date)}
+                </Cell>
+              )
             case 'description':
               return (
                 <Cell
@@ -202,13 +206,15 @@ function Cell({
   children,
   className,
   onClick,
+  noWrap,
 }: {
   children: ReactNode
   className?: string
   onClick?: ComponentPropsWithoutRef<'td'>['onClick']
+  noWrap?: boolean
 }) {
   return (
-    <Table.Td className={clsx(className, classes.cell)} onClick={onClick}>
+    <Table.Td className={clsx(className, classes.cell)} data-no-wrap={noWrap || undefined} onClick={onClick}>
       {children}
     </Table.Td>
   )
