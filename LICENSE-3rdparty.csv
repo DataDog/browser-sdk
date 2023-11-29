@@ -6,9 +6,9 @@ file,tracekit,MIT,Copyright 2013 Onur Can Cakmak and all TraceKit contributors
 file,web-vitals,Apache-2.0,Copyright 2020 Google LLC
 prod,@mantine/core,MIT,Copyright (c) 2021 Vitaly Rtishchev
 prod,@mantine/hooks,MIT,Copyright (c) 2021 Vitaly Rtishchev
+prod,clsx,MIT,Copyright (c) Luke Edwards <luke.edwards05@gmail.com> (lukeed.com)
 prod,react,MIT,Copyright (c) Facebook, Inc. and its affiliates.
 prod,react-dom,MIT,Copyright (c) Facebook, Inc. and its affiliates.
-dev,@emotion/react,MIT,Emotion team and other contributors
 dev,@jsdevtools/coverage-istanbul-loader,MIT,Copyright (c) 2015 James Messinger
 dev,@types/chrome,MIT,Copyright Microsoft Corporation
 dev,@types/connect-busboy,MIT,Copyright Microsoft Corporation
@@ -35,6 +35,7 @@ dev,chrome-webstore-upload,MIT,Copyright Federico Brigante <me@fregante.com> (ht
 dev,connect-busboy,MIT,Copyright Brian White
 dev,copy-webpack-plugin,MIT,Copyright JS Foundation and other contributors
 dev,cors,MIT,Copyright 2013 Troy Goode
+dev,css-loader,MIT,Copyright JS Foundation and other contributors
 dev,emoji-name-map,MIT,Copyright 2016-19 Ionică Bizău <bizauionica@gmail.com> (https://ionicabizau.net)
 dev,eslint,MIT,Copyright JS Foundation and other contributors
 dev,eslint-config-prettier,MIT,Copyright (c) 2017, 2018, 2019, 2020 Simon Lydell and contributors
@@ -50,7 +51,6 @@ dev,glob,ISC,Copyright (c) 2009-2022 Isaac Z. Schlueter and Contributors
 dev,html-webpack-plugin,MIT,Copyright JS Foundation and other contributors
 dev,jasmine-core,MIT,Copyright 2008-2017 Pivotal Labs
 dev,json-schema-to-typescript,MIT,
-dev,node-forge,BSD,Copyright (c) 2010, Digital Bazaar, Inc.
 dev,karma,MIT,Copyright 2011-2019 Google Inc.
 dev,karma-browserstack-launcher,MIT,Copyright 2011-2013 Google, Inc.
 dev,karma-chrome-launcher,MIT,Copyright 2011-2013 Google Inc.
@@ -62,10 +62,13 @@ dev,karma-spec-reporter,MIT,Copyright 2015 Michael Lex
 dev,karma-webpack,MIT,Copyright JS Foundation and other contributors
 dev,lerna,MIT,Copyright 2015-present Lerna Contributors
 dev,minimatch,ISC,Copyright (c) Isaac Z. Schlueter and Contributors
+dev,node-fetch,MIT,Copyright 2016-2020 Node Fetch Team
+dev,node-forge,BSD,Copyright (c) 2010, Digital Bazaar, Inc.
 dev,npm-run-all,MIT,Copyright 2015 Toru Nagashima
 dev,pako,MIT,(C) 2014-2017 Vitaly Puzrin and Andrey Tupitsin
 dev,prettier,MIT,Copyright James Long and contributors
 dev,puppeteer,Apache-2.0,Copyright 2017 Google Inc.
+dev,style-loader,MIT,Copyright JS Foundation and other contributors
 dev,terser-webpack-plugin,MIT,Copyright JS Foundation and other contributors
 dev,ts-loader,MIT,Copyright 2015 TypeStrong
 dev,ts-node,MIT,Copyright 2014 Blake Embrey
@@ -75,4 +78,3 @@ dev,webdriverio,MIT,Copyright JS Foundation and other contributors
 dev,webpack,MIT,Copyright JS Foundation and other contributors
 dev,webpack-cli,MIT,Copyright JS Foundation and other contributors
 dev,webpack-dev-middleware,MIT,Copyright JS Foundation and other contributors
-dev,node-fetch,MIT,Copyright 2016-2020 Node Fetch Team

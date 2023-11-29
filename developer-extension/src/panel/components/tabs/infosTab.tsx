@@ -59,7 +59,7 @@ export function InfosTab() {
                   >
                     Explorer
                   </AppLink>
-                  <Divider sx={{ height: '24px' }} orientation="vertical" />
+                  <Divider orientation="vertical" />
                   <AppLink config={infos.rum.config} path={`rum/replay/sessions/${sessionId}`} params={{}}>
                     Session Replay
                   </AppLink>
@@ -123,7 +123,7 @@ function AppLink({
 
 function Entry({ name, value }: { name: string; value: any }) {
   return (
-    <Text>
+    <Text component="div">
       {typeof value === 'string' ? (
         <>
           {name}: {value}

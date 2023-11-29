@@ -1,5 +1,4 @@
 import { Button, MantineProvider } from '@mantine/core'
-import { useColorScheme } from '@mantine/hooks'
 import type { ReactNode } from 'react'
 import React, { Suspense, useEffect, useState } from 'react'
 import { isDisconnectError } from '../../common/isDisconnectError'
@@ -8,7 +7,6 @@ import { Alert } from './alert'
 import { Panel } from './panel'
 
 export function App() {
-  const colorScheme = useColorScheme()
   const [isDisconnected, setIsDisconnected] = useState(false)
 
   useEffect(() => {
@@ -18,13 +16,8 @@ export function App() {
 
   return (
     <MantineProvider
+      defaultColorScheme="auto"
       theme={{
-        colorScheme,
-        globalStyles: () => ({
-          body: {
-            margin: 0,
-          },
-        }),
         cursorType: 'pointer',
         // This is the default for devtools on mac
         // https://github.com/ChromeDevTools/devtools-frontend/blob/92b3004cf9190eeb98a721ecb8c3931b45609031/front_end/ui/legacy/inspectorCommon.css#L86
@@ -43,11 +36,7 @@ export function App() {
           xl: '22px',
         },
         fontFamilyMonospace: 'menlo, monospace',
-        other: {
-          fontSizeMonospace: '11px',
-        },
       }}
-      withGlobalStyles
     >
       <ErrorBoundary>
         <Suspense fallback={<></>}>{isDisconnected ? <DisconnectAlert /> : <Panel />}</Suspense>

@@ -1,0 +1,15 @@
+.facetChildren {
+  /* the Mantine checkbox component happen to be 20px wide */
+  --dd-checkbox-width: 20px;
+  /* the Mantine tabs list happen to have a 2px border */
+  --dd-tabs-list-border-width: 2px;
+
+  padding-bottom: var(--mantine-spacing-xs);
+}
+
+.facetChildren:not([data-top-level]) {
+  margin-left: calc((var(--dd-checkbox-width) - var(--dd-tabs-list-border-width)) / 2);
+  padding-left: calc((var(--dd-checkbox-width) - var(--dd-tabs-list-border-width)) / 2);
+  border-left: var(--dd-tabs-list-border-width) solid var(--dd-border-color);
+  border-bottom-left-radius: var(--mantine-radius-md);
+}

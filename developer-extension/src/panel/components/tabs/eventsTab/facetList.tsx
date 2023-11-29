@@ -3,7 +3,7 @@ import React from 'react'
 import type { ExcludedFacetValues, FacetRegistry } from '../../../hooks/useEvents'
 import type { Facet } from '../../../facets.constants'
 import { FACET_ROOT, FacetValue } from '../../../facets.constants'
-import { BORDER_RADIUS, CHECKBOX_WIDTH, tabsListBorder, TABS_LIST_BORDER_WIDTH } from '../../../uiUtils'
+import classes from './facetList.module.css'
 
 export function FacetList({
   facetRegistry,
@@ -43,7 +43,7 @@ function FacetField({
   return (
     <Box>
       {facet.label && (
-        <Text pt="xs" color="dimmed" weight="bold">
+        <Text pt="xs" c="dimmed" fw="bold">
           {facet.label}
         </Text>
       )}
@@ -101,15 +101,7 @@ function FacetValue({
   const childFacets = facet.values?.[facetValue]?.facets
   const children = childFacets && (
     <Collapse in={isSelected}>
-      <Box
-        ml={isTopLevel ? undefined : (CHECKBOX_WIDTH - TABS_LIST_BORDER_WIDTH) / 2}
-        pl={isTopLevel ? undefined : (CHECKBOX_WIDTH - TABS_LIST_BORDER_WIDTH) / 2}
-        pb="xs"
-        sx={(theme) => ({
-          borderLeft: isTopLevel ? undefined : tabsListBorder(theme),
-          borderBottomLeftRadius: BORDER_RADIUS,
-        })}
-      >
+      <Box className={classes.facetChildren} data-top-level={isTopLevel ? true : undefined}>
         {childFacets.map((facet) => (
           <FacetField
             key={facet.path}
@@ -126,7 +118,7 @@ function FacetValue({
 
   if (isTopLevel) {
     return (
-      <Card shadow="sm" padding="sm" radius={BORDER_RADIUS} withBorder mb="md">
+      <Card shadow="sm" padding="sm" radius="md" withBorder mb="md">
         <Card.Section withBorder={isSelected} inheritPadding pb="xs">
           {value}
         </Card.Section>

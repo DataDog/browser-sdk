@@ -1,6 +1,7 @@
 import { Container, Flex, ScrollArea, Space } from '@mantine/core'
 import type { ReactNode } from 'react'
 import React from 'react'
+import classes from './tabBase.module.css'
 
 interface TabBaseProps {
   /**
@@ -21,31 +22,22 @@ interface TabBaseProps {
 
 export function TabBase({ top, leftSide, children }: TabBaseProps) {
   return (
-    <Flex direction="column" sx={{ height: '100%' }}>
+    <Flex direction="column" className={classes.root}>
       {top && (
-        <Container fluid sx={{ margin: 0 }}>
+        <Container fluid className={classes.topContainer}>
           <Space h="sm" />
           {top}
           <Space h="sm" />
         </Container>
       )}
-      <Flex
-        direction="row"
-        sx={{
-          flex: 1,
-          // This makes sure the row height fills its parent container and is not influenced by its inner content
-          minHeight: 0,
-        }}
-      >
+      <Flex direction="row" className={classes.horizontalContainer}>
         {leftSide && (
-          <>
-            <ScrollArea sx={{ width: '250px' }}>
-              {leftSide}
-              <Space h="sm" />
-            </ScrollArea>
-          </>
+          <ScrollArea className={classes.leftContainer}>
+            {leftSide}
+            <Space h="sm" />
+          </ScrollArea>
         )}
-        <Container fluid sx={{ flex: 1, overflowY: 'auto', padding: 0, margin: 0 }}>
+        <Container fluid className={classes.contentContainer}>
           {children}
         </Container>
       </Flex>

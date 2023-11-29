@@ -1,0 +1,10 @@
+.tabs {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.tab {
+  flex: 1;
+  min-height: 0;
+}

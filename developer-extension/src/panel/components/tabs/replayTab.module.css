@@ -1,0 +1,10 @@
+.iframe {
+  height: 100%;
+  width: 100%;
+  border: none;
+  display: block;
+}
+
+.iframe:not([data-status='ready']) {
+  display: none;
+}

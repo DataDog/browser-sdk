@@ -12,15 +12,17 @@
     "@types/react-dom": "18.2.15",
     "@webextension-toolbox/webpack-webextension-plugin": "3.2.1",
     "copy-webpack-plugin": "11.0.0",
+    "css-loader": "6.8.1",
     "html-webpack-plugin": "5.5.3",
+    "style-loader": "3.3.3",
     "webpack": "5.89.0"
   },
   "dependencies": {
     "@datadog/browser-logs": "workspace:*",
     "@datadog/browser-rum": "workspace:*",
-    "@emotion/react": "11.11.1",
-    "@mantine/core": "6.0.21",
-    "@mantine/hooks": "6.0.21",
+    "@mantine/core": "7.2.2",
+    "@mantine/hooks": "7.2.2",
+    "clsx": "2.0.0",
     "react": "18.2.0",
     "react-dom": "18.2.0"
   },

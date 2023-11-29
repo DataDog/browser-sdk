@@ -1,0 +1,65 @@
+.root {
+  /* --text-fz is used by mantine as a default font size for all <Text> components */
+  --text-fz: 11px;
+
+  --indent: 18px;
+  --line-height: 20px;
+
+  line-height: var(--line-height);
+  word-break: break-word;
+  -webkit-font-smoothing: auto;
+  font-family: var(--mantine-font-family-monospace);
+
+  /*
+    Use the same font size as the Chromium devtools for monospace fonts.
+    https://github.com/ChromeDevTools/devtools-frontend/blob/92b3004cf9190eeb98a721ecb8c3931b45609031/front_end/ui/legacy/inspectorCommon.css#L121
+  */
+  font-size: 11px;
+}
+
+.valueChildren {
+  position: relative;
+  min-height: var(--line-height);
+}
+
+.valueChildrenIndent {
+  position: absolute;
+  left: 0px;
+  width: var(--indent);
+
+  /* Leaves a small space between indent bars. */
+  top: 1px;
+  bottom: 1px;
+
+  line-height: var(--indent);
+  text-align: center;
+  border-radius: var(--mantine-radius-sm);
+  user-select: none;
+}
+
+.valueChildrenIndent[data-collapsible] {
+  cursor: pointer;
+}
+
+.valueChildrenCollapsedEllipsis {
+  cursor: pointer;
+}
+
+.jsonTextTarget {
+  cursor: pointer;
+}
+
+.jsonLine:not([data-top-level]) {
+  margin-left: calc(var(--indent) * var(--depth) + 4px);
+
+  /*
+    This indents wrapping lines.
+    https://stackoverflow.com/questions/480567/what-is-the-best-way-to-indent-text-in-a-div-when-it-wraps
+  */
+  padding-left: var(--indent);
+  text-indent: calc(-1 * var(--indent));
+}
+
+.jsonLine[data-floating] {
+  position: absolute;
+}

@@ -13,6 +13,8 @@ import { InfosTab } from './tabs/infosTab'
 import { EventsTab, DEFAULT_COLUMNS } from './tabs/eventsTab'
 import { ReplayTab } from './tabs/replayTab'
 
+import classes from './panel.module.css'
+
 export function Panel() {
   const [settings] = useSettings()
 
@@ -30,12 +32,7 @@ export function Panel() {
   }
 
   return (
-    <Tabs
-      color="violet"
-      value={activeTab}
-      sx={{ height: '100vh', display: 'flex', flexDirection: 'column' }}
-      onTabChange={updateActiveTab}
-    >
+    <Tabs color="violet" value={activeTab} className={classes.tabs} onChange={updateActiveTab}>
       <Tabs.List className="dd-privacy-allow">
         <Tabs.Tab value={PanelTabs.Events}>Events</Tabs.Tab>
         <Tabs.Tab value={PanelTabs.Infos}>
@@ -57,7 +54,7 @@ export function Panel() {
           Settings
         </Tabs.Tab>
       </Tabs.List>
-      <Tabs.Panel value={PanelTabs.Events} sx={{ flex: 1, minHeight: 0 }}>
+      <Tabs.Panel value={PanelTabs.Events} className={classes.tab}>
         <EventsTab
           events={events}
           facetRegistry={facetRegistry}
@@ -68,13 +65,13 @@ export function Panel() {
           clear={clear}
         />
       </Tabs.Panel>
-      <Tabs.Panel value={PanelTabs.Infos} sx={{ flex: 1, minHeight: 0 }}>
+      <Tabs.Panel value={PanelTabs.Infos} className={classes.tab}>
         <InfosTab />
       </Tabs.Panel>
-      <Tabs.Panel value={PanelTabs.Replay} sx={{ flex: 1, minHeight: 0 }}>
+      <Tabs.Panel value={PanelTabs.Replay} className={classes.tab}>
         <ReplayTab />
       </Tabs.Panel>
-      <Tabs.Panel value={PanelTabs.Settings} sx={{ flex: 1, minHeight: 0 }}>
+      <Tabs.Panel value={PanelTabs.Settings} className={classes.tab}>
         <SettingsTab />
       </Tabs.Panel>
     </Tabs>

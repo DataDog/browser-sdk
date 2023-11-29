@@ -1,0 +1,31 @@
+.root {
+  margin: 0 var(--mantine-spacing-md) var(--mantine-spacing-md) var(--mantine-spacing-md);
+  border: 1px solid var(--dd-border-color);
+  border-radius: var(--mantine-radius-md);
+}
+
+.addColumnCell {
+  width: 0;
+}
+
+.columnHeader :global(.mantine-CloseButton-root) {
+  opacity: 0;
+}
+
+.columnHeader:hover :global(.mantine-CloseButton-root) {
+  opacity: 1;
+}
+
+.addFieldColumn {
+  display: flex;
+  align-items: flex-end;
+  gab: var(--mantine-spacing-md);
+}
+
+.addFieldAutocomplete {
+  flex: 1;
+}
+
+.addFilterAutocompleteHighlight {
+  text-decoration: underline;
+}

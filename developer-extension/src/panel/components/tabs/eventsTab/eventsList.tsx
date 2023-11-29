@@ -1,14 +1,14 @@
-import { Popover, Box, Text, Button, Flex, Autocomplete, Table, useMantineTheme, CloseButton } from '@mantine/core'
-import type { ForwardedRef, ReactNode } from 'react'
-import React, { useMemo, useRef, useState, forwardRef } from 'react'
+import type { OptionsFilter } from '@mantine/core'
+import { Popover, Box, Text, Button, Flex, Autocomplete, Table, CloseButton } from '@mantine/core'
+import React, { useMemo, useRef, useState } from 'react'
 import type { EventFilters, FacetRegistry } from '../../../hooks/useEvents'
 import type { SdkEvent } from '../../../sdkEvent'
 import { isRumViewEvent } from '../../../sdkEvent'
-import { BORDER_RADIUS, separatorBorder } from '../../../uiUtils'
 import type { EventListColumn } from './columnUtils'
 import { removeColumn, getColumnTitle, DEFAULT_COLUMNS, includesColumn } from './columnUtils'
 import { EventRow } from './eventRow'
 import { ColumnDrag } from './columnDrag'
+import classes from './eventsList.module.css'
 
 export function EventsList({
   events,
@@ -24,20 +24,12 @@ export function EventsList({
   onColumnsChange: (columns: EventListColumn[]) => void
 }) {
   const headerRowRef = useRef<HTMLTableRowElement>(null)
-  const theme = useMantineTheme()
 
   return (
-    <Box
-      mx="md"
-      mb="md"
-      sx={{
-        border: separatorBorder(theme),
-        borderRadius: BORDER_RADIUS,
-      }}
-    >
+    <Box className={classes.root}>
       <Table>
-        <thead>
-          <tr ref={headerRowRef}>
+        <Table.Thead>
+          <Table.Tr ref={headerRowRef}>
             {columns.map((column) => (
               <ColumnHeader
                 key={column.type === 'field' ? `field-${column.path}` : column.type}
@@ -46,13 +38,13 @@ export function EventsList({
                 onColumnsChange={onColumnsChange}
               ></ColumnHeader>
             ))}
-            <Box component="th" sx={{ width: 0 }}>
+            <Table.Td className={classes.addColumnCell}>
               <AddColumnPopover columns={columns} onColumnsChange={onColumnsChange} facetRegistry={facetRegistry} />
-            </Box>
-          </tr>
-        </thead>
+            </Table.Td>
+          </Table.Tr>
+        </Table.Thead>
 
-        <tbody>
+        <Table.Tbody>
           {events.map((event) => (
             <EventRow
               key={getEventRenderingKey(event, !filters.outdatedVersions)}
@@ -62,7 +54,7 @@ export function EventsList({
               facetRegistry={facetRegistry}
             />
           ))}
-        </tbody>
+        </Table.Tbody>
       </Table>
 
       <ColumnDrag columns={columns} onColumnsChange={onColumnsChange} headerRowRef={headerRowRef} />
@@ -80,28 +72,16 @@ function ColumnHeader({
   onColumnsChange: (columns: EventListColumn[]) => void
 }) {
   return (
-    <Box
-      component="th"
+    <Table.Th
       key={column.type === 'field' ? `field-${column.path}` : column.type}
       data-header-cell
-      sx={{
-        '& .mantine-CloseButton-root': {
-          opacity: 0,
-        },
-        '&:hover': {
-          '& .mantine-CloseButton-root': {
-            opacity: 1,
-          },
-        },
-      }}
+      className={classes.columnHeader}
     >
-      <Flex gap="sm" align="center">
-        <Flex justify="space-between" gap="sm" align="center" sx={{ flex: 1 }}>
-          {getColumnTitle(column)}
-          <CloseButton size="xs" variant="filled" onClick={() => onColumnsChange(removeColumn(columns, column))} />
-        </Flex>
+      <Flex justify="space-between" gap="sm" align="center">
+        {getColumnTitle(column)}
+        <CloseButton size="xs" variant="filled" onClick={() => onColumnsChange(removeColumn(columns, column))} />
       </Flex>
-    </Box>
+    </Table.Th>
   )
 }
 
@@ -117,13 +97,11 @@ function AddColumnPopover({
   return (
     <Popover width={300} trapFocus position="bottom" withArrow shadow="md">
       <Popover.Target>
-        <Button variant="light" compact my="-sm">
+        <Button variant="light" size="compact-md" my="-sm">
           Add column
         </Button>
       </Popover.Target>
-      <Popover.Dropdown
-        sx={(theme) => ({ background: theme.colorScheme === 'dark' ? theme.colors.dark[7] : theme.white })}
-      >
+      <Popover.Dropdown>
         <Flex direction="column" gap="sm">
           {DEFAULT_COLUMNS.map((column) => (
             <AddDefaultColumnButton
@@ -201,54 +179,61 @@ function AddFieldColumn({
     []
   )
 
-  const suggestions = allPaths.filter((path) => path.includes(input))
-
   return (
-    <Flex align="flex-end" gap="sm">
-      <Box
-        component="form"
-        onSubmit={(event) => {
-          event.preventDefault()
-          addFieldColumn(input)
-        }}
-        sx={{ display: 'contents' }}
-      >
-        <Autocomplete
-          sx={{ flex: 1 }}
-          value={input}
-          label="Field"
-          onChange={setInput}
-          data={suggestions}
-          placeholder="foo.bar"
-          itemComponent={forwardRef(({ value, ...props }: { value: string }, ref: ForwardedRef<HTMLDivElement>) => {
-            const inputIndex = value.indexOf(input)
-            let renderedValue: ReactNode
-            if (inputIndex < 0) {
-              renderedValue = value
-            } else {
-              renderedValue = (
-                <>
-                  {value.slice(0, inputIndex)}
-                  <Text component="span" underline>
-                    {value.slice(inputIndex, inputIndex + input.length)}
-                  </Text>
-                  {value.slice(inputIndex + input.length)}
-                </>
-              )
-            }
-
-            return (
-              <Box {...props} ref={ref}>
-                {renderedValue}
-              </Box>
-            )
-          })}
-          onItemSubmit={({ value }) => addFieldColumn(value)}
-        />
-        <Button type="submit">Add</Button>
-      </Box>
-    </Flex>
+    <form
+      onSubmit={(event) => {
+        event.preventDefault()
+        addFieldColumn(input)
+      }}
+      className={classes.addFieldColumn}
+    >
+      <Autocomplete
+        className={classes.addFieldAutocomplete}
+        value={input}
+        label="Field"
+        onChange={setInput}
+        data={allPaths}
+        filter={filterColumns}
+        placeholder="foo.bar"
+        onOptionSubmit={addFieldColumn}
+      />
+      <Button type="submit">Add</Button>
+    </form>
   )
+}
+
+function filterColumns(filterOptions: Parameters<OptionsFilter>[0]): ReturnType<OptionsFilter> {
+  if (!filterOptions.search) {
+    return filterOptions.options
+  }
+  const filteredOptions = filterOptions.options.flatMap((option) => {
+    if (!('value' in option)) {
+      return []
+    }
+
+    const inputIndex = option.value.indexOf(filterOptions.search)
+    if (inputIndex < 0) {
+      return []
+    }
+
+    return [
+      {
+        value: option.value,
+        label: (
+          <span>
+            {option.value.slice(0, inputIndex)}
+            <span className={classes.addFilterAutocompleteHighlight}>
+              {option.value.slice(inputIndex, inputIndex + filterOptions.search.length)}
+            </span>
+            {option.value.slice(inputIndex + filterOptions.search.length)}
+          </span>
+        ) as unknown as string,
+        // Mantime types expect a string as label, but to support highlighting we need to return a
+        // ReactNode. This is the simplest way to achieve this, but it might break in the future
+      },
+    ]
+  })
+  return filteredOptions
 }
 
 const eventRenderingKeys = new WeakMap<SdkEvent, number>()
