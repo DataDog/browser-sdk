@@ -100,10 +100,13 @@ export const EventRow = React.memo(
                   key="description"
                   className={classes.descriptionCell}
                   onClick={(event) => {
-                    if (jsonRef.current?.contains(event.target as Node)) {
-                      // Ignore clicks on the collapsible area
+                    const target = event.target as Element
+
+                    // Ignore clicks on menus or the JSON contained in the collapsible area
+                    if (target.matches('[role="menu"] *') || jsonRef.current?.contains(target)) {
                       return
                     }
+
                     setIsCollapsed((previous) => !previous)
                   }}
                 >
