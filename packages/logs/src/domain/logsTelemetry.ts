@@ -9,6 +9,7 @@ import {
   isTelemetryReplicationAllowed,
   addTelemetryConfiguration,
 } from '@datadog/browser-core'
+import { LogsComponents } from '../boot/logsComponents'
 import type { LogsConfiguration, LogsInitConfiguration } from './configuration'
 import { getRUMInternalContext } from './rumInternalContext'
 import type { LogsSessionManager } from './logsSessionManager'
@@ -70,3 +71,13 @@ export function startLogsTelemetry(
     },
   }
 }
+/* eslint-disable local-rules/disallow-side-effects */
+startLogsTelemetry.$id = LogsComponents.Telemetry
+startLogsTelemetry.$deps = [
+  LogsComponents.InitConfiguration,
+  LogsComponents.Configuration,
+  LogsComponents.ReportError,
+  LogsComponents.PageExitObservable,
+  LogsComponents.Session,
+]
+/* eslint-enable local-rules/disallow-side-effects */

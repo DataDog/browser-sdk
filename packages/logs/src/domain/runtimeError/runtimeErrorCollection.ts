@@ -4,6 +4,7 @@ import type { LogsConfiguration } from '../configuration'
 import type { LifeCycle } from '../lifeCycle'
 import { LifeCycleEventType } from '../lifeCycle'
 import { StatusType } from '../logger'
+import { LogsComponents } from '../../boot/logsComponents'
 
 export interface ProvidedError {
   startClocks: ClocksState
@@ -43,3 +44,7 @@ export function startRuntimeErrorCollection(configuration: LogsConfiguration, li
     },
   }
 }
+/* eslint-disable local-rules/disallow-side-effects */
+startRuntimeErrorCollection.$id = LogsComponents.RuntimeErrorCollection
+startRuntimeErrorCollection.$deps = [LogsComponents.Configuration, LogsComponents.LifeCycle]
+/* eslint-enable local-rules/disallow-side-effects */

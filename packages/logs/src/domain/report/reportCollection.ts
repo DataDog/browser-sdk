@@ -10,6 +10,7 @@ import type { LogsConfiguration } from '../configuration'
 import type { LifeCycle } from '../lifeCycle'
 import { LifeCycleEventType } from '../lifeCycle'
 import { StatusType } from '../logger'
+import { LogsComponents } from '../../boot/logsComponents'
 
 export interface ProvidedError {
   startClocks: ClocksState
@@ -57,3 +58,7 @@ export function startReportCollection(configuration: LogsConfiguration, lifeCycl
     },
   }
 }
+/* eslint-disable local-rules/disallow-side-effects */
+startReportCollection.$id = LogsComponents.ReportCollection
+startReportCollection.$deps = [LogsComponents.Configuration, LogsComponents.LifeCycle]
+/* eslint-enable local-rules/disallow-side-effects */

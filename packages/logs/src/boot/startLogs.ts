@@ -1,74 +1,38 @@
-import {
-  sendToExtension,
-  createPageExitObservable,
-  willSyntheticsInjectRum,
-  canUseEventBridge,
-} from '@datadog/browser-core'
-import { startLogsSessionManager, startLogsSessionManagerStub } from '../domain/logsSessionManager'
+import { sendToExtension } from '@datadog/browser-core'
 import type { LogsConfiguration, LogsInitConfiguration } from '../domain/configuration'
-import { startLogsAssembly } from '../domain/assembly'
-import { startConsoleCollection } from '../domain/console/consoleCollection'
-import { startReportCollection } from '../domain/report/reportCollection'
-import { startNetworkErrorCollection } from '../domain/networkError/networkErrorCollection'
-import { startRuntimeErrorCollection } from '../domain/runtimeError/runtimeErrorCollection'
-import { LifeCycle, LifeCycleEventType } from '../domain/lifeCycle'
-import { startLoggerCollection } from '../domain/logger/loggerCollection'
+import type { LifeCycle } from '../domain/lifeCycle'
+import { LifeCycleEventType } from '../domain/lifeCycle'
+import type { startLoggerCollection } from '../domain/logger/loggerCollection'
 import type { CommonContext } from '../rawLogsEvent.types'
-import { startLogsBatch } from '../transport/startLogsBatch'
-import { startLogsBridge } from '../transport/startLogsBridge'
-import { startInternalContext } from '../domain/internalContext'
-import { startReportError } from '../domain/reportError'
-import { startLogsTelemetry } from '../domain/logsTelemetry'
+import type { startInternalContext } from '../domain/internalContext'
+import { LogsComponents } from './logsComponents'
+import { createLogsInjector } from './logsInjector'
 
 export function startLogs(
   initConfiguration: LogsInitConfiguration,
   configuration: LogsConfiguration,
   buildCommonContext: () => CommonContext
 ) {
-  const lifeCycle = new LifeCycle()
-  const cleanupTasks: Array<() => void> = []
+  const injector = createLogsInjector(initConfiguration, configuration, buildCommonContext)
 
+  ;[
+    LogsComponents.NetworkCollection,
+    LogsComponents.RuntimeErrorCollection,
+    LogsComponents.ConsoleCollection,
+    LogsComponents.ReportCollection,
+    LogsComponents.LoggerCollection,
+    LogsComponents.LogsAssembly,
+    LogsComponents.LogsTransport,
+    LogsComponents.Telemetry,
+    LogsComponents.InternalContext,
+  ].forEach((componentId) => injector.get(componentId))
+
+  const lifeCycle = injector.get<LifeCycle>(LogsComponents.LifeCycle)
   lifeCycle.subscribe(LifeCycleEventType.LOG_COLLECTED, (log) => sendToExtension('logs', log))
 
-  const reportError = startReportError(lifeCycle)
-  const pageExitObservable = createPageExitObservable(configuration)
-
-  const session =
-    configuration.sessionStoreStrategyType && !canUseEventBridge() && !willSyntheticsInjectRum()
-      ? startLogsSessionManager(configuration)
-      : startLogsSessionManagerStub(configuration)
-
-  const { stop: stopLogsTelemetry } = startLogsTelemetry(
-    initConfiguration,
-    configuration,
-    reportError,
-    pageExitObservable,
-    session
-  )
-  cleanupTasks.push(() => stopLogsTelemetry())
-
-  startNetworkErrorCollection(configuration, lifeCycle)
-  startRuntimeErrorCollection(configuration, lifeCycle)
-  startConsoleCollection(configuration, lifeCycle)
-  startReportCollection(configuration, lifeCycle)
-  const { handleLog } = startLoggerCollection(lifeCycle)
-
-  startLogsAssembly(session, configuration, lifeCycle, buildCommonContext, reportError)
-
-  if (!canUseEventBridge()) {
-    const { stop: stopLogsBatch } = startLogsBatch(configuration, lifeCycle, reportError, pageExitObservable, session)
-    cleanupTasks.push(() => stopLogsBatch())
-  } else {
-    startLogsBridge(lifeCycle)
-  }
-
-  const internalContext = startInternalContext(session)
-
   return {
-    handleLog,
-    getInternalContext: internalContext.get,
-    stop: () => {
-      cleanupTasks.forEach((task) => task())
-    },
+    handleLog: injector.get<ReturnType<typeof startLoggerCollection>>(LogsComponents.LoggerCollection).handleLog,
+    getInternalContext: injector.get<ReturnType<typeof startInternalContext>>(LogsComponents.InternalContext).get,
+    stop: injector.stop,
   }
 }

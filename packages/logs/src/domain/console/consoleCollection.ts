@@ -4,6 +4,7 @@ import type { LogsConfiguration } from '../configuration'
 import type { LifeCycle } from '../lifeCycle'
 import { LifeCycleEventType } from '../lifeCycle'
 import { StatusType } from '../logger'
+import { LogsComponents } from '../../boot/logsComponents'
 
 export interface ProvidedError {
   startClocks: ClocksState
@@ -44,3 +45,7 @@ export function startConsoleCollection(configuration: LogsConfiguration, lifeCyc
     },
   }
 }
+/* eslint-disable local-rules/disallow-side-effects */
+startConsoleCollection.$id = LogsComponents.ConsoleCollection
+startConsoleCollection.$deps = [LogsComponents.Configuration, LogsComponents.LifeCycle]
+/* eslint-enable local-rules/disallow-side-effects */
