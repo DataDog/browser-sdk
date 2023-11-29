@@ -1,6 +1,7 @@
 import type { BoxProps, MantineColor } from '@mantine/core'
 import { Box, Collapse, Menu, Text } from '@mantine/core'
 import { useColorScheme } from '@mantine/hooks'
+import { IconCopy } from '@tabler/icons-react'
 import type { ForwardedRef, ReactNode } from 'react'
 import React, { forwardRef, useContext, createContext, useState } from 'react'
 import { formatNumber } from '../formatNumber'
@@ -314,6 +315,7 @@ function CopyMenuItem({ value, children }: { value: unknown; children: ReactNode
       onClick={() => {
         copy(JSON.stringify(value, null, 2))
       }}
+      leftSection={<IconCopy size={14} />}
     >
       {children}
     </Menu.Item>

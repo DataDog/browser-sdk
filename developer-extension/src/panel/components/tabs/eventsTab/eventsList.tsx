@@ -1,6 +1,7 @@
 import type { OptionsFilter } from '@mantine/core'
 import { Popover, Text, Button, Flex, Autocomplete, Table, CloseButton } from '@mantine/core'
 import React, { useMemo, useRef, useState } from 'react'
+import { IconColumnInsertRight } from '@tabler/icons-react'
 import type { EventFilters, FacetRegistry } from '../../../hooks/useEvents'
 import type { SdkEvent } from '../../../sdkEvent'
 import { isRumViewEvent } from '../../../sdkEvent'
@@ -9,6 +10,7 @@ import { removeColumn, getColumnTitle, DEFAULT_COLUMNS, includesColumn } from '.
 import { EventRow } from './eventRow'
 import { ColumnDrag } from './columnDrag'
 import classes from './eventsList.module.css'
+import { RowButton } from './rowButton'
 
 export function EventsList({
   events,
@@ -97,9 +99,7 @@ function AddColumnPopover({
   return (
     <Popover width={300} trapFocus position="bottom" withArrow shadow="md">
       <Popover.Target>
-        <Button variant="light" size="compact-md" my="-sm">
-          Add column
-        </Button>
+        <RowButton title="Add column" icon={IconColumnInsertRight} />
       </Popover.Target>
       <Popover.Dropdown>
         <Flex direction="column" gap="sm">

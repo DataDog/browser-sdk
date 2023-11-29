@@ -464,6 +464,7 @@ __metadata:
     "@datadog/browser-rum": "workspace:*"
     "@mantine/core": 7.2.2
     "@mantine/hooks": 7.2.2
+    "@tabler/icons-react": 2.42.0
     "@types/chrome": 0.0.251
     "@types/react": 18.2.37
     "@types/react-dom": 18.2.15
@@ -1516,6 +1517,25 @@ __metadata:
   dependencies:
     defer-to-connect: ^2.0.1
   checksum: fc9cb993e808806692e4a3337c90ece0ec00c89f4b67e3652a356b89730da98bc824273a6d67ca84d5f33cd85f317dcd5ce39d8cc0a2f060145a608a7cb8ce92
+  languageName: node
+  linkType: hard
+
+"@tabler/icons-react@npm:2.42.0":
+  version: 2.42.0
+  resolution: "@tabler/icons-react@npm:2.42.0"
+  dependencies:
+    "@tabler/icons": 2.42.0
+    prop-types: ^15.7.2
+  peerDependencies:
+    react: ^16.5.1 || ^17.0.0 || ^18.0.0
+  checksum: be4956ddfb9ba0165f815c57189444b4b6a03d7c527381dfcb017d9911f6ac4fd9166aa718d94593339e27e298646863e5f5e96e84e11cf69956413e072fc448
+  languageName: node
+  linkType: hard
+
+"@tabler/icons@npm:2.42.0":
+  version: 2.42.0
+  resolution: "@tabler/icons@npm:2.42.0"
+  checksum: 0330b5454f445cbf25f18ba3b2d6386c10b3e266feee14a6d5e3ed5a686987e3bb8c1d50eb2f181032c81a96b6c250d89e7247813934ce373adb10867e316578
   languageName: node
   linkType: hard
 

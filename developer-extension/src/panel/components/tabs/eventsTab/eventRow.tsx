@@ -2,6 +2,7 @@ import { Table, Badge, Menu } from '@mantine/core'
 import type { ComponentPropsWithoutRef, ReactNode } from 'react'
 import React, { useRef, useState } from 'react'
 import clsx from 'clsx'
+import { IconColumnInsertRight } from '@tabler/icons-react'
 import type { TelemetryEvent } from '../../../../../../packages/core/src/domain/telemetry'
 import type { LogsEvent } from '../../../../../../packages/logs/src/logsEvent.types'
 import type {
@@ -76,6 +77,7 @@ export const EventRow = React.memo(
             onClick={() => {
               onColumnsChange(addColumn(columns, newColumn))
             }}
+            leftSection={<IconColumnInsertRight size={14} />}
           >
             Add column
           </Menu.Item>
