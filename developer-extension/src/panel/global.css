@@ -13,6 +13,7 @@
 :root[data-mantine-color-scheme='dark'] {
   --dd-border-color: var(--mantine-color-dark-4);
 }
+
 :root[data-mantine-color-scheme='light'] {
-  --dd-border-color: var(--mantine-color-dark-4);
+  --dd-border-color: var(--mantine-color-gray-3);
 }
