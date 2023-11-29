@@ -96,6 +96,7 @@ export interface RumLargestContentfulPaintTiming {
   startTime: RelativeTime
   size: number
   element?: Element
+  toJSON(): Omit<PerformanceEntry, 'toJSON'>
 }
 
 export interface RumFirstInputTiming {

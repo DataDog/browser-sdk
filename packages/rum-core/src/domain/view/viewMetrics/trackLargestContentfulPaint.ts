@@ -1,5 +1,14 @@
 import type { RelativeTime } from '@datadog/browser-core'
-import { DOM_EVENT, ONE_MINUTE, addEventListeners, findLast } from '@datadog/browser-core'
+import {
+  DOM_EVENT,
+  ExperimentalFeature,
+  ONE_MINUTE,
+  addEventListeners,
+  addTelemetryDebug,
+  findLast,
+  isExperimentalFeatureEnabled,
+  relativeNow,
+} from '@datadog/browser-core'
 import { LifeCycleEventType } from '../../lifeCycle'
 import type { LifeCycle } from '../../lifeCycle'
 import type { RumConfiguration } from '../../configuration'
@@ -16,6 +25,8 @@ export interface LargestContentfulPaint {
   value: RelativeTime
   targetSelector?: string
 }
+
+let zeroLcpReported = false
 /**
  * Track the largest contentful paint (LCP) occurring during the initial View.  This can yield
  * multiple values, only the most recent one should be used.
@@ -61,6 +72,22 @@ export function trackLargestContentfulPaint(
           lcpTargetSelector = getSelectorFromElement(lcpEntry.element, configuration.actionNameAttribute)
         }
 
+        if (
+          !zeroLcpReported &&
+          lcpEntry.startTime === 0 &&
+          isExperimentalFeatureEnabled(ExperimentalFeature.ZERO_LCP_TELEMETRY)
+        ) {
+          zeroLcpReported = true
+          addTelemetryDebug('LCP with startTime = 0', {
+            debug: {
+              entry: lcpEntry.toJSON(),
+              navigationStart: performance.timing.navigationStart,
+              timeOrigin: performance.timeOrigin,
+              now: relativeNow(),
+              visibilityState: document.visibilityState,
+            },
+          })
+        }
         callback({
           value: lcpEntry.startTime,
           targetSelector: lcpTargetSelector,
