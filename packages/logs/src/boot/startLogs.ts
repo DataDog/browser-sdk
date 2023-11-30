@@ -15,7 +15,7 @@ import {
 import { startLogsSessionManager, startLogsSessionManagerStub } from '../domain/logsSessionManager'
 import type { LogsConfiguration, LogsInitConfiguration } from '../domain/configuration'
 import { serializeLogsConfiguration } from '../domain/configuration'
-import { startLogsAssembly, getRUMInternalContext } from '../domain/assembly'
+import { startLogsAssembly } from '../domain/assembly'
 import { startConsoleCollection } from '../domain/console/consoleCollection'
 import { startReportCollection } from '../domain/report/reportCollection'
 import { startNetworkErrorCollection } from '../domain/networkError/networkErrorCollection'
@@ -28,6 +28,7 @@ import { startLogsBridge } from '../transport/startLogsBridge'
 import { startInternalContext } from '../domain/internalContext'
 import { startReportError } from '../domain/reportError'
 import { startLogsTelemetry } from '../domain/logsTelemetry'
+import { getRUMInternalContext } from '../domain/rumInternalContext'
 
 export function startLogs(
   initConfiguration: LogsInitConfiguration,

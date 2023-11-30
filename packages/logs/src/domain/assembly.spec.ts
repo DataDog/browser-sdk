@@ -12,11 +12,12 @@ import type { Clock } from '@datadog/browser-core/test'
 import { mockClock, cleanupSyntheticsWorkerValues, mockSyntheticsWorkerValues } from '@datadog/browser-core/test'
 import type { LogsEvent } from '../logsEvent.types'
 import type { CommonContext } from '../rawLogsEvent.types'
-import { getRUMInternalContext, resetRUMInternalContext, startLogsAssembly } from './assembly'
+import { startLogsAssembly } from './assembly'
 import { validateAndBuildLogsConfiguration } from './configuration'
 import { Logger, StatusType } from './logger'
 import type { LogsSessionManager } from './logsSessionManager'
 import { LifeCycle, LifeCycleEventType } from './lifeCycle'
+import { resetRUMInternalContext, getRUMInternalContext } from './rumInternalContext'
 
 const initConfiguration = { clientToken: 'xxx', service: 'service' }
 const SESSION_ID = 'session-id'
