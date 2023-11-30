@@ -27,11 +27,10 @@ export function canCopyEvent(sdkInfos: SdkInfos | undefined, event: SdkEvent): s
  */
 export function copyEventAsCurl(sdkInfos: SdkInfos, event: SdkEvent) {
   const url = getIntakeUrlForEvent(sdkInfos, event)
-  const escapedEvent = JSON.stringify(event).replace(/\\/g, '\\\\').replace(/'/g, "\\'")
   copy(`curl '${url}' \\
   -X POST \\
   -H 'Content-Type: text/plain' \\
-  --data-raw $'${escapedEvent}'`)
+  --data-raw ${escapeShellParameter(JSON.stringify(event))}`)
 }
 
 /**
@@ -61,7 +60,11 @@ export function copyEventAsFetch(sdkInfos: SdkInfos, event: SdkEvent) {
   })`)
 }
 
-function getIntakeUrlForEvent(sdkInfos: SdkInfos, event: SdkEvent) {
+export function escapeShellParameter(value: string) {
+  return `$'${value.replace(/\\/g, '\\\\').replace(/'/g, "\\'")}'`
+}
+
+export function getIntakeUrlForEvent(sdkInfos: SdkInfos, event: SdkEvent) {
   let builder: EndpointBuilder
   let version: string
 
