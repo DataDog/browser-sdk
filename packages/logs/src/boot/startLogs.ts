@@ -9,9 +9,7 @@ import {
   startTelemetry,
   startBatchWithReplica,
   isTelemetryReplicationAllowed,
-  ErrorSource,
   addTelemetryConfiguration,
-  addTelemetryDebug,
   createIdentityEncoder,
 } from '@datadog/browser-core'
 import { startLogsSessionManager, startLogsSessionManagerStub } from '../domain/logsSessionManager'
@@ -27,8 +25,8 @@ import { startLoggerCollection } from '../domain/logger/loggerCollection'
 import type { CommonContext } from '../rawLogsEvent.types'
 import { startLogsBatch } from '../transport/startLogsBatch'
 import { startLogsBridge } from '../transport/startLogsBridge'
-import { StatusType } from '../domain/logger'
 import { startInternalContext } from '../domain/internalContext'
+import { startReportError } from '../domain/reportError'
 
 export function startLogs(
   initConfiguration: LogsInitConfiguration,
@@ -40,17 +38,7 @@ export function startLogs(
 
   lifeCycle.subscribe(LifeCycleEventType.LOG_COLLECTED, (log) => sendToExtension('logs', log))
 
-  const reportError = (error: RawError) => {
-    lifeCycle.notify(LifeCycleEventType.RAW_LOG_COLLECTED, {
-      rawLogsEvent: {
-        message: error.message,
-        date: error.startClocks.timeStamp,
-        origin: ErrorSource.AGENT,
-        status: StatusType.error,
-      },
-    })
-    addTelemetryDebug('Error reported to customer', { 'error.message': error.message })
-  }
+  const reportError = startReportError(lifeCycle)
   const pageExitObservable = createPageExitObservable(configuration)
 
   const session =
