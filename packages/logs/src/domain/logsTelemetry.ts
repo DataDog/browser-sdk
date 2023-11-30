@@ -1,4 +1,4 @@
-import type { RawError, Observable, PageExitEvent, TelemetryEvent } from '@datadog/browser-core'
+import type { RawError, Observable, PageExitEvent, TelemetryEvent, Context } from '@datadog/browser-core'
 import {
   startTelemetry,
   TelemetryService,
@@ -7,16 +7,35 @@ import {
   startBatchWithReplica,
   createIdentityEncoder,
   isTelemetryReplicationAllowed,
+  addTelemetryConfiguration,
 } from '@datadog/browser-core'
-import type { LogsConfiguration } from './configuration'
+import type { LogsConfiguration, LogsInitConfiguration } from './configuration'
+import { getRUMInternalContext } from './rumInternalContext'
+import type { LogsSessionManager } from './logsSessionManager'
+import { serializeLogsConfiguration } from './configuration'
 
 export function startLogsTelemetry(
+  initConfiguration: LogsInitConfiguration,
   configuration: LogsConfiguration,
   reportError: (error: RawError) => void,
   pageExitObservable: Observable<PageExitEvent>,
-  sessionExpireObservable: Observable<void>
+  session: LogsSessionManager
 ) {
   const telemetry = startTelemetry(TelemetryService.LOGS, configuration)
+  telemetry.setContextProvider(() => ({
+    application: {
+      id: getRUMInternalContext()?.application_id,
+    },
+    session: {
+      id: session.findTrackedSession()?.id,
+    },
+    view: {
+      id: (getRUMInternalContext()?.view as Context)?.id,
+    },
+    action: {
+      id: (getRUMInternalContext()?.user_action as Context)?.id,
+    },
+  }))
   const cleanupTasks: Array<() => void> = []
   if (canUseEventBridge()) {
     const bridge = getEventBridge<'internal_telemetry', TelemetryEvent>()!
@@ -35,7 +54,7 @@ export function startLogsTelemetry(
       },
       reportError,
       pageExitObservable,
-      sessionExpireObservable
+      session.expireObservable
     )
     cleanupTasks.push(() => telemetryBatch.stop())
     const telemetrySubscription = telemetry.observable.subscribe((event) =>
@@ -43,6 +62,7 @@ export function startLogsTelemetry(
     )
     cleanupTasks.push(() => telemetrySubscription.unsubscribe())
   }
+  addTelemetryConfiguration(serializeLogsConfiguration(initConfiguration))
   return {
     telemetry,
     stop: () => {

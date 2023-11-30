@@ -1,20 +1,11 @@
-import type { Context, TelemetryEvent, RawError, Observable, PageExitEvent } from '@datadog/browser-core'
 import {
   sendToExtension,
   createPageExitObservable,
-  TelemetryService,
   willSyntheticsInjectRum,
   canUseEventBridge,
-  getEventBridge,
-  startTelemetry,
-  startBatchWithReplica,
-  isTelemetryReplicationAllowed,
-  addTelemetryConfiguration,
-  createIdentityEncoder,
 } from '@datadog/browser-core'
 import { startLogsSessionManager, startLogsSessionManagerStub } from '../domain/logsSessionManager'
 import type { LogsConfiguration, LogsInitConfiguration } from '../domain/configuration'
-import { serializeLogsConfiguration } from '../domain/configuration'
 import { startLogsAssembly } from '../domain/assembly'
 import { startConsoleCollection } from '../domain/console/consoleCollection'
 import { startReportCollection } from '../domain/report/reportCollection'
@@ -28,7 +19,6 @@ import { startLogsBridge } from '../transport/startLogsBridge'
 import { startInternalContext } from '../domain/internalContext'
 import { startReportError } from '../domain/reportError'
 import { startLogsTelemetry } from '../domain/logsTelemetry'
-import { getRUMInternalContext } from '../domain/rumInternalContext'
 
 export function startLogs(
   initConfiguration: LogsInitConfiguration,
@@ -48,27 +38,14 @@ export function startLogs(
       ? startLogsSessionManager(configuration)
       : startLogsSessionManagerStub(configuration)
 
-  const { telemetry, stop: stopLogsTelemetry } = startLogsTelemetry(
+  const { stop: stopLogsTelemetry } = startLogsTelemetry(
+    initConfiguration,
     configuration,
     reportError,
     pageExitObservable,
-    session.expireObservable
+    session
   )
   cleanupTasks.push(() => stopLogsTelemetry())
-  telemetry.setContextProvider(() => ({
-    application: {
-      id: getRUMInternalContext()?.application_id,
-    },
-    session: {
-      id: session.findTrackedSession()?.id,
-    },
-    view: {
-      id: (getRUMInternalContext()?.view as Context)?.id,
-    },
-    action: {
-      id: (getRUMInternalContext()?.user_action as Context)?.id,
-    },
-  }))
 
   startNetworkErrorCollection(configuration, lifeCycle)
   startRuntimeErrorCollection(configuration, lifeCycle)
@@ -91,7 +68,6 @@ export function startLogs(
     startLogsBridge(lifeCycle)
   }
 
-  addTelemetryConfiguration(serializeLogsConfiguration(initConfiguration))
   const internalContext = startInternalContext(session)
 
   return {
