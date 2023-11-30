@@ -4,13 +4,14 @@ import type { LogsConfiguration } from '../domain/configuration'
 import type { LifeCycle } from '../domain/lifeCycle'
 import { LifeCycleEventType } from '../domain/lifeCycle'
 import type { LogsEvent } from '../logsEvent.types'
+import type { LogsSessionManager } from '../domain/logsSessionManager'
 
 export function startLogsBatch(
   configuration: LogsConfiguration,
   lifeCycle: LifeCycle,
   reportError: (error: RawError) => void,
   pageExitObservable: Observable<PageExitEvent>,
-  sessionExpireObservable: Observable<void>
+  session: LogsSessionManager
 ) {
   const batch = startBatchWithReplica(
     configuration,
@@ -24,7 +25,7 @@ export function startLogsBatch(
     },
     reportError,
     pageExitObservable,
-    sessionExpireObservable
+    session.expireObservable
   )
 
   lifeCycle.subscribe(LifeCycleEventType.LOG_COLLECTED, (serverLogsEvent: LogsEvent & Context) => {

@@ -56,13 +56,7 @@ export function startLogs(
   startLogsAssembly(session, configuration, lifeCycle, buildCommonContext, reportError)
 
   if (!canUseEventBridge()) {
-    const { stop: stopLogsBatch } = startLogsBatch(
-      configuration,
-      lifeCycle,
-      reportError,
-      pageExitObservable,
-      session.expireObservable
-    )
+    const { stop: stopLogsBatch } = startLogsBatch(configuration, lifeCycle, reportError, pageExitObservable, session)
     cleanupTasks.push(() => stopLogsBatch())
   } else {
     startLogsBridge(lifeCycle)
