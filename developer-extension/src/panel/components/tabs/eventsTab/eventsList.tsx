@@ -44,6 +44,7 @@ export function EventsList({
               <AddColumnPopover columns={columns} onColumnsChange={onColumnsChange} facetRegistry={facetRegistry} />
             </Table.Td>
           </Table.Tr>
+          <div className={classes.headerRowShadow} />
         </Table.Thead>
 
         <Table.Tbody>
