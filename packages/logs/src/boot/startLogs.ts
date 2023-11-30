@@ -27,6 +27,7 @@ import { startLogsBatch } from '../transport/startLogsBatch'
 import { startLogsBridge } from '../transport/startLogsBridge'
 import { startInternalContext } from '../domain/internalContext'
 import { startReportError } from '../domain/reportError'
+import { startLogsTelemetry } from '../domain/logsTelemetry'
 
 export function startLogs(
   initConfiguration: LogsInitConfiguration,
@@ -95,47 +96,6 @@ export function startLogs(
   return {
     handleLog,
     getInternalContext: internalContext.get,
-    stop: () => {
-      cleanupTasks.forEach((task) => task())
-    },
-  }
-}
-
-function startLogsTelemetry(
-  configuration: LogsConfiguration,
-  reportError: (error: RawError) => void,
-  pageExitObservable: Observable<PageExitEvent>,
-  sessionExpireObservable: Observable<void>
-) {
-  const telemetry = startTelemetry(TelemetryService.LOGS, configuration)
-  const cleanupTasks: Array<() => void> = []
-  if (canUseEventBridge()) {
-    const bridge = getEventBridge<'internal_telemetry', TelemetryEvent>()!
-    const telemetrySubscription = telemetry.observable.subscribe((event) => bridge.send('internal_telemetry', event))
-    cleanupTasks.push(() => telemetrySubscription.unsubscribe())
-  } else {
-    const telemetryBatch = startBatchWithReplica(
-      configuration,
-      {
-        endpoint: configuration.rumEndpointBuilder,
-        encoder: createIdentityEncoder(),
-      },
-      configuration.replica && {
-        endpoint: configuration.replica.rumEndpointBuilder,
-        encoder: createIdentityEncoder(),
-      },
-      reportError,
-      pageExitObservable,
-      sessionExpireObservable
-    )
-    cleanupTasks.push(() => telemetryBatch.stop())
-    const telemetrySubscription = telemetry.observable.subscribe((event) =>
-      telemetryBatch.add(event, isTelemetryReplicationAllowed(configuration))
-    )
-    cleanupTasks.push(() => telemetrySubscription.unsubscribe())
-  }
-  return {
-    telemetry,
     stop: () => {
       cleanupTasks.forEach((task) => task())
     },
