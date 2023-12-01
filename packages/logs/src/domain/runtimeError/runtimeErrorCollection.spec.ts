@@ -1,16 +1,13 @@
 import { ErrorSource } from '@datadog/browser-core'
-import type { RawRuntimeLogsEvent } from '../../rawLogsEvent.types'
-import type { LogsConfiguration } from '../configuration'
 import { StatusType } from '../logger'
 import type { RawLogsEventCollectedData } from '../lifeCycle'
-import { LifeCycle, LifeCycleEventType } from '../lifeCycle'
-import { startRuntimeErrorCollection } from './runtimeErrorCollection'
+import type { LogsSpecInjector } from '../../../test/logsSpecInjector'
+import { createLogsSpecInjector, LogsSpecComponents } from '../../../test/logsSpecInjector'
+import { LogsComponents } from '../../boot/logsComponents'
 
 describe('runtime error collection', () => {
-  const configuration = { forwardErrorsToLogs: true } as LogsConfiguration
-  let lifeCycle: LifeCycle
-  let stopRuntimeErrorCollection: () => void
-  let rawLogsEvents: Array<RawLogsEventCollectedData<RawRuntimeLogsEvent>>
+  let injector: LogsSpecInjector
+  let rawLogsEvents: RawLogsEventCollectedData[]
   let onErrorSpy: jasmine.Spy
   let originalOnErrorHandler: OnErrorEventHandler
 
@@ -18,20 +15,18 @@ describe('runtime error collection', () => {
     originalOnErrorHandler = window.onerror
     onErrorSpy = jasmine.createSpy()
     window.onerror = onErrorSpy
-    rawLogsEvents = []
-    lifeCycle = new LifeCycle()
-    lifeCycle.subscribe(LifeCycleEventType.RAW_LOG_COLLECTED, (rawLogsEvent) =>
-      rawLogsEvents.push(rawLogsEvent as RawLogsEventCollectedData<RawRuntimeLogsEvent>)
-    )
+    injector = createLogsSpecInjector()
+    rawLogsEvents = injector.get<RawLogsEventCollectedData[]>(LogsSpecComponents.RawLogsEvents)
   })
 
   afterEach(() => {
-    stopRuntimeErrorCollection()
     window.onerror = originalOnErrorHandler
   })
 
   it('should send runtime errors', (done) => {
-    ;({ stop: stopRuntimeErrorCollection } = startRuntimeErrorCollection(configuration, lifeCycle))
+    injector.withConfiguration({ forwardErrorsToLogs: true })
+    injector.get(LogsComponents.RuntimeErrorCollection)
+
     setTimeout(() => {
       throw new Error('error!')
     })
@@ -49,10 +44,8 @@ describe('runtime error collection', () => {
   })
 
   it('should not send runtime errors when forwardErrorsToLogs is false', (done) => {
-    ;({ stop: stopRuntimeErrorCollection } = startRuntimeErrorCollection(
-      { ...configuration, forwardErrorsToLogs: false },
-      lifeCycle
-    ))
+    injector.withConfiguration({ forwardErrorsToLogs: false })
+    injector.get(LogsComponents.RuntimeErrorCollection)
 
     setTimeout(() => {
       throw new Error('error!')
