@@ -27,7 +27,7 @@
 
 @keyframes table-header-shadow {
   to {
-    box-shadow: 5px 0 var(--shadow-size) black;
+    box-shadow: 5px 0 var(--shadow-size) var(--shadow-color);
   }
 }
 
@@ -54,6 +54,14 @@
 
   height: 100px; /* give the shadow some space */
   pointer-events: none;
+}
+
+:root[data-mantine-color-scheme='light'] .headerRowShadow {
+  --shadow-color: rgba(0, 0, 0, 0.1);
+}
+
+:root[data-mantine-color-scheme='dark'] .headerRowShadow {
+  --shadow-color: rgba(0, 0, 0, 1);
 }
 
 .headerRowShadow::after {
