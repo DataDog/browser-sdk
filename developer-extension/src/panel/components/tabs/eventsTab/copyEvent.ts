@@ -1,5 +1,5 @@
 import type { EndpointBuilder, InitConfiguration } from '@datadog/browser-core'
-import { computeTransportConfiguration } from '@datadog/browser-core/esm/domain/configuration/transportConfiguration'
+import { computeTransportConfiguration } from '../../../../../../packages/core/src/domain/configuration'
 import { copy } from '../../../copy'
 import type { SdkInfos } from '../../../hooks/useSdkInfos'
 import type { SdkEvent } from '../../../sdkEvent'
