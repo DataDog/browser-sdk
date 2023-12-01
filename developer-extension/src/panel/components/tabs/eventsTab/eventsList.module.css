@@ -1,3 +1,62 @@
+/*
+  The event list is styled in a way that:
+
+  * when the table content would not fill the whole table width, the last column is stretched to
+    fill the remaining space:
+
+      | foo foo | bar bar                 |
+      |---------|-------------------------|
+      | foo foo | bar bar                 |
+
+  * when the table content would fill the table width, all columns are sized according to their
+    content, letting the text wrap:
+
+      | foo foo foo foo | bar bar bar bar |
+      | foo foo foo     | bar bar bar     |
+      |-----------------|-----------------|
+      | foo foo         | bar bar         |
+
+
+  To achieve this, first we bound the container width so it is either:
+
+  * 100% of the scrolling area when the content doesn't fill the whole table
+  * 100% + 1px of the scrolling area otherwise.
+
+  In the latter case, the scrolling container can theoretically scroll horizontally (in practice it
+  doesn't because the horizontal overflow is hidden).
+
+  We can detect this state by using a Scroll Driven Animation as described in
+  https://www.bram.us/2023/09/16/solved-by-css-scroll-driven-animations-detect-if-an-element-can-scroll-or-not/
+
+  Finally, we use a container query to stretch the last column to fill the remaining space only when
+  the table content doesn't fill the whole table.
+*/
+
 .root {
-  margin: 0 var(--mantine-spacing-md) var(--mantine-spacing-md) var(--mantine-spacing-md);
+  padding: 0 var(--mantine-spacing-md) var(--mantine-spacing-md) var(--mantine-spacing-md);
+
+  width: max-content;
+  min-width: 100%;
+  max-width: calc(100% + 1px);
+
+  --content-fills-the-table: no;
+  animation: detect-scroll;
+  animation-timeline: --dd-tab-scroll-x-timeline;
+}
+
+@keyframes detect-scroll {
+  from,
+  to {
+    --content-fills-the-table: yes;
+  }
+}
+
+@container style(--content-fills-the-table: no) {
+  .root table {
+    text-wrap: nowrap;
+  }
+
+  .root col[data-growable] {
+    width: 100%;
+  }
 }

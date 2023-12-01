@@ -14,6 +14,17 @@
   width: 0;
 }
 
+/*
+  The following style is used to draw a shadow at the bottom of the header.
+
+  We want to show the shadow only when the header is scrolled down. To do so, we use a Scroll Driven
+  Animation to display the shadow according to the scroll position.
+
+  When using a box-shadow directly on the header, the shadow is visible on the sides, which is a bit
+  weird aesthetically. To avoid this, we use a pseudo-element to draw the shadow and use the
+  container to "clip" the shadow on the sides.
+*/
+
 @keyframes table-header-shadow {
   to {
     box-shadow: 5px 0 var(--shadow-size) black;
@@ -50,12 +61,12 @@
 
   width: calc(100% - var(--shadow-size));
 
-  /* if the container has no height, the shadow is not quite visible. Set an arbitrary size */
+  /* If the container has no height, the shadow is not quite visible. Set an arbitrary size */
   height: 20px;
   margin: -20px auto 0;
 
   display: block;
-  animation: table-header-shadow linear both;
+  animation: table-header-shadow linear forwards;
   animation-timeline: --dd-tab-scroll-timeline;
-  animation-range: 0 35px; /* the thead is 35px tall */
+  animation-range: 0 35px; /* The header happens to be 35px tall. It doesn't need to be precise. */
 }

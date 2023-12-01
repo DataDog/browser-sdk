@@ -27,6 +27,17 @@ export function EventsList({
   return (
     <div className={classes.root}>
       <Table stickyHeader>
+        <colgroup>
+          {columns.map((_, index) => (
+            <col
+              key={index}
+              data-growable={
+                // Only the last column is allowed to grow
+                index === columns.length - 1 || undefined
+              }
+            />
+          ))}
+        </colgroup>
         <EventsListHeader
           ref={headerRowRef}
           columns={columns}
