@@ -1,14 +1,13 @@
-import { Flex, Table, CloseButton } from '@mantine/core'
+import { Table } from '@mantine/core'
 import React, { useRef } from 'react'
 import type { EventFilters, FacetRegistry } from '../../../hooks/useEvents'
 import type { SdkEvent } from '../../../sdkEvent'
 import { isRumViewEvent } from '../../../sdkEvent'
 import type { EventListColumn } from './columnUtils'
-import { removeColumn, getColumnTitle } from './columnUtils'
 import { EventRow } from './eventRow'
 import { ColumnDrag } from './columnDrag'
 import classes from './eventsList.module.css'
-import { AddColumnPopover } from './addColumnPopover'
+import { EventsListHeader } from './eventsListHeader'
 
 export function EventsList({
   events,
@@ -28,22 +27,12 @@ export function EventsList({
   return (
     <div className={classes.root}>
       <Table stickyHeader>
-        <Table.Thead>
-          <Table.Tr ref={headerRowRef}>
-            {columns.map((column) => (
-              <ColumnHeader
-                key={column.type === 'field' ? `field-${column.path}` : column.type}
-                columns={columns}
-                column={column}
-                onColumnsChange={onColumnsChange}
-              ></ColumnHeader>
-            ))}
-            <Table.Td className={classes.addColumnCell}>
-              <AddColumnPopover columns={columns} onColumnsChange={onColumnsChange} facetRegistry={facetRegistry} />
-            </Table.Td>
-          </Table.Tr>
-          <div className={classes.headerRowShadow} />
-        </Table.Thead>
+        <EventsListHeader
+          ref={headerRowRef}
+          columns={columns}
+          onColumnsChange={onColumnsChange}
+          facetRegistry={facetRegistry}
+        />
 
         <Table.Tbody>
           {events.map((event) => (
@@ -60,29 +49,6 @@ export function EventsList({
 
       <ColumnDrag columns={columns} onColumnsChange={onColumnsChange} headerRowRef={headerRowRef} />
     </div>
-  )
-}
-
-function ColumnHeader({
-  columns,
-  column,
-  onColumnsChange,
-}: {
-  columns: EventListColumn[]
-  column: EventListColumn
-  onColumnsChange: (columns: EventListColumn[]) => void
-}) {
-  return (
-    <Table.Th
-      key={column.type === 'field' ? `field-${column.path}` : column.type}
-      data-header-cell
-      className={classes.columnHeader}
-    >
-      <Flex justify="space-between" gap="sm" align="center">
-        {getColumnTitle(column)}
-        <CloseButton size="xs" variant="filled" onClick={() => onColumnsChange(removeColumn(columns, column))} />
-      </Flex>
-    </Table.Th>
   )
 }
 
