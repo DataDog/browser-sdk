@@ -1,0 +1,13 @@
+.addFieldColumn {
+  display: flex;
+  align-items: flex-end;
+  gab: var(--mantine-spacing-md);
+}
+
+.addFieldAutocomplete {
+  flex: 1;
+}
+
+.addFilterAutocompleteHighlight {
+  text-decoration: underline;
+}
