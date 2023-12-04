@@ -15,6 +15,8 @@ export interface Settings {
   autoFlush: boolean
   preserveEvents: boolean
   eventCollectionStrategy: EventCollectionStrategy
+  rumConfigurationOverride: object | null
+  logsConfigurationOverride: object | null
 }
 
 const DEFAULT_SETTINGS: Readonly<Settings> = {
@@ -25,6 +27,8 @@ const DEFAULT_SETTINGS: Readonly<Settings> = {
   autoFlush: false,
   preserveEvents: false,
   eventCollectionStrategy: 'sdk',
+  rumConfigurationOverride: null,
+  logsConfigurationOverride: null,
 }
 
 let settings: Settings | undefined

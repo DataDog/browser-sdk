@@ -35,7 +35,16 @@ export function Panel() {
     <Tabs color="violet" value={activeTab} className={classes.tabs} onChange={updateActiveTab}>
       <Tabs.List className="dd-privacy-allow">
         <Tabs.Tab value={PanelTabs.Events}>Events</Tabs.Tab>
-        <Tabs.Tab value={PanelTabs.Infos}>
+        <Tabs.Tab
+          value={PanelTabs.Infos}
+          rightSection={
+            isOverridingInitConfiguration(settings) && (
+              <Text c="orange" fw="bold" title="Overriding init configuration">
+                ⚠
+              </Text>
+            )
+          }
+        >
           <Text>Infos</Text>
         </Tabs.Tab>
         <Tabs.Tab value={PanelTabs.Replay}>
@@ -79,5 +88,9 @@ export function Panel() {
 }
 
 function isInterceptingNetworkRequests(settings: Settings) {
-  return settings.blockIntakeRequests || settings.useDevBundles || settings.useRumSlim
+  return settings.blockIntakeRequests || settings.useDevBundles || settings.injectDevBundles || settings.useRumSlim
+}
+
+function isOverridingInitConfiguration(settings: Settings) {
+  return settings.rumConfigurationOverride || settings.logsConfigurationOverride
 }

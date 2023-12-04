@@ -3,6 +3,8 @@ import { DEV_LOGS_URL, DEV_RUM_URL, SESSION_STORAGE_SETTINGS_KEY } from '../comm
 
 declare global {
   interface Window extends EventTarget {
+    DD_RUM?: SdkPublicApi
+    DD_LOGS?: SdkPublicApi
     __ddBrowserSdkExtensionCallback?: (message: unknown) => void
   }
 }
@@ -23,6 +25,14 @@ function main() {
     const ddRumGlobal = instrumentGlobal('DD_RUM')
     const ddLogsGlobal = instrumentGlobal('DD_LOGS')
 
+    if (settings.rumConfigurationOverride) {
+      overrideInitConfiguration(ddRumGlobal, settings.rumConfigurationOverride)
+    }
+
+    if (settings.logsConfigurationOverride) {
+      overrideInitConfiguration(ddLogsGlobal, settings.logsConfigurationOverride)
+    }
+
     if (settings.injectDevBundles) {
       injectDevBundle(DEV_RUM_URL, ddRumGlobal)
       injectDevBundle(DEV_LOGS_URL, ddLogsGlobal)
@@ -33,15 +43,15 @@ function main() {
 main()
 
 function sendEventsToExtension() {
-// This script is executed in the "main" execution world, the same world as the webpage. Thus, it
-// can define a global callback variable to listen to SDK events.
+  // This script is executed in the "main" execution world, the same world as the webpage. Thus, it
+  // can define a global callback variable to listen to SDK events.
   window.__ddBrowserSdkExtensionCallback = (message: unknown) => {
-  // Relays any message to the "isolated" content-script via a custom event.
-  window.dispatchEvent(
-    new CustomEvent('__ddBrowserSdkMessage', {
-      detail: message,
-    })
-  )
+    // Relays any message to the "isolated" content-script via a custom event.
+    window.dispatchEvent(
+      new CustomEvent('__ddBrowserSdkMessage', {
+        detail: message,
+      })
+    )
   }
 }
 
@@ -54,6 +64,16 @@ function injectDevBundle(url: string, global: GlobalInstrumentation) {
     global.returnValue(devInstance)
   }
 }
+
+function overrideInitConfiguration(global: GlobalInstrumentation, configurationOverride: object) {
+  global.onSet((sdkInstance) => {
+    const originalInit = sdkInstance.init
+    sdkInstance.init = (config: any) => {
+      originalInit({ ...config, ...configurationOverride })
+    }
+  })
+}
+
 function loadSdkScriptFromURL(url: string) {
   const xhr = new XMLHttpRequest()
   try {
@@ -103,6 +123,6 @@ function proxySdk(target: SdkPublicApi, root: SdkPublicApi) {
   for (const key in root) {
     if (Object.prototype.hasOwnProperty.call(root, key)) {
       target[key] = root[key]
+    }
   }
-}
 }
