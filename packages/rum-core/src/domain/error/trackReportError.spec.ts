@@ -39,7 +39,7 @@ describe('trackReportError', () => {
       source: ErrorSource.REPORT,
       handling: ErrorHandling.UNHANDLED,
       type: 'NavigatorVibrate',
-      originalError: FAKE_REPORT
+      originalError: FAKE_REPORT,
     })
   })
 })

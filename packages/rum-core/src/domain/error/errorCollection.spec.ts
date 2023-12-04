@@ -81,7 +81,6 @@ describe('error collection', () => {
               source_type: 'browser',
               causes: undefined,
               fingerprint: undefined,
-              original_error: error,
             },
             type: RumEventType.ERROR,
             view: {
@@ -254,7 +253,6 @@ describe('error collection', () => {
           source_type: 'browser',
           causes: undefined,
           fingerprint: undefined,
-          original_error: error,
         },
         view: {
           in_foreground: true,

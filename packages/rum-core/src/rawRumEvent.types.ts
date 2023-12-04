@@ -65,7 +65,6 @@ export interface RawRumErrorEvent {
     handling?: ErrorHandling
     causes?: RawErrorCause[]
     source_type: 'browser'
-    original_error?: unknown
   }
   view?: {
     in_foreground: boolean
