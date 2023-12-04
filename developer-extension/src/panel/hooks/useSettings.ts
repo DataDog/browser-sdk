@@ -1,12 +1,15 @@
 import { useEffect, useReducer } from 'react'
+import { SESSION_STORAGE_SETTINGS_KEY } from '../../common/constants'
 import { EventListeners } from '../../common/eventListeners'
 import { createLogger } from '../../common/logger'
+import { evalInWindow } from '../evalInWindow'
 import type { EventCollectionStrategy } from './useEvents'
 
 const logger = createLogger('useSettings')
 
 export interface Settings {
   useDevBundles: boolean
+  injectDevBundles: boolean
   useRumSlim: boolean
   blockIntakeRequests: boolean
   autoFlush: boolean
@@ -16,6 +19,7 @@ export interface Settings {
 
 const DEFAULT_SETTINGS: Readonly<Settings> = {
   useDevBundles: false,
+  injectDevBundles: false,
   useRumSlim: false,
   blockIntakeRequests: false,
   autoFlush: false,
@@ -29,11 +33,20 @@ const storageLoadingPromise = loadSettingsFromStorage().catch((error) =>
   logger.error('Error while loading extension storage', error)
 )
 
+function syncSettingsWithSessionStorage(settings: Settings) {
+  evalInWindow(`sessionStorage.setItem('${SESSION_STORAGE_SETTINGS_KEY}', '${JSON.stringify(settings)}')`).catch(
+    (error) => logger.error('Error while synchronizing session storage with extension storage', error)
+  )
+}
+
 async function loadSettingsFromStorage() {
   const storage = await chrome.storage.local.get()
   settings = Object.fromEntries(
     Object.entries(DEFAULT_SETTINGS).map(([name, defaultValue]) => [name, storage[name] ?? defaultValue])
   ) as Settings
+  if (settings) {
+    syncSettingsWithSessionStorage(settings)
+  }
 }
 
 function setSetting<Name extends keyof Settings>(name: Name, value: Settings[Name]) {
@@ -42,6 +55,9 @@ function setSetting<Name extends keyof Settings>(name: Name, value: Settings[Nam
   chrome.storage.local
     .set({ [name]: value })
     .catch((error) => logger.error('Error while storing setting to the storage', error))
+  if (settings) {
+    syncSettingsWithSessionStorage(settings)
+  }
 }
 
 export function useSettings() {

@@ -10,7 +10,15 @@ import css from './settingsTab.module.css'
 export function SettingsTab() {
   const devServerStatus = useDevServerStatus()
   const [
-    { useDevBundles, useRumSlim, blockIntakeRequests, preserveEvents, eventCollectionStrategy, autoFlush },
+    {
+      useDevBundles,
+      injectDevBundles,
+      useRumSlim,
+      blockIntakeRequests,
+      preserveEvents,
+      eventCollectionStrategy,
+      autoFlush,
+    },
     setSetting,
   ] = useSettings()
 
@@ -39,8 +47,34 @@ export function SettingsTab() {
               }
               description={
                 <>
-                  Use the local development bundles served by the Browser SDK development server. To start the
-                  development server, run <Code>yarn dev</Code> in the Browser SDK root folder.
+                  Overrides CDN bundles with local development bundles served by the Browser SDK development server. To
+                  start the development server, run <Code>yarn dev</Code> in the Browser SDK root folder.
+                </>
+              }
+            />
+
+            <SettingItem
+              input={
+                <Group align="start">
+                  <Checkbox
+                    label="Inject development bundles"
+                    checked={injectDevBundles}
+                    onChange={(e) => setSetting('injectDevBundles', isChecked(e.target))}
+                    color="violet"
+                  />
+                  {devServerStatus === DevServerStatus.AVAILABLE ? (
+                    <Badge color="green">Available</Badge>
+                  ) : devServerStatus === DevServerStatus.CHECKING ? (
+                    <Badge color="yellow">Checking...</Badge>
+                  ) : (
+                    <Badge color="red">Unavailable</Badge>
+                  )}
+                </Group>
+              }
+              description={
+                <>
+                  Inject local development bundles to override NPM or other CDN SDK bundles. To start the development
+                  server, run <Code>yarn dev</Code> in the Browser SDK root folder.
                 </>
               }
             />
