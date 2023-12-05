@@ -2,9 +2,9 @@ import { Badge, Box, Checkbox, Code, Group, Select, Space, Text } from '@mantine
 import React from 'react'
 import { DevServerStatus, useDevServerStatus } from '../../hooks/useDevServerStatus'
 import { useSettings } from '../../hooks/useSettings'
-import type { EventCollectionStrategy } from '../../hooks/useEvents'
 import { Columns } from '../columns'
 import { TabBase } from '../tabBase'
+import type { EventCollectionStrategy } from '../../../common/types'
 import css from './settingsTab.module.css'
 
 export function SettingsTab() {

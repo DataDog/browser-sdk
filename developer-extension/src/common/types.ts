@@ -40,3 +40,17 @@ export type SdkMessage =
         segment: BrowserSegmentMetadata
       }
     }
+
+export type EventCollectionStrategy = 'sdk' | 'requests'
+
+export interface Settings {
+  useDevBundles: boolean
+  injectDevBundles: boolean
+  useRumSlim: boolean
+  blockIntakeRequests: boolean
+  autoFlush: boolean
+  preserveEvents: boolean
+  eventCollectionStrategy: EventCollectionStrategy
+  rumConfigurationOverride: object | null
+  logsConfigurationOverride: object | null
+}

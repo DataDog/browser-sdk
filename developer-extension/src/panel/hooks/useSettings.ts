@@ -3,21 +3,9 @@ import { SESSION_STORAGE_SETTINGS_KEY } from '../../common/constants'
 import { EventListeners } from '../../common/eventListeners'
 import { createLogger } from '../../common/logger'
 import { evalInWindow } from '../evalInWindow'
-import type { EventCollectionStrategy } from './useEvents'
+import type { Settings } from '../../common/types'
 
 const logger = createLogger('useSettings')
-
-export interface Settings {
-  useDevBundles: boolean
-  injectDevBundles: boolean
-  useRumSlim: boolean
-  blockIntakeRequests: boolean
-  autoFlush: boolean
-  preserveEvents: boolean
-  eventCollectionStrategy: EventCollectionStrategy
-  rumConfigurationOverride: object | null
-  logsConfigurationOverride: object | null
-}
 
 const DEFAULT_SETTINGS: Readonly<Settings> = {
   useDevBundles: false,

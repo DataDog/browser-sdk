@@ -1,6 +1,7 @@
-import { ActionIcon, Anchor, Button, Divider, Group, JsonInput, Space, Text } from '@mantine/core'
+import { ActionIcon, Anchor, Button, Divider, Group, JsonInput, Menu, Space, Text } from '@mantine/core'
 import type { ReactNode } from 'react'
 import React, { useEffect, useState } from 'react'
+import { IconPencil, IconPencilExclamation, IconX } from '@tabler/icons-react'
 import { evalInWindow } from '../../evalInWindow'
 import { useSdkInfos } from '../../hooks/useSdkInfos'
 import { Columns } from '../columns'
@@ -14,7 +15,7 @@ const logger = createLogger('infosTab')
 
 export function InfosTab() {
   const infos = useSdkInfos()
-  const [, setSetting] = useSettings()
+  const [settings, setSetting] = useSettings()
 
   if (!infos) {
     return null
@@ -76,6 +77,7 @@ export function InfosTab() {
                 onChange={(value) => {
                   setSetting('rumConfigurationOverride', value)
                 }}
+                isOverridden={!!settings.rumConfigurationOverride}
               />
               <Entry name="Internal context" value={infos.rum.internalContext} />
               <Entry name="Global context" value={infos.rum.globalContext} />
@@ -106,6 +108,7 @@ export function InfosTab() {
                 onChange={(value) => {
                   setSetting('logsConfigurationOverride', value)
                 }}
+                isOverridden={!!settings.logsConfigurationOverride}
               />
               <Entry name="Global context" value={infos.logs.globalContext} />
               <Entry name="User" value={infos.logs.user} />
@@ -137,7 +140,17 @@ function AppLink({
   )
 }
 
-function Entry({ name, value, onChange }: { name: string; value: any; onChange?: (value: object | null) => void }) {
+function Entry({
+  name,
+  value,
+  isOverridden = false,
+  onChange,
+}: {
+  name: string
+  value: any
+  isOverridden?: boolean
+  onChange?: (value: object | null) => void
+}) {
   const [edited, setEdited] = useState(false)
   const [newValue, setNewValue] = React.useState<string | null>()
 
@@ -154,6 +167,11 @@ function Entry({ name, value, onChange }: { name: string; value: any; onChange?:
     }
   }
 
+  const handleClearClick = () => {
+    onChange && onChange(null)
+    reloadPage()
+  }
+
   return (
     <Text component="div">
       {typeof value === 'string' ? (
@@ -162,34 +180,43 @@ function Entry({ name, value, onChange }: { name: string; value: any; onChange?:
         </>
       ) : value ? (
         <>
-          {name}
-          {onChange && (
-            <>
-              {!edited ? (
-                <ActionIcon
-                  style={{ display: 'inline-block' }}
-                  color="violet"
-                  size="xs"
-                  variant="transparent"
-                  aria-label="Edit"
-                  onClick={() => setEdited(true)}
-                >
-                  ✏️
-                </ActionIcon>
-              ) : (
-                <Button
-                  color="violet"
-                  variant="transparent"
-                  size="compact-xs"
-                  onClick={handleApplyClick}
-                  className="dd-privacy-allow"
-                >
-                  Apply
-                </Button>
-              )}
-            </>
-          )}
-          :
+          <div style={{ display: 'inline-flex' }}>
+            {name}
+            {onChange && (
+              <>
+                {!edited ? (
+                  <Menu shadow="md" width={200}>
+                    <Menu.Target>
+                      <ActionIcon variant="transparent" aria-label="Settings" size="xs">
+                        {isOverridden ? (
+                          <IconPencilExclamation style={{ width: '90%', height: '90%' }} stroke={1.5} color="orange" />
+                        ) : (
+                          <IconPencil style={{ width: '90%', height: '90%' }} stroke={1.5} />
+                        )}
+                      </ActionIcon>
+                    </Menu.Target>
+                    <Menu.Dropdown>
+                      <Menu.Item leftSection={<IconPencil size={14} />} onClick={() => setEdited(true)}>
+                        Edit
+                      </Menu.Item>
+                      {isOverridden && (
+                        <Menu.Item leftSection={<IconX size={14} />} onClick={() => handleClearClick()}>
+                          Clear
+                        </Menu.Item>
+                      )}
+                    </Menu.Dropdown>
+                  </Menu>
+                ) : (
+                  <>
+                    <Button variant="light" size="compact-xs" onClick={handleApplyClick} className="dd-privacy-allow">
+                      Apply
+                    </Button>
+                  </>
+                )}
+              </>
+            )}
+            :
+          </div>
           {!edited ? (
             <Json value={value} />
           ) : (

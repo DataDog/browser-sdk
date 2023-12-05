@@ -1,11 +1,10 @@
+import type { EventCollectionStrategy } from '../../../common/types'
 import { INTAKE_DOMAINS } from '../../../common/constants'
 import { onBackgroundMessage } from '../../backgroundScriptConnection'
 import { isRumViewEvent, type SdkEvent } from '../../sdkEvent'
 import { FacetRegistry } from './facetRegistry'
 
 const MAXIMUM_LOGGED_EVENTS = 1000
-
-export type EventCollectionStrategy = 'sdk' | 'requests'
 
 export type EventCollection = ReturnType<typeof startEventCollection>
 

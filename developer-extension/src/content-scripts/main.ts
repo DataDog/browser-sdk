@@ -1,3 +1,4 @@
+import type { Settings } from '../common/types'
 import { EventListeners } from '../common/eventListeners'
 import { DEV_LOGS_URL, DEV_RUM_URL, SESSION_STORAGE_SETTINGS_KEY } from '../common/constants'
 
@@ -12,16 +13,16 @@ declare global {
 type SdkPublicApi = { [key: string]: (...args: any[]) => unknown }
 
 function main() {
-  if (window.__ddBrowserSdkExtensionCallback) {
-    return
-  }
-
   sendEventsToExtension()
 
-  const stringSettings = sessionStorage.getItem(SESSION_STORAGE_SETTINGS_KEY)
-  const settings = stringSettings && JSON.parse(stringSettings)
+  const settings = getSettings()
 
-  if (settings) {
+  if (
+    settings &&
+    // Avoid instrumenting SDK global variables if the SDKs are already loaded.
+    // This happens when the page is loaded and then the devtools are opened.
+    noBrowserSdkLoaded()
+  ) {
     const ddRumGlobal = instrumentGlobal('DD_RUM')
     const ddLogsGlobal = instrumentGlobal('DD_LOGS')
 
@@ -53,6 +54,22 @@ function sendEventsToExtension() {
       })
     )
   }
+}
+
+function getSettings() {
+  try {
+    // sessionStorage access throws in sandboxed iframes
+    const stringSettings = sessionStorage.getItem(SESSION_STORAGE_SETTINGS_KEY)
+    // JSON.parse throws if the stringSettings is not a valid JSON
+    return JSON.parse(stringSettings || 'null') as Settings
+  } catch (error) {
+    // eslint-disable-next-line no-console
+    console.error('Error getting settings', error)
+  }
+}
+
+function noBrowserSdkLoaded() {
+  return !window.DD_RUM && !window.DD_LOGS
 }
 
 function injectDevBundle(url: string, global: GlobalInstrumentation) {
