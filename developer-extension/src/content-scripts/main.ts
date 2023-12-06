@@ -74,7 +74,7 @@ function noBrowserSdkLoaded() {
 
 function injectDevBundle(url: string, global: GlobalInstrumentation) {
   loadSdkScriptFromURL(url)
-  const devInstance = global.get()
+  const devInstance = global.get() as SdkPublicApi
 
   if (devInstance) {
     global.onSet((sdkInstance) => proxySdk(sdkInstance, devInstance))
@@ -84,9 +84,12 @@ function injectDevBundle(url: string, global: GlobalInstrumentation) {
 
 function overrideInitConfiguration(global: GlobalInstrumentation, configurationOverride: object) {
   global.onSet((sdkInstance) => {
-    const originalInit = sdkInstance.init
-    sdkInstance.init = (config: any) => {
-      originalInit({ ...config, ...configurationOverride })
+    // Ensure the sdkInstance has an 'init' method, excluding async stubs.
+    if ('init' in sdkInstance) {
+      const originalInit = sdkInstance.init
+      sdkInstance.init = (config: any) => {
+        originalInit({ ...config, ...configurationOverride })
+      }
     }
   })
 }
@@ -112,7 +115,7 @@ function loadSdkScriptFromURL(url: string) {
 
 type GlobalInstrumentation = ReturnType<typeof instrumentGlobal>
 function instrumentGlobal(global: 'DD_RUM' | 'DD_LOGS') {
-  const eventListeners: EventListeners<SdkPublicApi> = new EventListeners<SdkPublicApi>()
+  const eventListeners = new EventListeners<SdkPublicApi>()
   let returnedInstance: SdkPublicApi | undefined
   let lastInstance: SdkPublicApi | undefined
   Object.defineProperty(window, global, {
