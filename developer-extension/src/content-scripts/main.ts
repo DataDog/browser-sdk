@@ -13,6 +13,11 @@ declare global {
 type SdkPublicApi = { [key: string]: (...args: any[]) => unknown }
 
 function main() {
+  // Prevent multiple executions when the devetools are reconnecting
+  if (window.__ddBrowserSdkExtensionCallback) {
+    return
+  }
+
   sendEventsToExtension()
 
   const settings = getSettings()
