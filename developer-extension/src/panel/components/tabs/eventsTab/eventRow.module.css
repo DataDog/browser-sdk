@@ -5,3 +5,7 @@
 .cell {
   vertical-align: top;
 }
+
+.cell:not([data-no-wrap]) {
+  word-break: break-word;
+}

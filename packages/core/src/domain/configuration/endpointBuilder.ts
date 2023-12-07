@@ -10,6 +10,13 @@ import { INTAKE_SITE_US1 } from './intakeSites'
 declare const __BUILD_ENV__SDK_VERSION__: string
 
 export type TrackType = 'logs' | 'rum' | 'replay'
+export type ApiType =
+  | 'xhr'
+  | 'fetch'
+  | 'beacon'
+  // 'manual' reflects that the request have been sent manually, outside of the SDK (ex: via curl or
+  // a Node.js script).
+  | 'manual'
 
 export type EndpointBuilder = ReturnType<typeof createEndpointBuilder>
 
@@ -21,7 +28,7 @@ export function createEndpointBuilder(
   const buildUrlWithParameters = createEndpointUrlWithParametersBuilder(initConfiguration, trackType)
 
   return {
-    build(api: 'xhr' | 'fetch' | 'beacon', payload: Payload) {
+    build(api: ApiType, payload: Payload) {
       const parameters = buildEndpointParameters(initConfiguration, trackType, configurationTags, api, payload)
       return buildUrlWithParameters(parameters)
     },
@@ -72,7 +79,7 @@ function buildEndpointParameters(
   { clientToken, internalAnalyticsSubdomain }: InitConfiguration,
   trackType: TrackType,
   configurationTags: string[],
-  api: 'xhr' | 'fetch' | 'beacon',
+  api: ApiType,
   { retry, flushReason, encoding }: Payload
 ) {
   const tags = [`sdk_version:${__BUILD_ENV__SDK_VERSION__}`, `api:${api}`].concat(configurationTags)

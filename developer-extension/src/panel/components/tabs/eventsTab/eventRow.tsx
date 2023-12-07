@@ -1,4 +1,5 @@
 import { Table, Badge, Menu } from '@mantine/core'
+import { IconCopy, IconDotsVertical, IconColumnInsertRight } from '@tabler/icons-react'
 import type { ComponentPropsWithoutRef, ReactNode } from 'react'
 import React, { useRef, useState } from 'react'
 import clsx from 'clsx'
@@ -17,9 +18,12 @@ import { formatDate, formatDuration } from '../../../formatNumber'
 import { defaultFormatValue, Json } from '../../json'
 import { LazyCollapse } from '../../lazyCollapse'
 import type { FacetRegistry } from '../../../hooks/useEvents'
+import { useSdkInfos } from '../../../hooks/useSdkInfos'
 import type { EventListColumn } from './columnUtils'
 import { addColumn, includesColumn } from './columnUtils'
 import classes from './eventRow.module.css'
+import { RowButton } from './rowButton'
+import { canCopyEvent, copyEventAsCurl, copyEventAsFetch } from './copyEvent'
 
 const RUM_EVENT_TYPE_COLOR = {
   action: 'violet',
@@ -76,6 +80,7 @@ export const EventRow = React.memo(
             onClick={() => {
               onColumnsChange(addColumn(columns, newColumn))
             }}
+            leftSection={<IconColumnInsertRight size={14} />}
           >
             Add column
           </Menu.Item>
@@ -85,12 +90,11 @@ export const EventRow = React.memo(
 
     return (
       <Table.Tr>
-        {columns.map((column, index): React.ReactElement => {
-          const isLast = index === columns.length - 1
+        {columns.map((column): React.ReactElement => {
           switch (column.type) {
             case 'date':
               return (
-                <Cell key="date" isLast={isLast}>
+                <Cell key="date" noWrap>
                   {formatDate(event.date)}
                 </Cell>
               )
@@ -98,13 +102,15 @@ export const EventRow = React.memo(
               return (
                 <Cell
                   key="description"
-                  isLast={isLast}
                   className={classes.descriptionCell}
                   onClick={(event) => {
-                    if (jsonRef.current?.contains(event.target as Node)) {
-                      // Ignore clicks on the collapsible area
+                    const target = event.target as Element
+
+                    // Ignore clicks on menus or the JSON contained in the collapsible area
+                    if (target.matches('[role="menu"] *') || jsonRef.current?.contains(target)) {
                       return
                     }
+
                     setIsCollapsed((previous) => !previous)
                   }}
                 >
@@ -123,7 +129,7 @@ export const EventRow = React.memo(
               )
             case 'type':
               return (
-                <Cell key="type" isLast={isLast}>
+                <Cell key="type">
                   {isRumEvent(event) || isTelemetryEvent(event) ? (
                     <Badge variant="outline" color={RUM_EVENT_TYPE_COLOR[event.type]}>
                       {event.type}
@@ -138,7 +144,7 @@ export const EventRow = React.memo(
             case 'field': {
               const value = facetRegistry.getFieldValueForEvent(event, column.path)
               return (
-                <Cell key={`field-${column.path}`} isLast={isLast}>
+                <Cell key={`field-${column.path}`}>
                   {value !== undefined && (
                     <Json
                       value={value}
@@ -152,24 +158,63 @@ export const EventRow = React.memo(
             }
           }
         })}
+        <Cell>
+          <EventMenu event={event} />
+        </Cell>
       </Table.Tr>
     )
   }
 )
 
+function EventMenu({ event }: { event: SdkEvent }) {
+  return (
+    <Menu shadow="md" width={200}>
+      <Menu.Target>
+        <RowButton icon={IconDotsVertical} title="Actions" />
+      </Menu.Target>
+
+      <Menu.Dropdown>
+        <EventMenuDropdown event={event} />
+      </Menu.Dropdown>
+    </Menu>
+  )
+}
+
+function EventMenuDropdown({ event }: { event: SdkEvent }) {
+  const infos = useSdkInfos()
+  if (!canCopyEvent(infos, event)) {
+    return (
+      <>
+        <Menu.Item disabled>Copy as cURL</Menu.Item>
+        <Menu.Item disabled>Copy as fetch</Menu.Item>
+      </>
+    )
+  }
+  return (
+    <>
+      <Menu.Item leftSection={<IconCopy size={14} />} onClick={() => copyEventAsCurl(infos, event)}>
+        Copy as cURL
+      </Menu.Item>
+      <Menu.Item leftSection={<IconCopy size={14} />} onClick={() => copyEventAsFetch(infos, event)}>
+        Copy as fetch
+      </Menu.Item>
+    </>
+  )
+}
+
 function Cell({
-  isLast,
   children,
   className,
   onClick,
+  noWrap,
 }: {
-  isLast: boolean
   children: ReactNode
   className?: string
   onClick?: ComponentPropsWithoutRef<'td'>['onClick']
+  noWrap?: boolean
 }) {
   return (
-    <Table.Td colSpan={isLast ? 2 : 1} className={clsx(className, classes.cell)} onClick={onClick}>
+    <Table.Td className={clsx(className, classes.cell)} data-no-wrap={noWrap || undefined} onClick={onClick}>
       {children}
     </Table.Td>
   )

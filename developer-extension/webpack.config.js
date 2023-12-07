@@ -1,7 +1,7 @@
 const HtmlWebpackPlugin = require('html-webpack-plugin')
 const { default: WebextensionPlugin } = require('@webextension-toolbox/webpack-webextension-plugin')
 const CopyPlugin = require('copy-webpack-plugin')
-const { DefinePlugin } = require('webpack')
+const { createDefinePlugin } = require('../webpack.base')
 
 module.exports = (_env, argv) => {
   return [
@@ -30,9 +30,7 @@ module.exports = (_env, argv) => {
         new HtmlWebpackPlugin({
           filename: 'panel.html',
         }),
-        new DefinePlugin({
-          'process.env.BUMBAG_ENV': JSON.stringify('production'),
-        }),
+        createDefinePlugin(),
       ],
     }),
     baseConfig({

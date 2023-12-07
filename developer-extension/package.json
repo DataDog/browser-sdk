@@ -7,6 +7,7 @@
     "dev": "webpack --mode development --watch"
   },
   "devDependencies": {
+    "@tabler/icons-react": "2.42.0",
     "@types/chrome": "0.0.254",
     "@types/react": "18.2.42",
     "@types/react-dom": "18.2.17",
@@ -18,6 +19,7 @@
     "webpack": "5.89.0"
   },
   "dependencies": {
+    "@datadog/browser-core": "workspace:*",
     "@datadog/browser-logs": "workspace:*",
     "@datadog/browser-rum": "workspace:*",
     "@mantine/core": "7.3.1",

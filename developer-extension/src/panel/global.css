@@ -1,3 +1,10 @@
+:root {
+  /* To keep z-index management simple, define all z-index values here, in ascending order */
+  --dd-json-z-index: 0;
+  --dd-events-list-header-z-index: 1;
+  --dd-column-drag-ghost-z-index: 2;
+}
+
 /*
  * Define the main border color to be used across the extension. It should match the color used by
  * Mantine, for example in the tabs component:
@@ -6,6 +13,7 @@
 :root[data-mantine-color-scheme='dark'] {
   --dd-border-color: var(--mantine-color-dark-4);
 }
+
 :root[data-mantine-color-scheme='light'] {
-  --dd-border-color: var(--mantine-color-dark-4);
+  --dd-border-color: var(--mantine-color-gray-3);
 }
