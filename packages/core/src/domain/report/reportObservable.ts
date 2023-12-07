@@ -19,6 +19,7 @@ export interface RawReport {
   type: RawReportType
   subtype: string
   message: string
+  originalReport: SecurityPolicyViolationEvent | DeprecationReport | InterventionReport
   stack?: string
 }
 
@@ -74,11 +75,14 @@ function createCspViolationReportObservable(configuration: Configuration) {
   return observable
 }
 
-function buildRawReportFromReport({ type, body }: DeprecationReport | InterventionReport): RawReport {
+function buildRawReportFromReport(report: DeprecationReport | InterventionReport): RawReport {
+  const { type, body } = report
+
   return {
     type,
     subtype: body.id,
     message: `${type}: ${body.message}`,
+    originalReport: report,
     stack: buildStack(body.id, body.message, body.sourceFile, body.lineNumber, body.columnNumber),
   }
 }
@@ -99,6 +103,7 @@ function buildRawReportFromCspViolation(event: SecurityPolicyViolationEvent): Ra
       event.lineNumber,
       event.columnNumber
     ),
+    originalReport: event,
   }
 }
 
