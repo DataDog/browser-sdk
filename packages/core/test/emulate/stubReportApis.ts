@@ -60,6 +60,7 @@ export function stubCspEventListener() {
 export const FAKE_CSP_VIOLATION_EVENT = createNewEvent('securitypolicyviolation', {
   blockedURI: 'blob',
   columnNumber: 8,
+  disposition: 'enforce',
   documentURI: 'blob',
   effectiveDirective: 'worker-src',
   lineNumber: 17,
