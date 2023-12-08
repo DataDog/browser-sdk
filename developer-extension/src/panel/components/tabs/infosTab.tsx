@@ -270,7 +270,7 @@ function tryParseJson(value: string) {
 function serializeJson(value: object) {
   // replacer to remove function attributes that have been serialized as empty object by useSdkInfos() (ex: beforeSend)
   const replacer = (key: string, val: unknown) =>
-    key !== '' && !Array.isArray(val) && typeof val === 'object' ? undefined : val
+    key !== '' && !Array.isArray(val) && typeof val === 'object' && val && !Object.keys(val).length ? undefined : val
 
   return JSON.stringify(value, replacer, 2)
 }
