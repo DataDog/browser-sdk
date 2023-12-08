@@ -64,15 +64,21 @@ module.exports = ({ entry, mode, filename, types, keepBuildEnvVariables }) => ({
             append: false,
           }
     ),
-    new webpack.DefinePlugin(
-      Object.fromEntries(
-        buildEnvKeys
-          .filter((key) => !keepBuildEnvVariables?.includes(key))
-          .map((key) => [
-            `__BUILD_ENV__${key}__`,
-            webpack.DefinePlugin.runtimeValue(() => JSON.stringify(getBuildEnvValue(key))),
-          ])
-      )
-    ),
+    createDefinePlugin({ keepBuildEnvVariables }),
   ],
 })
+
+function createDefinePlugin({ keepBuildEnvVariables } = {}) {
+  return new webpack.DefinePlugin(
+    Object.fromEntries(
+      buildEnvKeys
+        .filter((key) => !keepBuildEnvVariables?.includes(key))
+        .map((key) => [
+          `__BUILD_ENV__${key}__`,
+          webpack.DefinePlugin.runtimeValue(() => JSON.stringify(getBuildEnvValue(key))),
+        ])
+    )
+  )
+}
+
+module.exports.createDefinePlugin = createDefinePlugin

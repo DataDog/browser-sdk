@@ -24,6 +24,7 @@
 
 .valueChildrenIndent {
   position: absolute;
+  z-index: var(--dd-json-z-index);
   left: 0px;
   width: var(--indent);
 
@@ -62,4 +63,5 @@
 
 .jsonLine[data-floating] {
   position: absolute;
+  z-index: var(--dd-json-z-index);
 }

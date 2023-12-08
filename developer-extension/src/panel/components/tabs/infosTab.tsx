@@ -29,18 +29,24 @@ export function InfosTab() {
           {infos.cookie && (
             <>
               <Entry name="Id" value={infos.cookie.id} />
-              <Entry name="Logs" value={formatSessionType(infos.cookie.logs, 'Not tracked', 'Tracked')} />
+              <Entry
+                name="Logs"
+                value={infos.cookie.logs && formatSessionType(infos.cookie.logs, 'Not tracked', 'Tracked')}
+              />
               <Entry
                 name="RUM"
-                value={formatSessionType(
-                  infos.cookie.rum,
-                  'Not tracked',
-                  'Tracked with Session Replay',
-                  'Tracked without Session Replay'
-                )}
+                value={
+                  infos.cookie.rum &&
+                  formatSessionType(
+                    infos.cookie.rum,
+                    'Not tracked',
+                    'Tracked with Session Replay',
+                    'Tracked without Session Replay'
+                  )
+                }
               />
-              {infos.cookie.created && <Entry name="Created" value={formatDate(Number(infos.cookie.created))} />}
-              <Entry name="Expire" value={formatDate(Number(infos.cookie.expire))} />
+              <Entry name="Created" value={infos.cookie.created && formatDate(Number(infos.cookie.created))} />
+              <Entry name="Expire" value={infos.cookie.expire && formatDate(Number(infos.cookie.expire))} />
               <Button color="violet" variant="light" onClick={endSession} className="dd-privacy-allow">
                 End current session
               </Button>

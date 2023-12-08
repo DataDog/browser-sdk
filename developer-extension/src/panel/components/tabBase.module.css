@@ -13,8 +13,13 @@
 .contentContainer {
   flex: 1;
   overflow-y: auto;
+  overflow-x: hidden;
   padding: 0;
   margin: 0;
+
+  scroll-timeline:
+    --dd-tab-scroll-timeline,
+    --dd-tab-scroll-x-timeline x;
 }
 
 .horizontalContainer {

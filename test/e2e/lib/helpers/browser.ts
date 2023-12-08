@@ -27,6 +27,8 @@ export function getBrowserName(): (typeof validBrowserNames)[number] {
   let browserName = capabilities.browserName.toLowerCase()
   if (browserName === 'msedge') {
     browserName = 'edge'
+  } else if (browserName === 'chrome-headless-shell') {
+    browserName = 'chrome'
   }
   if (!includes(validBrowserNames, browserName)) {
     throw new Error(`Can't get browser name (invalid browser name ${browserName})`)

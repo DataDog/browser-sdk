@@ -33,7 +33,7 @@ export function useEvents({
   useEffect(() => {
     if (!preserveEvents) {
       const clearCurrentEvents = (details: chrome.webNavigation.WebNavigationTransitionCallbackDetails) => {
-        if (details.transitionType === 'reload') {
+        if (details.transitionType === 'reload' && details.tabId === chrome.devtools.inspectedWindow.tabId) {
           clearEvents()
         }
       }

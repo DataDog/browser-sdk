@@ -1,6 +1,6 @@
 const webpackConfig = require('../../webpack.base')({
   mode: 'development',
-  types: ['jasmine'],
+  types: ['jasmine', 'chrome'],
   // do not replace some build env variables in unit test in order to test different build behaviors
   keepBuildEnvVariables: ['SDK_VERSION'],
 })

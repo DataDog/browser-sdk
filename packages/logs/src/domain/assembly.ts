@@ -1,21 +1,12 @@
-import type { Context, EventRateLimiter, RawError, RelativeTime } from '@datadog/browser-core'
-import {
-  getSyntheticsResultId,
-  getSyntheticsTestId,
-  addTelemetryDebug,
-  willSyntheticsInjectRum,
-  ErrorSource,
-  combine,
-  createEventRateLimiter,
-  getRelativeTime,
-  isEmptyObject,
-} from '@datadog/browser-core'
+import type { EventRateLimiter, RawError } from '@datadog/browser-core'
+import { ErrorSource, combine, createEventRateLimiter, getRelativeTime, isEmptyObject } from '@datadog/browser-core'
 import type { CommonContext } from '../rawLogsEvent.types'
 import type { LogsConfiguration } from './configuration'
 import type { LifeCycle } from './lifeCycle'
 import { LifeCycleEventType } from './lifeCycle'
 import { STATUSES } from './logger'
 import type { LogsSessionManager } from './logsSessionManager'
+import { getRUMInternalContext } from './rumInternalContext'
 
 export function startLogsAssembly(
   sessionManager: LogsSessionManager,
@@ -66,43 +57,4 @@ export function startLogsAssembly(
       lifeCycle.notify(LifeCycleEventType.LOG_COLLECTED, log)
     }
   )
-}
-
-interface Rum {
-  getInternalContext?: (startTime?: RelativeTime) => Context | undefined
-}
-
-interface BrowserWindow {
-  DD_RUM?: Rum
-  DD_RUM_SYNTHETICS?: Rum
-}
-
-let logsSentBeforeRumInjectionTelemetryAdded = false
-
-export function getRUMInternalContext(startTime?: RelativeTime): Context | undefined {
-  const browserWindow = window as BrowserWindow
-
-  if (willSyntheticsInjectRum()) {
-    const context = getInternalContextFromRumGlobal(browserWindow.DD_RUM_SYNTHETICS)
-    if (!context && !logsSentBeforeRumInjectionTelemetryAdded) {
-      logsSentBeforeRumInjectionTelemetryAdded = true
-      addTelemetryDebug('Logs sent before RUM is injected by the synthetics worker', {
-        testId: getSyntheticsTestId(),
-        resultId: getSyntheticsResultId(),
-      })
-    }
-    return context
-  }
-
-  return getInternalContextFromRumGlobal(browserWindow.DD_RUM)
-
-  function getInternalContextFromRumGlobal(rumGlobal?: Rum): Context | undefined {
-    if (rumGlobal && rumGlobal.getInternalContext) {
-      return rumGlobal.getInternalContext(startTime)
-    }
-  }
-}
-
-export function resetRUMInternalContext() {
-  logsSentBeforeRumInjectionTelemetryAdded = false
 }

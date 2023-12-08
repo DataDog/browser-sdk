@@ -14,6 +14,7 @@ export function trackReportError(configuration: RumConfiguration, errorObservabl
       type: reportError.subtype,
       source: ErrorSource.REPORT,
       handling: ErrorHandling.UNHANDLED,
+      originalError: reportError.originalReport,
     })
   )
 
