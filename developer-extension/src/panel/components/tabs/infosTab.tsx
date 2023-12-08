@@ -1,7 +1,6 @@
-import { ActionIcon, Anchor, Button, Divider, Group, JsonInput, Menu, Space, Text } from '@mantine/core'
+import { Anchor, Button, Divider, Group, JsonInput, Space, Text } from '@mantine/core'
 import type { ReactNode } from 'react'
 import React, { useEffect, useState } from 'react'
-import { IconPencil, IconPencilExclamation, IconX } from '@tabler/icons-react'
 import { evalInWindow } from '../../evalInWindow'
 import { useSdkInfos } from '../../hooks/useSdkInfos'
 import { Columns } from '../columns'
@@ -42,7 +41,6 @@ export function InfosTab() {
               />
               {infos.cookie.created && <Entry name="Created" value={formatDate(Number(infos.cookie.created))} />}
               <Entry name="Expire" value={formatDate(Number(infos.cookie.expire))} />
-              <Space h="sm" />
               <Button color="violet" variant="light" onClick={endSession} className="dd-privacy-allow">
                 End current session
               </Button>
@@ -176,36 +174,25 @@ function Entry({
     <Text component="div">
       {typeof value === 'string' ? (
         <>
-          {name}: {value}
+          <EntryName>{name}: </EntryName> {value}
         </>
       ) : value ? (
         <>
-          <div style={{ display: 'inline-flex' }}>
-            {name}
+          <div style={{ display: 'inline-flex', gap: '5px', alignItems: 'center' }}>
+            <EntryName>{name}: </EntryName>
             {onChange && (
               <>
                 {!edited ? (
-                  <Menu shadow="md" width={200}>
-                    <Menu.Target>
-                      <ActionIcon variant="transparent" aria-label="Settings" size="xs">
-                        {isOverridden ? (
-                          <IconPencilExclamation style={{ width: '90%', height: '90%' }} stroke={1.5} color="orange" />
-                        ) : (
-                          <IconPencil style={{ width: '90%', height: '90%' }} stroke={1.5} />
-                        )}
-                      </ActionIcon>
-                    </Menu.Target>
-                    <Menu.Dropdown>
-                      <Menu.Item leftSection={<IconPencil size={14} />} onClick={() => setEdited(true)}>
-                        Edit
-                      </Menu.Item>
-                      {isOverridden && (
-                        <Menu.Item leftSection={<IconX size={14} />} onClick={() => handleClearClick()}>
-                          Clear
-                        </Menu.Item>
-                      )}
-                    </Menu.Dropdown>
-                  </Menu>
+                  <>
+                    <Button variant="light" size="compact-xs" onClick={() => setEdited(true)}>
+                      Edit
+                    </Button>
+                    {isOverridden && (
+                      <Button variant="light" size="compact-xs" onClick={() => handleClearClick()}>
+                        Clear
+                      </Button>
+                    )}
+                  </>
                 ) : (
                   <>
                     <Button variant="light" size="compact-xs" onClick={handleApplyClick} className="dd-privacy-allow">
@@ -215,12 +202,12 @@ function Entry({
                 )}
               </>
             )}
-            :
           </div>
           {!edited ? (
             <Json value={value} />
           ) : (
             <JsonInput
+              style={{ marginTop: '5px' }}
               validationError="Invalid JSON"
               formatOnBlur
               autosize
@@ -232,8 +219,19 @@ function Entry({
           )}
         </>
       ) : (
-        <>{name}: (empty)</>
+        <>
+          <EntryName>{name}: </EntryName>(empty)
+        </>
       )}
+      <Space h="xs" />
+    </Text>
+  )
+}
+
+function EntryName({ children }: { children: ReactNode }) {
+  return (
+    <Text component="span" size="md" fw={500}>
+      {children}
     </Text>
   )
 }
@@ -265,6 +263,8 @@ function tryParseJson(value: string) {
 
 function serializeJson(value: object) {
   // replacer to remove function attributes that have been serialized as empty object by useSdkInfos() (ex: beforeSend)
-  const replacer = (key: string, val: unknown) => (key !== '' && typeof val === 'object' ? undefined : val)
+  const replacer = (key: string, val: unknown) =>
+    key !== '' && !Array.isArray(val) && typeof val === 'object' ? undefined : val
+
   return JSON.stringify(value, replacer, 2)
 }
