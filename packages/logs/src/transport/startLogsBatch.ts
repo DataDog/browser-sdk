@@ -4,6 +4,7 @@ import type { LogsConfiguration } from '../domain/configuration'
 import type { LifeCycle } from '../domain/lifeCycle'
 import { LifeCycleEventType } from '../domain/lifeCycle'
 import type { LogsEvent } from '../logsEvent.types'
+import { LogsComponents } from '../boot/logsComponents'
 import type { LogsSessionManager } from '../domain/logsSessionManager'
 
 export function startLogsBatch(
@@ -34,3 +35,13 @@ export function startLogsBatch(
 
   return batch
 }
+/* eslint-disable local-rules/disallow-side-effects */
+startLogsBatch.$id = LogsComponents.LogsTransport
+startLogsBatch.$deps = [
+  LogsComponents.Configuration,
+  LogsComponents.LifeCycle,
+  LogsComponents.ReportError,
+  LogsComponents.PageExitObservable,
+  LogsComponents.Session,
+]
+/* eslint-enable local-rules/disallow-side-effects */

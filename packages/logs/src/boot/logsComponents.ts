@@ -1,0 +1,18 @@
+export const enum LogsComponents {
+  InitConfiguration,
+  Configuration,
+  BuildCommonContext,
+  LifeCycle,
+  ReportError,
+  PageExitObservable,
+  Session,
+  Telemetry,
+  NetworkCollection,
+  RuntimeErrorCollection,
+  ReportCollection,
+  ConsoleCollection,
+  LoggerCollection,
+  LogsAssembly,
+  LogsTransport,
+  InternalContext,
+}

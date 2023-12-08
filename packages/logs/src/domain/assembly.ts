@@ -1,6 +1,7 @@
 import type { EventRateLimiter, RawError } from '@datadog/browser-core'
 import { ErrorSource, combine, createEventRateLimiter, getRelativeTime, isEmptyObject } from '@datadog/browser-core'
 import type { CommonContext } from '../rawLogsEvent.types'
+import { LogsComponents } from '../boot/logsComponents'
 import type { LogsConfiguration } from './configuration'
 import type { LifeCycle } from './lifeCycle'
 import { LifeCycleEventType } from './lifeCycle'
@@ -20,7 +21,6 @@ export function startLogsAssembly(
   statusWithCustom.forEach((status) => {
     logRateLimiters[status] = createEventRateLimiter(status, configuration.eventRateLimiterThreshold, reportError)
   })
-
   lifeCycle.subscribe(
     LifeCycleEventType.RAW_LOG_COLLECTED,
     ({ rawLogsEvent, messageContext = undefined, savedCommonContext = undefined }) => {
@@ -53,8 +53,17 @@ export function startLogsAssembly(
       ) {
         return
       }
-
       lifeCycle.notify(LifeCycleEventType.LOG_COLLECTED, log)
     }
   )
 }
+/* eslint-disable local-rules/disallow-side-effects */
+startLogsAssembly.$id = LogsComponents.LogsAssembly
+startLogsAssembly.$deps = [
+  LogsComponents.Session,
+  LogsComponents.Configuration,
+  LogsComponents.LifeCycle,
+  LogsComponents.BuildCommonContext,
+  LogsComponents.ReportError,
+]
+/* eslint-enable local-rules/disallow-side-effects */

@@ -3,6 +3,7 @@ import { getEventBridge } from '@datadog/browser-core'
 import type { LifeCycle } from '../domain/lifeCycle'
 import { LifeCycleEventType } from '../domain/lifeCycle'
 import type { LogsEvent } from '../logsEvent.types'
+import { LogsComponents } from '../boot/logsComponents'
 
 export function startLogsBridge(lifeCycle: LifeCycle) {
   const bridge = getEventBridge<'log', LogsEvent>()!
@@ -11,3 +12,7 @@ export function startLogsBridge(lifeCycle: LifeCycle) {
     bridge.send('log', serverLogsEvent)
   })
 }
+/* eslint-disable local-rules/disallow-side-effects */
+startLogsBridge.$id = LogsComponents.LogsTransport
+startLogsBridge.$deps = [LogsComponents.LifeCycle]
+/* eslint-enable local-rules/disallow-side-effects */

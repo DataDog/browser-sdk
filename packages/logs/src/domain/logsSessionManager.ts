@@ -1,5 +1,6 @@
 import type { RelativeTime } from '@datadog/browser-core'
 import { Observable, performDraw, startSessionManager } from '@datadog/browser-core'
+import { LogsComponents } from '../boot/logsComponents'
 import type { LogsConfiguration } from './configuration'
 
 export const LOGS_SESSION_KEY = 'logs'
@@ -34,6 +35,10 @@ export function startLogsSessionManager(configuration: LogsConfiguration): LogsS
     expireObservable: sessionManager.expireObservable,
   }
 }
+/* eslint-disable local-rules/disallow-side-effects */
+startLogsSessionManager.$id = LogsComponents.Session
+startLogsSessionManager.$deps = [LogsComponents.Configuration]
+/* eslint-enable local-rules/disallow-side-effects */
 
 export function startLogsSessionManagerStub(configuration: LogsConfiguration): LogsSessionManager {
   const isTracked = computeTrackingType(configuration) === LoggerTrackingType.TRACKED
@@ -43,6 +48,10 @@ export function startLogsSessionManagerStub(configuration: LogsConfiguration): L
     expireObservable: new Observable(),
   }
 }
+/* eslint-disable local-rules/disallow-side-effects */
+startLogsSessionManagerStub.$id = LogsComponents.Session
+startLogsSessionManagerStub.$deps = [LogsComponents.Configuration]
+/* eslint-enable local-rules/disallow-side-effects */
 
 function computeTrackingType(configuration: LogsConfiguration) {
   if (!performDraw(configuration.sessionSampleRate)) {

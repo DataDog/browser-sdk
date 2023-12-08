@@ -12,6 +12,7 @@ import type { LifeCycle } from '../lifeCycle'
 import { LifeCycleEventType } from '../lifeCycle'
 import type { Logger, LogsMessage } from '../logger'
 import { StatusType, HandlerType } from '../logger'
+import { LogsComponents } from '../../boot/logsComponents'
 
 export const STATUS_PRIORITIES: { [key in StatusType]: number } = {
   [StatusType.debug]: 0,
@@ -51,6 +52,10 @@ export function startLoggerCollection(lifeCycle: LifeCycle) {
     handleLog,
   }
 }
+/* eslint-disable local-rules/disallow-side-effects */
+startLoggerCollection.$id = LogsComponents.LoggerCollection
+startLoggerCollection.$deps = [LogsComponents.LifeCycle]
+/* eslint-enable local-rules/disallow-side-effects */
 
 export function isAuthorized(status: StatusType, handlerType: HandlerType, logger: Logger) {
   const loggerHandler = logger.getHandler()

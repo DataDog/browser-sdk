@@ -16,6 +16,7 @@ import type { LogsConfiguration } from '../configuration'
 import type { LifeCycle } from '../lifeCycle'
 import { LifeCycleEventType } from '../lifeCycle'
 import { StatusType } from '../logger'
+import { LogsComponents } from '../../boot/logsComponents'
 
 export function startNetworkErrorCollection(configuration: LogsConfiguration, lifeCycle: LifeCycle) {
   if (!configuration.forwardErrorsToLogs) {
@@ -71,6 +72,10 @@ export function startNetworkErrorCollection(configuration: LogsConfiguration, li
     },
   }
 }
+/* eslint-disable local-rules/disallow-side-effects */
+startNetworkErrorCollection.$id = LogsComponents.NetworkCollection
+startNetworkErrorCollection.$deps = [LogsComponents.Configuration, LogsComponents.LifeCycle]
+/* eslint-enable local-rules/disallow-side-effects */
 
 // TODO: ideally, computeXhrResponseData should always call the callback with a string instead of
 // `unknown`. But to keep backward compatibility, in the case of XHR with a `responseType` different

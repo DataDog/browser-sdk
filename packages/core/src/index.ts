@@ -40,6 +40,7 @@ export {
 } from './domain/telemetry'
 export { monitored, monitor, callMonitored, setDebugMode } from './tools/monitor'
 export { Observable, Subscription } from './tools/observable'
+export { Injector, createInjector, ComponentId, Component, ComponentFactory } from './tools/injector'
 export {
   startSessionManager,
   SessionManager,
