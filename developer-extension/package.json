@@ -7,9 +7,9 @@
     "dev": "webpack --mode development --watch"
   },
   "devDependencies": {
-    "@tabler/icons-react": "2.42.0",
+    "@tabler/icons-react": "2.44.0",
     "@types/chrome": "0.0.254",
-    "@types/react": "18.2.42",
+    "@types/react": "18.2.43",
     "@types/react-dom": "18.2.17",
     "@webextension-toolbox/webpack-webextension-plugin": "3.2.1",
     "copy-webpack-plugin": "11.0.0",
