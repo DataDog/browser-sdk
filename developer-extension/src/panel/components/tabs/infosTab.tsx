@@ -1,6 +1,6 @@
 import { Anchor, Button, Divider, Group, JsonInput, Space, Text } from '@mantine/core'
 import type { ReactNode } from 'react'
-import React, { useEffect, useState } from 'react'
+import React, { useState } from 'react'
 import { evalInWindow } from '../../evalInWindow'
 import { useSdkInfos } from '../../hooks/useSdkInfos'
 import { Columns } from '../columns'
@@ -158,10 +158,6 @@ function Entry({
   const [edited, setEdited] = useState(false)
   const [newValue, setNewValue] = React.useState<string | null>()
 
-  useEffect(() => {
-    setNewValue(serializeJson(value))
-  }, [value])
-
   const handleApplyClick = () => {
     const valueJson = newValue ? tryParseJson(newValue) : null
     if (onChange && valueJson !== false) {
@@ -176,6 +172,10 @@ function Entry({
     reloadPage()
   }
 
+  const handleEditClick = () => {
+    setEdited(true)
+    setNewValue(serializeJson(value))
+  }
   return (
     <Text component="div">
       {typeof value === 'string' ? (
@@ -190,11 +190,11 @@ function Entry({
               <>
                 {!edited ? (
                   <>
-                    <Button variant="light" size="compact-xs" onClick={() => setEdited(true)}>
+                    <Button variant="light" size="compact-xs" onClick={handleEditClick}>
                       Edit
                     </Button>
                     {isOverridden && (
-                      <Button variant="light" size="compact-xs" onClick={() => handleClearClick()}>
+                      <Button variant="light" size="compact-xs" onClick={handleClearClick}>
                         Clear
                       </Button>
                     )}
@@ -203,6 +203,15 @@ function Entry({
                   <>
                     <Button variant="light" size="compact-xs" onClick={handleApplyClick} className="dd-privacy-allow">
                       Apply
+                    </Button>
+                    <Button
+                      variant="light"
+                      size="compact-xs"
+                      color="gray"
+                      onClick={() => setEdited(false)}
+                      className="dd-privacy-allow"
+                    >
+                      Cancel
                     </Button>
                   </>
                 )}
