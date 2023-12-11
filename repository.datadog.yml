@@ -2,5 +2,4 @@
 schema-version: v1
 kind: mergequeue
 team: rum-browser
-enable: true
 to_staging_enable: true
