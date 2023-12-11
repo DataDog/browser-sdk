@@ -16,6 +16,12 @@
 
 ---
 
+## v5.5.0
+
+- ✨ Expose original report events in beforeSend ([#2510](https://github.com/DataDog/browser-sdk/pull/2510))
+- ✨ Developer Extension improvements ([#2516](https://github.com/DataDog/browser-sdk/pull/2516))
+- ♻️ [Logs] reorganise some components ([#2519](https://github.com/DataDog/browser-sdk/pull/2519))
+
 ## v5.4.0
 
 - ✨ [RUM-1214] Collect core web vitals target selectors ([#2506](https://github.com/DataDog/browser-sdk/pull/2506))
