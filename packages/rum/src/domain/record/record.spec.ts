@@ -311,6 +311,22 @@ describe('record', () => {
       expect(innerMutationData.isChecked).toBe(true)
     })
 
+    it('should record the change event inside a shadow root only once, regardless if the DOM is serialized multiple times', () => {
+      const radio = appendElement('<input type="radio"/>', createShadow()) as HTMLInputElement
+      startRecording()
+
+      recordApi.takeSubsequentFullSnapshot()
+
+      radio.checked = true
+      radio.dispatchEvent(createNewEvent('change', { target: radio, composed: false }))
+
+      const inputRecords = getEmittedRecords().filter(
+        (record) => record.type === RecordType.IncrementalSnapshot && record.data.source === IncrementalSource.Input
+      )
+
+      expect(inputRecords.length).toBe(1)
+    })
+
     it('should clean the state once the shadow dom is removed to avoid memory leak', () => {
       const shadowRoot = createShadow()
       appendElement('<div class="toto"></div>', shadowRoot)
