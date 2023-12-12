@@ -30,6 +30,9 @@ export const initShadowRootsController = (
 
   const shadowRootsController: ShadowRootsController = {
     addShadowRoot: (shadowRoot: ShadowRoot) => {
+      if (controllerByShadowRoot.has(shadowRoot)) {
+        return
+      }
       const { stop: stopMutationObserver, flush } = initMutationObserver(
         mutationCb,
         configuration,
