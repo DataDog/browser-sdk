@@ -1,33 +1,22 @@
 import type { Configuration } from '../configuration'
-import { display } from '../../tools/display'
-import type { Clock } from '../../../test'
-import { mockClock, createNewEvent } from '../../../test'
+import { createNewEvent } from '../../../test'
 import { DOM_EVENT } from '../../browser/addEventListener'
 import { createStoredContextManager, buildStorageKey, removeStorageListeners } from './storedContextManager'
 import { CustomerDataType } from './contextConstants'
-import {
-  BYTES_COMPUTATION_THROTTLING_DELAY,
-  CUSTOMER_DATA_BYTES_LIMIT,
-  createCustomerDataTracker,
-} from './trackCustomerData'
+import { createCustomerDataTracker } from './trackCustomerData'
 
 describe('storedContextManager', () => {
   const PRODUCT_KEY = 'fake'
   const CUSTOMER_DATA_TYPE = CustomerDataType.User
   const STORAGE_KEY = buildStorageKey(PRODUCT_KEY, CUSTOMER_DATA_TYPE)
 
-  let clock: Clock
-  let displaySpy: jasmine.Spy<typeof display.warn>
   let configuration: Configuration
 
   beforeEach(() => {
-    clock = mockClock()
     configuration = {} as Configuration
-    displaySpy = spyOn(display, 'warn')
   })
 
   afterEach(() => {
-    clock.cleanup()
     localStorage.clear()
     removeStorageListeners()
   })
@@ -62,20 +51,15 @@ describe('storedContextManager', () => {
       expect(manager.getContext()).toEqual({})
     })
 
-    it('should warn if the context bytes limit is reached', () => {
-      const computeBytesCountStub = jasmine
-        .createSpy('computeBytesCountStub')
-        .and.returnValue(CUSTOMER_DATA_BYTES_LIMIT + 1)
-      const manager = createStoredContextManager(
-        configuration,
-        PRODUCT_KEY,
-        createCustomerDataTracker(CUSTOMER_DATA_TYPE, computeBytesCountStub)
-      )
+    it('should notify customer data tracker when the context is updated', () => {
+      const customerDataTracker = createCustomerDataTracker(CUSTOMER_DATA_TYPE)
+      const updateCustomerDataSpy = spyOn(customerDataTracker, 'updateCustomerData')
+      const manager = createStoredContextManager(configuration, PRODUCT_KEY, customerDataTracker)
+      const context = { bar: 'foo' }
 
-      manager.setContext({})
-      clock.tick(BYTES_COMPUTATION_THROTTLING_DELAY)
+      manager.setContext(context)
 
-      expect(displaySpy).toHaveBeenCalledTimes(1)
+      expect(updateCustomerDataSpy).toHaveBeenCalledWith(context)
     })
   })
 
