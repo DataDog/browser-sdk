@@ -15,6 +15,8 @@ import {
   canUseEventBridge,
   getEventBridge,
   addTelemetryDebug,
+  createCustomerDataTracker,
+  CustomerDataType,
 } from '@datadog/browser-core'
 import { createDOMMutationObservable } from '../browser/domMutationObservable'
 import { startPerformanceCollection } from '../browser/performanceCollection'
@@ -80,7 +82,10 @@ export function startRum(
     lifeCycle.notify(LifeCycleEventType.RAW_ERROR_COLLECTED, { error })
     addTelemetryDebug('Error reported to customer', { 'error.message': error.message })
   }
-  const featureFlagContexts = startFeatureFlagContexts(lifeCycle)
+  const featureFlagContexts = startFeatureFlagContexts(
+    lifeCycle,
+    createCustomerDataTracker(CustomerDataType.FeatureFlag)
+  )
 
   const pageExitObservable = createPageExitObservable(configuration)
   const pageExitSubscription = pageExitObservable.subscribe((event) => {

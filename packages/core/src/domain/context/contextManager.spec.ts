@@ -1,9 +1,13 @@
 import type { Clock } from '../../../test'
 import { mockClock } from '../../../test'
 import { display } from '../../tools/display'
-import { BYTES_COMPUTATION_THROTTLING_DELAY, createContextManager } from './contextManager'
-import { CUSTOMER_DATA_BYTES_LIMIT } from './heavyCustomerDataWarning'
+import { createContextManager } from './contextManager'
 import { CustomerDataType } from './contextConstants'
+import {
+  BYTES_COMPUTATION_THROTTLING_DELAY,
+  CUSTOMER_DATA_BYTES_LIMIT,
+  createCustomerDataTracker,
+} from './trackCustomerData'
 
 describe('createContextManager', () => {
   let clock: Clock
@@ -20,19 +24,19 @@ describe('createContextManager', () => {
   })
 
   it('starts with an empty context', () => {
-    const manager = createContextManager(CustomerDataType.User)
+    const manager = createContextManager(createCustomerDataTracker(CustomerDataType.User))
     expect(manager.getContext()).toEqual({})
   })
 
   it('updates the context', () => {
-    const manager = createContextManager(CustomerDataType.User)
+    const manager = createContextManager(createCustomerDataTracker(CustomerDataType.User))
     manager.setContext({ bar: 'foo' })
 
     expect(manager.getContext()).toEqual({ bar: 'foo' })
   })
 
   it('completely replaces the context', () => {
-    const manager = createContextManager(CustomerDataType.User)
+    const manager = createContextManager(createCustomerDataTracker(CustomerDataType.User))
     manager.setContext({ a: 'foo' })
     expect(manager.getContext()).toEqual({ a: 'foo' })
     manager.setContext({ b: 'foo' })
@@ -40,13 +44,13 @@ describe('createContextManager', () => {
   })
 
   it('sets a context value', () => {
-    const manager = createContextManager(CustomerDataType.User)
+    const manager = createContextManager(createCustomerDataTracker(CustomerDataType.User))
     manager.setContextProperty('foo', 'bar')
     expect(manager.getContext()).toEqual({ foo: 'bar' })
   })
 
   it('removes a context value', () => {
-    const manager = createContextManager(CustomerDataType.User)
+    const manager = createContextManager(createCustomerDataTracker(CustomerDataType.User))
     manager.setContext({ a: 'foo', b: 'bar' })
     manager.removeContextProperty('a')
     expect(manager.getContext()).toEqual({ b: 'bar' })
@@ -55,7 +59,7 @@ describe('createContextManager', () => {
   })
 
   it('should get a clone of the context from getContext', () => {
-    const manager = createContextManager(CustomerDataType.User)
+    const manager = createContextManager(createCustomerDataTracker(CustomerDataType.User))
     expect(manager.getContext()).toEqual(manager.getContext())
     expect(manager.getContext()).not.toBe(manager.getContext())
   })
@@ -63,7 +67,7 @@ describe('createContextManager', () => {
   it('should set a clone of context via setContext', () => {
     const nestedObject = { foo: 'bar' }
     const context = { nested: nestedObject }
-    const manager = createContextManager(CustomerDataType.User)
+    const manager = createContextManager(createCustomerDataTracker(CustomerDataType.User))
     manager.setContext(context)
     expect(manager.getContext().nested).toEqual(nestedObject)
     expect(manager.getContext().nested).not.toBe(nestedObject)
@@ -71,7 +75,7 @@ describe('createContextManager', () => {
 
   it('should set a clone of the property via setContextProperty', () => {
     const nestedObject = { foo: 'bar' }
-    const manager = createContextManager(CustomerDataType.User)
+    const manager = createContextManager(createCustomerDataTracker(CustomerDataType.User))
     manager.setContextProperty('nested', nestedObject)
     expect(manager.getContext().nested).toEqual(nestedObject)
     expect(manager.getContext().nested).not.toBe(nestedObject)
@@ -79,7 +83,7 @@ describe('createContextManager', () => {
 
   it('should clear context object via clearContext', () => {
     const context = { foo: 'bar' }
-    const manager = createContextManager(CustomerDataType.User)
+    const manager = createContextManager(createCustomerDataTracker(CustomerDataType.User))
     manager.setContext(context)
     expect(manager.getContext()).toEqual(context)
     manager.clearContext()
@@ -87,7 +91,7 @@ describe('createContextManager', () => {
   })
 
   it('should prevent setting non object values', () => {
-    const manager = createContextManager(CustomerDataType.GlobalContext)
+    const manager = createContextManager(createCustomerDataTracker(CustomerDataType.GlobalContext))
     manager.setContext(null as any)
     expect(manager.getContext()).toEqual({})
     manager.setContext(undefined as any)
@@ -99,7 +103,7 @@ describe('createContextManager', () => {
   describe('bytes count computation', () => {
     it('should be done every time the context is updated', () => {
       const computeBytesCountStub = jasmine.createSpy('computeBytesCountStub').and.returnValue(1)
-      const manager = createContextManager(CustomerDataType.User, computeBytesCountStub)
+      const manager = createContextManager(createCustomerDataTracker(CustomerDataType.User, computeBytesCountStub))
 
       manager.setContextProperty('foo', 'bar')
       clock.tick(BYTES_COMPUTATION_THROTTLING_DELAY)
@@ -128,7 +132,7 @@ describe('createContextManager', () => {
 
     it('should be throttled to minimize the impact on performance', () => {
       const computeBytesCountStub = jasmine.createSpy('computeBytesCountStub').and.returnValue(1)
-      const manager = createContextManager(CustomerDataType.User, computeBytesCountStub)
+      const manager = createContextManager(createCustomerDataTracker(CustomerDataType.User, computeBytesCountStub))
 
       manager.setContextProperty('1', 'foo') // leading call executed synchronously
       manager.setContextProperty('2', 'bar') // ignored
@@ -143,7 +147,7 @@ describe('createContextManager', () => {
     const computeBytesCountStub = jasmine
       .createSpy('computeBytesCountStub')
       .and.returnValue(CUSTOMER_DATA_BYTES_LIMIT + 1)
-    const manager = createContextManager(CustomerDataType.User, computeBytesCountStub)
+    const manager = createContextManager(createCustomerDataTracker(CustomerDataType.User, computeBytesCountStub))
 
     manager.setContext({})
     clock.tick(BYTES_COMPUTATION_THROTTLING_DELAY)
@@ -156,7 +160,7 @@ describe('createContextManager', () => {
   describe('changeObservable', () => {
     it('should notify on context changes', () => {
       const changeSpy = jasmine.createSpy('change')
-      const manager = createContextManager(CustomerDataType.GlobalContext)
+      const manager = createContextManager(createCustomerDataTracker(CustomerDataType.GlobalContext))
       manager.changeObservable.subscribe(changeSpy)
 
       manager.getContext()

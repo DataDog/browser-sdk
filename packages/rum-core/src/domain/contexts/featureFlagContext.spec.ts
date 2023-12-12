@@ -6,6 +6,8 @@ import {
   addExperimentalFeatures,
   relativeToClocks,
   CUSTOMER_DATA_BYTES_LIMIT,
+  createCustomerDataTracker,
+  CustomerDataType,
 } from '@datadog/browser-core'
 import type { TestSetupBuilder } from '../../../test'
 import { setup } from '../../../test'
@@ -28,7 +30,10 @@ describe('featureFlagContexts', () => {
     displaySpy = spyOn(display, 'warn')
     setupBuilder = setup().beforeBuild(({ lifeCycle }) => {
       computeBytesCountStub = jasmine.createSpy('computeBytesCountStub').and.callFake(() => fakeBytesCount)
-      featureFlagContexts = startFeatureFlagContexts(lifeCycle, computeBytesCountStub)
+      featureFlagContexts = startFeatureFlagContexts(
+        lifeCycle,
+        createCustomerDataTracker(CustomerDataType.FeatureFlag, computeBytesCountStub)
+      )
     })
   })
 

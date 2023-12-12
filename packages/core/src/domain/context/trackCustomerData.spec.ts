@@ -1,5 +1,5 @@
 import { display } from '../../tools/display'
-import { CUSTOMER_DATA_BYTES_LIMIT, warnIfCustomerDataLimitReached } from './heavyCustomerDataWarning'
+import { CUSTOMER_DATA_BYTES_LIMIT, warnIfCustomerDataLimitReached } from './trackCustomerData'
 import { CustomerDataType } from './contextConstants'
 
 describe('warnIfCustomerDataLimitReached', () => {

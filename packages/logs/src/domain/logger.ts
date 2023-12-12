@@ -11,6 +11,7 @@ import {
   monitored,
   sanitize,
   NonErrorPrefix,
+  createCustomerDataTracker,
 } from '@datadog/browser-core'
 
 import type { LogsEvent } from '../logsEvent.types'
@@ -40,7 +41,7 @@ export type HandlerType = (typeof HandlerType)[keyof typeof HandlerType]
 export const STATUSES = Object.keys(StatusType) as StatusType[]
 
 export class Logger {
-  private contextManager = createContextManager(CustomerDataType.LoggerContext)
+  private contextManager = createContextManager(createCustomerDataTracker(CustomerDataType.LoggerContext))
 
   constructor(
     private handleLogStrategy: (logsMessage: LogsMessage, logger: Logger) => void,

@@ -15,6 +15,7 @@ import {
   sanitize,
   createStoredContextManager,
   combine,
+  createCustomerDataTracker,
 } from '@datadog/browser-core'
 import type { LogsInitConfiguration } from '../domain/configuration'
 import { validateAndBuildLogsConfiguration } from '../domain/configuration'
@@ -40,8 +41,8 @@ const LOGS_STORAGE_KEY = 'logs'
 export function makeLogsPublicApi(startLogsImpl: StartLogs) {
   let isAlreadyInitialized = false
 
-  let globalContextManager = createContextManager(CustomerDataType.GlobalContext)
-  let userContextManager = createContextManager(CustomerDataType.User)
+  let globalContextManager = createContextManager(createCustomerDataTracker(CustomerDataType.GlobalContext))
+  let userContextManager = createContextManager(createCustomerDataTracker(CustomerDataType.User))
 
   const customLoggers: { [name: string]: Logger | undefined } = {}
   let getInternalContextStrategy: StartLogsResult['getInternalContext'] = () => undefined
@@ -100,12 +101,16 @@ export function makeLogsPublicApi(startLogsImpl: StartLogs) {
         globalContextManager = createStoredContextManager(
           configuration,
           LOGS_STORAGE_KEY,
-          CustomerDataType.GlobalContext
+          createCustomerDataTracker(CustomerDataType.GlobalContext)
         )
         globalContextManager.setContext(combine(globalContextManager.getContext(), beforeInitGlobalContext))
 
         const beforeInitUserContext = userContextManager.getContext()
-        userContextManager = createStoredContextManager(configuration, LOGS_STORAGE_KEY, CustomerDataType.User)
+        userContextManager = createStoredContextManager(
+          configuration,
+          LOGS_STORAGE_KEY,
+          createCustomerDataTracker(CustomerDataType.User)
+        )
         userContextManager.setContext(combine(userContextManager.getContext(), beforeInitUserContext))
       }
 

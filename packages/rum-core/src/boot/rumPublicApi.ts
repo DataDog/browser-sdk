@@ -30,6 +30,7 @@ import {
   createStoredContextManager,
   combine,
   createIdentityEncoder,
+  createCustomerDataTracker,
 } from '@datadog/browser-core'
 import type { LifeCycle } from '../domain/lifeCycle'
 import type { ViewContexts } from '../domain/contexts/viewContexts'
@@ -89,8 +90,8 @@ export function makeRumPublicApi(
 ) {
   let isAlreadyInitialized = false
 
-  let globalContextManager = createContextManager(CustomerDataType.GlobalContext)
-  let userContextManager = createContextManager(CustomerDataType.User)
+  let globalContextManager = createContextManager(createCustomerDataTracker(CustomerDataType.GlobalContext))
+  let userContextManager = createContextManager(createCustomerDataTracker(CustomerDataType.User))
 
   let getInternalContextStrategy: StartRumResult['getInternalContext'] = () => undefined
   let getInitConfigurationStrategy = (): InitConfiguration | undefined => undefined
@@ -206,11 +207,19 @@ export function makeRumPublicApi(
   ) {
     if (initConfiguration.storeContextsAcrossPages) {
       const beforeInitGlobalContext = globalContextManager.getContext()
-      globalContextManager = createStoredContextManager(configuration, RUM_STORAGE_KEY, CustomerDataType.GlobalContext)
+      globalContextManager = createStoredContextManager(
+        configuration,
+        RUM_STORAGE_KEY,
+        createCustomerDataTracker(CustomerDataType.GlobalContext)
+      )
       globalContextManager.setContext(combine(globalContextManager.getContext(), beforeInitGlobalContext))
 
       const beforeInitUserContext = userContextManager.getContext()
-      userContextManager = createStoredContextManager(configuration, RUM_STORAGE_KEY, CustomerDataType.User)
+      userContextManager = createStoredContextManager(
+        configuration,
+        RUM_STORAGE_KEY,
+        createCustomerDataTracker(CustomerDataType.User)
+      )
       userContextManager.setContext(combine(userContextManager.getContext(), beforeInitUserContext))
     }
 
