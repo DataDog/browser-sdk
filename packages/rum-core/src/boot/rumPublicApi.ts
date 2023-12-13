@@ -31,6 +31,7 @@ import {
   combine,
   createIdentityEncoder,
   createCustomerDataTracker,
+  CustomerDataCompressionStatus,
 } from '@datadog/browser-core'
 import type { LifeCycle } from '../domain/lifeCycle'
 import type { ViewContexts } from '../domain/contexts/viewContexts'
@@ -90,8 +91,12 @@ export function makeRumPublicApi(
 ) {
   let isAlreadyInitialized = false
 
-  let globalContextManager = createContextManager(createCustomerDataTracker(CustomerDataType.GlobalContext))
-  let userContextManager = createContextManager(createCustomerDataTracker(CustomerDataType.User))
+  let globalContextManager = createContextManager(
+    createCustomerDataTracker(CustomerDataType.GlobalContext, CustomerDataCompressionStatus.Unknown)
+  )
+  let userContextManager = createContextManager(
+    createCustomerDataTracker(CustomerDataType.User, CustomerDataCompressionStatus.Unknown)
+  )
 
   let getInternalContextStrategy: StartRumResult['getInternalContext'] = () => undefined
   let getInitConfigurationStrategy = (): InitConfiguration | undefined => undefined
@@ -222,6 +227,12 @@ export function makeRumPublicApi(
       )
       userContextManager.setContext(combine(userContextManager.getContext(), beforeInitUserContext))
     }
+
+    ;[globalContextManager, userContextManager].forEach((contextManager) => {
+      contextManager.customerDataTracker.setCompressionStatus(
+        deflateWorker ? CustomerDataCompressionStatus.Enabled : CustomerDataCompressionStatus.Disabled
+      )
+    })
 
     const startRumResults = startRumImpl(
       initConfiguration,

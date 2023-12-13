@@ -98,6 +98,7 @@ export {
   createCustomerDataTracker,
   CustomerDataTracker,
   CUSTOMER_DATA_BYTES_LIMIT,
+  CustomerDataCompressionStatus,
 } from './domain/context/trackCustomerData'
 export { CustomerDataType } from './domain/context/contextConstants'
 export { ValueHistory, ValueHistoryEntry, CLEAR_OLD_VALUES_INTERVAL } from './tools/valueHistory'

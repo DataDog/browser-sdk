@@ -8,6 +8,7 @@ import {
   noop,
   resetExperimentalFeatures,
   createIdentityEncoder,
+  CustomerDataCompressionStatus,
 } from '@datadog/browser-core'
 import {
   initEventBridgeStub,
@@ -37,6 +38,7 @@ const noopStartRum = (): ReturnType<StartRum> => ({
 })
 const DEFAULT_INIT_CONFIGURATION = { applicationId: 'xxx', clientToken: 'xxx' }
 const INVALID_INIT_CONFIGURATION = { clientToken: 'yes' } as RumInitConfiguration
+const FAKE_WORKER = {} as DeflateWorker
 
 describe('rum public api', () => {
   describe('configuration validation', () => {
@@ -170,7 +172,6 @@ describe('rum public api', () => {
       let rumPublicApi: RumPublicApi
       let startDeflateWorkerSpy: jasmine.Spy
       let recorderApiOnRumStartSpy: jasmine.Spy<RecorderApi['onRumStart']>
-      const FAKE_WORKER = {} as DeflateWorker
 
       beforeEach(() => {
         startDeflateWorkerSpy = jasmine.createSpy().and.returnValue(FAKE_WORKER)
@@ -244,6 +245,50 @@ describe('rum public api', () => {
           })
           expect(recorderApiOnRumStartSpy.calls.mostRecent().args[4]).toBe(FAKE_WORKER)
         })
+      })
+    })
+
+    describe('customer data trackers', () => {
+      it('should set the compression status to disabled if `compressIntakeRequests` is false', () => {
+        const rumPublicApi = makeRumPublicApi(startRumSpy, noopRecorderApi, {
+          startDeflateWorker: () => FAKE_WORKER,
+        })
+
+        rumPublicApi.init({
+          ...DEFAULT_INIT_CONFIGURATION,
+          compressIntakeRequests: false,
+        })
+
+        const globalContextManager = startRumSpy.calls.mostRecent().args[3]
+        expect(globalContextManager.customerDataTracker.getCompressionStatus()).toBe(
+          CustomerDataCompressionStatus.Disabled
+        )
+
+        const userContextManager = startRumSpy.calls.mostRecent().args[4]
+        expect(userContextManager.customerDataTracker.getCompressionStatus()).toBe(
+          CustomerDataCompressionStatus.Disabled
+        )
+      })
+
+      it('should set the compression status to enabled if `compressIntakeRequests` is true', () => {
+        const rumPublicApi = makeRumPublicApi(startRumSpy, noopRecorderApi, {
+          startDeflateWorker: () => FAKE_WORKER,
+        })
+
+        rumPublicApi.init({
+          ...DEFAULT_INIT_CONFIGURATION,
+          compressIntakeRequests: true,
+        })
+
+        const globalContextManager = startRumSpy.calls.mostRecent().args[3]
+        expect(globalContextManager.customerDataTracker.getCompressionStatus()).toBe(
+          CustomerDataCompressionStatus.Enabled
+        )
+
+        const userContextManager = startRumSpy.calls.mostRecent().args[4]
+        expect(userContextManager.customerDataTracker.getCompressionStatus()).toBe(
+          CustomerDataCompressionStatus.Enabled
+        )
       })
     })
   })

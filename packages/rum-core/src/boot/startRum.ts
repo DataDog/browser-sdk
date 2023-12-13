@@ -84,7 +84,10 @@ export function startRum(
   }
   const featureFlagContexts = startFeatureFlagContexts(
     lifeCycle,
-    createCustomerDataTracker(CustomerDataType.FeatureFlag)
+    createCustomerDataTracker(
+      CustomerDataType.FeatureFlag,
+      globalContextManager.customerDataTracker.getCompressionStatus()
+    )
   )
 
   const pageExitObservable = createPageExitObservable(configuration)
