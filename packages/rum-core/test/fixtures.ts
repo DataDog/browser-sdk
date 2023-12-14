@@ -155,8 +155,8 @@ export function createPerformanceEntry<T extends RumPerformanceEntryType>(
         },
         overrides
       ) as EntryTypeToReturnType[T]
-    case RumPerformanceEntryType.LARGEST_CONTENTFUL_PAINT:
-      return assign(
+    case RumPerformanceEntryType.LARGEST_CONTENTFUL_PAINT: {
+      const entry = assign(
         {
           entryType: RumPerformanceEntryType.LARGEST_CONTENTFUL_PAINT,
           startTime: 789 as RelativeTime,
@@ -164,6 +164,8 @@ export function createPerformanceEntry<T extends RumPerformanceEntryType>(
         },
         overrides
       ) as EntryTypeToReturnType[T]
+      return { ...entry, toJSON: () => entry }
+    }
     case RumPerformanceEntryType.LAYOUT_SHIFT:
       return assign(
         {
