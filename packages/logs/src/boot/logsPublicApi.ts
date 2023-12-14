@@ -101,7 +101,7 @@ export function makeLogsPublicApi(startLogsImpl: StartLogs) {
         globalContextManager = createStoredContextManager(
           configuration,
           LOGS_STORAGE_KEY,
-          createCustomerDataTracker(CustomerDataType.GlobalContext)
+          globalContextManager.customerDataTracker
         )
         globalContextManager.setContext(combine(globalContextManager.getContext(), beforeInitGlobalContext))
 
@@ -109,7 +109,7 @@ export function makeLogsPublicApi(startLogsImpl: StartLogs) {
         userContextManager = createStoredContextManager(
           configuration,
           LOGS_STORAGE_KEY,
-          createCustomerDataTracker(CustomerDataType.User)
+          userContextManager.customerDataTracker
         )
         userContextManager.setContext(combine(userContextManager.getContext(), beforeInitUserContext))
       }

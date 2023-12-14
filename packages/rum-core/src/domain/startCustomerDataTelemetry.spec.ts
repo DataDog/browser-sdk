@@ -44,7 +44,7 @@ describe('customerDataTelemetry', () => {
 
   function spyOnContextManager(contextManager: ContextManager) {
     spyOn(contextManager, 'getContext').and.callFake(() => fakeContext)
-    spyOn(contextManager, 'getBytesCount').and.callFake(() => fakeContextBytesCount)
+    spyOn(contextManager.customerDataTracker, 'getBytesCount').and.callFake(() => fakeContextBytesCount)
   }
 
   function spyOnFeatureFlagContexts(featureFlagContexts: FeatureFlagContexts) {

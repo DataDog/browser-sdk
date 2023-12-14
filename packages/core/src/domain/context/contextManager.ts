@@ -12,8 +12,6 @@ export function createContextManager(customerDataTracker: CustomerDataTracker) {
   const changeObservable = new Observable<void>()
 
   const contextManager = {
-    getBytesCount: () => customerDataTracker.getBytesCount(),
-
     getContext: () => deepClone(context),
 
     setContext: (newContext: Context) => {
@@ -44,6 +42,7 @@ export function createContextManager(customerDataTracker: CustomerDataTracker) {
       changeObservable.notify()
     },
 
+    customerDataTracker,
     changeObservable,
   }
   return contextManager
