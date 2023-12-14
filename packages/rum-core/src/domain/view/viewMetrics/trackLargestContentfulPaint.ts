@@ -28,6 +28,7 @@ export interface LargestContentfulPaint {
 
 let zeroLcpReported = false
 let previousNonZeroLcp: Omit<PerformanceEntry, 'toJSON'> | undefined
+
 /**
  * Track the largest contentful paint (LCP) occurring during the initial View.  This can yield
  * multiple values, only the most recent one should be used.
@@ -73,29 +74,10 @@ export function trackLargestContentfulPaint(
           lcpTargetSelector = getSelectorFromElement(lcpEntry.element, configuration.actionNameAttribute)
         }
 
-        if (!zeroLcpReported && lcpEntry.startTime !== 0) {
-          previousNonZeroLcp = lcpEntry.toJSON()
+        if (isExperimentalFeatureEnabled(ExperimentalFeature.ZERO_LCP_TELEMETRY)) {
+          monitorZeroLcpEntry(lcpEntry)
         }
 
-        if (
-          !zeroLcpReported &&
-          lcpEntry.startTime === 0 &&
-          isExperimentalFeatureEnabled(ExperimentalFeature.ZERO_LCP_TELEMETRY)
-        ) {
-          zeroLcpReported = true
-
-          addTelemetryDebug('LCP with startTime = 0', {
-            debug: {
-              entry: lcpEntry.toJSON(),
-              previousNonZeroLcp,
-              navigationStart: performance.timing.navigationStart,
-              timeOrigin: performance.timeOrigin,
-              now: relativeNow(),
-              visibilityState: document.visibilityState,
-              prerendering: (document as any).prerendering,
-            },
-          })
-        }
         callback({
           value: lcpEntry.startTime,
           targetSelector: lcpTargetSelector,
@@ -109,5 +91,27 @@ export function trackLargestContentfulPaint(
       stopEventListener()
       unsubscribeLifeCycle()
     },
+  }
+}
+
+function monitorZeroLcpEntry(lcpEntry: RumLargestContentfulPaintTiming) {
+  if (!zeroLcpReported && lcpEntry.startTime !== 0) {
+    previousNonZeroLcp = lcpEntry.toJSON()
+  }
+
+  if (!zeroLcpReported && lcpEntry.startTime === 0) {
+    zeroLcpReported = true
+
+    addTelemetryDebug('LCP with startTime = 0', {
+      debug: {
+        entry: lcpEntry.toJSON(),
+        previousNonZeroLcp,
+        navigationStart: performance.timing.navigationStart,
+        timeOrigin: performance.timeOrigin,
+        now: relativeNow(),
+        visibilityState: document.visibilityState,
+        prerendering: (document as any).prerendering,
+      },
+    })
   }
 }
