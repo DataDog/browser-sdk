@@ -16,6 +16,12 @@
 
 ---
 
+## v5.5.1
+
+- 🐛 [RUM-2280] fix duplicated mutations when using Shadow DOM ([#2527](https://github.com/DataDog/browser-sdk/pull/2527))
+- 🔊[RUM-2324] Telemetry on LCP with startTime to 0 ([#2515](https://github.com/DataDog/browser-sdk/pull/2515))
+- ✅ import JSON schemas dynamically in tests ([#2521](https://github.com/DataDog/browser-sdk/pull/2521))
+
 ## v5.5.0
 
 - ✨ Expose original report events in beforeSend ([#2510](https://github.com/DataDog/browser-sdk/pull/2510))
