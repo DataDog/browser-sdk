@@ -1,5 +1,6 @@
 import type { Payload } from '../../transport'
 import { computeTransportConfiguration } from './transportConfiguration'
+import { INTAKE_SITE_FED_STAGING } from './intakeSites'
 
 const DEFAULT_PAYLOAD = {} as Payload
 
@@ -11,6 +12,12 @@ describe('transportConfiguration', () => {
       const configuration = computeTransportConfiguration({ clientToken })
       expect(configuration.rumEndpointBuilder.build('xhr', DEFAULT_PAYLOAD)).toContain('datadoghq.com')
       expect(configuration.site).toBe('datadoghq.com')
+    })
+
+    it('should use logs intake domain for fed staging', () => {
+      const configuration = computeTransportConfiguration({ clientToken, site: INTAKE_SITE_FED_STAGING })
+      expect(configuration.rumEndpointBuilder.build('xhr', DEFAULT_PAYLOAD)).toContain('http-intake.logs.dd0g-gov.com')
+      expect(configuration.site).toBe(INTAKE_SITE_FED_STAGING)
     })
 
     it('should use site value when set', () => {
@@ -84,6 +91,7 @@ describe('transportConfiguration', () => {
       { site: 'us5.datadoghq.com', intakeDomain: 'browser-intake-us5-datadoghq.com' },
       { site: 'ddog-gov.com', intakeDomain: 'browser-intake-ddog-gov.com' },
       { site: 'ap1.datadoghq.com', intakeDomain: 'browser-intake-ap1-datadoghq.com' },
+      { site: 'dd0g-gov.com', intakeDomain: 'http-intake.logs.dd0g-gov.com' },
     ].forEach(({ site, intakeDomain }) => {
       it(`should detect intake request for ${site} site`, () => {
         const configuration = computeTransportConfiguration({ clientToken, site })
