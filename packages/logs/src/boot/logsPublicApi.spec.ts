@@ -1,4 +1,4 @@
-import type { Component, TimeStamp } from '@datadog/browser-core'
+import type { TimeStamp } from '@datadog/browser-core'
 import { monitor, ONE_SECOND, display, removeStorageListeners } from '@datadog/browser-core'
 import type { Clock } from '@datadog/browser-core/test'
 import { deleteEventBridgeStub, initEventBridgeStub, mockClock } from '@datadog/browser-core/test'
@@ -7,9 +7,11 @@ import type { Logger, LogsMessage } from '../domain/logger'
 import { HandlerType, StatusType } from '../domain/logger'
 import type { CommonContext } from '../rawLogsEvent.types'
 import { getBuildLogsCommonContext } from '../domain/commonContext'
-import type { LogsPublicApi, StartLogs } from './logsPublicApi'
+import type { LogsSpecInjector } from '../../test/logsSpecInjector'
+import { createLogsSpecInjector } from '../../test/logsSpecInjector'
+import type { LogsPublicApi } from './logsPublicApi'
 import { makeLogsPublicApi } from './logsPublicApi'
-import type { StartLogsResult } from './startLogs'
+import { startLogs, type StartLogsResult } from './startLogs'
 
 const DEFAULT_INIT_CONFIGURATION = { clientToken: 'xxx' }
 const INVALID_INIT_CONFIGURATION = {} as LogsInitConfiguration
@@ -26,8 +28,8 @@ describe('logs entry', () => {
       date?: TimeStamp | undefined
     ) => void
   >
-  let startLogsMock: jasmine.Spy<(buildCommonContext: () => CommonContext) => StartLogsResult> &
-    Component<StartLogsResult, [() => CommonContext]>
+  let startLogsMock: jasmine.Spy<() => StartLogsResult>
+  let injector: LogsSpecInjector
 
   function getLoggedMessage(index: number) {
     const [message, logger, savedCommonContext, savedDate] = handleLogSpy.calls.argsFor(index)
@@ -35,21 +37,20 @@ describe('logs entry', () => {
   }
 
   beforeEach(() => {
+    injector = createLogsSpecInjector()
     handleLogSpy = jasmine.createSpy()
-    startLogsMock = Object.assign(
-      jasmine.createSpy().and.callFake(() => ({ handleLog: handleLogSpy, getInternalContext })),
-      { $deps: [getBuildLogsCommonContext] as const }
-    ) satisfies StartLogs
+    startLogsMock = jasmine.createSpy().and.callFake(() => ({ handleLog: handleLogSpy, getInternalContext }))
+    injector.override(startLogs, startLogsMock)
   })
 
   it('should define the public API with init', () => {
-    const LOGS = makeLogsPublicApi(startLogsMock)
+    const LOGS = injector.run(makeLogsPublicApi)
     expect(!!LOGS).toEqual(true)
     expect(!!LOGS.init).toEqual(true)
   })
 
   it('should provide sdk version', () => {
-    const LOGS = makeLogsPublicApi(startLogsMock)
+    const LOGS = injector.run(makeLogsPublicApi)
     expect(LOGS.version).toBe('test')
   })
 
@@ -59,7 +60,7 @@ describe('logs entry', () => {
 
     beforeEach(() => {
       displaySpy = spyOn(display, 'error')
-      LOGS = makeLogsPublicApi(startLogsMock)
+      LOGS = injector.run(makeLogsPublicApi)
     })
 
     it('should start when the configuration is valid', () => {
@@ -150,15 +151,14 @@ describe('logs entry', () => {
     let LOGS: LogsPublicApi
 
     beforeEach(() => {
-      LOGS = makeLogsPublicApi(startLogsMock)
+      LOGS = injector.run(makeLogsPublicApi)
       LOGS.init(DEFAULT_INIT_CONFIGURATION)
     })
 
     it('should have the current date, view and global context', () => {
       LOGS.setGlobalContextProperty('foo', 'bar')
 
-      const buildCommonContext = startLogsMock.calls.mostRecent().args[0]
-      expect(buildCommonContext()).toEqual({
+      expect(injector.run(getBuildLogsCommonContext)()).toEqual({
         view: {
           referrer: document.referrer,
           url: window.location.href,
@@ -174,7 +174,7 @@ describe('logs entry', () => {
     let clock: Clock
 
     beforeEach(() => {
-      LOGS = makeLogsPublicApi(startLogsMock)
+      LOGS = injector.run(makeLogsPublicApi)
       clock = mockClock()
     })
 
@@ -204,6 +204,12 @@ describe('logs entry', () => {
 
     it('returns undefined initial configuration', () => {
       expect(LOGS.getInitConfiguration()).toBeUndefined()
+    })
+
+    describe('getInternalContext', () => {
+      it('should return undefined if not initialized', () => {
+        expect(LOGS.getInternalContext()).toBeUndefined()
+      })
     })
 
     describe('save context when submitting a log', () => {
@@ -250,7 +256,7 @@ describe('logs entry', () => {
     let LOGS: LogsPublicApi
 
     beforeEach(() => {
-      LOGS = makeLogsPublicApi(startLogsMock)
+      LOGS = injector.run(makeLogsPublicApi)
       LOGS.init(DEFAULT_INIT_CONFIGURATION)
     })
 
@@ -328,16 +334,6 @@ describe('logs entry', () => {
     })
 
     describe('internal context', () => {
-      let LOGS: LogsPublicApi
-
-      beforeEach(() => {
-        LOGS = makeLogsPublicApi(startLogsMock)
-      })
-
-      it('should return undefined if not initialized', () => {
-        expect(LOGS.getInternalContext()).toBeUndefined()
-      })
-
       it('should get the internal context', () => {
         LOGS.init(DEFAULT_INIT_CONFIGURATION)
         expect(LOGS.getInternalContext()?.session_id).toEqual(mockSessionId)
@@ -345,21 +341,17 @@ describe('logs entry', () => {
     })
 
     describe('setUser', () => {
-      let logsPublicApi: LogsPublicApi
       let displaySpy: jasmine.Spy<() => void>
 
       beforeEach(() => {
         displaySpy = spyOn(display, 'error')
-        logsPublicApi = makeLogsPublicApi(startLogsMock)
-        logsPublicApi.init(DEFAULT_INIT_CONFIGURATION)
       })
 
       it('should store user in common context', () => {
         const user = { id: 'foo', name: 'bar', email: 'qux', foo: { bar: 'qux' } }
-        logsPublicApi.setUser(user)
+        LOGS.setUser(user)
 
-        const buildCommonContext = startLogsMock.calls.mostRecent().args[0]
-        expect(buildCommonContext().user).toEqual({
+        expect(injector.run(getBuildLogsCommonContext)().user).toEqual({
           email: 'qux',
           foo: { bar: 'qux' },
           id: 'foo',
@@ -369,9 +361,8 @@ describe('logs entry', () => {
 
       it('should sanitize predefined properties', () => {
         const user = { id: null, name: 2, email: { bar: 'qux' } }
-        logsPublicApi.setUser(user as any)
-        const buildCommonContext = startLogsMock.calls.mostRecent().args[0]
-        expect(buildCommonContext().user).toEqual({
+        LOGS.setUser(user as any)
+        expect(injector.run(getBuildLogsCommonContext)().user).toEqual({
           email: '[object Object]',
           id: 'null',
           name: '2',
@@ -380,39 +371,31 @@ describe('logs entry', () => {
 
       it('should clear a previously set user', () => {
         const user = { id: 'foo', name: 'bar', email: 'qux' }
-        logsPublicApi.setUser(user)
-        logsPublicApi.clearUser()
+        LOGS.setUser(user)
+        LOGS.clearUser()
 
-        const buildCommonContext = startLogsMock.calls.mostRecent().args[0]
-        expect(buildCommonContext().user).toEqual({})
+        expect(injector.run(getBuildLogsCommonContext)().user).toEqual({})
       })
 
       it('should reject non object input', () => {
-        logsPublicApi.setUser(2 as any)
-        logsPublicApi.setUser(null as any)
-        logsPublicApi.setUser(undefined as any)
+        LOGS.setUser(2 as any)
+        LOGS.setUser(null as any)
+        LOGS.setUser(undefined as any)
         expect(displaySpy).toHaveBeenCalledTimes(3)
       })
     })
 
     describe('getUser', () => {
-      let logsPublicApi: LogsPublicApi
-
-      beforeEach(() => {
-        logsPublicApi = makeLogsPublicApi(startLogsMock)
-        logsPublicApi.init(DEFAULT_INIT_CONFIGURATION)
-      })
-
       it('should return empty object if no user has been set', () => {
-        const userClone = logsPublicApi.getUser()
+        const userClone = LOGS.getUser()
         expect(userClone).toEqual({})
       })
 
       it('should return a clone of the original object if set', () => {
         const user = { id: 'foo', name: 'bar', email: 'qux', foo: { bar: 'qux' } }
-        logsPublicApi.setUser(user)
-        const userClone = logsPublicApi.getUser()
-        const userClone2 = logsPublicApi.getUser()
+        LOGS.setUser(user)
+        const userClone = LOGS.getUser()
+        const userClone2 = LOGS.getUser()
 
         expect(userClone).not.toBe(user)
         expect(userClone).not.toBe(userClone2)
@@ -423,44 +406,38 @@ describe('logs entry', () => {
     describe('setUserProperty', () => {
       const user = { id: 'foo', name: 'bar', email: 'qux', foo: { bar: 'qux' } }
       const addressAttribute = { city: 'Paris' }
-      let logsPublicApi: LogsPublicApi
-
-      beforeEach(() => {
-        logsPublicApi = makeLogsPublicApi(startLogsMock)
-        logsPublicApi.init(DEFAULT_INIT_CONFIGURATION)
-      })
 
       it('should add attribute', () => {
-        logsPublicApi.setUser(user)
-        logsPublicApi.setUserProperty('address', addressAttribute)
-        const userClone = logsPublicApi.getUser()
+        LOGS.setUser(user)
+        LOGS.setUserProperty('address', addressAttribute)
+        const userClone = LOGS.getUser()
 
         expect(userClone.address).toEqual(addressAttribute)
       })
 
       it('should not contain original reference to object', () => {
         const userDetails: { [key: string]: any } = { name: 'john' }
-        logsPublicApi.setUser(user)
-        logsPublicApi.setUserProperty('userDetails', userDetails)
+        LOGS.setUser(user)
+        LOGS.setUserProperty('userDetails', userDetails)
         userDetails.DOB = '11/11/1999'
-        const userClone = logsPublicApi.getUser()
+        const userClone = LOGS.getUser()
 
         expect(userClone.userDetails).not.toBe(userDetails)
       })
 
       it('should override attribute', () => {
-        logsPublicApi.setUser(user)
-        logsPublicApi.setUserProperty('foo', addressAttribute)
-        const userClone = logsPublicApi.getUser()
+        LOGS.setUser(user)
+        LOGS.setUserProperty('foo', addressAttribute)
+        const userClone = LOGS.getUser()
 
         expect(userClone).toEqual({ ...user, foo: addressAttribute })
       })
 
       it('should sanitize properties', () => {
-        logsPublicApi.setUserProperty('id', 123)
-        logsPublicApi.setUserProperty('name', ['Adam', 'Smith'])
-        logsPublicApi.setUserProperty('email', { foo: 'bar' })
-        const userClone = logsPublicApi.getUser()
+        LOGS.setUserProperty('id', 123)
+        LOGS.setUserProperty('name', ['Adam', 'Smith'])
+        LOGS.setUserProperty('email', { foo: 'bar' })
+        const userClone = LOGS.getUser()
 
         expect(userClone.id).toEqual('123')
         expect(userClone.name).toEqual('Adam,Smith')
@@ -469,19 +446,12 @@ describe('logs entry', () => {
     })
 
     describe('removeUserProperty', () => {
-      let logsPublicApi: LogsPublicApi
-
-      beforeEach(() => {
-        logsPublicApi = makeLogsPublicApi(startLogsMock)
-        logsPublicApi.init(DEFAULT_INIT_CONFIGURATION)
-      })
-
       it('should remove property', () => {
         const user = { id: 'foo', name: 'bar', email: 'qux', foo: { bar: 'qux' } }
 
-        logsPublicApi.setUser(user)
-        logsPublicApi.removeUserProperty('foo')
-        const userClone = logsPublicApi.getUser()
+        LOGS.setUser(user)
+        LOGS.removeUserProperty('foo')
+        const userClone = LOGS.getUser()
         expect(userClone.foo).toBeUndefined()
       })
     })
@@ -491,7 +461,7 @@ describe('logs entry', () => {
     let logsPublicApi: LogsPublicApi
 
     beforeEach(() => {
-      logsPublicApi = makeLogsPublicApi(startLogsMock)
+      logsPublicApi = injector.run(makeLogsPublicApi)
     })
 
     afterEach(() => {

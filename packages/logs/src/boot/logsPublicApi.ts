@@ -1,4 +1,12 @@
-import type { AnyComponent, Context, InitConfiguration, User } from '@datadog/browser-core'
+import type {
+  AnyComponent,
+  Component,
+  Context,
+  ContextManager,
+  InitConfiguration,
+  Injector,
+  User,
+} from '@datadog/browser-core'
 import {
   CustomerDataType,
   assign,
@@ -15,9 +23,9 @@ import {
   sanitize,
   createStoredContextManager,
   combine,
-  createInjector,
   getConfiguration,
   getInitConfiguration,
+  getInjector,
 } from '@datadog/browser-core'
 import type { LogsInitConfiguration } from '../domain/configuration'
 import {
@@ -29,6 +37,7 @@ import type { HandlerType, StatusType, LogsMessage } from '../domain/logger'
 import { Logger } from '../domain/logger'
 import type { CommonContext } from '../rawLogsEvent.types'
 import { getBuildLogsCommonContext } from '../domain/commonContext'
+import { startLogs } from './startLogs'
 import type { StartLogsResult } from './startLogs'
 
 export interface LoggerConfiguration {
@@ -37,13 +46,36 @@ export interface LoggerConfiguration {
   context?: object
 }
 
-export type LogsPublicApi = ReturnType<typeof makeLogsPublicApi>
+export interface LogsPublicApi {
+  logger: Logger
+  version: string
+
+  init: (initConfiguration: LogsInitConfiguration) => void
+
+  createLogger: (name: string, conf?: LoggerConfiguration) => Logger
+  getLogger: (name: string) => Logger | undefined
+
+  getInitConfiguration: () => InitConfiguration | undefined
+  getInternalContext: StartLogsResult['getInternalContext']
+
+  getGlobalContext: ContextManager['getContext']
+  setGlobalContext: ContextManager['setContext']
+  setGlobalContextProperty: ContextManager['setContextProperty']
+  removeGlobalContextProperty: ContextManager['removeContextProperty']
+  clearGlobalContext: ContextManager['clearContext']
+
+  setUser: ContextManager['setContext']
+  getUser: ContextManager['getContext']
+  setUserProperty: ContextManager['setContextProperty']
+  removeUserProperty: ContextManager['removeContextProperty']
+  clearUser: ContextManager['clearContext']
+}
 
 export type StartLogs = AnyComponent<StartLogsResult>
 
 const LOGS_STORAGE_KEY = 'logs'
 
-export function makeLogsPublicApi(startLogsImpl: StartLogs) {
+export const makeLogsPublicApi: Component<LogsPublicApi, [Injector]> = (injector) => {
   let isAlreadyInitialized = false
 
   let globalContextManager = createContextManager(CustomerDataType.GlobalContext)
@@ -80,7 +112,7 @@ export function makeLogsPublicApi(startLogsImpl: StartLogs) {
   return makePublicApi({
     logger: mainLogger,
 
-    init: monitor((initConfiguration: LogsInitConfiguration) => {
+    init: monitor((initConfiguration) => {
       if (!initConfiguration) {
         display.error('Missing configuration')
         return
@@ -115,13 +147,12 @@ export function makeLogsPublicApi(startLogsImpl: StartLogs) {
         userContextManager.setContext(combine(userContextManager.getContext(), beforeInitUserContext))
       }
 
-      const injector = createInjector()
       injector.override(getConfiguration, () => configuration)
       injector.override(getLogsConfiguration, () => configuration)
       injector.override(getInitConfiguration, () => initConfiguration)
       injector.override(getLogsInitConfiguration, () => initConfiguration)
       injector.override(getBuildLogsCommonContext, () => buildCommonContext)
-      ;({ handleLog: handleLogStrategy, getInternalContext: getInternalContextStrategy } = injector.run(startLogsImpl))
+      ;({ handleLog: handleLogStrategy, getInternalContext: getInternalContextStrategy } = injector.run(startLogs))
 
       beforeInitLoggerLog.drain()
 
@@ -138,7 +169,7 @@ export function makeLogsPublicApi(startLogsImpl: StartLogs) {
 
     clearGlobalContext: monitor(() => globalContextManager.clearContext()),
 
-    createLogger: monitor((name: string, conf: LoggerConfiguration = {}) => {
+    createLogger: monitor((name, conf = {}) => {
       customLoggers[name] = new Logger(
         (...params) => handleLogStrategy(...params),
         sanitize(name),
@@ -150,11 +181,11 @@ export function makeLogsPublicApi(startLogsImpl: StartLogs) {
       return customLoggers[name]!
     }),
 
-    getLogger: monitor((name: string) => customLoggers[name]),
+    getLogger: monitor((name) => customLoggers[name]),
 
     getInitConfiguration: monitor(() => getInitConfigurationStrategy()),
 
-    getInternalContext: monitor((startTime?: number | undefined) => getInternalContextStrategy(startTime)),
+    getInternalContext: monitor((startTime) => getInternalContextStrategy(startTime)),
 
     setUser: monitor((newUser: User) => {
       if (checkUser(newUser)) {
@@ -188,3 +219,6 @@ export function makeLogsPublicApi(startLogsImpl: StartLogs) {
     return true
   }
 }
+
+// eslint-disable-next-line local-rules/disallow-side-effects
+makeLogsPublicApi.$deps = [getInjector]
