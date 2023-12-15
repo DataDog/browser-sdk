@@ -8,7 +8,6 @@ import {
   initEventBridgeStub,
   cleanupSyntheticsWorkerValues,
   mockSyntheticsWorkerValues,
-  registerCleanupTask,
 } from '@datadog/browser-core/test'
 
 import type { LogsConfiguration } from '../domain/configuration'
@@ -16,6 +15,7 @@ import { validateAndBuildLogsConfiguration } from '../domain/configuration'
 import { HandlerType, Logger, StatusType } from '../domain/logger'
 import type { startLoggerCollection } from '../domain/logger/loggerCollection'
 import type { LogsEvent } from '../logsEvent.types'
+import { createLogsSpecInjector } from '../../test/logsSpecInjector'
 import { startLogs } from './startLogs'
 
 function getLoggedMessage(requests: Request[], index: number) {
@@ -46,7 +46,6 @@ describe('logs', () => {
   let interceptor: ReturnType<typeof interceptRequests>
   let requests: Request[]
   let handleLog: ReturnType<typeof startLoggerCollection>['handleLog']
-  let stopLogs: () => void
   let logger: Logger
   let consoleLogSpy: jasmine.Spy
   let displayLogSpy: jasmine.Spy
@@ -73,8 +72,8 @@ describe('logs', () => {
 
   describe('request', () => {
     it('should send the needed data', () => {
-      ;({ handleLog, stop: stopLogs } = startLogs(initConfiguration, baseConfiguration, () => COMMON_CONTEXT))
-      registerCleanupTask(stopLogs)
+      const injector = createLogsSpecInjector()
+      ;({ handleLog } = injector.run(startLogs))
 
       handleLog({ message: 'message', status: StatusType.warn, context: { foo: 'bar' } }, logger, COMMON_CONTEXT)
 
@@ -96,12 +95,9 @@ describe('logs', () => {
     })
 
     it('should all use the same batch', () => {
-      ;({ handleLog, stop: stopLogs } = startLogs(
-        initConfiguration,
-        { ...baseConfiguration, batchMessagesLimit: 3 },
-        () => COMMON_CONTEXT
-      ))
-      registerCleanupTask(stopLogs)
+      const injector = createLogsSpecInjector()
+      injector.withConfiguration({ batchMessagesLimit: 3 })
+      ;({ handleLog } = injector.run(startLogs))
 
       handleLog(DEFAULT_MESSAGE, logger)
       handleLog(DEFAULT_MESSAGE, logger)
@@ -112,8 +108,7 @@ describe('logs', () => {
 
     it('should send bridge event when bridge is present', () => {
       const sendSpy = spyOn(initEventBridgeStub(), 'send')
-      ;({ handleLog, stop: stopLogs } = startLogs(initConfiguration, baseConfiguration, () => COMMON_CONTEXT))
-      registerCleanupTask(stopLogs)
+      ;({ handleLog } = createLogsSpecInjector().run(startLogs))
 
       handleLog(DEFAULT_MESSAGE, logger)
 
@@ -131,16 +126,13 @@ describe('logs', () => {
     it('should be applied when event bridge is present', () => {
       const sendSpy = spyOn(initEventBridgeStub(), 'send')
 
-      let configuration = { ...baseConfiguration, sessionSampleRate: 0 }
-      ;({ handleLog, stop: stopLogs } = startLogs(initConfiguration, configuration, () => COMMON_CONTEXT))
-      registerCleanupTask(stopLogs)
+      ;({ handleLog } = createLogsSpecInjector().withConfiguration({ sessionSampleRate: 0 }).run(startLogs))
+
       handleLog(DEFAULT_MESSAGE, logger)
 
       expect(sendSpy).not.toHaveBeenCalled()
+      ;({ handleLog } = createLogsSpecInjector().withConfiguration({ sessionSampleRate: 100 }).run(startLogs))
 
-      configuration = { ...baseConfiguration, sessionSampleRate: 100 }
-      ;({ handleLog, stop: stopLogs } = startLogs(initConfiguration, configuration, () => COMMON_CONTEXT))
-      registerCleanupTask(stopLogs)
       handleLog(DEFAULT_MESSAGE, logger)
 
       expect(sendSpy).toHaveBeenCalled()
@@ -149,12 +141,9 @@ describe('logs', () => {
 
   it('should not print the log twice when console handler is enabled', () => {
     logger.setHandler([HandlerType.console])
-    ;({ handleLog, stop: stopLogs } = startLogs(
-      initConfiguration,
-      { ...baseConfiguration, forwardConsoleLogs: ['log'] },
-      () => COMMON_CONTEXT
-    ))
-    registerCleanupTask(stopLogs)
+    ;({ handleLog } = createLogsSpecInjector()
+      .withConfiguration({ forwardConsoleLogs: ['log'] })
+      .run(startLogs))
 
     /* eslint-disable-next-line no-console */
     console.log('foo', 'bar')
@@ -169,24 +158,21 @@ describe('logs', () => {
     })
 
     it('creates a session on normal conditions', () => {
-      ;({ handleLog, stop: stopLogs } = startLogs(initConfiguration, baseConfiguration, () => COMMON_CONTEXT))
-      registerCleanupTask(stopLogs)
+      ;({ handleLog } = createLogsSpecInjector().run(startLogs))
 
       expect(getCookie(SESSION_STORE_KEY)).not.toBeUndefined()
     })
 
     it('does not create a session if event bridge is present', () => {
       initEventBridgeStub()
-      ;({ handleLog, stop: stopLogs } = startLogs(initConfiguration, baseConfiguration, () => COMMON_CONTEXT))
-      registerCleanupTask(stopLogs)
+      ;({ handleLog } = createLogsSpecInjector().run(startLogs))
 
       expect(getCookie(SESSION_STORE_KEY)).toBeUndefined()
     })
 
     it('does not create a session if synthetics worker will inject RUM', () => {
       mockSyntheticsWorkerValues({ injectsRum: true })
-      ;({ handleLog, stop: stopLogs } = startLogs(initConfiguration, baseConfiguration, () => COMMON_CONTEXT))
-      registerCleanupTask(stopLogs)
+      ;({ handleLog } = createLogsSpecInjector().run(startLogs))
 
       expect(getCookie(SESSION_STORE_KEY)).toBeUndefined()
     })

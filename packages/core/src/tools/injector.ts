@@ -7,7 +7,7 @@ interface SimpleComponent<Instance> {
   (): Instance
 }
 
-type AnyComponent<Instance> = Component<Instance, any> | SimpleComponent<Instance>
+export type AnyComponent<Instance> = Component<Instance, any> | SimpleComponent<Instance>
 
 export interface Injector {
   run: <T>(component: AnyComponent<T>) => T
@@ -19,6 +19,7 @@ export interface Injector {
 export function createInjector(): Injector {
   const instances = new Map<AnyComponent<any>, any>()
   const overrides = new Map<AnyComponent<any>, AnyComponent<any>>()
+  overrides.set(getInjector, () => injector)
 
   const injector: Injector = {
     run(component) {
@@ -57,12 +58,18 @@ export function createInjector(): Injector {
 
     stop() {
       instances.forEach((instance) => {
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-call
-        instance?.stop?.()
+        if (instance !== injector && instance?.stop) {
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-call
+          instance.stop()
+        }
       })
       instances.clear()
     },
   }
 
   return injector
+}
+
+export function getInjector(): Injector {
+  throw new Error('No injector available')
 }

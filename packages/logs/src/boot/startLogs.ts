@@ -1,8 +1,11 @@
-import { sendToExtension } from '@datadog/browser-core'
-import type { LogsConfiguration, LogsInitConfiguration } from '../domain/configuration'
+import type { Component, Injector } from '@datadog/browser-core'
+import { canUseEventBridge, getInjector, sendToExtension, willSyntheticsInjectRum } from '@datadog/browser-core'
+import { getLogsConfiguration } from '../domain/configuration'
+import type { LogsConfiguration } from '../domain/configuration'
 import { LifeCycleEventType, startLogsLifeCycle } from '../domain/lifeCycle'
+import type { LoggerCollection } from '../domain/logger/loggerCollection'
 import { startLoggerCollection } from '../domain/logger/loggerCollection'
-import type { CommonContext } from '../rawLogsEvent.types'
+import type { InternalContext } from '../domain/internalContext'
 import { startInternalContext } from '../domain/internalContext'
 import { startNetworkErrorCollection } from '../domain/networkError/networkErrorCollection'
 import { startRuntimeErrorCollection } from '../domain/runtimeError/runtimeErrorCollection'
@@ -11,14 +14,23 @@ import { startReportCollection } from '../domain/report/reportCollection'
 import { startLogsAssembly } from '../domain/assembly'
 import { startLogsBatch } from '../transport/startLogsBatch'
 import { startLogsTelemetry } from '../domain/logsTelemetry'
-import { createLogsInjector } from './logsInjector'
+import { startLogsSessionManager, startLogsSessionManagerStub } from '../domain/logsSessionManager'
+import { startLogsBridge } from '../transport/startLogsBridge'
 
-export function startLogs(
-  initConfiguration: LogsInitConfiguration,
-  configuration: LogsConfiguration,
-  buildCommonContext: () => CommonContext
-) {
-  const injector = createLogsInjector(initConfiguration, configuration, buildCommonContext)
+export interface StartLogsResult {
+  handleLog: LoggerCollection['handleLog']
+  getInternalContext: (startTime?: number) => InternalContext | undefined
+}
+
+export const startLogs: Component<StartLogsResult, [LogsConfiguration, Injector]> = (configuration, injector) => {
+  if (canUseEventBridge()) {
+    injector.override(startLogsSessionManager, startLogsSessionManagerStub)
+    injector.override(startLogsBatch, startLogsBridge)
+  }
+
+  if (!configuration.sessionStoreStrategyType || willSyntheticsInjectRum()) {
+    injector.override(startLogsSessionManager, startLogsSessionManagerStub)
+  }
 
   injector.run(startNetworkErrorCollection)
   injector.run(startRuntimeErrorCollection)
@@ -37,6 +49,8 @@ export function startLogs(
   return {
     handleLog: loggerCollection.handleLog,
     getInternalContext: internalContext.get,
-    stop: injector.stop,
   }
 }
+
+// eslint-disable-next-line local-rules/disallow-side-effects
+startLogs.$deps = [getLogsConfiguration, getInjector]

@@ -1,4 +1,4 @@
-import type { Context, InitConfiguration, User } from '@datadog/browser-core'
+import type { AnyComponent, Context, InitConfiguration, User } from '@datadog/browser-core'
 import {
   CustomerDataType,
   assign,
@@ -15,13 +15,21 @@ import {
   sanitize,
   createStoredContextManager,
   combine,
+  createInjector,
+  getConfiguration,
+  getInitConfiguration,
 } from '@datadog/browser-core'
 import type { LogsInitConfiguration } from '../domain/configuration'
-import { validateAndBuildLogsConfiguration } from '../domain/configuration'
+import {
+  getLogsConfiguration,
+  getLogsInitConfiguration,
+  validateAndBuildLogsConfiguration,
+} from '../domain/configuration'
 import type { HandlerType, StatusType, LogsMessage } from '../domain/logger'
 import { Logger } from '../domain/logger'
 import type { CommonContext } from '../rawLogsEvent.types'
-import type { startLogs } from './startLogs'
+import { getBuildLogsCommonContext } from '../domain/commonContext'
+import type { StartLogsResult } from './startLogs'
 
 export interface LoggerConfiguration {
   level?: StatusType
@@ -31,9 +39,7 @@ export interface LoggerConfiguration {
 
 export type LogsPublicApi = ReturnType<typeof makeLogsPublicApi>
 
-export type StartLogs = typeof startLogs
-
-type StartLogsResult = ReturnType<typeof startLogs>
+export type StartLogs = AnyComponent<StartLogsResult>
 
 const LOGS_STORAGE_KEY = 'logs'
 
@@ -109,11 +115,13 @@ export function makeLogsPublicApi(startLogsImpl: StartLogs) {
         userContextManager.setContext(combine(userContextManager.getContext(), beforeInitUserContext))
       }
 
-      ;({ handleLog: handleLogStrategy, getInternalContext: getInternalContextStrategy } = startLogsImpl(
-        initConfiguration,
-        configuration,
-        buildCommonContext
-      ))
+      const injector = createInjector()
+      injector.override(getConfiguration, () => configuration)
+      injector.override(getLogsConfiguration, () => configuration)
+      injector.override(getInitConfiguration, () => initConfiguration)
+      injector.override(getLogsInitConfiguration, () => initConfiguration)
+      injector.override(getBuildLogsCommonContext, () => buildCommonContext)
+      ;({ handleLog: handleLogStrategy, getInternalContext: getInternalContextStrategy } = injector.run(startLogsImpl))
 
       beforeInitLoggerLog.drain()
 

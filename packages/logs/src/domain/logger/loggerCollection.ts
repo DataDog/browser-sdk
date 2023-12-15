@@ -20,7 +20,7 @@ export const STATUS_PRIORITIES: { [key in StatusType]: number } = {
   [StatusType.error]: 3,
 }
 
-interface LoggerCollection {
+export interface LoggerCollection {
   handleLog: (
     logsMessage: LogsMessage,
     logger: Logger,

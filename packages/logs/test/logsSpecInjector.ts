@@ -1,13 +1,23 @@
 import { stubEndpointBuilder, registerCleanupTask } from '@datadog/browser-core/test'
-import type { Component, Injector } from '@datadog/browser-core'
-import { createLogsInjector } from '../src/boot/logsInjector'
+import {
+  createInjector,
+  type Component,
+  type Injector,
+  getConfiguration,
+  getInitConfiguration,
+} from '@datadog/browser-core'
 import type { LogsConfiguration } from '../src/domain/configuration'
-import { getLogsConfiguration, validateAndBuildLogsConfiguration } from '../src/domain/configuration'
+import {
+  getLogsConfiguration,
+  getLogsInitConfiguration,
+  validateAndBuildLogsConfiguration,
+} from '../src/domain/configuration'
 import type { RawLogsEventCollectedData, LifeCycle } from '../src/domain/lifeCycle'
 import { LifeCycleEventType, startLogsLifeCycle } from '../src/domain/lifeCycle'
+import { getBuildLogsCommonContext } from '../src/domain/commonContext'
 
 export interface LogsSpecInjector extends Injector {
-  withConfiguration(configuration: Partial<LogsConfiguration>): void
+  withConfiguration(configuration: Partial<LogsConfiguration>): LogsSpecInjector
 }
 
 export function createLogsSpecInjector(): LogsSpecInjector {
@@ -22,14 +32,26 @@ export function createLogsSpecInjector(): LogsSpecInjector {
     context: {},
     user: {},
   }
-  const injector = createLogsInjector(initConfiguration, baseConfiguration, () => commonContext)
+
+  const injector = createInjector()
   registerCleanupTask(() => injector.stop())
 
-  return {
+  injector.override(getConfiguration, () => baseConfiguration)
+  injector.override(getLogsConfiguration, () => baseConfiguration)
+  injector.override(getInitConfiguration, () => initConfiguration)
+  injector.override(getLogsInitConfiguration, () => initConfiguration)
+  injector.override(getBuildLogsCommonContext, () => () => commonContext)
+
+  const logsSpecInjector = {
     ...injector,
-    withConfiguration: (configuration: Partial<LogsConfiguration>) =>
-      injector.override(getLogsConfiguration, () => ({ ...baseConfiguration, ...configuration })),
+    withConfiguration: (configuration: Partial<LogsConfiguration>) => {
+      injector.override(getConfiguration, () => ({ ...baseConfiguration, ...configuration }))
+      injector.override(getLogsConfiguration, () => ({ ...baseConfiguration, ...configuration }))
+      return logsSpecInjector
+    },
   }
+
+  return logsSpecInjector
 }
 
 export const startRawLogEvents: Component<RawLogsEventCollectedData[], [LifeCycle]> = (lifeCycle) => {

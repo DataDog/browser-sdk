@@ -1,4 +1,4 @@
-import type { TimeStamp } from '@datadog/browser-core'
+import type { Component, TimeStamp } from '@datadog/browser-core'
 import { monitor, ONE_SECOND, display, removeStorageListeners } from '@datadog/browser-core'
 import type { Clock } from '@datadog/browser-core/test'
 import { deleteEventBridgeStub, initEventBridgeStub, mockClock } from '@datadog/browser-core/test'
@@ -6,8 +6,10 @@ import type { HybridInitConfiguration, LogsInitConfiguration } from '../domain/c
 import type { Logger, LogsMessage } from '../domain/logger'
 import { HandlerType, StatusType } from '../domain/logger'
 import type { CommonContext } from '../rawLogsEvent.types'
+import { getBuildLogsCommonContext } from '../domain/commonContext'
 import type { LogsPublicApi, StartLogs } from './logsPublicApi'
 import { makeLogsPublicApi } from './logsPublicApi'
+import type { StartLogsResult } from './startLogs'
 
 const DEFAULT_INIT_CONFIGURATION = { clientToken: 'xxx' }
 const INVALID_INIT_CONFIGURATION = {} as LogsInitConfiguration
@@ -24,7 +26,8 @@ describe('logs entry', () => {
       date?: TimeStamp | undefined
     ) => void
   >
-  let startLogs: jasmine.Spy<StartLogs>
+  let startLogsMock: jasmine.Spy<(buildCommonContext: () => CommonContext) => StartLogsResult> &
+    Component<StartLogsResult, [() => CommonContext]>
 
   function getLoggedMessage(index: number) {
     const [message, logger, savedCommonContext, savedDate] = handleLogSpy.calls.argsFor(index)
@@ -33,17 +36,20 @@ describe('logs entry', () => {
 
   beforeEach(() => {
     handleLogSpy = jasmine.createSpy()
-    startLogs = jasmine.createSpy().and.callFake(() => ({ handleLog: handleLogSpy, getInternalContext }))
+    startLogsMock = Object.assign(
+      jasmine.createSpy().and.callFake(() => ({ handleLog: handleLogSpy, getInternalContext })),
+      { $deps: [getBuildLogsCommonContext] as const }
+    ) satisfies StartLogs
   })
 
   it('should define the public API with init', () => {
-    const LOGS = makeLogsPublicApi(startLogs)
+    const LOGS = makeLogsPublicApi(startLogsMock)
     expect(!!LOGS).toEqual(true)
     expect(!!LOGS.init).toEqual(true)
   })
 
   it('should provide sdk version', () => {
-    const LOGS = makeLogsPublicApi(startLogs)
+    const LOGS = makeLogsPublicApi(startLogsMock)
     expect(LOGS.version).toBe('test')
   })
 
@@ -53,25 +59,25 @@ describe('logs entry', () => {
 
     beforeEach(() => {
       displaySpy = spyOn(display, 'error')
-      LOGS = makeLogsPublicApi(startLogs)
+      LOGS = makeLogsPublicApi(startLogsMock)
     })
 
     it('should start when the configuration is valid', () => {
       LOGS.init(DEFAULT_INIT_CONFIGURATION)
       expect(displaySpy).not.toHaveBeenCalled()
-      expect(startLogs).toHaveBeenCalled()
+      expect(startLogsMock).toHaveBeenCalled()
     })
 
     it('should not start when the configuration is missing', () => {
       ;(LOGS.init as () => void)()
       expect(displaySpy).toHaveBeenCalled()
-      expect(startLogs).not.toHaveBeenCalled()
+      expect(startLogsMock).not.toHaveBeenCalled()
     })
 
     it('should not start when the configuration is invalid', () => {
       LOGS.init(INVALID_INIT_CONFIGURATION)
       expect(displaySpy).toHaveBeenCalled()
-      expect(startLogs).not.toHaveBeenCalled()
+      expect(startLogsMock).not.toHaveBeenCalled()
     })
 
     it("should return init configuration even if it's invalid", () => {
@@ -135,7 +141,7 @@ describe('logs entry', () => {
         LOGS.init(hybridInitConfiguration as LogsInitConfiguration)
 
         expect(displaySpy).not.toHaveBeenCalled()
-        expect(startLogs).toHaveBeenCalled()
+        expect(startLogsMock).toHaveBeenCalled()
       })
     })
   })
@@ -144,14 +150,14 @@ describe('logs entry', () => {
     let LOGS: LogsPublicApi
 
     beforeEach(() => {
-      LOGS = makeLogsPublicApi(startLogs)
+      LOGS = makeLogsPublicApi(startLogsMock)
       LOGS.init(DEFAULT_INIT_CONFIGURATION)
     })
 
     it('should have the current date, view and global context', () => {
       LOGS.setGlobalContextProperty('foo', 'bar')
 
-      const buildCommonContext = startLogs.calls.mostRecent().args[2]
+      const buildCommonContext = startLogsMock.calls.mostRecent().args[0]
       expect(buildCommonContext()).toEqual({
         view: {
           referrer: document.referrer,
@@ -168,7 +174,7 @@ describe('logs entry', () => {
     let clock: Clock
 
     beforeEach(() => {
-      LOGS = makeLogsPublicApi(startLogs)
+      LOGS = makeLogsPublicApi(startLogsMock)
       clock = mockClock()
     })
 
@@ -244,7 +250,7 @@ describe('logs entry', () => {
     let LOGS: LogsPublicApi
 
     beforeEach(() => {
-      LOGS = makeLogsPublicApi(startLogs)
+      LOGS = makeLogsPublicApi(startLogsMock)
       LOGS.init(DEFAULT_INIT_CONFIGURATION)
     })
 
@@ -325,7 +331,7 @@ describe('logs entry', () => {
       let LOGS: LogsPublicApi
 
       beforeEach(() => {
-        LOGS = makeLogsPublicApi(startLogs)
+        LOGS = makeLogsPublicApi(startLogsMock)
       })
 
       it('should return undefined if not initialized', () => {
@@ -344,7 +350,7 @@ describe('logs entry', () => {
 
       beforeEach(() => {
         displaySpy = spyOn(display, 'error')
-        logsPublicApi = makeLogsPublicApi(startLogs)
+        logsPublicApi = makeLogsPublicApi(startLogsMock)
         logsPublicApi.init(DEFAULT_INIT_CONFIGURATION)
       })
 
@@ -352,7 +358,7 @@ describe('logs entry', () => {
         const user = { id: 'foo', name: 'bar', email: 'qux', foo: { bar: 'qux' } }
         logsPublicApi.setUser(user)
 
-        const buildCommonContext = startLogs.calls.mostRecent().args[2]
+        const buildCommonContext = startLogsMock.calls.mostRecent().args[0]
         expect(buildCommonContext().user).toEqual({
           email: 'qux',
           foo: { bar: 'qux' },
@@ -364,7 +370,7 @@ describe('logs entry', () => {
       it('should sanitize predefined properties', () => {
         const user = { id: null, name: 2, email: { bar: 'qux' } }
         logsPublicApi.setUser(user as any)
-        const buildCommonContext = startLogs.calls.mostRecent().args[2]
+        const buildCommonContext = startLogsMock.calls.mostRecent().args[0]
         expect(buildCommonContext().user).toEqual({
           email: '[object Object]',
           id: 'null',
@@ -377,7 +383,7 @@ describe('logs entry', () => {
         logsPublicApi.setUser(user)
         logsPublicApi.clearUser()
 
-        const buildCommonContext = startLogs.calls.mostRecent().args[2]
+        const buildCommonContext = startLogsMock.calls.mostRecent().args[0]
         expect(buildCommonContext().user).toEqual({})
       })
 
@@ -393,7 +399,7 @@ describe('logs entry', () => {
       let logsPublicApi: LogsPublicApi
 
       beforeEach(() => {
-        logsPublicApi = makeLogsPublicApi(startLogs)
+        logsPublicApi = makeLogsPublicApi(startLogsMock)
         logsPublicApi.init(DEFAULT_INIT_CONFIGURATION)
       })
 
@@ -420,7 +426,7 @@ describe('logs entry', () => {
       let logsPublicApi: LogsPublicApi
 
       beforeEach(() => {
-        logsPublicApi = makeLogsPublicApi(startLogs)
+        logsPublicApi = makeLogsPublicApi(startLogsMock)
         logsPublicApi.init(DEFAULT_INIT_CONFIGURATION)
       })
 
@@ -466,7 +472,7 @@ describe('logs entry', () => {
       let logsPublicApi: LogsPublicApi
 
       beforeEach(() => {
-        logsPublicApi = makeLogsPublicApi(startLogs)
+        logsPublicApi = makeLogsPublicApi(startLogsMock)
         logsPublicApi.init(DEFAULT_INIT_CONFIGURATION)
       })
 
@@ -485,7 +491,7 @@ describe('logs entry', () => {
     let logsPublicApi: LogsPublicApi
 
     beforeEach(() => {
-      logsPublicApi = makeLogsPublicApi(startLogs)
+      logsPublicApi = makeLogsPublicApi(startLogsMock)
     })
 
     afterEach(() => {
