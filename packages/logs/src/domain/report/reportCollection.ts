@@ -1,4 +1,4 @@
-import type { Context, ClocksState, RawReport } from '@datadog/browser-core'
+import type { Context, ClocksState, RawReport, Component } from '@datadog/browser-core'
 import {
   timeStampNow,
   ErrorSource,
@@ -6,11 +6,10 @@ import {
   getFileFromStackTraceString,
   initReportObservable,
 } from '@datadog/browser-core'
-import type { LogsConfiguration } from '../configuration'
+import { getLogsConfiguration, type LogsConfiguration } from '../configuration'
 import type { LifeCycle } from '../lifeCycle'
-import { LifeCycleEventType } from '../lifeCycle'
+import { LifeCycleEventType, startLogsLifeCycle } from '../lifeCycle'
 import { StatusType } from '../logger'
-import { LogsComponents } from '../../boot/logsComponents'
 
 export interface ProvidedError {
   startClocks: ClocksState
@@ -25,7 +24,10 @@ const LogStatusForReport = {
   [RawReportType.deprecation]: StatusType.warn,
 }
 
-export function startReportCollection(configuration: LogsConfiguration, lifeCycle: LifeCycle) {
+export const startReportCollection: Component<{ stop: () => void }, [LogsConfiguration, LifeCycle]> = (
+  configuration,
+  lifeCycle
+) => {
   const reportSubscription = initReportObservable(configuration, configuration.forwardReports).subscribe(
     (report: RawReport) => {
       let message = report.message
@@ -59,6 +61,5 @@ export function startReportCollection(configuration: LogsConfiguration, lifeCycl
   }
 }
 /* eslint-disable local-rules/disallow-side-effects */
-startReportCollection.$id = LogsComponents.ReportCollection
-startReportCollection.$deps = [LogsComponents.Configuration, LogsComponents.LifeCycle]
+startReportCollection.$deps = [getLogsConfiguration, startLogsLifeCycle]
 /* eslint-enable local-rules/disallow-side-effects */

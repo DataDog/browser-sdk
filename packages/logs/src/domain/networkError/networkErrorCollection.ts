@@ -1,4 +1,4 @@
-import type { FetchResolveContext, XhrCompleteContext } from '@datadog/browser-core'
+import type { Component, FetchResolveContext, XhrCompleteContext } from '@datadog/browser-core'
 import {
   ErrorSource,
   initXhrObservable,
@@ -12,13 +12,15 @@ import {
   tryToClone,
   isServerError,
 } from '@datadog/browser-core'
-import type { LogsConfiguration } from '../configuration'
+import { getLogsConfiguration, type LogsConfiguration } from '../configuration'
 import type { LifeCycle } from '../lifeCycle'
-import { LifeCycleEventType } from '../lifeCycle'
+import { LifeCycleEventType, startLogsLifeCycle } from '../lifeCycle'
 import { StatusType } from '../logger'
-import { LogsComponents } from '../../boot/logsComponents'
 
-export function startNetworkErrorCollection(configuration: LogsConfiguration, lifeCycle: LifeCycle) {
+export const startNetworkErrorCollection: Component<{ stop: () => void }, [LogsConfiguration, LifeCycle]> = (
+  configuration,
+  lifeCycle
+) => {
   if (!configuration.forwardErrorsToLogs) {
     return { stop: noop }
   }
@@ -73,8 +75,7 @@ export function startNetworkErrorCollection(configuration: LogsConfiguration, li
   }
 }
 /* eslint-disable local-rules/disallow-side-effects */
-startNetworkErrorCollection.$id = LogsComponents.NetworkCollection
-startNetworkErrorCollection.$deps = [LogsComponents.Configuration, LogsComponents.LifeCycle]
+startNetworkErrorCollection.$deps = [getLogsConfiguration, startLogsLifeCycle]
 /* eslint-enable local-rules/disallow-side-effects */
 
 // TODO: ideally, computeXhrResponseData should always call the callback with a string instead of

@@ -1,48 +1,66 @@
-export type Component = any
-// number and string to be compatible with enum and keys manipulation
-export type ComponentId = number | string
-
-export type ComponentFactory = ((...args: any[]) => Component) & {
-  $id: ComponentId
-  $deps?: ComponentId[]
+export interface Component<Instance, Deps extends any[]> {
+  (...args: Deps): Instance
+  $deps: Readonly<{ [K in keyof Deps]: AnyComponent<Deps[K]> }>
 }
 
+interface SimpleComponent<Instance> {
+  (): Instance
+}
+
+type AnyComponent<Instance> = Component<Instance, any> | SimpleComponent<Instance>
+
 export interface Injector {
-  register: (...factories: ComponentFactory[]) => void
-  get: <T extends Component>(componentId: ComponentId) => T
-  define: <T extends Component>(componentId: ComponentId, component: T) => void
+  run: <T>(component: AnyComponent<T>) => T
+  get: <T>(component: AnyComponent<T>) => T
+  override: <T>(originalComponent: AnyComponent<T>, newComponent: AnyComponent<T>) => void
   stop: () => void
 }
 
 export function createInjector(): Injector {
-  const factories: { [key: ComponentId]: ComponentFactory } = {}
-  const context: { [key: ComponentId]: Component } = {}
+  const instances = new Map<AnyComponent<any>, any>()
+  const overrides = new Map<AnyComponent<any>, AnyComponent<any>>()
 
-  const injector = {
-    register(...newFactories: ComponentFactory[]) {
-      newFactories.forEach((factory) => {
-        factories[factory.$id] = factory
-      })
-    },
-
-    get<T extends Component>(componentId: ComponentId) {
-      if (!context[componentId]) {
-        const factory = factories[componentId]
-        context[componentId] = factory.call(null, ...(factory.$deps || []).map(injector.get.bind(injector)))
+  const injector: Injector = {
+    run(component) {
+      if (instances.has(component)) {
+        throw new Error(`Component ${component.name} already started`)
       }
-      return context[componentId] as T
+      if (overrides.has(component)) {
+        component = overrides.get(component)!
+      }
+
+      const args = ('$deps' in component ? component.$deps : []).map((dependency): any =>
+        instances.has(dependency) ? instances.get(dependency) : injector.run(dependency)
+      )
+
+      const instance: any = component(...args)
+
+      instances.set(component, instance)
+
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+      return instance
     },
 
-    define<T extends Component>(componentId: ComponentId, component: T) {
-      context[componentId] = component
+    get<T>(component: AnyComponent<T>) {
+      if (!instances.has(component)) {
+        throw new Error(`Component ${component.name} not started`)
+      }
+      return instances.get(component) as T
+    },
+
+    override(originalComponent, newComponent) {
+      if (instances.has(originalComponent)) {
+        throw new Error(`Component ${originalComponent.name} already started`)
+      }
+      overrides.set(originalComponent, newComponent)
     },
 
     stop() {
-      Object.keys(context).forEach((componentId) => {
+      instances.forEach((instance) => {
         // eslint-disable-next-line @typescript-eslint/no-unsafe-call
-        context[componentId]?.stop?.()
-        delete context[componentId]
+        instance?.stop?.()
       })
+      instances.clear()
     },
   }
 

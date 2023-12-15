@@ -1,10 +1,9 @@
-import type { Context, ClocksState, ConsoleLog } from '@datadog/browser-core'
+import type { Context, ClocksState, ConsoleLog, Component } from '@datadog/browser-core'
 import { timeStampNow, ConsoleApiName, ErrorSource, initConsoleObservable } from '@datadog/browser-core'
-import type { LogsConfiguration } from '../configuration'
+import { getLogsConfiguration, type LogsConfiguration } from '../configuration'
 import type { LifeCycle } from '../lifeCycle'
-import { LifeCycleEventType } from '../lifeCycle'
+import { LifeCycleEventType, startLogsLifeCycle } from '../lifeCycle'
 import { StatusType } from '../logger'
-import { LogsComponents } from '../../boot/logsComponents'
 
 export interface ProvidedError {
   startClocks: ClocksState
@@ -20,7 +19,10 @@ export const LogStatusForApi = {
   [ConsoleApiName.warn]: StatusType.warn,
   [ConsoleApiName.error]: StatusType.error,
 }
-export function startConsoleCollection(configuration: LogsConfiguration, lifeCycle: LifeCycle) {
+export const startConsoleCollection: Component<{ stop: () => void }, [LogsConfiguration, LifeCycle]> = (
+  configuration: LogsConfiguration,
+  lifeCycle: LifeCycle
+) => {
   const consoleSubscription = initConsoleObservable(configuration.forwardConsoleLogs).subscribe((log: ConsoleLog) => {
     lifeCycle.notify(LifeCycleEventType.RAW_LOG_COLLECTED, {
       rawLogsEvent: {
@@ -46,6 +48,5 @@ export function startConsoleCollection(configuration: LogsConfiguration, lifeCyc
   }
 }
 /* eslint-disable local-rules/disallow-side-effects */
-startConsoleCollection.$id = LogsComponents.ConsoleCollection
-startConsoleCollection.$deps = [LogsComponents.Configuration, LogsComponents.LifeCycle]
+startConsoleCollection.$deps = [getLogsConfiguration, startLogsLifeCycle]
 /* eslint-enable local-rules/disallow-side-effects */

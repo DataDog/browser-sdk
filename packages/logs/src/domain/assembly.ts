@@ -1,21 +1,19 @@
-import type { EventRateLimiter, RawError } from '@datadog/browser-core'
+import type { Component, EventRateLimiter, RawError } from '@datadog/browser-core'
 import { ErrorSource, combine, createEventRateLimiter, getRelativeTime, isEmptyObject } from '@datadog/browser-core'
 import type { CommonContext } from '../rawLogsEvent.types'
-import { LogsComponents } from '../boot/logsComponents'
-import type { LogsConfiguration } from './configuration'
+import { getLogsConfiguration, type LogsConfiguration } from './configuration'
 import type { LifeCycle } from './lifeCycle'
-import { LifeCycleEventType } from './lifeCycle'
+import { LifeCycleEventType, startLogsLifeCycle } from './lifeCycle'
 import { STATUSES } from './logger'
-import type { LogsSessionManager } from './logsSessionManager'
+import { startLogsSessionManager, type LogsSessionManager } from './logsSessionManager'
 import { getRUMInternalContext } from './rumInternalContext'
+import { startReportError } from './reportError'
+import { getBuildLogsCommonContext } from './commonContext'
 
-export function startLogsAssembly(
-  sessionManager: LogsSessionManager,
-  configuration: LogsConfiguration,
-  lifeCycle: LifeCycle,
-  buildCommonContext: () => CommonContext,
-  reportError: (error: RawError) => void
-) {
+export const startLogsAssembly: Component<
+  void,
+  [LogsSessionManager, LogsConfiguration, LifeCycle, () => CommonContext, (error: RawError) => void]
+> = (sessionManager, configuration, lifeCycle, buildCommonContext, reportError) => {
   const statusWithCustom = (STATUSES as string[]).concat(['custom'])
   const logRateLimiters: { [key: string]: EventRateLimiter } = {}
   statusWithCustom.forEach((status) => {
@@ -57,13 +55,13 @@ export function startLogsAssembly(
     }
   )
 }
+
 /* eslint-disable local-rules/disallow-side-effects */
-startLogsAssembly.$id = LogsComponents.LogsAssembly
 startLogsAssembly.$deps = [
-  LogsComponents.Session,
-  LogsComponents.Configuration,
-  LogsComponents.LifeCycle,
-  LogsComponents.BuildCommonContext,
-  LogsComponents.ReportError,
+  startLogsSessionManager,
+  getLogsConfiguration,
+  startLogsLifeCycle,
+  getBuildLogsCommonContext,
+  startReportError,
 ]
 /* eslint-enable local-rules/disallow-side-effects */

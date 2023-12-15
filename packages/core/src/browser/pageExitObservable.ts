@@ -2,7 +2,9 @@ import { isExperimentalFeatureEnabled, ExperimentalFeature } from '../tools/expe
 import { Observable } from '../tools/observable'
 import { objectValues, includes } from '../tools/utils/polyfills'
 import { noop } from '../tools/utils/functionUtils'
+import { getConfiguration } from '../domain/configuration'
 import type { Configuration } from '../domain/configuration'
+import type { Component } from '../tools/injector'
 import { addEventListeners, addEventListener, DOM_EVENT } from './addEventListener'
 
 export const PageExitReason = {
@@ -18,7 +20,7 @@ export interface PageExitEvent {
   reason: PageExitReason
 }
 
-export function createPageExitObservable(configuration: Configuration): Observable<PageExitEvent> {
+export const createPageExitObservable: Component<Observable<PageExitEvent>, [Configuration]> = (configuration) => {
   const observable = new Observable<PageExitEvent>(() => {
     const pagehideEnabled = isExperimentalFeatureEnabled(ExperimentalFeature.PAGEHIDE)
     const { stop: stopListeners } = addEventListeners(
@@ -63,6 +65,9 @@ export function createPageExitObservable(configuration: Configuration): Observab
 
   return observable
 }
+
+// eslint-disable-next-line local-rules/disallow-side-effects
+createPageExitObservable.$deps = [getConfiguration]
 
 export function isPageExitReason(reason: string | undefined): reason is PageExitReason {
   return includes(objectValues(PageExitReason), reason)

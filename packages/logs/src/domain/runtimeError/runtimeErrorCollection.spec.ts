@@ -2,8 +2,8 @@ import { ErrorSource } from '@datadog/browser-core'
 import { StatusType } from '../logger'
 import type { RawLogsEventCollectedData } from '../lifeCycle'
 import type { LogsSpecInjector } from '../../../test/logsSpecInjector'
-import { createLogsSpecInjector, LogsSpecComponents } from '../../../test/logsSpecInjector'
-import { LogsComponents } from '../../boot/logsComponents'
+import { createLogsSpecInjector, startRawLogEvents } from '../../../test/logsSpecInjector'
+import { startRuntimeErrorCollection } from './runtimeErrorCollection'
 
 describe('runtime error collection', () => {
   let injector: LogsSpecInjector
@@ -16,7 +16,7 @@ describe('runtime error collection', () => {
     onErrorSpy = jasmine.createSpy()
     window.onerror = onErrorSpy
     injector = createLogsSpecInjector()
-    rawLogsEvents = injector.get<RawLogsEventCollectedData[]>(LogsSpecComponents.RawLogsEvents)
+    rawLogsEvents = injector.run(startRawLogEvents)
   })
 
   afterEach(() => {
@@ -25,7 +25,7 @@ describe('runtime error collection', () => {
 
   it('should send runtime errors', (done) => {
     injector.withConfiguration({ forwardErrorsToLogs: true })
-    injector.get(LogsComponents.RuntimeErrorCollection)
+    injector.run(startRuntimeErrorCollection)
 
     setTimeout(() => {
       throw new Error('error!')
@@ -45,7 +45,7 @@ describe('runtime error collection', () => {
 
   it('should not send runtime errors when forwardErrorsToLogs is false', (done) => {
     injector.withConfiguration({ forwardErrorsToLogs: false })
-    injector.get(LogsComponents.RuntimeErrorCollection)
+    injector.run(startRuntimeErrorCollection)
 
     setTimeout(() => {
       throw new Error('error!')

@@ -55,6 +55,10 @@ export interface InitConfiguration {
   telemetryConfigurationSampleRate?: number
 }
 
+export function getInitConfiguration(): InitConfiguration {
+  throw new Error('No init configuration')
+}
+
 // This type is only used to build the core configuration. Logs and RUM SDKs are using a proper type
 // for this option.
 type GenericBeforeSendCallback = (event: any, context?: any) => unknown
@@ -90,6 +94,10 @@ export interface Configuration extends TransportConfiguration {
   flushTimeout: Duration
   batchMessagesLimit: number
   messageBytesLimit: number
+}
+
+export function getConfiguration(): Configuration {
+  throw new Error('No configuration')
 }
 
 export function validateAndBuildConfiguration(initConfiguration: InitConfiguration): Configuration | undefined {

@@ -1,11 +1,16 @@
 import { sendToExtension } from '@datadog/browser-core'
 import type { LogsConfiguration, LogsInitConfiguration } from '../domain/configuration'
-import type { LifeCycle } from '../domain/lifeCycle'
-import { LifeCycleEventType } from '../domain/lifeCycle'
-import type { startLoggerCollection } from '../domain/logger/loggerCollection'
+import { LifeCycleEventType, startLogsLifeCycle } from '../domain/lifeCycle'
+import { startLoggerCollection } from '../domain/logger/loggerCollection'
 import type { CommonContext } from '../rawLogsEvent.types'
-import type { startInternalContext } from '../domain/internalContext'
-import { LogsComponents } from './logsComponents'
+import { startInternalContext } from '../domain/internalContext'
+import { startNetworkErrorCollection } from '../domain/networkError/networkErrorCollection'
+import { startRuntimeErrorCollection } from '../domain/runtimeError/runtimeErrorCollection'
+import { startConsoleCollection } from '../domain/console/consoleCollection'
+import { startReportCollection } from '../domain/report/reportCollection'
+import { startLogsAssembly } from '../domain/assembly'
+import { startLogsBatch } from '../transport/startLogsBatch'
+import { startLogsTelemetry } from '../domain/logsTelemetry'
 import { createLogsInjector } from './logsInjector'
 
 export function startLogs(
@@ -15,24 +20,23 @@ export function startLogs(
 ) {
   const injector = createLogsInjector(initConfiguration, configuration, buildCommonContext)
 
-  ;[
-    LogsComponents.NetworkCollection,
-    LogsComponents.RuntimeErrorCollection,
-    LogsComponents.ConsoleCollection,
-    LogsComponents.ReportCollection,
-    LogsComponents.LoggerCollection,
-    LogsComponents.LogsAssembly,
-    LogsComponents.LogsTransport,
-    LogsComponents.Telemetry,
-    LogsComponents.InternalContext,
-  ].forEach((componentId) => injector.get(componentId))
+  injector.run(startNetworkErrorCollection)
+  injector.run(startRuntimeErrorCollection)
+  injector.run(startConsoleCollection)
+  injector.run(startReportCollection)
+  const loggerCollection = injector.run(startLoggerCollection)
+  injector.run(startLogsAssembly)
+  injector.run(startLogsBatch)
+  injector.run(startLogsTelemetry)
+  const internalContext = injector.run(startInternalContext)
 
-  const lifeCycle = injector.get<LifeCycle>(LogsComponents.LifeCycle)
+  // TODO this could probably be moved in a component
+  const lifeCycle = injector.get(startLogsLifeCycle)
   lifeCycle.subscribe(LifeCycleEventType.LOG_COLLECTED, (log) => sendToExtension('logs', log))
 
   return {
-    handleLog: injector.get<ReturnType<typeof startLoggerCollection>>(LogsComponents.LoggerCollection).handleLog,
-    getInternalContext: injector.get<ReturnType<typeof startInternalContext>>(LogsComponents.InternalContext).get,
+    handleLog: loggerCollection.handleLog,
+    getInternalContext: internalContext.get,
     stop: injector.stop,
   }
 }

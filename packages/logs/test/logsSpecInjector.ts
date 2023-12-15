@@ -1,15 +1,10 @@
 import { stubEndpointBuilder, registerCleanupTask } from '@datadog/browser-core/test'
-import type { Injector } from '@datadog/browser-core'
+import type { Component, Injector } from '@datadog/browser-core'
 import { createLogsInjector } from '../src/boot/logsInjector'
 import type { LogsConfiguration } from '../src/domain/configuration'
-import { validateAndBuildLogsConfiguration } from '../src/domain/configuration'
+import { getLogsConfiguration, validateAndBuildLogsConfiguration } from '../src/domain/configuration'
 import type { RawLogsEventCollectedData, LifeCycle } from '../src/domain/lifeCycle'
-import { LifeCycleEventType } from '../src/domain/lifeCycle'
-import { LogsComponents } from '../src/boot/logsComponents'
-
-export enum LogsSpecComponents {
-  RawLogsEvents = 1000,
-}
+import { LifeCycleEventType, startLogsLifeCycle } from '../src/domain/lifeCycle'
 
 export interface LogsSpecInjector extends Injector {
   withConfiguration(configuration: Partial<LogsConfiguration>): void
@@ -28,28 +23,20 @@ export function createLogsSpecInjector(): LogsSpecInjector {
     user: {},
   }
   const injector = createLogsInjector(initConfiguration, baseConfiguration, () => commonContext)
-  injector.register(startRawLogEvents)
   registerCleanupTask(() => injector.stop())
 
   return {
-    get: injector.get,
-    define: injector.define,
-    register: injector.register,
-    stop: injector.stop,
+    ...injector,
     withConfiguration: (configuration: Partial<LogsConfiguration>) =>
-      injector.define(LogsComponents.Configuration, {
-        ...injector.get<LogsConfiguration>(LogsComponents.Configuration),
-        ...configuration,
-      }),
+      injector.override(getLogsConfiguration, () => ({ ...baseConfiguration, ...configuration })),
   }
 }
 
-function startRawLogEvents(lifeCycle: LifeCycle) {
+export const startRawLogEvents: Component<RawLogsEventCollectedData[], [LifeCycle]> = (lifeCycle) => {
   const rawLogsEvents: RawLogsEventCollectedData[] = []
   lifeCycle.subscribe(LifeCycleEventType.RAW_LOG_COLLECTED, (rawLogsEvent) => rawLogsEvents.push(rawLogsEvent))
   return rawLogsEvents
 }
 /* eslint-disable local-rules/disallow-side-effects */
-startRawLogEvents.$id = LogsSpecComponents.RawLogsEvents
-startRawLogEvents.$deps = [LogsComponents.LifeCycle]
+startRawLogEvents.$deps = [startLogsLifeCycle]
 /* eslint-enable local-rules/disallow-side-effects */

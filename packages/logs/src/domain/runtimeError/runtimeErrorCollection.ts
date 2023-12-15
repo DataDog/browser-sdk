@@ -1,10 +1,9 @@
-import type { Context, RawError, ClocksState } from '@datadog/browser-core'
+import type { Context, RawError, ClocksState, Component } from '@datadog/browser-core'
 import { noop, ErrorSource, trackRuntimeError, Observable } from '@datadog/browser-core'
-import type { LogsConfiguration } from '../configuration'
+import { getLogsConfiguration, type LogsConfiguration } from '../configuration'
 import type { LifeCycle } from '../lifeCycle'
-import { LifeCycleEventType } from '../lifeCycle'
+import { LifeCycleEventType, startLogsLifeCycle } from '../lifeCycle'
 import { StatusType } from '../logger'
-import { LogsComponents } from '../../boot/logsComponents'
 
 export interface ProvidedError {
   startClocks: ClocksState
@@ -13,7 +12,10 @@ export interface ProvidedError {
   handlingStack: string
 }
 
-export function startRuntimeErrorCollection(configuration: LogsConfiguration, lifeCycle: LifeCycle) {
+export const startRuntimeErrorCollection: Component<void, [LogsConfiguration, LifeCycle]> = (
+  configuration,
+  lifeCycle
+) => {
   if (!configuration.forwardErrorsToLogs) {
     return { stop: noop }
   }
@@ -45,6 +47,5 @@ export function startRuntimeErrorCollection(configuration: LogsConfiguration, li
   }
 }
 /* eslint-disable local-rules/disallow-side-effects */
-startRuntimeErrorCollection.$id = LogsComponents.RuntimeErrorCollection
-startRuntimeErrorCollection.$deps = [LogsComponents.Configuration, LogsComponents.LifeCycle]
+startRuntimeErrorCollection.$deps = [getLogsConfiguration, startLogsLifeCycle]
 /* eslint-enable local-rules/disallow-side-effects */

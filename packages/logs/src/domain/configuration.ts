@@ -20,6 +20,10 @@ export interface LogsInitConfiguration extends InitConfiguration {
   forwardReports?: RawReportType[] | 'all' | undefined
 }
 
+export function getLogsInitConfiguration(): LogsInitConfiguration {
+  throw new Error('No logs configuration')
+}
+
 export type HybridInitConfiguration = Omit<LogsInitConfiguration, 'clientToken'>
 
 export interface LogsConfiguration extends Configuration {
@@ -27,6 +31,10 @@ export interface LogsConfiguration extends Configuration {
   forwardConsoleLogs: ConsoleApiName[]
   forwardReports: RawReportType[]
   requestErrorResponseLengthLimit: number
+}
+
+export function getLogsConfiguration(): LogsConfiguration {
+  throw new Error('No logs configuration')
 }
 
 /**

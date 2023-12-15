@@ -1,19 +1,16 @@
-import type { Context, Observable, PageExitEvent, RawError } from '@datadog/browser-core'
-import { createIdentityEncoder, startBatchWithReplica } from '@datadog/browser-core'
-import type { LogsConfiguration } from '../domain/configuration'
+import type { Component, Context, Observable, PageExitEvent, RawError } from '@datadog/browser-core'
+import { createIdentityEncoder, createPageExitObservable, startBatchWithReplica } from '@datadog/browser-core'
+import { getLogsConfiguration, type LogsConfiguration } from '../domain/configuration'
 import type { LifeCycle } from '../domain/lifeCycle'
-import { LifeCycleEventType } from '../domain/lifeCycle'
+import { LifeCycleEventType, startLogsLifeCycle } from '../domain/lifeCycle'
 import type { LogsEvent } from '../logsEvent.types'
-import { LogsComponents } from '../boot/logsComponents'
-import type { LogsSessionManager } from '../domain/logsSessionManager'
+import { startLogsSessionManager, type LogsSessionManager } from '../domain/logsSessionManager'
+import { startReportError } from '../domain/reportError'
 
-export function startLogsBatch(
-  configuration: LogsConfiguration,
-  lifeCycle: LifeCycle,
-  reportError: (error: RawError) => void,
-  pageExitObservable: Observable<PageExitEvent>,
-  session: LogsSessionManager
-) {
+export const startLogsBatch: Component<
+  void,
+  [LogsConfiguration, LifeCycle, (error: RawError) => void, Observable<PageExitEvent>, LogsSessionManager]
+> = (configuration, lifeCycle, reportError, pageExitObservable, session) => {
   const batch = startBatchWithReplica(
     configuration,
     {
@@ -36,12 +33,11 @@ export function startLogsBatch(
   return batch
 }
 /* eslint-disable local-rules/disallow-side-effects */
-startLogsBatch.$id = LogsComponents.LogsTransport
 startLogsBatch.$deps = [
-  LogsComponents.Configuration,
-  LogsComponents.LifeCycle,
-  LogsComponents.ReportError,
-  LogsComponents.PageExitObservable,
-  LogsComponents.Session,
+  getLogsConfiguration,
+  startLogsLifeCycle,
+  startReportError,
+  createPageExitObservable,
+  startLogsSessionManager,
 ]
 /* eslint-enable local-rules/disallow-side-effects */

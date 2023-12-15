@@ -1,4 +1,12 @@
-import type { RawError, Observable, PageExitEvent, TelemetryEvent, Context } from '@datadog/browser-core'
+import type {
+  RawError,
+  Observable,
+  PageExitEvent,
+  TelemetryEvent,
+  Context,
+  Component,
+  Telemetry,
+} from '@datadog/browser-core'
 import {
   startTelemetry,
   TelemetryService,
@@ -8,20 +16,23 @@ import {
   createIdentityEncoder,
   isTelemetryReplicationAllowed,
   addTelemetryConfiguration,
+  createPageExitObservable,
 } from '@datadog/browser-core'
-import { LogsComponents } from '../boot/logsComponents'
 import type { LogsConfiguration, LogsInitConfiguration } from './configuration'
 import { getRUMInternalContext } from './rumInternalContext'
-import type { LogsSessionManager } from './logsSessionManager'
-import { serializeLogsConfiguration } from './configuration'
+import { startLogsSessionManager, type LogsSessionManager } from './logsSessionManager'
+import { getLogsConfiguration, getLogsInitConfiguration, serializeLogsConfiguration } from './configuration'
+import { startReportError } from './reportError'
 
-export function startLogsTelemetry(
-  initConfiguration: LogsInitConfiguration,
-  configuration: LogsConfiguration,
-  reportError: (error: RawError) => void,
-  pageExitObservable: Observable<PageExitEvent>,
-  session: LogsSessionManager
-) {
+interface LogsTelemetry {
+  telemetry: Telemetry
+  stop: () => void
+}
+
+export const startLogsTelemetry: Component<
+  LogsTelemetry,
+  [LogsInitConfiguration, LogsConfiguration, (error: RawError) => void, Observable<PageExitEvent>, LogsSessionManager]
+> = (initConfiguration, configuration, reportError, pageExitObservable, session) => {
   const telemetry = startTelemetry(TelemetryService.LOGS, configuration)
   telemetry.setContextProvider(() => ({
     application: {
@@ -72,12 +83,11 @@ export function startLogsTelemetry(
   }
 }
 /* eslint-disable local-rules/disallow-side-effects */
-startLogsTelemetry.$id = LogsComponents.Telemetry
 startLogsTelemetry.$deps = [
-  LogsComponents.InitConfiguration,
-  LogsComponents.Configuration,
-  LogsComponents.ReportError,
-  LogsComponents.PageExitObservable,
-  LogsComponents.Session,
+  getLogsInitConfiguration,
+  getLogsConfiguration,
+  startReportError,
+  createPageExitObservable,
+  startLogsSessionManager,
 ]
 /* eslint-enable local-rules/disallow-side-effects */

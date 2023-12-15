@@ -16,6 +16,10 @@ interface LifeCycleEventMap {
 export const LifeCycle = AbstractLifeCycle<LifeCycleEventMap>
 export type LifeCycle = AbstractLifeCycle<LifeCycleEventMap>
 
+export function startLogsLifeCycle(): LifeCycle {
+  return new LifeCycle()
+}
+
 export interface RawLogsEventCollectedData<E extends RawLogsEvent = RawLogsEvent> {
   rawLogsEvent: E
   messageContext?: object

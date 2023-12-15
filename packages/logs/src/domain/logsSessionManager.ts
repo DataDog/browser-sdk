@@ -1,6 +1,6 @@
-import type { RelativeTime } from '@datadog/browser-core'
+import type { Component, RelativeTime } from '@datadog/browser-core'
 import { Observable, performDraw, startSessionManager } from '@datadog/browser-core'
-import { LogsComponents } from '../boot/logsComponents'
+import { getLogsConfiguration } from './configuration'
 import type { LogsConfiguration } from './configuration'
 
 export const LOGS_SESSION_KEY = 'logs'
@@ -19,7 +19,7 @@ export const enum LoggerTrackingType {
   TRACKED = '1',
 }
 
-export function startLogsSessionManager(configuration: LogsConfiguration): LogsSessionManager {
+export const startLogsSessionManager: Component<LogsSessionManager, [LogsConfiguration]> = (configuration) => {
   const sessionManager = startSessionManager(configuration, LOGS_SESSION_KEY, (rawTrackingType) =>
     computeSessionState(configuration, rawTrackingType)
   )
@@ -36,11 +36,10 @@ export function startLogsSessionManager(configuration: LogsConfiguration): LogsS
   }
 }
 /* eslint-disable local-rules/disallow-side-effects */
-startLogsSessionManager.$id = LogsComponents.Session
-startLogsSessionManager.$deps = [LogsComponents.Configuration]
+startLogsSessionManager.$deps = [getLogsConfiguration]
 /* eslint-enable local-rules/disallow-side-effects */
 
-export function startLogsSessionManagerStub(configuration: LogsConfiguration): LogsSessionManager {
+export const startLogsSessionManagerStub: Component<LogsSessionManager, [LogsConfiguration]> = (configuration) => {
   const isTracked = computeTrackingType(configuration) === LoggerTrackingType.TRACKED
   const session = isTracked ? {} : undefined
   return {
@@ -49,8 +48,7 @@ export function startLogsSessionManagerStub(configuration: LogsConfiguration): L
   }
 }
 /* eslint-disable local-rules/disallow-side-effects */
-startLogsSessionManagerStub.$id = LogsComponents.Session
-startLogsSessionManagerStub.$deps = [LogsComponents.Configuration]
+startLogsSessionManagerStub.$deps = [getLogsConfiguration]
 /* eslint-enable local-rules/disallow-side-effects */
 
 function computeTrackingType(configuration: LogsConfiguration) {
