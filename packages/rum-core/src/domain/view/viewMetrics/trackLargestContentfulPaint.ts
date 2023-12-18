@@ -26,8 +26,10 @@ export interface LargestContentfulPaint {
   targetSelector?: string
 }
 
-let zeroLcpReported = false
-let previousNonZeroLcp: Omit<PerformanceEntry, 'toJSON'> | undefined
+type SerializableLCP = Omit<RumLargestContentfulPaintTiming, 'toJSON' | 'element'>
+
+let wrongLcpReported = false
+let previousLcp: SerializableLCP
 
 /**
  * Track the largest contentful paint (LCP) occurring during the initial View.  This can yield
@@ -75,7 +77,13 @@ export function trackLargestContentfulPaint(
         }
 
         if (isExperimentalFeatureEnabled(ExperimentalFeature.ZERO_LCP_TELEMETRY)) {
-          monitorZeroLcpEntry(lcpEntry)
+          monitorLcpEntries(
+            lcpEntry,
+            entries.filter(
+              (entry): entry is RumLargestContentfulPaintTiming =>
+                entry.entryType === RumPerformanceEntryType.LARGEST_CONTENTFUL_PAINT
+            )
+          )
         }
 
         callback({
@@ -94,24 +102,39 @@ export function trackLargestContentfulPaint(
   }
 }
 
-function monitorZeroLcpEntry(lcpEntry: RumLargestContentfulPaintTiming) {
-  if (!zeroLcpReported && lcpEntry.startTime !== 0) {
-    previousNonZeroLcp = lcpEntry.toJSON()
+function monitorLcpEntries(lcpEntry: RumLargestContentfulPaintTiming, lcpEntries: RumLargestContentfulPaintTiming[]) {
+  if (wrongLcpReported) {
+    return
   }
 
-  if (!zeroLcpReported && lcpEntry.startTime === 0) {
-    zeroLcpReported = true
+  const wrongLcpDetected =
+    lcpEntry.startTime === 0
+      ? 'LCP with startTime = 0'
+      : previousLcp !== undefined && lcpEntry.startTime < previousLcp.startTime
+        ? 'LCP with startTime < previous LCP'
+        : previousLcp !== undefined && lcpEntry.size < previousLcp.size
+          ? 'LCP with size < previous LCP'
+          : undefined
 
-    addTelemetryDebug('LCP with startTime = 0', {
+  if (wrongLcpDetected) {
+    wrongLcpReported = true
+
+    addTelemetryDebug(wrongLcpDetected, {
       debug: {
-        entry: lcpEntry.toJSON(),
-        previousNonZeroLcp,
-        navigationStart: performance.timing.navigationStart,
+        entry: toSerializableLCP(lcpEntry),
+        previousLcp,
         timeOrigin: performance.timeOrigin,
         now: relativeNow(),
-        visibilityState: document.visibilityState,
-        prerendering: (document as any).prerendering,
+        lcpEntries: lcpEntries.map(toSerializableLCP),
       },
     })
   }
+
+  previousLcp = toSerializableLCP(lcpEntry)
+}
+
+function toSerializableLCP(entry: RumLargestContentfulPaintTiming): SerializableLCP {
+  const jsonEntry = entry.toJSON()
+  delete jsonEntry.element
+  return jsonEntry
 }
