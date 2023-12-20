@@ -48,7 +48,7 @@ export type BrowserRecord =
 /**
  * Browser-specific. Schema of a Record type which contains the full snapshot of a screen.
  */
-export type BrowserFullSnapshotRecord = WebviewSupportedCommonRecordSchema & {
+export type BrowserFullSnapshotRecord = SlotSupportedCommonRecordSchema & {
   /**
    * The type of this Record.
    */
@@ -56,13 +56,13 @@ export type BrowserFullSnapshotRecord = WebviewSupportedCommonRecordSchema & {
   data: BrowserNode
 }
 /**
- * Schema of common properties for a Record event type that is supported by webviews.
+ * Schema of common properties for a Record event type that is supported by slots.
  */
-export type WebviewSupportedCommonRecordSchema = CommonRecordSchema & {
+export type SlotSupportedCommonRecordSchema = CommonRecordSchema & {
   /**
-   * Defines the unique ID of the nested replay environment that generated this record.
+   * Unique ID of the slot that generated this record.
    */
-  readonly nestedEnvId?: number
+  readonly slotId?: string
 }
 /**
  * Serialized node contained by this Record.
@@ -77,7 +77,7 @@ export type SerializedNode = DocumentNode | DocumentFragmentNode | DocumentTypeN
 /**
  * Browser-specific. Schema of a Record type which contains mutations of a screen.
  */
-export type BrowserIncrementalSnapshotRecord = WebviewSupportedCommonRecordSchema & {
+export type BrowserIncrementalSnapshotRecord = SlotSupportedCommonRecordSchema & {
   /**
    * The type of this Record.
    */
@@ -246,7 +246,7 @@ export type PointerInteractionData = {
 /**
  * Schema of a Record which contains the screen properties.
  */
-export type MetaRecord = WebviewSupportedCommonRecordSchema & {
+export type MetaRecord = SlotSupportedCommonRecordSchema & {
   /**
    * The type of this Record.
    */
@@ -272,7 +272,7 @@ export type MetaRecord = WebviewSupportedCommonRecordSchema & {
 /**
  * Schema of a Record type which contains focus information.
  */
-export type FocusRecord = WebviewSupportedCommonRecordSchema & {
+export type FocusRecord = SlotSupportedCommonRecordSchema & {
   /**
    * The type of this Record.
    */
@@ -287,7 +287,7 @@ export type FocusRecord = WebviewSupportedCommonRecordSchema & {
 /**
  * Schema of a Record which signifies that view lifecycle ended.
  */
-export type ViewEndRecord = WebviewSupportedCommonRecordSchema & {
+export type ViewEndRecord = SlotSupportedCommonRecordSchema & {
   /**
    * The type of this Record.
    */
@@ -296,7 +296,7 @@ export type ViewEndRecord = WebviewSupportedCommonRecordSchema & {
 /**
  * Schema of a Record which signifies that the viewport properties have changed.
  */
-export type VisualViewportRecord = WebviewSupportedCommonRecordSchema & {
+export type VisualViewportRecord = SlotSupportedCommonRecordSchema & {
   data: {
     height: number
     offsetLeft: number
@@ -314,7 +314,7 @@ export type VisualViewportRecord = WebviewSupportedCommonRecordSchema & {
 /**
  * Schema of a Record which signifies a collection of frustration signals.
  */
-export type FrustrationRecord = WebviewSupportedCommonRecordSchema & {
+export type FrustrationRecord = SlotSupportedCommonRecordSchema & {
   /**
    * The type of this Record.
    */
