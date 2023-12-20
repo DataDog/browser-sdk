@@ -1,6 +1,6 @@
 import { createContextManager } from './contextManager'
 import { CustomerDataType } from './contextConstants'
-import { createCustomerDataTracker } from './trackCustomerData'
+import { createCustomerDataTracker } from './customerDataTracker'
 
 describe('createContextManager', () => {
   it('starts with an empty context', () => {

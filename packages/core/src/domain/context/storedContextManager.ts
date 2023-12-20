@@ -4,7 +4,7 @@ import type { Configuration } from '../configuration'
 import type { ContextManager } from './contextManager'
 import { createContextManager } from './contextManager'
 import type { CustomerDataType } from './contextConstants'
-import type { CustomerDataTracker } from './trackCustomerData'
+import type { CustomerDataTracker } from './customerDataTracker'
 
 const CONTEXT_STORE_KEY_PREFIX = '_dd_c'
 

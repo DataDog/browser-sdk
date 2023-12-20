@@ -7,13 +7,13 @@ import {
   CUSTOMER_DATA_BYTES_LIMIT,
   CustomerDataCompressionStatus,
   createCustomerDataTracker,
-} from './trackCustomerData'
+} from './customerDataTracker'
 import { CustomerDataType } from './contextConstants'
 
 const CONTEXT_OVER_LIMIT = { a: Array(CUSTOMER_DATA_BYTES_LIMIT).join('a') }
 const CONTEXT_OVER_COMPRESSED_LIMIT = { a: Array(CUSTOMER_COMPRESSED_DATA_BYTES_LIMIT).join('a') }
 
-describe('trackCustomerData', () => {
+describe('customerDataTracker', () => {
   let clock: Clock
   let displaySpy: jasmine.Spy<typeof display.warn>
 

@@ -3,7 +3,7 @@ import { getType } from '../../tools/utils/typeUtils'
 import { sanitize } from '../../tools/serialisation/sanitize'
 import type { Context } from '../../tools/serialisation/context'
 import { Observable } from '../../tools/observable'
-import type { CustomerDataTracker } from './trackCustomerData'
+import type { CustomerDataTracker } from './customerDataTracker'
 
 export type ContextManager = ReturnType<typeof createContextManager>
 

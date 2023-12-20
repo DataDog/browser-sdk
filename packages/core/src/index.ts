@@ -99,7 +99,7 @@ export {
   CustomerDataTracker,
   CUSTOMER_DATA_BYTES_LIMIT,
   CustomerDataCompressionStatus,
-} from './domain/context/trackCustomerData'
+} from './domain/context/customerDataTracker'
 export { CustomerDataType } from './domain/context/contextConstants'
 export { ValueHistory, ValueHistoryEntry, CLEAR_OLD_VALUES_INTERVAL } from './tools/valueHistory'
 export { readBytesFromStream } from './tools/readBytesFromStream'

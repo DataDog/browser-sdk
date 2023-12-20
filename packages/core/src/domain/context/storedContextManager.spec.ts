@@ -3,7 +3,7 @@ import { createNewEvent } from '../../../test'
 import { DOM_EVENT } from '../../browser/addEventListener'
 import { createStoredContextManager, buildStorageKey, removeStorageListeners } from './storedContextManager'
 import { CustomerDataType } from './contextConstants'
-import { createCustomerDataTracker } from './trackCustomerData'
+import { createCustomerDataTracker } from './customerDataTracker'
 
 describe('storedContextManager', () => {
   const PRODUCT_KEY = 'fake'
