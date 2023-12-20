@@ -88,6 +88,6 @@ function displayCustomerDataLimitReachedWarning(customerDataType: CustomerDataTy
   display.warn(
     `The ${CustomerDataLabel[customerDataType]} data exceeds the recommended ${
       bytesCountLimit / ONE_KIBI_BYTE
-    }KiB threshold. More details: https://docs.datadoghq.com/real_user_monitoring/browser/troubleshooting/#customer-data-exceeds-the-recommended-3kib-warning`
+    }KiB threshold. More details: https://docs.datadoghq.com/real_user_monitoring/browser/troubleshooting/#customer-data-exceeds-the-recommended-threshold-warning`
   )
 }
