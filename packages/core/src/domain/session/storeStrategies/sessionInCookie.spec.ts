@@ -42,22 +42,32 @@ describe('session in cookie strategy', () => {
 
     it('should not be secure nor crossSite by default', () => {
       const cookieOptions = buildCookieOptions({ clientToken })!
-      expect(cookieOptions).toEqual({ secure: false, crossSite: false })
+      expect(cookieOptions).toEqual({ secure: false, crossSite: false, partitioned: false })
     })
 
     it('should be secure when `useSecureSessionCookie` is truthy', () => {
       const cookieOptions = buildCookieOptions({ clientToken, useSecureSessionCookie: true })!
-      expect(cookieOptions).toEqual({ secure: true, crossSite: false })
+      expect(cookieOptions).toEqual({ secure: true, crossSite: false, partitioned: false })
     })
 
     it('should be secure and crossSite when `useCrossSiteSessionCookie` is truthy', () => {
       const cookieOptions = buildCookieOptions({ clientToken, useCrossSiteSessionCookie: true })!
-      expect(cookieOptions).toEqual({ secure: true, crossSite: true })
+      expect(cookieOptions).toEqual({ secure: true, crossSite: true, partitioned: false })
+    })
+
+    it('should be secure, crossSite and partitioned when `usePartitionedCrossSiteSessionCookie` is truthy', () => {
+      const cookieOptions = buildCookieOptions({ clientToken, usePartitionedCrossSiteSessionCookie: true })!
+      expect(cookieOptions).toEqual({ secure: true, crossSite: true, partitioned: true })
     })
 
     it('should have domain when `trackSessionAcrossSubdomains` is truthy', () => {
       const cookieOptions = buildCookieOptions({ clientToken, trackSessionAcrossSubdomains: true })!
-      expect(cookieOptions).toEqual({ secure: false, crossSite: false, domain: jasmine.any(String) })
+      expect(cookieOptions).toEqual({
+        secure: false,
+        crossSite: false,
+        partitioned: false,
+        domain: jasmine.any(String),
+      })
     })
   })
 

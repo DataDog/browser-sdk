@@ -41,7 +41,11 @@ export interface InitConfiguration {
   version?: string | undefined
 
   // cookie options
+  /**
+   * @deprecated use usePartitionedCrossSiteSessionCookie instead
+   */
   useCrossSiteSessionCookie?: boolean | undefined
+  usePartitionedCrossSiteSessionCookie?: boolean | undefined
   useSecureSessionCookie?: boolean | undefined
   trackSessionAcrossSubdomains?: boolean | undefined
 
@@ -169,6 +173,7 @@ export function serializeConfiguration(initConfiguration: InitConfiguration): Pa
     telemetry_configuration_sample_rate: initConfiguration.telemetryConfigurationSampleRate,
     use_before_send: !!initConfiguration.beforeSend,
     use_cross_site_session_cookie: initConfiguration.useCrossSiteSessionCookie,
+    use_partitioned_cross_site_session_cookie: initConfiguration.usePartitionedCrossSiteSessionCookie,
     use_secure_session_cookie: initConfiguration.useSecureSessionCookie,
     use_proxy: !!initConfiguration.proxy,
     silent_multiple_init: initConfiguration.silentMultipleInit,

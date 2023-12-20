@@ -111,7 +111,7 @@ describe('validateAndBuildConfiguration', () => {
       const configuration = validateAndBuildConfiguration({ clientToken, allowFallbackToLocalStorage: false })
       expect(configuration?.sessionStoreStrategyType).toEqual({
         type: 'Cookie',
-        cookieOptions: { secure: false, crossSite: false },
+        cookieOptions: { secure: false, crossSite: false, partitioned: false },
       })
     })
 
@@ -119,7 +119,7 @@ describe('validateAndBuildConfiguration', () => {
       const configuration = validateAndBuildConfiguration({ clientToken, allowFallbackToLocalStorage: true })
       expect(configuration?.sessionStoreStrategyType).toEqual({
         type: 'Cookie',
-        cookieOptions: { secure: false, crossSite: false },
+        cookieOptions: { secure: false, crossSite: false, partitioned: false },
       })
     })
 

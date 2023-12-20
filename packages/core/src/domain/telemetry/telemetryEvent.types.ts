@@ -142,9 +142,13 @@ export type TelemetryConfigurationEvent = CommonTelemetryProperties & {
        */
       track_long_task?: boolean
       /**
-       * Whether a secure cross-site session cookie is used
+       * Whether a secure cross-site session cookie is used (deprecated)
        */
       use_cross_site_session_cookie?: boolean
+      /**
+       * Whether a partitioned secure cross-site session cookie is used
+       */
+      use_partitioned_cross_site_session_cookie?: boolean
       /**
        * Whether a secure session cookie is used
        */
@@ -285,6 +289,14 @@ export type TelemetryConfigurationEvent = CommonTelemetryProperties & {
        * The upload frequency of batches (in milliseconds)
        */
       batch_upload_frequency?: number
+      /**
+       * Maximum number of batches processed sequencially without a delay
+       */
+      batch_processing_level?: number
+      /**
+       * Whether UIApplication background tasks are enabled
+       */
+      background_tasks_enabled?: boolean
       /**
        * The version of React used in a ReactNative application
        */
