@@ -36,10 +36,10 @@ export function createCustomerDataTracker(
   // Especially useful if the user call context APIs synchronously multiple times in a row
   const { throttled: computeBytesCountThrottled, cancel: cancelComputeBytesCount } = throttle((context: Context) => {
     bytesCountCache = computeBytesCount(jsonStringify(context)!)
-    maybeWarn()
+    checkCustomerDataLimit()
   }, BYTES_COMPUTATION_THROTTLING_DELAY)
 
-  function maybeWarn() {
+  function checkCustomerDataLimit() {
     if (alreadyWarned || compressionStatus === CustomerDataCompressionStatus.Unknown) {
       return
     }
@@ -68,7 +68,7 @@ export function createCustomerDataTracker(
     setCompressionStatus: (newCompressionStatus: CustomerDataCompressionStatus) => {
       if (compressionStatus === CustomerDataCompressionStatus.Unknown) {
         compressionStatus = newCompressionStatus
-        maybeWarn()
+        checkCustomerDataLimit()
       }
     },
     stop: () => {
