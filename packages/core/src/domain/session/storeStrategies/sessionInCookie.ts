@@ -51,8 +51,13 @@ function deleteSessionCookie(options: CookieOptions) {
 export function buildCookieOptions(initConfiguration: InitConfiguration) {
   const cookieOptions: CookieOptions = {}
 
-  cookieOptions.secure = !!initConfiguration.useSecureSessionCookie || !!initConfiguration.useCrossSiteSessionCookie
-  cookieOptions.crossSite = !!initConfiguration.useCrossSiteSessionCookie
+  cookieOptions.secure =
+    !!initConfiguration.useSecureSessionCookie ||
+    !!initConfiguration.usePartitionedCrossSiteSessionCookie ||
+    !!initConfiguration.useCrossSiteSessionCookie
+  cookieOptions.crossSite =
+    !!initConfiguration.usePartitionedCrossSiteSessionCookie || !!initConfiguration.useCrossSiteSessionCookie
+  cookieOptions.partitioned = !!initConfiguration.usePartitionedCrossSiteSessionCookie
 
   if (initConfiguration.trackSessionAcrossSubdomains) {
     cookieOptions.domain = getCurrentSite()

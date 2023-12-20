@@ -5,6 +5,7 @@ import { findCommaSeparatedValue, findCommaSeparatedValues, generateUUID } from 
 export interface CookieOptions {
   secure?: boolean
   crossSite?: boolean
+  partitioned?: boolean
   domain?: string
 }
 
@@ -15,7 +16,8 @@ export function setCookie(name: string, value: string, expireDelay: number, opti
   const sameSite = options && options.crossSite ? 'none' : 'strict'
   const domain = options && options.domain ? `;domain=${options.domain}` : ''
   const secure = options && options.secure ? ';secure' : ''
-  document.cookie = `${name}=${value};${expires};path=/;samesite=${sameSite}${domain}${secure}`
+  const partitioned = options && options.partitioned ? ';partitioned' : ''
+  document.cookie = `${name}=${value};${expires};path=/;samesite=${sameSite}${domain}${secure}${partitioned}`
 }
 
 export function getCookie(name: string) {
