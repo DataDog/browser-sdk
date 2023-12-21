@@ -16,6 +16,11 @@
 
 ---
 
+## v5.6.0
+
+- ✨[RUM-2436] add partitioned support for third party cookies ([#2535](https://github.com/DataDog/browser-sdk/pull/2535))
+- 🔊[RUM-2324] Telemetry on other wrong LCP cases ([#2531](https://github.com/DataDog/browser-sdk/pull/2531))
+
 ## v5.5.1
 
 - 🐛 [RUM-2280] fix duplicated mutations when using Shadow DOM ([#2527](https://github.com/DataDog/browser-sdk/pull/2527))
