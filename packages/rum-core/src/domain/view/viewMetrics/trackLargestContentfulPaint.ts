@@ -7,6 +7,7 @@ import {
   addTelemetryDebug,
   findLast,
   isExperimentalFeatureEnabled,
+  noop,
   relativeNow,
 } from '@datadog/browser-core'
 import { LifeCycleEventType } from '../../lifeCycle'
@@ -118,7 +119,8 @@ function monitorLcpEntries(lcpEntry: RumLargestContentfulPaintTiming, lcpEntries
 
   if (wrongLcpDetected) {
     wrongLcpReported = true
-
+    const po = new PerformanceObserver(noop)
+    po.observe({ type: 'largest-contentful-paint', buffered: true })
     addTelemetryDebug(wrongLcpDetected, {
       debug: {
         entry: toSerializableLCP(lcpEntry),
@@ -126,6 +128,9 @@ function monitorLcpEntries(lcpEntry: RumLargestContentfulPaintTiming, lcpEntries
         timeOrigin: performance.timeOrigin,
         now: relativeNow(),
         lcpEntries: lcpEntries.map(toSerializableLCP),
+        takeRecordsEntries: po
+          .takeRecords()
+          .map((lcp) => toSerializableLCP(lcp as unknown as RumLargestContentfulPaintTiming)),
       },
     })
   }
