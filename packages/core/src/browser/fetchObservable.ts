@@ -38,7 +38,7 @@ export function initFetchObservable() {
 }
 
 function createFetchObservable() {
-  const observable = new Observable<FetchContext>(() => {
+  return new Observable<FetchContext>((observable) => {
     if (!window.fetch) {
       return
     }
@@ -66,8 +66,6 @@ function createFetchObservable() {
 
     return stop
   })
-
-  return observable
 }
 
 function beforeSend(observable: Observable<FetchContext>, input: unknown, init?: RequestInit) {

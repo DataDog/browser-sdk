@@ -33,7 +33,7 @@ export function resetConsoleObservable() {
 }
 
 function createConsoleObservable(api: ConsoleApiName) {
-  const observable = new Observable<ConsoleLog>(() => {
+  return new Observable<ConsoleLog>((observable) => {
     const originalConsoleApi = globalConsole[api]
 
     globalConsole[api] = (...params: unknown[]) => {
@@ -49,8 +49,6 @@ function createConsoleObservable(api: ConsoleApiName) {
       globalConsole[api] = originalConsoleApi
     }
   })
-
-  return observable
 }
 
 function buildConsoleLog(params: unknown[], api: ConsoleApiName, handlingStack: string): ConsoleLog {

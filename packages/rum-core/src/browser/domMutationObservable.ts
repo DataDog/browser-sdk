@@ -3,7 +3,7 @@ import { monitor, noop, Observable, getZoneJsOriginalValue } from '@datadog/brow
 export function createDOMMutationObservable() {
   const MutationObserver = getMutationObserverConstructor()
 
-  const observable: Observable<void> = new Observable<void>(() => {
+  return new Observable<void>((observable) => {
     if (!MutationObserver) {
       return
     }
@@ -16,8 +16,6 @@ export function createDOMMutationObservable() {
     })
     return () => observer.disconnect()
   })
-
-  return observable
 }
 
 type MutationObserverConstructor = new (callback: MutationCallback) => MutationObserver

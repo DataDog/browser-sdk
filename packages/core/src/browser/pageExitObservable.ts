@@ -19,7 +19,7 @@ export interface PageExitEvent {
 }
 
 export function createPageExitObservable(configuration: Configuration): Observable<PageExitEvent> {
-  const observable = new Observable<PageExitEvent>(() => {
+  return new Observable<PageExitEvent>((observable) => {
     const pagehideEnabled = isExperimentalFeatureEnabled(ExperimentalFeature.PAGEHIDE)
     const { stop: stopListeners } = addEventListeners(
       configuration,
@@ -60,8 +60,6 @@ export function createPageExitObservable(configuration: Configuration): Observab
       stopBeforeUnloadListener()
     }
   })
-
-  return observable
 }
 
 export function isPageExitReason(reason: string | undefined): reason is PageExitReason {
