@@ -16,19 +16,17 @@ export type PostCallCallback<TARGET extends { [key: string]: any }, METHOD exten
 export function instrumentMethod<TARGET extends { [key: string]: any }, METHOD extends keyof TARGET>(
   targetPrototype: TARGET,
   method: METHOD,
-  instrumentationFactory: (
-    original: TARGET[METHOD]
-  ) => (this: TARGET, ...args: Parameters<TARGET[METHOD]>) => ReturnType<TARGET[METHOD]>
+  onCall: (this: null, callInfos: InstrumentedMethodCall<TARGET, METHOD>) => void
 ) {
   const original = targetPrototype[method]
 
-  let instrumentation = instrumentationFactory(original)
+  let instrumentation = createInstrumentedMethod(original, onCall)
 
   const instrumentationWrapper = function (this: TARGET): ReturnType<TARGET[METHOD]> | undefined {
     if (typeof instrumentation !== 'function') {
       return undefined
     }
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-call
     return instrumentation.apply(this, arguments as unknown as Parameters<TARGET[METHOD]>)
   }
   targetPrototype[method] = instrumentationWrapper as TARGET[METHOD]
@@ -44,44 +42,39 @@ export function instrumentMethod<TARGET extends { [key: string]: any }, METHOD e
   }
 }
 
-export function instrumentMethodAndCallOriginal<TARGET extends { [key: string]: any }, METHOD extends keyof TARGET>(
-  targetPrototype: TARGET,
-  method: METHOD,
+function createInstrumentedMethod<TARGET extends { [key: string]: any }, METHOD extends keyof TARGET>(
+  original: TARGET[METHOD],
   onCall: (this: null, callInfos: InstrumentedMethodCall<TARGET, METHOD>) => void
-) {
-  return instrumentMethod(
-    targetPrototype,
-    method,
-    (original) =>
-      function () {
-        const parameters = arguments as unknown as Parameters<TARGET[METHOD]>
-        let result
+): TARGET[METHOD] {
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+  return function (this: TARGET) {
+    const parameters = arguments as unknown as Parameters<TARGET[METHOD]>
+    let result
 
-        let postCallCallback: PostCallCallback<TARGET, METHOD> | undefined
+    let postCallCallback: PostCallCallback<TARGET, METHOD> | undefined
 
-        callMonitored(onCall, null, [
-          {
-            target: this,
-            parameters,
-            onPostCall: (callback) => {
-              postCallCallback = callback
-            },
-          },
-        ])
+    callMonitored(onCall, null, [
+      {
+        target: this,
+        parameters,
+        onPostCall: (callback) => {
+          postCallCallback = callback
+        },
+      },
+    ])
 
-        if (typeof original === 'function') {
-          // eslint-disable-next-line @typescript-eslint/no-unsafe-call
-          result = original.apply(this, parameters)
-        }
+    if (typeof original === 'function') {
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-call
+      result = original.apply(this, parameters)
+    }
 
-        if (postCallCallback) {
-          callMonitored(postCallCallback, null, [result])
-        }
+    if (postCallCallback) {
+      callMonitored(postCallCallback, null, [result])
+    }
 
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-        return result
-      }
-  )
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+    return result
+  } as TARGET[METHOD]
 }
 
 export function instrumentSetter<TARGET extends { [key: string]: any }, PROPERTY extends keyof TARGET>(

@@ -1,5 +1,5 @@
 import type { InstrumentedMethodCall } from '../tools/instrumentMethod'
-import { instrumentMethodAndCallOriginal } from '../tools/instrumentMethod'
+import { instrumentMethod } from '../tools/instrumentMethod'
 import { Observable } from '../tools/observable'
 import type { Duration, ClocksState } from '../tools/utils/timeUtils'
 import { elapsed, clocksNow, timeStampNow } from '../tools/utils/timeUtils'
@@ -41,21 +41,13 @@ export function initXhrObservable(configuration: Configuration) {
 
 function createXhrObservable(configuration: Configuration) {
   return new Observable<XhrContext>((observable) => {
-    const { stop: stopInstrumentingStart } = instrumentMethodAndCallOriginal(XMLHttpRequest.prototype, 'open', openXhr)
+    const { stop: stopInstrumentingStart } = instrumentMethod(XMLHttpRequest.prototype, 'open', openXhr)
 
-    const { stop: stopInstrumentingSend } = instrumentMethodAndCallOriginal(
-      XMLHttpRequest.prototype,
-      'send',
-      (call) => {
-        sendXhr(call, configuration, observable)
-      }
-    )
+    const { stop: stopInstrumentingSend } = instrumentMethod(XMLHttpRequest.prototype, 'send', (call) => {
+      sendXhr(call, configuration, observable)
+    })
 
-    const { stop: stopInstrumentingAbort } = instrumentMethodAndCallOriginal(
-      XMLHttpRequest.prototype,
-      'abort',
-      abortXhr
-    )
+    const { stop: stopInstrumentingAbort } = instrumentMethod(XMLHttpRequest.prototype, 'abort', abortXhr)
 
     return () => {
       stopInstrumentingStart()
@@ -91,19 +83,15 @@ function sendXhr(
 
   let hasBeenReported = false
 
-  const { stop: stopInstrumentingOnReadyStateChange } = instrumentMethodAndCallOriginal(
-    xhr,
-    'onreadystatechange',
-    () => {
-      if (xhr.readyState === XMLHttpRequest.DONE) {
-        // Try to report the XHR as soon as possible, because the XHR may be mutated by the
-        // application during a future event. For example, Angular is calling .abort() on
-        // completed requests during an onreadystatechange event, so the status becomes '0'
-        // before the request is collected.
-        onEnd()
-      }
+  const { stop: stopInstrumentingOnReadyStateChange } = instrumentMethod(xhr, 'onreadystatechange', () => {
+    if (xhr.readyState === XMLHttpRequest.DONE) {
+      // Try to report the XHR as soon as possible, because the XHR may be mutated by the
+      // application during a future event. For example, Angular is calling .abort() on
+      // completed requests during an onreadystatechange event, so the status becomes '0'
+      // before the request is collected.
+      onEnd()
     }
-  )
+  })
 
   const onEnd = () => {
     unsubscribeLoadEndListener()

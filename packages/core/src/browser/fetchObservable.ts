@@ -1,5 +1,5 @@
 import type { InstrumentedMethodCall } from '../tools/instrumentMethod'
-import { instrumentMethodAndCallOriginal } from '../tools/instrumentMethod'
+import { instrumentMethod } from '../tools/instrumentMethod'
 import { monitor } from '../tools/monitor'
 import { Observable } from '../tools/observable'
 import type { ClocksState } from '../tools/utils/timeUtils'
@@ -44,7 +44,7 @@ function createFetchObservable() {
       return
     }
 
-    const { stop } = instrumentMethodAndCallOriginal(window, 'fetch', (call) => beforeSend(call, observable))
+    const { stop } = instrumentMethod(window, 'fetch', (call) => beforeSend(call, observable))
 
     return stop
   })

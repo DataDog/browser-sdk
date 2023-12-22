@@ -1,4 +1,4 @@
-import { instrumentMethodAndCallOriginal } from '../../tools/instrumentMethod'
+import { instrumentMethod } from '../../tools/instrumentMethod'
 import type { Observable } from '../../tools/observable'
 import { clocksNow } from '../../tools/utils/timeUtils'
 import type { StackTrace } from './computeStackTrace'
@@ -33,23 +33,19 @@ export function trackRuntimeError(errorObservable: Observable<RawError>) {
 }
 
 export function instrumentOnError(callback: UnhandledErrorCallback) {
-  return instrumentMethodAndCallOriginal(
-    window,
-    'onerror',
-    ({ parameters: [messageObj, url, line, column, errorObj] }) => {
-      let stackTrace
-      if (errorObj instanceof Error) {
-        stackTrace = computeStackTrace(errorObj)
-      } else {
-        stackTrace = computeStackTraceFromOnErrorMessage(messageObj, url, line, column)
-      }
-      callback(stackTrace, errorObj ?? messageObj)
+  return instrumentMethod(window, 'onerror', ({ parameters: [messageObj, url, line, column, errorObj] }) => {
+    let stackTrace
+    if (errorObj instanceof Error) {
+      stackTrace = computeStackTrace(errorObj)
+    } else {
+      stackTrace = computeStackTraceFromOnErrorMessage(messageObj, url, line, column)
     }
-  )
+    callback(stackTrace, errorObj ?? messageObj)
+  })
 }
 
 export function instrumentUnhandledRejection(callback: UnhandledErrorCallback) {
-  return instrumentMethodAndCallOriginal(window, 'onunhandledrejection', ({ parameters: [e] }) => {
+  return instrumentMethod(window, 'onunhandledrejection', ({ parameters: [e] }) => {
     const reason = e.reason || 'Empty reason'
     const stack = computeStackTrace(reason)
     callback(stack, reason)
