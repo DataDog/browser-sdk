@@ -33,8 +33,10 @@ export function trackRuntimeError(errorObservable: Observable<RawError>) {
 }
 
 export function instrumentOnError(callback: UnhandledErrorCallback) {
-  return instrumentMethodAndCallOriginal(window, 'onerror', {
-    before(this: any, messageObj: unknown, url?: string, line?: number, column?: number, errorObj?: unknown) {
+  return instrumentMethodAndCallOriginal(
+    window,
+    'onerror',
+    ({ parameters: [messageObj, url, line, column, errorObj] }) => {
       let stackTrace
       if (errorObj instanceof Error) {
         stackTrace = computeStackTrace(errorObj)
@@ -42,16 +44,14 @@ export function instrumentOnError(callback: UnhandledErrorCallback) {
         stackTrace = computeStackTraceFromOnErrorMessage(messageObj, url, line, column)
       }
       callback(stackTrace, errorObj ?? messageObj)
-    },
-  })
+    }
+  )
 }
 
 export function instrumentUnhandledRejection(callback: UnhandledErrorCallback) {
-  return instrumentMethodAndCallOriginal(window, 'onunhandledrejection', {
-    before(e: PromiseRejectionEvent) {
-      const reason = e.reason || 'Empty reason'
-      const stack = computeStackTrace(reason)
-      callback(stack, reason)
-    },
+  return instrumentMethodAndCallOriginal(window, 'onunhandledrejection', ({ parameters: [e] }) => {
+    const reason = e.reason || 'Empty reason'
+    const stack = computeStackTrace(reason)
+    callback(stack, reason)
   })
 }

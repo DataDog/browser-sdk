@@ -2,30 +2,41 @@ import { setTimeout } from './timer'
 import { callMonitored } from './monitor'
 import { noop } from './utils/functionUtils'
 
-export function instrumentMethod<OBJECT extends { [key: string]: any }, METHOD extends keyof OBJECT>(
-  object: OBJECT,
+export type InstrumentedMethodCall<TARGET extends { [key: string]: any }, METHOD extends keyof TARGET> = {
+  target: TARGET
+  // parameters can be muted by the instrumentation
+  parameters: Parameters<TARGET[METHOD]>
+  onPostCall: (callback: PostCallCallback<TARGET, METHOD>) => void
+}
+
+export type PostCallCallback<TARGET extends { [key: string]: any }, METHOD extends keyof TARGET> = (
+  result: ReturnType<TARGET[METHOD]>
+) => void
+
+export function instrumentMethod<TARGET extends { [key: string]: any }, METHOD extends keyof TARGET>(
+  targetPrototype: TARGET,
   method: METHOD,
   instrumentationFactory: (
-    original: OBJECT[METHOD]
-  ) => (this: OBJECT, ...args: Parameters<OBJECT[METHOD]>) => ReturnType<OBJECT[METHOD]>
+    original: TARGET[METHOD]
+  ) => (this: TARGET, ...args: Parameters<TARGET[METHOD]>) => ReturnType<TARGET[METHOD]>
 ) {
-  const original = object[method]
+  const original = targetPrototype[method]
 
   let instrumentation = instrumentationFactory(original)
 
-  const instrumentationWrapper = function (this: OBJECT): ReturnType<OBJECT[METHOD]> | undefined {
+  const instrumentationWrapper = function (this: TARGET): ReturnType<TARGET[METHOD]> | undefined {
     if (typeof instrumentation !== 'function') {
       return undefined
     }
     // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-    return instrumentation.apply(this, arguments as unknown as Parameters<OBJECT[METHOD]>)
+    return instrumentation.apply(this, arguments as unknown as Parameters<TARGET[METHOD]>)
   }
-  object[method] = instrumentationWrapper as OBJECT[METHOD]
+  targetPrototype[method] = instrumentationWrapper as TARGET[METHOD]
 
   return {
     stop: () => {
-      if (object[method] === instrumentationWrapper) {
-        object[method] = original
+      if (targetPrototype[method] === instrumentationWrapper) {
+        targetPrototype[method] = original
       } else {
         instrumentation = original
       }
@@ -33,36 +44,38 @@ export function instrumentMethod<OBJECT extends { [key: string]: any }, METHOD e
   }
 }
 
-export function instrumentMethodAndCallOriginal<OBJECT extends { [key: string]: any }, METHOD extends keyof OBJECT>(
-  object: OBJECT,
+export function instrumentMethodAndCallOriginal<TARGET extends { [key: string]: any }, METHOD extends keyof TARGET>(
+  targetPrototype: TARGET,
   method: METHOD,
-  {
-    before,
-    after,
-  }: {
-    before?: (this: OBJECT, ...args: Parameters<OBJECT[METHOD]>) => void
-    after?: (this: OBJECT, ...args: Parameters<OBJECT[METHOD]>) => void
-  }
+  onCall: (this: null, callInfos: InstrumentedMethodCall<TARGET, METHOD>) => void
 ) {
   return instrumentMethod(
-    object,
+    targetPrototype,
     method,
     (original) =>
       function () {
-        const args = arguments as unknown as Parameters<OBJECT[METHOD]>
+        const parameters = arguments as unknown as Parameters<TARGET[METHOD]>
         let result
 
-        if (before) {
-          callMonitored(before, this, args)
-        }
+        let postCallCallback: PostCallCallback<TARGET, METHOD> | undefined
+
+        callMonitored(onCall, null, [
+          {
+            target: this,
+            parameters,
+            onPostCall: (callback) => {
+              postCallCallback = callback
+            },
+          },
+        ])
 
         if (typeof original === 'function') {
           // eslint-disable-next-line @typescript-eslint/no-unsafe-call
-          result = original.apply(this, args)
+          result = original.apply(this, parameters)
         }
 
-        if (after) {
-          callMonitored(after, this, args)
+        if (postCallCallback) {
+          callMonitored(postCallCallback, null, [result])
         }
 
         // eslint-disable-next-line @typescript-eslint/no-unsafe-return
@@ -71,36 +84,36 @@ export function instrumentMethodAndCallOriginal<OBJECT extends { [key: string]: 
   )
 }
 
-export function instrumentSetter<OBJECT extends { [key: string]: any }, PROPERTY extends keyof OBJECT>(
-  object: OBJECT,
+export function instrumentSetter<TARGET extends { [key: string]: any }, PROPERTY extends keyof TARGET>(
+  targetPrototype: TARGET,
   property: PROPERTY,
-  after: (thisObject: OBJECT, value: OBJECT[PROPERTY]) => void
+  after: (target: TARGET, value: TARGET[PROPERTY]) => void
 ) {
-  const originalDescriptor = Object.getOwnPropertyDescriptor(object, property)
+  const originalDescriptor = Object.getOwnPropertyDescriptor(targetPrototype, property)
   if (!originalDescriptor || !originalDescriptor.set || !originalDescriptor.configurable) {
     return { stop: noop }
   }
 
-  let instrumentation = (thisObject: OBJECT, value: OBJECT[PROPERTY]) => {
+  let instrumentation = (target: TARGET, value: TARGET[PROPERTY]) => {
     // put hooked setter into event loop to avoid of set latency
     setTimeout(() => {
-      after(thisObject, value)
+      after(target, value)
     }, 0)
   }
 
-  const instrumentationWrapper = function (this: OBJECT, value: OBJECT[PROPERTY]) {
+  const instrumentationWrapper = function (this: TARGET, value: TARGET[PROPERTY]) {
     originalDescriptor.set!.call(this, value)
     instrumentation(this, value)
   }
 
-  Object.defineProperty(object, property, {
+  Object.defineProperty(targetPrototype, property, {
     set: instrumentationWrapper,
   })
 
   return {
     stop: () => {
-      if (Object.getOwnPropertyDescriptor(object, property)?.set === instrumentationWrapper) {
-        Object.defineProperty(object, property, originalDescriptor)
+      if (Object.getOwnPropertyDescriptor(targetPrototype, property)?.set === instrumentationWrapper) {
+        Object.defineProperty(targetPrototype, property, originalDescriptor)
       } else {
         instrumentation = noop
       }

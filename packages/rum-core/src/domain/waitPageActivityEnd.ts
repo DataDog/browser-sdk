@@ -178,5 +178,5 @@ function isExcludedUrl(configuration: RumConfiguration, requestUrl: string): boo
 }
 
 function trackWindowOpen(callback: () => void) {
-  return instrumentMethodAndCallOriginal(window, 'open', { before: callback })
+  return instrumentMethodAndCallOriginal(window, 'open', callback)
 }
