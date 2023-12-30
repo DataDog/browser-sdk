@@ -60,7 +60,7 @@
     "eslint-plugin-unicorn": "49.0.0",
     "express": "4.18.2",
     "glob": "10.3.10",
-    "jasmine-core": "3.99.1",
+    "jasmine-core": "5.1.1",
     "json-schema-to-typescript": "bcaudan/json-schema-to-typescript#bcaudan/add-readonly-support",
     "karma": "6.4.2",
     "karma-browserstack-launcher": "1.6.0",

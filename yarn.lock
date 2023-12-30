@@ -4005,7 +4005,7 @@ __metadata:
     eslint-plugin-unicorn: 49.0.0
     express: 4.18.2
     glob: 10.3.10
-    jasmine-core: 3.99.1
+    jasmine-core: 5.1.1
     json-schema-to-typescript: "bcaudan/json-schema-to-typescript#bcaudan/add-readonly-support"
     karma: 6.4.2
     karma-browserstack-launcher: 1.6.0
@@ -9021,7 +9021,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"jasmine-core@npm:3.99.1, jasmine-core@npm:^3.6.0":
+"jasmine-core@npm:5.1.1":
+  version: 5.1.1
+  resolution: "jasmine-core@npm:5.1.1"
+  checksum: 84f1b3a0af7769c9bd514cdde1e366e7798a0b1110efa5a09157c653c53cdad77e1c84bffd5cafe07649c9dba7141cd602c444ac37813f111f8f5b5e3f8f6c99
+  languageName: node
+  linkType: hard
+
+"jasmine-core@npm:^3.6.0":
   version: 3.99.1
   resolution: "jasmine-core@npm:3.99.1"
   checksum: 4e4a89739d99e471b86c7ccc4c5c244a77cc6d1e17b2b0d87d81266b8415697354d8873f7e764790a10661744f73a753a6e9bcd9b3e48c66a0c9b8a092b071b7
