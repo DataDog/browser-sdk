@@ -93,5 +93,5 @@
     "node": "18.19.0",
     "yarn": "1.22.21"
   },
-  "packageManager": "yarn@3.7.0"
+  "packageManager": "yarn@4.0.2"
 }
