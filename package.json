@@ -87,7 +87,7 @@
     "webpack-dev-middleware": "6.1.1"
   },
   "resolutions": {
-    "ansi-regex": "5.0.1"
+    "ansi-regex": "6.0.1"
   },
   "volta": {
     "node": "18.19.0",
