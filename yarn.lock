@@ -2302,10 +2302,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/jasmine@npm:3.10.18":
-  version: 3.10.18
-  resolution: "@types/jasmine@npm:3.10.18"
-  checksum: 7ec8e4a28b5d537badd76df53c227aa6c7af25e71f3e4b59470b4c4398c956f4270b5341ae6dac9f30cfd75c3c2a5357e23410473dfdc1785b1af0d9563dc12d
+"@types/jasmine@npm:5.1.4":
+  version: 5.1.4
+  resolution: "@types/jasmine@npm:5.1.4"
+  checksum: 1b2048d988077aee747a72fab31f4e0820f928c25e886ab91aa5a1ee2d4277655c22f81feed5d7b3b15cc61542878568a24b2381457eb21dfc84250c693f980a
   languageName: node
   linkType: hard
 
@@ -3979,7 +3979,7 @@ __metadata:
     "@types/connect-busboy": 1.0.3
     "@types/cors": 2.8.17
     "@types/express": 4.17.21
-    "@types/jasmine": 3.10.18
+    "@types/jasmine": 5.1.4
     "@typescript-eslint/eslint-plugin": 6.13.2
     "@typescript-eslint/parser": 6.13.2
     "@wdio/browserstack-service": 8.26.1
