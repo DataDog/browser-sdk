@@ -45,7 +45,7 @@
     "@wdio/spec-reporter": "8.24.12",
     "ajv": "6.12.6",
     "browserstack-local": "1.5.5",
-    "chrome-webstore-upload": "2.0.0",
+    "chrome-webstore-upload": "3.0.2",
     "connect-busboy": "1.0.0",
     "cors": "2.8.5",
     "emoji-name-map": "1.2.9",
