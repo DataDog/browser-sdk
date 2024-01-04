@@ -16,7 +16,7 @@ export function initViewportObservable(configuration: RumConfiguration) {
 }
 
 export function createViewportObservable(configuration: RumConfiguration) {
-  const observable = new Observable<ViewportDimension>(() => {
+  return new Observable<ViewportDimension>((observable) => {
     const { throttled: updateDimension } = throttle(() => {
       observable.notify(getViewportDimension())
     }, 200)
@@ -24,8 +24,6 @@ export function createViewportObservable(configuration: RumConfiguration) {
     return addEventListener(configuration, window, DOM_EVENT.RESIZE, updateDimension, { capture: true, passive: true })
       .stop
   })
-
-  return observable
 }
 
 // excludes the width and height of any rendered classic scrollbar that is fixed to the visual viewport

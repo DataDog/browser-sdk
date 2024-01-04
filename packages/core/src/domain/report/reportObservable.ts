@@ -39,7 +39,7 @@ export function initReportObservable(configuration: Configuration, apis: RawRepo
 }
 
 function createReportObservable(reportTypes: ReportType[]) {
-  const observable = new Observable<RawReport>(() => {
+  return new Observable<RawReport>((observable) => {
     if (!window.ReportingObserver) {
       return
     }
@@ -60,19 +60,16 @@ function createReportObservable(reportTypes: ReportType[]) {
       observer.disconnect()
     }
   })
-
-  return observable
 }
 
 function createCspViolationReportObservable(configuration: Configuration) {
-  const observable = new Observable<RawReport>(() => {
+  return new Observable<RawReport>((observable) => {
     const { stop } = addEventListener(configuration, document, DOM_EVENT.SECURITY_POLICY_VIOLATION, (event) => {
       observable.notify(buildRawReportFromCspViolation(event))
     })
 
     return stop
   })
-  return observable
 }
 
 function buildRawReportFromReport(report: DeprecationReport | InterventionReport): RawReport {
