@@ -9,6 +9,8 @@ import {
   canUseEventBridge,
   assign,
   round,
+  isExperimentalFeatureEnabled,
+  ExperimentalFeature,
 } from '@datadog/browser-core'
 import type { RumEventDomainContext } from '../domainContext.types'
 import type {
@@ -83,6 +85,9 @@ export function startRumAssembly(
     [RumEventType.RESOURCE]: assign(
       {
         'resource.url': 'string',
+      },
+      isExperimentalFeatureEnabled(ExperimentalFeature.WRITABLE_RESOURCE_GRAPHQL) && {
+        'resource.graphql': 'object',
       },
       USER_CUSTOMIZABLE_FIELD_PATHS,
       VIEW_MODIFIABLE_FIELD_PATHS
