@@ -1,3 +1,4 @@
+import type { DeflateEncoder } from '@datadog/browser-core'
 import { DeflateEncoderStreamId, canUseEventBridge, noop, runOnReadyState } from '@datadog/browser-core'
 import type {
   LifeCycle,
@@ -73,6 +74,7 @@ export function makeRecorderApi(
   let stopStrategy = () => {
     state = { status: RecorderStatus.Stopped }
   }
+
   return {
     start: () => startStrategy(),
     stop: () => stopStrategy(),
@@ -101,6 +103,27 @@ export function makeRecorderApi(
         }
       })
 
+      let cachedDeflateEncoder: DeflateEncoder | undefined
+
+      function getOrCreateDeflateEncoder() {
+        if (!cachedDeflateEncoder) {
+          if (!worker) {
+            worker = startDeflateWorker(
+              configuration,
+              'Datadog Session Replay',
+              () => {
+                stopStrategy()
+              },
+              createDeflateWorkerImpl
+            )
+          }
+          if (worker) {
+            cachedDeflateEncoder = createDeflateEncoder(configuration, worker, DeflateEncoderStreamId.REPLAY)
+          }
+        }
+        return cachedDeflateEncoder
+      }
+
       startStrategy = () => {
         const session = sessionManager.findTrackedSession()
         if (!session || !session.sessionReplayAllowed) {
@@ -119,22 +142,12 @@ export function makeRecorderApi(
             return
           }
 
-          if (!worker) {
-            worker = startDeflateWorker(
-              configuration,
-              'Datadog Session Replay',
-              () => {
-                stopStrategy()
-              },
-              createDeflateWorkerImpl
-            )
-
-            if (!worker) {
-              state = {
-                status: RecorderStatus.Stopped,
-              }
-              return
+          const deflateEncoder = getOrCreateDeflateEncoder()
+          if (!deflateEncoder) {
+            state = {
+              status: RecorderStatus.Stopped,
             }
+            return
           }
 
           const { stop: stopRecording } = startRecordingImpl(
@@ -142,7 +155,7 @@ export function makeRecorderApi(
             configuration,
             sessionManager,
             viewContexts,
-            createDeflateEncoder(configuration, worker, DeflateEncoderStreamId.REPLAY)
+            deflateEncoder
           )
           state = {
             status: RecorderStatus.Started,

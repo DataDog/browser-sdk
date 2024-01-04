@@ -1,4 +1,4 @@
-import type { DeflateWorker } from '@datadog/browser-core'
+import type { DeflateEncoder, DeflateWorker } from '@datadog/browser-core'
 import { display, isIE } from '@datadog/browser-core'
 import type { RecorderApi, ViewContexts, LifeCycle, RumConfiguration } from '@datadog/browser-rum-core'
 import { LifeCycleEventType } from '@datadog/browser-rum-core'
@@ -160,6 +160,21 @@ describe('makeRecorderApi', () => {
       mockWorker.dispatchErrorEvent()
 
       expect(stopRecordingSpy).toHaveBeenCalled()
+    })
+
+    it('restarting the recording should keep using the same DeflateEncoder instance', () => {
+      setupBuilder.build()
+      rumInit()
+      recorderApi.start()
+
+      recorderApi.stop()
+      recorderApi.start()
+
+      // Types are specified to make sure we are getting the correct arguments
+      const firstCallDeflateEncoder: DeflateEncoder = startRecordingSpy.calls.argsFor(0)[4]
+      const secondCallDeflateEncoder: DeflateEncoder = startRecordingSpy.calls.argsFor(1)[4]
+
+      expect(firstCallDeflateEncoder).toBe(secondCallDeflateEncoder)
     })
 
     describe('if event bridge present', () => {
