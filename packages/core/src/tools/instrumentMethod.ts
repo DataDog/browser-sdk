@@ -4,7 +4,7 @@ import { noop } from './utils/functionUtils'
 
 export type InstrumentedMethodCall<TARGET extends { [key: string]: any }, METHOD extends keyof TARGET> = {
   target: TARGET
-  // parameters can be muted by the instrumentation
+  // parameters can be mutated by the instrumentation
   parameters: Parameters<TARGET[METHOD]>
   onPostCall: (callback: PostCallCallback<TARGET, METHOD>) => void
 }
