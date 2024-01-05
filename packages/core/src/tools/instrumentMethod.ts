@@ -2,25 +2,63 @@ import { setTimeout } from './timer'
 import { callMonitored } from './monitor'
 import { noop } from './utils/functionUtils'
 
+/**
+ * Object passed to the callback of an instrumented method call. See `instrumentMethod` for more
+ * info.
+ */
 export type InstrumentedMethodCall<TARGET extends { [key: string]: any }, METHOD extends keyof TARGET> = {
+  /**
+   * The target object on which the method was called.
+   */
   target: TARGET
-  // parameters can be mutated by the instrumentation
+
+  /**
+   * The parameters with which the method was called. To avoid having to clone the argument list
+   * every time, this property is actually an instance of Argument, not Array, so not all methods
+   * are available (like .forEach).
+   *
+   * Note: if needed, parameters can be mutated by the instrumentation
+   */
   parameters: Parameters<TARGET[METHOD]>
+
+  /**
+   * Registers a callback that will be called after the original method is called, with the method
+   * result passed as argument.
+   */
   onPostCall: (callback: PostCallCallback<TARGET, METHOD>) => void
 }
 
-export type PostCallCallback<TARGET extends { [key: string]: any }, METHOD extends keyof TARGET> = (
+type PostCallCallback<TARGET extends { [key: string]: any }, METHOD extends keyof TARGET> = (
   result: ReturnType<TARGET[METHOD]>
 ) => void
 
+/**
+ * Instruments a method on a object, calling the given callback before the original method is
+ * invoked. The callback receives an object with information about the method call.
+ *
+ * Note: it is generally better to instrument methods that are "owned" by the object instead of ones
+ * that are inherited from the prototype chain. Example:
+ * * do:    `instrumentMethod(Array.prototype, 'push', ...)`
+ * * don't: `instrumentMethod([], 'push', ...)`
+ *
+ * @example
+ *
+ *  instrumentMethod(window, 'fetch', ({ target, parameters, onPostCall }) => {
+ *    console.log('Before calling fetch on', target, 'with parameters', parameters)
+ *
+ *    onPostCall((result) => {
+ *      console.log('After fetch calling on', target, 'with parameters', parameters, 'and result', result)
+ *    })
+ *  })
+ */
 export function instrumentMethod<TARGET extends { [key: string]: any }, METHOD extends keyof TARGET>(
   targetPrototype: TARGET,
   method: METHOD,
-  onCall: (this: null, callInfos: InstrumentedMethodCall<TARGET, METHOD>) => void
+  onPreCall: (this: null, callInfos: InstrumentedMethodCall<TARGET, METHOD>) => void
 ) {
   const original = targetPrototype[method]
 
-  let instrumentation = createInstrumentedMethod(original, onCall)
+  let instrumentation = createInstrumentedMethod(original, onPreCall)
 
   const instrumentationWrapper = function (this: TARGET): ReturnType<TARGET[METHOD]> | undefined {
     if (typeof instrumentation !== 'function') {
@@ -44,7 +82,7 @@ export function instrumentMethod<TARGET extends { [key: string]: any }, METHOD e
 
 function createInstrumentedMethod<TARGET extends { [key: string]: any }, METHOD extends keyof TARGET>(
   original: TARGET[METHOD],
-  onCall: (this: null, callInfos: InstrumentedMethodCall<TARGET, METHOD>) => void
+  onPreCall: (this: null, callInfos: InstrumentedMethodCall<TARGET, METHOD>) => void
 ): TARGET[METHOD] {
   // eslint-disable-next-line @typescript-eslint/no-unsafe-return
   return function (this: TARGET) {
@@ -53,7 +91,7 @@ function createInstrumentedMethod<TARGET extends { [key: string]: any }, METHOD 
 
     let postCallCallback: PostCallCallback<TARGET, METHOD> | undefined
 
-    callMonitored(onCall, null, [
+    callMonitored(onPreCall, null, [
       {
         target: this,
         parameters,
