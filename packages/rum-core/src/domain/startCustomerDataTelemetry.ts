@@ -1,5 +1,20 @@
-import type { Context, ContextManager, FlushEvent, Observable, Telemetry } from '@datadog/browser-core'
-import { isEmptyObject, includes, performDraw, ONE_SECOND, addTelemetryDebug, setInterval } from '@datadog/browser-core'
+import type {
+  Context,
+  ContextManager,
+  CustomerDataTrackerManager,
+  FlushEvent,
+  Observable,
+  Telemetry,
+} from '@datadog/browser-core'
+import {
+  isEmptyObject,
+  includes,
+  performDraw,
+  ONE_SECOND,
+  addTelemetryDebug,
+  setInterval,
+  CustomerDataType,
+} from '@datadog/browser-core'
 import { RumEventType } from '../rawRumEvent.types'
 import type { RumEvent } from '../rumEvent.types'
 import type { RumConfiguration } from './configuration'
@@ -38,6 +53,7 @@ export function startCustomerDataTelemetry(
   configuration: RumConfiguration,
   telemetry: Telemetry,
   lifeCycle: LifeCycle,
+  customerDataTrackerManager: CustomerDataTrackerManager,
   globalContextManager: ContextManager,
   userContextManager: ContextManager,
   featureFlagContexts: FeatureFlagContexts,
@@ -57,12 +73,16 @@ export function startCustomerDataTelemetry(
     batchHasRumEvent = true
     updateMeasure(
       currentBatchMeasures.globalContextBytes,
-      !isEmptyObject(globalContextManager.getContext()) ? globalContextManager.customerDataTracker.getBytesCount() : 0
+      !isEmptyObject(globalContextManager.getContext())
+        ? customerDataTrackerManager.getOrCreateTracker(CustomerDataType.GlobalContext).getBytesCount()
+        : 0
     )
 
     updateMeasure(
       currentBatchMeasures.userContextBytes,
-      !isEmptyObject(userContextManager.getContext()) ? userContextManager.customerDataTracker.getBytesCount() : 0
+      !isEmptyObject(userContextManager.getContext())
+        ? customerDataTrackerManager.getOrCreateTracker(CustomerDataType.User).getBytesCount()
+        : 0
     )
 
     const featureFlagContext = featureFlagContexts.findFeatureFlagEvaluations()

@@ -328,13 +328,14 @@ describe('view events', () => {
   let interceptor: ReturnType<typeof interceptRequests>
 
   beforeEach(() => {
-    setupBuilder = setup().beforeBuild(({ configuration }) =>
+    setupBuilder = setup().beforeBuild(({ configuration, customerDataTrackerManager }) =>
       startRum(
         {} as RumInitConfiguration,
         configuration,
         noopRecorderApi,
-        createContextManager(createCustomerDataTracker(CustomerDataType.GlobalContext)),
-        createContextManager(createCustomerDataTracker(CustomerDataType.User)),
+        customerDataTrackerManager,
+        createContextManager(customerDataTrackerManager.getOrCreateTracker(CustomerDataType.GlobalContext)),
+        createContextManager(customerDataTrackerManager.getOrCreateTracker(CustomerDataType.User)),
         undefined,
         createIdentityEncoder
       )

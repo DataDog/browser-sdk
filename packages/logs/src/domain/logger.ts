@@ -1,17 +1,15 @@
-import type { Context } from '@datadog/browser-core'
+import type { Context, ContextManager, CustomerDataTracker } from '@datadog/browser-core'
 import {
   clocksNow,
   computeRawError,
   ErrorHandling,
   computeStackTrace,
-  CustomerDataType,
   combine,
   createContextManager,
   ErrorSource,
   monitored,
   sanitize,
   NonErrorPrefix,
-  createCustomerDataTracker,
 } from '@datadog/browser-core'
 
 import type { LogsEvent } from '../logsEvent.types'
@@ -41,15 +39,17 @@ export type HandlerType = (typeof HandlerType)[keyof typeof HandlerType]
 export const STATUSES = Object.keys(StatusType) as StatusType[]
 
 export class Logger {
-  private contextManager = createContextManager(createCustomerDataTracker(CustomerDataType.LoggerContext))
+  private contextManager: ContextManager
 
   constructor(
     private handleLogStrategy: (logsMessage: LogsMessage, logger: Logger) => void,
+    customerDataTracker: CustomerDataTracker,
     name?: string,
     private handlerType: HandlerType | HandlerType[] = HandlerType.http,
     private level: StatusType = StatusType.debug,
     loggerContext: object = {}
   ) {
+    this.contextManager = createContextManager(customerDataTracker)
     this.contextManager.setContext(loggerContext as Context)
     if (name) {
       this.contextManager.setContextProperty('logger', { name })

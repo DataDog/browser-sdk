@@ -42,7 +42,6 @@ export function createContextManager(customerDataTracker: CustomerDataTracker) {
       changeObservable.notify()
     },
 
-    customerDataTracker,
     changeObservable,
   }
   return contextManager

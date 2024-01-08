@@ -19,10 +19,51 @@ export const CUSTOMER_COMPRESSED_DATA_BYTES_LIMIT = 16 * ONE_KIBI_BYTE
 export const BYTES_COMPUTATION_THROTTLING_DELAY = 200
 
 export type CustomerDataTracker = ReturnType<typeof createCustomerDataTracker>
+export type CustomerDataTrackerManager = ReturnType<typeof createCustomerDataTrackerManager>
+
 export const enum CustomerDataCompressionStatus {
   Unknown,
   Enabled,
   Disabled,
+}
+
+export function createCustomerDataTrackerManager(
+  compressionStatus: CustomerDataCompressionStatus = CustomerDataCompressionStatus.Disabled
+) {
+  const customerDataTrackers = new Map<CustomerDataType, CustomerDataTracker>()
+
+  return {
+    /**
+     * Creates a detached tracker. The manager will not store a reference to that tracker, and the
+     * bytes count will be counted independently from other detached trackers.
+     *
+     * This is particularly useful when we don't know when the tracker will be unused, so we don't
+     * leak memory (ex: when used in Logger instances).
+     */
+    createDetachedTracker: (type: CustomerDataType) => createCustomerDataTracker(type, compressionStatus),
+
+    /**
+     * Creates a tracker if it doesn't exist, and returns it.
+     */
+    getOrCreateTracker: (type: CustomerDataType) => {
+      if (!customerDataTrackers.has(type)) {
+        customerDataTrackers.set(type, createCustomerDataTracker(type, compressionStatus))
+      }
+      return customerDataTrackers.get(type)!
+    },
+
+    setCompressionStatus: (newCompressionStatus: CustomerDataCompressionStatus) => {
+      compressionStatus = newCompressionStatus
+      customerDataTrackers.forEach((tracker) => tracker.setCompressionStatus(newCompressionStatus))
+    },
+
+    getCompressionStatus: () => compressionStatus,
+
+    stop: () => {
+      customerDataTrackers.forEach((tracker) => tracker.stop())
+      customerDataTrackers.clear()
+    },
+  }
 }
 
 export function createCustomerDataTracker(
@@ -62,9 +103,6 @@ export function createCustomerDataTracker(
       bytesCountCache = 0
     },
     getBytesCount: () => bytesCountCache,
-    getCompressionStatus() {
-      return compressionStatus
-    },
     setCompressionStatus: (newCompressionStatus: CustomerDataCompressionStatus) => {
       if (compressionStatus === CustomerDataCompressionStatus.Unknown) {
         compressionStatus = newCompressionStatus

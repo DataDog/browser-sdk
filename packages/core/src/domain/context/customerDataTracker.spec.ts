@@ -6,7 +6,7 @@ import {
   CUSTOMER_COMPRESSED_DATA_BYTES_LIMIT,
   CUSTOMER_DATA_BYTES_LIMIT,
   CustomerDataCompressionStatus,
-  createCustomerDataTracker,
+  createCustomerDataTrackerManager,
 } from './customerDataTracker'
 import { CustomerDataType } from './contextConstants'
 
@@ -27,7 +27,9 @@ describe('customerDataTracker', () => {
   })
 
   it('should warn if the context bytes limit is reached', () => {
-    const customerDataTracker = createCustomerDataTracker(CustomerDataType.User, CustomerDataCompressionStatus.Disabled)
+    const customerDataTracker = createCustomerDataTrackerManager(
+      CustomerDataCompressionStatus.Disabled
+    ).getOrCreateTracker(CustomerDataType.User)
 
     customerDataTracker.updateCustomerData(CONTEXT_OVER_LIMIT)
     clock.tick(BYTES_COMPUTATION_THROTTLING_DELAY)
@@ -36,7 +38,9 @@ describe('customerDataTracker', () => {
   })
 
   it('should use a bigger limit if the compression is enabled', () => {
-    const customerDataTracker = createCustomerDataTracker(CustomerDataType.User, CustomerDataCompressionStatus.Enabled)
+    const customerDataTracker = createCustomerDataTrackerManager(
+      CustomerDataCompressionStatus.Enabled
+    ).getOrCreateTracker(CustomerDataType.User)
 
     customerDataTracker.updateCustomerData(CONTEXT_OVER_LIMIT)
     clock.tick(BYTES_COMPUTATION_THROTTLING_DELAY)
@@ -50,21 +54,24 @@ describe('customerDataTracker', () => {
   })
 
   it('should not warn until the compression status is known', () => {
-    const customerDataTracker = createCustomerDataTracker(CustomerDataType.User, CustomerDataCompressionStatus.Unknown)
+    const customerDataTrackerManager = createCustomerDataTrackerManager(CustomerDataCompressionStatus.Unknown)
+    const customerDataTracker = customerDataTrackerManager.getOrCreateTracker(CustomerDataType.User)
 
     customerDataTracker.updateCustomerData(CONTEXT_OVER_LIMIT)
     clock.tick(BYTES_COMPUTATION_THROTTLING_DELAY)
 
     expect(displaySpy).not.toHaveBeenCalled()
 
-    customerDataTracker.setCompressionStatus(CustomerDataCompressionStatus.Disabled)
+    customerDataTrackerManager.setCompressionStatus(CustomerDataCompressionStatus.Disabled)
     clock.tick(BYTES_COMPUTATION_THROTTLING_DELAY)
 
     expect(displaySpy).toHaveBeenCalled()
   })
 
   it('should be throttled to minimize the impact on performance', () => {
-    const customerDataTracker = createCustomerDataTracker(CustomerDataType.User, CustomerDataCompressionStatus.Disabled)
+    const customerDataTracker = createCustomerDataTrackerManager(
+      CustomerDataCompressionStatus.Disabled
+    ).getOrCreateTracker(CustomerDataType.User)
 
     customerDataTracker.updateCustomerData({ foo: 1 }) // leading call executed synchronously
     expect(customerDataTracker.getBytesCount()).toEqual(9)
@@ -75,8 +82,10 @@ describe('customerDataTracker', () => {
     expect(customerDataTracker.getBytesCount()).toEqual(11)
   })
 
-  it('should warn once if the context bytes limit is reached', () => {
-    const customerDataTracker = createCustomerDataTracker(CustomerDataType.User, CustomerDataCompressionStatus.Disabled)
+  it('should warn only once if the context bytes limit is reached', () => {
+    const customerDataTracker = createCustomerDataTrackerManager(
+      CustomerDataCompressionStatus.Disabled
+    ).getOrCreateTracker(CustomerDataType.User)
 
     customerDataTracker.updateCustomerData(CONTEXT_OVER_LIMIT)
     clock.tick(BYTES_COMPUTATION_THROTTLING_DELAY)

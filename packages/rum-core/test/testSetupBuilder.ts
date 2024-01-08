@@ -1,9 +1,9 @@
-import type { Context, ContextManager, TimeStamp } from '@datadog/browser-core'
+import type { Context, ContextManager, CustomerDataTrackerManager, TimeStamp } from '@datadog/browser-core'
 import {
   assign,
   combine,
   createContextManager,
-  createCustomerDataTracker,
+  createCustomerDataTrackerManager,
   CustomerDataType,
   noop,
   Observable,
@@ -61,6 +61,7 @@ export interface BuildContext {
   urlContexts: UrlContexts
   globalContextManager: ContextManager
   userContextManager: ContextManager
+  customerDataTrackerManager: CustomerDataTrackerManager
 }
 
 export interface TestIO {
@@ -106,8 +107,11 @@ export function setup(): TestSetupBuilder {
     stop: noop,
   }
 
-  const globalContextManager = createContextManager(createCustomerDataTracker(CustomerDataType.GlobalContext))
-  const userContextManager = createContextManager(createCustomerDataTracker(CustomerDataType.User))
+  const customerDataTrackerManager = createCustomerDataTrackerManager()
+  const globalContextManager = createContextManager(
+    customerDataTrackerManager.getOrCreateTracker(CustomerDataType.GlobalContext)
+  )
+  const userContextManager = createContextManager(customerDataTrackerManager.getOrCreateTracker(CustomerDataType.User))
   let pageStateHistory: PageStateHistory = {
     findAll: () => undefined,
     addPageState: noop,
@@ -201,6 +205,7 @@ export function setup(): TestSetupBuilder {
           location: fakeLocation as Location,
           globalContextManager,
           userContextManager,
+          customerDataTrackerManager,
         })
         if (result && result.stop) {
           cleanupTasks.push(result.stop)

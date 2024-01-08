@@ -5,6 +5,7 @@ import type {
   ContextManager,
   DeflateEncoderStreamId,
   Encoder,
+  CustomerDataTrackerManager,
 } from '@datadog/browser-core'
 import {
   sendToExtension,
@@ -15,7 +16,6 @@ import {
   canUseEventBridge,
   getEventBridge,
   addTelemetryDebug,
-  createCustomerDataTracker,
   CustomerDataType,
 } from '@datadog/browser-core'
 import { createDOMMutationObservable } from '../browser/domMutationObservable'
@@ -52,6 +52,7 @@ export function startRum(
   initConfiguration: RumInitConfiguration,
   configuration: RumConfiguration,
   recorderApi: RecorderApi,
+  customerDataTrackerManager: CustomerDataTrackerManager,
   globalContextManager: ContextManager,
   userContextManager: ContextManager,
   initialViewOptions: ViewOptions | undefined,
@@ -84,10 +85,7 @@ export function startRum(
   }
   const featureFlagContexts = startFeatureFlagContexts(
     lifeCycle,
-    createCustomerDataTracker(
-      CustomerDataType.FeatureFlag,
-      globalContextManager.customerDataTracker.getCompressionStatus()
-    )
+    customerDataTrackerManager.getOrCreateTracker(CustomerDataType.FeatureFlag)
   )
 
   const pageExitObservable = createPageExitObservable(configuration)
@@ -112,6 +110,7 @@ export function startRum(
       configuration,
       telemetry,
       lifeCycle,
+      customerDataTrackerManager,
       globalContextManager,
       userContextManager,
       featureFlagContexts,

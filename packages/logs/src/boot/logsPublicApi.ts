@@ -15,7 +15,7 @@ import {
   sanitize,
   createStoredContextManager,
   combine,
-  createCustomerDataTracker,
+  createCustomerDataTrackerManager,
 } from '@datadog/browser-core'
 import type { LogsInitConfiguration } from '../domain/configuration'
 import { validateAndBuildLogsConfiguration } from '../domain/configuration'
@@ -41,8 +41,11 @@ const LOGS_STORAGE_KEY = 'logs'
 export function makeLogsPublicApi(startLogsImpl: StartLogs) {
   let isAlreadyInitialized = false
 
-  let globalContextManager = createContextManager(createCustomerDataTracker(CustomerDataType.GlobalContext))
-  let userContextManager = createContextManager(createCustomerDataTracker(CustomerDataType.User))
+  const customerDataTrackerManager = createCustomerDataTrackerManager()
+  let globalContextManager = createContextManager(
+    customerDataTrackerManager.getOrCreateTracker(CustomerDataType.GlobalContext)
+  )
+  let userContextManager = createContextManager(customerDataTrackerManager.getOrCreateTracker(CustomerDataType.User))
 
   const customLoggers: { [name: string]: Logger | undefined } = {}
   let getInternalContextStrategy: StartLogsResult['getInternalContext'] = () => undefined
@@ -59,7 +62,10 @@ export function makeLogsPublicApi(startLogsImpl: StartLogs) {
   }
 
   let getInitConfigurationStrategy = (): InitConfiguration | undefined => undefined
-  const mainLogger = new Logger((...params) => handleLogStrategy(...params))
+  const mainLogger = new Logger(
+    (...params) => handleLogStrategy(...params),
+    customerDataTrackerManager.createDetachedTracker(CustomerDataType.LoggerContext)
+  )
 
   function buildCommonContext(): CommonContext {
     return {
@@ -101,7 +107,7 @@ export function makeLogsPublicApi(startLogsImpl: StartLogs) {
         globalContextManager = createStoredContextManager(
           configuration,
           LOGS_STORAGE_KEY,
-          globalContextManager.customerDataTracker
+          customerDataTrackerManager.getOrCreateTracker(CustomerDataType.GlobalContext)
         )
         globalContextManager.setContext(combine(globalContextManager.getContext(), beforeInitGlobalContext))
 
@@ -109,7 +115,7 @@ export function makeLogsPublicApi(startLogsImpl: StartLogs) {
         userContextManager = createStoredContextManager(
           configuration,
           LOGS_STORAGE_KEY,
-          userContextManager.customerDataTracker
+          customerDataTrackerManager.getOrCreateTracker(CustomerDataType.User)
         )
         userContextManager.setContext(combine(userContextManager.getContext(), beforeInitUserContext))
       }
@@ -138,6 +144,7 @@ export function makeLogsPublicApi(startLogsImpl: StartLogs) {
     createLogger: monitor((name: string, conf: LoggerConfiguration = {}) => {
       customLoggers[name] = new Logger(
         (...params) => handleLogStrategy(...params),
+        customerDataTrackerManager.createDetachedTracker(CustomerDataType.LoggerContext),
         sanitize(name),
         conf.handler,
         conf.level,

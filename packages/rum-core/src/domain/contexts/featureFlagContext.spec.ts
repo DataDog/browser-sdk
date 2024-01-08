@@ -21,7 +21,7 @@ describe('featureFlagContexts', () => {
 
   beforeEach(() => {
     setupBuilder = setup().beforeBuild(({ lifeCycle }) => {
-      customerDataTracker = createCustomerDataTracker(CustomerDataType.FeatureFlag)
+      customerDataTracker = createCustomerDataTracker(CustomerDataType.User)
       featureFlagContexts = startFeatureFlagContexts(lifeCycle, customerDataTracker)
     })
   })

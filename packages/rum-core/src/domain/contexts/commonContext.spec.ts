@@ -1,5 +1,5 @@
 import type { Context, ContextManager } from '@datadog/browser-core'
-import { createContextManager, CustomerDataType, createCustomerDataTracker } from '@datadog/browser-core'
+import { CustomerDataType, createContextManager, createCustomerDataTracker } from '@datadog/browser-core'
 import type { RecorderApi } from '../../boot/rumPublicApi'
 import { noopRecorderApi } from '../../../test'
 import type { CommonContext } from './commonContext'

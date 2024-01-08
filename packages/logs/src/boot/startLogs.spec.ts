@@ -1,5 +1,13 @@
 import type { Payload } from '@datadog/browser-core'
-import { ErrorSource, display, stopSessionManager, getCookie, SESSION_STORE_KEY } from '@datadog/browser-core'
+import {
+  ErrorSource,
+  display,
+  stopSessionManager,
+  getCookie,
+  SESSION_STORE_KEY,
+  createCustomerDataTracker,
+  CustomerDataType,
+} from '@datadog/browser-core'
 import type { Request } from '@datadog/browser-core/test'
 import {
   interceptRequests,
@@ -57,7 +65,7 @@ describe('logs', () => {
       logsEndpointBuilder: stubEndpointBuilder('https://localhost/v1/input/log'),
       batchMessagesLimit: 1,
     }
-    logger = new Logger((...params) => handleLog(...params))
+    logger = new Logger((...params) => handleLog(...params), createCustomerDataTracker(CustomerDataType.LoggerContext))
     interceptor = interceptRequests()
     requests = interceptor.requests
     consoleLogSpy = spyOn(console, 'log')

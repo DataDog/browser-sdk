@@ -1,5 +1,13 @@
 import type { Context, RelativeTime, TimeStamp } from '@datadog/browser-core'
-import { Observable, ErrorSource, ONE_MINUTE, getTimeStamp, noop } from '@datadog/browser-core'
+import {
+  Observable,
+  ErrorSource,
+  ONE_MINUTE,
+  getTimeStamp,
+  noop,
+  createCustomerDataTracker,
+  CustomerDataType,
+} from '@datadog/browser-core'
 import type { Clock } from '@datadog/browser-core/test'
 import { mockClock } from '@datadog/browser-core/test'
 import type { LogsEvent } from '../logsEvent.types'
@@ -53,7 +61,7 @@ describe('startLogsAssembly', () => {
       beforeSend: (x: LogsEvent) => beforeSend(x),
     }
     beforeSend = noop
-    mainLogger = new Logger(() => noop)
+    mainLogger = new Logger(() => noop, createCustomerDataTracker(CustomerDataType.LoggerContext))
     startLogsAssembly(sessionManager, configuration, lifeCycle, () => COMMON_CONTEXT, noop)
     window.DD_RUM = {
       getInternalContext: noop,

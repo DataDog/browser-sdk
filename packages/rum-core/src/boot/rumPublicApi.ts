@@ -30,8 +30,8 @@ import {
   createStoredContextManager,
   combine,
   createIdentityEncoder,
-  createCustomerDataTracker,
   CustomerDataCompressionStatus,
+  createCustomerDataTrackerManager,
 } from '@datadog/browser-core'
 import type { LifeCycle } from '../domain/lifeCycle'
 import type { ViewContexts } from '../domain/contexts/viewContexts'
@@ -91,12 +91,11 @@ export function makeRumPublicApi(
 ) {
   let isAlreadyInitialized = false
 
+  const customerDataTrackerManager = createCustomerDataTrackerManager(CustomerDataCompressionStatus.Unknown)
   let globalContextManager = createContextManager(
-    createCustomerDataTracker(CustomerDataType.GlobalContext, CustomerDataCompressionStatus.Unknown)
+    customerDataTrackerManager.getOrCreateTracker(CustomerDataType.GlobalContext)
   )
-  let userContextManager = createContextManager(
-    createCustomerDataTracker(CustomerDataType.User, CustomerDataCompressionStatus.Unknown)
-  )
+  let userContextManager = createContextManager(customerDataTrackerManager.getOrCreateTracker(CustomerDataType.User))
 
   let getInternalContextStrategy: StartRumResult['getInternalContext'] = () => undefined
   let getInitConfigurationStrategy = (): InitConfiguration | undefined => undefined
@@ -215,7 +214,7 @@ export function makeRumPublicApi(
       globalContextManager = createStoredContextManager(
         configuration,
         RUM_STORAGE_KEY,
-        globalContextManager.customerDataTracker
+        customerDataTrackerManager.getOrCreateTracker(CustomerDataType.GlobalContext)
       )
       globalContextManager.setContext(combine(globalContextManager.getContext(), beforeInitGlobalContext))
 
@@ -223,21 +222,20 @@ export function makeRumPublicApi(
       userContextManager = createStoredContextManager(
         configuration,
         RUM_STORAGE_KEY,
-        userContextManager.customerDataTracker
+        customerDataTrackerManager.getOrCreateTracker(CustomerDataType.User)
       )
       userContextManager.setContext(combine(userContextManager.getContext(), beforeInitUserContext))
     }
 
-    ;[globalContextManager, userContextManager].forEach((contextManager) => {
-      contextManager.customerDataTracker.setCompressionStatus(
-        deflateWorker ? CustomerDataCompressionStatus.Enabled : CustomerDataCompressionStatus.Disabled
-      )
-    })
+    customerDataTrackerManager.setCompressionStatus(
+      deflateWorker ? CustomerDataCompressionStatus.Enabled : CustomerDataCompressionStatus.Disabled
+    )
 
     const startRumResults = startRumImpl(
       initConfiguration,
       configuration,
       recorderApi,
+      customerDataTrackerManager,
       globalContextManager,
       userContextManager,
       initialViewOptions,

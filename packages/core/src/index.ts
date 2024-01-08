@@ -95,8 +95,10 @@ export { catchUserErrors } from './tools/catchUserErrors'
 export { createContextManager, ContextManager } from './domain/context/contextManager'
 export { createStoredContextManager, removeStorageListeners } from './domain/context/storedContextManager'
 export {
+  createCustomerDataTrackerManager,
   createCustomerDataTracker,
   CustomerDataTracker,
+  CustomerDataTrackerManager,
   CUSTOMER_DATA_BYTES_LIMIT,
   CustomerDataCompressionStatus,
 } from './domain/context/customerDataTracker'
