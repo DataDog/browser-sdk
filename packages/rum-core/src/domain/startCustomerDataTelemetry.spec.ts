@@ -1,10 +1,9 @@
-import type { FlushEvent, Context, ContextManager, TelemetryEvent, CustomerDataTracker } from '@datadog/browser-core'
+import type { FlushEvent, Context, TelemetryEvent, CustomerDataTracker } from '@datadog/browser-core'
 import { resetExperimentalFeatures, TelemetryService, startTelemetry, Observable } from '@datadog/browser-core'
 import type { TestSetupBuilder } from '../../test'
 import { setup } from '../../test'
 import { RumEventType } from '../rawRumEvent.types'
 import type { RumEvent } from '../rumEvent.types'
-import type { FeatureFlagContexts } from './contexts/featureFlagContext'
 import { LifeCycle, LifeCycleEventType } from './lifeCycle'
 import { MEASURES_PERIOD_DURATION, startCustomerDataTelemetry } from './startCustomerDataTelemetry'
 
@@ -12,7 +11,6 @@ describe('customerDataTelemetry', () => {
   let setupBuilder: TestSetupBuilder
   let batchFlushObservable: Observable<FlushEvent>
   let telemetryEvents: TelemetryEvent[]
-  let fakeContext: Context
   let fakeContextBytesCount: number
   let lifeCycle: LifeCycle
   const viewEvent = { type: RumEventType.VIEW } as RumEvent & Context
@@ -21,7 +19,6 @@ describe('customerDataTelemetry', () => {
     eventNumber,
     batchBytesCount = 1,
     contextBytesCount = fakeContextBytesCount,
-    context = fakeContext,
   }: {
     eventNumber: number
     eventType?: RumEventType | 'Telemetry'
@@ -30,7 +27,6 @@ describe('customerDataTelemetry', () => {
     context?: Context
   }) {
     fakeContextBytesCount = contextBytesCount
-    fakeContext = context
 
     for (let index = 0; index < eventNumber; index++) {
       lifeCycle.notify(LifeCycleEventType.RUM_EVENT_COLLECTED, viewEvent)
@@ -42,15 +38,6 @@ describe('customerDataTelemetry', () => {
     })
   }
 
-  function spyOnContextManager(contextManager: ContextManager) {
-    spyOn(contextManager, 'getContext').and.callFake(() => fakeContext)
-  }
-
-  function spyOnFeatureFlagContexts(featureFlagContexts: FeatureFlagContexts) {
-    spyOn(featureFlagContexts, 'findFeatureFlagEvaluations').and.callFake(() => fakeContext)
-    spyOn(featureFlagContexts, 'getFeatureFlagBytesCount').and.callFake(() => fakeContextBytesCount)
-  }
-
   beforeEach(() => {
     setupBuilder = setup()
       .withFakeClock()
@@ -59,44 +46,29 @@ describe('customerDataTelemetry', () => {
         customerDataTelemetrySampleRate: 100,
         maxTelemetryEventsPerPage: 2,
       })
-      .beforeBuild(
-        ({
-          globalContextManager,
-          userContextManager,
-          featureFlagContexts,
+      .beforeBuild(({ configuration, customerDataTrackerManager }) => {
+        batchFlushObservable = new Observable()
+        lifeCycle = new LifeCycle()
+        fakeContextBytesCount = 1
+        spyOn(customerDataTrackerManager, 'getOrCreateTracker').and.callFake(
+          () =>
+            ({
+              getBytesCount: () => fakeContextBytesCount,
+            }) as CustomerDataTracker
+        )
+
+        telemetryEvents = []
+        const telemetry = startTelemetry(TelemetryService.RUM, configuration)
+        telemetry.observable.subscribe((telemetryEvent) => telemetryEvents.push(telemetryEvent))
+
+        startCustomerDataTelemetry(
           configuration,
+          telemetry,
+          lifeCycle,
           customerDataTrackerManager,
-        }) => {
-          batchFlushObservable = new Observable()
-          lifeCycle = new LifeCycle()
-          fakeContextBytesCount = 1
-          fakeContext = { foo: 'bar' }
-          spyOn(customerDataTrackerManager, 'getOrCreateTracker').and.callFake(
-            () =>
-              ({
-                getBytesCount: () => fakeContextBytesCount,
-              }) as CustomerDataTracker
-          )
-          spyOnContextManager(globalContextManager)
-          spyOnContextManager(userContextManager)
-          spyOnFeatureFlagContexts(featureFlagContexts)
-
-          telemetryEvents = []
-          const telemetry = startTelemetry(TelemetryService.RUM, configuration)
-          telemetry.observable.subscribe((telemetryEvent) => telemetryEvents.push(telemetryEvent))
-
-          startCustomerDataTelemetry(
-            configuration,
-            telemetry,
-            lifeCycle,
-            customerDataTrackerManager,
-            globalContextManager,
-            userContextManager,
-            featureFlagContexts,
-            batchFlushObservable
-          )
-        }
-      )
+          batchFlushObservable
+        )
+      })
   })
 
   afterEach(() => {

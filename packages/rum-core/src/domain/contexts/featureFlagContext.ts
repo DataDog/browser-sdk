@@ -16,7 +16,6 @@ export type FeatureFlagContext = Context
 
 export interface FeatureFlagContexts {
   findFeatureFlagEvaluations: (startTime?: RelativeTime) => FeatureFlagContext | undefined
-  getFeatureFlagBytesCount: () => number
   addFeatureFlagEvaluation: (key: string, value: ContextValue) => void
   stop: () => void
 }
@@ -36,7 +35,6 @@ export function startFeatureFlagContexts(
   if (!isExperimentalFeatureEnabled(ExperimentalFeature.FEATURE_FLAGS)) {
     return {
       findFeatureFlagEvaluations: () => undefined,
-      getFeatureFlagBytesCount: () => 0,
       addFeatureFlagEvaluation: noop,
       stop: noop,
     }
@@ -55,14 +53,6 @@ export function startFeatureFlagContexts(
 
   return {
     findFeatureFlagEvaluations: (startTime?: RelativeTime) => featureFlagContexts.find(startTime),
-    getFeatureFlagBytesCount: () => {
-      const currentContext = featureFlagContexts.find()
-      if (!currentContext) {
-        return 0
-      }
-
-      return customerDataTracker.getBytesCount()
-    },
     addFeatureFlagEvaluation: (key: string, value: ContextValue) => {
       const currentContext = featureFlagContexts.find()
       if (currentContext) {

@@ -97,7 +97,6 @@ export function setup(): TestSetupBuilder {
     findFeatureFlagEvaluations: () => undefined,
     addFeatureFlagEvaluation: noop,
     stop: noop,
-    getFeatureFlagBytesCount: () => 0,
   }
   let actionContexts: ActionContexts = {
     findActionId: noop as () => undefined,

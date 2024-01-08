@@ -1,13 +1,5 @@
-import type {
-  Context,
-  ContextManager,
-  CustomerDataTrackerManager,
-  FlushEvent,
-  Observable,
-  Telemetry,
-} from '@datadog/browser-core'
+import type { Context, CustomerDataTrackerManager, FlushEvent, Observable, Telemetry } from '@datadog/browser-core'
 import {
-  isEmptyObject,
   includes,
   performDraw,
   ONE_SECOND,
@@ -18,7 +10,6 @@ import {
 import { RumEventType } from '../rawRumEvent.types'
 import type { RumEvent } from '../rumEvent.types'
 import type { RumConfiguration } from './configuration'
-import type { FeatureFlagContexts } from './contexts/featureFlagContext'
 import type { LifeCycle } from './lifeCycle'
 import { LifeCycleEventType } from './lifeCycle'
 
@@ -54,9 +45,6 @@ export function startCustomerDataTelemetry(
   telemetry: Telemetry,
   lifeCycle: LifeCycle,
   customerDataTrackerManager: CustomerDataTrackerManager,
-  globalContextManager: ContextManager,
-  userContextManager: ContextManager,
-  featureFlagContexts: FeatureFlagContexts,
   batchFlushObservable: Observable<FlushEvent>
 ) {
   const customerDataTelemetryEnabled = telemetry.enabled && performDraw(configuration.customerDataTelemetrySampleRate)
@@ -73,26 +61,19 @@ export function startCustomerDataTelemetry(
     batchHasRumEvent = true
     updateMeasure(
       currentBatchMeasures.globalContextBytes,
-      !isEmptyObject(globalContextManager.getContext())
-        ? customerDataTrackerManager.getOrCreateTracker(CustomerDataType.GlobalContext).getBytesCount()
-        : 0
+      customerDataTrackerManager.getOrCreateTracker(CustomerDataType.GlobalContext).getBytesCount()
     )
 
     updateMeasure(
       currentBatchMeasures.userContextBytes,
-      !isEmptyObject(userContextManager.getContext())
-        ? customerDataTrackerManager.getOrCreateTracker(CustomerDataType.User).getBytesCount()
-        : 0
+      customerDataTrackerManager.getOrCreateTracker(CustomerDataType.User).getBytesCount()
     )
 
-    const featureFlagContext = featureFlagContexts.findFeatureFlagEvaluations()
-    const hasFeatureFlagContext =
-      includes([RumEventType.VIEW, RumEventType.ERROR], event.type) &&
-      featureFlagContext &&
-      !isEmptyObject(featureFlagContext)
     updateMeasure(
       currentBatchMeasures.featureFlagBytes,
-      hasFeatureFlagContext ? featureFlagContexts.getFeatureFlagBytesCount() : 0
+      includes([RumEventType.VIEW, RumEventType.ERROR], event.type)
+        ? customerDataTrackerManager.getOrCreateTracker(CustomerDataType.FeatureFlag).getBytesCount()
+        : 0
     )
   })
 

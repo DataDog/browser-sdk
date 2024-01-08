@@ -3,6 +3,7 @@ import { throttle } from '../../tools/utils/functionUtils'
 import type { Context } from '../../tools/serialisation/context'
 import { jsonStringify } from '../../tools/serialisation/jsonStringify'
 import { display } from '../../tools/display'
+import { isEmptyObject } from '../../tools/utils/objectUtils'
 import type { CustomerDataType } from './contextConstants'
 
 // RUM and logs batch bytes limit is 16KB
@@ -103,11 +104,20 @@ export function createCustomerDataTracker(checkCustomerDataLimit: () => void) {
     checkCustomerDataLimit()
   }, BYTES_COMPUTATION_THROTTLING_DELAY)
 
+  const resetBytesCount = () => {
+    cancelComputeBytesCount()
+    bytesCountCache = 0
+  }
+
   return {
-    updateCustomerData: computeBytesCountThrottled,
-    resetCustomerData: () => {
-      bytesCountCache = 0
+    updateCustomerData: (context: Context) => {
+      if (isEmptyObject(context)) {
+        resetBytesCount()
+      } else {
+        computeBytesCountThrottled(context)
+      }
     },
+    resetCustomerData: resetBytesCount,
     getBytesCount: () => bytesCountCache,
     stop: () => {
       cancelComputeBytesCount()

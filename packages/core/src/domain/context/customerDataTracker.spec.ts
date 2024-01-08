@@ -100,20 +100,6 @@ describe('customerDataTracker', () => {
     expect(displaySpy).toHaveBeenCalled()
   })
 
-  it('should be throttled to minimize the impact on performance', () => {
-    const customerDataTracker = createCustomerDataTrackerManager(
-      CustomerDataCompressionStatus.Disabled
-    ).getOrCreateTracker(CustomerDataType.User)
-
-    customerDataTracker.updateCustomerData({ foo: 1 }) // leading call executed synchronously
-    expect(customerDataTracker.getBytesCount()).toEqual(9)
-    customerDataTracker.updateCustomerData({ foo: 11 }) // ignored
-    expect(customerDataTracker.getBytesCount()).toEqual(9)
-    customerDataTracker.updateCustomerData({ foo: 111 }) // trailing call executed after BYTES_COMPUTATION_THROTTLING_DELAY
-    clock.tick(BYTES_COMPUTATION_THROTTLING_DELAY)
-    expect(customerDataTracker.getBytesCount()).toEqual(11)
-  })
-
   it('should warn only once if the context bytes limit is reached', () => {
     const customerDataTracker = createCustomerDataTrackerManager(
       CustomerDataCompressionStatus.Disabled
@@ -125,5 +111,36 @@ describe('customerDataTracker', () => {
     clock.tick(BYTES_COMPUTATION_THROTTLING_DELAY)
 
     expect(displaySpy).toHaveBeenCalledTimes(1)
+  })
+
+  describe('getBytesCount', () => {
+    it('should be throttled to minimize the impact on performance', () => {
+      const customerDataTracker = createCustomerDataTrackerManager().getOrCreateTracker(CustomerDataType.User)
+
+      customerDataTracker.updateCustomerData({ foo: 1 }) // leading call executed synchronously
+      expect(customerDataTracker.getBytesCount()).toEqual(9)
+      customerDataTracker.updateCustomerData({ foo: 11 }) // ignored
+      expect(customerDataTracker.getBytesCount()).toEqual(9)
+      customerDataTracker.updateCustomerData({ foo: 111 }) // trailing call executed after BYTES_COMPUTATION_THROTTLING_DELAY
+      clock.tick(BYTES_COMPUTATION_THROTTLING_DELAY)
+      expect(customerDataTracker.getBytesCount()).toEqual(11)
+    })
+
+    it('returns 0 if the context is empty', () => {
+      const customerDataTracker = createCustomerDataTrackerManager().getOrCreateTracker(CustomerDataType.User)
+
+      clock.tick(BYTES_COMPUTATION_THROTTLING_DELAY)
+      expect(customerDataTracker.getBytesCount()).toEqual(0)
+    })
+
+    it('should cancel the bytes computation if the tracker is reset', () => {
+      const customerDataTracker = createCustomerDataTrackerManager().getOrCreateTracker(CustomerDataType.User)
+
+      customerDataTracker.updateCustomerData({ foo: 1 })
+      customerDataTracker.resetCustomerData()
+      clock.tick(BYTES_COMPUTATION_THROTTLING_DELAY)
+
+      expect(customerDataTracker.getBytesCount()).toEqual(0)
+    })
   })
 })
