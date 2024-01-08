@@ -8,6 +8,7 @@ import type {
   TimeStamp,
   RawErrorCause,
   DefaultPrivacyLevel,
+  Connectivity,
 } from '@datadog/browser-core'
 import type { PageState } from './domain/contexts/pageStateHistory'
 
@@ -246,6 +247,7 @@ export interface RumContext {
     url: string
     name?: string
   }
+  connectivity: Connectivity
   action?: {
     id: string | string[]
   }

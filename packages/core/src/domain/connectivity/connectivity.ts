@@ -10,10 +10,11 @@ export interface NetworkInformation {
   effectiveType?: EffectiveType
 }
 
-interface Connectivity {
+export interface Connectivity {
   status: 'connected' | 'not_connected'
   interfaces?: NetworkInterface[]
   effective_type?: EffectiveType
+  [key: string]: unknown
 }
 
 export function getConnectivity(): Connectivity {

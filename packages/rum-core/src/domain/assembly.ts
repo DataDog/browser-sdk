@@ -11,6 +11,7 @@ import {
   round,
   isExperimentalFeatureEnabled,
   ExperimentalFeature,
+  getConnectivity,
 } from '@datadog/browser-core'
 import type { RumEventDomainContext } from '../domainContext.types'
 import type {
@@ -158,6 +159,7 @@ export function startRumAssembly(
           synthetics: syntheticsContext,
           ci_test: ciTestContext,
           display: displayContext.get(),
+          connectivity: getConnectivity(),
         }
 
         const serverRumEvent = combine(rumContext as RumContext & Context, rawRumEvent) as RumEvent & Context

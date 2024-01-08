@@ -6,6 +6,8 @@ import {
   cleanupSyntheticsWorkerValues,
   mockSyntheticsWorkerValues,
   mockExperimentalFeatures,
+  setNavigatorOnLine,
+  setNavigatorConnection,
 } from '@datadog/browser-core/test'
 import type { TestSetupBuilder } from '../../test'
 import {
@@ -807,6 +809,23 @@ describe('rum assembly', () => {
       })
 
       expect(serverRumEvents[0].ci_test).toBeTruthy()
+    })
+  })
+
+  describe('connectivity', () => {
+    it('should include the connectivity information', () => {
+      setNavigatorOnLine(true)
+      setNavigatorConnection({ effectiveType: '2g' })
+
+      const { lifeCycle } = setupBuilder.build()
+      const rawRumEvent = createRawRumEvent(RumEventType.VIEW)
+      notifyRawRumEvent(lifeCycle, { rawRumEvent })
+
+      expect(serverRumEvents[0].connectivity).toEqual({
+        status: 'connected',
+        effective_type: '2g',
+        interfaces: undefined,
+      })
     })
   })
 
