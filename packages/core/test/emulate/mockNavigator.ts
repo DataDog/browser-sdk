@@ -1,4 +1,5 @@
 import { registerCleanupTask } from '../registerCleanupTask'
+import type { NetworkInformation } from '../../src'
 
 export function setNavigatorOnLine(onLine: boolean) {
   Object.defineProperty(navigator, 'onLine', {
@@ -9,5 +10,17 @@ export function setNavigatorOnLine(onLine: boolean) {
   })
   registerCleanupTask(() => {
     delete (navigator as any).onLine
+  })
+}
+
+export function setNavigatorConnection(connection: NetworkInformation | undefined) {
+  Object.defineProperty(navigator, 'connection', {
+    get() {
+      return connection
+    },
+    configurable: true,
+  })
+  registerCleanupTask(() => {
+    delete (navigator as any).connection
   })
 }
