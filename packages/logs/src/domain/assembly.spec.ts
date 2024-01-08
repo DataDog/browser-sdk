@@ -61,7 +61,7 @@ describe('startLogsAssembly', () => {
       beforeSend: (x: LogsEvent) => beforeSend(x),
     }
     beforeSend = noop
-    mainLogger = new Logger(() => noop, createCustomerDataTracker(CustomerDataType.LoggerContext))
+    mainLogger = new Logger(() => noop, createCustomerDataTracker(CustomerDataType.LoggerContext, noop))
     startLogsAssembly(sessionManager, configuration, lifeCycle, () => COMMON_CONTEXT, noop)
     window.DD_RUM = {
       getInternalContext: noop,

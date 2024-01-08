@@ -6,6 +6,7 @@ import {
   relativeToClocks,
   createCustomerDataTracker,
   CustomerDataType,
+  noop,
 } from '@datadog/browser-core'
 import type { TestSetupBuilder } from '../../../test'
 import { setup } from '../../../test'
@@ -21,7 +22,7 @@ describe('featureFlagContexts', () => {
 
   beforeEach(() => {
     setupBuilder = setup().beforeBuild(({ lifeCycle }) => {
-      customerDataTracker = createCustomerDataTracker(CustomerDataType.User)
+      customerDataTracker = createCustomerDataTracker(CustomerDataType.User, noop)
       featureFlagContexts = startFeatureFlagContexts(lifeCycle, customerDataTracker)
     })
   })

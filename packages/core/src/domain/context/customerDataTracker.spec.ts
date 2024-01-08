@@ -11,6 +11,7 @@ import {
 import { CustomerDataType } from './contextConstants'
 
 const CONTEXT_OVER_LIMIT = { a: Array(CUSTOMER_DATA_BYTES_LIMIT).join('a') }
+const CONTEXT_HALF_LIMIT = { a: Array(CUSTOMER_DATA_BYTES_LIMIT / 2).join('a') }
 const CONTEXT_OVER_COMPRESSED_LIMIT = { a: Array(CUSTOMER_COMPRESSED_DATA_BYTES_LIMIT).join('a') }
 
 describe('customerDataTracker', () => {
@@ -35,6 +36,43 @@ describe('customerDataTracker', () => {
     clock.tick(BYTES_COMPUTATION_THROTTLING_DELAY)
 
     expect(displaySpy).toHaveBeenCalledTimes(1)
+  })
+
+  it('should take all trackers into account', () => {
+    const customerDataTrackerManager = createCustomerDataTrackerManager(CustomerDataCompressionStatus.Disabled)
+
+    customerDataTrackerManager.getOrCreateTracker(CustomerDataType.User).updateCustomerData(CONTEXT_HALF_LIMIT)
+    customerDataTrackerManager.getOrCreateTracker(CustomerDataType.GlobalContext).updateCustomerData(CONTEXT_HALF_LIMIT)
+
+    clock.tick(BYTES_COMPUTATION_THROTTLING_DELAY)
+
+    expect(displaySpy).toHaveBeenCalledTimes(1)
+  })
+
+  it('should warn if a detached tracker plus regular trackers exceed the limit', () => {
+    const customerDataTrackerManager = createCustomerDataTrackerManager(CustomerDataCompressionStatus.Disabled)
+
+    customerDataTrackerManager.getOrCreateTracker(CustomerDataType.User).updateCustomerData(CONTEXT_HALF_LIMIT)
+    customerDataTrackerManager
+      .createDetachedTracker(CustomerDataType.LoggerContext)
+      .updateCustomerData(CONTEXT_HALF_LIMIT)
+
+    clock.tick(BYTES_COMPUTATION_THROTTLING_DELAY)
+    expect(displaySpy).toHaveBeenCalledTimes(1)
+  })
+
+  it('should consider detached trackers independently', () => {
+    const customerDataTrackerManager = createCustomerDataTrackerManager(CustomerDataCompressionStatus.Disabled)
+
+    customerDataTrackerManager
+      .createDetachedTracker(CustomerDataType.LoggerContext)
+      .updateCustomerData(CONTEXT_HALF_LIMIT)
+    customerDataTrackerManager
+      .createDetachedTracker(CustomerDataType.LoggerContext)
+      .updateCustomerData(CONTEXT_HALF_LIMIT)
+
+    clock.tick(BYTES_COMPUTATION_THROTTLING_DELAY)
+    expect(displaySpy).not.toHaveBeenCalled()
   })
 
   it('should use a bigger limit if the compression is enabled', () => {

@@ -3,7 +3,7 @@ import { throttle } from '../../tools/utils/functionUtils'
 import type { Context } from '../../tools/serialisation/context'
 import { jsonStringify } from '../../tools/serialisation/jsonStringify'
 import { display } from '../../tools/display'
-import { CustomerDataType } from './contextConstants'
+import type { CustomerDataType } from './contextConstants'
 
 // RUM and logs batch bytes limit is 16KB
 // ensure that we leave room for other event attributes and maintain a decent amount of event per batch
@@ -32,6 +32,28 @@ export function createCustomerDataTrackerManager(
 ) {
   const customerDataTrackers = new Map<CustomerDataType, CustomerDataTracker>()
 
+  let alreadyWarned = false
+  function checkCustomerDataLimit(initialBytesCount = 0) {
+    if (alreadyWarned || compressionStatus === CustomerDataCompressionStatus.Unknown) {
+      return
+    }
+
+    const bytesCountLimit =
+      compressionStatus === CustomerDataCompressionStatus.Disabled
+        ? CUSTOMER_DATA_BYTES_LIMIT
+        : CUSTOMER_COMPRESSED_DATA_BYTES_LIMIT
+
+    let bytesCount = initialBytesCount
+    customerDataTrackers.forEach((tracker) => {
+      bytesCount += tracker.getBytesCount()
+    })
+
+    if (bytesCount > bytesCountLimit) {
+      displayCustomerDataLimitReachedWarning(bytesCountLimit)
+      alreadyWarned = true
+    }
+  }
+
   return {
     /**
      * Creates a detached tracker. The manager will not store a reference to that tracker, and the
@@ -40,21 +62,26 @@ export function createCustomerDataTrackerManager(
      * This is particularly useful when we don't know when the tracker will be unused, so we don't
      * leak memory (ex: when used in Logger instances).
      */
-    createDetachedTracker: (type: CustomerDataType) => createCustomerDataTracker(type, compressionStatus),
+    createDetachedTracker: (type: CustomerDataType) => {
+      const tracker = createCustomerDataTracker(type, () => checkCustomerDataLimit(tracker.getBytesCount()))
+      return tracker
+    },
 
     /**
      * Creates a tracker if it doesn't exist, and returns it.
      */
     getOrCreateTracker: (type: CustomerDataType) => {
       if (!customerDataTrackers.has(type)) {
-        customerDataTrackers.set(type, createCustomerDataTracker(type, compressionStatus))
+        customerDataTrackers.set(type, createCustomerDataTracker(type, checkCustomerDataLimit))
       }
       return customerDataTrackers.get(type)!
     },
 
     setCompressionStatus: (newCompressionStatus: CustomerDataCompressionStatus) => {
-      compressionStatus = newCompressionStatus
-      customerDataTrackers.forEach((tracker) => tracker.setCompressionStatus(newCompressionStatus))
+      if (compressionStatus === CustomerDataCompressionStatus.Unknown) {
+        compressionStatus = newCompressionStatus
+        checkCustomerDataLimit()
+      }
     },
 
     getCompressionStatus: () => compressionStatus,
@@ -66,12 +93,8 @@ export function createCustomerDataTrackerManager(
   }
 }
 
-export function createCustomerDataTracker(
-  type: CustomerDataType,
-  compressionStatus = CustomerDataCompressionStatus.Disabled
-) {
+export function createCustomerDataTracker(type: CustomerDataType, checkCustomerDataLimit: () => void) {
   let bytesCountCache = 0
-  let alreadyWarned = false
 
   // Throttle the bytes computation to minimize the impact on performance.
   // Especially useful if the user call context APIs synchronously multiple times in a row
@@ -80,22 +103,6 @@ export function createCustomerDataTracker(
     checkCustomerDataLimit()
   }, BYTES_COMPUTATION_THROTTLING_DELAY)
 
-  function checkCustomerDataLimit() {
-    if (alreadyWarned || compressionStatus === CustomerDataCompressionStatus.Unknown) {
-      return
-    }
-
-    const bytesCountLimit =
-      compressionStatus === CustomerDataCompressionStatus.Disabled
-        ? CUSTOMER_DATA_BYTES_LIMIT
-        : CUSTOMER_COMPRESSED_DATA_BYTES_LIMIT
-
-    if (bytesCountCache > bytesCountLimit) {
-      displayCustomerDataLimitReachedWarning(type, bytesCountLimit)
-      alreadyWarned = true
-    }
-  }
-
   return {
     type,
     updateCustomerData: computeBytesCountThrottled,
@@ -103,28 +110,15 @@ export function createCustomerDataTracker(
       bytesCountCache = 0
     },
     getBytesCount: () => bytesCountCache,
-    setCompressionStatus: (newCompressionStatus: CustomerDataCompressionStatus) => {
-      if (compressionStatus === CustomerDataCompressionStatus.Unknown) {
-        compressionStatus = newCompressionStatus
-        checkCustomerDataLimit()
-      }
-    },
     stop: () => {
       cancelComputeBytesCount()
     },
   }
 }
 
-const CustomerDataLabel = {
-  [CustomerDataType.FeatureFlag]: 'feature flag evaluation',
-  [CustomerDataType.User]: 'user',
-  [CustomerDataType.GlobalContext]: 'global context',
-  [CustomerDataType.LoggerContext]: 'logger context',
-}
-
-function displayCustomerDataLimitReachedWarning(customerDataType: CustomerDataType, bytesCountLimit: number) {
+function displayCustomerDataLimitReachedWarning(bytesCountLimit: number) {
   display.warn(
-    `The ${CustomerDataLabel[customerDataType]} data exceeds the recommended ${
+    `Customer data exceeds the recommended ${
       bytesCountLimit / ONE_KIBI_BYTE
     }KiB threshold. More details: https://docs.datadoghq.com/real_user_monitoring/browser/troubleshooting/#customer-data-exceeds-the-recommended-threshold-warning`
   )

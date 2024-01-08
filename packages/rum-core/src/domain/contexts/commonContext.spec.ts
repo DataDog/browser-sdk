@@ -1,5 +1,5 @@
 import type { Context, ContextManager } from '@datadog/browser-core'
-import { CustomerDataType, createContextManager, createCustomerDataTracker } from '@datadog/browser-core'
+import { CustomerDataType, createContextManager, createCustomerDataTracker, noop } from '@datadog/browser-core'
 import type { RecorderApi } from '../../boot/rumPublicApi'
 import { noopRecorderApi } from '../../../test'
 import type { CommonContext } from './commonContext'
@@ -14,9 +14,11 @@ describe('commonContext', () => {
     isRecording = false
     fakeContext = { foo: 'bar' }
     const globalContextManager: ContextManager = createContextManager(
-      createCustomerDataTracker(CustomerDataType.GlobalContext)
+      createCustomerDataTracker(CustomerDataType.GlobalContext, noop)
     )
-    const userContextManager: ContextManager = createContextManager(createCustomerDataTracker(CustomerDataType.User))
+    const userContextManager: ContextManager = createContextManager(
+      createCustomerDataTracker(CustomerDataType.User, noop)
+    )
     spyOn(globalContextManager, 'getContext').and.callFake(() => fakeContext)
     spyOn(userContextManager, 'getContext').and.callFake(() => fakeContext)
 

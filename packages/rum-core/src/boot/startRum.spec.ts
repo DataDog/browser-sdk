@@ -73,7 +73,7 @@ function startRumStub(
     location,
     domMutationObservable,
     locationChangeObservable,
-    startFeatureFlagContexts(lifeCycle, createCustomerDataTracker(CustomerDataType.FeatureFlag)),
+    startFeatureFlagContexts(lifeCycle, createCustomerDataTracker(CustomerDataType.FeatureFlag, noop)),
     pageStateHistory,
     noopRecorderApi
   )

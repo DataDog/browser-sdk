@@ -6,6 +6,7 @@ import {
   originalConsoleMethods,
   createCustomerDataTracker,
   CustomerDataType,
+  noop,
 } from '@datadog/browser-core'
 import type { Clock } from '@datadog/browser-core/test'
 import { mockClock } from '@datadog/browser-core/test'
@@ -32,7 +33,10 @@ describe('logger collection', () => {
       rawLogsEvents.push(rawLogsEvent as RawLogsEventCollectedData<RawLoggerLogsEvent>)
     )
     spyOn(console, 'error').and.callFake(() => true)
-    logger = new Logger((...params) => handleLog(...params), createCustomerDataTracker(CustomerDataType.LoggerContext))
+    logger = new Logger(
+      (...params) => handleLog(...params),
+      createCustomerDataTracker(CustomerDataType.LoggerContext, noop)
+    )
     ;({ handleLog: handleLog } = startLoggerCollection(lifeCycle))
     clock = mockClock()
   })
