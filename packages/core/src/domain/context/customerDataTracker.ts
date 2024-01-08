@@ -62,8 +62,8 @@ export function createCustomerDataTrackerManager(
      * This is particularly useful when we don't know when the tracker will be unused, so we don't
      * leak memory (ex: when used in Logger instances).
      */
-    createDetachedTracker: (type: CustomerDataType) => {
-      const tracker = createCustomerDataTracker(type, () => checkCustomerDataLimit(tracker.getBytesCount()))
+    createDetachedTracker: () => {
+      const tracker = createCustomerDataTracker(() => checkCustomerDataLimit(tracker.getBytesCount()))
       return tracker
     },
 
@@ -72,7 +72,7 @@ export function createCustomerDataTrackerManager(
      */
     getOrCreateTracker: (type: CustomerDataType) => {
       if (!customerDataTrackers.has(type)) {
-        customerDataTrackers.set(type, createCustomerDataTracker(type, checkCustomerDataLimit))
+        customerDataTrackers.set(type, createCustomerDataTracker(checkCustomerDataLimit))
       }
       return customerDataTrackers.get(type)!
     },
@@ -93,7 +93,7 @@ export function createCustomerDataTrackerManager(
   }
 }
 
-export function createCustomerDataTracker(type: CustomerDataType, checkCustomerDataLimit: () => void) {
+export function createCustomerDataTracker(checkCustomerDataLimit: () => void) {
   let bytesCountCache = 0
 
   // Throttle the bytes computation to minimize the impact on performance.
@@ -104,7 +104,6 @@ export function createCustomerDataTracker(type: CustomerDataType, checkCustomerD
   }, BYTES_COMPUTATION_THROTTLING_DELAY)
 
   return {
-    type,
     updateCustomerData: computeBytesCountThrottled,
     resetCustomerData: () => {
       bytesCountCache = 0

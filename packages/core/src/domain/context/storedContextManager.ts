@@ -13,9 +13,10 @@ const storageListeners: Array<{ stop: () => void }> = []
 export function createStoredContextManager(
   configuration: Configuration,
   productKey: string,
+  customerDataType: CustomerDataType,
   customerDataTracker: CustomerDataTracker
 ): ContextManager {
-  const storageKey = buildStorageKey(productKey, customerDataTracker.type)
+  const storageKey = buildStorageKey(productKey, customerDataType)
   const contextManager = createContextManager(customerDataTracker)
 
   synchronizeWithStorage()

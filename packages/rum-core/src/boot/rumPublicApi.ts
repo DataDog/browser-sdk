@@ -214,6 +214,7 @@ export function makeRumPublicApi(
       globalContextManager = createStoredContextManager(
         configuration,
         RUM_STORAGE_KEY,
+        CustomerDataType.GlobalContext,
         customerDataTrackerManager.getOrCreateTracker(CustomerDataType.GlobalContext)
       )
       globalContextManager.setContext(combine(globalContextManager.getContext(), beforeInitGlobalContext))
@@ -222,6 +223,7 @@ export function makeRumPublicApi(
       userContextManager = createStoredContextManager(
         configuration,
         RUM_STORAGE_KEY,
+        CustomerDataType.User,
         customerDataTrackerManager.getOrCreateTracker(CustomerDataType.User)
       )
       userContextManager.setContext(combine(userContextManager.getContext(), beforeInitUserContext))

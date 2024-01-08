@@ -6,7 +6,6 @@ import {
   getCookie,
   SESSION_STORE_KEY,
   createCustomerDataTracker,
-  CustomerDataType,
   noop,
 } from '@datadog/browser-core'
 import type { Request } from '@datadog/browser-core/test'
@@ -66,10 +65,7 @@ describe('logs', () => {
       logsEndpointBuilder: stubEndpointBuilder('https://localhost/v1/input/log'),
       batchMessagesLimit: 1,
     }
-    logger = new Logger(
-      (...params) => handleLog(...params),
-      createCustomerDataTracker(CustomerDataType.LoggerContext, noop)
-    )
+    logger = new Logger((...params) => handleLog(...params), createCustomerDataTracker(noop))
     interceptor = interceptRequests()
     requests = interceptor.requests
     consoleLogSpy = spyOn(console, 'log')

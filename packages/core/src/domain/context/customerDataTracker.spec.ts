@@ -53,9 +53,7 @@ describe('customerDataTracker', () => {
     const customerDataTrackerManager = createCustomerDataTrackerManager(CustomerDataCompressionStatus.Disabled)
 
     customerDataTrackerManager.getOrCreateTracker(CustomerDataType.User).updateCustomerData(CONTEXT_HALF_LIMIT)
-    customerDataTrackerManager
-      .createDetachedTracker(CustomerDataType.LoggerContext)
-      .updateCustomerData(CONTEXT_HALF_LIMIT)
+    customerDataTrackerManager.createDetachedTracker().updateCustomerData(CONTEXT_HALF_LIMIT)
 
     clock.tick(BYTES_COMPUTATION_THROTTLING_DELAY)
     expect(displaySpy).toHaveBeenCalledTimes(1)
@@ -64,12 +62,8 @@ describe('customerDataTracker', () => {
   it('should consider detached trackers independently', () => {
     const customerDataTrackerManager = createCustomerDataTrackerManager(CustomerDataCompressionStatus.Disabled)
 
-    customerDataTrackerManager
-      .createDetachedTracker(CustomerDataType.LoggerContext)
-      .updateCustomerData(CONTEXT_HALF_LIMIT)
-    customerDataTrackerManager
-      .createDetachedTracker(CustomerDataType.LoggerContext)
-      .updateCustomerData(CONTEXT_HALF_LIMIT)
+    customerDataTrackerManager.createDetachedTracker().updateCustomerData(CONTEXT_HALF_LIMIT)
+    customerDataTrackerManager.createDetachedTracker().updateCustomerData(CONTEXT_HALF_LIMIT)
 
     clock.tick(BYTES_COMPUTATION_THROTTLING_DELAY)
     expect(displaySpy).not.toHaveBeenCalled()

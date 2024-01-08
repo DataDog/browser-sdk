@@ -1,9 +1,4 @@
-import {
-  CustomerDataType,
-  NO_ERROR_STACK_PRESENT_MESSAGE,
-  createCustomerDataTracker,
-  noop,
-} from '@datadog/browser-core'
+import { NO_ERROR_STACK_PRESENT_MESSAGE, createCustomerDataTracker, noop } from '@datadog/browser-core'
 import type { LogsMessage } from './logger'
 import { HandlerType, Logger, STATUSES, StatusType } from './logger'
 
@@ -21,7 +16,7 @@ describe('Logger', () => {
 
   beforeEach(() => {
     handleLogSpy = jasmine.createSpy()
-    logger = new Logger(handleLogSpy, createCustomerDataTracker(CustomerDataType.LoggerContext, noop))
+    logger = new Logger(handleLogSpy, createCustomerDataTracker(noop))
   })
 
   describe('log methods', () => {
@@ -98,7 +93,7 @@ describe('Logger', () => {
       const loggerContext = { foo: 'bar' }
       logger = new Logger(
         handleLogSpy,
-        createCustomerDataTracker(CustomerDataType.LoggerContext, noop),
+        createCustomerDataTracker(noop),
         undefined,
         HandlerType.http,
         StatusType.debug,
@@ -136,7 +131,7 @@ describe('Logger', () => {
       const loggerContext = { foo: 'bar' }
       logger = new Logger(
         handleLogSpy,
-        createCustomerDataTracker(CustomerDataType.LoggerContext, noop),
+        createCustomerDataTracker(noop),
         undefined,
         HandlerType.http,
         StatusType.debug,

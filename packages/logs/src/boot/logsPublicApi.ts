@@ -64,7 +64,7 @@ export function makeLogsPublicApi(startLogsImpl: StartLogs) {
   let getInitConfigurationStrategy = (): InitConfiguration | undefined => undefined
   const mainLogger = new Logger(
     (...params) => handleLogStrategy(...params),
-    customerDataTrackerManager.createDetachedTracker(CustomerDataType.LoggerContext)
+    customerDataTrackerManager.createDetachedTracker()
   )
 
   function buildCommonContext(): CommonContext {
@@ -107,6 +107,7 @@ export function makeLogsPublicApi(startLogsImpl: StartLogs) {
         globalContextManager = createStoredContextManager(
           configuration,
           LOGS_STORAGE_KEY,
+          CustomerDataType.GlobalContext,
           customerDataTrackerManager.getOrCreateTracker(CustomerDataType.GlobalContext)
         )
         globalContextManager.setContext(combine(globalContextManager.getContext(), beforeInitGlobalContext))
@@ -115,6 +116,7 @@ export function makeLogsPublicApi(startLogsImpl: StartLogs) {
         userContextManager = createStoredContextManager(
           configuration,
           LOGS_STORAGE_KEY,
+          CustomerDataType.User,
           customerDataTrackerManager.getOrCreateTracker(CustomerDataType.User)
         )
         userContextManager.setContext(combine(userContextManager.getContext(), beforeInitUserContext))
@@ -144,7 +146,7 @@ export function makeLogsPublicApi(startLogsImpl: StartLogs) {
     createLogger: monitor((name: string, conf: LoggerConfiguration = {}) => {
       customLoggers[name] = new Logger(
         (...params) => handleLogStrategy(...params),
-        customerDataTrackerManager.createDetachedTracker(CustomerDataType.LoggerContext),
+        customerDataTrackerManager.createDetachedTracker(),
         sanitize(name),
         conf.handler,
         conf.level,

@@ -27,7 +27,8 @@ describe('storedContextManager', () => {
       const manager = createStoredContextManager(
         configuration,
         PRODUCT_KEY,
-        createCustomerDataTracker(CUSTOMER_DATA_TYPE, noop)
+        CUSTOMER_DATA_TYPE,
+        createCustomerDataTracker(noop)
       )
       expect(manager.getContext()).toEqual({})
     })
@@ -36,7 +37,8 @@ describe('storedContextManager', () => {
       const manager = createStoredContextManager(
         configuration,
         PRODUCT_KEY,
-        createCustomerDataTracker(CUSTOMER_DATA_TYPE, noop)
+        CUSTOMER_DATA_TYPE,
+        createCustomerDataTracker(noop)
       )
 
       manager.setContext({ bar: 'foo' })
@@ -53,9 +55,9 @@ describe('storedContextManager', () => {
     })
 
     it('should notify customer data tracker when the context is updated', () => {
-      const customerDataTracker = createCustomerDataTracker(CUSTOMER_DATA_TYPE, noop)
+      const customerDataTracker = createCustomerDataTracker(noop)
       const updateCustomerDataSpy = spyOn(customerDataTracker, 'updateCustomerData')
-      const manager = createStoredContextManager(configuration, PRODUCT_KEY, customerDataTracker)
+      const manager = createStoredContextManager(configuration, PRODUCT_KEY, CUSTOMER_DATA_TYPE, customerDataTracker)
       const context = { bar: 'foo' }
 
       manager.setContext(context)
@@ -71,7 +73,8 @@ describe('storedContextManager', () => {
       const manager = createStoredContextManager(
         configuration,
         PRODUCT_KEY,
-        createCustomerDataTracker(CUSTOMER_DATA_TYPE, noop)
+        CUSTOMER_DATA_TYPE,
+        createCustomerDataTracker(noop)
       )
 
       expect(manager.getContext()).toEqual({ bar: 'foo' })
@@ -81,7 +84,8 @@ describe('storedContextManager', () => {
       const manager = createStoredContextManager(
         configuration,
         PRODUCT_KEY,
-        createCustomerDataTracker(CUSTOMER_DATA_TYPE, noop)
+        CUSTOMER_DATA_TYPE,
+        createCustomerDataTracker(noop)
       )
       expect(manager.getContext()).toEqual({})
 
@@ -99,7 +103,8 @@ describe('storedContextManager', () => {
       const manager = createStoredContextManager(
         configuration,
         PRODUCT_KEY,
-        createCustomerDataTracker(CUSTOMER_DATA_TYPE, noop)
+        CUSTOMER_DATA_TYPE,
+        createCustomerDataTracker(noop)
       )
       expect(localStorage.getItem(STORAGE_KEY)).toBe(null)
 
@@ -117,10 +122,10 @@ describe('storedContextManager', () => {
     })
 
     it('should store different product data in different storage key', () => {
-      createStoredContextManager(configuration, 'p1', createCustomerDataTracker(CUSTOMER_DATA_TYPE, noop)).setContext({
+      createStoredContextManager(configuration, 'p1', CUSTOMER_DATA_TYPE, createCustomerDataTracker(noop)).setContext({
         bar: 'foo',
       })
-      createStoredContextManager(configuration, 'p2', createCustomerDataTracker(CUSTOMER_DATA_TYPE, noop)).setContext({
+      createStoredContextManager(configuration, 'p2', CUSTOMER_DATA_TYPE, createCustomerDataTracker(noop)).setContext({
         qux: 'qix',
       })
 
@@ -132,12 +137,14 @@ describe('storedContextManager', () => {
       createStoredContextManager(
         configuration,
         PRODUCT_KEY,
-        createCustomerDataTracker(CustomerDataType.User, noop)
+        CustomerDataType.User,
+        createCustomerDataTracker(noop)
       ).setContext({ bar: 'foo' })
       createStoredContextManager(
         configuration,
         PRODUCT_KEY,
-        createCustomerDataTracker(CustomerDataType.GlobalContext, noop)
+        CustomerDataType.GlobalContext,
+        createCustomerDataTracker(noop)
       ).setContext({ qux: 'qix' })
 
       expect(localStorage.getItem(buildStorageKey(PRODUCT_KEY, CustomerDataType.User))).toBe('{"bar":"foo"}')
