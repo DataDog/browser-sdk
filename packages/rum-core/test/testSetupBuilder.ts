@@ -1,5 +1,13 @@
-import type { Context, ContextManager, TimeStamp } from '@datadog/browser-core'
-import { CustomerDataType, assign, combine, createContextManager, noop, Observable } from '@datadog/browser-core'
+import type { Context, ContextManager, CustomerDataTrackerManager, TimeStamp } from '@datadog/browser-core'
+import {
+  assign,
+  combine,
+  createContextManager,
+  createCustomerDataTrackerManager,
+  CustomerDataType,
+  noop,
+  Observable,
+} from '@datadog/browser-core'
 import type { Clock } from '@datadog/browser-core/test'
 import { mockClock, buildLocation, SPEC_ENDPOINTS } from '@datadog/browser-core/test'
 import type { LocationChange } from '../src/browser/locationChangeObservable'
@@ -53,6 +61,7 @@ export interface BuildContext {
   urlContexts: UrlContexts
   globalContextManager: ContextManager
   userContextManager: ContextManager
+  customerDataTrackerManager: CustomerDataTrackerManager
 }
 
 export interface TestIO {
@@ -88,7 +97,6 @@ export function setup(): TestSetupBuilder {
     findFeatureFlagEvaluations: () => undefined,
     addFeatureFlagEvaluation: noop,
     stop: noop,
-    getFeatureFlagBytesCount: () => 0,
   }
   let actionContexts: ActionContexts = {
     findActionId: noop as () => undefined,
@@ -98,8 +106,11 @@ export function setup(): TestSetupBuilder {
     stop: noop,
   }
 
-  const globalContextManager = createContextManager(CustomerDataType.GlobalContext)
-  const userContextManager = createContextManager(CustomerDataType.User)
+  const customerDataTrackerManager = createCustomerDataTrackerManager()
+  const globalContextManager = createContextManager(
+    customerDataTrackerManager.getOrCreateTracker(CustomerDataType.GlobalContext)
+  )
+  const userContextManager = createContextManager(customerDataTrackerManager.getOrCreateTracker(CustomerDataType.User))
   let pageStateHistory: PageStateHistory = {
     findAll: () => undefined,
     addPageState: noop,
@@ -193,6 +204,7 @@ export function setup(): TestSetupBuilder {
           location: fakeLocation as Location,
           globalContextManager,
           userContextManager,
+          customerDataTrackerManager,
         })
         if (result && result.stop) {
           cleanupTasks.push(result.stop)
