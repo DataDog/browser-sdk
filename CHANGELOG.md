@@ -16,6 +16,15 @@
 
 ---
 
+## v5.7.0
+
+- 🐛 [RUM-2689] fix recorder crash when restarted quickly ([#2553](https://github.com/DataDog/browser-sdk/pull/2553))
+- 🔉 [RUM-253] adjust heavy customer data warning when compression is enabled ([#2529](https://github.com/DataDog/browser-sdk/pull/2529))
+- ♻️ [RUMF-1436] instrument method improvements ([#2551](https://github.com/DataDog/browser-sdk/pull/2551))
+- ✨⚗ [RUM-2682] writable resource.graphql field on Resource events ([#2550](https://github.com/DataDog/browser-sdk/pull/2550))
+- 📝 add @datadog/browser-worker package to readme ([#2537](https://github.com/DataDog/browser-sdk/pull/2537))
+- ♻️ pass the Observable instance to the onFirstSubscribe callback ([#2539](https://github.com/DataDog/browser-sdk/pull/2539))
+
 ## v5.6.0
 
 - ✨[RUM-2436] add partitioned support for third party cookies ([#2535](https://github.com/DataDog/browser-sdk/pull/2535))
