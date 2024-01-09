@@ -1,10 +1,4 @@
-import {
-  addEventListener,
-  DOM_EVENT,
-  instrumentMethodAndCallOriginal,
-  Observable,
-  shallowClone,
-} from '@datadog/browser-core'
+import { addEventListener, DOM_EVENT, instrumentMethod, Observable, shallowClone } from '@datadog/browser-core'
 import type { RumConfiguration } from '../domain/configuration'
 
 export interface LocationChange {
@@ -39,11 +33,11 @@ export function createLocationChangeObservable(configuration: RumConfiguration, 
 }
 
 function trackHistory(configuration: RumConfiguration, onHistoryChange: () => void) {
-  const { stop: stopInstrumentingPushState } = instrumentMethodAndCallOriginal(history, 'pushState', {
-    after: onHistoryChange,
+  const { stop: stopInstrumentingPushState } = instrumentMethod(history, 'pushState', ({ onPostCall }) => {
+    onPostCall(onHistoryChange)
   })
-  const { stop: stopInstrumentingReplaceState } = instrumentMethodAndCallOriginal(history, 'replaceState', {
-    after: onHistoryChange,
+  const { stop: stopInstrumentingReplaceState } = instrumentMethod(history, 'replaceState', ({ onPostCall }) => {
+    onPostCall(onHistoryChange)
   })
   const { stop: removeListener } = addEventListener(configuration, window, DOM_EVENT.POP_STATE, onHistoryChange)
 

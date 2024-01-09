@@ -1,6 +1,6 @@
 import type { Subscription, TimeoutId, TimeStamp } from '@datadog/browser-core'
 import {
-  instrumentMethodAndCallOriginal,
+  instrumentMethod,
   matchList,
   monitor,
   Observable,
@@ -178,5 +178,5 @@ function isExcludedUrl(configuration: RumConfiguration, requestUrl: string): boo
 }
 
 function trackWindowOpen(callback: () => void) {
-  return instrumentMethodAndCallOriginal(window, 'open', { before: callback })
+  return instrumentMethod(window, 'open', callback)
 }

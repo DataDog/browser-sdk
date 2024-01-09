@@ -73,7 +73,7 @@ export * from './tools/utils/browserDetection'
 export { sendToExtension } from './tools/sendToExtension'
 export { runOnReadyState } from './browser/runOnReadyState'
 export { getZoneJsOriginalValue } from './tools/getZoneJsOriginalValue'
-export { instrumentMethod, instrumentMethodAndCallOriginal, instrumentSetter } from './tools/instrumentMethod'
+export { instrumentMethod, instrumentSetter, InstrumentedMethodCall } from './tools/instrumentMethod'
 export {
   computeRawError,
   createHandlingStack,

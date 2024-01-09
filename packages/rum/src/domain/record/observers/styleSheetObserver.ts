@@ -1,5 +1,5 @@
 import type { ListenerHandler } from '@datadog/browser-core'
-import { instrumentMethodAndCallOriginal } from '@datadog/browser-core'
+import { instrumentMethod } from '@datadog/browser-core'
 import type { StyleSheetRule } from '../../../types'
 import { getSerializedNodeId, hasSerializedNode } from '../serialization'
 
@@ -15,15 +15,12 @@ export function initStyleSheetObserver(cb: StyleSheetCallback): ListenerHandler 
   }
 
   const instrumentationStoppers = [
-    instrumentMethodAndCallOriginal(CSSStyleSheet.prototype, 'insertRule', {
-      before(rule, index) {
-        checkStyleSheetAndCallback(this, (id) => cb({ id, adds: [{ rule, index }] }))
-      },
+    instrumentMethod(CSSStyleSheet.prototype, 'insertRule', ({ target: styleSheet, parameters: [rule, index] }) => {
+      checkStyleSheetAndCallback(styleSheet, (id) => cb({ id, adds: [{ rule, index }] }))
     }),
-    instrumentMethodAndCallOriginal(CSSStyleSheet.prototype, 'deleteRule', {
-      before(index) {
-        checkStyleSheetAndCallback(this, (id) => cb({ id, removes: [{ index }] }))
-      },
+
+    instrumentMethod(CSSStyleSheet.prototype, 'deleteRule', ({ target: styleSheet, parameters: [index] }) => {
+      checkStyleSheetAndCallback(styleSheet, (id) => cb({ id, removes: [{ index }] }))
     }),
   ]
 
@@ -36,27 +33,24 @@ export function initStyleSheetObserver(cb: StyleSheetCallback): ListenerHandler 
 
   function instrumentGroupingCSSRuleClass(cls: GroupingCSSRuleTypes) {
     instrumentationStoppers.push(
-      instrumentMethodAndCallOriginal(cls.prototype, 'insertRule', {
-        before(rule, index) {
-          checkStyleSheetAndCallback(this.parentStyleSheet, (id) => {
-            const path = getPathToNestedCSSRule(this)
-            if (path) {
-              path.push(index || 0)
-              cb({ id, adds: [{ rule, index: path }] })
-            }
-          })
-        },
+      instrumentMethod(cls.prototype, 'insertRule', ({ target: styleSheet, parameters: [rule, index] }) => {
+        checkStyleSheetAndCallback(styleSheet.parentStyleSheet, (id) => {
+          const path = getPathToNestedCSSRule(styleSheet)
+          if (path) {
+            path.push(index || 0)
+            cb({ id, adds: [{ rule, index: path }] })
+          }
+        })
       }),
-      instrumentMethodAndCallOriginal(cls.prototype, 'deleteRule', {
-        before(index) {
-          checkStyleSheetAndCallback(this.parentStyleSheet, (id) => {
-            const path = getPathToNestedCSSRule(this)
-            if (path) {
-              path.push(index)
-              cb({ id, removes: [{ index: path }] })
-            }
-          })
-        },
+
+      instrumentMethod(cls.prototype, 'deleteRule', ({ target: styleSheet, parameters: [index] }) => {
+        checkStyleSheetAndCallback(styleSheet.parentStyleSheet, (id) => {
+          const path = getPathToNestedCSSRule(styleSheet)
+          if (path) {
+            path.push(index)
+            cb({ id, removes: [{ index: path }] })
+          }
+        })
       })
     )
   }
