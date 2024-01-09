@@ -10,6 +10,7 @@ export {
   INTAKE_SITE_US1_FED,
   INTAKE_SITE_EU1,
 } from './domain/configuration'
+export { TrackingConsent } from './domain/trackingConsent'
 export {
   isExperimentalFeatureEnabled,
   addExperimentalFeatures,
