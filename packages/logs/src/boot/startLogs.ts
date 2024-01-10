@@ -16,7 +16,7 @@ import { startLoggerCollection } from '../domain/logger/loggerCollection'
 import type { CommonContext } from '../rawLogsEvent.types'
 import { startLogsBatch } from '../transport/startLogsBatch'
 import { startLogsBridge } from '../transport/startLogsBridge'
-import { startInternalContext } from '../domain/internalContext'
+import { startInternalContext } from '../domain/contexts/internalContext'
 import { startReportError } from '../domain/reportError'
 import { startLogsTelemetry } from '../domain/logsTelemetry'
 
