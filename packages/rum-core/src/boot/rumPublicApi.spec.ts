@@ -29,8 +29,9 @@ import { setup, noopRecorderApi } from '../../test'
 import type { HybridInitConfiguration, RumInitConfiguration } from '../domain/configuration'
 import { ActionType } from '../rawRumEvent.types'
 import type { ViewOptions } from '../domain/view/trackViews'
-import type { RumPublicApi, StartRum, RecorderApi } from './rumPublicApi'
+import type { RumPublicApi, RecorderApi } from './rumPublicApi'
 import { makeRumPublicApi } from './rumPublicApi'
+import type { StartRum } from './startRum'
 
 const noopStartRum = (): ReturnType<StartRum> => ({
   addAction: () => undefined,

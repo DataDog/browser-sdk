@@ -46,6 +46,9 @@ import type { CommonContext } from '../domain/contexts/commonContext'
 import { startDisplayContext } from '../domain/contexts/displayContext'
 import type { RecorderApi } from './rumPublicApi'
 
+export type StartRum = typeof startRum
+export type StartRumResult = ReturnType<StartRum>
+
 export function startRum(
   initConfiguration: RumInitConfiguration,
   configuration: RumConfiguration,
