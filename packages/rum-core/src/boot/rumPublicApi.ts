@@ -62,11 +62,7 @@ export interface RecorderApi {
   ) => void
   isRecording: () => boolean
   getReplayStats: (viewId: string) => ReplayStats | undefined
-  getSessionReplayLink: (
-    configuration: RumConfiguration,
-    sessionManager: RumSessionManager,
-    viewContexts: ViewContexts
-  ) => string | undefined
+  getSessionReplayLink: () => string | undefined
 }
 interface RumPublicApiOptions {
   ignoreInitIfSyntheticsWillInjectRum?: boolean
@@ -100,7 +96,6 @@ export function makeRumPublicApi(
   let getInternalContextStrategy: StartRumResult['getInternalContext'] = () => undefined
   let getInitConfigurationStrategy = (): InitConfiguration | undefined => undefined
   let stopSessionStrategy: () => void = noop
-  let getSessionReplayLinkStrategy: () => string | undefined = () => undefined
 
   let bufferApiCalls = new BoundedBuffer()
   let addTimingStrategy: StartRumResult['addTiming'] = (name, time = timeStampNow()) => {
@@ -120,14 +115,6 @@ export function makeRumPublicApi(
     commonContext = buildCommonContext(globalContextManager, userContextManager, recorderApi)
   ) => {
     bufferApiCalls.add(() => addErrorStrategy(providedError, commonContext))
-  }
-
-  let recorderStartStrategy: typeof recorderApi.start = () => {
-    bufferApiCalls.add(() => recorderStartStrategy())
-  }
-
-  let recorderStopStrategy: typeof recorderApi.stop = () => {
-    bufferApiCalls.add(() => recorderStopStrategy())
   }
 
   let addFeatureFlagEvaluationStrategy: StartRumResult['addFeatureFlagEvaluation'] = (key: string, value: any) => {
@@ -245,10 +232,6 @@ export function makeRumPublicApi(
         ? (streamId) => createDeflateEncoder(configuration, deflateWorker!, streamId)
         : createIdentityEncoder
     )
-    getSessionReplayLinkStrategy = () =>
-      recorderApi.getSessionReplayLink(configuration, startRumResults.session, startRumResults.viewContexts)
-    recorderStartStrategy = recorderApi.start
-    recorderStopStrategy = recorderApi.stop
     ;({
       startView: startViewStrategy,
       addAction: addActionStrategy,
@@ -341,16 +324,16 @@ export function makeRumPublicApi(
       stopSessionStrategy()
     }),
 
-    startSessionReplayRecording: monitor(() => recorderStartStrategy()),
-    stopSessionReplayRecording: monitor(() => recorderStopStrategy()),
-
     /**
      * This feature is currently in beta. For more information see the full [feature flag tracking guide](https://docs.datadoghq.com/real_user_monitoring/feature_flag_tracking/).
      */
     addFeatureFlagEvaluation: monitor((key: string, value: any) => {
       addFeatureFlagEvaluationStrategy(sanitize(key)!, sanitize(value))
     }),
-    getSessionReplayLink: monitor(() => getSessionReplayLinkStrategy()),
+
+    getSessionReplayLink: monitor(() => recorderApi.getSessionReplayLink()),
+    startSessionReplayRecording: monitor(() => recorderApi.start()),
+    stopSessionReplayRecording: monitor(() => recorderApi.stop()),
   })
 
   return rumPublicApi

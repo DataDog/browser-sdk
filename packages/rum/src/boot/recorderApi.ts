@@ -74,12 +74,12 @@ export function makeRecorderApi(
   let stopStrategy = () => {
     state = { status: RecorderStatus.Stopped }
   }
+  let getSessionReplayLinkStrategy = noop as () => string | undefined
 
   return {
     start: () => startStrategy(),
     stop: () => stopStrategy(),
-    getSessionReplayLink: (configuration, sessionManager, viewContexts) =>
-      getSessionReplayLink(configuration, sessionManager, viewContexts, state.status !== RecorderStatus.Stopped),
+    getSessionReplayLink: () => getSessionReplayLinkStrategy(),
     onRumStart: (
       lifeCycle: LifeCycle,
       configuration: RumConfiguration,
@@ -177,6 +177,9 @@ export function makeRecorderApi(
           status: RecorderStatus.Stopped,
         }
       }
+
+      getSessionReplayLinkStrategy = () =>
+        getSessionReplayLink(configuration, sessionManager, viewContexts, state.status !== RecorderStatus.Stopped)
 
       if (state.status === RecorderStatus.IntentToStart) {
         startStrategy()
