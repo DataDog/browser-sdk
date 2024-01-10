@@ -1,3 +1,5 @@
+import { registerCleanupTask } from '../registerCleanupTask'
+
 export function setNavigatorOnLine(onLine: boolean) {
   Object.defineProperty(navigator, 'onLine', {
     get() {
@@ -5,8 +7,7 @@ export function setNavigatorOnLine(onLine: boolean) {
     },
     configurable: true,
   })
-}
-
-export function restoreNavigatorOnLine() {
-  delete (navigator as any).onLine
+  registerCleanupTask(() => {
+    delete (navigator as any).onLine
+  })
 }
