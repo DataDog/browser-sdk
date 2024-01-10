@@ -5,6 +5,7 @@ import type {
   ContextManager,
   DeflateEncoderStreamId,
   Encoder,
+  CustomerDataTrackerManager,
 } from '@datadog/browser-core'
 import {
   sendToExtension,
@@ -15,6 +16,7 @@ import {
   canUseEventBridge,
   getEventBridge,
   addTelemetryDebug,
+  CustomerDataType,
 } from '@datadog/browser-core'
 import { createDOMMutationObservable } from '../browser/domMutationObservable'
 import { startPerformanceCollection } from '../browser/performanceCollection'
@@ -50,6 +52,7 @@ export function startRum(
   initConfiguration: RumInitConfiguration,
   configuration: RumConfiguration,
   recorderApi: RecorderApi,
+  customerDataTrackerManager: CustomerDataTrackerManager,
   globalContextManager: ContextManager,
   userContextManager: ContextManager,
   initialViewOptions: ViewOptions | undefined,
@@ -80,7 +83,10 @@ export function startRum(
     lifeCycle.notify(LifeCycleEventType.RAW_ERROR_COLLECTED, { error })
     addTelemetryDebug('Error reported to customer', { 'error.message': error.message })
   }
-  const featureFlagContexts = startFeatureFlagContexts(lifeCycle)
+  const featureFlagContexts = startFeatureFlagContexts(
+    lifeCycle,
+    customerDataTrackerManager.getOrCreateTracker(CustomerDataType.FeatureFlag)
+  )
 
   const pageExitObservable = createPageExitObservable(configuration)
   const pageExitSubscription = pageExitObservable.subscribe((event) => {
@@ -100,15 +106,7 @@ export function startRum(
       createEncoder
     )
     cleanupTasks.push(() => batch.stop())
-    startCustomerDataTelemetry(
-      configuration,
-      telemetry,
-      lifeCycle,
-      globalContextManager,
-      userContextManager,
-      featureFlagContexts,
-      batch.flushObservable
-    )
+    startCustomerDataTelemetry(configuration, telemetry, lifeCycle, customerDataTrackerManager, batch.flushObservable)
   } else {
     startRumEventBridge(lifeCycle)
   }

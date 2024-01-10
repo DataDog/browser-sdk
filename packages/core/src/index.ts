@@ -73,7 +73,7 @@ export * from './tools/utils/browserDetection'
 export { sendToExtension } from './tools/sendToExtension'
 export { runOnReadyState } from './browser/runOnReadyState'
 export { getZoneJsOriginalValue } from './tools/getZoneJsOriginalValue'
-export { instrumentMethod, instrumentMethodAndCallOriginal, instrumentSetter } from './tools/instrumentMethod'
+export { instrumentMethod, instrumentSetter, InstrumentedMethodCall } from './tools/instrumentMethod'
 export {
   computeRawError,
   createHandlingStack,
@@ -94,7 +94,14 @@ export { BoundedBuffer } from './tools/boundedBuffer'
 export { catchUserErrors } from './tools/catchUserErrors'
 export { createContextManager, ContextManager } from './domain/context/contextManager'
 export { createStoredContextManager, removeStorageListeners } from './domain/context/storedContextManager'
-export { warnIfCustomerDataLimitReached, CUSTOMER_DATA_BYTES_LIMIT } from './domain/context/heavyCustomerDataWarning'
+export {
+  createCustomerDataTrackerManager,
+  createCustomerDataTracker,
+  CustomerDataTracker,
+  CustomerDataTrackerManager,
+  CUSTOMER_DATA_BYTES_LIMIT,
+  CustomerDataCompressionStatus,
+} from './domain/context/customerDataTracker'
 export { CustomerDataType } from './domain/context/contextConstants'
 export { ValueHistory, ValueHistoryEntry, CLEAR_OLD_VALUES_INTERVAL } from './tools/valueHistory'
 export { readBytesFromStream } from './tools/readBytesFromStream'

@@ -1,4 +1,4 @@
-import type { DeflateWorker } from '@datadog/browser-core'
+import type { DeflateEncoder, DeflateWorker, DeflateWorkerAction } from '@datadog/browser-core'
 import { display, isIE } from '@datadog/browser-core'
 import type { RecorderApi, ViewContexts, LifeCycle, RumConfiguration } from '@datadog/browser-rum-core'
 import { LifeCycleEventType } from '@datadog/browser-rum-core'
@@ -160,6 +160,27 @@ describe('makeRecorderApi', () => {
       mockWorker.dispatchErrorEvent()
 
       expect(stopRecordingSpy).toHaveBeenCalled()
+    })
+
+    it('restarting the recording should not reset the worker action id', () => {
+      setupBuilder.build()
+      rumInit()
+      recorderApi.start()
+
+      const firstCallDeflateEncoder: DeflateEncoder = startRecordingSpy.calls.mostRecent().args[4]
+      firstCallDeflateEncoder.write('foo')
+
+      recorderApi.stop()
+      recorderApi.start()
+
+      const secondCallDeflateEncoder: DeflateEncoder = startRecordingSpy.calls.mostRecent().args[4]
+      secondCallDeflateEncoder.write('foo')
+
+      const writeMessages = mockWorker.pendingMessages.filter(
+        (message): message is Extract<DeflateWorkerAction, { action: 'write' }> => message.action === 'write'
+      )
+      expect(writeMessages.length).toBe(2)
+      expect(writeMessages[0].id).toBeLessThan(writeMessages[1].id)
     })
 
     describe('if event bridge present', () => {

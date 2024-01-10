@@ -22,11 +22,12 @@ This repository contains several packages:
 | browser-rum      | [![npm version][11]][12] | [![bundle size][13]][14] |
 | browser-rum-slim | [![npm version][21]][22] | [![bundle size][23]][24] |
 | browser-rum-core | [![npm version][51]][52] | [![bundle size][53]][54] |
+| browser-worker   | [![npm version][61]][62] | [![bundle size][63]][64] |
 | browser-core     | [![npm version][41]][42] | [![bundle size][43]][44] |
 
 ## CDN bundles
 
-Datadog provides one CDN bundle per [site][60]:
+Datadog provides one CDN bundle per [site][70]:
 
 | Site    | logs                                                           | rum                                                           | rum-slim                                                           |
 | ------- | -------------------------------------------------------------- | ------------------------------------------------------------- | ------------------------------------------------------------------ |
@@ -60,4 +61,8 @@ Datadog provides one CDN bundle per [site][60]:
 [52]: https://badge.fury.io/js/%40datadog%2Fbrowser-rum-core
 [53]: https://badgen.net/bundlephobia/minzip/@datadog/browser-rum-core
 [54]: https://bundlephobia.com/result?p=@datadog/browser-rum-core
-[60]: https://docs.datadoghq.com/getting_started/site/
+[61]: https://badge.fury.io/js/%40datadog%2Fbrowser-worker.svg
+[62]: https://badge.fury.io/js/%40datadog%2Fbrowser-worker
+[63]: https://badgen.net/bundlephobia/minzip/@datadog/browser-worker
+[64]: https://bundlephobia.com/result?p=@datadog/browser-worker
+[70]: https://docs.datadoghq.com/getting_started/site/

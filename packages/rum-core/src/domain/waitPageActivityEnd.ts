@@ -1,6 +1,6 @@
 import type { Subscription, TimeoutId, TimeStamp } from '@datadog/browser-core'
 import {
-  instrumentMethodAndCallOriginal,
+  instrumentMethod,
   matchList,
   monitor,
   Observable,
@@ -120,7 +120,7 @@ export function createPageActivityObservable(
   domMutationObservable: Observable<void>,
   configuration: RumConfiguration
 ): Observable<PageActivityEvent> {
-  const observable = new Observable<PageActivityEvent>(() => {
+  return new Observable<PageActivityEvent>((observable) => {
     const subscriptions: Subscription[] = []
     let firstRequestIndex: undefined | number
     let pendingRequestsCount = 0
@@ -171,8 +171,6 @@ export function createPageActivityObservable(
       observable.notify({ isBusy: pendingRequestsCount > 0 })
     }
   })
-
-  return observable
 }
 
 function isExcludedUrl(configuration: RumConfiguration, requestUrl: string): boolean {
@@ -180,5 +178,5 @@ function isExcludedUrl(configuration: RumConfiguration, requestUrl: string): boo
 }
 
 function trackWindowOpen(callback: () => void) {
-  return instrumentMethodAndCallOriginal(window, 'open', { before: callback })
+  return instrumentMethod(window, 'open', callback)
 }

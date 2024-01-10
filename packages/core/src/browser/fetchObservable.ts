@@ -1,5 +1,6 @@
+import type { InstrumentedMethodCall } from '../tools/instrumentMethod'
 import { instrumentMethod } from '../tools/instrumentMethod'
-import { callMonitored, monitor } from '../tools/monitor'
+import { monitor } from '../tools/monitor'
 import { Observable } from '../tools/observable'
 import type { ClocksState } from '../tools/utils/timeUtils'
 import { clocksNow } from '../tools/utils/timeUtils'
@@ -38,39 +39,22 @@ export function initFetchObservable() {
 }
 
 function createFetchObservable() {
-  const observable = new Observable<FetchContext>(() => {
+  return new Observable<FetchContext>((observable) => {
     if (!window.fetch) {
       return
     }
 
-    const { stop } = instrumentMethod(
-      window,
-      'fetch',
-      (originalFetch) =>
-        function (input, init) {
-          let responsePromise: Promise<Response>
-
-          const context = callMonitored(beforeSend, null, [observable, input, init])
-          if (context) {
-            // casting should be `RequestInfo` but node types are ahead of DOM types, making `typecheck test/e2e` fail.
-            // it should be resolved with https://github.com/microsoft/TypeScript-DOM-lib-generator/issues/1483
-            responsePromise = originalFetch.call(this, context.input as any, context.init)
-            callMonitored(afterSend, null, [observable, responsePromise, context])
-          } else {
-            responsePromise = originalFetch.call(this, input, init)
-          }
-
-          return responsePromise
-        }
-    )
+    const { stop } = instrumentMethod(window, 'fetch', (call) => beforeSend(call, observable))
 
     return stop
   })
-
-  return observable
 }
 
-function beforeSend(observable: Observable<FetchContext>, input: unknown, init?: RequestInit) {
+function beforeSend(
+  { parameters, onPostCall }: InstrumentedMethodCall<Window, 'fetch'>,
+  observable: Observable<FetchContext>
+) {
+  const [input, init] = parameters
   let methodFromParams = init && init.method
 
   if (methodFromParams === undefined && input instanceof Request) {
@@ -92,7 +76,11 @@ function beforeSend(observable: Observable<FetchContext>, input: unknown, init?:
 
   observable.notify(context)
 
-  return context
+  // Those properties can be changed by observable subscribers
+  parameters[0] = context.input as RequestInfo | URL
+  parameters[1] = context.init
+
+  onPostCall((responsePromise) => afterSend(observable, responsePromise, context))
 }
 
 function afterSend(

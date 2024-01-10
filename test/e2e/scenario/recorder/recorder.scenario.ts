@@ -807,6 +807,26 @@ describe('recorder', () => {
       })
   })
 
+  createTest('restarting recording should send a new full snapshot')
+    .withRum()
+    .withSetup(bundleSetup)
+    .run(async ({ intakeRegistry }) => {
+      await browserExecute(() => {
+        window.DD_RUM!.stopSessionReplayRecording()
+        window.DD_RUM!.startSessionReplayRecording()
+      })
+
+      await flushEvents()
+
+      expect(intakeRegistry.replaySegments.length).toBe(2)
+
+      const firstSegment = intakeRegistry.replaySegments[0]
+      expect(findFullSnapshot(firstSegment)).toBeTruthy('first segment have a FullSnapshot record')
+
+      const secondSegment = intakeRegistry.replaySegments[1]
+      expect(findFullSnapshot(secondSegment)).toBeTruthy('second segment have a FullSnapshot record')
+    })
+
   createTest('workerUrl initialization parameter')
     .withRum({ workerUrl: '/worker.js' })
     .withSetup(bundleSetup)

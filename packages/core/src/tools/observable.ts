@@ -6,11 +6,11 @@ export class Observable<T> {
   private observers: Array<(data: T) => void> = []
   private onLastUnsubscribe?: () => void
 
-  constructor(private onFirstSubscribe?: () => (() => void) | void) {}
+  constructor(private onFirstSubscribe?: (observable: Observable<T>) => (() => void) | void) {}
 
   subscribe(f: (data: T) => void): Subscription {
     if (!this.observers.length && this.onFirstSubscribe) {
-      this.onLastUnsubscribe = this.onFirstSubscribe() || undefined
+      this.onLastUnsubscribe = this.onFirstSubscribe(this) || undefined
     }
     this.observers.push(f)
     return {
@@ -29,12 +29,10 @@ export class Observable<T> {
 }
 
 export function mergeObservables<T>(...observables: Array<Observable<T>>) {
-  const globalObservable = new Observable<T>(() => {
+  return new Observable<T>((globalObservable) => {
     const subscriptions: Subscription[] = observables.map((observable) =>
       observable.subscribe((data) => globalObservable.notify(data))
     )
     return () => subscriptions.forEach((subscription) => subscription.unsubscribe())
   })
-
-  return globalObservable
 }

@@ -1,6 +1,5 @@
 import type { Observable, RawError, Duration, RelativeTime } from '@datadog/browser-core'
 import {
-  CustomerDataType,
   createContextManager,
   stopSessionManager,
   toServerDuration,
@@ -10,6 +9,8 @@ import {
   isIE,
   relativeNow,
   createIdentityEncoder,
+  createCustomerDataTracker,
+  CustomerDataType,
 } from '@datadog/browser-core'
 import {
   createNewEvent,
@@ -72,7 +73,7 @@ function startRumStub(
     location,
     domMutationObservable,
     locationChangeObservable,
-    startFeatureFlagContexts(lifeCycle),
+    startFeatureFlagContexts(lifeCycle, createCustomerDataTracker(noop)),
     pageStateHistory,
     noopRecorderApi
   )
@@ -327,13 +328,14 @@ describe('view events', () => {
   let interceptor: ReturnType<typeof interceptRequests>
 
   beforeEach(() => {
-    setupBuilder = setup().beforeBuild(({ configuration }) =>
+    setupBuilder = setup().beforeBuild(({ configuration, customerDataTrackerManager }) =>
       startRum(
         {} as RumInitConfiguration,
         configuration,
         noopRecorderApi,
-        createContextManager(CustomerDataType.GlobalContext),
-        createContextManager(CustomerDataType.User),
+        customerDataTrackerManager,
+        createContextManager(customerDataTrackerManager.getOrCreateTracker(CustomerDataType.GlobalContext)),
+        createContextManager(customerDataTrackerManager.getOrCreateTracker(CustomerDataType.User)),
         undefined,
         createIdentityEncoder
       )

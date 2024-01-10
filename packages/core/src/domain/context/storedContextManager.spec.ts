@@ -1,42 +1,45 @@
 import type { Configuration } from '../configuration'
-import { display } from '../../tools/display'
-import type { Clock } from '../../../test'
-import { mockClock, createNewEvent } from '../../../test'
+import { createNewEvent } from '../../../test'
 import { DOM_EVENT } from '../../browser/addEventListener'
-import { CUSTOMER_DATA_BYTES_LIMIT } from './heavyCustomerDataWarning'
+import { noop } from '../../tools/utils/functionUtils'
 import { createStoredContextManager, buildStorageKey, removeStorageListeners } from './storedContextManager'
 import { CustomerDataType } from './contextConstants'
-import { BYTES_COMPUTATION_THROTTLING_DELAY } from './contextManager'
+import { createCustomerDataTracker } from './customerDataTracker'
 
 describe('storedContextManager', () => {
   const PRODUCT_KEY = 'fake'
   const CUSTOMER_DATA_TYPE = CustomerDataType.User
   const STORAGE_KEY = buildStorageKey(PRODUCT_KEY, CUSTOMER_DATA_TYPE)
 
-  let clock: Clock
-  let displaySpy: jasmine.Spy<typeof display.warn>
   let configuration: Configuration
 
   beforeEach(() => {
-    clock = mockClock()
     configuration = {} as Configuration
-    displaySpy = spyOn(display, 'warn')
   })
 
   afterEach(() => {
-    clock.cleanup()
     localStorage.clear()
     removeStorageListeners()
   })
 
   describe('contextManager features', () => {
     it('starts with an empty context', () => {
-      const manager = createStoredContextManager(configuration, PRODUCT_KEY, CUSTOMER_DATA_TYPE)
+      const manager = createStoredContextManager(
+        configuration,
+        PRODUCT_KEY,
+        CUSTOMER_DATA_TYPE,
+        createCustomerDataTracker(noop)
+      )
       expect(manager.getContext()).toEqual({})
     })
 
     it('updates the context', () => {
-      const manager = createStoredContextManager(configuration, PRODUCT_KEY, CUSTOMER_DATA_TYPE)
+      const manager = createStoredContextManager(
+        configuration,
+        PRODUCT_KEY,
+        CUSTOMER_DATA_TYPE,
+        createCustomerDataTracker(noop)
+      )
 
       manager.setContext({ bar: 'foo' })
       expect(manager.getContext()).toEqual({ bar: 'foo' })
@@ -51,16 +54,15 @@ describe('storedContextManager', () => {
       expect(manager.getContext()).toEqual({})
     })
 
-    it('should warn if the context bytes limit is reached', () => {
-      const computeBytesCountStub = jasmine
-        .createSpy('computeBytesCountStub')
-        .and.returnValue(CUSTOMER_DATA_BYTES_LIMIT + 1)
-      const manager = createStoredContextManager(configuration, PRODUCT_KEY, CUSTOMER_DATA_TYPE, computeBytesCountStub)
+    it('should notify customer data tracker when the context is updated', () => {
+      const customerDataTracker = createCustomerDataTracker(noop)
+      const updateCustomerDataSpy = spyOn(customerDataTracker, 'updateCustomerData')
+      const manager = createStoredContextManager(configuration, PRODUCT_KEY, CUSTOMER_DATA_TYPE, customerDataTracker)
+      const context = { bar: 'foo' }
 
-      manager.setContext({})
-      clock.tick(BYTES_COMPUTATION_THROTTLING_DELAY)
+      manager.setContext(context)
 
-      expect(displaySpy).toHaveBeenCalledTimes(1)
+      expect(updateCustomerDataSpy).toHaveBeenCalledWith(context)
     })
   })
 
@@ -68,13 +70,23 @@ describe('storedContextManager', () => {
     it('should synchronize with local storage at start', () => {
       localStorage.setItem(STORAGE_KEY, '{"bar":"foo"}')
 
-      const manager = createStoredContextManager(configuration, PRODUCT_KEY, CUSTOMER_DATA_TYPE)
+      const manager = createStoredContextManager(
+        configuration,
+        PRODUCT_KEY,
+        CUSTOMER_DATA_TYPE,
+        createCustomerDataTracker(noop)
+      )
 
       expect(manager.getContext()).toEqual({ bar: 'foo' })
     })
 
     it('should synchronize with local storage on storage events', () => {
-      const manager = createStoredContextManager(configuration, PRODUCT_KEY, CUSTOMER_DATA_TYPE)
+      const manager = createStoredContextManager(
+        configuration,
+        PRODUCT_KEY,
+        CUSTOMER_DATA_TYPE,
+        createCustomerDataTracker(noop)
+      )
       expect(manager.getContext()).toEqual({})
 
       localStorage.setItem(STORAGE_KEY, '{"bar":"foo"}')
@@ -88,7 +100,12 @@ describe('storedContextManager', () => {
     })
 
     it('should update local storage on context updates', () => {
-      const manager = createStoredContextManager(configuration, PRODUCT_KEY, CUSTOMER_DATA_TYPE)
+      const manager = createStoredContextManager(
+        configuration,
+        PRODUCT_KEY,
+        CUSTOMER_DATA_TYPE,
+        createCustomerDataTracker(noop)
+      )
       expect(localStorage.getItem(STORAGE_KEY)).toBe(null)
 
       manager.setContext({ bar: 'foo' })
@@ -105,16 +122,30 @@ describe('storedContextManager', () => {
     })
 
     it('should store different product data in different storage key', () => {
-      createStoredContextManager(configuration, 'p1', CUSTOMER_DATA_TYPE).setContext({ bar: 'foo' })
-      createStoredContextManager(configuration, 'p2', CUSTOMER_DATA_TYPE).setContext({ qux: 'qix' })
+      createStoredContextManager(configuration, 'p1', CUSTOMER_DATA_TYPE, createCustomerDataTracker(noop)).setContext({
+        bar: 'foo',
+      })
+      createStoredContextManager(configuration, 'p2', CUSTOMER_DATA_TYPE, createCustomerDataTracker(noop)).setContext({
+        qux: 'qix',
+      })
 
       expect(localStorage.getItem(buildStorageKey('p1', CUSTOMER_DATA_TYPE))).toBe('{"bar":"foo"}')
       expect(localStorage.getItem(buildStorageKey('p2', CUSTOMER_DATA_TYPE))).toBe('{"qux":"qix"}')
     })
 
     it('should store different data type in different storage key', () => {
-      createStoredContextManager(configuration, PRODUCT_KEY, CustomerDataType.User).setContext({ bar: 'foo' })
-      createStoredContextManager(configuration, PRODUCT_KEY, CustomerDataType.GlobalContext).setContext({ qux: 'qix' })
+      createStoredContextManager(
+        configuration,
+        PRODUCT_KEY,
+        CustomerDataType.User,
+        createCustomerDataTracker(noop)
+      ).setContext({ bar: 'foo' })
+      createStoredContextManager(
+        configuration,
+        PRODUCT_KEY,
+        CustomerDataType.GlobalContext,
+        createCustomerDataTracker(noop)
+      ).setContext({ qux: 'qix' })
 
       expect(localStorage.getItem(buildStorageKey(PRODUCT_KEY, CustomerDataType.User))).toBe('{"bar":"foo"}')
       expect(localStorage.getItem(buildStorageKey(PRODUCT_KEY, CustomerDataType.GlobalContext))).toBe('{"qux":"qix"}')

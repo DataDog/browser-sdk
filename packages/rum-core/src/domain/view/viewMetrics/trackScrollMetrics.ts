@@ -89,7 +89,7 @@ export function createScrollValuesObservable(
   configuration: RumConfiguration,
   throttleDuration = THROTTLE_SCROLL_DURATION
 ): Observable<ScrollValues> {
-  const observable = new Observable<ScrollValues>(() => {
+  return new Observable<ScrollValues>((observable) => {
     function notify() {
       observable.notify(computeScrollValues())
     }
@@ -114,6 +114,4 @@ export function createScrollValuesObservable(
       }
     }
   })
-
-  return observable
 }

@@ -1,4 +1,5 @@
-import { instrumentMethodAndCallOriginal } from '../tools/instrumentMethod'
+import type { InstrumentedMethodCall } from '../tools/instrumentMethod'
+import { instrumentMethod } from '../tools/instrumentMethod'
 import { Observable } from '../tools/observable'
 import type { Duration, ClocksState } from '../tools/utils/timeUtils'
 import { elapsed, clocksNow, timeStampNow } from '../tools/utils/timeUtils'
@@ -39,20 +40,14 @@ export function initXhrObservable(configuration: Configuration) {
 }
 
 function createXhrObservable(configuration: Configuration) {
-  const observable = new Observable<XhrContext>(() => {
-    const { stop: stopInstrumentingStart } = instrumentMethodAndCallOriginal(XMLHttpRequest.prototype, 'open', {
-      before: openXhr,
+  return new Observable<XhrContext>((observable) => {
+    const { stop: stopInstrumentingStart } = instrumentMethod(XMLHttpRequest.prototype, 'open', openXhr)
+
+    const { stop: stopInstrumentingSend } = instrumentMethod(XMLHttpRequest.prototype, 'send', (call) => {
+      sendXhr(call, configuration, observable)
     })
 
-    const { stop: stopInstrumentingSend } = instrumentMethodAndCallOriginal(XMLHttpRequest.prototype, 'send', {
-      before() {
-        sendXhr.call(this, configuration, observable)
-      },
-    })
-
-    const { stop: stopInstrumentingAbort } = instrumentMethodAndCallOriginal(XMLHttpRequest.prototype, 'abort', {
-      before: abortXhr,
-    })
+    const { stop: stopInstrumentingAbort } = instrumentMethod(XMLHttpRequest.prototype, 'abort', abortXhr)
 
     return () => {
       stopInstrumentingStart()
@@ -60,19 +55,22 @@ function createXhrObservable(configuration: Configuration) {
       stopInstrumentingAbort()
     }
   })
-  return observable
 }
 
-function openXhr(this: XMLHttpRequest, method: string, url: string | URL | undefined | null) {
-  xhrContexts.set(this, {
+function openXhr({ target: xhr, parameters: [method, url] }: InstrumentedMethodCall<XMLHttpRequest, 'open'>) {
+  xhrContexts.set(xhr, {
     state: 'open',
     method: String(method).toUpperCase(),
     url: normalizeUrl(String(url)),
   })
 }
 
-function sendXhr(this: XMLHttpRequest, configuration: Configuration, observable: Observable<XhrContext>) {
-  const context = xhrContexts.get(this)
+function sendXhr(
+  { target: xhr }: InstrumentedMethodCall<XMLHttpRequest, 'send'>,
+  configuration: Configuration,
+  observable: Observable<XhrContext>
+) {
+  const context = xhrContexts.get(xhr)
   if (!context) {
     return
   }
@@ -81,20 +79,18 @@ function sendXhr(this: XMLHttpRequest, configuration: Configuration, observable:
   startContext.state = 'start'
   startContext.startClocks = clocksNow()
   startContext.isAborted = false
-  startContext.xhr = this
+  startContext.xhr = xhr
 
   let hasBeenReported = false
 
-  const { stop: stopInstrumentingOnReadyStateChange } = instrumentMethodAndCallOriginal(this, 'onreadystatechange', {
-    before() {
-      if (this.readyState === XMLHttpRequest.DONE) {
-        // Try to report the XHR as soon as possible, because the XHR may be mutated by the
-        // application during a future event. For example, Angular is calling .abort() on
-        // completed requests during an onreadystatechange event, so the status becomes '0'
-        // before the request is collected.
-        onEnd()
-      }
-    },
+  const { stop: stopInstrumentingOnReadyStateChange } = instrumentMethod(xhr, 'onreadystatechange', () => {
+    if (xhr.readyState === XMLHttpRequest.DONE) {
+      // Try to report the XHR as soon as possible, because the XHR may be mutated by the
+      // application during a future event. For example, Angular is calling .abort() on
+      // completed requests during an onreadystatechange event, so the status becomes '0'
+      // before the request is collected.
+      onEnd()
+    }
   })
 
   const onEnd = () => {
@@ -108,17 +104,17 @@ function sendXhr(this: XMLHttpRequest, configuration: Configuration, observable:
     const completeContext = context as XhrCompleteContext
     completeContext.state = 'complete'
     completeContext.duration = elapsed(startContext.startClocks.timeStamp, timeStampNow())
-    completeContext.status = this.status
+    completeContext.status = xhr.status
     observable.notify(shallowClone(completeContext))
   }
 
-  const { stop: unsubscribeLoadEndListener } = addEventListener(configuration, this, 'loadend', onEnd)
+  const { stop: unsubscribeLoadEndListener } = addEventListener(configuration, xhr, 'loadend', onEnd)
 
   observable.notify(startContext)
 }
 
-function abortXhr(this: XMLHttpRequest) {
-  const context = xhrContexts.get(this) as XhrStartContext | undefined
+function abortXhr({ target: xhr }: InstrumentedMethodCall<XMLHttpRequest, 'abort'>) {
+  const context = xhrContexts.get(xhr) as XhrStartContext | undefined
   if (context) {
     context.isAborted = true
   }

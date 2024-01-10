@@ -1,10 +1,5 @@
-import type { RelativeTime, ContextValue, Context } from '@datadog/browser-core'
+import type { RelativeTime, ContextValue, Context, CustomerDataTracker } from '@datadog/browser-core'
 import {
-  CustomerDataType,
-  warnIfCustomerDataLimitReached,
-  throttle,
-  jsonStringify,
-  computeBytesCount,
   noop,
   isExperimentalFeatureEnabled,
   SESSION_TIME_OUT_DELAY,
@@ -21,7 +16,6 @@ export type FeatureFlagContext = Context
 
 export interface FeatureFlagContexts {
   findFeatureFlagEvaluations: (startTime?: RelativeTime) => FeatureFlagContext | undefined
-  getFeatureFlagBytesCount: () => number
   addFeatureFlagEvaluation: (key: string, value: ContextValue) => void
   stop: () => void
 }
@@ -36,20 +30,17 @@ export interface FeatureFlagContexts {
  */
 export function startFeatureFlagContexts(
   lifeCycle: LifeCycle,
-  computeBytesCountImpl = computeBytesCount
+  customerDataTracker: CustomerDataTracker
 ): FeatureFlagContexts {
   if (!isExperimentalFeatureEnabled(ExperimentalFeature.FEATURE_FLAGS)) {
     return {
       findFeatureFlagEvaluations: () => undefined,
-      getFeatureFlagBytesCount: () => 0,
       addFeatureFlagEvaluation: noop,
       stop: noop,
     }
   }
 
   const featureFlagContexts = new ValueHistory<FeatureFlagContext>(FEATURE_FLAG_CONTEXT_TIME_OUT_DELAY)
-  let bytesCountCache = 0
-  let alreadyWarned = false
 
   lifeCycle.subscribe(LifeCycleEventType.VIEW_ENDED, ({ endClocks }) => {
     featureFlagContexts.closeActive(endClocks.relative)
@@ -57,35 +48,18 @@ export function startFeatureFlagContexts(
 
   lifeCycle.subscribe(LifeCycleEventType.VIEW_CREATED, ({ startClocks }) => {
     featureFlagContexts.add({}, startClocks.relative)
-    bytesCountCache = 0
+    customerDataTracker.resetCustomerData()
   })
-
-  // Throttle the bytes computation to minimize the impact on performance.
-  // Especially useful if the user call addFeatureFlagEvaluation API synchronously multiple times in a row
-  const { throttled: computeBytesCountThrottled, cancel: cancelPendingComputation } = throttle((context: Context) => {
-    bytesCountCache = computeBytesCountImpl(jsonStringify(context)!)
-    if (!alreadyWarned) {
-      alreadyWarned = warnIfCustomerDataLimitReached(bytesCountCache, CustomerDataType.FeatureFlag)
-    }
-  }, BYTES_COMPUTATION_THROTTLING_DELAY)
 
   return {
     findFeatureFlagEvaluations: (startTime?: RelativeTime) => featureFlagContexts.find(startTime),
-    getFeatureFlagBytesCount: () => {
-      const currentContext = featureFlagContexts.find()
-      if (!currentContext) {
-        return 0
-      }
-
-      return bytesCountCache
-    },
     addFeatureFlagEvaluation: (key: string, value: ContextValue) => {
       const currentContext = featureFlagContexts.find()
       if (currentContext) {
         currentContext[key] = value
-        computeBytesCountThrottled(currentContext)
+        customerDataTracker.updateCustomerData(currentContext)
       }
     },
-    stop: cancelPendingComputation,
+    stop: () => customerDataTracker.stop(),
   }
 }

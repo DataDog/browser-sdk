@@ -1,10 +1,11 @@
 import type { ClocksState, RelativeTime } from '@datadog/browser-core'
-import { ErrorSource, ONE_MINUTE, display } from '@datadog/browser-core'
+import { ErrorSource, ExperimentalFeature, ONE_MINUTE, display } from '@datadog/browser-core'
 import {
   initEventBridgeStub,
   deleteEventBridgeStub,
   cleanupSyntheticsWorkerValues,
   mockSyntheticsWorkerValues,
+  mockExperimentalFeatures,
 } from '@datadog/browser-core/test'
 import type { TestSetupBuilder } from '../../test'
 import {
@@ -17,7 +18,7 @@ import {
 import type { RumEventDomainContext } from '../domainContext.types'
 import type { RawRumActionEvent, RawRumErrorEvent, RawRumEvent } from '../rawRumEvent.types'
 import { RumEventType } from '../rawRumEvent.types'
-import type { RumActionEvent, RumErrorEvent, RumEvent } from '../rumEvent.types'
+import type { RumActionEvent, RumErrorEvent, RumEvent, RumResourceEvent } from '../rumEvent.types'
 import { startRumAssembly } from './assembly'
 import type { LifeCycle, RawRumEventCollectedData } from './lifeCycle'
 import { LifeCycleEventType } from './lifeCycle'
@@ -108,6 +109,38 @@ describe('rum assembly', () => {
           })
 
           expect(serverRumEvents[0].view.name).toBe('added')
+        })
+
+        describe('field resource.graphql on Resource events', () => {
+          it('by default, it should not be modifiable', () => {
+            const { lifeCycle } = setupBuilder
+              .withConfiguration({
+                beforeSend: (event) => (event.resource!.graphql = { operationType: 'query' }),
+              })
+              .build()
+
+            notifyRawRumEvent(lifeCycle, {
+              rawRumEvent: createRawRumEvent(RumEventType.RESOURCE, { resource: { url: '/path?foo=bar' } }),
+            })
+
+            expect((serverRumEvents[0] as RumResourceEvent).resource.graphql).toBeUndefined()
+          })
+
+          it('with the writable_resource_graphql experimental flag is set, it should be modifiable', () => {
+            mockExperimentalFeatures([ExperimentalFeature.WRITABLE_RESOURCE_GRAPHQL])
+
+            const { lifeCycle } = setupBuilder
+              .withConfiguration({
+                beforeSend: (event) => (event.resource!.graphql = { operationType: 'query' }),
+              })
+              .build()
+
+            notifyRawRumEvent(lifeCycle, {
+              rawRumEvent: createRawRumEvent(RumEventType.RESOURCE, { resource: { url: '/path?foo=bar' } }),
+            })
+
+            expect((serverRumEvents[0] as RumResourceEvent).resource.graphql).toEqual({ operationType: 'query' })
+          })
         })
       })
 
