@@ -67,7 +67,7 @@ export function startRumAssembly(
   urlContexts: UrlContexts,
   actionContexts: ActionContexts,
   displayContext: DisplayContext,
-  buildCommonContext: () => CommonContext,
+  getCommonContext: () => CommonContext,
   reportError: (error: RawError) => void
 ) {
   modifiableFieldPathsByEvent = {
@@ -124,7 +124,7 @@ export function startRumAssembly(
       const urlContext = urlContexts.findUrl(startTime)
       const session = sessionManager.findTrackedSession(startTime)
       if (session && viewContext && urlContext) {
-        const commonContext = savedCommonContext || buildCommonContext()
+        const commonContext = savedCommonContext || getCommonContext()
         const actionId = actionContexts.findActionId(startTime)
 
         const rumContext: RumContext = {

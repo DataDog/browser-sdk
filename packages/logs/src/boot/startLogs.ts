@@ -13,17 +13,17 @@ import { startNetworkErrorCollection } from '../domain/networkError/networkError
 import { startRuntimeErrorCollection } from '../domain/runtimeError/runtimeErrorCollection'
 import { LifeCycle, LifeCycleEventType } from '../domain/lifeCycle'
 import { startLoggerCollection } from '../domain/logger/loggerCollection'
-import type { CommonContext } from '../rawLogsEvent.types'
 import { startLogsBatch } from '../transport/startLogsBatch'
 import { startLogsBridge } from '../transport/startLogsBridge'
 import { startInternalContext } from '../domain/contexts/internalContext'
 import { startReportError } from '../domain/reportError'
 import { startLogsTelemetry } from '../domain/logsTelemetry'
+import type { CommonContext } from '../rawLogsEvent.types'
 
 export function startLogs(
   initConfiguration: LogsInitConfiguration,
   configuration: LogsConfiguration,
-  buildCommonContext: () => CommonContext
+  getCommonContext: () => CommonContext
 ) {
   const lifeCycle = new LifeCycle()
   const cleanupTasks: Array<() => void> = []
@@ -53,7 +53,7 @@ export function startLogs(
   startReportCollection(configuration, lifeCycle)
   const { handleLog } = startLoggerCollection(lifeCycle)
 
-  startLogsAssembly(session, configuration, lifeCycle, buildCommonContext, reportError)
+  startLogsAssembly(session, configuration, lifeCycle, getCommonContext, reportError)
 
   if (!canUseEventBridge()) {
     const { stop: stopLogsBatch } = startLogsBatch(configuration, lifeCycle, reportError, pageExitObservable, session)

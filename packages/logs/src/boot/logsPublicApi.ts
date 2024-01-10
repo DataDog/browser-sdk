@@ -21,7 +21,7 @@ import type { LogsInitConfiguration } from '../domain/configuration'
 import { validateAndBuildLogsConfiguration } from '../domain/configuration'
 import type { HandlerType, StatusType, LogsMessage } from '../domain/logger'
 import { Logger } from '../domain/logger'
-import type { CommonContext } from '../rawLogsEvent.types'
+import { buildCommonContext } from '../domain/contexts/commonContext'
 import type { startLogs } from './startLogs'
 
 export interface LoggerConfiguration {
@@ -55,7 +55,7 @@ export function makeLogsPublicApi(startLogsImpl: StartLogs) {
   let handleLogStrategy: StartLogsResult['handleLog'] = (
     logsMessage: LogsMessage,
     logger: Logger,
-    savedCommonContext = deepClone(buildCommonContext()),
+    savedCommonContext = getCommonContext(),
     date = timeStampNow()
   ) => {
     beforeInitLoggerLog.add(() => handleLogStrategy(logsMessage, logger, savedCommonContext, date))
@@ -67,15 +67,8 @@ export function makeLogsPublicApi(startLogsImpl: StartLogs) {
     customerDataTrackerManager.createDetachedTracker()
   )
 
-  function buildCommonContext(): CommonContext {
-    return {
-      view: {
-        referrer: document.referrer,
-        url: window.location.href,
-      },
-      context: globalContextManager.getContext(),
-      user: userContextManager.getContext(),
-    }
+  function getCommonContext() {
+    return buildCommonContext(globalContextManager, userContextManager)
   }
 
   return makePublicApi({
@@ -125,7 +118,7 @@ export function makeLogsPublicApi(startLogsImpl: StartLogs) {
       ;({ handleLog: handleLogStrategy, getInternalContext: getInternalContextStrategy } = startLogsImpl(
         initConfiguration,
         configuration,
-        buildCommonContext
+        getCommonContext
       ))
 
       beforeInitLoggerLog.drain()

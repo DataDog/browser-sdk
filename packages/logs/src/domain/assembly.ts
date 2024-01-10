@@ -12,7 +12,7 @@ export function startLogsAssembly(
   sessionManager: LogsSessionManager,
   configuration: LogsConfiguration,
   lifeCycle: LifeCycle,
-  buildCommonContext: () => CommonContext,
+  getCommonContext: () => CommonContext,
   reportError: (error: RawError) => void
 ) {
   const statusWithCustom = (STATUSES as string[]).concat(['custom'])
@@ -31,7 +31,7 @@ export function startLogsAssembly(
         return
       }
 
-      const commonContext = savedCommonContext || buildCommonContext()
+      const commonContext = savedCommonContext || getCommonContext()
       const log = combine(
         {
           service: configuration.service,

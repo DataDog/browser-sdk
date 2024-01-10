@@ -1,6 +1,5 @@
 import type { Observable, RawError, Duration, RelativeTime } from '@datadog/browser-core'
 import {
-  createContextManager,
   stopSessionManager,
   toServerDuration,
   ONE_SECOND,
@@ -10,7 +9,6 @@ import {
   relativeNow,
   createIdentityEncoder,
   createCustomerDataTracker,
-  CustomerDataType,
 } from '@datadog/browser-core'
 import {
   createNewEvent,
@@ -334,8 +332,7 @@ describe('view events', () => {
         configuration,
         noopRecorderApi,
         customerDataTrackerManager,
-        createContextManager(customerDataTrackerManager.getOrCreateTracker(CustomerDataType.GlobalContext)),
-        createContextManager(customerDataTrackerManager.getOrCreateTracker(CustomerDataType.User)),
+        () => ({ user: {}, context: {}, hasReplay: undefined }),
         undefined,
         createIdentityEncoder
       )
