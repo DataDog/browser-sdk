@@ -71,8 +71,13 @@ function createFetchObservable() {
 }
 
 function beforeSend(observable: Observable<FetchContext>, input: unknown, init?: RequestInit) {
-  const methodFromParams = (init && init.method) || (input instanceof Request && input.method)
-  const method = methodFromParams ? methodFromParams.toUpperCase() : 'GET'
+  let methodFromParams = init && init.method
+
+  if (methodFromParams === undefined && input instanceof Request) {
+    methodFromParams = input.method
+  }
+
+  const method = methodFromParams !== undefined ? String(methodFromParams).toUpperCase() : 'GET'
   const url = input instanceof Request ? input.url : normalizeUrl(String(input))
   const startClocks = clocksNow()
 

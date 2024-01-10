@@ -377,4 +377,24 @@ describe('xhr observable', () => {
       expect(XMLHttpRequest.prototype.send).toBe(originalXhrStubSend)
     })
   })
+
+  it('should track request with undefined or null methods', (done) => {
+    withXhr({
+      setup(xhr) {
+        xhr.open(null, '/ok')
+        xhr.send()
+        xhr.onreadystatechange = jasmine.createSpy()
+        xhr.complete(200, 'ok')
+        xhr.open(undefined, '/ok')
+        xhr.send()
+        xhr.onreadystatechange = jasmine.createSpy()
+        xhr.complete(200, 'ok')
+      },
+      onComplete() {
+        expect(requests[0].method).toBe('NULL')
+        expect(requests[1].method).toBe('UNDEFINED')
+        done()
+      },
+    })
+  })
 })

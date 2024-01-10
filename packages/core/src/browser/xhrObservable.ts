@@ -66,7 +66,7 @@ function createXhrObservable(configuration: Configuration) {
 function openXhr(this: XMLHttpRequest, method: string, url: string | URL | undefined | null) {
   xhrContexts.set(this, {
     state: 'open',
-    method: method.toUpperCase(),
+    method: String(method).toUpperCase(),
     url: normalizeUrl(String(url)),
   })
 }
