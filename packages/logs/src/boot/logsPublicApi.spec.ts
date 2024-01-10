@@ -6,8 +6,9 @@ import type { HybridInitConfiguration, LogsInitConfiguration } from '../domain/c
 import type { Logger, LogsMessage } from '../domain/logger'
 import { HandlerType, StatusType } from '../domain/logger'
 import type { CommonContext } from '../rawLogsEvent.types'
-import type { LogsPublicApi, StartLogs } from './logsPublicApi'
+import type { LogsPublicApi } from './logsPublicApi'
 import { makeLogsPublicApi } from './logsPublicApi'
+import type { StartLogs } from './startLogs'
 
 const DEFAULT_INIT_CONFIGURATION = { clientToken: 'xxx' }
 const INVALID_INIT_CONFIGURATION = {} as LogsInitConfiguration
