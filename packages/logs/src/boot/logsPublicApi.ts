@@ -13,9 +13,8 @@ import {
   checkUser,
   sanitizeUser,
   sanitize,
-  createStoredContextManager,
-  combine,
   createCustomerDataTrackerManager,
+  storeContextManager,
 } from '@datadog/browser-core'
 import type { LogsInitConfiguration } from '../domain/configuration'
 import { validateAndBuildLogsConfiguration } from '../domain/configuration'
@@ -42,10 +41,10 @@ export function makeLogsPublicApi(startLogsImpl: StartLogs) {
   let isAlreadyInitialized = false
 
   const customerDataTrackerManager = createCustomerDataTrackerManager()
-  let globalContextManager = createContextManager(
+  const globalContextManager = createContextManager(
     customerDataTrackerManager.getOrCreateTracker(CustomerDataType.GlobalContext)
   )
-  let userContextManager = createContextManager(customerDataTrackerManager.getOrCreateTracker(CustomerDataType.User))
+  const userContextManager = createContextManager(customerDataTrackerManager.getOrCreateTracker(CustomerDataType.User))
 
   const customLoggers: { [name: string]: Logger | undefined } = {}
   let getInternalContextStrategy: StartLogsResult['getInternalContext'] = () => undefined
@@ -103,23 +102,8 @@ export function makeLogsPublicApi(startLogsImpl: StartLogs) {
       }
 
       if (initConfiguration.storeContextsAcrossPages) {
-        const beforeInitGlobalContext = globalContextManager.getContext()
-        globalContextManager = createStoredContextManager(
-          configuration,
-          LOGS_STORAGE_KEY,
-          CustomerDataType.GlobalContext,
-          customerDataTrackerManager.getOrCreateTracker(CustomerDataType.GlobalContext)
-        )
-        globalContextManager.setContext(combine(globalContextManager.getContext(), beforeInitGlobalContext))
-
-        const beforeInitUserContext = userContextManager.getContext()
-        userContextManager = createStoredContextManager(
-          configuration,
-          LOGS_STORAGE_KEY,
-          CustomerDataType.User,
-          customerDataTrackerManager.getOrCreateTracker(CustomerDataType.User)
-        )
-        userContextManager.setContext(combine(userContextManager.getContext(), beforeInitUserContext))
+        storeContextManager(configuration, globalContextManager, LOGS_STORAGE_KEY, CustomerDataType.GlobalContext)
+        storeContextManager(configuration, userContextManager, LOGS_STORAGE_KEY, CustomerDataType.User)
       }
 
       ;({ handleLog: handleLogStrategy, getInternalContext: getInternalContextStrategy } = startLogsImpl(
