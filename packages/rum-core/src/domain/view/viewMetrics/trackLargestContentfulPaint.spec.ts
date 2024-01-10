@@ -51,8 +51,7 @@ describe('trackLargestContentfulPaint', () => {
       createPerformanceEntry(RumPerformanceEntryType.LARGEST_CONTENTFUL_PAINT),
     ])
 
-    expect(lcpCallback).toHaveBeenCalledTimes(1 as RelativeTime)
-    expect(lcpCallback).toHaveBeenCalledWith({ value: 789 as RelativeTime, targetSelector: undefined })
+    expect(lcpCallback).toHaveBeenCalledOnceWith({ value: 789 as RelativeTime, targetSelector: undefined })
   })
 
   it('should provide the largest contentful paint target selector', () => {
@@ -64,8 +63,7 @@ describe('trackLargestContentfulPaint', () => {
       }),
     ])
 
-    expect(lcpCallback).toHaveBeenCalledTimes(1 as RelativeTime)
-    expect(lcpCallback).toHaveBeenCalledWith({ value: 789 as RelativeTime, targetSelector: '#lcp-target-element' })
+    expect(lcpCallback).toHaveBeenCalledOnceWith({ value: 789 as RelativeTime, targetSelector: '#lcp-target-element' })
   })
 
   it('should be discarded if it is reported after a user interaction', () => {
@@ -101,5 +99,24 @@ describe('trackLargestContentfulPaint', () => {
     ])
 
     expect(lcpCallback).not.toHaveBeenCalled()
+  })
+
+  it('should be discarded if it has a size inferior to the previous LCP entry', () => {
+    const { lifeCycle } = setupBuilder.build()
+    lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [
+      createPerformanceEntry(RumPerformanceEntryType.LARGEST_CONTENTFUL_PAINT, {
+        startTime: 1 as RelativeTime,
+        size: 10,
+      }),
+    ])
+
+    lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [
+      createPerformanceEntry(RumPerformanceEntryType.LARGEST_CONTENTFUL_PAINT, {
+        startTime: 2 as RelativeTime,
+        size: 5,
+      }),
+    ])
+
+    expect(lcpCallback).toHaveBeenCalledOnceWith(jasmine.objectContaining({ value: 1 }))
   })
 })
