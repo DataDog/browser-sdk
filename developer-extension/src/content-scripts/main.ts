@@ -39,7 +39,7 @@ function main() {
       overrideInitConfiguration(ddLogsGlobal, settings.logsConfigurationOverride)
     }
 
-    if (settings.injectDevBundles) {
+    if (settings.useDevBundles === 'npm') {
       injectDevBundle(DEV_RUM_URL, ddRumGlobal)
       injectDevBundle(DEV_LOGS_URL, ddLogsGlobal)
     }
@@ -66,7 +66,7 @@ function getSettings() {
     // sessionStorage access throws in sandboxed iframes
     const stringSettings = sessionStorage.getItem(SESSION_STORAGE_SETTINGS_KEY)
     // JSON.parse throws if the stringSettings is not a valid JSON
-    return JSON.parse(stringSettings || 'null') as Settings
+    return JSON.parse(stringSettings || 'null') as Settings | null
   } catch (error) {
     // eslint-disable-next-line no-console
     console.error('Error getting settings', error)
@@ -145,9 +145,5 @@ function instrumentGlobal(global: 'DD_RUM' | 'DD_LOGS') {
 }
 
 function proxySdk(target: SdkPublicApi, root: SdkPublicApi) {
-  for (const key in root) {
-    if (Object.prototype.hasOwnProperty.call(root, key)) {
-      target[key] = root[key]
-    }
-  }
+  Object.assign(target, root)
 }

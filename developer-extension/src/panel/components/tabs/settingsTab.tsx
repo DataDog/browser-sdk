@@ -1,24 +1,15 @@
-import { Badge, Box, Checkbox, Code, Group, Select, Space, Text } from '@mantine/core'
+import { Badge, Box, Checkbox, Code, Group, Space, Text, SegmentedControl } from '@mantine/core'
 import React from 'react'
 import { DevServerStatus, useDevServerStatus } from '../../hooks/useDevServerStatus'
 import { useSettings } from '../../hooks/useSettings'
 import { Columns } from '../columns'
 import { TabBase } from '../tabBase'
-import type { EventCollectionStrategy } from '../../../common/types'
-import css from './settingsTab.module.css'
+import type { DevBundlesOverride, EventCollectionStrategy } from '../../../common/types'
 
 export function SettingsTab() {
   const devServerStatus = useDevServerStatus()
   const [
-    {
-      useDevBundles,
-      injectDevBundles,
-      useRumSlim,
-      blockIntakeRequests,
-      preserveEvents,
-      eventCollectionStrategy,
-      autoFlush,
-    },
+    { useDevBundles, useRumSlim, blockIntakeRequests, preserveEvents, eventCollectionStrategy, autoFlush },
     setSetting,
   ] = useSettings()
 
@@ -29,12 +20,20 @@ export function SettingsTab() {
           <Columns.Column title="Request interception">
             <SettingItem
               input={
-                <Group align="start">
-                  <Checkbox
-                    label="Use development bundles"
-                    checked={useDevBundles}
-                    onChange={(e) => setSetting('useDevBundles', isChecked(e.target))}
+                <Group>
+                  <Text>Use development bundles:</Text>
+                  <SegmentedControl
                     color="violet"
+                    value={useDevBundles || 'No'}
+                    size="xs"
+                    data={[
+                      'No',
+                      { value: 'cdn', label: 'On CDN setup' },
+                      { value: 'npm', label: 'On NPM setup (experimental)' },
+                    ]}
+                    onChange={(value) =>
+                      setSetting('useDevBundles', value === 'No' ? false : (value as DevBundlesOverride))
+                    }
                   />
                   {devServerStatus === DevServerStatus.AVAILABLE ? (
                     <Badge color="green">Available</Badge>
@@ -47,34 +46,8 @@ export function SettingsTab() {
               }
               description={
                 <>
-                  Overrides CDN bundles with local development bundles served by the Browser SDK development server. To
+                  Overrides bundles with local development bundles served by the Browser SDK development server. To
                   start the development server, run <Code>yarn dev</Code> in the Browser SDK root folder.
-                </>
-              }
-            />
-
-            <SettingItem
-              input={
-                <Group align="start">
-                  <Checkbox
-                    label="Inject development bundles"
-                    checked={injectDevBundles}
-                    onChange={(e) => setSetting('injectDevBundles', isChecked(e.target))}
-                    color="violet"
-                  />
-                  {devServerStatus === DevServerStatus.AVAILABLE ? (
-                    <Badge color="green">Available</Badge>
-                  ) : devServerStatus === DevServerStatus.CHECKING ? (
-                    <Badge color="yellow">Checking...</Badge>
-                  ) : (
-                    <Badge color="red">Unavailable</Badge>
-                  )}
-                </Group>
-              }
-              description={
-                <>
-                  Inject local development bundles to override NPM or other CDN SDK bundles. To start the development
-                  server, run <Code>yarn dev</Code> in the Browser SDK root folder.
                 </>
               }
             />
@@ -123,15 +96,15 @@ export function SettingsTab() {
               input={
                 <Group>
                   <Text>Event collection strategy:</Text>
-                  <Select
-                    data={[
-                      { label: 'Requests', value: 'requests' },
-                      { label: 'SDK', value: 'sdk' },
-                    ]}
-                    value={eventCollectionStrategy}
-                    onChange={(value) => setSetting('eventCollectionStrategy', value as EventCollectionStrategy)}
+                  <SegmentedControl
                     color="violet"
-                    className={css.select}
+                    value={eventCollectionStrategy}
+                    size="xs"
+                    data={[
+                      { label: 'SDK', value: 'sdk' },
+                      { label: 'Requests', value: 'requests' },
+                    ]}
+                    onChange={(value) => setSetting('eventCollectionStrategy', value as EventCollectionStrategy)}
                   />
                 </Group>
               }

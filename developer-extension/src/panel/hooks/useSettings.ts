@@ -9,7 +9,6 @@ const logger = createLogger('useSettings')
 
 const DEFAULT_SETTINGS: Readonly<Settings> = {
   useDevBundles: false,
-  injectDevBundles: false,
   useRumSlim: false,
   blockIntakeRequests: false,
   autoFlush: false,
@@ -26,9 +25,10 @@ const storageLoadingPromise = loadSettingsFromStorage().catch((error) =>
 )
 
 function syncSettingsWithSessionStorage(settings: Settings) {
-  evalInWindow(`sessionStorage.setItem('${SESSION_STORAGE_SETTINGS_KEY}', '${JSON.stringify(settings)}')`).catch(
-    (error) => logger.error('Error while synchronizing session storage with extension storage', error)
-  )
+  evalInWindow(`sessionStorage.setItem(
+    ${JSON.stringify(SESSION_STORAGE_SETTINGS_KEY)},
+    ${JSON.stringify(JSON.stringify(settings))})
+  `).catch((error) => logger.error('Error while synchronizing session storage with extension storage', error))
 }
 
 async function loadSettingsFromStorage() {

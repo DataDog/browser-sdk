@@ -88,7 +88,7 @@ export function Panel() {
 }
 
 function isInterceptingNetworkRequests(settings: Settings) {
-  return settings.blockIntakeRequests || settings.useDevBundles || settings.injectDevBundles || settings.useRumSlim
+  return settings.blockIntakeRequests || settings.useDevBundles || settings.useRumSlim
 }
 
 function isOverridingInitConfiguration(settings: Settings) {

@@ -13,9 +13,11 @@ export type DevtoolsToBackgroundMessage = {
   options: NetRequestRulesOptions
 }
 
+export type DevBundlesOverride = false | 'cdn' | 'npm'
+
 export interface NetRequestRulesOptions {
   tabId: number
-  useDevBundles: boolean
+  useDevBundles: DevBundlesOverride
   useRumSlim: boolean
   blockIntakeRequests: boolean
 }
@@ -44,8 +46,7 @@ export type SdkMessage =
 export type EventCollectionStrategy = 'sdk' | 'requests'
 
 export interface Settings {
-  useDevBundles: boolean
-  injectDevBundles: boolean
+  useDevBundles: DevBundlesOverride
   useRumSlim: boolean
   blockIntakeRequests: boolean
   autoFlush: boolean
