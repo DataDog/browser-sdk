@@ -3,6 +3,7 @@ import { STABLE_ATTRIBUTES } from '@datadog/browser-rum-core'
 import type { RumConfiguration } from '@datadog/browser-rum-core'
 import { NodePrivacyLevel, PRIVACY_ATTR_NAME, CENSORED_STRING_MARK, CENSORED_IMG_MARK } from '../../../constants'
 import { MAX_ATTRIBUTE_VALUE_CHAR_LENGTH } from '../privacy'
+import { censoredImageForSize } from './serializationUtils'
 
 export function serializeAttribute(
   element: Element,
@@ -30,12 +31,23 @@ export function serializeAttribute(
       case 'placeholder':
         return CENSORED_STRING_MARK
     }
+
     // mask image URLs
-    if (tagName === 'IMG' || tagName === 'SOURCE') {
-      if (attributeName === 'src' || attributeName === 'srcset') {
-        return CENSORED_IMG_MARK
+    if (tagName === 'IMG' && (attributeName === 'src' || attributeName === 'srcset')) {
+      // generate image with similar dimension than the original to have the same rendering behaviour
+      const image = element as HTMLImageElement
+      if (image.naturalWidth > 0) {
+        return censoredImageForSize(image.naturalWidth, image.naturalHeight)
       }
+      const { width, height } = element.getBoundingClientRect()
+      return censoredImageForSize(width, height)
     }
+
+    // mask source URLs
+    if (tagName === 'SOURCE' && (attributeName === 'src' || attributeName === 'srcset')) {
+      return CENSORED_IMG_MARK
+    }
+
     // mask <a> URLs
     if (tagName === 'A' && attributeName === 'href') {
       return CENSORED_STRING_MARK
