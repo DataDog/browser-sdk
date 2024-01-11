@@ -116,6 +116,8 @@ describe('fetch proxy', () => {
     fetchStub(FAKE_URL, { method: 'post' }).resolveWith({ status: 500 })
     fetchStub(null as any).resolveWith({ status: 500 })
     fetchStub({ method: 'POST' } as any).resolveWith({ status: 500 })
+    fetchStub(FAKE_URL, { method: null as any }).resolveWith({ status: 500 })
+    fetchStub(FAKE_URL, { method: undefined }).resolveWith({ status: 500 })
 
     fetchStubManager.whenAllComplete(() => {
       expect(requests[0].method).toEqual('GET')
@@ -127,6 +129,9 @@ describe('fetch proxy', () => {
       expect(requests[6].method).toEqual('POST')
       expect(requests[7].method).toEqual('GET')
       expect(requests[8].method).toEqual('GET')
+      expect(requests[9].method).toEqual('NULL')
+      expect(requests[10].method).toEqual('GET')
+
       done()
     })
   })
