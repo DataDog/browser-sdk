@@ -41,7 +41,7 @@ export function startLogs(
 
   const session =
     configuration.sessionStoreStrategyType && !canUseEventBridge() && !willSyntheticsInjectRum()
-      ? startLogsSessionManager(configuration)
+      ? startLogsSessionManager(configuration, trackingConsentState)
       : startLogsSessionManagerStub(configuration)
 
   const { stop: stopLogsTelemetry } = startLogsTelemetry(

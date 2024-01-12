@@ -8,6 +8,8 @@ import {
   stopSessionManager,
   ONE_SECOND,
   DOM_EVENT,
+  createTrackingConsentState,
+  TrackingConsent,
 } from '@datadog/browser-core'
 import type { Clock } from '@datadog/browser-core/test'
 import { createNewEvent, mockClock } from '@datadog/browser-core/test'
@@ -206,7 +208,8 @@ describe('rum session manager', () => {
         trackLongTasks: true,
         ...configuration,
       },
-      lifeCycle
+      lifeCycle,
+      createTrackingConsentState(TrackingConsent.GRANTED)
     )
   }
 })

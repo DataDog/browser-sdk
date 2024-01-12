@@ -1,4 +1,10 @@
-import { createNewEvent, mockClock, restorePageVisibility, setPageVisibility } from '../../../test'
+import {
+  createNewEvent,
+  mockClock,
+  mockExperimentalFeatures,
+  restorePageVisibility,
+  setPageVisibility,
+} from '../../../test'
 import type { Clock } from '../../../test'
 import { getCookie, setCookie } from '../../browser/cookie'
 import type { RelativeTime } from '../../tools/utils/timeUtils'
@@ -6,6 +12,9 @@ import { isIE } from '../../tools/utils/browserDetection'
 import { DOM_EVENT } from '../../browser/addEventListener'
 import { ONE_HOUR, ONE_SECOND } from '../../tools/utils/timeUtils'
 import type { Configuration } from '../configuration'
+import type { TrackingConsentState } from '../trackingConsent'
+import { TrackingConsent, createTrackingConsentState } from '../trackingConsent'
+import { ExperimentalFeature } from '../../tools/experimentalFeatures'
 import type { SessionManager } from './sessionManager'
 import { startSessionManager, stopSessionManager, VISIBILITY_CHECK_DELAY } from './sessionManager'
 import { SESSION_EXPIRATION_DELAY, SESSION_TIME_OUT_DELAY } from './sessionConstants'
@@ -490,14 +499,60 @@ describe('startSessionManager', () => {
     })
   })
 
+  describe('tracking consent', () => {
+    beforeEach(() => {
+      mockExperimentalFeatures([ExperimentalFeature.TRACKING_CONSENT])
+    })
+
+    it('expires the session when tracking consent is withdrawn', () => {
+      const trackingConsentState = createTrackingConsentState(TrackingConsent.GRANTED)
+      const sessionManager = startSessionManagerWithDefaults({ trackingConsentState })
+
+      trackingConsentState.set(TrackingConsent.NOT_GRANTED)
+
+      expectSessionIdToNotBeDefined(sessionManager)
+      expect(getCookie(SESSION_STORE_KEY)).toBeUndefined()
+    })
+
+    it('does not renew the session when tracking consent is withdrawn', () => {
+      const trackingConsentState = createTrackingConsentState(TrackingConsent.GRANTED)
+      const sessionManager = startSessionManagerWithDefaults({ trackingConsentState })
+
+      trackingConsentState.set(TrackingConsent.NOT_GRANTED)
+
+      document.dispatchEvent(createNewEvent(DOM_EVENT.CLICK))
+
+      expectSessionIdToNotBeDefined(sessionManager)
+    })
+
+    it('renews the session when tracking consent is granted', () => {
+      const trackingConsentState = createTrackingConsentState(TrackingConsent.GRANTED)
+      const sessionManager = startSessionManagerWithDefaults({ trackingConsentState })
+      const initialSessionId = sessionManager.findActiveSession()!.id
+
+      trackingConsentState.set(TrackingConsent.NOT_GRANTED)
+
+      expectSessionIdToNotBeDefined(sessionManager)
+
+      trackingConsentState.set(TrackingConsent.GRANTED)
+
+      clock.tick(STORAGE_POLL_DELAY)
+
+      expectSessionIdToBeDefined(sessionManager)
+      expect(sessionManager.findActiveSession()!.id).not.toBe(initialSessionId)
+    })
+  })
+
   function startSessionManagerWithDefaults({
     configuration,
     productKey = FIRST_PRODUCT_KEY,
     computeSessionState = () => TRACKED_SESSION_STATE,
+    trackingConsentState = createTrackingConsentState(TrackingConsent.GRANTED),
   }: {
     configuration?: Partial<Configuration>
     productKey?: string
     computeSessionState?: () => { trackingType: FakeTrackingType; isTracked: boolean }
+    trackingConsentState?: TrackingConsentState
   } = {}) {
     return startSessionManager(
       {
@@ -505,7 +560,8 @@ describe('startSessionManager', () => {
         ...configuration,
       } as Configuration,
       productKey,
-      computeSessionState
+      computeSessionState,
+      trackingConsentState
     )
   }
 })

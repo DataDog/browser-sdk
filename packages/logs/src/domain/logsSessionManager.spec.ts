@@ -7,6 +7,8 @@ import {
   stopSessionManager,
   ONE_SECOND,
   DOM_EVENT,
+  createTrackingConsentState,
+  TrackingConsent,
 } from '@datadog/browser-core'
 import type { Clock } from '@datadog/browser-core/test'
 import { createNewEvent, mockClock } from '@datadog/browser-core/test'
@@ -111,11 +113,14 @@ describe('logs session manager', () => {
   })
 
   function startLogsSessionManagerWithDefaults({ configuration }: { configuration?: Partial<LogsConfiguration> } = {}) {
-    return startLogsSessionManager({
-      sessionSampleRate: 100,
-      sessionStoreStrategyType: { type: 'Cookie', cookieOptions: {} },
-      ...configuration,
-    } as LogsConfiguration)
+    return startLogsSessionManager(
+      {
+        sessionSampleRate: 100,
+        sessionStoreStrategyType: { type: 'Cookie', cookieOptions: {} },
+        ...configuration,
+      } as LogsConfiguration,
+      createTrackingConsentState(TrackingConsent.GRANTED)
+    )
   }
 })
 

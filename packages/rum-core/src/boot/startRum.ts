@@ -97,7 +97,9 @@ export function startRum(
   })
   cleanupTasks.push(() => pageExitSubscription.unsubscribe())
 
-  const session = !canUseEventBridge() ? startRumSessionManager(configuration, lifeCycle) : startRumSessionManagerStub()
+  const session = !canUseEventBridge()
+    ? startRumSessionManager(configuration, lifeCycle, trackingConsentState)
+    : startRumSessionManagerStub()
   if (!canUseEventBridge()) {
     const batch = startRumBatch(
       configuration,
