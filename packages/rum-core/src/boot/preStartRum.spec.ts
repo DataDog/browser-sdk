@@ -28,6 +28,8 @@ import { createPreStartStrategy } from './preStartRum'
 
 const DEFAULT_INIT_CONFIGURATION = { applicationId: 'xxx', clientToken: 'xxx' }
 const INVALID_INIT_CONFIGURATION = { clientToken: 'yes' } as RumInitConfiguration
+const AUTO_CONFIGURATION = { ...DEFAULT_INIT_CONFIGURATION }
+const MANUAL_CONFIGURATION = { ...AUTO_CONFIGURATION, trackViewsManually: true }
 const FAKE_WORKER = {} as DeflateWorker
 
 describe('preStartRum', () => {
@@ -241,9 +243,6 @@ describe('preStartRum', () => {
     })
 
     describe('trackViews mode', () => {
-      const AUTO_CONFIGURATION = { ...DEFAULT_INIT_CONFIGURATION }
-      const MANUAL_CONFIGURATION = { ...AUTO_CONFIGURATION, trackViewsManually: true }
-
       let clock: Clock | undefined
       let strategy: Strategy
       let startViewSpy: jasmine.Spy<StartRumResult['startView']>
@@ -510,11 +509,44 @@ describe('preStartRum', () => {
 
   describe('tracking consent', () => {
     describe('with tracking_consent enabled', () => {
-      it('does not start rum if tracking consent is not granted at init', () => {
+      beforeEach(() => {
         mockExperimentalFeatures([ExperimentalFeature.TRACKING_CONSENT])
+      })
+
+      it('does not start rum if tracking consent is not granted at init', () => {
         const strategy = createPreStartStrategy({}, getCommonContextSpy, doStartRumSpy)
         strategy.init({
           ...DEFAULT_INIT_CONFIGURATION,
+          trackingConsent: TrackingConsent.NOT_GRANTED,
+        })
+        expect(doStartRumSpy).not.toHaveBeenCalled()
+      })
+
+      it('starts rum if tracking consent is granted before init', () => {
+        const strategy = createPreStartStrategy({}, getCommonContextSpy, doStartRumSpy)
+        strategy.setTrackingConsent(TrackingConsent.GRANTED)
+        strategy.init({
+          ...DEFAULT_INIT_CONFIGURATION,
+          trackingConsent: TrackingConsent.NOT_GRANTED,
+        })
+        expect(doStartRumSpy).toHaveBeenCalledTimes(1)
+      })
+
+      it('does not start rum if tracking consent is withdrawn before init', () => {
+        const strategy = createPreStartStrategy({}, getCommonContextSpy, doStartRumSpy)
+        strategy.setTrackingConsent(TrackingConsent.NOT_GRANTED)
+        strategy.init({
+          ...DEFAULT_INIT_CONFIGURATION,
+          trackingConsent: TrackingConsent.GRANTED,
+        })
+        expect(doStartRumSpy).not.toHaveBeenCalled()
+      })
+
+      it('does not start rum if no view is started', () => {
+        const strategy = createPreStartStrategy({}, getCommonContextSpy, doStartRumSpy)
+        strategy.setTrackingConsent(TrackingConsent.GRANTED)
+        strategy.init({
+          ...MANUAL_CONFIGURATION,
           trackingConsent: TrackingConsent.NOT_GRANTED,
         })
         expect(doStartRumSpy).not.toHaveBeenCalled()
@@ -529,6 +561,13 @@ describe('preStartRum', () => {
           trackingConsent: TrackingConsent.NOT_GRANTED,
         })
         expect(doStartRumSpy).toHaveBeenCalled()
+      })
+
+      it('ignores setTrackingConsent', () => {
+        const strategy = createPreStartStrategy({}, getCommonContextSpy, doStartRumSpy)
+        strategy.setTrackingConsent(TrackingConsent.NOT_GRANTED)
+        strategy.init(DEFAULT_INIT_CONFIGURATION)
+        expect(doStartRumSpy).toHaveBeenCalledTimes(1)
       })
     })
   })

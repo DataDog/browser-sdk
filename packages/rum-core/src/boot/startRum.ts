@@ -16,6 +16,8 @@ import {
   getEventBridge,
   addTelemetryDebug,
   CustomerDataType,
+  createTrackingConsentState,
+  TrackingConsent,
 } from '@datadog/browser-core'
 import { createDOMMutationObservable } from '../browser/domMutationObservable'
 import { startPerformanceCollection } from '../browser/performanceCollection'
@@ -88,6 +90,7 @@ export function startRum(
     customerDataTrackerManager.getOrCreateTracker(CustomerDataType.FeatureFlag)
   )
 
+  const trackingConsentState = createTrackingConsentState(TrackingConsent.GRANTED)
   const pageExitObservable = createPageExitObservable(configuration)
   const pageExitSubscription = pageExitObservable.subscribe((event) => {
     lifeCycle.notify(LifeCycleEventType.PAGE_EXITED, event)
@@ -174,6 +177,7 @@ export function startRum(
     addError,
     addTiming,
     addFeatureFlagEvaluation: featureFlagContexts.addFeatureFlagEvaluation,
+    setTrackingConsent: trackingConsentState.set,
     startView,
     lifeCycle,
     viewContexts,

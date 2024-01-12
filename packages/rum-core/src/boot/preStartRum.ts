@@ -130,6 +130,8 @@ export function createPreStartStrategy(
       return cachedInitConfiguration
     },
 
+    setTrackingConsent: trackingConsentState.set,
+
     getInternalContext: noop as () => undefined,
 
     stopSession: noop,

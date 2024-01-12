@@ -6,6 +6,7 @@ import type {
   DeflateWorker,
   DeflateEncoderStreamId,
   DeflateEncoder,
+  TrackingConsent,
 } from '@datadog/browser-core'
 import {
   CustomerDataType,
@@ -72,6 +73,7 @@ const RUM_STORAGE_KEY = 'rum'
 
 export interface Strategy {
   init: (initConfiguration: RumInitConfiguration) => void
+  setTrackingConsent: StartRumResult['setTrackingConsent']
   initConfiguration: RumInitConfiguration | undefined
   getInternalContext: StartRumResult['getInternalContext']
   stopSession: StartRumResult['stopSession']
@@ -143,6 +145,8 @@ export function makeRumPublicApi(startRumImpl: StartRum, recorderApi: RecorderAp
 
   const rumPublicApi = makePublicApi({
     init: monitor((initConfiguration: RumInitConfiguration) => strategy.init(initConfiguration)),
+
+    setTrackingConsent: monitor((trackingConsent: TrackingConsent) => strategy.setTrackingConsent(trackingConsent)),
 
     setGlobalContextProperty: monitor((key, value) => globalContextManager.setContextProperty(key, value)),
 

@@ -66,6 +66,8 @@ export function createPreStartStrategy(
       tryStartLogs()
     },
 
+    setTrackingConsent: trackingConsentState.set,
+
     get initConfiguration() {
       return cachedInitConfiguration
     },
