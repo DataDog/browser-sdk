@@ -2,6 +2,7 @@ import {
   BoundedBuffer,
   assign,
   canUseEventBridge,
+  createTrackingConsentState,
   display,
   displayAlreadyInitializedError,
   noop,
@@ -23,9 +24,11 @@ export function createPreStartStrategy(
   const bufferApiCalls = new BoundedBuffer<StartLogsResult>()
   let cachedInitConfiguration: LogsInitConfiguration | undefined
   let cachedConfiguration: LogsConfiguration | undefined
+  const trackingConsentState = createTrackingConsentState()
+  trackingConsentState.observable.subscribe(tryStartLogs)
 
   function tryStartLogs() {
-    if (!cachedConfiguration || !cachedInitConfiguration) {
+    if (!cachedConfiguration || !cachedInitConfiguration || !trackingConsentState.isGranted()) {
       return
     }
 
@@ -59,6 +62,7 @@ export function createPreStartStrategy(
       }
 
       cachedConfiguration = configuration
+      trackingConsentState.setIfNotDefined(configuration.trackingConsent)
       tryStartLogs()
     },
 

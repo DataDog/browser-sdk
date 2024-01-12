@@ -1,11 +1,20 @@
 import type { DeflateWorker, RelativeTime, TimeStamp } from '@datadog/browser-core'
-import { display, getTimeStamp, noop, relativeToClocks, clocksNow } from '@datadog/browser-core'
+import {
+  display,
+  getTimeStamp,
+  noop,
+  relativeToClocks,
+  clocksNow,
+  TrackingConsent,
+  ExperimentalFeature,
+} from '@datadog/browser-core'
 import type { Clock } from '@datadog/browser-core/test'
 import {
   cleanupSyntheticsWorkerValues,
   deleteEventBridgeStub,
   initEventBridgeStub,
   mockClock,
+  mockExperimentalFeatures,
   mockSyntheticsWorkerValues,
 } from '@datadog/browser-core/test'
 import type { HybridInitConfiguration, RumConfiguration, RumInitConfiguration } from '../domain/configuration'
@@ -302,6 +311,17 @@ describe('preStartRum', () => {
           expect(startViewSpy).not.toHaveBeenCalled()
         })
 
+        it('calling startView then init does not start rum if tracking consent is not granted', () => {
+          mockExperimentalFeatures([ExperimentalFeature.TRACKING_CONSENT])
+          const strategy = createPreStartStrategy({}, getCommonContextSpy, doStartRumSpy)
+          strategy.startView({ name: 'foo' })
+          strategy.init({
+            ...MANUAL_CONFIGURATION,
+            trackingConsent: TrackingConsent.NOT_GRANTED,
+          })
+          expect(doStartRumSpy).not.toHaveBeenCalled()
+        })
+
         it('calling startView twice before init should start rum and create a new view', () => {
           clock = mockClock()
           clock.tick(10)
@@ -485,6 +505,31 @@ describe('preStartRum', () => {
       strategy.addFeatureFlagEvaluation(key, value)
       strategy.init(DEFAULT_INIT_CONFIGURATION)
       expect(addFeatureFlagEvaluationSpy).toHaveBeenCalledOnceWith(key, value)
+    })
+  })
+
+  describe('tracking consent', () => {
+    describe('with tracking_consent enabled', () => {
+      it('does not start rum if tracking consent is not granted at init', () => {
+        mockExperimentalFeatures([ExperimentalFeature.TRACKING_CONSENT])
+        const strategy = createPreStartStrategy({}, getCommonContextSpy, doStartRumSpy)
+        strategy.init({
+          ...DEFAULT_INIT_CONFIGURATION,
+          trackingConsent: TrackingConsent.NOT_GRANTED,
+        })
+        expect(doStartRumSpy).not.toHaveBeenCalled()
+      })
+    })
+
+    describe('with tracking_consent disabled', () => {
+      it('ignores the trackingConsent init param', () => {
+        const strategy = createPreStartStrategy({}, getCommonContextSpy, doStartRumSpy)
+        strategy.init({
+          ...DEFAULT_INIT_CONFIGURATION,
+          trackingConsent: TrackingConsent.NOT_GRANTED,
+        })
+        expect(doStartRumSpy).toHaveBeenCalled()
+      })
     })
   })
 })

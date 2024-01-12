@@ -9,6 +9,7 @@ import {
   timeStampNow,
   clocksNow,
   assign,
+  createTrackingConsentState,
 } from '@datadog/browser-core'
 import {
   validateAndBuildRumConfiguration,
@@ -38,9 +39,11 @@ export function createPreStartStrategy(
 
   let cachedInitConfiguration: RumInitConfiguration | undefined
   let cachedConfiguration: RumConfiguration | undefined
+  const trackingConsentState = createTrackingConsentState()
+  trackingConsentState.observable.subscribe(tryStartRum)
 
   function tryStartRum() {
-    if (!cachedInitConfiguration || !cachedConfiguration) {
+    if (!cachedInitConfiguration || !cachedConfiguration || !trackingConsentState.isGranted()) {
       return
     }
 
@@ -119,6 +122,7 @@ export function createPreStartStrategy(
       }
 
       cachedConfiguration = configuration
+      trackingConsentState.setIfNotDefined(configuration.trackingConsent)
       tryStartRum()
     },
 
