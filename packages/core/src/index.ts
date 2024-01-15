@@ -93,7 +93,7 @@ export { initConsoleObservable, resetConsoleObservable, ConsoleLog } from './dom
 export { BoundedBuffer } from './tools/boundedBuffer'
 export { catchUserErrors } from './tools/catchUserErrors'
 export { createContextManager, ContextManager } from './domain/context/contextManager'
-export { createStoredContextManager, removeStorageListeners } from './domain/context/storedContextManager'
+export { storeContextManager, removeStorageListeners } from './domain/context/storeContextManager'
 export {
   createCustomerDataTrackerManager,
   createCustomerDataTracker,

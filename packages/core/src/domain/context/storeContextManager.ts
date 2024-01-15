@@ -1,25 +1,22 @@
 import { addEventListener, DOM_EVENT } from '../../browser/addEventListener'
 import type { Context } from '../../tools/serialisation/context'
 import type { Configuration } from '../configuration'
+import { combine } from '../../tools/mergeInto'
 import type { ContextManager } from './contextManager'
-import { createContextManager } from './contextManager'
 import type { CustomerDataType } from './contextConstants'
-import type { CustomerDataTracker } from './customerDataTracker'
 
 const CONTEXT_STORE_KEY_PREFIX = '_dd_c'
 
 const storageListeners: Array<{ stop: () => void }> = []
 
-export function createStoredContextManager(
+export function storeContextManager(
   configuration: Configuration,
+  contextManager: ContextManager,
   productKey: string,
-  customerDataType: CustomerDataType,
-  customerDataTracker: CustomerDataTracker
-): ContextManager {
+  customerDataType: CustomerDataType
+) {
   const storageKey = buildStorageKey(productKey, customerDataType)
-  const contextManager = createContextManager(customerDataTracker)
 
-  synchronizeWithStorage()
   storageListeners.push(
     addEventListener(configuration, window, DOM_EVENT.STORAGE, ({ key }) => {
       if (storageKey === key) {
@@ -29,16 +26,19 @@ export function createStoredContextManager(
   )
   contextManager.changeObservable.subscribe(dumpToStorage)
 
-  return contextManager
+  contextManager.setContext(combine(getFromStorage(), contextManager.getContext()))
 
   function synchronizeWithStorage() {
-    const rawContext = localStorage.getItem(storageKey)
-    const context = rawContext !== null ? (JSON.parse(rawContext) as Context) : {}
-    contextManager.setContext(context)
+    contextManager.setContext(getFromStorage())
   }
 
   function dumpToStorage() {
     localStorage.setItem(storageKey, JSON.stringify(contextManager.getContext()))
+  }
+
+  function getFromStorage() {
+    const rawContext = localStorage.getItem(storageKey)
+    return rawContext !== null ? (JSON.parse(rawContext) as Context) : {}
   }
 }
 

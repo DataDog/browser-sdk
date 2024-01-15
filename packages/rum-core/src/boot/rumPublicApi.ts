@@ -27,11 +27,10 @@ import {
   checkUser,
   sanitizeUser,
   sanitize,
-  createStoredContextManager,
-  combine,
   createIdentityEncoder,
   CustomerDataCompressionStatus,
   createCustomerDataTrackerManager,
+  storeContextManager,
 } from '@datadog/browser-core'
 import type { LifeCycle } from '../domain/lifeCycle'
 import type { ViewContexts } from '../domain/contexts/viewContexts'
@@ -88,10 +87,10 @@ export function makeRumPublicApi(
   let isAlreadyInitialized = false
 
   const customerDataTrackerManager = createCustomerDataTrackerManager(CustomerDataCompressionStatus.Unknown)
-  let globalContextManager = createContextManager(
+  const globalContextManager = createContextManager(
     customerDataTrackerManager.getOrCreateTracker(CustomerDataType.GlobalContext)
   )
-  let userContextManager = createContextManager(customerDataTrackerManager.getOrCreateTracker(CustomerDataType.User))
+  const userContextManager = createContextManager(customerDataTrackerManager.getOrCreateTracker(CustomerDataType.User))
 
   function getCommonContext() {
     return buildCommonContext(globalContextManager, userContextManager, recorderApi)
@@ -195,23 +194,8 @@ export function makeRumPublicApi(
     initialViewOptions?: ViewOptions
   ) {
     if (initConfiguration.storeContextsAcrossPages) {
-      const beforeInitGlobalContext = globalContextManager.getContext()
-      globalContextManager = createStoredContextManager(
-        configuration,
-        RUM_STORAGE_KEY,
-        CustomerDataType.GlobalContext,
-        customerDataTrackerManager.getOrCreateTracker(CustomerDataType.GlobalContext)
-      )
-      globalContextManager.setContext(combine(globalContextManager.getContext(), beforeInitGlobalContext))
-
-      const beforeInitUserContext = userContextManager.getContext()
-      userContextManager = createStoredContextManager(
-        configuration,
-        RUM_STORAGE_KEY,
-        CustomerDataType.User,
-        customerDataTrackerManager.getOrCreateTracker(CustomerDataType.User)
-      )
-      userContextManager.setContext(combine(userContextManager.getContext(), beforeInitUserContext))
+      storeContextManager(configuration, globalContextManager, RUM_STORAGE_KEY, CustomerDataType.GlobalContext)
+      storeContextManager(configuration, userContextManager, RUM_STORAGE_KEY, CustomerDataType.User)
     }
 
     customerDataTrackerManager.setCompressionStatus(
