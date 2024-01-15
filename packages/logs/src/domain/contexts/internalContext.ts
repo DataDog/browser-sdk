@@ -1,5 +1,5 @@
 import type { RelativeTime } from '@datadog/browser-core'
-import type { LogsSessionManager } from './logsSessionManager'
+import type { LogsSessionManager } from '../logsSessionManager'
 
 export interface InternalContext {
   session_id: string | undefined

@@ -6,13 +6,13 @@ import type { LifeCycle } from './lifeCycle'
 import { LifeCycleEventType } from './lifeCycle'
 import { STATUSES } from './logger'
 import type { LogsSessionManager } from './logsSessionManager'
-import { getRUMInternalContext } from './rumInternalContext'
+import { getRUMInternalContext } from './contexts/rumInternalContext'
 
 export function startLogsAssembly(
   sessionManager: LogsSessionManager,
   configuration: LogsConfiguration,
   lifeCycle: LifeCycle,
-  buildCommonContext: () => CommonContext,
+  getCommonContext: () => CommonContext,
   reportError: (error: RawError) => void
 ) {
   const statusWithCustom = (STATUSES as string[]).concat(['custom'])
@@ -31,7 +31,7 @@ export function startLogsAssembly(
         return
       }
 
-      const commonContext = savedCommonContext || buildCommonContext()
+      const commonContext = savedCommonContext || getCommonContext()
       const log = combine(
         {
           service: configuration.service,

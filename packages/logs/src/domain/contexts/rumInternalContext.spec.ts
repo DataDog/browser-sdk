@@ -1,8 +1,8 @@
 import type { TelemetryEvent } from '@datadog/browser-core'
 import { startTelemetry, TelemetryService } from '@datadog/browser-core'
 import { mockSyntheticsWorkerValues, cleanupSyntheticsWorkerValues } from '@datadog/browser-core/test'
+import { validateAndBuildLogsConfiguration } from '../configuration'
 import { resetRUMInternalContext, getRUMInternalContext } from './rumInternalContext'
-import { validateAndBuildLogsConfiguration } from './configuration'
 
 const initConfiguration = { clientToken: 'xxx', service: 'service' }
 

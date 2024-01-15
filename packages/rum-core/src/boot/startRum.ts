@@ -2,7 +2,6 @@ import type {
   Observable,
   TelemetryEvent,
   RawError,
-  ContextManager,
   DeflateEncoderStreamId,
   Encoder,
   CustomerDataTrackerManager,
@@ -44,7 +43,6 @@ import { startFeatureFlagContexts } from '../domain/contexts/featureFlagContext'
 import { startCustomerDataTelemetry } from '../domain/startCustomerDataTelemetry'
 import { startPageStateHistory } from '../domain/contexts/pageStateHistory'
 import type { CommonContext } from '../domain/contexts/commonContext'
-import { buildCommonContext } from '../domain/contexts/commonContext'
 import { startDisplayContext } from '../domain/contexts/displayContext'
 import type { RecorderApi } from './rumPublicApi'
 
@@ -53,8 +51,7 @@ export function startRum(
   configuration: RumConfiguration,
   recorderApi: RecorderApi,
   customerDataTrackerManager: CustomerDataTrackerManager,
-  globalContextManager: ContextManager,
-  userContextManager: ContextManager,
+  getCommonContext: () => CommonContext,
   initialViewOptions: ViewOptions | undefined,
   createEncoder: (streamId: DeflateEncoderStreamId) => Encoder
 ) {
@@ -128,7 +125,7 @@ export function startRum(
     session,
     locationChangeObservable,
     domMutationObservable,
-    () => buildCommonContext(globalContextManager, userContextManager, recorderApi),
+    getCommonContext,
     reportError
   )
   cleanupTasks.push(stopRumEventCollection)
@@ -201,7 +198,7 @@ export function startRumEventCollection(
   sessionManager: RumSessionManager,
   locationChangeObservable: Observable<LocationChange>,
   domMutationObservable: Observable<void>,
-  buildCommonContext: () => CommonContext,
+  getCommonContext: () => CommonContext,
   reportError: (error: RawError) => void
 ) {
   const viewContexts = startViewContexts(lifeCycle)
@@ -226,7 +223,7 @@ export function startRumEventCollection(
     urlContexts,
     actionContexts,
     displayContext,
-    buildCommonContext,
+    getCommonContext,
     reportError
   )
 
