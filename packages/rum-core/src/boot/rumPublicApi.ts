@@ -278,7 +278,12 @@ export function makeRumPublicApi(
       })
     },
 
+    /**
+     * Using a relative time is discouraged since it can be challenging for users to determine the relative time of the start of the view.
+     * see https://github.com/DataDog/browser-sdk/issues/2552
+     */
     addTiming: monitor((name: string, time?: number) => {
+      // TODO: next major decide to drop relative time support or update its behaviour
       addTimingStrategy(sanitize(name)!, time as RelativeTime | TimeStamp | undefined)
     }),
 
