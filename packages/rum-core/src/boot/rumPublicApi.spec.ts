@@ -1015,18 +1015,18 @@ describe('rum public api', () => {
       )
     })
 
-    it('api calls before init are performed after onRumStart', () => {
-      // in order to let recording initial state to be defined by init configuration
-      const callOrders: string[] = []
-      spyOn(recorderApi, 'start').and.callFake(() => callOrders.push('start'))
-      spyOn(recorderApi, 'stop').and.callFake(() => callOrders.push('stop'))
-      recorderApiOnRumStartSpy.and.callFake(() => callOrders.push('onRumStart'))
+    it('public api calls are forwarded to the recorder api', () => {
+      spyOn(recorderApi, 'start')
+      spyOn(recorderApi, 'stop')
+      spyOn(recorderApi, 'getSessionReplayLink')
 
       rumPublicApi.startSessionReplayRecording()
       rumPublicApi.stopSessionReplayRecording()
-      rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
+      rumPublicApi.getSessionReplayLink()
 
-      expect(callOrders).toEqual(['onRumStart', 'start', 'stop'])
+      expect(recorderApi.start).toHaveBeenCalledTimes(1)
+      expect(recorderApi.stop).toHaveBeenCalledTimes(1)
+      expect(recorderApi.getSessionReplayLink).toHaveBeenCalledTimes(1)
     })
 
     it('is started with the default startSessionReplayRecordingManually', () => {
