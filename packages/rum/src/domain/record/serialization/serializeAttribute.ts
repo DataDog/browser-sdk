@@ -40,7 +40,11 @@ export function serializeAttribute(
         return censoredImageForSize(image.naturalWidth, image.naturalHeight)
       }
       const { width, height } = element.getBoundingClientRect()
-      return censoredImageForSize(width, height)
+      if (width > 0 || height > 0) {
+        return censoredImageForSize(width, height)
+      }
+      // if we can't get the image size, fallback to the censored image
+      return CENSORED_IMG_MARK
     }
 
     // mask source URLs
