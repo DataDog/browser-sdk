@@ -15,6 +15,7 @@ import {
   sanitize,
   createCustomerDataTrackerManager,
   storeContextManager,
+  displayAlreadyInitializedError,
 } from '@datadog/browser-core'
 import type { LogsInitConfiguration } from '../domain/configuration'
 import { validateAndBuildLogsConfiguration } from '../domain/configuration'
@@ -163,9 +164,7 @@ export function makeLogsPublicApi(startLogsImpl: StartLogs) {
 
   function canInitLogs(initConfiguration: LogsInitConfiguration) {
     if (isAlreadyInitialized) {
-      if (!initConfiguration.silentMultipleInit) {
-        display.error('DD_LOGS is already initialized.')
-      }
+      displayAlreadyInitializedError('DD_LOGS', initConfiguration)
       return false
     }
     return true

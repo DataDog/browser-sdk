@@ -31,6 +31,7 @@ import {
   CustomerDataCompressionStatus,
   createCustomerDataTrackerManager,
   storeContextManager,
+  displayAlreadyInitializedError,
 } from '@datadog/browser-core'
 import type { LifeCycle } from '../domain/lifeCycle'
 import type { ViewContexts } from '../domain/contexts/viewContexts'
@@ -333,9 +334,7 @@ export function makeRumPublicApi(
 
   function canInitRum(initConfiguration: RumInitConfiguration) {
     if (isAlreadyInitialized) {
-      if (!initConfiguration.silentMultipleInit) {
-        display.error('DD_RUM is already initialized.')
-      }
+      displayAlreadyInitializedError('DD_RUM', initConfiguration)
       return false
     }
     return true
