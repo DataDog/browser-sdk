@@ -96,4 +96,46 @@ describe('serializeAttribute', () => {
       expect(serializeAttribute(node, NodePrivacyLevel.MASK, STABLE_ATTRIBUTES[0], DEFAULT_CONFIGURATION)).toBe('foo')
     })
   })
+
+  describe('image masking', () => {
+    let imageStub: Partial<Element> & { width: number; height: number; naturalWidth: number; naturalHeight: number }
+
+    beforeEach(() => {
+      imageStub = {
+        width: 0,
+        height: 0,
+        naturalWidth: 0,
+        naturalHeight: 0,
+        tagName: 'IMG',
+        getAttribute() {
+          return 'http://foo.bar/image.png'
+        },
+        getBoundingClientRect() {
+          return { width: this.width, height: this.height } as DOMRect
+        },
+      }
+    })
+
+    it('should use an image with same natural dimension than the original one', () => {
+      imageStub.naturalWidth = 2000
+      imageStub.naturalHeight = 1000
+      expect(serializeAttribute(imageStub as Element, NodePrivacyLevel.MASK, 'src', DEFAULT_CONFIGURATION)).toBe(
+        "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='2000' height='1000' style='background-color:silver'%3E%3C/svg%3E"
+      )
+    })
+
+    it('should use an image with same rendering dimension than the original one', () => {
+      imageStub.width = 200
+      imageStub.height = 100
+      expect(serializeAttribute(imageStub as Element, NodePrivacyLevel.MASK, 'src', DEFAULT_CONFIGURATION)).toBe(
+        "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='100' style='background-color:silver'%3E%3C/svg%3E"
+      )
+    })
+
+    it("should use the censored image when original image size can't be computed", () => {
+      expect(serializeAttribute(imageStub as Element, NodePrivacyLevel.MASK, 'src', DEFAULT_CONFIGURATION)).toBe(
+        'data:image/gif;base64,R0lGODlhAQABAIAAAMLCwgAAACH5BAAAAAAALAAAAAABAAEAAAICRAEAOw=='
+      )
+    })
+  })
 })

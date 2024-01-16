@@ -119,3 +119,7 @@ export function getValidTagName(tagName: string): string {
 
   return processedTagName
 }
+
+export function censoredImageForSize(width: number, height: number) {
+  return `data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='${width}' height='${height}' style='background-color:silver'%3E%3C/svg%3E`
+}
