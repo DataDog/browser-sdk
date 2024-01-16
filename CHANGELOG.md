@@ -16,6 +16,16 @@
 
 ---
 
+## v5.8.0
+
+- ✨[RUM-2729] collect connectivity data ([#2560](https://github.com/DataDog/browser-sdk/pull/2560))
+- 🐛[RUM-2752] Replay: generate censored images with custom dimensions ([#2565](https://github.com/DataDog/browser-sdk/pull/2565))
+- 🐛[RUM-2735] Track request with undefined/null method
+- 📝 Document addTiming API relative time issue ([#2570](https://github.com/DataDog/browser-sdk/pull/2570))
+- ♻️ [RUM-2445] simplify context manager sync with local storage ([#2562](https://github.com/DataDog/browser-sdk/pull/2562))
+- ♻️ [RUM-2445] align rum and logs common context implementation ([#2564](https://github.com/DataDog/browser-sdk/pull/2564))
+- ♻️ [RUM-2445] use recorderApi directly ([#2563](https://github.com/DataDog/browser-sdk/pull/2563))
+
 ## v5.7.0
 
 - 🐛 [RUM-2689] fix recorder crash when restarted quickly ([#2553](https://github.com/DataDog/browser-sdk/pull/2553))
