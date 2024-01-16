@@ -15,6 +15,7 @@ import { combine } from '../../tools/mergeInto'
 import { NonErrorPrefix } from '../error/error.types'
 import type { StackTrace } from '../error/computeStackTrace'
 import { computeStackTrace } from '../error/computeStackTrace'
+import { getConnectivity } from '../connectivity'
 import type { TelemetryEvent } from './telemetryEvent.types'
 import type { RawTelemetryConfiguration, RawTelemetryEvent, RuntimeEnvInfo } from './rawTelemetryEvent.types'
 import { StatusType, TelemetryType } from './rawTelemetryEvent.types'
@@ -94,6 +95,7 @@ export function startTelemetry(telemetryService: TelemetryService, configuration
         },
         telemetry: combine(event, {
           runtime_env: runtimeEnvInfo,
+          connectivity: getConnectivity(),
         }),
         experimental_features: arrayFrom(getExperimentalFeatures()),
       },

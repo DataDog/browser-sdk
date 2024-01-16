@@ -5,6 +5,7 @@ import type { ExperimentalFeature } from '../../tools/experimentalFeatures'
 import { resetExperimentalFeatures, addExperimentalFeatures } from '../../tools/experimentalFeatures'
 import type { Configuration } from '../configuration'
 import { INTAKE_SITE_US1, INTAKE_SITE_US1_FED } from '../configuration'
+import { setNavigatorOnLine, setNavigatorConnection } from '../../../test'
 import {
   resetTelemetry,
   startTelemetry,
@@ -90,6 +91,22 @@ describe('telemetry', () => {
     expect(notifySpy.calls.mostRecent().args[0].telemetry.runtime_env).toEqual({
       is_local_file: jasmine.any(Boolean),
       is_worker: jasmine.any(Boolean),
+    })
+  })
+
+  it('should contain connectivity information', () => {
+    setNavigatorOnLine(false)
+    setNavigatorConnection({ type: 'wifi', effectiveType: '4g' })
+
+    const { notifySpy } = startAndSpyTelemetry()
+    callMonitored(() => {
+      throw new Error('message')
+    })
+
+    expect(notifySpy.calls.mostRecent().args[0].telemetry.connectivity).toEqual({
+      status: 'not_connected',
+      interfaces: ['wifi'],
+      effective_type: '4g',
     })
   })
 

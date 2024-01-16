@@ -255,6 +255,11 @@ function validateRumEventFormat(rawRumEvent: RawRumEvent) {
       referrer: '',
       url: 'fake url',
     },
+    connectivity: {
+      status: 'connected',
+      interfaces: ['wifi'],
+      effective_type: '4g',
+    },
   }
   validateRumFormat(combine(fakeContext as RumContext & Context, rawRumEvent))
 }
