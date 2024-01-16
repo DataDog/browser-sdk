@@ -279,7 +279,14 @@ export function makeRumPublicApi(
     },
 
     /**
-     * Using a relative time is discouraged since it can be challenging for users to determine the relative time of the start of the view.
+     * Add a custom timing relative to the start of the current view,
+     * stored in @view.custom_timings.<timing_name>
+     *
+     * @param name name of the custom timing
+     * @param [time] epoch timestamp of the custom timing (if not set, will use current time)
+     *
+     * Note: passing a relative time is discouraged since it is actually used as-is but displayed relative to the view start.
+     * We currently don't provide a way to retrieve the view start time, so it can be challenging to provide a timing relative to the view start.
      * see https://github.com/DataDog/browser-sdk/issues/2552
      */
     addTiming: monitor((name: string, time?: number) => {
