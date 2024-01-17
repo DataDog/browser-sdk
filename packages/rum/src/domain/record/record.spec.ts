@@ -14,6 +14,7 @@ import type {
 } from '../../types'
 import { NodeType, RecordType, IncrementalSource } from '../../types'
 import { appendElement } from '../../../../rum-core/test'
+import { getReplayStats, resetReplayStats } from '../replayStats'
 import type { RecordAPI } from './record'
 import { record } from './record'
 
@@ -22,6 +23,7 @@ describe('record', () => {
   let lifeCycle: LifeCycle
   let emitSpy: jasmine.Spy<(record: BrowserRecord) => void>
   let clock: Clock | undefined
+  const FAKE_VIEW_ID = '123'
 
   beforeEach(() => {
     if (isIE()) {
@@ -387,12 +389,25 @@ describe('record', () => {
     }
   })
 
+  describe('updates record replay stats', () => {
+    it('when recording new records', () => {
+      resetReplayStats()
+      startRecording()
+
+      const records = getEmittedRecords()
+      expect(getReplayStats(FAKE_VIEW_ID)?.records_count).toEqual(records.length)
+    })
+  })
+
   function startRecording() {
     lifeCycle = new LifeCycle()
     recordApi = record({
       emit: emitSpy,
       configuration: { defaultPrivacyLevel: DefaultPrivacyLevel.ALLOW } as RumConfiguration,
       lifeCycle,
+      viewContexts: {
+        findView: () => ({ id: FAKE_VIEW_ID, startClocks: {} }),
+      } as any,
     })
   }
 
