@@ -305,21 +305,27 @@ step-1_deploy-prod-minor-dcs:
   extends:
     - .deploy-prod
   variables:
-    UPLOAD_PATH: us3,us5,ap1,eu1
+    UPLOAD_PATH: us3,us5,ap1
 
-step-2_deploy-prod-us1:
+step-2_deploy-prod-eu1:
+  extends:
+    - .deploy-prod
+  variables:
+    UPLOAD_PATH: eu1
+
+step-3_deploy-prod-us1:
   extends:
     - .deploy-prod
   variables:
     UPLOAD_PATH: us1
 
-step-3_deploy-prod-gov:
+step-4_deploy-prod-gov:
   extends:
     - .deploy-prod
   variables:
     UPLOAD_PATH: root
 
-step-4_publish-npm:
+step-5_publish-npm:
   stage: deploy
   extends:
     - .base-configuration
@@ -330,7 +336,7 @@ step-4_publish-npm:
     - yarn
     - node ./scripts/deploy/publish-npm.js
 
-step-5_publish-developer-extension:
+step-6_publish-developer-extension:
   stage: deploy
   extends:
     - .base-configuration
