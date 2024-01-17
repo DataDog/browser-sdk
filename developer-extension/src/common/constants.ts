@@ -25,3 +25,5 @@ export const enum PanelTabs {
 }
 
 export const DEFAULT_PANEL_TAB = PanelTabs.Events
+
+export const SESSION_STORAGE_SETTINGS_KEY = '__ddBrowserSdkExtensionSettings'
