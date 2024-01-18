@@ -1,5 +1,5 @@
 import type { Encoder, EncoderResult } from '@datadog/browser-core'
-import { assign, sendToExtension } from '@datadog/browser-core'
+import { assign } from '@datadog/browser-core'
 import type { BrowserRecord, BrowserSegmentMetadata, CreationReason, SegmentContext } from '../../types'
 import { RecordType } from '../../types'
 import * as replayStats from '../replayStats'
@@ -40,9 +40,6 @@ export class Segment {
     this.metadata.end = Math.max(this.metadata.end, record.timestamp)
     this.metadata.records_count += 1
     this.metadata.has_full_snapshot ||= record.type === RecordType.FullSnapshot
-
-    sendToExtension('record', { record, segment: this.metadata })
-    replayStats.addRecord(this.metadata.view.id)
 
     const prefix = this.encoder.isEmpty ? '{"records":[' : ','
     this.encoder.write(prefix + JSON.stringify(record), (additionalEncodedBytesCount) => {

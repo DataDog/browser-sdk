@@ -1,6 +1,6 @@
 import { DefaultPrivacyLevel, findLast, isIE } from '@datadog/browser-core'
-import type { RumConfiguration } from '@datadog/browser-rum-core'
-import { LifeCycle } from '@datadog/browser-rum-core'
+import type { RumConfiguration, ViewCreatedEvent } from '@datadog/browser-rum-core'
+import { LifeCycle, LifeCycleEventType } from '@datadog/browser-rum-core'
 import type { Clock } from '@datadog/browser-core/test'
 import { createNewEvent, collectAsyncCalls } from '@datadog/browser-core/test'
 import { findFullSnapshot, findNode, recordsPerFullSnapshot } from '../../../test'
@@ -14,13 +14,16 @@ import type {
 } from '../../types'
 import { NodeType, RecordType, IncrementalSource } from '../../types'
 import { appendElement } from '../../../../rum-core/test'
+import { getReplayStats, resetReplayStats } from '../replayStats'
 import type { RecordAPI } from './record'
 import { record } from './record'
 
 describe('record', () => {
   let recordApi: RecordAPI
+  let lifeCycle: LifeCycle
   let emitSpy: jasmine.Spy<(record: BrowserRecord) => void>
   let clock: Clock | undefined
+  const FAKE_VIEW_ID = '123'
 
   beforeEach(() => {
     if (isIE()) {
@@ -118,7 +121,8 @@ describe('record', () => {
 
     appendElement('<hr/>')
 
-    recordApi.takeSubsequentFullSnapshot()
+    // trigger full snapshot by starting a new view
+    newView()
 
     collectAsyncCalls(emitSpy, 1 + 2 * recordsPerFullSnapshot(), () => {
       const records = getEmittedRecords()
@@ -180,7 +184,9 @@ describe('record', () => {
       startRecording()
       emitSpy.calls.reset()
 
-      recordApi.takeSubsequentFullSnapshot()
+      // trigger full snapshot by starting a new view
+      newView()
+
       expect(getEmittedRecords()[1].type).toBe(RecordType.Focus)
     })
 
@@ -315,7 +321,8 @@ describe('record', () => {
       const radio = appendElement('<input type="radio"/>', createShadow()) as HTMLInputElement
       startRecording()
 
-      recordApi.takeSubsequentFullSnapshot()
+      // trigger full snapshot by starting a new view
+      newView()
 
       radio.checked = true
       radio.dispatchEvent(createNewEvent('change', { target: radio, composed: false }))
@@ -382,12 +389,32 @@ describe('record', () => {
     }
   })
 
+  describe('updates record replay stats', () => {
+    it('when recording new records', () => {
+      resetReplayStats()
+      startRecording()
+
+      const records = getEmittedRecords()
+      expect(getReplayStats(FAKE_VIEW_ID)?.records_count).toEqual(records.length)
+    })
+  })
+
   function startRecording() {
+    lifeCycle = new LifeCycle()
     recordApi = record({
       emit: emitSpy,
       configuration: { defaultPrivacyLevel: DefaultPrivacyLevel.ALLOW } as RumConfiguration,
-      lifeCycle: new LifeCycle(),
+      lifeCycle,
+      viewContexts: {
+        findView: () => ({ id: FAKE_VIEW_ID, startClocks: {} }),
+      } as any,
     })
+  }
+
+  function newView() {
+    lifeCycle.notify(LifeCycleEventType.VIEW_CREATED, {
+      startClocks: { relative: 0, timeStamp: 0 },
+    } as ViewCreatedEvent)
   }
 
   function getEmittedRecords() {
