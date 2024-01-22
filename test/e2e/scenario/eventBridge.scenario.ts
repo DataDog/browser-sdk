@@ -91,4 +91,14 @@ describe('bridge present', () => {
       expect(intakeRegistry.logsEvents.length).toBe(1)
       expect(intakeRegistry.hasOnlyBridgeRequests).toBe(true)
     })
+
+  createTest('send records to the bridge')
+    .withRum()
+    .withEventBridge()
+    .run(async ({ intakeRegistry }) => {
+      await flushEvents()
+
+      expect(intakeRegistry.replayRecords.length).toBeGreaterThan(0)
+      expect(intakeRegistry.hasOnlyBridgeRequests).toBe(true)
+    })
 })

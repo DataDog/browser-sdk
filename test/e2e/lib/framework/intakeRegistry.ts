@@ -121,6 +121,10 @@ export class IntakeRegistry {
   get replaySegments() {
     return this.replayRequests.map((request) => request.segment)
   }
+
+  get replayRecords() {
+    return this.replayRequests.flatMap((request) => request.segment.records)
+  }
 }
 
 function isLogsIntakeRequest(request: IntakeRequest): request is LogsIntakeRequest {
