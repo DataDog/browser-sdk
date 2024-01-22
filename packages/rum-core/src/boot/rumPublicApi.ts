@@ -31,6 +31,7 @@ import {
   CustomerDataCompressionStatus,
   createCustomerDataTrackerManager,
   storeContextManager,
+  getEventBridge,
 } from '@datadog/browser-core'
 import type { LifeCycle } from '../domain/lifeCycle'
 import type { ViewContexts } from '../domain/contexts/viewContexts'
@@ -341,11 +342,12 @@ export function makeRumPublicApi(
     return true
   }
 
-  function overrideInitConfigurationForBridge<C extends InitConfiguration>(initConfiguration: C): C {
+  function overrideInitConfigurationForBridge<C extends RumInitConfiguration>(initConfiguration: C): C {
     return assign({}, initConfiguration, {
       applicationId: '00000000-aaaa-0000-aaaa-000000000000',
       clientToken: 'empty',
       sessionSampleRate: 100,
+      defaultPrivacyLevel: initConfiguration.defaultPrivacyLevel ?? getEventBridge()?.getPrivacyLevel(),
     })
   }
 }

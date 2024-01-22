@@ -23,6 +23,7 @@ import {
   deleteEventBridgeStub,
   cleanupSyntheticsWorkerValues,
   mockSyntheticsWorkerValues,
+  PRIVACY_LEVEL_FROM_EVENT_BRIDGE,
 } from '@datadog/browser-core/test'
 import type { TestSetupBuilder } from '../../test'
 import { setup, noopRecorderApi } from '../../test'
@@ -112,16 +113,32 @@ describe('rum public api', () => {
         deleteEventBridgeStub()
       })
 
-      it('init should accept empty application id and client token', () => {
+      it('should accept empty application id and client token', () => {
         const hybridInitConfiguration: HybridInitConfiguration = {}
         rumPublicApi.init(hybridInitConfiguration as RumInitConfiguration)
         expect(display.error).not.toHaveBeenCalled()
       })
 
-      it('init should force session sample rate to 100', () => {
+      it('should force session sample rate to 100', () => {
         const invalidConfiguration: HybridInitConfiguration = { sessionSampleRate: 50 }
         rumPublicApi.init(invalidConfiguration as RumInitConfiguration)
         expect(rumPublicApi.getInitConfiguration()?.sessionSampleRate).toEqual(100)
+      })
+
+      it('should set the default privacy level received from the bridge if the not provided in the init configuration', () => {
+        const hybridInitConfiguration: HybridInitConfiguration = {}
+        rumPublicApi.init(hybridInitConfiguration as RumInitConfiguration)
+        expect((rumPublicApi.getInitConfiguration() as RumInitConfiguration)?.defaultPrivacyLevel).toEqual(
+          PRIVACY_LEVEL_FROM_EVENT_BRIDGE
+        )
+      })
+
+      it('should set the default privacy level from the init configuration if provided', () => {
+        const hybridInitConfiguration: HybridInitConfiguration = { defaultPrivacyLevel: 'mask' }
+        rumPublicApi.init(hybridInitConfiguration as RumInitConfiguration)
+        expect((rumPublicApi.getInitConfiguration() as RumInitConfiguration)?.defaultPrivacyLevel).toEqual(
+          hybridInitConfiguration.defaultPrivacyLevel
+        )
       })
 
       it('should initialize even if session cannot be handled', () => {
