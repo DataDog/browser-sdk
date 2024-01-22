@@ -381,8 +381,13 @@ describe('view events', () => {
     clock.tick(VIEW_DURATION)
     window.dispatchEvent(createNewEvent('beforeunload'))
 
-    const lastBridgeMessage = JSON.parse(sendSpy.calls.mostRecent().args[0]) as { eventType: 'rum'; event: RumEvent }
+    const lastBridgeMessage = JSON.parse(sendSpy.calls.mostRecent().args[0]) as {
+      eventType: 'rum'
+      event: RumEvent
+      view: { id: string }
+    }
     expect(lastBridgeMessage.event.type).toBe('view')
     expect(lastBridgeMessage.event.view.time_spent).toBe(toServerDuration(VIEW_DURATION))
+    expect(lastBridgeMessage.view.id).toBeDefined()
   })
 })

@@ -6,6 +6,7 @@ export interface BrowserWindowWithEventBridge extends Window {
 }
 
 export interface DatadogEventBridge {
+  getPrivacyLevel?(): string
   getAllowedWebViewHosts(): string
   send(msg: string): void
 }
@@ -18,11 +19,15 @@ export function getEventBridge<T, E>() {
   }
 
   return {
+    getPrivacyLevel() {
+      return eventBridgeGlobal.getPrivacyLevel?.()
+    },
     getAllowedWebViewHosts() {
       return JSON.parse(eventBridgeGlobal.getAllowedWebViewHosts()) as string[]
     },
-    send(eventType: T, event: E) {
-      eventBridgeGlobal.send(JSON.stringify({ eventType, event }))
+    send(eventType: T, event: E, viewId?: string) {
+      const view = viewId ? { id: viewId } : undefined
+      eventBridgeGlobal.send(JSON.stringify({ eventType, event, view }))
     },
   }
 }

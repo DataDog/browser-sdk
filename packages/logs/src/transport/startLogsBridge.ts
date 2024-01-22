@@ -8,6 +8,6 @@ export function startLogsBridge(lifeCycle: LifeCycle) {
   const bridge = getEventBridge<'log', LogsEvent>()!
 
   lifeCycle.subscribe(LifeCycleEventType.LOG_COLLECTED, (serverLogsEvent: LogsEvent & Context) => {
-    bridge.send('log', serverLogsEvent)
+    bridge.send('log', serverLogsEvent, serverLogsEvent.view.id)
   })
 }

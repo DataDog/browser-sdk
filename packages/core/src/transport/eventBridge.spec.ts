@@ -1,4 +1,5 @@
-import { deleteEventBridgeStub, initEventBridgeStub } from '../../test'
+import { PRIVACY_LEVEL_FROM_EVENT_BRIDGE, deleteEventBridgeStub, initEventBridgeStub } from '../../test'
+import type { DatadogEventBridge } from './eventBridge'
 import { getEventBridge, canUseEventBridge } from './eventBridge'
 
 describe('canUseEventBridge', () => {
@@ -33,7 +34,7 @@ describe('canUseEventBridge', () => {
   })
 })
 
-describe('getEventBridge', () => {
+describe('event bridge send', () => {
   let sendSpy: jasmine.Spy<(msg: string) => void>
 
   beforeEach(() => {
@@ -45,11 +46,44 @@ describe('getEventBridge', () => {
     deleteEventBridgeStub()
   })
 
-  it('event bridge should serialize sent events', () => {
+  it('should serialize sent events without view', () => {
     const eventBridge = getEventBridge()!
 
     eventBridge.send('view', { foo: 'bar' })
 
     expect(sendSpy).toHaveBeenCalledOnceWith('{"eventType":"view","event":{"foo":"bar"}}')
+  })
+
+  it('should serialize sent events with view', () => {
+    const eventBridge = getEventBridge()!
+
+    eventBridge.send('view', { foo: 'bar' }, '123')
+
+    expect(sendSpy).toHaveBeenCalledOnceWith('{"eventType":"view","event":{"foo":"bar"},"view":{"id":"123"}}')
+  })
+})
+
+describe('event bridge getPrivacyLevel', () => {
+  let eventBridgeStub: DatadogEventBridge
+
+  beforeEach(() => {
+    eventBridgeStub = initEventBridgeStub()
+  })
+
+  afterEach(() => {
+    deleteEventBridgeStub()
+  })
+
+  it('should return the privacy level', () => {
+    const eventBridge = getEventBridge()!
+
+    expect(eventBridge.getPrivacyLevel()).toEqual(PRIVACY_LEVEL_FROM_EVENT_BRIDGE)
+  })
+
+  it('should return undefined if getPrivacyLevel not present in the bridge', () => {
+    delete eventBridgeStub.getPrivacyLevel
+    const eventBridge = getEventBridge()!
+
+    expect(eventBridge.getPrivacyLevel()).toBeUndefined()
   })
 })
