@@ -58,7 +58,7 @@ export function startRumSessionManager(configuration: RumConfiguration, lifeCycl
 export function startRumSessionManagerStub(): RumSessionManager {
   const session: RumSession = {
     id: '00000000-aaaa-0000-aaaa-000000000000',
-    sessionReplayAllowed: false,
+    sessionReplayAllowed: true,
   }
   return {
     findTrackedSession: () => session,
