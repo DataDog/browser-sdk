@@ -23,7 +23,6 @@ import {
   deleteEventBridgeStub,
   cleanupSyntheticsWorkerValues,
   mockSyntheticsWorkerValues,
-  PRIVACY_LEVEL_FROM_EVENT_BRIDGE,
 } from '@datadog/browser-core/test'
 import type { TestSetupBuilder } from '../../test'
 import { setup, noopRecorderApi } from '../../test'
@@ -105,8 +104,9 @@ describe('rum public api', () => {
     })
 
     describe('if event bridge present', () => {
+      const bridgePrivacyLevel = DefaultPrivacyLevel.ALLOW
       beforeEach(() => {
-        initEventBridgeStub()
+        initEventBridgeStub({ privacyLevel: bridgePrivacyLevel })
       })
 
       afterEach(() => {
@@ -129,12 +129,12 @@ describe('rum public api', () => {
         const hybridInitConfiguration: HybridInitConfiguration = {}
         rumPublicApi.init(hybridInitConfiguration as RumInitConfiguration)
         expect((rumPublicApi.getInitConfiguration() as RumInitConfiguration)?.defaultPrivacyLevel).toEqual(
-          PRIVACY_LEVEL_FROM_EVENT_BRIDGE
+          bridgePrivacyLevel
         )
       })
 
       it('should set the default privacy level from the init configuration if provided', () => {
-        const hybridInitConfiguration: HybridInitConfiguration = { defaultPrivacyLevel: 'mask' }
+        const hybridInitConfiguration: HybridInitConfiguration = { defaultPrivacyLevel: DefaultPrivacyLevel.MASK }
         rumPublicApi.init(hybridInitConfiguration as RumInitConfiguration)
         expect((rumPublicApi.getInitConfiguration() as RumInitConfiguration)?.defaultPrivacyLevel).toEqual(
           hybridInitConfiguration.defaultPrivacyLevel

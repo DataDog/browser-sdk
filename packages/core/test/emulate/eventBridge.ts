@@ -1,11 +1,14 @@
+import { DefaultPrivacyLevel } from '../../src/domain/configuration'
 import type { BrowserWindowWithEventBridge } from '../../src/transport'
 
-export const PRIVACY_LEVEL_FROM_EVENT_BRIDGE = 'allow'
-export function initEventBridgeStub(allowedWebViewHosts = [window.location.hostname]) {
+export function initEventBridgeStub({
+  allowedWebViewHosts = [window.location.hostname],
+  privacyLevel = DefaultPrivacyLevel.MASK,
+}: { allowedWebViewHosts?: string[]; privacyLevel?: DefaultPrivacyLevel } = {}) {
   const eventBridgeStub = {
     send: (_msg: string) => undefined,
     getAllowedWebViewHosts: () => JSON.stringify(allowedWebViewHosts),
-    getPrivacyLevel: () => PRIVACY_LEVEL_FROM_EVENT_BRIDGE,
+    getPrivacyLevel: () => privacyLevel,
   }
   ;(window as BrowserWindowWithEventBridge).DatadogEventBridge = eventBridgeStub
   return eventBridgeStub

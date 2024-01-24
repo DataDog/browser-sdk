@@ -8,6 +8,6 @@ export function startRumEventBridge(lifeCycle: LifeCycle) {
   const bridge = getEventBridge<'rum', RumEvent>()!
 
   lifeCycle.subscribe(LifeCycleEventType.RUM_EVENT_COLLECTED, (serverRumEvent: RumEvent & Context) => {
-    bridge.send('rum', serverRumEvent, serverRumEvent.view.id)
+    bridge.send('rum', serverRumEvent)
   })
 }

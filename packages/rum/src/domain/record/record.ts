@@ -1,3 +1,4 @@
+import type { RelativeTime } from '@datadog/browser-core'
 import { sendToExtension, timeStampNow } from '@datadog/browser-core'
 import type { LifeCycle, RumConfiguration, ViewContexts } from '@datadog/browser-rum-core'
 import type {
@@ -44,7 +45,7 @@ export function record(options: RecordOptions): RecordAPI {
   const emitAndComputeStats = (record: BrowserRecord) => {
     emit(record)
     sendToExtension('record', { record })
-    const view = options.viewContexts.findView()
+    const view = options.viewContexts.findView(record.timestamp as RelativeTime)
     if (view) {
       replayStats.addRecord(view.id)
     }

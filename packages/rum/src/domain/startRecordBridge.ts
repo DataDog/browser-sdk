@@ -1,3 +1,4 @@
+import type { RelativeTime } from '@datadog/browser-core'
 import { getEventBridge } from '@datadog/browser-core'
 import type { ViewContexts } from '@datadog/browser-rum-core'
 import type { BrowserRecord } from '../types'
@@ -7,7 +8,7 @@ export function startRecordBridge(viewContexts: ViewContexts) {
 
   return {
     addRecord: (record: BrowserRecord) => {
-      const view = viewContexts.findView()
+      const view = viewContexts.findView(record.timestamp as RelativeTime)
       if (!view) {
         return
       }
