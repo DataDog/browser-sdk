@@ -10,6 +10,13 @@ export class BoundedBuffer<T = void> {
     }
   }
 
+  remove(callback: (arg: T) => void) {
+    const index = this.buffer.indexOf(callback)
+    if (index !== -1) {
+      this.buffer.splice(index, 1)
+    }
+  }
+
   drain(arg: T) {
     this.buffer.forEach((callback) => callback(arg))
     this.buffer.length = 0

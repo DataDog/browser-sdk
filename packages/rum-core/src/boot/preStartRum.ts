@@ -31,26 +31,32 @@ export function createPreStartStrategy(
   ) => StartRumResult
 ): Strategy {
   const bufferApiCalls = new BoundedBuffer<StartRumResult>()
-  let firstStartView: { options: ViewOptions | undefined; ignore(): void } | undefined
+  let firstStartViewCall:
+    | { options: ViewOptions | undefined; callback: (startRumResult: StartRumResult) => void }
+    | undefined
   let deflateWorker: DeflateWorker | undefined
 
   let cachedInitConfiguration: RumInitConfiguration | undefined
   let cachedConfiguration: RumConfiguration | undefined
 
   function tryStartRum() {
-    if (
-      !cachedInitConfiguration ||
-      !cachedConfiguration ||
-      (cachedConfiguration.trackViewsManually && !firstStartView)
-    ) {
+    if (!cachedInitConfiguration || !cachedConfiguration) {
       return
     }
 
     let initialViewOptions: ViewOptions | undefined
 
     if (cachedConfiguration.trackViewsManually) {
-      firstStartView!.ignore()
-      initialViewOptions = firstStartView!.options
+      if (!firstStartViewCall) {
+        return
+      }
+      // An initial view is always created when starting RUM.
+      // When tracking views automatically, any startView call before RUM start creates an extra
+      // view.
+      // When tracking views manually, we use the ViewOptions from the first startView call as the
+      // initial view options, and we remove the actual startView call so we don't create
+      bufferApiCalls.remove(firstStartViewCall.callback)
+      initialViewOptions = firstStartViewCall.options
     }
 
     const startRumResult = doStartRum(cachedInitConfiguration, cachedConfiguration, deflateWorker, initialViewOptions)
@@ -128,22 +134,15 @@ export function createPreStartStrategy(
     },
 
     startView(options, startClocks = clocksNow()) {
-      let ignore = false
-      if (!firstStartView) {
-        firstStartView = {
-          options,
-          ignore() {
-            ignore = true
-          },
-        }
+      const callback = (startRumResult: StartRumResult) => {
+        startRumResult.startView(options, startClocks)
+      }
+      bufferApiCalls.add(callback)
+
+      if (!firstStartViewCall) {
+        firstStartViewCall = { options, callback }
         tryStartRum()
       }
-
-      bufferApiCalls.add((startRumResult) => {
-        if (!ignore) {
-          startRumResult.startView(options, startClocks)
-        }
-      })
     },
 
     addAction(action, commonContext = getCommonContext()) {
