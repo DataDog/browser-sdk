@@ -33,6 +33,7 @@ module.exports = {
     suppressErrorSummary: true,
     suppressPassed: true,
     suppressSkipped: true,
+    showBrowser: true,
   },
   junitReporter: {
     outputDir: testReportDirectory,
