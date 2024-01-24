@@ -56,7 +56,7 @@ export function makeLogsPublicApi(startLogsImpl: StartLogs) {
 
     const startLogsResult = startLogsImpl(initConfiguration, configuration, getCommonContext)
 
-    strategy = createActualStrategy(initConfiguration, startLogsResult)
+    strategy = createPostStartStrategy(initConfiguration, startLogsResult)
     return startLogsResult
   })
 
@@ -120,7 +120,7 @@ export function makeLogsPublicApi(startLogsImpl: StartLogs) {
   })
 }
 
-function createActualStrategy(initConfiguration: LogsInitConfiguration, startLogsResult: StartLogsResult): Strategy {
+function createPostStartStrategy(initConfiguration: LogsInitConfiguration, startLogsResult: StartLogsResult): Strategy {
   return assign(
     {
       init: (initConfiguration: LogsInitConfiguration) => {
