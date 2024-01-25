@@ -20,7 +20,6 @@ import {
 } from '@datadog/browser-core'
 import {
   initEventBridgeStub,
-  deleteEventBridgeStub,
   cleanupSyntheticsWorkerValues,
   mockSyntheticsWorkerValues,
 } from '@datadog/browser-core/test'
@@ -107,10 +106,6 @@ describe('rum public api', () => {
       const bridgePrivacyLevel = DefaultPrivacyLevel.ALLOW
       beforeEach(() => {
         initEventBridgeStub({ privacyLevel: bridgePrivacyLevel })
-      })
-
-      afterEach(() => {
-        deleteEventBridgeStub()
       })
 
       it('should accept empty application id and client token', () => {
@@ -218,7 +213,6 @@ describe('rum public api', () => {
 
       afterEach(() => {
         resetExperimentalFeatures()
-        deleteEventBridgeStub()
       })
 
       describe('with compressIntakeRequests: false', () => {

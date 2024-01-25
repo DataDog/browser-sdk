@@ -10,12 +10,7 @@ import {
   createIdentityEncoder,
   createCustomerDataTracker,
 } from '@datadog/browser-core'
-import {
-  createNewEvent,
-  interceptRequests,
-  initEventBridgeStub,
-  deleteEventBridgeStub,
-} from '@datadog/browser-core/test'
+import { createNewEvent, interceptRequests, initEventBridgeStub } from '@datadog/browser-core/test'
 import type { RumSessionManagerMock, TestSetupBuilder } from '../../test'
 import { createPerformanceEntry, createRumSessionManagerMock, noopRecorderApi, setup } from '../../test'
 import { RumPerformanceEntryType } from '../browser/performanceCollection'
@@ -341,7 +336,6 @@ describe('view events', () => {
   })
 
   afterEach(() => {
-    deleteEventBridgeStub()
     stopSessionManager()
     setupBuilder.cleanup()
     interceptor.restore()

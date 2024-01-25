@@ -3,12 +3,7 @@ import { PageExitReason, DefaultPrivacyLevel, noop, isIE, DeflateEncoderStreamId
 import type { LifeCycle, ViewCreatedEvent, RumConfiguration } from '@datadog/browser-rum-core'
 import { LifeCycleEventType } from '@datadog/browser-rum-core'
 import type { Clock } from '@datadog/browser-core/test'
-import {
-  collectAsyncCalls,
-  createNewEvent,
-  deleteEventBridgeStub,
-  initEventBridgeStub,
-} from '@datadog/browser-core/test'
+import { collectAsyncCalls, createNewEvent, initEventBridgeStub } from '@datadog/browser-core/test'
 import type { RumSessionManagerMock, TestSetupBuilder } from '../../../rum-core/test'
 import { appendElement, createRumSessionManagerMock, setup } from '../../../rum-core/test'
 
@@ -86,7 +81,6 @@ describe('startRecording', () => {
     setupBuilder.cleanup()
     clock?.cleanup()
     resetDeflateWorkerState()
-    deleteEventBridgeStub()
   })
 
   it('sends recorded segments with valid context', async () => {

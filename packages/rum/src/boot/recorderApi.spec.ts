@@ -2,7 +2,7 @@ import type { DeflateEncoder, DeflateWorker, DeflateWorkerAction } from '@datado
 import { display, isIE } from '@datadog/browser-core'
 import type { RecorderApi, ViewContexts, LifeCycle, RumConfiguration } from '@datadog/browser-rum-core'
 import { LifeCycleEventType } from '@datadog/browser-rum-core'
-import { deleteEventBridgeStub, initEventBridgeStub, createNewEvent } from '@datadog/browser-core/test'
+import { initEventBridgeStub, createNewEvent } from '@datadog/browser-core/test'
 import type { RumSessionManagerMock, TestSetupBuilder } from '../../../rum-core/test'
 import { createRumSessionManagerMock, setup } from '../../../rum-core/test'
 import type { CreateDeflateWorker } from '../domain/deflate'
@@ -186,10 +186,6 @@ describe('makeRecorderApi', () => {
     describe('if event bridge present', () => {
       beforeEach(() => {
         initEventBridgeStub()
-      })
-
-      afterEach(() => {
-        deleteEventBridgeStub()
       })
 
       it('does not start recording', () => {

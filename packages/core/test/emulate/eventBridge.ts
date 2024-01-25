@@ -1,5 +1,6 @@
 import { DefaultPrivacyLevel } from '../../src/domain/configuration'
 import type { BrowserWindowWithEventBridge } from '../../src/transport'
+import { registerCleanupTask } from '../registerCleanupTask'
 
 export function initEventBridgeStub({
   allowedWebViewHosts = [window.location.hostname],
@@ -11,9 +12,9 @@ export function initEventBridgeStub({
     getPrivacyLevel: () => privacyLevel,
   }
   ;(window as BrowserWindowWithEventBridge).DatadogEventBridge = eventBridgeStub
-  return eventBridgeStub
-}
 
-export function deleteEventBridgeStub() {
-  delete (window as BrowserWindowWithEventBridge).DatadogEventBridge
+  registerCleanupTask(() => {
+    delete (window as BrowserWindowWithEventBridge).DatadogEventBridge
+  })
+  return eventBridgeStub
 }

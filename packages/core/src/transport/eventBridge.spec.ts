@@ -1,14 +1,10 @@
-import { deleteEventBridgeStub, initEventBridgeStub } from '../../test'
+import { initEventBridgeStub } from '../../test'
 import { DefaultPrivacyLevel } from '../domain/configuration'
 import type { DatadogEventBridge } from './eventBridge'
 import { getEventBridge, canUseEventBridge } from './eventBridge'
 
 describe('canUseEventBridge', () => {
   const allowedWebViewHosts = ['foo.bar']
-
-  afterEach(() => {
-    deleteEventBridgeStub()
-  })
 
   it('should detect when the bridge is present and the webView host is allowed', () => {
     initEventBridgeStub({ allowedWebViewHosts })
@@ -43,10 +39,6 @@ describe('event bridge send', () => {
     sendSpy = spyOn(eventBridgeStub, 'send')
   })
 
-  afterEach(() => {
-    deleteEventBridgeStub()
-  })
-
   it('should serialize sent events without view', () => {
     const eventBridge = getEventBridge()!
 
@@ -70,10 +62,6 @@ describe('event bridge getPrivacyLevel', () => {
 
   beforeEach(() => {
     eventBridgeStub = initEventBridgeStub({ privacyLevel: bridgePrivacyLevel })
-  })
-
-  afterEach(() => {
-    deleteEventBridgeStub()
   })
 
   it('should return the privacy level', () => {

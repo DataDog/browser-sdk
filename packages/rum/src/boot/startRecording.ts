@@ -1,5 +1,5 @@
 import type { RawError, HttpRequest, DeflateEncoder } from '@datadog/browser-core'
-import { createHttpRequest, addTelemetryDebug, noop, canUseEventBridge } from '@datadog/browser-core'
+import { createHttpRequest, addTelemetryDebug, canUseEventBridge } from '@datadog/browser-core'
 import type { LifeCycle, ViewContexts, RumConfiguration, RumSessionManager } from '@datadog/browser-rum-core'
 import { LifeCycleEventType } from '@datadog/browser-rum-core'
 
@@ -16,6 +16,8 @@ export function startRecording(
   encoder: DeflateEncoder,
   httpRequest?: HttpRequest
 ) {
+  const cleanupTasks: Array<() => void> = []
+
   const reportError = (error: RawError) => {
     lifeCycle.notify(LifeCycleEventType.RAW_ERROR_COLLECTED, { error })
     addTelemetryDebug('Error reported to customer', { 'error.message': error.message })
@@ -25,8 +27,8 @@ export function startRecording(
     httpRequest ||
     createHttpRequest(configuration, configuration.sessionReplayEndpointBuilder, SEGMENT_BYTES_LIMIT, reportError)
 
-  let addRecord = (_record: BrowserRecord) => {}
-  let stopSegmentCollection = noop
+  let addRecord: (record: BrowserRecord) => void
+  let stopSegmentCollection: () => void
 
   if (!canUseEventBridge()) {
     ;({ addRecord, stop: stopSegmentCollection } = startSegmentCollection(
@@ -37,6 +39,7 @@ export function startRecording(
       replayRequest,
       encoder
     ))
+    cleanupTasks.push(() => stopSegmentCollection())
   } else {
     ;({ addRecord } = startRecordBridge(viewContexts))
   }
@@ -47,11 +50,11 @@ export function startRecording(
     lifeCycle,
     viewContexts,
   })
+  cleanupTasks.push(() => stopRecording())
 
   return {
     stop: () => {
-      stopRecording()
-      stopSegmentCollection()
+      cleanupTasks.forEach((task) => task())
     },
   }
 }

@@ -8,10 +8,7 @@ export function startRecordBridge(viewContexts: ViewContexts) {
 
   return {
     addRecord: (record: BrowserRecord) => {
-      const view = viewContexts.findView(record.timestamp as RelativeTime)
-      if (!view) {
-        return
-      }
+      const view = viewContexts.findView(record.timestamp as RelativeTime)!
       bridge.send('record', record, view.id)
     },
   }

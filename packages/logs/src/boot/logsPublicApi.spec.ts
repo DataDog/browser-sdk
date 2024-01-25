@@ -1,7 +1,7 @@
 import type { TimeStamp } from '@datadog/browser-core'
 import { monitor, ONE_SECOND, display, removeStorageListeners } from '@datadog/browser-core'
 import type { Clock } from '@datadog/browser-core/test'
-import { deleteEventBridgeStub, initEventBridgeStub, mockClock } from '@datadog/browser-core/test'
+import { initEventBridgeStub, mockClock } from '@datadog/browser-core/test'
 import type { HybridInitConfiguration, LogsInitConfiguration } from '../domain/configuration'
 import type { Logger, LogsMessage } from '../domain/logger'
 import { HandlerType, StatusType } from '../domain/logger'
@@ -124,10 +124,6 @@ describe('logs entry', () => {
     describe('if event bridge present', () => {
       beforeEach(() => {
         initEventBridgeStub()
-      })
-
-      afterEach(() => {
-        deleteEventBridgeStub()
       })
 
       it('init should accept empty client token', () => {
