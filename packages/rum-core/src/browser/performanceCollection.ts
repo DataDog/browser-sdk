@@ -154,6 +154,7 @@ export function supportPerformanceTimingEvent(entryType: RumPerformanceEntryType
 }
 
 export function startPerformanceCollection(lifeCycle: LifeCycle, configuration: RumConfiguration) {
+  const cleanupTasks: Array<() => void> = []
   retrieveInitialDocumentResourceTiming(configuration, (timing) => {
     handleRumPerformanceEntries(lifeCycle, configuration, [timing])
   })
@@ -195,6 +196,7 @@ export function startPerformanceCollection(lifeCycle: LifeCycle, configuration: 
           // cf: https://github.com/GoogleChrome/web-vitals/blob/3806160ffbc93c3c4abf210a167b81228172b31c/src/onINP.ts#L209
           durationThreshold: 40,
         })
+        cleanupTasks.push(() => observer.disconnect())
       })
     } catch (e) {
       // Some old browser versions (ex: chrome 67) don't support the PerformanceObserver type and buffered options
@@ -204,12 +206,19 @@ export function startPerformanceCollection(lifeCycle: LifeCycle, configuration: 
 
     const mainObserver = new PerformanceObserver(handlePerformanceEntryList)
     mainObserver.observe({ entryTypes: mainEntries })
+    cleanupTasks.push(() => mainObserver.disconnect())
 
     if (supportPerformanceObject() && 'addEventListener' in performance) {
       // https://bugzilla.mozilla.org/show_bug.cgi?id=1559377
-      addEventListener(configuration, performance, 'resourcetimingbufferfull', () => {
-        performance.clearResourceTimings()
-      })
+      const { stop: removePerformanceListener } = addEventListener(
+        configuration,
+        performance,
+        'resourcetimingbufferfull',
+        () => {
+          performance.clearResourceTimings()
+        }
+      )
+      cleanupTasks.push(removePerformanceListener)
     }
   }
   if (!supportPerformanceTimingEvent(RumPerformanceEntryType.NAVIGATION)) {
@@ -218,9 +227,15 @@ export function startPerformanceCollection(lifeCycle: LifeCycle, configuration: 
     })
   }
   if (!supportPerformanceTimingEvent(RumPerformanceEntryType.FIRST_INPUT)) {
-    retrieveFirstInputTiming(configuration, (timing) => {
+    const { stop: stopFirstInputTiming } = retrieveFirstInputTiming(configuration, (timing) => {
       handleRumPerformanceEntries(lifeCycle, configuration, [timing])
     })
+    cleanupTasks.push(stopFirstInputTiming)
+  }
+  return {
+    stop: () => {
+      cleanupTasks.forEach((task) => task())
+    },
   }
 }
 
@@ -316,6 +331,8 @@ function retrieveFirstInputTiming(configuration: RumConfiguration, callback: (ti
     },
     { passive: true, capture: true }
   )
+
+  return { stop: removeEventListeners }
 
   /**
    * Pointer events are a special case, because they can trigger main or compositor thread behavior.
