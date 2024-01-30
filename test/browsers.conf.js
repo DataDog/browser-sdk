@@ -18,7 +18,7 @@ const browserConfigurations = [
   {
     sessionName: 'Safari desktop',
     name: 'Safari',
-    version: '14.0',
+    version: '14.1',
     os: 'OS X',
     osVersion: 'Big Sur',
   },
@@ -33,8 +33,8 @@ const browserConfigurations = [
     sessionName: 'Safari mobile',
     name: 'safari',
     os: 'ios',
-    osVersion: '12',
-    device: 'iPhone XR',
+    osVersion: '13',
+    device: 'iPhone 8',
   },
   {
     sessionName: 'IE',
