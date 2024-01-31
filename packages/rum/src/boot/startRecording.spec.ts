@@ -211,17 +211,35 @@ describe('startRecording', () => {
 
   it('should send records through the bridge when it is present', () => {
     const eventBridgeStub = initEventBridgeStub()
-    setupBuilder.build()
+    const { lifeCycle } = setupBuilder.build()
     const sendSpy = spyOn(eventBridgeStub, 'send')
 
+    // send click record
     document.body.dispatchEvent(createNewEvent('click', { clientX: 1, clientY: 2 }))
 
-    const lastBridgeMessage = JSON.parse(sendSpy.calls.mostRecent().args[0])
+    // send view end record and meta record
+    changeView(lifeCycle)
 
-    expect(lastBridgeMessage).toEqual({
+    const record1 = JSON.parse(sendSpy.calls.argsFor(0)[0])
+    const record2 = JSON.parse(sendSpy.calls.argsFor(1)[0])
+    const record3 = JSON.parse(sendSpy.calls.argsFor(2)[0])
+
+    expect(record1).toEqual({
       eventType: 'record',
       event: jasmine.objectContaining({ type: RecordType.IncrementalSnapshot }),
-      view: { id: viewId },
+      view: { id: 'view-id' },
+    })
+
+    expect(record2).toEqual({
+      eventType: 'record',
+      event: jasmine.objectContaining({ type: RecordType.ViewEnd }),
+      view: { id: 'view-id' },
+    })
+
+    expect(record3).toEqual({
+      eventType: 'record',
+      event: jasmine.objectContaining({ type: RecordType.Meta }),
+      view: { id: 'view-id-2' },
     })
   })
 
