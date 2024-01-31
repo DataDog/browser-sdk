@@ -1,5 +1,5 @@
 import type { RelativeTime } from '@datadog/browser-core'
-import { Observable, noop, performDraw, startSessionManager } from '@datadog/browser-core'
+import { Observable, isBridgeForRecordsSupported, noop, performDraw, startSessionManager } from '@datadog/browser-core'
 import type { RumConfiguration } from './configuration'
 import type { LifeCycle } from './lifeCycle'
 import { LifeCycleEventType } from './lifeCycle'
@@ -58,7 +58,7 @@ export function startRumSessionManager(configuration: RumConfiguration, lifeCycl
 export function startRumSessionManagerStub(): RumSessionManager {
   const session: RumSession = {
     id: '00000000-aaaa-0000-aaaa-000000000000',
-    sessionReplayAllowed: true,
+    sessionReplayAllowed: isBridgeForRecordsSupported(),
   }
   return {
     findTrackedSession: () => session,

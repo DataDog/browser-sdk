@@ -32,6 +32,11 @@ export function getEventBridge<T, E>() {
   }
 }
 
+export function isBridgeForRecordsSupported(): boolean {
+  const bridge = getEventBridgeGlobal()
+  return !!bridge && 'getPrivacyLevel' in bridge
+}
+
 export function canUseEventBridge(currentHost = getGlobalObject<Window>().location?.hostname): boolean {
   const bridge = getEventBridge()
   return (

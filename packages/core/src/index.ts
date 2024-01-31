@@ -54,6 +54,7 @@ export {
   Payload,
   createHttpRequest,
   canUseEventBridge,
+  isBridgeForRecordsSupported,
   getEventBridge,
   startBatchWithReplica,
   createFlushController,

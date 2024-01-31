@@ -184,14 +184,21 @@ describe('makeRecorderApi', () => {
     })
 
     describe('if event bridge present', () => {
-      beforeEach(() => {
-        initEventBridgeStub()
+      it('should start recording when the bridge supports records', () => {
+        initEventBridgeStub({ bridgeForRecordsSupported: true })
+
+        setupBuilder.build()
+        rumInit()
+        recorderApi.start()
+        expect(startRecordingSpy).toHaveBeenCalled()
       })
 
-      it('does not start recording', () => {
+      it('should not start recording when the bridge does not support records', () => {
+        initEventBridgeStub({ bridgeForRecordsSupported: false })
+
         setupBuilder.build()
-        recorderApi.start()
         rumInit()
+        recorderApi.start()
         expect(startRecordingSpy).not.toHaveBeenCalled()
       })
     })

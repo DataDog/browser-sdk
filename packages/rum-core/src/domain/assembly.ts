@@ -117,7 +117,6 @@ export function startRumAssembly(
 
   const syntheticsContext = getSyntheticsContext()
   const ciTestContext = getCiTestContext()
-
   lifeCycle.subscribe(
     LifeCycleEventType.RAW_RUM_EVENT_COLLECTED,
     ({ startTime, rawRumEvent, domainContext, savedCommonContext, customerContext }) => {
