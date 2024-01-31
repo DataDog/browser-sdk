@@ -4,7 +4,7 @@ import type { TestSetupBuilder } from '../../../test'
 import { setup } from '../../../test'
 import { LifeCycleEventType } from '../lifeCycle'
 import type { ViewCreatedEvent } from '../view/trackViews'
-import type { ViewContexts } from './viewContexts'
+import type { ViewContext, ViewContexts } from './viewContexts'
 import { startViewContexts, VIEW_CONTEXT_TIME_OUT_DELAY } from './viewContexts'
 
 describe('viewContexts', () => {
@@ -108,6 +108,21 @@ describe('viewContexts', () => {
 
       lifeCycle.notify(LifeCycleEventType.VIEW_CREATED, buildViewCreatedEvent({ name: 'Fake name' }))
       expect(viewContexts.findView()!.name).toBe('Fake name')
+    })
+
+    it('should return the view if called from VIEW_END callback', () => {
+      const { lifeCycle } = setupBuilder.build()
+
+      lifeCycle.notify(LifeCycleEventType.VIEW_CREATED, buildViewCreatedEvent({ name: 'Fake name' }))
+
+      let currentView: ViewContext | undefined
+      lifeCycle.subscribe(LifeCycleEventType.VIEW_ENDED, () => {
+        currentView = viewContexts.findView()
+      })
+
+      lifeCycle.notify(LifeCycleEventType.VIEW_ENDED, {} as any)
+
+      expect(currentView?.name).toBe('Fake name')
     })
   })
 

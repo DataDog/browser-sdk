@@ -1,4 +1,4 @@
-import type { RelativeTime, ClocksState } from '@datadog/browser-core'
+import type { RelativeTime, ClocksState, ValueHistoryEntry } from '@datadog/browser-core'
 import { SESSION_TIME_OUT_DELAY, ValueHistory } from '@datadog/browser-core'
 import type { LifeCycle } from '../lifeCycle'
 import { LifeCycleEventType } from '../lifeCycle'
@@ -22,12 +22,12 @@ export interface ViewContexts {
 export function startViewContexts(lifeCycle: LifeCycle): ViewContexts {
   const viewContextHistory = new ValueHistory<ViewContext>(VIEW_CONTEXT_TIME_OUT_DELAY)
 
+  let currentViewEntry: ValueHistoryEntry<ViewContext> | undefined
   lifeCycle.subscribe(LifeCycleEventType.VIEW_CREATED, (view) => {
-    viewContextHistory.add(buildViewContext(view), view.startClocks.relative)
-  })
-
-  lifeCycle.subscribe(LifeCycleEventType.VIEW_ENDED, ({ endClocks }) => {
-    viewContextHistory.closeActive(endClocks.relative)
+    if (currentViewEntry) {
+      currentViewEntry.close(view.startClocks.relative)
+    }
+    currentViewEntry = viewContextHistory.add(buildViewContext(view), view.startClocks.relative)
   })
 
   lifeCycle.subscribe(LifeCycleEventType.SESSION_RENEWED, () => {
