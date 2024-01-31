@@ -15,7 +15,7 @@ describe('rum views', () => {
       expect(viewEvent.view.load_event).toBeGreaterThan(0)
     })
 
-  // When run via WebDriver, Safari 12 and 13 (at least) have an issue with `event.timeStamp`,
+  // When run via WebDriver, Safari <= 14 (at least) have an issue with `event.timeStamp`,
   // so the 'first-input' polyfill is ignoring it and doesn't send a performance entry.
   // See https://bugs.webkit.org/show_bug.cgi?id=211101
   if (getBrowserName() !== 'safari') {
