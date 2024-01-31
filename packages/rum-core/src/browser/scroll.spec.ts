@@ -2,10 +2,6 @@ import { addEventListener, DOM_EVENT, isIE } from '@datadog/browser-core'
 import type { RumConfiguration } from '../domain/configuration'
 import { getScrollX, getScrollY } from './scroll'
 
-function isMobileSafari12() {
-  return /iPhone OS 12.* like Mac OS.* Version\/12.* Mobile.*Safari/.test(navigator.userAgent)
-}
-
 describe('scroll', () => {
   let shouldWaitForWindowScrollEvent: boolean
   let configuration: RumConfiguration
@@ -27,12 +23,27 @@ describe('scroll', () => {
 
     // Those tests are triggering asynchronous scroll events that might impact tests run after them.
     // To avoid that, we wait for the next scroll event before continuing to the next one.
+    // Those events don't seem to be triggered consistently on safari though, so stop waiting after a while.
     if (shouldWaitForWindowScrollEvent) {
-      addEventListener(configuration, window, DOM_EVENT.SCROLL, () => done(), {
-        passive: true,
-        once: true,
-        capture: true,
-      })
+      const STOP_WAITING_FOR_SCROLL = 2000
+      const { stop: removeScrollListener } = addEventListener(
+        configuration,
+        window,
+        DOM_EVENT.SCROLL,
+        () => {
+          clearTimeout(timeout)
+          done()
+        },
+        {
+          passive: true,
+          once: true,
+          capture: true,
+        }
+      )
+      const timeout = setTimeout(() => {
+        removeScrollListener()
+        done()
+      }, STOP_WAITING_FOR_SCROLL)
     } else {
       done()
     }
@@ -48,12 +59,6 @@ describe('scroll', () => {
     })
 
     it('normalized scroll updates when scrolled', () => {
-      if (isMobileSafari12()) {
-        // Mobile Safari 12 doesn't support scrollTo() within an iframe
-        // Karma is evaluating some tests in an iframe
-        // https://coderwall.com/p/c-aqqw/scrollable-iframe-on-mobile-safari
-        pending('Mobile Safari 12 not supported')
-      }
       addVerticalScrollBar()
       const SCROLL_DOWN_PX = 100
 
