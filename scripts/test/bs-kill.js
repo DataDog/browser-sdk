@@ -9,7 +9,7 @@ const { browserStackRequest } = require('../lib/bs-utils')
 const MINIMUM_WORKER_LIFE = 30_000
 
 const BS_WORKERS_URL = 'https://api.browserstack.com/5/workers'
-const BS_WORKER_URL = (workerId) => `https://api.browserstack.com/5/worker/${workerId}`
+const buildBsWorkerUrl = (workerId) => `https://api.browserstack.com/5/worker/${workerId}`
 
 runMain(async () => {
   const workerIds = await getActiveWorkerIds()
@@ -23,7 +23,7 @@ async function getActiveWorkerIds() {
 }
 
 async function stopWorker(workerId) {
-  const stopResponse = await browserStackRequest(BS_WORKER_URL(workerId), { method: 'DELETE' })
+  const stopResponse = await browserStackRequest(buildBsWorkerUrl(workerId), { method: 'DELETE' })
   // stopResponse:
   // - when stopped: {"time":X.Y}
   // - when worker not old enough: {"message":"worker is running for X.Y secs, minimum life is 30 sec"}
