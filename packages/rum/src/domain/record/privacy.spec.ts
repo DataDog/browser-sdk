@@ -81,6 +81,46 @@ describe('getNodePrivacyLevel', () => {
       expect(getNodePrivacyLevel(node, NodePrivacyLevel.ALLOW)).toBe(NodePrivacyLevel.MASK)
     })
   })
+
+  describe('cache', () => {
+    it('fills the cache', () => {
+      const ancestor = document.createElement('div')
+      const node = document.createElement('div')
+      ancestor.setAttribute(PRIVACY_ATTR_NAME, PRIVACY_ATTR_VALUE_MASK)
+      ancestor.appendChild(node)
+
+      const cache = new Map()
+      getNodePrivacyLevel(node, NodePrivacyLevel.ALLOW, cache)
+
+      expect(cache.get(node)).toBe(NodePrivacyLevel.MASK)
+    })
+
+    it('uses the cache', () => {
+      const ancestor = document.createElement('div')
+      const node = document.createElement('div')
+      ancestor.appendChild(node)
+
+      const cache = new Map()
+      cache.set(node, NodePrivacyLevel.MASK_USER_INPUT)
+
+      expect(getNodePrivacyLevel(node, NodePrivacyLevel.ALLOW, cache)).toBe(NodePrivacyLevel.MASK_USER_INPUT)
+    })
+
+    it('does not recurse on ancestors if the node is already in the cache', () => {
+      const ancestor = document.createElement('div')
+      const node = document.createElement('div')
+      ancestor.appendChild(node)
+
+      const parentNodeGetterSpy = spyOnProperty(node, 'parentNode').and.returnValue(ancestor)
+
+      const cache = new Map()
+      cache.set(node, NodePrivacyLevel.MASK_USER_INPUT)
+
+      getNodePrivacyLevel(node, NodePrivacyLevel.ALLOW, cache)
+
+      expect(parentNodeGetterSpy).not.toHaveBeenCalled()
+    })
+  })
 })
 
 describe('getNodeSelfPrivacyLevel', () => {
