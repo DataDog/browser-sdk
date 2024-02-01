@@ -113,7 +113,7 @@ function readReplayIntakeRequest(
               records: rawBody
                 .toString('utf-8')
                 .split('\n')
-                .map((line): any => JSON.parse(line)),
+                .map((line): unknown => JSON.parse(line)),
             },
           } as ReplayIntakeRequest)
         })

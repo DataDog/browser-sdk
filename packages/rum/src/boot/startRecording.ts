@@ -28,18 +28,18 @@ export function startRecording(
     createHttpRequest(configuration, configuration.sessionReplayEndpointBuilder, SEGMENT_BYTES_LIMIT, reportError)
 
   let addRecord: (record: BrowserRecord) => void
-  let stopSegmentCollection: () => void
 
   if (!canUseEventBridge()) {
-    ;({ addRecord, stop: stopSegmentCollection } = startSegmentCollection(
+    const segmentCollection = startSegmentCollection(
       lifeCycle,
       configuration,
       sessionManager,
       viewContexts,
       replayRequest,
       encoder
-    ))
-    cleanupTasks.push(() => stopSegmentCollection())
+    )
+    addRecord = segmentCollection.addRecord
+    cleanupTasks.push(segmentCollection.stop)
   } else {
     ;({ addRecord } = startRecordBridge(viewContexts))
   }
@@ -50,7 +50,7 @@ export function startRecording(
     lifeCycle,
     viewContexts,
   })
-  cleanupTasks.push(() => stopRecording())
+  cleanupTasks.push(stopRecording)
 
   return {
     stop: () => {
