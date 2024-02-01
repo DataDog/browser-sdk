@@ -57,7 +57,7 @@ function buildRules(
   const rules: chrome.declarativeNetRequest.Rule[] = []
   let id = nextRuleId
 
-  if (useDevBundles) {
+  if (useDevBundles === 'cdn') {
     const devRumUrl = useRumSlim ? DEV_RUM_SLIM_URL : DEV_RUM_URL
     logger.log('add redirect to dev bundles rules')
     rules.push(

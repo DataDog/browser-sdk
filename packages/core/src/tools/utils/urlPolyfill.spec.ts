@@ -1,10 +1,13 @@
-import { isFirefox } from '../../../test'
-import { isIE } from './browserDetection'
-import { getHash, getOrigin, getPathName, getSearch, isValidUrl, normalizeUrl, getLocationOrigin } from './urlPolyfill'
+import { buildUrl, getPathName, isValidUrl, normalizeUrl } from './urlPolyfill'
 
 describe('normalize url', () => {
-  it('should add origin to relative path', () => {
-    expect(normalizeUrl('/my/path')).toEqual(`${getLocationOrigin()}/my/path`)
+  it('should resolve absolute paths', () => {
+    expect(normalizeUrl('/my/path')).toEqual(`${location.origin}/my/path`)
+  })
+
+  it('should resolve relative paths', () => {
+    history.pushState({}, '', '/foo/')
+    expect(normalizeUrl('./my/path')).toEqual(`${location.origin}/foo/my/path`)
   })
 
   it('should add protocol to relative url', () => {
@@ -20,12 +23,11 @@ describe('normalize url', () => {
   })
 
   it('should keep file url unchanged', () => {
-    if (isFirefox()) {
-      // On firefox, URL host is empty for file URI: 'https://bugzilla.mozilla.org/show_bug.cgi?id=1578787'
-      expect(normalizeUrl('file://foo.com/my/path')).toEqual('file:///my/path')
-    } else {
-      expect(normalizeUrl('file://foo.com/my/path')).toEqual('file://foo.com/my/path')
-    }
+    // On firefox, URL host is empty for file URI: 'https://bugzilla.mozilla.org/show_bug.cgi?id=1578787'
+    // In some cases, Mobile Safari also have this issue.
+    // As we should follow the browser behavior, having one or the other doesn't matter too much, so
+    // let's check for both.
+    expect(['file:///my/path', 'file://foo.com/my/path']).toContain(normalizeUrl('file://foo.com/my/path'))
   })
 })
 
@@ -33,7 +35,7 @@ describe('isValidUrl', () => {
   it('should ensure url is valid', () => {
     expect(isValidUrl('http://www.datadoghq.com')).toBe(true)
     expect(isValidUrl('http://www.datadoghq.com/foo/bar?a=b#hello')).toBe(true)
-    expect(isValidUrl('file://www.datadoghq.com')).toBe(true)
+    expect(isValidUrl('file:///www.datadoghq.com')).toBe(true)
     expect(isValidUrl('/plop')).toBe(false)
     expect(isValidUrl('')).toBe(false)
   })
@@ -45,40 +47,35 @@ describe('isValidUrl', () => {
   })
 })
 
-describe('getOrigin', () => {
-  it('should retrieve url origin', () => {
-    expect(getOrigin('http://www.datadoghq.com')).toBe('http://www.datadoghq.com')
-    expect(getOrigin('http://www.datadoghq.com/foo/bar?a=b#hello')).toBe('http://www.datadoghq.com')
-    expect(getOrigin('http://localhost:8080')).toBe('http://localhost:8080')
-  })
-
-  it('should retrieve file url origin', () => {
-    if (isIE()) {
-      // On IE, our origin fallback strategy contains the host
-      expect(getOrigin('file://foo.com/my/path')).toEqual('file://foo.com')
-    } else {
-      expect(getOrigin('file://foo.com/my/path')).toEqual('file://')
-    }
-  })
-})
-
 describe('getPathName', () => {
   it('should retrieve url path name', () => {
     expect(getPathName('http://www.datadoghq.com')).toBe('/')
     expect(getPathName('http://www.datadoghq.com/foo/bar?a=b#hello')).toBe('/foo/bar')
+    expect(getPathName('file://foo.com/bar?a=b#hello')).toBe('/bar')
   })
 })
 
-describe('getSearch', () => {
-  it('should retrieve url search', () => {
-    expect(getSearch('http://www.datadoghq.com')).toBe('')
-    expect(getSearch('http://www.datadoghq.com/foo/bar?a=b#hello')).toBe('?a=b')
-  })
-})
+describe('buildUrl', () => {
+  it('should normalize href for absolute URLs', () => {
+    expect(buildUrl('http://foo.com').href).toBe('http://foo.com/')
+    expect(buildUrl('http://foo.com:8080').href).toBe('http://foo.com:8080/')
+    expect(buildUrl('http://foo.com:80').href).toBe('http://foo.com/')
+    expect(buildUrl('https://foo.com:443').href).toBe('https://foo.com/')
 
-describe('getHash', () => {
-  it('should retrieve url hash', () => {
-    expect(getHash('http://www.datadoghq.com')).toBe('')
-    expect(getHash('http://www.datadoghq.com/foo/bar?a=b#hello')).toBe('#hello')
+    expect(['file:///my/path', 'file://foo.com/my/path']).toContain(buildUrl('file://foo.com/my/path').href)
+  })
+
+  it('should normalize href for relative URLs', () => {
+    expect(buildUrl('./bar', 'http://foo.com').href).toBe('http://foo.com/bar')
+    expect(buildUrl('/bar', 'http://foo.com').href).toBe('http://foo.com/bar')
+
+    expect(buildUrl('./bar', 'http://foo.com/foo').href).toBe('http://foo.com/bar')
+    expect(buildUrl('/bar', 'http://foo.com/foo').href).toBe('http://foo.com/bar')
+
+    expect(buildUrl('./bar', 'http://foo.com/foo/').href).toBe('http://foo.com/foo/bar')
+    expect(buildUrl('/bar', 'http://foo.com/foo/').href).toBe('http://foo.com/bar')
+
+    expect(['file:///bar', 'file://foo.com/bar']).toContain(buildUrl('./bar', 'file://foo.com/faa').href)
+    expect(['file:///bar', 'file://foo.com/bar']).toContain(buildUrl('/bar', 'file://foo.com/faa').href)
   })
 })

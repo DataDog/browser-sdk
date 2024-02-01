@@ -225,7 +225,7 @@ describe('Segment', () => {
     }
   })
 
-  describe('updates replay stats', () => {
+  describe('updates segment replay stats', () => {
     beforeEach(() => {
       resetReplayStats()
     })
@@ -233,23 +233,13 @@ describe('Segment', () => {
     it('when creating a segment', () => {
       createSegment()
       worker.processAllMessages()
-      expect(getReplayStats('b')).toEqual({
-        segments_count: 1,
-        records_count: 0,
-        segments_total_raw_size: 0,
-      })
-    })
-
-    it('when adding records', () => {
-      const segment = createSegment()
-      segment.addRecord(FULL_SNAPSHOT_RECORD, noop)
-      segment.addRecord(RECORD, noop)
-      worker.processAllMessages()
-      expect(getReplayStats('b')).toEqual({
-        segments_count: 1,
-        records_count: 2,
-        segments_total_raw_size: 0,
-      })
+      expect(getReplayStats('b')).toEqual(
+        jasmine.objectContaining({
+          segments_count: 1,
+          records_count: 0,
+          segments_total_raw_size: 0,
+        })
+      )
     })
 
     it('when flushing a segment', () => {
@@ -257,12 +247,13 @@ describe('Segment', () => {
       segment.addRecord(RECORD, noop)
       segment.flush(noop)
       worker.processAllMessages()
-      expect(getReplayStats('b')).toEqual({
-        segments_count: 1,
-        records_count: 1,
-        segments_total_raw_size:
-          ENCODED_SEGMENT_HEADER_BYTES_COUNT + ENCODED_RECORD_BYTES_COUNT + ENCODED_META_BYTES_COUNT,
-      })
+      expect(getReplayStats('b')).toEqual(
+        jasmine.objectContaining({
+          segments_count: 1,
+          segments_total_raw_size:
+            ENCODED_SEGMENT_HEADER_BYTES_COUNT + ENCODED_RECORD_BYTES_COUNT + ENCODED_META_BYTES_COUNT,
+        })
+      )
     })
   })
 

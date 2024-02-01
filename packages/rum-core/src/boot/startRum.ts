@@ -158,7 +158,8 @@ export function startRum(
   const { addError } = startErrorCollection(lifeCycle, configuration, pageStateHistory, featureFlagContexts)
 
   startRequestCollection(lifeCycle, configuration, session)
-  startPerformanceCollection(lifeCycle, configuration)
+  const { stop: stopPerformanceCollection } = startPerformanceCollection(lifeCycle, configuration)
+  cleanupTasks.push(stopPerformanceCollection)
 
   const internalContext = startInternalContext(
     configuration.applicationId,

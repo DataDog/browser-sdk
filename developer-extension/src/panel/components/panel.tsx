@@ -5,9 +5,9 @@ import { datadogRum } from '@datadog/browser-rum'
 import { useEvents } from '../hooks/useEvents'
 import { useAutoFlushEvents } from '../hooks/useAutoFlushEvents'
 import { useNetworkRules } from '../hooks/useNetworkRules'
-import type { Settings } from '../hooks/useSettings'
 import { useSettings } from '../hooks/useSettings'
 import { DEFAULT_PANEL_TAB, PanelTabs } from '../../common/constants'
+import type { Settings } from '../../common/types'
 import { SettingsTab } from './tabs/settingsTab'
 import { InfosTab } from './tabs/infosTab'
 import { EventsTab, DEFAULT_COLUMNS } from './tabs/eventsTab'
@@ -35,7 +35,16 @@ export function Panel() {
     <Tabs color="violet" value={activeTab} className={classes.tabs} onChange={updateActiveTab}>
       <Tabs.List className="dd-privacy-allow">
         <Tabs.Tab value={PanelTabs.Events}>Events</Tabs.Tab>
-        <Tabs.Tab value={PanelTabs.Infos}>
+        <Tabs.Tab
+          value={PanelTabs.Infos}
+          rightSection={
+            isOverridingInitConfiguration(settings) && (
+              <Text c="orange" fw="bold" title="Overriding init configuration">
+                ⚠
+              </Text>
+            )
+          }
+        >
           <Text>Infos</Text>
         </Tabs.Tab>
         <Tabs.Tab value={PanelTabs.Replay}>
@@ -80,4 +89,8 @@ export function Panel() {
 
 function isInterceptingNetworkRequests(settings: Settings) {
   return settings.blockIntakeRequests || settings.useDevBundles || settings.useRumSlim
+}
+
+function isOverridingInitConfiguration(settings: Settings) {
+  return settings.rumConfigurationOverride || settings.logsConfigurationOverride
 }
