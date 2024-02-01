@@ -1,3 +1,5 @@
+import { removeItem } from './utils/arrayUtils'
+
 const BUFFER_LIMIT = 500
 
 export class BoundedBuffer<T = void> {
@@ -11,10 +13,7 @@ export class BoundedBuffer<T = void> {
   }
 
   remove(callback: (arg: T) => void) {
-    const index = this.buffer.indexOf(callback)
-    if (index !== -1) {
-      this.buffer.splice(index, 1)
-    }
+    removeItem(this.buffer, callback)
   }
 
   drain(arg: T) {
