@@ -8,22 +8,22 @@
   },
   "devDependencies": {
     "@tabler/icons-react": "2.46.0",
-    "@types/chrome": "0.0.258",
-    "@types/react": "18.2.48",
+    "@types/chrome": "0.0.259",
+    "@types/react": "18.2.50",
     "@types/react-dom": "18.2.18",
     "@webextension-toolbox/webpack-webextension-plugin": "3.3.1",
     "copy-webpack-plugin": "12.0.2",
-    "css-loader": "6.9.1",
+    "css-loader": "6.10.0",
     "html-webpack-plugin": "5.6.0",
     "style-loader": "3.3.4",
-    "webpack": "5.89.0"
+    "webpack": "5.90.0"
   },
   "dependencies": {
     "@datadog/browser-core": "workspace:*",
     "@datadog/browser-logs": "workspace:*",
     "@datadog/browser-rum": "workspace:*",
-    "@mantine/core": "7.4.2",
-    "@mantine/hooks": "7.4.2",
+    "@mantine/core": "7.5.1",
+    "@mantine/hooks": "7.5.1",
     "clsx": "2.1.0",
     "react": "18.2.0",
     "react-dom": "18.2.0"
