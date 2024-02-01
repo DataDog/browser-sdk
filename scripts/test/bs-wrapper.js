@@ -14,12 +14,11 @@
 // after killing it. There might be a better way of prematurely aborting the test command if we need
 // to in the future.
 
-const { spawnCommand, printLog, runMain, fetch } = require('../lib/execution-utils')
+const { spawnCommand, printLog, runMain, timeout } = require('../lib/execution-utils')
 const { command } = require('../lib/command')
+const { browserStackRequest } = require('../lib/bs-utils')
 
 const AVAILABILITY_CHECK_DELAY = 30_000
-const BS_USERNAME = process.env.BS_USERNAME
-const BS_ACCESS_KEY = process.env.BS_ACCESS_KEY
 const BS_BUILD_URL = 'https://api.browserstack.com/automate/builds.json?status=running'
 
 runMain(async () => {
@@ -40,18 +39,10 @@ async function waitForAvailability() {
 }
 
 async function hasRunningBuild() {
-  return (
-    (await fetch(BS_BUILD_URL, {
-      headers: { Authorization: `Basic ${Buffer.from(`${BS_USERNAME}:${BS_ACCESS_KEY}`).toString('base64')}` },
-    })) !== '[]'
-  )
+  return (await browserStackRequest(BS_BUILD_URL)).length > 0
 }
 
 function runTests() {
   const [command, ...args] = process.argv.slice(2)
   return spawnCommand(command, args)
-}
-
-function timeout(ms) {
-  return new Promise((resolve) => setTimeout(resolve, ms))
 }
