@@ -91,8 +91,8 @@ describe('logs session manager', () => {
     expect(getCookie(SESSION_STORE_KEY)).toContain(`${LOGS_SESSION_KEY}=${LoggerTrackingType.TRACKED}`)
   })
 
-  describe('findSession', () => {
-    it('should return the current session', () => {
+  describe('findTrackedSession', () => {
+    it('should return the current active session', () => {
       setCookie(SESSION_STORE_KEY, 'id=abcdef&logs=1', DURATION)
       const logsSessionManager = startLogsSessionManager(configuration as LogsConfiguration)
       expect(logsSessionManager.findTrackedSession()!.id).toBe('abcdef')
@@ -101,17 +101,37 @@ describe('logs session manager', () => {
     it('should return undefined if the session is not tracked', () => {
       setCookie(SESSION_STORE_KEY, 'id=abcdef&logs=0', DURATION)
       const logsSessionManager = startLogsSessionManager(configuration as LogsConfiguration)
-      expect(logsSessionManager.findTrackedSession()).toBe(undefined)
+      expect(logsSessionManager.findTrackedSession()).toBeUndefined()
     })
 
-    it('should return undefined if the session has expired', () => {
+    it('should not return the current session if it has expired by default', () => {
+      setCookie(SESSION_STORE_KEY, 'id=abcdef&logs=1', DURATION)
+      const logsSessionManager = startLogsSessionManager(configuration as LogsConfiguration)
+      clock.tick(10 * ONE_SECOND)
+      setCookie(SESSION_STORE_KEY, '', DURATION)
+      clock.tick(STORAGE_POLL_DELAY)
+      expect(logsSessionManager.findTrackedSession()).toBeUndefined()
+    })
+
+    it('should return the current session if it has expired when returnExpired = true', () => {
       const logsSessionManager = startLogsSessionManager(configuration as LogsConfiguration)
       setCookie(SESSION_STORE_KEY, '', DURATION)
       clock.tick(STORAGE_POLL_DELAY)
-      expect(logsSessionManager.findTrackedSession()).toBe(undefined)
+      expect(logsSessionManager.findTrackedSession(relativeNow(), { returnExpired: true })).toBeDefined()
     })
 
     it('should return session corresponding to start time', () => {
+      setCookie(SESSION_STORE_KEY, 'id=foo&logs=1', DURATION)
+      const logsSessionManager = startLogsSessionManager(configuration as LogsConfiguration)
+      clock.tick(10 * ONE_SECOND)
+      setCookie(SESSION_STORE_KEY, 'id=bar&logs=1', DURATION)
+      // simulate a click to renew the session
+      document.dispatchEvent(createNewEvent(DOM_EVENT.CLICK))
+      clock.tick(STORAGE_POLL_DELAY)
+      expect(logsSessionManager.findTrackedSession(0 as RelativeTime)!.id).toEqual('foo')
+      expect(logsSessionManager.findTrackedSession()!.id).toEqual('bar')
+    })
+  })
       setCookie(SESSION_STORE_KEY, 'id=abcdef&logs=1', DURATION)
       const logsSessionManager = startLogsSessionManager(configuration as LogsConfiguration)
       clock.tick(10 * ONE_SECOND)

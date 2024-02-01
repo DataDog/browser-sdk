@@ -5,7 +5,7 @@ import type { LogsConfiguration } from './configuration'
 export const LOGS_SESSION_KEY = 'logs'
 
 export interface LogsSessionManager {
-  findTrackedSession: (startTime?: RelativeTime) => LogsSession | undefined
+  findTrackedSession: (startTime?: RelativeTime, options?: { returnExpired: boolean }) => LogsSession | undefined
   expireObservable: Observable<void>
 }
 
@@ -22,14 +22,18 @@ export function startLogsSessionManager(configuration: LogsConfiguration): LogsS
   const sessionManager = startSessionManager(configuration, LOGS_SESSION_KEY, (rawTrackingType) =>
     computeSessionState(configuration, rawTrackingType)
   )
+
   return {
-    findTrackedSession: (startTime) => {
-      const session = sessionManager.findActiveSession(startTime)
-      return session && session.trackingType === LoggerTrackingType.TRACKED
-        ? {
+    findTrackedSession: (startTime?: RelativeTime, { returnExpired } = { returnExpired: false }) => {
+      const session = returnExpired
+        ? sessionManager.findActiveOrExpiredSession(startTime)
+        : sessionManager.findActiveSession(startTime)
+
+      if (session && session.trackingType === LoggerTrackingType.TRACKED) {
+        return {
             id: session.id,
           }
-        : undefined
+      }
     },
     expireObservable: sessionManager.expireObservable,
   }
