@@ -12,7 +12,7 @@ export const config: Options.Testrunner = {
     .filter(
       (configuration) =>
         configuration.sessionName !== 'IE' &&
-        // Safari mobile on iOS 12.0 does not support
+        // Safari mobile on iOS <= 14.0 does not support
         // the way we flush events on page change
         // TODO check newer version on browserstack
         configuration.sessionName !== 'Safari mobile'
