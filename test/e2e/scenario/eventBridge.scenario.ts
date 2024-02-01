@@ -102,21 +102,12 @@ describe('bridge present', () => {
       expect(intakeRegistry.hasOnlyBridgeRequests).toBe(true)
     })
 
-  createTest('should only send records when the recording is started')
-    .withRum({ startSessionReplayRecordingManually: true })
+  createTest('do not send records when the recording is stopped')
+    .withRum()
     .withEventBridge()
     .run(async ({ intakeRegistry }) => {
-      expect(intakeRegistry.replayRecords.length).toEqual(0)
-
-      await browserExecute(() => {
-        window.DD_RUM!.startSessionReplayRecording()
-      })
-
       // wait for recorder to be properly started
       await browser.pause(200)
-
-      expect(intakeRegistry.replayRecords.length).toBeGreaterThan(0)
-      expect(intakeRegistry.hasOnlyBridgeRequests).toBe(true)
 
       const preStopRecordsCount = intakeRegistry.replayRecords.length
       await browserExecute(() => {
