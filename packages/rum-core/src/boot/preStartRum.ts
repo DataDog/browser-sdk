@@ -157,6 +157,14 @@ export function createPreStartStrategy(
     addFeatureFlagEvaluation(key, value) {
       bufferApiCalls.add((startRumResult) => startRumResult.addFeatureFlagEvaluation(key, value))
     },
+
+    startDurationVital(vitalStart) {
+      bufferApiCalls.add((startRumResult) => startRumResult.startDurationVital(vitalStart))
+    },
+
+    stopDurationVital(vitalStart) {
+      bufferApiCalls.add((startRumResult) => startRumResult.stopDurationVital(vitalStart))
+    },
   }
 }
 
