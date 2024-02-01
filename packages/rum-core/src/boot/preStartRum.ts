@@ -54,7 +54,8 @@ export function createPreStartStrategy(
       // When tracking views automatically, any startView call before RUM start creates an extra
       // view.
       // When tracking views manually, we use the ViewOptions from the first startView call as the
-      // initial view options, and we remove the actual startView call so we don't create
+      // initial view options, and we remove the actual startView call so we don't create an extra
+      // view.
       bufferApiCalls.remove(firstStartViewCall.callback)
       initialViewOptions = firstStartViewCall.options
     }
@@ -84,9 +85,9 @@ export function createPreStartStrategy(
         return
       }
 
-      // If we are in a Synthetics test configured to automatically inject a RUM instance, we want to
-      // completely discard the customer application RUM instance by ignoring their init() call.  But,
-      // we should not ignore the init() call from the Synthetics-injected RUM instance, so the
+      // If we are in a Synthetics test configured to automatically inject a RUM instance, we want
+      // to completely discard the customer application RUM instance by ignoring their init() call.
+      // But, we should not ignore the init() call from the Synthetics-injected RUM instance, so the
       // internal `ignoreInitIfSyntheticsWillInjectRum` option is here to bypass this condition.
       if (ignoreInitIfSyntheticsWillInjectRum && willSyntheticsInjectRum()) {
         return
