@@ -7,6 +7,7 @@ import {
   stopSessionManager,
   ONE_SECOND,
   DOM_EVENT,
+  relativeNow,
 } from '@datadog/browser-core'
 import type { Clock } from '@datadog/browser-core/test'
 import { createNewEvent, mockClock } from '@datadog/browser-core/test'
@@ -132,13 +133,18 @@ describe('logs session manager', () => {
       expect(logsSessionManager.findTrackedSession()!.id).toEqual('bar')
     })
   })
+
+  describe('isActiveAt', () => {
+    it('should return true when the session is active and false when the session has expired', () => {
       setCookie(SESSION_STORE_KEY, 'id=abcdef&logs=1', DURATION)
       const logsSessionManager = startLogsSessionManager(configuration as LogsConfiguration)
       clock.tick(10 * ONE_SECOND)
       setCookie(SESSION_STORE_KEY, '', DURATION)
       clock.tick(STORAGE_POLL_DELAY)
-      expect(logsSessionManager.findTrackedSession()).toBeUndefined()
-      expect(logsSessionManager.findTrackedSession(0 as RelativeTime)!.id).toBe('abcdef')
+
+      const session = logsSessionManager.findTrackedSession(relativeNow(), { returnExpired: true })!
+      expect(session.isActiveAt(0 as RelativeTime)).toEqual(true)
+      expect(session.isActiveAt((11 * ONE_SECOND) as RelativeTime)).toEqual(false)
     })
   })
 })

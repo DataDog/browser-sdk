@@ -1,5 +1,5 @@
 import type { RelativeTime } from '@datadog/browser-core'
-import { Observable, performDraw, startSessionManager } from '@datadog/browser-core'
+import { Observable, performDraw, relativeNow, startSessionManager } from '@datadog/browser-core'
 import type { LogsConfiguration } from './configuration'
 
 export const LOGS_SESSION_KEY = 'logs'
@@ -11,6 +11,7 @@ export interface LogsSessionManager {
 
 export type LogsSession = {
   id?: string // session can be tracked without id
+  isActiveAt: (startTime?: RelativeTime) => boolean
 }
 
 export const enum LoggerTrackingType {
@@ -31,8 +32,9 @@ export function startLogsSessionManager(configuration: LogsConfiguration): LogsS
 
       if (session && session.trackingType === LoggerTrackingType.TRACKED) {
         return {
-            id: session.id,
-          }
+          id: session.id,
+          isActiveAt: (startTime = relativeNow()) => (session.endTime || Infinity) > startTime,
+        }
       }
     },
     expireObservable: sessionManager.expireObservable,
@@ -41,7 +43,7 @@ export function startLogsSessionManager(configuration: LogsConfiguration): LogsS
 
 export function startLogsSessionManagerStub(configuration: LogsConfiguration): LogsSessionManager {
   const isTracked = computeTrackingType(configuration) === LoggerTrackingType.TRACKED
-  const session = isTracked ? {} : undefined
+  const session = isTracked ? { isActiveAt: () => true } : undefined
   return {
     findTrackedSession: () => session,
     expireObservable: new Observable(),
