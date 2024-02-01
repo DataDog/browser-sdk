@@ -27,4 +27,14 @@ describe('BoundedBuffer', () => {
     buffered.drain()
     expect(spy.calls.count()).toEqual(limit)
   })
+
+  it('removes a callback', () => {
+    const spy = jasmine.createSpy<() => void>()
+    const buffered = new BoundedBuffer()
+
+    buffered.add(spy)
+    buffered.remove(spy)
+    buffered.drain()
+    expect(spy).not.toHaveBeenCalled()
+  })
 })

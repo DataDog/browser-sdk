@@ -1,5 +1,6 @@
 import { setInterval, clearInterval } from './timer'
 import type { TimeoutId } from './timer'
+import { removeItem } from './utils/arrayUtils'
 import type { Duration, RelativeTime } from './utils/timeUtils'
 import { addDuration, relativeNow, ONE_MINUTE } from './utils/timeUtils'
 
@@ -40,10 +41,7 @@ export class ValueHistory<Value> {
       startTime,
       endTime: END_OF_TIMES,
       remove: () => {
-        const index = this.entries.indexOf(entry)
-        if (index >= 0) {
-          this.entries.splice(index, 1)
-        }
+        removeItem(this.entries, entry)
       },
       close: (endTime: RelativeTime) => {
         entry.endTime = endTime
