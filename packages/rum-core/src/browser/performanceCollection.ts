@@ -49,6 +49,7 @@ export enum RumPerformanceEntryType {
 export interface RumPerformanceResourceTiming {
   entryType: RumPerformanceEntryType.RESOURCE
   initiatorType: string
+  responseStatus?: number
   name: string
   startTime: RelativeTime
   duration: Duration

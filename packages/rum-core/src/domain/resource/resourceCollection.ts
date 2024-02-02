@@ -102,7 +102,6 @@ function processRequest(
     correspondingTimingOverrides,
     pageStateInfo
   )
-
   return {
     startTime: startClocks.relative,
     rawRumEvent: resourceEvent,
@@ -142,6 +141,7 @@ function processResourceEntry(
         id: generateUUID(),
         type,
         url: entry.name,
+        status_code: entry.responseStatus,
       },
       type: RumEventType.RESOURCE as const,
       _dd: {

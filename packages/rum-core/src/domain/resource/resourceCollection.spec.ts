@@ -55,6 +55,7 @@ describe('resourceCollection', () => {
         url: 'https://resource.com/valid',
         download: jasmine.any(Object),
         first_byte: jasmine.any(Object),
+        status_code: 200,
       },
       type: RumEventType.RESOURCE,
       _dd: {
