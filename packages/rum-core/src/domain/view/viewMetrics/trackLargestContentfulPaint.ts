@@ -58,7 +58,7 @@ export function trackLargestContentfulPaint(
     { capture: true, once: true }
   )
 
-  let prevLcpSize = 0
+  let biggestLcpSize = 0
   const { unsubscribe: unsubscribeLifeCycle } = lifeCycle.subscribe(
     LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED,
     (entries) => {
@@ -71,7 +71,7 @@ export function trackLargestContentfulPaint(
           entry.startTime < LCP_MAXIMUM_DELAY &&
           // Ensure to get the LCP entry with the biggest size, see
           // https://bugs.chromium.org/p/chromium/issues/detail?id=1516655
-          entry.size > prevLcpSize
+          entry.size > biggestLcpSize
       )
 
       if (lcpEntry) {
@@ -94,7 +94,7 @@ export function trackLargestContentfulPaint(
           value: lcpEntry.startTime,
           targetSelector: lcpTargetSelector,
         })
-        prevLcpSize = lcpEntry.size
+        biggestLcpSize = lcpEntry.size
       }
     }
   )
