@@ -20,6 +20,9 @@ import { startReportError } from '../domain/reportError'
 import { startLogsTelemetry } from '../domain/logsTelemetry'
 import type { CommonContext } from '../rawLogsEvent.types'
 
+export type StartLogs = typeof startLogs
+export type StartLogsResult = ReturnType<StartLogs>
+
 export function startLogs(
   initConfiguration: LogsInitConfiguration,
   configuration: LogsConfiguration,

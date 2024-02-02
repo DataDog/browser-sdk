@@ -46,6 +46,9 @@ import type { CommonContext } from '../domain/contexts/commonContext'
 import { startDisplayContext } from '../domain/contexts/displayContext'
 import type { RecorderApi } from './rumPublicApi'
 
+export type StartRum = typeof startRum
+export type StartRumResult = ReturnType<StartRum>
+
 export function startRum(
   initConfiguration: RumInitConfiguration,
   configuration: RumConfiguration,
@@ -155,7 +158,8 @@ export function startRum(
   const { addError } = startErrorCollection(lifeCycle, configuration, pageStateHistory, featureFlagContexts)
 
   startRequestCollection(lifeCycle, configuration, session)
-  startPerformanceCollection(lifeCycle, configuration)
+  const { stop: stopPerformanceCollection } = startPerformanceCollection(lifeCycle, configuration)
+  cleanupTasks.push(stopPerformanceCollection)
 
   const internalContext = startInternalContext(
     configuration.applicationId,

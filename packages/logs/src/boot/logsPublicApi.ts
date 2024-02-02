@@ -1,27 +1,24 @@
-import type { Context, InitConfiguration, User } from '@datadog/browser-core'
+import type { Context, User } from '@datadog/browser-core'
 import {
   CustomerDataType,
   assign,
-  BoundedBuffer,
   createContextManager,
   makePublicApi,
   monitor,
-  display,
-  deepClone,
-  canUseEventBridge,
-  timeStampNow,
   checkUser,
   sanitizeUser,
   sanitize,
   createCustomerDataTrackerManager,
   storeContextManager,
+  displayAlreadyInitializedError,
+  deepClone,
 } from '@datadog/browser-core'
 import type { LogsInitConfiguration } from '../domain/configuration'
-import { validateAndBuildLogsConfiguration } from '../domain/configuration'
-import type { HandlerType, StatusType, LogsMessage } from '../domain/logger'
+import type { HandlerType, StatusType } from '../domain/logger'
 import { Logger } from '../domain/logger'
 import { buildCommonContext } from '../domain/contexts/commonContext'
-import type { startLogs } from './startLogs'
+import type { StartLogs, StartLogsResult } from './startLogs'
+import { createPreStartStrategy } from './preStartLogs'
 
 export interface LoggerConfiguration {
   level?: StatusType
@@ -31,84 +28,49 @@ export interface LoggerConfiguration {
 
 export type LogsPublicApi = ReturnType<typeof makeLogsPublicApi>
 
-export type StartLogs = typeof startLogs
-
-type StartLogsResult = ReturnType<typeof startLogs>
-
 const LOGS_STORAGE_KEY = 'logs'
 
-export function makeLogsPublicApi(startLogsImpl: StartLogs) {
-  let isAlreadyInitialized = false
+export interface Strategy {
+  init: (initConfiguration: LogsInitConfiguration) => void
+  initConfiguration: LogsInitConfiguration | undefined
+  getInternalContext: StartLogsResult['getInternalContext']
+  handleLog: StartLogsResult['handleLog']
+}
 
+export function makeLogsPublicApi(startLogsImpl: StartLogs) {
   const customerDataTrackerManager = createCustomerDataTrackerManager()
   const globalContextManager = createContextManager(
     customerDataTrackerManager.getOrCreateTracker(CustomerDataType.GlobalContext)
   )
   const userContextManager = createContextManager(customerDataTrackerManager.getOrCreateTracker(CustomerDataType.User))
 
-  const customLoggers: { [name: string]: Logger | undefined } = {}
-  let getInternalContextStrategy: StartLogsResult['getInternalContext'] = () => undefined
-
-  const beforeInitLoggerLog = new BoundedBuffer()
-
-  let handleLogStrategy: StartLogsResult['handleLog'] = (
-    logsMessage: LogsMessage,
-    logger: Logger,
-    savedCommonContext = getCommonContext(),
-    date = timeStampNow()
-  ) => {
-    beforeInitLoggerLog.add(() => handleLogStrategy(logsMessage, logger, savedCommonContext, date))
-  }
-
-  let getInitConfigurationStrategy = (): InitConfiguration | undefined => undefined
-  const mainLogger = new Logger(
-    (...params) => handleLogStrategy(...params),
-    customerDataTrackerManager.createDetachedTracker()
-  )
-
   function getCommonContext() {
     return buildCommonContext(globalContextManager, userContextManager)
   }
 
+  let strategy = createPreStartStrategy(getCommonContext, (initConfiguration, configuration) => {
+    if (initConfiguration.storeContextsAcrossPages) {
+      storeContextManager(configuration, globalContextManager, LOGS_STORAGE_KEY, CustomerDataType.GlobalContext)
+      storeContextManager(configuration, userContextManager, LOGS_STORAGE_KEY, CustomerDataType.User)
+    }
+
+    const startLogsResult = startLogsImpl(initConfiguration, configuration, getCommonContext)
+
+    strategy = createPostStartStrategy(initConfiguration, startLogsResult)
+    return startLogsResult
+  })
+
+  const customLoggers: { [name: string]: Logger | undefined } = {}
+
+  const mainLogger = new Logger(
+    (...params) => strategy.handleLog(...params),
+    customerDataTrackerManager.createDetachedTracker()
+  )
+
   return makePublicApi({
     logger: mainLogger,
 
-    init: monitor((initConfiguration: LogsInitConfiguration) => {
-      if (!initConfiguration) {
-        display.error('Missing configuration')
-        return
-      }
-      // This function should be available, regardless of initialization success.
-      getInitConfigurationStrategy = () => deepClone(initConfiguration)
-
-      if (canUseEventBridge()) {
-        initConfiguration = overrideInitConfigurationForBridge(initConfiguration)
-      }
-
-      if (!canInitLogs(initConfiguration)) {
-        return
-      }
-
-      const configuration = validateAndBuildLogsConfiguration(initConfiguration)
-      if (!configuration) {
-        return
-      }
-
-      if (initConfiguration.storeContextsAcrossPages) {
-        storeContextManager(configuration, globalContextManager, LOGS_STORAGE_KEY, CustomerDataType.GlobalContext)
-        storeContextManager(configuration, userContextManager, LOGS_STORAGE_KEY, CustomerDataType.User)
-      }
-
-      ;({ handleLog: handleLogStrategy, getInternalContext: getInternalContextStrategy } = startLogsImpl(
-        initConfiguration,
-        configuration,
-        getCommonContext
-      ))
-
-      beforeInitLoggerLog.drain()
-
-      isAlreadyInitialized = true
-    }),
+    init: monitor((initConfiguration: LogsInitConfiguration) => strategy.init(initConfiguration)),
 
     getGlobalContext: monitor(() => globalContextManager.getContext()),
 
@@ -122,7 +84,7 @@ export function makeLogsPublicApi(startLogsImpl: StartLogs) {
 
     createLogger: monitor((name: string, conf: LoggerConfiguration = {}) => {
       customLoggers[name] = new Logger(
-        (...params) => handleLogStrategy(...params),
+        (...params) => strategy.handleLog(...params),
         customerDataTrackerManager.createDetachedTracker(),
         sanitize(name),
         conf.handler,
@@ -135,9 +97,9 @@ export function makeLogsPublicApi(startLogsImpl: StartLogs) {
 
     getLogger: monitor((name: string) => customLoggers[name]),
 
-    getInitConfiguration: monitor(() => getInitConfigurationStrategy()),
+    getInitConfiguration: monitor(() => deepClone(strategy.initConfiguration)),
 
-    getInternalContext: monitor((startTime?: number | undefined) => getInternalContextStrategy(startTime)),
+    getInternalContext: monitor((startTime?: number | undefined) => strategy.getInternalContext(startTime)),
 
     setUser: monitor((newUser: User) => {
       if (checkUser(newUser)) {
@@ -156,18 +118,16 @@ export function makeLogsPublicApi(startLogsImpl: StartLogs) {
 
     clearUser: monitor(() => userContextManager.clearContext()),
   })
+}
 
-  function overrideInitConfigurationForBridge<C extends InitConfiguration>(initConfiguration: C): C {
-    return assign({}, initConfiguration, { clientToken: 'empty' })
-  }
-
-  function canInitLogs(initConfiguration: LogsInitConfiguration) {
-    if (isAlreadyInitialized) {
-      if (!initConfiguration.silentMultipleInit) {
-        display.error('DD_LOGS is already initialized.')
-      }
-      return false
-    }
-    return true
-  }
+function createPostStartStrategy(initConfiguration: LogsInitConfiguration, startLogsResult: StartLogsResult): Strategy {
+  return assign(
+    {
+      init: (initConfiguration: LogsInitConfiguration) => {
+        displayAlreadyInitializedError('DD_LOGS', initConfiguration)
+      },
+      initConfiguration,
+    },
+    startLogsResult
+  )
 }

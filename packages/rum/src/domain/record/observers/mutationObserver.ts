@@ -14,6 +14,7 @@ import type {
   RemovedNodeMutation,
   TextMutation,
 } from '../../../types'
+import type { NodePrivacyLevelCache } from '../privacy'
 import { getNodePrivacyLevel, getTextContent } from '../privacy'
 import type { NodeWithSerializedNode } from '../serialization'
 import {
@@ -109,6 +110,8 @@ function processMutations(
   configuration: RumConfiguration,
   shadowRootsController: ShadowRootsController
 ) {
+  const nodePrivacyLevelCache: NodePrivacyLevelCache = new Map()
+
   mutations
     .filter((mutation): mutation is RumChildListMutationRecord => mutation.type === 'childList')
     .forEach((mutation) => {
@@ -125,7 +128,8 @@ function processMutations(
     (mutation): mutation is WithSerializedTarget<RumMutationRecord> =>
       mutation.target.isConnected &&
       nodeAndAncestorsHaveSerializedNode(mutation.target) &&
-      getNodePrivacyLevel(mutation.target, configuration.defaultPrivacyLevel) !== NodePrivacyLevel.HIDDEN
+      getNodePrivacyLevel(mutation.target, configuration.defaultPrivacyLevel, nodePrivacyLevelCache) !==
+        NodePrivacyLevel.HIDDEN
   )
 
   const { adds, removes, hasBeenSerialized } = processChildListMutations(
@@ -133,7 +137,8 @@ function processMutations(
       (mutation): mutation is WithSerializedTarget<RumChildListMutationRecord> => mutation.type === 'childList'
     ),
     configuration,
-    shadowRootsController
+    shadowRootsController,
+    nodePrivacyLevelCache
   )
 
   const texts = processCharacterDataMutations(
@@ -141,7 +146,8 @@ function processMutations(
       (mutation): mutation is WithSerializedTarget<RumCharacterDataMutationRecord> =>
         mutation.type === 'characterData' && !hasBeenSerialized(mutation.target)
     ),
-    configuration
+    configuration,
+    nodePrivacyLevelCache
   )
 
   const attributes = processAttributesMutations(
@@ -149,7 +155,8 @@ function processMutations(
       (mutation): mutation is WithSerializedTarget<RumAttributesMutationRecord> =>
         mutation.type === 'attributes' && !hasBeenSerialized(mutation.target)
     ),
-    configuration
+    configuration,
+    nodePrivacyLevelCache
   )
 
   if (!texts.length && !attributes.length && !removes.length && !adds.length) {
@@ -167,7 +174,8 @@ function processMutations(
 function processChildListMutations(
   mutations: Array<WithSerializedTarget<RumChildListMutationRecord>>,
   configuration: RumConfiguration,
-  shadowRootsController: ShadowRootsController
+  shadowRootsController: ShadowRootsController,
+  nodePrivacyLevelCache: NodePrivacyLevelCache
 ) {
   // First, we iterate over mutations to collect:
   //
@@ -217,7 +225,11 @@ function processChildListMutations(
       continue
     }
 
-    const parentNodePrivacyLevel = getNodePrivacyLevel(node.parentNode!, configuration.defaultPrivacyLevel)
+    const parentNodePrivacyLevel = getNodePrivacyLevel(
+      node.parentNode!,
+      configuration.defaultPrivacyLevel,
+      nodePrivacyLevelCache
+    )
     if (parentNodePrivacyLevel === NodePrivacyLevel.HIDDEN || parentNodePrivacyLevel === NodePrivacyLevel.IGNORE) {
       continue
     }
@@ -271,7 +283,8 @@ function processChildListMutations(
 
 function processCharacterDataMutations(
   mutations: Array<WithSerializedTarget<RumCharacterDataMutationRecord>>,
-  configuration: RumConfiguration
+  configuration: RumConfiguration,
+  nodePrivacyLevelCache: NodePrivacyLevelCache
 ) {
   const textMutations: TextMutation[] = []
 
@@ -294,7 +307,8 @@ function processCharacterDataMutations(
 
     const parentNodePrivacyLevel = getNodePrivacyLevel(
       getParentNode(mutation.target)!,
-      configuration.defaultPrivacyLevel
+      configuration.defaultPrivacyLevel,
+      nodePrivacyLevelCache
     )
     if (parentNodePrivacyLevel === NodePrivacyLevel.HIDDEN || parentNodePrivacyLevel === NodePrivacyLevel.IGNORE) {
       continue
@@ -312,7 +326,8 @@ function processCharacterDataMutations(
 
 function processAttributesMutations(
   mutations: Array<WithSerializedTarget<RumAttributesMutationRecord>>,
-  configuration: RumConfiguration
+  configuration: RumConfiguration,
+  nodePrivacyLevelCache: NodePrivacyLevelCache
 ) {
   const attributeMutations: AttributeMutation[] = []
 
@@ -338,7 +353,7 @@ function processAttributesMutations(
     if (uncensoredValue === mutation.oldValue) {
       continue
     }
-    const privacyLevel = getNodePrivacyLevel(mutation.target, configuration.defaultPrivacyLevel)
+    const privacyLevel = getNodePrivacyLevel(mutation.target, configuration.defaultPrivacyLevel, nodePrivacyLevelCache)
     const attributeValue = serializeAttribute(mutation.target, privacyLevel, mutation.attributeName!, configuration)
 
     let transformedValue: string | null
