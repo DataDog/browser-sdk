@@ -40,11 +40,11 @@ export interface TestSetupBuilder {
   clock: Clock | undefined
   domMutationObservable: Observable<void>
 
-  cleanup: () => void
   build: () => TestIO
 }
 
 type BeforeBuildCallback = (buildContext: BuildContext) => void | { stop: () => void }
+
 export interface BuildContext {
   lifeCycle: LifeCycle
   domMutationObservable: Observable<void>
@@ -220,14 +220,13 @@ export function setup(): TestSetupBuilder {
         changeLocation,
       }
     },
-    cleanup() {
-      cleanupTasks.forEach((task) => task())
-      // perform these steps at the end to generate correct events in cleanup and validate them
-      clock?.cleanup()
-      rawRumEventsCollected.unsubscribe()
-    },
   }
-  registerCleanupTask(() => setupBuilder.cleanup())
+  registerCleanupTask(() => {
+    cleanupTasks.forEach((task) => task())
+    // perform these steps at the end to generate correct events in cleanup and validate them
+    clock?.cleanup()
+    rawRumEventsCollected.unsubscribe()
+  })
   return setupBuilder
 }
 
