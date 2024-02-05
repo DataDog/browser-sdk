@@ -54,6 +54,7 @@ describe('resourceCollection', () => {
         url: 'https://resource.com/valid',
         download: jasmine.any(Object),
         first_byte: jasmine.any(Object),
+        status_code: 200,
       },
       type: RumEventType.RESOURCE,
       _dd: {
@@ -313,6 +314,13 @@ describe('resourceCollection', () => {
         error,
       })
     )
+  })
+
+  it('should discard 0 status code', () => {
+    const { lifeCycle, rawRumEvents } = setupBuilder.build()
+    const performanceEntry = createPerformanceEntry(RumPerformanceEntryType.RESOURCE, { responseStatus: 0 })
+    lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [performanceEntry])
+    expect((rawRumEvents[0].rawRumEvent as RawRumResourceEvent).resource.status_code).toBe(undefined)
   })
 
   describe('tracing info', () => {
