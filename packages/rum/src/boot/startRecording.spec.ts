@@ -78,7 +78,6 @@ describe('startRecording', () => {
 
   afterEach(() => {
     setSegmentBytesLimit()
-    setupBuilder.cleanup()
     clock?.cleanup()
     resetDeflateWorkerState()
   })

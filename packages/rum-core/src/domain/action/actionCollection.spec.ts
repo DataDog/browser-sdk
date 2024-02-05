@@ -20,9 +20,6 @@ describe('actionCollection', () => {
       })
   })
 
-  afterEach(() => {
-    setupBuilder.cleanup()
-  })
   it('should create action from auto action', () => {
     const { lifeCycle, rawRumEvents } = setupBuilder.build()
 

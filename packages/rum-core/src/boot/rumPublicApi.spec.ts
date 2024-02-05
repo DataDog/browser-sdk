@@ -163,10 +163,6 @@ describe('rum public api', () => {
       setupBuilder = setup()
     })
 
-    afterEach(() => {
-      setupBuilder.cleanup()
-    })
-
     it('allows sending actions before init', () => {
       rumPublicApi.addAction('foo', { bar: 'baz' })
 
@@ -254,10 +250,6 @@ describe('rum public api', () => {
       setupBuilder = setup()
     })
 
-    afterEach(() => {
-      setupBuilder.cleanup()
-    })
-
     it('allows capturing an error before init', () => {
       rumPublicApi.addError(new Error('foo'))
 
@@ -343,7 +335,6 @@ describe('rum public api', () => {
     let addActionSpy: jasmine.Spy<ReturnType<StartRum>['addAction']>
     let displaySpy: jasmine.Spy<() => void>
     let rumPublicApi: RumPublicApi
-    let setupBuilder: TestSetupBuilder
 
     beforeEach(() => {
       addActionSpy = jasmine.createSpy()
@@ -355,11 +346,6 @@ describe('rum public api', () => {
         }),
         noopRecorderApi
       )
-      setupBuilder = setup()
-    })
-
-    afterEach(() => {
-      setupBuilder.cleanup()
     })
 
     it('should attach valid objects', () => {
@@ -505,7 +491,6 @@ describe('rum public api', () => {
     let addTimingSpy: jasmine.Spy<ReturnType<StartRum>['addTiming']>
     let displaySpy: jasmine.Spy<() => void>
     let rumPublicApi: RumPublicApi
-    let setupBuilder: TestSetupBuilder
 
     beforeEach(() => {
       addTimingSpy = jasmine.createSpy()
@@ -517,11 +502,6 @@ describe('rum public api', () => {
         }),
         noopRecorderApi
       )
-      setupBuilder = setup()
-    })
-
-    afterEach(() => {
-      setupBuilder.cleanup()
     })
 
     it('should add custom timings', () => {
@@ -549,7 +529,6 @@ describe('rum public api', () => {
     let addFeatureFlagEvaluationSpy: jasmine.Spy<ReturnType<StartRum>['addFeatureFlagEvaluation']>
     let displaySpy: jasmine.Spy<() => void>
     let rumPublicApi: RumPublicApi
-    let setupBuilder: TestSetupBuilder
 
     beforeEach(() => {
       addFeatureFlagEvaluationSpy = jasmine.createSpy()
@@ -561,11 +540,6 @@ describe('rum public api', () => {
         }),
         noopRecorderApi
       )
-      setupBuilder = setup()
-    })
-
-    afterEach(() => {
-      setupBuilder.cleanup()
     })
 
     it('should add feature flag evaluation when ff feature_flags enabled', () => {
@@ -608,7 +582,6 @@ describe('rum public api', () => {
 
   describe('recording', () => {
     let recorderApiOnRumStartSpy: jasmine.Spy<RecorderApi['onRumStart']>
-    let setupBuilder: TestSetupBuilder
     let rumPublicApi: RumPublicApi
     let recorderApi: RecorderApi
 
@@ -616,11 +589,6 @@ describe('rum public api', () => {
       recorderApiOnRumStartSpy = jasmine.createSpy('recorderApiOnRumStart')
       recorderApi = { ...noopRecorderApi, onRumStart: recorderApiOnRumStartSpy }
       rumPublicApi = makeRumPublicApi(noopStartRum, recorderApi)
-      setupBuilder = setup()
-    })
-
-    afterEach(() => {
-      setupBuilder.cleanup()
     })
 
     it('is started with the default defaultPrivacyLevel', () => {

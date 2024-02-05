@@ -56,7 +56,6 @@ describe('trackInteractionToNextPaint', () => {
 
   afterEach(() => {
     resetExperimentalFeatures()
-    setupBuilder.cleanup()
     interactionCountStub.clear()
   })
 

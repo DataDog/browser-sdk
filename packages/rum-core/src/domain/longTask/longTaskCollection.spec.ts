@@ -21,10 +21,6 @@ describe('long task collection', () => {
       })
   })
 
-  afterEach(() => {
-    setupBuilder.cleanup()
-  })
-
   it('should only listen to long task performance entry', () => {
     const { lifeCycle, rawRumEvents } = setupBuilder.build()
     lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [

@@ -53,7 +53,6 @@ describe('makeRecorderApi', () => {
   })
 
   afterEach(() => {
-    setupBuilder.cleanup()
     resetDeflateWorkerState()
     replayStats.resetReplayStats()
   })

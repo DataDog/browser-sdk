@@ -36,10 +36,6 @@ describe('internal context', () => {
       })
   })
 
-  afterEach(() => {
-    setupBuilder.cleanup()
-  })
-
   it('should return current internal context', () => {
     const { fakeLocation } = setupBuilder.build()
 

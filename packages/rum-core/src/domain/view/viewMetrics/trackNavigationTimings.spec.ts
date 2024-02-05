@@ -16,10 +16,6 @@ describe('trackNavigationTimings', () => {
     setupBuilder = setup().beforeBuild(({ lifeCycle }) => trackNavigationTimings(lifeCycle, navigationTimingsCallback))
   })
 
-  afterEach(() => {
-    setupBuilder.cleanup()
-  })
-
   it('should provide navigation timing', () => {
     const { lifeCycle } = setupBuilder.build()
 

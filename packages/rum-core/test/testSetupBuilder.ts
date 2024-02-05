@@ -9,7 +9,7 @@ import {
   Observable,
 } from '@datadog/browser-core'
 import type { Clock } from '@datadog/browser-core/test'
-import { mockClock, buildLocation, SPEC_ENDPOINTS } from '@datadog/browser-core/test'
+import { registerCleanupTask, mockClock, buildLocation, SPEC_ENDPOINTS } from '@datadog/browser-core/test'
 import type { LocationChange } from '../src/browser/locationChangeObservable'
 import type { RumConfiguration } from '../src/domain/configuration'
 import { validateAndBuildRumConfiguration } from '../src/domain/configuration'
@@ -227,6 +227,7 @@ export function setup(): TestSetupBuilder {
       rawRumEventsCollected.unsubscribe()
     },
   }
+  registerCleanupTask(() => setupBuilder.cleanup())
   return setupBuilder
 }
 
