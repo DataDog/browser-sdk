@@ -1,11 +1,20 @@
 import type { DeflateWorker, RelativeTime, TimeStamp } from '@datadog/browser-core'
-import { display, getTimeStamp, noop, relativeToClocks, clocksNow } from '@datadog/browser-core'
+import {
+  display,
+  getTimeStamp,
+  noop,
+  relativeToClocks,
+  clocksNow,
+  TrackingConsent,
+  ExperimentalFeature,
+} from '@datadog/browser-core'
 import type { Clock } from '@datadog/browser-core/test'
 import {
   cleanupSyntheticsWorkerValues,
   deleteEventBridgeStub,
   initEventBridgeStub,
   mockClock,
+  mockExperimentalFeatures,
   mockSyntheticsWorkerValues,
 } from '@datadog/browser-core/test'
 import type { HybridInitConfiguration, RumConfiguration, RumInitConfiguration } from '../domain/configuration'
@@ -19,6 +28,8 @@ import { createPreStartStrategy } from './preStartRum'
 
 const DEFAULT_INIT_CONFIGURATION = { applicationId: 'xxx', clientToken: 'xxx' }
 const INVALID_INIT_CONFIGURATION = { clientToken: 'yes' } as RumInitConfiguration
+const AUTO_CONFIGURATION = { ...DEFAULT_INIT_CONFIGURATION }
+const MANUAL_CONFIGURATION = { ...AUTO_CONFIGURATION, trackViewsManually: true }
 const FAKE_WORKER = {} as DeflateWorker
 
 describe('preStartRum', () => {
@@ -232,9 +243,6 @@ describe('preStartRum', () => {
     })
 
     describe('trackViews mode', () => {
-      const AUTO_CONFIGURATION = { ...DEFAULT_INIT_CONFIGURATION }
-      const MANUAL_CONFIGURATION = { ...AUTO_CONFIGURATION, trackViewsManually: true }
-
       let clock: Clock | undefined
       let strategy: Strategy
       let startViewSpy: jasmine.Spy<StartRumResult['startView']>
@@ -300,6 +308,17 @@ describe('preStartRum', () => {
           const initialViewOptions: ViewOptions | undefined = doStartRumSpy.calls.argsFor(0)[3]
           expect(initialViewOptions).toEqual({ name: 'foo' })
           expect(startViewSpy).not.toHaveBeenCalled()
+        })
+
+        it('calling startView then init does not start rum if tracking consent is not granted', () => {
+          mockExperimentalFeatures([ExperimentalFeature.TRACKING_CONSENT])
+          const strategy = createPreStartStrategy({}, getCommonContextSpy, doStartRumSpy)
+          strategy.startView({ name: 'foo' })
+          strategy.init({
+            ...MANUAL_CONFIGURATION,
+            trackingConsent: TrackingConsent.NOT_GRANTED,
+          })
+          expect(doStartRumSpy).not.toHaveBeenCalled()
         })
 
         it('calling startView twice before init should start rum and create a new view', () => {
@@ -485,6 +504,71 @@ describe('preStartRum', () => {
       strategy.addFeatureFlagEvaluation(key, value)
       strategy.init(DEFAULT_INIT_CONFIGURATION)
       expect(addFeatureFlagEvaluationSpy).toHaveBeenCalledOnceWith(key, value)
+    })
+  })
+
+  describe('tracking consent', () => {
+    describe('with tracking_consent enabled', () => {
+      beforeEach(() => {
+        mockExperimentalFeatures([ExperimentalFeature.TRACKING_CONSENT])
+      })
+
+      it('does not start rum if tracking consent is not granted at init', () => {
+        const strategy = createPreStartStrategy({}, getCommonContextSpy, doStartRumSpy)
+        strategy.init({
+          ...DEFAULT_INIT_CONFIGURATION,
+          trackingConsent: TrackingConsent.NOT_GRANTED,
+        })
+        expect(doStartRumSpy).not.toHaveBeenCalled()
+      })
+
+      it('starts rum if tracking consent is granted before init', () => {
+        const strategy = createPreStartStrategy({}, getCommonContextSpy, doStartRumSpy)
+        strategy.setTrackingConsent(TrackingConsent.GRANTED)
+        strategy.init({
+          ...DEFAULT_INIT_CONFIGURATION,
+          trackingConsent: TrackingConsent.NOT_GRANTED,
+        })
+        expect(doStartRumSpy).toHaveBeenCalledTimes(1)
+      })
+
+      it('does not start rum if tracking consent is withdrawn before init', () => {
+        const strategy = createPreStartStrategy({}, getCommonContextSpy, doStartRumSpy)
+        strategy.setTrackingConsent(TrackingConsent.NOT_GRANTED)
+        strategy.init({
+          ...DEFAULT_INIT_CONFIGURATION,
+          trackingConsent: TrackingConsent.GRANTED,
+        })
+        expect(doStartRumSpy).not.toHaveBeenCalled()
+      })
+
+      it('does not start rum if no view is started', () => {
+        const strategy = createPreStartStrategy({}, getCommonContextSpy, doStartRumSpy)
+        strategy.setTrackingConsent(TrackingConsent.GRANTED)
+        strategy.init({
+          ...MANUAL_CONFIGURATION,
+          trackingConsent: TrackingConsent.NOT_GRANTED,
+        })
+        expect(doStartRumSpy).not.toHaveBeenCalled()
+      })
+    })
+
+    describe('with tracking_consent disabled', () => {
+      it('ignores the trackingConsent init param', () => {
+        const strategy = createPreStartStrategy({}, getCommonContextSpy, doStartRumSpy)
+        strategy.init({
+          ...DEFAULT_INIT_CONFIGURATION,
+          trackingConsent: TrackingConsent.NOT_GRANTED,
+        })
+        expect(doStartRumSpy).toHaveBeenCalled()
+      })
+
+      it('ignores setTrackingConsent', () => {
+        const strategy = createPreStartStrategy({}, getCommonContextSpy, doStartRumSpy)
+        strategy.setTrackingConsent(TrackingConsent.NOT_GRANTED)
+        strategy.init(DEFAULT_INIT_CONFIGURATION)
+        expect(doStartRumSpy).toHaveBeenCalledTimes(1)
+      })
     })
   })
 })

@@ -5,11 +5,18 @@ import {
   isExperimentalFeatureEnabled,
   resetExperimentalFeatures,
 } from '../../tools/experimentalFeatures'
+import { TrackingConsent } from '../trackingConsent'
 import type { InitConfiguration } from './configuration'
 import { validateAndBuildConfiguration } from './configuration'
 
 describe('validateAndBuildConfiguration', () => {
   const clientToken = 'some_client_token'
+
+  let displaySpy: jasmine.Spy<typeof display.error>
+
+  beforeEach(() => {
+    displaySpy = spyOn(display, 'error')
+  })
 
   afterEach(() => {
     resetExperimentalFeatures()
@@ -44,12 +51,6 @@ describe('validateAndBuildConfiguration', () => {
   })
 
   describe('validate init configuration', () => {
-    let displaySpy: jasmine.Spy<typeof display.error>
-
-    beforeEach(() => {
-      displaySpy = spyOn(display, 'error')
-    })
-
     it('requires the InitConfiguration to be defined', () => {
       expect(validateAndBuildConfiguration(undefined as unknown as InitConfiguration)).toBeUndefined()
       expect(displaySpy).toHaveBeenCalledOnceWith('Client Token is not configured, we will not send any data.')
@@ -160,7 +161,6 @@ describe('validateAndBuildConfiguration', () => {
         throw myError
       }
       const configuration = validateAndBuildConfiguration({ clientToken, beforeSend })!
-      const displaySpy = spyOn(display, 'error')
       expect(configuration.beforeSend!(null, {})).toBeUndefined()
       expect(displaySpy).toHaveBeenCalledWith('beforeSend threw an error:', myError)
     })
@@ -184,6 +184,27 @@ describe('validateAndBuildConfiguration', () => {
       expect(
         validateAndBuildConfiguration({ clientToken: 'yes', allowUntrustedEvents: 'foo' as any })!.allowUntrustedEvents
       ).toBeTrue()
+    })
+  })
+
+  describe('trackingConsent', () => {
+    it('defaults to "granted"', () => {
+      expect(validateAndBuildConfiguration({ clientToken: 'yes' })!.trackingConsent).toBe(TrackingConsent.GRANTED)
+    })
+
+    it('is set to provided value', () => {
+      expect(
+        validateAndBuildConfiguration({ clientToken: 'yes', trackingConsent: TrackingConsent.NOT_GRANTED })!
+          .trackingConsent
+      ).toBe(TrackingConsent.NOT_GRANTED)
+      expect(
+        validateAndBuildConfiguration({ clientToken: 'yes', trackingConsent: TrackingConsent.GRANTED })!.trackingConsent
+      ).toBe(TrackingConsent.GRANTED)
+    })
+
+    it('rejects invalid values', () => {
+      expect(validateAndBuildConfiguration({ clientToken: 'yes', trackingConsent: 'foo' as any })).toBeUndefined()
+      expect(displaySpy).toHaveBeenCalledOnceWith('Tracking Consent should be either "granted" or "not-granted"')
     })
   })
 })

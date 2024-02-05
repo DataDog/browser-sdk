@@ -32,6 +32,7 @@ const LOGS_STORAGE_KEY = 'logs'
 
 export interface Strategy {
   init: (initConfiguration: LogsInitConfiguration) => void
+  setTrackingConsent: StartLogsResult['setTrackingConsent']
   initConfiguration: LogsInitConfiguration | undefined
   getInternalContext: StartLogsResult['getInternalContext']
   handleLog: StartLogsResult['handleLog']

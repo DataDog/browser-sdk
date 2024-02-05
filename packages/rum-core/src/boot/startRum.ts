@@ -16,6 +16,8 @@ import {
   getEventBridge,
   addTelemetryDebug,
   CustomerDataType,
+  createTrackingConsentState,
+  TrackingConsent,
 } from '@datadog/browser-core'
 import { createDOMMutationObservable } from '../browser/domMutationObservable'
 import { startPerformanceCollection } from '../browser/performanceCollection'
@@ -88,13 +90,16 @@ export function startRum(
     customerDataTrackerManager.getOrCreateTracker(CustomerDataType.FeatureFlag)
   )
 
+  const trackingConsentState = createTrackingConsentState(TrackingConsent.GRANTED)
   const pageExitObservable = createPageExitObservable(configuration)
   const pageExitSubscription = pageExitObservable.subscribe((event) => {
     lifeCycle.notify(LifeCycleEventType.PAGE_EXITED, event)
   })
   cleanupTasks.push(() => pageExitSubscription.unsubscribe())
 
-  const session = !canUseEventBridge() ? startRumSessionManager(configuration, lifeCycle) : startRumSessionManagerStub()
+  const session = !canUseEventBridge()
+    ? startRumSessionManager(configuration, lifeCycle, trackingConsentState)
+    : startRumSessionManagerStub()
   if (!canUseEventBridge()) {
     const batch = startRumBatch(
       configuration,
@@ -174,6 +179,7 @@ export function startRum(
     addError,
     addTiming,
     addFeatureFlagEvaluation: featureFlagContexts.addFeatureFlagEvaluation,
+    setTrackingConsent: trackingConsentState.set,
     startView,
     lifeCycle,
     viewContexts,
