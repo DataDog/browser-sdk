@@ -141,7 +141,7 @@ function processResourceEntry(
         id: generateUUID(),
         type,
         url: entry.name,
-        status_code: entry.responseStatus,
+        status_code: discardZeroStatus(entry.responseStatus),
       },
       type: RumEventType.RESOURCE as const,
       _dd: {
@@ -234,4 +234,12 @@ function computeRequestDuration(pageStateHistory: PageStateHistory, startClocks:
     ?.some((pageState) => pageState.state === PageState.FROZEN)
 
   return !requestCrossedFrozenState ? toServerDuration(duration) : undefined
+}
+
+/**
+ * The status is 0 for cross origin resources without CORS headers, so the status is meaningless and we shouldn't report it
+ * https://developer.mozilla.org/en-US/docs/Web/API/PerformanceResourceTiming/responseStatus#cross-origin_response_status_codes
+ */
+function discardZeroStatus(statusCode: number | undefined): number | undefined {
+  return statusCode === 0 ? undefined : statusCode
 }

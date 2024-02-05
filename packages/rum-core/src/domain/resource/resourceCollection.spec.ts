@@ -317,6 +317,13 @@ describe('resourceCollection', () => {
     )
   })
 
+  it('should discard 0 status code', () => {
+    const { lifeCycle, rawRumEvents } = setupBuilder.build()
+    const performanceEntry = createPerformanceEntry(RumPerformanceEntryType.RESOURCE, { responseStatus: 0 })
+    lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [performanceEntry])
+    expect((rawRumEvents[0].rawRumEvent as RawRumResourceEvent).resource.status_code).toBe(undefined)
+  })
+
   describe('tracing info', () => {
     it('should be processed from traced initial document', () => {
       const { lifeCycle, rawRumEvents } = setupBuilder.build()
