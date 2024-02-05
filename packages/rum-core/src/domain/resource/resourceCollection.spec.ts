@@ -35,7 +35,6 @@ describe('resourceCollection', () => {
 
   afterEach(() => {
     resetExperimentalFeatures()
-    setupBuilder.cleanup()
   })
 
   it('should create resource from performance entry', () => {

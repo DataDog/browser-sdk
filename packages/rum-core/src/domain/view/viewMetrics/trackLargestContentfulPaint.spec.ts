@@ -39,7 +39,6 @@ describe('trackLargestContentfulPaint', () => {
   })
 
   afterEach(() => {
-    setupBuilder.cleanup()
     restorePageVisibility()
     resetExperimentalFeatures()
   })

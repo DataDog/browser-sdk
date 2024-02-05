@@ -1,6 +1,6 @@
 import { display, isIE, objectEntries } from '@datadog/browser-core'
-import type { TestSetupBuilder, RumSessionManagerMock } from '../../../test'
-import { setup, createRumSessionManagerMock } from '../../../test'
+import type { RumSessionManagerMock } from '../../../test'
+import { createRumSessionManagerMock } from '../../../test'
 import type { RumFetchResolveContext, RumFetchStartContext, RumXhrStartContext } from '../requestCollection'
 import type { RumConfiguration, RumInitConfiguration } from '../configuration'
 import { validateAndBuildRumConfiguration } from '../configuration'
@@ -14,7 +14,6 @@ describe('tracer', () => {
   const DISALLOWED_DOMAIN_CONTEXT: Partial<RumXhrStartContext | RumFetchStartContext> = {
     url: 'http://foo.com',
   }
-  let setupBuilder: TestSetupBuilder
   let sessionManager: RumSessionManagerMock
 
   const INIT_CONFIGURATION: RumInitConfiguration = {
@@ -26,12 +25,7 @@ describe('tracer', () => {
 
   beforeEach(() => {
     configuration = validateAndBuildRumConfiguration(INIT_CONFIGURATION)!
-    setupBuilder = setup()
     sessionManager = createRumSessionManagerMock()
-  })
-
-  afterEach(() => {
-    setupBuilder.cleanup()
   })
 
   describe('traceXhr', () => {

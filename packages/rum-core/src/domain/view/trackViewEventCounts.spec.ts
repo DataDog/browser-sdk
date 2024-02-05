@@ -16,10 +16,6 @@ describe('trackViewEventCounts', () => {
     setupBuilder = setup().beforeBuild(({ lifeCycle }) => trackViewEventCounts(lifeCycle, 'view-id', onChange))
   })
 
-  afterEach(() => {
-    setupBuilder.cleanup()
-  })
-
   it('should track events count', () => {
     const { lifeCycle } = setupBuilder.build()
 

@@ -29,10 +29,6 @@ describe('trackInitialViewMetrics', () => {
     })
   })
 
-  afterEach(() => {
-    setupBuilder.cleanup()
-  })
-
   it('should merge metrics from various sources', () => {
     const { lifeCycle } = setupBuilder.build()
     lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [

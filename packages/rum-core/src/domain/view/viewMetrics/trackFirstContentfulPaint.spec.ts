@@ -29,7 +29,6 @@ describe('trackFirstContentfulPaint', () => {
   })
 
   afterEach(() => {
-    setupBuilder.cleanup()
     restorePageVisibility()
   })
 

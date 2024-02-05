@@ -119,10 +119,6 @@ describe('rum session', () => {
     )
   })
 
-  afterEach(() => {
-    setupBuilder.cleanup()
-  })
-
   it('when the session is renewed, a new view event should be sent', () => {
     const session = createRumSessionManagerMock().setId('42')
     const { lifeCycle } = setupBuilder.withSessionManager(session).build()
@@ -182,10 +178,6 @@ describe('rum session keep alive', () => {
           )
         }
       )
-  })
-
-  afterEach(() => {
-    setupBuilder.cleanup()
   })
 
   it('should send a view update regularly', () => {
@@ -254,10 +246,6 @@ describe('rum events url', () => {
         )
       }
     )
-  })
-
-  afterEach(() => {
-    setupBuilder.cleanup()
   })
 
   it('should attach the url corresponding to the start of the event', () => {
@@ -343,7 +331,6 @@ describe('view events', () => {
   afterEach(() => {
     deleteEventBridgeStub()
     stopSessionManager()
-    setupBuilder.cleanup()
     interceptor.restore()
   })
 
