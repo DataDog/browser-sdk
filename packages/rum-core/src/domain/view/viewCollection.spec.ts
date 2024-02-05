@@ -99,7 +99,6 @@ describe('viewCollection', () => {
   })
 
   afterEach(() => {
-    setupBuilder.cleanup()
     resetExperimentalFeatures()
   })
 

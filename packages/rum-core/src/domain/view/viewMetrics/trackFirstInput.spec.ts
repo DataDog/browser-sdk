@@ -32,7 +32,6 @@ describe('firstInputTimings', () => {
   })
 
   afterEach(() => {
-    setupBuilder.cleanup()
     restorePageVisibility()
     resetExperimentalFeatures()
   })

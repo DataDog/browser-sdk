@@ -72,7 +72,6 @@ describe('customerDataTelemetry', () => {
   })
 
   afterEach(() => {
-    setupBuilder.cleanup()
     resetExperimentalFeatures()
   })
 

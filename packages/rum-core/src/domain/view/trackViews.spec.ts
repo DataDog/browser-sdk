@@ -32,10 +32,6 @@ describe('track views automatically', () => {
       })
   })
 
-  afterEach(() => {
-    setupBuilder.cleanup()
-  })
-
   describe('initial view', () => {
     it('should be created on start', () => {
       setupBuilder.build()
@@ -116,10 +112,6 @@ describe('view lifecycle', () => {
         })
         return viewTest
       })
-  })
-
-  afterEach(() => {
-    setupBuilder.cleanup()
   })
 
   describe('expire session', () => {
@@ -340,10 +332,6 @@ describe('view loading type', () => {
       })
   })
 
-  afterEach(() => {
-    setupBuilder.cleanup()
-  })
-
   it('should collect initial view type as "initial_load"', () => {
     setupBuilder.build()
     const { getViewUpdate } = viewTest
@@ -373,10 +361,6 @@ describe('view metrics', () => {
         viewTest = setupViewTest(buildContext)
         return viewTest
       })
-  })
-
-  afterEach(() => {
-    setupBuilder.cleanup()
   })
 
   describe('common view metrics', () => {
@@ -574,10 +558,6 @@ describe('view is active', () => {
     })
   })
 
-  afterEach(() => {
-    setupBuilder.cleanup()
-  })
-
   it('should set initial view as active', () => {
     setupBuilder.build()
     const { getViewUpdate } = viewTest
@@ -607,10 +587,6 @@ describe('view custom timings', () => {
         viewTest = setupViewTest(buildContext)
         return viewTest
       })
-  })
-
-  afterEach(() => {
-    setupBuilder.cleanup()
   })
 
   it('should add custom timing to current view', () => {
@@ -750,10 +726,6 @@ describe('start view', () => {
     })
   })
 
-  afterEach(() => {
-    setupBuilder.cleanup()
-  })
-
   it('should start a new view', () => {
     const { clock } = setupBuilder.withFakeClock().build()
     const { getViewUpdateCount, getViewUpdate, startView } = viewTest
@@ -841,10 +813,6 @@ describe('view event count', () => {
         viewTest = setupViewTest(buildContext)
         return viewTest
       })
-  })
-
-  afterEach(() => {
-    setupBuilder.cleanup()
   })
 
   it('should be updated when notified with a RUM_EVENT_COLLECTED event', () => {

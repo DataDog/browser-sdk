@@ -40,10 +40,6 @@ describe('trackLoadingTime', () => {
       .withFakeClock()
   })
 
-  afterEach(() => {
-    setupBuilder.cleanup()
-  })
-
   it('should have an undefined loading time if there is no activity on a route change', () => {
     setupBuilder.build()
 

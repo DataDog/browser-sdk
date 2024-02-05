@@ -28,10 +28,6 @@ describe('error collection', () => {
       })
   })
 
-  afterEach(() => {
-    setupBuilder.cleanup()
-  })
-
   describe('addError', () => {
     ;[
       {
