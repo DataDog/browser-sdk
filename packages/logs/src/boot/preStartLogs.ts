@@ -62,11 +62,11 @@ export function createPreStartStrategy(
       }
 
       cachedConfiguration = configuration
-      trackingConsentState.setIfNotDefined(configuration.trackingConsent)
+      trackingConsentState.tryToInit(configuration.trackingConsent)
       tryStartLogs()
     },
 
-    setTrackingConsent: trackingConsentState.set,
+    setTrackingConsent: trackingConsentState.update,
 
     get initConfiguration() {
       return cachedInitConfiguration

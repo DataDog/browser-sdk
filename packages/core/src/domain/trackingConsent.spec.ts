@@ -23,29 +23,29 @@ describe('createTrackingConsentState', () => {
       expect(trackingConsentState.isGranted()).toBeTrue()
     })
 
-    it('can be set to granted', () => {
+    it('can be updated to granted', () => {
       const trackingConsentState = createTrackingConsentState()
-      trackingConsentState.set(TrackingConsent.GRANTED)
+      trackingConsentState.update(TrackingConsent.GRANTED)
       expect(trackingConsentState.isGranted()).toBeTrue()
     })
 
-    it('notifies when the consent is set', () => {
+    it('notifies when the consent is updated', () => {
       const spy = jasmine.createSpy()
       const trackingConsentState = createTrackingConsentState()
       trackingConsentState.observable.subscribe(spy)
-      trackingConsentState.set(TrackingConsent.GRANTED)
+      trackingConsentState.update(TrackingConsent.GRANTED)
       expect(spy).toHaveBeenCalledTimes(1)
     })
 
-    it('can set a consent state if not defined', () => {
+    it('can init a consent state if not defined yet', () => {
       const trackingConsentState = createTrackingConsentState()
-      trackingConsentState.setIfNotDefined(TrackingConsent.GRANTED)
+      trackingConsentState.tryToInit(TrackingConsent.GRANTED)
       expect(trackingConsentState.isGranted()).toBeTrue()
     })
 
-    it('does not set a consent state if already defined', () => {
+    it('does not init a consent state if already defined', () => {
       const trackingConsentState = createTrackingConsentState(TrackingConsent.GRANTED)
-      trackingConsentState.setIfNotDefined(TrackingConsent.NOT_GRANTED)
+      trackingConsentState.tryToInit(TrackingConsent.NOT_GRANTED)
       expect(trackingConsentState.isGranted()).toBeTrue()
     })
   })
@@ -64,7 +64,7 @@ describe('createTrackingConsentState', () => {
       expect(trackingConsentState.isGranted()).toBeTrue()
 
       trackingConsentState = createTrackingConsentState()
-      trackingConsentState.set(TrackingConsent.NOT_GRANTED)
+      trackingConsentState.update(TrackingConsent.NOT_GRANTED)
       expect(trackingConsentState.isGranted()).toBeTrue()
     })
   })

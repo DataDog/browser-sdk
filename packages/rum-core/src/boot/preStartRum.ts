@@ -122,7 +122,7 @@ export function createPreStartStrategy(
       }
 
       cachedConfiguration = configuration
-      trackingConsentState.setIfNotDefined(configuration.trackingConsent)
+      trackingConsentState.tryToInit(configuration.trackingConsent)
       tryStartRum()
     },
 
@@ -130,7 +130,7 @@ export function createPreStartStrategy(
       return cachedInitConfiguration
     },
 
-    setTrackingConsent: trackingConsentState.set,
+    setTrackingConsent: trackingConsentState.update,
 
     getInternalContext: noop as () => undefined,
 

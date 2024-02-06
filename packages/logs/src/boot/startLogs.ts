@@ -73,7 +73,7 @@ export function startLogs(
   return {
     handleLog,
     getInternalContext: internalContext.get,
-    setTrackingConsent: trackingConsentState.set,
+    setTrackingConsent: trackingConsentState.update,
     stop: () => {
       cleanupTasks.forEach((task) => task())
     },

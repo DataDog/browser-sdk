@@ -8,8 +8,8 @@ export const TrackingConsent = {
 export type TrackingConsent = (typeof TrackingConsent)[keyof typeof TrackingConsent]
 
 export interface TrackingConsentState {
-  setIfNotDefined: (trackingConsent: TrackingConsent) => void
-  set: (trackingConsent: TrackingConsent) => void
+  tryToInit: (trackingConsent: TrackingConsent) => void
+  update: (trackingConsent: TrackingConsent) => void
   isGranted: () => boolean
   observable: Observable<void>
 }
@@ -18,12 +18,12 @@ export function createTrackingConsentState(currentConsent?: TrackingConsent): Tr
   const observable = new Observable<void>()
 
   return {
-    setIfNotDefined(trackingConsent: TrackingConsent) {
+    tryToInit(trackingConsent: TrackingConsent) {
       if (!currentConsent) {
         currentConsent = trackingConsent
       }
     },
-    set(trackingConsent: TrackingConsent) {
+    update(trackingConsent: TrackingConsent) {
       currentConsent = trackingConsent
       observable.notify()
     },

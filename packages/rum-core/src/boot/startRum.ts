@@ -179,7 +179,7 @@ export function startRum(
     addError,
     addTiming,
     addFeatureFlagEvaluation: featureFlagContexts.addFeatureFlagEvaluation,
-    setTrackingConsent: trackingConsentState.set,
+    setTrackingConsent: trackingConsentState.update,
     startView,
     lifeCycle,
     viewContexts,
