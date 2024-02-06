@@ -146,6 +146,18 @@ export function makeRumPublicApi(startRumImpl: StartRum, recorderApi: RecorderAp
   const rumPublicApi = makePublicApi({
     init: monitor((initConfiguration: RumInitConfiguration) => strategy.init(initConfiguration)),
 
+    /**
+     * Set the tracking consent of the current user.
+     *
+     * @param {"granted" | "not-granted"} trackingConsent The user tracking consent
+     *
+     * Data will be sent only if it is set to "granted". This value won't be stored by the library
+     * across page loads: you will need to call this method or set the appropriate `trackingConsent`
+     * field in the init() method at each page load.
+     *
+     * If this method is called before the init() method, the provided value will take precedence
+     * over the one provided as initialization parameter.
+     */
     setTrackingConsent: monitor((trackingConsent: TrackingConsent) => strategy.setTrackingConsent(trackingConsent)),
 
     setGlobalContextProperty: monitor((key, value) => globalContextManager.setContextProperty(key, value)),
