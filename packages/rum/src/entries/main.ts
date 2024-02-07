@@ -18,6 +18,7 @@ export {
   RumLongTaskEvent,
   RumResourceEvent,
   RumViewEvent,
+  RumVitalEvent,
   // Events context
   RumEventDomainContext,
   RumViewEventDomainContext,

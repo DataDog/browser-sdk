@@ -45,6 +45,7 @@ import { startCustomerDataTelemetry } from '../domain/startCustomerDataTelemetry
 import { startPageStateHistory } from '../domain/contexts/pageStateHistory'
 import type { CommonContext } from '../domain/contexts/commonContext'
 import { startDisplayContext } from '../domain/contexts/displayContext'
+import { startVitalCollection } from '../domain/vital/vitalCollection'
 import type { RecorderApi } from './rumPublicApi'
 
 export type StartRum = typeof startRum
@@ -167,6 +168,7 @@ export function startRum(
   const { stop: stopPerformanceCollection } = startPerformanceCollection(lifeCycle, configuration)
   cleanupTasks.push(stopPerformanceCollection)
 
+  const vitalCollection = startVitalCollection(lifeCycle)
   const internalContext = startInternalContext(
     configuration.applicationId,
     session,
@@ -186,6 +188,8 @@ export function startRum(
     session,
     stopSession: () => session.expire(),
     getInternalContext: internalContext.get,
+    startDurationVital: vitalCollection.startDurationVital,
+    stopDurationVital: vitalCollection.stopDurationVital,
     stop: () => {
       cleanupTasks.forEach((task) => task())
     },

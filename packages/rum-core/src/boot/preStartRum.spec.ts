@@ -510,6 +510,30 @@ describe('preStartRum', () => {
       strategy.init(DEFAULT_INIT_CONFIGURATION)
       expect(addFeatureFlagEvaluationSpy).toHaveBeenCalledOnceWith(key, value)
     })
+
+    it('startDurationVital', () => {
+      const startDurationVitalSpy = jasmine.createSpy()
+      doStartRumSpy.and.returnValue({
+        startDurationVital: startDurationVitalSpy,
+      } as unknown as StartRumResult)
+
+      const vitalStart = { name: 'timing', startClocks: clocksNow() }
+      strategy.startDurationVital(vitalStart)
+      strategy.init(DEFAULT_INIT_CONFIGURATION)
+      expect(startDurationVitalSpy).toHaveBeenCalledOnceWith(vitalStart)
+    })
+
+    it('stopDurationVital', () => {
+      const stopDurationVitalSpy = jasmine.createSpy()
+      doStartRumSpy.and.returnValue({
+        stopDurationVital: stopDurationVitalSpy,
+      } as unknown as StartRumResult)
+
+      const vitalStop = { name: 'timing', stopClocks: clocksNow() }
+      strategy.stopDurationVital(vitalStop)
+      strategy.init(DEFAULT_INIT_CONFIGURATION)
+      expect(stopDurationVitalSpy).toHaveBeenCalledOnceWith(vitalStop)
+    })
   })
 
   describe('tracking consent', () => {
