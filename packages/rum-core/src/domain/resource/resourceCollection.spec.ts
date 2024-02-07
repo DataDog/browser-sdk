@@ -320,7 +320,7 @@ describe('resourceCollection', () => {
     const { lifeCycle, rawRumEvents } = setupBuilder.build()
     const performanceEntry = createPerformanceEntry(RumPerformanceEntryType.RESOURCE, { responseStatus: 0 })
     lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [performanceEntry])
-    expect((rawRumEvents[0].rawRumEvent as RawRumResourceEvent).resource.status_code).toBe(undefined)
+    expect((rawRumEvents[0].rawRumEvent as RawRumResourceEvent).resource.status_code).toBeUndefined()
   })
 
   describe('tracing info', () => {
