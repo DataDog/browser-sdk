@@ -9,6 +9,8 @@ import type {
   TrackingConsent,
 } from '@datadog/browser-core'
 import {
+  isExperimentalFeatureEnabled,
+  ExperimentalFeature,
   CustomerDataType,
   assign,
   createContextManager,
@@ -82,6 +84,8 @@ export interface Strategy {
   addAction: StartRumResult['addAction']
   addError: StartRumResult['addError']
   addFeatureFlagEvaluation: StartRumResult['addFeatureFlagEvaluation']
+  startDurationVital: StartRumResult['startDurationVital']
+  stopDurationVital: StartRumResult['stopDurationVital']
 }
 
 export function makeRumPublicApi(startRumImpl: StartRum, recorderApi: RecorderApi, options: RumPublicApiOptions = {}) {
@@ -102,6 +106,21 @@ export function makeRumPublicApi(startRumImpl: StartRum, recorderApi: RecorderAp
     trackingConsentState,
 
     (initConfiguration, configuration, deflateWorker, initialViewOptions) => {
+      if (isExperimentalFeatureEnabled(ExperimentalFeature.CUSTOM_VITALS)) {
+        ;(rumPublicApi as any).startDurationVital = monitor((name: string) => {
+          strategy.startDurationVital({
+            name: sanitize(name)!,
+            startClocks: clocksNow(),
+          })
+        })
+        ;(rumPublicApi as any).stopDurationVital = monitor((name: string) => {
+          strategy.stopDurationVital({
+            name: sanitize(name)!,
+            stopClocks: clocksNow(),
+          })
+        })
+      }
+
       if (initConfiguration.storeContextsAcrossPages) {
         storeContextManager(configuration, globalContextManager, RUM_STORAGE_KEY, CustomerDataType.GlobalContext)
         storeContextManager(configuration, userContextManager, RUM_STORAGE_KEY, CustomerDataType.User)
