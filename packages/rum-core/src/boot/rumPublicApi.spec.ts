@@ -21,7 +21,6 @@ const noopStartRum = (): ReturnType<StartRum> => ({
   addFeatureFlagEvaluation: () => undefined,
   startView: () => undefined,
   getInternalContext: () => undefined,
-  setTrackingConsent: () => undefined,
   lifeCycle: {} as any,
   viewContexts: {} as any,
   session: {} as any,

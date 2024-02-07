@@ -9,6 +9,8 @@ import {
   relativeNow,
   createIdentityEncoder,
   createCustomerDataTracker,
+  createTrackingConsentState,
+  TrackingConsent,
 } from '@datadog/browser-core'
 import {
   createNewEvent,
@@ -334,7 +336,8 @@ describe('view events', () => {
         customerDataTrackerManager,
         () => ({ user: {}, context: {}, hasReplay: undefined }),
         undefined,
-        createIdentityEncoder
+        createIdentityEncoder,
+        createTrackingConsentState(TrackingConsent.GRANTED)
       )
     )
     interceptor = interceptRequests()
