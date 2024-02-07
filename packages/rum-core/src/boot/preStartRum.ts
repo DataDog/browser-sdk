@@ -1,7 +1,6 @@
 import {
   BoundedBuffer,
   display,
-  type DeflateWorker,
   canUseEventBridge,
   displayAlreadyInitializedError,
   willSyntheticsInjectRum,
@@ -9,8 +8,8 @@ import {
   timeStampNow,
   clocksNow,
   assign,
-  createTrackingConsentState,
 } from '@datadog/browser-core'
+import type { TrackingConsentState, DeflateWorker } from '@datadog/browser-core'
 import {
   validateAndBuildRumConfiguration,
   type RumConfiguration,
@@ -24,6 +23,7 @@ import type { StartRumResult } from './startRum'
 export function createPreStartStrategy(
   { ignoreInitIfSyntheticsWillInjectRum, startDeflateWorker }: RumPublicApiOptions,
   getCommonContext: () => CommonContext,
+  trackingConsentState: TrackingConsentState,
   doStartRum: (
     initConfiguration: RumInitConfiguration,
     configuration: RumConfiguration,
@@ -39,13 +39,15 @@ export function createPreStartStrategy(
 
   let cachedInitConfiguration: RumInitConfiguration | undefined
   let cachedConfiguration: RumConfiguration | undefined
-  const trackingConsentState = createTrackingConsentState()
-  trackingConsentState.observable.subscribe(tryStartRum)
+
+  const trackingConsentStateSubscription = trackingConsentState.observable.subscribe(tryStartRum)
 
   function tryStartRum() {
     if (!cachedInitConfiguration || !cachedConfiguration || !trackingConsentState.isGranted()) {
       return
     }
+
+    trackingConsentStateSubscription.unsubscribe()
 
     let initialViewOptions: ViewOptions | undefined
 
@@ -122,15 +124,13 @@ export function createPreStartStrategy(
       }
 
       cachedConfiguration = configuration
-      trackingConsentState.setIfNotDefined(configuration.trackingConsent)
+      trackingConsentState.tryToInit(configuration.trackingConsent)
       tryStartRum()
     },
 
     get initConfiguration() {
       return cachedInitConfiguration
     },
-
-    setTrackingConsent: trackingConsentState.set,
 
     getInternalContext: noop as () => undefined,
 

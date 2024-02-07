@@ -1,10 +1,9 @@
+import type { TrackingConsentState } from '@datadog/browser-core'
 import {
-  TrackingConsent,
   sendToExtension,
   createPageExitObservable,
   willSyntheticsInjectRum,
   canUseEventBridge,
-  createTrackingConsentState,
 } from '@datadog/browser-core'
 import { startLogsSessionManager, startLogsSessionManagerStub } from '../domain/logsSessionManager'
 import type { LogsConfiguration, LogsInitConfiguration } from '../domain/configuration'
@@ -28,7 +27,10 @@ export type StartLogsResult = ReturnType<StartLogs>
 export function startLogs(
   initConfiguration: LogsInitConfiguration,
   configuration: LogsConfiguration,
-  getCommonContext: () => CommonContext
+  getCommonContext: () => CommonContext,
+
+  // Tracking consent should always be granted when the startLogs is called.
+  trackingConsentState: TrackingConsentState
 ) {
   const lifeCycle = new LifeCycle()
   const cleanupTasks: Array<() => void> = []
@@ -37,7 +39,6 @@ export function startLogs(
 
   const reportError = startReportError(lifeCycle)
   const pageExitObservable = createPageExitObservable(configuration)
-  const trackingConsentState = createTrackingConsentState(TrackingConsent.GRANTED)
 
   const session =
     configuration.sessionStoreStrategyType && !canUseEventBridge() && !willSyntheticsInjectRum()
@@ -73,7 +74,6 @@ export function startLogs(
   return {
     handleLog,
     getInternalContext: internalContext.get,
-    setTrackingConsent: trackingConsentState.set,
     stop: () => {
       cleanupTasks.forEach((task) => task())
     },

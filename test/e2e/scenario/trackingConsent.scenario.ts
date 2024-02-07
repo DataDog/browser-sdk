@@ -59,4 +59,17 @@ describe('tracking consent', () => {
       expect(firstView.view.id).not.toEqual(lastView.view.id)
       expect(await findSessionCookie()).not.toEqual(initialSessionId)
     })
+
+  createTest('using setTrackingConsent before init overrides the init parameter')
+    .withRum({ enableExperimentalFeatures: ['tracking_consent'], trackingConsent: 'not-granted' })
+    .withRumInit((configuration) => {
+      window.DD_RUM!.setTrackingConsent('granted')
+      window.DD_RUM!.init(configuration)
+    })
+    .run(async ({ intakeRegistry }) => {
+      await flushEvents()
+
+      expect(intakeRegistry.isEmpty).toBe(false)
+      expect(await findSessionCookie()).toBeDefined()
+    })
 })

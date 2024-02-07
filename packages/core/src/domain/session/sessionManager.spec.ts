@@ -508,7 +508,7 @@ describe('startSessionManager', () => {
       const trackingConsentState = createTrackingConsentState(TrackingConsent.GRANTED)
       const sessionManager = startSessionManagerWithDefaults({ trackingConsentState })
 
-      trackingConsentState.set(TrackingConsent.NOT_GRANTED)
+      trackingConsentState.update(TrackingConsent.NOT_GRANTED)
 
       expectSessionIdToNotBeDefined(sessionManager)
       expect(getCookie(SESSION_STORE_KEY)).toBeUndefined()
@@ -518,7 +518,7 @@ describe('startSessionManager', () => {
       const trackingConsentState = createTrackingConsentState(TrackingConsent.GRANTED)
       const sessionManager = startSessionManagerWithDefaults({ trackingConsentState })
 
-      trackingConsentState.set(TrackingConsent.NOT_GRANTED)
+      trackingConsentState.update(TrackingConsent.NOT_GRANTED)
 
       document.dispatchEvent(createNewEvent(DOM_EVENT.CLICK))
 
@@ -530,11 +530,11 @@ describe('startSessionManager', () => {
       const sessionManager = startSessionManagerWithDefaults({ trackingConsentState })
       const initialSessionId = sessionManager.findActiveSession()!.id
 
-      trackingConsentState.set(TrackingConsent.NOT_GRANTED)
+      trackingConsentState.update(TrackingConsent.NOT_GRANTED)
 
       expectSessionIdToNotBeDefined(sessionManager)
 
-      trackingConsentState.set(TrackingConsent.GRANTED)
+      trackingConsentState.update(TrackingConsent.GRANTED)
 
       clock.tick(STORAGE_POLL_DELAY)
 

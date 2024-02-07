@@ -5,6 +5,7 @@ import type {
   DeflateEncoderStreamId,
   Encoder,
   CustomerDataTrackerManager,
+  TrackingConsentState,
 } from '@datadog/browser-core'
 import {
   sendToExtension,
@@ -16,8 +17,6 @@ import {
   getEventBridge,
   addTelemetryDebug,
   CustomerDataType,
-  createTrackingConsentState,
-  TrackingConsent,
 } from '@datadog/browser-core'
 import { createDOMMutationObservable } from '../browser/domMutationObservable'
 import { startPerformanceCollection } from '../browser/performanceCollection'
@@ -58,7 +57,10 @@ export function startRum(
   customerDataTrackerManager: CustomerDataTrackerManager,
   getCommonContext: () => CommonContext,
   initialViewOptions: ViewOptions | undefined,
-  createEncoder: (streamId: DeflateEncoderStreamId) => Encoder
+  createEncoder: (streamId: DeflateEncoderStreamId) => Encoder,
+
+  // Tracking consent should always be granted when the startRum is called.
+  trackingConsentState: TrackingConsentState
 ) {
   const cleanupTasks: Array<() => void> = []
   const lifeCycle = new LifeCycle()
@@ -90,7 +92,6 @@ export function startRum(
     customerDataTrackerManager.getOrCreateTracker(CustomerDataType.FeatureFlag)
   )
 
-  const trackingConsentState = createTrackingConsentState(TrackingConsent.GRANTED)
   const pageExitObservable = createPageExitObservable(configuration)
   const pageExitSubscription = pageExitObservable.subscribe((event) => {
     lifeCycle.notify(LifeCycleEventType.PAGE_EXITED, event)
@@ -179,7 +180,6 @@ export function startRum(
     addError,
     addTiming,
     addFeatureFlagEvaluation: featureFlagContexts.addFeatureFlagEvaluation,
-    setTrackingConsent: trackingConsentState.set,
     startView,
     lifeCycle,
     viewContexts,
