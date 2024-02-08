@@ -14,9 +14,12 @@ export const enum LifeCycleEventType {
   AUTO_ACTION_COMPLETED,
   VIEW_CREATED,
   VIEW_UPDATED,
+  BEFORE_VIEW_ENDED,
   VIEW_ENDED,
   REQUEST_STARTED,
   REQUEST_COMPLETED,
+
+  BEFORE_SESSION_EXPIRED,
 
   // The SESSION_EXPIRED lifecycle event has been introduced to represent when a session has expired
   // and trigger cleanup tasks related to this, prior to renewing the session. Its implementation is
@@ -55,9 +58,11 @@ declare const LifeCycleEventTypeAsConst: {
   AUTO_ACTION_COMPLETED: LifeCycleEventType.AUTO_ACTION_COMPLETED
   VIEW_CREATED: LifeCycleEventType.VIEW_CREATED
   VIEW_UPDATED: LifeCycleEventType.VIEW_UPDATED
+  BEFORE_VIEW_END: LifeCycleEventType.BEFORE_VIEW_END
   VIEW_ENDED: LifeCycleEventType.VIEW_ENDED
   REQUEST_STARTED: LifeCycleEventType.REQUEST_STARTED
   REQUEST_COMPLETED: LifeCycleEventType.REQUEST_COMPLETED
+  BEFORE_SESSION_EXPIRE: LifeCycleEventType.BEFORE_SESSION_EXPIRE
   SESSION_EXPIRED: LifeCycleEventType.SESSION_EXPIRED
   SESSION_RENEWED: LifeCycleEventType.SESSION_RENEWED
   PAGE_EXITED: LifeCycleEventType.PAGE_EXITED
@@ -73,9 +78,11 @@ export interface LifeCycleEventMap {
   [LifeCycleEventTypeAsConst.AUTO_ACTION_COMPLETED]: AutoAction
   [LifeCycleEventTypeAsConst.VIEW_CREATED]: ViewCreatedEvent
   [LifeCycleEventTypeAsConst.VIEW_UPDATED]: ViewEvent
+  [LifeCycleEventTypeAsConst.BEFORE_VIEW_END]: ViewEndedEvent
   [LifeCycleEventTypeAsConst.VIEW_ENDED]: ViewEndedEvent
   [LifeCycleEventTypeAsConst.REQUEST_STARTED]: RequestStartEvent
   [LifeCycleEventTypeAsConst.REQUEST_COMPLETED]: RequestCompleteEvent
+  [LifeCycleEventTypeAsConst.BEFORE_SESSION_EXPIRED]: ViewEndedEvent
   [LifeCycleEventTypeAsConst.SESSION_EXPIRED]: void
   [LifeCycleEventTypeAsConst.SESSION_RENEWED]: void
   [LifeCycleEventTypeAsConst.PAGE_EXITED]: PageExitEvent

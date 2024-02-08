@@ -125,7 +125,7 @@ export function trackViews(
       })
     })
 
-    lifeCycle.subscribe(LifeCycleEventType.SESSION_EXPIRED, () => {
+    lifeCycle.subscribe(LifeCycleEventType.BEFORE_SESSION_EXPIRED, () => {
       currentView.end({ sessionIsActive: false })
     })
 
