@@ -23,13 +23,13 @@ interface Vital {
 }
 
 export function startVitalCollection(lifeCycle: LifeCycle) {
-  const vitalStartsByName: { [name: string]: DurationVitalStart } = {}
+  const vitalStartsByName = new Map<string, DurationVitalStart>()
   return {
     startDurationVital: (vitalStart: DurationVitalStart) => {
-      vitalStartsByName[vitalStart.name] = vitalStart
+      vitalStartsByName.set(vitalStart.name, vitalStart)
     },
     stopDurationVital: (vitalStop: DurationVitalStop) => {
-      const vitalStart = vitalStartsByName[vitalStop.name]
+      const vitalStart = vitalStartsByName.get(vitalStop.name)
       if (!vitalStart) {
         return
       }
