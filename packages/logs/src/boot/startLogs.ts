@@ -29,7 +29,9 @@ export function startLogs(
   configuration: LogsConfiguration,
   getCommonContext: () => CommonContext,
 
-  // Tracking consent should always be granted when the startLogs is called.
+  // `startLogs` and its subcomponents assume tracking consent is granted initially and starts
+  // collecting logs unconditionally. As such, `startLogs` should be called with a
+  // `trackingConsentState` set to "granted".
   trackingConsentState: TrackingConsentState
 ) {
   const lifeCycle = new LifeCycle()

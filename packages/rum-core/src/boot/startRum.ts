@@ -59,7 +59,9 @@ export function startRum(
   initialViewOptions: ViewOptions | undefined,
   createEncoder: (streamId: DeflateEncoderStreamId) => Encoder,
 
-  // Tracking consent should always be granted when the startRum is called.
+  // `startRum` and its subcomponents assume tracking consent is granted initially and starts
+  // collecting logs unconditionally. As such, `startRum` should be called with a
+  // `trackingConsentState` set to "granted".
   trackingConsentState: TrackingConsentState
 ) {
   const cleanupTasks: Array<() => void> = []
