@@ -270,5 +270,14 @@ describe('preStartLogs', () => {
         expect(doStartLogsSpy).toHaveBeenCalledTimes(1)
       })
     })
+
+    it('do not call startLogs when tracking consent state is updated after init', () => {
+      strategy.init(DEFAULT_INIT_CONFIGURATION)
+      doStartLogsSpy.calls.reset()
+
+      trackingConsentState.update(TrackingConsent.GRANTED)
+
+      expect(doStartLogsSpy).not.toHaveBeenCalled()
+    })
   })
 })

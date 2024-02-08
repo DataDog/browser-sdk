@@ -577,5 +577,14 @@ describe('preStartRum', () => {
         expect(doStartRumSpy).toHaveBeenCalledTimes(1)
       })
     })
+
+    it('do not call startRum when tracking consent state is updated after init', () => {
+      strategy.init(DEFAULT_INIT_CONFIGURATION)
+      doStartRumSpy.calls.reset()
+
+      trackingConsentState.update(TrackingConsent.GRANTED)
+
+      expect(doStartRumSpy).not.toHaveBeenCalled()
+    })
   })
 })
