@@ -1,4 +1,4 @@
-import type { ClocksState } from '@datadog/browser-core'
+import type { ClocksState, Duration } from '@datadog/browser-core'
 import { elapsed, generateUUID } from '@datadog/browser-core'
 import { LifeCycleEventType } from '../lifeCycle'
 import type { LifeCycle, RawRumEventCollectedData } from '../lifeCycle'
@@ -15,11 +15,11 @@ export interface DurationVitalStop {
   stopClocks: ClocksState
 }
 
-interface Vital {
+interface DurationVital {
   name: string
-  type: VitalType
+  type: VitalType.DURATION
   startClocks: ClocksState
-  value: number
+  value: Duration
 }
 
 export function startVitalCollection(lifeCycle: LifeCycle) {
@@ -44,7 +44,7 @@ export function startVitalCollection(lifeCycle: LifeCycle) {
   }
 }
 
-function processVital(vital: Vital): RawRumEventCollectedData<RawRumVitalEvent> {
+function processVital(vital: DurationVital): RawRumEventCollectedData<RawRumVitalEvent> {
   return {
     rawRumEvent: {
       date: vital.startClocks.timeStamp,
