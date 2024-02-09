@@ -22,7 +22,7 @@ export interface ViewContexts {
 export function startViewContexts(lifeCycle: LifeCycle): ViewContexts {
   const viewContextHistory = new ValueHistory<ViewContext>(VIEW_CONTEXT_TIME_OUT_DELAY)
 
-  lifeCycle.subscribe(LifeCycleEventType.VIEW_CREATED, (view) => {
+  lifeCycle.subscribe(LifeCycleEventType.BEFORE_VIEW_CREATED, (view) => {
     viewContextHistory.add(buildViewContext(view), view.startClocks.relative)
   })
 

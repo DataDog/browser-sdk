@@ -1,9 +1,10 @@
 import type { TimeStamp, HttpRequest, ClocksState } from '@datadog/browser-core'
 import { PageExitReason, DefaultPrivacyLevel, noop, isIE, DeflateEncoderStreamId } from '@datadog/browser-core'
 import type { LifeCycle, ViewCreatedEvent, RumConfiguration } from '@datadog/browser-rum-core'
-import { LifeCycleEventType } from '@datadog/browser-rum-core'
+import { LifeCycleEventType, startViewContexts } from '@datadog/browser-rum-core'
 import type { Clock } from '@datadog/browser-core/test'
 import { collectAsyncCalls, createNewEvent } from '@datadog/browser-core/test'
+import type { ViewEndedEvent } from 'packages/rum-core/src/domain/view/trackViews'
 import type { RumSessionManagerMock, TestSetupBuilder } from '../../../rum-core/test'
 import { appendElement, createRumSessionManagerMock, setup } from '../../../rum-core/test'
 
@@ -41,16 +42,11 @@ describe('startRecording', () => {
     const worker = startDeflateWorker(configuration, 'Session Replay', noop)
 
     setupBuilder = setup()
-      .withViewContexts({
-        findView() {
-          return { id: viewId, startClocks: {} as ClocksState }
-        },
-      })
       .withSessionManager(sessionManager)
       .withConfiguration({
         defaultPrivacyLevel: DefaultPrivacyLevel.ALLOW,
       })
-      .beforeBuild(({ lifeCycle, configuration, viewContexts, sessionManager }) => {
+      .beforeBuild(({ lifeCycle, configuration, sessionManager }) => {
         requestSendSpy = jasmine.createSpy()
         const httpRequest = {
           send: requestSendSpy,
@@ -58,6 +54,9 @@ describe('startRecording', () => {
         }
 
         const deflateEncoder = createDeflateEncoder(configuration, worker!, DeflateEncoderStreamId.REPLAY)
+        const viewContexts = startViewContexts(lifeCycle)
+        initialView(lifeCycle)
+
         const recording = startRecording(
           lifeCycle,
           configuration,
@@ -173,6 +172,19 @@ describe('startRecording', () => {
     expect(secondSegment.records[0].type).toBe(RecordType.Meta)
   })
 
+  it('send view end record when the segment collection is waiting for the initial record', async () => {
+    const { lifeCycle } = setupBuilder.build()
+
+    flushSegment(lifeCycle)
+    changeView(lifeCycle)
+    flushSegment(lifeCycle)
+
+    const requests = await readSentRequests(3)
+    const secondSegment = requests[1].segment
+
+    expect(secondSegment.records[0].type).toBe(RecordType.ViewEnd)
+  })
+
   it('does not split Meta, Focus and FullSnapshot records between multiple segments when taking a full snapshot', async () => {
     setSegmentBytesLimit(0)
     setupBuilder.build()
@@ -208,12 +220,29 @@ describe('startRecording', () => {
     })
   })
 
-  function changeView(lifeCycle: LifeCycle) {
-    lifeCycle.notify(LifeCycleEventType.VIEW_ENDED, {} as any)
-    viewId = 'view-id-2'
+  function initialView(lifeCycle: LifeCycle) {
+    lifeCycle.notify(LifeCycleEventType.BEFORE_VIEW_CREATED, {
+      id: viewId,
+      startClocks: { relative: 1, timeStamp: VIEW_TIMESTAMP } as ClocksState,
+    })
     lifeCycle.notify(LifeCycleEventType.VIEW_CREATED, {
+      id: viewId,
+      startClocks: { relative: 1, timeStamp: VIEW_TIMESTAMP } as ClocksState,
+    })
+  }
+
+  function changeView(lifeCycle: LifeCycle) {
+    const viewEndedEvent = {
+      endClocks: { relative: 2, timeStamp: 2 as TimeStamp },
+    } as ViewEndedEvent
+    const viewCreatedEvent = {
       startClocks: { relative: 1, timeStamp: VIEW_TIMESTAMP },
-    } as Partial<ViewCreatedEvent> as any)
+    } as ViewCreatedEvent
+    lifeCycle.notify(LifeCycleEventType.BEFORE_VIEW_ENDED, viewEndedEvent)
+    lifeCycle.notify(LifeCycleEventType.VIEW_ENDED, viewEndedEvent)
+    viewId = 'view-id-2'
+    lifeCycle.notify(LifeCycleEventType.BEFORE_VIEW_CREATED, viewCreatedEvent)
+    lifeCycle.notify(LifeCycleEventType.VIEW_CREATED, viewCreatedEvent)
   }
 
   async function readSentRequests(expectedSentRequestCount: number) {

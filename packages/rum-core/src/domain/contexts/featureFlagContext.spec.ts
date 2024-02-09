@@ -43,7 +43,7 @@ describe('featureFlagContexts', () => {
 
       const { lifeCycle } = setupBuilder.build()
 
-      lifeCycle.notify(LifeCycleEventType.VIEW_CREATED, {
+      lifeCycle.notify(LifeCycleEventType.BEFORE_VIEW_CREATED, {
         startClocks: relativeToClocks(0 as RelativeTime),
       } as ViewCreatedEvent)
 
@@ -67,7 +67,7 @@ describe('featureFlagContexts', () => {
 
       const { lifeCycle } = setupBuilder.build()
 
-      lifeCycle.notify(LifeCycleEventType.VIEW_CREATED, {
+      lifeCycle.notify(LifeCycleEventType.BEFORE_VIEW_CREATED, {
         startClocks: relativeToClocks(0 as RelativeTime),
       } as ViewCreatedEvent)
 
@@ -83,7 +83,7 @@ describe('featureFlagContexts', () => {
     it('should not add feature flag evaluation when the ff feature_flags is disabled', () => {
       const { lifeCycle } = setupBuilder.build()
 
-      lifeCycle.notify(LifeCycleEventType.VIEW_CREATED, {
+      lifeCycle.notify(LifeCycleEventType.BEFORE_VIEW_CREATED, {
         startClocks: relativeToClocks(0 as RelativeTime),
       } as ViewCreatedEvent)
 
@@ -101,7 +101,7 @@ describe('featureFlagContexts', () => {
 
       const updateCustomerDataSpy = spyOn(customerDataTracker, 'updateCustomerData')
 
-      lifeCycle.notify(LifeCycleEventType.VIEW_CREATED, {
+      lifeCycle.notify(LifeCycleEventType.BEFORE_VIEW_CREATED, {
         startClocks: relativeToClocks(0 as RelativeTime),
       } as ViewCreatedEvent)
 
@@ -129,14 +129,14 @@ describe('featureFlagContexts', () => {
 
       const { lifeCycle } = setupBuilder.build()
 
-      lifeCycle.notify(LifeCycleEventType.VIEW_CREATED, {
+      lifeCycle.notify(LifeCycleEventType.BEFORE_VIEW_CREATED, {
         startClocks: relativeToClocks(0 as RelativeTime),
       } as ViewCreatedEvent)
       featureFlagContexts.addFeatureFlagEvaluation('feature', 'foo')
       lifeCycle.notify(LifeCycleEventType.VIEW_ENDED, {
         endClocks: relativeToClocks(10 as RelativeTime),
       } as ViewEndedEvent)
-      lifeCycle.notify(LifeCycleEventType.VIEW_CREATED, {
+      lifeCycle.notify(LifeCycleEventType.BEFORE_VIEW_CREATED, {
         startClocks: relativeToClocks(10 as RelativeTime),
       } as ViewCreatedEvent)
 
@@ -149,7 +149,7 @@ describe('featureFlagContexts', () => {
 
       const { lifeCycle, clock } = setupBuilder.withFakeClock().build()
 
-      lifeCycle.notify(LifeCycleEventType.VIEW_CREATED, {
+      lifeCycle.notify(LifeCycleEventType.BEFORE_VIEW_CREATED, {
         startClocks: relativeToClocks(0 as RelativeTime),
       } as ViewCreatedEvent)
 
@@ -158,7 +158,7 @@ describe('featureFlagContexts', () => {
       lifeCycle.notify(LifeCycleEventType.VIEW_ENDED, {
         endClocks: relativeToClocks(10 as RelativeTime),
       } as ViewEndedEvent)
-      lifeCycle.notify(LifeCycleEventType.VIEW_CREATED, {
+      lifeCycle.notify(LifeCycleEventType.BEFORE_VIEW_CREATED, {
         startClocks: relativeToClocks(10 as RelativeTime),
       } as ViewCreatedEvent)
 

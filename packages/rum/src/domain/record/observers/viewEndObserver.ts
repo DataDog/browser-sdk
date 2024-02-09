@@ -7,7 +7,7 @@ import { RecordType } from '../../../types'
 export type ViewEndCallback = (record: ViewEndRecord) => void
 
 export function initViewEndObserver(lifeCycle: LifeCycle, viewEndCb: ViewEndCallback): ListenerHandler {
-  return lifeCycle.subscribe(LifeCycleEventType.VIEW_ENDED, () => {
+  return lifeCycle.subscribe(LifeCycleEventType.BEFORE_VIEW_ENDED, () => {
     viewEndCb({
       timestamp: timeStampNow(),
       type: RecordType.ViewEnd,

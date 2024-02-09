@@ -19,7 +19,7 @@ describe('initMoveObserver', () => {
   })
 
   it('should generate view end record', () => {
-    lifeCycle.notify(LifeCycleEventType.VIEW_ENDED, {} as any)
+    lifeCycle.notify(LifeCycleEventType.BEFORE_VIEW_ENDED, {} as any)
 
     expect(viewEndCb).toHaveBeenCalledWith({
       timestamp: jasmine.any(Number),
