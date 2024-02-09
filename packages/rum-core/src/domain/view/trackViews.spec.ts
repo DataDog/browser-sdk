@@ -100,11 +100,14 @@ describe('track views automatically', () => {
 describe('view lifecycle', () => {
   let setupBuilder: TestSetupBuilder
   let viewTest: ViewTest
+  let notifySpy: jasmine.Spy
 
   beforeEach(() => {
     setupBuilder = setup()
       .withFakeLocation('/foo')
       .beforeBuild((buildContext) => {
+        notifySpy = spyOn(buildContext.lifeCycle, 'notify').and.callThrough()
+
         viewTest = setupViewTest(buildContext, {
           name: 'initial view name',
           service: 'initial service',
@@ -121,7 +124,7 @@ describe('view lifecycle', () => {
 
       expect(getViewEndCount()).toBe(0)
 
-      lifeCycle.notify(LifeCycleEventType.SESSION_EXPIRED)
+      lifeCycle.notify(LifeCycleEventType.BEFORE_SESSION_EXPIRED)
 
       expect(getViewEndCount()).toBe(1)
     })
@@ -132,7 +135,7 @@ describe('view lifecycle', () => {
 
       expect(getViewUpdateCount()).toBe(1)
 
-      lifeCycle.notify(LifeCycleEventType.SESSION_EXPIRED)
+      lifeCycle.notify(LifeCycleEventType.BEFORE_SESSION_EXPIRED)
 
       expect(getViewUpdateCount()).toBe(2)
       expect(getViewUpdate(0).sessionIsActive).toBe(true)
@@ -145,7 +148,7 @@ describe('view lifecycle', () => {
 
       expect(getViewCreateCount()).toBe(1)
 
-      lifeCycle.notify(LifeCycleEventType.SESSION_EXPIRED)
+      lifeCycle.notify(LifeCycleEventType.BEFORE_SESSION_EXPIRED)
 
       expect(getViewCreateCount()).toBe(1)
     })
@@ -154,12 +157,12 @@ describe('view lifecycle', () => {
       const { lifeCycle } = setupBuilder.build()
       const { getViewEndCount, getViewUpdateCount } = viewTest
 
-      lifeCycle.notify(LifeCycleEventType.PAGE_EXITED, { reason: PageExitReason.UNLOADING })
+      lifeCycle.notify(LifeCycleEventType.BEFORE_PAGE_EXITED, { reason: PageExitReason.UNLOADING })
 
       expect(getViewEndCount()).toBe(1)
       expect(getViewUpdateCount()).toBe(2)
 
-      lifeCycle.notify(LifeCycleEventType.SESSION_EXPIRED)
+      lifeCycle.notify(LifeCycleEventType.BEFORE_SESSION_EXPIRED)
 
       expect(getViewEndCount()).toBe(1)
       expect(getViewUpdateCount()).toBe(2)
@@ -173,7 +176,7 @@ describe('view lifecycle', () => {
 
       expect(getViewCreateCount()).toBe(1)
 
-      lifeCycle.notify(LifeCycleEventType.SESSION_EXPIRED)
+      lifeCycle.notify(LifeCycleEventType.BEFORE_SESSION_EXPIRED)
       lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED)
 
       expect(getViewCreateCount()).toBe(2)
@@ -183,17 +186,17 @@ describe('view lifecycle', () => {
       const { lifeCycle, changeLocation } = setupBuilder.build()
       const { getViewCreateCount, getViewCreate, startView } = viewTest
 
-      lifeCycle.notify(LifeCycleEventType.SESSION_EXPIRED)
+      lifeCycle.notify(LifeCycleEventType.BEFORE_SESSION_EXPIRED)
       lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED)
 
       startView({ name: 'view 1', service: 'service 1', version: 'version 1' })
       startView({ name: 'view 2', service: 'service 2', version: 'version 2' })
-      lifeCycle.notify(LifeCycleEventType.SESSION_EXPIRED)
+      lifeCycle.notify(LifeCycleEventType.BEFORE_SESSION_EXPIRED)
       lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED)
 
       startView({ name: 'view 3', service: 'service 3', version: 'version 3' })
       changeLocation('/bar')
-      lifeCycle.notify(LifeCycleEventType.SESSION_EXPIRED)
+      lifeCycle.notify(LifeCycleEventType.BEFORE_SESSION_EXPIRED)
       lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED)
 
       expect(getViewCreateCount()).toBe(8)
@@ -275,7 +278,7 @@ describe('view lifecycle', () => {
       const { lifeCycle, clock } = setupBuilder.withFakeClock().build()
       const { getViewUpdateCount } = viewTest
 
-      lifeCycle.notify(LifeCycleEventType.SESSION_EXPIRED)
+      lifeCycle.notify(LifeCycleEventType.BEFORE_SESSION_EXPIRED)
 
       expect(getViewUpdateCount()).toBe(2)
 
@@ -300,7 +303,7 @@ describe('view lifecycle', () => {
 
         expect(getViewEndCount()).toEqual(0)
 
-        lifeCycle.notify(LifeCycleEventType.PAGE_EXITED, { reason: exitReason })
+        lifeCycle.notify(LifeCycleEventType.BEFORE_PAGE_EXITED, { reason: exitReason })
 
         expect(getViewEndCount()).toEqual(expectViewEnd ? 1 : 0)
       })
@@ -312,7 +315,7 @@ describe('view lifecycle', () => {
 
       expect(getViewCreateCount()).toEqual(1)
 
-      lifeCycle.notify(LifeCycleEventType.PAGE_EXITED, { reason: PageExitReason.UNLOADING })
+      lifeCycle.notify(LifeCycleEventType.BEFORE_PAGE_EXITED, { reason: PageExitReason.UNLOADING })
 
       expect(getViewCreateCount()).toEqual(1)
     })
@@ -719,7 +722,7 @@ describe('view custom timings', () => {
     const { clock, lifeCycle } = setupBuilder.build()
     const { getViewUpdateCount, addTiming } = viewTest
 
-    lifeCycle.notify(LifeCycleEventType.SESSION_EXPIRED)
+    lifeCycle.notify(LifeCycleEventType.BEFORE_SESSION_EXPIRED)
 
     expect(getViewUpdateCount()).toBe(2)
 
@@ -850,7 +853,7 @@ describe('view event count', () => {
       lifeCycle.notify(LifeCycleEventType.RUM_EVENT_COLLECTED, createFakeActionEvent())
     })
 
-    lifeCycle.notify(LifeCycleEventType.PAGE_EXITED, { reason: PageExitReason.UNLOADING })
+    lifeCycle.notify(LifeCycleEventType.BEFORE_PAGE_EXITED, { reason: PageExitReason.UNLOADING })
 
     expect(getViewUpdate(getViewUpdateCount() - 1).eventCounts.actionCount).toBe(1)
   })

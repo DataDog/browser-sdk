@@ -1,4 +1,4 @@
-import type { Observable } from '../../tools/observable'
+import { Observable } from '../../tools/observable'
 import type { Context } from '../../tools/serialisation/context'
 import { ValueHistory } from '../../tools/valueHistory'
 import type { RelativeTime } from '../../tools/utils/timeUtils'
@@ -12,6 +12,7 @@ import { startSessionStore } from './sessionStore'
 export interface SessionManager<TrackingType extends string> {
   findActiveSession: (startTime?: RelativeTime) => SessionContext<TrackingType> | undefined
   renewObservable: Observable<void>
+  beforeExpireObservable: Observable<void>
   expireObservable: Observable<void>
   expire: () => void
 }
@@ -30,6 +31,10 @@ export function startSessionManager<TrackingType extends string>(
   productKey: string,
   computeSessionState: (rawTrackingType?: string) => { trackingType: TrackingType; isTracked: boolean }
 ): SessionManager<TrackingType> {
+  const renewObservable = new Observable<void>()
+  const expireObservable = new Observable<void>()
+  const beforeExpireObservable = new Observable<void>()
+
   // TODO - Improve configuration type and remove assertion
   const sessionStore = startSessionStore(configuration.sessionStoreStrategyType!, productKey, computeSessionState)
   stopCallbacks.push(() => sessionStore.stop())
@@ -39,9 +44,12 @@ export function startSessionManager<TrackingType extends string>(
 
   sessionStore.renewObservable.subscribe(() => {
     sessionContextHistory.add(buildSessionContext(), relativeNow())
+    renewObservable.notify()
   })
   sessionStore.expireObservable.subscribe(() => {
+    beforeExpireObservable.notify()
     sessionContextHistory.closeActive(relativeNow())
+    expireObservable.notify()
   })
 
   sessionStore.expandOrRenewSession()
@@ -59,8 +67,9 @@ export function startSessionManager<TrackingType extends string>(
 
   return {
     findActiveSession: (startTime) => sessionContextHistory.find(startTime),
-    renewObservable: sessionStore.renewObservable,
-    expireObservable: sessionStore.expireObservable,
+    renewObservable,
+    expireObservable,
+    beforeExpireObservable,
     expire: sessionStore.expire,
   }
 }

@@ -125,12 +125,12 @@ export function trackViews(
       })
     })
 
-    lifeCycle.subscribe(LifeCycleEventType.SESSION_EXPIRED, () => {
+    lifeCycle.subscribe(LifeCycleEventType.BEFORE_SESSION_EXPIRED, () => {
       currentView.end({ sessionIsActive: false })
     })
 
     // End the current view on page unload
-    lifeCycle.subscribe(LifeCycleEventType.PAGE_EXITED, (pageExitEvent) => {
+    lifeCycle.subscribe(LifeCycleEventType.BEFORE_PAGE_EXITED, (pageExitEvent) => {
       if (pageExitEvent.reason === PageExitReason.UNLOADING || pageExitEvent.reason === PageExitReason.PAGEHIDE) {
         currentView.end()
       }
