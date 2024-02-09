@@ -7,6 +7,8 @@ import {
   SESSION_STORE_KEY,
   createCustomerDataTracker,
   noop,
+  createTrackingConsentState,
+  TrackingConsent,
 } from '@datadog/browser-core'
 import type { Request } from '@datadog/browser-core/test'
 import {
@@ -81,7 +83,12 @@ describe('logs', () => {
 
   describe('request', () => {
     it('should send the needed data', () => {
-      ;({ handleLog, stop: stopLogs } = startLogs(initConfiguration, baseConfiguration, () => COMMON_CONTEXT))
+      ;({ handleLog, stop: stopLogs } = startLogs(
+        initConfiguration,
+        baseConfiguration,
+        () => COMMON_CONTEXT,
+        createTrackingConsentState(TrackingConsent.GRANTED)
+      ))
       registerCleanupTask(stopLogs)
 
       handleLog({ message: 'message', status: StatusType.warn, context: { foo: 'bar' } }, logger, COMMON_CONTEXT)
@@ -107,7 +114,8 @@ describe('logs', () => {
       ;({ handleLog, stop: stopLogs } = startLogs(
         initConfiguration,
         { ...baseConfiguration, batchMessagesLimit: 3 },
-        () => COMMON_CONTEXT
+        () => COMMON_CONTEXT,
+        createTrackingConsentState(TrackingConsent.GRANTED)
       ))
       registerCleanupTask(stopLogs)
 
@@ -120,7 +128,12 @@ describe('logs', () => {
 
     it('should send bridge event when bridge is present', () => {
       const sendSpy = spyOn(initEventBridgeStub(), 'send')
-      ;({ handleLog, stop: stopLogs } = startLogs(initConfiguration, baseConfiguration, () => COMMON_CONTEXT))
+      ;({ handleLog, stop: stopLogs } = startLogs(
+        initConfiguration,
+        baseConfiguration,
+        () => COMMON_CONTEXT,
+        createTrackingConsentState(TrackingConsent.GRANTED)
+      ))
       registerCleanupTask(stopLogs)
 
       handleLog(DEFAULT_MESSAGE, logger)
@@ -140,14 +153,24 @@ describe('logs', () => {
       const sendSpy = spyOn(initEventBridgeStub(), 'send')
 
       let configuration = { ...baseConfiguration, sessionSampleRate: 0 }
-      ;({ handleLog, stop: stopLogs } = startLogs(initConfiguration, configuration, () => COMMON_CONTEXT))
+      ;({ handleLog, stop: stopLogs } = startLogs(
+        initConfiguration,
+        configuration,
+        () => COMMON_CONTEXT,
+        createTrackingConsentState(TrackingConsent.GRANTED)
+      ))
       registerCleanupTask(stopLogs)
       handleLog(DEFAULT_MESSAGE, logger)
 
       expect(sendSpy).not.toHaveBeenCalled()
 
       configuration = { ...baseConfiguration, sessionSampleRate: 100 }
-      ;({ handleLog, stop: stopLogs } = startLogs(initConfiguration, configuration, () => COMMON_CONTEXT))
+      ;({ handleLog, stop: stopLogs } = startLogs(
+        initConfiguration,
+        configuration,
+        () => COMMON_CONTEXT,
+        createTrackingConsentState(TrackingConsent.GRANTED)
+      ))
       registerCleanupTask(stopLogs)
       handleLog(DEFAULT_MESSAGE, logger)
 
@@ -160,7 +183,8 @@ describe('logs', () => {
     ;({ handleLog, stop: stopLogs } = startLogs(
       initConfiguration,
       { ...baseConfiguration, forwardConsoleLogs: ['log'] },
-      () => COMMON_CONTEXT
+      () => COMMON_CONTEXT,
+      createTrackingConsentState(TrackingConsent.GRANTED)
     ))
     registerCleanupTask(stopLogs)
 
@@ -177,7 +201,12 @@ describe('logs', () => {
     })
 
     it('creates a session on normal conditions', () => {
-      ;({ handleLog, stop: stopLogs } = startLogs(initConfiguration, baseConfiguration, () => COMMON_CONTEXT))
+      ;({ handleLog, stop: stopLogs } = startLogs(
+        initConfiguration,
+        baseConfiguration,
+        () => COMMON_CONTEXT,
+        createTrackingConsentState(TrackingConsent.GRANTED)
+      ))
       registerCleanupTask(stopLogs)
 
       expect(getCookie(SESSION_STORE_KEY)).not.toBeUndefined()
@@ -185,7 +214,12 @@ describe('logs', () => {
 
     it('does not create a session if event bridge is present', () => {
       initEventBridgeStub()
-      ;({ handleLog, stop: stopLogs } = startLogs(initConfiguration, baseConfiguration, () => COMMON_CONTEXT))
+      ;({ handleLog, stop: stopLogs } = startLogs(
+        initConfiguration,
+        baseConfiguration,
+        () => COMMON_CONTEXT,
+        createTrackingConsentState(TrackingConsent.GRANTED)
+      ))
       registerCleanupTask(stopLogs)
 
       expect(getCookie(SESSION_STORE_KEY)).toBeUndefined()
@@ -193,7 +227,12 @@ describe('logs', () => {
 
     it('does not create a session if synthetics worker will inject RUM', () => {
       mockSyntheticsWorkerValues({ injectsRum: true })
-      ;({ handleLog, stop: stopLogs } = startLogs(initConfiguration, baseConfiguration, () => COMMON_CONTEXT))
+      ;({ handleLog, stop: stopLogs } = startLogs(
+        initConfiguration,
+        baseConfiguration,
+        () => COMMON_CONTEXT,
+        createTrackingConsentState(TrackingConsent.GRANTED)
+      ))
       registerCleanupTask(stopLogs)
 
       expect(getCookie(SESSION_STORE_KEY)).toBeUndefined()

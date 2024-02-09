@@ -1,7 +1,6 @@
 import {
   BoundedBuffer,
   display,
-  type DeflateWorker,
   canUseEventBridge,
   displayAlreadyInitializedError,
   willSyntheticsInjectRum,
@@ -10,6 +9,7 @@ import {
   clocksNow,
   assign,
 } from '@datadog/browser-core'
+import type { TrackingConsentState, DeflateWorker } from '@datadog/browser-core'
 import {
   validateAndBuildRumConfiguration,
   type RumConfiguration,
@@ -23,6 +23,7 @@ import type { StartRumResult } from './startRum'
 export function createPreStartStrategy(
   { ignoreInitIfSyntheticsWillInjectRum, startDeflateWorker }: RumPublicApiOptions,
   getCommonContext: () => CommonContext,
+  trackingConsentState: TrackingConsentState,
   doStartRum: (
     initConfiguration: RumInitConfiguration,
     configuration: RumConfiguration,
@@ -39,10 +40,14 @@ export function createPreStartStrategy(
   let cachedInitConfiguration: RumInitConfiguration | undefined
   let cachedConfiguration: RumConfiguration | undefined
 
+  const trackingConsentStateSubscription = trackingConsentState.observable.subscribe(tryStartRum)
+
   function tryStartRum() {
-    if (!cachedInitConfiguration || !cachedConfiguration) {
+    if (!cachedInitConfiguration || !cachedConfiguration || !trackingConsentState.isGranted()) {
       return
     }
+
+    trackingConsentStateSubscription.unsubscribe()
 
     let initialViewOptions: ViewOptions | undefined
 
@@ -119,6 +124,7 @@ export function createPreStartStrategy(
       }
 
       cachedConfiguration = configuration
+      trackingConsentState.tryToInit(configuration.trackingConsent)
       tryStartRum()
     },
 
@@ -156,6 +162,14 @@ export function createPreStartStrategy(
 
     addFeatureFlagEvaluation(key, value) {
       bufferApiCalls.add((startRumResult) => startRumResult.addFeatureFlagEvaluation(key, value))
+    },
+
+    startDurationVital(vitalStart) {
+      bufferApiCalls.add((startRumResult) => startRumResult.startDurationVital(vitalStart))
+    },
+
+    stopDurationVital(vitalStart) {
+      bufferApiCalls.add((startRumResult) => startRumResult.stopDurationVital(vitalStart))
     },
   }
 }

@@ -1,3 +1,4 @@
+import type { TrackingConsentState } from '@datadog/browser-core'
 import {
   BoundedBuffer,
   assign,
@@ -18,17 +19,20 @@ import type { StartLogsResult } from './startLogs'
 
 export function createPreStartStrategy(
   getCommonContext: () => CommonContext,
+  trackingConsentState: TrackingConsentState,
   doStartLogs: (initConfiguration: LogsInitConfiguration, configuration: LogsConfiguration) => StartLogsResult
 ): Strategy {
   const bufferApiCalls = new BoundedBuffer<StartLogsResult>()
   let cachedInitConfiguration: LogsInitConfiguration | undefined
   let cachedConfiguration: LogsConfiguration | undefined
+  const trackingConsentStateSubscription = trackingConsentState.observable.subscribe(tryStartLogs)
 
   function tryStartLogs() {
-    if (!cachedConfiguration || !cachedInitConfiguration) {
+    if (!cachedConfiguration || !cachedInitConfiguration || !trackingConsentState.isGranted()) {
       return
     }
 
+    trackingConsentStateSubscription.unsubscribe()
     const startLogsResult = doStartLogs(cachedInitConfiguration, cachedConfiguration)
 
     bufferApiCalls.drain(startLogsResult)
@@ -59,6 +63,7 @@ export function createPreStartStrategy(
       }
 
       cachedConfiguration = configuration
+      trackingConsentState.tryToInit(configuration.trackingConsent)
       tryStartLogs()
     },
 

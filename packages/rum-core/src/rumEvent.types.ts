@@ -6,7 +6,13 @@
 /**
  * Schema of all properties of a RUM event
  */
-export type RumEvent = RumActionEvent | RumErrorEvent | RumLongTaskEvent | RumResourceEvent | RumViewEvent
+export type RumEvent =
+  | RumActionEvent
+  | RumErrorEvent
+  | RumLongTaskEvent
+  | RumResourceEvent
+  | RumViewEvent
+  | RumVitalEvent
 /**
  * Schema of all properties of an Action event
  */
@@ -233,7 +239,7 @@ export type RumErrorEvent = CommonProperties &
         /**
          * HTTP method of the resource
          */
-        readonly method: 'POST' | 'GET' | 'HEAD' | 'PUT' | 'DELETE' | 'PATCH'
+        readonly method: 'POST' | 'GET' | 'HEAD' | 'PUT' | 'DELETE' | 'PATCH' | 'TRACE' | 'OPTIONS' | 'CONNECT'
         /**
          * HTTP Status code of the resource
          */
@@ -274,6 +280,96 @@ export type RumErrorEvent = CommonProperties &
             | 'video'
           [k: string]: unknown
         }
+        [k: string]: unknown
+      }
+      /**
+       * Description of each thread in the process when error happened.
+       */
+      threads?: {
+        /**
+         * Name of the thread (e.g. 'Thread 0').
+         */
+        readonly name: string
+        /**
+         * Tells if the thread crashed.
+         */
+        readonly crashed: boolean
+        /**
+         * Unsymbolicated stack trace of the given thread.
+         */
+        readonly stack: string
+        /**
+         * Platform-specific state of the thread when its state was captured (CPU registers dump for iOS, thread state enum for Android, etc.).
+         */
+        readonly state?: string
+        [k: string]: unknown
+      }[]
+      /**
+       * Description of each binary image (native libraries; for Android: .so files) loaded or referenced by the process/application.
+       */
+      readonly binary_images?: {
+        /**
+         * Build UUID that uniquely identifies the binary image.
+         */
+        readonly uuid: string
+        /**
+         * Name of the library.
+         */
+        readonly name: string
+        /**
+         * Determines if it's a system or user library.
+         */
+        readonly is_system: boolean
+        /**
+         * Library's load address (hexadecimal).
+         */
+        readonly load_address?: string
+        /**
+         * Max value from the library address range (hexadecimal).
+         */
+        readonly max_address?: string
+        /**
+         * CPU architecture from the library.
+         */
+        readonly arch?: string
+        [k: string]: unknown
+      }[]
+      /**
+       * A boolean value saying if any of the stack traces was truncated due to minification.
+       */
+      readonly was_truncated?: boolean
+      /**
+       * Platform-specific metadata of the error event.
+       */
+      readonly meta?: {
+        /**
+         * The CPU architecture of the process that crashed.
+         */
+        readonly code_type?: string
+        /**
+         * Parent process information.
+         */
+        readonly parent_process?: string
+        /**
+         * A client-generated 16-byte UUID of the incident.
+         */
+        readonly incident_identifier?: string
+        /**
+         * The name of the crashed process.
+         */
+        readonly process?: string
+        /**
+         * The name of the corresponding BSD termination signal. (in case of iOS crash)
+         */
+        readonly exception_type?: string
+        /**
+         * CPU specific information about the exception encoded into 64-bit hexadecimal number preceded by the signal code.
+         */
+        readonly exception_codes?: string
+        /**
+         * The location of the executable.
+         */
+        readonly path?: string
         [k: string]: unknown
       }
       [k: string]: unknown
@@ -372,7 +468,7 @@ export type RumResourceEvent = CommonProperties &
       /**
        * HTTP method of the resource
        */
-      readonly method?: 'POST' | 'GET' | 'HEAD' | 'PUT' | 'DELETE' | 'PATCH'
+      readonly method?: 'POST' | 'GET' | 'HEAD' | 'PUT' | 'DELETE' | 'PATCH' | 'TRACE' | 'OPTIONS' | 'CONNECT'
       /**
        * URL of the resource
        */
@@ -889,6 +985,37 @@ export type RumViewEvent = CommonProperties &
          */
         readonly max_scroll_height_time: number
         [k: string]: unknown
+      }
+      [k: string]: unknown
+    }
+    [k: string]: unknown
+  }
+/**
+ * Schema of all properties of a Vital event
+ */
+export type RumVitalEvent = CommonProperties &
+  ViewContainerSchema & {
+    /**
+     * RUM event type
+     */
+    readonly type: 'vital'
+    /**
+     * Vital properties
+     */
+    readonly vital: {
+      /**
+       * Type of the vital
+       */
+      readonly type: 'duration'
+      /**
+       * UUID of the vital
+       */
+      readonly id: string
+      /**
+       * User custom vital. As vital name is used as facet path, it must contain only letters, digits, or the characters - _ . @ $
+       */
+      readonly custom?: {
+        [k: string]: number
       }
       [k: string]: unknown
     }

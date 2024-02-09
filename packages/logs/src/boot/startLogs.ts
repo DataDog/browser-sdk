@@ -1,3 +1,4 @@
+import type { TrackingConsentState } from '@datadog/browser-core'
 import {
   sendToExtension,
   createPageExitObservable,
@@ -26,7 +27,10 @@ export type StartLogsResult = ReturnType<StartLogs>
 export function startLogs(
   initConfiguration: LogsInitConfiguration,
   configuration: LogsConfiguration,
-  getCommonContext: () => CommonContext
+  getCommonContext: () => CommonContext,
+
+  // Tracking consent should always be granted when the startLogs is called.
+  trackingConsentState: TrackingConsentState
 ) {
   const lifeCycle = new LifeCycle()
   const cleanupTasks: Array<() => void> = []
@@ -38,7 +42,7 @@ export function startLogs(
 
   const session =
     configuration.sessionStoreStrategyType && !canUseEventBridge() && !willSyntheticsInjectRum()
-      ? startLogsSessionManager(configuration)
+      ? startLogsSessionManager(configuration, trackingConsentState)
       : startLogsSessionManagerStub(configuration)
 
   const { stop: stopLogsTelemetry } = startLogsTelemetry(

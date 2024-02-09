@@ -5,6 +5,7 @@ import type {
   DeflateEncoderStreamId,
   Encoder,
   CustomerDataTrackerManager,
+  TrackingConsentState,
 } from '@datadog/browser-core'
 import {
   sendToExtension,
@@ -44,6 +45,7 @@ import { startCustomerDataTelemetry } from '../domain/startCustomerDataTelemetry
 import { startPageStateHistory } from '../domain/contexts/pageStateHistory'
 import type { CommonContext } from '../domain/contexts/commonContext'
 import { startDisplayContext } from '../domain/contexts/displayContext'
+import { startVitalCollection } from '../domain/vital/vitalCollection'
 import type { RecorderApi } from './rumPublicApi'
 
 export type StartRum = typeof startRum
@@ -56,7 +58,10 @@ export function startRum(
   customerDataTrackerManager: CustomerDataTrackerManager,
   getCommonContext: () => CommonContext,
   initialViewOptions: ViewOptions | undefined,
-  createEncoder: (streamId: DeflateEncoderStreamId) => Encoder
+  createEncoder: (streamId: DeflateEncoderStreamId) => Encoder,
+
+  // Tracking consent should always be granted when the startRum is called.
+  trackingConsentState: TrackingConsentState
 ) {
   const cleanupTasks: Array<() => void> = []
   const lifeCycle = new LifeCycle()
@@ -94,7 +99,9 @@ export function startRum(
   })
   cleanupTasks.push(() => pageExitSubscription.unsubscribe())
 
-  const session = !canUseEventBridge() ? startRumSessionManager(configuration, lifeCycle) : startRumSessionManagerStub()
+  const session = !canUseEventBridge()
+    ? startRumSessionManager(configuration, lifeCycle, trackingConsentState)
+    : startRumSessionManagerStub()
   if (!canUseEventBridge()) {
     const batch = startRumBatch(
       configuration,
@@ -161,6 +168,7 @@ export function startRum(
   const { stop: stopPerformanceCollection } = startPerformanceCollection(lifeCycle, configuration)
   cleanupTasks.push(stopPerformanceCollection)
 
+  const vitalCollection = startVitalCollection(lifeCycle)
   const internalContext = startInternalContext(
     configuration.applicationId,
     session,
@@ -180,6 +188,8 @@ export function startRum(
     session,
     stopSession: () => session.expire(),
     getInternalContext: internalContext.get,
+    startDurationVital: vitalCollection.startDurationVital,
+    stopDurationVital: vitalCollection.stopDurationVital,
     stop: () => {
       cleanupTasks.forEach((task) => task())
     },

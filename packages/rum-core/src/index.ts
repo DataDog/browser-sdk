@@ -8,6 +8,7 @@ export {
   RumViewEvent,
   RumResourceEvent,
   RumLongTaskEvent,
+  RumVitalEvent,
 } from './rumEvent.types'
 export {
   RumLongTaskEventDomainContext,

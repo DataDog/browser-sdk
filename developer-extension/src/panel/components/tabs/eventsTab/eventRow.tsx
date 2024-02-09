@@ -11,6 +11,7 @@ import type {
   RumLongTaskEvent,
   RumResourceEvent,
   RumViewEvent,
+  RumVitalEvent,
 } from '../../../../../../packages/rum-core/src/rumEvent.types'
 import type { SdkEvent } from '../../../sdkEvent'
 import { isTelemetryEvent, isLogEvent, isRumEvent } from '../../../sdkEvent'
@@ -32,6 +33,7 @@ const RUM_EVENT_TYPE_COLOR = {
   view: 'blue',
   resource: 'cyan',
   telemetry: 'teal',
+  vital: 'orange',
 }
 
 const LOG_STATUS_COLOR = {
@@ -260,6 +262,8 @@ export const EventDescription = React.memo(({ event }: { event: SdkEvent }) => {
         return <ResourceDescription event={event} />
       case 'action':
         return <ActionDescription event={event} />
+      case 'vital':
+        return <VitalDescription event={event} />
     }
   } else if (isLogEvent(event)) {
     return <LogDescription event={event} />
@@ -318,6 +322,17 @@ function LongTaskDescription({ event }: { event: RumLongTaskEvent }) {
   return (
     <>
       Long task of <Emphasis>{formatDuration(event.long_task.duration)}</Emphasis>
+    </>
+  )
+}
+
+function VitalDescription({ event }: { event: RumVitalEvent }) {
+  const vitalName = Object.keys(event.vital.custom!)[0]
+  const vitalValue = event.vital.custom![vitalName]
+  return (
+    <>
+      Custom <Emphasis>{event.vital.type}</Emphasis> vital: <Emphasis>{vitalName}</Emphasis> of{' '}
+      <Emphasis>{vitalValue}</Emphasis>
     </>
   )
 }
