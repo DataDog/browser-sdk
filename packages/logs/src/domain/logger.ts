@@ -75,6 +75,7 @@ export class Logger {
         stack: rawError.stack,
         kind: rawError.type,
         message: rawError.message,
+        causes: rawError.causes,
       }
     }
 
