@@ -83,6 +83,43 @@ describe('vitalCollection', () => {
       expect(rawRumEvents.length).toBe(1)
       expect((rawRumEvents[0].rawRumEvent as RawRumVitalEvent).vital.custom.foo).toBe(100)
     })
+
+    it('should merge start and stop contexts', () => {
+      const { rawRumEvents } = setupBuilder.build()
+
+      vitalCollection.startDurationVital({ name: 'both-undefined', startClocks: clocksNow() })
+      vitalCollection.stopDurationVital({ name: 'both-undefined', stopClocks: clocksNow() })
+      vitalCollection.startDurationVital({
+        name: 'start-defined',
+        startClocks: clocksNow(),
+        context: { start: 'defined' },
+      })
+      vitalCollection.stopDurationVital({ name: 'start-defined', stopClocks: clocksNow() })
+      vitalCollection.startDurationVital({ name: 'stop-defined', startClocks: clocksNow() })
+      vitalCollection.stopDurationVital({ name: 'stop-defined', stopClocks: clocksNow(), context: { stop: 'defined' } })
+      vitalCollection.startDurationVital({
+        name: 'both-defined',
+        startClocks: clocksNow(),
+        context: { start: 'defined' },
+      })
+      vitalCollection.stopDurationVital({ name: 'both-defined', stopClocks: clocksNow(), context: { stop: 'defined' } })
+      vitalCollection.startDurationVital({
+        name: 'stop-precedence',
+        startClocks: clocksNow(),
+        context: { precedence: 'start' },
+      })
+      vitalCollection.stopDurationVital({
+        name: 'stop-precedence',
+        stopClocks: clocksNow(),
+        context: { precedence: 'stop' },
+      })
+
+      expect(rawRumEvents[0].customerContext).toEqual(undefined)
+      expect(rawRumEvents[1].customerContext).toEqual({ start: 'defined' })
+      expect(rawRumEvents[2].customerContext).toEqual({ stop: 'defined' })
+      expect(rawRumEvents[3].customerContext).toEqual({ start: 'defined', stop: 'defined' })
+      expect(rawRumEvents[4].customerContext).toEqual({ precedence: 'stop' })
+    })
   })
 
   it('should collect raw rum event from duration vital', () => {

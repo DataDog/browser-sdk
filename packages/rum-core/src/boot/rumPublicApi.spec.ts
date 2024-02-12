@@ -744,8 +744,12 @@ describe('rum public api', () => {
       )
       rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
       // eslint-disable-next-line @typescript-eslint/no-unsafe-call
-      ;(rumPublicApi as any).startDurationVital('foo')
-      expect(startDurationVitalSpy).toHaveBeenCalledWith({ name: 'foo', startClocks: jasmine.any(Object) })
+      ;(rumPublicApi as any).startDurationVital('foo', { context: { foo: 'bar' } })
+      expect(startDurationVitalSpy).toHaveBeenCalledWith({
+        name: 'foo',
+        startClocks: jasmine.any(Object),
+        context: { foo: 'bar' },
+      })
     })
   })
 
@@ -772,8 +776,12 @@ describe('rum public api', () => {
       )
       rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
       // eslint-disable-next-line @typescript-eslint/no-unsafe-call
-      ;(rumPublicApi as any).stopDurationVital('foo')
-      expect(stopDurationVitalSpy).toHaveBeenCalledWith({ name: 'foo', stopClocks: jasmine.any(Object) })
+      ;(rumPublicApi as any).stopDurationVital('foo', { context: { foo: 'bar' } })
+      expect(stopDurationVitalSpy).toHaveBeenCalledWith({
+        name: 'foo',
+        stopClocks: jasmine.any(Object),
+        context: { foo: 'bar' },
+      })
     })
   })
 

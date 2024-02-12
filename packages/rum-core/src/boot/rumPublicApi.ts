@@ -107,16 +107,18 @@ export function makeRumPublicApi(startRumImpl: StartRum, recorderApi: RecorderAp
 
     (initConfiguration, configuration, deflateWorker, initialViewOptions) => {
       if (isExperimentalFeatureEnabled(ExperimentalFeature.CUSTOM_VITALS)) {
-        ;(rumPublicApi as any).startDurationVital = monitor((name: string) => {
+        ;(rumPublicApi as any).startDurationVital = monitor((name: string, options?: { context?: object }) => {
           strategy.startDurationVital({
             name: sanitize(name)!,
             startClocks: clocksNow(),
+            context: sanitize(options?.context) as Context,
           })
         })
-        ;(rumPublicApi as any).stopDurationVital = monitor((name: string) => {
+        ;(rumPublicApi as any).stopDurationVital = monitor((name: string, options?: { context?: object }) => {
           strategy.stopDurationVital({
             name: sanitize(name)!,
             stopClocks: clocksNow(),
+            context: sanitize(options?.context) as Context,
           })
         })
       }
