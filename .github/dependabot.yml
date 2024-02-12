@@ -1,3 +1,5 @@
+# Note: While we mainly use Renovate, Dependabot is used for security updates
+
 version: 2
 updates:
   - package-ecosystem: github-actions
