@@ -1,5 +1,5 @@
 import type { DeflateEncoder } from '@datadog/browser-core'
-import { DeflateEncoderStreamId, canUseEventBridge, noop, runOnReadyState } from '@datadog/browser-core'
+import { DeflateEncoderStreamId, PageExitReason, canUseEventBridge, noop, runOnReadyState } from '@datadog/browser-core'
 import type {
   LifeCycle,
   ViewContexts,
@@ -94,6 +94,12 @@ export function makeRecorderApi(
         if (state.status === RecorderStatus.Starting || state.status === RecorderStatus.Started) {
           stopStrategy()
           state = { status: RecorderStatus.IntentToStart }
+        }
+      })
+
+      lifeCycle.subscribe(LifeCycleEventType.PAGE_EXITED, (pageExitEvent) => {
+        if (pageExitEvent.reason === PageExitReason.UNLOADING || pageExitEvent.reason === PageExitReason.PAGEHIDE) {
+          stopStrategy()
         }
       })
 
