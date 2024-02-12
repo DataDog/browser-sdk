@@ -136,6 +136,7 @@ build-and-lint:
     - .test-allowed-branches
   interruptible: true
   script:
+    - echo "Target branch: $CI_MERGE_REQUEST_TARGET_BRANCH_NAME"
     - yarn
     - yarn build
     - yarn lint
