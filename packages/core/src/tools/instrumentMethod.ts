@@ -1,4 +1,5 @@
-import { setTimeout } from './timer'
+import type { TimeoutId } from './timer'
+import { setTimeout, clearTimeout } from './timer'
 import { callMonitored } from './monitor'
 import { noop } from './utils/functionUtils'
 
@@ -125,11 +126,14 @@ export function instrumentSetter<TARGET extends { [key: string]: any }, PROPERTY
     return { stop: noop }
   }
 
+  const timeoutIds = new Set<TimeoutId>()
   let instrumentation = (target: TARGET, value: TARGET[PROPERTY]) => {
     // put hooked setter into event loop to avoid of set latency
-    setTimeout(() => {
+    const timeoutId = setTimeout(() => {
+      timeoutIds.delete(timeoutId)
       after(target, value)
     }, 0)
+    timeoutIds.add(timeoutId)
   }
 
   const instrumentationWrapper = function (this: TARGET, value: TARGET[PROPERTY]) {
@@ -147,6 +151,10 @@ export function instrumentSetter<TARGET extends { [key: string]: any }, PROPERTY
         Object.defineProperty(targetPrototype, property, originalDescriptor)
       } else {
         instrumentation = noop
+      }
+      if (timeoutIds) {
+        timeoutIds.forEach(clearTimeout)
+        timeoutIds.clear()
       }
     },
   }
