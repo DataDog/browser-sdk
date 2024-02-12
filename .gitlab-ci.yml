@@ -135,10 +135,7 @@ build-and-lint:
     - .base-configuration
     - .test-allowed-branches
   interruptible: true
-  only:
-    - merge_requests
   script:
-    - echo $CI_MERGE_REQUEST_TARGET_BRANCH_NAME
     - yarn
     - yarn build
     - yarn lint
