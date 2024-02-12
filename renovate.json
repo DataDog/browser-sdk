@@ -16,7 +16,8 @@
     {
       "groupName": "all non-major dependencies",
       "groupSlug": "all-minor-patch",
-      "matchUpdateTypes": ["minor", "patch"]
+      "matchUpdateTypes": ["minor", "patch"],
+      "excludePackageNames": ["karma-webpack"]
     }
   ]
 }
