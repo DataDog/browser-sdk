@@ -15,6 +15,7 @@ runMain(() => {
     {
       message: 'Browser SDK bundles sizes',
       service: 'browser-sdk',
+      ddsource: 'browser-sdk',
       env: 'ci',
       bundle_sizes: {
         rum: getBundleSize(rumPath),
@@ -41,15 +42,14 @@ function getBundleSize(pathBundle) {
   return file.size
 }
 
-function PostBundleSize(url = '', bundleData = {}) {
-  fetch(url, {
+async function PostBundleSize(url = '', bundleData = {}) {
+  const response = await fetch(url, {
     method: 'POST',
     headers: {
       'DD-API-KEY': getOrg2ApiKey(),
       'Content-Type': 'application/json',
     },
     body: JSON.stringify(bundleData),
-  }).catch((error) => {
-    throw new Error(`Fetch request failed: ${error.message}`)
   })
+  console.log(await response.text())
 }
