@@ -10,7 +10,7 @@ const rumSlimPath = path.join(__dirname, '../packages/rum-slim/bundle/datadog-ru
 const workerPath = path.join(__dirname, '../packages/worker/bundle/worker.js')
 const versionPath = path.join(__dirname, '../packages/rum/package.json')
 
-runMain(() => {
+runMain(async () => {
   const logData = [
     {
       message: 'Browser SDK bundles sizes',
@@ -27,7 +27,7 @@ runMain(() => {
       commit: getCommitId(),
     },
   ]
-  PostBundleSize(url, logData)
+  await postBundleSize(url, logData)
 })
 
 const getCommitId = () => childProcess.execSync('git rev-parse HEAD').toString().trim()
@@ -42,7 +42,7 @@ function getBundleSize(pathBundle) {
   return file.size
 }
 
-async function PostBundleSize(url = '', bundleData = {}) {
+async function postBundleSize(url = '', bundleData = {}) {
   const response = await fetch(url, {
     method: 'POST',
     headers: {
