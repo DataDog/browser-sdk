@@ -137,7 +137,6 @@ build-and-lint:
   interruptible: true
   only:
     - merge_requests
-    - branches
   script:
     - echo $CI_MERGE_REQUEST_TARGET_BRANCH_NAME
     - yarn
