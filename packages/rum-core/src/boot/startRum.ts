@@ -5,6 +5,7 @@ import type {
   DeflateEncoderStreamId,
   Encoder,
   CustomerDataTrackerManager,
+  TrackingConsentState,
 } from '@datadog/browser-core'
 import {
   sendToExtension,
@@ -56,7 +57,12 @@ export function startRum(
   customerDataTrackerManager: CustomerDataTrackerManager,
   getCommonContext: () => CommonContext,
   initialViewOptions: ViewOptions | undefined,
-  createEncoder: (streamId: DeflateEncoderStreamId) => Encoder
+  createEncoder: (streamId: DeflateEncoderStreamId) => Encoder,
+
+  // `startRum` and its subcomponents assume tracking consent is granted initially and starts
+  // collecting logs unconditionally. As such, `startRum` should be called with a
+  // `trackingConsentState` set to "granted".
+  trackingConsentState: TrackingConsentState
 ) {
   const cleanupTasks: Array<() => void> = []
   const lifeCycle = new LifeCycle()
@@ -95,7 +101,9 @@ export function startRum(
   })
   cleanupTasks.push(() => pageExitSubscription.unsubscribe())
 
-  const session = !canUseEventBridge() ? startRumSessionManager(configuration, lifeCycle) : startRumSessionManagerStub()
+  const session = !canUseEventBridge()
+    ? startRumSessionManager(configuration, lifeCycle, trackingConsentState)
+    : startRumSessionManagerStub()
   if (!canUseEventBridge()) {
     const batch = startRumBatch(
       configuration,

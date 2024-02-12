@@ -1,4 +1,4 @@
-import type { Context, User } from '@datadog/browser-core'
+import type { Context, TrackingConsent, User } from '@datadog/browser-core'
 import {
   CustomerDataType,
   assign,
@@ -12,6 +12,7 @@ import {
   storeContextManager,
   displayAlreadyInitializedError,
   deepClone,
+  createTrackingConsentState,
 } from '@datadog/browser-core'
 import type { LogsInitConfiguration } from '../domain/configuration'
 import type { HandlerType, StatusType } from '../domain/logger'
@@ -43,18 +44,19 @@ export function makeLogsPublicApi(startLogsImpl: StartLogs) {
     customerDataTrackerManager.getOrCreateTracker(CustomerDataType.GlobalContext)
   )
   const userContextManager = createContextManager(customerDataTrackerManager.getOrCreateTracker(CustomerDataType.User))
+  const trackingConsentState = createTrackingConsentState()
 
   function getCommonContext() {
     return buildCommonContext(globalContextManager, userContextManager)
   }
 
-  let strategy = createPreStartStrategy(getCommonContext, (initConfiguration, configuration) => {
+  let strategy = createPreStartStrategy(getCommonContext, trackingConsentState, (initConfiguration, configuration) => {
     if (initConfiguration.storeContextsAcrossPages) {
       storeContextManager(configuration, globalContextManager, LOGS_STORAGE_KEY, CustomerDataType.GlobalContext)
       storeContextManager(configuration, userContextManager, LOGS_STORAGE_KEY, CustomerDataType.User)
     }
 
-    const startLogsResult = startLogsImpl(initConfiguration, configuration, getCommonContext)
+    const startLogsResult = startLogsImpl(initConfiguration, configuration, getCommonContext, trackingConsentState)
 
     strategy = createPostStartStrategy(initConfiguration, startLogsResult)
     return startLogsResult
@@ -71,6 +73,20 @@ export function makeLogsPublicApi(startLogsImpl: StartLogs) {
     logger: mainLogger,
 
     init: monitor((initConfiguration: LogsInitConfiguration) => strategy.init(initConfiguration)),
+
+    /**
+     * Set the tracking consent of the current user.
+     *
+     * @param {"granted" | "not-granted"} trackingConsent The user tracking consent
+     *
+     * Logs will be sent only if it is set to "granted". This value won't be stored by the library
+     * across page loads: you will need to call this method or set the appropriate `trackingConsent`
+     * field in the init() method at each page load.
+     *
+     * If this method is called before the init() method, the provided value will take precedence
+     * over the one provided as initialization parameter.
+     */
+    setTrackingConsent: monitor((trackingConsent: TrackingConsent) => trackingConsentState.update(trackingConsent)),
 
     getGlobalContext: monitor(() => globalContextManager.getContext()),
 

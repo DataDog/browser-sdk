@@ -8,6 +8,8 @@ import {
   stopSessionManager,
   ONE_SECOND,
   DOM_EVENT,
+  createTrackingConsentState,
+  TrackingConsent,
 } from '@datadog/browser-core'
 import type { Clock } from '@datadog/browser-core/test'
 import { createNewEvent, mockClock } from '@datadog/browser-core/test'
@@ -19,34 +21,15 @@ import { RUM_SESSION_KEY, RumTrackingType, startRumSessionManager } from './rumS
 
 describe('rum session manager', () => {
   const DURATION = 123456
-  let configuration: RumConfiguration
   let lifeCycle: LifeCycle
   let beforeSessionExpireSpy: jasmine.Spy
   let expireSessionSpy: jasmine.Spy
   let renewSessionSpy: jasmine.Spy
   let clock: Clock
 
-  function setupDraws({
-    tracked,
-    trackedWithSessionReplay,
-  }: {
-    tracked?: boolean
-    trackedWithSessionReplay?: boolean
-  }) {
-    configuration.sessionSampleRate = tracked ? 100 : 0
-    configuration.sessionReplaySampleRate = trackedWithSessionReplay ? 100 : 0
-  }
-
   beforeEach(() => {
     if (isIE()) {
       pending('no full rum support')
-    }
-    configuration = {
-      ...validateAndBuildRumConfiguration({ clientToken: 'xxx', applicationId: 'xxx' })!,
-      sessionSampleRate: 50,
-      sessionReplaySampleRate: 50,
-      trackResources: true,
-      trackLongTasks: true,
     }
     clock = mockClock()
     beforeSessionExpireSpy = jasmine.createSpy('beforeSessionExpireSpy')
@@ -69,9 +52,7 @@ describe('rum session manager', () => {
 
   describe('cookie storage', () => {
     it('when tracked with session replay should store session type and id', () => {
-      setupDraws({ tracked: true, trackedWithSessionReplay: true })
-
-      startRumSessionManager(configuration, lifeCycle)
+      startRumSessionManagerWithDefaults({ configuration: { sessionSampleRate: 100, sessionReplaySampleRate: 100 } })
 
       expect(beforeSessionExpireSpy).not.toHaveBeenCalled()
       expect(expireSessionSpy).not.toHaveBeenCalled()
@@ -83,9 +64,7 @@ describe('rum session manager', () => {
     })
 
     it('when tracked without session replay should store session type and id', () => {
-      setupDraws({ tracked: true, trackedWithSessionReplay: false })
-
-      startRumSessionManager(configuration, lifeCycle)
+      startRumSessionManagerWithDefaults({ configuration: { sessionSampleRate: 100, sessionReplaySampleRate: 0 } })
 
       expect(beforeSessionExpireSpy).not.toHaveBeenCalled()
       expect(expireSessionSpy).not.toHaveBeenCalled()
@@ -97,9 +76,7 @@ describe('rum session manager', () => {
     })
 
     it('when not tracked should store session type', () => {
-      setupDraws({ tracked: false })
-
-      startRumSessionManager(configuration, lifeCycle)
+      startRumSessionManagerWithDefaults({ configuration: { sessionSampleRate: 0 } })
 
       expect(beforeSessionExpireSpy).not.toHaveBeenCalled()
       expect(expireSessionSpy).not.toHaveBeenCalled()
@@ -111,7 +88,7 @@ describe('rum session manager', () => {
     it('when tracked should keep existing session type and id', () => {
       setCookie(SESSION_STORE_KEY, 'id=abcdef&rum=1', DURATION)
 
-      startRumSessionManager(configuration, lifeCycle)
+      startRumSessionManagerWithDefaults()
 
       expect(beforeSessionExpireSpy).not.toHaveBeenCalled()
       expect(expireSessionSpy).not.toHaveBeenCalled()
@@ -125,7 +102,7 @@ describe('rum session manager', () => {
     it('when not tracked should keep existing session type', () => {
       setCookie(SESSION_STORE_KEY, 'rum=0', DURATION)
 
-      startRumSessionManager(configuration, lifeCycle)
+      startRumSessionManagerWithDefaults()
 
       expect(beforeSessionExpireSpy).not.toHaveBeenCalled()
       expect(expireSessionSpy).not.toHaveBeenCalled()
@@ -135,7 +112,8 @@ describe('rum session manager', () => {
 
     it('should renew on activity after expiration', () => {
       setCookie(SESSION_STORE_KEY, 'id=abcdef&rum=1', DURATION)
-      startRumSessionManager(configuration, lifeCycle)
+
+      startRumSessionManagerWithDefaults({ configuration: { sessionSampleRate: 100, sessionReplaySampleRate: 100 } })
 
       setCookie(SESSION_STORE_KEY, '', DURATION)
       expect(getCookie(SESSION_STORE_KEY)).toBeUndefined()
@@ -144,7 +122,6 @@ describe('rum session manager', () => {
       expect(renewSessionSpy).not.toHaveBeenCalled()
       clock.tick(STORAGE_POLL_DELAY)
 
-      setupDraws({ tracked: true, trackedWithSessionReplay: true })
       document.dispatchEvent(createNewEvent(DOM_EVENT.CLICK))
       expect(beforeSessionExpireSpy).toHaveBeenCalled()
       expect(expireSessionSpy).toHaveBeenCalled()
@@ -159,18 +136,18 @@ describe('rum session manager', () => {
   describe('findSession', () => {
     it('should return the current session', () => {
       setCookie(SESSION_STORE_KEY, 'id=abcdef&rum=1', DURATION)
-      const rumSessionManager = startRumSessionManager(configuration, lifeCycle)
+      const rumSessionManager = startRumSessionManagerWithDefaults()
       expect(rumSessionManager.findTrackedSession()!.id).toBe('abcdef')
     })
 
     it('should return undefined if the session is not tracked', () => {
       setCookie(SESSION_STORE_KEY, 'id=abcdef&rum=0', DURATION)
-      const rumSessionManager = startRumSessionManager(configuration, lifeCycle)
+      const rumSessionManager = startRumSessionManagerWithDefaults()
       expect(rumSessionManager.findTrackedSession()).toBe(undefined)
     })
 
     it('should return undefined if the session has expired', () => {
-      const rumSessionManager = startRumSessionManager(configuration, lifeCycle)
+      const rumSessionManager = startRumSessionManagerWithDefaults()
       setCookie(SESSION_STORE_KEY, '', DURATION)
       clock.tick(STORAGE_POLL_DELAY)
       expect(rumSessionManager.findTrackedSession()).toBe(undefined)
@@ -178,7 +155,7 @@ describe('rum session manager', () => {
 
     it('should return session corresponding to start time', () => {
       setCookie(SESSION_STORE_KEY, 'id=abcdef&rum=1', DURATION)
-      const rumSessionManager = startRumSessionManager(configuration, lifeCycle)
+      const rumSessionManager = startRumSessionManagerWithDefaults()
       clock.tick(10 * ONE_SECOND)
       setCookie(SESSION_STORE_KEY, '', DURATION)
       clock.tick(STORAGE_POLL_DELAY)
@@ -188,13 +165,13 @@ describe('rum session manager', () => {
 
     it('should return session TRACKED_WITH_SESSION_REPLAY', () => {
       setCookie(SESSION_STORE_KEY, 'id=abcdef&rum=1', DURATION)
-      const rumSessionManager = startRumSessionManager(configuration, lifeCycle)
+      const rumSessionManager = startRumSessionManagerWithDefaults()
       expect(rumSessionManager.findTrackedSession()!.sessionReplayAllowed).toBe(true)
     })
 
     it('should return session TRACKED_WITHOUT_SESSION_REPLAY', () => {
       setCookie(SESSION_STORE_KEY, 'id=abcdef&rum=2', DURATION)
-      const rumSessionManager = startRumSessionManager(configuration, lifeCycle)
+      const rumSessionManager = startRumSessionManagerWithDefaults()
       expect(rumSessionManager.findTrackedSession()!.sessionReplayAllowed).toBe(false)
     })
   })
@@ -203,31 +180,46 @@ describe('rum session manager', () => {
     ;[
       {
         description: 'TRACKED_WITH_SESSION_REPLAY should have replay',
-        trackedWithSessionReplay: true,
+        sessionReplaySampleRate: 100,
         expectSessionReplay: true,
       },
       {
         description: 'TRACKED_WITHOUT_SESSION_REPLAY should have no replay',
-        trackedWithSessionReplay: false,
+        sessionReplaySampleRate: 0,
         expectSessionReplay: false,
       },
     ].forEach(
       ({
         description,
-        trackedWithSessionReplay,
+        sessionReplaySampleRate,
         expectSessionReplay,
       }: {
         description: string
-        trackedWithSessionReplay: boolean
+        sessionReplaySampleRate: number
         expectSessionReplay: boolean
       }) => {
         it(description, () => {
-          setupDraws({ tracked: true, trackedWithSessionReplay })
-
-          const rumSessionManager = startRumSessionManager(configuration, lifeCycle)
+          const rumSessionManager = startRumSessionManagerWithDefaults({
+            configuration: { sessionSampleRate: 100, sessionReplaySampleRate },
+          })
           expect(rumSessionManager.findTrackedSession()!.sessionReplayAllowed).toBe(expectSessionReplay)
         })
       }
     )
   })
+
+  function startRumSessionManagerWithDefaults({ configuration }: { configuration?: Partial<RumConfiguration> } = {}) {
+    return startRumSessionManager(
+      {
+        ...validateAndBuildRumConfiguration({ clientToken: 'xxx', applicationId: 'xxx' })!,
+        sessionSampleRate: 50,
+        sessionReplaySampleRate: 50,
+        trackResources: true,
+        trackLongTasks: true,
+        ...configuration,
+      },
+      lifeCycle,
+      createTrackingConsentState(TrackingConsent.GRANTED)
+    )
+  }
 })
