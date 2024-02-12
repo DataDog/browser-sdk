@@ -47,7 +47,7 @@ export function startFeatureFlagContexts(
     customerDataTracker.resetCustomerData()
   })
 
-  lifeCycle.subscribe(LifeCycleEventType.VIEW_ENDED, ({ endClocks }) => {
+  lifeCycle.subscribe(LifeCycleEventType.AFTER_VIEW_ENDED, ({ endClocks }) => {
     featureFlagContexts.closeActive(endClocks.relative)
   })
 

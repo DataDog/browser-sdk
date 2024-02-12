@@ -54,13 +54,13 @@ describe('viewContexts', () => {
         LifeCycleEventType.BEFORE_VIEW_CREATED,
         buildViewCreatedEvent({ startClocks: relativeToClocks(10 as RelativeTime), id: 'view 1' })
       )
-      lifeCycle.notify(LifeCycleEventType.VIEW_ENDED, { endClocks: relativeToClocks(20 as RelativeTime) })
+      lifeCycle.notify(LifeCycleEventType.AFTER_VIEW_ENDED, { endClocks: relativeToClocks(20 as RelativeTime) })
 
       lifeCycle.notify(
         LifeCycleEventType.BEFORE_VIEW_CREATED,
         buildViewCreatedEvent({ startClocks: relativeToClocks(20 as RelativeTime), id: 'view 2' })
       )
-      lifeCycle.notify(LifeCycleEventType.VIEW_ENDED, { endClocks: relativeToClocks(30 as RelativeTime) })
+      lifeCycle.notify(LifeCycleEventType.AFTER_VIEW_ENDED, { endClocks: relativeToClocks(30 as RelativeTime) })
 
       lifeCycle.notify(
         LifeCycleEventType.BEFORE_VIEW_CREATED,
@@ -79,12 +79,12 @@ describe('viewContexts', () => {
         LifeCycleEventType.BEFORE_VIEW_CREATED,
         buildViewCreatedEvent({ startClocks: relativeToClocks(10 as RelativeTime), id: 'view 1' })
       )
-      lifeCycle.notify(LifeCycleEventType.VIEW_ENDED, { endClocks: relativeToClocks(20 as RelativeTime) })
+      lifeCycle.notify(LifeCycleEventType.AFTER_VIEW_ENDED, { endClocks: relativeToClocks(20 as RelativeTime) })
       lifeCycle.notify(
         LifeCycleEventType.BEFORE_VIEW_CREATED,
         buildViewCreatedEvent({ startClocks: relativeToClocks(20 as RelativeTime), id: 'view 2' })
       )
-      lifeCycle.notify(LifeCycleEventType.VIEW_ENDED, { endClocks: relativeToClocks(20 as RelativeTime) })
+      lifeCycle.notify(LifeCycleEventType.AFTER_VIEW_ENDED, { endClocks: relativeToClocks(20 as RelativeTime) })
 
       expect(viewContexts.findView(5 as RelativeTime)).not.toBeDefined()
     })
@@ -118,7 +118,7 @@ describe('viewContexts', () => {
           startClocks: relativeToClocks(10 as RelativeTime),
         })
       )
-      lifeCycle.notify(LifeCycleEventType.VIEW_ENDED, { endClocks: relativeToClocks(20 as RelativeTime) })
+      lifeCycle.notify(LifeCycleEventType.AFTER_VIEW_ENDED, { endClocks: relativeToClocks(20 as RelativeTime) })
       lifeCycle.notify(
         LifeCycleEventType.BEFORE_VIEW_CREATED,
         buildViewCreatedEvent({
@@ -150,7 +150,7 @@ describe('viewContexts', () => {
           startClocks: originalClocks,
         })
       )
-      lifeCycle.notify(LifeCycleEventType.VIEW_ENDED, {
+      lifeCycle.notify(LifeCycleEventType.AFTER_VIEW_ENDED, {
         endClocks: relativeToClocks((originalTime + 10) as RelativeTime),
       })
       lifeCycle.notify(

@@ -43,7 +43,7 @@ export function startUrlContexts(
     previousViewUrl = viewUrl
   })
 
-  lifeCycle.subscribe(LifeCycleEventType.VIEW_ENDED, ({ endClocks }) => {
+  lifeCycle.subscribe(LifeCycleEventType.AFTER_VIEW_ENDED, ({ endClocks }) => {
     urlContextHistory.closeActive(endClocks.relative)
   })
 

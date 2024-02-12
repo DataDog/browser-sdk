@@ -75,7 +75,7 @@ export function trackClickActions(
     history.reset()
   })
 
-  lifeCycle.subscribe(LifeCycleEventType.BEFORE_VIEW_ENDED, stopClickChain)
+  lifeCycle.subscribe(LifeCycleEventType.VIEW_ENDED, stopClickChain)
 
   const { stop: stopActionEventsListener } = listenActionEvents<{
     clickActionBase: ClickActionBase
@@ -192,7 +192,7 @@ function startClickAction(
     CLICK_ACTION_MAX_DURATION
   )
 
-  const viewEndedSubscription = lifeCycle.subscribe(LifeCycleEventType.BEFORE_VIEW_ENDED, ({ endClocks }) => {
+  const viewEndedSubscription = lifeCycle.subscribe(LifeCycleEventType.VIEW_ENDED, ({ endClocks }) => {
     click.stop(endClocks.timeStamp)
   })
 

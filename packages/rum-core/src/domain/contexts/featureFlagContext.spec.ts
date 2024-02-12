@@ -133,7 +133,7 @@ describe('featureFlagContexts', () => {
         startClocks: relativeToClocks(0 as RelativeTime),
       } as ViewCreatedEvent)
       featureFlagContexts.addFeatureFlagEvaluation('feature', 'foo')
-      lifeCycle.notify(LifeCycleEventType.VIEW_ENDED, {
+      lifeCycle.notify(LifeCycleEventType.AFTER_VIEW_ENDED, {
         endClocks: relativeToClocks(10 as RelativeTime),
       } as ViewEndedEvent)
       lifeCycle.notify(LifeCycleEventType.BEFORE_VIEW_CREATED, {
@@ -155,7 +155,7 @@ describe('featureFlagContexts', () => {
 
       clock.tick(10)
       featureFlagContexts.addFeatureFlagEvaluation('feature', 'one')
-      lifeCycle.notify(LifeCycleEventType.VIEW_ENDED, {
+      lifeCycle.notify(LifeCycleEventType.AFTER_VIEW_ENDED, {
         endClocks: relativeToClocks(10 as RelativeTime),
       } as ViewEndedEvent)
       lifeCycle.notify(LifeCycleEventType.BEFORE_VIEW_CREATED, {

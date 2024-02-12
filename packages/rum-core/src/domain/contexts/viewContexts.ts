@@ -26,7 +26,7 @@ export function startViewContexts(lifeCycle: LifeCycle): ViewContexts {
     viewContextHistory.add(buildViewContext(view), view.startClocks.relative)
   })
 
-  lifeCycle.subscribe(LifeCycleEventType.VIEW_ENDED, ({ endClocks }) => {
+  lifeCycle.subscribe(LifeCycleEventType.AFTER_VIEW_ENDED, ({ endClocks }) => {
     viewContextHistory.closeActive(endClocks.relative)
   })
 

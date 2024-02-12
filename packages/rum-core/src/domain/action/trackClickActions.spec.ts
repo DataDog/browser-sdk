@@ -39,6 +39,7 @@ describe('trackClickActions', () => {
   let input: HTMLInputElement
   let setupBuilder: TestSetupBuilder
   let findActionId: ActionContexts['findActionId']
+
   beforeEach(() => {
     button = document.createElement('button')
     button.type = 'button'
@@ -175,13 +176,13 @@ describe('trackClickActions', () => {
     expect(findActionId()).toEqual([])
   })
 
-  it('ongoing click action is stopped before the view is ended', () => {
+  it('ongoing click action is stopped on view end', () => {
     const { lifeCycle, clock } = setupBuilder.build()
     emulateClick({ activity: { delay: BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY } })
 
     clock.tick(BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY)
 
-    lifeCycle.notify(LifeCycleEventType.BEFORE_VIEW_ENDED, {
+    lifeCycle.notify(LifeCycleEventType.VIEW_ENDED, {
       endClocks: clocksNow(),
     })
 

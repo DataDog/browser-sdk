@@ -67,7 +67,7 @@ describe('urlContexts', () => {
       startClocks: relativeToClocks(0 as RelativeTime),
     } as ViewCreatedEvent)
     changeLocation('/foo')
-    lifeCycle.notify(LifeCycleEventType.VIEW_ENDED, {
+    lifeCycle.notify(LifeCycleEventType.AFTER_VIEW_ENDED, {
       endClocks: relativeToClocks(10 as RelativeTime),
     } as ViewEndedEvent)
     lifeCycle.notify(LifeCycleEventType.BEFORE_VIEW_CREATED, {
@@ -88,7 +88,7 @@ describe('urlContexts', () => {
 
     clock.tick(10)
     changeLocation('/foo')
-    lifeCycle.notify(LifeCycleEventType.VIEW_ENDED, {
+    lifeCycle.notify(LifeCycleEventType.AFTER_VIEW_ENDED, {
       endClocks: relativeToClocks(10 as RelativeTime),
     } as ViewEndedEvent)
     lifeCycle.notify(LifeCycleEventType.BEFORE_VIEW_CREATED, {
@@ -100,7 +100,7 @@ describe('urlContexts', () => {
 
     clock.tick(10)
     changeLocation('/qux')
-    lifeCycle.notify(LifeCycleEventType.VIEW_ENDED, {
+    lifeCycle.notify(LifeCycleEventType.AFTER_VIEW_ENDED, {
       endClocks: relativeToClocks(30 as RelativeTime),
     } as ViewEndedEvent)
     lifeCycle.notify(LifeCycleEventType.BEFORE_VIEW_CREATED, {
@@ -135,7 +135,7 @@ describe('urlContexts', () => {
     lifeCycle.notify(LifeCycleEventType.BEFORE_VIEW_CREATED, {
       startClocks: relativeToClocks(0 as RelativeTime),
     } as ViewCreatedEvent)
-    lifeCycle.notify(LifeCycleEventType.VIEW_ENDED, {
+    lifeCycle.notify(LifeCycleEventType.AFTER_VIEW_ENDED, {
       endClocks: relativeToClocks(10 as RelativeTime),
     } as ViewEndedEvent)
 

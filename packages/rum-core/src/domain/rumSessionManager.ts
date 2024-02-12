@@ -35,10 +35,6 @@ export function startRumSessionManager(
     trackingConsentState
   )
 
-  sessionManager.beforeExpireObservable.subscribe(() => {
-    lifeCycle.notify(LifeCycleEventType.BEFORE_SESSION_EXPIRED)
-  })
-
   sessionManager.expireObservable.subscribe(() => {
     lifeCycle.notify(LifeCycleEventType.SESSION_EXPIRED)
   })

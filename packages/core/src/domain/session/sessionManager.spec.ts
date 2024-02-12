@@ -242,23 +242,28 @@ describe('startSessionManager', () => {
 
     it('should notify each expire and renew observables', () => {
       const firstSessionManager = startSessionManagerWithDefaults({ productKey: FIRST_PRODUCT_KEY })
-      const calls: string[] = []
-      firstSessionManager.beforeExpireObservable.subscribe(() => calls.push('beforeExpireA'))
-      firstSessionManager.expireObservable.subscribe(() => calls.push('expireA'))
-      firstSessionManager.renewObservable.subscribe(() => calls.push('renewA'))
+      const expireSessionASpy = jasmine.createSpy()
+      firstSessionManager.expireObservable.subscribe(expireSessionASpy)
+      const renewSessionASpy = jasmine.createSpy()
+      firstSessionManager.renewObservable.subscribe(renewSessionASpy)
 
       const secondSessionManager = startSessionManagerWithDefaults({ productKey: SECOND_PRODUCT_KEY })
-      secondSessionManager.beforeExpireObservable.subscribe(() => calls.push('beforeExpireB'))
-      secondSessionManager.expireObservable.subscribe(() => calls.push('expireB'))
-      secondSessionManager.renewObservable.subscribe(() => calls.push('renewB'))
+      const expireSessionBSpy = jasmine.createSpy()
+      secondSessionManager.expireObservable.subscribe(expireSessionBSpy)
+      const renewSessionBSpy = jasmine.createSpy()
+      secondSessionManager.renewObservable.subscribe(renewSessionBSpy)
 
       expireSessionCookie()
 
-      expect(calls).toEqual(['beforeExpireA', 'expireA', 'beforeExpireB', 'expireB'])
+      expect(expireSessionASpy).toHaveBeenCalled()
+      expect(expireSessionBSpy).toHaveBeenCalled()
+      expect(renewSessionASpy).not.toHaveBeenCalled()
+      expect(renewSessionBSpy).not.toHaveBeenCalled()
 
       document.dispatchEvent(createNewEvent(DOM_EVENT.CLICK))
 
-      expect(calls).toEqual(['beforeExpireA', 'expireA', 'beforeExpireB', 'expireB', 'renewA', 'renewB'])
+      expect(renewSessionASpy).toHaveBeenCalled()
+      expect(renewSessionBSpy).toHaveBeenCalled()
     })
   })
 

@@ -129,7 +129,7 @@ describe('rum session', () => {
     expect(serverRumEvents[0].type).toEqual('view')
     expect(serverRumEvents[0].session.id).toEqual('42')
 
-    lifeCycle.notify(LifeCycleEventType.BEFORE_SESSION_EXPIRED)
+    lifeCycle.notify(LifeCycleEventType.SESSION_EXPIRED)
     expect(serverRumEvents.length).toEqual(2)
 
     session.setId('43')
@@ -314,10 +314,10 @@ describe('rum events url', () => {
 describe('view events', () => {
   let setupBuilder: TestSetupBuilder
   let interceptor: ReturnType<typeof interceptRequests>
-  let startRumResult: ReturnType<typeof startRum>
+
   beforeEach(() => {
-    setupBuilder = setup().beforeBuild(({ configuration, customerDataTrackerManager }) => {
-      startRumResult = startRum(
+    setupBuilder = setup().beforeBuild(({ configuration, customerDataTrackerManager }) =>
+      startRum(
         {} as RumInitConfiguration,
         configuration,
         noopRecorderApi,
@@ -327,8 +327,7 @@ describe('view events', () => {
         createIdentityEncoder,
         createTrackingConsentState(TrackingConsent.GRANTED)
       )
-      return startRumResult
-    })
+    )
     interceptor = interceptRequests()
   })
 

@@ -175,6 +175,7 @@ describe('startRecording', () => {
   it('send view end record when the segment collection is waiting for the initial record', async () => {
     const { lifeCycle } = setupBuilder.build()
 
+    // flush segment right before the view change to set the segment collection in the waiting state
     flushSegment(lifeCycle)
     changeView(lifeCycle)
     flushSegment(lifeCycle)
@@ -238,8 +239,9 @@ describe('startRecording', () => {
     const viewCreatedEvent = {
       startClocks: { relative: 1, timeStamp: VIEW_TIMESTAMP },
     } as ViewCreatedEvent
-    lifeCycle.notify(LifeCycleEventType.BEFORE_VIEW_ENDED, viewEndedEvent)
     lifeCycle.notify(LifeCycleEventType.VIEW_ENDED, viewEndedEvent)
+    lifeCycle.notify(LifeCycleEventType.AFTER_VIEW_ENDED, viewEndedEvent)
+
     viewId = 'view-id-2'
     lifeCycle.notify(LifeCycleEventType.BEFORE_VIEW_CREATED, viewCreatedEvent)
     lifeCycle.notify(LifeCycleEventType.VIEW_CREATED, viewCreatedEvent)
