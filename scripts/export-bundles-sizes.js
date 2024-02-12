@@ -31,7 +31,7 @@ runMain(async () => {
       },
       version: getVersion(),
       commit: getGitInformation('git rev-parse HEAD'),
-      branch: process.env.GITHUB_HEAD_REF || (process.env.GITHUB_REF ? process.env.GITHUB_REF.split('/').pop() : null),
+      branch: process.env.CI_MERGE_REQUEST_TARGET_BRANCH_NAME,
     },
   ]
   await postBundleSize(URL, logData)
