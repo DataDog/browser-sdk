@@ -9,6 +9,7 @@ import type {
   TrackingConsent,
 } from '@datadog/browser-core'
 import {
+  timeStampToClocks,
   isExperimentalFeatureEnabled,
   ExperimentalFeature,
   CustomerDataType,
@@ -107,20 +108,41 @@ export function makeRumPublicApi(startRumImpl: StartRum, recorderApi: RecorderAp
 
     (initConfiguration, configuration, deflateWorker, initialViewOptions) => {
       if (isExperimentalFeatureEnabled(ExperimentalFeature.CUSTOM_VITALS)) {
-        ;(rumPublicApi as any).startDurationVital = monitor((name: string, options?: { context?: object }) => {
-          strategy.startDurationVital({
-            name: sanitize(name)!,
-            startClocks: clocksNow(),
-            context: sanitize(options?.context) as Context,
-          })
-        })
-        ;(rumPublicApi as any).stopDurationVital = monitor((name: string, options?: { context?: object }) => {
-          strategy.stopDurationVital({
-            name: sanitize(name)!,
-            stopClocks: clocksNow(),
-            context: sanitize(options?.context) as Context,
-          })
-        })
+        /**
+         * Start a custom duration vital
+         * stored in @vital.custom.<name>
+         *
+         * @param name name of the custom vital
+         * @param options.context custom context attached to the vital
+         * @param options.startTime epoch timestamp of the start of the custom vital (if not set, will use current time)
+         */
+        ;(rumPublicApi as any).startDurationVital = monitor(
+          (name: string, options?: { context?: object; startTime?: number }) => {
+            strategy.startDurationVital({
+              name: sanitize(name)!,
+              startClocks: options?.startTime ? timeStampToClocks(options.startTime as TimeStamp) : clocksNow(),
+              context: sanitize(options?.context) as Context,
+            })
+          }
+        )
+
+        /**
+         * Stop a custom duration vital
+         * stored in @vital.custom.<name>
+         *
+         * @param name name of the custom vital
+         * @param options.context custom context attached to the vital
+         * @param options.stopTime epoch timestamp of the stop of the custom vital (if not set, will use current time)
+         */
+        ;(rumPublicApi as any).stopDurationVital = monitor(
+          (name: string, options?: { context?: object; stopTime?: number }) => {
+            strategy.stopDurationVital({
+              name: sanitize(name)!,
+              stopClocks: options?.stopTime ? timeStampToClocks(options.stopTime as TimeStamp) : clocksNow(),
+              context: sanitize(options?.context) as Context,
+            })
+          }
+        )
       }
 
       if (initConfiguration.storeContextsAcrossPages) {
