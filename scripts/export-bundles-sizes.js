@@ -30,14 +30,14 @@ runMain(async () => {
         worker: getBundleSize(workerPath),
       },
       version: getVersion(),
-      commit: getGitInformation('git rev-parse HEAD'),
-      branch: process.env.CI_MERGE_REQUEST_TARGET_BRANCH_NAME,
+      commit: executeGitCommand('git rev-parse HEAD'),
+      branch: process.env.CI_COMMIT_REF_NAME,
     },
   ]
   await postBundleSize(URL, logData)
 })
 
-function getGitInformation(command) {
+function executeGitCommand(command) {
   try {
     return execSync(command)
       .toString('utf8')
