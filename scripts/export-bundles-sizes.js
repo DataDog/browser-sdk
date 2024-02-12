@@ -31,7 +31,7 @@ runMain(async () => {
       },
       version: getVersion(),
       commit: getGitInformation('git rev-parse HEAD'),
-      branch: getGitInformation('git rev-parse --abbrev-ref HEAD'),
+      branch: process.env.GITHUB_REF ? process.env.GITHUB_REF.split('/').pop() : null,
     },
   ]
   await postBundleSize(URL, logData)
