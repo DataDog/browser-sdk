@@ -14,7 +14,9 @@ export type RumEventDomainContext<T extends RumEventType = any> = T extends RumE
         ? RumErrorEventDomainContext
         : T extends RumEventType.LONG_TASK
           ? RumLongTaskEventDomainContext
-          : never
+          : T extends RumEventType.VITAL
+            ? RumVitalEventDomainContext
+            : never
 
 export interface RumViewEventDomainContext {
   location: Readonly<Location>
@@ -48,3 +50,5 @@ export interface RumErrorEventDomainContext {
 export interface RumLongTaskEventDomainContext {
   performanceEntry: PerformanceEntry
 }
+
+export interface RumVitalEventDomainContext {}
