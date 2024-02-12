@@ -45,6 +45,16 @@ describe('vitalCollection', () => {
       expect(rawRumEvents.length).toBe(0)
     })
 
+    it('should not create multiple duration vitals by calling the stop API multiple times', () => {
+      const { rawRumEvents } = setupBuilder.build()
+
+      vitalCollection.startDurationVital({ name: 'foo', startClocks: clocksNow() })
+      vitalCollection.stopDurationVital({ name: 'foo', stopClocks: clocksNow() })
+      vitalCollection.stopDurationVital({ name: 'foo', stopClocks: clocksNow() })
+
+      expect(rawRumEvents.length).toBe(1)
+    })
+
     it('should create multiple duration vitals from start/stop API', () => {
       const { rawRumEvents, clock } = setupBuilder.build()
 

@@ -40,6 +40,7 @@ export function startVitalCollection(lifeCycle: LifeCycle) {
         value: elapsed(vitalStart.startClocks.timeStamp, vitalStop.stopClocks.timeStamp),
       }
       lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, processVital(vital))
+      vitalStartsByName.delete(vitalStop.name)
     },
   }
 }
