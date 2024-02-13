@@ -72,6 +72,12 @@ export class ValueHistory<Value> {
     }
   }
 
+  findLast(): Value | undefined {
+    if (this.entries.length > 0) {
+      return this.entries[0].value
+    }
+  }
+
   /**
    * Helper function to close the currently active value, if any. This method assumes that entries
    * are not overlapping.

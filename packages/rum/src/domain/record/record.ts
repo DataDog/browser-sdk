@@ -49,7 +49,10 @@ export function record(options: RecordOptions): RecordAPI {
     if (view) {
       replayStats.addRecord(view.id)
     } else {
-      addTelemetryError('[Record] no active view', { record } as unknown as Context)
+      addTelemetryError(new Error('[Record] no active view'), {
+        record,
+        view: options.viewContexts.findLastView(),
+      } as unknown as Context)
     }
   }
 

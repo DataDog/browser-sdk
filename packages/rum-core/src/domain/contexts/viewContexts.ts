@@ -16,6 +16,7 @@ export interface ViewContext {
 
 export interface ViewContexts {
   findView: (startTime?: RelativeTime) => ViewContext | undefined
+  findLastView: () => ViewContext | undefined
   stop: () => void
 }
 
@@ -45,6 +46,7 @@ export function startViewContexts(lifeCycle: LifeCycle): ViewContexts {
   }
 
   return {
+    findLastView: () => viewContextHistory.findLast(),
     findView: (startTime) => viewContextHistory.find(startTime),
     stop: () => {
       viewContextHistory.stop()
