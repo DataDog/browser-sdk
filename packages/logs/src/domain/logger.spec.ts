@@ -41,6 +41,7 @@ describe('Logger', () => {
             kind: 'SyntaxError',
             message: 'My Error',
             stack: jasmine.stringMatching(/^SyntaxError: My Error/),
+            causes: undefined,
           },
         })
       })
@@ -72,6 +73,7 @@ describe('Logger', () => {
             kind: undefined,
             message: 'Provided "My Error"',
             stack: NO_ERROR_STACK_PRESENT_MESSAGE,
+            causes: undefined,
           },
         },
         status: 'error',
