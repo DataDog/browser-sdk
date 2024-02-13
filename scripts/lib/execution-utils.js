@@ -27,6 +27,7 @@ function runMain(mainFunction) {
     .catch((error) => {
       printError('\nScript exited with error:')
       printError(error)
+      printError(error.cause)
       process.exit(1)
     })
 }

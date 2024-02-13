@@ -1,7 +1,6 @@
 const fs = require('fs')
 const path = require('path')
-const { execSync } = require('child_process')
-const lernaJson = require('../lerna.json')
+const { getBrowserSdkVersion } = require('./lib/browser-sdk-version')
 const { getOrg2ApiKey } = require('./lib/secrets')
 const { runMain, fetch: fetchWrapper } = require('./lib/execution-utils')
 
@@ -29,7 +28,7 @@ runMain(async () => {
         rum_slim: getBundleSize(rumSlimPath),
         worker: getBundleSize(workerPath),
       },
-      version: lernaJson.version,
+      version: getBrowserSdkVersion(),
       commit: process.env.CI_COMMIT_SHORT_SHA,
       branch: process.env.CI_COMMIT_REF_NAME,
     },
