@@ -262,6 +262,7 @@ describe('instrumentSetter', () => {
       stop()
 
       object.foo = 2
+      clock.tick(0)
 
       expect(instrumentationSetterSpy).not.toHaveBeenCalled()
     })
@@ -284,13 +285,14 @@ describe('instrumentSetter', () => {
         const object = {} as { foo: number }
         Object.defineProperty(object, 'foo', { set: noop, configurable: true })
         const instrumentationSetterSpy = jasmine.createSpy()
-        const { stop } = instrumentSetter(object, 'foo', noop)
+        const { stop } = instrumentSetter(object, 'foo', instrumentationSetterSpy)
 
         thirdPartyInstrumentation(object)
 
         stop()
 
         object.foo = 2
+        clock.tick(0)
 
         expect(instrumentationSetterSpy).not.toHaveBeenCalled()
       })
