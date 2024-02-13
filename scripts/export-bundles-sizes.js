@@ -1,6 +1,7 @@
 const fs = require('fs')
 const path = require('path')
 const { execSync } = require('child_process')
+const lernaJson = require('../lerna.json')
 const { getOrg2ApiKey } = require('./lib/secrets')
 const { runMain, fetch: fetchWrapper } = require('./lib/execution-utils')
 
@@ -8,10 +9,9 @@ const rumPath = path.join(__dirname, '../packages/rum/bundle/datadog-rum.js')
 const logsPath = path.join(__dirname, '../packages/logs/bundle/datadog-logs.js')
 const rumSlimPath = path.join(__dirname, '../packages/rum-slim/bundle/datadog-rum-slim.js')
 const workerPath = path.join(__dirname, '../packages/worker/bundle/worker.js')
-const versionPath = path.join(__dirname, '../packages/rum/package.json')
 
-const URL = 'https://http-intake.logs.datadoghq.com/api/v2/logs'
-const HEADERS = {
+const LOG_INTAKE_URL = 'https://http-intake.logs.datadoghq.com/api/v2/logs'
+const LOG_INTAKE_REQUEST_HEADERS = {
   'DD-API-KEY': getOrg2ApiKey(),
   'Content-Type': 'application/json',
 }
@@ -29,49 +29,27 @@ runMain(async () => {
         rum_slim: getBundleSize(rumSlimPath),
         worker: getBundleSize(workerPath),
       },
-      version: getVersion(),
-      commit: executeGitCommand('git rev-parse HEAD'),
+      version: lernaJson.version,
+      commit: process.env.CI_COMMIT_SHORT_SHA,
       branch: process.env.CI_COMMIT_REF_NAME,
     },
   ]
-  await postBundleSize(URL, logData)
+  await sendLogToOrg2(logData)
 })
-
-function executeGitCommand(command) {
-  try {
-    return execSync(command)
-      .toString('utf8')
-      .replace(/[\n\r\s]+$/, '')
-  } catch (error) {
-    console.error('Failed to execute git command:', error)
-    return null
-  }
-}
-
-function getVersion() {
-  try {
-    const versionJson = fs.readFileSync(versionPath, 'utf8')
-    return JSON.parse(versionJson).version
-  } catch (error) {
-    console.error('Failed to get version:', error)
-    return null
-  }
-}
 
 function getBundleSize(pathBundle) {
   try {
     const file = fs.statSync(pathBundle)
     return file.size
   } catch (error) {
-    console.error('Failed to get bundle size:', error)
-    return null
+    throw new Error('Failed to get bundle size', { cause: error })
   }
 }
 
-async function postBundleSize(url = '', bundleData = {}) {
-  await fetchWrapper(url, {
+async function sendLogToOrg2(bundleData = {}) {
+  await fetchWrapper(LOG_INTAKE_URL, {
     method: 'POST',
-    headers: HEADERS,
+    headers: LOG_INTAKE_REQUEST_HEADERS,
     body: JSON.stringify(bundleData),
   })
 }
