@@ -29,7 +29,6 @@ describe('featureFlagContexts', () => {
   afterEach(() => {
     featureFlagContexts.stop()
     resetExperimentalFeatures()
-    setupBuilder.cleanup()
   })
 
   it('should return undefined before the initial view', () => {

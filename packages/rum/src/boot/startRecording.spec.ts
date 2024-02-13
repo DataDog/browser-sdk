@@ -1,16 +1,9 @@
 import type { TimeStamp, HttpRequest, ClocksState } from '@datadog/browser-core'
-import {
-  PageExitReason,
-  DefaultPrivacyLevel,
-  noop,
-  isIE,
-  timeStampNow,
-  DeflateEncoderStreamId,
-} from '@datadog/browser-core'
+import { PageExitReason, DefaultPrivacyLevel, noop, isIE, DeflateEncoderStreamId } from '@datadog/browser-core'
 import type { LifeCycle, ViewCreatedEvent, RumConfiguration } from '@datadog/browser-rum-core'
 import { LifeCycleEventType } from '@datadog/browser-rum-core'
 import type { Clock } from '@datadog/browser-core/test'
-import { collectAsyncCalls, createNewEvent, mockClock } from '@datadog/browser-core/test'
+import { collectAsyncCalls, createNewEvent } from '@datadog/browser-core/test'
 import type { RumSessionManagerMock, TestSetupBuilder } from '../../../rum-core/test'
 import { appendElement, createRumSessionManagerMock, setup } from '../../../rum-core/test'
 
@@ -85,7 +78,6 @@ describe('startRecording', () => {
 
   afterEach(() => {
     setSegmentBytesLimit()
-    setupBuilder.cleanup()
     clock?.cleanup()
     resetDeflateWorkerState()
   })
@@ -163,48 +155,6 @@ describe('startRecording', () => {
     const requests = await readSentRequests(1)
     expect(requests[0].metadata.records_count).toBe(1)
     expect(requests[0].metadata.session.id).toBe('new-session-id')
-  })
-
-  it('takes a full snapshot when the view changes', async () => {
-    const { lifeCycle } = setupBuilder.build()
-
-    changeView(lifeCycle)
-    flushSegment(lifeCycle)
-
-    const requests = await readSentRequests(2)
-    expect(requests[1].metadata.has_full_snapshot).toBe(true)
-  })
-
-  it('full snapshot related records should have the view change date', async () => {
-    clock = mockClock()
-    const { lifeCycle } = setupBuilder.build()
-
-    changeView(lifeCycle)
-    flushSegment(lifeCycle)
-
-    const requests = await readSentRequests(2)
-    const firstSegment = requests[0].segment
-    expect(firstSegment.records[0].timestamp).toEqual(timeStampNow())
-    expect(firstSegment.records[1].timestamp).toEqual(timeStampNow())
-    expect(firstSegment.records[2].timestamp).toEqual(timeStampNow())
-    expect(firstSegment.records[3].timestamp).toEqual(timeStampNow())
-
-    const secondSegment = requests[1].segment
-    expect(secondSegment.records[0].timestamp).toEqual(VIEW_TIMESTAMP)
-    expect(secondSegment.records[1].timestamp).toEqual(VIEW_TIMESTAMP)
-    expect(secondSegment.records[2].timestamp).toEqual(VIEW_TIMESTAMP)
-  })
-
-  it('adds a ViewEnd record when the view ends', async () => {
-    const { lifeCycle } = setupBuilder.build()
-
-    changeView(lifeCycle)
-    flushSegment(lifeCycle)
-
-    const requests = await readSentRequests(2)
-    expect(requests[0].metadata.view.id).toBe('view-id')
-    const records = requests[0].segment.records
-    expect(records[records.length - 1].type).toBe(RecordType.ViewEnd)
   })
 
   it('flushes pending mutations before ending the view', async () => {

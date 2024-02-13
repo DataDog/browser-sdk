@@ -33,7 +33,6 @@ describe('trackCumulativeLayoutShift', () => {
     if (originalSupportedEntryTypes) {
       Object.defineProperty(PerformanceObserver, 'supportedEntryTypes', originalSupportedEntryTypes)
     }
-    setupBuilder.cleanup()
   })
 
   it('should be initialized to 0', () => {

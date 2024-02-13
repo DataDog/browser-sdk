@@ -18,17 +18,32 @@ export const MAX_ATTRIBUTE_VALUE_CHAR_LENGTH = 100_000
 
 const TEXT_MASKING_CHAR = 'x'
 
+export type NodePrivacyLevelCache = Map<Node, NodePrivacyLevel>
+
 /**
  * Get node privacy level by iterating over its ancestors. When the direct parent privacy level is
  * know, it is best to use something like:
  *
  * derivePrivacyLevelGivenParent(getNodeSelfPrivacyLevel(node), parentNodePrivacyLevel)
  */
-export function getNodePrivacyLevel(node: Node, defaultPrivacyLevel: NodePrivacyLevel): NodePrivacyLevel {
+export function getNodePrivacyLevel(
+  node: Node,
+  defaultPrivacyLevel: NodePrivacyLevel,
+  cache?: NodePrivacyLevelCache
+): NodePrivacyLevel {
+  if (cache && cache.has(node)) {
+    return cache.get(node)!
+  }
   const parentNode = getParentNode(node)
-  const parentNodePrivacyLevel = parentNode ? getNodePrivacyLevel(parentNode, defaultPrivacyLevel) : defaultPrivacyLevel
+  const parentNodePrivacyLevel = parentNode
+    ? getNodePrivacyLevel(parentNode, defaultPrivacyLevel, cache)
+    : defaultPrivacyLevel
   const selfNodePrivacyLevel = getNodeSelfPrivacyLevel(node)
-  return reducePrivacyLevel(selfNodePrivacyLevel, parentNodePrivacyLevel)
+  const nodePrivacyLevel = reducePrivacyLevel(selfNodePrivacyLevel, parentNodePrivacyLevel)
+  if (cache) {
+    cache.set(node, nodePrivacyLevel)
+  }
+  return nodePrivacyLevel
 }
 
 /**

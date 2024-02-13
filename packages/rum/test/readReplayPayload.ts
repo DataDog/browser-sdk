@@ -22,8 +22,8 @@ export function readMetadataFromReplayPayload(payload: Payload) {
 }
 
 function readJsonBlob(blob: Blob, { decompress = false }: { decompress?: boolean } = {}) {
-  // Safari Mobile 12 does not support blob.text() or blob.arrayBuffer() yet, so we need to use a
-  // FileReader for now.
+  // Safari Mobile 14 should support blob.text() or blob.arrayBuffer() but the APIs are not defined on the safari
+  // provided by browserstack, so we still need to use a FileReader for now.
   // https://caniuse.com/mdn-api_blob_arraybuffer
   // https://caniuse.com/mdn-api_blob_text
   return new Promise((resolve) => {

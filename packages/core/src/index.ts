@@ -10,6 +10,7 @@ export {
   INTAKE_SITE_US1_FED,
   INTAKE_SITE_EU1,
 } from './domain/configuration'
+export { TrackingConsent, TrackingConsentState, createTrackingConsentState } from './domain/trackingConsent'
 export {
   isExperimentalFeatureEnabled,
   addExperimentalFeatures,
@@ -20,6 +21,7 @@ export {
 export { trackRuntimeError } from './domain/error/trackRuntimeError'
 export { computeStackTrace, StackTrace } from './domain/error/computeStackTrace'
 export { defineGlobal, makePublicApi } from './boot/init'
+export { displayAlreadyInitializedError } from './boot/displayAlreadyInitializedError'
 export { initReportObservable, RawReport, RawReportType } from './domain/report/reportObservable'
 export {
   startTelemetry,

@@ -1,7 +1,7 @@
 import { jsonStringify } from '../serialisation/jsonStringify'
 
 export function normalizeUrl(url: string) {
-  return buildUrl(url, getLocationOrigin()).href
+  return buildUrl(url, location.href).href
 }
 
 export function isValidUrl(url: string) {
@@ -12,21 +12,9 @@ export function isValidUrl(url: string) {
   }
 }
 
-export function getOrigin(url: string) {
-  return getLinkElementOrigin(buildUrl(url))
-}
-
 export function getPathName(url: string) {
   const pathname = buildUrl(url).pathname
   return pathname[0] === '/' ? pathname : `/${pathname}`
-}
-
-export function getSearch(url: string) {
-  return buildUrl(url).search
-}
-
-export function getHash(url: string) {
-  return buildUrl(url).hash
 }
 
 export function buildUrl(url: string, base?: string) {
@@ -66,21 +54,4 @@ function getSupportedUrl(): typeof URL | undefined {
     }
   }
   return isURLSupported ? originalURL : undefined
-}
-
-export function getLocationOrigin() {
-  return getLinkElementOrigin(window.location)
-}
-
-/**
- * Fallback
- * On IE HTMLAnchorElement origin is not supported: https://developer.mozilla.org/en-US/docs/Web/API/HTMLHyperlinkElementUtils/origin
- * On Firefox window.location.origin is "null" for file: URIs: https://bugzilla.mozilla.org/show_bug.cgi?id=878297
- */
-export function getLinkElementOrigin(element: Location | HTMLAnchorElement | URL) {
-  if (element.origin && element.origin !== 'null') {
-    return element.origin
-  }
-  const sanitizedHost = element.host.replace(/(:80|:443)$/, '')
-  return `${element.protocol}//${sanitizedHost}`
 }

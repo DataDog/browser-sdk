@@ -1,4 +1,4 @@
-import type { RelativeTime } from '@datadog/browser-core'
+import type { RelativeTime, TrackingConsentState } from '@datadog/browser-core'
 import { Observable, performDraw, relativeNow, startSessionManager } from '@datadog/browser-core'
 import type { LogsConfiguration } from './configuration'
 
@@ -19,9 +19,15 @@ export const enum LoggerTrackingType {
   TRACKED = '1',
 }
 
-export function startLogsSessionManager(configuration: LogsConfiguration): LogsSessionManager {
-  const sessionManager = startSessionManager(configuration, LOGS_SESSION_KEY, (rawTrackingType) =>
-    computeSessionState(configuration, rawTrackingType)
+export function startLogsSessionManager(
+  configuration: LogsConfiguration,
+  trackingConsentState: TrackingConsentState
+): LogsSessionManager {
+  const sessionManager = startSessionManager(
+    configuration,
+    LOGS_SESSION_KEY,
+    (rawTrackingType) => computeSessionState(configuration, rawTrackingType),
+    trackingConsentState
   )
 
   return {

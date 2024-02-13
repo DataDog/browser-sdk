@@ -44,7 +44,7 @@ export function trackLargestContentfulPaint(
   eventTarget: Window,
   callback: (largestContentfulPaint: LargestContentfulPaint) => void
 ) {
-  // Ignore entries that come after the first user interaction.  According to the documentation, the
+  // Ignore entries that come after the first user interaction. According to the documentation, the
   // browser should not send largest-contentful-paint entries after a user interact with the page,
   // but the web-vitals reference implementation uses this as a safeguard.
   let firstInteractionTimestamp = Infinity
@@ -58,6 +58,7 @@ export function trackLargestContentfulPaint(
     { capture: true, once: true }
   )
 
+  let biggestLcpSize = 0
   const { unsubscribe: unsubscribeLifeCycle } = lifeCycle.subscribe(
     LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED,
     (entries) => {
@@ -67,7 +68,10 @@ export function trackLargestContentfulPaint(
           entry.entryType === RumPerformanceEntryType.LARGEST_CONTENTFUL_PAINT &&
           entry.startTime < firstInteractionTimestamp &&
           entry.startTime < firstHidden.timeStamp &&
-          entry.startTime < LCP_MAXIMUM_DELAY
+          entry.startTime < LCP_MAXIMUM_DELAY &&
+          // Ensure to get the LCP entry with the biggest size, see
+          // https://bugs.chromium.org/p/chromium/issues/detail?id=1516655
+          entry.size > biggestLcpSize
       )
 
       if (lcpEntry) {
@@ -90,6 +94,7 @@ export function trackLargestContentfulPaint(
           value: lcpEntry.startTime,
           targetSelector: lcpTargetSelector,
         })
+        biggestLcpSize = lcpEntry.size
       }
     }
   )

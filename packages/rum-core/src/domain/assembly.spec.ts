@@ -77,7 +77,6 @@ describe('rum assembly', () => {
 
   afterEach(() => {
     deleteEventBridgeStub()
-    setupBuilder.cleanup()
     cleanupSyntheticsWorkerValues()
     cleanupCiVisibilityWindowValues()
   })

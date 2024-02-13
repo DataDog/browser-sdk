@@ -1,3 +1,4 @@
+import type { TrackingConsentState } from '@datadog/browser-core'
 import {
   sendToExtension,
   createPageExitObservable,
@@ -20,10 +21,18 @@ import { startReportError } from '../domain/reportError'
 import { startLogsTelemetry } from '../domain/logsTelemetry'
 import type { CommonContext } from '../rawLogsEvent.types'
 
+export type StartLogs = typeof startLogs
+export type StartLogsResult = ReturnType<StartLogs>
+
 export function startLogs(
   initConfiguration: LogsInitConfiguration,
   configuration: LogsConfiguration,
-  getCommonContext: () => CommonContext
+  getCommonContext: () => CommonContext,
+
+  // `startLogs` and its subcomponents assume tracking consent is granted initially and starts
+  // collecting logs unconditionally. As such, `startLogs` should be called with a
+  // `trackingConsentState` set to "granted".
+  trackingConsentState: TrackingConsentState
 ) {
   const lifeCycle = new LifeCycle()
   const cleanupTasks: Array<() => void> = []
@@ -35,7 +44,7 @@ export function startLogs(
 
   const session =
     configuration.sessionStoreStrategyType && !canUseEventBridge() && !willSyntheticsInjectRum()
-      ? startLogsSessionManager(configuration)
+      ? startLogsSessionManager(configuration, trackingConsentState)
       : startLogsSessionManagerStub(configuration)
 
   const { stop: stopLogsTelemetry } = startLogsTelemetry(

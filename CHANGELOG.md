@@ -16,6 +16,16 @@
 
 ---
 
+## v5.9.0
+
+- ✨[Developer extension] npm setup override support ([#2304](https://github.com/DataDog/browser-sdk/pull/2304))
+- 🐛 Fix LCP with size < previous LCP ([#2586](https://github.com/DataDog/browser-sdk/pull/2586))
+- 🐛 [RUM-2940] fix normalize URL for relative paths ([#2576](https://github.com/DataDog/browser-sdk/pull/2576))
+- ♻️ register setupBuilder.cleanup as a cleanup task ([#2590](https://github.com/DataDog/browser-sdk/pull/2590))
+- ♻️ [RUM-2445] split RUM and Logs public APIs modules ([#2575](https://github.com/DataDog/browser-sdk/pull/2575))
+- ⚡️ [RUM-2893] optimize getNodePrivacyLevel by adding a cache ([#2579](https://github.com/DataDog/browser-sdk/pull/2579))
+- ♻️ [RUM-2203] Move record logic from startRecording to the record module ([#2574](https://github.com/DataDog/browser-sdk/pull/2574))
+
 ## v5.8.0
 
 - ✨[RUM-2729] collect connectivity data ([#2560](https://github.com/DataDog/browser-sdk/pull/2560))

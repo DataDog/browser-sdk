@@ -31,10 +31,6 @@ describe('viewContexts', () => {
       })
   })
 
-  afterEach(() => {
-    setupBuilder.cleanup()
-  })
-
   describe('findView', () => {
     it('should return undefined when there is no current view and no startTime', () => {
       setupBuilder.build()

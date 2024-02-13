@@ -27,11 +27,12 @@ describe('trackEventCounts', () => {
     notifyCollectedRawRumEvent({ type: RumEventType.LONG_TASK })
     expect(eventCounts.longTaskCount).toBe(1)
   })
-
-  it("doesn't track views", () => {
-    const { eventCounts } = trackEventCounts({ lifeCycle, isChildEvent: () => true })
-    notifyCollectedRawRumEvent({ type: RumEventType.VIEW })
-    expect(objectValues(eventCounts as unknown as { [key: string]: number }).every((value) => value === 0)).toBe(true)
+  ;[RumEventType.VIEW, RumEventType.VITAL].forEach((eventType) => {
+    it(`doesn't track ${eventType} events`, () => {
+      const { eventCounts } = trackEventCounts({ lifeCycle, isChildEvent: () => true })
+      notifyCollectedRawRumEvent({ type: eventType })
+      expect(objectValues(eventCounts as unknown as { [key: string]: number }).every((value) => value === 0)).toBe(true)
+    })
   })
 
   it('tracks actions', () => {

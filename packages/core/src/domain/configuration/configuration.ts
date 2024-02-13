@@ -10,6 +10,7 @@ import { objectHasValue } from '../../tools/utils/objectUtils'
 import { assign } from '../../tools/utils/polyfills'
 import { selectSessionStoreStrategyType } from '../session/sessionStore'
 import type { SessionStoreStrategyType } from '../session/storeStrategies/sessionStoreStrategy'
+import { TrackingConsent } from '../trackingConsent'
 import type { TransportConfiguration } from './transportConfiguration'
 import { computeTransportConfiguration } from './transportConfiguration'
 
@@ -30,6 +31,7 @@ export interface InitConfiguration {
   allowFallbackToLocalStorage?: boolean | undefined
   allowUntrustedEvents?: boolean | undefined
   storeContextsAcrossPages?: boolean | undefined
+  trackingConsent?: TrackingConsent | undefined
 
   // transport options
   proxy?: string | ProxyFn | undefined
@@ -84,6 +86,7 @@ export interface Configuration extends TransportConfiguration {
   service: string | undefined
   silentMultipleInit: boolean
   allowUntrustedEvents: boolean
+  trackingConsent: TrackingConsent
 
   // Event limits
   eventRateLimiterThreshold: number // Limit the maximum number of actions, errors and logs per minutes
@@ -120,6 +123,14 @@ export function validateAndBuildConfiguration(initConfiguration: InitConfigurati
     return
   }
 
+  if (
+    initConfiguration.trackingConsent !== undefined &&
+    !objectHasValue(TrackingConsent, initConfiguration.trackingConsent)
+  ) {
+    display.error('Tracking Consent should be either "granted" or "not-granted"')
+    return
+  }
+
   // Set the experimental feature flags as early as possible, so we can use them in most places
   if (Array.isArray(initConfiguration.enableExperimentalFeatures)) {
     addExperimentalFeatures(
@@ -140,6 +151,7 @@ export function validateAndBuildConfiguration(initConfiguration: InitConfigurati
       service: initConfiguration.service,
       silentMultipleInit: !!initConfiguration.silentMultipleInit,
       allowUntrustedEvents: !!initConfiguration.allowUntrustedEvents,
+      trackingConsent: initConfiguration.trackingConsent ?? TrackingConsent.GRANTED,
 
       /**
        * beacon payload max queue size implementation is 64kb

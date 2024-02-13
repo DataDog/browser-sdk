@@ -21,10 +21,6 @@ describe('urlContexts', () => {
       })
   })
 
-  afterEach(() => {
-    setupBuilder.cleanup()
-  })
-
   it('should return undefined before the initial view', () => {
     setupBuilder.build()
 

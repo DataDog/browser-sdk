@@ -52,10 +52,15 @@ async function fetchWrapper(url, options) {
   return response.text()
 }
 
+function timeout(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms))
+}
+
 module.exports = {
   spawnCommand,
   printError,
   printLog,
   runMain,
   fetch: fetchWrapper,
+  timeout,
 }

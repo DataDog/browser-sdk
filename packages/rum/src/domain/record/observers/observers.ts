@@ -23,6 +23,7 @@ import { initMutationObserver } from './mutationObserver'
 import type { FocusCallback } from './focusObserver'
 import { initFocusObserver } from './focusObserver'
 import { initRecordIds } from './recordIds'
+import { initViewEndObserver, type ViewEndCallback } from './viewEndObserver'
 
 interface ObserverParam {
   lifeCycle: LifeCycle
@@ -39,6 +40,7 @@ interface ObserverParam {
   styleSheetCb: StyleSheetCallback
   focusCb: FocusCallback
   frustrationCb: FrustrationCallback
+  viewEndCb: ViewEndCallback
   shadowRootsController: ShadowRootsController
 }
 
@@ -67,6 +69,7 @@ export function initObservers(
   const focusHandler = initFocusObserver(configuration, o.focusCb)
   const visualViewportResizeHandler = initVisualViewportResizeObserver(configuration, o.visualViewportResizeCb)
   const frustrationHandler = initFrustrationObserver(o.lifeCycle, o.frustrationCb, recordIds)
+  const viewEndHandler = initViewEndObserver(o.lifeCycle, o.viewEndCb)
 
   return {
     flush: () => {
@@ -84,6 +87,7 @@ export function initObservers(
       focusHandler()
       visualViewportResizeHandler()
       frustrationHandler()
+      viewEndHandler()
     },
   }
 }

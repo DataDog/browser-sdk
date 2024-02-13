@@ -1,17 +1,10 @@
 import type { RawError, HttpRequest, DeflateEncoder } from '@datadog/browser-core'
-import { timeStampNow, createHttpRequest, addTelemetryDebug } from '@datadog/browser-core'
-import type {
-  LifeCycle,
-  ViewContexts,
-  RumConfiguration,
-  RumSessionManager,
-  ViewCreatedEvent,
-} from '@datadog/browser-rum-core'
+import { createHttpRequest, addTelemetryDebug } from '@datadog/browser-core'
+import type { LifeCycle, ViewContexts, RumConfiguration, RumSessionManager } from '@datadog/browser-rum-core'
 import { LifeCycleEventType } from '@datadog/browser-rum-core'
 
 import { record } from '../domain/record'
 import { startSegmentCollection, SEGMENT_BYTES_LIMIT } from '../domain/segmentCollection'
-import { RecordType } from '../types'
 
 export function startRecording(
   lifeCycle: LifeCycle,
@@ -39,34 +32,15 @@ export function startRecording(
     encoder
   )
 
-  const {
-    stop: stopRecording,
-    takeSubsequentFullSnapshot,
-    flushMutations,
-  } = record({
+  const { stop: stopRecording } = record({
     emit: addRecord,
     configuration,
     lifeCycle,
+    viewContexts,
   })
-
-  const { unsubscribe: unsubscribeViewEnded } = lifeCycle.subscribe(LifeCycleEventType.VIEW_ENDED, () => {
-    flushMutations()
-    addRecord({
-      timestamp: timeStampNow(),
-      type: RecordType.ViewEnd,
-    })
-  })
-  const { unsubscribe: unsubscribeViewCreated } = lifeCycle.subscribe(
-    LifeCycleEventType.VIEW_CREATED,
-    (view: ViewCreatedEvent) => {
-      takeSubsequentFullSnapshot(view.startClocks.timeStamp)
-    }
-  )
 
   return {
     stop: () => {
-      unsubscribeViewEnded()
-      unsubscribeViewCreated()
       stopRecording()
       stopSegmentCollection()
     },
