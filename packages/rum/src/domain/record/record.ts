@@ -1,5 +1,4 @@
-import type { Context } from '@datadog/browser-core'
-import { addTelemetryError, sendToExtension, timeStampNow } from '@datadog/browser-core'
+import { sendToExtension, timeStampNow } from '@datadog/browser-core'
 import type { LifeCycle, RumConfiguration, ViewContexts } from '@datadog/browser-rum-core'
 import type {
   BrowserMutationData,
@@ -46,14 +45,7 @@ export function record(options: RecordOptions): RecordAPI {
     emit(record)
     sendToExtension('record', { record })
     const view = options.viewContexts.findView()!
-    if (view) {
-      replayStats.addRecord(view.id)
-    } else {
-      addTelemetryError(new Error('[Record] no active view'), {
-        record,
-        view: options.viewContexts.findLastView(),
-      } as unknown as Context)
-    }
+    replayStats.addRecord(view.id)
   }
 
   const elementsScrollPositions = createElementsScrollPositions()
