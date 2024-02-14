@@ -24,7 +24,7 @@ const buildEnvFactories = {
   SDK_VERSION: () => {
     switch (getBuildMode()) {
       case 'release':
-        return getBrowserSdkVersion()
+        return getBrowserSdkVersion
       case 'canary': {
         const commitSha1 = execSync('git rev-parse HEAD').toString().trim()
         // TODO when tags would allow '+' characters
