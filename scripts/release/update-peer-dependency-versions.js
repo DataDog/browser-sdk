@@ -25,7 +25,7 @@ runMain(async () => {
 function updateJsonPeerDependencies(content) {
   const json = JSON.parse(content)
   Object.keys(json.peerDependencies).forEach((key) => {
-    json.peerDependencies[key] = getBrowserSdkVersion()
+    json.peerDependencies[key] = getBrowserSdkVersion
   })
   return `${JSON.stringify(json, null, 2)}\n`
 }

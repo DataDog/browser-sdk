@@ -29,7 +29,7 @@ const buildEnvFactories = {
         const commitSha1 = execSync('git rev-parse HEAD').toString().trim()
         // TODO when tags would allow '+' characters
         //  use build separator (+) instead of prerelease separator (-)
-        return `${getBrowserSdkVersion()}-${commitSha1}`
+        return `${getBrowserSdkVersion}-${commitSha1}`
       }
       default:
         return 'dev'

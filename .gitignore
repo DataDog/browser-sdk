@@ -17,6 +17,3 @@ browserstack.err
 !.yarn/releases
 !.yarn/sdks
 !.yarn/versions
-
-.DS_Store
-.vscode/*

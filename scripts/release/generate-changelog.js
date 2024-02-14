@@ -33,7 +33,7 @@ ${emojisLegend}
 
 ---
 
-## v${getBrowserSdkVersion()}
+## v${getBrowserSdkVersion}
 
 ${changesList}
 ${content.slice(content.indexOf('\n##'))}`

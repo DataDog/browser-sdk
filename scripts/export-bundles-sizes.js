@@ -2,7 +2,7 @@ const fs = require('fs')
 const path = require('path')
 const { getBrowserSdkVersion } = require('./lib/browser-sdk-version')
 const { getOrg2ApiKey } = require('./lib/secrets')
-const { runMain, fetch: fetchWrapper } = require('./lib/execution-utils')
+const { runMain, fetch } = require('./lib/execution-utils')
 
 const rumPath = path.join(__dirname, '../packages/rum/bundle/datadog-rum.js')
 const logsPath = path.join(__dirname, '../packages/logs/bundle/datadog-logs.js')
@@ -28,7 +28,7 @@ runMain(async () => {
         rum_slim: getBundleSize(rumSlimPath),
         worker: getBundleSize(workerPath),
       },
-      version: getBrowserSdkVersion(),
+      version: getBrowserSdkVersion,
       commit: process.env.CI_COMMIT_SHORT_SHA,
       branch: process.env.CI_COMMIT_REF_NAME,
     },
@@ -46,7 +46,7 @@ function getBundleSize(pathBundle) {
 }
 
 async function sendLogToOrg2(bundleData = {}) {
-  await fetchWrapper(LOG_INTAKE_URL, {
+  await fetch(LOG_INTAKE_URL, {
     method: 'POST',
     headers: LOG_INTAKE_REQUEST_HEADERS,
     body: JSON.stringify(bundleData),
