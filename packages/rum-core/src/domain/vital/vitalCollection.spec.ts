@@ -134,6 +134,7 @@ describe('vitalCollection', () => {
       vital: {
         id: jasmine.any(String),
         type: VitalType.DURATION,
+        name: 'foo',
         custom: {
           foo: 0,
         },

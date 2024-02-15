@@ -56,6 +56,7 @@ function processVital(vital: DurationVital): RawRumEventCollectedData<RawRumVita
       vital: {
         id: generateUUID(),
         type: vital.type,
+        name: vital.name,
         custom: {
           [vital.name]: vital.value,
         },

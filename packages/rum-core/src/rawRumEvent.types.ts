@@ -221,6 +221,7 @@ export interface RawRumVitalEvent {
   type: RumEventType.VITAL
   vital: {
     id: string
+    name: string
     type: VitalType
     custom: {
       [key: string]: number
