@@ -9,8 +9,11 @@ import {
   noop,
   createTrackingConsentState,
   TrackingConsent,
+  setCookie,
+  STORAGE_POLL_DELAY,
+  ONE_MINUTE,
 } from '@datadog/browser-core'
-import type { Request } from '@datadog/browser-core/test'
+import type { Clock, Request } from '@datadog/browser-core/test'
 import {
   interceptRequests,
   stubEndpointBuilder,
@@ -19,8 +22,11 @@ import {
   cleanupSyntheticsWorkerValues,
   mockSyntheticsWorkerValues,
   registerCleanupTask,
+  mockClock,
+  createNewEvent,
 } from '@datadog/browser-core/test'
 
+import { SESSION_EXPIRATION_DELAY } from 'packages/core/src/domain/session/sessionConstants'
 import type { LogsConfiguration } from '../domain/configuration'
 import { validateAndBuildLogsConfiguration } from '../domain/configuration'
 import { HandlerType, Logger, StatusType } from '../domain/logger'
@@ -236,6 +242,84 @@ describe('logs', () => {
       registerCleanupTask(stopLogs)
 
       expect(getCookie(SESSION_STORE_KEY)).toBeUndefined()
+    })
+  })
+
+  // it('if new session is not tracked, renew the session so that logs sdk stop sending events', () => {
+  //   ;({ handleLog, stop: stopLogs } = startLogs(
+  //     initConfiguration,
+  //     baseConfiguration,
+  //     () => COMMON_CONTEXT,
+  //     createTrackingConsentState(TrackingConsent.GRANTED)
+  //   ))
+  //   registerCleanupTask(stopLogs)
+
+  //   expect(getCookie(SESSION_STORE_KEY)).not.toBeUndefined()
+  // })
+
+  describe('session lifecycle', () => {
+    let clock: Clock
+    beforeEach(() => {
+      clock = mockClock()
+    })
+    afterEach(() => {
+      clock.cleanup()
+    })
+
+    it('when the renewed session is not tracked, stop sending events', () => {
+      setCookie(SESSION_STORE_KEY, 'id=foo&logs=1', ONE_MINUTE)
+      ;({ handleLog, stop: stopLogs } = startLogs(
+        initConfiguration,
+        baseConfiguration,
+        () => COMMON_CONTEXT,
+        createTrackingConsentState(TrackingConsent.GRANTED)
+      ))
+      registerCleanupTask(stopLogs)
+
+      handleLog({ status: StatusType.info, message: 'message 1' }, logger)
+
+      // renew untracked session
+      setCookie(SESSION_STORE_KEY, 'id=bar&logs=0', 1000)
+      clock.tick(STORAGE_POLL_DELAY)
+
+      handleLog({ status: StatusType.info, message: 'message 2' }, logger)
+
+      expect(requests.length).toEqual(1)
+      expect(getLoggedMessage(requests, 0)).toEqual(
+        jasmine.objectContaining({
+          message: 'message 1',
+          session_id: jasmine.any(String),
+        })
+      )
+    })
+
+    it('when the session expires keep sending logs without session id', () => {
+      setCookie(SESSION_STORE_KEY, 'id=foo&logs=1', ONE_MINUTE)
+      ;({ handleLog, stop: stopLogs } = startLogs(
+        initConfiguration,
+        baseConfiguration,
+        () => COMMON_CONTEXT,
+        createTrackingConsentState(TrackingConsent.GRANTED)
+      ))
+      registerCleanupTask(stopLogs)
+
+      handleLog({ status: StatusType.info, message: 'message 1' }, logger)
+
+      // expire session
+      setCookie(SESSION_STORE_KEY, '', ONE_MINUTE)
+      clock.tick(STORAGE_POLL_DELAY)
+
+      handleLog({ status: StatusType.info, message: 'message 2' }, logger)
+
+      const firstRequest = getLoggedMessage(requests, 0)
+      const secondRequest = getLoggedMessage(requests, 1)
+
+      expect(requests.length).toEqual(2)
+      expect(firstRequest.message).toEqual('message 1')
+      expect(firstRequest.session_id).toEqual('foo')
+
+      expect(secondRequest.message).toEqual('message 2')
+      expect(secondRequest.session_id).toBeUndefined()
     })
   })
 })
