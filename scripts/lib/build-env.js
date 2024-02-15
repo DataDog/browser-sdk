@@ -1,7 +1,7 @@
 const { readFileSync } = require('fs')
 const path = require('path')
 const execSync = require('child_process').execSync
-const lernaJson = require('../../lerna.json')
+const { browserSdkVersion } = require('./browser-sdk-version')
 const { command } = require('./command')
 
 /**
@@ -24,12 +24,12 @@ const buildEnvFactories = {
   SDK_VERSION: () => {
     switch (getBuildMode()) {
       case 'release':
-        return lernaJson.version
+        return browserSdkVersion
       case 'canary': {
         const commitSha1 = execSync('git rev-parse HEAD').toString().trim()
         // TODO when tags would allow '+' characters
         //  use build separator (+) instead of prerelease separator (-)
-        return `${lernaJson.version}-${commitSha1}`
+        return `${browserSdkVersion}-${commitSha1}`
       }
       default:
         return 'dev'
