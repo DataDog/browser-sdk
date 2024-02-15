@@ -231,7 +231,16 @@ export type RumErrorEvent = CommonProperties &
       /**
        * Source type of the error (the language or platform impacting the error stacktrace format)
        */
-      readonly source_type?: 'android' | 'browser' | 'ios' | 'react-native' | 'flutter' | 'roku'
+      readonly source_type?:
+        | 'android'
+        | 'browser'
+        | 'ios'
+        | 'react-native'
+        | 'flutter'
+        | 'roku'
+        | 'ndk'
+        | 'ios+il2cpp'
+        | 'ndk+il2cpp'
       /**
        * Resource properties of the error
        */
@@ -1012,7 +1021,11 @@ export type RumVitalEvent = CommonProperties &
        */
       readonly id: string
       /**
-       * User custom vital. As vital name is used as facet path, it must contain only letters, digits, or the characters - _ . @ $
+       * Name of the vital, as it is also used as facet path for its value, it must contain only letters, digits, or the characters - _ . @ $
+       */
+      readonly name?: string
+      /**
+       * User custom vital.
        */
       readonly custom?: {
         [k: string]: number
