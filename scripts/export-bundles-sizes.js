@@ -1,6 +1,6 @@
 const fs = require('fs')
 const path = require('path')
-const { getBrowserSdkVersion } = require('./lib/browser-sdk-version')
+const { BrowserSdkVersion } = require('./lib/browser-sdk-version')
 const { getOrg2ApiKey } = require('./lib/secrets')
 const { runMain, fetch } = require('./lib/execution-utils')
 
@@ -28,7 +28,7 @@ runMain(async () => {
         rum_slim: getBundleSize(rumSlimPath),
         worker: getBundleSize(workerPath),
       },
-      version: getBrowserSdkVersion,
+      version: BrowserSdkVersion,
       commit: process.env.CI_COMMIT_SHORT_SHA,
       branch: process.env.CI_COMMIT_REF_NAME,
     },

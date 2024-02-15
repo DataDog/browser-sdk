@@ -1,7 +1,7 @@
 const { readFileSync } = require('fs')
 const path = require('path')
 const execSync = require('child_process').execSync
-const { getBrowserSdkVersion } = require('./browser-sdk-version')
+const { BrowserSdkVersion } = require('./browser-sdk-version')
 const { command } = require('./command')
 
 /**
@@ -24,12 +24,12 @@ const buildEnvFactories = {
   SDK_VERSION: () => {
     switch (getBuildMode()) {
       case 'release':
-        return getBrowserSdkVersion
+        return BrowserSdkVersion
       case 'canary': {
         const commitSha1 = execSync('git rev-parse HEAD').toString().trim()
         // TODO when tags would allow '+' characters
         //  use build separator (+) instead of prerelease separator (-)
-        return `${getBrowserSdkVersion}-${commitSha1}`
+        return `${BrowserSdkVersion}-${commitSha1}`
       }
       default:
         return 'dev'
