@@ -1,4 +1,4 @@
-import type { ClocksState, RelativeTime } from '@datadog/browser-core'
+import type { ClocksState, RelativeTime, TimeStamp } from '@datadog/browser-core'
 import { ErrorSource, ExperimentalFeature, ONE_MINUTE, display } from '@datadog/browser-core'
 import {
   initEventBridgeStub,
@@ -18,7 +18,7 @@ import {
   cleanupCiVisibilityWindowValues,
 } from '../../test'
 import type { RumEventDomainContext } from '../domainContext.types'
-import type { RawRumActionEvent, RawRumErrorEvent, RawRumEvent } from '../rawRumEvent.types'
+import type { RawRumActionEvent, RawRumEvent } from '../rawRumEvent.types'
 import { RumEventType } from '../rawRumEvent.types'
 import type { RumActionEvent, RumErrorEvent, RumEvent, RumResourceEvent } from '../rumEvent.types'
 import { startRumAssembly } from './assembly'
@@ -827,128 +827,90 @@ describe('rum assembly', () => {
       })
     })
   })
-
-  describe('error events limitation', () => {
-    it('stops sending error events when reaching the limit', () => {
-      const { lifeCycle } = setupBuilder.withConfiguration({ eventRateLimiterThreshold: 1 }).build()
-      notifyRawRumErrorEvent(lifeCycle, 'foo')
-      notifyRawRumErrorEvent(lifeCycle, 'bar')
-
-      expect(serverRumEvents.length).toBe(1)
-      expect((serverRumEvents[0] as RumErrorEvent).error.message).toBe('foo')
-      expect(reportErrorSpy).toHaveBeenCalledTimes(1)
-      expect(reportErrorSpy.calls.argsFor(0)[0]).toEqual(
-        jasmine.objectContaining({
-          message: 'Reached max number of errors by minute: 1',
-          source: ErrorSource.AGENT,
+  ;[
+    {
+      eventType: RumEventType.ERROR,
+      message: 'Reached max number of errors by minute: 1',
+    },
+    {
+      eventType: RumEventType.ACTION,
+      message: 'Reached max number of actions by minute: 1',
+    },
+    {
+      eventType: RumEventType.VITAL,
+      message: 'Reached max number of vitals by minute: 1',
+    },
+  ].forEach(({ eventType, message }) => {
+    describe(`${eventType} events limitation`, () => {
+      it(`stops sending ${eventType} events when reaching the limit`, () => {
+        const { lifeCycle } = setupBuilder.withConfiguration({ eventRateLimiterThreshold: 1 }).build()
+        notifyRawRumEvent(lifeCycle, {
+          rawRumEvent: createRawRumEvent(eventType, { date: 100 as TimeStamp }),
         })
-      )
-    })
-
-    it('does not take discarded errors into account', () => {
-      const { lifeCycle } = setupBuilder
-        .withConfiguration({
-          eventRateLimiterThreshold: 1,
-          beforeSend: (event) => {
-            if (event.type === RumEventType.ERROR && (event as RumErrorEvent).error.message === 'discard me') {
-              return false
-            }
-          },
+        notifyRawRumEvent(lifeCycle, {
+          rawRumEvent: createRawRumEvent(eventType, { date: 200 as TimeStamp }),
         })
-        .build()
-      notifyRawRumErrorEvent(lifeCycle, 'discard me')
-      notifyRawRumErrorEvent(lifeCycle, 'discard me')
-      notifyRawRumErrorEvent(lifeCycle, 'discard me')
-      notifyRawRumErrorEvent(lifeCycle, 'foo')
-      expect(serverRumEvents.length).toBe(1)
-      expect((serverRumEvents[0] as RumErrorEvent).error.message).toBe('foo')
-      expect(reportErrorSpy).not.toHaveBeenCalled()
-    })
 
-    it('allows to send new errors after a minute', () => {
-      const { lifeCycle, clock } = setupBuilder
-        .withFakeClock()
-        .withConfiguration({ eventRateLimiterThreshold: 1 })
-        .build()
-      notifyRawRumErrorEvent(lifeCycle, 'foo')
-      notifyRawRumErrorEvent(lifeCycle, 'bar')
-      clock.tick(ONE_MINUTE)
-      notifyRawRumErrorEvent(lifeCycle, 'baz')
-
-      expect(serverRumEvents.length).toBe(2)
-      expect((serverRumEvents[0] as RumErrorEvent).error.message).toBe('foo')
-      expect((serverRumEvents[1] as RumErrorEvent).error.message).toBe('baz')
-    })
-
-    function notifyRawRumErrorEvent(lifeCycle: LifeCycle, message: string) {
-      const rawRumEvent = createRawRumEvent(RumEventType.ERROR) as RawRumErrorEvent
-      rawRumEvent.error.message = message
-      notifyRawRumEvent(lifeCycle, {
-        rawRumEvent,
+        expect(serverRumEvents.length).toBe(1)
+        expect(serverRumEvents[0].date).toBe(100)
+        expect(reportErrorSpy).toHaveBeenCalledTimes(1)
+        expect(reportErrorSpy.calls.argsFor(0)[0]).toEqual(
+          jasmine.objectContaining({
+            message,
+            source: ErrorSource.AGENT,
+          })
+        )
       })
-    }
-  })
 
-  describe('action events limitation', () => {
-    it('stops sending action events when reaching the limit', () => {
-      const { lifeCycle } = setupBuilder.withConfiguration({ eventRateLimiterThreshold: 1 }).build()
-
-      notifyRumActionEvent(lifeCycle, 'foo')
-      notifyRumActionEvent(lifeCycle, 'bar')
-
-      expect(serverRumEvents.length).toBe(1)
-      expect((serverRumEvents[0] as RumActionEvent).action.target?.name).toBe('foo')
-      expect(reportErrorSpy).toHaveBeenCalledTimes(1)
-      expect(reportErrorSpy.calls.argsFor(0)[0]).toEqual(
-        jasmine.objectContaining({
-          message: 'Reached max number of actions by minute: 1',
-          source: ErrorSource.AGENT,
+      it(`does not take discarded ${eventType} events into account`, () => {
+        const { lifeCycle } = setupBuilder
+          .withConfiguration({
+            eventRateLimiterThreshold: 1,
+            beforeSend: (event) => {
+              if (event.type === eventType && event.date === 100) {
+                return false
+              }
+            },
+          })
+          .build()
+        notifyRawRumEvent(lifeCycle, {
+          rawRumEvent: createRawRumEvent(eventType, { date: 100 as TimeStamp }),
         })
-      )
-    })
-
-    it('does not take discarded actions into account', () => {
-      const { lifeCycle } = setupBuilder
-        .withConfiguration({
-          eventRateLimiterThreshold: 1,
-          beforeSend: (event) => {
-            if (event.type === RumEventType.ACTION && (event as RumActionEvent).action.target?.name === 'discard me') {
-              return false
-            }
-          },
+        notifyRawRumEvent(lifeCycle, {
+          rawRumEvent: createRawRumEvent(eventType, { date: 100 as TimeStamp }),
         })
-        .build()
-      notifyRumActionEvent(lifeCycle, 'discard me')
-      notifyRumActionEvent(lifeCycle, 'discard me')
-      notifyRumActionEvent(lifeCycle, 'discard me')
-      notifyRumActionEvent(lifeCycle, 'foo')
-      expect(serverRumEvents.length).toBe(1)
-      expect((serverRumEvents[0] as RumActionEvent).action.target?.name).toBe('foo')
-      expect(reportErrorSpy).not.toHaveBeenCalled()
-    })
-
-    it('allows to send new actions after a minute', () => {
-      const { lifeCycle, clock } = setupBuilder
-        .withFakeClock()
-        .withConfiguration({ eventRateLimiterThreshold: 1 })
-        .build()
-      notifyRumActionEvent(lifeCycle, 'foo')
-      notifyRumActionEvent(lifeCycle, 'bar')
-      clock.tick(ONE_MINUTE)
-      notifyRumActionEvent(lifeCycle, 'baz')
-
-      expect(serverRumEvents.length).toBe(2)
-      expect((serverRumEvents[0] as RumActionEvent).action.target?.name).toBe('foo')
-      expect((serverRumEvents[1] as RumActionEvent).action.target?.name).toBe('baz')
-    })
-
-    function notifyRumActionEvent(lifeCycle: LifeCycle, name: string) {
-      const rawRumEvent = createRawRumEvent(RumEventType.ACTION) as RawRumActionEvent
-      rawRumEvent.action.target.name = name
-      notifyRawRumEvent(lifeCycle, {
-        rawRumEvent,
+        notifyRawRumEvent(lifeCycle, {
+          rawRumEvent: createRawRumEvent(eventType, { date: 100 as TimeStamp }),
+        })
+        notifyRawRumEvent(lifeCycle, {
+          rawRumEvent: createRawRumEvent(eventType, { date: 200 as TimeStamp }),
+        })
+        expect(serverRumEvents.length).toBe(1)
+        expect(serverRumEvents[0].date).toBe(200)
+        expect(reportErrorSpy).not.toHaveBeenCalled()
       })
-    }
+
+      it(`allows to send new ${eventType} events after a minute`, () => {
+        const { lifeCycle, clock } = setupBuilder
+          .withFakeClock()
+          .withConfiguration({ eventRateLimiterThreshold: 1 })
+          .build()
+        notifyRawRumEvent(lifeCycle, {
+          rawRumEvent: createRawRumEvent(eventType, { date: 100 as TimeStamp }),
+        })
+        notifyRawRumEvent(lifeCycle, {
+          rawRumEvent: createRawRumEvent(eventType, { date: 200 as TimeStamp }),
+        })
+        clock.tick(ONE_MINUTE)
+        notifyRawRumEvent(lifeCycle, {
+          rawRumEvent: createRawRumEvent(eventType, { date: 300 as TimeStamp }),
+        })
+
+        expect(serverRumEvents.length).toBe(2)
+        expect(serverRumEvents[0].date).toBe(100)
+        expect(serverRumEvents[1].date).toBe(300)
+      })
+    })
   })
 })
 

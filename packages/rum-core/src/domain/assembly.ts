@@ -114,6 +114,11 @@ export function startRumAssembly(
       configuration.eventRateLimiterThreshold,
       reportError
     ),
+    [RumEventType.VITAL]: createEventRateLimiter(
+      RumEventType.VITAL,
+      configuration.eventRateLimiterThreshold,
+      reportError
+    ),
   }
 
   const syntheticsContext = getSyntheticsContext()
