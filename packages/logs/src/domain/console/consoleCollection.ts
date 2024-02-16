@@ -31,6 +31,7 @@ export function startConsoleCollection(configuration: LogsConfiguration, lifeCyc
             ? {
                 stack: log.stack,
                 fingerprint: log.fingerprint,
+                causes: log.causes,
               }
             : undefined,
         status: LogStatusForApi[log.api],

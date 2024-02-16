@@ -29,6 +29,7 @@ export function startRuntimeErrorCollection(configuration: LogsConfiguration, li
         error: {
           kind: rawError.type,
           stack: rawError.stack,
+          causes: rawError.causes,
         },
         origin: ErrorSource.SOURCE,
         status: StatusType.error,
