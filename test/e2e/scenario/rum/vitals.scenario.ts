@@ -21,6 +21,7 @@ describe('vital collection', () => {
       await flushEvents()
 
       expect(intakeRegistry.rumVitalEvents.length).toBe(1)
+      expect(intakeRegistry.rumVitalEvents[0].vital.name).toEqual('foo')
       expect(intakeRegistry.rumVitalEvents[0].vital.custom).toEqual({ foo: jasmine.any(Number) })
     })
 })
