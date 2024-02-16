@@ -185,15 +185,17 @@ describe('view lifecycle', () => {
     it('should use the current view name, service and version for the new view', () => {
       const { lifeCycle, changeLocation } = setupBuilder.build()
       const { getViewCreateCount, getViewCreate, startView } = viewTest
-
+      lifeCycle.notify(LifeCycleEventType.SESSION_EXPIRED)
       lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED)
 
       startView({ name: 'view 1', service: 'service 1', version: 'version 1' })
       startView({ name: 'view 2', service: 'service 2', version: 'version 2' })
+      lifeCycle.notify(LifeCycleEventType.SESSION_EXPIRED)
       lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED)
 
       startView({ name: 'view 3', service: 'service 3', version: 'version 3' })
       changeLocation('/bar')
+      lifeCycle.notify(LifeCycleEventType.SESSION_EXPIRED)
       lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED)
 
       expect(getViewCreateCount()).toBe(8)
