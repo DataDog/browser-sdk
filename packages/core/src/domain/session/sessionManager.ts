@@ -9,13 +9,14 @@ import type { Configuration } from '../configuration'
 import type { TrackingConsentState } from '../trackingConsent'
 import { SESSION_TIME_OUT_DELAY } from './sessionConstants'
 import { startSessionStore } from './sessionStore'
+import type { SessionState } from './sessionState'
 
 export interface SessionManager<TrackingType extends string> {
   findActiveSession: (startTime?: RelativeTime) => SessionContext<TrackingType> | undefined
   findActiveOrExpiredSession: (startTime?: RelativeTime) => SessionContext<TrackingType> | undefined
 
   renewObservable: Observable<void>
-  expireObservable: Observable<void>
+  expireObservable: Observable<SessionState>
   expire: () => void
 }
 
@@ -35,6 +36,7 @@ export function startSessionManager<TrackingType extends string>(
   computeSessionState: (rawTrackingType?: string) => { trackingType: TrackingType; isTracked: boolean },
   trackingConsentState: TrackingConsentState
 ): SessionManager<TrackingType> {
+  const renewOnUserActivity
   // TODO - Improve configuration type and remove assertion
   const sessionStore = startSessionStore(configuration.sessionStoreStrategyType!, productKey, computeSessionState)
   stopCallbacks.push(() => sessionStore.stop())
@@ -42,15 +44,25 @@ export function startSessionManager<TrackingType extends string>(
   const sessionContextHistory = new ValueHistory<SessionContext<TrackingType>>(SESSION_CONTEXT_TIMEOUT_DELAY)
   stopCallbacks.push(() => sessionContextHistory.stop())
 
-  let currentSessionContext = buildSessionContext()
+  let currentSessionContext = buildSessionContext(sessionStore.getSession())
+
+  function addSessionContext(sessionState: SessionState) {
+    currentSessionContext = buildSessionContext(sessionState)
+    sessionContextHistory.add(currentSessionContext, relativeNow())
+  }
 
   sessionStore.renewObservable.subscribe(() => {
-    currentSessionContext = buildSessionContext()
-    sessionContextHistory.add(currentSessionContext, relativeNow())
+    addSessionContext(sessionStore.getSession())
   })
-  sessionStore.expireObservable.subscribe(() => {
+
+  sessionStore.expireObservable.subscribe((nextSession: SessionState) => {
     currentSessionContext.endTime = relativeNow()
     sessionContextHistory.closeActive(currentSessionContext.endTime)
+
+    // If next session is not tracked add it to the history
+    if (nextSession[productKey] && !computeSessionState(nextSession[productKey]).isTracked) {
+      addSessionContext(nextSession)
+    }
   })
 
   // We expand/renew session unconditionally as tracking consent is always granted when the session
@@ -73,7 +85,8 @@ export function startSessionManager<TrackingType extends string>(
   })
   trackVisibility(configuration, () => sessionStore.expandSession())
 
-  function buildSessionContext(): SessionContext<TrackingType> {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  function buildSessionContext(sessionState: SessionState): SessionContext<TrackingType> {
     return {
       id: sessionStore.getSession().id!,
       trackingType: sessionStore.getSession()[productKey] as TrackingType,

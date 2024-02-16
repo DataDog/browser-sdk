@@ -16,7 +16,7 @@ export interface SessionStore {
   expandSession: () => void
   getSession: () => SessionState
   renewObservable: Observable<void>
-  expireObservable: Observable<void>
+  expireObservable: Observable<SessionState>
   expire: () => void
   stop: () => void
 }
@@ -54,7 +54,7 @@ export function startSessionStore<TrackingType extends string>(
   computeSessionState: (rawTrackingType?: string) => { trackingType: TrackingType; isTracked: boolean }
 ): SessionStore {
   const renewObservable = new Observable<void>()
-  const expireObservable = new Observable<void>()
+  const expireObservable = new Observable<SessionState>()
 
   const sessionStoreStrategy =
     sessionStoreStrategyType.type === 'Cookie'
@@ -114,12 +114,12 @@ export function startSessionStore<TrackingType extends string>(
     }
     if (hasSessionInCache()) {
       if (isSessionInCacheOutdated(sessionState)) {
-        expireSessionInCache()
+        expireSessionInCache(sessionState)
 
         // Only renew if the session is not tracked, because we want tracked session to be renewed on user activity
-        if (sessionState[productKey] && !computeSessionState(sessionState[productKey]).isTracked) {
-          renewSessionInCache(sessionState)
-        }
+        // if (sessionState[productKey] && !computeSessionState(sessionState[productKey]).isTracked) {
+        //   renewSessionInCache(sessionState)
+        // }
       } else {
         sessionCache = sessionState
       }
@@ -144,9 +144,9 @@ export function startSessionStore<TrackingType extends string>(
     return sessionCache.id !== sessionState.id || sessionCache[productKey] !== sessionState[productKey]
   }
 
-  function expireSessionInCache() {
+  function expireSessionInCache(sessionState: SessionState) {
     sessionCache = {}
-    expireObservable.notify()
+    expireObservable.notify(sessionState)
   }
 
   function renewSessionInCache(sessionState: SessionState) {
