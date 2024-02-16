@@ -30,6 +30,11 @@ interface DurationVital {
 export function startVitalCollection(lifeCycle: LifeCycle, pageStateHistory: PageStateHistory) {
   const vitalStartsByName = new Map<string, DurationVitalStart>()
 
+  lifeCycle.subscribe(LifeCycleEventType.SESSION_RENEWED, () => {
+    // Discard all the vitals that have not been stopped to avoid memory leaks
+    vitalStartsByName.clear()
+  })
+
   function isValid(vital: DurationVital) {
     return !pageStateHistory.wasInPageStateDuringPeriod(PageState.FROZEN, vital.startClocks.relative, vital.value)
   }

@@ -1,4 +1,5 @@
 import { clocksNow } from '@datadog/browser-core'
+import { LifeCycleEventType } from '../lifeCycle'
 import type { TestSetupBuilder } from '../../../test'
 import { setup } from '../../../test'
 import type { RawRumVitalEvent } from '../../rawRumEvent.types'
@@ -129,6 +130,17 @@ describe('vitalCollection', () => {
 
       vitalCollection.startDurationVital({ name: 'foo', startClocks: clocksNow() })
       clock.tick(100)
+      vitalCollection.stopDurationVital({ name: 'foo', stopClocks: clocksNow() })
+
+      expect(rawRumEvents.length).toBe(0)
+    })
+
+    it('should discard pending vitals on SESSION_RENEWED', () => {
+      const { rawRumEvents, lifeCycle, clock } = setupBuilder.build()
+
+      vitalCollection.startDurationVital({ name: 'foo', startClocks: clocksNow() })
+      clock.tick(100)
+      lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED)
       vitalCollection.stopDurationVital({ name: 'foo', stopClocks: clocksNow() })
 
       expect(rawRumEvents.length).toBe(0)
