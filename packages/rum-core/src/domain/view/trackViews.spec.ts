@@ -318,20 +318,21 @@ describe('view lifecycle', () => {
     })
   })
 
-  it('should notify VIEW_CREATED before VIEW_CREATED', () => {
+  it('should notify BEFORE_VIEW_CREATED before VIEW_CREATED', () => {
     setupBuilder.build()
 
     expect(notifySpy.calls.argsFor(0)[0]).toEqual(LifeCycleEventType.BEFORE_VIEW_CREATED)
     expect(notifySpy.calls.argsFor(1)[0]).toEqual(LifeCycleEventType.VIEW_CREATED)
   })
 
-  it('should notify BEFORE_VIEW_ENDED before VIEW_ENDED', () => {
+  it('should notify AFTER_VIEW_ENDED after VIEW_ENDED', () => {
     setupBuilder.build()
-    notifySpy.calls.reset()
+    const callsCount = notifySpy.calls.count()
 
     viewTest.stop()
-    expect(notifySpy.calls.argsFor(0)[0]).toEqual(LifeCycleEventType.VIEW_ENDED)
-    expect(notifySpy.calls.argsFor(1)[0]).toEqual(LifeCycleEventType.AFTER_VIEW_ENDED)
+
+    expect(notifySpy.calls.argsFor(callsCount)[0]).toEqual(LifeCycleEventType.VIEW_ENDED)
+    expect(notifySpy.calls.argsFor(callsCount + 1)[0]).toEqual(LifeCycleEventType.AFTER_VIEW_ENDED)
   })
 })
 
