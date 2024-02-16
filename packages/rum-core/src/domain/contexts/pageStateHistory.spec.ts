@@ -1,9 +1,9 @@
-import type { RelativeTime, ServerDuration } from '@datadog/browser-core'
+import type { RelativeTime, ServerDuration, Duration } from '@datadog/browser-core'
 import type { Clock } from '../../../../core/test'
 import { mockClock, registerCleanupTask } from '../../../../core/test'
 import type { RumConfiguration } from '../configuration'
 import type { PageStateHistory } from './pageStateHistory'
-import { startPageStateHistory, PageState } from './pageStateHistory'
+import { PageState, startPageStateHistory } from './pageStateHistory'
 
 describe('pageStateHistory', () => {
   let pageStateHistory: PageStateHistory
@@ -103,6 +103,40 @@ describe('pageStateHistory', () => {
       clock.tick(10)
       pageStateHistory.addPageState(PageState.PASSIVE)
       expect(pageStateHistory.isInActivePageStateAt(10 as RelativeTime)).toEqual(false)
+    })
+  })
+
+  describe('wasInPageSateDuringPeriod', () => {
+    it('should return true if the page was in the given state during the given period', () => {
+      pageStateHistory.addPageState(PageState.ACTIVE)
+      clock.tick(10)
+      pageStateHistory.addPageState(PageState.PASSIVE)
+      clock.tick(10)
+      pageStateHistory.addPageState(PageState.HIDDEN)
+      clock.tick(10)
+
+      expect(pageStateHistory.wasInPageStateDuringPeriod(PageState.PASSIVE, 0 as RelativeTime, 30 as Duration)).toEqual(
+        true
+      )
+    })
+
+    it('should return false if the page was not in the given state during the given period', () => {
+      pageStateHistory.addPageState(PageState.ACTIVE)
+      clock.tick(10)
+      pageStateHistory.addPageState(PageState.PASSIVE)
+      clock.tick(10)
+      pageStateHistory.addPageState(PageState.HIDDEN)
+      clock.tick(10)
+
+      expect(pageStateHistory.wasInPageStateDuringPeriod(PageState.FROZEN, 0 as RelativeTime, 30 as Duration)).toEqual(
+        false
+      )
+    })
+
+    it('should return false if there was no page state during the given period', () => {
+      expect(pageStateHistory.wasInPageStateDuringPeriod(PageState.ACTIVE, 0 as RelativeTime, 30 as Duration)).toEqual(
+        false
+      )
     })
   })
 })

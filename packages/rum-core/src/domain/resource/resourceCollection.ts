@@ -1,3 +1,4 @@
+import type { ClocksState, Duration } from '@datadog/browser-core'
 import {
   combine,
   generateUUID,
@@ -10,7 +11,6 @@ import {
   isExperimentalFeatureEnabled,
   ExperimentalFeature,
 } from '@datadog/browser-core'
-import type { ClocksState, Duration } from '@datadog/browser-core'
 import type { RumConfiguration } from '../configuration'
 import type { RumPerformanceResourceTiming } from '../../browser/performanceCollection'
 import { RumPerformanceEntryType } from '../../browser/performanceCollection'
@@ -229,15 +229,13 @@ function computePageStateInfo(pageStateHistory: PageStateHistory, startClocks: C
 }
 
 function computeRequestDuration(pageStateHistory: PageStateHistory, startClocks: ClocksState, duration: Duration) {
-  const requestCrossedFrozenState = pageStateHistory
-    .findAll(startClocks.relative, duration)
-    ?.some((pageState) => pageState.state === PageState.FROZEN)
-
-  return !requestCrossedFrozenState ? toServerDuration(duration) : undefined
+  return !pageStateHistory.wasInPageStateDuringPeriod(PageState.FROZEN, startClocks.relative, duration)
+    ? toServerDuration(duration)
+    : undefined
 }
 
 /**
- * The status is 0 for cross origin resources without CORS headers, so the status is meaningless and we shouldn't report it
+ * The status is 0 for cross-origin resources without CORS headers, so the status is meaningless, and we shouldn't report it
  * https://developer.mozilla.org/en-US/docs/Web/API/PerformanceResourceTiming/responseStatus#cross-origin_response_status_codes
  */
 function discardZeroStatus(statusCode: number | undefined): number | undefined {
