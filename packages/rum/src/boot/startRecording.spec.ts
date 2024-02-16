@@ -172,7 +172,7 @@ describe('startRecording', () => {
     expect(secondSegment.records[0].type).toBe(RecordType.Meta)
   })
 
-  it('send view end record when the segment collection is waiting for the initial record', async () => {
+  it('flushes pending mutations before ending the view, even after the segment has been flushed', async () => {
     const { lifeCycle } = setupBuilder.build()
 
     // flush segment right before the view change to set the segment collection in the waiting state

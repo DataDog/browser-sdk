@@ -267,6 +267,19 @@ describe('instrumentSetter', () => {
       expect(instrumentationSetterSpy).not.toHaveBeenCalled()
     })
 
+    it('does not call instrumentation pending in the event loop via setTimeout', () => {
+      const object = {} as { foo: number }
+      Object.defineProperty(object, 'foo', { set: noop, configurable: true })
+      const instrumentationSetterSpy = jasmine.createSpy()
+      const { stop } = instrumentSetter(object, 'foo', instrumentationSetterSpy)
+
+      object.foo = 2
+      stop()
+      clock.tick(0)
+
+      expect(instrumentationSetterSpy).not.toHaveBeenCalled()
+    })
+
     describe('when the method has been instrumented by a third party', () => {
       it('should not break the third party instrumentation', () => {
         const object = {} as { foo: number }
