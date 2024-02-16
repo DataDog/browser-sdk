@@ -8,12 +8,14 @@ import { startVitalCollection } from './vitalCollection'
 describe('vitalCollection', () => {
   let setupBuilder: TestSetupBuilder
   let vitalCollection: ReturnType<typeof startVitalCollection>
+  let wasInPageStateDuringPeriodSpy: jasmine.Spy<jasmine.Func>
 
   beforeEach(() => {
     setupBuilder = setup()
       .withFakeClock()
-      .beforeBuild(({ lifeCycle }) => {
-        vitalCollection = startVitalCollection(lifeCycle)
+      .beforeBuild(({ lifeCycle, pageStateHistory }) => {
+        wasInPageStateDuringPeriodSpy = spyOn(pageStateHistory, 'wasInPageStateDuringPeriod')
+        vitalCollection = startVitalCollection(lifeCycle, pageStateHistory)
       })
   })
 
@@ -119,6 +121,17 @@ describe('vitalCollection', () => {
       expect(rawRumEvents[2].customerContext).toEqual({ stop: 'defined' })
       expect(rawRumEvents[3].customerContext).toEqual({ start: 'defined', stop: 'defined' })
       expect(rawRumEvents[4].customerContext).toEqual({ precedence: 'stop' })
+    })
+
+    it('should discard a vital for which a frozen state happened', () => {
+      const { rawRumEvents, clock } = setupBuilder.build()
+      wasInPageStateDuringPeriodSpy.and.returnValue(true)
+
+      vitalCollection.startDurationVital({ name: 'foo', startClocks: clocksNow() })
+      clock.tick(100)
+      vitalCollection.stopDurationVital({ name: 'foo', stopClocks: clocksNow() })
+
+      expect(rawRumEvents.length).toBe(0)
     })
   })
 
