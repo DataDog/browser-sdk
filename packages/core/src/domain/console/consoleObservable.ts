@@ -1,4 +1,10 @@
-import { createHandlingStack, flattenErrorCauses, formatErrorMessage, toStackTraceString, tryToGetFingerprint } from '../error/error'
+import {
+  createHandlingStack,
+  flattenErrorCauses,
+  formatErrorMessage,
+  toStackTraceString,
+  tryToGetFingerprint,
+} from '../error/error'
 import { mergeObservables, Observable } from '../../tools/observable'
 import { ConsoleApiName, globalConsole } from '../../tools/display'
 import { callMonitored } from '../../tools/monitor'
@@ -14,7 +20,7 @@ export interface ConsoleLog {
   stack?: string
   handlingStack?: string
   fingerprint?: string
-  causes?: RawErrorCause[];
+  causes?: RawErrorCause[]
 }
 
 let consoleObservablesByApi: { [k in ConsoleApiName]?: Observable<ConsoleLog> } = {}
@@ -63,7 +69,7 @@ function buildConsoleLog(params: unknown[], api: ConsoleApiName, handlingStack: 
     const firstErrorParam = find(params, (param: unknown): param is Error => param instanceof Error)
     stack = firstErrorParam ? toStackTraceString(computeStackTrace(firstErrorParam)) : undefined
     fingerprint = tryToGetFingerprint(firstErrorParam)
-    causes = firstErrorParam ? flattenErrorCauses(firstErrorParam, 'console'): undefined
+    causes = firstErrorParam ? flattenErrorCauses(firstErrorParam, 'console') : undefined
   }
 
   return {
