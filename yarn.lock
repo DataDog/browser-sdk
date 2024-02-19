@@ -2092,18 +2092,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/react@npm:*":
-  version: 18.2.55
-  resolution: "@types/react@npm:18.2.55"
-  dependencies:
-    "@types/prop-types": "*"
-    "@types/scheduler": "*"
-    csstype: ^3.0.2
-  checksum: a8eb4fa77f73831b9112d4f11a7006217dc0740361649b9b0da3fd441d151a9cd415d5d68b91c0af4e430e063424d301c77489e5edaddc9f711c4e46cf9818a5
-  languageName: node
-  linkType: hard
-
-"@types/react@npm:18.2.56":
+"@types/react@npm:*, @types/react@npm:18.2.56":
   version: 18.2.56
   resolution: "@types/react@npm:18.2.56"
   dependencies:
@@ -14828,7 +14817,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"webdriverio@npm:8.31.1, webdriverio@npm:^8.29.3":
+"webdriverio@npm:8.31.1":
   version: 8.31.1
   resolution: "webdriverio@npm:8.31.1"
   dependencies:
@@ -14865,7 +14854,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"webdriverio@npm:8.32.2":
+"webdriverio@npm:8.32.2, webdriverio@npm:^8.29.3":
   version: 8.32.2
   resolution: "webdriverio@npm:8.32.2"
   dependencies:
