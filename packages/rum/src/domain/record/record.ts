@@ -44,10 +44,8 @@ export function record(options: RecordOptions): RecordAPI {
   const emitAndComputeStats = (record: BrowserRecord) => {
     emit(record)
     sendToExtension('record', { record })
-    const view = options.viewContexts.findView()
-    if (view) {
-      replayStats.addRecord(view.id)
-    }
+    const view = options.viewContexts.findView()!
+    replayStats.addRecord(view.id)
   }
 
   const elementsScrollPositions = createElementsScrollPositions()

@@ -1,4 +1,4 @@
-import type { Observable } from '../../tools/observable'
+import { Observable } from '../../tools/observable'
 import type { Context } from '../../tools/serialisation/context'
 import { ValueHistory } from '../../tools/valueHistory'
 import type { RelativeTime } from '../../tools/utils/timeUtils'
@@ -32,6 +32,9 @@ export function startSessionManager<TrackingType extends string>(
   computeSessionState: (rawTrackingType?: string) => { trackingType: TrackingType; isTracked: boolean },
   trackingConsentState: TrackingConsentState
 ): SessionManager<TrackingType> {
+  const renewObservable = new Observable<void>()
+  const expireObservable = new Observable<void>()
+
   // TODO - Improve configuration type and remove assertion
   const sessionStore = startSessionStore(configuration.sessionStoreStrategyType!, productKey, computeSessionState)
   stopCallbacks.push(() => sessionStore.stop())
@@ -41,8 +44,10 @@ export function startSessionManager<TrackingType extends string>(
 
   sessionStore.renewObservable.subscribe(() => {
     sessionContextHistory.add(buildSessionContext(), relativeNow())
+    renewObservable.notify()
   })
   sessionStore.expireObservable.subscribe(() => {
+    expireObservable.notify()
     sessionContextHistory.closeActive(relativeNow())
   })
 
@@ -75,8 +80,8 @@ export function startSessionManager<TrackingType extends string>(
 
   return {
     findActiveSession: (startTime) => sessionContextHistory.find(startTime),
-    renewObservable: sessionStore.renewObservable,
-    expireObservable: sessionStore.expireObservable,
+    renewObservable,
+    expireObservable,
     expire: sessionStore.expire,
   }
 }

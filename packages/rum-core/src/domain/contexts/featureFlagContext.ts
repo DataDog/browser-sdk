@@ -42,13 +42,13 @@ export function startFeatureFlagContexts(
 
   const featureFlagContexts = new ValueHistory<FeatureFlagContext>(FEATURE_FLAG_CONTEXT_TIME_OUT_DELAY)
 
-  lifeCycle.subscribe(LifeCycleEventType.VIEW_ENDED, ({ endClocks }) => {
-    featureFlagContexts.closeActive(endClocks.relative)
-  })
-
-  lifeCycle.subscribe(LifeCycleEventType.VIEW_CREATED, ({ startClocks }) => {
+  lifeCycle.subscribe(LifeCycleEventType.BEFORE_VIEW_CREATED, ({ startClocks }) => {
     featureFlagContexts.add({}, startClocks.relative)
     customerDataTracker.resetCustomerData()
+  })
+
+  lifeCycle.subscribe(LifeCycleEventType.AFTER_VIEW_ENDED, ({ endClocks }) => {
+    featureFlagContexts.closeActive(endClocks.relative)
   })
 
   return {
