@@ -19,7 +19,7 @@ export function initScrollObserver(
   defaultPrivacyLevel: DefaultPrivacyLevel,
   elementsScrollPositions: ElementsScrollPositions
 ): ListenerHandler {
-  const { throttled: updatePosition } = throttle((event: Event) => {
+  const { throttled: updatePosition, cancel: cancelThrottle } = throttle((event: Event) => {
     const target = getEventTarget(event) as HTMLElement | Document
     if (
       !target ||
@@ -46,6 +46,14 @@ export function initScrollObserver(
       y: scrollPositions.scrollTop,
     })
   }, SCROLL_OBSERVER_THRESHOLD)
-  return addEventListener(configuration, document, DOM_EVENT.SCROLL, updatePosition, { capture: true, passive: true })
-    .stop
+
+  const { stop: removeListener } = addEventListener(configuration, document, DOM_EVENT.SCROLL, updatePosition, {
+    capture: true,
+    passive: true,
+  })
+
+  return () => {
+    removeListener()
+    cancelThrottle()
+  }
 }

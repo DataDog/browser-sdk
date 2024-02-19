@@ -26,7 +26,7 @@ function runMain(mainFunction) {
     .then(() => mainFunction())
     .catch((error) => {
       printError('\nScript exited with error:')
-      printError(error)
+      printErrorWithCause(error)
       process.exit(1)
     })
 }
@@ -36,6 +36,14 @@ const resetColor = '\x1b[0m'
 function printError(...params) {
   const redColor = '\x1b[31;1m'
   console.log(redColor, ...params, resetColor)
+}
+
+function printErrorWithCause(error) {
+  printError(error)
+  if (error.cause) {
+    printError('Caused by:')
+    printErrorWithCause(error.cause)
+  }
 }
 
 function printLog(...params) {
@@ -52,10 +60,15 @@ async function fetchWrapper(url, options) {
   return response.text()
 }
 
+function timeout(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms))
+}
+
 module.exports = {
   spawnCommand,
   printError,
   printLog,
   runMain,
   fetch: fetchWrapper,
+  timeout,
 }

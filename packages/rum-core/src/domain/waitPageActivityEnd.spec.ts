@@ -55,10 +55,6 @@ describe('createPageActivityObservable', () => {
       })
   })
 
-  afterEach(() => {
-    setupBuilder.cleanup()
-  })
-
   it('emits an activity event on dom mutation', () => {
     const { domMutationObservable } = setupBuilder.build()
     domMutationObservable.notify()

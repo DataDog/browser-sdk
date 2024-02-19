@@ -149,7 +149,7 @@ export function trackViewInteractionCount(viewLoadingType: ViewLoadingType) {
   let state: { stopped: false } | { stopped: true; interactionCount: number } = { stopped: false }
 
   function computeViewInteractionCount() {
-    return getInteractionCount()! - previousInteractionCount
+    return getInteractionCount() - previousInteractionCount
   }
 
   return {

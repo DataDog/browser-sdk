@@ -32,10 +32,6 @@ describe('track views automatically', () => {
       })
   })
 
-  afterEach(() => {
-    setupBuilder.cleanup()
-  })
-
   describe('initial view', () => {
     it('should be created on start', () => {
       setupBuilder.build()
@@ -104,11 +100,14 @@ describe('track views automatically', () => {
 describe('view lifecycle', () => {
   let setupBuilder: TestSetupBuilder
   let viewTest: ViewTest
+  let notifySpy: jasmine.Spy
 
   beforeEach(() => {
     setupBuilder = setup()
       .withFakeLocation('/foo')
       .beforeBuild((buildContext) => {
+        notifySpy = spyOn(buildContext.lifeCycle, 'notify').and.callThrough()
+
         viewTest = setupViewTest(buildContext, {
           name: 'initial view name',
           service: 'initial service',
@@ -116,10 +115,6 @@ describe('view lifecycle', () => {
         })
         return viewTest
       })
-  })
-
-  afterEach(() => {
-    setupBuilder.cleanup()
   })
 
   describe('expire session', () => {
@@ -190,7 +185,6 @@ describe('view lifecycle', () => {
     it('should use the current view name, service and version for the new view', () => {
       const { lifeCycle, changeLocation } = setupBuilder.build()
       const { getViewCreateCount, getViewCreate, startView } = viewTest
-
       lifeCycle.notify(LifeCycleEventType.SESSION_EXPIRED)
       lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED)
 
@@ -325,6 +319,23 @@ describe('view lifecycle', () => {
       expect(getViewCreateCount()).toEqual(1)
     })
   })
+
+  it('should notify BEFORE_VIEW_CREATED before VIEW_CREATED', () => {
+    setupBuilder.build()
+
+    expect(notifySpy.calls.argsFor(0)[0]).toEqual(LifeCycleEventType.BEFORE_VIEW_CREATED)
+    expect(notifySpy.calls.argsFor(1)[0]).toEqual(LifeCycleEventType.VIEW_CREATED)
+  })
+
+  it('should notify AFTER_VIEW_ENDED after VIEW_ENDED', () => {
+    setupBuilder.build()
+    const callsCount = notifySpy.calls.count()
+
+    viewTest.stop()
+
+    expect(notifySpy.calls.argsFor(callsCount)[0]).toEqual(LifeCycleEventType.VIEW_ENDED)
+    expect(notifySpy.calls.argsFor(callsCount + 1)[0]).toEqual(LifeCycleEventType.AFTER_VIEW_ENDED)
+  })
 })
 
 describe('view loading type', () => {
@@ -338,10 +349,6 @@ describe('view loading type', () => {
         viewTest = setupViewTest(buildContext)
         return viewTest
       })
-  })
-
-  afterEach(() => {
-    setupBuilder.cleanup()
   })
 
   it('should collect initial view type as "initial_load"', () => {
@@ -373,10 +380,6 @@ describe('view metrics', () => {
         viewTest = setupViewTest(buildContext)
         return viewTest
       })
-  })
-
-  afterEach(() => {
-    setupBuilder.cleanup()
   })
 
   describe('common view metrics', () => {
@@ -574,10 +577,6 @@ describe('view is active', () => {
     })
   })
 
-  afterEach(() => {
-    setupBuilder.cleanup()
-  })
-
   it('should set initial view as active', () => {
     setupBuilder.build()
     const { getViewUpdate } = viewTest
@@ -607,10 +606,6 @@ describe('view custom timings', () => {
         viewTest = setupViewTest(buildContext)
         return viewTest
       })
-  })
-
-  afterEach(() => {
-    setupBuilder.cleanup()
   })
 
   it('should add custom timing to current view', () => {
@@ -750,10 +745,6 @@ describe('start view', () => {
     })
   })
 
-  afterEach(() => {
-    setupBuilder.cleanup()
-  })
-
   it('should start a new view', () => {
     const { clock } = setupBuilder.withFakeClock().build()
     const { getViewUpdateCount, getViewUpdate, startView } = viewTest
@@ -841,10 +832,6 @@ describe('view event count', () => {
         viewTest = setupViewTest(buildContext)
         return viewTest
       })
-  })
-
-  afterEach(() => {
-    setupBuilder.cleanup()
   })
 
   it('should be updated when notified with a RUM_EVENT_COLLECTED event', () => {

@@ -9,6 +9,8 @@ import {
   relativeNow,
   createIdentityEncoder,
   createCustomerDataTracker,
+  createTrackingConsentState,
+  TrackingConsent,
 } from '@datadog/browser-core'
 import { createNewEvent, interceptRequests, initEventBridgeStub } from '@datadog/browser-core/test'
 import type { RumSessionManagerMock, TestSetupBuilder } from '../../test'
@@ -114,10 +116,6 @@ describe('rum session', () => {
     )
   })
 
-  afterEach(() => {
-    setupBuilder.cleanup()
-  })
-
   it('when the session is renewed, a new view event should be sent', () => {
     const session = createRumSessionManagerMock().setId('42')
     const { lifeCycle } = setupBuilder.withSessionManager(session).build()
@@ -177,10 +175,6 @@ describe('rum session keep alive', () => {
           )
         }
       )
-  })
-
-  afterEach(() => {
-    setupBuilder.cleanup()
   })
 
   it('should send a view update regularly', () => {
@@ -249,10 +243,6 @@ describe('rum events url', () => {
         )
       }
     )
-  })
-
-  afterEach(() => {
-    setupBuilder.cleanup()
   })
 
   it('should attach the url corresponding to the start of the event', () => {
@@ -329,7 +319,8 @@ describe('view events', () => {
         customerDataTrackerManager,
         () => ({ user: {}, context: {}, hasReplay: undefined }),
         undefined,
-        createIdentityEncoder
+        createIdentityEncoder,
+        createTrackingConsentState(TrackingConsent.GRANTED)
       )
     )
     interceptor = interceptRequests()
@@ -337,7 +328,6 @@ describe('view events', () => {
 
   afterEach(() => {
     stopSessionManager()
-    setupBuilder.cleanup()
     interceptor.restore()
   })
 

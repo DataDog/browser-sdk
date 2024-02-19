@@ -5,6 +5,7 @@ import {
   isBridgeForRecordsSupported,
   noop,
   runOnReadyState,
+  PageExitReason,
 } from '@datadog/browser-core'
 import type {
   LifeCycle,
@@ -100,6 +101,13 @@ export function makeRecorderApi(
         if (state.status === RecorderStatus.Starting || state.status === RecorderStatus.Started) {
           stopStrategy()
           state = { status: RecorderStatus.IntentToStart }
+        }
+      })
+
+      // Stop the recorder on page unload to avoid sending records after the page is ended.
+      lifeCycle.subscribe(LifeCycleEventType.PAGE_EXITED, (pageExitEvent) => {
+        if (pageExitEvent.reason === PageExitReason.UNLOADING || pageExitEvent.reason === PageExitReason.PAGEHIDE) {
+          stopStrategy()
         }
       })
 

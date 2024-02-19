@@ -1,12 +1,12 @@
 variables:
-  CURRENT_STAGING: staging-04
+  CURRENT_STAGING: staging-08
   APP: 'browser-sdk'
-  CURRENT_CI_IMAGE: 57
+  CURRENT_CI_IMAGE: 58
   BUILD_STABLE_REGISTRY: '486234852809.dkr.ecr.us-east-1.amazonaws.com'
   CI_IMAGE: '$BUILD_STABLE_REGISTRY/ci/$APP:$CURRENT_CI_IMAGE'
   GIT_REPOSITORY: 'git@github.com:DataDog/browser-sdk.git'
   MAIN_BRANCH: 'main'
-  CHROME_PACKAGE_VERSION: 120.0.6099.62-1
+  CHROME_PACKAGE_VERSION: 121.0.6167.85-1
 
 cache:
   key:
@@ -140,6 +140,7 @@ build-and-lint:
     - yarn build
     - yarn lint
     - node scripts/check-packages.js
+    - node scripts/export-bundles-sizes.js
 
 build-bundle:
   extends:

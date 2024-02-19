@@ -21,10 +21,6 @@ describe('urlContexts', () => {
       })
   })
 
-  afterEach(() => {
-    setupBuilder.cleanup()
-  })
-
   it('should return undefined before the initial view', () => {
     setupBuilder.build()
 
@@ -42,7 +38,7 @@ describe('urlContexts', () => {
   it('should return current url and document referrer for initial view', () => {
     const { lifeCycle } = setupBuilder.build()
 
-    lifeCycle.notify(LifeCycleEventType.VIEW_CREATED, {
+    lifeCycle.notify(LifeCycleEventType.BEFORE_VIEW_CREATED, {
       startClocks: relativeToClocks(0 as RelativeTime),
     } as ViewCreatedEvent)
 
@@ -54,7 +50,7 @@ describe('urlContexts', () => {
   it('should update url context on location change', () => {
     const { lifeCycle, changeLocation } = setupBuilder.build()
 
-    lifeCycle.notify(LifeCycleEventType.VIEW_CREATED, {
+    lifeCycle.notify(LifeCycleEventType.BEFORE_VIEW_CREATED, {
       startClocks: relativeToClocks(0 as RelativeTime),
     } as ViewCreatedEvent)
     changeLocation('/foo')
@@ -67,14 +63,14 @@ describe('urlContexts', () => {
   it('should update url context on new view', () => {
     const { lifeCycle, changeLocation } = setupBuilder.build()
 
-    lifeCycle.notify(LifeCycleEventType.VIEW_CREATED, {
+    lifeCycle.notify(LifeCycleEventType.BEFORE_VIEW_CREATED, {
       startClocks: relativeToClocks(0 as RelativeTime),
     } as ViewCreatedEvent)
     changeLocation('/foo')
-    lifeCycle.notify(LifeCycleEventType.VIEW_ENDED, {
+    lifeCycle.notify(LifeCycleEventType.AFTER_VIEW_ENDED, {
       endClocks: relativeToClocks(10 as RelativeTime),
     } as ViewEndedEvent)
-    lifeCycle.notify(LifeCycleEventType.VIEW_CREATED, {
+    lifeCycle.notify(LifeCycleEventType.BEFORE_VIEW_CREATED, {
       startClocks: relativeToClocks(10 as RelativeTime),
     } as ViewCreatedEvent)
 
@@ -86,16 +82,16 @@ describe('urlContexts', () => {
   it('should return the url context corresponding to the start time', () => {
     const { lifeCycle, changeLocation, clock } = setupBuilder.build()
 
-    lifeCycle.notify(LifeCycleEventType.VIEW_CREATED, {
+    lifeCycle.notify(LifeCycleEventType.BEFORE_VIEW_CREATED, {
       startClocks: relativeToClocks(0 as RelativeTime),
     } as ViewCreatedEvent)
 
     clock.tick(10)
     changeLocation('/foo')
-    lifeCycle.notify(LifeCycleEventType.VIEW_ENDED, {
+    lifeCycle.notify(LifeCycleEventType.AFTER_VIEW_ENDED, {
       endClocks: relativeToClocks(10 as RelativeTime),
     } as ViewEndedEvent)
-    lifeCycle.notify(LifeCycleEventType.VIEW_CREATED, {
+    lifeCycle.notify(LifeCycleEventType.BEFORE_VIEW_CREATED, {
       startClocks: relativeToClocks(10 as RelativeTime),
     } as ViewCreatedEvent)
 
@@ -104,10 +100,10 @@ describe('urlContexts', () => {
 
     clock.tick(10)
     changeLocation('/qux')
-    lifeCycle.notify(LifeCycleEventType.VIEW_ENDED, {
+    lifeCycle.notify(LifeCycleEventType.AFTER_VIEW_ENDED, {
       endClocks: relativeToClocks(30 as RelativeTime),
     } as ViewEndedEvent)
-    lifeCycle.notify(LifeCycleEventType.VIEW_CREATED, {
+    lifeCycle.notify(LifeCycleEventType.BEFORE_VIEW_CREATED, {
       startClocks: relativeToClocks(30 as RelativeTime),
     } as ViewCreatedEvent)
 
@@ -136,10 +132,10 @@ describe('urlContexts', () => {
   it('should return undefined when no current view', () => {
     const { lifeCycle } = setupBuilder.build()
 
-    lifeCycle.notify(LifeCycleEventType.VIEW_CREATED, {
+    lifeCycle.notify(LifeCycleEventType.BEFORE_VIEW_CREATED, {
       startClocks: relativeToClocks(0 as RelativeTime),
     } as ViewCreatedEvent)
-    lifeCycle.notify(LifeCycleEventType.VIEW_ENDED, {
+    lifeCycle.notify(LifeCycleEventType.AFTER_VIEW_ENDED, {
       endClocks: relativeToClocks(10 as RelativeTime),
     } as ViewEndedEvent)
 

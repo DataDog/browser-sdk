@@ -70,7 +70,6 @@ describe('trackClickActions', () => {
     button.parentNode!.removeChild(button)
     emptyElement.parentNode!.removeChild(emptyElement)
     input.parentNode!.removeChild(input)
-    setupBuilder.cleanup()
   })
 
   it('starts a click action when clicking on an element', () => {

@@ -8,7 +8,6 @@ import {
   relativeNow,
   ResourceType,
 } from '@datadog/browser-core'
-import { RumPerformanceEntryType } from '../src/browser/performanceCollection'
 import type {
   RumFirstInputTiming,
   RumLargestContentfulPaintTiming,
@@ -19,8 +18,9 @@ import type {
   RumPerformancePaintTiming,
   RumPerformanceResourceTiming,
 } from '../src/browser/performanceCollection'
+import { RumPerformanceEntryType } from '../src/browser/performanceCollection'
 import type { RawRumEvent } from '../src/rawRumEvent.types'
-import { ActionType, RumEventType, ViewLoadingType } from '../src/rawRumEvent.types'
+import { VitalType, ActionType, RumEventType, ViewLoadingType } from '../src/rawRumEvent.types'
 
 export function createRawRumEvent(type: RumEventType, overrides?: Context): RawRumEvent {
   switch (type) {
@@ -36,6 +36,22 @@ export function createRawRumEvent(type: RumEventType, overrides?: Context): RawR
             type: ActionType.CUSTOM,
           },
           date: 0 as TimeStamp,
+        },
+        overrides
+      )
+    case RumEventType.VITAL:
+      return combine(
+        {
+          type,
+          date: 0 as TimeStamp,
+          vital: {
+            id: generateUUID(),
+            type: VitalType.DURATION,
+            name: 'timing',
+            custom: {
+              timing: 0 as ServerDuration,
+            },
+          },
         },
         overrides
       )
@@ -230,6 +246,7 @@ export function createPerformanceEntry<T extends RumPerformanceEntryType>(
           responseStart: 200 as RelativeTime,
           secureConnectionStart: 200 as RelativeTime,
           startTime: 200 as RelativeTime,
+          responseStatus: 200,
         },
         overrides
       ) as EntryTypeToReturnType[T]

@@ -35,7 +35,7 @@ export function initVisualViewportResizeObserver(
       trailing: false,
     }
   )
-  const removeListener = addEventListeners(
+  const { stop: removeListener } = addEventListeners(
     configuration,
     visualViewport,
     [DOM_EVENT.RESIZE, DOM_EVENT.SCROLL],
@@ -44,7 +44,7 @@ export function initVisualViewportResizeObserver(
       capture: true,
       passive: true,
     }
-  ).stop
+  )
 
   return function stop() {
     removeListener()

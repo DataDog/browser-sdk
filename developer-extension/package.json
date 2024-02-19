@@ -1,29 +1,29 @@
 {
   "name": "@datadog/browser-sdk-developer-extension",
-  "version": "5.8.0",
+  "version": "5.9.0",
   "private": true,
   "scripts": {
     "build": "rm -rf dist && webpack --mode production",
     "dev": "webpack --mode development --watch"
   },
   "devDependencies": {
-    "@tabler/icons-react": "2.45.0",
-    "@types/chrome": "0.0.256",
-    "@types/react": "18.2.47",
-    "@types/react-dom": "18.2.18",
+    "@tabler/icons-react": "2.47.0",
+    "@types/chrome": "0.0.260",
+    "@types/react": "18.2.55",
+    "@types/react-dom": "18.2.19",
     "@webextension-toolbox/webpack-webextension-plugin": "3.3.1",
-    "copy-webpack-plugin": "11.0.0",
-    "css-loader": "6.8.1",
+    "copy-webpack-plugin": "12.0.2",
+    "css-loader": "6.10.0",
     "html-webpack-plugin": "5.6.0",
-    "style-loader": "3.3.3",
-    "webpack": "5.89.0"
+    "style-loader": "3.3.4",
+    "webpack": "5.90.1"
   },
   "dependencies": {
     "@datadog/browser-core": "workspace:*",
     "@datadog/browser-logs": "workspace:*",
     "@datadog/browser-rum": "workspace:*",
-    "@mantine/core": "7.4.0",
-    "@mantine/hooks": "7.4.0",
+    "@mantine/core": "7.5.2",
+    "@mantine/hooks": "7.5.2",
     "clsx": "2.1.0",
     "react": "18.2.0",
     "react-dom": "18.2.0"

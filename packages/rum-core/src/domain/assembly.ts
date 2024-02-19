@@ -101,6 +101,7 @@ export function startRumAssembly(
       VIEW_MODIFIABLE_FIELD_PATHS
     ),
     [RumEventType.LONG_TASK]: assign({}, USER_CUSTOMIZABLE_FIELD_PATHS, VIEW_MODIFIABLE_FIELD_PATHS),
+    [RumEventType.VITAL]: assign({}, USER_CUSTOMIZABLE_FIELD_PATHS, VIEW_MODIFIABLE_FIELD_PATHS),
   }
   const eventRateLimiters = {
     [RumEventType.ERROR]: createEventRateLimiter(
@@ -110,6 +111,11 @@ export function startRumAssembly(
     ),
     [RumEventType.ACTION]: createEventRateLimiter(
       RumEventType.ACTION,
+      configuration.eventRateLimiterThreshold,
+      reportError
+    ),
+    [RumEventType.VITAL]: createEventRateLimiter(
+      RumEventType.VITAL,
       configuration.eventRateLimiterThreshold,
       reportError
     ),

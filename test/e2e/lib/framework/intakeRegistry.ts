@@ -1,5 +1,12 @@
 import type { LogsEvent } from '@datadog/browser-logs'
-import type { RumEvent, RumActionEvent, RumErrorEvent, RumResourceEvent, RumViewEvent } from '@datadog/browser-rum'
+import type {
+  RumEvent,
+  RumActionEvent,
+  RumErrorEvent,
+  RumResourceEvent,
+  RumViewEvent,
+  RumVitalEvent,
+} from '@datadog/browser-rum'
 import type { TelemetryEvent, TelemetryErrorEvent, TelemetryConfigurationEvent } from '@datadog/browser-core'
 import type { BrowserSegment } from '@datadog/browser-rum/src/types'
 import type { BrowserSegmentMetadataAndSegmentSizes } from '@datadog/browser-rum/src/domain/segmentCollection'
@@ -94,6 +101,10 @@ export class IntakeRegistry {
     return this.rumEvents.filter(isRumViewEvent)
   }
 
+  get rumVitalEvents() {
+    return this.rumEvents.filter(isRumVitalEvent)
+  }
+
   //
   // Telemetry
   //
@@ -157,6 +168,10 @@ function isRumViewEvent(event: RumEvent): event is RumViewEvent {
 
 function isRumErrorEvent(event: RumEvent): event is RumErrorEvent {
   return event.type === 'error'
+}
+
+function isRumVitalEvent(event: RumEvent): event is RumVitalEvent {
+  return event.type === 'vital'
 }
 
 function isTelemetryEvent(event: RumEvent | TelemetryEvent): event is TelemetryEvent {

@@ -1,4 +1,4 @@
-import type { Observable } from '../../tools/observable'
+import { Observable } from '../../tools/observable'
 import type { Context } from '../../tools/serialisation/context'
 import { ValueHistory } from '../../tools/valueHistory'
 import type { RelativeTime } from '../../tools/utils/timeUtils'
@@ -6,6 +6,7 @@ import { relativeNow, clocksOrigin, ONE_MINUTE } from '../../tools/utils/timeUti
 import { DOM_EVENT, addEventListener, addEventListeners } from '../../browser/addEventListener'
 import { clearInterval, setInterval } from '../../tools/timer'
 import type { Configuration } from '../configuration'
+import type { TrackingConsentState } from '../trackingConsent'
 import { SESSION_TIME_OUT_DELAY } from './sessionConstants'
 import { startSessionStore } from './sessionStore'
 
@@ -28,8 +29,12 @@ let stopCallbacks: Array<() => void> = []
 export function startSessionManager<TrackingType extends string>(
   configuration: Configuration,
   productKey: string,
-  computeSessionState: (rawTrackingType?: string) => { trackingType: TrackingType; isTracked: boolean }
+  computeSessionState: (rawTrackingType?: string) => { trackingType: TrackingType; isTracked: boolean },
+  trackingConsentState: TrackingConsentState
 ): SessionManager<TrackingType> {
+  const renewObservable = new Observable<void>()
+  const expireObservable = new Observable<void>()
+
   // TODO - Improve configuration type and remove assertion
   const sessionStore = startSessionStore(configuration.sessionStoreStrategyType!, productKey, computeSessionState)
   stopCallbacks.push(() => sessionStore.stop())
@@ -39,15 +44,31 @@ export function startSessionManager<TrackingType extends string>(
 
   sessionStore.renewObservable.subscribe(() => {
     sessionContextHistory.add(buildSessionContext(), relativeNow())
+    renewObservable.notify()
   })
   sessionStore.expireObservable.subscribe(() => {
+    expireObservable.notify()
     sessionContextHistory.closeActive(relativeNow())
   })
 
+  // We expand/renew session unconditionally as tracking consent is always granted when the session
+  // manager is started.
   sessionStore.expandOrRenewSession()
   sessionContextHistory.add(buildSessionContext(), clocksOrigin().relative)
 
-  trackActivity(configuration, () => sessionStore.expandOrRenewSession())
+  trackingConsentState.observable.subscribe(() => {
+    if (trackingConsentState.isGranted()) {
+      sessionStore.expandOrRenewSession()
+    } else {
+      sessionStore.expire()
+    }
+  })
+
+  trackActivity(configuration, () => {
+    if (trackingConsentState.isGranted()) {
+      sessionStore.expandOrRenewSession()
+    }
+  })
   trackVisibility(configuration, () => sessionStore.expandSession())
 
   function buildSessionContext() {
@@ -59,8 +80,8 @@ export function startSessionManager<TrackingType extends string>(
 
   return {
     findActiveSession: (startTime) => sessionContextHistory.find(startTime),
-    renewObservable: sessionStore.renewObservable,
-    expireObservable: sessionStore.expireObservable,
+    renewObservable,
+    expireObservable,
     expire: sessionStore.expire,
   }
 }

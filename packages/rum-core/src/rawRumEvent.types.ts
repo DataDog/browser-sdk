@@ -18,6 +18,7 @@ export const enum RumEventType {
   LONG_TASK = 'long_task',
   VIEW = 'view',
   RESOURCE = 'resource',
+  VITAL = 'vital',
 }
 
 export interface RawRumResourceEvent {
@@ -215,12 +216,30 @@ export const enum FrustrationType {
   DEAD_CLICK = 'dead_click',
 }
 
+export interface RawRumVitalEvent {
+  date: TimeStamp
+  type: RumEventType.VITAL
+  vital: {
+    id: string
+    name: string
+    type: VitalType
+    custom: {
+      [key: string]: number
+    }
+  }
+}
+
+export const enum VitalType {
+  DURATION = 'duration',
+}
+
 export type RawRumEvent =
   | RawRumErrorEvent
   | RawRumResourceEvent
   | RawRumViewEvent
   | RawRumLongTaskEvent
   | RawRumActionEvent
+  | RawRumVitalEvent
 
 export interface RumContext {
   date: TimeStamp

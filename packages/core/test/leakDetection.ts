@@ -45,6 +45,7 @@ export function stopLeakDetection() {
 
 function withLeakDetection(eventName: string, listener: EventListener) {
   const specWhenAdded = getCurrentJasmineSpec()
+  const stackWhenAdded = new Error().stack
   if (!specWhenAdded) {
     return listener
   }
@@ -55,7 +56,8 @@ function withLeakDetection(eventName: string, listener: EventListener) {
       display.error(`Leaked listener
   event names: "${eventName}"
   attached with: "${specWhenAdded.fullName}"
-  ${currentSpec ? `executed with: "${currentSpec.fullName}"` : 'executed outside of a spec'}`)
+  ${currentSpec ? `executed with: "${currentSpec.fullName}"` : 'executed outside of a spec'}
+  attachment stack: ${stackWhenAdded}`)
     }
     listener(event)
   }

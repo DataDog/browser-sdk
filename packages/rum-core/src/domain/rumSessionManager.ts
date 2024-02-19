@@ -1,4 +1,4 @@
-import type { RelativeTime } from '@datadog/browser-core'
+import type { RelativeTime, TrackingConsentState } from '@datadog/browser-core'
 import { Observable, isBridgeForRecordsSupported, noop, performDraw, startSessionManager } from '@datadog/browser-core'
 import type { RumConfiguration } from './configuration'
 import type { LifeCycle } from './lifeCycle'
@@ -23,9 +23,16 @@ export const enum RumTrackingType {
   TRACKED_WITHOUT_SESSION_REPLAY = '2',
 }
 
-export function startRumSessionManager(configuration: RumConfiguration, lifeCycle: LifeCycle): RumSessionManager {
-  const sessionManager = startSessionManager(configuration, RUM_SESSION_KEY, (rawTrackingType) =>
-    computeSessionState(configuration, rawTrackingType)
+export function startRumSessionManager(
+  configuration: RumConfiguration,
+  lifeCycle: LifeCycle,
+  trackingConsentState: TrackingConsentState
+): RumSessionManager {
+  const sessionManager = startSessionManager(
+    configuration,
+    RUM_SESSION_KEY,
+    (rawTrackingType) => computeSessionState(configuration, rawTrackingType),
+    trackingConsentState
   )
 
   sessionManager.expireObservable.subscribe(() => {

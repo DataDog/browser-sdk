@@ -13,22 +13,16 @@ export class MockWorker implements DeflateWorker {
 
   private streams = new Map<number, Uint8Array[]>()
   private listeners: {
-    message: DeflateWorkerListener[]
-    error: Array<(error: unknown) => void>
-  } = { message: [], error: [] }
+    message: Set<DeflateWorkerListener>
+    error: Set<(error: unknown) => void>
+  } = { message: new Set(), error: new Set() }
 
   addEventListener(eventName: 'message' | 'error', listener: any): void {
-    const index = this.listeners[eventName].indexOf(listener)
-    if (index < 0) {
-      this.listeners[eventName].push(listener)
-    }
+    this.listeners[eventName].add(listener)
   }
 
   removeEventListener(eventName: 'message' | 'error', listener: any): void {
-    const index = this.listeners[eventName].indexOf(listener)
-    if (index >= 0) {
-      this.listeners[eventName].splice(index, 1)
-    }
+    this.listeners[eventName].delete(listener)
   }
 
   dispatchEvent(): boolean {
@@ -49,7 +43,7 @@ export class MockWorker implements DeflateWorker {
   }
 
   get messageListenersCount() {
-    return this.listeners.message.length
+    return this.listeners.message.size
   }
 
   processAllMessages(): void {

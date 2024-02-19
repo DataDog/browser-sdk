@@ -41,27 +41,27 @@ describe('session in cookie strategy', () => {
     const clientToken = 'abc'
 
     it('should not be secure nor crossSite by default', () => {
-      const cookieOptions = buildCookieOptions({ clientToken })!
+      const cookieOptions = buildCookieOptions({ clientToken })
       expect(cookieOptions).toEqual({ secure: false, crossSite: false, partitioned: false })
     })
 
     it('should be secure when `useSecureSessionCookie` is truthy', () => {
-      const cookieOptions = buildCookieOptions({ clientToken, useSecureSessionCookie: true })!
+      const cookieOptions = buildCookieOptions({ clientToken, useSecureSessionCookie: true })
       expect(cookieOptions).toEqual({ secure: true, crossSite: false, partitioned: false })
     })
 
     it('should be secure and crossSite when `useCrossSiteSessionCookie` is truthy', () => {
-      const cookieOptions = buildCookieOptions({ clientToken, useCrossSiteSessionCookie: true })!
+      const cookieOptions = buildCookieOptions({ clientToken, useCrossSiteSessionCookie: true })
       expect(cookieOptions).toEqual({ secure: true, crossSite: true, partitioned: false })
     })
 
     it('should be secure, crossSite and partitioned when `usePartitionedCrossSiteSessionCookie` is truthy', () => {
-      const cookieOptions = buildCookieOptions({ clientToken, usePartitionedCrossSiteSessionCookie: true })!
+      const cookieOptions = buildCookieOptions({ clientToken, usePartitionedCrossSiteSessionCookie: true })
       expect(cookieOptions).toEqual({ secure: true, crossSite: true, partitioned: true })
     })
 
     it('should have domain when `trackSessionAcrossSubdomains` is truthy', () => {
-      const cookieOptions = buildCookieOptions({ clientToken, trackSessionAcrossSubdomains: true })!
+      const cookieOptions = buildCookieOptions({ clientToken, trackSessionAcrossSubdomains: true })
       expect(cookieOptions).toEqual({
         secure: false,
         crossSite: false,
