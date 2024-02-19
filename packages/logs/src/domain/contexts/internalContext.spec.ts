@@ -15,6 +15,7 @@ describe('internal context', () => {
     const sessionManagerMock = {
       findTrackedSession: () => ({
         id: sessionIdMock,
+        isActiveAt: () => true,
       }),
       expireObservable: new Observable<void>(),
     }

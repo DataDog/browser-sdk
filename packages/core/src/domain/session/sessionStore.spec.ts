@@ -135,13 +135,13 @@ describe('session store', () => {
           expect(sessionStoreManager.getSession().id).toBeDefined()
           expectTrackedSessionToBeInStore()
           expect(expireSpy).not.toHaveBeenCalled()
-          expect(renewSpy).toHaveBeenCalled()
+          expect(renewSpy).toHaveBeenCalledTimes(1)
         }
       )
 
       it(
         'when session not in cache, session not in store and new session not tracked, ' +
-          'should store not tracked session',
+          'should store not tracked session and trigger renew session',
         () => {
           setupSessionStore(() => ({ isTracked: false, trackingType: FakeTrackingType.NOT_TRACKED }))
 
@@ -150,7 +150,7 @@ describe('session store', () => {
           expect(sessionStoreManager.getSession().id).toBeUndefined()
           expectNotTrackedSessionToBeInStore()
           expect(expireSpy).not.toHaveBeenCalled()
-          expect(renewSpy).not.toHaveBeenCalled()
+          expect(renewSpy).toHaveBeenCalledTimes(1)
         }
       )
 
@@ -163,7 +163,7 @@ describe('session store', () => {
         expect(sessionStoreManager.getSession().id).toBe(FIRST_ID)
         expectTrackedSessionToBeInStore(FIRST_ID)
         expect(expireSpy).not.toHaveBeenCalled()
-        expect(renewSpy).toHaveBeenCalled()
+        expect(renewSpy).toHaveBeenCalledTimes(1)
       })
 
       it(
@@ -181,13 +181,13 @@ describe('session store', () => {
           expect(sessionId).not.toBe(FIRST_ID)
           expectTrackedSessionToBeInStore(sessionId)
           expect(expireSpy).toHaveBeenCalled()
-          expect(renewSpy).toHaveBeenCalled()
+          expect(renewSpy).toHaveBeenCalledTimes(1)
         }
       )
 
       it(
         'when session in cache, session not in store and new session not tracked, ' +
-          'should expire session and store not tracked session',
+          'should expire session, store not tracked session and trigger renew session',
         () => {
           setSessionInStore(FakeTrackingType.TRACKED, FIRST_ID)
           setupSessionStore(() => ({ isTracked: false, trackingType: FakeTrackingType.NOT_TRACKED }))
@@ -199,13 +199,13 @@ describe('session store', () => {
           expect(sessionStoreManager.getSession()[PRODUCT_KEY]).toBeDefined()
           expectNotTrackedSessionToBeInStore()
           expect(expireSpy).toHaveBeenCalled()
-          expect(renewSpy).not.toHaveBeenCalled()
+          expect(renewSpy).toHaveBeenCalledTimes(1)
         }
       )
 
       it(
         'when session not tracked in cache, session not in store and new session not tracked, ' +
-          'should expire session and store not tracked session',
+          'should expire session, store not tracked session and trigger renew session',
         () => {
           setSessionInStore(FakeTrackingType.NOT_TRACKED)
           setupSessionStore(() => ({ isTracked: false, trackingType: FakeTrackingType.NOT_TRACKED }))
@@ -217,7 +217,7 @@ describe('session store', () => {
           expect(sessionStoreManager.getSession()[PRODUCT_KEY]).toBeDefined()
           expectNotTrackedSessionToBeInStore()
           expect(expireSpy).toHaveBeenCalled()
-          expect(renewSpy).not.toHaveBeenCalled()
+          expect(renewSpy).toHaveBeenCalledTimes(1)
         }
       )
 
@@ -248,13 +248,13 @@ describe('session store', () => {
           expect(sessionStoreManager.getSession().id).toBe(SECOND_ID)
           expectTrackedSessionToBeInStore(SECOND_ID)
           expect(expireSpy).toHaveBeenCalled()
-          expect(renewSpy).toHaveBeenCalled()
+          expect(renewSpy).toHaveBeenCalledTimes(1)
         }
       )
 
       it(
         'when session in cache is different session than in store and store session is not tracked, ' +
-          'should expire session and store not tracked session',
+          'should expire session, store not tracked session and trigger renew',
         () => {
           setSessionInStore(FakeTrackingType.TRACKED, FIRST_ID)
           setupSessionStore((rawTrackingType) => ({
@@ -268,7 +268,7 @@ describe('session store', () => {
           expect(sessionStoreManager.getSession().id).toBeUndefined()
           expectNotTrackedSessionToBeInStore()
           expect(expireSpy).toHaveBeenCalled()
-          expect(renewSpy).not.toHaveBeenCalled()
+          expect(renewSpy).toHaveBeenCalledTimes(1)
         }
       )
     })
@@ -281,6 +281,7 @@ describe('session store', () => {
 
         expect(sessionStoreManager.getSession().id).toBeUndefined()
         expect(expireSpy).not.toHaveBeenCalled()
+        expect(renewSpy).not.toHaveBeenCalled()
       })
 
       it('when session not in cache and session in store, should do nothing', () => {
@@ -291,6 +292,7 @@ describe('session store', () => {
 
         expect(sessionStoreManager.getSession().id).toBeUndefined()
         expect(expireSpy).not.toHaveBeenCalled()
+        expect(renewSpy).not.toHaveBeenCalled()
       })
 
       it('when session in cache and session not in store, should expire session', () => {
@@ -302,6 +304,7 @@ describe('session store', () => {
 
         expect(sessionStoreManager.getSession().id).toBeUndefined()
         expect(expireSpy).toHaveBeenCalled()
+        expect(renewSpy).not.toHaveBeenCalled()
       })
 
       it('when session in cache is same session than in store, should expand session', () => {
@@ -314,6 +317,7 @@ describe('session store', () => {
         expect(sessionStoreManager.getSession().id).toBe(FIRST_ID)
         expect(sessionStoreManager.getSession().expire).toBe(getStoreExpiration())
         expect(expireSpy).not.toHaveBeenCalled()
+        expect(renewSpy).not.toHaveBeenCalled()
       })
 
       it('when session in cache is different session than in store, should expire session', () => {
@@ -326,7 +330,25 @@ describe('session store', () => {
         expect(sessionStoreManager.getSession().id).toBeUndefined()
         expectTrackedSessionToBeInStore(SECOND_ID)
         expect(expireSpy).toHaveBeenCalled()
+        expect(renewSpy).not.toHaveBeenCalled()
       })
+
+      it(
+        'when session in cache is different session than in store and store session is not tracked, ' +
+          'should expire session and trigger renew',
+        () => {
+          setSessionInStore(FakeTrackingType.TRACKED, FIRST_ID)
+          setupSessionStore(() => ({ isTracked: false, trackingType: FakeTrackingType.NOT_TRACKED }))
+          setSessionInStore(FakeTrackingType.NOT_TRACKED)
+
+          sessionStoreManager.expandSession()
+
+          expect(sessionStoreManager.getSession().id).toBeUndefined()
+          expectNotTrackedSessionToBeInStore()
+          expect(expireSpy).toHaveBeenCalled()
+          expect(renewSpy).toHaveBeenCalledTimes(1)
+        }
+      )
     })
 
     describe('regular watch', () => {

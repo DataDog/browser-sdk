@@ -2,7 +2,7 @@ import type { Clock } from '../../test'
 import { mockClock } from '../../test'
 import type { Duration, RelativeTime } from './utils/timeUtils'
 import { addDuration, ONE_MINUTE } from './utils/timeUtils'
-import { CLEAR_OLD_VALUES_INTERVAL, ValueHistory } from './valueHistory'
+import { AFTER_ENTRY_START, CLEAR_OLD_VALUES_INTERVAL, ValueHistory } from './valueHistory'
 
 const EXPIRE_DELAY = 10 * ONE_MINUTE
 const MAX_ENTRIES = 5
@@ -53,6 +53,15 @@ describe('valueHistory', () => {
       valueHistory.add('bar', 20 as RelativeTime)
 
       expect(valueHistory.find(15 as RelativeTime)).toBeUndefined()
+    })
+
+    describe('with AFTER_ENTRY_START predicate', () => {
+      it('should return the value of the closest entry regardless of the being closed', () => {
+        valueHistory.add('foo', 0 as RelativeTime).close(10 as RelativeTime)
+        valueHistory.add('bar', 20 as RelativeTime)
+
+        expect(valueHistory.find(15 as RelativeTime, AFTER_ENTRY_START)).toEqual('foo')
+      })
     })
   })
 

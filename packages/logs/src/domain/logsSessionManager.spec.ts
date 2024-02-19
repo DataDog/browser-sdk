@@ -7,6 +7,7 @@ import {
   stopSessionManager,
   ONE_SECOND,
   DOM_EVENT,
+  relativeNow,
   createTrackingConsentState,
   TrackingConsent,
 } from '@datadog/browser-core'
@@ -81,8 +82,8 @@ describe('logs session manager', () => {
     expect(getCookie(SESSION_STORE_KEY)).toContain(`${LOGS_SESSION_KEY}=${LoggerTrackingType.TRACKED}`)
   })
 
-  describe('findSession', () => {
-    it('should return the current session', () => {
+  describe('findTrackedSession', () => {
+    it('should return the current active session', () => {
       setCookie(SESSION_STORE_KEY, 'id=abcdef&logs=1', DURATION)
       const logsSessionManager = startLogsSessionManagerWithDefaults()
       expect(logsSessionManager.findTrackedSession()!.id).toBe('abcdef')
@@ -91,24 +92,49 @@ describe('logs session manager', () => {
     it('should return undefined if the session is not tracked', () => {
       setCookie(SESSION_STORE_KEY, 'id=abcdef&logs=0', DURATION)
       const logsSessionManager = startLogsSessionManagerWithDefaults()
-      expect(logsSessionManager.findTrackedSession()).toBe(undefined)
+      expect(logsSessionManager.findTrackedSession()).toBeUndefined()
     })
 
-    it('should return undefined if the session has expired', () => {
-      const logsSessionManager = startLogsSessionManagerWithDefaults()
-      setCookie(SESSION_STORE_KEY, '', DURATION)
-      clock.tick(STORAGE_POLL_DELAY)
-      expect(logsSessionManager.findTrackedSession()).toBe(undefined)
-    })
-
-    it('should return session corresponding to start time', () => {
+    it('should not return the current session if it has expired by default', () => {
       setCookie(SESSION_STORE_KEY, 'id=abcdef&logs=1', DURATION)
       const logsSessionManager = startLogsSessionManagerWithDefaults()
       clock.tick(10 * ONE_SECOND)
       setCookie(SESSION_STORE_KEY, '', DURATION)
       clock.tick(STORAGE_POLL_DELAY)
       expect(logsSessionManager.findTrackedSession()).toBeUndefined()
-      expect(logsSessionManager.findTrackedSession(0 as RelativeTime)!.id).toBe('abcdef')
+    })
+
+    it('should return the current session if it has expired when returnExpired = true', () => {
+      const logsSessionManager = startLogsSessionManagerWithDefaults()
+      setCookie(SESSION_STORE_KEY, '', DURATION)
+      clock.tick(STORAGE_POLL_DELAY)
+      expect(logsSessionManager.findTrackedSession(relativeNow(), { returnExpired: true })).toBeDefined()
+    })
+
+    it('should return session corresponding to start time', () => {
+      setCookie(SESSION_STORE_KEY, 'id=foo&logs=1', DURATION)
+      const logsSessionManager = startLogsSessionManagerWithDefaults()
+      clock.tick(10 * ONE_SECOND)
+      setCookie(SESSION_STORE_KEY, 'id=bar&logs=1', DURATION)
+      // simulate a click to renew the session
+      document.dispatchEvent(createNewEvent(DOM_EVENT.CLICK))
+      clock.tick(STORAGE_POLL_DELAY)
+      expect(logsSessionManager.findTrackedSession(0 as RelativeTime)!.id).toEqual('foo')
+      expect(logsSessionManager.findTrackedSession()!.id).toEqual('bar')
+    })
+  })
+
+  describe('isActiveAt', () => {
+    it('should return true when the session is active and false when the session has expired', () => {
+      setCookie(SESSION_STORE_KEY, 'id=abcdef&logs=1', DURATION)
+      const logsSessionManager = startLogsSessionManagerWithDefaults()
+      clock.tick(10 * ONE_SECOND)
+      setCookie(SESSION_STORE_KEY, '', DURATION)
+      clock.tick(STORAGE_POLL_DELAY)
+
+      const session = logsSessionManager.findTrackedSession(relativeNow(), { returnExpired: true })!
+      expect(session.isActiveAt(0 as RelativeTime)).toEqual(true)
+      expect(session.isActiveAt((11 * ONE_SECOND) as RelativeTime)).toEqual(false)
     })
   })
 

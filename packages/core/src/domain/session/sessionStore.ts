@@ -66,16 +66,15 @@ export function startSessionStore<TrackingType extends string>(
   let sessionCache: SessionState = retrieveActiveSession()
 
   function expandOrRenewSession() {
-    let isTracked: boolean
     processSessionStoreOperations(
       {
         process: (sessionState) => {
           const synchronizedSession = synchronizeSession(sessionState)
-          isTracked = expandOrRenewSessionState(synchronizedSession)
+          expandOrRenewSessionState(synchronizedSession)
           return synchronizedSession
         },
         after: (sessionState) => {
-          if (isTracked && !hasSessionInCache()) {
+          if (!hasSessionInCache()) {
             renewSessionInCache(sessionState)
           }
           sessionCache = sessionState
@@ -116,6 +115,11 @@ export function startSessionStore<TrackingType extends string>(
     if (hasSessionInCache()) {
       if (isSessionInCacheOutdated(sessionState)) {
         expireSessionInCache()
+
+        // Only renew if the session is not tracked, because we want tracked session to be renewed on user activity
+        if (sessionState[productKey] && !computeSessionState(sessionState[productKey]).isTracked) {
+          renewSessionInCache(sessionState)
+        }
       } else {
         sessionCache = sessionState
       }
@@ -130,7 +134,6 @@ export function startSessionStore<TrackingType extends string>(
       sessionState.id = generateUUID()
       sessionState.created = String(dateNow())
     }
-    return isTracked
   }
 
   function hasSessionInCache() {
