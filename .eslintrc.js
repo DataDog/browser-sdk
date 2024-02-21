@@ -294,5 +294,6 @@ module.exports = {
         ],
       },
     },
+    { files: ['packages/react/**/*.tsx'], rules: { 'unicorn/filename-case': ['error', { case: 'pascalCase' }] } },
   ],
 }
