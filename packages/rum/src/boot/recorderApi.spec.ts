@@ -1,5 +1,5 @@
 import type { DeflateEncoder, DeflateWorker, DeflateWorkerAction } from '@datadog/browser-core'
-import { PageExitReason, display, isIE } from '@datadog/browser-core'
+import { BridgeCapability, PageExitReason, display, isIE } from '@datadog/browser-core'
 import type { RecorderApi, ViewContexts, LifeCycle, RumConfiguration } from '@datadog/browser-rum-core'
 import { LifeCycleEventType } from '@datadog/browser-rum-core'
 import { initEventBridgeStub, createNewEvent } from '@datadog/browser-core/test'
@@ -184,7 +184,7 @@ describe('makeRecorderApi', () => {
 
     describe('if event bridge present', () => {
       it('should start recording when the bridge supports records', () => {
-        initEventBridgeStub({ bridgeForRecordsSupported: true })
+        initEventBridgeStub({ capabilities: [BridgeCapability.RECORDS] })
 
         setupBuilder.build()
         rumInit()
@@ -193,7 +193,7 @@ describe('makeRecorderApi', () => {
       })
 
       it('should not start recording when the bridge does not support records', () => {
-        initEventBridgeStub({ bridgeForRecordsSupported: false })
+        initEventBridgeStub({ capabilities: [] })
 
         setupBuilder.build()
         rumInit()

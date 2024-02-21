@@ -10,6 +10,7 @@ import {
   DOM_EVENT,
   createTrackingConsentState,
   TrackingConsent,
+  BridgeCapability,
 } from '@datadog/browser-core'
 import type { Clock } from '@datadog/browser-core/test'
 import { createNewEvent, initEventBridgeStub, mockClock } from '@datadog/browser-core/test'
@@ -221,12 +222,12 @@ describe('rum session manager', () => {
 
 describe('rum session manager stub', () => {
   it('should return a tracked session with replay allowed when the event bridge support records', () => {
-    initEventBridgeStub({ bridgeForRecordsSupported: true })
+    initEventBridgeStub({ capabilities: [BridgeCapability.RECORDS] })
     expect(startRumSessionManagerStub().findTrackedSession()!.sessionReplayAllowed).toEqual(true)
   })
 
   it('should return a tracked session without replay allowed when the event bridge support records', () => {
-    initEventBridgeStub({ bridgeForRecordsSupported: false })
+    initEventBridgeStub({ capabilities: [] })
     expect(startRumSessionManagerStub().findTrackedSession()!.sessionReplayAllowed).toEqual(false)
   })
 })

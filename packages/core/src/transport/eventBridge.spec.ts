@@ -1,7 +1,7 @@
 import { initEventBridgeStub } from '../../test'
 import { DefaultPrivacyLevel } from '../domain/configuration'
 import type { DatadogEventBridge } from './eventBridge'
-import { getEventBridge, canUseEventBridge } from './eventBridge'
+import { getEventBridge, canUseEventBridge, BridgeCapability, bridgeSupports } from './eventBridge'
 
 describe('canUseEventBridge', () => {
   const allowedWebViewHosts = ['foo.bar']
@@ -75,5 +75,17 @@ describe('event bridge getPrivacyLevel', () => {
     const eventBridge = getEventBridge()!
 
     expect(eventBridge.getPrivacyLevel()).toBeUndefined()
+  })
+
+  describe('bridgeSupports', () => {
+    it('should returns true when the bridge supports a capability', () => {
+      initEventBridgeStub({ capabilities: [BridgeCapability.RECORDS] })
+      expect(bridgeSupports(BridgeCapability.RECORDS)).toBeTrue()
+    })
+
+    it('should returns false when the bridge does not support a capability', () => {
+      initEventBridgeStub({ capabilities: [] })
+      expect(bridgeSupports(BridgeCapability.RECORDS)).toBeFalse()
+    })
   })
 })

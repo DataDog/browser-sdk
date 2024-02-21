@@ -1,4 +1,4 @@
-import { endsWith } from '../tools/utils/polyfills'
+import { endsWith, includes } from '../tools/utils/polyfills'
 import { getGlobalObject } from '../tools/getGlobalObject'
 
 export interface BrowserWindowWithEventBridge extends Window {
@@ -6,9 +6,14 @@ export interface BrowserWindowWithEventBridge extends Window {
 }
 
 export interface DatadogEventBridge {
+  getCapabilities?(): string
   getPrivacyLevel?(): string
   getAllowedWebViewHosts(): string
   send(msg: string): void
+}
+
+export const enum BridgeCapability {
+  RECORDS = 'records',
 }
 
 export function getEventBridge<T, E>() {
@@ -19,6 +24,9 @@ export function getEventBridge<T, E>() {
   }
 
   return {
+    getCapabilities() {
+      return JSON.parse(eventBridgeGlobal.getCapabilities?.() || '[]') as BridgeCapability[]
+    },
     getPrivacyLevel() {
       return eventBridgeGlobal.getPrivacyLevel?.()
     },
@@ -32,9 +40,9 @@ export function getEventBridge<T, E>() {
   }
 }
 
-export function isBridgeForRecordsSupported(): boolean {
-  const bridge = getEventBridgeGlobal()
-  return !!bridge && 'getPrivacyLevel' in bridge
+export function bridgeSupports(capability: BridgeCapability): boolean {
+  const bridge = getEventBridge()
+  return !!bridge && includes(bridge.getCapabilities(), capability)
 }
 
 export function canUseEventBridge(currentHost = getGlobalObject<Window>().location?.hostname): boolean {

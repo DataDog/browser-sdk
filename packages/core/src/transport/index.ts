@@ -1,8 +1,9 @@
 export { HttpRequest, createHttpRequest, Payload, RetryInfo } from './httpRequest'
 export {
   canUseEventBridge,
-  isBridgeForRecordsSupported,
+  bridgeSupports,
   getEventBridge,
+  BridgeCapability,
   BrowserWindowWithEventBridge,
   DatadogEventBridge,
 } from './eventBridge'
