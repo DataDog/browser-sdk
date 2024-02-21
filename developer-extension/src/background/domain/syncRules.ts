@@ -66,7 +66,10 @@ function buildRules(
         url: DEV_RUM_SLIM_URL,
       }),
       createRedirectRule(/^https:\/\/.*\/datadog-logs(-v\d|-canary|-staging)?\.js$/, { url: DEV_LOGS_URL }),
-      createRedirectRule('https://localhost:8443/static/datadog-rum-hotdog.js', { url: devRumUrl })
+      createRedirectRule('https://localhost:8443/static/datadog-rum-hotdog.js', { url: devRumUrl }),
+      createRedirectRule(/^https:\/\/.*\/datadog-react-rum(-v\d|-canary|-staging)?\.js$/, {
+        url: 'http://localhost:8080/datadog-react-rum.js',
+      })
     )
   } else if (useRumSlim) {
     logger.log('add redirect to rum slim rule')

@@ -18,7 +18,7 @@ module.exports = ({ entry, mode, filename, types, keepBuildEnvVariables }) => ({
   module: {
     rules: [
       {
-        test: /\.(ts|js)$/,
+        test: /\.(ts|js|tsx|jsx)$/,
         loader: 'ts-loader',
         exclude: /node_modules/,
         options: {
@@ -28,6 +28,7 @@ module.exports = ({ entry, mode, filename, types, keepBuildEnvVariables }) => ({
             module: 'es6',
             allowJs: true,
             types: types || [],
+            jsx: 'react'
           },
         },
       },
@@ -35,7 +36,7 @@ module.exports = ({ entry, mode, filename, types, keepBuildEnvVariables }) => ({
   },
 
   resolve: {
-    extensions: ['.ts', '.js'],
+    extensions: ['.ts', '.js', '.tsx', '.jsx'],
     plugins: [new TsconfigPathsPlugin({ configFile: tsconfigPath })],
     alias: {
       // The default "pako.esm.js" build is not transpiled to es5
@@ -55,14 +56,14 @@ module.exports = ({ entry, mode, filename, types, keepBuildEnvVariables }) => ({
     new webpack.SourceMapDevToolPlugin(
       mode === 'development'
         ? // Use an inline source map during development (default options)
-          {}
+        {}
         : // When bundling for release, produce a source map file so it can be used for source code integration,
-          // but don't append the source map comment to bundles as we don't upload the source map to
-          // the CDN (yet).
-          {
-            filename: '[file].map',
-            append: false,
-          }
+        // but don't append the source map comment to bundles as we don't upload the source map to
+        // the CDN (yet).
+        {
+          filename: '[file].map',
+          append: false,
+        }
     ),
     createDefinePlugin({ keepBuildEnvVariables }),
   ],

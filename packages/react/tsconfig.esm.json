@@ -1,0 +1,14 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "baseUrl": ".",
+    "declaration": true,
+    "module": "es6",
+    "allowJs": true,
+    "rootDir": "./src/",
+    "outDir": "./esm/",
+    "jsx": "react-jsx"
+  },
+  "include": ["./src"],
+  "exclude": ["./src/**/*.spec.ts", "./src/**/*.specHelper.ts"]
+}

@@ -349,7 +349,7 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@datadog/browser-rum@workspace:*, @datadog/browser-rum@workspace:packages/rum":
+"@datadog/browser-rum@5.9.0, @datadog/browser-rum@workspace:*, @datadog/browser-rum@workspace:packages/rum":
   version: 0.0.0-use.local
   resolution: "@datadog/browser-rum@workspace:packages/rum"
   dependencies:
@@ -396,6 +396,20 @@ __metadata:
   dependencies:
     "@datadog/browser-core": 5.16.0
     webpack: 5.91.0
+  languageName: unknown
+  linkType: soft
+
+"@datadog/react-rum@workspace:packages/react":
+  version: 0.0.0-use.local
+  resolution: "@datadog/react-rum@workspace:packages/react"
+  dependencies:
+    "@datadog/browser-rum": 5.9.0
+    "@datadog/browser-rum-core": 5.9.0
+    react: 18.2.0
+    react-router-dom: 6.22.0
+  peerDependencies:
+    react: ">=17.0.0"
+    react-router-dom: ">=6.0.0"
   languageName: unknown
   linkType: soft
 
@@ -1293,6 +1307,13 @@ __metadata:
   bin:
     browsers: lib/cjs/main-cli.js
   checksum: 588ad09a340ae1abdb7e2a095b7e46cf8dc98a68cc6a92fdbf6cd9f91bc8a69957a9da6a144bc485f3b1e55fef187a7523185cf2ffa15c47addff6eb1a854bdc
+  languageName: node
+  linkType: hard
+
+"@remix-run/router@npm:1.15.0":
+  version: 1.15.0
+  resolution: "@remix-run/router@npm:1.15.0"
+  checksum: 0b5ea6b2e7bb7f3266005e033337a6fed29c458aa5ddc9a97a90ff19813ae6dfb4392871722d66d7e8db93a29760a8257830a9af58824b3a3363ed58e1e471d8
   languageName: node
   linkType: hard
 
@@ -10959,6 +10980,30 @@ __metadata:
     "@types/react":
       optional: true
   checksum: e0dbb6856beaed2cff4996d9ca62d775686ff72e3e9de34043034d932223b588993b2fc7a18644750dd3d73eb19bd3f2cedb8d91f0e424c1ef8403010da24b1d
+  languageName: node
+  linkType: hard
+
+"react-router-dom@npm:6.22.0":
+  version: 6.22.0
+  resolution: "react-router-dom@npm:6.22.0"
+  dependencies:
+    "@remix-run/router": 1.15.0
+    react-router: 6.22.0
+  peerDependencies:
+    react: ">=16.8"
+    react-dom: ">=16.8"
+  checksum: 21cbdda0070dffb50845a97e2688648a9925c7ebabd1f9335523a1f8ae66048c1d9d06442f1b0ec35a266d1c63ed3b56b437db70807f73440a185f3e2d3c632f
+  languageName: node
+  linkType: hard
+
+"react-router@npm:6.22.0":
+  version: 6.22.0
+  resolution: "react-router@npm:6.22.0"
+  dependencies:
+    "@remix-run/router": 1.15.0
+  peerDependencies:
+    react: ">=16.8"
+  checksum: 94f382f3fa6fcb8525c143d83d4c3a3b010979f417cac0bbe7a63f906b3809e2bb56e8c329b9b3fd3212a498670ab278aea72893e921b827dcf00024c3d115dd
   languageName: node
   linkType: hard
 
