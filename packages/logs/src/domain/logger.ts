@@ -12,7 +12,7 @@ import {
   NonErrorPrefix,
 } from '@datadog/browser-core'
 
-import type { LogsEvent } from '../logsEvent.types'
+import type { RawLoggerLogsEvent } from '../rawLogsEvent.types'
 
 export interface LogsMessage {
   message: string
@@ -58,7 +58,7 @@ export class Logger {
 
   @monitored
   log(message: string, messageContext?: object, status: StatusType = StatusType.info, error?: Error) {
-    let errorContext: LogsEvent['error']
+    let errorContext: RawLoggerLogsEvent['error']
 
     if (error !== undefined && error !== null) {
       const stackTrace = error instanceof Error ? computeStackTrace(error) : undefined
