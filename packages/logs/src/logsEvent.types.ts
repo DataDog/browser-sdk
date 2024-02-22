@@ -69,6 +69,23 @@ export interface LogsEvent {
      * Stacktrace of the error
      */
     stack?: string
+    /**
+     * Fingerprint of the error
+     */
+    fingerprint?: string
+    /**
+     * Message of the error
+     */
+    message?: string
+    /**
+     * Flattened causes of the error
+     */
+    causes?: Array<{
+      message: string
+      source: string
+      type?: string
+      stack?: string
+    }>
 
     [k: string]: unknown
   }

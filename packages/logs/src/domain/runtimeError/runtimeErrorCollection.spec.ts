@@ -1,3 +1,4 @@
+import type { ErrorWithCause } from '@datadog/browser-core'
 import { ErrorSource } from '@datadog/browser-core'
 import type { RawRuntimeLogsEvent } from '../../rawLogsEvent.types'
 import type { LogsConfiguration } from '../configuration'
@@ -39,8 +40,54 @@ describe('runtime error collection', () => {
     setTimeout(() => {
       expect(rawLogsEvents[0].rawLogsEvent).toEqual({
         date: jasmine.any(Number),
-        error: { kind: 'Error', stack: jasmine.any(String) },
+        error: { kind: 'Error', stack: jasmine.any(String), causes: undefined },
         message: 'error!',
+        status: StatusType.error,
+        origin: ErrorSource.SOURCE,
+      })
+      done()
+    }, 10)
+  })
+
+  it('should send runtime errors with causes', (done) => {
+    const error = new Error('High level error') as ErrorWithCause
+    error.stack = 'Error: High level error'
+
+    const nestedError = new Error('Mid level error') as ErrorWithCause
+    nestedError.stack = 'Error: Mid level error'
+
+    const deepNestedError = new TypeError('Low level error') as ErrorWithCause
+    deepNestedError.stack = 'TypeError: Low level error'
+
+    nestedError.cause = deepNestedError
+    error.cause = nestedError
+    ;({ stop: stopRuntimeErrorCollection } = startRuntimeErrorCollection(configuration, lifeCycle))
+    setTimeout(() => {
+      throw error
+    })
+
+    setTimeout(() => {
+      expect(rawLogsEvents[0].rawLogsEvent).toEqual({
+        date: jasmine.any(Number),
+        error: {
+          kind: 'Error',
+          stack: jasmine.any(String),
+          causes: [
+            {
+              source: ErrorSource.SOURCE,
+              type: 'Error',
+              stack: jasmine.any(String),
+              message: 'Mid level error',
+            },
+            {
+              source: ErrorSource.SOURCE,
+              type: 'TypeError',
+              stack: jasmine.any(String),
+              message: 'Low level error',
+            },
+          ],
+        },
+        message: 'High level error',
         status: StatusType.error,
         origin: ErrorSource.SOURCE,
       })

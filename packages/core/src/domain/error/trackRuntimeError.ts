@@ -11,7 +11,7 @@ export type UnhandledErrorCallback = (stackTrace: StackTrace, originalError?: an
 
 export function trackRuntimeError(errorObservable: Observable<RawError>) {
   const handleRuntimeError = (stackTrace: StackTrace, originalError?: any) => {
-    const test = computeRawError({
+    const rawError = computeRawError({
       stackTrace,
       originalError,
       startClocks: clocksNow(),
@@ -19,7 +19,7 @@ export function trackRuntimeError(errorObservable: Observable<RawError>) {
       source: ErrorSource.SOURCE,
       handling: ErrorHandling.UNHANDLED,
     })
-    errorObservable.notify(test)
+    errorObservable.notify(rawError)
   }
   const { stop: stopInstrumentingOnError } = instrumentOnError(handleRuntimeError)
   const { stop: stopInstrumentingOnUnhandledRejection } = instrumentUnhandledRejection(handleRuntimeError)
