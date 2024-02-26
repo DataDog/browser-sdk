@@ -90,3 +90,5 @@ RUN ddtool_version=$(curl -L https://binaries.ddbuild.io/ddtool/LATEST 2>/dev/nu
     tar xzvf "ddtool.tar.gz" ./ddtool_linux_${ARCH} && \
     mv -v ddtool_linux_${ARCH} ${HOME}/.local/bin/ddtool && \
     rm -vf ddtool.tar.gz
+
+ENV PATH="${PATH}:${HOME}/.local/bin"
