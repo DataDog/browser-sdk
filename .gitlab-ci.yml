@@ -141,7 +141,7 @@ build-and-lint:
     - yarn lint
     - node scripts/check-packages.js
     - node scripts/export-bundles-sizes.js
-    - node scripts/send-bundle-sizes.js
+    - node scripts/send-bundles-sizes-differences.js
 
 build-bundle:
   extends:
