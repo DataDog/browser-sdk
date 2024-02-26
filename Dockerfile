@@ -92,3 +92,8 @@ RUN ddtool_version=$(curl -L https://binaries.ddbuild.io/ddtool/LATEST 2>/dev/nu
     rm -vf ddtool.tar.gz
 
 ENV PATH="${PATH}:${HOME}/.local/bin"
+
+RUN echo "PATH: ${PATH}"
+RUN ls -l ${HOME}/.local/bin
+RUN echo "Contents of .local/bin:"
+RUN ls -l ${HOME}/.local/bin/ddtool
