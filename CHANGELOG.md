@@ -16,6 +16,18 @@
 
 ---
 
+## v5.10.0
+
+- ✨ [RUM-2902] Add error causes to context when logging an error ([#2602](https://github.com/DataDog/browser-sdk/pull/2602))
+- ✨ [RUM-3151] Report bundle sizes to logs ([#2605](https://github.com/DataDog/browser-sdk/pull/2605))
+- ✨ [RUM-160] Collect PerformanceResourceTiming.responseStatus ([#2587](https://github.com/DataDog/browser-sdk/pull/2587))
+- 🐛 [RUM-3039] Fix missing pending mutations at view end ([#2598](https://github.com/DataDog/browser-sdk/pull/2598))
+- ⚗️[RUM-3235] collect vital.name attribute ([#2609](https://github.com/DataDog/browser-sdk/pull/2609))
+- ⚗️[RUM-2889] custom vitals improvements ([#2606](https://github.com/DataDog/browser-sdk/pull/2606))
+- 🔧 ignore karma-webpack for now ([#2604](https://github.com/DataDog/browser-sdk/pull/2604))
+- ⚗️[RUM-2889] Bootstrap custom vital APIs ([#2591](https://github.com/DataDog/browser-sdk/pull/2591))
+- ⚗ ️✨ [RUM-2445] implement Tracking Consent management ([#2589](https://github.com/DataDog/browser-sdk/pull/2589))
+
 ## v5.9.0
 
 - ✨[Developer extension] npm setup override support ([#2304](https://github.com/DataDog/browser-sdk/pull/2304))
