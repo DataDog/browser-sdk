@@ -1,6 +1,6 @@
 const { execSync } = require('child_process')
 const { runMain } = require('./lib/execution-utils')
-const { getOrg2ApiKey, getGithubAccessToken } = require('./lib/secrets')
+const { getOrg2ApiKey, getGithubAccessToken, getOrg2AppKey } = require('./lib/secrets')
 
 const header = 'Bundles Sizes Evolution'
 const baseBranch = 'main'
@@ -112,7 +112,7 @@ function query(results) {
           headers: {
             'Content-Type': 'application/json',
             'DD-API-KEY': getOrg2ApiKey(),
-            'DD-APPLICATION-KEY': process.env.DD_APP_KEY,
+            'DD-APPLICATION-KEY': getOrg2AppKey(),
           },
         }
       )
