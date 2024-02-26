@@ -1,10 +1,15 @@
 const { execSync } = require('child_process')
 const { runMain } = require('./lib/execution-utils')
-const { getOrg2ApiKey } = require('./lib/secrets')
+const { getOrg2ApiKey, getGithubAccessToken } = require('./lib/secrets')
 
+const header = 'Bundles Sizes Evolution'
 const baseBranch = 'main'
-const localBranch = process.env.CI_COMMIT_REF_NAME.toLowerCase()
-const myToken = '' // Function needed to retrieve Github Token
+const localBranch = process.env.CI_COMMIT_REF_NAME
+const githubAuthToken = execSync('ddtool auth token rapid-eee-ci-interfaces --datacenter us1.ddbuild.io --http-header')
+  .toString()
+  .split(' ')[2]
+  .trim()
+const GH_TOKEN = getGithubAccessToken()
 
 const getLastCommonCommit = (branch) => {
   const command = `git merge-base origin/${branch} HEAD`
@@ -22,16 +27,14 @@ async function getPRs(branch) {
   const response = await fetch(`https://api.github.com/repos/DataDog/browser-sdk/pulls?head=DataDog:${branch}`, {
     method: 'GET',
     headers: {
-      Authorization: `token ${myToken}`,
+      Authorization: `token ${GH_TOKEN}`,
     },
   })
-  const PR = await response.json()
-  return PR
+  return response.body ? response.json() : null
 }
 
 function createMessage(difference, resultsBaseQuery, resultsLocalQuery) {
-  let message =
-    '## Bundles Sizes Evolution\n| Bundle | Base Size | Current Size | Difference |\n| --- | --- | --- | --- |\n'
+  let message = '| Bundle | Base Size | Current Size | Difference |\n| --- | --- | --- | --- |\n'
 
   difference.forEach((diff, index) => {
     const baseSize = resultsBaseQuery[index].size
@@ -43,27 +46,22 @@ function createMessage(difference, resultsBaseQuery, resultsLocalQuery) {
   return message
 }
 
-async function addComment(difference, resultsBaseQuery, resultsLocalQuery, prNumber) {
+async function updateOrAddComment(difference, resultsBaseQuery, resultsLocalQuery, prNumber, commentId) {
   const message = createMessage(difference, resultsBaseQuery, resultsLocalQuery)
-
-  await fetch(`https://api.github.com/repos/DataDog/browser-sdk/issues/${prNumber}/comments`, {
-    method: 'POST',
+  const method = commentId ? 'PATCH' : 'POST'
+  const payload = {
+    pr_url: `https://github.com/DataDog/browser-sdk/pull/${prNumber}`,
+    message,
+    header,
+    org: 'DataDog',
+    repo: 'browser-sdk',
+  }
+  await fetch('https://pr-commenter.us1.ddbuild.io/internal/cit/pr-comment', {
+    method,
     headers: {
-      Authorization: `token ${myToken}`,
+      Authorization: `Bearer ${githubAuthToken}`,
     },
-    body: JSON.stringify({ body: message }),
-  })
-}
-
-async function updateComment(difference, resultsBaseQuery, resultsLocalQuery, commentId) {
-  const message = createMessage(difference, resultsBaseQuery, resultsLocalQuery)
-
-  await fetch(`https://api.github.com/repos/DataDog/browser-sdk/issues/comments/${commentId}`, {
-    method: 'PATCH',
-    headers: {
-      Authorization: `token ${myToken}`,
-    },
-    body: JSON.stringify({ body: message }),
+    body: JSON.stringify(payload),
   })
 }
 
@@ -71,7 +69,7 @@ async function getCommentId(prNumber) {
   const response = await fetch(`https://api.github.com/repos/DataDog/browser-sdk/issues/${prNumber}/comments`, {
     method: 'GET',
     headers: {
-      Authorization: `token ${myToken}`,
+      Authorization: `token ${GH_TOKEN}`,
     },
   })
   const comments = await response.json()
@@ -114,7 +112,7 @@ function query(results) {
           headers: {
             'Content-Type': 'application/json',
             'DD-API-KEY': getOrg2ApiKey(),
-            'DD-APPLICATION-KEY': '', // Function needed to retrieve Datadog Application Key
+            'DD-APPLICATION-KEY': process.env.DD_APP_KEY,
           },
         }
       )
@@ -130,7 +128,7 @@ function query(results) {
   )
 }
 
-function Compare(resultsBaseQuery, resultsLocalQuery) {
+function compare(resultsBaseQuery, resultsLocalQuery) {
   return resultsBaseQuery.map((baseResult, index) => {
     const localResult = resultsLocalQuery[index]
     let percentageChange = null
@@ -160,15 +158,9 @@ runMain(async () => {
     console.log('No pull requests found')
     return
   }
-  const queryBase = loadQuery(lastCommonCommit)
-  const queryLocal = loadQuery(latestLocalCommit)
-  const resultsBaseQuery = await query(queryBase)
-  const resultsLocalQuery = await query(queryLocal)
-  const difference = Compare(resultsBaseQuery, resultsLocalQuery)
+  const resultsBaseQuery = await query(loadQuery(lastCommonCommit))
+  const resultsLocalQuery = await query(loadQuery(latestLocalCommit))
+  const difference = compare(resultsBaseQuery, resultsLocalQuery)
   const commentId = await getCommentId(prs[0].number)
-  if (commentId !== undefined) {
-    await updateComment(difference, resultsBaseQuery, resultsLocalQuery, commentId)
-  } else {
-    await addComment(difference, resultsBaseQuery, resultsLocalQuery, prs[0].number)
-  }
+  await updateOrAddComment(difference, resultsBaseQuery, resultsLocalQuery, prs[0].number, commentId)
 })
