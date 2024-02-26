@@ -83,13 +83,10 @@ RUN chmod +x codecov
 RUN mv codecov /usr/local/bin
 RUN rm codecov.*
 
-RUN apt-get update && apt-get install -y pass \
-    && gpg_key_id="$(gen_gpg_key "$user_name" "$email" "$validity")" \
-    && pass init "$gpg_key_id"
-
-RUN ddtool_version=$(curl -L https://binaries.ddbuild.io/ddtool/LATEST 2>/dev/null | cut -dv -f2) \
-    && wget "https://binaries.ddbuild.io/ddtool/v${ddtool_version}/ddtool.tar.gz" \
-    && tar xzvf "ddtool.tar.gz" ./ddtool_linux_amd64
-
-RUN mkdir -p "/usr/local/bin" \
-    && mv ddtool_linux_amd64 "/usr/local/bin/ddtool"
+RUN ddtool_version=$(curl -L https://binaries.ddbuild.io/ddtool/LATEST 2>/dev/null | cut -dv -f2) && \
+    curl -s -L -o ddtool.tar.gz "https://binaries.ddbuild.io/ddtool/v${ddtool_version}/ddtool.tar.gz" && \
+    mkdir -p "${HOME}/.local/bin" && \
+    case "$(arch)" in x86_64) ARCH=amd64;; aarch64) ARCH=arm64;; esac && \
+    tar xzvf "ddtool.tar.gz" ./ddtool_linux_${ARCH} && \
+    mv -v ddtool_linux_${ARCH} ${HOME}/.local/bin/ddtool && \
+    rm -vf ddtool.tar.gz
