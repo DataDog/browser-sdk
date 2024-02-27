@@ -1,0 +1,5 @@
+*
+!/build/**/*
+!/src/**/*
+/src/**/*.spec.ts
+/src/**/*.specHelper.ts

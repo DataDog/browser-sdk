@@ -186,6 +186,13 @@ module.exports = {
   },
   overrides: [
     {
+      files: ['**/*.mjs'],
+      parser: 'espree',
+      parserOptions: {
+        ecmaVersion: 2015,
+      },
+    },
+    {
       files: ['**/*.types.ts', '**/types.ts'],
       rules: {
         camelcase: 'off',

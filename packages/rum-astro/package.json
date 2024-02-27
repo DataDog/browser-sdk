@@ -1,0 +1,61 @@
+{
+  "name": "@datadog/browser-rum-astro",
+  "version": "5.9.0",
+  "description": "Datadog RUM Astro integration",
+  "license": "Apache-2.0",
+  "main": "./build/cjs/index.client.js",
+  "module": "./build/esm/index.server.js",
+  "browser": "./build/cjs/index.client.js",
+  "types": "./build/cjs/index.d.ts",
+  "scripts": {
+    "build": "run-p build:transpile build:types",
+    "build:transpile": "rollup -c rollup.npm.config.mjs",
+    "build:types": "rm -rf build/types && tsc -p tsconfig.types.json",
+    "replace-build-env": "node ../../scripts/build/replace-build-env.js"
+  },
+  "exports": {
+    ".": {
+      "node": "./build/esm/index.server.js",
+      "browser": "./build/esm/index.client.js",
+      "import": "./build/esm/index.client.js",
+      "require": "./build/cjs/index.server.js",
+      "types": "./build/types/index.types.d.ts"
+    },
+    "./middleware": {
+      "node": "./build/esm/integration/middleware/index.js",
+      "import": "./build/esm/integration/middleware/index.js",
+      "require": "./build/cjs/integration/middleware/index.js",
+      "types": "./build/types/integration/middleware/index.types.d.ts"
+    }
+  },
+  "peerDependencies": {
+    "astro": ">=3.x || >=4.0.0-beta"
+  },
+  "dependencies": {
+    "@datadog/browser-rum": "5.9.0"
+  },
+  "devDependencies": {
+    "@rollup/plugin-node-resolve": "^13.1.3",
+    "@rollup/plugin-sucrase": "^4.0.3",
+    "astro": "^3.5.0",
+    "deepmerge": "^4.2.2",
+    "npm-run-all": "4.1.5",
+    "rollup": "^3.20.2",
+    "typescript": "5.3.3"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/DataDog/browser-sdk.git",
+    "directory": "packages/rum-astro"
+  },
+  "bugs": {
+    "url": "https://github.com/DataDog/browser-sdk/issues"
+  },
+  "volta": {
+    "node": "18.17.0",
+    "yarn": "1.22.19"
+  },
+  "astro": {
+    "external": true
+  }
+}
