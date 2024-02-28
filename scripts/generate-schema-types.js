@@ -21,6 +21,10 @@ runMain(async () => {
     'session-replay-browser-schema.json',
     { options: { additionalProperties: false } }
   )
+  await generateTypesFromSchema(
+    path.join(__dirname, '../packages/rum-core/src/metricEvent.types.ts'),
+    'metric-events-schema.json'
+  )
 })
 
 async function generateTypesFromSchema(typesPath, schema, { options = {} } = {}) {
