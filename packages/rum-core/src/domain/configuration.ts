@@ -45,8 +45,6 @@ export interface RumInitConfiguration extends InitConfiguration {
 
   trackResources?: boolean | undefined
   trackLongTasks?: boolean | undefined
-
-  spotlight?: boolean | undefined
 }
 
 export type HybridInitConfiguration = Omit<RumInitConfiguration, 'applicationId' | 'clientToken'>
@@ -70,7 +68,6 @@ export interface RumConfiguration extends Configuration {
   version?: string
   subdomain?: string
   customerDataTelemetrySampleRate: number
-  spotlight?: boolean
 }
 
 export function validateAndBuildRumConfiguration(
@@ -130,7 +127,6 @@ export function validateAndBuildRumConfiguration(
         ? initConfiguration.defaultPrivacyLevel
         : DefaultPrivacyLevel.MASK,
       customerDataTelemetrySampleRate: 1,
-      spotlight: false,
     },
     baseConfiguration
   )
@@ -211,7 +207,7 @@ export function serializeRumConfiguration(configuration: RumInitConfiguration): 
       track_user_interactions: configuration.trackUserInteractions,
       track_resources: configuration.trackResources,
       track_long_task: configuration.trackLongTasks,
-      use_spotlight: configuration.spotlight,
+      use_spotlight: !!configuration.spotlight,
     },
     baseSerializedConfiguration
   )

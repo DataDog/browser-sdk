@@ -55,6 +55,7 @@ export interface InitConfiguration {
   enableExperimentalFeatures?: string[] | undefined
   replica?: ReplicaUserConfiguration | undefined
   datacenter?: string
+  spotlight?: boolean | undefined
   // TODO next major: remove this option and replace usages by proxyFn
   internalAnalyticsSubdomain?: string
 

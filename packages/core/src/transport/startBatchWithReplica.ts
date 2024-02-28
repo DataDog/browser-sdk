@@ -17,21 +17,33 @@ interface ReplicaBatchConfiguration<T> extends BatchConfiguration {
   transformMessage?: (message: T) => T
 }
 
+interface SpotlightBatchConfiguration<T> extends ReplicaBatchConfiguration<T> {
+  contentType?: string
+}
+
 export function startBatchWithReplica<T extends Context>(
   configuration: Configuration,
   primary: BatchConfiguration,
   replica: ReplicaBatchConfiguration<T> | undefined,
   reportError: (error: RawError) => void,
   pageExitObservable: Observable<PageExitEvent>,
-  sessionExpireObservable: Observable<void>
+  sessionExpireObservable: Observable<void>,
+  spotlightReplica?: SpotlightBatchConfiguration<T>
 ) {
   const primaryBatch = createBatch(configuration, primary)
   const replicaBatch = replica && createBatch(configuration, replica)
+  const spotlightBatch = spotlightReplica && createBatch(configuration, spotlightReplica)
 
-  function createBatch(configuration: Configuration, { endpoint, encoder }: BatchConfiguration) {
+  function createBatch(
+    configuration: Configuration,
+    batchConfiguration: BatchConfiguration | SpotlightBatchConfiguration<T>
+  ) {
+    const { endpoint, encoder } = batchConfiguration
+    const spotlight = (batchConfiguration as SpotlightBatchConfiguration<T>).contentType
+
     return new Batch(
       encoder,
-      createHttpRequest(configuration, endpoint, configuration.batchBytesLimit, reportError),
+      createHttpRequest(configuration, endpoint, configuration.batchBytesLimit, reportError, spotlight),
       createFlushController({
         messagesLimit: configuration.batchMessagesLimit,
         bytesLimit: configuration.batchBytesLimit,
@@ -51,6 +63,9 @@ export function startBatchWithReplica<T extends Context>(
       if (replicaBatch && replicated) {
         replicaBatch.add(replica.transformMessage ? replica.transformMessage(message) : message)
       }
+      if (spotlightBatch && replicated) {
+        spotlightBatch.add(spotlightReplica.transformMessage ? spotlightReplica.transformMessage(message) : message)
+      }
     },
 
     upsert: (message: T, key: string) => {
@@ -58,11 +73,18 @@ export function startBatchWithReplica<T extends Context>(
       if (replicaBatch) {
         replicaBatch.upsert(replica.transformMessage ? replica.transformMessage(message) : message, key)
       }
+      if (spotlightBatch) {
+        spotlightBatch.upsert(
+          spotlightReplica.transformMessage ? spotlightReplica.transformMessage(message) : message,
+          key
+        )
+      }
     },
 
     stop: () => {
       primaryBatch.stop()
       replicaBatch?.stop()
+      spotlightBatch?.stop()
     },
   }
 }

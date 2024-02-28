@@ -40,11 +40,12 @@ export function createHttpRequest(
   configuration: Configuration,
   endpointBuilder: EndpointBuilder,
   bytesLimit: number,
-  reportError: (error: RawError) => void
+  reportError: (error: RawError) => void,
+  contentType?: string
 ) {
   const retryState = newRetryState()
   const sendStrategyForRetry = (payload: Payload, onResponse: (r: HttpResponse) => void) =>
-    fetchKeepAliveStrategy(configuration, endpointBuilder, bytesLimit, payload, onResponse)
+    fetchKeepAliveStrategy(configuration, endpointBuilder, bytesLimit, payload, onResponse, contentType)
 
   return {
     send: (payload: Payload) => {
@@ -64,10 +65,11 @@ function sendBeaconStrategy(
   configuration: Configuration,
   endpointBuilder: EndpointBuilder,
   bytesLimit: number,
-  payload: Payload
+  payload: Payload,
+  contentType?: string
 ) {
   const canUseBeacon = !!navigator.sendBeacon && payload.bytesCount < bytesLimit
-  if (canUseBeacon) {
+  if (canUseBeacon && !contentType) {
     try {
       const beaconUrl = endpointBuilder.build('beacon', payload)
       const isQueued = navigator.sendBeacon(beaconUrl, payload.data)
@@ -81,7 +83,7 @@ function sendBeaconStrategy(
   }
 
   const xhrUrl = endpointBuilder.build('xhr', payload)
-  sendXHR(configuration, xhrUrl, payload.data)
+  sendXHR(configuration, xhrUrl, payload.data, undefined, contentType)
 }
 
 let hasReportedBeaconError = false
@@ -98,22 +100,30 @@ export function fetchKeepAliveStrategy(
   endpointBuilder: EndpointBuilder,
   bytesLimit: number,
   payload: Payload,
-  onResponse?: (r: HttpResponse) => void
+  onResponse?: (r: HttpResponse) => void,
+  contentType?: string
 ) {
   const canUseKeepAlive = isKeepAliveSupported() && payload.bytesCount < bytesLimit
   if (canUseKeepAlive) {
     const fetchUrl = endpointBuilder.build('fetch', payload)
-    fetch(fetchUrl, { method: 'POST', body: payload.data, keepalive: true, mode: 'cors' }).then(
+    const headers = contentType ? { 'Content-Type': contentType } : undefined
+    fetch(fetchUrl, {
+      body: payload.data,
+      method: 'POST',
+      mode: 'cors',
+      keepalive: !!contentType,
+      headers,
+    }).then(
       monitor((response: Response) => onResponse?.({ status: response.status, type: response.type })),
       monitor(() => {
         const xhrUrl = endpointBuilder.build('xhr', payload)
         // failed to queue the request
-        sendXHR(configuration, xhrUrl, payload.data, onResponse)
+        sendXHR(configuration, xhrUrl, payload.data, onResponse, contentType)
       })
     )
   } else {
     const xhrUrl = endpointBuilder.build('xhr', payload)
-    sendXHR(configuration, xhrUrl, payload.data, onResponse)
+    sendXHR(configuration, xhrUrl, payload.data, onResponse, contentType)
   }
 }
 
@@ -130,7 +140,8 @@ export function sendXHR(
   configuration: Configuration,
   url: string,
   data: Payload['data'],
-  onResponse?: (r: HttpResponse) => void
+  onResponse?: (r: HttpResponse) => void,
+  contentType?: string
 ) {
   const request = new XMLHttpRequest()
   request.open('POST', url, true)
@@ -139,6 +150,9 @@ export function sendXHR(
     // automatically, so the intake request ends up being rejected with an HTTP status 415
     // Defining the header manually fixes this issue.
     request.setRequestHeader('Content-Type', data.type)
+  }
+  if (contentType) {
+    request.setRequestHeader('Content-Type', contentType)
   }
   addEventListener(
     configuration,

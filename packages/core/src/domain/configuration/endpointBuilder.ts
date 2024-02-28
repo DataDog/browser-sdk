@@ -46,7 +46,8 @@ function createEndpointUrlWithParametersBuilder(
   initConfiguration: InitConfiguration,
   trackType: TrackType
 ): (parameters: string) => string {
-  const path = `/api/v2/${trackType}`
+  const isSpotlightRequest = initConfiguration.spotlight && initConfiguration.site?.startsWith('localhost')
+  const path = isSpotlightRequest ? '/stream' : `/api/v2/${trackType}`
   const proxy = initConfiguration.proxy
   if (typeof proxy === 'string') {
     const normalizedProxyUrl = normalizeUrl(proxy)
@@ -56,11 +57,16 @@ function createEndpointUrlWithParametersBuilder(
     return (parameters) => proxy({ path, parameters })
   }
   const host = buildEndpointHost(initConfiguration)
-  return (parameters) => `https://${host}${path}?${parameters}`
+  return (parameters) =>
+    `http${isSpotlightRequest ? '' : 's'}://${host}${path}${isSpotlightRequest ? '' : `?${parameters}`}`
 }
 
 function buildEndpointHost(initConfiguration: InitConfiguration) {
   const { site = INTAKE_SITE_US1, internalAnalyticsSubdomain } = initConfiguration
+
+  if (initConfiguration.spotlight && site.startsWith('localhost')) {
+    return site
+  }
 
   if (internalAnalyticsSubdomain && site === INTAKE_SITE_US1) {
     return `${internalAnalyticsSubdomain}.${INTAKE_SITE_US1}`

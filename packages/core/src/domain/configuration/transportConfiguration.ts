@@ -11,6 +11,7 @@ export interface TransportConfiguration {
   sessionReplayEndpointBuilder: EndpointBuilder
   isIntakeUrl: (url: string) => boolean
   replica?: ReplicaConfiguration
+  spotlight?: SpotlightConfiguration
   site: string
 }
 
@@ -18,6 +19,10 @@ export interface ReplicaConfiguration {
   applicationId?: string
   logsEndpointBuilder: EndpointBuilder
   rumEndpointBuilder: EndpointBuilder
+}
+
+export interface SpotlightConfiguration extends Omit<ReplicaConfiguration, 'applicationId'> {
+  contentType: string
 }
 
 export function computeTransportConfiguration(initConfiguration: InitConfiguration): TransportConfiguration {
@@ -28,11 +33,14 @@ export function computeTransportConfiguration(initConfiguration: InitConfigurati
 
   const replicaConfiguration = computeReplicaConfiguration(initConfiguration, intakeUrlPrefixes, tags)
 
+  const spotlightConfiguration = computeSpotlightConfiguration(initConfiguration, intakeUrlPrefixes, tags)
+
   return assign(
     {
       isIntakeUrl: (url: string) => intakeUrlPrefixes.some((intakeEndpoint) => url.indexOf(intakeEndpoint) === 0),
       replica: replicaConfiguration,
       site: initConfiguration.site || INTAKE_SITE_US1,
+      spotlight: spotlightConfiguration,
     },
     endpointBuilders
   )
@@ -68,4 +76,27 @@ function computeReplicaConfiguration(
   intakeUrlPrefixes.push(...objectValues(replicaEndpointBuilders).map((builder) => builder.urlPrefix))
 
   return assign({ applicationId: initConfiguration.replica.applicationId }, replicaEndpointBuilders)
+}
+
+function computeSpotlightConfiguration(
+  initConfiguration: InitConfiguration,
+  intakeUrlPrefixes: string[],
+  tags: string[]
+): SpotlightConfiguration | undefined {
+  if (!initConfiguration.spotlight) {
+    return
+  }
+
+  const spotlightConfiguration: InitConfiguration = assign({}, initConfiguration, {
+    site: 'localhost:8969',
+  })
+
+  const replicaEndpointBuilders = {
+    logsEndpointBuilder: createEndpointBuilder(spotlightConfiguration, 'logs', tags),
+    rumEndpointBuilder: createEndpointBuilder(spotlightConfiguration, 'rum', tags),
+  }
+
+  intakeUrlPrefixes.push(...objectValues(replicaEndpointBuilders).map((builder) => builder.urlPrefix))
+
+  return assign({ contentType: 'application/x-datadog-spotlight' }, replicaEndpointBuilders)
 }

@@ -21,4 +21,5 @@ const buildCommonInitOptions = (options: DatadogRumOptions): string => `
   trackResources: ${options.trackResources ?? true},
   trackLongTasks: ${options.trackLongTasks ?? true},
   defaultPrivacyLevel: ${options.defaultPrivacyLevel ? JSON.stringify(options.defaultPrivacyLevel) : "''"},
+  spotlight: true,
   `

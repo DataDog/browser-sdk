@@ -2,6 +2,7 @@ import type { Context, TelemetryEvent, Observable, RawError, PageExitEvent, Enco
 import {
   DeflateEncoderStreamId,
   combine,
+  createIdentityEncoder,
   isTelemetryReplicationAllowed,
   startBatchWithReplica,
 } from '@datadog/browser-core'
@@ -35,7 +36,12 @@ export function startRumBatch(
     },
     reportError,
     pageExitObservable,
-    sessionExpireObservable
+    sessionExpireObservable,
+    configuration.spotlight && {
+      contentType: configuration.spotlight.contentType,
+      endpoint: configuration.spotlight.rumEndpointBuilder,
+      encoder: createIdentityEncoder(),
+    }
   )
 
   lifeCycle.subscribe(LifeCycleEventType.RUM_EVENT_COLLECTED, (serverRumEvent: RumEvent & Context) => {
