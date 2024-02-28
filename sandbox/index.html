@@ -22,7 +22,13 @@
         telemetryConfigurationSampleRate: 100,
         enableExperimentalFeatures: [],
       })
+      const buttonClickCounter = DD_RUM.meterProvider.getMeter('default').createCounter('bastien.button_clicks')
+      function sendMetricReq() {
+        buttonClickCounter.add(1)
+      }
     </script>
   </head>
-  <body></body>
+  <body>
+    <button onclick="sendMetricReq()">send metrics</button>
+  </body>
 </html>

@@ -46,6 +46,7 @@ import { startPageStateHistory } from '../domain/contexts/pageStateHistory'
 import type { CommonContext } from '../domain/contexts/commonContext'
 import { startDisplayContext } from '../domain/contexts/displayContext'
 import { startVitalCollection } from '../domain/vital/vitalCollection'
+import { startMetricCollection } from '../domain/metric/metricCollection'
 import type { RecorderApi } from './rumPublicApi'
 
 export type StartRum = typeof startRum
@@ -69,6 +70,7 @@ export function startRum(
   const lifeCycle = new LifeCycle()
 
   lifeCycle.subscribe(LifeCycleEventType.RUM_EVENT_COLLECTED, (event) => sendToExtension('rum', event))
+  lifeCycle.subscribe(LifeCycleEventType.METRIC_EVENT_COLLECTED, (event) => sendToExtension('metric', event))
 
   const telemetry = startRumTelemetry(configuration)
   telemetry.setContextProvider(() => ({
@@ -171,6 +173,9 @@ export function startRum(
   cleanupTasks.push(stopPerformanceCollection)
 
   const vitalCollection = startVitalCollection(lifeCycle)
+  const { defaultMeterProvider, stop: stopMetricCollection } = startMetricCollection(lifeCycle)
+  cleanupTasks.push(stopMetricCollection)
+
   const internalContext = startInternalContext(
     configuration.applicationId,
     session,
@@ -180,6 +185,7 @@ export function startRum(
   )
 
   return {
+    defaultMeterProvider,
     addAction,
     addError,
     addTiming,

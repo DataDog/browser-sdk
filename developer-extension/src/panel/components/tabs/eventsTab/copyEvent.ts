@@ -70,6 +70,7 @@ export function getIntakeUrlForEvent(sdkInfos: SdkInfos, event: SdkEvent) {
 
   switch (getEventSource(event)) {
     case EventSource.RUM:
+    case EventSource.METRIC:
     case EventSource.TELEMETRY: {
       if (!sdkInfos.rum?.config || !sdkInfos.rum?.version) {
         return

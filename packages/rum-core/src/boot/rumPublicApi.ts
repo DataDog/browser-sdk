@@ -167,6 +167,8 @@ export function makeRumPublicApi(startRumImpl: StartRum, recorderApi: RecorderAp
         trackingConsentState
       )
 
+      ;(rumPublicApi as any).meterProvider = startRumResult.defaultMeterProvider
+
       recorderApi.onRumStart(
         startRumResult.lifeCycle,
         configuration,

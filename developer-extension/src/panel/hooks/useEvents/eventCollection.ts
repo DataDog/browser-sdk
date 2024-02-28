@@ -84,7 +84,12 @@ function listenEventsFromSdk(events: (events: SdkEvent[]) => void) {
       return
     }
     const sdkMessage = backgroundMessage.message
-    if (sdkMessage.type === 'logs' || sdkMessage.type === 'rum' || sdkMessage.type === 'telemetry') {
+    if (
+      sdkMessage.type === 'logs' ||
+      sdkMessage.type === 'rum' ||
+      sdkMessage.type === 'telemetry' ||
+      sdkMessage.type === 'metric'
+    ) {
       events([sdkMessage.payload])
     }
   })

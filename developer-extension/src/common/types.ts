@@ -1,3 +1,4 @@
+import type { MetricEvent } from '@datadog/browser-rum-core/src/metricEvent.types'
 import type { TelemetryEvent } from '../../../packages/core/src/domain/telemetry'
 import type { LogsEvent } from '../../../packages/logs/src/logsEvent.types'
 import type { RumEvent } from '../../../packages/rum-core/src/rumEvent.types'
@@ -34,6 +35,10 @@ export type SdkMessage =
   | {
       type: 'telemetry'
       payload: TelemetryEvent
+    }
+  | {
+      type: 'metric'
+      payload: MetricEvent
     }
   | {
       type: 'record'

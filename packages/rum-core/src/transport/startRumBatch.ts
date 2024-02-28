@@ -10,6 +10,7 @@ import type { LifeCycle } from '../domain/lifeCycle'
 import { LifeCycleEventType } from '../domain/lifeCycle'
 import { RumEventType } from '../rawRumEvent.types'
 import type { RumEvent } from '../rumEvent.types'
+import type { MetricEvent } from '../metricEvent.types'
 
 export function startRumBatch(
   configuration: RumConfiguration,
@@ -44,6 +45,10 @@ export function startRumBatch(
     } else {
       batch.add(serverRumEvent)
     }
+  })
+
+  lifeCycle.subscribe(LifeCycleEventType.METRIC_EVENT_COLLECTED, (metricEvent: MetricEvent & Context) => {
+    batch.add(metricEvent)
   })
 
   telemetryEventObservable.subscribe((event) => batch.add(event, isTelemetryReplicationAllowed(configuration)))

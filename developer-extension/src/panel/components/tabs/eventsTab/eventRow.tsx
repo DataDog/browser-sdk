@@ -3,6 +3,7 @@ import { IconCopy, IconDotsVertical, IconColumnInsertRight } from '@tabler/icons
 import type { ComponentPropsWithoutRef, ReactNode } from 'react'
 import React, { useRef, useState } from 'react'
 import clsx from 'clsx'
+import type { MetricEvent } from '@datadog/browser-rum-core/src/metricEvent.types'
 import type { TelemetryEvent } from '../../../../../../packages/core/src/domain/telemetry'
 import type { LogsEvent } from '../../../../../../packages/logs/src/logsEvent.types'
 import type {
@@ -14,7 +15,7 @@ import type {
   RumVitalEvent,
 } from '../../../../../../packages/rum-core/src/rumEvent.types'
 import type { SdkEvent } from '../../../sdkEvent'
-import { isTelemetryEvent, isLogEvent, isRumEvent } from '../../../sdkEvent'
+import { isMetricEvent, isTelemetryEvent, isLogEvent, isRumEvent } from '../../../sdkEvent'
 import { formatDate, formatDuration } from '../../../formatNumber'
 import { defaultFormatValue, Json } from '../../json'
 import { LazyCollapse } from '../../lazyCollapse'
@@ -33,6 +34,7 @@ const RUM_EVENT_TYPE_COLOR = {
   view: 'blue',
   resource: 'cyan',
   telemetry: 'teal',
+  metric: 'purple',
   vital: 'orange',
 }
 
@@ -132,7 +134,7 @@ export const EventRow = React.memo(
             case 'type':
               return (
                 <Cell key="type">
-                  {isRumEvent(event) || isTelemetryEvent(event) ? (
+                  {isRumEvent(event) || isTelemetryEvent(event) || isMetricEvent(event) ? (
                     <Badge variant="outline" color={RUM_EVENT_TYPE_COLOR[event.type]}>
                       {event.type}
                     </Badge>
@@ -267,6 +269,8 @@ export const EventDescription = React.memo(({ event }: { event: SdkEvent }) => {
     }
   } else if (isLogEvent(event)) {
     return <LogDescription event={event} />
+  } else if (isMetricEvent(event)) {
+    return <MetricDescription event={event} />
   } else {
     return <TelemetryDescription event={event} />
   }
@@ -281,6 +285,10 @@ function TelemetryDescription({ event }: { event: TelemetryEvent }) {
     return <Emphasis>Configuration</Emphasis>
   }
   return <>{event.telemetry.message}</>
+}
+
+function MetricDescription({ event }: { event: MetricEvent }) {
+  return <>Series collected</>
 }
 
 function ViewDescription({ event }: { event: RumViewEvent }) {
