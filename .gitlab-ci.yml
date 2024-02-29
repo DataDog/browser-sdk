@@ -136,7 +136,6 @@ build-and-lint:
     - .test-allowed-branches
   interruptible: true
   script:
-    - authanywhere
     - yarn
     - yarn build
     - yarn lint
