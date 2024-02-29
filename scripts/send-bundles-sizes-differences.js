@@ -13,7 +13,7 @@ const getLastCommonCommit = (branch) => {
     execSync('git fetch origin')
     const command = `git merge-base origin/${branch} HEAD`
     const commit = execSync(command).toString().trim()
-    const shortCommand = `git rev-parse --short ${commit}`
+    const shortCommand = `git rev-parse --short=8 ${commit}`
     return execSync(shortCommand).toString().trim()
   } catch (error) {
     console.error(`Error executing command: ${error}`)
