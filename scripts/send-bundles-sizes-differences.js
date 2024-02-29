@@ -15,11 +15,6 @@ const getLastCommonCommit = (branch) => {
   return execSync(shortCommand).toString().trim()
 }
 
-const getLatestCommit = (branch) => {
-  const command = `git rev-parse --short ${branch}`
-  return execSync(command).toString().trim()
-}
-
 async function getPRs(branch) {
   const response = await fetch(`https://api.github.com/repos/DataDog/browser-sdk/pulls?head=DataDog:${branch}`, {
     method: 'GET',
@@ -149,7 +144,7 @@ function formatName(bundleName) {
 
 runMain(async () => {
   const lastCommonCommit = getLastCommonCommit(baseBranch)
-  const latestLocalCommit = getLatestCommit(localBranch)
+  const latestLocalCommit = process.env.CI_COMMIT_SHORT_SHA
   const prs = await getPRs(localBranch)
   if (prs.length === 0) {
     console.log('No pull requests found')
