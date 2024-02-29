@@ -98,11 +98,11 @@ function loadQuery(commitSha) {
   ]
 }
 
-function query(results) {
+async function queryWithRetry(budget, retries = 4) {
   const now = Math.floor(Date.now() / 1000)
   const date = now - 30 * 24 * 60 * 60
-  return Promise.all(
-    results.map(async (budget) => {
+  for (let i = 0; i < retries; i++) {
+    try {
       const response = await fetch(
         `https://api.datadoghq.com/api/v1/query?query=${budget.queries}&from=${date}&to=${now}`,
         {
@@ -116,15 +116,25 @@ function query(results) {
       )
       const data = await response.json()
       console.log(data)
-      return {
-        name: budget.name,
-        size:
-          data.series && data.series.length > 0 && data.series[0].pointlist && data.series[0].pointlist.length > 0
-            ? data.series[0].pointlist[0][1]
-            : null,
+      if (data.series && data.series.length > 0 && data.series[0].pointlist && data.series[0].pointlist.length > 0) {
+        return {
+          name: budget.name,
+          size: data.series[0].pointlist[0][1],
+        }
       }
-    })
-  )
+    } catch (error) {
+      console.error(error)
+    }
+    await new Promise((resolve) => setTimeout(resolve, 5000))
+  }
+  return {
+    name: budget.name,
+    size: null,
+  }
+}
+
+function query(results) {
+  return Promise.all(results.map((budget) => queryWithRetry(budget)))
 }
 
 function compare(resultsBaseQuery, resultsLocalQuery) {
