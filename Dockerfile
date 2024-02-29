@@ -90,16 +90,6 @@ RUN if [ $(uname -m) = x86_64 ]; then AAA="amd64"; else AAA="arm64"; fi; curl -O
 
 RUN git config --global url."https://gitlab-ci-token:${CI_JOB_TOKEN}@gitlab.ddbuild.io/DataDog/".insteadOf "https://github.com/DataDog/"
 
-RUN ddtool_version=$(curl -L https://binaries.ddbuild.io/ddtool/LATEST 2>/dev/null | cut -dv -f2) && \
-    curl -s -L -o ddtool.tar.gz "https://binaries.ddbuild.io/ddtool/v${ddtool_version}/ddtool.tar.gz" && \
-    mkdir -p "${HOME}/.local/bin" && \
-    case "$(arch)" in x86_64) ARCH=amd64;; aarch64) ARCH=arm64;; esac && \
-    tar xzvf "ddtool.tar.gz" ./ddtool_linux_${ARCH} && \
-    mv -v ddtool_linux_${ARCH} ${HOME}/.local/bin/ddtool && \
-    rm -vf ddtool.tar.gz
-
-
-ENV PATH="${PATH}:/root/.local/bin"
     
 
 
