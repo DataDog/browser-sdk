@@ -16,19 +16,35 @@
         telemetryConfigurationSampleRate: 100,
         enableExperimentalFeatures: [],
       })
-      DD_LOGS.init({
-        clientToken: 'xxx',
-        telemetrySampleRate: 100,
-        telemetryConfigurationSampleRate: 100,
-        enableExperimentalFeatures: [],
-      })
-      const buttonClickCounter = DD_RUM.meterProvider.getMeter('default').createCounter('bastien.button_clicks')
-      function sendMetricReq() {
-        buttonClickCounter.add(1)
+      const meter = DD_RUM.meterProvider.getMeter('default')
+      function createCounter() {
+        const name = `rum.iw.${counterName.value}`
+        const counter = meter.createCounter(name)
+        setInterval(() => counter.add(1), 60000 / frequency.value)
+        const newCounter = document.createElement('li')
+        newCounter.textContent = `counter: ${name}, frequency: ${frequency.value} occurrences per minute`
+        activeCounters.appendChild(newCounter)
+
+        counterName.value = null
+        frequency.value = null
+        counterName.focus()
       }
     </script>
   </head>
   <body>
-    <button onclick="sendMetricReq()">send metrics</button>
+    <fieldset>
+      <legend>Create new counter</legend>
+      <label>
+        Name
+        <input id="counterName" type="text" placeholder="counter name" autofocus />
+      </label>
+      <label>
+        Frequency (occurrences by minute)
+        <input id="frequency" type="number" placeholder="100" />
+      </label>
+      <button onclick="createCounter()">Create counter</button>
+    </fieldset>
+    <p>Active Counters:</p>
+    <ul id="activeCounters"></ul>
   </body>
 </html>
