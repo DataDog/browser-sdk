@@ -4,6 +4,7 @@ import type { Observable } from '../tools/observable'
 import type { PageExitEvent } from '../browser/pageExitObservable'
 import type { RawError } from '../domain/error/error.types'
 import type { Encoder } from '../tools/encoder'
+import { assign } from '../tools/utils/polyfills'
 import { Batch } from './batch'
 import { createHttpRequest } from './httpRequest'
 import { createFlushController } from './flushController'
@@ -32,7 +33,12 @@ export function startBatchWithReplica<T extends Context>(
 ) {
   const primaryBatch = createBatch(configuration, primary)
   const replicaBatch = replica && createBatch(configuration, replica)
-  const spotlightBatch = spotlightReplica && createBatch(configuration, spotlightReplica)
+  const spotlightConfiguration = assign({}, configuration, {
+    batchMessagesLimit: 1,
+    batchBytesLimit: 1024,
+    flushTimeout: 1000,
+  })
+  const spotlightBatch = spotlightReplica && createBatch(spotlightConfiguration, spotlightReplica)
 
   function createBatch(
     configuration: Configuration,
