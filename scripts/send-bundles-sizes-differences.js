@@ -115,6 +115,7 @@ function query(results) {
         }
       )
       const data = await response.json()
+      console.log(data)
       return {
         name: budget.name,
         size:
@@ -152,6 +153,8 @@ runMain(async () => {
   const lastCommonCommit = getLastCommonCommit(baseBranch)
   const latestLocalCommit = process.env.CI_COMMIT_SHORT_SHA
   const prs = await getPRs(localBranch)
+  console.log(latestLocalCommit)
+  console.log(lastCommonCommit)
   if (prs.length === 0) {
     console.log('No pull requests found')
     return
