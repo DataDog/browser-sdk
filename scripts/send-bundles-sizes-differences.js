@@ -9,10 +9,16 @@ const githubAuthToken = execSync('authanywhere').toString().split(' ')[2].trim()
 const GH_TOKEN = getGithubAccessToken()
 
 const getLastCommonCommit = (branch) => {
-  const command = `git merge-base origin/${branch} HEAD`
-  const commit = execSync(command).toString().trim()
-  const shortCommand = `git rev-parse --short ${commit}`
-  return execSync(shortCommand).toString().trim()
+  try {
+    execSync('git fetch origin')
+    const command = `git merge-base origin/${branch} HEAD`
+    const commit = execSync(command).toString().trim()
+    const shortCommand = `git rev-parse --short ${commit}`
+    return execSync(shortCommand).toString().trim()
+  } catch (error) {
+    console.error(`Error executing command: ${error}`)
+    process.exit(1)
+  }
 }
 
 async function getPRs(branch) {
