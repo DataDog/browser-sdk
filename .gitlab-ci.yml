@@ -20,7 +20,6 @@ stages:
   - ci-image
   - test
   - after-tests
-  - browserstack
   - pre-deploy
   - pre-deploy-notify
   - deploy:canary
@@ -100,48 +99,6 @@ ci-image:
 # Tests
 ########################################################################################################################
 
-format:
-  extends:
-    - .base-configuration
-    - .test-allowed-branches
-  interruptible: true
-  script:
-    - yarn
-    - yarn format
-
-woke:
-  extends:
-    - .base-configuration
-    - .test-allowed-branches
-  interruptible: true
-  script:
-    - yarn
-    - yarn woke
-
-typecheck:
-  extends:
-    - .base-configuration
-    - .test-allowed-branches
-  interruptible: true
-  script:
-    - yarn
-    - yarn build
-    - yarn typecheck
-    - scripts/cli typecheck test/app
-    - scripts/cli typecheck test/e2e
-
-build-and-lint:
-  extends:
-    - .base-configuration
-    - .test-allowed-branches
-  interruptible: true
-  script:
-    - yarn
-    - yarn build
-    - yarn lint
-    - node scripts/check-packages.js
-    - node scripts/export-bundles-sizes.js
-
 build-bundle:
   extends:
     - .base-configuration
@@ -150,56 +107,6 @@ build-bundle:
   script:
     - yarn
     - yarn build:bundle
-
-compatibility:
-  extends:
-    - .base-configuration
-    - .test-allowed-branches
-  interruptible: true
-  script:
-    - yarn
-    - yarn test:compat:tsc
-    - yarn test:compat:ssr
-
-unit:
-  extends:
-    - .base-configuration
-    - .test-allowed-branches
-  interruptible: true
-  artifacts:
-    reports:
-      junit: test-report/unit/*.xml
-  script:
-    - yarn
-    - yarn test:unit
-    - ./scripts/test/codecov.sh
-  after_script:
-    - node ./scripts/test/export-test-result.js unit
-
-e2e:
-  extends:
-    - .base-configuration
-    - .test-allowed-branches
-  interruptible: true
-  artifacts:
-    when: always
-    paths: ['test-report/e2e/specs.log']
-    reports:
-      junit: test-report/e2e/*.xml
-  script:
-    - yarn
-    - FORCE_COLOR=1 yarn test:e2e
-  after_script:
-    - node ./scripts/test/export-test-result.js e2e
-
-check-licenses:
-  extends:
-    - .base-configuration
-    - .test-allowed-branches
-  interruptible: true
-  script:
-    - yarn
-    - node --no-warnings scripts/check-licenses.js
 
 check-release:
   extends:
@@ -210,40 +117,6 @@ check-release:
     - yarn
     - BUILD_MODE=release yarn build
     - node scripts/release/check-release.js
-
-unit-bs:
-  stage: browserstack
-  extends:
-    - .base-configuration
-    - .bs-allowed-branches
-  interruptible: true
-  resource_group: browserstack
-  artifacts:
-    reports:
-      junit: test-report/unit-bs/*.xml
-  script:
-    - yarn
-    - ./scripts/test/ci-bs.sh test:unit
-  after_script:
-    - node ./scripts/test/export-test-result.js unit-bs
-
-e2e-bs:
-  stage: browserstack
-  extends:
-    - .base-configuration
-    - .bs-allowed-branches
-  interruptible: true
-  resource_group: browserstack
-  artifacts:
-    when: always
-    paths: ['test-report/e2e-bs/specs.log']
-    reports:
-      junit: test-report/e2e-bs/*.xml
-  script:
-    - yarn
-    - FORCE_COLOR=1 ./scripts/test/ci-bs.sh test:e2e
-  after_script:
-    - node ./scripts/test/export-test-result.js e2e-bs
 
 ########################################################################################################################
 # Deploy
@@ -475,18 +348,6 @@ merge-into-staging:
     - yarn
     - node scripts/staging-ci/merge-into-staging.js
 
-check-staging-merge:
-  stage: test
-  extends:
-    - .base-configuration
-    - .feature-branches
-  interruptible: true
-  before_script:
-    - eval $(ssh-agent -s)
-  script:
-    - yarn
-    - node scripts/staging-ci/check-staging-merge.js
-
 # A noop job that's used to signal to `to-staging` that it can merge to the
 # staging branch, even though the pipeline is still running
 tests-passed:
@@ -497,20 +358,6 @@ tests-passed:
   interruptible: true
   script:
     - 'true'
-
-# in after-tests to not block `to-staging` merge
-check-squash-into-staging:
-  stage: after-tests
-  allow_failure: true
-  extends:
-    - .base-configuration
-    - .feature-branches
-  interruptible: true
-  before_script:
-    - eval $(ssh-agent -s)
-  script:
-    - yarn
-    - node scripts/staging-ci/check-squash-into-staging.js
 
 ########################################################################################################################
 # Bump e2e chrome version
