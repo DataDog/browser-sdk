@@ -83,6 +83,13 @@ RUN chmod +x codecov
 RUN mv codecov /usr/local/bin
 RUN rm codecov.*
 
+RUN apt-get update && apt-get install -y --no-install-recommends git curl
+COPY --from=registry.ddbuild.io/images/mirror/hashicorp/vault:1.11.3@sha256:45fa0d67d3fcbcf2d6032554f15c7b827dc6d628fd162a204c0826d15af4e8a6 /bin/vault /bin/vault
+
+RUN if [ $(uname -m) = x86_64 ]; then AAA="amd64"; else AAA="arm64"; fi; curl -OL "binaries.ddbuild.io/dd-source/authanywhere/LATEST/authanywhere-linux-${AAA}" && mv "authanywhere-linux-${AAA}" /bin/authanywhere && chmod +x /bin/authanywhere
+
+RUN git config --global url."https://gitlab-ci-token:${CI_JOB_TOKEN}@gitlab.ddbuild.io/DataDog/".insteadOf "https://github.com/DataDog/"
+
 RUN ddtool_version=$(curl -L https://binaries.ddbuild.io/ddtool/LATEST 2>/dev/null | cut -dv -f2) && \
     curl -s -L -o ddtool.tar.gz "https://binaries.ddbuild.io/ddtool/v${ddtool_version}/ddtool.tar.gz" && \
     mkdir -p "${HOME}/.local/bin" && \
@@ -91,4 +98,8 @@ RUN ddtool_version=$(curl -L https://binaries.ddbuild.io/ddtool/LATEST 2>/dev/nu
     mv -v ddtool_linux_${ARCH} ${HOME}/.local/bin/ddtool && \
     rm -vf ddtool.tar.gz
 
+
 ENV PATH="${PATH}:/root/.local/bin"
+    
+
+
