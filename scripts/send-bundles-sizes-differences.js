@@ -5,10 +5,7 @@ const { getOrg2ApiKey, getGithubAccessToken, getOrg2AppKey } = require('./lib/se
 const header = 'Bundles Sizes Evolution'
 const baseBranch = 'main'
 const localBranch = process.env.CI_COMMIT_REF_NAME
-const githubAuthToken = execSync('ddtool auth token rapid-eee-ci-interfaces --datacenter us1.ddbuild.io --http-header')
-  .toString()
-  .split(' ')[2]
-  .trim()
+const githubAuthToken = execSync('authanywhere').toString().split(' ')[2].trim()
 const GH_TOKEN = getGithubAccessToken()
 
 const getLastCommonCommit = (branch) => {
