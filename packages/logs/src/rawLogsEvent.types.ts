@@ -41,6 +41,7 @@ export interface RawNetworkLogsEvent extends CommonRawLogsEvent {
     method: 'POST' | 'GET' | 'HEAD' | 'PUT' | 'DELETE' | 'PATCH'
     status_code: number
     url: string
+    isAborted: boolean
     [k: string]: unknown
   }
 }

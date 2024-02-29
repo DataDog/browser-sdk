@@ -56,6 +56,7 @@ export function startNetworkErrorCollection(configuration: LogsConfiguration, li
             method: request.method as any, // Cast resource method because of case mismatch cf issue RUMF-1152
             status_code: request.status,
             url: request.url,
+            isAborted: request.isAborted
           },
           status: StatusType.error,
           origin: ErrorSource.NETWORK,

@@ -78,6 +78,7 @@ describe('network error collection', () => {
           method: 'GET',
           status_code: 503,
           url: 'http://fake.com/',
+          isAborted: false
         },
       })
       done()

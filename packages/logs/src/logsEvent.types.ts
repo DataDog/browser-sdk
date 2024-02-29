@@ -106,6 +106,8 @@ export interface LogsEvent {
      */
     url: string
 
+    isAborted: boolean
+
     [k: string]: unknown
   }
 
