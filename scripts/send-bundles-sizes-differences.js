@@ -1,5 +1,5 @@
 const { execSync } = require('child_process')
-const { runMain, fetch } = require('./lib/execution-utils')
+const { runMain, timeout } = require('./lib/execution-utils')
 const { getOrg2ApiKey, getGithubAccessToken, getOrg2AppKey } = require('./lib/secrets')
 
 const header = 'Bundles Sizes Evolution'
@@ -27,6 +27,9 @@ async function getPRs(branch) {
       Authorization: `token ${GH_TOKEN}`,
     },
   })
+  if (!response.ok) {
+    throw new Error(`HTTP Error Response: ${response.status} ${response.statusText}`)
+  }
   return response.body ? response.json() : null
 }
 
@@ -53,13 +56,16 @@ async function updateOrAddComment(difference, resultsBaseQuery, resultsLocalQuer
     org: 'DataDog',
     repo: 'browser-sdk',
   }
-  await fetch('https://pr-commenter.us1.ddbuild.io/internal/cit/pr-comment', {
+  const response = await fetch('https://pr-commenter.us1.ddbuild.io/internal/cit/pr-comment', {
     method,
     headers: {
       Authorization: `Bearer ${githubAuthToken}`,
     },
     body: JSON.stringify(payload),
   })
+  if (!response.ok) {
+    throw new Error(`HTTP Error Response: ${response.status} ${response.statusText}`)
+  }
 }
 
 async function getCommentId(prNumber) {
@@ -69,6 +75,9 @@ async function getCommentId(prNumber) {
       Authorization: `token ${GH_TOKEN}`,
     },
   })
+  if (!response.ok) {
+    throw new Error(`HTTP Error Response: ${response.status} ${response.statusText}`)
+  }
   const comments = await response.json()
   const targetComment = comments.filter((comment) => comment.body.startsWith('## Bundles Sizes Evolution'))[0]
   if (targetComment !== undefined) {
@@ -112,6 +121,9 @@ async function queryWithRetry(budget, retries = 4) {
         },
       }
     )
+    if (!response.ok) {
+      throw new Error(`HTTP Error Response: ${response.status} ${response.statusText}`)
+    }
     const data = await response.json()
     if (data.series && data.series.length > 0 && data.series[0].pointlist && data.series[0].pointlist.length > 0) {
       return {
@@ -119,7 +131,7 @@ async function queryWithRetry(budget, retries = 4) {
         size: data.series[0].pointlist[0][1],
       }
     }
-    await new Promise((resolve) => setTimeout(resolve, 5000))
+    await timeout(5000)
   }
   return {
     name: budget.name,
