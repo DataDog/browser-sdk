@@ -1,7 +1,7 @@
 variables:
   CURRENT_STAGING: staging-09
   APP: 'browser-sdk'
-  CURRENT_CI_IMAGE: 59
+  CURRENT_CI_IMAGE: 60
   BUILD_STABLE_REGISTRY: '486234852809.dkr.ecr.us-east-1.amazonaws.com'
   CI_IMAGE: '$BUILD_STABLE_REGISTRY/ci/$APP:$CURRENT_CI_IMAGE'
   GIT_REPOSITORY: 'git@github.com:DataDog/browser-sdk.git'
@@ -141,6 +141,7 @@ build-and-lint:
     - yarn lint
     - node scripts/check-packages.js
     - node scripts/export-bundles-sizes.js
+    - node scripts/send-bundles-sizes-differences.js
 
 build-bundle:
   extends:
