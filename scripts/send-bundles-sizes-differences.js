@@ -5,8 +5,8 @@ const { getOrg2ApiKey, getGithubAccessToken, getOrg2AppKey } = require('./lib/se
 const header = 'Bundles Sizes Evolution'
 const baseBranch = 'main'
 const localBranch = process.env.CI_COMMIT_REF_NAME
-const githubAuthToken = execSync('authanywhere').toString().split(' ')[2].trim()
-const GH_TOKEN = getGithubAccessToken()
+const prCommenterAuthToken = execSync('authanywhere').toString().split(' ')[2].trim()
+const githubToken = getGithubAccessToken()
 
 const getLastCommonCommit = (branch) => {
   try {
@@ -24,7 +24,7 @@ async function getPRs(branch) {
   const response = await fetch(`https://api.github.com/repos/DataDog/browser-sdk/pulls?head=DataDog:${branch}`, {
     method: 'GET',
     headers: {
-      Authorization: `token ${GH_TOKEN}`,
+      Authorization: `token ${githubToken}`,
     },
   })
   if (!response.ok) {
@@ -34,7 +34,7 @@ async function getPRs(branch) {
 }
 
 function createMessage(difference, resultsBaseQuery, resultsLocalQuery) {
-  let message = '| Bundle | Base Size | Current Size | 𝚫% |\n| --- | --- | --- | --- |\n'
+  let message = '| Bundle | Base Size | Local Size | 𝚫% |\n| --- | --- | --- | --- |\n'
 
   difference.forEach((diff, index) => {
     const baseSize = resultsBaseQuery[index].size
@@ -59,7 +59,7 @@ async function updateOrAddComment(difference, resultsBaseQuery, resultsLocalQuer
   const response = await fetch('https://pr-commenter.us1.ddbuild.io/internal/cit/pr-comment', {
     method,
     headers: {
-      Authorization: `Bearer ${githubAuthToken}`,
+      Authorization: `Bearer ${prCommenterAuthToken}`,
     },
     body: JSON.stringify(payload),
   })
@@ -72,7 +72,7 @@ async function getCommentId(prNumber) {
   const response = await fetch(`https://api.github.com/repos/DataDog/browser-sdk/issues/${prNumber}/comments`, {
     method: 'GET',
     headers: {
-      Authorization: `token ${GH_TOKEN}`,
+      Authorization: `token ${githubToken}`,
     },
   })
   if (!response.ok) {
@@ -139,7 +139,7 @@ async function queryWithRetry(budget, retries = 4) {
   }
 }
 
-function query(results) {
+function fetchAllPackagesBundleSize(results) {
   return Promise.all(results.map((budget) => queryWithRetry(budget)))
 }
 
@@ -173,9 +173,9 @@ runMain(async () => {
     console.log('No pull requests found')
     return
   }
-  const resultsBaseQuery = await query(loadQuery(lastCommonCommit))
-  const resultsLocalQuery = await query(loadQuery(latestLocalCommit))
-  const difference = compare(resultsBaseQuery, resultsLocalQuery)
+  const mainBranchBundleSizes = await fetchAllPackagesBundleSize(loadQuery(lastCommonCommit))
+  const currentBranchBundleSizes = await fetchAllPackagesBundleSize(loadQuery(latestLocalCommit))
+  const difference = compare(mainBranchBundleSizes, currentBranchBundleSizes)
   const commentId = await getCommentId(prs[0].number)
-  await updateOrAddComment(difference, resultsBaseQuery, resultsLocalQuery, prs[0].number, commentId)
+  await updateOrAddComment(difference, mainBranchBundleSizes, currentBranchBundleSizes, prs[0].number, commentId)
 })
