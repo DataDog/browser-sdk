@@ -82,3 +82,8 @@ RUN shasum -a 256 -c codecov.SHA256SUM
 RUN chmod +x codecov
 RUN mv codecov /usr/local/bin
 RUN rm codecov.*
+
+RUN apt-get update && apt-get install -y --no-install-recommends git curl
+RUN if [ $(uname -m) = x86_64 ]; then AAA="amd64"; else AAA="arm64"; fi; curl -OL "binaries.ddbuild.io/dd-source/authanywhere/LATEST/authanywhere-linux-${AAA}" && mv "authanywhere-linux-${AAA}" /bin/authanywhere && chmod +x /bin/authanywhere 
+
+
