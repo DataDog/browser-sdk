@@ -34,7 +34,7 @@ async function getPRs(branch) {
 }
 
 function createMessage(difference, resultsBaseQuery, resultsLocalQuery) {
-  let message = '| Bundle | Base Size | Current Size | Difference |\n| --- | --- | --- | --- |\n'
+  let message = '| Bundle | Base Size | Current Size | 𝚫% |\n| --- | --- | --- | --- |\n'
 
   difference.forEach((diff, index) => {
     const baseSize = resultsBaseQuery[index].size
