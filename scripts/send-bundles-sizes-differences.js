@@ -1,5 +1,5 @@
 const { execSync } = require('child_process')
-const { runMain } = require('./lib/execution-utils')
+const { runMain, fetch } = require('./lib/execution-utils')
 const { getOrg2ApiKey, getGithubAccessToken, getOrg2AppKey } = require('./lib/secrets')
 
 const header = 'Bundles Sizes Evolution'
@@ -16,8 +16,7 @@ const getLastCommonCommit = (branch) => {
     const shortCommand = `git rev-parse --short=8 ${commit}`
     return execSync(shortCommand).toString().trim()
   } catch (error) {
-    console.error(`Error executing command: ${error}`)
-    process.exit(1)
+    throw new Error('Failed to get last common commit', { cause: error })
   }
 }
 
@@ -102,27 +101,23 @@ async function queryWithRetry(budget, retries = 4) {
   const now = Math.floor(Date.now() / 1000)
   const date = now - 30 * 24 * 60 * 60
   for (let i = 0; i < retries; i++) {
-    try {
-      const response = await fetch(
-        `https://api.datadoghq.com/api/v1/query?query=${budget.queries}&from=${date}&to=${now}`,
-        {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-            'DD-API-KEY': getOrg2ApiKey(),
-            'DD-APPLICATION-KEY': getOrg2AppKey(),
-          },
-        }
-      )
-      const data = await response.json()
-      if (data.series && data.series.length > 0 && data.series[0].pointlist && data.series[0].pointlist.length > 0) {
-        return {
-          name: budget.name,
-          size: data.series[0].pointlist[0][1],
-        }
+    const response = await fetch(
+      `https://api.datadoghq.com/api/v1/query?query=${budget.queries}&from=${date}&to=${now}`,
+      {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'DD-API-KEY': getOrg2ApiKey(),
+          'DD-APPLICATION-KEY': getOrg2AppKey(),
+        },
       }
-    } catch (error) {
-      console.error(error)
+    )
+    const data = await response.json()
+    if (data.series && data.series.length > 0 && data.series[0].pointlist && data.series[0].pointlist.length > 0) {
+      return {
+        name: budget.name,
+        size: data.series[0].pointlist[0][1],
+      }
     }
     await new Promise((resolve) => setTimeout(resolve, 5000))
   }
