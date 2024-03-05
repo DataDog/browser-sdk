@@ -15,8 +15,10 @@ runMain(async () => {
   const latestLocalCommit = process.env.CI_COMMIT_SHORT_SHA
   const prs = await getPRs(LOCAL_BRANCH)
   if (prs.length === 0) {
-    console.log('No pull requests found')
-    return
+    throw new Error('No pull requests found for the branch')
+  }
+  if (prs.length > 1) {
+    throw new Error('More than one PR found for the branch')
   }
   const mainBranchBundleSizes = await fetchAllPackagesBundleSize(loadQuery(lastCommonCommit))
   const currentBranchBundleSizes = await fetchAllPackagesBundleSize(loadQuery(latestLocalCommit))
@@ -29,14 +31,15 @@ function getLastCommonCommit(baseBranch) {
   try {
     command`git fetch origin`.run()
     const commandOutput = command`git merge-base origin/${baseBranch} HEAD`.run()
+    // SHA commit is truncated to 8 caracters as bundle sizes commit are exported in short format to logs for convenience and readability.
     return commandOutput.trim().substring(0, 8)
   } catch (error) {
     throw new Error('Failed to get last common commit', { cause: error })
   }
 }
 
-async function getPRs(branch) {
-  const response = await fetch(`https://api.github.com/repos/DataDog/browser-sdk/pulls?head=DataDog:${branch}`, {
+async function getPRs(localBranch) {
+  const response = await fetch(`https://api.github.com/repos/DataDog/browser-sdk/pulls?head=DataDog:${localBranch}`, {
     method: 'GET',
     headers: {
       Authorization: `token ${GITHUB_TOKEN}`,
@@ -69,11 +72,11 @@ function loadQuery(commitSha) {
   ]
 }
 
-function fetchAllPackagesBundleSize(results) {
-  return Promise.all(results.map((budget) => queryWithRetry(budget)))
+function fetchAllPackagesBundleSize(bundleSizeQueries) {
+  return Promise.all(bundleSizeQueries.map((budget) => fetchBundleSizesMetrics(budget)))
 }
 
-async function queryWithRetry(budget, retries = 4) {
+async function fetchBundleSizesMetrics(budget, retries = 4) {
   const now = Math.floor(Date.now() / 1000)
   const date = now - 30 * ONE_DAY_IN_SECOND
   for (let i = 0; i < retries; i++) {
@@ -162,8 +165,8 @@ async function updateOrAddComment(difference, resultsBaseQuery, resultsLocalQuer
 function createMessage(difference, resultsBaseQuery, resultsLocalQuery) {
   let message = '| Bundle | Base Size | Local Size | 𝚫% |\n| --- | --- | --- | --- |\n'
   difference.forEach((diff, index) => {
-    const baseSize = `${(resultsBaseQuery[index].size / 1024).toFixed(1)} kB`
-    const localSize = `${(resultsLocalQuery[index].size / 1024).toFixed(1)} kB`
+    const baseSize = formatSize(resultsBaseQuery[index].size)
+    const localSize = formatSize(resultsLocalQuery[index].size)
     const sign = diff.percentageChange > 0 ? '+' : ''
     message += `| ${formatBundleName(diff.name)} | ${baseSize} | ${localSize} | ${sign}${diff.percentageChange}% |\n`
   })
@@ -176,4 +179,8 @@ function formatBundleName(bundleName) {
     .split('_')
     .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
     .join(' ')
+}
+
+function formatSize(size) {
+  return `<code title="${size}">${(size / 1024).toFixed(1)} kB</code>`
 }
