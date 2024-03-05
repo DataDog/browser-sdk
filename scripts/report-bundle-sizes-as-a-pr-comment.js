@@ -2,7 +2,7 @@ const { command } = require('./lib/command')
 const { runMain, timeout } = require('./lib/execution-utils')
 const { getOrg2ApiKey, getGithubAccessToken, getOrg2AppKey } = require('./lib/secrets')
 
-const PR_HEADER = 'Bundles Sizes Evolution'
+const PR_COMMENT_HEADER = 'Bundles Sizes Evolution'
 const BASE_BRANCH = process.env.MAIN_BRANCH
 const LOCAL_BRANCH = process.env.CI_COMMIT_REF_NAME
 const PR_COMMENTER_AUTH_TOKEN = command`authanywhere`.run().split(' ')[2].trim()
@@ -143,7 +143,7 @@ async function updateOrAddComment(difference, resultsBaseQuery, resultsLocalQuer
   const payload = {
     pr_url: `https://github.com/DataDog/browser-sdk/pull/${prNumber}`,
     message,
-    header: PR_HEADER,
+    header: PR_COMMENT_HEADER,
     org: 'DataDog',
     repo: 'browser-sdk',
   }
