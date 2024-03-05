@@ -8,6 +8,7 @@ const LOCAL_BRANCH = process.env.CI_COMMIT_REF_NAME
 const PR_COMMENTER_AUTH_TOKEN = command`authanywhere`.run().split(' ')[2].trim()
 const GITHUB_TOKEN = getGithubAccessToken()
 const ONE_DAY_IN_SECOND = 24 * 60 * 60
+const TIMEOUT_DURATION_MS = 5000
 
 runMain(async () => {
   const lastCommonCommit = getLastCommonCommit(BASE_BRANCH, LOCAL_BRANCH)
@@ -96,7 +97,7 @@ async function queryWithRetry(budget, retries = 4) {
         size: data.series[0].pointlist[0][1],
       }
     }
-    await timeout(5000)
+    await timeout(TIMEOUT_DURATION_MS)
   }
   return {
     name: budget.name,
