@@ -467,7 +467,7 @@ __metadata:
     "@mantine/hooks": 7.6.1
     "@tabler/icons-react": 2.47.0
     "@types/chrome": 0.0.262
-    "@types/react": 18.2.62
+    "@types/react": 18.2.63
     "@types/react-dom": 18.2.19
     "@webextension-toolbox/webpack-webextension-plugin": 3.3.1
     clsx: 2.1.0
@@ -2093,25 +2093,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/react@npm:*":
-  version: 18.2.59
-  resolution: "@types/react@npm:18.2.59"
+"@types/react@npm:*, @types/react@npm:18.2.63":
+  version: 18.2.63
+  resolution: "@types/react@npm:18.2.63"
   dependencies:
     "@types/prop-types": "*"
     "@types/scheduler": "*"
     csstype: ^3.0.2
-  checksum: 0b6c72d22817039b90b889eec1a3099ed9b194b2971f6322671e6a5eddc384356e0fd1d7b0c0d0e92e828c9515b85458d19f923d9e99dc49694850acc5190650
-  languageName: node
-  linkType: hard
-
-"@types/react@npm:18.2.62":
-  version: 18.2.62
-  resolution: "@types/react@npm:18.2.62"
-  dependencies:
-    "@types/prop-types": "*"
-    "@types/scheduler": "*"
-    csstype: ^3.0.2
-  checksum: f3979e8d6eadbd27fdbbe10aeaefc164b5a8a1af1df1a099cf8a950b4ea0a6cb6a7b36ff26fccecafcbb9086a908806f4f3b3c826909d97de31fc6bf572feaf1
+  checksum: f3d496b9e3c40fe984aa2f22e0f3776a4f0be223f436ad3a2b79fed4b496ba1549999083408c2c975e5c8b029bfc9e8a2924788325e00de205cf70a10ef772d0
   languageName: node
   linkType: hard
 
