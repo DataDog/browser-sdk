@@ -271,6 +271,22 @@ describe('session store', () => {
           expect(renewSpy).not.toHaveBeenCalled()
         }
       )
+
+      it('when throttled, expandOrRenewSession() should not renew the session if expire() is called right after', () => {
+        setSessionInStore(FakeTrackingType.TRACKED, FIRST_ID)
+        setupSessionStore()
+
+        // The first call is not throttled (leading execution)
+        sessionStoreManager.expandOrRenewSession()
+
+        sessionStoreManager.expandOrRenewSession()
+        sessionStoreManager.expire()
+
+        clock.tick(STORAGE_POLL_DELAY)
+
+        expect(sessionStoreManager.getSession().id).toBeUndefined()
+        expect(renewSpy).not.toHaveBeenCalled()
+      })
     })
 
     describe('expand session', () => {
