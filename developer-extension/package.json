@@ -9,7 +9,7 @@
   "devDependencies": {
     "@tabler/icons-react": "2.47.0",
     "@types/chrome": "0.0.262",
-    "@types/react": "18.2.59",
+    "@types/react": "18.2.63",
     "@types/react-dom": "18.2.19",
     "@webextension-toolbox/webpack-webextension-plugin": "3.3.1",
     "copy-webpack-plugin": "12.0.2",
@@ -22,8 +22,8 @@
     "@datadog/browser-core": "workspace:*",
     "@datadog/browser-logs": "workspace:*",
     "@datadog/browser-rum": "workspace:*",
-    "@mantine/core": "7.6.0",
-    "@mantine/hooks": "7.6.0",
+    "@mantine/core": "7.6.1",
+    "@mantine/hooks": "7.6.1",
     "clsx": "2.1.0",
     "react": "18.2.0",
     "react-dom": "18.2.0"
