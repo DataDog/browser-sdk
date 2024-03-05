@@ -15,7 +15,8 @@ runMain(async () => {
   const latestLocalCommit = process.env.CI_COMMIT_SHORT_SHA
   const prs = await getPRs(LOCAL_BRANCH)
   if (prs.length === 0) {
-    throw new Error('No pull requests found for the branch')
+    console.log('No pull requests found for the branch')
+    process.exit(0)
   }
   if (prs.length > 1) {
     throw new Error('More than one PR found for the branch')
