@@ -21,7 +21,7 @@ describe('error collection', () => {
     setupBuilder = setup()
       .withViewContexts(viewContextsStub)
       .withPageStateHistory({
-        isInActivePageStateAt: () => true,
+        wasInPageStateAt: () => true,
       })
       .beforeBuild(({ lifeCycle, pageStateHistory, featureFlagContexts }) => {
         ;({ addError } = doStartErrorCollection(lifeCycle, pageStateHistory, featureFlagContexts))

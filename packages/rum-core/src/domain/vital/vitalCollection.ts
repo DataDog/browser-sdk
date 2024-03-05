@@ -1,9 +1,11 @@
 import type { ClocksState, Duration, Context } from '@datadog/browser-core'
 import { combine, elapsed, generateUUID } from '@datadog/browser-core'
-import { LifeCycleEventType } from '../lifeCycle'
 import type { LifeCycle, RawRumEventCollectedData } from '../lifeCycle'
+import { LifeCycleEventType } from '../lifeCycle'
 import type { RawRumVitalEvent } from '../../rawRumEvent.types'
 import { RumEventType, VitalType } from '../../rawRumEvent.types'
+import type { PageStateHistory } from '../contexts/pageStateHistory'
+import { PageState } from '../contexts/pageStateHistory'
 
 export interface DurationVitalStart {
   name: string
@@ -25,8 +27,18 @@ interface DurationVital {
   context?: Context
 }
 
-export function startVitalCollection(lifeCycle: LifeCycle) {
+export function startVitalCollection(lifeCycle: LifeCycle, pageStateHistory: PageStateHistory) {
   const vitalStartsByName = new Map<string, DurationVitalStart>()
+
+  lifeCycle.subscribe(LifeCycleEventType.SESSION_RENEWED, () => {
+    // Discard all the vitals that have not been stopped to avoid memory leaks
+    vitalStartsByName.clear()
+  })
+
+  function isValid(vital: DurationVital) {
+    return !pageStateHistory.wasInPageStateDuringPeriod(PageState.FROZEN, vital.startClocks.relative, vital.value)
+  }
+
   return {
     startDurationVital: (vitalStart: DurationVitalStart) => {
       vitalStartsByName.set(vitalStart.name, vitalStart)
@@ -36,16 +48,22 @@ export function startVitalCollection(lifeCycle: LifeCycle) {
       if (!vitalStart) {
         return
       }
-      const vital = {
-        name: vitalStart.name,
-        type: VitalType.DURATION,
-        startClocks: vitalStart.startClocks,
-        value: elapsed(vitalStart.startClocks.timeStamp, vitalStop.stopClocks.timeStamp),
-        context: combine(vitalStart.context, vitalStop.context),
+      const vital = buildDurationVital(vitalStart, vitalStop)
+      vitalStartsByName.delete(vital.name)
+      if (isValid(vital)) {
+        lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, processVital(vital))
       }
-      lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, processVital(vital))
-      vitalStartsByName.delete(vitalStop.name)
     },
+  }
+}
+
+function buildDurationVital(vitalStart: DurationVitalStart, vitalStop: DurationVitalStop) {
+  return {
+    name: vitalStart.name,
+    type: VitalType.DURATION,
+    startClocks: vitalStart.startClocks,
+    value: elapsed(vitalStart.startClocks.timeStamp, vitalStop.stopClocks.timeStamp),
+    context: combine(vitalStart.context, vitalStop.context),
   }
 }
 

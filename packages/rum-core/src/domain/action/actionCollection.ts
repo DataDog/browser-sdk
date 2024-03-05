@@ -8,6 +8,7 @@ import { LifeCycleEventType } from '../lifeCycle'
 import type { RumConfiguration } from '../configuration'
 import type { CommonContext } from '../contexts/commonContext'
 import type { PageStateHistory } from '../contexts/pageStateHistory'
+import { PageState } from '../contexts/pageStateHistory'
 import type { ActionContexts, ClickAction } from './trackClickActions'
 import { trackClickActions } from './trackClickActions'
 
@@ -95,7 +96,7 @@ function processAction(
       },
       date: action.startClocks.timeStamp,
       type: RumEventType.ACTION as const,
-      view: { in_foreground: pageStateHistory.isInActivePageStateAt(action.startClocks.relative) },
+      view: { in_foreground: pageStateHistory.wasInPageStateAt(PageState.ACTIVE, action.startClocks.relative) },
     },
     autoActionProperties
   )

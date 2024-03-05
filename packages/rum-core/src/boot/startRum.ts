@@ -170,7 +170,7 @@ export function startRum(
   const { stop: stopPerformanceCollection } = startPerformanceCollection(lifeCycle, configuration)
   cleanupTasks.push(stopPerformanceCollection)
 
-  const vitalCollection = startVitalCollection(lifeCycle)
+  const vitalCollection = startVitalCollection(lifeCycle, pageStateHistory)
   const internalContext = startInternalContext(
     configuration.applicationId,
     session,

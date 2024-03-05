@@ -115,7 +115,8 @@ export function setup(): TestSetupBuilder {
     findAll: () => undefined,
     addPageState: noop,
     stop: noop,
-    isInActivePageStateAt: () => false,
+    wasInPageStateAt: () => false,
+    wasInPageStateDuringPeriod: () => false,
   }
   const FAKE_APP_ID = 'appId'
   const configuration: RumConfiguration = {

@@ -1,9 +1,9 @@
-import type { RelativeTime, ServerDuration } from '@datadog/browser-core'
+import type { RelativeTime, ServerDuration, Duration } from '@datadog/browser-core'
 import type { Clock } from '../../../../core/test'
 import { mockClock, registerCleanupTask } from '../../../../core/test'
 import type { RumConfiguration } from '../configuration'
 import type { PageStateHistory } from './pageStateHistory'
-import { startPageStateHistory, PageState } from './pageStateHistory'
+import { PageState, startPageStateHistory } from './pageStateHistory'
 
 describe('pageStateHistory', () => {
   let pageStateHistory: PageStateHistory
@@ -84,17 +84,17 @@ describe('pageStateHistory', () => {
     })
   })
 
-  describe('isInActivePageStateAt', () => {
-    it('should return true if the page was active at the given time', () => {
+  describe('wasInPageStateAt', () => {
+    it('should return true if the page was in the given state at the given time', () => {
       pageStateHistory.addPageState(PageState.ACTIVE)
 
       clock.tick(10)
       pageStateHistory.addPageState(PageState.PASSIVE)
 
-      expect(pageStateHistory.isInActivePageStateAt(0 as RelativeTime)).toEqual(true)
+      expect(pageStateHistory.wasInPageStateAt(PageState.ACTIVE, 0 as RelativeTime)).toEqual(true)
     })
 
-    it('should return false if the page was not active at the given time', () => {
+    it('should return false if the page was not in the given state at the given time', () => {
       const maxPageStateEntriesSelectable = 1
       pageStateHistory = startPageStateHistory(configuration, maxPageStateEntriesSelectable)
       registerCleanupTask(pageStateHistory.stop)
@@ -102,7 +102,43 @@ describe('pageStateHistory', () => {
       pageStateHistory.addPageState(PageState.ACTIVE)
       clock.tick(10)
       pageStateHistory.addPageState(PageState.PASSIVE)
-      expect(pageStateHistory.isInActivePageStateAt(10 as RelativeTime)).toEqual(false)
+      expect(pageStateHistory.wasInPageStateAt(PageState.ACTIVE, 11 as RelativeTime)).toEqual(false)
+    })
+  })
+
+  describe('wasInPageSateDuringPeriod', () => {
+    it('should return true if the page was in the given state during the given period', () => {
+      pageStateHistory.addPageState(PageState.ACTIVE)
+      clock.tick(10)
+      pageStateHistory.addPageState(PageState.PASSIVE)
+      clock.tick(10)
+      pageStateHistory.addPageState(PageState.HIDDEN)
+      clock.tick(10)
+
+      expect(pageStateHistory.wasInPageStateDuringPeriod(PageState.PASSIVE, 0 as RelativeTime, 30 as Duration)).toEqual(
+        true
+      )
+    })
+
+    it('should return false if the page was not in the given state during the given period', () => {
+      pageStateHistory.addPageState(PageState.ACTIVE)
+      clock.tick(10)
+      pageStateHistory.addPageState(PageState.PASSIVE)
+      clock.tick(10)
+      pageStateHistory.addPageState(PageState.HIDDEN)
+      clock.tick(10)
+
+      expect(pageStateHistory.wasInPageStateDuringPeriod(PageState.FROZEN, 0 as RelativeTime, 30 as Duration)).toEqual(
+        false
+      )
+    })
+
+    it('should return false if there was no page state during the given period', () => {
+      // pageStateHistory is initialized with the current page state
+      // look for a period before the initialization to make sure there is no page state
+      expect(
+        pageStateHistory.wasInPageStateDuringPeriod(PageState.ACTIVE, -40 as RelativeTime, 30 as Duration)
+      ).toEqual(false)
     })
   })
 })
