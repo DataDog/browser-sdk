@@ -27,6 +27,7 @@ runMain(async () => {
 
 function getLastCommonCommit(baseBranch) {
   try {
+    command`git fetch origin`.run()
     const commandOutput = command`git merge-base origin/${baseBranch} HEAD`.run()
     return commandOutput.trim().substring(0, 8)
   } catch (error) {
