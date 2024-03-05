@@ -134,9 +134,11 @@ describe('pageStateHistory', () => {
     })
 
     it('should return false if there was no page state during the given period', () => {
-      expect(pageStateHistory.wasInPageStateDuringPeriod(PageState.ACTIVE, 0 as RelativeTime, 30 as Duration)).toEqual(
-        false
-      )
+      // pageStateHistory is initialized with the current page state
+      // look for a period before the initialization to make sure there is no page state
+      expect(
+        pageStateHistory.wasInPageStateDuringPeriod(PageState.ACTIVE, -40 as RelativeTime, 30 as Duration)
+      ).toEqual(false)
     })
   })
 })
