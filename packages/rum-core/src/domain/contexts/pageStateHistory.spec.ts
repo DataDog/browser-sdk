@@ -84,17 +84,17 @@ describe('pageStateHistory', () => {
     })
   })
 
-  describe('isInActivePageStateAt', () => {
-    it('should return true if the page was active at the given time', () => {
+  describe('wasInPageStateAt', () => {
+    it('should return true if the page was in the given state at the given time', () => {
       pageStateHistory.addPageState(PageState.ACTIVE)
 
       clock.tick(10)
       pageStateHistory.addPageState(PageState.PASSIVE)
 
-      expect(pageStateHistory.isInActivePageStateAt(0 as RelativeTime)).toEqual(true)
+      expect(pageStateHistory.wasInPageStateAt(PageState.ACTIVE, 0 as RelativeTime)).toEqual(true)
     })
 
-    it('should return false if the page was not active at the given time', () => {
+    it('should return false if the page was not in the given state at the given time', () => {
       const maxPageStateEntriesSelectable = 1
       pageStateHistory = startPageStateHistory(configuration, maxPageStateEntriesSelectable)
       registerCleanupTask(pageStateHistory.stop)
@@ -102,7 +102,7 @@ describe('pageStateHistory', () => {
       pageStateHistory.addPageState(PageState.ACTIVE)
       clock.tick(10)
       pageStateHistory.addPageState(PageState.PASSIVE)
-      expect(pageStateHistory.isInActivePageStateAt(10 as RelativeTime)).toEqual(false)
+      expect(pageStateHistory.wasInPageStateAt(PageState.ACTIVE, 11 as RelativeTime)).toEqual(false)
     })
   })
 

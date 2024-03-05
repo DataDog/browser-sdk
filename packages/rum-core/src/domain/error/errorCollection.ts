@@ -19,6 +19,7 @@ import { LifeCycleEventType } from '../lifeCycle'
 import type { FeatureFlagContexts } from '../contexts/featureFlagContext'
 import type { CommonContext } from '../contexts/commonContext'
 import type { PageStateHistory } from '../contexts/pageStateHistory'
+import { PageState } from '../contexts/pageStateHistory'
 import { trackConsoleError } from './trackConsoleError'
 import { trackReportError } from './trackReportError'
 
@@ -109,7 +110,7 @@ function processError(
       fingerprint: error.fingerprint,
     },
     type: RumEventType.ERROR as const,
-    view: { in_foreground: pageStateHistory.isInActivePageStateAt(error.startClocks.relative) },
+    view: { in_foreground: pageStateHistory.wasInPageStateAt(PageState.ACTIVE, error.startClocks.relative) },
   }
 
   const featureFlagContext = featureFlagContexts.findFeatureFlagEvaluations(error.startClocks.relative)
