@@ -1,9 +1,9 @@
-import type { TimeStamp, HttpRequest, ClocksState } from '@datadog/browser-core'
+import type { TimeStamp, HttpRequest } from '@datadog/browser-core'
 import { PageExitReason, DefaultPrivacyLevel, noop, isIE, DeflateEncoderStreamId } from '@datadog/browser-core'
 import type { LifeCycle, ViewCreatedEvent, RumConfiguration } from '@datadog/browser-rum-core'
 import { LifeCycleEventType, startViewContexts } from '@datadog/browser-rum-core'
 import type { Clock } from '@datadog/browser-core/test'
-import { collectAsyncCalls, createNewEvent } from '@datadog/browser-core/test'
+import { collectAsyncCalls, createNewEvent, initEventBridgeStub } from '@datadog/browser-core/test'
 import type { ViewEndedEvent } from 'packages/rum-core/src/domain/view/trackViews'
 import type { RumSessionManagerMock, TestSetupBuilder } from '../../../rum-core/test'
 import { appendElement, createRumSessionManagerMock, setup } from '../../../rum-core/test'
@@ -221,28 +221,55 @@ describe('startRecording', () => {
     })
   })
 
+  it('should send records through the bridge when it is present', () => {
+    const eventBridgeStub = initEventBridgeStub()
+    const { lifeCycle } = setupBuilder.build()
+    const sendSpy = spyOn(eventBridgeStub, 'send')
+
+    // send click record
+    document.body.dispatchEvent(createNewEvent('click', { clientX: 1, clientY: 2 }))
+
+    // send view end record and meta record
+    changeView(lifeCycle)
+
+    const record1 = JSON.parse(sendSpy.calls.argsFor(0)[0])
+    const record2 = JSON.parse(sendSpy.calls.argsFor(1)[0])
+    const record3 = JSON.parse(sendSpy.calls.argsFor(2)[0])
+
+    expect(record1).toEqual({
+      eventType: 'record',
+      event: jasmine.objectContaining({ type: RecordType.IncrementalSnapshot }),
+      view: { id: 'view-id' },
+    })
+
+    expect(record2).toEqual({
+      eventType: 'record',
+      event: jasmine.objectContaining({ type: RecordType.ViewEnd }),
+      view: { id: 'view-id' },
+    })
+
+    expect(record3).toEqual({
+      eventType: 'record',
+      event: jasmine.objectContaining({ type: RecordType.Meta }),
+      view: { id: 'view-id-2' },
+    })
+  })
+
   function initialView(lifeCycle: LifeCycle) {
-    lifeCycle.notify(LifeCycleEventType.BEFORE_VIEW_CREATED, {
-      id: viewId,
-      startClocks: { relative: 1, timeStamp: VIEW_TIMESTAMP } as ClocksState,
-    })
-    lifeCycle.notify(LifeCycleEventType.VIEW_CREATED, {
-      id: viewId,
-      startClocks: { relative: 1, timeStamp: VIEW_TIMESTAMP } as ClocksState,
-    })
+    const viewCreatedEvent = { id: viewId, startClocks: { relative: 1, timeStamp: VIEW_TIMESTAMP } } as ViewCreatedEvent
+    lifeCycle.notify(LifeCycleEventType.BEFORE_VIEW_CREATED, viewCreatedEvent)
+    lifeCycle.notify(LifeCycleEventType.VIEW_CREATED, viewCreatedEvent)
   }
 
   function changeView(lifeCycle: LifeCycle) {
-    const viewEndedEvent = {
-      endClocks: { relative: 2, timeStamp: 2 as TimeStamp },
-    } as ViewEndedEvent
+    const viewEndedEvent = { endClocks: { relative: 2, timeStamp: 2 as TimeStamp } } as ViewEndedEvent
+    viewId = 'view-id-2'
     const viewCreatedEvent = {
+      id: viewId,
       startClocks: { relative: 1, timeStamp: VIEW_TIMESTAMP },
     } as ViewCreatedEvent
     lifeCycle.notify(LifeCycleEventType.VIEW_ENDED, viewEndedEvent)
     lifeCycle.notify(LifeCycleEventType.AFTER_VIEW_ENDED, viewEndedEvent)
-
-    viewId = 'view-id-2'
     lifeCycle.notify(LifeCycleEventType.BEFORE_VIEW_CREATED, viewCreatedEvent)
     lifeCycle.notify(LifeCycleEventType.VIEW_CREATED, viewCreatedEvent)
   }

@@ -2,7 +2,6 @@ import type { ClocksState, RelativeTime, TimeStamp } from '@datadog/browser-core
 import { ErrorSource, ExperimentalFeature, ONE_MINUTE, display } from '@datadog/browser-core'
 import {
   initEventBridgeStub,
-  deleteEventBridgeStub,
   cleanupSyntheticsWorkerValues,
   mockSyntheticsWorkerValues,
   mockExperimentalFeatures,
@@ -76,7 +75,6 @@ describe('rum assembly', () => {
   })
 
   afterEach(() => {
-    deleteEventBridgeStub()
     cleanupSyntheticsWorkerValues()
     cleanupCiVisibilityWindowValues()
   })

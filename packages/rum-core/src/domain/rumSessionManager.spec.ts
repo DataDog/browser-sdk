@@ -10,14 +10,20 @@ import {
   DOM_EVENT,
   createTrackingConsentState,
   TrackingConsent,
+  BridgeCapability,
 } from '@datadog/browser-core'
 import type { Clock } from '@datadog/browser-core/test'
-import { createNewEvent, mockClock } from '@datadog/browser-core/test'
+import { createNewEvent, initEventBridgeStub, mockClock } from '@datadog/browser-core/test'
 import type { RumConfiguration } from './configuration'
 import { validateAndBuildRumConfiguration } from './configuration'
 
 import { LifeCycle, LifeCycleEventType } from './lifeCycle'
-import { RUM_SESSION_KEY, RumTrackingType, startRumSessionManager } from './rumSessionManager'
+import {
+  RUM_SESSION_KEY,
+  RumTrackingType,
+  startRumSessionManager,
+  startRumSessionManagerStub,
+} from './rumSessionManager'
 
 describe('rum session manager', () => {
   const DURATION = 123456
@@ -212,4 +218,16 @@ describe('rum session manager', () => {
       createTrackingConsentState(TrackingConsent.GRANTED)
     )
   }
+})
+
+describe('rum session manager stub', () => {
+  it('should return a tracked session with replay allowed when the event bridge support records', () => {
+    initEventBridgeStub({ capabilities: [BridgeCapability.RECORDS] })
+    expect(startRumSessionManagerStub().findTrackedSession()!.sessionReplayAllowed).toEqual(true)
+  })
+
+  it('should return a tracked session without replay allowed when the event bridge support records', () => {
+    initEventBridgeStub({ capabilities: [] })
+    expect(startRumSessionManagerStub().findTrackedSession()!.sessionReplayAllowed).toEqual(false)
+  })
 })

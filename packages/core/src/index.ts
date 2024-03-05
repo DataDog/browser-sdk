@@ -57,6 +57,8 @@ export {
   createHttpRequest,
   canUseEventBridge,
   getEventBridge,
+  bridgeSupports,
+  BridgeCapability,
   startBatchWithReplica,
   createFlushController,
   FlushEvent,

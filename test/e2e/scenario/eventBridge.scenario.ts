@@ -91,4 +91,35 @@ describe('bridge present', () => {
       expect(intakeRegistry.logsEvents.length).toBe(1)
       expect(intakeRegistry.hasOnlyBridgeRequests).toBe(true)
     })
+
+  createTest('send records to the bridge')
+    .withRum()
+    .withEventBridge()
+    .run(async ({ intakeRegistry }) => {
+      await flushEvents()
+
+      expect(intakeRegistry.replayRecords.length).toBeGreaterThan(0)
+      expect(intakeRegistry.hasOnlyBridgeRequests).toBe(true)
+    })
+
+  createTest('do not send records when the recording is stopped')
+    .withRum()
+    .withEventBridge()
+    .run(async ({ intakeRegistry }) => {
+      // wait for recorder to be properly started
+      await browser.pause(200)
+
+      const preStopRecordsCount = intakeRegistry.replayRecords.length
+      await browserExecute(() => {
+        window.DD_RUM!.stopSessionReplayRecording()
+
+        // trigger a new record
+        document.body.appendChild(document.createElement('li'))
+      })
+
+      await flushEvents()
+
+      const postStopRecordsCount = intakeRegistry.replayRecords.length - preStopRecordsCount
+      expect(postStopRecordsCount).toEqual(0)
+    })
 })

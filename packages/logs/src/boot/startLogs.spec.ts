@@ -14,7 +14,6 @@ import type { Request } from '@datadog/browser-core/test'
 import {
   interceptRequests,
   stubEndpointBuilder,
-  deleteEventBridgeStub,
   initEventBridgeStub,
   cleanupSyntheticsWorkerValues,
   mockSyntheticsWorkerValues,
@@ -76,7 +75,6 @@ describe('logs', () => {
 
   afterEach(() => {
     delete window.DD_RUM
-    deleteEventBridgeStub()
     stopSessionManager()
     interceptor.restore()
   })

@@ -1,6 +1,5 @@
 import type { RelativeTime, Context, DeflateWorker, CustomerDataTrackerManager, TimeStamp } from '@datadog/browser-core'
 import {
-  timeStampToClocks,
   clocksNow,
   addExperimentalFeatures,
   ExperimentalFeature,
@@ -10,6 +9,7 @@ import {
   DefaultPrivacyLevel,
   removeStorageListeners,
   CustomerDataCompressionStatus,
+  timeStampToClocks,
 } from '@datadog/browser-core'
 import { cleanupSyntheticsWorkerValues } from '@datadog/browser-core/test'
 import type { TestSetupBuilder } from '../../test'

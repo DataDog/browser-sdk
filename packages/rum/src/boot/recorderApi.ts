@@ -1,5 +1,13 @@
 import type { DeflateEncoder } from '@datadog/browser-core'
-import { DeflateEncoderStreamId, PageExitReason, canUseEventBridge, noop, runOnReadyState } from '@datadog/browser-core'
+import {
+  DeflateEncoderStreamId,
+  canUseEventBridge,
+  noop,
+  runOnReadyState,
+  PageExitReason,
+  BridgeCapability,
+  bridgeSupports,
+} from '@datadog/browser-core'
 import type {
   LifeCycle,
   ViewContexts,
@@ -53,7 +61,7 @@ export function makeRecorderApi(
   startRecordingImpl: StartRecording,
   createDeflateWorkerImpl?: CreateDeflateWorker
 ): RecorderApi {
-  if (canUseEventBridge() || !isBrowserSupported()) {
+  if ((canUseEventBridge() && !bridgeSupports(BridgeCapability.RECORDS)) || !isBrowserSupported()) {
     return {
       start: noop,
       stop: noop,

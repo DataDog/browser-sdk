@@ -58,7 +58,7 @@ function computeIntakeRequestInfos(req: express.Request): IntakeRequestInfos {
     return {
       isBridge: true,
       encoding,
-      intakeType: eventType === 'log' ? 'logs' : 'rum',
+      intakeType: eventType === 'log' ? 'logs' : eventType === 'record' ? 'replay' : 'rum',
     }
   }
 
@@ -104,6 +104,23 @@ function readReplayIntakeRequest(
   infos: IntakeRequestInfos & { intakeType: 'replay' }
 ): Promise<ReplayIntakeRequest> {
   return new Promise((resolve, reject) => {
+    if (infos.isBridge) {
+      readStream(req)
+        .then((rawBody) => {
+          resolve({
+            ...infos,
+            segment: {
+              records: rawBody
+                .toString('utf-8')
+                .split('\n')
+                .map((line): unknown => JSON.parse(line)),
+            },
+          } as ReplayIntakeRequest)
+        })
+        .catch(reject)
+      return
+    }
+
     let segmentPromise: Promise<{
       encoding: string
       filename: string

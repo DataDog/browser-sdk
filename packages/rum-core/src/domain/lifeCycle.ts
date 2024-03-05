@@ -21,6 +21,7 @@ export const enum LifeCycleEventType {
   AFTER_VIEW_ENDED,
   REQUEST_STARTED,
   REQUEST_COMPLETED,
+
   // The SESSION_EXPIRED lifecycle event has been introduced to represent when a session has expired
   // and trigger cleanup tasks related to this, prior to renewing the session. Its implementation is
   // slightly naive: it is not triggered as soon as the session is expired, but rather just before

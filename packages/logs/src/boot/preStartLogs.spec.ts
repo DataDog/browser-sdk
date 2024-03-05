@@ -1,10 +1,4 @@
-import {
-  mockClock,
-  type Clock,
-  deleteEventBridgeStub,
-  initEventBridgeStub,
-  mockExperimentalFeatures,
-} from '@datadog/browser-core/test'
+import { mockClock, type Clock, initEventBridgeStub, mockExperimentalFeatures } from '@datadog/browser-core/test'
 import type { TimeStamp, TrackingConsentState } from '@datadog/browser-core'
 import {
   ExperimentalFeature,
@@ -108,10 +102,6 @@ describe('preStartLogs', () => {
     describe('if event bridge present', () => {
       beforeEach(() => {
         initEventBridgeStub()
-      })
-
-      afterEach(() => {
-        deleteEventBridgeStub()
       })
 
       it('init should accept empty client token', () => {
