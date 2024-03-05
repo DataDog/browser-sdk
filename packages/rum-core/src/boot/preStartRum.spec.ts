@@ -101,30 +101,31 @@ describe('preStartRum', () => {
     })
 
     describe('if event bridge present', () => {
-      const bridgePrivacyLevel = DefaultPrivacyLevel.ALLOW
-      beforeEach(() => {
-        initEventBridgeStub({ privacyLevel: bridgePrivacyLevel })
-      })
-
       it('init should accept empty application id and client token', () => {
+        initEventBridgeStub()
         const hybridInitConfiguration: HybridInitConfiguration = {}
         strategy.init(hybridInitConfiguration as RumInitConfiguration)
         expect(display.error).not.toHaveBeenCalled()
       })
 
       it('should force session sample rate to 100', () => {
+        initEventBridgeStub()
         const invalidConfiguration: HybridInitConfiguration = { sessionSampleRate: 50 }
         strategy.init(invalidConfiguration as RumInitConfiguration)
         expect(strategy.initConfiguration?.sessionSampleRate).toEqual(100)
       })
 
       it('should set the default privacy level received from the bridge if the not provided in the init configuration', () => {
+        initEventBridgeStub({ privacyLevel: DefaultPrivacyLevel.ALLOW })
         const hybridInitConfiguration: HybridInitConfiguration = {}
         strategy.init(hybridInitConfiguration as RumInitConfiguration)
-        expect((strategy.initConfiguration as RumInitConfiguration)?.defaultPrivacyLevel).toEqual(bridgePrivacyLevel)
+        expect((strategy.initConfiguration as RumInitConfiguration)?.defaultPrivacyLevel).toEqual(
+          DefaultPrivacyLevel.ALLOW
+        )
       })
 
       it('should set the default privacy level from the init configuration if provided', () => {
+        initEventBridgeStub({ privacyLevel: DefaultPrivacyLevel.ALLOW })
         const hybridInitConfiguration: HybridInitConfiguration = { defaultPrivacyLevel: DefaultPrivacyLevel.MASK }
         strategy.init(hybridInitConfiguration as RumInitConfiguration)
         expect((strategy.initConfiguration as RumInitConfiguration)?.defaultPrivacyLevel).toEqual(
@@ -132,7 +133,17 @@ describe('preStartRum', () => {
         )
       })
 
+      it('should set the default privacy level to "mask" if not provided in init configuration nor the bridge', () => {
+        initEventBridgeStub({ privacyLevel: undefined })
+        const hybridInitConfiguration: HybridInitConfiguration = {}
+        strategy.init(hybridInitConfiguration as RumInitConfiguration)
+        expect((strategy.initConfiguration as RumInitConfiguration)?.defaultPrivacyLevel).toEqual(
+          DefaultPrivacyLevel.MASK
+        )
+      })
+
       it('should initialize even if session cannot be handled', () => {
+        initEventBridgeStub()
         spyOnProperty(document, 'cookie', 'get').and.returnValue('')
         strategy.init(DEFAULT_INIT_CONFIGURATION)
         expect(doStartRumSpy).toHaveBeenCalled()
