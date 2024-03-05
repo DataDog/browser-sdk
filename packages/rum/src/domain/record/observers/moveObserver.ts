@@ -15,7 +15,7 @@ export type MousemoveCallBack = (
 ) => void
 
 export function initMoveObserver(configuration: RumConfiguration, cb: MousemoveCallBack): ListenerHandler {
-  const { throttled: updatePosition } = throttle(
+  const { throttled: updatePosition, cancel: cancelThrottle } = throttle(
     (event: MouseEvent | TouchEvent) => {
       const target = getEventTarget(event)
       if (hasSerializedNode(target)) {
@@ -39,10 +39,21 @@ export function initMoveObserver(configuration: RumConfiguration, cb: MousemoveC
     }
   )
 
-  return addEventListeners(configuration, document, [DOM_EVENT.MOUSE_MOVE, DOM_EVENT.TOUCH_MOVE], updatePosition, {
-    capture: true,
-    passive: true,
-  }).stop
+  const { stop: removeListener } = addEventListeners(
+    configuration,
+    document,
+    [DOM_EVENT.MOUSE_MOVE, DOM_EVENT.TOUCH_MOVE],
+    updatePosition,
+    {
+      capture: true,
+      passive: true,
+    }
+  )
+
+  return () => {
+    removeListener()
+    cancelThrottle()
+  }
 }
 
 export function tryToComputeCoordinates(event: MouseEvent | TouchEvent) {

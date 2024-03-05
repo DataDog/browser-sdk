@@ -189,13 +189,15 @@ function newView(
     version = viewOptions.version
   }
 
-  lifeCycle.notify(LifeCycleEventType.VIEW_CREATED, {
+  const viewCreatedEvent = {
     id,
     name,
     startClocks,
     service,
     version,
-  })
+  }
+  lifeCycle.notify(LifeCycleEventType.BEFORE_VIEW_CREATED, viewCreatedEvent)
+  lifeCycle.notify(LifeCycleEventType.VIEW_CREATED, viewCreatedEvent)
 
   // Update the view every time the measures are changing
   const { throttled: scheduleViewUpdate, cancel: cancelScheduleViewUpdate } = throttle(
@@ -272,6 +274,7 @@ function newView(
       sessionIsActive = options.sessionIsActive ?? true
 
       lifeCycle.notify(LifeCycleEventType.VIEW_ENDED, { endClocks })
+      lifeCycle.notify(LifeCycleEventType.AFTER_VIEW_ENDED, { endClocks })
       clearInterval(keepAliveIntervalId)
       setViewEnd(endClocks.relative)
       stopCommonViewMetricsTracking()

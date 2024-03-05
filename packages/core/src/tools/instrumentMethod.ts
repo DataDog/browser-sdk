@@ -125,10 +125,13 @@ export function instrumentSetter<TARGET extends { [key: string]: any }, PROPERTY
     return { stop: noop }
   }
 
+  const stoppedInstrumentation = noop
   let instrumentation = (target: TARGET, value: TARGET[PROPERTY]) => {
     // put hooked setter into event loop to avoid of set latency
     setTimeout(() => {
-      after(target, value)
+      if (instrumentation !== stoppedInstrumentation) {
+        after(target, value)
+      }
     }, 0)
   }
 
@@ -145,9 +148,8 @@ export function instrumentSetter<TARGET extends { [key: string]: any }, PROPERTY
     stop: () => {
       if (Object.getOwnPropertyDescriptor(targetPrototype, property)?.set === instrumentationWrapper) {
         Object.defineProperty(targetPrototype, property, originalDescriptor)
-      } else {
-        instrumentation = noop
       }
+      instrumentation = stoppedInstrumentation
     },
   }
 }

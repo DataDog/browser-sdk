@@ -497,6 +497,31 @@ describe('startSessionManager', () => {
         secondSessionTrackingType
       )
     })
+
+    it('should return the current session context in the renewObservable callback', () => {
+      const sessionManager = startSessionManagerWithDefaults()
+      let currentSession
+      sessionManager.renewObservable.subscribe(() => (currentSession = sessionManager.findActiveSession()))
+
+      // new session
+      expireSessionCookie()
+      document.dispatchEvent(createNewEvent(DOM_EVENT.CLICK))
+      clock.tick(STORAGE_POLL_DELAY)
+
+      expect(currentSession).toBeDefined()
+    })
+
+    it('should return the current session context in the expireObservable callback', () => {
+      const sessionManager = startSessionManagerWithDefaults()
+      let currentSession
+      sessionManager.expireObservable.subscribe(() => (currentSession = sessionManager.findActiveSession()))
+
+      // new session
+      expireSessionCookie()
+      clock.tick(STORAGE_POLL_DELAY)
+
+      expect(currentSession).toBeDefined()
+    })
   })
 
   describe('tracking consent', () => {
