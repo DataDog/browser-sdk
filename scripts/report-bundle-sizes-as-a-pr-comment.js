@@ -143,7 +143,7 @@ async function updateOrAddComment(difference, resultsBaseQuery, resultsLocalQuer
   const payload = {
     pr_url: `https://github.com/DataDog/browser-sdk/pull/${prNumber}`,
     message,
-    PR_HEADER,
+    header: PR_HEADER,
     org: 'DataDog',
     repo: 'browser-sdk',
   }
