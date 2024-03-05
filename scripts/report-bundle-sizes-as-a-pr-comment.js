@@ -9,6 +9,7 @@ const PR_COMMENTER_AUTH_TOKEN = command`authanywhere`.run().split(' ')[2].trim()
 const GITHUB_TOKEN = getGithubAccessToken()
 const ONE_DAY_IN_SECOND = 24 * 60 * 60
 const TIMEOUT_DURATION_MS = 5000
+const FETCH_RETRIES = 4
 
 runMain(async () => {
   const lastCommonCommit = getLastCommonCommit(BASE_BRANCH, LOCAL_BRANCH)
@@ -19,7 +20,8 @@ runMain(async () => {
     process.exit(0)
   }
   if (prs.length > 1) {
-    throw new Error('More than one PR found for the branch')
+    console.log('Multiple pull requests found for the branch')
+    process.exit(0)
   }
   const mainBranchBundleSizes = await fetchAllPackagesBundleSize(loadQuery(lastCommonCommit))
   const currentBranchBundleSizes = await fetchAllPackagesBundleSize(loadQuery(latestLocalCommit))
@@ -77,10 +79,10 @@ function fetchAllPackagesBundleSize(bundleSizeQueries) {
   return Promise.all(bundleSizeQueries.map((budget) => fetchBundleSizesMetrics(budget)))
 }
 
-async function fetchBundleSizesMetrics(budget, retries = 4) {
+async function fetchBundleSizesMetrics(budget) {
   const now = Math.floor(Date.now() / 1000)
   const date = now - 30 * ONE_DAY_IN_SECOND
-  for (let i = 0; i < retries; i++) {
+  for (let i = 0; i < FETCH_RETRIES; i++) {
     const response = await fetch(
       `https://api.datadoghq.com/api/v1/query?query=${budget.queries}&from=${date}&to=${now}`,
       {
