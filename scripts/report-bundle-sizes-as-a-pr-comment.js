@@ -14,20 +14,16 @@ const FETCH_RETRIES = 4
 runMain(async () => {
   const lastCommonCommit = getLastCommonCommit(BASE_BRANCH, LOCAL_BRANCH)
   const latestLocalCommit = process.env.CI_COMMIT_SHORT_SHA
-  const prs = await getPRs(LOCAL_BRANCH)
-  if (prs.length === 0) {
+  const prNumber = process.env.CI_EXTERNAL_PULL_REQUEST_IID
+  if (!prNumber) {
     console.log('No pull requests found for the branch')
     process.exit(0)
   }
-  if (prs.length > 1) {
-    console.log('Multiple pull requests found for the branch')
-    process.exit(0)
-  }
-  const mainBranchBundleSizes = await fetchAllPackagesBundleSize(loadQuery(lastCommonCommit))
-  const currentBranchBundleSizes = await fetchAllPackagesBundleSize(loadQuery(latestLocalCommit))
+  const mainBranchBundleSizes = await fetchAllPackagesBundleSize(buildQuery(lastCommonCommit))
+  const currentBranchBundleSizes = await fetchAllPackagesBundleSize(buildQuery(latestLocalCommit))
   const difference = compare(mainBranchBundleSizes, currentBranchBundleSizes)
-  const commentId = await retrieveExistingCommentId(prs[0].number)
-  await updateOrAddComment(difference, mainBranchBundleSizes, currentBranchBundleSizes, prs[0].number, commentId)
+  const commentId = await retrieveExistingCommentId(prNumber)
+  await updateOrAddComment(difference, mainBranchBundleSizes, currentBranchBundleSizes, prNumber, commentId)
 })
 
 function getLastCommonCommit(baseBranch) {
@@ -41,20 +37,7 @@ function getLastCommonCommit(baseBranch) {
   }
 }
 
-async function getPRs(localBranch) {
-  const response = await fetch(`https://api.github.com/repos/DataDog/browser-sdk/pulls?head=DataDog:${localBranch}`, {
-    method: 'GET',
-    headers: {
-      Authorization: `token ${GITHUB_TOKEN}`,
-    },
-  })
-  if (!response.ok) {
-    throw new Error(`HTTP Error Response: ${response.status} ${response.statusText}`)
-  }
-  return response.body ? response.json() : null
-}
-
-function loadQuery(commitSha) {
+function buildQuery(commitSha) {
   return [
     {
       name: 'bundles_sizes_rum',
@@ -184,6 +167,6 @@ function formatBundleName(bundleName) {
     .join(' ')
 }
 
-function formatSize(size) {
-  return `<code title="${size}" style="background: none;">${(size / 1024).toFixed(2)} kB</code>`
+function formatSize(bundleSize) {
+  return `<code title="${bundleSize}" style="background: none;">${(bundleSize / 1024).toFixed(2)} kB</code>`
 }
