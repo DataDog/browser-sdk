@@ -144,7 +144,7 @@ async function updateOrAddComment(difference, resultsBaseQuery, resultsLocalQuer
 }
 
 function createMessage(difference, resultsBaseQuery, resultsLocalQuery) {
-  let message = '| 📦 Bundle Name | Base Size | Local Size | 𝚫% |\n| --- | --- | --- | --- |\n'
+  let message = '| 📦 Bundle | Base Size | Local Size | 𝚫% |\n| --- | --- | --- | --- |\n'
   difference.forEach((diff, index) => {
     const baseSize = formatSize(resultsBaseQuery[index].size)
     const localSize = formatSize(resultsLocalQuery[index].size)
