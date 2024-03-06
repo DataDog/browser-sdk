@@ -93,6 +93,7 @@ export { initFetchObservable, FetchResolveContext, FetchStartContext, FetchConte
 export { createPageExitObservable, PageExitEvent, PageExitReason, isPageExitReason } from './browser/pageExitObservable'
 export * from './browser/addEventListener'
 export * from './tools/timer'
+export * from './tools/measurePerformance'
 export { initConsoleObservable, resetConsoleObservable, ConsoleLog } from './domain/console/consoleObservable'
 export { BoundedBuffer } from './tools/boundedBuffer'
 export { catchUserErrors } from './tools/catchUserErrors'

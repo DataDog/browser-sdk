@@ -201,6 +201,11 @@ export interface RawRumActionEvent {
         y: number
       }
       pointer_up_delay?: Duration
+      performance?: {
+        selector_duration: Duration | undefined
+        name_duration: Duration | undefined
+        private_name_duration: Duration | undefined
+      }
       private_name?: string
     }
   }

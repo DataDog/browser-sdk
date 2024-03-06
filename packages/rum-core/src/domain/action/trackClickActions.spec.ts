@@ -99,7 +99,6 @@ describe('trackClickActions', () => {
         duration: BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY as Duration,
         id: jasmine.any(String),
         name: 'Click me',
-        private_name: undefined,
         startClocks: {
           relative: addDuration(pointerDownClocks.relative, EMULATED_CLICK_DURATION),
           timeStamp: addDuration(pointerDownClocks.timeStamp, EMULATED_CLICK_DURATION),
@@ -114,6 +113,8 @@ describe('trackClickActions', () => {
         },
         position: { x: 50, y: 50 },
         events: [domEvent],
+        privateName: undefined,
+        performance: undefined,
       },
     ])
   })
@@ -128,7 +129,7 @@ describe('trackClickActions', () => {
     expect(findActionId()).not.toBeUndefined()
     clock.tick(EXPIRE_DELAY)
     createNewEvent('pointerup', { target: document.createElement('button') })
-    expect(events[0].private_name).toBe('#button')
+    expect(events[0].privateName).toBe('#button')
   })
 
   it('should keep track of previously validated click actions', () => {

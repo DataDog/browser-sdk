@@ -84,6 +84,7 @@ describe('actionCollection', () => {
             x: 1,
             y: 2,
           },
+          performance: undefined,
           private_name: undefined,
         },
       },

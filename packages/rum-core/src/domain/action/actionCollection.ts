@@ -80,6 +80,13 @@ function processAction(
           action: {
             target: action.target,
             position: action.position,
+            performance: action.performance
+              ? {
+                  selector_duration: action.performance?.selectorDuration,
+                  name_duration: action.performance?.nameDuration,
+                  private_name_duration: action.performance?.privateNameDuration,
+                }
+              : undefined,
             private_name: action.privateName,
           },
         },
