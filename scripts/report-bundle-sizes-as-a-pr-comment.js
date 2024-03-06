@@ -3,6 +3,7 @@ const { runMain, timeout } = require('./lib/execution-utils')
 const { getOrg2ApiKey, getGithubAccessToken, getOrg2AppKey } = require('./lib/secrets')
 
 const PR_COMMENT_HEADER = 'Bundles Sizes Evolution'
+const PACKAGES_NAMES = ['rum', 'logs', 'rum_slim', 'worker']
 const BASE_BRANCH = process.env.MAIN_BRANCH
 const LOCAL_BRANCH = process.env.CI_COMMIT_REF_NAME
 const PR_COMMENTER_AUTH_TOKEN = command`authanywhere`.run().split(' ')[2].trim()
@@ -19,8 +20,8 @@ runMain(async () => {
     console.log('No pull requests found for the branch')
     process.exit(0)
   }
-  const mainBranchBundleSizes = await fetchAllPackagesBundleSize(buildQuery(lastCommonCommit))
-  const currentBranchBundleSizes = await fetchAllPackagesBundleSize(buildQuery(latestLocalCommit))
+  const mainBranchBundleSizes = await fetchAllPackagesBundleSize(lastCommonCommit)
+  const currentBranchBundleSizes = await fetchAllPackagesBundleSize(latestLocalCommit)
   const difference = compare(mainBranchBundleSizes, currentBranchBundleSizes)
   const commentId = await retrieveExistingCommentId(pr[0].number)
   await updateOrAddComment(difference, mainBranchBundleSizes, currentBranchBundleSizes, pr[0].number, commentId)
@@ -54,37 +55,16 @@ async function fetchPR(localBranch) {
   return pr
 }
 
-function buildQuery(commitSha) {
-  return [
-    {
-      name: 'bundles_sizes_rum',
-      queries: `avg:bundle_sizes.rum{commit:${commitSha}}`,
-    },
-    {
-      name: 'bundles_sizes_logs',
-      queries: `avg:bundle_sizes.logs{commit:${commitSha}}`,
-    },
-    {
-      name: 'bundles_sizes_rum_slim',
-      queries: `avg:bundle_sizes.rum_slim{commit:${commitSha}}`,
-    },
-    {
-      name: 'bundles_sizes_worker',
-      queries: `avg:bundle_sizes.worker{commit:${commitSha}}`,
-    },
-  ]
+function fetchAllPackagesBundleSize(commitSha) {
+  return Promise.all(PACKAGES_NAMES.map((packageName) => fetchBundleSizesMetric(packageName, commitSha)))
 }
 
-function fetchAllPackagesBundleSize(bundleSizeQueries) {
-  return Promise.all(bundleSizeQueries.map((budget) => fetchBundleSizesMetrics(budget)))
-}
-
-async function fetchBundleSizesMetrics(budget) {
+async function fetchBundleSizesMetric(packageName, commitSha) {
   const now = Math.floor(Date.now() / 1000)
   const date = now - 30 * ONE_DAY_IN_SECOND
   for (let i = 0; i < FETCH_RETRIES; i++) {
     const response = await fetch(
-      `https://api.datadoghq.com/api/v1/query?query=${budget.queries}&from=${date}&to=${now}`,
+      `https://api.datadoghq.com/api/v1/query?query=avg:bundle_sizes.${packageName}{commit:${commitSha}}&from=${date}&to=${now}`,
       {
         method: 'GET',
         headers: {
@@ -100,14 +80,14 @@ async function fetchBundleSizesMetrics(budget) {
     const data = await response.json()
     if (data.series && data.series.length > 0 && data.series[0].pointlist && data.series[0].pointlist.length > 0) {
       return {
-        name: budget.name,
+        name: packageName,
         size: data.series[0].pointlist[0][1],
       }
     }
     await timeout(TIMEOUT_DURATION_MS)
   }
   return {
-    name: budget.name,
+    name: packageName,
     size: null,
   }
 }
@@ -166,7 +146,7 @@ async function updateOrAddComment(difference, resultsBaseQuery, resultsLocalQuer
 }
 
 function createMessage(difference, resultsBaseQuery, resultsLocalQuery) {
-  let message = '| 📦 Bundle | Base Size | Local Size | 𝚫% |\n| --- | --- | --- | --- |\n'
+  let message = '| 📦 Bundle Name | Base Size | Local Size | 𝚫% |\n| --- | --- | --- | --- |\n'
   difference.forEach((diff, index) => {
     const baseSize = formatSize(resultsBaseQuery[index].size)
     const localSize = formatSize(resultsLocalQuery[index].size)
