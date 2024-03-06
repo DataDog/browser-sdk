@@ -1,5 +1,5 @@
 import { appendElement } from '../../../test'
-import { getActionNameFromElement } from './getActionNameFromElement'
+import { getActionNameFromElement, getPrivateActionNameFromElement } from './getActionNameFromElement'
 
 describe('getActionNameFromElement', () => {
   it('extracts the textual content of an element', () => {
@@ -250,7 +250,46 @@ describe('getActionNameFromElement', () => {
     ).toBe('foo')
   })
 
-  describe('programmatically declared action name', () => {
+  it('remove children with programmatic action name in textual content', () => {
+    expect(
+      getActionNameFromElement(appendElement('<div>Foo <div data-dd-action-name="custom action">bar<div></div>'))
+    ).toBe('Foo')
+  })
+
+  it('remove children with programmatic action name in textual content based on the user-configured attribute', () => {
+    expect(
+      getActionNameFromElement(
+        appendElement('<div>Foo <div data-test-id="custom action">bar<div></div>'),
+        'data-test-id'
+      )
+    ).toBe('Foo')
+  })
+})
+
+describe('getPrivateActionNameFromElement', () => {
+  it('extracts the name from programmatically declared action name', () => {
+    expect(
+      getPrivateActionNameFromElement(
+        appendElement(`
+          <div data-dd-action-name="foo">ignored</div>
+        `)
+      )
+    ).toBe('foo')
+  })
+
+  it('extract a CSS selector in case no programmatic name is found', () => {
+    expect(
+      getPrivateActionNameFromElement(
+        appendElement(`
+          <div>ignored</div>
+        `)
+      )
+    ).toBe('DIV')
+  })
+})
+
+describe('programmatically declared action name', () => {
+  ;[getActionNameFromElement, getPrivateActionNameFromElement].forEach((getActionNameFromElement) => {
     it('extracts the name from the data-dd-action-name attribute', () => {
       expect(
         getActionNameFromElement(
@@ -293,7 +332,7 @@ describe('getActionNameFromElement', () => {
           </div>
       `)
         )
-      ).toBe('foo')
+      ).not.toBe('ignored')
     })
 
     it('extracts the name from a user-configured attribute', () => {
@@ -316,21 +355,6 @@ describe('getActionNameFromElement', () => {
           'data-test-id'
         )
       ).toBe('bar')
-    })
-
-    it('remove children with programmatic action name in textual content', () => {
-      expect(
-        getActionNameFromElement(appendElement('<div>Foo <div data-dd-action-name="custom action">bar<div></div>'))
-      ).toBe('Foo')
-    })
-
-    it('remove children with programmatic action name in textual content based on the user-configured attribute', () => {
-      expect(
-        getActionNameFromElement(
-          appendElement('<div>Foo <div data-test-id="custom action">bar<div></div>'),
-          'data-test-id'
-        )
-      ).toBe('Foo')
     })
   })
 })

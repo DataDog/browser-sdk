@@ -11,6 +11,9 @@ import {
   clocksNow,
   ONE_SECOND,
   elapsed,
+  isExperimentalFeatureEnabled,
+  ExperimentalFeature,
+  isIE,
 } from '@datadog/browser-core'
 import type { FrustrationType } from '../../rawRumEvent.types'
 import { ActionType } from '../../rawRumEvent.types'
@@ -22,7 +25,7 @@ import { PAGE_ACTIVITY_VALIDATION_DELAY, waitPageActivityEnd } from '../waitPage
 import { getSelectorFromElement } from '../getSelectorFromElement'
 import type { ClickChain } from './clickChain'
 import { createClickChain } from './clickChain'
-import { getActionNameFromElement } from './getActionNameFromElement'
+import { getActionNameFromElement, getPrivateActionNameFromElement } from './getActionNameFromElement'
 import type { MouseEventOnElement, UserActivity } from './listenActionEvents'
 import { listenActionEvents } from './listenActionEvents'
 import { computeFrustration } from './computeFrustration'
@@ -37,9 +40,9 @@ export interface ClickAction {
   type: ActionType.CLICK
   id: string
   name: string
+  private_name?: string
   target?: {
     selector: string
-    selector_with_stable_attributes?: string
     width: number
     height: number
   }
@@ -207,7 +210,7 @@ function startClickAction(
   })
 }
 
-type ClickActionBase = Pick<ClickAction, 'type' | 'name' | 'target' | 'position'>
+type ClickActionBase = Pick<ClickAction, 'type' | 'name' | 'private_name' | 'target' | 'position'>
 
 function computeClickActionBase(event: MouseEventOnElement, actionNameAttribute?: string): ClickActionBase {
   const rect = event.target.getBoundingClientRect()
@@ -224,6 +227,10 @@ function computeClickActionBase(event: MouseEventOnElement, actionNameAttribute?
       y: Math.round(event.clientY - rect.top),
     },
     name: getActionNameFromElement(event.target, actionNameAttribute),
+    private_name:
+      isExperimentalFeatureEnabled(ExperimentalFeature.SELECTOR_FOR_PRIVATE_ACTION_NAME) && !isIE()
+        ? getPrivateActionNameFromElement(event.target, actionNameAttribute)
+        : undefined,
   }
 }
 

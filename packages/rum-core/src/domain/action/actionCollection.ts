@@ -80,6 +80,7 @@ function processAction(
           action: {
             target: action.target,
             position: action.position,
+            private_name: action.privateName,
           },
         },
       }

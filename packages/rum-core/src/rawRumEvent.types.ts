@@ -201,6 +201,7 @@ export interface RawRumActionEvent {
         y: number
       }
       pointer_up_delay?: Duration
+      private_name?: string
     }
   }
 }

@@ -20,6 +20,7 @@ export enum ExperimentalFeature {
   WRITABLE_RESOURCE_GRAPHQL = 'writable_resource_graphql',
   TRACKING_CONSENT = 'tracking_consent',
   CUSTOM_VITALS = 'custom_vitals',
+  SELECTOR_FOR_PRIVATE_ACTION_NAME = 'selector_for_private_action_name',
 }
 
 const enabledExperimentalFeatures: Set<ExperimentalFeature> = new Set()

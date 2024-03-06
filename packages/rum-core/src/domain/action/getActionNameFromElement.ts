@@ -1,10 +1,6 @@
 import { safeTruncate, isIE, find } from '@datadog/browser-core'
-
-/**
- * Get the action name from the attribute 'data-dd-action-name' on the element or any of its parent.
- * It can also be retrieved from a user defined attribute.
- */
-export const DEFAULT_PROGRAMMATIC_ACTION_NAME_ATTRIBUTE = 'data-dd-action-name'
+import { getSelectorFromElement } from '../getSelectorFromElement'
+import { DEFAULT_PROGRAMMATIC_ACTION_NAME_ATTRIBUTE } from './actionNameConstant'
 
 export function getActionNameFromElement(element: Element, userProgrammaticAttribute?: string): string {
   // Proceed to get the action name in two steps:
@@ -19,6 +15,21 @@ export function getActionNameFromElement(element: Element, userProgrammaticAttri
     getActionNameFromElementForStrategies(element, userProgrammaticAttribute, priorityStrategies) ||
     getActionNameFromElementForStrategies(element, userProgrammaticAttribute, fallbackStrategies) ||
     ''
+  )
+}
+
+export function getPrivateActionNameFromElement(element: Element, userProgrammaticAttribute?: string): string {
+  // Proceed to get the private action name in two steps:
+  // * first, get the name programmatically, explicitly defined by the user.
+  // * then, get a CSS selector
+  return (
+    getActionNameFromElementProgrammatically(element, DEFAULT_PROGRAMMATIC_ACTION_NAME_ATTRIBUTE) ||
+    (userProgrammaticAttribute && getActionNameFromElementProgrammatically(element, userProgrammaticAttribute)) ||
+    getSelectorFromElement(element, userProgrammaticAttribute, {
+      stopRecurringWhenUnique: true,
+      targetMeaningfulElement: true,
+      onlyPrefixWithSemanticTag: true,
+    })
   )
 }
 
