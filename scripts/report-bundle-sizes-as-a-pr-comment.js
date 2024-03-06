@@ -12,12 +12,11 @@ const TIMEOUT_DURATION_MS = 5000
 const FETCH_RETRIES = 4
 
 runMain(async () => {
-  console.log('runMain')
-  const lastCommonCommit = getLastCommonCommit(BASE_BRANCH, LOCAL_BRANCH)
-  const latestLocalCommit = process.env.CI_COMMIT_SHORT_SHA
   const prNumber = process.env.CI_EXTERNAL_PULL_REQUEST_IID
   console.log('runMain')
   console.log(prNumber)
+  const lastCommonCommit = getLastCommonCommit(BASE_BRANCH, LOCAL_BRANCH)
+  const latestLocalCommit = process.env.CI_COMMIT_SHORT_SHA
   if (!prNumber) {
     console.log('No pull requests found for the branch')
     process.exit(0)
