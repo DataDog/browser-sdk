@@ -12,20 +12,18 @@ const TIMEOUT_DURATION_MS = 5000
 const FETCH_RETRIES = 4
 
 runMain(async () => {
-  const prNumber = process.env.CI_EXTERNAL_PULL_REQUEST_IID
-  console.log('runMain')
-  console.log(prNumber)
   const lastCommonCommit = getLastCommonCommit(BASE_BRANCH, LOCAL_BRANCH)
   const latestLocalCommit = process.env.CI_COMMIT_SHORT_SHA
-  if (!prNumber) {
+  const pr = await fetchPR(LOCAL_BRANCH)
+  if (!pr) {
     console.log('No pull requests found for the branch')
     process.exit(0)
   }
   const mainBranchBundleSizes = await fetchAllPackagesBundleSize(buildQuery(lastCommonCommit))
   const currentBranchBundleSizes = await fetchAllPackagesBundleSize(buildQuery(latestLocalCommit))
   const difference = compare(mainBranchBundleSizes, currentBranchBundleSizes)
-  const commentId = await retrieveExistingCommentId(prNumber)
-  await updateOrAddComment(difference, mainBranchBundleSizes, currentBranchBundleSizes, prNumber, commentId)
+  const commentId = await retrieveExistingCommentId(pr[0].number)
+  await updateOrAddComment(difference, mainBranchBundleSizes, currentBranchBundleSizes, pr[0].number, commentId)
 })
 
 function getLastCommonCommit(baseBranch) {
@@ -37,6 +35,23 @@ function getLastCommonCommit(baseBranch) {
   } catch (error) {
     throw new Error('Failed to get last common commit', { cause: error })
   }
+}
+
+async function fetchPR(localBranch) {
+  const response = await fetch(`https://api.github.com/repos/DataDog/browser-sdk/pulls?head=DataDog:${localBranch}`, {
+    method: 'GET',
+    headers: {
+      Authorization: `token ${GITHUB_TOKEN}`,
+    },
+  })
+  if (!response.ok) {
+    throw new Error(`HTTP Error Response: ${response.status} ${response.statusText}`)
+  }
+  const pr = response.body ? await response.json() : null
+  if (pr && pr.length > 1) {
+    throw new Error('Multiple pull requests found for the branch')
+  }
+  return pr
 }
 
 function buildQuery(commitSha) {
@@ -113,8 +128,6 @@ function compare(resultsBaseQuery, resultsLocalQuery) {
 }
 
 async function retrieveExistingCommentId(prNumber) {
-  console.log('retrieveExistingCommentId')
-  console.log(prNumber)
   const response = await fetch(`https://api.github.com/repos/DataDog/browser-sdk/issues/${prNumber}/comments`, {
     method: 'GET',
     headers: {
@@ -131,8 +144,6 @@ async function retrieveExistingCommentId(prNumber) {
   }
 }
 async function updateOrAddComment(difference, resultsBaseQuery, resultsLocalQuery, prNumber, commentId) {
-  console.log('updateOrAddComment')
-  console.log(prNumber)
   const message = createMessage(difference, resultsBaseQuery, resultsLocalQuery)
   const method = commentId ? 'PATCH' : 'POST'
   const payload = {
@@ -174,5 +185,5 @@ function formatBundleName(bundleName) {
 }
 
 function formatSize(bundleSize) {
-  return `<code title="${bundleSize}" style="background: none;">${(bundleSize / 1024).toFixed(2)} kB</code>`
+  return `${(bundleSize / 1024).toFixed(2)} kB`
 }
