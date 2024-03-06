@@ -15,6 +15,8 @@ runMain(async () => {
   const lastCommonCommit = getLastCommonCommit(BASE_BRANCH, LOCAL_BRANCH)
   const latestLocalCommit = process.env.CI_COMMIT_SHORT_SHA
   const prNumber = process.env.CI_EXTERNAL_PULL_REQUEST_IID
+  console.log('runMain')
+  console.log(prNumber)
   if (!prNumber) {
     console.log('No pull requests found for the branch')
     process.exit(0)
@@ -111,6 +113,8 @@ function compare(resultsBaseQuery, resultsLocalQuery) {
 }
 
 async function retrieveExistingCommentId(prNumber) {
+  console.log('retrieveExistingCommentId')
+  console.log(prNumber)
   const response = await fetch(`https://api.github.com/repos/DataDog/browser-sdk/issues/${prNumber}/comments`, {
     method: 'GET',
     headers: {
@@ -127,6 +131,8 @@ async function retrieveExistingCommentId(prNumber) {
   }
 }
 async function updateOrAddComment(difference, resultsBaseQuery, resultsLocalQuery, prNumber, commentId) {
+  console.log('updateOrAddComment')
+  console.log(prNumber)
   const message = createMessage(difference, resultsBaseQuery, resultsLocalQuery)
   const method = commentId ? 'PATCH' : 'POST'
   const payload = {
