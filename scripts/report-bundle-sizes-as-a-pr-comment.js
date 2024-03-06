@@ -10,7 +10,7 @@ const PR_COMMENTER_AUTH_TOKEN = command`authanywhere`.run().split(' ')[2].trim()
 const GITHUB_TOKEN = getGithubAccessToken()
 const ONE_DAY_IN_SECOND = 24 * 60 * 60
 const TIMEOUT_DURATION_MS = 5000
-const FETCH_RETRIES = 4
+const FETCH_RETRIES = 6
 
 runMain(async () => {
   const lastCommonCommit = getLastCommonCommit(BASE_BRANCH, LOCAL_BRANCH)
@@ -62,18 +62,16 @@ function fetchAllPackagesBundleSize(commitSha) {
 async function fetchBundleSizesMetric(packageName, commitSha) {
   const now = Math.floor(Date.now() / 1000)
   const date = now - 30 * ONE_DAY_IN_SECOND
+  const query = `avg:bundle_sizes.${packageName}{commit:${commitSha}}&from=${date}&to=${now}`
   for (let i = 0; i < FETCH_RETRIES; i++) {
-    const response = await fetch(
-      `https://api.datadoghq.com/api/v1/query?query=avg:bundle_sizes.${packageName}{commit:${commitSha}}&from=${date}&to=${now}`,
-      {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-          'DD-API-KEY': getOrg2ApiKey(),
-          'DD-APPLICATION-KEY': getOrg2AppKey(),
-        },
-      }
-    )
+    const response = await fetch(`https://api.datadoghq.com/api/v1/query?query=${query}`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'DD-API-KEY': getOrg2ApiKey(),
+        'DD-APPLICATION-KEY': getOrg2AppKey(),
+      },
+    })
     if (!response.ok) {
       throw new Error(`HTTP Error Response: ${response.status} ${response.statusText}`)
     }
