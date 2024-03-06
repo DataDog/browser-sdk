@@ -18,7 +18,6 @@ export enum ExperimentalFeature {
   ZERO_LCP_TELEMETRY = 'zero_lcp_telemetry',
   DISABLE_REPLAY_INLINE_CSS = 'disable_replay_inline_css',
   WRITABLE_RESOURCE_GRAPHQL = 'writable_resource_graphql',
-  TRACKING_CONSENT = 'tracking_consent',
   CUSTOM_VITALS = 'custom_vitals',
 }
 
