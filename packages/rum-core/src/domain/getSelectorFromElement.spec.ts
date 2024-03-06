@@ -1,4 +1,3 @@
-import { isIE } from '@datadog/browser-core'
 import { appendElement } from '../../test'
 import { getSelectorFromElement, supportScopeSelector } from './getSelectorFromElement'
 
@@ -181,12 +180,6 @@ describe('getSelectorFromElement', () => {
   })
 
   describe('should target closest meaningful element when targetMeaningfulElement: true', () => {
-    beforeEach(() => {
-      if (isIE()) {
-        pending('IE is not supported')
-      }
-    })
-
     it('based on their tags', () => {
       expect(
         getSelectorFromElement(appendElement('<button><span target><span></button>'), noActionNameAttribute, {

@@ -1,4 +1,5 @@
 import { cssEscape } from '@datadog/browser-core'
+import { closestElement } from '../browser/htmlDomUtils'
 import { DEFAULT_PROGRAMMATIC_ACTION_NAME_ATTRIBUTE } from './action/actionNameConstant'
 
 /**
@@ -64,8 +65,8 @@ export function getSelectorFromElement(
   let element: Element | null = targetElement
   const tagNameSelector = onlyPrefixWithSemanticTag ? getSemanticTagName : getTagNameSelector
 
-  if (targetMeaningfulElement && targetElement.closest) {
-    const closestMeaningfulElement = targetElement.closest(MEANINGFUL_ELEMENTS_SELECTORS.join(','))
+  if (targetMeaningfulElement) {
+    const closestMeaningfulElement = closestElement(targetElement, MEANINGFUL_ELEMENTS_SELECTORS.join(','))
     if (closestMeaningfulElement) {
       element = closestMeaningfulElement
     }

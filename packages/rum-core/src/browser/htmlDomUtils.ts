@@ -36,3 +36,29 @@ export function forEachChildNodes(node: Node, callback: (child: Node) => void) {
 export function getParentNode(node: Node): Node | null {
   return isNodeShadowRoot(node) ? node.host : node.parentNode
 }
+
+export function closestElement(targetElement: Element, selectors: string) {
+  if ('closest' in HTMLElement.prototype) {
+    return targetElement.closest(selectors)
+  }
+
+  let element: Element | null = targetElement
+  while (element) {
+    if (matches(element, selectors)) {
+      return element
+    }
+    element = element.parentElement
+  }
+}
+
+interface msElement extends Element {
+  msMatchesSelector: (selectors: string) => boolean
+}
+
+function matches(element: Element, selectors: string) {
+  if ('matches' in HTMLElement.prototype) {
+    return element.matches(selectors)
+  } else if ('msMatchesSelector' in HTMLElement.prototype) {
+    return (element as msElement).msMatchesSelector(selectors)
+  }
+}

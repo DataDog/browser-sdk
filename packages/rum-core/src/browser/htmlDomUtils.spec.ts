@@ -9,6 +9,7 @@ import {
   isNodeShadowHost,
   forEachChildNodes,
   hasChildNodes,
+  closestElement,
 } from './htmlDomUtils'
 
 describe('isTextNode', () => {
@@ -218,3 +219,15 @@ if (!isIE()) {
     })
   })
 }
+
+describe('closestElement', () => {
+  it('should return the closest HTML element', () => {
+    const targetElement = appendElement(
+      `<button class="foo">
+           <span target></span>
+         </button>`
+    )
+    const buttonElement = closestElement(targetElement, '.foo')
+    expect(buttonElement?.tagName).toEqual('BUTTON')
+  })
+})
