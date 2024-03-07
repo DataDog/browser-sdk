@@ -1,10 +1,4 @@
-import {
-  createNewEvent,
-  mockClock,
-  mockExperimentalFeatures,
-  restorePageVisibility,
-  setPageVisibility,
-} from '../../../test'
+import { createNewEvent, mockClock, restorePageVisibility, setPageVisibility } from '../../../test'
 import type { Clock } from '../../../test'
 import { getCookie, setCookie } from '../../browser/cookie'
 import type { RelativeTime } from '../../tools/utils/timeUtils'
@@ -14,7 +8,6 @@ import { ONE_HOUR, ONE_SECOND } from '../../tools/utils/timeUtils'
 import type { Configuration } from '../configuration'
 import type { TrackingConsentState } from '../trackingConsent'
 import { TrackingConsent, createTrackingConsentState } from '../trackingConsent'
-import { ExperimentalFeature } from '../../tools/experimentalFeatures'
 import type { SessionManager } from './sessionManager'
 import { startSessionManager, stopSessionManager, VISIBILITY_CHECK_DELAY } from './sessionManager'
 import { SESSION_EXPIRATION_DELAY, SESSION_TIME_OUT_DELAY } from './sessionConstants'
@@ -525,10 +518,6 @@ describe('startSessionManager', () => {
   })
 
   describe('tracking consent', () => {
-    beforeEach(() => {
-      mockExperimentalFeatures([ExperimentalFeature.TRACKING_CONSENT])
-    })
-
     it('expires the session when tracking consent is withdrawn', () => {
       const trackingConsentState = createTrackingConsentState(TrackingConsent.GRANTED)
       const sessionManager = startSessionManagerWithDefaults({ trackingConsentState })

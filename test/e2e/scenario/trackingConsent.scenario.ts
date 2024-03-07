@@ -5,7 +5,7 @@ import { findSessionCookie } from '../lib/helpers/session'
 describe('tracking consent', () => {
   describe('RUM', () => {
     createTest('does not start the SDK if tracking consent is not given at init')
-      .withRum({ enableExperimentalFeatures: ['tracking_consent'], trackingConsent: 'not-granted' })
+      .withRum({ trackingConsent: 'not-granted' })
       .run(async ({ intakeRegistry }) => {
         await flushEvents()
 
@@ -14,7 +14,7 @@ describe('tracking consent', () => {
       })
 
     createTest('starts the SDK once tracking consent is granted')
-      .withRum({ enableExperimentalFeatures: ['tracking_consent'], trackingConsent: 'not-granted' })
+      .withRum({ trackingConsent: 'not-granted' })
       .run(async ({ intakeRegistry }) => {
         await browserExecute(() => {
           window.DD_RUM!.setTrackingConsent('granted')
@@ -27,7 +27,7 @@ describe('tracking consent', () => {
       })
 
     createTest('stops sending events if tracking consent is revoked')
-      .withRum({ enableExperimentalFeatures: ['tracking_consent'], trackUserInteractions: true })
+      .withRum({ trackUserInteractions: true })
       .run(async ({ intakeRegistry }) => {
         await browserExecute(() => {
           window.DD_RUM!.setTrackingConsent('not-granted')
@@ -43,7 +43,7 @@ describe('tracking consent', () => {
       })
 
     createTest('starts a new session when tracking consent is granted again')
-      .withRum({ enableExperimentalFeatures: ['tracking_consent'] })
+      .withRum()
       .run(async ({ intakeRegistry }) => {
         const initialSessionId = await findSessionCookie()
 
@@ -62,7 +62,7 @@ describe('tracking consent', () => {
       })
 
     createTest('using setTrackingConsent before init overrides the init parameter')
-      .withRum({ enableExperimentalFeatures: ['tracking_consent'], trackingConsent: 'not-granted' })
+      .withRum({ trackingConsent: 'not-granted' })
       .withRumInit((configuration) => {
         window.DD_RUM!.setTrackingConsent('granted')
         window.DD_RUM!.init(configuration)
@@ -77,7 +77,7 @@ describe('tracking consent', () => {
 
   describe('Logs', () => {
     createTest('does not start the SDK if tracking consent is not given at init')
-      .withLogs({ enableExperimentalFeatures: ['tracking_consent'], trackingConsent: 'not-granted' })
+      .withLogs({ trackingConsent: 'not-granted' })
       .run(async ({ intakeRegistry }) => {
         await flushEvents()
 
@@ -86,7 +86,7 @@ describe('tracking consent', () => {
       })
 
     createTest('starts the SDK once tracking consent is granted')
-      .withLogs({ enableExperimentalFeatures: ['tracking_consent'], trackingConsent: 'not-granted' })
+      .withLogs({ trackingConsent: 'not-granted' })
       .run(async ({ intakeRegistry }) => {
         await browserExecute(() => {
           window.DD_LOGS!.setTrackingConsent('granted')

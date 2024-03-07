@@ -6,7 +6,6 @@ import {
   relativeToClocks,
   clocksNow,
   TrackingConsent,
-  ExperimentalFeature,
   createTrackingConsentState,
   DefaultPrivacyLevel,
 } from '@datadog/browser-core'
@@ -15,7 +14,6 @@ import {
   cleanupSyntheticsWorkerValues,
   initEventBridgeStub,
   mockClock,
-  mockExperimentalFeatures,
   mockSyntheticsWorkerValues,
 } from '@datadog/browser-core/test'
 import type { HybridInitConfiguration, RumConfiguration, RumInitConfiguration } from '../domain/configuration'
@@ -333,7 +331,6 @@ describe('preStartRum', () => {
         })
 
         it('calling startView then init does not start rum if tracking consent is not granted', () => {
-          mockExperimentalFeatures([ExperimentalFeature.TRACKING_CONSENT])
           const strategy = createPreStartStrategy({}, getCommonContextSpy, createTrackingConsentState(), doStartRumSpy)
           strategy.startView({ name: 'foo' })
           strategy.init({
@@ -563,61 +560,39 @@ describe('preStartRum', () => {
       strategy = createPreStartStrategy({}, getCommonContextSpy, trackingConsentState, doStartRumSpy)
     })
 
-    describe('with tracking_consent enabled', () => {
-      beforeEach(() => {
-        mockExperimentalFeatures([ExperimentalFeature.TRACKING_CONSENT])
+    it('does not start rum if tracking consent is not granted at init', () => {
+      strategy.init({
+        ...DEFAULT_INIT_CONFIGURATION,
+        trackingConsent: TrackingConsent.NOT_GRANTED,
       })
-
-      it('does not start rum if tracking consent is not granted at init', () => {
-        strategy.init({
-          ...DEFAULT_INIT_CONFIGURATION,
-          trackingConsent: TrackingConsent.NOT_GRANTED,
-        })
-        expect(doStartRumSpy).not.toHaveBeenCalled()
-      })
-
-      it('starts rum if tracking consent is granted before init', () => {
-        trackingConsentState.update(TrackingConsent.GRANTED)
-        strategy.init({
-          ...DEFAULT_INIT_CONFIGURATION,
-          trackingConsent: TrackingConsent.NOT_GRANTED,
-        })
-        expect(doStartRumSpy).toHaveBeenCalledTimes(1)
-      })
-
-      it('does not start rum if tracking consent is withdrawn before init', () => {
-        trackingConsentState.update(TrackingConsent.NOT_GRANTED)
-        strategy.init({
-          ...DEFAULT_INIT_CONFIGURATION,
-          trackingConsent: TrackingConsent.GRANTED,
-        })
-        expect(doStartRumSpy).not.toHaveBeenCalled()
-      })
-
-      it('does not start rum if no view is started', () => {
-        trackingConsentState.update(TrackingConsent.GRANTED)
-        strategy.init({
-          ...MANUAL_CONFIGURATION,
-          trackingConsent: TrackingConsent.NOT_GRANTED,
-        })
-        expect(doStartRumSpy).not.toHaveBeenCalled()
-      })
+      expect(doStartRumSpy).not.toHaveBeenCalled()
     })
 
-    describe('with tracking_consent disabled', () => {
-      it('ignores the trackingConsent init param', () => {
-        strategy.init({
-          ...DEFAULT_INIT_CONFIGURATION,
-          trackingConsent: TrackingConsent.NOT_GRANTED,
-        })
-        expect(doStartRumSpy).toHaveBeenCalled()
+    it('starts rum if tracking consent is granted before init', () => {
+      trackingConsentState.update(TrackingConsent.GRANTED)
+      strategy.init({
+        ...DEFAULT_INIT_CONFIGURATION,
+        trackingConsent: TrackingConsent.NOT_GRANTED,
       })
+      expect(doStartRumSpy).toHaveBeenCalledTimes(1)
+    })
 
-      it('ignores setTrackingConsent', () => {
-        trackingConsentState.update(TrackingConsent.NOT_GRANTED)
-        strategy.init(DEFAULT_INIT_CONFIGURATION)
-        expect(doStartRumSpy).toHaveBeenCalledTimes(1)
+    it('does not start rum if tracking consent is withdrawn before init', () => {
+      trackingConsentState.update(TrackingConsent.NOT_GRANTED)
+      strategy.init({
+        ...DEFAULT_INIT_CONFIGURATION,
+        trackingConsent: TrackingConsent.GRANTED,
       })
+      expect(doStartRumSpy).not.toHaveBeenCalled()
+    })
+
+    it('does not start rum if no view is started', () => {
+      trackingConsentState.update(TrackingConsent.GRANTED)
+      strategy.init({
+        ...MANUAL_CONFIGURATION,
+        trackingConsent: TrackingConsent.NOT_GRANTED,
+      })
+      expect(doStartRumSpy).not.toHaveBeenCalled()
     })
 
     it('do not call startRum when tracking consent state is updated after init', () => {
