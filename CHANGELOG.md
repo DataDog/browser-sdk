@@ -16,6 +16,13 @@
 
 ---
 
+## v5.11.0
+
+- ✨ [RUM-3349] enable the consent management API ([#2634](https://github.com/DataDog/browser-sdk/pull/2634))
+- ✨ [RUM-2203] Forward replay records to the bridge ([#2470](https://github.com/DataDog/browser-sdk/pull/2470))
+- 🐛 [RUM-2445] fix unexpected session renewal after expire() ([#2632](https://github.com/DataDog/browser-sdk/pull/2632))
+- ⚗️ [RUM-3234] Discard outdated vitals ([#2610](https://github.com/DataDog/browser-sdk/pull/2610))
+
 ## v5.10.0
 
 - ✨ [RUM-2902] Add error causes to context when logging an error ([#2602](https://github.com/DataDog/browser-sdk/pull/2602))
