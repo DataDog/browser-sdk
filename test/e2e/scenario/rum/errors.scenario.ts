@@ -121,6 +121,31 @@ describe('rum errors', () => {
         expect(browserLogs.length).toEqual(0)
       })
     })
+
+  createTest('send CSP violation errors')
+    .withHead(
+      html`<meta
+        http-equiv="Content-Security-Policy"
+        content="default-src 'self' 'unsafe-inline'; worker-src blob:; connect-src *"
+      />`
+    )
+    .withRum()
+    .withBody(html`<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>`)
+    .run(async ({ intakeRegistry }) => {
+      await flushEvents()
+
+      expect(intakeRegistry.rumErrorEvents.length).toBe(2)
+      expectError(intakeRegistry.rumErrorEvents[0].error, {
+        message:
+          "csp_violation: 'https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js' blocked by 'script-src-elem' directive",
+        source: 'report',
+        handling: 'unhandled',
+        disposition: 'enforce',
+      })
+      await withBrowserLogs((browserLogs) => {
+        expect(browserLogs.length).toEqual(2)
+      })
+    })
 })
 
 function expectError(
@@ -131,6 +156,7 @@ function expectError(
     stack?: string[]
     handlingStack?: string[]
     handling: 'handled' | 'unhandled'
+    disposition?: 'enforce' | 'report'
   }
 ) {
   expect(error.message).toBe(expected.message)
@@ -138,6 +164,7 @@ function expectError(
   expectStack(error.stack, expected.stack)
   expectStack(error.handling_stack, expected.handlingStack)
   expect(error.handling).toBe(expected.handling)
+  expect(error.disposition).toBe(expected.disposition)
 }
 
 function expectStack(stack: string | undefined, expectedLines?: string[]) {
