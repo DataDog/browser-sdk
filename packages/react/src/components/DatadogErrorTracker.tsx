@@ -7,14 +7,12 @@ interface DatadogErrorTrackerProps {
   children?: React.ReactNode
 }
 
-export class DatadogErrorTracker extends React.Component<DatadogErrorTrackerProps> {
+export class DatadogErrorTracker<P, S> extends React.Component<DatadogErrorTrackerProps & P, S> {
   static contextType = DatadogContext
 
-  constructor(props: DatadogErrorTrackerProps) {
+  constructor(props: DatadogErrorTrackerProps & P) {
     super(props)
   }
-
-  static getDerivedStateFromError() {}
 
   componentDidCatch(error: Error, info: ErrorInfo) {
     const { datadogReactRum } = this.context as React.ContextType<typeof DatadogContext>
@@ -27,11 +25,5 @@ export class DatadogErrorTracker extends React.Component<DatadogErrorTrackerProp
     datadogReactRum?.addError(renderingError, {
       framework: 'react',
     })
-    // Forward the error to the error boundary above.
-    throw error
-  }
-
-  render() {
-    return this.props.children
   }
 }
