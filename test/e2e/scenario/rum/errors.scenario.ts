@@ -130,10 +130,18 @@ describe('rum errors', () => {
       />`
     )
     .withRum()
-    .withBody(html`<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>`)
-    .run(async ({ intakeRegistry }) => {
-      await flushEvents()
+    .withBody(
+      createBody(`
+        const script = document.createElement('script');
+        script.src = "https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"
+        document.body.appendChild(script)
+      `)
+    )
+    .run(async ({ intakeRegistry, baseUrl }) => {
+      const button = await $('button')
+      await button.click()
 
+      await flushEvents()
       expect(intakeRegistry.rumErrorEvents.length).toBe(2)
       expectError(intakeRegistry.rumErrorEvents[0].error, {
         message:
@@ -141,6 +149,10 @@ describe('rum errors', () => {
         source: 'report',
         handling: 'unhandled',
         disposition: 'enforce',
+        stack: [
+          "script-src-elem: 'https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js' blocked by 'script-src-elem' directive of the policy \"connect-src *\"",
+          `at <anonymous> @ ${baseUrl}/:`,
+        ],
       })
       await withBrowserLogs((browserLogs) => {
         expect(browserLogs.length).toEqual(2)
