@@ -27,8 +27,8 @@
     "access": "public"
   },
   "dependencies": {
-    "@datadog/browser-rum": "5.9.0",
-    "@datadog/browser-rum-core": "5.9.0"
+    "@datadog/browser-rum": "5.10.0",
+    "@datadog/browser-rum-core": "5.10.0"
   },
   "peerDependencies": {
     "react": ">=17.0.0",

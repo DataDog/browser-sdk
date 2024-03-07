@@ -349,7 +349,7 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@datadog/browser-rum@5.9.0, @datadog/browser-rum@workspace:*, @datadog/browser-rum@workspace:packages/rum":
+"@datadog/browser-rum@5.10.0, @datadog/browser-rum@workspace:*, @datadog/browser-rum@workspace:packages/rum":
   version: 0.0.0-use.local
   resolution: "@datadog/browser-rum@workspace:packages/rum"
   dependencies:
@@ -403,8 +403,8 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@datadog/react-rum@workspace:packages/react"
   dependencies:
-    "@datadog/browser-rum": 5.9.0
-    "@datadog/browser-rum-core": 5.9.0
+    "@datadog/browser-rum": 5.10.0
+    "@datadog/browser-rum-core": 5.10.0
     react: 18.2.0
     react-router-dom: 6.22.0
   peerDependencies:
