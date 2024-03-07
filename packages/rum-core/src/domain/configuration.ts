@@ -186,7 +186,7 @@ function getSelectedTracingPropagators(configuration: RumInitConfiguration): Pro
   return arrayFrom(usedTracingPropagators)
 }
 
-export function serializeRumConfiguration(configuration: RumInitConfiguration): RawTelemetryConfiguration {
+export function serializeRumConfiguration(configuration: RumInitConfiguration) {
   const baseSerializedConfiguration = serializeConfiguration(configuration)
 
   return assign(
@@ -209,5 +209,5 @@ export function serializeRumConfiguration(configuration: RumInitConfiguration): 
       track_long_task: configuration.trackLongTasks,
     },
     baseSerializedConfiguration
-  )
+  ) satisfies RawTelemetryConfiguration
 }

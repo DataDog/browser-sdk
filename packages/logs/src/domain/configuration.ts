@@ -87,7 +87,7 @@ export function validateAndBuildForwardOption<T>(
   return option === 'all' ? allowedValues : removeDuplicates<T>(option)
 }
 
-export function serializeLogsConfiguration(configuration: LogsInitConfiguration): RawTelemetryConfiguration {
+export function serializeLogsConfiguration(configuration: LogsInitConfiguration) {
   const baseSerializedInitConfiguration = serializeConfiguration(configuration)
 
   return assign(
@@ -97,5 +97,5 @@ export function serializeLogsConfiguration(configuration: LogsInitConfiguration)
       forward_reports: configuration.forwardReports,
     },
     baseSerializedInitConfiguration
-  )
+  ) satisfies RawTelemetryConfiguration
 }
