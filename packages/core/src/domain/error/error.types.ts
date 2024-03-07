@@ -31,6 +31,7 @@ export interface RawError {
   handlingStack?: string
   causes?: RawErrorCause[]
   fingerprint?: string
+  disposition?: SecurityPolicyViolationEventDisposition
 }
 
 export const ErrorSource = {

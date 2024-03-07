@@ -385,6 +385,10 @@ export type RumErrorEvent = CommonProperties &
         readonly path?: string
         [k: string]: unknown
       }
+      /**
+       * In the context of CSP errors, indicates how the violated policy is configured to be treated by the user agent.
+       */
+      readonly disposition?: 'enforce' | 'report'
       [k: string]: unknown
     }
     /**
