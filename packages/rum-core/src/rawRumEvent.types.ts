@@ -9,6 +9,7 @@ import type {
   RawErrorCause,
   DefaultPrivacyLevel,
   Connectivity,
+  CspDisposition,
 } from '@datadog/browser-core'
 import type { PageState } from './domain/contexts/pageStateHistory'
 
@@ -67,7 +68,7 @@ export interface RawRumErrorEvent {
     handling?: ErrorHandling
     causes?: RawErrorCause[]
     source_type: 'browser'
-    disposition?: SecurityPolicyViolationEventDisposition
+    disposition?: CspDisposition
   }
   view?: {
     in_foreground: boolean
