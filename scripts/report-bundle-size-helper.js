@@ -140,7 +140,7 @@ function createMessage(difference, resultsBaseQuery, localBundleSizes) {
   let message = '| 📦 Bundle Name| Base Size | Local Size | 𝚫% |\n| --- | --- | --- | --- |\n'
   difference.forEach((diff, index) => {
     const baseSize = formatSize(resultsBaseQuery[index].size)
-    const localSize = formatSize(localBundleSizes[index].size)
+    const localSize = formatSize(localBundleSizes[diff.name])
     const sign = diff.percentageChange > 0 ? '+' : ''
     message += `| ${formatBundleName(diff.name)} | ${baseSize} | ${localSize} | ${sign}${diff.percentageChange}% |\n`
   })
