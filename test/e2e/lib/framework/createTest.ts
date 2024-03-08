@@ -40,7 +40,6 @@ export function createTest(title: string) {
 interface TestContext {
   baseUrl: string
   crossOriginUrl: string
-  intakeUrl: string
   intakeRegistry: IntakeRegistry
   servers: Servers
 }
@@ -201,7 +200,6 @@ function createTestContext(servers: Servers, { basePath }: SetupOptions): TestCo
   return {
     baseUrl: servers.base.url + basePath,
     crossOriginUrl: servers.crossOrigin.url,
-    intakeUrl: servers.intake.url,
     intakeRegistry: new IntakeRegistry(),
     servers,
   }

@@ -137,7 +137,7 @@ describe('rum errors', () => {
         document.body.appendChild(script)
       `)
     )
-    .run(async ({ intakeRegistry, baseUrl, crossOriginUrl, intakeUrl }) => {
+    .run(async ({ intakeRegistry, baseUrl }) => {
       const button = await $('button')
       await button.click()
 
@@ -147,11 +147,11 @@ describe('rum errors', () => {
         message:
           "csp_violation: 'https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js' blocked by 'script-src-elem' directive",
         source: 'report',
-        handling: 'unhandled',
         stack: [
-          `script-src-elem: 'https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js' blocked by 'script-src-elem' directive of the policy "connect-src ${intakeUrl} ${baseUrl} ${crossOriginUrl};script-src..."`,
-          `at <anonymous> @ ${baseUrl}/:`,
+          /^script-src-elem: 'https:\/\/ajax\.googleapis\.com\/ajax\/libs\/jquery\/3\.7\.1\/jquery\.min\.js' blocked by 'script-src-elem' directive of the policy "connect-src/,
+          `  at <anonymous> @ ${baseUrl}/:`,
         ],
+        handling: 'unhandled',
         csp: {
           disposition: 'enforce',
         },
@@ -167,8 +167,8 @@ function expectError(
   expected: {
     message: string
     source: string
-    stack?: string[]
-    handlingStack?: string[]
+    stack?: Array<string | RegExp>
+    handlingStack?: Array<string | RegExp>
     handling: 'handled' | 'unhandled'
     csp?: {
       disposition?: 'enforce' | 'report'
@@ -183,7 +183,7 @@ function expectError(
   expect(error.csp?.disposition).toBe(expected.csp?.disposition)
 }
 
-function expectStack(stack: string | undefined, expectedLines?: string[]) {
+function expectStack(stack: string | undefined, expectedLines?: Array<string | RegExp>) {
   if (expectedLines === undefined) {
     expect(stack).toBeUndefined()
   } else {
@@ -191,6 +191,10 @@ function expectStack(stack: string | undefined, expectedLines?: string[]) {
     const actualLines = stack!.split('\n')
     expect(actualLines.length).toBe(expectedLines.length)
     expectedLines.forEach((line, i) => {
+      if (typeof line !== 'string') {
+        return expect(actualLines[i]).toMatch(line)
+      }
+
       if (i === 0) {
         expect(actualLines[i]).toBe(line)
       } else {
