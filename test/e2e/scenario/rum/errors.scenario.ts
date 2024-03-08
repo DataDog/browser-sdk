@@ -137,7 +137,7 @@ describe('rum errors', () => {
         document.body.appendChild(script)
       `)
     )
-    .run(async ({ intakeRegistry, baseUrl }) => {
+    .run(async ({ intakeRegistry, baseUrl, crossOriginUrl, intakeUrl }) => {
       const button = await $('button')
       await button.click()
 
@@ -148,11 +148,13 @@ describe('rum errors', () => {
           "csp_violation: 'https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js' blocked by 'script-src-elem' directive",
         source: 'report',
         handling: 'unhandled',
-        disposition: 'enforce',
         stack: [
-          "script-src-elem: 'https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js' blocked by 'script-src-elem' directive of the policy \"connect-src *\"",
+          `script-src-elem: 'https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js' blocked by 'script-src-elem' directive of the policy "connect-src ${intakeUrl} ${baseUrl} ${crossOriginUrl};script-src..."`,
           `at <anonymous> @ ${baseUrl}/:`,
         ],
+        csp: {
+          disposition: 'enforce',
+        },
       })
       await withBrowserLogs((browserLogs) => {
         expect(browserLogs.length).toEqual(2)
@@ -168,7 +170,9 @@ function expectError(
     stack?: string[]
     handlingStack?: string[]
     handling: 'handled' | 'unhandled'
-    disposition?: 'enforce' | 'report'
+    csp?: {
+      disposition?: 'enforce' | 'report'
+    }
   }
 ) {
   expect(error.message).toBe(expected.message)
@@ -176,7 +180,7 @@ function expectError(
   expectStack(error.stack, expected.stack)
   expectStack(error.handling_stack, expected.handlingStack)
   expect(error.handling).toBe(expected.handling)
-  expect(error.disposition).toBe(expected.disposition)
+  expect(error.csp?.disposition).toBe(expected.csp?.disposition)
 }
 
 function expectStack(stack: string | undefined, expectedLines?: string[]) {

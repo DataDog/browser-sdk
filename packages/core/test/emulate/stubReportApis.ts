@@ -9,8 +9,6 @@ export function stubReportingObserver() {
 
   window.ReportingObserver = function (callback: ReportingObserverCallback, { types }: ReportingObserverOptions) {
     types?.forEach((type) => {
-      console.log('types', types)
-
       if (!callbacks[type]) {
         callbacks[type] = []
       }
