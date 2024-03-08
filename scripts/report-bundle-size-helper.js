@@ -84,12 +84,12 @@ async function fetchBundleSizesMetric(packageName, commitSha) {
 }
 
 function compare(resultsBaseQuery, localBundleSizes) {
-  return resultsBaseQuery.map((baseResult, index) => {
-    const localResult = localBundleSizes[index]
+  return resultsBaseQuery.map((baseResult) => {
+    const localSize = localBundleSizes[baseResult.name]
     let percentageChange = null
 
-    if (baseResult.size && localResult.size) {
-      percentageChange = (((localResult.size - baseResult.size) / baseResult.size) * 100).toFixed(2)
+    if (baseResult.size && localSize) {
+      percentageChange = (((localSize - baseResult.size) / baseResult.size) * 100).toFixed(2)
     }
     return {
       name: baseResult.name,
