@@ -3,7 +3,7 @@ const path = require('path')
 const { browserSdkVersion } = require('./lib/browser-sdk-version')
 const { getOrg2ApiKey } = require('./lib/secrets')
 const { runMain, fetch } = require('./lib/execution-utils')
-const { reportBundleSizes } = require('./reportBundleSizeHelper')
+const { reportBundleSizes } = require('./report-bundle-size-helper')
 
 const rumPath = path.join(__dirname, '../packages/rum/bundle/datadog-rum.js')
 const logsPath = path.join(__dirname, '../packages/logs/bundle/datadog-logs.js')

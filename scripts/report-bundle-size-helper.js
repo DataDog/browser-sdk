@@ -83,9 +83,9 @@ async function fetchBundleSizesMetric(packageName, commitSha) {
   }
 }
 
-function compare(resultsBaseQuery, resultsLocalQuery) {
+function compare(resultsBaseQuery, localBundleSizes) {
   return resultsBaseQuery.map((baseResult, index) => {
-    const localResult = resultsLocalQuery[index]
+    const localResult = localBundleSizes[index]
     let percentageChange = null
 
     if (baseResult.size && localResult.size) {
@@ -114,8 +114,8 @@ async function retrieveExistingCommentId(prNumber) {
     return targetComment.id
   }
 }
-async function updateOrAddComment(difference, resultsBaseQuery, resultsLocalQuery, prNumber, commentId) {
-  const message = createMessage(difference, resultsBaseQuery, resultsLocalQuery)
+async function updateOrAddComment(difference, resultsBaseQuery, localBundleSizes, prNumber, commentId) {
+  const message = createMessage(difference, resultsBaseQuery, localBundleSizes)
   const method = commentId ? 'PATCH' : 'POST'
   const payload = {
     pr_url: `https://github.com/DataDog/browser-sdk/pull/${prNumber}`,
@@ -136,11 +136,11 @@ async function updateOrAddComment(difference, resultsBaseQuery, resultsLocalQuer
   }
 }
 
-function createMessage(difference, resultsBaseQuery, resultsLocalQuery) {
+function createMessage(difference, resultsBaseQuery, localBundleSizes) {
   let message = '| 📦 Bundle Name| Base Size | Local Size | 𝚫% |\n| --- | --- | --- | --- |\n'
   difference.forEach((diff, index) => {
     const baseSize = formatSize(resultsBaseQuery[index].size)
-    const localSize = formatSize(resultsLocalQuery[index].size)
+    const localSize = formatSize(localBundleSizes[index].size)
     const sign = diff.percentageChange > 0 ? '+' : ''
     message += `| ${formatBundleName(diff.name)} | ${baseSize} | ${localSize} | ${sign}${diff.percentageChange}% |\n`
   })
