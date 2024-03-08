@@ -140,8 +140,7 @@ build-and-lint:
     - yarn build
     - yarn lint
     - node scripts/check-packages.js
-    - node scripts/export-bundles-sizes.js
-    - node scripts/report-bundle-sizes-as-a-pr-comment.js
+    - node scripts/export-and-report-bundles-sizes-as-a-pr-comment.js
 
 build-bundle:
   extends:

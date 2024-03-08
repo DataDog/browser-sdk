@@ -1,5 +1,4 @@
 const { command } = require('./lib/command')
-const { runMain, timeout } = require('./lib/execution-utils')
 const { getOrg2ApiKey, getGithubAccessToken, getOrg2AppKey } = require('./lib/secrets')
 
 const PR_COMMENT_HEADER = 'Bundles Sizes Evolution'
@@ -9,23 +8,19 @@ const LOCAL_BRANCH = process.env.CI_COMMIT_REF_NAME
 const PR_COMMENTER_AUTH_TOKEN = command`authanywhere`.run().split(' ')[2].trim()
 const GITHUB_TOKEN = getGithubAccessToken()
 const ONE_DAY_IN_SECOND = 24 * 60 * 60
-const TIMEOUT_DURATION_MS = 5000
-const FETCH_RETRIES = 6
 
-runMain(async () => {
+async function reportBundleSizes(localBundleSizes) {
   const lastCommonCommit = getLastCommonCommit(BASE_BRANCH, LOCAL_BRANCH)
-  const latestLocalCommit = process.env.CI_COMMIT_SHORT_SHA
   const pr = await fetchPR(LOCAL_BRANCH)
   if (!pr) {
     console.log('No pull requests found for the branch')
-    process.exit(0)
+    return
   }
-  const mainBranchBundleSizes = await fetchAllPackagesBundleSize(lastCommonCommit)
-  const currentBranchBundleSizes = await fetchAllPackagesBundleSize(latestLocalCommit)
-  const difference = compare(mainBranchBundleSizes, currentBranchBundleSizes)
-  const commentId = await retrieveExistingCommentId(pr[0].number)
-  await updateOrAddComment(difference, mainBranchBundleSizes, currentBranchBundleSizes, pr[0].number, commentId)
-})
+  const mainBranchBundleSizes = await fetchAllPackagesBaseBundleSize(lastCommonCommit)
+  const difference = compare(mainBranchBundleSizes, localBundleSizes)
+  const commentId = await retrieveExistingCommentId(pr.number)
+  await updateOrAddComment(difference, mainBranchBundleSizes, localBundleSizes, pr.number, commentId)
+}
 
 function getLastCommonCommit(baseBranch) {
   try {
@@ -52,10 +47,10 @@ async function fetchPR(localBranch) {
   if (pr && pr.length > 1) {
     throw new Error('Multiple pull requests found for the branch')
   }
-  return pr
+  return pr ? pr[0] : null
 }
 
-function fetchAllPackagesBundleSize(commitSha) {
+function fetchAllPackagesBaseBundleSize(commitSha) {
   return Promise.all(PACKAGES_NAMES.map((packageName) => fetchBundleSizesMetric(packageName, commitSha)))
 }
 
@@ -63,26 +58,24 @@ async function fetchBundleSizesMetric(packageName, commitSha) {
   const now = Math.floor(Date.now() / 1000)
   const date = now - 30 * ONE_DAY_IN_SECOND
   const query = `avg:bundle_sizes.${packageName}{commit:${commitSha}}&from=${date}&to=${now}`
-  for (let i = 0; i < FETCH_RETRIES; i++) {
-    const response = await fetch(`https://api.datadoghq.com/api/v1/query?query=${query}`, {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-        'DD-API-KEY': getOrg2ApiKey(),
-        'DD-APPLICATION-KEY': getOrg2AppKey(),
-      },
-    })
-    if (!response.ok) {
-      throw new Error(`HTTP Error Response: ${response.status} ${response.statusText}`)
+
+  const response = await fetch(`https://api.datadoghq.com/api/v1/query?query=${query}`, {
+    method: 'GET',
+    headers: {
+      'Content-Type': 'application/json',
+      'DD-API-KEY': getOrg2ApiKey(),
+      'DD-APPLICATION-KEY': getOrg2AppKey(),
+    },
+  })
+  if (!response.ok) {
+    throw new Error(`HTTP Error Response: ${response.status} ${response.statusText}`)
+  }
+  const data = await response.json()
+  if (data.series && data.series.length > 0 && data.series[0].pointlist && data.series[0].pointlist.length > 0) {
+    return {
+      name: packageName,
+      size: data.series[0].pointlist[0][1],
     }
-    const data = await response.json()
-    if (data.series && data.series.length > 0 && data.series[0].pointlist && data.series[0].pointlist.length > 0) {
-      return {
-        name: packageName,
-        size: data.series[0].pointlist[0][1],
-      }
-    }
-    await timeout(TIMEOUT_DURATION_MS)
   }
   return {
     name: packageName,
@@ -116,7 +109,7 @@ async function retrieveExistingCommentId(prNumber) {
     throw new Error(`HTTP Error Response: ${response.status} ${response.statusText}`)
   }
   const comments = await response.json()
-  const targetComment = comments.filter((comment) => comment.body.startsWith('## Bundles Sizes Evolution'))[0]
+  const targetComment = comments.find((comment) => comment.body.startsWith(`## ${PR_COMMENT_HEADER}`))
   if (targetComment !== undefined) {
     return targetComment.id
   }
@@ -165,3 +158,5 @@ function formatBundleName(bundleName) {
 function formatSize(bundleSize) {
   return `${(bundleSize / 1024).toFixed(2)} kB`
 }
+
+export { reportBundleSizes }

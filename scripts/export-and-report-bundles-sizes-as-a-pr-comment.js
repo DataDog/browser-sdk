@@ -3,6 +3,7 @@ const path = require('path')
 const { browserSdkVersion } = require('./lib/browser-sdk-version')
 const { getOrg2ApiKey } = require('./lib/secrets')
 const { runMain, fetch } = require('./lib/execution-utils')
+const { reportBundleSizes } = require('./reportBundleSizeHelper')
 
 const rumPath = path.join(__dirname, '../packages/rum/bundle/datadog-rum.js')
 const logsPath = path.join(__dirname, '../packages/logs/bundle/datadog-logs.js')
@@ -16,24 +17,26 @@ const LOG_INTAKE_REQUEST_HEADERS = {
 }
 
 runMain(async () => {
+  const bundleSizes = {
+    rum: getBundleSize(rumPath),
+    logs: getBundleSize(logsPath),
+    rum_slim: getBundleSize(rumSlimPath),
+    worker: getBundleSize(workerPath),
+  }
   const logData = [
     {
       message: 'Browser SDK bundles sizes',
       service: 'browser-sdk',
       ddsource: 'browser-sdk',
       env: 'ci',
-      bundle_sizes: {
-        rum: getBundleSize(rumPath),
-        logs: getBundleSize(logsPath),
-        rum_slim: getBundleSize(rumSlimPath),
-        worker: getBundleSize(workerPath),
-      },
+      bundle_sizes: bundleSizes,
       version: browserSdkVersion,
       commit: process.env.CI_COMMIT_SHORT_SHA,
       branch: process.env.CI_COMMIT_REF_NAME,
     },
   ]
   await sendLogToOrg2(logData)
+  await reportBundleSizes(bundleSizes)
 })
 
 function getBundleSize(pathBundle) {
