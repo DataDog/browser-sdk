@@ -1,5 +1,5 @@
-const { command } = require('./lib/command')
-const { getOrg2ApiKey, getGithubAccessToken, getOrg2AppKey } = require('./lib/secrets')
+const { command } = require('../lib/command')
+const { getOrg2ApiKey, getGithubAccessToken, getOrg2AppKey } = require('../lib/secrets')
 
 const PR_COMMENT_HEADER = 'Bundles Sizes Evolution'
 const BASE_BRANCH = process.env.MAIN_BRANCH
