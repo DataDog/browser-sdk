@@ -18,7 +18,9 @@ export function trackReportError(configuration: RumConfiguration, errorObservabl
     }
 
     if (reportError.originalReport.type === 'securitypolicyviolation') {
-      rawError.disposition = reportError.originalReport.disposition
+      rawError.csp = {
+        disposition: reportError.originalReport.disposition,
+      }
     }
 
     return errorObservable.notify(rawError)

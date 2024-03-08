@@ -78,7 +78,7 @@ describe('error collection', () => {
               source_type: 'browser',
               causes: undefined,
               fingerprint: undefined,
-              disposition: undefined,
+              csp: undefined,
             },
             type: RumEventType.ERROR,
             view: {
@@ -251,7 +251,7 @@ describe('error collection', () => {
           source_type: 'browser',
           causes: undefined,
           fingerprint: undefined,
-          disposition: undefined,
+          csp: undefined,
         },
         view: {
           in_foreground: true,
@@ -274,11 +274,13 @@ describe('error collection', () => {
           startClocks: { relative: 1234 as RelativeTime, timeStamp: 123456789 as TimeStamp },
           type: 'foo',
           originalError: FAKE_CSP_VIOLATION_EVENT,
-          disposition: FAKE_CSP_VIOLATION_EVENT.disposition,
+          csp: {
+            disposition: FAKE_CSP_VIOLATION_EVENT.disposition,
+          },
         },
       })
 
-      expect((rawRumEvents[0].rawRumEvent as RawRumErrorEvent).error.disposition).toEqual('enforce')
+      expect((rawRumEvents[0].rawRumEvent as RawRumErrorEvent).error.csp?.disposition).toEqual('enforce')
     })
   })
 })
