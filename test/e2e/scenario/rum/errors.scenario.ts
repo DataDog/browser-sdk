@@ -126,7 +126,7 @@ describe('rum errors', () => {
     .withHead(
       html`<meta
         http-equiv="Content-Security-Policy"
-        content="default-src 'self' 'unsafe-inline'; worker-src blob:; connect-src *"
+        content="default-src 'self' 'unsafe-inline'; worker-src blob:; connect-src *; child-src blob:"
       />`
     )
     .withRum()
