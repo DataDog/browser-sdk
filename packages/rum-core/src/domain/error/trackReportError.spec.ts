@@ -61,9 +61,11 @@ describe('trackReportError', () => {
       stack: jasmine.any(String),
       source: ErrorSource.REPORT,
       handling: ErrorHandling.UNHANDLED,
-      type: FAKE_CSP_VIOLATION_EVENT.violatedDirective,
+      type: FAKE_CSP_VIOLATION_EVENT.effectiveDirective,
       originalError: FAKE_CSP_VIOLATION_EVENT,
-      disposition: FAKE_CSP_VIOLATION_EVENT.disposition,
+      csp: {
+        disposition: FAKE_CSP_VIOLATION_EVENT.disposition,
+      },
     })
   })
 })
