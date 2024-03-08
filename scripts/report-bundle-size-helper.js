@@ -159,4 +159,6 @@ function formatSize(bundleSize) {
   return `${(bundleSize / 1024).toFixed(2)} kB`
 }
 
-export { reportBundleSizes }
+module.exports = {
+  reportBundleSizes,
+}
