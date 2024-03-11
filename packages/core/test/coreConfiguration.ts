@@ -51,6 +51,7 @@ export const SERIALIZED_EXHAUSTIVE_INIT_CONFIGURATION = {
   allow_fallback_to_local_storage: true,
   store_contexts_across_pages: true,
   allow_untrusted_events: true,
+  tracking_consent: 'not-granted',
 }
 
 /**

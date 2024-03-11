@@ -193,5 +193,6 @@ export function serializeConfiguration(initConfiguration: InitConfiguration) {
     allow_fallback_to_local_storage: !!initConfiguration.allowFallbackToLocalStorage,
     store_contexts_across_pages: !!initConfiguration.storeContextsAcrossPages,
     allow_untrusted_events: !!initConfiguration.allowUntrustedEvents,
+    tracking_consent: initConfiguration.trackingConsent,
   } satisfies RawTelemetryConfiguration
 }
