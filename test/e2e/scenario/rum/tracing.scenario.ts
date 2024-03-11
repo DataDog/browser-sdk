@@ -10,7 +10,9 @@ describe('tracing', () => {
         ['x-foo', 'bar'],
         ['x-foo', 'baz'],
       ])
-      checkRequestHeaders(rawHeaders)
+      const headers = parseHeaders(rawHeaders)
+      checkRequestHeaders(headers)
+      expect(headers['x-foo']).toBe('bar, baz')
       await flushEvents()
       checkTraceAssociatedToRumEvent(intakeRegistry)
     })
@@ -30,10 +32,9 @@ describe('tracing', () => {
           .then(done)
           .catch(() => done(new Error('Fetch request failed!')))
       })
-      if (rawHeaders instanceof Error) {
-        return fail(rawHeaders)
-      }
-      checkRequestHeaders(rawHeaders)
+      const headers = parseHeaders(rawHeaders)
+      checkRequestHeaders(headers)
+      expect(headers['x-foo']).toBe('bar, baz')
       await flushEvents()
       checkTraceAssociatedToRumEvent(intakeRegistry)
     })
@@ -48,21 +49,47 @@ describe('tracing', () => {
           .then(done)
           .catch(() => done(new Error('Fetch request failed!')))
       })
-      if (rawHeaders instanceof Error) {
-        return fail(rawHeaders)
-      }
-      checkRequestHeaders(rawHeaders)
+      const headers = parseHeaders(rawHeaders)
+      checkRequestHeaders(headers)
+      expect(headers['x-foo']).toBe('bar, baz')
       await flushEvents()
       checkTraceAssociatedToRumEvent(intakeRegistry)
     })
 
+  createTest('trace single argument fetch')
+    .withRum({ service: 'service', allowedTracingUrls: ['LOCATION_ORIGIN'] })
+    .run(async ({ intakeRegistry }) => {
+      const rawHeaders = await browserExecuteAsync<string | Error>((done) => {
+        window
+          .fetch('/headers')
+          .then((response) => response.text())
+          .then(done)
+          .catch(() => done(new Error('Fetch request failed!')))
+      })
+      const headers = parseHeaders(rawHeaders)
+      checkRequestHeaders(headers)
+      await flushEvents()
+      checkTraceAssociatedToRumEvent(intakeRegistry)
+    })
+
+  interface ParsedHeaders {
+    [key: string]: string
+  }
+
+  function parseHeaders(rawHeaders: string | Error): ParsedHeaders {
+    if (rawHeaders instanceof Error) {
+      fail(rawHeaders)
+      return {}
+    }
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+    return JSON.parse(rawHeaders)
+  }
+
   // By default, we send both Datadog and W3C tracecontext headers
-  function checkRequestHeaders(rawHeaders: string) {
-    const headers: { [key: string]: string } = JSON.parse(rawHeaders)
+  function checkRequestHeaders(headers: ParsedHeaders) {
     expect(headers['x-datadog-trace-id']).toMatch(/\d+/)
     expect(headers['x-datadog-origin']).toBe('rum')
     expect(headers['traceparent']).toMatch(/^[0-9a-f]{2}-[0-9a-f]{32}-[0-9a-f]{16}-01$/)
-    expect(headers['x-foo']).toBe('bar, baz')
   }
 
   function checkTraceAssociatedToRumEvent(intakeRegistry: IntakeRegistry) {

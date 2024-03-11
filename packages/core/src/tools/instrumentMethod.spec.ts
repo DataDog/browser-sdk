@@ -56,6 +56,24 @@ describe('instrumentMethod', () => {
     expect(instrumentationSpy.calls.mostRecent().args[0].parameters[1]).toBe(3)
   })
 
+  it('allows replacing a parameter', () => {
+    const object = { method: (a: number) => a }
+    instrumentMethod(object, 'method', ({ parameters }) => {
+      parameters[0] = 2
+    })
+
+    expect(object.method(1)).toBe(2)
+  })
+
+  it('allows adding a parameter', () => {
+    const object = { method: (a?: number) => a }
+    instrumentMethod(object, 'method', ({ parameters }) => {
+      parameters[0] = 2
+    })
+
+    expect(object.method()).toBe(2)
+  })
+
   it('calls the "onPostCall" callback with the original method result', () => {
     const object = { method: () => 1 }
     const onPostCallSpy = jasmine.createSpy()
