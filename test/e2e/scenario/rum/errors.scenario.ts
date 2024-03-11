@@ -1,6 +1,6 @@
 import type { RumErrorEvent } from '@datadog/browser-rum-core'
 import { createTest, flushEvents, html } from '../../lib/framework'
-import { withBrowserLogs } from '../../lib/helpers/browser'
+import { getBrowserName, getPlatformName, withBrowserLogs } from '../../lib/helpers/browser'
 
 // Note: using `browserExecute` to throw exceptions may result in "Script error." being reported,
 // because WDIO is evaluating the script in a different context than the page.
@@ -122,38 +122,44 @@ describe('rum errors', () => {
       })
     })
 
-  createTest('send CSP violation errors')
-    .withRum()
-    .withBody(
-      createBody(`
-        const script = document.createElement('script');
-        script.src = "https://example.com/foo.js"
-        document.body.appendChild(script)
+  // Ignore this test on Safari and firefox untill we upgrade because:
+  // - Safari < 15 don't report the property disposition
+  // - Firefox < 99 don't report csp violation at all
+  // TODO: Remove this condition when upgrading to Safari 15 and Firefox 99 (see: https://datadoghq.atlassian.net/browse/RUM-1063)
+  if (!((getBrowserName() === 'safari' && getPlatformName() === 'macos') || getBrowserName() === 'firefox')) {
+    createTest('send CSP violation errors')
+      .withRum()
+      .withBody(
+        createBody(`
+      const script = document.createElement('script');
+      script.src = "https://example.com/foo.js"
+      document.body.appendChild(script)
       `)
-    )
-    .run(async ({ intakeRegistry, baseUrl }) => {
-      const button = await $('button')
-      await button.click()
+      )
+      .run(async ({ intakeRegistry, baseUrl }) => {
+        const button = await $('button')
+        await button.click()
 
-      await flushEvents()
+        await flushEvents()
 
-      expect(intakeRegistry.rumErrorEvents.length).toBe(1)
-      expectError(intakeRegistry.rumErrorEvents[0].error, {
-        message: /^csp_violation: 'https:\/\/example\.com\/foo\.js' blocked by 'script-src(-elem)?' directive$/,
-        source: 'report',
-        stack: [
-          /^script-src(-elem)?: 'https:\/\/example\.com\/foo\.js' blocked by 'script-src(-elem)?' directive of the policy/,
-          `  at <anonymous> @ ${baseUrl}/:`,
-        ],
-        handling: 'unhandled',
-        csp: {
-          disposition: 'enforce',
-        },
+        expect(intakeRegistry.rumErrorEvents.length).toBe(1)
+        expectError(intakeRegistry.rumErrorEvents[0].error, {
+          message: /^csp_violation: 'https:\/\/example\.com\/foo\.js' blocked by 'script-src(-elem)?' directive$/,
+          source: 'report',
+          stack: [
+            /^script-src(-elem)?: 'https:\/\/example\.com\/foo\.js' blocked by 'script-src(-elem)?' directive of the policy/,
+            `  at <anonymous> @ ${baseUrl}/:`,
+          ],
+          handling: 'unhandled',
+          csp: {
+            disposition: 'enforce',
+          },
+        })
+        await withBrowserLogs((browserLogs) => {
+          expect(browserLogs.length).toEqual(1)
+        })
       })
-      await withBrowserLogs((browserLogs) => {
-        expect(browserLogs.length).toEqual(1)
-      })
-    })
+  }
 })
 
 function expectError(
