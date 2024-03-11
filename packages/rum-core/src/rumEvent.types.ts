@@ -221,6 +221,10 @@ export type RumErrorEvent = CommonProperties &
        */
       readonly type?: string
       /**
+       * The specific category of the error. It provides a high-level grouping for different types of errors.
+       */
+      readonly category?: 'ANR' | 'App Hang' | 'Exception'
+      /**
        * Whether the error has been handled manually in the source code or not
        */
       readonly handling?: 'handled' | 'unhandled'
@@ -381,6 +385,16 @@ export type RumErrorEvent = CommonProperties &
         readonly path?: string
         [k: string]: unknown
       }
+      [k: string]: unknown
+    }
+    /**
+     * Properties of App Hang and ANR errors
+     */
+    readonly freeze?: {
+      /**
+       * Duration of the main thread freeze (in ns)
+       */
+      readonly duration: number
       [k: string]: unknown
     }
     /**

@@ -114,6 +114,10 @@ export type TelemetryConfigurationEvent = CommonTelemetryProperties & {
        */
       session_replay_sample_rate?: number
       /**
+       * The initial tracking consent value
+       */
+      tracking_consent?: string
+      /**
        * Whether the session replay start is handled manually
        */
       start_session_replay_recording_manually?: boolean
@@ -193,6 +197,10 @@ export type TelemetryConfigurationEvent = CommonTelemetryProperties & {
        * Whether the Worker is loaded from an external URL
        */
       use_worker_url?: boolean
+      /**
+       * Whether intake requests are compressed
+       */
+      compress_intake_requests?: boolean
       /**
        * Whether user frustrations are tracked
        */
@@ -309,6 +317,14 @@ export type TelemetryConfigurationEvent = CommonTelemetryProperties & {
        * The version of Dart used in a Flutter application
        */
       dart_version?: string
+      /**
+       * The version of Unity used in a Unity application
+       */
+      unity_version?: string
+      /**
+       * The threshold used for iOS App Hangs monitoring (in milliseconds)
+       */
+      app_hang_threshold?: number
       [k: string]: unknown
     }
     [k: string]: unknown
