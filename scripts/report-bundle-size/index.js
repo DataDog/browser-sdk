@@ -1,9 +1,8 @@
 const path = require('path')
 const fs = require('fs')
-const { browserSdkVersion } = require('../lib/browser-sdk-version')
 const { runMain } = require('../lib/execution-utils')
-const { reportBundleSizes } = require('./report-as-a-pr-comment')
-const { createLogData, sendLogToOrg2 } = require('./report-to-datadog')
+const { reportBundleSizesAsPrComment } = require('./report-as-a-pr-comment')
+const { reportBundleSizesToDatadog } = require('./report-to-datadog')
 
 const rumPath = path.join(__dirname, '../../packages/rum/bundle/datadog-rum.js')
 const logsPath = path.join(__dirname, '../../packages/logs/bundle/datadog-logs.js')
@@ -17,9 +16,8 @@ runMain(async () => {
     rum_slim: getBundleSize(rumSlimPath),
     worker: getBundleSize(workerPath),
   }
-  const logData = createLogData(bundleSizes, browserSdkVersion)
-  await sendLogToOrg2(logData)
-  await reportBundleSizes(bundleSizes)
+  await reportBundleSizesToDatadog(bundleSizes)
+  await reportBundleSizesAsPrComment(bundleSizes)
 })
 
 function getBundleSize(pathBundle) {

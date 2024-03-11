@@ -8,7 +8,7 @@ const PR_COMMENTER_AUTH_TOKEN = command`authanywhere`.run().split(' ')[2].trim()
 const GITHUB_TOKEN = getGithubAccessToken()
 const ONE_DAY_IN_SECOND = 24 * 60 * 60
 
-async function reportBundleSizes(localBundleSizes) {
+async function reportBundleSizesAsPrComment(localBundleSizes) {
   const lastCommonCommit = getLastCommonCommit(BASE_BRANCH, LOCAL_BRANCH)
   const pr = await fetchPR(LOCAL_BRANCH)
   if (!pr) {
@@ -160,5 +160,5 @@ function formatSize(bundleSize) {
 }
 
 module.exports = {
-  reportBundleSizes,
+  reportBundleSizesAsPrComment,
 }
