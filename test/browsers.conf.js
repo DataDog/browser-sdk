@@ -11,16 +11,16 @@ const browserConfigurations = [
   {
     sessionName: 'Firefox',
     name: 'Firefox',
-    version: '91.0',
+    version: '99.0',
     os: 'Windows',
     osVersion: '11',
   },
   {
     sessionName: 'Safari desktop',
     name: 'Safari',
-    version: '14.1',
+    version: '15.6',
     os: 'OS X',
-    osVersion: 'Big Sur',
+    osVersion: 'Monterey',
   },
   {
     sessionName: 'Chrome mobile',
