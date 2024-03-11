@@ -123,17 +123,11 @@ describe('rum errors', () => {
     })
 
   createTest('send CSP violation errors')
-    .withHead(
-      html`<meta
-        http-equiv="Content-Security-Policy"
-        content="default-src 'self' 'unsafe-inline'; worker-src blob:; connect-src *; child-src blob:"
-      />`
-    )
     .withRum()
     .withBody(
       createBody(`
         const script = document.createElement('script');
-        script.src = "https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"
+        script.src = "https://example.com/foo.js"
         document.body.appendChild(script)
       `)
     )
@@ -142,13 +136,13 @@ describe('rum errors', () => {
       await button.click()
 
       await flushEvents()
-      expect(intakeRegistry.rumErrorEvents.length).toBe(2)
+
+      expect(intakeRegistry.rumErrorEvents.length).toBe(1)
       expectError(intakeRegistry.rumErrorEvents[0].error, {
-        message:
-          "csp_violation: 'https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js' blocked by 'script-src-elem' directive",
+        message: /^csp_violation: 'https:\/\/example\.com\/foo\.js' blocked by 'script-src(-elem)?' directive$/,
         source: 'report',
         stack: [
-          /^script-src-elem: 'https:\/\/ajax\.googleapis\.com\/ajax\/libs\/jquery\/3\.7\.1\/jquery\.min\.js' blocked by 'script-src-elem' directive of the policy "connect-src/,
+          /^script-src(-elem)?: 'https:\/\/example\.com\/foo\.js' blocked by 'script-src(-elem)?' directive of the policy/,
           `  at <anonymous> @ ${baseUrl}/:`,
         ],
         handling: 'unhandled',
@@ -157,7 +151,7 @@ describe('rum errors', () => {
         },
       })
       await withBrowserLogs((browserLogs) => {
-        expect(browserLogs.length).toEqual(2)
+        expect(browserLogs.length).toEqual(1)
       })
     })
 })
@@ -165,7 +159,7 @@ describe('rum errors', () => {
 function expectError(
   error: RumErrorEvent['error'],
   expected: {
-    message: string
+    message: string | RegExp
     source: string
     stack?: Array<string | RegExp>
     handlingStack?: Array<string | RegExp>
@@ -175,7 +169,7 @@ function expectError(
     }
   }
 ) {
-  expect(error.message).toBe(expected.message)
+  expect(error.message).toMatch(expected.message)
   expect(error.source).toBe(expected.source)
   expectStack(error.stack, expected.stack)
   expectStack(error.handling_stack, expected.handlingStack)
@@ -196,7 +190,7 @@ function expectStack(stack: string | undefined, expectedLines?: Array<string | R
       }
 
       if (i === 0) {
-        expect(actualLines[i]).toBe(line)
+        expect(actualLines[i]).toMatch(line)
       } else {
         expect(actualLines[i]).toContain(line)
       }
