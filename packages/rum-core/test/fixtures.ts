@@ -245,7 +245,7 @@ export function createPerformanceEntry<T extends RumPerformanceEntryType>(
           responseEnd: 300 as RelativeTime,
           responseStart: 200 as RelativeTime,
           secureConnectionStart: 200 as RelativeTime,
-          startTime: 200 as RelativeTime, // why do we set startTime equals to the response time?
+          startTime: 200 as RelativeTime,
           responseStatus: 200,
         },
         overrides
