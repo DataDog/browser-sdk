@@ -87,7 +87,8 @@
     "webpack-dev-middleware": "7.0.0"
   },
   "resolutions": {
-    "ansi-regex": "5.0.1"
+    "ansi-regex": "5.0.1",
+    "@mantine/core/type-fest": "4.12.0"
   },
   "volta": {
     "node": "18.19.1",
