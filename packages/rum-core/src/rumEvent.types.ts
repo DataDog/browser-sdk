@@ -408,6 +408,16 @@ export type RumErrorEvent = CommonProperties &
       [k: string]: unknown
     }
     /**
+     * Properties of App Hang and ANR errors
+     */
+    readonly freeze?: {
+      /**
+       * Duration of the main thread freeze (in ns)
+       */
+      readonly duration: number
+      [k: string]: unknown
+    }
+    /**
      * View properties
      */
     readonly view?: {
