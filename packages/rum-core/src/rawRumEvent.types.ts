@@ -32,6 +32,10 @@ export interface RawRumResourceEvent {
     method?: string
     status_code?: number
     size?: number
+    encodedBodySize?: number
+    decodedBodySize?: number
+    transferSize?: number
+    renderBlockingStatus?: string
     redirect?: PerformanceResourceDetailsElement
     dns?: PerformanceResourceDetailsElement
     connect?: PerformanceResourceDetailsElement
