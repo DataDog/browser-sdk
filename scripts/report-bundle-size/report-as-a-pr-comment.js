@@ -137,13 +137,13 @@ async function updateOrAddComment(difference, resultsBaseQuery, localBundleSizes
 }
 
 function createMessage(difference, resultsBaseQuery, localBundleSizes) {
-  let message = '| 📦 Bundle Name| Base Size | Local Size | 𝚫% | Impact |\n| --- | --- | --- | --- | --- |\n'
+  let message = '| 📦 Bundle Name| Base Size | Local Size | 𝚫% |\n| --- | --- | --- | --- |\n'
   difference.forEach((diff, index) => {
     const baseSize = formatSize(resultsBaseQuery[index].size)
     const localSize = formatSize(localBundleSizes[diff.name])
     const sign = diff.percentageChange > 0 ? '+' : ''
-    const emojiImpact = getEmojiWithThreshold(diff.percentageChange)
-    message += `| ${formatBundleName(diff.name)} | ${baseSize} | ${localSize} | ${sign}${diff.percentageChange}% | ${emojiImpact} |\n`
+    const emoji = getEmojiWithThreshold(diff.percentageChange)
+    message += `| ${formatBundleName(diff.name)} | ${baseSize} | ${localSize} | ${sign}${diff.percentageChange}% ${emoji} |\n`
   })
 
   return message
