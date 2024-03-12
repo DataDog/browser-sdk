@@ -232,7 +232,7 @@ export function createPerformanceEntry<T extends RumPerformanceEntryType>(
         {
           connectEnd: 200 as RelativeTime,
           connectStart: 200 as RelativeTime,
-          decodedBodySize: 200,
+          renderBlockingStatus: 'non-blocking',
           domainLookupEnd: 200 as RelativeTime,
           domainLookupStart: 200 as RelativeTime,
           duration: 100 as Duration,
@@ -245,7 +245,7 @@ export function createPerformanceEntry<T extends RumPerformanceEntryType>(
           responseEnd: 300 as RelativeTime,
           responseStart: 200 as RelativeTime,
           secureConnectionStart: 200 as RelativeTime,
-          startTime: 200 as RelativeTime,
+          startTime: 200 as RelativeTime, // why do we set startTime equals to the response time?
           responseStatus: 200,
         },
         overrides

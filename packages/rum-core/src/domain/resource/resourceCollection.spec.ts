@@ -57,6 +57,7 @@ describe('resourceCollection', () => {
         download: jasmine.any(Object),
         first_byte: jasmine.any(Object),
         status_code: 200,
+        renderBlockingStatus: 'non-blocking',
       },
       type: RumEventType.RESOURCE,
       _dd: {
@@ -66,6 +67,27 @@ describe('resourceCollection', () => {
     expect(rawRumEvents[0].domainContext).toEqual({
       performanceEntry,
     })
+  })
+
+  it('should create extra attributes from performance entry when available', () => {
+    const { lifeCycle, rawRumEvents } = setupBuilder.build()
+
+    const performanceEntry = createPerformanceEntry(RumPerformanceEntryType.RESOURCE, {
+      encodedBodySize: 42,
+      decodedBodySize: 51,
+      transferSize: 63,
+      renderBlockingStatus: 'blocking',
+      startTime: 190 as RelativeTime,
+    })
+    lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [performanceEntry])
+
+    const rumEvent = rawRumEvents[0].rawRumEvent as RawRumResourceEvent
+
+    expect(rumEvent.resource.size).toBe(51)
+    expect(rumEvent.resource.encodedBodySize).toBe(42)
+    expect(rumEvent.resource.decodedBodySize).toBe(51)
+    expect(rumEvent.resource.transferSize).toBe(63)
+    expect(rumEvent.resource.renderBlockingStatus).toBe('blocking')
   })
 
   it('should create resource from completed XHR request', () => {

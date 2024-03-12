@@ -29,6 +29,7 @@ import {
   computePerformanceResourceDuration,
   computeResourceKind,
   computeSize,
+  computeSizes,
   isRequestKind,
 } from './resourceUtils'
 
@@ -170,12 +171,15 @@ function shouldIndexResource(
 }
 
 function computePerformanceEntryMetrics(timing: RumPerformanceResourceTiming) {
+  const { renderBlockingStatus } = timing
   return {
     resource: assign(
       {
         duration: computePerformanceResourceDuration(timing),
         size: computeSize(timing),
+        renderBlockingStatus,
       },
+      computeSizes(timing),
       computePerformanceResourceDetails(timing)
     ),
   }
