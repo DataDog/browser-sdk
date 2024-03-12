@@ -65,6 +65,9 @@ export interface RumPerformanceResourceTiming {
   redirectStart: RelativeTime
   redirectEnd: RelativeTime
   decodedBodySize: number
+  encodedBodySize: number
+  transferSize: number
+  renderBlockingStatus: string
   traceId?: string
   toJSON(): Omit<PerformanceEntry, 'toJSON'>
 }
@@ -265,6 +268,9 @@ export function retrieveInitialDocumentResourceTiming(
         relativePerformanceTiming,
         {
           decodedBodySize: 0,
+          encodedBodySize: 0,
+          transferSize: 0,
+          renderBlockingStatus: 'non-blocking',
           duration: relativePerformanceTiming.responseEnd,
           name: window.location.href,
           startTime: 0 as RelativeTime,

@@ -201,6 +201,17 @@ export function computeSize(entry: RumPerformanceResourceTiming) {
   return undefined
 }
 
+export function computeDetailedSizes(entry: RumPerformanceResourceTiming) {
+  if (entry.startTime < entry.responseStart) {
+    const { encodedBodySize, decodedBodySize, transferSize } = entry
+    return {
+      encodedBodySize,
+      decodedBodySize,
+      transferSize,
+    }
+  }
+}
+
 export function isAllowedRequestUrl(configuration: RumConfiguration, url: string) {
   return url && !configuration.isIntakeUrl(url)
 }

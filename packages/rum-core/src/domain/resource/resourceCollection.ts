@@ -25,6 +25,7 @@ import type { PageStateHistory } from '../contexts/pageStateHistory'
 import { PageState } from '../contexts/pageStateHistory'
 import { matchRequestTiming } from './matchRequestTiming'
 import {
+  computeDetailedSizes,
   computePerformanceResourceDetails,
   computePerformanceResourceDuration,
   computeResourceKind,
@@ -170,12 +171,15 @@ function shouldIndexResource(
 }
 
 function computePerformanceEntryMetrics(timing: RumPerformanceResourceTiming) {
+  const { renderBlockingStatus } = timing
   return {
     resource: assign(
       {
         duration: computePerformanceResourceDuration(timing),
         size: computeSize(timing),
+        renderBlockingStatus,
       },
+      computeDetailedSizes(timing),
       computePerformanceResourceDetails(timing)
     ),
   }
