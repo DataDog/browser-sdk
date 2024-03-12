@@ -25,11 +25,11 @@ import type { PageStateHistory } from '../contexts/pageStateHistory'
 import { PageState } from '../contexts/pageStateHistory'
 import { matchRequestTiming } from './matchRequestTiming'
 import {
+  computeDetailedSizes,
   computePerformanceResourceDetails,
   computePerformanceResourceDuration,
   computeResourceKind,
   computeSize,
-  computeSizes,
   isRequestKind,
 } from './resourceUtils'
 
@@ -179,7 +179,7 @@ function computePerformanceEntryMetrics(timing: RumPerformanceResourceTiming) {
         size: computeSize(timing),
         renderBlockingStatus,
       },
-      computeSizes(timing),
+      computeDetailedSizes(timing),
       computePerformanceResourceDetails(timing)
     ),
   }

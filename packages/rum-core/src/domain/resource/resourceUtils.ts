@@ -201,7 +201,7 @@ export function computeSize(entry: RumPerformanceResourceTiming) {
   return undefined
 }
 
-export function computeSizes(entry: RumPerformanceResourceTiming) {
+export function computeDetailedSizes(entry: RumPerformanceResourceTiming) {
   if (entry.startTime < entry.responseStart) {
     const { encodedBodySize, decodedBodySize, transferSize } = entry
     return {
