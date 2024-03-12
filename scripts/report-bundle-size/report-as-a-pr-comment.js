@@ -163,15 +163,15 @@ function formatSize(bundleSize) {
 function getEmojiWithThreshold(percentageChange) {
   const absChange = Math.abs(percentageChange)
   const emojiMap = [
-    { threshold: 0.15, positive: '🟢', negative: '🎉' },
-    { threshold: 0.3, positive: '🟠', negative: '🥳' },
-    { threshold: 0.5, positive: '😡', negative: '🤩' },
-    { threshold: Infinity, positive: '⛔', negative: '🏆' },
+    { threshold: 0.15, increase: '😐', decrease: '🙂' },
+    { threshold: 0.3, increase: '😠', decrease: '😀' },
+    { threshold: 0.5, increase: '😡', decrease: '😃' },
+    { threshold: Infinity, increase: '⛔', decrease: '🤩' },
   ]
 
   for (let emoji of emojiMap) {
     if (absChange <= emoji.threshold) {
-      return percentageChange >= 0 ? emoji.positive : emoji.negative
+      return percentageChange >= 0 ? emoji.increase : emoji.decrease
     }
   }
 }
