@@ -137,12 +137,13 @@ async function updateOrAddComment(difference, resultsBaseQuery, localBundleSizes
 }
 
 function createMessage(difference, resultsBaseQuery, localBundleSizes) {
-  let message = '| 📦 Bundle Name| Base Size | Local Size | 𝚫% |\n| --- | --- | --- | --- |\n'
+  let message = '| 📦 Bundle Name| Base Size | Local Size | 𝚫% | Impact |\n| --- | --- | --- | --- | --- |\n'
   difference.forEach((diff, index) => {
     const baseSize = formatSize(resultsBaseQuery[index].size)
     const localSize = formatSize(localBundleSizes[diff.name])
     const sign = diff.percentageChange > 0 ? '+' : ''
-    message += `| ${formatBundleName(diff.name)} | ${baseSize} | ${localSize} | ${sign}${diff.percentageChange}% |\n`
+    const emojiImpact = getEmojiWithThreshold(diff.percentageChange)
+    message += `| ${formatBundleName(diff.name)} | ${baseSize} | ${localSize} | ${sign}${diff.percentageChange}% | ${emojiImpact} |\n`
   })
 
   return message
@@ -157,6 +158,22 @@ function formatBundleName(bundleName) {
 
 function formatSize(bundleSize) {
   return `${(bundleSize / 1024).toFixed(2)} kB`
+}
+
+function getEmojiWithThreshold(percentageChange) {
+  const absChange = Math.abs(percentageChange)
+  const emojiMap = [
+    { threshold: 0.15, positive: '🟢', negative: '🎉' },
+    { threshold: 0.3, positive: '🟠', negative: '🥳' },
+    { threshold: 0.5, positive: '😡', negative: '🤩' },
+    { threshold: Infinity, positive: '⛔', negative: '🏆' },
+  ]
+
+  for (let emoji of emojiMap) {
+    if (absChange <= emoji.threshold) {
+      return percentageChange >= 0 ? emoji.positive : emoji.negative
+    }
+  }
 }
 
 module.exports = {
