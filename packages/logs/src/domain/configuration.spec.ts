@@ -1,5 +1,18 @@
+import type { InitConfiguration } from '@datadog/browser-core'
 import { display } from '@datadog/browser-core'
-import { validateAndBuildForwardOption, validateAndBuildLogsConfiguration } from './configuration'
+import {
+  EXHAUSTIVE_INIT_CONFIGURATION,
+  type CamelToSnakeCase,
+  type ExtractTelemetryConfiguration,
+  type MapInitConfigurationKey,
+  SERIALIZED_EXHAUSTIVE_INIT_CONFIGURATION,
+} from '../../../core/test'
+import type { LogsInitConfiguration } from './configuration'
+import {
+  serializeLogsConfiguration,
+  validateAndBuildForwardOption,
+  validateAndBuildLogsConfiguration,
+} from './configuration'
 
 const DEFAULT_INIT_CONFIGURATION = { clientToken: 'xxx' }
 
@@ -95,5 +108,34 @@ describe('validateAndBuildForwardOption', () => {
 
   it('contains all options when "all" is provided', () => {
     expect(validateAndBuildForwardOption('all', allowedValues, label)).toEqual(allowedValues)
+  })
+})
+
+describe('serializeLogsConfiguration', () => {
+  it('should serialize the configuration', () => {
+    const exhaustiveLogsInitConfiguration: Required<LogsInitConfiguration> = {
+      ...EXHAUSTIVE_INIT_CONFIGURATION,
+      beforeSend: () => true,
+      forwardErrorsToLogs: true,
+      forwardConsoleLogs: 'all',
+      forwardReports: 'all',
+    }
+
+    type MapLogsInitConfigurationKey<Key extends string> = Key extends keyof InitConfiguration
+      ? MapInitConfigurationKey<Key>
+      : CamelToSnakeCase<Key>
+
+    // By specifying the type here, we can ensure that serializeConfiguration is returning an
+    // object containing all expected properties.
+    const serializedConfiguration: ExtractTelemetryConfiguration<
+      MapLogsInitConfigurationKey<keyof LogsInitConfiguration>
+    > = serializeLogsConfiguration(exhaustiveLogsInitConfiguration)
+
+    expect(serializedConfiguration).toEqual({
+      ...SERIALIZED_EXHAUSTIVE_INIT_CONFIGURATION,
+      forward_errors_to_logs: true,
+      forward_console_logs: 'all',
+      forward_reports: 'all',
+    })
   })
 })
