@@ -62,7 +62,7 @@ export function trackInteractionToNextPaint(
     }
 
     const newInteraction = longestInteractions.estimateP98Interaction()
-    if (newInteraction) {
+    if (newInteraction && newInteraction.duration !== interactionToNextPaint) {
       interactionToNextPaint = newInteraction.duration
 
       if (newInteraction.target && isElementNode(newInteraction.target)) {

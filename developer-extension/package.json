@@ -7,7 +7,7 @@
     "dev": "webpack --mode development --watch"
   },
   "devDependencies": {
-    "@tabler/icons-react": "2.47.0",
+    "@tabler/icons-react": "3.0.1",
     "@types/chrome": "0.0.263",
     "@types/react": "18.2.65",
     "@types/react-dom": "18.2.21",
