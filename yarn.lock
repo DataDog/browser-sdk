@@ -374,7 +374,7 @@ __metadata:
     "@datadog/browser-rum": "workspace:*"
     "@mantine/core": 7.6.1
     "@mantine/hooks": 7.6.1
-    "@tabler/icons-react": 2.47.0
+    "@tabler/icons-react": 3.0.1
     "@types/chrome": 0.0.263
     "@types/react": 18.2.65
     "@types/react-dom": 18.2.21
@@ -1377,22 +1377,21 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@tabler/icons-react@npm:2.47.0":
-  version: 2.47.0
-  resolution: "@tabler/icons-react@npm:2.47.0"
+"@tabler/icons-react@npm:3.0.1":
+  version: 3.0.1
+  resolution: "@tabler/icons-react@npm:3.0.1"
   dependencies:
-    "@tabler/icons": 2.47.0
-    prop-types: ^15.7.2
+    "@tabler/icons": 3.0.1
   peerDependencies:
-    react: ^16.5.1 || ^17.0.0 || ^18.0.0
-  checksum: f896a1fc146272d289a2a101e36027c08a6618cf930647e1b7b7dafd684aed6a4e63cc90b54b5b6742570125556c51162be4f1119d2881291c3e3a0f9427bc25
+    react: ">= 16"
+  checksum: fc8961ec53244ee2ade2530f7c93d99bbf8de0daf6706dc15d8231f626f17c642fc557af55ba5e8fb739321b7836405795fcc83477c2c256ba16164be76ac2b2
   languageName: node
   linkType: hard
 
-"@tabler/icons@npm:2.47.0":
-  version: 2.47.0
-  resolution: "@tabler/icons@npm:2.47.0"
-  checksum: 610582883f22510a3528fd7b5d0613faf815d6b0f48d42514ed080ac083bdbcbc3a7e49c62819c5c479d2d9d30dbb3e1cfc9978c0160f3900724890ec57caaab
+"@tabler/icons@npm:3.0.1":
+  version: 3.0.1
+  resolution: "@tabler/icons@npm:3.0.1"
+  checksum: 42f768eba081c541b4bc6b2f905425c4ec09035bb24692716a9d8975aae2172675f3a2d4f38b942a0166ed6ebabc91887d91f393b5a79e848856088a0f09dcf1
   languageName: node
   linkType: hard
 
