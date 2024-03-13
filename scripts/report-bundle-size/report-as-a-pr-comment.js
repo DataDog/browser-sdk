@@ -150,7 +150,7 @@ function createMessage(difference, resultsBaseQuery, localBundleSizes) {
 <details>
   <summary>Expand threshold legend</summary>
 
-  | 𝚫 < -0.5% | 𝚫 < -0.3% | 𝚫 < -0.15% | 𝚫 < 0 | 𝚫 > 0 | 𝚫 > 0.15% | 𝚫 > 0.3% | 𝚫 > 0.5% |
+  | 𝚫 < -0.5% | 𝚫 < -0.3% | 𝚫 < -0.15% | 𝚫 < 0 | 𝚫 ≥ 0 | 𝚫 > 0.15% | 𝚫 > 0.3% | 𝚫 > 0.5% |
   | --- | --- | --- | --- | --- | --- | --- | --- |
   | 🤩 | 😃 | 😀 | 🙂 | 😐 | 😠 | 😡 | ⛔ |
 </details>
