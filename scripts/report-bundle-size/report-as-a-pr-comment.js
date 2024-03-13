@@ -146,6 +146,16 @@ function createMessage(difference, resultsBaseQuery, localBundleSizes) {
     message += `| ${formatBundleName(diff.name)} | ${baseSize} | ${localSize} | ${sign}${diff.percentageChange}% ${emoji} |\n`
   })
 
+  message += `
+<details>
+  <summary>Expand threshold legend</summary>
+
+  | 𝚫 < -0.5% | 𝚫 < -0.3% | 𝚫 < -0.15% | 𝚫 < 0 | 𝚫 > 0 | 𝚫 > 0.15% | 𝚫 > 0.3% | 𝚫 > 0.5% |
+  | --- | --- | --- | --- | --- | --- | --- | --- |
+  | 🤩 | 😃 | 😀 | 🙂 | 😐 | 😠 | 😡 | ⛔ |
+</details>
+  `
+
   return message
 }
 
