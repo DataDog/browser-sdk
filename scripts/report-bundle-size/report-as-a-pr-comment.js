@@ -150,7 +150,7 @@ function createMessage(difference, resultsBaseQuery, localBundleSizes) {
 <details>
   <summary>Expand threshold legend</summary>
 
-  | 𝚫 < -0.5% | 𝚫 < -0.3% | 𝚫 < -0.15% | 𝚫 < 0 | 𝚫 ≥ 0 | 𝚫 > 0.15% | 𝚫 > 0.3% | 𝚫 > 0.5% |
+  | 𝚫 < -1.5% | 𝚫 < -3% | 𝚫 < -5% | 𝚫 < 0 | 𝚫 ≥ 0 | 𝚫 > 1.5% | 𝚫 > 3% | 𝚫 > 5% |
   | --- | --- | --- | --- | --- | --- | --- | --- |
   | 🤩 | 😃 | 😀 | 🙂 | 😐 | 😠 | 😡 | ⛔ |
 </details>
@@ -173,9 +173,9 @@ function formatSize(bundleSize) {
 function getEmojiWithThreshold(percentageChange) {
   const absChange = Math.abs(percentageChange)
   const emojiMap = [
-    { threshold: 0.15, increase: '😐', decrease: '🙂' },
-    { threshold: 0.3, increase: '😠', decrease: '😀' },
-    { threshold: 0.5, increase: '😡', decrease: '😃' },
+    { threshold: 1.5, increase: '😐', decrease: '🙂' },
+    { threshold: 3, increase: '😠', decrease: '😀' },
+    { threshold: 5, increase: '😡', decrease: '😃' },
     { threshold: Infinity, increase: '⛔', decrease: '🤩' },
   ]
 
