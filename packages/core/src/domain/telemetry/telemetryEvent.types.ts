@@ -325,6 +325,14 @@ export type TelemetryConfigurationEvent = CommonTelemetryProperties & {
        * The threshold used for iOS App Hangs monitoring (in milliseconds)
        */
       app_hang_threshold?: number
+      /**
+       * The tracer API used by the SDK. Possible values: 'Datadog', 'OpenTelemetry', 'OpenTracing'
+       */
+      tracer_api?: string
+      /**
+       * The version of the tracer API used by the SDK. Eg. '0.1.0'
+       */
+      tracer_api_version?: string
       [k: string]: unknown
     }
     [k: string]: unknown
