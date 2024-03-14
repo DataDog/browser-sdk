@@ -59,6 +59,8 @@ export interface InitConfiguration {
   internalAnalyticsSubdomain?: string
 
   telemetryConfigurationSampleRate?: number
+
+  usePciIntake?: boolean
 }
 
 // This type is only used to build the core configuration. Logs and RUM SDKs are using a proper type
@@ -194,5 +196,6 @@ export function serializeConfiguration(initConfiguration: InitConfiguration) {
     store_contexts_across_pages: !!initConfiguration.storeContextsAcrossPages,
     allow_untrusted_events: !!initConfiguration.allowUntrustedEvents,
     tracking_consent: initConfiguration.trackingConsent,
+    use_pci_intake: initConfiguration.usePciIntake,
   } satisfies RawTelemetryConfiguration
 }
