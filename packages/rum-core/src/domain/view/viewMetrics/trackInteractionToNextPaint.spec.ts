@@ -167,26 +167,67 @@ describe('trackInteractionToNextPaint', () => {
     })
   })
 
-  it('should return the target selector', () => {
-    const { lifeCycle } = setupBuilder.build()
+  describe('target selector', () => {
+    it('should be returned', () => {
+      const { lifeCycle } = setupBuilder.build()
 
-    newInteraction(lifeCycle, {
-      interactionId: 2,
-      target: appendElement('<button id="inp-target-element"></button>'),
+      newInteraction(lifeCycle, {
+        interactionId: 2,
+        target: appendElement('<button id="inp-target-element"></button>'),
+      })
+
+      expect(getInteractionToNextPaint()?.targetSelector).toEqual('#inp-target-element')
     })
 
-    expect(getInteractionToNextPaint()?.targetSelector).toEqual('#inp-target-element')
-  })
+    it("should not be returned if it's not a DOM element", () => {
+      const { lifeCycle } = setupBuilder.build()
 
-  it("should not return the target selector if it's not a DOM element", () => {
-    const { lifeCycle } = setupBuilder.build()
+      newInteraction(lifeCycle, {
+        interactionId: 2,
+        target: appendText('text'),
+      })
 
-    newInteraction(lifeCycle, {
-      interactionId: 2,
-      target: appendText('text'),
+      expect(getInteractionToNextPaint()?.targetSelector).toEqual(undefined)
     })
 
-    expect(getInteractionToNextPaint()?.targetSelector).toEqual(undefined)
+    it('should not be recomputed if the INP has not changed', () => {
+      const { lifeCycle } = setupBuilder.build()
+
+      const element = appendElement('<button id="foo"></button>')
+      newInteraction(lifeCycle, {
+        interactionId: 1,
+        duration: 10 as Duration,
+        target: element,
+      })
+
+      element.setAttribute('id', 'bar')
+
+      newInteraction(lifeCycle, {
+        interactionId: 2,
+        duration: 9 as Duration,
+        target: element,
+      })
+
+      expect(getInteractionToNextPaint()?.targetSelector).toEqual('#foo')
+    })
+
+    it('should be recomputed if the INP has changed', () => {
+      const { lifeCycle } = setupBuilder.build()
+
+      newInteraction(lifeCycle, {
+        interactionId: 1,
+        duration: 10 as Duration,
+        target: appendElement('<button id="foo"></button>'),
+      })
+
+      newInteraction(lifeCycle, {
+        interactionId: 2,
+        duration: 11 as Duration,
+        target: appendElement('<button id="bar"></button>'),
+      })
+
+      expect(getInteractionToNextPaint()?.targetSelector).toEqual('#bar')
+    })
   })
 })
 

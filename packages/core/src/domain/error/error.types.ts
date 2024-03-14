@@ -20,6 +20,10 @@ export type RawErrorCause = {
   stack?: string
 }
 
+export type Csp = {
+  disposition: 'enforce' | 'report'
+}
+
 export interface RawError {
   startClocks: ClocksState
   message: string
@@ -31,6 +35,7 @@ export interface RawError {
   handlingStack?: string
   causes?: RawErrorCause[]
   fingerprint?: string
+  csp?: Csp
 }
 
 export const ErrorSource = {

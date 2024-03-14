@@ -1,6 +1,7 @@
 import { setTimeout } from './timer'
 import { callMonitored } from './monitor'
 import { noop } from './utils/functionUtils'
+import { arrayFrom } from './utils/polyfills'
 
 /**
  * Object passed to the callback of an instrumented method call. See `instrumentMethod` for more
@@ -13,9 +14,7 @@ export type InstrumentedMethodCall<TARGET extends { [key: string]: any }, METHOD
   target: TARGET
 
   /**
-   * The parameters with which the method was called. To avoid having to clone the argument list
-   * every time, this property is actually an instance of Argument, not Array, so not all methods
-   * are available (like .forEach).
+   * The parameters with which the method was called.
    *
    * Note: if needed, parameters can be mutated by the instrumentation
    */
@@ -86,7 +85,7 @@ function createInstrumentedMethod<TARGET extends { [key: string]: any }, METHOD 
 ): TARGET[METHOD] {
   // eslint-disable-next-line @typescript-eslint/no-unsafe-return
   return function (this: TARGET) {
-    const parameters = arguments as unknown as Parameters<TARGET[METHOD]>
+    const parameters = arrayFrom(arguments) as Parameters<TARGET[METHOD]>
     let result
 
     let postCallCallback: PostCallCallback<TARGET, METHOD> | undefined
