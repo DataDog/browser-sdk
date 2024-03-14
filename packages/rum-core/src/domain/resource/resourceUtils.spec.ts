@@ -116,9 +116,9 @@ describe('computePerformanceResourceDetails', () => {
       )
     ).toEqual({
       size: undefined,
-      encodedBodySize: undefined,
-      decodedBodySize: undefined,
-      transferSize: undefined,
+      encoded_body_size: undefined,
+      decoded_body_size: undefined,
+      transfer_size: undefined,
     })
   })
 

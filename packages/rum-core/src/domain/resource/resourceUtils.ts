@@ -199,16 +199,16 @@ export function computeSize(entry: RumPerformanceResourceTiming) {
     const { encodedBodySize, decodedBodySize, transferSize } = entry
     return {
       size: decodedBodySize,
-      encodedBodySize,
-      decodedBodySize,
-      transferSize,
+      encoded_body_size: encodedBodySize,
+      decoded_body_size: decodedBodySize,
+      transfer_size: transferSize,
     }
   }
   return {
     size: undefined,
-    encodedBodySize: undefined,
-    decodedBodySize: undefined,
-    transferSize: undefined,
+    encoded_body_size: undefined,
+    decoded_body_size: undefined,
+    transfer_size: undefined,
   }
 }
 
