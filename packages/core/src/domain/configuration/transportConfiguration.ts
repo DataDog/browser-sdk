@@ -20,7 +20,9 @@ export interface ReplicaConfiguration {
   rumEndpointBuilder: EndpointBuilder
 }
 
-export function computeTransportConfiguration(initConfiguration: InitConfiguration): TransportConfiguration {
+export function computeTransportConfiguration(
+  initConfiguration: InitConfiguration & { usePciIntake?: boolean }
+): TransportConfiguration {
   const tags = buildTags(initConfiguration)
 
   const endpointBuilders = computeEndpointBuilders(initConfiguration, tags)
@@ -38,7 +40,7 @@ export function computeTransportConfiguration(initConfiguration: InitConfigurati
   )
 }
 
-function computeEndpointBuilders(initConfiguration: InitConfiguration, tags: string[]) {
+function computeEndpointBuilders(initConfiguration: InitConfiguration & { usePciIntake?: boolean }, tags: string[]) {
   return {
     logsEndpointBuilder: createEndpointBuilder(initConfiguration, 'logs', tags),
     rumEndpointBuilder: createEndpointBuilder(initConfiguration, 'rum', tags),

@@ -59,8 +59,6 @@ export interface InitConfiguration {
   internalAnalyticsSubdomain?: string
 
   telemetryConfigurationSampleRate?: number
-
-  usePciIntake?: boolean
 }
 
 // This type is only used to build the core configuration. Logs and RUM SDKs are using a proper type
@@ -101,7 +99,9 @@ export interface Configuration extends TransportConfiguration {
   messageBytesLimit: number
 }
 
-export function validateAndBuildConfiguration(initConfiguration: InitConfiguration): Configuration | undefined {
+export function validateAndBuildConfiguration(
+  initConfiguration: InitConfiguration & { usePciIntake?: boolean }
+): Configuration | undefined {
   if (!initConfiguration || !initConfiguration.clientToken) {
     display.error('Client Token is not configured, we will not send any data.')
     return
@@ -133,7 +133,7 @@ export function validateAndBuildConfiguration(initConfiguration: InitConfigurati
     return
   }
 
-  if (initConfiguration.usePciIntake === true && initConfiguration.site !== 'datadoghq.com') {
+  if (initConfiguration.usePciIntake === true && initConfiguration.site && initConfiguration.site !== 'datadoghq.com') {
     display.warn(
       'PCI compliance for Logs is only available for Datadog organizations in the US1 site. Default intake will be used.'
     )
@@ -202,6 +202,5 @@ export function serializeConfiguration(initConfiguration: InitConfiguration) {
     store_contexts_across_pages: !!initConfiguration.storeContextsAcrossPages,
     allow_untrusted_events: !!initConfiguration.allowUntrustedEvents,
     tracking_consent: initConfiguration.trackingConsent,
-    use_pci_intake: initConfiguration.usePciIntake,
   } satisfies RawTelemetryConfiguration
 }
