@@ -119,6 +119,7 @@ describe('serializeLogsConfiguration', () => {
       forwardErrorsToLogs: true,
       forwardConsoleLogs: 'all',
       forwardReports: 'all',
+      usePciIntake: false,
     }
 
     type MapLogsInitConfigurationKey<Key extends string> = Key extends keyof InitConfiguration
@@ -136,6 +137,7 @@ describe('serializeLogsConfiguration', () => {
       forward_errors_to_logs: true,
       forward_console_logs: 'all',
       forward_reports: 'all',
+      use_pci_intake: false,
     })
   })
 })

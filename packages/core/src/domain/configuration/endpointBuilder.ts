@@ -21,7 +21,7 @@ export type ApiType =
 export type EndpointBuilder = ReturnType<typeof createEndpointBuilder>
 
 export function createEndpointBuilder(
-  initConfiguration: InitConfiguration,
+  initConfiguration: InitConfiguration & { usePciIntake?: boolean },
   trackType: TrackType,
   configurationTags: string[]
 ) {
@@ -43,7 +43,7 @@ export function createEndpointBuilder(
  * request, as only parameters are changing.
  */
 function createEndpointUrlWithParametersBuilder(
-  initConfiguration: InitConfiguration,
+  initConfiguration: InitConfiguration & { usePciIntake?: boolean },
   trackType: TrackType
 ): (parameters: string) => string {
   const path = `/api/v2/${trackType}`
@@ -59,7 +59,7 @@ function createEndpointUrlWithParametersBuilder(
   return (parameters) => `https://${host}${path}?${parameters}`
 }
 
-function buildEndpointHost(trackType: TrackType, initConfiguration: InitConfiguration) {
+function buildEndpointHost(trackType: TrackType, initConfiguration: InitConfiguration & { usePciIntake?: boolean }) {
   const { site = INTAKE_SITE_US1, internalAnalyticsSubdomain } = initConfiguration
 
   if (trackType === 'logs' && initConfiguration.usePciIntake && site === INTAKE_SITE_US1) {

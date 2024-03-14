@@ -18,6 +18,7 @@ export interface LogsInitConfiguration extends InitConfiguration {
   forwardErrorsToLogs?: boolean | undefined
   forwardConsoleLogs?: ConsoleApiName[] | 'all' | undefined
   forwardReports?: RawReportType[] | 'all' | undefined
+  usePciIntake?: boolean
 }
 
 export type HybridInitConfiguration = Omit<LogsInitConfiguration, 'clientToken'>
@@ -95,6 +96,7 @@ export function serializeLogsConfiguration(configuration: LogsInitConfiguration)
       forward_errors_to_logs: configuration.forwardErrorsToLogs,
       forward_console_logs: configuration.forwardConsoleLogs,
       forward_reports: configuration.forwardReports,
+      use_pci_intake: configuration.usePciIntake,
     },
     baseSerializedInitConfiguration
   ) satisfies RawTelemetryConfiguration

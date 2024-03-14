@@ -333,6 +333,11 @@ export type TelemetryConfigurationEvent = CommonTelemetryProperties & {
        * The version of the tracer API used by the SDK. Eg. '0.1.0'
        */
       tracer_api_version?: string
+
+      /**
+       * Either forward logs to the PCI compliant intake or not
+       */
+      use_pci_intake?: boolean
       [k: string]: unknown
     }
     [k: string]: unknown
