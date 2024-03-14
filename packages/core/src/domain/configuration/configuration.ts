@@ -133,6 +133,12 @@ export function validateAndBuildConfiguration(initConfiguration: InitConfigurati
     return
   }
 
+  if (initConfiguration.usePciIntake === true && initConfiguration.site !== 'datadoghq.com') {
+    display.warn(
+      'PCI compliance for Logs is only available for Datadog organizations in the US1 site. Default intake will be used.'
+    )
+  }
+
   // Set the experimental feature flags as early as possible, so we can use them in most places
   if (Array.isArray(initConfiguration.enableExperimentalFeatures)) {
     addExperimentalFeatures(

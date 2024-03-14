@@ -15,9 +15,11 @@ describe('validateAndBuildConfiguration', () => {
   const clientToken = 'some_client_token'
 
   let displaySpy: jasmine.Spy<typeof display.error>
+  let warnSpy: jasmine.Spy<typeof display.warn>
 
   beforeEach(() => {
     displaySpy = spyOn(display, 'error')
+    warnSpy = spyOn(display, 'warn')
   })
 
   afterEach(() => {
@@ -66,6 +68,17 @@ describe('validateAndBuildConfiguration', () => {
     it("shouldn't display any error if the configuration is correct", () => {
       validateAndBuildConfiguration({ clientToken: 'yes' })
       expect(displaySpy).not.toHaveBeenCalled()
+    })
+
+    it('should display warning with wrong PCI intake configuration', () => {
+      validateAndBuildConfiguration({
+        clientToken,
+        site: 'some-site',
+        usePciIntake: true,
+      } as unknown as InitConfiguration)
+      expect(warnSpy).toHaveBeenCalledOnceWith(
+        'PCI compliance for Logs is only available for Datadog organizations in the US1 site. Default intake will be used.'
+      )
     })
 
     it('requires sessionSampleRate to be a percentage', () => {
