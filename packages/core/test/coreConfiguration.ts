@@ -35,6 +35,7 @@ export const EXHAUSTIVE_INIT_CONFIGURATION: Required<InitConfiguration> = {
   datacenter: 'datacenter',
   internalAnalyticsSubdomain: 'internal-analytics-subdomain.com',
   telemetryConfigurationSampleRate: 70,
+  usePciIntake: false,
 }
 
 export const SERIALIZED_EXHAUSTIVE_INIT_CONFIGURATION = {
@@ -52,6 +53,7 @@ export const SERIALIZED_EXHAUSTIVE_INIT_CONFIGURATION = {
   store_contexts_across_pages: true,
   allow_untrusted_events: true,
   tracking_consent: 'not-granted',
+  use_pci_intake: false,
 }
 
 /**
@@ -72,6 +74,7 @@ export type MapInitConfigurationKey<Key extends string> =
           | 'internalAnalyticsSubdomain'
           | 'replica'
           | 'enableExperimentalFeatures'
+          | 'usePciIntake'
       ? never
       : // Other keys are simply snake cased
         CamelToSnakeCase<Key>

@@ -59,6 +59,8 @@ export interface InitConfiguration {
   internalAnalyticsSubdomain?: string
 
   telemetryConfigurationSampleRate?: number
+
+  usePciIntake?: boolean
 }
 
 // This type is only used to build the core configuration. Logs and RUM SDKs are using a proper type
@@ -131,6 +133,12 @@ export function validateAndBuildConfiguration(initConfiguration: InitConfigurati
     return
   }
 
+  if (initConfiguration.usePciIntake === true && initConfiguration.site !== 'datadoghq.com') {
+    display.warn(
+      'PCI compliance for Logs is only available for Datadog organizations in the US1 site. Default intake will be used.'
+    )
+  }
+
   // Set the experimental feature flags as early as possible, so we can use them in most places
   if (Array.isArray(initConfiguration.enableExperimentalFeatures)) {
     addExperimentalFeatures(
@@ -194,5 +202,6 @@ export function serializeConfiguration(initConfiguration: InitConfiguration) {
     store_contexts_across_pages: !!initConfiguration.storeContextsAcrossPages,
     allow_untrusted_events: !!initConfiguration.allowUntrustedEvents,
     tracking_consent: initConfiguration.trackingConsent,
+    use_pci_intake: initConfiguration.usePciIntake,
   } satisfies RawTelemetryConfiguration
 }
