@@ -108,6 +108,7 @@ function processError(
       causes: error.causes,
       source_type: 'browser',
       fingerprint: error.fingerprint,
+      csp: error.csp,
     },
     type: RumEventType.ERROR as const,
     view: { in_foreground: pageStateHistory.wasInPageStateAt(PageState.ACTIVE, error.startClocks.relative) },
