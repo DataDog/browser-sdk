@@ -175,7 +175,7 @@ function computePerformanceEntryMetrics(timing: RumPerformanceResourceTiming) {
     resource: assign(
       {
         duration: computePerformanceResourceDuration(timing),
-        renderBlockingStatus,
+        render_blocking_status: renderBlockingStatus,
       },
       computeSize(timing),
       computePerformanceResourceDetails(timing)
