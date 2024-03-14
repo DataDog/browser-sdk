@@ -519,6 +519,22 @@ export type RumResourceEvent = CommonProperties &
        */
       readonly size?: number
       /**
+       * Size in octet of the resource before removing any applied content encodings
+       */
+      readonly encoded_body_size?: number
+      /**
+       * Size in octet of the resource after removing any applied encoding
+       */
+      readonly decoded_body_size?: number
+      /**
+       * Size in octet of the fetched resource
+       */
+      readonly transfer_size?: number
+      /**
+       * Render blocking status of the resource
+       */
+      readonly render_blocking_status?: 'blocking' | 'non-blocking'
+      /**
        * Redirect phase properties
        */
       readonly redirect?: {

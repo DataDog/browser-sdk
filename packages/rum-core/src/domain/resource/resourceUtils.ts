@@ -196,19 +196,19 @@ function formatTiming(origin: RelativeTime, start: RelativeTime, end: RelativeTi
 export function computeSize(entry: RumPerformanceResourceTiming) {
   // Make sure a request actually occurred
   if (entry.startTime < entry.responseStart) {
-    return entry.decodedBodySize
-  }
-  return undefined
-}
-
-export function computeDetailedSizes(entry: RumPerformanceResourceTiming) {
-  if (entry.startTime < entry.responseStart) {
     const { encodedBodySize, decodedBodySize, transferSize } = entry
     return {
+      size: decodedBodySize,
       encodedBodySize,
       decodedBodySize,
       transferSize,
     }
+  }
+  return {
+    size: undefined,
+    encodedBodySize: undefined,
+    decodedBodySize: undefined,
+    transferSize: undefined,
   }
 }
 

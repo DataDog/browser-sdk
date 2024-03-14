@@ -4,6 +4,7 @@ import { RumPerformanceEntryType, type RumPerformanceResourceTiming } from '../.
 import type { RumConfiguration } from '../configuration'
 import { validateAndBuildRumConfiguration } from '../configuration'
 import {
+  computeSize,
   computePerformanceResourceDetails,
   computePerformanceResourceDuration,
   computeResourceKind,
@@ -102,6 +103,22 @@ describe('computePerformanceResourceDetails', () => {
       first_byte: { start: 10e6 as ServerDuration, duration: 30e6 as ServerDuration },
       redirect: { start: 0 as ServerDuration, duration: 1e6 as ServerDuration },
       ssl: { start: 6e6 as ServerDuration, duration: 1e6 as ServerDuration },
+    })
+  })
+
+  it("should not compute detailed size when request doesn't happen", () => {
+    expect(
+      computeSize(
+        generateResourceWith({
+          startTime: 0 as RelativeTime,
+          responseStart: 0 as RelativeTime,
+        })
+      )
+    ).toEqual({
+      size: undefined,
+      encodedBodySize: undefined,
+      decodedBodySize: undefined,
+      transferSize: undefined,
     })
   })
 

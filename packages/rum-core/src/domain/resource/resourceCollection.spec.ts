@@ -42,7 +42,13 @@ describe('resourceCollection', () => {
   it('should create resource from performance entry', () => {
     const { lifeCycle, rawRumEvents } = setupBuilder.build()
 
-    const performanceEntry = createPerformanceEntry(RumPerformanceEntryType.RESOURCE)
+    const performanceEntry = createPerformanceEntry(RumPerformanceEntryType.RESOURCE, {
+      encodedBodySize: 42,
+      decodedBodySize: 51,
+      transferSize: 63,
+      renderBlockingStatus: 'blocking',
+      responseStart: 250 as RelativeTime,
+    })
     lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [performanceEntry])
 
     expect(rawRumEvents[0].startTime).toBe(200 as RelativeTime)
@@ -51,13 +57,16 @@ describe('resourceCollection', () => {
       resource: {
         id: jasmine.any(String),
         duration: (100 * 1e6) as ServerDuration,
-        size: undefined,
+        size: 51,
+        encodedBodySize: 42,
+        decodedBodySize: 51,
+        transferSize: 63,
         type: ResourceType.OTHER,
         url: 'https://resource.com/valid',
         download: jasmine.any(Object),
         first_byte: jasmine.any(Object),
         status_code: 200,
-        renderBlockingStatus: 'non-blocking',
+        renderBlockingStatus: 'blocking',
       },
       type: RumEventType.RESOURCE,
       _dd: {
@@ -67,27 +76,6 @@ describe('resourceCollection', () => {
     expect(rawRumEvents[0].domainContext).toEqual({
       performanceEntry,
     })
-  })
-
-  it('should create extra attributes from performance entry when available', () => {
-    const { lifeCycle, rawRumEvents } = setupBuilder.build()
-
-    const performanceEntry = createPerformanceEntry(RumPerformanceEntryType.RESOURCE, {
-      encodedBodySize: 42,
-      decodedBodySize: 51,
-      transferSize: 63,
-      renderBlockingStatus: 'blocking',
-      startTime: 190 as RelativeTime,
-    })
-    lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [performanceEntry])
-
-    const rumEvent = rawRumEvents[0].rawRumEvent as RawRumResourceEvent
-
-    expect(rumEvent.resource.size).toBe(51)
-    expect(rumEvent.resource.encodedBodySize).toBe(42)
-    expect(rumEvent.resource.decodedBodySize).toBe(51)
-    expect(rumEvent.resource.transferSize).toBe(63)
-    expect(rumEvent.resource.renderBlockingStatus).toBe('blocking')
   })
 
   it('should create resource from completed XHR request', () => {
