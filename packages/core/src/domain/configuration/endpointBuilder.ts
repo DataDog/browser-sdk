@@ -55,12 +55,16 @@ function createEndpointUrlWithParametersBuilder(
   if (typeof proxy === 'function') {
     return (parameters) => proxy({ path, parameters })
   }
-  const host = buildEndpointHost(initConfiguration)
+  const host = buildEndpointHost(trackType, initConfiguration)
   return (parameters) => `https://${host}${path}?${parameters}`
 }
 
-function buildEndpointHost(initConfiguration: InitConfiguration) {
+function buildEndpointHost(trackType: TrackType, initConfiguration: InitConfiguration & { usePciIntake?: boolean }) {
   const { site = INTAKE_SITE_US1, internalAnalyticsSubdomain } = initConfiguration
+
+  if (trackType === 'logs' && initConfiguration.usePciIntake && site === INTAKE_SITE_US1) {
+    return 'pci.browser-intake-datadoghq.com'
+  }
 
   if (internalAnalyticsSubdomain && site === INTAKE_SITE_US1) {
     return `${internalAnalyticsSubdomain}.${INTAKE_SITE_US1}`

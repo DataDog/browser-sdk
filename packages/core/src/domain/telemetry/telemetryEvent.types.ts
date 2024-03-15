@@ -325,6 +325,11 @@ export type TelemetryConfigurationEvent = CommonTelemetryProperties & {
        * The threshold used for iOS App Hangs monitoring (in milliseconds)
        */
       app_hang_threshold?: number
+
+      /**
+       * Either forward logs to the PCI compliant intake or not
+       */
+      use_pci_intake?: boolean
       /**
        * The tracer API used by the SDK. Possible values: 'Datadog', 'OpenTelemetry', 'OpenTracing'
        */
