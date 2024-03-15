@@ -87,7 +87,9 @@ export function startTelemetry(telemetryService: TelemetryService, configuration
       {
         type: 'telemetry' as const,
         date: timeStampNow(),
-        service: telemetryService,
+        service: (window as any).OVERRIDE_TELEMETRY_SERVICE
+          ? (window as any).OVERRIDE_TELEMETRY_SERVICE
+          : telemetryService,
         version: __BUILD_ENV__SDK_VERSION__,
         source: 'browser' as const,
         _dd: {
