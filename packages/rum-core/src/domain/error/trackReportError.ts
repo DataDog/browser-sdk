@@ -6,8 +6,8 @@ export function trackReportError(configuration: RumConfiguration, errorObservabl
   const subscription = initReportObservable(configuration, [
     RawReportType.cspViolation,
     RawReportType.intervention,
-  ]).subscribe((reportError) =>
-    errorObservable.notify({
+  ]).subscribe((reportError) => {
+    const rawError: RawError = {
       startClocks: clocksNow(),
       message: reportError.message,
       stack: reportError.stack,
@@ -15,8 +15,16 @@ export function trackReportError(configuration: RumConfiguration, errorObservabl
       source: ErrorSource.REPORT,
       handling: ErrorHandling.UNHANDLED,
       originalError: reportError.originalReport,
-    })
-  )
+    }
+
+    if (reportError.originalReport.type === 'securitypolicyviolation') {
+      rawError.csp = {
+        disposition: reportError.originalReport.disposition,
+      }
+    }
+
+    return errorObservable.notify(rawError)
+  })
 
   return {
     stop: () => {

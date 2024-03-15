@@ -42,7 +42,13 @@ describe('resourceCollection', () => {
   it('should create resource from performance entry', () => {
     const { lifeCycle, rawRumEvents } = setupBuilder.build()
 
-    const performanceEntry = createPerformanceEntry(RumPerformanceEntryType.RESOURCE)
+    const performanceEntry = createPerformanceEntry(RumPerformanceEntryType.RESOURCE, {
+      encodedBodySize: 42,
+      decodedBodySize: 51,
+      transferSize: 63,
+      renderBlockingStatus: 'blocking',
+      responseStart: 250 as RelativeTime,
+    })
     lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [performanceEntry])
 
     expect(rawRumEvents[0].startTime).toBe(200 as RelativeTime)
@@ -51,12 +57,16 @@ describe('resourceCollection', () => {
       resource: {
         id: jasmine.any(String),
         duration: (100 * 1e6) as ServerDuration,
-        size: undefined,
+        size: 51,
+        encoded_body_size: 42,
+        decoded_body_size: 51,
+        transfer_size: 63,
         type: ResourceType.OTHER,
         url: 'https://resource.com/valid',
         download: jasmine.any(Object),
         first_byte: jasmine.any(Object),
         status_code: 200,
+        render_blocking_status: 'blocking',
       },
       type: RumEventType.RESOURCE,
       _dd: {

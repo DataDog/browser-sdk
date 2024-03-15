@@ -170,12 +170,14 @@ function shouldIndexResource(
 }
 
 function computePerformanceEntryMetrics(timing: RumPerformanceResourceTiming) {
+  const { renderBlockingStatus } = timing
   return {
     resource: assign(
       {
         duration: computePerformanceResourceDuration(timing),
-        size: computeSize(timing),
+        render_blocking_status: renderBlockingStatus,
       },
+      computeSize(timing),
       computePerformanceResourceDetails(timing)
     ),
   }

@@ -385,6 +385,16 @@ export type RumErrorEvent = CommonProperties &
         readonly path?: string
         [k: string]: unknown
       }
+      /**
+       * Content Security Violation properties
+       */
+      readonly csp?: {
+        /**
+         * In the context of CSP errors, indicates how the violated policy is configured to be treated by the user agent.
+         */
+        readonly disposition?: 'enforce' | 'report'
+        [k: string]: unknown
+      }
       [k: string]: unknown
     }
     /**
@@ -508,6 +518,22 @@ export type RumResourceEvent = CommonProperties &
        * Size in octet of the resource response body
        */
       readonly size?: number
+      /**
+       * Size in octet of the resource before removing any applied content encodings
+       */
+      readonly encoded_body_size?: number
+      /**
+       * Size in octet of the resource after removing any applied encoding
+       */
+      readonly decoded_body_size?: number
+      /**
+       * Size in octet of the fetched resource
+       */
+      readonly transfer_size?: number
+      /**
+       * Render blocking status of the resource
+       */
+      readonly render_blocking_status?: 'blocking' | 'non-blocking'
       /**
        * Redirect phase properties
        */

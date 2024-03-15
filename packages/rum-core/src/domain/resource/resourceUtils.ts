@@ -196,9 +196,20 @@ function formatTiming(origin: RelativeTime, start: RelativeTime, end: RelativeTi
 export function computeSize(entry: RumPerformanceResourceTiming) {
   // Make sure a request actually occurred
   if (entry.startTime < entry.responseStart) {
-    return entry.decodedBodySize
+    const { encodedBodySize, decodedBodySize, transferSize } = entry
+    return {
+      size: decodedBodySize,
+      encoded_body_size: encodedBodySize,
+      decoded_body_size: decodedBodySize,
+      transfer_size: transferSize,
+    }
   }
-  return undefined
+  return {
+    size: undefined,
+    encoded_body_size: undefined,
+    decoded_body_size: undefined,
+    transfer_size: undefined,
+  }
 }
 
 export function isAllowedRequestUrl(configuration: RumConfiguration, url: string) {
