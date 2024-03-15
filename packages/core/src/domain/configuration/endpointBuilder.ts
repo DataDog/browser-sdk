@@ -21,7 +21,7 @@ export type ApiType =
 export type EndpointBuilder = ReturnType<typeof createEndpointBuilder>
 
 export function createEndpointBuilder(
-  initConfiguration: InitConfiguration & { usePciIntake?: boolean },
+  initConfiguration: InitConfiguration,
   trackType: TrackType,
   configurationTags: string[]
 ) {
@@ -43,7 +43,7 @@ export function createEndpointBuilder(
  * request, as only parameters are changing.
  */
 function createEndpointUrlWithParametersBuilder(
-  initConfiguration: InitConfiguration & { usePciIntake?: boolean },
+  initConfiguration: InitConfiguration,
   trackType: TrackType
 ): (parameters: string) => string {
   const path = `/api/v2/${trackType}`

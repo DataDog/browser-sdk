@@ -74,6 +74,24 @@ describe('validateAndBuildLogsConfiguration', () => {
       ).toEqual(['error'])
     })
   })
+
+  describe('PCI compliant intake option', () => {
+    let warnSpy: jasmine.Spy<typeof display.warn>
+
+    beforeEach(() => {
+      warnSpy = spyOn(display, 'warn')
+    })
+    it('should display warning with wrong PCI intake configuration', () => {
+      validateAndBuildLogsConfiguration({
+        ...DEFAULT_INIT_CONFIGURATION,
+        site: 'some-site',
+        usePciIntake: true,
+      })
+      expect(warnSpy).toHaveBeenCalledOnceWith(
+        'PCI compliance for Logs is only available for Datadog organizations in the US1 site. Default intake will be used.'
+      )
+    })
+  })
 })
 
 describe('validateAndBuildForwardOption', () => {
