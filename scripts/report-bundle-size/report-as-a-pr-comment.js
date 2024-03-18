@@ -137,24 +137,23 @@ async function updateOrAddComment(difference, resultsBaseQuery, localBundleSizes
 }
 
 function createMessage(difference, resultsBaseQuery, localBundleSizes) {
-  let message = '| 📦 Bundle Name| Base Size | Local Size | 𝚫% |\n| --- | --- | --- | --- |\n'
+  let message = '| 📦 Bundle Name| Base Size | Local Size | 𝚫% | Status |\n| --- | --- | --- | --- | --- |\n'
+  let warningFlag = false
   difference.forEach((diff, index) => {
     const baseSize = formatSize(resultsBaseQuery[index].size)
     const localSize = formatSize(localBundleSizes[diff.name])
     const sign = diff.percentageChange > 0 ? '+' : ''
-    const emoji = getEmojiWithThreshold(diff.percentageChange)
-    message += `| ${formatBundleName(diff.name)} | ${baseSize} | ${localSize} | ${sign}${diff.percentageChange}% ${emoji} |\n`
+    let status = '✅'
+    if (diff.percentageChange > 5) {
+      status = '⚠️'
+      warningFlag = true
+    }
+    message += `| ${formatBundleName(diff.name)} | ${baseSize} | ${localSize} | ${sign}${diff.percentageChange}% | ${status} |\n`
   })
 
-  message += `
-<details>
-  <summary>Expand threshold legend</summary>
-
-  | 𝚫 < -1.5% | 𝚫 < -3% | 𝚫 < -5% | 𝚫 < 0 | 𝚫 ≥ 0 | 𝚫 > 1.5% | 𝚫 > 3% | 𝚫 > 5% |
-  | --- | --- | --- | --- | --- | --- | --- | --- |
-  | 🤩 | 😃 | 😀 | 🙂 | 😐 | 😠 | 😡 | ⛔ |
-</details>
-  `
+  if (warningFlag) {
+    message += '\n⚠️ The increase is particularly high and exceeds 5%. Please check the changes.'
+  }
 
   return message
 }
@@ -168,22 +167,6 @@ function formatBundleName(bundleName) {
 
 function formatSize(bundleSize) {
   return `${(bundleSize / 1024).toFixed(2)} kB`
-}
-
-function getEmojiWithThreshold(percentageChange) {
-  const absChange = Math.abs(percentageChange)
-  const emojiMap = [
-    { threshold: 1.5, increase: '😐', decrease: '🙂' },
-    { threshold: 3, increase: '😠', decrease: '😀' },
-    { threshold: 5, increase: '😡', decrease: '😃' },
-    { threshold: Infinity, increase: '⛔', decrease: '🤩' },
-  ]
-
-  for (let emoji of emojiMap) {
-    if (absChange <= emoji.threshold) {
-      return percentageChange >= 0 ? emoji.increase : emoji.decrease
-    }
-  }
 }
 
 module.exports = {
