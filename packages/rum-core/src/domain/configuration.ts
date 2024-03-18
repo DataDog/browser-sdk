@@ -49,6 +49,22 @@ export interface RumInitConfiguration extends InitConfiguration {
 
 export type HybridInitConfiguration = Omit<RumInitConfiguration, 'applicationId' | 'clientToken'>
 
+/*
+Allows to control the behavior of trace context injection.
+This allows upstream services to inject trace context based on their sampling configuration.
+*/
+export enum TraceContextInjection {
+  /*
+  Default. Inject trace context to all network requests as per the sampling rate.
+  */
+  All,
+
+  /*
+  Inject trace context only if the trace is sampled.
+  */
+  Sampled,
+}
+
 export interface RumConfiguration extends Configuration {
   // Built from init configuration
   actionNameAttribute: string | undefined
@@ -68,6 +84,7 @@ export interface RumConfiguration extends Configuration {
   version?: string
   subdomain?: string
   customerDataTelemetrySampleRate: number
+  traceContextInjection?: TraceContextInjection
 }
 
 export function validateAndBuildRumConfiguration(
@@ -127,6 +144,7 @@ export function validateAndBuildRumConfiguration(
         ? initConfiguration.defaultPrivacyLevel
         : DefaultPrivacyLevel.MASK,
       customerDataTelemetrySampleRate: 1,
+      traceContextInjection: TraceContextInjection.All,
     },
     baseConfiguration
   )

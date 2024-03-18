@@ -3,7 +3,7 @@ import type { RumSessionManagerMock } from '../../../test'
 import { createRumSessionManagerMock } from '../../../test'
 import type { RumFetchResolveContext, RumFetchStartContext, RumXhrStartContext } from '../requestCollection'
 import type { RumConfiguration, RumInitConfiguration } from '../configuration'
-import { validateAndBuildRumConfiguration } from '../configuration'
+import { TraceContextInjection, validateAndBuildRumConfiguration } from '../configuration'
 import { startTracer, TraceIdentifier } from './tracer'
 
 describe('tracer', () => {
@@ -198,6 +198,22 @@ describe('tracer', () => {
       })!
 
       const tracer = startTracer(configurationWithoutHeaders, sessionManager)
+      const context = { ...ALLOWED_DOMAIN_CONTEXT }
+      tracer.traceXhr(context, xhrStub as unknown as XMLHttpRequest)
+
+      expect(xhrStub.headers['b3']).toBeUndefined()
+      expect(xhrStub.headers['traceparent']).toBeUndefined()
+      expect(xhrStub.headers['x-datadog-trace-id']).toBeUndefined()
+      expect(xhrStub.headers['X-B3-TraceId']).toBeUndefined()
+    })
+
+    it('should not add any headers with sampled traceContextInjection', () => {
+      const configurationWithInjectionParam = {
+        ...configuration,
+        traceContextInjection: TraceContextInjection.Sampled,
+      }
+
+      const tracer = startTracer(configurationWithInjectionParam, sessionManager)
       const context = { ...ALLOWED_DOMAIN_CONTEXT }
       tracer.traceXhr(context, xhrStub as unknown as XMLHttpRequest)
 

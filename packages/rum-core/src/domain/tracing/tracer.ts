@@ -9,7 +9,7 @@ import {
   isMatchOption,
   matchList,
 } from '@datadog/browser-core'
-import type { RumConfiguration } from '../configuration'
+import { TraceContextInjection, type RumConfiguration } from '../configuration'
 import type {
   RumFetchResolveContext,
   RumFetchStartContext,
@@ -121,7 +121,9 @@ function injectHeadersIfTracingAllowed(
   context.traceId = new TraceIdentifier()
   context.spanId = new TraceIdentifier()
   context.traceSampled = !isNumber(configuration.traceSampleRate) || performDraw(configuration.traceSampleRate)
-  inject(makeTracingHeaders(context.traceId, context.spanId, context.traceSampled, tracingOption.propagatorTypes))
+  if (configuration.traceContextInjection == TraceContextInjection.All) {
+    inject(makeTracingHeaders(context.traceId, context.spanId, context.traceSampled, tracingOption.propagatorTypes))
+  }
 }
 
 export function isTracingSupported() {
