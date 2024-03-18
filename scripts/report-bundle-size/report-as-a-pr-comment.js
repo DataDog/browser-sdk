@@ -7,6 +7,8 @@ const LOCAL_BRANCH = process.env.CI_COMMIT_REF_NAME
 const PR_COMMENTER_AUTH_TOKEN = command`authanywhere`.run().split(' ')[2].trim()
 const GITHUB_TOKEN = getGithubAccessToken()
 const ONE_DAY_IN_SECOND = 24 * 60 * 60
+// The value is set to 5% as it's around 10 times the average value for small PRs.
+const SIZE_INCREASE_THRESHOLD = 5
 
 async function reportBundleSizesAsPrComment(localBundleSizes) {
   const lastCommonCommit = getLastCommonCommit(BASE_BRANCH, LOCAL_BRANCH)
@@ -137,13 +139,23 @@ async function updateOrAddComment(difference, resultsBaseQuery, localBundleSizes
 }
 
 function createMessage(difference, resultsBaseQuery, localBundleSizes) {
-  let message = '| 📦 Bundle Name| Base Size | Local Size | 𝚫% |\n| --- | --- | --- | --- |\n'
+  let message = '| 📦 Bundle Name| Base Size | Local Size | 𝚫% | Status |\n| --- | --- | --- | --- | :---: |\n'
+  let highIncreaseDetected = false
   difference.forEach((diff, index) => {
     const baseSize = formatSize(resultsBaseQuery[index].size)
     const localSize = formatSize(localBundleSizes[diff.name])
     const sign = diff.percentageChange > 0 ? '+' : ''
-    message += `| ${formatBundleName(diff.name)} | ${baseSize} | ${localSize} | ${sign}${diff.percentageChange}% |\n`
+    let status = '✅'
+    if (diff.percentageChange > SIZE_INCREASE_THRESHOLD) {
+      status = '⚠️'
+      highIncreaseDetected = true
+    }
+    message += `| ${formatBundleName(diff.name)} | ${baseSize} | ${localSize} | ${sign}${diff.percentageChange}% | ${status} |\n`
   })
+
+  if (highIncreaseDetected) {
+    message += `\n⚠️ The increase is particularly high and exceeds ${SIZE_INCREASE_THRESHOLD}%. Please check the changes.`
+  }
 
   return message
 }
