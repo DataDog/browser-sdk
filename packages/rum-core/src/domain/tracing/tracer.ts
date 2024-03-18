@@ -9,7 +9,8 @@ import {
   isMatchOption,
   matchList,
 } from '@datadog/browser-core'
-import { TraceContextInjection, type RumConfiguration } from '../configuration'
+import { TraceContextInjection } from '../configuration'
+import type { RumConfiguration } from '../configuration'
 import type {
   RumFetchResolveContext,
   RumFetchStartContext,
