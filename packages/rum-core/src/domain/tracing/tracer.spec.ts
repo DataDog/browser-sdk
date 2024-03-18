@@ -3,8 +3,8 @@ import type { RumSessionManagerMock } from '../../../test'
 import { createRumSessionManagerMock } from '../../../test'
 import type { RumFetchResolveContext, RumFetchStartContext, RumXhrStartContext } from '../requestCollection'
 import type { RumConfiguration, RumInitConfiguration } from '../configuration'
-import { TraceContextInjection, validateAndBuildRumConfiguration } from '../configuration'
-import { startTracer, TraceIdentifier } from './tracer'
+import { validateAndBuildRumConfiguration } from '../configuration'
+import { startTracer, TraceIdentifier, TraceContextInjection } from './tracer'
 
 describe('tracer', () => {
   let configuration: RumConfiguration

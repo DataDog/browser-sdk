@@ -13,7 +13,7 @@ import {
 } from '@datadog/browser-core'
 import type { RumEventDomainContext } from '../domainContext.types'
 import type { RumEvent } from '../rumEvent.types'
-import { isTracingOption } from './tracing/tracer'
+import { isTracingOption, TraceContextInjection } from './tracing/tracer'
 import type { PropagatorType, TracingOption } from './tracing/tracer.types'
 
 export const DEFAULT_PROPAGATOR_TYPES: PropagatorType[] = ['tracecontext', 'datadog']
@@ -48,22 +48,6 @@ export interface RumInitConfiguration extends InitConfiguration {
 }
 
 export type HybridInitConfiguration = Omit<RumInitConfiguration, 'applicationId' | 'clientToken'>
-
-/*
-Allows to control the behavior of trace context injection.
-This allows upstream services to inject trace context based on their sampling configuration.
-*/
-export enum TraceContextInjection {
-  /*
-  Default. Inject trace context to all network requests as per the sampling rate.
-  */
-  All,
-
-  /*
-  Inject trace context only if the trace is sampled.
-  */
-  Sampled,
-}
 
 export interface RumConfiguration extends Configuration {
   // Built from init configuration

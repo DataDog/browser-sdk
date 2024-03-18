@@ -9,7 +9,6 @@ import {
   isMatchOption,
   matchList,
 } from '@datadog/browser-core'
-import { TraceContextInjection } from '../configuration'
 import type { RumConfiguration } from '../configuration'
 import type {
   RumFetchResolveContext,
@@ -19,6 +18,22 @@ import type {
 } from '../requestCollection'
 import type { RumSessionManager } from '../rumSessionManager'
 import type { PropagatorType, TracingOption } from './tracer.types'
+
+/*
+Allows to control the behavior of trace context injection.
+This allows upstream services to inject trace context based on their sampling configuration.
+*/
+export const enum TraceContextInjection {
+  /*
+    Default. Inject trace context to all network requests as per the sampling rate.
+    */
+  All,
+
+  /*
+    Inject trace context only if the trace is sampled.
+    */
+  Sampled,
+}
 
 export interface Tracer {
   traceFetch: (context: Partial<RumFetchStartContext>) => void
