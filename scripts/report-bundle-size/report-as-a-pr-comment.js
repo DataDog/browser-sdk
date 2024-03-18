@@ -7,8 +7,8 @@ const LOCAL_BRANCH = process.env.CI_COMMIT_REF_NAME
 const PR_COMMENTER_AUTH_TOKEN = command`authanywhere`.run().split(' ')[2].trim()
 const GITHUB_TOKEN = getGithubAccessToken()
 const ONE_DAY_IN_SECOND = 24 * 60 * 60
-const SIZE_INCREASE_THRESHOLD = 5
 // The value is set to 5% as it's around 10 times the average value for small PRs.
+const SIZE_INCREASE_THRESHOLD = 5
 
 async function reportBundleSizesAsPrComment(localBundleSizes) {
   const lastCommonCommit = getLastCommonCommit(BASE_BRANCH, LOCAL_BRANCH)
