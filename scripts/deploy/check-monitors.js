@@ -29,7 +29,9 @@ runMain(async () => {
     for (const monitorStatus of monitorStatuses) {
       printLog(`${monitorStatus.overall_state} - ${monitorStatus.name}`)
       if (monitorStatus.overall_state !== 'OK') {
-        throw new Error(`Monitor ${monitorStatus.name} is in state ${monitorStatus.overall_state}`)
+        throw new Error(
+          `Monitor ${monitorStatus.name} is in state ${monitorStatus.overall_state}, see ${computeMonitorLink(site, monitorStatus.id)}`
+        )
       }
     }
   }
@@ -45,4 +47,18 @@ async function fetchMonitorStatus(site, monitorId) {
     },
   })
   return JSON.parse(response)
+}
+
+function computeMonitorLink(site, monitorId) {
+  return `https://${computeTelemetryOrgDomain(site)}/monitors/${monitorId}`
+}
+
+function computeTelemetryOrgDomain(site) {
+  switch (site) {
+    case 'datadoghq.com':
+    case 'datadoghq.eu':
+      return `dd-rum-telemetry.${site}`
+    default:
+      return site
+  }
 }
