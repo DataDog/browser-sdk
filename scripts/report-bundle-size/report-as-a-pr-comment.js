@@ -143,7 +143,7 @@ function createMessage(difference, resultsBaseQuery, localBundleSizes) {
     const baseSize = formatSize(resultsBaseQuery[index].size)
     const localSize = formatSize(localBundleSizes[diff.name])
     const sign = diff.percentageChange > 0 ? '+' : ''
-    let status = '✅'
+    let status = '  ✅  '
     if (diff.percentageChange > 5) {
       status = '⚠️'
       warningFlag = true
