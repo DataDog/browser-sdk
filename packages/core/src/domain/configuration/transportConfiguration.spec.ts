@@ -87,10 +87,12 @@ describe('transportConfiguration', () => {
     ;[
       { site: 'datadoghq.eu', intakeDomain: 'browser-intake-datadoghq.eu' },
       { site: 'datadoghq.com', intakeDomain: 'browser-intake-datadoghq.com' },
+      { site: 'datadoghq.com', intakeDomain: 'pci.browser-intake-datadoghq.com' },
       { site: 'us3.datadoghq.com', intakeDomain: 'browser-intake-us3-datadoghq.com' },
       { site: 'us5.datadoghq.com', intakeDomain: 'browser-intake-us5-datadoghq.com' },
-      { site: 'ddog-gov.com', intakeDomain: 'browser-intake-ddog-gov.com' },
       { site: 'ap1.datadoghq.com', intakeDomain: 'browser-intake-ap1-datadoghq.com' },
+      { site: 'ddog-gov.com', intakeDomain: 'browser-intake-ddog-gov.com' },
+      { site: 'datad0g.com', intakeDomain: 'browser-intake-datad0g.com' },
       { site: 'dd0g-gov.com', intakeDomain: 'http-intake.logs.dd0g-gov.com' },
     ].forEach(({ site, intakeDomain }) => {
       it(`should detect intake request for ${site} site`, () => {

@@ -3,7 +3,7 @@ import type { InitConfiguration } from './configuration'
 import type { EndpointBuilder } from './endpointBuilder'
 import { createEndpointBuilder } from './endpointBuilder'
 import { buildTags } from './tags'
-import { INTAKE_SITE_US1 } from './intakeSites'
+import { INTAKE_SITE_FED_STAGING, INTAKE_SITE_US1 } from './intakeSites'
 
 export interface TransportConfiguration {
   logsEndpointBuilder: EndpointBuilder
@@ -28,9 +28,16 @@ export function computeTransportConfiguration(initConfiguration: InitConfigurati
 
   const replicaConfiguration = computeReplicaConfiguration(initConfiguration, intakeUrlPrefixes, tags)
 
+  function isIntakeUrl(url: string) {
+    return (
+      getIntakePrefixesRegEx(initConfiguration).some((intakeRegEx) => intakeRegEx.test(url)) ||
+      intakeUrlPrefixes.some((intakeEndpoint) => url.indexOf(intakeEndpoint) === 0)
+    )
+  }
+
   return assign(
     {
-      isIntakeUrl: (url: string) => intakeUrlPrefixes.some((intakeEndpoint) => url.indexOf(intakeEndpoint) === 0),
+      isIntakeUrl,
       replica: replicaConfiguration,
       site: initConfiguration.site || INTAKE_SITE_US1,
     },
@@ -68,4 +75,30 @@ function computeReplicaConfiguration(
   intakeUrlPrefixes.push(...objectValues(replicaEndpointBuilders).map((builder) => builder.urlPrefix))
 
   return assign({ applicationId: initConfiguration.replica.applicationId }, replicaEndpointBuilders)
+}
+
+function getIntakePrefixesRegEx(initConfiguration: InitConfiguration): RegExp[] {
+  const { site = INTAKE_SITE_US1, internalAnalyticsSubdomain } = initConfiguration
+
+  const intakePrefixesRegEx: RegExp[] = []
+
+  if (internalAnalyticsSubdomain) {
+    intakePrefixesRegEx.push(new RegExp(`^https://${internalAnalyticsSubdomain}.datadoghq.com/api/v2/(logs|rum)`))
+  }
+
+  if (site === INTAKE_SITE_FED_STAGING) {
+    intakePrefixesRegEx.push(new RegExp(`^https://http-intake.logs.${site}/api/v2/(logs|rum|replay)`))
+  }
+
+  if (site === INTAKE_SITE_US1) {
+    intakePrefixesRegEx.push(new RegExp(`^https://(pci.)?browser-intake-${site}/api/v2/(logs|rum|replay)`))
+  } else {
+    const domainParts = site.split('.')
+    const extension = domainParts.pop()
+    intakePrefixesRegEx.push(
+      new RegExp(`^https://browser-intake-${domainParts.join('-')}.${extension!}/api/v2/(logs|rum|replay)`)
+    )
+  }
+
+  return intakePrefixesRegEx
 }
