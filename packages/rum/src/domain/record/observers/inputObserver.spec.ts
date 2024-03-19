@@ -6,6 +6,7 @@ import { appendElement } from '../../../../../rum-core/test'
 import { PRIVACY_ATTR_NAME, PRIVACY_ATTR_VALUE_MASK_USER_INPUT } from '../../../constants'
 import { serializeDocument, SerializationContextStatus } from '../serialization'
 import { createElementsScrollPositions } from '../elementsScrollPositions'
+import { IncrementalSource, RecordType } from '../../../types'
 import type { InputCallback } from './inputObserver'
 import { initInputObserver } from './inputObserver'
 import { DEFAULT_CONFIGURATION, DEFAULT_SHADOW_ROOT_CONTROLLER } from './observers.specHelper'
@@ -42,8 +43,13 @@ describe('initInputObserver', () => {
     dispatchInputEvent('foo')
 
     expect(inputCallbackSpy).toHaveBeenCalledOnceWith({
-      text: 'foo',
-      id: jasmine.any(Number) as unknown as number,
+      type: RecordType.IncrementalSnapshot,
+      timestamp: jasmine.any(Number),
+      data: {
+        source: IncrementalSource.Input,
+        text: 'foo',
+        id: jasmine.any(Number) as unknown as number,
+      },
     })
   })
 
@@ -55,8 +61,13 @@ describe('initInputObserver', () => {
     clock.tick(0)
 
     expect(inputCallbackSpy).toHaveBeenCalledOnceWith({
-      text: 'foo',
-      id: jasmine.any(Number) as unknown as number,
+      type: RecordType.IncrementalSnapshot,
+      timestamp: jasmine.any(Number),
+      data: {
+        source: IncrementalSource.Input,
+        text: 'foo',
+        id: jasmine.any(Number) as unknown as number,
+      },
     })
   })
 
@@ -89,8 +100,13 @@ describe('initInputObserver', () => {
     dispatchInputEventWithInShadowDom('foo')
 
     expect(inputCallbackSpy).toHaveBeenCalledOnceWith({
-      text: 'foo',
-      id: jasmine.any(Number) as unknown as number,
+      type: RecordType.IncrementalSnapshot,
+      timestamp: jasmine.any(Number),
+      data: {
+        source: IncrementalSource.Input,
+        text: 'foo',
+        id: jasmine.any(Number) as unknown as number,
+      },
     })
   })
 
@@ -101,7 +117,7 @@ describe('initInputObserver', () => {
 
     dispatchInputEvent('foo')
 
-    expect((inputCallbackSpy.calls.first().args[0] as { text?: string }).text).toBe('***')
+    expect((inputCallbackSpy.calls.first().args[0].data as { text?: string }).text).toBe('***')
   })
 
   it('masks input values according to a parent element privacy level', () => {
@@ -111,7 +127,7 @@ describe('initInputObserver', () => {
 
     dispatchInputEvent('foo')
 
-    expect((inputCallbackSpy.calls.first().args[0] as { text?: string }).text).toBe('***')
+    expect((inputCallbackSpy.calls.first().args[0].data as { text?: string }).text).toBe('***')
   })
 
   it('masks input values according to a the default privacy level', () => {
@@ -120,7 +136,7 @@ describe('initInputObserver', () => {
 
     dispatchInputEvent('foo')
 
-    expect((inputCallbackSpy.calls.first().args[0] as { text?: string }).text).toBe('***')
+    expect((inputCallbackSpy.calls.first().args[0].data as { text?: string }).text).toBe('***')
   })
 
   function dispatchInputEvent(newValue: string) {

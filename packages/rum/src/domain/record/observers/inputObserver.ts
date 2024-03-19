@@ -2,16 +2,18 @@ import type { ListenerHandler } from '@datadog/browser-core'
 import { instrumentSetter, assign, DOM_EVENT, addEventListeners, forEach, noop, cssEscape } from '@datadog/browser-core'
 import type { RumConfiguration } from '@datadog/browser-rum-core'
 import { NodePrivacyLevel } from '../../../constants'
-import type { InputState } from '../../../types'
+import { IncrementalSource } from '../../../types'
+import type { BrowserIncrementalSnapshotRecord, InputData, InputState } from '../../../types'
 import { getEventTarget } from '../eventsUtils'
 import { getNodePrivacyLevel, shouldMaskNode } from '../privacy'
 import { getElementInputValue, getSerializedNodeId, hasSerializedNode } from '../serialization'
+import { assembleIncrementalSnapshot } from '../assembly'
 
-export type InputCallback = (v: InputState & { id: number }) => void
+export type InputCallback = (incrementalSnapshotRecord: BrowserIncrementalSnapshotRecord) => void
 
 export function initInputObserver(
   configuration: RumConfiguration,
-  cb: InputCallback,
+  inputCb: InputCallback,
   target: Document | ShadowRoot = document
 ): ListenerHandler {
   const defaultPrivacyLevel = configuration.defaultPrivacyLevel
@@ -114,12 +116,15 @@ export function initInputObserver(
       (lastInputState as { isChecked?: boolean }).isChecked !== (inputState as { isChecked?: boolean }).isChecked
     ) {
       lastInputStateMap.set(target, inputState)
-      cb(
-        assign(
-          {
-            id: getSerializedNodeId(target),
-          },
-          inputState
+      inputCb(
+        assembleIncrementalSnapshot<InputData>(
+          IncrementalSource.Input,
+          assign(
+            {
+              id: getSerializedNodeId(target),
+            },
+            inputState
+          )
         )
       )
     }

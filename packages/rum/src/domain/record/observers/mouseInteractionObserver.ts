@@ -36,7 +36,7 @@ export type MouseInteractionCallBack = (record: BrowserIncrementalSnapshotRecord
 
 export function initMouseInteractionObserver(
   configuration: RumConfiguration,
-  cb: MouseInteractionCallBack,
+  mouseInteractionCb: MouseInteractionCallBack,
   recordIds: RecordIds
 ): ListenerHandler {
   const handler = (event: MouseEvent | TouchEvent | FocusEvent) => {
@@ -65,7 +65,7 @@ export function initMouseInteractionObserver(
       { id: recordIds.getIdForEvent(event) },
       assembleIncrementalSnapshot<MouseInteractionData>(IncrementalSource.MouseInteraction, interaction)
     )
-    cb(record)
+    mouseInteractionCb(record)
   }
   return addEventListeners(
     configuration,

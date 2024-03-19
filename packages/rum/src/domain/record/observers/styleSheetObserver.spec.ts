@@ -2,6 +2,7 @@ import { isIE } from '@datadog/browser-core'
 import { isFirefox } from '@datadog/browser-core/test'
 import { serializeDocument, SerializationContextStatus } from '../serialization'
 import { createElementsScrollPositions } from '../elementsScrollPositions'
+import { IncrementalSource, RecordType } from '../../../types'
 import type { StyleSheetCallback } from './styleSheetObserver'
 import { initStyleSheetObserver, getPathToNestedCSSRule } from './styleSheetObserver'
 import { DEFAULT_CONFIGURATION, DEFAULT_SHADOW_ROOT_CONTROLLER } from './observers.specHelper'
@@ -40,11 +41,15 @@ describe('initStyleSheetObserver', () => {
         stopStyleSheetObserver = initStyleSheetObserver(styleSheetCallbackSpy)
         styleSheet.insertRule(styleRule)
 
-        const styleSheetRule = styleSheetCallbackSpy.calls.first().args[0]
-        expect(styleSheetRule.id).toBeDefined()
-        expect(styleSheetRule.removes).toBeUndefined()
-        expect(styleSheetRule.adds?.length).toEqual(1)
-        expect(styleSheetRule.adds?.[0]?.index).toEqual(undefined)
+        expect(styleSheetCallbackSpy).toHaveBeenCalledWith({
+          type: RecordType.IncrementalSnapshot,
+          timestamp: jasmine.any(Number),
+          data: {
+            id: jasmine.any(Number),
+            source: IncrementalSource.StyleSheetRule,
+            adds: [jasmine.objectContaining({ index: undefined })],
+          },
+        })
       })
 
       it('should capture CSSStyleRule insertion when index is provided', () => {
@@ -53,11 +58,15 @@ describe('initStyleSheetObserver', () => {
         stopStyleSheetObserver = initStyleSheetObserver(styleSheetCallbackSpy)
         styleSheet.insertRule(styleRule, index)
 
-        const styleSheetRule = styleSheetCallbackSpy.calls.first().args[0]
-        expect(styleSheetRule.id).toBeDefined()
-        expect(styleSheetRule.removes).toBeUndefined()
-        expect(styleSheetRule.adds?.length).toEqual(1)
-        expect(styleSheetRule.adds?.[0]?.index).toEqual(index)
+        expect(styleSheetCallbackSpy).toHaveBeenCalledWith({
+          type: RecordType.IncrementalSnapshot,
+          timestamp: jasmine.any(Number),
+          data: {
+            id: jasmine.any(Number),
+            source: IncrementalSource.StyleSheetRule,
+            adds: [jasmine.objectContaining({ index })],
+          },
+        })
       })
     })
 
@@ -69,11 +78,15 @@ describe('initStyleSheetObserver', () => {
         stopStyleSheetObserver = initStyleSheetObserver(styleSheetCallbackSpy)
         styleSheet.deleteRule(index)
 
-        const styleSheetRule = styleSheetCallbackSpy.calls.first().args[0]
-        expect(styleSheetRule.id).toBeDefined()
-        expect(styleSheetRule.adds).toBeUndefined()
-        expect(styleSheetRule.removes?.length).toEqual(1)
-        expect(styleSheetRule.removes?.[0]).toEqual({ index })
+        expect(styleSheetCallbackSpy).toHaveBeenCalledWith({
+          type: RecordType.IncrementalSnapshot,
+          timestamp: jasmine.any(Number),
+          data: {
+            id: jasmine.any(Number),
+            source: IncrementalSource.StyleSheetRule,
+            removes: [jasmine.objectContaining({ index })],
+          },
+        })
       })
     })
   })
@@ -88,11 +101,15 @@ describe('initStyleSheetObserver', () => {
         stopStyleSheetObserver = initStyleSheetObserver(styleSheetCallbackSpy)
         groupingRule.insertRule(styleRule, 1)
 
-        const styleSheetRule = styleSheetCallbackSpy.calls.first().args[0]
-        expect(styleSheetRule.id).toBeDefined()
-        expect(styleSheetRule.removes).toBeUndefined()
-        expect(styleSheetRule.adds?.length).toEqual(1)
-        expect(styleSheetRule.adds?.[0]?.index).toEqual([1, 0, 1])
+        expect(styleSheetCallbackSpy).toHaveBeenCalledWith({
+          type: RecordType.IncrementalSnapshot,
+          timestamp: jasmine.any(Number),
+          data: {
+            id: jasmine.any(Number),
+            source: IncrementalSource.StyleSheetRule,
+            adds: [jasmine.objectContaining({ index: [1, 0, 1] })],
+          },
+        })
       })
 
       it('should not create record when inserting into a detached CSSGroupingRule', () => {
@@ -122,11 +139,15 @@ describe('initStyleSheetObserver', () => {
         stopStyleSheetObserver = initStyleSheetObserver(styleSheetCallbackSpy)
         groupingRule.deleteRule(0)
 
-        const styleSheetRule = styleSheetCallbackSpy.calls.first().args[0]
-        expect(styleSheetRule.id).toBeDefined()
-        expect(styleSheetRule.adds).toBeUndefined()
-        expect(styleSheetRule.removes?.length).toEqual(1)
-        expect(styleSheetRule.removes?.[0]?.index).toEqual([1, 0, 0])
+        expect(styleSheetCallbackSpy).toHaveBeenCalledWith({
+          type: RecordType.IncrementalSnapshot,
+          timestamp: jasmine.any(Number),
+          data: {
+            id: jasmine.any(Number),
+            source: IncrementalSource.StyleSheetRule,
+            removes: [jasmine.objectContaining({ index: [1, 0, 0] })],
+          },
+        })
       })
 
       it('should not create record when removing from a detached CSSGroupingRule', () => {

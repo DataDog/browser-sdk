@@ -1,19 +1,19 @@
-import type { DefaultPrivacyLevel, ListenerHandler } from '@datadog/browser-core'
+import type { ListenerHandler } from '@datadog/browser-core'
 import { DOM_EVENT, addEventListeners } from '@datadog/browser-core'
 import type { RumConfiguration } from '@datadog/browser-rum-core'
 import { NodePrivacyLevel } from '../../../constants'
-import type { MediaInteraction } from '../../../types'
-import { MediaInteractionType } from '../../../types'
+import type { BrowserIncrementalSnapshotRecord, MediaInteractionData } from '../../../types'
+import { IncrementalSource, MediaInteractionType } from '../../../types'
 import { getEventTarget } from '../eventsUtils'
 import { getNodePrivacyLevel } from '../privacy'
 import { getSerializedNodeId, hasSerializedNode } from '../serialization'
+import { assembleIncrementalSnapshot } from '../assembly'
 
-export type MediaInteractionCallback = (p: MediaInteraction) => void
+export type MediaInteractionCallback = (incrementalSnapshotRecord: BrowserIncrementalSnapshotRecord) => void
 
 export function initMediaInteractionObserver(
   configuration: RumConfiguration,
-  mediaInteractionCb: MediaInteractionCallback,
-  defaultPrivacyLevel: DefaultPrivacyLevel
+  mediaInteractionCb: MediaInteractionCallback
 ): ListenerHandler {
   return addEventListeners(
     configuration,
@@ -23,15 +23,17 @@ export function initMediaInteractionObserver(
       const target = getEventTarget(event)
       if (
         !target ||
-        getNodePrivacyLevel(target, defaultPrivacyLevel) === NodePrivacyLevel.HIDDEN ||
+        getNodePrivacyLevel(target, configuration.defaultPrivacyLevel) === NodePrivacyLevel.HIDDEN ||
         !hasSerializedNode(target)
       ) {
         return
       }
-      mediaInteractionCb({
-        id: getSerializedNodeId(target),
-        type: event.type === DOM_EVENT.PLAY ? MediaInteractionType.Play : MediaInteractionType.Pause,
-      })
+      mediaInteractionCb(
+        assembleIncrementalSnapshot<MediaInteractionData>(IncrementalSource.MediaInteraction, {
+          id: getSerializedNodeId(target),
+          type: event.type === DOM_EVENT.PLAY ? MediaInteractionType.Play : MediaInteractionType.Pause,
+        })
+      )
     },
     {
       capture: true,

@@ -9,7 +9,7 @@ import {
   PRIVACY_ATTR_VALUE_MASK,
   PRIVACY_ATTR_VALUE_MASK_USER_INPUT,
 } from '../../../constants'
-import type { AttributeMutation, Attributes } from '../../../types'
+import type { AttributeMutation, Attributes, BrowserMutationPayload } from '../../../types'
 import { NodeType } from '../../../types'
 import { serializeDocument, SerializationContextStatus } from '../serialization'
 import { createElementsScrollPositions } from '../elementsScrollPositions'
@@ -46,7 +46,7 @@ describe('startMutationCollection', () => {
 
     return {
       mutationCallbackSpy,
-      getLatestMutationPayload: () => mutationCallbackSpy.calls.mostRecent()?.args[0],
+      getLatestMutationPayload: () => mutationCallbackSpy.calls.mostRecent()?.args[0].data as BrowserMutationPayload,
     }
   }
 

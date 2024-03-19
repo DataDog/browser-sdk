@@ -1,13 +1,15 @@
 import type { ListenerHandler } from '@datadog/browser-core'
 import { instrumentMethod } from '@datadog/browser-core'
-import type { StyleSheetRule } from '../../../types'
+import { IncrementalSource } from '../../../types'
+import type { StyleSheetRuleData, BrowserIncrementalSnapshotRecord } from '../../../types'
 import { getSerializedNodeId, hasSerializedNode } from '../serialization'
+import { assembleIncrementalSnapshot } from '../assembly'
 
 type GroupingCSSRuleTypes = typeof CSSGroupingRule | typeof CSSMediaRule | typeof CSSSupportsRule
 
-export type StyleSheetCallback = (s: StyleSheetRule) => void
+export type StyleSheetCallback = (incrementalSnapshotRecord: BrowserIncrementalSnapshotRecord) => void
 
-export function initStyleSheetObserver(cb: StyleSheetCallback): ListenerHandler {
+export function initStyleSheetObserver(styleSheetCb: StyleSheetCallback): ListenerHandler {
   function checkStyleSheetAndCallback(styleSheet: CSSStyleSheet | null, callback: (id: number) => void): void {
     if (styleSheet && hasSerializedNode(styleSheet.ownerNode!)) {
       callback(getSerializedNodeId(styleSheet.ownerNode))
@@ -16,11 +18,25 @@ export function initStyleSheetObserver(cb: StyleSheetCallback): ListenerHandler 
 
   const instrumentationStoppers = [
     instrumentMethod(CSSStyleSheet.prototype, 'insertRule', ({ target: styleSheet, parameters: [rule, index] }) => {
-      checkStyleSheetAndCallback(styleSheet, (id) => cb({ id, adds: [{ rule, index }] }))
+      checkStyleSheetAndCallback(styleSheet, (id) =>
+        styleSheetCb(
+          assembleIncrementalSnapshot<StyleSheetRuleData>(IncrementalSource.StyleSheetRule, {
+            id,
+            adds: [{ rule, index }],
+          })
+        )
+      )
     }),
 
     instrumentMethod(CSSStyleSheet.prototype, 'deleteRule', ({ target: styleSheet, parameters: [index] }) => {
-      checkStyleSheetAndCallback(styleSheet, (id) => cb({ id, removes: [{ index }] }))
+      checkStyleSheetAndCallback(styleSheet, (id) =>
+        styleSheetCb(
+          assembleIncrementalSnapshot<StyleSheetRuleData>(IncrementalSource.StyleSheetRule, {
+            id,
+            removes: [{ index }],
+          })
+        )
+      )
     }),
   ]
 
@@ -38,7 +54,12 @@ export function initStyleSheetObserver(cb: StyleSheetCallback): ListenerHandler 
           const path = getPathToNestedCSSRule(styleSheet)
           if (path) {
             path.push(index || 0)
-            cb({ id, adds: [{ rule, index: path }] })
+            styleSheetCb(
+              assembleIncrementalSnapshot<StyleSheetRuleData>(IncrementalSource.StyleSheetRule, {
+                id,
+                adds: [{ rule, index: path }],
+              })
+            )
           }
         })
       }),
@@ -48,7 +69,12 @@ export function initStyleSheetObserver(cb: StyleSheetCallback): ListenerHandler 
           const path = getPathToNestedCSSRule(styleSheet)
           if (path) {
             path.push(index)
-            cb({ id, removes: [{ index: path }] })
+            styleSheetCb(
+              assembleIncrementalSnapshot<StyleSheetRuleData>(IncrementalSource.StyleSheetRule, {
+                id,
+                removes: [{ index: path }],
+              })
+            )
           }
         })
       })

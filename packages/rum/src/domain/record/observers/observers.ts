@@ -27,7 +27,6 @@ import { initViewEndObserver, type ViewEndCallback } from './viewEndObserver'
 
 interface ObserverParam {
   lifeCycle: LifeCycle
-  configuration: RumConfiguration
   elementsScrollPositions: ElementsScrollPositions
   mutationCb: MutationCallBack
   mousemoveCb: MousemoveCallBack
@@ -49,22 +48,13 @@ export function initObservers(
   o: ObserverParam
 ): { stop: ListenerHandler; flush: ListenerHandler } {
   const recordIds = initRecordIds()
-  const mutationHandler = initMutationObserver(o.mutationCb, o.configuration, o.shadowRootsController, document)
+  const mutationHandler = initMutationObserver(o.mutationCb, configuration, o.shadowRootsController, document)
   const mousemoveHandler = initMoveObserver(configuration, o.mousemoveCb)
   const mouseInteractionHandler = initMouseInteractionObserver(configuration, o.mouseInteractionCb, recordIds)
-  const scrollHandler = initScrollObserver(
-    configuration,
-    o.scrollCb,
-    o.configuration.defaultPrivacyLevel,
-    o.elementsScrollPositions
-  )
+  const scrollHandler = initScrollObserver(configuration, o.scrollCb, o.elementsScrollPositions)
   const viewportResizeHandler = initViewportResizeObserver(configuration, o.viewportResizeCb)
   const inputHandler = initInputObserver(configuration, o.inputCb)
-  const mediaInteractionHandler = initMediaInteractionObserver(
-    configuration,
-    o.mediaInteractionCb,
-    o.configuration.defaultPrivacyLevel
-  )
+  const mediaInteractionHandler = initMediaInteractionObserver(configuration, o.mediaInteractionCb)
   const styleSheetObserver = initStyleSheetObserver(o.styleSheetCb)
   const focusHandler = initFocusObserver(configuration, o.focusCb)
   const visualViewportResizeHandler = initVisualViewportResizeObserver(configuration, o.visualViewportResizeCb)

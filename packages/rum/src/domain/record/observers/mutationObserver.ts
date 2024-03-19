@@ -7,12 +7,14 @@ import {
   forEachChildNodes,
 } from '@datadog/browser-rum-core'
 import { NodePrivacyLevel } from '../../../constants'
+import { IncrementalSource } from '../../../types'
 import type {
+  BrowserMutationData,
   AddedNodeMutation,
   AttributeMutation,
-  BrowserMutationPayload,
   RemovedNodeMutation,
   TextMutation,
+  BrowserIncrementalSnapshotRecord,
 } from '../../../types'
 import type { NodePrivacyLevelCache } from '../privacy'
 import { getNodePrivacyLevel, getTextContent } from '../privacy'
@@ -28,8 +30,9 @@ import {
 } from '../serialization'
 import { createMutationBatch } from '../mutationBatch'
 import type { ShadowRootCallBack, ShadowRootsController } from '../shadowRootsController'
+import { assembleIncrementalSnapshot } from '../assembly'
 
-export type MutationCallBack = (m: BrowserMutationPayload) => void
+export type MutationCallBack = (incrementalSnapshotRecord: BrowserIncrementalSnapshotRecord) => void
 
 type WithSerializedTarget<T> = T & { target: NodeWithSerializedNode }
 
@@ -163,12 +166,9 @@ function processMutations(
     return
   }
 
-  mutationCallback({
-    adds,
-    removes,
-    texts,
-    attributes,
-  })
+  mutationCallback(
+    assembleIncrementalSnapshot<BrowserMutationData>(IncrementalSource.Mutation, { adds, removes, texts, attributes })
+  )
 }
 
 function processChildListMutations(
