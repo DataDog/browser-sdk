@@ -210,6 +210,7 @@ describe('tracer', () => {
     it('should not add any headers with sampled traceContextInjection', () => {
       const configurationWithInjectionParam = {
         ...configuration,
+        traceSampleRate: 0,
         traceContextInjection: TraceContextInjection.Sampled,
       }
 
@@ -221,6 +222,20 @@ describe('tracer', () => {
       expect(xhrStub.headers['traceparent']).toBeUndefined()
       expect(xhrStub.headers['x-datadog-trace-id']).toBeUndefined()
       expect(xhrStub.headers['X-B3-TraceId']).toBeUndefined()
+    })
+
+    it('should add headers when trace sampled', () => {
+      const configurationWithInjectionParam = {
+        ...configuration,
+        traceSampleRate: 100,
+        traceContextInjection: TraceContextInjection.Sampled,
+      }
+
+      const tracer = startTracer(configurationWithInjectionParam, sessionManager)
+      const context = { ...ALLOWED_DOMAIN_CONTEXT }
+      tracer.traceXhr(context, xhrStub as unknown as XMLHttpRequest)
+
+      expect(xhrStub.headers['x-datadog-trace-id']).toBeDefined()
     })
 
     it('should ignore wrong propagator types', () => {
