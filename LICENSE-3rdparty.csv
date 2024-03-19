@@ -63,7 +63,6 @@ dev,karma-spec-reporter,MIT,Copyright 2015 Michael Lex
 dev,karma-webpack,MIT,Copyright JS Foundation and other contributors
 dev,lerna,MIT,Copyright 2015-present Lerna Contributors
 dev,minimatch,ISC,Copyright (c) Isaac Z. Schlueter and Contributors
-dev,node-fetch,MIT,Copyright 2016-2020 Node Fetch Team
 dev,node-forge,BSD,Copyright (c) 2010, Digital Bazaar, Inc.
 dev,npm-run-all,MIT,Copyright 2015 Toru Nagashima
 dev,pako,MIT,(C) 2014-2017 Vitaly Puzrin and Andrey Tupitsin
