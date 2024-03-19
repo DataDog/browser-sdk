@@ -3,7 +3,7 @@
  * Usage:
  * node check-monitors.js us1,eu1,...
  */
-const { printLog, runMain, fetch } = require('../lib/execution-utils')
+const { printLog, runMain, fetchHandlingError } = require('../lib/execution-utils')
 const { getTelemetryOrgApiKey, getTelemetryOrgApplicationKey } = require('../lib/secrets')
 const { siteByDatacenter } = require('../lib/datadog-sites')
 
@@ -38,7 +38,7 @@ runMain(async () => {
 })
 
 async function fetchMonitorStatus(site, monitorId) {
-  const response = await fetch(`https://api.${site}/api/v1/monitor/${monitorId}`, {
+  const response = await fetchHandlingError(`https://api.${site}/api/v1/monitor/${monitorId}`, {
     method: 'GET',
     headers: {
       Accept: 'application/json',
@@ -46,7 +46,7 @@ async function fetchMonitorStatus(site, monitorId) {
       'DD-APPLICATION-KEY': getTelemetryOrgApplicationKey(site),
     },
   })
-  return JSON.parse(response)
+  return response.json()
 }
 
 function computeMonitorLink(site, monitorId) {

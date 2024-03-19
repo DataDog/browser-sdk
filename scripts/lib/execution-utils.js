@@ -48,13 +48,13 @@ function printLog(...params) {
   console.log(greenColor, ...params, resetColor)
 }
 
-async function fetchWrapper(url, options) {
+async function fetchHandlingError(url, options) {
   const response = await fetch(url, options)
   if (!response.ok) {
     throw new Error(`HTTP Error Response: ${response.status} ${response.statusText}`)
   }
 
-  return response.text()
+  return response
 }
 
 function timeout(ms) {
@@ -66,6 +66,6 @@ module.exports = {
   printError,
   printLog,
   runMain,
-  fetch: fetchWrapper,
+  fetchHandlingError,
   timeout,
 }
