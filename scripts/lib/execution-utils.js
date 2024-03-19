@@ -1,7 +1,4 @@
 const spawn = require('child_process').spawn
-// node-fetch v3.x only support ESM syntax.
-// Todo: Remove node-fetch when node v18 LTS is released with fetch out of the box
-const fetch = (...args) => import('node-fetch').then(({ default: fetch }) => fetch(...args))
 
 /**
  * Helper to run executables asynchronously, in a shell. This function does not prevent Shell
