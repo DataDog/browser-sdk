@@ -21,16 +21,12 @@ export interface ReplicaConfiguration {
 }
 
 export function computeTransportConfiguration(initConfiguration: InitConfiguration): TransportConfiguration {
-  const { site = INTAKE_SITE_US1 } = initConfiguration
+  const site = initConfiguration.site || INTAKE_SITE_US1
 
   const tags = buildTags(initConfiguration)
 
   const endpointBuilders = computeEndpointBuilders(initConfiguration, tags)
-  const intakeUrlPrefixes = objectValues(endpointBuilders).map((builder) => builder.urlPrefix)
-
-  if (site === INTAKE_SITE_US1) {
-    intakeUrlPrefixes.push(`https://${PCI_INTAKE_HOST_US1}/api/v2/logs?`)
-  }
+  const intakeUrlPrefixes = computeIntakeUrlPrefixes(endpointBuilders, site)
 
   const replicaConfiguration = computeReplicaConfiguration(initConfiguration, intakeUrlPrefixes, tags)
 
@@ -74,4 +70,14 @@ function computeReplicaConfiguration(
   intakeUrlPrefixes.push(...objectValues(replicaEndpointBuilders).map((builder) => builder.urlPrefix))
 
   return assign({ applicationId: initConfiguration.replica.applicationId }, replicaEndpointBuilders)
+}
+
+function computeIntakeUrlPrefixes(endpointBuilders: ReturnType<typeof computeEndpointBuilders>, site: string): string[] {
+  const intakeUrlPrefixes = objectValues(endpointBuilders).map((builder) => builder.urlPrefix)
+
+  if (site === INTAKE_SITE_US1) {
+    intakeUrlPrefixes.push(`https://${PCI_INTAKE_HOST_US1}/api/v2/logs?`)
+  }
+
+  return intakeUrlPrefixes
 }
