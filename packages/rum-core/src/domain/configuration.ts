@@ -129,7 +129,7 @@ export function validateAndBuildRumConfiguration(
         ? initConfiguration.defaultPrivacyLevel
         : DefaultPrivacyLevel.MASK,
       customerDataTelemetrySampleRate: 1,
-      traceContextInjection: TraceContextInjection.All,
+      traceContextInjection: initConfiguration.traceContextInjection ?? TraceContextInjection.All,
     },
     baseConfiguration
   )

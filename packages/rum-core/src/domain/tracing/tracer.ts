@@ -137,6 +137,7 @@ function injectHeadersIfTracingAllowed(
   context.traceId = new TraceIdentifier()
   context.spanId = new TraceIdentifier()
   context.traceSampled = !isNumber(configuration.traceSampleRate) || performDraw(configuration.traceSampleRate)
+
   if (
     (context.traceSampled && configuration.traceContextInjection === TraceContextInjection.Sampled) ||
     configuration.traceContextInjection === TraceContextInjection.All
