@@ -19,22 +19,6 @@ import type {
 import type { RumSessionManager } from '../rumSessionManager'
 import type { PropagatorType, TracingOption } from './tracer.types'
 
-/*
-Allows to control the behavior of trace context injection.
-This allows upstream services to inject trace context based on their sampling configuration.
-*/
-export const enum TraceContextInjection {
-  /*
-    Default. Inject trace context to all network requests as per the sampling rate.
-    */
-  All,
-
-  /*
-    Inject trace context only if the trace is sampled.
-    */
-  Sampled,
-}
-
 export interface Tracer {
   traceFetch: (context: Partial<RumFetchStartContext>) => void
   traceXhr: (context: Partial<RumXhrStartContext>, xhr: XMLHttpRequest) => void
@@ -139,8 +123,8 @@ function injectHeadersIfTracingAllowed(
   context.traceSampled = !isNumber(configuration.traceSampleRate) || performDraw(configuration.traceSampleRate)
 
   if (
-    (context.traceSampled && configuration.traceContextInjection === TraceContextInjection.Sampled) ||
-    configuration.traceContextInjection === TraceContextInjection.All
+    (context.traceSampled && configuration.traceContextInjection === 'sampled') ||
+    configuration.traceContextInjection === 'all'
   ) {
     inject(makeTracingHeaders(context.traceId, context.spanId, context.traceSampled, tracingOption.propagatorTypes))
   }

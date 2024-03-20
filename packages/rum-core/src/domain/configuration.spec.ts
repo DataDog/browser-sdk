@@ -1,10 +1,9 @@
 import type { InitConfiguration } from '@datadog/browser-core'
-import { DefaultPrivacyLevel, display } from '@datadog/browser-core'
+import { DefaultPrivacyLevel, display, TraceContextInjection } from '@datadog/browser-core'
 import { EXHAUSTIVE_INIT_CONFIGURATION, SERIALIZED_EXHAUSTIVE_INIT_CONFIGURATION } from '../../../core/test'
 import type { ExtractTelemetryConfiguration, CamelToSnakeCase, MapInitConfigurationKey } from '../../../core/test'
 import type { RumInitConfiguration } from './configuration'
 import { DEFAULT_PROPAGATOR_TYPES, serializeRumConfiguration, validateAndBuildRumConfiguration } from './configuration'
-import { TraceContextInjection } from './tracing/tracer'
 
 const DEFAULT_INIT_CONFIGURATION = { clientToken: 'xxx', applicationId: 'xxx' }
 
@@ -410,7 +409,7 @@ describe('serializeRumConfiguration', () => {
       compressIntakeRequests: true,
       allowedTracingUrls: ['foo'],
       traceSampleRate: 50,
-      traceContextInjection: TraceContextInjection.All,
+      traceContextInjection: TraceContextInjection.ALL,
       defaultPrivacyLevel: 'allow',
       subdomain: 'foo',
       sessionReplaySampleRate: 60,
@@ -442,7 +441,7 @@ describe('serializeRumConfiguration', () => {
       ...SERIALIZED_EXHAUSTIVE_INIT_CONFIGURATION,
       session_replay_sample_rate: 60,
       trace_sample_rate: 50,
-      trace_context_injection: TraceContextInjection.All,
+      trace_context_injection: TraceContextInjection.ALL,
       use_allowed_tracing_urls: true,
       selected_tracing_propagators: ['tracecontext', 'datadog'],
       use_excluded_activity_urls: true,

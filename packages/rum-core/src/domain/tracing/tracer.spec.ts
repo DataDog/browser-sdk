@@ -1,10 +1,10 @@
-import { display, isIE, objectEntries } from '@datadog/browser-core'
+import { display, isIE, objectEntries, TraceContextInjection } from '@datadog/browser-core'
 import type { RumSessionManagerMock } from '../../../test'
 import { createRumSessionManagerMock } from '../../../test'
 import type { RumFetchResolveContext, RumFetchStartContext, RumXhrStartContext } from '../requestCollection'
 import type { RumConfiguration, RumInitConfiguration } from '../configuration'
 import { validateAndBuildRumConfiguration } from '../configuration'
-import { startTracer, TraceIdentifier, TraceContextInjection } from './tracer'
+import { startTracer, TraceIdentifier } from './tracer'
 
 describe('tracer', () => {
   let configuration: RumConfiguration
@@ -211,7 +211,7 @@ describe('tracer', () => {
       const configurationWithInjectionParam = {
         ...configuration,
         traceSampleRate: 0,
-        traceContextInjection: TraceContextInjection.Sampled,
+        traceContextInjection: TraceContextInjection.SAMPLED,
       }
 
       const tracer = startTracer(configurationWithInjectionParam, sessionManager)
@@ -226,7 +226,7 @@ describe('tracer', () => {
       const configurationWithInjectionParam = {
         ...configuration,
         traceSampleRate: 100,
-        traceContextInjection: TraceContextInjection.Sampled,
+        traceContextInjection: TraceContextInjection.SAMPLED,
       }
 
       const tracer = startTracer(configurationWithInjectionParam, sessionManager)
@@ -241,7 +241,7 @@ describe('tracer', () => {
       const configurationWithInjectionParam = {
         ...configuration,
         traceSampleRate: 0,
-        traceContextInjection: TraceContextInjection.All,
+        traceContextInjection: TraceContextInjection.ALL,
       }
 
       const tracer = startTracer(configurationWithInjectionParam, sessionManager)
@@ -573,7 +573,7 @@ describe('tracer', () => {
     const configurationWithoutHeaders = validateAndBuildRumConfiguration({
       ...INIT_CONFIGURATION,
       traceSampleRate: 0,
-      traceContextInjection: TraceContextInjection.Sampled,
+      traceContextInjection: TraceContextInjection.SAMPLED,
     })!
 
     const tracer = startTracer(configurationWithoutHeaders, sessionManager)
@@ -587,7 +587,7 @@ describe('tracer', () => {
     const configurationWithoutHeaders = validateAndBuildRumConfiguration({
       ...INIT_CONFIGURATION,
       traceSampleRate: 100,
-      traceContextInjection: TraceContextInjection.Sampled,
+      traceContextInjection: TraceContextInjection.SAMPLED,
     })!
 
     const tracer = startTracer(configurationWithoutHeaders, sessionManager)
@@ -604,7 +604,7 @@ describe('tracer', () => {
     const configurationWithoutHeaders = validateAndBuildRumConfiguration({
       ...INIT_CONFIGURATION,
       traceSampleRate: 0,
-      traceContextInjection: TraceContextInjection.All,
+      traceContextInjection: TraceContextInjection.ALL,
     })!
 
     const tracer = startTracer(configurationWithoutHeaders, sessionManager)

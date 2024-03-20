@@ -3,6 +3,7 @@ export {
   InitConfiguration,
   validateAndBuildConfiguration,
   DefaultPrivacyLevel,
+  TraceContextInjection,
   EndpointBuilder,
   serializeConfiguration,
   INTAKE_SITE_STAGING,

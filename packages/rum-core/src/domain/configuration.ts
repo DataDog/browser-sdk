@@ -6,6 +6,7 @@ import {
   serializeConfiguration,
   assign,
   DefaultPrivacyLevel,
+  TraceContextInjection,
   display,
   isPercentage,
   objectHasValue,
@@ -13,7 +14,7 @@ import {
 } from '@datadog/browser-core'
 import type { RumEventDomainContext } from '../domainContext.types'
 import type { RumEvent } from '../rumEvent.types'
-import { isTracingOption, TraceContextInjection } from './tracing/tracer'
+import { isTracingOption } from './tracing/tracer'
 import type { PropagatorType, TracingOption } from './tracing/tracer.types'
 
 export const DEFAULT_PROPAGATOR_TYPES: PropagatorType[] = ['tracecontext', 'datadog']
@@ -129,7 +130,7 @@ export function validateAndBuildRumConfiguration(
         ? initConfiguration.defaultPrivacyLevel
         : DefaultPrivacyLevel.MASK,
       customerDataTelemetrySampleRate: 1,
-      traceContextInjection: initConfiguration.traceContextInjection ?? TraceContextInjection.All,
+      traceContextInjection: initConfiguration.traceContextInjection ?? TraceContextInjection.ALL,
     },
     baseConfiguration
   )
