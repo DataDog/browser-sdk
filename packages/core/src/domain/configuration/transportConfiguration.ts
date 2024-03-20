@@ -72,7 +72,10 @@ function computeReplicaConfiguration(
   return assign({ applicationId: initConfiguration.replica.applicationId }, replicaEndpointBuilders)
 }
 
-function computeIntakeUrlPrefixes(endpointBuilders: ReturnType<typeof computeEndpointBuilders>, site: string): string[] {
+function computeIntakeUrlPrefixes(
+  endpointBuilders: ReturnType<typeof computeEndpointBuilders>,
+  site: string
+): string[] {
   const intakeUrlPrefixes = objectValues(endpointBuilders).map((builder) => builder.urlPrefix)
 
   if (site === INTAKE_SITE_US1) {
