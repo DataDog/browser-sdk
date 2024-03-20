@@ -1,7 +1,7 @@
 import { setTimeout } from './timer'
 import { callMonitored } from './monitor'
 import { noop } from './utils/functionUtils'
-import { arrayFrom } from './utils/polyfills'
+import { arrayFrom, startsWith } from './utils/polyfills'
 
 /**
  * Object passed to the callback of an instrumented method call. See `instrumentMethod` for more
@@ -58,7 +58,7 @@ export function instrumentMethod<TARGET extends { [key: string]: any }, METHOD e
   let original = targetPrototype[method]
 
   if (typeof original !== 'function') {
-    if (method.startsWith('on')) {
+    if (startsWith(method, 'on')) {
       original = noop as TARGET[METHOD]
     } else {
       return { stop: noop }
