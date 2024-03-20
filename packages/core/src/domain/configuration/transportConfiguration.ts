@@ -3,7 +3,7 @@ import type { InitConfiguration } from './configuration'
 import type { EndpointBuilder } from './endpointBuilder'
 import { createEndpointBuilder } from './endpointBuilder'
 import { buildTags } from './tags'
-import { INTAKE_SITE_FED_STAGING, INTAKE_SITE_US1 } from './intakeSites'
+import { INTAKE_SITE_US1, PCI_INTAKE_HOST_US1 } from './intakeSites'
 
 export interface TransportConfiguration {
   logsEndpointBuilder: EndpointBuilder
@@ -21,25 +21,24 @@ export interface ReplicaConfiguration {
 }
 
 export function computeTransportConfiguration(initConfiguration: InitConfiguration): TransportConfiguration {
+  const { site = INTAKE_SITE_US1 } = initConfiguration
+
   const tags = buildTags(initConfiguration)
 
   const endpointBuilders = computeEndpointBuilders(initConfiguration, tags)
   const intakeUrlPrefixes = objectValues(endpointBuilders).map((builder) => builder.urlPrefix)
 
-  const replicaConfiguration = computeReplicaConfiguration(initConfiguration, intakeUrlPrefixes, tags)
-
-  function isIntakeUrl(url: string) {
-    return (
-      getIntakePrefixesRegEx(initConfiguration).some((intakeRegEx) => intakeRegEx.test(url)) ||
-      intakeUrlPrefixes.some((intakeEndpoint) => url.indexOf(intakeEndpoint) === 0)
-    )
+  if (site === INTAKE_SITE_US1) {
+    intakeUrlPrefixes.push(`https://${PCI_INTAKE_HOST_US1}/api/v2/logs?`)
   }
+
+  const replicaConfiguration = computeReplicaConfiguration(initConfiguration, intakeUrlPrefixes, tags)
 
   return assign(
     {
-      isIntakeUrl,
+      isIntakeUrl: (url: string) => intakeUrlPrefixes.some((intakeEndpoint) => url.indexOf(intakeEndpoint) === 0),
       replica: replicaConfiguration,
-      site: initConfiguration.site || INTAKE_SITE_US1,
+      site,
     },
     endpointBuilders
   )
@@ -75,30 +74,4 @@ function computeReplicaConfiguration(
   intakeUrlPrefixes.push(...objectValues(replicaEndpointBuilders).map((builder) => builder.urlPrefix))
 
   return assign({ applicationId: initConfiguration.replica.applicationId }, replicaEndpointBuilders)
-}
-
-function getIntakePrefixesRegEx(initConfiguration: InitConfiguration): RegExp[] {
-  const { site = INTAKE_SITE_US1, internalAnalyticsSubdomain } = initConfiguration
-
-  const intakePrefixesRegEx: RegExp[] = []
-
-  if (internalAnalyticsSubdomain) {
-    intakePrefixesRegEx.push(new RegExp(`^https://${internalAnalyticsSubdomain}.datadoghq.com/api/v2/(logs|rum)`))
-  }
-
-  if (site === INTAKE_SITE_FED_STAGING) {
-    intakePrefixesRegEx.push(new RegExp(`^https://http-intake.logs.${site}/api/v2/(logs|rum|replay)`))
-  }
-
-  if (site === INTAKE_SITE_US1) {
-    intakePrefixesRegEx.push(new RegExp(`^https://(pci.)?browser-intake-${site}/api/v2/(logs|rum|replay)`))
-  } else {
-    const domainParts = site.split('.')
-    const extension = domainParts.pop()
-    intakePrefixesRegEx.push(
-      new RegExp(`^https://browser-intake-${domainParts.join('-')}.${extension!}/api/v2/(logs|rum|replay)`)
-    )
-  }
-
-  return intakePrefixesRegEx
 }
