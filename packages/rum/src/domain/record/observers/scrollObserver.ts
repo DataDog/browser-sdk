@@ -1,4 +1,3 @@
-import type { ListenerHandler } from '@datadog/browser-core'
 import { DOM_EVENT, throttle, addEventListener } from '@datadog/browser-core'
 import type { RumConfiguration } from '@datadog/browser-rum-core'
 import { getScrollX, getScrollY } from '@datadog/browser-rum-core'
@@ -19,7 +18,7 @@ export function initScrollObserver(
   configuration: RumConfiguration,
   scrollCb: ScrollCallback,
   elementsScrollPositions: ElementsScrollPositions
-): ListenerHandler {
+) {
   const { throttled: updatePosition, cancel: cancelThrottle } = throttle((event: Event) => {
     const target = getEventTarget(event) as HTMLElement | Document
     if (
@@ -55,8 +54,10 @@ export function initScrollObserver(
     passive: true,
   })
 
-  return () => {
-    removeListener()
-    cancelThrottle()
+  return {
+    stop: () => {
+      removeListener()
+      cancelThrottle()
+    },
   }
 }

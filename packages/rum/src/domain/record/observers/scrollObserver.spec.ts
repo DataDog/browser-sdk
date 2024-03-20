@@ -32,7 +32,7 @@ describe('initScrollObserver', () => {
       status: SerializationContextStatus.INITIAL_FULL_SNAPSHOT,
       elementsScrollPositions,
     })
-    stopScrollObserver = initScrollObserver(configuration, scrollCallback, elementsScrollPositions)
+    stopScrollObserver = initScrollObserver(configuration, scrollCallback, elementsScrollPositions).stop
   })
 
   afterEach(() => {

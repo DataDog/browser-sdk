@@ -11,7 +11,7 @@ describe('initMoveObserver', () => {
   beforeEach(() => {
     lifeCycle = new LifeCycle()
     viewEndCb = jasmine.createSpy()
-    stopObserver = initViewEndObserver(lifeCycle, viewEndCb)
+    stopObserver = initViewEndObserver(lifeCycle, viewEndCb).stop
   })
 
   afterEach(() => {

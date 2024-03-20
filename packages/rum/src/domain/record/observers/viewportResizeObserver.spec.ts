@@ -29,7 +29,10 @@ describe('initVisualViewportResizeObserver', () => {
       elementsScrollPositions,
     })
 
-    stopVisualViewportResizeObserver = initVisualViewportResizeObserver(configuration, visualViewportResizeCallback)
+    stopVisualViewportResizeObserver = initVisualViewportResizeObserver(
+      configuration,
+      visualViewportResizeCallback
+    ).stop
   })
 
   afterEach(() => {

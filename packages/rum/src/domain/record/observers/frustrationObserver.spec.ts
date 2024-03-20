@@ -49,7 +49,7 @@ describe('initFrustrationObserver', () => {
   })
 
   it('calls callback if the raw data inserted is a click action', () => {
-    stopFrustrationObserver = initFrustrationObserver(lifeCycle, frustrationsCallbackSpy, recordIds)
+    stopFrustrationObserver = initFrustrationObserver(lifeCycle, frustrationsCallbackSpy, recordIds).stop
     lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, rumData)
 
     const frustrationRecord = frustrationsCallbackSpy.calls.first().args[0]
@@ -61,7 +61,7 @@ describe('initFrustrationObserver', () => {
 
   it('ignores events other than click actions', () => {
     rumData.rawRumEvent.action.type = ActionType.CUSTOM
-    stopFrustrationObserver = initFrustrationObserver(lifeCycle, frustrationsCallbackSpy, recordIds)
+    stopFrustrationObserver = initFrustrationObserver(lifeCycle, frustrationsCallbackSpy, recordIds).stop
     lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, rumData)
 
     expect(frustrationsCallbackSpy).not.toHaveBeenCalled()
@@ -70,7 +70,7 @@ describe('initFrustrationObserver', () => {
   it('ignores click actions without frustrations', () => {
     rumData.rawRumEvent.action.frustration = { type: [] }
 
-    stopFrustrationObserver = initFrustrationObserver(lifeCycle, frustrationsCallbackSpy, recordIds)
+    stopFrustrationObserver = initFrustrationObserver(lifeCycle, frustrationsCallbackSpy, recordIds).stop
     lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, rumData)
 
     expect(frustrationsCallbackSpy).not.toHaveBeenCalled()
@@ -79,7 +79,7 @@ describe('initFrustrationObserver', () => {
   it('ignores click actions which are missing the original mouse events', () => {
     rumData.domainContext = {}
 
-    stopFrustrationObserver = initFrustrationObserver(lifeCycle, frustrationsCallbackSpy, recordIds)
+    stopFrustrationObserver = initFrustrationObserver(lifeCycle, frustrationsCallbackSpy, recordIds).stop
     lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, rumData)
 
     expect(frustrationsCallbackSpy).not.toHaveBeenCalled()

@@ -1,4 +1,3 @@
-import type { ListenerHandler } from '@datadog/browser-core'
 import { assign, addEventListeners, DOM_EVENT } from '@datadog/browser-core'
 import type { RumConfiguration } from '@datadog/browser-rum-core'
 import { NodePrivacyLevel } from '../../../constants'
@@ -38,7 +37,7 @@ export function initMouseInteractionObserver(
   configuration: RumConfiguration,
   mouseInteractionCb: MouseInteractionCallBack,
   recordIds: RecordIds
-): ListenerHandler {
+) {
   const handler = (event: MouseEvent | TouchEvent | FocusEvent) => {
     const target = getEventTarget(event)
     if (
@@ -76,5 +75,5 @@ export function initMouseInteractionObserver(
       capture: true,
       passive: true,
     }
-  ).stop
+  )
 }

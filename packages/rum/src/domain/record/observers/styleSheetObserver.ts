@@ -1,4 +1,3 @@
-import type { ListenerHandler } from '@datadog/browser-core'
 import { instrumentMethod } from '@datadog/browser-core'
 import { IncrementalSource } from '../../../types'
 import type { StyleSheetRuleData, BrowserIncrementalSnapshotRecord } from '../../../types'
@@ -9,7 +8,7 @@ type GroupingCSSRuleTypes = typeof CSSGroupingRule | typeof CSSMediaRule | typeo
 
 export type StyleSheetCallback = (incrementalSnapshotRecord: BrowserIncrementalSnapshotRecord) => void
 
-export function initStyleSheetObserver(styleSheetCb: StyleSheetCallback): ListenerHandler {
+export function initStyleSheetObserver(styleSheetCb: StyleSheetCallback) {
   function checkStyleSheetAndCallback(styleSheet: CSSStyleSheet | null, callback: (id: number) => void): void {
     if (styleSheet && hasSerializedNode(styleSheet.ownerNode!)) {
       callback(getSerializedNodeId(styleSheet.ownerNode))
@@ -81,7 +80,11 @@ export function initStyleSheetObserver(styleSheetCb: StyleSheetCallback): Listen
     )
   }
 
-  return () => instrumentationStoppers.forEach((stopper) => stopper.stop())
+  return {
+    stop: () => {
+      instrumentationStoppers.forEach((stopper) => stopper.stop())
+    },
+  }
 }
 
 export function getPathToNestedCSSRule(rule: CSSRule): number[] | undefined {

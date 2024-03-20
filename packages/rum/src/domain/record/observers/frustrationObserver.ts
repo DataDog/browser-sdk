@@ -1,4 +1,3 @@
-import type { ListenerHandler } from '@datadog/browser-core'
 import type { LifeCycle } from '@datadog/browser-rum-core'
 import { ActionType, RumEventType, LifeCycleEventType } from '@datadog/browser-rum-core'
 import type { FrustrationRecord } from '../../../types'
@@ -11,8 +10,8 @@ export function initFrustrationObserver(
   lifeCycle: LifeCycle,
   frustrationCb: FrustrationCallback,
   recordIds: RecordIds
-): ListenerHandler {
-  return lifeCycle.subscribe(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, (data) => {
+) {
+  const frustrationSubscription = lifeCycle.subscribe(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, (data) => {
     if (
       data.rawRumEvent.type === RumEventType.ACTION &&
       data.rawRumEvent.action.type === ActionType.CLICK &&
@@ -29,5 +28,11 @@ export function initFrustrationObserver(
         },
       })
     }
-  }).unsubscribe
+  })
+
+  return {
+    stop: () => {
+      frustrationSubscription.unsubscribe()
+    },
+  }
 }

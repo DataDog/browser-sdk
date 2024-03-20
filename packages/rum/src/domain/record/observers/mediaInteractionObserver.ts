@@ -1,4 +1,3 @@
-import type { ListenerHandler } from '@datadog/browser-core'
 import { DOM_EVENT, addEventListeners } from '@datadog/browser-core'
 import type { RumConfiguration } from '@datadog/browser-rum-core'
 import { NodePrivacyLevel } from '../../../constants'
@@ -14,7 +13,7 @@ export type MediaInteractionCallback = (incrementalSnapshotRecord: BrowserIncrem
 export function initMediaInteractionObserver(
   configuration: RumConfiguration,
   mediaInteractionCb: MediaInteractionCallback
-): ListenerHandler {
+) {
   return addEventListeners(
     configuration,
     document,
@@ -39,5 +38,5 @@ export function initMediaInteractionObserver(
       capture: true,
       passive: true,
     }
-  ).stop
+  )
 }

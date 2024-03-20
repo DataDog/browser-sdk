@@ -39,7 +39,7 @@ describe('initInputObserver', () => {
   })
 
   it('collects input values when an "input" event is dispatched', () => {
-    stopInputObserver = initInputObserver(configuration, inputCallbackSpy)
+    stopInputObserver = initInputObserver(configuration, inputCallbackSpy).stop
     dispatchInputEvent('foo')
 
     expect(inputCallbackSpy).toHaveBeenCalledOnceWith({
@@ -55,7 +55,7 @@ describe('initInputObserver', () => {
 
   it('collects input values when a property setter is used', () => {
     clock = mockClock()
-    stopInputObserver = initInputObserver(configuration, inputCallbackSpy)
+    stopInputObserver = initInputObserver(configuration, inputCallbackSpy).stop
     input.value = 'foo'
 
     clock.tick(0)
@@ -73,7 +73,7 @@ describe('initInputObserver', () => {
 
   it('does not invoke callback when the value does not change', () => {
     clock = mockClock()
-    stopInputObserver = initInputObserver(configuration, inputCallbackSpy)
+    stopInputObserver = initInputObserver(configuration, inputCallbackSpy).stop
     input.value = 'foo'
     clock.tick(0)
 
@@ -88,7 +88,7 @@ describe('initInputObserver', () => {
     const host = document.createElement('div')
     host.attachShadow({ mode: 'open' })
 
-    stopInputObserver = initInputObserver(configuration, inputCallbackSpy, host.shadowRoot!)
+    stopInputObserver = initInputObserver(configuration, inputCallbackSpy, host.shadowRoot!).stop
 
     // eslint-disable-next-line @typescript-eslint/unbound-method
     expect(Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')!.set).toBe(originalSetter)
@@ -96,7 +96,7 @@ describe('initInputObserver', () => {
 
   // cannot trigger an event in a Shadow DOM because event with `isTrusted:false` do not cross the root
   it('collects input values when an "input" event is composed', () => {
-    stopInputObserver = initInputObserver(configuration, inputCallbackSpy)
+    stopInputObserver = initInputObserver(configuration, inputCallbackSpy).stop
     dispatchInputEventWithInShadowDom('foo')
 
     expect(inputCallbackSpy).toHaveBeenCalledOnceWith({
@@ -112,7 +112,7 @@ describe('initInputObserver', () => {
 
   it('masks input values according to the element privacy level', () => {
     configuration.defaultPrivacyLevel = DefaultPrivacyLevel.ALLOW
-    stopInputObserver = initInputObserver(configuration, inputCallbackSpy)
+    stopInputObserver = initInputObserver(configuration, inputCallbackSpy).stop
     input.setAttribute(PRIVACY_ATTR_NAME, PRIVACY_ATTR_VALUE_MASK_USER_INPUT)
 
     dispatchInputEvent('foo')
@@ -122,7 +122,7 @@ describe('initInputObserver', () => {
 
   it('masks input values according to a parent element privacy level', () => {
     configuration.defaultPrivacyLevel = DefaultPrivacyLevel.ALLOW
-    stopInputObserver = initInputObserver(configuration, inputCallbackSpy)
+    stopInputObserver = initInputObserver(configuration, inputCallbackSpy).stop
     input.parentElement!.setAttribute(PRIVACY_ATTR_NAME, PRIVACY_ATTR_VALUE_MASK_USER_INPUT)
 
     dispatchInputEvent('foo')
@@ -132,7 +132,7 @@ describe('initInputObserver', () => {
 
   it('masks input values according to a the default privacy level', () => {
     configuration.defaultPrivacyLevel = DefaultPrivacyLevel.MASK
-    stopInputObserver = initInputObserver(configuration, inputCallbackSpy)
+    stopInputObserver = initInputObserver(configuration, inputCallbackSpy).stop
 
     dispatchInputEvent('foo')
 

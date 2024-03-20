@@ -1,4 +1,3 @@
-import type { ListenerHandler } from '@datadog/browser-core'
 import { instrumentSetter, assign, DOM_EVENT, addEventListeners, forEach, noop, cssEscape } from '@datadog/browser-core'
 import type { RumConfiguration } from '@datadog/browser-rum-core'
 import { NodePrivacyLevel } from '../../../constants'
@@ -15,7 +14,7 @@ export function initInputObserver(
   configuration: RumConfiguration,
   inputCb: InputCallback,
   target: Document | ShadowRoot = document
-): ListenerHandler {
+) {
   const defaultPrivacyLevel = configuration.defaultPrivacyLevel
   const lastInputStateMap: WeakMap<Node, InputState> = new WeakMap()
 
@@ -60,9 +59,11 @@ export function initInputObserver(
     stopPropertySetterInstrumentation = noop
   }
 
-  return () => {
-    stopPropertySetterInstrumentation()
-    stopEventListeners()
+  return {
+    stop: () => {
+      stopPropertySetterInstrumentation()
+      stopEventListeners()
+    },
   }
 
   function onElementChange(target: HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement) {

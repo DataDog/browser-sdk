@@ -29,7 +29,7 @@ describe('initMediaInteractionObserver', () => {
       status: SerializationContextStatus.INITIAL_FULL_SNAPSHOT,
       elementsScrollPositions: createElementsScrollPositions(),
     })
-    stopMediaInteractionObserver = initMediaInteractionObserver(configuration, mediaInteractionCallback)
+    stopMediaInteractionObserver = initMediaInteractionObserver(configuration, mediaInteractionCallback).stop
   })
 
   afterEach(() => {

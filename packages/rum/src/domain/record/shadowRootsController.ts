@@ -33,19 +33,14 @@ export const initShadowRootsController = (
       if (controllerByShadowRoot.has(shadowRoot)) {
         return
       }
-      const { stop: stopMutationObserver, flush } = initMutationObserver(
-        mutationCb,
-        configuration,
-        shadowRootsController,
-        shadowRoot
-      )
+      const mutationObserver = initMutationObserver(mutationCb, configuration, shadowRootsController, shadowRoot)
       // the change event no do bubble up across the shadow root, we have to listen on the shadow root
-      const stopInputObserver = initInputObserver(configuration, inputCb, shadowRoot)
+      const inputObserver = initInputObserver(configuration, inputCb, shadowRoot)
       controllerByShadowRoot.set(shadowRoot, {
-        flush,
+        flush: () => mutationObserver.flush(),
         stop: () => {
-          stopMutationObserver()
-          stopInputObserver()
+          mutationObserver.stop()
+          inputObserver.stop()
         },
       })
     },

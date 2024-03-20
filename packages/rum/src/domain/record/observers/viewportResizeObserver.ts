@@ -1,5 +1,4 @@
-import type { ListenerHandler } from '@datadog/browser-core'
-import { throttle, DOM_EVENT, addEventListeners, noop, timeStampNow } from '@datadog/browser-core'
+import { throttle, DOM_EVENT, addEventListeners, timeStampNow } from '@datadog/browser-core'
 import type { RumConfiguration, ViewportDimension } from '@datadog/browser-rum-core'
 import { initViewportObservable } from '@datadog/browser-rum-core'
 import { IncrementalSource, RecordType } from '../../../types'
@@ -13,22 +12,25 @@ export type ViewportResizeCallback = (incrementalSnapshotRecord: BrowserIncremen
 
 export type VisualViewportResizeCallback = (visualViewportRecord: VisualViewportRecord) => void
 
-export function initViewportResizeObserver(
-  configuration: RumConfiguration,
-  viewportResizeCb: ViewportResizeCallback
-): ListenerHandler {
-  return initViewportObservable(configuration).subscribe((data: ViewportDimension) => {
+export function initViewportResizeObserver(configuration: RumConfiguration, viewportResizeCb: ViewportResizeCallback) {
+  const viewportResizeSubscription = initViewportObservable(configuration).subscribe((data: ViewportDimension) => {
     viewportResizeCb(assembleIncrementalSnapshot<ViewportResizeData>(IncrementalSource.ViewportResize, data))
-  }).unsubscribe
+  })
+
+  return {
+    stop: () => {
+      viewportResizeSubscription.unsubscribe()
+    },
+  }
 }
 
 export function initVisualViewportResizeObserver(
   configuration: RumConfiguration,
   visualViewportResizeCb: VisualViewportResizeCallback
-): ListenerHandler {
+) {
   const visualViewport = window.visualViewport
   if (!visualViewport) {
-    return noop
+    return { stop: () => {} }
   }
   const { throttled: updateDimension, cancel: cancelThrottle } = throttle(
     () => {
@@ -54,8 +56,10 @@ export function initVisualViewportResizeObserver(
     }
   )
 
-  return function stop() {
-    removeListener()
-    cancelThrottle()
+  return {
+    stop: () => {
+      removeListener()
+      cancelThrottle()
+    },
   }
 }

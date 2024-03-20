@@ -15,7 +15,7 @@ describe('initFocusObserver', () => {
     }
     configuration = { defaultPrivacyLevel: DefaultPrivacyLevel.ALLOW } as RumConfiguration
     focusCallback = jasmine.createSpy()
-    stopFocusObserver = initFocusObserver(configuration, focusCallback)
+    stopFocusObserver = initFocusObserver(configuration, focusCallback).stop
   })
 
   afterEach(() => {

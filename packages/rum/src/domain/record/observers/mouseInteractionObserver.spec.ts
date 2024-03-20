@@ -35,7 +35,7 @@ describe('initMouseInteractionObserver', () => {
 
     mouseInteractionCallbackSpy = jasmine.createSpy()
     recordIds = initRecordIds()
-    stopObserver = initMouseInteractionObserver(configuration, mouseInteractionCallbackSpy, recordIds)
+    stopObserver = initMouseInteractionObserver(configuration, mouseInteractionCallbackSpy, recordIds).stop
   })
 
   afterEach(() => {

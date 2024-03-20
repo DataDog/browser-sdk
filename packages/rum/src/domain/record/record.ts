@@ -2,7 +2,21 @@ import { sendToExtension } from '@datadog/browser-core'
 import type { LifeCycle, RumConfiguration, ViewContexts } from '@datadog/browser-rum-core'
 import type { BrowserRecord } from '../../types'
 import * as replayStats from '../replayStats'
-import { initObservers } from './observers'
+import {
+  initFocusObserver,
+  initFrustrationObserver,
+  initInputObserver,
+  initMediaInteractionObserver,
+  initMouseInteractionObserver,
+  initMoveObserver,
+  initMutationObserver,
+  initRecordIds,
+  initScrollObserver,
+  initStyleSheetObserver,
+  initViewEndObserver,
+  initViewportResizeObserver,
+  initVisualViewportResizeObserver,
+} from './observers'
 import { createElementsScrollPositions } from './elementsScrollPositions'
 import type { ShadowRootsController } from './shadowRootsController'
 import { initShadowRootsController } from './shadowRootsController'
@@ -53,34 +67,33 @@ export function record(options: RecordOptions): RecordAPI {
 
   function flushMutations() {
     shadowRootsController.flush()
-    flushMutationsFromObservers()
+    mutationObserver.flush()
   }
 
-  const { stop: stopObservers, flush: flushMutationsFromObservers } = initObservers(configuration, {
-    lifeCycle: options.lifeCycle,
-    elementsScrollPositions,
-    inputCb: emitAndComputeStats,
-    mediaInteractionCb: emitAndComputeStats,
-    mouseInteractionCb: emitAndComputeStats,
-    mousemoveCb: emitAndComputeStats,
-    mutationCb: emitAndComputeStats,
-    scrollCb: emitAndComputeStats,
-    styleSheetCb: emitAndComputeStats,
-    viewportResizeCb: emitAndComputeStats,
-    frustrationCb: emitAndComputeStats,
-    focusCb: emitAndComputeStats,
-    visualViewportResizeCb: emitAndComputeStats,
-    viewEndCb: (viewEndRecord) => {
+  const recordIds = initRecordIds()
+  const mutationObserver = initMutationObserver(emitAndComputeStats, configuration, shadowRootsController, document)
+  const observers = [
+    mutationObserver,
+    initMoveObserver(configuration, emitAndComputeStats),
+    initMouseInteractionObserver(configuration, emitAndComputeStats, recordIds),
+    initScrollObserver(configuration, emitAndComputeStats, elementsScrollPositions),
+    initViewportResizeObserver(configuration, emitAndComputeStats),
+    initInputObserver(configuration, emitAndComputeStats),
+    initMediaInteractionObserver(configuration, emitAndComputeStats),
+    initStyleSheetObserver(emitAndComputeStats),
+    initFocusObserver(configuration, emitAndComputeStats),
+    initVisualViewportResizeObserver(configuration, emitAndComputeStats),
+    initFrustrationObserver(lifeCycle, emitAndComputeStats, recordIds),
+    initViewEndObserver(lifeCycle, (viewEndRecord) => {
       flushMutations()
       emitAndComputeStats(viewEndRecord)
-    },
-    shadowRootsController,
-  })
+    }),
+  ]
 
   return {
     stop: () => {
       shadowRootsController.stop()
-      stopObservers()
+      observers.forEach((observer) => observer.stop())
       stopFullSnapshots()
     },
     flushMutations,

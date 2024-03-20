@@ -26,7 +26,7 @@ describe('initMoveObserver', () => {
     })
 
     mouseMoveCallbackSpy = jasmine.createSpy()
-    stopObserver = initMoveObserver(configuration, mouseMoveCallbackSpy)
+    stopObserver = initMoveObserver(configuration, mouseMoveCallbackSpy).stop
   })
 
   afterEach(() => {
