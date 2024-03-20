@@ -1,7 +1,7 @@
 'use strict'
 
 const fs = require('fs')
-const { printLog, runMain, fetch } = require('../lib/execution-utils')
+const { printLog, runMain, fetchHandlingError } = require('../lib/execution-utils')
 const { command } = require('../lib/command')
 const { CI_FILE, replaceCiFileVariable } = require('../lib/files-utils')
 const { initGitConfig } = require('../lib/git-utils')
@@ -57,7 +57,7 @@ runMain(async () => {
 })
 
 async function getPackageVersion() {
-  const packagePage = await fetch(CHROME_PACKAGE_URL)
+  const packagePage = await (await fetchHandlingError(CHROME_PACKAGE_URL)).text()
   const packageMatches = /<td>([0-9.-]+)<\/td>/.exec(packagePage)
 
   return packageMatches ? packageMatches[1] : null

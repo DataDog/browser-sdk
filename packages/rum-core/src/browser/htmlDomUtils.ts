@@ -24,7 +24,14 @@ export function hasChildNodes(node: Node) {
 }
 
 export function forEachChildNodes(node: Node, callback: (child: Node) => void) {
-  node.childNodes.forEach(callback)
+  let child = node.firstChild
+
+  while (child) {
+    callback(child)
+
+    child = child.nextSibling
+  }
+
   if (isNodeShadowHost(node)) {
     callback(node.shadowRoot)
   }
