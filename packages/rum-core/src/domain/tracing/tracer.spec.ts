@@ -567,54 +567,53 @@ describe('tracer', () => {
       expect(context.init!.headers).not.toContain(jasmine.arrayContaining(['x-datadog-trace-id']))
       expect(context.init!.headers).not.toContain(jasmine.arrayContaining(['X-B3-TraceId']))
     })
-  })
+    it('should not init context when trace not sampled and config set to sampled only', () => {
+      const configurationWithHeaders = validateAndBuildRumConfiguration({
+        ...INIT_CONFIGURATION,
+        traceSampleRate: 0,
+        traceContextInjection: TraceContextInjection.SAMPLED,
+      })!
 
-  it('should not init context when trace not sampled and config set to sampled only', () => {
-    const configurationWithoutHeaders = validateAndBuildRumConfiguration({
-      ...INIT_CONFIGURATION,
-      traceSampleRate: 0,
-      traceContextInjection: TraceContextInjection.SAMPLED,
-    })!
+      const tracer = startTracer(configurationWithHeaders, sessionManager)
+      const context: Partial<RumFetchStartContext> = { ...ALLOWED_DOMAIN_CONTEXT }
+      tracer.traceFetch(context)
 
-    const tracer = startTracer(configurationWithoutHeaders, sessionManager)
-    const context: Partial<RumFetchStartContext> = { ...ALLOWED_DOMAIN_CONTEXT }
-    tracer.traceFetch(context)
+      expect(context.init).toBeUndefined()
+    })
 
-    expect(context.init).toBeUndefined()
-  })
+    it('should add headers when trace sampled and config set to sampled', () => {
+      const configurationWithHeaders = validateAndBuildRumConfiguration({
+        ...INIT_CONFIGURATION,
+        traceSampleRate: 100,
+        traceContextInjection: TraceContextInjection.SAMPLED,
+      })!
 
-  it('should add headers when trace sampled and config set to sampled', () => {
-    const configurationWithoutHeaders = validateAndBuildRumConfiguration({
-      ...INIT_CONFIGURATION,
-      traceSampleRate: 100,
-      traceContextInjection: TraceContextInjection.SAMPLED,
-    })!
+      const tracer = startTracer(configurationWithHeaders, sessionManager)
+      const context: Partial<RumFetchStartContext> = { ...ALLOWED_DOMAIN_CONTEXT }
+      tracer.traceFetch(context)
 
-    const tracer = startTracer(configurationWithoutHeaders, sessionManager)
-    const context: Partial<RumFetchStartContext> = { ...ALLOWED_DOMAIN_CONTEXT }
-    tracer.traceFetch(context)
+      expect(context.init!.headers).toContain(jasmine.arrayContaining(['x-datadog-origin']))
+      expect(context.init!.headers).toContain(jasmine.arrayContaining(['x-datadog-parent-id']))
+      expect(context.init!.headers).toContain(jasmine.arrayContaining(['x-datadog-trace-id']))
+      expect(context.init!.headers).toContain(jasmine.arrayContaining(['x-datadog-sampling-priority']))
+    })
 
-    expect(context.init!.headers).toContain(jasmine.arrayContaining(['x-datadog-origin']))
-    expect(context.init!.headers).toContain(jasmine.arrayContaining(['x-datadog-parent-id']))
-    expect(context.init!.headers).toContain(jasmine.arrayContaining(['x-datadog-trace-id']))
-    expect(context.init!.headers).toContain(jasmine.arrayContaining(['x-datadog-sampling-priority']))
-  })
+    it('should add headers when trace not sampled yet config set to all', () => {
+      const configurationWithHeaders = validateAndBuildRumConfiguration({
+        ...INIT_CONFIGURATION,
+        traceSampleRate: 0,
+        traceContextInjection: TraceContextInjection.ALL,
+      })!
 
-  it('should add headers when trace not sampled yet config set to all', () => {
-    const configurationWithoutHeaders = validateAndBuildRumConfiguration({
-      ...INIT_CONFIGURATION,
-      traceSampleRate: 0,
-      traceContextInjection: TraceContextInjection.ALL,
-    })!
+      const tracer = startTracer(configurationWithHeaders, sessionManager)
+      const context: Partial<RumFetchStartContext> = { ...ALLOWED_DOMAIN_CONTEXT }
+      tracer.traceFetch(context)
 
-    const tracer = startTracer(configurationWithoutHeaders, sessionManager)
-    const context: Partial<RumFetchStartContext> = { ...ALLOWED_DOMAIN_CONTEXT }
-    tracer.traceFetch(context)
-
-    expect(context.init!.headers).toContain(jasmine.arrayContaining(['x-datadog-origin']))
-    expect(context.init!.headers).toContain(jasmine.arrayContaining(['x-datadog-parent-id']))
-    expect(context.init!.headers).toContain(jasmine.arrayContaining(['x-datadog-trace-id']))
-    expect(context.init!.headers).toContain(jasmine.arrayContaining(['x-datadog-sampling-priority']))
+      expect(context.init!.headers).toContain(jasmine.arrayContaining(['x-datadog-origin']))
+      expect(context.init!.headers).toContain(jasmine.arrayContaining(['x-datadog-parent-id']))
+      expect(context.init!.headers).toContain(jasmine.arrayContaining(['x-datadog-trace-id']))
+      expect(context.init!.headers).toContain(jasmine.arrayContaining(['x-datadog-sampling-priority']))
+    })
   })
 
   describe('clearTracingIfCancelled', () => {
