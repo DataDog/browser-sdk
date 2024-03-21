@@ -567,7 +567,7 @@ describe('tracer', () => {
       expect(context.init!.headers).not.toContain(jasmine.arrayContaining(['x-datadog-trace-id']))
       expect(context.init!.headers).not.toContain(jasmine.arrayContaining(['X-B3-TraceId']))
     })
-    it('should not init context when trace not sampled and config set to sampled only', () => {
+    it('should not add headers when trace not sampled and config set to sample', () => {
       const configurationWithHeaders = validateAndBuildRumConfiguration({
         ...INIT_CONFIGURATION,
         traceSampleRate: 0,
