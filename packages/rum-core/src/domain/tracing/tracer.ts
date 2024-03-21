@@ -123,8 +123,7 @@ function injectHeadersIfTracingAllowed(
   context.traceSampled = !isNumber(configuration.traceSampleRate) || performDraw(configuration.traceSampleRate)
 
   if (
-    (context.traceSampled && configuration.traceContextInjection === 'sampled') ||
-    configuration.traceContextInjection === 'all'
+    (context.traceSampled || configuration.traceContextInjection === TraceContextInjection.ALL)
   ) {
     inject(makeTracingHeaders(context.traceId, context.spanId, context.traceSampled, tracingOption.propagatorTypes))
   }
