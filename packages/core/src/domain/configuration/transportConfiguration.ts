@@ -79,7 +79,7 @@ function computeIntakeUrlPrefixes(
   const intakeUrlPrefixes = objectValues(endpointBuilders).map((builder) => builder.urlPrefix)
 
   if (site === INTAKE_SITE_US1) {
-    intakeUrlPrefixes.push(`https://${PCI_INTAKE_HOST_US1}/api/v2/logs?`)
+    intakeUrlPrefixes.push(`https://${PCI_INTAKE_HOST_US1}/`)
   }
 
   return intakeUrlPrefixes
