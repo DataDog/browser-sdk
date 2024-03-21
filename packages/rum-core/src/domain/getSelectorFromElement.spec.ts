@@ -23,6 +23,8 @@ describe('getSelectorFromElement', () => {
   describe('class selector', () => {
     it('should use the class selector when the element as classes', () => {
       expect(getSelector('<div class="foo"></div>')).toBe('BODY>DIV.foo')
+      // IE does not support classList on SVG elements, so make sure the fallback works
+      expect(getSelector('<svg class="foo"></svg>')).toBe('BODY>svg.foo')
     })
 
     it('should use the class selector when siblings have the same classes but different tags', () => {

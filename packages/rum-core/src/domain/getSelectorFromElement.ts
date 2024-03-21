@@ -1,4 +1,5 @@
 import { cssEscape } from '@datadog/browser-core'
+import { getClassList } from '../browser/htmlDomUtils'
 import { DEFAULT_PROGRAMMATIC_ACTION_NAME_ATTRIBUTE } from './action/getActionNameFromElement'
 
 /**
@@ -92,9 +93,10 @@ function getClassSelector(element: Element): string | undefined {
   if (element.tagName === 'BODY') {
     return
   }
-  if (element.classList.length > 0) {
-    for (let i = 0; i < element.classList.length; i += 1) {
-      const className = element.classList[i]
+  const classList = getClassList(element)
+  if (classList.length > 0) {
+    for (let i = 0; i < classList.length; i += 1) {
+      const className = classList[i]
       if (isGeneratedValue(className)) {
         continue
       }

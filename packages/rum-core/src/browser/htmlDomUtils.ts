@@ -43,3 +43,13 @@ export function forEachChildNodes(node: Node, callback: (child: Node) => void) {
 export function getParentNode(node: Node): Node | null {
   return isNodeShadowRoot(node) ? node.host : node.parentNode
 }
+
+export function getClassList(element: Element): DOMTokenList | string[] {
+  // ie 11 does not support classList on SVG and MathMl elements
+  if (element.classList) {
+    return element.classList
+  }
+
+  // Use element.getAttribute('class') because element.className on SVG elements is a SVGAnimatedString
+  return (element.getAttribute('class') || '').split(/\s+/)
+}
