@@ -207,7 +207,7 @@ describe('tracer', () => {
       expect(xhrStub.headers['X-B3-TraceId']).toBeUndefined()
     })
 
-    it('should not add any headers when trace not sampled and config set to sampled only', () => {
+    it('should not add any headers when trace not sampled and config set to sampled', () => {
       const configurationWithInjectionParam = {
         ...configuration,
         traceSampleRate: 0,
