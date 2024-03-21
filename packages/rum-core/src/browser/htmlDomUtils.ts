@@ -44,12 +44,17 @@ export function getParentNode(node: Node): Node | null {
   return isNodeShadowRoot(node) ? node.host : node.parentNode
 }
 
+/**
+ * Return the classList of an element or an array of classes if classList is not supported
+ *
+ * In cases where classList is not supported, such as in IE11 for SVG and MathML elements,
+ * we fallback to using element.getAttribute('class').
+ * We opt for element.getAttribute('class') over element.className because className returns an SVGAnimatedString for SVG elements.
+ */
 export function getClassList(element: Element): DOMTokenList | string[] {
-  // ie 11 does not support classList on SVG and MathMl elements
   if (element.classList) {
     return element.classList
   }
 
-  // Use element.getAttribute('class') because element.className on SVG elements is a SVGAnimatedString
   return (element.getAttribute('class') || '').split(/\s+/)
 }

@@ -228,7 +228,7 @@ describe('getClassList', () => {
     expect(classList[1]).toEqual('bar')
   })
 
-  it('should return the classList of an element that do not support the classList attribute (e.g.: svg on IE)', () => {
+  it('should return the classList of an element that does not support the classList attribute (e.g.: svg on IE)', () => {
     const svgElement = appendElement('<svg class="foo bar"></svg>')
     Object.defineProperty(svgElement, 'classList', { get: () => undefined })
     const classList = getClassList(svgElement)
