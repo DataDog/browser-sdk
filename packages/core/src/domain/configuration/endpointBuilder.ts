@@ -4,7 +4,7 @@ import { normalizeUrl } from '../../tools/utils/urlPolyfill'
 import { ExperimentalFeature, isExperimentalFeatureEnabled } from '../../tools/experimentalFeatures'
 import { generateUUID } from '../../tools/utils/stringUtils'
 import type { InitConfiguration } from './configuration'
-import { INTAKE_SITE_US1, INTAKE_SITE_FED_STAGING } from './intakeSites'
+import { INTAKE_SITE_US1, INTAKE_SITE_FED_STAGING, PCI_INTAKE_HOST_US1 } from './intakeSites'
 
 // replaced at build time
 declare const __BUILD_ENV__SDK_VERSION__: string
@@ -63,7 +63,7 @@ function buildEndpointHost(trackType: TrackType, initConfiguration: InitConfigur
   const { site = INTAKE_SITE_US1, internalAnalyticsSubdomain } = initConfiguration
 
   if (trackType === 'logs' && initConfiguration.usePciIntake && site === INTAKE_SITE_US1) {
-    return 'pci.browser-intake-datadoghq.com'
+    return PCI_INTAKE_HOST_US1
   }
 
   if (internalAnalyticsSubdomain && site === INTAKE_SITE_US1) {
