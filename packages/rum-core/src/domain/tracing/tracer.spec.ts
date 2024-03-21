@@ -598,7 +598,7 @@ describe('tracer', () => {
       expect(context.init!.headers).toContain(jasmine.arrayContaining(['x-datadog-sampling-priority']))
     })
 
-    it('should add headers when trace not sampled yet config set to all', () => {
+    it('should add headers when trace not sampled and config set to all', () => {
       const configurationWithHeaders = validateAndBuildRumConfiguration({
         ...INIT_CONFIGURATION,
         traceSampleRate: 0,
