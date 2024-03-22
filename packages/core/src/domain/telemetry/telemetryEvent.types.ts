@@ -6,7 +6,11 @@
 /**
  * Schema of all properties of a telemetry event
  */
-export type TelemetryEvent = TelemetryErrorEvent | TelemetryDebugEvent | TelemetryConfigurationEvent
+export type TelemetryEvent =
+  | TelemetryErrorEvent
+  | TelemetryDebugEvent
+  | TelemetryConfigurationEvent
+  | TelemetryUsageEvent
 /**
  * Schema of all properties of a telemetry error event
  */
@@ -97,6 +101,7 @@ export type TelemetryConfigurationEvent = CommonTelemetryProperties & {
        * The percentage of telemetry configuration events sent after being sampled by telemetry_sample_rate
        */
       telemetry_configuration_sample_rate?: number
+      telemetry_usage_sample_rate?: number
       /**
        * The percentage of requests traced
        */
@@ -343,6 +348,14 @@ export type TelemetryConfigurationEvent = CommonTelemetryProperties & {
     [k: string]: unknown
   }
   [k: string]: unknown
+}
+
+export type TelemetryUsageEvent = CommonTelemetryProperties & {
+  telemetry: {
+    type: 'usage'
+    feature: string
+    [k: string]: unknown
+  }
 }
 
 /**
