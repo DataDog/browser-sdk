@@ -1,5 +1,4 @@
-import { cssEscape } from '@datadog/browser-core'
-import { getClassList, getParentElement } from '../browser/htmlDomUtils'
+import { cssEscape, getClassList, getParentElement } from '../browser/polyfills'
 import { DEFAULT_PROGRAMMATIC_ACTION_NAME_ATTRIBUTE } from './action/getActionNameFromElement'
 
 /**

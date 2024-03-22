@@ -73,38 +73,6 @@ export function endsWith(candidate: string, search: string) {
   return candidate.slice(-search.length) === search
 }
 
-export function elementMatches(element: Element & { msMatchesSelector?(selector: string): boolean }, selector: string) {
-  if (element.matches) {
-    return element.matches(selector)
-  }
-  // IE11 support
-  if (element.msMatchesSelector) {
-    return element.msMatchesSelector(selector)
-  }
-  return false
-}
-
-// https://github.com/jquery/jquery/blob/a684e6ba836f7c553968d7d026ed7941e1a612d8/src/selector/escapeSelector.js
-export function cssEscape(str: string) {
-  if (window.CSS && window.CSS.escape) {
-    return window.CSS.escape(str)
-  }
-
-  // eslint-disable-next-line no-control-regex
-  return str.replace(/([\0-\x1f\x7f]|^-?\d)|^-$|[^\x80-\uFFFF\w-]/g, function (ch, asCodePoint) {
-    if (asCodePoint) {
-      // U+0000 NULL becomes U+FFFD REPLACEMENT CHARACTER
-      if (ch === '\0') {
-        return '\uFFFD'
-      }
-      // Control characters and (dependent upon position) numbers get escaped as code points
-      return `${ch.slice(0, -1)}\\${ch.charCodeAt(ch.length - 1).toString(16)} `
-    }
-    // Other potentially-special ASCII characters get backslash-escaped
-    return `\\${ch}`
-  })
-}
-
 interface Assignable {
   [key: string]: any
 }

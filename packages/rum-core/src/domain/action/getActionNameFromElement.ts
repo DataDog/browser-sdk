@@ -1,5 +1,5 @@
 import { safeTruncate, isIE, find } from '@datadog/browser-core'
-import { getParentElement } from '../../browser/htmlDomUtils'
+import { getParentElement } from '../../browser/polyfills'
 
 /**
  * Get the action name from the attribute 'data-dd-action-name' on the element or any of its parent.

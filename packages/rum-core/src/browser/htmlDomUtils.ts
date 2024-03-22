@@ -43,36 +43,3 @@ export function forEachChildNodes(node: Node, callback: (child: Node) => void) {
 export function getParentNode(node: Node): Node | null {
   return isNodeShadowRoot(node) ? node.host : node.parentNode
 }
-
-/**
- * Return the parentElement of an node
- *
- * In cases where parentElement is not supported, such as in IE11 for SVG nodes, we fallback to parentNode
- */
-export function getParentElement(node: Node): HTMLElement | null {
-  if (node.parentElement) {
-    return node.parentElement
-  }
-
-  let parentNode = node.parentNode
-  while (parentNode !== null && parentNode.nodeType !== Node.ELEMENT_NODE) {
-    parentNode = node.parentNode
-  }
-
-  return parentNode as HTMLElement | null
-}
-
-/**
- * Return the classList of an element or an array of classes if classList is not supported
- *
- * In cases where classList is not supported, such as in IE11 for SVG and MathML elements,
- * we fallback to using element.getAttribute('class').
- * We opt for element.getAttribute('class') over element.className because className returns an SVGAnimatedString for SVG elements.
- */
-export function getClassList(element: Element): DOMTokenList | string[] {
-  if (element.classList) {
-    return element.classList
-  }
-
-  return (element.getAttribute('class') || '').split(/\s+/)
-}
