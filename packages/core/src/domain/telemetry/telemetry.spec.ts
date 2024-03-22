@@ -12,6 +12,7 @@ import {
   scrubCustomerFrames,
   formatError,
   addTelemetryConfiguration,
+  addTelemetryUsage,
   TelemetryService,
 } from './telemetry'
 
@@ -67,6 +68,32 @@ describe('telemetry', () => {
       const { notifySpy } = startAndSpyTelemetry({ telemetrySampleRate: 0, telemetryConfigurationSampleRate: 100 })
 
       addTelemetryConfiguration({})
+
+      expect(notifySpy).not.toHaveBeenCalled()
+    })
+  })
+
+  describe('addTelemetryUsage', () => {
+    it('should collects usage when sampled', () => {
+      const { notifySpy } = startAndSpyTelemetry({ telemetrySampleRate: 100, telemetryUsageSampleRate: 100 })
+
+      addTelemetryUsage({ feature: 'set-tracking-consent', tracking_consent: 'granted' })
+
+      expect(notifySpy).toHaveBeenCalled()
+    })
+
+    it('should not notify usage when not sampled', () => {
+      const { notifySpy } = startAndSpyTelemetry({ telemetrySampleRate: 100, telemetryUsageSampleRate: 0 })
+
+      addTelemetryUsage({ feature: 'set-tracking-consent', tracking_consent: 'granted' })
+
+      expect(notifySpy).not.toHaveBeenCalled()
+    })
+
+    it('should not notify usage when telemetrySampleRate is 0', () => {
+      const { notifySpy } = startAndSpyTelemetry({ telemetrySampleRate: 0, telemetryUsageSampleRate: 100 })
+
+      addTelemetryUsage({ feature: 'set-tracking-consent', tracking_consent: 'granted' })
 
       expect(notifySpy).not.toHaveBeenCalled()
     })
