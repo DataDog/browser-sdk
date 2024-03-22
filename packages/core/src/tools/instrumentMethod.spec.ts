@@ -28,15 +28,23 @@ describe('instrumentMethod', () => {
     expect(instrumentationSpy).toHaveBeenCalledBefore(originalSpy)
   })
 
-  it('sets a method originally undefined', () => {
+  it('does not set a method originally undefined', () => {
     const object: { method?: () => number } = {}
 
+    instrumentMethod(object, 'method', noop)
+
+    expect(object.method).toBeUndefined()
+  })
+
+  it('sets an event handler even if it was originally undefined', () => {
+    const object: { onevent?: () => void } = {}
+
     const instrumentationSpy = jasmine.createSpy()
-    instrumentMethod(object, 'method', instrumentationSpy)
+    instrumentMethod(object, 'onevent', instrumentationSpy)
 
-    expect(object.method).toBeDefined()
-    object.method!()
+    expect(object.onevent).toBeDefined()
 
+    object.onevent!()
     expect(instrumentationSpy).toHaveBeenCalled()
   })
 
@@ -133,25 +141,32 @@ describe('instrumentMethod', () => {
       })
 
       it('should not throw errors if original method was undefined', () => {
-        const object: { method?: () => number } = {}
+        const object: { onevent?: () => number } = {}
         const instrumentationStub = () => 2
-        const { stop } = instrumentMethod(object, 'method', instrumentationStub)
+        const { stop } = instrumentMethod(object, 'onevent', instrumentationStub)
 
         thirdPartyInstrumentation(object)
 
         stop()
 
-        expect(object.method).not.toThrow()
+        expect(object.onevent).not.toThrow()
       })
     })
   })
 
-  function thirdPartyInstrumentation(object: { method?: () => number }) {
+  function thirdPartyInstrumentation(object: { method?: () => number; onevent?: () => void }) {
     const originalMethod = object.method
     if (typeof originalMethod === 'function') {
       object.method = () => {
         originalMethod()
         return THIRD_PARTY_RESULT
+      }
+    }
+
+    const originalOnEvent = object.onevent
+    object.onevent = () => {
+      if (originalOnEvent) {
+        originalOnEvent()
       }
     }
   }
