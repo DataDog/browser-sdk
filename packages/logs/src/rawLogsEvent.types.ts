@@ -22,7 +22,7 @@ interface CommonRawLogsEvent {
   message: string
   status: StatusType
   error?: Error
-  origin: 'network' | 'source' | 'console' | 'logger' | 'agent' | 'report'
+  origin: ErrorSource
 }
 
 export interface RawConsoleLogsEvent extends CommonRawLogsEvent {
