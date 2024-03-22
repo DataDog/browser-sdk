@@ -222,7 +222,7 @@ describe('tracer', () => {
       expect(xhrStub.headers['x-datadog-sampling-priority']).toBeUndefined()
     })
 
-    it('should add headers when trace sampled and config set to Sampled', () => {
+    it('should add headers when trace sampled and config set to sampled', () => {
       const configurationWithInjectionParam = {
         ...configuration,
         traceSampleRate: 100,

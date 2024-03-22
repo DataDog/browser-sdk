@@ -118,14 +118,16 @@ function injectHeadersIfTracingAllowed(
   if (!tracingOption) {
     return
   }
+  context.traceSampled = !isNumber(configuration.traceSampleRate) || performDraw(configuration.traceSampleRate)
+
+  if (!context.traceSampled && configuration.traceContextInjection !== TraceContextInjection.ALL) {
+    return
+  }
 
   context.traceId = new TraceIdentifier()
   context.spanId = new TraceIdentifier()
-  context.traceSampled = !isNumber(configuration.traceSampleRate) || performDraw(configuration.traceSampleRate)
 
-  if (context.traceSampled || configuration.traceContextInjection === TraceContextInjection.ALL) {
-    inject(makeTracingHeaders(context.traceId, context.spanId, context.traceSampled, tracingOption.propagatorTypes))
-  }
+  inject(makeTracingHeaders(context.traceId, context.spanId, context.traceSampled, tracingOption.propagatorTypes))
 }
 
 export function isTracingSupported() {

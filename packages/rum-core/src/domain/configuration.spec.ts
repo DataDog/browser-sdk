@@ -81,6 +81,24 @@ describe('validateAndBuildRumConfiguration', () => {
     })
   })
 
+  describe('traceContextInjection', () => {
+    it('defaults to all if no options provided', () => {
+      expect(validateAndBuildRumConfiguration(DEFAULT_INIT_CONFIGURATION)!.traceContextInjection).toBe('all')
+    })
+    it('is set to provided value', () => {
+      expect(
+        validateAndBuildRumConfiguration({ ...DEFAULT_INIT_CONFIGURATION, traceContextInjection: 'sampled' })!
+          .traceContextInjection
+      ).toBe('sampled')
+    })
+    it('ignores incorrect value', () => {
+      expect(
+        validateAndBuildRumConfiguration({ ...DEFAULT_INIT_CONFIGURATION, traceContextInjection: 'foo' as any })!
+          .traceContextInjection
+      ).toBe(TraceContextInjection.ALL)
+    })
+  })
+
   describe('allowedTracingUrls', () => {
     it('defaults to an empty array', () => {
       expect(validateAndBuildRumConfiguration(DEFAULT_INIT_CONFIGURATION)!.allowedTracingUrls).toEqual([])
