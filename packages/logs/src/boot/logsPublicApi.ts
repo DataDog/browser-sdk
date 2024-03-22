@@ -1,5 +1,6 @@
 import type { Context, TrackingConsent, User } from '@datadog/browser-core'
 import {
+  addTelemetryUsage,
   CustomerDataType,
   assign,
   createContextManager,
@@ -86,7 +87,10 @@ export function makeLogsPublicApi(startLogsImpl: StartLogs) {
      * If this method is called before the init() method, the provided value will take precedence
      * over the one provided as initialization parameter.
      */
-    setTrackingConsent: monitor((trackingConsent: TrackingConsent) => trackingConsentState.update(trackingConsent)),
+    setTrackingConsent: monitor((trackingConsent: TrackingConsent) => {
+      trackingConsentState.update(trackingConsent)
+      addTelemetryUsage({ feature: 'set-tracking-consent', tracking_consent: trackingConsent })
+    }),
 
     getGlobalContext: monitor(() => globalContextManager.getContext()),
 
