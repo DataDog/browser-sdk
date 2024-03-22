@@ -50,7 +50,14 @@ const telemetryConfiguration: {
   sentEventCount: number
   telemetryEnabled: boolean
   telemetryConfigurationEnabled: boolean
-} = { maxEventsPerPage: 0, sentEventCount: 0, telemetryEnabled: false, telemetryConfigurationEnabled: false }
+  telemetryUsageEnabled: boolean
+} = {
+  maxEventsPerPage: 0,
+  sentEventCount: 0,
+  telemetryEnabled: false,
+  telemetryConfigurationEnabled: false,
+  telemetryUsageEnabled: false,
+}
 
 let onRawTelemetryEventCollected: ((event: RawTelemetryEvent) => void) | undefined
 
@@ -62,10 +69,16 @@ export function startTelemetry(telemetryService: TelemetryService, configuration
     !includes(TELEMETRY_EXCLUDED_SITES, configuration.site) && performDraw(configuration.telemetrySampleRate)
   telemetryConfiguration.telemetryConfigurationEnabled =
     telemetryConfiguration.telemetryEnabled && performDraw(configuration.telemetryConfigurationSampleRate)
+  telemetryConfiguration.telemetryUsageEnabled =
+    telemetryConfiguration.telemetryEnabled && performDraw(configuration.telemetryUsageSampleRate)
 
   const runtimeEnvInfo = getRuntimeEnvInfo()
   onRawTelemetryEventCollected = (rawEvent: RawTelemetryEvent) => {
-    if (telemetryConfiguration.telemetryEnabled) {
+    if (
+      telemetryConfiguration.telemetryEnabled &&
+      (rawEvent.type !== TelemetryType.configuration || telemetryConfiguration.telemetryConfigurationEnabled) &&
+      (rawEvent.type !== TelemetryType.usage || telemetryConfiguration.telemetryUsageEnabled)
+    ) {
       const event = toTelemetryEvent(telemetryService, rawEvent, runtimeEnvInfo)
       observable.notify(event)
       sendToExtension('telemetry', event)
@@ -172,12 +185,18 @@ export function addTelemetryError(e: unknown, context?: Context) {
 }
 
 export function addTelemetryConfiguration(configuration: RawTelemetryConfiguration) {
-  if (telemetryConfiguration.telemetryConfigurationEnabled) {
-    addTelemetry({
-      type: TelemetryType.configuration,
-      configuration,
-    })
-  }
+  addTelemetry({
+    type: TelemetryType.configuration,
+    configuration,
+  })
+}
+
+export function addTelemetryUsage(feature: string, context?: Context) {
+  addTelemetry({
+    type: TelemetryType.usage,
+    feature,
+    ...context,
+  })
 }
 
 function addTelemetry(event: RawTelemetryEvent) {

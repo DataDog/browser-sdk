@@ -3,6 +3,7 @@ import type { TelemetryEvent, TelemetryConfigurationEvent } from './telemetryEve
 export const TelemetryType = {
   log: 'log',
   configuration: 'configuration',
+  usage: 'usage',
 } as const
 
 export const enum StatusType {

@@ -59,6 +59,7 @@ export interface InitConfiguration {
   internalAnalyticsSubdomain?: string
 
   telemetryConfigurationSampleRate?: number
+  telemetryUsageSampleRate?: number
 }
 
 // This type is only used to build the core configuration. Logs and RUM SDKs are using a proper type
@@ -83,6 +84,7 @@ export interface Configuration extends TransportConfiguration {
   sessionSampleRate: number
   telemetrySampleRate: number
   telemetryConfigurationSampleRate: number
+  telemetryUsageSampleRate: number
   service: string | undefined
   silentMultipleInit: boolean
   allowUntrustedEvents: boolean
@@ -124,6 +126,14 @@ export function validateAndBuildConfiguration(initConfiguration: InitConfigurati
   }
 
   if (
+    initConfiguration.telemetryUsageSampleRate !== undefined &&
+    !isPercentage(initConfiguration.telemetryUsageSampleRate)
+  ) {
+    display.error('Telemetry Usage Sample Rate should be a number between 0 and 100')
+    return
+  }
+
+  if (
     initConfiguration.trackingConsent !== undefined &&
     !objectHasValue(TrackingConsent, initConfiguration.trackingConsent)
   ) {
@@ -148,6 +158,7 @@ export function validateAndBuildConfiguration(initConfiguration: InitConfigurati
       sessionSampleRate: initConfiguration.sessionSampleRate ?? 100,
       telemetrySampleRate: initConfiguration.telemetrySampleRate ?? 20,
       telemetryConfigurationSampleRate: initConfiguration.telemetryConfigurationSampleRate ?? 5,
+      telemetryUsageSampleRate: initConfiguration.telemetryUsageSampleRate ?? 5,
       service: initConfiguration.service,
       silentMultipleInit: !!initConfiguration.silentMultipleInit,
       allowUntrustedEvents: !!initConfiguration.allowUntrustedEvents,
@@ -183,6 +194,7 @@ export function serializeConfiguration(initConfiguration: InitConfiguration) {
     session_sample_rate: initConfiguration.sessionSampleRate,
     telemetry_sample_rate: initConfiguration.telemetrySampleRate,
     telemetry_configuration_sample_rate: initConfiguration.telemetryConfigurationSampleRate,
+    telemetry_usage_sample_rate: initConfiguration.telemetryUsageSampleRate,
     use_before_send: !!initConfiguration.beforeSend,
     use_cross_site_session_cookie: initConfiguration.useCrossSiteSessionCookie,
     use_partitioned_cross_site_session_cookie: initConfiguration.usePartitionedCrossSiteSessionCookie,
