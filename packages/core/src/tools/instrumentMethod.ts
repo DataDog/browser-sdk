@@ -35,10 +35,22 @@ type PostCallCallback<TARGET extends { [key: string]: any }, METHOD extends keyo
  * Instruments a method on a object, calling the given callback before the original method is
  * invoked. The callback receives an object with information about the method call.
  *
+ * This function makes sure that we are "good citizens" regarding third party instrumentations: when
+ * removing the instrumentation, the original method is usually restored, but if a third party
+ * instrumentation was set after ours, we keep it in place and just replace our instrumentation with
+ * a noop.
+ *
  * Note: it is generally better to instrument methods that are "owned" by the object instead of ones
  * that are inherited from the prototype chain. Example:
  * * do:    `instrumentMethod(Array.prototype, 'push', ...)`
  * * don't: `instrumentMethod([], 'push', ...)`
+ *
+ * This method is also used to set event handler properties (ex: window.onerror = ...), as it has
+ * the same requirements as instrumenting a method:
+ * * if the event handler is already set by a third party, we need to call it and not just blindly
+ * override it.
+ * * if the event handler is set by a third party after us, we need to keep it in place when
+ * removing ours.
  *
  * @example
  *
