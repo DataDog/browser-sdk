@@ -70,7 +70,7 @@ export interface RumConfiguration extends Configuration {
   version?: string
   subdomain?: string
   customerDataTelemetrySampleRate: number
-  traceContextInjection?: TraceContextInjection
+  traceContextInjection: TraceContextInjection
 }
 
 export function validateAndBuildRumConfiguration(
