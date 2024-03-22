@@ -1,4 +1,5 @@
 import { safeTruncate, isIE, find } from '@datadog/browser-core'
+import { getParentElement } from '../../browser/htmlDomUtils'
 
 /**
  * Get the action name from the attribute 'data-dd-action-name' on the element or any of its parent.
@@ -37,7 +38,7 @@ function getActionNameFromElementProgrammatically(targetElement: Element, progra
         elementWithAttribute = element
         break
       }
-      element = element.parentElement
+      element = getParentElement(element)
     }
   }
 
@@ -147,7 +148,7 @@ function getActionNameFromElementForStrategies(
     if (element.nodeName === 'FORM') {
       break
     }
-    element = element.parentElement
+    element = getParentElement(element)
     recursionCounter += 1
   }
 }

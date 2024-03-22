@@ -250,6 +250,18 @@ describe('getActionNameFromElement', () => {
     ).toBe('foo')
   })
 
+  it('computes an action name on SVG elements (IE does not support parentElement property on them)', () => {
+    expect(
+      getActionNameFromElement(
+        appendElement(`
+         <button>
+          foo <svg target></svg>
+         <button>
+      `)
+      )
+    ).toBe('foo')
+  })
+
   describe('programmatically declared action name', () => {
     it('extracts the name from the data-dd-action-name attribute', () => {
       expect(

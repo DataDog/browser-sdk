@@ -1,5 +1,5 @@
 import { cssEscape } from '@datadog/browser-core'
-import { getClassList } from '../browser/htmlDomUtils'
+import { getClassList, getParentElement } from '../browser/htmlDomUtils'
 import { DEFAULT_PROGRAMMATIC_ACTION_NAME_ATTRIBUTE } from './action/getActionNameFromElement'
 
 /**
@@ -65,7 +65,7 @@ export function getSelectorFromElement(targetElement: Element, actionNameAttribu
     targetElementSelector =
       uniqueSelectorAmongChildren || combineSelector(getPositionSelector(element), targetElementSelector)
 
-    element = element.parentElement
+    element = getParentElement(element)
   }
 
   return targetElementSelector
@@ -94,15 +94,13 @@ function getClassSelector(element: Element): string | undefined {
     return
   }
   const classList = getClassList(element)
-  if (classList.length > 0) {
-    for (let i = 0; i < classList.length; i += 1) {
-      const className = classList[i]
-      if (isGeneratedValue(className)) {
-        continue
-      }
-
-      return `${cssEscape(element.tagName)}.${cssEscape(className)}`
+  for (let i = 0; i < classList.length; i += 1) {
+    const className = classList[i]
+    if (isGeneratedValue(className)) {
+      continue
     }
+
+    return `${cssEscape(element.tagName)}.${cssEscape(className)}`
   }
 }
 
@@ -184,7 +182,7 @@ function isSelectorUniqueGlobally(element: Element, selector: string): boolean {
  */
 function isSelectorUniqueAmongSiblings(element: Element, selector: string): boolean {
   return (
-    element.parentElement!.querySelectorAll(supportScopeSelector() ? combineSelector(':scope', selector) : selector)
+    getParentElement(element)!.querySelectorAll(supportScopeSelector() ? combineSelector(':scope', selector) : selector)
       .length === 1
   )
 }
