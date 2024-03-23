@@ -13,6 +13,8 @@
 > 📝 - Documentation.
 >
 > ⚗ - Experimental.
+>
+> *[See [gitmoji](https://gitmoji.dev/) for other emojis]*
 
 ---
 
