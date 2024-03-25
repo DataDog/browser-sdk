@@ -86,13 +86,17 @@ async function fetchBundleSizesMetric(packageName, commitSha) {
 function compare(resultsBaseQuery, localBundleSizes) {
   return resultsBaseQuery.map((baseResult) => {
     const localSize = localBundleSizes[baseResult.name]
+    let change = null
     let percentageChange = null
 
     if (baseResult.size && localSize) {
-      percentageChange = (((localSize - baseResult.size) / baseResult.size) * 100).toFixed(2)
+      change = localSize - baseResult.size
+      percentageChange = ((change / baseResult.size) * 100).toFixed(2)
     }
+
     return {
       name: baseResult.name,
+      change,
       percentageChange,
     }
   })
@@ -134,18 +138,20 @@ async function updateOrAddComment(difference, resultsBaseQuery, localBundleSizes
 }
 
 function createMessage(difference, resultsBaseQuery, localBundleSizes) {
-  let message = '| 📦 Bundle Name| Base Size | Local Size | 𝚫% | Status |\n| --- | --- | --- | --- | :---: |\n'
+  let message =
+    '| 📦 Bundle Name| Base Size | Local Size | 𝚫 | 𝚫% | Status |\n| --- | --- | --- | --- | --- | :---: |\n'
   let highIncreaseDetected = false
   difference.forEach((diff, index) => {
     const baseSize = formatSize(resultsBaseQuery[index].size)
     const localSize = formatSize(localBundleSizes[diff.name])
+    const diffBytes = formatSize(diff.change)
     const sign = diff.percentageChange > 0 ? '+' : ''
     let status = '✅'
     if (diff.percentageChange > SIZE_INCREASE_THRESHOLD) {
       status = '⚠️'
       highIncreaseDetected = true
     }
-    message += `| ${formatBundleName(diff.name)} | ${baseSize} | ${localSize} | ${sign}${diff.percentageChange}% | ${status} |\n`
+    message += `| ${formatBundleName(diff.name)} | ${baseSize} | ${localSize} | ${diffBytes} | ${sign}${diff.percentageChange}% | ${status} |\n`
   })
 
   if (highIncreaseDetected) {
@@ -162,8 +168,12 @@ function formatBundleName(bundleName) {
     .join(' ')
 }
 
-function formatSize(bundleSize) {
-  return `${(bundleSize / 1024).toFixed(2)} kB`
+function formatSize(bytes) {
+  if (bytes < 1024) {
+    return `${bytes} B`
+  }
+
+  return `${(bytes / 1024).toFixed(2)} KiB`
 }
 
 module.exports = {
