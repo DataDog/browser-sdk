@@ -144,14 +144,14 @@ function createMessage(difference, resultsBaseQuery, localBundleSizes) {
   difference.forEach((diff, index) => {
     const baseSize = formatSize(resultsBaseQuery[index].size)
     const localSize = formatSize(localBundleSizes[diff.name])
-    const diffBytes = formatSize(diff.change)
+    const diffSize = formatSize(diff.change)
     const sign = diff.percentageChange > 0 ? '+' : ''
     let status = '✅'
     if (diff.percentageChange > SIZE_INCREASE_THRESHOLD) {
       status = '⚠️'
       highIncreaseDetected = true
     }
-    message += `| ${formatBundleName(diff.name)} | ${baseSize} | ${localSize} | ${diffBytes} | ${sign}${diff.percentageChange}% | ${status} |\n`
+    message += `| ${formatBundleName(diff.name)} | ${baseSize} | ${localSize} | ${diffSize} | ${sign}${diff.percentageChange}% | ${status} |\n`
   })
 
   if (highIncreaseDetected) {
