@@ -130,7 +130,7 @@ function getStableAttributeSelector(element: Element, actionNameAttribute: strin
 }
 
 function getPositionSelector(element: Element): string {
-  let sibling = element.parentElement!.firstElementChild
+  let sibling = getParentElement(element)!.firstElementChild
   let elementIndex = 1
 
   while (sibling && sibling !== element) {
