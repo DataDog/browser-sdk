@@ -1,5 +1,5 @@
 import type { InitConfiguration } from '@datadog/browser-core'
-import { DefaultPrivacyLevel, display } from '@datadog/browser-core'
+import { DefaultPrivacyLevel, display, TraceContextInjection } from '@datadog/browser-core'
 import { EXHAUSTIVE_INIT_CONFIGURATION, SERIALIZED_EXHAUSTIVE_INIT_CONFIGURATION } from '../../../core/test'
 import type { ExtractTelemetryConfiguration, CamelToSnakeCase, MapInitConfigurationKey } from '../../../core/test'
 import type { RumInitConfiguration } from './configuration'
@@ -78,6 +78,24 @@ describe('validateAndBuildRumConfiguration', () => {
       displayErrorSpy.calls.reset()
       expect(validateAndBuildRumConfiguration({ ...DEFAULT_INIT_CONFIGURATION, traceSampleRate: 200 })).toBeUndefined()
       expect(displayErrorSpy).toHaveBeenCalledOnceWith('Trace Sample Rate should be a number between 0 and 100')
+    })
+  })
+
+  describe('traceContextInjection', () => {
+    it('defaults to all if no options provided', () => {
+      expect(validateAndBuildRumConfiguration(DEFAULT_INIT_CONFIGURATION)!.traceContextInjection).toBe('all')
+    })
+    it('is set to provided value', () => {
+      expect(
+        validateAndBuildRumConfiguration({ ...DEFAULT_INIT_CONFIGURATION, traceContextInjection: 'sampled' })!
+          .traceContextInjection
+      ).toBe('sampled')
+    })
+    it('ignores incorrect value', () => {
+      expect(
+        validateAndBuildRumConfiguration({ ...DEFAULT_INIT_CONFIGURATION, traceContextInjection: 'foo' as any })!
+          .traceContextInjection
+      ).toBe(TraceContextInjection.ALL)
     })
   })
 
@@ -409,6 +427,7 @@ describe('serializeRumConfiguration', () => {
       compressIntakeRequests: true,
       allowedTracingUrls: ['foo'],
       traceSampleRate: 50,
+      traceContextInjection: TraceContextInjection.ALL,
       defaultPrivacyLevel: 'allow',
       subdomain: 'foo',
       sessionReplaySampleRate: 60,
@@ -440,6 +459,7 @@ describe('serializeRumConfiguration', () => {
       ...SERIALIZED_EXHAUSTIVE_INIT_CONFIGURATION,
       session_replay_sample_rate: 60,
       trace_sample_rate: 50,
+      trace_context_injection: TraceContextInjection.ALL,
       use_allowed_tracing_urls: true,
       selected_tracing_propagators: ['tracecontext', 'datadog'],
       use_excluded_activity_urls: true,
