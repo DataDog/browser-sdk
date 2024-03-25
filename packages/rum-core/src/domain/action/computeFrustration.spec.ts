@@ -68,6 +68,13 @@ describe('computeFrustration', () => {
       expect(getFrustrations(clicks[1])).toEqual([])
     })
 
+    it('does not add a dead frustration when clicking to scroll', () => {
+      clicks[0] = createFakeClick({ userActivity: { scroll: true } })
+      clicks[1] = createFakeClick()
+      computeFrustration(clicks, rageClick)
+      expect(getFrustrations(clicks[1])).toEqual([])
+    })
+
     it('adds an error frustration to clicks that have an error', () => {
       clicks[1] = createFakeClick({ hasError: true })
       computeFrustration(clicks, rageClick)
@@ -97,6 +104,12 @@ describe('isRage', () => {
 
   it('does not consider as rage when triple clicking to select a paragraph', () => {
     expect(isRage([createFakeClick(), createFakeClick({ userActivity: { selection: true } }), createFakeClick()])).toBe(
+      false
+    )
+  })
+
+  it('does not consider rage when at least one click is related to a "scroll" event', () => {
+    expect(isRage([createFakeClick(), createFakeClick({ userActivity: { scroll: true } }), createFakeClick()])).toBe(
       false
     )
   })
@@ -141,6 +154,10 @@ describe('isDead', () => {
 
   it('does not consider as dead when the click is related to an "input" event', () => {
     expect(isDead(createFakeClick({ hasPageActivity: false, userActivity: { input: true } }))).toBe(false)
+  })
+
+  it('does not consider as dead when the click is related to a "scroll" event', () => {
+    expect(isDead(createFakeClick({ hasPageActivity: false, userActivity: { scroll: true } }))).toBe(false)
   })
 
   for (const { element, expected } of [
