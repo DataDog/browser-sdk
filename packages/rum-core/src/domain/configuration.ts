@@ -6,6 +6,7 @@ import {
   serializeConfiguration,
   assign,
   DefaultPrivacyLevel,
+  TraceContextInjection,
   display,
   isPercentage,
   objectHasValue,
@@ -29,6 +30,7 @@ export interface RumInitConfiguration extends InitConfiguration {
   // tracing options
   allowedTracingUrls?: Array<MatchOption | TracingOption> | undefined
   traceSampleRate?: number | undefined
+  traceContextInjection?: TraceContextInjection | undefined
 
   // replay options
   defaultPrivacyLevel?: DefaultPrivacyLevel | undefined
@@ -68,6 +70,7 @@ export interface RumConfiguration extends Configuration {
   version?: string
   subdomain?: string
   customerDataTelemetrySampleRate: number
+  traceContextInjection: TraceContextInjection
 }
 
 export function validateAndBuildRumConfiguration(
@@ -127,6 +130,9 @@ export function validateAndBuildRumConfiguration(
         ? initConfiguration.defaultPrivacyLevel
         : DefaultPrivacyLevel.MASK,
       customerDataTelemetrySampleRate: 1,
+      traceContextInjection: objectHasValue(TraceContextInjection, initConfiguration.traceContextInjection)
+        ? initConfiguration.traceContextInjection
+        : TraceContextInjection.ALL,
     },
     baseConfiguration
   )
@@ -194,6 +200,7 @@ export function serializeRumConfiguration(configuration: RumInitConfiguration) {
       session_replay_sample_rate: configuration.sessionReplaySampleRate,
       start_session_replay_recording_manually: configuration.startSessionReplayRecordingManually,
       trace_sample_rate: configuration.traceSampleRate,
+      trace_context_injection: configuration.traceContextInjection,
       action_name_attribute: configuration.actionNameAttribute,
       use_allowed_tracing_urls:
         Array.isArray(configuration.allowedTracingUrls) && configuration.allowedTracingUrls.length > 0,
