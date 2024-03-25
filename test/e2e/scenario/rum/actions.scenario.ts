@@ -305,6 +305,54 @@ describe('action collection', () => {
       expect(actionEvents[0].action.frustration!.type).toEqual([])
     })
 
+  createTest('do not consider clicks leading to scrolls as "dead_click"')
+    .withRum({ trackUserInteractions: true })
+    .withBody(html`
+      <div style="height: 2500px;">
+        <button>click me</button>
+        <script>
+          const button = document.querySelector('button')
+          button.addEventListener('click', () => {
+            window.scrollTo(0, 2000)
+          })
+        </script>
+      </div>
+    `)
+    .run(async ({ intakeRegistry }) => {
+      const button = await $('button')
+      await button.click()
+
+      await flushEvents()
+      const actionEvents = intakeRegistry.rumActionEvents
+
+      expect(actionEvents.length).toBe(1)
+      expect(actionEvents[0].action.frustration!.type).toEqual([])
+    })
+
+  createTest('do not consider clicks leading to scrolls as "rage_click"')
+    .withRum({ trackUserInteractions: true })
+    .withBody(html`
+      <div style="height: 2500px;">
+        <button>click me</button>
+        <script>
+          const button = document.querySelector('button')
+          button.addEventListener('click', () => {
+            window.scrollTo(0, 2000)
+          })
+        </script>
+      </div>
+    `)
+    .run(async ({ intakeRegistry }) => {
+      const button = await $('button')
+      await Promise.all([button.click(), button.click(), button.click()])
+
+      await flushEvents()
+      const actionEvents = intakeRegistry.rumActionEvents
+
+      expect(actionEvents.length).toBe(3)
+      expect(actionEvents[0].action.frustration!.type).toEqual([])
+    })
+
   createTest('collect a "rage click"')
     .withRum({ trackUserInteractions: true })
     .withBody(html`
