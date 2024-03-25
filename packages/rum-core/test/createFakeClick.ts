@@ -12,7 +12,7 @@ export function createFakeClick({
 }: {
   hasError?: boolean
   hasPageActivity?: boolean
-  userActivity?: { selection?: boolean; input?: boolean }
+  userActivity?: { selection?: boolean; input?: boolean; scroll?: boolean }
   event?: Partial<PointerEvent & { target: Element }>
 } = {}) {
   const stopObservable = new Observable<void>()
@@ -37,6 +37,7 @@ export function createFakeClick({
     getUserActivity: () => ({
       selection: false,
       input: false,
+      scroll: false,
       ...userActivity,
     }),
     addFrustration: jasmine.createSpy<Click['addFrustration']>(),

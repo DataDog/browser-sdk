@@ -17,6 +17,7 @@ export function computeFrustration(clicks: Click[], rageClick: Click) {
   }
 
   const hasSelectionChanged = clicks.some((click) => click.getUserActivity().selection)
+  const didScrollOccur = clicks.some((click) => click.getUserActivity().scroll)
   clicks.forEach((click) => {
     if (click.hasError) {
       click.addFrustration(FrustrationType.ERROR_CLICK)
@@ -24,7 +25,9 @@ export function computeFrustration(clicks: Click[], rageClick: Click) {
     if (
       isDead(click) &&
       // Avoid considering clicks part of a double-click or triple-click selections as dead clicks
-      !hasSelectionChanged
+      !hasSelectionChanged &&
+      // Avoid considering clicks that resulted in a scroll as dead clicks
+      !didScrollOccur
     ) {
       click.addFrustration(FrustrationType.DEAD_CLICK)
     }
@@ -33,7 +36,7 @@ export function computeFrustration(clicks: Click[], rageClick: Click) {
 }
 
 export function isRage(clicks: Click[]) {
-  if (clicks.some((click) => click.getUserActivity().selection)) {
+  if (clicks.some((click) => click.getUserActivity().selection || click.getUserActivity().scroll)) {
     return false
   }
   for (let i = 0; i < clicks.length - (MIN_CLICKS_PER_SECOND_TO_CONSIDER_RAGE - 1); i += 1) {
@@ -64,7 +67,7 @@ const DEAD_CLICK_EXCLUDE_SELECTOR =
   'a[href] *'
 
 export function isDead(click: Click) {
-  if (click.hasPageActivity || click.getUserActivity().input) {
+  if (click.hasPageActivity || click.getUserActivity().input || click.getUserActivity().scroll) {
     return false
   }
   return !elementMatches(click.event.target, DEAD_CLICK_EXCLUDE_SELECTOR)
