@@ -3,12 +3,13 @@ import { IncrementalSource } from '../../../types'
 import type { StyleSheetRuleData, BrowserIncrementalSnapshotRecord } from '../../../types'
 import { getSerializedNodeId, hasSerializedNode } from '../serialization'
 import { assembleIncrementalSnapshot } from '../assembly'
+import type { Tracker } from './types'
 
 type GroupingCSSRuleTypes = typeof CSSGroupingRule | typeof CSSMediaRule | typeof CSSSupportsRule
 
 export type StyleSheetCallback = (incrementalSnapshotRecord: BrowserIncrementalSnapshotRecord) => void
 
-export function initStyleSheetObserver(styleSheetCb: StyleSheetCallback) {
+export function trackStyleSheet(styleSheetCb: StyleSheetCallback): Tracker {
   function checkStyleSheetAndCallback(styleSheet: CSSStyleSheet | null, callback: (id: number) => void): void {
     if (styleSheet && hasSerializedNode(styleSheet.ownerNode!)) {
       callback(getSerializedNodeId(styleSheet.ownerNode))

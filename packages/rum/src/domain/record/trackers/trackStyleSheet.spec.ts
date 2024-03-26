@@ -3,12 +3,13 @@ import { isFirefox } from '@datadog/browser-core/test'
 import { serializeDocument, SerializationContextStatus } from '../serialization'
 import { createElementsScrollPositions } from '../elementsScrollPositions'
 import { IncrementalSource, RecordType } from '../../../types'
-import type { StyleSheetCallback } from './styleSheetObserver'
-import { initStyleSheetObserver, getPathToNestedCSSRule } from './styleSheetObserver'
-import { DEFAULT_CONFIGURATION, DEFAULT_SHADOW_ROOT_CONTROLLER } from './observers.specHelper'
+import type { StyleSheetCallback } from './trackStyleSheet'
+import { trackStyleSheet, getPathToNestedCSSRule } from './trackStyleSheet'
+import { DEFAULT_CONFIGURATION, DEFAULT_SHADOW_ROOT_CONTROLLER } from './trackers.specHelper'
+import type { Tracker } from './types'
 
-describe('initStyleSheetObserver', () => {
-  let stopStyleSheetObserver: () => void
+describe('trackStyleSheet', () => {
+  let styleSheetTracker: Tracker
   let styleSheetCallbackSpy: jasmine.Spy<StyleSheetCallback>
   let styleElement: HTMLStyleElement
   let styleSheet: CSSStyleSheet
@@ -31,14 +32,14 @@ describe('initStyleSheetObserver', () => {
   })
 
   afterEach(() => {
-    stopStyleSheetObserver()
+    styleSheetTracker.stop()
     styleElement.remove()
   })
 
   describe('observing high level css stylesheet', () => {
     describe('when inserting rules into stylesheet', () => {
       it('should capture CSSStyleRule insertion when no index is provided', () => {
-        stopStyleSheetObserver = initStyleSheetObserver(styleSheetCallbackSpy).stop
+        styleSheetTracker = trackStyleSheet(styleSheetCallbackSpy)
         styleSheet.insertRule(styleRule)
 
         expect(styleSheetCallbackSpy).toHaveBeenCalledWith({
@@ -55,7 +56,7 @@ describe('initStyleSheetObserver', () => {
       it('should capture CSSStyleRule insertion when index is provided', () => {
         const index = 0
 
-        stopStyleSheetObserver = initStyleSheetObserver(styleSheetCallbackSpy).stop
+        styleSheetTracker = trackStyleSheet(styleSheetCallbackSpy)
         styleSheet.insertRule(styleRule, index)
 
         expect(styleSheetCallbackSpy).toHaveBeenCalledWith({
@@ -75,7 +76,7 @@ describe('initStyleSheetObserver', () => {
         styleSheet.insertRule(styleRule)
         const index = 0
 
-        stopStyleSheetObserver = initStyleSheetObserver(styleSheetCallbackSpy).stop
+        styleSheetTracker = trackStyleSheet(styleSheetCallbackSpy)
         styleSheet.deleteRule(index)
 
         expect(styleSheetCallbackSpy).toHaveBeenCalledWith({
@@ -98,7 +99,7 @@ describe('initStyleSheetObserver', () => {
         styleSheet.insertRule('.main {opacity: 0}')
         const groupingRule = (styleSheet.cssRules[1] as CSSGroupingRule).cssRules[0] as CSSGroupingRule
 
-        stopStyleSheetObserver = initStyleSheetObserver(styleSheetCallbackSpy).stop
+        styleSheetTracker = trackStyleSheet(styleSheetCallbackSpy)
         groupingRule.insertRule(styleRule, 1)
 
         expect(styleSheetCallbackSpy).toHaveBeenCalledWith({
@@ -123,7 +124,7 @@ describe('initStyleSheetObserver', () => {
         const groupingRule = parentRule.cssRules[0] as CSSGroupingRule
         parentRule.deleteRule(0)
 
-        stopStyleSheetObserver = initStyleSheetObserver(styleSheetCallbackSpy).stop
+        styleSheetTracker = trackStyleSheet(styleSheetCallbackSpy)
         groupingRule.insertRule(styleRule, 0)
 
         expect(styleSheetCallbackSpy).not.toHaveBeenCalled()
@@ -136,7 +137,7 @@ describe('initStyleSheetObserver', () => {
         styleSheet.insertRule('.main {opacity: 0}')
         const groupingRule = (styleSheet.cssRules[1] as CSSGroupingRule).cssRules[0] as CSSGroupingRule
 
-        stopStyleSheetObserver = initStyleSheetObserver(styleSheetCallbackSpy).stop
+        styleSheetTracker = trackStyleSheet(styleSheetCallbackSpy)
         groupingRule.deleteRule(0)
 
         expect(styleSheetCallbackSpy).toHaveBeenCalledWith({
@@ -161,7 +162,7 @@ describe('initStyleSheetObserver', () => {
         const groupingRule = parentRule.cssRules[0] as CSSGroupingRule
         parentRule.deleteRule(0)
 
-        stopStyleSheetObserver = initStyleSheetObserver(styleSheetCallbackSpy).stop
+        styleSheetTracker = trackStyleSheet(styleSheetCallbackSpy)
         groupingRule.deleteRule(0)
 
         expect(styleSheetCallbackSpy).not.toHaveBeenCalled()

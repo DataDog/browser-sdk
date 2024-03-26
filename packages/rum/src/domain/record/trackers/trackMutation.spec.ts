@@ -15,14 +15,14 @@ import { serializeDocument, SerializationContextStatus } from '../serialization'
 import { createElementsScrollPositions } from '../elementsScrollPositions'
 import type { ShadowRootCallBack } from '../shadowRootsController'
 import { appendElement, appendText } from '../../../../../rum-core/test'
-import { sortAddedAndMovedNodes, initMutationObserver } from './mutationObserver'
-import type { MutationCallBack } from './mutationObserver'
-import { DEFAULT_SHADOW_ROOT_CONTROLLER } from './observers.specHelper'
+import { sortAddedAndMovedNodes, trackMutation } from './trackMutation'
+import type { MutationCallBack } from './trackMutation'
+import { DEFAULT_SHADOW_ROOT_CONTROLLER } from './trackers.specHelper'
+import type { FlushableTracker } from './types'
 
-describe('startMutationCollection', () => {
+describe('trackMutation', () => {
   let sandbox: HTMLElement
-  let stopMutationCollection: () => void
-  let flushMutations: () => void
+  let mutationTracker: FlushableTracker
 
   let addShadowRootSpy: jasmine.Spy<ShadowRootCallBack>
   let removeShadowRootSpy: jasmine.Spy<ShadowRootCallBack>
@@ -35,14 +35,14 @@ describe('startMutationCollection', () => {
   function startMutationCollection(defaultPrivacyLevel: DefaultPrivacyLevel = DefaultPrivacyLevel.ALLOW) {
     const mutationCallbackSpy = jasmine.createSpy<MutationCallBack>()
 
-    ;({ stop: stopMutationCollection, flush: flushMutations } = initMutationObserver(
+    mutationTracker = trackMutation(
       mutationCallbackSpy,
       {
         defaultPrivacyLevel,
       } as RumConfiguration,
       { ...DEFAULT_SHADOW_ROOT_CONTROLLER, addShadowRoot: addShadowRootSpy, removeShadowRoot: removeShadowRootSpy },
       document
-    ))
+    )
 
     return {
       mutationCallbackSpy,
@@ -73,7 +73,7 @@ describe('startMutationCollection', () => {
   })
 
   afterEach(() => {
-    stopMutationCollection()
+    mutationTracker.stop()
   })
 
   describe('childList mutation records', () => {
@@ -82,7 +82,7 @@ describe('startMutationCollection', () => {
       const { mutationCallbackSpy, getLatestMutationPayload } = startMutationCollection()
 
       appendElement('<div></div>', sandbox)
-      flushMutations()
+      mutationTracker.flush()
 
       expect(mutationCallbackSpy).toHaveBeenCalledTimes(1)
 
@@ -113,7 +113,7 @@ describe('startMutationCollection', () => {
       const { mutationCallbackSpy } = startMutationCollection()
 
       appendElement('<div></div>', sandbox)
-      flushMutations()
+      mutationTracker.flush()
 
       expect(mutationCallbackSpy).not.toHaveBeenCalled()
     })
@@ -126,7 +126,7 @@ describe('startMutationCollection', () => {
 
       expect(mutationCallbackSpy).toHaveBeenCalledTimes(0)
 
-      flushMutations()
+      mutationTracker.flush()
 
       expect(mutationCallbackSpy).toHaveBeenCalledTimes(1)
     })
@@ -140,7 +140,7 @@ describe('startMutationCollection', () => {
 
         element.setAttribute('foo', 'bar')
         sandbox.remove()
-        flushMutations()
+        mutationTracker.flush()
 
         expect(getLatestMutationPayload().attributes).toEqual([])
       })
@@ -154,7 +154,7 @@ describe('startMutationCollection', () => {
 
         textNode.data = 'bar'
         sandbox.remove()
-        flushMutations()
+        mutationTracker.flush()
 
         expect(getLatestMutationPayload().texts).toEqual([])
       })
@@ -166,7 +166,7 @@ describe('startMutationCollection', () => {
 
         appendElement('<div><hr /></div>', sandbox)
         sandbox.remove()
-        flushMutations()
+        mutationTracker.flush()
 
         expect(getLatestMutationPayload().adds).toEqual([])
       })
@@ -179,7 +179,7 @@ describe('startMutationCollection', () => {
 
         element.remove()
         sandbox.remove()
-        flushMutations()
+        mutationTracker.flush()
 
         const { validate, expectInitialNode } = createMutationPayloadValidator(serializedDocument)
         validate(getLatestMutationPayload(), {
@@ -209,7 +209,7 @@ describe('startMutationCollection', () => {
         sandbox.appendChild(element)
 
         element.setAttribute('foo', 'bar')
-        flushMutations()
+        mutationTracker.flush()
 
         expect(getLatestMutationPayload().attributes).toEqual([])
       })
@@ -224,7 +224,7 @@ describe('startMutationCollection', () => {
         sandbox.appendChild(textNode)
 
         textNode.data = 'bar'
-        flushMutations()
+        mutationTracker.flush()
 
         expect(getLatestMutationPayload().texts).toEqual([])
       })
@@ -242,7 +242,7 @@ describe('startMutationCollection', () => {
         // Generate a mutation on 'parent'
         parent.remove()
         sandbox.appendChild(parent)
-        flushMutations()
+        mutationTracker.flush()
 
         const { validate, expectInitialNode } = createMutationPayloadValidator(serializedDocument)
 
@@ -276,7 +276,7 @@ describe('startMutationCollection', () => {
         const child = appendElement('<a><b target/></a>', sandbox)
 
         child.remove()
-        flushMutations()
+        mutationTracker.flush()
 
         const { validate, expectInitialNode, expectNewNode } = createMutationPayloadValidator(serializedDocument)
         validate(getLatestMutationPayload(), {
@@ -300,7 +300,7 @@ describe('startMutationCollection', () => {
       element.remove()
       sandbox.appendChild(element)
 
-      flushMutations()
+      mutationTracker.flush()
 
       const { validate, expectInitialNode, expectNewNode } = createMutationPayloadValidator(serializedDocument)
       validate(getLatestMutationPayload(), {
@@ -322,7 +322,7 @@ describe('startMutationCollection', () => {
       // Moves 'a' after 'b'
       sandbox.appendChild(a)
 
-      flushMutations()
+      mutationTracker.flush()
 
       const { validate, expectInitialNode } = createMutationPayloadValidator(serializedDocument)
       validate(getLatestMutationPayload(), {
@@ -357,7 +357,7 @@ describe('startMutationCollection', () => {
       a.appendChild(span)
       b.appendChild(span)
 
-      flushMutations()
+      mutationTracker.flush()
 
       const { validate, expectInitialNode } = createMutationPayloadValidator(serializedDocument)
       validate(getLatestMutationPayload(), {
@@ -383,7 +383,7 @@ describe('startMutationCollection', () => {
 
       appendElement('<a></a><b></b><c></c>', sandbox)
 
-      flushMutations()
+      mutationTracker.flush()
 
       const { validate, expectInitialNode, expectNewNode } = createMutationPayloadValidator(serializedDocument)
       const c = expectNewNode({ type: NodeType.Element, tagName: 'c' })
@@ -414,7 +414,7 @@ describe('startMutationCollection', () => {
       const { getLatestMutationPayload } = startMutationCollection(DefaultPrivacyLevel.MASK)
 
       sandbox.innerText = 'foo bar'
-      flushMutations()
+      mutationTracker.flush()
 
       const { validate, expectNewNode, expectInitialNode } = createMutationPayloadValidator(serializedDocument)
       validate(getLatestMutationPayload(), {
@@ -437,7 +437,7 @@ describe('startMutationCollection', () => {
         const host = appendElement('<div></div>', sandbox)
         const shadowRoot = host.attachShadow({ mode: 'open' })
         appendElement('<span></span>', shadowRoot)
-        flushMutations()
+        mutationTracker.flush()
 
         expect(mutationCallbackSpy).toHaveBeenCalledTimes(1)
         const { validate, expectNewNode, expectInitialNode } = createMutationPayloadValidator(serializedDocument)
@@ -466,7 +466,7 @@ describe('startMutationCollection', () => {
         const serializedDocument = serializeDocumentWithDefaults()
         const { mutationCallbackSpy, getLatestMutationPayload } = startMutationCollection()
         host.remove()
-        flushMutations()
+        mutationTracker.flush()
         expect(mutationCallbackSpy).toHaveBeenCalledTimes(1)
 
         const { validate, expectInitialNode } = createMutationPayloadValidator(serializedDocument)
@@ -490,7 +490,7 @@ describe('startMutationCollection', () => {
         const serializedDocument = serializeDocumentWithDefaults()
         const { mutationCallbackSpy, getLatestMutationPayload } = startMutationCollection()
         host.parentElement!.remove()
-        flushMutations()
+        mutationTracker.flush()
         expect(mutationCallbackSpy).toHaveBeenCalledTimes(1)
 
         const { validate, expectInitialNode } = createMutationPayloadValidator(serializedDocument)
@@ -515,7 +515,7 @@ describe('startMutationCollection', () => {
         const serializedDocument = serializeDocumentWithDefaults()
         const { mutationCallbackSpy, getLatestMutationPayload } = startMutationCollection()
         parentHost.remove()
-        flushMutations()
+        mutationTracker.flush()
         expect(mutationCallbackSpy).toHaveBeenCalledTimes(1)
 
         const { validate, expectInitialNode } = createMutationPayloadValidator(serializedDocument)
@@ -550,7 +550,7 @@ describe('startMutationCollection', () => {
       const { mutationCallbackSpy, getLatestMutationPayload } = startMutationCollection()
 
       textNode.data = 'bar'
-      flushMutations()
+      mutationTracker.flush()
 
       expect(mutationCallbackSpy).toHaveBeenCalledTimes(1)
 
@@ -571,7 +571,7 @@ describe('startMutationCollection', () => {
       const { mutationCallbackSpy } = startMutationCollection()
 
       textNode.data = 'bar'
-      flushMutations()
+      mutationTracker.flush()
 
       expect(mutationCallbackSpy).toHaveBeenCalledTimes(1)
     })
@@ -582,7 +582,7 @@ describe('startMutationCollection', () => {
 
       textNode.data = 'bar'
       textNode.data = 'foo'
-      flushMutations()
+      mutationTracker.flush()
 
       expect(mutationCallbackSpy).not.toHaveBeenCalled()
     })
@@ -592,7 +592,7 @@ describe('startMutationCollection', () => {
       const { getLatestMutationPayload } = startMutationCollection(DefaultPrivacyLevel.MASK)
 
       textNode.data = 'foo bar'
-      flushMutations()
+      mutationTracker.flush()
 
       const { validate, expectInitialNode } = createMutationPayloadValidator(serializedDocument)
       validate(getLatestMutationPayload(), {
@@ -613,7 +613,7 @@ describe('startMutationCollection', () => {
       const { mutationCallbackSpy, getLatestMutationPayload } = startMutationCollection(DefaultPrivacyLevel.MASK)
 
       div.firstChild!.textContent = 'bazz 7'
-      flushMutations()
+      mutationTracker.flush()
 
       expect(mutationCallbackSpy).toHaveBeenCalledTimes(1)
 
@@ -635,7 +635,7 @@ describe('startMutationCollection', () => {
       const { mutationCallbackSpy, getLatestMutationPayload } = startMutationCollection()
 
       sandbox.setAttribute('foo', 'bar')
-      flushMutations()
+      mutationTracker.flush()
 
       expect(mutationCallbackSpy).toHaveBeenCalledTimes(1)
 
@@ -655,7 +655,7 @@ describe('startMutationCollection', () => {
       const { getLatestMutationPayload } = startMutationCollection()
 
       sandbox.setAttribute('foo', '')
-      flushMutations()
+      mutationTracker.flush()
 
       const { validate, expectInitialNode } = createMutationPayloadValidator(serializedDocument)
       validate(getLatestMutationPayload(), {
@@ -674,7 +674,7 @@ describe('startMutationCollection', () => {
       const { getLatestMutationPayload } = startMutationCollection()
 
       sandbox.removeAttribute('foo')
-      flushMutations()
+      mutationTracker.flush()
 
       const { validate, expectInitialNode } = createMutationPayloadValidator(serializedDocument)
       validate(getLatestMutationPayload(), {
@@ -694,7 +694,7 @@ describe('startMutationCollection', () => {
 
       sandbox.setAttribute('foo', 'biz')
       sandbox.setAttribute('foo', 'bar')
-      flushMutations()
+      mutationTracker.flush()
 
       expect(mutationCallbackSpy).not.toHaveBeenCalled()
     })
@@ -705,7 +705,7 @@ describe('startMutationCollection', () => {
 
       sandbox.setAttribute('foo1', 'biz')
       sandbox.setAttribute('foo2', 'bar')
-      flushMutations()
+      mutationTracker.flush()
 
       const { validate, expectInitialNode } = createMutationPayloadValidator(serializedDocument)
       validate(getLatestMutationPayload(), {
@@ -723,7 +723,7 @@ describe('startMutationCollection', () => {
       const { getLatestMutationPayload } = startMutationCollection(DefaultPrivacyLevel.MASK)
 
       sandbox.setAttribute('data-foo', 'biz')
-      flushMutations()
+      mutationTracker.flush()
 
       const { validate, expectInitialNode } = createMutationPayloadValidator(serializedDocument)
       validate(getLatestMutationPayload(), {
@@ -751,7 +751,7 @@ describe('startMutationCollection', () => {
 
       sandbox.insertBefore(document.createElement('a'), ignoredElement)
 
-      flushMutations()
+      mutationTracker.flush()
 
       const { validate, expectInitialNode, expectNewNode } = createMutationPayloadValidator(serializedDocument)
       validate(getLatestMutationPayload(), {
@@ -773,7 +773,7 @@ describe('startMutationCollection', () => {
 
         sandbox.appendChild(ignoredElement)
 
-        flushMutations()
+        mutationTracker.flush()
 
         expect(mutationCallbackSpy).not.toHaveBeenCalled()
       })
@@ -785,7 +785,7 @@ describe('startMutationCollection', () => {
 
         ignoredElement.setAttribute('foo', 'bar')
 
-        flushMutations()
+        mutationTracker.flush()
 
         expect(mutationCallbackSpy).not.toHaveBeenCalled()
       })
@@ -797,7 +797,7 @@ describe('startMutationCollection', () => {
 
         appendElement("'function foo() {}'", ignoredElement)
 
-        flushMutations()
+        mutationTracker.flush()
 
         expect(mutationCallbackSpy).not.toHaveBeenCalled()
       })
@@ -812,7 +812,7 @@ describe('startMutationCollection', () => {
 
         textNode.data = 'function bar() {}'
 
-        flushMutations()
+        mutationTracker.flush()
 
         expect(mutationCallbackSpy).not.toHaveBeenCalled()
       })
@@ -825,7 +825,7 @@ describe('startMutationCollection', () => {
 
         ignoredElement.appendChild(textNode)
 
-        flushMutations()
+        mutationTracker.flush()
 
         const { validate, expectInitialNode } = createMutationPayloadValidator(serializedDocument)
         validate(getLatestMutationPayload(), {
@@ -846,7 +846,7 @@ describe('startMutationCollection', () => {
         const { mutationCallbackSpy } = startMutationCollection()
 
         sandbox.appendChild(script)
-        flushMutations()
+        mutationTracker.flush()
 
         expect(mutationCallbackSpy).not.toHaveBeenCalled()
       })
@@ -866,7 +866,7 @@ describe('startMutationCollection', () => {
 
       hiddenElement.setAttribute('foo', 'bar')
 
-      flushMutations()
+      mutationTracker.flush()
 
       expect(mutationCallbackSpy).not.toHaveBeenCalled()
     })
@@ -879,7 +879,7 @@ describe('startMutationCollection', () => {
 
         appendElement('function foo() {}', hiddenElement)
 
-        flushMutations()
+        mutationTracker.flush()
 
         expect(mutationCallbackSpy).not.toHaveBeenCalled()
       })
@@ -894,7 +894,7 @@ describe('startMutationCollection', () => {
 
         textNode.data = 'function bar() {}'
 
-        flushMutations()
+        mutationTracker.flush()
 
         expect(mutationCallbackSpy).not.toHaveBeenCalled()
       })
@@ -907,7 +907,7 @@ describe('startMutationCollection', () => {
 
         hiddenElement.appendChild(textNode)
 
-        flushMutations()
+        mutationTracker.flush()
 
         const { validate, expectInitialNode } = createMutationPayloadValidator(serializedDocument)
         validate(getLatestMutationPayload(), {
@@ -996,7 +996,7 @@ describe('startMutationCollection', () => {
           const { getLatestMutationPayload } = startMutationCollection()
 
           sandbox.appendChild(input)
-          flushMutations()
+          mutationTracker.flush()
 
           const { validate, expectNewNode, expectInitialNode } = createMutationPayloadValidator(serializedDocument)
           validate(getLatestMutationPayload(), {
@@ -1027,7 +1027,7 @@ describe('startMutationCollection', () => {
           const { getLatestMutationPayload, mutationCallbackSpy } = startMutationCollection()
 
           input.setAttribute('value', 'bar')
-          flushMutations()
+          mutationTracker.flush()
 
           if (expectedAttributesMutation) {
             const { validate, expectInitialNode } = createMutationPayloadValidator(serializedDocument)

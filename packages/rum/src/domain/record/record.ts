@@ -2,21 +2,21 @@ import { sendToExtension } from '@datadog/browser-core'
 import type { LifeCycle, RumConfiguration, ViewContexts } from '@datadog/browser-rum-core'
 import type { BrowserRecord } from '../../types'
 import * as replayStats from '../replayStats'
+import type { FlushableTracker, Tracker } from './trackers'
 import {
-  initFocusObserver,
-  initFrustrationObserver,
-  initInputObserver,
-  initMediaInteractionObserver,
-  initMouseInteractionObserver,
-  initMoveObserver,
-  initMutationObserver,
   initRecordIds,
-  initScrollObserver,
-  initStyleSheetObserver,
-  initViewEndObserver,
-  initViewportResizeObserver,
-  initVisualViewportResizeObserver,
-} from './observers'
+  trackFocus,
+  trackFrustration,
+  trackInput,
+  trackMediaInteraction,
+  trackMouseInteraction,
+  trackMove,
+  trackMutation,
+  trackScroll,
+  trackStyleSheet,
+  trackViewEnd,
+  trackViewportResize,
+} from './trackers'
 import { createElementsScrollPositions } from './elementsScrollPositions'
 import type { ShadowRootsController } from './shadowRootsController'
 import { initShadowRootsController } from './shadowRootsController'
@@ -67,24 +67,29 @@ export function record(options: RecordOptions): RecordAPI {
 
   function flushMutations() {
     shadowRootsController.flush()
-    mutationObserver.flush()
+    mutationTracker.flush()
   }
 
   const recordIds = initRecordIds()
-  const mutationObserver = initMutationObserver(emitAndComputeStats, configuration, shadowRootsController, document)
-  const observers = [
-    mutationObserver,
-    initMoveObserver(configuration, emitAndComputeStats),
-    initMouseInteractionObserver(configuration, emitAndComputeStats, recordIds),
-    initScrollObserver(configuration, emitAndComputeStats, elementsScrollPositions),
-    initViewportResizeObserver(configuration, emitAndComputeStats),
-    initInputObserver(configuration, emitAndComputeStats),
-    initMediaInteractionObserver(configuration, emitAndComputeStats),
-    initStyleSheetObserver(emitAndComputeStats),
-    initFocusObserver(configuration, emitAndComputeStats),
-    initVisualViewportResizeObserver(configuration, emitAndComputeStats),
-    initFrustrationObserver(lifeCycle, emitAndComputeStats, recordIds),
-    initViewEndObserver(lifeCycle, (viewEndRecord) => {
+  const mutationTracker: FlushableTracker = trackMutation(
+    emitAndComputeStats,
+    configuration,
+    shadowRootsController,
+    document
+  )
+  const trackers: Tracker[] = [
+    mutationTracker,
+    trackMove(configuration, emitAndComputeStats),
+    trackMouseInteraction(configuration, emitAndComputeStats, recordIds),
+    trackScroll(configuration, emitAndComputeStats, elementsScrollPositions),
+    trackViewportResize(configuration, emitAndComputeStats),
+    trackInput(configuration, emitAndComputeStats),
+    trackMediaInteraction(configuration, emitAndComputeStats),
+    trackStyleSheet(emitAndComputeStats),
+    trackFocus(configuration, emitAndComputeStats),
+    trackViewportResize(configuration, emitAndComputeStats),
+    trackFrustration(lifeCycle, emitAndComputeStats, recordIds),
+    trackViewEnd(lifeCycle, (viewEndRecord) => {
       flushMutations()
       emitAndComputeStats(viewEndRecord)
     }),
@@ -93,7 +98,7 @@ export function record(options: RecordOptions): RecordAPI {
   return {
     stop: () => {
       shadowRootsController.stop()
-      observers.forEach((observer) => observer.stop())
+      trackers.forEach((tracker) => tracker.stop())
       stopFullSnapshots()
     },
     flushMutations,

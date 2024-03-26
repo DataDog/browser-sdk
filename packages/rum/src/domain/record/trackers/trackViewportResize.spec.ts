@@ -5,12 +5,13 @@ import { serializeDocument, SerializationContextStatus } from '../serialization'
 import type { ElementsScrollPositions } from '../elementsScrollPositions'
 import { createElementsScrollPositions } from '../elementsScrollPositions'
 import { RecordType } from '../../../types'
-import { DEFAULT_CONFIGURATION, DEFAULT_SHADOW_ROOT_CONTROLLER } from './observers.specHelper'
-import type { VisualViewportResizeCallback } from './viewportResizeObserver'
-import { initVisualViewportResizeObserver } from './viewportResizeObserver'
+import { DEFAULT_CONFIGURATION, DEFAULT_SHADOW_ROOT_CONTROLLER } from './trackers.specHelper'
+import type { VisualViewportResizeCallback } from './trackViewportResize'
+import { tackVisualViewportResize } from './trackViewportResize'
+import type { Tracker } from './types'
 
-describe('initVisualViewportResizeObserver', () => {
-  let stopVisualViewportResizeObserver: () => void
+describe('trackViewportResize', () => {
+  let viewportResizeTracker: Tracker
   let visualViewportResizeCallback: jasmine.Spy<VisualViewportResizeCallback>
   let configuration: RumConfiguration
   let elementsScrollPositions: ElementsScrollPositions
@@ -29,14 +30,11 @@ describe('initVisualViewportResizeObserver', () => {
       elementsScrollPositions,
     })
 
-    stopVisualViewportResizeObserver = initVisualViewportResizeObserver(
-      configuration,
-      visualViewportResizeCallback
-    ).stop
+    viewportResizeTracker = tackVisualViewportResize(configuration, visualViewportResizeCallback)
   })
 
   afterEach(() => {
-    stopVisualViewportResizeObserver()
+    viewportResizeTracker.stop()
   })
 
   it('collects visual viewport on resize', () => {

@@ -5,15 +5,16 @@ import { appendElement } from '../../../../../rum-core/test'
 import { IncrementalSource, MouseInteractionType, RecordType } from '../../../types'
 import { serializeDocument, SerializationContextStatus } from '../serialization'
 import { createElementsScrollPositions } from '../elementsScrollPositions'
-import type { MouseInteractionCallBack } from './mouseInteractionObserver'
-import { initMouseInteractionObserver } from './mouseInteractionObserver'
+import type { MouseInteractionCallback } from './trackMouseInteraction'
+import { trackMouseInteraction } from './trackMouseInteraction'
 import type { RecordIds } from './recordIds'
 import { initRecordIds } from './recordIds'
-import { DEFAULT_CONFIGURATION, DEFAULT_SHADOW_ROOT_CONTROLLER } from './observers.specHelper'
+import { DEFAULT_CONFIGURATION, DEFAULT_SHADOW_ROOT_CONTROLLER } from './trackers.specHelper'
+import type { Tracker } from './types'
 
-describe('initMouseInteractionObserver', () => {
-  let mouseInteractionCallbackSpy: jasmine.Spy<MouseInteractionCallBack>
-  let stopObserver: () => void
+describe('trackMouseInteraction', () => {
+  let mouseInteractionCallbackSpy: jasmine.Spy<MouseInteractionCallback>
+  let mouseInteractionTracker: Tracker
   let recordIds: RecordIds
   let a: HTMLAnchorElement
   let configuration: RumConfiguration
@@ -35,11 +36,11 @@ describe('initMouseInteractionObserver', () => {
 
     mouseInteractionCallbackSpy = jasmine.createSpy()
     recordIds = initRecordIds()
-    stopObserver = initMouseInteractionObserver(configuration, mouseInteractionCallbackSpy, recordIds).stop
+    mouseInteractionTracker = trackMouseInteraction(configuration, mouseInteractionCallbackSpy, recordIds)
   })
 
   afterEach(() => {
-    stopObserver()
+    mouseInteractionTracker.stop()
   })
 
   it('should generate click record', () => {

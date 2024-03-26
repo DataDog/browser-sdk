@@ -9,16 +9,17 @@ import { IncrementalSource } from '../../../types'
 import type { BrowserIncrementalSnapshotRecord, ScrollData } from '../../../types'
 import { NodePrivacyLevel } from '../../../constants'
 import { assembleIncrementalSnapshot } from '../assembly'
+import type { Tracker } from './types'
 
 const SCROLL_OBSERVER_THRESHOLD = 100
 
 export type ScrollCallback = (incrementalSnapshotRecord: BrowserIncrementalSnapshotRecord) => void
 
-export function initScrollObserver(
+export function trackScroll(
   configuration: RumConfiguration,
   scrollCb: ScrollCallback,
   elementsScrollPositions: ElementsScrollPositions
-) {
+): Tracker {
   const { throttled: updatePosition, cancel: cancelThrottle } = throttle((event: Event) => {
     const target = getEventTarget(event) as HTMLElement | Document
     if (

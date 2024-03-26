@@ -7,13 +7,14 @@ import { getEventTarget } from '../eventsUtils'
 import { getNodePrivacyLevel } from '../privacy'
 import { getSerializedNodeId, hasSerializedNode } from '../serialization'
 import { assembleIncrementalSnapshot } from '../assembly'
+import type { Tracker } from './types'
 
 export type MediaInteractionCallback = (incrementalSnapshotRecord: BrowserIncrementalSnapshotRecord) => void
 
-export function initMediaInteractionObserver(
+export function trackMediaInteraction(
   configuration: RumConfiguration,
   mediaInteractionCb: MediaInteractionCallback
-) {
+): Tracker {
   return addEventListeners(
     configuration,
     document,

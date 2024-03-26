@@ -5,12 +5,13 @@ import { appendElement } from '../../../../../rum-core/test'
 import { serializeDocument, SerializationContextStatus } from '../serialization'
 import { createElementsScrollPositions } from '../elementsScrollPositions'
 import { IncrementalSource, MediaInteractionType, RecordType } from '../../../types'
-import type { InputCallback } from './inputObserver'
-import { DEFAULT_CONFIGURATION, DEFAULT_SHADOW_ROOT_CONTROLLER } from './observers.specHelper'
-import { initMediaInteractionObserver } from './mediaInteractionObserver'
+import type { InputCallback } from './trackInput'
+import { DEFAULT_CONFIGURATION, DEFAULT_SHADOW_ROOT_CONTROLLER } from './trackers.specHelper'
+import { trackMediaInteraction } from './trackMediaInteraction'
+import type { Tracker } from './types'
 
-describe('initMediaInteractionObserver', () => {
-  let stopMediaInteractionObserver: () => void
+describe('trackMediaInteraction', () => {
+  let mediaInteractionTracker: Tracker
   let mediaInteractionCallback: jasmine.Spy<InputCallback>
   let audio: HTMLAudioElement
   let configuration: RumConfiguration
@@ -29,11 +30,11 @@ describe('initMediaInteractionObserver', () => {
       status: SerializationContextStatus.INITIAL_FULL_SNAPSHOT,
       elementsScrollPositions: createElementsScrollPositions(),
     })
-    stopMediaInteractionObserver = initMediaInteractionObserver(configuration, mediaInteractionCallback).stop
+    mediaInteractionTracker = trackMediaInteraction(configuration, mediaInteractionCallback)
   })
 
   afterEach(() => {
-    stopMediaInteractionObserver()
+    mediaInteractionTracker.stop()
   })
 
   it('collects play interactions', () => {

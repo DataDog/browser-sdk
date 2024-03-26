@@ -3,14 +3,15 @@ import { ActionType, RumEventType, LifeCycleEventType } from '@datadog/browser-r
 import type { FrustrationRecord } from '../../../types'
 import { RecordType } from '../../../types'
 import type { RecordIds } from './recordIds'
+import type { Tracker } from './types'
 
 export type FrustrationCallback = (record: FrustrationRecord) => void
 
-export function initFrustrationObserver(
+export function trackFrustration(
   lifeCycle: LifeCycle,
   frustrationCb: FrustrationCallback,
   recordIds: RecordIds
-) {
+): Tracker {
   const frustrationSubscription = lifeCycle.subscribe(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, (data) => {
     if (
       data.rawRumEvent.type === RumEventType.ACTION &&

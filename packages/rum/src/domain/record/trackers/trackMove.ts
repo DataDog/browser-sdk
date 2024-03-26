@@ -6,12 +6,13 @@ import { IncrementalSource } from '../../../types'
 import { getEventTarget, isTouchEvent } from '../eventsUtils'
 import { convertMouseEventToLayoutCoordinates } from '../viewports'
 import { assembleIncrementalSnapshot } from '../assembly'
+import type { Tracker } from './types'
 
 const MOUSE_MOVE_OBSERVER_THRESHOLD = 50
 
 export type MousemoveCallBack = (incrementalSnapshotRecord: BrowserIncrementalSnapshotRecord) => void
 
-export function initMoveObserver(configuration: RumConfiguration, moveCb: MousemoveCallBack) {
+export function trackMove(configuration: RumConfiguration, moveCb: MousemoveCallBack): Tracker {
   const { throttled: updatePosition, cancel: cancelThrottle } = throttle(
     (event: MouseEvent | TouchEvent) => {
       const target = getEventTarget(event)

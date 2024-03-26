@@ -7,8 +7,9 @@ import { assembleIncrementalSnapshot } from '../assembly'
 import { getEventTarget } from '../eventsUtils'
 import { getNodePrivacyLevel } from '../privacy'
 import { getSerializedNodeId, hasSerializedNode } from '../serialization'
-import { tryToComputeCoordinates } from './moveObserver'
+import { tryToComputeCoordinates } from './trackMove'
 import type { RecordIds } from './recordIds'
+import type { Tracker } from './types'
 
 const eventTypeToMouseInteraction = {
   // Listen for pointerup DOM events instead of mouseup for MouseInteraction/MouseUp records. This
@@ -31,13 +32,13 @@ const eventTypeToMouseInteraction = {
   [DOM_EVENT.TOUCH_END]: MouseInteractionType.TouchEnd,
 }
 
-export type MouseInteractionCallBack = (record: BrowserIncrementalSnapshotRecord) => void
+export type MouseInteractionCallback = (record: BrowserIncrementalSnapshotRecord) => void
 
-export function initMouseInteractionObserver(
+export function trackMouseInteraction(
   configuration: RumConfiguration,
-  mouseInteractionCb: MouseInteractionCallBack,
+  mouseInteractionCb: MouseInteractionCallback,
   recordIds: RecordIds
-) {
+): Tracker {
   const handler = (event: MouseEvent | TouchEvent | FocusEvent) => {
     const target = getEventTarget(event)
     if (

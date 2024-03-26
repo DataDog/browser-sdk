@@ -7,14 +7,15 @@ import { getEventTarget } from '../eventsUtils'
 import { getNodePrivacyLevel, shouldMaskNode } from '../privacy'
 import { getElementInputValue, getSerializedNodeId, hasSerializedNode } from '../serialization'
 import { assembleIncrementalSnapshot } from '../assembly'
+import type { Tracker } from './types'
 
 export type InputCallback = (incrementalSnapshotRecord: BrowserIncrementalSnapshotRecord) => void
 
-export function initInputObserver(
+export function trackInput(
   configuration: RumConfiguration,
   inputCb: InputCallback,
   target: Document | ShadowRoot = document
-) {
+): Tracker {
   const defaultPrivacyLevel = configuration.defaultPrivacyLevel
   const lastInputStateMap: WeakMap<Node, InputState> = new WeakMap()
 

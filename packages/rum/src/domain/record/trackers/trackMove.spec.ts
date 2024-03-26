@@ -4,13 +4,14 @@ import type { RumConfiguration } from '@datadog/browser-rum-core'
 import { SerializationContextStatus, serializeDocument } from '../serialization'
 import { createElementsScrollPositions } from '../elementsScrollPositions'
 import { IncrementalSource, RecordType } from '../../../types'
-import type { MousemoveCallBack } from './moveObserver'
-import { initMoveObserver } from './moveObserver'
-import { DEFAULT_CONFIGURATION, DEFAULT_SHADOW_ROOT_CONTROLLER } from './observers.specHelper'
+import type { MousemoveCallBack } from './trackMove'
+import { trackMove } from './trackMove'
+import { DEFAULT_CONFIGURATION, DEFAULT_SHADOW_ROOT_CONTROLLER } from './trackers.specHelper'
+import type { Tracker } from './types'
 
-describe('initMoveObserver', () => {
+describe('trackMove', () => {
   let mouseMoveCallbackSpy: jasmine.Spy<MousemoveCallBack>
-  let stopObserver: () => void
+  let moveTracker: Tracker
   let configuration: RumConfiguration
 
   beforeEach(() => {
@@ -26,11 +27,11 @@ describe('initMoveObserver', () => {
     })
 
     mouseMoveCallbackSpy = jasmine.createSpy()
-    stopObserver = initMoveObserver(configuration, mouseMoveCallbackSpy).stop
+    moveTracker = trackMove(configuration, mouseMoveCallbackSpy)
   })
 
   afterEach(() => {
-    stopObserver()
+    moveTracker.stop()
   })
 
   it('should generate mouse move record', () => {

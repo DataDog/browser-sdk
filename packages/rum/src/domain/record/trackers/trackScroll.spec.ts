@@ -6,12 +6,13 @@ import { serializeDocument, SerializationContextStatus } from '../serialization'
 import type { ElementsScrollPositions } from '../elementsScrollPositions'
 import { createElementsScrollPositions } from '../elementsScrollPositions'
 import { IncrementalSource, RecordType } from '../../../types'
-import type { InputCallback } from './inputObserver'
-import { DEFAULT_CONFIGURATION, DEFAULT_SHADOW_ROOT_CONTROLLER } from './observers.specHelper'
-import { initScrollObserver } from './scrollObserver'
+import type { InputCallback } from './trackInput'
+import { DEFAULT_CONFIGURATION, DEFAULT_SHADOW_ROOT_CONTROLLER } from './trackers.specHelper'
+import { trackScroll } from './trackScroll'
+import type { Tracker } from './types'
 
-describe('initScrollObserver', () => {
-  let stopScrollObserver: () => void
+describe('trackScroll', () => {
+  let scrollTracker: Tracker
   let scrollCallback: jasmine.Spy<InputCallback>
   let div: HTMLDivElement
   let configuration: RumConfiguration
@@ -32,11 +33,11 @@ describe('initScrollObserver', () => {
       status: SerializationContextStatus.INITIAL_FULL_SNAPSHOT,
       elementsScrollPositions,
     })
-    stopScrollObserver = initScrollObserver(configuration, scrollCallback, elementsScrollPositions).stop
+    scrollTracker = trackScroll(configuration, scrollCallback, elementsScrollPositions)
   })
 
   afterEach(() => {
-    stopScrollObserver()
+    scrollTracker.stop()
   })
 
   it('collects scrolls', () => {
