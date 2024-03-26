@@ -278,7 +278,7 @@ describe('action collection', () => {
       expect(actionEvents[0].action.frustration!.type).toEqual([])
     })
 
-    createTest('do not consider clicks leading to scrolls as "dead_click"')
+  createTest('do not consider clicks leading to scrolls as "dead_click"')
     .withRum({ trackUserInteractions: true })
     .withBody(html`
       <div style="height: 200vh;">
