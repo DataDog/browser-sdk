@@ -91,6 +91,7 @@ describe('resourceCollection', () => {
         type: RequestType.XHR,
         url: 'https://resource.com/valid',
         xhr,
+        isAborted: false,
       })
     )
 
@@ -117,6 +118,7 @@ describe('resourceCollection', () => {
       requestInput: undefined,
       requestInit: undefined,
       error: undefined,
+      isAborted: false,
     })
   })
 
@@ -263,6 +265,7 @@ describe('resourceCollection', () => {
         response,
         input: 'https://resource.com/valid',
         init: { headers: { foo: 'bar' } },
+        isAborted: false,
       })
     )
 
@@ -289,6 +292,7 @@ describe('resourceCollection', () => {
       requestInput: 'https://resource.com/valid',
       requestInit: { headers: { foo: 'bar' } },
       error: undefined,
+      isAborted: false,
     })
   })
   ;[null, undefined, 42, {}].forEach((input: any) => {
