@@ -16,6 +16,13 @@
 
 ---
 
+## v5.13.0
+
+- ✨ [RUM-3542] Add trace context injection control in rum configuration ([#2656](https://github.com/DataDog/browser-sdk/pull/2656))
+- 🐛 [RUM-3599] do not define undefined instrumented method ([#2662](https://github.com/DataDog/browser-sdk/pull/2662))
+- 🐛 [RUM-3598] Ignore collecting requests to logs PCI intake as RUM resources ([#2655](https://github.com/DataDog/browser-sdk/pull/2655))
+- ⚡ [RUM-2633] Optimize DOM iteration in the recorder ([#2657](https://github.com/DataDog/browser-sdk/pull/2657))
+
 ## v5.12.0
 
 - ✨ [RUM-3546] Add support of PCI compliant intake for browser logs ([#2648](https://github.com/DataDog/browser-sdk/pull/2648))
