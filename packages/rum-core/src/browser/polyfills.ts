@@ -40,13 +40,26 @@ export function getParentElement(node: Node): HTMLElement | null {
     return node.parentElement
   }
 
-  let parentNode = node.parentNode
-  while (parentNode !== null && parentNode.nodeType !== Node.ELEMENT_NODE) {
-    parentNode = node.parentNode
+  while (node.parentNode) {
+    if (node.parentNode.nodeType === Node.ELEMENT_NODE) {
+      return node.parentNode as HTMLElement
+    }
+    node = node.parentNode
   }
 
-  return parentNode as HTMLElement | null
+  return null
 }
+
+// let parentNode = node.parentNode
+// while (parentNode !== null && parentNode.nodeType !== Node.ELEMENT_NODE) {
+//   parentNode = node.parentNode
+// }
+
+// let parentNode = document.querySelector('span').parentNode
+// while (parentNode !== null && parentNode.nodeType !== Node.ELEMENT_NODE) {
+//   parentNode = node.parentNode
+// }
+// console.log(parentNode)
 
 /**
  * Return the classList of an element or an array of classes if classList is not supported
@@ -60,5 +73,6 @@ export function getClassList(element: Element): DOMTokenList | string[] {
     return element.classList
   }
 
-  return (element.getAttribute('class') || '').split(/\s+/)
+  const classes = element.getAttribute('class')?.trim()
+  return classes ? classes.split(/\s+/) : []
 }

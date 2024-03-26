@@ -37,6 +37,13 @@ describe('getParentElement', () => {
     const parenElement = getParentElement(svgElement)
     expect(parenElement?.className).toEqual('parent')
   })
+
+  it('should return null on the top most element', () => {
+    const html = document.querySelector('html')!
+    Object.defineProperty(html, 'parenElement', { get: () => undefined })
+    const parenElement = getParentElement(html)
+    expect(parenElement).toEqual(null)
+  })
 })
 
 describe('getClassList', () => {
