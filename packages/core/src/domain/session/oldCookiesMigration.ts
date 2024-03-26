@@ -1,8 +1,7 @@
 import { getInitCookie } from '../../browser/cookie'
 import type { SessionStoreStrategy } from './storeStrategies/sessionStoreStrategy'
 import { SESSION_STORE_KEY } from './storeStrategies/sessionStoreStrategy'
-import type { SessionState } from './sessionState'
-import { expandSessionState, isSessionInExpiredState } from './sessionState'
+import { getInitialSessionState, expandSessionState, isSessionInExpiredState } from './sessionState'
 
 export const OLD_SESSION_COOKIE_NAME = '_dd'
 export const OLD_RUM_COOKIE_NAME = '_dd_r'
@@ -22,7 +21,7 @@ export function tryOldCookiesMigration(cookieStoreStrategy: SessionStoreStrategy
     const oldSessionId = getInitCookie(OLD_SESSION_COOKIE_NAME)
     const oldRumType = getInitCookie(OLD_RUM_COOKIE_NAME)
     const oldLogsType = getInitCookie(OLD_LOGS_COOKIE_NAME)
-    const session: SessionState = {}
+    const session = getInitialSessionState()
 
     if (oldSessionId) {
       session.id = oldSessionId
