@@ -49,6 +49,9 @@ export interface InitConfiguration {
   env?: string | undefined
   version?: string | undefined
 
+  // custom tags
+  customTags?: Record<string, string> | undefined
+
   // cookie options
   /**
    * @deprecated use usePartitionedCrossSiteSessionCookie instead

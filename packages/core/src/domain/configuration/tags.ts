@@ -1,24 +1,28 @@
 import { display } from '../../tools/display'
+import { assign } from '../../tools/utils/polyfills'
 import type { InitConfiguration } from './configuration'
 
 export const TAG_SIZE_LIMIT = 200
 
 export function buildTags(configuration: InitConfiguration): string[] {
-  const { env, service, version, datacenter } = configuration
-  const tags = []
+  const { env, service, version, datacenter, customTags } = configuration
 
-  if (env) {
-    tags.push(buildTag('env', env))
-  }
-  if (service) {
-    tags.push(buildTag('service', service))
-  }
-  if (version) {
-    tags.push(buildTag('version', version))
-  }
-  if (datacenter) {
-    tags.push(buildTag('datacenter', datacenter))
-  }
+  const uniqueTags = assign({}, customTags, {
+    env,
+    service,
+    version,
+    datacenter,
+  })
+
+  const tags: string[] = []
+
+  Object.keys(uniqueTags).forEach((key) => {
+    const rawValue = uniqueTags[key]
+
+    if (rawValue) {
+      tags.push(buildTag(key, rawValue))
+    }
+  })
 
   return tags
 }

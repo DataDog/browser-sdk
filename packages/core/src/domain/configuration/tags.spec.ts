@@ -15,6 +15,37 @@ describe('buildTags', () => {
       } as InitConfiguration)
     ).toEqual(['env:bar', 'service:foo', 'version:baz', 'datacenter:us1.prod.dog'])
   })
+
+  it('should consider custom tags', () => {
+    expect(
+      buildTags({
+        service: 'foo',
+        customTags: {
+          tag1: 'value1',
+          tag2: 'value2',
+        },
+        clientToken: '',
+      } as InitConfiguration)
+    ).toEqual(['tag1:value1', 'tag2:value2', 'service:foo'])
+  })
+
+  it('should not allow overwriting tags from init configuration', () => {
+    expect(
+      buildTags({
+        service: 'foo',
+        env: 'bar',
+        version: 'baz',
+        datacenter: 'us1.prod.dog',
+        customTags: {
+          env: 'bar_override',
+          service: 'foo_override',
+          version: 'baz_override',
+          datacenter: 'us1.prod.dog_override',
+        },
+        clientToken: '',
+      } as InitConfiguration)
+    ).toEqual(['env:bar', 'service:foo', 'version:baz', 'datacenter:us1.prod.dog'])
+  })
 })
 
 describe('buildTag', () => {
