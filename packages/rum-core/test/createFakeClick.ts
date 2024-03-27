@@ -1,6 +1,7 @@
 import { clocksNow, Observable, timeStampNow } from '@datadog/browser-core'
 import { createNewEvent } from '@datadog/browser-core/test'
 import type { Click } from '../src/domain/action/trackClickActions'
+import type { UserActivity } from '../src/domain/action/listenActionEvents'
 
 export type FakeClick = Readonly<ReturnType<typeof createFakeClick>>
 
@@ -12,7 +13,7 @@ export function createFakeClick({
 }: {
   hasError?: boolean
   hasPageActivity?: boolean
-  userActivity?: { selection?: boolean; input?: boolean; scroll?: boolean }
+  userActivity?: Partial<UserActivity>
   event?: Partial<PointerEvent & { target: Element }>
 } = {}) {
   const stopObservable = new Observable<void>()
