@@ -3,14 +3,15 @@ import type { RawRumActionEvent } from '@datadog/browser-rum-core'
 import { ActionType, LifeCycle, LifeCycleEventType, RumEventType, FrustrationType } from '@datadog/browser-rum-core'
 import type { RawRumEventCollectedData } from 'packages/rum-core/src/domain/lifeCycle'
 import { RecordType } from '../../../types'
-import type { FrustrationCallback } from './frustrationObserver'
-import { initFrustrationObserver } from './frustrationObserver'
-import type { RecordIds } from './recordIds'
-import { initRecordIds } from './recordIds'
+import type { RecordIds } from '../recordIds'
+import { initRecordIds } from '../recordIds'
+import type { FrustrationCallback } from './trackFrustration'
+import { trackFrustration } from './trackFrustration'
+import type { Tracker } from './types'
 
-describe('initFrustrationObserver', () => {
+describe('trackFrustration', () => {
   const lifeCycle = new LifeCycle()
-  let stopFrustrationObserver: () => void
+  let frustrationTracker: Tracker
   let frustrationsCallbackSpy: jasmine.Spy<FrustrationCallback>
   let mouseEvent: MouseEvent
   let rumData: RawRumEventCollectedData<RawRumActionEvent>
@@ -45,11 +46,11 @@ describe('initFrustrationObserver', () => {
   })
 
   afterEach(() => {
-    stopFrustrationObserver()
+    frustrationTracker.stop()
   })
 
   it('calls callback if the raw data inserted is a click action', () => {
-    stopFrustrationObserver = initFrustrationObserver(lifeCycle, frustrationsCallbackSpy, recordIds)
+    frustrationTracker = trackFrustration(lifeCycle, frustrationsCallbackSpy, recordIds)
     lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, rumData)
 
     const frustrationRecord = frustrationsCallbackSpy.calls.first().args[0]
@@ -61,7 +62,7 @@ describe('initFrustrationObserver', () => {
 
   it('ignores events other than click actions', () => {
     rumData.rawRumEvent.action.type = ActionType.CUSTOM
-    stopFrustrationObserver = initFrustrationObserver(lifeCycle, frustrationsCallbackSpy, recordIds)
+    frustrationTracker = trackFrustration(lifeCycle, frustrationsCallbackSpy, recordIds)
     lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, rumData)
 
     expect(frustrationsCallbackSpy).not.toHaveBeenCalled()
@@ -70,7 +71,7 @@ describe('initFrustrationObserver', () => {
   it('ignores click actions without frustrations', () => {
     rumData.rawRumEvent.action.frustration = { type: [] }
 
-    stopFrustrationObserver = initFrustrationObserver(lifeCycle, frustrationsCallbackSpy, recordIds)
+    frustrationTracker = trackFrustration(lifeCycle, frustrationsCallbackSpy, recordIds)
     lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, rumData)
 
     expect(frustrationsCallbackSpy).not.toHaveBeenCalled()
@@ -79,7 +80,7 @@ describe('initFrustrationObserver', () => {
   it('ignores click actions which are missing the original mouse events', () => {
     rumData.domainContext = {}
 
-    stopFrustrationObserver = initFrustrationObserver(lifeCycle, frustrationsCallbackSpy, recordIds)
+    frustrationTracker = trackFrustration(lifeCycle, frustrationsCallbackSpy, recordIds)
     lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, rumData)
 
     expect(frustrationsCallbackSpy).not.toHaveBeenCalled()

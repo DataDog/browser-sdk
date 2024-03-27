@@ -1,4 +1,3 @@
-import type { ListenerHandler } from '@datadog/browser-core'
 import { assign, addEventListeners, DOM_EVENT } from '@datadog/browser-core'
 import type { RumConfiguration } from '@datadog/browser-rum-core'
 import { NodePrivacyLevel } from '../../../constants'
@@ -8,8 +7,9 @@ import { assembleIncrementalSnapshot } from '../assembly'
 import { getEventTarget } from '../eventsUtils'
 import { getNodePrivacyLevel } from '../privacy'
 import { getSerializedNodeId, hasSerializedNode } from '../serialization'
-import { tryToComputeCoordinates } from './moveObserver'
-import type { RecordIds } from './recordIds'
+import type { RecordIds } from '../recordIds'
+import { tryToComputeCoordinates } from './trackMove'
+import type { Tracker } from './types'
 
 const eventTypeToMouseInteraction = {
   // Listen for pointerup DOM events instead of mouseup for MouseInteraction/MouseUp records. This
@@ -32,13 +32,13 @@ const eventTypeToMouseInteraction = {
   [DOM_EVENT.TOUCH_END]: MouseInteractionType.TouchEnd,
 }
 
-export type MouseInteractionCallBack = (record: BrowserIncrementalSnapshotRecord) => void
+export type MouseInteractionCallback = (record: BrowserIncrementalSnapshotRecord) => void
 
-export function initMouseInteractionObserver(
+export function trackMouseInteraction(
   configuration: RumConfiguration,
-  cb: MouseInteractionCallBack,
+  mouseInteractionCb: MouseInteractionCallback,
   recordIds: RecordIds
-): ListenerHandler {
+): Tracker {
   const handler = (event: MouseEvent | TouchEvent | FocusEvent) => {
     const target = getEventTarget(event)
     if (
@@ -65,7 +65,7 @@ export function initMouseInteractionObserver(
       { id: recordIds.getIdForEvent(event) },
       assembleIncrementalSnapshot<MouseInteractionData>(IncrementalSource.MouseInteraction, interaction)
     )
-    cb(record)
+    mouseInteractionCb(record)
   }
   return addEventListeners(
     configuration,
@@ -76,5 +76,5 @@ export function initMouseInteractionObserver(
       capture: true,
       passive: true,
     }
-  ).stop
+  )
 }
