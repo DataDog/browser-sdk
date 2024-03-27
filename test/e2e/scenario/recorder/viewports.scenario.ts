@@ -272,7 +272,7 @@ function getScrollbarThickness(): Promise<number> {
     // Removing temporary elements from the DOM
     document.body.removeChild(outer)
     return scrollbarThickness
-  }) as Promise<number>
+  })
 }
 
 // Mac OS X Chrome scrollbars are included here (~15px) which seems to be against spec
