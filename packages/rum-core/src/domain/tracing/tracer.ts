@@ -8,6 +8,7 @@ import {
   getType,
   isMatchOption,
   matchList,
+  TraceContextInjection,
 } from '@datadog/browser-core'
 import type { RumConfiguration } from '../configuration'
 import type {
@@ -117,10 +118,15 @@ function injectHeadersIfTracingAllowed(
   if (!tracingOption) {
     return
   }
+  context.traceSampled = !isNumber(configuration.traceSampleRate) || performDraw(configuration.traceSampleRate)
+
+  if (!context.traceSampled && configuration.traceContextInjection !== TraceContextInjection.ALL) {
+    return
+  }
 
   context.traceId = new TraceIdentifier()
   context.spanId = new TraceIdentifier()
-  context.traceSampled = !isNumber(configuration.traceSampleRate) || performDraw(configuration.traceSampleRate)
+
   inject(makeTracingHeaders(context.traceId, context.spanId, context.traceSampled, tracingOption.propagatorTypes))
 }
 

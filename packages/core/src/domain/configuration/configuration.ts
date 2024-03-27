@@ -21,6 +21,13 @@ export const DefaultPrivacyLevel = {
 } as const
 export type DefaultPrivacyLevel = (typeof DefaultPrivacyLevel)[keyof typeof DefaultPrivacyLevel]
 
+export const TraceContextInjection = {
+  ALL: 'all',
+  SAMPLED: 'sampled',
+} as const
+
+export type TraceContextInjection = (typeof TraceContextInjection)[keyof typeof TraceContextInjection]
+
 export interface InitConfiguration {
   // global options
   clientToken: string

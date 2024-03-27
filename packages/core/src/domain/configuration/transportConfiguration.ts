@@ -3,7 +3,7 @@ import type { InitConfiguration } from './configuration'
 import type { EndpointBuilder } from './endpointBuilder'
 import { createEndpointBuilder } from './endpointBuilder'
 import { buildTags } from './tags'
-import { INTAKE_SITE_US1 } from './intakeSites'
+import { INTAKE_SITE_US1, PCI_INTAKE_HOST_US1 } from './intakeSites'
 
 export interface TransportConfiguration {
   logsEndpointBuilder: EndpointBuilder
@@ -21,10 +21,12 @@ export interface ReplicaConfiguration {
 }
 
 export function computeTransportConfiguration(initConfiguration: InitConfiguration): TransportConfiguration {
+  const site = initConfiguration.site || INTAKE_SITE_US1
+
   const tags = buildTags(initConfiguration)
 
   const endpointBuilders = computeEndpointBuilders(initConfiguration, tags)
-  const intakeUrlPrefixes = objectValues(endpointBuilders).map((builder) => builder.urlPrefix)
+  const intakeUrlPrefixes = computeIntakeUrlPrefixes(endpointBuilders, site)
 
   const replicaConfiguration = computeReplicaConfiguration(initConfiguration, intakeUrlPrefixes, tags)
 
@@ -32,7 +34,7 @@ export function computeTransportConfiguration(initConfiguration: InitConfigurati
     {
       isIntakeUrl: (url: string) => intakeUrlPrefixes.some((intakeEndpoint) => url.indexOf(intakeEndpoint) === 0),
       replica: replicaConfiguration,
-      site: initConfiguration.site || INTAKE_SITE_US1,
+      site,
     },
     endpointBuilders
   )
@@ -68,4 +70,17 @@ function computeReplicaConfiguration(
   intakeUrlPrefixes.push(...objectValues(replicaEndpointBuilders).map((builder) => builder.urlPrefix))
 
   return assign({ applicationId: initConfiguration.replica.applicationId }, replicaEndpointBuilders)
+}
+
+function computeIntakeUrlPrefixes(
+  endpointBuilders: ReturnType<typeof computeEndpointBuilders>,
+  site: string
+): string[] {
+  const intakeUrlPrefixes = objectValues(endpointBuilders).map((builder) => builder.urlPrefix)
+
+  if (site === INTAKE_SITE_US1) {
+    intakeUrlPrefixes.push(`https://${PCI_INTAKE_HOST_US1}/`)
+  }
+
+  return intakeUrlPrefixes
 }

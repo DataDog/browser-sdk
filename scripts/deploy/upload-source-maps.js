@@ -5,6 +5,7 @@ const { printLog, runMain } = require('../lib/execution-utils')
 const { command } = require('../lib/command')
 const { getBuildEnvValue } = require('../lib/build-env')
 const { getTelemetryOrgApiKey } = require('../lib/secrets')
+const { siteByDatacenter } = require('../lib/datadog-sites')
 const {
   buildRootUploadPath,
   buildDatacenterUploadPath,
@@ -20,13 +21,7 @@ const {
  */
 const version = process.argv[2]
 let uploadPathTypes = process.argv[3].split(',')
-const siteByDatacenter = {
-  us1: 'datadoghq.com',
-  eu1: 'datadoghq.eu',
-  us3: 'us3.datadoghq.com',
-  us5: 'us5.datadoghq.com',
-  ap1: 'ap1.datadoghq.com',
-}
+
 function getSitesByVersion(version) {
   switch (version) {
     case 'staging':

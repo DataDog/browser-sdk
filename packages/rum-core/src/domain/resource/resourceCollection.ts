@@ -112,6 +112,7 @@ function processRequest(
       requestInput: request.input,
       requestInit: request.init,
       error: request.error,
+      isAborted: request.isAborted,
     } as RumFetchResourceEventDomainContext | RumXhrResourceEventDomainContext,
   }
 }

@@ -16,6 +16,24 @@
 
 ---
 
+## v5.13.0
+
+- ✨ [RUM-3542] Add trace context injection control in rum configuration ([#2656](https://github.com/DataDog/browser-sdk/pull/2656))
+- 🐛 [RUM-3599] do not define undefined instrumented method ([#2662](https://github.com/DataDog/browser-sdk/pull/2662))
+- 🐛 [RUM-3598] Ignore collecting requests to logs PCI intake as RUM resources ([#2655](https://github.com/DataDog/browser-sdk/pull/2655))
+- ⚡ [RUM-2633] Optimize DOM iteration in the recorder ([#2657](https://github.com/DataDog/browser-sdk/pull/2657))
+
+## v5.12.0
+
+- ✨ [RUM-3546] Add support of PCI compliant intake for browser logs ([#2648](https://github.com/DataDog/browser-sdk/pull/2648))
+- ✨ [RUM 3352] Extra resource event attributes to enable performance CWV troubleshooting ([#2646](https://github.com/DataDog/browser-sdk/pull/2646))
+- ✨ [RUM-2885] Collect CSP disposition ([#2635](https://github.com/DataDog/browser-sdk/pull/2635))
+- 🐛 [RUM-3440] Fix INP CSS selector computation
+- 🐛 [RUM-3502] fix fetch(url) tracing ([#2642](https://github.com/DataDog/browser-sdk/pull/2642))
+- 🔧 Enforce snake case for event type properties ([#2649](https://github.com/DataDog/browser-sdk/pull/2649))
+- 🔊 [RUM-3501] add `tracking_consent` to configuration telemetry ([#2640](https://github.com/DataDog/browser-sdk/pull/2640))
+- 🔧 configure renovate to deduplicate subdependencies ([#2643](https://github.com/DataDog/browser-sdk/pull/2643))
+
 ## v5.11.0
 
 - ✨ [RUM-3349] enable the consent management API ([#2634](https://github.com/DataDog/browser-sdk/pull/2634))
