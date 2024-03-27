@@ -2,7 +2,7 @@ import type { LifeCycle } from '@datadog/browser-rum-core'
 import { ActionType, RumEventType, LifeCycleEventType } from '@datadog/browser-rum-core'
 import type { FrustrationRecord } from '../../../types'
 import { RecordType } from '../../../types'
-import type { RecordIds } from './recordIds'
+import type { RecordIds } from '../recordIds'
 import type { Tracker } from './types'
 
 export type FrustrationCallback = (record: FrustrationRecord) => void

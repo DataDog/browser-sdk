@@ -3,10 +3,10 @@ import type { RawRumActionEvent } from '@datadog/browser-rum-core'
 import { ActionType, LifeCycle, LifeCycleEventType, RumEventType, FrustrationType } from '@datadog/browser-rum-core'
 import type { RawRumEventCollectedData } from 'packages/rum-core/src/domain/lifeCycle'
 import { RecordType } from '../../../types'
+import type { RecordIds } from '../recordIds'
+import { initRecordIds } from '../recordIds'
 import type { FrustrationCallback } from './trackFrustration'
 import { trackFrustration } from './trackFrustration'
-import type { RecordIds } from './recordIds'
-import { initRecordIds } from './recordIds'
 import type { Tracker } from './types'
 
 describe('trackFrustration', () => {

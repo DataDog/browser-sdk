@@ -16,13 +16,12 @@ import { createElementsScrollPositions } from '../elementsScrollPositions'
 import type { ShadowRootCallBack } from '../shadowRootsController'
 import { appendElement, appendText } from '../../../../../rum-core/test'
 import { sortAddedAndMovedNodes, trackMutation } from './trackMutation'
-import type { MutationCallBack } from './trackMutation'
+import type { MutationCallBack, MutationTracker } from './trackMutation'
 import { DEFAULT_SHADOW_ROOT_CONTROLLER } from './trackers.specHelper'
-import type { FlushableTracker } from './types'
 
 describe('trackMutation', () => {
   let sandbox: HTMLElement
-  let mutationTracker: FlushableTracker
+  let mutationTracker: MutationTracker
 
   let addShadowRootSpy: jasmine.Spy<ShadowRootCallBack>
   let removeShadowRootSpy: jasmine.Spy<ShadowRootCallBack>

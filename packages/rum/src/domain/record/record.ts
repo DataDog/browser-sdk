@@ -2,9 +2,8 @@ import { sendToExtension } from '@datadog/browser-core'
 import type { LifeCycle, RumConfiguration, ViewContexts } from '@datadog/browser-rum-core'
 import type { BrowserRecord } from '../../types'
 import * as replayStats from '../replayStats'
-import type { FlushableTracker, Tracker } from './trackers'
+import type { Tracker } from './trackers'
 import {
-  initRecordIds,
   trackFocus,
   trackFrustration,
   trackInput,
@@ -21,6 +20,7 @@ import { createElementsScrollPositions } from './elementsScrollPositions'
 import type { ShadowRootsController } from './shadowRootsController'
 import { initShadowRootsController } from './shadowRootsController'
 import { startFullSnapshots } from './startFullSnapshots'
+import { initRecordIds } from './recordIds'
 
 export interface RecordOptions {
   emit?: (record: BrowserRecord) => void
@@ -71,12 +71,7 @@ export function record(options: RecordOptions): RecordAPI {
   }
 
   const recordIds = initRecordIds()
-  const mutationTracker: FlushableTracker = trackMutation(
-    emitAndComputeStats,
-    configuration,
-    shadowRootsController,
-    document
-  )
+  const mutationTracker = trackMutation(emitAndComputeStats, configuration, shadowRootsController, document)
   const trackers: Tracker[] = [
     mutationTracker,
     trackMove(configuration, emitAndComputeStats),

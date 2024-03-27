@@ -7,8 +7,8 @@ import { assembleIncrementalSnapshot } from '../assembly'
 import { getEventTarget } from '../eventsUtils'
 import { getNodePrivacyLevel } from '../privacy'
 import { getSerializedNodeId, hasSerializedNode } from '../serialization'
+import type { RecordIds } from '../recordIds'
 import { tryToComputeCoordinates } from './trackMove'
-import type { RecordIds } from './recordIds'
 import type { Tracker } from './types'
 
 const eventTypeToMouseInteraction = {
