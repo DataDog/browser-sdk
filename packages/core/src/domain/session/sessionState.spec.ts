@@ -4,7 +4,7 @@ import type { SessionState } from './sessionState'
 import { expandSessionState, isSessionInExpiredState, toSessionString, toSessionState } from './sessionState'
 
 describe('session state utilities', () => {
-  const EXPIRED_SESSION: SessionState = {}
+  const EXPIRED_SESSION: SessionState = { id: 'null' }
   const SERIALIZED_EXPIRED_SESSION = ''
   const LIVE_SESSION: SessionState = { created: '0', id: '123' }
   const SERIALIZED_LIVE_SESSION = 'created=0&id=123'

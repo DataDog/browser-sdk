@@ -33,7 +33,7 @@ describe('session in local storage strategy', () => {
     localStorageStrategy.persistSession(sessionState)
     localStorageStrategy.clearSession()
     const session = localStorageStrategy?.retrieveSession()
-    expect(session).toEqual({})
+    expect(session).toEqual({ id: 'null' })
     expect(window.localStorage.getItem(SESSION_STORE_KEY)).toBeNull()
   })
 
@@ -50,6 +50,6 @@ describe('session in local storage strategy', () => {
     const localStorageStrategy = initLocalStorageStrategy()
     localStorage.setItem(SESSION_STORE_KEY, '{test:42}')
     const session = localStorageStrategy?.retrieveSession()
-    expect(session).toEqual({})
+    expect(session).toEqual({ id: 'null' })
   })
 })

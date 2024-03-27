@@ -1,5 +1,5 @@
 import { RecordType } from '@datadog/browser-rum/src/types'
-import { expireSession, findSessionCookie, renewSession } from '../../lib/helpers/session'
+import { expireSession, getSessionFromCookie, renewSession } from '../../lib/helpers/session'
 import { bundleSetup, createTest, flushEvents, waitForRequests } from '../../lib/framework'
 import { browserExecute, browserExecuteAsync, sendXhr } from '../../lib/helpers/browser'
 
@@ -69,7 +69,8 @@ describe('rum sessions', () => {
         })
         await flushEvents()
 
-        expect(await findSessionCookie()).toBeUndefined()
+        const session = await getSessionFromCookie()
+        expect(session.id).toBe('null')
         expect(intakeRegistry.rumActionEvents.length).toBe(0)
       })
 
@@ -79,10 +80,11 @@ describe('rum sessions', () => {
         await browserExecute(() => {
           window.DD_RUM!.stopSession()
         })
+
         await (await $('html')).click()
 
         // The session is not created right away, let's wait until we see a cookie
-        await browser.waitUntil(async () => Boolean(await findSessionCookie()))
+        await browser.waitUntil(async () => (await getSessionFromCookie()).id !== 'null')
 
         await browserExecute(() => {
           window.DD_RUM!.addAction('foo')
@@ -90,7 +92,8 @@ describe('rum sessions', () => {
 
         await flushEvents()
 
-        expect(await findSessionCookie()).not.toBeUndefined()
+        const session = await getSessionFromCookie()
+        expect(session.id).not.toBe('null')
         expect(intakeRegistry.rumActionEvents.length).toBe(1)
       })
 

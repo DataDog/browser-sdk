@@ -1,8 +1,10 @@
 import * as os from 'os'
 
-// typing issue for execute https://github.com/webdriverio/webdriverio/issues/3796
-export function browserExecute(fn: any) {
-  return browser.execute(fn)
+export function browserExecute<ReturnValue, InnerArguments extends any[]>(
+  fn: (...args: InnerArguments) => ReturnValue,
+  ...args: InnerArguments
+): Promise<ReturnValue> {
+  return browser.execute(fn, ...args)
 }
 
 export function browserExecuteAsync<R, A, B>(fn: (a: A, b: B, done: (result: R) => void) => any, a: A, b: B): Promise<R>
@@ -101,6 +103,19 @@ export function deleteAllCookies() {
       document.cookie = `${name}=;expires=Thu, 01 Jan 1970 00:00:00 GMT;samesite=strict`
     }
   })
+}
+
+export function setCookie(name: string, value: string, expiresDelay: number = 0) {
+  return browserExecute(
+    (name, value, expiresDelay) => {
+      const expires = new Date(Date.now() + expiresDelay).toUTCString()
+
+      document.cookie = `${name}=${value};expires=${expires};`
+    },
+    name,
+    value,
+    expiresDelay
+  )
 }
 
 export async function sendXhr(url: string, headers: string[][] = []): Promise<string> {

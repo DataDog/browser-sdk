@@ -66,7 +66,7 @@ const cookieOptions: CookieOptions = {}
         processSessionStoreOperations({ process: processSpy, after: afterSpy }, sessionStoreStrategy)
 
         expect(processSpy).toHaveBeenCalledWith(initialSession)
-        const expectedSession = {}
+        const expectedSession = { id: 'null' }
         expect(sessionStoreStrategy.retrieveSession()).toEqual(expectedSession)
         expect(afterSpy).toHaveBeenCalledWith(expectedSession)
       })
@@ -119,7 +119,7 @@ const cookieOptions: CookieOptions = {}
         processSessionStoreOperations({ process: processSpy, after: afterSpy }, sessionStoreStrategy)
 
         expect(processSpy).toHaveBeenCalledWith({ ...initialSession, lock: jasmine.any(String) })
-        const expectedSession = {}
+        const expectedSession = { id: 'null' }
         expect(sessionStoreStrategy.retrieveSession()).toEqual(expectedSession)
         expect(afterSpy).toHaveBeenCalledWith(expectedSession)
       })

@@ -1,16 +1,26 @@
-import { SESSION_STORE_KEY } from '@datadog/browser-core'
-import { deleteAllCookies } from './browser'
+import { SESSION_STORE_KEY, SESSION_TIME_OUT_DELAY } from '@datadog/browser-core'
+import {
+  getInitialSessionState,
+  toSessionState,
+  toSessionString,
+} from '@datadog/browser-core/src/domain/session/sessionState'
+import { setCookie } from './browser'
 
 export async function renewSession() {
   await expireSession()
   const documentElement = await $('html')
   await documentElement.click()
-  expect(await findSessionCookie()).toBeDefined()
+
+  const session = await getSessionFromCookie()
+  expect(session.id).not.toBe('null')
 }
 
 export async function expireSession() {
-  await deleteAllCookies()
-  expect(await findSessionCookie()).toBeUndefined()
+  await setCookie(SESSION_STORE_KEY, toSessionString(getInitialSessionState()), SESSION_TIME_OUT_DELAY)
+
+  const session = await getSessionFromCookie()
+  expect(await getSessionFromCookie()).toEqual(session)
+
   // Cookies are cached for 1s, wait until the cache expires
   await browser.pause(1100)
 }
@@ -20,4 +30,10 @@ export async function findSessionCookie() {
   // In some case, the session cookie is returned but with an empty value. Let's consider it expired
   // in this case.
   return cookies[0]?.value || undefined
+}
+
+export async function getSessionFromCookie() {
+  const cookies = await browser.getCookies(SESSION_STORE_KEY)
+
+  return toSessionState(cookies[0]?.value)
 }

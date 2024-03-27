@@ -1,6 +1,6 @@
 import { createTest, flushEvents } from '../lib/framework'
 import { browserExecute } from '../lib/helpers/browser'
-import { findSessionCookie } from '../lib/helpers/session'
+import { findSessionCookie, getSessionFromCookie } from '../lib/helpers/session'
 
 describe('tracking consent', () => {
   describe('RUM', () => {
@@ -38,8 +38,10 @@ describe('tracking consent', () => {
 
         await flushEvents()
 
+        const session = await getSessionFromCookie()
+
         expect(intakeRegistry.rumActionEvents).toEqual([])
-        expect(await findSessionCookie()).toBeUndefined()
+        expect(session.id).toBe('null')
       })
 
     createTest('starts a new session when tracking consent is granted again')
