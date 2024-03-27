@@ -17,7 +17,6 @@ export function computeFrustration(clicks: Click[], rageClick: Click) {
   }
 
   const hasSelectionChanged = clicks.some((click) => click.getUserActivity().selection)
-  const didScrollOccur = clicks.some((click) => click.getUserActivity().scroll)
   clicks.forEach((click) => {
     if (click.hasError) {
       click.addFrustration(FrustrationType.ERROR_CLICK)
@@ -25,9 +24,7 @@ export function computeFrustration(clicks: Click[], rageClick: Click) {
     if (
       isDead(click) &&
       // Avoid considering clicks part of a double-click or triple-click selections as dead clicks
-      !hasSelectionChanged &&
-      // Avoid considering clicks that resulted in a scroll as dead clicks
-      !didScrollOccur
+      !hasSelectionChanged
     ) {
       click.addFrustration(FrustrationType.DEAD_CLICK)
     }

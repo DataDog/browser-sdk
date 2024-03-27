@@ -68,13 +68,6 @@ describe('computeFrustration', () => {
       expect(getFrustrations(clicks[1])).toEqual([])
     })
 
-    it('does not add a dead frustration when clicking to scroll', () => {
-      clicks[0] = createFakeClick({ userActivity: { scroll: true } })
-      clicks[1] = createFakeClick()
-      computeFrustration(clicks, rageClick)
-      expect(getFrustrations(clicks[1])).toEqual([])
-    })
-
     it('adds an error frustration to clicks that have an error', () => {
       clicks[1] = createFakeClick({ hasError: true })
       computeFrustration(clicks, rageClick)
