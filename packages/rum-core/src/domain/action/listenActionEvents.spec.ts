@@ -207,6 +207,41 @@ describe('listenActionEvents', () => {
     }
   })
 
+  describe('scroll', () => {
+    it('click that do not trigger a scroll event should not report scroll user activity', () => {
+      emulateClick()
+      expect(hasScrollUserActivity()).toBe(false)
+    })
+
+    it('click that triggers a scroll event during the click should report a scroll user activity', () => {
+      emulateClick({
+        beforeMouseUp() {
+          emulateScrollEvent()
+        },
+      })
+      expect(hasScrollUserActivity()).toBe(true)
+    })
+
+    it('click that triggers a scroll event slightly after the click should report a scroll user activity', () => {
+      emulateClick()
+      emulateScrollEvent()
+      expect(hasScrollUserActivity()).toBe(true)
+    })
+
+    it('scroll events that precede clicks should not be taken into account', () => {
+      emulateScrollEvent()
+      emulateClick()
+      expect(hasScrollUserActivity()).toBe(false)
+    })
+
+    function emulateScrollEvent() {
+      window.dispatchEvent(createNewEvent('scroll'))
+    }
+    function hasScrollUserActivity() {
+      return actionEventsHooks.onPointerUp.calls.mostRecent().args[2]().scroll
+    }
+  })
+
   function emulateClick({
     beforeMouseUp,
     target = document.body,
