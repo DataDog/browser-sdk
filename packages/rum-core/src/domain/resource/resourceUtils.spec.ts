@@ -1,5 +1,5 @@
-import type { Duration, RelativeTime, ServerDuration } from '@datadog/browser-core'
-import { SPEC_ENDPOINTS } from '@datadog/browser-core/test'
+import { ExperimentalFeature, type Duration, type RelativeTime, type ServerDuration } from '@datadog/browser-core'
+import { SPEC_ENDPOINTS, mockExperimentalFeatures } from '@datadog/browser-core/test'
 import { RumPerformanceEntryType, type RumPerformanceResourceTiming } from '../../browser/performanceCollection'
 import type { RumConfiguration } from '../configuration'
 import { validateAndBuildRumConfiguration } from '../configuration'
@@ -196,31 +196,37 @@ describe('computePerformanceResourceDetails', () => {
   })
   ;[
     {
+      timing: 'connect' as const,
+      reason: 'connectStart > connectEnd',
       connectEnd: 10 as RelativeTime,
       connectStart: 20 as RelativeTime,
-      reason: 'connectStart > connectEnd',
     },
     {
+      timing: 'dns' as const,
+      reason: 'domainLookupStart > domainLookupEnd',
       domainLookupEnd: 10 as RelativeTime,
       domainLookupStart: 20 as RelativeTime,
-      reason: 'domainLookupStart > domainLookupEnd',
     },
     {
+      timing: 'download' as const,
       reason: 'responseStart > responseEnd',
       responseEnd: 10 as RelativeTime,
       responseStart: 20 as RelativeTime,
     },
     {
+      timing: 'first_byte' as const,
       reason: 'requestStart > responseStart',
       requestStart: 20 as RelativeTime,
       responseStart: 10 as RelativeTime,
     },
     {
+      timing: 'redirect' as const,
       reason: 'redirectStart > redirectEnd',
       redirectEnd: 15 as RelativeTime,
       redirectStart: 20 as RelativeTime,
     },
     {
+      timing: 'ssl' as const,
       connectEnd: 10 as RelativeTime,
       reason: 'secureConnectionStart > connectEnd',
       secureConnectionStart: 20 as RelativeTime,
@@ -231,10 +237,17 @@ describe('computePerformanceResourceDetails', () => {
       fetchStart: 10 as RelativeTime,
       reason: 'negative timing start',
     },
-  ].forEach(({ reason, ...overrides }) => {
-    it(`should not compute entry when ${reason}`, () => {
+  ].forEach(({ reason, timing, ...overrides }) => {
+    it(`[without tolerant-resource-timings] should not compute entry when ${reason}`, () => {
       expect(computePerformanceResourceDetails(generateResourceWith(overrides))).toBeUndefined()
     })
+
+    if (timing) {
+      it(`[with tolerant-resource-timings] should not include the '${timing}' timing when ${reason}`, () => {
+        mockExperimentalFeatures([ExperimentalFeature.TOLERANT_RESOURCE_TIMINGS])
+        expect(computePerformanceResourceDetails(generateResourceWith(overrides))![timing]).toBeUndefined()
+      })
+    }
   })
 
   it('should allow really fast document resource', () => {

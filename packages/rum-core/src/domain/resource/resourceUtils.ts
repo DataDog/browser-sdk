@@ -2,8 +2,10 @@ import type { RelativeTime, ServerDuration } from '@datadog/browser-core'
 import {
   addTelemetryDebug,
   elapsed,
+  ExperimentalFeature,
   getPathName,
   includes,
+  isExperimentalFeatureEnabled,
   isValidUrl,
   ResourceType,
   toServerDuration,
@@ -19,8 +21,8 @@ export interface PerformanceResourceDetails {
   dns?: PerformanceResourceDetailsElement
   connect?: PerformanceResourceDetailsElement
   ssl?: PerformanceResourceDetailsElement
-  first_byte: PerformanceResourceDetailsElement
-  download: PerformanceResourceDetailsElement
+  first_byte?: PerformanceResourceDetailsElement
+  download?: PerformanceResourceDetailsElement
 }
 
 export const FAKE_INITIAL_DOCUMENT = 'initial_document'
@@ -113,21 +115,22 @@ export function computePerformanceResourceDetails(
   }
 
   // Make sure a connection occurred
-  if (connectEnd !== fetchStart) {
+  if (fetchStart < connectEnd) {
     details.connect = formatTiming(startTime, connectStart, connectEnd)
 
     // Make sure a secure connection occurred
-    if (areInOrder(connectStart, secureConnectionStart, connectEnd)) {
+    if (connectStart <= secureConnectionStart && secureConnectionStart <= connectEnd) {
       details.ssl = formatTiming(startTime, secureConnectionStart, connectEnd)
     }
   }
 
   // Make sure a domain lookup occurred
-  if (domainLookupEnd !== fetchStart) {
+  if (fetchStart < domainLookupEnd) {
     details.dns = formatTiming(startTime, domainLookupStart, domainLookupEnd)
   }
 
-  if (hasRedirection(entry)) {
+  // Make sure a redirection occurred
+  if (startTime < redirectEnd) {
     details.redirect = formatTiming(startTime, redirectStart, redirectEnd)
   }
 
@@ -135,6 +138,10 @@ export function computePerformanceResourceDetails(
 }
 
 export function toValidEntry(entry: RumPerformanceResourceTiming) {
+  if (isExperimentalFeatureEnabled(ExperimentalFeature.TOLERANT_RESOURCE_TIMINGS)) {
+    return entry
+  }
+
   // Ensure timings are in the right order. On top of filtering out potential invalid
   // RumPerformanceResourceTiming, it will ignore entries from requests where timings cannot be
   // collected, for example cross origin requests without a "Timing-Allow-Origin" header allowing
@@ -163,11 +170,12 @@ export function toValidEntry(entry: RumPerformanceResourceTiming) {
 function hasRedirection(entry: RumPerformanceResourceTiming) {
   return entry.redirectEnd > entry.startTime
 }
-
 function formatTiming(origin: RelativeTime, start: RelativeTime, end: RelativeTime) {
-  return {
-    duration: toServerDuration(elapsed(start, end)),
-    start: toServerDuration(elapsed(origin, start)),
+  if (origin <= start && start <= end) {
+    return {
+      duration: toServerDuration(elapsed(start, end)),
+      start: toServerDuration(elapsed(origin, start)),
+    }
   }
 }
 
