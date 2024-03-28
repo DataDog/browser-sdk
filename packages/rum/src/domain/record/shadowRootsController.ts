@@ -1,6 +1,6 @@
 import type { RumConfiguration } from '@datadog/browser-rum-core'
-import type { InputCallback, MutationCallBack } from './observers'
-import { initInputObserver, initMutationObserver } from './observers'
+import type { InputCallback, MutationCallBack } from './trackers'
+import { trackInput, trackMutation } from './trackers'
 
 interface ShadowRootController {
   stop: () => void
@@ -33,19 +33,14 @@ export const initShadowRootsController = (
       if (controllerByShadowRoot.has(shadowRoot)) {
         return
       }
-      const { stop: stopMutationObserver, flush } = initMutationObserver(
-        mutationCb,
-        configuration,
-        shadowRootsController,
-        shadowRoot
-      )
+      const mutationTracker = trackMutation(mutationCb, configuration, shadowRootsController, shadowRoot)
       // the change event no do bubble up across the shadow root, we have to listen on the shadow root
-      const stopInputObserver = initInputObserver(configuration, inputCb, shadowRoot)
+      const inputTracker = trackInput(configuration, inputCb, shadowRoot)
       controllerByShadowRoot.set(shadowRoot, {
-        flush,
+        flush: () => mutationTracker.flush(),
         stop: () => {
-          stopMutationObserver()
-          stopInputObserver()
+          mutationTracker.stop()
+          inputTracker.stop()
         },
       })
     },

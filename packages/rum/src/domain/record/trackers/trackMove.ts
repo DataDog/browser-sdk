@@ -1,20 +1,18 @@
-import type { ListenerHandler } from '@datadog/browser-core'
 import { addEventListeners, addTelemetryDebug, DOM_EVENT, throttle } from '@datadog/browser-core'
 import type { RumConfiguration } from '@datadog/browser-rum-core'
 import { getSerializedNodeId, hasSerializedNode } from '../serialization'
-import type { MousePosition } from '../../../types'
+import type { BrowserIncrementalSnapshotRecord, MousemoveData, MousePosition } from '../../../types'
 import { IncrementalSource } from '../../../types'
 import { getEventTarget, isTouchEvent } from '../eventsUtils'
 import { convertMouseEventToLayoutCoordinates } from '../viewports'
+import { assembleIncrementalSnapshot } from '../assembly'
+import type { Tracker } from './types'
 
 const MOUSE_MOVE_OBSERVER_THRESHOLD = 50
 
-export type MousemoveCallBack = (
-  p: MousePosition[],
-  source: typeof IncrementalSource.MouseMove | typeof IncrementalSource.TouchMove
-) => void
+export type MousemoveCallBack = (incrementalSnapshotRecord: BrowserIncrementalSnapshotRecord) => void
 
-export function initMoveObserver(configuration: RumConfiguration, cb: MousemoveCallBack): ListenerHandler {
+export function trackMove(configuration: RumConfiguration, moveCb: MousemoveCallBack): Tracker {
   const { throttled: updatePosition, cancel: cancelThrottle } = throttle(
     (event: MouseEvent | TouchEvent) => {
       const target = getEventTarget(event)
@@ -30,7 +28,12 @@ export function initMoveObserver(configuration: RumConfiguration, cb: MousemoveC
           y: coordinates.y,
         }
 
-        cb([position], isTouchEvent(event) ? IncrementalSource.TouchMove : IncrementalSource.MouseMove)
+        moveCb(
+          assembleIncrementalSnapshot<MousemoveData>(
+            isTouchEvent(event) ? IncrementalSource.TouchMove : IncrementalSource.MouseMove,
+            { positions: [position] }
+          )
+        )
       }
     },
     MOUSE_MOVE_OBSERVER_THRESHOLD,
@@ -50,9 +53,11 @@ export function initMoveObserver(configuration: RumConfiguration, cb: MousemoveC
     }
   )
 
-  return () => {
-    removeListener()
-    cancelThrottle()
+  return {
+    stop: () => {
+      removeListener()
+      cancelThrottle()
+    },
   }
 }
 

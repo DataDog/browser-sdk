@@ -55,6 +55,7 @@ export interface RequestCompleteEvent {
   input?: unknown
   init?: RequestInit
   error?: Error
+  isAborted: boolean
 }
 
 let nextRequestIndex = 1
@@ -100,6 +101,7 @@ export function trackXhr(lifeCycle: LifeCycle, configuration: RumConfiguration, 
           type: RequestType.XHR,
           url: context.url,
           xhr: context.xhr,
+          isAborted: context.isAborted,
         })
         break
     }
@@ -143,6 +145,7 @@ export function trackFetch(lifeCycle: LifeCycle, configuration: RumConfiguration
             response: context.response,
             init: context.init,
             input: context.input,
+            isAborted: context.isAborted,
           })
         })
         break
