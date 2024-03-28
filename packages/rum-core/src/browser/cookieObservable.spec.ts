@@ -39,6 +39,7 @@ describe('cookieObservable', () => {
       done()
     })
     setCookie(COOKIE_NAME, 'foo', COOKIE_DURATION)
+    clock.tick(STORAGE_POLL_DELAY)
   })
 
   it('should notify observers on cookie change when cookieStore is not supported', () => {
