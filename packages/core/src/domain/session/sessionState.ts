@@ -25,7 +25,11 @@ export function isSessionInitialized(session: SessionState) {
 }
 
 export function isSessionInExpiredState(session: SessionState) {
-  return session.id === 'null'
+  // an expired session is `{id = null}` or `{id = null, lock = whatever}`
+  return (
+    (Object.keys(session).length === 1 && session.id === 'null') ||
+    (Object.keys(session).length === 2 && session.id === 'null' && session.lock !== undefined)
+  )
 }
 
 export function expandSessionState(session: SessionState) {
