@@ -1,4 +1,4 @@
-import { cssEscape } from '@datadog/browser-core'
+import { cssEscape, getClassList, getParentElement } from '../browser/polyfills'
 import { DEFAULT_PROGRAMMATIC_ACTION_NAME_ATTRIBUTE } from './action/getActionNameFromElement'
 
 /**
@@ -64,7 +64,7 @@ export function getSelectorFromElement(targetElement: Element, actionNameAttribu
     targetElementSelector =
       uniqueSelectorAmongChildren || combineSelector(getPositionSelector(element), targetElementSelector)
 
-    element = element.parentElement
+    element = getParentElement(element)
   }
 
   return targetElementSelector
@@ -92,15 +92,14 @@ function getClassSelector(element: Element): string | undefined {
   if (element.tagName === 'BODY') {
     return
   }
-  if (element.classList.length > 0) {
-    for (let i = 0; i < element.classList.length; i += 1) {
-      const className = element.classList[i]
-      if (isGeneratedValue(className)) {
-        continue
-      }
-
-      return `${cssEscape(element.tagName)}.${cssEscape(className)}`
+  const classList = getClassList(element)
+  for (let i = 0; i < classList.length; i += 1) {
+    const className = classList[i]
+    if (isGeneratedValue(className)) {
+      continue
     }
+
+    return `${cssEscape(element.tagName)}.${cssEscape(className)}`
   }
 }
 
@@ -131,7 +130,7 @@ function getStableAttributeSelector(element: Element, actionNameAttribute: strin
 }
 
 function getPositionSelector(element: Element): string {
-  let sibling = element.parentElement!.firstElementChild
+  let sibling = getParentElement(element)!.firstElementChild
   let elementIndex = 1
 
   while (sibling && sibling !== element) {
@@ -182,7 +181,7 @@ function isSelectorUniqueGlobally(element: Element, selector: string): boolean {
  */
 function isSelectorUniqueAmongSiblings(element: Element, selector: string): boolean {
   return (
-    element.parentElement!.querySelectorAll(supportScopeSelector() ? combineSelector(':scope', selector) : selector)
+    getParentElement(element)!.querySelectorAll(supportScopeSelector() ? combineSelector(':scope', selector) : selector)
       .length === 1
   )
 }

@@ -1,4 +1,5 @@
-import { instrumentSetter, assign, DOM_EVENT, addEventListeners, forEach, noop, cssEscape } from '@datadog/browser-core'
+import { instrumentSetter, assign, DOM_EVENT, addEventListeners, forEach, noop } from '@datadog/browser-core'
+import { cssEscape } from '@datadog/browser-rum-core'
 import type { RumConfiguration } from '@datadog/browser-rum-core'
 import { NodePrivacyLevel } from '../../../constants'
 import { IncrementalSource } from '../../../types'
