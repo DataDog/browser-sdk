@@ -46,6 +46,7 @@ import { startPageStateHistory } from '../domain/contexts/pageStateHistory'
 import type { CommonContext } from '../domain/contexts/commonContext'
 import { startDisplayContext } from '../domain/contexts/displayContext'
 import { startVitalCollection } from '../domain/vital/vitalCollection'
+import { startCiVisibilityContext } from '../domain/contexts/ciVisibilityContext'
 import type { RecorderApi } from './rumPublicApi'
 
 export type StartRum = typeof startRum
@@ -230,6 +231,7 @@ export function startRumEventCollection(
   )
 
   const displayContext = startDisplayContext(configuration)
+  const ciVisibilityContext = startCiVisibilityContext(configuration)
 
   startRumAssembly(
     configuration,
@@ -239,6 +241,7 @@ export function startRumEventCollection(
     urlContexts,
     actionContexts,
     displayContext,
+    ciVisibilityContext,
     getCommonContext,
     reportError
   )
@@ -250,6 +253,7 @@ export function startRumEventCollection(
     addAction,
     actionContexts,
     stop: () => {
+      ciVisibilityContext.stop()
       displayContext.stop()
       pageStateHistory.stop()
       urlContexts.stop()

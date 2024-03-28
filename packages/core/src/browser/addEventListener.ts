@@ -1,7 +1,7 @@
 import { monitor } from '../tools/monitor'
 import { getZoneJsOriginalValue } from '../tools/getZoneJsOriginalValue'
 import type { Configuration } from '../domain/configuration'
-import type { VisualViewport, VisualViewportEventMap } from './types'
+import type { CookieStore, CookieStoreEventMap, VisualViewport, VisualViewportEventMap } from './types'
 
 export type TrustableEvent<E extends Event = Event> = E & { __ddIsTrusted?: boolean }
 
@@ -75,7 +75,9 @@ type EventMapFor<T> = T extends Window
               ? PerformanceEventMap
               : T extends Worker
                 ? WorkerEventMap
-                : Record<never, never>
+                : T extends CookieStore
+                  ? CookieStoreEventMap
+                  : Record<never, never>
 
 /**
  * Add an event listener to an event target object (Window, Element, mock object...).  This provides
