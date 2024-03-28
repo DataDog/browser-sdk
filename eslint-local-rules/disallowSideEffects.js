@@ -29,6 +29,9 @@ const pathsWithSideEffect = new Set([
   `${packagesRoot}/logs/src/entries/main.ts`,
   `${packagesRoot}/rum/src/entries/main.ts`,
   `${packagesRoot}/rum-slim/src/entries/main.ts`,
+  `${packagesRoot}/react/src/entries/main.ts`,
+  `${packagesRoot}/react/src/lib/datadogContext.ts`,
+  `${packagesRoot}/react/src/hooks/useRoutesWithTracker.ts`,
 ])
 
 // Those packages are known to have no side effects when evaluated
