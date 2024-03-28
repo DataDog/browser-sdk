@@ -96,6 +96,7 @@ export {
   deleteCookie,
   resetInitCookies,
 } from './browser/cookie'
+export { CookieStore } from './browser/types'
 export { initXhrObservable, XhrCompleteContext, XhrStartContext } from './browser/xhrObservable'
 export { initFetchObservable, FetchResolveContext, FetchStartContext, FetchContext } from './browser/fetchObservable'
 export { createPageExitObservable, PageExitEvent, PageExitReason, isPageExitReason } from './browser/pageExitObservable'

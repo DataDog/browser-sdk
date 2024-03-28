@@ -1,4 +1,4 @@
-import type { Configuration } from '@datadog/browser-core'
+import type { Configuration, CookieStore } from '@datadog/browser-core'
 import {
   setInterval,
   clearInterval,
@@ -7,16 +7,17 @@ import {
   ONE_SECOND,
   findCommaSeparatedValue,
 } from '@datadog/browser-core'
-import type { CookieChangeItem, CookieStore } from 'packages/core/src/browser/types'
 
 export interface CookieStoreWindow extends Window {
-  cookieStore: CookieStore
+  cookieStore?: CookieStore
 }
 
 export type CookieObservable = ReturnType<typeof createCookieObservable>
 
+export type CookieChange = { name: string; value: string | undefined }
+
 export function createCookieObservable(configuration: Configuration, cookieName: string) {
-  return new Observable<CookieChangeItem>(
+  return new Observable<CookieChange>(
     (observable) =>
       listenToCookieStoreChange(configuration, cookieName, (event) => observable.notify(event)) ??
       watchCookieFallback(cookieName, (event) => observable.notify(event))
@@ -26,13 +27,13 @@ export function createCookieObservable(configuration: Configuration, cookieName:
 function listenToCookieStoreChange(
   configuration: Configuration,
   cookieName: string,
-  callback: (event: CookieChangeItem) => void
+  callback: (event: CookieChange) => void
 ) {
-  if (!('cookieStore' in window)) {
+  if (!(window as CookieStoreWindow).cookieStore) {
     return
   }
 
-  const listener = addEventListener(configuration, (window as CookieStoreWindow).cookieStore, 'change', (event) => {
+  const listener = addEventListener(configuration, (window as CookieStoreWindow).cookieStore!, 'change', (event) => {
     event.changed
       .concat(event.deleted)
       .filter((change) => change.name === cookieName)

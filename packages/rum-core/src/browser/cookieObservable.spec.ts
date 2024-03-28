@@ -2,10 +2,9 @@ import type { Subscription } from '@datadog/browser-core'
 import { ONE_MINUTE, STORAGE_POLL_DELAY, deleteCookie, setCookie } from '@datadog/browser-core'
 import type { Clock } from '@datadog/browser-core/test'
 import { mockClock } from '@datadog/browser-core/test'
-import type { CookieChangeItem } from 'packages/core/src/browser/types'
 import type { RumConfiguration } from '../domain/configuration'
 import { createCookieObservable } from './cookieObservable'
-import type { CookieObservable } from './cookieObservable'
+import type { CookieChange, CookieObservable } from './cookieObservable'
 
 const COOKIE_NAME = 'cookie_name'
 const COOKIE_DURATION = ONE_MINUTE
@@ -44,7 +43,7 @@ describe('cookieObservable', () => {
 
   it('should notify observers on cookie change when cookieStore is not supported', () => {
     Object.defineProperty(window, 'cookieStore', { get: () => undefined })
-    let cookieChange: CookieChangeItem | undefined
+    let cookieChange: CookieChange | undefined
     observable.subscribe((change) => (cookieChange = change))
 
     setCookie(COOKIE_NAME, 'foo', COOKIE_DURATION)

@@ -40,7 +40,6 @@ export interface VisualViewport extends EventTarget {
 }
 
 // Those are native API types that are not official supported by TypeScript yet
-// https://github.com/microsoft/TypeScript/blob/13c374a868c926f6a907666a5599992c1351b773/src/lib/dom.generated.d.ts#L15399-L15418
 
 export interface CookieStore extends EventTarget {}
 
