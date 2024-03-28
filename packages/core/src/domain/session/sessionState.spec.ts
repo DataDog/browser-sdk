@@ -5,7 +5,7 @@ import { expandSessionState, isSessionInExpiredState, toSessionString, toSession
 
 describe('session state utilities', () => {
   const EXPIRED_SESSION: SessionState = { id: 'null' }
-  const SERIALIZED_EXPIRED_SESSION = ''
+  const SERIALIZED_EXPIRED_SESSION = 'id=null'
   const LIVE_SESSION: SessionState = { created: '0', id: '123' }
   const SERIALIZED_LIVE_SESSION = 'created=0&id=123'
 

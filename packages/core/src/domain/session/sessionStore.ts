@@ -180,9 +180,7 @@ export function startSessionStore<TrackingType extends string>(
     // these checks could be removed when older versions will not be available/live anymore
     return (
       (sessionState.created === undefined || dateNow() - Number(sessionState.created) < SESSION_TIME_OUT_DELAY) &&
-      (sessionState.expire === undefined || dateNow() < Number(sessionState.expire)) &&
-      sessionState.id &&
-      sessionState.id !== 'null'
+      (sessionState.expire === undefined || dateNow() < Number(sessionState.expire))
     )
   }
 

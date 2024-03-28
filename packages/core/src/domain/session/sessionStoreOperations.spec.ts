@@ -14,19 +14,20 @@ const cookieOptions: CookieOptions = {}
   [
     {
       title: 'Cookie Storage',
-      sessionStoreStrategy: initCookieStrategy(cookieOptions),
+      createSessionStoreStrategy: () => initCookieStrategy(cookieOptions),
       stubStorageProvider: stubCookieProvider,
       storageKey: SESSION_STORE_KEY,
     },
     {
       title: 'Local Storage',
-      sessionStoreStrategy: initLocalStorageStrategy(),
+      createSessionStoreStrategy: () => initLocalStorageStrategy(),
       stubStorageProvider: stubLocalStorageProvider,
       storageKey: SESSION_STORE_KEY,
     },
   ] as const
-).forEach(({ title, sessionStoreStrategy, stubStorageProvider, storageKey }) => {
+).forEach(({ title, createSessionStoreStrategy, stubStorageProvider, storageKey }) => {
   describe(`process operations mechanism with ${title}`, () => {
+    const sessionStoreStrategy = createSessionStoreStrategy()
     let initialSession: SessionState
     let otherSession: SessionState
     let processSpy: jasmine.Spy<jasmine.Func>
@@ -114,11 +115,12 @@ const cookieOptions: CookieOptions = {}
 
       it('should clear session when process returns an empty value', () => {
         sessionStoreStrategy.persistSession(initialSession)
-        processSpy.and.returnValue({})
+        processSpy.and.returnValue({ id: 'null' })
 
         processSessionStoreOperations({ process: processSpy, after: afterSpy }, sessionStoreStrategy)
 
         expect(processSpy).toHaveBeenCalledWith({ ...initialSession, lock: jasmine.any(String) })
+
         const expectedSession = { id: 'null' }
         expect(sessionStoreStrategy.retrieveSession()).toEqual(expectedSession)
         expect(afterSpy).toHaveBeenCalledWith(expectedSession)

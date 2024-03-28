@@ -39,7 +39,7 @@ export function toSessionString(session: SessionState) {
 }
 
 export function toSessionState(sessionString: string | undefined | null) {
-  const session: SessionState = {} as SessionState
+  const session: SessionState = { id: 'null' } as SessionState
 
   if (isValidSessionString(sessionString)) {
     sessionString.split(SESSION_ENTRY_SEPARATOR).forEach((entry) => {
