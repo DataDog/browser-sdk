@@ -259,7 +259,7 @@ function formatSessionType(value: string, ...labels: string[]) {
 function endSession() {
   evalInWindow(
     `
-      document.cookie = '_dd_s=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/'
+      DD_RUM.stopSession()
     `
   ).catch((error) => logger.error('Error while ending session:', error))
 }

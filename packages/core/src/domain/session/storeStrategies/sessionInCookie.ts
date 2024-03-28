@@ -1,11 +1,11 @@
 import { isChromium } from '../../../tools/utils/browserDetection'
 import type { CookieOptions } from '../../../browser/cookie'
-import { getCurrentSite, areCookiesAuthorized, deleteCookie, getCookie, setCookie } from '../../../browser/cookie'
+import { getCurrentSite, areCookiesAuthorized, getCookie, setCookie } from '../../../browser/cookie'
 import type { InitConfiguration } from '../../configuration'
 import { tryOldCookiesMigration } from '../oldCookiesMigration'
-import { SESSION_EXPIRATION_DELAY } from '../sessionConstants'
+import { SESSION_EXPIRATION_DELAY, SESSION_TIME_OUT_DELAY } from '../sessionConstants'
 import type { SessionState } from '../sessionState'
-import { toSessionString, toSessionState } from '../sessionState'
+import { toSessionString, toSessionState, isSessionInitialized, getInitialSessionState } from '../sessionState'
 import type { SessionStoreStrategy, SessionStoreStrategyType } from './sessionStoreStrategy'
 import { SESSION_STORE_KEY } from './sessionStoreStrategy'
 
@@ -23,7 +23,13 @@ export function initCookieStrategy(cookieOptions: CookieOptions): SessionStoreSt
     isLockEnabled: isChromium(),
     persistSession: persistSessionCookie(cookieOptions),
     retrieveSession: retrieveSessionCookie,
-    clearSession: deleteSessionCookie(cookieOptions),
+    clearSession: () => setInitialSessionCookie(cookieOptions),
+  }
+
+  const sessionCookie = retrieveSessionCookie()
+
+  if (!isSessionInitialized(sessionCookie)) {
+    setInitialSessionCookie(cookieOptions)
   }
 
   tryOldCookiesMigration(cookieStore)
@@ -42,10 +48,8 @@ function retrieveSessionCookie(): SessionState {
   return toSessionState(sessionString)
 }
 
-function deleteSessionCookie(options: CookieOptions) {
-  return () => {
-    deleteCookie(SESSION_STORE_KEY, options)
-  }
+function setInitialSessionCookie(options: CookieOptions) {
+  setCookie(SESSION_STORE_KEY, toSessionString(getInitialSessionState()), SESSION_TIME_OUT_DELAY, options)
 }
 
 export function buildCookieOptions(initConfiguration: InitConfiguration) {

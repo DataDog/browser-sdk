@@ -81,7 +81,7 @@ describe('rum session manager', () => {
       expect(expireSessionSpy).not.toHaveBeenCalled()
       expect(renewSessionSpy).not.toHaveBeenCalled()
       expect(getCookie(SESSION_STORE_KEY)).toContain(`${RUM_SESSION_KEY}=${RumTrackingType.NOT_TRACKED}`)
-      expect(getCookie(SESSION_STORE_KEY)).not.toContain('id=')
+      expect(getCookie(SESSION_STORE_KEY)).toContain('id=null')
     })
 
     it('when tracked should keep existing session type and id', () => {
@@ -98,7 +98,7 @@ describe('rum session manager', () => {
     })
 
     it('when not tracked should keep existing session type', () => {
-      setCookie(SESSION_STORE_KEY, 'rum=0', DURATION)
+      setCookie(SESSION_STORE_KEY, 'id=null&rum=0', DURATION)
 
       startRumSessionManagerWithDefaults()
 
@@ -112,8 +112,8 @@ describe('rum session manager', () => {
 
       startRumSessionManagerWithDefaults({ configuration: { sessionSampleRate: 100, sessionReplaySampleRate: 100 } })
 
-      setCookie(SESSION_STORE_KEY, '', DURATION)
-      expect(getCookie(SESSION_STORE_KEY)).toBeUndefined()
+      setCookie(SESSION_STORE_KEY, 'id=null', DURATION)
+      expect(getCookie(SESSION_STORE_KEY)).toEqual('id=null')
       expect(expireSessionSpy).not.toHaveBeenCalled()
       expect(renewSessionSpy).not.toHaveBeenCalled()
       clock.tick(STORAGE_POLL_DELAY)
@@ -144,7 +144,7 @@ describe('rum session manager', () => {
 
     it('should return undefined if the session has expired', () => {
       const rumSessionManager = startRumSessionManagerWithDefaults()
-      setCookie(SESSION_STORE_KEY, '', DURATION)
+      setCookie(SESSION_STORE_KEY, 'id=null', DURATION)
       clock.tick(STORAGE_POLL_DELAY)
       expect(rumSessionManager.findTrackedSession()).toBe(undefined)
     })

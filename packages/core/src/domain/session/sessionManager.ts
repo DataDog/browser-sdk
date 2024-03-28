@@ -73,7 +73,7 @@ export function startSessionManager<TrackingType extends string>(
 
   function buildSessionContext() {
     return {
-      id: sessionStore.getSession().id!,
+      id: sessionStore.getSession().id,
       trackingType: sessionStore.getSession()[productKey] as TrackingType,
     }
   }

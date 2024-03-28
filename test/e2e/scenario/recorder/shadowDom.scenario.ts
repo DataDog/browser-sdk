@@ -271,5 +271,5 @@ async function getNodeInsideShadowDom(hostTag: string, selector: string) {
 }
 
 function isAdoptedStyleSheetsSupported(): Promise<boolean> {
-  return browserExecute(() => document.adoptedStyleSheets !== undefined) as Promise<boolean>
+  return browserExecute(() => document.adoptedStyleSheets !== undefined)
 }
