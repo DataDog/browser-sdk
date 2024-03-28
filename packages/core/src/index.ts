@@ -87,7 +87,14 @@ export {
 } from './domain/error/error'
 export { NonErrorPrefix } from './domain/error/error.types'
 export { Context, ContextArray, ContextValue } from './tools/serialisation/context'
-export { areCookiesAuthorized, getCookie, setCookie, deleteCookie } from './browser/cookie'
+export {
+  areCookiesAuthorized,
+  getCookie,
+  getInitCookie,
+  setCookie,
+  deleteCookie,
+  resetInitCookies,
+} from './browser/cookie'
 export { initXhrObservable, XhrCompleteContext, XhrStartContext } from './browser/xhrObservable'
 export { initFetchObservable, FetchResolveContext, FetchStartContext, FetchContext } from './browser/fetchObservable'
 export { createPageExitObservable, PageExitEvent, PageExitReason, isPageExitReason } from './browser/pageExitObservable'
