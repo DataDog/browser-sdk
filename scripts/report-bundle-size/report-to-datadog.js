@@ -1,4 +1,4 @@
-const { fetch } = require('../lib/execution-utils')
+const { fetchHandlingError } = require('../lib/execution-utils')
 const { getOrg2ApiKey } = require('../lib/secrets')
 const { browserSdkVersion } = require('../lib/browser-sdk-version')
 
@@ -29,7 +29,7 @@ function createLogData(bundleSizes, browserSdkVersion) {
 }
 
 async function sendLogToOrg2(bundleData = {}) {
-  await fetch(LOG_INTAKE_URL, {
+  await fetchHandlingError(LOG_INTAKE_URL, {
     method: 'POST',
     headers: LOG_INTAKE_REQUEST_HEADERS,
     body: JSON.stringify(bundleData),

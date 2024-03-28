@@ -3,6 +3,7 @@ export {
   InitConfiguration,
   validateAndBuildConfiguration,
   DefaultPrivacyLevel,
+  TraceContextInjection,
   EndpointBuilder,
   serializeConfiguration,
   INTAKE_SITE_STAGING,
@@ -136,10 +137,6 @@ export * from './tools/utils/stringUtils'
 export * from './tools/matchOption'
 export * from './tools/utils/responseUtils'
 export * from './tools/utils/typeUtils'
-export { ErrorHandling } from './domain/error/error.types'
-export { ErrorSource } from './domain/error/error.types'
-export { RawError } from './domain/error/error.types'
-export { RawErrorCause } from './domain/error/error.types'
-export { ErrorWithCause } from './domain/error/error.types'
+export { ErrorHandling, ErrorSource, RawError, RawErrorCause, ErrorWithCause, Csp } from './domain/error/error.types'
 export * from './domain/deflate'
 export * from './domain/connectivity'

@@ -1,21 +1,22 @@
 import { LifeCycle, LifeCycleEventType } from '@datadog/browser-rum-core'
 import { RecordType } from '../../../types'
-import type { ViewEndCallback } from './viewEndObserver'
-import { initViewEndObserver } from './viewEndObserver'
+import type { ViewEndCallback } from './trackViewEnd'
+import { trackViewEnd } from './trackViewEnd'
+import type { Tracker } from './types'
 
-describe('initMoveObserver', () => {
+describe('trackViewEnd', () => {
   let lifeCycle: LifeCycle
   let viewEndCb: jasmine.Spy<ViewEndCallback>
-  let stopObserver: () => void
+  let viewEndTracker: Tracker
 
   beforeEach(() => {
     lifeCycle = new LifeCycle()
     viewEndCb = jasmine.createSpy()
-    stopObserver = initViewEndObserver(lifeCycle, viewEndCb)
+    viewEndTracker = trackViewEnd(lifeCycle, viewEndCb)
   })
 
   afterEach(() => {
-    stopObserver()
+    viewEndTracker.stop()
   })
 
   it('should generate view end record', () => {

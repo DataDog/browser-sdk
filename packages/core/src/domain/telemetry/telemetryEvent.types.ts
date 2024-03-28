@@ -102,6 +102,10 @@ export type TelemetryConfigurationEvent = CommonTelemetryProperties & {
        */
       trace_sample_rate?: number
       /**
+       * The opt-in configuration to add trace context
+       */
+      trace_context_injection?: 'all' | 'sampled'
+      /**
        * The percentage of sessions with Browser RUM & Session Replay pricing tracked (deprecated in favor of session_replay_sample_rate)
        */
       premium_sample_rate?: number
@@ -113,6 +117,10 @@ export type TelemetryConfigurationEvent = CommonTelemetryProperties & {
        * The percentage of sessions with RUM & Session Replay pricing tracked
        */
       session_replay_sample_rate?: number
+      /**
+       * The initial tracking consent value
+       */
+      tracking_consent?: string
       /**
        * Whether the session replay start is handled manually
        */
@@ -193,6 +201,10 @@ export type TelemetryConfigurationEvent = CommonTelemetryProperties & {
        * Whether the Worker is loaded from an external URL
        */
       use_worker_url?: boolean
+      /**
+       * Whether intake requests are compressed
+       */
+      compress_intake_requests?: boolean
       /**
        * Whether user frustrations are tracked
        */
@@ -309,6 +321,27 @@ export type TelemetryConfigurationEvent = CommonTelemetryProperties & {
        * The version of Dart used in a Flutter application
        */
       dart_version?: string
+      /**
+       * The version of Unity used in a Unity application
+       */
+      unity_version?: string
+      /**
+       * The threshold used for iOS App Hangs monitoring (in milliseconds)
+       */
+      app_hang_threshold?: number
+
+      /**
+       * Either forward logs to the PCI compliant intake or not
+       */
+      use_pci_intake?: boolean
+      /**
+       * The tracer API used by the SDK. Possible values: 'Datadog', 'OpenTelemetry', 'OpenTracing'
+       */
+      tracer_api?: string
+      /**
+       * The version of the tracer API used by the SDK. Eg. '0.1.0'
+       */
+      tracer_api_version?: string
       [k: string]: unknown
     }
     [k: string]: unknown

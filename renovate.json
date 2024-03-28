@@ -12,12 +12,13 @@
   "prConcurrentLimit": 5,
   "prHourlyLimit": 1,
   "schedule": ["every weekend"],
+  "postUpdateOptions": ["yarnDedupeHighest"],
   "packageRules": [
     {
       "groupName": "all non-major dependencies",
       "groupSlug": "all-minor-patch",
       "matchUpdateTypes": ["minor", "patch"],
-      "excludePackageNames": ["karma-webpack"]
+      "excludePackageNames": ["karma-webpack", "typescript"]
     }
   ]
 }

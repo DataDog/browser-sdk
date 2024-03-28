@@ -21,6 +21,11 @@ function getTelemetryOrgApiKey(site) {
   return getSecretKey(`ci.browser-sdk.source-maps.${normalizedSite}.ci_api_key`)
 }
 
+function getTelemetryOrgApplicationKey(site) {
+  const normalizedSite = site.replaceAll('.', '-')
+  return getSecretKey(`ci.browser-sdk.telemetry.${normalizedSite}.ci_app_key`)
+}
+
 function getNpmToken() {
   return getSecretKey('ci.browser-sdk.npm_token')
 }
@@ -55,4 +60,5 @@ module.exports = {
   getOrg2ApiKey,
   getOrg2AppKey,
   getTelemetryOrgApiKey,
+  getTelemetryOrgApplicationKey,
 }

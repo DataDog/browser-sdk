@@ -21,6 +21,13 @@ export const DefaultPrivacyLevel = {
 } as const
 export type DefaultPrivacyLevel = (typeof DefaultPrivacyLevel)[keyof typeof DefaultPrivacyLevel]
 
+export const TraceContextInjection = {
+  ALL: 'all',
+  SAMPLED: 'sampled',
+} as const
+
+export type TraceContextInjection = (typeof TraceContextInjection)[keyof typeof TraceContextInjection]
+
 export interface InitConfiguration {
   // global options
   clientToken: string
@@ -178,7 +185,7 @@ export function validateAndBuildConfiguration(initConfiguration: InitConfigurati
   )
 }
 
-export function serializeConfiguration(initConfiguration: InitConfiguration): Partial<RawTelemetryConfiguration> {
+export function serializeConfiguration(initConfiguration: InitConfiguration) {
   return {
     session_sample_rate: initConfiguration.sessionSampleRate,
     telemetry_sample_rate: initConfiguration.telemetrySampleRate,
@@ -193,5 +200,6 @@ export function serializeConfiguration(initConfiguration: InitConfiguration): Pa
     allow_fallback_to_local_storage: !!initConfiguration.allowFallbackToLocalStorage,
     store_contexts_across_pages: !!initConfiguration.storeContextsAcrossPages,
     allow_untrusted_events: !!initConfiguration.allowUntrustedEvents,
-  }
+    tracking_consent: initConfiguration.trackingConsent,
+  } satisfies RawTelemetryConfiguration
 }

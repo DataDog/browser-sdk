@@ -112,6 +112,7 @@ function processRequest(
       requestInput: request.input,
       requestInit: request.init,
       error: request.error,
+      isAborted: request.isAborted,
     } as RumFetchResourceEventDomainContext | RumXhrResourceEventDomainContext,
   }
 }
@@ -170,12 +171,14 @@ function shouldIndexResource(
 }
 
 function computePerformanceEntryMetrics(timing: RumPerformanceResourceTiming) {
+  const { renderBlockingStatus } = timing
   return {
     resource: assign(
       {
         duration: computePerformanceResourceDuration(timing),
-        size: computeSize(timing),
+        render_blocking_status: renderBlockingStatus,
       },
+      computeSize(timing),
       computePerformanceResourceDetails(timing)
     ),
   }

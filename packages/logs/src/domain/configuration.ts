@@ -18,6 +18,7 @@ export interface LogsInitConfiguration extends InitConfiguration {
   forwardErrorsToLogs?: boolean | undefined
   forwardConsoleLogs?: ConsoleApiName[] | 'all' | undefined
   forwardReports?: RawReportType[] | 'all' | undefined
+  usePciIntake?: boolean
 }
 
 export type HybridInitConfiguration = Omit<LogsInitConfiguration, 'clientToken'>
@@ -37,6 +38,12 @@ export const DEFAULT_REQUEST_ERROR_RESPONSE_LENGTH_LIMIT = 32 * ONE_KIBI_BYTE
 export function validateAndBuildLogsConfiguration(
   initConfiguration: LogsInitConfiguration
 ): LogsConfiguration | undefined {
+  if (initConfiguration.usePciIntake === true && initConfiguration.site && initConfiguration.site !== 'datadoghq.com') {
+    display.warn(
+      'PCI compliance for Logs is only available for Datadog organizations in the US1 site. Default intake will be used.'
+    )
+  }
+
   const baseConfiguration = validateAndBuildConfiguration(initConfiguration)
 
   const forwardConsoleLogs = validateAndBuildForwardOption<ConsoleApiName>(
@@ -87,7 +94,7 @@ export function validateAndBuildForwardOption<T>(
   return option === 'all' ? allowedValues : removeDuplicates<T>(option)
 }
 
-export function serializeLogsConfiguration(configuration: LogsInitConfiguration): RawTelemetryConfiguration {
+export function serializeLogsConfiguration(configuration: LogsInitConfiguration) {
   const baseSerializedInitConfiguration = serializeConfiguration(configuration)
 
   return assign(
@@ -95,7 +102,8 @@ export function serializeLogsConfiguration(configuration: LogsInitConfiguration)
       forward_errors_to_logs: configuration.forwardErrorsToLogs,
       forward_console_logs: configuration.forwardConsoleLogs,
       forward_reports: configuration.forwardReports,
+      use_pci_intake: configuration.usePciIntake,
     },
     baseSerializedInitConfiguration
-  )
+  ) satisfies RawTelemetryConfiguration
 }

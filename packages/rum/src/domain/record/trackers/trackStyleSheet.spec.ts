@@ -2,12 +2,14 @@ import { isIE } from '@datadog/browser-core'
 import { isFirefox } from '@datadog/browser-core/test'
 import { serializeDocument, SerializationContextStatus } from '../serialization'
 import { createElementsScrollPositions } from '../elementsScrollPositions'
-import type { StyleSheetCallback } from './styleSheetObserver'
-import { initStyleSheetObserver, getPathToNestedCSSRule } from './styleSheetObserver'
-import { DEFAULT_CONFIGURATION, DEFAULT_SHADOW_ROOT_CONTROLLER } from './observers.specHelper'
+import { IncrementalSource, RecordType } from '../../../types'
+import type { StyleSheetCallback } from './trackStyleSheet'
+import { trackStyleSheet, getPathToNestedCSSRule } from './trackStyleSheet'
+import { DEFAULT_CONFIGURATION, DEFAULT_SHADOW_ROOT_CONTROLLER } from './trackers.specHelper'
+import type { Tracker } from './types'
 
-describe('initStyleSheetObserver', () => {
-  let stopStyleSheetObserver: () => void
+describe('trackStyleSheet', () => {
+  let styleSheetTracker: Tracker
   let styleSheetCallbackSpy: jasmine.Spy<StyleSheetCallback>
   let styleElement: HTMLStyleElement
   let styleSheet: CSSStyleSheet
@@ -30,34 +32,42 @@ describe('initStyleSheetObserver', () => {
   })
 
   afterEach(() => {
-    stopStyleSheetObserver()
+    styleSheetTracker.stop()
     styleElement.remove()
   })
 
   describe('observing high level css stylesheet', () => {
     describe('when inserting rules into stylesheet', () => {
       it('should capture CSSStyleRule insertion when no index is provided', () => {
-        stopStyleSheetObserver = initStyleSheetObserver(styleSheetCallbackSpy)
+        styleSheetTracker = trackStyleSheet(styleSheetCallbackSpy)
         styleSheet.insertRule(styleRule)
 
-        const styleSheetRule = styleSheetCallbackSpy.calls.first().args[0]
-        expect(styleSheetRule.id).toBeDefined()
-        expect(styleSheetRule.removes).toBeUndefined()
-        expect(styleSheetRule.adds?.length).toEqual(1)
-        expect(styleSheetRule.adds?.[0]?.index).toEqual(undefined)
+        expect(styleSheetCallbackSpy).toHaveBeenCalledWith({
+          type: RecordType.IncrementalSnapshot,
+          timestamp: jasmine.any(Number),
+          data: {
+            id: jasmine.any(Number),
+            source: IncrementalSource.StyleSheetRule,
+            adds: [jasmine.objectContaining({ index: undefined })],
+          },
+        })
       })
 
       it('should capture CSSStyleRule insertion when index is provided', () => {
         const index = 0
 
-        stopStyleSheetObserver = initStyleSheetObserver(styleSheetCallbackSpy)
+        styleSheetTracker = trackStyleSheet(styleSheetCallbackSpy)
         styleSheet.insertRule(styleRule, index)
 
-        const styleSheetRule = styleSheetCallbackSpy.calls.first().args[0]
-        expect(styleSheetRule.id).toBeDefined()
-        expect(styleSheetRule.removes).toBeUndefined()
-        expect(styleSheetRule.adds?.length).toEqual(1)
-        expect(styleSheetRule.adds?.[0]?.index).toEqual(index)
+        expect(styleSheetCallbackSpy).toHaveBeenCalledWith({
+          type: RecordType.IncrementalSnapshot,
+          timestamp: jasmine.any(Number),
+          data: {
+            id: jasmine.any(Number),
+            source: IncrementalSource.StyleSheetRule,
+            adds: [jasmine.objectContaining({ index })],
+          },
+        })
       })
     })
 
@@ -66,14 +76,18 @@ describe('initStyleSheetObserver', () => {
         styleSheet.insertRule(styleRule)
         const index = 0
 
-        stopStyleSheetObserver = initStyleSheetObserver(styleSheetCallbackSpy)
+        styleSheetTracker = trackStyleSheet(styleSheetCallbackSpy)
         styleSheet.deleteRule(index)
 
-        const styleSheetRule = styleSheetCallbackSpy.calls.first().args[0]
-        expect(styleSheetRule.id).toBeDefined()
-        expect(styleSheetRule.adds).toBeUndefined()
-        expect(styleSheetRule.removes?.length).toEqual(1)
-        expect(styleSheetRule.removes?.[0]).toEqual({ index })
+        expect(styleSheetCallbackSpy).toHaveBeenCalledWith({
+          type: RecordType.IncrementalSnapshot,
+          timestamp: jasmine.any(Number),
+          data: {
+            id: jasmine.any(Number),
+            source: IncrementalSource.StyleSheetRule,
+            removes: [jasmine.objectContaining({ index })],
+          },
+        })
       })
     })
   })
@@ -85,14 +99,18 @@ describe('initStyleSheetObserver', () => {
         styleSheet.insertRule('.main {opacity: 0}')
         const groupingRule = (styleSheet.cssRules[1] as CSSGroupingRule).cssRules[0] as CSSGroupingRule
 
-        stopStyleSheetObserver = initStyleSheetObserver(styleSheetCallbackSpy)
+        styleSheetTracker = trackStyleSheet(styleSheetCallbackSpy)
         groupingRule.insertRule(styleRule, 1)
 
-        const styleSheetRule = styleSheetCallbackSpy.calls.first().args[0]
-        expect(styleSheetRule.id).toBeDefined()
-        expect(styleSheetRule.removes).toBeUndefined()
-        expect(styleSheetRule.adds?.length).toEqual(1)
-        expect(styleSheetRule.adds?.[0]?.index).toEqual([1, 0, 1])
+        expect(styleSheetCallbackSpy).toHaveBeenCalledWith({
+          type: RecordType.IncrementalSnapshot,
+          timestamp: jasmine.any(Number),
+          data: {
+            id: jasmine.any(Number),
+            source: IncrementalSource.StyleSheetRule,
+            adds: [jasmine.objectContaining({ index: [1, 0, 1] })],
+          },
+        })
       })
 
       it('should not create record when inserting into a detached CSSGroupingRule', () => {
@@ -106,7 +124,7 @@ describe('initStyleSheetObserver', () => {
         const groupingRule = parentRule.cssRules[0] as CSSGroupingRule
         parentRule.deleteRule(0)
 
-        stopStyleSheetObserver = initStyleSheetObserver(styleSheetCallbackSpy)
+        styleSheetTracker = trackStyleSheet(styleSheetCallbackSpy)
         groupingRule.insertRule(styleRule, 0)
 
         expect(styleSheetCallbackSpy).not.toHaveBeenCalled()
@@ -119,14 +137,18 @@ describe('initStyleSheetObserver', () => {
         styleSheet.insertRule('.main {opacity: 0}')
         const groupingRule = (styleSheet.cssRules[1] as CSSGroupingRule).cssRules[0] as CSSGroupingRule
 
-        stopStyleSheetObserver = initStyleSheetObserver(styleSheetCallbackSpy)
+        styleSheetTracker = trackStyleSheet(styleSheetCallbackSpy)
         groupingRule.deleteRule(0)
 
-        const styleSheetRule = styleSheetCallbackSpy.calls.first().args[0]
-        expect(styleSheetRule.id).toBeDefined()
-        expect(styleSheetRule.adds).toBeUndefined()
-        expect(styleSheetRule.removes?.length).toEqual(1)
-        expect(styleSheetRule.removes?.[0]?.index).toEqual([1, 0, 0])
+        expect(styleSheetCallbackSpy).toHaveBeenCalledWith({
+          type: RecordType.IncrementalSnapshot,
+          timestamp: jasmine.any(Number),
+          data: {
+            id: jasmine.any(Number),
+            source: IncrementalSource.StyleSheetRule,
+            removes: [jasmine.objectContaining({ index: [1, 0, 0] })],
+          },
+        })
       })
 
       it('should not create record when removing from a detached CSSGroupingRule', () => {
@@ -140,7 +162,7 @@ describe('initStyleSheetObserver', () => {
         const groupingRule = parentRule.cssRules[0] as CSSGroupingRule
         parentRule.deleteRule(0)
 
-        stopStyleSheetObserver = initStyleSheetObserver(styleSheetCallbackSpy)
+        styleSheetTracker = trackStyleSheet(styleSheetCallbackSpy)
         groupingRule.deleteRule(0)
 
         expect(styleSheetCallbackSpy).not.toHaveBeenCalled()

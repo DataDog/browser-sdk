@@ -23,7 +23,7 @@ export function startLogsAssembly(
 
   lifeCycle.subscribe(
     LifeCycleEventType.RAW_LOG_COLLECTED,
-    ({ rawLogsEvent, messageContext = undefined, savedCommonContext = undefined }) => {
+    ({ rawLogsEvent, messageContext = undefined, savedCommonContext = undefined, domainContext }) => {
       const startTime = getRelativeTime(rawLogsEvent.date)
       const session = sessionManager.findTrackedSession(startTime)
 
@@ -47,7 +47,7 @@ export function startLogsAssembly(
       )
 
       if (
-        configuration.beforeSend?.(log) === false ||
+        configuration.beforeSend?.(log, domainContext) === false ||
         (log.origin !== ErrorSource.AGENT &&
           (logRateLimiters[log.status] ?? logRateLimiters['custom']).isLimitReached())
       ) {

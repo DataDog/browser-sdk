@@ -3,14 +3,15 @@ import { createNewEvent } from '@datadog/browser-core/test'
 import type { RumConfiguration } from '@datadog/browser-rum-core'
 import { SerializationContextStatus, serializeDocument } from '../serialization'
 import { createElementsScrollPositions } from '../elementsScrollPositions'
-import { IncrementalSource } from '../../../types'
-import type { MousemoveCallBack } from './moveObserver'
-import { initMoveObserver } from './moveObserver'
-import { DEFAULT_CONFIGURATION, DEFAULT_SHADOW_ROOT_CONTROLLER } from './observers.specHelper'
+import { IncrementalSource, RecordType } from '../../../types'
+import type { MousemoveCallBack } from './trackMove'
+import { trackMove } from './trackMove'
+import { DEFAULT_CONFIGURATION, DEFAULT_SHADOW_ROOT_CONTROLLER } from './trackers.specHelper'
+import type { Tracker } from './types'
 
-describe('initMoveObserver', () => {
+describe('trackMove', () => {
   let mouseMoveCallbackSpy: jasmine.Spy<MousemoveCallBack>
-  let stopObserver: () => void
+  let moveTracker: Tracker
   let configuration: RumConfiguration
 
   beforeEach(() => {
@@ -26,45 +27,53 @@ describe('initMoveObserver', () => {
     })
 
     mouseMoveCallbackSpy = jasmine.createSpy()
-    stopObserver = initMoveObserver(configuration, mouseMoveCallbackSpy)
+    moveTracker = trackMove(configuration, mouseMoveCallbackSpy)
   })
 
   afterEach(() => {
-    stopObserver()
+    moveTracker.stop()
   })
 
   it('should generate mouse move record', () => {
     const event = createNewEvent('mousemove', { clientX: 1, clientY: 2 })
     document.body.dispatchEvent(event)
 
-    expect(mouseMoveCallbackSpy).toHaveBeenCalledWith(
-      [
-        {
-          x: 1,
-          y: 2,
-          id: jasmine.any(Number),
-          timeOffset: 0,
-        },
-      ],
-      IncrementalSource.MouseMove
-    )
+    expect(mouseMoveCallbackSpy).toHaveBeenCalledWith({
+      type: RecordType.IncrementalSnapshot,
+      timestamp: jasmine.any(Number),
+      data: {
+        source: IncrementalSource.MouseMove,
+        positions: [
+          {
+            x: 1,
+            y: 2,
+            id: jasmine.any(Number),
+            timeOffset: 0,
+          },
+        ],
+      },
+    })
   })
 
   it('should generate touch move record', () => {
     const event = createNewEvent('touchmove', { changedTouches: [{ clientX: 1, clientY: 2 }] })
     document.body.dispatchEvent(event)
 
-    expect(mouseMoveCallbackSpy).toHaveBeenCalledWith(
-      [
-        {
-          x: 1,
-          y: 2,
-          id: jasmine.any(Number),
-          timeOffset: 0,
-        },
-      ],
-      IncrementalSource.TouchMove
-    )
+    expect(mouseMoveCallbackSpy).toHaveBeenCalledWith({
+      type: RecordType.IncrementalSnapshot,
+      timestamp: jasmine.any(Number),
+      data: {
+        source: IncrementalSource.TouchMove,
+        positions: [
+          {
+            x: 1,
+            y: 2,
+            id: jasmine.any(Number),
+            timeOffset: 0,
+          },
+        ],
+      },
+    })
   })
 
   it('should not generate mouse move record if x/y are missing', () => {
