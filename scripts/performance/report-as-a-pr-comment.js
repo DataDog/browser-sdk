@@ -137,7 +137,7 @@ async function updateOrAddComment(difference, resultsBaseQuery, localBundleSizes
   })
 }
 
-function createMessage(difference, resultsBaseQuery, localBundleSizes, cpuPerformance) {
+function createMessage(difference, resultsBaseQuery, localBundleSizes) {
   let message =
     '| 📦 Bundle Name| Base Size | Local Size | 𝚫 | 𝚫% | Status |\n| --- | --- | --- | --- | --- | :---: |\n'
   let highIncreaseDetected = false
@@ -160,9 +160,6 @@ function createMessage(difference, resultsBaseQuery, localBundleSizes, cpuPerfor
 
   message += '\n\n## CPU Performance\n\nExpand for details...\n\n'
   message += '| 📦 Bundle Name | CPU Time |\n| --- | --- |\n'
-  cpuPerformance.forEach((perf) => {
-    message += `| ${formatBundleName(perf.name)} | ${perf.time}ms |\n`
-  })
 
   return message
 }
