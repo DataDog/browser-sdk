@@ -8,7 +8,7 @@ const LOG_INTAKE_REQUEST_HEADERS = {
   'Content-Type': 'application/json',
 }
 
-async function reportBundleSizesToDatadog(bundleSizes) {
+async function reportToDatadog(bundleSizes) {
   const logData = createLogData(bundleSizes, browserSdkVersion)
   await sendLogToOrg2(logData)
 }
@@ -36,4 +36,6 @@ async function sendLogToOrg2(bundleData = {}) {
   })
 }
 
-module.exports = { reportBundleSizesToDatadog }
+module.exports = {
+  reportToDatadog,
+}

@@ -11,7 +11,7 @@ const ONE_DAY_IN_SECOND = 24 * 60 * 60
 // The value is set to 5% as it's around 10 times the average value for small PRs.
 const SIZE_INCREASE_THRESHOLD = 5
 
-async function reportBundleSizesAsPrComment(localBundleSizes) {
+async function reportAsPrComment(localBundleSizes, cpuPerformance) {
   const lastCommonCommit = getLastCommonCommit(BASE_BRANCH, LOCAL_BRANCH)
   const pr = await fetchPR(LOCAL_BRANCH)
   if (!pr) {
@@ -22,7 +22,7 @@ async function reportBundleSizesAsPrComment(localBundleSizes) {
   const mainBranchBundleSizes = await fetchAllPackagesBaseBundleSize(packageNames, lastCommonCommit)
   const difference = compare(mainBranchBundleSizes, localBundleSizes)
   const commentId = await retrieveExistingCommentId(pr.number)
-  await updateOrAddComment(difference, mainBranchBundleSizes, localBundleSizes, pr.number, commentId)
+  await updateOrAddComment(difference, mainBranchBundleSizes, localBundleSizes, cpuPerformance, pr.number, commentId)
 }
 
 function getLastCommonCommit(baseBranch) {
@@ -137,7 +137,7 @@ async function updateOrAddComment(difference, resultsBaseQuery, localBundleSizes
   })
 }
 
-function createMessage(difference, resultsBaseQuery, localBundleSizes) {
+function createMessage(difference, resultsBaseQuery, localBundleSizes, cpuPerformance) {
   let message =
     '| 📦 Bundle Name| Base Size | Local Size | 𝚫 | 𝚫% | Status |\n| --- | --- | --- | --- | --- | :---: |\n'
   let highIncreaseDetected = false
@@ -158,6 +158,12 @@ function createMessage(difference, resultsBaseQuery, localBundleSizes) {
     message += `\n⚠️ The increase is particularly high and exceeds ${SIZE_INCREASE_THRESHOLD}%. Please check the changes.`
   }
 
+  message += '\n\n## CPU Performance\n\nExpand for details...\n\n'
+  message += '| 📦 Bundle Name | CPU Time |\n| --- | --- |\n'
+  cpuPerformance.forEach((perf) => {
+    message += `| ${formatBundleName(perf.name)} | ${perf.time}ms |\n`
+  })
+
   return message
 }
 
@@ -177,5 +183,5 @@ function formatSize(bytes) {
 }
 
 module.exports = {
-  reportBundleSizesAsPrComment,
+  reportAsPrComment,
 }
