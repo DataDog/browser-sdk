@@ -118,8 +118,8 @@ async function retrieveExistingCommentId(prNumber) {
     return targetComment.id
   }
 }
-async function updateOrAddComment(difference, resultsBaseQuery, localBundleSizes, prNumber, commentId) {
-  const message = createMessage(difference, resultsBaseQuery, localBundleSizes)
+async function updateOrAddComment(difference, resultsBaseQuery, localBundleSizes, cpuPerformance, prNumber, commentId) {
+  const message = createMessage(difference, resultsBaseQuery, localBundleSizes, cpuPerformance)
   const method = commentId ? 'PATCH' : 'POST'
   const payload = {
     pr_url: `https://github.com/DataDog/browser-sdk/pull/${prNumber}`,
@@ -137,7 +137,7 @@ async function updateOrAddComment(difference, resultsBaseQuery, localBundleSizes
   })
 }
 
-function createMessage(difference, resultsBaseQuery, localBundleSizes) {
+function createMessage(difference, resultsBaseQuery, localBundleSizes, cpuPerformance) {
   let message =
     '| 📦 Bundle Name| Base Size | Local Size | 𝚫 | 𝚫% | Status |\n| --- | --- | --- | --- | --- | :---: |\n'
   let highIncreaseDetected = false
@@ -160,6 +160,9 @@ function createMessage(difference, resultsBaseQuery, localBundleSizes) {
 
   message += '\n\n## CPU Performance\n\nExpand for details...\n\n'
   message += '| 📦 Bundle Name | CPU Time |\n| --- | --- |\n'
+  cpuPerformance.forEach((perf) => {
+    message += `| ${formatBundleName(perf.name)} | ${perf.time}ms |\n`
+  })
 
   return message
 }
