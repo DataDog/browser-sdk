@@ -34,6 +34,8 @@ function listenToCookieStoreChange(configuration: Configuration) {
       (window as CookieStoreWindow).cookieStore!,
       DOM_EVENT.CHANGE,
       (event) => {
+        // Based on our experimentation, we're assuming that entries for the same cookie cannot be in both the 'changed' and 'deleted' arrays.
+        // However, due to ambiguity in the specification, we asked for clarification: https://github.com/WICG/cookie-store/issues/226
         event.changed
           .concat(event.deleted)
           .filter((change) => change.name === cookieName)
