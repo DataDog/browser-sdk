@@ -1,27 +1,26 @@
 import type { Configuration } from '@datadog/browser-core'
 import { Observable } from '@datadog/browser-core'
-import { cleanupCiVisibilityValues, mockCiVisibilityValues } from '../../../test'
+import { mockCiVisibilityValues } from '../../../test'
 import type { CiVisibilityContext } from './ciVisibilityContext'
 import { CI_VISIBILITY_TEST_ID_COOKIE_NAME, startCiVisibilityContext } from './ciVisibilityContext'
 
 describe('startCiVisibilityContext', () => {
   let ciVisibilityContext: CiVisibilityContext
-  let observable: Observable<{
+  let cookieObservable: Observable<{
     name: string
     value: string | undefined
   }>
   beforeEach(() => {
-    observable = new Observable()
+    cookieObservable = new Observable()
   })
 
   afterEach(() => {
     ciVisibilityContext.stop()
-    cleanupCiVisibilityValues()
   })
 
   it('sets the ci visibility context defined by Cypress global variables', () => {
     mockCiVisibilityValues('trace_id_value')
-    ciVisibilityContext = startCiVisibilityContext({} as Configuration, observable)
+    ciVisibilityContext = startCiVisibilityContext({} as Configuration, cookieObservable)
 
     expect(ciVisibilityContext.get()).toEqual({
       test_execution_id: 'trace_id_value',
@@ -30,9 +29,9 @@ describe('startCiVisibilityContext', () => {
 
   it('sets the ci visibility context defined by global cookie', () => {
     mockCiVisibilityValues('trace_id_value', 'cookies')
-    ciVisibilityContext = startCiVisibilityContext({} as Configuration, observable)
+    ciVisibilityContext = startCiVisibilityContext({} as Configuration, cookieObservable)
 
-    observable.notify({ name: CI_VISIBILITY_TEST_ID_COOKIE_NAME, value: 'trace_id_value' })
+    cookieObservable.notify({ name: CI_VISIBILITY_TEST_ID_COOKIE_NAME, value: 'trace_id_value' })
 
     expect(ciVisibilityContext.get()).toEqual({
       test_execution_id: 'trace_id_value',
@@ -41,8 +40,8 @@ describe('startCiVisibilityContext', () => {
 
   it('update the ci visibility context when global cookie is updated', () => {
     mockCiVisibilityValues('trace_id_value', 'cookies')
-    ciVisibilityContext = startCiVisibilityContext({} as Configuration, observable)
-    observable.notify({ name: CI_VISIBILITY_TEST_ID_COOKIE_NAME, value: 'trace_id_value_updated' })
+    ciVisibilityContext = startCiVisibilityContext({} as Configuration, cookieObservable)
+    cookieObservable.notify({ name: CI_VISIBILITY_TEST_ID_COOKIE_NAME, value: 'trace_id_value_updated' })
 
     expect(ciVisibilityContext.get()).toEqual({
       test_execution_id: 'trace_id_value_updated',
@@ -51,14 +50,14 @@ describe('startCiVisibilityContext', () => {
 
   it('does not set ci visibility context if the Cypress global variable is undefined', () => {
     mockCiVisibilityValues(undefined)
-    ciVisibilityContext = startCiVisibilityContext({} as Configuration, observable)
+    ciVisibilityContext = startCiVisibilityContext({} as Configuration, cookieObservable)
 
     expect(ciVisibilityContext.get()).toBeUndefined()
   })
 
   it('does not set ci visibility context if it is not a string', () => {
     mockCiVisibilityValues({ key: 'value' })
-    ciVisibilityContext = startCiVisibilityContext({} as Configuration, observable)
+    ciVisibilityContext = startCiVisibilityContext({} as Configuration, cookieObservable)
 
     expect(ciVisibilityContext.get()).toBeUndefined()
   })

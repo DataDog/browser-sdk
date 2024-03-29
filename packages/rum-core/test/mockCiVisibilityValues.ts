@@ -1,4 +1,5 @@
 import { ONE_MINUTE, resetInitCookies, deleteCookie, setCookie } from '@datadog/browser-core'
+import { registerCleanupTask } from '@datadog/browser-core/test'
 import { CI_VISIBILITY_TEST_ID_COOKIE_NAME, type CiTestWindow } from '../src/domain/contexts/ciVisibilityContext'
 
 // Duration to create a cookie lasting at least until the end of the test
@@ -23,10 +24,10 @@ export function mockCiVisibilityValues(testExecutionId: unknown, method: 'global
       break
   }
   resetInitCookies()
-}
 
-export function cleanupCiVisibilityValues() {
-  delete (window as CiTestWindow).Cypress
-  deleteCookie(CI_VISIBILITY_TEST_ID_COOKIE_NAME)
-  resetInitCookies()
+  registerCleanupTask(() => {
+    delete (window as CiTestWindow).Cypress
+    deleteCookie(CI_VISIBILITY_TEST_ID_COOKIE_NAME)
+    resetInitCookies()
+  })
 }

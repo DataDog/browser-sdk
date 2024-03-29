@@ -9,7 +9,7 @@ import {
   setNavigatorConnection,
 } from '@datadog/browser-core/test'
 import type { TestSetupBuilder } from '../../test'
-import { createRumSessionManagerMock, setup, createRawRumEvent, cleanupCiVisibilityValues } from '../../test'
+import { createRumSessionManagerMock, setup, createRawRumEvent } from '../../test'
 import type { RumEventDomainContext } from '../domainContext.types'
 import type { RawRumActionEvent, RawRumEvent } from '../rawRumEvent.types'
 import { RumEventType } from '../rawRumEvent.types'
@@ -76,7 +76,6 @@ describe('rum assembly', () => {
 
   afterEach(() => {
     cleanupSyntheticsWorkerValues()
-    cleanupCiVisibilityValues()
   })
 
   describe('beforeSend', () => {
