@@ -24,4 +24,6 @@ function calculateBundleSizes() {
   }
 }
 
-module.exports = calculateBundleSizes
+module.exports = {
+  calculateBundleSizes,
+}
