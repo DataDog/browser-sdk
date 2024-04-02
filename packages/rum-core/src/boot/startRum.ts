@@ -180,7 +180,7 @@ export function startRum(
     urlContexts
   )
 
-  startVulnerabilityCollection(lifeCycle, addAction)
+  startVulnerabilityCollection(lifeCycle, addAction, getCommonContext)
   
   return {
     addAction,
