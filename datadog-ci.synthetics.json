@@ -1,0 +1,10 @@
+{
+    "tests": [
+      {
+        "id": "vcg-7rk-5av",
+        "config": {
+          "startUrl": "https://datadoghq.dev/browser-sdk-test-playground/performance/?prNumber="
+        }
+      }
+    ]
+  }

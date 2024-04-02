@@ -141,7 +141,7 @@ build-and-lint:
     - yarn lint
     - node scripts/check-packages.js
     - node scripts/performance/index.js
-    - node ./scripts/deploy/deploy.js staging 10000 pull-request
+
 build-bundle:
   extends:
     - .base-configuration

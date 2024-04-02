@@ -2,9 +2,9 @@ const { command } = require('../lib/command')
 const { fetchHandlingError } = require('../lib/execution-utils')
 const { getOrg2ApiKey, getGithubAccessToken, getOrg2AppKey } = require('../lib/secrets')
 
-const PR_COMMENT_HEADER = 'Bundles Sizes Evolution'
-const BASE_BRANCH = process.env.MAIN_BRANCH
 const LOCAL_BRANCH = process.env.CI_COMMIT_REF_NAME
+const BASE_BRANCH = process.env.MAIN_BRANCH
+const PR_COMMENT_HEADER = 'Bundles Sizes Evolution'
 const PR_COMMENTER_AUTH_TOKEN = command`authanywhere`.run().split(' ')[2].trim()
 const GITHUB_TOKEN = getGithubAccessToken()
 const ONE_DAY_IN_SECOND = 24 * 60 * 60
@@ -184,4 +184,6 @@ function formatSize(bytes) {
 
 module.exports = {
   reportAsPrComment,
+  fetchPR,
+  LOCAL_BRANCH,
 }
