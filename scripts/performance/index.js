@@ -1,9 +1,11 @@
+const { path } = require('path')
 const { runMain } = require('../lib/execution-utils')
 const { command } = require('../lib/command')
 const { reportAsPrComment, fetchPR, LOCAL_BRANCH } = require('./report-as-a-pr-comment')
 const { reportToDatadog } = require('./report-to-datadog')
 const { calculateBundleSizes } = require('./bundle-size/bundle-size-calculator')
 const { updateStartUrl, syntheticTrigger } = require('./cpu-performance/synthetic-trigger')
+const deployPath = path.join(__dirname, '../deploy/deploy.js')
 // const { calculateCpuPerformance } = require('./cpu-performance/cpu-performance-calculator.js')
 
 runMain(async () => {
@@ -12,7 +14,7 @@ runMain(async () => {
   updateStartUrl(PR_NUMBER)
   syntheticTrigger()
   const cpuPerformance = []
-  command`node ../deploy/deploy.js staging ${PR_NUMBER} pull-request`.run()
+  command`node ${deployPath} staging ${PR_NUMBER} pull-request`.run()
   await reportToDatadog(bundleSizes)
   await reportAsPrComment(bundleSizes, cpuPerformance)
 })
