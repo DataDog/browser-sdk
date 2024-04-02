@@ -46,6 +46,7 @@ import { startPageStateHistory } from '../domain/contexts/pageStateHistory'
 import type { CommonContext } from '../domain/contexts/commonContext'
 import { startDisplayContext } from '../domain/contexts/displayContext'
 import { startVitalCollection } from '../domain/vital/vitalCollection'
+import { startVulnerabilityCollection } from '../domain/vulnerabilities/vulnerabilityCollection'
 import type { RecorderApi } from './rumPublicApi'
 
 export type StartRum = typeof startRum
@@ -179,6 +180,8 @@ export function startRum(
     urlContexts
   )
 
+  startVulnerabilityCollection(lifeCycle, configuration)
+  
   return {
     addAction,
     addError,
