@@ -1,5 +1,5 @@
 
-import type { Vulnerability } from '@datadog/browser-core';
+import type { Observable, Vulnerability } from '@datadog/browser-core';
 import type { LifeCycle} from '../lifeCycle';
 import { LifeCycleEventType } from '../lifeCycle';
 
