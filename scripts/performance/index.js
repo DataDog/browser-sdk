@@ -12,9 +12,9 @@ runMain(async () => {
   const PR_NUMBER = (await fetchPR(LOCAL_BRANCH)).number
   const bundleSizes = calculateBundleSizes()
   updateStartUrl(PR_NUMBER)
+  command`node ${deployPath} staging ${PR_NUMBER} pull-request`.run()
   syntheticTrigger()
   const cpuPerformance = []
-  command`node ${deployPath} staging ${PR_NUMBER} pull-request`.run()
   await reportToDatadog(bundleSizes)
   await reportAsPrComment(bundleSizes, cpuPerformance)
 })
