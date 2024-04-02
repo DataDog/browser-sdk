@@ -3,17 +3,19 @@ import { VulnerabilityType, type Observable, type Vulnerability } from '@datadog
 import type { LifeCycle} from '../lifeCycle';
 import { LifeCycleEventType } from '../lifeCycle';
 
-
 export function trackAutocomplete(lifeCycle: LifeCycle, vulnerabilityObservable: Observable<Vulnerability>) {
-  const subscription = lifeCycle.subscribe(LifeCycleEventType.VIEW_UPDATED, () => {
+  const subscription = lifeCycle.subscribe(LifeCycleEventType.VIEW_UPDATED, (view) => {
+
+    console.log(view)
+
     const forms = document.querySelectorAll<HTMLFormElement>('form')
 
     forms.forEach(form => {
-      notifyAutocomplete(form.getAttribute('autocomplete'), form, vulnerabilityObservable)
+      notifyAutocomplete(form.getAttribute('autocomplete'), form, vulnerabilityObservable, view.location)
 
       const elements = form.querySelectorAll<HTMLElement>('input, textarea, select')
       elements.forEach(element => {
-        notifyAutocomplete(element.getAttribute('autocomplete'), element, vulnerabilityObservable)
+        notifyAutocomplete(element.getAttribute('autocomplete'), element, vulnerabilityObservable, view.location)
       })
     })
   })
@@ -25,13 +27,20 @@ export function trackAutocomplete(lifeCycle: LifeCycle, vulnerabilityObservable:
   }
 }
 
-function notifyAutocomplete(autocompleteValue: string | null, element: HTMLElement, vulnerabilityObservable: Observable<Vulnerability>) {
+function notifyAutocomplete(
+  autocompleteValue: string | null,
+  element: HTMLElement,
+  vulnerabilityObservable: Observable<Vulnerability>,
+  location: Location
+) {
   if (autocompleteValue === 'on') {
     vulnerabilityObservable.notify({
       type: VulnerabilityType.AUTOCOMPLETE,
 
       // TODO: obtain location: file, line, column...
-      element
+      element,
+
+      location
     })
   }
 }
