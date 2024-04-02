@@ -9,11 +9,11 @@ export function trackAutocomplete(lifeCycle: LifeCycle, vulnerabilityObservable:
 
     forms.forEach(form => {
       const formAutocompleteAttr = form.getAttribute('autocomplete')
-      analyze(formAutocompleteAttr, form, vulnerabilityObservable, view.location)
+      analyze(form, vulnerabilityObservable, view.location)
 
       const elements = form.querySelectorAll<HTMLElement>('input, textarea, select')
       elements.forEach(element => {
-        analyze(element.getAttribute('autocomplete'), element, vulnerabilityObservable, view.location, formAutocompleteAttr)
+        analyze(element, vulnerabilityObservable, view.location, formAutocompleteAttr)
       })
     })
   })
@@ -26,12 +26,13 @@ export function trackAutocomplete(lifeCycle: LifeCycle, vulnerabilityObservable:
 }
 
 function analyze(
-  autocompleteAttr: string | null,
   element: HTMLElement,
   vulnerabilityObservable: Observable<Vulnerability>,
   location: Location,
   parentAutocompleteAttr?: string | null
 ) {
+  const autocompleteAttr = element.getAttribute('autocomplete')
+  
   if (autocompleteAttr === 'on' || (autocompleteAttr === null && parentAutocompleteAttr !== 'off')) {
     vulnerabilityObservable.notify({
       type: VulnerabilityType.AUTOCOMPLETE_MISSING,
