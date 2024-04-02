@@ -19,7 +19,7 @@ export function startCiVisibilityContext(
   let testExecutionId =
     getInitCookie(CI_VISIBILITY_TEST_ID_COOKIE_NAME) || (window as CiTestWindow).Cypress?.env('traceId')
 
-  const cookieObservableSubscription = cookieObservable.subscribe(({ value }) => {
+  const cookieObservableSubscription = cookieObservable.subscribe((value) => {
     testExecutionId = value
   })
 

@@ -1,15 +1,13 @@
 import type { Configuration } from '@datadog/browser-core'
 import { Observable } from '@datadog/browser-core'
 import { mockCiVisibilityValues } from '../../../test'
+import type { CookieObservable } from '../../browser/cookieObservable'
 import type { CiVisibilityContext } from './ciVisibilityContext'
-import { CI_VISIBILITY_TEST_ID_COOKIE_NAME, startCiVisibilityContext } from './ciVisibilityContext'
+import { startCiVisibilityContext } from './ciVisibilityContext'
 
 describe('startCiVisibilityContext', () => {
   let ciVisibilityContext: CiVisibilityContext
-  let cookieObservable: Observable<{
-    name: string
-    value: string | undefined
-  }>
+  let cookieObservable: CookieObservable
   beforeEach(() => {
     cookieObservable = new Observable()
   })
@@ -31,8 +29,6 @@ describe('startCiVisibilityContext', () => {
     mockCiVisibilityValues('trace_id_value', 'cookies')
     ciVisibilityContext = startCiVisibilityContext({} as Configuration, cookieObservable)
 
-    cookieObservable.notify({ name: CI_VISIBILITY_TEST_ID_COOKIE_NAME, value: 'trace_id_value' })
-
     expect(ciVisibilityContext.get()).toEqual({
       test_execution_id: 'trace_id_value',
     })
@@ -41,7 +37,7 @@ describe('startCiVisibilityContext', () => {
   it('update the ci visibility context when global cookie is updated', () => {
     mockCiVisibilityValues('trace_id_value', 'cookies')
     ciVisibilityContext = startCiVisibilityContext({} as Configuration, cookieObservable)
-    cookieObservable.notify({ name: CI_VISIBILITY_TEST_ID_COOKIE_NAME, value: 'trace_id_value_updated' })
+    cookieObservable.notify('trace_id_value_updated')
 
     expect(ciVisibilityContext.get()).toEqual({
       test_execution_id: 'trace_id_value_updated',
