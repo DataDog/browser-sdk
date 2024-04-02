@@ -1,4 +1,4 @@
-const { path } = require('path')
+const path = require('path')
 const { runMain } = require('../lib/execution-utils')
 const { command } = require('../lib/command')
 const { reportAsPrComment, fetchPR, LOCAL_BRANCH } = require('./report-as-a-pr-comment')
