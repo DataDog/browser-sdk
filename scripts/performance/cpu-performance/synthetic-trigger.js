@@ -24,7 +24,7 @@ function updateStartUrl(prNumber) {
 }
 
 function syntheticTrigger() {
-  command`yarn datadog-ci synthetics run-tests --apiKey ${apiKey} --appKey ${appKey} --files ${filePath}`.run()
+  command`datadog-ci synthetics run-tests --apiKey ${apiKey} --appKey ${appKey} --files ${filePath}`.run()
 }
 
 module.exports = {
