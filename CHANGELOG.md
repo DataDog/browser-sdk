@@ -16,6 +16,13 @@
 
 ---
 
+## v5.14.0
+
+- ✨ [RUM-3387] forward to beforeSend context ([#2665](https://github.com/DataDog/browser-sdk/pull/2665))
+- 🐛 [RUM-3581] Fix the selector computation due to properties partially supported on IE ([#2663](https://github.com/DataDog/browser-sdk/pull/2663))
+- 🐛 [RUM-96] Ignore frustrations on clicks resulting in scrolls ([#2669](https://github.com/DataDog/browser-sdk/pull/2669))
+- ♻️✅ Harmonize record observers ([#2659](https://github.com/DataDog/browser-sdk/pull/2659))
+
 ## v5.13.0
 
 - ✨ [RUM-3542] Add trace context injection control in rum configuration ([#2656](https://github.com/DataDog/browser-sdk/pull/2656))
