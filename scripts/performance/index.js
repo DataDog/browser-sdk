@@ -11,7 +11,7 @@ const deployPath = path.join(__dirname, '../deploy/deploy.js')
 runMain(async () => {
   const PR_NUMBER = (await fetchPR(LOCAL_BRANCH)).number
   const bundleSizes = calculateBundleSizes()
-  updateStartUrl(PR_NUMBER)
+  await updateStartUrl(PR_NUMBER)
   command`node ${deployPath} staging ${PR_NUMBER} pull-request`.run()
   syntheticTrigger()
   const cpuPerformance = []
