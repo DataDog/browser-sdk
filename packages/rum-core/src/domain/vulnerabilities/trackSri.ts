@@ -31,7 +31,7 @@ function analyze(
   location: Location,
 ) {
   const integrityAttr = element.getAttribute('integrity')
-  
+
   if (!integrityAttr) {
     vulnerabilityObservable.notify({
       type: VulnerabilityType.SRI_MISSING,
