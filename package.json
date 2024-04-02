@@ -90,7 +90,7 @@
     "@mantine/core/type-fest": "4.14.0"
   },
   "volta": {
-    "node": "18.20.0",
+    "node": "20.12.0",
     "yarn": "1.22.22"
   },
   "packageManager": "yarn@3.8.1"
