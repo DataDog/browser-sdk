@@ -9,13 +9,7 @@ import {
   setNavigatorConnection,
 } from '@datadog/browser-core/test'
 import type { TestSetupBuilder } from '../../test'
-import {
-  createRumSessionManagerMock,
-  mockCiVisibilityWindowValues,
-  setup,
-  createRawRumEvent,
-  cleanupCiVisibilityWindowValues,
-} from '../../test'
+import { createRumSessionManagerMock, setup, createRawRumEvent } from '../../test'
 import type { RumEventDomainContext } from '../domainContext.types'
 import type { RawRumActionEvent, RawRumEvent } from '../rawRumEvent.types'
 import { RumEventType } from '../rawRumEvent.types'
@@ -26,6 +20,7 @@ import { LifeCycleEventType } from './lifeCycle'
 import type { RumConfiguration } from './configuration'
 import type { ViewContext } from './contexts/viewContexts'
 import type { CommonContext } from './contexts/commonContext'
+import type { CiVisibilityContext } from './contexts/ciVisibilityContext'
 
 describe('rum assembly', () => {
   let setupBuilder: TestSetupBuilder
@@ -34,6 +29,8 @@ describe('rum assembly', () => {
   let extraConfigurationOptions: Partial<RumConfiguration> = {}
   let findView: () => ViewContext
   let reportErrorSpy: jasmine.Spy<jasmine.Func>
+  let ciVisibilityContext: { test_execution_id: string } | undefined
+
   beforeEach(() => {
     findView = () => ({
       id: '7890',
@@ -46,6 +43,8 @@ describe('rum assembly', () => {
       user: {},
       hasReplay: undefined,
     }
+    ciVisibilityContext = undefined
+
     setupBuilder = setup()
       .withViewContexts({
         findView: () => findView(),
@@ -67,6 +66,7 @@ describe('rum assembly', () => {
             urlContexts,
             actionContexts,
             displayContext,
+            { get: () => ciVisibilityContext } as CiVisibilityContext,
             () => commonContext,
             reportErrorSpy
           )
@@ -76,7 +76,6 @@ describe('rum assembly', () => {
 
   afterEach(() => {
     cleanupSyntheticsWorkerValues()
-    cleanupCiVisibilityWindowValues()
   })
 
   describe('beforeSend', () => {
@@ -674,8 +673,8 @@ describe('rum assembly', () => {
       expect(serverRumEvents[0].session.type).toEqual('synthetics')
     })
 
-    it('should detect ci visibility tests based on ci visibility global window values', () => {
-      mockCiVisibilityWindowValues('traceId')
+    it('should detect ci visibility tests', () => {
+      ciVisibilityContext = { test_execution_id: 'traceId' }
 
       const { lifeCycle } = setupBuilder.build()
       notifyRawRumEvent(lifeCycle, {
@@ -798,7 +797,7 @@ describe('rum assembly', () => {
 
   describe('ci visibility context', () => {
     it('includes the ci visibility context', () => {
-      mockCiVisibilityWindowValues('traceId')
+      ciVisibilityContext = { test_execution_id: 'traceId' }
 
       const { lifeCycle } = setupBuilder.build()
       notifyRawRumEvent(lifeCycle, {

@@ -1,5 +1,6 @@
-import { elementMatches, ONE_SECOND } from '@datadog/browser-core'
+import { ONE_SECOND } from '@datadog/browser-core'
 import { FrustrationType } from '../../rawRumEvent.types'
+import { elementMatches } from '../../browser/polyfills'
 import type { Click } from './trackClickActions'
 
 const MIN_CLICKS_PER_SECOND_TO_CONSIDER_RAGE = 3
@@ -33,7 +34,7 @@ export function computeFrustration(clicks: Click[], rageClick: Click) {
 }
 
 export function isRage(clicks: Click[]) {
-  if (clicks.some((click) => click.getUserActivity().selection)) {
+  if (clicks.some((click) => click.getUserActivity().selection || click.getUserActivity().scroll)) {
     return false
   }
   for (let i = 0; i < clicks.length - (MIN_CLICKS_PER_SECOND_TO_CONSIDER_RAGE - 1); i += 1) {
@@ -64,7 +65,7 @@ const DEAD_CLICK_EXCLUDE_SELECTOR =
   'a[href] *'
 
 export function isDead(click: Click) {
-  if (click.hasPageActivity || click.getUserActivity().input) {
+  if (click.hasPageActivity || click.getUserActivity().input || click.getUserActivity().scroll) {
     return false
   }
   return !elementMatches(click.event.target, DEAD_CLICK_EXCLUDE_SELECTOR)

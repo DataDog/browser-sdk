@@ -101,6 +101,12 @@ describe('isRage', () => {
     )
   })
 
+  it('does not consider rage when at least one click is related to a "scroll" event', () => {
+    expect(isRage([createFakeClick(), createFakeClick({ userActivity: { scroll: true } }), createFakeClick()])).toBe(
+      false
+    )
+  })
+
   it('does not consider as rage two clicks happening at the same time', () => {
     expect(isRage([createFakeClick(), createFakeClick()])).toBe(false)
   })
@@ -141,6 +147,10 @@ describe('isDead', () => {
 
   it('does not consider as dead when the click is related to an "input" event', () => {
     expect(isDead(createFakeClick({ hasPageActivity: false, userActivity: { input: true } }))).toBe(false)
+  })
+
+  it('does not consider as dead when the click is related to a "scroll" event', () => {
+    expect(isDead(createFakeClick({ hasPageActivity: false, userActivity: { scroll: true } }))).toBe(false)
   })
 
   for (const { element, expected } of [

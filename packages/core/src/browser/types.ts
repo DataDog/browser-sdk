@@ -38,3 +38,20 @@ export interface VisualViewport extends EventTarget {
     options?: boolean | EventListenerOptions
   ): void
 }
+
+// Those are native API types that are not official supported by TypeScript yet
+
+export interface CookieStore extends EventTarget {}
+
+export interface CookieStoreEventMap {
+  change: CookieChangeEvent
+}
+
+export type CookieChangeItem = { name: string; value: string | undefined }
+
+export type CookieChangeEvent = Event & {
+  changed: CookieChangeItem[]
+  deleted: CookieChangeItem[]
+}
+
+export interface CookieStore extends EventTarget {}
