@@ -1,7 +1,7 @@
 import { RecordType } from '@datadog/browser-rum/src/types'
 import { expireSession, getSessionFromCookie, renewSession } from '../../lib/helpers/session'
 import { bundleSetup, createTest, flushEvents, waitForRequests } from '../../lib/framework'
-import { browserExecute, browserExecuteAsync, sendXhr } from '../../lib/helpers/browser'
+import { browserExecute, browserExecuteAsync, deleteAllCookies, sendXhr } from '../../lib/helpers/browser'
 
 describe('rum sessions', () => {
   describe('session renewal', () => {
@@ -116,6 +116,29 @@ describe('rum sessions', () => {
         expect(intakeRegistry.rumViewEvents[0].session.is_active).toBe(false)
         expect(intakeRegistry.logsEvents.length).toBe(1)
         expect(intakeRegistry.replaySegments.length).toBe(1)
+      })
+  })
+
+  describe('third party cookie clearing', () => {
+    createTest('after a 3rd party clears the cookies, stop the session')
+      .withRum()
+      .run(async ({ intakeRegistry }) => {
+        await deleteAllCookies()
+
+        // Cookies are cached for 1s, wait until the cache expires
+        await browser.pause(1100)
+
+        await browserExecute(() => {
+          window.DD_RUM!.addAction('foo')
+        })
+
+        await flushEvents()
+
+        const session = await getSessionFromCookie()
+        expect(session.id).toBeUndefined()
+        expect(intakeRegistry.rumActionEvents.length).toBe(0)
+        expect(intakeRegistry.rumViewEvents.length).toBe(1)
+        expect(intakeRegistry.rumViewEvents[0].session.is_active).toBe(false)
       })
   })
 })
