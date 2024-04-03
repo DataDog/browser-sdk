@@ -806,6 +806,34 @@ describe('recorder', () => {
       })
   })
 
+  describe('recording of sampled out sessions', () => {
+    createTest('should not start recording when session is sampled out')
+      .withRum({ sessionReplaySampleRate: 0})
+      .withSetup(bundleSetup)
+      .run(async ({ intakeRegistry }) => {
+        await browserExecute(() => {
+          window.DD_RUM!.startSessionReplayRecording()
+        })
+
+        await flushEvents()
+
+        expect(intakeRegistry.replaySegments.length).toBe(0)
+      })
+
+    createTest('should start recording if forced when session is sampled out')
+      .withRum({ sessionReplaySampleRate: 0})
+      .withSetup(bundleSetup)
+      .run(async ({ intakeRegistry }) => {
+        await browserExecute(() => {
+          window.DD_RUM!.startSessionReplayRecording({ forceStart: true })
+        })
+
+        await flushEvents()
+
+        expect(intakeRegistry.replaySegments.length).toBe(1)
+      })
+  })
+
   createTest('restarting recording should send a new full snapshot')
     .withRum()
     .withSetup(bundleSetup)
