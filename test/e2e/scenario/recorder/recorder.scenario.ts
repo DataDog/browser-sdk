@@ -808,7 +808,7 @@ describe('recorder', () => {
 
   describe('recording of sampled out sessions', () => {
     createTest('should not start recording when session is sampled out')
-      .withRum({ sessionReplaySampleRate: 0})
+      .withRum({ sessionReplaySampleRate: 0 })
       .withSetup(bundleSetup)
       .run(async ({ intakeRegistry }) => {
         await browserExecute(() => {
@@ -821,7 +821,7 @@ describe('recorder', () => {
       })
 
     createTest('should start recording if forced when session is sampled out')
-      .withRum({ sessionReplaySampleRate: 0})
+      .withRum({ sessionReplaySampleRate: 0 })
       .withSetup(bundleSetup)
       .run(async ({ intakeRegistry }) => {
         await browserExecute(() => {
