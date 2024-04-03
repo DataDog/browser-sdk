@@ -198,10 +198,10 @@ function createMessage(difference, resultsBaseQuery, localBundleSizes, cpuPerfor
     message += `\n⚠️ The increase is particularly high and exceeds ${SIZE_INCREASE_THRESHOLD}%. Please check the changes.`
   }
 
-  message += '\n\n<details>\n<summary>CPU Performance</summary>\n\n'
+  message += '\n\n<details>\n<summary>🚀 CPU Performance</summary>\n\n\n'
   message += '| Action Name | Average Cpu Time |\n| --- | --- |\n'
   cpuPerformance.forEach((perf) => {
-    message += `| ${formatBundleName(perf.name)} | ${perf.average} |\n`
+    message += `| ${formatBundleName(perf.name)} | ${perf.average.toFixed(3)} |\n`
   })
   message += '\n</details>\n'
 
