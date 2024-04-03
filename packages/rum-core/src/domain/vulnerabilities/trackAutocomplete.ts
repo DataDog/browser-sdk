@@ -32,10 +32,10 @@ function analyze(
   parentAutocompleteAttr?: string | null
 ) {
   const autocompleteAttr = element.getAttribute('autocomplete')
-  
+
   if (autocompleteAttr === 'on' || (autocompleteAttr === null && parentAutocompleteAttr !== 'off')) {
     vulnerabilityObservable.notify({
-      type: VulnerabilityType.AUTOCOMPLETE_MISSING,
+      type: VulnerabilityType.AUTOCOMPLETE_INVALID,
       element,
       location
     })
