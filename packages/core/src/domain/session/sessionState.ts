@@ -6,7 +6,7 @@ const SESSION_ENTRY_REGEXP = /^([a-z]+)=([a-z0-9-]+)$/
 const SESSION_ENTRY_SEPARATOR = '&'
 
 export interface SessionState {
-  id: string
+  id?: string
   created?: string
   expire?: string
   lock?: string
@@ -43,7 +43,7 @@ export function toSessionString(session: SessionState) {
 }
 
 export function toSessionState(sessionString: string | undefined | null) {
-  const session: SessionState = { id: 'null' } as SessionState
+  const session: SessionState = {}
 
   if (isValidSessionString(sessionString)) {
     sessionString.split(SESSION_ENTRY_SEPARATOR).forEach((entry) => {

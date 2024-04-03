@@ -1,13 +1,27 @@
 import { dateNow } from '../../tools/utils/timeUtils'
 import { SESSION_EXPIRATION_DELAY } from './sessionConstants'
 import type { SessionState } from './sessionState'
-import { expandSessionState, isSessionInExpiredState, toSessionString, toSessionState } from './sessionState'
+import {
+  expandSessionState,
+  isSessionInExpiredState,
+  toSessionString,
+  toSessionState,
+  isSessionInitialized,
+} from './sessionState'
 
 describe('session state utilities', () => {
   const EXPIRED_SESSION: SessionState = { id: 'null' }
   const SERIALIZED_EXPIRED_SESSION = 'id=null'
   const LIVE_SESSION: SessionState = { created: '0', id: '123' }
   const SERIALIZED_LIVE_SESSION = 'created=0&id=123'
+
+  describe('isSessionInitialized', () => {
+    it('should correctly identify a session in initialized state', () => {
+      expect(isSessionInitialized({ id: '123' })).toBe(true)
+      expect(isSessionInitialized({ id: 'null' })).toBe(true)
+      expect(isSessionInitialized({} as SessionState)).toBe(false)
+    })
+  })
 
   describe('isSessionInExpiredState', () => {
     it('should correctly identify a session in expired state', () => {
@@ -40,7 +54,7 @@ describe('session state utilities', () => {
 
     it('should handle invalid session strings', () => {
       const sessionString = '{invalid: true}'
-      expect(toSessionState(sessionString)).toEqual(EXPIRED_SESSION)
+      expect(toSessionState(sessionString)).toEqual({})
     })
   })
 

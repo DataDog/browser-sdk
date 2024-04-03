@@ -1,6 +1,6 @@
 import { generateUUID } from '../../../tools/utils/stringUtils'
 import type { SessionState } from '../sessionState'
-import { toSessionString, toSessionState } from '../sessionState'
+import { toSessionString, toSessionState, isSessionInitialized, getInitialSessionState } from '../sessionState'
 import type { SessionStoreStrategy, SessionStoreStrategyType } from './sessionStoreStrategy'
 import { SESSION_STORE_KEY } from './sessionStoreStrategy'
 
@@ -20,6 +20,12 @@ export function selectLocalStorageStrategy(): SessionStoreStrategyType | undefin
 }
 
 export function initLocalStorageStrategy(): SessionStoreStrategy {
+  const sessionState = retrieveSessionFromLocalStorage()
+
+  if (!isSessionInitialized(sessionState)) {
+    persistInLocalStorage(getInitialSessionState())
+  }
+
   return {
     isLockEnabled: false,
     persistSession: persistInLocalStorage,
@@ -38,5 +44,5 @@ function retrieveSessionFromLocalStorage(): SessionState {
 }
 
 function clearSessionFromLocalStorage() {
-  localStorage.removeItem(SESSION_STORE_KEY)
+  persistInLocalStorage(getInitialSessionState())
 }

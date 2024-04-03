@@ -16,10 +16,14 @@ const PRODUCT_KEY = 'product'
 const FIRST_ID = 'first'
 const SECOND_ID = 'second'
 
-function setSessionInStore(trackingType: FakeTrackingType = FakeTrackingType.TRACKED, id?: string, expire?: number) {
+function setSessionInStore(
+  trackingType: FakeTrackingType = FakeTrackingType.TRACKED,
+  id: string = 'null',
+  expire?: number
+) {
   setCookie(
     SESSION_STORE_KEY,
-    `${id ? `id=${id}&` : ''}${PRODUCT_KEY}=${trackingType}&created=${Date.now()}&expire=${
+    `id=${id}&${PRODUCT_KEY}=${trackingType}&created=${Date.now()}&expire=${
       expire || Date.now() + SESSION_EXPIRATION_DELAY
     }`,
     DURATION
@@ -41,7 +45,7 @@ function getStoreExpiration() {
 }
 
 function resetSessionInStore() {
-  setCookie(SESSION_STORE_KEY, '', DURATION)
+  setCookie(SESSION_STORE_KEY, 'id=null', DURATION)
 }
 
 describe('session store', () => {
@@ -261,7 +265,7 @@ describe('session store', () => {
             isTracked: rawTrackingType === FakeTrackingType.TRACKED,
             trackingType: rawTrackingType as FakeTrackingType,
           }))
-          setSessionInStore(FakeTrackingType.NOT_TRACKED, '')
+          setSessionInStore(FakeTrackingType.NOT_TRACKED)
 
           sessionStoreManager.expandOrRenewSession()
 

@@ -60,7 +60,7 @@ const cookieOptions: CookieOptions = {}
         expect(afterSpy).toHaveBeenCalledWith(expectedSession)
       })
 
-      it('should clear session when process return an expired session', () => {
+      it('should clear session when process returns an expired session', () => {
         sessionStoreStrategy.persistSession(initialSession)
         processSpy.and.returnValue({ id: 'null' })
 
@@ -113,7 +113,7 @@ const cookieOptions: CookieOptions = {}
         expect(afterSpy).toHaveBeenCalledWith(expectedSession)
       })
 
-      it('should clear session when process returns an empty value', () => {
+      it('should clear session when process returns an expired session', () => {
         sessionStoreStrategy.persistSession(initialSession)
         processSpy.and.returnValue({ id: 'null' })
 

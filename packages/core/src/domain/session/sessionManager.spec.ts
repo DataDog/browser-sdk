@@ -42,6 +42,11 @@ describe('startSessionManager', () => {
     clock.tick(STORAGE_POLL_DELAY)
   }
 
+  function deleteSessionCookie() {
+    setCookie(SESSION_STORE_KEY, '', DURATION)
+    clock.tick(STORAGE_POLL_DELAY)
+  }
+
   function expectSessionIdToBe(sessionManager: SessionManager<FakeTrackingType>, sessionId: string) {
     expect(sessionManager.findActiveSession()!.id).toBe(sessionId)
     expect(getCookie(SESSION_STORE_KEY)).toContain(`id=${sessionId}`)
@@ -49,7 +54,10 @@ describe('startSessionManager', () => {
 
   function expectSessionIdToBeDefined(sessionManager: SessionManager<FakeTrackingType>) {
     expect(sessionManager.findActiveSession()!.id).toMatch(/^[a-f0-9-]+$/)
+    expect(sessionManager.findActiveSession()?.id).not.toBe('null')
+
     expect(getCookie(SESSION_STORE_KEY)).toMatch(/id=[a-f0-9-]+/)
+    expect(getCookie(SESSION_STORE_KEY)).not.toContain('id=null')
   }
 
   function expectSessionIdToNotBeDefined(sessionManager: SessionManager<FakeTrackingType>) {
@@ -187,6 +195,25 @@ describe('startSessionManager', () => {
 
       expect(renewSessionSpy).not.toHaveBeenCalled()
       expectSessionIdToNotBeDefined(sessionManager)
+    })
+
+    it('should not renew on activity if cookie is deleted by a 3rd party', () => {
+      const sessionManager = startSessionManagerWithDefaults()
+      const renewSessionSpy = jasmine.createSpy()
+      sessionManager.renewObservable.subscribe(renewSessionSpy)
+
+      deleteSessionCookie()
+
+      expect(renewSessionSpy).not.toHaveBeenCalled()
+
+      expect(sessionManager.findActiveSession()).toBeUndefined()
+      expect(getCookie(SESSION_STORE_KEY)).toBeUndefined()
+
+      document.dispatchEvent(createNewEvent(DOM_EVENT.CLICK))
+
+      expect(renewSessionSpy).not.toHaveBeenCalled()
+      expect(sessionManager.findActiveSession()).toBeUndefined()
+      expect(getCookie(SESSION_STORE_KEY)).toBeUndefined()
     })
   })
 

@@ -26,13 +26,13 @@ export function initCookieStrategy(cookieOptions: CookieOptions): SessionStoreSt
     clearSession: () => setInitialSessionCookie(cookieOptions),
   }
 
+  tryOldCookiesMigration(cookieStore)
+
   const sessionCookie = retrieveSessionCookie()
 
   if (!isSessionInitialized(sessionCookie)) {
     setInitialSessionCookie(cookieOptions)
   }
-
-  tryOldCookiesMigration(cookieStore)
 
   return cookieStore
 }
@@ -43,13 +43,13 @@ function persistSessionCookie(options: CookieOptions) {
   }
 }
 
+function setInitialSessionCookie(options: CookieOptions) {
+  setCookie(SESSION_STORE_KEY, toSessionString(getInitialSessionState()), SESSION_TIME_OUT_DELAY, options)
+}
+
 function retrieveSessionCookie(): SessionState {
   const sessionString = getCookie(SESSION_STORE_KEY)
   return toSessionState(sessionString)
-}
-
-function setInitialSessionCookie(options: CookieOptions) {
-  setCookie(SESSION_STORE_KEY, toSessionString(getInitialSessionState()), SESSION_TIME_OUT_DELAY, options)
 }
 
 export function buildCookieOptions(initConfiguration: InitConfiguration) {

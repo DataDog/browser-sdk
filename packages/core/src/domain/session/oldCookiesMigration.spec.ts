@@ -15,6 +15,7 @@ describe('old cookies migration', () => {
 
   beforeEach(() => {
     sessionStoreStrategy = initCookieStrategy({})
+    setCookie(SESSION_STORE_KEY, '', SESSION_EXPIRATION_DELAY)
     resetInitCookies()
   })
 
