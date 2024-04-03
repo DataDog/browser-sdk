@@ -44,7 +44,6 @@ export function toSessionString(session: SessionState) {
 
 export function toSessionState(sessionString: string | undefined | null) {
   const session: SessionState = {}
-
   if (isValidSessionString(sessionString)) {
     sessionString.split(SESSION_ENTRY_SEPARATOR).forEach((entry) => {
       const matches = SESSION_ENTRY_REGEXP.exec(entry)

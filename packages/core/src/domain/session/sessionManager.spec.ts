@@ -303,8 +303,7 @@ describe('startSessionManager', () => {
       expect(getCookie(SESSION_STORE_KEY)).toBeDefined()
 
       clock.tick(SESSION_TIME_OUT_DELAY)
-      expect(sessionManager.findActiveSession()).toBeUndefined()
-      expect(getCookie(SESSION_STORE_KEY)).toBe('id=null')
+      expectSessionIdToNotBeDefined(sessionManager)
       expect(expireSessionSpy).toHaveBeenCalled()
     })
 
