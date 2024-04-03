@@ -14,6 +14,7 @@ import type {
   RumSessionManager,
   RecorderApi,
   RumConfiguration,
+  StartStrategyOptions,
 } from '@datadog/browser-rum-core'
 import { LifeCycleEventType } from '@datadog/browser-rum-core'
 import { getReplayStats as getReplayStatsImpl } from '../domain/replayStats'
@@ -57,6 +58,8 @@ type RecorderState =
       stopRecording: () => void
     }
 
+type StartStrategyFn = (options?: StartStrategyOptions) => void
+
 export function makeRecorderApi(
   startRecordingImpl: StartRecording,
   createDeflateWorkerImpl?: CreateDeflateWorker
@@ -76,7 +79,7 @@ export function makeRecorderApi(
     status: RecorderStatus.IntentToStart,
   }
 
-  let startStrategy = () => {
+  let startStrategy: StartStrategyFn = () => {
     state = { status: RecorderStatus.IntentToStart }
   }
   let stopStrategy = () => {
@@ -85,7 +88,7 @@ export function makeRecorderApi(
   let getSessionReplayLinkStrategy = noop as () => string | undefined
 
   return {
-    start: () => startStrategy(),
+    start: (options?: StartStrategyOptions) => startStrategy(options),
     stop: () => stopStrategy(),
     getSessionReplayLink: () => getSessionReplayLinkStrategy(),
     onRumStart: (
@@ -139,9 +142,11 @@ export function makeRecorderApi(
         return cachedDeflateEncoder
       }
 
-      startStrategy = () => {
+      startStrategy = (options?: StartStrategyOptions) => {
         const session = sessionManager.findTrackedSession()
-        if (!session || !session.sessionReplayAllowed) {
+        // If session is undefined (untracked), recording should never start
+        // If session is not allowed for replay and not being forced, recording should not start
+        if (!session || (!session.sessionReplayAllowed && !options?.forceStart)) {
           state = { status: RecorderStatus.IntentToStart }
           return
         }
