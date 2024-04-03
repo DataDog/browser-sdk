@@ -4,7 +4,6 @@ import { ONE_SECOND, dateNow } from '../../tools/utils/timeUtils'
 import { throttle } from '../../tools/utils/functionUtils'
 import { generateUUID } from '../../tools/utils/stringUtils'
 import type { InitConfiguration } from '../configuration'
-import { assign } from '../../tools/utils/polyfills'
 import { SESSION_TIME_OUT_DELAY } from './sessionConstants'
 import { selectCookieStrategy, initCookieStrategy } from './storeStrategies/sessionInCookie'
 import type { SessionStoreStrategyType } from './storeStrategies/sessionStoreStrategy'
@@ -119,9 +118,7 @@ export function startSessionStore<TrackingType extends string>(
     }
 
     if (!isActiveSession(sessionState)) {
-      sessionState = assign(getInitialSessionState(), {
-        lock: sessionState.lock,
-      })
+      sessionState = getInitialSessionState()
     }
 
     if (hasSessionInCache()) {

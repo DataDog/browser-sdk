@@ -18,8 +18,7 @@ export async function renewSession() {
 export async function expireSession() {
   await setCookie(SESSION_STORE_KEY, toSessionString(getInitialSessionState()), SESSION_TIME_OUT_DELAY)
 
-  const session = await getSessionFromCookie()
-  expect(await getSessionFromCookie()).toEqual(session)
+  expect(await getSessionFromCookie()).toEqual(getInitialSessionState())
 
   // Cookies are cached for 1s, wait until the cache expires
   await browser.pause(1100)
