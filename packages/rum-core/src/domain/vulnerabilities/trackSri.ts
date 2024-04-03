@@ -6,14 +6,18 @@ export function trackSri(lifeCycle: LifeCycle, vulnerabilityObservable: Observab
   const subscription = lifeCycle.subscribe(LifeCycleEventType.VIEW_UPDATED, (view) => {
     const scripts = document.querySelectorAll<HTMLElement>('script')
     scripts.forEach(script => {
-      analyze(script, vulnerabilityObservable, view.location)
+      if (script.getAttribute('src')) {
+        analyze(script, vulnerabilityObservable, view.location)
+      }
     })
 
     const links = document.querySelectorAll<HTMLElement>('link')
     links.forEach(link => {
-      const rel = link.getAttribute('rel')
-      if (rel === 'stylesheet' || rel === 'preload' || rel === 'modulepreload') {
-        analyze(link, vulnerabilityObservable, view.location)
+      if (link.getAttribute('href')) {
+        const rel = link.getAttribute('rel')
+        if (rel === 'stylesheet' || rel === 'preload' || rel === 'modulepreload') {
+          analyze(link, vulnerabilityObservable, view.location)
+        }
       }
     })
   })
