@@ -139,20 +139,22 @@ export function toValidEntry(entry: RumPerformanceResourceTiming) {
   // RumPerformanceResourceTiming, it will ignore entries from requests where timings cannot be
   // collected, for example cross origin requests without a "Timing-Allow-Origin" header allowing
   // it.
-  if (
-    areInOrder(
-      entry.startTime,
-      entry.fetchStart,
-      entry.domainLookupStart,
-      entry.domainLookupEnd,
-      entry.connectStart,
-      entry.connectEnd,
-      entry.requestStart,
-      entry.responseStart,
-      entry.responseEnd
-    ) &&
-    (!hasRedirection(entry) || areInOrder(entry.startTime, entry.redirectStart, entry.redirectEnd, entry.fetchStart))
-  ) {
+  const areCommonTimingsInOrder = areInOrder(
+    entry.startTime,
+    entry.fetchStart,
+    entry.domainLookupStart,
+    entry.domainLookupEnd,
+    entry.connectStart,
+    entry.connectEnd,
+    entry.requestStart,
+    entry.responseStart,
+    entry.responseEnd
+  )
+
+  const areRedirectionTimingsInOrder =
+    !hasRedirection(entry) || areInOrder(entry.startTime, entry.redirectStart, entry.redirectEnd, entry.fetchStart)
+
+  if (areCommonTimingsInOrder && areRedirectionTimingsInOrder) {
     return entry
   }
 }
