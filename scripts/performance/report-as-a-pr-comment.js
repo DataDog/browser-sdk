@@ -10,8 +10,17 @@ const GITHUB_TOKEN = getGithubAccessToken()
 const ONE_DAY_IN_SECOND = 24 * 60 * 60
 // The value is set to 5% as it's around 10 times the average value for small PRs.
 const SIZE_INCREASE_THRESHOLD = 5
+const actionNames = [
+  'adderror',
+  'addaction',
+  'logmessage',
+  'startview',
+  'startstopsessionreplayrecording',
+  'addtiming',
+  'addglobalcontext',
+]
 
-async function reportAsPrComment(localBundleSizes, cpuPerformance) {
+async function reportAsPrComment(localBundleSizes) {
   const lastCommonCommit = getLastCommonCommit(BASE_BRANCH, LOCAL_BRANCH)
   const pr = await fetchPR(LOCAL_BRANCH)
   if (!pr) {
@@ -21,6 +30,7 @@ async function reportAsPrComment(localBundleSizes, cpuPerformance) {
   const packageNames = Object.keys(localBundleSizes)
   const mainBranchBundleSizes = await fetchAllPackagesBaseBundleSize(packageNames, lastCommonCommit)
   const difference = compare(mainBranchBundleSizes, localBundleSizes)
+  const cpuPerformance = await fetchAllCpuPerformanceMetrics(actionNames, pr.number)
   const commentId = await retrieveExistingCommentId(pr.number)
   await updateOrAddComment(difference, mainBranchBundleSizes, localBundleSizes, cpuPerformance, pr.number, commentId)
 }
@@ -80,6 +90,36 @@ async function fetchBundleSizesMetric(packageName, commitSha) {
   return {
     name: packageName,
     size: null,
+  }
+}
+
+function fetchAllCpuPerformanceMetrics(actionNames, prNumber) {
+  return Promise.all(actionNames.map((actionName) => fetchCpuPerformanceMetric(actionName, prNumber)))
+}
+
+async function fetchCpuPerformanceMetric(actionName, prNumber) {
+  const now = Math.floor(Date.now() / 1000)
+  const date = now - 30 * ONE_DAY_IN_SECOND
+  const query = `avg:cpu.sdk.${actionName}.performance.average{prnumber:${prNumber}}&from=${date}&to=${now}`
+
+  const response = await fetchHandlingError(`https://api.datadoghq.com/api/v1/query?query=${query}`, {
+    method: 'GET',
+    headers: {
+      'Content-Type': 'application/json',
+      'DD-API-KEY': getOrg2ApiKey(),
+      'DD-APPLICATION-KEY': getOrg2AppKey(),
+    },
+  })
+  const data = await response.json()
+  if (data.series && data.series.length > 0 && data.series[0].pointlist && data.series[0].pointlist.length > 0) {
+    return {
+      name: actionName,
+      average: data.series[0].pointlist[0][1],
+    }
+  }
+  return {
+    name: actionName,
+    average: null,
   }
 }
 
@@ -158,11 +198,12 @@ function createMessage(difference, resultsBaseQuery, localBundleSizes, cpuPerfor
     message += `\n⚠️ The increase is particularly high and exceeds ${SIZE_INCREASE_THRESHOLD}%. Please check the changes.`
   }
 
-  message += '\n\n## CPU Performance\n\nExpand for details...\n\n'
-  message += '| 📦 Bundle Name | CPU Time |\n| --- | --- |\n'
+  message += '\n\n<details>\n<summary>CPU Performance</summary>\n\n'
+  message += '| Action Name | Average Cpu Time |\n| --- | --- |\n'
   cpuPerformance.forEach((perf) => {
-    message += `| ${formatBundleName(perf.name)} | ${perf.time}ms |\n`
+    message += `| ${formatBundleName(perf.name)} | ${perf.average} |\n`
   })
+  message += '\n</details>\n'
 
   return message
 }

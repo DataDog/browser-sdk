@@ -14,7 +14,7 @@ runMain(async () => {
   await updateStartUrl(PR_NUMBER)
   command`node ${deployPath} staging ${PR_NUMBER} pull-request`.run()
   syntheticTrigger()
-  const cpuPerformance = []
+  await new Promise((resolve) => setTimeout(resolve, 60 * 1000))
   await reportToDatadog(bundleSizes)
-  await reportAsPrComment(bundleSizes, cpuPerformance)
+  await reportAsPrComment(bundleSizes)
 })
