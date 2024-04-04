@@ -52,3 +52,10 @@ export function safeTruncate(candidate: string, length: number, suffix = '') {
 
   return `${candidate.slice(0, correctedLength)}${suffix}`
 }
+
+const DATA_URL_REGEX = /data:([-\w]+\/[-+\w.]+)?(;?\w+=[-\w]+)*(;base64)?/g
+
+export function findDataUrlAndTruncate(url: string): string | null {
+  const match = url.match(DATA_URL_REGEX)
+  return match ? match[0] : null
+}
