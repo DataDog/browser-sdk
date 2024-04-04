@@ -151,8 +151,9 @@ export function toValidEntry(entry: RumPerformanceResourceTiming) {
     entry.responseEnd
   )
 
-  const areRedirectionTimingsInOrder =
-    !hasRedirection(entry) || areInOrder(entry.startTime, entry.redirectStart, entry.redirectEnd, entry.fetchStart)
+  const areRedirectionTimingsInOrder = hasRedirection(entry)
+    ? areInOrder(entry.startTime, entry.redirectStart, entry.redirectEnd, entry.fetchStart)
+    : true
 
   if (areCommonTimingsInOrder && areRedirectionTimingsInOrder) {
     return entry
