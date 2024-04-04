@@ -16,6 +16,7 @@ module.exports = function (config) {
       project: 'browser sdk unit',
       build: getBuildInfos(),
       video: false,
+      captureTimeout: 2 * 60 * 1000,
     },
     customLaunchers: Object.fromEntries(
       browserConfigurations.map((configuration) => [
