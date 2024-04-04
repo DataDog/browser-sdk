@@ -1,6 +1,6 @@
 import type { ErrorSource } from '@datadog/browser-core'
 
-export type LogsEventDomainContext<T extends ErrorSource> = T extends typeof ErrorSource.NETWORK
+export type LogsEventDomainContext<T extends ErrorSource = any> = T extends typeof ErrorSource.NETWORK
   ? NetworkLogsEventDomainContext
   : never
 
