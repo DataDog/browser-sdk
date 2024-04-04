@@ -13,7 +13,8 @@ import {
   isServerError,
 } from '@datadog/browser-core'
 import type { LogsConfiguration } from '../configuration'
-import type { LifeCycle, LogsEventDomainContext } from '../lifeCycle'
+import type { LifeCycle } from '../lifeCycle'
+import type { LogsEventDomainContext } from '../../domainContext.types'
 import { LifeCycleEventType } from '../lifeCycle'
 import { StatusType } from '../logger'
 

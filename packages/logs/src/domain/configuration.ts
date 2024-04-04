@@ -12,7 +12,7 @@ import {
   objectValues,
 } from '@datadog/browser-core'
 import type { LogsEvent } from '../logsEvent.types'
-import type { LogsEventDomainContext } from './lifeCycle'
+import type { LogsEventDomainContext } from '../domainContext.types'
 
 export interface LogsInitConfiguration extends InitConfiguration {
   beforeSend?: (<T extends LogsEvent>(event: T, context: LogsEventDomainContext<T['origin']>) => boolean) | undefined
