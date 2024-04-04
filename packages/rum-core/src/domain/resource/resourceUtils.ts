@@ -1,6 +1,5 @@
 import type { RelativeTime, ServerDuration } from '@datadog/browser-core'
 import {
-  assign,
   addTelemetryDebug,
   elapsed,
   getPathName,
@@ -140,50 +139,29 @@ export function toValidEntry(entry: RumPerformanceResourceTiming) {
   // RumPerformanceResourceTiming, it will ignore entries from requests where timings cannot be
   // collected, for example cross origin requests without a "Timing-Allow-Origin" header allowing
   // it.
-  if (
-    !areInOrder(
-      entry.startTime,
-      entry.fetchStart,
-      entry.domainLookupStart,
-      entry.domainLookupEnd,
-      entry.connectStart,
-      entry.connectEnd,
-      entry.requestStart,
-      entry.responseStart,
-      entry.responseEnd
-    )
-  ) {
-    return undefined
-  }
+  const areCommonTimingsInOrder = areInOrder(
+    entry.startTime,
+    entry.fetchStart,
+    entry.domainLookupStart,
+    entry.domainLookupEnd,
+    entry.connectStart,
+    entry.connectEnd,
+    entry.requestStart,
+    entry.responseStart,
+    entry.responseEnd
+  )
 
-  if (!hasRedirection(entry)) {
+  const areRedirectionTimingsInOrder = hasRedirection(entry)
+    ? areInOrder(entry.startTime, entry.redirectStart, entry.redirectEnd, entry.fetchStart)
+    : true
+
+  if (areCommonTimingsInOrder && areRedirectionTimingsInOrder) {
     return entry
   }
-
-  let { redirectStart, redirectEnd } = entry
-  // Firefox doesn't provide redirect timings on cross origin requests.
-  // Provide a default for those.
-  if (redirectStart < entry.startTime) {
-    redirectStart = entry.startTime
-  }
-  if (redirectEnd < entry.startTime) {
-    redirectEnd = entry.fetchStart
-  }
-
-  // Make sure redirect timings are in order
-  if (!areInOrder(entry.startTime, redirectStart, redirectEnd, entry.fetchStart)) {
-    return undefined
-  }
-
-  return assign({}, entry, {
-    redirectEnd,
-    redirectStart,
-  })
 }
 
 function hasRedirection(entry: RumPerformanceResourceTiming) {
-  // The only time fetchStart is different than startTime is if a redirection occurred.
-  return entry.fetchStart !== entry.startTime
+  return entry.redirectEnd > entry.startTime
 }
 
 function formatTiming(origin: RelativeTime, start: RelativeTime, end: RelativeTime) {
