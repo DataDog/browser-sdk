@@ -1,0 +1,80 @@
+.root {
+  z-index: var(--dd-events-list-header-z-index);
+}
+
+.columnHeader :global(.mantine-CloseButton-root) {
+  opacity: 0;
+}
+
+.columnHeader:hover :global(.mantine-CloseButton-root) {
+  opacity: 1;
+}
+
+.addColumnCell {
+  width: 0;
+}
+
+/*
+  The following style is used to draw a shadow at the bottom of the header.
+
+  We want to show the shadow only when the header is scrolled down. To do so, we use a Scroll Driven
+  Animation to display the shadow according to the scroll position.
+
+  When using a box-shadow directly on the header, the shadow is visible on the sides, which is a bit
+  weird aesthetically. To avoid this, we use a pseudo-element to draw the shadow and use the
+  container to "clip" the shadow on the sides.
+*/
+
+@keyframes table-header-shadow {
+  to {
+    box-shadow: 5px 0 var(--shadow-size) var(--shadow-color);
+  }
+}
+
+.headerRowShadow {
+  --shadow-size: 20px;
+
+  position: absolute;
+
+  /*
+    When the header is positioned as 'sticky', its bottom border disappears when scrolled down,
+    making difficult to differentiate the header from the rows. This pseudo-element is used to
+    draw a border at the bottom of the header, so that it is always visible.
+  */
+  border-top: 1px solid var(--dd-border-color);
+  margin-top: -1px;
+
+  width: 100%;
+
+  /*
+    The goal of this hidden overflow is to crop the shadow on the sides, to keep the shadow only on
+    the bottom.
+  */
+  overflow: hidden;
+
+  height: 100px; /* give the shadow some space */
+  pointer-events: none;
+}
+
+:root[data-mantine-color-scheme='light'] .headerRowShadow {
+  --shadow-color: rgba(0, 0, 0, 0.1);
+}
+
+:root[data-mantine-color-scheme='dark'] .headerRowShadow {
+  --shadow-color: rgba(0, 0, 0, 1);
+}
+
+.headerRowShadow::after {
+  content: '';
+
+  width: calc(100% - var(--shadow-size));
+
+  /* If the container has no height, the shadow is not quite visible. Set an arbitrary size */
+  height: 20px;
+  margin: -20px auto 0;
+
+  display: block;
+  animation: table-header-shadow linear forwards;
+  animation-timeline: --dd-tab-scroll-timeline;
+  animation-range: 0 35px; /* The header happens to be 35px tall. It doesn't need to be precise. */
+}

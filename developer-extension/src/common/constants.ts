@@ -22,6 +22,7 @@ export const enum PanelTabs {
   Infos = 'infos',
   Settings = 'settings',
   Replay = 'replay',
+  Vulnerabilities = 'vulnerabilities'
 }
 
 export const DEFAULT_PANEL_TAB = PanelTabs.Events
