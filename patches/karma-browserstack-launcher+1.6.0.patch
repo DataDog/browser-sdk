@@ -1,0 +1,23 @@
+diff --git a/node_modules/karma-browserstack-launcher/index.js b/node_modules/karma-browserstack-launcher/index.js
+index 1b47dff..fe5c864 100644
+--- a/node_modules/karma-browserstack-launcher/index.js
++++ b/node_modules/karma-browserstack-launcher/index.js
+@@ -37,7 +37,8 @@ var createBrowserStackTunnel = function (logger, config, emitter) {
+   return deferred.promise
+ }
+ 
+-var createBrowserStackClient = function (/* config.browserStack */config, /* BrowserStack:sessionMapping */ sessionMapping) {
++var createBrowserStackClient = function (logger, /* config.browserStack */config, /* BrowserStack:sessionMapping */ sessionMapping) {
++  const log = logger.create('launcher.browserstack')
+   var env = process.env
+ 
+   config = config || {}
+@@ -85,7 +86,7 @@ var createBrowserStackClient = function (/* config.browserStack */config, /* Bro
+   if (!workerManager.isPolling) {
+     workerManager.startPolling(client, pollingTimeout, function (err) {
+       if (err) {
+-        console.error(err)
++        log.error(err)
+       }
+     })
+   }

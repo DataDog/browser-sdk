@@ -10,7 +10,7 @@ module.exports = function (config) {
     browsers: browserConfigurations.map((configuration) => configuration.sessionName),
     concurrency: 5,
     browserDisconnectTolerance: 3,
-    captureTimeout: 2 * 60 * 1000,
+    captureTimeout: 60 * 1000,
     browserStack: {
       username: process.env.BS_USERNAME,
       accessKey: process.env.BS_ACCESS_KEY,
