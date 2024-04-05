@@ -215,3 +215,10 @@ export function computeSize(entry: RumPerformanceResourceTiming) {
 export function isAllowedRequestUrl(configuration: RumConfiguration, url: string) {
   return url && !configuration.isIntakeUrl(url)
 }
+
+const DATA_URL_REGEX = /data:([-\w]+\/[-+\w.]+)?(;?\w+=[-\w]+)*(;base64)?/g
+
+export function findDataUrlAndTruncate(url: string): string | null {
+  const match = url.match(DATA_URL_REGEX)
+  return match ? match[0] : null
+}

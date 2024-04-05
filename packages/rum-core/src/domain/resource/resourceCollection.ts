@@ -10,7 +10,6 @@ import {
   isNumber,
   isExperimentalFeatureEnabled,
   ExperimentalFeature,
-  findDataUrlAndTruncate,
 } from '@datadog/browser-core'
 import type { RumConfiguration } from '../configuration'
 import type { RumPerformanceResourceTiming } from '../../browser/performanceCollection'
@@ -31,6 +30,7 @@ import {
   computeResourceKind,
   computeSize,
   isRequestKind,
+  findDataUrlAndTruncate,
 } from './resourceUtils'
 
 export function startResourceCollection(

@@ -4,6 +4,7 @@ import type { RumConfiguration } from '@datadog/browser-rum-core'
 import { NodePrivacyLevel, PRIVACY_ATTR_NAME, CENSORED_STRING_MARK, CENSORED_IMG_MARK } from '../../../constants'
 import { MAX_ATTRIBUTE_VALUE_CHAR_LENGTH } from '../privacy'
 import { censoredImageForSize } from './serializationUtils'
+import { findDataUrlAndTruncate } from 'packages/rum-core/src/domain/resource/resourceUtils'
 
 export function serializeAttribute(
   element: Element,
@@ -68,10 +69,6 @@ export function serializeAttribute(
     return attributeValue
   }
 
-  // Minimum Fix for customer.
-  if (attributeValue.length > MAX_ATTRIBUTE_VALUE_CHAR_LENGTH && attributeValue.slice(0, 5) === 'data:') {
-    return 'data:truncated'
-  }
-
-  return attributeValue
+  // Truncate data:url to avoid performance impact
+  return findDataUrlAndTruncate(attributeValue) ?? attributeValue
 }
