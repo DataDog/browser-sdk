@@ -1,10 +1,10 @@
 import React, { useState } from 'react'
 import { Center, Text } from '@mantine/core'
 
+import type { RumActionEvent } from '@datadog/browser-rum-core'
 import { TabBase } from '../../tabBase'
 import { VulnerabilitiesList } from './vulnerabilitiesList'
-import { VulnerabilitiesListColumn } from './columnUtils'
-import { RumActionEvent } from '@datadog/browser-rum-core'
+import type { VulnerabilitiesListColumn } from './columnUtils'
 import { VulnerabilitiesTabTop } from './vulnerabilitiesTabTop'
 
 interface VulnerabilitiesTabProps {
@@ -23,16 +23,25 @@ export function VulnerabilitiesTab({
 
   const [vulnerabilitiesFromTracer, setVulnerabilitiesFromTracer] = useState<any[]>([])
 
-  function readVulnerabilities(path: string) {
-    fetch(path)
-      .then(response => response.text())
-      .then(text => setVulnerabilitiesFromTracer(parseTraces(text)))
-      .catch(console.error)
+
+  let timeout: number
+  function readVulnerabilities(path: string = 'file:///tmp/_dd_trace_log') {
+    if (timeout) {
+      clearTimeout(timeout)
+    }
+    timeout = setTimeout(() => {
+      fetch(path)
+        .then(response => response.text())
+        .then(text => setVulnerabilitiesFromTracer(parseTraces(text)))
+        .then(() => readVulnerabilities())
+        .catch(console.error)
+    }, 1000)
   }
   
+  readVulnerabilities()
   return (
     <TabBase
-      top={<VulnerabilitiesTabTop clear={clear} readVulnerabilities={readVulnerabilities} />}
+      // top={<VulnerabilitiesTabTop clear={clear} readVulnerabilities={readVulnerabilities} />}
     >
       {vulnerabilities.length === 0 && vulnerabilitiesFromTracer.length === 0? (
         <Center>
@@ -44,7 +53,7 @@ export function VulnerabilitiesTab({
       }
       {vulnerabilities.length > 0 ? (
         <VulnerabilitiesList
-          title={"Client vulnerabilities"}
+          title={'Client vulnerabilities'}
           vulnerabilities={vulnerabilities}
           columns={columns}
         />
@@ -52,7 +61,7 @@ export function VulnerabilitiesTab({
       }
       {vulnerabilitiesFromTracer.length > 0 ? (
         <VulnerabilitiesList
-          title={"App vulnerabilities"}
+          title={'App vulnerabilities'}
           vulnerabilities={vulnerabilitiesFromTracer}
           columns={columnsFromTracer}
         />
