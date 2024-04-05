@@ -11,7 +11,7 @@ import type { Settings } from '../../common/types'
 import { SettingsTab } from './tabs/settingsTab'
 import { InfosTab } from './tabs/infosTab'
 import { EventsTab, DEFAULT_COLUMNS } from './tabs/eventsTab'
-import { VulnerabilitiesTab, DEFAULT_VULNERABILITIES_COLUMNS } from './tabs/vulnerabilitiesTab'
+import { VulnerabilitiesTab, DEFAULT_VULNERABILITIES_COLUMNS, DEFAULT_VULNERABILITIES_FROM_TRACER_COLUMNS } from './tabs/vulnerabilitiesTab'
 import { ReplayTab } from './tabs/replayTab'
 
 import classes from './panel.module.css'
@@ -28,7 +28,8 @@ export function Panel() {
   const [columns, setColumns] = useState(DEFAULT_COLUMNS)
 
   const { vulnerabilities, clearVulnerabilities } = useVulnerabilities(settings)
-  const [vulnerabilitiesColumns, setVulnerabilitiesColumns] = useState(DEFAULT_VULNERABILITIES_COLUMNS)
+  const [vulnerabilitiesColumns] = useState(DEFAULT_VULNERABILITIES_COLUMNS)
+  const [vulnerabilitiesFromTracerColumns] = useState(DEFAULT_VULNERABILITIES_FROM_TRACER_COLUMNS)
 
   const [activeTab, setActiveTab] = useState<string | null>(DEFAULT_PANEL_TAB)
   function updateActiveTab(activeTab: string | null) {
@@ -73,6 +74,7 @@ export function Panel() {
         <VulnerabilitiesTab
           vulnerabilities={vulnerabilities}
           columns={vulnerabilitiesColumns}
+          columnsFromTracer={vulnerabilitiesFromTracerColumns}
           clear={clearVulnerabilities}
         />
       </Tabs.Panel>

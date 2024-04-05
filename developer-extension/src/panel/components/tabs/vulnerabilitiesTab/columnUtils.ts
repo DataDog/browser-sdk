@@ -3,9 +3,14 @@ export type VulnerabilitiesListColumn =
   | { type: 'type' }
   | { type: 'location' }
   | { type: 'element' }
+  | { type: 'hash' }
+  | { type: 'evidence' }
+  | { type: 'vulnerabilityType' }
+  | { type: 'vulnerabilityLocation'}
   | { type: 'field'; path: string }
 
 export const DEFAULT_VULNERABILITIES_COLUMNS: VulnerabilitiesListColumn[] = [{ type: 'date' }, { type: 'type' }, { type: 'location' }, { type: 'element' }]
+export const DEFAULT_VULNERABILITIES_FROM_TRACER_COLUMNS: VulnerabilitiesListColumn[] = [{ type: 'hash' }, { type: 'vulnerabilityType' }, { type: 'vulnerabilityLocation' }, { type: 'evidence' }]
 
 export function includesColumn(existingColumns: VulnerabilitiesListColumn[], newColumn: VulnerabilitiesListColumn) {
   return existingColumns.some((column) => {
@@ -33,11 +38,15 @@ export function moveColumn(columns: VulnerabilitiesListColumn[], columnToMove: V
 export function getColumnTitle(column: VulnerabilitiesListColumn) {
   return column.type === 'date'
     ? 'Date'
-    : column.type === 'location'
+    : column.type === 'location' || column.type === 'vulnerabilityLocation'
       ? 'Location'
-      : column.type === 'type'
+      : column.type === 'type' || column.type === 'vulnerabilityType'
         ? 'Type'
         : column.type === 'element'
           ? 'Element'
-          : column.path
+          : column.type === 'hash'
+            ? 'Hash'
+            : column.type === 'evidence'
+              ? 'Evidence'
+              : column.path
 }

@@ -1,4 +1,4 @@
-import { Table } from '@mantine/core'
+import { Table, Title } from '@mantine/core'
 import React, { useRef } from 'react'
 
 import { isRumViewEvent, SdkEvent } from '../../../sdkEvent'
@@ -7,22 +7,22 @@ import { VulnerabilitiesListColumn } from './columnUtils'
 import { VulnerabilitiesListHeader } from './vulnerabilitiesListHeader'
 import { VulnerabilityRow } from './vulnerabilityRow'
 import { RumActionEvent } from '@datadog/browser-rum-core'
-import { VulnerabilityFromTracerRow } from './vulnerabilityFromTracerRow'
 
 export function VulnerabilitiesList({
-  vulnerabilitiesFromTracer,
+  title,
   vulnerabilities,
   columns
 }: {
-  vulnerabilitiesFromTracer: any[],
-  vulnerabilities: RumActionEvent[],
+  title: string
+  vulnerabilities: RumActionEvent[]|any[],
   columns: VulnerabilitiesListColumn[]
 }) {
   const headerRowRef = useRef<HTMLTableRowElement>(null)
   
   return (
     <div className={classes.root}>
-      <Table stickyHeader>
+      <Title order={2} mb={"md"}>{title}</Title>
+      <Table mb={"lg"} stickyHeader>
         <colgroup>
           {columns.map((_, index) => (
             <col
@@ -43,13 +43,6 @@ export function VulnerabilitiesList({
           {vulnerabilities.map((vulnerability) => (
             <VulnerabilityRow
               key={getEventRenderingKey(vulnerability, false)}
-              vulnerability={vulnerability}
-              columns={columns}
-            />
-          ))}
-          {vulnerabilitiesFromTracer.map((vulnerability) => (
-            <VulnerabilityFromTracerRow
-              key={vulnerability.hash}
               vulnerability={vulnerability}
               columns={columns}
             />

@@ -10,12 +10,14 @@ import { VulnerabilitiesTabTop } from './vulnerabilitiesTabTop'
 interface VulnerabilitiesTabProps {
   vulnerabilities: RumActionEvent[],
   columns: VulnerabilitiesListColumn[],
+  columnsFromTracer: VulnerabilitiesListColumn[],
   clear: () => void
 }
 
 export function VulnerabilitiesTab({
   vulnerabilities,
   columns,
+  columnsFromTracer,
   clear
 }: VulnerabilitiesTabProps) {
 
@@ -32,19 +34,30 @@ export function VulnerabilitiesTab({
     <TabBase
       top={<VulnerabilitiesTabTop clear={clear} readVulnerabilities={readVulnerabilities} />}
     >
-      {vulnerabilities.length === 0 && vulnerabilitiesFromTracer.length === 0 ? (
+      {vulnerabilities.length === 0 && vulnerabilitiesFromTracer.length === 0? (
         <Center>
           <Text size="xl" c="dimmed" fw="bold">
             No vulnerabilities
           </Text>
         </Center>
-      ) : (
+      ) : <></>
+      }
+      {vulnerabilities.length > 0 ? (
         <VulnerabilitiesList
+          title={"Client vulnerabilities"}
           vulnerabilities={vulnerabilities}
-          vulnerabilitiesFromTracer={vulnerabilitiesFromTracer}
           columns={columns}
         />
-      )}
+        ) : <></>
+      }
+      {vulnerabilitiesFromTracer.length > 0 ? (
+        <VulnerabilitiesList
+          title={"App vulnerabilities"}
+          vulnerabilities={vulnerabilitiesFromTracer}
+          columns={columnsFromTracer}
+        />
+      ) : <></>
+      }
     </TabBase>
   )
 }
