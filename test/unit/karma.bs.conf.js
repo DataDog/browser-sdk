@@ -11,6 +11,7 @@ module.exports = function (config) {
     concurrency: 5,
     browserDisconnectTolerance: 3,
     captureTimeout: 2 * 60 * 1000,
+    logLevel: config.LOG_DEBUG,
     browserStack: {
       username: process.env.BS_USERNAME,
       accessKey: process.env.BS_ACCESS_KEY,
