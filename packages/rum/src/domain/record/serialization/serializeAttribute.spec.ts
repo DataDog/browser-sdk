@@ -19,24 +19,21 @@ describe('serializeAttribute', () => {
     const node = document.createElement('p')
 
     const longString = new Array(MAX_ATTRIBUTE_VALUE_CHAR_LENGTH + 1 - 5).join('a')
-    const maxAttributeValue = `data:${longString}`
+    const dataUrlAttributeValue = `data:${longString}`
     const truncatedValue = 'data:'
-    const exceededAttributeValue = `data:${longString}1`
     const ignoredAttributeValue = `foos:${longString}`
 
-    node.setAttribute('test-okay', maxAttributeValue)
-    node.setAttribute('test-truncate', exceededAttributeValue)
+    node.setAttribute('test-truncate', dataUrlAttributeValue)
     node.setAttribute('test-ignored', ignoredAttributeValue)
-
-    expect(serializeAttribute(node, NodePrivacyLevel.ALLOW, 'test-okay', DEFAULT_CONFIGURATION)).toBe(truncatedValue)
-    expect(serializeAttribute(node, NodePrivacyLevel.MASK, 'test-okay', DEFAULT_CONFIGURATION)).toBe(truncatedValue)
 
     expect(serializeAttribute(node, NodePrivacyLevel.MASK, 'test-ignored', DEFAULT_CONFIGURATION)).toBe(
       ignoredAttributeValue
     )
 
-    expect(serializeAttribute(node, NodePrivacyLevel.ALLOW, 'test-truncate', DEFAULT_CONFIGURATION)).toBe('data:')
-    expect(serializeAttribute(node, NodePrivacyLevel.MASK, 'test-truncate', DEFAULT_CONFIGURATION)).toBe('data:')
+    expect(serializeAttribute(node, NodePrivacyLevel.ALLOW, 'test-truncate', DEFAULT_CONFIGURATION)).toBe(
+      truncatedValue
+    )
+    expect(serializeAttribute(node, NodePrivacyLevel.MASK, 'test-truncate', DEFAULT_CONFIGURATION)).toBe(truncatedValue)
   })
 
   it('does not mask the privacy attribute', () => {
