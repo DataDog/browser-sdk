@@ -1,5 +1,5 @@
 import { createTest, flushEvents, html } from '../../lib/framework'
-import { browserExecute, getBrowserName } from '../../lib/helpers/browser'
+import { getBrowserName } from '../../lib/helpers/browser'
 
 describe('rum views', () => {
   createTest('send performance timings along the view events')
@@ -51,7 +51,7 @@ describe('rum views', () => {
     createTest('create a new view on hash change')
       .withRum()
       .run(async ({ intakeRegistry }) => {
-        await browserExecute(() => {
+        await browser.execute(() => {
           window.location.hash = '#bar'
         })
 

@@ -1,4 +1,4 @@
-import { browserExecute, flushBrowserLogs } from '../lib/helpers/browser'
+import { flushBrowserLogs } from '../lib/helpers/browser'
 import { createTest, flushEvents, html } from '../lib/framework'
 
 describe('bridge present', () => {
@@ -29,7 +29,7 @@ describe('bridge present', () => {
     .withRum()
     .withEventBridge()
     .run(async ({ intakeRegistry }) => {
-      await browserExecute(() => {
+      await browser.execute(() => {
         console.error('oh snap')
       })
 
@@ -64,7 +64,7 @@ describe('bridge present', () => {
     .withLogs()
     .withEventBridge()
     .run(async ({ intakeRegistry }) => {
-      await browserExecute(() => {
+      await browser.execute(() => {
         const context = {
           get foo() {
             throw new window.Error('bar')
@@ -83,7 +83,7 @@ describe('bridge present', () => {
     .withLogs()
     .withEventBridge()
     .run(async ({ intakeRegistry }) => {
-      await browserExecute(() => {
+      await browser.execute(() => {
         window.DD_LOGS!.logger.log('hello')
       })
       await flushEvents()
@@ -110,7 +110,7 @@ describe('bridge present', () => {
       await browser.pause(200)
 
       const preStopRecordsCount = intakeRegistry.replayRecords.length
-      await browserExecute(() => {
+      await browser.execute(() => {
         window.DD_RUM!.stopSessionReplayRecording()
 
         // trigger a new record

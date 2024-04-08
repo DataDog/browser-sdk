@@ -19,7 +19,6 @@ import {
 } from '@datadog/browser-rum/test'
 
 import { flushEvents, createTest, bundleSetup, html } from '../../lib/framework'
-import { browserExecute } from '../../lib/helpers/browser'
 
 /** Will generate the following HTML
  * ```html
@@ -115,7 +114,7 @@ const scrollableDivShadowDom = `<script>
 
     const button = document.createElement("button");
     button.textContent = 'scroll to 250';
-    
+
     button.onclick = () => {
       div.scrollTo({ top: 250 });
     }
@@ -268,7 +267,7 @@ describe('recorder with shadow DOM', () => {
       <my-div id="host" />
     `)
     .run(async ({ intakeRegistry }) => {
-      await browserExecute(() => {
+      await browser.execute(() => {
         const host = document.body.querySelector('#host') as HTMLElement
         const div = host.shadowRoot!.querySelector('div') as HTMLElement
         div.innerText = 'titi'
@@ -345,5 +344,5 @@ async function getNodeInsideShadowDom(hostTag: string, selector: string) {
 }
 
 function isAdoptedStyleSheetsSupported(): Promise<boolean> {
-  return browserExecute(() => document.adoptedStyleSheets !== undefined)
+  return browser.execute(() => document.adoptedStyleSheets !== undefined)
 }

@@ -1,7 +1,7 @@
 import { RecordType } from '@datadog/browser-rum/src/types'
 import { expireSession, findSessionCookie, renewSession } from '../../lib/helpers/session'
 import { bundleSetup, createTest, flushEvents, waitForRequests } from '../../lib/framework'
-import { browserExecute, browserExecuteAsync, deleteAllCookies, sendXhr } from '../../lib/helpers/browser'
+import { deleteAllCookies, sendXhr } from '../../lib/helpers/browser'
 
 describe('rum sessions', () => {
   describe('session renewal', () => {
@@ -55,7 +55,7 @@ describe('rum sessions', () => {
     createTest('calling stopSession() stops the session')
       .withRum()
       .run(async ({ intakeRegistry }) => {
-        await browserExecuteAsync<void>((done) => {
+        await browser.executeAsync((done) => {
           window.DD_RUM!.stopSession()
           setTimeout(() => {
             // If called directly after `stopSession`, the action start time may be the same as the
@@ -76,7 +76,7 @@ describe('rum sessions', () => {
     createTest('after calling stopSession(), a user interaction starts a new session')
       .withRum()
       .run(async ({ intakeRegistry }) => {
-        await browserExecute(() => {
+        await browser.execute(() => {
           window.DD_RUM!.stopSession()
         })
         await (await $('html')).click()
@@ -84,7 +84,7 @@ describe('rum sessions', () => {
         // The session is not created right away, let's wait until we see a cookie
         await browser.waitUntil(async () => Boolean(await findSessionCookie()))
 
-        await browserExecute(() => {
+        await browser.execute(() => {
           window.DD_RUM!.addAction('foo')
         })
 
@@ -103,7 +103,7 @@ describe('rum sessions', () => {
         expect(intakeRegistry.logsEvents.length).toBe(0)
         expect(intakeRegistry.replaySegments.length).toBe(0)
 
-        await browserExecute(() => {
+        await browser.execute(() => {
           window.DD_LOGS!.logger.log('foo')
           window.DD_RUM!.stopSession()
         })
@@ -130,7 +130,7 @@ describe('rum sessions', () => {
 
         await browser.pause(1100)
 
-        await browserExecute(() => {
+        await browser.execute(() => {
           window.DD_RUM!.addAction('foo')
         })
 
