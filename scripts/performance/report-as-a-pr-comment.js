@@ -26,10 +26,10 @@ async function reportAsPrComment(localBundleSizes) {
   }
   const packageNames = Object.keys(localBundleSizes)
   const mainBranchBundleSizes = await fetchMetrics('bundle', packageNames, lastCommonCommit)
-  const differenceBundle = compare(mainBranchBundleSizes, localBundleSizes)
-  const differenceCpu = compare(cpuBasePerformance, cpuLocalPerformance)
   const cpuBasePerformance = await fetchMetrics('cpu', ACTION_NAMES, lastCommonCommit)
   const cpuLocalPerformance = await fetchMetrics('cpu', ACTION_NAMES, process.env.CI_COMMIT_SHORT_SHA)
+  const differenceBundle = compare(mainBranchBundleSizes, localBundleSizes)
+  const differenceCpu = compare(cpuBasePerformance, cpuLocalPerformance)
   const commentId = await retrieveExistingCommentId(pr.number)
   await updateOrAddComment(
     differenceBundle,
