@@ -1,12 +1,9 @@
 const { command } = require('../lib/command')
 const { fetchHandlingError } = require('../lib/execution-utils')
-const { getOrg2ApiKey, getGithubAccessToken, getOrg2AppKey } = require('../lib/secrets')
-
-const LOCAL_BRANCH = process.env.CI_COMMIT_REF_NAME
-const BASE_BRANCH = process.env.MAIN_BRANCH
+const { getOrg2ApiKey, getOrg2AppKey } = require('../lib/secrets')
+const { LOCAL_BRANCH, BASE_BRANCH, GITHUB_TOKEN, getLastCommonCommit, fetchPR } = require('../lib/git-utils')
 const PR_COMMENT_HEADER = 'Bundles Sizes Evolution'
 const PR_COMMENTER_AUTH_TOKEN = command`authanywhere`.run().split(' ')[2].trim()
-const GITHUB_TOKEN = getGithubAccessToken()
 const ONE_DAY_IN_SECOND = 24 * 60 * 60
 // The value is set to 5% as it's around 10 times the average value for small PRs.
 const SIZE_INCREASE_THRESHOLD = 5
@@ -28,10 +25,10 @@ async function reportAsPrComment(localBundleSizes) {
     return
   }
   const packageNames = Object.keys(localBundleSizes)
-  const mainBranchBundleSizes = await fetchAllPackagesBaseBundleSize(packageNames, lastCommonCommit)
+  const mainBranchBundleSizes = await fetchMetrics('bundle', packageNames, lastCommonCommit)
   const difference = compare(mainBranchBundleSizes, localBundleSizes)
-  const cpuBasePerformance = await fetchAllCpuPerformanceMetrics(ACTION_NAMES, lastCommonCommit)
-  const cpuLocalPerformance = await fetchAllCpuPerformanceMetrics(ACTION_NAMES, process.env.CI_COMMIT_SHORT_SHA)
+  const cpuBasePerformance = await fetchMetrics('cpu', ACTION_NAMES, lastCommonCommit)
+  const cpuLocalPerformance = await fetchMetrics('cpu', ACTION_NAMES, process.env.CI_COMMIT_SHORT_SHA)
   const commentId = await retrieveExistingCommentId(pr.number)
   await updateOrAddComment(
     difference,
@@ -44,42 +41,20 @@ async function reportAsPrComment(localBundleSizes) {
   )
 }
 
-function getLastCommonCommit(baseBranch) {
-  try {
-    command`git fetch origin`.run()
-    const commandOutput = command`git merge-base origin/${baseBranch} HEAD`.run()
-    // SHA commit is truncated to 8 characters as bundle sizes commit are exported in short format to logs for convenience and readability.
-    return commandOutput.trim().substring(0, 8)
-  } catch (error) {
-    throw new Error('Failed to get last common commit', { cause: error })
-  }
+function fetchMetrics(type, names, commitId) {
+  return Promise.all(names.map((name) => fetchMetric(type, name, commitId)))
 }
 
-async function fetchPR(localBranch) {
-  const response = await fetchHandlingError(
-    `https://api.github.com/repos/DataDog/browser-sdk/pulls?head=DataDog:${localBranch}`,
-    {
-      method: 'GET',
-      headers: {
-        Authorization: `token ${GITHUB_TOKEN}`,
-      },
-    }
-  )
-  const pr = response.body ? await response.json() : null
-  if (pr && pr.length > 1) {
-    throw new Error('Multiple pull requests found for the branch')
-  }
-  return pr ? pr[0] : null
-}
-
-function fetchAllPackagesBaseBundleSize(packageNames, commitSha) {
-  return Promise.all(packageNames.map((packageName) => fetchBundleSizesMetric(packageName, commitSha)))
-}
-
-async function fetchBundleSizesMetric(packageName, commitSha) {
+async function fetchMetric(type, name, commitId) {
   const now = Math.floor(Date.now() / 1000)
   const date = now - 30 * ONE_DAY_IN_SECOND
-  const query = `avg:bundle_sizes.${packageName}{commit:${commitSha}}&from=${date}&to=${now}`
+  let query = ''
+
+  if (type === 'bundle') {
+    query = `avg:bundle_sizes.${name}{commit:${commitId}}&from=${date}&to=${now}`
+  } else if (type === 'cpu') {
+    query = `avg:cpu.sdk.${name}.performance.average{commitid:${commitId}}&from=${date}&to=${now}`
+  }
 
   const response = await fetchHandlingError(`https://api.datadoghq.com/api/v1/query?query=${query}`, {
     method: 'GET',
@@ -92,55 +67,36 @@ async function fetchBundleSizesMetric(packageName, commitSha) {
   const data = await response.json()
   if (data.series && data.series.length > 0 && data.series[0].pointlist && data.series[0].pointlist.length > 0) {
     return {
-      name: packageName,
-      size: data.series[0].pointlist[0][1],
+      name,
+      value: data.series[0].pointlist[0][1],
     }
   }
   return {
-    name: packageName,
-    size: null,
+    name,
+    value: null,
   }
 }
 
-function fetchAllCpuPerformanceMetrics(actionNames, commitId) {
-  return Promise.all(actionNames.map((actionName) => fetchCpuPerformanceMetric(actionName, commitId)))
-}
+function compare(baseResults, localResults) {
+  return baseResults.map((baseResult) => {
+    let localResult = null
 
-async function fetchCpuPerformanceMetric(actionName, commitId) {
-  const now = Math.floor(Date.now() / 1000)
-  const date = now - 30 * ONE_DAY_IN_SECOND
-  const query = `avg:cpu.sdk.${actionName}.performance.average{commitid:${commitId}}&from=${date}&to=${now}`
-
-  const response = await fetchHandlingError(`https://api.datadoghq.com/api/v1/query?query=${query}`, {
-    method: 'GET',
-    headers: {
-      'Content-Type': 'application/json',
-      'DD-API-KEY': getOrg2ApiKey(),
-      'DD-APPLICATION-KEY': getOrg2AppKey(),
-    },
-  })
-  const data = await response.json()
-  if (data.series && data.series.length > 0 && data.series[0].pointlist && data.series[0].pointlist.length > 0) {
-    return {
-      name: actionName,
-      average: data.series[0].pointlist[0][1],
+    if (Array.isArray(localResults)) {
+      const localResultObj = localResults.find((result) => result.name === baseResult.name)
+      localResult = localResultObj ? localResultObj.value : null
+    } else {
+      localResult = localResults[baseResult.name]
     }
-  }
-  return {
-    name: actionName,
-    average: null,
-  }
-}
 
-function compare(resultsBaseQuery, localBundleSizes) {
-  return resultsBaseQuery.map((baseResult) => {
-    const localResult = localBundleSizes[baseResult.name]
     let change = null
     let percentageChange = null
 
-    if (baseResult.size && localResult) {
-      change = localResult - baseResult.size
-      percentageChange = ((change / baseResult.size) * 100).toFixed(2)
+    if (baseResult.value && localResult) {
+      change = localResult - baseResult.value
+      percentageChange = ((change / baseResult.value) * 100).toFixed(2)
+    } else if (localResult) {
+      change = localResult
+      percentageChange = 'N/A'
     }
 
     return {
@@ -194,13 +150,13 @@ async function updateOrAddComment(
   })
 }
 
-function createMessage(difference, resultsBaseQuery, localBundleSizes, cpuBasePerformance, cpuLocalPerformance) {
+function createMessage(difference, baseBundleSizes, localBundleSizes, cpuBasePerformance, cpuLocalPerformance) {
   let message =
     '| 📦 Bundle Name| Base Size | Local Size | 𝚫 | 𝚫% | Status |\n| --- | --- | --- | --- | --- | :---: |\n'
   let highIncreaseDetected = false
   difference.forEach((diff, index) => {
-    const baseSize = formatSize(resultsBaseQuery[index].size)
-    const localSize = formatSize(localBundleSizes[diff.name])
+    const baseSize = formatSize(baseBundleSizes[index].value)
+    const localSize = formatSize(localBundleSizes[diff.name].value)
     const diffSize = formatSize(diff.change)
     const sign = diff.percentageChange > 0 ? '+' : ''
     let status = '✅'
@@ -219,7 +175,9 @@ function createMessage(difference, resultsBaseQuery, localBundleSizes, cpuBasePe
   message += '| Action Name | Base Average Cpu Time | Local Average Cpu Time |\n| --- | --- | --- |\n'
   cpuBasePerformance.forEach((basePerf, index) => {
     const localPerf = cpuLocalPerformance[index]
-    message += `| ${formatBundleName(basePerf.name)} | null | ${localPerf.average.toFixed(3)} |\n`
+    const baseValue = basePerf.value !== null ? basePerf.value.toFixed(3) : 'N/A'
+    const localValue = localPerf.value !== null ? localPerf.value.toFixed(3) : 'N/A'
+    message += `| ${formatBundleName(basePerf.name)} | ${baseValue} | ${localValue} |\n`
   })
   message += '\n</details>\n'
 
@@ -243,8 +201,4 @@ function formatSize(bytes) {
 
 module.exports = {
   reportAsPrComment,
-  fetchPR,
-  getLastCommonCommit,
-  LOCAL_BRANCH,
-  BASE_BRANCH,
 }

@@ -1,7 +1,7 @@
 const path = require('path')
 const { runMain } = require('../lib/execution-utils')
 const { command } = require('../lib/command')
-const { reportAsPrComment, fetchPR, LOCAL_BRANCH } = require('./report-as-a-pr-comment')
+const { reportAsPrComment, fetchPR, LOCAL_BRANCH } = require('../lib/git-utils')
 const { reportToDatadog } = require('./report-to-datadog')
 const { calculateBundleSizes } = require('./bundle-size/bundle-size-calculator')
 const { syntheticTrigger } = require('./cpu-performance/synthetic-trigger')
