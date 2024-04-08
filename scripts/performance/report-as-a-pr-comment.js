@@ -26,12 +26,14 @@ async function reportAsPrComment(localBundleSizes) {
   }
   const packageNames = Object.keys(localBundleSizes)
   const mainBranchBundleSizes = await fetchMetrics('bundle', packageNames, lastCommonCommit)
-  const difference = compare(mainBranchBundleSizes, localBundleSizes)
+  const differenceBundle = compare(mainBranchBundleSizes, localBundleSizes)
+  const differenceCpu = compare(cpuBasePerformance, cpuLocalPerformance)
   const cpuBasePerformance = await fetchMetrics('cpu', ACTION_NAMES, lastCommonCommit)
   const cpuLocalPerformance = await fetchMetrics('cpu', ACTION_NAMES, process.env.CI_COMMIT_SHORT_SHA)
   const commentId = await retrieveExistingCommentId(pr.number)
   await updateOrAddComment(
-    difference,
+    differenceBundle,
+    differenceCpu,
     mainBranchBundleSizes,
     localBundleSizes,
     cpuBasePerformance,
@@ -124,15 +126,23 @@ async function retrieveExistingCommentId(prNumber) {
   }
 }
 async function updateOrAddComment(
-  difference,
-  resultsBaseQuery,
+  differenceBundle,
+  differenceCpu,
+  baseBundleSizes,
   localBundleSizes,
   cpuBasePerformance,
   cpuLocalPerformance,
   prNumber,
   commentId
 ) {
-  const message = createMessage(difference, resultsBaseQuery, localBundleSizes, cpuBasePerformance, cpuLocalPerformance)
+  const message = createMessage(
+    differenceBundle,
+    differenceCpu,
+    baseBundleSizes,
+    localBundleSizes,
+    cpuBasePerformance,
+    cpuLocalPerformance
+  )
   const method = commentId ? 'PATCH' : 'POST'
   const payload = {
     pr_url: `https://github.com/DataDog/browser-sdk/pull/${prNumber}`,
@@ -150,13 +160,20 @@ async function updateOrAddComment(
   })
 }
 
-function createMessage(difference, baseBundleSizes, localBundleSizes, cpuBasePerformance, cpuLocalPerformance) {
+function createMessage(
+  differenceBundle,
+  differenceCpu,
+  baseBundleSizes,
+  localBundleSizes,
+  cpuBasePerformance,
+  cpuLocalPerformance
+) {
   let message =
     '| 📦 Bundle Name| Base Size | Local Size | 𝚫 | 𝚫% | Status |\n| --- | --- | --- | --- | --- | :---: |\n'
   let highIncreaseDetected = false
-  difference.forEach((diff, index) => {
+  differenceBundle.forEach((diff, index) => {
     const baseSize = formatSize(baseBundleSizes[index].value)
-    const localSize = formatSize(localBundleSizes[diff.name].value)
+    const localSize = formatSize(localBundleSizes[diff.name])
     const diffSize = formatSize(diff.change)
     const sign = diff.percentageChange > 0 ? '+' : ''
     let status = '✅'
@@ -171,13 +188,14 @@ function createMessage(difference, baseBundleSizes, localBundleSizes, cpuBasePer
     message += `\n⚠️ The increase is particularly high and exceeds ${SIZE_INCREASE_THRESHOLD}%. Please check the changes.`
   }
 
-  message += '\n\n<details>\n<summary>🚀 CPU Performance</summary>\n\n\n'
-  message += '| Action Name | Base Average Cpu Time | Local Average Cpu Time |\n| --- | --- | --- |\n'
+  message += '| Action Name | Base Average Cpu Time | Local Average Cpu Time | 𝚫 |\n| --- | --- | --- | --- |\n'
   cpuBasePerformance.forEach((basePerf, index) => {
     const localPerf = cpuLocalPerformance[index]
+    const diffPerf = differenceCpu[index]
     const baseValue = basePerf.value !== null ? basePerf.value.toFixed(3) : 'N/A'
     const localValue = localPerf.value !== null ? localPerf.value.toFixed(3) : 'N/A'
-    message += `| ${formatBundleName(basePerf.name)} | ${baseValue} | ${localValue} |\n`
+    const diffValue = diffPerf.change !== null ? diffPerf.change.toFixed(3) : 'N/A'
+    message += `| ${formatBundleName(basePerf.name)} | ${baseValue} | ${localValue} | ${diffValue} |\n`
   })
   message += '\n</details>\n'
 
