@@ -1,5 +1,5 @@
 import { RecordType } from '@datadog/browser-rum/src/types'
-import { expireSession, getSessionFromCookie, renewSession } from '../../lib/helpers/session'
+import { expireSession, findSessionCookie, renewSession } from '../../lib/helpers/session'
 import { bundleSetup, createTest, flushEvents, waitForRequests } from '../../lib/framework'
 import { browserExecute, browserExecuteAsync, deleteAllCookies, sendXhr } from '../../lib/helpers/browser'
 
@@ -69,8 +69,7 @@ describe('rum sessions', () => {
         })
         await flushEvents()
 
-        const session = await getSessionFromCookie()
-        expect(session.id).toBe('null')
+        expect(await findSessionCookie()).toBe('expired=0')
         expect(intakeRegistry.rumActionEvents.length).toBe(0)
       })
 
@@ -84,7 +83,7 @@ describe('rum sessions', () => {
         await (await $('html')).click()
 
         // The session is not created right away, let's wait until we see a cookie
-        await browser.waitUntil(async () => (await getSessionFromCookie()).id !== 'null')
+        await browser.waitUntil(async () => Boolean(await findSessionCookie()))
 
         await browserExecute(() => {
           window.DD_RUM!.addAction('foo')
@@ -92,8 +91,8 @@ describe('rum sessions', () => {
 
         await flushEvents()
 
-        const session = await getSessionFromCookie()
-        expect(session.id).not.toBe('null')
+        expect(await findSessionCookie()).not.toContain('expired=0')
+        expect(await findSessionCookie()).toMatch(/id=[a-f0-9-]+/)
         expect(intakeRegistry.rumActionEvents.length).toBe(1)
       })
 
@@ -134,8 +133,7 @@ describe('rum sessions', () => {
 
         await flushEvents()
 
-        const session = await getSessionFromCookie()
-        expect(session.id).toBeUndefined()
+        expect(await findSessionCookie()).toBeUndefined()
         expect(intakeRegistry.rumActionEvents.length).toBe(0)
         expect(intakeRegistry.rumViewEvents.length).toBe(1)
         expect(intakeRegistry.rumViewEvents[0].session.is_active).toBe(false)
