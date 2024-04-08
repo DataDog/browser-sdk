@@ -411,5 +411,26 @@ describe('session store', () => {
         expect(expireSpy).toHaveBeenCalled()
       })
     })
+
+    describe('reinitialize session', () => {
+      it('when session not in store, should do reinitialize the store', () => {
+        setSessionInStore()
+        setupSessionStore()
+
+        sessionStoreManager.reinitializeSession()
+
+        expect(sessionStoreManager.getSession().expired).toBe(SessionExpiredReason.UNKNOWN)
+      })
+
+      it('when session in store, should do nothing', () => {
+        setSessionInStore(FakeTrackingType.TRACKED, FIRST_ID)
+        setupSessionStore()
+
+        sessionStoreManager.reinitializeSession()
+
+        expect(sessionStoreManager.getSession().id).toBe(FIRST_ID)
+        expect(sessionStoreManager.getSession().expired).toBeUndefined()
+      })
+    })
   })
 })

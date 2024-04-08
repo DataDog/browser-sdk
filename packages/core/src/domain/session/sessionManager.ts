@@ -70,6 +70,7 @@ export function startSessionManager<TrackingType extends string>(
     }
   })
   trackVisibility(configuration, () => sessionStore.expandSession())
+  trackResume(configuration, () => sessionStore.reinitializeSession())
 
   function buildSessionContext() {
     return {
@@ -116,4 +117,9 @@ function trackVisibility(configuration: Configuration, expandSession: () => void
   stopCallbacks.push(() => {
     clearInterval(visibilityCheckInterval)
   })
+}
+
+function trackResume(configuration: Configuration, cb: () => void) {
+  const { stop } = addEventListener(configuration, window, DOM_EVENT.RESUME, cb)
+  stopCallbacks.push(stop)
 }

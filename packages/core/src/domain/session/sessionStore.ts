@@ -16,6 +16,7 @@ export interface SessionStore {
   expandOrRenewSession: () => void
   expandSession: () => void
   getSession: () => SessionState
+  reinitializeSession: () => void
   renewObservable: Observable<void>
   expireObservable: Observable<void>
   expire: () => void
@@ -131,6 +132,20 @@ export function startSessionStore<TrackingType extends string>(
     return sessionState
   }
 
+  function reinitializeSession() {
+    processSessionStoreOperations(
+      {
+        process: (sessionState) => {
+          if (!isSessionInitialized(sessionState)) {
+            return getInitialSessionState()
+          }
+        },
+        after: synchronizeSession,
+      },
+      sessionStoreStrategy
+    )
+  }
+
   function expandOrRenewSessionState(sessionState: SessionState) {
     if (!isSessionInitialized(sessionState)) {
       return false
@@ -189,6 +204,7 @@ export function startSessionStore<TrackingType extends string>(
     getSession: () => sessionCache,
     renewObservable,
     expireObservable,
+    reinitializeSession,
     expire: () => {
       cancelExpandOrRenewSession()
       clearSession()
