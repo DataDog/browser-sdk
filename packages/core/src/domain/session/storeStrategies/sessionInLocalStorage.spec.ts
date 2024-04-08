@@ -1,4 +1,4 @@
-import type { SessionState } from '../sessionState'
+import { SessionExpiredReason, type SessionState } from '../sessionState'
 import { selectLocalStorageStrategy, initLocalStorageStrategy } from './sessionInLocalStorage'
 import { SESSION_STORE_KEY } from './sessionStoreStrategy'
 
@@ -24,8 +24,8 @@ describe('session in local storage strategy', () => {
     const localStorageStrategy = initLocalStorageStrategy()
     const session = localStorageStrategy.retrieveSession()
 
-    expect(session).toEqual({ id: 'null' })
-    expect(window.localStorage.getItem(SESSION_STORE_KEY)).toBe('id=null')
+    expect(session).toEqual({ expired: SessionExpiredReason.UNKNOWN })
+    expect(window.localStorage.getItem(SESSION_STORE_KEY)).toBe('expired=0')
   })
 
   it('should persist a session in local storage', () => {
@@ -41,8 +41,8 @@ describe('session in local storage strategy', () => {
     localStorageStrategy.persistSession(sessionState)
     localStorageStrategy.clearSession()
     const session = localStorageStrategy?.retrieveSession()
-    expect(session).toEqual({ id: 'null' })
-    expect(window.localStorage.getItem(SESSION_STORE_KEY)).toBe('id=null')
+    expect(session).toEqual({ expired: SessionExpiredReason.UNKNOWN })
+    expect(window.localStorage.getItem(SESSION_STORE_KEY)).toBe('expired=0')
   })
 
   it('should not interfere with other keys present in local storage', () => {

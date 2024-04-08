@@ -16,13 +16,37 @@
         telemetryConfigurationSampleRate: 100,
         enableExperimentalFeatures: [],
       })
-      DD_LOGS.init({
-        clientToken: 'xxx',
-        telemetrySampleRate: 100,
-        telemetryConfigurationSampleRate: 100,
-        enableExperimentalFeatures: [],
-      })
+
+      // DD_LOGS.init({
+      //   clientToken: 'xxx',
+      //   telemetrySampleRate: 100,
+      //   telemetryConfigurationSampleRate: 100,
+      //   enableExperimentalFeatures: [],
+      // })
     </script>
   </head>
-  <body></body>
+  <body>
+    <script>
+      function addButton(label, id, handler) {
+        const button = document.createElement('button')
+        button.innerText = label
+        button.id = id
+        button.addEventListener('click', handler)
+
+        const container = document.createElement('p')
+        container.appendChild(button)
+        document.body.appendChild(container)
+      }
+
+      addButton('Send a user action', 'send-user-action', () => {
+        console.log('Sending a user action')
+        DD_RUM.addAction('one')
+        // document.cookie = '_dd_s=foo=bar;expires=Thu, 01 Jan 1970 00:00:00 GMT'
+        setTimeout(() => {
+          console.log('User action sent')
+          DD_RUM.addAction('two')
+        }, 1000)
+      })
+    </script>
+  </body>
 </html>

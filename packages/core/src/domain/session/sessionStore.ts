@@ -132,16 +132,18 @@ export function startSessionStore<TrackingType extends string>(
   }
 
   function expandOrRenewSessionState(sessionState: SessionState) {
-    if (!sessionState.id) {
+    if (!isSessionInitialized(sessionState)) {
       return false
     }
 
     const { trackingType, isTracked } = computeSessionState(sessionState[productKey])
     sessionState[productKey] = trackingType
-    if (isTracked && sessionState.id === 'null') {
+    if (isTracked && !sessionState.id) {
       sessionState.id = generateUUID()
       sessionState.created = String(dateNow())
+      delete sessionState.expired
     }
+
     return isTracked
   }
 

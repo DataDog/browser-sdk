@@ -1,5 +1,5 @@
 import { setCookie, deleteCookie, getCookie, getCurrentSite } from '../../../browser/cookie'
-import type { SessionState } from '../sessionState'
+import { SessionExpiredReason, type SessionState } from '../sessionState'
 import { buildCookieOptions, selectCookieStrategy, initCookieStrategy } from './sessionInCookie'
 import type { SessionStoreStrategy } from './sessionStoreStrategy'
 import { SESSION_STORE_KEY } from './sessionStoreStrategy'
@@ -19,8 +19,8 @@ describe('session in cookie strategy', () => {
   it('should initialize a new cookie', () => {
     const session = cookieStorageStrategy.retrieveSession()
 
-    expect(session).toEqual({ id: 'null' })
-    expect(getCookie(SESSION_STORE_KEY)).toBe('id=null')
+    expect(session).toEqual({ expired: SessionExpiredReason.UNKNOWN })
+    expect(getCookie(SESSION_STORE_KEY)).toBe('expired=0')
   })
 
   it('should persist a session in a cookie', () => {
@@ -34,8 +34,8 @@ describe('session in cookie strategy', () => {
     cookieStorageStrategy.persistSession(sessionState)
     cookieStorageStrategy.clearSession()
     const session = cookieStorageStrategy.retrieveSession()
-    expect(session).toEqual({ id: 'null' })
-    expect(getCookie(SESSION_STORE_KEY)).toBe('id=null')
+    expect(session).toEqual({ expired: SessionExpiredReason.UNKNOWN })
+    expect(getCookie(SESSION_STORE_KEY)).toBe('expired=0')
   })
 
   it('should return an empty object if session string is invalid', () => {
