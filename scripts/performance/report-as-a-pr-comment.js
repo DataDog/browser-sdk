@@ -219,7 +219,7 @@ function createMessage(difference, resultsBaseQuery, localBundleSizes, cpuBasePe
   message += '| Action Name | Base Average Cpu Time | Local Average Cpu Time |\n| --- | --- | --- |\n'
   cpuBasePerformance.forEach((basePerf, index) => {
     const localPerf = cpuLocalPerformance[index]
-    message += `| ${formatBundleName(basePerf.name)} | ${basePerf.average.toFixed(3)} | ${localPerf.average.toFixed(3)} |\n`
+    message += `| ${formatBundleName(basePerf.name)} | null | ${localPerf.average.toFixed(3)} |\n`
   })
   message += '\n</details>\n'
 
