@@ -16,6 +16,12 @@
 
 ---
 
+## v5.15.0
+
+- 🐛 fix beforeSend type definition for logs ([#2686](https://github.com/DataDog/browser-sdk/pull/2686))
+- 🐛 [RUM-2782] remove buggy redirect timing estimation based on fetchStart ([#2683](https://github.com/DataDog/browser-sdk/pull/2683))
+- [ci-visibility] Implement driver-agnostic integration with CI Visibility ([#2639](https://github.com/DataDog/browser-sdk/pull/2639))
+
 ## v5.14.0
 
 - ✨ [RUM-3387] forward to beforeSend context ([#2665](https://github.com/DataDog/browser-sdk/pull/2665))
