@@ -102,14 +102,14 @@ async function fetchBundleSizesMetric(packageName, commitSha) {
   }
 }
 
-function fetchAllCpuPerformanceMetrics(actionNames, prNumber) {
-  return Promise.all(actionNames.map((actionName) => fetchCpuPerformanceMetric(actionName, prNumber)))
+function fetchAllCpuPerformanceMetrics(actionNames, commitId) {
+  return Promise.all(actionNames.map((actionName) => fetchCpuPerformanceMetric(actionName, commitId)))
 }
 
 async function fetchCpuPerformanceMetric(actionName, commitId) {
   const now = Math.floor(Date.now() / 1000)
   const date = now - 30 * ONE_DAY_IN_SECOND
-  const query = `avg:cpu.sdk.${actionName}.performance.average{commitId:${commitId}}&from=${date}&to=${now}`
+  const query = `avg:cpu.sdk.${actionName}.performance.average{commitid:${commitId}}&from=${date}&to=${now}`
 
   const response = await fetchHandlingError(`https://api.datadoghq.com/api/v1/query?query=${query}`, {
     method: 'GET',
