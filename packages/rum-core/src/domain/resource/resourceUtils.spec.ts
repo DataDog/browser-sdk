@@ -8,7 +8,8 @@ import {
   computePerformanceResourceDuration,
   computeResourceKind,
   isAllowedRequestUrl,
-  findDataUrlAndTruncate,
+  isDataUrl,
+  sanitizeDataUrl,
 } from './resourceUtils'
 
 function generateResourceWith(overrides: Partial<RumPerformanceResourceTiming>) {
@@ -315,32 +316,48 @@ describe('shouldTrackResource', () => {
   })
 })
 
-describe('findDataUrlAndTruncate', () => {
+describe('isDataUrl and sanitizeDataUrl', () => {
   it('returns truncated url when detects data url of json', () => {
+    const longDataUrl =
+      'data:text/json; charset=utf-8,%7B%22data%22%3A%7B%22type%22%3A%22notebooks%22%2C%22attributes%22%3A%7B%22metadata%22%3A%7B'
+
     const expectedUrl = 'data:text/json'
-    expect(
-      findDataUrlAndTruncate(
-        'data:text/json; charset=utf-8,%7B%22data%22%3A%7B%22type%22%3A%22notebooks%22%2C%22attributes%22%3A%7B%22metadata%22%3A%7B'
-      )
-    ).toEqual(expectedUrl)
+    expect(isDataUrl(longDataUrl)).toEqual(true)
+    expect(sanitizeDataUrl(longDataUrl)).toEqual(expectedUrl)
   })
 
   it('returns truncated url when detects data url of html', () => {
+    const longDataUrl = 'data:text/html,%3Ch1%3EHello%2C%20World%21%3C%2Fh1%3E'
+
     const expectedUrl = 'data:text/html'
-    expect(findDataUrlAndTruncate('data:text/html,%3Ch1%3EHello%2C%20World%21%3C%2Fh1%3E')).toEqual(expectedUrl)
+    expect(isDataUrl(longDataUrl)).toEqual(true)
+    expect(sanitizeDataUrl(longDataUrl)).toEqual(expectedUrl)
   })
 
   it('returns truncated url when detects data url of image', () => {
+    const longDataUrl = 'data:image/svg+xml;base64,+DQo8L3N2Zz4='
+
     const expectedUrl = 'data:image/svg+xml;base64'
-    expect(findDataUrlAndTruncate('data:image/svg+xml;base64,+DQo8L3N2Zz4=')).toEqual(expectedUrl)
+    expect(isDataUrl(longDataUrl)).toEqual(true)
+    expect(sanitizeDataUrl(longDataUrl)).toEqual(expectedUrl)
   })
   it('returns truncated url when detects plain data url', () => {
+    const plainDataUrl = 'data:,Hello%2C%20World%21'
     const expectedUrl = 'data:'
-    expect(findDataUrlAndTruncate('data:,Hello%2C%20World%21')).toEqual(expectedUrl)
+    expect(isDataUrl(plainDataUrl)).toEqual(true)
+    expect(sanitizeDataUrl(plainDataUrl)).toEqual(expectedUrl)
+  })
+
+  it('returns truncated url when detects data url with exotic mime type', () => {
+    const exoticTypeDataUrl =
+      'data:application/vnd.openxmlformats;fileName=officedocument.presentationxml;base64,AAAAAAAAAAAAAAAAAAAAA'
+    const expectedUrl = 'data:application/vnd.openxmlformats;fileName=officedocument.presentationxml;base64'
+    expect(isDataUrl(exoticTypeDataUrl)).toEqual(true)
+    expect(sanitizeDataUrl(exoticTypeDataUrl)).toEqual(expectedUrl)
   })
 
   it('returns null when no data url found', () => {
     const nonDataUrl = 'https://static.datad0g.com/static/c/70086/chunk.min.js'
-    expect(findDataUrlAndTruncate(nonDataUrl)).toBeNull()
+    expect(isDataUrl(nonDataUrl)).toEqual(false)
   })
 })

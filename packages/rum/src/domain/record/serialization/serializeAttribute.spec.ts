@@ -1,7 +1,7 @@
 import { isIE } from '@datadog/browser-core'
 
 import type { RumConfiguration } from '@datadog/browser-rum-core'
-import { STABLE_ATTRIBUTES, DEFAULT_PROGRAMMATIC_ACTION_NAME_ATTRIBUTE } from '@datadog/browser-rum-core'
+import { STABLE_ATTRIBUTES, DEFAULT_PROGRAMMATIC_ACTION_NAME_ATTRIBUTE, isDataUrl } from '@datadog/browser-rum-core'
 import { NodePrivacyLevel, PRIVACY_ATTR_NAME } from '../../../constants'
 import { MAX_ATTRIBUTE_VALUE_CHAR_LENGTH } from '../privacy'
 import { serializeAttribute } from './serializeAttribute'
@@ -18,13 +18,20 @@ describe('serializeAttribute', () => {
   it('truncates "data:" URIs after long string length', () => {
     const node = document.createElement('p')
 
-    const longString = new Array(MAX_ATTRIBUTE_VALUE_CHAR_LENGTH + 1 - 5).join('a')
-    const dataUrlAttributeValue = `data:${longString}`
+    const longString = new Array(MAX_ATTRIBUTE_VALUE_CHAR_LENGTH - 5).join('a')
+    const maxAttributeValue = `data:,${longString}`
+    const exceededAttributeValue = `data:,${longString}aa`
+    const dataUrlAttributeValue = `data:,${longString}a`
     const truncatedValue = 'data:'
-    const ignoredAttributeValue = `foos:${longString}`
+    const ignoredAttributeValue = `foos:,${longString}`
 
+    node.setAttribute('test-okay', maxAttributeValue)
+    node.setAttribute('test-truncate', exceededAttributeValue)
     node.setAttribute('test-truncate', dataUrlAttributeValue)
     node.setAttribute('test-ignored', ignoredAttributeValue)
+
+    expect(serializeAttribute(node, NodePrivacyLevel.ALLOW, 'test-okay', DEFAULT_CONFIGURATION)).toBe(maxAttributeValue)
+    expect(serializeAttribute(node, NodePrivacyLevel.MASK, 'test-okay', DEFAULT_CONFIGURATION)).toBe(maxAttributeValue)
 
     expect(serializeAttribute(node, NodePrivacyLevel.MASK, 'test-ignored', DEFAULT_CONFIGURATION)).toBe(
       ignoredAttributeValue
@@ -33,6 +40,7 @@ describe('serializeAttribute', () => {
     expect(serializeAttribute(node, NodePrivacyLevel.ALLOW, 'test-truncate', DEFAULT_CONFIGURATION)).toBe(
       truncatedValue
     )
+    expect(serializeAttribute(node, NodePrivacyLevel.MASK, 'test-truncate', DEFAULT_CONFIGURATION)).toBe(truncatedValue)
     expect(serializeAttribute(node, NodePrivacyLevel.MASK, 'test-truncate', DEFAULT_CONFIGURATION)).toBe(truncatedValue)
   })
 

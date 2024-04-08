@@ -14,7 +14,7 @@ import {
   CENSORED_STRING_MARK,
 } from '../../constants'
 
-export const MAX_ATTRIBUTE_VALUE_CHAR_LENGTH = 100_000
+export const MAX_ATTRIBUTE_VALUE_CHAR_LENGTH = 24_000
 
 const TEXT_MASKING_CHAR = 'x'
 

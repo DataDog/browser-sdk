@@ -30,7 +30,8 @@ import {
   computeResourceKind,
   computeSize,
   isRequestKind,
-  findDataUrlAndTruncate,
+  isDataUrl,
+  sanitizeDataUrl,
 } from './resourceUtils'
 
 export function startResourceCollection(
@@ -92,7 +93,7 @@ function processRequest(
         duration,
         method: request.method,
         status_code: request.status,
-        url: findDataUrlAndTruncate(request.url) ?? request.url,
+        url: isDataUrl(request.url) ? sanitizeDataUrl(request.url) : request.url,
       },
       type: RumEventType.RESOURCE as const,
       _dd: {
