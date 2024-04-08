@@ -22,7 +22,7 @@ describe('serializeAttribute', () => {
     const maxAttributeValue = `data:,${longString}`
     const exceededAttributeValue = `data:,${longString}aa`
     const dataUrlAttributeValue = `data:,${longString}a`
-    const truncatedValue = 'data:'
+    const truncatedValue = 'data:,'
     const ignoredAttributeValue = `foos:,${longString}`
 
     node.setAttribute('test-okay', maxAttributeValue)

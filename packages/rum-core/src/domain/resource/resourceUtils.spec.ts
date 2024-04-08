@@ -321,7 +321,7 @@ describe('isDataUrl and sanitizeDataUrl', () => {
     const longDataUrl =
       'data:text/json; charset=utf-8,%7B%22data%22%3A%7B%22type%22%3A%22notebooks%22%2C%22attributes%22%3A%7B%22metadata%22%3A%7B'
 
-    const expectedUrl = 'data:text/json'
+    const expectedUrl = 'data:text/json; charset=utf-8,'
     expect(isDataUrl(longDataUrl)).toEqual(true)
     expect(sanitizeDataUrl(longDataUrl)).toEqual(expectedUrl)
   })
@@ -329,7 +329,7 @@ describe('isDataUrl and sanitizeDataUrl', () => {
   it('returns truncated url when detects data url of html', () => {
     const longDataUrl = 'data:text/html,%3Ch1%3EHello%2C%20World%21%3C%2Fh1%3E'
 
-    const expectedUrl = 'data:text/html'
+    const expectedUrl = 'data:text/html,'
     expect(isDataUrl(longDataUrl)).toEqual(true)
     expect(sanitizeDataUrl(longDataUrl)).toEqual(expectedUrl)
   })
@@ -337,13 +337,13 @@ describe('isDataUrl and sanitizeDataUrl', () => {
   it('returns truncated url when detects data url of image', () => {
     const longDataUrl = 'data:image/svg+xml;base64,+DQo8L3N2Zz4='
 
-    const expectedUrl = 'data:image/svg+xml;base64'
+    const expectedUrl = 'data:image/svg+xml;base64,'
     expect(isDataUrl(longDataUrl)).toEqual(true)
     expect(sanitizeDataUrl(longDataUrl)).toEqual(expectedUrl)
   })
   it('returns truncated url when detects plain data url', () => {
     const plainDataUrl = 'data:,Hello%2C%20World%21'
-    const expectedUrl = 'data:'
+    const expectedUrl = 'data:,'
     expect(isDataUrl(plainDataUrl)).toEqual(true)
     expect(sanitizeDataUrl(plainDataUrl)).toEqual(expectedUrl)
   })
@@ -351,7 +351,7 @@ describe('isDataUrl and sanitizeDataUrl', () => {
   it('returns truncated url when detects data url with exotic mime type', () => {
     const exoticTypeDataUrl =
       'data:application/vnd.openxmlformats;fileName=officedocument.presentationxml;base64,AAAAAAAAAAAAAAAAAAAAA'
-    const expectedUrl = 'data:application/vnd.openxmlformats;fileName=officedocument.presentationxml;base64'
+    const expectedUrl = 'data:application/vnd.openxmlformats;fileName=officedocument.presentationxml;base64,'
     expect(isDataUrl(exoticTypeDataUrl)).toEqual(true)
     expect(sanitizeDataUrl(exoticTypeDataUrl)).toEqual(expectedUrl)
   })

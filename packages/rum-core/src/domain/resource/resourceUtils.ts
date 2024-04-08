@@ -216,7 +216,7 @@ export function isAllowedRequestUrl(configuration: RumConfiguration, url: string
   return url && !configuration.isIntakeUrl(url)
 }
 
-const DATA_URL_REGEX = /data:([-\w]+\/[-+\w.]+)?(;?\w+=[-\w.]+)*(;base64)?/g
+const DATA_URL_REGEX = /data:(.+)?(;base64)?,/g
 
 export function isDataUrl(url: string): boolean {
   const match = url.match(DATA_URL_REGEX)
