@@ -95,7 +95,3 @@ function generateEnvironmentForRole(awsAccountId, roleName) {
     AWS_SESSION_TOKEN: credentials['SessionToken'],
   }
 }
-
-module.exports = {
-  deploy: runMain,
-}
