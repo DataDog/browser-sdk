@@ -217,8 +217,12 @@ export function isAllowedRequestUrl(configuration: RumConfiguration, url: string
 }
 
 const DATA_URL_REGEX = /data:(.+)?(;base64)?,/g
+export const MAX_ATTRIBUTE_VALUE_CHAR_LENGTH = 24_000
 
-export function isDataUrl(url: string): boolean {
+export function isDataUrlTooLong(url: string): boolean {
+  if (url.length <= MAX_ATTRIBUTE_VALUE_CHAR_LENGTH) {
+    return false
+  }
   const match = url.match(DATA_URL_REGEX)
   return !!match
 }

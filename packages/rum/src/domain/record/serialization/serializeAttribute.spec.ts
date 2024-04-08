@@ -1,9 +1,12 @@
 import { isIE } from '@datadog/browser-core'
 
 import type { RumConfiguration } from '@datadog/browser-rum-core'
-import { STABLE_ATTRIBUTES, DEFAULT_PROGRAMMATIC_ACTION_NAME_ATTRIBUTE } from '@datadog/browser-rum-core'
+import {
+  STABLE_ATTRIBUTES,
+  DEFAULT_PROGRAMMATIC_ACTION_NAME_ATTRIBUTE,
+  MAX_ATTRIBUTE_VALUE_CHAR_LENGTH,
+} from '@datadog/browser-rum-core'
 import { NodePrivacyLevel, PRIVACY_ATTR_NAME } from '../../../constants'
-import { MAX_ATTRIBUTE_VALUE_CHAR_LENGTH } from '../privacy'
 import { serializeAttribute } from './serializeAttribute'
 
 const DEFAULT_CONFIGURATION = {} as RumConfiguration

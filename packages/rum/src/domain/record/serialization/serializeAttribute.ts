@@ -1,8 +1,7 @@
 import { startsWith } from '@datadog/browser-core'
-import { STABLE_ATTRIBUTES, isDataUrl, sanitizeDataUrl } from '@datadog/browser-rum-core'
+import { STABLE_ATTRIBUTES, isDataUrlTooLong, sanitizeDataUrl } from '@datadog/browser-rum-core'
 import type { RumConfiguration } from '@datadog/browser-rum-core'
 import { NodePrivacyLevel, PRIVACY_ATTR_NAME, CENSORED_STRING_MARK, CENSORED_IMG_MARK } from '../../../constants'
-import { MAX_ATTRIBUTE_VALUE_CHAR_LENGTH } from '../privacy'
 import { censoredImageForSize } from './serializationUtils'
 
 export function serializeAttribute(
@@ -69,7 +68,7 @@ export function serializeAttribute(
   }
 
   // Minimum Fix for customer.
-  if (attributeValue.length > MAX_ATTRIBUTE_VALUE_CHAR_LENGTH && isDataUrl(attributeValue)) {
+  if (isDataUrlTooLong(attributeValue)) {
     return sanitizeDataUrl(attributeValue)
   }
 
