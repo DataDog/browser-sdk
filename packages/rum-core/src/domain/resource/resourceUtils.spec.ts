@@ -220,7 +220,7 @@ describe('computePerformanceResourceDetails', () => {
     },
     {
       reason: 'redirectStart > redirectEnd',
-      redirectEnd: 10 as RelativeTime,
+      redirectEnd: 15 as RelativeTime,
       redirectStart: 20 as RelativeTime,
     },
     {
@@ -260,24 +260,6 @@ describe('computePerformanceResourceDetails', () => {
     ).toEqual({
       download: { start: 30e6 as ServerDuration, duration: 10e6 as ServerDuration },
       first_byte: { start: 0 as ServerDuration, duration: 30e6 as ServerDuration },
-    })
-  })
-
-  it('should use startTime and fetchStart as fallback for redirectStart and redirectEnd', () => {
-    expect(
-      computePerformanceResourceDetails(
-        generateResourceWith({
-          redirectEnd: 0 as RelativeTime,
-          redirectStart: 0 as RelativeTime,
-        })
-      )
-    ).toEqual({
-      connect: { start: 5e6 as ServerDuration, duration: 2e6 as ServerDuration },
-      dns: { start: 3e6 as ServerDuration, duration: 1e6 as ServerDuration },
-      download: { start: 40e6 as ServerDuration, duration: 10e6 as ServerDuration },
-      first_byte: { start: 10e6 as ServerDuration, duration: 30e6 as ServerDuration },
-      redirect: { start: 0 as ServerDuration, duration: 2e6 as ServerDuration },
-      ssl: { start: 6e6 as ServerDuration, duration: 1e6 as ServerDuration },
     })
   })
 })
