@@ -11,7 +11,6 @@ const {
   packages,
 } = require('./lib/deployment-utils')
 
-const PR_NUMBER = 10000
 const ONE_MINUTE_IN_SECOND = 60
 const ONE_HOUR_IN_SECOND = 60 * ONE_MINUTE_IN_SECOND
 const AWS_CONFIG = {
@@ -62,7 +61,7 @@ function uploadToS3(awsConfig, bundlePath, uploadPath) {
   const accessToS3 = generateEnvironmentForRole(awsConfig.accountId, 'build-stable-browser-agent-artifacts-s3-write')
 
   const browserCache =
-    version === 'staging' || version === 'canary' || version === `${PR_NUMBER}`
+    version === 'staging' || version === 'canary' || version === 'pullRequest'
       ? 15 * ONE_MINUTE_IN_SECOND
       : 4 * ONE_HOUR_IN_SECOND
   const cacheControl = `max-age=${browserCache}, s-maxage=60`
@@ -95,4 +94,8 @@ function generateEnvironmentForRole(awsAccountId, roleName) {
     AWS_SECRET_ACCESS_KEY: credentials['SecretAccessKey'],
     AWS_SESSION_TOKEN: credentials['SessionToken'],
   }
+}
+
+module.exports = {
+  deploy: runMain,
 }
