@@ -10,7 +10,7 @@ const GITHUB_TOKEN = getGithubAccessToken()
 const ONE_DAY_IN_SECOND = 24 * 60 * 60
 // The value is set to 5% as it's around 10 times the average value for small PRs.
 const SIZE_INCREASE_THRESHOLD = 5
-const actionNames = [
+const ACTION_NAMES = [
   'adderror',
   'addaction',
   'logmessage',
@@ -30,9 +30,18 @@ async function reportAsPrComment(localBundleSizes) {
   const packageNames = Object.keys(localBundleSizes)
   const mainBranchBundleSizes = await fetchAllPackagesBaseBundleSize(packageNames, lastCommonCommit)
   const difference = compare(mainBranchBundleSizes, localBundleSizes)
-  const cpuPerformance = await fetchAllCpuPerformanceMetrics(actionNames, pr.number)
+  const cpuBasePerformance = await fetchAllCpuPerformanceMetrics(ACTION_NAMES, lastCommonCommit)
+  const cpuLocalPerformance = await fetchAllCpuPerformanceMetrics(ACTION_NAMES, process.env.CI_COMMIT_SHORT_SHA)
   const commentId = await retrieveExistingCommentId(pr.number)
-  await updateOrAddComment(difference, mainBranchBundleSizes, localBundleSizes, cpuPerformance, pr.number, commentId)
+  await updateOrAddComment(
+    difference,
+    mainBranchBundleSizes,
+    localBundleSizes,
+    cpuBasePerformance,
+    cpuLocalPerformance,
+    pr.number,
+    commentId
+  )
 }
 
 function getLastCommonCommit(baseBranch) {
@@ -97,10 +106,10 @@ function fetchAllCpuPerformanceMetrics(actionNames, prNumber) {
   return Promise.all(actionNames.map((actionName) => fetchCpuPerformanceMetric(actionName, prNumber)))
 }
 
-async function fetchCpuPerformanceMetric(actionName, prNumber) {
+async function fetchCpuPerformanceMetric(actionName, commitId) {
   const now = Math.floor(Date.now() / 1000)
   const date = now - 30 * ONE_DAY_IN_SECOND
-  const query = `avg:cpu.sdk.${actionName}.performance.average{prnumber:${prNumber}}&from=${date}&to=${now}`
+  const query = `avg:cpu.sdk.${actionName}.performance.average{commitId:${commitId}}&from=${date}&to=${now}`
 
   const response = await fetchHandlingError(`https://api.datadoghq.com/api/v1/query?query=${query}`, {
     method: 'GET',
@@ -125,12 +134,12 @@ async function fetchCpuPerformanceMetric(actionName, prNumber) {
 
 function compare(resultsBaseQuery, localBundleSizes) {
   return resultsBaseQuery.map((baseResult) => {
-    const localSize = localBundleSizes[baseResult.name]
+    const localResult = localBundleSizes[baseResult.name]
     let change = null
     let percentageChange = null
 
-    if (baseResult.size && localSize) {
-      change = localSize - baseResult.size
+    if (baseResult.size && localResult) {
+      change = localResult - baseResult.size
       percentageChange = ((change / baseResult.size) * 100).toFixed(2)
     }
 
@@ -158,8 +167,16 @@ async function retrieveExistingCommentId(prNumber) {
     return targetComment.id
   }
 }
-async function updateOrAddComment(difference, resultsBaseQuery, localBundleSizes, cpuPerformance, prNumber, commentId) {
-  const message = createMessage(difference, resultsBaseQuery, localBundleSizes, cpuPerformance)
+async function updateOrAddComment(
+  difference,
+  resultsBaseQuery,
+  localBundleSizes,
+  cpuBasePerformance,
+  cpuLocalPerformance,
+  prNumber,
+  commentId
+) {
+  const message = createMessage(difference, resultsBaseQuery, localBundleSizes, cpuBasePerformance, cpuLocalPerformance)
   const method = commentId ? 'PATCH' : 'POST'
   const payload = {
     pr_url: `https://github.com/DataDog/browser-sdk/pull/${prNumber}`,
@@ -177,7 +194,7 @@ async function updateOrAddComment(difference, resultsBaseQuery, localBundleSizes
   })
 }
 
-function createMessage(difference, resultsBaseQuery, localBundleSizes, cpuPerformance) {
+function createMessage(difference, resultsBaseQuery, localBundleSizes, cpuBasePerformance, cpuLocalPerformance) {
   let message =
     '| 📦 Bundle Name| Base Size | Local Size | 𝚫 | 𝚫% | Status |\n| --- | --- | --- | --- | --- | :---: |\n'
   let highIncreaseDetected = false
@@ -199,9 +216,10 @@ function createMessage(difference, resultsBaseQuery, localBundleSizes, cpuPerfor
   }
 
   message += '\n\n<details>\n<summary>🚀 CPU Performance</summary>\n\n\n'
-  message += '| Action Name | Average Cpu Time |\n| --- | --- |\n'
-  cpuPerformance.forEach((perf) => {
-    message += `| ${formatBundleName(perf.name)} | ${perf.average.toFixed(3)} |\n`
+  message += '| Action Name | Base Average Cpu Time | Local Average Cpu Time |\n| --- | --- | --- |\n'
+  cpuBasePerformance.forEach((basePerf, index) => {
+    const localPerf = cpuLocalPerformance[index]
+    message += `| ${formatBundleName(basePerf.name)} | ${basePerf.average.toFixed(3)} | ${localPerf.average.toFixed(3)} |\n`
   })
   message += '\n</details>\n'
 
@@ -226,5 +244,7 @@ function formatSize(bytes) {
 module.exports = {
   reportAsPrComment,
   fetchPR,
+  getLastCommonCommit,
   LOCAL_BRANCH,
+  BASE_BRANCH,
 }
