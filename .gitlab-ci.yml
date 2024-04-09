@@ -139,7 +139,24 @@ build-and-lint:
     - yarn
     - yarn build
     - yarn lint
+
+check-packages:
+  extends:
+    - .base-configuration
+    - .test-allowed-branches
+  interruptible: true
+  needs: ['build-and-lint']
+  script:
     - node scripts/check-packages.js
+
+test-performance:
+  extends:
+    - .base-configuration
+    - .test-allowed-branches
+  interruptible: true
+  needs: ['build-and-lint']
+  script:
+    - node ./scripts/deploy/deploy.js staging pullRequest pull-request
     - node scripts/performance/index.js
 
 build-bundle:
