@@ -36,7 +36,7 @@ const env = process.argv[2]
 const version = process.argv[3]
 const uploadPathTypes = process.argv[4].split(',')
 
-runMain(() => {
+runMain(async () => {
   const awsConfig = AWS_CONFIG[env]
   let cloudfrontPathsToInvalidate = []
   for (const { packageName } of packages) {
@@ -44,7 +44,7 @@ runMain(() => {
     for (const uploadPathType of uploadPathTypes) {
       let uploadPath
       if (uploadPathType === 'pull-request') {
-        const PR_NUMBER = fetchPR(LOCAL_BRANCH).number
+        const PR_NUMBER = (await fetchPR(LOCAL_BRANCH)).number
         uploadPath = buildPullRequestUploadPath(packageName, PR_NUMBER)
       } else if (uploadPathType === 'root') {
         uploadPath = buildRootUploadPath(packageName, version)
