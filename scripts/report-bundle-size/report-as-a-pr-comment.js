@@ -27,7 +27,7 @@ async function reportBundleSizesAsPrComment(localBundleSizes) {
 
 function getLastCommonCommit(baseBranch) {
   try {
-    command`git fetch origin`.run()
+    command`git fetch --depth=100 origin ${baseBranch}`.run()
     const commandOutput = command`git merge-base origin/${baseBranch} HEAD`.run()
     // SHA commit is truncated to 8 characters as bundle sizes commit are exported in short format to logs for convenience and readability.
     return commandOutput.trim().substring(0, 8)
