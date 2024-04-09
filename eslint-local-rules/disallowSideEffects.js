@@ -63,11 +63,7 @@ function reportPotentialSideEffect(context, node) {
     case 'ImportDeclaration':
       if (node.declaration) {
         reportPotentialSideEffect(context, node.declaration)
-      } else if (
-        node.source &&
-        node.importKind !== 'type' &&
-        !isAllowedImport(context.filename, node.source.value)
-      ) {
+      } else if (node.source && node.importKind !== 'type' && !isAllowedImport(context.filename, node.source.value)) {
         context.report({
           node: node.source,
           message: 'This file cannot import modules with side-effects',
