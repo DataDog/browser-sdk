@@ -9,7 +9,7 @@ import {
   computePerformanceResourceDuration,
   computeResourceKind,
   isAllowedRequestUrl,
-  isDataUrlTooLong,
+  isLongDataUrl,
   sanitizeDataUrl,
 } from './resourceUtils'
 
@@ -317,46 +317,44 @@ describe('shouldTrackResource', () => {
   })
 })
 
-describe('isDataUrl and sanitizeDataUrl', () => {
+describe('isLongDataUrl and sanitizeDataUrl', () => {
   const longString = new Array(MAX_ATTRIBUTE_VALUE_CHAR_LENGTH).join('a')
   it('returns truncated url when detects data url of json', () => {
     const longDataUrl = `data:text/json; charset=utf-8,${longString}`
-
-    const expectedUrl = 'data:text/json; charset=utf-8,'
-    expect(isDataUrlTooLong(longDataUrl)).toEqual(true)
-    expect(sanitizeDataUrl(longDataUrl)).toEqual(expectedUrl)
+    expect(isLongDataUrl(longDataUrl)).toEqual(true)
+    expect(sanitizeDataUrl(longDataUrl)).toEqual('data:text/json; charset=utf-8,')
   })
 
   it('returns truncated url when detects data url of html', () => {
     const longDataUrl = `data:text/html,${longString}`
-    expect(isDataUrlTooLong(longDataUrl)).toEqual(true)
+    expect(isLongDataUrl(longDataUrl)).toEqual(true)
     expect(sanitizeDataUrl(longDataUrl)).toEqual('data:text/html,')
   })
 
   it('returns truncated url when detects data url of image', () => {
     const longDataUrl = `data:image/svg+xml;base64,${longString}`
-    expect(isDataUrlTooLong(longDataUrl)).toEqual(true)
+    expect(isLongDataUrl(longDataUrl)).toEqual(true)
     expect(sanitizeDataUrl(longDataUrl)).toEqual('data:image/svg+xml;base64,')
   })
   it('returns truncated url when detects plain data url', () => {
     const plainDataUrl = `data:,${longString}`
-    expect(isDataUrlTooLong(plainDataUrl)).toEqual(true)
+    expect(isLongDataUrl(plainDataUrl)).toEqual(true)
     expect(sanitizeDataUrl(plainDataUrl)).toEqual('data:,')
   })
 
   it('returns truncated url when detects data url with exotic mime type', () => {
     const exoticTypeDataUrl = `data:application/vnd.openxmlformats;fileName=officedocument.presentationxml;base64,${longString}`
-    expect(isDataUrlTooLong(exoticTypeDataUrl)).toEqual(true)
+    expect(isLongDataUrl(exoticTypeDataUrl)).toEqual(true)
     expect(sanitizeDataUrl(exoticTypeDataUrl)).toEqual(
       'data:application/vnd.openxmlformats;fileName=officedocument.presentationxml;base64,'
     )
   })
 
   it('returns the original url when the data url is within limit', () => {
-    expect(isDataUrlTooLong(`data:,${longString.substring(5)}`)).toEqual(false)
+    expect(isLongDataUrl(`data:,${longString.substring(5)}`)).toEqual(false)
   })
 
-  it('returns null when no data url found', () => {
-    expect(isDataUrlTooLong('https://static.datad0g.com/static/c/70086/chunk.min.js')).toEqual(false)
+  it('returns false when no data url found', () => {
+    expect(isLongDataUrl('https://static.datad0g.com/static/c/70086/chunk.min.js')).toEqual(false)
   })
 })

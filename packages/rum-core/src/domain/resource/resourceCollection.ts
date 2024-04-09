@@ -30,7 +30,7 @@ import {
   computeResourceKind,
   computeSize,
   isRequestKind,
-  isDataUrlTooLong,
+  isLongDataUrl,
   sanitizeDataUrl,
 } from './resourceUtils'
 
@@ -93,7 +93,7 @@ function processRequest(
         duration,
         method: request.method,
         status_code: request.status,
-        url: isDataUrlTooLong(request.url) ? sanitizeDataUrl(request.url) : request.url,
+        url: isLongDataUrl(request.url) ? sanitizeDataUrl(request.url) : request.url,
       },
       type: RumEventType.RESOURCE as const,
       _dd: {
