@@ -1,7 +1,9 @@
 'use strict'
 
 const { printLog, runMain } = require('../lib/execution-utils')
+const { fetchPR, LOCAL_BRANCH } = require('../lib/git-utils')
 const { command } = require('../lib/command')
+
 const {
   buildRootUploadPath,
   buildDatacenterUploadPath,
@@ -42,7 +44,8 @@ runMain(() => {
     for (const uploadPathType of uploadPathTypes) {
       let uploadPath
       if (uploadPathType === 'pull-request') {
-        uploadPath = buildPullRequestUploadPath(packageName, version)
+        const PR_NUMBER = fetchPR(LOCAL_BRANCH).number
+        uploadPath = buildPullRequestUploadPath(packageName, PR_NUMBER)
       } else if (uploadPathType === 'root') {
         uploadPath = buildRootUploadPath(packageName, version)
       } else {
@@ -61,7 +64,7 @@ function uploadToS3(awsConfig, bundlePath, uploadPath) {
   const accessToS3 = generateEnvironmentForRole(awsConfig.accountId, 'build-stable-browser-agent-artifacts-s3-write')
 
   const browserCache =
-    version === 'staging' || version === 'canary' || !isNaN(version)
+    version === 'staging' || version === 'canary' || version === 'pull-request'
       ? 15 * ONE_MINUTE_IN_SECOND
       : 4 * ONE_HOUR_IN_SECOND
   const cacheControl = `max-age=${browserCache}, s-maxage=60`
