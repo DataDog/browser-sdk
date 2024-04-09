@@ -147,6 +147,7 @@ check-packages:
   interruptible: true
   needs: ['build-and-lint']
   script:
+    - yarn
     - node scripts/check-packages.js
 
 test-performance:
@@ -158,7 +159,8 @@ test-performance:
   script:
     - yarn
     - yarn build:bundle
-    - PR_NUMBER=$(echo $GITHUB_REF | awk 'BEGIN { FS = "/" } ; { print $3 }')
+    - PR_NUMBER=$(node ./scripts/get-pr-number.js)
+    - echo PR_NUMBER
     - node ./scripts/deploy/deploy.js staging $PR_NUMBER pull-request
     - node scripts/performance/index.js
 
