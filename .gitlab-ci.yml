@@ -159,7 +159,7 @@ test-performance:
     - yarn
     - yarn build:bundle
     - PR_NUMBER=$(echo $GITHUB_REF | awk 'BEGIN { FS = "/" } ; { print $3 }')
-    - echo PR_NUMBER
+    - echo $PR_NUMBER
     - node ./scripts/deploy/deploy.js staging $PR_NUMBER pull-request
     - node scripts/performance/index.js
 
