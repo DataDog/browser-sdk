@@ -188,7 +188,8 @@ function createMessage(
     message += `\n⚠️ The increase is particularly high and exceeds ${SIZE_INCREASE_THRESHOLD}%. Please check the changes.`
   }
   message += '\n\n<details>\n<summary>🚀 CPU Performance</summary>\n\n\n'
-  message += '| Action Name | Base Average Cpu Time | Local Average Cpu Time | 𝚫 |\n| --- | --- | --- | --- |\n'
+  message +=
+    '| Action Name | Base Average Cpu Time (ms) | Local Average Cpu Time (ms) | 𝚫 |\n| --- | --- | --- | --- |\n'
   cpuBasePerformance.forEach((basePerf, index) => {
     const localPerf = cpuLocalPerformance[index]
     const diffPerf = differenceCpu[index]
