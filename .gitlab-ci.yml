@@ -156,7 +156,10 @@ test-performance:
   interruptible: true
   needs: ['build-and-lint']
   script:
-    - node ./scripts/deploy/deploy.js staging pullRequest pull-request
+    - yarn
+    - yarn build:bundle
+    - PR_NUMBER=$(echo $GITHUB_REF | awk 'BEGIN { FS = "/" } ; { print $3 }')
+    - node ./scripts/deploy/deploy.js staging $PR_NUMBER pull-request
     - node scripts/performance/index.js
 
 build-bundle:
