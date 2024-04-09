@@ -67,7 +67,7 @@ function getFirstProtectedDirectory(importedModule, context) {
     }
 
     // Make sure we shouldn't ignore it
-    const resolvedPathRelativeToCwd = path.relative(context.getCwd(), resolvedPath)
+    const resolvedPathRelativeToCwd = path.relative(context.cwd, resolvedPath)
     const shouldIgnore = context.options[0]?.ignore?.some((glob) => minimatch(resolvedPathRelativeToCwd, glob))
     if (shouldIgnore) {
       return

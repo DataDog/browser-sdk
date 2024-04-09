@@ -10,7 +10,7 @@ module.exports = {
   },
   create: (context) => ({
     Program: (node) => {
-      const filename = path.basename(context.getFilename())
+      const filename = path.basename(context.filename)
       if (isGenericUtilsFileName(filename)) {
         context.report({
           node,
