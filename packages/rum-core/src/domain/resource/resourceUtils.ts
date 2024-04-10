@@ -225,8 +225,9 @@ export function isLongDataUrl(url: string): boolean {
   } else if (url.substring(0, 5) === 'data:') {
     // Avoid String.match RangeError: Maximum call stack size exceeded
     url = url.substring(0, MAX_ATTRIBUTE_VALUE_CHAR_LENGTH)
+    return true
   }
-  return !!url.match(DATA_URL_REGEX)
+  return false
 }
 
 export function sanitizeDataUrl(url: string): string {
