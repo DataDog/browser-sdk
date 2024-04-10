@@ -220,5 +220,6 @@ function formatSize(bytes) {
 }
 
 module.exports = {
+  LOCAL_COMMIT_SHA,
   reportAsPrComment,
 }
