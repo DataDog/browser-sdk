@@ -1,30 +1,15 @@
-const path = require('path')
-const fs = require('fs')
 const { runMain } = require('../lib/execution-utils')
-const { reportBundleSizesAsPrComment } = require('./report-as-a-pr-comment')
-const { reportBundleSizesToDatadog } = require('./report-to-datadog')
-
-const rumPath = path.join(__dirname, '../../packages/rum/bundle/datadog-rum.js')
-const logsPath = path.join(__dirname, '../../packages/logs/bundle/datadog-logs.js')
-const rumSlimPath = path.join(__dirname, '../../packages/rum-slim/bundle/datadog-rum-slim.js')
-const workerPath = path.join(__dirname, '../../packages/worker/bundle/worker.js')
+const { fetchPR, LOCAL_BRANCH } = require('../lib/git-utils')
+const { reportAsPrComment } = require('./report-as-a-pr-comment')
+const { reportToDatadog } = require('./report-to-datadog')
+const { calculateBundleSizes } = require('./bundle-size/bundle-size-calculator')
+const { syntheticTrigger } = require('./cpu-performance/synthetic-trigger')
 
 runMain(async () => {
-  const bundleSizes = {
-    rum: getBundleSize(rumPath),
-    logs: getBundleSize(logsPath),
-    rum_slim: getBundleSize(rumSlimPath),
-    worker: getBundleSize(workerPath),
-  }
-  await reportBundleSizesToDatadog(bundleSizes)
-  await reportBundleSizesAsPrComment(bundleSizes)
+  const PR_NUMBER = (await fetchPR(LOCAL_BRANCH)).number
+  const bundleSizes = calculateBundleSizes()
+  await syntheticTrigger(PR_NUMBER, process.env.CI_COMMIT_SHORT_SHA)
+  await new Promise((resolve) => setTimeout(resolve, 60 * 1000)) // Waiting for synthetic test to finish
+  await reportToDatadog(bundleSizes)
+  await reportAsPrComment(bundleSizes)
 })
-
-function getBundleSize(pathBundle) {
-  try {
-    const file = fs.statSync(pathBundle)
-    return file.size
-  } catch (error) {
-    throw new Error('Failed to get bundle size', { cause: error })
-  }
-}
