@@ -222,9 +222,11 @@ export const MAX_ATTRIBUTE_VALUE_CHAR_LENGTH = 24_000
 export function isLongDataUrl(url: string): boolean {
   if (url.length <= MAX_ATTRIBUTE_VALUE_CHAR_LENGTH) {
     return false
+  } else if (url.substring(0, 5) === 'data:') {
+    // Avoid String.match RangeError: Maximum call stack size exceeded
+    url = url.substring(0, MAX_ATTRIBUTE_VALUE_CHAR_LENGTH)
   }
-  const match = url.match(DATA_URL_REGEX)
-  return !!match
+  return !!url.match(DATA_URL_REGEX)
 }
 
 export function sanitizeDataUrl(url: string): string {
