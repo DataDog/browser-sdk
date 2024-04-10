@@ -32,7 +32,7 @@ async function syntheticTrigger(prNumber, commitId) {
 async function getSyntheticTestResult(resultId, RETRIES_NUMBER) {
   const url = `https://api.datadoghq.com/api/v1/synthetics/tests/${TEST_PUBLIC_ID}/results/${resultId}`
   for (let i = 0; i < RETRIES_NUMBER; i++) {
-    const response = await fetchHandlingError(url, {
+    const response = await fetch(url, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
