@@ -322,31 +322,31 @@ describe('isLongDataUrl and sanitizeDataUrl', () => {
   it('returns truncated url when detects data url of json', () => {
     const longDataUrl = `data:text/json; charset=utf-8,${longString}`
     expect(isLongDataUrl(longDataUrl)).toEqual(true)
-    expect(sanitizeDataUrl(longDataUrl)).toEqual('data:text/json; charset=utf-8,')
+    expect(sanitizeDataUrl(longDataUrl)).toEqual('data:text/json; charset=utf-8,[...]')
   })
 
   it('returns truncated url when detects data url of html', () => {
     const longDataUrl = `data:text/html,${longString}`
     expect(isLongDataUrl(longDataUrl)).toEqual(true)
-    expect(sanitizeDataUrl(longDataUrl)).toEqual('data:text/html,')
+    expect(sanitizeDataUrl(longDataUrl)).toEqual('data:text/html,[...]')
   })
 
   it('returns truncated url when detects data url of image', () => {
     const longDataUrl = `data:image/svg+xml;base64,${longString}`
     expect(isLongDataUrl(longDataUrl)).toEqual(true)
-    expect(sanitizeDataUrl(longDataUrl)).toEqual('data:image/svg+xml;base64,')
+    expect(sanitizeDataUrl(longDataUrl)).toEqual('data:image/svg+xml;base64,[...]')
   })
   it('returns truncated url when detects plain data url', () => {
     const plainDataUrl = `data:,${longString}`
     expect(isLongDataUrl(plainDataUrl)).toEqual(true)
-    expect(sanitizeDataUrl(plainDataUrl)).toEqual('data:,')
+    expect(sanitizeDataUrl(plainDataUrl)).toEqual('data:,[...]')
   })
 
   it('returns truncated url when detects data url with exotic mime type', () => {
     const exoticTypeDataUrl = `data:application/vnd.openxmlformats;fileName=officedocument.presentationxml;base64,${longString}`
     expect(isLongDataUrl(exoticTypeDataUrl)).toEqual(true)
     expect(sanitizeDataUrl(exoticTypeDataUrl)).toEqual(
-      'data:application/vnd.openxmlformats;fileName=officedocument.presentationxml;base64,'
+      'data:application/vnd.openxmlformats;fileName=officedocument.presentationxml;base64,[...]'
     )
   })
 

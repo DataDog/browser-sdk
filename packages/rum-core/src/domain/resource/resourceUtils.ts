@@ -228,5 +228,5 @@ export function isLongDataUrl(url: string): boolean {
 }
 
 export function sanitizeDataUrl(url: string): string {
-  return url.match(DATA_URL_REGEX)![0]
+  return `${url.match(DATA_URL_REGEX)![0]}[...]`
 }
