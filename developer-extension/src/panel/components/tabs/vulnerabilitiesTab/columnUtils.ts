@@ -9,8 +9,8 @@ export type VulnerabilitiesListColumn =
   | { type: 'vulnerabilityLocation'}
   | { type: 'field'; path: string }
 
-export const DEFAULT_VULNERABILITIES_COLUMNS: VulnerabilitiesListColumn[] = [{ type: 'date' }, { type: 'type' }, { type: 'location' }, { type: 'element' }]
-export const DEFAULT_VULNERABILITIES_FROM_TRACER_COLUMNS: VulnerabilitiesListColumn[] = [{ type: 'hash' }, { type: 'vulnerabilityType' }, { type: 'vulnerabilityLocation' }, { type: 'evidence' }]
+export const DEFAULT_VULNERABILITIES_COLUMNS: VulnerabilitiesListColumn[] = [{ type: 'type' }, { type: 'location' }, { type: 'element' }]
+export const DEFAULT_VULNERABILITIES_FROM_TRACER_COLUMNS: VulnerabilitiesListColumn[] = [{ type: 'vulnerabilityType' }, { type: 'vulnerabilityLocation' }, { type: 'evidence' }]
 
 export function includesColumn(existingColumns: VulnerabilitiesListColumn[], newColumn: VulnerabilitiesListColumn) {
   return existingColumns.some((column) => {
