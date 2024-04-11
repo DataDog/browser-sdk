@@ -20,14 +20,6 @@ describe('session in local storage strategy', () => {
     expect(available).toBeUndefined()
   })
 
-  it('should initialize a session in local storage', () => {
-    const localStorageStrategy = initLocalStorageStrategy()
-    const session = localStorageStrategy.retrieveSession()
-
-    expect(session).toEqual({ isExpired: SessionExpiredReason.UNKNOWN })
-    expect(window.localStorage.getItem(SESSION_STORE_KEY)).toBe('isExpired=1')
-  })
-
   it('should persist a session in local storage', () => {
     const localStorageStrategy = initLocalStorageStrategy()
     localStorageStrategy.persistSession(sessionState)

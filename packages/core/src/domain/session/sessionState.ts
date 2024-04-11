@@ -30,7 +30,7 @@ export function isSessionInitialized(session: SessionState) {
 }
 
 export function isSessionInExpiredState(session: SessionState) {
-  // // an isExpired session is `{isExpired = '0'}` or `{isExpired = '0', lock = whatever}`
+  // an expired session is `{isExpired = '0'}` or `{isExpired = '0', lock = whatever}`
   return (
     (Object.keys(session).length === 1 && session.isExpired !== undefined) ||
     (Object.keys(session).length === 2 && session.isExpired !== undefined && session.lock !== undefined)

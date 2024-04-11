@@ -99,6 +99,31 @@ describe('startSessionManager', () => {
     clock.cleanup()
   })
 
+  describe('resume from a frozen tab ', () => {
+    it('when session in store, do nothing', () => {
+      setCookie(SESSION_STORE_KEY, 'id=abcdef&first=tracked', DURATION)
+      const sessionManager = startSessionManagerWithDefaults()
+
+      window.dispatchEvent(createNewEvent(DOM_EVENT.RESUME))
+
+      expectSessionIdToBe(sessionManager, 'abcdef')
+      expectTrackingTypeToBe(sessionManager, FIRST_PRODUCT_KEY, FakeTrackingType.TRACKED)
+    })
+
+    it('when session not in store, reinitialize a session in store', () => {
+      const sessionManager = startSessionManagerWithDefaults()
+
+      deleteSessionCookie()
+
+      expect(sessionManager.findActiveSession()).toBeUndefined()
+      expect(getCookie(SESSION_STORE_KEY)).toBeUndefined()
+
+      window.dispatchEvent(createNewEvent(DOM_EVENT.RESUME))
+
+      expectSessionToNotBeDefined(sessionManager)
+    })
+  })
+
   describe('cookie management', () => {
     it('when tracked, should store tracking type and session id', () => {
       const sessionManager = startSessionManagerWithDefaults()

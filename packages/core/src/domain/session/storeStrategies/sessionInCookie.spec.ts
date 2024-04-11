@@ -16,13 +16,6 @@ describe('session in cookie strategy', () => {
     deleteCookie(SESSION_STORE_KEY)
   })
 
-  it('should initialize a new cookie', () => {
-    const session = cookieStorageStrategy.retrieveSession()
-
-    expect(session).toEqual({ isExpired: SessionExpiredReason.UNKNOWN })
-    expect(getCookie(SESSION_STORE_KEY)).toBe('isExpired=1')
-  })
-
   it('should persist a session in a cookie', () => {
     cookieStorageStrategy.persistSession(sessionState)
     const session = cookieStorageStrategy.retrieveSession()

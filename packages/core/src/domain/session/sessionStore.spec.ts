@@ -124,6 +124,23 @@ describe('session store', () => {
       sessionStoreManager.stop()
     })
 
+    describe('initialize session', () => {
+      it('when session not in store, should initialize a new session', () => {
+        setupSessionStore()
+
+        expect(sessionStoreManager.getSession()).toEqual({ isExpired: SessionExpiredReason.UNKNOWN })
+      })
+
+      it('when session in store, should do nothing ', () => {
+        setSessionInStore(FakeTrackingType.TRACKED, FIRST_ID)
+        setupSessionStore()
+
+        expect(sessionStoreManager.getSession().id).toBe(FIRST_ID)
+        expect(sessionStoreManager.getSession().isExpired).toBeUndefined()
+        expect(sessionStoreManager.getSession()[PRODUCT_KEY]).toBeDefined()
+      })
+    })
+
     describe('expand or renew session', () => {
       it(
         'when session not in cache, session not in store and new session tracked, ' +

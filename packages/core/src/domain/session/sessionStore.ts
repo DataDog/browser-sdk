@@ -67,6 +67,8 @@ export function startSessionStore<TrackingType extends string>(
   const watchSessionTimeoutId = setInterval(watchSession, STORAGE_POLL_DELAY)
   let sessionCache: SessionState = retrieveActiveSession()
 
+  initializeSession()
+
   const { throttled: throttledExpandOrRenewSession, cancel: cancelExpandOrRenewSession } = throttle(() => {
     let isTracked: boolean
     processSessionStoreOperations(
@@ -132,7 +134,7 @@ export function startSessionStore<TrackingType extends string>(
     return sessionState
   }
 
-  function reinitializeSession() {
+  function initializeSession() {
     processSessionStoreOperations(
       {
         process: (sessionState) => {
@@ -140,7 +142,9 @@ export function startSessionStore<TrackingType extends string>(
             return getInitialSessionState()
           }
         },
-        after: synchronizeSession,
+        after: (sessionState) => {
+          sessionCache = sessionState
+        },
       },
       sessionStoreStrategy
     )
@@ -204,7 +208,7 @@ export function startSessionStore<TrackingType extends string>(
     getSession: () => sessionCache,
     renewObservable,
     expireObservable,
-    reinitializeSession,
+    reinitializeSession: initializeSession,
     expire: () => {
       cancelExpandOrRenewSession()
       clearSession()
