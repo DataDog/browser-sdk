@@ -38,7 +38,7 @@ describe('startSessionManager', () => {
   let clock: Clock
 
   function expireSessionCookie() {
-    setCookie(SESSION_STORE_KEY, 'expired=0', DURATION)
+    setCookie(SESSION_STORE_KEY, 'isExpired=1', DURATION)
     clock.tick(STORAGE_POLL_DELAY)
   }
 
@@ -54,20 +54,20 @@ describe('startSessionManager', () => {
 
   function expectSessionIdToBeDefined(sessionManager: SessionManager<FakeTrackingType>) {
     expect(sessionManager.findActiveSession()!.id).toMatch(/^[a-f0-9-]+$/)
-    expect(sessionManager.findActiveSession()?.expired).toBeUndefined()
+    expect(sessionManager.findActiveSession()?.isExpired).toBeUndefined()
 
     expect(getCookie(SESSION_STORE_KEY)).toMatch(/id=[a-f0-9-]+/)
-    expect(getCookie(SESSION_STORE_KEY)).not.toContain('expired=0')
+    expect(getCookie(SESSION_STORE_KEY)).not.toContain('isExpired=1')
   }
 
   function expectSessionToNotBeDefined(sessionManager: SessionManager<FakeTrackingType>) {
     expect(sessionManager.findActiveSession()).toBeUndefined()
-    expect(getCookie(SESSION_STORE_KEY)).toContain('expired=0')
+    expect(getCookie(SESSION_STORE_KEY)).toContain('isExpired=1')
   }
 
   function expectSessionIdToNotBeDefined(sessionManager: SessionManager<FakeTrackingType>) {
     expect(sessionManager.findActiveSession()!.id).toBeUndefined()
-    expect(getCookie(SESSION_STORE_KEY)).toContain('expired=0')
+    expect(getCookie(SESSION_STORE_KEY)).toContain('isExpired=1')
   }
 
   function expectTrackingTypeToBe(
@@ -146,19 +146,19 @@ describe('startSessionManager', () => {
     })
 
     it('should be called with an invalid value if the cookie has an invalid value', () => {
-      setCookie(SESSION_STORE_KEY, 'expired=0&first=invalid', DURATION)
+      setCookie(SESSION_STORE_KEY, 'isExpired=1&first=invalid', DURATION)
       startSessionManagerWithDefaults({ computeSessionState: spy })
       expect(spy).toHaveBeenCalledWith('invalid')
     })
 
     it('should be called with TRACKED', () => {
-      setCookie(SESSION_STORE_KEY, 'expired=0&first=tracked', DURATION)
+      setCookie(SESSION_STORE_KEY, 'isExpired=1&first=tracked', DURATION)
       startSessionManagerWithDefaults({ computeSessionState: spy })
       expect(spy).toHaveBeenCalledWith(FakeTrackingType.TRACKED)
     })
 
     it('should be called with NOT_TRACKED', () => {
-      setCookie(SESSION_STORE_KEY, 'expired=0&first=not-tracked', DURATION)
+      setCookie(SESSION_STORE_KEY, 'isExpired=1&first=not-tracked', DURATION)
       startSessionManagerWithDefaults({ computeSessionState: spy })
       expect(spy).toHaveBeenCalledWith(FakeTrackingType.NOT_TRACKED)
     })
@@ -557,7 +557,7 @@ describe('startSessionManager', () => {
       trackingConsentState.update(TrackingConsent.NOT_GRANTED)
 
       expectSessionToNotBeDefined(sessionManager)
-      expect(getCookie(SESSION_STORE_KEY)).toBe('expired=0')
+      expect(getCookie(SESSION_STORE_KEY)).toBe('isExpired=1')
     })
 
     it('does not renew the session when tracking consent is withdrawn', () => {

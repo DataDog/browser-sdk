@@ -156,7 +156,7 @@ export function startSessionStore<TrackingType extends string>(
     if (isTracked && !sessionState.id) {
       sessionState.id = generateUUID()
       sessionState.created = String(dateNow())
-      delete sessionState.expired
+      delete sessionState.isExpired
     }
 
     return isTracked

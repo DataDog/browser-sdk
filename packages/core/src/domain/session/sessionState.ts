@@ -2,11 +2,11 @@ import { objectEntries } from '../../tools/utils/polyfills'
 import { dateNow } from '../../tools/utils/timeUtils'
 import { SESSION_EXPIRATION_DELAY } from './sessionConstants'
 
-const SESSION_ENTRY_REGEXP = /^([a-z]+)=([a-z0-9-]+)$/
+const SESSION_ENTRY_REGEXP = /^([a-zA-Z]+)=([a-z0-9-]+)$/
 const SESSION_ENTRY_SEPARATOR = '&'
 
 export const enum SessionExpiredReason {
-  UNKNOWN = '0',
+  UNKNOWN = '1',
 }
 
 export interface SessionState {
@@ -14,26 +14,26 @@ export interface SessionState {
   created?: string
   expire?: string
   lock?: string
-  expired?: SessionExpiredReason
+  isExpired?: SessionExpiredReason
 
   [key: string]: string | undefined
 }
 
 export function getInitialSessionState(): SessionState {
   return {
-    expired: SessionExpiredReason.UNKNOWN,
+    isExpired: SessionExpiredReason.UNKNOWN,
   }
 }
 
 export function isSessionInitialized(session: SessionState) {
-  return session.id !== undefined || session.expired !== undefined
+  return session.id !== undefined || session.isExpired !== undefined
 }
 
 export function isSessionInExpiredState(session: SessionState) {
-  // // an expired session is `{expired = '0'}` or `{expired = '0', lock = whatever}`
+  // // an isExpired session is `{isExpired = '0'}` or `{isExpired = '0', lock = whatever}`
   return (
-    (Object.keys(session).length === 1 && session.expired !== undefined) ||
-    (Object.keys(session).length === 2 && session.expired !== undefined && session.lock !== undefined)
+    (Object.keys(session).length === 1 && session.isExpired !== undefined) ||
+    (Object.keys(session).length === 2 && session.isExpired !== undefined && session.lock !== undefined)
   )
 }
 

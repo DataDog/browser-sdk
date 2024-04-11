@@ -49,7 +49,7 @@ describe('old cookies migration', () => {
 
     tryOldCookiesMigration(sessionStoreStrategy)
 
-    expect(getCookie(SESSION_STORE_KEY)).toContain('expired=0')
+    expect(getCookie(SESSION_STORE_KEY)).toContain('isExpired=1')
     expect(getCookie(SESSION_STORE_KEY)).toContain('rum=0')
     expect(getCookie(SESSION_STORE_KEY)).toMatch(/expire=\d+/)
   })

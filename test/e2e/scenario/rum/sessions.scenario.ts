@@ -69,7 +69,7 @@ describe('rum sessions', () => {
         })
         await flushEvents()
 
-        expect(await findSessionCookie()).toBe('expired=0')
+        expect(await findSessionCookie()).toBe('isExpired=1')
         expect(intakeRegistry.rumActionEvents.length).toBe(0)
       })
 
@@ -91,7 +91,7 @@ describe('rum sessions', () => {
 
         await flushEvents()
 
-        expect(await findSessionCookie()).not.toContain('expired=0')
+        expect(await findSessionCookie()).not.toContain('isExpired=1')
         expect(await findSessionCookie()).toMatch(/id=[a-f0-9-]+/)
         expect(intakeRegistry.rumActionEvents.length).toBe(1)
       })

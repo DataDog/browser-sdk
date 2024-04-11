@@ -11,23 +11,23 @@ import {
 } from './sessionState'
 
 describe('session state utilities', () => {
-  const EXPIRED_SESSION: SessionState = { expired: SessionExpiredReason.UNKNOWN }
-  const SERIALIZED_EXPIRED_SESSION = 'expired=0'
+  const EXPIRED_SESSION: SessionState = { isExpired: SessionExpiredReason.UNKNOWN }
+  const SERIALIZED_EXPIRED_SESSION = 'isExpired=1'
   const LIVE_SESSION: SessionState = { created: '0', id: '123' }
   const SERIALIZED_LIVE_SESSION = 'created=0&id=123'
 
   describe('isSessionInitialized', () => {
     it('should correctly identify a session in initialized state', () => {
       expect(isSessionInitialized({ id: '123' })).toBe(true)
-      expect(isSessionInitialized({ expired: SessionExpiredReason.UNKNOWN })).toBe(true)
+      expect(isSessionInitialized({ isExpired: SessionExpiredReason.UNKNOWN })).toBe(true)
       expect(isSessionInitialized({} as SessionState)).toBe(false)
     })
   })
 
   describe('isSessionInExpiredState', () => {
-    it('should correctly identify a session in expired state', () => {
+    it('should correctly identify a session in isExpired state', () => {
       expect(isSessionInExpiredState(EXPIRED_SESSION)).toBe(true)
-      expect(isSessionInExpiredState({ expired: SessionExpiredReason.UNKNOWN, first: 'not-tracked' })).toBe(false)
+      expect(isSessionInExpiredState({ isExpired: SessionExpiredReason.UNKNOWN, first: 'not-tracked' })).toBe(false)
     })
 
     it('should correctly identify a session in live state', () => {
@@ -51,6 +51,10 @@ describe('session state utilities', () => {
     })
 
     it('should handle empty session strings', () => {
+      expect(toSessionState('')).toEqual({})
+    })
+
+    it('should handle expired session', () => {
       expect(toSessionState(SERIALIZED_EXPIRED_SESSION)).toEqual(EXPIRED_SESSION)
     })
 

@@ -62,12 +62,12 @@ const cookieOptions: CookieOptions = {}
 
       it('should clear session when process returns an expired session', () => {
         sessionStoreStrategy.persistSession(initialSession)
-        processSpy.and.returnValue({ expired: SessionExpiredReason.UNKNOWN })
+        processSpy.and.returnValue({ isExpired: SessionExpiredReason.UNKNOWN })
 
         processSessionStoreOperations({ process: processSpy, after: afterSpy }, sessionStoreStrategy)
 
         expect(processSpy).toHaveBeenCalledWith(initialSession)
-        const expectedSession = { expired: SessionExpiredReason.UNKNOWN }
+        const expectedSession = { isExpired: SessionExpiredReason.UNKNOWN }
         expect(sessionStoreStrategy.retrieveSession()).toEqual(expectedSession)
         expect(afterSpy).toHaveBeenCalledWith(expectedSession)
       })
@@ -115,13 +115,13 @@ const cookieOptions: CookieOptions = {}
 
       it('should clear session when process returns an expired session', () => {
         sessionStoreStrategy.persistSession(initialSession)
-        processSpy.and.returnValue({ expired: SessionExpiredReason.UNKNOWN })
+        processSpy.and.returnValue({ isExpired: SessionExpiredReason.UNKNOWN })
 
         processSessionStoreOperations({ process: processSpy, after: afterSpy }, sessionStoreStrategy)
 
         expect(processSpy).toHaveBeenCalledWith({ ...initialSession, lock: jasmine.any(String) })
 
-        const expectedSession = { expired: SessionExpiredReason.UNKNOWN }
+        const expectedSession = { isExpired: SessionExpiredReason.UNKNOWN }
         expect(sessionStoreStrategy.retrieveSession()).toEqual(expectedSession)
         expect(afterSpy).toHaveBeenCalledWith(expectedSession)
       })
