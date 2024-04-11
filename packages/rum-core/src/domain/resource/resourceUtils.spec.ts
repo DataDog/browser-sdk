@@ -4,10 +4,13 @@ import { RumPerformanceEntryType, type RumPerformanceResourceTiming } from '../.
 import type { RumConfiguration } from '../configuration'
 import { validateAndBuildRumConfiguration } from '../configuration'
 import {
+  MAX_ATTRIBUTE_VALUE_CHAR_LENGTH,
   computePerformanceResourceDetails,
   computePerformanceResourceDuration,
   computeResourceKind,
   isAllowedRequestUrl,
+  isLongDataUrl,
+  sanitizeDataUrl,
 } from './resourceUtils'
 
 function generateResourceWith(overrides: Partial<RumPerformanceResourceTiming>) {
@@ -293,5 +296,47 @@ describe('shouldTrackResource', () => {
 
   it('should allow requests on non intake domains', () => {
     expect(isAllowedRequestUrl(configuration, 'https://my-domain.com/hello?a=b')).toBe(true)
+  })
+})
+
+describe('isLongDataUrl and sanitizeDataUrl', () => {
+  const longString = new Array(MAX_ATTRIBUTE_VALUE_CHAR_LENGTH).join('a')
+  it('returns truncated url when detects data url of json', () => {
+    const longDataUrl = `data:text/json; charset=utf-8,${longString}`
+    expect(isLongDataUrl(longDataUrl)).toEqual(true)
+    expect(sanitizeDataUrl(longDataUrl)).toEqual('data:text/json; charset=utf-8,[...]')
+  })
+
+  it('returns truncated url when detects data url of html', () => {
+    const longDataUrl = `data:text/html,${longString}`
+    expect(isLongDataUrl(longDataUrl)).toEqual(true)
+    expect(sanitizeDataUrl(longDataUrl)).toEqual('data:text/html,[...]')
+  })
+
+  it('returns truncated url when detects data url of image', () => {
+    const longDataUrl = `data:image/svg+xml;base64,${longString}`
+    expect(isLongDataUrl(longDataUrl)).toEqual(true)
+    expect(sanitizeDataUrl(longDataUrl)).toEqual('data:image/svg+xml;base64,[...]')
+  })
+  it('returns truncated url when detects plain data url', () => {
+    const plainDataUrl = `data:,${longString}`
+    expect(isLongDataUrl(plainDataUrl)).toEqual(true)
+    expect(sanitizeDataUrl(plainDataUrl)).toEqual('data:,[...]')
+  })
+
+  it('returns truncated url when detects data url with exotic mime type', () => {
+    const exoticTypeDataUrl = `data:application/vnd.openxmlformats;fileName=officedocument.presentationxml;base64,${longString}`
+    expect(isLongDataUrl(exoticTypeDataUrl)).toEqual(true)
+    expect(sanitizeDataUrl(exoticTypeDataUrl)).toEqual(
+      'data:application/vnd.openxmlformats;fileName=officedocument.presentationxml;base64,[...]'
+    )
+  })
+
+  it('returns the original url when the data url is within limit', () => {
+    expect(isLongDataUrl(`data:,${longString.substring(5)}`)).toEqual(false)
+  })
+
+  it('returns false when no data url found', () => {
+    expect(isLongDataUrl('https://static.datad0g.com/static/c/70086/chunk.min.js')).toEqual(false)
   })
 })
