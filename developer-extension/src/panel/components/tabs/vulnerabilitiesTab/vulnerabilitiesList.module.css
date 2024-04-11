@@ -33,7 +33,7 @@
 */
 
 .root {
-  padding: 0 var(--mantine-spacing-md) var(--mantine-spacing-md) var(--mantine-spacing-md);
+  padding: var(--mantine-spacing-md) var(--mantine-spacing-md);
 
   width: max-content;
   min-width: 100%;

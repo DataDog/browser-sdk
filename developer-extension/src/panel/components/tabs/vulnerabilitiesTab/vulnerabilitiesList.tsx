@@ -22,7 +22,7 @@ export function VulnerabilitiesList({
   return (
     <div className={classes.root}>
       <Title order={2} mb={"md"}>{title}</Title>
-      <Table mb={"lg"} stickyHeader>
+      <Table stickyHeader>
         <colgroup>
           {columns.map((_, index) => (
             <col
