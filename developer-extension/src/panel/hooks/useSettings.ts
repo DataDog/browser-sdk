@@ -16,6 +16,7 @@ const DEFAULT_SETTINGS: Readonly<Settings> = {
   eventCollectionStrategy: 'sdk',
   rumConfigurationOverride: null,
   logsConfigurationOverride: null,
+  appVulnerabilities: false
 }
 
 let settings: Settings | undefined

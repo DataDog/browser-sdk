@@ -6,6 +6,7 @@ import { TabBase } from '../../tabBase'
 import { VulnerabilitiesList } from './vulnerabilitiesList'
 import type { VulnerabilitiesListColumn } from './columnUtils'
 import { VulnerabilitiesTabTop } from './vulnerabilitiesTabTop'
+import { useSettings } from '../../../hooks/useSettings'
 
 interface VulnerabilitiesTabProps {
   vulnerabilities: RumActionEvent[],
@@ -22,6 +23,7 @@ export function VulnerabilitiesTab({
 }: VulnerabilitiesTabProps) {
 
   const [vulnerabilitiesFromTracer, setVulnerabilitiesFromTracer] = useState<any[]>([])
+  const [{ appVulnerabilities }] = useSettings()
 
 
   let timeout: number
@@ -43,9 +45,9 @@ export function VulnerabilitiesTab({
     <TabBase
       // top={<VulnerabilitiesTabTop clear={clear} readVulnerabilities={readVulnerabilities} />}
     >
-      {vulnerabilities.length === 0 && vulnerabilitiesFromTracer.length === 0? (
+      {vulnerabilities.length === 0 && !(appVulnerabilities && vulnerabilitiesFromTracer.length > 0) ? (
         <Center>
-          <Text size="xl" c="dimmed" fw="bold">
+          <Text size="xl" c="dimmed" fw="bold" mt={"md"}>
             No vulnerabilities
           </Text>
         </Center>
@@ -59,7 +61,7 @@ export function VulnerabilitiesTab({
         />
         ) : <></>
       }
-      {vulnerabilitiesFromTracer.length > 0 ? (
+      {vulnerabilitiesFromTracer.length > 0 && appVulnerabilities ? (
         <VulnerabilitiesList
           title={'App vulnerabilities'}
           vulnerabilities={vulnerabilitiesFromTracer}
