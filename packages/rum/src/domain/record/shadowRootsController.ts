@@ -1,6 +1,8 @@
 import type { RumConfiguration } from '@datadog/browser-rum-core'
 import type { InputCallback, MutationCallBack } from './trackers'
-import { trackInput, trackMutation } from './trackers'
+import { trackInput, trackMutation, trackScroll } from './trackers'
+import type { ScrollCallback } from './trackers'
+import { ElementsScrollPositions } from './elementsScrollPositions'
 
 interface ShadowRootController {
   stop: () => void
@@ -16,15 +18,16 @@ export interface ShadowRootsController {
   flush: () => void
 }
 
+type ShadowRootControllerCallbacks = {
+  mutationCb: MutationCallBack
+  inputCb: InputCallback
+  scrollCb: ScrollCallback
+}
+
 export const initShadowRootsController = (
   configuration: RumConfiguration,
-  {
-    mutationCb,
-    inputCb,
-  }: {
-    mutationCb: MutationCallBack
-    inputCb: InputCallback
-  }
+  { mutationCb, inputCb, scrollCb }: ShadowRootControllerCallbacks,
+  elementsScrollPositions: ElementsScrollPositions
 ): ShadowRootsController => {
   const controllerByShadowRoot = new Map<ShadowRoot, ShadowRootController>()
 
@@ -34,13 +37,16 @@ export const initShadowRootsController = (
         return
       }
       const mutationTracker = trackMutation(mutationCb, configuration, shadowRootsController, shadowRoot)
-      // the change event no do bubble up across the shadow root, we have to listen on the shadow root
+      // The change event does not bubble up across the shadow root, we have to listen on the shadow root
       const inputTracker = trackInput(configuration, inputCb, shadowRoot)
+      // The scroll event does not bubble up across the shadow root, we have to listen on the shadow root
+      const scrollTracker = trackScroll(configuration, scrollCb, elementsScrollPositions, shadowRoot)
       controllerByShadowRoot.set(shadowRoot, {
         flush: () => mutationTracker.flush(),
         stop: () => {
           mutationTracker.stop()
           inputTracker.stop()
+          scrollTracker.stop()
         },
       })
     },

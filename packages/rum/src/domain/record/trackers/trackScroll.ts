@@ -18,7 +18,8 @@ export type ScrollCallback = (incrementalSnapshotRecord: BrowserIncrementalSnaps
 export function trackScroll(
   configuration: RumConfiguration,
   scrollCb: ScrollCallback,
-  elementsScrollPositions: ElementsScrollPositions
+  elementsScrollPositions: ElementsScrollPositions,
+  target: Document | ShadowRoot = document
 ): Tracker {
   const { throttled: updatePosition, cancel: cancelThrottle } = throttle((event: Event) => {
     const target = getEventTarget(event) as HTMLElement | Document
@@ -50,7 +51,7 @@ export function trackScroll(
     )
   }, SCROLL_OBSERVER_THRESHOLD)
 
-  const { stop: removeListener } = addEventListener(configuration, document, DOM_EVENT.SCROLL, updatePosition, {
+  const { stop: removeListener } = addEventListener(configuration, target, DOM_EVENT.SCROLL, updatePosition, {
     capture: true,
     passive: true,
   })
