@@ -10,8 +10,8 @@ const TEST_PUBLIC_ID = 'vcg-7rk-5av'
 const RETRIES_NUMBER = 6
 
 async function computeCpuPerformance() {
-  const prNumber = (await fetchPR(LOCAL_BRANCH)).number
-  const resultId = await triggerSyntheticsTest(prNumber, LOCAL_COMMIT_SHA)
+  const prNumber = fetchPR(LOCAL_BRANCH).number
+  const resultId = triggerSyntheticsTest(prNumber, LOCAL_COMMIT_SHA)
   await waitForSyntheticsTestToFinish(resultId, RETRIES_NUMBER)
 }
 
