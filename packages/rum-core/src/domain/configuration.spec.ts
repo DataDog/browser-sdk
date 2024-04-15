@@ -468,6 +468,7 @@ describe('serializeRumConfiguration', () => {
       start_session_replay_recording_manually: true,
       action_name_attribute: 'test-id',
       default_privacy_level: 'allow',
+      enable_privacy_for_action_name: false,
       track_resources: true,
       track_long_task: true,
       use_worker_url: true,

@@ -209,6 +209,7 @@ export function serializeRumConfiguration(configuration: RumInitConfiguration) {
         Array.isArray(configuration.allowedTracingUrls) && configuration.allowedTracingUrls.length > 0,
       selected_tracing_propagators: getSelectedTracingPropagators(configuration),
       default_privacy_level: configuration.defaultPrivacyLevel,
+      enable_privacy_for_action_name: configuration.enablePrivacyForActionName,
       use_excluded_activity_urls:
         Array.isArray(configuration.excludedActivityUrls) && configuration.excludedActivityUrls.length > 0,
       use_worker_url: !!configuration.workerUrl,
