@@ -1,8 +1,7 @@
 import type { RumConfiguration } from '@datadog/browser-rum-core'
-import type { InputCallback, MutationCallBack } from './trackers'
+import type { InputCallback, MutationCallBack, ScrollCallback } from './trackers'
 import { trackInput, trackMutation, trackScroll } from './trackers'
-import type { ScrollCallback } from './trackers'
-import { ElementsScrollPositions } from './elementsScrollPositions'
+import type { ElementsScrollPositions } from './elementsScrollPositions'
 
 interface ShadowRootController {
   stop: () => void
