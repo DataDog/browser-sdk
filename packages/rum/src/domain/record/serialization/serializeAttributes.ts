@@ -1,7 +1,7 @@
 import { ExperimentalFeature, isExperimentalFeatureEnabled, isSafari } from '@datadog/browser-core'
 
-import { NodePrivacyLevel } from '../../../constants'
-import { shouldMaskNode } from '../privacy'
+import { NodePrivacyLevel } from '../../../../../rum-core/src/constants'
+import { shouldMaskNode } from '../../../../../rum-core/src/domain/privacy'
 import { getElementInputValue, switchToAbsoluteUrl, getValidTagName } from './serializationUtils'
 import type { SerializeOptions } from './serialization.types'
 import { SerializationContextStatus } from './serialization.types'

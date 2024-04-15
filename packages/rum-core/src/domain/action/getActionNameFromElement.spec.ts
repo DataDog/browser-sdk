@@ -345,4 +345,90 @@ describe('getActionNameFromElement', () => {
       ).toBe('Foo')
     })
   })
+
+  describe('with privacyEnabledForActionName', () => {
+    it('extracts attribute text when privacyEnabledActionName is false', () => {
+      expect(
+        getActionNameFromElement(
+          appendElement(`
+            <div data-dd-action-name="foo">
+              <span target>ignored</span>
+            </div>
+      `),
+          undefined,
+          false
+        )
+      ).toBe('foo')
+    })
+
+    it('extracts user defined attribute text when privacyEnabledActionName is false', () => {
+      expect(
+        getActionNameFromElement(
+          appendElement(`
+            <div data-test-id="foo">
+              <span target>ignored</span>
+            </div>
+      `),
+          'data-test-id',
+          false
+        )
+      ).toBe('foo')
+    })
+
+    it('extracts inner text when privacyEnabledActionName is false and attribute is empty', () => {
+      expect(
+        getActionNameFromElement(
+          appendElement(`
+            <div data-test-id="">
+              <span target>foo</span>
+            </div>
+      `),
+          'data-test-id',
+          false
+        )
+      ).toBe('foo')
+    })
+
+    it('returns placeholder when privacyEnabledActionName is true and attribute is empty', () => {
+      expect(
+        getActionNameFromElement(
+          appendElement(`
+            <div data-test-id="">
+              <span target>foo</span>
+            </div>
+      `),
+          'data-test-id',
+          true
+        )
+      ).toBe('Masked Element')
+    })
+
+    it('extracts default attribute text when privacyEnabledActionName is true', () => {
+      expect(
+        getActionNameFromElement(
+          appendElement(`
+            <div data-dd-action-name="foo">
+              <span target>ignored</span>
+            </div>
+      `),
+          undefined,
+          true
+        )
+      ).toBe('foo')
+    })
+
+    it('extracts user defined attribute text when privacyEnabledActionName is true', () => {
+      expect(
+        getActionNameFromElement(
+          appendElement(`
+            <div data-test-id="foo">
+              <span target>ignored</span>
+            </div>
+      `),
+          'data-test-id',
+          true
+        )
+      ).toBe('foo')
+    })
+  })
 })

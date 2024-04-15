@@ -1,5 +1,5 @@
 import type { Context, Duration } from '@datadog/browser-core'
-import { addDuration, clocksNow, timeStampNow, relativeNow } from '@datadog/browser-core'
+import { addDuration, clocksNow, timeStampNow, relativeNow, DefaultPrivacyLevel } from '@datadog/browser-core'
 import { createNewEvent } from '@datadog/browser-core/test'
 import type { TestSetupBuilder } from '../../../test'
 import { setup, createFakeClick } from '../../../test'
@@ -230,6 +230,53 @@ describe('trackClickActions', () => {
     clock.tick(EXPIRE_DELAY)
 
     expect(events.length).toBe(1)
+  })
+
+  fdescribe('with enablePrivacyForActionName false', () => {
+    it('extracts action name when default privacy level is mask', () => {
+      setupBuilder.withConfiguration({
+        defaultPrivacyLevel: DefaultPrivacyLevel.MASK,
+        enablePrivacyForActionName: false,
+      })
+      const { clock } = setupBuilder.build()
+      emulateClick({ activity: {} })
+      expect(findActionId()).not.toBeUndefined()
+      clock.tick(EXPIRE_DELAY)
+
+      expect(events.length).toBe(1)
+      expect(events[0].name).toBe('Click me')
+    })
+  })
+
+  fdescribe('with enablePrivacyForActionName true', () => {
+    it('get placeholder when defaultPrivacyLevel is mask without programmatically declared action name', () => {
+      setupBuilder.withConfiguration({
+        defaultPrivacyLevel: DefaultPrivacyLevel.MASK,
+        enablePrivacyForActionName: true,
+      })
+      const { clock } = setupBuilder.build()
+      emulateClick({ activity: {} })
+      expect(findActionId()).not.toBeUndefined()
+      clock.tick(EXPIRE_DELAY)
+
+      expect(events.length).toBe(1)
+      expect(events[0].name).toBe('Masked Element')
+    })
+
+    it('get placeholder when html override is hidden', () => {
+      input.setAttribute('data-dd-privacy', 'hidden')
+      setupBuilder.withConfiguration({
+        defaultPrivacyLevel: DefaultPrivacyLevel.MASK,
+        enablePrivacyForActionName: true,
+      })
+      const { clock } = setupBuilder.build()
+      emulateClick({ activity: {} })
+      expect(findActionId()).not.toBeUndefined()
+      clock.tick(EXPIRE_DELAY)
+
+      expect(events.length).toBe(1)
+      expect(events[0].name).toBe('Masked Element')
+    })
   })
 
   describe('rage clicks', () => {

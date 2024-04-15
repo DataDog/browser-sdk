@@ -39,6 +39,7 @@ export interface RumInitConfiguration extends InitConfiguration {
   startSessionReplayRecordingManually?: boolean | undefined
 
   // action options
+  enablePrivacyForActionName?: boolean | undefined
   trackUserInteractions?: boolean | undefined
   actionNameAttribute?: string | undefined
 
@@ -61,6 +62,7 @@ export interface RumConfiguration extends Configuration {
   compressIntakeRequests: boolean
   applicationId: string
   defaultPrivacyLevel: DefaultPrivacyLevel
+  enablePrivacyForActionName: boolean
   sessionReplaySampleRate: number
   startSessionReplayRecordingManually: boolean
   trackUserInteractions: boolean
@@ -129,6 +131,7 @@ export function validateAndBuildRumConfiguration(
       defaultPrivacyLevel: objectHasValue(DefaultPrivacyLevel, initConfiguration.defaultPrivacyLevel)
         ? initConfiguration.defaultPrivacyLevel
         : DefaultPrivacyLevel.MASK,
+      enablePrivacyForActionName: initConfiguration.enablePrivacyForActionName ?? false,
       customerDataTelemetrySampleRate: 1,
       traceContextInjection: objectHasValue(TraceContextInjection, initConfiguration.traceContextInjection)
         ? initConfiguration.traceContextInjection

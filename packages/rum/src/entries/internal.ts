@@ -6,7 +6,12 @@
  * changes.
  */
 export type { TimeStamp } from '@datadog/browser-core'
-export { PRIVACY_ATTR_NAME, PRIVACY_ATTR_VALUE_HIDDEN, PRIVACY_CLASS_HIDDEN, NodePrivacyLevel } from '../constants'
+export {
+  PRIVACY_ATTR_NAME,
+  PRIVACY_ATTR_VALUE_HIDDEN,
+  PRIVACY_CLASS_HIDDEN,
+  NodePrivacyLevel,
+} from '../../../rum-core/src/constants'
 
 export * from '../types'
 

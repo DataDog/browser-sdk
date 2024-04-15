@@ -6,7 +6,7 @@ import {
   DEFAULT_PROGRAMMATIC_ACTION_NAME_ATTRIBUTE,
   MAX_ATTRIBUTE_VALUE_CHAR_LENGTH,
 } from '@datadog/browser-rum-core'
-import { NodePrivacyLevel, PRIVACY_ATTR_NAME } from '../../../constants'
+import { NodePrivacyLevel, PRIVACY_ATTR_NAME } from '../../../../../rum-core/src/constants'
 import { serializeAttribute } from './serializeAttribute'
 
 const DEFAULT_CONFIGURATION = {} as RumConfiguration

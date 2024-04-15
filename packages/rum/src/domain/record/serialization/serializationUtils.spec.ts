@@ -1,5 +1,5 @@
 import { isIE } from '@datadog/browser-core'
-import { NodePrivacyLevel } from '../../../constants'
+import { NodePrivacyLevel } from '../../../../../rum-core/src/constants'
 import {
   getSerializedNodeId,
   hasSerializedNode,

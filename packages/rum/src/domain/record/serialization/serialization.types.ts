@@ -1,5 +1,5 @@
 import type { RumConfiguration } from '@datadog/browser-rum-core'
-import type { NodePrivacyLevel } from '../../../constants'
+import type { NodePrivacyLevel } from '../../../../../rum-core/src/constants'
 import type { ElementsScrollPositions } from '../elementsScrollPositions'
 import type { ShadowRootsController } from '../shadowRootsController'
 

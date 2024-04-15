@@ -6,8 +6,22 @@ import { getParentElement } from '../../browser/polyfills'
  * It can also be retrieved from a user defined attribute.
  */
 export const DEFAULT_PROGRAMMATIC_ACTION_NAME_ATTRIBUTE = 'data-dd-action-name'
-
-export function getActionNameFromElement(element: Element, userProgrammaticAttribute?: string): string {
+export const ACTION_NAME_PLACEHOLDER = 'Masked Element'
+export function getActionNameFromElement(
+  element: Element,
+  userProgrammaticAttribute?: string,
+  privacyEnabledForActionName?: boolean
+): string {
+  // Only get the defined action name if
+  // * privacy is enabled for action name
+  // * and privacy is enabled for the Node or globally
+  if (privacyEnabledForActionName) {
+    return (
+      getActionNameFromElementProgrammatically(element, DEFAULT_PROGRAMMATIC_ACTION_NAME_ATTRIBUTE) ||
+      (userProgrammaticAttribute && getActionNameFromElementProgrammatically(element, userProgrammaticAttribute)) ||
+      ACTION_NAME_PLACEHOLDER
+    )
+  }
   // Proceed to get the action name in two steps:
   // * first, get the name programmatically, explicitly defined by the user.
   // * then, use strategies that are known to return good results. Those strategies will be used on

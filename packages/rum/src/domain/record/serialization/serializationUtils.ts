@@ -1,8 +1,8 @@
 import { buildUrl } from '@datadog/browser-core'
 import { getParentNode, isNodeShadowRoot } from '@datadog/browser-rum-core'
-import type { NodePrivacyLevel } from '../../../constants'
-import { CENSORED_STRING_MARK } from '../../../constants'
-import { shouldMaskNode } from '../privacy'
+import type { NodePrivacyLevel } from '../../../../../rum-core/src/constants'
+import { CENSORED_STRING_MARK } from '../../../../../rum-core/src/constants'
+import { shouldMaskNode } from '../../../../../rum-core/src/domain/privacy'
 import type { NodeWithSerializedNode } from './serialization.types'
 
 const serializedNodeIds = new WeakMap<Node, number>()
