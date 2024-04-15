@@ -1,10 +1,19 @@
 const { fetchHandlingError } = require('../../lib/execution-utils')
 const { getOrg2ApiKey, getOrg2AppKey } = require('../../lib/secrets')
 const { timeout } = require('../../lib/execution-utils')
+const { fetchPR, LOCAL_BRANCH } = require('../../lib/git-utils')
+const { LOCAL_COMMIT_SHA } = require('../report-as-a-pr-comment')
 const API_KEY = getOrg2ApiKey()
 const APP_KEY = getOrg2AppKey()
 const TIMEOUT_IN_MS = 10000
 const TEST_PUBLIC_ID = 'vcg-7rk-5av'
+const RETRIES_NUMBER = 6
+
+async function computeCpuPerformance() {
+  const prNumber = (await fetchPR(LOCAL_BRANCH)).number
+  const resultId = await triggerSyntheticsTest(prNumber, LOCAL_COMMIT_SHA)
+  await waitForSyntheticsTestToFinish(resultId, RETRIES_NUMBER)
+}
 
 async function triggerSyntheticsTest(prNumber, commitId) {
   const body = {
@@ -53,6 +62,5 @@ async function waitForSyntheticsTestToFinish(resultId, RETRIES_NUMBER) {
 }
 
 module.exports = {
-  triggerSyntheticsTest,
-  waitForSyntheticsTestToFinish,
+  computeCpuPerformance,
 }
