@@ -211,6 +211,15 @@ check-release:
     - BUILD_MODE=release yarn build
     - node scripts/release/check-release.js
 
+check-schemas:
+  extends:
+    - .base-configuration
+    - .test-allowed-branches
+  interruptible: true
+  script:
+    - yarn
+    - node scripts/check-schemas.js
+
 unit-bs:
   stage: browserstack
   extends:
