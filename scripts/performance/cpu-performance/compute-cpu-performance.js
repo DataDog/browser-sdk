@@ -51,6 +51,7 @@ async function waitForSyntheticsTestToFinish(resultId, RETRIES_NUMBER) {
     })
     const data = await response.json()
     if (data.length !== 0 && data.status === 0) {
+      await timeout(TIMEOUT_IN_MS) // Wait for logs ingestion
       return
     }
     await timeout(TIMEOUT_IN_MS)
