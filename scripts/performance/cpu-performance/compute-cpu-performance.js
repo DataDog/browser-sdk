@@ -12,7 +12,7 @@ const RETRIES_NUMBER = 6
 async function computeCpuPerformance() {
   const prNumber = (await fetchPR(LOCAL_BRANCH)).number
   const resultId = await triggerSyntheticsTest(prNumber, LOCAL_COMMIT_SHA)
-  return waitForSyntheticsTestToFinish(resultId, RETRIES_NUMBER)
+  await waitForSyntheticsTestToFinish(resultId, RETRIES_NUMBER)
 }
 
 async function triggerSyntheticsTest(prNumber, commitId) {
