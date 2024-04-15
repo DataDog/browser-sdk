@@ -7,7 +7,7 @@ const API_KEY = getOrg2ApiKey()
 const APP_KEY = getOrg2AppKey()
 const TIMEOUT_IN_MS = 10000
 const TEST_PUBLIC_ID = 'vcg-7rk-5av'
-const RETRIES_NUMBER = 6
+const RETRIES_NUMBER = 10
 
 async function computeCpuPerformance() {
   const prNumber = (await fetchPR(LOCAL_BRANCH)).number
