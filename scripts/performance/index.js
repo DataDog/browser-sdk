@@ -6,7 +6,7 @@ const { computeCpuPerformance } = require('./cpu-performance/compute-cpu-perform
 
 runMain(async () => {
   const localBundleSizes = calculateBundleSizes()
-  const dummy = await computeCpuPerformance()
+  const sample = await computeCpuPerformance()
   await reportToDatadog(localBundleSizes)
-  await reportAsPrComment(localBundleSizes, dummy)
+  await reportAsPrComment(localBundleSizes, sample)
 })
