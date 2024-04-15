@@ -11,7 +11,7 @@ export {
   PRIVACY_ATTR_VALUE_HIDDEN,
   PRIVACY_CLASS_HIDDEN,
   NodePrivacyLevel,
-} from '../../../rum-core/src/constants'
+} from '@datadog/browser-rum-core'
 
 export * from '../types'
 

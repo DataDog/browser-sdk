@@ -1,8 +1,8 @@
 import type { RumConfiguration } from '@datadog/browser-rum-core'
+import { NodePrivacyLevel, PRIVACY_ATTR_NAME } from '@datadog/browser-rum-core'
 import { display, noop, objectValues } from '@datadog/browser-core'
 import type { SerializedNodeWithId } from '../../../types'
 import { serializeNodeWithId, SerializationContextStatus, createElementsScrollPositions } from '..'
-import { NodePrivacyLevel, PRIVACY_ATTR_NAME } from '../../../../../rum-core/src/constants'
 
 export const makeHtmlDoc = (htmlContent: string, privacyTag: string) => {
   try {

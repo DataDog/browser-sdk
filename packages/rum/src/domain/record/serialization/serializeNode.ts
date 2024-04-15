@@ -1,4 +1,14 @@
-import { isNodeShadowRoot, hasChildNodes, forEachChildNodes } from '@datadog/browser-rum-core'
+import {
+  reducePrivacyLevel,
+  getNodeSelfPrivacyLevel,
+  getTextContent,
+  isNodeShadowRoot,
+  hasChildNodes,
+  forEachChildNodes,
+  NodePrivacyLevel,
+  PRIVACY_ATTR_NAME,
+  PRIVACY_ATTR_VALUE_HIDDEN,
+} from '@datadog/browser-rum-core'
 import { assign } from '@datadog/browser-core'
 import type {
   DocumentFragmentNode,
@@ -11,8 +21,6 @@ import type {
   TextNode,
 } from '../../../types'
 import { NodeType } from '../../../types'
-import { NodePrivacyLevel, PRIVACY_ATTR_NAME, PRIVACY_ATTR_VALUE_HIDDEN } from '../../../../../rum-core/src/constants'
-import { reducePrivacyLevel, getNodeSelfPrivacyLevel, getTextContent } from '../../../../../rum-core/src/domain/privacy'
 import { getSerializedNodeId, getValidTagName, setSerializedNodeId } from './serializationUtils'
 import type { SerializeOptions } from './serialization.types'
 import { serializeStyleSheets } from './serializeStyleSheets'
