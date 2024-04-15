@@ -6,7 +6,7 @@ const APP_KEY = getOrg2AppKey()
 const TIMEOUT_IN_MS = 10000
 const TEST_PUBLIC_ID = 'vcg-7rk-5av'
 
-async function syntheticTrigger(prNumber, commitId) {
+async function triggerSyntheticsTest(prNumber, commitId) {
   const body = {
     tests: [
       {
@@ -29,25 +29,30 @@ async function syntheticTrigger(prNumber, commitId) {
   return data.results[0].result_id
 }
 
-async function getSyntheticTestResult(resultId, RETRIES_NUMBER) {
+async function waitForSyntheticsTestToFinish(resultId, RETRIES_NUMBER) {
   const url = `https://api.datadoghq.com/api/v1/synthetics/tests/${TEST_PUBLIC_ID}/results/${resultId}`
   for (let i = 0; i < RETRIES_NUMBER; i++) {
-    const response = await fetch(url, {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-        'DD-API-KEY': API_KEY,
-        'DD-APPLICATION-KEY': APP_KEY,
-      },
-    })
-    const data = await response.json()
-    if (data.length !== 0 && data.status === 0) {
-      break
+    try {
+      const response = await fetch(url, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'DD-API-KEY': API_KEY,
+          'DD-APPLICATION-KEY': APP_KEY,
+        },
+      })
+      const data = await response.json()
+      if (data.length !== 0 && data.status === 0) {
+        break
+      }
+    } catch (error) {
+      console.error(`Error on attempt ${i + 1}:`, error)
     }
     await timeout(TIMEOUT_IN_MS)
   }
 }
+
 module.exports = {
-  getSyntheticTestResult,
-  syntheticTrigger,
+  triggerSyntheticsTest,
+  waitForSyntheticsTestToFinish,
 }

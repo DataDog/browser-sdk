@@ -30,7 +30,7 @@ const AWS_CONFIG = {
 /**
  * Deploy SDK files to CDN
  * Usage:
- * node deploy.js staging|prod staging|canary|pull-request|vXXX root,pull-Request,us1,eu1,...
+ * node deploy.js staging|prod staging|canary|pull-request|vXXX root,pull-request,us1,eu1,...
  */
 const env = process.argv[2]
 const version = process.argv[3]
