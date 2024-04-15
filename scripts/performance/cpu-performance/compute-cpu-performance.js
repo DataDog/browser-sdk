@@ -55,7 +55,7 @@ async function waitForSyntheticsTestToFinish(resultId, RETRIES_NUMBER) {
     }
     await timeout(TIMEOUT_IN_MS)
   }
-  throw new Error('Synthetics test did not finish within the specified number of retries') // Test did not finish, reject the promise
+  throw new Error('Synthetics test did not finish within the specified number of retries')
 }
 
 module.exports = {
