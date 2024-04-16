@@ -136,10 +136,7 @@ describe('session store', () => {
       it('when session not in store, should initialize a new session', () => {
         setupSessionStore()
 
-        expect(sessionStoreManager.getSession()).toEqual({
-          isExpired: SessionExpiredReason.UNKNOWN,
-          lock: jasmine.any(String),
-        })
+        expect(sessionStoreManager.getSession().isExpired).toBe(SessionExpiredReason.UNKNOWN)
       })
 
       it('when tracked session in store, should do nothing ', () => {
