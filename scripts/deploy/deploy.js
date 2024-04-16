@@ -44,8 +44,12 @@ runMain(async () => {
     for (const uploadPathType of uploadPathTypes) {
       let uploadPath
       if (uploadPathType === 'pull-request') {
-        const PR_NUMBER = (await fetchPR(LOCAL_BRANCH)).number
-        uploadPath = buildPullRequestUploadPath(packageName, PR_NUMBER)
+        const pr = await fetchPR(LOCAL_BRANCH)
+        if (!pr) {
+          console.log('No pull requests found for the branch')
+          return
+        }
+        uploadPath = buildPullRequestUploadPath(packageName, pr.number)
       } else if (uploadPathType === 'root') {
         uploadPath = buildRootUploadPath(packageName, version)
       } else {
