@@ -88,24 +88,7 @@ async function retrieveExistingCommentId(prNumber) {
     return targetComment.id
   }
 }
-async function updateOrAddComment(
-  differenceBundle,
-  differenceCpu,
-  baseBundleSizes,
-  localBundleSizes,
-  cpuBasePerformance,
-  cpuLocalPerformance,
-  prNumber,
-  commentId
-) {
-  const message = createMessage(
-    differenceBundle,
-    differenceCpu,
-    baseBundleSizes,
-    localBundleSizes,
-    cpuBasePerformance,
-    cpuLocalPerformance
-  )
+async function updateOrAddComment(message, prNumber, commentId) {
   const method = commentId ? 'PATCH' : 'POST'
   const payload = {
     pr_url: `https://github.com/DataDog/browser-sdk/pull/${prNumber}`,
