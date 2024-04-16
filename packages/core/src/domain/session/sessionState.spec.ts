@@ -39,9 +39,9 @@ describe('session state utilities', () => {
     })
 
     it('should correctly identify a session in live state', () => {
-      expect(
-        isSessionInExpiredState({ created: dateNowWithOffset(-1000), expire: dateNowWithOffset(1000) }, true)
-      ).toBe(false)
+      expect(isSessionInExpiredState({ created: dateNowWithOffset(-1000), expire: dateNowWithOffset(1000) })).toBe(
+        false
+      )
       expect(isSessionInExpiredState({ first: 'not-tracked' })).toBe(false)
       expect(isSessionInExpiredState({ first: 'tracked' })).toBe(false)
     })
