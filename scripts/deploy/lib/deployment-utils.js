@@ -14,10 +14,6 @@ const buildDatacenterUploadPath = (datacenter, packageName, version, extension =
 // ex: datadog-rum.js
 const buildBundleFileName = (packageName, extension = 'js') => `datadog-${packageName}.${extension}`
 
-// ex: pull-request/2781/datadog-rum.js
-function buildPullRequestUploadPath(packageName, version, extension = 'js') {
-  return `pull-request/${version}/datadog-${packageName}.${extension}`
-}
 // ex: packages/rum/bundle
 const buildBundleFolder = (packageName) => `packages/${packageName}/bundle`
 
@@ -27,5 +23,4 @@ module.exports = {
   buildDatacenterUploadPath,
   buildBundleFileName,
   buildBundleFolder,
-  buildPullRequestUploadPath,
 }

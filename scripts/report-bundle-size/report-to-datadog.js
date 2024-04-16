@@ -1,13 +1,14 @@
 const { fetchHandlingError } = require('../lib/execution-utils')
 const { getOrg2ApiKey } = require('../lib/secrets')
 const { browserSdkVersion } = require('../lib/browser-sdk-version')
+
 const LOG_INTAKE_URL = 'https://http-intake.logs.datadoghq.com/api/v2/logs'
 const LOG_INTAKE_REQUEST_HEADERS = {
   'DD-API-KEY': getOrg2ApiKey(),
   'Content-Type': 'application/json',
 }
 
-async function reportToDatadog(bundleSizes) {
+async function reportBundleSizesToDatadog(bundleSizes) {
   const logData = createLogData(bundleSizes, browserSdkVersion)
   await sendLogToOrg2(logData)
 }
@@ -26,6 +27,7 @@ function createLogData(bundleSizes, browserSdkVersion) {
     },
   ]
 }
+
 async function sendLogToOrg2(bundleData = {}) {
   await fetchHandlingError(LOG_INTAKE_URL, {
     method: 'POST',
@@ -34,6 +36,4 @@ async function sendLogToOrg2(bundleData = {}) {
   })
 }
 
-module.exports = {
-  reportToDatadog,
-}
+module.exports = { reportBundleSizesToDatadog }

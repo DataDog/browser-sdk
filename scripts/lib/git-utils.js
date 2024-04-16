@@ -2,38 +2,7 @@ const os = require('os')
 const fs = require('fs')
 
 const { command } = require('../lib/command')
-const { getGithubDeployKey, getGithubAccessToken } = require('./secrets')
-const { fetchHandlingError } = require('./execution-utils')
-
-const GITHUB_TOKEN = getGithubAccessToken()
-
-async function fetchPR(localBranch) {
-  const response = await fetchHandlingError(
-    `https://api.github.com/repos/DataDog/browser-sdk/pulls?head=DataDog:${localBranch}`,
-    {
-      method: 'GET',
-      headers: {
-        Authorization: `token ${GITHUB_TOKEN}`,
-      },
-    }
-  )
-  const pr = response.body ? await response.json() : null
-  if (pr && pr.length > 1) {
-    throw new Error('Multiple pull requests found for the branch')
-  }
-  return pr ? pr[0] : null
-}
-
-function getLastCommonCommit(baseBranch) {
-  try {
-    command`git fetch --depth=100 origin ${baseBranch}`.run()
-    const commandOutput = command`git merge-base origin/${baseBranch} HEAD`.run()
-    // SHA commit is truncated to 8 characters as bundle sizes commit are exported in short format to logs for convenience and readability.
-    return commandOutput.trim().substring(0, 8)
-  } catch (error) {
-    throw new Error('Failed to get last common commit', { cause: error })
-  }
-}
+const { getGithubDeployKey } = require('./secrets')
 
 function initGitConfig(repository) {
   const homedir = os.homedir()
@@ -52,9 +21,4 @@ function initGitConfig(repository) {
 
 module.exports = {
   initGitConfig,
-  fetchPR,
-  getLastCommonCommit,
-  BASE_BRANCH: process.env.MAIN_BRANCH,
-  LOCAL_BRANCH: process.env.CI_COMMIT_REF_NAME,
-  GITHUB_TOKEN,
 }
