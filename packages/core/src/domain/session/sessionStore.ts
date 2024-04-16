@@ -4,10 +4,9 @@ import { ONE_SECOND, dateNow } from '../../tools/utils/timeUtils'
 import { throttle } from '../../tools/utils/functionUtils'
 import { generateUUID } from '../../tools/utils/stringUtils'
 import type { InitConfiguration } from '../configuration'
-import { SESSION_TIME_OUT_DELAY } from './sessionConstants'
 import { selectCookieStrategy, initCookieStrategy } from './storeStrategies/sessionInCookie'
 import type { SessionStoreStrategyType } from './storeStrategies/sessionStoreStrategy'
-import { getInitialSessionState, isSessionInitialized } from './sessionState'
+import { getInitialSessionState, isSessionInExpiredState, isSessionStarted } from './sessionState'
 import type { SessionState } from './sessionState'
 import { initLocalStorageStrategy, selectLocalStorageStrategy } from './storeStrategies/sessionInLocalStorage'
 import { processSessionStoreOperations } from './sessionStoreOperations'
@@ -74,6 +73,10 @@ export function startSessionStore<TrackingType extends string>(
     processSessionStoreOperations(
       {
         process: (sessionState) => {
+          if (!isSessionStarted(sessionState)) {
+            return
+          }
+
           const synchronizedSession = synchronizeSession(sessionState)
           isTracked = expandOrRenewSessionState(synchronizedSession)
           return synchronizedSession
@@ -107,7 +110,7 @@ export function startSessionStore<TrackingType extends string>(
     processSessionStoreOperations(
       {
         process: (sessionState) =>
-          isSessionInitialized(sessionState) && !isActiveSession(sessionState) ? getInitialSessionState() : undefined,
+          isSessionInExpiredState(sessionState) ? getInitialSessionState(sessionState) : undefined,
         after: synchronizeSession,
       },
       sessionStoreStrategy
@@ -115,15 +118,9 @@ export function startSessionStore<TrackingType extends string>(
   }
 
   function synchronizeSession(sessionState: SessionState) {
-    if (!isSessionInitialized(sessionState)) {
-      expireSessionInCache()
-      return sessionState
+    if (isSessionInExpiredState(sessionState)) {
+      sessionState = getInitialSessionState(sessionState)
     }
-
-    if (!isActiveSession(sessionState)) {
-      sessionState = getInitialSessionState()
-    }
-
     if (hasSessionInCache()) {
       if (isSessionInCacheOutdated(sessionState)) {
         expireSessionInCache()
@@ -138,8 +135,8 @@ export function startSessionStore<TrackingType extends string>(
     processSessionStoreOperations(
       {
         process: (sessionState) => {
-          if (!isSessionInitialized(sessionState)) {
-            return getInitialSessionState()
+          if (!isSessionStarted(sessionState)) {
+            return getInitialSessionState(sessionState)
           }
         },
         after: (sessionState) => {
@@ -151,18 +148,17 @@ export function startSessionStore<TrackingType extends string>(
   }
 
   function expandOrRenewSessionState(sessionState: SessionState) {
-    if (!isSessionInitialized(sessionState)) {
+    if (!isSessionStarted(sessionState)) {
       return false
     }
 
     const { trackingType, isTracked } = computeSessionState(sessionState[productKey])
     sessionState[productKey] = trackingType
+    delete sessionState.isExpired
     if (isTracked && !sessionState.id) {
       sessionState.id = generateUUID()
       sessionState.created = String(dateNow())
-      delete sessionState.isExpired
     }
-
     return isTracked
   }
 
@@ -176,7 +172,6 @@ export function startSessionStore<TrackingType extends string>(
 
   function expireSessionInCache() {
     sessionCache = getInitialSessionState()
-
     expireObservable.notify()
   }
 
@@ -187,19 +182,10 @@ export function startSessionStore<TrackingType extends string>(
 
   function retrieveActiveSession(): SessionState {
     const session = retrieveSession()
-    if (isActiveSession(session)) {
+    if (!isSessionInExpiredState(session)) {
       return session
     }
     return getInitialSessionState()
-  }
-
-  function isActiveSession(sessionState: SessionState) {
-    // created and expire can be undefined for versions which was not storing them
-    // these checks could be removed when older versions will not be available/live anymore
-    return (
-      (sessionState.created === undefined || dateNow() - Number(sessionState.created) < SESSION_TIME_OUT_DELAY) &&
-      (sessionState.expire === undefined || dateNow() < Number(sessionState.expire))
-    )
   }
 
   return {

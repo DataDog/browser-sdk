@@ -23,7 +23,7 @@ describe('session in cookie strategy', () => {
     expect(getCookie(SESSION_STORE_KEY)).toBe('id=123&created=0')
   })
 
-  it('should clear the cookie holding the session', () => {
+  it('should set `isExpired=1` to the cookie holding the session', () => {
     cookieStorageStrategy.persistSession(sessionState)
     cookieStorageStrategy.clearSession()
     const session = cookieStorageStrategy.retrieveSession()

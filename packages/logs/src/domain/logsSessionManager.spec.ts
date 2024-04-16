@@ -48,7 +48,7 @@ describe('logs session manager', () => {
     startLogsSessionManagerWithDefaults({ configuration: { sessionSampleRate: 0 } })
 
     expect(getCookie(SESSION_STORE_KEY)).toContain(`${LOGS_SESSION_KEY}=${LoggerTrackingType.NOT_TRACKED}`)
-    expect(getCookie(SESSION_STORE_KEY)).toContain('isExpired=1')
+    expect(getCookie(SESSION_STORE_KEY)).not.toContain('isExpired=1')
   })
 
   it('when tracked should keep existing tracking type and session id', () => {
@@ -61,7 +61,7 @@ describe('logs session manager', () => {
   })
 
   it('when not tracked should keep existing tracking type', () => {
-    setCookie(SESSION_STORE_KEY, 'isExpired=1&logs=0', DURATION)
+    setCookie(SESSION_STORE_KEY, 'logs=0', DURATION)
 
     startLogsSessionManagerWithDefaults()
 

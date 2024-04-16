@@ -79,7 +79,6 @@ describe('rum sessions', () => {
         await browserExecute(() => {
           window.DD_RUM!.stopSession()
         })
-
         await (await $('html')).click()
 
         // The session is not created right away, let's wait until we see a cookie

@@ -28,7 +28,7 @@ describe('session in local storage strategy', () => {
     expect(window.localStorage.getItem(SESSION_STORE_KEY)).toMatch(/.*id=.*created/)
   })
 
-  it('should delete the local storage item holding the session', () => {
+  it('should set `isExpired=1` to the local storage item holding the session', () => {
     const localStorageStrategy = initLocalStorageStrategy()
     localStorageStrategy.persistSession(sessionState)
     localStorageStrategy.clearSession()

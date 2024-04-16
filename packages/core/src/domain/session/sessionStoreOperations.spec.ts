@@ -33,11 +33,12 @@ const cookieOptions: CookieOptions = {}
     let processSpy: jasmine.Spy<jasmine.Func>
     let afterSpy: jasmine.Spy<jasmine.Func>
     let stubStorage: StubStorage
+    const now = Date.now()
 
     beforeEach(() => {
       sessionStoreStrategy.clearSession()
-      initialSession = { id: '123', created: '0' }
-      otherSession = { id: '456', created: '100' }
+      initialSession = { id: '123', created: String(now) }
+      otherSession = { id: '456', created: String(now + 100) }
       processSpy = jasmine.createSpy('process')
       afterSpy = jasmine.createSpy('after')
       stubStorage = stubStorageProvider.get()

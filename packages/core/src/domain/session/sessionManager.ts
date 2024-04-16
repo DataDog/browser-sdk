@@ -120,6 +120,6 @@ function trackVisibility(configuration: Configuration, expandSession: () => void
 }
 
 function trackResume(configuration: Configuration, cb: () => void) {
-  const { stop } = addEventListener(configuration, window, DOM_EVENT.RESUME, cb)
+  const { stop } = addEventListener(configuration, window, DOM_EVENT.RESUME, cb, { capture: true })
   stopCallbacks.push(stop)
 }

@@ -1,6 +1,7 @@
+import { isEmptyObject } from '../../tools/utils/objectUtils'
 import { objectEntries } from '../../tools/utils/polyfills'
 import { dateNow } from '../../tools/utils/timeUtils'
-import { SESSION_EXPIRATION_DELAY } from './sessionConstants'
+import { SESSION_EXPIRATION_DELAY, SESSION_TIME_OUT_DELAY } from './sessionConstants'
 
 const SESSION_ENTRY_REGEXP = /^([a-zA-Z]+)=([a-z0-9-]+)$/
 const SESSION_ENTRY_SEPARATOR = '&'
@@ -19,21 +20,32 @@ export interface SessionState {
   [key: string]: string | undefined
 }
 
-export function getInitialSessionState(): SessionState {
-  return {
+export function getInitialSessionState({ lock }: SessionState = {}): SessionState {
+  const session: SessionState = {
     isExpired: SessionExpiredReason.UNKNOWN,
   }
+
+  if (lock) {
+    session.lock = lock
+  }
+
+  return session
 }
 
-export function isSessionInitialized(session: SessionState) {
-  return session.id !== undefined || session.isExpired !== undefined
+export function isSessionStarted(session: SessionState) {
+  return !(isEmptyObject(session) || (Object.keys(session).length === 1 && 'lock' in session))
 }
 
 export function isSessionInExpiredState(session: SessionState) {
-  // an expired session is `{isExpired = '0'}` or `{isExpired = '0', lock = whatever}`
+  return session.isExpired !== undefined || !isActiveSession(session)
+}
+
+function isActiveSession(sessionState: SessionState) {
+  // created and expire can be undefined for versions which was not storing them
+  // these checks could be removed when older versions will not be available/live anymore
   return (
-    (Object.keys(session).length === 1 && session.isExpired !== undefined) ||
-    (Object.keys(session).length === 2 && session.isExpired !== undefined && session.lock !== undefined)
+    (sessionState.created === undefined || dateNow() - Number(sessionState.created) < SESSION_TIME_OUT_DELAY) &&
+    (sessionState.expire === undefined || dateNow() < Number(sessionState.expire))
   )
 }
 

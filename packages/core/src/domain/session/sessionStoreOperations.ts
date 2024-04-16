@@ -2,7 +2,7 @@ import { setTimeout } from '../../tools/timer'
 import { generateUUID } from '../../tools/utils/stringUtils'
 import type { SessionStoreStrategy } from './storeStrategies/sessionStoreStrategy'
 import type { SessionState } from './sessionState'
-import { expandSessionState, isSessionInExpiredState, isSessionInitialized } from './sessionState'
+import { expandSessionState, isSessionInExpiredState } from './sessionState'
 
 type Operations = {
   process: (sessionState: SessionState) => SessionState | undefined
@@ -63,7 +63,7 @@ export function processSessionStoreOperations(
   if (processedSession) {
     if (isSessionInExpiredState(processedSession)) {
       clearSession()
-    } else if (isSessionInitialized(processedSession)) {
+    } else {
       expandSessionState(processedSession)
       persistSession(processedSession)
     }

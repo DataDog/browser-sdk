@@ -15,7 +15,6 @@ describe('old cookies migration', () => {
 
   beforeEach(() => {
     sessionStoreStrategy = initCookieStrategy({})
-    setCookie(SESSION_STORE_KEY, '', SESSION_EXPIRATION_DELAY)
     resetInitCookies()
   })
 
@@ -49,7 +48,7 @@ describe('old cookies migration', () => {
 
     tryOldCookiesMigration(sessionStoreStrategy)
 
-    expect(getCookie(SESSION_STORE_KEY)).toContain('isExpired=1')
+    expect(getCookie(SESSION_STORE_KEY)).not.toContain('id=')
     expect(getCookie(SESSION_STORE_KEY)).toContain('rum=0')
     expect(getCookie(SESSION_STORE_KEY)).toMatch(/expire=\d+/)
   })

@@ -81,7 +81,8 @@ describe('rum session manager', () => {
       expect(expireSessionSpy).not.toHaveBeenCalled()
       expect(renewSessionSpy).not.toHaveBeenCalled()
       expect(getCookie(SESSION_STORE_KEY)).toContain(`${RUM_SESSION_KEY}=${RumTrackingType.NOT_TRACKED}`)
-      expect(getCookie(SESSION_STORE_KEY)).toContain('isExpired=1')
+      expect(getCookie(SESSION_STORE_KEY)).not.toContain('id=')
+      expect(getCookie(SESSION_STORE_KEY)).not.toContain('isExpired=1')
     })
 
     it('when tracked should keep existing session type and id', () => {
@@ -98,7 +99,7 @@ describe('rum session manager', () => {
     })
 
     it('when not tracked should keep existing session type', () => {
-      setCookie(SESSION_STORE_KEY, 'isExpired=1&rum=0', DURATION)
+      setCookie(SESSION_STORE_KEY, 'rum=0', DURATION)
 
       startRumSessionManagerWithDefaults()
 
