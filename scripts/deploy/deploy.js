@@ -1,12 +1,15 @@
 'use strict'
 
 const { printLog, runMain } = require('../lib/execution-utils')
+const { fetchPR, LOCAL_BRANCH } = require('../lib/git-utils')
 const { command } = require('../lib/command')
+
 const {
   buildRootUploadPath,
   buildDatacenterUploadPath,
   buildBundleFolder,
   buildBundleFileName,
+  buildPullRequestUploadPath,
   packages,
 } = require('./lib/deployment-utils')
 
@@ -27,20 +30,23 @@ const AWS_CONFIG = {
 /**
  * Deploy SDK files to CDN
  * Usage:
- * node deploy.js staging|prod staging|canary|vXXX root,us1,eu1,...
+ * node deploy.js staging|prod staging|canary|pull-request|vXXX root,pull-request,us1,eu1,...
  */
 const env = process.argv[2]
 const version = process.argv[3]
 const uploadPathTypes = process.argv[4].split(',')
 
-runMain(() => {
+runMain(async () => {
   const awsConfig = AWS_CONFIG[env]
   let cloudfrontPathsToInvalidate = []
   for (const { packageName } of packages) {
     const bundleFolder = buildBundleFolder(packageName)
     for (const uploadPathType of uploadPathTypes) {
       let uploadPath
-      if (uploadPathType === 'root') {
+      if (uploadPathType === 'pull-request') {
+        const PR_NUMBER = (await fetchPR(LOCAL_BRANCH)).number
+        uploadPath = buildPullRequestUploadPath(packageName, PR_NUMBER)
+      } else if (uploadPathType === 'root') {
         uploadPath = buildRootUploadPath(packageName, version)
       } else {
         uploadPath = buildDatacenterUploadPath(uploadPathType, packageName, version)
@@ -58,7 +64,9 @@ function uploadToS3(awsConfig, bundlePath, uploadPath) {
   const accessToS3 = generateEnvironmentForRole(awsConfig.accountId, 'build-stable-browser-agent-artifacts-s3-write')
 
   const browserCache =
-    version === 'staging' || version === 'canary' ? 15 * ONE_MINUTE_IN_SECOND : 4 * ONE_HOUR_IN_SECOND
+    version === 'staging' || version === 'canary' || version === 'pull-request'
+      ? 15 * ONE_MINUTE_IN_SECOND
+      : 4 * ONE_HOUR_IN_SECOND
   const cacheControl = `max-age=${browserCache}, s-maxage=60`
 
   printLog(`Upload ${bundlePath} to s3://${awsConfig.bucketName}/${uploadPath}`)

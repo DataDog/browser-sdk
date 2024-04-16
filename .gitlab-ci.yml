@@ -140,7 +140,17 @@ build-and-lint:
     - yarn build
     - yarn lint
     - node scripts/check-packages.js
-    - node scripts/report-bundle-size/index.js
+
+test-performance:
+  extends:
+    - .base-configuration
+    - .test-allowed-branches
+  interruptible: true
+  script:
+    - yarn
+    - yarn build:bundle
+    - node ./scripts/deploy/deploy.js staging pull-request pull-request
+    - node scripts/performance/index.js
 
 build-bundle:
   extends:
