@@ -1,7 +1,7 @@
 const { command } = require('../lib/command')
 const { fetchHandlingError } = require('../lib/execution-utils')
 const { LOCAL_BRANCH, BASE_BRANCH, GITHUB_TOKEN, getLastCommonCommit, fetchPR } = require('../lib/git-utils')
-const { fetchMetrics } = require('./query-performance-data')
+const { fetchPerformanceMetrics } = require('./fetch-performance-metrics')
 const PR_COMMENT_HEADER = 'Bundles Sizes Evolution'
 const PR_COMMENTER_AUTH_TOKEN = command`authanywhere`.run().split(' ')[2].trim()
 // The value is set to 5% as it's around 10 times the average value for small PRs.
@@ -25,22 +25,21 @@ async function reportAsPrComment(localBundleSizes) {
     return
   }
   const packageNames = Object.keys(localBundleSizes)
-  const mainBranchBundleSizes = await fetchMetrics('bundle', packageNames, lastCommonCommit)
-  const cpuBasePerformance = await fetchMetrics('cpu', ACTION_NAMES, lastCommonCommit)
-  const cpuLocalPerformance = await fetchMetrics('cpu', ACTION_NAMES, LOCAL_COMMIT_SHA)
-  const differenceBundlePerformance = compare(mainBranchBundleSizes, localBundleSizes)
-  const differenceCpuPerformance = compare(cpuBasePerformance, cpuLocalPerformance)
+  const baseBundleSizes = await fetchPerformanceMetrics('bundle', packageNames, lastCommonCommit)
+  const cpuBasePerformance = await fetchPerformanceMetrics('cpu', ACTION_NAMES, lastCommonCommit)
+  const cpuLocalPerformance = await fetchPerformanceMetrics('cpu', ACTION_NAMES, LOCAL_COMMIT_SHA)
+  const differenceBundle = compare(baseBundleSizes, localBundleSizes)
+  const differenceCpu = compare(cpuBasePerformance, cpuLocalPerformance)
   const commentId = await retrieveExistingCommentId(pr.number)
-  await updateOrAddComment(
-    differenceBundlePerformance,
-    differenceCpuPerformance,
-    mainBranchBundleSizes,
+  const message = createMessage(
+    differenceBundle,
+    differenceCpu,
+    baseBundleSizes,
     localBundleSizes,
     cpuBasePerformance,
-    cpuLocalPerformance,
-    pr.number,
-    commentId
+    cpuLocalPerformance
   )
+  await updateOrAddComment(message, pr.number, commentId)
 }
 
 function compare(baseResults, localResults) {
