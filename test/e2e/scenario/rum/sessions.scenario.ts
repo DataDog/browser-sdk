@@ -118,12 +118,16 @@ describe('rum sessions', () => {
   })
 
   describe('third party cookie clearing', () => {
-    createTest('after a 3rd party clears the cookies, stop the session')
+    createTest('after a 3rd party clears the cookies, do not restart a session on user interaction')
       .withRum()
       .run(async ({ intakeRegistry }) => {
         await deleteAllCookies()
 
         // Cookies are cached for 1s, wait until the cache expires
+        await browser.pause(1100)
+
+        await (await $('html')).click()
+
         await browser.pause(1100)
 
         await browserExecute(() => {
