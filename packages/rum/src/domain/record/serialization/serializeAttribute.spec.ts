@@ -151,12 +151,5 @@ describe('serializeAttribute', () => {
       node.setAttribute(PRIVACY_ATTR_NAME, 'mask')
       expect(serializeAttribute(node, NodePrivacyLevel.MASK, 'srcdoc', DEFAULT_CONFIGURATION)).toBe('***')
     })
-
-    it('should mask iframe src when privacy override set to mask', () => {
-      const node = document.createElement('iframe')
-      node.src = 'data:text/html, <html><body>data-foo</body></html>">'
-      node.setAttribute(PRIVACY_ATTR_NAME, 'mask')
-      expect(serializeAttribute(node, NodePrivacyLevel.MASK, 'src', DEFAULT_CONFIGURATION)).toBe('***')
-    })
   })
 })

@@ -63,7 +63,7 @@ export function serializeAttribute(
     }
 
     // mask iframe srcdoc
-    if (tagName === 'IFRAME' && (attributeName === 'src' || attributeName === 'srcdoc')) {
+    if (tagName === 'IFRAME' && attributeName === 'srcdoc') {
       return CENSORED_STRING_MARK
     }
   }
