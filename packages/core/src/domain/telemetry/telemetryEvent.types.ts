@@ -194,6 +194,10 @@ export type TelemetryConfigurationEvent = CommonTelemetryProperties & {
        */
       default_privacy_level?: string
       /**
+       * Privacy control for action name
+       */
+      enable_privacy_for_action_name?: boolean
+      /**
        * Whether the request origins list to ignore when computing the page activity is used
        */
       use_excluded_activity_urls?: boolean
@@ -302,7 +306,7 @@ export type TelemetryConfigurationEvent = CommonTelemetryProperties & {
        */
       batch_upload_frequency?: number
       /**
-       * Maximum number of batches processed sequencially without a delay
+       * Maximum number of batches processed sequentially without a delay
        */
       batch_processing_level?: number
       /**
@@ -329,9 +333,8 @@ export type TelemetryConfigurationEvent = CommonTelemetryProperties & {
        * The threshold used for iOS App Hangs monitoring (in milliseconds)
        */
       app_hang_threshold?: number
-
       /**
-       * Either forward logs to the PCI compliant intake or not
+       * Whether logs are sent to the PCI-compliant intake
        */
       use_pci_intake?: boolean
       /**

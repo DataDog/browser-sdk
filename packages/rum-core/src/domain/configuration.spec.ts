@@ -429,6 +429,7 @@ describe('serializeRumConfiguration', () => {
       traceSampleRate: 50,
       traceContextInjection: TraceContextInjection.ALL,
       defaultPrivacyLevel: 'allow',
+      enablePrivacyForActionName: false,
       subdomain: 'foo',
       sessionReplaySampleRate: 60,
       startSessionReplayRecordingManually: true,
