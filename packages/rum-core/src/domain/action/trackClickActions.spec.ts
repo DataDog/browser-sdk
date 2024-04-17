@@ -232,7 +232,7 @@ describe('trackClickActions', () => {
     expect(events.length).toBe(1)
   })
 
-  fdescribe('with enablePrivacyForActionName false', () => {
+  describe('with enablePrivacyForActionName false', () => {
     it('extracts action name when default privacy level is mask', () => {
       setupBuilder.withConfiguration({
         defaultPrivacyLevel: DefaultPrivacyLevel.MASK,
@@ -248,7 +248,7 @@ describe('trackClickActions', () => {
     })
   })
 
-  fdescribe('with enablePrivacyForActionName true', () => {
+  describe('with enablePrivacyForActionName true', () => {
     it('get placeholder when defaultPrivacyLevel is mask without programmatically declared action name', () => {
       setupBuilder.withConfiguration({
         defaultPrivacyLevel: DefaultPrivacyLevel.MASK,

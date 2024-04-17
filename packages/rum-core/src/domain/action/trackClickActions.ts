@@ -25,7 +25,7 @@ import { getSelectorFromElement } from '../getSelectorFromElement'
 import { getNodePrivacyLevel } from '../privacy'
 import type { ClickChain } from './clickChain'
 import { createClickChain } from './clickChain'
-import { getActionNameFromElement, ACTION_NAME_PLACEHOLDER } from './getActionNameFromElement'
+import { getActionNameFromElement } from './getActionNameFromElement'
 import type { MouseEventOnElement, UserActivity } from './listenActionEvents'
 import { listenActionEvents } from './listenActionEvents'
 import { computeFrustration } from './computeFrustration'
@@ -82,24 +82,27 @@ export function trackClickActions(
   lifeCycle.subscribe(LifeCycleEventType.VIEW_ENDED, stopClickChain)
 
   const { stop: stopActionEventsListener } = listenActionEvents<{
-    clickActionBase: ClickActionBase
+    clickActionBase: ClickActionBase | undefined
     hadActivityOnPointerDown: () => boolean
   }>(configuration, {
     onPointerDown: (pointerDownEvent) =>
       processPointerDown(configuration, lifeCycle, domMutationObservable, pointerDownEvent),
-    onPointerUp: ({ clickActionBase, hadActivityOnPointerDown }, startEvent, getUserActivity) =>
-      startClickAction(
-        configuration,
-        lifeCycle,
-        domMutationObservable,
-        history,
-        stopObservable,
-        appendClickToClickChain,
-        clickActionBase,
-        startEvent,
-        getUserActivity,
-        hadActivityOnPointerDown
-      ),
+    onPointerUp: ({ clickActionBase, hadActivityOnPointerDown }, startEvent, getUserActivity) => {
+      if (clickActionBase) {
+        startClickAction(
+          configuration,
+          lifeCycle,
+          domMutationObservable,
+          history,
+          stopObservable,
+          appendClickToClickChain,
+          clickActionBase,
+          startEvent,
+          getUserActivity,
+          hadActivityOnPointerDown
+        )
+      }
+    },
   })
 
   const actionContexts: ActionContexts = {
@@ -213,17 +216,26 @@ function startClickAction(
 
 type ClickActionBase = Pick<ClickAction, 'type' | 'name' | 'target' | 'position'>
 
-function computeClickActionBase(event: MouseEventOnElement, configuration: RumConfiguration): ClickActionBase {
+function computeClickActionBase(
+  event: MouseEventOnElement,
+  configuration: RumConfiguration
+): ClickActionBase | undefined {
   const rect = event.target.getBoundingClientRect()
+  const privacyLevel = getNodePrivacyLevel(event.target, configuration.defaultPrivacyLevel)
+
+  // When the node is set to hidden, we do not track click action
+  if (privacyLevel === NodePrivacyLevel.HIDDEN && configuration.enablePrivacyForActionName) {
+    return
+  }
+
   const privacyEnabledForActionName =
-    (getNodePrivacyLevel(event.target, configuration.defaultPrivacyLevel) === NodePrivacyLevel.HIDDEN ||
-      configuration.defaultPrivacyLevel === DefaultPrivacyLevel.MASK) &&
-    configuration.enablePrivacyForActionName
-  const actionName = getActionNameFromElement(
+    privacyLevel === DefaultPrivacyLevel.MASK && configuration.enablePrivacyForActionName
+  const actionNameResult = getActionNameFromElement(
     event.target,
     configuration.actionNameAttribute,
     privacyEnabledForActionName
   )
+
   const target = {
     width: Math.round(rect.width),
     height: Math.round(rect.height),
@@ -232,14 +244,13 @@ function computeClickActionBase(event: MouseEventOnElement, configuration: RumCo
 
   return {
     type: ActionType.CLICK,
-    target:
-      actionName === ACTION_NAME_PLACEHOLDER && privacyEnabledForActionName ? assign({ masked: true }, target) : target,
+    target: typeof actionNameResult === 'string' ? target : assign({ masked: actionNameResult.masked }, target),
     position: {
       // Use clientX and Y because for SVG element offsetX and Y are relatives to the <svg> element
       x: Math.round(event.clientX - rect.left),
       y: Math.round(event.clientY - rect.top),
     },
-    name: actionName,
+    name: typeof actionNameResult === 'string' ? actionNameResult : actionNameResult.name,
   }
 }
 

@@ -400,7 +400,7 @@ describe('getActionNameFromElement', () => {
           'data-test-id',
           true
         )
-      ).toBe('Masked Element')
+      ).toEqual({ name: 'Masked Element', masked: true })
     })
 
     it('extracts default attribute text when privacyEnabledActionName is true', () => {
@@ -414,7 +414,7 @@ describe('getActionNameFromElement', () => {
           undefined,
           true
         )
-      ).toBe('foo')
+      ).toEqual({ name: 'foo', masked: false })
     })
 
     it('extracts user defined attribute text when privacyEnabledActionName is true', () => {
@@ -428,7 +428,7 @@ describe('getActionNameFromElement', () => {
           'data-test-id',
           true
         )
-      ).toBe('foo')
+      ).toEqual({ name: 'foo', masked: false })
     })
   })
 })

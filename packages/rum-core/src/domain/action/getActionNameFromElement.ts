@@ -11,16 +11,18 @@ export function getActionNameFromElement(
   element: Element,
   userProgrammaticAttribute?: string,
   privacyEnabledForActionName?: boolean
-): string {
+): { name: string; masked?: boolean } | string {
+  const definedActionNameFromElement =
+    getActionNameFromElementProgrammatically(element, DEFAULT_PROGRAMMATIC_ACTION_NAME_ATTRIBUTE) ||
+    (userProgrammaticAttribute && getActionNameFromElementProgrammatically(element, userProgrammaticAttribute))
   // Only get the defined action name if
   // * privacy is enabled for action name
   // * and privacy is enabled for the Node or globally
   if (privacyEnabledForActionName) {
-    return (
-      getActionNameFromElementProgrammatically(element, DEFAULT_PROGRAMMATIC_ACTION_NAME_ATTRIBUTE) ||
-      (userProgrammaticAttribute && getActionNameFromElementProgrammatically(element, userProgrammaticAttribute)) ||
-      ACTION_NAME_PLACEHOLDER
-    )
+    return {
+      name: definedActionNameFromElement || ACTION_NAME_PLACEHOLDER,
+      masked: definedActionNameFromElement ? false : true,
+    }
   }
   // Proceed to get the action name in two steps:
   // * first, get the name programmatically, explicitly defined by the user.
@@ -29,8 +31,7 @@ export function getActionNameFromElement(
   // * if no name is found this way, use strategies returning less accurate names as a fallback.
   //   Those are much likely to succeed.
   return (
-    getActionNameFromElementProgrammatically(element, DEFAULT_PROGRAMMATIC_ACTION_NAME_ATTRIBUTE) ||
-    (userProgrammaticAttribute && getActionNameFromElementProgrammatically(element, userProgrammaticAttribute)) ||
+    definedActionNameFromElement ||
     getActionNameFromElementForStrategies(element, userProgrammaticAttribute, priorityStrategies) ||
     getActionNameFromElementForStrategies(element, userProgrammaticAttribute, fallbackStrategies) ||
     ''
