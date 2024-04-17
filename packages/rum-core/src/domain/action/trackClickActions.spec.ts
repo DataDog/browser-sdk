@@ -249,22 +249,19 @@ describe('trackClickActions', () => {
   })
 
   describe('with enablePrivacyForActionName true', () => {
-    it('get placeholder when defaultPrivacyLevel is mask without programmatically declared action name', () => {
+    it('does not track click actions when html override set hidden', () => {
       setupBuilder.withConfiguration({
-        defaultPrivacyLevel: DefaultPrivacyLevel.MASK,
         enablePrivacyForActionName: true,
       })
+      button.setAttribute('data-dd-privacy', 'hidden')
+
       const { clock } = setupBuilder.build()
       emulateClick({ activity: {} })
-      expect(findActionId()).not.toBeUndefined()
       clock.tick(EXPIRE_DELAY)
 
-      expect(events.length).toBe(1)
-      expect(events[0].name).toBe('Masked Element')
+      expect(events.length).toBe(0)
     })
-
-    it('get placeholder when html override is hidden', () => {
-      input.setAttribute('data-dd-privacy', 'hidden')
+    it('get placeholder when defaultPrivacyLevel is mask without programmatically declared action name', () => {
       setupBuilder.withConfiguration({
         defaultPrivacyLevel: DefaultPrivacyLevel.MASK,
         enablePrivacyForActionName: true,
