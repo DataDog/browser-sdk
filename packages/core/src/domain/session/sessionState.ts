@@ -20,7 +20,7 @@ export interface SessionState {
   [key: string]: string | undefined
 }
 
-export function getInitialSessionState({ lock }: SessionState = {}): SessionState {
+export function getExpiredSessionState({ lock }: SessionState = {}): SessionState {
   const session: SessionState = {
     isExpired: SessionExpiredReason.UNKNOWN,
   }
@@ -32,14 +32,15 @@ export function getInitialSessionState({ lock }: SessionState = {}): SessionStat
   return session
 }
 
-export function isSessionStarted(session: SessionState) {
-  return !(isEmptyObject(session) || (Object.keys(session).length === 1 && 'lock' in session))
+export function isSessionInNotStartedState(session: SessionState) {
+  return isEmptyObject(session) || (Object.keys(session).length === 1 && 'lock' in session)
 }
 
 export function isSessionInExpiredState(session: SessionState) {
   return session.isExpired !== undefined || !isActiveSession(session)
 }
 
+// An active session is a session in either `Tracked` or `NotTracked` state
 function isActiveSession(sessionState: SessionState) {
   // created and expire can be undefined for versions which was not storing them
   // these checks could be removed when older versions will not be available/live anymore

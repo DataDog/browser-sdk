@@ -1,6 +1,6 @@
 import { generateUUID } from '../../../tools/utils/stringUtils'
 import type { SessionState } from '../sessionState'
-import { toSessionString, toSessionState, getInitialSessionState } from '../sessionState'
+import { toSessionString, toSessionState, getExpiredSessionState } from '../sessionState'
 import type { SessionStoreStrategy, SessionStoreStrategyType } from './sessionStoreStrategy'
 import { SESSION_STORE_KEY } from './sessionStoreStrategy'
 
@@ -38,5 +38,5 @@ function retrieveSessionFromLocalStorage(): SessionState {
 }
 
 function clearSessionFromLocalStorage() {
-  persistInLocalStorage(getInitialSessionState())
+  persistInLocalStorage(getExpiredSessionState())
 }

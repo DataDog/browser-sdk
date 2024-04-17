@@ -7,7 +7,12 @@
 | Tracked    | `{id: 'xxxx-xx-xx}`                                          |
 | NotTracked | `{rum: 0}` or `{logs: 0}`                                    |
 
-## session initialization
+Other terminology:
+
+- A _started_ session is a session that is either `Expired`, `Tracked`, or `NotTracked`.
+- An _active_ session is a session that is either `Tracked` or `NotTracked`.
+
+## start session
 
 ```mermaid
 stateDiagram-v2
@@ -20,7 +25,7 @@ fork_state --> NotStarted
 fork_state --> Expired
 fork_state --> Tracked
 fork_state --> NotTracked
-NotStarted --> Expired: initializeSession()
+NotStarted --> Expired: start()
 
 Expired --> fork_state2
 Tracked --> fork_state2
@@ -68,7 +73,7 @@ fork_state --> Expired
 fork_state --> Tracked
 fork_state --> NotTracked
 
-NotStarted --> Expired: reinitializeSession()
+NotStarted --> Expired: restartSession()
 Expired --> fork_state2
 Tracked --> fork_state2
 NotTracked --> fork_state2

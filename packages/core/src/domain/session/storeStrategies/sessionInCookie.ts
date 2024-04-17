@@ -5,7 +5,7 @@ import type { InitConfiguration } from '../../configuration'
 import { tryOldCookiesMigration } from '../oldCookiesMigration'
 import { SESSION_EXPIRATION_DELAY, SESSION_TIME_OUT_DELAY } from '../sessionConstants'
 import type { SessionState } from '../sessionState'
-import { toSessionString, toSessionState, getInitialSessionState } from '../sessionState'
+import { toSessionString, toSessionState, getExpiredSessionState } from '../sessionState'
 import type { SessionStoreStrategy, SessionStoreStrategyType } from './sessionStoreStrategy'
 import { SESSION_STORE_KEY } from './sessionStoreStrategy'
 
@@ -38,7 +38,7 @@ function persistSessionCookie(options: CookieOptions) {
 }
 
 function setInitialSessionCookie(options: CookieOptions) {
-  setCookie(SESSION_STORE_KEY, toSessionString(getInitialSessionState()), SESSION_TIME_OUT_DELAY, options)
+  setCookie(SESSION_STORE_KEY, toSessionString(getExpiredSessionState()), SESSION_TIME_OUT_DELAY, options)
 }
 
 function retrieveSessionCookie(): SessionState {

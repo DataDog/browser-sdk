@@ -454,7 +454,7 @@ describe('session store', () => {
       it('when session not in store, should reinitialize the store', () => {
         setupSessionStore()
 
-        sessionStoreManager.reinitializeSession()
+        sessionStoreManager.restartSession()
 
         expect(sessionStoreManager.getSession().isExpired).toBe(SessionExpiredReason.UNKNOWN)
       })
@@ -463,7 +463,7 @@ describe('session store', () => {
         setSessionInStore(FakeTrackingType.TRACKED, FIRST_ID)
         setupSessionStore()
 
-        sessionStoreManager.reinitializeSession()
+        sessionStoreManager.restartSession()
 
         expect(sessionStoreManager.getSession().id).toBe(FIRST_ID)
         expect(sessionStoreManager.getSession().isExpired).toBeUndefined()

@@ -70,7 +70,7 @@ export function startSessionManager<TrackingType extends string>(
     }
   })
   trackVisibility(configuration, () => sessionStore.expandSession())
-  trackResume(configuration, () => sessionStore.reinitializeSession())
+  trackResume(configuration, () => sessionStore.restartSession())
 
   function buildSessionContext() {
     return {

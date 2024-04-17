@@ -60,7 +60,7 @@ describe('startSessionManager', () => {
     expect(getCookie(SESSION_STORE_KEY)).not.toContain('isExpired=1')
   }
 
-  function expectSessionToNotBeDefined(sessionManager: SessionManager<FakeTrackingType>) {
+  function expectSessionToBeExpired(sessionManager: SessionManager<FakeTrackingType>) {
     expect(sessionManager.findActiveSession()).toBeUndefined()
     expect(getCookie(SESSION_STORE_KEY)).toContain('isExpired=1')
   }
@@ -120,7 +120,7 @@ describe('startSessionManager', () => {
 
       window.dispatchEvent(createNewEvent(DOM_EVENT.RESUME))
 
-      expectSessionToNotBeDefined(sessionManager)
+      expectSessionToBeExpired(sessionManager)
     })
   })
 
@@ -199,7 +199,7 @@ describe('startSessionManager', () => {
 
       expect(renewSessionSpy).not.toHaveBeenCalled()
 
-      expectSessionToNotBeDefined(sessionManager)
+      expectSessionToBeExpired(sessionManager)
       expectTrackingTypeToNotBeDefined(sessionManager, FIRST_PRODUCT_KEY)
 
       document.dispatchEvent(createNewEvent(DOM_EVENT.CLICK))
@@ -219,7 +219,7 @@ describe('startSessionManager', () => {
       clock.tick(VISIBILITY_CHECK_DELAY)
 
       expect(renewSessionSpy).not.toHaveBeenCalled()
-      expectSessionToNotBeDefined(sessionManager)
+      expectSessionToBeExpired(sessionManager)
     })
 
     it('should not renew on activity if cookie is deleted by a 3rd party', () => {
@@ -328,7 +328,7 @@ describe('startSessionManager', () => {
       expect(getCookie(SESSION_STORE_KEY)).toBeDefined()
 
       clock.tick(SESSION_TIME_OUT_DELAY)
-      expectSessionToNotBeDefined(sessionManager)
+      expectSessionToBeExpired(sessionManager)
       expect(expireSessionSpy).toHaveBeenCalled()
     })
 
@@ -371,7 +371,7 @@ describe('startSessionManager', () => {
       expectSessionIdToBeDefined(sessionManager)
 
       clock.tick(SESSION_EXPIRATION_DELAY)
-      expectSessionToNotBeDefined(sessionManager)
+      expectSessionToBeExpired(sessionManager)
       expect(expireSessionSpy).toHaveBeenCalled()
     })
 
@@ -390,7 +390,7 @@ describe('startSessionManager', () => {
       expect(expireSessionSpy).not.toHaveBeenCalled()
 
       clock.tick(SESSION_EXPIRATION_DELAY)
-      expectSessionToNotBeDefined(sessionManager)
+      expectSessionToBeExpired(sessionManager)
       expect(expireSessionSpy).toHaveBeenCalled()
     })
 
@@ -430,7 +430,7 @@ describe('startSessionManager', () => {
       expect(expireSessionSpy).not.toHaveBeenCalled()
 
       clock.tick(10)
-      expectSessionToNotBeDefined(sessionManager)
+      expectSessionToBeExpired(sessionManager)
       expect(expireSessionSpy).toHaveBeenCalled()
     })
 
@@ -464,7 +464,7 @@ describe('startSessionManager', () => {
 
       sessionManager.expire()
 
-      expectSessionToNotBeDefined(sessionManager)
+      expectSessionToBeExpired(sessionManager)
       expect(expireSessionSpy).toHaveBeenCalled()
     })
 
@@ -476,7 +476,7 @@ describe('startSessionManager', () => {
       sessionManager.expire()
       sessionManager.expire()
 
-      expectSessionToNotBeDefined(sessionManager)
+      expectSessionToBeExpired(sessionManager)
       expect(expireSessionSpy).toHaveBeenCalledTimes(1)
     })
 
@@ -488,7 +488,7 @@ describe('startSessionManager', () => {
       clock.tick(SESSION_EXPIRATION_DELAY)
       sessionManager.expire()
 
-      expectSessionToNotBeDefined(sessionManager)
+      expectSessionToBeExpired(sessionManager)
       expect(expireSessionSpy).toHaveBeenCalledTimes(1)
     })
 
@@ -581,7 +581,7 @@ describe('startSessionManager', () => {
 
       trackingConsentState.update(TrackingConsent.NOT_GRANTED)
 
-      expectSessionToNotBeDefined(sessionManager)
+      expectSessionToBeExpired(sessionManager)
       expect(getCookie(SESSION_STORE_KEY)).toBe('isExpired=1')
     })
 
@@ -593,7 +593,7 @@ describe('startSessionManager', () => {
 
       document.dispatchEvent(createNewEvent(DOM_EVENT.CLICK))
 
-      expectSessionToNotBeDefined(sessionManager)
+      expectSessionToBeExpired(sessionManager)
     })
 
     it('renews the session when tracking consent is granted', () => {
@@ -603,7 +603,7 @@ describe('startSessionManager', () => {
 
       trackingConsentState.update(TrackingConsent.NOT_GRANTED)
 
-      expectSessionToNotBeDefined(sessionManager)
+      expectSessionToBeExpired(sessionManager)
 
       trackingConsentState.update(TrackingConsent.GRANTED)
 
