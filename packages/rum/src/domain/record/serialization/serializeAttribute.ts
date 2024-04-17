@@ -15,6 +15,7 @@ export function serializeAttribute(
     return null
   }
   const attributeValue = element.getAttribute(attributeName)
+
   if (
     nodePrivacyLevel === NodePrivacyLevel.MASK &&
     attributeName !== PRIVACY_ATTR_NAME &&
@@ -22,11 +23,11 @@ export function serializeAttribute(
     attributeName !== configuration.actionNameAttribute
   ) {
     const tagName = element.tagName
-
     switch (attributeName) {
       // Mask Attribute text content
       case 'title':
       case 'alt':
+      case 'srcdoc' || 'srcDoc':
       case 'placeholder':
         return CENSORED_STRING_MARK
     }
