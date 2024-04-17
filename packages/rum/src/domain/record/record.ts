@@ -51,15 +51,7 @@ export function record(options: RecordOptions): RecordAPI {
 
   const elementsScrollPositions = createElementsScrollPositions()
 
-  const shadowRootsController = initShadowRootsController(
-    configuration,
-    {
-      mutationCb: emitAndComputeStats,
-      inputCb: emitAndComputeStats,
-      scrollCb: emitAndComputeStats,
-    },
-    elementsScrollPositions
-  )
+  const shadowRootsController = initShadowRootsController(configuration, emitAndComputeStats, elementsScrollPositions)
 
   const { stop: stopFullSnapshots } = startFullSnapshots(
     elementsScrollPositions,

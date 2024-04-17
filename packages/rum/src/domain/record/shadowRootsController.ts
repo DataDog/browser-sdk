@@ -1,7 +1,7 @@
 import type { RumConfiguration } from '@datadog/browser-rum-core'
-import type { InputCallback, MutationCallBack, ScrollCallback } from './trackers'
 import { trackInput, trackMutation, trackScroll } from './trackers'
 import type { ElementsScrollPositions } from './elementsScrollPositions'
+import { BrowserIncrementalSnapshotRecord } from '../../types'
 
 interface ShadowRootController {
   stop: () => void
@@ -17,15 +17,9 @@ export interface ShadowRootsController {
   flush: () => void
 }
 
-type ShadowRootControllerCallbacks = {
-  mutationCb: MutationCallBack
-  inputCb: InputCallback
-  scrollCb: ScrollCallback
-}
-
 export const initShadowRootsController = (
   configuration: RumConfiguration,
-  { mutationCb, inputCb, scrollCb }: ShadowRootControllerCallbacks,
+  callback: (record: BrowserIncrementalSnapshotRecord) => void,
   elementsScrollPositions: ElementsScrollPositions
 ): ShadowRootsController => {
   const controllerByShadowRoot = new Map<ShadowRoot, ShadowRootController>()
@@ -35,11 +29,11 @@ export const initShadowRootsController = (
       if (controllerByShadowRoot.has(shadowRoot)) {
         return
       }
-      const mutationTracker = trackMutation(mutationCb, configuration, shadowRootsController, shadowRoot)
+      const mutationTracker = trackMutation(callback, configuration, shadowRootsController, shadowRoot)
       // The change event does not bubble up across the shadow root, we have to listen on the shadow root
-      const inputTracker = trackInput(configuration, inputCb, shadowRoot)
+      const inputTracker = trackInput(configuration, callback, shadowRoot)
       // The scroll event does not bubble up across the shadow root, we have to listen on the shadow root
-      const scrollTracker = trackScroll(configuration, scrollCb, elementsScrollPositions, shadowRoot)
+      const scrollTracker = trackScroll(configuration, callback, elementsScrollPositions, shadowRoot)
       controllerByShadowRoot.set(shadowRoot, {
         flush: () => mutationTracker.flush(),
         stop: () => {
