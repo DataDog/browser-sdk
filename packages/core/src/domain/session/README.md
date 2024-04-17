@@ -7,7 +7,7 @@
 | Tracked    | `{id: 'xxxx-xx-xx}`                                          |
 | NotTracked | `{rum: 0}` or `{logs: 0}`                                    |
 
-## session initializion
+## session initialization
 
 ```mermaid
 stateDiagram-v2
