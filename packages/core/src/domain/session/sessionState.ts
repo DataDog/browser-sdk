@@ -25,7 +25,7 @@ export function getExpiredSessionState(): SessionState {
 }
 
 export function isSessionInNotStartedState(session: SessionState) {
-  return isEmptyObject(session) || (Object.keys(session).length === 1 && 'lock' in session)
+  return isEmptyObject(session)
 }
 
 export function isSessionStarted(session: SessionState) {
