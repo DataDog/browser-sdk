@@ -334,6 +334,22 @@ describe('record', () => {
       expect(inputRecords.length).toBe(1)
     })
 
+    it('should record the scroll event inside a shadow root', () => {
+      const div = appendElement('<div></div>', createShadow()) as HTMLDivElement
+      startRecording()
+      expect(getEmittedRecords().length).toBe(recordsPerFullSnapshot())
+
+      div.dispatchEvent(createNewEvent('scroll', { target: div, composed: false }))
+
+      recordApi.flushMutations()
+      const innerMutationData = getLastIncrementalSnapshotData<BrowserMutationData>(
+        getEmittedRecords(),
+        IncrementalSource.Scroll
+      )
+
+      expect(innerMutationData).toBeDefined()
+    })
+
     it('should clean the state once the shadow dom is removed to avoid memory leak', () => {
       const shadowRoot = createShadow()
       appendElement('<div class="toto"></div>', shadowRoot)
