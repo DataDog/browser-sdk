@@ -19,7 +19,7 @@ export function processSessionStoreOperations(
   sessionStoreStrategy: SessionStoreStrategy,
   numberOfRetries = 0
 ) {
-  const { isLockEnabled, retrieveSession, persistSession, clearSession } = sessionStoreStrategy
+  const { isLockEnabled, retrieveSession, persistSession, expireSession } = sessionStoreStrategy
 
   if (!ongoingOperations) {
     ongoingOperations = operations
@@ -62,7 +62,7 @@ export function processSessionStoreOperations(
   }
   if (processedSession) {
     if (isSessionInExpiredState(processedSession)) {
-      clearSession()
+      expireSession()
     } else {
       expandSessionState(processedSession)
       persistSession(processedSession)

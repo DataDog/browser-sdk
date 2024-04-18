@@ -31,7 +31,7 @@ describe('session in local storage strategy', () => {
   it('should set `isExpired=1` to the local storage item holding the session', () => {
     const localStorageStrategy = initLocalStorageStrategy()
     localStorageStrategy.persistSession(sessionState)
-    localStorageStrategy.clearSession()
+    localStorageStrategy.expireSession()
     const session = localStorageStrategy?.retrieveSession()
     expect(session).toEqual({ isExpired: SessionExpiredReason.UNKNOWN })
     expect(window.localStorage.getItem(SESSION_STORE_KEY)).toBe('isExpired=1')
@@ -42,7 +42,7 @@ describe('session in local storage strategy', () => {
     const localStorageStrategy = initLocalStorageStrategy()
     localStorageStrategy.persistSession(sessionState)
     localStorageStrategy.retrieveSession()
-    localStorageStrategy.clearSession()
+    localStorageStrategy.expireSession()
     expect(window.localStorage.getItem('test')).toEqual('hello')
   })
 

@@ -25,7 +25,7 @@ describe('session in cookie strategy', () => {
 
   it('should set `isExpired=1` to the cookie holding the session', () => {
     cookieStorageStrategy.persistSession(sessionState)
-    cookieStorageStrategy.clearSession()
+    cookieStorageStrategy.expireSession()
     const session = cookieStorageStrategy.retrieveSession()
     expect(session).toEqual({ isExpired: SessionExpiredReason.UNKNOWN })
     expect(getCookie(SESSION_STORE_KEY)).toBe('isExpired=1')

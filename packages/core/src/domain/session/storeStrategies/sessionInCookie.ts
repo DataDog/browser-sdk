@@ -23,7 +23,7 @@ export function initCookieStrategy(cookieOptions: CookieOptions): SessionStoreSt
     isLockEnabled: isChromium(),
     persistSession: persistSessionCookie(cookieOptions),
     retrieveSession: retrieveSessionCookie,
-    clearSession: () => setInitialSessionCookie(cookieOptions),
+    expireSession: () => expireSessionCookie(cookieOptions),
   }
 
   tryOldCookiesMigration(cookieStore)
@@ -37,7 +37,7 @@ function persistSessionCookie(options: CookieOptions) {
   }
 }
 
-function setInitialSessionCookie(options: CookieOptions) {
+function expireSessionCookie(options: CookieOptions) {
   setCookie(SESSION_STORE_KEY, toSessionString(getExpiredSessionState()), SESSION_TIME_OUT_DELAY, options)
 }
 

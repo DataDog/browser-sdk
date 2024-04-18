@@ -61,7 +61,7 @@ export function startSessionStore<TrackingType extends string>(
     sessionStoreStrategyType.type === 'Cookie'
       ? initCookieStrategy(sessionStoreStrategyType.cookieOptions)
       : initLocalStorageStrategy()
-  const { clearSession } = sessionStoreStrategy
+  const { expireSession } = sessionStoreStrategy
 
   const watchSessionTimeoutId = setInterval(watchSession, STORAGE_POLL_DELAY)
   let sessionCache: SessionState
@@ -189,7 +189,7 @@ export function startSessionStore<TrackingType extends string>(
     restartSession: startSession,
     expire: () => {
       cancelExpandOrRenewSession()
-      clearSession()
+      expireSession()
       synchronizeSession(getExpiredSessionState())
     },
     stop: () => {

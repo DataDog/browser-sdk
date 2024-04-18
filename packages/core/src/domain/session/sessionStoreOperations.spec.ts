@@ -36,7 +36,7 @@ const cookieOptions: CookieOptions = {}
     const now = Date.now()
 
     beforeEach(() => {
-      sessionStoreStrategy.clearSession()
+      sessionStoreStrategy.expireSession()
       initialSession = { id: '123', created: String(now) }
       otherSession = { id: '456', created: String(now + 100) }
       processSpy = jasmine.createSpy('process')

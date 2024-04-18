@@ -24,7 +24,7 @@ export function initLocalStorageStrategy(): SessionStoreStrategy {
     isLockEnabled: false,
     persistSession: persistInLocalStorage,
     retrieveSession: retrieveSessionFromLocalStorage,
-    clearSession: clearSessionFromLocalStorage,
+    expireSession: expireSessionFromLocalStorage,
   }
 }
 
@@ -37,6 +37,6 @@ function retrieveSessionFromLocalStorage(): SessionState {
   return toSessionState(sessionString)
 }
 
-function clearSessionFromLocalStorage() {
+function expireSessionFromLocalStorage() {
   persistInLocalStorage(getExpiredSessionState())
 }
