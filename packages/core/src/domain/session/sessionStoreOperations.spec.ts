@@ -104,11 +104,11 @@ const EXPIRED_SESSION: SessionState = { isExpired: '1' }
 
       it('should persist session when process returns a value', () => {
         sessionStoreStrategy.persistSession(initialSession)
-        processSpy.and.callFake((session) => ({ ...otherSession, lock: session.lock }))
+        processSpy.and.returnValue({ ...otherSession })
 
         processSessionStoreOperations({ process: processSpy, after: afterSpy }, sessionStoreStrategy)
 
-        expect(processSpy).toHaveBeenCalledWith({ ...initialSession, lock: jasmine.any(String) })
+        expect(processSpy).toHaveBeenCalledWith(initialSession)
         const expectedSession = { ...otherSession, expire: jasmine.any(String) }
         expect(sessionStoreStrategy.retrieveSession()).toEqual(expectedSession)
         expect(afterSpy).toHaveBeenCalledWith(expectedSession)
@@ -120,7 +120,7 @@ const EXPIRED_SESSION: SessionState = { isExpired: '1' }
 
         processSessionStoreOperations({ process: processSpy, after: afterSpy }, sessionStoreStrategy)
 
-        expect(processSpy).toHaveBeenCalledWith({ ...initialSession, lock: jasmine.any(String) })
+        expect(processSpy).toHaveBeenCalledWith(initialSession)
 
         expect(sessionStoreStrategy.retrieveSession()).toEqual(EXPIRED_SESSION)
         expect(afterSpy).toHaveBeenCalledWith(EXPIRED_SESSION)
@@ -132,7 +132,7 @@ const EXPIRED_SESSION: SessionState = { isExpired: '1' }
 
         processSessionStoreOperations({ process: processSpy, after: afterSpy }, sessionStoreStrategy)
 
-        expect(processSpy).toHaveBeenCalledWith({ ...initialSession, lock: jasmine.any(String) })
+        expect(processSpy).toHaveBeenCalledWith(initialSession)
         expect(sessionStoreStrategy.retrieveSession()).toEqual(initialSession)
         expect(afterSpy).toHaveBeenCalledWith(initialSession)
       })
@@ -203,7 +203,6 @@ const EXPIRED_SESSION: SessionState = { isExpired: '1' }
                 expect(processSpy).toHaveBeenCalledWith({
                   ...initialSession,
                   other: 'other',
-                  lock: jasmine.any(String),
                   expire: jasmine.any(String),
                 })
 

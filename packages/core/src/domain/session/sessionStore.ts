@@ -109,8 +109,7 @@ export function startSessionStore<TrackingType extends string>(
   function watchSession() {
     processSessionStoreOperations(
       {
-        process: (sessionState) =>
-          isSessionInExpiredState(sessionState) ? getExpiredSessionState(sessionState) : undefined,
+        process: (sessionState) => (isSessionInExpiredState(sessionState) ? getExpiredSessionState() : undefined),
         after: synchronizeSession,
       },
       sessionStoreStrategy
@@ -119,7 +118,7 @@ export function startSessionStore<TrackingType extends string>(
 
   function synchronizeSession(sessionState: SessionState) {
     if (isSessionInExpiredState(sessionState)) {
-      sessionState = getExpiredSessionState(sessionState)
+      sessionState = getExpiredSessionState()
     }
     if (hasSessionInCache()) {
       if (isSessionInCacheOutdated(sessionState)) {
@@ -136,7 +135,7 @@ export function startSessionStore<TrackingType extends string>(
       {
         process: (sessionState) => {
           if (isSessionInNotStartedState(sessionState)) {
-            return getExpiredSessionState(sessionState)
+            return getExpiredSessionState()
           }
         },
         after: (sessionState) => {

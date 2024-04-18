@@ -18,16 +18,10 @@ export interface SessionState {
   [key: string]: string | undefined
 }
 
-export function getExpiredSessionState({ lock }: SessionState = {}): SessionState {
-  const session: SessionState = {
+export function getExpiredSessionState(): SessionState {
+  return {
     isExpired: EXPIRED,
   }
-
-  if (lock) {
-    session.lock = lock
-  }
-
-  return session
 }
 
 export function isSessionInNotStartedState(session: SessionState) {
