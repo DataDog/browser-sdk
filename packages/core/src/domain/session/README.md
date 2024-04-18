@@ -184,4 +184,4 @@ state extendOrExpire() {
 ```
 
 > [!NOTE]  
-> Because the `Expired` state could happens because a session timed out, `expire()` will normalize explicitely the state to `isExpired=1`
+> Because a session time out can result in an `Expired` state, `expire()` explicitly normalizes the state to `isExpired=1`
