@@ -1,5 +1,5 @@
 import { setCookie, deleteCookie, getCookie, getCurrentSite } from '../../../browser/cookie'
-import { SessionExpiredReason, type SessionState } from '../sessionState'
+import { type SessionState } from '../sessionState'
 import { buildCookieOptions, selectCookieStrategy, initCookieStrategy } from './sessionInCookie'
 import type { SessionStoreStrategy } from './sessionStoreStrategy'
 import { SESSION_STORE_KEY } from './sessionStoreStrategy'
@@ -27,7 +27,7 @@ describe('session in cookie strategy', () => {
     cookieStorageStrategy.persistSession(sessionState)
     cookieStorageStrategy.expireSession()
     const session = cookieStorageStrategy.retrieveSession()
-    expect(session).toEqual({ isExpired: SessionExpiredReason.UNKNOWN })
+    expect(session).toEqual({ isExpired: '1' })
     expect(getCookie(SESSION_STORE_KEY)).toBe('isExpired=1')
   })
 

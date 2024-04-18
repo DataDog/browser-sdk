@@ -6,23 +6,21 @@ import { SESSION_EXPIRATION_DELAY, SESSION_TIME_OUT_DELAY } from './sessionConst
 const SESSION_ENTRY_REGEXP = /^([a-zA-Z]+)=([a-z0-9-]+)$/
 const SESSION_ENTRY_SEPARATOR = '&'
 
-export const enum SessionExpiredReason {
-  UNKNOWN = '1',
-}
+export const EXPIRED = '1'
 
 export interface SessionState {
   id?: string
   created?: string
   expire?: string
   lock?: string
-  isExpired?: SessionExpiredReason
+  isExpired?: typeof EXPIRED
 
   [key: string]: string | undefined
 }
 
 export function getExpiredSessionState({ lock }: SessionState = {}): SessionState {
   const session: SessionState = {
-    isExpired: SessionExpiredReason.UNKNOWN,
+    isExpired: EXPIRED,
   }
 
   if (lock) {

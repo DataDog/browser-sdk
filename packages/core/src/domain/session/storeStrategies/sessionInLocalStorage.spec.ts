@@ -1,4 +1,4 @@
-import { SessionExpiredReason, type SessionState } from '../sessionState'
+import { type SessionState } from '../sessionState'
 import { selectLocalStorageStrategy, initLocalStorageStrategy } from './sessionInLocalStorage'
 import { SESSION_STORE_KEY } from './sessionStoreStrategy'
 
@@ -33,7 +33,7 @@ describe('session in local storage strategy', () => {
     localStorageStrategy.persistSession(sessionState)
     localStorageStrategy.expireSession()
     const session = localStorageStrategy?.retrieveSession()
-    expect(session).toEqual({ isExpired: SessionExpiredReason.UNKNOWN })
+    expect(session).toEqual({ isExpired: '1' })
     expect(window.localStorage.getItem(SESSION_STORE_KEY)).toBe('isExpired=1')
   })
 

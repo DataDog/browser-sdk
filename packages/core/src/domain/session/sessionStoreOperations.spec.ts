@@ -4,11 +4,12 @@ import type { CookieOptions } from '../../browser/cookie'
 import { initCookieStrategy } from './storeStrategies/sessionInCookie'
 import { initLocalStorageStrategy } from './storeStrategies/sessionInLocalStorage'
 import type { SessionState } from './sessionState'
-import { SessionExpiredReason, expandSessionState, toSessionString } from './sessionState'
+import { expandSessionState, toSessionString } from './sessionState'
 import { processSessionStoreOperations, LOCK_MAX_TRIES, LOCK_RETRY_DELAY } from './sessionStoreOperations'
 import { SESSION_STORE_KEY } from './storeStrategies/sessionStoreStrategy'
 
 const cookieOptions: CookieOptions = {}
+const EXPIRED_SESSION: SessionState = { isExpired: '1' }
 
 ;(
   [
@@ -63,14 +64,13 @@ const cookieOptions: CookieOptions = {}
 
       it('should clear session when process returns an expired session', () => {
         sessionStoreStrategy.persistSession(initialSession)
-        processSpy.and.returnValue({ isExpired: SessionExpiredReason.UNKNOWN })
+        processSpy.and.returnValue(EXPIRED_SESSION)
 
         processSessionStoreOperations({ process: processSpy, after: afterSpy }, sessionStoreStrategy)
 
         expect(processSpy).toHaveBeenCalledWith(initialSession)
-        const expectedSession = { isExpired: SessionExpiredReason.UNKNOWN }
-        expect(sessionStoreStrategy.retrieveSession()).toEqual(expectedSession)
-        expect(afterSpy).toHaveBeenCalledWith(expectedSession)
+        expect(sessionStoreStrategy.retrieveSession()).toEqual(EXPIRED_SESSION)
+        expect(afterSpy).toHaveBeenCalledWith(EXPIRED_SESSION)
       })
 
       it('should not persist session when process returns undefined', () => {
@@ -116,15 +116,14 @@ const cookieOptions: CookieOptions = {}
 
       it('should clear session when process returns an expired session', () => {
         sessionStoreStrategy.persistSession(initialSession)
-        processSpy.and.returnValue({ isExpired: SessionExpiredReason.UNKNOWN })
+        processSpy.and.returnValue(EXPIRED_SESSION)
 
         processSessionStoreOperations({ process: processSpy, after: afterSpy }, sessionStoreStrategy)
 
         expect(processSpy).toHaveBeenCalledWith({ ...initialSession, lock: jasmine.any(String) })
 
-        const expectedSession = { isExpired: SessionExpiredReason.UNKNOWN }
-        expect(sessionStoreStrategy.retrieveSession()).toEqual(expectedSession)
-        expect(afterSpy).toHaveBeenCalledWith(expectedSession)
+        expect(sessionStoreStrategy.retrieveSession()).toEqual(EXPIRED_SESSION)
+        expect(afterSpy).toHaveBeenCalledWith(EXPIRED_SESSION)
       })
 
       it('should not persist session when process returns undefined', () => {

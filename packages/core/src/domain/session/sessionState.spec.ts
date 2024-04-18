@@ -7,13 +7,12 @@ import {
   toSessionString,
   toSessionState,
   isSessionInNotStartedState,
-  SessionExpiredReason,
 } from './sessionState'
 
 describe('session state utilities', () => {
   const NOT_STARTED_SESSION: SessionState = {}
   const SERIALIZED_NOT_STARTED_SESSION = ''
-  const EXPIRED_SESSION: SessionState = { isExpired: SessionExpiredReason.UNKNOWN }
+  const EXPIRED_SESSION: SessionState = { isExpired: '1' }
   const SERIALIZED_EXPIRED_SESSION = 'isExpired=1'
   const LIVE_SESSION: SessionState = { id: '123', first: 'tracked' }
   const SERIALIZED_LIVE_SESSION = 'id=123&first=tracked'
