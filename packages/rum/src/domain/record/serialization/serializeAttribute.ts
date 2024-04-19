@@ -61,6 +61,11 @@ export function serializeAttribute(
       // Exception: it's safe to reveal the `${PRIVACY_ATTR_NAME}` attr
       return CENSORED_STRING_MARK
     }
+
+    // mask iframe srcdoc
+    if (tagName === 'IFRAME' && attributeName === 'srcdoc') {
+      return CENSORED_STRING_MARK
+    }
   }
 
   if (!attributeValue || typeof attributeValue !== 'string') {
