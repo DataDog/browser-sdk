@@ -3,7 +3,7 @@ import type { RumConfiguration, ViewCreatedEvent } from '@datadog/browser-rum-co
 import { LifeCycle, LifeCycleEventType } from '@datadog/browser-rum-core'
 import type { Clock } from '@datadog/browser-core/test'
 import { createNewEvent, collectAsyncCalls } from '@datadog/browser-core/test'
-import { findFullSnapshot, findNode, recordsPerFullSnapshot } from '../../../test'
+import { findElement, findFullSnapshot, findNode, recordsPerFullSnapshot } from '../../../test'
 import type {
   BrowserIncrementalSnapshotRecord,
   BrowserMutationData,
@@ -11,6 +11,7 @@ import type {
   DocumentFragmentNode,
   ElementNode,
   FocusRecord,
+  ScrollData,
 } from '../../types'
 import { NodeType, RecordType, IncrementalSource } from '../../types'
 import { appendElement } from '../../../../rum-core/test'
@@ -334,20 +335,26 @@ describe('record', () => {
       expect(inputRecords.length).toBe(1)
     })
 
-    it('should record the scroll event inside a shadow root', () => {
-      const div = appendElement('<div></div>', createShadow()) as HTMLDivElement
+    fit('should record the scroll event inside a shadow root', () => {
+      const div = appendElement('<div unique-selector="enabled"></div>', createShadow()) as HTMLDivElement
       startRecording()
       expect(getEmittedRecords().length).toBe(recordsPerFullSnapshot())
 
       div.dispatchEvent(createNewEvent('scroll', { target: div, composed: false }))
 
       recordApi.flushMutations()
-      const innerMutationData = getLastIncrementalSnapshotData<BrowserMutationData>(
+      const innerMutationData = getLastIncrementalSnapshotData<ScrollData>(
         getEmittedRecords(),
         IncrementalSource.Scroll
       )
 
-      expect(innerMutationData).toBeDefined()
+      const fs = findFullSnapshot({ records: getEmittedRecords() })!
+      const scrollableNode = findElement(
+        fs.data.node,
+        (node) => { return node.attributes['unique-selector'] === "enabled" }
+      )!
+
+      expect(innerMutationData.id).toBe(scrollableNode.id)
     })
 
     it('should clean the state once the shadow dom is removed to avoid memory leak', () => {

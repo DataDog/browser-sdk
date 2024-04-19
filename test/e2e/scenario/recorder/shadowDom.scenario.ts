@@ -86,6 +86,18 @@ const divShadowDom = `<script>
  </script>
  `
 
+/** Will generate the following HTML
+ * ```html
+ * <my-div id="titi">
+ *  #shadow-root
+ *    <div scrollable-div style="height:100px; overflow: scroll;">
+ *      <div style="height:500px;"></div>
+ *    </div>
+ *    <button>scroll to 250</button>
+ *</my-div>
+ *```
+ when called like `<my-div />`
+ */
 const scrollableDivShadowDom = `<script>
  class CustomScrollableDiv extends HTMLElement {
   constructor() {
@@ -290,9 +302,11 @@ describe('recorder with shadow DOM', () => {
       <my-scrollable-div id="host" />
     `)
     .run(async ({ intakeRegistry }) => {
-      const div = await getNodeInsideShadowDom('my-scrollable-div', 'button')
+      const button = await getNodeInsideShadowDom('my-scrollable-div', 'button')
 
-      await div.click()
+      // Triggering scrollTo from the test itself is not allowed
+      // Thus, a callback to scroll the div was added to the button 'click' event
+      await button.click()
 
       await flushEvents()
       expect(intakeRegistry.replaySegments.length).toBe(1)
