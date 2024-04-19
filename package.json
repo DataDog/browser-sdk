@@ -35,14 +35,14 @@
     "@types/cors": "2.8.17",
     "@types/express": "4.17.21",
     "@types/jasmine": "3.10.18",
-    "@typescript-eslint/eslint-plugin": "7.5.0",
-    "@typescript-eslint/parser": "7.5.0",
-    "@wdio/browserstack-service": "8.35.1",
-    "@wdio/cli": "8.35.1",
-    "@wdio/jasmine-framework": "8.35.1",
-    "@wdio/junit-reporter": "8.32.4",
-    "@wdio/local-runner": "8.35.1",
-    "@wdio/spec-reporter": "8.32.4",
+    "@typescript-eslint/eslint-plugin": "7.7.0",
+    "@typescript-eslint/parser": "7.7.0",
+    "@wdio/browserstack-service": "8.36.0",
+    "@wdio/cli": "8.36.0",
+    "@wdio/jasmine-framework": "8.36.0",
+    "@wdio/junit-reporter": "8.36.0",
+    "@wdio/local-runner": "8.36.0",
+    "@wdio/spec-reporter": "8.36.0",
     "ajv": "6.12.6",
     "browserstack-local": "1.5.5",
     "chrome-webstore-upload": "3.0.3",
@@ -79,8 +79,8 @@
     "ts-loader": "9.5.1",
     "ts-node": "10.9.2",
     "tsconfig-paths-webpack-plugin": "4.1.0",
-    "typescript": "5.4.4",
-    "webdriverio": "8.35.1",
+    "typescript": "5.4.5",
+    "webdriverio": "8.36.0",
     "webpack": "5.91.0",
     "webpack-cli": "5.1.4",
     "webpack-dev-middleware": "7.2.1"
@@ -90,7 +90,7 @@
     "@mantine/core/type-fest": "4.15.0"
   },
   "volta": {
-    "node": "20.12.1",
+    "node": "20.12.2",
     "yarn": "1.22.22"
   },
   "packageManager": "yarn@3.8.1"

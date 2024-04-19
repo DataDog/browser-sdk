@@ -1,5 +1,6 @@
 import type { Duration, RelativeTime } from '@datadog/browser-core'
-import { isIE, relativeToClocks } from '@datadog/browser-core'
+import { ExperimentalFeature, isIE, relativeToClocks } from '@datadog/browser-core'
+import { mockExperimentalFeatures } from '@datadog/browser-core/test'
 import { createPerformanceEntry } from '../../../test'
 import type { RumPerformanceResourceTiming } from '../../browser/performanceCollection'
 import { RumPerformanceEntryType } from '../../browser/performanceCollection'
@@ -94,7 +95,7 @@ describe('matchRequestTiming', () => {
     expect(matchingTiming).toEqual(undefined)
   })
 
-  it('should not match invalid timing nested in the request ', () => {
+  it('[without tolerant_resource_timings] should not match invalid timing nested in the request ', () => {
     const entry = createPerformanceEntry(RumPerformanceEntryType.RESOURCE, {
       // fetchStart < startTime is invalid
       fetchStart: 0 as RelativeTime,
@@ -106,5 +107,20 @@ describe('matchRequestTiming', () => {
     const matchingTiming = matchRequestTiming(FAKE_REQUEST as RequestCompleteEvent)
 
     expect(matchingTiming).toEqual(undefined)
+  })
+
+  it('[with tolerant_resource_timings] should match invalid timing nested in the request ', () => {
+    mockExperimentalFeatures([ExperimentalFeature.TOLERANT_RESOURCE_TIMINGS])
+    const entry = createPerformanceEntry(RumPerformanceEntryType.RESOURCE, {
+      // fetchStart < startTime is invalid
+      fetchStart: 0 as RelativeTime,
+      startTime: 200 as RelativeTime,
+    })
+
+    entries.push(entry)
+
+    const matchingTiming = matchRequestTiming(FAKE_REQUEST as RequestCompleteEvent)
+
+    expect(matchingTiming).toBeDefined()
   })
 })

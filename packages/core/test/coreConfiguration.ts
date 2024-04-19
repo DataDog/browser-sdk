@@ -35,12 +35,14 @@ export const EXHAUSTIVE_INIT_CONFIGURATION: Required<InitConfiguration> = {
   datacenter: 'datacenter',
   internalAnalyticsSubdomain: 'internal-analytics-subdomain.com',
   telemetryConfigurationSampleRate: 70,
+  telemetryUsageSampleRate: 80,
 }
 
 export const SERIALIZED_EXHAUSTIVE_INIT_CONFIGURATION = {
   session_sample_rate: 50,
   telemetry_sample_rate: 60,
   telemetry_configuration_sample_rate: 70,
+  telemetry_usage_sample_rate: 80,
   use_before_send: true,
   use_cross_site_session_cookie: true,
   use_partitioned_cross_site_session_cookie: true,
@@ -51,7 +53,7 @@ export const SERIALIZED_EXHAUSTIVE_INIT_CONFIGURATION = {
   allow_fallback_to_local_storage: true,
   store_contexts_across_pages: true,
   allow_untrusted_events: true,
-  tracking_consent: 'not-granted',
+  tracking_consent: 'not-granted' as const,
 }
 
 /**

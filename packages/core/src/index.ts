@@ -40,6 +40,7 @@ export {
   TelemetryService,
   isTelemetryReplicationAllowed,
   addTelemetryConfiguration,
+  addTelemetryUsage,
 } from './domain/telemetry'
 export { monitored, monitor, callMonitored, setDebugMode } from './tools/monitor'
 export { Observable, Subscription } from './tools/observable'

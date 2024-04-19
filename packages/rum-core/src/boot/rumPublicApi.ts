@@ -9,6 +9,7 @@ import type {
   TrackingConsent,
 } from '@datadog/browser-core'
 import {
+  addTelemetryUsage,
   timeStampToClocks,
   isExperimentalFeatureEnabled,
   ExperimentalFeature,
@@ -204,7 +205,10 @@ export function makeRumPublicApi(startRumImpl: StartRum, recorderApi: RecorderAp
      * If this method is called before the init() method, the provided value will take precedence
      * over the one provided as initialization parameter.
      */
-    setTrackingConsent: monitor((trackingConsent: TrackingConsent) => trackingConsentState.update(trackingConsent)),
+    setTrackingConsent: monitor((trackingConsent: TrackingConsent) => {
+      trackingConsentState.update(trackingConsent)
+      addTelemetryUsage({ feature: 'set-tracking-consent', tracking_consent: trackingConsent })
+    }),
 
     setGlobalContextProperty: monitor((key, value) => globalContextManager.setContextProperty(key, value)),
 
@@ -278,6 +282,7 @@ export function makeRumPublicApi(startRumImpl: StartRum, recorderApi: RecorderAp
 
     stopSession: monitor(() => {
       strategy.stopSession()
+      addTelemetryUsage({ feature: 'stop-session' })
     }),
 
     /**
@@ -288,7 +293,10 @@ export function makeRumPublicApi(startRumImpl: StartRum, recorderApi: RecorderAp
     }),
 
     getSessionReplayLink: monitor(() => recorderApi.getSessionReplayLink()),
-    startSessionReplayRecording: monitor(() => recorderApi.start()),
+    startSessionReplayRecording: monitor(() => {
+      recorderApi.start()
+      addTelemetryUsage({ feature: 'start-session-replay-recording' })
+    }),
     stopSessionReplayRecording: monitor(() => recorderApi.stop()),
   })
 

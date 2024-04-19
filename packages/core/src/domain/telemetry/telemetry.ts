@@ -17,7 +17,12 @@ import type { StackTrace } from '../error/computeStackTrace'
 import { computeStackTrace } from '../error/computeStackTrace'
 import { getConnectivity } from '../connectivity'
 import type { TelemetryEvent } from './telemetryEvent.types'
-import type { RawTelemetryConfiguration, RawTelemetryEvent, RuntimeEnvInfo } from './rawTelemetryEvent.types'
+import type {
+  RawTelemetryConfiguration,
+  RawTelemetryEvent,
+  RuntimeEnvInfo,
+  RawTelemetryUsage,
+} from './rawTelemetryEvent.types'
 import { StatusType, TelemetryType } from './rawTelemetryEvent.types'
 
 // replaced at build time
@@ -48,9 +53,10 @@ const TELEMETRY_EXCLUDED_SITES: string[] = [INTAKE_SITE_US1_FED]
 const telemetryConfiguration: {
   maxEventsPerPage: number
   sentEventCount: number
-  telemetryEnabled: boolean
-  telemetryConfigurationEnabled: boolean
-} = { maxEventsPerPage: 0, sentEventCount: 0, telemetryEnabled: false, telemetryConfigurationEnabled: false }
+} = {
+  maxEventsPerPage: 0,
+  sentEventCount: 0,
+}
 
 let onRawTelemetryEventCollected: ((event: RawTelemetryEvent) => void) | undefined
 
@@ -58,14 +64,18 @@ export function startTelemetry(telemetryService: TelemetryService, configuration
   let contextProvider: () => Context
   const observable = new Observable<TelemetryEvent & Context>()
 
-  telemetryConfiguration.telemetryEnabled =
+  const telemetryEnabled =
     !includes(TELEMETRY_EXCLUDED_SITES, configuration.site) && performDraw(configuration.telemetrySampleRate)
-  telemetryConfiguration.telemetryConfigurationEnabled =
-    telemetryConfiguration.telemetryEnabled && performDraw(configuration.telemetryConfigurationSampleRate)
+
+  const telemetryEnabledPerType = {
+    [TelemetryType.log]: telemetryEnabled,
+    [TelemetryType.configuration]: telemetryEnabled && performDraw(configuration.telemetryConfigurationSampleRate),
+    [TelemetryType.usage]: telemetryEnabled && performDraw(configuration.telemetryUsageSampleRate),
+  }
 
   const runtimeEnvInfo = getRuntimeEnvInfo()
   onRawTelemetryEventCollected = (rawEvent: RawTelemetryEvent) => {
-    if (telemetryConfiguration.telemetryEnabled) {
+    if (telemetryEnabledPerType[rawEvent.type!]) {
       const event = toTelemetryEvent(telemetryService, rawEvent, runtimeEnvInfo)
       observable.notify(event)
       sendToExtension('telemetry', event)
@@ -108,7 +118,7 @@ export function startTelemetry(telemetryService: TelemetryService, configuration
       contextProvider = provider
     },
     observable,
-    enabled: telemetryConfiguration.telemetryEnabled,
+    enabled: telemetryEnabled,
   }
 }
 function getRuntimeEnvInfo(): RuntimeEnvInfo {
@@ -172,12 +182,17 @@ export function addTelemetryError(e: unknown, context?: Context) {
 }
 
 export function addTelemetryConfiguration(configuration: RawTelemetryConfiguration) {
-  if (telemetryConfiguration.telemetryConfigurationEnabled) {
-    addTelemetry({
-      type: TelemetryType.configuration,
-      configuration,
-    })
-  }
+  addTelemetry({
+    type: TelemetryType.configuration,
+    configuration,
+  })
+}
+
+export function addTelemetryUsage(usage: RawTelemetryUsage) {
+  addTelemetry({
+    type: TelemetryType.usage,
+    usage,
+  })
 }
 
 function addTelemetry(event: RawTelemetryEvent) {
