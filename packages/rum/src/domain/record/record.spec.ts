@@ -335,7 +335,7 @@ describe('record', () => {
       expect(inputRecords.length).toBe(1)
     })
 
-    fit('should record the scroll event inside a shadow root', () => {
+    it('should record the scroll event inside a shadow root', () => {
       const div = appendElement('<div unique-selector="enabled"></div>', createShadow()) as HTMLDivElement
       startRecording()
       expect(getEmittedRecords().length).toBe(recordsPerFullSnapshot())
@@ -349,10 +349,7 @@ describe('record', () => {
       )
 
       const fs = findFullSnapshot({ records: getEmittedRecords() })!
-      const scrollableNode = findElement(
-        fs.data.node,
-        (node) => { return node.attributes['unique-selector'] === "enabled" }
-      )!
+      const scrollableNode = findElement(fs.data.node, (node) => node.attributes['unique-selector'] === 'enabled')!
 
       expect(innerMutationData.id).toBe(scrollableNode.id)
     })
