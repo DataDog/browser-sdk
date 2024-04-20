@@ -47,6 +47,7 @@ import type { CommonContext } from '../domain/contexts/commonContext'
 import { startDisplayContext } from '../domain/contexts/displayContext'
 import { startVitalCollection } from '../domain/vital/vitalCollection'
 import { startCiVisibilityContext } from '../domain/contexts/ciVisibilityContext'
+import { startVulnerabilityCollection } from '../domain/vulnerabilities/vulnerabilityCollection'
 import type { RecorderApi } from './rumPublicApi'
 
 export type StartRum = typeof startRum
@@ -180,6 +181,8 @@ export function startRum(
     urlContexts
   )
 
+  startVulnerabilityCollection(lifeCycle, addAction, getCommonContext)
+  
   return {
     addAction,
     addError,

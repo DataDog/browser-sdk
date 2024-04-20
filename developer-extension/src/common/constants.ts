@@ -22,8 +22,9 @@ export const enum PanelTabs {
   Infos = 'infos',
   Settings = 'settings',
   Replay = 'replay',
+  Vulnerabilities = 'vulnerabilities'
 }
 
-export const DEFAULT_PANEL_TAB = PanelTabs.Events
+export const DEFAULT_PANEL_TAB = PanelTabs.Vulnerabilities
 
 export const SESSION_STORAGE_SETTINGS_KEY = '__ddBrowserSdkExtensionSettings'

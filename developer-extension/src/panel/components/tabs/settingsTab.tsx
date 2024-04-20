@@ -9,7 +9,7 @@ import type { DevBundlesOverride, EventCollectionStrategy } from '../../../commo
 export function SettingsTab() {
   const devServerStatus = useDevServerStatus()
   const [
-    { useDevBundles, useRumSlim, blockIntakeRequests, preserveEvents, eventCollectionStrategy, autoFlush },
+    { useDevBundles, useRumSlim, blockIntakeRequests, preserveEvents, eventCollectionStrategy, autoFlush, appVulnerabilities },
     setSetting,
   ] = useSettings()
 
@@ -136,6 +136,20 @@ export function SettingsTab() {
                 />
               }
               description={<>Force the SDK to flush events periodically.</>}
+            />
+          </Columns.Column>
+        
+          <Columns.Column title="Vulnerabilities">
+            <SettingItem
+              input={
+                <Checkbox
+                  label="Show app vulnerabilities"
+                  checked={appVulnerabilities}
+                  onChange={(e) => setSetting('appVulnerabilities', isChecked(e.target))}
+                  color="violet"
+                />
+              }
+              description={<>Display app vulnerabilities detected by tracer.</>}
             />
           </Columns.Column>
         </Columns>

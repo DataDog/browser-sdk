@@ -11,9 +11,11 @@ import type { Settings } from '../../common/types'
 import { SettingsTab } from './tabs/settingsTab'
 import { InfosTab } from './tabs/infosTab'
 import { EventsTab, DEFAULT_COLUMNS } from './tabs/eventsTab'
+import { VulnerabilitiesTab, DEFAULT_VULNERABILITIES_COLUMNS, DEFAULT_VULNERABILITIES_FROM_TRACER_COLUMNS } from './tabs/vulnerabilitiesTab'
 import { ReplayTab } from './tabs/replayTab'
 
 import classes from './panel.module.css'
+import { useVulnerabilities } from '../hooks/useVulnerabilities'
 
 export function Panel() {
   const [settings] = useSettings()
@@ -25,6 +27,10 @@ export function Panel() {
 
   const [columns, setColumns] = useState(DEFAULT_COLUMNS)
 
+  const { vulnerabilities, clearVulnerabilities } = useVulnerabilities(settings)
+  const [vulnerabilitiesColumns] = useState(DEFAULT_VULNERABILITIES_COLUMNS)
+  const [vulnerabilitiesFromTracerColumns] = useState(DEFAULT_VULNERABILITIES_FROM_TRACER_COLUMNS)
+
   const [activeTab, setActiveTab] = useState<string | null>(DEFAULT_PANEL_TAB)
   function updateActiveTab(activeTab: string | null) {
     setActiveTab(activeTab)
@@ -34,6 +40,7 @@ export function Panel() {
   return (
     <Tabs color="violet" value={activeTab} className={classes.tabs} onChange={updateActiveTab}>
       <Tabs.List className="dd-privacy-allow">
+        <Tabs.Tab value={PanelTabs.Vulnerabilities}>Vulnerabilities</Tabs.Tab>
         <Tabs.Tab value={PanelTabs.Events}>Events</Tabs.Tab>
         <Tabs.Tab
           value={PanelTabs.Infos}
@@ -63,6 +70,14 @@ export function Panel() {
           Settings
         </Tabs.Tab>
       </Tabs.List>
+      <Tabs.Panel value={PanelTabs.Vulnerabilities} className={classes.tab}>
+        <VulnerabilitiesTab
+          vulnerabilities={vulnerabilities}
+          columns={vulnerabilitiesColumns}
+          columnsFromTracer={vulnerabilitiesFromTracerColumns}
+          clear={clearVulnerabilities}
+        />
+      </Tabs.Panel>
       <Tabs.Panel value={PanelTabs.Events} className={classes.tab}>
         <EventsTab
           events={events}
