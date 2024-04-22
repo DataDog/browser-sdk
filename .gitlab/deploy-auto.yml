@@ -7,18 +7,74 @@ stages:
   tags: ['runner:main', 'size:large']
   image: $CI_IMAGE
 
-deploy-auto:
+.deploy-prod:
+  stage: deploy
+  script:
+    - export BUILD_MODE=release
+    - VERSION=$(node -p -e "require('./lerna.json').version")
+    - yarn
+    - yarn build:bundle
+    - node ./scripts/deploy/deploy-prod-dc.js v${VERSION%%.*} $UPLOAD_PATH true
+
+step-1_deploy-prod-minor-dcs:
+  when: manual
+  allow_failure: false
+  extends:
+    - .base-configuration
+    - .deploy-prod
+  variables:
+    UPLOAD_PATH: us3,us5,ap1
+
+step-2_deploy-prod-eu1:
+  needs:
+    - step-1_deploy-prod-minor-dcs
+  extends:
+    - .base-configuration
+    - .deploy-prod
+  variables:
+    UPLOAD_PATH: eu1
+
+step-3_deploy-prod-us1:
+  needs:
+    - step-2_deploy-prod-eu1
+  extends:
+    - .base-configuration
+    - .deploy-prod
+  variables:
+    UPLOAD_PATH: us1
+
+step-4_deploy-prod-gov:
+  needs:
+    - step-3_deploy-prod-us1
+  extends:
+    - .base-configuration
+    - .deploy-prod
+  variables:
+    UPLOAD_PATH: root
+
+step-5_publish-npm:
+  needs:
+    - step-4_deploy-prod-gov
   stage: deploy
   extends:
     - .base-configuration
   when: manual
   allow_failure: false
   script:
-    - export BUILD_MODE=release
-    - VERSION=$(node -p -e "require('./lerna.json').version")
     - yarn
-    - yarn build:bundle
-    - node ./scripts/deploy-auto.js v${VERSION%%.*}
+    - node ./scripts/deploy/publish-npm.js
+
+step-6_publish-developer-extension:
+  needs:
+    - step-5_publish-npm
+  stage: deploy
+  extends:
+    - .base-configuration
+  when: manual
+  allow_failure: false
+  script:
+    - yarn
+    - node ./scripts/deploy/publish-developer-extension.js
 
 ########################################################################################################################
 # Notify
@@ -43,6 +99,8 @@ notify-deploy-ready:
 
 notify-deploy-success:
   stage: post-notify
+  needs:
+    - step-6_publish-developer-extension
   extends:
     - .prepare_notification
   script:
