@@ -67,7 +67,6 @@ export function processSessionStoreOperations(
   }
   let processedSession = operations.process(currentStore.session)
   if (isLockEnabled) {
-    assign
     // if lock corrupted after process, retry later
     currentStore = retrieveStore()
     if (currentStore.lock !== currentLock!) {

@@ -5,6 +5,7 @@ import type { SessionStore } from './sessionStore'
 import { STORAGE_POLL_DELAY, startSessionStore, selectSessionStoreStrategyType } from './sessionStore'
 import { SESSION_EXPIRATION_DELAY, SESSION_TIME_OUT_DELAY } from './sessionConstants'
 import { SESSION_STORE_KEY } from './storeStrategies/sessionStoreStrategy'
+import type { SessionState } from './sessionState'
 
 const enum FakeTrackingType {
   TRACKED = 'tracked',
@@ -15,6 +16,8 @@ const DURATION = 123456
 const PRODUCT_KEY = 'product'
 const FIRST_ID = 'first'
 const SECOND_ID = 'second'
+
+const EXPIRED_SESSION: SessionState = { isExpired: '1' }
 
 function setSessionInStore(trackingType: FakeTrackingType = FakeTrackingType.TRACKED, id?: string, expire?: number) {
   setCookie(
@@ -135,7 +138,7 @@ describe('session store', () => {
       it('when session not in store, should initialize a new session', () => {
         setupSessionStore()
 
-        expect(sessionStoreManager.getSession().isExpired).toBe('1')
+        expect(sessionStoreManager.getSession()).toEqual(EXPIRED_SESSION)
       })
 
       it('when tracked session in store, should do nothing ', () => {
@@ -455,7 +458,7 @@ describe('session store', () => {
 
         sessionStoreManager.restartSession()
 
-        expect(sessionStoreManager.getSession().isExpired).toBe('1')
+        expect(sessionStoreManager.getSession()).toEqual(EXPIRED_SESSION)
       })
 
       it('when session in store, should do nothing', () => {

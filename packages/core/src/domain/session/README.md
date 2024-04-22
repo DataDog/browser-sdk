@@ -1,11 +1,17 @@
 ## possible states:
 
-| state      | value                                                        |
-| ---------- | ------------------------------------------------------------ |
-| NotStarted | `{}`                                                         |
-| Expired    | `{expired: '1'}` or `expire >  15 minutes` or `created > 4H` |
-| Tracked    | `{id: 'xxxx-xx-xx}`                                          |
-| NotTracked | `{rum: 0}` or `{logs: 0}`                                    |
+| state                   | value                                                        |
+| ----------------------- | ------------------------------------------------------------ |
+| NotStarted<sup>\*</sup> | `{}`                                                         |
+| Expired                 | `{expired: '1'}` or `expire >  15 minutes` or `created > 4H` |
+| Tracked                 | `{id: 'xxxx-xx-xx}`                                          |
+| NotTracked              | `{rum: 0}` or `{logs: 0}`                                    |
+
+(<sup>\*</sup>) `NotStarted` is a state that can happen in a few different ways:
+
+- First load of the page if there is no cookie present already
+- After the cookie has been deleted by a 3rd party (user, ad blocker, ...)
+- After the cookie has expired (it is deleted by the browser)
 
 Other terminology:
 
@@ -25,7 +31,7 @@ fork_state --> NotStarted
 fork_state --> Expired
 fork_state --> Tracked
 fork_state --> NotTracked
-NotStarted --> Expired: start()
+NotStarted --> Expired: startSession()
 
 Expired --> fork_state2
 Tracked --> fork_state2

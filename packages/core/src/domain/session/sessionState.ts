@@ -12,7 +12,6 @@ export interface SessionState {
   id?: string
   created?: string
   expire?: string
-  lock?: string
   isExpired?: typeof EXPIRED
 
   [key: string]: string | undefined
