@@ -1,0 +1,108 @@
+stages:
+  - pre-notify
+  - deploy
+  - post-notify
+
+.base-configuration:
+  tags: ['runner:main', 'size:large']
+  image: $CI_IMAGE
+
+.deploy-prod:
+  stage: deploy
+  when: manual
+  allow_failure: false
+  script:
+    - export BUILD_MODE=release
+    - VERSION=$(node -p -e "require('./lerna.json').version")
+    - yarn
+    - yarn build:bundle
+    - node ./scripts/deploy/check-monitors.js $UPLOAD_PATH
+    - node ./scripts/deploy/deploy.js prod v${VERSION%%.*} $UPLOAD_PATH
+    - node ./scripts/deploy/upload-source-maps.js v${VERSION%%.*} $UPLOAD_PATH
+
+step-1_deploy-prod-minor-dcs:
+  extends:
+    - .base-configuration
+    - .deploy-prod
+  variables:
+    UPLOAD_PATH: us3,us5,ap1
+
+step-2_deploy-prod-eu1:
+  extends:
+    - .base-configuration
+    - .deploy-prod
+  variables:
+    UPLOAD_PATH: eu1
+
+step-3_deploy-prod-us1:
+  extends:
+    - .base-configuration
+    - .deploy-prod
+  variables:
+    UPLOAD_PATH: us1
+
+step-4_deploy-prod-gov:
+  extends:
+    - .base-configuration
+    - .deploy-prod
+  variables:
+    UPLOAD_PATH: root
+
+step-5_publish-npm:
+  stage: deploy
+  extends:
+    - .base-configuration
+  when: manual
+  allow_failure: false
+  script:
+    - yarn
+    - node ./scripts/deploy/publish-npm.js
+
+step-6_publish-developer-extension:
+  stage: deploy
+  extends:
+    - .base-configuration
+  when: manual
+  allow_failure: false
+  script:
+    - yarn
+    - node ./scripts/deploy/publish-developer-extension.js
+
+########################################################################################################################
+# Notify
+########################################################################################################################
+
+include: 'https://gitlab-templates.ddbuild.io/slack-notifier/v1/template.yml'
+
+.prepare_notification:
+  extends: .slack-notifier-base
+  before_script:
+    - COMMIT_MESSAGE=`git show-branch --no-name HEAD`
+    - BUILD_URL="$CI_PROJECT_URL/pipelines/$CI_PIPELINE_ID"
+    - COMMIT_URL="$CI_PROJECT_URL/commits/$CI_COMMIT_SHA"
+
+notify-deploy-ready:
+  stage: pre-notify
+  extends:
+    - .prepare_notification
+  script:
+    - 'MESSAGE_TEXT=":i: $CI_PROJECT_NAME <$BUILD_URL|$COMMIT_MESSAGE> ready to be deployed *manually* to :datadog:"'
+    - postmessage "#browser-sdk-deploy" "$MESSAGE_TEXT"
+
+notify-deploy-success:
+  stage: post-notify
+  extends:
+    - .prepare_notification
+  script:
+    - 'MESSAGE_TEXT=":rocket: $CI_PROJECT_NAME <$COMMIT_URL|$COMMIT_MESSAGE> *manually* deployed to :earth_americas:."'
+    - postmessage "#browser-sdk-deploy" "$MESSAGE_TEXT"
+    - postmessage "#rum-browser-sdk-ops" "$MESSAGE_TEXT"
+
+notify-deploy-failure:
+  stage: post-notify
+  extends:
+    - .prepare_notification
+  when: on_failure
+  script:
+    - 'MESSAGE_TEXT=":host-red: $CI_PROJECT_NAME *manual* deployment of <$BUILD_URL|$COMMIT_MESSAGE> failed."'
+    - postmessage "#browser-sdk-deploy" "$MESSAGE_TEXT"

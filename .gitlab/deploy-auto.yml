@@ -1,0 +1,60 @@
+stages:
+  - pre-notify
+  - deploy
+  - post-notify
+
+.base-configuration:
+  tags: ['runner:main', 'size:large']
+  image: $CI_IMAGE
+
+deploy-auto:
+  stage: deploy
+  extends:
+    - .base-configuration
+  when: manual
+  allow_failure: false
+  script:
+    - export BUILD_MODE=release
+    - VERSION=$(node -p -e "require('./lerna.json').version")
+    - yarn
+    - yarn build:bundle
+    - node ./scripts/deploy-auto.js v${VERSION%%.*}
+
+########################################################################################################################
+# Notify
+########################################################################################################################
+
+include: 'https://gitlab-templates.ddbuild.io/slack-notifier/v1/template.yml'
+
+.prepare_notification:
+  extends: .slack-notifier-base
+  before_script:
+    - COMMIT_MESSAGE=`git show-branch --no-name HEAD`
+    - BUILD_URL="$CI_PROJECT_URL/pipelines/$CI_PIPELINE_ID"
+    - COMMIT_URL="$CI_PROJECT_URL/commits/$CI_COMMIT_SHA"
+
+notify-deploy-ready:
+  stage: pre-notify
+  extends:
+    - .prepare_notification
+  script:
+    - 'MESSAGE_TEXT=":i: $CI_PROJECT_NAME <$BUILD_URL|$COMMIT_MESSAGE> ready to be deployed *automatically* to :datadog:"'
+    - postmessage "#browser-sdk-deploy" "$MESSAGE_TEXT"
+
+notify-deploy-success:
+  stage: post-notify
+  extends:
+    - .prepare_notification
+  script:
+    - 'MESSAGE_TEXT=":rocket: $CI_PROJECT_NAME <$COMMIT_URL|$COMMIT_MESSAGE> *automatically* deployed to :earth_americas:."'
+    - postmessage "#browser-sdk-deploy" "$MESSAGE_TEXT"
+    - postmessage "#rum-browser-sdk-ops" "$MESSAGE_TEXT"
+
+notify-deploy-failure:
+  stage: post-notify
+  extends:
+    - .prepare_notification
+  when: on_failure
+  script:
+    - 'MESSAGE_TEXT=":host-red: $CI_PROJECT_NAME *automatic* deployment of <$BUILD_URL|$COMMIT_MESSAGE> failed."'
+    - postmessage "#browser-sdk-deploy" "$MESSAGE_TEXT"
