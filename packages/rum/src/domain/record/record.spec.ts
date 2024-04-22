@@ -343,15 +343,18 @@ describe('record', () => {
       div.dispatchEvent(createNewEvent('scroll', { target: div, composed: false }))
 
       recordApi.flushMutations()
-      const innerMutationData = getLastIncrementalSnapshotData<ScrollData>(
-        getEmittedRecords(),
-        IncrementalSource.Scroll
+
+      const scrollRecords = getEmittedRecords().filter(
+        (record) => record.type === RecordType.IncrementalSnapshot && record.data.source === IncrementalSource.Scroll
       )
+      expect(scrollRecords.length).toBe(1)
+
+      const scrollData = getLastIncrementalSnapshotData<ScrollData>(getEmittedRecords(), IncrementalSource.Scroll)
 
       const fs = findFullSnapshot({ records: getEmittedRecords() })!
       const scrollableNode = findElement(fs.data.node, (node) => node.attributes['unique-selector'] === 'enabled')!
 
-      expect(innerMutationData.id).toBe(scrollableNode.id)
+      expect(scrollData.id).toBe(scrollableNode.id)
     })
 
     it('should clean the state once the shadow dom is removed to avoid memory leak', () => {
