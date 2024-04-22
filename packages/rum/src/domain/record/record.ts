@@ -51,10 +51,7 @@ export function record(options: RecordOptions): RecordAPI {
 
   const elementsScrollPositions = createElementsScrollPositions()
 
-  const shadowRootsController = initShadowRootsController(configuration, {
-    mutationCb: emitAndComputeStats,
-    inputCb: emitAndComputeStats,
-  })
+  const shadowRootsController = initShadowRootsController(configuration, emitAndComputeStats, elementsScrollPositions)
 
   const { stop: stopFullSnapshots } = startFullSnapshots(
     elementsScrollPositions,
@@ -76,7 +73,7 @@ export function record(options: RecordOptions): RecordAPI {
     mutationTracker,
     trackMove(configuration, emitAndComputeStats),
     trackMouseInteraction(configuration, emitAndComputeStats, recordIds),
-    trackScroll(configuration, emitAndComputeStats, elementsScrollPositions),
+    trackScroll(configuration, emitAndComputeStats, elementsScrollPositions, document),
     trackViewportResize(configuration, emitAndComputeStats),
     trackInput(configuration, emitAndComputeStats),
     trackMediaInteraction(configuration, emitAndComputeStats),
