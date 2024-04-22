@@ -11,11 +11,9 @@ const RETRIES_NUMBER = 6
 
 async function computeCpuPerformance() {
   const pr = await fetchPR(LOCAL_BRANCH)
-  if (!pr) {
-    console.log('No pull requests found for the branch')
-    return
-  }
-  const resultId = await triggerSyntheticsTest(pr.number, LOCAL_COMMIT_SHA)
+  const resultId = pr
+    ? await triggerSyntheticsTest(pr.number, LOCAL_COMMIT_SHA)
+    : await triggerSyntheticsTest('', LOCAL_COMMIT_SHA)
   await waitForSyntheticsTestToFinish(resultId, RETRIES_NUMBER)
 }
 
