@@ -1,7 +1,5 @@
 const puppeteer = require('puppeteer')
-
 const BUNDLE_URL = 'https://www.datadoghq-browser-agent.com/datadog-rum-canary.js'
-
 const NUMBER_OF_RUNS = 30 // Rule of thumb: 30 runs should be enough to get a good average
 
 async function run() {
@@ -9,12 +7,10 @@ async function run() {
     defaultViewport: { width: 1920, height: 1080 },
     headless: true,
   })
+
   const page = await browser.newPage()
-
   await page.goto('https://datadoghq.dev/browser-sdk-test-playground/performance/')
-
   const buttons = await page.$$('button')
-
   for (let i = 0; i < buttons.length; i++) {
     const button = buttons[i]
     const buttonName = await page.evaluate((button) => button.innerText, button)
@@ -41,19 +37,13 @@ async function runTest(i, buttonName) {
     headless: true,
   })
   const page = await browser.newPage()
-
   await page.goto('https://datadoghq.dev/browser-sdk-test-playground/performance/')
-
   const client = await page.target().createCDPSession()
   await client.send('HeapProfiler.enable')
-
   await page.waitForSelector('button')
-
   const button = (await page.$$('button'))[i]
-
   await client.send('HeapProfiler.collectGarbage')
   console.log(`Running test for: ${buttonName}`)
-
   const measurements = []
   await client.send('HeapProfiler.startSampling', {
     samplingInterval: 100,
@@ -82,9 +72,7 @@ async function runTest(i, buttonName) {
 
   measurements.sort((a, b) => a - b)
   const averageSize = measurements[Math.floor(measurements.length / 2)]
-
   await browser.close()
-
   return averageSize
 }
 
