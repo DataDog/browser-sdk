@@ -1,5 +1,5 @@
 variables:
-  CURRENT_STAGING: staging-16
+  CURRENT_STAGING: staging-17
   APP: 'browser-sdk'
   CURRENT_CI_IMAGE: 63
   BUILD_STABLE_REGISTRY: '486234852809.dkr.ecr.us-east-1.amazonaws.com'
@@ -140,7 +140,17 @@ build-and-lint:
     - yarn build
     - yarn lint
     - node scripts/check-packages.js
-    - node scripts/report-bundle-size/index.js
+
+test-performance:
+  extends:
+    - .base-configuration
+    - .test-allowed-branches
+  interruptible: true
+  script:
+    - yarn
+    - yarn build:bundle
+    - node ./scripts/deploy/deploy.js staging pull-request pull-request
+    - node scripts/performance/index.js
 
 build-bundle:
   extends:
@@ -210,6 +220,15 @@ check-release:
     - yarn
     - BUILD_MODE=release yarn build
     - node scripts/release/check-release.js
+
+check-schemas:
+  extends:
+    - .base-configuration
+    - .test-allowed-branches
+  interruptible: true
+  script:
+    - yarn
+    - node scripts/check-schemas.js
 
 unit-bs:
   stage: browserstack

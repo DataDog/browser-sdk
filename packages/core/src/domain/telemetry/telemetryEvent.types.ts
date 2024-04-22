@@ -6,7 +6,11 @@
 /**
  * Schema of all properties of a telemetry event
  */
-export type TelemetryEvent = TelemetryErrorEvent | TelemetryDebugEvent | TelemetryConfigurationEvent
+export type TelemetryEvent =
+  | TelemetryErrorEvent
+  | TelemetryDebugEvent
+  | TelemetryConfigurationEvent
+  | TelemetryUsageEvent
 /**
  * Schema of all properties of a telemetry error event
  */
@@ -98,6 +102,10 @@ export type TelemetryConfigurationEvent = CommonTelemetryProperties & {
        */
       telemetry_configuration_sample_rate?: number
       /**
+       * The percentage of telemetry usage events sent after being sampled by telemetry_sample_rate
+       */
+      telemetry_usage_sample_rate?: number
+      /**
        * The percentage of requests traced
        */
       trace_sample_rate?: number
@@ -120,7 +128,7 @@ export type TelemetryConfigurationEvent = CommonTelemetryProperties & {
       /**
        * The initial tracking consent value
        */
-      tracking_consent?: string
+      tracking_consent?: 'granted' | 'not-granted' | 'pending'
       /**
        * Whether the session replay start is handled manually
        */
@@ -349,6 +357,55 @@ export type TelemetryConfigurationEvent = CommonTelemetryProperties & {
     }
     [k: string]: unknown
   }
+  [k: string]: unknown
+}
+/**
+ * Schema of all properties of a telemetry usage event
+ */
+export type TelemetryUsageEvent = CommonTelemetryProperties & {
+  /**
+   * The telemetry usage information
+   */
+  telemetry: {
+    /**
+     * Telemetry type
+     */
+    type: 'usage'
+    usage: TelemetryCommonFeaturesUsage | TelemetryBrowserFeaturesUsage
+    [k: string]: unknown
+  }
+  [k: string]: unknown
+}
+/**
+ * Schema of features usage common across SDKs
+ */
+export type TelemetryCommonFeaturesUsage =
+  | {
+      /**
+       * setTrackingConsent API
+       */
+      feature: 'set-tracking-consent'
+      /**
+       * The tracking consent value set by the user
+       */
+      tracking_consent: 'granted' | 'not-granted' | 'pending'
+      [k: string]: unknown
+    }
+  | {
+      /**
+       * stopSession API
+       */
+      feature: 'stop-session'
+      [k: string]: unknown
+    }
+/**
+ * Schema of browser specific features usage
+ */
+export type TelemetryBrowserFeaturesUsage = {
+  /**
+   * startSessionReplayRecording API
+   */
+  feature: 'start-session-replay-recording'
   [k: string]: unknown
 }
 

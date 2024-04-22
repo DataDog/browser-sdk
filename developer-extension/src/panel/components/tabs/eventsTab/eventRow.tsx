@@ -280,6 +280,13 @@ function TelemetryDescription({ event }: { event: TelemetryEvent }) {
   if (event.telemetry.type === 'configuration') {
     return <Emphasis>Configuration</Emphasis>
   }
+  if (event.telemetry.type === 'usage') {
+    return (
+      <>
+        <Emphasis>Usage</Emphasis> of <Emphasis>{event.telemetry.usage.feature}</Emphasis>
+      </>
+    )
+  }
   return <>{event.telemetry.message}</>
 }
 
