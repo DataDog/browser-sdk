@@ -14,14 +14,11 @@ async function run() {
   for (let i = 0; i < buttons.length; i++) {
     const button = buttons[i]
     const buttonName = await page.evaluate((button) => button.innerText, button)
-
     const allMeasurements = []
-
     for (let j = 0; j < NUMBER_OF_RUNS; j++) {
       const averageSize = await runTest(i, buttonName)
       allMeasurements.push(averageSize)
     }
-
     const totalAverageSize = allMeasurements.reduce((a, b) => a + b, 0) / allMeasurements.length
     console.log(
       `Average percentage of memory used by SDK for ${buttonName} over ${NUMBER_OF_RUNS} runs: ${totalAverageSize}%`
@@ -54,22 +51,18 @@ async function runTest(i, buttonName) {
   const sizeForNodeId = new Map()
   for (const sample of profile.samples) {
     sizeForNodeId.set(sample.nodeId, (sizeForNodeId.get(sample.nodeId) || 0) + sample.size)
-
     let totalSize = 0
     let sdkConsumption = 0
     for (const node of iterNodes(profile.head)) {
       const consumption = sizeForNodeId.get(node.id) || 0
       totalSize += consumption
-
       if (isSdkBundleUrl(node.callFrame.url)) {
         sdkConsumption += consumption
       }
     }
-
     const sdkPercentage = (sdkConsumption / totalSize) * 100
     measurements.push(sdkPercentage)
   }
-
   measurements.sort((a, b) => a - b)
   const averageSize = measurements[Math.floor(measurements.length / 2)]
   await browser.close()
