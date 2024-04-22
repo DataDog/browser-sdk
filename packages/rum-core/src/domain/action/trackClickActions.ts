@@ -224,13 +224,14 @@ function computeClickActionBase(
   const privacyLevel = getNodePrivacyLevel(event.target, configuration.defaultPrivacyLevel)
 
   // When the node is set to hidden, we do not track click action
+  // Make sure everything has been done before return
   if (privacyLevel === NodePrivacyLevel.HIDDEN && configuration.enablePrivacyForActionName) {
     return
   }
 
   const privacyEnabledForActionName =
     privacyLevel === DefaultPrivacyLevel.MASK && configuration.enablePrivacyForActionName
-  const actionNameResult = getActionNameFromElement(
+  const { name: actionName, masked } = getActionNameFromElement(
     event.target,
     configuration.actionNameAttribute,
     privacyEnabledForActionName
@@ -244,13 +245,13 @@ function computeClickActionBase(
 
   return {
     type: ActionType.CLICK,
-    target: typeof actionNameResult === 'string' ? target : assign({ masked: actionNameResult.masked }, target),
+    target: masked ? assign({ masked }, target) : target,
     position: {
       // Use clientX and Y because for SVG element offsetX and Y are relatives to the <svg> element
       x: Math.round(event.clientX - rect.left),
       y: Math.round(event.clientY - rect.top),
     },
-    name: typeof actionNameResult === 'string' ? actionNameResult : actionNameResult.name,
+    name: actionName,
   }
 }
 

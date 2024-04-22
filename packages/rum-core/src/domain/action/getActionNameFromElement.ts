@@ -11,7 +11,7 @@ export function getActionNameFromElement(
   element: Element,
   userProgrammaticAttribute?: string,
   privacyEnabledForActionName?: boolean
-): { name: string; masked?: boolean } | string {
+): { name: string; masked?: boolean } {
   const definedActionNameFromElement =
     getActionNameFromElementProgrammatically(element, DEFAULT_PROGRAMMATIC_ACTION_NAME_ATTRIBUTE) ||
     (userProgrammaticAttribute && getActionNameFromElementProgrammatically(element, userProgrammaticAttribute))
@@ -30,12 +30,13 @@ export function getActionNameFromElement(
   //   the element and a few parents, but it's likely that they won't succeed at all.
   // * if no name is found this way, use strategies returning less accurate names as a fallback.
   //   Those are much likely to succeed.
-  return (
-    definedActionNameFromElement ||
-    getActionNameFromElementForStrategies(element, userProgrammaticAttribute, priorityStrategies) ||
-    getActionNameFromElementForStrategies(element, userProgrammaticAttribute, fallbackStrategies) ||
-    ''
-  )
+  return {
+    name:
+      definedActionNameFromElement ||
+      getActionNameFromElementForStrategies(element, userProgrammaticAttribute, priorityStrategies) ||
+      getActionNameFromElementForStrategies(element, userProgrammaticAttribute, fallbackStrategies) ||
+      '',
+  }
 }
 
 function getActionNameFromElementProgrammatically(targetElement: Element, programmaticAttribute: string) {
