@@ -1,8 +1,8 @@
 import React from 'react'
 import { matchRoutes, useLocation, useRoutes } from 'react-router-dom'
 import type { RouteObject } from 'react-router-dom'
-import { DatadogContext } from '../lib/datadogContext'
-import { _computeViewName } from '../lib/_computeViewName'
+import { DatadogContext } from '../../lib/datadogContext'
+import { _computeViewName } from '../../lib/_computeViewName'
 
 export const useRoutesWithTracker = (
   routes: RouteObject[],
@@ -22,7 +22,7 @@ export const useRoutesWithTracker = (
     const viewName = computeViewName(routeMatches as any)
     // eslint-disable-next-line @typescript-eslint/no-unsafe-call
     datadogReactRum.startView(viewName)
-  }, [location])
+  }, [location.pathname])
 
   const element = useRoutes(routes)
   return element

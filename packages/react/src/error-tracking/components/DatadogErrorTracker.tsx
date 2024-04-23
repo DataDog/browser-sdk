@@ -1,6 +1,6 @@
 import React from 'react'
 import type { ErrorInfo } from 'react'
-import { DatadogContext } from '../lib/datadogContext'
+import { DatadogContext } from '../../lib/datadogContext'
 
 // --------- Error Boundaries---------
 interface DatadogErrorTrackerProps {
@@ -25,5 +25,9 @@ export class DatadogErrorTracker<P, S> extends React.Component<DatadogErrorTrack
     datadogReactRum?.addError(renderingError, {
       framework: 'react',
     })
+  }
+
+  render() {
+    return this.props.children
   }
 }

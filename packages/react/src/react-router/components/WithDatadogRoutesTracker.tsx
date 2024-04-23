@@ -1,10 +1,10 @@
 import React from 'react'
 import { useLocation, createRoutesFromChildren, matchRoutes } from 'react-router-dom'
-import { DatadogContext } from '../lib/datadogContext'
-import { _computeViewName } from '../lib/_computeViewName'
+import { DatadogContext } from '../../lib/datadogContext'
+import { _computeViewName } from '../../lib/_computeViewName'
 
 export const WithDatadogRoutesTracker =
-  (Component: React.Component) =>
+  (Component: React.ComponentType) =>
   (props: { computeViewName?: typeof _computeViewName; children?: React.ReactNode } = {}) => {
     const { computeViewName = _computeViewName, children } = props
     const location = useLocation()
