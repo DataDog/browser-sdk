@@ -137,3 +137,4 @@ export { ErrorHandling, ErrorSource, RawError, RawErrorCause, ErrorWithCause, Cs
 export * from './domain/deflate'
 export * from './domain/connectivity'
 export * from './tools/stackTrace/handlingStack'
+export { SessionState } from './domain/session/sessionState'

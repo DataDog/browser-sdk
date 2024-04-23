@@ -4,6 +4,7 @@ import { ONE_SECOND, dateNow } from '../../tools/utils/timeUtils'
 import { throttle } from '../../tools/utils/functionUtils'
 import { generateUUID } from '../../tools/utils/stringUtils'
 import type { InitConfiguration } from '../configuration'
+import { assign } from '../../tools/utils/polyfills'
 import { selectCookieStrategy, initCookieStrategy } from './storeStrategies/sessionInCookie'
 import type { SessionStoreStrategyType } from './storeStrategies/sessionStoreStrategy'
 import { getExpiredSessionState, isSessionInExpiredState, isSessionInNotStartedState } from './sessionState'
@@ -20,6 +21,7 @@ export interface SessionStore {
   expireObservable: Observable<void>
   expire: () => void
   stop: () => void
+  updateSessionInStore: (state: Partial<SessionState>) => void
 }
 
 /**
@@ -179,6 +181,16 @@ export function startSessionStore<TrackingType extends string>(
     renewObservable.notify()
   }
 
+  function updateSessionInStore(updatedState: Partial<SessionState>) {
+    processSessionStoreOperations(
+      {
+        process: (sessionState) => assign({}, sessionState, updatedState),
+        after: synchronizeSession,
+      },
+      sessionStoreStrategy
+    )
+  }
+
   return {
     expandOrRenewSession: throttledExpandOrRenewSession,
     expandSession,
@@ -194,5 +206,6 @@ export function startSessionStore<TrackingType extends string>(
     stop: () => {
       clearInterval(watchSessionTimeoutId)
     },
+    updateSessionInStore,
   }
 }

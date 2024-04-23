@@ -16,7 +16,7 @@ import type {
   RumConfiguration,
   StartStrategyOptions,
 } from '@datadog/browser-rum-core'
-import { LifeCycleEventType } from '@datadog/browser-rum-core'
+import { LifeCycleEventType, RumTrackingType } from '@datadog/browser-rum-core'
 import { getReplayStats as getReplayStatsImpl } from '../domain/replayStats'
 import { getSessionReplayLink } from '../domain/getSessionReplayLink'
 import type { CreateDeflateWorker } from '../domain/deflate'
@@ -144,8 +144,8 @@ export function makeRecorderApi(
 
       startStrategy = (options?: StartStrategyOptions) => {
         const session = sessionManager.findTrackedSession()
-        // If session is undefined (untracked), recording should never start
-        // If session is not allowed for replay and not being forced, recording should not start
+        // If session is undefined (untracked), recording should not start
+        // If session is not sampled for replay and not being forced, recording should not start
         if (!session || (!session.sessionReplayAllowed && !options?.forceStart)) {
           state = { status: RecorderStatus.IntentToStart }
           return
@@ -182,6 +182,11 @@ export function makeRecorderApi(
             stopRecording,
           }
         })
+
+        // Updating cookie to reflect that session recording was forced
+        if (options?.forceStart && !session.sessionReplayAllowed) {
+          sessionManager.updateSessionInStore({ rum: RumTrackingType.TRACKED_WITH_FORCED_REPLAY })
+        }
       }
 
       stopStrategy = () => {
