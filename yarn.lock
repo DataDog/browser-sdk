@@ -307,7 +307,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@datadog/browser-core@5.12.0, @datadog/browser-core@^5.12.0, @datadog/browser-core@workspace:*, @datadog/browser-core@workspace:packages/core":
+"@datadog/browser-core@5.16.0, @datadog/browser-core@^5.12.0, @datadog/browser-core@workspace:*, @datadog/browser-core@workspace:packages/core":
   version: 0.0.0-use.local
   resolution: "@datadog/browser-core@workspace:packages/core"
   languageName: unknown
@@ -326,7 +326,7 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@datadog/browser-rum-core@5.12.0, @datadog/browser-rum-core@^5.12.0, @datadog/browser-rum-core@workspace:packages/rum-core":
+"@datadog/browser-rum-core@5.16.0, @datadog/browser-rum-core@^5.12.0, @datadog/browser-rum-core@workspace:packages/rum-core":
   version: 0.0.0-use.local
   resolution: "@datadog/browser-rum-core@workspace:packages/rum-core"
   dependencies:
