@@ -257,9 +257,12 @@ function formatSessionType(value: string, ...labels: string[]) {
 }
 
 function endSession() {
+  const fourHours = 1000 * 60 * 60 * 4
+  const expires = new Date(Date.now() + fourHours).toUTCString()
+
   evalInWindow(
     `
-      document.cookie = '_dd_s=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/'
+      document.cookie = '_dd_s=isExpired=1; expires=${expires}; path=/'
     `
   ).catch((error) => logger.error('Error while ending session:', error))
 }
