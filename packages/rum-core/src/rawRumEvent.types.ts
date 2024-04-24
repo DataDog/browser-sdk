@@ -233,6 +233,11 @@ export interface RawRumVitalEvent {
       [key: string]: number
     }
   }
+  _dd?: {
+    vital: {
+      computed_value: true
+    }
+  }
 }
 
 export const enum VitalType {
