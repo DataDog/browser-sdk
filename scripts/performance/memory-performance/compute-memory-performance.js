@@ -35,8 +35,7 @@ async function computeMemoryPerformance() {
 
 async function runTest(i, buttonName) {
   const browser = await puppeteer.launch({
-    defaultViewport: { width: 1920, height: 1080 },
-    headless: true,
+    args: ['--no-sandbox', '--disable-setuid-sandbox'],
   })
   const page = await browser.newPage()
   await page.goto('https://datadoghq.dev/browser-sdk-test-playground/performance/')
