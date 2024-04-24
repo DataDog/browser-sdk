@@ -58,7 +58,6 @@ step-5_publish-npm:
   stage: deploy
   extends:
     - .base-configuration
-  when: manual
   allow_failure: false
   script:
     - yarn
@@ -70,7 +69,6 @@ step-6_publish-developer-extension:
   stage: deploy
   extends:
     - .base-configuration
-  when: manual
   allow_failure: false
   script:
     - yarn
