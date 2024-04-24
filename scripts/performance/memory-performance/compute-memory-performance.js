@@ -1,0 +1,100 @@
+const puppeteer = require('puppeteer')
+const BUNDLE_URL = 'https://www.datadoghq-browser-agent.com/datadog-rum-canary.js'
+const NUMBER_OF_RUNS = 1 // Rule of thumb: 30 runs should be enough to get a good average
+const TASK_NAMES = [
+  'RUM - add global context',
+  'RUM - add action',
+  'RUM - add error',
+  'RUM - add timing',
+  'RUM - start view',
+  'RUM - start/stop session replay recording',
+  'Logs - log message',
+]
+
+async function computeMemoryPerformance() {
+  const results = []
+
+  for (let i = 0; i < TASK_NAMES.length; i++) {
+    const sdkTask = TASK_NAMES[i]
+    const allBytesMeasurements = []
+    const allPercentageMeasurements = []
+    for (let j = 0; j < NUMBER_OF_RUNS; j++) {
+      const { medianPercentage, medianBytes } = await runTest(i, sdkTask)
+      allPercentageMeasurements.push(medianPercentage)
+      allBytesMeasurements.push(medianBytes)
+    }
+    const sdkMemoryPercentage = allPercentageMeasurements.reduce((a, b) => a + b, 0) / allPercentageMeasurements.length
+    const sdkMemoryBytes = (allBytesMeasurements.reduce((a, b) => a + b, 0) / allBytesMeasurements.length).toFixed(2)
+    console.log(
+      `Average percentage of memory used by SDK for ${sdkTask} over ${NUMBER_OF_RUNS} runs: ${sdkMemoryPercentage}%  for ${sdkMemoryBytes} bytes`
+    )
+    results.push({ sdkTask, sdkMemoryBytes, sdkMemoryPercentage })
+  }
+  return results
+}
+
+async function runTest(i, buttonName) {
+  const browser = await puppeteer.launch({
+    defaultViewport: { width: 1920, height: 1080 },
+    headless: true,
+  })
+  const page = await browser.newPage()
+  await page.goto('https://datadoghq.dev/browser-sdk-test-playground/performance/')
+
+  // Start the Chrome DevTools Protocol session and enable the heap profiler
+  const client = await page.target().createCDPSession()
+  await client.send('HeapProfiler.enable')
+
+  // Select the button to trigger the sdk task
+  await page.waitForSelector('button')
+  const button = (await page.$$('button'))[i]
+
+  await client.send('HeapProfiler.collectGarbage')
+
+  // Start the heap profiler sampling
+  await client.send('HeapProfiler.startSampling', {
+    samplingInterval: 100,
+  })
+
+  console.log(`Running test for: ${buttonName}`)
+  await button.click()
+  await new Promise((resolve) => setTimeout(resolve, 1000))
+  const { profile } = await client.send('HeapProfiler.stopSampling')
+  const measurementsPercentage = []
+  const measurementsBytes = []
+  const sizeForNodeId = new Map()
+  for (const sample of profile.samples) {
+    sizeForNodeId.set(sample.nodeId, (sizeForNodeId.get(sample.nodeId) || 0) + sample.size)
+    let totalSize = 0
+    let sdkConsumption = 0
+    for (const node of iterNodes(profile.head)) {
+      const consumption = sizeForNodeId.get(node.id) || 0
+      totalSize += consumption
+      if (isSdkBundleUrl(node.callFrame.url)) {
+        sdkConsumption += consumption
+      }
+    }
+    const sdkPercentage = (sdkConsumption / totalSize) * 100
+    measurementsBytes.push(sdkConsumption)
+    measurementsPercentage.push(sdkPercentage)
+  }
+
+  measurementsPercentage.sort((a, b) => a - b)
+  measurementsBytes.sort((a, b) => a - b)
+  const medianPercentage = measurementsPercentage[Math.floor(measurementsPercentage.length / 2)]
+  const medianBytes = measurementsBytes[Math.floor(measurementsBytes.length / 2)]
+  await browser.close()
+  return { medianPercentage, medianBytes }
+}
+
+function* iterNodes(node) {
+  yield node
+  for (const child of node.children || []) {
+    yield* iterNodes(child)
+  }
+}
+function isSdkBundleUrl(url) {
+  return url === BUNDLE_URL
+}
+
+module.exports = { computeMemoryPerformance }
