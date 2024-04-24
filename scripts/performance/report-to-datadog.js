@@ -7,12 +7,20 @@ const LOG_INTAKE_REQUEST_HEADERS = {
   'Content-Type': 'application/json',
 }
 
-async function reportToDatadog(bundleSizes) {
-  const logData = createLogData(bundleSizes, browserSdkVersion)
+async function reportToDatadog(data, dataType) {
+  let logData
+  switch (dataType) {
+    case 'bundleSizes':
+      logData = createBundleSizesLogData(data, browserSdkVersion)
+      break
+    case 'memoryPerformance':
+      logData = createMemoryPerformanceLogData(data, browserSdkVersion)
+      break
+  }
   await sendLogToOrg2(logData)
 }
 
-function createLogData(bundleSizes, browserSdkVersion) {
+function createBundleSizesLogData(bundleSizes, browserSdkVersion) {
   return [
     {
       message: 'Browser SDK bundles sizes',
@@ -26,11 +34,31 @@ function createLogData(bundleSizes, browserSdkVersion) {
     },
   ]
 }
-async function sendLogToOrg2(bundleData = {}) {
+
+function createMemoryPerformanceLogData(memoryPerformance, browserSdkVersion) {
+  const memoryPerformanceData = memoryPerformance.reduce((result, { sdkTask, sdkMemoryBytes, sdkMemoryPercentage }) => {
+    result[sdkTask] = { memory_bytes: sdkMemoryBytes, memory_percentage: sdkMemoryPercentage }
+    return result
+  }, {})
+  return [
+    {
+      message: 'Memory performance',
+      service: 'browser-sdk',
+      ddsource: 'browser-sdk',
+      env: 'ci',
+      ...memoryPerformanceData,
+      version: browserSdkVersion,
+      commit: process.env.CI_COMMIT_SHORT_SHA,
+      branch: process.env.CI_COMMIT_REF_NAME,
+    },
+  ]
+}
+
+async function sendLogToOrg2(logData = []) {
   await fetchHandlingError(LOG_INTAKE_URL, {
     method: 'POST',
     headers: LOG_INTAKE_REQUEST_HEADERS,
-    body: JSON.stringify(bundleData),
+    body: JSON.stringify(logData),
   })
 }
 
