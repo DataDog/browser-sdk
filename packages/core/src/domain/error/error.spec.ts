@@ -1,8 +1,8 @@
 import { clocksNow } from '../../tools/utils/timeUtils'
-import { createHandlingStack, computeRawError, getFileFromStackTraceString, flattenErrorCauses } from './error'
+import type { StackTrace } from '../../tools/stackTrace/computeStackTrace'
+import { computeRawError, getFileFromStackTraceString, flattenErrorCauses } from './error'
 import type { RawErrorCause, ErrorWithCause } from './error.types'
 import { ErrorHandling, ErrorSource, NonErrorPrefix } from './error.types'
-import type { StackTrace } from './computeStackTrace'
 
 describe('computeRawError', () => {
   const ERROR_INSTANCE = new TypeError('oh snap!')
@@ -264,27 +264,6 @@ describe('getFileFromStackTraceString', () => {
 
   it('should get undefined if no source file is in the stack', () => {
     expect(getFileFromStackTraceString('TypeError: oh snap!')).not.toBeDefined()
-  })
-})
-
-describe('createHandlingStack', () => {
-  let handlingStack: string
-  function internalCall() {
-    handlingStack = createHandlingStack()
-  }
-  function userCallTwo() {
-    internalCall()
-  }
-  function userCallOne() {
-    userCallTwo()
-  }
-
-  it('should create handling stack trace without internal calls', () => {
-    userCallOne()
-
-    expect(handlingStack).toMatch(`Error: 
-  at userCallTwo @ (.*)
-  at userCallOne @ (.*)`)
   })
 })
 
