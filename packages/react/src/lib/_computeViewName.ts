@@ -1,4 +1,4 @@
-import type { RouteMatch } from '../entries/types'
+import type { RouteMatch } from '../react-router/types'
 
 // Compute view name out of routeMatches
 export function _computeViewName(routeMatches: RouteMatch[] = []) {
