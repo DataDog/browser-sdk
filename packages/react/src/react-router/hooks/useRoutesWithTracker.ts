@@ -8,11 +8,11 @@ export const useRoutesWithTracker = (
   routes: RouteObject[],
   computeViewName: typeof _computeViewName = _computeViewName
 ) => {
-  const { datadogReactRum } = React.useContext(DatadogContext)
+  const { datadogBrowserSdk } = React.useContext(DatadogContext)
   const location = useLocation()
 
   React.useEffect(() => {
-    if (datadogReactRum === undefined) {
+    if (datadogBrowserSdk === undefined) {
       return
     }
 
@@ -21,7 +21,7 @@ export const useRoutesWithTracker = (
     // eslint-disable-next-line
     const viewName = computeViewName(routeMatches as any)
     // eslint-disable-next-line @typescript-eslint/no-unsafe-call
-    datadogReactRum.startView(viewName)
+    datadogBrowserSdk.startView(viewName)
   }, [location.pathname])
 
   const element = useRoutes(routes)

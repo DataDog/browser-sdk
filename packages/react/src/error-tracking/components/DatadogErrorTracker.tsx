@@ -15,14 +15,14 @@ export class DatadogErrorTracker<P, S> extends React.Component<DatadogErrorTrack
   }
 
   componentDidCatch(error: Error, info: ErrorInfo) {
-    const { datadogReactRum } = this.context as React.ContextType<typeof DatadogContext>
+    const { datadogBrowserSdk } = this.context as React.ContextType<typeof DatadogContext>
     const renderingError = new Error(error.message)
     renderingError.name = 'ReactRenderingError'
     renderingError.stack = info.componentStack ?? undefined
     if ('cause' in renderingError) {
       renderingError.cause = error
     }
-    datadogReactRum?.addError(renderingError, {
+    datadogBrowserSdk?.addError(renderingError, {
       framework: 'react',
     })
   }

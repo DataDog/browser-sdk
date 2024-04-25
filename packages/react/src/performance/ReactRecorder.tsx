@@ -70,7 +70,7 @@ export const ReactRecorder = ({
   children?: React.ReactNode
   burstDebounce?: number
 }) => {
-  const { datadogReactRum } = React.useContext(DatadogContext)
+  const { datadogBrowserSdk } = React.useContext(DatadogContext)
 
   const isFirstRender = React.useRef(true)
 
@@ -103,9 +103,9 @@ export const ReactRecorder = ({
     <>
       <LifeCycle
         onRender={() => {
-          if (datadogReactRum !== undefined && 'startDurationVital' in datadogReactRum) {
+          if (datadogBrowserSdk !== undefined && 'startDurationVital' in datadogBrowserSdk) {
             // @ts-expect-error experimental-feature
-            datadogReactRum.startDurationVital(`render-${componentName}`, {
+            datadogBrowserSdk.startDurationVital(`render-${componentName}`, {
               startTime: Date.now(),
               context: {
                 component: componentName,
@@ -123,9 +123,9 @@ export const ReactRecorder = ({
         onRender={() => {}}
         onLayoutEffect={() => {}}
         onEffect={() => {
-          if (datadogReactRum !== undefined && 'stopDurationVital' in datadogReactRum) {
+          if (datadogBrowserSdk !== undefined && 'stopDurationVital' in datadogBrowserSdk) {
             // @ts-expect-error experimental-feature
-            datadogReactRum.stopDurationVital(`render-${componentName}`, {
+            datadogBrowserSdk.stopDurationVital(`render-${componentName}`, {
               startTime: Date.now(),
               context: {
                 component: componentName,

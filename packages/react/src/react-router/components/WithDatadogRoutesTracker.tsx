@@ -8,10 +8,10 @@ export const WithDatadogRoutesTracker =
   (props: { computeViewName?: typeof _computeViewName; children?: React.ReactNode } = {}) => {
     const { computeViewName = _computeViewName, children } = props
     const location = useLocation()
-    const { datadogReactRum } = React.useContext(DatadogContext)
+    const { datadogBrowserSdk } = React.useContext(DatadogContext)
 
     React.useEffect(() => {
-      if (datadogReactRum === undefined) {
+      if (datadogBrowserSdk === undefined) {
         return
       }
       const routes = createRoutesFromChildren(children)
@@ -21,7 +21,7 @@ export const WithDatadogRoutesTracker =
       // eslint-disable-next-line
       const viewName = computeViewName(routeMatches as any)
       // eslint-disable-next-line @typescript-eslint/no-unsafe-call
-      datadogReactRum.startView(viewName)
+      datadogBrowserSdk.startView(viewName)
     }, [location])
 
     // @ts-ignore TODO: fix this

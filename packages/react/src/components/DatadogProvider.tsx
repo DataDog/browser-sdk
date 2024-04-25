@@ -4,10 +4,10 @@ import { DatadogContext } from '../lib/datadogContext'
 
 interface DatadogProviderProps {
   children?: React.ReactNode
-  datadogReactRum: RumPublicApi
+  datadogBrowserSdk: RumPublicApi
 }
 
-export const DatadogProvider = ({ children, datadogReactRum }: DatadogProviderProps) => {
-  const stableContextValue = React.useMemo(() => ({ datadogReactRum }), [datadogReactRum])
+export const DatadogProvider = ({ children, datadogBrowserSdk }: DatadogProviderProps) => {
+  const stableContextValue = React.useMemo(() => ({ datadogBrowserSdk }), [datadogBrowserSdk])
   return <DatadogContext.Provider value={stableContextValue}>{children}</DatadogContext.Provider>
 }
