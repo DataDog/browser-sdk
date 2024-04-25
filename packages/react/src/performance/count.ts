@@ -1,6 +1,6 @@
 export const countState: Record<string, number> = {}
 
-export const count = ({ name, value, context }: { name: string; value?: number; context?: object }) => {
+export const count = ({ name, value }: { name: string; value?: number; context?: object }) => {
   if (countState[name] === undefined) {
     countState[name] = 0
   }
@@ -10,7 +10,4 @@ export const count = ({ name, value, context }: { name: string; value?: number; 
     return
   }
   countState[name]++
-
-  /* eslint-disable no-console */
-  console.log('>>> Count', name, value, context)
 }

@@ -1,23 +1,23 @@
-import { datadogRum } from '@datadog/browser-rum'
+import type { RumPublicApi } from '@datadog/browser-rum-core'
 import { _computeViewName } from '../lib/_computeViewName'
 import type { RouteMatch, Router, RouterState } from './types'
 
 export const createDatadogReactRouter = <T extends Router>(
   router: T,
+  datadogBrowserSdk: RumPublicApi,
   computeViewName: (routeMatches: RouteMatch[]) => string = _computeViewName
 ) => {
   router.subscribe((state: RouterState) => {
-    const internalContext = datadogRum.getInternalContext()
+    const internalContext = datadogBrowserSdk.getInternalContext()
     const viewName = computeViewName(state.matches)
     if (internalContext?.view?.name === viewName) {
       return
     }
-    datadogRum.startView(viewName)
+    datadogBrowserSdk.startView(viewName)
   })
   return router
 }
 
-export const datadogReactRum = datadogRum
 export { WithDatadogRoutesTracker } from '../react-router/components/WithDatadogRoutesTracker'
 export { DatadogProvider } from '../components/DatadogProvider'
 export { useRoutesWithTracker } from '../react-router/hooks/useRoutesWithTracker'
