@@ -124,7 +124,7 @@ function createMessage(
   cpuLocalPerformance
 ) {
   let message =
-    '<details>\n<summary>📦 Bundle Size</summary>\n\n| Bundle Name | Base Size | Local Size | 𝚫 | 𝚫% | Status |\n| --- | --- | --- | --- | --- | :---: |\n'
+    '📦 Bundle Size\n\n| Bundle Name | Base Size | Local Size | 𝚫 | 𝚫% | Status |\n| --- | --- | --- | --- | --- | :---: |\n'
   let highIncreaseDetected = false
   differenceBundle.forEach((diff, index) => {
     const baseSize = formatSize(baseBundleSizes[index].value)
@@ -159,14 +159,13 @@ function createMessage(
 
   message += '\n\n<details>\n<summary>🧠 Memory Performance</summary>\n\n'
   message +=
-    '| Action Name | Base Average Memory (bytes) | Local Average Memory (bytes) | 𝚫 |\n| --- | --- | --- | --- |\n'
+    '| Action Name | Base Consumption Memory (bytes) | Local Consumption Memory (bytes) | 𝚫 |\n| --- | --- | --- | --- |\n'
   memoryBasePerformance.forEach((memoryActionPerformance, index) => {
     const localMemoryPerf = memoryPerformance[index]
     const diffMemoryPerf = differenceMemory[index]
-    const baseMemoryTaskValue =
-      memoryActionPerformance.value !== null ? memoryActionPerformance.value.toFixed(3) : 'N/A'
-    const localMemoryTaskValue = localMemoryPerf.value !== null ? localMemoryPerf.value.toFixed(3) : 'N/A'
-    const diffMemoryTaskValue = diffMemoryPerf.change !== null ? diffMemoryPerf.change.toFixed(3) : 'N/A'
+    const baseMemoryTaskValue = memoryActionPerformance.value !== null ? memoryActionPerformance.value : 'N/A'
+    const localMemoryTaskValue = localMemoryPerf.value !== null ? localMemoryPerf.value : 'N/A'
+    const diffMemoryTaskValue = diffMemoryPerf.change !== null ? diffMemoryPerf.change : 'N/A'
     message += `| ${memoryActionPerformance.name} | ${baseMemoryTaskValue} | ${localMemoryTaskValue} | ${diffMemoryTaskValue} |\n`
   })
   message += '\n</details>\n'
