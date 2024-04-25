@@ -1,11 +1,13 @@
 const { fetchHandlingError } = require('../lib/execution-utils')
 const { getOrg2ApiKey } = require('../lib/secrets')
+const { timeout } = require('../lib/execution-utils')
 const { browserSdkVersion } = require('../lib/browser-sdk-version')
 const LOG_INTAKE_URL = 'https://http-intake.logs.datadoghq.com/api/v2/logs'
 const LOG_INTAKE_REQUEST_HEADERS = {
   'DD-API-KEY': getOrg2ApiKey(),
   'Content-Type': 'application/json',
 }
+const TIMEOUT_IN_MS = 15000
 
 async function reportToDatadog(data, dataType) {
   let logData
@@ -61,6 +63,8 @@ async function sendLogToOrg2(logData = []) {
     headers: LOG_INTAKE_REQUEST_HEADERS,
     body: JSON.stringify(logData),
   })
+  // Wait for logs ingestion
+  await timeout(TIMEOUT_IN_MS)
 }
 
 function formatTaskName(taskName) {

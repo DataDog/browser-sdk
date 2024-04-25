@@ -124,7 +124,7 @@ function createMessage(
   cpuLocalPerformance
 ) {
   let message =
-    '📦 Bundle Size\n\n| Bundle Name | Base Size | Local Size | 𝚫 | 𝚫% | Status |\n| --- | --- | --- | --- | --- | :---: |\n'
+    '|📦 Bundle Name | Base Size | Local Size | 𝚫 | 𝚫% | Status |\n| --- | --- | --- | --- | --- | :---: |\n'
   let highIncreaseDetected = false
   differenceBundle.forEach((diff, index) => {
     const baseSize = formatSize(baseBundleSizes[index].value)
