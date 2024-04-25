@@ -8,6 +8,6 @@ module.exports = (_env, argv) =>
     entry: path.resolve(__dirname, 'src/entries/main.ts'),
     filename: 'datadog-react-rum.js',
     resolve: {
-      modules: ['node_modules', './src']
-    }
+      modules: ['node_modules', './src'],
+    },
   })
