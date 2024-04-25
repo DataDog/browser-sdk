@@ -21,10 +21,15 @@ export interface LogsMessage {
 }
 
 export const StatusType = {
+  OK: 'OK',
   debug: 'debug',
-  error: 'error',
   info: 'info',
+  notice: 'notice',
   warn: 'warn',
+  error: 'error',
+  critical: 'critical',
+  alert: 'alert',
+  emerg: 'emerg',
 } as const
 
 export type StatusType = (typeof StatusType)[keyof typeof StatusType]
@@ -95,6 +100,10 @@ export class Logger {
     )
   }
 
+  OK(message: string, messageContext?: object, error?: Error) {
+    this.log(message, messageContext, StatusType.OK, error)
+  }
+
   debug(message: string, messageContext?: object, error?: Error) {
     this.log(message, messageContext, StatusType.debug, error)
   }
@@ -103,12 +112,28 @@ export class Logger {
     this.log(message, messageContext, StatusType.info, error)
   }
 
+  notice(message: string, messageContext?: object, error?: Error) {
+    this.log(message, messageContext, StatusType.notice, error)
+  }
+
   warn(message: string, messageContext?: object, error?: Error) {
     this.log(message, messageContext, StatusType.warn, error)
   }
 
   error(message: string, messageContext?: object, error?: Error) {
     this.log(message, messageContext, StatusType.error, error)
+  }
+
+  critical(message: string, messageContext?: object, error?: Error) {
+    this.log(message, messageContext, StatusType.critical, error)
+  }
+
+  alert(message: string, messageContext?: object, error?: Error) {
+    this.log(message, messageContext, StatusType.alert, error)
+  }
+
+  emerg(message: string, messageContext?: object, error?: Error) {
+    this.log(message, messageContext, StatusType.emerg, error)
   }
 
   setContext(context: object) {

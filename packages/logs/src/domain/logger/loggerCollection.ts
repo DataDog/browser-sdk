@@ -1,4 +1,4 @@
-import type { Context, TimeStamp } from '@datadog/browser-core'
+import type { ConsoleApiName, Context, TimeStamp } from '@datadog/browser-core'
 import {
   includes,
   combine,
@@ -14,10 +14,15 @@ import type { Logger, LogsMessage } from '../logger'
 import { StatusType, HandlerType } from '../logger'
 
 export const STATUS_PRIORITIES: { [key in StatusType]: number } = {
-  [StatusType.debug]: 0,
-  [StatusType.info]: 1,
-  [StatusType.warn]: 2,
-  [StatusType.error]: 3,
+  [StatusType.OK]: 0,
+  [StatusType.debug]: 1,
+  [StatusType.info]: 2,
+  [StatusType.notice]: 4,
+  [StatusType.warn]: 5,
+  [StatusType.error]: 6,
+  [StatusType.critical]: 7,
+  [StatusType.alert]: 8,
+  [StatusType.emerg]: 9,
 }
 
 export function startLoggerCollection(lifeCycle: LifeCycle) {
@@ -60,6 +65,22 @@ export function isAuthorized(status: StatusType, handlerType: HandlerType, logge
   )
 }
 
-function displayInConsole(logsMessage: LogsMessage, messageContext: Context | undefined) {
-  originalConsoleMethods[logsMessage.status].call(globalConsole, logsMessage.message, messageContext)
+function displayInConsole({ message, status }: LogsMessage, messageContext: Context | undefined) {
+  const display = (api: ConsoleApiName) => originalConsoleMethods[api].call(globalConsole, message, messageContext)
+
+  switch (status) {
+    case 'OK':
+      display('debug')
+      break
+    case 'notice':
+      display('info')
+      break
+    case 'critical':
+    case 'alert':
+    case 'emerg':
+      display('error')
+      break
+    default:
+      display(status)
+  }
 }
