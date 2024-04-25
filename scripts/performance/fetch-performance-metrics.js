@@ -11,10 +11,16 @@ async function fetchMetric(type, name, commitId) {
   const date = now - 30 * ONE_DAY_IN_SECOND
   let query = ''
 
-  if (type === 'bundle') {
-    query = `avg:bundle_sizes.${name}{commit:${commitId}}&from=${date}&to=${now}`
-  } else if (type === 'cpu') {
-    query = `avg:cpu.sdk.${name}.performance.average{commitid:${commitId}}&from=${date}&to=${now}`
+  switch (type) {
+    case 'bundle':
+      query = `avg:bundle_sizes.${name}{commit:${commitId}}&from=${date}&to=${now}`
+      break
+    case 'cpu':
+      query = `avg:cpu.sdk.${name}.performance.average{commitid:${commitId}}&from=${date}&to=${now}`
+      break
+    case 'memory':
+      query = `avg:memory.sdk.${name}.performance.bytes{commitid:${commitId}}&from=${date}&to=${now}`
+      break
   }
 
   const response = await fetchHandlingError(`https://api.datadoghq.com/api/v1/query?query=${query}`, {

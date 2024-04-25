@@ -64,7 +64,7 @@ async function sendLogToOrg2(logData = []) {
 }
 
 function formatTaskName(taskName) {
-  return taskName.replace(/ - /g, '_').replace(/ /g, '').toLowerCase()
+  return taskName.replace(/ - /g, '_').replace(/ /g, '').replace(/\//g, '').toLowerCase()
 }
 
 module.exports = {

@@ -2,7 +2,7 @@ const puppeteer = require('puppeteer')
 const BUNDLE_URL = 'https://www.datadoghq-browser-agent.com/datadog-rum-canary.js'
 const NUMBER_OF_RUNS = 1 // Rule of thumb: 30 runs should be enough to get a good average
 const TASK_DURATION = 1000
-const TASK_NAMES = [
+const ACTION_NAMES = [
   'RUM - add global context',
   'RUM - add action',
   'RUM - add error',
@@ -15,8 +15,8 @@ const TASK_NAMES = [
 async function computeMemoryPerformance() {
   const results = []
 
-  for (let i = 0; i < TASK_NAMES.length; i++) {
-    const sdkTask = TASK_NAMES[i]
+  for (let i = 0; i < ACTION_NAMES.length; i++) {
+    const sdkTask = ACTION_NAMES[i]
     const allBytesMeasurements = []
     const allPercentageMeasurements = []
     for (let j = 0; j < NUMBER_OF_RUNS; j++) {

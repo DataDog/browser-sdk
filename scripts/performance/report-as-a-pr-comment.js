@@ -28,14 +28,20 @@ async function reportAsPrComment(localBundleSizes) {
   const baseBundleSizes = await fetchPerformanceMetrics('bundle', packageNames, lastCommonCommit)
   const cpuBasePerformance = await fetchPerformanceMetrics('cpu', ACTION_NAMES, lastCommonCommit)
   const cpuLocalPerformance = await fetchPerformanceMetrics('cpu', ACTION_NAMES, LOCAL_COMMIT_SHA)
+  const memoryBasePerformance = await fetchPerformanceMetrics('memory', ACTION_NAMES, lastCommonCommit)
+  const memoryLocalPerformance = await fetchPerformanceMetrics('memory', ACTION_NAMES, LOCAL_COMMIT_SHA)
+  const differenceMemory = compare(memoryBasePerformance, memoryLocalPerformance)
   const differenceBundle = compare(baseBundleSizes, localBundleSizes)
   const differenceCpu = compare(cpuBasePerformance, cpuLocalPerformance)
   const commentId = await retrieveExistingCommentId(pr.number)
   const message = createMessage(
     differenceBundle,
+    differenceMemory,
     differenceCpu,
     baseBundleSizes,
     localBundleSizes,
+    memoryBasePerformance,
+    memoryLocalPerformance,
     cpuBasePerformance,
     cpuLocalPerformance
   )
@@ -108,14 +114,17 @@ async function updateOrAddComment(message, prNumber, commentId) {
 
 function createMessage(
   differenceBundle,
+  differenceMemory,
   differenceCpu,
   baseBundleSizes,
   localBundleSizes,
+  memoryBasePerformance,
+  memoryPerformance,
   cpuBasePerformance,
   cpuLocalPerformance
 ) {
   let message =
-    '| 📦 Bundle Name| Base Size | Local Size | 𝚫 | 𝚫% | Status |\n| --- | --- | --- | --- | --- | :---: |\n'
+    '<details>\n<summary>📦 Bundle Size</summary>\n\n| Bundle Name | Base Size | Local Size | 𝚫 | 𝚫% | Status |\n| --- | --- | --- | --- | --- | :---: |\n'
   let highIncreaseDetected = false
   differenceBundle.forEach((diff, index) => {
     const baseSize = formatSize(baseBundleSizes[index].value)
@@ -129,11 +138,13 @@ function createMessage(
     }
     message += `| ${formatBundleName(diff.name)} | ${baseSize} | ${localSize} | ${diffSize} | ${sign}${diff.percentageChange}% | ${status} |\n`
   })
+  message += '</details>\n\n'
 
   if (highIncreaseDetected) {
     message += `\n⚠️ The increase is particularly high and exceeds ${SIZE_INCREASE_THRESHOLD}%. Please check the changes.`
   }
-  message += '\n\n<details>\n<summary>🚀 CPU Performance</summary>\n\n\n'
+
+  message += '\n\n<details>\n<summary>🚀 CPU Performance</summary>\n\n'
   message +=
     '| Action Name | Base Average Cpu Time (ms) | Local Average Cpu Time (ms) | 𝚫 |\n| --- | --- | --- | --- |\n'
   cpuBasePerformance.forEach((cpuActionPerformance, index) => {
@@ -143,6 +154,20 @@ function createMessage(
     const localCpuTaskValue = localCpuPerf.value !== null ? localCpuPerf.value.toFixed(3) : 'N/A'
     const diffCpuTaskValue = diffCpuPerf.change !== null ? diffCpuPerf.change.toFixed(3) : 'N/A'
     message += `| ${cpuActionPerformance.name} | ${baseCpuTaskValue} | ${localCpuTaskValue} | ${diffCpuTaskValue} |\n`
+  })
+  message += '\n</details>\n'
+
+  message += '\n\n<details>\n<summary>🧠 Memory Performance</summary>\n\n'
+  message +=
+    '| Action Name | Base Average Memory (bytes) | Local Average Memory (bytes) | 𝚫 |\n| --- | --- | --- | --- |\n'
+  memoryBasePerformance.forEach((memoryActionPerformance, index) => {
+    const localMemoryPerf = memoryPerformance[index]
+    const diffMemoryPerf = differenceMemory[index]
+    const baseMemoryTaskValue =
+      memoryActionPerformance.value !== null ? memoryActionPerformance.value.toFixed(3) : 'N/A'
+    const localMemoryTaskValue = localMemoryPerf.value !== null ? localMemoryPerf.value.toFixed(3) : 'N/A'
+    const diffMemoryTaskValue = diffMemoryPerf.change !== null ? diffMemoryPerf.change.toFixed(3) : 'N/A'
+    message += `| ${memoryActionPerformance.name} | ${baseMemoryTaskValue} | ${localMemoryTaskValue} | ${diffMemoryTaskValue} |\n`
   })
   message += '\n</details>\n'
 
