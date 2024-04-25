@@ -12,6 +12,7 @@ const DEFAULT_ID = 'session-id'
 const enum SessionStatus {
   TRACKED_WITH_SESSION_REPLAY,
   TRACKED_WITHOUT_SESSION_REPLAY,
+  TRACKED_WITH_FORCED_SESSION_REPLAY,
   NOT_TRACKED,
   EXPIRED,
 }
@@ -23,13 +24,15 @@ export function createRumSessionManagerMock(): RumSessionManagerMock {
     findTrackedSession() {
       if (
         sessionStatus !== SessionStatus.TRACKED_WITH_SESSION_REPLAY &&
-        sessionStatus !== SessionStatus.TRACKED_WITHOUT_SESSION_REPLAY
+        sessionStatus !== SessionStatus.TRACKED_WITHOUT_SESSION_REPLAY &&
+        sessionStatus !== SessionStatus.TRACKED_WITH_FORCED_SESSION_REPLAY
       ) {
         return undefined
       }
       return {
         id,
-        sessionReplayAllowed: sessionStatus === SessionStatus.TRACKED_WITH_SESSION_REPLAY,
+        sampledForReplay: sessionStatus === SessionStatus.TRACKED_WITH_SESSION_REPLAY,
+        sessionReplayAllowed: sessionStatus === SessionStatus.TRACKED_WITH_SESSION_REPLAY || sessionStatus === SessionStatus.TRACKED_WITH_FORCED_SESSION_REPLAY,
       }
     },
     expire() {

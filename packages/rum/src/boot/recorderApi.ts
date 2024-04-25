@@ -183,7 +183,7 @@ export function makeRecorderApi(
           }
         })
 
-        if (options?.force && !session.sessionReplayAllowed) {
+        if (options?.force && !session.sampledForReplay) {
           sessionManager.setTrackingType(RumTrackingType.TRACKED_WITH_FORCED_SESSION_REPLAY)
         }
       }

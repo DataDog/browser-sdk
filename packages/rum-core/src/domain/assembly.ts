@@ -178,7 +178,7 @@ export function startRumAssembly(
           ;(serverRumEvent.session as Mutable<RumEvent['session']>).has_replay = commonContext.hasReplay
         }
         if (serverRumEvent.type === 'view') {
-          ;(serverRumEvent.session as Mutable<RumEvent['session']>).sampled_for_replay = session.sessionReplayAllowed
+          ;(serverRumEvent.session as Mutable<RumEvent['session']>).sampled_for_replay = session.sampledForReplay
         }
 
         if (!isEmptyObject(commonContext.user)) {
