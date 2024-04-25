@@ -37,12 +37,13 @@ function createBundleSizesLogData(bundleSizes, browserSdkVersion) {
 
 function createMemoryPerformanceLogData(memoryPerformance, browserSdkVersion) {
   const memoryPerformanceData = memoryPerformance.reduce((result, { sdkTask, sdkMemoryBytes, sdkMemoryPercentage }) => {
-    result[sdkTask] = { memory_bytes: sdkMemoryBytes, memory_percentage: sdkMemoryPercentage }
+    const transformedTaskName = formatTaskName(sdkTask)
+    result[transformedTaskName] = { memory_bytes: sdkMemoryBytes, memory_percentage: sdkMemoryPercentage }
     return result
   }, {})
   return [
     {
-      message: 'Memory performance',
+      message: 'Memory performance SDK',
       service: 'browser-sdk',
       ddsource: 'browser-sdk',
       env: 'ci',
@@ -60,6 +61,10 @@ async function sendLogToOrg2(logData = []) {
     headers: LOG_INTAKE_REQUEST_HEADERS,
     body: JSON.stringify(logData),
   })
+}
+
+function formatTaskName(taskName) {
+  return taskName.replace(/ - /g, '_').replace(/ /g, '').toLowerCase()
 }
 
 module.exports = {

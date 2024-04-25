@@ -1,6 +1,7 @@
 const puppeteer = require('puppeteer')
 const BUNDLE_URL = 'https://www.datadoghq-browser-agent.com/datadog-rum-canary.js'
 const NUMBER_OF_RUNS = 1 // Rule of thumb: 30 runs should be enough to get a good average
+const TASK_DURATION = 1000
 const TASK_NAMES = [
   'RUM - add global context',
   'RUM - add action',
@@ -61,7 +62,7 @@ async function runTest(i, buttonName) {
 
   console.log(`Running test for: ${buttonName}`)
   await button.click()
-  await new Promise((resolve) => setTimeout(resolve, 1000))
+  await new Promise((resolve) => setTimeout(resolve, TASK_DURATION))
   const { profile } = await client.send('HeapProfiler.stopSampling')
   const measurementsPercentage = []
   const measurementsBytes = []
