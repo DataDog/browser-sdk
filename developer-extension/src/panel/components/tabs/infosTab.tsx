@@ -41,7 +41,8 @@ export function InfosTab() {
                     infos.cookie.rum,
                     'Not tracked',
                     'Tracked with Session Replay',
-                    'Tracked without Session Replay'
+                    'Tracked without Session Replay',
+                    'Tracked with Forced Session Replay'
                   )
                 }
               />

@@ -14,7 +14,7 @@ import type {
   RumSessionManager,
   RecorderApi,
   RumConfiguration,
-  StartStrategyOptions,
+  StartRecordingOptions,
 } from '@datadog/browser-rum-core'
 import { LifeCycleEventType, RumTrackingType } from '@datadog/browser-rum-core'
 import { getReplayStats as getReplayStatsImpl } from '../domain/replayStats'
@@ -58,7 +58,7 @@ type RecorderState =
       stopRecording: () => void
     }
 
-type StartStrategyFn = (options?: StartStrategyOptions) => void
+type StartStrategyFn = (options?: StartRecordingOptions) => void
 
 export function makeRecorderApi(
   startRecordingImpl: StartRecording,
@@ -88,7 +88,7 @@ export function makeRecorderApi(
   let getSessionReplayLinkStrategy = noop as () => string | undefined
 
   return {
-    start: (options?: StartStrategyOptions) => startStrategy(options),
+    start: (options?: StartRecordingOptions) => startStrategy(options),
     stop: () => stopStrategy(),
     getSessionReplayLink: () => getSessionReplayLinkStrategy(),
     onRumStart: (
@@ -142,11 +142,11 @@ export function makeRecorderApi(
         return cachedDeflateEncoder
       }
 
-      startStrategy = (options?: StartStrategyOptions) => {
+      startStrategy = (options?: StartRecordingOptions) => {
         const session = sessionManager.findTrackedSession()
         // If session is undefined (untracked), recording should not start
         // If session is not sampled for replay and not being forced, recording should not start
-        if (!session || (!session.sessionReplayAllowed && !options?.forceStart)) {
+        if (!session || (!session.sessionReplayAllowed && !options?.force)) {
           state = { status: RecorderStatus.IntentToStart }
           return
         }
@@ -183,9 +183,8 @@ export function makeRecorderApi(
           }
         })
 
-        // Updating cookie to reflect that session recording was forced
-        if (options?.forceStart && !session.sessionReplayAllowed) {
-          sessionManager.updateSessionInStore({ rum: RumTrackingType.TRACKED_WITH_FORCED_REPLAY })
+        if (options?.force && !session.sessionReplayAllowed) {
+          sessionManager.setTrackingType(RumTrackingType.TRACKED_WITH_FORCED_SESSION_REPLAY)
         }
       }
 

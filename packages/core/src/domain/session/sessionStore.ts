@@ -21,7 +21,7 @@ export interface SessionStore {
   expireObservable: Observable<void>
   expire: () => void
   stop: () => void
-  updateSessionInStore: (state: Partial<SessionState>) => void
+  updateSession: (state: Partial<SessionState>) => void
 }
 
 /**
@@ -181,7 +181,7 @@ export function startSessionStore<TrackingType extends string>(
     renewObservable.notify()
   }
 
-  function updateSessionInStore(updatedState: Partial<SessionState>) {
+  function updateSession(updatedState: Partial<SessionState>) {
     processSessionStoreOperations(
       {
         process: (sessionState) => assign({}, sessionState, updatedState),
@@ -206,6 +206,6 @@ export function startSessionStore<TrackingType extends string>(
     stop: () => {
       clearInterval(watchSessionTimeoutId)
     },
-    updateSessionInStore,
+    updateSession,
   }
 }

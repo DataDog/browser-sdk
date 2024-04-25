@@ -16,7 +16,7 @@ export interface SessionManager<TrackingType extends string> {
   renewObservable: Observable<void>
   expireObservable: Observable<void>
   expire: () => void
-  updateSessionInStore: (state: Partial<SessionState>) => void
+  updateSession: (state: Partial<SessionState>) => void
 }
 
 export interface SessionContext<TrackingType extends string> extends Context {
@@ -86,7 +86,7 @@ export function startSessionManager<TrackingType extends string>(
     renewObservable,
     expireObservable,
     expire: sessionStore.expire,
-    updateSessionInStore: sessionStore.updateSessionInStore,
+    updateSession: sessionStore.updateSession,
   }
 }
 

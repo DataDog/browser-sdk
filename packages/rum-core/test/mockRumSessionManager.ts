@@ -53,6 +53,6 @@ export function createRumSessionManagerMock(): RumSessionManagerMock {
       sessionStatus = SessionStatus.TRACKED_WITH_SESSION_REPLAY
       return this
     },
-    updateSessionInStore: () => {},
+    setTrackingType: () => {},
   }
 }

@@ -825,7 +825,7 @@ describe('recorder', () => {
       .withSetup(bundleSetup)
       .run(async ({ intakeRegistry }) => {
         await browserExecute(() => {
-          window.DD_RUM!.startSessionReplayRecording({ forceStart: true })
+          window.DD_RUM!.startSessionReplayRecording({ force: true })
         })
 
         await flushEvents()

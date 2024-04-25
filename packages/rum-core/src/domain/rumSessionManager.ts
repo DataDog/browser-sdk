@@ -1,4 +1,4 @@
-import type { RelativeTime, TrackingConsentState, SessionState } from '@datadog/browser-core'
+import type { RelativeTime, TrackingConsentState } from '@datadog/browser-core'
 import {
   BridgeCapability,
   Observable,
@@ -17,7 +17,7 @@ export interface RumSessionManager {
   findTrackedSession: (startTime?: RelativeTime) => RumSession | undefined
   expire: () => void
   expireObservable: Observable<void>
-  updateSessionInStore: (state: Partial<SessionState>) => void
+  setTrackingType: (trackingType: RumTrackingType) => void
 }
 
 export type RumSession = {
@@ -29,7 +29,7 @@ export const enum RumTrackingType {
   NOT_TRACKED = '0',
   TRACKED_WITH_SESSION_REPLAY = '1',
   TRACKED_WITHOUT_SESSION_REPLAY = '2',
-  TRACKED_WITH_FORCED_REPLAY = '3',
+  TRACKED_WITH_FORCED_SESSION_REPLAY = '3',
 }
 
 export function startRumSessionManager(
@@ -65,7 +65,7 @@ export function startRumSessionManager(
     },
     expire: sessionManager.expire,
     expireObservable: sessionManager.expireObservable,
-    updateSessionInStore: sessionManager.updateSessionInStore,
+    setTrackingType: (trackingType: RumTrackingType) => sessionManager.updateSession({ rum: trackingType }),
   }
 }
 
@@ -81,7 +81,7 @@ export function startRumSessionManagerStub(): RumSessionManager {
     findTrackedSession: () => session,
     expire: noop,
     expireObservable: new Observable(),
-    updateSessionInStore: noop,
+    setTrackingType: noop,
   }
 }
 
@@ -107,7 +107,7 @@ function hasValidRumSession(trackingType?: string): trackingType is RumTrackingT
     trackingType === RumTrackingType.NOT_TRACKED ||
     trackingType === RumTrackingType.TRACKED_WITH_SESSION_REPLAY ||
     trackingType === RumTrackingType.TRACKED_WITHOUT_SESSION_REPLAY ||
-    trackingType === RumTrackingType.TRACKED_WITH_FORCED_REPLAY
+    trackingType === RumTrackingType.TRACKED_WITH_FORCED_SESSION_REPLAY
   )
 }
 
@@ -115,6 +115,6 @@ function isTypeTracked(rumSessionType: RumTrackingType | undefined) {
   return (
     rumSessionType === RumTrackingType.TRACKED_WITHOUT_SESSION_REPLAY ||
     rumSessionType === RumTrackingType.TRACKED_WITH_SESSION_REPLAY ||
-    rumSessionType === RumTrackingType.TRACKED_WITH_FORCED_REPLAY
+    rumSessionType === RumTrackingType.TRACKED_WITH_FORCED_SESSION_REPLAY
   )
 }
