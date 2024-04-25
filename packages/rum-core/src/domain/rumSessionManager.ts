@@ -62,7 +62,9 @@ export function startRumSessionManager(
       return {
         id: session.id,
         sampledForReplay: session.trackingType === RumTrackingType.TRACKED_WITH_SESSION_REPLAY,
-        sessionReplayAllowed: session.trackingType === RumTrackingType.TRACKED_WITH_SESSION_REPLAY || session.trackingType === RumTrackingType.TRACKED_WITH_FORCED_SESSION_REPLAY,
+        sessionReplayAllowed:
+          session.trackingType === RumTrackingType.TRACKED_WITH_SESSION_REPLAY ||
+          session.trackingType === RumTrackingType.TRACKED_WITH_FORCED_SESSION_REPLAY,
       }
     },
     expire: sessionManager.expire,
