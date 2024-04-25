@@ -19,7 +19,7 @@ async function fetchMetric(type, name, commitId) {
       query = `avg:cpu.sdk.${name}.performance.average{commitid:${commitId}}&from=${date}&to=${now}`
       break
     case 'memory':
-      query = `avg:memory.sdk.${name}.performance.bytes{commitid:${commitId}}&from=${date}&to=${now}`
+      query = `avg:memory.sdk.${name}.performance.bytes{commit:${commitId}}&from=${date}&to=${now}`
       break
   }
 
