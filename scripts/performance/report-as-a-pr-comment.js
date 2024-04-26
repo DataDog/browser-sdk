@@ -17,7 +17,7 @@ const ACTION_NAMES = [
   'addglobalcontext',
 ]
 
-async function reportAsPrComment(localBundleSizes) {
+async function reportAsPrComment(localBundleSizes, memoryLocalPerformance) {
   const lastCommonCommit = getLastCommonCommit(BASE_BRANCH, LOCAL_BRANCH)
   const pr = await fetchPR(LOCAL_BRANCH)
   if (!pr) {
@@ -25,11 +25,12 @@ async function reportAsPrComment(localBundleSizes) {
     return
   }
   const packageNames = Object.keys(localBundleSizes)
+  const actionNames = Object.keys(memoryLocalPerformance).map((key) => key.replace('rum_', ''))
+  console.log(actionNames)
   const baseBundleSizes = await fetchPerformanceMetrics('bundle', packageNames, lastCommonCommit)
-  const cpuBasePerformance = await fetchPerformanceMetrics('cpu', ACTION_NAMES, lastCommonCommit)
-  const cpuLocalPerformance = await fetchPerformanceMetrics('cpu', ACTION_NAMES, LOCAL_COMMIT_SHA)
-  const memoryBasePerformance = await fetchPerformanceMetrics('memory', ACTION_NAMES, lastCommonCommit)
-  const memoryLocalPerformance = await fetchPerformanceMetrics('memory', ACTION_NAMES, LOCAL_COMMIT_SHA)
+  const cpuBasePerformance = await fetchPerformanceMetrics('cpu', actionNames, lastCommonCommit)
+  const cpuLocalPerformance = await fetchPerformanceMetrics('cpu', actionNames, LOCAL_COMMIT_SHA)
+  const memoryBasePerformance = await fetchPerformanceMetrics('memory', actionNames, lastCommonCommit)
   const differenceMemory = compare(memoryBasePerformance, memoryLocalPerformance)
   const differenceBundle = compare(baseBundleSizes, localBundleSizes)
   const differenceCpu = compare(cpuBasePerformance, cpuLocalPerformance)
@@ -119,7 +120,7 @@ function createMessage(
   baseBundleSizes,
   localBundleSizes,
   memoryBasePerformance,
-  memoryPerformance,
+  memoryLocalPerformance,
   cpuBasePerformance,
   cpuLocalPerformance
 ) {
@@ -161,7 +162,7 @@ function createMessage(
   message +=
     '| Action Name | Base Consumption Memory (bytes) | Local Consumption Memory (bytes) | 𝚫 |\n| --- | --- | --- | --- |\n'
   memoryBasePerformance.forEach((memoryActionPerformance, index) => {
-    const localMemoryPerf = memoryPerformance[index]
+    const localMemoryPerf = memoryLocalPerformance[index]
     const diffMemoryPerf = differenceMemory[index]
     const baseMemoryTaskValue = memoryActionPerformance.value !== null ? memoryActionPerformance.value : 'N/A'
     const localMemoryTaskValue = localMemoryPerf.value !== null ? localMemoryPerf.value : 'N/A'

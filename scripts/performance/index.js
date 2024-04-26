@@ -7,9 +7,9 @@ const { computeMemoryPerformance } = require('./memory-performance/compute-memor
 
 runMain(async () => {
   const localBundleSizes = calculateBundleSizes()
-  const memoryPerformance = await computeMemoryPerformance()
+  const localMemoryPerformance = await computeMemoryPerformance()
   await computeCpuPerformance()
-  await reportToDatadog(memoryPerformance, 'memoryPerformance')
+  await reportToDatadog(localMemoryPerformance, 'memoryPerformance')
   await reportToDatadog(localBundleSizes, 'bundleSizes')
-  await reportAsPrComment(localBundleSizes, memoryPerformance)
+  await reportAsPrComment(localBundleSizes, localMemoryPerformance)
 })
