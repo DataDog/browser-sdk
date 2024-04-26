@@ -12,8 +12,23 @@ import React from 'react'
 import { App } from './components/app'
 import { initMonitoring } from './monitoring'
 
+mockDevtoolsApiForTests()
+
 const main = document.createElement('main')
 document.body.append(main)
 const root = createRoot(main)
 root.render(<App />)
 initMonitoring()
+
+/**
+ * Allow to display the extension panel outside of chrome devtools for testing
+ */
+function mockDevtoolsApiForTests() {
+  if (!chrome.devtools) {
+    chrome.devtools = {
+      inspectedWindow: {
+        tabId: 0,
+      },
+    } as any
+  }
+}
