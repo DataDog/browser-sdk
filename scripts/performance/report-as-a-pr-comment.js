@@ -151,12 +151,15 @@ function createMessage(
   message += '\n\n<details>\n<summary>🧠 Memory Performance</summary>\n\n'
   message +=
     '| Action Name | Base Consumption Memory (bytes) | Local Consumption Memory (bytes) | 𝚫 |\n| --- | --- | --- | --- |\n'
-  memoryBasePerformance.forEach((memoryActionPerformance, index) => {
-    const localMemoryPerf = memoryLocalPerformance[index]
-    const diffMemoryPerf = differenceMemory[index]
-    const baseMemoryTaskValue = memoryActionPerformance.value !== null ? memoryActionPerformance.value : 'N/A'
-    const localMemoryTaskValue = localMemoryPerf.value !== null ? localMemoryPerf.value : 'N/A'
-    const diffMemoryTaskValue = diffMemoryPerf.change !== null ? diffMemoryPerf.change : 'N/A'
+  differenceMemory.forEach((memoryActionPerformance, index) => {
+    const baseMemoryPerf = memoryBasePerformance[index]
+    const localMemoryPerf = memoryLocalPerformance.find(
+      (perf) => formatActionName(perf.sdkTask) === memoryActionPerformance.name
+    )
+    const baseMemoryTaskValue = baseMemoryPerf.value !== null ? baseMemoryPerf.value : 'N/A'
+    const localMemoryTaskValue =
+      localMemoryPerf && localMemoryPerf.sdkMemoryBytes !== null ? localMemoryPerf.sdkMemoryBytes : 'N/A'
+    const diffMemoryTaskValue = memoryActionPerformance.change !== null ? memoryActionPerformance.change : 'N/A'
     message += `| ${memoryActionPerformance.name} | ${baseMemoryTaskValue} | ${localMemoryTaskValue} | ${diffMemoryTaskValue} |\n`
   })
   message += '\n</details>\n'
@@ -172,7 +175,13 @@ function formatBundleName(bundleName) {
 }
 
 function formatActionName(taskName) {
-  return taskName.replace('RUM - ', '').replace(/ - /g, '_').replace(/ /g, '').replace(/\//g, '').toLowerCase()
+  return taskName
+    .replace('RUM - ', '')
+    .replace('Logs - ', '')
+    .replace(/ - /g, '_')
+    .replace(/ /g, '')
+    .replace(/\//g, '')
+    .toLowerCase()
 }
 
 function formatSize(bytes) {
