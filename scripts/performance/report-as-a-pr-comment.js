@@ -7,15 +7,6 @@ const PR_COMMENTER_AUTH_TOKEN = command`authanywhere`.run().split(' ')[2].trim()
 // The value is set to 5% as it's around 10 times the average value for small PRs.
 const SIZE_INCREASE_THRESHOLD = 5
 const LOCAL_COMMIT_SHA = process.env.CI_COMMIT_SHORT_SHA
-const ACTION_NAMES = [
-  'adderror',
-  'addaction',
-  'logmessage',
-  'startview',
-  'startstopsessionreplayrecording',
-  'addtiming',
-  'addglobalcontext',
-]
 
 async function reportAsPrComment(localBundleSizes, memoryLocalPerformance) {
   const lastCommonCommit = getLastCommonCommit(BASE_BRANCH, LOCAL_BRANCH)
@@ -25,7 +16,11 @@ async function reportAsPrComment(localBundleSizes, memoryLocalPerformance) {
     return
   }
   const packageNames = Object.keys(localBundleSizes)
-  const actionNames = Object.keys(memoryLocalPerformance).map((key) => key.replace('rum_', ''))
+  const actionNames = Object.keys(memoryLocalPerformance).reduce((result, key) => {
+    const formatedActionName = formatActionName(key)
+    result[formatedActionName] = memoryLocalPerformance[key]
+    return result
+  }, {})
   console.log(actionNames)
   const baseBundleSizes = await fetchPerformanceMetrics('bundle', packageNames, lastCommonCommit)
   const cpuBasePerformance = await fetchPerformanceMetrics('cpu', actionNames, lastCommonCommit)
@@ -179,6 +174,10 @@ function formatBundleName(bundleName) {
     .split('_')
     .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
     .join(' ')
+}
+
+function formatActionName(taskName) {
+  return taskName.replace('rum_', '')
 }
 
 function formatSize(bytes) {
