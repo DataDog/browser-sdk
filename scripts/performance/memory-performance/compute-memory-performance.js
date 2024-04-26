@@ -1,6 +1,6 @@
 const puppeteer = require('puppeteer')
 const BUNDLE_URL = 'https://www.datadoghq-browser-agent.com/datadog-rum-canary.js'
-const NUMBER_OF_RUNS = 1 // Rule of thumb: 30 runs should be enough to get a good average
+const NUMBER_OF_RUNS = 40 // Rule of thumb: 30 runs should be enough to get a good average
 const TASK_DURATION = 1000
 const ACTION_NAMES = [
   'RUM - add global context',
