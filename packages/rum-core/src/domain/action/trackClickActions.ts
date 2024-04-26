@@ -82,26 +82,24 @@ export function trackClickActions(
   lifeCycle.subscribe(LifeCycleEventType.VIEW_ENDED, stopClickChain)
 
   const { stop: stopActionEventsListener } = listenActionEvents<{
-    clickActionBase: ClickActionBase | undefined
+    clickActionBase: ClickActionBase
     hadActivityOnPointerDown: () => boolean
   }>(configuration, {
     onPointerDown: (pointerDownEvent) =>
       processPointerDown(configuration, lifeCycle, domMutationObservable, pointerDownEvent),
     onPointerUp: ({ clickActionBase, hadActivityOnPointerDown }, startEvent, getUserActivity) => {
-      if (clickActionBase) {
-        startClickAction(
-          configuration,
-          lifeCycle,
-          domMutationObservable,
-          history,
-          stopObservable,
-          appendClickToClickChain,
-          clickActionBase,
-          startEvent,
-          getUserActivity,
-          hadActivityOnPointerDown
-        )
-      }
+      startClickAction(
+        configuration,
+        lifeCycle,
+        domMutationObservable,
+        history,
+        stopObservable,
+        appendClickToClickChain,
+        clickActionBase,
+        startEvent,
+        getUserActivity,
+        hadActivityOnPointerDown
+      )
     },
   })
 
@@ -145,7 +143,7 @@ function processPointerDown(
   // When the node is set to hidden, we do not track click action
   // Make sure everything has been done before return
   if (privacyLevel === NodePrivacyLevel.HIDDEN && configuration.enablePrivacyForActionName) {
-    return { clickActionBase: undefined, hadActivityOnPointerDown: () => false }
+    return undefined
   }
   const privacyEnabledForActionName =
     privacyLevel === DefaultPrivacyLevel.MASK && configuration.enablePrivacyForActionName
@@ -234,7 +232,7 @@ function computeClickActionBase(
   event: MouseEventOnElement,
   privacyEnabledForActionName: boolean,
   actionNameAttribute?: string
-): ClickActionBase | undefined {
+): ClickActionBase {
   const rect = event.target.getBoundingClientRect()
 
   const { name: actionName, masked } = getActionNameFromElement(
