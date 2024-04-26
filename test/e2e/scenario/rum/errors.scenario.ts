@@ -2,7 +2,7 @@ import type { RumErrorEvent } from '@datadog/browser-rum-core'
 import { createTest, flushEvents, html } from '../../lib/framework'
 import { getBrowserName, getPlatformName, withBrowserLogs } from '../../lib/helpers/browser'
 
-// Note: using `browserExecute` to throw exceptions may result in "Script error." being reported,
+// Note: using `browser.execute` to throw exceptions may result in "Script error." being reported,
 // because WDIO is evaluating the script in a different context than the page.
 function createBody(errorGenerator: string) {
   return html`
