@@ -16,12 +16,7 @@ async function reportAsPrComment(localBundleSizes, memoryLocalPerformance) {
     return
   }
   const packageNames = Object.keys(localBundleSizes)
-  const actionNames = Object.keys(memoryLocalPerformance).reduce((result, key) => {
-    const formatedActionName = formatActionName(key)
-    result[formatedActionName] = memoryLocalPerformance[key]
-    return result
-  }, {})
-  console.log(actionNames)
+  const actionNames = memoryLocalPerformance.map((obj) => formatActionName(obj.sdkTask))
   const baseBundleSizes = await fetchPerformanceMetrics('bundle', packageNames, lastCommonCommit)
   const cpuBasePerformance = await fetchPerformanceMetrics('cpu', actionNames, lastCommonCommit)
   const cpuLocalPerformance = await fetchPerformanceMetrics('cpu', actionNames, LOCAL_COMMIT_SHA)
@@ -177,7 +172,7 @@ function formatBundleName(bundleName) {
 }
 
 function formatActionName(taskName) {
-  return taskName.replace('rum_', '')
+  return taskName.replace('RUM - ', '').replace(/ - /g, '_').replace(/ /g, '').replace(/\//g, '').toLowerCase()
 }
 
 function formatSize(bytes) {
