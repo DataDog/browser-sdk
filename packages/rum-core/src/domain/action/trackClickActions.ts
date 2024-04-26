@@ -140,7 +140,21 @@ function processPointerDown(
   domMutationObservable: Observable<void>,
   pointerDownEvent: MouseEventOnElement
 ) {
-  const clickActionBase = computeClickActionBase(pointerDownEvent, configuration)
+  const privacyLevel = getNodePrivacyLevel(pointerDownEvent.target, configuration.defaultPrivacyLevel)
+
+  // When the node is set to hidden, we do not track click action
+  // Make sure everything has been done before return
+  if (privacyLevel === NodePrivacyLevel.HIDDEN && configuration.enablePrivacyForActionName) {
+    return { clickActionBase: undefined, hadActivityOnPointerDown: () => false }
+  }
+  const privacyEnabledForActionName =
+    privacyLevel === DefaultPrivacyLevel.MASK && configuration.enablePrivacyForActionName
+
+  const clickActionBase = computeClickActionBase(
+    pointerDownEvent,
+    privacyEnabledForActionName,
+    configuration.actionNameAttribute
+  )
 
   let hadActivityOnPointerDown = false
 
@@ -218,29 +232,21 @@ type ClickActionBase = Pick<ClickAction, 'type' | 'name' | 'target' | 'position'
 
 function computeClickActionBase(
   event: MouseEventOnElement,
-  configuration: RumConfiguration
+  privacyEnabledForActionName: boolean,
+  actionNameAttribute?: string
 ): ClickActionBase | undefined {
   const rect = event.target.getBoundingClientRect()
-  const privacyLevel = getNodePrivacyLevel(event.target, configuration.defaultPrivacyLevel)
 
-  // When the node is set to hidden, we do not track click action
-  // Make sure everything has been done before return
-  if (privacyLevel === NodePrivacyLevel.HIDDEN && configuration.enablePrivacyForActionName) {
-    return
-  }
-
-  const privacyEnabledForActionName =
-    privacyLevel === DefaultPrivacyLevel.MASK && configuration.enablePrivacyForActionName
   const { name: actionName, masked } = getActionNameFromElement(
     event.target,
-    configuration.actionNameAttribute,
+    actionNameAttribute,
     privacyEnabledForActionName
   )
 
   const target = {
     width: Math.round(rect.width),
     height: Math.round(rect.height),
-    selector: getSelectorFromElement(event.target, configuration.actionNameAttribute),
+    selector: getSelectorFromElement(event.target, actionNameAttribute),
   }
 
   return {
