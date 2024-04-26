@@ -234,7 +234,7 @@ export function makeRumPublicApi(startRumImpl: StartRum, recorderApi: RecorderAp
     }),
 
     addError: (error: unknown, context?: object) => {
-      const handlingStack = createHandlingStack()
+      const handlingStack = createHandlingStack(2)
       callMonitored(() => {
         strategy.addError({
           error, // Do not sanitize error here, it is needed unserialized by computeRawError()

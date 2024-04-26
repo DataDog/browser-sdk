@@ -19,6 +19,7 @@ export interface XhrStartContext extends Omit<XhrOpenContext, 'state'> {
   startClocks: ClocksState
   isAborted: boolean
   xhr: XMLHttpRequest
+  handlingStack: string
 }
 
 export interface XhrCompleteContext extends Omit<XhrStartContext, 'state'> {
@@ -66,7 +67,7 @@ function openXhr({ target: xhr, parameters: [method, url] }: InstrumentedMethodC
 }
 
 function sendXhr(
-  { target: xhr }: InstrumentedMethodCall<XMLHttpRequest, 'send'>,
+  { target: xhr, handlingStack }: InstrumentedMethodCall<XMLHttpRequest, 'send'>,
   configuration: Configuration,
   observable: Observable<XhrContext>
 ) {
@@ -80,6 +81,7 @@ function sendXhr(
   startContext.startClocks = clocksNow()
   startContext.isAborted = false
   startContext.xhr = xhr
+  startContext.handlingStack = handlingStack
 
   let hasBeenReported = false
 

@@ -7,7 +7,8 @@ import {
   ResourceType,
   ExperimentalFeature,
 } from '@datadog/browser-core'
-import type { RumFetchResourceEventDomainContext } from '../../domainContext.types'
+import { mockExperimentalFeatures } from '@datadog/browser-core/test'
+import type { RumFetchResourceEventDomainContext, RumXhrResourceEventDomainContext } from '../../domainContext.types'
 import { setup, createRumSessionManagerMock, createPerformanceEntry } from '../../../test'
 import type { TestSetupBuilder } from '../../../test'
 import type { RawRumResourceEvent } from '../../rawRumEvent.types'
@@ -456,6 +457,37 @@ describe('resourceCollection', () => {
       expect(privateFields.rule_psr).toEqual(0)
     })
   })
+
+  describe('with micro-frontend feature flag enabled', () => {
+    const HANDLING_STACK_REGEX = /^Error: \n\s+at <anonymous> @/
+
+    beforeEach(() => {
+      mockExperimentalFeatures([ExperimentalFeature.MICRO_FRONTEND])
+    })
+
+    it('should collect handlingStack from completed fetch request', () => {
+      if (isIE()) {
+        pending('No IE support')
+      }
+
+      const { lifeCycle, rawRumEvents } = setupBuilder.build()
+      const response = new Response()
+      lifeCycle.notify(LifeCycleEventType.REQUEST_COMPLETED, createCompletedRequest({ response }))
+      const domainContext = rawRumEvents[0].domainContext as RumFetchResourceEventDomainContext
+
+      expect(domainContext.handlingStack).toMatch(HANDLING_STACK_REGEX)
+    })
+
+    it('should collect handlingStack from completed XHR request', () => {
+      const { lifeCycle, rawRumEvents } = setupBuilder.build()
+      const xhr = new XMLHttpRequest()
+      lifeCycle.notify(LifeCycleEventType.REQUEST_COMPLETED, createCompletedRequest({ xhr }))
+
+      const domainContext = rawRumEvents[0].domainContext as RumXhrResourceEventDomainContext
+
+      expect(domainContext.handlingStack).toMatch(HANDLING_STACK_REGEX)
+    })
+  })
 })
 
 function createCompletedRequest(details?: Partial<RequestCompleteEvent>): RequestCompleteEvent {
@@ -466,6 +498,8 @@ function createCompletedRequest(details?: Partial<RequestCompleteEvent>): Reques
     status: 200,
     type: RequestType.XHR,
     url: 'https://resource.com/valid',
+    handlingStack:
+      'Error: \n  at <anonymous> @ http://localhost/foo.js:1:2\n    at <anonymous> @ http://localhost/vendor.js:1:2',
     ...details,
   }
   return request as RequestCompleteEvent

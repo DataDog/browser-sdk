@@ -104,7 +104,7 @@ function processRequest(
     correspondingTimingOverrides,
     pageStateInfo
   )
-  return {
+  const collectedData = {
     startTime: startClocks.relative,
     rawRumEvent: resourceEvent,
     domainContext: {
@@ -117,6 +117,12 @@ function processRequest(
       isAborted: request.isAborted,
     } as RumFetchResourceEventDomainContext | RumXhrResourceEventDomainContext,
   }
+
+  if (isExperimentalFeatureEnabled(ExperimentalFeature.MICRO_FRONTEND)) {
+    collectedData.domainContext.handlingStack = request.handlingStack
+  }
+
+  return collectedData
 }
 
 function processResourceEntry(

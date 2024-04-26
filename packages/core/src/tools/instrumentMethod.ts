@@ -2,6 +2,7 @@ import { setTimeout } from './timer'
 import { callMonitored } from './monitor'
 import { noop } from './utils/functionUtils'
 import { arrayFrom, startsWith } from './utils/polyfills'
+import { createHandlingStack } from './stackTrace/handlingStack'
 
 /**
  * Object passed to the callback of an instrumented method call. See `instrumentMethod` for more
@@ -25,6 +26,8 @@ export type InstrumentedMethodCall<TARGET extends { [key: string]: any }, METHOD
    * result passed as argument.
    */
   onPostCall: (callback: PostCallCallback<TARGET, METHOD>) => void
+
+  handlingStack: string
 }
 
 type PostCallCallback<TARGET extends { [key: string]: any }, METHOD extends keyof TARGET> = (
@@ -116,6 +119,7 @@ function createInstrumentedMethod<TARGET extends { [key: string]: any }, METHOD 
         onPostCall: (callback) => {
           postCallCallback = callback
         },
+        handlingStack: createHandlingStack(3),
       },
     ])
 

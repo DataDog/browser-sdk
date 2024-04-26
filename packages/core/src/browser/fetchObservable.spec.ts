@@ -1,9 +1,11 @@
-import type { FetchStub, FetchStubManager, FetchStubPromise } from '../../test'
+import type { FetchStubManager, FetchStubPromise } from '../../test'
 import { stubFetch } from '../../test'
 import { isIE } from '../tools/utils/browserDetection'
 import type { Subscription } from '../tools/observable'
 import type { FetchResolveContext, FetchContext } from './fetchObservable'
 import { initFetchObservable } from './fetchObservable'
+
+const HANDLING_STACK_REGEX = /^Error: \n\s+at fetchStub @/
 
 describe('fetch proxy', () => {
   const FAKE_URL = 'http://fake-url/'
@@ -29,7 +31,9 @@ describe('fetch proxy', () => {
         requests.push(context)
       }
     })
-    fetchStub = window.fetch as FetchStub
+    fetchStub = function fetchStub(...args): FetchStubPromise {
+      return window.fetch(...args) as FetchStubPromise
+    }
   })
 
   afterEach(() => {
@@ -47,6 +51,7 @@ describe('fetch proxy', () => {
       expect(request.url).toEqual(FAKE_URL)
       expect(request.status).toEqual(500)
       expect(request.isAborted).toBe(false)
+      expect(request.handlingStack).toMatch(HANDLING_STACK_REGEX)
       done()
     })
   })
@@ -61,6 +66,7 @@ describe('fetch proxy', () => {
       expect(request.status).toEqual(0)
       expect(request.isAborted).toBe(false)
       expect(request.error).toEqual(new Error('fetch error'))
+      expect(request.handlingStack).toMatch(HANDLING_STACK_REGEX)
       done()
     })
   })
@@ -75,6 +81,7 @@ describe('fetch proxy', () => {
       expect(request.status).toEqual(0)
       expect(request.isAborted).toBe(true)
       expect(request.error).toEqual(new DOMException('The user aborted a request', 'AbortError'))
+      expect(request.handlingStack).toMatch(HANDLING_STACK_REGEX)
       done()
     })
   })

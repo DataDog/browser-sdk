@@ -33,12 +33,14 @@ export interface RumFetchResourceEventDomainContext {
   error?: Error
   performanceEntry?: PerformanceEntry
   isAborted: boolean
+  handlingStack?: string
 }
 
 export interface RumXhrResourceEventDomainContext {
   xhr: XMLHttpRequest
   performanceEntry?: PerformanceEntry
   isAborted: boolean
+  handlingStack?: string
 }
 
 export interface RumOtherResourceEventDomainContext {

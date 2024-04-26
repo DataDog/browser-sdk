@@ -1,6 +1,6 @@
 import type { Payload } from '@datadog/browser-core'
 import { isIE, RequestType } from '@datadog/browser-core'
-import type { FetchStub, FetchStubManager } from '@datadog/browser-core/test'
+import type { FetchStub, FetchStubManager, FetchStubPromise } from '@datadog/browser-core/test'
 import { SPEC_ENDPOINTS, stubFetch, stubXhr, withXhr } from '@datadog/browser-core/test'
 import type { RumConfiguration } from './configuration'
 import { validateAndBuildRumConfiguration } from './configuration'
@@ -20,6 +20,7 @@ describe('collect fetch', () => {
   let startSpy: jasmine.Spy<(requestStartEvent: RequestStartEvent) => void>
   let completeSpy: jasmine.Spy<(requestCompleteEvent: RequestCompleteEvent) => void>
   let stopFetchTracking: () => void
+  const HANDLING_STACK_REGEX = /^Error: \n\s+at fetchStub @/
 
   beforeEach(() => {
     if (isIE()) {
@@ -46,7 +47,9 @@ describe('collect fetch', () => {
     }
     ;({ stop: stopFetchTracking } = trackFetch(lifeCycle, configuration, tracerStub as Tracer))
 
-    fetchStub = window.fetch as FetchStub
+    fetchStub = function fetchStub(...args): FetchStubPromise {
+      return window.fetch(...args) as FetchStubPromise
+    }
     window.onunhandledrejection = (ev: PromiseRejectionEvent) => {
       throw new Error(`unhandled rejected promise \n    ${ev.reason as string}`)
     }
@@ -77,6 +80,7 @@ describe('collect fetch', () => {
       expect(request.method).toEqual('GET')
       expect(request.url).toEqual(FAKE_URL)
       expect(request.status).toEqual(200)
+      expect(request.handlingStack).toMatch(HANDLING_STACK_REGEX)
       done()
     })
   })
@@ -91,6 +95,7 @@ describe('collect fetch', () => {
       expect(request.method).toEqual('GET')
       expect(request.url).toEqual(FAKE_URL)
       expect(request.status).toEqual(200)
+      expect(request.handlingStack).toMatch(HANDLING_STACK_REGEX)
       done()
     })
   })
@@ -105,6 +110,7 @@ describe('collect fetch', () => {
       expect(request.method).toEqual('GET')
       expect(request.url).toEqual(FAKE_URL)
       expect(request.status).toEqual(200)
+      expect(request.handlingStack).toMatch(HANDLING_STACK_REGEX)
       done()
     })
   })
@@ -119,6 +125,7 @@ describe('collect fetch', () => {
       expect(request.method).toEqual('GET')
       expect(request.url).toEqual(FAKE_URL)
       expect(request.status).toEqual(500)
+      expect(request.handlingStack).toMatch(HANDLING_STACK_REGEX)
       done()
     })
   })
@@ -191,6 +198,7 @@ describe('collect xhr', () => {
   let completeSpy: jasmine.Spy<(requestCompleteEvent: RequestCompleteEvent) => void>
   let stubXhrManager: { reset(): void }
   let stopXhrTracking: () => void
+  const HANDLING_STACK_REGEX = /^Error: \n\s+at setup @/
 
   beforeEach(() => {
     if (isIE()) {
@@ -253,6 +261,7 @@ describe('collect xhr', () => {
         expect(request.method).toEqual('GET')
         expect(request.url).toContain('/ok')
         expect(request.status).toEqual(200)
+        expect(request.handlingStack).toMatch(HANDLING_STACK_REGEX)
         done()
       },
     })
