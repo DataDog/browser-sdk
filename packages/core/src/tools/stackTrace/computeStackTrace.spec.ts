@@ -1,4 +1,4 @@
-import { isSafari } from '../../tools/utils/browserDetection'
+import { isSafari } from '../utils/browserDetection'
 import * as CapturedExceptions from './capturedExceptions.specHelper'
 import { computeStackTrace } from './computeStackTrace'
 
