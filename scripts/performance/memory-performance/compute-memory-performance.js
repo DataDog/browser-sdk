@@ -1,5 +1,5 @@
 const puppeteer = require('puppeteer')
-const BUNDLE_URL = 'https://www.datadoghq-browser-agent.com/datadog-rum-canary.js'
+const { fetchPR, LOCAL_BRANCH } = require('../../lib/git-utils')
 const NUMBER_OF_RUNS = 40 // Rule of thumb: 30 runs should be enough to get a good average
 const TASK_DURATION = 1000
 const ACTION_NAMES = [
@@ -14,13 +14,17 @@ const ACTION_NAMES = [
 
 async function computeMemoryPerformance() {
   const results = []
+  const pr = await fetchPR(LOCAL_BRANCH)
+  const bundleUrl = pr
+    ? `https://www.datadoghq-browser-agent.com/datadog-rum-canary.js?prNumber=${pr.number}`
+    : 'https://www.datadoghq-browser-agent.com/datadog-rum-canary.js'
 
   for (let i = 0; i < ACTION_NAMES.length; i++) {
     const sdkTask = ACTION_NAMES[i]
     const allBytesMeasurements = []
     const allPercentageMeasurements = []
     for (let j = 0; j < NUMBER_OF_RUNS; j++) {
-      const { medianPercentage, medianBytes } = await runTest(i, sdkTask)
+      const { medianPercentage, medianBytes } = await runTest(i, sdkTask, bundleUrl)
       allPercentageMeasurements.push(medianPercentage)
       allBytesMeasurements.push(medianBytes)
     }
@@ -38,12 +42,12 @@ async function computeMemoryPerformance() {
   return results
 }
 
-async function runTest(i, buttonName) {
+async function runTest(i, buttonName, bundleUrl) {
   const browser = await puppeteer.launch({
     args: ['--no-sandbox', '--disable-setuid-sandbox'],
   })
   const page = await browser.newPage()
-  await page.goto('https://datadoghq.dev/browser-sdk-test-playground/performance/')
+  await page.goto(bundleUrl)
 
   // Start the Chrome DevTools Protocol session and enable the heap profiler
   const client = await page.target().createCDPSession()
@@ -74,7 +78,7 @@ async function runTest(i, buttonName) {
     for (const node of iterNodes(profile.head)) {
       const consumption = sizeForNodeId.get(node.id) || 0
       totalSize += consumption
-      if (isSdkBundleUrl(node.callFrame.url)) {
+      if (isSdkBundleUrl(node.callFrame.url, bundleUrl)) {
         sdkConsumption += consumption
       }
     }
@@ -97,8 +101,8 @@ function* iterNodes(node) {
     yield* iterNodes(child)
   }
 }
-function isSdkBundleUrl(url) {
-  return url === BUNDLE_URL
+function isSdkBundleUrl(url, bundleUrl) {
+  return url === bundleUrl
 }
 
 module.exports = { computeMemoryPerformance }
