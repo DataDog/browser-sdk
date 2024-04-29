@@ -1,4 +1,4 @@
-import { isElementNode, getParentNode, isTextNode } from '@datadog/browser-rum-core'
+import { isElementNode, getParentNode, isTextNode } from '../browser/htmlDomUtils'
 import {
   NodePrivacyLevel,
   PRIVACY_ATTR_NAME,
@@ -12,7 +12,7 @@ import {
   PRIVACY_CLASS_HIDDEN,
   FORM_PRIVATE_TAG_NAMES,
   CENSORED_STRING_MARK,
-} from '../../constants'
+} from '../constants'
 
 const TEXT_MASKING_CHAR = 'x'
 

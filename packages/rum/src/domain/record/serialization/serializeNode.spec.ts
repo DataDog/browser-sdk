@@ -15,7 +15,7 @@ import {
   PRIVACY_ATTR_VALUE_HIDDEN,
   PRIVACY_ATTR_VALUE_MASK,
   PRIVACY_ATTR_VALUE_MASK_USER_INPUT,
-} from '../../../constants'
+} from '@datadog/browser-rum-core'
 import type { ElementNode, SerializedNodeWithId } from '../../../types'
 import { NodeType } from '../../../types'
 import { appendElement } from '../../../../../rum-core/test'

@@ -3,346 +3,490 @@ import { getActionNameFromElement } from './getActionNameFromElement'
 
 describe('getActionNameFromElement', () => {
   it('extracts the textual content of an element', () => {
-    expect(getActionNameFromElement(appendElement('<div>Foo <div>bar</div></div>'))).toBe('Foo bar')
+    const { name } = getActionNameFromElement(appendElement('<div>Foo <div>bar</div></div>'))
+    expect(name).toBe('Foo bar')
   })
 
   it('extracts the text of an input button', () => {
-    expect(getActionNameFromElement(appendElement('<input type="button" value="Click" />'))).toBe('Click')
+    const { name } = getActionNameFromElement(appendElement('<input type="button" value="Click" />'))
+    expect(name).toBe('Click')
   })
 
   it('extracts the alt text of an image', () => {
-    expect(getActionNameFromElement(appendElement('<img title="foo" alt="bar" />'))).toBe('bar')
+    const { name } = getActionNameFromElement(appendElement('<img title="foo" alt="bar" />'))
+    expect(name).toBe('bar')
   })
 
   it('extracts the title text of an image', () => {
-    expect(getActionNameFromElement(appendElement('<img title="foo" />'))).toBe('foo')
+    const { name } = getActionNameFromElement(appendElement('<img title="foo" />'))
+    expect(name).toBe('foo')
   })
 
   it('extracts the text of an aria-label attribute', () => {
-    expect(getActionNameFromElement(appendElement('<span aria-label="Foo" />'))).toBe('Foo')
+    const { name } = getActionNameFromElement(appendElement('<span aria-label="Foo" />'))
+    expect(name).toBe('Foo')
   })
 
   it('gets the parent element textual content if everything else fails', () => {
-    expect(getActionNameFromElement(appendElement('<div>Foo <img target /></div>'))).toBe('Foo')
+    const { name } = getActionNameFromElement(appendElement('<div>Foo <img target /></div>'))
+    expect(name).toBe('Foo')
   })
 
   it("doesn't get the value of a text input", () => {
-    expect(getActionNameFromElement(appendElement('<input type="text" value="foo" />'))).toBe('')
+    const { name } = getActionNameFromElement(appendElement('<input type="text" value="foo" />'))
+    expect(name).toBe('')
   })
 
   it("doesn't get the value of a password input", () => {
-    expect(getActionNameFromElement(appendElement('<input type="password" value="foo" />'))).toBe('')
+    const { name } = getActionNameFromElement(appendElement('<input type="password" value="foo" />'))
+    expect(name).toBe('')
   })
 
   it('limits the name length to a reasonable size', () => {
-    expect(
-      getActionNameFromElement(
-        appendElement(
-          '<div>Foooooooooooooooooo baaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaar baaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaz</div>'
-        )
+    const { name } = getActionNameFromElement(
+      appendElement(
+        '<div>Foooooooooooooooooo baaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaar baaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaz</div>'
       )
-    ).toBe('Foooooooooooooooooo baaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa [...]')
+    )
+    expect(name).toBe(
+      'Foooooooooooooooooo baaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa [...]'
+    )
   })
 
   it('normalize white spaces', () => {
-    expect(getActionNameFromElement(appendElement('<div>foo\tbar\n\n  baz</div>'))).toBe('foo bar baz')
+    const { name } = getActionNameFromElement(appendElement('<div>foo\tbar\n\n  baz</div>'))
+    expect(name).toBe('foo bar baz')
   })
 
   it('ignores the inline script textual content', () => {
-    expect(getActionNameFromElement(appendElement("<div><script>console.log('toto')</script>b</div>"))).toBe('b')
+    const { name } = getActionNameFromElement(appendElement("<div><script>console.log('toto')</script>b</div>"))
+    expect(name).toBe('b')
   })
 
   it('extracts text from SVG elements', () => {
-    expect(getActionNameFromElement(appendElement('<svg><text>foo  bar</text></svg>'))).toBe('foo bar')
+    const { name } = getActionNameFromElement(appendElement('<svg><text>foo  bar</text></svg>'))
+    expect(name).toBe('foo bar')
   })
 
   it('extracts text from an associated label', () => {
-    expect(
-      getActionNameFromElement(
-        appendElement(`
-        <div>
-          <label for="toto">label text</label>
-          <div>ignored</div>
-          <input id="toto" target />
-        </div>
-      `)
-      )
-    ).toBe('label text')
+    const { name } = getActionNameFromElement(
+      appendElement(`
+      <div>
+        <label for="toto">label text</label>
+        <div>ignored</div>
+        <input id="toto" target />
+      </div>
+    `)
+    )
+    expect(name).toBe('label text')
   })
 
   it('extracts text from a parent label', () => {
-    expect(
-      getActionNameFromElement(
-        appendElement(`
-        <label>
-          foo
-          <div>
-            bar
-            <input target />
-          </div>
-        </label>
-      `)
-      )
-    ).toBe('foo bar')
+    const { name } = getActionNameFromElement(
+      appendElement(`
+      <label>
+        foo
+        <div>
+          bar
+          <input target />
+        </div>
+      </label>
+    `)
+    )
+    expect(name).toBe('foo bar')
   })
 
   it('extracts text from the first OPTION element when clicking on a SELECT', () => {
-    expect(
-      getActionNameFromElement(
-        appendElement(`
-        <select>
-          <option>foo</option>
-          <option>bar</option>
-        </select>
-      `)
-      )
-    ).toBe('foo')
+    const { name } = getActionNameFromElement(
+      appendElement(`
+      <select>
+        <option>foo</option>
+        <option>bar</option>
+      </select>
+    `)
+    )
+    expect(name).toBe('foo')
   })
 
   it('extracts text from a aria-labelledby associated element', () => {
-    expect(
-      getActionNameFromElement(
-        appendElement(`
-        <div>
-          <label id="toto">label text</label>
-          <div>ignored</div>
-          <input aria-labelledby="toto" target />
-        </div>
-      `)
-      )
-    ).toBe('label text')
+    const { name } = getActionNameFromElement(
+      appendElement(`
+      <div>
+        <label id="toto">label text</label>
+        <div>ignored</div>
+        <input aria-labelledby="toto" target />
+      </div>
+    `)
+    )
+    expect(name).toBe('label text')
   })
 
   it('extracts text from multiple aria-labelledby associated elements', () => {
-    expect(
-      getActionNameFromElement(
-        appendElement(`
-        <div>
-          <label id="toto1">label</label>
-          <div>ignored</div>
-          <input aria-labelledby="toto1 toto2" target />
-          <div>ignored</div>
-          <label id="toto2">text</label>
-        </div>
-      `)
-      )
-    ).toBe('label text')
+    const { name } = getActionNameFromElement(
+      appendElement(`
+      <div>
+        <label id="toto1">label</label>
+        <div>ignored</div>
+        <input aria-labelledby="toto1 toto2" target />
+        <div>ignored</div>
+        <label id="toto2">text</label>
+      </div>
+    `)
+    )
+    expect(name).toBe('label text')
   })
 
   it('extracts text from a BUTTON element', () => {
-    expect(
-      getActionNameFromElement(
-        appendElement(`
-        <div>
-          <div>ignored</div>
-          <button target>foo</button>
-        </div>
-      `)
-      )
-    ).toBe('foo')
+    const { name } = getActionNameFromElement(
+      appendElement(`
+      <div>
+        <div>ignored</div>
+        <button target>foo</button>
+      </div>
+    `)
+    )
+    expect(name).toBe('foo')
   })
 
   it('extracts text from a role=button element', () => {
-    expect(
-      getActionNameFromElement(
-        appendElement(`
-        <div>
-          <div>ignored</div>
-          <div role="button" target>foo</div>
-        </div>
-      `)
-      )
-    ).toBe('foo')
+    const { name } = getActionNameFromElement(
+      appendElement(`
+      <div>
+        <div>ignored</div>
+        <div role="button" target>foo</div>
+      </div>
+    `)
+    )
+    expect(name).toBe('foo')
   })
 
   it('limits the recursion to the 10th parent', () => {
-    expect(
-      getActionNameFromElement(
-        appendElement(`
-        <div>
-          <div>ignored</div>
-          <i><i><i><i><i><i><i><i><i><i>
-            <i target></i>
-          </i></i></i></i></i></i></i></i></i></i>
-        </div>
-      `)
-      )
-    ).toBe('')
+    const { name } = getActionNameFromElement(
+      appendElement(`
+      <div>
+        <div>ignored</div>
+        <i><i><i><i><i><i><i><i><i><i>
+          <i target></i>
+        </i></i></i></i></i></i></i></i></i></i>
+      </div>
+    `)
+    )
+    expect(name).toBe('')
   })
 
   it('limits the recursion to the BODY element', () => {
-    expect(
-      getActionNameFromElement(
-        appendElement(`
-        <div>ignored</div>
-        <i target></i>
-      `)
-      )
-    ).toBe('')
+    const { name } = getActionNameFromElement(
+      appendElement(`
+      <div>ignored</div>
+      <i target></i>
+    `)
+    )
+    expect(name).toBe('')
   })
 
   it('limits the recursion to a FORM element', () => {
-    expect(
-      getActionNameFromElement(
-        appendElement(`
-        <div>
-          <div>ignored</div>
-          <form>
-            <i target></i>
-          </form>
-        </div>
-      `)
-      )
-    ).toBe('')
+    const { name } = getActionNameFromElement(
+      appendElement(`
+      <div>
+        <div>ignored</div>
+        <form>
+          <i target></i>
+        </form>
+      </div>
+    `)
+    )
+    expect(name).toBe('')
   })
 
   it('extracts the name from a parent FORM element', () => {
-    expect(
-      getActionNameFromElement(
-        appendElement(`
-        <div>
-          <div>ignored</div>
-          <form title="foo">
-            <i target></i>
-          </form>
-        </div>
-      `)
-      )
-    ).toBe('foo')
+    const { name } = getActionNameFromElement(
+      appendElement(`
+      <div>
+        <div>ignored</div>
+        <form title="foo">
+          <i target></i>
+        </form>
+      </div>
+    `)
+    )
+    expect(name).toBe('foo')
   })
 
   it('extracts the whole textual content of a button', () => {
-    expect(
-      getActionNameFromElement(
-        appendElement(`
-        <button>
-          foo
-          <i target>bar</i>
-        </button>
-      `)
-      )
-    ).toBe('foo bar')
+    const { name } = getActionNameFromElement(
+      appendElement(`
+      <button>
+        foo
+        <i target>bar</i>
+      </button>
+    `)
+    )
+    expect(name).toBe('foo bar')
   })
 
   it('ignores the textual content of contenteditable elements', () => {
-    expect(
-      getActionNameFromElement(
-        appendElement(`
-        <div contenteditable>
-          <i target>ignored</i>
-          ignored
-        </div>
-      `)
-      )
-    ).toBe('')
+    const { name } = getActionNameFromElement(
+      appendElement(`
+      <div contenteditable>
+        <i target>ignored</i>
+        ignored
+      </div>
+    `)
+    )
+    expect(name).toBe('')
   })
 
   it('extracts the name from attributes of contenteditable elements', () => {
-    expect(
-      getActionNameFromElement(
-        appendElement(`
-        <div contenteditable>
-          <i aria-label="foo" target>ignored</i>
-          ignored
-        </div>
-      `)
-      )
-    ).toBe('foo')
+    const { name } = getActionNameFromElement(
+      appendElement(`
+      <div contenteditable>
+        <i aria-label="foo" target>ignored</i>
+        ignored
+      </div>
+    `)
+    )
+    expect(name).toBe('foo')
   })
 
   it('computes an action name on SVG elements (IE does not support parentElement property on them)', () => {
-    expect(
-      getActionNameFromElement(
-        appendElement(`
-         <button>
-          foo <svg target></svg>
-         <button>
-      `)
-      )
-    ).toBe('foo')
+    const { name } = getActionNameFromElement(
+      appendElement(`
+       <button>
+        foo <svg target></svg>
+       <button>
+    `)
+    )
+    expect(name).toBe('foo')
   })
 
   describe('programmatically declared action name', () => {
     it('extracts the name from the data-dd-action-name attribute', () => {
-      expect(
-        getActionNameFromElement(
-          appendElement(`
-          <div data-dd-action-name="foo">ignored</div>
-        `)
-        )
-      ).toBe('foo')
+      const { name } = getActionNameFromElement(
+        appendElement(`
+        <div data-dd-action-name="foo">ignored</div>
+      `)
+      )
+      expect(name).toBe('foo')
     })
 
     it('considers any parent', () => {
-      const target = appendElement(`
+      const { name } = getActionNameFromElement(
+        appendElement(`
         <form data-dd-action-name="foo">
           <i><i><i><i><i><i><i><i><i><i><i><i>
             <span target>ignored</span>
           </i></i></i></i></i></i></i></i></i></i></i></i>
         </form>
       `)
-      expect(getActionNameFromElement(target)).toBe('foo')
+      )
+      expect(name).toBe('foo')
     })
 
     it('normalizes the value', () => {
-      expect(
-        getActionNameFromElement(
-          appendElement(`
-          <div data-dd-action-name="   foo  \t bar  ">ignored</div>
-        `)
-        )
-      ).toBe('foo bar')
+      const { name } = getActionNameFromElement(
+        appendElement(`
+        <div data-dd-action-name="   foo  \t bar  ">ignored</div>
+      `)
+      )
+      expect(name).toBe('foo bar')
     })
 
     it('fallback on an automatic strategy if the attribute is empty', () => {
-      expect(
-        getActionNameFromElement(
-          appendElement(`
-          <div data-dd-action-name="ignored">
-            <div data-dd-action-name="">
-              <span target>foo</span>
-            </div>
+      const { name } = getActionNameFromElement(
+        appendElement(`
+        <div data-dd-action-name="ignored">
+          <div data-dd-action-name="">
+            <span target>foo</span>
           </div>
-      `)
-        )
-      ).toBe('foo')
+        </div>
+    `)
+      )
+      expect(name).toBe('foo')
     })
 
     it('extracts the name from a user-configured attribute', () => {
-      expect(
-        getActionNameFromElement(
-          appendElement(`
-          <div data-test-id="foo">ignored</div>
-        `),
-          'data-test-id'
-        )
-      ).toBe('foo')
+      const { name } = getActionNameFromElement(
+        appendElement(`
+        <div data-test-id="foo">ignored</div>
+      `),
+        undefined,
+        'data-test-id'
+      )
+      expect(name).toBe('foo')
     })
 
     it('favors data-dd-action-name over user-configured attribute', () => {
-      expect(
-        getActionNameFromElement(
-          appendElement(`
-          <div data-test-id="foo" data-dd-action-name="bar">ignored</div>
-        `),
-          'data-test-id'
-        )
-      ).toBe('bar')
+      const { name } = getActionNameFromElement(
+        appendElement(`
+        <div data-test-id="foo" data-dd-action-name="bar">ignored</div>
+      `),
+        undefined,
+        'data-test-id'
+      )
+      expect(name).toBe('bar')
     })
 
     it('remove children with programmatic action name in textual content', () => {
-      expect(
-        getActionNameFromElement(appendElement('<div>Foo <div data-dd-action-name="custom action">bar<div></div>'))
-      ).toBe('Foo')
+      const { name } = getActionNameFromElement(
+        appendElement('<div>Foo <div data-dd-action-name="custom action">bar<div></div>')
+      )
+
+      expect(name).toBe('Foo')
     })
 
     it('remove children with programmatic action name in textual content based on the user-configured attribute', () => {
+      const { name } = getActionNameFromElement(
+        appendElement('<div>Foo <div data-test-id="custom action">bar<div></div>'),
+        undefined,
+        'data-test-id'
+      )
+      expect(name).toBe('Foo')
+    })
+  })
+
+  describe('with privacyEnabledForActionName', () => {
+    const { name } = getActionNameFromElement(
+      appendElement(`
+        <div data-dd-action-name="foo">
+          <span target>ignored</span>
+        </div>
+  `),
+      false
+    )
+    it('extracts attribute text when privacyEnabledActionName is false', () => {
+      expect(name).toBe('foo')
+    })
+
+    it('extracts user defined attribute text when privacyEnabledActionName is false', () => {
+      const { name } = getActionNameFromElement(
+        appendElement(`
+          <div data-test-id="foo">
+            <span target>ignored</span>
+          </div>
+    `),
+        false,
+        'data-test-id'
+      )
+      expect(name).toBe('foo')
+    })
+
+    it('extracts inner text when privacyEnabledActionName is false and custom action name set to empty', () => {
+      const { name } = getActionNameFromElement(
+        appendElement(`
+          <div data-test-id="">
+            <span target>foo</span>
+          </div>
+    `),
+        false,
+        'data-test-id'
+      )
+      expect(name).toBe('foo')
+    })
+
+    it('returns placeholder when privacyEnabledActionName is true and custom action name set to empty', () => {
       expect(
         getActionNameFromElement(
-          appendElement('<div>Foo <div data-test-id="custom action">bar<div></div>'),
+          appendElement(`
+            <div data-test-id="">
+              <span target>foo</span>
+            </div>
+      `),
+          true,
           'data-test-id'
         )
-      ).toBe('Foo')
+      ).toEqual({ name: 'Masked Element', masked: true })
+    })
+
+    it('extracts default attribute text when privacyEnabledActionName is true', () => {
+      expect(
+        getActionNameFromElement(
+          appendElement(`
+            <div data-dd-action-name="foo">
+              <span target>ignored</span>
+            </div>
+      `),
+          true
+        )
+      ).toEqual({ name: 'foo', masked: false })
+    })
+
+    it('extracts user defined attribute text when privacyEnabledActionName is true', () => {
+      expect(
+        getActionNameFromElement(
+          appendElement(`
+            <div data-test-id="foo">
+              <span target>ignored</span>
+            </div>
+      `),
+          true,
+          'data-test-id'
+        )
+      ).toEqual({ name: 'foo', masked: false })
+    })
+
+    describe('with html tag privacy override', () => {
+      it('extracts inner text when privacyEnabledActionName is true and privacy level is allow', () => {
+        expect(
+          getActionNameFromElement(
+            appendElement(`
+              <div data-dd-privacy="allow">
+                <span target>foo</span>
+              </div>
+        `),
+            true
+          )
+        ).toEqual({ name: 'foo', masked: false })
+      })
+
+      it('returns placeholder when privacyEnabledActionName is true and privacy level is mask', () => {
+        expect(
+          getActionNameFromElement(
+            appendElement(`
+              <div data-dd-privacy="mask">
+                <span target>foo</span>
+              </div>
+        `),
+            true
+          )
+        ).toEqual({ name: 'Masked Element', masked: true })
+      })
+
+      it('inherent privacy level and does not fallback to masked child text when privacyEnabledActionName is true', () => {
+        expect(
+          getActionNameFromElement(
+            appendElement(`
+              <div data-dd-privacy="allow">
+                bar
+                <div target>
+                  foo
+                  <div data-dd-privacy="mask">
+                    <span>secret</span>
+                  </div>
+                </div>
+              </div>
+        `),
+            true
+          )
+        ).toEqual({ name: 'foo', masked: false })
+      })
+    })
+    it('fallback to children but not the masked one when privacyEnabledActionName is true', () => {
+      expect(
+        getActionNameFromElement(
+          appendElement(`
+            <div data-dd-privacy="allow" target>
+              bar
+              <div>
+                foo
+                <div data-dd-privacy="mask">
+                  <span>secret</span>
+                </div>
+              </div>
+            </div>
+      `),
+          true
+        )
+      ).toEqual({ name: 'bar foo', masked: false })
     })
   })
 })
