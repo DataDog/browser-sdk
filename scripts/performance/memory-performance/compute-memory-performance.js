@@ -19,12 +19,15 @@ async function computeMemoryPerformance() {
     ? `https://www.datad0g-browser-agent.com/pull-request/${pr.number}/datadog-rum.js`
     : 'https://www.datadoghq-browser-agent.com/datadog-rum-canary.js'
 
+  const benchmarkUrl = pr
+    ? `https://datadoghq.dev/browser-sdk-test-playground/performance/?prNumber=${pr.number}`
+    : 'https://datadoghq.dev/browser-sdk-test-playground/performance/'
   for (let i = 0; i < ACTION_NAMES.length; i++) {
     const sdkTask = ACTION_NAMES[i]
     const allBytesMeasurements = []
     const allPercentageMeasurements = []
     for (let j = 0; j < NUMBER_OF_RUNS; j++) {
-      const { medianPercentage, medianBytes } = await runTest(i, sdkTask, bundleUrl)
+      const { medianPercentage, medianBytes } = await runTest(i, sdkTask, bundleUrl, benchmarkUrl)
       allPercentageMeasurements.push(medianPercentage)
       allBytesMeasurements.push(medianBytes)
     }
@@ -42,12 +45,12 @@ async function computeMemoryPerformance() {
   return results
 }
 
-async function runTest(i, buttonName, bundleUrl) {
+async function runTest(i, buttonName, bundleUrl, benchmarkUrl) {
   const browser = await puppeteer.launch({
     args: ['--no-sandbox', '--disable-setuid-sandbox'],
   })
   const page = await browser.newPage()
-  await page.goto(bundleUrl)
+  await page.goto(benchmarkUrl)
 
   // Start the Chrome DevTools Protocol session and enable the heap profiler
   const client = await page.target().createCDPSession()
