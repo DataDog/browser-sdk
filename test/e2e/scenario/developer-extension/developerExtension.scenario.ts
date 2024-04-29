@@ -12,6 +12,8 @@ describe('developer-extension', () => {
 class DeveloperExtensionPanel {
   async open() {
     await browser.url('chrome://extensions')
+    // extensions page is built with custom elements, >>> selector to traverse shadow DOM
+    // cf https://webdriver.io/docs/selectors/#deep-selectors
     const extensionId = await $('>>>extensions-item').getAttribute('id')
     const url = `chrome-extension://${extensionId}/panel.html`
     await browser.url(url)
