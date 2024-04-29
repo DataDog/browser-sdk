@@ -138,15 +138,15 @@ function processPointerDown(
   domMutationObservable: Observable<void>,
   pointerDownEvent: MouseEventOnElement
 ) {
-  const privacyLevel = getNodePrivacyLevel(pointerDownEvent.target, configuration.defaultPrivacyLevel)
+  const nodePrivacyLevel = getNodePrivacyLevel(pointerDownEvent.target, configuration.defaultPrivacyLevel)
 
   // When the node is set to hidden, we do not track click action
   // Make sure everything has been done before return
-  if (privacyLevel === NodePrivacyLevel.HIDDEN && configuration.enablePrivacyForActionName) {
+  if (nodePrivacyLevel === NodePrivacyLevel.HIDDEN && configuration.enablePrivacyForActionName) {
     return undefined
   }
   const privacyEnabledForActionName =
-    privacyLevel === DefaultPrivacyLevel.MASK && configuration.enablePrivacyForActionName
+    nodePrivacyLevel === NodePrivacyLevel.MASK && configuration.enablePrivacyForActionName
 
   const clickActionBase = computeClickActionBase(
     pointerDownEvent,
@@ -237,19 +237,18 @@ function computeClickActionBase(
 
   const { name: actionName, masked } = getActionNameFromElement(
     event.target,
-    actionNameAttribute,
-    privacyEnabledForActionName
+    privacyEnabledForActionName,
+    actionNameAttribute
   )
-
-  const target = {
-    width: Math.round(rect.width),
-    height: Math.round(rect.height),
-    selector: getSelectorFromElement(event.target, actionNameAttribute),
-  }
 
   return {
     type: ActionType.CLICK,
-    target: masked ? assign({ masked }, target) : target,
+    target: {
+      width: Math.round(rect.width),
+      height: Math.round(rect.height),
+      selector: getSelectorFromElement(event.target, actionNameAttribute),
+      masked,
+    },
     position: {
       // Use clientX and Y because for SVG element offsetX and Y are relatives to the <svg> element
       x: Math.round(event.clientX - rect.left),

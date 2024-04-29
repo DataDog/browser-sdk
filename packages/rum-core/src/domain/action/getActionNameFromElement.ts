@@ -1,5 +1,7 @@
 import { safeTruncate, isIE, find } from '@datadog/browser-core'
 import { getParentElement } from '../../browser/polyfills'
+import { NodePrivacyLevel, PRIVACY_ATTR_NAME } from '../../constants'
+import { getNodePrivacyLevel } from '../privacy'
 
 /**
  * Get the action name from the attribute 'data-dd-action-name' on the element or any of its parent.
@@ -9,33 +11,53 @@ export const DEFAULT_PROGRAMMATIC_ACTION_NAME_ATTRIBUTE = 'data-dd-action-name'
 export const ACTION_NAME_PLACEHOLDER = 'Masked Element'
 export function getActionNameFromElement(
   element: Element,
-  userProgrammaticAttribute?: string,
-  privacyEnabledForActionName?: boolean
+  privacyEnabledForActionName?: boolean,
+  userProgrammaticAttribute?: string
 ): { name: string; masked?: boolean } {
-  const definedActionNameFromElement =
-    getActionNameFromElementProgrammatically(element, DEFAULT_PROGRAMMATIC_ACTION_NAME_ATTRIBUTE) ||
-    (userProgrammaticAttribute && getActionNameFromElementProgrammatically(element, userProgrammaticAttribute))
-  // Only get the defined action name if
-  // * privacy is enabled for action name
-  // * and privacy is enabled for the Node or globally
-  if (privacyEnabledForActionName) {
-    return {
-      name: definedActionNameFromElement || ACTION_NAME_PLACEHOLDER,
-      masked: definedActionNameFromElement ? false : true,
-    }
-  }
+  // to determine if we should add placeholder
+
+  // console.log(element, privacyEnabledForActionName, getNodeSelfPrivacyLevel(element))
+  const executeStrategies = (): string | undefined =>
+    getActionNameFromElementForStrategies(
+      element,
+      userProgrammaticAttribute,
+      priorityStrategies,
+      privacyEnabledForActionName
+    ) ||
+    getActionNameFromElementForStrategies(
+      element,
+      userProgrammaticAttribute,
+      fallbackStrategies,
+      privacyEnabledForActionName
+    )
+
+  // get the privacy level from current or parent html attribute override
+  // If privacy is not enabled for action name, we assume the default is allowed
+  // to be consistent with current behaviors.
+  const selfPrivacyLevel = getNodePrivacyLevel(
+    element,
+    privacyEnabledForActionName ? NodePrivacyLevel.MASK : NodePrivacyLevel.ALLOW
+  )
+
   // Proceed to get the action name in two steps:
   // * first, get the name programmatically, explicitly defined by the user.
   // * then, use strategies that are known to return good results. Those strategies will be used on
   //   the element and a few parents, but it's likely that they won't succeed at all.
   // * if no name is found this way, use strategies returning less accurate names as a fallback.
   //   Those are much likely to succeed.
+  const definedActionNameFromElement =
+    getActionNameFromElementProgrammatically(element, DEFAULT_PROGRAMMATIC_ACTION_NAME_ATTRIBUTE) ||
+    (userProgrammaticAttribute && getActionNameFromElementProgrammatically(element, userProgrammaticAttribute)) ||
+    // if the current node has privacy level mask, we don't execute fallback strategies
+    (selfPrivacyLevel && selfPrivacyLevel !== NodePrivacyLevel.MASK ? executeStrategies() : '')
+
+  // console.log(definedActionNameFromElement)
   return {
     name:
       definedActionNameFromElement ||
-      getActionNameFromElementForStrategies(element, userProgrammaticAttribute, priorityStrategies) ||
-      getActionNameFromElementForStrategies(element, userProgrammaticAttribute, fallbackStrategies) ||
+      (privacyEnabledForActionName ? ACTION_NAME_PLACEHOLDER : executeStrategies()) ||
       '',
+    masked: privacyEnabledForActionName && !definedActionNameFromElement,
   }
 }
 
@@ -67,12 +89,13 @@ function getActionNameFromElementProgrammatically(targetElement: Element, progra
 
 type NameStrategy = (
   element: Element | HTMLElement | HTMLInputElement | HTMLSelectElement,
-  userProgrammaticAttribute: string | undefined
+  userProgrammaticAttribute: string | undefined,
+  privacyEnabledActionName?: boolean
 ) => string | undefined | null
 
 const priorityStrategies: NameStrategy[] = [
   // associated LABEL text
-  (element, userProgrammaticAttribute) => {
+  (element, userProgrammaticAttribute, privacy) => {
     // IE does not support element.labels, so we fallback to a CSS selector based on the element id
     // instead
     if (supportsLabelProperty()) {
@@ -83,7 +106,7 @@ const priorityStrategies: NameStrategy[] = [
       const label =
         element.ownerDocument &&
         find(element.ownerDocument.querySelectorAll('label'), (label) => label.htmlFor === element.id)
-      return label && getTextualContent(label, userProgrammaticAttribute)
+      return label && getTextualContent(label, userProgrammaticAttribute, privacy)
     }
   },
   // INPUT button (and associated) value
@@ -97,21 +120,21 @@ const priorityStrategies: NameStrategy[] = [
     }
   },
   // BUTTON, LABEL or button-like element text
-  (element, userProgrammaticAttribute) => {
+  (element, userProgrammaticAttribute, privacyEnabledActionName) => {
     if (element.nodeName === 'BUTTON' || element.nodeName === 'LABEL' || element.getAttribute('role') === 'button') {
-      return getTextualContent(element, userProgrammaticAttribute)
+      return getTextualContent(element, userProgrammaticAttribute, privacyEnabledActionName)
     }
   },
   (element) => element.getAttribute('aria-label'),
   // associated element text designated by the aria-labelledby attribute
-  (element, userProgrammaticAttribute) => {
+  (element, userProgrammaticAttribute, privacyEnabledActionName) => {
     const labelledByAttribute = element.getAttribute('aria-labelledby')
     if (labelledByAttribute) {
       return labelledByAttribute
         .split(/\s+/)
         .map((id) => getElementById(element, id))
         .filter((label): label is HTMLElement => Boolean(label))
-        .map((element) => getTextualContent(element, userProgrammaticAttribute))
+        .map((element) => getTextualContent(element, userProgrammaticAttribute, privacyEnabledActionName))
         .join(' ')
     }
   },
@@ -128,7 +151,8 @@ const priorityStrategies: NameStrategy[] = [
 ]
 
 const fallbackStrategies: NameStrategy[] = [
-  (element, userProgrammaticAttribute) => getTextualContent(element, userProgrammaticAttribute),
+  (element, userProgrammaticAttribute, privacyEnabledActionName) =>
+    getTextualContent(element, userProgrammaticAttribute, privacyEnabledActionName),
 ]
 
 /**
@@ -139,7 +163,8 @@ const MAX_PARENTS_TO_CONSIDER = 10
 function getActionNameFromElementForStrategies(
   targetElement: Element,
   userProgrammaticAttribute: string | undefined,
-  strategies: NameStrategy[]
+  strategies: NameStrategy[],
+  privacyEnabledActionName?: boolean
 ) {
   let element: Element | null = targetElement
   let recursionCounter = 0
@@ -151,7 +176,7 @@ function getActionNameFromElementForStrategies(
     element.nodeName !== 'HEAD'
   ) {
     for (const strategy of strategies) {
-      const name = strategy(element, userProgrammaticAttribute)
+      const name = strategy(element, userProgrammaticAttribute, privacyEnabledActionName)
       if (typeof name === 'string') {
         const trimmedName = name.trim()
         if (trimmedName) {
@@ -183,7 +208,11 @@ function getElementById(refElement: Element, id: string) {
   return refElement.ownerDocument ? refElement.ownerDocument.getElementById(id) : null
 }
 
-function getTextualContent(element: Element | HTMLElement, userProgrammaticAttribute: string | undefined) {
+function getTextualContent(
+  element: Element | HTMLElement,
+  userProgrammaticAttribute: string | undefined,
+  privacyEnabledActionName?: boolean
+) {
   if ((element as HTMLElement).isContentEditable) {
     return
   }
@@ -215,6 +244,11 @@ function getTextualContent(element: Element | HTMLElement, userProgrammaticAttri
 
     if (userProgrammaticAttribute) {
       removeTextFromElements(`[${userProgrammaticAttribute}]`)
+    }
+
+    if (privacyEnabledActionName) {
+      // remove the text of elements with privacy override
+      removeTextFromElements(`[${PRIVACY_ATTR_NAME}=${NodePrivacyLevel.MASK}]`)
     }
 
     return text

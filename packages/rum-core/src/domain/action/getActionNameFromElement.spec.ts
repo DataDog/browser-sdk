@@ -309,6 +309,7 @@ describe('getActionNameFromElement', () => {
         appendElement(`
         <div data-test-id="foo">ignored</div>
       `),
+        undefined,
         'data-test-id'
       )
       expect(name).toBe('foo')
@@ -319,6 +320,7 @@ describe('getActionNameFromElement', () => {
         appendElement(`
         <div data-test-id="foo" data-dd-action-name="bar">ignored</div>
       `),
+        undefined,
         'data-test-id'
       )
       expect(name).toBe('bar')
@@ -335,6 +337,7 @@ describe('getActionNameFromElement', () => {
     it('remove children with programmatic action name in textual content based on the user-configured attribute', () => {
       const { name } = getActionNameFromElement(
         appendElement('<div>Foo <div data-test-id="custom action">bar<div></div>'),
+        undefined,
         'data-test-id'
       )
       expect(name).toBe('Foo')
@@ -348,7 +351,6 @@ describe('getActionNameFromElement', () => {
           <span target>ignored</span>
         </div>
   `),
-      undefined,
       false
     )
     it('extracts attribute text when privacyEnabledActionName is false', () => {
@@ -362,26 +364,26 @@ describe('getActionNameFromElement', () => {
             <span target>ignored</span>
           </div>
     `),
-        'data-test-id',
-        false
+        false,
+        'data-test-id'
       )
       expect(name).toBe('foo')
     })
 
-    it('extracts inner text when privacyEnabledActionName is false and attribute is empty', () => {
+    it('extracts inner text when privacyEnabledActionName is false and custom action name set to empty', () => {
       const { name } = getActionNameFromElement(
         appendElement(`
           <div data-test-id="">
             <span target>foo</span>
           </div>
     `),
-        'data-test-id',
-        false
+        false,
+        'data-test-id'
       )
       expect(name).toBe('foo')
     })
 
-    it('returns placeholder when privacyEnabledActionName is true and attribute is empty', () => {
+    it('returns placeholder when privacyEnabledActionName is true and custom action name set to empty', () => {
       expect(
         getActionNameFromElement(
           appendElement(`
@@ -389,8 +391,8 @@ describe('getActionNameFromElement', () => {
               <span target>foo</span>
             </div>
       `),
-          'data-test-id',
-          true
+          true,
+          'data-test-id'
         )
       ).toEqual({ name: 'Masked Element', masked: true })
     })
@@ -403,7 +405,6 @@ describe('getActionNameFromElement', () => {
               <span target>ignored</span>
             </div>
       `),
-          undefined,
           true
         )
       ).toEqual({ name: 'foo', masked: false })
@@ -417,10 +418,75 @@ describe('getActionNameFromElement', () => {
               <span target>ignored</span>
             </div>
       `),
-          'data-test-id',
-          true
+          true,
+          'data-test-id'
         )
       ).toEqual({ name: 'foo', masked: false })
+    })
+
+    describe('with html tag privacy override', () => {
+      it('extracts inner text when privacyEnabledActionName is true and privacy level is allow', () => {
+        expect(
+          getActionNameFromElement(
+            appendElement(`
+              <div data-dd-privacy="allow">
+                <span target>foo</span>
+              </div>
+        `),
+            true
+          )
+        ).toEqual({ name: 'foo', masked: false })
+      })
+
+      it('returns placeholder when privacyEnabledActionName is true and privacy level is mask', () => {
+        expect(
+          getActionNameFromElement(
+            appendElement(`
+              <div data-dd-privacy="mask">
+                <span target>foo</span>
+              </div>
+        `),
+            true
+          )
+        ).toEqual({ name: 'Masked Element', masked: true })
+      })
+
+      it('inherent privacy level and does not fallback to masked child text when privacyEnabledActionName is true', () => {
+        expect(
+          getActionNameFromElement(
+            appendElement(`
+              <div data-dd-privacy="allow">
+                bar
+                <div target>
+                  foo
+                  <div data-dd-privacy="mask">
+                    <span>secret</span>
+                  </div>
+                </div>
+              </div>
+        `),
+            true
+          )
+        ).toEqual({ name: 'foo', masked: false })
+      })
+    })
+    it('fallback to children but not the masked one when privacyEnabledActionName is true', () => {
+      expect(
+        getActionNameFromElement(
+          appendElement(`
+            <div data-dd-privacy="allow" target>
+              bar
+              <div>
+                foo
+                <div data-dd-privacy="mask">
+                  <span>secret</span>
+                </div>
+              </div>
+            </div>
+      `),
+          true
+        )
+      ).toEqual({ name: 'bar foo', masked: false })
     })
   })
 })

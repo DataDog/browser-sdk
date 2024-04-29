@@ -100,6 +100,7 @@ describe('trackClickActions', () => {
           selector: '#button',
           width: 100,
           height: 100,
+          masked: false,
         },
         position: { x: 50, y: 50 },
         events: [domEvent],
@@ -307,7 +308,7 @@ describe('trackClickActions', () => {
       expect(events[0].events?.length).toBe(3)
     })
 
-    it('aggregates frustrationTypes from all clicks', () => {
+    it('aggregates frustration Types from all clicks', () => {
       const { lifeCycle, clock } = setupBuilder.build()
 
       // Dead
