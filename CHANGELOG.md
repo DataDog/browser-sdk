@@ -16,6 +16,14 @@
 
 ---
 
+## v5.16.0
+
+- ✨ [RUM-3684] Capture scroll record on shadow dom elements ([#2708](https://github.com/DataDog/browser-sdk/pull/2708))
+- ✨[RUM-3798] Report the cpu impact as a pr comment ([#2702](https://github.com/DataDog/browser-sdk/pull/2702))
+- ✨ [RUM-162] Truncate resources URL containing data URLs ([#2690](https://github.com/DataDog/browser-sdk/pull/2690))
+- 🐛[RUM-4109] Mask iframe srcdoc with privacy override ([#2714](https://github.com/DataDog/browser-sdk/pull/2714))
+- ⚗ [RUM-2782] Validate resource timings more granularly
+
 ## v5.15.0
 
 - 🐛 fix beforeSend type definition for logs ([#2686](https://github.com/DataDog/browser-sdk/pull/2686))

@@ -2,7 +2,7 @@ import { getInitCookie } from '../../browser/cookie'
 import type { SessionStoreStrategy } from './storeStrategies/sessionStoreStrategy'
 import { SESSION_STORE_KEY } from './storeStrategies/sessionStoreStrategy'
 import type { SessionState } from './sessionState'
-import { expandSessionState, isSessionInExpiredState } from './sessionState'
+import { expandSessionState, isSessionStarted } from './sessionState'
 
 export const OLD_SESSION_COOKIE_NAME = '_dd'
 export const OLD_RUM_COOKIE_NAME = '_dd_r'
@@ -34,7 +34,7 @@ export function tryOldCookiesMigration(cookieStoreStrategy: SessionStoreStrategy
       session[RUM_SESSION_KEY] = oldRumType
     }
 
-    if (!isSessionInExpiredState(session)) {
+    if (isSessionStarted(session)) {
       expandSessionState(session)
       cookieStoreStrategy.persistSession(session)
     }

@@ -6,7 +6,7 @@ import { isRumViewEvent } from '../../../sdkEvent'
 import type { EventListColumn } from './columnUtils'
 import { EventRow } from './eventRow'
 import { ColumnDrag } from './columnDrag'
-import classes from './eventsList.module.css'
+import * as classes from './eventsList.module.css'
 import { EventsListHeader } from './eventsListHeader'
 
 export function EventsList({

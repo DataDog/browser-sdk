@@ -1,5 +1,5 @@
 import { setCookie, deleteCookie, getCookie, getCurrentSite } from '../../../browser/cookie'
-import type { SessionState } from '../sessionState'
+import { type SessionState } from '../sessionState'
 import { buildCookieOptions, selectCookieStrategy, initCookieStrategy } from './sessionInCookie'
 import type { SessionStoreStrategy } from './sessionStoreStrategy'
 import { SESSION_STORE_KEY } from './sessionStoreStrategy'
@@ -23,12 +23,12 @@ describe('session in cookie strategy', () => {
     expect(getCookie(SESSION_STORE_KEY)).toBe('id=123&created=0')
   })
 
-  it('should delete the cookie holding the session', () => {
+  it('should set `isExpired=1` to the cookie holding the session', () => {
     cookieStorageStrategy.persistSession(sessionState)
-    cookieStorageStrategy.clearSession()
+    cookieStorageStrategy.expireSession()
     const session = cookieStorageStrategy.retrieveSession()
-    expect(session).toEqual({})
-    expect(getCookie(SESSION_STORE_KEY)).toBeUndefined()
+    expect(session).toEqual({ isExpired: '1' })
+    expect(getCookie(SESSION_STORE_KEY)).toBe('isExpired=1')
   })
 
   it('should return an empty object if session string is invalid', () => {
