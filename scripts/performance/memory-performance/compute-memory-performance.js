@@ -16,7 +16,7 @@ async function computeMemoryPerformance() {
   const results = []
   const pr = await fetchPR(LOCAL_BRANCH)
   const bundleUrl = pr
-    ? `https://www.datadoghq-browser-agent.com/datadog-rum-canary.js?prNumber=${pr.number}`
+    ? `https://www.datad0g-browser-agent.com/pull-request/${pr.number}/datadog-rum.js`
     : 'https://www.datadoghq-browser-agent.com/datadog-rum-canary.js'
 
   for (let i = 0; i < ACTION_NAMES.length; i++) {
