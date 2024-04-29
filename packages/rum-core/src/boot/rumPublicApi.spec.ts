@@ -1,9 +1,6 @@
 import type { RelativeTime, Context, DeflateWorker, CustomerDataTrackerManager, TimeStamp } from '@datadog/browser-core'
 import {
   clocksNow,
-  addExperimentalFeatures,
-  ExperimentalFeature,
-  resetExperimentalFeatures,
   ONE_SECOND,
   display,
   DefaultPrivacyLevel,
@@ -728,18 +725,7 @@ describe('rum public api', () => {
       setup().withFakeClock().build()
     })
 
-    afterEach(() => {
-      resetExperimentalFeatures()
-    })
-
-    it('should not expose startDurationVital when ff is disabled', () => {
-      const rumPublicApi = makeRumPublicApi(noopStartRum, noopRecorderApi)
-      rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
-      expect((rumPublicApi as any).startDurationVital).toBeUndefined()
-    })
-
     it('should call startDurationVital on the startRum result when ff is enabled', () => {
-      addExperimentalFeatures([ExperimentalFeature.CUSTOM_VITALS])
       const startDurationVitalSpy = jasmine.createSpy()
       const rumPublicApi = makeRumPublicApi(
         () => ({
@@ -759,7 +745,6 @@ describe('rum public api', () => {
     })
 
     it('should call startDurationVital with provided startTime when ff is enabled', () => {
-      addExperimentalFeatures([ExperimentalFeature.CUSTOM_VITALS])
       const startDurationVitalSpy = jasmine.createSpy()
       const rumPublicApi = makeRumPublicApi(
         () => ({
@@ -785,18 +770,7 @@ describe('rum public api', () => {
       setup().withFakeClock().build()
     })
 
-    afterEach(() => {
-      resetExperimentalFeatures()
-    })
-
-    it('should not expose stopDurationVital when ff is disabled', () => {
-      const rumPublicApi = makeRumPublicApi(noopStartRum, noopRecorderApi)
-      rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
-      expect((rumPublicApi as any).stopDurationVital).toBeUndefined()
-    })
-
     it('should call stopDurationVital on the startRum result when ff is enabled', () => {
-      addExperimentalFeatures([ExperimentalFeature.CUSTOM_VITALS])
       const stopDurationVitalSpy = jasmine.createSpy()
       const rumPublicApi = makeRumPublicApi(
         () => ({
@@ -816,7 +790,6 @@ describe('rum public api', () => {
     })
 
     it('should call stopDurationVital with provided stopTime when ff is enabled', () => {
-      addExperimentalFeatures([ExperimentalFeature.CUSTOM_VITALS])
       const stopDurationVitalSpy = jasmine.createSpy()
       const rumPublicApi = makeRumPublicApi(
         () => ({
