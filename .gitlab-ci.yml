@@ -201,6 +201,15 @@ e2e:
   after_script:
     - node ./scripts/test/export-test-result.js e2e
 
+e2e-developer-extension:
+  extends:
+    - .base-configuration
+    - .test-allowed-branches
+  interruptible: true
+  script:
+    - yarn
+    - yarn test:e2e:developer-extension
+
 check-licenses:
   extends:
     - .base-configuration
