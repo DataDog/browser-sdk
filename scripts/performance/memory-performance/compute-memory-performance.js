@@ -69,7 +69,7 @@ async function runTest(i, buttonName, bundleUrl, benchmarkUrl) {
 
   console.log(`Running test for: ${buttonName}`)
   await button.click()
-  timeout(TASK_DURATION)
+  await timeout(TASK_DURATION)
   const { profile } = await client.send('HeapProfiler.stopSampling')
   const measurementsPercentage = []
   const measurementsBytes = []
