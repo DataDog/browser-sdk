@@ -3,7 +3,7 @@ import React from 'react'
 import type { ExcludedFacetValues, FacetRegistry } from '../../../hooks/useEvents'
 import type { Facet } from '../../../facets.constants'
 import { FACET_ROOT, FacetValue } from '../../../facets.constants'
-import classes from './facetList.module.css'
+import * as classes from './facetList.module.css'
 
 export function FacetList({
   facetRegistry,

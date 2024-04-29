@@ -5,7 +5,7 @@ import type { Coordinates } from './drag'
 import { initDrag } from './drag'
 import type { EventListColumn } from './columnUtils'
 import { moveColumn, removeColumn, getColumnTitle } from './columnUtils'
-import classes from './columnDrag.module.css'
+import * as classes from './columnDrag.module.css'
 
 /** Number of pixel to determine if the cursor is close enough of a position to trigger an action */
 const ACTION_DISTANCE_THRESHOLD = 20
