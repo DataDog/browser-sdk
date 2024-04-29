@@ -20,7 +20,7 @@ export {
   ExperimentalFeature,
 } from './tools/experimentalFeatures'
 export { trackRuntimeError } from './domain/error/trackRuntimeError'
-export { computeStackTrace, StackTrace } from './domain/error/computeStackTrace'
+export { computeStackTrace, StackTrace } from './tools/stackTrace/computeStackTrace'
 export { defineGlobal, makePublicApi } from './boot/init'
 export { displayAlreadyInitializedError } from './boot/displayAlreadyInitializedError'
 export { initReportObservable, RawReport, RawReportType } from './domain/report/reportObservable'
@@ -80,13 +80,7 @@ export { sendToExtension } from './tools/sendToExtension'
 export { runOnReadyState } from './browser/runOnReadyState'
 export { getZoneJsOriginalValue } from './tools/getZoneJsOriginalValue'
 export { instrumentMethod, instrumentSetter, InstrumentedMethodCall } from './tools/instrumentMethod'
-export {
-  computeRawError,
-  createHandlingStack,
-  toStackTraceString,
-  getFileFromStackTraceString,
-  NO_ERROR_STACK_PRESENT_MESSAGE,
-} from './domain/error/error'
+export { computeRawError, getFileFromStackTraceString, NO_ERROR_STACK_PRESENT_MESSAGE } from './domain/error/error'
 export { NonErrorPrefix } from './domain/error/error.types'
 export { Context, ContextArray, ContextValue } from './tools/serialisation/context'
 export {
@@ -142,3 +136,4 @@ export * from './tools/utils/typeUtils'
 export { ErrorHandling, ErrorSource, RawError, RawErrorCause, ErrorWithCause, Csp } from './domain/error/error.types'
 export * from './domain/deflate'
 export * from './domain/connectivity'
+export * from './tools/stackTrace/handlingStack'

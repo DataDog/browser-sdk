@@ -1,5 +1,6 @@
 import { setTimeout } from '../../tools/timer'
 import { generateUUID } from '../../tools/utils/stringUtils'
+import { assign } from '../../tools/utils/polyfills'
 import type { SessionStoreStrategy } from './storeStrategies/sessionStoreStrategy'
 import type { SessionState } from './sessionState'
 import { expandSessionState, isSessionInExpiredState } from './sessionState'
@@ -19,7 +20,21 @@ export function processSessionStoreOperations(
   sessionStoreStrategy: SessionStoreStrategy,
   numberOfRetries = 0
 ) {
-  const { isLockEnabled, retrieveSession, persistSession, clearSession } = sessionStoreStrategy
+  const { isLockEnabled, persistSession, expireSession } = sessionStoreStrategy
+  const persistWithLock = (session: SessionState) => persistSession(assign({}, session, { lock: currentLock }))
+  const retrieveStore = () => {
+    const session = sessionStoreStrategy.retrieveSession()
+    const lock = session.lock
+
+    if (session.lock) {
+      delete session.lock
+    }
+
+    return {
+      session,
+      lock,
+    }
+  }
 
   if (!ongoingOperations) {
     ongoingOperations = operations
@@ -33,39 +48,38 @@ export function processSessionStoreOperations(
     return
   }
   let currentLock: string
-  let currentSession = retrieveSession()
+  let currentStore = retrieveStore()
   if (isLockEnabled) {
     // if someone has lock, retry later
-    if (currentSession.lock) {
+    if (currentStore.lock) {
       retryLater(operations, sessionStoreStrategy, numberOfRetries)
       return
     }
     // acquire lock
     currentLock = generateUUID()
-    currentSession.lock = currentLock
-    persistSession(currentSession)
+    persistWithLock(currentStore.session)
     // if lock is not acquired, retry later
-    currentSession = retrieveSession()
-    if (currentSession.lock !== currentLock) {
+    currentStore = retrieveStore()
+    if (currentStore.lock !== currentLock) {
       retryLater(operations, sessionStoreStrategy, numberOfRetries)
       return
     }
   }
-  let processedSession = operations.process(currentSession)
+  let processedSession = operations.process(currentStore.session)
   if (isLockEnabled) {
     // if lock corrupted after process, retry later
-    currentSession = retrieveSession()
-    if (currentSession.lock !== currentLock!) {
+    currentStore = retrieveStore()
+    if (currentStore.lock !== currentLock!) {
       retryLater(operations, sessionStoreStrategy, numberOfRetries)
       return
     }
   }
   if (processedSession) {
     if (isSessionInExpiredState(processedSession)) {
-      clearSession()
+      expireSession()
     } else {
       expandSessionState(processedSession)
-      persistSession(processedSession)
+      isLockEnabled ? persistWithLock(processedSession) : persistSession(processedSession)
     }
   }
   if (isLockEnabled) {
@@ -73,19 +87,18 @@ export function processSessionStoreOperations(
     // since we don't have evidence of lock issues around expiration, let's just not do the corruption check for it
     if (!(processedSession && isSessionInExpiredState(processedSession))) {
       // if lock corrupted after persist, retry later
-      currentSession = retrieveSession()
-      if (currentSession.lock !== currentLock!) {
+      currentStore = retrieveStore()
+      if (currentStore.lock !== currentLock!) {
         retryLater(operations, sessionStoreStrategy, numberOfRetries)
         return
       }
-      delete currentSession.lock
-      persistSession(currentSession)
-      processedSession = currentSession
+      persistSession(currentStore.session)
+      processedSession = currentStore.session
     }
   }
   // call after even if session is not persisted in order to perform operations on
   // up-to-date session state value => the value could have been modified by another tab
-  operations.after?.(processedSession || currentSession)
+  operations.after?.(processedSession || currentStore.session)
   next(sessionStoreStrategy)
 }
 

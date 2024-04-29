@@ -1,7 +1,7 @@
 import type { RumResourceEvent } from '@datadog/browser-rum'
 import type { IntakeRegistry } from '../../lib/framework'
 import { flushEvents, bundleSetup, createTest, html } from '../../lib/framework'
-import { browserExecuteAsync, sendXhr } from '../../lib/helpers/browser'
+import { sendXhr } from '../../lib/helpers/browser'
 
 const REQUEST_DURATION = 200
 
@@ -82,7 +82,7 @@ describe('rum resources', () => {
       .withRum()
       .withSetup(bundleSetup)
       .run(async ({ intakeRegistry }) => {
-        await browserExecuteAsync((done) => {
+        await browser.executeAsync((done) => {
           const xhr = new XMLHttpRequest()
           xhr.open('GET', '/ok?duration=1000')
           xhr.send()
@@ -101,7 +101,7 @@ describe('rum resources', () => {
       .withRum()
       .withSetup(bundleSetup)
       .run(async ({ intakeRegistry }) => {
-        await browserExecuteAsync((done) => {
+        await browser.executeAsync((done) => {
           const xhr = new XMLHttpRequest()
           xhr.open('GET', '/ok')
           xhr.abort()
@@ -118,7 +118,7 @@ describe('rum resources', () => {
       .withRum()
       .withSetup(bundleSetup)
       .run(async ({ intakeRegistry }) => {
-        await browserExecuteAsync((done) => {
+        await browser.executeAsync((done) => {
           const xhr = new XMLHttpRequest()
           xhr.open('GET', '/ok')
           xhr.onreadystatechange = () => {
@@ -139,7 +139,7 @@ describe('rum resources', () => {
       .withRum()
       .withSetup(bundleSetup)
       .run(async ({ intakeRegistry }) => {
-        await browserExecuteAsync((done) => {
+        await browser.executeAsync((done) => {
           const xhr = new XMLHttpRequest()
           xhr.open('GET', '/ok')
           xhr.addEventListener('loadend', () => {
@@ -177,7 +177,7 @@ describe('rum resources', () => {
       .withRum()
       .withSetup(bundleSetup)
       .run(async ({ intakeRegistry }) => {
-        await browserExecuteAsync((done) => {
+        await browser.executeAsync((done) => {
           const controller = new AbortController()
           fetch('/ok?duration=1000', { signal: controller.signal }).catch(() => {
             // ignore abortion error
@@ -199,7 +199,7 @@ describe('rum resources', () => {
   createTest('track redirect fetch timings')
     .withRum()
     .run(async ({ intakeRegistry }) => {
-      await browserExecuteAsync((done) => {
+      await browser.executeAsync((done) => {
         fetch('/redirect?duration=200').then(
           () => done(undefined),
           () => {
@@ -222,7 +222,7 @@ describe('rum resources', () => {
       .withRum()
       .withSetup(bundleSetup)
       .run(async ({ intakeRegistry }) => {
-        await browserExecuteAsync((done) => {
+        await browser.executeAsync((done) => {
           const xhr = new XMLHttpRequest()
           const triggerSecondCall = () => {
             xhr.removeEventListener('loadend', triggerSecondCall)

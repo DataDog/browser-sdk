@@ -1,4 +1,4 @@
-import { toStackTraceString } from '../error/error'
+import { toStackTraceString } from '../../tools/stackTrace/handlingStack'
 import { monitor } from '../../tools/monitor'
 import { mergeObservables, Observable } from '../../tools/observable'
 import { addEventListener, DOM_EVENT } from '../../browser/addEventListener'

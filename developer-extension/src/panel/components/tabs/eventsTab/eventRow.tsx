@@ -37,10 +37,15 @@ const RUM_EVENT_TYPE_COLOR = {
 }
 
 const LOG_STATUS_COLOR = {
+  emerg: 'red',
+  alert: 'red',
+  critical: 'red',
   error: 'red',
   warn: 'yellow',
+  notice: 'blue',
   info: 'blue',
   debug: 'cyan',
+  OK: 'cyan',
 }
 
 const RESOURCE_TYPE_LABELS: Record<string, string | undefined> = {

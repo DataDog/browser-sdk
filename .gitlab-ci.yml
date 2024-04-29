@@ -1,12 +1,12 @@
 variables:
-  CURRENT_STAGING: staging-17
+  CURRENT_STAGING: staging-18
   APP: 'browser-sdk'
-  CURRENT_CI_IMAGE: 63
+  CURRENT_CI_IMAGE: 64
   BUILD_STABLE_REGISTRY: '486234852809.dkr.ecr.us-east-1.amazonaws.com'
   CI_IMAGE: '$BUILD_STABLE_REGISTRY/ci/$APP:$CURRENT_CI_IMAGE'
   GIT_REPOSITORY: 'git@github.com:DataDog/browser-sdk.git'
   MAIN_BRANCH: 'main'
-  CHROME_PACKAGE_VERSION: 123.0.6312.58-1
+  CHROME_PACKAGE_VERSION: 124.0.6367.60-1
 
 cache:
   key:
@@ -22,7 +22,6 @@ stages:
   - after-tests
   - browserstack
   - pre-deploy
-  - pre-deploy-notify
   - deploy:canary
   - notify:canary
   - deploy
@@ -202,6 +201,15 @@ e2e:
   after_script:
     - node ./scripts/test/export-test-result.js e2e
 
+e2e-developer-extension:
+  extends:
+    - .base-configuration
+    - .test-allowed-branches
+  interruptible: true
+  script:
+    - yarn
+    - yarn test:e2e:developer-extension
+
 check-licenses:
   extends:
     - .base-configuration
@@ -306,67 +314,21 @@ deploy-prod-canary:
     - node ./scripts/deploy/deploy.js prod canary root
     - node ./scripts/deploy/upload-source-maps.js canary root
 
-.deploy-prod:
+deploy-manual:
   stage: deploy
   extends:
-    - .base-configuration
     - .tags
-  when: manual
-  allow_failure: false
-  script:
-    - export BUILD_MODE=release
-    - VERSION=$(node -p -e "require('./lerna.json').version")
-    - yarn
-    - yarn build:bundle
-    - node ./scripts/deploy/check-monitors.js $UPLOAD_PATH
-    - node ./scripts/deploy/deploy.js prod v${VERSION%%.*} $UPLOAD_PATH
-    - node ./scripts/deploy/upload-source-maps.js v${VERSION%%.*} $UPLOAD_PATH
+  trigger:
+    include:
+      - local: .gitlab/deploy-manual.yml
 
-step-1_deploy-prod-minor-dcs:
-  extends:
-    - .deploy-prod
-  variables:
-    UPLOAD_PATH: us3,us5,ap1
-
-step-2_deploy-prod-eu1:
-  extends:
-    - .deploy-prod
-  variables:
-    UPLOAD_PATH: eu1
-
-step-3_deploy-prod-us1:
-  extends:
-    - .deploy-prod
-  variables:
-    UPLOAD_PATH: us1
-
-step-4_deploy-prod-gov:
-  extends:
-    - .deploy-prod
-  variables:
-    UPLOAD_PATH: root
-
-step-5_publish-npm:
+deploy-auto:
   stage: deploy
   extends:
-    - .base-configuration
     - .tags
-  when: manual
-  allow_failure: false
-  script:
-    - yarn
-    - node ./scripts/deploy/publish-npm.js
-
-step-6_publish-developer-extension:
-  stage: deploy
-  extends:
-    - .base-configuration
-    - .tags
-  when: manual
-  allow_failure: false
-  script:
-    - yarn
-    - node ./scripts/deploy/publish-developer-extension.js
+  trigger:
+    include:
+      - local: .gitlab/deploy-auto.yml
 
 ########################################################################################################################
 # Notify
@@ -395,15 +357,6 @@ notify-staging-failure:
     - 'MESSAGE_TEXT=":host-red: $CI_PROJECT_NAME main pipeline for <$BUILD_URL|$COMMIT_MESSAGE> failed."'
     - postmessage "#browser-sdk-deploy" "$MESSAGE_TEXT"
 
-notify-release-ready:
-  stage: pre-deploy-notify
-  extends:
-    - .prepare_notification
-    - .tags
-  script:
-    - 'MESSAGE_TEXT=":i: $CI_PROJECT_NAME <$BUILD_URL|$COMMIT_MESSAGE> ready to be deployed to :datadog:"'
-    - postmessage "#browser-sdk-deploy" "$MESSAGE_TEXT"
-
 notify-prod-canary-success:
   stage: notify:canary
   extends:
@@ -419,24 +372,6 @@ notify-prod-canary-failure:
   extends:
     - .prepare_notification
     - .main
-  when: on_failure
-  script:
-    - 'MESSAGE_TEXT=":host-red: $CI_PROJECT_NAME release pipeline <$BUILD_URL|$COMMIT_MESSAGE> failed."'
-    - postmessage "#browser-sdk-deploy" "$MESSAGE_TEXT"
-
-notify-prod-stable-success:
-  extends:
-    - .prepare_notification
-    - .tags
-  script:
-    - 'MESSAGE_TEXT=":rocket: $CI_PROJECT_NAME <$COMMIT_URL|$COMMIT_MESSAGE> deployed to :earth_americas:."'
-    - postmessage "#browser-sdk-deploy" "$MESSAGE_TEXT"
-    - postmessage "#rum-browser-sdk-ops" "$MESSAGE_TEXT"
-
-notify-prod-stable-failure:
-  extends:
-    - .prepare_notification
-    - .tags
   when: on_failure
   script:
     - 'MESSAGE_TEXT=":host-red: $CI_PROJECT_NAME release pipeline <$BUILD_URL|$COMMIT_MESSAGE> failed."'
