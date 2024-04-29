@@ -1,4 +1,5 @@
 const puppeteer = require('puppeteer')
+const { timeout } = require('../../lib/execution-utils')
 const { fetchPR, LOCAL_BRANCH } = require('../../lib/git-utils')
 const NUMBER_OF_RUNS = 40 // Rule of thumb: 30 runs should be enough to get a good average
 const TASK_DURATION = 1000
@@ -18,7 +19,6 @@ async function computeMemoryPerformance() {
   const bundleUrl = pr
     ? `https://www.datad0g-browser-agent.com/pull-request/${pr.number}/datadog-rum.js`
     : 'https://www.datadoghq-browser-agent.com/datadog-rum-canary.js'
-
   const benchmarkUrl = pr
     ? `https://datadoghq.dev/browser-sdk-test-playground/performance/?prNumber=${pr.number}`
     : 'https://datadoghq.dev/browser-sdk-test-playground/performance/'
@@ -69,7 +69,7 @@ async function runTest(i, buttonName, bundleUrl, benchmarkUrl) {
 
   console.log(`Running test for: ${buttonName}`)
   await button.click()
-  await new Promise((resolve) => setTimeout(resolve, TASK_DURATION))
+  timeout(TASK_DURATION)
   const { profile } = await client.send('HeapProfiler.stopSampling')
   const measurementsPercentage = []
   const measurementsBytes = []
