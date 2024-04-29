@@ -11,7 +11,6 @@ import {
   clocksNow,
   ONE_SECOND,
   elapsed,
-  DefaultPrivacyLevel,
 } from '@datadog/browser-core'
 import type { FrustrationType } from '../../rawRumEvent.types'
 import { ActionType } from '../../rawRumEvent.types'
