@@ -7,7 +7,7 @@ import React, { forwardRef, useContext, createContext, useState } from 'react'
 import { copy } from '../copy'
 import { formatNumber } from '../formatNumber'
 
-import classes from './json.module.css'
+import * as classes from './json.module.css'
 
 interface JsonProps {
   value: unknown
