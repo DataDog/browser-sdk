@@ -82,5 +82,9 @@ export function elementClasslistContains(element: Element, className: string): b
   if (classList instanceof DOMTokenList) {
     return element.classList.contains(className)
   }
-  return classList.includes(className)
+  for (let i = 0; i < classList.length; i += 1) {
+    if (classList[i] === className) {
+      return true
+    }
+  }
 }
