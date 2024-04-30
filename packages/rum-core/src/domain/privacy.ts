@@ -101,6 +101,12 @@ export function getNodeSelfPrivacyLevel(node: Node): NodePrivacyLevel | undefine
     }
   }
 
+  if (!node.classList) {
+    // SVGElement doesn't have classList in IE11
+    // We assume that SVGElement should be treated as ALLOW
+    return NodePrivacyLevel.ALLOW
+  }
+
   // Check HTML privacy attributes and classes
   if (privAttr === PRIVACY_ATTR_VALUE_HIDDEN || node.classList.contains(PRIVACY_CLASS_HIDDEN)) {
     return NodePrivacyLevel.HIDDEN
