@@ -14,6 +14,7 @@ import { TrackingConsent } from '../trackingConsent'
 import type { TransportConfiguration } from './transportConfiguration'
 import { computeTransportConfiguration } from './transportConfiguration'
 
+export const DOC_LINK = 'https://docs.datadoghq.com/getting_started/site/'
 export const DefaultPrivacyLevel = {
   ALLOW: 'allow',
   MASK: 'mask',
@@ -152,7 +153,7 @@ export function validateAndBuildConfiguration(initConfiguration: InitConfigurati
   }
 
   if (initConfiguration.site && !isDatadogSite(initConfiguration.site)) {
-    display.error('Site should be a valid Datadog site.')
+    display.error(`Site should be a valid Datadog site. Refer to our documentation for more information: ${DOC_LINK}.`)
     return
   }
 

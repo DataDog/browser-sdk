@@ -9,7 +9,7 @@ import {
 } from '../../tools/experimentalFeatures'
 import { TrackingConsent } from '../trackingConsent'
 import type { InitConfiguration } from './configuration'
-import { serializeConfiguration, validateAndBuildConfiguration } from './configuration'
+import { DOC_LINK, serializeConfiguration, validateAndBuildConfiguration } from './configuration'
 
 describe('validateAndBuildConfiguration', () => {
   const clientToken = 'some_client_token'
@@ -213,7 +213,9 @@ describe('validateAndBuildConfiguration', () => {
   describe('site parameter validation', () => {
     it('should validate the site parameter', () => {
       validateAndBuildConfiguration({ clientToken, site: 'foo.com' })
-      expect(displaySpy).toHaveBeenCalledOnceWith('Site should be a valid Datadog site.')
+      expect(displaySpy).toHaveBeenCalledOnceWith(
+        `Site should be a valid Datadog site. Refer to our documentation for more information: ${DOC_LINK}.`
+      )
     })
   })
 
