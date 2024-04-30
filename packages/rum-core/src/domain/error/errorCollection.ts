@@ -10,6 +10,8 @@ import {
   Observable,
   trackRuntimeError,
   NonErrorPrefix,
+  isExperimentalFeatureEnabled,
+  ExperimentalFeature,
 } from '@datadog/browser-core'
 import type { RumConfiguration } from '../configuration'
 import type { RawRumErrorEvent } from '../../rawRumEvent.types'
@@ -20,6 +22,7 @@ import type { FeatureFlagContexts } from '../contexts/featureFlagContext'
 import type { CommonContext } from '../contexts/commonContext'
 import type { PageStateHistory } from '../contexts/pageStateHistory'
 import { PageState } from '../contexts/pageStateHistory'
+import type { RumErrorEventDomainContext } from '../../domainContext.types'
 import { trackConsoleError } from './trackConsoleError'
 import { trackReportError } from './trackReportError'
 
@@ -119,11 +122,17 @@ function processError(
     rawRumEvent.feature_flags = featureFlagContext
   }
 
+  const domainContext: RumErrorEventDomainContext = {
+    error: error.originalError,
+  }
+
+  if (isExperimentalFeatureEnabled(ExperimentalFeature.MICRO_FRONTEND)) {
+    domainContext.handlingStack = error.handlingStack
+  }
+
   return {
     rawRumEvent,
     startTime: error.startClocks.relative,
-    domainContext: {
-      error: error.originalError,
-    },
+    domainContext,
   }
 }

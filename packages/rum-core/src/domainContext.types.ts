@@ -24,6 +24,7 @@ export interface RumViewEventDomainContext {
 
 export interface RumActionEventDomainContext {
   events?: Event[]
+  handlingStack?: string
 }
 
 export interface RumFetchResourceEventDomainContext {
@@ -49,6 +50,7 @@ export interface RumOtherResourceEventDomainContext {
 
 export interface RumErrorEventDomainContext {
   error: unknown
+  handlingStack?: string
 }
 
 export interface RumLongTaskEventDomainContext {
