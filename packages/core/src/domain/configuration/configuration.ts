@@ -13,7 +13,6 @@ import type { SessionStoreStrategyType } from '../session/storeStrategies/sessio
 import { TrackingConsent } from '../trackingConsent'
 import type { TransportConfiguration } from './transportConfiguration'
 import { computeTransportConfiguration } from './transportConfiguration'
-import { INTAKE_SITE_US1 } from './intakeSites'
 
 export const DefaultPrivacyLevel = {
   ALLOW: 'allow',
