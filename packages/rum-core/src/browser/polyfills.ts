@@ -87,4 +87,5 @@ export function elementClasslistContains(element: Element, className: string): b
       return true
     }
   }
+  return false
 }
