@@ -1,0 +1,9 @@
+*
+!/bundle/datadog-react-rum.js
+!/cjs/**/*
+!/esm/**/*
+!/src/**/*
+/src/**/*.spec.ts
+/src/**/*.specHelper.ts
+!/internal/*
+!/internal-synthetics/*
