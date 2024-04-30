@@ -10,7 +10,6 @@ import {
 import { TrackingConsent } from '../trackingConsent'
 import type { InitConfiguration } from './configuration'
 import { serializeConfiguration, validateAndBuildConfiguration } from './configuration'
-import { INTAKE_SITE_US1 } from './intakeSites'
 
 describe('validateAndBuildConfiguration', () => {
   const clientToken = 'some_client_token'
@@ -214,9 +213,7 @@ describe('validateAndBuildConfiguration', () => {
   describe('site parameter validation', () => {
     it('should validate the site parameter', () => {
       validateAndBuildConfiguration({ clientToken, site: 'foo.com' })
-      expect(displaySpy).toHaveBeenCalledOnceWith(
-        `Site should be a valid Datadog site. We will fall back to US1 region: ${INTAKE_SITE_US1}`
-      )
+      expect(displaySpy).toHaveBeenCalledOnceWith('Site should be a valid Datadog site.')
     })
   })
 

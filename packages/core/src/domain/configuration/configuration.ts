@@ -153,7 +153,7 @@ export function validateAndBuildConfiguration(initConfiguration: InitConfigurati
   }
 
   if (initConfiguration.site && !isDatadogSite(initConfiguration.site)) {
-    display.error(`Site should be a valid Datadog site. We will fall back to US1 region: ${INTAKE_SITE_US1}`)
+    display.error('Site should be a valid Datadog site.')
     return
   }
 
