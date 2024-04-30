@@ -1,4 +1,5 @@
 import { isElementNode, getParentNode, isTextNode } from '../browser/htmlDomUtils'
+import { elementClasslistContains } from '../browser/polyfills'
 import {
   NodePrivacyLevel,
   PRIVACY_ATTR_NAME,
@@ -101,26 +102,23 @@ export function getNodeSelfPrivacyLevel(node: Node): NodePrivacyLevel | undefine
     }
   }
 
-  if (!node.classList) {
-    // SVGElement doesn't have classList in IE11
-    // We assume that SVGElement should be treated as ALLOW
-    return NodePrivacyLevel.ALLOW
-  }
-
   // Check HTML privacy attributes and classes
-  if (privAttr === PRIVACY_ATTR_VALUE_HIDDEN || node.classList.contains(PRIVACY_CLASS_HIDDEN)) {
+  if (privAttr === PRIVACY_ATTR_VALUE_HIDDEN || elementClasslistContains(node, PRIVACY_CLASS_HIDDEN)) {
     return NodePrivacyLevel.HIDDEN
   }
 
-  if (privAttr === PRIVACY_ATTR_VALUE_MASK || node.classList.contains(PRIVACY_CLASS_MASK)) {
+  if (privAttr === PRIVACY_ATTR_VALUE_MASK || elementClasslistContains(node, PRIVACY_CLASS_MASK)) {
     return NodePrivacyLevel.MASK
   }
 
-  if (privAttr === PRIVACY_ATTR_VALUE_MASK_USER_INPUT || node.classList.contains(PRIVACY_CLASS_MASK_USER_INPUT)) {
+  if (
+    privAttr === PRIVACY_ATTR_VALUE_MASK_USER_INPUT ||
+    elementClasslistContains(node, PRIVACY_CLASS_MASK_USER_INPUT)
+  ) {
     return NodePrivacyLevel.MASK_USER_INPUT
   }
 
-  if (privAttr === PRIVACY_ATTR_VALUE_ALLOW || node.classList.contains(PRIVACY_CLASS_ALLOW)) {
+  if (privAttr === PRIVACY_ATTR_VALUE_ALLOW || elementClasslistContains(node, PRIVACY_CLASS_ALLOW)) {
     return NodePrivacyLevel.ALLOW
   }
 
