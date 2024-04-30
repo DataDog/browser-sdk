@@ -13,6 +13,7 @@ import type { SessionStoreStrategyType } from '../session/storeStrategies/sessio
 import { TrackingConsent } from '../trackingConsent'
 import type { TransportConfiguration } from './transportConfiguration'
 import { computeTransportConfiguration } from './transportConfiguration'
+import { INTAKE_SITE_US1 } from './intakeSites'
 
 export const DefaultPrivacyLevel = {
   ALLOW: 'allow',
@@ -107,6 +108,9 @@ export interface Configuration extends TransportConfiguration {
   batchMessagesLimit: number
   messageBytesLimit: number
 }
+function isDatadogSite(site: string) {
+  return /(datadog|ddog|datad0g|dd0g)/.test(site)
+}
 
 export function validateAndBuildConfiguration(initConfiguration: InitConfiguration): Configuration | undefined {
   if (!initConfiguration || !initConfiguration.clientToken) {
@@ -145,6 +149,11 @@ export function validateAndBuildConfiguration(initConfiguration: InitConfigurati
     !objectHasValue(TrackingConsent, initConfiguration.trackingConsent)
   ) {
     display.error('Tracking Consent should be either "granted" or "not-granted"')
+    return
+  }
+
+  if (initConfiguration.site && !isDatadogSite(initConfiguration.site)) {
+    display.error(`Site should be a valid Datadog site. We will fall back to US1 region: ${INTAKE_SITE_US1}`)
     return
   }
 

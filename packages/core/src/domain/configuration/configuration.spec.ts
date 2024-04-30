@@ -10,6 +10,7 @@ import {
 import { TrackingConsent } from '../trackingConsent'
 import type { InitConfiguration } from './configuration'
 import { serializeConfiguration, validateAndBuildConfiguration } from './configuration'
+import { INTAKE_SITE_US1 } from './intakeSites'
 
 describe('validateAndBuildConfiguration', () => {
   const clientToken = 'some_client_token'
@@ -207,6 +208,15 @@ describe('validateAndBuildConfiguration', () => {
     it('rejects invalid values', () => {
       expect(validateAndBuildConfiguration({ clientToken: 'yes', trackingConsent: 'foo' as any })).toBeUndefined()
       expect(displaySpy).toHaveBeenCalledOnceWith('Tracking Consent should be either "granted" or "not-granted"')
+    })
+  })
+
+  describe('site parameter validation', () => {
+    it('should validate the site parameter', () => {
+      validateAndBuildConfiguration({ clientToken, site: 'foo.com' })
+      expect(displaySpy).toHaveBeenCalledOnceWith(
+        `Site should be a valid Datadog site. We will fall back to US1 region: ${INTAKE_SITE_US1}`
+      )
     })
   })
 
