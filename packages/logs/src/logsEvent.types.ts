@@ -10,7 +10,7 @@ export interface LogsEvent {
   /**
    * The log status
    */
-  status: 'debug' | 'info' | 'warn' | 'error'
+  status: 'OK' | 'debug' | 'info' | 'notice' | 'warn' | 'error' | 'critical' | 'alert' | 'emerg'
   /**
    * Origin of the log
    */
