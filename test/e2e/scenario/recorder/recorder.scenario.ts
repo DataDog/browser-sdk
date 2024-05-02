@@ -811,7 +811,7 @@ describe('recorder', () => {
       .withRum({ sessionReplaySampleRate: 0 })
       .withSetup(bundleSetup)
       .run(async ({ intakeRegistry }) => {
-        await browserExecute(() => {
+        await browser.execute(() => {
           window.DD_RUM!.startSessionReplayRecording()
         })
 
@@ -824,7 +824,7 @@ describe('recorder', () => {
       .withRum({ sessionReplaySampleRate: 0 })
       .withSetup(bundleSetup)
       .run(async ({ intakeRegistry }) => {
-        await browserExecute(() => {
+        await browser.execute(() => {
           window.DD_RUM!.startSessionReplayRecording({ force: true })
         })
 
