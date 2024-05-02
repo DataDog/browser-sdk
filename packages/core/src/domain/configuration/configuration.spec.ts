@@ -213,9 +213,7 @@ describe('validateAndBuildConfiguration', () => {
   describe('site parameter validation', () => {
     it('should validate the site parameter', () => {
       validateAndBuildConfiguration({ clientToken, site: 'foo.com' })
-      expect(displaySpy).toHaveBeenCalledOnceWith(
-        `Site should be a valid Datadog site. Refer to our documentation for more information: ${DOC_LINK}.`
-      )
+      expect(displaySpy).toHaveBeenCalledOnceWith(`Site should be a valid Datadog site. Learn more here: ${DOC_LINK}.`)
     })
   })
 

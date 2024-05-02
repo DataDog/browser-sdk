@@ -153,7 +153,7 @@ export function validateAndBuildConfiguration(initConfiguration: InitConfigurati
   }
 
   if (initConfiguration.site && !isDatadogSite(initConfiguration.site)) {
-    display.error(`Site should be a valid Datadog site. Refer to our documentation for more information: ${DOC_LINK}.`)
+    display.error(`Site should be a valid Datadog site. Learn more here: ${DOC_LINK}.`)
     return
   }
 
