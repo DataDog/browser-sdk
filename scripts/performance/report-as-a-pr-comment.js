@@ -160,7 +160,7 @@ function createMessage(
     const localMemoryTaskValue =
       localMemoryPerf && localMemoryPerf.sdkMemoryBytes !== null ? localMemoryPerf.sdkMemoryBytes : 'N/A'
     const diffMemoryTaskValue = memoryActionPerformance.change !== null ? memoryActionPerformance.change : 'N/A'
-    message += `| ${memoryActionPerformance.name} | ${baseMemoryTaskValue} | ${localMemoryTaskValue} | ${diffMemoryTaskValue} |\n`
+    message += `| ${memoryActionPerformance.name} | ${formatSize(baseMemoryTaskValue)} | ${formatSize(localMemoryTaskValue)} | ${formatSize(diffMemoryTaskValue)} |\n`
   })
   message += '\n</details>\n'
 

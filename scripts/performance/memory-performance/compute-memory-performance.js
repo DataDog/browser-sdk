@@ -31,12 +31,8 @@ async function computeMemoryPerformance() {
       allPercentageMeasurements.push(medianPercentage)
       allBytesMeasurements.push(medianBytes)
     }
-    const sdkMemoryPercentage = Number(
-      (allPercentageMeasurements.reduce((a, b) => a + b, 0) / allPercentageMeasurements.length).toFixed(2)
-    )
-    const sdkMemoryBytes = Number(
-      (allBytesMeasurements.reduce((a, b) => a + b, 0) / allBytesMeasurements.length).toFixed(2)
-    )
+    const sdkMemoryPercentage = average(allPercentageMeasurements)
+    const sdkMemoryBytes = average(allBytesMeasurements)
     console.log(
       `Average percentage of memory used by SDK for ${sdkTask} over ${NUMBER_OF_RUNS} runs: ${sdkMemoryPercentage}%  for ${sdkMemoryBytes} bytes`
     )
@@ -78,7 +74,7 @@ async function runTest(i, buttonName, bundleUrl, benchmarkUrl) {
     sizeForNodeId.set(sample.nodeId, (sizeForNodeId.get(sample.nodeId) || 0) + sample.size)
     let totalSize = 0
     let sdkConsumption = 0
-    for (const node of iterNodes(profile.head)) {
+    for (const node of children(profile.head)) {
       const consumption = sizeForNodeId.get(node.id) || 0
       totalSize += consumption
       if (isSdkBundleUrl(node.callFrame.url, bundleUrl)) {
@@ -90,22 +86,29 @@ async function runTest(i, buttonName, bundleUrl, benchmarkUrl) {
     measurementsPercentage.push(sdkPercentage)
   }
 
-  measurementsPercentage.sort((a, b) => a - b)
-  measurementsBytes.sort((a, b) => a - b)
-  const medianPercentage = measurementsPercentage[Math.floor(measurementsPercentage.length / 2)]
-  const medianBytes = measurementsBytes[Math.floor(measurementsBytes.length / 2)]
+  const medianPercentage = median(measurementsPercentage)
+  const medianBytes = median(measurementsBytes)
   await browser.close()
   return { medianPercentage, medianBytes }
 }
 
-function* iterNodes(node) {
+function* children(node) {
   yield node
   for (const child of node.children || []) {
-    yield* iterNodes(child)
+    yield* children(child)
   }
 }
 function isSdkBundleUrl(url, bundleUrl) {
   return url === bundleUrl
+}
+
+function average(values) {
+  return Number((values.reduce((a, b) => a + b, 0) / values.length).toFixed(2))
+}
+
+function median(values) {
+  values.sort((a, b) => a - b)
+  return values[Math.floor(values.length / 2)]
 }
 
 module.exports = { computeMemoryPerformance }
