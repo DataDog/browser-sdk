@@ -27,7 +27,7 @@ async function computeMemoryPerformance() {
     const allBytesMeasurements = []
     const allPercentageMeasurements = []
     for (let j = 0; j < NUMBER_OF_RUNS; j++) {
-      const { medianPercentage, medianBytes } = await runTest(i, sdkTask, bundleUrl, benchmarkUrl)
+      const { medianPercentage, medianBytes } = await runTest(sdkTask, bundleUrl, benchmarkUrl)
       allPercentageMeasurements.push(medianPercentage)
       allBytesMeasurements.push(medianBytes)
     }
@@ -41,7 +41,7 @@ async function computeMemoryPerformance() {
   return results
 }
 
-async function runTest(i, buttonName, bundleUrl, benchmarkUrl) {
+async function runTest(buttonName, bundleUrl, benchmarkUrl) {
   const browser = await puppeteer.launch({
     args: ['--no-sandbox', '--disable-setuid-sandbox'],
   })
@@ -53,8 +53,9 @@ async function runTest(i, buttonName, bundleUrl, benchmarkUrl) {
   await client.send('HeapProfiler.enable')
 
   // Select the button to trigger the sdk task
-  await page.waitForSelector('button')
-  const button = (await page.$$('button'))[i]
+  const buttonId = buttonName.replace(/\W+/g, '-').toLowerCase()
+  await page.waitForSelector(`#${buttonId}`)
+  const button = await page.$(`#${buttonId}`)
 
   await client.send('HeapProfiler.collectGarbage')
 
