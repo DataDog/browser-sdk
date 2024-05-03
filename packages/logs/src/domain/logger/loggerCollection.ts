@@ -1,5 +1,6 @@
-import type { ConsoleApiName, Context, TimeStamp } from '@datadog/browser-core'
+import type { Context, TimeStamp } from '@datadog/browser-core'
 import {
+  ConsoleApiName,
   includes,
   combine,
   ErrorSource,
@@ -65,22 +66,18 @@ export function isAuthorized(status: StatusType, handlerType: HandlerType, logge
   )
 }
 
-function displayInConsole({ message, status }: LogsMessage, messageContext: Context | undefined) {
-  const display = (api: ConsoleApiName) => originalConsoleMethods[api].call(globalConsole, message, messageContext)
+const loggerToConsoleApiName: { [key in StatusType]: ConsoleApiName } = {
+  [StatusType.OK]: ConsoleApiName.debug,
+  [StatusType.debug]: ConsoleApiName.debug,
+  [StatusType.info]: ConsoleApiName.info,
+  [StatusType.notice]: ConsoleApiName.info,
+  [StatusType.warn]: ConsoleApiName.warn,
+  [StatusType.error]: ConsoleApiName.error,
+  [StatusType.critical]: ConsoleApiName.error,
+  [StatusType.alert]: ConsoleApiName.error,
+  [StatusType.emerg]: ConsoleApiName.error,
+}
 
-  switch (status) {
-    case 'OK':
-      display('debug')
-      break
-    case 'notice':
-      display('info')
-      break
-    case 'critical':
-    case 'alert':
-    case 'emerg':
-      display('error')
-      break
-    default:
-      display(status)
-  }
+function displayInConsole({ status, message }: LogsMessage, messageContext: Context | undefined) {
+  originalConsoleMethods[loggerToConsoleApiName[status]].call(globalConsole, message, messageContext)
 }
