@@ -189,7 +189,6 @@ export function makeRumPublicApi(startRumImpl: StartRum, recorderApi: RecorderAp
     const sanitizedOptions = typeof options === 'object' ? options : { name: options }
     strategy.startView(sanitizedOptions)
   })
-
   const rumPublicApi = makePublicApi({
     init: monitor((initConfiguration: RumInitConfiguration) => strategy.init(initConfiguration)),
 
@@ -247,10 +246,10 @@ export function makeRumPublicApi(startRumImpl: StartRum, recorderApi: RecorderAp
 
     /**
      * Add a custom timing relative to the start of the current view,
-     * stored in @view.custom_timings.<timing_name>
+     * stored in `@view.custom_timings.<timing_name>`
      *
-     * @param name name of the custom timing
-     * @param [time] epoch timestamp of the custom timing (if not set, will use current time)
+     * @param name Name of the custom timing
+     * @param [time] Epoch timestamp of the custom timing (if not set, will use current time)
      *
      * Note: passing a relative time is discouraged since it is actually used as-is but displayed relative to the view start.
      * We currently don't provide a way to retrieve the view start time, so it can be challenging to provide a timing relative to the view start.
@@ -286,7 +285,14 @@ export function makeRumPublicApi(startRumImpl: StartRum, recorderApi: RecorderAp
     }),
 
     /**
-     * This feature is currently in beta. For more information see the full [feature flag tracking guide](https://docs.datadoghq.com/real_user_monitoring/feature_flag_tracking/).
+     * Add a feature flag evaluation,
+     * stored in `@feature_flags.<feature_flag_key>`
+     *
+     * @param {string} key The key of the feature flag.
+     * @param {any} value The value of the feature flag.
+     *
+     * We recommend enabling the intake request compression when using feature flags `compressIntakeRequests: true`.
+     * For more information see the full [feature flag tracking guide](https://docs.datadoghq.com/real_user_monitoring/feature_flag_tracking/).
      */
     addFeatureFlagEvaluation: monitor((key: string, value: any) => {
       strategy.addFeatureFlagEvaluation(sanitize(key)!, sanitize(value))
