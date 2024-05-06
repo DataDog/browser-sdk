@@ -19,6 +19,7 @@ export interface SessionStore {
   restartSession: () => void
   renewObservable: Observable<void>
   expireObservable: Observable<void>
+  trackingUpdateObservable: Observable<void>
   expire: () => void
   stop: () => void
   updateSession: (state: Partial<SessionState>) => void
@@ -54,10 +55,12 @@ export function selectSessionStoreStrategyType(
 export function startSessionStore<TrackingType extends string>(
   sessionStoreStrategyType: SessionStoreStrategyType,
   productKey: string,
-  computeSessionState: (rawTrackingType?: string) => { trackingType: TrackingType; isTracked: boolean }
+  computeSessionState: (rawTrackingType?: string) => { trackingType: TrackingType; isTracked: boolean },
+  allowedStateTransitions?: TrackingType
 ): SessionStore {
   const renewObservable = new Observable<void>()
   const expireObservable = new Observable<void>()
+  const trackingUpdateObservable = new Observable<void>()
 
   const sessionStoreStrategy =
     sessionStoreStrategyType.type === 'Cookie'
@@ -126,6 +129,12 @@ export function startSessionStore<TrackingType extends string>(
       if (isSessionInCacheOutdated(sessionState)) {
         expireSessionInCache()
       } else {
+        if (
+          sessionState[productKey] !== sessionCache[productKey] &&
+          sessionState[productKey] === allowedStateTransitions
+        ) {
+          trackingUpdateObservable.notify()
+        }
         sessionCache = sessionState
       }
     }
@@ -168,7 +177,11 @@ export function startSessionStore<TrackingType extends string>(
   }
 
   function isSessionInCacheOutdated(sessionState: SessionState) {
-    return sessionCache.id !== sessionState.id || sessionCache[productKey] !== sessionState[productKey]
+    const didSessionIdChange = sessionCache.id !== sessionState.id
+    const untoleratedTrackingChange =
+      sessionState[productKey] !== allowedStateTransitions && sessionCache[productKey] !== sessionState[productKey]
+
+    return didSessionIdChange || untoleratedTrackingChange
   }
 
   function expireSessionInCache() {
@@ -197,6 +210,7 @@ export function startSessionStore<TrackingType extends string>(
     getSession: () => sessionCache,
     renewObservable,
     expireObservable,
+    trackingUpdateObservable,
     restartSession: startSession,
     expire: () => {
       cancelExpandOrRenewSession()

@@ -10,6 +10,7 @@ import type { SessionState } from './sessionState'
 const enum FakeTrackingType {
   TRACKED = 'tracked',
   NOT_TRACKED = 'not-tracked',
+  OTHER_TRACKING = 'other-tracking',
 }
 
 const DURATION = 123456
@@ -470,6 +471,87 @@ describe('session store', () => {
         expect(sessionStoreManager.getSession().id).toBe(FIRST_ID)
         expect(sessionStoreManager.getSession().isExpired).toBeUndefined()
       })
+    })
+  })
+
+  fdescribe('session update and synchronisation', () => {
+    let expireSpy: () => void
+    let otherExpireSpy: () => void
+    let updateSpy: () => void
+    let otherUpdateSpy: () => void
+    let clock: Clock
+
+    function setupSessionStore(spies: {expireSpy: () => void, updateSpy: () => void}) {
+      const computeSessionState: (rawTrackingType?: string) => {
+        trackingType: FakeTrackingType
+        isTracked: boolean
+      } = () => ({
+        isTracked: true,
+        trackingType: FakeTrackingType.TRACKED,
+      })
+      const sessionStoreStrategyType = selectSessionStoreStrategyType({
+        clientToken: 'abc',
+        allowFallbackToLocalStorage: false,
+      })
+
+      const sessionStoreManager = startSessionStore(sessionStoreStrategyType!, PRODUCT_KEY, computeSessionState, FakeTrackingType.OTHER_TRACKING)
+      sessionStoreManager.expireObservable.subscribe(spies.expireSpy)
+      sessionStoreManager.trackingUpdateObservable.subscribe(spies.updateSpy)
+
+      return sessionStoreManager
+    }
+
+    let sessionStoreManager: SessionStore
+    let otherSessionStoreManager: SessionStore
+
+    beforeEach(() => {
+      expireSpy = jasmine.createSpy('expire session')
+      otherExpireSpy = jasmine.createSpy('expire session')
+      updateSpy = jasmine.createSpy('renew session')
+      otherUpdateSpy = jasmine.createSpy('renew session')
+      clock = mockClock()
+    })
+
+    afterEach(() => {
+      resetSessionInStore()
+      clock.cleanup()
+      sessionStoreManager.stop()
+      otherSessionStoreManager.stop()
+    })
+
+    it('should expire all stores when transition is not allowed', () => {
+      setSessionInStore(FakeTrackingType.TRACKED, FIRST_ID)
+
+      sessionStoreManager = setupSessionStore({ expireSpy, updateSpy })
+      otherSessionStoreManager = setupSessionStore({ expireSpy: otherExpireSpy, updateSpy: otherUpdateSpy })
+
+      sessionStoreManager.updateSession({[PRODUCT_KEY]: FakeTrackingType.NOT_TRACKED})
+      expect(expireSpy).toHaveBeenCalled()
+      expect(updateSpy).not.toHaveBeenCalled()
+
+      // Need to wait until watch is triggered
+      clock.tick(STORAGE_POLL_DELAY)
+      expect(otherExpireSpy).toHaveBeenCalled()
+      expect(otherUpdateSpy).not.toHaveBeenCalled()
+    })
+
+    it('should synchronise all stores and notify update observables of all stores', () => {
+      setSessionInStore(FakeTrackingType.TRACKED, FIRST_ID)
+
+      sessionStoreManager = setupSessionStore({ expireSpy, updateSpy })
+      otherSessionStoreManager = setupSessionStore({ expireSpy: otherExpireSpy, updateSpy: otherUpdateSpy })
+
+      sessionStoreManager.updateSession({[PRODUCT_KEY]: FakeTrackingType.OTHER_TRACKING})
+
+      expect(updateSpy).toHaveBeenCalled()
+      expect(expireSpy).not.toHaveBeenCalled()
+      expect(sessionStoreManager.getSession()[PRODUCT_KEY]).toBe(FakeTrackingType.OTHER_TRACKING)
+
+      // Need to wait until watch is triggered
+      clock.tick(STORAGE_POLL_DELAY)
+      expect(otherUpdateSpy).toHaveBeenCalled()
+      expect(otherExpireSpy).not.toHaveBeenCalled()
+      expect(otherSessionStoreManager.getSession()[PRODUCT_KEY]).toBe(FakeTrackingType.OTHER_TRACKING)
     })
   })
 })

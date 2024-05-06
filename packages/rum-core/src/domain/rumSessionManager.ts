@@ -42,7 +42,8 @@ export function startRumSessionManager(
     configuration,
     RUM_SESSION_KEY,
     (rawTrackingType) => computeSessionState(configuration, rawTrackingType),
-    trackingConsentState
+    trackingConsentState,
+    RumTrackingType.TRACKED_WITH_FORCED_SESSION_REPLAY
   )
 
   sessionManager.expireObservable.subscribe(() => {
