@@ -474,7 +474,7 @@ describe('session store', () => {
     })
   })
 
-  fdescribe('session update and synchronisation', () => {
+  describe('session update and synchronisation', () => {
     let expireSpy: () => void
     let otherExpireSpy: () => void
     let updateSpy: () => void
