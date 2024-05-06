@@ -16,6 +16,10 @@
 
 ---
 
+## v5.17.1
+
+- 🐛fix deploy script ([#2742](https://github.com/DataDog/browser-sdk/pull/2742))
+
 ## v5.17.0
 
 - ✨ [RUM-4052] Sanitize `site` parameter in configuration ([#2735](https://github.com/DataDog/browser-sdk/pull/2735))
