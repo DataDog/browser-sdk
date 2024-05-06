@@ -10,6 +10,8 @@ import {
   monitored,
   sanitize,
   NonErrorPrefix,
+  matchList,
+  includesItem,
 } from '@datadog/browser-core'
 
 import type { RawLoggerLogsEvent } from '../rawLogsEvent.types'
@@ -43,6 +45,37 @@ export const HandlerType = {
 export type HandlerType = (typeof HandlerType)[keyof typeof HandlerType]
 export const STATUSES = Object.keys(StatusType) as StatusType[]
 
+export const StatusMapping: { [key in StatusType]: { match: (v: string) => boolean; priority: number } } = {
+  [StatusType.emerg]: { priority: 0, match: (v) => matchList(['f', 'emerg'], v, true) },
+  [StatusType.alert]: { priority: 1, match: (v) => matchList(['a'], v, true) },
+  [StatusType.critical]: { priority: 2, match: (v) => matchList(['c'], v, true) },
+  [StatusType.error]: { priority: 3, match: (v) => matchList(['e'], v, true) && !matchList(['emerg'], v, true) },
+  [StatusType.warn]: { priority: 4, match: (v) => matchList(['w'], v, true) },
+  [StatusType.notice]: { priority: 5, match: (v) => matchList(['n'], v, true) },
+  [StatusType.info]: { priority: 6, match: (v) => matchList(['i'], v, true) },
+  [StatusType.debug]: { priority: 7, match: (v) => matchList(['d', 'trace', 'verbose'], v, true) },
+  [StatusType.OK]: { priority: 8, match: (v) => matchList(['o', 's'], v, true) || matchList(['ok', 'success'], v) },
+}
+
+const remap = (rawStatus: string | number): StatusType => {
+  if (includesItem(STATUSES, rawStatus)) {
+    return rawStatus
+  }
+
+  for (const status of STATUSES) {
+    const { match, priority } = StatusMapping[status]
+    if (typeof rawStatus === 'string') {
+      if (match(rawStatus.toLowerCase())) {
+        return status
+      }
+    } else if (rawStatus >= 0 && rawStatus <= 7 && rawStatus === priority) {
+      return status
+    }
+  }
+
+  return 'info'
+}
+
 export class Logger {
   private contextManager: ContextManager
 
@@ -62,7 +95,7 @@ export class Logger {
   }
 
   @monitored
-  log(message: string, messageContext?: object, status: StatusType = StatusType.info, error?: Error) {
+  log(message: string, messageContext?: object, status: string | number = StatusType.info, error?: Error): void {
     let errorContext: RawLoggerLogsEvent['error']
 
     if (error !== undefined && error !== null) {
@@ -94,7 +127,7 @@ export class Logger {
       {
         message: sanitize(message)!,
         context,
-        status,
+        status: remap(status),
       },
       this
     )

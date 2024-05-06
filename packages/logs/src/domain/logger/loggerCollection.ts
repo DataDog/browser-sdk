@@ -12,19 +12,7 @@ import type { CommonContext } from '../../rawLogsEvent.types'
 import type { LifeCycle } from '../lifeCycle'
 import { LifeCycleEventType } from '../lifeCycle'
 import type { Logger, LogsMessage } from '../logger'
-import { StatusType, HandlerType } from '../logger'
-
-export const STATUS_PRIORITIES: { [key in StatusType]: number } = {
-  [StatusType.OK]: 0,
-  [StatusType.debug]: 1,
-  [StatusType.info]: 2,
-  [StatusType.notice]: 4,
-  [StatusType.warn]: 5,
-  [StatusType.error]: 6,
-  [StatusType.critical]: 7,
-  [StatusType.alert]: 8,
-  [StatusType.emerg]: 9,
-}
+import { StatusType, HandlerType, StatusMapping } from '../logger'
 
 export function startLoggerCollection(lifeCycle: LifeCycle) {
   function handleLog(
@@ -62,7 +50,9 @@ export function isAuthorized(status: StatusType, handlerType: HandlerType, logge
   const loggerHandler = logger.getHandler()
   const sanitizedHandlerType = Array.isArray(loggerHandler) ? loggerHandler : [loggerHandler]
   return (
-    STATUS_PRIORITIES[status] >= STATUS_PRIORITIES[logger.getLevel()] && includes(sanitizedHandlerType, handlerType)
+    StatusMapping[status] &&
+    StatusMapping[status].priority <= StatusMapping[logger.getLevel()].priority &&
+    includes(sanitizedHandlerType, handlerType)
   )
 }
 

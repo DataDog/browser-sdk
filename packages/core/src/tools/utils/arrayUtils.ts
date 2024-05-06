@@ -12,3 +12,7 @@ export function removeItem<T>(array: T[], item: T) {
     array.splice(index, 1)
   }
 }
+
+export function includesItem<T>(array: readonly T[], item: unknown): item is T {
+  return array.includes(item as T)
+}
