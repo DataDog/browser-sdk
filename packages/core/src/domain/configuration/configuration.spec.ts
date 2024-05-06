@@ -217,6 +217,13 @@ describe('validateAndBuildConfiguration', () => {
     })
   })
 
+  describe('version parameter validation', () => {
+    it('should not validate the version parameter', () => {
+      validateAndBuildConfiguration({ clientToken, version: 1 as any })
+      expect(displaySpy).toHaveBeenCalledOnceWith('Version must be defined as a string')
+    })
+  })
+
   describe('serializeConfiguration', () => {
     it('should serialize the configuration', () => {
       // By specifying the type here, we can ensure that serializeConfiguration is returning an

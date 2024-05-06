@@ -144,6 +144,11 @@ export function validateAndBuildConfiguration(initConfiguration: InitConfigurati
     return
   }
 
+  if (initConfiguration.version && typeof initConfiguration.version !== 'string') {
+    display.error('Version must be defined as a string')
+    return
+  }
+
   if (
     initConfiguration.trackingConsent !== undefined &&
     !objectHasValue(TrackingConsent, initConfiguration.trackingConsent)
