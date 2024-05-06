@@ -16,6 +16,15 @@
 
 ---
 
+## v5.17.0
+
+- ✨ [RUM-4052] Sanitize `site` parameter in configuration ([#2735](https://github.com/DataDog/browser-sdk/pull/2735))
+- ✨ [RUM-4287] Enable feature flags API ([#2728](https://github.com/DataDog/browser-sdk/pull/2728))
+- ✨ [RUM-3710] Update session ID handling to support cookie deletion ([#2673](https://github.com/DataDog/browser-sdk/pull/2673))
+- ✨⚗️ [RUM-4179] vital: collect `computed_value` property ([#2723](https://github.com/DataDog/browser-sdk/pull/2723))
+- ♻️ use browser.execute and browser.executeAsync directly ([#2700](https://github.com/DataDog/browser-sdk/pull/2700))
+- ♻️ move createHandlingStack to the tools folder ([#2727](https://github.com/DataDog/browser-sdk/pull/2727))
+
 ## v5.16.0
 
 - ✨ [RUM-3684] Capture scroll record on shadow dom elements ([#2708](https://github.com/DataDog/browser-sdk/pull/2708))

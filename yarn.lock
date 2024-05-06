@@ -307,7 +307,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@datadog/browser-core@5.16.0, @datadog/browser-core@workspace:*, @datadog/browser-core@workspace:packages/core":
+"@datadog/browser-core@5.17.0, @datadog/browser-core@workspace:*, @datadog/browser-core@workspace:packages/core":
   version: 0.0.0-use.local
   resolution: "@datadog/browser-core@workspace:packages/core"
   languageName: unknown
@@ -317,20 +317,20 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@datadog/browser-logs@workspace:packages/logs"
   dependencies:
-    "@datadog/browser-core": 5.16.0
+    "@datadog/browser-core": 5.17.0
   peerDependencies:
-    "@datadog/browser-rum": 5.16.0
+    "@datadog/browser-rum": 5.17.0
   peerDependenciesMeta:
     "@datadog/browser-rum":
       optional: true
   languageName: unknown
   linkType: soft
 
-"@datadog/browser-rum-core@5.16.0, @datadog/browser-rum-core@workspace:packages/rum-core":
+"@datadog/browser-rum-core@5.17.0, @datadog/browser-rum-core@workspace:packages/rum-core":
   version: 0.0.0-use.local
   resolution: "@datadog/browser-rum-core@workspace:packages/rum-core"
   dependencies:
-    "@datadog/browser-core": 5.16.0
+    "@datadog/browser-core": 5.17.0
     ajv: 6.12.6
   languageName: unknown
   linkType: soft
@@ -339,10 +339,10 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@datadog/browser-rum-slim@workspace:packages/rum-slim"
   dependencies:
-    "@datadog/browser-core": 5.16.0
-    "@datadog/browser-rum-core": 5.16.0
+    "@datadog/browser-core": 5.17.0
+    "@datadog/browser-rum-core": 5.17.0
   peerDependencies:
-    "@datadog/browser-logs": 5.16.0
+    "@datadog/browser-logs": 5.17.0
   peerDependenciesMeta:
     "@datadog/browser-logs":
       optional: true
@@ -353,12 +353,12 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@datadog/browser-rum@workspace:packages/rum"
   dependencies:
-    "@datadog/browser-core": 5.16.0
-    "@datadog/browser-rum-core": 5.16.0
+    "@datadog/browser-core": 5.17.0
+    "@datadog/browser-rum-core": 5.17.0
     "@types/pako": 2.0.3
     pako: 2.1.0
   peerDependencies:
-    "@datadog/browser-logs": 5.16.0
+    "@datadog/browser-logs": 5.17.0
   peerDependenciesMeta:
     "@datadog/browser-logs":
       optional: true
@@ -394,7 +394,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@datadog/browser-worker@workspace:packages/worker"
   dependencies:
-    "@datadog/browser-core": 5.16.0
+    "@datadog/browser-core": 5.17.0
     webpack: 5.91.0
   languageName: unknown
   linkType: soft
