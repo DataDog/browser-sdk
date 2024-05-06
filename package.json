@@ -36,8 +36,8 @@
     "@types/cors": "2.8.17",
     "@types/express": "4.17.21",
     "@types/jasmine": "3.10.18",
-    "@typescript-eslint/eslint-plugin": "7.7.1",
-    "@typescript-eslint/parser": "7.7.1",
+    "@typescript-eslint/eslint-plugin": "7.8.0",
+    "@typescript-eslint/parser": "7.8.0",
     "@wdio/browserstack-service": "8.36.1",
     "@wdio/cli": "8.36.1",
     "@wdio/jasmine-framework": "8.36.1",
@@ -88,11 +88,11 @@
   },
   "resolutions": {
     "ansi-regex": "5.0.1",
-    "@mantine/core/type-fest": "4.18.0"
+    "@mantine/core/type-fest": "4.18.1"
   },
   "volta": {
     "node": "20.12.2",
     "yarn": "1.22.22"
   },
-  "packageManager": "yarn@3.8.1"
+  "packageManager": "yarn@3.8.2"
 }
