@@ -130,8 +130,9 @@ export function startSessionStore<TrackingType extends string>(
         expireSessionInCache()
       } else {
         if (
-          sessionState[productKey] !== sessionCache[productKey] &&
-          sessionState[productKey] === allowedStateTransitions
+          allowedStateTransitions &&
+          sessionState[productKey] === allowedStateTransitions &&
+          sessionState[productKey] !== sessionCache[productKey]
         ) {
           trackingUpdateObservable.notify()
         }
@@ -178,8 +179,10 @@ export function startSessionStore<TrackingType extends string>(
 
   function isSessionInCacheOutdated(sessionState: SessionState) {
     const didSessionIdChange = sessionCache.id !== sessionState.id
+    const didSessionTrackingChange = sessionCache[productKey] !== sessionState[productKey]
     const untoleratedTrackingChange =
-      sessionState[productKey] !== allowedStateTransitions && sessionCache[productKey] !== sessionState[productKey]
+      (!allowedStateTransitions && didSessionTrackingChange) ||
+      (allowedStateTransitions && sessionState[productKey] !== allowedStateTransitions && didSessionTrackingChange)
 
     return didSessionIdChange || untoleratedTrackingChange
   }

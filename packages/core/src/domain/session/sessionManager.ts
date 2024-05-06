@@ -15,7 +15,6 @@ export interface SessionManager<TrackingType extends string> {
   findActiveSession: (startTime?: RelativeTime) => SessionContext<TrackingType> | undefined
   renewObservable: Observable<void>
   expireObservable: Observable<void>
-  trackingUpdateObservable?: Observable<void>
   expire: () => void
   updateSession: (state: Partial<SessionState>) => void
 }
@@ -34,7 +33,7 @@ export function startSessionManager<TrackingType extends string>(
   productKey: string,
   computeSessionState: (rawTrackingType?: string) => { trackingType: TrackingType; isTracked: boolean },
   trackingConsentState: TrackingConsentState,
-  allowedTrackingTransision?: TrackingType
+  allowedTrackingTransition?: TrackingType
 ): SessionManager<TrackingType> {
   const renewObservable = new Observable<void>()
   const expireObservable = new Observable<void>()
@@ -44,7 +43,7 @@ export function startSessionManager<TrackingType extends string>(
     configuration.sessionStoreStrategyType!,
     productKey,
     computeSessionState,
-    allowedTrackingTransision
+    allowedTrackingTransition
   )
   stopCallbacks.push(() => sessionStore.stop())
 
@@ -59,10 +58,10 @@ export function startSessionManager<TrackingType extends string>(
     expireObservable.notify()
     sessionContextHistory.closeActive(relativeNow())
   })
-  sessionStore.trackingUpdateObservable?.subscribe(() => {
+  sessionStore.trackingUpdateObservable.subscribe(() => {
     const sessionEntity = sessionContextHistory.find()
-    if (sessionEntity && allowedTrackingTransision) {
-      sessionEntity.trackingType = allowedTrackingTransision
+    if (sessionEntity && allowedTrackingTransition) {
+      sessionEntity.trackingType = allowedTrackingTransition
     }
   })
 

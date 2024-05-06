@@ -481,7 +481,7 @@ describe('session store', () => {
     let otherUpdateSpy: () => void
     let clock: Clock
 
-    function setupSessionStore(spies: {expireSpy: () => void, updateSpy: () => void}) {
+    function setupSessionStore(spies: { expireSpy: () => void; updateSpy: () => void }) {
       const computeSessionState: (rawTrackingType?: string) => {
         trackingType: FakeTrackingType
         isTracked: boolean
@@ -494,7 +494,12 @@ describe('session store', () => {
         allowFallbackToLocalStorage: false,
       })
 
-      const sessionStoreManager = startSessionStore(sessionStoreStrategyType!, PRODUCT_KEY, computeSessionState, FakeTrackingType.OTHER_TRACKING)
+      const sessionStoreManager = startSessionStore(
+        sessionStoreStrategyType!,
+        PRODUCT_KEY,
+        computeSessionState,
+        FakeTrackingType.OTHER_TRACKING
+      )
       sessionStoreManager.expireObservable.subscribe(spies.expireSpy)
       sessionStoreManager.trackingUpdateObservable.subscribe(spies.updateSpy)
 
@@ -525,7 +530,7 @@ describe('session store', () => {
       sessionStoreManager = setupSessionStore({ expireSpy, updateSpy })
       otherSessionStoreManager = setupSessionStore({ expireSpy: otherExpireSpy, updateSpy: otherUpdateSpy })
 
-      sessionStoreManager.updateSession({[PRODUCT_KEY]: FakeTrackingType.NOT_TRACKED})
+      sessionStoreManager.updateSession({ [PRODUCT_KEY]: FakeTrackingType.NOT_TRACKED })
       expect(expireSpy).toHaveBeenCalled()
       expect(updateSpy).not.toHaveBeenCalled()
 
@@ -541,7 +546,7 @@ describe('session store', () => {
       sessionStoreManager = setupSessionStore({ expireSpy, updateSpy })
       otherSessionStoreManager = setupSessionStore({ expireSpy: otherExpireSpy, updateSpy: otherUpdateSpy })
 
-      sessionStoreManager.updateSession({[PRODUCT_KEY]: FakeTrackingType.OTHER_TRACKING})
+      sessionStoreManager.updateSession({ [PRODUCT_KEY]: FakeTrackingType.OTHER_TRACKING })
 
       expect(updateSpy).toHaveBeenCalled()
       expect(expireSpy).not.toHaveBeenCalled()
