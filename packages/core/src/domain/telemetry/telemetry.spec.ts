@@ -147,13 +147,13 @@ describe('telemetry', () => {
         foo: 'bar',
       }))
       callMonitored(() => {
-        throw new Error('message')
+        throw new Error('foo')
       })
       expect(notifySpy.calls.mostRecent().args[0].foo).toEqual('bar')
 
       telemetry.setContextProvider(() => ({}))
       callMonitored(() => {
-        throw new Error('message')
+        throw new Error('bar')
       })
       expect(notifySpy.calls.mostRecent().args[0].foo).not.toBeDefined()
     })
