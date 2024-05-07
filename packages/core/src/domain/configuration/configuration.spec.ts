@@ -219,7 +219,7 @@ describe('validateAndBuildConfiguration', () => {
 
   describe('env parameter validation', () => {
     it('should not validate the env parameter', () => {
-      validateAndBuildConfiguration({ clientToken, env: 1 as any })
+      validateAndBuildConfiguration({ clientToken, env: false as any })
       expect(displaySpy).toHaveBeenCalledOnceWith('Env must be defined as a string')
     })
   })
@@ -233,7 +233,7 @@ describe('validateAndBuildConfiguration', () => {
 
   describe('version parameter validation', () => {
     it('should not validate the version parameter', () => {
-      validateAndBuildConfiguration({ clientToken, version: 1 as any })
+      validateAndBuildConfiguration({ clientToken, version: 0 as any })
       expect(displaySpy).toHaveBeenCalledOnceWith('Version must be defined as a string')
     })
   })

@@ -109,8 +109,8 @@ export interface Configuration extends TransportConfiguration {
   messageBytesLimit: number
 }
 
-function checkIfString(tag: any, tagName: string) {
-  if (tag && typeof tag !== 'string') {
+function checkIfString(tag: unknown, tagName: string) {
+  if (tag !== undefined && typeof tag !== 'string') {
     display.error(`${tagName} must be defined as a string`)
     return false
   }
