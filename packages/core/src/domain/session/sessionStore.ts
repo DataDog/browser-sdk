@@ -56,7 +56,7 @@ export function startSessionStore<TrackingType extends string>(
   sessionStoreStrategyType: SessionStoreStrategyType,
   productKey: string,
   computeSessionState: (rawTrackingType?: string) => { trackingType: TrackingType; isTracked: boolean },
-  allowedStateTransitions?: TrackingType
+  allowedTrackingTransition?: TrackingType
 ): SessionStore {
   const renewObservable = new Observable<void>()
   const expireObservable = new Observable<void>()
@@ -130,8 +130,8 @@ export function startSessionStore<TrackingType extends string>(
         expireSessionInCache()
       } else {
         if (
-          allowedStateTransitions &&
-          sessionState[productKey] === allowedStateTransitions &&
+          allowedTrackingTransition &&
+          sessionState[productKey] === allowedTrackingTransition &&
           sessionState[productKey] !== sessionCache[productKey]
         ) {
           trackingUpdateObservable.notify()
@@ -181,10 +181,11 @@ export function startSessionStore<TrackingType extends string>(
     const didSessionIdChange = sessionCache.id !== sessionState.id
     const didSessionTrackingChange = sessionCache[productKey] !== sessionState[productKey]
     const untoleratedTrackingChange =
-      (!allowedStateTransitions && didSessionTrackingChange) ||
-      (allowedStateTransitions && sessionState[productKey] !== allowedStateTransitions && didSessionTrackingChange)
+      (!allowedTrackingTransition && didSessionTrackingChange) ||
+      (allowedTrackingTransition && sessionState[productKey] !== allowedTrackingTransition && didSessionTrackingChange)
 
-    return didSessionIdChange || untoleratedTrackingChange
+    const a = didSessionIdChange || untoleratedTrackingChange
+    return a
   }
 
   function expireSessionInCache() {

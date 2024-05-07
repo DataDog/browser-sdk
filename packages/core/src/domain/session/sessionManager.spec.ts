@@ -18,6 +18,8 @@ import { STORAGE_POLL_DELAY } from './sessionStore'
 const enum FakeTrackingType {
   NOT_TRACKED = 'not-tracked',
   TRACKED = 'tracked',
+  OTHER_TRACKING = 'other-tracking',
+  DISALLOWED_TRACKING = 'disallowed-tracking',
 }
 
 const TRACKED_SESSION_STATE = {
@@ -614,16 +616,34 @@ describe('startSessionManager', () => {
     })
   })
 
+  describe('session tracking type transition', () => {
+    it('should expire the session when the tracking type transitions to unallowed type', () => {
+      const sessionManager = startSessionManagerWithDefaults({ allowedTrackingTransition: FakeTrackingType.OTHER_TRACKING })
+      sessionManager.updateSession({ [FIRST_PRODUCT_KEY]: FakeTrackingType.DISALLOWED_TRACKING })
+
+      expect(sessionManager.findActiveSession()).not.toBeDefined()
+    })
+    it('should update current entity in history', () => {
+      const sessionManager = startSessionManagerWithDefaults({ allowedTrackingTransition: FakeTrackingType.OTHER_TRACKING })
+      sessionManager.updateSession({ [FIRST_PRODUCT_KEY]: FakeTrackingType.OTHER_TRACKING })
+
+      expect(sessionManager.findActiveSession()!.id).toBeDefined()
+      expect(sessionManager.findActiveSession()!.trackingType).toBe(FakeTrackingType.OTHER_TRACKING)
+    })
+  })
+
   function startSessionManagerWithDefaults({
     configuration,
     productKey = FIRST_PRODUCT_KEY,
     computeSessionState = () => TRACKED_SESSION_STATE,
     trackingConsentState = createTrackingConsentState(TrackingConsent.GRANTED),
+    allowedTrackingTransition,
   }: {
     configuration?: Partial<Configuration>
     productKey?: string
     computeSessionState?: () => { trackingType: FakeTrackingType; isTracked: boolean }
     trackingConsentState?: TrackingConsentState
+    allowedTrackingTransition?: FakeTrackingType
   } = {}) {
     return startSessionManager(
       {
@@ -632,7 +652,8 @@ describe('startSessionManager', () => {
       } as Configuration,
       productKey,
       computeSessionState,
-      trackingConsentState
+      trackingConsentState,
+      allowedTrackingTransition,
     )
   }
 })
