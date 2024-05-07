@@ -11,11 +11,9 @@ export const DEFAULT_PROGRAMMATIC_ACTION_NAME_ATTRIBUTE = 'data-dd-action-name'
 export const ACTION_NAME_PLACEHOLDER = 'Masked Element'
 export function getActionNameFromElement(
   element: Element,
-  nodePrivacyLevel?: NodePrivacyLevel,
-  configuration?: RumConfiguration
+  { enablePrivacyForActionName, actionNameAttribute: userProgrammaticAttribute }: RumConfiguration,
+  nodePrivacyLevel?: NodePrivacyLevel
 ): { name: string; masked?: boolean } {
-  const { enablePrivacyForActionName = undefined, actionNameAttribute: userProgrammaticAttribute = undefined } =
-    configuration || {}
   // Proceed to get the action name in two steps:
   // * first, get the name programmatically, explicitly defined by the user.
   // * then, use strategies that are known to return good results. Those strategies will be used on

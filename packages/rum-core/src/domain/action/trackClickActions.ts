@@ -234,7 +234,7 @@ function computeClickActionBase(
 ): ClickActionBase {
   const rect = event.target.getBoundingClientRect()
 
-  const { name: actionName, masked } = getActionNameFromElement(event.target, nodePrivacyLevel, configuration)
+  const { name: actionName, masked } = getActionNameFromElement(event.target, configuration, nodePrivacyLevel)
 
   return {
     type: ActionType.CLICK,

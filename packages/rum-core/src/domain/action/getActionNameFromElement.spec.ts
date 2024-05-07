@@ -7,42 +7,48 @@ const defaultConfiguration = {} as RumConfiguration
 
 describe('getActionNameFromElement', () => {
   it('extracts the textual content of an element', () => {
-    const { name } = getActionNameFromElement(appendElement('<div>Foo <div>bar</div></div>'))
+    const { name } = getActionNameFromElement(appendElement('<div>Foo <div>bar</div></div>'), defaultConfiguration)
     expect(name).toBe('Foo bar')
   })
 
   it('extracts the text of an input button', () => {
-    const { name } = getActionNameFromElement(appendElement('<input type="button" value="Click" />'))
+    const { name } = getActionNameFromElement(
+      appendElement('<input type="button" value="Click" />'),
+      defaultConfiguration
+    )
     expect(name).toBe('Click')
   })
 
   it('extracts the alt text of an image', () => {
-    const { name } = getActionNameFromElement(appendElement('<img title="foo" alt="bar" />'))
+    const { name } = getActionNameFromElement(appendElement('<img title="foo" alt="bar" />'), defaultConfiguration)
     expect(name).toBe('bar')
   })
 
   it('extracts the title text of an image', () => {
-    const { name } = getActionNameFromElement(appendElement('<img title="foo" />'))
+    const { name } = getActionNameFromElement(appendElement('<img title="foo" />'), defaultConfiguration)
     expect(name).toBe('foo')
   })
 
   it('extracts the text of an aria-label attribute', () => {
-    const { name } = getActionNameFromElement(appendElement('<span aria-label="Foo" />'))
+    const { name } = getActionNameFromElement(appendElement('<span aria-label="Foo" />'), defaultConfiguration)
     expect(name).toBe('Foo')
   })
 
   it('gets the parent element textual content if everything else fails', () => {
-    const { name } = getActionNameFromElement(appendElement('<div>Foo <img target /></div>'))
+    const { name } = getActionNameFromElement(appendElement('<div>Foo <img target /></div>'), defaultConfiguration)
     expect(name).toBe('Foo')
   })
 
   it("doesn't get the value of a text input", () => {
-    const { name } = getActionNameFromElement(appendElement('<input type="text" value="foo" />'))
+    const { name } = getActionNameFromElement(appendElement('<input type="text" value="foo" />'), defaultConfiguration)
     expect(name).toBe('')
   })
 
   it("doesn't get the value of a password input", () => {
-    const { name } = getActionNameFromElement(appendElement('<input type="password" value="foo" />'))
+    const { name } = getActionNameFromElement(
+      appendElement('<input type="password" value="foo" />'),
+      defaultConfiguration
+    )
     expect(name).toBe('')
   })
 
@@ -50,7 +56,8 @@ describe('getActionNameFromElement', () => {
     const { name } = getActionNameFromElement(
       appendElement(
         '<div>Foooooooooooooooooo baaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaar baaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaz</div>'
-      )
+      ),
+      defaultConfiguration
     )
     expect(name).toBe(
       'Foooooooooooooooooo baaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa [...]'
@@ -58,17 +65,20 @@ describe('getActionNameFromElement', () => {
   })
 
   it('normalize white spaces', () => {
-    const { name } = getActionNameFromElement(appendElement('<div>foo\tbar\n\n  baz</div>'))
+    const { name } = getActionNameFromElement(appendElement('<div>foo\tbar\n\n  baz</div>'), defaultConfiguration)
     expect(name).toBe('foo bar baz')
   })
 
   it('ignores the inline script textual content', () => {
-    const { name } = getActionNameFromElement(appendElement("<div><script>console.log('toto')</script>b</div>"))
+    const { name } = getActionNameFromElement(
+      appendElement("<div><script>console.log('toto')</script>b</div>"),
+      defaultConfiguration
+    )
     expect(name).toBe('b')
   })
 
   it('extracts text from SVG elements', () => {
-    const { name } = getActionNameFromElement(appendElement('<svg><text>foo  bar</text></svg>'))
+    const { name } = getActionNameFromElement(appendElement('<svg><text>foo  bar</text></svg>'), defaultConfiguration)
     expect(name).toBe('foo bar')
   })
 
@@ -80,7 +90,8 @@ describe('getActionNameFromElement', () => {
         <div>ignored</div>
         <input id="toto" target />
       </div>
-    `)
+    `),
+      defaultConfiguration
     )
     expect(name).toBe('label text')
   })
@@ -95,7 +106,8 @@ describe('getActionNameFromElement', () => {
           <input target />
         </div>
       </label>
-    `)
+    `),
+      defaultConfiguration
     )
     expect(name).toBe('foo bar')
   })
@@ -107,7 +119,8 @@ describe('getActionNameFromElement', () => {
         <option>foo</option>
         <option>bar</option>
       </select>
-    `)
+    `),
+      defaultConfiguration
     )
     expect(name).toBe('foo')
   })
@@ -120,7 +133,8 @@ describe('getActionNameFromElement', () => {
         <div>ignored</div>
         <input aria-labelledby="toto" target />
       </div>
-    `)
+    `),
+      defaultConfiguration
     )
     expect(name).toBe('label text')
   })
@@ -135,7 +149,8 @@ describe('getActionNameFromElement', () => {
         <div>ignored</div>
         <label id="toto2">text</label>
       </div>
-    `)
+    `),
+      defaultConfiguration
     )
     expect(name).toBe('label text')
   })
@@ -147,7 +162,8 @@ describe('getActionNameFromElement', () => {
         <div>ignored</div>
         <button target>foo</button>
       </div>
-    `)
+    `),
+      defaultConfiguration
     )
     expect(name).toBe('foo')
   })
@@ -159,7 +175,8 @@ describe('getActionNameFromElement', () => {
         <div>ignored</div>
         <div role="button" target>foo</div>
       </div>
-    `)
+    `),
+      defaultConfiguration
     )
     expect(name).toBe('foo')
   })
@@ -173,7 +190,8 @@ describe('getActionNameFromElement', () => {
           <i target></i>
         </i></i></i></i></i></i></i></i></i></i>
       </div>
-    `)
+    `),
+      defaultConfiguration
     )
     expect(name).toBe('')
   })
@@ -183,7 +201,8 @@ describe('getActionNameFromElement', () => {
       appendElement(`
       <div>ignored</div>
       <i target></i>
-    `)
+    `),
+      defaultConfiguration
     )
     expect(name).toBe('')
   })
@@ -197,7 +216,8 @@ describe('getActionNameFromElement', () => {
           <i target></i>
         </form>
       </div>
-    `)
+    `),
+      defaultConfiguration
     )
     expect(name).toBe('')
   })
@@ -211,7 +231,8 @@ describe('getActionNameFromElement', () => {
           <i target></i>
         </form>
       </div>
-    `)
+    `),
+      defaultConfiguration
     )
     expect(name).toBe('foo')
   })
@@ -223,7 +244,8 @@ describe('getActionNameFromElement', () => {
         foo
         <i target>bar</i>
       </button>
-    `)
+    `),
+      defaultConfiguration
     )
     expect(name).toBe('foo bar')
   })
@@ -235,7 +257,8 @@ describe('getActionNameFromElement', () => {
         <i target>ignored</i>
         ignored
       </div>
-    `)
+    `),
+      defaultConfiguration
     )
     expect(name).toBe('')
   })
@@ -247,7 +270,8 @@ describe('getActionNameFromElement', () => {
         <i aria-label="foo" target>ignored</i>
         ignored
       </div>
-    `)
+    `),
+      defaultConfiguration
     )
     expect(name).toBe('foo')
   })
@@ -258,7 +282,8 @@ describe('getActionNameFromElement', () => {
        <button>
         foo <svg target></svg>
        <button>
-    `)
+    `),
+      defaultConfiguration
     )
     expect(name).toBe('foo')
   })
@@ -268,7 +293,8 @@ describe('getActionNameFromElement', () => {
       const { name } = getActionNameFromElement(
         appendElement(`
         <div data-dd-action-name="foo">ignored</div>
-      `)
+      `),
+        defaultConfiguration
       )
       expect(name).toBe('foo')
     })
@@ -281,7 +307,8 @@ describe('getActionNameFromElement', () => {
             <span target>ignored</span>
           </i></i></i></i></i></i></i></i></i></i></i></i>
         </form>
-      `)
+      `),
+        defaultConfiguration
       )
       expect(name).toBe('foo')
     })
@@ -290,7 +317,8 @@ describe('getActionNameFromElement', () => {
       const { name } = getActionNameFromElement(
         appendElement(`
         <div data-dd-action-name="   foo  \t bar  ">ignored</div>
-      `)
+      `),
+        defaultConfiguration
       )
       expect(name).toBe('foo bar')
     })
@@ -303,7 +331,8 @@ describe('getActionNameFromElement', () => {
             <span target>foo</span>
           </div>
         </div>
-    `)
+    `),
+        defaultConfiguration
       )
       expect(name).toBe('foo')
     })
@@ -313,11 +342,11 @@ describe('getActionNameFromElement', () => {
         appendElement(`
         <div data-test-id="foo">ignored</div>
       `),
-        undefined,
         {
           ...defaultConfiguration,
           actionNameAttribute: 'data-test-id',
-        }
+        },
+        undefined
       )
       expect(name).toBe('foo')
     })
@@ -327,18 +356,19 @@ describe('getActionNameFromElement', () => {
         appendElement(`
         <div data-test-id="foo" data-dd-action-name="bar">ignored</div>
       `),
-        undefined,
         {
           ...defaultConfiguration,
           actionNameAttribute: 'data-test-id',
-        }
+        },
+        undefined
       )
       expect(name).toBe('bar')
     })
 
     it('remove children with programmatic action name in textual content', () => {
       const { name } = getActionNameFromElement(
-        appendElement('<div>Foo <div data-dd-action-name="custom action">bar<div></div>')
+        appendElement('<div>Foo <div data-dd-action-name="custom action">bar<div></div>'),
+        defaultConfiguration
       )
 
       expect(name).toBe('Foo')
@@ -347,11 +377,11 @@ describe('getActionNameFromElement', () => {
     it('remove children with programmatic action name in textual content based on the user-configured attribute', () => {
       const { name } = getActionNameFromElement(
         appendElement('<div>Foo <div data-test-id="custom action">bar<div></div>'),
-        undefined,
         {
           ...defaultConfiguration,
           actionNameAttribute: 'data-test-id',
-        }
+        },
+        undefined
       )
       expect(name).toBe('Foo')
     })
@@ -365,6 +395,7 @@ describe('getActionNameFromElement', () => {
             <span target>ignored</span>
           </div>
     `),
+        defaultConfiguration,
         NodePrivacyLevel.MASK
       )
       expect(name).toBe('foo')
@@ -377,11 +408,11 @@ describe('getActionNameFromElement', () => {
             <span target>ignored</span>
           </div>
     `),
-        NodePrivacyLevel.MASK,
         {
           ...defaultConfiguration,
           actionNameAttribute: 'data-test-id',
-        }
+        },
+        NodePrivacyLevel.MASK
       )
       expect(name).toBe('foo')
     })
@@ -393,11 +424,11 @@ describe('getActionNameFromElement', () => {
             <span target>foo</span>
           </div>
     `),
-        NodePrivacyLevel.ALLOW,
         {
           ...defaultConfiguration,
           actionNameAttribute: 'data-test-id',
-        }
+        },
+        NodePrivacyLevel.ALLOW
       )
       expect(name).toBe('foo')
     })
@@ -410,12 +441,12 @@ describe('getActionNameFromElement', () => {
               <span target>foo</span>
             </div>
       `),
-          NodePrivacyLevel.MASK,
           {
             ...defaultConfiguration,
             actionNameAttribute: 'data-test-id',
             enablePrivacyForActionName: true,
-          }
+          },
+          NodePrivacyLevel.MASK
         )
       ).toEqual({ name: 'Masked Element', masked: true })
     })
@@ -428,6 +459,7 @@ describe('getActionNameFromElement', () => {
               <span target>ignored</span>
             </div>
       `),
+          defaultConfiguration,
           NodePrivacyLevel.ALLOW
         )
       ).toEqual({ name: 'foo', masked: false })
@@ -441,11 +473,11 @@ describe('getActionNameFromElement', () => {
               <span target>ignored</span>
             </div>
       `),
-          NodePrivacyLevel.ALLOW,
           {
             ...defaultConfiguration,
             actionNameAttribute: 'data-test-id',
-          }
+          },
+          NodePrivacyLevel.ALLOW
         )
       ).toEqual({ name: 'foo', masked: false })
     })
@@ -459,6 +491,7 @@ describe('getActionNameFromElement', () => {
                 <span target>foo</span>
               </div>
         `),
+            defaultConfiguration,
             NodePrivacyLevel.ALLOW
           )
         ).toEqual({ name: 'foo', masked: false })
@@ -472,11 +505,11 @@ describe('getActionNameFromElement', () => {
                 <span target>foo</span>
               </div>
         `),
-            NodePrivacyLevel.MASK,
             {
               ...defaultConfiguration,
               enablePrivacyForActionName: true,
-            }
+            },
+            NodePrivacyLevel.MASK
           )
         ).toEqual({ name: 'Masked Element', masked: true })
       })
@@ -495,11 +528,11 @@ describe('getActionNameFromElement', () => {
                 </div>
               </div>
         `),
-            NodePrivacyLevel.ALLOW,
             {
               ...defaultConfiguration,
               enablePrivacyForActionName: true,
-            }
+            },
+            NodePrivacyLevel.ALLOW
           )
         ).toEqual({ name: 'foo', masked: false })
       })
@@ -517,11 +550,11 @@ describe('getActionNameFromElement', () => {
                 </div>
               </div>
         `),
-            NodePrivacyLevel.ALLOW,
             {
               ...defaultConfiguration,
               enablePrivacyForActionName: true,
-            }
+            },
+            NodePrivacyLevel.ALLOW
           )
         ).toEqual({ name: 'bar foo', masked: false })
       })
@@ -540,11 +573,11 @@ describe('getActionNameFromElement', () => {
                 </div>
               </div>
         `),
-            NodePrivacyLevel.ALLOW,
             {
               ...defaultConfiguration,
               enablePrivacyForActionName: true,
-            }
+            },
+            NodePrivacyLevel.ALLOW
           )
         ).toEqual({ name: 'foo', masked: false })
       })
@@ -562,11 +595,11 @@ describe('getActionNameFromElement', () => {
                 </div>
               </div>
         `),
-            NodePrivacyLevel.ALLOW,
             {
               ...defaultConfiguration,
               enablePrivacyForActionName: true,
-            }
+            },
+            NodePrivacyLevel.ALLOW
           )
         ).toEqual({ name: 'bar foo', masked: false })
       })
