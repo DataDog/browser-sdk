@@ -124,6 +124,7 @@ export function makeRumPublicApi(startRumImpl: StartRum, recorderApi: RecorderAp
               startClocks: options?.startTime ? timeStampToClocks(options.startTime as TimeStamp) : clocksNow(),
               context: sanitize(options?.context) as Context,
             })
+            addTelemetryUsage({ feature: 'start-duration-vital' })
           }
         )
 
@@ -188,6 +189,7 @@ export function makeRumPublicApi(startRumImpl: StartRum, recorderApi: RecorderAp
   } = monitor((options?: string | ViewOptions) => {
     const sanitizedOptions = typeof options === 'object' ? options : { name: options }
     strategy.startView(sanitizedOptions)
+    addTelemetryUsage({ feature: 'start-view' })
   })
   const rumPublicApi = makePublicApi({
     init: monitor((initConfiguration: RumInitConfiguration) => strategy.init(initConfiguration)),
@@ -209,13 +211,19 @@ export function makeRumPublicApi(startRumImpl: StartRum, recorderApi: RecorderAp
       addTelemetryUsage({ feature: 'set-tracking-consent', tracking_consent: trackingConsent })
     }),
 
-    setGlobalContextProperty: monitor((key, value) => globalContextManager.setContextProperty(key, value)),
+    setGlobalContextProperty: monitor((key, value) => {
+      globalContextManager.setContextProperty(key, value)
+      addTelemetryUsage({ feature: 'set-global-context' })
+    }),
 
     removeGlobalContextProperty: monitor((key) => globalContextManager.removeContextProperty(key)),
 
     getGlobalContext: monitor(() => globalContextManager.getContext()),
 
-    setGlobalContext: monitor((context) => globalContextManager.setContext(context)),
+    setGlobalContext: monitor((context) => {
+      globalContextManager.setContext(context)
+      addTelemetryUsage({ feature: 'set-global-context' })
+    }),
 
     clearGlobalContext: monitor(() => globalContextManager.clearContext()),
 
@@ -230,6 +238,7 @@ export function makeRumPublicApi(startRumImpl: StartRum, recorderApi: RecorderAp
         startClocks: clocksNow(),
         type: ActionType.CUSTOM,
       })
+      addTelemetryUsage({ feature: 'add-action' })
     }),
 
     addError: (error: unknown, context?: object) => {
@@ -241,6 +250,7 @@ export function makeRumPublicApi(startRumImpl: StartRum, recorderApi: RecorderAp
           context: sanitize(context) as Context,
           startClocks: clocksNow(),
         })
+        addTelemetryUsage({ feature: 'add-error' })
       })
     },
 
@@ -264,6 +274,7 @@ export function makeRumPublicApi(startRumImpl: StartRum, recorderApi: RecorderAp
       if (checkUser(newUser)) {
         userContextManager.setContext(sanitizeUser(newUser as Context))
       }
+      addTelemetryUsage({ feature: 'set-user' })
     }),
 
     getUser: monitor(() => userContextManager.getContext()),
@@ -271,6 +282,7 @@ export function makeRumPublicApi(startRumImpl: StartRum, recorderApi: RecorderAp
     setUserProperty: monitor((key, property) => {
       const sanitizedProperty = sanitizeUser({ [key]: property })[key]
       userContextManager.setContextProperty(key, sanitizedProperty)
+      addTelemetryUsage({ feature: 'set-user' })
     }),
 
     removeUserProperty: monitor((key) => userContextManager.removeContextProperty(key)),
@@ -296,6 +308,7 @@ export function makeRumPublicApi(startRumImpl: StartRum, recorderApi: RecorderAp
      */
     addFeatureFlagEvaluation: monitor((key: string, value: any) => {
       strategy.addFeatureFlagEvaluation(sanitize(key)!, sanitize(value))
+      addTelemetryUsage({ feature: 'add-feature-flag-evaluation' })
     }),
 
     getSessionReplayLink: monitor(() => recorderApi.getSessionReplayLink()),
