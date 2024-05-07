@@ -108,6 +108,15 @@ export interface Configuration extends TransportConfiguration {
   batchMessagesLimit: number
   messageBytesLimit: number
 }
+
+function checkIfString(tag: any, tagName: string) {
+  if (tag && typeof tag !== 'string') {
+    display.error(`${tagName} must be defined as a string`)
+    return false
+  }
+  return true
+}
+
 function isDatadogSite(site: string) {
   return /(datadog|ddog|datad0g|dd0g)/.test(site)
 }
@@ -144,8 +153,15 @@ export function validateAndBuildConfiguration(initConfiguration: InitConfigurati
     return
   }
 
-  if (initConfiguration.version && typeof initConfiguration.version !== 'string') {
-    display.error('Version must be defined as a string')
+  if (!checkIfString(initConfiguration.version, 'Version')) {
+    return
+  }
+
+  if (!checkIfString(initConfiguration.env, 'Env')) {
+    return
+  }
+
+  if (!checkIfString(initConfiguration.service, 'Service')) {
     return
   }
 
