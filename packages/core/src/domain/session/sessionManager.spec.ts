@@ -618,13 +618,17 @@ describe('startSessionManager', () => {
 
   describe('session tracking type transition', () => {
     it('should expire the session when the tracking type transitions to unallowed type', () => {
-      const sessionManager = startSessionManagerWithDefaults({ allowedTrackingTransition: FakeTrackingType.OTHER_TRACKING })
+      const sessionManager = startSessionManagerWithDefaults({
+        allowedTrackingTransition: FakeTrackingType.OTHER_TRACKING,
+      })
       sessionManager.updateSession({ [FIRST_PRODUCT_KEY]: FakeTrackingType.DISALLOWED_TRACKING })
 
       expect(sessionManager.findActiveSession()).not.toBeDefined()
     })
     it('should update current entity in history', () => {
-      const sessionManager = startSessionManagerWithDefaults({ allowedTrackingTransition: FakeTrackingType.OTHER_TRACKING })
+      const sessionManager = startSessionManagerWithDefaults({
+        allowedTrackingTransition: FakeTrackingType.OTHER_TRACKING,
+      })
       sessionManager.updateSession({ [FIRST_PRODUCT_KEY]: FakeTrackingType.OTHER_TRACKING })
 
       expect(sessionManager.findActiveSession()!.id).toBeDefined()
@@ -653,7 +657,7 @@ describe('startSessionManager', () => {
       productKey,
       computeSessionState,
       trackingConsentState,
-      allowedTrackingTransition,
+      allowedTrackingTransition
     )
   }
 })
