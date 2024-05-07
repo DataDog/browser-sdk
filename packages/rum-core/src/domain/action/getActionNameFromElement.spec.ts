@@ -1,5 +1,9 @@
 import { appendElement } from '../../../test'
+import { NodePrivacyLevel } from '../../constants'
+import type { RumConfiguration } from '../configuration'
 import { getActionNameFromElement } from './getActionNameFromElement'
+
+const defaultConfiguration = {} as RumConfiguration
 
 describe('getActionNameFromElement', () => {
   it('extracts the textual content of an element', () => {
@@ -310,7 +314,10 @@ describe('getActionNameFromElement', () => {
         <div data-test-id="foo">ignored</div>
       `),
         undefined,
-        'data-test-id'
+        {
+          ...defaultConfiguration,
+          actionNameAttribute: 'data-test-id',
+        }
       )
       expect(name).toBe('foo')
     })
@@ -321,7 +328,10 @@ describe('getActionNameFromElement', () => {
         <div data-test-id="foo" data-dd-action-name="bar">ignored</div>
       `),
         undefined,
-        'data-test-id'
+        {
+          ...defaultConfiguration,
+          actionNameAttribute: 'data-test-id',
+        }
       )
       expect(name).toBe('bar')
     })
@@ -338,22 +348,25 @@ describe('getActionNameFromElement', () => {
       const { name } = getActionNameFromElement(
         appendElement('<div>Foo <div data-test-id="custom action">bar<div></div>'),
         undefined,
-        'data-test-id'
+        {
+          ...defaultConfiguration,
+          actionNameAttribute: 'data-test-id',
+        }
       )
       expect(name).toBe('Foo')
     })
   })
 
   describe('with privacyEnabledForActionName', () => {
-    const { name } = getActionNameFromElement(
-      appendElement(`
-        <div data-dd-action-name="foo">
-          <span target>ignored</span>
-        </div>
-  `),
-      false
-    )
     it('extracts attribute text when privacyEnabledActionName is false', () => {
+      const { name } = getActionNameFromElement(
+        appendElement(`
+          <div data-dd-action-name="foo">
+            <span target>ignored</span>
+          </div>
+    `),
+        NodePrivacyLevel.MASK
+      )
       expect(name).toBe('foo')
     })
 
@@ -364,8 +377,11 @@ describe('getActionNameFromElement', () => {
             <span target>ignored</span>
           </div>
     `),
-        false,
-        'data-test-id'
+        NodePrivacyLevel.MASK,
+        {
+          ...defaultConfiguration,
+          actionNameAttribute: 'data-test-id',
+        }
       )
       expect(name).toBe('foo')
     })
@@ -377,8 +393,11 @@ describe('getActionNameFromElement', () => {
             <span target>foo</span>
           </div>
     `),
-        false,
-        'data-test-id'
+        NodePrivacyLevel.ALLOW,
+        {
+          ...defaultConfiguration,
+          actionNameAttribute: 'data-test-id',
+        }
       )
       expect(name).toBe('foo')
     })
@@ -391,8 +410,12 @@ describe('getActionNameFromElement', () => {
               <span target>foo</span>
             </div>
       `),
-          true,
-          'data-test-id'
+          NodePrivacyLevel.MASK,
+          {
+            ...defaultConfiguration,
+            actionNameAttribute: 'data-test-id',
+            enablePrivacyForActionName: true,
+          }
         )
       ).toEqual({ name: 'Masked Element', masked: true })
     })
@@ -405,7 +428,7 @@ describe('getActionNameFromElement', () => {
               <span target>ignored</span>
             </div>
       `),
-          true
+          NodePrivacyLevel.ALLOW
         )
       ).toEqual({ name: 'foo', masked: false })
     })
@@ -418,14 +441,17 @@ describe('getActionNameFromElement', () => {
               <span target>ignored</span>
             </div>
       `),
-          true,
-          'data-test-id'
+          NodePrivacyLevel.ALLOW,
+          {
+            ...defaultConfiguration,
+            actionNameAttribute: 'data-test-id',
+          }
         )
       ).toEqual({ name: 'foo', masked: false })
     })
 
-    describe('with html tag privacy override', () => {
-      it('extracts inner text when privacyEnabledActionName is true and privacy level is allow', () => {
+    describe('with html tag privacy override when privacyEnabledActionName is true', () => {
+      it('extracts inner text when privacy level is allow', () => {
         expect(
           getActionNameFromElement(
             appendElement(`
@@ -433,12 +459,12 @@ describe('getActionNameFromElement', () => {
                 <span target>foo</span>
               </div>
         `),
-            true
+            NodePrivacyLevel.ALLOW
           )
         ).toEqual({ name: 'foo', masked: false })
       })
 
-      it('returns placeholder when privacyEnabledActionName is true and privacy level is mask', () => {
+      it('returns placeholder when privacy level is mask', () => {
         expect(
           getActionNameFromElement(
             appendElement(`
@@ -446,12 +472,16 @@ describe('getActionNameFromElement', () => {
                 <span target>foo</span>
               </div>
         `),
-            true
+            NodePrivacyLevel.MASK,
+            {
+              ...defaultConfiguration,
+              enablePrivacyForActionName: true,
+            }
           )
         ).toEqual({ name: 'Masked Element', masked: true })
       })
 
-      it('inherent privacy level and does not fallback to masked child text when privacyEnabledActionName is true', () => {
+      it('inherent privacy level and does not fallback to masked child text', () => {
         expect(
           getActionNameFromElement(
             appendElement(`
@@ -465,28 +495,81 @@ describe('getActionNameFromElement', () => {
                 </div>
               </div>
         `),
-            true
+            NodePrivacyLevel.ALLOW,
+            {
+              ...defaultConfiguration,
+              enablePrivacyForActionName: true,
+            }
           )
         ).toEqual({ name: 'foo', masked: false })
       })
-    })
-    it('fallback to children but not the masked one when privacyEnabledActionName is true', () => {
-      expect(
-        getActionNameFromElement(
-          appendElement(`
-            <div data-dd-privacy="allow" target>
-              bar
-              <div>
-                foo
-                <div data-dd-privacy="mask">
-                  <span>secret</span>
+      it('fallback to children but not the masked one with mixed class name and attribute', () => {
+        expect(
+          getActionNameFromElement(
+            appendElement(`
+              <div data-dd-privacy="allow" target>
+                bar
+                <div>
+                  foo
+                  <div data-dd-privacy="hidden">
+                    <span>secret</span>
+                  </div>
                 </div>
               </div>
-            </div>
-      `),
-          true
-        )
-      ).toEqual({ name: 'bar foo', masked: false })
+        `),
+            NodePrivacyLevel.ALLOW,
+            {
+              ...defaultConfiguration,
+              enablePrivacyForActionName: true,
+            }
+          )
+        ).toEqual({ name: 'bar foo', masked: false })
+      })
+
+      it('inherent privacy level and does not fallback to masked child text with mixed classname and attribute', () => {
+        expect(
+          getActionNameFromElement(
+            appendElement(`
+              <div class="dd-privacy-allow">
+                bar
+                <div target>
+                  foo
+                  <div data-dd-privacy="hidden">
+                    <span>secret</span>
+                  </div>
+                </div>
+              </div>
+        `),
+            NodePrivacyLevel.ALLOW,
+            {
+              ...defaultConfiguration,
+              enablePrivacyForActionName: true,
+            }
+          )
+        ).toEqual({ name: 'foo', masked: false })
+      })
+      it('fallback to children but not the masked one with class names', () => {
+        expect(
+          getActionNameFromElement(
+            appendElement(`
+              <div class="dd-privacy-allow" target>
+                bar
+                <div>
+                  foo
+                  <div class="dd-privacy-mask">
+                    <span>secret</span>
+                  </div>
+                </div>
+              </div>
+        `),
+            NodePrivacyLevel.ALLOW,
+            {
+              ...defaultConfiguration,
+              enablePrivacyForActionName: true,
+            }
+          )
+        ).toEqual({ name: 'bar foo', masked: false })
+      })
     })
   })
 })

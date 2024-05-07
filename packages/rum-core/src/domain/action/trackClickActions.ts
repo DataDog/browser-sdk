@@ -137,21 +137,21 @@ function processPointerDown(
   domMutationObservable: Observable<void>,
   pointerDownEvent: MouseEventOnElement
 ) {
-  const nodePrivacyLevel = getNodePrivacyLevel(pointerDownEvent.target, configuration.defaultPrivacyLevel)
+  let nodePrivacyLevel: NodePrivacyLevel
 
-  // When the node is set to hidden, we do not track click action
-  // Make sure everything has been done before return
-  if (nodePrivacyLevel === NodePrivacyLevel.HIDDEN && configuration.enablePrivacyForActionName) {
-    return undefined
+  if (configuration.enablePrivacyForActionName) {
+    nodePrivacyLevel = getNodePrivacyLevel(pointerDownEvent.target, configuration.defaultPrivacyLevel)
+
+    // When the node is set to hidden, we do not track click action
+    // Make sure everything has been done before return
+    if (nodePrivacyLevel === NodePrivacyLevel.HIDDEN) {
+      return undefined
+    }
+  } else {
+    nodePrivacyLevel = NodePrivacyLevel.ALLOW
   }
-  const privacyEnabledForActionName =
-    nodePrivacyLevel === NodePrivacyLevel.MASK && configuration.enablePrivacyForActionName
 
-  const clickActionBase = computeClickActionBase(
-    pointerDownEvent,
-    privacyEnabledForActionName,
-    configuration.actionNameAttribute
-  )
+  const clickActionBase = computeClickActionBase(pointerDownEvent, nodePrivacyLevel, configuration)
 
   let hadActivityOnPointerDown = false
 
@@ -229,23 +229,19 @@ type ClickActionBase = Pick<ClickAction, 'type' | 'name' | 'target' | 'position'
 
 function computeClickActionBase(
   event: MouseEventOnElement,
-  privacyEnabledForActionName: boolean,
-  actionNameAttribute?: string
+  nodePrivacyLevel: NodePrivacyLevel,
+  configuration: RumConfiguration
 ): ClickActionBase {
   const rect = event.target.getBoundingClientRect()
 
-  const { name: actionName, masked } = getActionNameFromElement(
-    event.target,
-    privacyEnabledForActionName,
-    actionNameAttribute
-  )
+  const { name: actionName, masked } = getActionNameFromElement(event.target, nodePrivacyLevel, configuration)
 
   return {
     type: ActionType.CLICK,
     target: {
       width: Math.round(rect.width),
       height: Math.round(rect.height),
-      selector: getSelectorFromElement(event.target, actionNameAttribute),
+      selector: getSelectorFromElement(event.target, configuration.actionNameAttribute),
       masked,
     },
     position: {

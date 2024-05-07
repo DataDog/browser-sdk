@@ -1,7 +1,7 @@
 import { safeTruncate, isIE, find } from '@datadog/browser-core'
 import { getParentElement } from '../../browser/polyfills'
-import { NodePrivacyLevel, PRIVACY_ATTR_NAME } from '../../constants'
-import { getNodePrivacyLevel } from '../privacy'
+import { NodePrivacyLevel, PRIVACY_ATTR_NAME, PRIVACY_CLASS_HIDDEN, PRIVACY_CLASS_MASK } from '../../constants'
+import type { RumConfiguration } from '../configuration'
 
 /**
  * Get the action name from the attribute 'data-dd-action-name' on the element or any of its parent.
@@ -11,53 +11,45 @@ export const DEFAULT_PROGRAMMATIC_ACTION_NAME_ATTRIBUTE = 'data-dd-action-name'
 export const ACTION_NAME_PLACEHOLDER = 'Masked Element'
 export function getActionNameFromElement(
   element: Element,
-  privacyEnabledForActionName?: boolean,
-  userProgrammaticAttribute?: string
+  nodePrivacyLevel?: NodePrivacyLevel,
+  configuration?: RumConfiguration
 ): { name: string; masked?: boolean } {
-  // to determine if we should add placeholder
-
-  // console.log(element, privacyEnabledForActionName, getNodeSelfPrivacyLevel(element))
-  const executeStrategies = (): string | undefined =>
-    getActionNameFromElementForStrategies(
-      element,
-      userProgrammaticAttribute,
-      priorityStrategies,
-      privacyEnabledForActionName
-    ) ||
-    getActionNameFromElementForStrategies(
-      element,
-      userProgrammaticAttribute,
-      fallbackStrategies,
-      privacyEnabledForActionName
-    )
-
-  // get the privacy level from current or parent html attribute override
-  // If privacy is not enabled for action name, we assume the default is allowed
-  // to be consistent with current behaviors.
-  const selfPrivacyLevel = getNodePrivacyLevel(
-    element,
-    privacyEnabledForActionName ? NodePrivacyLevel.MASK : NodePrivacyLevel.ALLOW
-  )
-
+  const { enablePrivacyForActionName = undefined, actionNameAttribute: userProgrammaticAttribute = undefined } =
+    configuration || {}
   // Proceed to get the action name in two steps:
   // * first, get the name programmatically, explicitly defined by the user.
   // * then, use strategies that are known to return good results. Those strategies will be used on
   //   the element and a few parents, but it's likely that they won't succeed at all.
   // * if no name is found this way, use strategies returning less accurate names as a fallback.
   //   Those are much likely to succeed.
-  const definedActionNameFromElement =
+  const defaultActionName =
     getActionNameFromElementProgrammatically(element, DEFAULT_PROGRAMMATIC_ACTION_NAME_ATTRIBUTE) ||
-    (userProgrammaticAttribute && getActionNameFromElementProgrammatically(element, userProgrammaticAttribute)) ||
-    // if the current node has privacy level mask, we don't execute fallback strategies
-    (selfPrivacyLevel && selfPrivacyLevel !== NodePrivacyLevel.MASK ? executeStrategies() : '')
+    (userProgrammaticAttribute && getActionNameFromElementProgrammatically(element, userProgrammaticAttribute))
 
-  // console.log(definedActionNameFromElement)
+  if (nodePrivacyLevel === NodePrivacyLevel.MASK) {
+    return {
+      name: defaultActionName || ACTION_NAME_PLACEHOLDER,
+      masked: true,
+    }
+  }
+
   return {
     name:
-      definedActionNameFromElement ||
-      (privacyEnabledForActionName ? ACTION_NAME_PLACEHOLDER : executeStrategies()) ||
+      defaultActionName ||
+      getActionNameFromElementForStrategies(
+        element,
+        userProgrammaticAttribute,
+        priorityStrategies,
+        enablePrivacyForActionName
+      ) ||
+      getActionNameFromElementForStrategies(
+        element,
+        userProgrammaticAttribute,
+        fallbackStrategies,
+        enablePrivacyForActionName
+      ) ||
       '',
-    masked: privacyEnabledForActionName && !definedActionNameFromElement,
+    masked: false,
   }
 }
 
@@ -248,7 +240,12 @@ function getTextualContent(
 
     if (privacyEnabledActionName) {
       // remove the text of elements with privacy override
-      removeTextFromElements(`[${PRIVACY_ATTR_NAME}=${NodePrivacyLevel.MASK}]`)
+      removeTextFromElements(
+        `[${PRIVACY_ATTR_NAME}=${NodePrivacyLevel.MASK}],
+        [${PRIVACY_ATTR_NAME}=${NodePrivacyLevel.HIDDEN}],
+        [class=${PRIVACY_CLASS_MASK}],
+        [class=${PRIVACY_CLASS_HIDDEN}]`
+      )
     }
 
     return text
