@@ -64,6 +64,7 @@ let onRawTelemetryEventCollected: ((event: RawTelemetryEvent) => void) | undefin
 export function startTelemetry(telemetryService: TelemetryService, configuration: Configuration): Telemetry {
   let contextProvider: () => Context
   const observable = new Observable<TelemetryEvent & Context>()
+  const alreadySeenEvents = new Set<string>()
 
   const telemetryEnabled =
     !includes(TELEMETRY_EXCLUDED_SITES, configuration.site) && performDraw(configuration.telemetrySampleRate)
@@ -76,10 +77,17 @@ export function startTelemetry(telemetryService: TelemetryService, configuration
 
   const runtimeEnvInfo = getRuntimeEnvInfo()
   onRawTelemetryEventCollected = (rawEvent: RawTelemetryEvent) => {
-    if (telemetryEnabledPerType[rawEvent.type!]) {
+    const stringifiedEvent = jsonStringify(rawEvent)!
+    if (
+      telemetryEnabledPerType[rawEvent.type!] &&
+      telemetryConfiguration.sentEventCount < telemetryConfiguration.maxEventsPerPage &&
+      !alreadySeenEvents.has(stringifiedEvent)
+    ) {
       const event = toTelemetryEvent(telemetryService, rawEvent, runtimeEnvInfo)
       observable.notify(event)
       sendToExtension('telemetry', event)
+      alreadySeenEvents.add(stringifiedEvent)
+      telemetryConfiguration.sentEventCount += 1
     }
   }
   startMonitorErrorCollection(addTelemetryError)
@@ -197,8 +205,7 @@ export function addTelemetryUsage(usage: RawTelemetryUsage) {
 }
 
 function addTelemetry(event: RawTelemetryEvent) {
-  if (onRawTelemetryEventCollected && telemetryConfiguration.sentEventCount < telemetryConfiguration.maxEventsPerPage) {
-    telemetryConfiguration.sentEventCount += 1
+  if (onRawTelemetryEventCollected) {
     onRawTelemetryEventCollected(event)
   }
 }
