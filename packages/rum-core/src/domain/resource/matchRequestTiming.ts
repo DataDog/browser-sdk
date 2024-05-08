@@ -2,12 +2,14 @@ import type { Duration, RelativeTime } from '@datadog/browser-core'
 import { addDuration } from '@datadog/browser-core'
 import type { RumPerformanceResourceTiming } from '../../browser/performanceCollection'
 import type { RequestCompleteEvent } from '../requestCollection'
-import { toValidEntry } from './resourceUtils'
+import { isValidEntry } from './resourceUtils'
 
 interface Timing {
   startTime: RelativeTime
   duration: Duration
 }
+
+const matchedResourceTimingEntries = new WeakSet<PerformanceEntry>()
 
 /**
  * Look for corresponding timing in resource timing buffer
@@ -32,18 +34,24 @@ export function matchRequestTiming(request: RequestCompleteEvent) {
   }
 
   const candidates = sameNameEntries
-    .map((entry) => entry.toJSON() as RumPerformanceResourceTiming)
-    .filter(toValidEntry)
+    .filter((entry) => !matchedResourceTimingEntries.has(entry))
+    .map((entry) => ({
+      original: entry,
+      serialized: entry.toJSON() as RumPerformanceResourceTiming,
+    }))
+    .filter((entry) => isValidEntry(entry.serialized))
     .filter((entry) =>
       isBetween(
-        entry,
+        entry.serialized,
         request.startClocks.relative,
         endTime({ startTime: request.startClocks.relative, duration: request.duration })
       )
     )
 
   if (candidates.length === 1) {
-    return candidates[0]
+    matchedResourceTimingEntries.add(candidates[0].original)
+
+    return candidates[0].serialized
   }
 
   return
