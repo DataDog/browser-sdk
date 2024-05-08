@@ -9,7 +9,9 @@ interface Timing {
   duration: Duration
 }
 
-const matchedResourceTimingEntries = new WeakSet<PerformanceEntry>()
+// we use a WeakMap because WeakSet is not supported in ie11
+const PLACEHOLDER = 1
+const matchedResourceTimingEntries = new WeakMap<PerformanceEntry, typeof PLACEHOLDER>()
 
 /**
  * Look for corresponding timing in resource timing buffer
@@ -49,7 +51,7 @@ export function matchRequestTiming(request: RequestCompleteEvent) {
     )
 
   if (candidates.length === 1) {
-    matchedResourceTimingEntries.add(candidates[0].original)
+    matchedResourceTimingEntries.set(candidates[0].original, PLACEHOLDER)
 
     return candidates[0].serialized
   }
