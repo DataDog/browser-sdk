@@ -1,5 +1,5 @@
-import { round, find, ONE_SECOND, noop } from '@datadog/browser-core'
-import type { RelativeTime } from '@datadog/browser-core'
+import { round, find, ONE_SECOND, noop, setTimeout, clearTimeout } from '@datadog/browser-core'
+import type { RelativeTime, TimeoutId } from '@datadog/browser-core'
 import { isElementNode } from '../../../browser/htmlDomUtils'
 import type { LifeCycle } from '../../lifeCycle'
 import { LifeCycleEventType } from '../../lifeCycle'
@@ -58,19 +58,19 @@ export function trackCumulativeLayoutShift(
           maxClsValue = window.value()
           const cls = round(maxClsValue, 4)
           const clsTarget = window.largestLayoutShiftTarget()
-          let cslTargetSelector
+          let clsTargetSelector
 
           if (
             clsTarget &&
             // Check if the CLS target have been removed from the DOM between the time we collect the target reference and when we compute the selector
             clsTarget.isConnected
           ) {
-            cslTargetSelector = getSelectorFromElement(clsTarget, configuration.actionNameAttribute)
+            clsTargetSelector = getSelectorFromElement(clsTarget, configuration.actionNameAttribute)
           }
 
           callback({
             value: cls,
-            targetSelector: cslTargetSelector,
+            targetSelector: clsTargetSelector,
           })
         }
       }
@@ -82,7 +82,10 @@ export function trackCumulativeLayoutShift(
   }
 }
 
-function slidingSessionWindow() {
+const MAX_WINDOW_LENGTH = 5 * ONE_SECOND
+const MAX_UPDATE_GAP = ONE_SECOND
+
+export function slidingSessionWindow() {
   let value = 0
   let startTime: RelativeTime
   let endTime: RelativeTime
@@ -90,18 +93,28 @@ function slidingSessionWindow() {
   let largestLayoutShift = 0
   let largestLayoutShiftTarget: HTMLElement | undefined
   let largestLayoutShiftTime: RelativeTime
+  let timeoutId: TimeoutId
+
+  function resetWindow(entry: RumLayoutShiftTiming) {
+    startTime = endTime = entry.startTime
+    value = entry.value
+    largestLayoutShift = 0
+    largestLayoutShiftTarget = undefined
+    largestLayoutShiftTime = entry.startTime
+  }
+
   return {
     update: (entry: RumLayoutShiftTiming) => {
+      clearTimeout(timeoutId)
+      timeoutId = setTimeout(() => resetWindow(entry), MAX_WINDOW_LENGTH)
+
       const shouldCreateNewWindow =
         startTime === undefined ||
-        entry.startTime - endTime >= ONE_SECOND ||
-        entry.startTime - startTime >= 5 * ONE_SECOND
+        entry.startTime - endTime >= MAX_UPDATE_GAP ||
+        entry.startTime - startTime >= MAX_WINDOW_LENGTH
 
       if (shouldCreateNewWindow) {
-        startTime = endTime = entry.startTime
-        value = entry.value
-        largestLayoutShift = 0
-        largestLayoutShiftTarget = undefined
+        resetWindow(entry)
       } else {
         value += entry.value
         endTime = entry.startTime

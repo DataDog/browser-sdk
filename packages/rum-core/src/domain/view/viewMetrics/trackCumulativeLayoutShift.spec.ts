@@ -1,10 +1,12 @@
 import { resetExperimentalFeatures } from '@datadog/browser-core'
+import type { Clock } from '@datadog/browser-core/test'
+import { mockClock } from '@datadog/browser-core/test'
 import type { TestSetupBuilder } from '../../../../test'
 import { appendElement, appendText, createPerformanceEntry, setup } from '../../../../test'
 import { LifeCycleEventType } from '../../lifeCycle'
 import { RumPerformanceEntryType } from '../../../browser/performanceCollection'
 import type { CumulativeLayoutShift } from './trackCumulativeLayoutShift'
-import { trackCumulativeLayoutShift } from './trackCumulativeLayoutShift'
+import { slidingSessionWindow, trackCumulativeLayoutShift } from './trackCumulativeLayoutShift'
 
 describe('trackCumulativeLayoutShift', () => {
   let setupBuilder: TestSetupBuilder
@@ -213,5 +215,119 @@ describe('trackCumulativeLayoutShift', () => {
       expect(clsCallback.calls.mostRecent().args[0].value).toEqual(0.3)
       expect(clsCallback.calls.mostRecent().args[0].targetSelector).toEqual(undefined)
     })
+  })
+})
+
+describe('slidingSessionWindow', () => {
+  let clock: Clock
+
+  beforeEach(() => {
+    clock = mockClock()
+  })
+
+  afterEach(() => {
+    clock.cleanup()
+  })
+
+  it('should return 0 if no layout shift happen', () => {
+    const window = slidingSessionWindow()
+
+    expect(window.value()).toEqual(0)
+  })
+
+  it('should accumulate layout shift values', () => {
+    const window = slidingSessionWindow()
+
+    window.update(createPerformanceEntry(RumPerformanceEntryType.LAYOUT_SHIFT, { value: 0.2 }))
+    window.update(createPerformanceEntry(RumPerformanceEntryType.LAYOUT_SHIFT, { value: 0.5 }))
+
+    expect(window.value()).toEqual(0.7)
+  })
+
+  it('should return the element with the largest layout shift', () => {
+    const window = slidingSessionWindow()
+
+    const textNode = appendText('text')
+    const divElement = appendElement('<div id="div-element"></div>')
+
+    window.update(
+      createPerformanceEntry(RumPerformanceEntryType.LAYOUT_SHIFT, {
+        value: 0.2,
+        sources: [{ node: textNode }, { node: divElement }, { node: textNode }],
+      })
+    )
+
+    expect(window.largestLayoutShiftTarget()).toEqual(divElement)
+  })
+
+  it('should create a new session window if the gap is more than 1 second', () => {
+    const window = slidingSessionWindow()
+
+    window.update(createPerformanceEntry(RumPerformanceEntryType.LAYOUT_SHIFT, { value: 0.2 }))
+
+    clock.tick(1001)
+
+    window.update(createPerformanceEntry(RumPerformanceEntryType.LAYOUT_SHIFT, { value: 0.1 }))
+
+    expect(window.value()).toEqual(0.1)
+  })
+
+  it('should create a new session window if the current session window is more than 5 second', () => {
+    const window = slidingSessionWindow()
+
+    window.update(createPerformanceEntry(RumPerformanceEntryType.LAYOUT_SHIFT, { value: 0 }))
+
+    for (let i = 0; i < 6; i += 1) {
+      clock.tick(999)
+      window.update(createPerformanceEntry(RumPerformanceEntryType.LAYOUT_SHIFT, { value: 0.1 }))
+    } // window 1: 0.5 | window 2: 0.1
+
+    expect(window.value()).toEqual(0.1)
+  })
+
+  it('should return largest layout shift target element', () => {
+    const window = slidingSessionWindow()
+    const firstElement = appendElement('<div id="first-element"></div>')
+    const secondElement = appendElement('<div id="second-element"></div>')
+    const thirdElement = appendElement('<div id="third-element"></div>')
+
+    window.update(
+      createPerformanceEntry(RumPerformanceEntryType.LAYOUT_SHIFT, {
+        value: 0.2,
+        sources: [{ node: firstElement }],
+      })
+    )
+
+    window.update(
+      createPerformanceEntry(RumPerformanceEntryType.LAYOUT_SHIFT, {
+        value: 0.3,
+        sources: [{ node: secondElement }],
+      })
+    )
+
+    window.update(
+      createPerformanceEntry(RumPerformanceEntryType.LAYOUT_SHIFT, {
+        value: 0.1,
+        sources: [{ node: thirdElement }],
+      })
+    )
+
+    expect(window.largestLayoutShiftTarget()).toEqual(secondElement)
+  })
+
+  it('should not retain the largest layout shift target element after 5 seconds', () => {
+    const window = slidingSessionWindow()
+    const divElement = appendElement('<div id="div-element"></div>')
+
+    window.update(
+      createPerformanceEntry(RumPerformanceEntryType.LAYOUT_SHIFT, {
+        value: 0.2,
+        sources: [{ node: divElement }],
+      })
+    )
+
+    clock.tick(5001)
+
+    expect(window.largestLayoutShiftTarget()).toBeUndefined()
   })
 })
