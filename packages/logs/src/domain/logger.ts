@@ -11,7 +11,7 @@ import {
   sanitize,
   NonErrorPrefix,
   matchList,
-  includesItem,
+  includes,
 } from '@datadog/browser-core'
 
 import type { RawLoggerLogsEvent } from '../rawLogsEvent.types'
@@ -58,8 +58,8 @@ export const StatusMapping: { [key in StatusType]: { match: (v: string) => boole
 }
 
 const remap = (rawStatus: string | number): StatusType => {
-  if (includesItem(STATUSES, rawStatus)) {
-    return rawStatus
+  if (includes(STATUSES, rawStatus)) {
+    return rawStatus as StatusType
   }
 
   for (const status of STATUSES) {
