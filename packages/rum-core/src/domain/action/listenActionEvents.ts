@@ -6,6 +6,7 @@ export type MouseEventOnElement = PointerEvent & { target: Element }
 export interface UserActivity {
   selection: boolean
   input: boolean
+  scroll: boolean
 }
 export interface ActionEventsHooks<ClickContext> {
   onPointerDown: (event: MouseEventOnElement) => ClickContext | undefined
@@ -20,6 +21,7 @@ export function listenActionEvents<ClickContext>(
   let userActivity: UserActivity = {
     selection: false,
     input: false,
+    scroll: false,
   }
   let clickContext: ClickContext | undefined
 
@@ -34,6 +36,7 @@ export function listenActionEvents<ClickContext>(
           userActivity = {
             selection: false,
             input: false,
+            scroll: false,
           }
           clickContext = onPointerDown(event)
         }
@@ -51,6 +54,16 @@ export function listenActionEvents<ClickContext>(
         }
       },
       { capture: true }
+    ),
+
+    addEventListener(
+      configuration,
+      window,
+      DOM_EVENT.SCROLL,
+      () => {
+        userActivity.scroll = true
+      },
+      { capture: true, passive: true }
     ),
 
     addEventListener(

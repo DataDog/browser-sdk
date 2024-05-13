@@ -30,7 +30,8 @@ export type PageStateEntry = { state: PageState; startTime: RelativeTime }
 
 export interface PageStateHistory {
   findAll: (startTime: RelativeTime, duration: Duration) => PageStateServerEntry[] | undefined
-  isInActivePageStateAt: (startTime: RelativeTime) => boolean
+  wasInPageStateAt: (state: PageState, startTime: RelativeTime) => boolean
+  wasInPageStateDuringPeriod: (state: PageState, startTime: RelativeTime, duration: Duration) => boolean
   addPageState(nextPageState: PageState, startTime?: RelativeTime): void
   stop: () => void
 }
@@ -39,7 +40,10 @@ export function startPageStateHistory(
   configuration: RumConfiguration,
   maxPageStateEntriesSelectable = MAX_PAGE_STATE_ENTRIES_SELECTABLE
 ): PageStateHistory {
-  const pageStateHistory = new ValueHistory<PageStateEntry>(PAGE_STATE_CONTEXT_TIME_OUT_DELAY, MAX_PAGE_STATE_ENTRIES)
+  const pageStateEntryHistory = new ValueHistory<PageStateEntry>(
+    PAGE_STATE_CONTEXT_TIME_OUT_DELAY,
+    MAX_PAGE_STATE_ENTRIES
+  )
 
   let currentPageState: PageState
   addPageState(getPageState(), relativeNow())
@@ -68,13 +72,13 @@ export function startPageStateHistory(
     }
 
     currentPageState = nextPageState
-    pageStateHistory.closeActive(startTime)
-    pageStateHistory.add({ state: currentPageState, startTime }, startTime)
+    pageStateEntryHistory.closeActive(startTime)
+    pageStateEntryHistory.add({ state: currentPageState, startTime }, startTime)
   }
 
-  return {
+  const pageStateHistory = {
     findAll: (eventStartTime: RelativeTime, duration: Duration): PageStateServerEntry[] | undefined => {
-      const pageStateEntries = pageStateHistory.findAll(eventStartTime, duration)
+      const pageStateEntries = pageStateEntryHistory.findAll(eventStartTime, duration)
 
       if (pageStateEntries.length === 0) {
         return
@@ -98,16 +102,17 @@ export function startPageStateHistory(
 
       return pageStateServerEntries
     },
-    isInActivePageStateAt: (startTime: RelativeTime) => {
-      const pageStateEntry = pageStateHistory.find(startTime)
-      return pageStateEntry !== undefined && pageStateEntry.state === PageState.ACTIVE
-    },
+    wasInPageStateAt: (state: PageState, startTime: RelativeTime) =>
+      pageStateHistory.wasInPageStateDuringPeriod(state, startTime, 0 as Duration),
+    wasInPageStateDuringPeriod: (state: PageState, startTime: RelativeTime, duration: Duration) =>
+      pageStateEntryHistory.findAll(startTime, duration).some((pageState) => pageState.state === state),
     addPageState,
     stop: () => {
       stopEventListeners()
-      pageStateHistory.stop()
+      pageStateEntryHistory.stop()
     },
   }
+  return pageStateHistory
 }
 
 function computePageState(event: Event & { type: DOM_EVENT }) {

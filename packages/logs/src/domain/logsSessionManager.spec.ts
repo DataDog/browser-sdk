@@ -49,7 +49,7 @@ describe('logs session manager', () => {
     startLogsSessionManagerWithDefaults({ configuration: { sessionSampleRate: 0 } })
 
     expect(getCookie(SESSION_STORE_KEY)).toContain(`${LOGS_SESSION_KEY}=${LoggerTrackingType.NOT_TRACKED}`)
-    expect(getCookie(SESSION_STORE_KEY)).not.toContain('id=')
+    expect(getCookie(SESSION_STORE_KEY)).not.toContain('isExpired=1')
   })
 
   it('when tracked should keep existing tracking type and session id', () => {
@@ -72,8 +72,8 @@ describe('logs session manager', () => {
   it('should renew on activity after expiration', () => {
     startLogsSessionManagerWithDefaults()
 
-    setCookie(SESSION_STORE_KEY, '', DURATION)
-    expect(getCookie(SESSION_STORE_KEY)).toBeUndefined()
+    setCookie(SESSION_STORE_KEY, 'isExpired=1', DURATION)
+    expect(getCookie(SESSION_STORE_KEY)).toBe('isExpired=1')
     clock.tick(STORAGE_POLL_DELAY)
 
     document.body.dispatchEvent(createNewEvent(DOM_EVENT.CLICK))

@@ -1,5 +1,6 @@
 import type { RelativeTime, TimeStamp, ErrorWithCause } from '@datadog/browser-core'
 import { ErrorHandling, ErrorSource, NO_ERROR_STACK_PRESENT_MESSAGE } from '@datadog/browser-core'
+import { FAKE_CSP_VIOLATION_EVENT } from '@datadog/browser-core/test'
 import type { TestSetupBuilder } from '../../../test'
 import { setup } from '../../../test'
 import type { RawRumErrorEvent } from '../../rawRumEvent.types'
@@ -21,7 +22,7 @@ describe('error collection', () => {
     setupBuilder = setup()
       .withViewContexts(viewContextsStub)
       .withPageStateHistory({
-        isInActivePageStateAt: () => true,
+        wasInPageStateAt: () => true,
       })
       .beforeBuild(({ lifeCycle, pageStateHistory, featureFlagContexts }) => {
         ;({ addError } = doStartErrorCollection(lifeCycle, pageStateHistory, featureFlagContexts))
@@ -77,6 +78,7 @@ describe('error collection', () => {
               source_type: 'browser',
               causes: undefined,
               fingerprint: undefined,
+              csp: undefined,
             },
             type: RumEventType.ERROR,
             view: {
@@ -249,6 +251,7 @@ describe('error collection', () => {
           source_type: 'browser',
           causes: undefined,
           fingerprint: undefined,
+          csp: undefined,
         },
         view: {
           in_foreground: true,
@@ -258,6 +261,26 @@ describe('error collection', () => {
       expect(rawRumEvents[0].domainContext).toEqual({
         error,
       })
+    })
+
+    it('should extract disposition from Security Policy Violation Events', () => {
+      const { rawRumEvents, lifeCycle } = setupBuilder.build()
+
+      lifeCycle.notify(LifeCycleEventType.RAW_ERROR_COLLECTED, {
+        error: {
+          message: 'hello',
+          source: ErrorSource.CUSTOM,
+          stack: 'bar',
+          startClocks: { relative: 1234 as RelativeTime, timeStamp: 123456789 as TimeStamp },
+          type: 'foo',
+          originalError: FAKE_CSP_VIOLATION_EVENT,
+          csp: {
+            disposition: FAKE_CSP_VIOLATION_EVENT.disposition,
+          },
+        },
+      })
+
+      expect((rawRumEvents[0].rawRumEvent as RawRumErrorEvent).error.csp?.disposition).toEqual('enforce')
     })
   })
 })

@@ -1,3 +1,4 @@
+import type { ErrorWithCause } from '@datadog/browser-core'
 import { NO_ERROR_STACK_PRESENT_MESSAGE, createCustomerDataTracker, noop } from '@datadog/browser-core'
 import type { LogsMessage } from './logger'
 import { HandlerType, Logger, STATUSES, StatusType } from './logger'
@@ -40,6 +41,7 @@ describe('Logger', () => {
             kind: 'SyntaxError',
             message: 'My Error',
             stack: jasmine.stringMatching(/^SyntaxError: My Error/),
+            causes: undefined,
           },
         })
       })
@@ -71,19 +73,59 @@ describe('Logger', () => {
             kind: undefined,
             message: 'Provided "My Error"',
             stack: NO_ERROR_STACK_PRESENT_MESSAGE,
+            causes: undefined,
           },
         },
         status: 'error',
       })
     })
 
-    it("'logger.error' should have an empty context if no Error object is provided", () => {
-      logger.error('message')
+    describe('when using logger.error', () => {
+      it("'logger.error' should have an empty context if no Error object is provided", () => {
+        logger.error('message')
 
-      expect(getLoggedMessage(0)).toEqual({
-        message: 'message',
-        status: 'error',
-        context: undefined,
+        expect(getLoggedMessage(0)).toEqual({
+          message: 'message',
+          status: 'error',
+          context: undefined,
+        })
+      })
+
+      it('should include causes when provided with an error', () => {
+        const error = new Error('High level error') as ErrorWithCause
+        error.stack = 'Error: High level error'
+
+        const nestedError = new Error('Mid level error') as ErrorWithCause
+        nestedError.stack = 'Error: Mid level error'
+
+        const deepNestedError = new TypeError('Low level error') as ErrorWithCause
+        deepNestedError.stack = 'TypeError: Low level error'
+
+        nestedError.cause = deepNestedError
+        error.cause = nestedError
+
+        logger.log('Logging message', {}, StatusType.error, error)
+
+        expect(getLoggedMessage(0)).toEqual({
+          message: 'Logging message',
+          status: 'error',
+          context: {
+            error: {
+              stack: 'Error: High level error',
+              kind: 'Error',
+              message: 'High level error',
+              causes: [
+                { message: 'Mid level error', source: 'logger', type: 'Error', stack: 'Error: Mid level error' },
+                {
+                  message: 'Low level error',
+                  source: 'logger',
+                  type: 'TypeError',
+                  stack: 'TypeError: Low level error',
+                },
+              ],
+            },
+          },
+        })
       })
     })
   })

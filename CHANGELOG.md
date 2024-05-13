@@ -16,6 +16,77 @@
 
 ---
 
+## v5.17.1
+
+- 🐛fix deploy script ([#2742](https://github.com/DataDog/browser-sdk/pull/2742))
+
+## v5.17.0
+
+- ✨ [RUM-4052] Sanitize `site` parameter in configuration ([#2735](https://github.com/DataDog/browser-sdk/pull/2735))
+- ✨ [RUM-4287] Enable feature flags API ([#2728](https://github.com/DataDog/browser-sdk/pull/2728))
+- ✨ [RUM-3710] Update session ID handling to support cookie deletion ([#2673](https://github.com/DataDog/browser-sdk/pull/2673))
+- ✨⚗️ [RUM-4179] vital: collect `computed_value` property ([#2723](https://github.com/DataDog/browser-sdk/pull/2723))
+- ♻️ use browser.execute and browser.executeAsync directly ([#2700](https://github.com/DataDog/browser-sdk/pull/2700))
+- ♻️ move createHandlingStack to the tools folder ([#2727](https://github.com/DataDog/browser-sdk/pull/2727))
+
+## v5.16.0
+
+- ✨ [RUM-3684] Capture scroll record on shadow dom elements ([#2708](https://github.com/DataDog/browser-sdk/pull/2708))
+- ✨[RUM-3798] Report the cpu impact as a pr comment ([#2702](https://github.com/DataDog/browser-sdk/pull/2702))
+- ✨ [RUM-162] Truncate resources URL containing data URLs ([#2690](https://github.com/DataDog/browser-sdk/pull/2690))
+- 🐛[RUM-4109] Mask iframe srcdoc with privacy override ([#2714](https://github.com/DataDog/browser-sdk/pull/2714))
+- ⚗ [RUM-2782] Validate resource timings more granularly
+
+## v5.15.0
+
+- 🐛 fix beforeSend type definition for logs ([#2686](https://github.com/DataDog/browser-sdk/pull/2686))
+- 🐛 [RUM-2782] remove buggy redirect timing estimation based on fetchStart ([#2683](https://github.com/DataDog/browser-sdk/pull/2683))
+- [ci-visibility] Implement driver-agnostic integration with CI Visibility ([#2639](https://github.com/DataDog/browser-sdk/pull/2639))
+
+## v5.14.0
+
+- ✨ [RUM-3387] forward to beforeSend context ([#2665](https://github.com/DataDog/browser-sdk/pull/2665))
+- 🐛 [RUM-3581] Fix the selector computation due to properties partially supported on IE ([#2663](https://github.com/DataDog/browser-sdk/pull/2663))
+- 🐛 [RUM-96] Ignore frustrations on clicks resulting in scrolls ([#2669](https://github.com/DataDog/browser-sdk/pull/2669))
+- ♻️✅ Harmonize record observers ([#2659](https://github.com/DataDog/browser-sdk/pull/2659))
+
+## v5.13.0
+
+- ✨ [RUM-3542] Add trace context injection control in rum configuration ([#2656](https://github.com/DataDog/browser-sdk/pull/2656))
+- 🐛 [RUM-3599] do not define undefined instrumented method ([#2662](https://github.com/DataDog/browser-sdk/pull/2662))
+- 🐛 [RUM-3598] Ignore collecting requests to logs PCI intake as RUM resources ([#2655](https://github.com/DataDog/browser-sdk/pull/2655))
+- ⚡ [RUM-2633] Optimize DOM iteration in the recorder ([#2657](https://github.com/DataDog/browser-sdk/pull/2657))
+
+## v5.12.0
+
+- ✨ [RUM-3546] Add support of PCI compliant intake for browser logs ([#2648](https://github.com/DataDog/browser-sdk/pull/2648))
+- ✨ [RUM 3352] Extra resource event attributes to enable performance CWV troubleshooting ([#2646](https://github.com/DataDog/browser-sdk/pull/2646))
+- ✨ [RUM-2885] Collect CSP disposition ([#2635](https://github.com/DataDog/browser-sdk/pull/2635))
+- 🐛 [RUM-3440] Fix INP CSS selector computation
+- 🐛 [RUM-3502] fix fetch(url) tracing ([#2642](https://github.com/DataDog/browser-sdk/pull/2642))
+- 🔧 Enforce snake case for event type properties ([#2649](https://github.com/DataDog/browser-sdk/pull/2649))
+- 🔊 [RUM-3501] add `tracking_consent` to configuration telemetry ([#2640](https://github.com/DataDog/browser-sdk/pull/2640))
+- 🔧 configure renovate to deduplicate subdependencies ([#2643](https://github.com/DataDog/browser-sdk/pull/2643))
+
+## v5.11.0
+
+- ✨ [RUM-3349] enable the consent management API ([#2634](https://github.com/DataDog/browser-sdk/pull/2634))
+- ✨ [RUM-2203] Forward replay records to the bridge ([#2470](https://github.com/DataDog/browser-sdk/pull/2470))
+- 🐛 [RUM-2445] fix unexpected session renewal after expire() ([#2632](https://github.com/DataDog/browser-sdk/pull/2632))
+- ⚗️ [RUM-3234] Discard outdated vitals ([#2610](https://github.com/DataDog/browser-sdk/pull/2610))
+
+## v5.10.0
+
+- ✨ [RUM-2902] Add error causes to context when logging an error ([#2602](https://github.com/DataDog/browser-sdk/pull/2602))
+- ✨ [RUM-3151] Report bundle sizes to logs ([#2605](https://github.com/DataDog/browser-sdk/pull/2605))
+- ✨ [RUM-160] Collect PerformanceResourceTiming.responseStatus ([#2587](https://github.com/DataDog/browser-sdk/pull/2587))
+- 🐛 [RUM-3039] Fix missing pending mutations at view end ([#2598](https://github.com/DataDog/browser-sdk/pull/2598))
+- ⚗️[RUM-3235] collect vital.name attribute ([#2609](https://github.com/DataDog/browser-sdk/pull/2609))
+- ⚗️[RUM-2889] custom vitals improvements ([#2606](https://github.com/DataDog/browser-sdk/pull/2606))
+- 🔧 ignore karma-webpack for now ([#2604](https://github.com/DataDog/browser-sdk/pull/2604))
+- ⚗️[RUM-2889] Bootstrap custom vital APIs ([#2591](https://github.com/DataDog/browser-sdk/pull/2591))
+- ⚗ ️✨ [RUM-2445] implement Tracking Consent management ([#2589](https://github.com/DataDog/browser-sdk/pull/2589))
+
 ## v5.9.0
 
 - ✨[Developer extension] npm setup override support ([#2304](https://github.com/DataDog/browser-sdk/pull/2304))

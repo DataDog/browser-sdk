@@ -7,7 +7,7 @@ import { evalInWindow } from '../../evalInWindow'
 import { createLogger } from '../../../common/logger'
 import { Alert } from '../alert'
 import { useSdkInfos } from '../../hooks/useSdkInfos'
-import classes from './replayTab.module.css'
+import * as classes from './replayTab.module.css'
 
 const logger = createLogger('replayTab')
 

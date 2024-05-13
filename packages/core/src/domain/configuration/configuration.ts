@@ -14,12 +14,20 @@ import { TrackingConsent } from '../trackingConsent'
 import type { TransportConfiguration } from './transportConfiguration'
 import { computeTransportConfiguration } from './transportConfiguration'
 
+export const DOC_LINK = 'https://docs.datadoghq.com/getting_started/site/'
 export const DefaultPrivacyLevel = {
   ALLOW: 'allow',
   MASK: 'mask',
   MASK_USER_INPUT: 'mask-user-input',
 } as const
 export type DefaultPrivacyLevel = (typeof DefaultPrivacyLevel)[keyof typeof DefaultPrivacyLevel]
+
+export const TraceContextInjection = {
+  ALL: 'all',
+  SAMPLED: 'sampled',
+} as const
+
+export type TraceContextInjection = (typeof TraceContextInjection)[keyof typeof TraceContextInjection]
 
 export interface InitConfiguration {
   // global options
@@ -59,6 +67,7 @@ export interface InitConfiguration {
   internalAnalyticsSubdomain?: string
 
   telemetryConfigurationSampleRate?: number
+  telemetryUsageSampleRate?: number
 }
 
 // This type is only used to build the core configuration. Logs and RUM SDKs are using a proper type
@@ -83,6 +92,7 @@ export interface Configuration extends TransportConfiguration {
   sessionSampleRate: number
   telemetrySampleRate: number
   telemetryConfigurationSampleRate: number
+  telemetryUsageSampleRate: number
   service: string | undefined
   silentMultipleInit: boolean
   allowUntrustedEvents: boolean
@@ -97,6 +107,9 @@ export interface Configuration extends TransportConfiguration {
   flushTimeout: Duration
   batchMessagesLimit: number
   messageBytesLimit: number
+}
+function isDatadogSite(site: string) {
+  return /(datadog|ddog|datad0g|dd0g)/.test(site)
 }
 
 export function validateAndBuildConfiguration(initConfiguration: InitConfiguration): Configuration | undefined {
@@ -124,10 +137,23 @@ export function validateAndBuildConfiguration(initConfiguration: InitConfigurati
   }
 
   if (
+    initConfiguration.telemetryUsageSampleRate !== undefined &&
+    !isPercentage(initConfiguration.telemetryUsageSampleRate)
+  ) {
+    display.error('Telemetry Usage Sample Rate should be a number between 0 and 100')
+    return
+  }
+
+  if (
     initConfiguration.trackingConsent !== undefined &&
     !objectHasValue(TrackingConsent, initConfiguration.trackingConsent)
   ) {
     display.error('Tracking Consent should be either "granted" or "not-granted"')
+    return
+  }
+
+  if (initConfiguration.site && !isDatadogSite(initConfiguration.site)) {
+    display.error(`Site should be a valid Datadog site. Learn more here: ${DOC_LINK}.`)
     return
   }
 
@@ -148,6 +174,7 @@ export function validateAndBuildConfiguration(initConfiguration: InitConfigurati
       sessionSampleRate: initConfiguration.sessionSampleRate ?? 100,
       telemetrySampleRate: initConfiguration.telemetrySampleRate ?? 20,
       telemetryConfigurationSampleRate: initConfiguration.telemetryConfigurationSampleRate ?? 5,
+      telemetryUsageSampleRate: initConfiguration.telemetryUsageSampleRate ?? 5,
       service: initConfiguration.service,
       silentMultipleInit: !!initConfiguration.silentMultipleInit,
       allowUntrustedEvents: !!initConfiguration.allowUntrustedEvents,
@@ -178,11 +205,12 @@ export function validateAndBuildConfiguration(initConfiguration: InitConfigurati
   )
 }
 
-export function serializeConfiguration(initConfiguration: InitConfiguration): Partial<RawTelemetryConfiguration> {
+export function serializeConfiguration(initConfiguration: InitConfiguration) {
   return {
     session_sample_rate: initConfiguration.sessionSampleRate,
     telemetry_sample_rate: initConfiguration.telemetrySampleRate,
     telemetry_configuration_sample_rate: initConfiguration.telemetryConfigurationSampleRate,
+    telemetry_usage_sample_rate: initConfiguration.telemetryUsageSampleRate,
     use_before_send: !!initConfiguration.beforeSend,
     use_cross_site_session_cookie: initConfiguration.useCrossSiteSessionCookie,
     use_partitioned_cross_site_session_cookie: initConfiguration.usePartitionedCrossSiteSessionCookie,
@@ -193,5 +221,6 @@ export function serializeConfiguration(initConfiguration: InitConfiguration): Pa
     allow_fallback_to_local_storage: !!initConfiguration.allowFallbackToLocalStorage,
     store_contexts_across_pages: !!initConfiguration.storeContextsAcrossPages,
     allow_untrusted_events: !!initConfiguration.allowUntrustedEvents,
-  }
+    tracking_consent: initConfiguration.trackingConsent,
+  } satisfies RawTelemetryConfiguration
 }

@@ -23,12 +23,14 @@ import { startResourceCollection } from './resourceCollection'
 describe('resourceCollection', () => {
   let setupBuilder: TestSetupBuilder
   let trackResources: boolean
+  let findAllSpy: jasmine.Spy<jasmine.Func>
+  let wasInPageStateDuringPeriodSpy: jasmine.Spy<jasmine.Func>
 
-  let pageStateHistorySpy: jasmine.Spy<jasmine.Func>
   beforeEach(() => {
     trackResources = true
     setupBuilder = setup().beforeBuild(({ lifeCycle, sessionManager, pageStateHistory, configuration }) => {
-      pageStateHistorySpy = spyOn(pageStateHistory, 'findAll')
+      findAllSpy = spyOn(pageStateHistory, 'findAll')
+      wasInPageStateDuringPeriodSpy = spyOn(pageStateHistory, 'wasInPageStateDuringPeriod')
       startResourceCollection(lifeCycle, { ...configuration, trackResources }, sessionManager, pageStateHistory)
     })
   })
@@ -40,7 +42,13 @@ describe('resourceCollection', () => {
   it('should create resource from performance entry', () => {
     const { lifeCycle, rawRumEvents } = setupBuilder.build()
 
-    const performanceEntry = createPerformanceEntry(RumPerformanceEntryType.RESOURCE)
+    const performanceEntry = createPerformanceEntry(RumPerformanceEntryType.RESOURCE, {
+      encodedBodySize: 42,
+      decodedBodySize: 51,
+      transferSize: 63,
+      renderBlockingStatus: 'blocking',
+      responseStart: 250 as RelativeTime,
+    })
     lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [performanceEntry])
 
     expect(rawRumEvents[0].startTime).toBe(200 as RelativeTime)
@@ -49,12 +57,16 @@ describe('resourceCollection', () => {
       resource: {
         id: jasmine.any(String),
         duration: (100 * 1e6) as ServerDuration,
-        size: undefined,
+        size: 51,
+        encoded_body_size: 42,
+        decoded_body_size: 51,
+        transfer_size: 63,
         type: ResourceType.OTHER,
         url: 'https://resource.com/valid',
         download: jasmine.any(Object),
         first_byte: jasmine.any(Object),
         status_code: 200,
+        render_blocking_status: 'blocking',
       },
       type: RumEventType.RESOURCE,
       _dd: {
@@ -79,6 +91,7 @@ describe('resourceCollection', () => {
         type: RequestType.XHR,
         url: 'https://resource.com/valid',
         xhr,
+        isAborted: false,
       })
     )
 
@@ -105,6 +118,7 @@ describe('resourceCollection', () => {
       requestInput: undefined,
       requestInit: undefined,
       error: undefined,
+      isAborted: false,
     })
   })
 
@@ -189,7 +203,7 @@ describe('resourceCollection', () => {
     const mockXHR = createCompletedRequest()
     const mockPerformanceEntry = createPerformanceEntry(RumPerformanceEntryType.RESOURCE)
 
-    pageStateHistorySpy.and.returnValue(mockPageStates)
+    findAllSpy.and.returnValue(mockPageStates)
 
     lifeCycle.notify(LifeCycleEventType.REQUEST_COMPLETED, mockXHR)
     lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [mockPerformanceEntry])
@@ -197,21 +211,17 @@ describe('resourceCollection', () => {
     const rawRumResourceEventFetch = rawRumEvents[0].rawRumEvent as RawRumResourceEvent
     const rawRumResourceEventEntry = rawRumEvents[1].rawRumEvent as RawRumResourceEvent
 
-    expect(pageStateHistorySpy.calls.first().args).toEqual([mockXHR.startClocks.relative, mockXHR.duration])
-    expect(pageStateHistorySpy.calls.mostRecent().args).toEqual([
-      mockPerformanceEntry.startTime,
-      mockPerformanceEntry.duration,
-    ])
+    expect(findAllSpy.calls.first().args).toEqual([mockXHR.startClocks.relative, mockXHR.duration])
+    expect(findAllSpy.calls.mostRecent().args).toEqual([mockPerformanceEntry.startTime, mockPerformanceEntry.duration])
     expect(rawRumResourceEventFetch._dd.page_states).toEqual(jasmine.objectContaining(mockPageStates))
     expect(rawRumResourceEventEntry._dd.page_states).toEqual(jasmine.objectContaining(mockPageStates))
   })
 
   it('should not have a duration if a frozen state happens during the request and no performance entry matches', () => {
     const { lifeCycle, rawRumEvents } = setupBuilder.build()
-    const mockPageStates = [{ state: PageState.FROZEN, startTime: 0 as RelativeTime }]
     const mockXHR = createCompletedRequest()
 
-    pageStateHistorySpy.and.returnValue(mockPageStates)
+    wasInPageStateDuringPeriodSpy.and.returnValue(true)
 
     lifeCycle.notify(LifeCycleEventType.REQUEST_COMPLETED, mockXHR)
 
@@ -225,7 +235,7 @@ describe('resourceCollection', () => {
     const mockXHR = createCompletedRequest()
     const mockPerformanceEntry = createPerformanceEntry(RumPerformanceEntryType.RESOURCE)
 
-    pageStateHistorySpy.and.returnValue(mockPageStates)
+    findAllSpy.and.returnValue(mockPageStates)
 
     lifeCycle.notify(LifeCycleEventType.REQUEST_COMPLETED, mockXHR)
     lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [mockPerformanceEntry])
@@ -255,6 +265,7 @@ describe('resourceCollection', () => {
         response,
         input: 'https://resource.com/valid',
         init: { headers: { foo: 'bar' } },
+        isAborted: false,
       })
     )
 
@@ -281,6 +292,7 @@ describe('resourceCollection', () => {
       requestInput: 'https://resource.com/valid',
       requestInit: { headers: { foo: 'bar' } },
       error: undefined,
+      isAborted: false,
     })
   })
   ;[null, undefined, 42, {}].forEach((input: any) => {

@@ -1,16 +1,19 @@
-import { SESSION_STORE_KEY } from '@datadog/browser-core'
-import { deleteAllCookies } from './browser'
+import { SESSION_STORE_KEY, SESSION_TIME_OUT_DELAY } from '@datadog/browser-core'
+import { setCookie } from './browser'
 
 export async function renewSession() {
   await expireSession()
   const documentElement = await $('html')
   await documentElement.click()
-  expect(await findSessionCookie()).toBeDefined()
+
+  expect(await findSessionCookie()).not.toContain('isExpired=1')
 }
 
 export async function expireSession() {
-  await deleteAllCookies()
-  expect(await findSessionCookie()).toBeUndefined()
+  await setCookie(SESSION_STORE_KEY, 'isExpired=1', SESSION_TIME_OUT_DELAY)
+
+  expect(await findSessionCookie()).toBe('isExpired=1')
+
   // Cookies are cached for 1s, wait until the cache expires
   await browser.pause(1100)
 }

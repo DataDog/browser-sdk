@@ -1,4 +1,4 @@
-import type { Context, ErrorSource, TimeStamp, User } from '@datadog/browser-core'
+import type { Context, ErrorSource, RawErrorCause, TimeStamp, User } from '@datadog/browser-core'
 import type { StatusType } from './domain/logger'
 
 export type RawLogsEvent =
@@ -10,10 +10,11 @@ export type RawLogsEvent =
   | RawRuntimeLogsEvent
 
 type Error = {
+  message?: string
   kind?: string
   stack?: string
   fingerprint?: string
-  [k: string]: unknown
+  causes?: RawErrorCause[]
 }
 
 interface CommonRawLogsEvent {
@@ -21,7 +22,7 @@ interface CommonRawLogsEvent {
   message: string
   status: StatusType
   error?: Error
-  origin: 'network' | 'source' | 'console' | 'logger' | 'agent' | 'report'
+  origin: ErrorSource
 }
 
 export interface RawConsoleLogsEvent extends CommonRawLogsEvent {

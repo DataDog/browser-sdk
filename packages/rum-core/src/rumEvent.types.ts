@@ -221,6 +221,10 @@ export type RumErrorEvent = CommonProperties &
        */
       readonly type?: string
       /**
+       * The specific category of the error. It provides a high-level grouping for different types of errors.
+       */
+      readonly category?: 'ANR' | 'App Hang' | 'Exception'
+      /**
        * Whether the error has been handled manually in the source code or not
        */
       readonly handling?: 'handled' | 'unhandled'
@@ -231,7 +235,16 @@ export type RumErrorEvent = CommonProperties &
       /**
        * Source type of the error (the language or platform impacting the error stacktrace format)
        */
-      readonly source_type?: 'android' | 'browser' | 'ios' | 'react-native' | 'flutter' | 'roku'
+      readonly source_type?:
+        | 'android'
+        | 'browser'
+        | 'ios'
+        | 'react-native'
+        | 'flutter'
+        | 'roku'
+        | 'ndk'
+        | 'ios+il2cpp'
+        | 'ndk+il2cpp'
       /**
        * Resource properties of the error
        */
@@ -372,6 +385,30 @@ export type RumErrorEvent = CommonProperties &
         readonly path?: string
         [k: string]: unknown
       }
+      /**
+       * Content Security Violation properties
+       */
+      readonly csp?: {
+        /**
+         * In the context of CSP errors, indicates how the violated policy is configured to be treated by the user agent.
+         */
+        readonly disposition?: 'enforce' | 'report'
+        [k: string]: unknown
+      }
+      /**
+       * Time since application start when error happened (in milliseconds)
+       */
+      readonly time_since_app_start?: number
+      [k: string]: unknown
+    }
+    /**
+     * Properties of App Hang and ANR errors
+     */
+    readonly freeze?: {
+      /**
+       * Duration of the main thread freeze (in ns)
+       */
+      readonly duration: number
       [k: string]: unknown
     }
     /**
@@ -485,6 +522,22 @@ export type RumResourceEvent = CommonProperties &
        * Size in octet of the resource response body
        */
       readonly size?: number
+      /**
+       * Size in octet of the resource before removing any applied content encodings
+       */
+      readonly encoded_body_size?: number
+      /**
+       * Size in octet of the resource after removing any applied encoding
+       */
+      readonly decoded_body_size?: number
+      /**
+       * Size in octet of the fetched resource
+       */
+      readonly transfer_size?: number
+      /**
+       * Render blocking status of the resource
+       */
+      readonly render_blocking_status?: 'blocking' | 'non-blocking'
       /**
        * Redirect phase properties
        */
@@ -1012,10 +1065,30 @@ export type RumVitalEvent = CommonProperties &
        */
       readonly id: string
       /**
-       * User custom vital. As vital name is used as facet path, it must contain only letters, digits, or the characters - _ . @ $
+       * Name of the vital, as it is also used as facet path for its value, it must contain only letters, digits, or the characters - _ . @ $
+       */
+      readonly name?: string
+      /**
+       * User custom vital.
        */
       readonly custom?: {
         [k: string]: number
+      }
+      [k: string]: unknown
+    }
+    /**
+     * Internal properties
+     */
+    readonly _dd?: {
+      /**
+       * Internal vital properties
+       */
+      readonly vital?: {
+        /**
+         * Whether the value of the vital is computed by the SDK (as opposed to directly provided by the customer)
+         */
+        readonly computed_value?: boolean
+        [k: string]: unknown
       }
       [k: string]: unknown
     }

@@ -1,12 +1,5 @@
 import type { CustomerDataTracker, RelativeTime } from '@datadog/browser-core'
-import {
-  ExperimentalFeature,
-  resetExperimentalFeatures,
-  addExperimentalFeatures,
-  relativeToClocks,
-  createCustomerDataTracker,
-  noop,
-} from '@datadog/browser-core'
+import { relativeToClocks, createCustomerDataTracker, noop } from '@datadog/browser-core'
 import type { TestSetupBuilder } from '../../../test'
 import { setup } from '../../../test'
 import { LifeCycleEventType } from '../lifeCycle'
@@ -28,7 +21,6 @@ describe('featureFlagContexts', () => {
 
   afterEach(() => {
     featureFlagContexts.stop()
-    resetExperimentalFeatures()
   })
 
   it('should return undefined before the initial view', () => {
@@ -38,12 +30,10 @@ describe('featureFlagContexts', () => {
   })
 
   describe('addFeatureFlagEvaluation', () => {
-    it('should add feature flag evaluations of any type when the ff feature_flags is enabled', () => {
-      addExperimentalFeatures([ExperimentalFeature.FEATURE_FLAGS])
-
+    it('should add feature flag evaluations of any type', () => {
       const { lifeCycle } = setupBuilder.build()
 
-      lifeCycle.notify(LifeCycleEventType.VIEW_CREATED, {
+      lifeCycle.notify(LifeCycleEventType.BEFORE_VIEW_CREATED, {
         startClocks: relativeToClocks(0 as RelativeTime),
       } as ViewCreatedEvent)
 
@@ -62,12 +52,10 @@ describe('featureFlagContexts', () => {
       })
     })
 
-    it('should replace existing feature flag evaluation to the current context when the ff feature_flags is enabled', () => {
-      addExperimentalFeatures([ExperimentalFeature.FEATURE_FLAGS])
-
+    it('should replace existing feature flag evaluation to the current context', () => {
       const { lifeCycle } = setupBuilder.build()
 
-      lifeCycle.notify(LifeCycleEventType.VIEW_CREATED, {
+      lifeCycle.notify(LifeCycleEventType.BEFORE_VIEW_CREATED, {
         startClocks: relativeToClocks(0 as RelativeTime),
       } as ViewCreatedEvent)
 
@@ -80,28 +68,12 @@ describe('featureFlagContexts', () => {
       expect(featureFlagContext).toEqual({ feature: 'bar', feature2: 'baz' })
     })
 
-    it('should not add feature flag evaluation when the ff feature_flags is disabled', () => {
-      const { lifeCycle } = setupBuilder.build()
-
-      lifeCycle.notify(LifeCycleEventType.VIEW_CREATED, {
-        startClocks: relativeToClocks(0 as RelativeTime),
-      } as ViewCreatedEvent)
-
-      featureFlagContexts.addFeatureFlagEvaluation('feature', 'foo')
-
-      const featureFlagContext = featureFlagContexts.findFeatureFlagEvaluations()!
-
-      expect(featureFlagContext).toBeUndefined()
-    })
-
     it('should notify the customer data tracker on feature flag evaluation', () => {
-      addExperimentalFeatures([ExperimentalFeature.FEATURE_FLAGS])
-
       const { lifeCycle } = setupBuilder.build()
 
       const updateCustomerDataSpy = spyOn(customerDataTracker, 'updateCustomerData')
 
-      lifeCycle.notify(LifeCycleEventType.VIEW_CREATED, {
+      lifeCycle.notify(LifeCycleEventType.BEFORE_VIEW_CREATED, {
         startClocks: relativeToClocks(0 as RelativeTime),
       } as ViewCreatedEvent)
 
@@ -117,26 +89,22 @@ describe('featureFlagContexts', () => {
      * (which seems unlikely) and this event would anyway be rejected by lack of view id
      */
     it('should return undefined when no current view', () => {
-      addExperimentalFeatures([ExperimentalFeature.FEATURE_FLAGS])
-
       setupBuilder.build()
 
       expect(featureFlagContexts.findFeatureFlagEvaluations()).toBeUndefined()
     })
 
     it('should clear feature flag context on new view', () => {
-      addExperimentalFeatures([ExperimentalFeature.FEATURE_FLAGS])
-
       const { lifeCycle } = setupBuilder.build()
 
-      lifeCycle.notify(LifeCycleEventType.VIEW_CREATED, {
+      lifeCycle.notify(LifeCycleEventType.BEFORE_VIEW_CREATED, {
         startClocks: relativeToClocks(0 as RelativeTime),
       } as ViewCreatedEvent)
       featureFlagContexts.addFeatureFlagEvaluation('feature', 'foo')
-      lifeCycle.notify(LifeCycleEventType.VIEW_ENDED, {
+      lifeCycle.notify(LifeCycleEventType.AFTER_VIEW_ENDED, {
         endClocks: relativeToClocks(10 as RelativeTime),
       } as ViewEndedEvent)
-      lifeCycle.notify(LifeCycleEventType.VIEW_CREATED, {
+      lifeCycle.notify(LifeCycleEventType.BEFORE_VIEW_CREATED, {
         startClocks: relativeToClocks(10 as RelativeTime),
       } as ViewCreatedEvent)
 
@@ -145,20 +113,18 @@ describe('featureFlagContexts', () => {
     })
 
     it('should return the feature flag context corresponding to the start time', () => {
-      addExperimentalFeatures([ExperimentalFeature.FEATURE_FLAGS])
-
       const { lifeCycle, clock } = setupBuilder.withFakeClock().build()
 
-      lifeCycle.notify(LifeCycleEventType.VIEW_CREATED, {
+      lifeCycle.notify(LifeCycleEventType.BEFORE_VIEW_CREATED, {
         startClocks: relativeToClocks(0 as RelativeTime),
       } as ViewCreatedEvent)
 
       clock.tick(10)
       featureFlagContexts.addFeatureFlagEvaluation('feature', 'one')
-      lifeCycle.notify(LifeCycleEventType.VIEW_ENDED, {
+      lifeCycle.notify(LifeCycleEventType.AFTER_VIEW_ENDED, {
         endClocks: relativeToClocks(10 as RelativeTime),
       } as ViewEndedEvent)
-      lifeCycle.notify(LifeCycleEventType.VIEW_CREATED, {
+      lifeCycle.notify(LifeCycleEventType.BEFORE_VIEW_CREATED, {
         startClocks: relativeToClocks(10 as RelativeTime),
       } as ViewCreatedEvent)
 

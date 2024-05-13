@@ -22,7 +22,7 @@ import type { FacetRegistry } from '../../../hooks/useEvents'
 import { useSdkInfos } from '../../../hooks/useSdkInfos'
 import type { EventListColumn } from './columnUtils'
 import { addColumn, includesColumn } from './columnUtils'
-import classes from './eventRow.module.css'
+import * as classes from './eventRow.module.css'
 import { RowButton } from './rowButton'
 import { canCopyEvent, copyEventAsCurl, copyEventAsFetch } from './copyEvent'
 
@@ -279,6 +279,13 @@ function LogDescription({ event }: { event: LogsEvent }) {
 function TelemetryDescription({ event }: { event: TelemetryEvent }) {
   if (event.telemetry.type === 'configuration') {
     return <Emphasis>Configuration</Emphasis>
+  }
+  if (event.telemetry.type === 'usage') {
+    return (
+      <>
+        <Emphasis>Usage</Emphasis> of <Emphasis>{event.telemetry.usage.feature}</Emphasis>
+      </>
+    )
   }
   return <>{event.telemetry.message}</>
 }

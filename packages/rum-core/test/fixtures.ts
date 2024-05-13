@@ -47,6 +47,7 @@ export function createRawRumEvent(type: RumEventType, overrides?: Context): RawR
           vital: {
             id: generateUUID(),
             type: VitalType.DURATION,
+            name: 'timing',
             custom: {
               timing: 0 as ServerDuration,
             },
@@ -231,7 +232,7 @@ export function createPerformanceEntry<T extends RumPerformanceEntryType>(
         {
           connectEnd: 200 as RelativeTime,
           connectStart: 200 as RelativeTime,
-          decodedBodySize: 200,
+          renderBlockingStatus: 'non-blocking',
           domainLookupEnd: 200 as RelativeTime,
           domainLookupStart: 200 as RelativeTime,
           duration: 100 as Duration,

@@ -5,6 +5,7 @@ import type { SessionStore } from './sessionStore'
 import { STORAGE_POLL_DELAY, startSessionStore, selectSessionStoreStrategyType } from './sessionStore'
 import { SESSION_EXPIRATION_DELAY, SESSION_TIME_OUT_DELAY } from './sessionConstants'
 import { SESSION_STORE_KEY } from './storeStrategies/sessionStoreStrategy'
+import type { SessionState } from './sessionState'
 
 const enum FakeTrackingType {
   TRACKED = 'tracked',
@@ -15,6 +16,8 @@ const DURATION = 123456
 const PRODUCT_KEY = 'product'
 const FIRST_ID = 'first'
 const SECOND_ID = 'second'
+
+const EXPIRED_SESSION: SessionState = { isExpired: '1' }
 
 function setSessionInStore(trackingType: FakeTrackingType = FakeTrackingType.TRACKED, id?: string, expire?: number) {
   setCookie(
@@ -28,12 +31,20 @@ function setSessionInStore(trackingType: FakeTrackingType = FakeTrackingType.TRA
 
 function expectTrackedSessionToBeInStore(id?: string) {
   expect(getCookie(SESSION_STORE_KEY)).toMatch(new RegExp(`id=${id ? id : '[a-f0-9-]+'}`))
+  expect(getCookie(SESSION_STORE_KEY)).not.toContain('isExpired=1')
   expect(getCookie(SESSION_STORE_KEY)).toContain(`${PRODUCT_KEY}=${FakeTrackingType.TRACKED}`)
 }
 
 function expectNotTrackedSessionToBeInStore() {
   expect(getCookie(SESSION_STORE_KEY)).not.toContain('id=')
+  expect(getCookie(SESSION_STORE_KEY)).not.toContain('isExpired=1')
   expect(getCookie(SESSION_STORE_KEY)).toContain(`${PRODUCT_KEY}=${FakeTrackingType.NOT_TRACKED}`)
+}
+
+function expectSessionToBeExpiredInStore() {
+  expect(getCookie(SESSION_STORE_KEY)).toContain('isExpired=1')
+  expect(getCookie(SESSION_STORE_KEY)).not.toContain('id=')
+  expect(getCookie(SESSION_STORE_KEY)).not.toContain(`${PRODUCT_KEY}=`)
 }
 
 function getStoreExpiration() {
@@ -41,7 +52,7 @@ function getStoreExpiration() {
 }
 
 function resetSessionInStore() {
-  setCookie(SESSION_STORE_KEY, '', DURATION)
+  setCookie(SESSION_STORE_KEY, 'isExpired=1', DURATION)
 }
 
 fdescribe('session store', () => {
@@ -121,6 +132,32 @@ fdescribe('session store', () => {
       resetSessionInStore()
       clock.cleanup()
       sessionStoreManager.stop()
+    })
+
+    describe('initialize session', () => {
+      it('when session not in store, should initialize a new session', () => {
+        setupSessionStore()
+
+        expect(sessionStoreManager.getSession()).toEqual(EXPIRED_SESSION)
+      })
+
+      it('when tracked session in store, should do nothing ', () => {
+        setSessionInStore(FakeTrackingType.TRACKED, FIRST_ID)
+        setupSessionStore()
+
+        expect(sessionStoreManager.getSession().id).toBe(FIRST_ID)
+        expect(sessionStoreManager.getSession().isExpired).toBeUndefined()
+        expect(sessionStoreManager.getSession()[PRODUCT_KEY]).toBeDefined()
+      })
+
+      it('when not tracked session in store, should do nothing ', () => {
+        setSessionInStore(FakeTrackingType.NOT_TRACKED)
+        setupSessionStore()
+
+        expect(sessionStoreManager.getSession().id).toBeUndefined()
+        expect(sessionStoreManager.getSession().isExpired).toBeUndefined()
+        expect(sessionStoreManager.getSession()[PRODUCT_KEY]).toBeDefined()
+      })
     })
 
     describe('expand or renew session', () => {
@@ -271,6 +308,23 @@ fdescribe('session store', () => {
           expect(renewSpy).toHaveBeenCalledTimes(1)
         }
       )
+
+      it('when throttled, expandOrRenewSession() should not renew the session if expire() is called right after', () => {
+        setSessionInStore(FakeTrackingType.TRACKED, FIRST_ID)
+        setupSessionStore()
+
+        // The first call is not throttled (leading execution)
+        sessionStoreManager.expandOrRenewSession()
+
+        sessionStoreManager.expandOrRenewSession()
+        sessionStoreManager.expire()
+
+        clock.tick(STORAGE_POLL_DELAY)
+
+        expectSessionToBeExpiredInStore()
+        expect(sessionStoreManager.getSession().id).toBeUndefined()
+        expect(renewSpy).not.toHaveBeenCalled()
+      })
     })
 
     describe('expand session', () => {
@@ -302,6 +356,7 @@ fdescribe('session store', () => {
 
         sessionStoreManager.expandSession()
 
+        expectSessionToBeExpiredInStore()
         expect(sessionStoreManager.getSession().id).toBeUndefined()
         expect(expireSpy).toHaveBeenCalled()
         expect(renewSpy).not.toHaveBeenCalled()
@@ -357,6 +412,7 @@ fdescribe('session store', () => {
 
         clock.tick(STORAGE_POLL_DELAY)
 
+        expectSessionToBeExpiredInStore()
         expect(sessionStoreManager.getSession().id).toBeUndefined()
         expect(expireSpy).not.toHaveBeenCalled()
       })
@@ -379,6 +435,7 @@ fdescribe('session store', () => {
         clock.tick(STORAGE_POLL_DELAY)
 
         expect(sessionStoreManager.getSession().id).toBeUndefined()
+        expectSessionToBeExpiredInStore()
         expect(expireSpy).toHaveBeenCalled()
       })
 
@@ -414,6 +471,26 @@ fdescribe('session store', () => {
 
         expect(sessionStoreManager.getSession().id).toBeUndefined()
         expect(expireSpy).toHaveBeenCalled()
+      })
+    })
+
+    describe('reinitialize session', () => {
+      it('when session not in store, should reinitialize the store', () => {
+        setupSessionStore()
+
+        sessionStoreManager.restartSession()
+
+        expect(sessionStoreManager.getSession()).toEqual(EXPIRED_SESSION)
+      })
+
+      it('when session in store, should do nothing', () => {
+        setSessionInStore(FakeTrackingType.TRACKED, FIRST_ID)
+        setupSessionStore()
+
+        sessionStoreManager.restartSession()
+
+        expect(sessionStoreManager.getSession().id).toBe(FIRST_ID)
+        expect(sessionStoreManager.getSession().isExpired).toBeUndefined()
       })
     })
   })

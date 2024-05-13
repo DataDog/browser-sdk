@@ -1,7 +1,7 @@
-const lernaConfig = require('../../lerna.json')
 const { runMain } = require('../lib/execution-utils')
 const { modifyFile } = require('../lib/files-utils')
 const { command } = require('../lib/command')
+const { browserSdkVersion } = require('../lib/browser-sdk-version')
 
 const JSON_FILES = ['rum', 'rum-slim', 'logs'].map((packageName) => `./packages/${packageName}/package.json`)
 
@@ -25,7 +25,7 @@ runMain(async () => {
 function updateJsonPeerDependencies(content) {
   const json = JSON.parse(content)
   Object.keys(json.peerDependencies).forEach((key) => {
-    json.peerDependencies[key] = lernaConfig.version
+    json.peerDependencies[key] = browserSdkVersion
   })
   return `${JSON.stringify(json, null, 2)}\n`
 }

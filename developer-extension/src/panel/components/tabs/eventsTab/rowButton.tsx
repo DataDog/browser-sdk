@@ -4,7 +4,7 @@ import type { PolymorphicComponentProps } from '@mantine/core/lib/core/factory/c
 import clsx from 'clsx'
 import type { JSXElementConstructor } from 'react'
 import React, { forwardRef } from 'react'
-import classes from './rowButton.module.css'
+import * as classes from './rowButton.module.css'
 
 type RowButtonProps = Omit<PolymorphicComponentProps<'button', ActionIconProps>, 'children'> & {
   icon: JSXElementConstructor<{ size: number; strokeWidth: number }>

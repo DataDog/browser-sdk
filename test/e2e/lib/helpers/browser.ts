@@ -1,17 +1,5 @@
 import * as os from 'os'
 
-// typing issue for execute https://github.com/webdriverio/webdriverio/issues/3796
-export function browserExecute(fn: any) {
-  return browser.execute(fn)
-}
-
-export function browserExecuteAsync<R, A, B>(fn: (a: A, b: B, done: (result: R) => void) => any, a: A, b: B): Promise<R>
-export function browserExecuteAsync<R, A>(fn: (a: A, done: (result: R) => void) => any, arg: A): Promise<R>
-export function browserExecuteAsync<R>(fn: (done: (result: R) => void) => any): Promise<R>
-export function browserExecuteAsync<A extends any[]>(fn: (...params: A) => any, ...args: A) {
-  return browser.executeAsync(fn as any, ...args)
-}
-
 // To keep tests sane, ensure we got a fixed list of possible platforms and browser names.
 const validPlatformNames = ['windows', 'macos', 'linux', 'ios', 'android'] as const
 const validBrowserNames = ['edge', 'safari', 'chrome', 'firefox', 'ie'] as const
@@ -93,7 +81,7 @@ export async function flushBrowserLogs() {
 
 // wdio method does not work for some browsers
 export function deleteAllCookies() {
-  return browserExecute(() => {
+  return browser.execute(() => {
     const cookies = document.cookie.split(';')
     for (const cookie of cookies) {
       const eqPos = cookie.indexOf('=')
@@ -103,10 +91,23 @@ export function deleteAllCookies() {
   })
 }
 
+export function setCookie(name: string, value: string, expiresDelay: number = 0) {
+  return browser.execute(
+    (name, value, expiresDelay) => {
+      const expires = new Date(Date.now() + expiresDelay).toUTCString()
+
+      document.cookie = `${name}=${value};expires=${expires};`
+    },
+    name,
+    value,
+    expiresDelay
+  )
+}
+
 export async function sendXhr(url: string, headers: string[][] = []): Promise<string> {
   type State = { state: 'success'; response: string } | { state: 'error' }
 
-  const result: State = await browserExecuteAsync(
+  const result: State = await browser.executeAsync(
     (url, headers, done) => {
       const xhr = new XMLHttpRequest()
       let state: State = { state: 'error' }

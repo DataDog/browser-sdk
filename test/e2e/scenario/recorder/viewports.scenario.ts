@@ -4,7 +4,7 @@ import { IncrementalSource } from '@datadog/browser-rum/cjs/types'
 import { findAllIncrementalSnapshots, findAllVisualViewports } from '@datadog/browser-rum/test'
 import type { IntakeRegistry } from '../../lib/framework'
 import { flushEvents, createTest, bundleSetup, html } from '../../lib/framework'
-import { browserExecute, getBrowserName, getPlatformName } from '../../lib/helpers/browser'
+import { getBrowserName, getPlatformName } from '../../lib/helpers/browser'
 
 const NAVBAR_HEIGHT_CHANGE_UPPER_BOUND = 30
 const VIEWPORT_META_TAGS = `
@@ -33,7 +33,7 @@ describe('recorder', () => {
         const { innerWidth, innerHeight } = await getWindowInnerDimensions()
         await performSignificantZoom()
 
-        await browserExecute(() => {
+        await browser.execute(() => {
           window.dispatchEvent(new Event('resize'))
         })
 
@@ -211,7 +211,7 @@ async function visualScrollVerticallyDown(yChange: number) {
 }
 
 async function buildScrollablePage() {
-  await browserExecute(() => {
+  await browser.execute(() => {
     document.documentElement.style.setProperty('width', '5000px')
     document.documentElement.style.setProperty('height', '5000px')
     document.documentElement.style.setProperty('margin', '0px')
@@ -234,7 +234,7 @@ interface VisualViewportData {
 }
 
 function getVisualViewport(): Promise<VisualViewportData> {
-  return browserExecute(() => {
+  return browser.execute(() => {
     const visual = window.visualViewport || ({} as Record<string, undefined>)
     return {
       scale: visual.scale,
@@ -249,7 +249,7 @@ function getVisualViewport(): Promise<VisualViewportData> {
 }
 
 function getWindowScroll() {
-  return browserExecute(() => ({
+  return browser.execute(() => ({
     scrollX: window.scrollX,
     scrollY: window.scrollY,
   })) as Promise<{ scrollX: number; scrollY: number }>
@@ -257,7 +257,7 @@ function getWindowScroll() {
 
 function getScrollbarThickness(): Promise<number> {
   // https://stackoverflow.com/questions/13382516/getting-scroll-bar-width-using-javascript#answer-13382873
-  return browserExecute(() => {
+  return browser.execute(() => {
     // Creating invisible container
     const outer = document.createElement('div')
     outer.style.visibility = 'hidden'
@@ -272,7 +272,7 @@ function getScrollbarThickness(): Promise<number> {
     // Removing temporary elements from the DOM
     document.body.removeChild(outer)
     return scrollbarThickness
-  }) as Promise<number>
+  })
 }
 
 // Mac OS X Chrome scrollbars are included here (~15px) which seems to be against spec
@@ -293,14 +293,14 @@ async function getLastRecord<T>(intakeRegistry: IntakeRegistry, filterMethod: (s
 }
 
 function getWindowInnerDimensions() {
-  return browserExecute(() => ({
+  return browser.execute(() => ({
     innerWidth: window.innerWidth,
     innerHeight: window.innerHeight,
   })) as Promise<{ innerWidth: number; innerHeight: number }>
 }
 
 async function resetWindowScroll() {
-  await browserExecute(() => {
+  await browser.execute(() => {
     window.scrollTo(-500, -500)
   })
   const { scrollX: nextScrollX, scrollY: nextScrollY } = await getWindowScroll()

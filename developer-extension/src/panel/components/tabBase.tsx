@@ -1,7 +1,7 @@
 import { Container, Flex, ScrollArea, Space } from '@mantine/core'
 import type { ReactNode } from 'react'
 import React from 'react'
-import classes from './tabBase.module.css'
+import * as classes from './tabBase.module.css'
 
 interface TabBaseProps {
   /**

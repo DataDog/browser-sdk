@@ -9,6 +9,8 @@ import type {
   TrackingConsent,
 } from '@datadog/browser-core'
 import {
+  addTelemetryUsage,
+  timeStampToClocks,
   isExperimentalFeatureEnabled,
   ExperimentalFeature,
   CustomerDataType,
@@ -107,18 +109,41 @@ export function makeRumPublicApi(startRumImpl: StartRum, recorderApi: RecorderAp
 
     (initConfiguration, configuration, deflateWorker, initialViewOptions) => {
       if (isExperimentalFeatureEnabled(ExperimentalFeature.CUSTOM_VITALS)) {
-        ;(rumPublicApi as any).startDurationVital = monitor((name: string) => {
-          strategy.startDurationVital({
-            name: sanitize(name)!,
-            startClocks: clocksNow(),
-          })
-        })
-        ;(rumPublicApi as any).stopDurationVital = monitor((name: string) => {
-          strategy.stopDurationVital({
-            name: sanitize(name)!,
-            stopClocks: clocksNow(),
-          })
-        })
+        /**
+         * Start a custom duration vital
+         * stored in @vital.custom.<name>
+         *
+         * @param name name of the custom vital
+         * @param options.context custom context attached to the vital
+         * @param options.startTime epoch timestamp of the start of the custom vital (if not set, will use current time)
+         */
+        ;(rumPublicApi as any).startDurationVital = monitor(
+          (name: string, options?: { context?: object; startTime?: number }) => {
+            strategy.startDurationVital({
+              name: sanitize(name)!,
+              startClocks: options?.startTime ? timeStampToClocks(options.startTime as TimeStamp) : clocksNow(),
+              context: sanitize(options?.context) as Context,
+            })
+          }
+        )
+
+        /**
+         * Stop a custom duration vital
+         * stored in @vital.custom.<name>
+         *
+         * @param name name of the custom vital
+         * @param options.context custom context attached to the vital
+         * @param options.stopTime epoch timestamp of the stop of the custom vital (if not set, will use current time)
+         */
+        ;(rumPublicApi as any).stopDurationVital = monitor(
+          (name: string, options?: { context?: object; stopTime?: number }) => {
+            strategy.stopDurationVital({
+              name: sanitize(name)!,
+              stopClocks: options?.stopTime ? timeStampToClocks(options.stopTime as TimeStamp) : clocksNow(),
+              context: sanitize(options?.context) as Context,
+            })
+          }
+        )
       }
 
       if (initConfiguration.storeContextsAcrossPages) {
@@ -164,7 +189,6 @@ export function makeRumPublicApi(startRumImpl: StartRum, recorderApi: RecorderAp
     const sanitizedOptions = typeof options === 'object' ? options : { name: options }
     strategy.startView(sanitizedOptions)
   })
-
   const rumPublicApi = makePublicApi({
     init: monitor((initConfiguration: RumInitConfiguration) => strategy.init(initConfiguration)),
 
@@ -180,7 +204,10 @@ export function makeRumPublicApi(startRumImpl: StartRum, recorderApi: RecorderAp
      * If this method is called before the init() method, the provided value will take precedence
      * over the one provided as initialization parameter.
      */
-    setTrackingConsent: monitor((trackingConsent: TrackingConsent) => trackingConsentState.update(trackingConsent)),
+    setTrackingConsent: monitor((trackingConsent: TrackingConsent) => {
+      trackingConsentState.update(trackingConsent)
+      addTelemetryUsage({ feature: 'set-tracking-consent', tracking_consent: trackingConsent })
+    }),
 
     setGlobalContextProperty: monitor((key, value) => globalContextManager.setContextProperty(key, value)),
 
@@ -219,10 +246,10 @@ export function makeRumPublicApi(startRumImpl: StartRum, recorderApi: RecorderAp
 
     /**
      * Add a custom timing relative to the start of the current view,
-     * stored in @view.custom_timings.<timing_name>
+     * stored in `@view.custom_timings.<timing_name>`
      *
-     * @param name name of the custom timing
-     * @param [time] epoch timestamp of the custom timing (if not set, will use current time)
+     * @param name Name of the custom timing
+     * @param [time] Epoch timestamp of the custom timing (if not set, will use current time)
      *
      * Note: passing a relative time is discouraged since it is actually used as-is but displayed relative to the view start.
      * We currently don't provide a way to retrieve the view start time, so it can be challenging to provide a timing relative to the view start.
@@ -254,17 +281,28 @@ export function makeRumPublicApi(startRumImpl: StartRum, recorderApi: RecorderAp
 
     stopSession: monitor(() => {
       strategy.stopSession()
+      addTelemetryUsage({ feature: 'stop-session' })
     }),
 
     /**
-     * This feature is currently in beta. For more information see the full [feature flag tracking guide](https://docs.datadoghq.com/real_user_monitoring/feature_flag_tracking/).
+     * Add a feature flag evaluation,
+     * stored in `@feature_flags.<feature_flag_key>`
+     *
+     * @param {string} key The key of the feature flag.
+     * @param {any} value The value of the feature flag.
+     *
+     * We recommend enabling the intake request compression when using feature flags `compressIntakeRequests: true`.
+     * For more information see the full [feature flag tracking guide](https://docs.datadoghq.com/real_user_monitoring/feature_flag_tracking/).
      */
     addFeatureFlagEvaluation: monitor((key: string, value: any) => {
       strategy.addFeatureFlagEvaluation(sanitize(key)!, sanitize(value))
     }),
 
     getSessionReplayLink: monitor(() => recorderApi.getSessionReplayLink()),
-    startSessionReplayRecording: monitor(() => recorderApi.start()),
+    startSessionReplayRecording: monitor(() => {
+      recorderApi.start()
+      addTelemetryUsage({ feature: 'start-session-replay-recording' })
+    }),
     stopSessionReplayRecording: monitor(() => recorderApi.stop()),
   })
 

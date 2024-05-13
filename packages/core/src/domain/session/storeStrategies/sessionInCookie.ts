@@ -1,11 +1,11 @@
 import { isChromium } from '../../../tools/utils/browserDetection'
 import type { CookieOptions } from '../../../browser/cookie'
-import { getCurrentSite, areCookiesAuthorized, deleteCookie, getCookie, setCookie } from '../../../browser/cookie'
+import { getCurrentSite, areCookiesAuthorized, getCookie, setCookie } from '../../../browser/cookie'
 import type { InitConfiguration } from '../../configuration'
 import { tryOldCookiesMigration } from '../oldCookiesMigration'
-import { SESSION_EXPIRATION_DELAY } from '../sessionConstants'
+import { SESSION_EXPIRATION_DELAY, SESSION_TIME_OUT_DELAY } from '../sessionConstants'
 import type { SessionState } from '../sessionState'
-import { toSessionString, toSessionState } from '../sessionState'
+import { toSessionString, toSessionState, getExpiredSessionState } from '../sessionState'
 import type { SessionStoreStrategy, SessionStoreStrategyType } from './sessionStoreStrategy'
 import { SESSION_STORE_KEY } from './sessionStoreStrategy'
 
@@ -23,7 +23,7 @@ export function initCookieStrategy(cookieOptions: CookieOptions): SessionStoreSt
     isLockEnabled: isChromium(),
     persistSession: persistSessionCookie(cookieOptions),
     retrieveSession: retrieveSessionCookie,
-    clearSession: deleteSessionCookie(cookieOptions),
+    expireSession: () => expireSessionCookie(cookieOptions),
   }
 
   tryOldCookiesMigration(cookieStore)
@@ -37,15 +37,13 @@ function persistSessionCookie(options: CookieOptions) {
   }
 }
 
+function expireSessionCookie(options: CookieOptions) {
+  setCookie(SESSION_STORE_KEY, toSessionString(getExpiredSessionState()), SESSION_TIME_OUT_DELAY, options)
+}
+
 function retrieveSessionCookie(): SessionState {
   const sessionString = getCookie(SESSION_STORE_KEY)
   return toSessionState(sessionString)
-}
-
-function deleteSessionCookie(options: CookieOptions) {
-  return () => {
-    deleteCookie(SESSION_STORE_KEY, options)
-  }
 }
 
 export function buildCookieOptions(initConfiguration: InitConfiguration) {

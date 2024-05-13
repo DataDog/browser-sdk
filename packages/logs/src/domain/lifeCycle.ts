@@ -2,6 +2,7 @@ import { AbstractLifeCycle } from '@datadog/browser-core'
 import type { Context } from '@datadog/browser-core'
 import type { LogsEvent } from '../logsEvent.types'
 import type { CommonContext, RawLogsEvent } from '../rawLogsEvent.types'
+import type { LogsEventDomainContext } from '../domainContext.types'
 
 export const enum LifeCycleEventType {
   RAW_LOG_COLLECTED,
@@ -20,4 +21,5 @@ export interface RawLogsEventCollectedData<E extends RawLogsEvent = RawLogsEvent
   rawLogsEvent: E
   messageContext?: object
   savedCommonContext?: CommonContext
+  domainContext?: LogsEventDomainContext<E['origin']>
 }

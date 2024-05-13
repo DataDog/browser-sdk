@@ -28,15 +28,23 @@ describe('instrumentMethod', () => {
     expect(instrumentationSpy).toHaveBeenCalledBefore(originalSpy)
   })
 
-  it('sets a method originally undefined', () => {
+  it('does not set a method originally undefined', () => {
     const object: { method?: () => number } = {}
 
+    instrumentMethod(object, 'method', noop)
+
+    expect(object.method).toBeUndefined()
+  })
+
+  it('sets an event handler even if it was originally undefined', () => {
+    const object: { onevent?: () => void } = {}
+
     const instrumentationSpy = jasmine.createSpy()
-    instrumentMethod(object, 'method', instrumentationSpy)
+    instrumentMethod(object, 'onevent', instrumentationSpy)
 
-    expect(object.method).toBeDefined()
-    object.method!()
+    expect(object.onevent).toBeDefined()
 
+    object.onevent!()
     expect(instrumentationSpy).toHaveBeenCalled()
   })
 
@@ -54,6 +62,24 @@ describe('instrumentMethod', () => {
     })
     expect(instrumentationSpy.calls.mostRecent().args[0].parameters[0]).toBe(2)
     expect(instrumentationSpy.calls.mostRecent().args[0].parameters[1]).toBe(3)
+  })
+
+  it('allows replacing a parameter', () => {
+    const object = { method: (a: number) => a }
+    instrumentMethod(object, 'method', ({ parameters }) => {
+      parameters[0] = 2
+    })
+
+    expect(object.method(1)).toBe(2)
+  })
+
+  it('allows adding a parameter', () => {
+    const object = { method: (a?: number) => a }
+    instrumentMethod(object, 'method', ({ parameters }) => {
+      parameters[0] = 2
+    })
+
+    expect(object.method()).toBe(2)
   })
 
   it('calls the "onPostCall" callback with the original method result', () => {
@@ -115,25 +141,32 @@ describe('instrumentMethod', () => {
       })
 
       it('should not throw errors if original method was undefined', () => {
-        const object: { method?: () => number } = {}
+        const object: { onevent?: () => number } = {}
         const instrumentationStub = () => 2
-        const { stop } = instrumentMethod(object, 'method', instrumentationStub)
+        const { stop } = instrumentMethod(object, 'onevent', instrumentationStub)
 
         thirdPartyInstrumentation(object)
 
         stop()
 
-        expect(object.method).not.toThrow()
+        expect(object.onevent).not.toThrow()
       })
     })
   })
 
-  function thirdPartyInstrumentation(object: { method?: () => number }) {
+  function thirdPartyInstrumentation(object: { method?: () => number; onevent?: () => void }) {
     const originalMethod = object.method
     if (typeof originalMethod === 'function') {
       object.method = () => {
         originalMethod()
         return THIRD_PARTY_RESULT
+      }
+    }
+
+    const originalOnEvent = object.onevent
+    object.onevent = () => {
+      if (originalOnEvent) {
+        originalOnEvent()
       }
     }
   }
@@ -262,6 +295,20 @@ describe('instrumentSetter', () => {
       stop()
 
       object.foo = 2
+      clock.tick(0)
+
+      expect(instrumentationSetterSpy).not.toHaveBeenCalled()
+    })
+
+    it('does not call instrumentation pending in the event loop via setTimeout', () => {
+      const object = {} as { foo: number }
+      Object.defineProperty(object, 'foo', { set: noop, configurable: true })
+      const instrumentationSetterSpy = jasmine.createSpy()
+      const { stop } = instrumentSetter(object, 'foo', instrumentationSetterSpy)
+
+      object.foo = 2
+      stop()
+      clock.tick(0)
 
       expect(instrumentationSetterSpy).not.toHaveBeenCalled()
     })
@@ -284,13 +331,14 @@ describe('instrumentSetter', () => {
         const object = {} as { foo: number }
         Object.defineProperty(object, 'foo', { set: noop, configurable: true })
         const instrumentationSetterSpy = jasmine.createSpy()
-        const { stop } = instrumentSetter(object, 'foo', noop)
+        const { stop } = instrumentSetter(object, 'foo', instrumentationSetterSpy)
 
         thirdPartyInstrumentation(object)
 
         stop()
 
         object.foo = 2
+        clock.tick(0)
 
         expect(instrumentationSetterSpy).not.toHaveBeenCalled()
       })

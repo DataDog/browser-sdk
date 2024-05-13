@@ -1,7 +1,4 @@
 const spawn = require('child_process').spawn
-// node-fetch v3.x only support ESM syntax.
-// Todo: Remove node-fetch when node v18 LTS is released with fetch out of the box
-const fetch = (...args) => import('node-fetch').then(({ default: fetch }) => fetch(...args))
 
 /**
  * Helper to run executables asynchronously, in a shell. This function does not prevent Shell
@@ -26,7 +23,7 @@ function runMain(mainFunction) {
     .then(() => mainFunction())
     .catch((error) => {
       printError('\nScript exited with error:')
-      printError(error)
+      printErrorWithCause(error)
       process.exit(1)
     })
 }
@@ -38,18 +35,26 @@ function printError(...params) {
   console.log(redColor, ...params, resetColor)
 }
 
+function printErrorWithCause(error) {
+  printError(error)
+  if (error.cause) {
+    printError('Caused by:')
+    printErrorWithCause(error.cause)
+  }
+}
+
 function printLog(...params) {
   const greenColor = '\x1b[32;1m'
   console.log(greenColor, ...params, resetColor)
 }
 
-async function fetchWrapper(url, options) {
+async function fetchHandlingError(url, options) {
   const response = await fetch(url, options)
   if (!response.ok) {
     throw new Error(`HTTP Error Response: ${response.status} ${response.statusText}`)
   }
 
-  return response.text()
+  return response
 }
 
 function timeout(ms) {
@@ -61,6 +66,6 @@ module.exports = {
   printError,
   printLog,
   runMain,
-  fetch: fetchWrapper,
+  fetchHandlingError,
   timeout,
 }

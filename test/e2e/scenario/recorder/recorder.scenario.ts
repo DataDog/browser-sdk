@@ -19,7 +19,6 @@ import {
   findElementWithTagName,
 } from '@datadog/browser-rum/test'
 import { flushEvents, createTest, bundleSetup, html } from '../../lib/framework'
-import { browserExecute, browserExecuteAsync } from '../../lib/helpers/browser'
 
 const TIMESTAMP_RE = /^\d{13}$/
 const UUID_RE = /^[0-9a-f]{8}-([0-9a-f]{4}-){3}[0-9a-f]{12}$/
@@ -28,7 +27,7 @@ describe('recorder', () => {
   createTest('record mouse move')
     .withRum()
     .run(async ({ intakeRegistry }) => {
-      await browserExecute(() => document.documentElement.outerHTML)
+      await browser.execute(() => document.documentElement.outerHTML)
       const html = await $('html')
       await html.click()
       await flushEvents()
@@ -131,7 +130,7 @@ describe('recorder', () => {
         </ul>
       `)
       .run(async ({ intakeRegistry }) => {
-        await browserExecute(() => {
+        await browser.execute(() => {
           const li = document.createElement('li')
           const ul = document.querySelector('ul') as HTMLUListElement
 
@@ -175,7 +174,7 @@ describe('recorder', () => {
         </ul>
       `)
       .run(async ({ intakeRegistry }) => {
-        await browserExecute(() => {
+        await browser.execute(() => {
           const li = document.createElement('li')
           const ul = document.querySelector('ul') as HTMLUListElement
 
@@ -225,7 +224,7 @@ describe('recorder', () => {
         </ul>
       `)
       .run(async ({ intakeRegistry }) => {
-        await browserExecute(() => {
+        await browser.execute(() => {
           const li = document.createElement('li')
           const ul = document.querySelector('ul') as HTMLUListElement
 
@@ -270,7 +269,7 @@ describe('recorder', () => {
         </div>
       `)
       .run(async ({ intakeRegistry }) => {
-        await browserExecute(() => {
+        await browser.execute(() => {
           document.querySelector('div')!.setAttribute('foo', 'bar')
           document.querySelector('li')!.textContent = 'hop'
           document.querySelector('div')!.appendChild(document.createElement('p'))
@@ -295,7 +294,7 @@ describe('recorder', () => {
         `
       )
       .run(async ({ intakeRegistry }) => {
-        await browserExecute(() => {
+        await browser.execute(() => {
           const div = document.querySelector('div')!
           const p = document.querySelector('p')!
           const span = document.querySelector('span')!
@@ -344,7 +343,7 @@ describe('recorder', () => {
         `
       )
       .run(async ({ intakeRegistry }) => {
-        await browserExecute(() => {
+        await browser.execute(() => {
           const div = document.createElement('div')
           const span = document.querySelector('span')!
           document.body.appendChild(div)
@@ -395,7 +394,7 @@ describe('recorder', () => {
         `
       )
       .run(async ({ intakeRegistry }) => {
-        await browserExecute(() => {
+        await browser.execute(() => {
           const ul = document.querySelector('ul') as HTMLUListElement
           let count = 3
           while (count > 0) {
@@ -596,7 +595,7 @@ describe('recorder', () => {
         </style>
       `)
       .run(async ({ intakeRegistry }) => {
-        await browserExecute(() => {
+        await browser.execute(() => {
           document.styleSheets[0].deleteRule(0)
           document.styleSheets[0].insertRule('.added {}', 0)
         })
@@ -634,7 +633,7 @@ describe('recorder', () => {
         </style>
       `)
       .run(async ({ intakeRegistry }) => {
-        await browserExecute(() => {
+        await browser.execute(() => {
           const supportsRule = document.styleSheets[0].cssRules[0] as CSSGroupingRule
           const mediaRule = document.styleSheets[0].cssRules[1] as CSSGroupingRule
 
@@ -740,7 +739,7 @@ describe('recorder', () => {
       `)
       .run(async ({ intakeRegistry }) => {
         function scroll({ windowY, containerX }: { windowY: number; containerX: number }) {
-          return browserExecuteAsync(
+          return browser.executeAsync(
             (windowY, containerX, done) => {
               let scrollCount = 0
 
@@ -767,7 +766,7 @@ describe('recorder', () => {
         // initial scroll positions
         await scroll({ windowY: 100, containerX: 10 })
 
-        await browserExecute(() => {
+        await browser.execute(() => {
           window.DD_RUM!.startSessionReplayRecording()
         })
 
@@ -778,7 +777,7 @@ describe('recorder', () => {
         await scroll({ windowY: 150, containerX: 20 })
 
         // trigger new full snapshot
-        await browserExecute(() => {
+        await browser.execute(() => {
           window.DD_RUM!.startView()
         })
 
@@ -811,7 +810,7 @@ describe('recorder', () => {
     .withRum()
     .withSetup(bundleSetup)
     .run(async ({ intakeRegistry }) => {
-      await browserExecute(() => {
+      await browser.execute(() => {
         window.DD_RUM!.stopSessionReplayRecording()
         window.DD_RUM!.startSessionReplayRecording()
       })

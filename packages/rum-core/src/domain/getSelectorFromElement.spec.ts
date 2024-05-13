@@ -22,7 +22,7 @@ describe('getSelectorFromElement', () => {
 
   describe('class selector', () => {
     it('should use the class selector when the element as classes', () => {
-      expect(getSelector('<div class="foo"></div>')).toBe('BODY>DIV.foo')
+      expect(getSelector('<div target class="foo"></div>')).toBe('BODY>DIV.foo')
     })
 
     it('should use the class selector when siblings have the same classes but different tags', () => {
@@ -155,6 +155,11 @@ describe('getSelectorFromElement', () => {
             'BODY>BUTTON:nth-of-type(1)'
       )
     })
+  })
+
+  it('should compute a CSS selector on SVG elements (IE does not support classList nor parentElement properties on them)', () => {
+    const element = appendElement('<svg class="foo"></svg>')
+    expect(getSelector(element)).toBe('BODY>svg.foo')
   })
 
   function getSelector(htmlOrElement: string | Element, actionNameAttribute?: string): string {

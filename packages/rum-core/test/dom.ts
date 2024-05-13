@@ -22,7 +22,7 @@ export function appendElement(html: string, container: Element | ShadowRoot = do
   nodes.forEach((node) => container.appendChild(node))
 
   registerCleanupTask(() => {
-    nodes.forEach((node) => node.parentElement?.removeChild(node))
+    nodes.forEach((node) => node.parentNode?.removeChild(node))
   })
 
   return target as HTMLElement

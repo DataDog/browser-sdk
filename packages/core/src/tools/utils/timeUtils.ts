@@ -16,6 +16,10 @@ export function relativeToClocks(relative: RelativeTime) {
   return { relative, timeStamp: getCorrectedTimeStamp(relative) }
 }
 
+export function timeStampToClocks(timeStamp: TimeStamp) {
+  return { relative: getRelativeTime(timeStamp), timeStamp }
+}
+
 function getCorrectedTimeStamp(relativeTime: RelativeTime) {
   const correctedOrigin = (dateNow() - performance.now()) as TimeStamp
   // apply correction only for positive drift

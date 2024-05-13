@@ -1,18 +1,6 @@
-import {
-  mockClock,
-  type Clock,
-  deleteEventBridgeStub,
-  initEventBridgeStub,
-  mockExperimentalFeatures,
-} from '@datadog/browser-core/test'
+import { mockClock, type Clock, initEventBridgeStub } from '@datadog/browser-core/test'
 import type { TimeStamp, TrackingConsentState } from '@datadog/browser-core'
-import {
-  ExperimentalFeature,
-  ONE_SECOND,
-  TrackingConsent,
-  createTrackingConsentState,
-  display,
-} from '@datadog/browser-core'
+import { ONE_SECOND, TrackingConsent, createTrackingConsentState, display } from '@datadog/browser-core'
 import type { CommonContext } from '../rawLogsEvent.types'
 import type { HybridInitConfiguration, LogsConfiguration, LogsInitConfiguration } from '../domain/configuration'
 import { StatusType, type Logger } from '../domain/logger'
@@ -108,10 +96,6 @@ describe('preStartLogs', () => {
     describe('if event bridge present', () => {
       beforeEach(() => {
         initEventBridgeStub()
-      })
-
-      afterEach(() => {
-        deleteEventBridgeStub()
       })
 
       it('init should accept empty client token', () => {
@@ -223,52 +207,30 @@ describe('preStartLogs', () => {
       strategy = createPreStartStrategy(getCommonContextSpy, trackingConsentState, doStartLogsSpy)
     })
 
-    describe('with tracking_consent enabled', () => {
-      beforeEach(() => {
-        mockExperimentalFeatures([ExperimentalFeature.TRACKING_CONSENT])
+    it('does not start logs if tracking consent is not granted at init', () => {
+      strategy.init({
+        ...DEFAULT_INIT_CONFIGURATION,
+        trackingConsent: TrackingConsent.NOT_GRANTED,
       })
-
-      it('does not start logs if tracking consent is not granted at init', () => {
-        strategy.init({
-          ...DEFAULT_INIT_CONFIGURATION,
-          trackingConsent: TrackingConsent.NOT_GRANTED,
-        })
-        expect(doStartLogsSpy).not.toHaveBeenCalled()
-      })
-
-      it('starts logs if tracking consent is granted before init', () => {
-        trackingConsentState.update(TrackingConsent.GRANTED)
-        strategy.init({
-          ...DEFAULT_INIT_CONFIGURATION,
-          trackingConsent: TrackingConsent.NOT_GRANTED,
-        })
-        expect(doStartLogsSpy).toHaveBeenCalledTimes(1)
-      })
-
-      it('does not start logs if tracking consent is not withdrawn before init', () => {
-        trackingConsentState.update(TrackingConsent.NOT_GRANTED)
-        strategy.init({
-          ...DEFAULT_INIT_CONFIGURATION,
-          trackingConsent: TrackingConsent.GRANTED,
-        })
-        expect(doStartLogsSpy).not.toHaveBeenCalled()
-      })
+      expect(doStartLogsSpy).not.toHaveBeenCalled()
     })
 
-    describe('with tracking_consent disabled', () => {
-      it('ignores the trackingConsent init param', () => {
-        strategy.init({
-          ...DEFAULT_INIT_CONFIGURATION,
-          trackingConsent: TrackingConsent.NOT_GRANTED,
-        })
-        expect(doStartLogsSpy).toHaveBeenCalled()
+    it('starts logs if tracking consent is granted before init', () => {
+      trackingConsentState.update(TrackingConsent.GRANTED)
+      strategy.init({
+        ...DEFAULT_INIT_CONFIGURATION,
+        trackingConsent: TrackingConsent.NOT_GRANTED,
       })
+      expect(doStartLogsSpy).toHaveBeenCalledTimes(1)
+    })
 
-      it('ignores setTrackingConsent', () => {
-        trackingConsentState.update(TrackingConsent.NOT_GRANTED)
-        strategy.init(DEFAULT_INIT_CONFIGURATION)
-        expect(doStartLogsSpy).toHaveBeenCalledTimes(1)
+    it('does not start logs if tracking consent is not withdrawn before init', () => {
+      trackingConsentState.update(TrackingConsent.NOT_GRANTED)
+      strategy.init({
+        ...DEFAULT_INIT_CONFIGURATION,
+        trackingConsent: TrackingConsent.GRANTED,
       })
+      expect(doStartLogsSpy).not.toHaveBeenCalled()
     })
 
     it('do not call startLogs when tracking consent state is updated after init', () => {

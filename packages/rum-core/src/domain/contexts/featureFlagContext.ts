@@ -1,11 +1,5 @@
 import type { RelativeTime, ContextValue, Context, CustomerDataTracker } from '@datadog/browser-core'
-import {
-  noop,
-  isExperimentalFeatureEnabled,
-  SESSION_TIME_OUT_DELAY,
-  ValueHistory,
-  ExperimentalFeature,
-} from '@datadog/browser-core'
+import { SESSION_TIME_OUT_DELAY, ValueHistory } from '@datadog/browser-core'
 import type { LifeCycle } from '../lifeCycle'
 import { LifeCycleEventType } from '../lifeCycle'
 
@@ -32,23 +26,15 @@ export function startFeatureFlagContexts(
   lifeCycle: LifeCycle,
   customerDataTracker: CustomerDataTracker
 ): FeatureFlagContexts {
-  if (!isExperimentalFeatureEnabled(ExperimentalFeature.FEATURE_FLAGS)) {
-    return {
-      findFeatureFlagEvaluations: () => undefined,
-      addFeatureFlagEvaluation: noop,
-      stop: noop,
-    }
-  }
-
   const featureFlagContexts = new ValueHistory<FeatureFlagContext>(FEATURE_FLAG_CONTEXT_TIME_OUT_DELAY)
 
-  lifeCycle.subscribe(LifeCycleEventType.VIEW_ENDED, ({ endClocks }) => {
-    featureFlagContexts.closeActive(endClocks.relative)
-  })
-
-  lifeCycle.subscribe(LifeCycleEventType.VIEW_CREATED, ({ startClocks }) => {
+  lifeCycle.subscribe(LifeCycleEventType.BEFORE_VIEW_CREATED, ({ startClocks }) => {
     featureFlagContexts.add({}, startClocks.relative)
     customerDataTracker.resetCustomerData()
+  })
+
+  lifeCycle.subscribe(LifeCycleEventType.AFTER_VIEW_ENDED, ({ endClocks }) => {
+    featureFlagContexts.closeActive(endClocks.relative)
   })
 
   return {

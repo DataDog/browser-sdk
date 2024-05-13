@@ -14,6 +14,7 @@ import {
 } from '@datadog/browser-core'
 import type { LogsConfiguration } from '../configuration'
 import type { LifeCycle } from '../lifeCycle'
+import type { LogsEventDomainContext } from '../../domainContext.types'
 import { LifeCycleEventType } from '../lifeCycle'
 import { StatusType } from '../logger'
 
@@ -45,6 +46,10 @@ export function startNetworkErrorCollection(configuration: LogsConfiguration, li
     }
 
     function onResponseDataAvailable(responseData: unknown) {
+      const domainContext: LogsEventDomainContext<typeof ErrorSource.NETWORK> = {
+        isAborted: request.isAborted,
+      }
+
       lifeCycle.notify(LifeCycleEventType.RAW_LOG_COLLECTED, {
         rawLogsEvent: {
           message: `${format(type)} error ${request.method} ${request.url}`,
@@ -60,6 +65,7 @@ export function startNetworkErrorCollection(configuration: LogsConfiguration, li
           status: StatusType.error,
           origin: ErrorSource.NETWORK,
         },
+        domainContext,
       })
     }
   }

@@ -1,13 +1,16 @@
-import type { Duration, RelativeTime, ServerDuration } from '@datadog/browser-core'
-import { SPEC_ENDPOINTS } from '@datadog/browser-core/test'
+import { ExperimentalFeature, type Duration, type RelativeTime, type ServerDuration } from '@datadog/browser-core'
+import { SPEC_ENDPOINTS, mockExperimentalFeatures } from '@datadog/browser-core/test'
 import { RumPerformanceEntryType, type RumPerformanceResourceTiming } from '../../browser/performanceCollection'
 import type { RumConfiguration } from '../configuration'
 import { validateAndBuildRumConfiguration } from '../configuration'
 import {
+  MAX_ATTRIBUTE_VALUE_CHAR_LENGTH,
   computePerformanceResourceDetails,
   computePerformanceResourceDuration,
   computeResourceKind,
   isAllowedRequestUrl,
+  isLongDataUrl,
+  sanitizeDataUrl,
 } from './resourceUtils'
 
 function generateResourceWith(overrides: Partial<RumPerformanceResourceTiming>) {
@@ -196,31 +199,37 @@ describe('computePerformanceResourceDetails', () => {
   })
   ;[
     {
+      timing: 'connect' as const,
+      reason: 'connectStart > connectEnd',
       connectEnd: 10 as RelativeTime,
       connectStart: 20 as RelativeTime,
-      reason: 'connectStart > connectEnd',
     },
     {
+      timing: 'dns' as const,
+      reason: 'domainLookupStart > domainLookupEnd',
       domainLookupEnd: 10 as RelativeTime,
       domainLookupStart: 20 as RelativeTime,
-      reason: 'domainLookupStart > domainLookupEnd',
     },
     {
+      timing: 'download' as const,
       reason: 'responseStart > responseEnd',
       responseEnd: 10 as RelativeTime,
       responseStart: 20 as RelativeTime,
     },
     {
+      timing: 'first_byte' as const,
       reason: 'requestStart > responseStart',
       requestStart: 20 as RelativeTime,
       responseStart: 10 as RelativeTime,
     },
     {
+      timing: 'redirect' as const,
       reason: 'redirectStart > redirectEnd',
-      redirectEnd: 10 as RelativeTime,
+      redirectEnd: 15 as RelativeTime,
       redirectStart: 20 as RelativeTime,
     },
     {
+      timing: 'ssl' as const,
       connectEnd: 10 as RelativeTime,
       reason: 'secureConnectionStart > connectEnd',
       secureConnectionStart: 20 as RelativeTime,
@@ -231,10 +240,17 @@ describe('computePerformanceResourceDetails', () => {
       fetchStart: 10 as RelativeTime,
       reason: 'negative timing start',
     },
-  ].forEach(({ reason, ...overrides }) => {
-    it(`should not compute entry when ${reason}`, () => {
+  ].forEach(({ reason, timing, ...overrides }) => {
+    it(`[without tolerant-resource-timings] should not compute entry when ${reason}`, () => {
       expect(computePerformanceResourceDetails(generateResourceWith(overrides))).toBeUndefined()
     })
+
+    if (timing) {
+      it(`[with tolerant-resource-timings] should not include the '${timing}' timing when ${reason}`, () => {
+        mockExperimentalFeatures([ExperimentalFeature.TOLERANT_RESOURCE_TIMINGS])
+        expect(computePerformanceResourceDetails(generateResourceWith(overrides))![timing]).toBeUndefined()
+      })
+    }
   })
 
   it('should allow really fast document resource', () => {
@@ -257,24 +273,6 @@ describe('computePerformanceResourceDetails', () => {
     ).toEqual({
       download: { start: 30e6 as ServerDuration, duration: 10e6 as ServerDuration },
       first_byte: { start: 0 as ServerDuration, duration: 30e6 as ServerDuration },
-    })
-  })
-
-  it('should use startTime and fetchStart as fallback for redirectStart and redirectEnd', () => {
-    expect(
-      computePerformanceResourceDetails(
-        generateResourceWith({
-          redirectEnd: 0 as RelativeTime,
-          redirectStart: 0 as RelativeTime,
-        })
-      )
-    ).toEqual({
-      connect: { start: 5e6 as ServerDuration, duration: 2e6 as ServerDuration },
-      dns: { start: 3e6 as ServerDuration, duration: 1e6 as ServerDuration },
-      download: { start: 40e6 as ServerDuration, duration: 10e6 as ServerDuration },
-      first_byte: { start: 10e6 as ServerDuration, duration: 30e6 as ServerDuration },
-      redirect: { start: 0 as ServerDuration, duration: 2e6 as ServerDuration },
-      ssl: { start: 6e6 as ServerDuration, duration: 1e6 as ServerDuration },
     })
   })
 })
@@ -311,5 +309,47 @@ describe('shouldTrackResource', () => {
 
   it('should allow requests on non intake domains', () => {
     expect(isAllowedRequestUrl(configuration, 'https://my-domain.com/hello?a=b')).toBe(true)
+  })
+})
+
+describe('isLongDataUrl and sanitizeDataUrl', () => {
+  const longString = new Array(MAX_ATTRIBUTE_VALUE_CHAR_LENGTH).join('a')
+  it('returns truncated url when detects data url of json', () => {
+    const longDataUrl = `data:text/json; charset=utf-8,${longString}`
+    expect(isLongDataUrl(longDataUrl)).toEqual(true)
+    expect(sanitizeDataUrl(longDataUrl)).toEqual('data:text/json; charset=utf-8,[...]')
+  })
+
+  it('returns truncated url when detects data url of html', () => {
+    const longDataUrl = `data:text/html,${longString}`
+    expect(isLongDataUrl(longDataUrl)).toEqual(true)
+    expect(sanitizeDataUrl(longDataUrl)).toEqual('data:text/html,[...]')
+  })
+
+  it('returns truncated url when detects data url of image', () => {
+    const longDataUrl = `data:image/svg+xml;base64,${longString}`
+    expect(isLongDataUrl(longDataUrl)).toEqual(true)
+    expect(sanitizeDataUrl(longDataUrl)).toEqual('data:image/svg+xml;base64,[...]')
+  })
+  it('returns truncated url when detects plain data url', () => {
+    const plainDataUrl = `data:,${longString}`
+    expect(isLongDataUrl(plainDataUrl)).toEqual(true)
+    expect(sanitizeDataUrl(plainDataUrl)).toEqual('data:,[...]')
+  })
+
+  it('returns truncated url when detects data url with exotic mime type', () => {
+    const exoticTypeDataUrl = `data:application/vnd.openxmlformats;fileName=officedocument.presentationxml;base64,${longString}`
+    expect(isLongDataUrl(exoticTypeDataUrl)).toEqual(true)
+    expect(sanitizeDataUrl(exoticTypeDataUrl)).toEqual(
+      'data:application/vnd.openxmlformats;fileName=officedocument.presentationxml;base64,[...]'
+    )
+  })
+
+  it('returns the original url when the data url is within limit', () => {
+    expect(isLongDataUrl(`data:,${longString.substring(5)}`)).toEqual(false)
+  })
+
+  it('returns false when no data url found', () => {
+    expect(isLongDataUrl('https://static.datad0g.com/static/c/70086/chunk.min.js')).toEqual(false)
   })
 })

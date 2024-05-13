@@ -10,11 +10,15 @@ import type { AutoAction } from './action/actionCollection'
 import type { ViewEvent, ViewCreatedEvent, ViewEndedEvent } from './view/trackViews'
 
 export const enum LifeCycleEventType {
+  // Contexts (like viewContexts) should be opened using prefixed BEFORE_XXX events and closed using prefixed AFTER_XXX events
+  // It ensures the context is available during the non prefixed event callbacks
   PERFORMANCE_ENTRIES_COLLECTED,
   AUTO_ACTION_COMPLETED,
+  BEFORE_VIEW_CREATED,
   VIEW_CREATED,
   VIEW_UPDATED,
   VIEW_ENDED,
+  AFTER_VIEW_ENDED,
   REQUEST_STARTED,
   REQUEST_COMPLETED,
 
@@ -29,7 +33,6 @@ export const enum LifeCycleEventType {
   // the same time, for example when using Logs and RUM on the same page, or opening multiple tabs
   // on the same domain.
   SESSION_EXPIRED,
-
   SESSION_RENEWED,
   PAGE_EXITED,
   RAW_RUM_EVENT_COLLECTED,
@@ -53,9 +56,11 @@ export const enum LifeCycleEventType {
 declare const LifeCycleEventTypeAsConst: {
   PERFORMANCE_ENTRIES_COLLECTED: LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED
   AUTO_ACTION_COMPLETED: LifeCycleEventType.AUTO_ACTION_COMPLETED
+  BEFORE_VIEW_CREATED: LifeCycleEventType.BEFORE_VIEW_CREATED
   VIEW_CREATED: LifeCycleEventType.VIEW_CREATED
   VIEW_UPDATED: LifeCycleEventType.VIEW_UPDATED
   VIEW_ENDED: LifeCycleEventType.VIEW_ENDED
+  AFTER_VIEW_ENDED: LifeCycleEventType.AFTER_VIEW_ENDED
   REQUEST_STARTED: LifeCycleEventType.REQUEST_STARTED
   REQUEST_COMPLETED: LifeCycleEventType.REQUEST_COMPLETED
   SESSION_EXPIRED: LifeCycleEventType.SESSION_EXPIRED
@@ -71,9 +76,11 @@ declare const LifeCycleEventTypeAsConst: {
 export interface LifeCycleEventMap {
   [LifeCycleEventTypeAsConst.PERFORMANCE_ENTRIES_COLLECTED]: RumPerformanceEntry[]
   [LifeCycleEventTypeAsConst.AUTO_ACTION_COMPLETED]: AutoAction
+  [LifeCycleEventTypeAsConst.BEFORE_VIEW_CREATED]: ViewCreatedEvent
   [LifeCycleEventTypeAsConst.VIEW_CREATED]: ViewCreatedEvent
   [LifeCycleEventTypeAsConst.VIEW_UPDATED]: ViewEvent
   [LifeCycleEventTypeAsConst.VIEW_ENDED]: ViewEndedEvent
+  [LifeCycleEventTypeAsConst.AFTER_VIEW_ENDED]: ViewEndedEvent
   [LifeCycleEventTypeAsConst.REQUEST_STARTED]: RequestStartEvent
   [LifeCycleEventTypeAsConst.REQUEST_COMPLETED]: RequestCompleteEvent
   [LifeCycleEventTypeAsConst.SESSION_EXPIRED]: void

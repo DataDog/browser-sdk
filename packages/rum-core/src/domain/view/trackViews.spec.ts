@@ -100,11 +100,14 @@ describe('track views automatically', () => {
 describe('view lifecycle', () => {
   let setupBuilder: TestSetupBuilder
   let viewTest: ViewTest
+  let notifySpy: jasmine.Spy
 
   beforeEach(() => {
     setupBuilder = setup()
       .withFakeLocation('/foo')
       .beforeBuild((buildContext) => {
+        notifySpy = spyOn(buildContext.lifeCycle, 'notify').and.callThrough()
+
         viewTest = setupViewTest(buildContext, {
           name: 'initial view name',
           service: 'initial service',
@@ -182,7 +185,6 @@ describe('view lifecycle', () => {
     it('should use the current view name, service and version for the new view', () => {
       const { lifeCycle, changeLocation } = setupBuilder.build()
       const { getViewCreateCount, getViewCreate, startView } = viewTest
-
       lifeCycle.notify(LifeCycleEventType.SESSION_EXPIRED)
       lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED)
 
@@ -316,6 +318,23 @@ describe('view lifecycle', () => {
 
       expect(getViewCreateCount()).toEqual(1)
     })
+  })
+
+  it('should notify BEFORE_VIEW_CREATED before VIEW_CREATED', () => {
+    setupBuilder.build()
+
+    expect(notifySpy.calls.argsFor(0)[0]).toEqual(LifeCycleEventType.BEFORE_VIEW_CREATED)
+    expect(notifySpy.calls.argsFor(1)[0]).toEqual(LifeCycleEventType.VIEW_CREATED)
+  })
+
+  it('should notify AFTER_VIEW_ENDED after VIEW_ENDED', () => {
+    setupBuilder.build()
+    const callsCount = notifySpy.calls.count()
+
+    viewTest.stop()
+
+    expect(notifySpy.calls.argsFor(callsCount)[0]).toEqual(LifeCycleEventType.VIEW_ENDED)
+    expect(notifySpy.calls.argsFor(callsCount + 1)[0]).toEqual(LifeCycleEventType.AFTER_VIEW_ENDED)
   })
 })
 

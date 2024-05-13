@@ -1,5 +1,13 @@
 import type { DeflateEncoder } from '@datadog/browser-core'
-import { DeflateEncoderStreamId, canUseEventBridge, noop, runOnReadyState } from '@datadog/browser-core'
+import {
+  DeflateEncoderStreamId,
+  canUseEventBridge,
+  noop,
+  runOnReadyState,
+  PageExitReason,
+  BridgeCapability,
+  bridgeSupports,
+} from '@datadog/browser-core'
 import type {
   LifeCycle,
   ViewContexts,
@@ -53,7 +61,7 @@ export function makeRecorderApi(
   startRecordingImpl: StartRecording,
   createDeflateWorkerImpl?: CreateDeflateWorker
 ): RecorderApi {
-  if (canUseEventBridge() || !isBrowserSupported()) {
+  if ((canUseEventBridge() && !bridgeSupports(BridgeCapability.RECORDS)) || !isBrowserSupported()) {
     return {
       start: noop,
       stop: noop,
@@ -94,6 +102,13 @@ export function makeRecorderApi(
         if (state.status === RecorderStatus.Starting || state.status === RecorderStatus.Started) {
           stopStrategy()
           state = { status: RecorderStatus.IntentToStart }
+        }
+      })
+
+      // Stop the recorder on page unload to avoid sending records after the page is ended.
+      lifeCycle.subscribe(LifeCycleEventType.PAGE_EXITED, (pageExitEvent) => {
+        if (pageExitEvent.reason === PageExitReason.UNLOADING || pageExitEvent.reason === PageExitReason.PAGEHIDE) {
+          stopStrategy()
         }
       })
 

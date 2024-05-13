@@ -12,9 +12,18 @@ function getOrg2ApiKey() {
   return getSecretKey('ci.browser-sdk.datadog_ci_api_key')
 }
 
+function getOrg2AppKey() {
+  return getSecretKey('ci.browser-sdk.datadog_ci_application_key')
+}
+
 function getTelemetryOrgApiKey(site) {
   const normalizedSite = site.replaceAll('.', '-')
   return getSecretKey(`ci.browser-sdk.source-maps.${normalizedSite}.ci_api_key`)
+}
+
+function getTelemetryOrgApplicationKey(site) {
+  const normalizedSite = site.replaceAll('.', '-')
+  return getSecretKey(`ci.browser-sdk.telemetry.${normalizedSite}.ci_app_key`)
 }
 
 function getNpmToken() {
@@ -49,5 +58,7 @@ module.exports = {
   getGithubAccessToken,
   getNpmToken,
   getOrg2ApiKey,
+  getOrg2AppKey,
   getTelemetryOrgApiKey,
+  getTelemetryOrgApplicationKey,
 }

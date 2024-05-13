@@ -1,8 +1,9 @@
-import type { TelemetryEvent, TelemetryConfigurationEvent } from './telemetryEvent.types'
+import type { TelemetryEvent, TelemetryConfigurationEvent, TelemetryUsageEvent } from './telemetryEvent.types'
 
 export const TelemetryType = {
   log: 'log',
   configuration: 'configuration',
+  usage: 'usage',
 } as const
 
 export const enum StatusType {
@@ -17,3 +18,4 @@ export interface RuntimeEnvInfo {
 
 export type RawTelemetryEvent = TelemetryEvent['telemetry']
 export type RawTelemetryConfiguration = TelemetryConfigurationEvent['telemetry']['configuration']
+export type RawTelemetryUsage = TelemetryUsageEvent['telemetry']['usage']

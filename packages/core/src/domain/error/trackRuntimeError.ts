@@ -1,8 +1,8 @@
 import { instrumentMethod } from '../../tools/instrumentMethod'
 import type { Observable } from '../../tools/observable'
 import { clocksNow } from '../../tools/utils/timeUtils'
-import type { StackTrace } from './computeStackTrace'
-import { computeStackTrace, computeStackTraceFromOnErrorMessage } from './computeStackTrace'
+import type { StackTrace } from '../../tools/stackTrace/computeStackTrace'
+import { computeStackTrace, computeStackTraceFromOnErrorMessage } from '../../tools/stackTrace/computeStackTrace'
 import { computeRawError } from './error'
 import type { RawError } from './error.types'
 import { ErrorHandling, ErrorSource, NonErrorPrefix } from './error.types'
@@ -11,7 +11,7 @@ export type UnhandledErrorCallback = (stackTrace: StackTrace, originalError?: an
 
 export function trackRuntimeError(errorObservable: Observable<RawError>) {
   const handleRuntimeError = (stackTrace: StackTrace, originalError?: any) => {
-    const test = computeRawError({
+    const rawError = computeRawError({
       stackTrace,
       originalError,
       startClocks: clocksNow(),
@@ -19,7 +19,7 @@ export function trackRuntimeError(errorObservable: Observable<RawError>) {
       source: ErrorSource.SOURCE,
       handling: ErrorHandling.UNHANDLED,
     })
-    errorObservable.notify(test)
+    errorObservable.notify(rawError)
   }
   const { stop: stopInstrumentingOnError } = instrumentOnError(handleRuntimeError)
   const { stop: stopInstrumentingOnUnhandledRejection } = instrumentUnhandledRejection(handleRuntimeError)

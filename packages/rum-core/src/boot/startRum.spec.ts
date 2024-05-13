@@ -12,12 +12,7 @@ import {
   createTrackingConsentState,
   TrackingConsent,
 } from '@datadog/browser-core'
-import {
-  createNewEvent,
-  interceptRequests,
-  initEventBridgeStub,
-  deleteEventBridgeStub,
-} from '@datadog/browser-core/test'
+import { createNewEvent, interceptRequests, initEventBridgeStub } from '@datadog/browser-core/test'
 import type { RumSessionManagerMock, TestSetupBuilder } from '../../test'
 import { createPerformanceEntry, createRumSessionManagerMock, noopRecorderApi, setup } from '../../test'
 import { RumPerformanceEntryType } from '../browser/performanceCollection'
@@ -332,7 +327,6 @@ describe('view events', () => {
   })
 
   afterEach(() => {
-    deleteEventBridgeStub()
     stopSessionManager()
     interceptor.restore()
   })
@@ -371,7 +365,10 @@ describe('view events', () => {
     clock.tick(VIEW_DURATION)
     window.dispatchEvent(createNewEvent('beforeunload'))
 
-    const lastBridgeMessage = JSON.parse(sendSpy.calls.mostRecent().args[0]) as { eventType: 'rum'; event: RumEvent }
+    const lastBridgeMessage = JSON.parse(sendSpy.calls.mostRecent().args[0]) as {
+      eventType: 'rum'
+      event: RumEvent
+    }
     expect(lastBridgeMessage.event.type).toBe('view')
     expect(lastBridgeMessage.event.view.time_spent).toBe(toServerDuration(VIEW_DURATION))
   })

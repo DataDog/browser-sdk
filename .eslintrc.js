@@ -186,9 +186,16 @@ module.exports = {
   },
   overrides: [
     {
-      files: ['**/*.types.ts', '**/types.ts'],
+      files: ['**/*Event.types.ts'],
       rules: {
-        camelcase: 'off',
+        '@typescript-eslint/naming-convention': [
+          'error',
+          {
+            leadingUnderscore: 'allow',
+            selector: 'property',
+            format: ['snake_case'],
+          },
+        ],
       },
     },
     {

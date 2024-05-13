@@ -24,7 +24,7 @@ import type {
 import { RumEventType } from '../rawRumEvent.types'
 import type { RumEvent } from '../rumEvent.types'
 import { getSyntheticsContext } from './contexts/syntheticsContext'
-import { getCiTestContext } from './contexts/ciTestContext'
+import type { CiVisibilityContext } from './contexts/ciVisibilityContext'
 import type { LifeCycle } from './lifeCycle'
 import { LifeCycleEventType } from './lifeCycle'
 import type { ViewContexts } from './contexts/viewContexts'
@@ -68,6 +68,7 @@ export function startRumAssembly(
   urlContexts: UrlContexts,
   actionContexts: ActionContexts,
   displayContext: DisplayContext,
+  ciVisibilityContext: CiVisibilityContext,
   getCommonContext: () => CommonContext,
   reportError: (error: RawError) => void
 ) {
@@ -114,11 +115,14 @@ export function startRumAssembly(
       configuration.eventRateLimiterThreshold,
       reportError
     ),
+    [RumEventType.VITAL]: createEventRateLimiter(
+      RumEventType.VITAL,
+      configuration.eventRateLimiterThreshold,
+      reportError
+    ),
   }
 
   const syntheticsContext = getSyntheticsContext()
-  const ciTestContext = getCiTestContext()
-
   lifeCycle.subscribe(
     LifeCycleEventType.RAW_RUM_EVENT_COLLECTED,
     ({ startTime, rawRumEvent, domainContext, savedCommonContext, customerContext }) => {
@@ -148,7 +152,11 @@ export function startRumAssembly(
           source: 'browser',
           session: {
             id: session.id,
-            type: syntheticsContext ? SessionType.SYNTHETICS : ciTestContext ? SessionType.CI_TEST : SessionType.USER,
+            type: syntheticsContext
+              ? SessionType.SYNTHETICS
+              : ciVisibilityContext.get()
+                ? SessionType.CI_TEST
+                : SessionType.USER,
           },
           view: {
             id: viewContext.id,
@@ -158,7 +166,7 @@ export function startRumAssembly(
           },
           action: needToAssembleWithAction(rawRumEvent) && actionId ? { id: actionId } : undefined,
           synthetics: syntheticsContext,
-          ci_test: ciTestContext,
+          ci_test: ciVisibilityContext.get(),
           display: displayContext.get(),
           connectivity: getConnectivity(),
         }

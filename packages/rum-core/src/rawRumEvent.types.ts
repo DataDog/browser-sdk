@@ -9,6 +9,7 @@ import type {
   RawErrorCause,
   DefaultPrivacyLevel,
   Connectivity,
+  Csp,
 } from '@datadog/browser-core'
 import type { PageState } from './domain/contexts/pageStateHistory'
 
@@ -32,6 +33,10 @@ export interface RawRumResourceEvent {
     method?: string
     status_code?: number
     size?: number
+    encoded_body_size?: number
+    decoded_body_size?: number
+    transfer_size?: number
+    render_blocking_status?: string
     redirect?: PerformanceResourceDetailsElement
     dns?: PerformanceResourceDetailsElement
     connect?: PerformanceResourceDetailsElement
@@ -67,6 +72,7 @@ export interface RawRumErrorEvent {
     handling?: ErrorHandling
     causes?: RawErrorCause[]
     source_type: 'browser'
+    csp?: Csp
   }
   view?: {
     in_foreground: boolean
@@ -221,9 +227,15 @@ export interface RawRumVitalEvent {
   type: RumEventType.VITAL
   vital: {
     id: string
+    name: string
     type: VitalType
     custom: {
       [key: string]: number
+    }
+  }
+  _dd?: {
+    vital: {
+      computed_value: true
     }
   }
 }

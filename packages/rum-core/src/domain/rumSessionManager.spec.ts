@@ -10,14 +10,20 @@ import {
   DOM_EVENT,
   createTrackingConsentState,
   TrackingConsent,
+  BridgeCapability,
 } from '@datadog/browser-core'
 import type { Clock } from '@datadog/browser-core/test'
-import { createNewEvent, mockClock } from '@datadog/browser-core/test'
+import { createNewEvent, initEventBridgeStub, mockClock } from '@datadog/browser-core/test'
 import type { RumConfiguration } from './configuration'
 import { validateAndBuildRumConfiguration } from './configuration'
 
 import { LifeCycle, LifeCycleEventType } from './lifeCycle'
-import { RUM_SESSION_KEY, RumTrackingType, startRumSessionManager } from './rumSessionManager'
+import {
+  RUM_SESSION_KEY,
+  RumTrackingType,
+  startRumSessionManager,
+  startRumSessionManagerStub,
+} from './rumSessionManager'
 
 describe('rum session manager', () => {
   const DURATION = 123456
@@ -76,6 +82,7 @@ describe('rum session manager', () => {
       expect(renewSessionSpy).not.toHaveBeenCalled()
       expect(getCookie(SESSION_STORE_KEY)).toContain(`${RUM_SESSION_KEY}=${RumTrackingType.NOT_TRACKED}`)
       expect(getCookie(SESSION_STORE_KEY)).not.toContain('id=')
+      expect(getCookie(SESSION_STORE_KEY)).not.toContain('isExpired=1')
     })
 
     it('when tracked should keep existing session type and id', () => {
@@ -106,8 +113,8 @@ describe('rum session manager', () => {
 
       startRumSessionManagerWithDefaults({ configuration: { sessionSampleRate: 100, sessionReplaySampleRate: 100 } })
 
-      setCookie(SESSION_STORE_KEY, '', DURATION)
-      expect(getCookie(SESSION_STORE_KEY)).toBeUndefined()
+      setCookie(SESSION_STORE_KEY, 'isExpired=1', DURATION)
+      expect(getCookie(SESSION_STORE_KEY)).toEqual('isExpired=1')
       expect(expireSessionSpy).not.toHaveBeenCalled()
       expect(renewSessionSpy).not.toHaveBeenCalled()
       clock.tick(STORAGE_POLL_DELAY)
@@ -138,7 +145,7 @@ describe('rum session manager', () => {
 
     it('should return undefined if the session has expired', () => {
       const rumSessionManager = startRumSessionManagerWithDefaults()
-      setCookie(SESSION_STORE_KEY, '', DURATION)
+      setCookie(SESSION_STORE_KEY, 'isExpired=1', DURATION)
       clock.tick(STORAGE_POLL_DELAY)
       expect(rumSessionManager.findTrackedSession()).toBe(undefined)
     })
@@ -212,4 +219,16 @@ describe('rum session manager', () => {
       createTrackingConsentState(TrackingConsent.GRANTED)
     )
   }
+})
+
+describe('rum session manager stub', () => {
+  it('should return a tracked session with replay allowed when the event bridge support records', () => {
+    initEventBridgeStub({ capabilities: [BridgeCapability.RECORDS] })
+    expect(startRumSessionManagerStub().findTrackedSession()!.sessionReplayAllowed).toEqual(true)
+  })
+
+  it('should return a tracked session without replay allowed when the event bridge support records', () => {
+    initEventBridgeStub({ capabilities: [] })
+    expect(startRumSessionManagerStub().findTrackedSession()!.sessionReplayAllowed).toEqual(false)
+  })
 })

@@ -6,7 +6,7 @@ import type { FacetRegistry } from '../../../hooks/useEvents'
 import type { EventListColumn } from './columnUtils'
 import { getColumnTitle, includesColumn, DEFAULT_COLUMNS } from './columnUtils'
 import { RowButton } from './rowButton'
-import classes from './addColumnPopover.module.css'
+import * as classes from './addColumnPopover.module.css'
 
 export function AddColumnPopover({
   columns,

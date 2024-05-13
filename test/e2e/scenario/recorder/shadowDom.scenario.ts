@@ -1,11 +1,17 @@
-import type { DocumentFragmentNode, MouseInteractionData, SerializedNodeWithId } from '@datadog/browser-rum/src/types'
-import { MouseInteractionType, NodeType } from '@datadog/browser-rum/src/types'
+import type {
+  DocumentFragmentNode,
+  MouseInteractionData,
+  ScrollData,
+  SerializedNodeWithId,
+} from '@datadog/browser-rum/src/types'
+import { IncrementalSource, MouseInteractionType, NodeType } from '@datadog/browser-rum/src/types'
 
 import {
   createMutationPayloadValidatorFromSegment,
   findElementWithIdAttribute,
   findElementWithTagName,
   findFullSnapshot,
+  findIncrementalSnapshot,
   findMouseInteractionRecords,
   findNode,
   findTextContent,
@@ -13,7 +19,6 @@ import {
 } from '@datadog/browser-rum/test'
 
 import { flushEvents, createTest, bundleSetup, html } from '../../lib/framework'
-import { browserExecute } from '../../lib/helpers/browser'
 
 /** Will generate the following HTML
  * ```html
@@ -77,6 +82,49 @@ const divShadowDom = `<script>
   }
 }
       window.customElements.define("my-div", CustomDiv);
+ </script>
+ `
+
+/** Will generate the following HTML
+ * ```html
+ * <my-div id="titi">
+ *  #shadow-root
+ *    <div scrollable-div style="height:100px; overflow: scroll;">
+ *      <div style="height:500px;"></div>
+ *    </div>
+ *    <button>scroll to 250</button>
+ *</my-div>
+ *```
+ when called like `<my-div />`
+ */
+const scrollableDivShadowDom = `<script>
+ class CustomScrollableDiv extends HTMLElement {
+  constructor() {
+    super();
+    this.attachShadow({ mode: "open" });
+  }
+  connectedCallback() {
+    const div = document.createElement("div");
+    div.id = 'scrollable-div';
+    div.style.height = '100px';
+    div.style.overflow = 'scroll';
+
+    const innerDiv = document.createElement("div");
+    innerDiv.style.height = '500px';
+
+    const button = document.createElement("button");
+    button.textContent = 'scroll to 250';
+
+    button.onclick = () => {
+      div.scrollTo({ top: 250 });
+    }
+
+    div.appendChild(innerDiv);
+    this.shadowRoot.appendChild(button);
+    this.shadowRoot.appendChild(div);
+  }
+}
+      window.customElements.define("my-scrollable-div", CustomScrollableDiv);
  </script>
  `
 
@@ -219,7 +267,7 @@ describe('recorder with shadow DOM', () => {
       <my-div id="host" />
     `)
     .run(async ({ intakeRegistry }) => {
-      await browserExecute(() => {
+      await browser.execute(() => {
         const host = document.body.querySelector('#host') as HTMLElement
         const div = host.shadowRoot!.querySelector('div') as HTMLElement
         div.innerText = 'titi'
@@ -243,6 +291,31 @@ describe('recorder with shadow DOM', () => {
           },
         ],
       })
+    })
+
+  createTest('can record scroll from inside the shadow root')
+    .withRum({})
+    .withSetup(bundleSetup)
+    .withBody(html`
+      ${scrollableDivShadowDom}
+      <my-scrollable-div id="host" />
+    `)
+    .run(async ({ intakeRegistry }) => {
+      const button = await getNodeInsideShadowDom('my-scrollable-div', 'button')
+
+      // Triggering scrollTo from the test itself is not allowed
+      // Thus, a callback to scroll the div was added to the button 'click' event
+      await button.click()
+
+      await flushEvents()
+      expect(intakeRegistry.replaySegments.length).toBe(1)
+      const scrollRecord = findIncrementalSnapshot(intakeRegistry.replaySegments[0], IncrementalSource.Scroll)
+      const fullSnapshot = findFullSnapshot(intakeRegistry.replaySegments[0])!
+      const divNode = findElementWithIdAttribute(fullSnapshot.data.node, 'scrollable-div')!
+
+      expect(scrollRecord).toBeTruthy()
+      expect((scrollRecord?.data as ScrollData).id).toBe(divNode.id)
+      expect((scrollRecord?.data as ScrollData).y).toBe(250)
     })
 })
 
@@ -271,5 +344,5 @@ async function getNodeInsideShadowDom(hostTag: string, selector: string) {
 }
 
 function isAdoptedStyleSheetsSupported(): Promise<boolean> {
-  return browserExecute(() => document.adoptedStyleSheets !== undefined) as Promise<boolean>
+  return browser.execute(() => document.adoptedStyleSheets !== undefined)
 }

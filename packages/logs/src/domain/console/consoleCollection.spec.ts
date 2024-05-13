@@ -1,3 +1,4 @@
+import type { ErrorWithCause } from '@datadog/browser-core'
 import { ErrorSource, noop, objectEntries } from '@datadog/browser-core'
 import type { RawConsoleLogsEvent } from '../../rawLogsEvent.types'
 import { validateAndBuildLogsConfiguration } from '../configuration'
@@ -66,6 +67,7 @@ describe('console collection', () => {
     expect(rawLogsEvents[0].rawLogsEvent.error).toEqual({
       stack: undefined,
       fingerprint: undefined,
+      causes: undefined,
     })
   })
 
@@ -86,6 +88,47 @@ describe('console collection', () => {
     expect(rawLogsEvents[0].rawLogsEvent.error).toEqual({
       stack: jasmine.any(String),
       fingerprint: 'my-fingerprint',
+      causes: undefined,
+    })
+  })
+
+  it('should retrieve causes from console error', () => {
+    ;({ stop: stopConsoleCollection } = startConsoleCollection(
+      validateAndBuildLogsConfiguration({ ...initConfiguration, forwardErrorsToLogs: true })!,
+      lifeCycle
+    ))
+    const error = new Error('High level error') as ErrorWithCause
+    error.stack = 'Error: High level error'
+
+    const nestedError = new Error('Mid level error') as ErrorWithCause
+    nestedError.stack = 'Error: Mid level error'
+
+    const deepNestedError = new TypeError('Low level error') as ErrorWithCause
+    deepNestedError.stack = 'TypeError: Low level error'
+
+    nestedError.cause = deepNestedError
+    error.cause = nestedError
+
+    // eslint-disable-next-line no-console
+    console.error(error)
+
+    expect(rawLogsEvents[0].rawLogsEvent.error).toEqual({
+      stack: jasmine.any(String),
+      fingerprint: undefined,
+      causes: [
+        {
+          source: ErrorSource.CONSOLE,
+          type: 'Error',
+          stack: jasmine.any(String),
+          message: 'Mid level error',
+        },
+        {
+          source: ErrorSource.CONSOLE,
+          type: 'TypeError',
+          stack: jasmine.any(String),
+          message: 'Low level error',
+        },
+      ],
     })
   })
 })

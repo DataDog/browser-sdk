@@ -1,4 +1,6 @@
 import type { RumEvent } from '../../../../rum-core/src'
+import { EXHAUSTIVE_INIT_CONFIGURATION, SERIALIZED_EXHAUSTIVE_INIT_CONFIGURATION } from '../../../test'
+import type { ExtractTelemetryConfiguration, MapInitConfigurationKey } from '../../../test'
 import { display } from '../../tools/display'
 import {
   ExperimentalFeature,
@@ -7,7 +9,7 @@ import {
 } from '../../tools/experimentalFeatures'
 import { TrackingConsent } from '../trackingConsent'
 import type { InitConfiguration } from './configuration'
-import { validateAndBuildConfiguration } from './configuration'
+import { DOC_LINK, serializeConfiguration, validateAndBuildConfiguration } from './configuration'
 
 describe('validateAndBuildConfiguration', () => {
   const clientToken = 'some_client_token'
@@ -205,6 +207,24 @@ describe('validateAndBuildConfiguration', () => {
     it('rejects invalid values', () => {
       expect(validateAndBuildConfiguration({ clientToken: 'yes', trackingConsent: 'foo' as any })).toBeUndefined()
       expect(displaySpy).toHaveBeenCalledOnceWith('Tracking Consent should be either "granted" or "not-granted"')
+    })
+  })
+
+  describe('site parameter validation', () => {
+    it('should validate the site parameter', () => {
+      validateAndBuildConfiguration({ clientToken, site: 'foo.com' })
+      expect(displaySpy).toHaveBeenCalledOnceWith(`Site should be a valid Datadog site. Learn more here: ${DOC_LINK}.`)
+    })
+  })
+
+  describe('serializeConfiguration', () => {
+    it('should serialize the configuration', () => {
+      // By specifying the type here, we can ensure that serializeConfiguration is returning an
+      // object containing all expected properties.
+      const serializedConfiguration: ExtractTelemetryConfiguration<MapInitConfigurationKey<keyof InitConfiguration>> =
+        serializeConfiguration(EXHAUSTIVE_INIT_CONFIGURATION)
+
+      expect(serializedConfiguration).toEqual(SERIALIZED_EXHAUSTIVE_INIT_CONFIGURATION)
     })
   })
 })

@@ -12,14 +12,13 @@
 // eslint-disable-next-line no-restricted-syntax
 export enum ExperimentalFeature {
   PAGEHIDE = 'pagehide',
-  FEATURE_FLAGS = 'feature_flags',
   RESOURCE_PAGE_STATES = 'resource_page_states',
   COLLECT_FLUSH_REASON = 'collect_flush_reason',
   ZERO_LCP_TELEMETRY = 'zero_lcp_telemetry',
   DISABLE_REPLAY_INLINE_CSS = 'disable_replay_inline_css',
   WRITABLE_RESOURCE_GRAPHQL = 'writable_resource_graphql',
-  TRACKING_CONSENT = 'tracking_consent',
   CUSTOM_VITALS = 'custom_vitals',
+  TOLERANT_RESOURCE_TIMINGS = 'tolerant_resource_timings',
 }
 
 const enabledExperimentalFeatures: Set<ExperimentalFeature> = new Set()

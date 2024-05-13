@@ -1,3 +1,4 @@
+import type { ClocksState, Duration } from '@datadog/browser-core'
 import {
   combine,
   generateUUID,
@@ -10,15 +11,14 @@ import {
   isExperimentalFeatureEnabled,
   ExperimentalFeature,
 } from '@datadog/browser-core'
-import type { ClocksState, Duration } from '@datadog/browser-core'
 import type { RumConfiguration } from '../configuration'
 import type { RumPerformanceResourceTiming } from '../../browser/performanceCollection'
 import { RumPerformanceEntryType } from '../../browser/performanceCollection'
 import type { RumXhrResourceEventDomainContext, RumFetchResourceEventDomainContext } from '../../domainContext.types'
 import type { RawRumResourceEvent } from '../../rawRumEvent.types'
 import { RumEventType } from '../../rawRumEvent.types'
-import type { LifeCycle, RawRumEventCollectedData } from '../lifeCycle'
 import { LifeCycleEventType } from '../lifeCycle'
+import type { RawRumEventCollectedData, LifeCycle } from '../lifeCycle'
 import type { RequestCompleteEvent } from '../requestCollection'
 import type { RumSessionManager } from '../rumSessionManager'
 import type { PageStateHistory } from '../contexts/pageStateHistory'
@@ -30,6 +30,8 @@ import {
   computeResourceKind,
   computeSize,
   isRequestKind,
+  isLongDataUrl,
+  sanitizeDataUrl,
 } from './resourceUtils'
 
 export function startResourceCollection(
@@ -91,7 +93,7 @@ function processRequest(
         duration,
         method: request.method,
         status_code: request.status,
-        url: request.url,
+        url: isLongDataUrl(request.url) ? sanitizeDataUrl(request.url) : request.url,
       },
       type: RumEventType.RESOURCE as const,
       _dd: {
@@ -112,6 +114,7 @@ function processRequest(
       requestInput: request.input,
       requestInit: request.init,
       error: request.error,
+      isAborted: request.isAborted,
     } as RumFetchResourceEventDomainContext | RumXhrResourceEventDomainContext,
   }
 }
@@ -170,12 +173,14 @@ function shouldIndexResource(
 }
 
 function computePerformanceEntryMetrics(timing: RumPerformanceResourceTiming) {
+  const { renderBlockingStatus } = timing
   return {
     resource: assign(
       {
         duration: computePerformanceResourceDuration(timing),
-        size: computeSize(timing),
+        render_blocking_status: renderBlockingStatus,
       },
+      computeSize(timing),
       computePerformanceResourceDetails(timing)
     ),
   }
@@ -229,15 +234,13 @@ function computePageStateInfo(pageStateHistory: PageStateHistory, startClocks: C
 }
 
 function computeRequestDuration(pageStateHistory: PageStateHistory, startClocks: ClocksState, duration: Duration) {
-  const requestCrossedFrozenState = pageStateHistory
-    .findAll(startClocks.relative, duration)
-    ?.some((pageState) => pageState.state === PageState.FROZEN)
-
-  return !requestCrossedFrozenState ? toServerDuration(duration) : undefined
+  return !pageStateHistory.wasInPageStateDuringPeriod(PageState.FROZEN, startClocks.relative, duration)
+    ? toServerDuration(duration)
+    : undefined
 }
 
 /**
- * The status is 0 for cross origin resources without CORS headers, so the status is meaningless and we shouldn't report it
+ * The status is 0 for cross-origin resources without CORS headers, so the status is meaningless, and we shouldn't report it
  * https://developer.mozilla.org/en-US/docs/Web/API/PerformanceResourceTiming/responseStatus#cross-origin_response_status_codes
  */
 function discardZeroStatus(statusCode: number | undefined): number | undefined {

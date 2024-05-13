@@ -1,4 +1,3 @@
-import { ExperimentalFeature, isExperimentalFeatureEnabled } from '../tools/experimentalFeatures'
 import { Observable } from '../tools/observable'
 
 export const TrackingConsent = {
@@ -28,10 +27,7 @@ export function createTrackingConsentState(currentConsent?: TrackingConsent): Tr
       observable.notify()
     },
     isGranted() {
-      return (
-        !isExperimentalFeatureEnabled(ExperimentalFeature.TRACKING_CONSENT) ||
-        currentConsent === TrackingConsent.GRANTED
-      )
+      return currentConsent === TrackingConsent.GRANTED
     },
     observable,
   }

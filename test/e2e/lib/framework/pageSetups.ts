@@ -206,6 +206,12 @@ function setupEventBridge(servers: Servers) {
   return html`
     <script type="text/javascript">
       window.DatadogEventBridge = {
+        getCapabilities() {
+          return '["records"]'
+        },
+        getPrivacyLevel() {
+          return 'mask'
+        },
         getAllowedWebViewHosts() {
           return '["${baseHostname}"]'
         },

@@ -1,4 +1,7 @@
-import { DefaultPrivacyLevel, display } from '@datadog/browser-core'
+import type { InitConfiguration } from '@datadog/browser-core'
+import { DefaultPrivacyLevel, display, TraceContextInjection } from '@datadog/browser-core'
+import { EXHAUSTIVE_INIT_CONFIGURATION, SERIALIZED_EXHAUSTIVE_INIT_CONFIGURATION } from '../../../core/test'
+import type { ExtractTelemetryConfiguration, CamelToSnakeCase, MapInitConfigurationKey } from '../../../core/test'
 import type { RumInitConfiguration } from './configuration'
 import { DEFAULT_PROPAGATOR_TYPES, serializeRumConfiguration, validateAndBuildRumConfiguration } from './configuration'
 
@@ -75,6 +78,24 @@ describe('validateAndBuildRumConfiguration', () => {
       displayErrorSpy.calls.reset()
       expect(validateAndBuildRumConfiguration({ ...DEFAULT_INIT_CONFIGURATION, traceSampleRate: 200 })).toBeUndefined()
       expect(displayErrorSpy).toHaveBeenCalledOnceWith('Trace Sample Rate should be a number between 0 and 100')
+    })
+  })
+
+  describe('traceContextInjection', () => {
+    it('defaults to all if no options provided', () => {
+      expect(validateAndBuildRumConfiguration(DEFAULT_INIT_CONFIGURATION)!.traceContextInjection).toBe('all')
+    })
+    it('is set to provided value', () => {
+      expect(
+        validateAndBuildRumConfiguration({ ...DEFAULT_INIT_CONFIGURATION, traceContextInjection: 'sampled' })!
+          .traceContextInjection
+      ).toBe('sampled')
+    })
+    it('ignores incorrect value', () => {
+      expect(
+        validateAndBuildRumConfiguration({ ...DEFAULT_INIT_CONFIGURATION, traceContextInjection: 'foo' as any })!
+          .traceContextInjection
+      ).toBe(TraceContextInjection.ALL)
     })
   })
 
@@ -391,6 +412,66 @@ describe('validateAndBuildRumConfiguration', () => {
         validateAndBuildRumConfiguration({ ...DEFAULT_INIT_CONFIGURATION, workerUrl: 'https://example.org/worker.js' })!
           .workerUrl
       ).toBe('https://example.org/worker.js')
+    })
+  })
+})
+
+describe('serializeRumConfiguration', () => {
+  it('should serialize the configuration', () => {
+    const exhaustiveRumInitConfiguration: Required<RumInitConfiguration> = {
+      ...EXHAUSTIVE_INIT_CONFIGURATION,
+      applicationId: 'applicationId',
+      beforeSend: () => true,
+      excludedActivityUrls: ['toto.com'],
+      workerUrl: './worker.js',
+      compressIntakeRequests: true,
+      allowedTracingUrls: ['foo'],
+      traceSampleRate: 50,
+      traceContextInjection: TraceContextInjection.ALL,
+      defaultPrivacyLevel: 'allow',
+      subdomain: 'foo',
+      sessionReplaySampleRate: 60,
+      startSessionReplayRecordingManually: true,
+      trackUserInteractions: true,
+      actionNameAttribute: 'test-id',
+      trackViewsManually: true,
+      trackResources: true,
+      trackLongTasks: true,
+    }
+
+    type MapRumInitConfigurationKey<Key extends string> = Key extends keyof InitConfiguration
+      ? MapInitConfigurationKey<Key>
+      : Key extends 'workerUrl' | 'allowedTracingUrls' | 'excludedActivityUrls'
+        ? `use_${CamelToSnakeCase<Key>}`
+        : Key extends 'trackLongTasks'
+          ? 'track_long_task' // oops
+          : Key extends 'applicationId' | 'subdomain'
+            ? never
+            : CamelToSnakeCase<Key>
+
+    // By specifying the type here, we can ensure that serializeConfiguration is returning an
+    // object containing all expected properties.
+    const serializedConfiguration: ExtractTelemetryConfiguration<
+      MapRumInitConfigurationKey<keyof RumInitConfiguration> | 'selected_tracing_propagators'
+    > = serializeRumConfiguration(exhaustiveRumInitConfiguration)
+
+    expect(serializedConfiguration).toEqual({
+      ...SERIALIZED_EXHAUSTIVE_INIT_CONFIGURATION,
+      session_replay_sample_rate: 60,
+      trace_sample_rate: 50,
+      trace_context_injection: TraceContextInjection.ALL,
+      use_allowed_tracing_urls: true,
+      selected_tracing_propagators: ['tracecontext', 'datadog'],
+      use_excluded_activity_urls: true,
+      track_user_interactions: true,
+      track_views_manually: true,
+      start_session_replay_recording_manually: true,
+      action_name_attribute: 'test-id',
+      default_privacy_level: 'allow',
+      track_resources: true,
+      track_long_task: true,
+      use_worker_url: true,
+      compress_intake_requests: true,
     })
   })
 })

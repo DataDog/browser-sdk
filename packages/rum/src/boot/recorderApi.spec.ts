@@ -1,8 +1,8 @@
 import type { DeflateEncoder, DeflateWorker, DeflateWorkerAction } from '@datadog/browser-core'
-import { display, isIE } from '@datadog/browser-core'
+import { BridgeCapability, PageExitReason, display, isIE } from '@datadog/browser-core'
 import type { RecorderApi, ViewContexts, LifeCycle, RumConfiguration } from '@datadog/browser-rum-core'
 import { LifeCycleEventType } from '@datadog/browser-rum-core'
-import { deleteEventBridgeStub, initEventBridgeStub, createNewEvent } from '@datadog/browser-core/test'
+import { initEventBridgeStub, createNewEvent } from '@datadog/browser-core/test'
 import type { RumSessionManagerMock, TestSetupBuilder } from '../../../rum-core/test'
 import { createRumSessionManagerMock, setup } from '../../../rum-core/test'
 import type { CreateDeflateWorker } from '../domain/deflate'
@@ -183,18 +183,21 @@ describe('makeRecorderApi', () => {
     })
 
     describe('if event bridge present', () => {
-      beforeEach(() => {
-        initEventBridgeStub()
-      })
+      it('should start recording when the bridge supports records', () => {
+        initEventBridgeStub({ capabilities: [BridgeCapability.RECORDS] })
 
-      afterEach(() => {
-        deleteEventBridgeStub()
-      })
-
-      it('does not start recording', () => {
         setupBuilder.build()
-        recorderApi.start()
         rumInit()
+        recorderApi.start()
+        expect(startRecordingSpy).toHaveBeenCalled()
+      })
+
+      it('should not start recording when the bridge does not support records', () => {
+        initEventBridgeStub({ capabilities: [] })
+
+        setupBuilder.build()
+        rumInit()
+        recorderApi.start()
         expect(startRecordingSpy).not.toHaveBeenCalled()
       })
     })
@@ -240,7 +243,7 @@ describe('makeRecorderApi', () => {
     })
   })
 
-  describe('when session renewal change the tracking type', () => {
+  describe('recorder lifecycle', () => {
     let sessionManager: RumSessionManagerMock
     let lifeCycle: LifeCycle
     beforeEach(() => {
@@ -249,179 +252,191 @@ describe('makeRecorderApi', () => {
       ;({ lifeCycle } = setupBuilder.build())
     })
 
-    describe('from WITHOUT_REPLAY to WITH_REPLAY', () => {
-      beforeEach(() => {
-        sessionManager.setTrackedWithoutSessionReplay()
-      })
+    // prevent getting records after the before_unload event has been triggered.
+    it('stop recording when the page unloads', () => {
+      sessionManager.setTrackedWithSessionReplay()
+      rumInit()
+      expect(startRecordingSpy).toHaveBeenCalledTimes(1)
 
-      it('starts recording if startSessionReplayRecording was called', () => {
-        rumInit()
-        sessionManager.setTrackedWithSessionReplay()
-        lifeCycle.notify(LifeCycleEventType.SESSION_EXPIRED)
-        expect(startRecordingSpy).not.toHaveBeenCalled()
-        lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED)
-        expect(startRecordingSpy).toHaveBeenCalled()
-        expect(stopRecordingSpy).not.toHaveBeenCalled()
-      })
-
-      it('does not starts recording if stopSessionReplayRecording was called', () => {
-        rumInit()
-        recorderApi.stop()
-        sessionManager.setTrackedWithSessionReplay()
-        lifeCycle.notify(LifeCycleEventType.SESSION_EXPIRED)
-        lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED)
-        expect(startRecordingSpy).not.toHaveBeenCalled()
-      })
+      lifeCycle.notify(LifeCycleEventType.PAGE_EXITED, { reason: PageExitReason.UNLOADING })
+      expect(stopRecordingSpy).toHaveBeenCalled()
     })
 
-    describe('from WITHOUT_REPLAY to untracked', () => {
-      beforeEach(() => {
-        sessionManager.setTrackedWithoutSessionReplay()
+    describe('when session renewal change the tracking type', () => {
+      describe('from WITHOUT_REPLAY to WITH_REPLAY', () => {
+        beforeEach(() => {
+          sessionManager.setTrackedWithoutSessionReplay()
+        })
+
+        it('starts recording if startSessionReplayRecording was called', () => {
+          rumInit()
+          sessionManager.setTrackedWithSessionReplay()
+          lifeCycle.notify(LifeCycleEventType.SESSION_EXPIRED)
+          expect(startRecordingSpy).not.toHaveBeenCalled()
+          lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED)
+          expect(startRecordingSpy).toHaveBeenCalled()
+          expect(stopRecordingSpy).not.toHaveBeenCalled()
+        })
+
+        it('does not starts recording if stopSessionReplayRecording was called', () => {
+          rumInit()
+          recorderApi.stop()
+          sessionManager.setTrackedWithSessionReplay()
+          lifeCycle.notify(LifeCycleEventType.SESSION_EXPIRED)
+          lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED)
+          expect(startRecordingSpy).not.toHaveBeenCalled()
+        })
       })
 
-      it('keeps not recording if startSessionReplayRecording was called', () => {
-        rumInit()
-        sessionManager.setNotTracked()
-        lifeCycle.notify(LifeCycleEventType.SESSION_EXPIRED)
-        lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED)
-        expect(startRecordingSpy).not.toHaveBeenCalled()
-        expect(stopRecordingSpy).not.toHaveBeenCalled()
-      })
-    })
+      describe('from WITHOUT_REPLAY to untracked', () => {
+        beforeEach(() => {
+          sessionManager.setTrackedWithoutSessionReplay()
+        })
 
-    describe('from WITHOUT_REPLAY to WITHOUT_REPLAY', () => {
-      beforeEach(() => {
-        sessionManager.setTrackedWithoutSessionReplay()
-      })
-
-      it('keeps not recording if startSessionReplayRecording was called', () => {
-        rumInit()
-        lifeCycle.notify(LifeCycleEventType.SESSION_EXPIRED)
-        lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED)
-        expect(startRecordingSpy).not.toHaveBeenCalled()
-        expect(stopRecordingSpy).not.toHaveBeenCalled()
-      })
-    })
-
-    describe('from WITH_REPLAY to WITHOUT_REPLAY', () => {
-      beforeEach(() => {
-        sessionManager.setTrackedWithSessionReplay()
+        it('keeps not recording if startSessionReplayRecording was called', () => {
+          rumInit()
+          sessionManager.setNotTracked()
+          lifeCycle.notify(LifeCycleEventType.SESSION_EXPIRED)
+          lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED)
+          expect(startRecordingSpy).not.toHaveBeenCalled()
+          expect(stopRecordingSpy).not.toHaveBeenCalled()
+        })
       })
 
-      it('stops recording if startSessionReplayRecording was called', () => {
-        rumInit()
-        expect(startRecordingSpy).toHaveBeenCalledTimes(1)
-        sessionManager.setTrackedWithoutSessionReplay()
-        lifeCycle.notify(LifeCycleEventType.SESSION_EXPIRED)
-        expect(stopRecordingSpy).toHaveBeenCalled()
-        lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED)
-        expect(startRecordingSpy).toHaveBeenCalledTimes(1)
+      describe('from WITHOUT_REPLAY to WITHOUT_REPLAY', () => {
+        beforeEach(() => {
+          sessionManager.setTrackedWithoutSessionReplay()
+        })
+
+        it('keeps not recording if startSessionReplayRecording was called', () => {
+          rumInit()
+          lifeCycle.notify(LifeCycleEventType.SESSION_EXPIRED)
+          lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED)
+          expect(startRecordingSpy).not.toHaveBeenCalled()
+          expect(stopRecordingSpy).not.toHaveBeenCalled()
+        })
       })
 
-      it('prevents session recording to start if the session is renewed before the DOM is loaded', () => {
-        const { triggerOnDomLoaded } = mockDocumentReadyState()
-        rumInit()
-        sessionManager.setTrackedWithoutSessionReplay()
-        lifeCycle.notify(LifeCycleEventType.SESSION_EXPIRED)
-        lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED)
-        triggerOnDomLoaded()
-        expect(startRecordingSpy).not.toHaveBeenCalled()
-      })
-    })
+      describe('from WITH_REPLAY to WITHOUT_REPLAY', () => {
+        beforeEach(() => {
+          sessionManager.setTrackedWithSessionReplay()
+        })
 
-    describe('from WITH_REPLAY to untracked', () => {
-      beforeEach(() => {
-        sessionManager.setTrackedWithSessionReplay()
-      })
+        it('stops recording if startSessionReplayRecording was called', () => {
+          rumInit()
+          expect(startRecordingSpy).toHaveBeenCalledTimes(1)
+          sessionManager.setTrackedWithoutSessionReplay()
+          lifeCycle.notify(LifeCycleEventType.SESSION_EXPIRED)
+          expect(stopRecordingSpy).toHaveBeenCalled()
+          lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED)
+          expect(startRecordingSpy).toHaveBeenCalledTimes(1)
+        })
 
-      it('stops recording if startSessionReplayRecording was called', () => {
-        rumInit()
-        expect(startRecordingSpy).toHaveBeenCalledTimes(1)
-        sessionManager.setNotTracked()
-        lifeCycle.notify(LifeCycleEventType.SESSION_EXPIRED)
-        expect(stopRecordingSpy).toHaveBeenCalled()
-        lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED)
-        expect(startRecordingSpy).toHaveBeenCalledTimes(1)
-      })
-    })
-
-    describe('from WITH_REPLAY to WITH_REPLAY', () => {
-      beforeEach(() => {
-        sessionManager.setTrackedWithSessionReplay()
+        it('prevents session recording to start if the session is renewed before the DOM is loaded', () => {
+          const { triggerOnDomLoaded } = mockDocumentReadyState()
+          rumInit()
+          sessionManager.setTrackedWithoutSessionReplay()
+          lifeCycle.notify(LifeCycleEventType.SESSION_EXPIRED)
+          lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED)
+          triggerOnDomLoaded()
+          expect(startRecordingSpy).not.toHaveBeenCalled()
+        })
       })
 
-      it('keeps recording if startSessionReplayRecording was called', () => {
-        rumInit()
-        expect(startRecordingSpy).toHaveBeenCalledTimes(1)
-        lifeCycle.notify(LifeCycleEventType.SESSION_EXPIRED)
-        expect(stopRecordingSpy).toHaveBeenCalled()
-        lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED)
-        expect(startRecordingSpy).toHaveBeenCalledTimes(2)
+      describe('from WITH_REPLAY to untracked', () => {
+        beforeEach(() => {
+          sessionManager.setTrackedWithSessionReplay()
+        })
+
+        it('stops recording if startSessionReplayRecording was called', () => {
+          rumInit()
+          expect(startRecordingSpy).toHaveBeenCalledTimes(1)
+          sessionManager.setNotTracked()
+          lifeCycle.notify(LifeCycleEventType.SESSION_EXPIRED)
+          expect(stopRecordingSpy).toHaveBeenCalled()
+          lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED)
+          expect(startRecordingSpy).toHaveBeenCalledTimes(1)
+        })
       })
 
-      it('does not starts recording if stopSessionReplayRecording was called', () => {
-        rumInit()
-        expect(startRecordingSpy).toHaveBeenCalledTimes(1)
-        recorderApi.stop()
-        expect(stopRecordingSpy).toHaveBeenCalledTimes(1)
-        lifeCycle.notify(LifeCycleEventType.SESSION_EXPIRED)
-        lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED)
-        expect(startRecordingSpy).toHaveBeenCalledTimes(1)
-        expect(stopRecordingSpy).toHaveBeenCalledTimes(1)
-      })
-    })
+      describe('from WITH_REPLAY to WITH_REPLAY', () => {
+        beforeEach(() => {
+          sessionManager.setTrackedWithSessionReplay()
+        })
 
-    describe('from untracked to REPLAY', () => {
-      beforeEach(() => {
-        sessionManager.setNotTracked()
-      })
+        it('keeps recording if startSessionReplayRecording was called', () => {
+          rumInit()
+          expect(startRecordingSpy).toHaveBeenCalledTimes(1)
+          lifeCycle.notify(LifeCycleEventType.SESSION_EXPIRED)
+          expect(stopRecordingSpy).toHaveBeenCalled()
+          lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED)
+          expect(startRecordingSpy).toHaveBeenCalledTimes(2)
+        })
 
-      it('starts recording if startSessionReplayRecording was called', () => {
-        rumInit()
-        sessionManager.setTrackedWithSessionReplay()
-        lifeCycle.notify(LifeCycleEventType.SESSION_EXPIRED)
-        lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED)
-        expect(startRecordingSpy).toHaveBeenCalled()
-        expect(stopRecordingSpy).not.toHaveBeenCalled()
-      })
-
-      it('does not starts recording if stopSessionReplayRecording was called', () => {
-        rumInit()
-        recorderApi.stop()
-        sessionManager.setTrackedWithSessionReplay()
-        lifeCycle.notify(LifeCycleEventType.SESSION_EXPIRED)
-        lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED)
-        expect(startRecordingSpy).not.toHaveBeenCalled()
-        expect(stopRecordingSpy).not.toHaveBeenCalled()
-      })
-    })
-
-    describe('from untracked to WITHOUT_REPLAY', () => {
-      beforeEach(() => {
-        sessionManager.setNotTracked()
+        it('does not starts recording if stopSessionReplayRecording was called', () => {
+          rumInit()
+          expect(startRecordingSpy).toHaveBeenCalledTimes(1)
+          recorderApi.stop()
+          expect(stopRecordingSpy).toHaveBeenCalledTimes(1)
+          lifeCycle.notify(LifeCycleEventType.SESSION_EXPIRED)
+          lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED)
+          expect(startRecordingSpy).toHaveBeenCalledTimes(1)
+          expect(stopRecordingSpy).toHaveBeenCalledTimes(1)
+        })
       })
 
-      it('keeps not recording if startSessionReplayRecording was called', () => {
-        rumInit()
-        sessionManager.setTrackedWithoutSessionReplay()
-        lifeCycle.notify(LifeCycleEventType.SESSION_EXPIRED)
-        lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED)
-        expect(startRecordingSpy).not.toHaveBeenCalled()
-        expect(stopRecordingSpy).not.toHaveBeenCalled()
-      })
-    })
+      describe('from untracked to REPLAY', () => {
+        beforeEach(() => {
+          sessionManager.setNotTracked()
+        })
 
-    describe('from untracked to untracked', () => {
-      beforeEach(() => {
-        sessionManager.setNotTracked()
+        it('starts recording if startSessionReplayRecording was called', () => {
+          rumInit()
+          sessionManager.setTrackedWithSessionReplay()
+          lifeCycle.notify(LifeCycleEventType.SESSION_EXPIRED)
+          lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED)
+          expect(startRecordingSpy).toHaveBeenCalled()
+          expect(stopRecordingSpy).not.toHaveBeenCalled()
+        })
+
+        it('does not starts recording if stopSessionReplayRecording was called', () => {
+          rumInit()
+          recorderApi.stop()
+          sessionManager.setTrackedWithSessionReplay()
+          lifeCycle.notify(LifeCycleEventType.SESSION_EXPIRED)
+          lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED)
+          expect(startRecordingSpy).not.toHaveBeenCalled()
+          expect(stopRecordingSpy).not.toHaveBeenCalled()
+        })
       })
 
-      it('keeps not recording if startSessionReplayRecording was called', () => {
-        rumInit()
-        lifeCycle.notify(LifeCycleEventType.SESSION_EXPIRED)
-        lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED)
-        expect(startRecordingSpy).not.toHaveBeenCalled()
-        expect(stopRecordingSpy).not.toHaveBeenCalled()
+      describe('from untracked to WITHOUT_REPLAY', () => {
+        beforeEach(() => {
+          sessionManager.setNotTracked()
+        })
+
+        it('keeps not recording if startSessionReplayRecording was called', () => {
+          rumInit()
+          sessionManager.setTrackedWithoutSessionReplay()
+          lifeCycle.notify(LifeCycleEventType.SESSION_EXPIRED)
+          lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED)
+          expect(startRecordingSpy).not.toHaveBeenCalled()
+          expect(stopRecordingSpy).not.toHaveBeenCalled()
+        })
+      })
+
+      describe('from untracked to untracked', () => {
+        beforeEach(() => {
+          sessionManager.setNotTracked()
+        })
+
+        it('keeps not recording if startSessionReplayRecording was called', () => {
+          rumInit()
+          lifeCycle.notify(LifeCycleEventType.SESSION_EXPIRED)
+          lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED)
+          expect(startRecordingSpy).not.toHaveBeenCalled()
+          expect(stopRecordingSpy).not.toHaveBeenCalled()
+        })
       })
     })
   })

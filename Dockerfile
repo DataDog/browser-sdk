@@ -1,4 +1,4 @@
-FROM node:18.19.0-buster-slim
+FROM node:20.12.2-buster-slim
 
 ARG CHROME_PACKAGE_VERSION
 
@@ -82,3 +82,6 @@ RUN shasum -a 256 -c codecov.SHA256SUM
 RUN chmod +x codecov
 RUN mv codecov /usr/local/bin
 RUN rm codecov.*
+
+# Install authanywhere for pull request commenter token
+RUN if [ $(uname -m) = x86_64 ]; then AAA="amd64"; else AAA="arm64"; fi; curl -OL "binaries.ddbuild.io/dd-source/authanywhere/LATEST/authanywhere-linux-${AAA}" && mv "authanywhere-linux-${AAA}" /bin/authanywhere && chmod +x /bin/authanywhere 

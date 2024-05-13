@@ -1,25 +1,26 @@
-import { sendToExtension, timeStampNow } from '@datadog/browser-core'
+import { sendToExtension } from '@datadog/browser-core'
 import type { LifeCycle, RumConfiguration, ViewContexts } from '@datadog/browser-rum-core'
-import type {
-  BrowserMutationData,
-  BrowserMutationPayload,
-  BrowserRecord,
-  InputData,
-  MediaInteractionData,
-  MousemoveData,
-  ScrollData,
-  StyleSheetRuleData,
-  ViewportResizeData,
-} from '../../types'
-import { RecordType, IncrementalSource } from '../../types'
+import type { BrowserRecord } from '../../types'
 import * as replayStats from '../replayStats'
-import { assembleIncrementalSnapshot } from './assembly'
-import { initObservers } from './observers'
+import type { Tracker } from './trackers'
+import {
+  trackFocus,
+  trackFrustration,
+  trackInput,
+  trackMediaInteraction,
+  trackMouseInteraction,
+  trackMove,
+  trackMutation,
+  trackScroll,
+  trackStyleSheet,
+  trackViewEnd,
+  trackViewportResize,
+} from './trackers'
 import { createElementsScrollPositions } from './elementsScrollPositions'
 import type { ShadowRootsController } from './shadowRootsController'
 import { initShadowRootsController } from './shadowRootsController'
-import type { InputCallback } from './observers'
 import { startFullSnapshots } from './startFullSnapshots'
+import { initRecordIds } from './recordIds'
 
 export interface RecordOptions {
   emit?: (record: BrowserRecord) => void
@@ -44,21 +45,13 @@ export function record(options: RecordOptions): RecordAPI {
   const emitAndComputeStats = (record: BrowserRecord) => {
     emit(record)
     sendToExtension('record', { record })
-    const view = options.viewContexts.findView()
-    if (view) {
-      replayStats.addRecord(view.id)
-    }
+    const view = options.viewContexts.findView()!
+    replayStats.addRecord(view.id)
   }
 
   const elementsScrollPositions = createElementsScrollPositions()
 
-  const mutationCb = (mutation: BrowserMutationPayload) => {
-    emitAndComputeStats(assembleIncrementalSnapshot<BrowserMutationData>(IncrementalSource.Mutation, mutation))
-  }
-  const inputCb: InputCallback = (s) =>
-    emitAndComputeStats(assembleIncrementalSnapshot<InputData>(IncrementalSource.Input, s))
-
-  const shadowRootsController = initShadowRootsController(configuration, { mutationCb, inputCb })
+  const shadowRootsController = initShadowRootsController(configuration, emitAndComputeStats, elementsScrollPositions)
 
   const { stop: stopFullSnapshots } = startFullSnapshots(
     elementsScrollPositions,
@@ -71,50 +64,33 @@ export function record(options: RecordOptions): RecordAPI {
 
   function flushMutations() {
     shadowRootsController.flush()
-    flushMutationsFromObservers()
+    mutationTracker.flush()
   }
 
-  const { stop: stopObservers, flush: flushMutationsFromObservers } = initObservers(configuration, {
-    lifeCycle: options.lifeCycle,
-    configuration,
-    elementsScrollPositions,
-    inputCb,
-    mediaInteractionCb: (p) =>
-      emitAndComputeStats(assembleIncrementalSnapshot<MediaInteractionData>(IncrementalSource.MediaInteraction, p)),
-    mouseInteractionCb: (mouseInteractionRecord) => emitAndComputeStats(mouseInteractionRecord),
-    mousemoveCb: (positions, source) =>
-      emitAndComputeStats(assembleIncrementalSnapshot<MousemoveData>(source, { positions })),
-    mutationCb,
-    scrollCb: (p) => emitAndComputeStats(assembleIncrementalSnapshot<ScrollData>(IncrementalSource.Scroll, p)),
-    styleSheetCb: (r) =>
-      emitAndComputeStats(assembleIncrementalSnapshot<StyleSheetRuleData>(IncrementalSource.StyleSheetRule, r)),
-    viewportResizeCb: (d) =>
-      emitAndComputeStats(assembleIncrementalSnapshot<ViewportResizeData>(IncrementalSource.ViewportResize, d)),
-    frustrationCb: (frustrationRecord) => emitAndComputeStats(frustrationRecord),
-    focusCb: (data) =>
-      emitAndComputeStats({
-        data,
-        type: RecordType.Focus,
-        timestamp: timeStampNow(),
-      }),
-    visualViewportResizeCb: (data) => {
-      emitAndComputeStats({
-        data,
-        type: RecordType.VisualViewport,
-        timestamp: timeStampNow(),
-      })
-    },
-    viewEndCb: (viewEndRecord) => {
+  const recordIds = initRecordIds()
+  const mutationTracker = trackMutation(emitAndComputeStats, configuration, shadowRootsController, document)
+  const trackers: Tracker[] = [
+    mutationTracker,
+    trackMove(configuration, emitAndComputeStats),
+    trackMouseInteraction(configuration, emitAndComputeStats, recordIds),
+    trackScroll(configuration, emitAndComputeStats, elementsScrollPositions, document),
+    trackViewportResize(configuration, emitAndComputeStats),
+    trackInput(configuration, emitAndComputeStats),
+    trackMediaInteraction(configuration, emitAndComputeStats),
+    trackStyleSheet(emitAndComputeStats),
+    trackFocus(configuration, emitAndComputeStats),
+    trackViewportResize(configuration, emitAndComputeStats),
+    trackFrustration(lifeCycle, emitAndComputeStats, recordIds),
+    trackViewEnd(lifeCycle, (viewEndRecord) => {
       flushMutations()
       emitAndComputeStats(viewEndRecord)
-    },
-    shadowRootsController,
-  })
+    }),
+  ]
 
   return {
     stop: () => {
       shadowRootsController.stop()
-      stopObservers()
+      trackers.forEach((tracker) => tracker.stop())
       stopFullSnapshots()
     },
     flushMutations,

@@ -1,5 +1,18 @@
+import type { InitConfiguration } from '@datadog/browser-core'
 import { display } from '@datadog/browser-core'
-import { validateAndBuildForwardOption, validateAndBuildLogsConfiguration } from './configuration'
+import {
+  EXHAUSTIVE_INIT_CONFIGURATION,
+  type CamelToSnakeCase,
+  type ExtractTelemetryConfiguration,
+  type MapInitConfigurationKey,
+  SERIALIZED_EXHAUSTIVE_INIT_CONFIGURATION,
+} from '../../../core/test'
+import type { LogsInitConfiguration } from './configuration'
+import {
+  serializeLogsConfiguration,
+  validateAndBuildForwardOption,
+  validateAndBuildLogsConfiguration,
+} from './configuration'
 
 const DEFAULT_INIT_CONFIGURATION = { clientToken: 'xxx' }
 
@@ -61,6 +74,24 @@ describe('validateAndBuildLogsConfiguration', () => {
       ).toEqual(['error'])
     })
   })
+
+  describe('PCI compliant intake option', () => {
+    let warnSpy: jasmine.Spy<typeof display.warn>
+
+    beforeEach(() => {
+      warnSpy = spyOn(display, 'warn')
+    })
+    it('should display warning with wrong PCI intake configuration', () => {
+      validateAndBuildLogsConfiguration({
+        ...DEFAULT_INIT_CONFIGURATION,
+        site: 'some-site',
+        usePciIntake: true,
+      })
+      expect(warnSpy).toHaveBeenCalledOnceWith(
+        'PCI compliance for Logs is only available for Datadog organizations in the US1 site. Default intake will be used.'
+      )
+    })
+  })
 })
 
 describe('validateAndBuildForwardOption', () => {
@@ -95,5 +126,36 @@ describe('validateAndBuildForwardOption', () => {
 
   it('contains all options when "all" is provided', () => {
     expect(validateAndBuildForwardOption('all', allowedValues, label)).toEqual(allowedValues)
+  })
+})
+
+describe('serializeLogsConfiguration', () => {
+  it('should serialize the configuration', () => {
+    const exhaustiveLogsInitConfiguration: Required<LogsInitConfiguration> = {
+      ...EXHAUSTIVE_INIT_CONFIGURATION,
+      beforeSend: () => true,
+      forwardErrorsToLogs: true,
+      forwardConsoleLogs: 'all',
+      forwardReports: 'all',
+      usePciIntake: false,
+    }
+
+    type MapLogsInitConfigurationKey<Key extends string> = Key extends keyof InitConfiguration
+      ? MapInitConfigurationKey<Key>
+      : CamelToSnakeCase<Key>
+
+    // By specifying the type here, we can ensure that serializeConfiguration is returning an
+    // object containing all expected properties.
+    const serializedConfiguration: ExtractTelemetryConfiguration<
+      MapLogsInitConfigurationKey<keyof LogsInitConfiguration>
+    > = serializeLogsConfiguration(exhaustiveLogsInitConfiguration)
+
+    expect(serializedConfiguration).toEqual({
+      ...SERIALIZED_EXHAUSTIVE_INIT_CONFIGURATION,
+      forward_errors_to_logs: true,
+      forward_console_logs: 'all',
+      forward_reports: 'all',
+      use_pci_intake: false,
+    })
   })
 })
