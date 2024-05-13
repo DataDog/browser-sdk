@@ -9,7 +9,6 @@ import type { Configuration } from '../configuration'
 import type { TrackingConsentState } from '../trackingConsent'
 import { SESSION_TIME_OUT_DELAY } from './sessionConstants'
 import { startSessionStore } from './sessionStore'
-import type { SessionState } from './sessionState'
 
 export interface SessionManager<TrackingType extends string> {
   findActiveSession: (startTime?: RelativeTime) => SessionContext<TrackingType> | undefined
@@ -46,20 +45,17 @@ export function startSessionManager<TrackingType extends string>(
   const sessionContextHistory = new ValueHistory<SessionContext<TrackingType>>(SESSION_CONTEXT_TIMEOUT_DELAY)
   stopCallbacks.push(() => sessionContextHistory.stop())
 
-  let currentSessionContext = buildSessionContext(sessionStore.getSession())
-
-  function addSessionContext(sessionState: SessionState) {
-    currentSessionContext = buildSessionContext(sessionState)
-    sessionContextHistory.add(currentSessionContext, relativeNow())
-  }
+  let currentSessionContext = buildSessionContext()
 
   sessionStore.renewObservable.subscribe(() => {
-    addSessionContext(sessionStore.getSession())
+    currentSessionContext = buildSessionContext()
+    sessionContextHistory.add(currentSessionContext, relativeNow())
     renewObservable.notify()
   })
   sessionStore.expireObservable.subscribe(() => {
     expireObservable.notify()
-    sessionContextHistory.closeActive(relativeNow())
+    currentSessionContext.endTime = relativeNow()
+    sessionContextHistory.closeActive(currentSessionContext.endTime)
   })
 
   // We expand/renew session unconditionally as tracking consent is always granted when the session
@@ -83,8 +79,7 @@ export function startSessionManager<TrackingType extends string>(
   trackVisibility(configuration, () => sessionStore.expandSession())
   trackResume(configuration, () => sessionStore.restartSession())
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  function buildSessionContext(sessionState: SessionState): SessionContext<TrackingType> {
+  function buildSessionContext(): SessionContext<TrackingType> {
     return {
       id: sessionStore.getSession().id!,
       trackingType: sessionStore.getSession()[productKey] as TrackingType,
@@ -94,8 +89,8 @@ export function startSessionManager<TrackingType extends string>(
   return {
     findActiveSession: (startTime) => sessionContextHistory.find(startTime),
     findActiveOrExpiredSession: (startTime) => sessionContextHistory.find(startTime, AFTER_ENTRY_START),
-    renewObservable: sessionStore.renewObservable,
-    expireObservable: sessionStore.expireObservable,
+    renewObservable,
+    expireObservable,
     expire: sessionStore.expire,
   }
 }

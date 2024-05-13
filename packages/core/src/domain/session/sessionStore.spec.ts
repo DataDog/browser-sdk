@@ -55,7 +55,7 @@ function resetSessionInStore() {
   setCookie(SESSION_STORE_KEY, 'isExpired=1', DURATION)
 }
 
-fdescribe('session store', () => {
+describe('session store', () => {
   describe('getSessionStoreStrategyType', () => {
     it('should return a type cookie when cookies are available', () => {
       const sessionStoreStrategyType = selectSessionStoreStrategyType({

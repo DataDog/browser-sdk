@@ -22,10 +22,8 @@ import {
   mockSyntheticsWorkerValues,
   registerCleanupTask,
   mockClock,
-  createNewEvent,
 } from '@datadog/browser-core/test'
 
-import { SESSION_EXPIRATION_DELAY } from 'packages/core/src/domain/session/sessionConstants'
 import type { LogsConfiguration } from '../domain/configuration'
 import { validateAndBuildLogsConfiguration } from '../domain/configuration'
 import { HandlerType, Logger, StatusType } from '../domain/logger'

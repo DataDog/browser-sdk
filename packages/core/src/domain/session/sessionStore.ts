@@ -6,7 +6,12 @@ import { generateUUID } from '../../tools/utils/stringUtils'
 import type { InitConfiguration } from '../configuration'
 import { selectCookieStrategy, initCookieStrategy } from './storeStrategies/sessionInCookie'
 import type { SessionStoreStrategyType } from './storeStrategies/sessionStoreStrategy'
-import { getExpiredSessionState, isSessionInExpiredState, isSessionInNotStartedState } from './sessionState'
+import {
+  getExpiredSessionState,
+  isSessionInExpiredState,
+  isSessionInNotStartedState,
+  isSessionStarted,
+} from './sessionState'
 import type { SessionState } from './sessionState'
 import { initLocalStorageStrategy, selectLocalStorageStrategy } from './storeStrategies/sessionInLocalStorage'
 import { processSessionStoreOperations } from './sessionStoreOperations'
@@ -81,7 +86,7 @@ export function startSessionStore<TrackingType extends string>(
           return synchronizedSession
         },
         after: (sessionState) => {
-          if (!hasSessionInCache()) {
+          if (isSessionStarted(sessionState) && !hasSessionInCache()) {
             renewSessionInCache(sessionState)
           }
           sessionCache = sessionState
