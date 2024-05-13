@@ -1,5 +1,5 @@
-import { round, find, ONE_SECOND, noop, setTimeout, clearTimeout } from '@datadog/browser-core'
-import type { RelativeTime, TimeoutId } from '@datadog/browser-core'
+import { round, find, ONE_SECOND, noop } from '@datadog/browser-core'
+import type { RelativeTime } from '@datadog/browser-core'
 import { isElementNode } from '../../../browser/htmlDomUtils'
 import type { LifeCycle } from '../../lifeCycle'
 import { LifeCycleEventType } from '../../lifeCycle'
@@ -42,6 +42,7 @@ export function trackCumulativeLayoutShift(
   }
 
   let maxClsValue = 0
+  let maxClsTargetSelector: string | undefined
 
   // if no layout shift happen the value should be reported as 0
   callback({
@@ -52,25 +53,21 @@ export function trackCumulativeLayoutShift(
   const { unsubscribe: stop } = lifeCycle.subscribe(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, (entries) => {
     for (const entry of entries) {
       if (entry.entryType === RumPerformanceEntryType.LAYOUT_SHIFT && !entry.hadRecentInput) {
-        window.update(entry)
+        const { cumulatedValue, isMaxValue } = window.update(entry)
 
-        if (window.value() > maxClsValue) {
-          maxClsValue = window.value()
-          const cls = round(maxClsValue, 4)
-          const clsTarget = window.largestLayoutShiftTarget()
-          let clsTargetSelector
+        if (isMaxValue) {
+          const maxClsTarget = getTargetSelctorFromSource(entry.sources)
+          maxClsTargetSelector = maxClsTarget?.isConnected
+            ? getSelectorFromElement(maxClsTarget, configuration.actionNameAttribute)
+            : undefined
+        }
 
-          if (
-            clsTarget &&
-            // Check if the CLS target have been removed from the DOM between the time we collect the target reference and when we compute the selector
-            clsTarget.isConnected
-          ) {
-            clsTargetSelector = getSelectorFromElement(clsTarget, configuration.actionNameAttribute)
-          }
+        if (cumulatedValue > maxClsValue) {
+          maxClsValue = cumulatedValue
 
           callback({
-            value: cls,
-            targetSelector: clsTargetSelector,
+            value: round(maxClsValue, 4),
+            targetSelector: maxClsTargetSelector,
           })
         }
       }
@@ -82,60 +79,53 @@ export function trackCumulativeLayoutShift(
   }
 }
 
-const MAX_WINDOW_LENGTH = 5 * ONE_SECOND
+function getTargetSelctorFromSource(sources?: Array<{ node?: Node }>) {
+  if (!sources) {
+    return
+  }
+
+  return find(sources, (source): source is { node: HTMLElement } => !!source.node && isElementNode(source.node))?.node
+}
+
+const MAX_WINDOW_DURATION = 5 * ONE_SECOND
 const MAX_UPDATE_GAP = ONE_SECOND
 
-export function slidingSessionWindow() {
-  let value = 0
+function slidingSessionWindow() {
+  let cumulatedValue = 0
   let startTime: RelativeTime
   let endTime: RelativeTime
-
-  let largestLayoutShift = 0
-  let largestLayoutShiftTarget: HTMLElement | undefined
-  let largestLayoutShiftTime: RelativeTime
-  let timeoutId: TimeoutId
-
-  function resetWindow(entry: RumLayoutShiftTiming) {
-    startTime = endTime = entry.startTime
-    value = entry.value
-    largestLayoutShift = 0
-    largestLayoutShiftTarget = undefined
-    largestLayoutShiftTime = entry.startTime
-  }
+  let maxValue = 0
 
   return {
     update: (entry: RumLayoutShiftTiming) => {
-      clearTimeout(timeoutId)
-      timeoutId = setTimeout(() => resetWindow(entry), MAX_WINDOW_LENGTH)
-
       const shouldCreateNewWindow =
         startTime === undefined ||
         entry.startTime - endTime >= MAX_UPDATE_GAP ||
-        entry.startTime - startTime >= MAX_WINDOW_LENGTH
+        entry.startTime - startTime >= MAX_WINDOW_DURATION
+
+      let isMaxValue: boolean
 
       if (shouldCreateNewWindow) {
-        resetWindow(entry)
+        startTime = endTime = entry.startTime
+        maxValue = cumulatedValue = entry.value
+        isMaxValue = true
       } else {
-        value += entry.value
+        cumulatedValue += entry.value
         endTime = entry.startTime
+        isMaxValue = false
       }
 
-      if (entry.value > largestLayoutShift) {
-        largestLayoutShift = entry.value
-        largestLayoutShiftTime = entry.startTime
-        if (entry.sources?.length) {
-          largestLayoutShiftTarget = find(
-            entry.sources,
-            (s): s is { node: HTMLElement } => !!s.node && isElementNode(s.node)
-          )?.node
-        } else {
-          largestLayoutShiftTarget = undefined
-        }
+      if (entry.value > maxValue) {
+        maxValue = entry.value
+        isMaxValue = true
+      }
+
+      return {
+        cumulatedValue,
+        isMaxValue,
       }
     },
-    value: () => value,
-    largestLayoutShiftTarget: () => largestLayoutShiftTarget,
-    largestLayoutShiftTime: () => largestLayoutShiftTime,
+    value: () => cumulatedValue,
   }
 }
 
