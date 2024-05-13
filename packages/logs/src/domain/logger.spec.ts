@@ -1,7 +1,7 @@
 import type { ErrorWithCause } from '@datadog/browser-core'
 import { NO_ERROR_STACK_PRESENT_MESSAGE, createCustomerDataTracker, noop, objectEntries } from '@datadog/browser-core'
 import type { LogsMessage } from './logger'
-import { HandlerType, Logger, STATUSES, StatusType } from './logger'
+import { HandlerType, Logger, StatusType } from './logger'
 
 describe('Logger', () => {
   let logger: Logger
@@ -27,7 +27,9 @@ describe('Logger', () => {
       expect(getLoggedMessage(0).status).toEqual(StatusType.info)
     })
 
-    STATUSES.forEach((status) => {
+    const supportedStatusAPI = ['info', 'debug', 'warn', 'error'] as const
+
+    supportedStatusAPI.forEach((status) => {
       it(`'logger.${status}' should have ${status} status`, () => {
         logger[status]('message')
         expect(getLoggedMessage(0).status).toEqual(status)
