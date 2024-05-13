@@ -125,7 +125,6 @@ function slidingSessionWindow() {
         isMaxValue,
       }
     },
-    value: () => cumulatedValue,
   }
 }
 
