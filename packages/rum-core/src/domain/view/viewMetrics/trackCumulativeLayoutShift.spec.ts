@@ -6,7 +6,7 @@ import { RumPerformanceEntryType } from '../../../browser/performanceCollection'
 import type { CumulativeLayoutShift } from './trackCumulativeLayoutShift'
 import { trackCumulativeLayoutShift } from './trackCumulativeLayoutShift'
 
-fdescribe('trackCumulativeLayoutShift', () => {
+describe('trackCumulativeLayoutShift', () => {
   let setupBuilder: TestSetupBuilder
   let isLayoutShiftSupported: boolean
   let originalSupportedEntryTypes: PropertyDescriptor | undefined
@@ -128,7 +128,6 @@ fdescribe('trackCumulativeLayoutShift', () => {
 
   it('should get the max value sessions', () => {
     const { lifeCycle, clock } = setupBuilder.withFakeClock().build()
-    const divElement = appendElement('<div id="div-element"></div>')
 
     // first session window
     lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [
@@ -143,7 +142,7 @@ fdescribe('trackCumulativeLayoutShift', () => {
       createPerformanceEntry(RumPerformanceEntryType.LAYOUT_SHIFT, { value: 0.1 }),
     ])
     lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [
-      createPerformanceEntry(RumPerformanceEntryType.LAYOUT_SHIFT, { value: 0.2, sources: [{ node: divElement }] }),
+      createPerformanceEntry(RumPerformanceEntryType.LAYOUT_SHIFT, { value: 0.2 }),
     ])
     lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [
       createPerformanceEntry(RumPerformanceEntryType.LAYOUT_SHIFT, { value: 0.2 }),
@@ -158,7 +157,7 @@ fdescribe('trackCumulativeLayoutShift', () => {
     ])
 
     expect(clsCallback).toHaveBeenCalledTimes(4)
-    expect(clsCallback.calls.mostRecent().args[0]).toEqual({ value: 0.5, targetSelector: '#div-element' })
+    expect(clsCallback.calls.mostRecent().args[0]).toEqual({ value: 0.5, targetSelector: undefined })
   })
 
   describe('cls target element', () => {
@@ -216,7 +215,7 @@ fdescribe('trackCumulativeLayoutShift', () => {
       expect(clsCallback.calls.mostRecent().args[0].targetSelector).toEqual(undefined)
     })
 
-    fit('should get the target element of the largest layout shift', () => {
+    it('should get the target element of the largest layout shift', () => {
       const { lifeCycle, clock } = setupBuilder.withFakeClock().build()
       const divElement = appendElement('<div id="div-element"></div>')
 
