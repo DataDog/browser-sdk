@@ -91,16 +91,6 @@ describe('logger collection', () => {
 
       expect(originalConsoleMethods.info).not.toHaveBeenCalled()
     })
-
-    it('does not print the log and does not crash if its status is unknown', () => {
-      handleLog({ message: 'message', status: 'unknown' as StatusType }, logger, COMMON_CONTEXT)
-
-      expect(originalConsoleMethods.info).not.toHaveBeenCalled()
-      expect(originalConsoleMethods.log).not.toHaveBeenCalled()
-      expect(originalConsoleMethods.error).not.toHaveBeenCalled()
-      expect(originalConsoleMethods.warn).not.toHaveBeenCalled()
-      expect(originalConsoleMethods.debug).not.toHaveBeenCalled()
-    })
   })
 
   describe('when handle type is set to "http"', () => {
@@ -141,12 +131,6 @@ describe('logger collection', () => {
     it('does not send the log if its status is below the logger level', () => {
       logger.setLevel(StatusType.warn)
       handleLog({ message: 'message', status: StatusType.info }, logger, COMMON_CONTEXT)
-
-      expect(rawLogsEvents.length).toBe(0)
-    })
-
-    it('does not send the log and does not crash if its status is unknown', () => {
-      handleLog({ message: 'message', status: 'unknown' as StatusType }, logger, COMMON_CONTEXT)
 
       expect(rawLogsEvents.length).toBe(0)
     })

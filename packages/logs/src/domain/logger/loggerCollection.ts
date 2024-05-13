@@ -50,7 +50,6 @@ export function isAuthorized(status: StatusType, handlerType: HandlerType, logge
   const loggerHandler = logger.getHandler()
   const sanitizedHandlerType = Array.isArray(loggerHandler) ? loggerHandler : [loggerHandler]
   return (
-    StatusMapping[status] &&
     StatusMapping[status].priority <= StatusMapping[logger.getLevel()].priority &&
     includes(sanitizedHandlerType, handlerType)
   )
