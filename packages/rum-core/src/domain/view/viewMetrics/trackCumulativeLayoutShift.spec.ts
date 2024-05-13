@@ -130,6 +130,7 @@ describe('trackCumulativeLayoutShift', () => {
 
   it('should get the max value sessions', () => {
     const { lifeCycle, clock } = setupBuilder.withFakeClock().build()
+    const divElement = appendElement('<div id="div-element"></div>')
 
     // first session window
     lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [
@@ -144,7 +145,7 @@ describe('trackCumulativeLayoutShift', () => {
       createPerformanceEntry(RumPerformanceEntryType.LAYOUT_SHIFT, { value: 0.1 }),
     ])
     lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [
-      createPerformanceEntry(RumPerformanceEntryType.LAYOUT_SHIFT, { value: 0.2 }),
+      createPerformanceEntry(RumPerformanceEntryType.LAYOUT_SHIFT, { value: 0.2, sources: [{ node: divElement }] }),
     ])
     lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [
       createPerformanceEntry(RumPerformanceEntryType.LAYOUT_SHIFT, { value: 0.2 }),
@@ -159,7 +160,7 @@ describe('trackCumulativeLayoutShift', () => {
     ])
 
     expect(clsCallback).toHaveBeenCalledTimes(4)
-    expect(clsCallback.calls.mostRecent().args[0]).toEqual({ value: 0.5, targetSelector: undefined })
+    expect(clsCallback.calls.mostRecent().args[0]).toEqual({ value: 0.5, targetSelector: '#div-element' })
   })
 
   describe('cls target element', () => {
