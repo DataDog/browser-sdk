@@ -217,6 +217,27 @@ describe('validateAndBuildConfiguration', () => {
     })
   })
 
+  describe('env parameter validation', () => {
+    it('should not validate the env parameter', () => {
+      validateAndBuildConfiguration({ clientToken, env: false as any })
+      expect(displaySpy).toHaveBeenCalledOnceWith('Env must be defined as a string')
+    })
+  })
+
+  describe('service parameter validation', () => {
+    it('should not validate the service parameter', () => {
+      validateAndBuildConfiguration({ clientToken, service: 1 as any })
+      expect(displaySpy).toHaveBeenCalledOnceWith('Service must be defined as a string')
+    })
+  })
+
+  describe('version parameter validation', () => {
+    it('should not validate the version parameter', () => {
+      validateAndBuildConfiguration({ clientToken, version: 0 as any })
+      expect(displaySpy).toHaveBeenCalledOnceWith('Version must be defined as a string')
+    })
+  })
+
   describe('serializeConfiguration', () => {
     it('should serialize the configuration', () => {
       // By specifying the type here, we can ensure that serializeConfiguration is returning an

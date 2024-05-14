@@ -108,6 +108,15 @@ export interface Configuration extends TransportConfiguration {
   batchMessagesLimit: number
   messageBytesLimit: number
 }
+
+function checkIfString(tag: unknown, tagName: string) {
+  if (tag !== undefined && typeof tag !== 'string') {
+    display.error(`${tagName} must be defined as a string`)
+    return false
+  }
+  return true
+}
+
 function isDatadogSite(site: string) {
   return /(datadog|ddog|datad0g|dd0g)/.test(site)
 }
@@ -141,6 +150,18 @@ export function validateAndBuildConfiguration(initConfiguration: InitConfigurati
     !isPercentage(initConfiguration.telemetryUsageSampleRate)
   ) {
     display.error('Telemetry Usage Sample Rate should be a number between 0 and 100')
+    return
+  }
+
+  if (!checkIfString(initConfiguration.version, 'Version')) {
+    return
+  }
+
+  if (!checkIfString(initConfiguration.env, 'Env')) {
+    return
+  }
+
+  if (!checkIfString(initConfiguration.service, 'Service')) {
     return
   }
 
