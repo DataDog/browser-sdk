@@ -94,5 +94,5 @@
     "node": "20.13.1",
     "yarn": "1.22.22"
   },
-  "packageManager": "yarn@3.8.2"
+  "packageManager": "yarn@4.2.2"
 }
