@@ -7,6 +7,7 @@ import type { Configuration } from '../configuration'
 import { INTAKE_SITE_US1, INTAKE_SITE_US1_FED } from '../configuration'
 import { setNavigatorOnLine, setNavigatorConnection } from '../../../test'
 import {
+  addTelemetryError,
   resetTelemetry,
   startTelemetry,
   scrubCustomerFrames,
@@ -20,6 +21,7 @@ function startAndSpyTelemetry(configuration?: Partial<Configuration>) {
   const telemetry = startTelemetry(TelemetryService.RUM, {
     maxTelemetryEventsPerPage: 7,
     telemetrySampleRate: 100,
+    telemetryUsageSampleRate: 100,
     ...configuration,
   } as Configuration)
   const notifySpy = jasmine.createSpy('notified')
@@ -145,13 +147,13 @@ describe('telemetry', () => {
         foo: 'bar',
       }))
       callMonitored(() => {
-        throw new Error('message')
+        throw new Error('foo')
       })
       expect(notifySpy.calls.mostRecent().args[0].foo).toEqual('bar')
 
       telemetry.setContextProvider(() => ({}))
       callMonitored(() => {
-        throw new Error('message')
+        throw new Error('bar')
       })
       expect(notifySpy.calls.mostRecent().args[0].foo).not.toBeDefined()
     })
@@ -178,6 +180,34 @@ describe('telemetry', () => {
       })
 
       expect(notifySpy).not.toHaveBeenCalled()
+    })
+  })
+
+  describe('deduplicating', () => {
+    it('should discard already sent telemetry', () => {
+      const { notifySpy } = startAndSpyTelemetry()
+      const fooError = new Error('foo')
+      const barError = new Error('bar')
+
+      addTelemetryError(fooError)
+      addTelemetryError(fooError)
+      addTelemetryError(barError)
+
+      expect(notifySpy).toHaveBeenCalledTimes(2)
+      expect(notifySpy.calls.argsFor(0)[0].telemetry.message).toEqual('foo')
+      expect(notifySpy.calls.argsFor(1)[0].telemetry.message).toEqual('bar')
+    })
+
+    it('should not consider a discarded event for the maxTelemetryEventsPerPage', () => {
+      const { notifySpy } = startAndSpyTelemetry({ maxTelemetryEventsPerPage: 2 })
+
+      addTelemetryUsage({ feature: 'stop-session' })
+      addTelemetryUsage({ feature: 'stop-session' })
+      addTelemetryUsage({ feature: 'start-session-replay-recording' })
+
+      expect(notifySpy).toHaveBeenCalledTimes(2)
+      expect(notifySpy.calls.argsFor(0)[0].telemetry.usage.feature).toEqual('stop-session')
+      expect(notifySpy.calls.argsFor(1)[0].telemetry.usage.feature).toEqual('start-session-replay-recording')
     })
   })
 

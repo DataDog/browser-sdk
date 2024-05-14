@@ -51,19 +51,12 @@ export interface Telemetry {
 
 const TELEMETRY_EXCLUDED_SITES: string[] = [INTAKE_SITE_US1_FED]
 
-const telemetryConfiguration: {
-  maxEventsPerPage: number
-  sentEventCount: number
-} = {
-  maxEventsPerPage: 0,
-  sentEventCount: 0,
-}
-
 let onRawTelemetryEventCollected: ((event: RawTelemetryEvent) => void) | undefined
 
 export function startTelemetry(telemetryService: TelemetryService, configuration: Configuration): Telemetry {
   let contextProvider: () => Context
   const observable = new Observable<TelemetryEvent & Context>()
+  const alreadySentEvents = new Set<string>()
 
   const telemetryEnabled =
     !includes(TELEMETRY_EXCLUDED_SITES, configuration.site) && performDraw(configuration.telemetrySampleRate)
@@ -76,18 +69,19 @@ export function startTelemetry(telemetryService: TelemetryService, configuration
 
   const runtimeEnvInfo = getRuntimeEnvInfo()
   onRawTelemetryEventCollected = (rawEvent: RawTelemetryEvent) => {
-    if (telemetryEnabledPerType[rawEvent.type!]) {
+    const stringifiedEvent = jsonStringify(rawEvent)!
+    if (
+      telemetryEnabledPerType[rawEvent.type!] &&
+      alreadySentEvents.size < configuration.maxTelemetryEventsPerPage &&
+      !alreadySentEvents.has(stringifiedEvent)
+    ) {
       const event = toTelemetryEvent(telemetryService, rawEvent, runtimeEnvInfo)
       observable.notify(event)
       sendToExtension('telemetry', event)
+      alreadySentEvents.add(stringifiedEvent)
     }
   }
   startMonitorErrorCollection(addTelemetryError)
-
-  assign(telemetryConfiguration, {
-    maxEventsPerPage: configuration.maxTelemetryEventsPerPage,
-    sentEventCount: 0,
-  })
 
   function toTelemetryEvent(
     telemetryService: TelemetryService,
@@ -131,10 +125,6 @@ function getRuntimeEnvInfo(): RuntimeEnvInfo {
 
 export function startFakeTelemetry() {
   const events: RawTelemetryEvent[] = []
-  assign(telemetryConfiguration, {
-    maxEventsPerPage: Infinity,
-    sentEventCount: 0,
-  })
 
   onRawTelemetryEventCollected = (event: RawTelemetryEvent) => {
     events.push(event)
@@ -197,8 +187,7 @@ export function addTelemetryUsage(usage: RawTelemetryUsage) {
 }
 
 function addTelemetry(event: RawTelemetryEvent) {
-  if (onRawTelemetryEventCollected && telemetryConfiguration.sentEventCount < telemetryConfiguration.maxEventsPerPage) {
-    telemetryConfiguration.sentEventCount += 1
+  if (onRawTelemetryEventCollected) {
     onRawTelemetryEventCollected(event)
   }
 }
