@@ -184,7 +184,7 @@ describe('telemetry', () => {
   })
 
   describe('deduplicating', () => {
-    it('should discard already seen telemetry', () => {
+    it('should discard already sent telemetry', () => {
       const { notifySpy } = startAndSpyTelemetry()
       const fooError = new Error('foo')
       const barError = new Error('bar')
