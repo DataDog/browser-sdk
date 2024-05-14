@@ -160,11 +160,7 @@ export function isValidEntry(entry: RumPerformanceResourceTiming) {
     ? areInOrder(entry.startTime, entry.redirectStart, entry.redirectEnd, entry.fetchStart)
     : true
 
-  if (areCommonTimingsInOrder && areRedirectionTimingsInOrder) {
-    return true
-  }
-
-  return false
+  return areCommonTimingsInOrder && areRedirectionTimingsInOrder
 }
 
 function hasRedirection(entry: RumPerformanceResourceTiming) {
