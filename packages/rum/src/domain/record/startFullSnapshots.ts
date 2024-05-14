@@ -64,18 +64,23 @@ export function startFullSnapshots(
     }
     return records
   }
-
   fullSnapshotCallback(takeFullSnapshot())
-
+  let requestIdleCallbackId: number | undefined
   const { unsubscribe } = lifeCycle.subscribe(LifeCycleEventType.VIEW_CREATED, (view) => {
     flushMutations()
-    fullSnapshotCallback(
-      takeFullSnapshot(view.startClocks.timeStamp, {
-        shadowRootsController,
-        status: SerializationContextStatus.SUBSEQUENT_FULL_SNAPSHOT,
-        elementsScrollPositions,
-      })
-    )
+
+    if (requestIdleCallbackId !== undefined) {
+      cancelIdleCallback(requestIdleCallbackId)
+    }
+    requestIdleCallbackId = requestIdleCallback(() => {
+      fullSnapshotCallback(
+        takeFullSnapshot(view.startClocks.timeStamp, {
+          shadowRootsController,
+          status: SerializationContextStatus.SUBSEQUENT_FULL_SNAPSHOT,
+          elementsScrollPositions,
+        })
+      )
+    })
   })
 
   return {
