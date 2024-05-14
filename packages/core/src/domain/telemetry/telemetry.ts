@@ -17,6 +17,7 @@ import { NonErrorPrefix } from '../error/error.types'
 import type { StackTrace } from '../../tools/stackTrace/computeStackTrace'
 import { computeStackTrace } from '../../tools/stackTrace/computeStackTrace'
 import { getConnectivity } from '../connectivity'
+import { BoundedBuffer } from '../../tools/boundedBuffer'
 import type { TelemetryEvent } from './telemetryEvent.types'
 import type {
   RawTelemetryConfiguration,
@@ -51,7 +52,11 @@ export interface Telemetry {
 
 const TELEMETRY_EXCLUDED_SITES: string[] = [INTAKE_SITE_US1_FED]
 
-let onRawTelemetryEventCollected: ((event: RawTelemetryEvent) => void) | undefined
+// eslint-disable-next-line local-rules/disallow-side-effects
+let preStartTelemetryBuffer = new BoundedBuffer()
+let onRawTelemetryEventCollected = (event: RawTelemetryEvent) => {
+  preStartTelemetryBuffer.add(() => onRawTelemetryEventCollected(event))
+}
 
 export function startTelemetry(telemetryService: TelemetryService, configuration: Configuration): Telemetry {
   let contextProvider: () => Context
@@ -133,8 +138,16 @@ export function startFakeTelemetry() {
   return events
 }
 
+// need to be called after telemetry context is provided and observers are registered
+export function drainPreStartTelemetry() {
+  preStartTelemetryBuffer.drain()
+}
+
 export function resetTelemetry() {
-  onRawTelemetryEventCollected = undefined
+  preStartTelemetryBuffer = new BoundedBuffer()
+  onRawTelemetryEventCollected = (event: RawTelemetryEvent) => {
+    preStartTelemetryBuffer.add(() => onRawTelemetryEventCollected(event))
+  }
 }
 
 /**
@@ -147,7 +160,7 @@ export function isTelemetryReplicationAllowed(configuration: Configuration) {
 
 export function addTelemetryDebug(message: string, context?: Context) {
   displayIfDebugEnabled(ConsoleApiName.debug, message, context)
-  addTelemetry(
+  onRawTelemetryEventCollected(
     assign(
       {
         type: TelemetryType.log,
@@ -160,7 +173,7 @@ export function addTelemetryDebug(message: string, context?: Context) {
 }
 
 export function addTelemetryError(e: unknown, context?: Context) {
-  addTelemetry(
+  onRawTelemetryEventCollected(
     assign(
       {
         type: TelemetryType.log,
@@ -173,23 +186,17 @@ export function addTelemetryError(e: unknown, context?: Context) {
 }
 
 export function addTelemetryConfiguration(configuration: RawTelemetryConfiguration) {
-  addTelemetry({
+  onRawTelemetryEventCollected({
     type: TelemetryType.configuration,
     configuration,
   })
 }
 
 export function addTelemetryUsage(usage: RawTelemetryUsage) {
-  addTelemetry({
+  onRawTelemetryEventCollected({
     type: TelemetryType.usage,
     usage,
   })
-}
-
-function addTelemetry(event: RawTelemetryEvent) {
-  if (onRawTelemetryEventCollected) {
-    onRawTelemetryEventCollected(event)
-  }
 }
 
 export function formatError(e: unknown) {
