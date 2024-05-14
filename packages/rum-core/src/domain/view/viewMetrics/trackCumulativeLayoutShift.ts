@@ -87,7 +87,7 @@ function getTargetSelctorFromSource(sources?: Array<{ node?: Node }>) {
   return find(sources, (source): source is { node: HTMLElement } => !!source.node && isElementNode(source.node))?.node
 }
 
-const MAX_WINDOW_DURATION = 5 * ONE_SECOND
+export const MAX_WINDOW_DURATION = 5 * ONE_SECOND
 const MAX_UPDATE_GAP = ONE_SECOND
 
 function slidingSessionWindow() {
@@ -112,12 +112,12 @@ function slidingSessionWindow() {
       } else {
         cumulatedValue += entry.value
         endTime = entry.startTime
-        isMaxValue = false
-      }
+        isMaxValue = entry.value > maxValue
 
-      if (entry.value > maxValue) {
-        maxValue = entry.value
-        isMaxValue = true
+        if (isMaxValue) {
+          maxValue = entry.value
+          isMaxValue = true
+        }
       }
 
       return {

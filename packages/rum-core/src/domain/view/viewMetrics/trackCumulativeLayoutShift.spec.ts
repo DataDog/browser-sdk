@@ -4,7 +4,7 @@ import { appendElement, appendText, createPerformanceEntry, setup } from '../../
 import { LifeCycleEventType } from '../../lifeCycle'
 import { RumPerformanceEntryType } from '../../../browser/performanceCollection'
 import type { CumulativeLayoutShift } from './trackCumulativeLayoutShift'
-import { trackCumulativeLayoutShift } from './trackCumulativeLayoutShift'
+import { MAX_WINDOW_DURATION, trackCumulativeLayoutShift } from './trackCumulativeLayoutShift'
 
 describe('trackCumulativeLayoutShift', () => {
   let setupBuilder: TestSetupBuilder
@@ -206,12 +206,8 @@ describe('trackCumulativeLayoutShift', () => {
           sources: [{ node: divElement }],
         }),
       ])
-      // second shift that makes this window the maximum CLS
-      lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [
-        createPerformanceEntry(RumPerformanceEntryType.LAYOUT_SHIFT, { value: 0.1 }),
-      ])
 
-      expect(clsCallback.calls.mostRecent().args[0].value).toEqual(0.3)
+      expect(clsCallback.calls.mostRecent().args[0].value).toEqual(0.2)
       expect(clsCallback.calls.mostRecent().args[0].targetSelector).toEqual(undefined)
     })
 
@@ -230,7 +226,7 @@ describe('trackCumulativeLayoutShift', () => {
       ])
 
       // second session window
-      clock.tick(5001)
+      clock.tick(MAX_WINDOW_DURATION + 1)
       lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [
         createPerformanceEntry(RumPerformanceEntryType.LAYOUT_SHIFT, { value: 0.2 }),
       ])
