@@ -19,6 +19,7 @@ export interface LogsInitConfiguration extends InitConfiguration {
   forwardErrorsToLogs?: boolean | undefined
   forwardConsoleLogs?: ConsoleApiName[] | 'all' | undefined
   forwardReports?: RawReportType[] | 'all' | undefined
+  sendLogsAfterSessionExpiration?: boolean
   usePciIntake?: boolean
 }
 
@@ -29,6 +30,7 @@ export interface LogsConfiguration extends Configuration {
   forwardConsoleLogs: ConsoleApiName[]
   forwardReports: RawReportType[]
   requestErrorResponseLengthLimit: number
+  sendLogsAfterSessionExpiration: boolean
 }
 
 /**
@@ -73,6 +75,7 @@ export function validateAndBuildLogsConfiguration(
       forwardConsoleLogs,
       forwardReports,
       requestErrorResponseLengthLimit: DEFAULT_REQUEST_ERROR_RESPONSE_LENGTH_LIMIT,
+      sendLogsAfterSessionExpiration: initConfiguration.sendLogsAfterSessionExpiration !== false,
     },
     baseConfiguration
   )
@@ -104,6 +107,7 @@ export function serializeLogsConfiguration(configuration: LogsInitConfiguration)
       forward_console_logs: configuration.forwardConsoleLogs,
       forward_reports: configuration.forwardReports,
       use_pci_intake: configuration.usePciIntake,
+      send_logs_after_session_expiration: configuration.sendLogsAfterSessionExpiration,
     },
     baseSerializedInitConfiguration
   ) satisfies RawTelemetryConfiguration

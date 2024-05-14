@@ -278,5 +278,30 @@ describe('logs', () => {
       expect(secondRequest.message).toEqual('message 2')
       expect(secondRequest.session_id).toBeUndefined()
     })
+
+    it('does not send logs with session id when session is expired and sendLogsAfterSessionExpiration is false', () => {
+      setCookie(SESSION_STORE_KEY, 'id=foo&logs=1', ONE_MINUTE)
+      ;({ handleLog, stop: stopLogs } = startLogs(
+        initConfiguration,
+        { ...baseConfiguration, sendLogsAfterSessionExpiration: false },
+        () => COMMON_CONTEXT,
+        createTrackingConsentState(TrackingConsent.GRANTED)
+      ))
+      registerCleanupTask(stopLogs)
+
+      handleLog({ status: StatusType.info, message: 'message 1' }, logger)
+
+      // expire session
+      setCookie(SESSION_STORE_KEY, 'isExpired=1', ONE_MINUTE)
+      clock.tick(STORAGE_POLL_DELAY * 2)
+
+      handleLog({ status: StatusType.info, message: 'message 2' }, logger)
+
+      const firstRequest = getLoggedMessage(requests, 0)
+
+      expect(requests.length).toEqual(1)
+      expect(firstRequest.message).toEqual('message 1')
+      expect(firstRequest.session_id).toEqual('foo')
+    })
   })
 })

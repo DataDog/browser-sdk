@@ -25,7 +25,9 @@ export function startLogsAssembly(
     LifeCycleEventType.RAW_LOG_COLLECTED,
     ({ rawLogsEvent, messageContext = undefined, savedCommonContext = undefined, domainContext }) => {
       const startTime = getRelativeTime(rawLogsEvent.date)
-      const session = sessionManager.findTrackedSession(startTime, { returnExpired: true })
+      const session = sessionManager.findTrackedSession(startTime, {
+        returnExpired: configuration.sendLogsAfterSessionExpiration,
+      })
 
       if (!session) {
         return
