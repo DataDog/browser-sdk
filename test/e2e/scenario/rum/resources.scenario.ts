@@ -217,6 +217,27 @@ describe('rum resources', () => {
       expect(resourceEvent.resource.redirect!.duration).toBeGreaterThan(0)
     })
 
+  createTest('track concurent fetch to same resource')
+    .withRum()
+    .withSetup(bundleSetup)
+    .run(async ({ intakeRegistry }) => {
+      await browser.executeAsync((done) => {
+        Promise.all([fetch('/ok'), fetch('/ok')])
+          .then(() => done())
+          .catch(() => done())
+      })
+
+      await flushEvents()
+
+      const resourceEvents = intakeRegistry.rumResourceEvents.filter((event) => event.resource.type === 'fetch')
+
+      expect(resourceEvents[0]).toBeTruthy()
+      expect(resourceEvents[0]?.resource.size).toBeDefined()
+
+      expect(resourceEvents[1]).toBeTruthy()
+      expect(resourceEvents[1]?.resource.size).toBeDefined()
+    })
+
   describe('support XHRs with same XMLHttpRequest instance', () => {
     createTest('track XHRs when calling requests one after another')
       .withRum()

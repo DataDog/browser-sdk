@@ -1,5 +1,5 @@
 import { appendElement } from '../../test'
-import { cssEscape, elementMatches, getClassList, getParentElement } from './polyfills'
+import { WeakSet, cssEscape, elementMatches, getClassList, getParentElement } from './polyfills'
 
 describe('cssEscape', () => {
   it('should escape a string', () => {
@@ -60,5 +60,33 @@ describe('getClassList', () => {
     const classList = getClassList(svgElement)
     expect(classList[0]).toEqual('foo')
     expect(classList[1]).toEqual('bar')
+  })
+})
+
+describe('WeakSet', () => {
+  it('should support add and has', () => {
+    const set = new WeakSet()
+    const obj = {}
+
+    set.add(obj)
+    expect(set.has(obj)).toEqual(true)
+    expect(set.has({})).toEqual(false)
+  })
+
+  it('should support delete', () => {
+    const set = new WeakSet()
+    const obj = {}
+
+    set.add(obj)
+    expect(set.has(obj)).toEqual(true)
+    set.delete(obj)
+    expect(set.has(obj)).toEqual(false)
+  })
+
+  it('should support initial values', () => {
+    const obj = {}
+    const set = new WeakSet([obj])
+
+    expect(set.has(obj)).toEqual(true)
   })
 })

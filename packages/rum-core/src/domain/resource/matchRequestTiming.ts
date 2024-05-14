@@ -2,6 +2,7 @@ import type { Duration, RelativeTime } from '@datadog/browser-core'
 import { addDuration } from '@datadog/browser-core'
 import type { RumPerformanceResourceTiming } from '../../browser/performanceCollection'
 import type { RequestCompleteEvent } from '../requestCollection'
+import { WeakSet } from '../../browser/polyfills'
 import { isValidEntry } from './resourceUtils'
 
 interface Timing {
@@ -9,9 +10,7 @@ interface Timing {
   duration: Duration
 }
 
-// we use a WeakMap because WeakSet is not supported in ie11
-const PLACEHOLDER = 1
-const matchedResourceTimingEntries = new WeakMap<PerformanceEntry, typeof PLACEHOLDER>()
+const alreadyMatchedEntries = new WeakSet<PerformanceEntry>()
 
 /**
  * Look for corresponding timing in resource timing buffer
@@ -22,38 +21,35 @@ const matchedResourceTimingEntries = new WeakMap<PerformanceEntry, typeof PLACEH
  *
  * Strategy:
  * - from valid nested entries (with 1 ms error margin)
- * - if a single timing match, return the timing
+ * - filter out timing that were already matched to a request
+ * - then, if a single timing match, return the timing
  * - otherwise we can't decide, return undefined
  */
 export function matchRequestTiming(request: RequestCompleteEvent) {
   if (!performance || !('getEntriesByName' in performance)) {
     return
   }
-  const sameNameEntries = performance.getEntriesByName(request.url, 'resource')
+  const sameNameEntries = performance.getEntriesByName(request.url, 'resource') as RumPerformanceResourceTiming[]
 
   if (!sameNameEntries.length || !('toJSON' in sameNameEntries[0])) {
     return
   }
 
   const candidates = sameNameEntries
-    .filter((entry) => !matchedResourceTimingEntries.has(entry))
-    .map((entry) => ({
-      original: entry,
-      serialized: entry.toJSON() as RumPerformanceResourceTiming,
-    }))
-    .filter((entry) => isValidEntry(entry.serialized))
+    .filter((entry) => !alreadyMatchedEntries.has(entry))
+    .filter((entry) => isValidEntry(entry))
     .filter((entry) =>
       isBetween(
-        entry.serialized,
+        entry,
         request.startClocks.relative,
         endTime({ startTime: request.startClocks.relative, duration: request.duration })
       )
     )
 
   if (candidates.length === 1) {
-    matchedResourceTimingEntries.set(candidates[0].original, PLACEHOLDER)
+    alreadyMatchedEntries.add(candidates[0])
 
-    return candidates[0].serialized
+    return candidates[0].toJSON() as RumPerformanceResourceTiming
   }
 
   return

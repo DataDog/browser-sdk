@@ -59,7 +59,7 @@ describe('matchRequestTiming', () => {
     expect(matchingTiming).toEqual(undefined)
   })
 
-  it('should match all timings to the same request done at the same time', () => {
+  it('should discard already matched timings when multiple identical requests are done conurently', () => {
     const entry1 = createPerformanceEntry(RumPerformanceEntryType.RESOURCE, {
       startTime: 200 as RelativeTime,
       duration: 300 as Duration,
