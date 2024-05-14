@@ -127,11 +127,6 @@ export function startSessionStore<TrackingType extends string>(
     if (hasSessionInCache()) {
       if (isSessionInCacheOutdated(sessionState)) {
         expireSessionInCache()
-
-        // Only renew if the session is not tracked, because we want tracked session to be renewed on user activity
-        if (sessionState[productKey] && !computeSessionState(sessionState[productKey]).isTracked) {
-          renewSessionInCache(sessionState)
-        }
       } else {
         sessionCache = sessionState
       }

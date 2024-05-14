@@ -241,18 +241,6 @@ describe('logs', () => {
     })
   })
 
-  // it('if new session is not tracked, renew the session so that logs sdk stop sending events', () => {
-  //   ;({ handleLog, stop: stopLogs } = startLogs(
-  //     initConfiguration,
-  //     baseConfiguration,
-  //     () => COMMON_CONTEXT,
-  //     createTrackingConsentState(TrackingConsent.GRANTED)
-  //   ))
-  //   registerCleanupTask(stopLogs)
-
-  //   expect(getCookie(SESSION_STORE_KEY)).not.toBeUndefined()
-  // })
-
   describe('session lifecycle', () => {
     let clock: Clock
     beforeEach(() => {
@@ -262,34 +250,7 @@ describe('logs', () => {
       clock.cleanup()
     })
 
-    it('when the renewed session is not tracked, stop sending events', () => {
-      setCookie(SESSION_STORE_KEY, 'id=foo&logs=1', ONE_MINUTE)
-      ;({ handleLog, stop: stopLogs } = startLogs(
-        initConfiguration,
-        baseConfiguration,
-        () => COMMON_CONTEXT,
-        createTrackingConsentState(TrackingConsent.GRANTED)
-      ))
-      registerCleanupTask(stopLogs)
-
-      handleLog({ status: StatusType.info, message: 'message 1' }, logger)
-
-      // renew untracked session
-      setCookie(SESSION_STORE_KEY, 'id=bar&logs=0', 1000)
-      clock.tick(STORAGE_POLL_DELAY)
-
-      handleLog({ status: StatusType.info, message: 'message 2' }, logger)
-
-      expect(requests.length).toEqual(1)
-      expect(getLoggedMessage(requests, 0)).toEqual(
-        jasmine.objectContaining({
-          message: 'message 1',
-          session_id: jasmine.any(String),
-        })
-      )
-    })
-
-    it('when the session expires keep sending logs without session id', () => {
+    it('sends logs without session id when the session expires ', () => {
       setCookie(SESSION_STORE_KEY, 'id=foo&logs=1', ONE_MINUTE)
       ;({ handleLog, stop: stopLogs } = startLogs(
         initConfiguration,
@@ -302,8 +263,8 @@ describe('logs', () => {
       handleLog({ status: StatusType.info, message: 'message 1' }, logger)
 
       // expire session
-      setCookie(SESSION_STORE_KEY, '', ONE_MINUTE)
-      clock.tick(STORAGE_POLL_DELAY)
+      setCookie(SESSION_STORE_KEY, 'isExpired=1', ONE_MINUTE)
+      clock.tick(STORAGE_POLL_DELAY * 2)
 
       handleLog({ status: StatusType.info, message: 'message 2' }, logger)
 
