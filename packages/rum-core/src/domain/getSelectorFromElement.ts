@@ -38,7 +38,15 @@ const UNIQUE_AMONG_CHILDREN_SELECTOR_GETTERS: SelectorGetter[] = [
   getTagNameSelector,
 ]
 
-export function getSelectorFromElement(targetElement: Element, actionNameAttribute: string | undefined) {
+export function getSelectorFromElement(
+  targetElement: Element,
+  actionNameAttribute: string | undefined
+): string | undefined {
+  if (!targetElement.isConnected) {
+    // We cannot compute a selector for a detached element, as we don't have access to all of its
+    // parents, and we cannot determine if it's unique in the document.
+    return
+  }
   let targetElementSelector = ''
   let element: Element | null = targetElement
 
