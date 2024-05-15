@@ -15,6 +15,7 @@ import {
   addTelemetryConfiguration,
   addTelemetryUsage,
   TelemetryService,
+  drainPreStartTelemetry,
 } from './telemetry'
 
 function startAndSpyTelemetry(configuration?: Partial<Configuration>) {
@@ -137,6 +138,16 @@ describe('telemetry', () => {
       interfaces: ['wifi'],
       effective_type: '4g',
     })
+  })
+
+  it('should collect pre start events', () => {
+    addTelemetryUsage({ feature: 'set-tracking-consent', tracking_consent: 'granted' })
+
+    const { notifySpy } = startAndSpyTelemetry({ telemetrySampleRate: 100, telemetryUsageSampleRate: 100 })
+    expect(notifySpy).not.toHaveBeenCalled()
+
+    drainPreStartTelemetry()
+    expect(notifySpy).toHaveBeenCalled()
   })
 
   describe('telemetry context', () => {
