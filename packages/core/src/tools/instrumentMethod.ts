@@ -80,34 +80,14 @@ export function instrumentMethod<TARGET extends { [key: string]: any }, METHOD e
     }
   }
 
-  let instrumentation = createInstrumentedMethod(original, onPreCall)
+  let stopped = false
 
-  const instrumentationWrapper = function (this: TARGET): ReturnType<TARGET[METHOD]> | undefined {
-    if (typeof instrumentation !== 'function') {
-      return undefined
+  const instrumentation = function (this: TARGET): ReturnType<TARGET[METHOD]> | undefined {
+    if (stopped) {
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-call
+      return original.apply(this, arguments as unknown as Parameters<TARGET[METHOD]>)
     }
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-call
-    return instrumentation.apply(this, arguments as unknown as Parameters<TARGET[METHOD]>)
-  }
-  targetPrototype[method] = instrumentationWrapper as TARGET[METHOD]
 
-  return {
-    stop: () => {
-      if (targetPrototype[method] === instrumentationWrapper) {
-        targetPrototype[method] = original
-      } else {
-        instrumentation = original
-      }
-    },
-  }
-}
-
-function createInstrumentedMethod<TARGET extends { [key: string]: any }, METHOD extends keyof TARGET>(
-  original: TARGET[METHOD],
-  onPreCall: (this: null, callInfos: InstrumentedMethodCall<TARGET, METHOD>) => void
-): TARGET[METHOD] {
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-  return function (this: TARGET) {
     const parameters = arrayFrom(arguments) as Parameters<TARGET[METHOD]>
 
     let postCallCallback: PostCallCallback<TARGET, METHOD> | undefined
@@ -119,7 +99,7 @@ function createInstrumentedMethod<TARGET extends { [key: string]: any }, METHOD 
         onPostCall: (callback) => {
           postCallCallback = callback
         },
-        handlingStack: createHandlingStack(3),
+        handlingStack: createHandlingStack(2),
       },
     ])
 
@@ -132,7 +112,19 @@ function createInstrumentedMethod<TARGET extends { [key: string]: any }, METHOD 
 
     // eslint-disable-next-line @typescript-eslint/no-unsafe-return
     return result
-  } as TARGET[METHOD]
+  }
+
+  targetPrototype[method] = instrumentation as TARGET[METHOD]
+
+  return {
+    stop: () => {
+      stopped = true
+      // If the instrumentation has been removed by a third party, keep the last one
+      if (targetPrototype[method] === instrumentation) {
+        targetPrototype[method] = original
+      }
+    },
+  }
 }
 
 export function instrumentSetter<TARGET extends { [key: string]: any }, PROPERTY extends keyof TARGET>(
