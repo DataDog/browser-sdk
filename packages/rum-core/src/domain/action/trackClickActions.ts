@@ -137,18 +137,12 @@ function processPointerDown(
   domMutationObservable: Observable<void>,
   pointerDownEvent: MouseEventOnElement
 ) {
-  let nodePrivacyLevel: NodePrivacyLevel
+  const nodePrivacyLevel = configuration.enablePrivacyForActionName
+    ? getNodePrivacyLevel(pointerDownEvent.target, configuration.defaultPrivacyLevel)
+    : NodePrivacyLevel.ALLOW
 
-  if (configuration.enablePrivacyForActionName) {
-    nodePrivacyLevel = getNodePrivacyLevel(pointerDownEvent.target, configuration.defaultPrivacyLevel)
-
-    // When the node is set to hidden, we do not track click action
-    // Make sure everything has been done before return
-    if (nodePrivacyLevel === NodePrivacyLevel.HIDDEN) {
-      return undefined
-    }
-  } else {
-    nodePrivacyLevel = NodePrivacyLevel.ALLOW
+  if (nodePrivacyLevel === NodePrivacyLevel.HIDDEN) {
+    return undefined
   }
 
   const clickActionBase = computeClickActionBase(pointerDownEvent, nodePrivacyLevel, configuration)
