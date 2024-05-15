@@ -13,8 +13,12 @@ describe('trackCumulativeLayoutShift', () => {
   let clsCallback: jasmine.Spy<(csl: CumulativeLayoutShift) => void>
 
   beforeEach(() => {
-    if (!('PerformanceObserver' in window) || !('supportedEntryTypes' in PerformanceObserver)) {
-      pending('No PerformanceObserver support')
+    if (
+      !('PerformanceObserver' in window) ||
+      !('supportedEntryTypes' in PerformanceObserver) ||
+      !PerformanceObserver.supportedEntryTypes.includes('layout-shift')
+    ) {
+      pending('No LayoutShift API support')
     }
 
     clsCallback = jasmine.createSpy()

@@ -1,3 +1,4 @@
+import type { ContextValue } from '@datadog/browser-core'
 import { isIE } from '../utils/browserDetection'
 import { display } from '../display'
 import { createNewEvent } from '../../../test'
@@ -86,7 +87,7 @@ describe('sanitize', () => {
       // IE11 adds a description field
       // Safari IOS12 adds parts of the stack
       const error = new Error('My Error')
-      expect(sanitize(error)).toEqual({ ...error })
+      expect(sanitize(error)).toEqual({ ...error } as ContextValue)
     })
 
     it('should keep additional properties from errors', () => {
@@ -94,7 +95,7 @@ describe('sanitize', () => {
       // will serialize all other additional properties
       const error = new Error('My Error')
       ;(error as any).additionalProperty = { inner: 'test' }
-      expect(sanitize(error)).toEqual({ ...error })
+      expect(sanitize(error)).toEqual({ ...error } as ContextValue)
     })
 
     it('should serialize objects like maps as a string', () => {

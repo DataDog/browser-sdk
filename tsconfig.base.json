@@ -11,7 +11,7 @@
     "sourceMap": true,
 
     "types": [],
-    "lib": ["ES2016", "DOM"],
+    "lib": ["ES2022", "DOM"],
 
     "paths": {
       "@datadog/browser-core": ["./packages/core/src"],
