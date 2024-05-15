@@ -36,6 +36,7 @@ describe('startFullSnapshots', () => {
   })
 
   it('takes a full snapshot when the view changes', () => {
+    addExperimentalFeatures([ExperimentalFeature.ASYNC_FULL_SNAPSHOT])
     const { triggerIdleCallbacks } = mockRequestIdleCallback()
     lifeCycle.notify(LifeCycleEventType.VIEW_CREATED, {
       startClocks: viewStartClock,
@@ -58,6 +59,7 @@ describe('startFullSnapshots', () => {
   })
 
   it('full snapshot related records should have the view change date', () => {
+    addExperimentalFeatures([ExperimentalFeature.ASYNC_FULL_SNAPSHOT])
     const { triggerIdleCallbacks } = mockRequestIdleCallback()
     lifeCycle.notify(LifeCycleEventType.VIEW_CREATED, {
       startClocks: viewStartClock,

@@ -3,12 +3,7 @@ import { PageExitReason, DefaultPrivacyLevel, noop, isIE, DeflateEncoderStreamId
 import type { LifeCycle, ViewCreatedEvent, RumConfiguration } from '@datadog/browser-rum-core'
 import { LifeCycleEventType, startViewContexts } from '@datadog/browser-rum-core'
 import type { Clock } from '@datadog/browser-core/test'
-import {
-  collectAsyncCalls,
-  createNewEvent,
-  initEventBridgeStub,
-  mockRequestIdleCallback,
-} from '@datadog/browser-core/test'
+import { collectAsyncCalls, createNewEvent, initEventBridgeStub } from '@datadog/browser-core/test'
 import type { ViewEndedEvent } from 'packages/rum-core/src/domain/view/trackViews'
 import type { RumSessionManagerMock, TestSetupBuilder } from '../../../rum-core/test'
 import { appendElement, createRumSessionManagerMock, setup } from '../../../rum-core/test'
@@ -163,11 +158,9 @@ describe('startRecording', () => {
 
   it('flushes pending mutations before ending the view', async () => {
     const { lifeCycle } = setupBuilder.build()
-    const { triggerIdleCallbacks } = mockRequestIdleCallback()
 
     appendElement('<hr/>')
     changeView(lifeCycle)
-    triggerIdleCallbacks()
     flushSegment(lifeCycle)
 
     const requests = await readSentRequests(2)
@@ -181,11 +174,9 @@ describe('startRecording', () => {
 
   it('flushes pending mutations before ending the view, even after the segment has been flushed', async () => {
     const { lifeCycle } = setupBuilder.build()
-    const { triggerIdleCallbacks } = mockRequestIdleCallback()
     // flush segment  right before the view change to set the segment collection in the waiting state
     flushSegment(lifeCycle)
     changeView(lifeCycle)
-    triggerIdleCallbacks()
     flushSegment(lifeCycle)
 
     const requests = await readSentRequests(3)
@@ -231,7 +222,6 @@ describe('startRecording', () => {
 
   it('should send records through the bridge when it is present', () => {
     const eventBridgeStub = initEventBridgeStub()
-    const { triggerIdleCallbacks } = mockRequestIdleCallback()
     const { lifeCycle } = setupBuilder.build()
     const sendSpy = spyOn(eventBridgeStub, 'send')
 
@@ -240,7 +230,6 @@ describe('startRecording', () => {
 
     // send view end record and meta record
     changeView(lifeCycle)
-    triggerIdleCallbacks()
 
     const record1 = JSON.parse(sendSpy.calls.argsFor(0)[0])
     const record2 = JSON.parse(sendSpy.calls.argsFor(1)[0])
