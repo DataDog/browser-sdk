@@ -23,5 +23,6 @@ export function mockRequestIdleCallback() {
     triggerIdleCallbacks: () => {
       callbacks.forEach((callback) => callback())
     },
+    cancelIdleCallbackSpy,
   }
 }
