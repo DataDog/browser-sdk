@@ -43,7 +43,7 @@ describe('startFullSnapshots', () => {
     expect(fullSnapshotCallback).toHaveBeenCalledTimes(2)
   })
 
-  it('cancels the idle callback if requestIdleCallbackId is not undefined', () => {
+  it('cancels the idle callback if requestIdleCallbackId is defined', () => {
     const { triggerIdleCallbacks, cancelIdleCallbackSpy } = mockRequestIdleCallback()
     lifeCycle.notify(LifeCycleEventType.VIEW_CREATED, {
       startClocks: viewStartClock,
