@@ -120,7 +120,6 @@ function slidingSessionWindow() {
 
         if (isMaxValue) {
           maxValue = entry.value
-          isMaxValue = true
         }
       }
 
