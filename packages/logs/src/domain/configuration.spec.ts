@@ -84,7 +84,7 @@ describe('validateAndBuildLogsConfiguration', () => {
     it('should display warning with wrong PCI intake configuration', () => {
       validateAndBuildLogsConfiguration({
         ...DEFAULT_INIT_CONFIGURATION,
-        site: 'some-site',
+        site: 'us3.datadoghq.com',
         usePciIntake: true,
       })
       expect(warnSpy).toHaveBeenCalledOnceWith(

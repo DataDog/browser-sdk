@@ -31,7 +31,7 @@
   },
   "devDependencies": {
     "@jsdevtools/coverage-istanbul-loader": "3.0.5",
-    "@types/chrome": "0.0.267",
+    "@types/chrome": "0.0.268",
     "@types/connect-busboy": "1.0.3",
     "@types/cors": "2.8.17",
     "@types/express": "4.17.21",
@@ -55,12 +55,12 @@
     "eslint-module-utils": "2.8.1",
     "eslint-plugin-import": "2.29.1",
     "eslint-plugin-jasmine": "4.1.3",
-    "eslint-plugin-jsdoc": "48.2.3",
+    "eslint-plugin-jsdoc": "48.2.4",
     "eslint-plugin-local-rules": "2.0.1",
     "eslint-plugin-prefer-arrow": "1.2.3",
-    "eslint-plugin-unicorn": "52.0.0",
+    "eslint-plugin-unicorn": "53.0.0",
     "express": "4.19.2",
-    "glob": "10.3.12",
+    "glob": "10.3.15",
     "jasmine-core": "3.99.1",
     "json-schema-to-typescript": "bcaudan/json-schema-to-typescript#bcaudan/add-readonly-support",
     "karma": "6.4.3",
@@ -88,11 +88,11 @@
   },
   "resolutions": {
     "ansi-regex": "5.0.1",
-    "@mantine/core/type-fest": "4.18.1"
+    "@mantine/core/type-fest": "4.18.2"
   },
   "volta": {
-    "node": "20.12.2",
+    "node": "20.13.1",
     "yarn": "1.22.22"
   },
-  "packageManager": "yarn@3.8.2"
+  "packageManager": "yarn@4.2.2"
 }
