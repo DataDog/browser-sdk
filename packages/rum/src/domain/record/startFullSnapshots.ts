@@ -66,10 +66,15 @@ export function startFullSnapshots(
     return records
   }
   fullSnapshotCallback(takeFullSnapshot())
+  let cancelIdleCallback: (() => void) | undefined
   const { unsubscribe } = lifeCycle.subscribe(LifeCycleEventType.VIEW_CREATED, (view) => {
     flushMutations()
     if (isExperimentalFeatureEnabled(ExperimentalFeature.ASYNC_FULL_SNAPSHOT)) {
-      requestIdleCallback(() => {
+      if (cancelIdleCallback) {
+        cancelIdleCallback()
+      }
+
+      cancelIdleCallback = requestIdleCallback(() => {
         fullSnapshotCallback(
           takeFullSnapshot(view.startClocks.timeStamp, {
             shadowRootsController,
@@ -90,6 +95,11 @@ export function startFullSnapshots(
   })
 
   return {
-    stop: unsubscribe,
+    stop: () => {
+      unsubscribe()
+      if (cancelIdleCallback) {
+        cancelIdleCallback()
+      }
+    },
   }
 }

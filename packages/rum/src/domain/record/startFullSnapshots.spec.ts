@@ -13,6 +13,8 @@ describe('startFullSnapshots', () => {
   const viewStartClock = { relative: 1, timeStamp: 1 as TimeStamp }
   let lifeCycle: LifeCycle
   let fullSnapshotCallback: jasmine.Spy<(records: BrowserRecord[]) => void>
+  const original1 = window.requestIdleCallback
+  const original2 = window.cancelIdleCallback
 
   beforeEach(() => {
     if (isIE()) {
@@ -31,6 +33,11 @@ describe('startFullSnapshots', () => {
     )
   })
 
+  afterEach(() => {
+    window.requestIdleCallback = original1
+    window.cancelIdleCallback = original2
+  })
+
   it('takes a full snapshot when startFullSnapshots is called', () => {
     expect(fullSnapshotCallback).toHaveBeenCalledTimes(1)
   })
@@ -45,6 +52,22 @@ describe('startFullSnapshots', () => {
     expect(fullSnapshotCallback).toHaveBeenCalledTimes(2)
   })
 
+  it('cancels the previous idle callback when the view changes', () => {
+    addExperimentalFeatures([ExperimentalFeature.ASYNC_FULL_SNAPSHOT])
+    const { triggerIdleCallbacks, cancelIdleCallbackSpy } = mockRequestIdleCallback()
+
+    lifeCycle.notify(LifeCycleEventType.VIEW_CREATED, {
+      startClocks: viewStartClock,
+    } as Partial<ViewCreatedEvent> as any)
+
+    lifeCycle.notify(LifeCycleEventType.VIEW_CREATED, {
+      startClocks: viewStartClock,
+    } as Partial<ViewCreatedEvent> as any)
+
+    triggerIdleCallbacks()
+    expect(cancelIdleCallbackSpy).toHaveBeenCalledTimes(1)
+  })
+
   it('full snapshot related records should have the view change date', () => {
     addExperimentalFeatures([ExperimentalFeature.ASYNC_FULL_SNAPSHOT])
     const { triggerIdleCallbacks } = mockRequestIdleCallback()
@@ -56,5 +79,18 @@ describe('startFullSnapshots', () => {
     expect(records[0].timestamp).toEqual(1)
     expect(records[1].timestamp).toEqual(1)
     expect(records[2].timestamp).toEqual(1)
+  })
+
+  it('should use requestAnimationFrame when requestIdleCallback is not defined', () => {
+    window.requestIdleCallback = undefined as any
+    window.cancelIdleCallback = undefined as any
+    const { triggerIdleCallbacks } = mockRequestIdleCallback()
+    addExperimentalFeatures([ExperimentalFeature.ASYNC_FULL_SNAPSHOT])
+    lifeCycle.notify(LifeCycleEventType.VIEW_CREATED, {
+      startClocks: viewStartClock,
+    } as Partial<ViewCreatedEvent> as any)
+    triggerIdleCallbacks()
+
+    expect(fullSnapshotCallback).toHaveBeenCalledTimes(2)
   })
 })
