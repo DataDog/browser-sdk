@@ -19,6 +19,7 @@ export enum ExperimentalFeature {
   WRITABLE_RESOURCE_GRAPHQL = 'writable_resource_graphql',
   CUSTOM_VITALS = 'custom_vitals',
   TOLERANT_RESOURCE_TIMINGS = 'tolerant_resource_timings',
+  ASYNC_FULL_SNAPSHOT = 'async_full_snapshot',
 }
 
 const enabledExperimentalFeatures: Set<ExperimentalFeature> = new Set()

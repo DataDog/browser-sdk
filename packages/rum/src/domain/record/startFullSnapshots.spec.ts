@@ -4,6 +4,7 @@ import type { TimeStamp } from '@datadog/browser-core'
 import { isIE, noop } from '@datadog/browser-core'
 import { mockRequestIdleCallback } from '@datadog/browser-core/test'
 import type { BrowserRecord } from '../../types'
+import { addExperimentalFeatures, ExperimentalFeature } from '../../../../core/src/tools/experimentalFeatures'
 import { startFullSnapshots } from './startFullSnapshots'
 import { createElementsScrollPositions } from './elementsScrollPositions'
 import type { ShadowRootsController } from './shadowRootsController'
@@ -44,6 +45,7 @@ describe('startFullSnapshots', () => {
   })
 
   it('cancels the idle callback if requestIdleCallbackId is defined', () => {
+    addExperimentalFeatures([ExperimentalFeature.ASYNC_FULL_SNAPSHOT])
     const { triggerIdleCallbacks, cancelIdleCallbackSpy } = mockRequestIdleCallback()
     lifeCycle.notify(LifeCycleEventType.VIEW_CREATED, {
       startClocks: viewStartClock,
