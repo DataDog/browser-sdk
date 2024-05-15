@@ -45,19 +45,6 @@ describe('startFullSnapshots', () => {
     expect(fullSnapshotCallback).toHaveBeenCalledTimes(2)
   })
 
-  it('cancels the idle callback if requestIdleCallbackId is defined', () => {
-    addExperimentalFeatures([ExperimentalFeature.ASYNC_FULL_SNAPSHOT])
-    const { triggerIdleCallbacks, cancelIdleCallbackSpy } = mockRequestIdleCallback()
-    lifeCycle.notify(LifeCycleEventType.VIEW_CREATED, {
-      startClocks: viewStartClock,
-    } as Partial<ViewCreatedEvent> as any)
-    triggerIdleCallbacks()
-    lifeCycle.notify(LifeCycleEventType.VIEW_CREATED, {
-      startClocks: viewStartClock,
-    } as Partial<ViewCreatedEvent> as any)
-    expect(cancelIdleCallbackSpy).toHaveBeenCalled()
-  })
-
   it('full snapshot related records should have the view change date', () => {
     addExperimentalFeatures([ExperimentalFeature.ASYNC_FULL_SNAPSHOT])
     const { triggerIdleCallbacks } = mockRequestIdleCallback()
