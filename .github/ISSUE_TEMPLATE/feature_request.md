@@ -6,4 +6,4 @@ labels: enhancement
 assignees: ''
 ---
 
-Please contact [support](https://www.datadoghq.com/support/) and fill a FEATURE_REQUEST with them.
+Please contact [support](https://www.datadoghq.com/support/) to open a feature request.
