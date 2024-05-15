@@ -187,6 +187,7 @@ describe('record', () => {
 
       // trigger full snapshot by starting a new view
       newView()
+
       expect(getEmittedRecords()[1].type).toBe(RecordType.Focus)
     })
 
