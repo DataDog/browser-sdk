@@ -175,7 +175,7 @@ describe('startRecording', () => {
   it('flushes pending mutations before ending the view, even after the segment has been flushed', async () => {
     const { lifeCycle } = setupBuilder.build()
 
-    // flush segment  right before the view change to set the segment collection in the waiting state
+    // flush segment right before the view change to set the segment collection in the waiting state
     flushSegment(lifeCycle)
     changeView(lifeCycle)
     flushSegment(lifeCycle)
