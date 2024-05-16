@@ -217,7 +217,7 @@ describe('rum resources', () => {
       expect(resourceEvent.resource.redirect!.duration).toBeGreaterThan(0)
     })
 
-  createTest('track concurent fetch to same resource')
+  createTest('track concurrent fetch to same resource')
     .withRum()
     .withSetup(bundleSetup)
     .run(async ({ intakeRegistry }) => {
@@ -226,6 +226,10 @@ describe('rum resources', () => {
           .then(() => done())
           .catch(() => done())
       })
+
+      if (!browser.isChromium) {
+        pending('Only Chromium based browsers will emit predictable timings events for concurrent fetches')
+      }
 
       await flushEvents()
 
