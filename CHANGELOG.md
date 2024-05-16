@@ -16,6 +16,13 @@
 
 ---
 
+## v5.18.0
+
+- 🔊[RUM-4360] monitor more API usages ([#2745](https://github.com/DataDog/browser-sdk/pull/2745))
+- 🔊 collect pre start telemetry ([#2755](https://github.com/DataDog/browser-sdk/pull/2755))
+- 🔊 Deduplicate telemetry events ([#2746](https://github.com/DataDog/browser-sdk/pull/2746))
+- 🐛 [RUM-97] Sanitize tags parameter in configuration ([#2744](https://github.com/DataDog/browser-sdk/pull/2744))
+
 ## v5.17.1
 
 - 🐛fix deploy script ([#2742](https://github.com/DataDog/browser-sdk/pull/2742))
