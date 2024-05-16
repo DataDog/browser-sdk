@@ -489,7 +489,6 @@ describe('preStartRum', () => {
       strategy.addError(error)
       strategy.init(DEFAULT_INIT_CONFIGURATION)
       expect(addErrorSpy).toHaveBeenCalledOnceWith(error, undefined)
-      // todo: test with handlingStack
     })
 
     it('startView', () => {

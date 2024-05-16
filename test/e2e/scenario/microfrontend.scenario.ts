@@ -1,8 +1,8 @@
-import { flushEvents, createTest, html } from '../lib/framework'
+import { flushEvents, createTest } from '../lib/framework'
 
 const HANDLING_STACK_REGEX = /^Error: \n\s+at testHandlingStack @/
 
-const RUM_CONFIG = {
+const CONFIG = {
   enableExperimentalFeatures: ['micro_frontend'],
   beforeSend: (event: any, domainContext: any) => {
     if ('handlingStack' in domainContext) {
@@ -13,37 +13,20 @@ const RUM_CONFIG = {
   },
 }
 
-function createBody(additionalBody: string = '') {
-  return (
-    html`
-      <script>
-        function done() {
-          const done = document.createElement('div')
-          done.id = 'done'
-          document.body.appendChild(done)
-        }
-      </script>
-    ` + additionalBody
-  )
-}
-
 describe('microfrontend', () => {
   createTest('expose handling stack for fetch requests')
-    .withRum(RUM_CONFIG)
-    .withBody(
-      createBody(
-        html`<script>
-          async function testHandlingStack() {
-            await fetch('/ok')
-            done()
-          }
+    .withRum(CONFIG)
+    .withRumInit((configuration) => {
+      window.DD_RUM!.init(configuration)
 
-          testHandlingStack()
-        </script>`
-      )
-    )
+      const noop = () => {}
+      function testHandlingStack() {
+        fetch('/ok').then(noop, noop)
+      }
+
+      testHandlingStack()
+    })
     .run(async ({ intakeRegistry }) => {
-      await $('#done')
       await flushEvents()
 
       const event = intakeRegistry.rumResourceEvents.find((event) => event.resource.type === 'fetch')
@@ -53,23 +36,19 @@ describe('microfrontend', () => {
     })
 
   createTest('expose handling stack for xhr requests')
-    .withRum(RUM_CONFIG)
-    .withBody(
-      createBody(
-        html`<script>
-          function testHandlingStack() {
-            const xhr = new XMLHttpRequest()
-            xhr.addEventListener('loadend', done)
-            xhr.open('GET', '/ok')
-            xhr.send()
-          }
+    .withRum(CONFIG)
+    .withRumInit((configuration) => {
+      window.DD_RUM!.init(configuration)
 
-          testHandlingStack()
-        </script>`
-      )
-    )
+      function testHandlingStack() {
+        const xhr = new XMLHttpRequest()
+        xhr.open('GET', '/ok')
+        xhr.send()
+      }
+
+      testHandlingStack()
+    })
     .run(async ({ intakeRegistry }) => {
-      await $('#done')
       await flushEvents()
 
       const event = intakeRegistry.rumResourceEvents.find((event) => event.resource.type === 'xhr')
@@ -79,21 +58,17 @@ describe('microfrontend', () => {
     })
 
   createTest('expose handling stack for DD_RUM.addAction')
-    .withRum(RUM_CONFIG)
-    .withBody(
-      createBody(
-        html`<script>
-          function testHandlingStack() {
-            DD_RUM.addAction('foo')
-            done()
-          }
+    .withRum(CONFIG)
+    .withRumInit((configuration) => {
+      window.DD_RUM!.init(configuration)
 
-          testHandlingStack()
-        </script>`
-      )
-    )
+      function testHandlingStack() {
+        window.DD_RUM!.addAction('foo')
+      }
+
+      testHandlingStack()
+    })
     .run(async ({ intakeRegistry }) => {
-      await $('#done')
       await flushEvents()
 
       const event = intakeRegistry.rumActionEvents[0]
@@ -103,21 +78,17 @@ describe('microfrontend', () => {
     })
 
   createTest('expose handling stack for DD_RUM.addError')
-    .withRum(RUM_CONFIG)
-    .withBody(
-      createBody(
-        html`<script>
-          function testHandlingStack() {
-            DD_RUM.addError(new Error('foo'))
-            done()
-          }
+    .withRum(CONFIG)
+    .withRumInit((configuration) => {
+      window.DD_RUM!.init(configuration)
 
-          testHandlingStack()
-        </script>`
-      )
-    )
+      function testHandlingStack() {
+        window.DD_RUM!.addError(new Error('foo'))
+      }
+
+      testHandlingStack()
+    })
     .run(async ({ intakeRegistry }) => {
-      await $('#done')
       await flushEvents()
 
       const event = intakeRegistry.rumErrorEvents[0]

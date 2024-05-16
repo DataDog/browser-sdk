@@ -59,7 +59,7 @@ describe('instrumentMethod', () => {
       target: object,
       parameters: jasmine.any(Object),
       onPostCall: jasmine.any(Function),
-      handlingStack: jasmine.stringMatching(/^Error: \n\s+at UserContext.<anonymous> @/),
+      handlingStack: jasmine.any(String),
     })
     expect(instrumentationSpy.calls.mostRecent().args[0].parameters[0]).toBe(2)
     expect(instrumentationSpy.calls.mostRecent().args[0].parameters[1]).toBe(3)

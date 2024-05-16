@@ -5,8 +5,6 @@ import type { Subscription } from '../tools/observable'
 import type { XhrCompleteContext, XhrContext } from './xhrObservable'
 import { initXhrObservable } from './xhrObservable'
 
-const HANDLING_STACK_REGEX = /^Error: \n {2}at setup @/
-
 describe('xhr observable', () => {
   let requestsTrackingSubscription: Subscription
   let contextEditionSubscription: Subscription | undefined
@@ -53,7 +51,7 @@ describe('xhr observable', () => {
         expect(request.status).toBe(200)
         expect(request.isAborted).toBe(false)
         expect(request.duration).toEqual(jasmine.any(Number))
-        expect(request.handlingStack).toMatch(HANDLING_STACK_REGEX)
+        expect(request.handlingStack).toBeDefined()
         done()
       },
     })
@@ -69,7 +67,7 @@ describe('xhr observable', () => {
       onComplete() {
         const request = requests[0]
         expect(request.method).toBe('GET')
-        expect(request.handlingStack).toMatch(HANDLING_STACK_REGEX)
+        expect(request.handlingStack).toBeDefined()
         done()
       },
     })
@@ -89,7 +87,7 @@ describe('xhr observable', () => {
         expect(request.status).toBe(404)
         expect(request.isAborted).toBe(false)
         expect(request.duration).toEqual(jasmine.any(Number))
-        expect(request.handlingStack).toMatch(HANDLING_STACK_REGEX)
+        expect(request.handlingStack).toBeDefined()
         done()
       },
     })
@@ -109,7 +107,7 @@ describe('xhr observable', () => {
         expect(request.status).toBe(500)
         expect(request.isAborted).toBe(false)
         expect(request.duration).toEqual(jasmine.any(Number))
-        expect(request.handlingStack).toMatch(HANDLING_STACK_REGEX)
+        expect(request.handlingStack).toBeDefined()
         done()
       },
     })
@@ -129,7 +127,7 @@ describe('xhr observable', () => {
         expect(request.status).toBe(0)
         expect(request.isAborted).toBe(false)
         expect(request.duration).toEqual(jasmine.any(Number))
-        expect(request.handlingStack).toMatch(HANDLING_STACK_REGEX)
+        expect(request.handlingStack).toBeDefined()
         done()
       },
     })
@@ -158,7 +156,7 @@ describe('xhr observable', () => {
         expect(request.isAborted).toBe(false)
         expect(xhr.status).toBe(0)
         expect(xhr.onreadystatechange).toHaveBeenCalledTimes(1)
-        expect(request.handlingStack).toMatch(HANDLING_STACK_REGEX)
+        expect(request.handlingStack).toBeDefined()
         done()
       },
     })
@@ -179,7 +177,7 @@ describe('xhr observable', () => {
         expect(request.duration).toEqual(jasmine.any(Number))
         expect(request.isAborted).toBe(true)
         expect(xhr.status).toBe(0)
-        expect(request.handlingStack).toMatch(HANDLING_STACK_REGEX)
+        expect(request.handlingStack).toBeDefined()
         done()
       },
     })
@@ -201,7 +199,7 @@ describe('xhr observable', () => {
         expect(request.isAborted).toBe(false)
         expect(request.duration).toEqual(jasmine.any(Number))
         expect(xhr.onreadystatechange).toHaveBeenCalled()
-        expect(request.handlingStack).toMatch(HANDLING_STACK_REGEX)
+        expect(request.handlingStack).toBeDefined()
         done()
       },
     })
@@ -223,7 +221,7 @@ describe('xhr observable', () => {
         expect(request.isAborted).toBe(false)
         expect(request.duration).toEqual(jasmine.any(Number))
         expect(xhr.onreadystatechange).toHaveBeenCalled()
-        expect(request.handlingStack).toMatch(HANDLING_STACK_REGEX)
+        expect(request.handlingStack).toBeDefined()
         done()
       },
     })
@@ -295,7 +293,7 @@ describe('xhr observable', () => {
         expect(firstRequest.status).toBe(200)
         expect(firstRequest.isAborted).toBe(false)
         expect(firstRequest.duration).toEqual(jasmine.any(Number))
-        expect(firstRequest.handlingStack).toMatch(HANDLING_STACK_REGEX)
+        expect(firstRequest.handlingStack).toBeDefined()
 
         const secondRequest = requests[1]
         expect(secondRequest.method).toBe('GET')
@@ -303,7 +301,7 @@ describe('xhr observable', () => {
         expect(secondRequest.status).toBe(400)
         expect(secondRequest.isAborted).toBe(false)
         expect(secondRequest.duration).toEqual(jasmine.any(Number))
-        expect(secondRequest.handlingStack).toMatch(/^Error: \n {2}at StubXhr.onLoad @/)
+        expect(secondRequest.handlingStack).toBeDefined()
 
         expect(xhr.onreadystatechange).toHaveBeenCalledTimes(2)
         expect(listeners.load.length).toBe(0)
