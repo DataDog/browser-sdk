@@ -19,7 +19,8 @@ export interface LogsInitConfiguration extends InitConfiguration {
   forwardErrorsToLogs?: boolean | undefined
   forwardConsoleLogs?: ConsoleApiName[] | 'all' | undefined
   forwardReports?: RawReportType[] | 'all' | undefined
-  sendLogsAfterSessionExpiration?: boolean
+  // TODO next major: remove this option and make it the default behaviour
+  sendLogsAfterSessionExpiration?: boolean | undefined
   usePciIntake?: boolean
 }
 
