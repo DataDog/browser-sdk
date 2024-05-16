@@ -1,12 +1,12 @@
 variables:
   CURRENT_STAGING: staging-20
   APP: 'browser-sdk'
-  CURRENT_CI_IMAGE: 64
+  CURRENT_CI_IMAGE: 65
   BUILD_STABLE_REGISTRY: '486234852809.dkr.ecr.us-east-1.amazonaws.com'
   CI_IMAGE: '$BUILD_STABLE_REGISTRY/ci/$APP:$CURRENT_CI_IMAGE'
   GIT_REPOSITORY: 'git@github.com:DataDog/browser-sdk.git'
   MAIN_BRANCH: 'main'
-  CHROME_PACKAGE_VERSION: 124.0.6367.60-1
+  CHROME_PACKAGE_VERSION: 125.0.6422.60-1
 
 cache:
   key:
