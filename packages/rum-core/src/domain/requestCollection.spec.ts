@@ -195,7 +195,6 @@ describe('collect xhr', () => {
   let completeSpy: jasmine.Spy<(requestCompleteEvent: RequestCompleteEvent) => void>
   let stubXhrManager: { reset(): void }
   let stopXhrTracking: () => void
-  const HANDLING_STACK_REGEX = /^Error: \n\s+at setup @/
 
   beforeEach(() => {
     if (isIE()) {
