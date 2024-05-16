@@ -4,7 +4,7 @@ import { appendElement, appendText, createPerformanceEntry, setup } from '../../
 import { LifeCycleEventType } from '../../lifeCycle'
 import { RumPerformanceEntryType } from '../../../browser/performanceCollection'
 import type { CumulativeLayoutShift } from './trackCumulativeLayoutShift'
-import { trackCumulativeLayoutShift } from './trackCumulativeLayoutShift'
+import { MAX_WINDOW_DURATION, trackCumulativeLayoutShift } from './trackCumulativeLayoutShift'
 
 describe('trackCumulativeLayoutShift', () => {
   let setupBuilder: TestSetupBuilder
@@ -13,8 +13,12 @@ describe('trackCumulativeLayoutShift', () => {
   let clsCallback: jasmine.Spy<(csl: CumulativeLayoutShift) => void>
 
   beforeEach(() => {
-    if (!('PerformanceObserver' in window) || !('supportedEntryTypes' in PerformanceObserver)) {
-      pending('No PerformanceObserver support')
+    if (
+      !('PerformanceObserver' in window) ||
+      !('supportedEntryTypes' in PerformanceObserver) ||
+      !PerformanceObserver.supportedEntryTypes.includes('layout-shift')
+    ) {
+      pending('No LayoutShift API support')
     }
 
     clsCallback = jasmine.createSpy()
@@ -181,7 +185,7 @@ describe('trackCumulativeLayoutShift', () => {
       expect(clsCallback.calls.mostRecent().args[0].targetSelector).toEqual('#div-element')
     })
 
-    it('should not return the target element when the element is detached from the DOM', () => {
+    it('should not return the target element when the element is detached from the DOM before the performance entry event is triggered', () => {
       const { lifeCycle, clock } = setupBuilder.withFakeClock().build()
 
       // first session window
@@ -198,20 +202,44 @@ describe('trackCumulativeLayoutShift', () => {
       // second session window
       // first shift with an element
       const divElement = appendElement('<div id="div-element"></div>')
+      divElement.remove()
+
       lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [
         createPerformanceEntry(RumPerformanceEntryType.LAYOUT_SHIFT, {
           value: 0.2,
           sources: [{ node: divElement }],
         }),
       ])
-      divElement.remove()
-      // second shift that makes this window the maximum CLS
+
+      expect(clsCallback.calls.mostRecent().args[0].value).toEqual(0.2)
+      expect(clsCallback.calls.mostRecent().args[0].targetSelector).toEqual(undefined)
+    })
+
+    it('should get the target element of the largest layout shift', () => {
+      const { lifeCycle, clock } = setupBuilder.withFakeClock().build()
+      const divElement = appendElement('<div id="div-element"></div>')
+
       lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [
         createPerformanceEntry(RumPerformanceEntryType.LAYOUT_SHIFT, { value: 0.1 }),
       ])
+      lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [
+        createPerformanceEntry(RumPerformanceEntryType.LAYOUT_SHIFT, { value: 0.2, sources: [{ node: divElement }] }),
+      ])
+      lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [
+        createPerformanceEntry(RumPerformanceEntryType.LAYOUT_SHIFT, { value: 0.2 }),
+      ])
 
-      expect(clsCallback.calls.mostRecent().args[0].value).toEqual(0.3)
-      expect(clsCallback.calls.mostRecent().args[0].targetSelector).toEqual(undefined)
+      // second session window
+      clock.tick(MAX_WINDOW_DURATION + 1)
+      lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [
+        createPerformanceEntry(RumPerformanceEntryType.LAYOUT_SHIFT, { value: 0.2 }),
+      ])
+      lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [
+        createPerformanceEntry(RumPerformanceEntryType.LAYOUT_SHIFT, { value: 0.2 }),
+      ])
+
+      expect(clsCallback).toHaveBeenCalledTimes(4)
+      expect(clsCallback.calls.mostRecent().args[0]).toEqual({ value: 0.5, targetSelector: '#div-element' })
     })
   })
 })

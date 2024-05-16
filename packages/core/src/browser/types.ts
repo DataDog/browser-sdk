@@ -39,6 +39,18 @@ export interface VisualViewport extends EventTarget {
   ): void
 }
 
+export interface WeakRef<T extends object> {
+  readonly [Symbol.toStringTag]: 'WeakRef'
+
+  deref(): T | undefined
+}
+
+export interface WeakRefConstructor {
+  readonly prototype: WeakRef<any>
+
+  new <T extends object>(target: T): WeakRef<T>
+}
+
 // Those are native API types that are not official supported by TypeScript yet
 
 export interface CookieStore extends EventTarget {}
