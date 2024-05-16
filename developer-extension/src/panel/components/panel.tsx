@@ -13,7 +13,7 @@ import { InfosTab } from './tabs/infosTab'
 import { EventsTab, DEFAULT_COLUMNS } from './tabs/eventsTab'
 import { ReplayTab } from './tabs/replayTab'
 
-import classes from './panel.module.css'
+import * as classes from './panel.module.css'
 
 export function Panel() {
   const [settings] = useSettings()

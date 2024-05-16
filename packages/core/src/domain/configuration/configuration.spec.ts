@@ -9,7 +9,7 @@ import {
 } from '../../tools/experimentalFeatures'
 import { TrackingConsent } from '../trackingConsent'
 import type { InitConfiguration } from './configuration'
-import { serializeConfiguration, validateAndBuildConfiguration } from './configuration'
+import { DOC_LINK, serializeConfiguration, validateAndBuildConfiguration } from './configuration'
 
 describe('validateAndBuildConfiguration', () => {
   const clientToken = 'some_client_token'
@@ -207,6 +207,34 @@ describe('validateAndBuildConfiguration', () => {
     it('rejects invalid values', () => {
       expect(validateAndBuildConfiguration({ clientToken: 'yes', trackingConsent: 'foo' as any })).toBeUndefined()
       expect(displaySpy).toHaveBeenCalledOnceWith('Tracking Consent should be either "granted" or "not-granted"')
+    })
+  })
+
+  describe('site parameter validation', () => {
+    it('should validate the site parameter', () => {
+      validateAndBuildConfiguration({ clientToken, site: 'foo.com' })
+      expect(displaySpy).toHaveBeenCalledOnceWith(`Site should be a valid Datadog site. Learn more here: ${DOC_LINK}.`)
+    })
+  })
+
+  describe('env parameter validation', () => {
+    it('should not validate the env parameter', () => {
+      validateAndBuildConfiguration({ clientToken, env: false as any })
+      expect(displaySpy).toHaveBeenCalledOnceWith('Env must be defined as a string')
+    })
+  })
+
+  describe('service parameter validation', () => {
+    it('should not validate the service parameter', () => {
+      validateAndBuildConfiguration({ clientToken, service: 1 as any })
+      expect(displaySpy).toHaveBeenCalledOnceWith('Service must be defined as a string')
+    })
+  })
+
+  describe('version parameter validation', () => {
+    it('should not validate the version parameter', () => {
+      validateAndBuildConfiguration({ clientToken, version: 0 as any })
+      expect(displaySpy).toHaveBeenCalledOnceWith('Version must be defined as a string')
     })
   })
 

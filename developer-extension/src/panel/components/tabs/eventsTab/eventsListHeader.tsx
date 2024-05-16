@@ -4,7 +4,7 @@ import type { FacetRegistry } from '../../../hooks/useEvents'
 import type { EventListColumn } from './columnUtils'
 import { removeColumn, getColumnTitle } from './columnUtils'
 import { AddColumnPopover } from './addColumnPopover'
-import classes from './eventsListHeader.module.css'
+import * as classes from './eventsListHeader.module.css'
 
 interface Props {
   columns: EventListColumn[]

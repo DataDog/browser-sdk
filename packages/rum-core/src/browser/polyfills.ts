@@ -50,17 +50,6 @@ export function getParentElement(node: Node): HTMLElement | null {
   return null
 }
 
-// let parentNode = node.parentNode
-// while (parentNode !== null && parentNode.nodeType !== Node.ELEMENT_NODE) {
-//   parentNode = node.parentNode
-// }
-
-// let parentNode = document.querySelector('span').parentNode
-// while (parentNode !== null && parentNode.nodeType !== Node.ELEMENT_NODE) {
-//   parentNode = node.parentNode
-// }
-// console.log(parentNode)
-
 /**
  * Return the classList of an element or an array of classes if classList is not supported
  *

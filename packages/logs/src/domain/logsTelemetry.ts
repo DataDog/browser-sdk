@@ -8,6 +8,7 @@ import {
   createIdentityEncoder,
   isTelemetryReplicationAllowed,
   addTelemetryConfiguration,
+  drainPreStartTelemetry,
 } from '@datadog/browser-core'
 import type { LogsConfiguration, LogsInitConfiguration } from './configuration'
 import { getRUMInternalContext } from './contexts/rumInternalContext'
@@ -62,6 +63,7 @@ export function startLogsTelemetry(
     )
     cleanupTasks.push(() => telemetrySubscription.unsubscribe())
   }
+  drainPreStartTelemetry()
   addTelemetryConfiguration(serializeLogsConfiguration(initConfiguration))
   return {
     telemetry,
