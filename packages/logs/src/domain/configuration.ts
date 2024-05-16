@@ -76,7 +76,7 @@ export function validateAndBuildLogsConfiguration(
       forwardConsoleLogs,
       forwardReports,
       requestErrorResponseLengthLimit: DEFAULT_REQUEST_ERROR_RESPONSE_LENGTH_LIMIT,
-      sendLogsAfterSessionExpiration: initConfiguration.sendLogsAfterSessionExpiration !== false,
+      sendLogsAfterSessionExpiration: !!initConfiguration.sendLogsAfterSessionExpiration,
     },
     baseConfiguration
   )

@@ -254,7 +254,7 @@ describe('logs', () => {
       setCookie(SESSION_STORE_KEY, 'id=foo&logs=1', ONE_MINUTE)
       ;({ handleLog, stop: stopLogs } = startLogs(
         initConfiguration,
-        baseConfiguration,
+        { ...baseConfiguration, sendLogsAfterSessionExpiration: true },
         () => COMMON_CONTEXT,
         createTrackingConsentState(TrackingConsent.GRANTED)
       ))
@@ -283,7 +283,7 @@ describe('logs', () => {
       setCookie(SESSION_STORE_KEY, 'id=foo&logs=1', ONE_MINUTE)
       ;({ handleLog, stop: stopLogs } = startLogs(
         initConfiguration,
-        { ...baseConfiguration, sendLogsAfterSessionExpiration: false },
+        baseConfiguration,
         () => COMMON_CONTEXT,
         createTrackingConsentState(TrackingConsent.GRANTED)
       ))
