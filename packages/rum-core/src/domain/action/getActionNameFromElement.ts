@@ -1,6 +1,6 @@
 import { safeTruncate, isIE, find } from '@datadog/browser-core'
 import { getParentElement } from '../../browser/polyfills'
-import { NodePrivacyLevel, PRIVACY_ATTR_NAME, PRIVACY_CLASS_HIDDEN, PRIVACY_CLASS_MASK } from '../../constants'
+import { NodePrivacyLevel, PRIVACY_ATTR_NAME, PRIVACY_CLASS_HIDDEN, PRIVACY_CLASS_MASK } from '../privacy'
 import type { RumConfiguration } from '../configuration'
 
 /**

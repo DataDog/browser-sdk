@@ -39,7 +39,7 @@ export interface RumInitConfiguration extends InitConfiguration {
   startSessionReplayRecordingManually?: boolean | undefined
 
   // action options
-  enablePrivacyForActionName?: boolean | undefined
+  enablePrivacyForActionName?: boolean | undefined // TODO next major: remove this option and make privacy for action name the default behavior
   trackUserInteractions?: boolean | undefined
   actionNameAttribute?: string | undefined
 

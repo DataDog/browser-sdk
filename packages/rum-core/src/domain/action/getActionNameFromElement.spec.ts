@@ -1,5 +1,5 @@
 import { appendElement } from '../../../test'
-import { NodePrivacyLevel } from '../../constants'
+import { NodePrivacyLevel } from '../privacy'
 import type { RumConfiguration } from '../configuration'
 import { getActionNameFromElement } from './getActionNameFromElement'
 
