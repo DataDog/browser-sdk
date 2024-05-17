@@ -38,14 +38,15 @@ function createBundleSizesLogData(bundleSizes, browserSdkVersion) {
 }
 
 function createMemoryPerformanceLogData(memoryPerformance, browserSdkVersion) {
-  const memoryPerformanceData = memoryPerformance.reduce((result, { sdkTask, sdkMemoryBytes, sdkMemoryPercentage }) => {
-    const transformedTaskName = formatTaskName(sdkTask)
-    result[transformedTaskName] = { memory_bytes: sdkMemoryBytes, memory_percentage: sdkMemoryPercentage }
-    return result
-  }, {})
+  const memoryPerformanceData = Object.fromEntries(
+    memoryPerformance.map(({ testProperty, sdkMemoryBytes, sdkMemoryPercentage }) => [
+      testProperty,
+      { memory_bytes: sdkMemoryBytes, memory_percentage: sdkMemoryPercentage },
+    ])
+  )
   return [
     {
-      message: 'Memory performance SDK',
+      message: 'Browser SDK memory consumption',
       service: 'browser-sdk',
       ddsource: 'browser-sdk',
       env: 'ci',
@@ -65,10 +66,6 @@ async function sendLogToOrg2(logData = []) {
   })
   // Wait for logs ingestion
   await timeout(TIMEOUT_IN_MS)
-}
-
-function formatTaskName(taskName) {
-  return taskName.replace(/ - /g, '_').replace(/ /g, '').replace(/\//g, '').toLowerCase()
 }
 
 module.exports = {
