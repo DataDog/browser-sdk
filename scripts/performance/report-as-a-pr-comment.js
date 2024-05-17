@@ -16,7 +16,7 @@ async function reportAsPrComment(localBundleSizes, memoryLocalPerformance) {
     return
   }
   const packageNames = Object.keys(localBundleSizes)
-  const actionNames = memoryLocalPerformance.map((obj) => obj.property)
+  const actionNames = memoryLocalPerformance.map((obj) => obj.testProperty)
   const baseBundleSizes = await fetchPerformanceMetrics('bundle', packageNames, lastCommonCommit)
   const cpuBasePerformance = await fetchPerformanceMetrics('cpu', actionNames, lastCommonCommit)
   const cpuLocalPerformance = await fetchPerformanceMetrics('cpu', actionNames, LOCAL_COMMIT_SHA)
@@ -153,7 +153,7 @@ function createMessage(
     '| Action Name | Base Consumption Memory (bytes) | Local Consumption Memory (bytes) | 𝚫 |\n| --- | --- | --- | --- |\n'
   differenceMemory.forEach((memoryTestPerformance, index) => {
     const baseMemoryPerf = memoryBasePerformance[index]
-    const localMemoryPerf = memoryLocalPerformance.find((perf) => perf.property === memoryTestPerformance.name)
+    const localMemoryPerf = memoryLocalPerformance.find((perf) => perf.testProperty === memoryTestPerformance.name)
     const baseMemoryTaskValue = baseMemoryPerf.value !== null ? baseMemoryPerf.value : 'N/A'
     const localMemoryTaskValue =
       localMemoryPerf && localMemoryPerf.sdkMemoryBytes !== null ? localMemoryPerf.sdkMemoryBytes : 'N/A'
