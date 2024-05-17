@@ -16,7 +16,7 @@ async function reportAsPrComment(localBundleSizes, memoryLocalPerformance) {
     return
   }
   const packageNames = Object.keys(localBundleSizes)
-  const actionNames = memoryLocalPerformance.map((obj) => formatActionName(obj.sdkTask))
+  const actionNames = memoryLocalPerformance.map((obj) => obj.property)
   const baseBundleSizes = await fetchPerformanceMetrics('bundle', packageNames, lastCommonCommit)
   const cpuBasePerformance = await fetchPerformanceMetrics('cpu', actionNames, lastCommonCommit)
   const cpuLocalPerformance = await fetchPerformanceMetrics('cpu', actionNames, LOCAL_COMMIT_SHA)
