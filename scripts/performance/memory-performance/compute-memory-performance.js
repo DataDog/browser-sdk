@@ -16,7 +16,7 @@ const TESTS = [
   },
   {
     name: 'RUM - add error',
-    button: '#rum-dd-error',
+    button: '#rum-add-error',
     property: 'rum_adderror',
   },
   {
