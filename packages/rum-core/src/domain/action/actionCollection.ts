@@ -1,5 +1,5 @@
-import type { ClocksState, Context, Observable } from '@datadog/browser-core'
-import { noop, assign, combine, toServerDuration, generateUUID } from '@datadog/browser-core'
+import type { ClocksState, Context, Observable, ServerDuration } from '@datadog/browser-core'
+import { noop, assign, combine, toServerDuration, generateUUID, isNumber } from '@datadog/browser-core'
 
 import type { RawRumActionEvent } from '../../rawRumEvent.types'
 import { ActionType, RumEventType } from '../../rawRumEvent.types'
@@ -62,7 +62,7 @@ function processAction(
     ? {
         action: {
           id: action.id,
-          loading_time: toServerDuration(action.duration),
+          loading_time: discardNegativeLoadingTime(toServerDuration(action.duration)),
           frustration: {
             type: action.frustrationTypes,
           },
@@ -111,4 +111,8 @@ function processAction(
 
 function isAutoAction(action: AutoAction | CustomAction): action is AutoAction {
   return action.type !== ActionType.CUSTOM
+}
+
+function discardNegativeLoadingTime(duration: ServerDuration | undefined): ServerDuration | undefined {
+  return isNumber(duration) && duration < 0 ? undefined : duration
 }
