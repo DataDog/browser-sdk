@@ -151,16 +151,14 @@ function createMessage(
   message += '\n\n<details>\n<summary>🧠 Memory Performance</summary>\n\n'
   message +=
     '| Action Name | Base Consumption Memory (bytes) | Local Consumption Memory (bytes) | 𝚫 |\n| --- | --- | --- | --- |\n'
-  differenceMemory.forEach((memoryActionPerformance, index) => {
+  differenceMemory.forEach((memoryTestPerformance, index) => {
     const baseMemoryPerf = memoryBasePerformance[index]
-    const localMemoryPerf = memoryLocalPerformance.find(
-      (perf) => formatActionName(perf.sdkTask) === memoryActionPerformance.name
-    )
+    const localMemoryPerf = memoryLocalPerformance.find((perf) => perf.property === memoryTestPerformance.name)
     const baseMemoryTaskValue = baseMemoryPerf.value !== null ? baseMemoryPerf.value : 'N/A'
     const localMemoryTaskValue =
       localMemoryPerf && localMemoryPerf.sdkMemoryBytes !== null ? localMemoryPerf.sdkMemoryBytes : 'N/A'
-    const diffMemoryTaskValue = memoryActionPerformance.change !== null ? memoryActionPerformance.change : 'N/A'
-    message += `| ${memoryActionPerformance.name} | ${formatSize(baseMemoryTaskValue)} | ${formatSize(localMemoryTaskValue)} | ${formatSize(diffMemoryTaskValue)} |\n`
+    const diffMemoryTaskValue = memoryTestPerformance.change !== null ? memoryTestPerformance.change : 'N/A'
+    message += `| ${memoryTestPerformance.name} | ${formatSize(baseMemoryTaskValue)} | ${formatSize(localMemoryTaskValue)} | ${formatSize(diffMemoryTaskValue)} |\n`
   })
   message += '\n</details>\n'
 
