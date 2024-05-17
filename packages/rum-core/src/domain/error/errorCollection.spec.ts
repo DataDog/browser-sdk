@@ -1,6 +1,6 @@
 import type { RelativeTime, TimeStamp, ErrorWithCause } from '@datadog/browser-core'
-import { ErrorHandling, ErrorSource, NO_ERROR_STACK_PRESENT_MESSAGE } from '@datadog/browser-core'
-import { FAKE_CSP_VIOLATION_EVENT } from '@datadog/browser-core/test'
+import { ErrorHandling, ErrorSource, ExperimentalFeature, NO_ERROR_STACK_PRESENT_MESSAGE } from '@datadog/browser-core'
+import { FAKE_CSP_VIOLATION_EVENT, mockExperimentalFeatures } from '@datadog/browser-core/test'
 import type { TestSetupBuilder } from '../../../test'
 import { setup } from '../../../test'
 import type { RawRumErrorEvent } from '../../rawRumEvent.types'
@@ -219,6 +219,22 @@ describe('error collection', () => {
       const rawRumErrorEvent = rawRumEvents[0].rawRumEvent as RawRumErrorEvent
 
       expect(rawRumErrorEvent.feature_flags).toEqual({ feature: 'foo' })
+    })
+
+    it('should include handling stack', () => {
+      const { rawRumEvents } = setupBuilder.build()
+
+      mockExperimentalFeatures([ExperimentalFeature.MICRO_FRONTEND])
+
+      addError({
+        error: new Error('foo'),
+        startClocks: { relative: 1234 as RelativeTime, timeStamp: 123456789 as TimeStamp },
+        handlingStack: 'Error\n    at foo\n    at bar',
+      })
+      expect(rawRumEvents[0].domainContext).toEqual({
+        error: new Error('foo'),
+        handlingStack: 'Error\n    at foo\n    at bar',
+      })
     })
   })
 
