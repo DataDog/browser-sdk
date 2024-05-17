@@ -7,37 +7,37 @@ const TESTS = [
   {
     name: 'RUM - add global context',
     button: '#rum-add-global-context',
-    property: 'rum_addglobalcontext',
+    property: 'addglobalcontext',
   },
   {
     name: 'RUM - add action',
     button: '#rum-add-action',
-    property: 'rum_addaction',
+    property: 'addaction',
   },
   {
     name: 'RUM - add error',
     button: '#rum-add-error',
-    property: 'rum_adderror',
+    property: 'adderror',
   },
   {
     name: 'RUM - add timing',
     button: '#rum-add-timing',
-    property: 'rum_addtiming',
+    property: 'addtiming',
   },
   {
     name: 'RUM - start view',
     button: '#rum-start-view',
-    property: 'rum_startview',
+    property: 'startview',
   },
   {
     name: 'RUM - start/stop session replay recording',
     button: '#rum-start-stop-session-replay-recording',
-    property: 'rum_startstopsessionreplayrecording',
+    property: 'startstopsessionreplayrecording',
   },
   {
     name: 'Logs - log message',
     button: '#logs-log-message',
-    property: 'logs_logmessage',
+    property: 'logmessage',
   },
 ]
 
