@@ -28,7 +28,10 @@ runMain(() => {
     command`git merge --no-ff ${CI_COMMIT_SHA}`.run()
   } catch (error) {
     const diff = command`git diff`.run()
-    printError(`Conflicts:\n${diff}`)
+    printError(
+      `Conflicts:\n${diff}\n` +
+        'See "How to fix staging" in Confluence for help: https://datadoghq.atlassian.net/wiki/spaces/FRON/pages/2548269306/How+to+fix+staging+conflicts'
+    )
     throw error
   }
 
