@@ -172,16 +172,6 @@ function formatBundleName(bundleName) {
     .join(' ')
 }
 
-function formatActionName(taskName) {
-  return taskName
-    .replace('RUM - ', '')
-    .replace('Logs - ', '')
-    .replace(/ - /g, '_')
-    .replace(/ /g, '')
-    .replace(/\//g, '')
-    .toLowerCase()
-}
-
 function formatSize(bytes) {
   if (bytes < 1024) {
     return `${bytes} B`
