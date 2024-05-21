@@ -148,10 +148,12 @@ function createMessage(
     return [cpuActionPerformance.name, baseCpuTaskValue, localCpuTaskValue, diffCpuTaskValue]
   })
 
+  message += '<details>\n<summary>🚀 CPU Performance</summary>\n\n'
   message += markdownArray({
     headers: ['Action Name', 'Base Average Cpu Time (ms)', 'Local Average Cpu Time (ms)', '𝚫'],
     rows: cpuRows,
   })
+  message += '\n</details>\n\n'
 
   const memoryRows = differenceMemory.map((memoryTestPerformance, index) => {
     const baseMemoryPerf = memoryBasePerformance[index]
@@ -168,10 +170,12 @@ function createMessage(
     ]
   })
 
+  message += '<details>\n<summary>🧠 Memory Performance</summary>\n\n'
   message += markdownArray({
     headers: ['Action Name', 'Base Consumption Memory (bytes)', 'Local Consumption Memory (bytes)', '𝚫'],
     rows: memoryRows,
   })
+  message += '\n</details>\n\n'
 
   return message
 }
