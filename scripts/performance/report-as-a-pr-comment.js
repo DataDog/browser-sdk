@@ -16,11 +16,11 @@ async function reportAsPrComment(localBundleSizes, memoryLocalPerformance) {
     return
   }
   const packageNames = Object.keys(localBundleSizes)
-  const actionNames = memoryLocalPerformance.map((obj) => obj.testProperty)
+  const testNames = memoryLocalPerformance.map((obj) => obj.testProperty)
   const baseBundleSizes = await fetchPerformanceMetrics('bundle', packageNames, lastCommonCommit)
-  const cpuBasePerformance = await fetchPerformanceMetrics('cpu', actionNames, lastCommonCommit)
-  const cpuLocalPerformance = await fetchPerformanceMetrics('cpu', actionNames, LOCAL_COMMIT_SHA)
-  const memoryBasePerformance = await fetchPerformanceMetrics('memory', actionNames, lastCommonCommit)
+  const cpuBasePerformance = await fetchPerformanceMetrics('cpu', testNames, lastCommonCommit)
+  const cpuLocalPerformance = await fetchPerformanceMetrics('cpu', testNames, LOCAL_COMMIT_SHA)
+  const memoryBasePerformance = await fetchPerformanceMetrics('memory', testNames, lastCommonCommit)
   const differenceMemory = compare(memoryBasePerformance, memoryLocalPerformance)
   const differenceBundle = compare(baseBundleSizes, localBundleSizes)
   const differenceCpu = compare(cpuBasePerformance, cpuLocalPerformance)
@@ -139,13 +139,13 @@ function createMessage(
     message += `\n⚠️ The increase is particularly high and exceeds ${SIZE_INCREASE_THRESHOLD}%. Please check the changes.`
   }
 
-  const cpuRows = cpuBasePerformance.map((cpuActionPerformance, index) => {
+  const cpuRows = cpuBasePerformance.map((cpuTestPerformance, index) => {
     const localCpuPerf = cpuLocalPerformance[index]
     const diffCpuPerf = differenceCpu[index]
-    const baseCpuTaskValue = cpuActionPerformance.value !== null ? cpuActionPerformance.value.toFixed(3) : 'N/A'
-    const localCpuTaskValue = localCpuPerf.value !== null ? localCpuPerf.value.toFixed(3) : 'N/A'
-    const diffCpuTaskValue = diffCpuPerf.change !== null ? diffCpuPerf.change.toFixed(3) : 'N/A'
-    return [cpuActionPerformance.name, baseCpuTaskValue, localCpuTaskValue, diffCpuTaskValue]
+    const baseCpuTestValue = cpuTestPerformance.value !== null ? cpuTestPerformance.value.toFixed(3) : 'N/A'
+    const localCpuTestValue = localCpuPerf.value !== null ? localCpuPerf.value.toFixed(3) : 'N/A'
+    const diffCpuTestValue = diffCpuPerf.change !== null ? diffCpuPerf.change.toFixed(3) : 'N/A'
+    return [cpuTestPerformance.name, baseCpuTestValue, localCpuTestValue, diffCpuTestValue]
   })
 
   message += '<details>\n<summary>🚀 CPU Performance</summary>\n\n'
@@ -158,15 +158,15 @@ function createMessage(
   const memoryRows = differenceMemory.map((memoryTestPerformance, index) => {
     const baseMemoryPerf = memoryBasePerformance[index]
     const localMemoryPerf = memoryLocalPerformance.find((perf) => perf.testProperty === memoryTestPerformance.name)
-    const baseMemoryTaskValue = baseMemoryPerf.value !== null ? baseMemoryPerf.value : 'N/A'
-    const localMemoryTaskValue =
+    const baseMemoryTestValue = baseMemoryPerf.value !== null ? baseMemoryPerf.value : 'N/A'
+    const localMemoryTestValue =
       localMemoryPerf && localMemoryPerf.sdkMemoryBytes !== null ? localMemoryPerf.sdkMemoryBytes : 'N/A'
-    const diffMemoryTaskValue = memoryTestPerformance.change !== null ? memoryTestPerformance.change : 'N/A'
+    const diffMemoryTestValue = memoryTestPerformance.change !== null ? memoryTestPerformance.change : 'N/A'
     return [
       memoryTestPerformance.name,
-      formatSize(baseMemoryTaskValue),
-      formatSize(localMemoryTaskValue),
-      formatSize(diffMemoryTaskValue),
+      formatSize(baseMemoryTestValue),
+      formatSize(localMemoryTestValue),
+      formatSize(diffMemoryTestValue),
     ]
   })
 
