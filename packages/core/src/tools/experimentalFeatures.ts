@@ -12,7 +12,6 @@
 // eslint-disable-next-line no-restricted-syntax
 export enum ExperimentalFeature {
   PAGEHIDE = 'pagehide',
-  RESOURCE_PAGE_STATES = 'resource_page_states',
   COLLECT_FLUSH_REASON = 'collect_flush_reason',
   ZERO_LCP_TELEMETRY = 'zero_lcp_telemetry',
   DISABLE_REPLAY_INLINE_CSS = 'disable_replay_inline_css',
