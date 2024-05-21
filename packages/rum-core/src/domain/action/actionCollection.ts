@@ -1,7 +1,7 @@
 import type { ClocksState, Context, Observable } from '@datadog/browser-core'
 import { noop, assign, combine, toServerDuration, generateUUID } from '@datadog/browser-core'
 
-import { discardNegativeDuration } from '../view/viewCollection'
+import { discardNegativeDuration } from '../discardNegativeDuration'
 import type { RawRumActionEvent } from '../../rawRumEvent.types'
 import { ActionType, RumEventType } from '../../rawRumEvent.types'
 import type { LifeCycle, RawRumEventCollectedData } from '../lifeCycle'

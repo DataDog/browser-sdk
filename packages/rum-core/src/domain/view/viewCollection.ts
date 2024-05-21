@@ -1,5 +1,6 @@
 import type { Duration, ServerDuration, Observable } from '@datadog/browser-core'
-import { isEmptyObject, mapValues, toServerDuration, isNumber } from '@datadog/browser-core'
+import { isEmptyObject, mapValues, toServerDuration } from '@datadog/browser-core'
+import { discardNegativeDuration } from '../discardNegativeDuration'
 import type { RecorderApi } from '../../boot/rumPublicApi'
 import type { RawRumViewEvent } from '../../rawRumEvent.types'
 import { RumEventType } from '../../rawRumEvent.types'
@@ -130,8 +131,4 @@ function processViewUpdate(
       location: view.location,
     },
   }
-}
-
-export function discardNegativeDuration(duration: ServerDuration | undefined): ServerDuration | undefined {
-  return isNumber(duration) && duration < 0 ? undefined : duration
 }
