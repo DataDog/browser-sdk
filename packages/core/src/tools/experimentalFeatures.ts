@@ -13,7 +13,6 @@
 export enum ExperimentalFeature {
   PAGEHIDE = 'pagehide',
   COLLECT_FLUSH_REASON = 'collect_flush_reason',
-  ZERO_LCP_TELEMETRY = 'zero_lcp_telemetry',
   DISABLE_REPLAY_INLINE_CSS = 'disable_replay_inline_css',
   WRITABLE_RESOURCE_GRAPHQL = 'writable_resource_graphql',
   CUSTOM_VITALS = 'custom_vitals',
