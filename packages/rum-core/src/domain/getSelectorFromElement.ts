@@ -42,7 +42,7 @@ export function getSelectorFromElement(
   targetElement: Element,
   actionNameAttribute: string | undefined
 ): string | undefined {
-  if (!targetElement.isConnected) {
+  if (!isConnected(targetElement)) {
     // We cannot compute a selector for a detached element, as we don't have access to all of its
     // parents, and we cannot determine if it's unique in the document.
     return
@@ -208,4 +208,16 @@ export function supportScopeSelector() {
     }
   }
   return supportScopeSelectorCache
+}
+
+function isConnected(element: Element): boolean {
+  if (
+    'isConnected' in
+    // cast is to make sure `element` is not inferred as `never` after the check
+    (element as { isConnected?: boolean })
+  ) {
+    return element.isConnected
+  }
+
+  return element.ownerDocument.documentElement.contains(element)
 }
