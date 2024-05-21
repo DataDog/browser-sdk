@@ -11,6 +11,8 @@ import {
   isPercentage,
   objectHasValue,
   validateAndBuildConfiguration,
+  isExperimentalFeatureEnabled,
+  ExperimentalFeature,
 } from '@datadog/browser-core'
 import type { RumEventDomainContext } from '../domainContext.types'
 import type { RumEvent } from '../rumEvent.types'
@@ -131,7 +133,10 @@ export function validateAndBuildRumConfiguration(
       defaultPrivacyLevel: objectHasValue(DefaultPrivacyLevel, initConfiguration.defaultPrivacyLevel)
         ? initConfiguration.defaultPrivacyLevel
         : DefaultPrivacyLevel.MASK,
-      enablePrivacyForActionName: initConfiguration.enablePrivacyForActionName ?? false,
+      enablePrivacyForActionName:
+        (isExperimentalFeatureEnabled(ExperimentalFeature.ENABLE_PRIVACY_FOR_ACTION_NAME) &&
+          initConfiguration.enablePrivacyForActionName) ??
+        false,
       customerDataTelemetrySampleRate: 1,
       traceContextInjection: objectHasValue(TraceContextInjection, initConfiguration.traceContextInjection)
         ? initConfiguration.traceContextInjection
