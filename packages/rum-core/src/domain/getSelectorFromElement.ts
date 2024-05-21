@@ -210,6 +210,9 @@ export function supportScopeSelector() {
   return supportScopeSelectorCache
 }
 
+/**
+ * Polyfill-utility for the `isConnected` property not supported in IE11
+ */
 function isConnected(element: Element): boolean {
   if (
     'isConnected' in
