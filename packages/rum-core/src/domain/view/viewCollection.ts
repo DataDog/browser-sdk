@@ -132,6 +132,6 @@ function processViewUpdate(
   }
 }
 
-function discardNegativeDuration(duration: ServerDuration | undefined): ServerDuration | undefined {
+export function discardNegativeDuration(duration: ServerDuration | undefined): ServerDuration | undefined {
   return isNumber(duration) && duration < 0 ? undefined : duration
 }

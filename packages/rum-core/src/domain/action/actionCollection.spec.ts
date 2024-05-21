@@ -118,7 +118,7 @@ describe('actionCollection', () => {
     })
     expect(rawRumEvents[0].domainContext).toEqual({})
   })
-  it('should discard negative action loading time', () => {
+  it('should not set the loading time field of the action', () => {
     const { lifeCycle, rawRumEvents } = setupBuilder.build()
     const event = createNewEvent('pointerup', { target: document.createElement('button') })
     lifeCycle.notify(LifeCycleEventType.AUTO_ACTION_COMPLETED, {
