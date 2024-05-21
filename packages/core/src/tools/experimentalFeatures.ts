@@ -11,7 +11,6 @@
 // string is an expected feature flag
 // eslint-disable-next-line no-restricted-syntax
 export enum ExperimentalFeature {
-  PAGEHIDE = 'pagehide',
   COLLECT_FLUSH_REASON = 'collect_flush_reason',
   DISABLE_REPLAY_INLINE_CSS = 'disable_replay_inline_css',
   WRITABLE_RESOURCE_GRAPHQL = 'writable_resource_graphql',

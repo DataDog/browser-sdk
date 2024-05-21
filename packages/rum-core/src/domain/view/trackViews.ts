@@ -131,7 +131,7 @@ export function trackViews(
 
     // End the current view on page unload
     lifeCycle.subscribe(LifeCycleEventType.PAGE_EXITED, (pageExitEvent) => {
-      if (pageExitEvent.reason === PageExitReason.UNLOADING || pageExitEvent.reason === PageExitReason.PAGEHIDE) {
+      if (pageExitEvent.reason === PageExitReason.UNLOADING) {
         currentView.end()
       }
     })
