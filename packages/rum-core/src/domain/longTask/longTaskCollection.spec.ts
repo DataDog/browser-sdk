@@ -16,8 +16,8 @@ describe('long task collection', () => {
     sessionManager = createRumSessionManagerMock()
     setupBuilder = setup()
       .withSessionManager(sessionManager)
-      .beforeBuild(({ lifeCycle, sessionManager, configuration }) => {
-        startLongTaskCollection(lifeCycle, { ...configuration, trackLongTasks }, sessionManager)
+      .beforeBuild(({ lifeCycle, configuration }) => {
+        startLongTaskCollection(lifeCycle, { ...configuration, trackLongTasks })
       })
   })
 
