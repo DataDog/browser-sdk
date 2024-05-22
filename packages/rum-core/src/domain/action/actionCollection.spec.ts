@@ -1,5 +1,6 @@
 import type { Duration, RelativeTime, ServerDuration, TimeStamp } from '@datadog/browser-core'
 import { createNewEvent } from '@datadog/browser-core/test'
+import type { RawRumActionEvent } from '@datadog/browser-rum-core'
 import type { TestSetupBuilder } from '../../../test'
 import { setup } from '../../../test'
 import { RumEventType, ActionType } from '../../rawRumEvent.types'
@@ -116,5 +117,25 @@ describe('actionCollection', () => {
       },
     })
     expect(rawRumEvents[0].domainContext).toEqual({})
+  })
+  it('should not set the loading time field of the action', () => {
+    const { lifeCycle, rawRumEvents } = setupBuilder.build()
+    const event = createNewEvent('pointerup', { target: document.createElement('button') })
+    lifeCycle.notify(LifeCycleEventType.AUTO_ACTION_COMPLETED, {
+      counts: {
+        errorCount: 0,
+        longTaskCount: 0,
+        resourceCount: 0,
+      },
+      duration: -10 as Duration,
+      event,
+      events: [event],
+      frustrationTypes: [],
+      id: 'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee',
+      name: 'foo',
+      startClocks: { relative: 0 as RelativeTime, timeStamp: 0 as TimeStamp },
+      type: ActionType.CLICK,
+    })
+    expect((rawRumEvents[0].rawRumEvent as RawRumActionEvent).action.loading_time).toBeUndefined()
   })
 })
