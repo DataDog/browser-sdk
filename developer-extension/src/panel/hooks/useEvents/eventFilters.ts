@@ -75,13 +75,15 @@ function filterOutdatedVersions(events: SdkEvent[]): SdkEvent[] {
 
 function parseQuery(query: string) {
   const queryParts = query
-    .split(' ')
+    .split(/(?<!\\)\s/gm)
     .filter((queryPart) => queryPart)
     .map((queryPart) => queryPart.split(':'))
 
   return {
     match: (event: SdkEvent) =>
-      queryParts.every((queryPart) => matchQueryPart(event, queryPart[0], queryPart.length ? queryPart[1] : '')),
+      queryParts.every((queryPart) =>
+        matchQueryPart(event, queryPart[0], queryPart.length > 1 ? queryPart[1].replaceAll(/\\[ ]+/gm, ' ') : '')
+      ),
   }
 }
 
