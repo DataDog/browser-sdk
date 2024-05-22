@@ -12,6 +12,7 @@ import * as classes from './json.module.css'
 interface JsonProps {
   value: unknown
   defaultCollapseLevel?: number
+  columnPath?: string
   getMenuItemsForPath?: GetMenuItemsForPath
   formatValue?: FormatValue
 }
@@ -42,38 +43,40 @@ const COLORS = {
 
 const JsonContext = createContext<{
   defaultCollapseLevel: number
+  columnPath?: string
   getMenuItemsForPath?: GetMenuItemsForPath
   formatValue: FormatValue
 } | null>(null)
 
 type JsonValueDescriptor =
   | {
-      parentType: 'root'
-      value: unknown
-      depth: 0
-      path: ''
-    }
+    parentType: 'root'
+    value: unknown
+    depth: 0
+    path: ''
+  }
   | {
-      parentType: 'array'
-      parentValue: unknown[]
-      value: unknown
-      path: string
-      depth: number
-    }
+    parentType: 'array'
+    parentValue: unknown[]
+    value: unknown
+    path: string
+    depth: number
+  }
   | {
-      parentType: 'object'
-      parentValue: object
-      value: unknown
-      path: string
-      depth: number
-      key: string
-    }
+    parentType: 'object'
+    parentValue: object
+    value: unknown
+    path: string
+    depth: number
+    key: string
+  }
 
 export const Json = forwardRef(
   (
     {
       value,
       defaultCollapseLevel = Infinity,
+      columnPath,
       formatValue = defaultFormatValue,
       getMenuItemsForPath,
       ...boxProps
@@ -89,7 +92,7 @@ export const Json = forwardRef(
       component={doesValueHasChildren(value) ? 'div' : 'span'}
       className={classes.root}
     >
-      <JsonContext.Provider value={{ defaultCollapseLevel, getMenuItemsForPath, formatValue }}>
+      <JsonContext.Provider value={{ defaultCollapseLevel, columnPath, getMenuItemsForPath, formatValue }}>
         <JsonValue
           descriptor={{
             parentType: 'root',
@@ -256,6 +259,7 @@ function JsonText({
     menuItems = (
       <>
         <CopyMenuItem value={descriptor.value}>Copy value</CopyMenuItem>
+        <CopyMenuItem value={getSearchQuery(descriptor)}>Copy search query</CopyMenuItem>
       </>
     )
   }
@@ -273,6 +277,14 @@ function JsonText({
       </Menu.Dropdown>
     </Menu>
   )
+}
+
+function getSearchQuery(descriptor: JsonValueDescriptor) {
+  const { columnPath } = useContext(JsonContext)!
+  if (columnPath) {
+    return `${columnPath}:${String(descriptor.value)}`
+  }
+  return ''
 }
 
 function JsonLine({
@@ -314,7 +326,7 @@ function CopyMenuItem({ value, children }: { value: unknown; children: ReactNode
   return (
     <Menu.Item
       onClick={() => {
-        copy(JSON.stringify(value, null, 2))
+        copy(JSON.parse(JSON.stringify(value, null, 2)))
       }}
       leftSection={<IconCopy size={14} />}
     >

@@ -151,6 +151,7 @@ export const EventRow = React.memo(
                     <Json
                       value={value}
                       defaultCollapseLevel={0}
+                      columnPath={column.path}
                       getMenuItemsForPath={(path) => getMenuItemsForPath(path ? `${column.path}.${path}` : column.path)}
                       formatValue={(path, value) => formatValue(path ? `${column.path}.${path}` : column.path, value)}
                     />
