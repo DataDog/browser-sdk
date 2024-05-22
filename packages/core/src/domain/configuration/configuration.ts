@@ -30,43 +30,126 @@ export const TraceContextInjection = {
 export type TraceContextInjection = (typeof TraceContextInjection)[keyof typeof TraceContextInjection]
 
 export interface InitConfiguration {
-  // global options
+  /**
+   * The client token for Datadog. Required for authenticating your application with Datadog.
+   */
   clientToken: string
   beforeSend?: GenericBeforeSendCallback | undefined
+  /**
+   * The percentage of sessions tracked. A value between 0 and 100.
+   * @default 100
+   */
   sessionSampleRate?: number | undefined
+  /**
+   * The percentage of telemetry events sent. A value between 0 and 100.
+   * @default 20
+   */
   telemetrySampleRate?: number | undefined
+  /**
+   * Initialization fails silently if the RUM Browser SDK is already initialized on the page.
+   * @default false
+   */
   silentMultipleInit?: boolean | undefined
+  /**
+   * Allows the use of localStorage when cookies cannot be set. This enables the RUM Browser SDK to run in environments that do not provide cookie support.
+   * See [Monitor Electron Applications Using the Browser SDK](https://docs.datadoghq.com/real_user_monitoring/guide/monitor-electron-applications-using-browser-sdk) for further information.
+   * @default false
+   */
   allowFallbackToLocalStorage?: boolean | undefined
+  /**
+   * Allow untrusted events to be collected by the browser SDK. Can be useful if you heavily rely on programmatic events, such as in an automated UI test environment.
+   * @default false
+   */
   allowUntrustedEvents?: boolean | undefined
+  /**
+   * Store global context and user context in localStorage to preserve them along the user navigation.
+   * See [Contexts life cycle](https://docs.datadoghq.com/real_user_monitoring/browser/advanced_configuration/?tab=npm#contexts-life-cycle) for further information.
+   * @default false
+   */
   storeContextsAcrossPages?: boolean | undefined
+  /**
+   * Set the initial user tracking consent state.
+   * See [User tracking consent](https://docs.datadoghq.com/real_user_monitoring/browser/advanced_configuration/?tab=npm#user-tracking-consent) for further information.
+   * @default granted
+   */
   trackingConsent?: TrackingConsent | undefined
 
   // transport options
+  /**
+   * Optional proxy URL, for example: https://www.proxy.com/path.
+   * See [Proxy Your Browser RUM Data](https://docs.datadoghq.com/real_user_monitoring/guide/proxy-rum-data) for further information.
+   */
   proxy?: string | ProxyFn | undefined
+  /**
+   * The Datadog [site](https://docs.datadoghq.com/getting_started/site) parameter of your organization.
+   * @default datadoghq.com
+   */
   site?: string | undefined
 
   // tag and context options
+  /**
+   * The service name for your application. Follows the [tag syntax requirements](https://docs.datadoghq.com/getting_started/tagging/#define-tags).
+   */
   service?: string | undefined
+  /**
+   * The application’s environment, for example: prod, pre-prod, and staging. Follows the [tag syntax requirements](https://docs.datadoghq.com/getting_started/tagging/#define-tags).
+   */
   env?: string | undefined
+  /**
+   * The application’s version, for example: 1.2.3, 6c44da20, and 2020.02.13. Follows the [tag syntax requirements](https://docs.datadoghq.com/getting_started/tagging/#define-tags).
+   */
   version?: string | undefined
 
   // cookie options
   /**
+   * Whether a secure cross-site session cookie is used
+   * @default false
    * @deprecated use usePartitionedCrossSiteSessionCookie instead
    */
   useCrossSiteSessionCookie?: boolean | undefined
+  /**
+   * Use a partitioned secure cross-site session cookie. This allows the RUM Browser SDK to run when the site is loaded from another one (iframe). Implies `useSecureSessionCookie`.
+   * @default false
+   */
   usePartitionedCrossSiteSessionCookie?: boolean | undefined
+  /**
+   * Use a secure session cookie. This disables RUM events sent on insecure (non-HTTPS) connections.
+   * @default false
+   */
   useSecureSessionCookie?: boolean | undefined
+  /**
+   * Preserve the session across subdomains for the same site.
+   * @default false
+   */
   trackSessionAcrossSubdomains?: boolean | undefined
 
   // internal options
+  /**
+   * [Internal option] Enable experimental features
+   */
   enableExperimentalFeatures?: string[] | undefined
+  /**
+   * [Internal option] Configure the dual chipping to another datacenter
+   */
   replica?: ReplicaUserConfiguration | undefined
+  /**
+   * [Internal option] Set the datacenter from where the data is dual chipped
+   */
   datacenter?: string
+  /**
+   * [Internal option] Datadog internal analytics subdomain
+   */
   // TODO next major: remove this option and replace usages by proxyFn
   internalAnalyticsSubdomain?: string
-
+  /**
+   * [Internal option] The percentage of telemetry configuration sent. A value between 0 and 100.
+   * @default 5
+   */
   telemetryConfigurationSampleRate?: number
+  /**
+   * [Internal option] The percentage of telemetry usage sent. A value between 0 and 100.
+   * @default 5
+   */
   telemetryUsageSampleRate?: number
 }
 

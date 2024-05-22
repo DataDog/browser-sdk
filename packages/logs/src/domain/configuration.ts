@@ -15,10 +15,31 @@ import type { LogsEvent } from '../logsEvent.types'
 import type { LogsEventDomainContext } from '../domainContext.types'
 
 export interface LogsInitConfiguration extends InitConfiguration {
+  /**
+   * Access to every logs collected by the Logs SDK before they are sent to Datadog.
+   * It allows:
+   * - Enrich your logs with additional context attributes
+   * - Modify your logs to modify their content, or redact sensitive sequences (see the list of editable properties)
+   * - Discard selected logs
+   */
   beforeSend?: ((event: LogsEvent, context: LogsEventDomainContext) => boolean) | undefined
+  /**
+   * Forward console.error logs, uncaught exceptions and network errors to Datadog.
+   * @default true
+   */
   forwardErrorsToLogs?: boolean | undefined
+  /**
+   * Forward logs from console.* to Datadog. Use "all" to forward everything or an array of console API names to forward only a subset.
+   */
   forwardConsoleLogs?: ConsoleApiName[] | 'all' | undefined
+  /**
+   * Forward reports from the Reporting API to Datadog. Use "all" to forward everything or an array of report types to forward only a subset.
+   */
   forwardReports?: RawReportType[] | 'all' | undefined
+  /**
+   * Use PCI-compliant intake. See [PCI DSS Compliance](https://docs.datadoghq.com/data_security/pci_compliance/?tab=logmanagement) for further information.
+   * @default false
+   */
   usePciIntake?: boolean
 }
 
