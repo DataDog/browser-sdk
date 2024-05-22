@@ -8,6 +8,7 @@ import { useNetworkRules } from '../hooks/useNetworkRules'
 import { useSettings } from '../hooks/useSettings'
 import { DEFAULT_PANEL_TAB, PanelTabs } from '../../common/constants'
 import type { Settings } from '../../common/types'
+import { useDebugMode } from '../hooks/useDebugMode'
 import { SettingsTab } from './tabs/settingsTab'
 import { InfosTab } from './tabs/infosTab'
 import { EventsTab, DEFAULT_COLUMNS } from './tabs/eventsTab'
@@ -20,6 +21,7 @@ export function Panel() {
 
   useAutoFlushEvents(settings.autoFlush)
   useNetworkRules(settings)
+  useDebugMode(settings.debugMode)
 
   const { events, filters, setFilters, clear, facetRegistry } = useEvents(settings)
 

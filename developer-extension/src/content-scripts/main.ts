@@ -31,6 +31,11 @@ function main() {
     const ddRumGlobal = instrumentGlobal('DD_RUM')
     const ddLogsGlobal = instrumentGlobal('DD_LOGS')
 
+    if (settings.debugMode) {
+      ddRumGlobal.onSet((sdkInstance) => sdkInstance._setDebug(settings.debugMode))
+      ddLogsGlobal.onSet((sdkInstance) => sdkInstance._setDebug(settings.debugMode))
+    }
+
     if (settings.rumConfigurationOverride) {
       overrideInitConfiguration(ddRumGlobal, settings.rumConfigurationOverride)
     }
