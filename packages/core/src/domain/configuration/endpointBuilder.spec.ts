@@ -1,9 +1,4 @@
 import type { BuildEnvWindow } from '../../../test'
-import {
-  ExperimentalFeature,
-  resetExperimentalFeatures,
-  addExperimentalFeatures,
-} from '../../tools/experimentalFeatures'
 import { startsWith } from '../../tools/utils/polyfills'
 import type { Payload } from '../../transport'
 import type { InitConfiguration } from './configuration'
@@ -18,7 +13,6 @@ describe('endpointBuilder', () => {
   beforeEach(() => {
     initConfiguration = { clientToken }
     ;(window as unknown as BuildEnvWindow).__BUILD_ENV__SDK_VERSION__ = 'some_version'
-    resetExperimentalFeatures()
   })
 
   describe('query parameters', () => {
@@ -125,31 +119,11 @@ describe('endpointBuilder', () => {
         })
       ).toContain('retry_count%3A5%2Cretry_after%3A408')
     })
-
-    it('should contain flush reason when ff collect_flush_reason is enabled', () => {
-      addExperimentalFeatures([ExperimentalFeature.COLLECT_FLUSH_REASON])
-      expect(
-        createEndpointBuilder(initConfiguration, 'rum', []).build('xhr', {
-          ...DEFAULT_PAYLOAD,
-          flushReason: 'bytes_limit',
-        })
-      ).toContain('flush_reason%3Abytes_limit')
-    })
-
-    it('should not contain flush reason when ff collect_flush_reason is disabled', () => {
-      expect(
-        createEndpointBuilder(initConfiguration, 'rum', []).build('xhr', {
-          ...DEFAULT_PAYLOAD,
-          flushReason: 'bytes_limit',
-        })
-      ).not.toContain('flush_reason')
-    })
   })
 
   describe('PCI compliance intake with option', () => {
     beforeEach(() => {
       ;(window as unknown as BuildEnvWindow).__BUILD_ENV__SDK_VERSION__ = 'some_version'
-      resetExperimentalFeatures()
     })
 
     it('should return PCI compliance intake endpoint if site is us1', () => {

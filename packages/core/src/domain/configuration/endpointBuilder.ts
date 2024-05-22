@@ -1,7 +1,6 @@
 import type { Payload } from '../../transport'
 import { timeStampNow } from '../../tools/utils/timeUtils'
 import { normalizeUrl } from '../../tools/utils/urlPolyfill'
-import { ExperimentalFeature, isExperimentalFeatureEnabled } from '../../tools/experimentalFeatures'
 import { generateUUID } from '../../tools/utils/stringUtils'
 import type { InitConfiguration } from './configuration'
 import { INTAKE_SITE_US1, INTAKE_SITE_FED_STAGING, PCI_INTAKE_HOST_US1 } from './intakeSites'
@@ -88,12 +87,9 @@ function buildEndpointParameters(
   trackType: TrackType,
   configurationTags: string[],
   api: ApiType,
-  { retry, flushReason, encoding }: Payload
+  { retry, encoding }: Payload
 ) {
   const tags = [`sdk_version:${__BUILD_ENV__SDK_VERSION__}`, `api:${api}`].concat(configurationTags)
-  if (flushReason && isExperimentalFeatureEnabled(ExperimentalFeature.COLLECT_FLUSH_REASON)) {
-    tags.push(`flush_reason:${flushReason}`)
-  }
   if (retry) {
     tags.push(`retry_count:${retry.count}`, `retry_after:${retry.lastFailureStatus}`)
   }
