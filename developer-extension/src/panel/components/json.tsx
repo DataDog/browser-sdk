@@ -281,8 +281,9 @@ function JsonText({
 
 function getSearchQuery(descriptor: JsonValueDescriptor) {
   const { columnPath } = useContext(JsonContext)!
+  const searchTerm = String(descriptor.value).replace(/ /g, '\\ ')
   if (columnPath) {
-    return `${columnPath}:${String(descriptor.value)}`
+    return `${columnPath}:${searchTerm}`
   }
   return ''
 }
