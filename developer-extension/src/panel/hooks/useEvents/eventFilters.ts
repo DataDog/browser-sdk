@@ -94,15 +94,31 @@ function parseQuery(query: string) {
 }
 
 function matchDescriptionPart(event: SdkEvent, searchTerm: string): boolean {
-  const stringifiedEvent = JSON.stringify(event)
-  if (stringifiedEvent.toLowerCase().includes(searchTerm.toLowerCase())) {
+  if (matchWithWildcard(String(event), searchTerm)) {
     return true
   }
   return false
 }
 
+function matchWithWildcard(value: string, searchTerm: string): boolean {
+  value = value.toLowerCase()
+  if (!searchTerm.includes('*')) {
+    return value.includes(searchTerm.toLowerCase())
+  }
+  const searchTerms = searchTerm.toLowerCase().split('*')
+  let lastIndex = 0
+  for (const term of searchTerms) {
+    const index = value.indexOf(term, lastIndex)
+    if (index === -1) {
+      return false
+    }
+    lastIndex = index + term.length
+  }
+  return true
+}
+
 function matchQueryPart(json: unknown, searchKey: string, searchTerm: string, jsonPath = ''): boolean {
-  if (jsonPath.endsWith(searchKey) && String(json).startsWith(searchTerm)) {
+  if (jsonPath.endsWith(searchKey) && matchWithWildcard(String(json), searchTerm)) {
     return true
   }
 
