@@ -9,6 +9,7 @@ import {
   ExperimentalFeature,
 } from '@datadog/browser-core'
 
+import { discardNegativeDuration } from '../discardNegativeDuration'
 import type { RawRumActionEvent } from '../../rawRumEvent.types'
 import { ActionType, RumEventType } from '../../rawRumEvent.types'
 import type { LifeCycle, RawRumEventCollectedData } from '../lifeCycle'
@@ -72,7 +73,7 @@ function processAction(
     ? {
         action: {
           id: action.id,
-          loading_time: toServerDuration(action.duration),
+          loading_time: discardNegativeDuration(toServerDuration(action.duration)),
           frustration: {
             type: action.frustrationTypes,
           },
