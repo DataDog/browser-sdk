@@ -75,16 +75,30 @@ function filterOutdatedVersions(events: SdkEvent[]): SdkEvent[] {
 
 function parseQuery(query: string) {
   const queryParts = query
-    .split(/(?<!\\)\s/gm)
+    .split(/(?<!\\)\s/gm) // Hack it to escape whitespace with backslashes
     .filter((queryPart) => queryPart)
     .map((queryPart) => queryPart.split(':'))
 
   return {
     match: (event: SdkEvent) =>
-      queryParts.every((queryPart) =>
-        matchQueryPart(event, queryPart[0], queryPart.length > 1 ? queryPart[1].replaceAll(/\\[ ]+/gm, ' ') : '')
-      ),
+      queryParts.every((queryPart) => {
+        // Hack it to restore the whitespace
+        const searchTerm = queryPart.length > 1 ? queryPart[1].replaceAll(/\\[ ]+/gm, ' ') : ''
+        // Hack it to match the description part
+        if (queryPart[0] === 'Description') {
+          return matchDescriptionPart(event, searchTerm)
+        }
+        return matchQueryPart(event, queryPart[0], searchTerm)
+      }),
   }
+}
+
+function matchDescriptionPart(event: SdkEvent, searchTerm: string): boolean {
+  const stringifiedEvent = JSON.stringify(event)
+  if (stringifiedEvent.toLowerCase().includes(searchTerm.toLowerCase())) {
+    return true
+  }
+  return false
 }
 
 function matchQueryPart(json: unknown, searchKey: string, searchTerm: string, jsonPath = ''): boolean {
