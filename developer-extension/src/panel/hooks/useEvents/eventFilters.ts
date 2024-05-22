@@ -84,22 +84,9 @@ function parseQuery(query: string) {
       queryParts.every((queryPart) => {
         // Hack it to restore the whitespace
         const searchTerm = queryPart.length > 1 ? queryPart[1].replaceAll(/\\[ ]+/gm, ' ') : ''
-        // Hack it to match the description part
-        if (queryPart[0] === 'Description') {
-          return matchDescriptionPart(event, searchTerm)
-        }
         return matchQueryPart(event, queryPart[0], searchTerm)
       }),
   }
-}
-
-function matchDescriptionPart(event: SdkEvent, searchTerm: string): boolean {
-  // We can only match on the emphasis part of the description
-  // because the description is not stored in the event
-  if (matchWithWildcard(String(event), searchTerm)) {
-    return true
-  }
-  return false
 }
 
 function matchWithWildcard(value: string, searchTerm: string): boolean {
@@ -120,6 +107,9 @@ function matchWithWildcard(value: string, searchTerm: string): boolean {
 }
 
 function matchQueryPart(json: unknown, searchKey: string, searchTerm: string, jsonPath = ''): boolean {
+  if (searchKey.toLowerCase() === 'description') {
+    return matchWithWildcard(JSON.stringify(json), searchTerm)
+  }
   if (jsonPath.endsWith(searchKey) && matchWithWildcard(String(json), searchTerm)) {
     return true
   }
