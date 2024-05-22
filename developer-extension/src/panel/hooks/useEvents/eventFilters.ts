@@ -94,6 +94,8 @@ function parseQuery(query: string) {
 }
 
 function matchDescriptionPart(event: SdkEvent, searchTerm: string): boolean {
+  // We can only match on the emphasis part of the description
+  // because the description is not stored in the event
   if (matchWithWildcard(String(event), searchTerm)) {
     return true
   }
