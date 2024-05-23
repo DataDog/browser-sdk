@@ -1,12 +1,5 @@
 import type { Duration, RelativeTime, ServerDuration, TimeStamp } from '@datadog/browser-core'
-import {
-  resetExperimentalFeatures,
-  addExperimentalFeatures,
-  isIE,
-  RequestType,
-  ResourceType,
-  ExperimentalFeature,
-} from '@datadog/browser-core'
+import { isIE, RequestType, ResourceType, ExperimentalFeature } from '@datadog/browser-core'
 import { mockExperimentalFeatures } from '@datadog/browser-core/test'
 import type { RumFetchResourceEventDomainContext, RumXhrResourceEventDomainContext } from '../../domainContext.types'
 import { setup, createRumSessionManagerMock, createPerformanceEntry } from '../../../test'
