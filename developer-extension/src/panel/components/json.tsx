@@ -326,6 +326,7 @@ function CopyMenuItem({ value, children }: { value: unknown; children: ReactNode
   return (
     <Menu.Item
       onClick={() => {
+        // Remove the outer quotation marks from copied string
         copy(JSON.parse(JSON.stringify(value, null, 2)))
       }}
       leftSection={<IconCopy size={14} />}
