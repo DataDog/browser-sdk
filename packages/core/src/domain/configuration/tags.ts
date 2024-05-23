@@ -32,7 +32,9 @@ export function buildTag(key: string, rawValue: string) {
   const valueSizeLimit = TAG_SIZE_LIMIT - key.length - 1
 
   if (rawValue.length > valueSizeLimit || FORBIDDEN_CHARACTERS.test(rawValue)) {
-    display.warn(`${key} value doesn't meet tag requirements and will be sanitized`)
+    display.warn(
+      `${key} value doesn't meet tag requirements and will be sanitized. More details: https://docs.datadoghq.com/getting_started/tagging/#defining-tags`
+    )
   }
 
   // Let the backend do most of the sanitization, but still make sure multiple tags can't be crafted

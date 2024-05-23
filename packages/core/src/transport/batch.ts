@@ -82,7 +82,7 @@ export class Batch {
 
     if (estimatedMessageBytesCount >= this.messageBytesLimit) {
       display.warn(
-        `Discarded a message whose size was bigger than the maximum allowed size ${this.messageBytesLimit}KB.`
+        `Discarded a message whose size was bigger than the maximum allowed size ${this.messageBytesLimit}KB. More details: https://docs.datadoghq.com/real_user_monitoring/browser/troubleshooting/#technical-limitations`
       )
       return
     }
