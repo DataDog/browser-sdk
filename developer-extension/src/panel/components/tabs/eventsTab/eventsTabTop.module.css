@@ -37,9 +37,6 @@
   margin-right: 4px;
 }
 
-.removeButton {
-  margin-left: 4px;
-  cursor: pointer;
-  font-weight: bold;
-  color: #4a90e2; 
+.warning {
+  color: red;
 }

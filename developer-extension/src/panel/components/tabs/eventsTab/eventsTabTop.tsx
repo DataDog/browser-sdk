@@ -54,11 +54,14 @@ export function EventsTabTop({
   return (
     <Group className="dd-privacy-allow">
       <div className={classes.inputWrapper}>
-        {params.map((param, index) => (
-          <span key={index} className={classes.paramBox}>
-            <span className={classes.highlight}>{param}</span>
-          </span>
-        ))}
+      {params.map((param, index) => (
+        <span key={index} className={classes.paramBox}>
+          <span className={classes.highlight}>{param}</span>
+          {param.includes(':') && param.split(':')[1] === '' && (
+            <span className={classes.warning}>⚠️</span>
+          )}
+        </span>
+      ))}
         <input
           type="text"
           placeholder="Filter your events, syntax: 'type:view application.id:40d8ca4b'"
