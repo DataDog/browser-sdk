@@ -505,55 +505,68 @@ describe('startSessionManager', () => {
   })
 
   describe('session history', () => {
-    ;['findActiveSession' as const, 'findActiveOrExpiredSession' as const].forEach((method) => {
-      describe(method, () => {
-        it('should return the current session context when there is no start time', () => {
-          const sessionManager = startSessionManagerWithDefaults()
+    it('should return undefined when there is no current session and no startTime', () => {
+      const sessionManager = startSessionManagerWithDefaults()
+      expireSessionCookie()
 
-          expect(sessionManager[method]()!.id).toBeDefined()
-          expect(sessionManager[method]()!.trackingType).toBeDefined()
-        })
-
-        it('should return the session context corresponding to startTime', () => {
-          const sessionManager = startSessionManagerWithDefaults()
-
-          // 0s to 10s: first session
-          clock.tick(10 * ONE_SECOND - STORAGE_POLL_DELAY)
-          const firstSessionId = sessionManager[method]()!.id
-          const firstSessionTrackingType = sessionManager[method]()!.trackingType
-          expireSessionCookie()
-
-          // 10s to end: second session
-          document.dispatchEvent(createNewEvent(DOM_EVENT.CLICK))
-          clock.tick(10 * ONE_SECOND)
-          const secondSessionId = sessionManager[method]()!.id
-          const secondSessionTrackingType = sessionManager[method]()!.trackingType
-
-          expect(sessionManager[method]((5 * ONE_SECOND) as RelativeTime)!.id).toBe(firstSessionId)
-          expect(sessionManager[method]((5 * ONE_SECOND) as RelativeTime)!.trackingType).toBe(firstSessionTrackingType)
-          expect(sessionManager[method]((15 * ONE_SECOND) as RelativeTime)!.id).toBe(secondSessionId)
-          expect(sessionManager[method]((15 * ONE_SECOND) as RelativeTime)!.trackingType).toBe(
-            secondSessionTrackingType
-          )
-        })
-      })
+      expect(sessionManager.findActiveSession()).toBeUndefined()
     })
 
-    describe('findActiveSession', () => {
-      it('should return undefined when the session is expired', () => {
-        const sessionManager = startSessionManagerWithDefaults()
-        expireSessionCookie()
+    it('should return the current session context when there is no start time', () => {
+      const sessionManager = startSessionManagerWithDefaults()
 
-        expect(sessionManager.findActiveSession()).toBeUndefined()
-      })
+      expect(sessionManager.findActiveSession()!.id).toBeDefined()
+      expect(sessionManager.findActiveSession()!.trackingType).toBeDefined()
     })
 
-    describe('findActiveOrExpiredSession', () => {
-      it('should return the session context when the session is expired', () => {
+    it('should return the session context corresponding to startTime', () => {
+      const sessionManager = startSessionManagerWithDefaults()
+
+      // 0s to 10s: first session
+      clock.tick(10 * ONE_SECOND - STORAGE_POLL_DELAY)
+      const firstSessionId = sessionManager.findActiveSession()!.id
+      const firstSessionTrackingType = sessionManager.findActiveSession()!.trackingType
+      expireSessionCookie()
+
+      // 10s to 20s: no session
+      clock.tick(10 * ONE_SECOND)
+
+      // 20s to end: second session
+      document.dispatchEvent(createNewEvent(DOM_EVENT.CLICK))
+      clock.tick(10 * ONE_SECOND)
+      const secondSessionId = sessionManager.findActiveSession()!.id
+      const secondSessionTrackingType = sessionManager.findActiveSession()!.trackingType
+
+      expect(sessionManager.findActiveSession((5 * ONE_SECOND) as RelativeTime)!.id).toBe(firstSessionId)
+      expect(sessionManager.findActiveSession((5 * ONE_SECOND) as RelativeTime)!.trackingType).toBe(
+        firstSessionTrackingType
+      )
+      expect(sessionManager.findActiveSession((15 * ONE_SECOND) as RelativeTime)).toBeUndefined()
+      expect(sessionManager.findActiveSession((25 * ONE_SECOND) as RelativeTime)!.id).toBe(secondSessionId)
+      expect(sessionManager.findActiveSession((25 * ONE_SECOND) as RelativeTime)!.trackingType).toBe(
+        secondSessionTrackingType
+      )
+    })
+
+    describe('option `returnInactive` is true', () => {
+      it('should return the session context even when the session is expired', () => {
         const sessionManager = startSessionManagerWithDefaults()
+
+        // 0s to 10s: first session
+        clock.tick(10 * ONE_SECOND - STORAGE_POLL_DELAY)
+
         expireSessionCookie()
 
-        expect(sessionManager.findActiveOrExpiredSession()).toBeDefined()
+        // 10s to 20s: no session
+        clock.tick(10 * ONE_SECOND)
+
+        expect(
+          sessionManager.findActiveSession((15 * ONE_SECOND) as RelativeTime, { returnInactive: true })
+        ).toBeDefined()
+
+        expect(
+          sessionManager.findActiveSession((15 * ONE_SECOND) as RelativeTime, { returnInactive: false })
+        ).toBeUndefined()
       })
     })
 

@@ -6,10 +6,6 @@ import { addDuration, relativeNow, ONE_MINUTE } from './utils/timeUtils'
 
 const END_OF_TIMES = Infinity as RelativeTime
 
-export const AFTER_ENTRY_START = () => true
-const DURING_ENTRY_LIFESPAN = <Value>(entry: ValueHistoryEntry<Value>, startTime: RelativeTime) =>
-  startTime <= entry.endTime
-
 export interface ValueHistoryEntry<T> {
   startTime: RelativeTime
   endTime: RelativeTime
@@ -62,14 +58,15 @@ export class ValueHistory<Value> {
   }
 
   /**
-   * Return the latest value matching the startTime and the predicate,
-   * if no `startTime` is provided, return the most recent value
-   * if no `predicate` is provided, return the active value
+   * Return the latest value that was active during `startTime`, or the currently active value
+   * if no `startTime` is provided. This method assumes that entries are not overlapping.
+   *
+   * If `option.returnInactive` is true, returns the value at `startTime` (active or not).
    */
-  find(startTime: RelativeTime = END_OF_TIMES, predicate = DURING_ENTRY_LIFESPAN): Value | undefined {
+  find(startTime: RelativeTime = END_OF_TIMES, options?: { returnInactive: boolean }): Value | undefined {
     for (const entry of this.entries) {
       if (entry.startTime <= startTime) {
-        if (predicate(entry, startTime)) {
+        if (options?.returnInactive || startTime <= entry.endTime) {
           return entry.value
         }
         break

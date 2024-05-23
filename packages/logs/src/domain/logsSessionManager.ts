@@ -1,17 +1,16 @@
 import type { RelativeTime, TrackingConsentState } from '@datadog/browser-core'
-import { Observable, performDraw, relativeNow, startSessionManager } from '@datadog/browser-core'
+import { Observable, performDraw, startSessionManager } from '@datadog/browser-core'
 import type { LogsConfiguration } from './configuration'
 
 export const LOGS_SESSION_KEY = 'logs'
 
 export interface LogsSessionManager {
-  findTrackedSession: (startTime?: RelativeTime, options?: { returnExpired: boolean }) => LogsSession | undefined
+  findTrackedSession: (startTime?: RelativeTime, options?: { returnInactive: boolean }) => LogsSession | undefined
   expireObservable: Observable<void>
 }
 
 export type LogsSession = {
   id?: string // session can be tracked without id
-  isActiveAt: (startTime?: RelativeTime) => boolean
 }
 
 export const enum LoggerTrackingType {
@@ -29,19 +28,14 @@ export function startLogsSessionManager(
     (rawTrackingType) => computeSessionState(configuration, rawTrackingType),
     trackingConsentState
   )
-
   return {
-    findTrackedSession: (startTime?: RelativeTime, { returnExpired } = { returnExpired: false }) => {
-      const session = returnExpired
-        ? sessionManager.findActiveOrExpiredSession(startTime)
-        : sessionManager.findActiveSession(startTime)
-
-      if (session && session.trackingType === LoggerTrackingType.TRACKED) {
-        return {
-          id: session.id,
-          isActiveAt: (startTime = relativeNow()) => (session.endTime || Infinity) > startTime,
-        }
-      }
+    findTrackedSession: (startTime?: RelativeTime, options = { returnInactive: false }) => {
+      const session = sessionManager.findActiveSession(startTime, options)
+      return session && session.trackingType === LoggerTrackingType.TRACKED
+        ? {
+            id: session.id,
+          }
+        : undefined
     },
     expireObservable: sessionManager.expireObservable,
   }
@@ -49,7 +43,7 @@ export function startLogsSessionManager(
 
 export function startLogsSessionManagerStub(configuration: LogsConfiguration): LogsSessionManager {
   const isTracked = computeTrackingType(configuration) === LoggerTrackingType.TRACKED
-  const session = isTracked ? { isActiveAt: () => true } : undefined
+  const session = isTracked ? {} : undefined
   return {
     findTrackedSession: () => session,
     expireObservable: new Observable(),

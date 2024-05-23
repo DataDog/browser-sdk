@@ -12,6 +12,7 @@ import { mockClock } from '@datadog/browser-core/test'
 import type { LogsEvent } from '../logsEvent.types'
 import type { CommonContext } from '../rawLogsEvent.types'
 import { startLogsAssembly } from './assembly'
+import type { LogsConfiguration } from './configuration'
 import { validateAndBuildLogsConfiguration } from './configuration'
 import { Logger, StatusType } from './logger'
 import type { LogsSessionManager } from './logsSessionManager'
@@ -41,7 +42,10 @@ const COMMON_CONTEXT_WITH_USER: CommonContext = {
 
 describe('startLogsAssembly', () => {
   const sessionManager: LogsSessionManager = {
-    findTrackedSession: () => (sessionIsTracked ? { id: SESSION_ID, isActiveAt: () => sessionIsActive } : undefined),
+    findTrackedSession: (_startTime, options) =>
+      (sessionIsActive && sessionIsTracked) || options?.returnInactive
+        ? { id: sessionIsTracked ? SESSION_ID : undefined }
+        : undefined,
     expireObservable: new Observable(),
   }
 
@@ -49,6 +53,7 @@ describe('startLogsAssembly', () => {
   let sessionIsActive: boolean
   let sessionIsTracked: boolean
   let lifeCycle: LifeCycle
+  let configuration: LogsConfiguration
   let serverLogs: Array<LogsEvent & Context> = []
   let mainLogger: Logger
 
@@ -57,8 +62,8 @@ describe('startLogsAssembly', () => {
     sessionIsActive = true
     lifeCycle = new LifeCycle()
     lifeCycle.subscribe(LifeCycleEventType.LOG_COLLECTED, (serverRumEvent) => serverLogs.push(serverRumEvent))
-    const configuration = {
-      ...validateAndBuildLogsConfiguration(initConfiguration)!,
+    configuration = {
+      ...validateAndBuildLogsConfiguration({ ...initConfiguration })!,
       beforeSend: (x: LogsEvent) => beforeSend(x),
     }
     beforeSend = noop
@@ -118,8 +123,17 @@ describe('startLogsAssembly', () => {
     })
 
     it('should send log without session id if session has expired', () => {
+      startLogsAssembly(
+        sessionManager,
+        { ...configuration, sendLogsAfterSessionExpiration: true },
+        lifeCycle,
+        () => COMMON_CONTEXT,
+        noop
+      )
+
       sessionIsTracked = true
       sessionIsActive = false
+
       lifeCycle.notify(LifeCycleEventType.RAW_LOG_COLLECTED, {
         rawLogsEvent: DEFAULT_MESSAGE,
       })
@@ -307,7 +321,7 @@ describe('startLogsAssembly', () => {
 
 describe('user management', () => {
   const sessionManager: LogsSessionManager = {
-    findTrackedSession: () => (sessionIsTracked ? { id: SESSION_ID, isActiveAt: () => true } : undefined),
+    findTrackedSession: () => (sessionIsTracked ? { id: SESSION_ID } : undefined),
     expireObservable: new Observable<void>(),
   }
 
@@ -375,7 +389,7 @@ describe('user management', () => {
 describe('logs limitation', () => {
   let clock: Clock
   const sessionManager: LogsSessionManager = {
-    findTrackedSession: () => ({ id: SESSION_ID, isActiveAt: () => true }),
+    findTrackedSession: () => ({ id: SESSION_ID }),
     expireObservable: new Observable(),
   }
 

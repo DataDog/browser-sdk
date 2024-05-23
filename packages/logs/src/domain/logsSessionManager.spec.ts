@@ -108,7 +108,7 @@ describe('logs session manager', () => {
       const logsSessionManager = startLogsSessionManagerWithDefaults()
       expireCookie()
       clock.tick(STORAGE_POLL_DELAY)
-      expect(logsSessionManager.findTrackedSession(relativeNow(), { returnExpired: true })).toBeDefined()
+      expect(logsSessionManager.findTrackedSession(relativeNow(), { returnInactive: true })).toBeDefined()
     })
 
     it('should return session corresponding to start time', () => {
@@ -121,20 +121,6 @@ describe('logs session manager', () => {
       clock.tick(STORAGE_POLL_DELAY)
       expect(logsSessionManager.findTrackedSession(0 as RelativeTime)!.id).toEqual('foo')
       expect(logsSessionManager.findTrackedSession()!.id).toEqual('bar')
-    })
-  })
-
-  describe('isActiveAt', () => {
-    it('should return true when the session is active and false when the session has expired', () => {
-      setCookie(SESSION_STORE_KEY, 'id=abcdef&logs=1', DURATION)
-      const logsSessionManager = startLogsSessionManagerWithDefaults()
-      clock.tick(10 * ONE_SECOND)
-      expireCookie()
-      clock.tick(STORAGE_POLL_DELAY)
-
-      const session = logsSessionManager.findTrackedSession(relativeNow(), { returnExpired: true })!
-      expect(session.isActiveAt(0 as RelativeTime)).toEqual(true)
-      expect(session.isActiveAt((11 * ONE_SECOND) as RelativeTime)).toEqual(false)
     })
   })
 

@@ -1,6 +1,6 @@
 import { Observable } from '../../tools/observable'
 import type { Context } from '../../tools/serialisation/context'
-import { AFTER_ENTRY_START, ValueHistory } from '../../tools/valueHistory'
+import { ValueHistory } from '../../tools/valueHistory'
 import type { RelativeTime } from '../../tools/utils/timeUtils'
 import { relativeNow, clocksOrigin, ONE_MINUTE } from '../../tools/utils/timeUtils'
 import { DOM_EVENT, addEventListener, addEventListeners } from '../../browser/addEventListener'
@@ -11,9 +11,10 @@ import { SESSION_TIME_OUT_DELAY } from './sessionConstants'
 import { startSessionStore } from './sessionStore'
 
 export interface SessionManager<TrackingType extends string> {
-  findActiveSession: (startTime?: RelativeTime) => SessionContext<TrackingType> | undefined
-  findActiveOrExpiredSession: (startTime?: RelativeTime) => SessionContext<TrackingType> | undefined
-
+  findActiveSession: (
+    startTime?: RelativeTime,
+    options?: { returnInactive: boolean }
+  ) => SessionContext<TrackingType> | undefined
   renewObservable: Observable<void>
   expireObservable: Observable<void>
   expire: () => void
@@ -22,7 +23,6 @@ export interface SessionManager<TrackingType extends string> {
 export interface SessionContext<TrackingType extends string> extends Context {
   id: string
   trackingType: TrackingType
-  endTime?: RelativeTime
 }
 
 export const VISIBILITY_CHECK_DELAY = ONE_MINUTE
@@ -45,23 +45,19 @@ export function startSessionManager<TrackingType extends string>(
   const sessionContextHistory = new ValueHistory<SessionContext<TrackingType>>(SESSION_CONTEXT_TIMEOUT_DELAY)
   stopCallbacks.push(() => sessionContextHistory.stop())
 
-  let currentSessionContext = buildSessionContext()
-
   sessionStore.renewObservable.subscribe(() => {
-    currentSessionContext = buildSessionContext()
-    sessionContextHistory.add(currentSessionContext, relativeNow())
+    sessionContextHistory.add(buildSessionContext(), relativeNow())
     renewObservable.notify()
   })
   sessionStore.expireObservable.subscribe(() => {
     expireObservable.notify()
-    currentSessionContext.endTime = relativeNow()
-    sessionContextHistory.closeActive(currentSessionContext.endTime)
+    sessionContextHistory.closeActive(relativeNow())
   })
 
   // We expand/renew session unconditionally as tracking consent is always granted when the session
   // manager is started.
   sessionStore.expandOrRenewSession()
-  sessionContextHistory.add(currentSessionContext, clocksOrigin().relative)
+  sessionContextHistory.add(buildSessionContext(), clocksOrigin().relative)
 
   trackingConsentState.observable.subscribe(() => {
     if (trackingConsentState.isGranted()) {
@@ -79,7 +75,7 @@ export function startSessionManager<TrackingType extends string>(
   trackVisibility(configuration, () => sessionStore.expandSession())
   trackResume(configuration, () => sessionStore.restartSession())
 
-  function buildSessionContext(): SessionContext<TrackingType> {
+  function buildSessionContext() {
     return {
       id: sessionStore.getSession().id!,
       trackingType: sessionStore.getSession()[productKey] as TrackingType,
@@ -87,8 +83,7 @@ export function startSessionManager<TrackingType extends string>(
   }
 
   return {
-    findActiveSession: (startTime) => sessionContextHistory.find(startTime),
-    findActiveOrExpiredSession: (startTime) => sessionContextHistory.find(startTime, AFTER_ENTRY_START),
+    findActiveSession: (startTime, options) => sessionContextHistory.find(startTime, options),
     renewObservable,
     expireObservable,
     expire: sessionStore.expire,
