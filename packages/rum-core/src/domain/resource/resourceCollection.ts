@@ -8,6 +8,8 @@ import {
   relativeToClocks,
   assign,
   isNumber,
+  ExperimentalFeature,
+  isExperimentalFeatureEnabled,
 } from '@datadog/browser-core'
 import type { RumConfiguration } from '../configuration'
 import type { RumPerformanceResourceTiming } from '../../browser/performanceCollection'
