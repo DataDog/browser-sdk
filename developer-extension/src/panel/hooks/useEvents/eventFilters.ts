@@ -83,7 +83,7 @@ function parseQuery(query: string) {
     match: (event: SdkEvent) =>
       queryParts.every((queryPart) => {
         // Hack it to restore the whitespace
-        const searchTerm = queryPart.length > 1 ? queryPart[1].replaceAll(/\\[ ]+/gm, ' ') : ''
+        const searchTerm = queryPart.length > 1 ? queryPart[1].replaceAll(/\\\s+/gm, ' ') : ''
         return matchQueryPart(event, queryPart[0], searchTerm)
       }),
   }
