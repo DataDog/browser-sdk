@@ -17,6 +17,7 @@ import {
   getEventBridge,
   addTelemetryDebug,
   CustomerDataType,
+  drainPreStartTelemetry,
 } from '@datadog/browser-core'
 import { createDOMMutationObservable } from '../browser/domMutationObservable'
 import { startPerformanceCollection } from '../browser/performanceCollection'
@@ -143,6 +144,7 @@ export function startRum(
   )
   cleanupTasks.push(stopRumEventCollection)
 
+  drainPreStartTelemetry()
   addTelemetryConfiguration(serializeRumConfiguration(initConfiguration))
 
   startLongTaskCollection(lifeCycle, configuration, session)
