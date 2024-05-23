@@ -65,14 +65,17 @@ export function Panel() {
           Settings
         </Tabs.Tab>
         <Tabs.Tab
-          color='blue'
+          color="blue"
           value={activeTab ?? PanelTabs.Events}
           rightSection={
-            <Anchor href="https://github.com/DataDog/browser-sdk/tree/main/developer-extension#browser-sdk-developer-extension" target="_blank">
+            <Anchor
+              href="https://github.com/DataDog/browser-sdk/tree/main/developer-extension#browser-sdk-developer-extension"
+              target="_blank"
+            >
               🔗 Docs
             </Anchor>
-          }>
-        </Tabs.Tab>
+          }
+        ></Tabs.Tab>
       </Tabs.List>
       <Tabs.Panel value={PanelTabs.Events} className={classes.tab}>
         <EventsTab
