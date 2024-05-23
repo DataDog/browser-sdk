@@ -54,4 +54,5 @@ export interface Settings {
   eventCollectionStrategy: EventCollectionStrategy
   rumConfigurationOverride: object | null
   logsConfigurationOverride: object | null
+  debugMode: boolean
 }
