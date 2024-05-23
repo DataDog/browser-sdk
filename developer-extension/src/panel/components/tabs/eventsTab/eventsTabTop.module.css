@@ -1,3 +1,45 @@
+.inputWrapper {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px; 
+  border: 1px solid #4a90e2; 
+  border-radius: 4px; 
+  padding: 8px; 
+  width: 100%;
+  min-height: 40px; 
+  background-color: #f0f4f8; 
+}
+
 .textInput {
+  border: none;
+  outline: none;
   flex-grow: 1;
+  padding: 4px;
+  background: transparent;
+  min-width: 100px; 
+  color: #333; 
+}
+
+.paramBox {
+  display: flex;
+  align-items: center;
+  background-color: rgba(74, 144, 226, 0.1); 
+  border: 1px solid rgba(74, 144, 226, 0.3);
+  border-radius: 4px;
+  padding: 4px 8px;
+  white-space: nowrap;
+  color: #4a90e2; 
+  font-weight: bold;
+}
+
+.highlight {
+  margin-right: 4px;
+}
+
+.removeButton {
+  margin-left: 4px;
+  cursor: pointer;
+  font-weight: bold;
+  color: #4a90e2; 
 }
