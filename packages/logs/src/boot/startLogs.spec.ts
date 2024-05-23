@@ -22,6 +22,7 @@ import {
   mockSyntheticsWorkerValues,
   registerCleanupTask,
   mockClock,
+  expireCookie,
 } from '@datadog/browser-core/test'
 
 import type { LogsConfiguration } from '../domain/configuration'
@@ -262,8 +263,7 @@ describe('logs', () => {
 
       handleLog({ status: StatusType.info, message: 'message 1' }, logger)
 
-      // expire session
-      setCookie(SESSION_STORE_KEY, 'isExpired=1', ONE_MINUTE)
+      expireCookie()
       clock.tick(STORAGE_POLL_DELAY * 2)
 
       handleLog({ status: StatusType.info, message: 'message 2' }, logger)
@@ -291,8 +291,7 @@ describe('logs', () => {
 
       handleLog({ status: StatusType.info, message: 'message 1' }, logger)
 
-      // expire session
-      setCookie(SESSION_STORE_KEY, 'isExpired=1', ONE_MINUTE)
+      expireCookie()
       clock.tick(STORAGE_POLL_DELAY * 2)
 
       handleLog({ status: StatusType.info, message: 'message 2' }, logger)

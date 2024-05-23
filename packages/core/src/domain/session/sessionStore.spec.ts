@@ -1,5 +1,5 @@
 import type { Clock } from '../../../test'
-import { mockClock } from '../../../test'
+import { expireCookie, mockClock } from '../../../test'
 import { getCookie, setCookie } from '../../browser/cookie'
 import type { SessionStore } from './sessionStore'
 import { STORAGE_POLL_DELAY, startSessionStore, selectSessionStoreStrategyType } from './sessionStore'
@@ -52,7 +52,7 @@ function getStoreExpiration() {
 }
 
 function resetSessionInStore() {
-  setCookie(SESSION_STORE_KEY, 'isExpired=1', DURATION)
+  expireCookie()
 }
 
 describe('session store', () => {

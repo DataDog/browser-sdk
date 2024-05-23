@@ -12,7 +12,7 @@ import {
   TrackingConsent,
 } from '@datadog/browser-core'
 import type { Clock } from '@datadog/browser-core/test'
-import { createNewEvent, mockClock } from '@datadog/browser-core/test'
+import { createNewEvent, expireCookie, mockClock } from '@datadog/browser-core/test'
 
 import type { LogsConfiguration } from './configuration'
 import {
@@ -72,7 +72,7 @@ describe('logs session manager', () => {
   it('should renew on activity after expiration', () => {
     startLogsSessionManagerWithDefaults()
 
-    setCookie(SESSION_STORE_KEY, 'isExpired=1', DURATION)
+    expireCookie()
     expect(getCookie(SESSION_STORE_KEY)).toBe('isExpired=1')
     clock.tick(STORAGE_POLL_DELAY)
 
@@ -99,14 +99,14 @@ describe('logs session manager', () => {
       setCookie(SESSION_STORE_KEY, 'id=abcdef&logs=1', DURATION)
       const logsSessionManager = startLogsSessionManagerWithDefaults()
       clock.tick(10 * ONE_SECOND)
-      setCookie(SESSION_STORE_KEY, '', DURATION)
+      expireCookie()
       clock.tick(STORAGE_POLL_DELAY)
       expect(logsSessionManager.findTrackedSession()).toBeUndefined()
     })
 
     it('should return the current session if it has expired when returnExpired = true', () => {
       const logsSessionManager = startLogsSessionManagerWithDefaults()
-      setCookie(SESSION_STORE_KEY, '', DURATION)
+      expireCookie()
       clock.tick(STORAGE_POLL_DELAY)
       expect(logsSessionManager.findTrackedSession(relativeNow(), { returnExpired: true })).toBeDefined()
     })
@@ -129,7 +129,7 @@ describe('logs session manager', () => {
       setCookie(SESSION_STORE_KEY, 'id=abcdef&logs=1', DURATION)
       const logsSessionManager = startLogsSessionManagerWithDefaults()
       clock.tick(10 * ONE_SECOND)
-      setCookie(SESSION_STORE_KEY, '', DURATION)
+      expireCookie()
       clock.tick(STORAGE_POLL_DELAY)
 
       const session = logsSessionManager.findTrackedSession(relativeNow(), { returnExpired: true })!

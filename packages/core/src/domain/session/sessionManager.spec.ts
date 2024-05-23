@@ -1,4 +1,4 @@
-import { createNewEvent, mockClock, restorePageVisibility, setPageVisibility } from '../../../test'
+import { createNewEvent, expireCookie, mockClock, restorePageVisibility, setPageVisibility } from '../../../test'
 import type { Clock } from '../../../test'
 import { getCookie, setCookie } from '../../browser/cookie'
 import type { RelativeTime } from '../../tools/utils/timeUtils'
@@ -38,7 +38,7 @@ describe('startSessionManager', () => {
   let clock: Clock
 
   function expireSessionCookie() {
-    setCookie(SESSION_STORE_KEY, 'isExpired=1', DURATION)
+    expireCookie()
     clock.tick(STORAGE_POLL_DELAY)
   }
 
