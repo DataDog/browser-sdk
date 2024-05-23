@@ -243,7 +243,7 @@ describe('startDeflateWorker', () => {
           type: 'log',
           status: 'error',
           message: 'boom',
-          error: { kind: 'Error', stack: jasmine.any(String) },
+          error: { stack: jasmine.any(String), kind: 'Error' },
         },
       ])
     })

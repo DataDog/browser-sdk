@@ -27,39 +27,39 @@ export function startFullSnapshots(
     const { width, height } = getViewportDimension()
     const records: BrowserRecord[] = [
       {
+        timestamp,
+        type: RecordType.Meta,
         data: {
+          width,
           height,
           href: window.location.href,
-          width,
         },
-        type: RecordType.Meta,
-        timestamp,
       },
       {
+        timestamp,
+        type: RecordType.Focus,
         data: {
           has_focus: document.hasFocus(),
         },
-        type: RecordType.Focus,
-        timestamp,
       },
       {
+        timestamp,
+        type: RecordType.FullSnapshot,
         data: {
           node: serializeDocument(document, configuration, serializationContext),
           initialOffset: {
-            left: getScrollX(),
             top: getScrollY(),
+            left: getScrollX(),
           },
         },
-        type: RecordType.FullSnapshot,
-        timestamp,
       },
     ]
 
     if (window.visualViewport) {
       records.push({
-        data: getVisualViewport(window.visualViewport),
-        type: RecordType.VisualViewport,
         timestamp,
+        type: RecordType.VisualViewport,
+        data: getVisualViewport(window.visualViewport),
       })
     }
     return records
@@ -71,9 +71,9 @@ export function startFullSnapshots(
     flushMutations()
     fullSnapshotCallback(
       takeFullSnapshot(view.startClocks.timeStamp, {
-        shadowRootsController,
         status: SerializationContextStatus.SUBSEQUENT_FULL_SNAPSHOT,
         elementsScrollPositions,
+        shadowRootsController,
       })
     )
   })

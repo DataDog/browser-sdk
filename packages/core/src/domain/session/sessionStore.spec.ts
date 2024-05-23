@@ -105,8 +105,8 @@ describe('session store', () => {
         trackingType: FakeTrackingType
         isTracked: boolean
       } = () => ({
-        isTracked: true,
         trackingType: FakeTrackingType.TRACKED,
+        isTracked: true,
       })
     ) {
       const sessionStoreStrategyType = selectSessionStoreStrategyType({
@@ -180,7 +180,7 @@ describe('session store', () => {
         'when session not in cache, session not in store and new session not tracked, ' +
           'should store not tracked session',
         () => {
-          setupSessionStore(() => ({ isTracked: false, trackingType: FakeTrackingType.NOT_TRACKED }))
+          setupSessionStore(() => ({ trackingType: FakeTrackingType.NOT_TRACKED, isTracked: false }))
 
           sessionStoreManager.expandOrRenewSession()
 
@@ -227,7 +227,7 @@ describe('session store', () => {
           'should expire session and store not tracked session',
         () => {
           setSessionInStore(FakeTrackingType.TRACKED, FIRST_ID)
-          setupSessionStore(() => ({ isTracked: false, trackingType: FakeTrackingType.NOT_TRACKED }))
+          setupSessionStore(() => ({ trackingType: FakeTrackingType.NOT_TRACKED, isTracked: false }))
           resetSessionInStore()
 
           sessionStoreManager.expandOrRenewSession()
@@ -245,7 +245,7 @@ describe('session store', () => {
           'should expire session and store not tracked session',
         () => {
           setSessionInStore(FakeTrackingType.NOT_TRACKED)
-          setupSessionStore(() => ({ isTracked: false, trackingType: FakeTrackingType.NOT_TRACKED }))
+          setupSessionStore(() => ({ trackingType: FakeTrackingType.NOT_TRACKED, isTracked: false }))
           resetSessionInStore()
 
           sessionStoreManager.expandOrRenewSession()
@@ -295,8 +295,8 @@ describe('session store', () => {
         () => {
           setSessionInStore(FakeTrackingType.TRACKED, FIRST_ID)
           setupSessionStore((rawTrackingType) => ({
-            isTracked: rawTrackingType === FakeTrackingType.TRACKED,
             trackingType: rawTrackingType as FakeTrackingType,
+            isTracked: rawTrackingType === FakeTrackingType.TRACKED,
           }))
           setSessionInStore(FakeTrackingType.NOT_TRACKED, '')
 

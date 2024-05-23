@@ -46,8 +46,8 @@ function command(...templateArguments) {
 
     run() {
       const commandResult = childProcess.spawnSync(commandName, commandArguments, {
-        input,
         env: { ...process.env, ...env },
+        input,
         encoding: 'utf-8',
         ...extraOptions,
       })

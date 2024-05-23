@@ -51,8 +51,8 @@ export function computeStackTrace(ex: unknown): StackTrace {
   }
 
   return {
-    message: tryToGetString(ex, 'message'),
     name: tryToGetString(ex, 'name'),
+    message: tryToGetString(ex, 'message'),
     stack,
   }
 }
@@ -81,11 +81,11 @@ function parseChromeLine(line: string): StackFrame | undefined {
   }
 
   return {
-    args: isNative ? [parts[2]] : [],
-    column: parts[4] ? +parts[4] : undefined,
-    func: parts[1] || UNKNOWN_FUNCTION,
-    line: parts[3] ? +parts[3] : undefined,
     url: !isNative ? parts[2] : undefined,
+    func: parts[1] || UNKNOWN_FUNCTION,
+    args: isNative ? [parts[2]] : [],
+    line: parts[3] ? +parts[3] : undefined,
+    column: parts[4] ? +parts[4] : undefined,
   }
 }
 
@@ -99,11 +99,11 @@ function parseChromeAnonymousLine(line: string): StackFrame | undefined {
   }
 
   return {
-    args: [],
-    column: parts[3] ? +parts[3] : undefined,
-    func: UNKNOWN_FUNCTION,
-    line: parts[2] ? +parts[2] : undefined,
     url: parts[1],
+    func: UNKNOWN_FUNCTION,
+    args: [],
+    line: parts[2] ? +parts[2] : undefined,
+    column: parts[3] ? +parts[3] : undefined,
   }
 }
 
@@ -117,11 +117,11 @@ function parseWinLine(line: string): StackFrame | undefined {
   }
 
   return {
-    args: [],
-    column: parts[4] ? +parts[4] : undefined,
-    func: parts[1] || UNKNOWN_FUNCTION,
-    line: +parts[3],
     url: parts[2],
+    func: parts[1] || UNKNOWN_FUNCTION,
+    args: [],
+    line: +parts[3],
+    column: parts[4] ? +parts[4] : undefined,
   }
 }
 
@@ -146,11 +146,11 @@ function parseGeckoLine(line: string): StackFrame | undefined {
   }
 
   return {
-    args: parts[2] ? parts[2].split(',') : [],
-    column: parts[5] ? +parts[5] : undefined,
-    func: parts[1] || UNKNOWN_FUNCTION,
-    line: parts[4] ? +parts[4] : undefined,
     url: parts[3],
+    func: parts[1] || UNKNOWN_FUNCTION,
+    args: parts[2] ? parts[2].split(',') : [],
+    line: parts[4] ? +parts[4] : undefined,
+    column: parts[5] ? +parts[5] : undefined,
   }
 }
 

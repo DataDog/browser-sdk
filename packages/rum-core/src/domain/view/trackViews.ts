@@ -242,21 +242,21 @@ function newView(
     const currentEnd = endClocks === undefined ? timeStampNow() : endClocks.timeStamp
 
     lifeCycle.notify(LifeCycleEventType.VIEW_UPDATED, {
-      customTimings,
-      documentVersion,
       id,
       name,
       service,
       version,
-      loadingType,
       location,
-      startClocks,
       commonViewMetrics: getCommonViewMetrics(),
       initialViewMetrics,
+      customTimings,
+      eventCounts,
+      documentVersion,
+      startClocks,
       duration: elapsed(startClocks.timeStamp, currentEnd),
       isActive: endClocks === undefined,
       sessionIsActive,
-      eventCounts,
+      loadingType,
     })
   }
 

@@ -52,8 +52,8 @@ describe('Logger', () => {
 
       expect(getLoggedMessage(0)).toEqual({
         message: 'message',
-        context: { foo: 'bar' },
         status: StatusType.info,
+        context: { foo: 'bar' },
       })
     })
 
@@ -68,6 +68,7 @@ describe('Logger', () => {
 
       expect(getLoggedMessage(0)).toEqual({
         message: 'message',
+        status: 'error',
         context: {
           error: {
             kind: undefined,
@@ -76,7 +77,6 @@ describe('Logger', () => {
             causes: undefined,
           },
         },
-        status: 'error',
       })
     })
 

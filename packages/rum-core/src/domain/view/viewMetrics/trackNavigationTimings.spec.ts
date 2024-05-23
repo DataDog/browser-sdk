@@ -24,11 +24,11 @@ describe('trackNavigationTimings', () => {
     ])
 
     expect(navigationTimingsCallback).toHaveBeenCalledOnceWith({
-      firstByte: 123 as Duration,
       domComplete: 456 as Duration,
       domContentLoaded: 345 as Duration,
       domInteractive: 234 as Duration,
       loadEvent: 567 as Duration,
+      firstByte: 123 as Duration,
     })
   })
 })

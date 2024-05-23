@@ -31,13 +31,13 @@ export function getViewportDimension(): ViewportDimension {
   const visual = window.visualViewport
   if (visual) {
     return {
-      width: Number(visual.width * visual.scale),
       height: Number(visual.height * visual.scale),
+      width: Number(visual.width * visual.scale),
     }
   }
 
   return {
-    width: Number(window.innerWidth || 0),
     height: Number(window.innerHeight || 0),
+    width: Number(window.innerWidth || 0),
   }
 }

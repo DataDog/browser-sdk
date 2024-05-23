@@ -56,10 +56,10 @@ export function createDeflateEncoder(
     const output =
       compressedData.length === 0 ? new Uint8Array(0) : concatBuffers(compressedData.concat(compressedDataTrailer))
     const result: EncoderResult<Uint8Array> = {
-      rawBytesCount,
       output,
       outputBytesCount: output.byteLength,
       encoding: 'deflate',
+      rawBytesCount,
     }
     rawBytesCount = 0
     compressedData = []
@@ -87,12 +87,12 @@ export function createDeflateEncoder(
       worker.postMessage({
         action: 'write',
         id: nextWriteActionId,
-        data,
         streamId,
+        data,
       })
       pendingWriteActions.push({
-        id: nextWriteActionId,
         writeCallback: callback,
+        id: nextWriteActionId,
         data,
       })
       nextWriteActionId += 1

@@ -30,8 +30,8 @@ export function trackMediaInteraction(
       }
       mediaInteractionCb(
         assembleIncrementalSnapshot<MediaInteractionData>(IncrementalSource.MediaInteraction, {
-          id: getSerializedNodeId(target),
           type: event.type === DOM_EVENT.PLAY ? MediaInteractionType.Play : MediaInteractionType.Pause,
+          id: getSerializedNodeId(target),
         })
       )
     },

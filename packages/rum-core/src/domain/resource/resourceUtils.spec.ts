@@ -15,21 +15,21 @@ import {
 
 function generateResourceWith(overrides: Partial<RumPerformanceResourceTiming>) {
   const completeTiming: Partial<RumPerformanceResourceTiming> = {
-    connectEnd: 17 as RelativeTime,
-    connectStart: 15 as RelativeTime,
-    domainLookupEnd: 14 as RelativeTime,
-    domainLookupStart: 13 as RelativeTime,
-    duration: 50 as Duration,
     entryType: RumPerformanceEntryType.RESOURCE,
-    fetchStart: 12 as RelativeTime,
     name: 'entry',
-    redirectEnd: 11 as RelativeTime,
-    redirectStart: 10 as RelativeTime,
-    requestStart: 20 as RelativeTime,
-    responseEnd: 60 as RelativeTime,
-    responseStart: 50 as RelativeTime,
-    secureConnectionStart: 16 as RelativeTime,
     startTime: 10 as RelativeTime,
+    duration: 50 as Duration,
+    fetchStart: 12 as RelativeTime,
+    domainLookupStart: 13 as RelativeTime,
+    domainLookupEnd: 14 as RelativeTime,
+    connectStart: 15 as RelativeTime,
+    secureConnectionStart: 16 as RelativeTime,
+    connectEnd: 17 as RelativeTime,
+    requestStart: 20 as RelativeTime,
+    responseStart: 50 as RelativeTime,
+    responseEnd: 60 as RelativeTime,
+    redirectStart: 10 as RelativeTime,
+    redirectEnd: 11 as RelativeTime,
     ...overrides,
   }
   return completeTiming as RumPerformanceResourceTiming
@@ -83,15 +83,15 @@ describe('computePerformanceResourceDetails', () => {
     expect(
       computePerformanceResourceDetails(
         generateResourceWith({
-          connectEnd: 0 as RelativeTime,
-          connectStart: 0 as RelativeTime,
-          domainLookupEnd: 0 as RelativeTime,
           domainLookupStart: 0 as RelativeTime,
-          redirectEnd: 0 as RelativeTime,
-          redirectStart: 0 as RelativeTime,
+          domainLookupEnd: 0 as RelativeTime,
+          connectStart: 0 as RelativeTime,
+          secureConnectionStart: 0 as RelativeTime,
+          connectEnd: 0 as RelativeTime,
           requestStart: 0 as RelativeTime,
           responseStart: 0 as RelativeTime,
-          secureConnectionStart: 0 as RelativeTime,
+          redirectStart: 0 as RelativeTime,
+          redirectEnd: 0 as RelativeTime,
         })
       )
     ).toBeUndefined()
@@ -99,12 +99,12 @@ describe('computePerformanceResourceDetails', () => {
 
   it('should compute timings from entry', () => {
     expect(computePerformanceResourceDetails(generateResourceWith({}))).toEqual({
-      connect: { start: 5e6 as ServerDuration, duration: 2e6 as ServerDuration },
-      dns: { start: 3e6 as ServerDuration, duration: 1e6 as ServerDuration },
-      download: { start: 40e6 as ServerDuration, duration: 10e6 as ServerDuration },
-      first_byte: { start: 10e6 as ServerDuration, duration: 30e6 as ServerDuration },
-      redirect: { start: 0 as ServerDuration, duration: 1e6 as ServerDuration },
-      ssl: { start: 6e6 as ServerDuration, duration: 1e6 as ServerDuration },
+      redirect: { duration: 1e6 as ServerDuration, start: 0 as ServerDuration },
+      dns: { duration: 1e6 as ServerDuration, start: 3e6 as ServerDuration },
+      connect: { duration: 2e6 as ServerDuration, start: 5e6 as ServerDuration },
+      ssl: { duration: 1e6 as ServerDuration, start: 6e6 as ServerDuration },
+      first_byte: { duration: 30e6 as ServerDuration, start: 10e6 as ServerDuration },
+      download: { duration: 10e6 as ServerDuration, start: 40e6 as ServerDuration },
     })
   })
 
@@ -113,16 +113,16 @@ describe('computePerformanceResourceDetails', () => {
       computePerformanceResourceDetails(
         generateResourceWith({
           fetchStart: 10 as RelativeTime,
-          redirectEnd: 0 as RelativeTime,
           redirectStart: 0 as RelativeTime,
+          redirectEnd: 0 as RelativeTime,
         })
       )
     ).toEqual({
-      connect: { start: 5e6 as ServerDuration, duration: 2e6 as ServerDuration },
-      dns: { start: 3e6 as ServerDuration, duration: 1e6 as ServerDuration },
-      download: { start: 40e6 as ServerDuration, duration: 10e6 as ServerDuration },
-      first_byte: { start: 10e6 as ServerDuration, duration: 30e6 as ServerDuration },
-      ssl: { start: 6e6 as ServerDuration, duration: 1e6 as ServerDuration },
+      dns: { duration: 1e6 as ServerDuration, start: 3e6 as ServerDuration },
+      connect: { duration: 2e6 as ServerDuration, start: 5e6 as ServerDuration },
+      ssl: { duration: 1e6 as ServerDuration, start: 6e6 as ServerDuration },
+      first_byte: { duration: 30e6 as ServerDuration, start: 10e6 as ServerDuration },
+      download: { duration: 10e6 as ServerDuration, start: 40e6 as ServerDuration },
     })
   })
 
@@ -130,17 +130,17 @@ describe('computePerformanceResourceDetails', () => {
     expect(
       computePerformanceResourceDetails(
         generateResourceWith({
-          domainLookupEnd: 12 as RelativeTime,
-          domainLookupStart: 12 as RelativeTime,
           fetchStart: 12 as RelativeTime,
+          domainLookupStart: 12 as RelativeTime,
+          domainLookupEnd: 12 as RelativeTime,
         })
       )
     ).toEqual({
-      connect: { start: 5e6 as ServerDuration, duration: 2e6 as ServerDuration },
-      download: { start: 40e6 as ServerDuration, duration: 10e6 as ServerDuration },
-      first_byte: { start: 10e6 as ServerDuration, duration: 30e6 as ServerDuration },
-      redirect: { start: 0 as ServerDuration, duration: 1e6 as ServerDuration },
-      ssl: { start: 6e6 as ServerDuration, duration: 1e6 as ServerDuration },
+      redirect: { duration: 1e6 as ServerDuration, start: 0 as ServerDuration },
+      connect: { duration: 2e6 as ServerDuration, start: 5e6 as ServerDuration },
+      ssl: { duration: 1e6 as ServerDuration, start: 6e6 as ServerDuration },
+      first_byte: { duration: 30e6 as ServerDuration, start: 10e6 as ServerDuration },
+      download: { duration: 10e6 as ServerDuration, start: 40e6 as ServerDuration },
     })
   })
 
@@ -152,11 +152,11 @@ describe('computePerformanceResourceDetails', () => {
         })
       )
     ).toEqual({
-      connect: { start: 5e6 as ServerDuration, duration: 2e6 as ServerDuration },
-      dns: { start: 3e6 as ServerDuration, duration: 1e6 as ServerDuration },
-      download: { start: 40e6 as ServerDuration, duration: 10e6 as ServerDuration },
-      first_byte: { start: 10e6 as ServerDuration, duration: 30e6 as ServerDuration },
-      redirect: { start: 0 as ServerDuration, duration: 1e6 as ServerDuration },
+      redirect: { duration: 1e6 as ServerDuration, start: 0 as ServerDuration },
+      dns: { duration: 1e6 as ServerDuration, start: 3e6 as ServerDuration },
+      connect: { duration: 2e6 as ServerDuration, start: 5e6 as ServerDuration },
+      first_byte: { duration: 30e6 as ServerDuration, start: 10e6 as ServerDuration },
+      download: { duration: 10e6 as ServerDuration, start: 40e6 as ServerDuration },
     })
   })
 
@@ -164,18 +164,18 @@ describe('computePerformanceResourceDetails', () => {
     expect(
       computePerformanceResourceDetails(
         generateResourceWith({
-          connectEnd: 12 as RelativeTime,
-          connectStart: 12 as RelativeTime,
-          domainLookupEnd: 12 as RelativeTime,
-          domainLookupStart: 12 as RelativeTime,
           fetchStart: 12 as RelativeTime,
+          domainLookupStart: 12 as RelativeTime,
+          domainLookupEnd: 12 as RelativeTime,
+          connectStart: 12 as RelativeTime,
           secureConnectionStart: 12 as RelativeTime,
+          connectEnd: 12 as RelativeTime,
         })
       )
     ).toEqual({
-      download: { start: 40e6 as ServerDuration, duration: 10e6 as ServerDuration },
-      first_byte: { start: 10e6 as ServerDuration, duration: 30e6 as ServerDuration },
-      redirect: { start: 0 as ServerDuration, duration: 1e6 as ServerDuration },
+      redirect: { duration: 1e6 as ServerDuration, start: 0 as ServerDuration },
+      first_byte: { duration: 30e6 as ServerDuration, start: 10e6 as ServerDuration },
+      download: { duration: 10e6 as ServerDuration, start: 40e6 as ServerDuration },
     })
   })
 
@@ -183,18 +183,18 @@ describe('computePerformanceResourceDetails', () => {
     expect(
       computePerformanceResourceDetails(
         generateResourceWith({
-          connectEnd: 12 as RelativeTime,
-          connectStart: 12 as RelativeTime,
-          domainLookupEnd: 12 as RelativeTime,
-          domainLookupStart: 12 as RelativeTime,
           fetchStart: 12 as RelativeTime,
+          domainLookupStart: 12 as RelativeTime,
+          domainLookupEnd: 12 as RelativeTime,
+          connectStart: 12 as RelativeTime,
           secureConnectionStart: 0 as RelativeTime,
+          connectEnd: 12 as RelativeTime,
         })
       )
     ).toEqual({
-      download: { start: 40e6 as ServerDuration, duration: 10e6 as ServerDuration },
-      first_byte: { start: 10e6 as ServerDuration, duration: 30e6 as ServerDuration },
-      redirect: { start: 0 as ServerDuration, duration: 1e6 as ServerDuration },
+      redirect: { duration: 1e6 as ServerDuration, start: 0 as ServerDuration },
+      first_byte: { duration: 30e6 as ServerDuration, start: 10e6 as ServerDuration },
+      download: { duration: 10e6 as ServerDuration, start: 40e6 as ServerDuration },
     })
   })
   ;[
@@ -257,22 +257,22 @@ describe('computePerformanceResourceDetails', () => {
     expect(
       computePerformanceResourceDetails(
         generateResourceWith({
-          connectEnd: 10 as RelativeTime,
-          connectStart: 10 as RelativeTime,
-          domainLookupEnd: 10 as RelativeTime,
-          domainLookupStart: 10 as RelativeTime,
           fetchStart: 10 as RelativeTime,
-          redirectEnd: 0 as RelativeTime,
-          redirectStart: 0 as RelativeTime,
-          requestStart: 10 as RelativeTime,
-          responseEnd: 50 as RelativeTime,
-          responseStart: 40 as RelativeTime,
+          domainLookupStart: 10 as RelativeTime,
+          domainLookupEnd: 10 as RelativeTime,
+          connectStart: 10 as RelativeTime,
           secureConnectionStart: 0 as RelativeTime,
+          connectEnd: 10 as RelativeTime,
+          requestStart: 10 as RelativeTime,
+          responseStart: 40 as RelativeTime,
+          responseEnd: 50 as RelativeTime,
+          redirectStart: 0 as RelativeTime,
+          redirectEnd: 0 as RelativeTime,
         })
       )
     ).toEqual({
-      download: { start: 30e6 as ServerDuration, duration: 10e6 as ServerDuration },
-      first_byte: { start: 0 as ServerDuration, duration: 30e6 as ServerDuration },
+      first_byte: { duration: 30e6 as ServerDuration, start: 0 as ServerDuration },
+      download: { duration: 10e6 as ServerDuration, start: 30e6 as ServerDuration },
     })
   })
 })

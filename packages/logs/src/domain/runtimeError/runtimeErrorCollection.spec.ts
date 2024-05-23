@@ -40,9 +40,9 @@ describe('runtime error collection', () => {
     setTimeout(() => {
       expect(rawLogsEvents[0].rawLogsEvent).toEqual({
         date: jasmine.any(Number),
-        error: { kind: 'Error', stack: jasmine.any(String), causes: undefined },
         message: 'error!',
         status: StatusType.error,
+        error: { kind: 'Error', stack: jasmine.any(String), causes: undefined },
         origin: ErrorSource.SOURCE,
       })
       done()
@@ -69,26 +69,26 @@ describe('runtime error collection', () => {
     setTimeout(() => {
       expect(rawLogsEvents[0].rawLogsEvent).toEqual({
         date: jasmine.any(Number),
+        message: 'High level error',
+        status: StatusType.error,
         error: {
           kind: 'Error',
           stack: jasmine.any(String),
           causes: [
             {
+              message: 'Mid level error',
               source: ErrorSource.SOURCE,
               type: 'Error',
               stack: jasmine.any(String),
-              message: 'Mid level error',
             },
             {
+              message: 'Low level error',
               source: ErrorSource.SOURCE,
               type: 'TypeError',
               stack: jasmine.any(String),
-              message: 'Low level error',
             },
           ],
         },
-        message: 'High level error',
-        status: StatusType.error,
         origin: ErrorSource.SOURCE,
       })
       done()

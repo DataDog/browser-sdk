@@ -13,9 +13,9 @@ export function getSessionReplayLink(
   const viewContext = viewContexts.findView()
 
   return getSessionReplayUrl(configuration, {
+    session,
     viewContext,
     errorType,
-    session,
   })
 }
 

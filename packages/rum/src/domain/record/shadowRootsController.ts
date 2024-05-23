@@ -35,12 +35,12 @@ export const initShadowRootsController = (
       // The scroll event does not bubble up across the shadow root, we have to listen on the shadow root
       const scrollTracker = trackScroll(configuration, callback, elementsScrollPositions, shadowRoot)
       controllerByShadowRoot.set(shadowRoot, {
-        flush: () => mutationTracker.flush(),
         stop: () => {
           mutationTracker.stop()
           inputTracker.stop()
           scrollTracker.stop()
         },
+        flush: () => mutationTracker.flush(),
       })
     },
     removeShadowRoot: (shadowRoot: ShadowRoot) => {

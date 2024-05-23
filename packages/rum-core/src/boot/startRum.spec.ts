@@ -56,8 +56,8 @@ function startRumStub(
     locationChangeObservable,
     domMutationObservable,
     () => ({
-      context: {},
       user: {},
+      context: {},
       hasReplay: undefined,
     }),
     reportError

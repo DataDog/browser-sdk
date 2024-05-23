@@ -100,13 +100,13 @@ function processRequest(
     startTime: startClocks.relative,
     rawRumEvent: resourceEvent,
     domainContext: {
-      performanceEntry: matchingTiming,
-      xhr: request.xhr,
-      response: request.response,
-      requestInput: request.input,
       requestInit: request.init,
+      requestInput: request.input,
+      response: request.response,
       error: request.error,
+      performanceEntry: matchingTiming,
       isAborted: request.isAborted,
+      xhr: request.xhr,
     } as RumFetchResourceEventDomainContext | RumXhrResourceEventDomainContext,
   }
 }

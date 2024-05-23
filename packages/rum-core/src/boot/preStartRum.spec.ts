@@ -421,7 +421,7 @@ describe('preStartRum', () => {
 
     beforeEach(() => {
       strategy = createPreStartStrategy({}, getCommonContextSpy, createTrackingConsentState(), doStartRumSpy)
-      initConfiguration = { ...DEFAULT_INIT_CONFIGURATION, service: 'my-service', version: '1.4.2', env: 'dev' }
+      initConfiguration = { ...DEFAULT_INIT_CONFIGURATION, service: 'my-service', env: 'dev', version: '1.4.2' }
     })
 
     afterEach(() => {
@@ -467,8 +467,8 @@ describe('preStartRum', () => {
       doStartRumSpy.and.returnValue({ addAction: addActionSpy } as unknown as StartRumResult)
 
       const customAction: CustomAction = {
-        name: 'foo',
         type: ActionType.CUSTOM,
+        name: 'foo',
         startClocks: clocksNow(),
       }
       strategy.addAction(customAction)

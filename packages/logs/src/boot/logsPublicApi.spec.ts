@@ -131,8 +131,8 @@ describe('logs entry', () => {
 
       it('should be configurable', () => {
         const logger = LOGS.createLogger('foo', {
-          handler: HandlerType.console,
           level: StatusType.info,
+          handler: HandlerType.console,
         })
 
         expect(logger.getHandler()).toEqual(HandlerType.console)
@@ -192,9 +192,9 @@ describe('logs entry', () => {
 
         const getCommonContext = startLogs.calls.mostRecent().args[2]
         expect(getCommonContext().user).toEqual({
+          id: 'foo',
           email: 'qux',
           foo: { bar: 'qux' },
-          id: 'foo',
           name: 'bar',
         })
       })
@@ -204,8 +204,8 @@ describe('logs entry', () => {
         logsPublicApi.setUser(user as any)
         const getCommonContext = startLogs.calls.mostRecent().args[2]
         expect(getCommonContext().user).toEqual({
-          email: '[object Object]',
           id: 'null',
+          email: '[object Object]',
           name: '2',
         })
       })

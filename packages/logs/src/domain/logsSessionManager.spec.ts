@@ -115,8 +115,8 @@ describe('logs session manager', () => {
   function startLogsSessionManagerWithDefaults({ configuration }: { configuration?: Partial<LogsConfiguration> } = {}) {
     return startLogsSessionManager(
       {
-        sessionSampleRate: 100,
         sessionStoreStrategyType: { type: 'Cookie', cookieOptions: {} },
+        sessionSampleRate: 100,
         ...configuration,
       } as LogsConfiguration,
       createTrackingConsentState(TrackingConsent.GRANTED)

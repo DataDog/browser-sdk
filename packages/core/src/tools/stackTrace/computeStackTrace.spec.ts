@@ -145,32 +145,32 @@ Error: foo
 
     expect(stackFrames.stack.length).toEqual(4)
     expect(stackFrames.stack[0]).toEqual({
-      args: [],
-      column: undefined,
-      func: '?',
-      line: 48,
       url: 'http://path/to/file.js',
+      func: '?',
+      args: [],
+      line: 48,
+      column: undefined,
     })
     expect(stackFrames.stack[1]).toEqual({
-      args: [],
-      column: undefined,
-      func: 'dumpException3',
-      line: 52,
       url: 'http://path/to/file.js',
+      func: 'dumpException3',
+      args: [],
+      line: 52,
+      column: undefined,
     })
     expect(stackFrames.stack[2]).toEqual({
-      args: [],
-      column: undefined,
-      func: 'onclick',
-      line: 82,
       url: 'http://path/to/file.js',
+      func: 'onclick',
+      args: [],
+      line: 82,
+      column: undefined,
     })
     expect(stackFrames.stack[3]).toEqual({
-      args: [],
-      column: undefined,
-      func: '?',
-      line: undefined,
       url: '[native code]',
+      func: '?',
+      args: [],
+      line: undefined,
+      column: undefined,
     })
   })
 
@@ -179,25 +179,25 @@ Error: foo
 
     expect(stackFrames.stack.length).toEqual(3)
     expect(stackFrames.stack[0]).toEqual({
-      args: [],
-      column: 22,
-      func: '?',
-      line: 48,
       url: 'http://path/to/file.js',
+      func: '?',
+      args: [],
+      line: 48,
+      column: 22,
     })
     expect(stackFrames.stack[1]).toEqual({
-      args: [],
-      column: 15,
-      func: 'foo',
-      line: 52,
       url: 'http://path/to/file.js',
+      func: 'foo',
+      args: [],
+      line: 52,
+      column: 15,
     })
     expect(stackFrames.stack[2]).toEqual({
-      args: [],
-      column: 107,
-      func: 'bar',
-      line: 108,
       url: 'http://path/to/file.js',
+      func: 'bar',
+      args: [],
+      line: 108,
+      column: 107,
     })
   })
 
@@ -206,25 +206,25 @@ Error: foo
 
     expect(stackFrames.stack.length).toEqual(3)
     expect(stackFrames.stack[0]).toEqual({
-      args: [],
-      column: 22,
-      func: '?',
-      line: 47,
       url: 'http://path/to/file.js',
+      func: '?',
+      args: [],
+      line: 47,
+      column: 22,
     })
     expect(stackFrames.stack[1]).toEqual({
-      args: [],
-      column: 15,
-      func: 'foo',
-      line: 52,
       url: 'http://path/to/file.js',
+      func: 'foo',
+      args: [],
+      line: 52,
+      column: 15,
     })
     expect(stackFrames.stack[2]).toEqual({
-      args: [],
-      column: 23,
-      func: 'bar',
-      line: 108,
       url: 'http://path/to/file.js',
+      func: 'bar',
+      args: [],
+      line: 108,
+      column: 23,
     })
   })
 
@@ -235,25 +235,25 @@ Error: foo
 
     expect(stackFrames.stack.length).toEqual(3)
     expect(stackFrames.stack[0]).toEqual({
-      args: [],
-      column: undefined,
-      func: 'eval',
-      line: undefined,
       url: '[native code]',
+      func: 'eval',
+      args: [],
+      line: undefined,
+      column: undefined,
     })
     expect(stackFrames.stack[1]).toEqual({
-      args: [],
-      column: 21,
-      func: 'foo',
-      line: 58,
       url: 'http://path/to/file.js',
+      func: 'foo',
+      args: [],
+      line: 58,
+      column: 21,
     })
     expect(stackFrames.stack[2]).toEqual({
-      args: [],
-      column: 91,
-      func: 'bar',
-      line: 109,
       url: 'http://path/to/file.js',
+      func: 'bar',
+      args: [],
+      line: 109,
+      column: 91,
     })
   })
 
@@ -262,53 +262,53 @@ Error: foo
 
     expect(stackFrames.stack.length).toEqual(7)
     expect(stackFrames.stack[0]).toEqual({
-      args: [],
-      column: undefined,
-      func: '?',
-      line: 44,
       url: 'http://127.0.0.1:8000/js/stacktrace.js',
+      func: '?',
+      args: [],
+      line: 44,
+      column: undefined,
     })
     expect(stackFrames.stack[1]).toEqual({
-      args: ['null'],
-      column: undefined,
-      func: '?',
-      line: 31,
       url: 'http://127.0.0.1:8000/js/stacktrace.js',
+      func: '?',
+      args: ['null'],
+      line: 31,
+      column: undefined,
     })
     expect(stackFrames.stack[2]).toEqual({
-      args: [],
-      column: undefined,
-      func: 'printStackTrace',
-      line: 18,
       url: 'http://127.0.0.1:8000/js/stacktrace.js',
+      func: 'printStackTrace',
+      args: [],
+      line: 18,
+      column: undefined,
     })
     expect(stackFrames.stack[3]).toEqual({
-      args: ['1'],
-      column: undefined,
-      func: 'bar',
-      line: 13,
       url: 'http://127.0.0.1:8000/js/file.js',
+      func: 'bar',
+      args: ['1'],
+      line: 13,
+      column: undefined,
     })
     expect(stackFrames.stack[4]).toEqual({
-      args: ['2'],
-      column: undefined,
-      func: 'bar',
-      line: 16,
       url: 'http://127.0.0.1:8000/js/file.js',
+      func: 'bar',
+      args: ['2'],
+      line: 16,
+      column: undefined,
     })
     expect(stackFrames.stack[5]).toEqual({
-      args: [],
-      column: undefined,
-      func: 'foo',
-      line: 20,
       url: 'http://127.0.0.1:8000/js/file.js',
+      func: 'foo',
+      args: [],
+      line: 20,
+      column: undefined,
     })
     expect(stackFrames.stack[6]).toEqual({
-      args: [],
-      column: undefined,
-      func: '?',
-      line: 24,
       url: 'http://127.0.0.1:8000/js/file.js',
+      func: '?',
+      args: [],
+      line: 24,
+      column: undefined,
     })
   })
 
@@ -317,53 +317,53 @@ Error: foo
 
     expect(stackFrames.stack.length).toEqual(7)
     expect(stackFrames.stack[0]).toEqual({
-      args: [],
-      column: undefined,
-      func: '?',
-      line: 44,
       url: 'file:///G:/js/stacktrace.js',
+      func: '?',
+      args: [],
+      line: 44,
+      column: undefined,
     })
     expect(stackFrames.stack[1]).toEqual({
-      args: ['null'],
-      column: undefined,
-      func: '?',
-      line: 31,
       url: 'file:///G:/js/stacktrace.js',
+      func: '?',
+      args: ['null'],
+      line: 31,
+      column: undefined,
     })
     expect(stackFrames.stack[2]).toEqual({
-      args: [],
-      column: undefined,
-      func: 'printStackTrace',
-      line: 18,
       url: 'file:///G:/js/stacktrace.js',
+      func: 'printStackTrace',
+      args: [],
+      line: 18,
+      column: undefined,
     })
     expect(stackFrames.stack[3]).toEqual({
-      args: ['1'],
-      column: undefined,
-      func: 'bar',
-      line: 13,
       url: 'file:///G:/js/file.js',
+      func: 'bar',
+      args: ['1'],
+      line: 13,
+      column: undefined,
     })
     expect(stackFrames.stack[4]).toEqual({
-      args: ['2'],
-      column: undefined,
-      func: 'bar',
-      line: 16,
       url: 'file:///G:/js/file.js',
+      func: 'bar',
+      args: ['2'],
+      line: 16,
+      column: undefined,
     })
     expect(stackFrames.stack[5]).toEqual({
-      args: [],
-      column: undefined,
-      func: 'foo',
-      line: 20,
       url: 'file:///G:/js/file.js',
+      func: 'foo',
+      args: [],
+      line: 20,
+      column: undefined,
     })
     expect(stackFrames.stack[6]).toEqual({
-      args: [],
-      column: undefined,
-      func: '?',
-      line: 24,
       url: 'file:///G:/js/file.js',
+      func: '?',
+      args: [],
+      line: 24,
+      column: undefined,
     })
   })
 
@@ -372,25 +372,25 @@ Error: foo
 
     expect(stackFrames.stack.length).toEqual(3)
     expect(stackFrames.stack[0]).toEqual({
-      args: [],
-      column: undefined,
-      func: '?',
-      line: 48,
       url: 'http://path/to/file.js',
+      func: '?',
+      args: [],
+      line: 48,
+      column: undefined,
     })
     expect(stackFrames.stack[1]).toEqual({
-      args: [],
-      column: undefined,
-      func: 'dumpException3',
-      line: 52,
       url: 'http://path/to/file.js',
+      func: 'dumpException3',
+      args: [],
+      line: 52,
+      column: undefined,
     })
     expect(stackFrames.stack[2]).toEqual({
-      args: [],
-      column: undefined,
-      func: 'onclick',
-      line: 1,
       url: 'http://path/to/file.js',
+      func: 'onclick',
+      args: [],
+      line: 1,
+      column: undefined,
     })
   })
 
@@ -399,25 +399,25 @@ Error: foo
 
     expect(stackFrames.stack.length).toEqual(3)
     expect(stackFrames.stack[0]).toEqual({
-      args: [],
-      column: 13,
-      func: 'foo',
-      line: 41,
       url: 'http://path/to/file.js',
+      func: 'foo',
+      args: [],
+      line: 41,
+      column: 13,
     })
     expect(stackFrames.stack[1]).toEqual({
-      args: [],
-      column: 1,
-      func: 'bar',
-      line: 1,
       url: 'http://path/to/file.js',
+      func: 'bar',
+      args: [],
+      line: 1,
+      column: 1,
     })
     expect(stackFrames.stack[2]).toEqual({
-      args: [],
-      column: 1,
-      func: '.plugin/e.fn[c]/<',
-      line: 1,
       url: 'http://path/to/file.js',
+      func: '.plugin/e.fn[c]/<',
+      args: [],
+      line: 1,
+      column: 1,
     })
   })
 
@@ -426,32 +426,32 @@ Error: foo
 
     expect(stackFrames.stack.length).toEqual(4)
     expect(stackFrames.stack[0]).toEqual({
-      args: [],
-      column: 28,
-      func: '[2]</Bar.prototype._baz/</<',
-      line: 703,
       url: 'http://path/to/file.js',
+      func: '[2]</Bar.prototype._baz/</<',
+      args: [],
+      line: 703,
+      column: 28,
     })
     expect(stackFrames.stack[1]).toEqual({
-      args: [],
-      column: 2,
-      func: 'App.prototype.foo',
-      line: 15,
       url: 'file:///path/to/file.js',
+      func: 'App.prototype.foo',
+      args: [],
+      line: 15,
+      column: 2,
     })
     expect(stackFrames.stack[2]).toEqual({
-      args: [],
-      column: 3,
-      func: 'bar',
-      line: 20,
       url: 'file:///path/to/file.js',
+      func: 'bar',
+      args: [],
+      line: 20,
+      column: 3,
     })
     expect(stackFrames.stack[3]).toEqual({
-      args: [],
-      column: 1,
-      func: '?',
-      line: 23,
       url: 'file:///path/to/index.html',
+      func: '?',
+      args: [],
+      line: 23,
+      column: 1,
     })
   })
 
@@ -460,11 +460,11 @@ Error: foo
     const stackFrames = computeStackTrace(error as Error)
     expect(stackFrames.stack.length).toEqual(1)
     expect(stackFrames.stack[0]).toEqual({
-      args: ['native'],
-      column: undefined,
-      func: 'Array.forEach',
-      line: undefined,
       url: undefined,
+      func: 'Array.forEach',
+      args: ['native'],
+      line: undefined,
+      column: undefined,
     })
   })
 
@@ -477,25 +477,25 @@ Error: foo
     const stackFrames = computeStackTrace({ stack } as Error)
     expect(stackFrames.stack.length).toEqual(3)
     expect(stackFrames.stack[0]).toEqual({
-      args: [],
-      column: 12,
-      func: 'foo$bar$oof$rab',
-      line: 1060,
       url: 'events.cljs',
+      func: 'foo$bar$oof$rab',
+      args: [],
+      line: 1060,
+      column: 12,
     })
     expect(stackFrames.stack[1]).toEqual({
-      args: [],
-      column: 19,
-      func: 'func1$func2$func3$func4',
-      line: 128,
       url: 'std_interceptors.js',
+      func: 'func1$func2$func3$func4',
+      args: [],
+      line: 128,
+      column: 19,
     })
     expect(stackFrames.stack[2]).toEqual({
-      args: [],
-      column: 29,
-      func: 'eval',
-      line: 132,
       url: 'std_interceptors.jsx',
+      func: 'eval',
+      args: [],
+      line: 132,
+      column: 29,
     })
   })
 
@@ -513,18 +513,18 @@ Error: foo
     const stackFrames = computeStackTrace({ stack } as Error)
     expect(stackFrames.stack.length).toEqual(2)
     expect(stackFrames.stack[0]).toEqual({
-      args: [],
-      column: 191,
-      func: '?',
-      line: 8489,
       url: 'https://datadoghq.com/somefile.js',
+      func: '?',
+      args: [],
+      line: 8489,
+      column: 191,
     })
     expect(stackFrames.stack[1]).toEqual({
-      args: [],
-      column: 37379,
-      func: '?',
-      line: 85,
       url: 'chrome-extension://<id>/content/index.js',
+      func: '?',
+      args: [],
+      line: 85,
+      column: 37379,
     })
   })
 
@@ -533,32 +533,32 @@ Error: foo
 
     expect(stackFrames.stack.length).toEqual(4)
     expect(stackFrames.stack[0]).toEqual({
-      args: [],
-      column: 17,
-      func: 'bar',
-      line: 13,
       url: 'http://path/to/file.js',
+      func: 'bar',
+      args: [],
+      line: 13,
+      column: 17,
     })
     expect(stackFrames.stack[1]).toEqual({
-      args: [],
-      column: 5,
-      func: 'bar',
-      line: 16,
       url: 'http://path/to/file.js',
+      func: 'bar',
+      args: [],
+      line: 16,
+      column: 5,
     })
     expect(stackFrames.stack[2]).toEqual({
-      args: [],
-      column: 5,
-      func: 'foo',
-      line: 20,
       url: 'http://path/to/file.js',
+      func: 'foo',
+      args: [],
+      line: 20,
+      column: 5,
     })
     expect(stackFrames.stack[3]).toEqual({
-      args: [],
-      column: 4,
-      func: '?',
-      line: 24,
       url: 'http://path/to/file.js',
+      func: '?',
+      args: [],
+      line: 24,
+      column: 4,
     })
   })
 
@@ -567,25 +567,25 @@ Error: foo
 
     expect(stackFrames.stack.length).toEqual(3)
     expect(stackFrames.stack[0]).toEqual({
-      args: [],
-      column: 27,
-      func: 'dumpExceptionError',
-      line: 41,
       url: 'http://localhost:8080/file.js',
+      func: 'dumpExceptionError',
+      args: [],
+      line: 41,
+      column: 27,
     })
     expect(stackFrames.stack[1]).toEqual({
-      args: [],
-      column: 146,
-      func: 'HTMLButtonElement.onclick',
-      line: 107,
       url: 'http://localhost:8080/file.js',
+      func: 'HTMLButtonElement.onclick',
+      args: [],
+      line: 107,
+      column: 146,
     })
     expect(stackFrames.stack[2]).toEqual({
-      args: [],
-      column: 3651,
-      func: 'I.e.fn.(anonymous function) [as index]',
-      line: 10,
       url: 'http://localhost:8080/file.js',
+      func: 'I.e.fn.(anonymous function) [as index]',
+      args: [],
+      line: 10,
+      column: 3651,
     })
   })
 
@@ -594,32 +594,32 @@ Error: foo
 
     expect(stackFrames.stack.length).toEqual(4)
     expect(stackFrames.stack[0]).toEqual({
-      args: [],
-      column: 108,
-      func: 'TESTTESTTEST.eval',
-      line: 295,
       url: 'webpack:///./src/components/test/test.jsx?',
+      func: 'TESTTESTTEST.eval',
+      args: [],
+      line: 295,
+      column: 108,
     })
     expect(stackFrames.stack[1]).toEqual({
-      args: [],
-      column: 32,
-      func: 'TESTTESTTEST.render',
-      line: 272,
       url: 'webpack:///./src/components/test/test.jsx?',
+      func: 'TESTTESTTEST.render',
+      args: [],
+      line: 272,
+      column: 32,
     })
     expect(stackFrames.stack[2]).toEqual({
-      args: [],
-      column: 31,
-      func: 'TESTTESTTEST.tryRender',
-      line: 34,
       url: 'webpack:///./~/react-transform-catch-errors/lib/index.js?',
+      func: 'TESTTESTTEST.tryRender',
+      args: [],
+      line: 34,
+      column: 31,
     })
     expect(stackFrames.stack[3]).toEqual({
-      args: [],
-      column: 30,
-      func: 'TESTTESTTEST.proxiedMethod',
-      line: 44,
       url: 'webpack:///./~/react-proxy/modules/createPrototypeProxy.js?',
+      func: 'TESTTESTTEST.proxiedMethod',
+      args: [],
+      line: 44,
+      column: 30,
     })
   })
 
@@ -628,39 +628,39 @@ Error: foo
 
     expect(stackFrames.stack.length).toEqual(5)
     expect(stackFrames.stack[0]).toEqual({
-      args: [],
-      column: 17,
-      func: 'baz',
-      line: 21,
       url: 'http://localhost:8080/file.js',
+      func: 'baz',
+      args: [],
+      line: 21,
+      column: 17,
     })
     expect(stackFrames.stack[1]).toEqual({
-      args: [],
-      column: 17,
-      func: 'foo',
-      line: 21,
       url: 'http://localhost:8080/file.js',
+      func: 'foo',
+      args: [],
+      line: 21,
+      column: 17,
     })
     expect(stackFrames.stack[2]).toEqual({
-      args: [],
-      column: 17,
-      func: 'eval',
-      line: 21,
       url: 'http://localhost:8080/file.js',
+      func: 'eval',
+      args: [],
+      line: 21,
+      column: 17,
     })
     expect(stackFrames.stack[3]).toEqual({
-      args: [],
-      column: 17,
-      func: 'Object.speak',
-      line: 21,
       url: 'http://localhost:8080/file.js',
+      func: 'Object.speak',
+      args: [],
+      line: 21,
+      column: 17,
     })
     expect(stackFrames.stack[4]).toEqual({
-      args: [],
-      column: 13,
-      func: '?',
-      line: 31,
       url: 'http://localhost:8080/file.js',
+      func: '?',
+      args: [],
+      line: 31,
+      column: 13,
     })
   })
 
@@ -669,46 +669,46 @@ Error: foo
 
     expect(stackFrames.stack.length).toEqual(7)
     expect(stackFrames.stack[1]).toEqual({
-      args: [],
-      column: 29146,
-      func: 's',
-      line: 31,
       url: 'blob:http%3A//localhost%3A8080/abfc40e9-4742-44ed-9dcd-af8f99a29379',
+      func: 's',
+      args: [],
+      line: 31,
+      column: 29146,
     })
     expect(stackFrames.stack[2]).toEqual({
-      args: [],
-      column: 30039,
-      func: 'Object.d [as add]',
-      line: 31,
       url: 'blob:http%3A//localhost%3A8080/abfc40e9-4742-44ed-9dcd-af8f99a29379',
+      func: 'Object.d [as add]',
+      args: [],
+      line: 31,
+      column: 30039,
     })
     expect(stackFrames.stack[3]).toEqual({
-      args: [],
-      column: 10978,
-      func: '?',
-      line: 15,
       url: 'blob:http%3A//localhost%3A8080/d4eefe0f-361a-4682-b217-76587d9f712a',
+      func: '?',
+      args: [],
+      line: 15,
+      column: 10978,
     })
     expect(stackFrames.stack[4]).toEqual({
-      args: [],
-      column: 6911,
-      func: '?',
-      line: 1,
       url: 'blob:http%3A//localhost%3A8080/abfc40e9-4742-44ed-9dcd-af8f99a29379',
+      func: '?',
+      args: [],
+      line: 1,
+      column: 6911,
     })
     expect(stackFrames.stack[5]).toEqual({
-      args: [],
-      column: 3019,
-      func: 'n.fire',
-      line: 7,
       url: 'blob:http%3A//localhost%3A8080/abfc40e9-4742-44ed-9dcd-af8f99a29379',
+      func: 'n.fire',
+      args: [],
+      line: 7,
+      column: 3019,
     })
     expect(stackFrames.stack[6]).toEqual({
-      args: [],
-      column: 2863,
-      func: 'n.handle',
-      line: 7,
       url: 'blob:http%3A//localhost%3A8080/abfc40e9-4742-44ed-9dcd-af8f99a29379',
+      func: 'n.handle',
+      args: [],
+      line: 7,
+      column: 2863,
     })
   })
 
@@ -717,11 +717,11 @@ Error: foo
 
     expect(stackFrames.stack.length).toEqual(1)
     expect(stackFrames.stack[0]).toEqual({
-      args: [],
-      column: 13,
-      func: '?',
-      line: 1,
       url: 'snippet:///snippet_file',
+      func: '?',
+      args: [],
+      line: 1,
+      column: 13,
     })
   })
 
@@ -739,25 +739,25 @@ Error: foo
     expect(stackFrames.stack.length).toEqual(3)
     // TODO: func should be normalized
     expect(stackFrames.stack[0]).toEqual({
-      args: [],
-      column: 13,
-      func: 'Anonymous function',
-      line: 48,
       url: 'http://path/to/file.js',
+      func: 'Anonymous function',
+      args: [],
+      line: 48,
+      column: 13,
     })
     expect(stackFrames.stack[1]).toEqual({
-      args: [],
-      column: 9,
-      func: 'foo',
-      line: 46,
       url: 'http://path/to/file.js',
+      func: 'foo',
+      args: [],
+      line: 46,
+      column: 9,
     })
     expect(stackFrames.stack[2]).toEqual({
-      args: [],
-      column: 1,
-      func: 'bar',
-      line: 82,
       url: 'http://path/to/file.js',
+      func: 'bar',
+      args: [],
+      line: 82,
+      column: 1,
     })
   })
 
@@ -767,25 +767,25 @@ Error: foo
     expect(stackFrames.stack.length).toEqual(3)
     // TODO: func should be normalized
     expect(stackFrames.stack[0]).toEqual({
-      args: [],
-      column: 21,
-      func: 'Anonymous function',
-      line: 47,
       url: 'http://path/to/file.js',
+      func: 'Anonymous function',
+      args: [],
+      line: 47,
+      column: 21,
     })
     expect(stackFrames.stack[1]).toEqual({
-      args: [],
-      column: 13,
-      func: 'foo',
-      line: 45,
       url: 'http://path/to/file.js',
+      func: 'foo',
+      args: [],
+      line: 45,
+      column: 13,
     })
     expect(stackFrames.stack[2]).toEqual({
-      args: [],
-      column: 1,
-      func: 'bar',
-      line: 108,
       url: 'http://path/to/file.js',
+      func: 'bar',
+      args: [],
+      line: 108,
+      column: 1,
     })
   })
 
@@ -794,25 +794,25 @@ Error: foo
 
     expect(stackFrames.stack.length).toEqual(3)
     expect(stackFrames.stack[0]).toEqual({
-      args: [],
-      column: 1,
-      func: 'eval code',
-      line: 1,
       url: 'eval code',
+      func: 'eval code',
+      args: [],
+      line: 1,
+      column: 1,
     })
     expect(stackFrames.stack[1]).toEqual({
-      args: [],
-      column: 17,
-      func: 'foo',
-      line: 58,
       url: 'http://path/to/file.js',
+      func: 'foo',
+      args: [],
+      line: 58,
+      column: 17,
     })
     expect(stackFrames.stack[2]).toEqual({
-      args: [],
-      column: 1,
-      func: 'bar',
-      line: 109,
       url: 'http://path/to/file.js',
+      func: 'bar',
+      args: [],
+      line: 109,
+      column: 1,
     })
   })
 
@@ -821,25 +821,25 @@ Error: foo
 
     expect(stackFrames.stack.length).toEqual(3)
     expect(stackFrames.stack[0]).toEqual({
-      args: [],
-      column: 22,
-      func: '?',
-      line: 47,
       url: 'http://path/to/file.js',
+      func: '?',
+      args: [],
+      line: 47,
+      column: 22,
     })
     expect(stackFrames.stack[1]).toEqual({
-      args: [],
-      column: 15,
-      func: 'foo',
-      line: 52,
       url: 'http://path/to/file.js',
+      func: 'foo',
+      args: [],
+      line: 52,
+      column: 15,
     })
     expect(stackFrames.stack[2]).toEqual({
-      args: [],
-      column: 168,
-      func: 'bar',
-      line: 108,
       url: 'http://path/to/file.js',
+      func: 'bar',
+      args: [],
+      line: 108,
+      column: 168,
     })
   })
 
@@ -848,25 +848,25 @@ Error: foo
 
     expect(stackFrames.stack.length).toEqual(3)
     expect(stackFrames.stack[0]).toEqual({
-      args: [],
-      column: undefined,
-      func: '?',
-      line: 878,
       url: 'file:///path/to/file.js',
+      func: '?',
+      args: [],
+      line: 878,
+      column: undefined,
     })
     expect(stackFrames.stack[1]).toEqual({
-      args: [],
-      column: undefined,
-      func: 'foo',
-      line: 4283,
       url: 'http://path/to/file.js',
+      func: 'foo',
+      args: [],
+      line: 4283,
+      column: undefined,
     })
     expect(stackFrames.stack[2]).toEqual({
-      args: [],
-      column: undefined,
-      func: '?',
-      line: 4287,
       url: 'http://path/to/file.js',
+      func: '?',
+      args: [],
+      line: 4287,
+      column: undefined,
     })
   })
 
@@ -875,11 +875,11 @@ Error: foo
 
     expect(stackFrames.stack.length).toEqual(3)
     expect(stackFrames.stack[0]).toEqual({
-      args: [],
-      column: 16,
-      func: 'render',
-      line: 5529,
       url: 'resource://path/data/content/bundle.js',
+      func: 'render',
+      args: [],
+      line: 5529,
+      column: 16,
     })
   })
 
@@ -888,39 +888,39 @@ Error: foo
 
     expect(stackFrames.stack.length).toEqual(5)
     expect(stackFrames.stack[0]).toEqual({
-      args: [],
-      column: undefined,
-      func: 'baz',
-      line: 26,
       url: 'http://localhost:8080/file.js',
+      func: 'baz',
+      args: [],
+      line: 26,
+      column: undefined,
     })
     expect(stackFrames.stack[1]).toEqual({
-      args: [],
-      column: undefined,
-      func: 'foo',
-      line: 26,
       url: 'http://localhost:8080/file.js',
+      func: 'foo',
+      args: [],
+      line: 26,
+      column: undefined,
     })
     expect(stackFrames.stack[2]).toEqual({
-      args: [],
-      column: undefined,
-      func: '?',
-      line: 26,
       url: 'http://localhost:8080/file.js',
+      func: '?',
+      args: [],
+      line: 26,
+      column: undefined,
     })
     expect(stackFrames.stack[3]).toEqual({
-      args: [],
-      column: 17,
-      func: 'speak',
-      line: 26,
       url: 'http://localhost:8080/file.js',
+      func: 'speak',
+      args: [],
+      line: 26,
+      column: 17,
     })
     expect(stackFrames.stack[4]).toEqual({
-      args: [],
-      column: 9,
-      func: '?',
-      line: 33,
       url: 'http://localhost:8080/file.js',
+      func: '?',
+      args: [],
+      line: 33,
+      column: 9,
     })
   })
 
@@ -929,18 +929,18 @@ Error: foo
 
     expect(stackFrames.stack.length).toEqual(8)
     expect(stackFrames.stack[0]).toEqual({
-      args: [],
-      column: 24,
-      func: 'render',
-      line: 78,
       url: '/home/username/sample-workspace/sampleapp.collect.react/src/components/GpsMonitorScene.js',
+      func: 'render',
+      args: [],
+      line: 78,
+      column: 24,
     })
     expect(stackFrames.stack[7]).toEqual({
-      args: [],
-      column: 41,
-      func: 'this',
-      line: 74,
       url: '/home/username/sample-workspace/sampleapp.collect.react/node_modules/react-native/Libraries/Renderer/src/renderers/native/ReactNativeBaseComponent.js',
+      func: 'this',
+      args: [],
+      line: 74,
+      column: 41,
     })
   })
 
@@ -949,25 +949,25 @@ Error: foo
 
     expect(stackFrames.stack.length).toEqual(37)
     expect(stackFrames.stack[0]).toEqual({
-      args: [],
-      column: 1917,
-      func: 'value',
-      line: 12,
       url: 'index.android.bundle',
+      func: 'value',
+      args: [],
+      line: 12,
+      column: 1917,
     })
     expect(stackFrames.stack[35]).toEqual({
-      args: [],
-      column: 927,
-      func: 'value',
-      line: 29,
       url: 'index.android.bundle',
+      func: 'value',
+      args: [],
+      line: 29,
+      column: 927,
     })
     expect(stackFrames.stack[36]).toEqual({
-      args: [],
-      column: undefined,
-      func: '?',
-      line: undefined,
       url: '[native code]',
+      func: '?',
+      args: [],
+      line: undefined,
+      column: undefined,
     })
   })
 
@@ -976,18 +976,18 @@ Error: foo
 
     expect(stackFrames.stack.length).toEqual(2)
     expect(stackFrames.stack[0]).toEqual({
-      args: [],
-      column: 99546,
-      func: '?',
-      line: 34,
       url: 'capacitor://localhost/media/dist/bundle.js',
+      func: '?',
+      args: [],
+      line: 34,
+      column: 99546,
     })
     expect(stackFrames.stack[1]).toEqual({
-      args: [],
-      column: 47950,
-      func: 'r',
-      line: 34,
       url: 'capacitor://localhost/media/dist/bundle.js',
+      func: 'r',
+      args: [],
+      line: 34,
+      column: 47950,
     })
   })
 })

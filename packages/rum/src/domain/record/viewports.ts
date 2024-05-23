@@ -58,11 +58,11 @@ export const convertMouseEventToLayoutCoordinates = (clientX: number, clientY: n
 }
 
 export const getVisualViewport = (visualViewport: VisualViewport): VisualViewportRecord['data'] => ({
-  scale: visualViewport.scale,
+  height: visualViewport.height,
   offsetLeft: visualViewport.offsetLeft,
   offsetTop: visualViewport.offsetTop,
   pageLeft: visualViewport.pageLeft,
   pageTop: visualViewport.pageTop,
-  height: visualViewport.height,
+  scale: visualViewport.scale,
   width: visualViewport.width,
 })

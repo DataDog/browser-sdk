@@ -250,7 +250,7 @@ describe('listenActionEvents', () => {
     window.dispatchEvent(createNewEvent('pointerdown', { target, isPrimary: true }))
     window.dispatchEvent(createNewEvent('mousedown', { target }))
     beforeMouseUp?.()
-    window.dispatchEvent(createNewEvent('pointerup', { target, isPrimary: true }))
+    window.dispatchEvent(createNewEvent('pointerup', { isPrimary: true, target }))
     window.dispatchEvent(createNewEvent('mouseup', { target }))
     window.dispatchEvent(createNewEvent('click', { target, isPrimary: clickEventIsPrimary }))
   }

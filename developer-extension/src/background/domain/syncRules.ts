@@ -28,8 +28,8 @@ async function updateRules(options: NetRequestRulesOptions) {
   logger.log(`Updating rules for tab ${options.tabId}`)
   const { tabRuleIds, nextRuleId } = await getExistingRulesInfos(options.tabId)
   await chrome.declarativeNetRequest.updateSessionRules({
-    removeRuleIds: tabRuleIds,
     addRules: buildRules(options, nextRuleId),
+    removeRuleIds: tabRuleIds,
   })
   await chrome.browsingData.removeCache({})
 }
@@ -77,11 +77,11 @@ function buildRules(
     logger.log('add block intake rules')
     for (const intakeDomain of INTAKE_DOMAINS) {
       rules.push({
-        id: id++,
-        condition: { tabIds: [tabId], urlFilter: `||${intakeDomain}` },
         action: {
           type: chrome.declarativeNetRequest.RuleActionType.BLOCK,
         },
+        condition: { tabIds: [tabId], urlFilter: `||${intakeDomain}` },
+        id: id++,
       })
     }
   }
@@ -92,13 +92,13 @@ function buildRules(
   ): chrome.declarativeNetRequest.Rule {
     const tabIds = [tabId]
     return {
-      id: id++,
       action: {
-        type: chrome.declarativeNetRequest.RuleActionType.REDIRECT,
         redirect,
+        type: chrome.declarativeNetRequest.RuleActionType.REDIRECT,
       },
       condition:
-        typeof filter === 'string' ? { tabIds, urlFilter: `|${filter}|` } : { tabIds, regexFilter: filter.source },
+        typeof filter === 'string' ? { tabIds, urlFilter: `|${filter}|` } : { regexFilter: filter.source, tabIds },
+      id: id++,
     }
   }
 

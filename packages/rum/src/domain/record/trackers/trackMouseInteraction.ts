@@ -56,9 +56,9 @@ export function trackMouseInteraction(
       if (!coordinates) {
         return
       }
-      interaction = { id, type, x: coordinates.x, y: coordinates.y }
+      interaction = { type, id, x: coordinates.x, y: coordinates.y }
     } else {
-      interaction = { id, type }
+      interaction = { type, id }
     }
 
     const record = assign(

@@ -38,11 +38,11 @@ describe('collect fetch', () => {
     lifeCycle.subscribe(LifeCycleEventType.REQUEST_STARTED, startSpy)
     lifeCycle.subscribe(LifeCycleEventType.REQUEST_COMPLETED, completeSpy)
     const tracerStub: Partial<Tracer> = {
-      clearTracingIfNeeded,
       traceFetch: (context) => {
         context.traceId = new TraceIdentifier()
         context.spanId = new TraceIdentifier()
       },
+      clearTracingIfNeeded,
     }
     ;({ stop: stopFetchTracking } = trackFetch(lifeCycle, configuration, tracerStub as Tracer))
 
@@ -208,11 +208,11 @@ describe('collect xhr', () => {
     lifeCycle.subscribe(LifeCycleEventType.REQUEST_STARTED, startSpy)
     lifeCycle.subscribe(LifeCycleEventType.REQUEST_COMPLETED, completeSpy)
     const tracerStub: Partial<Tracer> = {
-      clearTracingIfNeeded,
       traceXhr: (context) => {
         context.traceId = new TraceIdentifier()
         context.spanId = new TraceIdentifier()
       },
+      clearTracingIfNeeded,
     }
     ;({ stop: stopXhrTracking } = trackXhr(lifeCycle, configuration, tracerStub as Tracer))
   })

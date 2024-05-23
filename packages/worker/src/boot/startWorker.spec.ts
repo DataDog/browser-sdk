@@ -55,7 +55,7 @@ describe('startWorker', () => {
   }
 
   it('buffers data and responds with the buffer deflated result when writing', () => {
-    expect(emulateAction({ id: 0, streamId: TEST_STREAM_ID, action: 'write', data: 'foo' })).toEqual({
+    expect(emulateAction({ action: 'write', id: 0, streamId: TEST_STREAM_ID, data: 'foo' })).toEqual({
       type: 'wrote',
       id: 0,
       streamId: TEST_STREAM_ID,
@@ -64,7 +64,7 @@ describe('startWorker', () => {
       additionalBytesCount: 3,
     })
 
-    expect(emulateAction({ id: 1, streamId: TEST_STREAM_ID, action: 'write', data: 'bar' })).toEqual({
+    expect(emulateAction({ action: 'write', id: 1, streamId: TEST_STREAM_ID, data: 'bar' })).toEqual({
       type: 'wrote',
       id: 1,
       streamId: TEST_STREAM_ID,
@@ -73,7 +73,7 @@ describe('startWorker', () => {
       additionalBytesCount: 3,
     })
 
-    expect(emulateAction({ id: 2, streamId: TEST_STREAM_ID, action: 'write', data: 'baz' })).toEqual({
+    expect(emulateAction({ action: 'write', id: 2, streamId: TEST_STREAM_ID, data: 'baz' })).toEqual({
       type: 'wrote',
       id: 2,
       streamId: TEST_STREAM_ID,
@@ -109,9 +109,9 @@ describe('startWorker', () => {
   it('support writing to different streams at the same time', () => {
     expect(
       emulateAction({
+        action: 'write',
         id: 0,
         streamId: TEST_STREAM_ID,
-        action: 'write',
         data: 'foo',
       })
     ).toEqual({
@@ -125,9 +125,9 @@ describe('startWorker', () => {
 
     expect(
       emulateAction({
+        action: 'write',
         id: 1,
         streamId: OTHER_TEST_STREAM_ID,
-        action: 'write',
         data: 'bar',
       })
     ).toEqual({
@@ -141,16 +141,16 @@ describe('startWorker', () => {
 
     expect(
       emulateAction({
-        streamId: OTHER_TEST_STREAM_ID,
         action: 'reset',
+        streamId: OTHER_TEST_STREAM_ID,
       })
     ).toBeUndefined()
 
     expect(
       emulateAction({
+        action: 'write',
         id: 2,
         streamId: TEST_STREAM_ID,
-        action: 'write',
         data: 'baz',
       })
     ).toEqual({
@@ -166,8 +166,8 @@ describe('startWorker', () => {
   it('reports an error when an unexpected exception occurs', () => {
     expect(emulateAction(null as any)).toEqual({
       type: 'errored',
-      error: jasmine.any(TypeError),
       streamId: undefined,
+      error: jasmine.any(TypeError),
     })
   })
 
@@ -180,15 +180,15 @@ describe('startWorker', () => {
     })
     expect(
       emulateAction({
+        action: 'write',
         id: 2,
         streamId: TEST_STREAM_ID,
-        action: 'write',
         data: 'baz',
       })
     ).toEqual({
       type: 'errored',
-      error: new Error('Something went wrong!'),
       streamId: TEST_STREAM_ID,
+      error: new Error('Something went wrong!'),
     })
   })
 
@@ -200,8 +200,8 @@ describe('startWorker', () => {
     })
     expect(emulateAction(null as any)).toEqual({
       type: 'errored',
-      error: jasmine.stringContaining('TypeError'),
       streamId: undefined,
+      error: jasmine.stringContaining('TypeError'),
     })
   })
 })

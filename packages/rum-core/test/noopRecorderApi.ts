@@ -4,8 +4,8 @@ import { noop } from '@datadog/browser-core'
 export const noopRecorderApi: RecorderApi = {
   start: noop,
   stop: noop,
-  isRecording: () => false,
   onRumStart: noop,
+  isRecording: () => false,
   getReplayStats: () => undefined,
   getSessionReplayLink: () => undefined,
 }

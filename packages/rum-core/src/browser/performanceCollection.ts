@@ -194,8 +194,8 @@ export function startPerformanceCollection(lifeCycle: LifeCycle, configuration: 
       experimentalEntries.forEach((type) => {
         const observer = new (window as BrowserWindow).PerformanceObserver(handlePerformanceEntryList)
         observer.observe({
-          type,
           buffered: true,
+          type,
           // durationThreshold only impact PerformanceEventTiming entries used for INP computation which requires a threshold at 40 (default is 104ms)
           // cf: https://github.com/GoogleChrome/web-vitals/blob/3806160ffbc93c3c4abf210a167b81228172b31c/src/onINP.ts#L209
           durationThreshold: 40,
@@ -323,9 +323,9 @@ function retrieveFirstInputTiming(configuration: RumConfiguration, callback: (ti
       // (e.g. performance.now()).
       const timing: RumFirstInputTiming = {
         entryType: RumPerformanceEntryType.FIRST_INPUT,
+        startTime: evt.timeStamp as RelativeTime,
         processingStart: relativeNow(),
         processingEnd: relativeNow(),
-        startTime: evt.timeStamp as RelativeTime,
         duration: 0 as Duration, // arbitrary value to avoid nullable duration and simplify INP logic
         name: '',
       }
@@ -336,7 +336,7 @@ function retrieveFirstInputTiming(configuration: RumConfiguration, callback: (ti
         sendTiming(timing)
       }
     },
-    { passive: true, capture: true }
+    { capture: true, passive: true }
   )
 
   return { stop: removeEventListeners }

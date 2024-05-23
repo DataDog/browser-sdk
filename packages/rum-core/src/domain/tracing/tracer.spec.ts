@@ -18,8 +18,8 @@ describe('tracer', () => {
 
   const INIT_CONFIGURATION: RumInitConfiguration = {
     clientToken: 'xxx',
-    applicationId: 'xxx',
     service: 'service',
+    applicationId: 'xxx',
     allowedTracingUrls: [{ match: window.location.origin, propagatorTypes: ['datadog'] }],
   }
 
@@ -37,10 +37,10 @@ describe('tracer', () => {
 
     beforeEach(() => {
       xhrStub = {
+        headers: {} as XhrStub['headers'],
         setRequestHeader(this: XhrStub, name: string, value: string) {
           this.headers[name] = value
         },
-        headers: {} as XhrStub['headers'],
       }
     })
 
@@ -103,8 +103,8 @@ describe('tracer', () => {
 
       const configurationWithAllOtelHeaders = validateAndBuildRumConfiguration({
         ...INIT_CONFIGURATION,
-        traceSampleRate: 50,
         allowedTracingUrls: [{ match: window.location.origin, propagatorTypes: ['b3', 'tracecontext', 'b3multi'] }],
+        traceSampleRate: 50,
       })!
 
       const tracer = startTracer(configurationWithAllOtelHeaders, sessionManager)
@@ -417,10 +417,10 @@ describe('tracer', () => {
     it('should ignore headers from a Request instance if other headers are set', () => {
       const context: Partial<RumFetchStartContext> = {
         ...ALLOWED_DOMAIN_CONTEXT,
-        init: { headers: { 'x-init-header': 'baz' } },
         input: new Request(document.location.origin, {
           headers: { 'x-request-header': 'bar' },
         }),
+        init: { headers: { 'x-init-header': 'baz' } },
       }
 
       const tracer = startTracer(configuration, sessionManager)

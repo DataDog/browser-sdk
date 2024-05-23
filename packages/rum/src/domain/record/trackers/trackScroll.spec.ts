@@ -29,8 +29,8 @@ describe('trackScroll', () => {
     div = appendElement('<div target></div>') as HTMLDivElement
 
     serializeDocument(document, DEFAULT_CONFIGURATION, {
-      shadowRootsController: DEFAULT_SHADOW_ROOT_CONTROLLER,
       status: SerializationContextStatus.INITIAL_FULL_SNAPSHOT,
+      shadowRootsController: DEFAULT_SHADOW_ROOT_CONTROLLER,
       elementsScrollPositions,
     })
     scrollTracker = trackScroll(configuration, scrollCallback, elementsScrollPositions)
@@ -44,8 +44,8 @@ describe('trackScroll', () => {
     div.dispatchEvent(createNewEvent('scroll', { target: div }))
 
     expect(scrollCallback).toHaveBeenCalledOnceWith({
-      type: RecordType.IncrementalSnapshot,
       timestamp: jasmine.any(Number),
+      type: RecordType.IncrementalSnapshot,
       data: {
         source: IncrementalSource.Scroll,
         id: jasmine.any(Number),

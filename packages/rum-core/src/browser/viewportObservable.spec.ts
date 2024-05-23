@@ -35,7 +35,7 @@ describe('viewportObservable', () => {
     window.dispatchEvent(createNewEvent('resize'))
     clock.tick(200)
 
-    expect(viewportDimension).toEqual({ width: jasmine.any(Number), height: jasmine.any(Number) })
+    expect(viewportDimension).toEqual({ height: jasmine.any(Number), width: jasmine.any(Number) })
   })
 
   describe('get layout width and height has similar native behaviour', () => {
@@ -46,7 +46,7 @@ describe('viewportObservable', () => {
 
     // innerWidth includes the thickness of the sidebar while `visualViewport.width` and clientWidth exclude it
     it('without scrollbars', () => {
-      expect(getViewportDimension()).toEqual({ width: window.innerWidth, height: window.innerHeight })
+      expect(getViewportDimension()).toEqual({ height: window.innerHeight, width: window.innerWidth })
     })
 
     it('with scrollbars', () => {

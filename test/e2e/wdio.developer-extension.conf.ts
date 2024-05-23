@@ -5,8 +5,7 @@ import { config as baseConfig } from './wdio.base.conf'
 export const config: Options.Testrunner = {
   ...baseConfig,
 
-  specs: ['./scenario/developer-extension/*.scenario.ts'],
-  exclude: [],
+  onPrepare() {},
 
   capabilities: [
     {
@@ -21,5 +20,6 @@ export const config: Options.Testrunner = {
     },
   ],
 
-  onPrepare() {},
+  specs: ['./scenario/developer-extension/*.scenario.ts'],
+  exclude: [],
 }

@@ -184,7 +184,7 @@ function Entry({
         </>
       ) : value ? (
         <>
-          <div style={{ display: 'inline-flex', gap: '5px', alignItems: 'center' }}>
+          <div style={{ alignItems: 'center', display: 'inline-flex', gap: '5px' }}>
             <EntryName>{name}: </EntryName>
             {onChange && (
               <>

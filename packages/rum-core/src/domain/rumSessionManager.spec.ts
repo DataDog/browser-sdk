@@ -54,7 +54,7 @@ describe('rum session manager', () => {
 
   describe('cookie storage', () => {
     it('when tracked with session replay should store session type and id', () => {
-      startRumSessionManagerWithDefaults({ configuration: { sessionSampleRate: 100, sessionReplaySampleRate: 100 } })
+      startRumSessionManagerWithDefaults({ configuration: { sessionReplaySampleRate: 100, sessionSampleRate: 100 } })
 
       expect(expireSessionSpy).not.toHaveBeenCalled()
       expect(renewSessionSpy).not.toHaveBeenCalled()
@@ -65,7 +65,7 @@ describe('rum session manager', () => {
     })
 
     it('when tracked without session replay should store session type and id', () => {
-      startRumSessionManagerWithDefaults({ configuration: { sessionSampleRate: 100, sessionReplaySampleRate: 0 } })
+      startRumSessionManagerWithDefaults({ configuration: { sessionReplaySampleRate: 0, sessionSampleRate: 100 } })
 
       expect(expireSessionSpy).not.toHaveBeenCalled()
       expect(renewSessionSpy).not.toHaveBeenCalled()
@@ -111,7 +111,7 @@ describe('rum session manager', () => {
     it('should renew on activity after expiration', () => {
       setCookie(SESSION_STORE_KEY, 'id=abcdef&rum=1', DURATION)
 
-      startRumSessionManagerWithDefaults({ configuration: { sessionSampleRate: 100, sessionReplaySampleRate: 100 } })
+      startRumSessionManagerWithDefaults({ configuration: { sessionReplaySampleRate: 100, sessionSampleRate: 100 } })
 
       setCookie(SESSION_STORE_KEY, 'isExpired=1', DURATION)
       expect(getCookie(SESSION_STORE_KEY)).toEqual('isExpired=1')
@@ -197,7 +197,7 @@ describe('rum session manager', () => {
       }) => {
         it(description, () => {
           const rumSessionManager = startRumSessionManagerWithDefaults({
-            configuration: { sessionSampleRate: 100, sessionReplaySampleRate },
+            configuration: { sessionReplaySampleRate, sessionSampleRate: 100 },
           })
           expect(rumSessionManager.findTrackedSession()!.sessionReplayAllowed).toBe(expectSessionReplay)
         })

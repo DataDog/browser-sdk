@@ -26,8 +26,8 @@ describe('trackMediaInteraction', () => {
     audio = appendElement('<audio controls autoplay target></audio>') as HTMLAudioElement
 
     serializeDocument(document, DEFAULT_CONFIGURATION, {
-      shadowRootsController: DEFAULT_SHADOW_ROOT_CONTROLLER,
       status: SerializationContextStatus.INITIAL_FULL_SNAPSHOT,
+      shadowRootsController: DEFAULT_SHADOW_ROOT_CONTROLLER,
       elementsScrollPositions: createElementsScrollPositions(),
     })
     mediaInteractionTracker = trackMediaInteraction(configuration, mediaInteractionCallback)
@@ -41,12 +41,12 @@ describe('trackMediaInteraction', () => {
     audio.dispatchEvent(createNewEvent('play', { target: audio }))
 
     expect(mediaInteractionCallback).toHaveBeenCalledOnceWith({
-      type: RecordType.IncrementalSnapshot,
       timestamp: jasmine.any(Number),
+      type: RecordType.IncrementalSnapshot,
       data: {
         source: IncrementalSource.MediaInteraction,
-        id: jasmine.any(Number) as unknown as number,
         type: MediaInteractionType.Play,
+        id: jasmine.any(Number) as unknown as number,
       },
     })
   })
@@ -55,12 +55,12 @@ describe('trackMediaInteraction', () => {
     audio.dispatchEvent(createNewEvent('pause', { target: audio }))
 
     expect(mediaInteractionCallback).toHaveBeenCalledOnceWith({
-      type: RecordType.IncrementalSnapshot,
       timestamp: jasmine.any(Number),
+      type: RecordType.IncrementalSnapshot,
       data: {
         source: IncrementalSource.MediaInteraction,
-        id: jasmine.any(Number) as unknown as number,
         type: MediaInteractionType.Pause,
+        id: jasmine.any(Number) as unknown as number,
       },
     })
   })

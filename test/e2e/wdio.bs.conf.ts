@@ -5,8 +5,11 @@ import { config as baseConfig } from './wdio.base.conf'
 
 export const config: Options.Testrunner = {
   ...baseConfig,
-
-  specFileRetries: 1,
+  logLevels: {
+    '@wdio/browserstack-service': 'info',
+  },
+  user: process.env.BS_USERNAME,
+  key: process.env.BS_ACCESS_KEY,
 
   capabilities: browserConfigurations
     .filter(
@@ -37,9 +40,8 @@ export const config: Options.Testrunner = {
         },
       })
     ),
-  logLevels: {
-    '@wdio/browserstack-service': 'info',
-  },
+
+  specFileRetries: 1,
   services: [
     [
       'browserstack',
@@ -48,6 +50,4 @@ export const config: Options.Testrunner = {
       },
     ],
   ],
-  user: process.env.BS_USERNAME,
-  key: process.env.BS_ACCESS_KEY,
 }

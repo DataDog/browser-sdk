@@ -97,14 +97,14 @@ describe('logs', () => {
         date: jasmine.any(Number),
         foo: 'bar',
         message: 'message',
+        status: StatusType.warn,
+        origin: ErrorSource.LOGGER,
         service: 'service',
         session_id: jasmine.any(String),
-        status: StatusType.warn,
         view: {
           referrer: 'common_referrer',
           url: 'common_url',
         },
-        origin: ErrorSource.LOGGER,
       })
     })
 

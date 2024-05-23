@@ -65,9 +65,9 @@ export function makeRecorderApi(
     return {
       start: noop,
       stop: noop,
-      getReplayStats: () => undefined,
       onRumStart: noop,
       isRecording: () => false,
+      getReplayStats: () => undefined,
       getSessionReplayLink: () => undefined,
     }
   }
@@ -87,7 +87,6 @@ export function makeRecorderApi(
   return {
     start: () => startStrategy(),
     stop: () => stopStrategy(),
-    getSessionReplayLink: () => getSessionReplayLinkStrategy(),
     onRumStart: (
       lifeCycle: LifeCycle,
       configuration: RumConfiguration,
@@ -228,5 +227,6 @@ export function makeRecorderApi(
 
     getReplayStats: (viewId) =>
       getDeflateWorkerStatus() === DeflateWorkerStatus.Initialized ? getReplayStatsImpl(viewId) : undefined,
+    getSessionReplayLink: () => getSessionReplayLinkStrategy(),
   }
 }

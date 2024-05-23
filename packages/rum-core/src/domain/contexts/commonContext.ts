@@ -13,8 +13,8 @@ export function buildCommonContext(
   recorderApi: RecorderApi
 ): CommonContext {
   return {
-    context: globalContextManager.getContext(),
     user: userContextManager.getContext(),
+    context: globalContextManager.getContext(),
     hasReplay: recorderApi.isRecording() ? true : undefined,
   }
 }

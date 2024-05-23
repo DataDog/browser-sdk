@@ -1,9 +1,9 @@
 export function setPageVisibility(visibility: 'visible' | 'hidden') {
   Object.defineProperty(document, 'visibilityState', {
+    configurable: true,
     get() {
       return visibility
     },
-    configurable: true,
   })
 }
 

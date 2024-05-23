@@ -49,9 +49,9 @@ describe('createEventRateLimiter', () => {
     eventLimiter.isLimitReached()
     eventLimiter.isLimitReached()
     expect(onLimitReachedSpy).toHaveBeenCalledOnceWith({
+      startClocks: relativeToClocks(0 as RelativeTime),
       message: 'Reached max number of errors by minute: 1',
       source: 'agent',
-      startClocks: relativeToClocks(0 as RelativeTime),
     })
   })
 

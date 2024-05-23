@@ -39,7 +39,7 @@ describe('cookieObservable', () => {
   })
 
   it('should notify observers on cookie change when cookieStore is not supported', () => {
-    Object.defineProperty(window, 'cookieStore', { get: () => undefined, configurable: true })
+    Object.defineProperty(window, 'cookieStore', { configurable: true, get: () => undefined })
     const observable = createCookieObservable({} as RumConfiguration, COOKIE_NAME)
 
     let cookieChange: string | undefined
@@ -52,7 +52,7 @@ describe('cookieObservable', () => {
   })
 
   it('should not notify observers on cookie change when the cookie value as not changed when cookieStore is not supported', () => {
-    Object.defineProperty(window, 'cookieStore', { get: () => undefined, configurable: true })
+    Object.defineProperty(window, 'cookieStore', { configurable: true, get: () => undefined })
     const observable = createCookieObservable({} as RumConfiguration, COOKIE_NAME)
 
     setCookie(COOKIE_NAME, 'foo', COOKIE_DURATION)

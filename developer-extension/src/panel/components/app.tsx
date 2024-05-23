@@ -18,11 +18,11 @@ export function App() {
     <MantineProvider
       defaultColorScheme="auto"
       theme={{
-        cursorType: 'pointer',
         // This is the default for devtools on mac
         // https://github.com/ChromeDevTools/devtools-frontend/blob/92b3004cf9190eeb98a721ecb8c3931b45609031/front_end/ui/legacy/inspectorCommon.css#L86
         // TODO: adjust for other OS
         fontFamily: '".SFNSDisplay-Regular", "Helvetica Neue", "Lucida Grande", sans-serif',
+        fontFamilyMonospace: 'menlo, monospace',
         fontSizes: {
           xs: '11px',
 
@@ -35,7 +35,7 @@ export function App() {
           lg: '16px',
           xl: '22px',
         },
-        fontFamilyMonospace: 'menlo, monospace',
+        cursorType: 'pointer',
       }}
     >
       <ErrorBoundary>

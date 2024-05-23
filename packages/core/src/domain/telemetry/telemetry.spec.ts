@@ -20,9 +20,9 @@ import {
 
 function startAndSpyTelemetry(configuration?: Partial<Configuration>) {
   const telemetry = startTelemetry(TelemetryService.RUM, {
-    maxTelemetryEventsPerPage: 7,
     telemetrySampleRate: 100,
     telemetryUsageSampleRate: 100,
+    maxTelemetryEventsPerPage: 7,
     ...configuration,
   } as Configuration)
   const notifySpy = jasmine.createSpy('notified')
@@ -247,29 +247,29 @@ describe('telemetry', () => {
 describe('formatError', () => {
   it('formats error instances', () => {
     expect(formatError(new Error('message'))).toEqual({
-      message: 'message',
       error: {
         kind: 'Error',
         stack: jasmine.stringMatching(/^Error: message(\n|$)/) as unknown as string,
       },
+      message: 'message',
     })
   })
 
   it('formats strings', () => {
     expect(formatError('message')).toEqual({
-      message: 'Uncaught "message"',
       error: {
         stack: NO_ERROR_STACK_PRESENT_MESSAGE,
       },
+      message: 'Uncaught "message"',
     })
   })
 
   it('formats objects', () => {
     expect(formatError({ foo: 'bar' })).toEqual({
-      message: 'Uncaught {"foo":"bar"}',
       error: {
         stack: NO_ERROR_STACK_PRESENT_MESSAGE,
       },
+      message: 'Uncaught {"foo":"bar"}',
     })
   })
 })

@@ -73,7 +73,7 @@ describe('transportConfiguration', () => {
     })
 
     it('should be set as tags in the logs and rum endpoints', () => {
-      const configuration = computeTransportConfiguration({ clientToken, env: 'foo', service: 'bar', version: 'baz' })
+      const configuration = computeTransportConfiguration({ clientToken, service: 'bar', env: 'foo', version: 'baz' })
       expect(decodeURIComponent(configuration.rumEndpointBuilder.build('xhr', DEFAULT_PAYLOAD))).toContain(
         'env:foo,service:bar,version:baz'
       )

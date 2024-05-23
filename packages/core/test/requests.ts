@@ -126,12 +126,12 @@ export function stubFetch(): FetchStubManager {
   }) as typeof window.fetch
 
   return {
-    whenAllComplete(callback: () => void) {
-      allFetchCompleteCallback = callback
-    },
     reset() {
       window.fetch = originalFetch
       allFetchCompleteCallback = noop
+    },
+    whenAllComplete(callback: () => void) {
+      allFetchCompleteCallback = callback
     },
   }
 }

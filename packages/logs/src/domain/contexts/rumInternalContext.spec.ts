@@ -33,7 +33,7 @@ describe('getRUMInternalContext', () => {
     let telemetrySpy: jasmine.Spy<(event: TelemetryEvent) => void>
 
     beforeEach(() => {
-      mockSyntheticsWorkerValues({ injectsRum: true, publicId: 'test-id', resultId: 'result-id' })
+      mockSyntheticsWorkerValues({ publicId: 'test-id', resultId: 'result-id', injectsRum: true })
       const telemetry = startTelemetry(
         TelemetryService.LOGS,
         validateAndBuildLogsConfiguration({ ...initConfiguration, telemetrySampleRate: 100 })!

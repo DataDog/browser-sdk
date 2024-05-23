@@ -98,8 +98,8 @@ describe('firstInputTimings', () => {
 
     lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [
       createPerformanceEntry(RumPerformanceEntryType.FIRST_INPUT, {
-        processingStart: 900 as RelativeTime,
         startTime: 1000 as RelativeTime,
+        processingStart: 900 as RelativeTime,
         duration: 0 as Duration,
       }),
     ])

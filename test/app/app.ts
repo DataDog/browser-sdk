@@ -19,6 +19,6 @@ if (typeof window !== 'undefined') {
 } else {
   // compat test
   datadogLogs.init({ clientToken: 'xxx', beforeSend: undefined })
-  datadogRum.init({ clientToken: 'xxx', applicationId: 'xxx', beforeSend: undefined })
+  datadogRum.init({ clientToken: 'xxx', beforeSend: undefined, applicationId: 'xxx' })
   datadogRum.setUser({ id: undefined })
 }

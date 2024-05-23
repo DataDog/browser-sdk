@@ -156,18 +156,18 @@ describe('vitalCollection', () => {
     expect(rawRumEvents[0].startTime).toEqual(jasmine.any(Number))
     expect(rawRumEvents[0].rawRumEvent).toEqual({
       date: jasmine.any(Number),
-      vital: {
-        id: jasmine.any(String),
-        type: VitalType.DURATION,
-        name: 'foo',
-        custom: {
-          foo: 0,
-        },
-      },
       type: RumEventType.VITAL,
       _dd: {
         vital: {
           computed_value: true,
+        },
+      },
+      vital: {
+        id: jasmine.any(String),
+        name: 'foo',
+        type: VitalType.DURATION,
+        custom: {
+          foo: 0,
         },
       },
     })

@@ -42,14 +42,14 @@ describe('internal context', () => {
     expect(internalContext.get()).toEqual({
       application_id: 'appId',
       session_id: '456',
-      user_action: {
-        id: '7890',
-      },
       view: {
         id: 'abcde',
-        name: 'foo',
-        referrer: document.referrer,
         url: fakeLocation.href!,
+        referrer: document.referrer,
+        name: 'foo',
+      },
+      user_action: {
+        id: '7890',
       },
     })
   })

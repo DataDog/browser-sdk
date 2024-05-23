@@ -37,9 +37,9 @@ export class ValueHistory<Value> {
    */
   add(value: Value, startTime: RelativeTime): ValueHistoryEntry<Value> {
     const entry: ValueHistoryEntry<Value> = {
-      value,
       startTime,
       endTime: END_OF_TIMES,
+      value,
       remove: () => {
         removeItem(this.entries, entry)
       },

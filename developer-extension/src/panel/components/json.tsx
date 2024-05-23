@@ -123,10 +123,10 @@ function JsonValue({ descriptor }: { descriptor: JsonValueDescriptor }) {
             key={i}
             descriptor={{
               parentType: 'array',
-              parentValue: descriptor.value as unknown[],
               value: child,
-              path: descriptor.path,
               depth: descriptor.depth + 1,
+              path: descriptor.path,
+              parentValue: descriptor.value as unknown[],
             }}
           />
         ))}
@@ -147,10 +147,10 @@ function JsonValue({ descriptor }: { descriptor: JsonValueDescriptor }) {
             key={key}
             descriptor={{
               parentType: 'object',
-              parentValue: descriptor.value as object,
               value: child,
-              path: descriptor.path ? `${descriptor.path}.${key}` : key,
               depth: descriptor.depth + 1,
+              path: descriptor.path ? `${descriptor.path}.${key}` : key,
+              parentValue: descriptor.value as object,
               key,
             }}
           />

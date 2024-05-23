@@ -108,8 +108,8 @@ describe('validateAndBuildRumConfiguration', () => {
       expect(
         validateAndBuildRumConfiguration({
           ...DEFAULT_INIT_CONFIGURATION,
-          allowedTracingUrls: ['foo'],
           service: 'bar',
+          allowedTracingUrls: ['foo'],
         })!.allowedTracingUrls
       ).toEqual([{ match: 'foo', propagatorTypes: DEFAULT_PROPAGATOR_TYPES }])
     })
@@ -120,8 +120,8 @@ describe('validateAndBuildRumConfiguration', () => {
       expect(
         validateAndBuildRumConfiguration({
           ...DEFAULT_INIT_CONFIGURATION,
-          allowedTracingUrls: [customOriginFunction],
           service: 'bar',
+          allowedTracingUrls: [customOriginFunction],
         })!.allowedTracingUrls
       ).toEqual([{ match: customOriginFunction, propagatorTypes: DEFAULT_PROPAGATOR_TYPES }])
     })
@@ -130,8 +130,8 @@ describe('validateAndBuildRumConfiguration', () => {
       expect(
         validateAndBuildRumConfiguration({
           ...DEFAULT_INIT_CONFIGURATION,
-          allowedTracingUrls: [/az/i],
           service: 'bar',
+          allowedTracingUrls: [/az/i],
         })!.allowedTracingUrls
       ).toEqual([{ match: /az/i, propagatorTypes: DEFAULT_PROPAGATOR_TYPES }])
     })
@@ -140,8 +140,8 @@ describe('validateAndBuildRumConfiguration', () => {
       expect(
         validateAndBuildRumConfiguration({
           ...DEFAULT_INIT_CONFIGURATION,
-          allowedTracingUrls: [{ match: 'simple', propagatorTypes: ['b3multi', 'tracecontext'] }],
           service: 'bar',
+          allowedTracingUrls: [{ match: 'simple', propagatorTypes: ['b3multi', 'tracecontext'] }],
         })!.allowedTracingUrls
       ).toEqual([{ match: 'simple', propagatorTypes: ['b3multi', 'tracecontext'] }])
     })
@@ -187,8 +187,8 @@ describe('validateAndBuildRumConfiguration', () => {
       expect(
         validateAndBuildRumConfiguration({
           ...DEFAULT_INIT_CONFIGURATION,
-          excludedActivityUrls: ['foo'],
           service: 'bar',
+          excludedActivityUrls: ['foo'],
         })!.excludedActivityUrls
       ).toEqual(['foo'])
     })
@@ -199,8 +199,8 @@ describe('validateAndBuildRumConfiguration', () => {
       expect(
         validateAndBuildRumConfiguration({
           ...DEFAULT_INIT_CONFIGURATION,
-          excludedActivityUrls: [customUrlFunction],
           service: 'bar',
+          excludedActivityUrls: [customUrlFunction],
         })!.excludedActivityUrls
       ).toEqual([customUrlFunction])
     })
@@ -458,20 +458,20 @@ describe('serializeRumConfiguration', () => {
     expect(serializedConfiguration).toEqual({
       ...SERIALIZED_EXHAUSTIVE_INIT_CONFIGURATION,
       session_replay_sample_rate: 60,
+      start_session_replay_recording_manually: true,
       trace_sample_rate: 50,
       trace_context_injection: TraceContextInjection.ALL,
+      action_name_attribute: 'test-id',
       use_allowed_tracing_urls: true,
       selected_tracing_propagators: ['tracecontext', 'datadog'],
-      use_excluded_activity_urls: true,
-      track_user_interactions: true,
-      track_views_manually: true,
-      start_session_replay_recording_manually: true,
-      action_name_attribute: 'test-id',
       default_privacy_level: 'allow',
-      track_resources: true,
-      track_long_task: true,
+      use_excluded_activity_urls: true,
       use_worker_url: true,
       compress_intake_requests: true,
+      track_views_manually: true,
+      track_user_interactions: true,
+      track_resources: true,
+      track_long_task: true,
     })
   })
 })

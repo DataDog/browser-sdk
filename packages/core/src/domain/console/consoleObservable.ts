@@ -68,8 +68,8 @@ function buildConsoleLog(params: unknown[], api: ConsoleApiName, handlingStack: 
   }
 
   return {
-    api,
     message,
+    api,
     stack,
     handlingStack,
     fingerprint,

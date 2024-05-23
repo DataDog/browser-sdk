@@ -75,12 +75,12 @@ export const FAKE_REPORT: InterventionReport = {
   type: 'intervention',
   url: 'http://foo.bar',
   body: {
-    id: 'NavigatorVibrate',
-    columnNumber: 10,
-    lineNumber: 20,
-    message: 'foo bar',
-    sourceFile: 'http://foo.bar/index.js',
     toJSON: noop,
+    id: 'NavigatorVibrate',
+    message: 'foo bar',
+    lineNumber: 20,
+    columnNumber: 10,
+    sourceFile: 'http://foo.bar/index.js',
   },
   toJSON: noop,
 }

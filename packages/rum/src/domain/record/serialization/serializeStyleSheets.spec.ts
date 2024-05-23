@@ -19,8 +19,8 @@ describe('serializeStyleSheets', () => {
     printStylesheet.insertRule('a { color: red; }')
 
     expect(serializeStyleSheets([disabledStylesheet, printStylesheet])).toEqual([
-      { cssRules: ['div { width: 100%; }'], disabled: true, media: undefined },
-      { cssRules: ['a { color: red; }'], disabled: undefined, media: ['print'] },
+      { cssRules: ['div { width: 100%; }'], media: undefined, disabled: true },
+      { cssRules: ['a { color: red; }'], media: ['print'], disabled: undefined },
     ])
   })
 })

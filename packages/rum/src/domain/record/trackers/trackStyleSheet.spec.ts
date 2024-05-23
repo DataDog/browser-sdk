@@ -25,8 +25,8 @@ describe('trackStyleSheet', () => {
     styleSheet = styleElement.sheet!
 
     serializeDocument(document, DEFAULT_CONFIGURATION, {
-      shadowRootsController: DEFAULT_SHADOW_ROOT_CONTROLLER,
       status: SerializationContextStatus.INITIAL_FULL_SNAPSHOT,
+      shadowRootsController: DEFAULT_SHADOW_ROOT_CONTROLLER,
       elementsScrollPositions: createElementsScrollPositions(),
     })
   })
@@ -43,12 +43,12 @@ describe('trackStyleSheet', () => {
         styleSheet.insertRule(styleRule)
 
         expect(styleSheetCallbackSpy).toHaveBeenCalledWith({
-          type: RecordType.IncrementalSnapshot,
           timestamp: jasmine.any(Number),
+          type: RecordType.IncrementalSnapshot,
           data: {
-            id: jasmine.any(Number),
             source: IncrementalSource.StyleSheetRule,
             adds: [jasmine.objectContaining({ index: undefined })],
+            id: jasmine.any(Number),
           },
         })
       })
@@ -60,12 +60,12 @@ describe('trackStyleSheet', () => {
         styleSheet.insertRule(styleRule, index)
 
         expect(styleSheetCallbackSpy).toHaveBeenCalledWith({
-          type: RecordType.IncrementalSnapshot,
           timestamp: jasmine.any(Number),
+          type: RecordType.IncrementalSnapshot,
           data: {
-            id: jasmine.any(Number),
             source: IncrementalSource.StyleSheetRule,
             adds: [jasmine.objectContaining({ index })],
+            id: jasmine.any(Number),
           },
         })
       })
@@ -80,12 +80,12 @@ describe('trackStyleSheet', () => {
         styleSheet.deleteRule(index)
 
         expect(styleSheetCallbackSpy).toHaveBeenCalledWith({
-          type: RecordType.IncrementalSnapshot,
           timestamp: jasmine.any(Number),
+          type: RecordType.IncrementalSnapshot,
           data: {
-            id: jasmine.any(Number),
             source: IncrementalSource.StyleSheetRule,
             removes: [jasmine.objectContaining({ index })],
+            id: jasmine.any(Number),
           },
         })
       })
@@ -103,12 +103,12 @@ describe('trackStyleSheet', () => {
         groupingRule.insertRule(styleRule, 1)
 
         expect(styleSheetCallbackSpy).toHaveBeenCalledWith({
-          type: RecordType.IncrementalSnapshot,
           timestamp: jasmine.any(Number),
+          type: RecordType.IncrementalSnapshot,
           data: {
-            id: jasmine.any(Number),
             source: IncrementalSource.StyleSheetRule,
             adds: [jasmine.objectContaining({ index: [1, 0, 1] })],
+            id: jasmine.any(Number),
           },
         })
       })
@@ -141,12 +141,12 @@ describe('trackStyleSheet', () => {
         groupingRule.deleteRule(0)
 
         expect(styleSheetCallbackSpy).toHaveBeenCalledWith({
-          type: RecordType.IncrementalSnapshot,
           timestamp: jasmine.any(Number),
+          type: RecordType.IncrementalSnapshot,
           data: {
-            id: jasmine.any(Number),
             source: IncrementalSource.StyleSheetRule,
             removes: [jasmine.objectContaining({ index: [1, 0, 0] })],
+            id: jasmine.any(Number),
           },
         })
       })

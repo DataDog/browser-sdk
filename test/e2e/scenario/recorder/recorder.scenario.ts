@@ -40,30 +40,30 @@ describe('recorder', () => {
       } = intakeRegistry.replayRequests[0]
       expect(metadata).toEqual({
         application: { id: jasmine.stringMatching(UUID_RE) },
-        creation_reason: 'init',
-        end: jasmine.stringMatching(TIMESTAMP_RE),
-        has_full_snapshot: true,
-        records_count: jasmine.any(Number),
         session: { id: jasmine.stringMatching(UUID_RE) },
-        start: jasmine.stringMatching(TIMESTAMP_RE),
         view: { id: jasmine.stringMatching(UUID_RE) },
+        start: jasmine.stringMatching(TIMESTAMP_RE),
+        end: jasmine.stringMatching(TIMESTAMP_RE),
+        records_count: jasmine.any(Number),
+        index_in_view: 0,
+        has_full_snapshot: true,
+        source: 'browser',
+        creation_reason: 'init',
         raw_segment_size: jasmine.any(Number),
         compressed_segment_size: jasmine.any(Number),
-        index_in_view: 0,
-        source: 'browser',
       })
       expect(segment).toEqual({
         application: { id: metadata.application.id },
-        creation_reason: metadata.creation_reason,
-        end: Number(metadata.end),
-        has_full_snapshot: true,
-        records: jasmine.any(Array),
-        records_count: Number(metadata.records_count),
         session: { id: metadata.session.id },
-        start: Number(metadata.start),
         view: { id: metadata.view.id },
+        start: Number(metadata.start),
+        end: Number(metadata.end),
+        records_count: Number(metadata.records_count),
         index_in_view: 0,
+        has_full_snapshot: true,
         source: 'browser',
+        creation_reason: metadata.creation_reason,
+        records: jasmine.any(Array),
       })
       expect(encoding).toEqual(jasmine.any(String))
       expect(filename).toBe(`${metadata.session.id}-${metadata.start}`)
@@ -149,16 +149,16 @@ describe('recorder', () => {
         )
 
         validate({
-          adds: [
-            {
-              parent: expectInitialNode({ tag: 'p' }),
-              node: expectNewNode({ type: NodeType.Element, tagName: 'span' }),
-            },
-          ],
           removes: [
             {
-              parent: expectInitialNode({ tag: 'body' }),
               node: expectInitialNode({ tag: 'ul' }),
+              parent: expectInitialNode({ tag: 'body' }),
+            },
+          ],
+          adds: [
+            {
+              node: expectNewNode({ type: NodeType.Element, tagName: 'span' }),
+              parent: expectInitialNode({ tag: 'p' }),
             },
           ],
         })
@@ -195,20 +195,20 @@ describe('recorder', () => {
         )
 
         validate({
-          adds: [
-            {
-              parent: expectInitialNode({ tag: 'p' }),
-              node: expectNewNode({ type: NodeType.Text, textContent: 'mutated' }),
-            },
-          ],
           removes: [
             {
-              parent: expectInitialNode({ tag: 'body' }),
               node: expectInitialNode({ tag: 'ul' }),
+              parent: expectInitialNode({ tag: 'body' }),
             },
             {
-              parent: expectInitialNode({ tag: 'p' }),
               node: expectInitialNode({ text: 'mutation observer' }),
+              parent: expectInitialNode({ tag: 'p' }),
+            },
+          ],
+          adds: [
+            {
+              node: expectNewNode({ type: NodeType.Text, textContent: 'mutated' }),
+              parent: expectInitialNode({ tag: 'p' }),
             },
           ],
         })
@@ -251,8 +251,8 @@ describe('recorder', () => {
           ],
           removes: [
             {
-              parent: expectInitialNode({ tag: 'body' }),
               node: expectInitialNode({ tag: 'ul' }),
+              parent: expectInitialNode({ tag: 'body' }),
             },
           ],
         })
@@ -310,9 +310,14 @@ describe('recorder', () => {
           intakeRegistry.replaySegments[0]
         )
         validate({
+          removes: [
+            {
+              node: expectInitialNode({ tag: 'span' }),
+              parent: expectInitialNode({ tag: 'body' }),
+            },
+          ],
           adds: [
             {
-              parent: expectInitialNode({ tag: 'div' }),
               node: expectInitialNode({ tag: 'span' }).withChildren(
                 expectInitialNode({ text: 'c' }),
                 expectInitialNode({ tag: 'i' }).withChildren(
@@ -322,12 +327,7 @@ describe('recorder', () => {
                 ),
                 expectInitialNode({ text: 'g' })
               ),
-            },
-          ],
-          removes: [
-            {
-              parent: expectInitialNode({ tag: 'body' }),
-              node: expectInitialNode({ tag: 'span' }),
+              parent: expectInitialNode({ tag: 'div' }),
             },
           ],
         })
@@ -359,9 +359,14 @@ describe('recorder', () => {
         const div = expectNewNode({ type: NodeType.Element, tagName: 'div' })
 
         validate({
+          removes: [
+            {
+              node: expectInitialNode({ tag: 'span' }),
+              parent: expectInitialNode({ tag: 'body' }),
+            },
+          ],
           adds: [
             {
-              parent: expectInitialNode({ tag: 'body' }),
               node: div.withChildren(
                 expectInitialNode({ tag: 'span' }).withChildren(
                   expectInitialNode({ text: 'c' }),
@@ -373,12 +378,7 @@ describe('recorder', () => {
                   expectInitialNode({ text: 'g' })
                 )
               ),
-            },
-          ],
-          removes: [
-            {
               parent: expectInitialNode({ tag: 'body' }),
-              node: expectInitialNode({ tag: 'span' }),
             },
           ],
         })
@@ -418,18 +418,18 @@ describe('recorder', () => {
         validate({
           adds: [
             {
-              parent: ul,
               node: li1,
+              parent: ul,
             },
             {
-              next: li1,
-              parent: ul,
               node: li2,
+              parent: ul,
+              next: li1,
             },
             {
-              next: li2,
-              parent: ul,
               node: li3,
+              parent: ul,
+              next: li2,
             },
           ],
         })

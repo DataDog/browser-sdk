@@ -25,8 +25,8 @@ describe('trackViewportResize', () => {
     visualViewportResizeCallback = jasmine.createSpy()
 
     serializeDocument(document, DEFAULT_CONFIGURATION, {
-      shadowRootsController: DEFAULT_SHADOW_ROOT_CONTROLLER,
       status: SerializationContextStatus.INITIAL_FULL_SNAPSHOT,
+      shadowRootsController: DEFAULT_SHADOW_ROOT_CONTROLLER,
       elementsScrollPositions,
     })
 
@@ -41,17 +41,17 @@ describe('trackViewportResize', () => {
     visualViewport!.dispatchEvent(createNewEvent('resize'))
 
     expect(visualViewportResizeCallback).toHaveBeenCalledOnceWith({
-      type: RecordType.VisualViewport,
       timestamp: jasmine.any(Number),
       data: {
-        scale: jasmine.any(Number),
+        height: jasmine.any(Number),
         offsetLeft: jasmine.any(Number),
         offsetTop: jasmine.any(Number),
         pageLeft: jasmine.any(Number),
         pageTop: jasmine.any(Number),
-        height: jasmine.any(Number),
+        scale: jasmine.any(Number),
         width: jasmine.any(Number),
       },
+      type: RecordType.VisualViewport,
     })
   })
 
@@ -59,17 +59,17 @@ describe('trackViewportResize', () => {
     visualViewport!.dispatchEvent(createNewEvent('scroll'))
 
     expect(visualViewportResizeCallback).toHaveBeenCalledOnceWith({
-      type: RecordType.VisualViewport,
       timestamp: jasmine.any(Number),
       data: {
-        scale: jasmine.any(Number),
+        height: jasmine.any(Number),
         offsetLeft: jasmine.any(Number),
         offsetTop: jasmine.any(Number),
         pageLeft: jasmine.any(Number),
         pageTop: jasmine.any(Number),
-        height: jasmine.any(Number),
+        scale: jasmine.any(Number),
         width: jasmine.any(Number),
       },
+      type: RecordType.VisualViewport,
     })
   })
 })

@@ -56,8 +56,8 @@ describe('trackMutation', () => {
         defaultPrivacyLevel: NodePrivacyLevel.ALLOW,
       } as RumConfiguration,
       {
-        shadowRootsController: DEFAULT_SHADOW_ROOT_CONTROLLER,
         status: SerializationContextStatus.INITIAL_FULL_SNAPSHOT,
+        shadowRootsController: DEFAULT_SHADOW_ROOT_CONTROLLER,
         elementsScrollPositions: createElementsScrollPositions(),
       }
     )
@@ -89,8 +89,8 @@ describe('trackMutation', () => {
       validate(getLatestMutationPayload(), {
         adds: [
           {
-            parent: expectInitialNode({ idAttribute: 'sandbox' }),
             node: expectNewNode({ type: NodeType.Element, tagName: 'div' }),
+            parent: expectInitialNode({ idAttribute: 'sandbox' }),
           },
         ],
       })
@@ -184,8 +184,8 @@ describe('trackMutation', () => {
         validate(getLatestMutationPayload(), {
           removes: [
             {
-              parent: expectInitialNode({ tag: 'body' }),
               node: expectInitialNode({ idAttribute: 'sandbox' }),
+              parent: expectInitialNode({ tag: 'body' }),
             },
           ],
         })
@@ -248,20 +248,20 @@ describe('trackMutation', () => {
         // Even if the mutation on 'child' comes first, we only take the 'parent' mutation into
         // account since it is embeds an up-to-date serialization of 'parent'
         validate(getLatestMutationPayload(), {
-          adds: [
-            {
-              parent: expectInitialNode({ idAttribute: 'sandbox' }),
-              node: expectInitialNode({ tag: 'a' }).withChildren(expectInitialNode({ tag: 'b' })),
-            },
-          ],
           removes: [
             {
-              parent: expectInitialNode({ tag: 'a' }),
               node: expectInitialNode({ tag: 'b' }),
+              parent: expectInitialNode({ tag: 'a' }),
             },
             {
-              parent: expectInitialNode({ idAttribute: 'sandbox' }),
               node: expectInitialNode({ tag: 'a' }),
+              parent: expectInitialNode({ idAttribute: 'sandbox' }),
+            },
+          ],
+          adds: [
+            {
+              node: expectInitialNode({ tag: 'a' }).withChildren(expectInitialNode({ tag: 'b' })),
+              parent: expectInitialNode({ idAttribute: 'sandbox' }),
             },
           ],
         })
@@ -281,8 +281,8 @@ describe('trackMutation', () => {
         validate(getLatestMutationPayload(), {
           adds: [
             {
-              parent: expectInitialNode({ idAttribute: 'sandbox' }),
               node: expectNewNode({ type: NodeType.Element, tagName: 'a' }),
+              parent: expectInitialNode({ idAttribute: 'sandbox' }),
             },
           ],
         })
@@ -305,8 +305,8 @@ describe('trackMutation', () => {
       validate(getLatestMutationPayload(), {
         adds: [
           {
-            parent: expectInitialNode({ idAttribute: 'sandbox' }),
             node: expectNewNode({ type: NodeType.Element, tagName: 'a' }),
+            parent: expectInitialNode({ idAttribute: 'sandbox' }),
           },
         ],
       })
@@ -325,16 +325,16 @@ describe('trackMutation', () => {
 
       const { validate, expectInitialNode } = createMutationPayloadValidator(serializedDocument)
       validate(getLatestMutationPayload(), {
-        adds: [
-          {
-            parent: expectInitialNode({ idAttribute: 'sandbox' }),
-            node: expectInitialNode({ tag: 'a' }),
-          },
-        ],
         removes: [
           {
-            parent: expectInitialNode({ idAttribute: 'sandbox' }),
             node: expectInitialNode({ tag: 'a' }),
+            parent: expectInitialNode({ idAttribute: 'sandbox' }),
+          },
+        ],
+        adds: [
+          {
+            node: expectInitialNode({ tag: 'a' }),
+            parent: expectInitialNode({ idAttribute: 'sandbox' }),
           },
         ],
       })
@@ -360,16 +360,16 @@ describe('trackMutation', () => {
 
       const { validate, expectInitialNode } = createMutationPayloadValidator(serializedDocument)
       validate(getLatestMutationPayload(), {
-        adds: [
-          {
-            parent: expectInitialNode({ tag: 'b' }),
-            node: expectInitialNode({ tag: 'span' }),
-          },
-        ],
         removes: [
           {
-            parent: expectInitialNode({ idAttribute: 'sandbox' }),
             node: expectInitialNode({ tag: 'span' }),
+            parent: expectInitialNode({ idAttribute: 'sandbox' }),
+          },
+        ],
+        adds: [
+          {
+            node: expectInitialNode({ tag: 'span' }),
+            parent: expectInitialNode({ tag: 'b' }),
           },
         ],
       })
@@ -391,17 +391,17 @@ describe('trackMutation', () => {
       validate(getLatestMutationPayload(), {
         adds: [
           {
-            parent: expectInitialNode({ idAttribute: 'sandbox' }),
             node: c,
+            parent: expectInitialNode({ idAttribute: 'sandbox' }),
           },
           {
-            parent: expectInitialNode({ idAttribute: 'sandbox' }),
             node: b,
+            parent: expectInitialNode({ idAttribute: 'sandbox' }),
             next: c,
           },
           {
-            parent: expectInitialNode({ idAttribute: 'sandbox' }),
             node: a,
+            parent: expectInitialNode({ idAttribute: 'sandbox' }),
             next: b,
           },
         ],
@@ -419,11 +419,11 @@ describe('trackMutation', () => {
       validate(getLatestMutationPayload(), {
         adds: [
           {
-            parent: expectInitialNode({ idAttribute: 'sandbox' }),
             node: expectNewNode({
               type: NodeType.Text,
               textContent: 'xxx xxx',
             }),
+            parent: expectInitialNode({ idAttribute: 'sandbox' }),
           },
         ],
       })
@@ -449,8 +449,8 @@ describe('trackMutation', () => {
         validate(getLatestMutationPayload(), {
           adds: [
             {
-              parent: expectInitialNode({ idAttribute: 'sandbox' }),
               node: expectedHost,
+              parent: expectInitialNode({ idAttribute: 'sandbox' }),
             },
           ],
         })
@@ -472,8 +472,8 @@ describe('trackMutation', () => {
         validate(getLatestMutationPayload(), {
           removes: [
             {
-              parent: expectInitialNode({ idAttribute: 'sandbox' }),
               node: expectInitialNode({ idAttribute: 'host' }),
+              parent: expectInitialNode({ idAttribute: 'sandbox' }),
             },
           ],
         })
@@ -496,8 +496,8 @@ describe('trackMutation', () => {
         validate(getLatestMutationPayload(), {
           removes: [
             {
-              parent: expectInitialNode({ idAttribute: 'sandbox' }),
               node: expectInitialNode({ idAttribute: 'parent' }),
+              parent: expectInitialNode({ idAttribute: 'sandbox' }),
             },
           ],
         })
@@ -521,8 +521,8 @@ describe('trackMutation', () => {
         validate(getLatestMutationPayload(), {
           removes: [
             {
-              parent: expectInitialNode({ idAttribute: 'sandbox' }),
               node: expectInitialNode({ idAttribute: 'host' }),
+              parent: expectInitialNode({ idAttribute: 'sandbox' }),
             },
           ],
         })
@@ -756,8 +756,8 @@ describe('trackMutation', () => {
       validate(getLatestMutationPayload(), {
         adds: [
           {
-            parent: expectInitialNode({ idAttribute: 'sandbox' }),
             node: expectNewNode({ type: NodeType.Element, tagName: 'a' }),
+            parent: expectInitialNode({ idAttribute: 'sandbox' }),
           },
         ],
       })
@@ -830,8 +830,8 @@ describe('trackMutation', () => {
         validate(getLatestMutationPayload(), {
           removes: [
             {
-              parent: expectInitialNode({ idAttribute: 'sandbox' }),
               node: expectInitialNode({ text: 'function foo() {}' }),
+              parent: expectInitialNode({ idAttribute: 'sandbox' }),
             },
           ],
         })
@@ -912,8 +912,8 @@ describe('trackMutation', () => {
         validate(getLatestMutationPayload(), {
           removes: [
             {
-              parent: expectInitialNode({ idAttribute: 'sandbox' }),
               node: expectInitialNode({ text: 'function foo() {}' }),
+              parent: expectInitialNode({ idAttribute: 'sandbox' }),
             },
           ],
         })
@@ -1001,12 +1001,12 @@ describe('trackMutation', () => {
           validate(getLatestMutationPayload(), {
             adds: [
               {
-                parent: expectInitialNode({ idAttribute: 'sandbox' }),
                 node: expectNewNode({
+                  attributes: expectedSerializedAttributes,
                   type: NodeType.Element,
                   tagName: 'input',
-                  attributes: expectedSerializedAttributes,
                 }),
+                parent: expectInitialNode({ idAttribute: 'sandbox' }),
               },
             ],
           })

@@ -77,7 +77,7 @@ function AddFieldColumn({
   const [input, setInput] = useState('')
 
   function addFieldColumn(path: string) {
-    const newColumn: EventListColumn = { path, type: 'field' }
+    const newColumn: EventListColumn = { type: 'field', path }
     if (!includesColumn(columns, newColumn)) {
       onColumnsChange(columns.concat(newColumn))
     }

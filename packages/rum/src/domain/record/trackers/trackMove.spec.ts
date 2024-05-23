@@ -21,8 +21,8 @@ describe('trackMove', () => {
 
     configuration = {} as RumConfiguration
     serializeDocument(document, DEFAULT_CONFIGURATION, {
-      shadowRootsController: DEFAULT_SHADOW_ROOT_CONTROLLER,
       status: SerializationContextStatus.INITIAL_FULL_SNAPSHOT,
+      shadowRootsController: DEFAULT_SHADOW_ROOT_CONTROLLER,
       elementsScrollPositions: createElementsScrollPositions(),
     })
 
@@ -39,8 +39,8 @@ describe('trackMove', () => {
     document.body.dispatchEvent(event)
 
     expect(mouseMoveCallbackSpy).toHaveBeenCalledWith({
-      type: RecordType.IncrementalSnapshot,
       timestamp: jasmine.any(Number),
+      type: RecordType.IncrementalSnapshot,
       data: {
         source: IncrementalSource.MouseMove,
         positions: [
@@ -60,8 +60,8 @@ describe('trackMove', () => {
     document.body.dispatchEvent(event)
 
     expect(mouseMoveCallbackSpy).toHaveBeenCalledWith({
-      type: RecordType.IncrementalSnapshot,
       timestamp: jasmine.any(Number),
+      type: RecordType.IncrementalSnapshot,
       data: {
         source: IncrementalSource.TouchMove,
         positions: [

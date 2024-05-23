@@ -78,14 +78,14 @@ describe('trackInteractionToNextPaint', () => {
     setViewEnd(10 as RelativeTime)
 
     newInteraction(lifeCycle, {
-      interactionId: 1,
-      duration: 10 as Duration,
       startTime: -1 as RelativeTime,
+      duration: 10 as Duration,
+      interactionId: 1,
     })
     newInteraction(lifeCycle, {
-      interactionId: 2,
-      duration: 10 as Duration,
       startTime: 11 as RelativeTime,
+      duration: 10 as Duration,
+      interactionId: 2,
     })
     expect(getInteractionToNextPaint()).toEqual(undefined)
   })
@@ -96,9 +96,9 @@ describe('trackInteractionToNextPaint', () => {
     setViewEnd(10 as RelativeTime)
 
     newInteraction(lifeCycle, {
-      interactionId: 1,
-      duration: 100 as Duration,
       startTime: 1 as RelativeTime,
+      duration: 100 as Duration,
+      interactionId: 1,
     })
     expect(getInteractionToNextPaint()).toEqual({
       value: 100 as Duration,
@@ -109,8 +109,8 @@ describe('trackInteractionToNextPaint', () => {
   it('should cap INP value', () => {
     const { lifeCycle } = setupBuilder.build()
     newInteraction(lifeCycle, {
-      interactionId: 1,
       duration: (MAX_INP_VALUE + 1) as Duration,
+      interactionId: 1,
     })
 
     expect(getInteractionToNextPaint()).toEqual({
@@ -142,8 +142,8 @@ describe('trackInteractionToNextPaint', () => {
   it('should take first-input entry into account', () => {
     const { lifeCycle } = setupBuilder.build()
     newInteraction(lifeCycle, {
-      interactionId: 1,
       entryType: RumPerformanceEntryType.FIRST_INPUT,
+      interactionId: 1,
     })
     expect(getInteractionToNextPaint()).toEqual({
       value: 40 as Duration,
@@ -195,16 +195,16 @@ describe('trackInteractionToNextPaint', () => {
 
       const element = appendElement('<button id="foo"></button>')
       newInteraction(lifeCycle, {
-        interactionId: 1,
         duration: 10 as Duration,
+        interactionId: 1,
         target: element,
       })
 
       element.setAttribute('id', 'bar')
 
       newInteraction(lifeCycle, {
-        interactionId: 2,
         duration: 9 as Duration,
+        interactionId: 2,
         target: element,
       })
 
@@ -215,14 +215,14 @@ describe('trackInteractionToNextPaint', () => {
       const { lifeCycle } = setupBuilder.build()
 
       newInteraction(lifeCycle, {
-        interactionId: 1,
         duration: 10 as Duration,
+        interactionId: 1,
         target: appendElement('<button id="foo"></button>'),
       })
 
       newInteraction(lifeCycle, {
-        interactionId: 2,
         duration: 11 as Duration,
+        interactionId: 2,
         target: appendElement('<button id="bar"></button>'),
       })
 
@@ -268,7 +268,7 @@ describe('trackViewInteractionCount', () => {
 function subInteractionCount() {
   let interactionCount = 0
   const originalInteractionCount = Object.getOwnPropertyDescriptor(window.performance, 'interactionCount')
-  Object.defineProperty(window.performance, 'interactionCount', { get: () => interactionCount, configurable: true })
+  Object.defineProperty(window.performance, 'interactionCount', { configurable: true, get: () => interactionCount })
 
   return {
     setInteractionCount: (newInteractionCount: Duration) => {

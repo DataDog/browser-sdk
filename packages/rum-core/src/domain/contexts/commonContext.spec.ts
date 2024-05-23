@@ -25,8 +25,8 @@ describe('commonContext', () => {
 
   it('should return common context', () => {
     expect(buildCommonContext()).toEqual({
-      context: fakeContext,
       user: fakeContext,
+      context: fakeContext,
       hasReplay: undefined,
     })
   })

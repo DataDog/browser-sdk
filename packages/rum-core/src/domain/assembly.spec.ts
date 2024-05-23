@@ -39,8 +39,8 @@ describe('rum assembly', () => {
     })
     reportErrorSpy = jasmine.createSpy('reportError')
     commonContext = {
-      context: {},
       user: {},
+      context: {},
       hasReplay: undefined,
     }
     ciVisibilityContext = undefined
@@ -185,8 +185,8 @@ describe('rum assembly', () => {
             .build()
 
           notifyRawRumEvent(lifeCycle, {
-            rawRumEvent: createRawRumEvent(RumEventType.LONG_TASK),
             customerContext: { foo: 'bar' },
+            rawRumEvent: createRawRumEvent(RumEventType.LONG_TASK),
           })
 
           expect(serverRumEvents[0].context).toBeUndefined()
@@ -202,8 +202,8 @@ describe('rum assembly', () => {
             .build()
 
           notifyRawRumEvent(lifeCycle, {
-            rawRumEvent: createRawRumEvent(RumEventType.LONG_TASK),
             customerContext: { foo: 'bar' },
+            rawRumEvent: createRawRumEvent(RumEventType.LONG_TASK),
           })
 
           expect(serverRumEvents[0].context).toBeUndefined()
@@ -219,8 +219,8 @@ describe('rum assembly', () => {
             .build()
 
           notifyRawRumEvent(lifeCycle, {
-            rawRumEvent: createRawRumEvent(RumEventType.LONG_TASK),
             customerContext: { foo: 'bar' },
+            rawRumEvent: createRawRumEvent(RumEventType.LONG_TASK),
           })
 
           expect(serverRumEvents[0].context).toBeUndefined()
@@ -266,8 +266,8 @@ describe('rum assembly', () => {
             .build()
 
           notifyRawRumEvent(lifeCycle, {
-            rawRumEvent: createRawRumEvent(RumEventType.LONG_TASK),
             customerContext: { foo: 'bar' },
+            rawRumEvent: createRawRumEvent(RumEventType.LONG_TASK),
           })
 
           expect(serverRumEvents[0].context!.foo).toBe('bar')
@@ -474,12 +474,12 @@ describe('rum assembly', () => {
       commonContext.context = { replacedContext: 'b', addedContext: 'x' }
 
       notifyRawRumEvent(lifeCycle, {
-        rawRumEvent: createRawRumEvent(RumEventType.VIEW),
         savedCommonContext: {
-          context: { replacedContext: 'a' },
           user: {},
+          context: { replacedContext: 'a' },
           hasReplay: undefined,
         },
+        rawRumEvent: createRawRumEvent(RumEventType.VIEW),
       })
 
       expect((serverRumEvents[0].context as any).replacedContext).toEqual('a')
@@ -513,12 +513,12 @@ describe('rum assembly', () => {
       commonContext.user = { replacedAttribute: 'b', addedAttribute: 'x' }
 
       notifyRawRumEvent(lifeCycle, {
-        rawRumEvent: createRawRumEvent(RumEventType.VIEW),
         savedCommonContext: {
-          context: {},
           user: { replacedAttribute: 'a' },
+          context: {},
           hasReplay: undefined,
         },
+        rawRumEvent: createRawRumEvent(RumEventType.VIEW),
       })
 
       expect(serverRumEvents[0].usr!.replacedAttribute).toEqual('a')
@@ -581,7 +581,7 @@ describe('rum assembly', () => {
 
   describe('service and version', () => {
     beforeEach(() => {
-      extraConfigurationOptions = { service: 'default service', version: 'default version' }
+      extraConfigurationOptions = { version: 'default version', service: 'default service' }
     })
 
     it('should come from the init configuration by default', () => {
@@ -654,11 +654,11 @@ describe('rum assembly', () => {
         rawRumEvent: createRawRumEvent(RumEventType.VIEW),
       })
       expect(serverRumEvents[0].session).toEqual({
-        has_replay: undefined,
-        sampled_for_replay: jasmine.any(Boolean),
-        is_active: undefined,
         id: '1234',
         type: 'user',
+        has_replay: undefined,
+        is_active: undefined,
+        sampled_for_replay: jasmine.any(Boolean),
       })
     })
 
@@ -746,16 +746,16 @@ describe('rum assembly', () => {
         rawRumEvent: createRawRumEvent(RumEventType.ACTION),
       })
       expect(serverRumEvents[0]._dd.configuration).toEqual({
-        session_replay_sample_rate: 0,
         session_sample_rate: 100,
+        session_replay_sample_rate: 0,
       })
     })
 
     it('should round sample rates', () => {
       const { lifeCycle } = setupBuilder
         .withConfiguration({
-          sessionSampleRate: 1.2341,
           sessionReplaySampleRate: 6.7891,
+          sessionSampleRate: 1.2341,
         })
         .build()
       notifyRawRumEvent(lifeCycle, {
@@ -819,8 +819,8 @@ describe('rum assembly', () => {
 
       expect(serverRumEvents[0].connectivity).toEqual({
         status: 'connected',
-        effective_type: '2g',
         interfaces: undefined,
+        effective_type: '2g',
       })
     })
   })
@@ -862,12 +862,12 @@ describe('rum assembly', () => {
       it(`does not take discarded ${eventType} events into account`, () => {
         const { lifeCycle } = setupBuilder
           .withConfiguration({
-            eventRateLimiterThreshold: 1,
             beforeSend: (event) => {
               if (event.type === eventType && event.date === 100) {
                 return false
               }
             },
+            eventRateLimiterThreshold: 1,
           })
           .build()
         notifyRawRumEvent(lifeCycle, {

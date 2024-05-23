@@ -25,7 +25,7 @@ export function startConsoleCollection(configuration: LogsConfiguration, lifeCyc
       rawLogsEvent: {
         date: timeStampNow(),
         message: log.message,
-        origin: ErrorSource.CONSOLE,
+        status: LogStatusForApi[log.api],
         error:
           log.api === ConsoleApiName.error
             ? {
@@ -34,7 +34,7 @@ export function startConsoleCollection(configuration: LogsConfiguration, lifeCyc
                 causes: log.causes,
               }
             : undefined,
-        status: LogStatusForApi[log.api],
+        origin: ErrorSource.CONSOLE,
       },
     })
   })

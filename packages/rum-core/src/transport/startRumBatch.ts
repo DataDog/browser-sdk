@@ -29,8 +29,8 @@ export function startRumBatch(
       encoder: createEncoder(DeflateEncoderStreamId.RUM),
     },
     replica && {
-      endpoint: replica.rumEndpointBuilder,
       transformMessage: (message) => combine(message, { application: { id: replica.applicationId } }),
+      endpoint: replica.rumEndpointBuilder,
       encoder: createEncoder(DeflateEncoderStreamId.RUM_REPLICA),
     },
     reportError,

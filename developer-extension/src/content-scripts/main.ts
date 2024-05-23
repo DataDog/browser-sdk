@@ -129,12 +129,12 @@ function instrumentGlobal(global: 'DD_RUM' | 'DD_LOGS') {
   let returnedInstance: SdkPublicApi | undefined
   let lastInstance: SdkPublicApi | undefined
   Object.defineProperty(window, global, {
+    get(): SdkPublicApi | undefined {
+      return returnedInstance ?? lastInstance
+    },
     set(sdkInstance: SdkPublicApi) {
       eventListeners.notify(sdkInstance)
       lastInstance = sdkInstance
-    },
-    get(): SdkPublicApi | undefined {
-      return returnedInstance ?? lastInstance
     },
   })
 

@@ -46,7 +46,7 @@ export function startProxy() {
   return new Promise<Proxy>((resolve, reject) => {
     const { key, cert, spkiFingerprint } = createSelfSignedCertificate()
     const stats = new ProxyStats()
-    const server = createServer({ key, cert })
+    const server = createServer({ cert, key })
     server.on('error', reject)
     server.on('request', (req: IncomingMessage, res: ServerResponse) => {
       let requestSize = 0
@@ -161,9 +161,9 @@ function createSelfSignedCertificate() {
   cert.sign(keys.privateKey)
 
   const spkiHex = pki.getPublicKeyFingerprint(cert.publicKey, {
-    encoding: 'hex',
-    md: md.sha256.create(),
     type: 'SubjectPublicKeyInfo',
+    md: md.sha256.create(),
+    encoding: 'hex',
   })
 
   return {

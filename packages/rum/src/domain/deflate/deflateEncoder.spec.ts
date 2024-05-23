@@ -56,8 +56,8 @@ describe('createDeflateEncoder', () => {
       expect(finishCallbackSpy).toHaveBeenCalledOnceWith({
         output: new Uint8Array([...ENCODED_FOO, ...ENCODED_BAR, ...TRAILER]),
         outputBytesCount: 7,
-        rawBytesCount: 6,
         encoding: 'deflate',
+        rawBytesCount: 6,
       })
     })
 
@@ -69,8 +69,8 @@ describe('createDeflateEncoder', () => {
       expect(finishCallbackSpy).toHaveBeenCalledOnceWith({
         output: new Uint8Array(0),
         outputBytesCount: 0,
-        rawBytesCount: 0,
         encoding: 'deflate',
+        rawBytesCount: 0,
       })
     })
 
@@ -109,16 +109,16 @@ describe('createDeflateEncoder', () => {
           {
             output: new Uint8Array([...ENCODED_FOO, ...TRAILER]),
             outputBytesCount: 4,
-            rawBytesCount: 3,
             encoding: 'deflate',
+            rawBytesCount: 3,
           },
         ],
         [
           {
             output: new Uint8Array([...ENCODED_BAR, ...TRAILER]),
             outputBytesCount: 4,
-            rawBytesCount: 3,
             encoding: 'deflate',
+            rawBytesCount: 3,
           },
         ],
       ])
@@ -136,9 +136,9 @@ describe('createDeflateEncoder', () => {
       expect(encoder.finishSync()).toEqual({
         output: new Uint8Array([...ENCODED_FOO, ...TRAILER]),
         outputBytesCount: 4,
+        encoding: 'deflate',
         rawBytesCount: 3,
         pendingData: 'bar',
-        encoding: 'deflate',
       })
     })
 
@@ -170,9 +170,9 @@ describe('createDeflateEncoder', () => {
       expect(encoder.finishSync()).toEqual({
         output: new Uint8Array(0),
         outputBytesCount: 0,
+        encoding: 'deflate',
         rawBytesCount: 0,
         pendingData: 'foobar',
-        encoding: 'deflate',
       })
 
       worker.processAllMessages()
@@ -207,8 +207,8 @@ describe('createDeflateEncoder', () => {
     expect(telemetryEvents).toEqual([
       {
         type: 'log',
-        message: 'Worker responses received out of order.',
         status: 'debug',
+        message: 'Worker responses received out of order.',
       },
     ])
   })

@@ -90,16 +90,16 @@ export function trackXhr(lifeCycle: LifeCycle, configuration: RumConfiguration, 
       case 'complete':
         tracer.clearTracingIfNeeded(context)
         lifeCycle.notify(LifeCycleEventType.REQUEST_COMPLETED, {
-          duration: context.duration,
-          method: context.method,
           requestIndex: context.requestIndex,
-          spanId: context.spanId,
-          startClocks: context.startClocks,
+          type: RequestType.XHR,
+          method: context.method,
+          url: context.url,
           status: context.status,
+          startClocks: context.startClocks,
+          duration: context.duration,
+          spanId: context.spanId,
           traceId: context.traceId,
           traceSampled: context.traceSampled,
-          type: RequestType.XHR,
-          url: context.url,
           xhr: context.xhr,
           isAborted: context.isAborted,
         })
@@ -131,20 +131,20 @@ export function trackFetch(lifeCycle: LifeCycle, configuration: RumConfiguration
         waitForResponseToComplete(context, (duration: Duration) => {
           tracer.clearTracingIfNeeded(context)
           lifeCycle.notify(LifeCycleEventType.REQUEST_COMPLETED, {
-            duration,
-            method: context.method,
             requestIndex: context.requestIndex,
-            responseType: context.responseType,
-            spanId: context.spanId,
-            startClocks: context.startClocks,
+            type: RequestType.FETCH,
+            method: context.method,
+            url: context.url,
             status: context.status,
+            responseType: context.responseType,
+            startClocks: context.startClocks,
+            duration,
+            spanId: context.spanId,
             traceId: context.traceId,
             traceSampled: context.traceSampled,
-            type: RequestType.FETCH,
-            url: context.url,
             response: context.response,
-            init: context.init,
             input: context.input,
+            init: context.init,
             isAborted: context.isAborted,
           })
         })

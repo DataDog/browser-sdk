@@ -39,8 +39,8 @@ export const generateLeanSerializedDoc = (htmlContent: string, privacyTag: strin
     serializeNodeWithId(newDoc, {
       parentNodePrivacyLevel: NodePrivacyLevel.ALLOW,
       serializationContext: {
-        shadowRootsController: DEFAULT_SHADOW_ROOT_CONTROLLER,
         status: SerializationContextStatus.INITIAL_FULL_SNAPSHOT,
+        shadowRootsController: DEFAULT_SHADOW_ROOT_CONTROLLER,
         elementsScrollPositions: createElementsScrollPositions(),
       },
       configuration: {} as RumConfiguration,

@@ -44,12 +44,12 @@ async function waitForSyntheticsTestToFinish(resultId, RETRIES_NUMBER) {
   const url = `https://api.datadoghq.com/api/v1/synthetics/tests/${TEST_PUBLIC_ID}/results/${resultId}`
   for (let i = 0; i < RETRIES_NUMBER; i++) {
     const response = await fetch(url, {
-      method: 'GET',
       headers: {
         'Content-Type': 'application/json',
         'DD-API-KEY': API_KEY,
         'DD-APPLICATION-KEY': APP_KEY,
       },
+      method: 'GET',
     })
     // do not use response.ok as we can have 404 responses
     if (response.status >= 500) {

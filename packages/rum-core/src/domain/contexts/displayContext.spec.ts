@@ -18,8 +18,8 @@ describe('displayContext', () => {
   it('should return current display context', () => {
     expect(displayContext.get()).toEqual({
       viewport: {
-        width: jasmine.any(Number),
         height: jasmine.any(Number),
+        width: jasmine.any(Number),
       },
     })
   })

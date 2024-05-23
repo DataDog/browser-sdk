@@ -62,20 +62,20 @@ describe('long task collection', () => {
     expect(rawRumEvents[0].startTime).toBe(1234 as RelativeTime)
     expect(rawRumEvents[0].rawRumEvent).toEqual({
       date: jasmine.any(Number),
-      long_task: {
-        id: jasmine.any(String),
-        duration: (100 * 1e6) as ServerDuration,
-      },
       type: RumEventType.LONG_TASK,
       _dd: {
         discarded: false,
       },
+      long_task: {
+        id: jasmine.any(String),
+        duration: (100 * 1e6) as ServerDuration,
+      },
     })
     expect(rawRumEvents[0].domainContext).toEqual({
       performanceEntry: {
-        name: 'self',
         duration: 100,
         entryType: 'longtask',
+        name: 'self',
         startTime: 1234,
         toJSON: jasmine.any(Function),
       },

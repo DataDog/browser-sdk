@@ -69,8 +69,8 @@ describe('getSessionReplayUrl', () => {
   parameters.forEach(([{ testCase, session, viewContext, errorType, expected }]) => {
     it(`should build url when ${testCase}`, () => {
       const link = getSessionReplayUrl({ site: 'datadoghq.com' } as RumConfiguration, {
-        viewContext,
         session,
+        viewContext,
         errorType,
       })
       expect(link).toBe(expected)

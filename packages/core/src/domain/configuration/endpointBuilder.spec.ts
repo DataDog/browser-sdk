@@ -129,8 +129,8 @@ describe('endpointBuilder', () => {
     it('should return PCI compliance intake endpoint if site is us1', () => {
       const config: InitConfiguration & { usePciIntake?: boolean } = {
         clientToken,
-        usePciIntake: true,
         site: 'datadoghq.com',
+        usePciIntake: true,
       }
       expect(createEndpointBuilder(config, 'logs', []).build('xhr', DEFAULT_PAYLOAD)).toContain(
         'https://pci.browser-intake-datadoghq.com'
@@ -139,8 +139,8 @@ describe('endpointBuilder', () => {
     it('should not return PCI compliance intake endpoint if site is not us1', () => {
       const config: InitConfiguration & { usePciIntake?: boolean } = {
         clientToken,
-        usePciIntake: true,
         site: 'ap1.datadoghq.com',
+        usePciIntake: true,
       }
       expect(createEndpointBuilder(config, 'logs', []).build('xhr', DEFAULT_PAYLOAD)).not.toContain(
         'https://pci.browser-intake-datadoghq.com'
@@ -149,8 +149,8 @@ describe('endpointBuilder', () => {
     it('should not return PCI compliance intake endpoint if and site is us1 and track is not logs', () => {
       const config: InitConfiguration & { usePciIntake?: boolean } = {
         clientToken,
-        usePciIntake: true,
         site: 'datadoghq.com',
+        usePciIntake: true,
       }
       expect(createEndpointBuilder(config, 'rum', []).build('xhr', DEFAULT_PAYLOAD)).not.toContain(
         'https://pci.browser-intake-datadoghq.com'

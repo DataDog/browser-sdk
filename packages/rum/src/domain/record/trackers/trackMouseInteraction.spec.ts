@@ -29,8 +29,8 @@ describe('trackMouseInteraction', () => {
     a.dispatchEvent(createNewEvent(DOM_EVENT.FOCUS))
 
     serializeDocument(document, DEFAULT_CONFIGURATION, {
-      shadowRootsController: DEFAULT_SHADOW_ROOT_CONTROLLER,
       status: SerializationContextStatus.INITIAL_FULL_SNAPSHOT,
+      shadowRootsController: DEFAULT_SHADOW_ROOT_CONTROLLER,
       elementsScrollPositions: createElementsScrollPositions(),
     })
 
@@ -47,9 +47,8 @@ describe('trackMouseInteraction', () => {
     a.dispatchEvent(createNewEvent(DOM_EVENT.CLICK, { clientX: 0, clientY: 0 }))
 
     expect(mouseInteractionCallbackSpy).toHaveBeenCalledWith({
-      id: jasmine.any(Number),
-      type: RecordType.IncrementalSnapshot,
       timestamp: jasmine.any(Number),
+      type: RecordType.IncrementalSnapshot,
       data: {
         source: IncrementalSource.MouseInteraction,
         type: MouseInteractionType.Click,
@@ -57,6 +56,7 @@ describe('trackMouseInteraction', () => {
         x: jasmine.any(Number),
         y: jasmine.any(Number),
       },
+      id: jasmine.any(Number),
     })
   })
 
@@ -65,9 +65,8 @@ describe('trackMouseInteraction', () => {
     a.dispatchEvent(pointerupEvent)
 
     expect(mouseInteractionCallbackSpy).toHaveBeenCalledWith({
-      id: recordIds.getIdForEvent(pointerupEvent),
-      type: RecordType.IncrementalSnapshot,
       timestamp: jasmine.any(Number),
+      type: RecordType.IncrementalSnapshot,
       data: {
         source: IncrementalSource.MouseInteraction,
         type: MouseInteractionType.MouseUp,
@@ -75,6 +74,7 @@ describe('trackMouseInteraction', () => {
         x: jasmine.any(Number),
         y: jasmine.any(Number),
       },
+      id: recordIds.getIdForEvent(pointerupEvent),
     })
   })
 
@@ -89,14 +89,14 @@ describe('trackMouseInteraction', () => {
     a.dispatchEvent(createNewEvent(DOM_EVENT.BLUR))
 
     expect(mouseInteractionCallbackSpy).toHaveBeenCalledWith({
-      id: jasmine.any(Number),
-      type: RecordType.IncrementalSnapshot,
       timestamp: jasmine.any(Number),
+      type: RecordType.IncrementalSnapshot,
       data: {
         source: IncrementalSource.MouseInteraction,
         type: MouseInteractionType.Blur,
         id: jasmine.any(Number),
       },
+      id: jasmine.any(Number),
     })
   })
 
@@ -111,11 +111,11 @@ describe('trackMouseInteraction', () => {
 
       coordinatesComputed = false
       Object.defineProperty(window.visualViewport, 'offsetTop', {
+        configurable: true,
         get() {
           coordinatesComputed = true
           return 0
         },
-        configurable: true,
       })
     })
 

@@ -107,17 +107,17 @@ describe('serializeAttribute', () => {
 
     beforeEach(() => {
       imageStub = {
-        width: 0,
-        height: 0,
-        naturalWidth: 0,
-        naturalHeight: 0,
         tagName: 'IMG',
         getAttribute() {
           return 'http://foo.bar/image.png'
         },
         getBoundingClientRect() {
-          return { width: this.width, height: this.height } as DOMRect
+          return { height: this.height, width: this.width } as DOMRect
         },
+        width: 0,
+        height: 0,
+        naturalWidth: 0,
+        naturalHeight: 0,
       }
     })
 

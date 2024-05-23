@@ -29,32 +29,32 @@ describe('resourceCollection', () => {
     const { lifeCycle, rawRumEvents } = setupBuilder.build()
 
     const performanceEntry = createPerformanceEntry(RumPerformanceEntryType.RESOURCE, {
-      encodedBodySize: 42,
+      responseStart: 250 as RelativeTime,
       decodedBodySize: 51,
+      encodedBodySize: 42,
       transferSize: 63,
       renderBlockingStatus: 'blocking',
-      responseStart: 250 as RelativeTime,
     })
     lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [performanceEntry])
 
     expect(rawRumEvents[0].startTime).toBe(200 as RelativeTime)
     expect(rawRumEvents[0].rawRumEvent).toEqual({
       date: jasmine.any(Number) as unknown as TimeStamp,
+      type: RumEventType.RESOURCE,
       resource: {
+        type: ResourceType.OTHER,
         id: jasmine.any(String),
         duration: (100 * 1e6) as ServerDuration,
+        url: 'https://resource.com/valid',
+        status_code: 200,
         size: 51,
         encoded_body_size: 42,
         decoded_body_size: 51,
         transfer_size: 63,
-        type: ResourceType.OTHER,
-        url: 'https://resource.com/valid',
-        download: jasmine.any(Object),
-        first_byte: jasmine.any(Object),
-        status_code: 200,
         render_blocking_status: 'blocking',
+        first_byte: jasmine.any(Object),
+        download: jasmine.any(Object),
       },
-      type: RumEventType.RESOURCE,
       _dd: {
         discarded: false,
       },
@@ -70,12 +70,12 @@ describe('resourceCollection', () => {
     lifeCycle.notify(
       LifeCycleEventType.REQUEST_COMPLETED,
       createCompletedRequest({
-        duration: 100 as Duration,
-        method: 'GET',
-        startClocks: { relative: 1234 as RelativeTime, timeStamp: 123456789 as TimeStamp },
-        status: 200,
         type: RequestType.XHR,
+        method: 'GET',
         url: 'https://resource.com/valid',
+        status: 200,
+        startClocks: { relative: 1234 as RelativeTime, timeStamp: 123456789 as TimeStamp },
+        duration: 100 as Duration,
         xhr,
         isAborted: false,
       })
@@ -84,27 +84,27 @@ describe('resourceCollection', () => {
     expect(rawRumEvents[0].startTime).toBe(1234 as RelativeTime)
     expect(rawRumEvents[0].rawRumEvent).toEqual({
       date: jasmine.any(Number),
+      type: RumEventType.RESOURCE,
       resource: {
+        type: ResourceType.XHR,
         id: jasmine.any(String),
         duration: (100 * 1e6) as ServerDuration,
+        url: 'https://resource.com/valid',
         method: 'GET',
         status_code: 200,
-        type: ResourceType.XHR,
-        url: 'https://resource.com/valid',
       },
-      type: RumEventType.RESOURCE,
       _dd: {
         discarded: false,
       },
     })
     expect(rawRumEvents[0].domainContext).toEqual({
-      xhr,
-      performanceEntry: undefined,
-      response: undefined,
-      requestInput: undefined,
-      requestInit: undefined,
       error: undefined,
+      performanceEntry: undefined,
+      requestInit: undefined,
+      requestInput: undefined,
+      response: undefined,
       isAborted: false,
+      xhr,
     })
   })
 
@@ -169,8 +169,8 @@ describe('resourceCollection', () => {
             LifeCycleEventType.REQUEST_COMPLETED,
             createCompletedRequest({
               type: RequestType.XHR,
-              traceId: new TraceIdentifier(),
               spanId: new TraceIdentifier(),
+              traceId: new TraceIdentifier(),
               traceSampled: true,
             })
           )
@@ -203,12 +203,12 @@ describe('resourceCollection', () => {
     lifeCycle.notify(
       LifeCycleEventType.REQUEST_COMPLETED,
       createCompletedRequest({
-        duration: 100 as Duration,
-        method: 'GET',
-        startClocks: { relative: 1234 as RelativeTime, timeStamp: 123456789 as TimeStamp },
-        status: 200,
         type: RequestType.FETCH,
+        method: 'GET',
         url: 'https://resource.com/valid',
+        status: 200,
+        startClocks: { relative: 1234 as RelativeTime, timeStamp: 123456789 as TimeStamp },
+        duration: 100 as Duration,
         response,
         input: 'https://resource.com/valid',
         init: { headers: { foo: 'bar' } },
@@ -219,27 +219,27 @@ describe('resourceCollection', () => {
     expect(rawRumEvents[0].startTime).toBe(1234 as RelativeTime)
     expect(rawRumEvents[0].rawRumEvent).toEqual({
       date: jasmine.any(Number),
+      type: RumEventType.RESOURCE,
       resource: {
+        type: ResourceType.FETCH,
         id: jasmine.any(String),
         duration: (100 * 1e6) as ServerDuration,
+        url: 'https://resource.com/valid',
         method: 'GET',
         status_code: 200,
-        type: ResourceType.FETCH,
-        url: 'https://resource.com/valid',
       },
-      type: RumEventType.RESOURCE,
       _dd: {
         discarded: false,
       },
     })
     expect(rawRumEvents[0].domainContext).toEqual({
-      performanceEntry: undefined,
-      xhr: undefined,
-      response,
-      requestInput: 'https://resource.com/valid',
-      requestInit: { headers: { foo: 'bar' } },
       error: undefined,
+      performanceEntry: undefined,
+      requestInit: { headers: { foo: 'bar' } },
+      requestInput: 'https://resource.com/valid',
+      response,
       isAborted: false,
+      xhr: undefined,
     })
   })
   ;[null, undefined, 42, {}].forEach((input: any) => {
@@ -298,9 +298,9 @@ describe('resourceCollection', () => {
       lifeCycle.notify(
         LifeCycleEventType.REQUEST_COMPLETED,
         createCompletedRequest({
-          traceSampled: true,
           spanId: new TraceIdentifier(),
           traceId: new TraceIdentifier(),
+          traceSampled: true,
         })
       )
       const privateFields = (rawRumEvents[0].rawRumEvent as RawRumResourceEvent)._dd
@@ -313,9 +313,9 @@ describe('resourceCollection', () => {
       lifeCycle.notify(
         LifeCycleEventType.REQUEST_COMPLETED,
         createCompletedRequest({
-          traceSampled: false,
           spanId: new TraceIdentifier(),
           traceId: new TraceIdentifier(),
+          traceSampled: false,
         })
       )
       const privateFields = (rawRumEvents[0].rawRumEvent as RawRumResourceEvent)._dd
@@ -341,9 +341,9 @@ describe('resourceCollection', () => {
       lifeCycle.notify(
         LifeCycleEventType.REQUEST_COMPLETED,
         createCompletedRequest({
-          traceSampled: true,
           spanId: new TraceIdentifier(),
           traceId: new TraceIdentifier(),
+          traceSampled: true,
         })
       )
       const privateFields = (rawRumEvents[0].rawRumEvent as RawRumResourceEvent)._dd
@@ -367,9 +367,9 @@ describe('resourceCollection', () => {
       lifeCycle.notify(
         LifeCycleEventType.REQUEST_COMPLETED,
         createCompletedRequest({
-          traceSampled: true,
           spanId: new TraceIdentifier(),
           traceId: new TraceIdentifier(),
+          traceSampled: true,
         })
       )
       const privateFields = (rawRumEvents[0].rawRumEvent as RawRumResourceEvent)._dd
@@ -394,9 +394,9 @@ describe('resourceCollection', () => {
       lifeCycle.notify(
         LifeCycleEventType.REQUEST_COMPLETED,
         createCompletedRequest({
-          traceSampled: true,
           spanId: new TraceIdentifier(),
           traceId: new TraceIdentifier(),
+          traceSampled: true,
         })
       )
       const privateFields = (rawRumEvents[0].rawRumEvent as RawRumResourceEvent)._dd
@@ -407,12 +407,12 @@ describe('resourceCollection', () => {
 
 function createCompletedRequest(details?: Partial<RequestCompleteEvent>): RequestCompleteEvent {
   const request: Partial<RequestCompleteEvent> = {
-    duration: 100 as Duration,
-    method: 'GET',
-    startClocks: { relative: 1234 as RelativeTime, timeStamp: 123456789 as TimeStamp },
-    status: 200,
     type: RequestType.XHR,
+    method: 'GET',
     url: 'https://resource.com/valid',
+    status: 200,
+    startClocks: { relative: 1234 as RelativeTime, timeStamp: 123456789 as TimeStamp },
+    duration: 100 as Duration,
     ...details,
   }
   return request as RequestCompleteEvent

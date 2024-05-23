@@ -39,8 +39,8 @@ export function startInternalContext(
         return {
           application_id: applicationId,
           session_id: session.id,
+          view: { id: viewContext.id, url: urlContext.url, referrer: urlContext.referrer, name: viewContext.name },
           user_action: actionId ? { id: actionId } : undefined,
-          view: { id: viewContext.id, name: viewContext.name, referrer: urlContext.referrer, url: urlContext.url },
         }
       }
     },

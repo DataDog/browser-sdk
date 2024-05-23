@@ -25,11 +25,11 @@ const noopStartRum = (): ReturnType<StartRum> => ({
   addTiming: () => undefined,
   addFeatureFlagEvaluation: () => undefined,
   startView: () => undefined,
-  getInternalContext: () => undefined,
   lifeCycle: {} as any,
   viewContexts: {} as any,
   session: {} as any,
   stopSession: () => undefined,
+  getInternalContext: () => undefined,
   startDurationVital: () => undefined,
   stopDurationVital: () => undefined,
   stop: () => undefined,
@@ -179,10 +179,10 @@ describe('rum public api', () => {
       expect(addActionSpy).toHaveBeenCalledTimes(1)
       expect(addActionSpy.calls.argsFor(0)).toEqual([
         {
-          context: { bar: 'baz' },
+          type: ActionType.CUSTOM,
           name: 'foo',
           startClocks: jasmine.any(Object),
-          type: ActionType.CUSTOM,
+          context: { bar: 'baz' },
         },
         { context: {}, user: {}, hasReplay: undefined },
       ])
@@ -267,11 +267,11 @@ describe('rum public api', () => {
       expect(addErrorSpy.calls.argsFor(0)).toEqual([
         {
           context: undefined,
+          startClocks: jasmine.any(Object),
           error: new Error('foo'),
           handlingStack: jasmine.any(String),
-          startClocks: jasmine.any(Object),
         },
-        { context: {}, user: {}, hasReplay: undefined },
+        { user: {}, context: {}, hasReplay: undefined },
       ])
     })
 
@@ -365,9 +365,9 @@ describe('rum public api', () => {
       rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
 
       expect(addActionSpy.calls.argsFor(0)[1]!.user).toEqual({
+        id: 'foo',
         email: 'qux',
         foo: { bar: 'qux' },
-        id: 'foo',
         name: 'bar',
       })
       expect(displaySpy).not.toHaveBeenCalled()
@@ -381,8 +381,8 @@ describe('rum public api', () => {
       rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
 
       expect(addActionSpy.calls.argsFor(0)[1]!.user).toEqual({
-        email: '[object Object]',
         id: 'null',
+        email: '[object Object]',
         name: '2',
       })
       expect(displaySpy).not.toHaveBeenCalled()

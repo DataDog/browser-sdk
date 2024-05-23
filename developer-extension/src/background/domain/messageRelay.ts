@@ -29,13 +29,13 @@ const CONTENT_SCRIPTS: Array<{
 }> = [
   {
     id: 'browser-sdk-content-script-main',
-    world: 'MAIN',
     file: './content-script-main.js',
+    world: 'MAIN',
   },
   {
     id: 'browser-sdk-content-script-isolated',
-    world: 'ISOLATED',
     file: './content-script-isolated.js',
+    world: 'ISOLATED',
   },
 ]
 
@@ -87,12 +87,12 @@ async function registerContentScripts(tabId: number) {
   await Promise.all(
     CONTENT_SCRIPTS.map((script) =>
       chrome.scripting.executeScript({
-        files: [script.file],
-        world: script.world,
         target: {
-          tabId,
           allFrames: true,
+          tabId,
         },
+        world: script.world,
+        files: [script.file],
       })
     )
   )

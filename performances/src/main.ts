@@ -50,10 +50,10 @@ async function profileScenario(
   runScenario: (page: Page, takeMeasurements: () => Promise<void>) => Promise<void>
 ) {
   const browser = await puppeteer.launch({
-    defaultViewport: { width: 1366, height: 768 },
     // Twitter detects headless browsing and refuses to load
     headless: false,
     args: [`--ignore-certificate-errors-spki-list=${options.proxy.spkiFingerprint}`],
+    defaultViewport: { width: 1366, height: 768 },
   })
   let result: ProfilingResults
   try {

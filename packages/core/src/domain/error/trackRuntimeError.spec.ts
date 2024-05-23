@@ -261,7 +261,7 @@ describe('instrumentOnError', () => {
         )
         const [stack, error] = callbackSpy.calls.mostRecent().args
         expect(stack.message).toBe('Any error message')
-        expect(stack.stack).toEqual([{ url: 'https://example.com', column: testColNo, line: testLineNo }])
+        expect(stack.stack).toEqual([{ url: 'https://example.com', line: testLineNo, column: testColNo }])
         expect(error).toEqual('Actual Error Message')
       })
 
@@ -272,7 +272,7 @@ describe('instrumentOnError', () => {
         } as any)
         const [stack, error] = callbackSpy.calls.mostRecent().args
         expect(stack.message).toBe('Any error message')
-        expect(stack.stack).toEqual([{ url: 'https://example.com', column: testColNo, line: testLineNo }])
+        expect(stack.stack).toEqual([{ url: 'https://example.com', line: testLineNo, column: testColNo }])
         expect(error).toEqual({ message: 'SyntaxError', data: 'foo' })
       })
     })
