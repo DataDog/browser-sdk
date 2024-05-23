@@ -236,7 +236,7 @@ function JsonText({
   color?: MantineColor | undefined
   descriptor: JsonValueDescriptor
 }) {
-  const { getMenuItemsForPath } = useContext(JsonContext)!
+  const { getMenuItemsForPath, columnPath } = useContext(JsonContext)!
   const menuItemsForPath = getMenuItemsForPath?.(descriptor.path, descriptor.value)
 
   let menuItems: ReactNode
@@ -259,7 +259,7 @@ function JsonText({
     menuItems = (
       <>
         <CopyMenuItem value={descriptor.value}>Copy value</CopyMenuItem>
-        <CopyMenuItem value={getSearchQuery(descriptor)}>Copy search query</CopyMenuItem>
+        <CopyMenuItem value={getSearchQuery(descriptor, columnPath)}>Copy search query</CopyMenuItem>
       </>
     )
   }
@@ -279,8 +279,7 @@ function JsonText({
   )
 }
 
-function getSearchQuery(descriptor: JsonValueDescriptor) {
-  const { columnPath } = useContext(JsonContext)!
+function getSearchQuery(descriptor: JsonValueDescriptor, columnPath?: string) {
   const searchTerm = String(descriptor.value).replace(/ /g, '\\ ')
   if (columnPath) {
     return `${columnPath}:${searchTerm}`
