@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { Tabs, Text } from '@mantine/core'
+import { Tabs, Text, Anchor } from '@mantine/core'
 import { datadogRum } from '@datadog/browser-rum'
 
 import { useEvents } from '../hooks/useEvents'
@@ -63,6 +63,15 @@ export function Panel() {
           }
         >
           Settings
+        </Tabs.Tab>
+        <Tabs.Tab
+          color='blue'
+          value={activeTab ?? PanelTabs.Events}
+          rightSection={
+            <Anchor href="https://github.com/DataDog/browser-sdk/tree/main/developer-extension#browser-sdk-developer-extension" target="_blank">
+              🔗 Docs
+            </Anchor>
+          }>
         </Tabs.Tab>
       </Tabs.List>
       <Tabs.Panel value={PanelTabs.Events} className={classes.tab}>
