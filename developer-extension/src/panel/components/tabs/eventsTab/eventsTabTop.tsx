@@ -18,10 +18,10 @@ export function EventsTabTop({
 
   useEffect(() => {
     const newParams = inputValue.trim().split(' ').filter(Boolean);
-    if (newParams.length > 1) {
-      setParams([...params, ...newParams.slice(0, -1)]);
-      setInputValue(newParams.slice(-1)[0]);
-      onFiltersChange({ ...filters, query: [...params, ...newParams.slice(0, -1)].join(' ') });
+    if (inputValue.endsWith(' ')) {
+      setParams([...params, ...newParams]);
+      setInputValue('');
+      onFiltersChange({ ...filters, query: [...params, ...newParams].join(' ') });
     }
   }, [inputValue]);
 
