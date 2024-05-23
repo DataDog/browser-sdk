@@ -22,6 +22,7 @@ export interface RumSessionManager {
 
 export type RumSession = {
   id: string
+  sampledForReplay: boolean
   sessionReplayAllowed: boolean
 }
 
@@ -63,6 +64,7 @@ export function startRumSessionManager(
       }
       return {
         id: session.id,
+        sampledForReplay: session.trackingType === RumTrackingType.TRACKED_WITH_SESSION_REPLAY,
         sessionReplayAllowed: session.trackingType === RumTrackingType.TRACKED_WITH_SESSION_REPLAY,
       }
     },
@@ -78,6 +80,7 @@ export function startRumSessionManager(
 export function startRumSessionManagerStub(): RumSessionManager {
   const session: RumSession = {
     id: '00000000-aaaa-0000-aaaa-000000000000',
+    sampledForReplay: bridgeSupports(BridgeCapability.RECORDS),
     sessionReplayAllowed: bridgeSupports(BridgeCapability.RECORDS),
   }
   return {
