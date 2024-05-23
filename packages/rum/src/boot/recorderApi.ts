@@ -180,6 +180,10 @@ export function makeRecorderApi(
             stopRecording,
           }
         })
+
+        if (options?.force && !session.sessionReplayAllowed) {
+          sessionManager.setForcedReplay()
+        }
       }
 
       stopStrategy = () => {

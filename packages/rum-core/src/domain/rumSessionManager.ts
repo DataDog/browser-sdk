@@ -17,6 +17,7 @@ export interface RumSessionManager {
   findTrackedSession: (startTime?: RelativeTime) => RumSession | undefined
   expire: () => void
   expireObservable: Observable<void>
+  setForcedReplay: () => void
 }
 
 export type RumSession = {
@@ -50,6 +51,10 @@ export function startRumSessionManager(
     lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED)
   })
 
+  function setForcedReplay() {
+    sessionManager.updateSession({ forced_replay: 'enabled' })
+  }
+
   return {
     findTrackedSession: (startTime) => {
       const session = sessionManager.findActiveSession(startTime)
@@ -63,6 +68,7 @@ export function startRumSessionManager(
     },
     expire: sessionManager.expire,
     expireObservable: sessionManager.expireObservable,
+    setForcedReplay,
   }
 }
 
@@ -78,6 +84,7 @@ export function startRumSessionManagerStub(): RumSessionManager {
     findTrackedSession: () => session,
     expire: noop,
     expireObservable: new Observable(),
+    setForcedReplay: noop,
   }
 }
 
