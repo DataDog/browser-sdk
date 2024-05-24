@@ -65,7 +65,7 @@ The Events List offers an interactive experience to visualize RUM events:
 - Remove (by clicking on `x` in the column title) or add new columns:
   - Add a new column from searching for a field by clicking on the `+column` icon at the right side of the header row.
   - Add a new column from values in existing columns by right clicking on any attribute in the event json.
-- Copy queries and objects from the list by right clicking on any cell
+- Copy queries and objects from the list by clicking on any cell
 
 ### Info Tab
 
