@@ -1,4 +1,4 @@
-import { cssEscape, getClassList, getParentElement } from '../browser/polyfills'
+import { cssEscape, elementMatches, getClassList, getParentElement } from '../browser/polyfills'
 import { DEFAULT_PROGRAMMATIC_ACTION_NAME_ATTRIBUTE } from './action/getActionNameFromElement'
 
 /**
@@ -252,7 +252,7 @@ export function isSelectorUniqueAmongSiblings(
     // If the child selector is undefined (meaning `currentElement` is the target element, not one
     // of its ancestor), we need to use `matches` to check if the sibling is matching the selector,
     // as `querySelector` only returns a descendant of the element.
-    isSiblingMatching = (sibling) => sibling.matches(currentElementSelector)
+    isSiblingMatching = (sibling) => elementMatches(sibling, currentElementSelector)
   } else {
     const scopedSelector = supportScopeSelector()
       ? combineSelector(`${currentElementSelector}:scope`, childSelector)
