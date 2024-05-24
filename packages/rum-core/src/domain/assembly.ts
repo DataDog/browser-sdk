@@ -72,6 +72,16 @@ export function startRumAssembly(
   getCommonContext: () => CommonContext,
   reportError: (error: RawError) => void
 ) {
+  // TODO: lift this declaration to module level once feature flag is removed
+  const ROOT_MODIFIABLE_FIELD_PATHS: ModifiableFieldPaths = isExperimentalFeatureEnabled(
+    ExperimentalFeature.MICRO_FRONTEND
+  )
+    ? {
+        service: 'string',
+        version: 'string',
+      }
+    : {}
+
   modifiableFieldPathsByEvent = {
     [RumEventType.VIEW]: VIEW_MODIFIABLE_FIELD_PATHS,
     [RumEventType.ERROR]: assign(
@@ -82,27 +92,42 @@ export function startRumAssembly(
         'error.fingerprint': 'string',
       },
       USER_CUSTOMIZABLE_FIELD_PATHS,
-      VIEW_MODIFIABLE_FIELD_PATHS
+      VIEW_MODIFIABLE_FIELD_PATHS,
+      ROOT_MODIFIABLE_FIELD_PATHS
     ),
     [RumEventType.RESOURCE]: assign(
       {
         'resource.url': 'string',
       },
-      isExperimentalFeatureEnabled(ExperimentalFeature.WRITABLE_RESOURCE_GRAPHQL) && {
-        'resource.graphql': 'object',
-      },
+      isExperimentalFeatureEnabled(ExperimentalFeature.WRITABLE_RESOURCE_GRAPHQL)
+        ? {
+            'resource.graphql': 'object',
+          }
+        : {},
       USER_CUSTOMIZABLE_FIELD_PATHS,
-      VIEW_MODIFIABLE_FIELD_PATHS
+      VIEW_MODIFIABLE_FIELD_PATHS,
+      ROOT_MODIFIABLE_FIELD_PATHS
     ),
     [RumEventType.ACTION]: assign(
       {
         'action.target.name': 'string',
       },
       USER_CUSTOMIZABLE_FIELD_PATHS,
-      VIEW_MODIFIABLE_FIELD_PATHS
+      VIEW_MODIFIABLE_FIELD_PATHS,
+      ROOT_MODIFIABLE_FIELD_PATHS
     ),
-    [RumEventType.LONG_TASK]: assign({}, USER_CUSTOMIZABLE_FIELD_PATHS, VIEW_MODIFIABLE_FIELD_PATHS),
-    [RumEventType.VITAL]: assign({}, USER_CUSTOMIZABLE_FIELD_PATHS, VIEW_MODIFIABLE_FIELD_PATHS),
+    [RumEventType.LONG_TASK]: assign(
+      {},
+      USER_CUSTOMIZABLE_FIELD_PATHS,
+      VIEW_MODIFIABLE_FIELD_PATHS,
+      ROOT_MODIFIABLE_FIELD_PATHS
+    ),
+    [RumEventType.VITAL]: assign(
+      {},
+      USER_CUSTOMIZABLE_FIELD_PATHS,
+      VIEW_MODIFIABLE_FIELD_PATHS,
+      ROOT_MODIFIABLE_FIELD_PATHS
+    ),
   }
   const eventRateLimiters = {
     [RumEventType.ERROR]: createEventRateLimiter(
