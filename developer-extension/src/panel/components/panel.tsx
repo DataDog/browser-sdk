@@ -35,48 +35,49 @@ export function Panel() {
 
   return (
     <Tabs color="violet" value={activeTab} className={classes.tabs} onChange={updateActiveTab}>
-      <Tabs.List className="dd-privacy-allow">
-        <Tabs.Tab value={PanelTabs.Events}>Events</Tabs.Tab>
-        <Tabs.Tab
-          value={PanelTabs.Infos}
-          rightSection={
-            isOverridingInitConfiguration(settings) && (
-              <Text c="orange" fw="bold" title="Overriding init configuration">
-                ⚠
-              </Text>
-            )
-          }
+      <Tabs.List className={classes.topBox} data-dd-privacy="allow">
+        <div className={classes.tabBox}>
+          <Tabs.Tab value={PanelTabs.Events}>Events</Tabs.Tab>
+          <Tabs.Tab
+            value={PanelTabs.Infos}
+            rightSection={
+              isOverridingInitConfiguration(settings) && (
+                <Text c="orange" fw="bold" title="Overriding init configuration">
+                  ⚠
+                </Text>
+              )
+            }
+          >
+            <Text>Infos</Text>
+          </Tabs.Tab>
+          <Tabs.Tab value={PanelTabs.Replay}>
+            <Text>Live replay</Text>
+          </Tabs.Tab>
+          <Tabs.Tab
+            value={PanelTabs.Settings}
+            rightSection={
+              isInterceptingNetworkRequests(settings) && (
+                <Text c="orange" fw="bold" title="Intercepting network requests">
+                  ⚠
+                </Text>
+              )
+            }
+          >
+            Settings
+          </Tabs.Tab>
+        </div>
+        <Anchor
+          className={classes.link}
+          href="https://github.com/DataDog/browser-sdk/tree/main/developer-extension#browser-sdk-developer-extension"
+          target="_blank"
         >
-          <Text>Infos</Text>
-        </Tabs.Tab>
-        <Tabs.Tab value={PanelTabs.Replay}>
-          <Text>Live replay</Text>
-        </Tabs.Tab>
-        <Tabs.Tab
-          value={PanelTabs.Settings}
-          rightSection={
-            isInterceptingNetworkRequests(settings) && (
-              <Text c="orange" fw="bold" title="Intercepting network requests">
-                ⚠
-              </Text>
-            )
-          }
-        >
-          Settings
-        </Tabs.Tab>
-        <Tabs.Tab
-          color="blue"
-          value={activeTab ?? PanelTabs.Events}
-          rightSection={
-            <Anchor
-              href="https://github.com/DataDog/browser-sdk/tree/main/developer-extension#browser-sdk-developer-extension"
-              target="_blank"
-            >
-              🔗 Docs
-            </Anchor>
-          }
-        ></Tabs.Tab>
+          🔗 Documentation
+        </Anchor>
       </Tabs.List>
+
+
+
+
       <Tabs.Panel value={PanelTabs.Events} className={classes.tab}>
         <EventsTab
           events={events}
@@ -97,7 +98,7 @@ export function Panel() {
       <Tabs.Panel value={PanelTabs.Settings} className={classes.tab}>
         <SettingsTab />
       </Tabs.Panel>
-    </Tabs>
+    </Tabs >
   )
 }
 

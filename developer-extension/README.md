@@ -49,7 +49,7 @@ The Event Tab contains a list of events sent by the SDK and a menu of event type
 
 #### Search Syntax
 
-We support a basic `key:value` search syntax which means you can search within the limits of [RUM event structures](https://docs.datadoghq.com/real_user_monitoring/explorer/search/), such as `action.target.name:action_name`. While all the fields can be added as columns in the event list, it does not mean the existing ones are valid fields: the `Description` summary is not part of RUM event structure. You can click on any `Description` cell for details of the event to look for correct key to search with.
+We support a basic `key:value` search syntax which means you can search within the limits of [RUM event structures](https://docs.datadoghq.com/real_user_monitoring/explorer/search/), such as `action.target.name:action_name`.
 
 We split each search key based on whitespaces. To search with multiple conditions, simply add whitespaces in between, such as:
 
@@ -78,7 +78,7 @@ Info tab contains information about Session and RUM SDK configurations
 
 ### Setting Tab
 
-> [!IMPORTANT]  
+> [!IMPORTANT]
 > Don’t forget to reset everything in the Setting Tab after experimenting.
 
 - **Request Interception**: override the current SDK bundle with local build, or ​​switch between `rum` and `rum-slim` bundles on any site that is using RUM SDK. (note: if the SDK is installed from NPM, this override might not work, as it is still in an experimental stage.)
