@@ -218,21 +218,27 @@ describe('validateAndBuildConfiguration', () => {
   })
 
   describe('env parameter validation', () => {
-    it('should not validate the env parameter', () => {
+    it('should validate the env parameter', () => {
       validateAndBuildConfiguration({ clientToken, env: false as any })
       expect(displaySpy).toHaveBeenCalledOnceWith('Env must be defined as a string')
     })
   })
 
   describe('service parameter validation', () => {
-    it('should not validate the service parameter', () => {
+    it('should validate the service parameter', () => {
       validateAndBuildConfiguration({ clientToken, service: 1 as any })
       expect(displaySpy).toHaveBeenCalledOnceWith('Service must be defined as a string')
+    })
+
+    it('should not reject null', () => {
+      const configuration = validateAndBuildConfiguration({ clientToken, service: null })
+      expect(displaySpy).not.toHaveBeenCalled()
+      expect(configuration!.service).toBeUndefined()
     })
   })
 
   describe('version parameter validation', () => {
-    it('should not validate the version parameter', () => {
+    it('should validate the version parameter', () => {
       validateAndBuildConfiguration({ clientToken, version: 0 as any })
       expect(displaySpy).toHaveBeenCalledOnceWith('Version must be defined as a string')
     })
