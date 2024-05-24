@@ -46,9 +46,9 @@ export interface InitConfiguration {
   site?: string | undefined
 
   // tag and context options
-  service?: string | undefined
-  env?: string | undefined
-  version?: string | undefined
+  service?: string | undefined | null
+  env?: string | undefined | null
+  version?: string | undefined | null
 
   // cookie options
   /**
@@ -109,8 +109,8 @@ export interface Configuration extends TransportConfiguration {
   messageBytesLimit: number
 }
 
-function checkIfString(tag: unknown, tagName: string) {
-  if (tag !== undefined && typeof tag !== 'string') {
+function checkIfString(tag: unknown, tagName: string): tag is string | undefined | null {
+  if (tag !== undefined && tag !== null && typeof tag !== 'string') {
     display.error(`${tagName} must be defined as a string`)
     return false
   }
@@ -196,7 +196,7 @@ export function validateAndBuildConfiguration(initConfiguration: InitConfigurati
       telemetrySampleRate: initConfiguration.telemetrySampleRate ?? 20,
       telemetryConfigurationSampleRate: initConfiguration.telemetryConfigurationSampleRate ?? 5,
       telemetryUsageSampleRate: initConfiguration.telemetryUsageSampleRate ?? 5,
-      service: initConfiguration.service,
+      service: initConfiguration.service || undefined,
       silentMultipleInit: !!initConfiguration.silentMultipleInit,
       allowUntrustedEvents: !!initConfiguration.allowUntrustedEvents,
       trackingConsent: initConfiguration.trackingConsent ?? TrackingConsent.GRANTED,
