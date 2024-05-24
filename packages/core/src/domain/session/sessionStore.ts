@@ -196,7 +196,6 @@ export function startSessionStore<TrackingType extends string>(
     )
   }
 
-
   return {
     expandOrRenewSession: throttledExpandOrRenewSession,
     expandSession,

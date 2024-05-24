@@ -613,7 +613,7 @@ describe('startSessionManager', () => {
       expect(sessionManager.findActiveSession()!.id).not.toBe(initialSessionId)
     })
   })
-  
+
   describe('forced replay', () => {
     it('should update current entity when replay recording is forced', () => {
       const sessionManager = startSessionManagerWithDefaults()

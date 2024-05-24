@@ -52,7 +52,6 @@ export function startRumSessionManager(
     lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED)
   })
 
-
   return {
     findTrackedSession: (startTime) => {
       const session = sessionManager.findActiveSession(startTime)
