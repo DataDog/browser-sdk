@@ -78,7 +78,8 @@ Info tab contains information about Session and RUM SDK configurations
 
 ### Setting Tab
 
-**⚠️Don’t forget to reset everything in the Setting Tab after experimenting.**
+> [!IMPORTANT]  
+> Don’t forget to reset everything in the Setting Tab after experimenting.
 
 - **Request Interception**: override the current SDK bundle with local build, or ​​switch between `rum` and `rum-slim` bundles on any site that is using RUM SDK. (note: if the SDK is installed from NPM, this override might not work, as it is still in an experimental stage.)
 
