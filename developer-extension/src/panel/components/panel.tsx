@@ -75,9 +75,6 @@ export function Panel() {
         </Anchor>
       </Tabs.List>
 
-
-
-
       <Tabs.Panel value={PanelTabs.Events} className={classes.tab}>
         <EventsTab
           events={events}
@@ -98,7 +95,7 @@ export function Panel() {
       <Tabs.Panel value={PanelTabs.Settings} className={classes.tab}>
         <SettingsTab />
       </Tabs.Panel>
-    </Tabs >
+    </Tabs>
   )
 }
 
