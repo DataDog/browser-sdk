@@ -316,7 +316,7 @@ export function makeRumPublicApi(startRumImpl: StartRum, recorderApi: RecorderAp
     getSessionReplayLink: monitor(() => recorderApi.getSessionReplayLink()),
     startSessionReplayRecording: monitor((options?: StartRecordingOptions) => {
       recorderApi.start(options)
-      addTelemetryUsage({ feature: 'start-session-replay-recording' })
+      addTelemetryUsage({ feature: 'start-session-replay-recording', force: options?.force })
     }),
     stopSessionReplayRecording: monitor(() => recorderApi.stop()),
   })

@@ -53,7 +53,7 @@ export function startRumSessionManager(
   })
 
   function setForcedReplay() {
-    sessionManager.updateSession({ forced_replay: 'enabled' })
+    sessionManager.updateSession({ forcedReplay: '1' })
   }
 
   return {
@@ -65,7 +65,8 @@ export function startRumSessionManager(
       return {
         id: session.id,
         sampledForReplay: session.trackingType === RumTrackingType.TRACKED_WITH_SESSION_REPLAY,
-        sessionReplayAllowed: session.trackingType === RumTrackingType.TRACKED_WITH_SESSION_REPLAY,
+        sessionReplayAllowed:
+          session.trackingType === RumTrackingType.TRACKED_WITH_SESSION_REPLAY || session.isReplayForced,
       }
     },
     expire: sessionManager.expire,

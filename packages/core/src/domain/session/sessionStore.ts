@@ -19,6 +19,7 @@ export interface SessionStore {
   restartSession: () => void
   renewObservable: Observable<void>
   expireObservable: Observable<void>
+  forceReplayObservable: Observable<void>
   expire: () => void
   stop: () => void
   updateSession: (state: Partial<SessionState>) => void
@@ -58,6 +59,7 @@ export function startSessionStore<TrackingType extends string>(
 ): SessionStore {
   const renewObservable = new Observable<void>()
   const expireObservable = new Observable<void>()
+  const forceReplayObservable = new Observable<void>()
 
   const sessionStoreStrategy =
     sessionStoreStrategyType.type === 'Cookie'
@@ -185,7 +187,12 @@ export function startSessionStore<TrackingType extends string>(
     processSessionStoreOperations(
       {
         process: (sessionState) => assign({}, sessionState, updatedState),
-        after: synchronizeSession,
+        after: (state: SessionState) => {
+          synchronizeSession(state)
+          if (updatedState.forcedReplay) {
+            forceReplayObservable.notify()
+          }
+        },
       },
       sessionStoreStrategy
     )
@@ -197,6 +204,7 @@ export function startSessionStore<TrackingType extends string>(
     getSession: () => sessionCache,
     renewObservable,
     expireObservable,
+    forceReplayObservable,
     restartSession: startSession,
     expire: () => {
       cancelExpandOrRenewSession()
