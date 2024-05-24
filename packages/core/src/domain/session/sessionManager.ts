@@ -9,14 +9,13 @@ import type { Configuration } from '../configuration'
 import type { TrackingConsentState } from '../trackingConsent'
 import { SESSION_TIME_OUT_DELAY } from './sessionConstants'
 import { startSessionStore } from './sessionStore'
-import type { SessionState } from './sessionState'
 
 export interface SessionManager<TrackingType extends string> {
   findActiveSession: (startTime?: RelativeTime) => SessionContext<TrackingType> | undefined
   renewObservable: Observable<void>
   expireObservable: Observable<void>
   expire: () => void
-  updateSession: (state: Partial<SessionState>) => void
+  setForcedReplay: () => void
 }
 
 export interface SessionContext<TrackingType extends string> extends Context {
@@ -94,7 +93,7 @@ export function startSessionManager<TrackingType extends string>(
     renewObservable,
     expireObservable,
     expire: sessionStore.expire,
-    updateSession: sessionStore.updateSession,
+    setForcedReplay: sessionStore.setForcedReplay,
   }
 }
 

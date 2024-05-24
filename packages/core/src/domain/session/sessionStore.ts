@@ -22,7 +22,7 @@ export interface SessionStore {
   forceReplayObservable: Observable<void>
   expire: () => void
   stop: () => void
-  updateSession: (state: Partial<SessionState>) => void
+  setForcedReplay: () => void
 }
 
 /**
@@ -128,6 +128,9 @@ export function startSessionStore<TrackingType extends string>(
       if (isSessionInCacheOutdated(sessionState)) {
         expireSessionInCache()
       } else {
+        if (sessionState.forcedReplay && !sessionCache.forcedReplay) {
+          forceReplayObservable.notify()
+        }
         sessionCache = sessionState
       }
     }
@@ -183,20 +186,16 @@ export function startSessionStore<TrackingType extends string>(
     renewObservable.notify()
   }
 
-  function updateSession(updatedState: Partial<SessionState>) {
+  function setForcedReplay() {
     processSessionStoreOperations(
       {
-        process: (sessionState) => assign({}, sessionState, updatedState),
-        after: (state: SessionState) => {
-          synchronizeSession(state)
-          if (updatedState.forcedReplay) {
-            forceReplayObservable.notify()
-          }
-        },
+        process: (sessionState) => assign({}, sessionState, { forcedReplay: '1' }),
+        after: synchronizeSession,
       },
       sessionStoreStrategy
     )
   }
+
 
   return {
     expandOrRenewSession: throttledExpandOrRenewSession,
@@ -214,6 +213,6 @@ export function startSessionStore<TrackingType extends string>(
     stop: () => {
       clearInterval(watchSessionTimeoutId)
     },
-    updateSession,
+    setForcedReplay,
   }
 }

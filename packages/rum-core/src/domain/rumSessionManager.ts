@@ -52,9 +52,6 @@ export function startRumSessionManager(
     lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED)
   })
 
-  function setForcedReplay() {
-    sessionManager.updateSession({ forcedReplay: '1' })
-  }
 
   return {
     findTrackedSession: (startTime) => {
@@ -71,7 +68,7 @@ export function startRumSessionManager(
     },
     expire: sessionManager.expire,
     expireObservable: sessionManager.expireObservable,
-    setForcedReplay,
+    setForcedReplay: sessionManager.setForcedReplay,
   }
 }
 
