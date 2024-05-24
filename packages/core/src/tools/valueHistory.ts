@@ -63,10 +63,13 @@ export class ValueHistory<Value> {
    *
    * If `option.returnInactive` is true, returns the value at `startTime` (active or not).
    */
-  find(startTime: RelativeTime = END_OF_TIMES, options?: { returnInactive: boolean }): Value | undefined {
+  find(
+    startTime: RelativeTime = END_OF_TIMES,
+    options: { returnInactive: boolean } = { returnInactive: false }
+  ): Value | undefined {
     for (const entry of this.entries) {
       if (entry.startTime <= startTime) {
-        if (options?.returnInactive || startTime <= entry.endTime) {
+        if (options.returnInactive || startTime <= entry.endTime) {
           return entry.value
         }
         break
