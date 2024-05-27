@@ -57,7 +57,7 @@ export interface InitConfiguration {
    */
   allowFallbackToLocalStorage?: boolean | undefined
   /**
-   * Allow untrusted events to be collected by the browser SDK. Can be useful if you heavily rely on programmatic events, such as in an automated UI test environment.
+   * Allow listening to DOM events dispatched programmatically ([untrusted events](https://developer.mozilla.org/en-US/docs/Web/API/Event/isTrusted)). Enabling this option can be useful if you heavily rely on programmatic events, such as in an automated UI test environment.
    * @default false
    */
   allowUntrustedEvents?: boolean | undefined
