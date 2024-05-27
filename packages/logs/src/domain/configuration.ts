@@ -33,7 +33,7 @@ export interface LogsInitConfiguration extends InitConfiguration {
    */
   forwardConsoleLogs?: ConsoleApiName[] | 'all' | undefined
   /**
-   * Forward reports from the Reporting API to Datadog. Use "all" to forward everything or an array of report types to forward only a subset.
+   * Forward reports from the [Reporting API](https://developer.mozilla.org/en-US/docs/Web/API/Reporting_API) to Datadog. Use "all" to forward everything or an array of report types to forward only a subset.
    */
   forwardReports?: RawReportType[] | 'all' | undefined
   /**
@@ -41,8 +41,11 @@ export interface LogsInitConfiguration extends InitConfiguration {
    * @default false
    */
   usePciIntake?: boolean
-  // TODO next major: remove this option and make it the default behaviour
-  sendLogsAfterSessionExpiration?: boolean | undefined
+  /**
+   * Keep sending logs after the session expiration.
+   * @default false
+   */
+  sendLogsAfterSessionExpiration?: boolean | undefined // TODO next major: remove this option and make it the default behaviour
 }
 
 export type HybridInitConfiguration = Omit<LogsInitConfiguration, 'clientToken'>
