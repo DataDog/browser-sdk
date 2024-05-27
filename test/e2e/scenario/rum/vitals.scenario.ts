@@ -2,18 +2,12 @@ import { createTest, flushEvents } from '../../lib/framework'
 
 describe('vital collection', () => {
   createTest('send custom duration vital')
-    .withRum({
-      enableExperimentalFeatures: ['custom_vitals'],
-    })
+    .withRum()
     .run(async ({ intakeRegistry }) => {
       await browser.executeAsync((done) => {
-        // TODO remove cast and unsafe calls when removing the flag
-        const global = window.DD_RUM! as any
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-call
-        global.startDurationVital('foo')
+        window.DD_RUM!.startDurationVital('foo')
         setTimeout(() => {
-          // eslint-disable-next-line @typescript-eslint/no-unsafe-call
-          global.stopDurationVital('foo')
+          window.DD_RUM!.stopDurationVital('foo')
           done()
         }, 5)
       })
