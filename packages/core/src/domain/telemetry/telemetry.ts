@@ -1,6 +1,7 @@
 import type { Context } from '../../tools/serialisation/context'
 import { ConsoleApiName } from '../../tools/display'
-import { toStackTraceString, NO_ERROR_STACK_PRESENT_MESSAGE } from '../error/error'
+import { NO_ERROR_STACK_PRESENT_MESSAGE } from '../error/error'
+import { toStackTraceString } from '../../tools/stackTrace/handlingStack'
 import { getExperimentalFeatures } from '../../tools/experimentalFeatures'
 import type { Configuration } from '../configuration'
 import { INTAKE_SITE_STAGING, INTAKE_SITE_US1_FED } from '../configuration'
@@ -13,9 +14,10 @@ import { performDraw } from '../../tools/utils/numberUtils'
 import { jsonStringify } from '../../tools/serialisation/jsonStringify'
 import { combine } from '../../tools/mergeInto'
 import { NonErrorPrefix } from '../error/error.types'
-import type { StackTrace } from '../error/computeStackTrace'
-import { computeStackTrace } from '../error/computeStackTrace'
+import type { StackTrace } from '../../tools/stackTrace/computeStackTrace'
+import { computeStackTrace } from '../../tools/stackTrace/computeStackTrace'
 import { getConnectivity } from '../connectivity'
+import { BoundedBuffer } from '../../tools/boundedBuffer'
 import type { TelemetryEvent } from './telemetryEvent.types'
 import type {
   RawTelemetryConfiguration,
@@ -50,19 +52,16 @@ export interface Telemetry {
 
 const TELEMETRY_EXCLUDED_SITES: string[] = [INTAKE_SITE_US1_FED]
 
-const telemetryConfiguration: {
-  maxEventsPerPage: number
-  sentEventCount: number
-} = {
-  maxEventsPerPage: 0,
-  sentEventCount: 0,
+// eslint-disable-next-line local-rules/disallow-side-effects
+let preStartTelemetryBuffer = new BoundedBuffer()
+let onRawTelemetryEventCollected = (event: RawTelemetryEvent) => {
+  preStartTelemetryBuffer.add(() => onRawTelemetryEventCollected(event))
 }
-
-let onRawTelemetryEventCollected: ((event: RawTelemetryEvent) => void) | undefined
 
 export function startTelemetry(telemetryService: TelemetryService, configuration: Configuration): Telemetry {
   let contextProvider: () => Context
   const observable = new Observable<TelemetryEvent & Context>()
+  const alreadySentEvents = new Set<string>()
 
   const telemetryEnabled =
     !includes(TELEMETRY_EXCLUDED_SITES, configuration.site) && performDraw(configuration.telemetrySampleRate)
@@ -75,18 +74,19 @@ export function startTelemetry(telemetryService: TelemetryService, configuration
 
   const runtimeEnvInfo = getRuntimeEnvInfo()
   onRawTelemetryEventCollected = (rawEvent: RawTelemetryEvent) => {
-    if (telemetryEnabledPerType[rawEvent.type!]) {
+    const stringifiedEvent = jsonStringify(rawEvent)!
+    if (
+      telemetryEnabledPerType[rawEvent.type!] &&
+      alreadySentEvents.size < configuration.maxTelemetryEventsPerPage &&
+      !alreadySentEvents.has(stringifiedEvent)
+    ) {
       const event = toTelemetryEvent(telemetryService, rawEvent, runtimeEnvInfo)
       observable.notify(event)
       sendToExtension('telemetry', event)
+      alreadySentEvents.add(stringifiedEvent)
     }
   }
   startMonitorErrorCollection(addTelemetryError)
-
-  assign(telemetryConfiguration, {
-    maxEventsPerPage: configuration.maxTelemetryEventsPerPage,
-    sentEventCount: 0,
-  })
 
   function toTelemetryEvent(
     telemetryService: TelemetryService,
@@ -130,10 +130,6 @@ function getRuntimeEnvInfo(): RuntimeEnvInfo {
 
 export function startFakeTelemetry() {
   const events: RawTelemetryEvent[] = []
-  assign(telemetryConfiguration, {
-    maxEventsPerPage: Infinity,
-    sentEventCount: 0,
-  })
 
   onRawTelemetryEventCollected = (event: RawTelemetryEvent) => {
     events.push(event)
@@ -142,8 +138,16 @@ export function startFakeTelemetry() {
   return events
 }
 
+// need to be called after telemetry context is provided and observers are registered
+export function drainPreStartTelemetry() {
+  preStartTelemetryBuffer.drain()
+}
+
 export function resetTelemetry() {
-  onRawTelemetryEventCollected = undefined
+  preStartTelemetryBuffer = new BoundedBuffer()
+  onRawTelemetryEventCollected = (event: RawTelemetryEvent) => {
+    preStartTelemetryBuffer.add(() => onRawTelemetryEventCollected(event))
+  }
 }
 
 /**
@@ -156,7 +160,7 @@ export function isTelemetryReplicationAllowed(configuration: Configuration) {
 
 export function addTelemetryDebug(message: string, context?: Context) {
   displayIfDebugEnabled(ConsoleApiName.debug, message, context)
-  addTelemetry(
+  onRawTelemetryEventCollected(
     assign(
       {
         type: TelemetryType.log,
@@ -169,7 +173,7 @@ export function addTelemetryDebug(message: string, context?: Context) {
 }
 
 export function addTelemetryError(e: unknown, context?: Context) {
-  addTelemetry(
+  onRawTelemetryEventCollected(
     assign(
       {
         type: TelemetryType.log,
@@ -182,24 +186,17 @@ export function addTelemetryError(e: unknown, context?: Context) {
 }
 
 export function addTelemetryConfiguration(configuration: RawTelemetryConfiguration) {
-  addTelemetry({
+  onRawTelemetryEventCollected({
     type: TelemetryType.configuration,
     configuration,
   })
 }
 
 export function addTelemetryUsage(usage: RawTelemetryUsage) {
-  addTelemetry({
+  onRawTelemetryEventCollected({
     type: TelemetryType.usage,
     usage,
   })
-}
-
-function addTelemetry(event: RawTelemetryEvent) {
-  if (onRawTelemetryEventCollected && telemetryConfiguration.sentEventCount < telemetryConfiguration.maxEventsPerPage) {
-    telemetryConfiguration.sentEventCount += 1
-    onRawTelemetryEventCollected(event)
-  }
 }
 
 export function formatError(e: unknown) {

@@ -124,6 +124,7 @@ export function makeRumPublicApi(startRumImpl: StartRum, recorderApi: RecorderAp
               startClocks: options?.startTime ? timeStampToClocks(options.startTime as TimeStamp) : clocksNow(),
               context: sanitize(options?.context) as Context,
             })
+            addTelemetryUsage({ feature: 'start-duration-vital' })
           }
         )
 
@@ -188,8 +189,8 @@ export function makeRumPublicApi(startRumImpl: StartRum, recorderApi: RecorderAp
   } = monitor((options?: string | ViewOptions) => {
     const sanitizedOptions = typeof options === 'object' ? options : { name: options }
     strategy.startView(sanitizedOptions)
+    addTelemetryUsage({ feature: 'start-view' })
   })
-
   const rumPublicApi = makePublicApi({
     init: monitor((initConfiguration: RumInitConfiguration) => strategy.init(initConfiguration)),
 
@@ -210,13 +211,19 @@ export function makeRumPublicApi(startRumImpl: StartRum, recorderApi: RecorderAp
       addTelemetryUsage({ feature: 'set-tracking-consent', tracking_consent: trackingConsent })
     }),
 
-    setGlobalContextProperty: monitor((key, value) => globalContextManager.setContextProperty(key, value)),
+    setGlobalContextProperty: monitor((key, value) => {
+      globalContextManager.setContextProperty(key, value)
+      addTelemetryUsage({ feature: 'set-global-context' })
+    }),
 
     removeGlobalContextProperty: monitor((key) => globalContextManager.removeContextProperty(key)),
 
     getGlobalContext: monitor(() => globalContextManager.getContext()),
 
-    setGlobalContext: monitor((context) => globalContextManager.setContext(context)),
+    setGlobalContext: monitor((context) => {
+      globalContextManager.setContext(context)
+      addTelemetryUsage({ feature: 'set-global-context' })
+    }),
 
     clearGlobalContext: monitor(() => globalContextManager.clearContext()),
 
@@ -231,6 +238,7 @@ export function makeRumPublicApi(startRumImpl: StartRum, recorderApi: RecorderAp
         startClocks: clocksNow(),
         type: ActionType.CUSTOM,
       })
+      addTelemetryUsage({ feature: 'add-action' })
     }),
 
     addError: (error: unknown, context?: object) => {
@@ -242,15 +250,16 @@ export function makeRumPublicApi(startRumImpl: StartRum, recorderApi: RecorderAp
           context: sanitize(context) as Context,
           startClocks: clocksNow(),
         })
+        addTelemetryUsage({ feature: 'add-error' })
       })
     },
 
     /**
      * Add a custom timing relative to the start of the current view,
-     * stored in @view.custom_timings.<timing_name>
+     * stored in `@view.custom_timings.<timing_name>`
      *
-     * @param name name of the custom timing
-     * @param [time] epoch timestamp of the custom timing (if not set, will use current time)
+     * @param name Name of the custom timing
+     * @param [time] Epoch timestamp of the custom timing (if not set, will use current time)
      *
      * Note: passing a relative time is discouraged since it is actually used as-is but displayed relative to the view start.
      * We currently don't provide a way to retrieve the view start time, so it can be challenging to provide a timing relative to the view start.
@@ -265,6 +274,7 @@ export function makeRumPublicApi(startRumImpl: StartRum, recorderApi: RecorderAp
       if (checkUser(newUser)) {
         userContextManager.setContext(sanitizeUser(newUser as Context))
       }
+      addTelemetryUsage({ feature: 'set-user' })
     }),
 
     getUser: monitor(() => userContextManager.getContext()),
@@ -272,6 +282,7 @@ export function makeRumPublicApi(startRumImpl: StartRum, recorderApi: RecorderAp
     setUserProperty: monitor((key, property) => {
       const sanitizedProperty = sanitizeUser({ [key]: property })[key]
       userContextManager.setContextProperty(key, sanitizedProperty)
+      addTelemetryUsage({ feature: 'set-user' })
     }),
 
     removeUserProperty: monitor((key) => userContextManager.removeContextProperty(key)),
@@ -286,10 +297,18 @@ export function makeRumPublicApi(startRumImpl: StartRum, recorderApi: RecorderAp
     }),
 
     /**
-     * This feature is currently in beta. For more information see the full [feature flag tracking guide](https://docs.datadoghq.com/real_user_monitoring/feature_flag_tracking/).
+     * Add a feature flag evaluation,
+     * stored in `@feature_flags.<feature_flag_key>`
+     *
+     * @param {string} key The key of the feature flag.
+     * @param {any} value The value of the feature flag.
+     *
+     * We recommend enabling the intake request compression when using feature flags `compressIntakeRequests: true`.
+     * For more information see the full [feature flag tracking guide](https://docs.datadoghq.com/real_user_monitoring/feature_flag_tracking/).
      */
     addFeatureFlagEvaluation: monitor((key: string, value: any) => {
       strategy.addFeatureFlagEvaluation(sanitize(key)!, sanitize(value))
+      addTelemetryUsage({ feature: 'add-feature-flag-evaluation' })
     }),
 
     getSessionReplayLink: monitor(() => recorderApi.getSessionReplayLink()),

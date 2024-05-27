@@ -84,7 +84,7 @@ describe('validateAndBuildLogsConfiguration', () => {
     it('should display warning with wrong PCI intake configuration', () => {
       validateAndBuildLogsConfiguration({
         ...DEFAULT_INIT_CONFIGURATION,
-        site: 'some-site',
+        site: 'us3.datadoghq.com',
         usePciIntake: true,
       })
       expect(warnSpy).toHaveBeenCalledOnceWith(
@@ -138,6 +138,7 @@ describe('serializeLogsConfiguration', () => {
       forwardConsoleLogs: 'all',
       forwardReports: 'all',
       usePciIntake: false,
+      sendLogsAfterSessionExpiration: false,
     }
 
     type MapLogsInitConfigurationKey<Key extends string> = Key extends keyof InitConfiguration
@@ -156,6 +157,7 @@ describe('serializeLogsConfiguration', () => {
       forward_console_logs: 'all',
       forward_reports: 'all',
       use_pci_intake: false,
+      send_logs_after_session_expiration: false,
     })
   })
 })

@@ -51,6 +51,10 @@ async function waitForSyntheticsTestToFinish(resultId, RETRIES_NUMBER) {
         'DD-APPLICATION-KEY': APP_KEY,
       },
     })
+    // do not use response.ok as we can have 404 responses
+    if (response.status >= 500) {
+      throw new Error(`HTTP Error Response: ${response.status} ${response.statusText}`)
+    }
     const data = await response.json()
     if (data.length !== 0 && data.status === 0) {
       await timeout(TIMEOUT_IN_MS) // Wait for logs ingestion

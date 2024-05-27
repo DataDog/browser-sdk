@@ -165,6 +165,11 @@ describe('vitalCollection', () => {
         },
       },
       type: RumEventType.VITAL,
+      _dd: {
+        vital: {
+          computed_value: true,
+        },
+      },
     })
     expect(rawRumEvents[0].domainContext).toEqual({})
   })

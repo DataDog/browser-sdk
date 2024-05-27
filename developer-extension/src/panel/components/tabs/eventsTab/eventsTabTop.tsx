@@ -2,7 +2,7 @@ import { Button, Group, TextInput } from '@mantine/core'
 import React from 'react'
 import { flushEvents } from '../../../flushEvents'
 import type { EventFilters } from '../../../hooks/useEvents'
-import classes from './eventsTabTop.module.css'
+import * as classes from './eventsTabTop.module.css'
 
 export function EventsTabTop({
   filters,

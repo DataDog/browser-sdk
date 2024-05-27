@@ -38,7 +38,15 @@ const UNIQUE_AMONG_CHILDREN_SELECTOR_GETTERS: SelectorGetter[] = [
   getTagNameSelector,
 ]
 
-export function getSelectorFromElement(targetElement: Element, actionNameAttribute: string | undefined) {
+export function getSelectorFromElement(
+  targetElement: Element,
+  actionNameAttribute: string | undefined
+): string | undefined {
+  if (!isConnected(targetElement)) {
+    // We cannot compute a selector for a detached element, as we don't have access to all of its
+    // parents, and we cannot determine if it's unique in the document.
+    return
+  }
   let targetElementSelector = ''
   let element: Element | null = targetElement
 
@@ -75,10 +83,9 @@ function isGeneratedValue(value: string) {
   // if it thinks the part is an identifier. The condition it uses is to checks whether a digit is
   // present.
   //
-  // Here, we use the same strategy: if a the value contains a digit, we consider it generated. This
+  // Here, we use the same strategy: if the value contains a digit, we consider it generated. This
   // strategy might be a bit naive and fail in some cases, but there are many fallbacks to generate
-  // CSS selectors so it should be fine most of the time. We might want to allow customers to
-  // provide their own `isGeneratedValue` at some point.
+  // CSS selectors so it should be fine most of the time.
   return /[0-9]/.test(value)
 }
 
@@ -201,4 +208,19 @@ export function supportScopeSelector() {
     }
   }
   return supportScopeSelectorCache
+}
+
+/**
+ * Polyfill-utility for the `isConnected` property not supported in IE11
+ */
+function isConnected(element: Element): boolean {
+  if (
+    'isConnected' in
+    // cast is to make sure `element` is not inferred as `never` after the check
+    (element as { isConnected?: boolean })
+  ) {
+    return element.isConnected
+  }
+
+  return element.ownerDocument.documentElement.contains(element)
 }

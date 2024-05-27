@@ -89,9 +89,7 @@ export function computePerformanceResourceDuration(entry: RumPerformanceResource
 export function computePerformanceResourceDetails(
   entry: RumPerformanceResourceTiming
 ): PerformanceResourceDetails | undefined {
-  const validEntry = toValidEntry(entry)
-
-  if (!validEntry) {
+  if (!isValidEntry(entry)) {
     return undefined
   }
   const {
@@ -107,7 +105,7 @@ export function computePerformanceResourceDetails(
     requestStart,
     responseStart,
     responseEnd,
-  } = validEntry
+  } = entry
 
   const details: PerformanceResourceDetails = {
     download: formatTiming(startTime, responseStart, responseEnd),
@@ -137,9 +135,9 @@ export function computePerformanceResourceDetails(
   return details
 }
 
-export function toValidEntry(entry: RumPerformanceResourceTiming) {
+export function isValidEntry(entry: RumPerformanceResourceTiming) {
   if (isExperimentalFeatureEnabled(ExperimentalFeature.TOLERANT_RESOURCE_TIMINGS)) {
-    return entry
+    return true
   }
 
   // Ensure timings are in the right order. On top of filtering out potential invalid
@@ -162,9 +160,7 @@ export function toValidEntry(entry: RumPerformanceResourceTiming) {
     ? areInOrder(entry.startTime, entry.redirectStart, entry.redirectEnd, entry.fetchStart)
     : true
 
-  if (areCommonTimingsInOrder && areRedirectionTimingsInOrder) {
-    return entry
-  }
+  return areCommonTimingsInOrder && areRedirectionTimingsInOrder
 }
 
 function hasRedirection(entry: RumPerformanceResourceTiming) {

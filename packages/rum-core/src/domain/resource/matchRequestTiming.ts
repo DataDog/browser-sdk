@@ -2,12 +2,15 @@ import type { Duration, RelativeTime } from '@datadog/browser-core'
 import { addDuration } from '@datadog/browser-core'
 import type { RumPerformanceResourceTiming } from '../../browser/performanceCollection'
 import type { RequestCompleteEvent } from '../requestCollection'
-import { toValidEntry } from './resourceUtils'
+import { WeakSet } from '../../browser/polyfills'
+import { isValidEntry } from './resourceUtils'
 
 interface Timing {
   startTime: RelativeTime
   duration: Duration
 }
+
+const alreadyMatchedEntries = new WeakSet<PerformanceEntry>()
 
 /**
  * Look for corresponding timing in resource timing buffer
@@ -18,22 +21,23 @@ interface Timing {
  *
  * Strategy:
  * - from valid nested entries (with 1 ms error margin)
- * - if a single timing match, return the timing
+ * - filter out timing that were already matched to a request
+ * - then, if a single timing match, return the timing
  * - otherwise we can't decide, return undefined
  */
 export function matchRequestTiming(request: RequestCompleteEvent) {
   if (!performance || !('getEntriesByName' in performance)) {
     return
   }
-  const sameNameEntries = performance.getEntriesByName(request.url, 'resource')
+  const sameNameEntries = performance.getEntriesByName(request.url, 'resource') as RumPerformanceResourceTiming[]
 
   if (!sameNameEntries.length || !('toJSON' in sameNameEntries[0])) {
     return
   }
 
   const candidates = sameNameEntries
-    .map((entry) => entry.toJSON() as RumPerformanceResourceTiming)
-    .filter(toValidEntry)
+    .filter((entry) => !alreadyMatchedEntries.has(entry))
+    .filter((entry) => isValidEntry(entry))
     .filter((entry) =>
       isBetween(
         entry,
@@ -43,7 +47,9 @@ export function matchRequestTiming(request: RequestCompleteEvent) {
     )
 
   if (candidates.length === 1) {
-    return candidates[0]
+    alreadyMatchedEntries.add(candidates[0])
+
+    return candidates[0].toJSON() as RumPerformanceResourceTiming
   }
 
   return

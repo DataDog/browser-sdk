@@ -16,8 +16,8 @@ const withGateMonitors = process.argv[4] === 'true'
 
 runMain(async () => {
   command`node ./scripts/deploy/check-monitors.js ${uploadPath}`.withLogs().run()
-  command`node ./scripts/deploy/deploy.js prod v${version} ${uploadPath}`.withLogs().run()
-  command`node ./scripts/deploy/upload-source-maps.js prod v${version} ${uploadPath}`.withLogs().run()
+  command`node ./scripts/deploy/deploy.js prod ${version} ${uploadPath}`.withLogs().run()
+  command`node ./scripts/deploy/upload-source-maps.js ${version} ${uploadPath}`.withLogs().run()
 
   if (withGateMonitors && uploadPath !== 'root') {
     await gateMonitors(uploadPath)
