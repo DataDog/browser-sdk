@@ -4,7 +4,6 @@ import { display } from '../tools/display'
 import type { Encoder } from '../tools/encoder'
 import { createIdentityEncoder } from '../tools/encoder'
 import { Batch } from './batch'
-import type { FlushReason } from './flushController'
 import type { HttpRequest } from './httpRequest'
 
 describe('batch', () => {
@@ -21,7 +20,6 @@ describe('batch', () => {
     sendOnExit: jasmine.Spy<HttpRequest['sendOnExit']>
   }
 
-  const flushReason: FlushReason = 'bytes_limit'
   let flushController: MockFlushController
   let encoder: Encoder<string>
 
@@ -43,7 +41,6 @@ describe('batch', () => {
     expect(transport.send.calls.mostRecent().args[0]).toEqual({
       data: '{"message":"hello"}',
       bytesCount: SMALL_MESSAGE_BYTES_COUNT,
-      flushReason,
       encoding: undefined,
     })
   })
@@ -114,7 +111,6 @@ describe('batch', () => {
     expect(transport.send.calls.mostRecent().args[0]).toEqual({
       data: '{"message":"2"}\n{"message":"3"}\n{"message":"4"}',
       bytesCount: jasmine.any(Number),
-      flushReason,
       encoding: undefined,
     })
 
@@ -126,7 +122,6 @@ describe('batch', () => {
     expect(transport.send.calls.mostRecent().args[0]).toEqual({
       data: '{"message":"5"}\n{"message":"6"}\n{"message":"7"}',
       bytesCount: jasmine.any(Number),
-      flushReason,
       encoding: undefined,
     })
 
@@ -139,7 +134,6 @@ describe('batch', () => {
     expect(transport.send.calls.mostRecent().args[0]).toEqual({
       data: '{"message":"10"}\n{"message":"11"}',
       bytesCount: jasmine.any(Number),
-      flushReason,
       encoding: undefined,
     })
   })
@@ -154,7 +148,6 @@ describe('batch', () => {
       expect(transport.send.calls.mostRecent().args[0]).toEqual({
         data: '{"message":"1"}\n{"message":"2"}',
         bytesCount: jasmine.any(Number),
-        flushReason,
         encoding: undefined,
       })
     })

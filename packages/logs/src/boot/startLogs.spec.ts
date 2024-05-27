@@ -9,8 +9,11 @@ import {
   noop,
   createTrackingConsentState,
   TrackingConsent,
+  setCookie,
+  STORAGE_POLL_DELAY,
+  ONE_MINUTE,
 } from '@datadog/browser-core'
-import type { Request } from '@datadog/browser-core/test'
+import type { Clock, Request } from '@datadog/browser-core/test'
 import {
   interceptRequests,
   stubEndpointBuilder,
@@ -18,6 +21,8 @@ import {
   cleanupSyntheticsWorkerValues,
   mockSyntheticsWorkerValues,
   registerCleanupTask,
+  mockClock,
+  expireCookie,
 } from '@datadog/browser-core/test'
 
 import type { LogsConfiguration } from '../domain/configuration'
@@ -234,6 +239,68 @@ describe('logs', () => {
       registerCleanupTask(stopLogs)
 
       expect(getCookie(SESSION_STORE_KEY)).toBeUndefined()
+    })
+  })
+
+  describe('session lifecycle', () => {
+    let clock: Clock
+    beforeEach(() => {
+      clock = mockClock()
+    })
+    afterEach(() => {
+      clock.cleanup()
+    })
+
+    it('sends logs without session id when the session expires ', () => {
+      setCookie(SESSION_STORE_KEY, 'id=foo&logs=1', ONE_MINUTE)
+      ;({ handleLog, stop: stopLogs } = startLogs(
+        initConfiguration,
+        { ...baseConfiguration, sendLogsAfterSessionExpiration: true },
+        () => COMMON_CONTEXT,
+        createTrackingConsentState(TrackingConsent.GRANTED)
+      ))
+      registerCleanupTask(stopLogs)
+
+      handleLog({ status: StatusType.info, message: 'message 1' }, logger)
+
+      expireCookie()
+      clock.tick(STORAGE_POLL_DELAY * 2)
+
+      handleLog({ status: StatusType.info, message: 'message 2' }, logger)
+
+      const firstRequest = getLoggedMessage(requests, 0)
+      const secondRequest = getLoggedMessage(requests, 1)
+
+      expect(requests.length).toEqual(2)
+      expect(firstRequest.message).toEqual('message 1')
+      expect(firstRequest.session_id).toEqual('foo')
+
+      expect(secondRequest.message).toEqual('message 2')
+      expect(secondRequest.session_id).toBeUndefined()
+    })
+
+    it('does not send logs with session id when session is expired and sendLogsAfterSessionExpiration is false', () => {
+      setCookie(SESSION_STORE_KEY, 'id=foo&logs=1', ONE_MINUTE)
+      ;({ handleLog, stop: stopLogs } = startLogs(
+        initConfiguration,
+        baseConfiguration,
+        () => COMMON_CONTEXT,
+        createTrackingConsentState(TrackingConsent.GRANTED)
+      ))
+      registerCleanupTask(stopLogs)
+
+      handleLog({ status: StatusType.info, message: 'message 1' }, logger)
+
+      expireCookie()
+      clock.tick(STORAGE_POLL_DELAY * 2)
+
+      handleLog({ status: StatusType.info, message: 'message 2' }, logger)
+
+      const firstRequest = getLoggedMessage(requests, 0)
+
+      expect(requests.length).toEqual(1)
+      expect(firstRequest.message).toEqual('message 1')
+      expect(firstRequest.session_id).toEqual('foo')
     })
   })
 })

@@ -1,14 +1,5 @@
 import type { RelativeTime } from '@datadog/browser-core'
-import {
-  DOM_EVENT,
-  ExperimentalFeature,
-  ONE_MINUTE,
-  addEventListeners,
-  addTelemetryDebug,
-  findLast,
-  isExperimentalFeatureEnabled,
-  relativeNow,
-} from '@datadog/browser-core'
+import { DOM_EVENT, ONE_MINUTE, addEventListeners, findLast } from '@datadog/browser-core'
 import { LifeCycleEventType } from '../../lifeCycle'
 import type { LifeCycle } from '../../lifeCycle'
 import type { RumConfiguration } from '../../configuration'
@@ -25,11 +16,6 @@ export interface LargestContentfulPaint {
   value: RelativeTime
   targetSelector?: string
 }
-
-type SerializableLCP = Omit<RumLargestContentfulPaintTiming, 'toJSON' | 'element'>
-
-let wrongLcpReported = false
-let previousLcp: SerializableLCP
 
 /**
  * Track the largest contentful paint (LCP) occurring during the initial View.  This can yield
@@ -80,16 +66,6 @@ export function trackLargestContentfulPaint(
           lcpTargetSelector = getSelectorFromElement(lcpEntry.element, configuration.actionNameAttribute)
         }
 
-        if (isExperimentalFeatureEnabled(ExperimentalFeature.ZERO_LCP_TELEMETRY)) {
-          monitorLcpEntries(
-            lcpEntry,
-            entries.filter(
-              (entry): entry is RumLargestContentfulPaintTiming =>
-                entry.entryType === RumPerformanceEntryType.LARGEST_CONTENTFUL_PAINT
-            )
-          )
-        }
-
         callback({
           value: lcpEntry.startTime,
           targetSelector: lcpTargetSelector,
@@ -105,41 +81,4 @@ export function trackLargestContentfulPaint(
       unsubscribeLifeCycle()
     },
   }
-}
-
-function monitorLcpEntries(lcpEntry: RumLargestContentfulPaintTiming, lcpEntries: RumLargestContentfulPaintTiming[]) {
-  if (wrongLcpReported) {
-    return
-  }
-
-  const wrongLcpDetected =
-    lcpEntry.startTime === 0
-      ? 'LCP with startTime = 0'
-      : previousLcp !== undefined && lcpEntry.startTime < previousLcp.startTime
-        ? 'LCP with startTime < previous LCP'
-        : previousLcp !== undefined && lcpEntry.size < previousLcp.size
-          ? 'LCP with size < previous LCP'
-          : undefined
-
-  if (wrongLcpDetected) {
-    wrongLcpReported = true
-
-    addTelemetryDebug(wrongLcpDetected, {
-      debug: {
-        entry: toSerializableLCP(lcpEntry),
-        previousLcp,
-        timeOrigin: performance.timeOrigin,
-        now: relativeNow(),
-        lcpEntries: lcpEntries.map(toSerializableLCP),
-      },
-    })
-  }
-
-  previousLcp = toSerializableLCP(lcpEntry)
-}
-
-function toSerializableLCP(entry: RumLargestContentfulPaintTiming): SerializableLCP {
-  const jsonEntry = entry.toJSON()
-  delete jsonEntry.element
-  return jsonEntry
 }

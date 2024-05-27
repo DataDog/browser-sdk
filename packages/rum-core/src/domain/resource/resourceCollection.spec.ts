@@ -1,12 +1,5 @@
 import type { Duration, RelativeTime, ServerDuration, TimeStamp } from '@datadog/browser-core'
-import {
-  resetExperimentalFeatures,
-  addExperimentalFeatures,
-  isIE,
-  RequestType,
-  ResourceType,
-  ExperimentalFeature,
-} from '@datadog/browser-core'
+import { isIE, RequestType, ResourceType } from '@datadog/browser-core'
 import type { RumFetchResourceEventDomainContext } from '../../domainContext.types'
 import { setup, createPerformanceEntry } from '../../../test'
 import type { TestSetupBuilder } from '../../../test'
@@ -16,27 +9,20 @@ import { LifeCycleEventType } from '../lifeCycle'
 import type { RequestCompleteEvent } from '../requestCollection'
 import { TraceIdentifier } from '../tracing/tracer'
 import { validateAndBuildRumConfiguration } from '../configuration'
-import { PageState } from '../contexts/pageStateHistory'
 import { RumPerformanceEntryType } from '../../browser/performanceCollection'
 import { startResourceCollection } from './resourceCollection'
 
 describe('resourceCollection', () => {
   let setupBuilder: TestSetupBuilder
   let trackResources: boolean
-  let findAllSpy: jasmine.Spy<jasmine.Func>
   let wasInPageStateDuringPeriodSpy: jasmine.Spy<jasmine.Func>
 
   beforeEach(() => {
     trackResources = true
     setupBuilder = setup().beforeBuild(({ lifeCycle, pageStateHistory, configuration }) => {
-      findAllSpy = spyOn(pageStateHistory, 'findAll')
       wasInPageStateDuringPeriodSpy = spyOn(pageStateHistory, 'wasInPageStateDuringPeriod')
       startResourceCollection(lifeCycle, { ...configuration, trackResources }, pageStateHistory)
     })
-  })
-
-  afterEach(() => {
-    resetExperimentalFeatures()
   })
 
   it('should create resource from performance entry', () => {
@@ -181,27 +167,6 @@ describe('resourceCollection', () => {
     })
   })
 
-  it('should collect page states on resources when ff resource_page_states enabled', () => {
-    addExperimentalFeatures([ExperimentalFeature.RESOURCE_PAGE_STATES])
-    const { lifeCycle, rawRumEvents } = setupBuilder.build()
-    const mockPageStates = [{ state: PageState.ACTIVE, startTime: 0 as RelativeTime }]
-    const mockXHR = createCompletedRequest()
-    const mockPerformanceEntry = createPerformanceEntry(RumPerformanceEntryType.RESOURCE)
-
-    findAllSpy.and.returnValue(mockPageStates)
-
-    lifeCycle.notify(LifeCycleEventType.REQUEST_COMPLETED, mockXHR)
-    lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [mockPerformanceEntry])
-
-    const rawRumResourceEventFetch = rawRumEvents[0].rawRumEvent as RawRumResourceEvent
-    const rawRumResourceEventEntry = rawRumEvents[1].rawRumEvent as RawRumResourceEvent
-
-    expect(findAllSpy.calls.first().args).toEqual([mockXHR.startClocks.relative, mockXHR.duration])
-    expect(findAllSpy.calls.mostRecent().args).toEqual([mockPerformanceEntry.startTime, mockPerformanceEntry.duration])
-    expect(rawRumResourceEventFetch._dd.page_states).toEqual(jasmine.objectContaining(mockPageStates))
-    expect(rawRumResourceEventEntry._dd.page_states).toEqual(jasmine.objectContaining(mockPageStates))
-  })
-
   it('should not have a duration if a frozen state happens during the request and no performance entry matches', () => {
     const { lifeCycle, rawRumEvents } = setupBuilder.build()
     const mockXHR = createCompletedRequest()
@@ -212,24 +177,6 @@ describe('resourceCollection', () => {
 
     const rawRumResourceEventFetch = rawRumEvents[0].rawRumEvent as RawRumResourceEvent
     expect(rawRumResourceEventFetch.resource.duration).toBeUndefined()
-  })
-
-  it('should not collect page states on resources when ff resource_page_states disabled', () => {
-    const { lifeCycle, rawRumEvents } = setupBuilder.build()
-    const mockPageStates = [{ state: PageState.ACTIVE, startTime: 0 as RelativeTime }]
-    const mockXHR = createCompletedRequest()
-    const mockPerformanceEntry = createPerformanceEntry(RumPerformanceEntryType.RESOURCE)
-
-    findAllSpy.and.returnValue(mockPageStates)
-
-    lifeCycle.notify(LifeCycleEventType.REQUEST_COMPLETED, mockXHR)
-    lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [mockPerformanceEntry])
-
-    const rawRumResourceEventFetch = rawRumEvents[0].rawRumEvent as RawRumResourceEvent
-    const rawRumResourceEventEntry = rawRumEvents[1].rawRumEvent as RawRumResourceEvent
-
-    expect(rawRumResourceEventFetch._dd.page_states).not.toBeDefined()
-    expect(rawRumResourceEventEntry._dd.page_states).not.toBeDefined()
   })
 
   it('should create resource from completed fetch request', () => {

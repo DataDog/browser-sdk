@@ -8,8 +8,6 @@ import {
   relativeToClocks,
   assign,
   isNumber,
-  isExperimentalFeatureEnabled,
-  ExperimentalFeature,
 } from '@datadog/browser-core'
 import type { RumConfiguration } from '../configuration'
 import type { RumPerformanceResourceTiming } from '../../browser/performanceCollection'
@@ -48,7 +46,7 @@ export function startResourceCollection(
   lifeCycle.subscribe(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, (entries) => {
     for (const entry of entries) {
       if (entry.entryType === RumPerformanceEntryType.RESOURCE && !isRequestKind(entry)) {
-        const rawEvent = processResourceEntry(entry, configuration, pageStateHistory)
+        const rawEvent = processResourceEntry(entry, configuration)
         if (rawEvent) {
           lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, rawEvent)
         }
@@ -74,11 +72,6 @@ function processRequest(
   const correspondingTimingOverrides = matchingTiming ? computePerformanceEntryMetrics(matchingTiming) : undefined
 
   const duration = computeRequestDuration(pageStateHistory, startClocks, request.duration)
-  const pageStateInfo = computePageStateInfo(
-    pageStateHistory,
-    startClocks,
-    matchingTiming?.duration ?? request.duration
-  )
 
   const resourceEvent = combine(
     {
@@ -97,8 +90,7 @@ function processRequest(
       },
     },
     tracingInfo,
-    correspondingTimingOverrides,
-    pageStateInfo
+    correspondingTimingOverrides
   )
   return {
     startTime: startClocks.relative,
@@ -117,8 +109,7 @@ function processRequest(
 
 function processResourceEntry(
   entry: RumPerformanceResourceTiming,
-  configuration: RumConfiguration,
-  pageStateHistory: PageStateHistory
+  configuration: RumConfiguration
 ): RawRumEventCollectedData<RawRumResourceEvent> | undefined {
   const startClocks = relativeToClocks(entry.startTime)
   const tracingInfo = computeEntryTracingInfo(entry, configuration)
@@ -128,7 +119,7 @@ function processResourceEntry(
 
   const type = computeResourceKind(entry)
   const entryMetrics = computePerformanceEntryMetrics(entry)
-  const pageStateInfo = computePageStateInfo(pageStateHistory, startClocks, entry.duration)
+
   const resourceEvent = combine(
     {
       date: startClocks.timeStamp,
@@ -144,8 +135,7 @@ function processResourceEntry(
       },
     },
     tracingInfo,
-    entryMetrics,
-    pageStateInfo
+    entryMetrics
   )
   return {
     startTime: startClocks.relative,
@@ -202,19 +192,6 @@ function computeEntryTracingInfo(entry: RumPerformanceResourceTiming, configurat
  */
 function getRulePsr(configuration: RumConfiguration) {
   return isNumber(configuration.traceSampleRate) ? configuration.traceSampleRate / 100 : undefined
-}
-
-function computePageStateInfo(pageStateHistory: PageStateHistory, startClocks: ClocksState, duration: Duration) {
-  if (!isExperimentalFeatureEnabled(ExperimentalFeature.RESOURCE_PAGE_STATES)) {
-    return
-  }
-
-  return {
-    _dd: {
-      page_states: pageStateHistory.findAll(startClocks.relative, duration),
-      page_was_discarded: String((document as any).wasDiscarded),
-    },
-  }
 }
 
 function computeRequestDuration(pageStateHistory: PageStateHistory, startClocks: ClocksState, duration: Duration) {
