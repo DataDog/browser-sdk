@@ -7,6 +7,7 @@ import type {
   DeflateEncoderStreamId,
   DeflateEncoder,
   TrackingConsent,
+  PublicApi,
 } from '@datadog/browser-core'
 import {
   addTelemetryUsage,
@@ -44,7 +45,7 @@ import type { InternalContext } from '../domain/contexts/internalContext'
 import { createPreStartStrategy } from './preStartRum'
 import type { StartRum, StartRumResult } from './startRum'
 
-export interface RumPublicApi {
+export interface RumPublicApi extends PublicApi {
   /**
    * Init the RUM browser SDK.
    * @param initConfiguration Configuration options of the SDK
@@ -99,7 +100,7 @@ export interface RumPublicApi {
    *
    * See [Global context](https://docs.datadoghq.com/real_user_monitoring/browser/advanced_configuration/#global-context) for further information.
    */
-  removeGlobalContextProperty: (key: any, value: any) => void
+  removeGlobalContextProperty: (key: any) => void
 
   /**
    * Clear the global context

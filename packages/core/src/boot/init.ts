@@ -5,7 +5,21 @@ import { assign } from '../tools/utils/polyfills'
 // replaced at build time
 declare const __BUILD_ENV__SDK_VERSION__: string
 
-export function makePublicApi<T>(stub: T): T & { onReady(callback: () => void): void; version: string } {
+export interface PublicApi {
+  /**
+   * Version of the Logs browser SDK
+   */
+  version: string
+
+  /**
+   * [For CDN async setup] Early RUM API calls must be wrapped in the `window.DD_RUM.onReady()` callback. This ensures the code only gets executed once the SDK is properly loaded.
+   *
+   * See [CDN async setup](https://docs.datadoghq.com/real_user_monitoring/browser/#cdn-async) for further information.
+   */
+  onReady: (callback: () => void) => void
+}
+
+export function makePublicApi<T>(stub: T): T & PublicApi {
   const publicApi = assign(
     {
       version: __BUILD_ENV__SDK_VERSION__,

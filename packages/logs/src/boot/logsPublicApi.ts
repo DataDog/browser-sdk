@@ -1,4 +1,4 @@
-import type { Context, TrackingConsent, User } from '@datadog/browser-core'
+import type { Context, TrackingConsent, User, PublicApi } from '@datadog/browser-core'
 import {
   addTelemetryUsage,
   CustomerDataType,
@@ -29,7 +29,7 @@ export interface LoggerConfiguration {
   context?: object
 }
 
-export interface LogsPublicApi {
+export interface LogsPublicApi extends PublicApi {
   logger: Logger
 
   /**
@@ -168,7 +168,7 @@ export interface Strategy {
   handleLog: StartLogsResult['handleLog']
 }
 
-export function makeLogsPublicApi(startLogsImpl: StartLogs): LogsPublicApi {
+export function makeLogsPublicApi(startLogsImpl: StartLogs) {
   const customerDataTrackerManager = createCustomerDataTrackerManager()
   const globalContextManager = createContextManager(
     customerDataTrackerManager.getOrCreateTracker(CustomerDataType.GlobalContext)
