@@ -183,7 +183,7 @@ export function validateAndBuildRumConfiguration(
   return assign(
     {
       applicationId: initConfiguration.applicationId,
-      version: initConfiguration.version,
+      version: initConfiguration.version || undefined,
       actionNameAttribute: initConfiguration.actionNameAttribute,
       sessionReplaySampleRate: initConfiguration.sessionReplaySampleRate ?? 0,
       startSessionReplayRecordingManually: !!initConfiguration.startSessionReplayRecordingManually,

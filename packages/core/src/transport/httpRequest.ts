@@ -5,7 +5,6 @@ import { monitor } from '../tools/monitor'
 import { addEventListener } from '../browser/addEventListener'
 import type { RawError } from '../domain/error/error.types'
 import { newRetryState, sendWithRetryStrategy } from './sendWithRetryStrategy'
-import type { FlushReason } from './flushController'
 
 /**
  * Use POST request without content type to:
@@ -27,7 +26,6 @@ export interface Payload {
   data: string | FormData | Blob
   bytesCount: number
   retry?: RetryInfo
-  flushReason?: FlushReason
   encoding?: 'deflate'
 }
 

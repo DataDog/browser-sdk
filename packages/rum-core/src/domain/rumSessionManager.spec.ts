@@ -13,7 +13,7 @@ import {
   BridgeCapability,
 } from '@datadog/browser-core'
 import type { Clock } from '@datadog/browser-core/test'
-import { createNewEvent, initEventBridgeStub, mockClock } from '@datadog/browser-core/test'
+import { createNewEvent, expireCookie, initEventBridgeStub, mockClock } from '@datadog/browser-core/test'
 import type { RumConfiguration } from './configuration'
 import { validateAndBuildRumConfiguration } from './configuration'
 
@@ -113,7 +113,7 @@ describe('rum session manager', () => {
 
       startRumSessionManagerWithDefaults({ configuration: { sessionSampleRate: 100, sessionReplaySampleRate: 100 } })
 
-      setCookie(SESSION_STORE_KEY, 'isExpired=1', DURATION)
+      expireCookie()
       expect(getCookie(SESSION_STORE_KEY)).toEqual('isExpired=1')
       expect(expireSessionSpy).not.toHaveBeenCalled()
       expect(renewSessionSpy).not.toHaveBeenCalled()
@@ -145,7 +145,7 @@ describe('rum session manager', () => {
 
     it('should return undefined if the session has expired', () => {
       const rumSessionManager = startRumSessionManagerWithDefaults()
-      setCookie(SESSION_STORE_KEY, 'isExpired=1', DURATION)
+      expireCookie()
       clock.tick(STORAGE_POLL_DELAY)
       expect(rumSessionManager.findTrackedSession()).toBe(undefined)
     })
@@ -154,7 +154,7 @@ describe('rum session manager', () => {
       setCookie(SESSION_STORE_KEY, 'id=abcdef&rum=1', DURATION)
       const rumSessionManager = startRumSessionManagerWithDefaults()
       clock.tick(10 * ONE_SECOND)
-      setCookie(SESSION_STORE_KEY, '', DURATION)
+      expireCookie()
       clock.tick(STORAGE_POLL_DELAY)
       expect(rumSessionManager.findTrackedSession()).toBeUndefined()
       expect(rumSessionManager.findTrackedSession(0 as RelativeTime)!.id).toBe('abcdef')

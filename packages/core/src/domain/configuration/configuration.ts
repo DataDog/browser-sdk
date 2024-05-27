@@ -90,15 +90,15 @@ export interface InitConfiguration {
   /**
    * The service name for your application. Follows the [tag syntax requirements](https://docs.datadoghq.com/getting_started/tagging/#define-tags).
    */
-  service?: string | undefined
+  service?: string | undefined | null
   /**
    * The application’s environment, for example: prod, pre-prod, and staging. Follows the [tag syntax requirements](https://docs.datadoghq.com/getting_started/tagging/#define-tags).
    */
-  env?: string | undefined
+  env?: string | undefined | null
   /**
    * The application’s version, for example: 1.2.3, 6c44da20, and 2020.02.13. Follows the [tag syntax requirements](https://docs.datadoghq.com/getting_started/tagging/#define-tags).
    */
-  version?: string | undefined
+  version?: string | undefined | null
 
   // cookie options
   /**
@@ -192,8 +192,8 @@ export interface Configuration extends TransportConfiguration {
   messageBytesLimit: number
 }
 
-function checkIfString(tag: unknown, tagName: string) {
-  if (tag !== undefined && typeof tag !== 'string') {
+function checkIfString(tag: unknown, tagName: string): tag is string | undefined | null {
+  if (tag !== undefined && tag !== null && typeof tag !== 'string') {
     display.error(`${tagName} must be defined as a string`)
     return false
   }
@@ -279,7 +279,7 @@ export function validateAndBuildConfiguration(initConfiguration: InitConfigurati
       telemetrySampleRate: initConfiguration.telemetrySampleRate ?? 20,
       telemetryConfigurationSampleRate: initConfiguration.telemetryConfigurationSampleRate ?? 5,
       telemetryUsageSampleRate: initConfiguration.telemetryUsageSampleRate ?? 5,
-      service: initConfiguration.service,
+      service: initConfiguration.service || undefined,
       silentMultipleInit: !!initConfiguration.silentMultipleInit,
       allowUntrustedEvents: !!initConfiguration.allowUntrustedEvents,
       trackingConsent: initConfiguration.trackingConsent ?? TrackingConsent.GRANTED,

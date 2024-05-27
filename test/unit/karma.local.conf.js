@@ -20,6 +20,9 @@ module.exports = function (config) {
       ...karmaBaseConf.webpack,
       module: withIstanbulRule(karmaBaseConf.webpack.module),
     },
+    sourceMapLoader: {
+      remapSource: (source) => source.replace(/webpack:\/\//g, path.join(__dirname, '../../')),
+    },
   })
 }
 
