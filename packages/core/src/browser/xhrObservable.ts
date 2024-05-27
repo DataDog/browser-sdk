@@ -19,7 +19,7 @@ export interface XhrStartContext extends Omit<XhrOpenContext, 'state'> {
   startClocks: ClocksState
   isAborted: boolean
   xhr: XMLHttpRequest
-  handlingStack: string
+  handlingStack?: string
 }
 
 export interface XhrCompleteContext extends Omit<XhrStartContext, 'state'> {
@@ -44,9 +44,14 @@ function createXhrObservable(configuration: Configuration) {
   return new Observable<XhrContext>((observable) => {
     const { stop: stopInstrumentingStart } = instrumentMethod(XMLHttpRequest.prototype, 'open', openXhr)
 
-    const { stop: stopInstrumentingSend } = instrumentMethod(XMLHttpRequest.prototype, 'send', (call) => {
-      sendXhr(call, configuration, observable)
-    })
+    const { stop: stopInstrumentingSend } = instrumentMethod(
+      XMLHttpRequest.prototype,
+      'send',
+      (call) => {
+        sendXhr(call, configuration, observable)
+      },
+      { computeHandlingStack: true }
+    )
 
     const { stop: stopInstrumentingAbort } = instrumentMethod(XMLHttpRequest.prototype, 'abort', abortXhr)
 

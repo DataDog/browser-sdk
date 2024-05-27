@@ -27,7 +27,10 @@ export type InstrumentedMethodCall<TARGET extends { [key: string]: any }, METHOD
    */
   onPostCall: (callback: PostCallCallback<TARGET, METHOD>) => void
 
-  handlingStack: string
+  /**
+   * The stack trace of the method call.
+   */
+  handlingStack?: string
 }
 
 type PostCallCallback<TARGET extends { [key: string]: any }, METHOD extends keyof TARGET> = (
@@ -68,7 +71,8 @@ type PostCallCallback<TARGET extends { [key: string]: any }, METHOD extends keyo
 export function instrumentMethod<TARGET extends { [key: string]: any }, METHOD extends keyof TARGET & string>(
   targetPrototype: TARGET,
   method: METHOD,
-  onPreCall: (this: null, callInfos: InstrumentedMethodCall<TARGET, METHOD>) => void
+  onPreCall: (this: null, callInfos: InstrumentedMethodCall<TARGET, METHOD>) => void,
+  { computeHandlingStack }: { computeHandlingStack?: boolean } = {}
 ) {
   let original = targetPrototype[method]
 
@@ -99,7 +103,7 @@ export function instrumentMethod<TARGET extends { [key: string]: any }, METHOD e
         onPostCall: (callback) => {
           postCallCallback = callback
         },
-        handlingStack: createHandlingStack(2),
+        handlingStack: computeHandlingStack ? createHandlingStack() : undefined,
       },
     ])
 

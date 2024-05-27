@@ -41,7 +41,7 @@ function createConsoleObservable(api: ConsoleApiName) {
 
     globalConsole[api] = (...params: unknown[]) => {
       originalConsoleApi.apply(console, params)
-      const handlingStack = createHandlingStack(2)
+      const handlingStack = createHandlingStack()
 
       callMonitored(() => {
         observable.notify(buildConsoleLog(params, api, handlingStack))
