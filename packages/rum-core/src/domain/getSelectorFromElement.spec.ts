@@ -151,14 +151,7 @@ describe('getSelectorFromElement', () => {
               <button data-testid="foo"></button>
             </div>
           `)
-      ).toBe(
-        supportScopeSelector()
-          ? 'BODY>BUTTON[data-testid="foo"]'
-          : // Degraded support for browsers not supporting scoped selector: the selector is still
-            // correct, but its quality is a bit worse, as using a stable attribute reduce the
-            // chances of matching a completely unrelated element.
-            'BODY>BUTTON:nth-of-type(1)'
-      )
+      ).toBe('BODY>BUTTON[data-testid="foo"]')
     })
   })
 
