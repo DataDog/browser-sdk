@@ -56,7 +56,7 @@ export interface RequestCompleteEvent {
   init?: RequestInit
   error?: Error
   isAborted: boolean
-  handlingStack: string
+  handlingStack?: string
 }
 
 let nextRequestIndex = 1

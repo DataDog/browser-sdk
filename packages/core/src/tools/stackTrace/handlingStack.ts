@@ -9,13 +9,14 @@ import { computeStackTrace } from './computeStackTrace'
  * - Has to be called at the utmost position of the call stack.
  * - No monitored function should encapsulate it, that is why we need to use callMonitored inside it.
  */
-export function createHandlingStack(framesToSkip = 0): string {
+export function createHandlingStack(): string {
   /**
    * Skip the two internal frames:
    * - SDK API (console.error, ...)
    * - this function
    * in order to keep only the user calls
    */
+  const internalFramesToSkip = 2
   const error = new Error()
   let formattedStack: string
 
@@ -30,7 +31,7 @@ export function createHandlingStack(framesToSkip = 0): string {
 
   callMonitored(() => {
     const stackTrace = computeStackTrace(error)
-    stackTrace.stack = stackTrace.stack.slice(framesToSkip)
+    stackTrace.stack = stackTrace.stack.slice(internalFramesToSkip)
     formattedStack = toStackTraceString(stackTrace)
   })
 

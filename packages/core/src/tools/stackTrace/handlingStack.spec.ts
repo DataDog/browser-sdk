@@ -3,7 +3,7 @@ import { createHandlingStack } from './handlingStack'
 describe('createHandlingStack', () => {
   let handlingStack: string
   function internalCall() {
-    handlingStack = createHandlingStack(2)
+    handlingStack = createHandlingStack()
   }
   function userCallTwo() {
     internalCall()

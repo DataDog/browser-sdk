@@ -232,7 +232,7 @@ export function makeRumPublicApi(startRumImpl: StartRum, recorderApi: RecorderAp
     getInitConfiguration: monitor(() => deepClone(strategy.initConfiguration)),
 
     addAction: (name: string, context?: object) => {
-      const handlingStack = createHandlingStack(2)
+      const handlingStack = createHandlingStack()
 
       callMonitored(() => {
         strategy.addAction({
@@ -247,7 +247,7 @@ export function makeRumPublicApi(startRumImpl: StartRum, recorderApi: RecorderAp
     },
 
     addError: (error: unknown, context?: object) => {
-      const handlingStack = createHandlingStack(2)
+      const handlingStack = createHandlingStack()
       callMonitored(() => {
         strategy.addError({
           error, // Do not sanitize error here, it is needed unserialized by computeRawError()
