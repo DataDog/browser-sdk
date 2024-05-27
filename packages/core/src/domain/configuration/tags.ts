@@ -1,4 +1,4 @@
-import { display } from '../../tools/display'
+import { DOCS_ORIGIN, display } from '../../tools/display'
 import type { InitConfiguration } from './configuration'
 
 export const TAG_SIZE_LIMIT = 200
@@ -33,7 +33,7 @@ export function buildTag(key: string, rawValue: string) {
 
   if (rawValue.length > valueSizeLimit || FORBIDDEN_CHARACTERS.test(rawValue)) {
     display.warn(
-      `${key} value doesn't meet tag requirements and will be sanitized. More details: https://docs.datadoghq.com/getting_started/tagging/#defining-tags`
+      `${key} value doesn't meet tag requirements and will be sanitized. More details: ${DOCS_ORIGIN}/getting_started/tagging/#defining-tags`
     )
   }
 
