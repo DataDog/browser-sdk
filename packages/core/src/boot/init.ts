@@ -19,7 +19,7 @@ export interface PublicApi {
   onReady: (callback: () => void) => void
 }
 
-export function makePublicApi<T>(stub: T): T & PublicApi {
+export function makePublicApi<T extends PublicApi>(stub: Omit<T, keyof PublicApi>): T {
   const publicApi = assign(
     {
       version: __BUILD_ENV__SDK_VERSION__,
@@ -43,7 +43,7 @@ export function makePublicApi<T>(stub: T): T & PublicApi {
     enumerable: false,
   })
 
-  return publicApi
+  return publicApi as T
 }
 
 export function defineGlobal<Global, Name extends keyof Global>(global: Global, name: Name, api: Global[Name]) {

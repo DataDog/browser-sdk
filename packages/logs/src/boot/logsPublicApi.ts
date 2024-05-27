@@ -168,7 +168,7 @@ export interface Strategy {
   handleLog: StartLogsResult['handleLog']
 }
 
-export function makeLogsPublicApi(startLogsImpl: StartLogs) {
+export function makeLogsPublicApi(startLogsImpl: StartLogs): LogsPublicApi {
   const customerDataTrackerManager = createCustomerDataTrackerManager()
   const globalContextManager = createContextManager(
     customerDataTrackerManager.getOrCreateTracker(CustomerDataType.GlobalContext)
@@ -199,12 +199,12 @@ export function makeLogsPublicApi(startLogsImpl: StartLogs) {
     customerDataTrackerManager.createDetachedTracker()
   )
 
-  return makePublicApi({
+  return makePublicApi<LogsPublicApi>({
     logger: mainLogger,
 
-    init: monitor((initConfiguration: LogsInitConfiguration) => strategy.init(initConfiguration)),
+    init: monitor((initConfiguration) => strategy.init(initConfiguration)),
 
-    setTrackingConsent: monitor((trackingConsent: TrackingConsent) => {
+    setTrackingConsent: monitor((trackingConsent) => {
       trackingConsentState.update(trackingConsent)
       addTelemetryUsage({ feature: 'set-tracking-consent', tracking_consent: trackingConsent })
     }),
@@ -219,7 +219,7 @@ export function makeLogsPublicApi(startLogsImpl: StartLogs) {
 
     clearGlobalContext: monitor(() => globalContextManager.clearContext()),
 
-    createLogger: monitor((name: string, conf: LoggerConfiguration = {}) => {
+    createLogger: monitor((name, conf = {}) => {
       customLoggers[name] = new Logger(
         (...params) => strategy.handleLog(...params),
         customerDataTrackerManager.createDetachedTracker(),
@@ -232,13 +232,13 @@ export function makeLogsPublicApi(startLogsImpl: StartLogs) {
       return customLoggers[name]!
     }),
 
-    getLogger: monitor((name: string) => customLoggers[name]),
+    getLogger: monitor((name) => customLoggers[name]),
 
     getInitConfiguration: monitor(() => deepClone(strategy.initConfiguration)),
 
-    getInternalContext: monitor((startTime?: number | undefined) => strategy.getInternalContext(startTime)),
+    getInternalContext: monitor((startTime) => strategy.getInternalContext(startTime)),
 
-    setUser: monitor((newUser: User) => {
+    setUser: monitor((newUser) => {
       if (checkUser(newUser)) {
         userContextManager.setContext(sanitizeUser(newUser as Context))
       }

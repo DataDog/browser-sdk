@@ -394,10 +394,10 @@ export function makeRumPublicApi(
     strategy.startView(sanitizedOptions)
     addTelemetryUsage({ feature: 'start-view' })
   })
-  const rumPublicApi = makePublicApi({
-    init: monitor((initConfiguration: RumInitConfiguration) => strategy.init(initConfiguration)),
+  const rumPublicApi = makePublicApi<RumPublicApi>({
+    init: monitor((initConfiguration) => strategy.init(initConfiguration)),
 
-    setTrackingConsent: monitor((trackingConsent: TrackingConsent) => {
+    setTrackingConsent: monitor((trackingConsent) => {
       trackingConsentState.update(trackingConsent)
       addTelemetryUsage({ feature: 'set-tracking-consent', tracking_consent: trackingConsent })
     }),
@@ -418,11 +418,11 @@ export function makeRumPublicApi(
 
     clearGlobalContext: monitor(() => globalContextManager.clearContext()),
 
-    getInternalContext: monitor((startTime?: number) => strategy.getInternalContext(startTime)),
+    getInternalContext: monitor((startTime) => strategy.getInternalContext(startTime)),
 
     getInitConfiguration: monitor(() => deepClone(strategy.initConfiguration)),
 
-    addAction: monitor((name: string, context?: object) => {
+    addAction: monitor((name, context) => {
       strategy.addAction({
         name: sanitize(name)!,
         context: sanitize(context) as Context,
@@ -432,7 +432,7 @@ export function makeRumPublicApi(
       addTelemetryUsage({ feature: 'add-action' })
     }),
 
-    addError: (error: unknown, context?: object) => {
+    addError: (error, context) => {
       const handlingStack = createHandlingStack()
       callMonitored(() => {
         strategy.addError({
@@ -445,12 +445,12 @@ export function makeRumPublicApi(
       })
     },
 
-    addTiming: monitor((name: string, time?: number) => {
+    addTiming: monitor((name, time) => {
       // TODO: next major decide to drop relative time support or update its behaviour
       strategy.addTiming(sanitize(name)!, time as RelativeTime | TimeStamp | undefined)
     }),
 
-    setUser: monitor((newUser: User) => {
+    setUser: monitor((newUser) => {
       if (checkUser(newUser)) {
         userContextManager.setContext(sanitizeUser(newUser as Context))
       }
@@ -476,7 +476,7 @@ export function makeRumPublicApi(
       addTelemetryUsage({ feature: 'stop-session' })
     }),
 
-    addFeatureFlagEvaluation: monitor((key: string, value: any) => {
+    addFeatureFlagEvaluation: monitor((key, value) => {
       strategy.addFeatureFlagEvaluation(sanitize(key)!, sanitize(value))
       addTelemetryUsage({ feature: 'add-feature-flag-evaluation' })
     }),
