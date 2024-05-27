@@ -131,23 +131,23 @@ describe('action collection', () => {
 
       expect(actionEvents.length).toBe(1)
       expect(actionEvents[0].action).toEqual({
+        type: 'click',
+        id: jasmine.any(String) as unknown as string,
+        loading_time: jasmine.any(Number) as unknown as number,
+        target: {
+          name: 'click me',
+        },
+        frustration: {
+          type: [],
+        },
         error: {
           count: 0,
         },
-        id: jasmine.any(String) as unknown as string,
-        loading_time: jasmine.any(Number) as unknown as number,
         long_task: {
           count: jasmine.any(Number) as unknown as number,
         },
         resource: {
           count: 1,
-        },
-        target: {
-          name: 'click me',
-        },
-        type: 'click',
-        frustration: {
-          type: [],
         },
       })
 

@@ -114,9 +114,9 @@ describe('logger collection', () => {
       expect(rawLogsEvents[0]).toEqual({
         rawLogsEvent: {
           date: timeStampNow(),
-          origin: ErrorSource.LOGGER,
           message: 'message',
           status: StatusType.error,
+          origin: ErrorSource.LOGGER,
         },
         messageContext: {
           foo: 'from-logger',

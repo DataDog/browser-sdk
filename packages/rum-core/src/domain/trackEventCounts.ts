@@ -23,9 +23,9 @@ export function trackEventCounts({
 }) {
   const eventCounts: EventCounts = {
     errorCount: 0,
+    actionCount: 0,
     longTaskCount: 0,
     resourceCount: 0,
-    actionCount: 0,
     frustrationCount: 0,
   }
 

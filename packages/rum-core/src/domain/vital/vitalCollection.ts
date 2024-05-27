@@ -70,15 +70,15 @@ function buildDurationVital(vitalStart: DurationVitalStart, vitalStop: DurationV
 function processVital(vital: DurationVital, valueComputedBySdk: boolean): RawRumEventCollectedData<RawRumVitalEvent> {
   const rawRumEvent: RawRumVitalEvent = {
     date: vital.startClocks.timeStamp,
+    type: RumEventType.VITAL,
     vital: {
       id: generateUUID(),
-      type: vital.type,
       name: vital.name,
+      type: vital.type,
       custom: {
         [vital.name]: vital.value,
       },
     },
-    type: RumEventType.VITAL,
   }
 
   if (valueComputedBySdk) {
@@ -90,9 +90,9 @@ function processVital(vital: DurationVital, valueComputedBySdk: boolean): RawRum
   }
 
   return {
-    rawRumEvent,
     startTime: vital.startClocks.relative,
     customerContext: vital.context,
+    rawRumEvent,
     domainContext: {},
   }
 }

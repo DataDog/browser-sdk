@@ -278,16 +278,16 @@ describe('recorder with shadow DOM', () => {
         intakeRegistry.replaySegments[0]
       )
       validate({
-        adds: [
-          {
-            parent: expectInitialNode({ tag: 'div' }),
-            node: expectNewNode({ type: NodeType.Text, textContent: 'titi' }),
-          },
-        ],
         removes: [
           {
-            parent: expectInitialNode({ tag: 'div' }),
             node: expectInitialNode({ text: 'toto' }),
+            parent: expectInitialNode({ tag: 'div' }),
+          },
+        ],
+        adds: [
+          {
+            node: expectNewNode({ type: NodeType.Text, textContent: 'titi' }),
+            parent: expectInitialNode({ tag: 'div' }),
           },
         ],
       })

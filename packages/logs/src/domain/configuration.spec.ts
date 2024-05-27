@@ -68,8 +68,8 @@ describe('validateAndBuildLogsConfiguration', () => {
       expect(
         validateAndBuildLogsConfiguration({
           ...DEFAULT_INIT_CONFIGURATION,
-          forwardConsoleLogs: ['error'],
           forwardErrorsToLogs: true,
+          forwardConsoleLogs: ['error'],
         })!.forwardConsoleLogs
       ).toEqual(['error'])
     })

@@ -110,14 +110,14 @@ class TestBuilder {
     const setups = this.setups.length ? this.setups : DEFAULT_SETUPS
 
     const setupOptions: SetupOptions = {
-      body: this.body,
-      head: this.head,
-      logs: this.logsConfiguration,
       rum: this.rumConfiguration,
-      rumInit: this.rumInit,
-      logsInit: this.logsInit,
       useRumSlim: false,
+      logs: this.logsConfiguration,
+      logsInit: this.logsInit,
+      rumInit: this.rumInit,
       eventBridge: this.eventBridge,
+      head: this.head,
+      body: this.body,
       basePath: this.basePath,
       context: {
         run_id: getRunId(),

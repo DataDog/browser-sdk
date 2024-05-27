@@ -10,11 +10,11 @@ export function trackReportError(configuration: RumConfiguration, errorObservabl
     const rawError: RawError = {
       startClocks: clocksNow(),
       message: reportError.message,
-      stack: reportError.stack,
       type: reportError.subtype,
+      stack: reportError.stack,
       source: ErrorSource.REPORT,
-      handling: ErrorHandling.UNHANDLED,
       originalError: reportError.originalReport,
+      handling: ErrorHandling.UNHANDLED,
     }
 
     if (reportError.originalReport.type === 'securitypolicyviolation') {

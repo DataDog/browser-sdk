@@ -109,8 +109,8 @@ export function SettingsTab() {
                     value={eventCollectionStrategy}
                     size="xs"
                     data={[
-                      { label: 'SDK', value: 'sdk' },
-                      { label: 'Requests', value: 'requests' },
+                      { value: 'sdk', label: 'SDK' },
+                      { value: 'requests', label: 'Requests' },
                     ]}
                     onChange={(value) => setSetting('eventCollectionStrategy', value as EventCollectionStrategy)}
                   />

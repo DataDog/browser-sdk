@@ -67,13 +67,13 @@ describe('network error collection', () => {
 
     fetchStubManager.whenAllComplete(() => {
       expect(rawLogsEvents[0].rawLogsEvent).toEqual({
-        message: 'Fetch error GET http://fake.com/',
         date: jasmine.any(Number),
+        message: 'Fetch error GET http://fake.com/',
         status: StatusType.error,
-        origin: ErrorSource.NETWORK,
         error: {
           stack: 'Server error',
         },
+        origin: ErrorSource.NETWORK,
         http: {
           method: 'GET',
           status_code: 503,

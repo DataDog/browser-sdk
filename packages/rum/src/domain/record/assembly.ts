@@ -7,13 +7,13 @@ export function assembleIncrementalSnapshot<Data extends BrowserIncrementalData>
   data: Omit<Data, 'source'>
 ): BrowserIncrementalSnapshotRecord {
   return {
+    timestamp: timeStampNow(),
+    type: RecordType.IncrementalSnapshot,
     data: assign(
       {
         source,
       },
       data
     ) as Data,
-    type: RecordType.IncrementalSnapshot,
-    timestamp: timeStampNow(),
   }
 }

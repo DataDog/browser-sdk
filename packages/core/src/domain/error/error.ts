@@ -40,13 +40,13 @@ export function computeRawError({
 
   return {
     startClocks,
+    message,
+    type,
+    stack,
     source,
+    originalError,
     handling,
     handlingStack,
-    originalError,
-    type,
-    message,
-    stack,
     causes,
     fingerprint,
   }

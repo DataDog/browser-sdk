@@ -31,7 +31,7 @@ export async function startMemoryProfiling(options: ProfilingOptions, client: CD
           sdkConsumption += consumption
         }
       }
-      measurements.push({ totalConsumption, sdkConsumption })
+      measurements.push({ sdkConsumption, totalConsumption })
     },
 
     stopMemoryProfiling: async () => {

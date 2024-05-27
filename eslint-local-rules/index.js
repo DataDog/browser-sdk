@@ -16,4 +16,5 @@ module.exports = {
   'disallow-url-constructor-patched-values': require('./disallowUrlConstructorPatchValues.js'),
   'disallow-generic-utils': require('./disallowGenericUtils'),
   'secure-command-execution': require('./secureCommandExecution'),
+  'object-key-order': require('./objectKeyOrder'),
 }

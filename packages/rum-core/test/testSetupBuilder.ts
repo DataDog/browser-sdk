@@ -113,10 +113,10 @@ export function setup(): TestSetupBuilder {
   const userContextManager = createContextManager(customerDataTrackerManager.getOrCreateTracker(CustomerDataType.User))
   let pageStateHistory: PageStateHistory = {
     findAll: () => undefined,
-    addPageState: noop,
-    stop: noop,
     wasInPageStateAt: () => false,
     wasInPageStateDuringPeriod: () => false,
+    addPageState: noop,
+    stop: noop,
   }
   const FAKE_APP_ID = 'appId'
   const configuration: RumConfiguration = {
@@ -145,11 +145,6 @@ export function setup(): TestSetupBuilder {
   }
 
   const setupBuilder: TestSetupBuilder = {
-    domMutationObservable,
-    get clock() {
-      return clock
-    },
-
     withFakeLocation(initialUrl: string) {
       fakeLocation = buildLocation(initialUrl)
       return setupBuilder
@@ -187,22 +182,26 @@ export function setup(): TestSetupBuilder {
       beforeBuildTasks.push(callback)
       return setupBuilder
     },
+    get clock() {
+      return clock
+    },
+    domMutationObservable,
     build() {
       beforeBuildTasks.forEach((task) => {
         const result = task({
           lifeCycle,
           domMutationObservable,
           locationChangeObservable,
+          configuration,
+          sessionManager,
+          location: fakeLocation as Location,
+          applicationId: FAKE_APP_ID,
           viewContexts,
-          urlContexts,
           actionContexts,
           displayContext,
           pageStateHistory,
           featureFlagContexts,
-          sessionManager,
-          applicationId: FAKE_APP_ID,
-          configuration,
-          location: fakeLocation as Location,
+          urlContexts,
           globalContextManager,
           userContextManager,
           customerDataTrackerManager,
@@ -212,13 +211,13 @@ export function setup(): TestSetupBuilder {
         }
       })
       return {
-        clock,
-        fakeLocation,
         lifeCycle,
         domMutationObservable,
-        rawRumEvents,
-        sessionManager,
         changeLocation,
+        clock,
+        fakeLocation,
+        sessionManager,
+        rawRumEvents,
       }
     },
   }
@@ -234,18 +233,10 @@ export function setup(): TestSetupBuilder {
 function validateRumEventFormat(rawRumEvent: RawRumEvent) {
   const fakeId = '00000000-aaaa-0000-aaaa-000000000000'
   const fakeContext: RumContext = {
-    _dd: {
-      format_version: 2,
-      drift: 0,
-      configuration: {
-        session_sample_rate: 40,
-        session_replay_sample_rate: 60,
-      },
-    },
+    date: 0 as TimeStamp,
     application: {
       id: fakeId,
     },
-    date: 0 as TimeStamp,
     source: 'browser',
     session: {
       id: fakeId,
@@ -260,6 +251,14 @@ function validateRumEventFormat(rawRumEvent: RawRumEvent) {
       status: 'connected',
       interfaces: ['wifi'],
       effective_type: '4g',
+    },
+    _dd: {
+      format_version: 2,
+      drift: 0,
+      configuration: {
+        session_sample_rate: 40,
+        session_replay_sample_rate: 60,
+      },
     },
   }
   validateRumFormat(combine(fakeContext as RumContext & Context, rawRumEvent))

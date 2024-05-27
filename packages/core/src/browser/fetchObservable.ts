@@ -66,12 +66,12 @@ function beforeSend(
   const startClocks = clocksNow()
 
   const context: FetchStartContext = {
-    state: 'start',
-    init,
-    input,
     method,
     startClocks,
+    input,
+    init,
     url,
+    state: 'start',
   }
 
   observable.notify(context)

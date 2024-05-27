@@ -65,16 +65,16 @@ export class Logger {
       const rawError = computeRawError({
         stackTrace,
         originalError: error,
+        startClocks: clocksNow(),
         nonErrorPrefix: NonErrorPrefix.PROVIDED,
         source: ErrorSource.LOGGER,
         handling: ErrorHandling.HANDLED,
-        startClocks: clocksNow(),
       })
 
       errorContext = {
-        stack: rawError.stack,
-        kind: rawError.type,
         message: rawError.message,
+        kind: rawError.type,
+        stack: rawError.stack,
         causes: rawError.causes,
       }
     }
@@ -88,8 +88,8 @@ export class Logger {
     this.handleLogStrategy(
       {
         message: sanitize(message)!,
-        context,
         status,
+        context,
       },
       this
     )

@@ -52,52 +52,48 @@ function processViewUpdate(
   const featureFlagContext = featureFlagContexts.findFeatureFlagEvaluations(view.startClocks.relative)
   const pageStates = pageStateHistory.findAll(view.startClocks.relative, view.duration)
   const viewEvent: RawRumViewEvent = {
-    _dd: {
-      document_version: view.documentVersion,
-      replay_stats: replayStats,
-      page_states: pageStates,
-      configuration: {
-        start_session_replay_recording_manually: configuration.startSessionReplayRecordingManually,
-      },
-    },
     date: view.startClocks.timeStamp,
     type: RumEventType.VIEW,
     view: {
-      action: {
-        count: view.eventCounts.actionCount,
-      },
-      frustration: {
-        count: view.eventCounts.frustrationCount,
-      },
-      cumulative_layout_shift: view.commonViewMetrics.cumulativeLayoutShift?.value,
-      cumulative_layout_shift_target_selector: view.commonViewMetrics.cumulativeLayoutShift?.targetSelector,
+      loading_type: view.loadingType,
       first_byte: toServerDuration(view.initialViewMetrics.navigationTimings?.firstByte),
-      dom_complete: toServerDuration(view.initialViewMetrics.navigationTimings?.domComplete),
-      dom_content_loaded: toServerDuration(view.initialViewMetrics.navigationTimings?.domContentLoaded),
-      dom_interactive: toServerDuration(view.initialViewMetrics.navigationTimings?.domInteractive),
-      error: {
-        count: view.eventCounts.errorCount,
-      },
       first_contentful_paint: toServerDuration(view.initialViewMetrics.firstContentfulPaint),
       first_input_delay: toServerDuration(view.initialViewMetrics.firstInput?.delay),
       first_input_time: toServerDuration(view.initialViewMetrics.firstInput?.time),
       first_input_target_selector: view.initialViewMetrics.firstInput?.targetSelector,
       interaction_to_next_paint: toServerDuration(view.commonViewMetrics.interactionToNextPaint?.value),
       interaction_to_next_paint_target_selector: view.commonViewMetrics.interactionToNextPaint?.targetSelector,
-      is_active: view.isActive,
-      name: view.name,
+      cumulative_layout_shift: view.commonViewMetrics.cumulativeLayoutShift?.value,
+      cumulative_layout_shift_target_selector: view.commonViewMetrics.cumulativeLayoutShift?.targetSelector,
       largest_contentful_paint: toServerDuration(view.initialViewMetrics.largestContentfulPaint?.value),
       largest_contentful_paint_target_selector: view.initialViewMetrics.largestContentfulPaint?.targetSelector,
+      dom_interactive: toServerDuration(view.initialViewMetrics.navigationTimings?.domInteractive),
+      dom_content_loaded: toServerDuration(view.initialViewMetrics.navigationTimings?.domContentLoaded),
+      dom_complete: toServerDuration(view.initialViewMetrics.navigationTimings?.domComplete),
       load_event: toServerDuration(view.initialViewMetrics.navigationTimings?.loadEvent),
       loading_time: discardNegativeDuration(toServerDuration(view.commonViewMetrics.loadingTime)),
-      loading_type: view.loadingType,
+      time_spent: toServerDuration(view.duration),
+      is_active: view.isActive,
+      name: view.name,
+      error: {
+        count: view.eventCounts.errorCount,
+      },
+      action: {
+        count: view.eventCounts.actionCount,
+      },
       long_task: {
         count: view.eventCounts.longTaskCount,
       },
       resource: {
         count: view.eventCounts.resourceCount,
       },
-      time_spent: toServerDuration(view.duration),
+      frustration: {
+        count: view.eventCounts.frustrationCount,
+      },
+    },
+    session: {
+      has_replay: replayStats ? true : undefined,
+      is_active: view.sessionIsActive ? undefined : false,
     },
     feature_flags: featureFlagContext && !isEmptyObject(featureFlagContext) ? featureFlagContext : undefined,
     display: view.commonViewMetrics.scroll
@@ -110,12 +106,16 @@ function processViewUpdate(
           },
         }
       : undefined,
-    session: {
-      has_replay: replayStats ? true : undefined,
-      is_active: view.sessionIsActive ? undefined : false,
-    },
     privacy: {
       replay_level: configuration.defaultPrivacyLevel,
+    },
+    _dd: {
+      document_version: view.documentVersion,
+      replay_stats: replayStats,
+      page_states: pageStates,
+      configuration: {
+        start_session_replay_recording_manually: configuration.startSessionReplayRecordingManually,
+      },
     },
   }
   if (!isEmptyObject(view.customTimings)) {
@@ -125,8 +125,8 @@ function processViewUpdate(
     )
   }
   return {
-    rawRumEvent: viewEvent,
     startTime: view.startClocks.relative,
+    rawRumEvent: viewEvent,
     domainContext: {
       location: view.location,
     },

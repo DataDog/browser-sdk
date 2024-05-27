@@ -98,6 +98,10 @@ function initColumnDrag(
 
       state = {
         targetRect: targetCell.getBoundingClientRect(),
+        startPosition: position,
+        position,
+        action: undefined,
+        moved: false,
         insertPlaces: siblings.flatMap((sibling, index) => {
           if (sibling === targetCell) {
             return []
@@ -107,10 +111,6 @@ function initColumnDrag(
             index,
           }
         }),
-        startPosition: position,
-        position,
-        moved: false,
-        action: undefined,
         column: columns[columnIndex],
       }
       onColumnDragStateChanges(state)
@@ -132,7 +132,7 @@ function initColumnDrag(
         }
       }
 
-      state = { ...state, action, position, moved: true }
+      state = { ...state, position, action, moved: true }
       onColumnDragStateChanges(state)
     },
 

@@ -57,8 +57,8 @@ function computeIntakeRequestInfos(req: express.Request): IntakeRequestInfos {
     const eventType = req.query.event_type
     return {
       isBridge: true,
-      encoding,
       intakeType: eventType === 'log' ? 'logs' : eventType === 'record' ? 'replay' : 'rum',
+      encoding,
     }
   }
 
@@ -72,8 +72,8 @@ function computeIntakeRequestInfos(req: express.Request): IntakeRequestInfos {
   }
   return {
     isBridge: false,
-    encoding,
     intakeType,
+    encoding,
   }
 }
 

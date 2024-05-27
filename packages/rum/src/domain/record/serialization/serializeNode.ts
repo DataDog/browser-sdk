@@ -71,8 +71,8 @@ function serializeNode(node: Node, options: SerializeOptions): SerializedNode | 
 export function serializeDocumentNode(document: Document, options: SerializeOptions): DocumentNode {
   return {
     type: NodeType.Document,
-    childNodes: serializeChildNodes(document, options),
     adoptedStyleSheets: serializeStyleSheets(document.adoptedStyleSheets),
+    childNodes: serializeChildNodes(document, options),
   }
 }
 
@@ -87,9 +87,9 @@ function serializeDocumentFragmentNode(
 
   return {
     type: NodeType.DocumentFragment,
-    childNodes: serializeChildNodes(element, options),
-    isShadowRoot,
     adoptedStyleSheets: isShadowRoot ? serializeStyleSheets(element.adoptedStyleSheets) : undefined,
+    isShadowRoot,
+    childNodes: serializeChildNodes(element, options),
   }
 }
 

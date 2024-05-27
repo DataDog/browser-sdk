@@ -52,18 +52,18 @@ export function startNetworkErrorCollection(configuration: LogsConfiguration, li
 
       lifeCycle.notify(LifeCycleEventType.RAW_LOG_COLLECTED, {
         rawLogsEvent: {
-          message: `${format(type)} error ${request.method} ${request.url}`,
           date: request.startClocks.timeStamp,
+          message: `${format(type)} error ${request.method} ${request.url}`,
+          status: StatusType.error,
           error: {
             stack: (responseData as string) || 'Failed to load',
           },
+          origin: ErrorSource.NETWORK,
           http: {
             method: request.method as any, // Cast resource method because of case mismatch cf issue RUMF-1152
             status_code: request.status,
             url: request.url,
           },
-          status: StatusType.error,
-          origin: ErrorSource.NETWORK,
         },
         domainContext,
       })

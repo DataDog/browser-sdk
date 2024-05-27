@@ -44,7 +44,7 @@ export function initInteractionCountPolyfill() {
     })
   )
 
-  observer.observe({ type: 'event', buffered: true, durationThreshold: 0 })
+  observer.observe({ buffered: true, type: 'event', durationThreshold: 0 })
 }
 
 /**

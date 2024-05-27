@@ -47,8 +47,8 @@ describe('console collection', () => {
         date: jasmine.any(Number),
         message: 'foo bar',
         status,
-        origin: ErrorSource.CONSOLE,
         error: whatever(),
+        origin: ErrorSource.CONSOLE,
       })
 
       expect(consoleSpies[api]).toHaveBeenCalled()
@@ -117,16 +117,16 @@ describe('console collection', () => {
       fingerprint: undefined,
       causes: [
         {
+          message: 'Mid level error',
           source: ErrorSource.CONSOLE,
           type: 'Error',
           stack: jasmine.any(String),
-          message: 'Mid level error',
         },
         {
+          message: 'Low level error',
           source: ErrorSource.CONSOLE,
           type: 'TypeError',
           stack: jasmine.any(String),
-          message: 'Low level error',
         },
       ],
     })

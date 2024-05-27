@@ -108,8 +108,8 @@ export function computePerformanceResourceDetails(
   } = entry
 
   const details: PerformanceResourceDetails = {
-    download: formatTiming(startTime, responseStart, responseEnd),
     first_byte: formatTiming(startTime, requestStart, responseStart),
+    download: formatTiming(startTime, responseStart, responseEnd),
   }
 
   // Make sure a connection occurred

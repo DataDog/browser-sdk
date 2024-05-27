@@ -9,10 +9,10 @@ export function initEventBridgeStub({
   capabilities = [BridgeCapability.RECORDS],
 }: { allowedWebViewHosts?: string[]; privacyLevel?: DefaultPrivacyLevel; capabilities?: BridgeCapability[] } = {}) {
   const eventBridgeStub: DatadogEventBridge = {
-    send: (_msg: string) => undefined,
-    getAllowedWebViewHosts: () => JSON.stringify(allowedWebViewHosts),
     getCapabilities: () => JSON.stringify(capabilities),
     getPrivacyLevel: () => privacyLevel,
+    getAllowedWebViewHosts: () => JSON.stringify(allowedWebViewHosts),
+    send: (_msg: string) => undefined,
   }
 
   ;(window as BrowserWindowWithEventBridge).DatadogEventBridge = eventBridgeStub

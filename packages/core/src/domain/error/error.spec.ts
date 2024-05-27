@@ -40,8 +40,8 @@ describe('computeRawError', () => {
     describe('from an error instance', () => {
       it('should format', () => {
         const stackTrace: StackTrace = {
-          message: 'oh snap!',
           name: 'TypeError',
+          message: 'oh snap!',
           stack: DEFAULT_STACK,
         }
 
@@ -62,8 +62,8 @@ describe('computeRawError', () => {
 
       it('should format with an empty message', () => {
         const stackTrace: StackTrace = {
-          message: '',
           name: 'TypeError',
+          message: '',
           stack: DEFAULT_STACK,
         }
 
@@ -176,8 +176,8 @@ describe('computeRawError', () => {
 
   it('should compute an object error with causes', () => {
     const stackTrace: StackTrace = {
-      message: 'some typeError message',
       name: 'TypeError',
+      message: 'some typeError message',
       stack: [
         {
           url: '<fake url>',
@@ -203,8 +203,8 @@ describe('computeRawError', () => {
       ...DEFAULT_RAW_ERROR_PARAMS,
       stackTrace,
       originalError: error,
-      handling: ErrorHandling.HANDLED,
       source: ErrorSource.SOURCE,
+      handling: ErrorHandling.HANDLED,
     })
 
     expect(formatted?.type).toEqual('TypeError')
@@ -228,8 +228,8 @@ describe('computeRawError', () => {
   it('should propagate the original error without modifications', () => {
     const error = { description: 'syntax error' }
     const stackTrace: StackTrace = {
-      message: 'some syntax message',
       name: 'SyntaxError',
+      message: 'some syntax message',
       stack: [],
     }
 

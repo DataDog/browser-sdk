@@ -47,8 +47,8 @@ export function createFakeClick({
     event: createNewEvent('pointerup', {
       clientX: 100,
       clientY: 100,
-      timeStamp: timeStampNow(),
       target: document.body,
+      timeStamp: timeStampNow(),
       ...event,
     }),
   }

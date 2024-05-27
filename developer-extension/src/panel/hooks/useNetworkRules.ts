@@ -11,10 +11,10 @@ export function useNetworkRules({
     sendMessageToBackground({
       type: 'update-net-request-rules',
       options: {
-        blockIntakeRequests,
+        tabId: chrome.devtools.inspectedWindow.tabId,
         useDevBundles,
         useRumSlim,
-        tabId: chrome.devtools.inspectedWindow.tabId,
+        blockIntakeRequests,
       },
     })
   }, [blockIntakeRequests, useDevBundles, useRumSlim])

@@ -60,8 +60,8 @@ module.exports = ({ entry, mode, filename, types, keepBuildEnvVariables }) => ({
           // but don't append the source map comment to bundles as we don't upload the source map to
           // the CDN (yet).
           {
-            filename: '[file].map',
             append: false,
+            filename: '[file].map',
           }
     ),
     createDefinePlugin({ keepBuildEnvVariables }),

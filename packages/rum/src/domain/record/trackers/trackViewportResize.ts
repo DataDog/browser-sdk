@@ -39,9 +39,9 @@ export function tackVisualViewportResize(
   const { throttled: updateDimension, cancel: cancelThrottle } = throttle(
     () => {
       visualViewportResizeCb({
+        timestamp: timeStampNow(),
         data: getVisualViewport(visualViewport),
         type: RecordType.VisualViewport,
-        timestamp: timeStampNow(),
       })
     },
     VISUAL_VIEWPORT_OBSERVER_THRESHOLD,

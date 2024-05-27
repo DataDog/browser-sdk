@@ -23,10 +23,10 @@ export function makePublicApi<T>(stub: T): T & { onReady(callback: () => void): 
   // Add a "hidden" property to set debug mode. We define it that way to hide it
   // as much as possible but of course it's not a real protection.
   Object.defineProperty(publicApi, '_setDebug', {
+    enumerable: false,
     get() {
       return setDebugMode
     },
-    enumerable: false,
   })
 
   return publicApi

@@ -437,11 +437,11 @@ describe('view metrics', () => {
 
       expect(getViewUpdateCount()).toEqual(2)
       expect(getViewUpdate(1).initialViewMetrics.navigationTimings).toEqual({
-        firstByte: 123 as Duration,
         domComplete: 456 as Duration,
         domContentLoaded: 345 as Duration,
         domInteractive: 234 as Duration,
         loadEvent: 567 as Duration,
+        firstByte: 123 as Duration,
       })
     })
 
@@ -515,8 +515,8 @@ describe('view metrics', () => {
         expect(getViewUpdateCount()).toEqual(4)
 
         initialView = {
-          end: getViewUpdate(1),
           init: getViewUpdate(0),
+          end: getViewUpdate(1),
           last: getViewUpdate(3),
         }
         secondView = {
@@ -858,8 +858,8 @@ describe('view event count', () => {
     clock.tick(KEEP_TRACKING_AFTER_VIEW_DELAY - 1)
 
     lifeCycle.notify(LifeCycleEventType.RUM_EVENT_COLLECTED, {
-      type: RumEventType.RESOURCE,
       view: { id: firstView.id },
+      type: RumEventType.RESOURCE,
     } as RumEvent & Context)
 
     clock.tick(THROTTLE_VIEW_UPDATE_PERIOD)
@@ -879,8 +879,8 @@ describe('view event count', () => {
     clock.tick(KEEP_TRACKING_AFTER_VIEW_DELAY)
 
     lifeCycle.notify(LifeCycleEventType.RUM_EVENT_COLLECTED, {
-      type: RumEventType.RESOURCE,
       view: { id: firstView.id },
+      type: RumEventType.RESOURCE,
     } as RumEvent & Context)
 
     clock.tick(THROTTLE_VIEW_UPDATE_PERIOD)
@@ -891,9 +891,9 @@ describe('view event count', () => {
 
   function createFakeActionEvent() {
     return {
+      view: viewTest.getLatestViewContext(),
       type: RumEventType.ACTION,
       action: {},
-      view: viewTest.getLatestViewContext(),
     } as RumEvent & Context
   }
 })

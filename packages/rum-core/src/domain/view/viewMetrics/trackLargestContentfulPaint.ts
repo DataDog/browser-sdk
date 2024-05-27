@@ -41,7 +41,7 @@ export function trackLargestContentfulPaint(
     (event) => {
       firstInteractionTimestamp = event.timeStamp
     },
-    { capture: true, once: true }
+    { once: true, capture: true }
   )
 
   let biggestLcpSize = 0

@@ -32,15 +32,15 @@ function sendError(workerScope: WorkerScope, error: unknown, streamId?: number) 
   try {
     workerScope.postMessage({
       type: 'errored',
-      error: error as Error,
       streamId,
+      error: error as Error,
     })
   } catch (_) {
     // DATA_CLONE_ERR, cf https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API/Structured_clone_algorithm
     workerScope.postMessage({
       type: 'errored',
-      error: String(error),
       streamId,
+      error: String(error),
     })
   }
 }

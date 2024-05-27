@@ -10,8 +10,8 @@ export function serializeDocument(
 ): SerializedNodeWithId {
   // We are sure that Documents are never ignored, so this function never returns null
   return serializeNodeWithId(document, {
-    serializationContext,
     parentNodePrivacyLevel: configuration.defaultPrivacyLevel,
+    serializationContext,
     configuration,
   })!
 }

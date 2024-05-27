@@ -16,13 +16,13 @@ import {
   SEGMENT_DURATION_LIMIT,
 } from './segmentCollection'
 
-const CONTEXT: SegmentContext = { application: { id: 'a' }, view: { id: 'b' }, session: { id: 'c' } }
-const RECORD: BrowserRecord = { type: RecordType.ViewEnd, timestamp: 10 as TimeStamp }
+const CONTEXT: SegmentContext = { application: { id: 'a' }, session: { id: 'c' }, view: { id: 'b' } }
+const RECORD: BrowserRecord = { timestamp: 10 as TimeStamp, type: RecordType.ViewEnd }
 
 // A record that will make the segment size reach the SEGMENT_BYTES_LIMIT
 const VERY_BIG_RECORD: BrowserRecord = {
-  type: RecordType.FullSnapshot,
   timestamp: 10 as TimeStamp,
+  type: RecordType.FullSnapshot,
   data: Array(SEGMENT_BYTES_LIMIT).join('a') as any,
 }
 

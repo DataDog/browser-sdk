@@ -93,8 +93,8 @@ describe('readBytesFromStream', () => {
 
   it('should handle rejection error on cancel', (done) => {
     const stream = new ReadableStream({
-      pull: (controller) => controller.enqueue(new TextEncoder().encode('f')),
       cancel: () => Promise.reject(new Error('foo')),
+      pull: (controller) => controller.enqueue(new TextEncoder().encode('f')),
     })
 
     readBytesFromStream(
@@ -121,8 +121,8 @@ describe('readBytesFromStream', () => {
     const bytesLimit = 64
 
     const stream = new ReadableStream({
-      pull: pullSpy,
       cancel: cancelSpy,
+      pull: pullSpy,
     })
 
     readBytesFromStream(

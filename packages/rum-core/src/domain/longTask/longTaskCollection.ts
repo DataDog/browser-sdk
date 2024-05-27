@@ -24,18 +24,18 @@ export function startLongTaskCollection(
       const startClocks = relativeToClocks(entry.startTime)
       const rawRumEvent: RawRumLongTaskEvent = {
         date: startClocks.timeStamp,
+        type: RumEventType.LONG_TASK,
         long_task: {
           id: generateUUID(),
           duration: toServerDuration(entry.duration),
         },
-        type: RumEventType.LONG_TASK,
         _dd: {
           discarded: false,
         },
       }
       lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, {
-        rawRumEvent,
         startTime: startClocks.relative,
+        rawRumEvent,
         domainContext: { performanceEntry: entry },
       })
     }

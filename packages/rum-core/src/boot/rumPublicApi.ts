@@ -233,10 +233,10 @@ export function makeRumPublicApi(startRumImpl: StartRum, recorderApi: RecorderAp
 
     addAction: monitor((name: string, context?: object) => {
       strategy.addAction({
-        name: sanitize(name)!,
-        context: sanitize(context) as Context,
-        startClocks: clocksNow(),
         type: ActionType.CUSTOM,
+        name: sanitize(name)!,
+        startClocks: clocksNow(),
+        context: sanitize(context) as Context,
       })
       addTelemetryUsage({ feature: 'add-action' })
     }),
@@ -245,10 +245,10 @@ export function makeRumPublicApi(startRumImpl: StartRum, recorderApi: RecorderAp
       const handlingStack = createHandlingStack()
       callMonitored(() => {
         strategy.addError({
-          error, // Do not sanitize error here, it is needed unserialized by computeRawError()
-          handlingStack,
-          context: sanitize(context) as Context,
           startClocks: clocksNow(),
+          error, // Do not sanitize error here, it is needed unserialized by computeRawError()
+          context: sanitize(context) as Context,
+          handlingStack,
         })
         addTelemetryUsage({ feature: 'add-error' })
       })

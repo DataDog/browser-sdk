@@ -42,8 +42,8 @@ describe('customerDataTelemetry', () => {
     setupBuilder = setup()
       .withFakeClock()
       .withConfiguration({
-        telemetrySampleRate: 100,
         customerDataTelemetrySampleRate: 100,
+        telemetrySampleRate: 100,
         maxTelemetryEventsPerPage: 2,
       })
       .beforeBuild(({ configuration, customerDataTrackerManager }) => {
@@ -78,8 +78,8 @@ describe('customerDataTelemetry', () => {
   it('should collect customer data telemetry', () => {
     const { clock } = setupBuilder.build()
 
-    generateBatch({ eventNumber: 10, contextBytesCount: 10, batchBytesCount: 10 })
-    generateBatch({ eventNumber: 1, contextBytesCount: 1, batchBytesCount: 1 })
+    generateBatch({ eventNumber: 10, batchBytesCount: 10, contextBytesCount: 10 })
+    generateBatch({ eventNumber: 1, batchBytesCount: 1, contextBytesCount: 1 })
     clock.tick(MEASURES_PERIOD_DURATION)
 
     expect(telemetryEvents[0].telemetry).toEqual(
@@ -139,7 +139,7 @@ describe('customerDataTelemetry', () => {
 
   it('should not collect customer data telemetry when telemetry disabled', () => {
     const { clock } = setupBuilder
-      .withConfiguration({ telemetrySampleRate: 100, customerDataTelemetrySampleRate: 0 })
+      .withConfiguration({ customerDataTelemetrySampleRate: 0, telemetrySampleRate: 100 })
       .build()
 
     generateBatch({ eventNumber: 1 })

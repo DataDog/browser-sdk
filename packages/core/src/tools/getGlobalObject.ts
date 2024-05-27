@@ -7,10 +7,10 @@ export function getGlobalObject<T = typeof globalThis>(): T {
     return globalThis as unknown as T
   }
   Object.defineProperty(Object.prototype, '_dd_temp_', {
+    configurable: true,
     get() {
       return this as object
     },
-    configurable: true,
   })
   // @ts-ignore _dd_temp is defined using defineProperty
   let globalObject: unknown = _dd_temp_

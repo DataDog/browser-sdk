@@ -28,9 +28,9 @@ describe('trackFocus', () => {
     window.dispatchEvent(createNewEvent('focus'))
 
     expect(focusCallback).toHaveBeenCalledOnceWith({
-      data: { has_focus: true },
-      type: RecordType.Focus,
       timestamp: jasmine.any(Number),
+      type: RecordType.Focus,
+      data: { has_focus: true },
     })
   })
 
@@ -39,9 +39,9 @@ describe('trackFocus', () => {
     window.dispatchEvent(createNewEvent('blur'))
 
     expect(focusCallback).toHaveBeenCalledOnceWith({
-      data: { has_focus: false },
-      type: RecordType.Focus,
       timestamp: jasmine.any(Number),
+      type: RecordType.Focus,
+      data: { has_focus: false },
     })
   })
 })

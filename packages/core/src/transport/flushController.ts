@@ -58,8 +58,8 @@ export function createFlushController({
 
     flushObservable.notify({
       reason: flushReason,
-      messagesCount,
       bytesCount,
+      messagesCount,
     })
   }
 

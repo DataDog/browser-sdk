@@ -24,9 +24,9 @@ export function formatDate(ms: number): string {
     now.getDate() === date.getDate() && now.getMonth() === date.getMonth() && now.getFullYear() === date.getFullYear()
 
   return new Intl.DateTimeFormat(LOCALE, {
+    hour12: false, // slightly more compact date
     dateStyle: isSameDay ? undefined : 'medium',
     timeStyle: 'medium',
-    hour12: false, // slightly more compact date
   })
     .formatToParts(date)
     .map(({ type, value }) => {

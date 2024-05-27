@@ -19,8 +19,8 @@ export function createLocationChangeObservable(configuration: RumConfiguration, 
       }
       const newLocation = shallowClone(location)
       observable.notify({
-        newLocation,
         oldLocation: currentLocation,
+        newLocation,
       })
       currentLocation = newLocation
     }

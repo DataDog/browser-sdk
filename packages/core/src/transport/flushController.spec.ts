@@ -24,8 +24,8 @@ describe('flushController', () => {
     pageExitObservable = new Observable()
     sessionExpireObservable = new Observable()
     flushController = createFlushController({
-      bytesLimit: BYTES_LIMIT,
       messagesLimit: MESSAGES_LIMIT,
+      bytesLimit: BYTES_LIMIT,
       durationLimit: DURATION_LIMIT,
       pageExitObservable,
       sessionExpireObservable,

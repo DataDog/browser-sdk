@@ -180,6 +180,7 @@ module.exports = {
         ],
       },
     ],
+    'local-rules/object-key-order': 'error',
 
     'unicorn/filename-case': ['error', { case: 'camelCase' }],
     'unicorn/no-empty-file': 'error',

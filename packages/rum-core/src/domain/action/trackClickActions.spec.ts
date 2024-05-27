@@ -81,27 +81,27 @@ describe('trackClickActions', () => {
     const domEvent = createNewEvent('pointerup', { target: document.createElement('button') })
     expect(events).toEqual([
       {
-        counts: {
-          errorCount: 0,
-          longTaskCount: 0,
-          resourceCount: 0,
-        },
-        duration: BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY as Duration,
+        type: ActionType.CLICK,
         id: jasmine.any(String),
         name: 'Click me',
-        startClocks: {
-          relative: addDuration(pointerDownClocks.relative, EMULATED_CLICK_DURATION),
-          timeStamp: addDuration(pointerDownClocks.timeStamp, EMULATED_CLICK_DURATION),
-        },
-        type: ActionType.CLICK,
-        event: domEvent,
-        frustrationTypes: [],
         target: {
           selector: '#button',
           width: 100,
           height: 100,
         },
         position: { x: 50, y: 50 },
+        startClocks: {
+          relative: addDuration(pointerDownClocks.relative, EMULATED_CLICK_DURATION),
+          timeStamp: addDuration(pointerDownClocks.timeStamp, EMULATED_CLICK_DURATION),
+        },
+        duration: BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY as Duration,
+        counts: {
+          errorCount: 0,
+          longTaskCount: 0,
+          resourceCount: 0,
+        },
+        event: domEvent,
+        frustrationTypes: [],
         events: [domEvent],
       },
     ])
@@ -225,7 +225,7 @@ describe('trackClickActions', () => {
 
   it('collect click actions even if it fails to find a name', () => {
     const { clock } = setupBuilder.build()
-    emulateClick({ activity: {}, target: emptyElement })
+    emulateClick({ target: emptyElement, activity: {} })
     expect(findActionId()!.length).toBeGreaterThan(0)
     clock.tick(EXPIRE_DELAY)
 

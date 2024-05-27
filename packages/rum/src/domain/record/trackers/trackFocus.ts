@@ -8,9 +8,9 @@ export type FocusCallback = (data: FocusRecord) => void
 export function trackFocus(configuration: RumConfiguration, focusCb: FocusCallback): Tracker {
   return addEventListeners(configuration, window, [DOM_EVENT.FOCUS, DOM_EVENT.BLUR], () => {
     focusCb({
-      data: { has_focus: document.hasFocus() },
-      type: RecordType.Focus,
       timestamp: timeStampNow(),
+      type: RecordType.Focus,
+      data: { has_focus: document.hasFocus() },
     })
   })
 }

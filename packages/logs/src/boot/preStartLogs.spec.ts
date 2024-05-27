@@ -111,8 +111,8 @@ describe('preStartLogs', () => {
   it('allows sending logs', () => {
     strategy.handleLog(
       {
-        status: StatusType.info,
         message: 'message',
+        status: StatusType.info,
       },
       {} as Logger
     )
@@ -132,8 +132,8 @@ describe('preStartLogs', () => {
     it('saves the date', () => {
       strategy.handleLog(
         {
-          status: StatusType.info,
           message: 'message',
+          status: StatusType.info,
         },
         {} as Logger
       )
@@ -147,8 +147,8 @@ describe('preStartLogs', () => {
       getCommonContextSpy.and.returnValue({ view: { url: 'url' } } as unknown as CommonContext)
       strategy.handleLog(
         {
-          status: StatusType.info,
           message: 'message',
+          status: StatusType.info,
         },
         {} as Logger
       )
@@ -161,8 +161,8 @@ describe('preStartLogs', () => {
       getCommonContextSpy.and.returnValue({ context: { foo: 'bar' } } as unknown as CommonContext)
       strategy.handleLog(
         {
-          status: StatusType.info,
           message: 'message',
+          status: StatusType.info,
         },
         {} as Logger
       )
@@ -177,8 +177,8 @@ describe('preStartLogs', () => {
       const context = { foo: 'bar' }
       strategy.handleLog(
         {
-          status: StatusType.info,
           message: 'message',
+          status: StatusType.info,
           context: { foo: 'bar' },
         },
         {} as Logger

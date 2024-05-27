@@ -10,8 +10,8 @@ export function serializeStyleSheets(cssStyleSheets: CSSStyleSheet[] | undefined
 
     const styleSheet: StyleSheet = {
       cssRules,
-      disabled: cssStyleSheet.disabled || undefined,
       media: cssStyleSheet.media.length > 0 ? Array.from(cssStyleSheet.media) : undefined,
+      disabled: cssStyleSheet.disabled || undefined,
     }
     return styleSheet
   })

@@ -119,9 +119,9 @@ describe('matchRequestTiming', () => {
 
   it('[without tolerant_resource_timings] should not match invalid timing nested in the request ', () => {
     const entry = createPerformanceEntry(RumPerformanceEntryType.RESOURCE, {
+      startTime: 200 as RelativeTime,
       // fetchStart < startTime is invalid
       fetchStart: 0 as RelativeTime,
-      startTime: 200 as RelativeTime,
     })
 
     entries.push(entry)
@@ -134,9 +134,9 @@ describe('matchRequestTiming', () => {
   it('[with tolerant_resource_timings] should match invalid timing nested in the request ', () => {
     mockExperimentalFeatures([ExperimentalFeature.TOLERANT_RESOURCE_TIMINGS])
     const entry = createPerformanceEntry(RumPerformanceEntryType.RESOURCE, {
+      startTime: 200 as RelativeTime,
       // fetchStart < startTime is invalid
       fetchStart: 0 as RelativeTime,
-      startTime: 200 as RelativeTime,
     })
 
     entries.push(entry)

@@ -11,7 +11,7 @@ export function Columns({ children }: { children: React.ReactNode }) {
 
 function Column({ children, title }: { children: React.ReactNode; title: string }) {
   return (
-    <Grid.Col span={{ md: 4, sm: 12 }}>
+    <Grid.Col span={{ sm: 12, md: 4 }}>
       <Title order={3}>{title}</Title>
       <Space h="sm" />
       {children || '(empty)'}

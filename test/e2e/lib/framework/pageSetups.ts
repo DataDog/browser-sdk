@@ -80,8 +80,8 @@ n=o.getElementsByTagName(u)[0];n.parentNode.insertBefore(d,n)
   }
 
   return basePage({
-    body,
     header,
+    body,
   })
 }
 

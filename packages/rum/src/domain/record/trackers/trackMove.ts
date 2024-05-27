@@ -22,10 +22,10 @@ export function trackMove(configuration: RumConfiguration, moveCb: MousemoveCall
           return
         }
         const position: MousePosition = {
-          id: getSerializedNodeId(target),
-          timeOffset: 0,
           x: coordinates.x,
           y: coordinates.y,
+          id: getSerializedNodeId(target),
+          timeOffset: 0,
         }
 
         moveCb(

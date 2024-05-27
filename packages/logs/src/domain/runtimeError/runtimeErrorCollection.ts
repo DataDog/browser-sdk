@@ -24,15 +24,15 @@ export function startRuntimeErrorCollection(configuration: LogsConfiguration, li
   const rawErrorSubscription = rawErrorObservable.subscribe((rawError) => {
     lifeCycle.notify(LifeCycleEventType.RAW_LOG_COLLECTED, {
       rawLogsEvent: {
-        message: rawError.message,
         date: rawError.startClocks.timeStamp,
+        message: rawError.message,
+        status: StatusType.error,
         error: {
           kind: rawError.type,
           stack: rawError.stack,
           causes: rawError.causes,
         },
         origin: ErrorSource.SOURCE,
-        status: StatusType.error,
       },
     })
   })

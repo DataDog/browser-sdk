@@ -134,19 +134,10 @@ export function startRumAssembly(
         const actionId = actionContexts.findActionId(startTime)
 
         const rumContext: RumContext = {
-          _dd: {
-            format_version: 2,
-            drift: currentDrift(),
-            configuration: {
-              session_sample_rate: round(configuration.sessionSampleRate, 3),
-              session_replay_sample_rate: round(configuration.sessionReplaySampleRate, 3),
-            },
-            browser_sdk_version: canUseEventBridge() ? __BUILD_ENV__SDK_VERSION__ : undefined,
-          },
+          date: timeStampNow(),
           application: {
             id: configuration.applicationId,
           },
-          date: timeStampNow(),
           service: viewContext.service || configuration.service,
           version: viewContext.version || configuration.version,
           source: 'browser',
@@ -158,17 +149,26 @@ export function startRumAssembly(
                 ? SessionType.CI_TEST
                 : SessionType.USER,
           },
+          display: displayContext.get(),
           view: {
             id: viewContext.id,
-            name: viewContext.name,
-            url: urlContext.url,
             referrer: urlContext.referrer,
+            url: urlContext.url,
+            name: viewContext.name,
           },
+          connectivity: getConnectivity(),
           action: needToAssembleWithAction(rawRumEvent) && actionId ? { id: actionId } : undefined,
           synthetics: syntheticsContext,
           ci_test: ciVisibilityContext.get(),
-          display: displayContext.get(),
-          connectivity: getConnectivity(),
+          _dd: {
+            format_version: 2,
+            drift: currentDrift(),
+            configuration: {
+              session_sample_rate: round(configuration.sessionSampleRate, 3),
+              session_replay_sample_rate: round(configuration.sessionReplaySampleRate, 3),
+            },
+            browser_sdk_version: canUseEventBridge() ? __BUILD_ENV__SDK_VERSION__ : undefined,
+          },
         }
 
         const serverRumEvent = combine(rumContext as RumContext & Context, rawRumEvent) as RumEvent & Context

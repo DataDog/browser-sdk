@@ -190,7 +190,7 @@ describe('instrumentSetter', () => {
       // do nothing particular, only used to test if this setter gets replaced
     }
     const object = {} as { foo: number }
-    Object.defineProperty(object, 'foo', { set: originalSetter, configurable: true })
+    Object.defineProperty(object, 'foo', { configurable: true, set: originalSetter })
 
     instrumentSetter(object, 'foo', noop)
 
@@ -211,7 +211,7 @@ describe('instrumentSetter', () => {
       // do nothing particular, only used to test if this setter gets replaced
     }
     const object = {} as { foo: number }
-    Object.defineProperty(object, 'foo', { set: originalSetter, configurable: false })
+    Object.defineProperty(object, 'foo', { configurable: false, set: originalSetter })
 
     instrumentSetter(object, 'foo', noop)
     // eslint-disable-next-line @typescript-eslint/unbound-method
@@ -221,7 +221,7 @@ describe('instrumentSetter', () => {
   it('calls the original setter', () => {
     const originalSetterSpy = jasmine.createSpy()
     const object = {} as { foo: number }
-    Object.defineProperty(object, 'foo', { set: originalSetterSpy, configurable: true })
+    Object.defineProperty(object, 'foo', { configurable: true, set: originalSetterSpy })
 
     instrumentSetter(object, 'foo', noop)
 
@@ -232,7 +232,7 @@ describe('instrumentSetter', () => {
   it('calls the instrumentation asynchronously', () => {
     const instrumentationSetterSpy = jasmine.createSpy()
     const object = {} as { foo: number }
-    Object.defineProperty(object, 'foo', { set: noop, configurable: true })
+    Object.defineProperty(object, 'foo', { configurable: true, set: noop })
 
     instrumentSetter(object, 'foo', instrumentationSetterSpy)
 
@@ -247,7 +247,7 @@ describe('instrumentSetter', () => {
     zoneJsStub.replaceProperty(window, 'setTimeout', zoneJsSetTimeoutSpy)
 
     const object = {} as { foo: number }
-    Object.defineProperty(object, 'foo', { set: noop, configurable: true })
+    Object.defineProperty(object, 'foo', { configurable: true, set: noop })
 
     instrumentSetter(object, 'foo', noop)
     object.foo = 2
@@ -259,7 +259,7 @@ describe('instrumentSetter', () => {
 
   it('allows other instrumentations from third parties', () => {
     const object = {} as { foo: number }
-    Object.defineProperty(object, 'foo', { set: noop, configurable: true })
+    Object.defineProperty(object, 'foo', { configurable: true, set: noop })
     const instrumentationSetterSpy = jasmine.createSpy()
     instrumentSetter(object, 'foo', instrumentationSetterSpy)
 
@@ -277,7 +277,7 @@ describe('instrumentSetter', () => {
       const originalSetter = () => {
         // do nothing particular, only used to test if this setter gets replaced
       }
-      Object.defineProperty(object, 'foo', { set: originalSetter, configurable: true })
+      Object.defineProperty(object, 'foo', { configurable: true, set: originalSetter })
       const { stop } = instrumentSetter(object, 'foo', noop)
 
       stop()
@@ -288,7 +288,7 @@ describe('instrumentSetter', () => {
 
     it('does not call the instrumentation anymore', () => {
       const object = {} as { foo: number }
-      Object.defineProperty(object, 'foo', { set: noop, configurable: true })
+      Object.defineProperty(object, 'foo', { configurable: true, set: noop })
       const instrumentationSetterSpy = jasmine.createSpy()
       const { stop } = instrumentSetter(object, 'foo', instrumentationSetterSpy)
 
@@ -302,7 +302,7 @@ describe('instrumentSetter', () => {
 
     it('does not call instrumentation pending in the event loop via setTimeout', () => {
       const object = {} as { foo: number }
-      Object.defineProperty(object, 'foo', { set: noop, configurable: true })
+      Object.defineProperty(object, 'foo', { configurable: true, set: noop })
       const instrumentationSetterSpy = jasmine.createSpy()
       const { stop } = instrumentSetter(object, 'foo', instrumentationSetterSpy)
 
@@ -316,7 +316,7 @@ describe('instrumentSetter', () => {
     describe('when the method has been instrumented by a third party', () => {
       it('should not break the third party instrumentation', () => {
         const object = {} as { foo: number }
-        Object.defineProperty(object, 'foo', { set: noop, configurable: true })
+        Object.defineProperty(object, 'foo', { configurable: true, set: noop })
         const { stop } = instrumentSetter(object, 'foo', noop)
 
         const thirdPartyInstrumentationSpy = thirdPartyInstrumentation(object)
@@ -329,7 +329,7 @@ describe('instrumentSetter', () => {
 
       it('does not call the instrumentation', () => {
         const object = {} as { foo: number }
-        Object.defineProperty(object, 'foo', { set: noop, configurable: true })
+        Object.defineProperty(object, 'foo', { configurable: true, set: noop })
         const instrumentationSetterSpy = jasmine.createSpy()
         const { stop } = instrumentSetter(object, 'foo', instrumentationSetterSpy)
 

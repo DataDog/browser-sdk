@@ -39,14 +39,14 @@ describe('trackInitialViewMetrics', () => {
 
     expect(scheduleViewUpdateSpy).toHaveBeenCalledTimes(3)
     expect(trackInitialViewMetricsResult.initialViewMetrics).toEqual({
+      firstContentfulPaint: 123 as Duration,
       navigationTimings: {
-        firstByte: 123 as Duration,
         domComplete: 456 as Duration,
         domContentLoaded: 345 as Duration,
         domInteractive: 234 as Duration,
         loadEvent: 567 as Duration,
+        firstByte: 123 as Duration,
       },
-      firstContentfulPaint: 123 as Duration,
       firstInput: {
         delay: 100 as Duration,
         time: 1000 as RelativeTime,

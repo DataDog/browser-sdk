@@ -8,10 +8,10 @@ export function startReportError(lifeCycle: LifeCycle) {
   return (error: RawError) => {
     lifeCycle.notify(LifeCycleEventType.RAW_LOG_COLLECTED, {
       rawLogsEvent: {
-        message: error.message,
         date: error.startClocks.timeStamp,
-        origin: ErrorSource.AGENT,
+        message: error.message,
         status: StatusType.error,
+        origin: ErrorSource.AGENT,
       },
     })
     addTelemetryDebug('Error reported to customer', { 'error.message': error.message })

@@ -78,35 +78,35 @@ describe('trackScrollMetrics', () => {
 
   it('should update scroll height and scroll depth', () => {
     setupBuilder.build()
-    updateScrollValues({ scrollDepth: 700, scrollHeight: 2000, scrollTop: 100 })
+    updateScrollValues({ scrollDepth: 700, scrollTop: 100, scrollHeight: 2000 })
     expect(scrollMetricsCallback).toHaveBeenCalledOnceWith({
       maxDepth: 700,
       maxScrollHeight: 2000,
-      maxScrollHeightTime: 100 as Duration,
       maxDepthScrollTop: 100,
+      maxScrollHeightTime: 100 as Duration,
     })
   })
   it('should update time and scroll height only if it has increased', () => {
     setupBuilder.build()
-    updateScrollValues({ scrollDepth: 700, scrollHeight: 2000, scrollTop: 100 })
-    updateScrollValues({ scrollDepth: 700, scrollHeight: 1900, scrollTop: 100 })
+    updateScrollValues({ scrollDepth: 700, scrollTop: 100, scrollHeight: 2000 })
+    updateScrollValues({ scrollDepth: 700, scrollTop: 100, scrollHeight: 1900 })
     expect(scrollMetricsCallback).toHaveBeenCalledOnceWith({
       maxDepth: 700,
       maxScrollHeight: 2000,
-      maxScrollHeightTime: 100 as Duration,
       maxDepthScrollTop: 100,
+      maxScrollHeightTime: 100 as Duration,
     })
   })
 
   it('should update max depth only if it has increased', () => {
     setupBuilder.build()
-    updateScrollValues({ scrollDepth: 700, scrollHeight: 2000, scrollTop: 100 })
-    updateScrollValues({ scrollDepth: 600, scrollHeight: 2000, scrollTop: 0 })
+    updateScrollValues({ scrollDepth: 700, scrollTop: 100, scrollHeight: 2000 })
+    updateScrollValues({ scrollDepth: 600, scrollTop: 0, scrollHeight: 2000 })
     expect(scrollMetricsCallback).toHaveBeenCalledOnceWith({
       maxDepth: 700,
       maxScrollHeight: 2000,
-      maxScrollHeightTime: 100 as Duration,
       maxDepthScrollTop: 100,
+      maxScrollHeightTime: 100 as Duration,
     })
   })
 })

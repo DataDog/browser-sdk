@@ -12,7 +12,7 @@ const { buildEnvKeys, getBuildEnvValue } = require('../lib/build-env')
 runMain(async () => {
   const buildDirectory = process.argv[2]
 
-  for (const path of glob.sync('**/*.js', { cwd: buildDirectory, absolute: true })) {
+  for (const path of glob.sync('**/*.js', { absolute: true, cwd: buildDirectory })) {
     if (await modifyFile(path, (content) => replaceBuildEnv(content))) {
       printLog(`Replaced BuildEnv in ${path}`)
     }

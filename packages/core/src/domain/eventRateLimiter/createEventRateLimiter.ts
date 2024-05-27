@@ -31,9 +31,9 @@ export function createEventRateLimiter(
         allowNextEvent = true
         try {
           onLimitReached({
+            startClocks: clocksNow(),
             message: `Reached max number of ${eventType}s by minute: ${limit}`,
             source: ErrorSource.AGENT,
-            startClocks: clocksNow(),
           })
         } finally {
           allowNextEvent = false

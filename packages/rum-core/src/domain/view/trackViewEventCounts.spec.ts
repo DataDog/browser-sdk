@@ -20,8 +20,8 @@ describe('trackViewEventCounts', () => {
     const { lifeCycle } = setupBuilder.build()
 
     lifeCycle.notify(LifeCycleEventType.RUM_EVENT_COLLECTED, {
-      type: RumEventType.ERROR,
       view: { id: 'view-id' },
+      type: RumEventType.ERROR,
     } as RumEvent & Context)
 
     expect(onChange).toHaveBeenCalledTimes(1)
@@ -31,8 +31,8 @@ describe('trackViewEventCounts', () => {
     const { lifeCycle } = setupBuilder.build()
 
     lifeCycle.notify(LifeCycleEventType.RUM_EVENT_COLLECTED, {
-      type: RumEventType.ERROR,
       view: { id: 'unrelated-view-id' },
+      type: RumEventType.ERROR,
     } as RumEvent & Context)
 
     expect(onChange).not.toHaveBeenCalled()

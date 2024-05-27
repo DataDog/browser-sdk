@@ -43,9 +43,9 @@ export function startReportCollection(configuration: LogsConfiguration, lifeCycl
         rawLogsEvent: {
           date: timeStampNow(),
           message,
-          origin: ErrorSource.REPORT,
-          error,
           status,
+          error,
+          origin: ErrorSource.REPORT,
         },
       })
     }

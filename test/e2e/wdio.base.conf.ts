@@ -27,28 +27,24 @@ if (testReportDirectory) {
 
 type OptionsWithLogsPath = Options.Testrunner & { logsPath?: string }
 export const config: OptionsWithLogsPath = {
+  capabilities: [],
   runner: 'local',
+  specs: ['./scenario/**/*.scenario.ts'],
+  exclude: ['./scenario/developer-extension/*.scenario.ts'],
+  maxInstances: 5,
+  // We do not inject @wdio globals to keep Jasmine's expect
+  injectGlobals: false,
+  bail: 0,
+  framework: 'jasmine',
+  reporters,
+  jasmineOpts: {
+    defaultTimeoutInterval: 60000,
+  },
   autoCompileOpts: {
     autoCompile: true,
     tsNodeOpts: {
       project: './tsconfig.json',
     },
-  },
-  // We do not inject @wdio globals to keep Jasmine's expect
-  injectGlobals: false,
-  specs: ['./scenario/**/*.scenario.ts'],
-  exclude: ['./scenario/developer-extension/*.scenario.ts'],
-  capabilities: [],
-  maxInstances: 5,
-  logLevel: 'warn',
-  bail: 0,
-  waitforTimeout: 10000,
-  connectionRetryTimeout: 90000,
-  connectionRetryCount: 0,
-  framework: 'jasmine',
-  reporters,
-  jasmineOpts: {
-    defaultTimeoutInterval: 60000,
   },
   onPrepare: (_config, _capabilities) => {
     console.log(
@@ -82,5 +78,9 @@ export const config: OptionsWithLogsPath = {
     global.$ = $
     global.$$ = $$
   },
+  logLevel: 'warn',
+  connectionRetryTimeout: 90000,
+  connectionRetryCount: 0,
+  waitforTimeout: 10000,
   logsPath,
 }

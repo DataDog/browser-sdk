@@ -157,8 +157,8 @@ describe('record', () => {
     it('adds an initial Focus record when starting to record', () => {
       startRecording()
       expect(getEmittedRecords()[1]).toEqual({
-        type: RecordType.Focus,
         timestamp: jasmine.any(Number),
+        type: RecordType.Focus,
         data: {
           has_focus: true,
         },

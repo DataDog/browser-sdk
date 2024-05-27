@@ -28,8 +28,8 @@ describe('trackInput', () => {
     input = appendElement('<div><input target /></div>') as HTMLInputElement
 
     serializeDocument(document, DEFAULT_CONFIGURATION, {
-      shadowRootsController: DEFAULT_SHADOW_ROOT_CONTROLLER,
       status: SerializationContextStatus.INITIAL_FULL_SNAPSHOT,
+      shadowRootsController: DEFAULT_SHADOW_ROOT_CONTROLLER,
       elementsScrollPositions: createElementsScrollPositions(),
     })
   })
@@ -44,12 +44,12 @@ describe('trackInput', () => {
     dispatchInputEvent('foo')
 
     expect(inputCallbackSpy).toHaveBeenCalledOnceWith({
-      type: RecordType.IncrementalSnapshot,
       timestamp: jasmine.any(Number),
+      type: RecordType.IncrementalSnapshot,
       data: {
         source: IncrementalSource.Input,
-        text: 'foo',
         id: jasmine.any(Number) as unknown as number,
+        text: 'foo',
       },
     })
   })
@@ -62,12 +62,12 @@ describe('trackInput', () => {
     clock.tick(0)
 
     expect(inputCallbackSpy).toHaveBeenCalledOnceWith({
-      type: RecordType.IncrementalSnapshot,
       timestamp: jasmine.any(Number),
+      type: RecordType.IncrementalSnapshot,
       data: {
         source: IncrementalSource.Input,
-        text: 'foo',
         id: jasmine.any(Number) as unknown as number,
+        text: 'foo',
       },
     })
   })
@@ -101,12 +101,12 @@ describe('trackInput', () => {
     dispatchInputEventWithInShadowDom('foo')
 
     expect(inputCallbackSpy).toHaveBeenCalledOnceWith({
-      type: RecordType.IncrementalSnapshot,
       timestamp: jasmine.any(Number),
+      type: RecordType.IncrementalSnapshot,
       data: {
         source: IncrementalSource.Input,
-        text: 'foo',
         id: jasmine.any(Number) as unknown as number,
+        text: 'foo',
       },
     })
   })

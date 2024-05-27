@@ -37,7 +37,7 @@ const COMMON_CONTEXT: CommonContext = {
 
 const COMMON_CONTEXT_WITH_USER: CommonContext = {
   ...COMMON_CONTEXT,
-  user: { id: 'id', name: 'name', email: 'test@test.com' },
+  user: { id: 'id', email: 'test@test.com', name: 'name' },
 }
 
 describe('startLogsAssembly', () => {
@@ -237,9 +237,9 @@ describe('startLogsAssembly', () => {
       lifeCycle.notify(LifeCycleEventType.RAW_LOG_COLLECTED, { rawLogsEvent: DEFAULT_MESSAGE })
 
       expect(serverLogs[0].view).toEqual({
-        id: 'view-id',
-        url: 'http://from-rum-context.com',
         referrer: 'referrer_from_common_context',
+        url: 'http://from-rum-context.com',
+        id: 'view-id',
       })
     })
 
@@ -419,10 +419,10 @@ describe('logs limitation', () => {
   })
   it('should not apply to agent logs', () => {
     lifeCycle.notify(LifeCycleEventType.RAW_LOG_COLLECTED, {
-      rawLogsEvent: { ...DEFAULT_MESSAGE, origin: ErrorSource.AGENT, status: 'error', message: 'foo' },
+      rawLogsEvent: { ...DEFAULT_MESSAGE, message: 'foo', status: 'error', origin: ErrorSource.AGENT },
     })
     lifeCycle.notify(LifeCycleEventType.RAW_LOG_COLLECTED, {
-      rawLogsEvent: { ...DEFAULT_MESSAGE, origin: ErrorSource.AGENT, status: 'error', message: 'bar' },
+      rawLogsEvent: { ...DEFAULT_MESSAGE, message: 'bar', status: 'error', origin: ErrorSource.AGENT },
     })
 
     expect(serverLogs.length).toEqual(2)

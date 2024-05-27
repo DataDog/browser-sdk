@@ -57,36 +57,36 @@ describe('error collection', () => {
         const { rawRumEvents } = setupBuilder.build()
 
         addError({
+          startClocks: { relative: 1234 as RelativeTime, timeStamp: 123456789 as TimeStamp },
           error,
           handlingStack: 'Error: handling foo',
-          startClocks: { relative: 1234 as RelativeTime, timeStamp: 123456789 as TimeStamp },
         })
 
         expect(rawRumEvents.length).toBe(1)
         expect(rawRumEvents[0]).toEqual({
+          startTime: 1234 as RelativeTime,
+          savedCommonContext: undefined,
           customerContext: undefined,
           rawRumEvent: {
             date: jasmine.any(Number),
+            type: RumEventType.ERROR,
             error: {
               id: jasmine.any(String),
-              message,
-              source: ErrorSource.CUSTOM,
+              type,
               stack,
               handling_stack: 'Error: handling foo',
-              type,
-              handling: ErrorHandling.HANDLED,
-              source_type: 'browser',
-              causes: undefined,
               fingerprint: undefined,
+              source: ErrorSource.CUSTOM,
+              message,
+              handling: ErrorHandling.HANDLED,
+              causes: undefined,
+              source_type: 'browser',
               csp: undefined,
             },
-            type: RumEventType.ERROR,
             view: {
               in_foreground: true,
             },
           },
-          savedCommonContext: undefined,
-          startTime: 1234 as RelativeTime,
           domainContext: { error },
         })
       })
@@ -102,9 +102,9 @@ describe('error collection', () => {
       error2.cause = error3
 
       addError({
+        startClocks: { relative: 1234 as RelativeTime, timeStamp: 123456789 as TimeStamp },
         error: error1,
         handlingStack: 'Error: handling foo',
-        startClocks: { relative: 1234 as RelativeTime, timeStamp: 123456789 as TimeStamp },
       })
       const { error } = rawRumEvents[0].rawRumEvent as RawRumErrorEvent
       expect(error.message).toEqual('foo')
@@ -127,9 +127,9 @@ describe('error collection', () => {
       ;(error as DatadogError).dd_fingerprint = 'my-fingerprint'
 
       addError({
+        startClocks: { relative: 1234 as RelativeTime, timeStamp: 123456789 as TimeStamp },
         error,
         handlingStack: 'Error: handling foo',
-        startClocks: { relative: 1234 as RelativeTime, timeStamp: 123456789 as TimeStamp },
       })
 
       expect((rawRumEvents[0].rawRumEvent as RawRumErrorEvent).error.fingerprint).toEqual('my-fingerprint')
@@ -142,9 +142,9 @@ describe('error collection', () => {
       ;(error as any).dd_fingerprint = 2
 
       addError({
+        startClocks: { relative: 1234 as RelativeTime, timeStamp: 123456789 as TimeStamp },
         error,
         handlingStack: 'Error: handling foo',
-        startClocks: { relative: 1234 as RelativeTime, timeStamp: 123456789 as TimeStamp },
       })
 
       expect((rawRumEvents[0].rawRumEvent as RawRumErrorEvent).error.fingerprint).toEqual('2')
@@ -153,10 +153,10 @@ describe('error collection', () => {
     it('should save the specified customer context', () => {
       const { rawRumEvents } = setupBuilder.build()
       addError({
-        context: { foo: 'bar' },
-        error: new Error('foo'),
-        handlingStack: 'Error: handling foo',
         startClocks: { relative: 1234 as RelativeTime, timeStamp: 123456789 as TimeStamp },
+        error: new Error('foo'),
+        context: { foo: 'bar' },
+        handlingStack: 'Error: handling foo',
       })
       expect(rawRumEvents[0].customerContext).toEqual({
         foo: 'bar',
@@ -167,11 +167,11 @@ describe('error collection', () => {
       const { rawRumEvents } = setupBuilder.build()
       addError(
         {
+          startClocks: { relative: 1234 as RelativeTime, timeStamp: 123456789 as TimeStamp },
           error: new Error('foo'),
           handlingStack: 'Error: handling foo',
-          startClocks: { relative: 1234 as RelativeTime, timeStamp: 123456789 as TimeStamp },
         },
-        { context: { foo: 'bar' }, user: {}, hasReplay: undefined }
+        { user: {}, context: { foo: 'bar' }, hasReplay: undefined }
       )
       expect(rawRumEvents[0].savedCommonContext!.context).toEqual({
         foo: 'bar',
@@ -182,11 +182,11 @@ describe('error collection', () => {
       const { rawRumEvents } = setupBuilder.build()
       addError(
         {
+          startClocks: { relative: 1234 as RelativeTime, timeStamp: 123456789 as TimeStamp },
           error: new Error('foo'),
           handlingStack: 'Error: handling foo',
-          startClocks: { relative: 1234 as RelativeTime, timeStamp: 123456789 as TimeStamp },
         },
-        { context: {}, user: { id: 'foo' }, hasReplay: undefined }
+        { user: { id: 'foo' }, context: {}, hasReplay: undefined }
       )
       expect(rawRumEvents[0].savedCommonContext!.user).toEqual({
         id: 'foo',
@@ -196,9 +196,9 @@ describe('error collection', () => {
     it('should include non-Error values in domain context', () => {
       const { rawRumEvents } = setupBuilder.build()
       addError({
+        startClocks: { relative: 1234 as RelativeTime, timeStamp: 123456789 as TimeStamp },
         error: { foo: 'bar' },
         handlingStack: 'Error: handling foo',
-        startClocks: { relative: 1234 as RelativeTime, timeStamp: 123456789 as TimeStamp },
       })
       expect(rawRumEvents[0].domainContext).toEqual({
         error: { foo: 'bar' },
@@ -211,9 +211,9 @@ describe('error collection', () => {
         .build()
 
       addError({
+        startClocks: { relative: 1234 as RelativeTime, timeStamp: 123456789 as TimeStamp },
         error: { foo: 'bar' },
         handlingStack: 'Error: handling foo',
-        startClocks: { relative: 1234 as RelativeTime, timeStamp: 123456789 as TimeStamp },
       })
 
       const rawRumErrorEvent = rawRumEvents[0].rawRumEvent as RawRumErrorEvent
@@ -228,11 +228,11 @@ describe('error collection', () => {
       const error = new Error('hello')
       lifeCycle.notify(LifeCycleEventType.RAW_ERROR_COLLECTED, {
         error: {
-          message: 'hello',
-          source: ErrorSource.CUSTOM,
-          stack: 'bar',
           startClocks: { relative: 1234 as RelativeTime, timeStamp: 123456789 as TimeStamp },
+          message: 'hello',
           type: 'foo',
+          stack: 'bar',
+          source: ErrorSource.CUSTOM,
           originalError: error,
         },
       })
@@ -240,23 +240,23 @@ describe('error collection', () => {
       expect(rawRumEvents[0].startTime).toBe(1234 as RelativeTime)
       expect(rawRumEvents[0].rawRumEvent).toEqual({
         date: jasmine.any(Number),
+        type: RumEventType.ERROR,
         error: {
           id: jasmine.any(String),
-          message: 'hello',
-          source: ErrorSource.CUSTOM,
+          type: 'foo',
           stack: 'bar',
           handling_stack: undefined,
-          type: 'foo',
-          handling: undefined,
-          source_type: 'browser',
-          causes: undefined,
           fingerprint: undefined,
+          source: ErrorSource.CUSTOM,
+          message: 'hello',
+          handling: undefined,
+          causes: undefined,
+          source_type: 'browser',
           csp: undefined,
         },
         view: {
           in_foreground: true,
         },
-        type: RumEventType.ERROR,
       })
       expect(rawRumEvents[0].domainContext).toEqual({
         error,
@@ -268,11 +268,11 @@ describe('error collection', () => {
 
       lifeCycle.notify(LifeCycleEventType.RAW_ERROR_COLLECTED, {
         error: {
-          message: 'hello',
-          source: ErrorSource.CUSTOM,
-          stack: 'bar',
           startClocks: { relative: 1234 as RelativeTime, timeStamp: 123456789 as TimeStamp },
+          message: 'hello',
           type: 'foo',
+          stack: 'bar',
+          source: ErrorSource.CUSTOM,
           originalError: FAKE_CSP_VIOLATION_EVENT,
           csp: {
             disposition: FAKE_CSP_VIOLATION_EVENT.disposition,

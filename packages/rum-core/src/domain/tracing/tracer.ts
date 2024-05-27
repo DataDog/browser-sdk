@@ -66,7 +66,6 @@ export function clearTracingIfNeeded(context: RumFetchResolveContext | RumXhrCom
 
 export function startTracer(configuration: RumConfiguration, sessionManager: RumSessionManager): Tracer {
   return {
-    clearTracingIfNeeded,
     traceFetch: (context) =>
       injectHeadersIfTracingAllowed(configuration, context, sessionManager, (tracingHeaders: TracingHeaders) => {
         if (context.input instanceof Request && !context.init?.headers) {
@@ -99,6 +98,7 @@ export function startTracer(configuration: RumConfiguration, sessionManager: Rum
           xhr.setRequestHeader(name, tracingHeaders[name])
         })
       }),
+    clearTracingIfNeeded,
   }
 }
 

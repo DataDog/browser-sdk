@@ -51,8 +51,8 @@ export function trackScrollMetrics(
     if (shouldUpdate) {
       callback({
         maxDepth: Math.min(maxScrollDepth, maxScrollHeight),
-        maxDepthScrollTop: scrollTop,
         maxScrollHeight,
+        maxDepthScrollTop: scrollTop,
         maxScrollHeightTime,
       })
     }

@@ -101,7 +101,7 @@ export function serializeAttributes(
       scrollTop = Math.round(element.scrollTop)
       scrollLeft = Math.round(element.scrollLeft)
       if (scrollTop || scrollLeft) {
-        serializationContext.elementsScrollPositions.set(element, { scrollTop, scrollLeft })
+        serializationContext.elementsScrollPositions.set(element, { scrollLeft, scrollTop })
       }
       break
     case SerializationContextStatus.SUBSEQUENT_FULL_SNAPSHOT:

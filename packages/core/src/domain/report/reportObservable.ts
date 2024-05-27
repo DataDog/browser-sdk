@@ -51,8 +51,8 @@ function createReportObservable(reportTypes: ReportType[]) {
     ) as ReportingObserverCallback
 
     const observer = new window.ReportingObserver(handleReports, {
-      types: reportTypes,
       buffered: true,
+      types: reportTypes,
     })
 
     observer.observe()
@@ -91,6 +91,7 @@ function buildRawReportFromCspViolation(event: SecurityPolicyViolationEvent): Ra
     type: RawReportType.cspViolation,
     subtype: event.effectiveDirective,
     message: `${type}: ${message}`,
+    originalReport: event,
     stack: buildStack(
       event.effectiveDirective,
       event.originalPolicy
@@ -100,7 +101,6 @@ function buildRawReportFromCspViolation(event: SecurityPolicyViolationEvent): Ra
       event.lineNumber,
       event.columnNumber
     ),
-    originalReport: event,
   }
 }
 
@@ -117,8 +117,8 @@ function buildStack(
         message,
         stack: [
           {
-            func: '?',
             url: sourceFile,
+            func: '?',
             line: lineNumber ?? undefined,
             column: columnNumber ?? undefined,
           },

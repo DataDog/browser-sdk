@@ -117,9 +117,9 @@ function retryQueuedPayloads(
 ) {
   if (reason === RetryReason.AFTER_SUCCESS && state.queuedPayloads.isFull() && !state.queueFullReported) {
     reportError({
+      startClocks: clocksNow(),
       message: `Reached max ${trackType} events size queued for upload: ${MAX_QUEUE_BYTES_COUNT / ONE_MEBI_BYTE}MiB`,
       source: ErrorSource.AGENT,
-      startClocks: clocksNow(),
     })
     state.queueFullReported = true
   }

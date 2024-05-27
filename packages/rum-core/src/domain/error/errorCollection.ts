@@ -82,9 +82,9 @@ export function doStartErrorCollection(
       })
 
       lifeCycle.notify(LifeCycleEventType.RAW_ERROR_COLLECTED, {
-        customerContext,
-        savedCommonContext,
         error: rawError,
+        savedCommonContext,
+        customerContext,
       })
     },
   }
@@ -97,20 +97,20 @@ function processError(
 ): RawRumEventCollectedData<RawRumErrorEvent> {
   const rawRumEvent: RawRumErrorEvent = {
     date: error.startClocks.timeStamp,
+    type: RumEventType.ERROR as const,
     error: {
       id: generateUUID(),
-      message: error.message,
-      source: error.source,
+      type: error.type,
       stack: error.stack,
       handling_stack: error.handlingStack,
-      type: error.type,
+      fingerprint: error.fingerprint,
+      source: error.source,
+      message: error.message,
       handling: error.handling,
       causes: error.causes,
       source_type: 'browser',
-      fingerprint: error.fingerprint,
       csp: error.csp,
     },
-    type: RumEventType.ERROR as const,
     view: { in_foreground: pageStateHistory.wasInPageStateAt(PageState.ACTIVE, error.startClocks.relative) },
   }
 
@@ -120,8 +120,8 @@ function processError(
   }
 
   return {
-    rawRumEvent,
     startTime: error.startClocks.relative,
+    rawRumEvent,
     domainContext: {
       error: error.originalError,
     },

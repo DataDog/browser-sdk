@@ -4,7 +4,7 @@ import { sendXhr } from '../../lib/helpers/browser'
 
 describe('tracing', () => {
   createTest('trace xhr')
-    .withRum({ service: 'service', allowedTracingUrls: ['LOCATION_ORIGIN'] })
+    .withRum({ allowedTracingUrls: ['LOCATION_ORIGIN'], service: 'service' })
     .run(async ({ intakeRegistry }) => {
       const rawHeaders = await sendXhr('/headers', [
         ['x-foo', 'bar'],
@@ -18,7 +18,7 @@ describe('tracing', () => {
     })
 
   createTest('trace fetch')
-    .withRum({ service: 'service', allowedTracingUrls: ['LOCATION_ORIGIN'] })
+    .withRum({ allowedTracingUrls: ['LOCATION_ORIGIN'], service: 'service' })
     .run(async ({ intakeRegistry }) => {
       const rawHeaders = await browser.executeAsync<string | Error, []>((done) => {
         window
@@ -40,7 +40,7 @@ describe('tracing', () => {
     })
 
   createTest('trace fetch with Request argument')
-    .withRum({ service: 'service', allowedTracingUrls: ['LOCATION_ORIGIN'] })
+    .withRum({ allowedTracingUrls: ['LOCATION_ORIGIN'], service: 'service' })
     .run(async ({ intakeRegistry }) => {
       const rawHeaders = await browser.executeAsync<string | Error, []>((done) => {
         window
@@ -57,7 +57,7 @@ describe('tracing', () => {
     })
 
   createTest('trace single argument fetch')
-    .withRum({ service: 'service', allowedTracingUrls: ['LOCATION_ORIGIN'] })
+    .withRum({ allowedTracingUrls: ['LOCATION_ORIGIN'], service: 'service' })
     .run(async ({ intakeRegistry }) => {
       const rawHeaders = await browser.executeAsync<string | Error, []>((done) => {
         window

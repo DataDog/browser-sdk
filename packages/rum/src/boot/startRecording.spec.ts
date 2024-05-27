@@ -91,21 +91,21 @@ describe('startRecording', () => {
       application: {
         id: 'appId',
       },
-      creation_reason: 'init',
-      end: jasmine.stringMatching(/^\d{13}$/),
-      has_full_snapshot: true,
-      records_count: recordsPerFullSnapshot(),
       session: {
         id: 'session-id',
       },
-      start: jasmine.any(Number),
-      raw_segment_size: jasmine.any(Number),
-      compressed_segment_size: jasmine.any(Number),
       view: {
         id: 'view-id',
       },
+      start: jasmine.any(Number),
+      end: jasmine.stringMatching(/^\d{13}$/),
+      records_count: recordsPerFullSnapshot(),
       index_in_view: 0,
+      has_full_snapshot: true,
       source: 'browser',
+      creation_reason: 'init',
+      raw_segment_size: jasmine.any(Number),
+      compressed_segment_size: jasmine.any(Number),
     })
   })
 

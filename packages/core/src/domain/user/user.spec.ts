@@ -24,7 +24,7 @@ describe('check user function', () => {
     spyOn(display, 'error')
 
     const obj: any = { id: 42, name: true, email: null } // Valid, even though not sanitized
-    const user: User = { id: '42', name: 'John', email: 'john@doe.com' }
+    const user: User = { id: '42', email: 'john@doe.com', name: 'John' }
     const undefUser: any = undefined
     const nullUser: any = null
     const invalidUser: any = 42

@@ -35,9 +35,9 @@ describe('scroll', () => {
           done()
         },
         {
-          passive: true,
           once: true,
           capture: true,
+          passive: true,
         }
       )
       const timeout = setTimeout(() => {

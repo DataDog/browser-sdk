@@ -34,8 +34,8 @@ export async function getTestServers() {
   if (!serversSingleton) {
     serversSingleton = {
       base: await createServer(),
-      crossOrigin: await createServer(),
       intake: await createServer(),
+      crossOrigin: await createServer(),
     }
   }
   return serversSingleton
@@ -69,16 +69,16 @@ async function createServer<App extends ServerApp>(): Promise<Server<App>> {
   })
 
   return {
-    bindServerApp(newServerApp: App) {
-      serverApp = newServerApp
-    },
+    url: `http://${address}:${port}`,
     get app() {
       if (!serverApp) {
         throw new Error('no server app bound')
       }
       return serverApp
     },
-    url: `http://${address}:${port}`,
+    bindServerApp(newServerApp: App) {
+      serverApp = newServerApp
+    },
     waitForIdle: createServerIdleWaiter(server),
   }
 }

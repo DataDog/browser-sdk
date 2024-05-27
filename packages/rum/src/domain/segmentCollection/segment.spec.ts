@@ -9,12 +9,12 @@ import { createDeflateEncoder } from '../deflate'
 import type { AddRecordCallback, FlushCallback } from './segment'
 import { Segment } from './segment'
 
-const CONTEXT: SegmentContext = { application: { id: 'a' }, view: { id: 'b' }, session: { id: 'c' } }
+const CONTEXT: SegmentContext = { application: { id: 'a' }, session: { id: 'c' }, view: { id: 'b' } }
 const RECORD_TIMESTAMP = 10 as TimeStamp
-const RECORD: BrowserRecord = { type: RecordType.ViewEnd, timestamp: RECORD_TIMESTAMP }
+const RECORD: BrowserRecord = { timestamp: RECORD_TIMESTAMP, type: RecordType.ViewEnd }
 const FULL_SNAPSHOT_RECORD: BrowserRecord = {
-  type: RecordType.FullSnapshot,
   timestamp: RECORD_TIMESTAMP,
+  type: RecordType.FullSnapshot,
   data: {} as any,
 }
 const ENCODED_SEGMENT_HEADER_BYTES_COUNT = 12 // {"records":[
@@ -58,19 +58,19 @@ describe('Segment', () => {
     expect(flushCallbackSpy).toHaveBeenCalledTimes(1)
 
     expect(parseSegment(flushCallbackSpy.calls.mostRecent().args[1].output)).toEqual({
+      start: 10,
+      end: 10,
+      records_count: 1,
+      index_in_view: 0,
+      has_full_snapshot: false,
       source: 'browser' as const,
       creation_reason: 'init' as const,
-      end: 10,
-      has_full_snapshot: false,
       records: [
         {
           timestamp: RECORD_TIMESTAMP,
           type: RecordType.ViewEnd,
         },
       ],
-      records_count: 1,
-      start: 10,
-      index_in_view: 0,
       ...CONTEXT,
     })
   })
@@ -95,11 +95,11 @@ describe('Segment', () => {
       {
         start: 10,
         end: 10,
-        creation_reason: 'init',
-        has_full_snapshot: false,
-        index_in_view: 0,
-        source: 'browser',
         records_count: 1,
+        index_in_view: 0,
+        has_full_snapshot: false,
+        source: 'browser',
+        creation_reason: 'init',
         ...CONTEXT,
       },
       {
@@ -109,8 +109,8 @@ describe('Segment', () => {
           ENCODED_RECORD_BYTES_COUNT +
           ENCODED_META_BYTES_COUNT +
           TRAILER_BYTES_COUNT,
-        rawBytesCount: ENCODED_SEGMENT_HEADER_BYTES_COUNT + ENCODED_RECORD_BYTES_COUNT + ENCODED_META_BYTES_COUNT,
         encoding: 'deflate',
+        rawBytesCount: ENCODED_SEGMENT_HEADER_BYTES_COUNT + ENCODED_RECORD_BYTES_COUNT + ENCODED_META_BYTES_COUNT,
       }
     )
   })
@@ -141,8 +141,8 @@ describe('Segment', () => {
       let segment: Segment
       beforeEach(() => {
         segment = createSegment()
-        segment.addRecord({ type: RecordType.ViewEnd, timestamp: 10 as TimeStamp }, noop)
-        segment.addRecord({ type: RecordType.ViewEnd, timestamp: 15 as TimeStamp }, noop)
+        segment.addRecord({ timestamp: 10 as TimeStamp, type: RecordType.ViewEnd }, noop)
+        segment.addRecord({ timestamp: 15 as TimeStamp, type: RecordType.ViewEnd }, noop)
       })
 
       it('does increment records_count', () => {
@@ -154,7 +154,7 @@ describe('Segment', () => {
       })
 
       it('does change the start timestamp when receiving an earlier record', () => {
-        segment.addRecord({ type: RecordType.ViewEnd, timestamp: 5 as TimeStamp }, noop)
+        segment.addRecord({ timestamp: 5 as TimeStamp, type: RecordType.ViewEnd }, noop)
         expect(flushAndGetMetadata(segment).start).toBe(5)
       })
 
@@ -163,7 +163,7 @@ describe('Segment', () => {
       })
 
       it('does not change the end timestamp when receiving an earlier record', () => {
-        segment.addRecord({ type: RecordType.ViewEnd, timestamp: 5 as TimeStamp }, noop)
+        segment.addRecord({ timestamp: 5 as TimeStamp, type: RecordType.ViewEnd }, noop)
         expect(flushAndGetMetadata(segment).end).toBe(15)
       })
     })

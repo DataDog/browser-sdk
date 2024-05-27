@@ -170,7 +170,7 @@ function processMutations(
   }
 
   mutationCallback(
-    assembleIncrementalSnapshot<BrowserMutationData>(IncrementalSource.Mutation, { adds, removes, texts, attributes })
+    assembleIncrementalSnapshot<BrowserMutationData>(IncrementalSource.Mutation, { attributes, removes, adds, texts })
   )
 }
 
@@ -249,9 +249,9 @@ function processChildListMutations(
 
     const parentNode = getParentNode(node)!
     addedNodeMutations.push({
-      nextId: getNextSibling(node),
-      parentId: getSerializedNodeId(parentNode)!,
       node: serializedNode,
+      parentId: getSerializedNodeId(parentNode)!,
+      nextId: getNextSibling(node),
     })
   }
   // Finally, we emit remove mutations.
@@ -259,8 +259,8 @@ function processChildListMutations(
   removedNodes.forEach((parent, node) => {
     if (hasSerializedNode(node)) {
       removedNodeMutations.push({
-        parentId: getSerializedNodeId(parent),
         id: getSerializedNodeId(node),
+        parentId: getSerializedNodeId(parent),
       })
     }
   })

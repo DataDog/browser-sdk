@@ -186,9 +186,9 @@ export function startSessionStore<TrackingType extends string>(
     expandOrRenewSession: throttledExpandOrRenewSession,
     expandSession,
     getSession: () => sessionCache,
+    restartSession: startSession,
     renewObservable,
     expireObservable,
-    restartSession: startSession,
     expire: () => {
       cancelExpandOrRenewSession()
       expireSession()
