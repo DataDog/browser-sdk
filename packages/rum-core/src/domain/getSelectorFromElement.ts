@@ -1,4 +1,4 @@
-import { cssEscape, getClassList, getParentElement } from '../browser/polyfills'
+import { cssEscape, elementMatches, getClassList, getParentElement } from '../browser/polyfills'
 import { DEFAULT_PROGRAMMATIC_ACTION_NAME_ATTRIBUTE } from './action/getActionNameFromElement'
 
 /**
@@ -47,12 +47,12 @@ export function getSelectorFromElement(
     // parents, and we cannot determine if it's unique in the document.
     return
   }
-  let targetElementSelector = ''
-  let element: Element | null = targetElement
+  let targetElementSelector: string | undefined
+  let currentElement: Element | null = targetElement
 
-  while (element && element.nodeName !== 'HTML') {
+  while (currentElement && currentElement.nodeName !== 'HTML') {
     const globallyUniqueSelector = findSelector(
-      element,
+      currentElement,
       GLOBALLY_UNIQUE_SELECTOR_GETTERS,
       isSelectorUniqueGlobally,
       actionNameAttribute,
@@ -63,16 +63,16 @@ export function getSelectorFromElement(
     }
 
     const uniqueSelectorAmongChildren = findSelector(
-      element,
+      currentElement,
       UNIQUE_AMONG_CHILDREN_SELECTOR_GETTERS,
       isSelectorUniqueAmongSiblings,
       actionNameAttribute,
       targetElementSelector
     )
     targetElementSelector =
-      uniqueSelectorAmongChildren || combineSelector(getPositionSelector(element), targetElementSelector)
+      uniqueSelectorAmongChildren || combineSelector(getPositionSelector(currentElement), targetElementSelector)
 
-    element = getParentElement(element)
+    currentElement = getParentElement(currentElement)
   }
 
   return targetElementSelector
@@ -153,18 +153,17 @@ function getPositionSelector(element: Element): string {
 function findSelector(
   element: Element,
   selectorGetters: SelectorGetter[],
-  predicate: (element: Element, selector: string) => boolean,
+  predicate: (element: Element, elementSelector: string, childSelector: string | undefined) => boolean,
   actionNameAttribute: string | undefined,
-  childSelector?: string
+  childSelector: string | undefined
 ) {
   for (const selectorGetter of selectorGetters) {
     const elementSelector = selectorGetter(element, actionNameAttribute)
     if (!elementSelector) {
       continue
     }
-    const fullSelector = combineSelector(elementSelector, childSelector)
-    if (predicate(element, fullSelector)) {
-      return fullSelector
+    if (predicate(element, elementSelector, childSelector)) {
+      return combineSelector(elementSelector, childSelector)
     }
   }
 }
@@ -172,25 +171,105 @@ function findSelector(
 /**
  * Check whether the selector is unique among the whole document.
  */
-function isSelectorUniqueGlobally(element: Element, selector: string): boolean {
-  return element.ownerDocument.querySelectorAll(selector).length === 1
+function isSelectorUniqueGlobally(
+  element: Element,
+  elementSelector: string,
+  childSelector: string | undefined
+): boolean {
+  return element.ownerDocument.querySelectorAll(combineSelector(elementSelector, childSelector)).length === 1
 }
 
 /**
  * Check whether the selector is unique among the element siblings. In other words, it returns true
- * if "ELEMENT_PARENT > SELECTOR" returns a single element.
+ * if "ELEMENT_PARENT > CHILD_SELECTOR" returns a single element.
+ *
+ * @param {Element} currentElement - the element being considered while iterating over the target
+ * element ancestors.
+ *
+ * @param {string} currentElementSelector - a selector that matches the current element. That
+ * selector is not a composed selector (i.e. it might be a single tag name, class name...).
+ *
+ * @param {string|undefined} childSelector - child selector is a selector that targets a descendant
+ * of the current element. When undefined, the current element is the target element.
+ *
+ * # Scope selector usage
+ *
+ * When composed together, the final selector will be joined with `>` operators to make sure we
+ * target direct descendants at each level. In this function, we'll use `querySelector` to check if
+ * a selector matches descendants of the current element. But by default, the query selector match
+ * elements at any level. Example:
+ *
+ * ```html
+ * <main>
+ *   <div>
+ *     <span></span>
+ *   </div>
+ *   <marquee>
+ *     <div>
+ *       <span></span>
+ *     </div>
+ *   </marquee>
+ * </main>
+ * ```
+ *
+ * `sibling.querySelector('DIV > SPAN')` will match both span elements, so we would consider the
+ * selector to be not unique, even if it is unique when we'll compose it with the parent with a `>`
+ * operator (`MAIN > DIV > SPAN`).
+ *
+ * To avoid this, we can use the `:scope` selector to make sure the selector starts from the current
+ * sibling (i.e. `sibling.querySelector('DIV:scope > SPAN')` will only match the first span).
  *
  * The result will be less accurate on browsers that don't support :scope (i. e. IE): it will check
  * for any element matching the selector contained in the parent (in other words,
- * "ELEMENT_PARENT SELECTOR" returns a single element), regardless of whether the selector is a
- * direct descendent of the element parent. This should not impact results too much: if it
+ * "ELEMENT_PARENT CHILD_SELECTOR" returns a single element), regardless of whether the selector is
+ * a direct descendant of the element parent. This should not impact results too much: if it
  * inaccurately returns false, we'll just fall back to another strategy.
+ *
+ * [1]: https://developer.mozilla.org/fr/docs/Web/CSS/:scope
+ *
+ * # Performance considerations
+ *
+ * We compute selectors in performance-critical operations (ex: during a click), so we need to make
+ * sure the function is as fast as possible. We observed that naively using `querySelectorAll` to
+ * check if the selector matches more than 1 element is quite expensive, so we want to avoid it.
+ *
+ * Because we are iterating the DOM upward and we use that function at every level, we know the
+ * child selector is already unique among the current element children, so we don't need to check
+ * for the current element subtree.
+ *
+ * Instead, we can focus on the current element siblings. If we find a single element matching the
+ * selector within a sibling, we know that it's not unique. This allows us to use `querySelector`
+ * (or `matches`, when the current element is the target element) instead of `querySelectorAll`.
  */
-function isSelectorUniqueAmongSiblings(element: Element, selector: string): boolean {
-  return (
-    getParentElement(element)!.querySelectorAll(supportScopeSelector() ? combineSelector(':scope', selector) : selector)
-      .length === 1
-  )
+export function isSelectorUniqueAmongSiblings(
+  currentElement: Element,
+  currentElementSelector: string,
+  childSelector: string | undefined
+): boolean {
+  let isSiblingMatching: (sibling: Element) => boolean
+
+  if (childSelector === undefined) {
+    // If the child selector is undefined (meaning `currentElement` is the target element, not one
+    // of its ancestor), we need to use `matches` to check if the sibling is matching the selector,
+    // as `querySelector` only returns a descendant of the element.
+    isSiblingMatching = (sibling) => elementMatches(sibling, currentElementSelector)
+  } else {
+    const scopedSelector = supportScopeSelector()
+      ? combineSelector(`${currentElementSelector}:scope`, childSelector)
+      : combineSelector(currentElementSelector, childSelector)
+    isSiblingMatching = (sibling) => sibling.querySelector(scopedSelector) !== null
+  }
+
+  const parent = getParentElement(currentElement)!
+  let child = parent.firstElementChild
+  while (child) {
+    if (child !== currentElement && isSiblingMatching(child)) {
+      return false
+    }
+    child = child.nextElementSibling
+  }
+
+  return true
 }
 
 function combineSelector(parent: string, child: string | undefined): string {
