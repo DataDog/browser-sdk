@@ -18,7 +18,6 @@ import { RumEventType } from '../../rawRumEvent.types'
 import { LifeCycleEventType } from '../lifeCycle'
 import type { RawRumEventCollectedData, LifeCycle } from '../lifeCycle'
 import type { RequestCompleteEvent } from '../requestCollection'
-import type { RumSessionManager } from '../rumSessionManager'
 import type { PageStateHistory } from '../contexts/pageStateHistory'
 import { PageState } from '../contexts/pageStateHistory'
 import { matchRequestTiming } from './matchRequestTiming'
@@ -35,11 +34,10 @@ import {
 export function startResourceCollection(
   lifeCycle: LifeCycle,
   configuration: RumConfiguration,
-  sessionManager: RumSessionManager,
   pageStateHistory: PageStateHistory
 ) {
   lifeCycle.subscribe(LifeCycleEventType.REQUEST_COMPLETED, (request: RequestCompleteEvent) => {
-    const rawEvent = processRequest(request, configuration, sessionManager, pageStateHistory)
+    const rawEvent = processRequest(request, configuration, pageStateHistory)
     if (rawEvent) {
       lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, rawEvent)
     }
@@ -48,7 +46,7 @@ export function startResourceCollection(
   lifeCycle.subscribe(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, (entries) => {
     for (const entry of entries) {
       if (entry.entryType === RumPerformanceEntryType.RESOURCE && !isRequestKind(entry)) {
-        const rawEvent = processResourceEntry(entry, configuration, sessionManager)
+        const rawEvent = processResourceEntry(entry, configuration)
         if (rawEvent) {
           lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, rawEvent)
         }
@@ -60,14 +58,12 @@ export function startResourceCollection(
 function processRequest(
   request: RequestCompleteEvent,
   configuration: RumConfiguration,
-  sessionManager: RumSessionManager,
   pageStateHistory: PageStateHistory
 ): RawRumEventCollectedData<RawRumResourceEvent> | undefined {
   const matchingTiming = matchRequestTiming(request)
   const startClocks = matchingTiming ? relativeToClocks(matchingTiming.startTime) : request.startClocks
-  const shouldIndex = shouldIndexResource(configuration, sessionManager, startClocks)
   const tracingInfo = computeRequestTracingInfo(request, configuration)
-  if (!shouldIndex && !tracingInfo) {
+  if (!configuration.trackResources && !tracingInfo) {
     return
   }
 
@@ -90,7 +86,7 @@ function processRequest(
       },
       type: RumEventType.RESOURCE as const,
       _dd: {
-        discarded: !shouldIndex,
+        discarded: !configuration.trackResources,
       },
     },
     tracingInfo,
@@ -113,13 +109,11 @@ function processRequest(
 
 function processResourceEntry(
   entry: RumPerformanceResourceTiming,
-  configuration: RumConfiguration,
-  sessionManager: RumSessionManager
+  configuration: RumConfiguration
 ): RawRumEventCollectedData<RawRumResourceEvent> | undefined {
   const startClocks = relativeToClocks(entry.startTime)
-  const shouldIndex = shouldIndexResource(configuration, sessionManager, startClocks)
   const tracingInfo = computeEntryTracingInfo(entry, configuration)
-  if (!shouldIndex && !tracingInfo) {
+  if (!configuration.trackResources && !tracingInfo) {
     return
   }
 
@@ -137,7 +131,7 @@ function processResourceEntry(
       },
       type: RumEventType.RESOURCE as const,
       _dd: {
-        discarded: !shouldIndex,
+        discarded: !configuration.trackResources,
       },
     },
     tracingInfo,
@@ -150,14 +144,6 @@ function processResourceEntry(
       performanceEntry: entry,
     },
   }
-}
-
-function shouldIndexResource(
-  configuration: RumConfiguration,
-  sessionManager: RumSessionManager,
-  resourceStart: ClocksState
-) {
-  return configuration.trackResources && sessionManager.findTrackedSession(resourceStart.relative)
 }
 
 function computePerformanceEntryMetrics(timing: RumPerformanceResourceTiming) {
