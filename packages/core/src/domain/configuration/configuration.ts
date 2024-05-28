@@ -1,5 +1,5 @@
 import { catchUserErrors } from '../../tools/catchUserErrors'
-import { display } from '../../tools/display'
+import { DOCS_ORIGIN, display } from '../../tools/display'
 import type { RawTelemetryConfiguration } from '../telemetry'
 import { ExperimentalFeature, addExperimentalFeatures } from '../../tools/experimentalFeatures'
 import type { Duration } from '../../tools/utils/timeUtils'
@@ -14,7 +14,6 @@ import { TrackingConsent } from '../trackingConsent'
 import type { TransportConfiguration } from './transportConfiguration'
 import { computeTransportConfiguration } from './transportConfiguration'
 
-export const DOC_LINK = 'https://docs.datadoghq.com/getting_started/site/'
 export const DefaultPrivacyLevel = {
   ALLOW: 'allow',
   MASK: 'mask',
@@ -174,7 +173,7 @@ export function validateAndBuildConfiguration(initConfiguration: InitConfigurati
   }
 
   if (initConfiguration.site && !isDatadogSite(initConfiguration.site)) {
-    display.error(`Site should be a valid Datadog site. Learn more here: ${DOC_LINK}.`)
+    display.error(`Site should be a valid Datadog site. Learn more here: ${DOCS_ORIGIN}/getting_started/site/.`)
     return
   }
 
