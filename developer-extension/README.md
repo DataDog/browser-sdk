@@ -91,7 +91,7 @@ To work on the developer extension and debug it easily:
 
 1. In a terminal, cd into the `developer-extension` folder.
 
-- Run `yarn dev`
+2. Run `yarn dev`.
 
 - In Chrome, load the `developer-extension/dist` folder as an unpacked extension
 
