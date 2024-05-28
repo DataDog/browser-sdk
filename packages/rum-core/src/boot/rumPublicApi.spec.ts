@@ -183,9 +183,24 @@ describe('rum public api', () => {
           name: 'foo',
           startClocks: jasmine.any(Object),
           type: ActionType.CUSTOM,
+          handlingStack: jasmine.any(String),
         },
         { context: {}, user: {}, hasReplay: undefined },
       ])
+    })
+
+    it('should generate a handling stack', () => {
+      rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
+
+      function triggerAction() {
+        rumPublicApi.addAction('foo', { bar: 'baz' })
+      }
+
+      triggerAction()
+
+      expect(addActionSpy).toHaveBeenCalledTimes(1)
+      const stacktrace = addActionSpy.calls.argsFor(0)[0].handlingStack
+      expect(stacktrace).toMatch(/^Error:\s+at triggerAction @/)
     })
 
     describe('save context when sending an action', () => {
