@@ -17,10 +17,12 @@ export interface RumSessionManager {
   findTrackedSession: (startTime?: RelativeTime) => RumSession | undefined
   expire: () => void
   expireObservable: Observable<void>
+  setForcedReplay: () => void
 }
 
 export type RumSession = {
   id: string
+  sampledForReplay: boolean
   sessionReplayAllowed: boolean
 }
 
@@ -58,11 +60,14 @@ export function startRumSessionManager(
       }
       return {
         id: session.id,
-        sessionReplayAllowed: session.trackingType === RumTrackingType.TRACKED_WITH_SESSION_REPLAY,
+        sampledForReplay: session.trackingType === RumTrackingType.TRACKED_WITH_SESSION_REPLAY,
+        sessionReplayAllowed:
+          session.trackingType === RumTrackingType.TRACKED_WITH_SESSION_REPLAY || session.isReplayForced,
       }
     },
     expire: sessionManager.expire,
     expireObservable: sessionManager.expireObservable,
+    setForcedReplay: sessionManager.setForcedReplay,
   }
 }
 
@@ -72,12 +77,14 @@ export function startRumSessionManager(
 export function startRumSessionManagerStub(): RumSessionManager {
   const session: RumSession = {
     id: '00000000-aaaa-0000-aaaa-000000000000',
+    sampledForReplay: bridgeSupports(BridgeCapability.RECORDS),
     sessionReplayAllowed: bridgeSupports(BridgeCapability.RECORDS),
   }
   return {
     findTrackedSession: () => session,
     expire: noop,
     expireObservable: new Observable(),
+    setForcedReplay: noop,
   }
 }
 

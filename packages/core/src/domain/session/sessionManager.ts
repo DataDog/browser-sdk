@@ -18,11 +18,13 @@ export interface SessionManager<TrackingType extends string> {
   renewObservable: Observable<void>
   expireObservable: Observable<void>
   expire: () => void
+  setForcedReplay: () => void
 }
 
 export interface SessionContext<TrackingType extends string> extends Context {
   id: string
   trackingType: TrackingType
+  isReplayForced: boolean
 }
 
 export const VISIBILITY_CHECK_DELAY = ONE_MINUTE
@@ -53,6 +55,12 @@ export function startSessionManager<TrackingType extends string>(
     expireObservable.notify()
     sessionContextHistory.closeActive(relativeNow())
   })
+  sessionStore.forceReplayObservable.subscribe(() => {
+    const sessionEntity = sessionContextHistory.find()
+    if (sessionEntity) {
+      sessionEntity.isReplayForced = true
+    }
+  })
 
   // We expand/renew session unconditionally as tracking consent is always granted when the session
   // manager is started.
@@ -79,6 +87,7 @@ export function startSessionManager<TrackingType extends string>(
     return {
       id: sessionStore.getSession().id!,
       trackingType: sessionStore.getSession()[productKey] as TrackingType,
+      isReplayForced: !!sessionStore.getSession().forcedReplay,
     }
   }
 
@@ -87,6 +96,7 @@ export function startSessionManager<TrackingType extends string>(
     renewObservable,
     expireObservable,
     expire: sessionStore.expire,
+    setForcedReplay: sessionStore.setForcedReplay,
   }
 }
 

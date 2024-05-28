@@ -472,4 +472,60 @@ describe('session store', () => {
       })
     })
   })
+
+  describe('session update and synchronisation', () => {
+    let updateSpy: () => void
+    let otherUpdateSpy: () => void
+    let clock: Clock
+
+    function setupSessionStore(updateSpy: () => void) {
+      const computeSessionState: (rawTrackingType?: string) => {
+        trackingType: FakeTrackingType
+        isTracked: boolean
+      } = () => ({
+        isTracked: true,
+        trackingType: FakeTrackingType.TRACKED,
+      })
+      const sessionStoreStrategyType = selectSessionStoreStrategyType({
+        clientToken: 'abc',
+        allowFallbackToLocalStorage: false,
+      })
+
+      const sessionStoreManager = startSessionStore(sessionStoreStrategyType!, PRODUCT_KEY, computeSessionState)
+      sessionStoreManager.forceReplayObservable.subscribe(updateSpy)
+
+      return sessionStoreManager
+    }
+
+    let sessionStoreManager: SessionStore
+    let otherSessionStoreManager: SessionStore
+
+    beforeEach(() => {
+      updateSpy = jasmine.createSpy()
+      otherUpdateSpy = jasmine.createSpy()
+      clock = mockClock()
+    })
+
+    afterEach(() => {
+      resetSessionInStore()
+      clock.cleanup()
+      sessionStoreManager.stop()
+      otherSessionStoreManager.stop()
+    })
+
+    it('should synchronise all stores and notify update observables of all stores', () => {
+      setSessionInStore(FakeTrackingType.TRACKED, FIRST_ID)
+
+      sessionStoreManager = setupSessionStore(updateSpy)
+      otherSessionStoreManager = setupSessionStore(otherUpdateSpy)
+
+      sessionStoreManager.setForcedReplay()
+
+      expect(updateSpy).toHaveBeenCalled()
+
+      // Need to wait until watch is triggered
+      clock.tick(STORAGE_POLL_DELAY)
+      expect(otherUpdateSpy).toHaveBeenCalled()
+    })
+  })
 })

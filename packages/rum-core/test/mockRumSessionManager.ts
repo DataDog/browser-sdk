@@ -29,6 +29,7 @@ export function createRumSessionManagerMock(): RumSessionManagerMock {
       }
       return {
         id,
+        sampledForReplay: sessionStatus === SessionStatus.TRACKED_WITH_SESSION_REPLAY,
         sessionReplayAllowed: sessionStatus === SessionStatus.TRACKED_WITH_SESSION_REPLAY,
       }
     },
@@ -53,5 +54,6 @@ export function createRumSessionManagerMock(): RumSessionManagerMock {
       sessionStatus = SessionStatus.TRACKED_WITH_SESSION_REPLAY
       return this
     },
+    setForcedReplay() {},
   }
 }

@@ -630,6 +630,16 @@ describe('startSessionManager', () => {
     })
   })
 
+  describe('forced replay', () => {
+    it('should update current entity when replay recording is forced', () => {
+      const sessionManager = startSessionManagerWithDefaults()
+      sessionManager.setForcedReplay()
+
+      expectSessionIdToBeDefined(sessionManager)
+      expect(sessionManager.findSession()!.isReplayForced).toBe(true)
+    })
+  })
+
   function startSessionManagerWithDefaults({
     configuration,
     productKey = FIRST_PRODUCT_KEY,
