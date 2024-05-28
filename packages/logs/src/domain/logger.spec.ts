@@ -1,7 +1,7 @@
 import type { ErrorWithCause } from '@datadog/browser-core'
-import { NO_ERROR_STACK_PRESENT_MESSAGE, createCustomerDataTracker, noop, objectEntries } from '@datadog/browser-core'
+import { NO_ERROR_STACK_PRESENT_MESSAGE, createCustomerDataTracker, noop } from '@datadog/browser-core'
 import type { LogsMessage } from './logger'
-import { HandlerType, Logger, StatusType } from './logger'
+import { HandlerType, Logger, STATUSES, StatusType } from './logger'
 
 describe('Logger', () => {
   let logger: Logger
@@ -27,9 +27,7 @@ describe('Logger', () => {
       expect(getLoggedMessage(0).status).toEqual(StatusType.info)
     })
 
-    const supportedStatusAPI = ['info', 'debug', 'warn', 'error'] as const
-
-    supportedStatusAPI.forEach((status) => {
+    STATUSES.forEach((status) => {
       it(`'logger.${status}' should have ${status} status`, () => {
         logger[status]('message')
         expect(getLoggedMessage(0).status).toEqual(status)
@@ -230,40 +228,6 @@ describe('Logger', () => {
       logger.setHandler([HandlerType.console, HandlerType.http])
 
       expect(logger.getHandler()).toEqual([HandlerType.console, HandlerType.http])
-    })
-  })
-
-  describe('remapping status', () => {
-    const supportedStatus = {
-      [StatusType.OK]: ['o', 's', 'OK', 'Success', 'okstatus', 'successstatus'],
-      [StatusType.debug]: [7, 'd', 'trace', 'verbose', 'debugstatus'],
-      [StatusType.info]: [6, 'i', 'infostatus'],
-      [StatusType.notice]: [5, 'n', 'noticestatus'],
-      [StatusType.warn]: [4, 'w', 'warnstatus'],
-      [StatusType.error]: [3, 'e', 'errorstatus'],
-      [StatusType.critical]: [2, 'c', 'criticalstatus'],
-      [StatusType.alert]: [1, 'a', 'alertingstatus'],
-      [StatusType.emerg]: [0, 'f', 'emerg', 'emergestatus'],
-    }
-
-    objectEntries(supportedStatus).forEach(([status, values]) => {
-      values.forEach((value) => {
-        it("'logger.log' should remap incoming status", () => {
-          logger.log('message', {}, value)
-
-          expect(getLoggedMessage(0).status).toEqual(status)
-        })
-      })
-    })
-
-    const unsupportedStatus = [8, -1, 'KO', '', undefined, {}]
-
-    unsupportedStatus.forEach((value) => {
-      it("'logger.log' should remap non supported status to 'info'", () => {
-        logger.log('message', {}, value as string | undefined)
-
-        expect(getLoggedMessage(0).status).toEqual('info')
-      })
     })
   })
 })

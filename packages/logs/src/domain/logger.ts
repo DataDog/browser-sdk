@@ -10,8 +10,6 @@ import {
   monitored,
   sanitize,
   NonErrorPrefix,
-  matchList,
-  includes,
 } from '@datadog/browser-core'
 
 import type { RawLoggerLogsEvent } from '../rawLogsEvent.types'
@@ -23,15 +21,15 @@ export interface LogsMessage {
 }
 
 export const StatusType = {
-  emerg: 'emerg',
-  alert: 'alert',
-  critical: 'critical',
-  error: 'error',
-  warn: 'warn',
-  notice: 'notice',
-  info: 'info',
-  debug: 'debug',
   OK: 'OK',
+  debug: 'debug',
+  info: 'info',
+  notice: 'notice',
+  warn: 'warn',
+  error: 'error',
+  critical: 'critical',
+  alert: 'alert',
+  emerg: 'emerg',
 } as const
 
 export type StatusType = (typeof StatusType)[keyof typeof StatusType]
@@ -44,43 +42,6 @@ export const HandlerType = {
 
 export type HandlerType = (typeof HandlerType)[keyof typeof HandlerType]
 export const STATUSES = Object.keys(StatusType) as StatusType[]
-
-export const StatusMapping: {
-  [key in StatusType]: { prefixes: string[]; excludedPrefixes?: string[]; priority: number }
-} = {
-  [StatusType.emerg]: { priority: 0, prefixes: ['f', 'emerg'] },
-  [StatusType.alert]: { priority: 1, prefixes: ['a'] },
-  [StatusType.critical]: { priority: 2, prefixes: ['c'] },
-  [StatusType.error]: { priority: 3, prefixes: ['e'], excludedPrefixes: ['emerg'] },
-  [StatusType.warn]: { priority: 4, prefixes: ['w'] },
-  [StatusType.notice]: { priority: 5, prefixes: ['n'] },
-  [StatusType.info]: { priority: 6, prefixes: ['i'] },
-  [StatusType.debug]: { priority: 7, prefixes: ['d', 'trace', 'verbose'] },
-  [StatusType.OK]: { priority: 8, prefixes: ['o', 's'] },
-}
-
-const remap = (rawStatus: string | number): StatusType => {
-  if (includes(STATUSES, rawStatus)) {
-    return rawStatus as StatusType
-  }
-
-  // Only map Syslog severity level numbers.
-  if (typeof rawStatus === 'number' && rawStatus >= 0 && rawStatus <= 7) {
-    return STATUSES[rawStatus]
-  }
-
-  if (typeof rawStatus === 'string') {
-    rawStatus = rawStatus.toLowerCase()
-    for (const status of STATUSES) {
-      const { prefixes, excludedPrefixes } = StatusMapping[status]
-      if (matchList(prefixes, rawStatus, true) && !matchList(excludedPrefixes ?? [], rawStatus, true)) {
-        return status
-      }
-    }
-  }
-
-  return StatusType.info
-}
 
 export class Logger {
   private contextManager: ContextManager
@@ -101,7 +62,7 @@ export class Logger {
   }
 
   @monitored
-  log(message: string, messageContext?: object, status: string | number = StatusType.info, error?: Error): void {
+  log(message: string, messageContext?: object, status: StatusType = StatusType.info, error?: Error) {
     let errorContext: RawLoggerLogsEvent['error']
 
     if (error !== undefined && error !== null) {
@@ -133,10 +94,14 @@ export class Logger {
       {
         message: sanitize(message)!,
         context,
-        status: remap(status),
+        status,
       },
       this
     )
+  }
+
+  OK(message: string, messageContext?: object, error?: Error) {
+    this.log(message, messageContext, StatusType.OK, error)
   }
 
   debug(message: string, messageContext?: object, error?: Error) {
@@ -147,12 +112,28 @@ export class Logger {
     this.log(message, messageContext, StatusType.info, error)
   }
 
+  notice(message: string, messageContext?: object, error?: Error) {
+    this.log(message, messageContext, StatusType.notice, error)
+  }
+
   warn(message: string, messageContext?: object, error?: Error) {
     this.log(message, messageContext, StatusType.warn, error)
   }
 
   error(message: string, messageContext?: object, error?: Error) {
     this.log(message, messageContext, StatusType.error, error)
+  }
+
+  critical(message: string, messageContext?: object, error?: Error) {
+    this.log(message, messageContext, StatusType.critical, error)
+  }
+
+  alert(message: string, messageContext?: object, error?: Error) {
+    this.log(message, messageContext, StatusType.alert, error)
+  }
+
+  emerg(message: string, messageContext?: object, error?: Error) {
+    this.log(message, messageContext, StatusType.emerg, error)
   }
 
   setContext(context: object) {
