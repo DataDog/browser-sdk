@@ -51,7 +51,7 @@ The Event Tab contains a list of events sent by the SDK and a menu of event type
 
 We support a basic `key:value` search syntax, which means you can search within the limits of [RUM event structures](https://docs.datadoghq.com/real_user_monitoring/explorer/search/), such as `action.target.name:action_name`.
 
-We split each search key based on whitespaces. To search with multiple conditions, simply add whitespaces in between, such as:
+We split each search key based on whitespace. To search with multiple conditions, simply add whitespace characters in between, such as:
 
 ```
 type:view application.id:2 action.target.name:my_action_name
