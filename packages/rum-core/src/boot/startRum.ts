@@ -147,8 +147,8 @@ export function startRum(
   drainPreStartTelemetry()
   addTelemetryConfiguration(serializeRumConfiguration(initConfiguration))
 
-  startLongTaskCollection(lifeCycle, configuration, session)
-  startResourceCollection(lifeCycle, configuration, session, pageStateHistory)
+  startLongTaskCollection(lifeCycle, configuration)
+  startResourceCollection(lifeCycle, configuration, pageStateHistory)
 
   const {
     addTiming,
