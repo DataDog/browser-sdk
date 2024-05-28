@@ -89,7 +89,7 @@ Info tab contains information about Session and RUM SDK configurations
 
 To work on the developer extension and debug it easily:
 
-- In a terminal, cd into the `developer-extension` folder
+1. In a terminal, cd into the `developer-extension` folder.
 
 - Run `yarn dev`
 
