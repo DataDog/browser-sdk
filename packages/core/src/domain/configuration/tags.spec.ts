@@ -44,6 +44,8 @@ describe('buildTag', () => {
   })
 
   function expectWarning() {
-    expect(displaySpy).toHaveBeenCalledOnceWith("env value doesn't meet tag requirements and will be sanitized")
+    expect(displaySpy).toHaveBeenCalledOnceWith(
+      jasmine.stringContaining("env value doesn't meet tag requirements and will be sanitized")
+    )
   }
 })
