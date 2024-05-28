@@ -47,7 +47,7 @@ For now, only Google Chrome is supported.
 
 The Event Tab contains a list of events sent by the SDK and a menu of event types for quick filtering.
 
-#### Search Syntax
+#### Search syntax
 
 We support a basic `key:value` search syntax which means you can search within the limits of [RUM event structures](https://docs.datadoghq.com/real_user_monitoring/explorer/search/), such as `action.target.name:action_name`.
 
