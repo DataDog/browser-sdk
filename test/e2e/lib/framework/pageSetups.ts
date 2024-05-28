@@ -8,6 +8,7 @@ export interface SetupOptions {
   useRumSlim: boolean
   logs?: LogsInitConfiguration
   logsInit: (initConfiguration: LogsInitConfiguration) => void
+  logsInitArgs: any[]
   rumInit: (initConfiguration: RumInitConfiguration) => void
   eventBridge: boolean
   head?: string
@@ -61,7 +62,7 @@ n=o.getElementsByTagName(u)[0];n.parentNode.insertBefore(d,n)
         ${formatSnippet('./datadog-logs.js', 'DD_LOGS')}
         DD_LOGS.onReady(function () {
           DD_LOGS.setGlobalContext(${JSON.stringify(options.context)})
-          DD_LOGS.init(${formatConfiguration(options.logs, servers)})
+          ;(${options.logsInit.toString()})(${formatConfiguration(options.logs, servers)})
         })
       </script>
     `
@@ -73,7 +74,10 @@ n=o.getElementsByTagName(u)[0];n.parentNode.insertBefore(d,n)
         ${formatSnippet(options.useRumSlim ? './datadog-rum-slim.js' : './datadog-rum.js', 'DD_RUM')}
         DD_RUM.onReady(function () {
           DD_RUM.setGlobalContext(${JSON.stringify(options.context)})
-          ;(${options.rumInit.toString()})(${formatConfiguration(options.rum, servers)})
+          ;(${options.rumInit.toString()})(
+            ${formatConfiguration(options.rum, servers)},
+            ${options.logsInitArgs?.map((logInitArg) => JSON.stringify(logInitArg)).join(',')}
+          )
         })
       </script>
     `
@@ -97,7 +101,10 @@ export function bundleSetup(options: SetupOptions, servers: Servers) {
       <script type="text/javascript" src="./datadog-logs.js"></script>
       <script type="text/javascript">
         DD_LOGS.setGlobalContext(${JSON.stringify(options.context)})
-        DD_LOGS.init(${formatConfiguration(options.logs, servers)})
+        ;(${options.logsInit.toString()})(
+          ${formatConfiguration(options.logs, servers)},
+          ${options.logsInitArgs?.map((logInitArg) => JSON.stringify(logInitArg)).join(',')}
+        )
       </script>
     `
   }
@@ -133,7 +140,10 @@ export function npmSetup(options: SetupOptions, servers: Servers) {
       <script type="text/javascript">
         window.LOGS_INIT = () => {
           window.DD_LOGS.setGlobalContext(${JSON.stringify(options.context)})
-          ;(${options.logsInit.toString()})(${formatConfiguration(options.logs, servers)})
+          ;(${options.logsInit.toString()})(
+            ${formatConfiguration(options.logs, servers)},
+            ${options.logsInitArgs?.map((logInitArg) => JSON.stringify(logInitArg)).join(',')}
+          )
         }
       </script>
     `

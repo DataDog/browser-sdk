@@ -36,6 +36,9 @@ export function startConsoleCollection(configuration: LogsConfiguration, lifeCyc
             : undefined,
         status: LogStatusForApi[log.api],
       },
+      domainContext: {
+        handlingStack: log.handlingStack,
+      },
     })
   })
 

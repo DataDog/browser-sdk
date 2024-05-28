@@ -55,6 +55,7 @@ class TestBuilder {
   private basePath = ''
   private eventBridge = false
   private setups: Array<{ factory: SetupFactory; name?: string }> = []
+  private logsInitArgs: any[] = []
 
   constructor(private title: string) {}
 
@@ -70,6 +71,15 @@ class TestBuilder {
 
   withRumInit(rumInit: (initConfiguration: RumInitConfiguration) => void) {
     this.rumInit = rumInit
+    return this
+  }
+
+  withLogsInit<InnerArguments extends any[]>(
+    logsInit: (initConfiguration: LogsInitConfiguration, ...args: InnerArguments) => void,
+    ...args: InnerArguments
+  ) {
+    this.logsInit = logsInit
+    this.logsInitArgs = args
     return this
   }
 
@@ -90,6 +100,7 @@ class TestBuilder {
 
   withEventBridge() {
     this.eventBridge = true
+
     return this
   }
 
@@ -116,6 +127,7 @@ class TestBuilder {
       rum: this.rumConfiguration,
       rumInit: this.rumInit,
       logsInit: this.logsInit,
+      logsInitArgs: this.logsInitArgs,
       useRumSlim: false,
       eventBridge: this.eventBridge,
       basePath: this.basePath,
@@ -144,7 +156,7 @@ class TestBuilder {
     window.DD_RUM!.init(configuration)
   }
 
-  private logsInit: (configuration: LogsInitConfiguration) => void = (configuration) => {
+  private logsInit: (configuration: LogsInitConfiguration, ...args: any[]) => void = (configuration) => {
     window.DD_LOGS!.init(configuration)
   }
 }
