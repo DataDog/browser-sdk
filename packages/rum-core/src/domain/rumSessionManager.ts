@@ -52,7 +52,7 @@ export function startRumSessionManager(
 
   return {
     findTrackedSession: (startTime) => {
-      const session = sessionManager.findActiveSession(startTime)
+      const session = sessionManager.findSession(startTime)
       if (!session || !isTypeTracked(session.trackingType)) {
         return
       }
