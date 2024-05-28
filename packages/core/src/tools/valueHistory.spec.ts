@@ -54,6 +54,14 @@ describe('valueHistory', () => {
 
       expect(valueHistory.find(15 as RelativeTime)).toBeUndefined()
     })
+
+    describe('with `option.returnInactive` true', () => {
+      it('should return the value of the closest entry regardless of the being closed', () => {
+        valueHistory.add('foo', 0 as RelativeTime).close(10 as RelativeTime)
+        valueHistory.add('bar', 20 as RelativeTime)
+        expect(valueHistory.find(15 as RelativeTime, { returnInactive: true })).toEqual('foo')
+      })
+    })
   })
 
   describe('findAll', () => {

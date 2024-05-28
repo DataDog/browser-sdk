@@ -60,11 +60,16 @@ export class ValueHistory<Value> {
   /**
    * Return the latest value that was active during `startTime`, or the currently active value
    * if no `startTime` is provided. This method assumes that entries are not overlapping.
+   *
+   * If `option.returnInactive` is true, returns the value at `startTime` (active or not).
    */
-  find(startTime: RelativeTime = END_OF_TIMES): Value | undefined {
+  find(
+    startTime: RelativeTime = END_OF_TIMES,
+    options: { returnInactive: boolean } = { returnInactive: false }
+  ): Value | undefined {
     for (const entry of this.entries) {
       if (entry.startTime <= startTime) {
-        if (startTime <= entry.endTime) {
+        if (options.returnInactive || startTime <= entry.endTime) {
           return entry.value
         }
         break

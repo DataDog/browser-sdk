@@ -2,7 +2,7 @@ import type { Duration, RelativeTime, ServerDuration, TimeStamp } from '@datadog
 import { isIE, RequestType, ResourceType, ExperimentalFeature } from '@datadog/browser-core'
 import { mockExperimentalFeatures } from '@datadog/browser-core/test'
 import type { RumFetchResourceEventDomainContext, RumXhrResourceEventDomainContext } from '../../domainContext.types'
-import { setup, createRumSessionManagerMock, createPerformanceEntry } from '../../../test'
+import { setup, createPerformanceEntry } from '../../../test'
 import type { TestSetupBuilder } from '../../../test'
 import type { RawRumResourceEvent } from '../../rawRumEvent.types'
 import { RumEventType } from '../../rawRumEvent.types'
@@ -20,9 +20,9 @@ describe('resourceCollection', () => {
 
   beforeEach(() => {
     trackResources = true
-    setupBuilder = setup().beforeBuild(({ lifeCycle, sessionManager, pageStateHistory, configuration }) => {
+    setupBuilder = setup().beforeBuild(({ lifeCycle, pageStateHistory, configuration }) => {
       wasInPageStateDuringPeriodSpy = spyOn(pageStateHistory, 'wasInPageStateDuringPeriod')
-      startResourceCollection(lifeCycle, { ...configuration, trackResources }, sessionManager, pageStateHistory)
+      startResourceCollection(lifeCycle, { ...configuration, trackResources }, pageStateHistory)
     })
   })
 
@@ -109,76 +109,61 @@ describe('resourceCollection', () => {
     })
   })
 
-  //
-  ;[
-    {
-      title: 'when trackResource is false',
-      trackResources: false,
-      session: createRumSessionManagerMock(),
-    },
-    {
-      title: 'when the session is not tracked',
-      trackResources: true,
-      session: createRumSessionManagerMock().setNotTracked(),
-    },
-  ].forEach((options) => {
-    describe(options.title, () => {
-      beforeEach(() => {
-        trackResources = options.trackResources
-        setupBuilder.withSessionManager(options.session)
+  describe('when trackResource is false', () => {
+    beforeEach(() => {
+      trackResources = false
+    })
+
+    describe('and resource is not traced', () => {
+      it('should not collect a resource from a performance entry', () => {
+        const { lifeCycle, rawRumEvents } = setupBuilder.build()
+
+        lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [
+          createPerformanceEntry(RumPerformanceEntryType.RESOURCE),
+        ])
+
+        expect(rawRumEvents.length).toBe(0)
       })
 
-      describe('and resource is not traced', () => {
-        it('should not collect a resource from a performance entry', () => {
-          const { lifeCycle, rawRumEvents } = setupBuilder.build()
+      it('should not collect a resource from a completed XHR request', () => {
+        const { lifeCycle, rawRumEvents } = setupBuilder.build()
+        lifeCycle.notify(
+          LifeCycleEventType.REQUEST_COMPLETED,
+          createCompletedRequest({
+            type: RequestType.XHR,
+          })
+        )
 
-          lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [
-            createPerformanceEntry(RumPerformanceEntryType.RESOURCE),
-          ])
+        expect(rawRumEvents.length).toBe(0)
+      })
+    })
 
-          expect(rawRumEvents.length).toBe(0)
-        })
+    describe('and resource is traced', () => {
+      it('should collect a resource from a performance entry', () => {
+        const { lifeCycle, rawRumEvents } = setupBuilder.build()
 
-        it('should not collect a resource from a completed XHR request', () => {
-          const { lifeCycle, rawRumEvents } = setupBuilder.build()
-          lifeCycle.notify(
-            LifeCycleEventType.REQUEST_COMPLETED,
-            createCompletedRequest({
-              type: RequestType.XHR,
-            })
-          )
+        lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [
+          createPerformanceEntry(RumPerformanceEntryType.RESOURCE, { traceId: '1234' }),
+        ])
 
-          expect(rawRumEvents.length).toBe(0)
-        })
+        expect(rawRumEvents.length).toBe(1)
+        expect((rawRumEvents[0].rawRumEvent as RawRumResourceEvent)._dd.discarded).toBeTrue()
       })
 
-      describe('and resource is traced', () => {
-        it('should collect a resource from a performance entry', () => {
-          const { lifeCycle, rawRumEvents } = setupBuilder.build()
+      it('should collect a resource from a completed XHR request', () => {
+        const { lifeCycle, rawRumEvents } = setupBuilder.build()
+        lifeCycle.notify(
+          LifeCycleEventType.REQUEST_COMPLETED,
+          createCompletedRequest({
+            type: RequestType.XHR,
+            traceId: new TraceIdentifier(),
+            spanId: new TraceIdentifier(),
+            traceSampled: true,
+          })
+        )
 
-          lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [
-            createPerformanceEntry(RumPerformanceEntryType.RESOURCE, { traceId: '1234' }),
-          ])
-
-          expect(rawRumEvents.length).toBe(1)
-          expect((rawRumEvents[0].rawRumEvent as RawRumResourceEvent)._dd.discarded).toBeTrue()
-        })
-
-        it('should collect a resource from a completed XHR request', () => {
-          const { lifeCycle, rawRumEvents } = setupBuilder.build()
-          lifeCycle.notify(
-            LifeCycleEventType.REQUEST_COMPLETED,
-            createCompletedRequest({
-              type: RequestType.XHR,
-              traceId: new TraceIdentifier(),
-              spanId: new TraceIdentifier(),
-              traceSampled: true,
-            })
-          )
-
-          expect(rawRumEvents.length).toBe(1)
-          expect((rawRumEvents[0].rawRumEvent as RawRumResourceEvent)._dd.discarded).toBeTrue()
-        })
+        expect(rawRumEvents.length).toBe(1)
+        expect((rawRumEvents[0].rawRumEvent as RawRumResourceEvent)._dd.discarded).toBeTrue()
       })
     })
   })
@@ -325,7 +310,7 @@ describe('resourceCollection', () => {
     })
 
     it('should pull traceSampleRate from config if present', () => {
-      setupBuilder = setup().beforeBuild(({ lifeCycle, sessionManager, pageStateHistory }) => {
+      setupBuilder = setup().beforeBuild(({ lifeCycle, pageStateHistory }) => {
         startResourceCollection(
           lifeCycle,
           validateAndBuildRumConfiguration({
@@ -333,7 +318,6 @@ describe('resourceCollection', () => {
             applicationId: 'xxx',
             traceSampleRate: 60,
           })!,
-          sessionManager,
           pageStateHistory
         )
       })
@@ -352,14 +336,13 @@ describe('resourceCollection', () => {
     })
 
     it('should not define rule_psr if traceSampleRate is undefined', () => {
-      setupBuilder = setup().beforeBuild(({ lifeCycle, sessionManager, pageStateHistory }) => {
+      setupBuilder = setup().beforeBuild(({ lifeCycle, pageStateHistory }) => {
         startResourceCollection(
           lifeCycle,
           validateAndBuildRumConfiguration({
             clientToken: 'xxx',
             applicationId: 'xxx',
           })!,
-          sessionManager,
           pageStateHistory
         )
       })
@@ -378,7 +361,7 @@ describe('resourceCollection', () => {
     })
 
     it('should define rule_psr to 0 if traceSampleRate is set to 0', () => {
-      setupBuilder = setup().beforeBuild(({ lifeCycle, sessionManager, pageStateHistory }) => {
+      setupBuilder = setup().beforeBuild(({ lifeCycle, pageStateHistory }) => {
         startResourceCollection(
           lifeCycle,
           validateAndBuildRumConfiguration({
@@ -386,7 +369,6 @@ describe('resourceCollection', () => {
             applicationId: 'xxx',
             traceSampleRate: 0,
           })!,
-          sessionManager,
           pageStateHistory
         )
       })
