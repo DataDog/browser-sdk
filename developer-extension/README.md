@@ -41,7 +41,7 @@ Then, in Google Chrome:
 
 For now, only Google Chrome is supported.
 
-## Usage Tips
+## Usage tips
 
 ### Event Tab
 
