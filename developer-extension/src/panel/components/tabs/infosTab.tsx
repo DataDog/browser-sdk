@@ -45,6 +45,7 @@ export function InfosTab() {
                   )
                 }
               />
+              {infos.cookie.forcedReplay && <Entry name="Is Replay Forced" value={'True'} />}
               <Entry name="Created" value={infos.cookie.created && formatDate(Number(infos.cookie.created))} />
               <Entry name="Expire" value={infos.cookie.expire && formatDate(Number(infos.cookie.expire))} />
               <Button color="violet" variant="light" onClick={endSession} className="dd-privacy-allow">
