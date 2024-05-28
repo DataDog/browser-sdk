@@ -57,7 +57,7 @@ We split each search key based on whitespace. To search with multiple conditions
 type:view application.id:2 action.target.name:my_action_name
 ```
 
-#### Event Columns
+#### Event columns
 
 The Events List offers an interactive experience to visualize RUM events:
 
