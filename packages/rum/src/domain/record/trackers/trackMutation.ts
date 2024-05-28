@@ -1,12 +1,14 @@
 import { monitor, noop } from '@datadog/browser-core'
-import type { RumConfiguration } from '@datadog/browser-rum-core'
+import type { RumConfiguration, NodePrivacyLevelCache } from '@datadog/browser-rum-core'
 import {
   isNodeShadowHost,
   getMutationObserverConstructor,
   getParentNode,
   forEachChildNodes,
+  getNodePrivacyLevel,
+  getTextContent,
+  NodePrivacyLevel,
 } from '@datadog/browser-rum-core'
-import { NodePrivacyLevel } from '../../../constants'
 import { IncrementalSource } from '../../../types'
 import type {
   BrowserMutationData,
@@ -16,8 +18,6 @@ import type {
   TextMutation,
   BrowserIncrementalSnapshotRecord,
 } from '../../../types'
-import type { NodePrivacyLevelCache } from '../privacy'
-import { getNodePrivacyLevel, getTextContent } from '../privacy'
 import type { NodeWithSerializedNode } from '../serialization'
 import {
   getElementInputValue,

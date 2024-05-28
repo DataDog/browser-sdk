@@ -1,5 +1,5 @@
 import type { Context, Duration } from '@datadog/browser-core'
-import { addDuration, clocksNow, timeStampNow, relativeNow } from '@datadog/browser-core'
+import { addDuration, clocksNow, timeStampNow, relativeNow, DefaultPrivacyLevel } from '@datadog/browser-core'
 import { createNewEvent } from '@datadog/browser-core/test'
 import type { TestSetupBuilder } from '../../../test'
 import { setup, createFakeClick } from '../../../test'
@@ -100,6 +100,7 @@ describe('trackClickActions', () => {
           selector: '#button',
           width: 100,
           height: 100,
+          masked: false,
         },
         position: { x: 50, y: 50 },
         events: [domEvent],
@@ -232,6 +233,50 @@ describe('trackClickActions', () => {
     expect(events.length).toBe(1)
   })
 
+  describe('with enablePrivacyForActionName false', () => {
+    it('extracts action name when default privacy level is mask', () => {
+      setupBuilder.withConfiguration({
+        defaultPrivacyLevel: DefaultPrivacyLevel.MASK,
+        enablePrivacyForActionName: false,
+      })
+      const { clock } = setupBuilder.build()
+      emulateClick({ activity: {} })
+      expect(findActionId()).not.toBeUndefined()
+      clock.tick(EXPIRE_DELAY)
+
+      expect(events.length).toBe(1)
+      expect(events[0].name).toBe('Click me')
+    })
+  })
+
+  describe('with enablePrivacyForActionName true', () => {
+    it('does not track click actions when html override set hidden', () => {
+      setupBuilder.withConfiguration({
+        enablePrivacyForActionName: true,
+      })
+      button.setAttribute('data-dd-privacy', 'hidden')
+
+      const { clock } = setupBuilder.build()
+      emulateClick({ activity: {} })
+      clock.tick(EXPIRE_DELAY)
+
+      expect(events.length).toBe(0)
+    })
+    it('get placeholder when defaultPrivacyLevel is mask without programmatically declared action name', () => {
+      setupBuilder.withConfiguration({
+        defaultPrivacyLevel: DefaultPrivacyLevel.MASK,
+        enablePrivacyForActionName: true,
+      })
+      const { clock } = setupBuilder.build()
+      emulateClick({ activity: {} })
+      expect(findActionId()).not.toBeUndefined()
+      clock.tick(EXPIRE_DELAY)
+
+      expect(events.length).toBe(1)
+      expect(events[0].name).toBe('Masked Element')
+    })
+  })
+
   describe('rage clicks', () => {
     it('considers a chain of three clicks or more as a single action with "rage" frustration type', () => {
       const { clock } = setupBuilder.build()
@@ -263,7 +308,7 @@ describe('trackClickActions', () => {
       expect(events[0].events?.length).toBe(3)
     })
 
-    it('aggregates frustrationTypes from all clicks', () => {
+    it('aggregates frustration Types from all clicks', () => {
       const { lifeCycle, clock } = setupBuilder.build()
 
       // Dead
