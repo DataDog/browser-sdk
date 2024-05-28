@@ -50,3 +50,5 @@ export const display: Display = {
   warn: originalConsoleMethods.warn.bind(globalConsole, PREFIX),
   error: originalConsoleMethods.error.bind(globalConsole, PREFIX),
 }
+
+export const DOCS_ORIGIN = 'https://docs.datadoghq.com'
