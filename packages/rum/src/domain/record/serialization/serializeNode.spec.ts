@@ -1,11 +1,4 @@
-import {
-  ExperimentalFeature,
-  addExperimentalFeatures,
-  isIE,
-  noop,
-  resetExperimentalFeatures,
-} from '@datadog/browser-core'
-
+import { isIE, noop } from '@datadog/browser-core'
 import type { RumConfiguration } from '@datadog/browser-rum-core'
 import { isAdoptedStyleSheetsSupported } from '@datadog/browser-core/test'
 import {
@@ -68,10 +61,6 @@ describe('serializeNodeWithId', () => {
     if (isIE()) {
       pending('IE not supported')
     }
-  })
-
-  afterEach(() => {
-    resetExperimentalFeatures()
   })
 
   describe('document serialization', () => {
@@ -632,25 +621,6 @@ describe('serializeNodeWithId', () => {
           },
           childNodes: [],
         })
-      })
-
-      it('does not inline external CSS when DISABLE_REPLAY_INLINE_CSS is enabled', () => {
-        addExperimentalFeatures([ExperimentalFeature.DISABLE_REPLAY_INLINE_CSS])
-        const linkNode = appendElement(
-          "<link rel='stylesheet' href='https://datadoghq.com/some/style.css' />",
-          document.head
-        )
-        Object.defineProperty(document, 'styleSheets', {
-          value: [
-            {
-              href: 'https://datadoghq.com/some/style.css',
-              cssRules: [{ cssText: 'body { width: 100%; }' }],
-            },
-          ],
-          configurable: true,
-        })
-
-        expect((serializeNodeWithId(linkNode, DEFAULT_OPTIONS) as ElementNode).attributes._cssText).toBeUndefined()
       })
 
       it('does not inline external CSS if the style sheet is behind CORS', () => {

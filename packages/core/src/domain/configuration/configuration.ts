@@ -1,5 +1,5 @@
 import { catchUserErrors } from '../../tools/catchUserErrors'
-import { display } from '../../tools/display'
+import { DOCS_ORIGIN, display } from '../../tools/display'
 import type { RawTelemetryConfiguration } from '../telemetry'
 import { ExperimentalFeature, addExperimentalFeatures } from '../../tools/experimentalFeatures'
 import type { Duration } from '../../tools/utils/timeUtils'
@@ -45,9 +45,9 @@ export interface InitConfiguration {
   site?: string | undefined
 
   // tag and context options
-  service?: string | undefined
-  env?: string | undefined
-  version?: string | undefined
+  service?: string | undefined | null
+  env?: string | undefined | null
+  version?: string | undefined | null
 
   // cookie options
   /**
@@ -108,6 +108,18 @@ export interface Configuration extends TransportConfiguration {
   messageBytesLimit: number
 }
 
+function checkIfString(tag: unknown, tagName: string): tag is string | undefined | null {
+  if (tag !== undefined && tag !== null && typeof tag !== 'string') {
+    display.error(`${tagName} must be defined as a string`)
+    return false
+  }
+  return true
+}
+
+function isDatadogSite(site: string) {
+  return /(datadog|ddog|datad0g|dd0g)/.test(site)
+}
+
 export function validateAndBuildConfiguration(initConfiguration: InitConfiguration): Configuration | undefined {
   if (!initConfiguration || !initConfiguration.clientToken) {
     display.error('Client Token is not configured, we will not send any data.')
@@ -140,11 +152,28 @@ export function validateAndBuildConfiguration(initConfiguration: InitConfigurati
     return
   }
 
+  if (!checkIfString(initConfiguration.version, 'Version')) {
+    return
+  }
+
+  if (!checkIfString(initConfiguration.env, 'Env')) {
+    return
+  }
+
+  if (!checkIfString(initConfiguration.service, 'Service')) {
+    return
+  }
+
   if (
     initConfiguration.trackingConsent !== undefined &&
     !objectHasValue(TrackingConsent, initConfiguration.trackingConsent)
   ) {
     display.error('Tracking Consent should be either "granted" or "not-granted"')
+    return
+  }
+
+  if (initConfiguration.site && !isDatadogSite(initConfiguration.site)) {
+    display.error(`Site should be a valid Datadog site. Learn more here: ${DOCS_ORIGIN}/getting_started/site/.`)
     return
   }
 
@@ -166,7 +195,7 @@ export function validateAndBuildConfiguration(initConfiguration: InitConfigurati
       telemetrySampleRate: initConfiguration.telemetrySampleRate ?? 20,
       telemetryConfigurationSampleRate: initConfiguration.telemetryConfigurationSampleRate ?? 5,
       telemetryUsageSampleRate: initConfiguration.telemetryUsageSampleRate ?? 5,
-      service: initConfiguration.service,
+      service: initConfiguration.service || undefined,
       silentMultipleInit: !!initConfiguration.silentMultipleInit,
       allowUntrustedEvents: !!initConfiguration.allowUntrustedEvents,
       trackingConsent: initConfiguration.trackingConsent ?? TrackingConsent.GRANTED,

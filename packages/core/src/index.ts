@@ -21,7 +21,7 @@ export {
 } from './tools/experimentalFeatures'
 export { trackRuntimeError } from './domain/error/trackRuntimeError'
 export { computeStackTrace, StackTrace } from './tools/stackTrace/computeStackTrace'
-export { defineGlobal, makePublicApi } from './boot/init'
+export { defineGlobal, makePublicApi, PublicApi } from './boot/init'
 export { displayAlreadyInitializedError } from './boot/displayAlreadyInitializedError'
 export { initReportObservable, RawReport, RawReportType } from './domain/report/reportObservable'
 export {
@@ -41,6 +41,7 @@ export {
   isTelemetryReplicationAllowed,
   addTelemetryConfiguration,
   addTelemetryUsage,
+  drainPreStartTelemetry,
 } from './domain/telemetry'
 export { monitored, monitor, callMonitored, setDebugMode } from './tools/monitor'
 export { Observable, Subscription } from './tools/observable'
@@ -91,7 +92,7 @@ export {
   deleteCookie,
   resetInitCookies,
 } from './browser/cookie'
-export { CookieStore } from './browser/types'
+export { CookieStore, WeakRef, WeakRefConstructor } from './browser/types'
 export { initXhrObservable, XhrCompleteContext, XhrStartContext } from './browser/xhrObservable'
 export { initFetchObservable, FetchResolveContext, FetchStartContext, FetchContext } from './browser/fetchObservable'
 export { createPageExitObservable, PageExitEvent, PageExitReason, isPageExitReason } from './browser/pageExitObservable'

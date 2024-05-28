@@ -1,4 +1,4 @@
-import { display } from '../tools/display'
+import { DOCS_ORIGIN, display } from '../tools/display'
 import type { Context } from '../tools/serialisation/context'
 import { objectValues } from '../tools/utils/polyfills'
 import { isPageExitReason } from '../browser/pageExitObservable'
@@ -53,7 +53,7 @@ export class Batch {
 
       // Send encoded messages
       if (encoderResult.outputBytesCount) {
-        send(formatPayloadFromEncoder(encoderResult, event))
+        send(formatPayloadFromEncoder(encoderResult))
       }
 
       // Send messages that are not yet encoded at this point
@@ -62,7 +62,6 @@ export class Batch {
         send({
           data: pendingMessages,
           bytesCount: computeBytesCount(pendingMessages),
-          flushReason: event.reason,
         })
       }
     } else {
@@ -70,7 +69,7 @@ export class Batch {
         this.encoder.write(this.encoder.isEmpty ? upsertMessages : `\n${upsertMessages}`)
       }
       this.encoder.finish((encoderResult) => {
-        send(formatPayloadFromEncoder(encoderResult, event))
+        send(formatPayloadFromEncoder(encoderResult))
       })
     }
   }
@@ -82,7 +81,7 @@ export class Batch {
 
     if (estimatedMessageBytesCount >= this.messageBytesLimit) {
       display.warn(
-        `Discarded a message whose size was bigger than the maximum allowed size ${this.messageBytesLimit}KB.`
+        `Discarded a message whose size was bigger than the maximum allowed size ${this.messageBytesLimit}KB. More details: ${DOCS_ORIGIN}/real_user_monitoring/browser/troubleshooting/#technical-limitations`
       )
       return
     }
@@ -122,7 +121,7 @@ export class Batch {
   }
 }
 
-function formatPayloadFromEncoder(encoderResult: EncoderResult, flushEvent: FlushEvent): Payload {
+function formatPayloadFromEncoder(encoderResult: EncoderResult): Payload {
   let data: string | Blob
   if (typeof encoderResult.output === 'string') {
     data = encoderResult.output
@@ -142,6 +141,5 @@ function formatPayloadFromEncoder(encoderResult: EncoderResult, flushEvent: Flus
     data,
     bytesCount: encoderResult.outputBytesCount,
     encoding: encoderResult.encoding,
-    flushReason: flushEvent.reason,
   }
 }

@@ -39,8 +39,7 @@ export interface ClickAction {
   id: string
   name: string
   target?: {
-    selector: string
-    selector_with_stable_attributes?: string
+    selector: string | undefined
     width: number
     height: number
     masked?: boolean

@@ -414,6 +414,14 @@ describe('validateAndBuildRumConfiguration', () => {
       ).toBe('https://example.org/worker.js')
     })
   })
+
+  describe('version parameter validation', () => {
+    it('should not reject null', () => {
+      const configuration = validateAndBuildRumConfiguration({ ...DEFAULT_INIT_CONFIGURATION, version: null })
+      expect(displayErrorSpy).not.toHaveBeenCalled()
+      expect(configuration!.version).toBeUndefined()
+    })
+  })
 })
 
 describe('serializeRumConfiguration', () => {

@@ -75,3 +75,29 @@ export function elementClasslistContains(element: Element, className: string): b
   }
   return includes(classList, className)
 }
+
+// ie11 supports WeakMap but not WeakSet
+const PLACEHOLDER = 1
+export class WeakSet<T extends object> {
+  private map = new WeakMap<T, typeof PLACEHOLDER>()
+
+  constructor(initialValues?: T[]) {
+    if (initialValues) {
+      initialValues.forEach((value) => this.map.set(value, PLACEHOLDER))
+    }
+  }
+
+  add(value: T) {
+    this.map.set(value, PLACEHOLDER)
+
+    return this
+  }
+
+  delete(value: T) {
+    return this.map.delete(value)
+  }
+
+  has(value: T) {
+    return this.map.has(value)
+  }
+}
