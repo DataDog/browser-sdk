@@ -237,7 +237,7 @@ export interface RumPublicApi extends PublicApi {
    *
    * See [Browser Session Replay](https://docs.datadoghq.com/real_user_monitoring/session_replay/browser) for further information.
    */
-  startSessionReplayRecording: () => void
+  startSessionReplayRecording: (options: StartRecordingOptions) => void
 
   /**
    * Stop Session Replay recording.
