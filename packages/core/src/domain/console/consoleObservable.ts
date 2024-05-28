@@ -1,18 +1,13 @@
-import {
-  createHandlingStack,
-  flattenErrorCauses,
-  formatErrorMessage,
-  toStackTraceString,
-  tryToGetFingerprint,
-} from '../error/error'
+import { flattenErrorCauses, tryToGetFingerprint } from '../error/error'
 import { mergeObservables, Observable } from '../../tools/observable'
 import { ConsoleApiName, globalConsole } from '../../tools/display'
 import { callMonitored } from '../../tools/monitor'
 import { sanitize } from '../../tools/serialisation/sanitize'
 import { find } from '../../tools/utils/polyfills'
 import { jsonStringify } from '../../tools/serialisation/jsonStringify'
-import { computeStackTrace } from '../error/computeStackTrace'
 import type { RawErrorCause } from '../error/error.types'
+import { computeStackTrace } from '../../tools/stackTrace/computeStackTrace'
+import { createHandlingStack, toStackTraceString, formatErrorMessage } from '../../tools/stackTrace/handlingStack'
 
 export interface ConsoleLog {
   message: string

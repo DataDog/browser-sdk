@@ -22,7 +22,7 @@ import type { FacetRegistry } from '../../../hooks/useEvents'
 import { useSdkInfos } from '../../../hooks/useSdkInfos'
 import type { EventListColumn } from './columnUtils'
 import { addColumn, includesColumn } from './columnUtils'
-import classes from './eventRow.module.css'
+import * as classes from './eventRow.module.css'
 import { RowButton } from './rowButton'
 import { canCopyEvent, copyEventAsCurl, copyEventAsFetch } from './copyEvent'
 

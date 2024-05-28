@@ -1,5 +1,4 @@
-import { ExperimentalFeature, isExperimentalFeatureEnabled, isSafari } from '@datadog/browser-core'
-
+import { isSafari } from '@datadog/browser-core'
 import { NodePrivacyLevel } from '../../../constants'
 import { shouldMaskNode } from '../privacy'
 import { getElementInputValue, switchToAbsoluteUrl, getValidTagName } from './serializationUtils'
@@ -53,7 +52,7 @@ export function serializeAttributes(
   if (tagName === 'link') {
     const stylesheet = Array.from(doc.styleSheets).find((s) => s.href === (element as HTMLLinkElement).href)
     const cssText = getCssRulesString(stylesheet)
-    if (cssText && stylesheet && !isExperimentalFeatureEnabled(ExperimentalFeature.DISABLE_REPLAY_INLINE_CSS)) {
+    if (cssText && stylesheet) {
       safeAttrs._cssText = cssText
     }
   }

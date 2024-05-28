@@ -1,6 +1,6 @@
 import type { IntakeRegistry } from '../../lib/framework'
 import { flushEvents, createTest } from '../../lib/framework'
-import { browserExecuteAsync, sendXhr } from '../../lib/helpers/browser'
+import { sendXhr } from '../../lib/helpers/browser'
 
 describe('tracing', () => {
   createTest('trace xhr')
@@ -20,7 +20,7 @@ describe('tracing', () => {
   createTest('trace fetch')
     .withRum({ service: 'service', allowedTracingUrls: ['LOCATION_ORIGIN'] })
     .run(async ({ intakeRegistry }) => {
-      const rawHeaders = await browserExecuteAsync<string | Error>((done) => {
+      const rawHeaders = await browser.executeAsync<string | Error, []>((done) => {
         window
           .fetch('/headers', {
             headers: [
@@ -42,7 +42,7 @@ describe('tracing', () => {
   createTest('trace fetch with Request argument')
     .withRum({ service: 'service', allowedTracingUrls: ['LOCATION_ORIGIN'] })
     .run(async ({ intakeRegistry }) => {
-      const rawHeaders = await browserExecuteAsync<string | Error>((done) => {
+      const rawHeaders = await browser.executeAsync<string | Error, []>((done) => {
         window
           .fetch(new Request('/headers', { headers: { 'x-foo': 'bar, baz' } }))
           .then((response) => response.text())
@@ -59,7 +59,7 @@ describe('tracing', () => {
   createTest('trace single argument fetch')
     .withRum({ service: 'service', allowedTracingUrls: ['LOCATION_ORIGIN'] })
     .run(async ({ intakeRegistry }) => {
-      const rawHeaders = await browserExecuteAsync<string | Error>((done) => {
+      const rawHeaders = await browser.executeAsync<string | Error, []>((done) => {
         window
           .fetch('/headers')
           .then((response) => response.text())

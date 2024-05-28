@@ -1,12 +1,5 @@
 import type { Context, Duration, RelativeTime } from '@datadog/browser-core'
-import {
-  PageExitReason,
-  timeStampNow,
-  display,
-  relativeToClocks,
-  relativeNow,
-  resetExperimentalFeatures,
-} from '@datadog/browser-core'
+import { PageExitReason, timeStampNow, display, relativeToClocks, relativeNow } from '@datadog/browser-core'
 import type { TestSetupBuilder } from '../../../test'
 import { createPerformanceEntry, setup } from '../../../test'
 import { RumEventType, ViewLoadingType } from '../../rawRumEvent.types'
@@ -256,7 +249,6 @@ describe('view lifecycle', () => {
           version: undefined,
         })
       )
-      resetExperimentalFeatures()
     })
   })
 
@@ -290,7 +282,6 @@ describe('view lifecycle', () => {
   describe('page exit', () => {
     ;[
       { exitReason: PageExitReason.UNLOADING, expectViewEnd: true },
-      { exitReason: PageExitReason.PAGEHIDE, expectViewEnd: true },
       { exitReason: PageExitReason.FROZEN, expectViewEnd: false },
       { exitReason: PageExitReason.HIDDEN, expectViewEnd: false },
     ].forEach(({ exitReason, expectViewEnd }) => {
@@ -806,7 +797,6 @@ describe('start view', () => {
         version: 'version 2',
       })
     )
-    resetExperimentalFeatures()
   })
 
   it('should use the provided clock to stop the current view and start the new one', () => {

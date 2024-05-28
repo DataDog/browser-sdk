@@ -20,7 +20,7 @@ describe('matchRequestTiming', () => {
       pending('no full rum support')
     }
     entries = []
-    spyOn(performance, 'getEntriesByName').and.returnValues(entries as unknown as PerformanceResourceTiming[])
+    spyOn(performance, 'getEntriesByName').and.returnValue(entries)
   })
 
   it('should match single timing nested in the request ', () => {
@@ -57,6 +57,28 @@ describe('matchRequestTiming', () => {
     const matchingTiming = matchRequestTiming(FAKE_REQUEST as RequestCompleteEvent)
 
     expect(matchingTiming).toEqual(undefined)
+  })
+
+  it('should discard already matched timings when multiple identical requests are done conurently', () => {
+    const entry1 = createPerformanceEntry(RumPerformanceEntryType.RESOURCE, {
+      startTime: 200 as RelativeTime,
+      duration: 300 as Duration,
+    })
+    entries.push(entry1)
+
+    const matchingTiming1 = matchRequestTiming(FAKE_REQUEST as RequestCompleteEvent)
+
+    expect(matchingTiming1).toEqual(entry1.toJSON() as RumPerformanceResourceTiming)
+
+    const entry2 = createPerformanceEntry(RumPerformanceEntryType.RESOURCE, {
+      startTime: 99 as RelativeTime,
+      duration: 502 as Duration,
+    })
+    entries.push(entry2)
+
+    const matchingTiming2 = matchRequestTiming(FAKE_REQUEST as RequestCompleteEvent)
+
+    expect(matchingTiming2).toEqual(entry2.toJSON() as RumPerformanceResourceTiming)
   })
 
   it('should not match two not following timings nested in the request ', () => {

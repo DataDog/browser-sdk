@@ -1,5 +1,13 @@
 import type { DeflateWorker, DeflateWorkerResponse } from '@datadog/browser-core'
-import { addTelemetryError, display, includes, addEventListener, setTimeout, ONE_SECOND } from '@datadog/browser-core'
+import {
+  addTelemetryError,
+  display,
+  includes,
+  addEventListener,
+  setTimeout,
+  ONE_SECOND,
+  DOCS_ORIGIN,
+} from '@datadog/browser-core'
 import type { RumConfiguration } from '@datadog/browser-rum-core'
 
 export const INITIALIZATION_TIME_OUT_DELAY = 10 * ONE_SECOND
@@ -146,7 +154,7 @@ function onError(configuration: RumConfiguration, source: string, error: unknown
         baseMessage = 'Please make sure CSP is correctly configured.'
       }
       display.error(
-        `${baseMessage} See documentation at https://docs.datadoghq.com/integrations/content_security_policy_logs/#use-csp-with-real-user-monitoring-and-session-replay`
+        `${baseMessage} See documentation at ${DOCS_ORIGIN}/integrations/content_security_policy_logs/#use-csp-with-real-user-monitoring-and-session-replay`
       )
     } else {
       addTelemetryError(error)

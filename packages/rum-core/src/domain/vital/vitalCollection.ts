@@ -51,7 +51,7 @@ export function startVitalCollection(lifeCycle: LifeCycle, pageStateHistory: Pag
       const vital = buildDurationVital(vitalStart, vitalStop)
       vitalStartsByName.delete(vital.name)
       if (isValid(vital)) {
-        lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, processVital(vital))
+        lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, processVital(vital, true))
       }
     },
   }
@@ -67,20 +67,30 @@ function buildDurationVital(vitalStart: DurationVitalStart, vitalStop: DurationV
   }
 }
 
-function processVital(vital: DurationVital): RawRumEventCollectedData<RawRumVitalEvent> {
-  return {
-    rawRumEvent: {
-      date: vital.startClocks.timeStamp,
-      vital: {
-        id: generateUUID(),
-        type: vital.type,
-        name: vital.name,
-        custom: {
-          [vital.name]: vital.value,
-        },
+function processVital(vital: DurationVital, valueComputedBySdk: boolean): RawRumEventCollectedData<RawRumVitalEvent> {
+  const rawRumEvent: RawRumVitalEvent = {
+    date: vital.startClocks.timeStamp,
+    vital: {
+      id: generateUUID(),
+      type: vital.type,
+      name: vital.name,
+      custom: {
+        [vital.name]: vital.value,
       },
-      type: RumEventType.VITAL,
     },
+    type: RumEventType.VITAL,
+  }
+
+  if (valueComputedBySdk) {
+    rawRumEvent._dd = {
+      vital: {
+        computed_value: true,
+      },
+    }
+  }
+
+  return {
+    rawRumEvent,
     startTime: vital.startClocks.relative,
     customerContext: vital.context,
     domainContext: {},

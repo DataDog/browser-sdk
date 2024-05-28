@@ -1,13 +1,13 @@
 import { DEFAULT_REQUEST_ERROR_RESPONSE_LENGTH_LIMIT } from '@datadog/browser-logs/cjs/domain/configuration'
 import { createTest, flushEvents } from '../lib/framework'
 import { APPLICATION_ID, UNREACHABLE_URL } from '../lib/helpers/constants'
-import { browserExecute, browserExecuteAsync, flushBrowserLogs, withBrowserLogs } from '../lib/helpers/browser'
+import { flushBrowserLogs, withBrowserLogs } from '../lib/helpers/browser'
 
 describe('logs', () => {
   createTest('send logs')
     .withLogs()
     .run(async ({ intakeRegistry }) => {
-      await browserExecute(() => {
+      await browser.execute(() => {
         window.DD_LOGS!.logger.log('hello')
       })
       await flushEvents()
@@ -18,7 +18,7 @@ describe('logs', () => {
   createTest('display logs in the console')
     .withLogs()
     .run(async ({ intakeRegistry }) => {
-      await browserExecute(() => {
+      await browser.execute(() => {
         window.DD_LOGS!.logger.setHandler('console')
         window.DD_LOGS!.logger.warn('hello')
       })
@@ -36,7 +36,7 @@ describe('logs', () => {
   createTest('send console errors')
     .withLogs({ forwardErrorsToLogs: true })
     .run(async ({ intakeRegistry }) => {
-      await browserExecute(() => {
+      await browser.execute(() => {
         console.error('oh snap')
       })
       await flushEvents()
@@ -50,7 +50,7 @@ describe('logs', () => {
   createTest('send XHR network errors')
     .withLogs({ forwardErrorsToLogs: true })
     .run(async ({ intakeRegistry }) => {
-      await browserExecuteAsync((unreachableUrl, done) => {
+      await browser.executeAsync((unreachableUrl, done) => {
         const xhr = new XMLHttpRequest()
         xhr.addEventListener('error', () => done(undefined))
         xhr.open('GET', unreachableUrl)
@@ -73,7 +73,7 @@ describe('logs', () => {
   createTest('send fetch network errors')
     .withLogs({ forwardErrorsToLogs: true })
     .run(async ({ intakeRegistry }) => {
-      await browserExecuteAsync((unreachableUrl, done) => {
+      await browser.executeAsync((unreachableUrl, done) => {
         fetch(unreachableUrl).catch(() => {
           done(undefined)
         })
@@ -95,7 +95,7 @@ describe('logs', () => {
   createTest('keep only the first bytes of the response')
     .withLogs({ forwardErrorsToLogs: true })
     .run(async ({ intakeRegistry, baseUrl, servers }) => {
-      await browserExecuteAsync((done) => {
+      await browser.executeAsync((done) => {
         fetch('/throw-large-response').then(() => done(undefined), console.log)
       })
 
@@ -124,7 +124,7 @@ describe('logs', () => {
   createTest('track fetch error')
     .withLogs({ forwardErrorsToLogs: true })
     .run(async ({ intakeRegistry, baseUrl }) => {
-      await browserExecuteAsync((unreachableUrl, done) => {
+      await browser.executeAsync((unreachableUrl, done) => {
         let count = 0
         fetch('/throw')
           .then(() => (count += 1))
@@ -166,7 +166,7 @@ describe('logs', () => {
     .withRum()
     .withLogs()
     .run(async ({ intakeRegistry }) => {
-      await browserExecute(() => {
+      await browser.execute(() => {
         window.DD_LOGS!.logger.log('hello')
       })
       await flushEvents()
@@ -183,7 +183,7 @@ describe('logs', () => {
       },
     })
     .run(async ({ intakeRegistry }) => {
-      await browserExecute(() => {
+      await browser.execute(() => {
         window.DD_LOGS!.logger.log('hello', {})
       })
       await flushEvents()

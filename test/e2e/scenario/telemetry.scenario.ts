@@ -1,12 +1,11 @@
 import { bundleSetup, createTest, flushEvents } from '../lib/framework'
-import { browserExecute } from '../lib/helpers/browser'
 
 describe('telemetry', () => {
   createTest('send errors for logs')
     .withSetup(bundleSetup)
     .withLogs()
     .run(async ({ intakeRegistry }) => {
-      await browserExecute(() => {
+      await browser.execute(() => {
         const context = {
           get foo() {
             throw new window.Error('expected error')
@@ -28,7 +27,7 @@ describe('telemetry', () => {
     .withSetup(bundleSetup)
     .withRum()
     .run(async ({ intakeRegistry }) => {
-      await browserExecute(() => {
+      await browser.execute(() => {
         const context = {
           get foo() {
             throw new window.Error('expected error')

@@ -16,6 +16,38 @@
 
 ---
 
+## v5.19.0
+
+- 🐛 [RUM-4629] accept `null` as env/version/service ([#2781](https://github.com/DataDog/browser-sdk/pull/2781))
+- 🐛 [RUM-4493] do not compute selectors for detached elements ([#2766](https://github.com/DataDog/browser-sdk/pull/2766))
+- 🐛 [RUM-2720] Send logs without session id when session inactive ([#2578](https://github.com/DataDog/browser-sdk/pull/2578))
+- 🐛 [RUM-1666] Don't set negative action loading time ([#2764](https://github.com/DataDog/browser-sdk/pull/2764))
+- 🐛 [RUM-4434] fix timing matching for the same resource requested twice at the same time ([#2747](https://github.com/DataDog/browser-sdk/pull/2747))
+- 🐛 [RUM-4436] fix detached node memory leak on CLS ([#2749](https://github.com/DataDog/browser-sdk/pull/2749))
+- ✅ fix clearing cookies between tests ([#2780](https://github.com/DataDog/browser-sdk/pull/2780))
+- 🔥 Cleanup experimental features ([#2768](https://github.com/DataDog/browser-sdk/pull/2768))
+- ✏️ various comment fixes ([#2760](https://github.com/DataDog/browser-sdk/pull/2760))
+
+## v5.18.0
+
+- 🔊[RUM-4360] monitor more API usages ([#2745](https://github.com/DataDog/browser-sdk/pull/2745))
+- 🔊 collect pre start telemetry ([#2755](https://github.com/DataDog/browser-sdk/pull/2755))
+- 🔊 Deduplicate telemetry events ([#2746](https://github.com/DataDog/browser-sdk/pull/2746))
+- 🐛 [RUM-97] Sanitize tags parameter in configuration ([#2744](https://github.com/DataDog/browser-sdk/pull/2744))
+
+## v5.17.1
+
+- 🐛fix deploy script ([#2742](https://github.com/DataDog/browser-sdk/pull/2742))
+
+## v5.17.0
+
+- ✨ [RUM-4052] Sanitize `site` parameter in configuration ([#2735](https://github.com/DataDog/browser-sdk/pull/2735))
+- ✨ [RUM-4287] Enable feature flags API ([#2728](https://github.com/DataDog/browser-sdk/pull/2728))
+- ✨ [RUM-3710] Update session ID handling to support cookie deletion ([#2673](https://github.com/DataDog/browser-sdk/pull/2673))
+- ✨⚗️ [RUM-4179] vital: collect `computed_value` property ([#2723](https://github.com/DataDog/browser-sdk/pull/2723))
+- ♻️ use browser.execute and browser.executeAsync directly ([#2700](https://github.com/DataDog/browser-sdk/pull/2700))
+- ♻️ move createHandlingStack to the tools folder ([#2727](https://github.com/DataDog/browser-sdk/pull/2727))
+
 ## v5.16.0
 
 - ✨ [RUM-3684] Capture scroll record on shadow dom elements ([#2708](https://github.com/DataDog/browser-sdk/pull/2708))

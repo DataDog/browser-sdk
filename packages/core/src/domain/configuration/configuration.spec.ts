@@ -1,7 +1,7 @@
 import type { RumEvent } from '../../../../rum-core/src'
 import { EXHAUSTIVE_INIT_CONFIGURATION, SERIALIZED_EXHAUSTIVE_INIT_CONFIGURATION } from '../../../test'
 import type { ExtractTelemetryConfiguration, MapInitConfigurationKey } from '../../../test'
-import { display } from '../../tools/display'
+import { DOCS_ORIGIN, display } from '../../tools/display'
 import {
   ExperimentalFeature,
   isExperimentalFeatureEnabled,
@@ -207,6 +207,42 @@ describe('validateAndBuildConfiguration', () => {
     it('rejects invalid values', () => {
       expect(validateAndBuildConfiguration({ clientToken: 'yes', trackingConsent: 'foo' as any })).toBeUndefined()
       expect(displaySpy).toHaveBeenCalledOnceWith('Tracking Consent should be either "granted" or "not-granted"')
+    })
+  })
+
+  describe('site parameter validation', () => {
+    it('should validate the site parameter', () => {
+      validateAndBuildConfiguration({ clientToken, site: 'foo.com' })
+      expect(displaySpy).toHaveBeenCalledOnceWith(
+        `Site should be a valid Datadog site. Learn more here: ${DOCS_ORIGIN}/getting_started/site/.`
+      )
+    })
+  })
+
+  describe('env parameter validation', () => {
+    it('should validate the env parameter', () => {
+      validateAndBuildConfiguration({ clientToken, env: false as any })
+      expect(displaySpy).toHaveBeenCalledOnceWith('Env must be defined as a string')
+    })
+  })
+
+  describe('service parameter validation', () => {
+    it('should validate the service parameter', () => {
+      validateAndBuildConfiguration({ clientToken, service: 1 as any })
+      expect(displaySpy).toHaveBeenCalledOnceWith('Service must be defined as a string')
+    })
+
+    it('should not reject null', () => {
+      const configuration = validateAndBuildConfiguration({ clientToken, service: null })
+      expect(displaySpy).not.toHaveBeenCalled()
+      expect(configuration!.service).toBeUndefined()
+    })
+  })
+
+  describe('version parameter validation', () => {
+    it('should validate the version parameter', () => {
+      validateAndBuildConfiguration({ clientToken, version: 0 as any })
+      expect(displaySpy).toHaveBeenCalledOnceWith('Version must be defined as a string')
     })
   })
 

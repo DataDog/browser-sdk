@@ -37,6 +37,7 @@ export const config: OptionsWithLogsPath = {
   // We do not inject @wdio globals to keep Jasmine's expect
   injectGlobals: false,
   specs: ['./scenario/**/*.scenario.ts'],
+  exclude: ['./scenario/developer-extension/*.scenario.ts'],
   capabilities: [],
   maxInstances: 5,
   logLevel: 'warn',

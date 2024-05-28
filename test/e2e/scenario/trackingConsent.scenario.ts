@@ -1,5 +1,4 @@
 import { createTest, flushEvents } from '../lib/framework'
-import { browserExecute } from '../lib/helpers/browser'
 import { findSessionCookie } from '../lib/helpers/session'
 
 describe('tracking consent', () => {
@@ -16,7 +15,7 @@ describe('tracking consent', () => {
     createTest('starts the SDK once tracking consent is granted')
       .withRum({ trackingConsent: 'not-granted' })
       .run(async ({ intakeRegistry }) => {
-        await browserExecute(() => {
+        await browser.execute(() => {
           window.DD_RUM!.setTrackingConsent('granted')
         })
 
@@ -29,7 +28,7 @@ describe('tracking consent', () => {
     createTest('stops sending events if tracking consent is revoked')
       .withRum({ trackUserInteractions: true })
       .run(async ({ intakeRegistry }) => {
-        await browserExecute(() => {
+        await browser.execute(() => {
           window.DD_RUM!.setTrackingConsent('not-granted')
         })
 
@@ -47,7 +46,7 @@ describe('tracking consent', () => {
       .run(async ({ intakeRegistry }) => {
         const initialSessionId = await findSessionCookie()
 
-        await browserExecute(() => {
+        await browser.execute(() => {
           window.DD_RUM!.setTrackingConsent('not-granted')
           window.DD_RUM!.setTrackingConsent('granted')
         })
@@ -88,7 +87,7 @@ describe('tracking consent', () => {
     createTest('starts the SDK once tracking consent is granted')
       .withLogs({ trackingConsent: 'not-granted' })
       .run(async ({ intakeRegistry }) => {
-        await browserExecute(() => {
+        await browser.execute(() => {
           window.DD_LOGS!.setTrackingConsent('granted')
         })
 

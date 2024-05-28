@@ -9,7 +9,15 @@ import type { DevBundlesOverride, EventCollectionStrategy } from '../../../commo
 export function SettingsTab() {
   const devServerStatus = useDevServerStatus()
   const [
-    { useDevBundles, useRumSlim, blockIntakeRequests, preserveEvents, eventCollectionStrategy, autoFlush },
+    {
+      useDevBundles,
+      useRumSlim,
+      blockIntakeRequests,
+      preserveEvents,
+      eventCollectionStrategy,
+      autoFlush,
+      debugMode: debug,
+    },
     setSetting,
   ] = useSettings()
 
@@ -136,6 +144,19 @@ export function SettingsTab() {
                 />
               }
               description={<>Force the SDK to flush events periodically.</>}
+            />
+          </Columns.Column>
+          <Columns.Column title="Other">
+            <SettingItem
+              input={
+                <Checkbox
+                  label="Debug mode"
+                  checked={debug}
+                  onChange={(e) => setSetting('debugMode', isChecked(e.target))}
+                  color="violet"
+                />
+              }
+              description={<>Enable the SDK logs in the developer console</>}
             />
           </Columns.Column>
         </Columns>
