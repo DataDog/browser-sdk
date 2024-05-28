@@ -93,6 +93,6 @@ To work on the developer extension and debug it easily:
 
 2. Run `yarn dev`.
 
-- In Chrome, load the `developer-extension/dist` folder as an unpacked extension
+3. In Chrome, load the `developer-extension/dist` folder as an unpacked extension.
 
 - After you make a change, you can right-click on the extension UI and “Reload frame”
