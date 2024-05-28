@@ -422,15 +422,20 @@ export function makeRumPublicApi(
 
     getInitConfiguration: monitor(() => deepClone(strategy.initConfiguration)),
 
-    addAction: monitor((name, context) => {
-      strategy.addAction({
-        name: sanitize(name)!,
-        context: sanitize(context) as Context,
-        startClocks: clocksNow(),
-        type: ActionType.CUSTOM,
+    addAction: (name, context) => {
+      const handlingStack = createHandlingStack()
+
+      callMonitored(() => {
+        strategy.addAction({
+          name: sanitize(name)!,
+          context: sanitize(context) as Context,
+          startClocks: clocksNow(),
+          type: ActionType.CUSTOM,
+          handlingStack,
+        })
+        addTelemetryUsage({ feature: 'add-action' })
       })
-      addTelemetryUsage({ feature: 'add-action' })
-    }),
+    },
 
     addError: (error, context) => {
       const handlingStack = createHandlingStack()
