@@ -85,7 +85,7 @@ Info tab contains information about Session and RUM SDK configurations
 
 - **Debug Mode**: This option enables debug mode from the developer extension to display errors happening in RUM and LOGS in the developer console.
 
-## Contribution Tips
+## Contribution tips
 
 To work on the developer extension and debug it easily:
 
