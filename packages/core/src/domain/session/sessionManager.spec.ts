@@ -636,7 +636,7 @@ describe('startSessionManager', () => {
       sessionManager.setForcedReplay()
 
       expectSessionIdToBeDefined(sessionManager)
-      expect(sessionManager.findActiveSession()!.isReplayForced).toBe(true)
+      expect(sessionManager.findSession()!.isReplayForced).toBe(true)
     })
   })
 
