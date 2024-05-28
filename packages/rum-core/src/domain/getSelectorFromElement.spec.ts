@@ -6,6 +6,11 @@ describe('getSelectorFromElement', () => {
     document.body.classList.remove('foo')
   })
 
+  it('returns undefined for detached elements', () => {
+    const element = document.createElement('div')
+    expect(getSelector(element)).toBeUndefined()
+  })
+
   describe('ID selector', () => {
     it('should use the ID selector when the element as an ID', () => {
       expect(getSelector('<div id="foo"></div>')).toBe('#foo')
@@ -162,7 +167,7 @@ describe('getSelectorFromElement', () => {
     expect(getSelector(element)).toBe('BODY>svg.foo')
   })
 
-  function getSelector(htmlOrElement: string | Element, actionNameAttribute?: string): string {
+  function getSelector(htmlOrElement: string | Element, actionNameAttribute?: string): string | undefined {
     return getSelectorFromElement(
       typeof htmlOrElement === 'string' ? appendElement(htmlOrElement) : htmlOrElement,
       actionNameAttribute

@@ -11,7 +11,10 @@ import { SESSION_TIME_OUT_DELAY } from './sessionConstants'
 import { startSessionStore } from './sessionStore'
 
 export interface SessionManager<TrackingType extends string> {
-  findActiveSession: (startTime?: RelativeTime) => SessionContext<TrackingType> | undefined
+  findSession: (
+    startTime?: RelativeTime,
+    options?: { returnInactive: boolean }
+  ) => SessionContext<TrackingType> | undefined
   renewObservable: Observable<void>
   expireObservable: Observable<void>
   expire: () => void
@@ -89,7 +92,7 @@ export function startSessionManager<TrackingType extends string>(
   }
 
   return {
-    findActiveSession: (startTime) => sessionContextHistory.find(startTime),
+    findSession: (startTime, options) => sessionContextHistory.find(startTime, options),
     renewObservable,
     expireObservable,
     expire: sessionStore.expire,

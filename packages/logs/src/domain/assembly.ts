@@ -27,7 +27,11 @@ export function startLogsAssembly(
       const startTime = getRelativeTime(rawLogsEvent.date)
       const session = sessionManager.findTrackedSession(startTime)
 
-      if (!session) {
+      if (
+        !session &&
+        (!configuration.sendLogsAfterSessionExpiration ||
+          !sessionManager.findTrackedSession(startTime, { returnInactive: true }))
+      ) {
         return
       }
 
@@ -35,7 +39,7 @@ export function startLogsAssembly(
       const log = combine(
         {
           service: configuration.service,
-          session_id: session.id,
+          session_id: session?.id,
           // Insert user first to allow overrides from global context
           usr: !isEmptyObject(commonContext.user) ? commonContext.user : undefined,
           view: commonContext.view,

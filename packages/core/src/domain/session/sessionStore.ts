@@ -7,7 +7,12 @@ import type { InitConfiguration } from '../configuration'
 import { assign } from '../../tools/utils/polyfills'
 import { selectCookieStrategy, initCookieStrategy } from './storeStrategies/sessionInCookie'
 import type { SessionStoreStrategyType } from './storeStrategies/sessionStoreStrategy'
-import { getExpiredSessionState, isSessionInExpiredState, isSessionInNotStartedState } from './sessionState'
+import {
+  getExpiredSessionState,
+  isSessionInExpiredState,
+  isSessionInNotStartedState,
+  isSessionStarted,
+} from './sessionState'
 import type { SessionState } from './sessionState'
 import { initLocalStorageStrategy, selectLocalStorageStrategy } from './storeStrategies/sessionInLocalStorage'
 import { processSessionStoreOperations } from './sessionStoreOperations'
@@ -73,7 +78,6 @@ export function startSessionStore<TrackingType extends string>(
   startSession()
 
   const { throttled: throttledExpandOrRenewSession, cancel: cancelExpandOrRenewSession } = throttle(() => {
-    let isTracked: boolean
     processSessionStoreOperations(
       {
         process: (sessionState) => {
@@ -82,11 +86,11 @@ export function startSessionStore<TrackingType extends string>(
           }
 
           const synchronizedSession = synchronizeSession(sessionState)
-          isTracked = expandOrRenewSessionState(synchronizedSession)
+          expandOrRenewSessionState(synchronizedSession)
           return synchronizedSession
         },
         after: (sessionState) => {
-          if (isTracked && !hasSessionInCache()) {
+          if (isSessionStarted(sessionState) && !hasSessionInCache()) {
             renewSessionInCache(sessionState)
           }
           sessionCache = sessionState
@@ -165,7 +169,6 @@ export function startSessionStore<TrackingType extends string>(
       sessionState.id = generateUUID()
       sessionState.created = String(dateNow())
     }
-    return isTracked
   }
 
   function hasSessionInCache() {

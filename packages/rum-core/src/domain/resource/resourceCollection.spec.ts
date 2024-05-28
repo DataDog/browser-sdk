@@ -1,14 +1,7 @@
 import type { Duration, RelativeTime, ServerDuration, TimeStamp } from '@datadog/browser-core'
-import {
-  resetExperimentalFeatures,
-  addExperimentalFeatures,
-  isIE,
-  RequestType,
-  ResourceType,
-  ExperimentalFeature,
-} from '@datadog/browser-core'
+import { isIE, RequestType, ResourceType } from '@datadog/browser-core'
 import type { RumFetchResourceEventDomainContext } from '../../domainContext.types'
-import { setup, createRumSessionManagerMock, createPerformanceEntry } from '../../../test'
+import { setup, createPerformanceEntry } from '../../../test'
 import type { TestSetupBuilder } from '../../../test'
 import type { RawRumResourceEvent } from '../../rawRumEvent.types'
 import { RumEventType } from '../../rawRumEvent.types'
@@ -16,27 +9,20 @@ import { LifeCycleEventType } from '../lifeCycle'
 import type { RequestCompleteEvent } from '../requestCollection'
 import { TraceIdentifier } from '../tracing/tracer'
 import { validateAndBuildRumConfiguration } from '../configuration'
-import { PageState } from '../contexts/pageStateHistory'
 import { RumPerformanceEntryType } from '../../browser/performanceCollection'
 import { startResourceCollection } from './resourceCollection'
 
 describe('resourceCollection', () => {
   let setupBuilder: TestSetupBuilder
   let trackResources: boolean
-  let findAllSpy: jasmine.Spy<jasmine.Func>
   let wasInPageStateDuringPeriodSpy: jasmine.Spy<jasmine.Func>
 
   beforeEach(() => {
     trackResources = true
-    setupBuilder = setup().beforeBuild(({ lifeCycle, sessionManager, pageStateHistory, configuration }) => {
-      findAllSpy = spyOn(pageStateHistory, 'findAll')
+    setupBuilder = setup().beforeBuild(({ lifeCycle, pageStateHistory, configuration }) => {
       wasInPageStateDuringPeriodSpy = spyOn(pageStateHistory, 'wasInPageStateDuringPeriod')
-      startResourceCollection(lifeCycle, { ...configuration, trackResources }, sessionManager, pageStateHistory)
+      startResourceCollection(lifeCycle, { ...configuration, trackResources }, pageStateHistory)
     })
-  })
-
-  afterEach(() => {
-    resetExperimentalFeatures()
   })
 
   it('should create resource from performance entry', () => {
@@ -122,99 +108,63 @@ describe('resourceCollection', () => {
     })
   })
 
-  //
-  ;[
-    {
-      title: 'when trackResource is false',
-      trackResources: false,
-      session: createRumSessionManagerMock(),
-    },
-    {
-      title: 'when the session is not tracked',
-      trackResources: true,
-      session: createRumSessionManagerMock().setNotTracked(),
-    },
-  ].forEach((options) => {
-    describe(options.title, () => {
-      beforeEach(() => {
-        trackResources = options.trackResources
-        setupBuilder.withSessionManager(options.session)
+  describe('when trackResource is false', () => {
+    beforeEach(() => {
+      trackResources = false
+    })
+
+    describe('and resource is not traced', () => {
+      it('should not collect a resource from a performance entry', () => {
+        const { lifeCycle, rawRumEvents } = setupBuilder.build()
+
+        lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [
+          createPerformanceEntry(RumPerformanceEntryType.RESOURCE),
+        ])
+
+        expect(rawRumEvents.length).toBe(0)
       })
 
-      describe('and resource is not traced', () => {
-        it('should not collect a resource from a performance entry', () => {
-          const { lifeCycle, rawRumEvents } = setupBuilder.build()
+      it('should not collect a resource from a completed XHR request', () => {
+        const { lifeCycle, rawRumEvents } = setupBuilder.build()
+        lifeCycle.notify(
+          LifeCycleEventType.REQUEST_COMPLETED,
+          createCompletedRequest({
+            type: RequestType.XHR,
+          })
+        )
 
-          lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [
-            createPerformanceEntry(RumPerformanceEntryType.RESOURCE),
-          ])
-
-          expect(rawRumEvents.length).toBe(0)
-        })
-
-        it('should not collect a resource from a completed XHR request', () => {
-          const { lifeCycle, rawRumEvents } = setupBuilder.build()
-          lifeCycle.notify(
-            LifeCycleEventType.REQUEST_COMPLETED,
-            createCompletedRequest({
-              type: RequestType.XHR,
-            })
-          )
-
-          expect(rawRumEvents.length).toBe(0)
-        })
-      })
-
-      describe('and resource is traced', () => {
-        it('should collect a resource from a performance entry', () => {
-          const { lifeCycle, rawRumEvents } = setupBuilder.build()
-
-          lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [
-            createPerformanceEntry(RumPerformanceEntryType.RESOURCE, { traceId: '1234' }),
-          ])
-
-          expect(rawRumEvents.length).toBe(1)
-          expect((rawRumEvents[0].rawRumEvent as RawRumResourceEvent)._dd.discarded).toBeTrue()
-        })
-
-        it('should collect a resource from a completed XHR request', () => {
-          const { lifeCycle, rawRumEvents } = setupBuilder.build()
-          lifeCycle.notify(
-            LifeCycleEventType.REQUEST_COMPLETED,
-            createCompletedRequest({
-              type: RequestType.XHR,
-              traceId: new TraceIdentifier(),
-              spanId: new TraceIdentifier(),
-              traceSampled: true,
-            })
-          )
-
-          expect(rawRumEvents.length).toBe(1)
-          expect((rawRumEvents[0].rawRumEvent as RawRumResourceEvent)._dd.discarded).toBeTrue()
-        })
+        expect(rawRumEvents.length).toBe(0)
       })
     })
-  })
 
-  it('should collect page states on resources when ff resource_page_states enabled', () => {
-    addExperimentalFeatures([ExperimentalFeature.RESOURCE_PAGE_STATES])
-    const { lifeCycle, rawRumEvents } = setupBuilder.build()
-    const mockPageStates = [{ state: PageState.ACTIVE, startTime: 0 as RelativeTime }]
-    const mockXHR = createCompletedRequest()
-    const mockPerformanceEntry = createPerformanceEntry(RumPerformanceEntryType.RESOURCE)
+    describe('and resource is traced', () => {
+      it('should collect a resource from a performance entry', () => {
+        const { lifeCycle, rawRumEvents } = setupBuilder.build()
 
-    findAllSpy.and.returnValue(mockPageStates)
+        lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [
+          createPerformanceEntry(RumPerformanceEntryType.RESOURCE, { traceId: '1234' }),
+        ])
 
-    lifeCycle.notify(LifeCycleEventType.REQUEST_COMPLETED, mockXHR)
-    lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [mockPerformanceEntry])
+        expect(rawRumEvents.length).toBe(1)
+        expect((rawRumEvents[0].rawRumEvent as RawRumResourceEvent)._dd.discarded).toBeTrue()
+      })
 
-    const rawRumResourceEventFetch = rawRumEvents[0].rawRumEvent as RawRumResourceEvent
-    const rawRumResourceEventEntry = rawRumEvents[1].rawRumEvent as RawRumResourceEvent
+      it('should collect a resource from a completed XHR request', () => {
+        const { lifeCycle, rawRumEvents } = setupBuilder.build()
+        lifeCycle.notify(
+          LifeCycleEventType.REQUEST_COMPLETED,
+          createCompletedRequest({
+            type: RequestType.XHR,
+            traceId: new TraceIdentifier(),
+            spanId: new TraceIdentifier(),
+            traceSampled: true,
+          })
+        )
 
-    expect(findAllSpy.calls.first().args).toEqual([mockXHR.startClocks.relative, mockXHR.duration])
-    expect(findAllSpy.calls.mostRecent().args).toEqual([mockPerformanceEntry.startTime, mockPerformanceEntry.duration])
-    expect(rawRumResourceEventFetch._dd.page_states).toEqual(jasmine.objectContaining(mockPageStates))
-    expect(rawRumResourceEventEntry._dd.page_states).toEqual(jasmine.objectContaining(mockPageStates))
+        expect(rawRumEvents.length).toBe(1)
+        expect((rawRumEvents[0].rawRumEvent as RawRumResourceEvent)._dd.discarded).toBeTrue()
+      })
+    })
   })
 
   it('should not have a duration if a frozen state happens during the request and no performance entry matches', () => {
@@ -227,24 +177,6 @@ describe('resourceCollection', () => {
 
     const rawRumResourceEventFetch = rawRumEvents[0].rawRumEvent as RawRumResourceEvent
     expect(rawRumResourceEventFetch.resource.duration).toBeUndefined()
-  })
-
-  it('should not collect page states on resources when ff resource_page_states disabled', () => {
-    const { lifeCycle, rawRumEvents } = setupBuilder.build()
-    const mockPageStates = [{ state: PageState.ACTIVE, startTime: 0 as RelativeTime }]
-    const mockXHR = createCompletedRequest()
-    const mockPerformanceEntry = createPerformanceEntry(RumPerformanceEntryType.RESOURCE)
-
-    findAllSpy.and.returnValue(mockPageStates)
-
-    lifeCycle.notify(LifeCycleEventType.REQUEST_COMPLETED, mockXHR)
-    lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [mockPerformanceEntry])
-
-    const rawRumResourceEventFetch = rawRumEvents[0].rawRumEvent as RawRumResourceEvent
-    const rawRumResourceEventEntry = rawRumEvents[1].rawRumEvent as RawRumResourceEvent
-
-    expect(rawRumResourceEventFetch._dd.page_states).not.toBeDefined()
-    expect(rawRumResourceEventEntry._dd.page_states).not.toBeDefined()
   })
 
   it('should create resource from completed fetch request', () => {
@@ -377,7 +309,7 @@ describe('resourceCollection', () => {
     })
 
     it('should pull traceSampleRate from config if present', () => {
-      setupBuilder = setup().beforeBuild(({ lifeCycle, sessionManager, pageStateHistory }) => {
+      setupBuilder = setup().beforeBuild(({ lifeCycle, pageStateHistory }) => {
         startResourceCollection(
           lifeCycle,
           validateAndBuildRumConfiguration({
@@ -385,7 +317,6 @@ describe('resourceCollection', () => {
             applicationId: 'xxx',
             traceSampleRate: 60,
           })!,
-          sessionManager,
           pageStateHistory
         )
       })
@@ -404,14 +335,13 @@ describe('resourceCollection', () => {
     })
 
     it('should not define rule_psr if traceSampleRate is undefined', () => {
-      setupBuilder = setup().beforeBuild(({ lifeCycle, sessionManager, pageStateHistory }) => {
+      setupBuilder = setup().beforeBuild(({ lifeCycle, pageStateHistory }) => {
         startResourceCollection(
           lifeCycle,
           validateAndBuildRumConfiguration({
             clientToken: 'xxx',
             applicationId: 'xxx',
           })!,
-          sessionManager,
           pageStateHistory
         )
       })
@@ -430,7 +360,7 @@ describe('resourceCollection', () => {
     })
 
     it('should define rule_psr to 0 if traceSampleRate is set to 0', () => {
-      setupBuilder = setup().beforeBuild(({ lifeCycle, sessionManager, pageStateHistory }) => {
+      setupBuilder = setup().beforeBuild(({ lifeCycle, pageStateHistory }) => {
         startResourceCollection(
           lifeCycle,
           validateAndBuildRumConfiguration({
@@ -438,7 +368,6 @@ describe('resourceCollection', () => {
             applicationId: 'xxx',
             traceSampleRate: 0,
           })!,
-          sessionManager,
           pageStateHistory
         )
       })

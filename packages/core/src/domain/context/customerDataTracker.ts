@@ -2,7 +2,7 @@ import { ONE_KIBI_BYTE, computeBytesCount } from '../../tools/utils/byteUtils'
 import { throttle } from '../../tools/utils/functionUtils'
 import type { Context } from '../../tools/serialisation/context'
 import { jsonStringify } from '../../tools/serialisation/jsonStringify'
-import { display } from '../../tools/display'
+import { DOCS_ORIGIN, display } from '../../tools/display'
 import { isEmptyObject } from '../../tools/utils/objectUtils'
 import type { CustomerDataType } from './contextConstants'
 
@@ -129,6 +129,6 @@ function displayCustomerDataLimitReachedWarning(bytesCountLimit: number) {
   display.warn(
     `Customer data exceeds the recommended ${
       bytesCountLimit / ONE_KIBI_BYTE
-    }KiB threshold. More details: https://docs.datadoghq.com/real_user_monitoring/browser/troubleshooting/#customer-data-exceeds-the-recommended-threshold-warning`
+    }KiB threshold. More details: ${DOCS_ORIGIN}/real_user_monitoring/browser/troubleshooting/#customer-data-exceeds-the-recommended-threshold-warning`
   )
 }
