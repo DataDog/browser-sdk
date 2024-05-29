@@ -172,6 +172,14 @@ describe('rum session manager', () => {
       const rumSessionManager = startRumSessionManagerWithDefaults()
       expect(rumSessionManager.findTrackedSession()!.sessionReplay).toBe(SessionReplayState.OFF)
     })
+
+    it('should update current entity when replay recording is forced', () => {
+      setCookie(SESSION_STORE_KEY, 'id=abcdef&rum=2', DURATION)
+      const rumSessionManager = startRumSessionManagerWithDefaults()
+      rumSessionManager.setForcedReplay()
+
+      expect(rumSessionManager.findTrackedSession()!.sessionReplay).toBe(SessionReplayState.FORCED)
+    })
   })
 
   describe('session behaviors', () => {

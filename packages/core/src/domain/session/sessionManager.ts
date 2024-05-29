@@ -35,7 +35,8 @@ export function startSessionManager<TrackingType extends string>(
   configuration: Configuration,
   productKey: string,
   computeSessionState: (rawTrackingType?: string) => { trackingType: TrackingType; isTracked: boolean },
-  trackingConsentState: TrackingConsentState
+  trackingConsentState: TrackingConsentState,
+  forceReplayInHistory?: (sessionContextHistory: ValueHistory<SessionContext<TrackingType>>) => void
 ): SessionManager<TrackingType> {
   const renewObservable = new Observable<void>()
   const expireObservable = new Observable<void>()
@@ -55,12 +56,9 @@ export function startSessionManager<TrackingType extends string>(
     expireObservable.notify()
     sessionContextHistory.closeActive(relativeNow())
   })
-  sessionStore.forceReplayObservable.subscribe(() => {
-    const sessionEntity = sessionContextHistory.find()
-    if (sessionEntity) {
-      sessionEntity.isReplayForced = true
-    }
-  })
+  if (forceReplayInHistory) {
+    sessionStore.forceReplayObservable.subscribe(() => forceReplayInHistory(sessionContextHistory))
+  }
 
   // We expand/renew session unconditionally as tracking consent is always granted when the session
   // manager is started.

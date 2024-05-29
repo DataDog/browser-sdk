@@ -46,7 +46,13 @@ export function startRumSessionManager(
     configuration,
     RUM_SESSION_KEY,
     (rawTrackingType) => computeSessionState(configuration, rawTrackingType),
-    trackingConsentState
+    trackingConsentState,
+    (sessionContextHistory) => {
+      const sessionEntity = sessionContextHistory.find()
+      if (sessionEntity) {
+        sessionEntity.isReplayForced = true
+      }
+    }
   )
 
   sessionManager.expireObservable.subscribe(() => {
