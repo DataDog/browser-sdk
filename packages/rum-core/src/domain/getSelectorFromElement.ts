@@ -261,12 +261,12 @@ export function isSelectorUniqueAmongSiblings(
   }
 
   const parent = getParentElement(currentElement)!
-  let child = parent.firstElementChild
-  while (child) {
-    if (child !== currentElement && isSiblingMatching(child)) {
+  let sibling = parent.firstElementChild
+  while (sibling) {
+    if (sibling !== currentElement && isSiblingMatching(sibling)) {
       return false
     }
-    child = child.nextElementSibling
+    sibling = sibling.nextElementSibling
   }
 
   return true
