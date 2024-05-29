@@ -1,6 +1,7 @@
 import { LifeCycleEventType, getScrollX, getScrollY, getViewportDimension } from '@datadog/browser-rum-core'
 import type { RumConfiguration, LifeCycle } from '@datadog/browser-rum-core'
-import { timeStampNow } from '@datadog/browser-core'
+import { timeStampNow, isExperimentalFeatureEnabled, ExperimentalFeature } from '@datadog/browser-core'
+import { requestIdleCallback } from '../../browser/requestIdleCallback'
 import type { BrowserRecord } from '../../types'
 import { RecordType } from '../../types'
 import type { ElementsScrollPositions } from './elementsScrollPositions'
@@ -64,18 +65,33 @@ export function startFullSnapshots(
     }
     return records
   }
-
   fullSnapshotCallback(takeFullSnapshot())
-
+  let cancelIdleCallback: (() => void) | undefined
   const { unsubscribe } = lifeCycle.subscribe(LifeCycleEventType.VIEW_CREATED, (view) => {
     flushMutations()
-    fullSnapshotCallback(
-      takeFullSnapshot(view.startClocks.timeStamp, {
-        shadowRootsController,
-        status: SerializationContextStatus.SUBSEQUENT_FULL_SNAPSHOT,
-        elementsScrollPositions,
+    if (isExperimentalFeatureEnabled(ExperimentalFeature.ASYNC_FULL_SNAPSHOT)) {
+      if (cancelIdleCallback) {
+        cancelIdleCallback()
+      }
+
+      cancelIdleCallback = requestIdleCallback(() => {
+        fullSnapshotCallback(
+          takeFullSnapshot(view.startClocks.timeStamp, {
+            shadowRootsController,
+            status: SerializationContextStatus.SUBSEQUENT_FULL_SNAPSHOT,
+            elementsScrollPositions,
+          })
+        )
       })
-    )
+    } else {
+      fullSnapshotCallback(
+        takeFullSnapshot(view.startClocks.timeStamp, {
+          shadowRootsController,
+          status: SerializationContextStatus.SUBSEQUENT_FULL_SNAPSHOT,
+          elementsScrollPositions,
+        })
+      )
+    }
   })
 
   return {
