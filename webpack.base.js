@@ -18,7 +18,7 @@ module.exports = ({ entry, mode, filename, types, keepBuildEnvVariables }) => ({
   module: {
     rules: [
       {
-        test: /\.(ts|js)$/,
+        test: /\.(ts|tsx|js)$/,
         loader: 'ts-loader',
         exclude: /node_modules/,
         options: {

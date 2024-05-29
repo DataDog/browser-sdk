@@ -9,6 +9,7 @@
     "strict": true,
     "target": "es5",
     "sourceMap": true,
+    "jsx": "react",
 
     "types": [],
     "lib": ["ES2016", "DOM"],
