@@ -16,7 +16,7 @@ import type {
   RumConfiguration,
   StartRecordingOptions,
 } from '@datadog/browser-rum-core'
-import { LifeCycleEventType } from '@datadog/browser-rum-core'
+import { LifeCycleEventType, SessionReplayState } from '@datadog/browser-rum-core'
 import { getReplayStats as getReplayStatsImpl } from '../domain/replayStats'
 import { getSessionReplayLink } from '../domain/getSessionReplayLink'
 import type { CreateDeflateWorker } from '../domain/deflate'
@@ -144,7 +144,7 @@ export function makeRecorderApi(
 
       startStrategy = (options?: StartRecordingOptions) => {
         const session = sessionManager.findTrackedSession()
-        if (!session || (!session.sessionReplayAllowed && !options?.force)) {
+        if (!session || (session.sessionReplay === SessionReplayState.OFF && !options?.force)) {
           state = { status: RecorderStatus.IntentToStart }
           return
         }
@@ -181,7 +181,7 @@ export function makeRecorderApi(
           }
         })
 
-        if (options?.force && !session.sessionReplayAllowed) {
+        if (options?.force && session.sessionReplay === SessionReplayState.OFF) {
           sessionManager.setForcedReplay()
         }
       }

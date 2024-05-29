@@ -29,10 +29,10 @@ export function ReplayTab() {
     return <Alert level="error" message="RUM session plan does not include replay." />
   }
 
-  return <Player isReplayForced={infos.cookie.forcedReplay === '1'} />
+  return <Player />
 }
 
-function Player({ isReplayForced }: { isReplayForced: boolean }) {
+function Player() {
   const frameRef = useRef<HTMLIFrameElement | null>(null)
   const [playerStatus, setPlayerStatus] = useState<SessionReplayPlayerStatus>('loading')
 
@@ -43,18 +43,18 @@ function Player({ isReplayForced }: { isReplayForced: boolean }) {
   return (
     <TabBase>
       <iframe ref={frameRef} className={classes.iframe} data-status={playerStatus} />
-      {playerStatus === 'waiting-for-full-snapshot' && <WaitingForFullSnapshot isReplayForced={isReplayForced} />}
+      {playerStatus === 'waiting-for-full-snapshot' && <WaitingForFullSnapshot />}
     </TabBase>
   )
 }
 
-function WaitingForFullSnapshot({ isReplayForced }: { isReplayForced: boolean }) {
+function WaitingForFullSnapshot() {
   return (
     <Alert
       level="warning"
       message="Waiting for a full snapshot to be generated..."
       button={
-        <Button onClick={() => generateFullSnapshot(isReplayForced)} color="orange">
+        <Button onClick={generateFullSnapshot} color="orange">
           Generate Full Snapshot
         </Button>
       }
@@ -62,12 +62,11 @@ function WaitingForFullSnapshot({ isReplayForced }: { isReplayForced: boolean })
   )
 }
 
-function generateFullSnapshot(isReplayForced: boolean) {
+function generateFullSnapshot() {
   // Restart to make sure we have a fresh Full Snapshot
-  const startParam = isReplayForced ? '{ force: true }' : ''
   evalInWindow(`
     DD_RUM.stopSessionReplayRecording()
-    DD_RUM.startSessionReplayRecording(${startParam})
+    DD_RUM.startSessionReplayRecording({ force: true })
   `).catch((error) => {
     logger.error('While restarting recording:', error)
   })

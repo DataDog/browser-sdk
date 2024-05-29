@@ -21,6 +21,7 @@ import { LifeCycle, LifeCycleEventType } from './lifeCycle'
 import {
   RUM_SESSION_KEY,
   RumTrackingType,
+  SessionReplayState,
   startRumSessionManager,
   startRumSessionManagerStub,
 } from './rumSessionManager'
@@ -163,13 +164,13 @@ describe('rum session manager', () => {
     it('should return session TRACKED_WITH_SESSION_REPLAY', () => {
       setCookie(SESSION_STORE_KEY, 'id=abcdef&rum=1', DURATION)
       const rumSessionManager = startRumSessionManagerWithDefaults()
-      expect(rumSessionManager.findTrackedSession()!.sessionReplayAllowed).toBe(true)
+      expect(rumSessionManager.findTrackedSession()!.sessionReplay).toBe(SessionReplayState.SAMPLED)
     })
 
     it('should return session TRACKED_WITHOUT_SESSION_REPLAY', () => {
       setCookie(SESSION_STORE_KEY, 'id=abcdef&rum=2', DURATION)
       const rumSessionManager = startRumSessionManagerWithDefaults()
-      expect(rumSessionManager.findTrackedSession()!.sessionReplayAllowed).toBe(false)
+      expect(rumSessionManager.findTrackedSession()!.sessionReplay).toBe(SessionReplayState.OFF)
     })
   })
 
@@ -178,12 +179,12 @@ describe('rum session manager', () => {
       {
         description: 'TRACKED_WITH_SESSION_REPLAY should have replay',
         sessionReplaySampleRate: 100,
-        expectSessionReplay: true,
+        expectSessionReplay: SessionReplayState.SAMPLED,
       },
       {
         description: 'TRACKED_WITHOUT_SESSION_REPLAY should have no replay',
         sessionReplaySampleRate: 0,
-        expectSessionReplay: false,
+        expectSessionReplay: SessionReplayState.OFF,
       },
     ].forEach(
       ({
@@ -193,13 +194,13 @@ describe('rum session manager', () => {
       }: {
         description: string
         sessionReplaySampleRate: number
-        expectSessionReplay: boolean
+        expectSessionReplay: SessionReplayState
       }) => {
         it(description, () => {
           const rumSessionManager = startRumSessionManagerWithDefaults({
             configuration: { sessionSampleRate: 100, sessionReplaySampleRate },
           })
-          expect(rumSessionManager.findTrackedSession()!.sessionReplayAllowed).toBe(expectSessionReplay)
+          expect(rumSessionManager.findTrackedSession()!.sessionReplay).toBe(expectSessionReplay)
         })
       }
     )
@@ -224,11 +225,11 @@ describe('rum session manager', () => {
 describe('rum session manager stub', () => {
   it('should return a tracked session with replay allowed when the event bridge support records', () => {
     initEventBridgeStub({ capabilities: [BridgeCapability.RECORDS] })
-    expect(startRumSessionManagerStub().findTrackedSession()!.sessionReplayAllowed).toEqual(true)
+    expect(startRumSessionManagerStub().findTrackedSession()!.sessionReplay).toEqual(SessionReplayState.SAMPLED)
   })
 
   it('should return a tracked session without replay allowed when the event bridge support records', () => {
     initEventBridgeStub({ capabilities: [] })
-    expect(startRumSessionManagerStub().findTrackedSession()!.sessionReplayAllowed).toEqual(false)
+    expect(startRumSessionManagerStub().findTrackedSession()!.sessionReplay).toEqual(SessionReplayState.OFF)
   })
 })

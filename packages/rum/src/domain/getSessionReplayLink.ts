@@ -1,5 +1,5 @@
 import type { RumConfiguration, RumSessionManager, ViewContexts, RumSession } from '@datadog/browser-rum-core'
-import { getSessionReplayUrl } from '@datadog/browser-rum-core'
+import { getSessionReplayUrl, SessionReplayState } from '@datadog/browser-rum-core'
 import { isBrowserSupported } from '../boot/isBrowserSupported'
 
 export function getSessionReplayLink(
@@ -29,7 +29,7 @@ function getErrorType(session: RumSession | undefined, isRecordingStarted: boole
     // - session expired (edge case)
     return 'rum-not-tracked'
   }
-  if (!session.sessionReplayAllowed) {
+  if (session.sessionReplay === SessionReplayState.OFF) {
     // possibilities
     // - replay sampled out
     return 'incorrect-session-plan'
