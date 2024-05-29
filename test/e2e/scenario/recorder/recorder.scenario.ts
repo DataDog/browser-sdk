@@ -19,6 +19,7 @@ import {
   findElementWithTagName,
 } from '@datadog/browser-rum/test'
 import { flushEvents, createTest, bundleSetup, html } from '../../lib/framework'
+import { SESSION_STORE_KEY } from '@datadog/browser-core'
 
 const TIMESTAMP_RE = /^\d{13}$/
 const UUID_RE = /^[0-9a-f]{8}-([0-9a-f]{4}-){3}[0-9a-f]{12}$/
@@ -827,6 +828,10 @@ describe('recorder', () => {
         await browser.execute(() => {
           window.DD_RUM!.startSessionReplayRecording({ force: true })
         })
+        const [cookie] = await browser.getCookies([SESSION_STORE_KEY])
+        const cookieForcedReplay= cookie.value.match(/forcedReplay=([\w-]+)/)![1]
+
+        expect(cookieForcedReplay).toBe('1')
 
         await flushEvents()
 
