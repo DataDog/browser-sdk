@@ -829,7 +829,7 @@ describe('recorder', () => {
           window.DD_RUM!.startSessionReplayRecording({ force: true })
         })
         const [cookie] = await browser.getCookies([SESSION_STORE_KEY])
-        const cookieForcedReplay= cookie.value.match(/forcedReplay=([\w-]+)/)![1]
+        const cookieForcedReplay = cookie.value.match(/forcedReplay=([\w-]+)/)![1]
 
         expect(cookieForcedReplay).toBe('1')
 
