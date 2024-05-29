@@ -18,8 +18,8 @@ import {
   findMouseInteractionRecords,
   findElementWithTagName,
 } from '@datadog/browser-rum/test'
-import { flushEvents, createTest, bundleSetup, html } from '../../lib/framework'
 import { SESSION_STORE_KEY } from '@datadog/browser-core'
+import { flushEvents, createTest, bundleSetup, html } from '../../lib/framework'
 
 const TIMESTAMP_RE = /^\d{13}$/
 const UUID_RE = /^[0-9a-f]{8}-([0-9a-f]{4}-){3}[0-9a-f]{12}$/
