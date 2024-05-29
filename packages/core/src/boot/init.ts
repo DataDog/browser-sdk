@@ -35,8 +35,8 @@ export function makePublicApi<T>(stub: T): T & { onReady(callback: () => void): 
 
 export function defineGlobal<Global, Name extends keyof Global>(global: Global, name: Name, api: Global[Name]) {
   const existingGlobalVariable = global[name] as { q?: Array<() => void>; version?: string } | undefined
-  if (global[name] && existingGlobalVariable && !existingGlobalVariable.q && existingGlobalVariable.version) {
-    display.warn('SDK is loaded more than once')
+  if (existingGlobalVariable && !existingGlobalVariable.q && existingGlobalVariable.version) {
+    display.warn('SDK is loaded more than once. This is unsupported and might have unexpected behavior.')
   }
   global[name] = api
   if (existingGlobalVariable && existingGlobalVariable.q) {
