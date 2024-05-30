@@ -72,7 +72,10 @@ describe('logs', () => {
       logsEndpointBuilder: stubEndpointBuilder('https://localhost/v1/input/log'),
       batchMessagesLimit: 1,
     }
-    logger = new Logger((...params) => handleLog(...params), createCustomerDataTracker(noop))
+    logger = new Logger(
+      (logsMessage, logger, handlingStack) => handleLog(logsMessage, logger, undefined, undefined, handlingStack),
+      createCustomerDataTracker(noop)
+    )
     interceptor = interceptRequests()
     requests = interceptor.requests
     consoleLogSpy = spyOn(console, 'log')

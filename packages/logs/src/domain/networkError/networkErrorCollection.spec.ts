@@ -110,7 +110,10 @@ describe('network error collection', () => {
 
     fetchStubManager.whenAllComplete(() => {
       expect(rawLogsEvents.length).toEqual(1)
-      expect(rawLogsEvents[0].domainContext).toEqual({ isAborted: true })
+      expect(rawLogsEvents[0].domainContext).toEqual({
+        isAborted: true,
+        handlingStack: jasmine.any(String),
+      })
       done()
     })
   })

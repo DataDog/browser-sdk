@@ -49,7 +49,7 @@ export class Logger {
     }
   }
 
-  log(message: string, messageContext?: object, error?: Error) {
+  log(message: string, messageContext?: object, status: StatusType = StatusType.info, error?: Error) {
     // note: generating the handling stack is intentionally duplicated in each of the logger method to save a frame in the stack
     let handlingStack: string | undefined
 
@@ -57,7 +57,7 @@ export class Logger {
       handlingStack = createHandlingStack()
     }
 
-    this.logImplementation(message, messageContext, StatusType.info, error, handlingStack)
+    this.logImplementation(message, messageContext, status, error, handlingStack)
   }
 
   debug(message: string, messageContext?: object, error?: Error) {
