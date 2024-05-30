@@ -1,7 +1,5 @@
-import type { RumEvent, RumEventDomainContext, RumInitConfiguration } from '@datadog/browser-rum-core/src'
-import type { LogsInitConfiguration } from '@datadog/browser-logs/cjs/domain/configuration'
-import type { LogsEvent } from '@datadog/browser-logs'
-import type { LogsEventDomainContext } from '@datadog/browser-logs/cjs/domainContext.types'
+import type { RumEvent, RumEventDomainContext, RumInitConfiguration } from '@datadog/browser-rum-core'
+import type { LogsEvent, LogsInitConfiguration, LogsEventDomainContext } from '@datadog/browser-logs'
 import { flushBrowserLogs, withBrowserLogs } from '../lib/helpers/browser'
 import { flushEvents, createTest } from '../lib/framework'
 
@@ -139,31 +137,63 @@ describe('microfrontend', () => {
       expect(event?.context?.handlingStack).toMatch(HANDLING_STACK_REGEX)
     })
 
-  const consoleApis = ['log', 'debug', 'error', 'info', 'warn'] as const
+  describe('console apis', () => {
+    const consoleApis = ['log', 'debug', 'error', 'info', 'warn'] as const
 
-  consoleApis.forEach((api) => {
-    createTest(`expose handling stack for console.${api}`)
-      .withLogs(LOGS_CONFIG)
-      .withLogsInit((configuration, api: (typeof consoleApis)[number]) => {
-        window.DD_LOGS!.init(configuration)
+    consoleApis.forEach((api) => {
+      createTest(`expose handling stack for console.${api}`)
+        .withLogs(LOGS_CONFIG)
+        .withLogsInit((configuration, api: (typeof consoleApis)[number]) => {
+          window.DD_LOGS!.init(configuration)
 
-        function testHandlingStack() {
-          console[api]('foo')
-        }
+          function testHandlingStack() {
+            console[api]('foo')
+          }
 
-        testHandlingStack()
-      }, api)
-      .run(async ({ intakeRegistry }) => {
-        await flushEvents()
+          testHandlingStack()
+        }, api)
+        .run(async ({ intakeRegistry }) => {
+          await flushEvents()
 
-        const event = intakeRegistry.logsEvents[0]
+          const event = intakeRegistry.logsEvents[0]
 
-        await flushBrowserLogs()
+          await flushBrowserLogs()
 
-        expect(event).toBeTruthy()
-        expect(event?.context).toEqual({
-          handlingStack: jasmine.stringMatching(HANDLING_STACK_REGEX),
+          expect(event).toBeTruthy()
+          expect(event?.context).toEqual({
+            handlingStack: jasmine.stringMatching(HANDLING_STACK_REGEX),
+          })
         })
-      })
+    })
+  })
+
+  describe('logger apis', () => {
+    const consoleApis = ['log', 'debug', 'error', 'info', 'warn'] as const
+
+    consoleApis.forEach((api) => {
+      createTest(`expose handling stack for DD_LOGS.logger.${api}`)
+        .withLogs(LOGS_CONFIG)
+        .withLogsInit((configuration, api: (typeof consoleApis)[number]) => {
+          window.DD_LOGS!.init(configuration)
+
+          function testHandlingStack() {
+            window.DD_LOGS!.logger[api]('foo')
+          }
+
+          testHandlingStack()
+        }, api)
+        .run(async ({ intakeRegistry }) => {
+          await flushEvents()
+
+          const event = intakeRegistry.logsEvents[0]
+
+          await flushBrowserLogs()
+
+          expect(event).toBeTruthy()
+          expect(event?.context).toEqual({
+            handlingStack: jasmine.stringMatching(HANDLING_STACK_REGEX),
+          })
+        })
+    })
   })
 })

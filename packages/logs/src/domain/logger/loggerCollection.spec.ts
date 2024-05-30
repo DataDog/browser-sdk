@@ -12,7 +12,8 @@ import { mockClock } from '@datadog/browser-core/test'
 import type { CommonContext, RawLoggerLogsEvent } from '../../rawLogsEvent.types'
 import type { RawLogsEventCollectedData } from '../lifeCycle'
 import { LifeCycle, LifeCycleEventType } from '../lifeCycle'
-import { HandlerType, Logger, StatusType } from '../logger'
+import { HandlerType, Logger } from '../logger'
+import { StatusType } from './isAuthorized'
 import { startLoggerCollection } from './loggerCollection'
 
 const COMMON_CONTEXT = {} as CommonContext

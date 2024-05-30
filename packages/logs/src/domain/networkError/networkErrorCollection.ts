@@ -16,7 +16,7 @@ import type { LogsConfiguration } from '../configuration'
 import type { LifeCycle } from '../lifeCycle'
 import type { LogsEventDomainContext } from '../../domainContext.types'
 import { LifeCycleEventType } from '../lifeCycle'
-import { StatusType } from '../logger'
+import { StatusType } from '../logger/isAuthorized'
 
 export function startNetworkErrorCollection(configuration: LogsConfiguration, lifeCycle: LifeCycle) {
   if (!configuration.forwardErrorsToLogs) {
@@ -37,17 +37,24 @@ export function startNetworkErrorCollection(configuration: LogsConfiguration, li
   function handleResponse(type: RequestType, request: XhrCompleteContext | FetchResolveContext) {
     if (!configuration.isIntakeUrl(request.url) && (isRejected(request) || isServerError(request.status))) {
       if ('xhr' in request) {
-        computeXhrResponseData(request.xhr, configuration, onResponseDataAvailable)
+        computeXhrResponseData(request.xhr, configuration, (responseData) =>
+          onResponseDataAvailable(responseData, request.handlingStack)
+        )
       } else if (request.response) {
-        computeFetchResponseText(request.response, configuration, onResponseDataAvailable)
+        computeFetchResponseText(request.response, configuration, (responseData) =>
+          onResponseDataAvailable(responseData, request.handlingStack)
+        )
       } else if (request.error) {
-        computeFetchErrorText(request.error, configuration, onResponseDataAvailable)
+        computeFetchErrorText(request.error, configuration, (responseData) =>
+          onResponseDataAvailable(responseData, request.handlingStack)
+        )
       }
     }
 
-    function onResponseDataAvailable(responseData: unknown) {
+    function onResponseDataAvailable(responseData: unknown, handlingStack?: string) {
       const domainContext: LogsEventDomainContext<typeof ErrorSource.NETWORK> = {
         isAborted: request.isAborted,
+        handlingStack,
       }
 
       lifeCycle.notify(LifeCycleEventType.RAW_LOG_COLLECTED, {

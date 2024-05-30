@@ -10,7 +10,7 @@ import {
 import type { LogsConfiguration } from '../configuration'
 import type { LifeCycle, RawLogsEventCollectedData } from '../lifeCycle'
 import { LifeCycleEventType } from '../lifeCycle'
-import { StatusType } from '../logger'
+import { StatusType } from '../logger/isAuthorized'
 import type { RawLogsEvent } from '../../rawLogsEvent.types'
 
 export interface ProvidedError {

@@ -5,7 +5,7 @@ import type { RawNetworkLogsEvent } from '../../rawLogsEvent.types'
 import type { LogsConfiguration } from '../configuration'
 import type { RawLogsEventCollectedData } from '../lifeCycle'
 import { LifeCycle, LifeCycleEventType } from '../lifeCycle'
-import { StatusType } from '../logger'
+import { StatusType } from '../logger/isAuthorized'
 
 import {
   computeFetchErrorText,

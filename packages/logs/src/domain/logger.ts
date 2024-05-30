@@ -10,24 +10,17 @@ import {
   monitored,
   sanitize,
   NonErrorPrefix,
+  createHandlingStack,
 } from '@datadog/browser-core'
 
 import type { RawLoggerLogsEvent } from '../rawLogsEvent.types'
+import { isAuthorized, StatusType } from './logger/isAuthorized'
 
 export interface LogsMessage {
   message: string
   status: StatusType
   context?: Context
 }
-
-export const StatusType = {
-  debug: 'debug',
-  error: 'error',
-  info: 'info',
-  warn: 'warn',
-} as const
-
-export type StatusType = (typeof StatusType)[keyof typeof StatusType]
 
 export const HandlerType = {
   console: 'console',
@@ -42,7 +35,7 @@ export class Logger {
   private contextManager: ContextManager
 
   constructor(
-    private handleLogStrategy: (logsMessage: LogsMessage, logger: Logger) => void,
+    private handleLogStrategy: (logsMessage: LogsMessage, logger: Logger, handlingStack?: string) => void,
     customerDataTracker: CustomerDataTracker,
     name?: string,
     private handlerType: HandlerType | HandlerType[] = HandlerType.http,
@@ -56,59 +49,55 @@ export class Logger {
     }
   }
 
-  @monitored
-  log(message: string, messageContext?: object, status: StatusType = StatusType.info, error?: Error) {
-    let errorContext: RawLoggerLogsEvent['error']
+  log(message: string, messageContext?: object, error?: Error) {
+    // note: generating the handling stack is intentionally duplicated in each of the logger method to save a frame in the stack
+    let handlingStack: string | undefined
 
-    if (error !== undefined && error !== null) {
-      const stackTrace = error instanceof Error ? computeStackTrace(error) : undefined
-      const rawError = computeRawError({
-        stackTrace,
-        originalError: error,
-        nonErrorPrefix: NonErrorPrefix.PROVIDED,
-        source: ErrorSource.LOGGER,
-        handling: ErrorHandling.HANDLED,
-        startClocks: clocksNow(),
-      })
-
-      errorContext = {
-        stack: rawError.stack,
-        kind: rawError.type,
-        message: rawError.message,
-        causes: rawError.causes,
-      }
+    if (isAuthorized(StatusType.info, HandlerType.http, this)) {
+      handlingStack = createHandlingStack()
     }
 
-    const sanitizedMessageContext = sanitize(messageContext) as Context
-
-    const context = errorContext
-      ? (combine({ error: errorContext }, sanitizedMessageContext) as Context)
-      : sanitizedMessageContext
-
-    this.handleLogStrategy(
-      {
-        message: sanitize(message)!,
-        context,
-        status,
-      },
-      this
-    )
+    this.logImplementation(message, messageContext, StatusType.info, error, handlingStack)
   }
 
   debug(message: string, messageContext?: object, error?: Error) {
-    this.log(message, messageContext, StatusType.debug, error)
+    let handlingStack: string | undefined
+
+    if (isAuthorized(StatusType.info, HandlerType.http, this)) {
+      handlingStack = createHandlingStack()
+    }
+
+    this.logImplementation(message, messageContext, StatusType.debug, error, handlingStack)
   }
 
   info(message: string, messageContext?: object, error?: Error) {
-    this.log(message, messageContext, StatusType.info, error)
+    let handlingStack: string | undefined
+
+    if (isAuthorized(StatusType.info, HandlerType.http, this)) {
+      handlingStack = createHandlingStack()
+    }
+
+    this.logImplementation(message, messageContext, StatusType.info, error, handlingStack)
   }
 
   warn(message: string, messageContext?: object, error?: Error) {
-    this.log(message, messageContext, StatusType.warn, error)
+    let handlingStack: string | undefined
+
+    if (isAuthorized(StatusType.info, HandlerType.http, this)) {
+      handlingStack = createHandlingStack()
+    }
+
+    this.logImplementation(message, messageContext, StatusType.warn, error, handlingStack)
   }
 
   error(message: string, messageContext?: object, error?: Error) {
-    this.log(message, messageContext, StatusType.error, error)
+    let handlingStack: string | undefined
+
+    if (isAuthorized(StatusType.info, HandlerType.http, this)) {
+      handlingStack = createHandlingStack()
+    }
+
+    this.logImplementation(message, messageContext, StatusType.error, error, handlingStack)
   }
 
   setContext(context: object) {
@@ -145,5 +134,51 @@ export class Logger {
 
   getLevel() {
     return this.level
+  }
+
+  @monitored
+  private logImplementation(
+    message: string,
+    messageContext?: object,
+    status: StatusType = StatusType.info,
+    error?: Error,
+    handlingStack?: string
+  ) {
+    let errorContext: RawLoggerLogsEvent['error']
+
+    if (error !== undefined && error !== null) {
+      const stackTrace = error instanceof Error ? computeStackTrace(error) : undefined
+      const rawError = computeRawError({
+        stackTrace,
+        originalError: error,
+        nonErrorPrefix: NonErrorPrefix.PROVIDED,
+        source: ErrorSource.LOGGER,
+        handling: ErrorHandling.HANDLED,
+        startClocks: clocksNow(),
+      })
+
+      errorContext = {
+        stack: rawError.stack,
+        kind: rawError.type,
+        message: rawError.message,
+        causes: rawError.causes,
+      }
+    }
+
+    const sanitizedMessageContext = sanitize(messageContext) as Context
+
+    const context = errorContext
+      ? (combine({ error: errorContext }, sanitizedMessageContext) as Context)
+      : sanitizedMessageContext
+
+    this.handleLogStrategy(
+      {
+        message: sanitize(message)!,
+        context,
+        status,
+      },
+      this,
+      handlingStack
+    )
   }
 }

@@ -8,6 +8,7 @@ export type LogsEventDomainContext<T extends ErrorSource = any> = T extends type
 
 export type NetworkLogsEventDomainContext = {
   isAborted: boolean
+  handlingStack?: string
 }
 
 export type ConsoleLogsEventDomainContext = {
