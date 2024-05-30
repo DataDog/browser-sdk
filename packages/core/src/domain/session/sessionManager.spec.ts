@@ -8,7 +8,8 @@ import { ONE_HOUR, ONE_SECOND } from '../../tools/utils/timeUtils'
 import type { Configuration } from '../configuration'
 import type { TrackingConsentState } from '../trackingConsent'
 import { TrackingConsent, createTrackingConsentState } from '../trackingConsent'
-import type { SessionManager } from './sessionManager'
+import type { ValueHistory } from '../../tools/valueHistory'
+import type { SessionContext, SessionManager } from './sessionManager'
 import { startSessionManager, stopSessionManager, VISIBILITY_CHECK_DELAY } from './sessionManager'
 import { SESSION_EXPIRATION_DELAY, SESSION_TIME_OUT_DELAY } from './sessionConstants'
 import type { SessionStoreStrategyType } from './storeStrategies/sessionStoreStrategy'
@@ -632,11 +633,12 @@ describe('startSessionManager', () => {
 
   describe('forced replay', () => {
     it('should update current entity when replay recording is forced', () => {
-      const sessionManager = startSessionManagerWithDefaults()
+      const forceReplayInHistorySpy = jasmine.createSpy()
+      const sessionManager = startSessionManagerWithDefaults({ forceReplayInHistory: forceReplayInHistorySpy })
       sessionManager.setForcedReplay()
 
       expectSessionIdToBeDefined(sessionManager)
-      expect(sessionManager.findSession()!.isReplayForced).toBe(true)
+      expect(forceReplayInHistorySpy).toHaveBeenCalledTimes(1)
     })
   })
 
@@ -645,11 +647,13 @@ describe('startSessionManager', () => {
     productKey = FIRST_PRODUCT_KEY,
     computeSessionState = () => TRACKED_SESSION_STATE,
     trackingConsentState = createTrackingConsentState(TrackingConsent.GRANTED),
+    forceReplayInHistory,
   }: {
     configuration?: Partial<Configuration>
     productKey?: string
     computeSessionState?: () => { trackingType: FakeTrackingType; isTracked: boolean }
     trackingConsentState?: TrackingConsentState
+    forceReplayInHistory?: (sessionContextHistory: ValueHistory<SessionContext<FakeTrackingType>>) => void
   } = {}) {
     return startSessionManager(
       {
@@ -658,7 +662,8 @@ describe('startSessionManager', () => {
       } as Configuration,
       productKey,
       computeSessionState,
-      trackingConsentState
+      trackingConsentState,
+      forceReplayInHistory
     )
   }
 })

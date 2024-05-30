@@ -18,6 +18,7 @@ import {
   findMouseInteractionRecords,
   findElementWithTagName,
 } from '@datadog/browser-rum/test'
+import { SESSION_STORE_KEY } from '@datadog/browser-core'
 import { flushEvents, createTest, bundleSetup, html } from '../../lib/framework'
 
 const TIMESTAMP_RE = /^\d{13}$/
@@ -827,6 +828,10 @@ describe('recorder', () => {
         await browser.execute(() => {
           window.DD_RUM!.startSessionReplayRecording({ force: true })
         })
+        const [cookie] = await browser.getCookies([SESSION_STORE_KEY])
+        const cookieForcedReplay = cookie.value.match(/forcedReplay=([\w-]+)/)![1]
+
+        expect(cookieForcedReplay).toBe('1')
 
         await flushEvents()
 

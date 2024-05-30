@@ -22,14 +22,19 @@ export interface RumSessionManager {
 
 export type RumSession = {
   id: string
-  sampledForReplay: boolean
-  sessionReplayAllowed: boolean
+  sessionReplay: SessionReplayState
 }
 
 export const enum RumTrackingType {
   NOT_TRACKED = '0',
   TRACKED_WITH_SESSION_REPLAY = '1',
   TRACKED_WITHOUT_SESSION_REPLAY = '2',
+}
+
+export const enum SessionReplayState {
+  OFF = '0',
+  SAMPLED = '1',
+  FORCED = '2',
 }
 
 export function startRumSessionManager(
@@ -41,7 +46,13 @@ export function startRumSessionManager(
     configuration,
     RUM_SESSION_KEY,
     (rawTrackingType) => computeSessionState(configuration, rawTrackingType),
-    trackingConsentState
+    trackingConsentState,
+    (sessionContextHistory) => {
+      const sessionEntity = sessionContextHistory.find()
+      if (sessionEntity) {
+        sessionEntity.isReplayForced = true
+      }
+    }
   )
 
   sessionManager.expireObservable.subscribe(() => {
@@ -60,9 +71,12 @@ export function startRumSessionManager(
       }
       return {
         id: session.id,
-        sampledForReplay: session.trackingType === RumTrackingType.TRACKED_WITH_SESSION_REPLAY,
-        sessionReplayAllowed:
-          session.trackingType === RumTrackingType.TRACKED_WITH_SESSION_REPLAY || session.isReplayForced,
+        sessionReplay:
+          session.trackingType === RumTrackingType.TRACKED_WITH_SESSION_REPLAY
+            ? SessionReplayState.SAMPLED
+            : session.isReplayForced
+              ? SessionReplayState.FORCED
+              : SessionReplayState.OFF,
       }
     },
     expire: sessionManager.expire,
@@ -77,8 +91,7 @@ export function startRumSessionManager(
 export function startRumSessionManagerStub(): RumSessionManager {
   const session: RumSession = {
     id: '00000000-aaaa-0000-aaaa-000000000000',
-    sampledForReplay: bridgeSupports(BridgeCapability.RECORDS),
-    sessionReplayAllowed: bridgeSupports(BridgeCapability.RECORDS),
+    sessionReplay: bridgeSupports(BridgeCapability.RECORDS) ? SessionReplayState.SAMPLED : SessionReplayState.OFF,
   }
   return {
     findTrackedSession: () => session,

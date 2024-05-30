@@ -25,7 +25,7 @@ export function ReplayTab() {
     return <Alert level="error" message="RUM session sampled out." />
   }
 
-  if (infos.cookie.rum === '2') {
+  if (infos.cookie.rum === '2' && infos.cookie.forcedReplay !== '1') {
     return <Alert level="error" message="RUM session plan does not include replay." />
   }
 
@@ -66,7 +66,7 @@ function generateFullSnapshot() {
   // Restart to make sure we have a fresh Full Snapshot
   evalInWindow(`
     DD_RUM.stopSessionReplayRecording()
-    DD_RUM.startSessionReplayRecording()
+    DD_RUM.startSessionReplayRecording({ force: true })
   `).catch((error) => {
     logger.error('While restarting recording:', error)
   })

@@ -51,6 +51,36 @@ describe('getReplayLink', () => {
     )
   })
 
+  it('should return link when replay is forced', () => {
+    const sessionManager = createRumSessionManagerMock()
+      .setId('session-id-1')
+      .setTrackedWithoutSessionReplay()
+      .setForcedReplay()
+
+    const viewContexts = {
+      findView: () => ({
+        id: 'view-id-1',
+        startClocks: {
+          timeStamp: 123456,
+        },
+      }),
+    } as ViewContexts
+    addRecord('view-id-1')
+
+    const link = getSessionReplayLink(
+      { ...DEFAULT_CONFIGURATION, site: 'datadoghq.com', subdomain: 'toto' },
+      sessionManager,
+      viewContexts,
+      true
+    )
+
+    expect(link).toBe(
+      isIE()
+        ? 'https://toto.datadoghq.com/rum/replay/sessions/session-id-1?error-type=browser-not-supported&seed=view-id-1&from=123456'
+        : 'https://toto.datadoghq.com/rum/replay/sessions/session-id-1?seed=view-id-1&from=123456'
+    )
+  })
+
   it('return a param if replay is sampled out', () => {
     const sessionManager = createRumSessionManagerMock().setId('session-id-1').setTrackedWithoutSessionReplay()
     const viewContexts = {

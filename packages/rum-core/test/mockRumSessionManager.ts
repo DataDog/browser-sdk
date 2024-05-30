@@ -1,11 +1,12 @@
 import { Observable } from '@datadog/browser-core'
-import type { RumSessionManager } from '../src/domain/rumSessionManager'
+import { SessionReplayState, type RumSessionManager } from '../src/domain/rumSessionManager'
 
 export interface RumSessionManagerMock extends RumSessionManager {
   setId(id: string): RumSessionManagerMock
   setNotTracked(): RumSessionManagerMock
   setTrackedWithoutSessionReplay(): RumSessionManagerMock
   setTrackedWithSessionReplay(): RumSessionManagerMock
+  setForcedReplay(): RumSessionManagerMock
 }
 
 const DEFAULT_ID = 'session-id'
@@ -19,6 +20,7 @@ const enum SessionStatus {
 export function createRumSessionManagerMock(): RumSessionManagerMock {
   let id = DEFAULT_ID
   let sessionStatus: SessionStatus = SessionStatus.TRACKED_WITH_SESSION_REPLAY
+  let forcedReplay: boolean = false
   return {
     findTrackedSession() {
       if (
@@ -29,8 +31,12 @@ export function createRumSessionManagerMock(): RumSessionManagerMock {
       }
       return {
         id,
-        sampledForReplay: sessionStatus === SessionStatus.TRACKED_WITH_SESSION_REPLAY,
-        sessionReplayAllowed: sessionStatus === SessionStatus.TRACKED_WITH_SESSION_REPLAY,
+        sessionReplay:
+          sessionStatus === SessionStatus.TRACKED_WITH_SESSION_REPLAY
+            ? SessionReplayState.SAMPLED
+            : forcedReplay
+              ? SessionReplayState.FORCED
+              : SessionReplayState.OFF,
       }
     },
     expire() {
@@ -54,6 +60,9 @@ export function createRumSessionManagerMock(): RumSessionManagerMock {
       sessionStatus = SessionStatus.TRACKED_WITH_SESSION_REPLAY
       return this
     },
-    setForcedReplay() {},
+    setForcedReplay() {
+      forcedReplay = true
+      return this
+    },
   }
 }

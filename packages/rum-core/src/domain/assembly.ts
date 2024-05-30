@@ -28,7 +28,7 @@ import type { CiVisibilityContext } from './contexts/ciVisibilityContext'
 import type { LifeCycle } from './lifeCycle'
 import { LifeCycleEventType } from './lifeCycle'
 import type { ViewContexts } from './contexts/viewContexts'
-import type { RumSessionManager } from './rumSessionManager'
+import { SessionReplayState, type RumSessionManager } from './rumSessionManager'
 import type { UrlContexts } from './contexts/urlContexts'
 import type { RumConfiguration } from './configuration'
 import type { ActionContexts } from './action/actionCollection'
@@ -178,7 +178,8 @@ export function startRumAssembly(
           ;(serverRumEvent.session as Mutable<RumEvent['session']>).has_replay = commonContext.hasReplay
         }
         if (serverRumEvent.type === 'view') {
-          ;(serverRumEvent.session as Mutable<RumEvent['session']>).sampled_for_replay = session.sampledForReplay
+          ;(serverRumEvent.session as Mutable<RumEvent['session']>).sampled_for_replay =
+            session.sessionReplay === SessionReplayState.SAMPLED
         }
 
         if (!isEmptyObject(commonContext.user)) {
