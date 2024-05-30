@@ -24,10 +24,18 @@ export function getActionNameFromElement(
     getActionNameFromElementProgrammatically(element, DEFAULT_PROGRAMMATIC_ACTION_NAME_ATTRIBUTE) ||
     (userProgrammaticAttribute && getActionNameFromElementProgrammatically(element, userProgrammaticAttribute))
 
+  console.log(
+    'defaultActionName',
+    defaultActionName,
+    'userProgrammaticAttribute',
+    userProgrammaticAttribute,
+    'nodePrivacyLevel',
+    nodePrivacyLevel
+  )
   if (nodePrivacyLevel === NodePrivacyLevel.MASK) {
     return {
       name: defaultActionName || ACTION_NAME_PLACEHOLDER,
-      masked: true,
+      masked: defaultActionName ? false : true,
     }
   }
 
