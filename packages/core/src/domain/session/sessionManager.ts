@@ -9,6 +9,7 @@ import type { Configuration } from '../configuration'
 import type { TrackingConsentState } from '../trackingConsent'
 import { SESSION_TIME_OUT_DELAY } from './sessionConstants'
 import { startSessionStore } from './sessionStore'
+import type { SessionState } from './sessionState'
 
 export interface SessionManager<TrackingType extends string> {
   findSession: (
@@ -17,8 +18,9 @@ export interface SessionManager<TrackingType extends string> {
   ) => SessionContext<TrackingType> | undefined
   renewObservable: Observable<void>
   expireObservable: Observable<void>
+  sessionStateUpdateObservable: Observable<{ previousState: SessionState; newState: SessionState }>
   expire: () => void
-  setForcedReplay: () => void
+  updateSessionState: (state: Partial<SessionState>) => void
 }
 
 export interface SessionContext<TrackingType extends string> extends Context {
@@ -35,11 +37,11 @@ export function startSessionManager<TrackingType extends string>(
   configuration: Configuration,
   productKey: string,
   computeSessionState: (rawTrackingType?: string) => { trackingType: TrackingType; isTracked: boolean },
-  trackingConsentState: TrackingConsentState,
-  forceReplayInHistory?: (sessionContextHistory: ValueHistory<SessionContext<TrackingType>>) => void
+  trackingConsentState: TrackingConsentState
 ): SessionManager<TrackingType> {
   const renewObservable = new Observable<void>()
   const expireObservable = new Observable<void>()
+  const sessionStateUpdateObservable = new Observable<{ previousState: SessionState; newState: SessionState }>()
 
   // TODO - Improve configuration type and remove assertion
   const sessionStore = startSessionStore(configuration.sessionStoreStrategyType!, productKey, computeSessionState)
@@ -56,9 +58,9 @@ export function startSessionManager<TrackingType extends string>(
     expireObservable.notify()
     sessionContextHistory.closeActive(relativeNow())
   })
-  if (forceReplayInHistory) {
-    sessionStore.forceReplayObservable.subscribe(() => forceReplayInHistory(sessionContextHistory))
-  }
+  sessionStore.sessionStateUpdateObservable.subscribe(({ previousState, newState }) =>
+    sessionStateUpdateObservable.notify({ previousState, newState })
+  )
 
   // We expand/renew session unconditionally as tracking consent is always granted when the session
   // manager is started.
@@ -93,8 +95,9 @@ export function startSessionManager<TrackingType extends string>(
     findSession: (startTime, options) => sessionContextHistory.find(startTime, options),
     renewObservable,
     expireObservable,
+    sessionStateUpdateObservable,
     expire: sessionStore.expire,
-    setForcedReplay: sessionStore.setForcedReplay,
+    updateSessionState: sessionStore.updateSessionState,
   }
 }
 

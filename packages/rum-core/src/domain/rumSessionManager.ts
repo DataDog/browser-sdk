@@ -46,13 +46,7 @@ export function startRumSessionManager(
     configuration,
     RUM_SESSION_KEY,
     (rawTrackingType) => computeSessionState(configuration, rawTrackingType),
-    trackingConsentState,
-    (sessionContextHistory) => {
-      const sessionEntity = sessionContextHistory.find()
-      if (sessionEntity) {
-        sessionEntity.isReplayForced = true
-      }
-    }
+    trackingConsentState
   )
 
   sessionManager.expireObservable.subscribe(() => {
@@ -61,6 +55,15 @@ export function startRumSessionManager(
 
   sessionManager.renewObservable.subscribe(() => {
     lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED)
+  })
+
+  sessionManager.sessionStateUpdateObservable.subscribe(({ previousState, newState }) => {
+    if (!previousState.forcedReplay && newState.forcedReplay) {
+      const sessionEntity = sessionManager.findSession()
+      if (sessionEntity) {
+        sessionEntity.isReplayForced = true
+      }
+    }
   })
 
   return {
@@ -81,7 +84,7 @@ export function startRumSessionManager(
     },
     expire: sessionManager.expire,
     expireObservable: sessionManager.expireObservable,
-    setForcedReplay: sessionManager.setForcedReplay,
+    setForcedReplay: () => sessionManager.updateSessionState({ forcedReplay: '1' }),
   }
 }
 

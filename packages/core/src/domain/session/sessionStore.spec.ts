@@ -474,8 +474,8 @@ describe('session store', () => {
   })
 
   describe('session update and synchronisation', () => {
-    let updateSpy: () => void
-    let otherUpdateSpy: () => void
+    let updateSpy: jasmine.Spy<jasmine.Func>
+    let otherUpdateSpy: jasmine.Spy<jasmine.Func>
     let clock: Clock
 
     function setupSessionStore(updateSpy: () => void) {
@@ -492,7 +492,7 @@ describe('session store', () => {
       })
 
       const sessionStoreManager = startSessionStore(sessionStoreStrategyType!, PRODUCT_KEY, computeSessionState)
-      sessionStoreManager.forceReplayObservable.subscribe(updateSpy)
+      sessionStoreManager.sessionStateUpdateObservable.subscribe(updateSpy)
 
       return sessionStoreManager
     }
@@ -519,9 +519,13 @@ describe('session store', () => {
       sessionStoreManager = setupSessionStore(updateSpy)
       otherSessionStoreManager = setupSessionStore(otherUpdateSpy)
 
-      sessionStoreManager.setForcedReplay()
+      sessionStoreManager.updateSessionState({ extra: 'extra' })
 
-      expect(updateSpy).toHaveBeenCalled()
+      expect(updateSpy).toHaveBeenCalledTimes(1)
+
+      const callArgs = updateSpy.calls.argsFor(0)[0]
+      expect(callArgs!.previousState.extra).toBeUndefined()
+      expect(callArgs.newState.extra).toBe('extra')
 
       // Need to wait until watch is triggered
       clock.tick(STORAGE_POLL_DELAY)

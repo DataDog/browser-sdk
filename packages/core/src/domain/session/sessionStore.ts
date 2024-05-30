@@ -24,10 +24,10 @@ export interface SessionStore {
   restartSession: () => void
   renewObservable: Observable<void>
   expireObservable: Observable<void>
-  forceReplayObservable: Observable<void>
+  sessionStateUpdateObservable: Observable<{ previousState: SessionState; newState: SessionState }>
   expire: () => void
   stop: () => void
-  setForcedReplay: () => void
+  updateSessionState: (state: Partial<SessionState>) => void
 }
 
 /**
@@ -64,7 +64,7 @@ export function startSessionStore<TrackingType extends string>(
 ): SessionStore {
   const renewObservable = new Observable<void>()
   const expireObservable = new Observable<void>()
-  const forceReplayObservable = new Observable<void>()
+  const sessionStateUpdateObservable = new Observable<{ previousState: SessionState; newState: SessionState }>()
 
   const sessionStoreStrategy =
     sessionStoreStrategyType.type === 'Cookie'
@@ -132,9 +132,7 @@ export function startSessionStore<TrackingType extends string>(
       if (isSessionInCacheOutdated(sessionState)) {
         expireSessionInCache()
       } else {
-        if (sessionState.forcedReplay && !sessionCache.forcedReplay) {
-          forceReplayObservable.notify()
-        }
+        sessionStateUpdateObservable.notify({ previousState: sessionCache, newState: sessionState })
         sessionCache = sessionState
       }
     }
@@ -189,10 +187,11 @@ export function startSessionStore<TrackingType extends string>(
     renewObservable.notify()
   }
 
-  function setForcedReplay() {
+  function updateSessionState(partialSessionState: Partial<SessionState>) {
+    // console.timeLog('partialSessionState', partialSessionState)
     processSessionStoreOperations(
       {
-        process: (sessionState) => assign({}, sessionState, { forcedReplay: '1' }),
+        process: (sessionState) => assign({}, sessionState, partialSessionState),
         after: synchronizeSession,
       },
       sessionStoreStrategy
@@ -205,7 +204,7 @@ export function startSessionStore<TrackingType extends string>(
     getSession: () => sessionCache,
     renewObservable,
     expireObservable,
-    forceReplayObservable,
+    sessionStateUpdateObservable,
     restartSession: startSession,
     expire: () => {
       cancelExpandOrRenewSession()
@@ -215,6 +214,6 @@ export function startSessionStore<TrackingType extends string>(
     stop: () => {
       clearInterval(watchSessionTimeoutId)
     },
-    setForcedReplay,
+    updateSessionState,
   }
 }

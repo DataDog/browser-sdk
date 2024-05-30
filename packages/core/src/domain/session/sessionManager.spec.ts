@@ -8,8 +8,7 @@ import { ONE_HOUR, ONE_SECOND } from '../../tools/utils/timeUtils'
 import type { Configuration } from '../configuration'
 import type { TrackingConsentState } from '../trackingConsent'
 import { TrackingConsent, createTrackingConsentState } from '../trackingConsent'
-import type { ValueHistory } from '../../tools/valueHistory'
-import type { SessionContext, SessionManager } from './sessionManager'
+import type { SessionManager } from './sessionManager'
 import { startSessionManager, stopSessionManager, VISIBILITY_CHECK_DELAY } from './sessionManager'
 import { SESSION_EXPIRATION_DELAY, SESSION_TIME_OUT_DELAY } from './sessionConstants'
 import type { SessionStoreStrategyType } from './storeStrategies/sessionStoreStrategy'
@@ -631,14 +630,20 @@ describe('startSessionManager', () => {
     })
   })
 
-  describe('forced replay', () => {
-    it('should update current entity when replay recording is forced', () => {
-      const forceReplayInHistorySpy = jasmine.createSpy()
-      const sessionManager = startSessionManagerWithDefaults({ forceReplayInHistory: forceReplayInHistorySpy })
-      sessionManager.setForcedReplay()
+  describe('session state update', () => {
+    it('should notify session manager update observable', () => {
+      const sessionStateUpdateSpy = jasmine.createSpy()
+      const sessionManager = startSessionManagerWithDefaults()
+      sessionManager.sessionStateUpdateObservable.subscribe(sessionStateUpdateSpy)
+
+      sessionManager.updateSessionState({ extra: 'extra' })
 
       expectSessionIdToBeDefined(sessionManager)
-      expect(forceReplayInHistorySpy).toHaveBeenCalledTimes(1)
+      expect(sessionStateUpdateSpy).toHaveBeenCalledTimes(1)
+
+      const callArgs = sessionStateUpdateSpy.calls.argsFor(0)[0]
+      expect(callArgs.previousState.extra).toBeUndefined()
+      expect(callArgs.newState.extra).toBe('extra')
     })
   })
 
@@ -647,13 +652,11 @@ describe('startSessionManager', () => {
     productKey = FIRST_PRODUCT_KEY,
     computeSessionState = () => TRACKED_SESSION_STATE,
     trackingConsentState = createTrackingConsentState(TrackingConsent.GRANTED),
-    forceReplayInHistory,
   }: {
     configuration?: Partial<Configuration>
     productKey?: string
     computeSessionState?: () => { trackingType: FakeTrackingType; isTracked: boolean }
     trackingConsentState?: TrackingConsentState
-    forceReplayInHistory?: (sessionContextHistory: ValueHistory<SessionContext<FakeTrackingType>>) => void
   } = {}) {
     return startSessionManager(
       {
@@ -662,8 +665,7 @@ describe('startSessionManager', () => {
       } as Configuration,
       productKey,
       computeSessionState,
-      trackingConsentState,
-      forceReplayInHistory
+      trackingConsentState
     )
   }
 })
