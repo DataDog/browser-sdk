@@ -41,7 +41,6 @@ export function startSessionManager<TrackingType extends string>(
 ): SessionManager<TrackingType> {
   const renewObservable = new Observable<void>()
   const expireObservable = new Observable<void>()
-  const sessionStateUpdateObservable = new Observable<{ previousState: SessionState; newState: SessionState }>()
 
   // TODO - Improve configuration type and remove assertion
   const sessionStore = startSessionStore(configuration.sessionStoreStrategyType!, productKey, computeSessionState)
@@ -58,9 +57,6 @@ export function startSessionManager<TrackingType extends string>(
     expireObservable.notify()
     sessionContextHistory.closeActive(relativeNow())
   })
-  sessionStore.sessionStateUpdateObservable.subscribe(({ previousState, newState }) =>
-    sessionStateUpdateObservable.notify({ previousState, newState })
-  )
 
   // We expand/renew session unconditionally as tracking consent is always granted when the session
   // manager is started.
@@ -95,7 +91,7 @@ export function startSessionManager<TrackingType extends string>(
     findSession: (startTime, options) => sessionContextHistory.find(startTime, options),
     renewObservable,
     expireObservable,
-    sessionStateUpdateObservable,
+    sessionStateUpdateObservable: sessionStore.sessionStateUpdateObservable,
     expire: sessionStore.expire,
     updateSessionState: sessionStore.updateSessionState,
   }

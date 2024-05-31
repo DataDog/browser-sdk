@@ -188,7 +188,6 @@ export function startSessionStore<TrackingType extends string>(
   }
 
   function updateSessionState(partialSessionState: Partial<SessionState>) {
-    // console.timeLog('partialSessionState', partialSessionState)
     processSessionStoreOperations(
       {
         process: (sessionState) => assign({}, sessionState, partialSessionState),
