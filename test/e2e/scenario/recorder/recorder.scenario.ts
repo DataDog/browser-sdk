@@ -831,7 +831,6 @@ describe('recorder', () => {
         const [cookie] = await browser.getCookies([SESSION_STORE_KEY])
         expect(cookie.value).toContain('forcedReplay=1')
 
-
         await flushEvents()
 
         expect(intakeRegistry.replaySegments.length).toBe(1)
