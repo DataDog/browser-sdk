@@ -32,9 +32,9 @@ export const enum RumTrackingType {
 }
 
 export const enum SessionReplayState {
-  OFF = '0',
-  SAMPLED = '1',
-  FORCED = '2',
+  OFF,
+  SAMPLED,
+  FORCED,
 }
 
 export function startRumSessionManager(
