@@ -4,7 +4,9 @@ export type LogsEventDomainContext<T extends ErrorSource = any> = T extends type
   ? NetworkLogsEventDomainContext
   : T extends typeof ErrorSource.CONSOLE
     ? ConsoleLogsEventDomainContext
-    : never
+    : T extends typeof ErrorSource.LOGGER
+      ? LoggerLogsEventDomainContext
+      : never
 
 export type NetworkLogsEventDomainContext = {
   isAborted: boolean
@@ -12,5 +14,9 @@ export type NetworkLogsEventDomainContext = {
 }
 
 export type ConsoleLogsEventDomainContext = {
+  handlingStack: string
+}
+
+export type LoggerLogsEventDomainContext = {
   handlingStack: string
 }

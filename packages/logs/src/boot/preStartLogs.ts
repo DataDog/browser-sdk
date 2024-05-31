@@ -73,9 +73,9 @@ export function createPreStartStrategy(
 
     getInternalContext: noop as () => undefined,
 
-    handleLog(message, statusType, context = getCommonContext(), date = timeStampNow(), handlingStack) {
+    handleLog(message, statusType, handlingStack, context = getCommonContext(), date = timeStampNow()) {
       bufferApiCalls.add((startLogsResult) =>
-        startLogsResult.handleLog(message, statusType, context, date, handlingStack)
+        startLogsResult.handleLog(message, statusType, handlingStack, context, date)
       )
     },
   }

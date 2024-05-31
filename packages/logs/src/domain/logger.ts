@@ -53,7 +53,7 @@ export class Logger {
     // note: generating the handling stack is intentionally duplicated in each of the logger method to save a frame in the stack
     let handlingStack: string | undefined
 
-    if (isAuthorized(StatusType.info, HandlerType.http, this)) {
+    if (isAuthorized(status, HandlerType.http, this)) {
       handlingStack = createHandlingStack()
     }
 
@@ -63,7 +63,7 @@ export class Logger {
   debug(message: string, messageContext?: object, error?: Error) {
     let handlingStack: string | undefined
 
-    if (isAuthorized(StatusType.info, HandlerType.http, this)) {
+    if (isAuthorized(StatusType.debug, HandlerType.http, this)) {
       handlingStack = createHandlingStack()
     }
 
@@ -83,7 +83,7 @@ export class Logger {
   warn(message: string, messageContext?: object, error?: Error) {
     let handlingStack: string | undefined
 
-    if (isAuthorized(StatusType.info, HandlerType.http, this)) {
+    if (isAuthorized(StatusType.warn, HandlerType.http, this)) {
       handlingStack = createHandlingStack()
     }
 
@@ -93,7 +93,7 @@ export class Logger {
   error(message: string, messageContext?: object, error?: Error) {
     let handlingStack: string | undefined
 
-    if (isAuthorized(StatusType.info, HandlerType.http, this)) {
+    if (isAuthorized(StatusType.error, HandlerType.http, this)) {
       handlingStack = createHandlingStack()
     }
 

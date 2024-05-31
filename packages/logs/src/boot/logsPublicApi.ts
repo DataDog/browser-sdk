@@ -196,8 +196,7 @@ export function makeLogsPublicApi(startLogsImpl: StartLogs): LogsPublicApi {
   const customLoggers: { [name: string]: Logger | undefined } = {}
 
   const mainLogger = new Logger(
-    (logsMessage, logger, handlingStack) =>
-      strategy.handleLog(logsMessage, logger, undefined, undefined, handlingStack),
+    (...params) => strategy.handleLog(...params),
     customerDataTrackerManager.createDetachedTracker()
   )
 
@@ -223,8 +222,7 @@ export function makeLogsPublicApi(startLogsImpl: StartLogs): LogsPublicApi {
 
     createLogger: monitor((name, conf = {}) => {
       customLoggers[name] = new Logger(
-        (logsMessage, logger, handlingStack) =>
-          strategy.handleLog(logsMessage, logger, undefined, undefined, handlingStack),
+        (...params) => strategy.handleLog(...params),
         customerDataTrackerManager.createDetachedTracker(),
         sanitize(name),
         conf.handler,

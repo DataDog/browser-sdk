@@ -22,8 +22,8 @@ describe('preStartLogs', () => {
   let clock: Clock
 
   function getLoggedMessage(index: number) {
-    const [message, logger, savedCommonContext, savedDate] = handleLogSpy.calls.argsFor(index)
-    return { message, logger, savedCommonContext, savedDate }
+    const [message, logger, handlingStack, savedCommonContext, savedDate] = handleLogSpy.calls.argsFor(index)
+    return { message, logger, handlingStack, savedCommonContext, savedDate }
   }
 
   beforeEach(() => {

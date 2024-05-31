@@ -72,10 +72,7 @@ describe('logs', () => {
       logsEndpointBuilder: stubEndpointBuilder('https://localhost/v1/input/log'),
       batchMessagesLimit: 1,
     }
-    logger = new Logger(
-      (logsMessage, logger, handlingStack) => handleLog(logsMessage, logger, undefined, undefined, handlingStack),
-      createCustomerDataTracker(noop)
-    )
+    logger = new Logger((...params) => handleLog(...params), createCustomerDataTracker(noop))
     interceptor = interceptRequests()
     requests = interceptor.requests
     consoleLogSpy = spyOn(console, 'log')
@@ -98,7 +95,12 @@ describe('logs', () => {
       ))
       registerCleanupTask(stopLogs)
 
-      handleLog({ message: 'message', status: StatusType.warn, context: { foo: 'bar' } }, logger, COMMON_CONTEXT)
+      handleLog(
+        { message: 'message', status: StatusType.warn, context: { foo: 'bar' } },
+        logger,
+        'fake-handling-stack',
+        COMMON_CONTEXT
+      )
 
       expect(requests.length).toEqual(1)
       expect(requests[0].url).toContain(baseConfiguration.logsEndpointBuilder.build('xhr', DEFAULT_PAYLOAD))

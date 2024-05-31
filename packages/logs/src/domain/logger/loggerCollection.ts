@@ -11,9 +11,9 @@ export function startLoggerCollection(lifeCycle: LifeCycle) {
   function handleLog(
     logsMessage: LogsMessage,
     logger: Logger,
+    handlingStack?: string,
     savedCommonContext?: CommonContext,
-    savedDate?: TimeStamp,
-    handlingStack?: string
+    savedDate?: TimeStamp
   ) {
     const messageContext = combine(logger.getContext(), logsMessage.context)
 

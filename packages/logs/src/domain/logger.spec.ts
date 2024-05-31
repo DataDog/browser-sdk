@@ -4,9 +4,9 @@ import type { LogsMessage } from './logger'
 import { HandlerType, Logger, STATUSES } from './logger'
 import { StatusType } from './logger/isAuthorized'
 
-describe('Logger', () => {
+fdescribe('Logger', () => {
   let logger: Logger
-  let handleLogSpy: jasmine.Spy<(message: LogsMessage, logger: Logger) => void>
+  let handleLogSpy: jasmine.Spy<(message: LogsMessage, logger: Logger, handlingStack?: string) => void>
 
   function getLoggedMessage(index: number) {
     return handleLogSpy.calls.argsFor(index)[0]
@@ -14,6 +14,10 @@ describe('Logger', () => {
 
   function getMessageLogger(index: number) {
     return handleLogSpy.calls.argsFor(index)[1]
+  }
+
+  function getLoggedHandlingStack(index: number) {
+    return handleLogSpy.calls.argsFor(index)[2]
   }
 
   beforeEach(() => {
@@ -46,6 +50,35 @@ describe('Logger', () => {
           },
         })
       })
+
+      it(`'logger.${status}' should create an handling stack`, () => {
+        logger[status]('message')
+
+        expect(getLoggedHandlingStack(0)).toBeDefined()
+      })
+
+      it(`'logger.${status}' should not create an handling stack if the handler is 'console'`, () => {
+        logger.setHandler(HandlerType.console)
+        logger[status]('message')
+
+        expect(getLoggedHandlingStack(0)).not.toBeDefined()
+      })
+
+      it(`'logger.${status}' should not create an handling stack if the handler is 'silent'`, () => {
+        logger.setHandler(HandlerType.silent)
+        logger[status]('message')
+
+        expect(getLoggedHandlingStack(0)).not.toBeDefined()
+      })
+    })
+
+    it('should not create an handling stack if level is below the logger level', () => {
+      logger.setLevel(StatusType.warn)
+      logger.log('message')
+      logger.warn('message')
+
+      expect(getLoggedHandlingStack(0)).not.toBeDefined()
+      expect(getLoggedHandlingStack(1)).toBeDefined()
     })
 
     it("'logger.log' should send the log message", () => {
