@@ -4,7 +4,7 @@ import type { LogsMessage } from './logger'
 import { HandlerType, Logger, STATUSES } from './logger'
 import { StatusType } from './logger/isAuthorized'
 
-fdescribe('Logger', () => {
+describe('Logger', () => {
   let logger: Logger
   let handleLogSpy: jasmine.Spy<(message: LogsMessage, logger: Logger, handlingStack?: string) => void>
 
