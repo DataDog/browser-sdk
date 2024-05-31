@@ -62,7 +62,10 @@ n=o.getElementsByTagName(u)[0];n.parentNode.insertBefore(d,n)
         ${formatSnippet('./datadog-logs.js', 'DD_LOGS')}
         DD_LOGS.onReady(function () {
           DD_LOGS.setGlobalContext(${JSON.stringify(options.context)})
-          ;(${options.logsInit.toString()})(${formatConfiguration(options.logs, servers)})
+          ;(${options.logsInit.toString()})(
+            ${formatConfiguration(options.logs, servers)},
+            ${options.logsInitArgs?.map((logInitArg) => JSON.stringify(logInitArg)).join(',')}
+          )
         })
       </script>
     `
@@ -74,10 +77,7 @@ n=o.getElementsByTagName(u)[0];n.parentNode.insertBefore(d,n)
         ${formatSnippet(options.useRumSlim ? './datadog-rum-slim.js' : './datadog-rum.js', 'DD_RUM')}
         DD_RUM.onReady(function () {
           DD_RUM.setGlobalContext(${JSON.stringify(options.context)})
-          ;(${options.rumInit.toString()})(
-            ${formatConfiguration(options.rum, servers)},
-            ${options.logsInitArgs?.map((logInitArg) => JSON.stringify(logInitArg)).join(',')}
-          )
+          ;(${options.rumInit.toString()})(${formatConfiguration(options.rum, servers)})
         })
       </script>
     `
