@@ -92,7 +92,7 @@ function parseQuery(query: string) {
 function matchWithWildcard(value: string, searchTerm: string): boolean {
   value = value.toLowerCase()
   if (!searchTerm.includes('*')) {
-    return value.includes(searchTerm.toLowerCase())
+    return value === searchTerm
   }
   const searchTerms = searchTerm.toLowerCase().split('*')
   let lastIndex = 0
