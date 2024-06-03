@@ -129,16 +129,16 @@ ci-image:
 #     - scripts/cli typecheck test/app
 #     - scripts/cli typecheck test/e2e
 
-# build-and-lint:
-#   extends:
-#     - .base-configuration
-#     - .test-allowed-branches
-#   interruptible: true
-#   script:
-#     - yarn
-#     - yarn build
-#     - yarn lint
-#     - node scripts/check-packages.js
+build-and-lint:
+  extends:
+    - .base-configuration
+    - .test-allowed-branches
+  interruptible: true
+  script:
+    - yarn
+    - yarn build
+    - yarn lint
+    - node scripts/check-packages.js
 
 # test-performance:
 #   extends:
