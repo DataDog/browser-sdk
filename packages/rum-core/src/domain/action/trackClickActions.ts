@@ -226,22 +226,19 @@ function computeClickActionBase(
 ): ClickActionBase {
   const rect = event.target.getBoundingClientRect()
 
-  const { name: actionName, masked } = getActionNameFromElement(event.target, configuration, nodePrivacyLevel)
-
   return {
     type: ActionType.CLICK,
     target: {
       width: Math.round(rect.width),
       height: Math.round(rect.height),
       selector: getSelectorFromElement(event.target, configuration.actionNameAttribute),
-      masked,
     },
     position: {
       // Use clientX and Y because for SVG element offsetX and Y are relatives to the <svg> element
       x: Math.round(event.clientX - rect.left),
       y: Math.round(event.clientY - rect.top),
     },
-    name: actionName,
+    name: getActionNameFromElement(event.target, configuration, nodePrivacyLevel),
   }
 }
 

@@ -13,7 +13,7 @@ export function getActionNameFromElement(
   element: Element,
   { enablePrivacyForActionName, actionNameAttribute: userProgrammaticAttribute }: RumConfiguration,
   nodePrivacyLevel?: NodePrivacyLevel
-): { name: string; masked?: boolean } {
+): string {
   // Proceed to get the action name in two steps:
   // * first, get the name programmatically, explicitly defined by the user.
   // * then, use strategies that are known to return good results. Those strategies will be used on
@@ -25,30 +25,25 @@ export function getActionNameFromElement(
     (userProgrammaticAttribute && getActionNameFromElementProgrammatically(element, userProgrammaticAttribute))
 
   if (nodePrivacyLevel === NodePrivacyLevel.MASK) {
-    return {
-      name: defaultActionName || ACTION_NAME_PLACEHOLDER,
-      masked: defaultActionName ? false : true,
-    }
+    return defaultActionName || ACTION_NAME_PLACEHOLDER
   }
 
-  return {
-    name:
-      defaultActionName ||
-      getActionNameFromElementForStrategies(
-        element,
-        userProgrammaticAttribute,
-        priorityStrategies,
-        enablePrivacyForActionName
-      ) ||
-      getActionNameFromElementForStrategies(
-        element,
-        userProgrammaticAttribute,
-        fallbackStrategies,
-        enablePrivacyForActionName
-      ) ||
-      '',
-    masked: false,
-  }
+  return (
+    defaultActionName ||
+    getActionNameFromElementForStrategies(
+      element,
+      userProgrammaticAttribute,
+      priorityStrategies,
+      enablePrivacyForActionName
+    ) ||
+    getActionNameFromElementForStrategies(
+      element,
+      userProgrammaticAttribute,
+      fallbackStrategies,
+      enablePrivacyForActionName
+    ) ||
+    ''
+  )
 }
 
 function getActionNameFromElementProgrammatically(targetElement: Element, programmaticAttribute: string) {

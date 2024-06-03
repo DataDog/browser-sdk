@@ -100,7 +100,6 @@ describe('trackClickActions', () => {
           selector: '#button',
           width: 100,
           height: 100,
-          masked: false,
         },
         position: { x: 50, y: 50 },
         events: [domEvent],
