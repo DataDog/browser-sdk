@@ -22,7 +22,7 @@ async function triggerSyntheticsTest(prNumber, commitId) {
     tests: [
       {
         public_id: `${TEST_PUBLIC_ID}`,
-        startUrl: `https://datadoghq.dev/browser-sdk-test-playground/performance/?prNumber=${prNumber}&commitId=${commitId}`,
+        startUrl: `https://datadoghq.dev/browser-sdk-test-playground/performance/cpu/?prNumber=${prNumber}&commitId=${commitId}`,
       },
     ],
   }
