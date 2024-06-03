@@ -2,6 +2,7 @@ import { setTimeout } from './timer'
 import { callMonitored } from './monitor'
 import { noop } from './utils/functionUtils'
 import { arrayFrom, startsWith } from './utils/polyfills'
+import { createHandlingStack } from './stackTrace/handlingStack'
 
 /**
  * Object passed to the callback of an instrumented method call. See `instrumentMethod` for more
@@ -25,6 +26,11 @@ export type InstrumentedMethodCall<TARGET extends { [key: string]: any }, METHOD
    * result passed as argument.
    */
   onPostCall: (callback: PostCallCallback<TARGET, METHOD>) => void
+
+  /**
+   * The stack trace of the method call.
+   */
+  handlingStack?: string
 }
 
 type PostCallCallback<TARGET extends { [key: string]: any }, METHOD extends keyof TARGET> = (
@@ -65,7 +71,8 @@ type PostCallCallback<TARGET extends { [key: string]: any }, METHOD extends keyo
 export function instrumentMethod<TARGET extends { [key: string]: any }, METHOD extends keyof TARGET & string>(
   targetPrototype: TARGET,
   method: METHOD,
-  onPreCall: (this: null, callInfos: InstrumentedMethodCall<TARGET, METHOD>) => void
+  onPreCall: (this: null, callInfos: InstrumentedMethodCall<TARGET, METHOD>) => void,
+  { computeHandlingStack }: { computeHandlingStack?: boolean } = {}
 ) {
   let original = targetPrototype[method]
 
@@ -77,34 +84,14 @@ export function instrumentMethod<TARGET extends { [key: string]: any }, METHOD e
     }
   }
 
-  let instrumentation = createInstrumentedMethod(original, onPreCall)
+  let stopped = false
 
-  const instrumentationWrapper = function (this: TARGET): ReturnType<TARGET[METHOD]> | undefined {
-    if (typeof instrumentation !== 'function') {
-      return undefined
+  const instrumentation = function (this: TARGET): ReturnType<TARGET[METHOD]> | undefined {
+    if (stopped) {
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-call
+      return original.apply(this, arguments as unknown as Parameters<TARGET[METHOD]>)
     }
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-call
-    return instrumentation.apply(this, arguments as unknown as Parameters<TARGET[METHOD]>)
-  }
-  targetPrototype[method] = instrumentationWrapper as TARGET[METHOD]
 
-  return {
-    stop: () => {
-      if (targetPrototype[method] === instrumentationWrapper) {
-        targetPrototype[method] = original
-      } else {
-        instrumentation = original
-      }
-    },
-  }
-}
-
-function createInstrumentedMethod<TARGET extends { [key: string]: any }, METHOD extends keyof TARGET>(
-  original: TARGET[METHOD],
-  onPreCall: (this: null, callInfos: InstrumentedMethodCall<TARGET, METHOD>) => void
-): TARGET[METHOD] {
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-  return function (this: TARGET) {
     const parameters = arrayFrom(arguments) as Parameters<TARGET[METHOD]>
 
     let postCallCallback: PostCallCallback<TARGET, METHOD> | undefined
@@ -116,6 +103,7 @@ function createInstrumentedMethod<TARGET extends { [key: string]: any }, METHOD 
         onPostCall: (callback) => {
           postCallCallback = callback
         },
+        handlingStack: computeHandlingStack ? createHandlingStack() : undefined,
       },
     ])
 
@@ -128,7 +116,19 @@ function createInstrumentedMethod<TARGET extends { [key: string]: any }, METHOD 
 
     // eslint-disable-next-line @typescript-eslint/no-unsafe-return
     return result
-  } as TARGET[METHOD]
+  }
+
+  targetPrototype[method] = instrumentation as TARGET[METHOD]
+
+  return {
+    stop: () => {
+      stopped = true
+      // If the instrumentation has been removed by a third party, keep the last one
+      if (targetPrototype[method] === instrumentation) {
+        targetPrototype[method] = original
+      }
+    },
+  }
 }
 
 export function instrumentSetter<TARGET extends { [key: string]: any }, PROPERTY extends keyof TARGET>(

@@ -1,5 +1,13 @@
 import type { ClocksState, Context, Observable } from '@datadog/browser-core'
-import { noop, assign, combine, toServerDuration, generateUUID } from '@datadog/browser-core'
+import {
+  noop,
+  assign,
+  combine,
+  toServerDuration,
+  generateUUID,
+  isExperimentalFeatureEnabled,
+  ExperimentalFeature,
+} from '@datadog/browser-core'
 
 import { discardNegativeDuration } from '../discardNegativeDuration'
 import type { RawRumActionEvent } from '../../rawRumEvent.types'
@@ -10,6 +18,7 @@ import type { RumConfiguration } from '../configuration'
 import type { CommonContext } from '../contexts/commonContext'
 import type { PageStateHistory } from '../contexts/pageStateHistory'
 import { PageState } from '../contexts/pageStateHistory'
+import type { RumActionEventDomainContext } from '../../domainContext.types'
 import type { ActionContexts, ClickAction } from './trackClickActions'
 import { trackClickActions } from './trackClickActions'
 
@@ -20,6 +29,7 @@ export interface CustomAction {
   name: string
   startClocks: ClocksState
   context?: Context
+  handlingStack?: string
 }
 
 export type AutoAction = ClickAction
@@ -102,11 +112,21 @@ function processAction(
     autoActionProperties
   )
 
+  const domainContext: RumActionEventDomainContext = isAutoAction(action) ? { events: action.events } : {}
+
+  if (
+    !isAutoAction(action) &&
+    action.handlingStack &&
+    isExperimentalFeatureEnabled(ExperimentalFeature.MICRO_FRONTEND)
+  ) {
+    domainContext.handlingStack = action.handlingStack
+  }
+
   return {
     customerContext,
     rawRumEvent: actionEvent,
     startTime: action.startClocks.relative,
-    domainContext: isAutoAction(action) ? { events: action.events } : {},
+    domainContext,
   }
 }
 
