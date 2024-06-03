@@ -1,16 +1,18 @@
-import { resetExperimentalFeatures } from '@datadog/browser-core'
+import type { RelativeTime } from '@datadog/browser-core'
+import { resetExperimentalFeatures, elapsed, ONE_SECOND } from '@datadog/browser-core'
 import type { TestSetupBuilder } from '../../../../test'
 import { appendElement, appendText, createPerformanceEntry, setup } from '../../../../test'
 import { LifeCycleEventType } from '../../lifeCycle'
 import { RumPerformanceEntryType } from '../../../browser/performanceCollection'
 import type { CumulativeLayoutShift } from './trackCumulativeLayoutShift'
-import { MAX_WINDOW_DURATION, trackCumulativeLayoutShift } from './trackCumulativeLayoutShift'
+import { trackCumulativeLayoutShift } from './trackCumulativeLayoutShift'
 
 describe('trackCumulativeLayoutShift', () => {
   let setupBuilder: TestSetupBuilder
   let isLayoutShiftSupported: boolean
   let originalSupportedEntryTypes: PropertyDescriptor | undefined
   let clsCallback: jasmine.Spy<(csl: CumulativeLayoutShift) => void>
+  let viewStart: RelativeTime
 
   beforeEach(() => {
     if (
@@ -22,8 +24,9 @@ describe('trackCumulativeLayoutShift', () => {
     }
 
     clsCallback = jasmine.createSpy()
+    viewStart = 0 as RelativeTime
     setupBuilder = setup().beforeBuild(({ lifeCycle, configuration }) =>
-      trackCumulativeLayoutShift(configuration, lifeCycle, clsCallback)
+      trackCumulativeLayoutShift(configuration, lifeCycle, viewStart, clsCallback)
     )
 
     originalSupportedEntryTypes = Object.getOwnPropertyDescriptor(PerformanceObserver, 'supportedEntryTypes')
@@ -53,27 +56,31 @@ describe('trackCumulativeLayoutShift', () => {
   })
 
   it('should accumulate layout shift values for the first session window', () => {
-    const { lifeCycle, clock } = setupBuilder.withFakeClock().build()
+    const { lifeCycle } = setupBuilder.build()
 
     lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [
-      createPerformanceEntry(RumPerformanceEntryType.LAYOUT_SHIFT, { value: 0.1 }),
+      createPerformanceEntry(RumPerformanceEntryType.LAYOUT_SHIFT, { value: 0.1, startTime: 1 as RelativeTime }),
     ])
-    clock.tick(100)
+
     lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [
-      createPerformanceEntry(RumPerformanceEntryType.LAYOUT_SHIFT, { value: 0.2 }),
+      createPerformanceEntry(RumPerformanceEntryType.LAYOUT_SHIFT, { value: 0.2, startTime: 2 as RelativeTime }),
     ])
 
     expect(clsCallback).toHaveBeenCalledTimes(3)
-    expect(clsCallback.calls.mostRecent().args[0].value).toEqual(0.3)
+    expect(clsCallback.calls.mostRecent().args[0]).toEqual({
+      value: 0.3,
+      time: 2 as RelativeTime,
+      targetSelector: undefined,
+    })
   })
 
   it('should round the cumulative layout shift value to 4 decimals', () => {
-    const { lifeCycle, clock } = setupBuilder.withFakeClock().build()
+    const { lifeCycle } = setupBuilder.build()
 
     lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [
       createPerformanceEntry(RumPerformanceEntryType.LAYOUT_SHIFT, { value: 1.23456789 }),
     ])
-    clock.tick(100)
+
     lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [
       createPerformanceEntry(RumPerformanceEntryType.LAYOUT_SHIFT, { value: 1.11111111111 }),
     ])
@@ -83,85 +90,113 @@ describe('trackCumulativeLayoutShift', () => {
   })
 
   it('should ignore entries with recent input', () => {
-    const { lifeCycle } = setupBuilder.withFakeClock().build()
+    const { lifeCycle } = setupBuilder.build()
 
     lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [
-      createPerformanceEntry(RumPerformanceEntryType.LAYOUT_SHIFT, { value: 0.1, hadRecentInput: true }),
+      createPerformanceEntry(RumPerformanceEntryType.LAYOUT_SHIFT, {
+        value: 0.1,
+        hadRecentInput: true,
+      }),
     ])
 
     expect(clsCallback).toHaveBeenCalledTimes(1)
-    expect(clsCallback.calls.mostRecent().args[0].value).toEqual(0)
+    expect(clsCallback.calls.mostRecent().args[0]).toEqual({
+      value: 0,
+    })
   })
 
   it('should create a new session window if the gap is more than 1 second', () => {
-    const { lifeCycle, clock } = setupBuilder.withFakeClock().build()
+    const { lifeCycle } = setupBuilder.build()
     // first session window
     lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [
-      createPerformanceEntry(RumPerformanceEntryType.LAYOUT_SHIFT, { value: 0.1 }),
+      createPerformanceEntry(RumPerformanceEntryType.LAYOUT_SHIFT, { value: 0.1, startTime: 0 as RelativeTime }),
     ])
-    clock.tick(100)
     lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [
-      createPerformanceEntry(RumPerformanceEntryType.LAYOUT_SHIFT, { value: 0.2 }),
-    ]) // second session window
-    clock.tick(1001)
+      createPerformanceEntry(RumPerformanceEntryType.LAYOUT_SHIFT, { value: 0.2, startTime: 1 as RelativeTime }),
+    ])
+    // second session window
     lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [
-      createPerformanceEntry(RumPerformanceEntryType.LAYOUT_SHIFT, { value: 0.1 }),
+      createPerformanceEntry(RumPerformanceEntryType.LAYOUT_SHIFT, {
+        value: 0.1,
+        startTime: (1 + ONE_SECOND) as RelativeTime,
+      }),
     ])
 
     expect(clsCallback).toHaveBeenCalledTimes(3)
-    expect(clsCallback.calls.mostRecent().args[0].value).toEqual(0.3)
+    expect(clsCallback.calls.mostRecent().args[0]).toEqual({
+      value: 0.3,
+      time: 1 as RelativeTime,
+      targetSelector: undefined,
+    })
   })
 
   it('should create a new session window if the current session window is more than 5 second', () => {
-    const { lifeCycle, clock } = setupBuilder.withFakeClock().build()
+    const { lifeCycle } = setupBuilder.build()
 
-    lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [
-      createPerformanceEntry(RumPerformanceEntryType.LAYOUT_SHIFT, { value: 0 }),
-    ])
-
-    for (let i = 0; i < 6; i += 1) {
-      clock.tick(999)
+    for (let i = 1; i <= 7; i++) {
       lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [
-        createPerformanceEntry(RumPerformanceEntryType.LAYOUT_SHIFT, { value: 0.1 }),
+        createPerformanceEntry(RumPerformanceEntryType.LAYOUT_SHIFT, {
+          value: 0.1,
+          startTime: (i * 999) as RelativeTime,
+        }),
       ])
-    } // window 1: 0.5 | window 2: 0.1
+    } // window 1: { value: 0.6, time: 999 } | window 2: { value: 0.1, time: 5994(6*999) }
 
-    expect(clsCallback).toHaveBeenCalledTimes(6)
-    expect(clsCallback.calls.mostRecent().args[0].value).toEqual(0.5)
+    expect(clsCallback).toHaveBeenCalledTimes(7)
+    expect(clsCallback.calls.mostRecent().args[0]).toEqual({
+      value: 0.6,
+      time: 999 as RelativeTime,
+      targetSelector: undefined,
+    })
   })
 
   it('should get the max value sessions', () => {
-    const { lifeCycle, clock } = setupBuilder.withFakeClock().build()
+    const { lifeCycle } = setupBuilder.build()
 
-    // first session window
+    // first session window: { value: 0.3, time: 1 }
     lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [
-      createPerformanceEntry(RumPerformanceEntryType.LAYOUT_SHIFT, { value: 0.1 }),
+      createPerformanceEntry(RumPerformanceEntryType.LAYOUT_SHIFT, { value: 0.1, startTime: 0 as RelativeTime }),
     ])
     lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [
-      createPerformanceEntry(RumPerformanceEntryType.LAYOUT_SHIFT, { value: 0.2 }),
+      createPerformanceEntry(RumPerformanceEntryType.LAYOUT_SHIFT, { value: 0.2, startTime: 1 as RelativeTime }),
     ])
-    // second session window
-    clock.tick(5001)
+
+    // second session window: { value: 0.5, time: 5002 }
     lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [
-      createPerformanceEntry(RumPerformanceEntryType.LAYOUT_SHIFT, { value: 0.1 }),
-    ])
-    lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [
-      createPerformanceEntry(RumPerformanceEntryType.LAYOUT_SHIFT, { value: 0.2 }),
+      createPerformanceEntry(RumPerformanceEntryType.LAYOUT_SHIFT, { value: 0.1, startTime: 5001 as RelativeTime }),
     ])
     lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [
-      createPerformanceEntry(RumPerformanceEntryType.LAYOUT_SHIFT, { value: 0.2 }),
-    ])
-    // third session window
-    clock.tick(5001)
-    lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [
-      createPerformanceEntry(RumPerformanceEntryType.LAYOUT_SHIFT, { value: 0.2 }),
+      createPerformanceEntry(RumPerformanceEntryType.LAYOUT_SHIFT, { value: 0.2, startTime: 5002 as RelativeTime }),
     ])
     lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [
-      createPerformanceEntry(RumPerformanceEntryType.LAYOUT_SHIFT, { value: 0.2 }),
+      createPerformanceEntry(RumPerformanceEntryType.LAYOUT_SHIFT, { value: 0.2, startTime: 5003 as RelativeTime }),
+    ])
+
+    // third session window: { value: 0.4, time: 10003 }
+    lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [
+      createPerformanceEntry(RumPerformanceEntryType.LAYOUT_SHIFT, { value: 0.2, startTime: 10003 as RelativeTime }),
+    ])
+    lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [
+      createPerformanceEntry(RumPerformanceEntryType.LAYOUT_SHIFT, { value: 0.2, startTime: 10004 as RelativeTime }),
     ])
 
     expect(clsCallback).toHaveBeenCalledTimes(4)
-    expect(clsCallback.calls.mostRecent().args[0]).toEqual({ value: 0.5, targetSelector: undefined })
+    expect(clsCallback.calls.mostRecent().args[0]).toEqual({
+      value: 0.5,
+      time: 5002 as RelativeTime,
+      targetSelector: undefined,
+    })
+  })
+
+  it('should get the time from the beginning of the view', () => {
+    viewStart = 100 as RelativeTime
+    const { lifeCycle } = setupBuilder.build()
+    const shiftStart = 110 as RelativeTime
+    lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [
+      createPerformanceEntry(RumPerformanceEntryType.LAYOUT_SHIFT, { value: 0.1, startTime: shiftStart }),
+    ])
+
+    expect(clsCallback.calls.mostRecent().args[0].time).toEqual(elapsed(viewStart, shiftStart))
   })
 
   describe('cls target element', () => {
@@ -186,18 +221,17 @@ describe('trackCumulativeLayoutShift', () => {
     })
 
     it('should not return the target element when the element is detached from the DOM before the performance entry event is triggered', () => {
-      const { lifeCycle, clock } = setupBuilder.withFakeClock().build()
+      const { lifeCycle } = setupBuilder.build()
 
       // first session window
       lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [
         createPerformanceEntry(RumPerformanceEntryType.LAYOUT_SHIFT, {
           value: 0.2,
+          startTime: 0 as RelativeTime,
         }),
       ])
 
       expect(clsCallback.calls.mostRecent().args[0].value).toEqual(0.2)
-
-      clock.tick(1001)
 
       // second session window
       // first shift with an element
@@ -207,6 +241,7 @@ describe('trackCumulativeLayoutShift', () => {
       lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [
         createPerformanceEntry(RumPerformanceEntryType.LAYOUT_SHIFT, {
           value: 0.2,
+          startTime: 1001 as RelativeTime,
           sources: [{ node: divElement }],
         }),
       ])
@@ -215,31 +250,39 @@ describe('trackCumulativeLayoutShift', () => {
       expect(clsCallback.calls.mostRecent().args[0].targetSelector).toEqual(undefined)
     })
 
-    it('should get the target element of the largest layout shift', () => {
-      const { lifeCycle, clock } = setupBuilder.withFakeClock().build()
+    it('should get the target element and time of the largest layout shift', () => {
+      const { lifeCycle } = setupBuilder.build()
       const divElement = appendElement('<div id="div-element"></div>')
 
+      // first session window:  { value: 0.5, time: 1, targetSelector: '#div-element' }
       lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [
-        createPerformanceEntry(RumPerformanceEntryType.LAYOUT_SHIFT, { value: 0.1 }),
+        createPerformanceEntry(RumPerformanceEntryType.LAYOUT_SHIFT, { value: 0.1, startTime: 0 as RelativeTime }),
       ])
       lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [
-        createPerformanceEntry(RumPerformanceEntryType.LAYOUT_SHIFT, { value: 0.2, sources: [{ node: divElement }] }),
+        createPerformanceEntry(RumPerformanceEntryType.LAYOUT_SHIFT, {
+          value: 0.2,
+          startTime: 1 as RelativeTime,
+          sources: [{ node: divElement }],
+        }),
       ])
       lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [
-        createPerformanceEntry(RumPerformanceEntryType.LAYOUT_SHIFT, { value: 0.2 }),
+        createPerformanceEntry(RumPerformanceEntryType.LAYOUT_SHIFT, { value: 0.2, startTime: 2 as RelativeTime }),
       ])
 
-      // second session window
-      clock.tick(MAX_WINDOW_DURATION + 1)
+      // second session window:  { value: 0.4, time: 5002, targetSelector: undefined }
       lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [
-        createPerformanceEntry(RumPerformanceEntryType.LAYOUT_SHIFT, { value: 0.2 }),
+        createPerformanceEntry(RumPerformanceEntryType.LAYOUT_SHIFT, { value: 0.2, startTime: 5002 as RelativeTime }),
       ])
       lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [
-        createPerformanceEntry(RumPerformanceEntryType.LAYOUT_SHIFT, { value: 0.2 }),
+        createPerformanceEntry(RumPerformanceEntryType.LAYOUT_SHIFT, { value: 0.2, startTime: 5003 as RelativeTime }),
       ])
 
       expect(clsCallback).toHaveBeenCalledTimes(4)
-      expect(clsCallback.calls.mostRecent().args[0]).toEqual({ value: 0.5, targetSelector: '#div-element' })
+      expect(clsCallback.calls.mostRecent().args[0]).toEqual({
+        value: 0.5,
+        time: 1 as RelativeTime,
+        targetSelector: '#div-element',
+      })
     })
   })
 })

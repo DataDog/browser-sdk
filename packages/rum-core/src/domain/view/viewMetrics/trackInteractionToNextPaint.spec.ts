@@ -1,5 +1,5 @@
 import type { Duration, RelativeTime } from '@datadog/browser-core'
-import { relativeNow, resetExperimentalFeatures } from '@datadog/browser-core'
+import { elapsed, resetExperimentalFeatures } from '@datadog/browser-core'
 import type { TestSetupBuilder } from '../../../../test'
 import { appendElement, appendText, createPerformanceEntry, setup } from '../../../../test'
 import { RumPerformanceEntryType } from '../../../browser/performanceCollection'
@@ -23,6 +23,7 @@ describe('trackInteractionToNextPaint', () => {
   let interactionCountStub: ReturnType<typeof subInteractionCount>
   let getInteractionToNextPaint: ReturnType<typeof trackInteractionToNextPaint>['getInteractionToNextPaint']
   let setViewEnd: ReturnType<typeof trackInteractionToNextPaint>['setViewEnd']
+  let viewStart: RelativeTime
 
   function newInteraction(lifeCycle: LifeCycle, overrides: Partial<RumPerformanceEventTiming | RumFirstInputTiming>) {
     if (overrides.interactionId) {
@@ -38,20 +39,19 @@ describe('trackInteractionToNextPaint', () => {
     }
     interactionCountStub = subInteractionCount()
 
-    setupBuilder = setup()
-      .withFakeClock()
-      .beforeBuild(({ lifeCycle, configuration }) => {
-        const interactionToNextPaintTracking = trackInteractionToNextPaint(
-          configuration,
-          relativeNow(),
-          ViewLoadingType.INITIAL_LOAD,
-          lifeCycle
-        )
-        getInteractionToNextPaint = interactionToNextPaintTracking.getInteractionToNextPaint
-        setViewEnd = interactionToNextPaintTracking.setViewEnd
+    viewStart = 0 as RelativeTime
+    setupBuilder = setup().beforeBuild(({ lifeCycle, configuration }) => {
+      const interactionToNextPaintTracking = trackInteractionToNextPaint(
+        configuration,
+        viewStart,
+        ViewLoadingType.INITIAL_LOAD,
+        lifeCycle
+      )
+      getInteractionToNextPaint = interactionToNextPaintTracking.getInteractionToNextPaint
+      setViewEnd = interactionToNextPaintTracking.setViewEnd
 
-        return interactionToNextPaintTracking
-      })
+      return interactionToNextPaintTracking
+    })
   })
 
   afterEach(() => {
@@ -103,6 +103,7 @@ describe('trackInteractionToNextPaint', () => {
     expect(getInteractionToNextPaint()).toEqual({
       value: 100 as Duration,
       targetSelector: undefined,
+      time: 1 as RelativeTime,
     })
   })
 
@@ -111,11 +112,13 @@ describe('trackInteractionToNextPaint', () => {
     newInteraction(lifeCycle, {
       interactionId: 1,
       duration: (MAX_INP_VALUE + 1) as Duration,
+      startTime: 1 as RelativeTime,
     })
 
     expect(getInteractionToNextPaint()).toEqual({
       value: MAX_INP_VALUE,
       targetSelector: undefined,
+      time: 1 as RelativeTime,
     })
   })
 
@@ -125,11 +128,13 @@ describe('trackInteractionToNextPaint', () => {
       newInteraction(lifeCycle, {
         duration: index as Duration,
         interactionId: index,
+        startTime: index as RelativeTime,
       })
     }
     expect(getInteractionToNextPaint()).toEqual({
       value: 98 as Duration,
       targetSelector: undefined,
+      time: 98 as RelativeTime,
     })
   })
 
@@ -144,10 +149,12 @@ describe('trackInteractionToNextPaint', () => {
     newInteraction(lifeCycle, {
       interactionId: 1,
       entryType: RumPerformanceEntryType.FIRST_INPUT,
+      startTime: 1 as RelativeTime,
     })
     expect(getInteractionToNextPaint()).toEqual({
       value: 40 as Duration,
       targetSelector: undefined,
+      time: 1 as RelativeTime,
     })
   })
 
@@ -158,13 +165,28 @@ describe('trackInteractionToNextPaint', () => {
       newInteraction(lifeCycle, {
         duration: index as Duration,
         interactionId: 1,
+        startTime: index as RelativeTime,
       })
     }
     // the p98 return 100 which shows that the entry has been updated
     expect(getInteractionToNextPaint()).toEqual({
       value: 100 as Duration,
       targetSelector: undefined,
+      time: 100 as RelativeTime,
     })
+  })
+
+  it('should get the time from the beginning of the view', () => {
+    viewStart = 100 as RelativeTime
+    const { lifeCycle } = setupBuilder.build()
+
+    const interactionStart = 110 as RelativeTime
+    newInteraction(lifeCycle, {
+      interactionId: 1,
+      duration: 10 as Duration,
+      startTime: interactionStart,
+    })
+    expect(getInteractionToNextPaint()!.time).toEqual(elapsed(viewStart, interactionStart))
   })
 
   describe('target selector', () => {

@@ -1,4 +1,4 @@
-import { noop, ONE_MINUTE } from '@datadog/browser-core'
+import { elapsed, noop, ONE_MINUTE } from '@datadog/browser-core'
 import type { Duration, RelativeTime } from '@datadog/browser-core'
 import { RumPerformanceEntryType, supportPerformanceTimingEvent } from '../../../browser/performanceCollection'
 import type { RumFirstInputTiming, RumPerformanceEventTiming } from '../../../browser/performanceCollection'
@@ -18,6 +18,7 @@ export const MAX_INP_VALUE = (1 * ONE_MINUTE) as Duration
 export interface InteractionToNextPaint {
   value: Duration
   targetSelector?: string
+  time?: Duration
 }
 /**
  * Track the interaction to next paint (INP).
@@ -46,6 +47,7 @@ export function trackInteractionToNextPaint(
   const longestInteractions = trackLongestInteractions(getViewInteractionCount)
   let interactionToNextPaint = -1 as Duration
   let interactionToNextPaintTargetSelector: string | undefined
+  let interactionToNextPaintStartTime: Duration | undefined
 
   const { unsubscribe: stop } = lifeCycle.subscribe(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, (entries) => {
     for (const entry of entries) {
@@ -64,6 +66,7 @@ export function trackInteractionToNextPaint(
     const newInteraction = longestInteractions.estimateP98Interaction()
     if (newInteraction && newInteraction.duration !== interactionToNextPaint) {
       interactionToNextPaint = newInteraction.duration
+      interactionToNextPaintStartTime = elapsed(viewStart, newInteraction.startTime)
 
       if (newInteraction.target && isElementNode(newInteraction.target)) {
         interactionToNextPaintTargetSelector = getSelectorFromElement(
@@ -84,6 +87,7 @@ export function trackInteractionToNextPaint(
         return {
           value: Math.min(interactionToNextPaint, MAX_INP_VALUE) as Duration,
           targetSelector: interactionToNextPaintTargetSelector,
+          time: interactionToNextPaintStartTime,
         }
       } else if (getViewInteractionCount()) {
         return {
