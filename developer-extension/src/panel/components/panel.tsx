@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { Tabs, Text } from '@mantine/core'
+import { Tabs, Text, Anchor } from '@mantine/core'
 import { datadogRum } from '@datadog/browser-rum'
 
 import { useEvents } from '../hooks/useEvents'
@@ -35,36 +35,46 @@ export function Panel() {
 
   return (
     <Tabs color="violet" value={activeTab} className={classes.tabs} onChange={updateActiveTab}>
-      <Tabs.List className="dd-privacy-allow">
-        <Tabs.Tab value={PanelTabs.Events}>Events</Tabs.Tab>
-        <Tabs.Tab
-          value={PanelTabs.Infos}
-          rightSection={
-            isOverridingInitConfiguration(settings) && (
-              <Text c="orange" fw="bold" title="Overriding init configuration">
-                ⚠
-              </Text>
-            )
-          }
+      <Tabs.List className={classes.topBox} data-dd-privacy="allow">
+        <div className={classes.tabBox}>
+          <Tabs.Tab value={PanelTabs.Events}>Events</Tabs.Tab>
+          <Tabs.Tab
+            value={PanelTabs.Infos}
+            rightSection={
+              isOverridingInitConfiguration(settings) && (
+                <Text c="orange" fw="bold" title="Overriding init configuration">
+                  ⚠
+                </Text>
+              )
+            }
+          >
+            <Text>Infos</Text>
+          </Tabs.Tab>
+          <Tabs.Tab value={PanelTabs.Replay}>
+            <Text>Live replay</Text>
+          </Tabs.Tab>
+          <Tabs.Tab
+            value={PanelTabs.Settings}
+            rightSection={
+              isInterceptingNetworkRequests(settings) && (
+                <Text c="orange" fw="bold" title="Intercepting network requests">
+                  ⚠
+                </Text>
+              )
+            }
+          >
+            Settings
+          </Tabs.Tab>
+        </div>
+        <Anchor
+          className={classes.link}
+          href="https://github.com/DataDog/browser-sdk/tree/main/developer-extension#browser-sdk-developer-extension"
+          target="_blank"
         >
-          <Text>Infos</Text>
-        </Tabs.Tab>
-        <Tabs.Tab value={PanelTabs.Replay}>
-          <Text>Live replay</Text>
-        </Tabs.Tab>
-        <Tabs.Tab
-          value={PanelTabs.Settings}
-          rightSection={
-            isInterceptingNetworkRequests(settings) && (
-              <Text c="orange" fw="bold" title="Intercepting network requests">
-                ⚠
-              </Text>
-            )
-          }
-        >
-          Settings
-        </Tabs.Tab>
+          🔗 Documentation
+        </Anchor>
       </Tabs.List>
+
       <Tabs.Panel value={PanelTabs.Events} className={classes.tab}>
         <EventsTab
           events={events}
