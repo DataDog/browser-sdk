@@ -21,13 +21,11 @@ async function reportAsPrComment(localBundleSizes, memoryLocalPerformance) {
   const cpuBasePerformance = await fetchPerformanceMetrics('cpu', testNames, lastCommonCommit)
   const cpuLocalPerformance = await fetchPerformanceMetrics('cpu', testNames, LOCAL_COMMIT_SHA)
   const memoryBasePerformance = await fetchPerformanceMetrics('memory', testNames, lastCommonCommit)
-  const differenceMemory = compare(memoryBasePerformance, memoryLocalPerformance)
   const differenceBundle = compare(baseBundleSizes, localBundleSizes)
   const differenceCpu = compare(cpuBasePerformance, cpuLocalPerformance)
   const commentId = await retrieveExistingCommentId(pr.number)
   const message = createMessage(
     differenceBundle,
-    differenceMemory,
     differenceCpu,
     baseBundleSizes,
     localBundleSizes,
@@ -105,7 +103,6 @@ async function updateOrAddComment(message, prNumber, commentId) {
 
 function createMessage(
   differenceBundle,
-  differenceMemory,
   differenceCpu,
   baseBundleSizes,
   localBundleSizes,
@@ -155,12 +152,13 @@ function createMessage(
   })
   message += '\n</details>\n\n'
 
-  const memoryRows = differenceMemory.map((memoryTestPerformance, index) => {
-    const baseMemoryPerf = memoryBasePerformance[index]
-    const localMemoryPerf = memoryLocalPerformance.find((perf) => perf.testProperty === memoryTestPerformance.name)
+  const memoryRows = memoryBasePerformance.map((baseMemoryPerf, index) => {
+    const memoryTestPerformance = memoryLocalPerformance[index]
     const baseMemoryTestValue = baseMemoryPerf.value !== null ? baseMemoryPerf.value : 'N/A'
     const localMemoryTestValue =
-      localMemoryPerf && localMemoryPerf.sdkMemoryBytes !== null ? localMemoryPerf.sdkMemoryBytes : 'N/A'
+      memoryTestPerformance && memoryTestPerformance.sdkMemoryBytes !== null
+        ? memoryTestPerformance.sdkMemoryBytes
+        : 'N/A'
     return [
       memoryTestPerformance.name,
       formatSize(baseMemoryTestValue),
@@ -188,10 +186,10 @@ function formatBundleName(bundleName) {
 
 function formatSize(bytes) {
   if (bytes < 1024) {
-    return `${Math.floor(bytes)} B`
+    return `${Math.floor(bytes).toString().padStart(6)} B   `
   }
 
-  return `${(bytes / 1024).toFixed(2)} KiB`
+  return `${(bytes / 1024).toFixed(2).toString().padStart(6)} KiB`
 }
 
 function markdownArray({ headers, rows }) {
