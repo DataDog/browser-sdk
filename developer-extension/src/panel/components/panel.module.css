@@ -8,3 +8,20 @@
   flex: 1;
   min-height: 0;
 }
+
+.link {
+  align-self: center;
+  padding-right: 2%;
+  flex-shrink: 0;
+}
+
+.topBox {
+  justify-content: space-between;
+  flex-wrap: unset;
+}
+
+.tabBox {
+  display: flex;
+  flex: 1;
+  flex-direction: row;
+}

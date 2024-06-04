@@ -1,8 +1,6 @@
 const puppeteer = require('puppeteer')
-const { timeout } = require('../../lib/execution-utils')
 const { fetchPR, LOCAL_BRANCH } = require('../../lib/git-utils')
 const NUMBER_OF_RUNS = 30 // Rule of thumb: this should be enough to get a good average
-const TEST_DURATION = 1000 // Duration of the test in the micro-benchmark
 const TESTS = [
   {
     name: 'RUM - add global context',
@@ -45,8 +43,8 @@ async function computeMemoryPerformance() {
   const results = []
   const pr = await fetchPR(LOCAL_BRANCH)
   const benchmarkUrl = pr
-    ? `https://datadoghq.dev/browser-sdk-test-playground/performance/?prNumber=${pr.number}`
-    : 'https://datadoghq.dev/browser-sdk-test-playground/performance/'
+    ? `https://datadoghq.dev/browser-sdk-test-playground/performance/memory?prNumber=${pr.number}`
+    : 'https://datadoghq.dev/browser-sdk-test-playground/performance/memory'
   for (const test of TESTS) {
     const testName = test.name
     const testButton = test.button
@@ -92,7 +90,6 @@ async function runTest(testButton, benchmarkUrl) {
 
   console.log(`Running test for: ${testButton}`)
   await button.click()
-  await timeout(TEST_DURATION)
   const { profile } = await client.send('HeapProfiler.stopSampling')
   const measurementsPercentage = []
   const measurementsBytes = []

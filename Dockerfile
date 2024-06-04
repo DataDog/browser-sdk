@@ -1,4 +1,4 @@
-FROM node:20.13.1-buster-slim
+FROM node:20.14.0-buster-slim
 
 ARG CHROME_PACKAGE_VERSION
 
