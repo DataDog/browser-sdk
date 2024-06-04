@@ -161,12 +161,11 @@ function createMessage(
     const baseMemoryTestValue = baseMemoryPerf.value !== null ? baseMemoryPerf.value : 'N/A'
     const localMemoryTestValue =
       localMemoryPerf && localMemoryPerf.sdkMemoryBytes !== null ? localMemoryPerf.sdkMemoryBytes : 'N/A'
-    const diffMemoryTestValue = memoryTestPerformance.change !== null ? memoryTestPerformance.change : 'N/A'
     return [
       memoryTestPerformance.name,
       formatSize(baseMemoryTestValue),
       formatSize(localMemoryTestValue),
-      formatSize(diffMemoryTestValue),
+      formatSize(Math.abs(baseMemoryTestValue - localMemoryTestValue)),
     ]
   })
 
