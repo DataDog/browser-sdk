@@ -163,13 +163,13 @@ function createMessage(
       memoryTestPerformance.testProperty,
       formatSize(baseMemoryTestValue),
       formatSize(localMemoryTestValue),
-      formatSize(Math.abs(baseMemoryTestValue - localMemoryTestValue)),
+      formatSize(localMemoryTestValue - baseMemoryTestValue),
     ]
   })
 
   message += '<details>\n<summary>🧠 Memory Performance</summary>\n\n'
   message += markdownArray({
-    headers: ['Action Name', 'Base Consumption Memory (bytes)', 'Local Consumption Memory (bytes)', '𝚫'],
+    headers: ['Action Name', 'Base Consumption Memory (bytes)', 'Local Consumption Memory (bytes)', '𝚫 (bytes)'],
     rows: memoryRows,
   })
   message += '\n</details>\n\n'
@@ -186,10 +186,10 @@ function formatBundleName(bundleName) {
 
 function formatSize(bytes) {
   if (bytes < 1024) {
-    return `${Math.floor(bytes).toString().padStart(6)} B   `
+    return `${Math.floor(bytes)} B   `
   }
 
-  return `${(bytes / 1024).toFixed(2).toString().padStart(6)} KiB`
+  return `${(bytes / 1024).toFixed(2)} KiB`
 }
 
 function markdownArray({ headers, rows }) {
