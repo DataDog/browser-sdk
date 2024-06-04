@@ -160,7 +160,7 @@ function createMessage(
         ? memoryTestPerformance.sdkMemoryBytes
         : 'N/A'
     return [
-      memoryTestPerformance.name,
+      memoryTestPerformance.testProperty,
       formatSize(baseMemoryTestValue),
       formatSize(localMemoryTestValue),
       formatSize(Math.abs(baseMemoryTestValue - localMemoryTestValue)),
