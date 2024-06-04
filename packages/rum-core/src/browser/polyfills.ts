@@ -68,14 +68,6 @@ export function getClassList(element: Element): DOMTokenList | string[] {
   return classes ? classes.split(/\s+/) : []
 }
 
-export function elementClasslistContains(element: Element, className: string): boolean {
-  const classList = getClassList(element)
-  if (classList instanceof DOMTokenList) {
-    return element.classList.contains(className)
-  }
-  return includes(classList, className)
-}
-
 // ie11 supports WeakMap but not WeakSet
 const PLACEHOLDER = 1
 export class WeakSet<T extends object> {

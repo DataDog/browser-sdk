@@ -1,6 +1,5 @@
 import { DefaultPrivacyLevel } from '@datadog/browser-core'
 import { isElementNode, getParentNode, isTextNode } from '../browser/htmlDomUtils'
-import { elementClasslistContains } from '../browser/polyfills'
 
 export const NodePrivacyLevel = {
   IGNORE: 'ignore',
@@ -20,10 +19,7 @@ export const PRIVACY_ATTR_VALUE_MASK_USER_INPUT = 'mask-user-input'
 export const PRIVACY_ATTR_VALUE_HIDDEN = 'hidden'
 
 // Privacy Classes - not all customers can set plain HTML attributes, so support classes too
-export const PRIVACY_CLASS_ALLOW = 'dd-privacy-allow'
-export const PRIVACY_CLASS_MASK = 'dd-privacy-mask'
-export const PRIVACY_CLASS_MASK_USER_INPUT = 'dd-privacy-mask-user-input'
-export const PRIVACY_CLASS_HIDDEN = 'dd-privacy-hidden'
+export const PRIVACY_CLASS_PREFIX = 'dd-privacy-'
 
 // Private Replacement Templates
 export const CENSORED_STRING_MARK = '***'
@@ -103,8 +99,6 @@ export function getNodeSelfPrivacyLevel(node: Node): NodePrivacyLevel | undefine
     return
   }
 
-  const privAttr = node.getAttribute(PRIVACY_ATTR_NAME)
-
   // Overrules for replay purpose
   if (node.tagName === 'BASE') {
     return NodePrivacyLevel.ALLOW
@@ -127,22 +121,19 @@ export function getNodeSelfPrivacyLevel(node: Node): NodePrivacyLevel | undefine
   }
 
   // Check HTML privacy attributes and classes
-  if (privAttr === PRIVACY_ATTR_VALUE_HIDDEN || elementClasslistContains(node, PRIVACY_CLASS_HIDDEN)) {
+  if (node.matches(getPrivacySelector(NodePrivacyLevel.HIDDEN))) {
     return NodePrivacyLevel.HIDDEN
   }
 
-  if (privAttr === PRIVACY_ATTR_VALUE_MASK || elementClasslistContains(node, PRIVACY_CLASS_MASK)) {
+  if (node.matches(getPrivacySelector(NodePrivacyLevel.MASK))) {
     return NodePrivacyLevel.MASK
   }
 
-  if (
-    privAttr === PRIVACY_ATTR_VALUE_MASK_USER_INPUT ||
-    elementClasslistContains(node, PRIVACY_CLASS_MASK_USER_INPUT)
-  ) {
+  if (node.matches(getPrivacySelector(NodePrivacyLevel.MASK_USER_INPUT))) {
     return NodePrivacyLevel.MASK_USER_INPUT
   }
 
-  if (privAttr === PRIVACY_ATTR_VALUE_ALLOW || elementClasslistContains(node, PRIVACY_CLASS_ALLOW)) {
+  if (node.matches(getPrivacySelector(NodePrivacyLevel.ALLOW))) {
     return NodePrivacyLevel.ALLOW
   }
 
@@ -313,4 +304,8 @@ export function shouldIgnoreElement(element: Element): boolean {
   }
 
   return false
+}
+
+export function getPrivacySelector(privacyLevel: string) {
+  return `[${PRIVACY_ATTR_NAME}="${privacyLevel}"], .${PRIVACY_CLASS_PREFIX}${privacyLevel}`
 }

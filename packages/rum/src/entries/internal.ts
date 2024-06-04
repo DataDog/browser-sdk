@@ -9,7 +9,7 @@ export type { TimeStamp } from '@datadog/browser-core'
 export {
   PRIVACY_ATTR_NAME,
   PRIVACY_ATTR_VALUE_HIDDEN,
-  PRIVACY_CLASS_HIDDEN,
+  PRIVACY_CLASS_PREFIX,
   NodePrivacyLevel,
 } from '@datadog/browser-rum-core'
 

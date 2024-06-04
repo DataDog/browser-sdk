@@ -1,6 +1,6 @@
 import { safeTruncate, isIE, find } from '@datadog/browser-core'
 import { getParentElement } from '../../browser/polyfills'
-import { NodePrivacyLevel, PRIVACY_ATTR_NAME, PRIVACY_CLASS_HIDDEN, PRIVACY_CLASS_MASK } from '../privacy'
+import { NodePrivacyLevel, getPrivacySelector } from '../privacy'
 import type { RumConfiguration } from '../configuration'
 
 /**
@@ -234,10 +234,7 @@ function getTextualContent(
     if (privacyEnabledActionName) {
       // remove the text of elements with privacy override
       removeTextFromElements(
-        `[${PRIVACY_ATTR_NAME}=${NodePrivacyLevel.MASK}],
-        [${PRIVACY_ATTR_NAME}=${NodePrivacyLevel.HIDDEN}],
-        [class=${PRIVACY_CLASS_MASK}],
-        [class=${PRIVACY_CLASS_HIDDEN}]`
+        `${getPrivacySelector(NodePrivacyLevel.HIDDEN)}, ${getPrivacySelector(NodePrivacyLevel.MASK)}`
       )
     }
 
