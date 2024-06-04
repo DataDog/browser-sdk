@@ -16,6 +16,15 @@
 
 ---
 
+## v5.20.0
+
+- ✨ [RUM-4013] DD_RUM: add handling stack in beforeSend context ([#2730](https://github.com/DataDog/browser-sdk/pull/2730))
+- ✨[RUM-4178] Report memory impact to Datadog ([#2724](https://github.com/DataDog/browser-sdk/pull/2724))
+- 🐛 [RUM-98] Warn when SDK is loaded multiple times ([#2785](https://github.com/DataDog/browser-sdk/pull/2785))
+- ⚡️ [RUM-4468] improve CSS selector computation performance ([#2782](https://github.com/DataDog/browser-sdk/pull/2782))
+- 📝 [RUM-158] Add jsdoc to public APIs ([#2775](https://github.com/DataDog/browser-sdk/pull/2775))
+- 🔥 Remove unnecessary session checks in collections ([#2769](https://github.com/DataDog/browser-sdk/pull/2769))
+
 ## v5.19.0
 
 - 🐛 [RUM-4629] accept `null` as env/version/service ([#2781](https://github.com/DataDog/browser-sdk/pull/2781))
