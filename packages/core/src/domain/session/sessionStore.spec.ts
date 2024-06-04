@@ -472,4 +472,64 @@ describe('session store', () => {
       })
     })
   })
+
+  describe('session update and synchronisation', () => {
+    let updateSpy: jasmine.Spy<jasmine.Func>
+    let otherUpdateSpy: jasmine.Spy<jasmine.Func>
+    let clock: Clock
+
+    function setupSessionStore(updateSpy: () => void) {
+      const computeSessionState: (rawTrackingType?: string) => {
+        trackingType: FakeTrackingType
+        isTracked: boolean
+      } = () => ({
+        isTracked: true,
+        trackingType: FakeTrackingType.TRACKED,
+      })
+      const sessionStoreStrategyType = selectSessionStoreStrategyType({
+        clientToken: 'abc',
+        allowFallbackToLocalStorage: false,
+      })
+
+      const sessionStoreManager = startSessionStore(sessionStoreStrategyType!, PRODUCT_KEY, computeSessionState)
+      sessionStoreManager.sessionStateUpdateObservable.subscribe(updateSpy)
+
+      return sessionStoreManager
+    }
+
+    let sessionStoreManager: SessionStore
+    let otherSessionStoreManager: SessionStore
+
+    beforeEach(() => {
+      updateSpy = jasmine.createSpy()
+      otherUpdateSpy = jasmine.createSpy()
+      clock = mockClock()
+    })
+
+    afterEach(() => {
+      resetSessionInStore()
+      clock.cleanup()
+      sessionStoreManager.stop()
+      otherSessionStoreManager.stop()
+    })
+
+    it('should synchronise all stores and notify update observables of all stores', () => {
+      setSessionInStore(FakeTrackingType.TRACKED, FIRST_ID)
+
+      sessionStoreManager = setupSessionStore(updateSpy)
+      otherSessionStoreManager = setupSessionStore(otherUpdateSpy)
+
+      sessionStoreManager.updateSessionState({ extra: 'extra' })
+
+      expect(updateSpy).toHaveBeenCalledTimes(1)
+
+      const callArgs = updateSpy.calls.argsFor(0)[0]
+      expect(callArgs!.previousState.extra).toBeUndefined()
+      expect(callArgs.newState.extra).toBe('extra')
+
+      // Need to wait until watch is triggered
+      clock.tick(STORAGE_POLL_DELAY)
+      expect(otherUpdateSpy).toHaveBeenCalled()
+    })
+  })
 })

@@ -18,6 +18,7 @@ import {
   findMouseInteractionRecords,
   findElementWithTagName,
 } from '@datadog/browser-rum/test'
+import { SESSION_STORE_KEY } from '@datadog/browser-core'
 import { flushEvents, createTest, bundleSetup, html } from '../../lib/framework'
 
 const TIMESTAMP_RE = /^\d{13}$/
@@ -803,6 +804,36 @@ describe('recorder', () => {
         expect(htmlElement.attributes.rr_scrollTop).toBe(150)
         containerElement = findElementWithIdAttribute(secondFullSnapshot.data.node, 'container')!
         expect(containerElement.attributes.rr_scrollLeft).toBe(20)
+      })
+  })
+
+  describe('recording of sampled out sessions', () => {
+    createTest('should not start recording when session is sampled out')
+      .withRum({ sessionReplaySampleRate: 0 })
+      .withSetup(bundleSetup)
+      .run(async ({ intakeRegistry }) => {
+        await browser.execute(() => {
+          window.DD_RUM!.startSessionReplayRecording()
+        })
+
+        await flushEvents()
+
+        expect(intakeRegistry.replaySegments.length).toBe(0)
+      })
+
+    createTest('should start recording if forced when session is sampled out')
+      .withRum({ sessionReplaySampleRate: 0 })
+      .withSetup(bundleSetup)
+      .run(async ({ intakeRegistry }) => {
+        await browser.execute(() => {
+          window.DD_RUM!.startSessionReplayRecording({ force: true })
+        })
+        const [cookie] = await browser.getCookies([SESSION_STORE_KEY])
+        expect(cookie.value).toContain('forcedReplay=1')
+
+        await flushEvents()
+
+        expect(intakeRegistry.replaySegments.length).toBe(1)
       })
   })
 
