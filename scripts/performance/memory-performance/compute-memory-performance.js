@@ -1,6 +1,6 @@
 const puppeteer = require('puppeteer')
 const { fetchPR, LOCAL_BRANCH } = require('../../lib/git-utils')
-const NUMBER_OF_RUNS = 30 // Rule of thumb: this should be enough to get a good average
+const NUMBER_OF_RUNS = 40 // Rule of thumb: this should be enough to get a good average
 const TESTS = [
   {
     name: 'RUM - add global context',
