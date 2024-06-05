@@ -1,6 +1,7 @@
-import type { ExperimentalFeature } from './experimentalFeatures'
 import {
+  ExperimentalFeature,
   addExperimentalFeatures,
+  initFeatureFlags,
   isExperimentalFeatureEnabled,
   resetExperimentalFeatures,
 } from './experimentalFeatures'
@@ -30,5 +31,29 @@ describe('experimentalFeatures', () => {
 
     expect(isExperimentalFeatureEnabled(TEST_FEATURE_FLAG_ONE)).toBeTrue()
     expect(isExperimentalFeatureEnabled(TEST_FEATURE_FLAG_TWO)).toBeTrue()
+  })
+})
+
+describe('initFeatureFlags', () => {
+  beforeEach(() => {
+    ;(ExperimentalFeature as any).FOO = TEST_FEATURE_FLAG_ONE
+  })
+
+  afterEach(() => {
+    delete (ExperimentalFeature as any).FOO
+  })
+
+  it('ignores unknown experimental features', () => {
+    initFeatureFlags(['bar', undefined as any, null as any, 11 as any])
+
+    expect(isExperimentalFeatureEnabled('bar' as any)).toBeFalse()
+    expect(isExperimentalFeatureEnabled(undefined as any)).toBeFalse()
+    expect(isExperimentalFeatureEnabled(null as any)).toBeFalse()
+    expect(isExperimentalFeatureEnabled(11 as any)).toBeFalse()
+  })
+
+  it('updates experimental feature flags', () => {
+    initFeatureFlags(['foo'])
+    expect(isExperimentalFeatureEnabled(TEST_FEATURE_FLAG_ONE)).toBeTrue()
   })
 })
