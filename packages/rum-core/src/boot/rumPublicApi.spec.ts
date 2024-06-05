@@ -88,7 +88,7 @@ describe('rum public api', () => {
           compressIntakeRequests: false,
         })
 
-        const customerDataTrackerManager: CustomerDataTrackerManager = startRumSpy.calls.mostRecent().args[3]
+        const customerDataTrackerManager: CustomerDataTrackerManager = startRumSpy.calls.mostRecent().args[2]
         expect(customerDataTrackerManager.getCompressionStatus()).toBe(CustomerDataCompressionStatus.Disabled)
       })
 
@@ -102,7 +102,7 @@ describe('rum public api', () => {
           compressIntakeRequests: true,
         })
 
-        const customerDataTrackerManager: CustomerDataTrackerManager = startRumSpy.calls.mostRecent().args[3]
+        const customerDataTrackerManager: CustomerDataTrackerManager = startRumSpy.calls.mostRecent().args[2]
         expect(customerDataTrackerManager.getCompressionStatus()).toBe(CustomerDataCompressionStatus.Enabled)
       })
     })

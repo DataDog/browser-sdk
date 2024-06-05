@@ -24,7 +24,7 @@ import type { RumEvent, RumViewEvent } from '../rumEvent.types'
 import type { LocationChange } from '../browser/locationChangeObservable'
 import { startLongTaskCollection } from '../domain/longTask/longTaskCollection'
 import type { RumSessionManager } from '..'
-import type { RumConfiguration, RumInitConfiguration } from '../domain/configuration'
+import type { RumConfiguration } from '../domain/configuration'
 import { RumEventType } from '../rawRumEvent.types'
 import { startFeatureFlagContexts } from '../domain/contexts/featureFlagContext'
 import type { PageStateHistory } from '../domain/contexts/pageStateHistory'
@@ -313,7 +313,6 @@ describe('view events', () => {
   beforeEach(() => {
     setupBuilder = setup().beforeBuild(({ configuration, customerDataTrackerManager }) =>
       startRum(
-        {} as RumInitConfiguration,
         configuration,
         noopRecorderApi,
         customerDataTrackerManager,
