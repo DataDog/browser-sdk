@@ -630,6 +630,23 @@ describe('startSessionManager', () => {
     })
   })
 
+  describe('session state update', () => {
+    it('should notify session manager update observable', () => {
+      const sessionStateUpdateSpy = jasmine.createSpy()
+      const sessionManager = startSessionManagerWithDefaults()
+      sessionManager.sessionStateUpdateObservable.subscribe(sessionStateUpdateSpy)
+
+      sessionManager.updateSessionState({ extra: 'extra' })
+
+      expectSessionIdToBeDefined(sessionManager)
+      expect(sessionStateUpdateSpy).toHaveBeenCalledTimes(1)
+
+      const callArgs = sessionStateUpdateSpy.calls.argsFor(0)[0]
+      expect(callArgs.previousState.extra).toBeUndefined()
+      expect(callArgs.newState.extra).toBe('extra')
+    })
+  })
+
   function startSessionManagerWithDefaults({
     configuration,
     productKey = FIRST_PRODUCT_KEY,

@@ -9,6 +9,7 @@ import type { Configuration } from '../configuration'
 import type { TrackingConsentState } from '../trackingConsent'
 import { SESSION_TIME_OUT_DELAY } from './sessionConstants'
 import { startSessionStore } from './sessionStore'
+import type { SessionState } from './sessionState'
 
 export interface SessionManager<TrackingType extends string> {
   findSession: (
@@ -17,12 +18,15 @@ export interface SessionManager<TrackingType extends string> {
   ) => SessionContext<TrackingType> | undefined
   renewObservable: Observable<void>
   expireObservable: Observable<void>
+  sessionStateUpdateObservable: Observable<{ previousState: SessionState; newState: SessionState }>
   expire: () => void
+  updateSessionState: (state: Partial<SessionState>) => void
 }
 
 export interface SessionContext<TrackingType extends string> extends Context {
   id: string
   trackingType: TrackingType
+  isReplayForced: boolean
 }
 
 export const VISIBILITY_CHECK_DELAY = ONE_MINUTE
@@ -79,6 +83,7 @@ export function startSessionManager<TrackingType extends string>(
     return {
       id: sessionStore.getSession().id!,
       trackingType: sessionStore.getSession()[productKey] as TrackingType,
+      isReplayForced: !!sessionStore.getSession().forcedReplay,
     }
   }
 
@@ -86,7 +91,9 @@ export function startSessionManager<TrackingType extends string>(
     findSession: (startTime, options) => sessionContextHistory.find(startTime, options),
     renewObservable,
     expireObservable,
+    sessionStateUpdateObservable: sessionStore.sessionStateUpdateObservable,
     expire: sessionStore.expire,
+    updateSessionState: sessionStore.updateSessionState,
   }
 }
 

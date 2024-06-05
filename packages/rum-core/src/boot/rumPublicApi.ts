@@ -45,6 +45,9 @@ import type { InternalContext } from '../domain/contexts/internalContext'
 import { createPreStartStrategy } from './preStartRum'
 import type { StartRum, StartRumResult } from './startRum'
 
+export interface StartRecordingOptions {
+  force: boolean
+}
 export interface RumPublicApi extends PublicApi {
   /**
    * Init the RUM browser SDK.
@@ -234,7 +237,7 @@ export interface RumPublicApi extends PublicApi {
    *
    * See [Browser Session Replay](https://docs.datadoghq.com/real_user_monitoring/session_replay/browser) for further information.
    */
-  startSessionReplayRecording: () => void
+  startSessionReplayRecording: (options?: StartRecordingOptions) => void
 
   /**
    * Stop Session Replay recording.
@@ -245,7 +248,7 @@ export interface RumPublicApi extends PublicApi {
 }
 
 export interface RecorderApi {
-  start: () => void
+  start: (options?: StartRecordingOptions) => void
   stop: () => void
   onRumStart: (
     lifeCycle: LifeCycle,
@@ -487,10 +490,9 @@ export function makeRumPublicApi(
     }),
 
     getSessionReplayLink: monitor(() => recorderApi.getSessionReplayLink()),
-
-    startSessionReplayRecording: monitor(() => {
-      recorderApi.start()
-      addTelemetryUsage({ feature: 'start-session-replay-recording' })
+    startSessionReplayRecording: monitor((options?: StartRecordingOptions) => {
+      recorderApi.start(options)
+      addTelemetryUsage({ feature: 'start-session-replay-recording', force: options?.force })
     }),
 
     stopSessionReplayRecording: monitor(() => recorderApi.stop()),

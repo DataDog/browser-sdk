@@ -21,13 +21,11 @@ async function reportAsPrComment(localBundleSizes, memoryLocalPerformance) {
   const cpuBasePerformance = await fetchPerformanceMetrics('cpu', testNames, lastCommonCommit)
   const cpuLocalPerformance = await fetchPerformanceMetrics('cpu', testNames, LOCAL_COMMIT_SHA)
   const memoryBasePerformance = await fetchPerformanceMetrics('memory', testNames, lastCommonCommit)
-  const differenceMemory = compare(memoryBasePerformance, memoryLocalPerformance)
   const differenceBundle = compare(baseBundleSizes, localBundleSizes)
   const differenceCpu = compare(cpuBasePerformance, cpuLocalPerformance)
   const commentId = await retrieveExistingCommentId(pr.number)
   const message = createMessage(
     differenceBundle,
-    differenceMemory,
     differenceCpu,
     baseBundleSizes,
     localBundleSizes,
@@ -105,7 +103,6 @@ async function updateOrAddComment(message, prNumber, commentId) {
 
 function createMessage(
   differenceBundle,
-  differenceMemory,
   differenceCpu,
   baseBundleSizes,
   localBundleSizes,
@@ -155,24 +152,24 @@ function createMessage(
   })
   message += '\n</details>\n\n'
 
-  const memoryRows = differenceMemory.map((memoryTestPerformance, index) => {
-    const baseMemoryPerf = memoryBasePerformance[index]
-    const localMemoryPerf = memoryLocalPerformance.find((perf) => perf.testProperty === memoryTestPerformance.name)
+  const memoryRows = memoryBasePerformance.map((baseMemoryPerf, index) => {
+    const memoryTestPerformance = memoryLocalPerformance[index]
     const baseMemoryTestValue = baseMemoryPerf.value !== null ? baseMemoryPerf.value : 'N/A'
     const localMemoryTestValue =
-      localMemoryPerf && localMemoryPerf.sdkMemoryBytes !== null ? localMemoryPerf.sdkMemoryBytes : 'N/A'
-    const diffMemoryTestValue = memoryTestPerformance.change !== null ? memoryTestPerformance.change : 'N/A'
+      memoryTestPerformance && memoryTestPerformance.sdkMemoryBytes !== null
+        ? memoryTestPerformance.sdkMemoryBytes
+        : 'N/A'
     return [
-      memoryTestPerformance.name,
+      memoryTestPerformance.testProperty,
       formatSize(baseMemoryTestValue),
       formatSize(localMemoryTestValue),
-      formatSize(diffMemoryTestValue),
+      formatSize(localMemoryTestValue - baseMemoryTestValue),
     ]
   })
 
   message += '<details>\n<summary>🧠 Memory Performance</summary>\n\n'
   message += markdownArray({
-    headers: ['Action Name', 'Base Consumption Memory (bytes)', 'Local Consumption Memory (bytes)', '𝚫'],
+    headers: ['Action Name', 'Base Consumption Memory (bytes)', 'Local Consumption Memory (bytes)', '𝚫 (bytes)'],
     rows: memoryRows,
   })
   message += '\n</details>\n\n'
@@ -189,7 +186,7 @@ function formatBundleName(bundleName) {
 
 function formatSize(bytes) {
   if (bytes < 1024) {
-    return `${bytes} B`
+    return `${Math.round(bytes)} B`
   }
 
   return `${(bytes / 1024).toFixed(2)} KiB`
