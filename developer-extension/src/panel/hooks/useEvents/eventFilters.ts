@@ -26,8 +26,14 @@ export function applyEventFilters(filters: EventFilters, events: SdkEvent[], fac
   filteredEvents = filterExcludedFacets(filteredEvents, filters.excludedFacetValues, facetRegistry)
 
   if (filters.query) {
-    const query = parseQuery(filters.query)
-    filteredEvents = filteredEvents.filter(query.match)
+    const queryParts: string[][] = parseQuery(filters.query)
+    const matchQuery = (event: SdkEvent) =>
+      queryParts.every((queryPart) => {
+        // Hack it to restore the whitespace
+        const searchTerm = queryPart.length > 1 ? queryPart[1].replaceAll(/\\\s+/gm, ' ') : ''
+        return matchQueryPart(event, queryPart[0], searchTerm)
+      })
+    filteredEvents = filteredEvents.filter(matchQuery)
   }
 
   if (!filters.outdatedVersions) {
@@ -73,20 +79,13 @@ function filterOutdatedVersions(events: SdkEvent[]): SdkEvent[] {
   return events.filter((event) => !outdatedEvents.has(event))
 }
 
-function parseQuery(query: string) {
+export function parseQuery(query: string) {
   const queryParts = query
     .split(/(?<!\\)\s/gm) // Hack it to escape whitespace with backslashes
     .filter((queryPart) => queryPart)
     .map((queryPart) => queryPart.split(':'))
 
-  return {
-    match: (event: SdkEvent) =>
-      queryParts.every((queryPart) => {
-        // Hack it to restore the whitespace
-        const searchTerm = queryPart.length > 1 ? queryPart[1].replaceAll(/\\\s+/gm, ' ') : ''
-        return matchQueryPart(event, queryPart[0], searchTerm)
-      }),
-  }
+  return queryParts
 }
 
 function matchWithWildcard(value: string, searchTerm: string): boolean {
