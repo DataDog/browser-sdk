@@ -1,6 +1,10 @@
 import type { InitConfiguration } from '@datadog/browser-core'
-import { DefaultPrivacyLevel, display, TraceContextInjection } from '@datadog/browser-core'
-import { EXHAUSTIVE_INIT_CONFIGURATION, SERIALIZED_EXHAUSTIVE_INIT_CONFIGURATION } from '../../../core/test'
+import { DefaultPrivacyLevel, display, ExperimentalFeature, TraceContextInjection } from '@datadog/browser-core'
+import {
+  EXHAUSTIVE_INIT_CONFIGURATION,
+  mockExperimentalFeatures,
+  SERIALIZED_EXHAUSTIVE_INIT_CONFIGURATION,
+} from '../../../core/test'
 import type { ExtractTelemetryConfiguration, CamelToSnakeCase, MapInitConfigurationKey } from '../../../core/test'
 import type { RumInitConfiguration } from './configuration'
 import { DEFAULT_PROPAGATOR_TYPES, serializeRumConfiguration, validateAndBuildRumConfiguration } from './configuration'
@@ -323,6 +327,25 @@ describe('validateAndBuildRumConfiguration', () => {
         validateAndBuildRumConfiguration({ ...DEFAULT_INIT_CONFIGURATION, defaultPrivacyLevel: 'foo' as any })!
           .defaultPrivacyLevel
       ).toBe(DefaultPrivacyLevel.MASK)
+    })
+  })
+
+  describe('enablePrivacyForActionName', () => {
+    it('defaults to false', () => {
+      expect(validateAndBuildRumConfiguration(DEFAULT_INIT_CONFIGURATION)!.enablePrivacyForActionName).toBeFalse()
+    })
+    it('is false when the feature is not enabled and the option is true', () => {
+      expect(
+        validateAndBuildRumConfiguration({ ...DEFAULT_INIT_CONFIGURATION, enablePrivacyForActionName: true })!
+          .enablePrivacyForActionName
+      ).toBeFalse()
+    })
+    it('is only true when the feature is enabled and the option is true', () => {
+      mockExperimentalFeatures([ExperimentalFeature.ENABLE_PRIVACY_FOR_ACTION_NAME])
+      expect(
+        validateAndBuildRumConfiguration({ ...DEFAULT_INIT_CONFIGURATION, enablePrivacyForActionName: true })!
+          .enablePrivacyForActionName
+      ).toBeTrue()
     })
   })
 

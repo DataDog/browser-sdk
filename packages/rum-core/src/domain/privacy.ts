@@ -1,5 +1,6 @@
 import { DefaultPrivacyLevel } from '@datadog/browser-core'
 import { isElementNode, getParentNode, isTextNode } from '../browser/htmlDomUtils'
+import { elementMatches } from '../browser/polyfills'
 
 export const NodePrivacyLevel = {
   IGNORE: 'ignore',
@@ -121,19 +122,19 @@ export function getNodeSelfPrivacyLevel(node: Node): NodePrivacyLevel | undefine
   }
 
   // Check HTML privacy attributes and classes
-  if (node.matches(getPrivacySelector(NodePrivacyLevel.HIDDEN))) {
+  if (elementMatches(node, getPrivacySelector(NodePrivacyLevel.HIDDEN))) {
     return NodePrivacyLevel.HIDDEN
   }
 
-  if (node.matches(getPrivacySelector(NodePrivacyLevel.MASK))) {
+  if (elementMatches(node, getPrivacySelector(NodePrivacyLevel.MASK))) {
     return NodePrivacyLevel.MASK
   }
 
-  if (node.matches(getPrivacySelector(NodePrivacyLevel.MASK_USER_INPUT))) {
+  if (elementMatches(node, getPrivacySelector(NodePrivacyLevel.MASK_USER_INPUT))) {
     return NodePrivacyLevel.MASK_USER_INPUT
   }
 
-  if (node.matches(getPrivacySelector(NodePrivacyLevel.ALLOW))) {
+  if (elementMatches(node, getPrivacySelector(NodePrivacyLevel.ALLOW))) {
     return NodePrivacyLevel.ALLOW
   }
 

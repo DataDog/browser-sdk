@@ -239,7 +239,7 @@ describe('trackClickActions', () => {
         enablePrivacyForActionName: false,
       })
       const { clock } = setupBuilder.build()
-      emulateClick({ activity: { on: 'pointerdown' } })
+      emulateClick({ activity: {} })
       expect(findActionId()).not.toBeUndefined()
       clock.tick(EXPIRE_DELAY)
 
@@ -256,7 +256,7 @@ describe('trackClickActions', () => {
       button.setAttribute('data-dd-privacy', 'hidden')
 
       const { clock } = setupBuilder.build()
-      emulateClick({ activity: { on: 'pointerdown' } })
+      emulateClick({ activity: {} })
       clock.tick(EXPIRE_DELAY)
 
       expect(events.length).toBe(0)
@@ -267,7 +267,8 @@ describe('trackClickActions', () => {
         enablePrivacyForActionName: true,
       })
       const { clock } = setupBuilder.build()
-      emulateClick({ activity: { on: 'pointerdown' } })
+
+      emulateClick({ activity: {} })
       expect(findActionId()).not.toBeUndefined()
       clock.tick(EXPIRE_DELAY)
 
