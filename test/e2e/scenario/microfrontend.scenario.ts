@@ -2,7 +2,6 @@ import type { RumEvent, RumEventDomainContext, RumInitConfiguration } from '@dat
 import type { LogsEvent, LogsInitConfiguration, LogsEventDomainContext } from '@datadog/browser-logs'
 import { flushBrowserLogs, withBrowserLogs } from '../lib/helpers/browser'
 import { flushEvents, createTest } from '../lib/framework'
-import { noop } from '@datadog/browser-core'
 
 const HANDLING_STACK_REGEX = /^Error: \n\s+at testHandlingStack @/
 
@@ -201,7 +200,7 @@ describe('microfrontend', () => {
   })
 
   createTest('allow to modify service and version')
-    .withRum(CONFIG)
+    .withRum(RUM_CONFIG)
     .withRumInit((configuration) => {
       window.DD_RUM!.init({
         ...configuration,
