@@ -200,7 +200,7 @@ describe('microfrontend', () => {
   })
 
   createTest('allow to modify service and version')
-    .withRum(CONFIG)
+    .withRum(RUM_CONFIG)
     .withRumInit((configuration) => {
       window.DD_RUM!.init({
         ...configuration,
