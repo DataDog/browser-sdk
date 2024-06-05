@@ -6,6 +6,8 @@ import { flushEvents, createTest } from '../lib/framework'
 const HANDLING_STACK_REGEX = /^Error: \n\s+at testHandlingStack @/
 
 const RUM_CONFIG: Partial<RumInitConfiguration> = {
+  service: 'main-service',
+  version: '1.0.0',
   enableExperimentalFeatures: ['micro_frontend'],
   beforeSend: (event: RumEvent, domainContext: RumEventDomainContext) => {
     if ('handlingStack' in domainContext) {
@@ -196,4 +198,34 @@ describe('microfrontend', () => {
         })
     })
   })
+
+  createTest('allow to modify service and version')
+    .withRum(CONFIG)
+    .withRumInit((configuration) => {
+      window.DD_RUM!.init({
+        ...configuration,
+        beforeSend: (event: RumEvent) => {
+          if (event.type === 'resource') {
+            event.service = 'mf-service'
+            event.version = '0.1.0'
+          }
+
+          return true
+        },
+      })
+    })
+    .run(async ({ intakeRegistry }) => {
+      await flushEvents()
+
+      const viewEvent = intakeRegistry.rumViewEvents[0]
+      const resourceEvent = intakeRegistry.rumResourceEvents[0]
+
+      expect(viewEvent).toBeTruthy()
+      expect(viewEvent.service).toBe('main-service')
+      expect(viewEvent.version).toBe('1.0.0')
+
+      expect(resourceEvent).toBeTruthy()
+      expect(resourceEvent.service).toBe('mf-service')
+      expect(resourceEvent.version).toBe('0.1.0')
+    })
 })

@@ -17,17 +17,24 @@ export interface RumSessionManager {
   findTrackedSession: (startTime?: RelativeTime) => RumSession | undefined
   expire: () => void
   expireObservable: Observable<void>
+  setForcedReplay: () => void
 }
 
 export type RumSession = {
   id: string
-  sessionReplayAllowed: boolean
+  sessionReplay: SessionReplayState
 }
 
 export const enum RumTrackingType {
   NOT_TRACKED = '0',
   TRACKED_WITH_SESSION_REPLAY = '1',
   TRACKED_WITHOUT_SESSION_REPLAY = '2',
+}
+
+export const enum SessionReplayState {
+  OFF,
+  SAMPLED,
+  FORCED,
 }
 
 export function startRumSessionManager(
@@ -50,6 +57,15 @@ export function startRumSessionManager(
     lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED)
   })
 
+  sessionManager.sessionStateUpdateObservable.subscribe(({ previousState, newState }) => {
+    if (!previousState.forcedReplay && newState.forcedReplay) {
+      const sessionEntity = sessionManager.findSession()
+      if (sessionEntity) {
+        sessionEntity.isReplayForced = true
+      }
+    }
+  })
+
   return {
     findTrackedSession: (startTime) => {
       const session = sessionManager.findSession(startTime)
@@ -58,11 +74,17 @@ export function startRumSessionManager(
       }
       return {
         id: session.id,
-        sessionReplayAllowed: session.trackingType === RumTrackingType.TRACKED_WITH_SESSION_REPLAY,
+        sessionReplay:
+          session.trackingType === RumTrackingType.TRACKED_WITH_SESSION_REPLAY
+            ? SessionReplayState.SAMPLED
+            : session.isReplayForced
+              ? SessionReplayState.FORCED
+              : SessionReplayState.OFF,
       }
     },
     expire: sessionManager.expire,
     expireObservable: sessionManager.expireObservable,
+    setForcedReplay: () => sessionManager.updateSessionState({ forcedReplay: '1' }),
   }
 }
 
@@ -72,12 +94,13 @@ export function startRumSessionManager(
 export function startRumSessionManagerStub(): RumSessionManager {
   const session: RumSession = {
     id: '00000000-aaaa-0000-aaaa-000000000000',
-    sessionReplayAllowed: bridgeSupports(BridgeCapability.RECORDS),
+    sessionReplay: bridgeSupports(BridgeCapability.RECORDS) ? SessionReplayState.SAMPLED : SessionReplayState.OFF,
   }
   return {
     findTrackedSession: () => session,
     expire: noop,
     expireObservable: new Observable(),
+    setForcedReplay: noop,
   }
 }
 

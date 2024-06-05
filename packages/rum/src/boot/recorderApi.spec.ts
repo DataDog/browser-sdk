@@ -135,6 +135,22 @@ describe('makeRecorderApi', () => {
       expect(startRecordingSpy).not.toHaveBeenCalled()
     })
 
+    it('should start recording if session is tracked without session replay when forced', () => {
+      const setForcedReplaySpy = jasmine.createSpy()
+
+      setupBuilder
+        .withSessionManager({
+          ...createRumSessionManagerMock().setTrackedWithoutSessionReplay(),
+          setForcedReplay: setForcedReplaySpy,
+        })
+        .build()
+
+      rumInit()
+      recorderApi.start({ force: true })
+      expect(startRecordingSpy).toHaveBeenCalledTimes(1)
+      expect(setForcedReplaySpy).toHaveBeenCalledTimes(1)
+    })
+
     it('uses the previously created worker if available', () => {
       setupBuilder.build()
       rumInit({ worker: mockWorker })

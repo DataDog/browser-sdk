@@ -28,7 +28,7 @@ import type { CiVisibilityContext } from './contexts/ciVisibilityContext'
 import type { LifeCycle } from './lifeCycle'
 import { LifeCycleEventType } from './lifeCycle'
 import type { ViewContexts } from './contexts/viewContexts'
-import type { RumSessionManager } from './rumSessionManager'
+import { SessionReplayState, type RumSessionManager } from './rumSessionManager'
 import type { UrlContexts } from './contexts/urlContexts'
 import type { RumConfiguration } from './configuration'
 import type { ActionContexts } from './action/actionCollection'
@@ -72,6 +72,16 @@ export function startRumAssembly(
   getCommonContext: () => CommonContext,
   reportError: (error: RawError) => void
 ) {
+  // TODO: lift this declaration to module level once feature flag is removed
+  const ROOT_MODIFIABLE_FIELD_PATHS: ModifiableFieldPaths = isExperimentalFeatureEnabled(
+    ExperimentalFeature.MICRO_FRONTEND
+  )
+    ? {
+        service: 'string',
+        version: 'string',
+      }
+    : {}
+
   modifiableFieldPathsByEvent = {
     [RumEventType.VIEW]: VIEW_MODIFIABLE_FIELD_PATHS,
     [RumEventType.ERROR]: assign(
@@ -82,24 +92,29 @@ export function startRumAssembly(
         'error.fingerprint': 'string',
       },
       USER_CUSTOMIZABLE_FIELD_PATHS,
-      VIEW_MODIFIABLE_FIELD_PATHS
+      VIEW_MODIFIABLE_FIELD_PATHS,
+      ROOT_MODIFIABLE_FIELD_PATHS
     ),
     [RumEventType.RESOURCE]: assign(
       {
         'resource.url': 'string',
       },
-      isExperimentalFeatureEnabled(ExperimentalFeature.WRITABLE_RESOURCE_GRAPHQL) && {
-        'resource.graphql': 'object',
-      },
+      isExperimentalFeatureEnabled(ExperimentalFeature.WRITABLE_RESOURCE_GRAPHQL)
+        ? {
+            'resource.graphql': 'object',
+          }
+        : {},
       USER_CUSTOMIZABLE_FIELD_PATHS,
-      VIEW_MODIFIABLE_FIELD_PATHS
+      VIEW_MODIFIABLE_FIELD_PATHS,
+      ROOT_MODIFIABLE_FIELD_PATHS
     ),
     [RumEventType.ACTION]: assign(
       {
         'action.target.name': 'string',
       },
       USER_CUSTOMIZABLE_FIELD_PATHS,
-      VIEW_MODIFIABLE_FIELD_PATHS
+      VIEW_MODIFIABLE_FIELD_PATHS,
+      ROOT_MODIFIABLE_FIELD_PATHS
     ),
     [RumEventType.LONG_TASK]: assign({}, USER_CUSTOMIZABLE_FIELD_PATHS, VIEW_MODIFIABLE_FIELD_PATHS),
     [RumEventType.VITAL]: assign({}, USER_CUSTOMIZABLE_FIELD_PATHS, VIEW_MODIFIABLE_FIELD_PATHS),
@@ -178,7 +193,8 @@ export function startRumAssembly(
           ;(serverRumEvent.session as Mutable<RumEvent['session']>).has_replay = commonContext.hasReplay
         }
         if (serverRumEvent.type === 'view') {
-          ;(serverRumEvent.session as Mutable<RumEvent['session']>).sampled_for_replay = session.sessionReplayAllowed
+          ;(serverRumEvent.session as Mutable<RumEvent['session']>).sampled_for_replay =
+            session.sessionReplay === SessionReplayState.SAMPLED
         }
 
         if (!isEmptyObject(commonContext.user)) {

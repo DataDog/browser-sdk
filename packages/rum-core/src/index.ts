@@ -1,4 +1,4 @@
-export { RumPublicApi, makeRumPublicApi, RecorderApi } from './boot/rumPublicApi'
+export { RumPublicApi, makeRumPublicApi, RecorderApi, StartRecordingOptions } from './boot/rumPublicApi'
 export { StartRum } from './boot/startRum'
 export {
   RumEvent,
@@ -36,3 +36,4 @@ export * from './browser/htmlDomUtils'
 export * from './browser/polyfills'
 export { getSessionReplayUrl } from './domain/getSessionReplayUrl'
 export { isLongDataUrl, sanitizeDataUrl, MAX_ATTRIBUTE_VALUE_CHAR_LENGTH } from './domain/resource/resourceUtils'
+export { SessionReplayState } from './domain/rumSessionManager'

@@ -26,6 +26,7 @@ export interface SdkInfos {
     expire?: string
     logs?: string
     rum?: string
+    forcedReplay?: '1'
   }
 }
 
