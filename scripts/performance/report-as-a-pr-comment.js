@@ -7,17 +7,8 @@ const PR_COMMENTER_AUTH_TOKEN = command`authanywhere`.run().split(' ')[2].trim()
 // The value is set to 5% as it's around 10 times the average value for small PRs.
 const SIZE_INCREASE_THRESHOLD = 5
 const LOCAL_COMMIT_SHA = process.env.CI_COMMIT_SHORT_SHA
-const ACTION_NAMES = [
-  'adderror',
-  'addaction',
-  'logmessage',
-  'startview',
-  'startstopsessionreplayrecording',
-  'addtiming',
-  'addglobalcontext',
-]
 
-async function reportAsPrComment(localBundleSizes) {
+async function reportAsPrComment(localBundleSizes, memoryLocalPerformance) {
   const lastCommonCommit = getLastCommonCommit(BASE_BRANCH, LOCAL_BRANCH)
   const pr = await fetchPR(LOCAL_BRANCH)
   if (!pr) {
@@ -25,9 +16,11 @@ async function reportAsPrComment(localBundleSizes) {
     return
   }
   const packageNames = Object.keys(localBundleSizes)
+  const testNames = memoryLocalPerformance.map((obj) => obj.testProperty)
   const baseBundleSizes = await fetchPerformanceMetrics('bundle', packageNames, lastCommonCommit)
-  const cpuBasePerformance = await fetchPerformanceMetrics('cpu', ACTION_NAMES, lastCommonCommit)
-  const cpuLocalPerformance = await fetchPerformanceMetrics('cpu', ACTION_NAMES, LOCAL_COMMIT_SHA)
+  const cpuBasePerformance = await fetchPerformanceMetrics('cpu', testNames, lastCommonCommit)
+  const cpuLocalPerformance = await fetchPerformanceMetrics('cpu', testNames, LOCAL_COMMIT_SHA)
+  const memoryBasePerformance = await fetchPerformanceMetrics('memory', testNames, lastCommonCommit)
   const differenceBundle = compare(baseBundleSizes, localBundleSizes)
   const differenceCpu = compare(cpuBasePerformance, cpuLocalPerformance)
   const commentId = await retrieveExistingCommentId(pr.number)
@@ -36,6 +29,8 @@ async function reportAsPrComment(localBundleSizes) {
     differenceCpu,
     baseBundleSizes,
     localBundleSizes,
+    memoryBasePerformance,
+    memoryLocalPerformance,
     cpuBasePerformance,
     cpuLocalPerformance
   )
@@ -111,13 +106,13 @@ function createMessage(
   differenceCpu,
   baseBundleSizes,
   localBundleSizes,
+  memoryBasePerformance,
+  memoryLocalPerformance,
   cpuBasePerformance,
   cpuLocalPerformance
 ) {
-  let message =
-    '| 📦 Bundle Name| Base Size | Local Size | 𝚫 | 𝚫% | Status |\n| --- | --- | --- | --- | --- | :---: |\n'
   let highIncreaseDetected = false
-  differenceBundle.forEach((diff, index) => {
+  const bundleRows = differenceBundle.map((diff, index) => {
     const baseSize = formatSize(baseBundleSizes[index].value)
     const localSize = formatSize(localBundleSizes[diff.name])
     const diffSize = formatSize(diff.change)
@@ -127,24 +122,57 @@ function createMessage(
       status = '⚠️'
       highIncreaseDetected = true
     }
-    message += `| ${formatBundleName(diff.name)} | ${baseSize} | ${localSize} | ${diffSize} | ${sign}${diff.percentageChange}% | ${status} |\n`
+    return [formatBundleName(diff.name), baseSize, localSize, diffSize, `${sign}${diff.percentageChange}%`, status]
   })
+
+  let message = markdownArray({
+    headers: ['📦 Bundle Name', 'Base Size', 'Local Size', '𝚫', '𝚫%', 'Status'],
+    rows: bundleRows,
+  })
+
+  message += '</details>\n\n'
 
   if (highIncreaseDetected) {
     message += `\n⚠️ The increase is particularly high and exceeds ${SIZE_INCREASE_THRESHOLD}%. Please check the changes.`
   }
-  message += '\n\n<details>\n<summary>🚀 CPU Performance</summary>\n\n\n'
-  message +=
-    '| Action Name | Base Average Cpu Time (ms) | Local Average Cpu Time (ms) | 𝚫 |\n| --- | --- | --- | --- |\n'
-  cpuBasePerformance.forEach((cpuActionPerformance, index) => {
+
+  const cpuRows = cpuBasePerformance.map((cpuTestPerformance, index) => {
     const localCpuPerf = cpuLocalPerformance[index]
     const diffCpuPerf = differenceCpu[index]
-    const baseCpuTaskValue = cpuActionPerformance.value !== null ? cpuActionPerformance.value.toFixed(3) : 'N/A'
-    const localCpuTaskValue = localCpuPerf.value !== null ? localCpuPerf.value.toFixed(3) : 'N/A'
-    const diffCpuTaskValue = diffCpuPerf.change !== null ? diffCpuPerf.change.toFixed(3) : 'N/A'
-    message += `| ${cpuActionPerformance.name} | ${baseCpuTaskValue} | ${localCpuTaskValue} | ${diffCpuTaskValue} |\n`
+    const baseCpuTestValue = cpuTestPerformance.value !== null ? cpuTestPerformance.value.toFixed(3) : 'N/A'
+    const localCpuTestValue = localCpuPerf.value !== null ? localCpuPerf.value.toFixed(3) : 'N/A'
+    const diffCpuTestValue = diffCpuPerf.change !== null ? diffCpuPerf.change.toFixed(3) : 'N/A'
+    return [cpuTestPerformance.name, baseCpuTestValue, localCpuTestValue, diffCpuTestValue]
   })
-  message += '\n</details>\n'
+
+  message += '<details>\n<summary>🚀 CPU Performance</summary>\n\n'
+  message += markdownArray({
+    headers: ['Action Name', 'Base Average Cpu Time (ms)', 'Local Average Cpu Time (ms)', '𝚫'],
+    rows: cpuRows,
+  })
+  message += '\n</details>\n\n'
+
+  const memoryRows = memoryBasePerformance.map((baseMemoryPerf, index) => {
+    const memoryTestPerformance = memoryLocalPerformance[index]
+    const baseMemoryTestValue = baseMemoryPerf.value !== null ? baseMemoryPerf.value : 'N/A'
+    const localMemoryTestValue =
+      memoryTestPerformance && memoryTestPerformance.sdkMemoryBytes !== null
+        ? memoryTestPerformance.sdkMemoryBytes
+        : 'N/A'
+    return [
+      memoryTestPerformance.testProperty,
+      formatSize(baseMemoryTestValue),
+      formatSize(localMemoryTestValue),
+      formatSize(localMemoryTestValue - baseMemoryTestValue),
+    ]
+  })
+
+  message += '<details>\n<summary>🧠 Memory Performance</summary>\n\n'
+  message += markdownArray({
+    headers: ['Action Name', 'Base Consumption Memory (bytes)', 'Local Consumption Memory (bytes)', '𝚫 (bytes)'],
+    rows: memoryRows,
+  })
+  message += '\n</details>\n\n'
 
   return message
 }
@@ -158,10 +186,18 @@ function formatBundleName(bundleName) {
 
 function formatSize(bytes) {
   if (bytes < 1024) {
-    return `${bytes} B`
+    return `${Math.round(bytes)} B`
   }
 
   return `${(bytes / 1024).toFixed(2)} KiB`
+}
+
+function markdownArray({ headers, rows }) {
+  let markdown = `| ${headers.join(' | ')} |\n| ${new Array(headers.length).fill('---').join(' | ')} |\n`
+  rows.forEach((row) => {
+    markdown += `| ${row.join(' | ')} |\n`
+  })
+  return markdown
 }
 
 module.exports = {

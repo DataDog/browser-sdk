@@ -14,8 +14,9 @@ import type {
   RumSessionManager,
   RecorderApi,
   RumConfiguration,
+  StartRecordingOptions,
 } from '@datadog/browser-rum-core'
-import { LifeCycleEventType } from '@datadog/browser-rum-core'
+import { LifeCycleEventType, SessionReplayState } from '@datadog/browser-rum-core'
 import { getReplayStats as getReplayStatsImpl } from '../domain/replayStats'
 import { getSessionReplayLink } from '../domain/getSessionReplayLink'
 import type { CreateDeflateWorker } from '../domain/deflate'
@@ -57,6 +58,8 @@ type RecorderState =
       stopRecording: () => void
     }
 
+type StartStrategyFn = (options?: StartRecordingOptions) => void
+
 export function makeRecorderApi(
   startRecordingImpl: StartRecording,
   createDeflateWorkerImpl?: CreateDeflateWorker
@@ -76,7 +79,7 @@ export function makeRecorderApi(
     status: RecorderStatus.IntentToStart,
   }
 
-  let startStrategy = () => {
+  let startStrategy: StartStrategyFn = () => {
     state = { status: RecorderStatus.IntentToStart }
   }
   let stopStrategy = () => {
@@ -85,7 +88,7 @@ export function makeRecorderApi(
   let getSessionReplayLinkStrategy = noop as () => string | undefined
 
   return {
-    start: () => startStrategy(),
+    start: (options?: StartRecordingOptions) => startStrategy(options),
     stop: () => stopStrategy(),
     getSessionReplayLink: () => getSessionReplayLinkStrategy(),
     onRumStart: (
@@ -107,7 +110,7 @@ export function makeRecorderApi(
 
       // Stop the recorder on page unload to avoid sending records after the page is ended.
       lifeCycle.subscribe(LifeCycleEventType.PAGE_EXITED, (pageExitEvent) => {
-        if (pageExitEvent.reason === PageExitReason.UNLOADING || pageExitEvent.reason === PageExitReason.PAGEHIDE) {
+        if (pageExitEvent.reason === PageExitReason.UNLOADING) {
           stopStrategy()
         }
       })
@@ -139,9 +142,9 @@ export function makeRecorderApi(
         return cachedDeflateEncoder
       }
 
-      startStrategy = () => {
+      startStrategy = (options?: StartRecordingOptions) => {
         const session = sessionManager.findTrackedSession()
-        if (!session || !session.sessionReplayAllowed) {
+        if (!session || (session.sessionReplay === SessionReplayState.OFF && !options?.force)) {
           state = { status: RecorderStatus.IntentToStart }
           return
         }
@@ -177,6 +180,10 @@ export function makeRecorderApi(
             stopRecording,
           }
         })
+
+        if (options?.force && session.sessionReplay === SessionReplayState.OFF) {
+          sessionManager.setForcedReplay()
+        }
       }
 
       stopStrategy = () => {

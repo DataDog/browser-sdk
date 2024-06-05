@@ -12,6 +12,7 @@ interface FetchContextBase {
   input: unknown
   init?: RequestInit
   url: string
+  handlingStack?: string
 }
 
 export interface FetchStartContext extends FetchContextBase {
@@ -44,14 +45,16 @@ function createFetchObservable() {
       return
     }
 
-    const { stop } = instrumentMethod(window, 'fetch', (call) => beforeSend(call, observable))
+    const { stop } = instrumentMethod(window, 'fetch', (call) => beforeSend(call, observable), {
+      computeHandlingStack: true,
+    })
 
     return stop
   })
 }
 
 function beforeSend(
-  { parameters, onPostCall }: InstrumentedMethodCall<Window, 'fetch'>,
+  { parameters, onPostCall, handlingStack }: InstrumentedMethodCall<Window, 'fetch'>,
   observable: Observable<FetchContext>
 ) {
   const [input, init] = parameters
@@ -72,6 +75,7 @@ function beforeSend(
     method,
     startClocks,
     url,
+    handlingStack,
   }
 
   observable.notify(context)

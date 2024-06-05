@@ -24,6 +24,7 @@ export interface RumViewEventDomainContext {
 
 export interface RumActionEventDomainContext {
   events?: Event[]
+  handlingStack?: string
 }
 
 export interface RumFetchResourceEventDomainContext {
@@ -33,12 +34,14 @@ export interface RumFetchResourceEventDomainContext {
   error?: Error
   performanceEntry?: PerformanceEntry
   isAborted: boolean
+  handlingStack?: string
 }
 
 export interface RumXhrResourceEventDomainContext {
   xhr: XMLHttpRequest
   performanceEntry?: PerformanceEntry
   isAborted: boolean
+  handlingStack?: string
 }
 
 export interface RumOtherResourceEventDomainContext {
@@ -47,6 +50,7 @@ export interface RumOtherResourceEventDomainContext {
 
 export interface RumErrorEventDomainContext {
   error: unknown
+  handlingStack?: string
 }
 
 export interface RumLongTaskEventDomainContext {

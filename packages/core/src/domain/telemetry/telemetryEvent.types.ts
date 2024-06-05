@@ -353,6 +353,10 @@ export type TelemetryConfigurationEvent = CommonTelemetryProperties & {
        * The version of the tracer API used by the SDK. Eg. '0.1.0'
        */
       tracer_api_version?: string
+      /**
+       * Whether logs are sent after the session expiration
+       */
+      send_logs_after_session_expiration?: boolean
       [k: string]: unknown
     }
     [k: string]: unknown

@@ -1,5 +1,11 @@
-import type { Duration, RelativeTime, ServerDuration, TimeStamp } from '@datadog/browser-core'
-import { createNewEvent } from '@datadog/browser-core/test'
+import {
+  ExperimentalFeature,
+  type Duration,
+  type RelativeTime,
+  type ServerDuration,
+  type TimeStamp,
+} from '@datadog/browser-core'
+import { createNewEvent, mockExperimentalFeatures } from '@datadog/browser-core/test'
 import type { RawRumActionEvent } from '@datadog/browser-rum-core'
 import type { TestSetupBuilder } from '../../../test'
 import { setup } from '../../../test'
@@ -137,5 +143,22 @@ describe('actionCollection', () => {
       type: ActionType.CLICK,
     })
     expect((rawRumEvents[0].rawRumEvent as RawRumActionEvent).action.loading_time).toBeUndefined()
+  })
+
+  it('should create action with handling stack', () => {
+    const { rawRumEvents } = setupBuilder.build()
+
+    mockExperimentalFeatures([ExperimentalFeature.MICRO_FRONTEND])
+
+    addAction({
+      name: 'foo',
+      startClocks: { relative: 1234 as RelativeTime, timeStamp: 123456789 as TimeStamp },
+      type: ActionType.CUSTOM,
+      handlingStack: 'Error\n    at foo\n    at bar',
+    })
+
+    expect(rawRumEvents[0].domainContext).toEqual({
+      handlingStack: 'Error\n    at foo\n    at bar',
+    })
   })
 })

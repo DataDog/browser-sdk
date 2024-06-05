@@ -603,6 +603,50 @@ describe('rum assembly', () => {
       expect(serverRumEvents[0].service).toEqual('new service')
       expect(serverRumEvents[0].version).toEqual('new version')
     })
+
+    describe('fields service and version', () => {
+      it('by default, it should not be modifiable', () => {
+        const { lifeCycle } = setupBuilder
+          .withConfiguration({
+            beforeSend: (event) => {
+              event.service = 'bar'
+              event.version = '0.2.0'
+
+              return true
+            },
+          })
+          .build()
+
+        notifyRawRumEvent(lifeCycle, {
+          rawRumEvent: createRawRumEvent(RumEventType.RESOURCE, { resource: { url: '/path?foo=bar' } }),
+        })
+
+        expect((serverRumEvents[0] as RumResourceEvent).service).toBe('default service')
+        expect((serverRumEvents[0] as RumResourceEvent).version).toBe('default version')
+      })
+
+      it('when the micro_frontend experimental flag is set, it should be modifiable', () => {
+        mockExperimentalFeatures([ExperimentalFeature.MICRO_FRONTEND])
+
+        const { lifeCycle } = setupBuilder
+          .withConfiguration({
+            beforeSend: (event) => {
+              event.service = 'bar'
+              event.version = '0.2.0'
+
+              return true
+            },
+          })
+          .build()
+
+        notifyRawRumEvent(lifeCycle, {
+          rawRumEvent: createRawRumEvent(RumEventType.RESOURCE, { resource: { url: '/path?foo=bar' } }),
+        })
+
+        expect((serverRumEvents[0] as RumResourceEvent).service).toBe('bar')
+        expect((serverRumEvents[0] as RumResourceEvent).version).toBe('0.2.0')
+      })
+    })
   })
 
   describe('url context', () => {

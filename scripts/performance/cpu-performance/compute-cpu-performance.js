@@ -5,7 +5,7 @@ const { fetchPR, LOCAL_BRANCH } = require('../../lib/git-utils')
 const { LOCAL_COMMIT_SHA } = require('../report-as-a-pr-comment')
 const API_KEY = getOrg2ApiKey()
 const APP_KEY = getOrg2AppKey()
-const TIMEOUT_IN_MS = 10000
+const TIMEOUT_IN_MS = 15000
 const TEST_PUBLIC_ID = 'vcg-7rk-5av'
 const RETRIES_NUMBER = 6
 
@@ -22,7 +22,7 @@ async function triggerSyntheticsTest(prNumber, commitId) {
     tests: [
       {
         public_id: `${TEST_PUBLIC_ID}`,
-        startUrl: `https://datadoghq.dev/browser-sdk-test-playground/performance/?prNumber=${prNumber}&commitId=${commitId}`,
+        startUrl: `https://datadoghq.dev/browser-sdk-test-playground/performance/cpu?prNumber=${prNumber}&commitId=${commitId}`,
       },
     ],
   }

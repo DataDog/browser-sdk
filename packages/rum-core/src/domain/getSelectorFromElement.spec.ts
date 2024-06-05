@@ -1,9 +1,14 @@
 import { appendElement } from '../../test'
-import { getSelectorFromElement, supportScopeSelector } from './getSelectorFromElement'
+import { getSelectorFromElement, isSelectorUniqueAmongSiblings, supportScopeSelector } from './getSelectorFromElement'
 
 describe('getSelectorFromElement', () => {
   afterEach(() => {
     document.body.classList.remove('foo')
+  })
+
+  it('returns undefined for detached elements', () => {
+    const element = document.createElement('div')
+    expect(getSelector(element)).toBeUndefined()
   })
 
   describe('ID selector', () => {
@@ -146,14 +151,7 @@ describe('getSelectorFromElement', () => {
               <button data-testid="foo"></button>
             </div>
           `)
-      ).toBe(
-        supportScopeSelector()
-          ? 'BODY>BUTTON[data-testid="foo"]'
-          : // Degraded support for browsers not supporting scoped selector: the selector is still
-            // correct, but its quality is a bit worse, as using a stable attribute reduce the
-            // chances of matching a completely unrelated element.
-            'BODY>BUTTON:nth-of-type(1)'
-      )
+      ).toBe('BODY>BUTTON[data-testid="foo"]')
     })
   })
 
@@ -162,10 +160,75 @@ describe('getSelectorFromElement', () => {
     expect(getSelector(element)).toBe('BODY>svg.foo')
   })
 
-  function getSelector(htmlOrElement: string | Element, actionNameAttribute?: string): string {
+  function getSelector(htmlOrElement: string | Element, actionNameAttribute?: string): string | undefined {
     return getSelectorFromElement(
       typeof htmlOrElement === 'string' ? appendElement(htmlOrElement) : htmlOrElement,
       actionNameAttribute
     )
   }
+})
+
+describe('isSelectorUniqueAmongSiblings', () => {
+  it('returns true when the element is alone', () => {
+    const element = appendElement('<div></div>')
+    expect(isSelectorUniqueAmongSiblings(element, 'DIV', undefined)).toBeTrue()
+  })
+
+  it('returns false when a sibling element matches the element selector', () => {
+    const element = appendElement(`
+      <div target></div>
+      <div></div>
+    `)
+    expect(isSelectorUniqueAmongSiblings(element, 'DIV', undefined)).toBeFalse()
+  })
+
+  it('returns true when the element selector does not match any sibling', () => {
+    const element = appendElement(`
+      <div target></div>
+      <span></span>
+    `)
+    expect(isSelectorUniqueAmongSiblings(element, 'DIV', undefined)).toBeTrue()
+  })
+
+  it('returns false when the child selector matches an element in a sibling', () => {
+    const element = appendElement(`
+      <div target>
+        <hr>
+      </div>
+      <div>
+        <hr>
+      </div>
+    `)
+    expect(isSelectorUniqueAmongSiblings(element, 'DIV', 'HR')).toBeFalse()
+  })
+
+  it('returns true when the current element selector does not match the sibling', () => {
+    const element = appendElement(`
+      <div target>
+        <hr>
+      </div>
+      <h1>
+        <hr>
+      </h1>
+    `)
+    expect(isSelectorUniqueAmongSiblings(element, 'DIV', 'HR')).toBeTrue()
+  })
+
+  it('the selector should not consider elements deep in the tree', () => {
+    if (!supportScopeSelector()) {
+      pending('This test is only relevant for browsers supporting scoped selectors')
+    }
+
+    const element = appendElement(`
+      <div target>
+        <hr>
+      </div>
+      <h1>
+        <div>
+          <hr>
+        </div>
+      </h1>
+    `)
+    expect(isSelectorUniqueAmongSiblings(element, 'DIV', 'HR')).toBeTrue()
+  })
 })

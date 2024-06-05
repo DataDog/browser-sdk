@@ -8,8 +8,8 @@ import {
   relativeToClocks,
   assign,
   isNumber,
-  isExperimentalFeatureEnabled,
   ExperimentalFeature,
+  isExperimentalFeatureEnabled,
 } from '@datadog/browser-core'
 import type { RumConfiguration } from '../configuration'
 import type { RumPerformanceResourceTiming } from '../../browser/performanceCollection'
@@ -20,7 +20,6 @@ import { RumEventType } from '../../rawRumEvent.types'
 import { LifeCycleEventType } from '../lifeCycle'
 import type { RawRumEventCollectedData, LifeCycle } from '../lifeCycle'
 import type { RequestCompleteEvent } from '../requestCollection'
-import type { RumSessionManager } from '../rumSessionManager'
 import type { PageStateHistory } from '../contexts/pageStateHistory'
 import { PageState } from '../contexts/pageStateHistory'
 import { matchRequestTiming } from './matchRequestTiming'
@@ -37,11 +36,10 @@ import {
 export function startResourceCollection(
   lifeCycle: LifeCycle,
   configuration: RumConfiguration,
-  sessionManager: RumSessionManager,
   pageStateHistory: PageStateHistory
 ) {
   lifeCycle.subscribe(LifeCycleEventType.REQUEST_COMPLETED, (request: RequestCompleteEvent) => {
-    const rawEvent = processRequest(request, configuration, sessionManager, pageStateHistory)
+    const rawEvent = processRequest(request, configuration, pageStateHistory)
     if (rawEvent) {
       lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, rawEvent)
     }
@@ -50,7 +48,7 @@ export function startResourceCollection(
   lifeCycle.subscribe(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, (entries) => {
     for (const entry of entries) {
       if (entry.entryType === RumPerformanceEntryType.RESOURCE && !isRequestKind(entry)) {
-        const rawEvent = processResourceEntry(entry, configuration, sessionManager, pageStateHistory)
+        const rawEvent = processResourceEntry(entry, configuration)
         if (rawEvent) {
           lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, rawEvent)
         }
@@ -62,14 +60,12 @@ export function startResourceCollection(
 function processRequest(
   request: RequestCompleteEvent,
   configuration: RumConfiguration,
-  sessionManager: RumSessionManager,
   pageStateHistory: PageStateHistory
 ): RawRumEventCollectedData<RawRumResourceEvent> | undefined {
   const matchingTiming = matchRequestTiming(request)
   const startClocks = matchingTiming ? relativeToClocks(matchingTiming.startTime) : request.startClocks
-  const shouldIndex = shouldIndexResource(configuration, sessionManager, startClocks)
   const tracingInfo = computeRequestTracingInfo(request, configuration)
-  if (!shouldIndex && !tracingInfo) {
+  if (!configuration.trackResources && !tracingInfo) {
     return
   }
 
@@ -78,11 +74,6 @@ function processRequest(
   const correspondingTimingOverrides = matchingTiming ? computePerformanceEntryMetrics(matchingTiming) : undefined
 
   const duration = computeRequestDuration(pageStateHistory, startClocks, request.duration)
-  const pageStateInfo = computePageStateInfo(
-    pageStateHistory,
-    startClocks,
-    matchingTiming?.duration ?? request.duration
-  )
 
   const resourceEvent = combine(
     {
@@ -97,14 +88,13 @@ function processRequest(
       },
       type: RumEventType.RESOURCE as const,
       _dd: {
-        discarded: !shouldIndex,
+        discarded: !configuration.trackResources,
       },
     },
     tracingInfo,
-    correspondingTimingOverrides,
-    pageStateInfo
+    correspondingTimingOverrides
   )
-  return {
+  const collectedData = {
     startTime: startClocks.relative,
     rawRumEvent: resourceEvent,
     domainContext: {
@@ -117,25 +107,26 @@ function processRequest(
       isAborted: request.isAborted,
     } as RumFetchResourceEventDomainContext | RumXhrResourceEventDomainContext,
   }
+
+  if (isExperimentalFeatureEnabled(ExperimentalFeature.MICRO_FRONTEND)) {
+    collectedData.domainContext.handlingStack = request.handlingStack
+  }
+
+  return collectedData
 }
 
 function processResourceEntry(
   entry: RumPerformanceResourceTiming,
-  configuration: RumConfiguration,
-  sessionManager: RumSessionManager,
-  pageStateHistory: PageStateHistory
+  configuration: RumConfiguration
 ): RawRumEventCollectedData<RawRumResourceEvent> | undefined {
   const startClocks = relativeToClocks(entry.startTime)
-  const shouldIndex = shouldIndexResource(configuration, sessionManager, startClocks)
   const tracingInfo = computeEntryTracingInfo(entry, configuration)
-  if (!shouldIndex && !tracingInfo) {
+  if (!configuration.trackResources && !tracingInfo) {
     return
   }
 
   const type = computeResourceKind(entry)
   const entryMetrics = computePerformanceEntryMetrics(entry)
-
-  const pageStateInfo = computePageStateInfo(pageStateHistory, startClocks, entry.duration)
 
   const resourceEvent = combine(
     {
@@ -148,12 +139,11 @@ function processResourceEntry(
       },
       type: RumEventType.RESOURCE as const,
       _dd: {
-        discarded: !shouldIndex,
+        discarded: !configuration.trackResources,
       },
     },
     tracingInfo,
-    entryMetrics,
-    pageStateInfo
+    entryMetrics
   )
   return {
     startTime: startClocks.relative,
@@ -162,14 +152,6 @@ function processResourceEntry(
       performanceEntry: entry,
     },
   }
-}
-
-function shouldIndexResource(
-  configuration: RumConfiguration,
-  sessionManager: RumSessionManager,
-  resourceStart: ClocksState
-) {
-  return configuration.trackResources && sessionManager.findTrackedSession(resourceStart.relative)
 }
 
 function computePerformanceEntryMetrics(timing: RumPerformanceResourceTiming) {
@@ -218,19 +200,6 @@ function computeEntryTracingInfo(entry: RumPerformanceResourceTiming, configurat
  */
 function getRulePsr(configuration: RumConfiguration) {
   return isNumber(configuration.traceSampleRate) ? configuration.traceSampleRate / 100 : undefined
-}
-
-function computePageStateInfo(pageStateHistory: PageStateHistory, startClocks: ClocksState, duration: Duration) {
-  if (!isExperimentalFeatureEnabled(ExperimentalFeature.RESOURCE_PAGE_STATES)) {
-    return
-  }
-
-  return {
-    _dd: {
-      page_states: pageStateHistory.findAll(startClocks.relative, duration),
-      page_was_discarded: String((document as any).wasDiscarded),
-    },
-  }
 }
 
 function computeRequestDuration(pageStateHistory: PageStateHistory, startClocks: ClocksState, duration: Duration) {

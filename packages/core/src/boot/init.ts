@@ -1,11 +1,26 @@
 import { catchUserErrors } from '../tools/catchUserErrors'
 import { setDebugMode } from '../tools/monitor'
 import { assign } from '../tools/utils/polyfills'
+import { display } from '../tools/display'
 
 // replaced at build time
 declare const __BUILD_ENV__SDK_VERSION__: string
 
-export function makePublicApi<T>(stub: T): T & { onReady(callback: () => void): void; version: string } {
+export interface PublicApi {
+  /**
+   * Version of the Logs browser SDK
+   */
+  version: string
+
+  /**
+   * [For CDN async setup] Early RUM API calls must be wrapped in the `window.DD_RUM.onReady()` callback. This ensures the code only gets executed once the SDK is properly loaded.
+   *
+   * See [CDN async setup](https://docs.datadoghq.com/real_user_monitoring/browser/#cdn-async) for further information.
+   */
+  onReady: (callback: () => void) => void
+}
+
+export function makePublicApi<T extends PublicApi>(stub: Omit<T, keyof PublicApi>): T {
   const publicApi = assign(
     {
       version: __BUILD_ENV__SDK_VERSION__,
@@ -29,11 +44,14 @@ export function makePublicApi<T>(stub: T): T & { onReady(callback: () => void): 
     enumerable: false,
   })
 
-  return publicApi
+  return publicApi as T
 }
 
 export function defineGlobal<Global, Name extends keyof Global>(global: Global, name: Name, api: Global[Name]) {
-  const existingGlobalVariable = global[name] as { q?: Array<() => void> } | undefined
+  const existingGlobalVariable = global[name] as { q?: Array<() => void>; version?: string } | undefined
+  if (existingGlobalVariable && !existingGlobalVariable.q && existingGlobalVariable.version) {
+    display.warn('SDK is loaded more than once. This is unsupported and might have unexpected behavior.')
+  }
   global[name] = api
   if (existingGlobalVariable && existingGlobalVariable.q) {
     existingGlobalVariable.q.forEach((fn) => catchUserErrors(fn, 'onReady callback threw an error:')())

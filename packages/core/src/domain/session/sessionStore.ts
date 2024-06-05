@@ -4,9 +4,15 @@ import { ONE_SECOND, dateNow } from '../../tools/utils/timeUtils'
 import { throttle } from '../../tools/utils/functionUtils'
 import { generateUUID } from '../../tools/utils/stringUtils'
 import type { InitConfiguration } from '../configuration'
+import { assign } from '../../tools/utils/polyfills'
 import { selectCookieStrategy, initCookieStrategy } from './storeStrategies/sessionInCookie'
 import type { SessionStoreStrategyType } from './storeStrategies/sessionStoreStrategy'
-import { getExpiredSessionState, isSessionInExpiredState, isSessionInNotStartedState } from './sessionState'
+import {
+  getExpiredSessionState,
+  isSessionInExpiredState,
+  isSessionInNotStartedState,
+  isSessionStarted,
+} from './sessionState'
 import type { SessionState } from './sessionState'
 import { initLocalStorageStrategy, selectLocalStorageStrategy } from './storeStrategies/sessionInLocalStorage'
 import { processSessionStoreOperations } from './sessionStoreOperations'
@@ -18,8 +24,10 @@ export interface SessionStore {
   restartSession: () => void
   renewObservable: Observable<void>
   expireObservable: Observable<void>
+  sessionStateUpdateObservable: Observable<{ previousState: SessionState; newState: SessionState }>
   expire: () => void
   stop: () => void
+  updateSessionState: (state: Partial<SessionState>) => void
 }
 
 /**
@@ -56,6 +64,7 @@ export function startSessionStore<TrackingType extends string>(
 ): SessionStore {
   const renewObservable = new Observable<void>()
   const expireObservable = new Observable<void>()
+  const sessionStateUpdateObservable = new Observable<{ previousState: SessionState; newState: SessionState }>()
 
   const sessionStoreStrategy =
     sessionStoreStrategyType.type === 'Cookie'
@@ -69,7 +78,6 @@ export function startSessionStore<TrackingType extends string>(
   startSession()
 
   const { throttled: throttledExpandOrRenewSession, cancel: cancelExpandOrRenewSession } = throttle(() => {
-    let isTracked: boolean
     processSessionStoreOperations(
       {
         process: (sessionState) => {
@@ -78,11 +86,11 @@ export function startSessionStore<TrackingType extends string>(
           }
 
           const synchronizedSession = synchronizeSession(sessionState)
-          isTracked = expandOrRenewSessionState(synchronizedSession)
+          expandOrRenewSessionState(synchronizedSession)
           return synchronizedSession
         },
         after: (sessionState) => {
-          if (isTracked && !hasSessionInCache()) {
+          if (isSessionStarted(sessionState) && !hasSessionInCache()) {
             renewSessionInCache(sessionState)
           }
           sessionCache = sessionState
@@ -124,6 +132,7 @@ export function startSessionStore<TrackingType extends string>(
       if (isSessionInCacheOutdated(sessionState)) {
         expireSessionInCache()
       } else {
+        sessionStateUpdateObservable.notify({ previousState: sessionCache, newState: sessionState })
         sessionCache = sessionState
       }
     }
@@ -158,7 +167,6 @@ export function startSessionStore<TrackingType extends string>(
       sessionState.id = generateUUID()
       sessionState.created = String(dateNow())
     }
-    return isTracked
   }
 
   function hasSessionInCache() {
@@ -179,12 +187,23 @@ export function startSessionStore<TrackingType extends string>(
     renewObservable.notify()
   }
 
+  function updateSessionState(partialSessionState: Partial<SessionState>) {
+    processSessionStoreOperations(
+      {
+        process: (sessionState) => assign({}, sessionState, partialSessionState),
+        after: synchronizeSession,
+      },
+      sessionStoreStrategy
+    )
+  }
+
   return {
     expandOrRenewSession: throttledExpandOrRenewSession,
     expandSession,
     getSession: () => sessionCache,
     renewObservable,
     expireObservable,
+    sessionStateUpdateObservable,
     restartSession: startSession,
     expire: () => {
       cancelExpandOrRenewSession()
@@ -194,5 +213,6 @@ export function startSessionStore<TrackingType extends string>(
     stop: () => {
       clearInterval(watchSessionTimeoutId)
     },
+    updateSessionState,
   }
 }

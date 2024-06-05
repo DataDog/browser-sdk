@@ -16,6 +16,27 @@
 
 ---
 
+## v5.20.0
+
+- ✨ [RUM-4013] DD_RUM: add handling stack in beforeSend context ([#2730](https://github.com/DataDog/browser-sdk/pull/2730))
+- ✨[RUM-4178] Report memory impact to Datadog ([#2724](https://github.com/DataDog/browser-sdk/pull/2724))
+- 🐛 [RUM-98] Warn when SDK is loaded multiple times ([#2785](https://github.com/DataDog/browser-sdk/pull/2785))
+- ⚡️ [RUM-4468] improve CSS selector computation performance ([#2782](https://github.com/DataDog/browser-sdk/pull/2782))
+- 📝 [RUM-158] Add jsdoc to public APIs ([#2775](https://github.com/DataDog/browser-sdk/pull/2775))
+- 🔥 Remove unnecessary session checks in collections ([#2769](https://github.com/DataDog/browser-sdk/pull/2769))
+
+## v5.19.0
+
+- 🐛 [RUM-4629] accept `null` as env/version/service ([#2781](https://github.com/DataDog/browser-sdk/pull/2781))
+- 🐛 [RUM-4493] do not compute selectors for detached elements ([#2766](https://github.com/DataDog/browser-sdk/pull/2766))
+- 🐛 [RUM-2720] Send logs without session id when session inactive ([#2578](https://github.com/DataDog/browser-sdk/pull/2578))
+- 🐛 [RUM-1666] Don't set negative action loading time ([#2764](https://github.com/DataDog/browser-sdk/pull/2764))
+- 🐛 [RUM-4434] fix timing matching for the same resource requested twice at the same time ([#2747](https://github.com/DataDog/browser-sdk/pull/2747))
+- 🐛 [RUM-4436] fix detached node memory leak on CLS ([#2749](https://github.com/DataDog/browser-sdk/pull/2749))
+- ✅ fix clearing cookies between tests ([#2780](https://github.com/DataDog/browser-sdk/pull/2780))
+- 🔥 Cleanup experimental features ([#2768](https://github.com/DataDog/browser-sdk/pull/2768))
+- ✏️ various comment fixes ([#2760](https://github.com/DataDog/browser-sdk/pull/2760))
+
 ## v5.18.0
 
 - 🔊[RUM-4360] monitor more API usages ([#2745](https://github.com/DataDog/browser-sdk/pull/2745))
