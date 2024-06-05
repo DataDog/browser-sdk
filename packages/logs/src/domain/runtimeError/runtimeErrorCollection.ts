@@ -3,7 +3,7 @@ import { noop, ErrorSource, trackRuntimeError, Observable } from '@datadog/brows
 import type { LogsConfiguration } from '../configuration'
 import type { LifeCycle } from '../lifeCycle'
 import { LifeCycleEventType } from '../lifeCycle'
-import { StatusType } from '../logger'
+import { StatusType } from '../logger/isAuthorized'
 
 export interface ProvidedError {
   startClocks: ClocksState

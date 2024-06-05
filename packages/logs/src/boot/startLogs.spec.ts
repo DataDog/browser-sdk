@@ -27,7 +27,8 @@ import {
 
 import type { LogsConfiguration } from '../domain/configuration'
 import { validateAndBuildLogsConfiguration } from '../domain/configuration'
-import { HandlerType, Logger, StatusType } from '../domain/logger'
+import { HandlerType, Logger } from '../domain/logger'
+import { StatusType } from '../domain/logger/isAuthorized'
 import type { startLoggerCollection } from '../domain/logger/loggerCollection'
 import type { LogsEvent } from '../logsEvent.types'
 import { startLogs } from './startLogs'
@@ -94,7 +95,12 @@ describe('logs', () => {
       ))
       registerCleanupTask(stopLogs)
 
-      handleLog({ message: 'message', status: StatusType.warn, context: { foo: 'bar' } }, logger, COMMON_CONTEXT)
+      handleLog(
+        { message: 'message', status: StatusType.warn, context: { foo: 'bar' } },
+        logger,
+        'fake-handling-stack',
+        COMMON_CONTEXT
+      )
 
       expect(requests.length).toEqual(1)
       expect(requests[0].url).toContain(baseConfiguration.logsEndpointBuilder.build('xhr', DEFAULT_PAYLOAD))

@@ -1,10 +1,12 @@
-import type { RumEvent, RumEventDomainContext, RumInitConfiguration } from '@datadog/browser-rum-core/src'
-import { withBrowserLogs } from '../lib/helpers/browser'
+import type { RumEvent, RumEventDomainContext, RumInitConfiguration } from '@datadog/browser-rum-core'
+import type { LogsEvent, LogsInitConfiguration, LogsEventDomainContext } from '@datadog/browser-logs'
+import { flushBrowserLogs, withBrowserLogs } from '../lib/helpers/browser'
 import { flushEvents, createTest } from '../lib/framework'
+import { noop } from '@datadog/browser-core'
 
 const HANDLING_STACK_REGEX = /^Error: \n\s+at testHandlingStack @/
 
-const CONFIG: Partial<RumInitConfiguration> = {
+const RUM_CONFIG: Partial<RumInitConfiguration> = {
   service: 'main-service',
   version: '1.0.0',
   enableExperimentalFeatures: ['micro_frontend'],
@@ -17,9 +19,21 @@ const CONFIG: Partial<RumInitConfiguration> = {
   },
 }
 
+const LOGS_CONFIG: Partial<LogsInitConfiguration> = {
+  forwardConsoleLogs: 'all',
+  enableExperimentalFeatures: ['micro_frontend'],
+  beforeSend: (event: LogsEvent, domainContext: LogsEventDomainContext) => {
+    if (domainContext && 'handlingStack' in domainContext) {
+      event.context = { handlingStack: domainContext.handlingStack }
+    }
+
+    return true
+  },
+}
+
 describe('microfrontend', () => {
   createTest('expose handling stack for fetch requests')
-    .withRum(CONFIG)
+    .withRum(RUM_CONFIG)
     .withRumInit((configuration) => {
       window.DD_RUM!.init(configuration)
 
@@ -40,7 +54,7 @@ describe('microfrontend', () => {
     })
 
   createTest('expose handling stack for xhr requests')
-    .withRum(CONFIG)
+    .withRum(RUM_CONFIG)
     .withRumInit((configuration) => {
       window.DD_RUM!.init(configuration)
 
@@ -62,7 +76,7 @@ describe('microfrontend', () => {
     })
 
   createTest('expose handling stack for DD_RUM.addAction')
-    .withRum(CONFIG)
+    .withRum(RUM_CONFIG)
     .withRumInit((configuration) => {
       window.DD_RUM!.init(configuration)
 
@@ -82,7 +96,7 @@ describe('microfrontend', () => {
     })
 
   createTest('expose handling stack for DD_RUM.addError')
-    .withRum(CONFIG)
+    .withRum(RUM_CONFIG)
     .withRumInit((configuration) => {
       window.DD_RUM!.init(configuration)
 
@@ -102,7 +116,7 @@ describe('microfrontend', () => {
     })
 
   createTest('expose handling stack for console errors')
-    .withRum(CONFIG)
+    .withRum(RUM_CONFIG)
     .withRumInit((configuration) => {
       window.DD_RUM!.init(configuration)
 
@@ -125,6 +139,66 @@ describe('microfrontend', () => {
       expect(event).toBeTruthy()
       expect(event?.context?.handlingStack).toMatch(HANDLING_STACK_REGEX)
     })
+
+  describe('console apis', () => {
+    const consoleApis = ['log', 'debug', 'error', 'info', 'warn'] as const
+
+    consoleApis.forEach((api) => {
+      createTest(`expose handling stack for console.${api}`)
+        .withLogs(LOGS_CONFIG)
+        .withLogsInit((configuration, api: (typeof consoleApis)[number]) => {
+          window.DD_LOGS!.init(configuration)
+
+          function testHandlingStack() {
+            console[api]('foo')
+          }
+
+          testHandlingStack()
+        }, api)
+        .run(async ({ intakeRegistry }) => {
+          await flushEvents()
+
+          const event = intakeRegistry.logsEvents[0]
+
+          await flushBrowserLogs()
+
+          expect(event).toBeTruthy()
+          expect(event?.context).toEqual({
+            handlingStack: jasmine.stringMatching(HANDLING_STACK_REGEX),
+          })
+        })
+    })
+  })
+
+  describe('logger apis', () => {
+    const consoleApis = ['log', 'debug', 'error', 'info', 'warn'] as const
+
+    consoleApis.forEach((api) => {
+      createTest(`expose handling stack for DD_LOGS.logger.${api}`)
+        .withLogs(LOGS_CONFIG)
+        .withLogsInit((configuration, api: (typeof consoleApis)[number]) => {
+          window.DD_LOGS!.init(configuration)
+
+          function testHandlingStack() {
+            window.DD_LOGS!.logger[api]('foo')
+          }
+
+          testHandlingStack()
+        }, api)
+        .run(async ({ intakeRegistry }) => {
+          await flushEvents()
+
+          const event = intakeRegistry.logsEvents[0]
+
+          await flushBrowserLogs()
+
+          expect(event).toBeTruthy()
+          expect(event?.context).toEqual({
+            handlingStack: jasmine.stringMatching(HANDLING_STACK_REGEX),
+          })
+        })
+    })
+  })
 
   createTest('allow to modify service and version')
     .withRum(CONFIG)
