@@ -64,7 +64,7 @@ n=o.getElementsByTagName(u)[0];n.parentNode.insertBefore(d,n)
           DD_LOGS.setGlobalContext(${JSON.stringify(options.context)})
           ;(${options.logsInit.toString()})(
             ${formatConfiguration(options.logs, servers)},
-            ${options.logsInitArgs?.map((logInitArg) => JSON.stringify(logInitArg)).join(',')}
+            ${formatlogInitArgs(options.logsInitArgs)}
           )
         })
       </script>
@@ -103,7 +103,7 @@ export function bundleSetup(options: SetupOptions, servers: Servers) {
         DD_LOGS.setGlobalContext(${JSON.stringify(options.context)})
         ;(${options.logsInit.toString()})(
           ${formatConfiguration(options.logs, servers)},
-          ${options.logsInitArgs?.map((logInitArg) => JSON.stringify(logInitArg)).join(',')}
+          ${formatlogInitArgs(options.logsInitArgs)}
         )
       </script>
     `
@@ -142,7 +142,7 @@ export function npmSetup(options: SetupOptions, servers: Servers) {
           window.DD_LOGS.setGlobalContext(${JSON.stringify(options.context)})
           ;(${options.logsInit.toString()})(
             ${formatConfiguration(options.logs, servers)},
-            ${options.logsInitArgs?.map((logInitArg) => JSON.stringify(logInitArg)).join(',')}
+            ${formatlogInitArgs(options.logsInitArgs)}
           )
         }
       </script>
@@ -250,4 +250,8 @@ function formatConfiguration(initConfiguration: LogsInitConfiguration | RumInitC
     result = result.replace('"BEFORE_SEND"', initConfiguration.beforeSend.toString())
   }
   return result
+}
+
+function formatlogInitArgs(logInitArgs: any[]) {
+  return logInitArgs?.map((logInitArg) => JSON.stringify(logInitArg)).join(',')
 }
