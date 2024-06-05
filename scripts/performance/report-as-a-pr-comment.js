@@ -186,7 +186,7 @@ function formatBundleName(bundleName) {
 
 function formatSize(bytes) {
   if (bytes < 1024) {
-    return `${Math.floor(bytes)} B   `
+    return `${Math.round(bytes)} B`
   }
 
   return `${(bytes / 1024).toFixed(2)} KiB`
