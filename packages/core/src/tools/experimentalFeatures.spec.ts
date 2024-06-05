@@ -41,6 +41,7 @@ describe('initFeatureFlags', () => {
 
   afterEach(() => {
     delete (ExperimentalFeature as any).FOO
+    resetExperimentalFeatures()
   })
 
   it('ignores unknown experimental features', () => {
