@@ -340,8 +340,10 @@ describe('validateAndBuildRumConfiguration', () => {
           .enablePrivacyForActionName
       ).toBeFalse()
     })
+
     it('is only true when the feature is enabled and the option is true', () => {
       mockExperimentalFeatures([ExperimentalFeature.ENABLE_PRIVACY_FOR_ACTION_NAME])
+      expect(validateAndBuildRumConfiguration(DEFAULT_INIT_CONFIGURATION)!.enablePrivacyForActionName).toBeFalse()
       expect(
         validateAndBuildRumConfiguration({ ...DEFAULT_INIT_CONFIGURATION, enablePrivacyForActionName: true })!
           .enablePrivacyForActionName
