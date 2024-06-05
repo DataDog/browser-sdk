@@ -1116,11 +1116,11 @@ export interface CommonProperties {
   /**
    * The service name for this application
    */
-  readonly service?: string
+  service?: string
   /**
    * The version for this application
    */
-  readonly version?: string
+  version?: string
   /**
    * The build version for this application
    */

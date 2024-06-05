@@ -1,6 +1,7 @@
 import { catchUserErrors } from '../tools/catchUserErrors'
 import { setDebugMode } from '../tools/monitor'
 import { assign } from '../tools/utils/polyfills'
+import { display } from '../tools/display'
 
 // replaced at build time
 declare const __BUILD_ENV__SDK_VERSION__: string
@@ -47,7 +48,10 @@ export function makePublicApi<T extends PublicApi>(stub: Omit<T, keyof PublicApi
 }
 
 export function defineGlobal<Global, Name extends keyof Global>(global: Global, name: Name, api: Global[Name]) {
-  const existingGlobalVariable = global[name] as { q?: Array<() => void> } | undefined
+  const existingGlobalVariable = global[name] as { q?: Array<() => void>; version?: string } | undefined
+  if (existingGlobalVariable && !existingGlobalVariable.q && existingGlobalVariable.version) {
+    display.warn('SDK is loaded more than once. This is unsupported and might have unexpected behavior.')
+  }
   global[name] = api
   if (existingGlobalVariable && existingGlobalVariable.q) {
     existingGlobalVariable.q.forEach((fn) => catchUserErrors(fn, 'onReady callback threw an error:')())
