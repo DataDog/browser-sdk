@@ -67,7 +67,7 @@ describe('logger collection', () => {
     })
 
     for (const { status, api } of [
-      { status: StatusType.OK, api: ConsoleApiName.debug },
+      { status: StatusType.ok, api: ConsoleApiName.debug },
       { status: StatusType.debug, api: ConsoleApiName.debug },
       { status: StatusType.info, api: ConsoleApiName.info },
       { status: StatusType.notice, api: ConsoleApiName.info },
@@ -78,7 +78,7 @@ describe('logger collection', () => {
       { status: StatusType.emerg, api: ConsoleApiName.error },
     ]) {
       it(`should use console.${api} to log messages with status ${status}`, () => {
-        logger.setLevel(StatusType.OK)
+        logger.setLevel(StatusType.ok)
         handleLog({ message: 'message', status }, logger, COMMON_CONTEXT)
 
         expect(originalConsoleMethods[api]).toHaveBeenCalled()

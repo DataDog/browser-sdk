@@ -21,7 +21,7 @@ export interface LogsMessage {
 }
 
 export const StatusType = {
-  OK: 'OK',
+  ok: 'ok',
   debug: 'debug',
   info: 'info',
   notice: 'notice',
@@ -100,8 +100,8 @@ export class Logger {
     )
   }
 
-  OK(message: string, messageContext?: object, error?: Error) {
-    this.log(message, messageContext, StatusType.OK, error)
+  ok(message: string, messageContext?: object, error?: Error) {
+    this.log(message, messageContext, StatusType.ok, error)
   }
 
   debug(message: string, messageContext?: object, error?: Error) {

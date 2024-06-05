@@ -15,7 +15,7 @@ import type { Logger, LogsMessage } from '../logger'
 import { StatusType, HandlerType } from '../logger'
 
 export const STATUS_PRIORITIES: { [key in StatusType]: number } = {
-  [StatusType.OK]: 0,
+  [StatusType.ok]: 0,
   [StatusType.debug]: 1,
   [StatusType.info]: 2,
   [StatusType.notice]: 4,
@@ -67,7 +67,7 @@ export function isAuthorized(status: StatusType, handlerType: HandlerType, logge
 }
 
 const loggerToConsoleApiName: { [key in StatusType]: ConsoleApiName } = {
-  [StatusType.OK]: ConsoleApiName.debug,
+  [StatusType.ok]: ConsoleApiName.debug,
   [StatusType.debug]: ConsoleApiName.debug,
   [StatusType.info]: ConsoleApiName.info,
   [StatusType.notice]: ConsoleApiName.info,

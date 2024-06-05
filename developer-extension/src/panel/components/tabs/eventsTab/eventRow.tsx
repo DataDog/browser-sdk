@@ -45,7 +45,7 @@ const LOG_STATUS_COLOR = {
   notice: 'blue',
   info: 'blue',
   debug: 'cyan',
-  OK: 'cyan',
+  ok: 'cyan',
 }
 
 const RESOURCE_TYPE_LABELS: Record<string, string | undefined> = {
