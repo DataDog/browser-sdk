@@ -32,7 +32,8 @@ async function reportAsPrComment(localBundleSizes, memoryLocalPerformance) {
     memoryBasePerformance,
     memoryLocalPerformance,
     cpuBasePerformance,
-    cpuLocalPerformance
+    cpuLocalPerformance,
+    pr.number
   )
   await updateOrAddComment(message, pr.number, commentId)
 }
@@ -109,7 +110,8 @@ function createMessage(
   memoryBasePerformance,
   memoryLocalPerformance,
   cpuBasePerformance,
-  cpuLocalPerformance
+  cpuLocalPerformance,
+  prNumber
 ) {
   let highIncreaseDetected = false
   const bundleRows = differenceBundle.map((diff, index) => {
@@ -172,6 +174,10 @@ function createMessage(
     headers: ['Action Name', 'Base Consumption Memory (bytes)', 'Local Consumption Memory (bytes)', '𝚫 (bytes)'],
     rows: memoryRows,
   })
+  message += '\n</details>\n\n'
+
+  message += '<details>\n<summary>ℹ️ Useful Testing Links</summary>\n\n'
+  message += `- [Playground with PR Bundle](https://datadoghq.dev/browser-sdk-test-playground/performance/memory?prNumber=${prNumber})\n`
   message += '\n</details>\n\n'
 
   return message
