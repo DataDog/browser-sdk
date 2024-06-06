@@ -1,5 +1,6 @@
 import type { Context, TimeStamp } from '@datadog/browser-core'
 import {
+  ConsoleApiName,
   includes,
   combine,
   ErrorSource,
@@ -14,10 +15,15 @@ import type { Logger, LogsMessage } from '../logger'
 import { StatusType, HandlerType } from '../logger'
 
 export const STATUS_PRIORITIES: { [key in StatusType]: number } = {
-  [StatusType.debug]: 0,
-  [StatusType.info]: 1,
-  [StatusType.warn]: 2,
-  [StatusType.error]: 3,
+  [StatusType.ok]: 0,
+  [StatusType.debug]: 1,
+  [StatusType.info]: 2,
+  [StatusType.notice]: 4,
+  [StatusType.warn]: 5,
+  [StatusType.error]: 6,
+  [StatusType.critical]: 7,
+  [StatusType.alert]: 8,
+  [StatusType.emerg]: 9,
 }
 
 export function startLoggerCollection(lifeCycle: LifeCycle) {
@@ -60,6 +66,18 @@ export function isAuthorized(status: StatusType, handlerType: HandlerType, logge
   )
 }
 
-function displayInConsole(logsMessage: LogsMessage, messageContext: Context | undefined) {
-  originalConsoleMethods[logsMessage.status].call(globalConsole, logsMessage.message, messageContext)
+const loggerToConsoleApiName: { [key in StatusType]: ConsoleApiName } = {
+  [StatusType.ok]: ConsoleApiName.debug,
+  [StatusType.debug]: ConsoleApiName.debug,
+  [StatusType.info]: ConsoleApiName.info,
+  [StatusType.notice]: ConsoleApiName.info,
+  [StatusType.warn]: ConsoleApiName.warn,
+  [StatusType.error]: ConsoleApiName.error,
+  [StatusType.critical]: ConsoleApiName.error,
+  [StatusType.alert]: ConsoleApiName.error,
+  [StatusType.emerg]: ConsoleApiName.error,
+}
+
+function displayInConsole({ status, message }: LogsMessage, messageContext: Context | undefined) {
+  originalConsoleMethods[loggerToConsoleApiName[status]].call(globalConsole, message, messageContext)
 }

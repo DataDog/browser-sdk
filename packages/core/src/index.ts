@@ -17,6 +17,7 @@ export {
   addExperimentalFeatures,
   resetExperimentalFeatures,
   getExperimentalFeatures,
+  initFeatureFlags,
   ExperimentalFeature,
 } from './tools/experimentalFeatures'
 export { trackRuntimeError } from './domain/error/trackRuntimeError'
