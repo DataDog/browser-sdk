@@ -1,7 +1,6 @@
 import { catchUserErrors } from '../../tools/catchUserErrors'
 import { DOCS_ORIGIN, display } from '../../tools/display'
 import type { RawTelemetryConfiguration } from '../telemetry'
-import { ExperimentalFeature, addExperimentalFeatures } from '../../tools/experimentalFeatures'
 import type { Duration } from '../../tools/utils/timeUtils'
 import { ONE_SECOND } from '../../tools/utils/timeUtils'
 import { isPercentage } from '../../tools/utils/numberUtils'
@@ -258,15 +257,6 @@ export function validateAndBuildConfiguration(initConfiguration: InitConfigurati
   if (initConfiguration.site && !isDatadogSite(initConfiguration.site)) {
     display.error(`Site should be a valid Datadog site. Learn more here: ${DOCS_ORIGIN}/getting_started/site/.`)
     return
-  }
-
-  // Set the experimental feature flags as early as possible, so we can use them in most places
-  if (Array.isArray(initConfiguration.enableExperimentalFeatures)) {
-    addExperimentalFeatures(
-      initConfiguration.enableExperimentalFeatures.filter((flag): flag is ExperimentalFeature =>
-        objectHasValue(ExperimentalFeature, flag)
-      )
-    )
   }
 
   return assign(
