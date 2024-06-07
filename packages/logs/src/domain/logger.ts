@@ -63,7 +63,7 @@ export class Logger {
   ok(message: string, messageContext?: object, error?: Error) {
     let handlingStack: string | undefined
 
-    if (isAuthorized(StatusType.error, HandlerType.http, this)) {
+    if (isAuthorized(StatusType.ok, HandlerType.http, this)) {
       handlingStack = createHandlingStack()
     }
 
@@ -93,7 +93,7 @@ export class Logger {
   notice(message: string, messageContext?: object, error?: Error) {
     let handlingStack: string | undefined
 
-    if (isAuthorized(StatusType.error, HandlerType.http, this)) {
+    if (isAuthorized(StatusType.notice, HandlerType.http, this)) {
       handlingStack = createHandlingStack()
     }
 
@@ -123,7 +123,7 @@ export class Logger {
   critical(message: string, messageContext?: object, error?: Error) {
     let handlingStack: string | undefined
 
-    if (isAuthorized(StatusType.warn, HandlerType.http, this)) {
+    if (isAuthorized(StatusType.critical, HandlerType.http, this)) {
       handlingStack = createHandlingStack()
     }
 
@@ -133,7 +133,7 @@ export class Logger {
   alert(message: string, messageContext?: object, error?: Error) {
     let handlingStack: string | undefined
 
-    if (isAuthorized(StatusType.warn, HandlerType.http, this)) {
+    if (isAuthorized(StatusType.alert, HandlerType.http, this)) {
       handlingStack = createHandlingStack()
     }
 
@@ -143,7 +143,7 @@ export class Logger {
   emerg(message: string, messageContext?: object, error?: Error) {
     let handlingStack: string | undefined
 
-    if (isAuthorized(StatusType.warn, HandlerType.http, this)) {
+    if (isAuthorized(StatusType.emerg, HandlerType.http, this)) {
       handlingStack = createHandlingStack()
     }
 
