@@ -12,10 +12,10 @@ import {
   objectHasValue,
   validateAndBuildConfiguration,
 } from '@datadog/browser-core'
-import type { RumEventDomainContext } from '../domainContext.types'
-import type { RumEvent } from '../rumEvent.types'
-import { isTracingOption } from './tracing/tracer'
-import type { PropagatorType, TracingOption } from './tracing/tracer.types'
+import type { RumEventDomainContext } from '../../domainContext.types'
+import type { RumEvent } from '../../rumEvent.types'
+import { isTracingOption } from '../tracing/tracer'
+import type { PropagatorType, TracingOption } from '../tracing/tracer.types'
 
 export const DEFAULT_PROPAGATOR_TYPES: PropagatorType[] = ['tracecontext', 'datadog']
 
@@ -50,6 +50,7 @@ export interface RumInitConfiguration extends InitConfiguration {
    * See [Content Security Policy guidelines](https://docs.datadoghq.com/integrations/content_security_policy_logs/?tab=firefox#use-csp-with-real-user-monitoring-and-session-replay) for further information.
    */
   compressIntakeRequests?: boolean | undefined
+  remoteConfigurationId?: string | undefined
 
   // tracing options
   /**
@@ -204,6 +205,7 @@ export function validateAndBuildRumConfiguration(
       traceContextInjection: objectHasValue(TraceContextInjection, initConfiguration.traceContextInjection)
         ? initConfiguration.traceContextInjection
         : TraceContextInjection.ALL,
+      storeContextsAcrossPages: initConfiguration.storeContextsAcrossPages,
     },
     baseConfiguration
   )
