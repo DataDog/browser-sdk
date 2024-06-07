@@ -170,12 +170,12 @@ describe('microfrontend', () => {
   })
 
   describe('logger apis', () => {
-    const consoleApis = ['log', 'debug', 'error', 'info', 'warn'] as const
+    const loggerApis = ['log', 'ok', 'debug', 'info', 'notice', 'warn', 'error', 'critical', 'alert', 'emerg'] as const
 
-    consoleApis.forEach((api) => {
+    loggerApis.forEach((api) => {
       createTest(`expose handling stack for DD_LOGS.logger.${api}`)
         .withLogs(LOGS_CONFIG)
-        .withLogsInit((configuration, api: (typeof consoleApis)[number]) => {
+        .withLogsInit((configuration, api: (typeof loggerApis)[number]) => {
           window.DD_LOGS!.init(configuration)
 
           function testHandlingStack() {
