@@ -60,6 +60,16 @@ export class Logger {
     this.logImplementation(message, messageContext, status, error, handlingStack)
   }
 
+  ok(message: string, messageContext?: object, error?: Error) {
+    let handlingStack: string | undefined
+
+    if (isAuthorized(StatusType.error, HandlerType.http, this)) {
+      handlingStack = createHandlingStack()
+    }
+
+    this.logImplementation(message, messageContext, StatusType.ok, error, handlingStack)
+  }
+
   debug(message: string, messageContext?: object, error?: Error) {
     let handlingStack: string | undefined
 
@@ -80,6 +90,16 @@ export class Logger {
     this.logImplementation(message, messageContext, StatusType.info, error, handlingStack)
   }
 
+  notice(message: string, messageContext?: object, error?: Error) {
+    let handlingStack: string | undefined
+
+    if (isAuthorized(StatusType.error, HandlerType.http, this)) {
+      handlingStack = createHandlingStack()
+    }
+
+    this.logImplementation(message, messageContext, StatusType.notice, error, handlingStack)
+  }
+
   warn(message: string, messageContext?: object, error?: Error) {
     let handlingStack: string | undefined
 
@@ -98,6 +118,36 @@ export class Logger {
     }
 
     this.logImplementation(message, messageContext, StatusType.error, error, handlingStack)
+  }
+
+  critical(message: string, messageContext?: object, error?: Error) {
+    let handlingStack: string | undefined
+
+    if (isAuthorized(StatusType.warn, HandlerType.http, this)) {
+      handlingStack = createHandlingStack()
+    }
+
+    this.logImplementation(message, messageContext, StatusType.critical, error, handlingStack)
+  }
+
+  alert(message: string, messageContext?: object, error?: Error) {
+    let handlingStack: string | undefined
+
+    if (isAuthorized(StatusType.warn, HandlerType.http, this)) {
+      handlingStack = createHandlingStack()
+    }
+
+    this.logImplementation(message, messageContext, StatusType.alert, error, handlingStack)
+  }
+
+  emerg(message: string, messageContext?: object, error?: Error) {
+    let handlingStack: string | undefined
+
+    if (isAuthorized(StatusType.warn, HandlerType.http, this)) {
+      handlingStack = createHandlingStack()
+    }
+
+    this.logImplementation(message, messageContext, StatusType.emerg, error, handlingStack)
   }
 
   setContext(context: object) {

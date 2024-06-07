@@ -9,6 +9,7 @@ import {
   clocksNow,
   assign,
   getEventBridge,
+  initFeatureFlags,
 } from '@datadog/browser-core'
 import type { TrackingConsentState, DeflateWorker } from '@datadog/browser-core'
 import {
@@ -77,6 +78,9 @@ export function createPreStartStrategy(
         display.error('Missing configuration')
         return
       }
+
+      // Set the experimental feature flags as early as possible, so we can use them in most places
+      initFeatureFlags(initConfiguration.enableExperimentalFeatures)
 
       const eventBridgeAvailable = canUseEventBridge()
       if (eventBridgeAvailable) {

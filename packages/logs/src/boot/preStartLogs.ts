@@ -5,6 +5,7 @@ import {
   canUseEventBridge,
   display,
   displayAlreadyInitializedError,
+  initFeatureFlags,
   noop,
   timeStampNow,
 } from '@datadog/browser-core'
@@ -44,6 +45,8 @@ export function createPreStartStrategy(
         display.error('Missing configuration')
         return
       }
+      // Set the experimental feature flags as early as possible, so we can use them in most places
+      initFeatureFlags(initConfiguration.enableExperimentalFeatures)
 
       if (canUseEventBridge()) {
         initConfiguration = overrideInitConfigurationForBridge(initConfiguration)
