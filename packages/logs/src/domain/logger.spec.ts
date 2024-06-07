@@ -26,6 +26,10 @@ describe('Logger', () => {
   })
 
   describe('log methods', () => {
+    beforeEach(() => {
+      logger.setLevel(StatusType.ok)
+    })
+
     it("'logger.log' should have info status by default", () => {
       logger.log('message')
 

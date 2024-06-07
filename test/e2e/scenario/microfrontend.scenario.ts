@@ -177,6 +177,7 @@ describe('microfrontend', () => {
         .withLogs(LOGS_CONFIG)
         .withLogsInit((configuration, api: (typeof loggerApis)[number]) => {
           window.DD_LOGS!.init(configuration)
+          window.DD_LOGS!.logger.setLevel('ok')
 
           function testHandlingStack() {
             window.DD_LOGS!.logger[api]('foo')
