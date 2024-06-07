@@ -23,6 +23,7 @@ import {
 import type { CommonContext } from '../domain/contexts/commonContext'
 import type { ViewOptions } from '../domain/view/trackViews'
 import { fetchAndApplyRemoteConfiguration, serializeRumConfiguration } from '../domain/configuration'
+import { callHook } from '../domain/plugins'
 import type { RumPublicApiOptions, Strategy } from './rumPublicApi'
 import type { StartRumResult } from './startRum'
 
@@ -121,7 +122,7 @@ export function createPreStartStrategy(
   }
 
   return {
-    init(initConfiguration) {
+    init(initConfiguration, publicApi) {
       if (!initConfiguration) {
         display.error('Missing configuration')
         return
@@ -139,6 +140,8 @@ export function createPreStartStrategy(
       if (ignoreInitIfSyntheticsWillInjectRum && willSyntheticsInjectRum()) {
         return
       }
+
+      callHook(initConfiguration.plugins, 'onInit', { initConfiguration, publicApi })
 
       if (
         initConfiguration.remoteConfigurationId &&

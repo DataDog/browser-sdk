@@ -16,6 +16,7 @@ import {
 } from '@datadog/browser-core'
 import type { RumEventDomainContext } from '../../domainContext.types'
 import type { RumEvent } from '../../rumEvent.types'
+import type { RumPlugin } from '../plugins'
 import { isTracingOption } from '../tracing/tracer'
 import type { PropagatorType, TracingOption } from '../tracing/tracer.types'
 
@@ -124,6 +125,11 @@ export interface RumInitConfiguration extends InitConfiguration {
    * Enables collection of long task events.
    */
   trackLongTasks?: boolean | undefined
+
+  /**
+   * List of plugins to enable.
+   */
+  plugins?: RumPlugin[] | undefined
 }
 
 export type HybridInitConfiguration = Omit<RumInitConfiguration, 'applicationId' | 'clientToken'>
@@ -214,6 +220,7 @@ export function validateAndBuildRumConfiguration(
       traceContextInjection: objectHasValue(TraceContextInjection, initConfiguration.traceContextInjection)
         ? initConfiguration.traceContextInjection
         : TraceContextInjection.ALL,
+      plugins: initConfiguration.plugins,
     },
     baseConfiguration
   )
@@ -296,6 +303,7 @@ export function serializeRumConfiguration(configuration: RumInitConfiguration) {
       track_user_interactions: configuration.trackUserInteractions,
       track_resources: configuration.trackResources,
       track_long_task: configuration.trackLongTasks,
+      plugins: configuration.plugins?.map((plugin) => assign({ name: plugin.name }, plugin.serializeConfiguration?.())),
     },
     baseSerializedConfiguration
   ) satisfies RawTelemetryConfiguration

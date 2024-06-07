@@ -279,7 +279,7 @@ export interface RumPublicApiOptions {
 const RUM_STORAGE_KEY = 'rum'
 
 export interface Strategy {
-  init: (initConfiguration: RumInitConfiguration) => void
+  init: (initConfiguration: RumInitConfiguration, publicApi: RumPublicApi) => void
   initConfiguration: RumInitConfiguration | undefined
   getInternalContext: StartRumResult['getInternalContext']
   stopSession: StartRumResult['stopSession']
@@ -396,8 +396,8 @@ export function makeRumPublicApi(
     strategy.startView(sanitizedOptions)
     addTelemetryUsage({ feature: 'start-view' })
   })
-  const rumPublicApi = makePublicApi<RumPublicApi>({
-    init: monitor((initConfiguration) => strategy.init(initConfiguration)),
+  const rumPublicApi: RumPublicApi = makePublicApi<RumPublicApi>({
+    init: monitor((initConfiguration) => strategy.init(initConfiguration, rumPublicApi)),
 
     setTrackingConsent: monitor((trackingConsent) => {
       trackingConsentState.update(trackingConsent)

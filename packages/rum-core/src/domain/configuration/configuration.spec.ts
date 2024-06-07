@@ -476,6 +476,7 @@ describe('serializeRumConfiguration', () => {
       trackResources: true,
       trackLongTasks: true,
       remoteConfigurationId: '123',
+      plugins: [{ name: 'foo', serializeConfiguration: () => ({ bar: true }) }],
     }
 
     type MapRumInitConfigurationKey<Key extends string> = Key extends keyof InitConfiguration
@@ -512,6 +513,7 @@ describe('serializeRumConfiguration', () => {
       track_long_task: true,
       use_worker_url: true,
       compress_intake_requests: true,
+      plugins: [{ name: 'foo', bar: true }],
     })
   })
 })
