@@ -1,6 +1,5 @@
 import { monitor } from '../tools/monitor'
 import { getZoneJsOriginalValue } from '../tools/getZoneJsOriginalValue'
-import type { Configuration } from '../domain/configuration'
 import type { CookieStore, CookieStoreEventMap, VisualViewport, VisualViewportEventMap } from './types'
 
 export type TrustableEvent<E extends Event = Event> = E & { __ddIsTrusted?: boolean }
@@ -90,7 +89,7 @@ type EventMapFor<T> = T extends Window
  * * returns a `stop` function to remove the listener
  */
 export function addEventListener<Target extends EventTarget, EventName extends keyof EventMapFor<Target> & string>(
-  configuration: Configuration,
+  configuration: { allowUntrustedEvents?: boolean | undefined },
   eventTarget: Target,
   eventName: EventName,
   listener: (event: EventMapFor<Target>[EventName] & { type: EventName }) => void,
@@ -112,7 +111,7 @@ export function addEventListener<Target extends EventTarget, EventName extends k
  * * with `once: true`, the listener will be called at most once, even if different events are listened
  */
 export function addEventListeners<Target extends EventTarget, EventName extends keyof EventMapFor<Target> & string>(
-  configuration: Configuration,
+  configuration: { allowUntrustedEvents?: boolean | undefined },
   eventTarget: Target,
   eventNames: EventName[],
   listener: (event: EventMapFor<Target>[EventName] & { type: EventName }) => void,

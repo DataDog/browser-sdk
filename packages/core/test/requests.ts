@@ -279,6 +279,7 @@ class StubEventEmitter {
 class StubXhr extends StubEventEmitter {
   public static onSend: (xhr: StubXhr) => void | undefined
   public response: string | undefined = undefined
+  public responseText: string | undefined = undefined
   public status: number | undefined = undefined
   public readyState: number = XMLHttpRequest.UNSENT
   public onreadystatechange: () => void = noop
@@ -313,6 +314,7 @@ class StubXhr extends StubEventEmitter {
     }
     this.hasEnded = true
     this.response = response
+    this.responseText = response
     this.status = status
     this.readyState = XMLHttpRequest.DONE
 
