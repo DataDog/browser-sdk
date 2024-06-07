@@ -799,6 +799,19 @@ describe('start view', () => {
     )
   })
 
+  it('should ignore null service/version', () => {
+    setupBuilder.build()
+    const { getViewUpdate, startView } = viewTest
+
+    startView({ service: null, version: null })
+    expect(getViewUpdate(2)).toEqual(
+      jasmine.objectContaining({
+        service: undefined,
+        version: undefined,
+      })
+    )
+  })
+
   it('should use the provided clock to stop the current view and start the new one', () => {
     const { clock } = setupBuilder.withFakeClock().build()
     const { getViewUpdate, startView } = viewTest
