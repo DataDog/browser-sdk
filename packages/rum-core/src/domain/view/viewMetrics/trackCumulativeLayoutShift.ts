@@ -1,5 +1,5 @@
-import { round, find, ONE_SECOND, noop } from '@datadog/browser-core'
-import type { RelativeTime, WeakRef, WeakRefConstructor } from '@datadog/browser-core'
+import { round, find, ONE_SECOND, noop, elapsed } from '@datadog/browser-core'
+import type { Duration, RelativeTime, WeakRef, WeakRefConstructor } from '@datadog/browser-core'
 import { isElementNode } from '../../../browser/htmlDomUtils'
 import type { LifeCycle } from '../../lifeCycle'
 import { LifeCycleEventType } from '../../lifeCycle'
@@ -11,6 +11,7 @@ import type { RumConfiguration } from '../../configuration'
 export interface CumulativeLayoutShift {
   value: number
   targetSelector?: string
+  time?: Duration
 }
 
 declare const WeakRef: WeakRefConstructor
@@ -35,6 +36,7 @@ declare const WeakRef: WeakRefConstructor
 export function trackCumulativeLayoutShift(
   configuration: RumConfiguration,
   lifeCycle: LifeCycle,
+  viewStart: RelativeTime,
   callback: (cumulativeLayoutShift: CumulativeLayoutShift) => void
 ) {
   if (!isLayoutShiftSupported()) {
@@ -46,6 +48,7 @@ export function trackCumulativeLayoutShift(
   let maxClsValue = 0
   // WeakRef is not supported in IE11 and Safari mobile, but so is the layout shift API, so this code won't be executed in these browsers
   let maxClsTarget: WeakRef<HTMLElement> | undefined
+  let maxClsStartTime: Duration | undefined
 
   // if no layout shift happen the value should be reported as 0
   callback({
@@ -61,6 +64,7 @@ export function trackCumulativeLayoutShift(
         if (isMaxValue) {
           const target = getTargetFromSource(entry.sources)
           maxClsTarget = target ? new WeakRef(target) : undefined
+          maxClsStartTime = elapsed(viewStart, entry.startTime)
         }
 
         if (cumulatedValue > maxClsValue) {
@@ -70,6 +74,7 @@ export function trackCumulativeLayoutShift(
           callback({
             value: round(maxClsValue, 4),
             targetSelector: target && getSelectorFromElement(target, configuration.actionNameAttribute),
+            time: maxClsStartTime,
           })
         }
       }
