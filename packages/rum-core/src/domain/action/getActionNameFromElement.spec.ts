@@ -508,7 +508,7 @@ describe('getActionNameFromElement', () => {
         ).toEqual('Masked Element')
       })
 
-      it('inherent privacy level and does not fallback to masked child text', () => {
+      it('inherit privacy level and does not fallback to masked child text', () => {
         expect(
           getActionNameFromElement(
             appendElement(`
@@ -553,7 +553,7 @@ describe('getActionNameFromElement', () => {
         ).toEqual('bar foo')
       })
 
-      it('inherent privacy level and does not fallback to masked child text with mixed classname and attribute', () => {
+      it('inherit privacy level and does not fallback to masked child text with mixed classname and attribute', () => {
         expect(
           getActionNameFromElement(
             appendElement(`
