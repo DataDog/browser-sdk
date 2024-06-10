@@ -37,24 +37,18 @@ export function startNetworkErrorCollection(configuration: LogsConfiguration, li
   function handleResponse(type: RequestType, request: XhrCompleteContext | FetchResolveContext) {
     if (!configuration.isIntakeUrl(request.url) && (isRejected(request) || isServerError(request.status))) {
       if ('xhr' in request) {
-        computeXhrResponseData(request.xhr, configuration, (responseData) =>
-          onResponseDataAvailable(responseData, request.handlingStack)
-        )
+        computeXhrResponseData(request.xhr, configuration, onResponseDataAvailable)
       } else if (request.response) {
-        computeFetchResponseText(request.response, configuration, (responseData) =>
-          onResponseDataAvailable(responseData, request.handlingStack)
-        )
+        computeFetchResponseText(request.response, configuration, onResponseDataAvailable)
       } else if (request.error) {
-        computeFetchErrorText(request.error, configuration, (responseData) =>
-          onResponseDataAvailable(responseData, request.handlingStack)
-        )
+        computeFetchErrorText(request.error, configuration, onResponseDataAvailable)
       }
     }
 
-    function onResponseDataAvailable(responseData: unknown, handlingStack?: string) {
+    function onResponseDataAvailable(responseData: unknown) {
       const domainContext: LogsEventDomainContext<typeof ErrorSource.NETWORK> = {
         isAborted: request.isAborted,
-        handlingStack,
+        handlingStack: request.handlingStack,
       }
 
       lifeCycle.notify(LifeCycleEventType.RAW_LOG_COLLECTED, {
