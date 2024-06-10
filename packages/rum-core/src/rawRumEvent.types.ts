@@ -92,8 +92,10 @@ export interface RawRumViewEvent {
     first_input_time?: ServerDuration
     first_input_target_selector?: string
     interaction_to_next_paint?: ServerDuration
+    interaction_to_next_paint_time?: ServerDuration
     interaction_to_next_paint_target_selector?: string
     cumulative_layout_shift?: number
+    cumulative_layout_shift_time?: ServerDuration
     cumulative_layout_shift_target_selector?: string
     custom_timings?: {
       [key: string]: ServerDuration
