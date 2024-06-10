@@ -9,6 +9,9 @@
  */
 // We want to use a real enum (i.e. not a const enum) here, to be able to check whether an arbitrary
 // string is an expected feature flag
+
+import { objectHasValue } from './utils/objectUtils'
+
 // eslint-disable-next-line no-restricted-syntax
 export enum ExperimentalFeature {
   WRITABLE_RESOURCE_GRAPHQL = 'writable_resource_graphql',
@@ -19,6 +22,16 @@ export enum ExperimentalFeature {
 }
 
 const enabledExperimentalFeatures: Set<ExperimentalFeature> = new Set()
+
+export function initFeatureFlags(enableExperimentalFeatures?: string[] | undefined) {
+  if (Array.isArray(enableExperimentalFeatures)) {
+    addExperimentalFeatures(
+      enableExperimentalFeatures.filter((flag): flag is ExperimentalFeature =>
+        objectHasValue(ExperimentalFeature, flag)
+      )
+    )
+  }
+}
 
 export function addExperimentalFeatures(enabledFeatures: ExperimentalFeature[]): void {
   enabledFeatures.forEach((flag) => {

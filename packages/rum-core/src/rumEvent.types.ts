@@ -764,6 +764,10 @@ export type RumViewEvent = CommonProperties &
        */
       readonly interaction_to_next_paint?: number
       /**
+       * Duration in ns between start of the view and start of the INP
+       */
+      readonly interaction_to_next_paint_time?: number
+      /**
        * CSS selector path of the interacted element corresponding to INP
        */
       readonly interaction_to_next_paint_target_selector?: string
@@ -771,6 +775,10 @@ export type RumViewEvent = CommonProperties &
        * Total layout shift score that occurred on the view
        */
       readonly cumulative_layout_shift?: number
+      /**
+       * Duration in ns between start of the view and start of the largest layout shift contributing to CLS
+       */
+      readonly cumulative_layout_shift_time?: number
       /**
        * CSS selector path of the first element (in document order) of the largest layout shift contributing to CLS
        */
@@ -1069,6 +1077,14 @@ export type RumVitalEvent = CommonProperties &
        */
       readonly name?: string
       /**
+       * Details of the vital. It can be used as a secondary identifier (URL, React component name...)
+       */
+      readonly details?: string
+      /**
+       * Duration of the vital in nanoseconds
+       */
+      readonly duration?: number
+      /**
        * User custom vital.
        */
       readonly custom?: {
@@ -1116,11 +1132,11 @@ export interface CommonProperties {
   /**
    * The service name for this application
    */
-  readonly service?: string
+  service?: string
   /**
    * The version for this application
    */
-  readonly version?: string
+  version?: string
   /**
    * The build version for this application
    */

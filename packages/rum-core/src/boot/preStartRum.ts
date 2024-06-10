@@ -9,6 +9,8 @@ import {
   clocksNow,
   assign,
   getEventBridge,
+  addTelemetryConfiguration,
+  initFeatureFlags,
 } from '@datadog/browser-core'
 import type { TrackingConsentState, DeflateWorker } from '@datadog/browser-core'
 import {
@@ -18,6 +20,7 @@ import {
 } from '../domain/configuration'
 import type { CommonContext } from '../domain/contexts/commonContext'
 import type { ViewOptions } from '../domain/view/trackViews'
+import { serializeRumConfiguration } from '../domain/configuration'
 import type { RumPublicApiOptions, Strategy } from './rumPublicApi'
 import type { StartRumResult } from './startRum'
 
@@ -26,7 +29,6 @@ export function createPreStartStrategy(
   getCommonContext: () => CommonContext,
   trackingConsentState: TrackingConsentState,
   doStartRum: (
-    initConfiguration: RumInitConfiguration,
     configuration: RumConfiguration,
     deflateWorker: DeflateWorker | undefined,
     initialViewOptions?: ViewOptions
@@ -66,7 +68,7 @@ export function createPreStartStrategy(
       initialViewOptions = firstStartViewCall.options
     }
 
-    const startRumResult = doStartRum(cachedInitConfiguration, cachedConfiguration, deflateWorker, initialViewOptions)
+    const startRumResult = doStartRum(cachedConfiguration, deflateWorker, initialViewOptions)
 
     bufferApiCalls.drain(startRumResult)
   }
@@ -78,6 +80,9 @@ export function createPreStartStrategy(
         return
       }
 
+      // Set the experimental feature flags as early as possible, so we can use them in most places
+      initFeatureFlags(initConfiguration.enableExperimentalFeatures)
+
       const eventBridgeAvailable = canUseEventBridge()
       if (eventBridgeAvailable) {
         initConfiguration = overrideInitConfigurationForBridge(initConfiguration)
@@ -85,6 +90,7 @@ export function createPreStartStrategy(
 
       // Expose the initial configuration regardless of initialization success.
       cachedInitConfiguration = initConfiguration
+      addTelemetryConfiguration(serializeRumConfiguration(initConfiguration))
 
       if (cachedConfiguration) {
         displayAlreadyInitializedError('DD_RUM', initConfiguration)

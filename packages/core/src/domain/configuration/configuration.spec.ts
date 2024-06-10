@@ -35,11 +35,6 @@ describe('validateAndBuildConfiguration', () => {
       delete (ExperimentalFeature as any).FOO
     })
 
-    it('updates experimental feature flags', () => {
-      validateAndBuildConfiguration({ clientToken, enableExperimentalFeatures: ['foo'] })
-      expect(isExperimentalFeatureEnabled(TEST_FEATURE_FLAG)).toBeTrue()
-    })
-
     it('ignores unknown experimental features', () => {
       validateAndBuildConfiguration({
         clientToken,
