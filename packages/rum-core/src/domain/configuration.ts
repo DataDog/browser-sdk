@@ -134,9 +134,8 @@ export function validateAndBuildRumConfiguration(
         ? initConfiguration.defaultPrivacyLevel
         : DefaultPrivacyLevel.MASK,
       enablePrivacyForActionName:
-        (isExperimentalFeatureEnabled(ExperimentalFeature.ENABLE_PRIVACY_FOR_ACTION_NAME) &&
-          initConfiguration.enablePrivacyForActionName) ??
-        false,
+        isExperimentalFeatureEnabled(ExperimentalFeature.ENABLE_PRIVACY_FOR_ACTION_NAME) &&
+          !!initConfiguration.enablePrivacyForActionName
       customerDataTelemetrySampleRate: 1,
       traceContextInjection: objectHasValue(TraceContextInjection, initConfiguration.traceContextInjection)
         ? initConfiguration.traceContextInjection
