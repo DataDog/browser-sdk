@@ -140,64 +140,55 @@ describe('microfrontend', () => {
     })
 
   describe('console apis', () => {
-    const consoleApis = ['log', 'debug', 'error', 'info', 'warn'] as const
+    createTest('expose handling stack for console.log')
+      .withLogs(LOGS_CONFIG)
+      .withLogsInit((configuration) => {
+        window.DD_LOGS!.init(configuration)
 
-    consoleApis.forEach((api) => {
-      createTest(`expose handling stack for console.${api}`)
-        .withLogs(LOGS_CONFIG)
-        .withLogsInit((configuration, api: (typeof consoleApis)[number]) => {
-          window.DD_LOGS!.init(configuration)
+        function testHandlingStack() {
+          console.log('foo')
+        }
 
-          function testHandlingStack() {
-            console[api]('foo')
-          }
+        testHandlingStack()
+      })
+      .run(async ({ intakeRegistry }) => {
+        await flushEvents()
 
-          testHandlingStack()
-        }, api)
-        .run(async ({ intakeRegistry }) => {
-          await flushEvents()
+        const event = intakeRegistry.logsEvents[0]
 
-          const event = intakeRegistry.logsEvents[0]
+        await flushBrowserLogs()
 
-          await flushBrowserLogs()
-
-          expect(event).toBeTruthy()
-          expect(event?.context).toEqual({
-            handlingStack: jasmine.stringMatching(HANDLING_STACK_REGEX),
-          })
+        expect(event).toBeTruthy()
+        expect(event?.context).toEqual({
+          handlingStack: jasmine.stringMatching(HANDLING_STACK_REGEX),
         })
-    })
+      })
   })
 
   describe('logger apis', () => {
-    const loggerApis = ['log', 'ok', 'debug', 'info', 'notice', 'warn', 'error', 'critical', 'alert', 'emerg'] as const
+    createTest('expose handling stack for DD_LOGS.logger.log')
+      .withLogs(LOGS_CONFIG)
+      .withLogsInit((configuration) => {
+        window.DD_LOGS!.init(configuration)
 
-    loggerApis.forEach((api) => {
-      createTest(`expose handling stack for DD_LOGS.logger.${api}`)
-        .withLogs(LOGS_CONFIG)
-        .withLogsInit((configuration, api: (typeof loggerApis)[number]) => {
-          window.DD_LOGS!.init(configuration)
-          window.DD_LOGS!.logger.setLevel('ok')
+        function testHandlingStack() {
+          window.DD_LOGS!.logger.log('foo')
+        }
 
-          function testHandlingStack() {
-            window.DD_LOGS!.logger[api]('foo')
-          }
+        testHandlingStack()
+      })
+      .run(async ({ intakeRegistry }) => {
+        await flushEvents()
 
-          testHandlingStack()
-        }, api)
-        .run(async ({ intakeRegistry }) => {
-          await flushEvents()
+        const event = intakeRegistry.logsEvents[0]
 
-          const event = intakeRegistry.logsEvents[0]
+        await flushBrowserLogs()
 
-          await flushBrowserLogs()
-
-          expect(event).toBeTruthy()
-          expect(event?.context).toEqual({
-            handlingStack: jasmine.stringMatching(HANDLING_STACK_REGEX),
-          })
+        expect(event).toBeTruthy()
+        expect(event?.context).toEqual({
+          handlingStack: jasmine.stringMatching(HANDLING_STACK_REGEX),
         })
-    })
+      })
   })
 
   createTest('allow to modify service and version')

@@ -8,7 +8,6 @@ export interface SetupOptions {
   useRumSlim: boolean
   logs?: LogsInitConfiguration
   logsInit: (initConfiguration: LogsInitConfiguration) => void
-  logsInitArgs: any[]
   rumInit: (initConfiguration: RumInitConfiguration) => void
   eventBridge: boolean
   head?: string
@@ -62,10 +61,7 @@ n=o.getElementsByTagName(u)[0];n.parentNode.insertBefore(d,n)
         ${formatSnippet('./datadog-logs.js', 'DD_LOGS')}
         DD_LOGS.onReady(function () {
           DD_LOGS.setGlobalContext(${JSON.stringify(options.context)})
-          ;(${options.logsInit.toString()})(
-            ${formatConfiguration(options.logs, servers)},
-            ${formatlogInitArgs(options.logsInitArgs)}
-          )
+          ;(${options.logsInit.toString()})(${formatConfiguration(options.logs, servers)})
         })
       </script>
     `
@@ -101,10 +97,7 @@ export function bundleSetup(options: SetupOptions, servers: Servers) {
       <script type="text/javascript" src="./datadog-logs.js"></script>
       <script type="text/javascript">
         DD_LOGS.setGlobalContext(${JSON.stringify(options.context)})
-        ;(${options.logsInit.toString()})(
-          ${formatConfiguration(options.logs, servers)},
-          ${formatlogInitArgs(options.logsInitArgs)}
-        )
+        ;(${options.logsInit.toString()})(${formatConfiguration(options.logs, servers)})
       </script>
     `
   }
@@ -140,10 +133,7 @@ export function npmSetup(options: SetupOptions, servers: Servers) {
       <script type="text/javascript">
         window.LOGS_INIT = () => {
           window.DD_LOGS.setGlobalContext(${JSON.stringify(options.context)})
-          ;(${options.logsInit.toString()})(
-            ${formatConfiguration(options.logs, servers)},
-            ${formatlogInitArgs(options.logsInitArgs)}
-          )
+          ;(${options.logsInit.toString()})(${formatConfiguration(options.logs, servers)})
         }
       </script>
     `
@@ -250,8 +240,4 @@ function formatConfiguration(initConfiguration: LogsInitConfiguration | RumInitC
     result = result.replace('"BEFORE_SEND"', initConfiguration.beforeSend.toString())
   }
   return result
-}
-
-function formatlogInitArgs(logInitArgs: any[]) {
-  return logInitArgs?.map((logInitArg) => JSON.stringify(logInitArg)).join(',')
 }
