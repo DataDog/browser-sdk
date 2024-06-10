@@ -42,7 +42,6 @@ export interface ClickAction {
     selector: string | undefined
     width: number
     height: number
-    masked?: boolean
   }
   position?: { x: number; y: number }
   startClocks: ClocksState
