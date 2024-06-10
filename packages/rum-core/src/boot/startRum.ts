@@ -194,7 +194,7 @@ export function startRum(
     stopSession: () => session.expire(),
     getInternalContext: internalContext.get,
     startDurationVital: vitalCollection.startDurationVital,
-    stopDurationVital: vitalCollection.stopDurationVital,
+    addDurationVital: vitalCollection.addDurationVital,
     stop: () => {
       cleanupTasks.forEach((task) => task())
     },

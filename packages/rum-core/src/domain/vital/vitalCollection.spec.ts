@@ -1,5 +1,5 @@
+import type { Duration } from '@datadog/browser-core'
 import { clocksNow } from '@datadog/browser-core'
-import { LifeCycleEventType } from '../lifeCycle'
 import type { TestSetupBuilder } from '../../../test'
 import { setup } from '../../../test'
 import type { RawRumVitalEvent } from '../../rawRumEvent.types'
@@ -21,29 +21,21 @@ describe('vitalCollection', () => {
   })
 
   describe('custom duration', () => {
-    it('should create duration vital from start/stop API', () => {
+    it('should create duration vital from start API', () => {
       const { rawRumEvents, clock } = setupBuilder.build()
 
-      vitalCollection.startDurationVital({ name: 'foo', startClocks: clocksNow() })
+      const vital = vitalCollection.startDurationVital({ name: 'foo' })
       clock.tick(100)
-      vitalCollection.stopDurationVital({ name: 'foo', stopClocks: clocksNow() })
+      vital.stop({})
 
       expect(rawRumEvents.length).toBe(1)
-      expect((rawRumEvents[0].rawRumEvent as RawRumVitalEvent).vital.custom.foo).toBe(100)
+      expect((rawRumEvents[0].rawRumEvent as RawRumVitalEvent).vital.duration).toBe(100)
     })
 
-    it('should not create duration vital without calling the stop API', () => {
+    it('should not create duration vital without calling `stop` on vital instance', () => {
       const { rawRumEvents } = setupBuilder.build()
 
-      vitalCollection.startDurationVital({ name: 'foo', startClocks: clocksNow() })
-
-      expect(rawRumEvents.length).toBe(0)
-    })
-
-    it('should not create duration vital without calling the start API', () => {
-      const { rawRumEvents } = setupBuilder.build()
-
-      vitalCollection.stopDurationVital({ name: 'foo', stopClocks: clocksNow() })
+      vitalCollection.startDurationVital({ name: 'foo' })
 
       expect(rawRumEvents.length).toBe(0)
     })
@@ -51,71 +43,72 @@ describe('vitalCollection', () => {
     it('should not create multiple duration vitals by calling the stop API multiple times', () => {
       const { rawRumEvents } = setupBuilder.build()
 
-      vitalCollection.startDurationVital({ name: 'foo', startClocks: clocksNow() })
-      vitalCollection.stopDurationVital({ name: 'foo', stopClocks: clocksNow() })
-      vitalCollection.stopDurationVital({ name: 'foo', stopClocks: clocksNow() })
+      const vital = vitalCollection.startDurationVital({ name: 'foo' })
+      vital.stop()
+      vital.stop()
 
       expect(rawRumEvents.length).toBe(1)
     })
 
-    it('should create multiple duration vitals from start/stop API', () => {
+    it('should create multiple duration vitals from start API', () => {
       const { rawRumEvents, clock } = setupBuilder.build()
 
-      vitalCollection.startDurationVital({ name: 'foo', startClocks: clocksNow() })
+      const vitalFoo = vitalCollection.startDurationVital({ name: 'foo' })
       clock.tick(100)
-      vitalCollection.startDurationVital({ name: 'bar', startClocks: clocksNow() })
+      const vitalBar = vitalCollection.startDurationVital({ name: 'bar' })
       clock.tick(100)
-      vitalCollection.stopDurationVital({ name: 'bar', stopClocks: clocksNow() })
+      vitalBar.stop()
       clock.tick(100)
-      vitalCollection.stopDurationVital({ name: 'foo', stopClocks: clocksNow() })
+      vitalFoo.stop()
 
       expect(rawRumEvents.length).toBe(2)
-      expect((rawRumEvents[0].rawRumEvent as RawRumVitalEvent).vital.custom.bar).toBe(100)
-      expect((rawRumEvents[1].rawRumEvent as RawRumVitalEvent).vital.custom.foo).toBe(300)
+      expect((rawRumEvents[0].rawRumEvent as RawRumVitalEvent).vital.duration).toBe(100)
+      expect((rawRumEvents[1].rawRumEvent as RawRumVitalEvent).vital.duration).toBe(300)
     })
 
-    it('should discard a previous start with the same name', () => {
-      const { rawRumEvents, clock } = setupBuilder.build()
+    it('should create a vitals from add API', () => {
+      const { rawRumEvents } = setupBuilder.build()
 
-      vitalCollection.startDurationVital({ name: 'foo', startClocks: clocksNow() })
-      clock.tick(100)
-      vitalCollection.startDurationVital({ name: 'foo', startClocks: clocksNow() })
-      clock.tick(100)
-      vitalCollection.stopDurationVital({ name: 'foo', stopClocks: clocksNow() })
+      vitalCollection.addDurationVital({
+        name: 'foo',
+        startClocks: clocksNow(),
+        duration: 100 as Duration,
+        context: { foo: 'bar' },
+        details: 'baz',
+      })
 
       expect(rawRumEvents.length).toBe(1)
-      expect((rawRumEvents[0].rawRumEvent as RawRumVitalEvent).vital.custom.foo).toBe(100)
+      expect((rawRumEvents[0].rawRumEvent as RawRumVitalEvent).vital.duration).toBe(100)
+      expect((rawRumEvents[0].rawRumEvent as RawRumVitalEvent).vital.details).toBe('baz')
+      expect(rawRumEvents[0].customerContext).toEqual({ foo: 'bar' })
     })
 
     it('should merge start and stop contexts', () => {
       const { rawRumEvents } = setupBuilder.build()
 
-      vitalCollection.startDurationVital({ name: 'both-undefined', startClocks: clocksNow() })
-      vitalCollection.stopDurationVital({ name: 'both-undefined', stopClocks: clocksNow() })
-      vitalCollection.startDurationVital({
+      const vital = vitalCollection.startDurationVital({ name: 'both-undefined' })
+      vital.stop()
+
+      const vital1 = vitalCollection.startDurationVital({
         name: 'start-defined',
-        startClocks: clocksNow(),
         context: { start: 'defined' },
       })
-      vitalCollection.stopDurationVital({ name: 'start-defined', stopClocks: clocksNow() })
-      vitalCollection.startDurationVital({ name: 'stop-defined', startClocks: clocksNow() })
-      vitalCollection.stopDurationVital({ name: 'stop-defined', stopClocks: clocksNow(), context: { stop: 'defined' } })
-      vitalCollection.startDurationVital({
+      vital1.stop()
+
+      const vital2 = vitalCollection.startDurationVital({ name: 'stop-defined' })
+      vital2.stop({ context: { stop: 'defined' } })
+
+      const vital3 = vitalCollection.startDurationVital({
         name: 'both-defined',
-        startClocks: clocksNow(),
         context: { start: 'defined' },
       })
-      vitalCollection.stopDurationVital({ name: 'both-defined', stopClocks: clocksNow(), context: { stop: 'defined' } })
-      vitalCollection.startDurationVital({
+      vital3.stop({ context: { stop: 'defined' } })
+
+      const vital4 = vitalCollection.startDurationVital({
         name: 'stop-precedence',
-        startClocks: clocksNow(),
         context: { precedence: 'start' },
       })
-      vitalCollection.stopDurationVital({
-        name: 'stop-precedence',
-        stopClocks: clocksNow(),
-        context: { precedence: 'stop' },
-      })
+      vital4.stop({ context: { precedence: 'stop' } })
 
       expect(rawRumEvents[0].customerContext).toEqual(undefined)
       expect(rawRumEvents[1].customerContext).toEqual({ start: 'defined' })
@@ -128,20 +121,9 @@ describe('vitalCollection', () => {
       const { rawRumEvents, clock } = setupBuilder.build()
       wasInPageStateDuringPeriodSpy.and.returnValue(true)
 
-      vitalCollection.startDurationVital({ name: 'foo', startClocks: clocksNow() })
+      const vital = vitalCollection.startDurationVital({ name: 'foo' })
       clock.tick(100)
-      vitalCollection.stopDurationVital({ name: 'foo', stopClocks: clocksNow() })
-
-      expect(rawRumEvents.length).toBe(0)
-    })
-
-    it('should discard pending vitals on SESSION_RENEWED', () => {
-      const { rawRumEvents, lifeCycle, clock } = setupBuilder.build()
-
-      vitalCollection.startDurationVital({ name: 'foo', startClocks: clocksNow() })
-      clock.tick(100)
-      lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED)
-      vitalCollection.stopDurationVital({ name: 'foo', stopClocks: clocksNow() })
+      vital.stop()
 
       expect(rawRumEvents.length).toBe(0)
     })
@@ -150,8 +132,8 @@ describe('vitalCollection', () => {
   it('should collect raw rum event from duration vital', () => {
     const { rawRumEvents } = setupBuilder.build()
 
-    vitalCollection.startDurationVital({ name: 'foo', startClocks: clocksNow() })
-    vitalCollection.stopDurationVital({ name: 'foo', stopClocks: clocksNow() })
+    const vital = vitalCollection.startDurationVital({ name: 'foo' })
+    vital.stop()
 
     expect(rawRumEvents[0].startTime).toEqual(jasmine.any(Number))
     expect(rawRumEvents[0].rawRumEvent).toEqual({
@@ -160,9 +142,9 @@ describe('vitalCollection', () => {
         id: jasmine.any(String),
         type: VitalType.DURATION,
         name: 'foo',
-        custom: {
-          foo: 0,
-        },
+        custom: {},
+        duration: 0,
+        details: undefined,
       },
       type: RumEventType.VITAL,
       _dd: {

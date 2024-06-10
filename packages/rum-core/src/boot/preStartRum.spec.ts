@@ -1,4 +1,4 @@
-import type { DeflateWorker, RelativeTime, TimeStamp, TrackingConsentState } from '@datadog/browser-core'
+import type { DeflateWorker, Duration, RelativeTime, TimeStamp, TrackingConsentState } from '@datadog/browser-core'
 import {
   display,
   getTimeStamp,
@@ -532,22 +532,22 @@ describe('preStartRum', () => {
         startDurationVital: startDurationVitalSpy,
       } as unknown as StartRumResult)
 
-      const vitalStart = { name: 'timing', startClocks: clocksNow() }
+      const vitalStart = { name: 'timing' }
       strategy.startDurationVital(vitalStart)
       strategy.init(DEFAULT_INIT_CONFIGURATION)
       expect(startDurationVitalSpy).toHaveBeenCalledOnceWith(vitalStart)
     })
 
-    it('stopDurationVital', () => {
-      const stopDurationVitalSpy = jasmine.createSpy()
+    it('addDurationVital', () => {
+      const addDurationVitalSpy = jasmine.createSpy()
       doStartRumSpy.and.returnValue({
-        stopDurationVital: stopDurationVitalSpy,
+        addDurationVital: addDurationVitalSpy,
       } as unknown as StartRumResult)
 
-      const vitalStop = { name: 'timing', stopClocks: clocksNow() }
-      strategy.stopDurationVital(vitalStop)
+      const vitalAdd = { name: 'timing', startClocks: clocksNow(), duration: 100 as Duration }
+      strategy.addDurationVital(vitalAdd)
       strategy.init(DEFAULT_INIT_CONFIGURATION)
-      expect(stopDurationVitalSpy).toHaveBeenCalledOnceWith(vitalStop)
+      expect(addDurationVitalSpy).toHaveBeenCalledOnceWith(vitalAdd)
     })
   })
 

@@ -19,6 +19,7 @@ import {
 } from '../domain/configuration'
 import type { CommonContext } from '../domain/contexts/commonContext'
 import type { ViewOptions } from '../domain/view/trackViews'
+import type { DurationVitalInstance } from '../domain/vital/vitalCollection'
 import type { RumPublicApiOptions, Strategy } from './rumPublicApi'
 import type { StartRumResult } from './startRum'
 
@@ -170,11 +171,20 @@ export function createPreStartStrategy(
     },
 
     startDurationVital(vitalStart) {
-      bufferApiCalls.add((startRumResult) => startRumResult.startDurationVital(vitalStart))
-    },
+      let vital: DurationVitalInstance
 
-    stopDurationVital(vitalStart) {
-      bufferApiCalls.add((startRumResult) => startRumResult.stopDurationVital(vitalStart))
+      bufferApiCalls.add((startRumResult) => {
+        vital = startRumResult.startDurationVital(vitalStart)
+      })
+
+      return {
+        stop: (options) => {
+          vital?.stop(options)
+        },
+      }
+    },
+    addDurationVital: (vital) => {
+      bufferApiCalls.add((startRumResult) => startRumResult.addDurationVital(vital))
     },
   }
 }

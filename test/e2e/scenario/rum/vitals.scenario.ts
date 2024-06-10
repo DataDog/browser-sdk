@@ -21,6 +21,6 @@ describe('vital collection', () => {
 
       expect(intakeRegistry.rumVitalEvents.length).toBe(1)
       expect(intakeRegistry.rumVitalEvents[0].vital.name).toEqual('foo')
-      expect(intakeRegistry.rumVitalEvents[0].vital.custom).toEqual({ foo: jasmine.any(Number) })
+      expect(intakeRegistry.rumVitalEvents[0].vital.duration).toEqual(jasmine.any(Number))
     })
 })
