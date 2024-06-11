@@ -31,6 +31,8 @@ export const HandlerType = {
 export type HandlerType = (typeof HandlerType)[keyof typeof HandlerType]
 export const STATUSES = Object.keys(StatusType) as StatusType[]
 
+// note: it is safe to merge declarations as long as the methods are actually defined on the prototype
+// eslint-disable-next-line @typescript-eslint/no-unsafe-declaration-merging
 export class Logger {
   private contextManager: ContextManager
 
@@ -105,17 +107,6 @@ export class Logger {
     this.logImplementation(message, messageContext, status, error, handlingStack)
   }
 
-  // plaheholders for type definition, the actual implementation is done in the prototype level
-  ok(_message: string, _messageContext?: object, _error?: Error): void {}
-  debug(_message: string, _messageContext?: object, _error?: Error): void {}
-  info(_message: string, _messageContext?: object, _error?: Error): void {}
-  notice(_message: string, _messageContext?: object, _error?: Error): void {}
-  warn(_message: string, _messageContext?: object, _error?: Error): void {}
-  error(_message: string, _messageContext?: object, _error?: Error): void {}
-  critical(_message: string, _messageContext?: object, _error?: Error): void {}
-  alert(_message: string, _messageContext?: object, _error?: Error): void {}
-  emerg(_message: string, _messageContext?: object, _error?: Error): void {}
-
   setContext(context: object) {
     this.contextManager.setContext(context as Context)
   }
@@ -163,8 +154,21 @@ Logger.prototype.error = createLoggerMethod(StatusType.error)
 Logger.prototype.critical = createLoggerMethod(StatusType.critical)
 Logger.prototype.alert = createLoggerMethod(StatusType.alert)
 Logger.prototype.emerg = createLoggerMethod(StatusType.emerg)
-
 /* eslint-enable local-rules/disallow-side-effects */
+
+// note: it is safe to merge declarations as long as the methods are actually defined on the prototype
+// eslint-disable-next-line @typescript-eslint/no-unsafe-declaration-merging
+export interface Logger {
+  ok(message: string, messageContext?: object, error?: Error): void
+  debug(message: string, messageContext?: object, error?: Error): void
+  info(message: string, messageContext?: object, error?: Error): void
+  notice(message: string, messageContext?: object, error?: Error): void
+  warn(message: string, messageContext?: object, error?: Error): void
+  error(message: string, messageContext?: object, error?: Error): void
+  critical(message: string, messageContext?: object, error?: Error): void
+  alert(message: string, messageContext?: object, error?: Error): void
+  emerg(message: string, messageContext?: object, error?: Error): void
+}
 
 function createLoggerMethod(status: StatusType) {
   return function (this: Logger, message: string, messageContext?: object, error?: Error) {
