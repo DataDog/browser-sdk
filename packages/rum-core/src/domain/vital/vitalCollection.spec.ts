@@ -23,54 +23,91 @@ describe('vitalCollection', () => {
   describe('custom duration', () => {
     describe('createVitalInstance', () => {
       it('should create duration vital from a vital instance', () => {
-        const { rawRumEvents, clock } = setupBuilder.build()
+        const { clock } = setupBuilder.build()
 
-        const vital = createVitalInstance(vitalCollection.addDurationVital, { name: 'foo' })
+        const cbSpy = jasmine.createSpy()
+
+        const vital = createVitalInstance(cbSpy, { name: 'foo' })
         clock.tick(100)
         vital.stop({})
 
-        expect(rawRumEvents.length).toBe(1)
-        expect((rawRumEvents[0].rawRumEvent as RawRumVitalEvent).vital.duration).toBe(100)
+        expect(cbSpy).toHaveBeenCalledOnceWith(jasmine.objectContaining({ name: 'foo', duration: 100 }))
       })
 
       it('should not create duration vital without calling `stop` on vital instance', () => {
-        const { rawRumEvents } = setupBuilder.build()
+        const cbSpy = jasmine.createSpy()
 
-        createVitalInstance(vitalCollection.addDurationVital, { name: 'foo' })
+        createVitalInstance(cbSpy, { name: 'foo' })
 
-        expect(rawRumEvents.length).toBe(0)
+        expect(cbSpy).not.toHaveBeenCalled()
       })
 
-      it('should not create multiple duration vitals by calling "stop" on a vital instance multiple times', () => {
-        const { rawRumEvents } = setupBuilder.build()
+      it('should not create multiple duration vitals by calling "stop" on the same vital instance multiple times', () => {
+        const cbSpy = jasmine.createSpy()
 
-        const vital = createVitalInstance(vitalCollection.addDurationVital, { name: 'foo' })
+        const vital = createVitalInstance(cbSpy, { name: 'foo' })
         vital.stop()
         vital.stop()
 
-        expect(rawRumEvents.length).toBe(1)
+        expect(cbSpy).toHaveBeenCalledTimes(1)
       })
 
       it('should create multiple duration vitals from createVitalInstance', () => {
-        const { rawRumEvents, clock } = setupBuilder.build()
+        const { clock } = setupBuilder.build()
 
-        const vital1 = createVitalInstance(vitalCollection.addDurationVital, { name: 'foo', details: 'component 1' })
+        const cbSpy = jasmine.createSpy()
+
+        const vital1 = createVitalInstance(cbSpy, { name: 'foo', details: 'component 1' })
         clock.tick(100)
-        const vital2 = createVitalInstance(vitalCollection.addDurationVital, { name: 'foo', details: 'component 2' })
+        const vital2 = createVitalInstance(cbSpy, { name: 'foo', details: 'component 2' })
         clock.tick(100)
         vital2.stop()
         clock.tick(100)
         vital1.stop()
 
-        expect(rawRumEvents.length).toBe(2)
-        expect((rawRumEvents[0].rawRumEvent as RawRumVitalEvent).vital.duration).toBe(100)
-        expect((rawRumEvents[0].rawRumEvent as RawRumVitalEvent).vital.details).toBe('component 2')
-        expect((rawRumEvents[1].rawRumEvent as RawRumVitalEvent).vital.duration).toBe(300)
-        expect((rawRumEvents[1].rawRumEvent as RawRumVitalEvent).vital.details).toBe('component 1')
+        expect(cbSpy).toHaveBeenCalledTimes(2)
+        expect(cbSpy.calls.argsFor(0)).toEqual([jasmine.objectContaining({ details: 'component 2', duration: 100 })])
+        expect(cbSpy.calls.argsFor(1)).toEqual([jasmine.objectContaining({ details: 'component 1', duration: 300 })])
+      })
+
+      it('should merge createVitalInstance and vital instance details', () => {
+        const cbSpy = jasmine.createSpy()
+
+        createVitalInstance(cbSpy, { name: 'both-undefined' }).stop()
+        createVitalInstance(cbSpy, { name: 'start-defined', details: 'start-defined' }).stop()
+        createVitalInstance(cbSpy, { name: 'stop-defined' }).stop({ details: 'stop-defined' })
+        createVitalInstance(cbSpy, { name: 'both-defined', details: 'start-defined' }).stop({ details: 'stop-defined' })
+
+        expect(cbSpy).toHaveBeenCalledTimes(4)
+        expect(cbSpy.calls.argsFor(0)).toEqual([jasmine.objectContaining({ details: undefined })])
+        expect(cbSpy.calls.argsFor(1)).toEqual([jasmine.objectContaining({ details: 'start-defined' })])
+        expect(cbSpy.calls.argsFor(2)).toEqual([jasmine.objectContaining({ details: 'stop-defined' })])
+        expect(cbSpy.calls.argsFor(3)).toEqual([jasmine.objectContaining({ details: 'stop-defined' })])
+      })
+
+      it('should merge createVitalInstance and vital instance contexts', () => {
+        const cbSpy = jasmine.createSpy()
+
+        createVitalInstance(cbSpy, { name: 'both-undefined' }).stop()
+        createVitalInstance(cbSpy, { name: 'start-defined', context: { start: 'defined' } }).stop()
+        createVitalInstance(cbSpy, { name: 'stop-defined' }).stop({ context: { stop: 'defined' } })
+        createVitalInstance(cbSpy, { name: 'both-defined', context: { start: 'defined' } }).stop({
+          context: { stop: 'defined' },
+        })
+        createVitalInstance(cbSpy, { name: 'stop-precedence', context: { precedence: 'start' } }).stop({
+          context: { precedence: 'stop' },
+        })
+
+        expect(cbSpy).toHaveBeenCalledTimes(5)
+        expect(cbSpy.calls.argsFor(0)[0].context).toEqual(undefined)
+        expect(cbSpy.calls.argsFor(1)[0].context).toEqual({ start: 'defined' })
+        expect(cbSpy.calls.argsFor(2)[0].context).toEqual({ stop: 'defined' })
+        expect(cbSpy.calls.argsFor(3)[0].context).toEqual({ start: 'defined', stop: 'defined' })
+        expect(cbSpy.calls.argsFor(4)[0].context).toEqual({ precedence: 'stop' })
       })
     })
 
-    it('should create a vitals from add API', () => {
+    it('should create a vital from add API', () => {
       const { rawRumEvents } = setupBuilder.build()
 
       vitalCollection.addDurationVital({
@@ -87,47 +124,15 @@ describe('vitalCollection', () => {
       expect(rawRumEvents[0].customerContext).toEqual({ foo: 'bar' })
     })
 
-    it('should merge start and stop contexts', () => {
-      const { rawRumEvents } = setupBuilder.build()
-
-      const vital = createVitalInstance(vitalCollection.addDurationVital, { name: 'both-undefined' })
-      vital.stop()
-
-      const vital1 = createVitalInstance(vitalCollection.addDurationVital, {
-        name: 'start-defined',
-        context: { start: 'defined' },
-      })
-      vital1.stop()
-
-      const vital2 = createVitalInstance(vitalCollection.addDurationVital, { name: 'stop-defined' })
-      vital2.stop({ context: { stop: 'defined' } })
-
-      const vital3 = createVitalInstance(vitalCollection.addDurationVital, {
-        name: 'both-defined',
-        context: { start: 'defined' },
-      })
-      vital3.stop({ context: { stop: 'defined' } })
-
-      const vital4 = createVitalInstance(vitalCollection.addDurationVital, {
-        name: 'stop-precedence',
-        context: { precedence: 'start' },
-      })
-      vital4.stop({ context: { precedence: 'stop' } })
-
-      expect(rawRumEvents[0].customerContext).toEqual(undefined)
-      expect(rawRumEvents[1].customerContext).toEqual({ start: 'defined' })
-      expect(rawRumEvents[2].customerContext).toEqual({ stop: 'defined' })
-      expect(rawRumEvents[3].customerContext).toEqual({ start: 'defined', stop: 'defined' })
-      expect(rawRumEvents[4].customerContext).toEqual({ precedence: 'stop' })
-    })
-
     it('should discard a vital for which a frozen state happened', () => {
-      const { rawRumEvents, clock } = setupBuilder.build()
+      const { rawRumEvents } = setupBuilder.build()
       wasInPageStateDuringPeriodSpy.and.returnValue(true)
 
-      const vital = createVitalInstance(vitalCollection.addDurationVital, { name: 'foo' })
-      clock.tick(100)
-      vital.stop()
+      vitalCollection.addDurationVital({
+        name: 'foo',
+        startClocks: clocksNow(),
+        duration: 100 as Duration,
+      })
 
       expect(rawRumEvents.length).toBe(0)
     })
