@@ -10,10 +10,10 @@ describe('vital collection', () => {
         // TODO remove cast and unsafe calls when removing the flag
         const global = window.DD_RUM! as any
         // eslint-disable-next-line @typescript-eslint/no-unsafe-call
-        global.startDurationVital('foo')
+        const vital = global.startDurationVital('foo')
         setTimeout(() => {
           // eslint-disable-next-line @typescript-eslint/no-unsafe-call
-          global.stopDurationVital('foo')
+          vital.stop()
           done()
         }, 5)
       })
