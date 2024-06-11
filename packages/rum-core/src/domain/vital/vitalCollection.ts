@@ -86,7 +86,7 @@ function buildDurationVital(
     startClocks,
     duration: elapsed(startClocks.timeStamp, stopClocks.timeStamp),
     context: combine(vitalStart.context, stopOptions.context),
-    details: vitalStart.details ?? stopOptions.details,
+    details: stopOptions.details ?? vitalStart.details,
   }
 }
 
