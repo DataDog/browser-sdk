@@ -315,7 +315,7 @@ export function makeRumPublicApi(
     getCommonContext,
     trackingConsentState,
 
-    (initConfiguration, configuration, deflateWorker, initialViewOptions) => {
+    (configuration, deflateWorker, initialViewOptions) => {
       if (isExperimentalFeatureEnabled(ExperimentalFeature.CUSTOM_VITALS)) {
         /**
          * Start a custom duration vital
@@ -370,7 +370,7 @@ export function makeRumPublicApi(
         ;(rumPublicApi as any).stopDurationVital = noop
       }
 
-      if (initConfiguration.storeContextsAcrossPages) {
+      if (configuration.storeContextsAcrossPages) {
         storeContextManager(configuration, globalContextManager, RUM_STORAGE_KEY, CustomerDataType.GlobalContext)
         storeContextManager(configuration, userContextManager, RUM_STORAGE_KEY, CustomerDataType.User)
       }
@@ -380,7 +380,6 @@ export function makeRumPublicApi(
       )
 
       const startRumResult = startRumImpl(
-        initConfiguration,
         configuration,
         recorderApi,
         customerDataTrackerManager,
@@ -400,7 +399,7 @@ export function makeRumPublicApi(
         deflateWorker
       )
 
-      strategy = createPostStartStrategy(initConfiguration, startRumResult)
+      strategy = createPostStartStrategy(strategy, startRumResult)
 
       return startRumResult
     }
@@ -518,13 +517,13 @@ export function makeRumPublicApi(
   return rumPublicApi
 }
 
-function createPostStartStrategy(initConfiguration: RumInitConfiguration, startRumResult: StartRumResult): Strategy {
+function createPostStartStrategy(preStartStrategy: Strategy, startRumResult: StartRumResult): Strategy {
   return assign(
     {
       init: (initConfiguration: RumInitConfiguration) => {
         displayAlreadyInitializedError('DD_RUM', initConfiguration)
       },
-      initConfiguration,
+      initConfiguration: preStartStrategy.initConfiguration,
     },
     startRumResult
   )

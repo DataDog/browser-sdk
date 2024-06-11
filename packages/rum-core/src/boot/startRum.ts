@@ -11,7 +11,6 @@ import {
   sendToExtension,
   createPageExitObservable,
   TelemetryService,
-  addTelemetryConfiguration,
   startTelemetry,
   canUseEventBridge,
   getEventBridge,
@@ -38,8 +37,7 @@ import { startRumEventBridge } from '../transport/startRumEventBridge'
 import { startUrlContexts } from '../domain/contexts/urlContexts'
 import type { LocationChange } from '../browser/locationChangeObservable'
 import { createLocationChangeObservable } from '../browser/locationChangeObservable'
-import type { RumConfiguration, RumInitConfiguration } from '../domain/configuration'
-import { serializeRumConfiguration } from '../domain/configuration'
+import type { RumConfiguration } from '../domain/configuration'
 import type { ViewOptions } from '../domain/view/trackViews'
 import { startFeatureFlagContexts } from '../domain/contexts/featureFlagContext'
 import { startCustomerDataTelemetry } from '../domain/startCustomerDataTelemetry'
@@ -55,7 +53,6 @@ export type StartRum = typeof startRum
 export type StartRumResult = ReturnType<StartRum>
 
 export function startRum(
-  initConfiguration: RumInitConfiguration,
   configuration: RumConfiguration,
   recorderApi: RecorderApi,
   customerDataTrackerManager: CustomerDataTrackerManager,
@@ -146,7 +143,6 @@ export function startRum(
   cleanupTasks.push(stopRumEventCollection)
 
   drainPreStartTelemetry()
-  addTelemetryConfiguration(serializeRumConfiguration(initConfiguration))
 
   startLongTaskCollection(lifeCycle, configuration)
   startResourceCollection(lifeCycle, configuration, pageStateHistory)

@@ -178,6 +178,7 @@ export interface Configuration extends TransportConfiguration {
   silentMultipleInit: boolean
   allowUntrustedEvents: boolean
   trackingConsent: TrackingConsent
+  storeContextsAcrossPages: boolean
 
   // Event limits
   eventRateLimiterThreshold: number // Limit the maximum number of actions, errors and logs per minutes
@@ -272,7 +273,7 @@ export function validateAndBuildConfiguration(initConfiguration: InitConfigurati
       silentMultipleInit: !!initConfiguration.silentMultipleInit,
       allowUntrustedEvents: !!initConfiguration.allowUntrustedEvents,
       trackingConsent: initConfiguration.trackingConsent ?? TrackingConsent.GRANTED,
-
+      storeContextsAcrossPages: !!initConfiguration.storeContextsAcrossPages,
       /**
        * beacon payload max queue size implementation is 64kb
        * ensure that we leave room for logs, rum and potential other users

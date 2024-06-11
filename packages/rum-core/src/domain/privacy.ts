@@ -1,18 +1,40 @@
-import { isElementNode, getParentNode, isTextNode } from '@datadog/browser-rum-core'
-import {
-  NodePrivacyLevel,
-  PRIVACY_ATTR_NAME,
-  PRIVACY_ATTR_VALUE_ALLOW,
-  PRIVACY_ATTR_VALUE_MASK,
-  PRIVACY_ATTR_VALUE_MASK_USER_INPUT,
-  PRIVACY_ATTR_VALUE_HIDDEN,
-  PRIVACY_CLASS_ALLOW,
-  PRIVACY_CLASS_MASK,
-  PRIVACY_CLASS_MASK_USER_INPUT,
-  PRIVACY_CLASS_HIDDEN,
-  FORM_PRIVATE_TAG_NAMES,
-  CENSORED_STRING_MARK,
-} from '../../constants'
+import { DefaultPrivacyLevel } from '@datadog/browser-core'
+import { isElementNode, getParentNode, isTextNode } from '../browser/htmlDomUtils'
+import { elementMatches } from '../browser/polyfills'
+
+export const NodePrivacyLevel = {
+  IGNORE: 'ignore',
+  HIDDEN: 'hidden',
+  ALLOW: DefaultPrivacyLevel.ALLOW,
+  MASK: DefaultPrivacyLevel.MASK,
+  MASK_USER_INPUT: DefaultPrivacyLevel.MASK_USER_INPUT,
+} as const
+export type NodePrivacyLevel = (typeof NodePrivacyLevel)[keyof typeof NodePrivacyLevel]
+
+export const PRIVACY_ATTR_NAME = 'data-dd-privacy'
+
+// Privacy Attrs
+export const PRIVACY_ATTR_VALUE_ALLOW = 'allow'
+export const PRIVACY_ATTR_VALUE_MASK = 'mask'
+export const PRIVACY_ATTR_VALUE_MASK_USER_INPUT = 'mask-user-input'
+export const PRIVACY_ATTR_VALUE_HIDDEN = 'hidden'
+
+// Privacy Classes - not all customers can set plain HTML attributes, so support classes too
+export const PRIVACY_CLASS_PREFIX = 'dd-privacy-'
+
+// Private Replacement Templates
+export const CENSORED_STRING_MARK = '***'
+export const CENSORED_IMG_MARK = 'data:image/gif;base64,R0lGODlhAQABAIAAAMLCwgAAACH5BAAAAAAALAAAAAABAAEAAAICRAEAOw=='
+
+export const FORM_PRIVATE_TAG_NAMES: { [tagName: string]: true } = {
+  INPUT: true,
+  OUTPUT: true,
+  TEXTAREA: true,
+  SELECT: true,
+  OPTION: true,
+  DATALIST: true,
+  OPTGROUP: true,
+}
 
 const TEXT_MASKING_CHAR = 'x'
 
@@ -78,8 +100,6 @@ export function getNodeSelfPrivacyLevel(node: Node): NodePrivacyLevel | undefine
     return
   }
 
-  const privAttr = node.getAttribute(PRIVACY_ATTR_NAME)
-
   // Overrules for replay purpose
   if (node.tagName === 'BASE') {
     return NodePrivacyLevel.ALLOW
@@ -102,19 +122,19 @@ export function getNodeSelfPrivacyLevel(node: Node): NodePrivacyLevel | undefine
   }
 
   // Check HTML privacy attributes and classes
-  if (privAttr === PRIVACY_ATTR_VALUE_HIDDEN || node.classList.contains(PRIVACY_CLASS_HIDDEN)) {
+  if (elementMatches(node, getPrivacySelector(NodePrivacyLevel.HIDDEN))) {
     return NodePrivacyLevel.HIDDEN
   }
 
-  if (privAttr === PRIVACY_ATTR_VALUE_MASK || node.classList.contains(PRIVACY_CLASS_MASK)) {
+  if (elementMatches(node, getPrivacySelector(NodePrivacyLevel.MASK))) {
     return NodePrivacyLevel.MASK
   }
 
-  if (privAttr === PRIVACY_ATTR_VALUE_MASK_USER_INPUT || node.classList.contains(PRIVACY_CLASS_MASK_USER_INPUT)) {
+  if (elementMatches(node, getPrivacySelector(NodePrivacyLevel.MASK_USER_INPUT))) {
     return NodePrivacyLevel.MASK_USER_INPUT
   }
 
-  if (privAttr === PRIVACY_ATTR_VALUE_ALLOW || node.classList.contains(PRIVACY_CLASS_ALLOW)) {
+  if (elementMatches(node, getPrivacySelector(NodePrivacyLevel.ALLOW))) {
     return NodePrivacyLevel.ALLOW
   }
 
@@ -285,4 +305,8 @@ export function shouldIgnoreElement(element: Element): boolean {
   }
 
   return false
+}
+
+export function getPrivacySelector(privacyLevel: string) {
+  return `[${PRIVACY_ATTR_NAME}="${privacyLevel}"], .${PRIVACY_CLASS_PREFIX}${privacyLevel}`
 }

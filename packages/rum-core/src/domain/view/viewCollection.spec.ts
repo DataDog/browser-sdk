@@ -47,8 +47,8 @@ const VIEW: ViewEvent = {
   },
   commonViewMetrics: {
     loadingTime: 20 as Duration,
-    cumulativeLayoutShift: { value: 1 },
-    interactionToNextPaint: { value: 10 as Duration },
+    cumulativeLayoutShift: { value: 1, time: 100 as Duration },
+    interactionToNextPaint: { value: 10 as Duration, time: 100 as Duration },
     scroll: {
       maxDepth: 2000,
       maxScrollHeight: 3000,
@@ -130,6 +130,7 @@ describe('viewCollection', () => {
         },
         cumulative_layout_shift: 1,
         cumulative_layout_shift_target_selector: undefined,
+        cumulative_layout_shift_time: (100 * 1e6) as ServerDuration,
         custom_timings: {
           bar: (20 * 1e6) as ServerDuration,
           foo: (10 * 1e6) as ServerDuration,
@@ -147,6 +148,7 @@ describe('viewCollection', () => {
         first_input_target_selector: undefined,
         interaction_to_next_paint: (10 * 1e6) as ServerDuration,
         interaction_to_next_paint_target_selector: undefined,
+        interaction_to_next_paint_time: (100 * 1e6) as ServerDuration,
         is_active: false,
         name: undefined,
         largest_contentful_paint: (10 * 1e6) as ServerDuration,

@@ -1,6 +1,10 @@
 import type { InitConfiguration } from '@datadog/browser-core'
-import { DefaultPrivacyLevel, display, TraceContextInjection } from '@datadog/browser-core'
-import { EXHAUSTIVE_INIT_CONFIGURATION, SERIALIZED_EXHAUSTIVE_INIT_CONFIGURATION } from '../../../core/test'
+import { DefaultPrivacyLevel, display, ExperimentalFeature, TraceContextInjection } from '@datadog/browser-core'
+import {
+  EXHAUSTIVE_INIT_CONFIGURATION,
+  mockExperimentalFeatures,
+  SERIALIZED_EXHAUSTIVE_INIT_CONFIGURATION,
+} from '../../../core/test'
 import type { ExtractTelemetryConfiguration, CamelToSnakeCase, MapInitConfigurationKey } from '../../../core/test'
 import type { RumInitConfiguration } from './configuration'
 import { DEFAULT_PROPAGATOR_TYPES, serializeRumConfiguration, validateAndBuildRumConfiguration } from './configuration'
@@ -326,6 +330,27 @@ describe('validateAndBuildRumConfiguration', () => {
     })
   })
 
+  describe('enablePrivacyForActionName', () => {
+    it('defaults to false', () => {
+      expect(validateAndBuildRumConfiguration(DEFAULT_INIT_CONFIGURATION)!.enablePrivacyForActionName).toBeFalse()
+    })
+    it('is false when the feature is not enabled and the option is true', () => {
+      expect(
+        validateAndBuildRumConfiguration({ ...DEFAULT_INIT_CONFIGURATION, enablePrivacyForActionName: true })!
+          .enablePrivacyForActionName
+      ).toBeFalse()
+    })
+
+    it('is only true when the feature is enabled and the option is true', () => {
+      mockExperimentalFeatures([ExperimentalFeature.ENABLE_PRIVACY_FOR_ACTION_NAME])
+      expect(validateAndBuildRumConfiguration(DEFAULT_INIT_CONFIGURATION)!.enablePrivacyForActionName).toBeFalse()
+      expect(
+        validateAndBuildRumConfiguration({ ...DEFAULT_INIT_CONFIGURATION, enablePrivacyForActionName: true })!
+          .enablePrivacyForActionName
+      ).toBeTrue()
+    })
+  })
+
   describe('trackResources', () => {
     it('defaults to false', () => {
       expect(validateAndBuildRumConfiguration(DEFAULT_INIT_CONFIGURATION)!.trackResources).toBeFalse()
@@ -437,6 +462,7 @@ describe('serializeRumConfiguration', () => {
       traceSampleRate: 50,
       traceContextInjection: TraceContextInjection.ALL,
       defaultPrivacyLevel: 'allow',
+      enablePrivacyForActionName: false,
       subdomain: 'foo',
       sessionReplaySampleRate: 60,
       startSessionReplayRecordingManually: true,
@@ -476,6 +502,7 @@ describe('serializeRumConfiguration', () => {
       start_session_replay_recording_manually: true,
       action_name_attribute: 'test-id',
       default_privacy_level: 'allow',
+      enable_privacy_for_action_name: false,
       track_resources: true,
       track_long_task: true,
       use_worker_url: true,

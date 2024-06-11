@@ -34,7 +34,6 @@ const FAKE_WORKER = {} as DeflateWorker
 describe('preStartRum', () => {
   let doStartRumSpy: jasmine.Spy<
     (
-      initConfiguration: RumInitConfiguration,
       configuration: RumConfiguration,
       deflateWorker: DeflateWorker | undefined,
       initialViewOptions?: ViewOptions
@@ -220,7 +219,7 @@ describe('preStartRum', () => {
           strategy.init(DEFAULT_INIT_CONFIGURATION)
 
           expect(startDeflateWorkerSpy).not.toHaveBeenCalled()
-          const worker: DeflateWorker | undefined = doStartRumSpy.calls.mostRecent().args[2]
+          const worker: DeflateWorker | undefined = doStartRumSpy.calls.mostRecent().args[1]
           expect(worker).toBeUndefined()
         })
       })
@@ -233,7 +232,7 @@ describe('preStartRum', () => {
           })
 
           expect(startDeflateWorkerSpy).toHaveBeenCalledTimes(1)
-          const worker: DeflateWorker | undefined = doStartRumSpy.calls.mostRecent().args[2]
+          const worker: DeflateWorker | undefined = doStartRumSpy.calls.mostRecent().args[1]
           expect(worker).toBeDefined()
         })
 
@@ -325,7 +324,7 @@ describe('preStartRum', () => {
 
           strategy.init(MANUAL_CONFIGURATION)
           expect(doStartRumSpy).toHaveBeenCalled()
-          const initialViewOptions: ViewOptions | undefined = doStartRumSpy.calls.argsFor(0)[3]
+          const initialViewOptions: ViewOptions | undefined = doStartRumSpy.calls.argsFor(0)[2]
           expect(initialViewOptions).toEqual({ name: 'foo' })
           expect(startViewSpy).not.toHaveBeenCalled()
         })
@@ -352,7 +351,7 @@ describe('preStartRum', () => {
           strategy.init(MANUAL_CONFIGURATION)
 
           expect(doStartRumSpy).toHaveBeenCalled()
-          const initialViewOptions: ViewOptions | undefined = doStartRumSpy.calls.argsFor(0)[3]
+          const initialViewOptions: ViewOptions | undefined = doStartRumSpy.calls.argsFor(0)[2]
           expect(initialViewOptions).toEqual({ name: 'foo' })
           expect(startViewSpy).toHaveBeenCalledOnceWith({ name: 'bar' }, relativeToClocks(20 as RelativeTime))
         })
@@ -364,7 +363,7 @@ describe('preStartRum', () => {
 
           strategy.startView({ name: 'foo' })
           expect(doStartRumSpy).toHaveBeenCalled()
-          const initialViewOptions: ViewOptions | undefined = doStartRumSpy.calls.argsFor(0)[3]
+          const initialViewOptions: ViewOptions | undefined = doStartRumSpy.calls.argsFor(0)[2]
           expect(initialViewOptions).toEqual({ name: 'foo' })
           expect(startViewSpy).not.toHaveBeenCalled()
         })

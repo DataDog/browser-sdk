@@ -16,6 +16,17 @@
 
 ---
 
+## v5.21.0
+
+- ✨ [RUM-4659] Collect INP and CLS timestamp ([#2793](https://github.com/DataDog/browser-sdk/pull/2793))
+- ✨ [RUM-1310] Support all log statuses ([#2725](https://github.com/DataDog/browser-sdk/pull/2725))
+- ✨ [RUM-3965] make service and version fields modifiable ([#2788](https://github.com/DataDog/browser-sdk/pull/2788))
+- ✨ [RUM-3837] Force Replay recording on sampled-out sessions ([#2777](https://github.com/DataDog/browser-sdk/pull/2777))
+- 🐛 [RUM-4178] Update performance difference memory ([#2794](https://github.com/DataDog/browser-sdk/pull/2794))
+- ♻️ Sends the conf telemetry from preStartRum ([#2795](https://github.com/DataDog/browser-sdk/pull/2795))
+- ♻️ Set the experimental feature flags as early as possible ([#2796](https://github.com/DataDog/browser-sdk/pull/2796))
+- 📝 [RUM-158] Add jsdoc annotations on initConfiguration ([#2772](https://github.com/DataDog/browser-sdk/pull/2772))
+
 ## v5.20.0
 
 - ✨ [RUM-4013] DD_RUM: add handling stack in beforeSend context ([#2730](https://github.com/DataDog/browser-sdk/pull/2730))
