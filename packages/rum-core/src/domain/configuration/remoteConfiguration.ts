@@ -2,7 +2,7 @@ import type { DefaultPrivacyLevel } from '@datadog/browser-core'
 import { display, addEventListener, assign } from '@datadog/browser-core'
 import type { RumInitConfiguration } from './configuration'
 
-export const REMOTE_CONFIGURATION_URL = 'https://www.datad0g-browser-agent.com/configuration'
+export const REMOTE_CONFIGURATION_URL = 'https://d3uc069fcn7uxw.cloudfront.net/configuration'
 
 export interface RumRemoteConfiguration {
   sessionSampleRate?: number
