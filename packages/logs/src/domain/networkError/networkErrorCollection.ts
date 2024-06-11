@@ -16,7 +16,7 @@ import type { LogsConfiguration } from '../configuration'
 import type { LifeCycle } from '../lifeCycle'
 import type { LogsEventDomainContext } from '../../domainContext.types'
 import { LifeCycleEventType } from '../lifeCycle'
-import { StatusType } from '../logger'
+import { StatusType } from '../logger/isAuthorized'
 
 export function startNetworkErrorCollection(configuration: LogsConfiguration, lifeCycle: LifeCycle) {
   if (!configuration.forwardErrorsToLogs) {
@@ -48,6 +48,7 @@ export function startNetworkErrorCollection(configuration: LogsConfiguration, li
     function onResponseDataAvailable(responseData: unknown) {
       const domainContext: LogsEventDomainContext<typeof ErrorSource.NETWORK> = {
         isAborted: request.isAborted,
+        handlingStack: request.handlingStack,
       }
 
       lifeCycle.notify(LifeCycleEventType.RAW_LOG_COLLECTED, {

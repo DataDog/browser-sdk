@@ -4,7 +4,7 @@ import type { RawReportLogsEvent } from '../../rawLogsEvent.types'
 import { validateAndBuildLogsConfiguration } from '../configuration'
 import type { RawLogsEventCollectedData } from '../lifeCycle'
 import { LifeCycle, LifeCycleEventType } from '../lifeCycle'
-import { StatusType } from '../logger'
+import { StatusType } from '../logger/isAuthorized'
 import { startReportCollection } from './reportCollection'
 
 describe('reports', () => {

@@ -13,7 +13,7 @@ export interface ConsoleLog {
   message: string
   api: ConsoleApiName
   stack?: string
-  handlingStack?: string
+  handlingStack: string
   fingerprint?: string
   causes?: RawErrorCause[]
 }

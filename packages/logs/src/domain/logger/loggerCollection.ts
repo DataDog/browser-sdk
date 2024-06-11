@@ -1,35 +1,24 @@
 import type { Context, TimeStamp } from '@datadog/browser-core'
 import {
-  ConsoleApiName,
-  includes,
   combine,
   ErrorSource,
   timeStampNow,
   originalConsoleMethods,
   globalConsole,
+  ConsoleApiName,
 } from '@datadog/browser-core'
-import type { CommonContext } from '../../rawLogsEvent.types'
-import type { LifeCycle } from '../lifeCycle'
+import type { CommonContext, RawLogsEvent } from '../../rawLogsEvent.types'
+import type { LifeCycle, RawLogsEventCollectedData } from '../lifeCycle'
 import { LifeCycleEventType } from '../lifeCycle'
 import type { Logger, LogsMessage } from '../logger'
-import { StatusType, HandlerType } from '../logger'
-
-export const STATUS_PRIORITIES: { [key in StatusType]: number } = {
-  [StatusType.ok]: 0,
-  [StatusType.debug]: 1,
-  [StatusType.info]: 2,
-  [StatusType.notice]: 4,
-  [StatusType.warn]: 5,
-  [StatusType.error]: 6,
-  [StatusType.critical]: 7,
-  [StatusType.alert]: 8,
-  [StatusType.emerg]: 9,
-}
+import { HandlerType } from '../logger'
+import { isAuthorized, StatusType } from './isAuthorized'
 
 export function startLoggerCollection(lifeCycle: LifeCycle) {
   function handleLog(
     logsMessage: LogsMessage,
     logger: Logger,
+    handlingStack?: string,
     savedCommonContext?: CommonContext,
     savedDate?: TimeStamp
   ) {
@@ -40,7 +29,7 @@ export function startLoggerCollection(lifeCycle: LifeCycle) {
     }
 
     if (isAuthorized(logsMessage.status, HandlerType.http, logger)) {
-      lifeCycle.notify(LifeCycleEventType.RAW_LOG_COLLECTED, {
+      const rawLogEventData: RawLogsEventCollectedData<RawLogsEvent> = {
         rawLogsEvent: {
           date: savedDate || timeStampNow(),
           message: logsMessage.message,
@@ -49,7 +38,13 @@ export function startLoggerCollection(lifeCycle: LifeCycle) {
         },
         messageContext,
         savedCommonContext,
-      })
+      }
+
+      if (handlingStack) {
+        rawLogEventData.domainContext = { handlingStack }
+      }
+
+      lifeCycle.notify(LifeCycleEventType.RAW_LOG_COLLECTED, rawLogEventData)
     }
   }
 
@@ -57,15 +52,6 @@ export function startLoggerCollection(lifeCycle: LifeCycle) {
     handleLog,
   }
 }
-
-export function isAuthorized(status: StatusType, handlerType: HandlerType, logger: Logger) {
-  const loggerHandler = logger.getHandler()
-  const sanitizedHandlerType = Array.isArray(loggerHandler) ? loggerHandler : [loggerHandler]
-  return (
-    STATUS_PRIORITIES[status] >= STATUS_PRIORITIES[logger.getLevel()] && includes(sanitizedHandlerType, handlerType)
-  )
-}
-
 const loggerToConsoleApiName: { [key in StatusType]: ConsoleApiName } = {
   [StatusType.ok]: ConsoleApiName.debug,
   [StatusType.debug]: ConsoleApiName.debug,
