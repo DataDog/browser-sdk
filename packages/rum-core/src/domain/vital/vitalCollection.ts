@@ -45,25 +45,6 @@ export function startVitalCollection(lifeCycle: LifeCycle, pageStateHistory: Pag
   }
 
   return {
-    startDurationVital: (vitalStart: DurationVitalStart): DurationVitalInstance => {
-      const startClocks = clocksNow()
-      let stopClocks: ClocksState | undefined
-
-      return {
-        stop: (vitalStop) => {
-          if (stopClocks) {
-            return
-          }
-
-          stopClocks = clocksNow()
-
-          const vital = buildDurationVital(vitalStart, startClocks, vitalStop, stopClocks)
-          if (isValid(vital)) {
-            lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, processVital(vital, true))
-          }
-        },
-      }
-    },
     addDurationVital: (vitalAdd: DurationVitalAdd) => {
       const vital = Object.assign({ type: VitalType.DURATION }, vitalAdd)
 
@@ -74,12 +55,32 @@ export function startVitalCollection(lifeCycle: LifeCycle, pageStateHistory: Pag
   }
 }
 
+export function createVitalInstance(
+  cb: (vital: DurationVital) => void,
+  vitalStart: DurationVitalStart
+): DurationVitalInstance {
+  const startClocks = clocksNow()
+  let stopClocks: ClocksState | undefined
+
+  return {
+    stop: (vitalStop) => {
+      if (stopClocks) {
+        return
+      }
+
+      stopClocks = clocksNow()
+
+      cb(buildDurationVital(vitalStart, startClocks, vitalStop, stopClocks))
+    },
+  }
+}
+
 function buildDurationVital(
   vitalStart: DurationVitalStart,
   startClocks: ClocksState,
   stopOptions: DurationVitalStop = {},
   stopClocks: ClocksState
-) {
+): DurationVital {
   return {
     name: vitalStart.name,
     type: VitalType.DURATION,

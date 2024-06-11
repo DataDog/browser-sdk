@@ -527,15 +527,18 @@ describe('preStartRum', () => {
     })
 
     it('startDurationVital', () => {
-      const startDurationVitalSpy = jasmine.createSpy()
+      const addDurationVitalSpy = jasmine.createSpy()
       doStartRumSpy.and.returnValue({
-        startDurationVital: startDurationVitalSpy,
+        addDurationVital: addDurationVitalSpy,
       } as unknown as StartRumResult)
 
       const vitalStart = { name: 'timing' }
-      strategy.startDurationVital(vitalStart)
+
+      const vital = strategy.startDurationVital(vitalStart)
+      vital.stop()
+
       strategy.init(DEFAULT_INIT_CONFIGURATION)
-      expect(startDurationVitalSpy).toHaveBeenCalledOnceWith(vitalStart)
+      expect(addDurationVitalSpy).toHaveBeenCalled()
     })
 
     it('addDurationVital', () => {

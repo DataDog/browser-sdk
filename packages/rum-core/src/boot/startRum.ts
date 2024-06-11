@@ -46,7 +46,8 @@ import { startCustomerDataTelemetry } from '../domain/startCustomerDataTelemetry
 import { startPageStateHistory } from '../domain/contexts/pageStateHistory'
 import type { CommonContext } from '../domain/contexts/commonContext'
 import { startDisplayContext } from '../domain/contexts/displayContext'
-import { startVitalCollection } from '../domain/vital/vitalCollection'
+import type { DurationVitalStart } from '../domain/vital/vitalCollection'
+import { createVitalInstance, startVitalCollection } from '../domain/vital/vitalCollection'
 import { startCiVisibilityContext } from '../domain/contexts/ciVisibilityContext'
 import type { RecorderApi } from './rumPublicApi'
 
@@ -182,6 +183,11 @@ export function startRum(
     urlContexts
   )
 
+  const startDurationVital = (startVital: DurationVitalStart) =>
+    createVitalInstance((vital) => {
+      vitalCollection.addDurationVital(vital)
+    }, startVital)
+
   return {
     addAction,
     addError,
@@ -193,7 +199,7 @@ export function startRum(
     session,
     stopSession: () => session.expire(),
     getInternalContext: internalContext.get,
-    startDurationVital: vitalCollection.startDurationVital,
+    startDurationVital,
     addDurationVital: vitalCollection.addDurationVital,
     stop: () => {
       cleanupTasks.forEach((task) => task())

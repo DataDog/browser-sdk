@@ -327,12 +327,12 @@ export function makeRumPublicApi(
          */
         ;(rumPublicApi as any).startDurationVital = monitor(
           (name: string, options?: { context?: object; details?: string }) => {
-            strategy.startDurationVital({
+            addTelemetryUsage({ feature: 'start-duration-vital' })
+            return strategy.startDurationVital({
               name: sanitize(name)!,
               context: sanitize(options?.context) as Context,
               details: sanitize(options?.details) as string | undefined,
             })
-            addTelemetryUsage({ feature: 'start-duration-vital' })
           }
         )
 
