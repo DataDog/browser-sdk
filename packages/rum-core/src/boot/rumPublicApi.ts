@@ -33,6 +33,7 @@ import {
   displayAlreadyInitializedError,
   createTrackingConsentState,
   timeStampToClocks,
+  noop,
 } from '@datadog/browser-core'
 import type { LifeCycle } from '../domain/lifeCycle'
 import type { ViewContexts } from '../domain/contexts/viewContexts'
@@ -356,6 +357,17 @@ export function makeRumPublicApi(
             })
           }
         )
+
+        /**
+         * @deprecated
+         * Stop a custom duration vital
+         * stored in @vital.custom.<name>
+         *
+         * @param name name of the custom vital
+         * @param options.context custom context attached to the vital
+         * @param options.stopTime epoch timestamp of the stop of the custom vital (if not set, will use current time)
+         */
+        ;(rumPublicApi as any).stopDurationVital = noop
       }
 
       if (initConfiguration.storeContextsAcrossPages) {
