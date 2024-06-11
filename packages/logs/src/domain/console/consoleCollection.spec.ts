@@ -52,6 +52,8 @@ describe('console collection', () => {
         error: whatever(),
       })
 
+      expect(rawLogsEvents[0].domainContext).not.toBeDefined()
+
       expect(consoleSpies[api]).toHaveBeenCalled()
     })
   })
