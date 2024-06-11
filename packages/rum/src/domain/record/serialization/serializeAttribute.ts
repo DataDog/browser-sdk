@@ -1,7 +1,14 @@
 import { startsWith } from '@datadog/browser-core'
-import { STABLE_ATTRIBUTES, isLongDataUrl, sanitizeDataUrl } from '@datadog/browser-rum-core'
+import {
+  NodePrivacyLevel,
+  PRIVACY_ATTR_NAME,
+  CENSORED_STRING_MARK,
+  CENSORED_IMG_MARK,
+  STABLE_ATTRIBUTES,
+  isLongDataUrl,
+  sanitizeDataUrl,
+} from '@datadog/browser-rum-core'
 import type { RumConfiguration } from '@datadog/browser-rum-core'
-import { NodePrivacyLevel, PRIVACY_ATTR_NAME, CENSORED_STRING_MARK, CENSORED_IMG_MARK } from '../../../constants'
 import { censoredImageForSize } from './serializationUtils'
 
 export function serializeAttribute(
