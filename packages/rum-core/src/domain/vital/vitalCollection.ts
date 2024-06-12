@@ -1,5 +1,5 @@
 import type { ClocksState, Duration, Context } from '@datadog/browser-core'
-import { clocksNow, combine, elapsed, generateUUID } from '@datadog/browser-core'
+import { clocksNow, combine, elapsed, generateUUID, toServerDuration } from '@datadog/browser-core'
 import type { LifeCycle, RawRumEventCollectedData } from '../lifeCycle'
 import { LifeCycleEventType } from '../lifeCycle'
 import type { RawRumVitalEvent } from '../../rawRumEvent.types'
@@ -98,7 +98,7 @@ function processVital(vital: DurationVital, valueComputedBySdk: boolean): RawRum
       id: generateUUID(),
       type: vital.type,
       name: vital.name,
-      duration: vital.duration,
+      duration: toServerDuration(vital.duration),
       details: vital.details,
       custom: {},
     },

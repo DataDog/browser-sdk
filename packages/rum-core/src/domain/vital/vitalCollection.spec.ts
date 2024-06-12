@@ -119,7 +119,7 @@ describe('vitalCollection', () => {
       })
 
       expect(rawRumEvents.length).toBe(1)
-      expect((rawRumEvents[0].rawRumEvent as RawRumVitalEvent).vital.duration).toBe(100)
+      expect((rawRumEvents[0].rawRumEvent as RawRumVitalEvent).vital.duration).toBe(100000000)
       expect((rawRumEvents[0].rawRumEvent as RawRumVitalEvent).vital.details).toBe('baz')
       expect(rawRumEvents[0].customerContext).toEqual({ foo: 'bar' })
     })
