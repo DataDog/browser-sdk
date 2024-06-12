@@ -113,9 +113,6 @@ function createMessage(
   cpuLocalPerformance,
   prNumber
 ) {
-  let message = `<div style="background-color: #FF9800; padding: 10px; margin-bottom: 10px;">
-  🔗 <a href="https://datadoghq.dev/browser-sdk-test-playground/performance/memory?prNumber=${prNumber}">Playground</a>
-</div>\n\n`
   let highIncreaseDetected = false
   const bundleRows = differenceBundle.map((diff, index) => {
     const baseSize = formatSize(baseBundleSizes[index].value)
@@ -130,7 +127,7 @@ function createMessage(
     return [formatBundleName(diff.name), baseSize, localSize, diffSize, `${sign}${diff.percentageChange}%`, status]
   })
 
-  message += markdownArray({
+  let message = markdownArray({
     headers: ['📦 Bundle Name', 'Base Size', 'Local Size', '𝚫', '𝚫%', 'Status'],
     rows: bundleRows,
   })
@@ -179,9 +176,7 @@ function createMessage(
   })
   message += '\n</details>\n\n'
 
-  message += '<details>\n<summary>ℹ️ Useful Testing Links</summary>\n\n'
-  message += `- [Playground with PR Bundle](https://datadoghq.dev/browser-sdk-test-playground/performance/memory?prNumber=${prNumber})\n`
-  message += '\n</details>\n\n'
+  message += `🔗 [Playground](https://datadoghq.dev/browser-sdk-test-playground/performance/memory?prNumber=${prNumber})\n\n`
 
   return message
 }
