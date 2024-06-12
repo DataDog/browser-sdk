@@ -1,5 +1,5 @@
 import type { ClocksState, Duration, Context } from '@datadog/browser-core'
-import { clocksNow, combine, elapsed, generateUUID, toServerDuration } from '@datadog/browser-core'
+import { assign, clocksNow, combine, elapsed, generateUUID, toServerDuration } from '@datadog/browser-core'
 import type { LifeCycle, RawRumEventCollectedData } from '../lifeCycle'
 import { LifeCycleEventType } from '../lifeCycle'
 import type { RawRumVitalEvent } from '../../rawRumEvent.types'
@@ -46,7 +46,7 @@ export function startVitalCollection(lifeCycle: LifeCycle, pageStateHistory: Pag
 
   return {
     addDurationVital: (vitalAdd: DurationVitalAdd) => {
-      const vital = Object.assign({ type: VitalType.DURATION }, vitalAdd)
+      const vital = assign({ type: VitalType.DURATION }, vitalAdd)
 
       if (isValid(vital)) {
         lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, processVital(vital, true))
