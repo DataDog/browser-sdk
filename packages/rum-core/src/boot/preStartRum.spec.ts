@@ -18,6 +18,7 @@ import {
   initEventBridgeStub,
   interceptRequests,
   mockClock,
+  mockExperimentalFeatures,
   mockSyntheticsWorkerValues,
 } from '@datadog/browser-core/test'
 import type { HybridInitConfiguration, RumConfiguration, RumInitConfiguration } from '../domain/configuration'
@@ -407,12 +408,12 @@ describe('preStartRum', () => {
 
       afterEach(() => {
         interceptor.restore()
-        resetExperimentalFeatures()
       })
 
       describe('when remote_configuration ff is enabled', () => {
         it('should start with the remote configuration when a remoteConfigurationId is provided', (done) => {
-          addExperimentalFeatures([ExperimentalFeature.REMOTE_CONFIGURATION])
+          mockExperimentalFeatures([ExperimentalFeature.REMOTE_CONFIGURATION])
+
           interceptor.withStubXhr((xhr) => {
             xhr.complete(200, '{"sessionSampleRate":50}')
 
