@@ -44,4 +44,25 @@ describe('reactPlugin', () => {
     expect(callbackSpy.calls.mostRecent().args[0]).toBe(pluginConfiguration)
     expect(callbackSpy.calls.mostRecent().args[1]).toBe(PUBLIC_API)
   })
+
+  it('enforce manual view tracking when router is enabled', () => {
+    const initConfiguration = { ...INIT_CONFIGURATION }
+    reactPlugin({ router: true }).onInit({ publicApi: PUBLIC_API, initConfiguration })
+
+    expect(initConfiguration.trackViewsManually).toBe(true)
+  })
+
+  it('does not enforce manual view tracking when router is disabled', () => {
+    const initConfiguration = { ...INIT_CONFIGURATION }
+    reactPlugin({ router: false }).onInit({ publicApi: PUBLIC_API, initConfiguration })
+
+    expect(initConfiguration.trackViewsManually).toBeUndefined()
+  })
+
+  it('returns the configuration telemetry', () => {
+    const pluginConfiguration = { router: true }
+    const plugin = reactPlugin(pluginConfiguration)
+
+    expect(plugin.getConfigurationTelemetry()).toEqual({ router: true })
+  })
 })

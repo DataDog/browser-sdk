@@ -6,16 +6,26 @@ type Subscriber = (configuration: ReactPluginConfiguration, rumPublicApi: RumPub
 
 const onReactPluginInitSubscribers: Subscriber[] = []
 
-export interface ReactPluginConfiguration {}
+export interface ReactPluginConfiguration {
+  /**
+   * Enable react-router integration
+   */
+  router?: boolean
+}
 
 export function reactPlugin(configuration: ReactPluginConfiguration = {}) {
   return {
     name: 'react',
-    onInit({ publicApi }) {
+    onInit({ publicApi, initConfiguration }) {
       globalPublicApi = publicApi
       globalConfiguration = configuration
       onReactPluginInitSubscribers.forEach((subscriber) => subscriber(configuration, publicApi))
-      onReactPluginInitSubscribers.length = 0
+      if (configuration.router) {
+        initConfiguration.trackViewsManually = true
+      }
+    },
+    getConfigurationTelemetry() {
+      return { router: !!configuration.router }
     },
   } satisfies RumPlugin
 }

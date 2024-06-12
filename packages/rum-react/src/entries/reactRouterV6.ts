@@ -1,1 +1,1 @@
-// TODO
+export * from '../domain/reactRouterV6'
