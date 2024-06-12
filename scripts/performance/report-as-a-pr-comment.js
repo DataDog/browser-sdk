@@ -176,7 +176,7 @@ function createMessage(
   })
   message += '\n</details>\n\n'
 
-  message += `🔗 [Playground](https://datadoghq.dev/browser-sdk-test-playground/performance/memory?prNumber=${prNumber})\n\n`
+  message += `🔗 [RealWorld](https://datadoghq.dev/browser-sdk-test-playground/realworld-scenario/?prNumber=${prNumber})\n\n`
 
   return message
 }
