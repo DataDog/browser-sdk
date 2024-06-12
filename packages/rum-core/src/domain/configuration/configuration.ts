@@ -205,7 +205,6 @@ export function validateAndBuildRumConfiguration(
       traceContextInjection: objectHasValue(TraceContextInjection, initConfiguration.traceContextInjection)
         ? initConfiguration.traceContextInjection
         : TraceContextInjection.ALL,
-      storeContextsAcrossPages: initConfiguration.storeContextsAcrossPages,
     },
     baseConfiguration
   )
