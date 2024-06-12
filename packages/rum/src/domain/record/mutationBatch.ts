@@ -1,4 +1,4 @@
-import { noop, monitor } from '@datadog/browser-core'
+import { noop, monitor, throttle } from '@datadog/browser-core'
 import type { RumMutationRecord } from './trackers'
 
 /**
@@ -8,6 +8,7 @@ import type { RumMutationRecord } from './trackers'
  * browser is busy executing a longer task, mutations will be processed after this task.
  */
 const MUTATION_PROCESS_MAX_DELAY = 100
+export const MUTATION_PROCESS_MIN_DELAY = 16
 
 export function createMutationBatch(processMutationBatch: (mutations: RumMutationRecord[]) => void) {
   let cancelScheduledFlush = noop
@@ -19,10 +20,14 @@ export function createMutationBatch(processMutationBatch: (mutations: RumMutatio
     pendingMutations = []
   }
 
+  const { throttled: throttledFlush, cancel: cancelThrottle } = throttle(flush, MUTATION_PROCESS_MIN_DELAY, {
+    leading: false,
+  })
+
   return {
     addMutations: (mutations: RumMutationRecord[]) => {
       if (pendingMutations.length === 0) {
-        cancelScheduledFlush = requestIdleCallback(flush, { timeout: MUTATION_PROCESS_MAX_DELAY })
+        cancelScheduledFlush = requestIdleCallback(throttledFlush, { timeout: MUTATION_PROCESS_MAX_DELAY })
       }
       pendingMutations.push(...mutations)
     },
@@ -31,6 +36,7 @@ export function createMutationBatch(processMutationBatch: (mutations: RumMutatio
 
     stop: () => {
       cancelScheduledFlush()
+      cancelThrottle()
     },
   }
 }
