@@ -174,6 +174,10 @@ export function createPreStartStrategy(
       }
     },
 
+    updateViewName(name) {
+      bufferApiCalls.add((startRumResult) => startRumResult.updateViewName(name))
+    },
+
     addAction(action, commonContext = getCommonContext()) {
       bufferApiCalls.add((startRumResult) => startRumResult.addAction(action, commonContext))
     },

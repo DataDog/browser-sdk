@@ -154,6 +154,10 @@ export function trackViews(
       currentView.end({ endClocks: startClocks })
       currentView = startNewView(ViewLoadingType.ROUTE_CHANGE, startClocks, options)
     },
+    updateViewName: (name: string) => {
+      currentView.updateViewName(name)
+    },
+
     stop: () => {
       locationChangeSubscription?.unsubscribe()
       currentView.end()
@@ -295,6 +299,10 @@ function newView(
       }
       const relativeTime = looksLikeRelativeTime(time) ? time : elapsed(startClocks.timeStamp, time)
       customTimings[sanitizeTiming(name)] = relativeTime
+      scheduleViewUpdate()
+    },
+    updateViewName(updatedName: string) {
+      name = updatedName
       scheduleViewUpdate()
     },
   }
