@@ -31,6 +31,7 @@ describe('createMutationBatch', () => {
     mutationBatch.addMutations([mutation])
 
     expect(requestIdleCallbackSpy).toHaveBeenCalled()
+    expect(processMutationBatchSpy).not.toHaveBeenCalled()
     clock.tick(MUTATION_PROCESS_MIN_DELAY)
     expect(processMutationBatchSpy).toHaveBeenCalledWith([mutation])
   })
