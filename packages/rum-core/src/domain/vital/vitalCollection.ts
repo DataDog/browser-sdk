@@ -56,7 +56,7 @@ export function startVitalCollection(lifeCycle: LifeCycle, pageStateHistory: Pag
 }
 
 export function createVitalInstance(
-  cb: (vital: DurationVital) => void,
+  stopCallback: (vital: DurationVital) => void,
   vitalStart: DurationVitalStart
 ): DurationVitalInstance {
   const startClocks = clocksNow()
@@ -70,7 +70,7 @@ export function createVitalInstance(
 
       stopClocks = clocksNow()
 
-      cb(buildDurationVital(vitalStart, startClocks, vitalStop, stopClocks))
+      stopCallback(buildDurationVital(vitalStart, startClocks, vitalStop, stopClocks))
     },
   }
 }
