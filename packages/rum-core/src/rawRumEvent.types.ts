@@ -233,9 +233,6 @@ export interface RawRumVitalEvent {
     type: VitalType
     details?: string
     duration: number
-    custom: {
-      [key: string]: number
-    }
   }
   _dd?: {
     vital: {

@@ -151,7 +151,6 @@ describe('vitalCollection', () => {
         id: jasmine.any(String),
         type: VitalType.DURATION,
         name: 'foo',
-        custom: {},
         duration: 0,
         details: undefined,
       },

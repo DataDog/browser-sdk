@@ -100,7 +100,6 @@ function processVital(vital: DurationVital, valueComputedBySdk: boolean): RawRum
       name: vital.name,
       duration: toServerDuration(vital.duration),
       details: vital.details,
-      custom: {},
     },
     type: RumEventType.VITAL,
   }
