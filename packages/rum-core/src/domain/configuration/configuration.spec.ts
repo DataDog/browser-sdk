@@ -4,8 +4,12 @@ import {
   EXHAUSTIVE_INIT_CONFIGURATION,
   mockExperimentalFeatures,
   SERIALIZED_EXHAUSTIVE_INIT_CONFIGURATION,
-} from '../../../core/test'
-import type { ExtractTelemetryConfiguration, CamelToSnakeCase, MapInitConfigurationKey } from '../../../core/test'
+} from '@datadog/browser-core/test'
+import type {
+  ExtractTelemetryConfiguration,
+  CamelToSnakeCase,
+  MapInitConfigurationKey,
+} from '@datadog/browser-core/test'
 import type { RumInitConfiguration } from './configuration'
 import { DEFAULT_PROPAGATOR_TYPES, serializeRumConfiguration, validateAndBuildRumConfiguration } from './configuration'
 
@@ -471,6 +475,7 @@ describe('serializeRumConfiguration', () => {
       trackViewsManually: true,
       trackResources: true,
       trackLongTasks: true,
+      remoteConfigurationId: '123',
     }
 
     type MapRumInitConfigurationKey<Key extends string> = Key extends keyof InitConfiguration
@@ -479,7 +484,7 @@ describe('serializeRumConfiguration', () => {
         ? `use_${CamelToSnakeCase<Key>}`
         : Key extends 'trackLongTasks'
           ? 'track_long_task' // oops
-          : Key extends 'applicationId' | 'subdomain'
+          : Key extends 'applicationId' | 'subdomain' | 'remoteConfigurationId'
             ? never
             : CamelToSnakeCase<Key>
 

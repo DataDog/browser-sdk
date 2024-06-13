@@ -19,6 +19,7 @@ export enum ExperimentalFeature {
   TOLERANT_RESOURCE_TIMINGS = 'tolerant_resource_timings',
   ENABLE_PRIVACY_FOR_ACTION_NAME = 'enable_privacy_for_action_name',
   MICRO_FRONTEND = 'micro_frontend',
+  REMOTE_CONFIGURATION = 'remote_configuration',
 }
 
 const enabledExperimentalFeatures: Set<ExperimentalFeature> = new Set()
