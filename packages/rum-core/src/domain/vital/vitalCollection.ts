@@ -44,14 +44,20 @@ export function startVitalCollection(lifeCycle: LifeCycle, pageStateHistory: Pag
     return !pageStateHistory.wasInPageStateDuringPeriod(PageState.FROZEN, vital.startClocks.relative, vital.duration)
   }
 
-  return {
-    addDurationVital: (vitalAdd: DurationVitalAdd) => {
-      const vital = assign({ type: VitalType.DURATION }, vitalAdd)
+  function addDurationVital(vitalAdd: DurationVitalAdd) {
+    const vital = assign({ type: VitalType.DURATION }, vitalAdd)
 
-      if (isValid(vital)) {
-        lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, processVital(vital, true))
-      }
-    },
+    if (isValid(vital)) {
+      lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, processVital(vital, true))
+    }
+  }
+
+  return {
+    addDurationVital,
+    startDurationVital: (startVital: DurationVitalStart) =>
+      createVitalInstance((vital) => {
+        addDurationVital(vital)
+      }, startVital),
   }
 }
 
