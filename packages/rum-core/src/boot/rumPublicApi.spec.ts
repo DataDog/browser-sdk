@@ -859,7 +859,7 @@ describe('rum public api', () => {
   })
 
   describe('updateViewName', () => {
-    it('should call RUM results startView with the view name', () => {
+    it('should update the view name', () => {
       const updateViewNameSpy = jasmine.createSpy()
       const rumPublicApi = makeRumPublicApi(
         () => ({ ...noopStartRum(), updateViewName: updateViewNameSpy }),

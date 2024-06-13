@@ -462,10 +462,6 @@ export function makeRumPublicApi(
       })
     },
 
-    updateViewName: (name) => {
-      strategy.updateViewName(name)
-    },
-
     addTiming: monitor((name, time) => {
       // TODO: next major decide to drop relative time support or update its behaviour
       strategy.addTiming(sanitize(name)!, time as RelativeTime | TimeStamp | undefined)
@@ -491,6 +487,10 @@ export function makeRumPublicApi(
     clearUser: monitor(() => userContextManager.clearContext()),
 
     startView,
+
+    updateViewName: (name) => {
+      strategy.updateViewName(name)
+    },
 
     stopSession: monitor(() => {
       strategy.stopSession()
