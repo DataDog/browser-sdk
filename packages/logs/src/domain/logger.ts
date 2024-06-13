@@ -10,29 +10,17 @@ import {
   monitored,
   sanitize,
   NonErrorPrefix,
+  createHandlingStack,
 } from '@datadog/browser-core'
 
 import type { RawLoggerLogsEvent } from '../rawLogsEvent.types'
+import { isAuthorized, StatusType } from './logger/isAuthorized'
 
 export interface LogsMessage {
   message: string
   status: StatusType
   context?: Context
 }
-
-export const StatusType = {
-  ok: 'ok',
-  debug: 'debug',
-  info: 'info',
-  notice: 'notice',
-  warn: 'warn',
-  error: 'error',
-  critical: 'critical',
-  alert: 'alert',
-  emerg: 'emerg',
-} as const
-
-export type StatusType = (typeof StatusType)[keyof typeof StatusType]
 
 export const HandlerType = {
   console: 'console',
@@ -43,11 +31,13 @@ export const HandlerType = {
 export type HandlerType = (typeof HandlerType)[keyof typeof HandlerType]
 export const STATUSES = Object.keys(StatusType) as StatusType[]
 
+// note: it is safe to merge declarations as long as the methods are actually defined on the prototype
+// eslint-disable-next-line @typescript-eslint/no-unsafe-declaration-merging
 export class Logger {
   private contextManager: ContextManager
 
   constructor(
-    private handleLogStrategy: (logsMessage: LogsMessage, logger: Logger) => void,
+    private handleLogStrategy: (logsMessage: LogsMessage, logger: Logger, handlingStack?: string) => void,
     customerDataTracker: CustomerDataTracker,
     name?: string,
     private handlerType: HandlerType | HandlerType[] = HandlerType.http,
@@ -62,7 +52,13 @@ export class Logger {
   }
 
   @monitored
-  log(message: string, messageContext?: object, status: StatusType = StatusType.info, error?: Error) {
+  logImplementation(
+    message: string,
+    messageContext?: object,
+    status: StatusType = StatusType.info,
+    error?: Error,
+    handlingStack?: string
+  ) {
     let errorContext: RawLoggerLogsEvent['error']
 
     if (error !== undefined && error !== null) {
@@ -96,44 +92,19 @@ export class Logger {
         context,
         status,
       },
-      this
+      this,
+      handlingStack
     )
   }
 
-  ok(message: string, messageContext?: object, error?: Error) {
-    this.log(message, messageContext, StatusType.ok, error)
-  }
+  log(message: string, messageContext?: object, status: StatusType = StatusType.info, error?: Error) {
+    let handlingStack: string | undefined
 
-  debug(message: string, messageContext?: object, error?: Error) {
-    this.log(message, messageContext, StatusType.debug, error)
-  }
+    if (isAuthorized(status, HandlerType.http, this)) {
+      handlingStack = createHandlingStack()
+    }
 
-  info(message: string, messageContext?: object, error?: Error) {
-    this.log(message, messageContext, StatusType.info, error)
-  }
-
-  notice(message: string, messageContext?: object, error?: Error) {
-    this.log(message, messageContext, StatusType.notice, error)
-  }
-
-  warn(message: string, messageContext?: object, error?: Error) {
-    this.log(message, messageContext, StatusType.warn, error)
-  }
-
-  error(message: string, messageContext?: object, error?: Error) {
-    this.log(message, messageContext, StatusType.error, error)
-  }
-
-  critical(message: string, messageContext?: object, error?: Error) {
-    this.log(message, messageContext, StatusType.critical, error)
-  }
-
-  alert(message: string, messageContext?: object, error?: Error) {
-    this.log(message, messageContext, StatusType.alert, error)
-  }
-
-  emerg(message: string, messageContext?: object, error?: Error) {
-    this.log(message, messageContext, StatusType.emerg, error)
+    this.logImplementation(message, messageContext, status, error, handlingStack)
   }
 
   setContext(context: object) {
@@ -170,5 +141,43 @@ export class Logger {
 
   getLevel() {
     return this.level
+  }
+}
+
+/* eslint-disable local-rules/disallow-side-effects */
+Logger.prototype.ok = createLoggerMethod(StatusType.ok)
+Logger.prototype.debug = createLoggerMethod(StatusType.debug)
+Logger.prototype.info = createLoggerMethod(StatusType.info)
+Logger.prototype.notice = createLoggerMethod(StatusType.notice)
+Logger.prototype.warn = createLoggerMethod(StatusType.warn)
+Logger.prototype.error = createLoggerMethod(StatusType.error)
+Logger.prototype.critical = createLoggerMethod(StatusType.critical)
+Logger.prototype.alert = createLoggerMethod(StatusType.alert)
+Logger.prototype.emerg = createLoggerMethod(StatusType.emerg)
+/* eslint-enable local-rules/disallow-side-effects */
+
+// note: it is safe to merge declarations as long as the methods are actually defined on the prototype
+// eslint-disable-next-line @typescript-eslint/no-unsafe-declaration-merging
+export interface Logger {
+  ok(message: string, messageContext?: object, error?: Error): void
+  debug(message: string, messageContext?: object, error?: Error): void
+  info(message: string, messageContext?: object, error?: Error): void
+  notice(message: string, messageContext?: object, error?: Error): void
+  warn(message: string, messageContext?: object, error?: Error): void
+  error(message: string, messageContext?: object, error?: Error): void
+  critical(message: string, messageContext?: object, error?: Error): void
+  alert(message: string, messageContext?: object, error?: Error): void
+  emerg(message: string, messageContext?: object, error?: Error): void
+}
+
+function createLoggerMethod(status: StatusType) {
+  return function (this: Logger, message: string, messageContext?: object, error?: Error) {
+    let handlingStack: string | undefined
+
+    if (isAuthorized(status, HandlerType.http, this)) {
+      handlingStack = createHandlingStack()
+    }
+
+    this.logImplementation(message, messageContext, status, error, handlingStack)
   }
 }

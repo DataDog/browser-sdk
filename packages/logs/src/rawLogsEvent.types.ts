@@ -1,5 +1,5 @@
 import type { Context, ErrorSource, RawErrorCause, TimeStamp, User } from '@datadog/browser-core'
-import type { StatusType } from './domain/logger'
+import type { StatusType } from './domain/logger/isAuthorized'
 
 export type RawLogsEvent =
   | RawConsoleLogsEvent

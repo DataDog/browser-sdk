@@ -396,6 +396,7 @@ describe('view metrics', () => {
       expect(getViewUpdate(1).commonViewMetrics.cumulativeLayoutShift).toEqual({
         value: 0.1,
         targetSelector: undefined,
+        time: 0 as Duration,
       })
     })
 

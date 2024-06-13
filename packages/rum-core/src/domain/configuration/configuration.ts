@@ -11,6 +11,8 @@ import {
   isPercentage,
   objectHasValue,
   validateAndBuildConfiguration,
+  isExperimentalFeatureEnabled,
+  ExperimentalFeature,
 } from '@datadog/browser-core'
 import type { RumEventDomainContext } from '../../domainContext.types'
 import type { RumEvent } from '../../rumEvent.types'
@@ -94,7 +96,10 @@ export interface RumInitConfiguration extends InitConfiguration {
    */
   startSessionReplayRecordingManually?: boolean | undefined
 
-  // action options
+  /**
+   * Enables privacy control for action names.
+   */
+  enablePrivacyForActionName?: boolean | undefined // TODO next major: remove this option and make privacy for action name the default behavior
   /**
    * Enables automatic collection of users actions.
    * See [Tracking User Actions](https://docs.datadoghq.com/real_user_monitoring/browser/tracking_user_actions) for further information.
@@ -133,6 +138,7 @@ export interface RumConfiguration extends Configuration {
   compressIntakeRequests: boolean
   applicationId: string
   defaultPrivacyLevel: DefaultPrivacyLevel
+  enablePrivacyForActionName: boolean
   sessionReplaySampleRate: number
   startSessionReplayRecordingManually: boolean
   trackUserInteractions: boolean
@@ -201,6 +207,9 @@ export function validateAndBuildRumConfiguration(
       defaultPrivacyLevel: objectHasValue(DefaultPrivacyLevel, initConfiguration.defaultPrivacyLevel)
         ? initConfiguration.defaultPrivacyLevel
         : DefaultPrivacyLevel.MASK,
+      enablePrivacyForActionName:
+        isExperimentalFeatureEnabled(ExperimentalFeature.ENABLE_PRIVACY_FOR_ACTION_NAME) &&
+        !!initConfiguration.enablePrivacyForActionName,
       customerDataTelemetrySampleRate: 1,
       traceContextInjection: objectHasValue(TraceContextInjection, initConfiguration.traceContextInjection)
         ? initConfiguration.traceContextInjection
@@ -278,6 +287,7 @@ export function serializeRumConfiguration(configuration: RumInitConfiguration) {
         Array.isArray(configuration.allowedTracingUrls) && configuration.allowedTracingUrls.length > 0,
       selected_tracing_propagators: getSelectedTracingPropagators(configuration),
       default_privacy_level: configuration.defaultPrivacyLevel,
+      enable_privacy_for_action_name: configuration.enablePrivacyForActionName,
       use_excluded_activity_urls:
         Array.isArray(configuration.excludedActivityUrls) && configuration.excludedActivityUrls.length > 0,
       use_worker_url: !!configuration.workerUrl,

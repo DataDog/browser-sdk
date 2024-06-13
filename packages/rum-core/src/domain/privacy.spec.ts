@@ -5,8 +5,11 @@ import {
   PRIVACY_ATTR_VALUE_HIDDEN,
   PRIVACY_ATTR_VALUE_MASK,
   PRIVACY_ATTR_VALUE_MASK_USER_INPUT,
-} from '../../constants'
-import { getNodeSelfPrivacyLevel, reducePrivacyLevel, getNodePrivacyLevel, shouldMaskNode } from './privacy'
+  getNodeSelfPrivacyLevel,
+  reducePrivacyLevel,
+  getNodePrivacyLevel,
+  shouldMaskNode,
+} from './privacy'
 
 describe('getNodePrivacyLevel', () => {
   beforeEach(() => {
