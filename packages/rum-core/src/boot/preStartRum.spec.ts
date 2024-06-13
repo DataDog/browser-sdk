@@ -26,6 +26,7 @@ import type { CommonContext } from '../domain/contexts/commonContext'
 import type { ViewOptions } from '../domain/view/trackViews'
 import { ActionType } from '../rawRumEvent.types'
 import type { CustomAction } from '../domain/action/actionCollection'
+import type { RumPlugin } from '../domain/plugins'
 import type { RumPublicApi, Strategy } from './rumPublicApi'
 import type { StartRumResult } from './startRum'
 import { createPreStartStrategy } from './preStartRum'
@@ -463,6 +464,40 @@ describe('preStartRum', () => {
           )
           expect(doStartRumSpy.calls.mostRecent().args[0].sessionSampleRate).toEqual(100)
         })
+      })
+    })
+
+    describe('plugins', () => {
+      it('calls the onInit hook on provided plugins', () => {
+        const plugin = { name: 'a', onInit: jasmine.createSpy() }
+        const strategy = createPreStartStrategy({}, getCommonContextSpy, createTrackingConsentState(), doStartRumSpy)
+        const initConfiguration = { ...DEFAULT_INIT_CONFIGURATION, plugins: [plugin] }
+        strategy.init(initConfiguration, PUBLIC_API)
+
+        expect(plugin.onInit).toHaveBeenCalledWith({
+          initConfiguration,
+          publicApi: PUBLIC_API,
+        })
+      })
+
+      it('plugins can edit the init configuration prior to validation', () => {
+        const plugin: RumPlugin = {
+          name: 'a',
+          onInit: ({ initConfiguration }) => {
+            initConfiguration.clientToken = 'client-token'
+            initConfiguration.applicationId = 'application-id'
+          },
+        }
+        const strategy = createPreStartStrategy({}, getCommonContextSpy, createTrackingConsentState(), doStartRumSpy)
+        strategy.init(
+          {
+            plugins: [plugin],
+          } as RumInitConfiguration,
+          PUBLIC_API
+        )
+
+        expect(doStartRumSpy).toHaveBeenCalled()
+        expect(doStartRumSpy.calls.mostRecent().args[0].applicationId).toBe('application-id')
       })
     })
   })
