@@ -3,7 +3,8 @@ import type { TimeStamp, TrackingConsentState } from '@datadog/browser-core'
 import { ONE_SECOND, TrackingConsent, createTrackingConsentState, display } from '@datadog/browser-core'
 import type { CommonContext } from '../rawLogsEvent.types'
 import type { HybridInitConfiguration, LogsConfiguration, LogsInitConfiguration } from '../domain/configuration'
-import { StatusType, type Logger } from '../domain/logger'
+import type { Logger } from '../domain/logger'
+import { StatusType } from '../domain/logger/isAuthorized'
 import type { Strategy } from './logsPublicApi'
 import { createPreStartStrategy } from './preStartLogs'
 import type { StartLogsResult } from './startLogs'
@@ -21,8 +22,8 @@ describe('preStartLogs', () => {
   let clock: Clock
 
   function getLoggedMessage(index: number) {
-    const [message, logger, savedCommonContext, savedDate] = handleLogSpy.calls.argsFor(index)
-    return { message, logger, savedCommonContext, savedDate }
+    const [message, logger, handlingStack, savedCommonContext, savedDate] = handleLogSpy.calls.argsFor(index)
+    return { message, logger, handlingStack, savedCommonContext, savedDate }
   }
 
   beforeEach(() => {

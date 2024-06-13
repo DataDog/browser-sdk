@@ -8,12 +8,17 @@ import {
   TrackingConsent,
   createTrackingConsentState,
   DefaultPrivacyLevel,
+  addExperimentalFeatures,
+  ExperimentalFeature,
+  resetExperimentalFeatures,
 } from '@datadog/browser-core'
 import type { Clock } from '@datadog/browser-core/test'
 import {
   cleanupSyntheticsWorkerValues,
   initEventBridgeStub,
+  interceptRequests,
   mockClock,
+  mockExperimentalFeatures,
   mockSyntheticsWorkerValues,
 } from '@datadog/browser-core/test'
 import type { HybridInitConfiguration, RumConfiguration, RumInitConfiguration } from '../domain/configuration'
@@ -393,6 +398,48 @@ describe('preStartRum', () => {
         })
       })
     })
+
+    describe('remote configuration', () => {
+      let interceptor: ReturnType<typeof interceptRequests>
+
+      beforeEach(() => {
+        interceptor = interceptRequests()
+      })
+
+      afterEach(() => {
+        interceptor.restore()
+      })
+
+      describe('when remote_configuration ff is enabled', () => {
+        it('should start with the remote configuration when a remoteConfigurationId is provided', (done) => {
+          mockExperimentalFeatures([ExperimentalFeature.REMOTE_CONFIGURATION])
+
+          interceptor.withStubXhr((xhr) => {
+            xhr.complete(200, '{"sessionSampleRate":50}')
+
+            expect(doStartRumSpy.calls.mostRecent().args[0].sessionSampleRate).toEqual(50)
+            done()
+          })
+
+          const strategy = createPreStartStrategy({}, getCommonContextSpy, createTrackingConsentState(), doStartRumSpy)
+          strategy.init({
+            ...DEFAULT_INIT_CONFIGURATION,
+            remoteConfigurationId: '123',
+          })
+        })
+      })
+
+      describe('when remote_configuration ff is disabled', () => {
+        it('should start without the remote configuration when a remoteConfigurationId is provided', () => {
+          const strategy = createPreStartStrategy({}, getCommonContextSpy, createTrackingConsentState(), doStartRumSpy)
+          strategy.init({
+            ...DEFAULT_INIT_CONFIGURATION,
+            remoteConfigurationId: '123',
+          })
+          expect(doStartRumSpy.calls.mostRecent().args[0].sessionSampleRate).toEqual(100)
+        })
+      })
+    })
   })
 
   describe('getInternalContext', () => {
@@ -417,14 +464,18 @@ describe('preStartRum', () => {
   describe('initConfiguration', () => {
     let strategy: Strategy
     let initConfiguration: RumInitConfiguration
+    let interceptor: ReturnType<typeof interceptRequests>
 
     beforeEach(() => {
+      interceptor = interceptRequests()
       strategy = createPreStartStrategy({}, getCommonContextSpy, createTrackingConsentState(), doStartRumSpy)
       initConfiguration = { ...DEFAULT_INIT_CONFIGURATION, service: 'my-service', version: '1.4.2', env: 'dev' }
     })
 
     afterEach(() => {
       cleanupSyntheticsWorkerValues()
+      interceptor.restore()
+      resetExperimentalFeatures()
     })
 
     it('is undefined before init', () => {
@@ -451,6 +502,22 @@ describe('preStartRum', () => {
       strategy.init(initConfiguration)
 
       expect(strategy.initConfiguration).toEqual(initConfiguration)
+    })
+
+    it('returns the initConfiguration with the remote configuration when a remoteConfigurationId is provided', (done) => {
+      addExperimentalFeatures([ExperimentalFeature.REMOTE_CONFIGURATION])
+      interceptor.withStubXhr((xhr) => {
+        xhr.complete(200, '{"sessionSampleRate":50}')
+
+        expect(strategy.initConfiguration?.sessionSampleRate).toEqual(50)
+        done()
+      })
+
+      const strategy = createPreStartStrategy({}, getCommonContextSpy, createTrackingConsentState(), doStartRumSpy)
+      strategy.init({
+        ...DEFAULT_INIT_CONFIGURATION,
+        remoteConfigurationId: '123',
+      })
     })
   })
 

@@ -61,7 +61,7 @@ n=o.getElementsByTagName(u)[0];n.parentNode.insertBefore(d,n)
         ${formatSnippet('./datadog-logs.js', 'DD_LOGS')}
         DD_LOGS.onReady(function () {
           DD_LOGS.setGlobalContext(${JSON.stringify(options.context)})
-          DD_LOGS.init(${formatConfiguration(options.logs, servers)})
+          ;(${options.logsInit.toString()})(${formatConfiguration(options.logs, servers)})
         })
       </script>
     `
@@ -97,7 +97,7 @@ export function bundleSetup(options: SetupOptions, servers: Servers) {
       <script type="text/javascript" src="./datadog-logs.js"></script>
       <script type="text/javascript">
         DD_LOGS.setGlobalContext(${JSON.stringify(options.context)})
-        DD_LOGS.init(${formatConfiguration(options.logs, servers)})
+        ;(${options.logsInit.toString()})(${formatConfiguration(options.logs, servers)})
       </script>
     `
   }

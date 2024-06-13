@@ -73,6 +73,11 @@ class TestBuilder {
     return this
   }
 
+  withLogsInit(logsInit: (initConfiguration: LogsInitConfiguration) => void) {
+    this.logsInit = logsInit
+    return this
+  }
+
   withLogs(logsInitConfiguration?: Partial<LogsInitConfiguration>) {
     this.logsConfiguration = { ...DEFAULT_LOGS_CONFIGURATION, ...logsInitConfiguration }
     return this

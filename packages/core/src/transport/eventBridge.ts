@@ -1,5 +1,6 @@
 import { endsWith, includes } from '../tools/utils/polyfills'
 import { getGlobalObject } from '../tools/getGlobalObject'
+import type { DefaultPrivacyLevel } from '../domain/configuration'
 
 export interface BrowserWindowWithEventBridge extends Window {
   DatadogEventBridge?: DatadogEventBridge
@@ -7,7 +8,7 @@ export interface BrowserWindowWithEventBridge extends Window {
 
 export interface DatadogEventBridge {
   getCapabilities?(): string
-  getPrivacyLevel?(): string
+  getPrivacyLevel?(): DefaultPrivacyLevel
   getAllowedWebViewHosts(): string
   send(msg: string): void
 }

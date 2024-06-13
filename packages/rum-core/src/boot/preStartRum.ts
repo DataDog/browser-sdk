@@ -9,8 +9,10 @@ import {
   clocksNow,
   assign,
   getEventBridge,
-  addTelemetryConfiguration,
+  ExperimentalFeature,
+  isExperimentalFeatureEnabled,
   initFeatureFlags,
+  addTelemetryConfiguration,
 } from '@datadog/browser-core'
 import type { TrackingConsentState, DeflateWorker } from '@datadog/browser-core'
 import {
@@ -21,7 +23,7 @@ import {
 import type { CommonContext } from '../domain/contexts/commonContext'
 import type { ViewOptions } from '../domain/view/trackViews'
 import { createVitalInstance } from '../domain/vital/vitalCollection'
-import { serializeRumConfiguration } from '../domain/configuration'
+import { fetchAndApplyRemoteConfiguration, serializeRumConfiguration } from '../domain/configuration'
 import type { RumPublicApiOptions, Strategy } from './rumPublicApi'
 import type { StartRumResult } from './startRum'
 
@@ -74,29 +76,62 @@ export function createPreStartStrategy(
     bufferApiCalls.drain(startRumResult)
   }
 
+  function doInit(initConfiguration: RumInitConfiguration) {
+    const eventBridgeAvailable = canUseEventBridge()
+    if (eventBridgeAvailable) {
+      initConfiguration = overrideInitConfigurationForBridge(initConfiguration)
+    }
+
+    // Update the exposed initConfiguration to reflect the bridge and remote configuration overrides
+    cachedInitConfiguration = initConfiguration
+    addTelemetryConfiguration(serializeRumConfiguration(initConfiguration))
+
+    if (cachedConfiguration) {
+      displayAlreadyInitializedError('DD_RUM', initConfiguration)
+      return
+    }
+
+    const configuration = validateAndBuildRumConfiguration(initConfiguration)
+    if (!configuration) {
+      return
+    }
+
+    if (!eventBridgeAvailable && !configuration.sessionStoreStrategyType) {
+      display.warn('No storage available for session. We will not send any data.')
+      return
+    }
+
+    if (configuration.compressIntakeRequests && !eventBridgeAvailable && startDeflateWorker) {
+      deflateWorker = startDeflateWorker(
+        configuration,
+        'Datadog RUM',
+        // Worker initialization can fail asynchronously, especially in Firefox where even CSP
+        // issues are reported asynchronously. For now, the SDK will continue its execution even if
+        // data won't be sent to Datadog. We could improve this behavior in the future.
+        noop
+      )
+      if (!deflateWorker) {
+        // `startDeflateWorker` should have logged an error message explaining the issue
+        return
+      }
+    }
+
+    cachedConfiguration = configuration
+    trackingConsentState.tryToInit(configuration.trackingConsent)
+    tryStartRum()
+  }
+
   return {
     init(initConfiguration) {
       if (!initConfiguration) {
         display.error('Missing configuration')
         return
       }
-
       // Set the experimental feature flags as early as possible, so we can use them in most places
       initFeatureFlags(initConfiguration.enableExperimentalFeatures)
 
-      const eventBridgeAvailable = canUseEventBridge()
-      if (eventBridgeAvailable) {
-        initConfiguration = overrideInitConfigurationForBridge(initConfiguration)
-      }
-
       // Expose the initial configuration regardless of initialization success.
       cachedInitConfiguration = initConfiguration
-      addTelemetryConfiguration(serializeRumConfiguration(initConfiguration))
-
-      if (cachedConfiguration) {
-        displayAlreadyInitializedError('DD_RUM', initConfiguration)
-        return
-      }
 
       // If we are in a Synthetics test configured to automatically inject a RUM instance, we want
       // to completely discard the customer application RUM instance by ignoring their init() call.
@@ -106,34 +141,14 @@ export function createPreStartStrategy(
         return
       }
 
-      const configuration = validateAndBuildRumConfiguration(initConfiguration)
-      if (!configuration) {
-        return
+      if (
+        initConfiguration.remoteConfigurationId &&
+        isExperimentalFeatureEnabled(ExperimentalFeature.REMOTE_CONFIGURATION)
+      ) {
+        fetchAndApplyRemoteConfiguration(initConfiguration, doInit)
+      } else {
+        doInit(initConfiguration)
       }
-
-      if (!eventBridgeAvailable && !configuration.sessionStoreStrategyType) {
-        display.warn('No storage available for session. We will not send any data.')
-        return
-      }
-
-      if (configuration.compressIntakeRequests && !eventBridgeAvailable && startDeflateWorker) {
-        deflateWorker = startDeflateWorker(
-          configuration,
-          'Datadog RUM',
-          // Worker initialization can fail asynchronously, especially in Firefox where even CSP
-          // issues are reported asynchronously. For now, the SDK will continue its execution even if
-          // data won't be sent to Datadog. We could improve this behavior in the future.
-          noop
-        )
-        if (!deflateWorker) {
-          // `startDeflateWorker` should have logged an error message explaining the issue
-          return
-        }
-      }
-
-      cachedConfiguration = configuration
-      trackingConsentState.tryToInit(configuration.trackingConsent)
-      tryStartRum()
     },
 
     get initConfiguration() {
