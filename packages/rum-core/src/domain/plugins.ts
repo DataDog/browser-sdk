@@ -7,21 +7,21 @@ export interface RumPlugin {
   onInit?(options: { initConfiguration: RumInitConfiguration; publicApi: RumPublicApi }): void
 }
 
-type HookNames = 'onInit'
-type HookParameter<HookName extends HookNames> = Parameters<NonNullable<RumPlugin[HookName]>>[0]
+type MethodNames = 'onInit'
+type MethodParameter<MethodName extends MethodNames> = Parameters<NonNullable<RumPlugin[MethodName]>>[0]
 
-export function callHook<HookName extends HookNames>(
+export function callPluginsMethod<MethodName extends MethodNames>(
   plugins: RumPlugin[] | undefined,
-  hookName: HookName,
-  parameter: HookParameter<HookName>
+  methodName: MethodName,
+  parameter: MethodParameter<MethodName>
 ) {
   if (!plugins) {
     return
   }
   for (const plugin of plugins) {
-    const hook = plugin[hookName]
-    if (hook) {
-      hook(parameter)
+    const method = plugin[methodName]
+    if (method) {
+      method(parameter)
     }
   }
 }

@@ -23,7 +23,7 @@ import {
 import type { CommonContext } from '../domain/contexts/commonContext'
 import type { ViewOptions } from '../domain/view/trackViews'
 import { fetchAndApplyRemoteConfiguration, serializeRumConfiguration } from '../domain/configuration'
-import { callHook } from '../domain/plugins'
+import { callPluginsMethod } from '../domain/plugins'
 import type { RumPublicApiOptions, Strategy } from './rumPublicApi'
 import type { StartRumResult } from './startRum'
 
@@ -142,7 +142,7 @@ export function createPreStartStrategy(
       }
 
       if (isExperimentalFeatureEnabled(ExperimentalFeature.PLUGINS)) {
-        callHook(initConfiguration.plugins, 'onInit', { initConfiguration, publicApi })
+        callPluginsMethod(initConfiguration.plugins, 'onInit', { initConfiguration, publicApi })
       }
 
       if (
