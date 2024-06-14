@@ -127,7 +127,9 @@ export interface RumInitConfiguration extends InitConfiguration {
   trackLongTasks?: boolean | undefined
 
   /**
-   * List of plugins to enable.
+   * List of plugins to enable. The plugins API is unstable and experimental, and may change without
+   * notice. Please use only plugins provided by Datadog matching the version of the SDK you are
+   * using.
    */
   plugins?: RumPlugin[] | undefined
 }
