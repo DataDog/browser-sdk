@@ -3,7 +3,7 @@ import type { RumInitConfiguration } from './configuration'
 
 export interface RumPlugin {
   name: string
-  serializeConfiguration?(): Record<string, unknown>
+  getConfigurationTelemetry?(): Record<string, unknown>
   onInit?(options: { initConfiguration: RumInitConfiguration; publicApi: RumPublicApi }): void
 }
 

@@ -306,7 +306,9 @@ export function serializeRumConfiguration(configuration: RumInitConfiguration) {
       track_user_interactions: configuration.trackUserInteractions,
       track_resources: configuration.trackResources,
       track_long_task: configuration.trackLongTasks,
-      plugins: configuration.plugins?.map((plugin) => assign({ name: plugin.name }, plugin.serializeConfiguration?.())),
+      plugins: configuration.plugins?.map((plugin) =>
+        assign({ name: plugin.name }, plugin.getConfigurationTelemetry?.())
+      ),
     },
     baseSerializedConfiguration
   ) satisfies RawTelemetryConfiguration
