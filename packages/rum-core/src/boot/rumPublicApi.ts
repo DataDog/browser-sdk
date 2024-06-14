@@ -39,7 +39,7 @@ import type { LifeCycle } from '../domain/lifeCycle'
 import type { ViewContexts } from '../domain/contexts/viewContexts'
 import type { RumSessionManager } from '../domain/rumSessionManager'
 import type { ReplayStats } from '../rawRumEvent.types'
-import { ActionType } from '../rawRumEvent.types'
+import { ActionType, VitalType } from '../rawRumEvent.types'
 import type { RumConfiguration, RumInitConfiguration } from '../domain/configuration'
 import type { ViewOptions } from '../domain/view/trackViews'
 import { buildCommonContext } from '../domain/contexts/commonContext'
@@ -350,6 +350,7 @@ export function makeRumPublicApi(
           (name: string, options: { startTime: number; duration: number; context?: object; details?: string }) => {
             strategy.addDurationVital({
               name: sanitize(name)!,
+              type: VitalType.DURATION,
               startClocks: timeStampToClocks(options.startTime as TimeStamp),
               duration: options.duration as Duration,
               context: sanitize(options?.context) as Context,

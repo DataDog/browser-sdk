@@ -24,7 +24,7 @@ import {
 import type { HybridInitConfiguration, RumConfiguration, RumInitConfiguration } from '../domain/configuration'
 import type { CommonContext } from '../domain/contexts/commonContext'
 import type { ViewOptions } from '../domain/view/trackViews'
-import { ActionType } from '../rawRumEvent.types'
+import { ActionType, VitalType } from '../rawRumEvent.types'
 import type { CustomAction } from '../domain/action/actionCollection'
 import type { Strategy } from './rumPublicApi'
 import type { StartRumResult } from './startRum'
@@ -613,7 +613,7 @@ describe('preStartRum', () => {
         addDurationVital: addDurationVitalSpy,
       } as unknown as StartRumResult)
 
-      const vitalAdd = { name: 'timing', startClocks: clocksNow(), duration: 100 as Duration }
+      const vitalAdd = { name: 'timing', type: VitalType.DURATION, startClocks: clocksNow(), duration: 100 as Duration }
       strategy.addDurationVital(vitalAdd)
       strategy.init(DEFAULT_INIT_CONFIGURATION)
       expect(addDurationVitalSpy).toHaveBeenCalledOnceWith(vitalAdd)

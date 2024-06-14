@@ -13,7 +13,7 @@ import {
 import { cleanupSyntheticsWorkerValues } from '@datadog/browser-core/test'
 import type { TestSetupBuilder } from '../../test'
 import { setup, noopRecorderApi } from '../../test'
-import { ActionType } from '../rawRumEvent.types'
+import { ActionType, VitalType } from '../rawRumEvent.types'
 import type { DurationVitalInstance } from '../domain/vital/vitalCollection'
 import type { RumPublicApi, RecorderApi } from './rumPublicApi'
 import { makeRumPublicApi } from './rumPublicApi'
@@ -814,6 +814,7 @@ describe('rum public api', () => {
         duration: 100,
         context: { foo: 'bar' },
         details: 'details-value',
+        type: VitalType.DURATION,
       })
     })
   })

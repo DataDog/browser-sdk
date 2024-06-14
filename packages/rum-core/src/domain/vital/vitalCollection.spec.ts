@@ -131,6 +131,7 @@ describe('vitalCollection', () => {
 
       vitalCollection.addDurationVital({
         name: 'foo',
+        type: VitalType.DURATION,
         startClocks: clocksNow(),
         duration: 100 as Duration,
         context: { foo: 'bar' },
@@ -149,6 +150,7 @@ describe('vitalCollection', () => {
 
       vitalCollection.addDurationVital({
         name: 'foo',
+        type: VitalType.DURATION,
         startClocks: clocksNow(),
         duration: 100 as Duration,
       })

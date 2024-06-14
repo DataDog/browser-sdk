@@ -22,7 +22,7 @@ import {
 } from '../domain/configuration'
 import type { CommonContext } from '../domain/contexts/commonContext'
 import type { ViewOptions } from '../domain/view/trackViews'
-import type { DurationVitalAdd } from '../domain/vital/vitalCollection'
+import type { DurationVital } from '../domain/vital/vitalCollection'
 import { createVitalInstance } from '../domain/vital/vitalCollection'
 import { fetchAndApplyRemoteConfiguration, serializeRumConfiguration } from '../domain/configuration'
 import type { RumPublicApiOptions, Strategy } from './rumPublicApi'
@@ -122,7 +122,7 @@ export function createPreStartStrategy(
     tryStartRum()
   }
 
-  const addDurationVital = (vital: DurationVitalAdd) => {
+  const addDurationVital = (vital: DurationVital) => {
     bufferApiCalls.add((startRumResult) => startRumResult.addDurationVital(vital))
   }
 

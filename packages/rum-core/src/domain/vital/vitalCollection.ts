@@ -1,5 +1,5 @@
 import type { ClocksState, Duration, Context } from '@datadog/browser-core'
-import { assign, clocksNow, combine, elapsed, generateUUID, toServerDuration } from '@datadog/browser-core'
+import { clocksNow, combine, elapsed, generateUUID, toServerDuration } from '@datadog/browser-core'
 import type { LifeCycle, RawRumEventCollectedData } from '../lifeCycle'
 import { LifeCycleEventType } from '../lifeCycle'
 import type { RawRumVitalEvent } from '../../rawRumEvent.types'
@@ -18,19 +18,11 @@ export interface DurationVitalStop {
   details?: string
 }
 
-export interface DurationVitalAdd {
-  name: string
-  startClocks: ClocksState
-  duration: Duration
-  context?: Context
-  details?: string
-}
-
 export interface DurationVitalInstance {
   stop: (options?: DurationVitalStop) => void
 }
 
-interface DurationVital {
+export interface DurationVital {
   name: string
   type: VitalType.DURATION
   startClocks: ClocksState
@@ -44,9 +36,7 @@ export function startVitalCollection(lifeCycle: LifeCycle, pageStateHistory: Pag
     return !pageStateHistory.wasInPageStateDuringPeriod(PageState.FROZEN, vital.startClocks.relative, vital.duration)
   }
 
-  function addDurationVital(vitalAdd: DurationVitalAdd) {
-    const vital = assign({ type: VitalType.DURATION }, vitalAdd)
-
+  function addDurationVital(vital: DurationVital) {
     if (isValid(vital)) {
       lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, processVital(vital, true))
     }
@@ -84,7 +74,7 @@ export function createVitalInstance(
 function buildDurationVital(
   vitalStart: DurationVitalStart,
   startClocks: ClocksState,
-  stopOptions: DurationVitalStop = {},
+  vitalStop: DurationVitalStop = {},
   stopClocks: ClocksState
 ): DurationVital {
   return {
@@ -92,8 +82,8 @@ function buildDurationVital(
     type: VitalType.DURATION,
     startClocks,
     duration: elapsed(startClocks.timeStamp, stopClocks.timeStamp),
-    context: combine(vitalStart.context, stopOptions.context),
-    details: stopOptions.details ?? vitalStart.details,
+    context: combine(vitalStart.context, vitalStop.context),
+    details: vitalStop.details ?? vitalStart.details,
   }
 }
 
