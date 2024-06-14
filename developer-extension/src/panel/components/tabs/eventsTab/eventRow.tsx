@@ -346,7 +346,8 @@ function VitalDescription({ event }: { event: RumVitalEvent }) {
     <>
       Custom <Emphasis>{event.vital.type}</Emphasis> vital:{' '}
       <Emphasis>
-        {vitalName} - {vitalDetails}
+        {vitalName}
+        {vitalDetails && ` - ${vitalDetails}`}
       </Emphasis>{' '}
       of <Emphasis>{vitalValue}</Emphasis>
     </>
