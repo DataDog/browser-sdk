@@ -141,7 +141,9 @@ export function createPreStartStrategy(
         return
       }
 
-      callHook(initConfiguration.plugins, 'onInit', { initConfiguration, publicApi })
+      if (isExperimentalFeatureEnabled(ExperimentalFeature.PLUGINS)) {
+        callHook(initConfiguration.plugins, 'onInit', { initConfiguration, publicApi })
+      }
 
       if (
         initConfiguration.remoteConfigurationId &&

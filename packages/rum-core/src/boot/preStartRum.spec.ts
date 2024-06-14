@@ -468,6 +468,10 @@ describe('preStartRum', () => {
     })
 
     describe('plugins', () => {
+      beforeEach(() => {
+        mockExperimentalFeatures([ExperimentalFeature.PLUGINS])
+      })
+
       it('calls the onInit hook on provided plugins', () => {
         const plugin = { name: 'a', onInit: jasmine.createSpy() }
         const strategy = createPreStartStrategy({}, getCommonContextSpy, createTrackingConsentState(), doStartRumSpy)

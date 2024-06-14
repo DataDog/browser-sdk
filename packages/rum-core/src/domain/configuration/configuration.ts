@@ -157,6 +157,7 @@ export interface RumConfiguration extends Configuration {
   subdomain?: string
   customerDataTelemetrySampleRate: number
   traceContextInjection: TraceContextInjection
+  plugins: RumPlugin[]
 }
 
 export function validateAndBuildRumConfiguration(
@@ -222,7 +223,7 @@ export function validateAndBuildRumConfiguration(
       traceContextInjection: objectHasValue(TraceContextInjection, initConfiguration.traceContextInjection)
         ? initConfiguration.traceContextInjection
         : TraceContextInjection.ALL,
-      plugins: initConfiguration.plugins,
+      plugins: (isExperimentalFeatureEnabled(ExperimentalFeature.PLUGINS) && initConfiguration.plugins) || [],
     },
     baseConfiguration
   )
