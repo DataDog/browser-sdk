@@ -107,6 +107,25 @@ describe('vitalCollection', () => {
       })
     })
 
+    it('should create a vital from start API', () => {
+      const { rawRumEvents, clock } = setupBuilder.build()
+
+      const vital = vitalCollection.startDurationVital({
+        name: 'foo',
+        context: { foo: 'bar' },
+        details: 'baz',
+      })
+
+      clock.tick(100)
+
+      vital.stop()
+
+      expect(rawRumEvents.length).toBe(1)
+      expect((rawRumEvents[0].rawRumEvent as RawRumVitalEvent).vital.duration).toBe(100000000)
+      expect((rawRumEvents[0].rawRumEvent as RawRumVitalEvent).vital.details).toBe('baz')
+      expect(rawRumEvents[0].customerContext).toEqual({ foo: 'bar' })
+    })
+
     it('should create a vital from add API', () => {
       const { rawRumEvents } = setupBuilder.build()
 
