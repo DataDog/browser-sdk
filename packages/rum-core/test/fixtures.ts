@@ -49,7 +49,6 @@ export function createRawRumEvent(type: RumEventType, overrides?: Context): RawR
             type: VitalType.DURATION,
             name: 'timing',
             duration: 0 as ServerDuration,
-            custom: {},
           },
         },
         overrides
