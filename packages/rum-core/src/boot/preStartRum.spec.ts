@@ -271,13 +271,16 @@ describe('preStartRum', () => {
       let strategy: Strategy
       let startViewSpy: jasmine.Spy<StartRumResult['startView']>
       let addTimingSpy: jasmine.Spy<StartRumResult['addTiming']>
+      let updateViewNameSpy: jasmine.Spy<StartRumResult['updateViewName']>
 
       beforeEach(() => {
         startViewSpy = jasmine.createSpy('startView')
         addTimingSpy = jasmine.createSpy('addTiming')
+        updateViewNameSpy = jasmine.createSpy('updateViewName')
         doStartRumSpy.and.returnValue({
           startView: startViewSpy,
           addTiming: addTimingSpy,
+          updateViewName: updateViewNameSpy,
         } as unknown as StartRumResult)
         strategy = createPreStartStrategy({}, getCommonContextSpy, createTrackingConsentState(), doStartRumSpy)
       })
@@ -577,6 +580,16 @@ describe('preStartRum', () => {
       strategy.addTiming(name, time)
       strategy.init(DEFAULT_INIT_CONFIGURATION)
       expect(addTimingSpy).toHaveBeenCalledOnceWith(name, time)
+    })
+
+    it('updateViewName', () => {
+      const updateViewNameSpy = jasmine.createSpy()
+      doStartRumSpy.and.returnValue({ updateViewName: updateViewNameSpy } as unknown as StartRumResult)
+
+      const name = 'foo'
+      strategy.updateViewName(name)
+      strategy.init(DEFAULT_INIT_CONFIGURATION)
+      expect(updateViewNameSpy).toHaveBeenCalledOnceWith(name)
     })
 
     it('addFeatureFlagEvaluation', () => {

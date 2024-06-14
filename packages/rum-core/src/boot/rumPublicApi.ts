@@ -294,12 +294,12 @@ export interface Strategy {
   stopSession: StartRumResult['stopSession']
   addTiming: StartRumResult['addTiming']
   startView: StartRumResult['startView']
+  updateViewName: StartRumResult['updateViewName']
   addAction: StartRumResult['addAction']
   addError: StartRumResult['addError']
   addFeatureFlagEvaluation: StartRumResult['addFeatureFlagEvaluation']
   startDurationVital: StartRumResult['startDurationVital']
   stopDurationVital: StartRumResult['stopDurationVital']
-  updateViewName: StartRumResult['updateViewName']
 }
 
 export function makeRumPublicApi(

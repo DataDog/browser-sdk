@@ -897,4 +897,34 @@ describe('view event count', () => {
       view: viewTest.getLatestViewContext(),
     } as RumEvent & Context
   }
+
+  describe('update view name', () => {
+    let setupBuilder: TestSetupBuilder
+    let viewTest: ViewTest
+
+    beforeEach(() => {
+      setupBuilder = setup().beforeBuild((buildContext) => {
+        viewTest = setupViewTest(buildContext)
+        return viewTest
+      })
+    })
+
+    it('should update an undefined view name', () => {
+      setupBuilder.build()
+      const { getViewUpdate, startView, updateViewName } = viewTest
+
+      startView()
+      updateViewName('foo')
+      expect(getViewUpdate(3).name).toEqual('foo')
+    })
+
+    it('should update a defined view name', () => {
+      setupBuilder.build()
+      const { getViewUpdate, startView, updateViewName } = viewTest
+
+      startView({ name: 'initial view name' })
+      updateViewName('foo')
+      expect(getViewUpdate(3).name).toEqual('foo')
+    })
+  })
 })

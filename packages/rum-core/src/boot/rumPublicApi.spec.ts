@@ -859,15 +859,29 @@ describe('rum public api', () => {
   })
 
   describe('updateViewName', () => {
-    it('should update the view name', () => {
-      const updateViewNameSpy = jasmine.createSpy()
-      const rumPublicApi = makeRumPublicApi(
-        () => ({ ...noopStartRum(), updateViewName: updateViewNameSpy }),
+    let updateViewNameSpy: jasmine.Spy<ReturnType<StartRum>['updateViewName']>
+    let displaySpy: jasmine.Spy<() => void>
+    let rumPublicApi: RumPublicApi
+
+    beforeEach(() => {
+      updateViewNameSpy = jasmine.createSpy()
+      displaySpy = spyOn(display, 'error')
+      rumPublicApi = makeRumPublicApi(
+        () => ({
+          ...noopStartRum(),
+          updateViewName: updateViewNameSpy,
+        }),
         noopRecorderApi
       )
+    })
+
+    it('should update the view name', () => {
       rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
+
       rumPublicApi.updateViewName('foo')
+
       expect(updateViewNameSpy.calls.argsFor(0)[0]).toEqual('foo')
+      expect(displaySpy).not.toHaveBeenCalled()
     })
   })
 })

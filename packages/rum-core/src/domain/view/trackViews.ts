@@ -303,7 +303,7 @@ function newView(
     },
     updateViewName(updatedName: string) {
       name = updatedName
-      scheduleViewUpdate()
+      triggerViewUpdate()
     },
   }
 }

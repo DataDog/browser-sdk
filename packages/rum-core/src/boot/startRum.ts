@@ -148,8 +148,8 @@ export function startRum(
 
   const {
     addTiming,
-    updateViewName,
     startView,
+    updateViewName,
     stop: stopViewCollection,
   } = startViewCollection(
     lifeCycle,
@@ -185,6 +185,7 @@ export function startRum(
     addTiming,
     addFeatureFlagEvaluation: featureFlagContexts.addFeatureFlagEvaluation,
     startView,
+    updateViewName,
     lifeCycle,
     viewContexts,
     session,
@@ -192,7 +193,6 @@ export function startRum(
     getInternalContext: internalContext.get,
     startDurationVital: vitalCollection.startDurationVital,
     stopDurationVital: vitalCollection.stopDurationVital,
-    updateViewName,
     stop: () => {
       cleanupTasks.forEach((task) => task())
     },
