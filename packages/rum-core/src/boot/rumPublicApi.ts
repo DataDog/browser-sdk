@@ -348,6 +348,7 @@ export function makeRumPublicApi(
          */
         ;(rumPublicApi as any).addDurationVital = monitor(
           (name: string, options: { startTime: number; duration: number; context?: object; details?: string }) => {
+            addTelemetryUsage({ feature: 'add-duration-vital' })
             strategy.addDurationVital({
               name: sanitize(name)!,
               type: VitalType.DURATION,
