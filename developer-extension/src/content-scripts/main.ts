@@ -32,8 +32,8 @@ function main() {
     const ddLogsGlobal = instrumentGlobal('DD_LOGS')
 
     if (settings.debugMode) {
-      ddRumGlobal.onSet((sdkInstance) => sdkInstance._setDebug(settings.debugMode))
-      ddLogsGlobal.onSet((sdkInstance) => sdkInstance._setDebug(settings.debugMode))
+      setDebug(ddRumGlobal)
+      setDebug(ddLogsGlobal)
     }
 
     if (settings.rumConfigurationOverride) {
@@ -90,6 +90,15 @@ function injectDevBundle(url: string, global: GlobalInstrumentation) {
     global.onSet((sdkInstance) => proxySdk(sdkInstance, devInstance))
     global.returnValue(devInstance)
   }
+}
+
+function setDebug(global: GlobalInstrumentation) {
+  global.onSet((sdkInstance) => {
+    // Ensure the sdkInstance has a '_setDebug' method, excluding async stubs.
+    if ('_setDebug' in sdkInstance) {
+      sdkInstance._setDebug(true)
+    }
+  })
 }
 
 function overrideInitConfiguration(global: GlobalInstrumentation, configurationOverride: object) {
