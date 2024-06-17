@@ -1,5 +1,14 @@
 import type { Context, Duration, RelativeTime } from '@datadog/browser-core'
-import { PageExitReason, timeStampNow, display, relativeToClocks, relativeNow } from '@datadog/browser-core'
+import {
+  PageExitReason,
+  timeStampNow,
+  display,
+  relativeToClocks,
+  relativeNow,
+  ExperimentalFeature,
+  resetExperimentalFeatures,
+  addExperimentalFeatures,
+} from '@datadog/browser-core'
 import type { TestSetupBuilder } from '../../../test'
 import { createPerformanceEntry, setup } from '../../../test'
 import { RumEventType, ViewLoadingType } from '../../rawRumEvent.types'
@@ -909,7 +918,12 @@ describe('view event count', () => {
       })
     })
 
+    afterEach(() => {
+      resetExperimentalFeatures()
+    })
+
     it('should update an undefined view name', () => {
+      addExperimentalFeatures([ExperimentalFeature.UPDATE_VIEW_NAME])
       setupBuilder.build()
       const { getViewUpdate, startView, updateViewName } = viewTest
 
@@ -919,6 +933,7 @@ describe('view event count', () => {
     })
 
     it('should update a defined view name', () => {
+      addExperimentalFeatures([ExperimentalFeature.UPDATE_VIEW_NAME])
       setupBuilder.build()
       const { getViewUpdate, startView, updateViewName } = viewTest
 

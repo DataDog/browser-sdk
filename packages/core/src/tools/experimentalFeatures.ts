@@ -20,6 +20,7 @@ export enum ExperimentalFeature {
   ENABLE_PRIVACY_FOR_ACTION_NAME = 'enable_privacy_for_action_name',
   MICRO_FRONTEND = 'micro_frontend',
   REMOTE_CONFIGURATION = 'remote_configuration',
+  UPDATE_VIEW_NAME = 'update_view_name',
 }
 
 const enabledExperimentalFeatures: Set<ExperimentalFeature> = new Set()

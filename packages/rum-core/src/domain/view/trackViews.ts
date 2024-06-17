@@ -16,6 +16,8 @@ import {
   clearInterval,
   setTimeout,
   Observable,
+  isExperimentalFeatureEnabled,
+  ExperimentalFeature,
 } from '@datadog/browser-core'
 
 import type { ViewCustomTimings } from '../../rawRumEvent.types'
@@ -302,6 +304,9 @@ function newView(
       scheduleViewUpdate()
     },
     updateViewName(updatedName: string) {
+      if (!isExperimentalFeatureEnabled(ExperimentalFeature.UPDATE_VIEW_NAME)) {
+        return
+      }
       name = updatedName
       triggerViewUpdate()
     },
