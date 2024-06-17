@@ -2,9 +2,9 @@ import type { RumConfiguration, ViewCreatedEvent } from '@datadog/browser-rum-co
 import { LifeCycle, LifeCycleEventType } from '@datadog/browser-rum-core'
 import type { TimeStamp } from '@datadog/browser-core'
 import { isIE, noop } from '@datadog/browser-core'
-import { mockRequestIdleCallback } from '@datadog/browser-core/test'
+import { mockExperimentalFeatures, mockRequestIdleCallback } from '@datadog/browser-core/test'
 import type { BrowserRecord } from '../../types'
-import { addExperimentalFeatures, ExperimentalFeature } from '../../../../core/src/tools/experimentalFeatures'
+import { ExperimentalFeature } from '../../../../core/src/tools/experimentalFeatures'
 import { startFullSnapshots } from './startFullSnapshots'
 import { createElementsScrollPositions } from './elementsScrollPositions'
 import type { ShadowRootsController } from './shadowRootsController'
@@ -22,7 +22,7 @@ describe('startFullSnapshots', () => {
     }
 
     lifeCycle = new LifeCycle()
-    addExperimentalFeatures([ExperimentalFeature.ASYNC_FULL_SNAPSHOT])
+    mockExperimentalFeatures([ExperimentalFeature.ASYNC_FULL_SNAPSHOT])
     fullSnapshotCallback = jasmine.createSpy()
     startFullSnapshots(
       createElementsScrollPositions(),
