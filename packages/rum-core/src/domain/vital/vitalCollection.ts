@@ -1,5 +1,5 @@
 import type { ClocksState, Duration, Context } from '@datadog/browser-core'
-import { combine, elapsed, generateUUID } from '@datadog/browser-core'
+import { clocksNow, combine, elapsed, generateUUID, toServerDuration } from '@datadog/browser-core'
 import type { LifeCycle, RawRumEventCollectedData } from '../lifeCycle'
 import { LifeCycleEventType } from '../lifeCycle'
 import type { RawRumVitalEvent } from '../../rawRumEvent.types'
@@ -9,61 +9,81 @@ import { PageState } from '../contexts/pageStateHistory'
 
 export interface DurationVitalStart {
   name: string
-  startClocks: ClocksState
   context?: Context
+  details?: string
 }
 
 export interface DurationVitalStop {
-  name: string
-  stopClocks: ClocksState
   context?: Context
+  details?: string
 }
 
-interface DurationVital {
+export interface DurationVitalInstance {
+  stop: (options?: DurationVitalStop) => void
+}
+
+export interface DurationVital {
   name: string
   type: VitalType.DURATION
   startClocks: ClocksState
-  value: Duration
+  duration: Duration
+  details?: string
   context?: Context
 }
 
 export function startVitalCollection(lifeCycle: LifeCycle, pageStateHistory: PageStateHistory) {
-  const vitalStartsByName = new Map<string, DurationVitalStart>()
-
-  lifeCycle.subscribe(LifeCycleEventType.SESSION_RENEWED, () => {
-    // Discard all the vitals that have not been stopped to avoid memory leaks
-    vitalStartsByName.clear()
-  })
-
   function isValid(vital: DurationVital) {
-    return !pageStateHistory.wasInPageStateDuringPeriod(PageState.FROZEN, vital.startClocks.relative, vital.value)
+    return !pageStateHistory.wasInPageStateDuringPeriod(PageState.FROZEN, vital.startClocks.relative, vital.duration)
+  }
+
+  function addDurationVital(vital: DurationVital) {
+    if (isValid(vital)) {
+      lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, processVital(vital, true))
+    }
   }
 
   return {
-    startDurationVital: (vitalStart: DurationVitalStart) => {
-      vitalStartsByName.set(vitalStart.name, vitalStart)
-    },
-    stopDurationVital: (vitalStop: DurationVitalStop) => {
-      const vitalStart = vitalStartsByName.get(vitalStop.name)
-      if (!vitalStart) {
+    addDurationVital,
+    startDurationVital: (startVital: DurationVitalStart) =>
+      createVitalInstance((vital) => {
+        addDurationVital(vital)
+      }, startVital),
+  }
+}
+
+export function createVitalInstance(
+  stopCallback: (vital: DurationVital) => void,
+  vitalStart: DurationVitalStart
+): DurationVitalInstance {
+  const startClocks = clocksNow()
+  let stopClocks: ClocksState | undefined
+
+  return {
+    stop: (vitalStop) => {
+      if (stopClocks) {
         return
       }
-      const vital = buildDurationVital(vitalStart, vitalStop)
-      vitalStartsByName.delete(vital.name)
-      if (isValid(vital)) {
-        lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, processVital(vital, true))
-      }
+
+      stopClocks = clocksNow()
+
+      stopCallback(buildDurationVital(vitalStart, startClocks, vitalStop, stopClocks))
     },
   }
 }
 
-function buildDurationVital(vitalStart: DurationVitalStart, vitalStop: DurationVitalStop) {
+function buildDurationVital(
+  vitalStart: DurationVitalStart,
+  startClocks: ClocksState,
+  vitalStop: DurationVitalStop = {},
+  stopClocks: ClocksState
+): DurationVital {
   return {
     name: vitalStart.name,
     type: VitalType.DURATION,
-    startClocks: vitalStart.startClocks,
-    value: elapsed(vitalStart.startClocks.timeStamp, vitalStop.stopClocks.timeStamp),
+    startClocks,
+    duration: elapsed(startClocks.timeStamp, stopClocks.timeStamp),
     context: combine(vitalStart.context, vitalStop.context),
+    details: vitalStop.details ?? vitalStart.details,
   }
 }
 
@@ -74,9 +94,8 @@ function processVital(vital: DurationVital, valueComputedBySdk: boolean): RawRum
       id: generateUUID(),
       type: vital.type,
       name: vital.name,
-      custom: {
-        [vital.name]: vital.value,
-      },
+      duration: toServerDuration(vital.duration),
+      details: vital.details,
     },
     type: RumEventType.VITAL,
   }
