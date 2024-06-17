@@ -16,7 +16,7 @@ import type {
 import type { SdkEvent } from '../../../sdkEvent'
 import { isTelemetryEvent, isLogEvent, isRumEvent } from '../../../sdkEvent'
 import { formatDate, formatDuration } from '../../../formatNumber'
-import { defaultFormatValue, Json } from '../../json'
+import { CopyMenuItem, defaultFormatValue, Json } from '../../json'
 import { LazyCollapse } from '../../lazyCollapse'
 import type { FacetRegistry } from '../../../hooks/useEvents'
 import { useSdkInfos } from '../../../hooks/useSdkInfos'
@@ -90,6 +90,11 @@ export const EventRow = React.memo(
       )
     }
 
+    function getCopyMenuItemsForPath(path: string, value: unknown) {
+      const searchTerm = String(value).replace(/ /g, '\\ ')
+      return <CopyMenuItem value={`${path}:${searchTerm}`}>Copy search query</CopyMenuItem>
+    }
+
     return (
       <Table.Tr>
         {columns.map((column): React.ReactElement => {
@@ -151,13 +156,18 @@ export const EventRow = React.memo(
                     <Json
                       value={value}
                       defaultCollapseLevel={0}
-                      columnPath={column.path}
-                      getMenuItemsForPath={(path) => getMenuItemsForPath(path ? `${column.path}.${path}` : column.path)}
+                      getMenuItemsForPath={(path) => {
+                        const fullPath = path ? `${column.path}.${path}` : column.path;
+                        return <>
+                          {getMenuItemsForPath(fullPath)}
+                          {typeof value === 'string' ? getCopyMenuItemsForPath(column.path, value) : undefined}
+                        </>
+                      }}
                       formatValue={(path, value) => formatValue(path ? `${column.path}.${path}` : column.path, value)}
                     />
                   )}
                 </Cell>
-              )
+              );
             }
           }
         })}

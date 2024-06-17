@@ -88,10 +88,11 @@ export function parseQuery(query: string) {
   return queryParts
 }
 
-function matchWithWildcard(value: string, searchTerm: string): boolean {
+export function matchWithWildcard(value: string, searchTerm: string): boolean {
   value = value.toLowerCase()
+  searchTerm = searchTerm.toLowerCase()
   if (!searchTerm.includes('*')) {
-    return value === searchTerm
+    return value.includes(searchTerm)
   }
   const searchTerms = searchTerm.toLowerCase().split('*')
   let lastIndex = 0
