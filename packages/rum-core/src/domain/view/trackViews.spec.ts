@@ -922,7 +922,7 @@ describe('view event count', () => {
       resetExperimentalFeatures()
     })
 
-    it('should update an undefined view name', () => {
+    it('should update an undefined view name if the experimental feature is enabled', () => {
       addExperimentalFeatures([ExperimentalFeature.UPDATE_VIEW_NAME])
       setupBuilder.build()
       const { getViewUpdate, startView, updateViewName } = viewTest
@@ -932,7 +932,7 @@ describe('view event count', () => {
       expect(getViewUpdate(3).name).toEqual('foo')
     })
 
-    it('should update a defined view name', () => {
+    it('should update a defined view name if the experimental feature is enabled', () => {
       addExperimentalFeatures([ExperimentalFeature.UPDATE_VIEW_NAME])
       setupBuilder.build()
       const { getViewUpdate, startView, updateViewName } = viewTest
@@ -940,6 +940,15 @@ describe('view event count', () => {
       startView({ name: 'initial view name' })
       updateViewName('foo')
       expect(getViewUpdate(3).name).toEqual('foo')
+    })
+
+    it('should not update a defined view name if the experimental feature is not enabled', () => {
+      setupBuilder.build()
+      const { getViewUpdate, startView, updateViewName } = viewTest
+
+      startView({ name: 'initial view name' })
+      updateViewName('foo')
+      expect(getViewUpdate(2).name).toEqual('initial view name')
     })
   })
 })
