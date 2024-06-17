@@ -4,7 +4,7 @@ import { withBrowserLogs } from '../../lib/helpers/browser'
 
 describe('API calls and events around init', () => {
   createTest('should display a console log when calling init without configuration')
-    .withRum({ enableExperimentalFeatures: ['update_view_name'] })
+    .withRum()
     .withRumInit(() => {
       ;(window.DD_RUM! as unknown as { init(): void }).init()
     })
@@ -66,7 +66,7 @@ describe('API calls and events around init', () => {
     })
 
   createTest('should be associated to corresponding views when views are manually tracked')
-    .withRum({ trackViewsManually: true })
+    .withRum({ trackViewsManually: true, enableExperimentalFeatures: ['update_view_name'] })
     .withRumSlim()
     .withRumInit((configuration) => {
       window.DD_RUM!.addError('before init')
