@@ -4,7 +4,7 @@ import { withBrowserLogs } from '../../lib/helpers/browser'
 
 describe('API calls and events around init', () => {
   createTest('should display a console log when calling init without configuration')
-    .withRum()
+    .withRum({ enableExperimentalFeatures: ['update_view_name'] })
     .withRumInit(() => {
       ;(window.DD_RUM! as unknown as { init(): void }).init()
     })
