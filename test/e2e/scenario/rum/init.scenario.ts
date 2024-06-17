@@ -30,7 +30,6 @@ describe('API calls and events around init', () => {
         window.DD_RUM!.addError('after manual view')
         window.DD_RUM!.addAction('after manual view')
         window.DD_RUM!.addTiming('after manual view')
-        window.DD_RUM!.updateViewName('after manual view')
       }, 20)
 
       setTimeout(() => window.DD_RUM!.init(configuration), 30)
@@ -45,7 +44,7 @@ describe('API calls and events around init', () => {
       })
 
       const manualView = intakeRegistry.rumViewEvents[1]
-      expect(manualView.view.name).toBe('after manual view')
+      expect(manualView.view.name).toBe('manual view')
       expect(manualView.view.custom_timings).toEqual({
         after_manual_view: jasmine.any(Number),
       })
