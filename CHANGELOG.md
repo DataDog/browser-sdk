@@ -16,6 +16,18 @@
 
 ---
 
+## v5.22.0
+
+- ✨⚗️ [RUM-4469] introduce a plugin system ([#2809](https://github.com/DataDog/browser-sdk/pull/2809))
+- ✨ [RUM-4014] DD_LOGS: add handling stack in beforeSend context ([#2786](https://github.com/DataDog/browser-sdk/pull/2786))
+- ✨ [RUM-3902] Add privacy control for action names ([#2707](https://github.com/DataDog/browser-sdk/pull/2707))
+- 🐛 fix developer extension crashing when dev mode enabled ([#2810](https://github.com/DataDog/browser-sdk/pull/2810))
+- ⚡️[RUM-3570] Batch the records for 16ms minimum before processing them ([#2807](https://github.com/DataDog/browser-sdk/pull/2807))
+- use the same service/version type in init() and startView() ([#2798](https://github.com/DataDog/browser-sdk/pull/2798))
+- [RUM-4895] Add link to playground with pr's bundle ([#2797](https://github.com/DataDog/browser-sdk/pull/2797))
+- ⚗️[RUM-4780] Remote configuration ([#2799](https://github.com/DataDog/browser-sdk/pull/2799))
+- Bump braces from 3.0.2 to 3.0.3 in /test/app ([#2804](https://github.com/DataDog/browser-sdk/pull/2804))
+
 ## v5.21.0
 
 - ✨ [RUM-4659] Collect INP and CLS timestamp ([#2793](https://github.com/DataDog/browser-sdk/pull/2793))
