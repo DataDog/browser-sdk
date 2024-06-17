@@ -26,7 +26,8 @@ import type { CommonContext } from '../domain/contexts/commonContext'
 import type { ViewOptions } from '../domain/view/trackViews'
 import { ActionType } from '../rawRumEvent.types'
 import type { CustomAction } from '../domain/action/actionCollection'
-import type { Strategy } from './rumPublicApi'
+import type { RumPlugin } from '../domain/plugins'
+import type { RumPublicApi, Strategy } from './rumPublicApi'
 import type { StartRumResult } from './startRum'
 import { createPreStartStrategy } from './preStartRum'
 
@@ -35,6 +36,7 @@ const INVALID_INIT_CONFIGURATION = { clientToken: 'yes' } as RumInitConfiguratio
 const AUTO_CONFIGURATION = { ...DEFAULT_INIT_CONFIGURATION }
 const MANUAL_CONFIGURATION = { ...AUTO_CONFIGURATION, trackViewsManually: true }
 const FAKE_WORKER = {} as DeflateWorker
+const PUBLIC_API = {} as RumPublicApi
 
 describe('preStartRum', () => {
   let doStartRumSpy: jasmine.Spy<
@@ -61,7 +63,7 @@ describe('preStartRum', () => {
     })
 
     it('should start when the configuration is valid', () => {
-      strategy.init(DEFAULT_INIT_CONFIGURATION)
+      strategy.init(DEFAULT_INIT_CONFIGURATION, PUBLIC_API)
       expect(displaySpy).not.toHaveBeenCalled()
       expect(doStartRumSpy).toHaveBeenCalled()
     })
@@ -73,31 +75,37 @@ describe('preStartRum', () => {
     })
 
     it('should not start when the configuration is invalid', () => {
-      strategy.init(INVALID_INIT_CONFIGURATION)
+      strategy.init(INVALID_INIT_CONFIGURATION, PUBLIC_API)
       expect(displaySpy).toHaveBeenCalled()
       expect(doStartRumSpy).not.toHaveBeenCalled()
     })
 
     describe('multiple init', () => {
       it('should log an error if init is called several times', () => {
-        strategy.init(DEFAULT_INIT_CONFIGURATION)
+        strategy.init(DEFAULT_INIT_CONFIGURATION, PUBLIC_API)
         expect(displaySpy).toHaveBeenCalledTimes(0)
 
-        strategy.init(DEFAULT_INIT_CONFIGURATION)
+        strategy.init(DEFAULT_INIT_CONFIGURATION, PUBLIC_API)
         expect(displaySpy).toHaveBeenCalledTimes(1)
       })
 
       it('should not log an error if init is called several times and silentMultipleInit is true', () => {
-        strategy.init({
-          ...DEFAULT_INIT_CONFIGURATION,
-          silentMultipleInit: true,
-        })
+        strategy.init(
+          {
+            ...DEFAULT_INIT_CONFIGURATION,
+            silentMultipleInit: true,
+          },
+          PUBLIC_API
+        )
         expect(displaySpy).toHaveBeenCalledTimes(0)
 
-        strategy.init({
-          ...DEFAULT_INIT_CONFIGURATION,
-          silentMultipleInit: true,
-        })
+        strategy.init(
+          {
+            ...DEFAULT_INIT_CONFIGURATION,
+            silentMultipleInit: true,
+          },
+          PUBLIC_API
+        )
         expect(displaySpy).toHaveBeenCalledTimes(0)
       })
     })
@@ -106,21 +114,21 @@ describe('preStartRum', () => {
       it('init should accept empty application id and client token', () => {
         initEventBridgeStub()
         const hybridInitConfiguration: HybridInitConfiguration = {}
-        strategy.init(hybridInitConfiguration as RumInitConfiguration)
+        strategy.init(hybridInitConfiguration as RumInitConfiguration, PUBLIC_API)
         expect(display.error).not.toHaveBeenCalled()
       })
 
       it('should force session sample rate to 100', () => {
         initEventBridgeStub()
         const invalidConfiguration: HybridInitConfiguration = { sessionSampleRate: 50 }
-        strategy.init(invalidConfiguration as RumInitConfiguration)
+        strategy.init(invalidConfiguration as RumInitConfiguration, PUBLIC_API)
         expect(strategy.initConfiguration?.sessionSampleRate).toEqual(100)
       })
 
       it('should set the default privacy level received from the bridge if the not provided in the init configuration', () => {
         initEventBridgeStub({ privacyLevel: DefaultPrivacyLevel.ALLOW })
         const hybridInitConfiguration: HybridInitConfiguration = {}
-        strategy.init(hybridInitConfiguration as RumInitConfiguration)
+        strategy.init(hybridInitConfiguration as RumInitConfiguration, PUBLIC_API)
         expect((strategy.initConfiguration as RumInitConfiguration)?.defaultPrivacyLevel).toEqual(
           DefaultPrivacyLevel.ALLOW
         )
@@ -129,7 +137,7 @@ describe('preStartRum', () => {
       it('should set the default privacy level from the init configuration if provided', () => {
         initEventBridgeStub({ privacyLevel: DefaultPrivacyLevel.ALLOW })
         const hybridInitConfiguration: HybridInitConfiguration = { defaultPrivacyLevel: DefaultPrivacyLevel.MASK }
-        strategy.init(hybridInitConfiguration as RumInitConfiguration)
+        strategy.init(hybridInitConfiguration as RumInitConfiguration, PUBLIC_API)
         expect((strategy.initConfiguration as RumInitConfiguration)?.defaultPrivacyLevel).toEqual(
           hybridInitConfiguration.defaultPrivacyLevel
         )
@@ -138,7 +146,7 @@ describe('preStartRum', () => {
       it('should set the default privacy level to "mask" if not provided in init configuration nor the bridge', () => {
         initEventBridgeStub({ privacyLevel: undefined })
         const hybridInitConfiguration: HybridInitConfiguration = {}
-        strategy.init(hybridInitConfiguration as RumInitConfiguration)
+        strategy.init(hybridInitConfiguration as RumInitConfiguration, PUBLIC_API)
         expect((strategy.initConfiguration as RumInitConfiguration)?.defaultPrivacyLevel).toEqual(
           DefaultPrivacyLevel.MASK
         )
@@ -147,7 +155,7 @@ describe('preStartRum', () => {
       it('should initialize even if session cannot be handled', () => {
         initEventBridgeStub()
         spyOnProperty(document, 'cookie', 'get').and.returnValue('')
-        strategy.init(DEFAULT_INIT_CONFIGURATION)
+        strategy.init(DEFAULT_INIT_CONFIGURATION, PUBLIC_API)
         expect(doStartRumSpy).toHaveBeenCalled()
       })
     })
@@ -162,7 +170,7 @@ describe('preStartRum', () => {
       spyOnProperty(document, 'cookie', 'get').and.returnValue('')
       const displaySpy = spyOn(display, 'warn')
       const strategy = createPreStartStrategy({}, getCommonContextSpy, createTrackingConsentState(), doStartRumSpy)
-      strategy.init(DEFAULT_INIT_CONFIGURATION)
+      strategy.init(DEFAULT_INIT_CONFIGURATION, PUBLIC_API)
       expect(doStartRumSpy).not.toHaveBeenCalled()
       expect(displaySpy).toHaveBeenCalled()
     })
@@ -179,7 +187,7 @@ describe('preStartRum', () => {
           createTrackingConsentState(),
           doStartRumSpy
         )
-        strategy.init(DEFAULT_INIT_CONFIGURATION)
+        strategy.init(DEFAULT_INIT_CONFIGURATION, PUBLIC_API)
 
         expect(doStartRumSpy).not.toHaveBeenCalled()
       })
@@ -195,7 +203,7 @@ describe('preStartRum', () => {
           createTrackingConsentState(),
           doStartRumSpy
         )
-        strategy.init(DEFAULT_INIT_CONFIGURATION)
+        strategy.init(DEFAULT_INIT_CONFIGURATION, PUBLIC_API)
 
         expect(doStartRumSpy).toHaveBeenCalled()
       })
@@ -221,7 +229,7 @@ describe('preStartRum', () => {
 
       describe('with compressIntakeRequests: false', () => {
         it('does not create a deflate worker', () => {
-          strategy.init(DEFAULT_INIT_CONFIGURATION)
+          strategy.init(DEFAULT_INIT_CONFIGURATION, PUBLIC_API)
 
           expect(startDeflateWorkerSpy).not.toHaveBeenCalled()
           const worker: DeflateWorker | undefined = doStartRumSpy.calls.mostRecent().args[1]
@@ -231,10 +239,13 @@ describe('preStartRum', () => {
 
       describe('with compressIntakeRequests: true', () => {
         it('creates a deflate worker instance', () => {
-          strategy.init({
-            ...DEFAULT_INIT_CONFIGURATION,
-            compressIntakeRequests: true,
-          })
+          strategy.init(
+            {
+              ...DEFAULT_INIT_CONFIGURATION,
+              compressIntakeRequests: true,
+            },
+            PUBLIC_API
+          )
 
           expect(startDeflateWorkerSpy).toHaveBeenCalledTimes(1)
           const worker: DeflateWorker | undefined = doStartRumSpy.calls.mostRecent().args[1]
@@ -244,10 +255,13 @@ describe('preStartRum', () => {
         it('aborts the initialization if it fails to create a deflate worker', () => {
           startDeflateWorkerSpy.and.returnValue(undefined)
 
-          strategy.init({
-            ...DEFAULT_INIT_CONFIGURATION,
-            compressIntakeRequests: true,
-          })
+          strategy.init(
+            {
+              ...DEFAULT_INIT_CONFIGURATION,
+              compressIntakeRequests: true,
+            },
+            PUBLIC_API
+          )
 
           expect(doStartRumSpy).not.toHaveBeenCalled()
         })
@@ -255,10 +269,13 @@ describe('preStartRum', () => {
         it('if message bridge is present, does not create a deflate worker instance', () => {
           initEventBridgeStub()
 
-          strategy.init({
-            ...DEFAULT_INIT_CONFIGURATION,
-            compressIntakeRequests: true,
-          })
+          strategy.init(
+            {
+              ...DEFAULT_INIT_CONFIGURATION,
+              compressIntakeRequests: true,
+            },
+            PUBLIC_API
+          )
 
           expect(startDeflateWorkerSpy).not.toHaveBeenCalled()
           expect(doStartRumSpy).toHaveBeenCalledTimes(1)
@@ -290,7 +307,7 @@ describe('preStartRum', () => {
 
       describe('when auto', () => {
         it('should start rum at init', () => {
-          strategy.init(AUTO_CONFIGURATION)
+          strategy.init(AUTO_CONFIGURATION, PUBLIC_API)
 
           expect(doStartRumSpy).toHaveBeenCalled()
         })
@@ -304,7 +321,7 @@ describe('preStartRum', () => {
           expect(startViewSpy).not.toHaveBeenCalled()
 
           clock.tick(20)
-          strategy.init(AUTO_CONFIGURATION)
+          strategy.init(AUTO_CONFIGURATION, PUBLIC_API)
 
           expect(startViewSpy).toHaveBeenCalled()
           expect(startViewSpy.calls.argsFor(0)[0]).toEqual({ name: 'foo' })
@@ -317,7 +334,7 @@ describe('preStartRum', () => {
 
       describe('when views are tracked manually', () => {
         it('should not start rum at init', () => {
-          strategy.init(MANUAL_CONFIGURATION)
+          strategy.init(MANUAL_CONFIGURATION, PUBLIC_API)
 
           expect(doStartRumSpy).not.toHaveBeenCalled()
         })
@@ -327,7 +344,7 @@ describe('preStartRum', () => {
           expect(doStartRumSpy).not.toHaveBeenCalled()
           expect(startViewSpy).not.toHaveBeenCalled()
 
-          strategy.init(MANUAL_CONFIGURATION)
+          strategy.init(MANUAL_CONFIGURATION, PUBLIC_API)
           expect(doStartRumSpy).toHaveBeenCalled()
           const initialViewOptions: ViewOptions | undefined = doStartRumSpy.calls.argsFor(0)[2]
           expect(initialViewOptions).toEqual({ name: 'foo' })
@@ -337,10 +354,13 @@ describe('preStartRum', () => {
         it('calling startView then init does not start rum if tracking consent is not granted', () => {
           const strategy = createPreStartStrategy({}, getCommonContextSpy, createTrackingConsentState(), doStartRumSpy)
           strategy.startView({ name: 'foo' })
-          strategy.init({
-            ...MANUAL_CONFIGURATION,
-            trackingConsent: TrackingConsent.NOT_GRANTED,
-          })
+          strategy.init(
+            {
+              ...MANUAL_CONFIGURATION,
+              trackingConsent: TrackingConsent.NOT_GRANTED,
+            },
+            PUBLIC_API
+          )
           expect(doStartRumSpy).not.toHaveBeenCalled()
         })
 
@@ -353,7 +373,7 @@ describe('preStartRum', () => {
           strategy.startView({ name: 'bar' })
 
           clock.tick(10)
-          strategy.init(MANUAL_CONFIGURATION)
+          strategy.init(MANUAL_CONFIGURATION, PUBLIC_API)
 
           expect(doStartRumSpy).toHaveBeenCalled()
           const initialViewOptions: ViewOptions | undefined = doStartRumSpy.calls.argsFor(0)[2]
@@ -362,7 +382,7 @@ describe('preStartRum', () => {
         })
 
         it('calling init then startView should start rum', () => {
-          strategy.init(MANUAL_CONFIGURATION)
+          strategy.init(MANUAL_CONFIGURATION, PUBLIC_API)
           expect(doStartRumSpy).not.toHaveBeenCalled()
           expect(startViewSpy).not.toHaveBeenCalled()
 
@@ -386,7 +406,7 @@ describe('preStartRum', () => {
           strategy.addTiming('second')
 
           clock.tick(10)
-          strategy.init(MANUAL_CONFIGURATION)
+          strategy.init(MANUAL_CONFIGURATION, PUBLIC_API)
 
           expect(addTimingSpy).toHaveBeenCalledTimes(2)
 
@@ -422,22 +442,66 @@ describe('preStartRum', () => {
           })
 
           const strategy = createPreStartStrategy({}, getCommonContextSpy, createTrackingConsentState(), doStartRumSpy)
-          strategy.init({
-            ...DEFAULT_INIT_CONFIGURATION,
-            remoteConfigurationId: '123',
-          })
+          strategy.init(
+            {
+              ...DEFAULT_INIT_CONFIGURATION,
+              remoteConfigurationId: '123',
+            },
+            PUBLIC_API
+          )
         })
       })
 
       describe('when remote_configuration ff is disabled', () => {
         it('should start without the remote configuration when a remoteConfigurationId is provided', () => {
           const strategy = createPreStartStrategy({}, getCommonContextSpy, createTrackingConsentState(), doStartRumSpy)
-          strategy.init({
-            ...DEFAULT_INIT_CONFIGURATION,
-            remoteConfigurationId: '123',
-          })
+          strategy.init(
+            {
+              ...DEFAULT_INIT_CONFIGURATION,
+              remoteConfigurationId: '123',
+            },
+            PUBLIC_API
+          )
           expect(doStartRumSpy.calls.mostRecent().args[0].sessionSampleRate).toEqual(100)
         })
+      })
+    })
+
+    describe('plugins', () => {
+      beforeEach(() => {
+        mockExperimentalFeatures([ExperimentalFeature.PLUGINS])
+      })
+
+      it('calls the onInit method on provided plugins', () => {
+        const plugin = { name: 'a', onInit: jasmine.createSpy() }
+        const strategy = createPreStartStrategy({}, getCommonContextSpy, createTrackingConsentState(), doStartRumSpy)
+        const initConfiguration = { ...DEFAULT_INIT_CONFIGURATION, plugins: [plugin] }
+        strategy.init(initConfiguration, PUBLIC_API)
+
+        expect(plugin.onInit).toHaveBeenCalledWith({
+          initConfiguration,
+          publicApi: PUBLIC_API,
+        })
+      })
+
+      it('plugins can edit the init configuration prior to validation', () => {
+        const plugin: RumPlugin = {
+          name: 'a',
+          onInit: ({ initConfiguration }) => {
+            initConfiguration.clientToken = 'client-token'
+            initConfiguration.applicationId = 'application-id'
+          },
+        }
+        const strategy = createPreStartStrategy({}, getCommonContextSpy, createTrackingConsentState(), doStartRumSpy)
+        strategy.init(
+          {
+            plugins: [plugin],
+          } as RumInitConfiguration,
+          PUBLIC_API
+        )
+
+        expect(doStartRumSpy).toHaveBeenCalled()
+        expect(doStartRumSpy.calls.mostRecent().args[0].applicationId).toBe('application-id')
       })
     })
   })
@@ -456,7 +520,7 @@ describe('preStartRum', () => {
       doStartRumSpy.and.returnValue({ stopSession: stopSessionSpy } as unknown as StartRumResult)
 
       strategy.stopSession()
-      strategy.init(DEFAULT_INIT_CONFIGURATION)
+      strategy.init(DEFAULT_INIT_CONFIGURATION, PUBLIC_API)
       expect(stopSessionSpy).not.toHaveBeenCalled()
     })
   })
@@ -483,7 +547,7 @@ describe('preStartRum', () => {
     })
 
     it('returns the user configuration after init', () => {
-      strategy.init(initConfiguration)
+      strategy.init(initConfiguration, PUBLIC_API)
 
       expect(strategy.initConfiguration).toEqual(initConfiguration)
     })
@@ -499,7 +563,7 @@ describe('preStartRum', () => {
         createTrackingConsentState(),
         doStartRumSpy
       )
-      strategy.init(initConfiguration)
+      strategy.init(initConfiguration, PUBLIC_API)
 
       expect(strategy.initConfiguration).toEqual(initConfiguration)
     })
@@ -514,10 +578,13 @@ describe('preStartRum', () => {
       })
 
       const strategy = createPreStartStrategy({}, getCommonContextSpy, createTrackingConsentState(), doStartRumSpy)
-      strategy.init({
-        ...DEFAULT_INIT_CONFIGURATION,
-        remoteConfigurationId: '123',
-      })
+      strategy.init(
+        {
+          ...DEFAULT_INIT_CONFIGURATION,
+          remoteConfigurationId: '123',
+        },
+        PUBLIC_API
+      )
     })
   })
 
@@ -538,7 +605,7 @@ describe('preStartRum', () => {
         startClocks: clocksNow(),
       }
       strategy.addAction(customAction)
-      strategy.init(DEFAULT_INIT_CONFIGURATION)
+      strategy.init(DEFAULT_INIT_CONFIGURATION, PUBLIC_API)
       expect(addActionSpy).toHaveBeenCalledOnceWith(customAction, undefined)
     })
 
@@ -553,7 +620,7 @@ describe('preStartRum', () => {
         startClocks: clocksNow(),
       }
       strategy.addError(error)
-      strategy.init(DEFAULT_INIT_CONFIGURATION)
+      strategy.init(DEFAULT_INIT_CONFIGURATION, PUBLIC_API)
       expect(addErrorSpy).toHaveBeenCalledOnceWith(error, undefined)
     })
 
@@ -564,7 +631,7 @@ describe('preStartRum', () => {
       const options = { name: 'foo' }
       const clockState = clocksNow()
       strategy.startView(options, clockState)
-      strategy.init(DEFAULT_INIT_CONFIGURATION)
+      strategy.init(DEFAULT_INIT_CONFIGURATION, PUBLIC_API)
       expect(startViewSpy).toHaveBeenCalledOnceWith(options, clockState)
     })
 
@@ -575,7 +642,7 @@ describe('preStartRum', () => {
       const name = 'foo'
       const time = 123 as TimeStamp
       strategy.addTiming(name, time)
-      strategy.init(DEFAULT_INIT_CONFIGURATION)
+      strategy.init(DEFAULT_INIT_CONFIGURATION, PUBLIC_API)
       expect(addTimingSpy).toHaveBeenCalledOnceWith(name, time)
     })
 
@@ -588,7 +655,7 @@ describe('preStartRum', () => {
       const key = 'foo'
       const value = 'bar'
       strategy.addFeatureFlagEvaluation(key, value)
-      strategy.init(DEFAULT_INIT_CONFIGURATION)
+      strategy.init(DEFAULT_INIT_CONFIGURATION, PUBLIC_API)
       expect(addFeatureFlagEvaluationSpy).toHaveBeenCalledOnceWith(key, value)
     })
 
@@ -600,7 +667,7 @@ describe('preStartRum', () => {
 
       const vitalStart = { name: 'timing', startClocks: clocksNow() }
       strategy.startDurationVital(vitalStart)
-      strategy.init(DEFAULT_INIT_CONFIGURATION)
+      strategy.init(DEFAULT_INIT_CONFIGURATION, PUBLIC_API)
       expect(startDurationVitalSpy).toHaveBeenCalledOnceWith(vitalStart)
     })
 
@@ -612,7 +679,7 @@ describe('preStartRum', () => {
 
       const vitalStop = { name: 'timing', stopClocks: clocksNow() }
       strategy.stopDurationVital(vitalStop)
-      strategy.init(DEFAULT_INIT_CONFIGURATION)
+      strategy.init(DEFAULT_INIT_CONFIGURATION, PUBLIC_API)
       expect(stopDurationVitalSpy).toHaveBeenCalledOnceWith(vitalStop)
     })
   })
@@ -627,42 +694,54 @@ describe('preStartRum', () => {
     })
 
     it('does not start rum if tracking consent is not granted at init', () => {
-      strategy.init({
-        ...DEFAULT_INIT_CONFIGURATION,
-        trackingConsent: TrackingConsent.NOT_GRANTED,
-      })
+      strategy.init(
+        {
+          ...DEFAULT_INIT_CONFIGURATION,
+          trackingConsent: TrackingConsent.NOT_GRANTED,
+        },
+        PUBLIC_API
+      )
       expect(doStartRumSpy).not.toHaveBeenCalled()
     })
 
     it('starts rum if tracking consent is granted before init', () => {
       trackingConsentState.update(TrackingConsent.GRANTED)
-      strategy.init({
-        ...DEFAULT_INIT_CONFIGURATION,
-        trackingConsent: TrackingConsent.NOT_GRANTED,
-      })
+      strategy.init(
+        {
+          ...DEFAULT_INIT_CONFIGURATION,
+          trackingConsent: TrackingConsent.NOT_GRANTED,
+        },
+        PUBLIC_API
+      )
       expect(doStartRumSpy).toHaveBeenCalledTimes(1)
     })
 
     it('does not start rum if tracking consent is withdrawn before init', () => {
       trackingConsentState.update(TrackingConsent.NOT_GRANTED)
-      strategy.init({
-        ...DEFAULT_INIT_CONFIGURATION,
-        trackingConsent: TrackingConsent.GRANTED,
-      })
+      strategy.init(
+        {
+          ...DEFAULT_INIT_CONFIGURATION,
+          trackingConsent: TrackingConsent.GRANTED,
+        },
+        PUBLIC_API
+      )
       expect(doStartRumSpy).not.toHaveBeenCalled()
     })
 
     it('does not start rum if no view is started', () => {
       trackingConsentState.update(TrackingConsent.GRANTED)
-      strategy.init({
-        ...MANUAL_CONFIGURATION,
-        trackingConsent: TrackingConsent.NOT_GRANTED,
-      })
+      strategy.init(
+        {
+          ...MANUAL_CONFIGURATION,
+          trackingConsent: TrackingConsent.NOT_GRANTED,
+        },
+        PUBLIC_API
+      )
       expect(doStartRumSpy).not.toHaveBeenCalled()
     })
 
     it('do not call startRum when tracking consent state is updated after init', () => {
-      strategy.init(DEFAULT_INIT_CONFIGURATION)
+      strategy.init(DEFAULT_INIT_CONFIGURATION, PUBLIC_API)
       doStartRumSpy.calls.reset()
 
       trackingConsentState.update(TrackingConsent.GRANTED)

@@ -451,6 +451,32 @@ describe('validateAndBuildRumConfiguration', () => {
       expect(configuration!.version).toBeUndefined()
     })
   })
+
+  describe('plugins', () => {
+    it('with `plugins` enabled: should be set in the configuration', () => {
+      mockExperimentalFeatures([ExperimentalFeature.PLUGINS])
+
+      const plugin = {
+        name: 'foo',
+      }
+      const configuration = validateAndBuildRumConfiguration({
+        ...DEFAULT_INIT_CONFIGURATION,
+        plugins: [plugin],
+      })
+      expect(configuration!.plugins).toEqual([plugin])
+    })
+
+    it('without `plugins` enabled: should not be set in the configuration', () => {
+      const plugin = {
+        name: 'foo',
+      }
+      const configuration = validateAndBuildRumConfiguration({
+        ...DEFAULT_INIT_CONFIGURATION,
+        plugins: [plugin],
+      })
+      expect(configuration!.plugins).toEqual([])
+    })
+  })
 })
 
 describe('serializeRumConfiguration', () => {
@@ -476,6 +502,7 @@ describe('serializeRumConfiguration', () => {
       trackResources: true,
       trackLongTasks: true,
       remoteConfigurationId: '123',
+      plugins: [{ name: 'foo', getConfigurationTelemetry: () => ({ bar: true }) }],
     }
 
     type MapRumInitConfigurationKey<Key extends string> = Key extends keyof InitConfiguration
@@ -512,6 +539,7 @@ describe('serializeRumConfiguration', () => {
       track_long_task: true,
       use_worker_url: true,
       compress_intake_requests: true,
+      plugins: [{ name: 'foo', bar: true }],
     })
   })
 })
