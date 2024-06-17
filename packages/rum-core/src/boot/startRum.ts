@@ -149,6 +149,7 @@ export function startRum(
   const {
     addTiming,
     startView,
+    updateViewName,
     stop: stopViewCollection,
   } = startViewCollection(
     lifeCycle,
@@ -184,6 +185,7 @@ export function startRum(
     addTiming,
     addFeatureFlagEvaluation: featureFlagContexts.addFeatureFlagEvaluation,
     startView,
+    updateViewName,
     lifeCycle,
     viewContexts,
     session,

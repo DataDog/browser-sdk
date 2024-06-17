@@ -25,6 +25,7 @@ const noopStartRum = (): ReturnType<StartRum> => ({
   addTiming: () => undefined,
   addFeatureFlagEvaluation: () => undefined,
   startView: () => undefined,
+  updateViewName: () => undefined,
   getInternalContext: () => undefined,
   lifeCycle: {} as any,
   viewContexts: {} as any,
@@ -855,5 +856,32 @@ describe('rum public api', () => {
   it('should provide sdk version', () => {
     const rumPublicApi = makeRumPublicApi(noopStartRum, noopRecorderApi)
     expect(rumPublicApi.version).toBe('test')
+  })
+
+  describe('updateViewName', () => {
+    let updateViewNameSpy: jasmine.Spy<ReturnType<StartRum>['updateViewName']>
+    let displaySpy: jasmine.Spy<() => void>
+    let rumPublicApi: RumPublicApi
+
+    beforeEach(() => {
+      updateViewNameSpy = jasmine.createSpy()
+      displaySpy = spyOn(display, 'error')
+      rumPublicApi = makeRumPublicApi(
+        () => ({
+          ...noopStartRum(),
+          updateViewName: updateViewNameSpy,
+        }),
+        noopRecorderApi
+      )
+    })
+
+    it('should update the view name', () => {
+      rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
+
+      rumPublicApi.updateViewName('foo')
+
+      expect(updateViewNameSpy.calls.argsFor(0)[0]).toEqual('foo')
+      expect(displaySpy).not.toHaveBeenCalled()
+    })
   })
 })
