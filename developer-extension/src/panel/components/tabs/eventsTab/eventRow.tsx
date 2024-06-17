@@ -71,28 +71,29 @@ export const EventRow = React.memo(
     const [isCollapsed, setIsCollapsed] = useState(true)
     const jsonRef = useRef<HTMLDivElement>(null)
 
-    function getMenuItemsForPath(path: string) {
-      const newColumn: EventListColumn = { type: 'field', path }
-      if (!path || includesColumn(columns, newColumn)) {
-        return null
-      }
-      return (
-        <>
-          <Menu.Item
-            onClick={() => {
-              onColumnsChange(addColumn(columns, newColumn))
-            }}
-            leftSection={<IconColumnInsertRight size={14} />}
-          >
-            Add column
-          </Menu.Item>
-        </>
-      )
-    }
+    function getMenuItemsForPath(path: string, value?: unknown) {
+      const menuItems: ReactNode[] = []
 
-    function getCopyMenuItemsForPath(path: string, value: unknown) {
-      const searchTerm = String(value).replace(/ /g, '\\ ')
-      return <CopyMenuItem value={`${path}:${searchTerm}`}>Copy search query</CopyMenuItem>
+      const newColumn: EventListColumn = { type: 'field', path }
+      if (path && !includesColumn(columns, newColumn)) {
+        menuItems.push(
+          <>
+            <Menu.Item
+              onClick={() => {
+                onColumnsChange(addColumn(columns, newColumn))
+              }}
+              leftSection={<IconColumnInsertRight size={14} />}
+            >
+              Add column
+            </Menu.Item>
+          </>
+        )
+      }
+      if (typeof value === 'string') {
+        const searchTerm = String(value).replace(/ /g, '\\ ')
+        menuItems.push(<CopyMenuItem value={`${path}:${searchTerm}`}>Copy search query</CopyMenuItem>)
+      }
+      return <>{menuItems}</>
     }
 
     return (
@@ -156,15 +157,9 @@ export const EventRow = React.memo(
                     <Json
                       value={value}
                       defaultCollapseLevel={0}
-                      getMenuItemsForPath={(path) => {
-                        const fullPath = path ? `${column.path}.${path}` : column.path
-                        return (
-                          <>
-                            {getMenuItemsForPath(fullPath)}
-                            {typeof value === 'string' ? getCopyMenuItemsForPath(column.path, value) : undefined}
-                          </>
-                        )
-                      }}
+                      getMenuItemsForPath={(path) =>
+                        getMenuItemsForPath(path ? `${column.path}.${path}` : column.path, value)
+                      }
                       formatValue={(path, value) => formatValue(path ? `${column.path}.${path}` : column.path, value)}
                     />
                   )}

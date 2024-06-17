@@ -314,7 +314,6 @@ export function CopyMenuItem({ value, children }: { value: unknown; children: Re
   return (
     <Menu.Item
       onClick={() => {
-        // Remove the outer quotation marks from copied string
         if (typeof value === 'object') {
           copy(JSON.stringify(value, null, 2))
         } else {
