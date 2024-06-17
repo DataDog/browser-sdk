@@ -157,17 +157,19 @@ export const EventRow = React.memo(
                       value={value}
                       defaultCollapseLevel={0}
                       getMenuItemsForPath={(path) => {
-                        const fullPath = path ? `${column.path}.${path}` : column.path;
-                        return <>
-                          {getMenuItemsForPath(fullPath)}
-                          {typeof value === 'string' ? getCopyMenuItemsForPath(column.path, value) : undefined}
-                        </>
+                        const fullPath = path ? `${column.path}.${path}` : column.path
+                        return (
+                          <>
+                            {getMenuItemsForPath(fullPath)}
+                            {typeof value === 'string' ? getCopyMenuItemsForPath(column.path, value) : undefined}
+                          </>
+                        )
                       }}
                       formatValue={(path, value) => formatValue(path ? `${column.path}.${path}` : column.path, value)}
                     />
                   )}
                 </Cell>
-              );
+              )
             }
           }
         })}

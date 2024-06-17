@@ -48,26 +48,26 @@ const JsonContext = createContext<{
 
 type JsonValueDescriptor =
   | {
-    parentType: 'root'
-    value: unknown
-    depth: 0
-    path: ''
-  }
+      parentType: 'root'
+      value: unknown
+      depth: 0
+      path: ''
+    }
   | {
-    parentType: 'array'
-    parentValue: unknown[]
-    value: unknown
-    path: string
-    depth: number
-  }
+      parentType: 'array'
+      parentValue: unknown[]
+      value: unknown
+      path: string
+      depth: number
+    }
   | {
-    parentType: 'object'
-    parentValue: object
-    value: unknown
-    path: string
-    depth: number
-    key: string
-  }
+      parentType: 'object'
+      parentValue: object
+      value: unknown
+      path: string
+      depth: number
+      key: string
+    }
 
 export const Json = forwardRef(
   (
