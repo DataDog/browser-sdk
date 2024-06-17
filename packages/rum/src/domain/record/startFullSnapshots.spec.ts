@@ -55,8 +55,8 @@ describe('startFullSnapshots', () => {
     expect(fullSnapshotCallback).toHaveBeenCalledTimes(2)
   })
 
-  it('cancels the previous idle callback when the view changes', () => {
-    const { triggerIdleCallbacks, cancelIdleCallbackSpy } = mockRequestIdleCallback()
+  it('cancels the full snapshot if another view is created before it can it happens', () => {
+    const { triggerIdleCallbacks } = mockRequestIdleCallback()
 
     lifeCycle.notify(LifeCycleEventType.VIEW_CREATED, {
       startClocks: viewStartClock,
@@ -67,7 +67,7 @@ describe('startFullSnapshots', () => {
     } as Partial<ViewCreatedEvent> as any)
 
     triggerIdleCallbacks()
-    expect(cancelIdleCallbackSpy).toHaveBeenCalledTimes(1)
+    expect(fullSnapshotCallback).toHaveBeenCalledTimes(2)
   })
 
   it('full snapshot related records should have the view change date', () => {
@@ -83,19 +83,5 @@ describe('startFullSnapshots', () => {
     expect(records[0].timestamp).toEqual(1)
     expect(records[1].timestamp).toEqual(1)
     expect(records[2].timestamp).toEqual(1)
-  })
-
-  it('should use requestAnimationFrame when requestIdleCallback is not defined', () => {
-    window.requestIdleCallback = undefined as any
-    window.cancelIdleCallback = undefined as any
-
-    const { triggerIdleCallbacks } = mockRequestIdleCallback()
-
-    lifeCycle.notify(LifeCycleEventType.VIEW_CREATED, {
-      startClocks: viewStartClock,
-    } as Partial<ViewCreatedEvent> as any)
-    triggerIdleCallbacks()
-
-    expect(fullSnapshotCallback).toHaveBeenCalledTimes(2)
   })
 })

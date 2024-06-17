@@ -69,21 +69,8 @@ export function startFullSnapshots(
   let cancelIdleCallback: (() => void) | undefined
   const { unsubscribe } = lifeCycle.subscribe(LifeCycleEventType.VIEW_CREATED, (view) => {
     flushMutations()
-    if (isExperimentalFeatureEnabled(ExperimentalFeature.ASYNC_FULL_SNAPSHOT)) {
-      if (cancelIdleCallback) {
-        cancelIdleCallback()
-      }
-
-      cancelIdleCallback = requestIdleCallback(() => {
-        fullSnapshotCallback(
-          takeFullSnapshot(view.startClocks.timeStamp, {
-            shadowRootsController,
-            status: SerializationContextStatus.SUBSEQUENT_FULL_SNAPSHOT,
-            elementsScrollPositions,
-          })
-        )
-      })
-    } else {
+    function takeSubsequentFullSnapshot() {
+      flushMutations()
       fullSnapshotCallback(
         takeFullSnapshot(view.startClocks.timeStamp, {
           shadowRootsController,
@@ -91,6 +78,16 @@ export function startFullSnapshots(
           elementsScrollPositions,
         })
       )
+    }
+
+    if (isExperimentalFeatureEnabled(ExperimentalFeature.ASYNC_FULL_SNAPSHOT)) {
+      if (cancelIdleCallback) {
+        cancelIdleCallback()
+      }
+
+      cancelIdleCallback = requestIdleCallback(takeSubsequentFullSnapshot)
+    } else {
+      takeSubsequentFullSnapshot()
     }
   })
 
