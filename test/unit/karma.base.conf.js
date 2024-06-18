@@ -14,9 +14,9 @@ if (testReportDirectory) {
   reporters.push('junit')
 }
 
-module.exports = {
+module.exports = (files) => ({
   basePath: '../..',
-  files: ['packages/*/+(src|test)/**/*.spec.ts', 'developer-extension/src/**/*.spec.ts', 'packages/rum/test/toto.css'],
+  files: [...files, 'packages/rum/test/toto.css'],
   frameworks: ['jasmine', 'webpack'],
   client: {
     jasmine: {
@@ -24,10 +24,10 @@ module.exports = {
       stopSpecOnExpectationFailure: true,
     },
   },
-  preprocessors: {
-    'packages/*/+(src|test)/**/*.ts': ['webpack', 'sourcemap'],
-    'developer-extension/src/**/*.ts': ['webpack', 'sourcemap'],
-  },
+  preprocessors: files.reduce((acc, file) => {
+    acc[file] = ['webpack', 'sourcemap']
+    return acc
+  }, {}),
   reporters,
   specReporter: {
     suppressErrorSummary: true,
@@ -66,4 +66,4 @@ module.exports = {
   // Socket.io) does not consider that the browser crashed.
   pingTimeout: 60_000,
   browserNoActivityTimeout: 60_000,
-}
+})

@@ -1,6 +1,17 @@
-const { browserConfigurations } = require('../browsers.conf')
+let { browserConfigurations } = require('../browsers.conf')
+const { extensionBrowserConfigurations } = require('../browsers.developer-extension.conf')
 const { getBuildInfos } = require('../envUtils')
-const karmaBaseConf = require('./karma.base.conf')
+const karmaBaseConfig = require('./karma.base.conf')
+
+const testFiles = ['packages/*/+(src|test)/**/*.spec.ts']
+const isExtension = process.argv.includes('--ext')
+
+if (isExtension) {
+  testFiles.push('developer-extension/src/**/*.spec.ts')
+  browserConfigurations = extensionBrowserConfigurations
+}
+
+const karmaBaseConf = karmaBaseConfig(testFiles)
 
 module.exports = function (config) {
   config.set({
