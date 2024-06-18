@@ -64,7 +64,7 @@ export function serializeAttribute(
     }
 
     // mask data-* attributes
-    if (attributeValue && startsWith(attributeName, 'data-')) {
+    if (configuration.maskDataAttributes && attributeValue && startsWith(attributeName, 'data-')) {
       // Exception: it's safe to reveal the `${PRIVACY_ATTR_NAME}` attr
       return CENSORED_STRING_MARK
     }

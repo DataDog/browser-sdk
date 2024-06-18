@@ -38,6 +38,7 @@ describe('trackMutation', () => {
       mutationCallbackSpy,
       {
         defaultPrivacyLevel,
+        maskDataAttributes: true,
       } as RumConfiguration,
       { ...DEFAULT_SHADOW_ROOT_CONTROLLER, addShadowRoot: addShadowRootSpy, removeShadowRoot: removeShadowRootSpy },
       document
@@ -54,6 +55,7 @@ describe('trackMutation', () => {
       document,
       {
         defaultPrivacyLevel: NodePrivacyLevel.ALLOW,
+        maskDataAttributes: true,
       } as RumConfiguration,
       {
         shadowRootsController: DEFAULT_SHADOW_ROOT_CONTROLLER,

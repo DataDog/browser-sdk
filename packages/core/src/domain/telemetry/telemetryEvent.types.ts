@@ -202,6 +202,10 @@ export type TelemetryConfigurationEvent = CommonTelemetryProperties & {
        */
       default_privacy_level?: string
       /**
+       * Whether to mask data attributes
+       */
+      mask_data_attributes?: boolean
+      /**
        * Privacy control for action name
        */
       enable_privacy_for_action_name?: boolean

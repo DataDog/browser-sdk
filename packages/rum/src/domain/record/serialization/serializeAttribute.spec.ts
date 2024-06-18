@@ -10,7 +10,9 @@ import {
 } from '@datadog/browser-rum-core'
 import { serializeAttribute } from './serializeAttribute'
 
-const DEFAULT_CONFIGURATION = {} as RumConfiguration
+const DEFAULT_CONFIGURATION = {
+  maskDataAttributes: true,
+} as RumConfiguration
 
 describe('serializeAttribute', () => {
   beforeEach(() => {

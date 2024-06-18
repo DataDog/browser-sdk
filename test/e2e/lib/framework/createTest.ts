@@ -20,6 +20,7 @@ const DEFAULT_RUM_CONFIGURATION = {
   clientToken: CLIENT_TOKEN,
   sessionReplaySampleRate: 100,
   defaultPrivacyLevel: DefaultPrivacyLevel.ALLOW,
+  maskDataAttributes: true,
   trackResources: true,
   trackLongTasks: true,
   telemetrySampleRate: 100,

@@ -82,6 +82,11 @@ export interface RumInitConfiguration extends InitConfiguration {
    */
   defaultPrivacyLevel?: DefaultPrivacyLevel | undefined
   /**
+   * If you set `defaultPrivacyLevel` to `mask`, you can choose whether to mask data attributes.
+   * @default true
+   */
+  maskDataAttributes?: boolean | undefined
+  /**
    * If you are accessing Datadog through a custom subdomain, you can set `subdomain` to include your custom domain in the `getSessionReplayLink()` returned URL .
    * See [Connect Session Replay To Your Third-Party Tools](https://docs.datadoghq.com/real_user_monitoring/guide/connect-session-replay-to-your-third-party-tools) for further information.
    */
@@ -146,6 +151,7 @@ export interface RumConfiguration extends Configuration {
   compressIntakeRequests: boolean
   applicationId: string
   defaultPrivacyLevel: DefaultPrivacyLevel
+  maskDataAttributes: boolean
   enablePrivacyForActionName: boolean
   sessionReplaySampleRate: number
   startSessionReplayRecordingManually: boolean
@@ -216,6 +222,7 @@ export function validateAndBuildRumConfiguration(
       defaultPrivacyLevel: objectHasValue(DefaultPrivacyLevel, initConfiguration.defaultPrivacyLevel)
         ? initConfiguration.defaultPrivacyLevel
         : DefaultPrivacyLevel.MASK,
+      maskDataAttributes: initConfiguration.maskDataAttributes ?? true,
       enablePrivacyForActionName:
         isExperimentalFeatureEnabled(ExperimentalFeature.ENABLE_PRIVACY_FOR_ACTION_NAME) &&
         !!initConfiguration.enablePrivacyForActionName,
@@ -297,6 +304,7 @@ export function serializeRumConfiguration(configuration: RumInitConfiguration) {
         Array.isArray(configuration.allowedTracingUrls) && configuration.allowedTracingUrls.length > 0,
       selected_tracing_propagators: getSelectedTracingPropagators(configuration),
       default_privacy_level: configuration.defaultPrivacyLevel,
+      mask_data_attributes: configuration.maskDataAttributes,
       enable_privacy_for_action_name: configuration.enablePrivacyForActionName,
       use_excluded_activity_urls:
         Array.isArray(configuration.excludedActivityUrls) && configuration.excludedActivityUrls.length > 0,
