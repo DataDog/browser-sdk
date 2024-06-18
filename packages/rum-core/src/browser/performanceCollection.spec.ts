@@ -1,28 +1,55 @@
-import { setup } from '../../test'
-import type { RumConfiguration } from '../domain/configuration'
-import { retrieveInitialDocumentResourceTiming, startPerformanceCollection } from './performanceCollection'
+import type { TestSetupBuilder } from '../../test'
+import { createPerformanceEntry, mockPerformanceObserver, setup } from '../../test'
+import { LifeCycleEventType } from '../domain/lifeCycle'
+import { startPerformanceCollection } from './performanceCollection'
+import { RumPerformanceEntryType, type RumPerformanceEntry } from './performanceObservable'
 
-describe('rum initial document resource', () => {
-  let configuration: RumConfiguration
+describe('startPerformanceCollection', () => {
+  let notifyPerformanceEntry: (entry: RumPerformanceEntry) => void
+  let entryCollectedCallback: jasmine.Spy
+  let setupBuilder: TestSetupBuilder
 
   beforeEach(() => {
-    configuration = {} as RumConfiguration
-    setup().beforeBuild(({ lifeCycle, configuration }) => {
-      startPerformanceCollection(lifeCycle, configuration)
+    if (!window.PerformanceObserver) {
+      pending('PerformanceObserver not supported')
+    }
+    entryCollectedCallback = jasmine.createSpy()
+    ;({ notifyPerformanceEntry } = mockPerformanceObserver())
+
+    setupBuilder = setup().beforeBuild(({ lifeCycle, configuration }) => {
+      const { stop } = startPerformanceCollection(lifeCycle, configuration)
+      const subscription = lifeCycle.subscribe(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, entryCollectedCallback)
+      return {
+        stop() {
+          stop()
+          subscription.unsubscribe()
+        },
+      }
+    })
+  })
+  ;[
+    RumPerformanceEntryType.NAVIGATION,
+    RumPerformanceEntryType.LONG_TASK,
+    RumPerformanceEntryType.PAINT,
+    RumPerformanceEntryType.LARGEST_CONTENTFUL_PAINT,
+    RumPerformanceEntryType.FIRST_INPUT,
+    RumPerformanceEntryType.LAYOUT_SHIFT,
+    RumPerformanceEntryType.EVENT,
+  ].forEach((entryType) => {
+    it(`should notify ${entryType}`, () => {
+      setupBuilder.build()
+
+      notifyPerformanceEntry(createPerformanceEntry(entryType))
+
+      expect(entryCollectedCallback).toHaveBeenCalledWith([jasmine.objectContaining({ entryType })])
     })
   })
 
-  it('creates a resource timing for the initial document', (done) => {
-    retrieveInitialDocumentResourceTiming(configuration, (timing) => {
-      expect(timing.entryType).toBe('resource')
-      expect(timing.duration).toBeGreaterThan(0)
+  it('should not notify resource timings', () => {
+    setupBuilder.build()
 
-      // generate a performance entry like structure
-      const toJsonTiming = timing.toJSON()
-      expect(toJsonTiming.entryType).toEqual(timing.entryType)
-      expect(toJsonTiming.duration).toEqual(timing.duration)
-      expect((toJsonTiming as any).toJSON).toBeUndefined()
-      done()
-    })
+    notifyPerformanceEntry(createPerformanceEntry(RumPerformanceEntryType.RESOURCE))
+
+    expect(entryCollectedCallback).not.toHaveBeenCalled()
   })
 })
