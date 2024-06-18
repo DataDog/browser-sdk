@@ -1,15 +1,17 @@
 const { getBuildInfos } = require('../envUtils')
-const karmaBaseConfig = require('./karma.base.conf')
+let { browserConfigurations } = require('../browsers.conf')
+const initKarmaBaseConf = require('./karma.base.conf')
 
 const isExtension = process.argv.includes('--ext')
 
 const testFiles = isExtension
   ? ['packages/*/+(src|test)/**/*.spec.ts', 'developer-extension/src/**/*.spec.ts']
   : ['packages/*/+(src|test)/**/*.spec.ts']
-const browserConfigurations = isExtension
-  ? require('../browsers.developer-extension.conf')
-  : require('../browsers.conf')
-const karmaBaseConf = karmaBaseConfig(testFiles)
+const excludeBrowsers = ['ie', 'safari']
+browserConfigurations = isExtension
+  ? browserConfigurations.filter((configuration) => !excludeBrowsers.includes(configuration.name))
+  : browserConfigurations
+const karmaBaseConf = initKarmaBaseConf(testFiles)
 
 module.exports = function (config) {
   config.set({
