@@ -1,6 +1,7 @@
 const { getBuildInfos } = require('../envUtils')
+let { browserConfigurations } = require('../browsers.conf')
+
 const karmaBaseConf = require('./karma.base.conf')
-let { browserConfigurations } = require('./browsers.conf')
 
 const isExtension = process.argv.includes('--ext')
 browserConfigurations = isExtension
