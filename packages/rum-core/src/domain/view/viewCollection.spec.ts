@@ -77,6 +77,7 @@ describe('viewCollection', () => {
           configuration,
           featureFlagContexts,
           domMutationObservable,
+          performanceResourceObservable,
           locationChangeObservable,
           pageStateHistory,
         }) => {
@@ -86,6 +87,7 @@ describe('viewCollection', () => {
             configuration,
             location,
             domMutationObservable,
+            performanceResourceObservable,
             locationChangeObservable,
             featureFlagContexts,
             pageStateHistory,

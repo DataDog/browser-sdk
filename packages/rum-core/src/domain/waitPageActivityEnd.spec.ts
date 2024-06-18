@@ -4,7 +4,7 @@ import type { Clock } from '@datadog/browser-core/test'
 import { mockClock } from '@datadog/browser-core/test'
 import type { TestSetupBuilder } from '../../test'
 import { createPerformanceEntry, setup } from '../../test'
-import { RumPerformanceEntryType } from '../browser/performanceCollection'
+import { RumPerformanceEntryType } from '../browser/performanceObservable'
 import { LifeCycleEventType } from './lifeCycle'
 import type { RequestCompleteEvent, RequestStartEvent } from './requestCollection'
 import type { PageActivityEvent, PageActivityEndEvent } from './waitPageActivityEnd'
@@ -49,8 +49,13 @@ describe('createPageActivityObservable', () => {
   beforeEach(() => {
     setupBuilder = setup()
       .withConfiguration({ excludedActivityUrls: [EXCLUDED_FAKE_URL] })
-      .beforeBuild(({ lifeCycle, domMutationObservable, configuration }) => {
-        const pageActivityObservable = createPageActivityObservable(lifeCycle, domMutationObservable, configuration)
+      .beforeBuild(({ lifeCycle, domMutationObservable, performanceResourceObservable, configuration }) => {
+        const pageActivityObservable = createPageActivityObservable(
+          lifeCycle,
+          domMutationObservable,
+          performanceResourceObservable,
+          configuration
+        )
         pageActivitySubscription = pageActivityObservable.subscribe(pushEvent)
       })
   })
@@ -62,10 +67,9 @@ describe('createPageActivityObservable', () => {
   })
 
   it('emits an activity event on resource collected', () => {
-    const { lifeCycle } = setupBuilder.build()
-    lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [
-      createPerformanceEntry(RumPerformanceEntryType.RESOURCE),
-    ])
+    const { performanceResourceObservable } = setupBuilder.build()
+    performanceResourceObservable.notify([createPerformanceEntry(RumPerformanceEntryType.RESOURCE)])
+
     expect(events).toEqual([{ isBusy: false }])
   })
 

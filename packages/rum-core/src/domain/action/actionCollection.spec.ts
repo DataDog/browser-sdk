@@ -22,9 +22,17 @@ describe('actionCollection', () => {
       .withPageStateHistory({
         wasInPageStateAt: () => true,
       })
-      .beforeBuild(({ lifeCycle, configuration, domMutationObservable, pageStateHistory }) => {
-        ;({ addAction } = startActionCollection(lifeCycle, domMutationObservable, configuration, pageStateHistory))
-      })
+      .beforeBuild(
+        ({ lifeCycle, configuration, domMutationObservable, performanceResourceObservable, pageStateHistory }) => {
+          ;({ addAction } = startActionCollection(
+            lifeCycle,
+            domMutationObservable,
+            performanceResourceObservable,
+            configuration,
+            pageStateHistory
+          ))
+        }
+      )
   })
 
   it('should create action from auto action', () => {

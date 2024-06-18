@@ -15,7 +15,8 @@ import {
 import { createNewEvent, interceptRequests, initEventBridgeStub } from '@datadog/browser-core/test'
 import type { RumSessionManagerMock, TestSetupBuilder } from '../../test'
 import { createPerformanceEntry, createRumSessionManagerMock, noopRecorderApi, setup } from '../../test'
-import { RumPerformanceEntryType } from '../browser/performanceCollection'
+import type { RumPerformanceResourceTiming } from '../browser/performanceObservable'
+import { RumPerformanceEntryType } from '../browser/performanceObservable'
 import type { LifeCycle } from '../domain/lifeCycle'
 import { LifeCycleEventType } from '../domain/lifeCycle'
 import { SESSION_KEEP_ALIVE_INTERVAL, THROTTLE_VIEW_UPDATE_PERIOD } from '../domain/view/trackViews'
@@ -44,6 +45,7 @@ function startRumStub(
   sessionManager: RumSessionManager,
   location: Location,
   domMutationObservable: Observable<void>,
+  performanceResourceObservable: Observable<RumPerformanceResourceTiming[]>,
   locationChangeObservable: Observable<LocationChange>,
   pageStateHistory: PageStateHistory,
   reportError: (error: RawError) => void
@@ -55,6 +57,7 @@ function startRumStub(
     sessionManager,
     locationChangeObservable,
     domMutationObservable,
+    performanceResourceObservable,
     () => ({
       context: {},
       user: {},
@@ -67,6 +70,7 @@ function startRumStub(
     configuration,
     location,
     domMutationObservable,
+    performanceResourceObservable,
     locationChangeObservable,
     startFeatureFlagContexts(lifeCycle, createCustomerDataTracker(noop)),
     pageStateHistory,
@@ -98,6 +102,7 @@ describe('rum session', () => {
         configuration,
         sessionManager,
         domMutationObservable,
+        performanceResourceObservable,
         locationChangeObservable,
         pageStateHistory,
       }) => {
@@ -108,6 +113,7 @@ describe('rum session', () => {
           sessionManager,
           location,
           domMutationObservable,
+          performanceResourceObservable,
           locationChangeObservable,
           pageStateHistory,
           noop
@@ -159,6 +165,7 @@ describe('rum session keep alive', () => {
           configuration,
           sessionManager,
           domMutationObservable,
+          performanceResourceObservable,
           locationChangeObservable,
           pageStateHistory,
         }) => {
@@ -169,6 +176,7 @@ describe('rum session keep alive', () => {
             sessionManager,
             location,
             domMutationObservable,
+            performanceResourceObservable,
             locationChangeObservable,
             pageStateHistory,
             noop
@@ -227,6 +235,7 @@ describe('rum events url', () => {
         configuration,
         sessionManager,
         domMutationObservable,
+        performanceResourceObservable,
         locationChangeObservable,
         pageStateHistory,
       }) => {
@@ -237,6 +246,7 @@ describe('rum events url', () => {
           sessionManager,
           location,
           domMutationObservable,
+          performanceResourceObservable,
           locationChangeObservable,
           pageStateHistory,
           noop

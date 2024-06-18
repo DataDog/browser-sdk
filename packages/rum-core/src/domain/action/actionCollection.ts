@@ -19,6 +19,7 @@ import type { CommonContext } from '../contexts/commonContext'
 import type { PageStateHistory } from '../contexts/pageStateHistory'
 import { PageState } from '../contexts/pageStateHistory'
 import type { RumActionEventDomainContext } from '../../domainContext.types'
+import type { RumPerformanceResourceTiming } from '../../browser/performanceObservable'
 import type { ActionContexts, ClickAction } from './trackClickActions'
 import { trackClickActions } from './trackClickActions'
 
@@ -37,6 +38,7 @@ export type AutoAction = ClickAction
 export function startActionCollection(
   lifeCycle: LifeCycle,
   domMutationObservable: Observable<void>,
+  performanceResourceObservable: Observable<RumPerformanceResourceTiming[]>,
   configuration: RumConfiguration,
   pageStateHistory: PageStateHistory
 ) {
@@ -46,7 +48,12 @@ export function startActionCollection(
 
   let actionContexts: ActionContexts = { findActionId: noop as () => undefined }
   if (configuration.trackUserInteractions) {
-    actionContexts = trackClickActions(lifeCycle, domMutationObservable, configuration).actionContexts
+    actionContexts = trackClickActions(
+      lifeCycle,
+      domMutationObservable,
+      performanceResourceObservable,
+      configuration
+    ).actionContexts
   }
 
   return {

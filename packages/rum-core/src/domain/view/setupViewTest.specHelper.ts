@@ -6,7 +6,14 @@ import { trackViews } from './trackViews'
 export type ViewTest = ReturnType<typeof setupViewTest>
 
 export function setupViewTest(
-  { lifeCycle, location, domMutationObservable, configuration, locationChangeObservable }: BuildContext,
+  {
+    lifeCycle,
+    location,
+    domMutationObservable,
+    performanceResourceObservable,
+    configuration,
+    locationChangeObservable,
+  }: BuildContext,
   initialViewOptions?: ViewOptions
 ) {
   const {
@@ -30,6 +37,7 @@ export function setupViewTest(
     location,
     lifeCycle,
     domMutationObservable,
+    performanceResourceObservable,
     configuration,
     locationChangeObservable,
     !configuration.trackViewsManually,

@@ -1,4 +1,5 @@
 import type { ClocksState, Duration, Observable } from '@datadog/browser-core'
+import type { RumPerformanceResourceTiming } from 'packages/rum-core/src/browser/performanceObservable'
 import type { ViewLoadingType } from '../../../rawRumEvent.types'
 import type { RumConfiguration } from '../../configuration'
 import type { LifeCycle } from '../../lifeCycle'
@@ -20,6 +21,7 @@ export interface CommonViewMetrics {
 export function trackCommonViewMetrics(
   lifeCycle: LifeCycle,
   domMutationObservable: Observable<void>,
+  performanceResourceObservable: Observable<RumPerformanceResourceTiming[]>,
   configuration: RumConfiguration,
   scheduleViewUpdate: () => void,
   loadingType: ViewLoadingType,
@@ -30,6 +32,7 @@ export function trackCommonViewMetrics(
   const { stop: stopLoadingTimeTracking, setLoadEvent } = trackLoadingTime(
     lifeCycle,
     domMutationObservable,
+    performanceResourceObservable,
     configuration,
     loadingType,
     viewStart,

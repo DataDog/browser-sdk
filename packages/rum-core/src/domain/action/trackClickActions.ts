@@ -21,6 +21,7 @@ import { PAGE_ACTIVITY_VALIDATION_DELAY, waitPageActivityEnd } from '../waitPage
 import { getSelectorFromElement } from '../getSelectorFromElement'
 import { getNodePrivacyLevel, NodePrivacyLevel } from '../privacy'
 import type { RumConfiguration } from '../configuration'
+import type { RumPerformanceResourceTiming } from '../../browser/performanceObservable'
 import type { ClickChain } from './clickChain'
 import { createClickChain } from './clickChain'
 import { getActionNameFromElement } from './getActionNameFromElement'
@@ -65,6 +66,7 @@ export const ACTION_CONTEXT_TIME_OUT_DELAY = 5 * ONE_MINUTE // arbitrary
 export function trackClickActions(
   lifeCycle: LifeCycle,
   domMutationObservable: Observable<void>,
+  performanceResourceObservable: Observable<RumPerformanceResourceTiming[]>,
   configuration: RumConfiguration
 ) {
   const history: ClickActionIdHistory = new ValueHistory(ACTION_CONTEXT_TIME_OUT_DELAY)
@@ -82,12 +84,19 @@ export function trackClickActions(
     hadActivityOnPointerDown: () => boolean
   }>(configuration, {
     onPointerDown: (pointerDownEvent) =>
-      processPointerDown(configuration, lifeCycle, domMutationObservable, pointerDownEvent),
+      processPointerDown(
+        configuration,
+        lifeCycle,
+        domMutationObservable,
+        performanceResourceObservable,
+        pointerDownEvent
+      ),
     onPointerUp: ({ clickActionBase, hadActivityOnPointerDown }, startEvent, getUserActivity) => {
       startClickAction(
         configuration,
         lifeCycle,
         domMutationObservable,
+        performanceResourceObservable,
         history,
         stopObservable,
         appendClickToClickChain,
@@ -132,6 +141,7 @@ function processPointerDown(
   configuration: RumConfiguration,
   lifeCycle: LifeCycle,
   domMutationObservable: Observable<void>,
+  performanceResourceObservable: Observable<RumPerformanceResourceTiming[]>,
   pointerDownEvent: MouseEventOnElement
 ) {
   const nodePrivacyLevel = configuration.enablePrivacyForActionName
@@ -149,6 +159,7 @@ function processPointerDown(
   waitPageActivityEnd(
     lifeCycle,
     domMutationObservable,
+    performanceResourceObservable,
     configuration,
     (pageActivityEndEvent) => {
       hadActivityOnPointerDown = pageActivityEndEvent.hadActivity
@@ -165,6 +176,7 @@ function startClickAction(
   configuration: RumConfiguration,
   lifeCycle: LifeCycle,
   domMutationObservable: Observable<void>,
+  performanceResourceObservable: Observable<RumPerformanceResourceTiming[]>,
   history: ClickActionIdHistory,
   stopObservable: Observable<void>,
   appendClickToClickChain: (click: Click) => void,
@@ -179,6 +191,7 @@ function startClickAction(
   const { stop: stopWaitPageActivityEnd } = waitPageActivityEnd(
     lifeCycle,
     domMutationObservable,
+    performanceResourceObservable,
     configuration,
     (pageActivityEndEvent) => {
       if (pageActivityEndEvent.hadActivity && pageActivityEndEvent.end < click.startClocks.timeStamp) {

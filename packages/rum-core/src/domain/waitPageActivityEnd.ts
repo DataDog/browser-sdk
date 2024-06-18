@@ -8,7 +8,7 @@ import {
   setTimeout,
   clearTimeout,
 } from '@datadog/browser-core'
-import { RumPerformanceEntryType } from '../browser/performanceCollection'
+import type { RumPerformanceResourceTiming } from '../browser/performanceObservable'
 import type { RumConfiguration } from './configuration'
 import type { LifeCycle } from './lifeCycle'
 import { LifeCycleEventType } from './lifeCycle'
@@ -57,11 +57,17 @@ export type PageActivityEndEvent = { hadActivity: true; end: TimeStamp } | { had
 export function waitPageActivityEnd(
   lifeCycle: LifeCycle,
   domMutationObservable: Observable<void>,
+  performanceResourceObservable: Observable<RumPerformanceResourceTiming[]>,
   configuration: RumConfiguration,
   pageActivityEndCallback: (event: PageActivityEndEvent) => void,
   maxDuration?: number
 ) {
-  const pageActivityObservable = createPageActivityObservable(lifeCycle, domMutationObservable, configuration)
+  const pageActivityObservable = createPageActivityObservable(
+    lifeCycle,
+    domMutationObservable,
+    performanceResourceObservable,
+    configuration
+  )
   return doWaitPageActivityEnd(pageActivityObservable, pageActivityEndCallback, maxDuration)
 }
 
@@ -118,6 +124,7 @@ export function doWaitPageActivityEnd(
 export function createPageActivityObservable(
   lifeCycle: LifeCycle,
   domMutationObservable: Observable<void>,
+  performanceResourceObservable: Observable<RumPerformanceResourceTiming[]>,
   configuration: RumConfiguration
 ): Observable<PageActivityEvent> {
   return new Observable<PageActivityEvent>((observable) => {
@@ -127,12 +134,8 @@ export function createPageActivityObservable(
 
     subscriptions.push(
       domMutationObservable.subscribe(notifyPageActivity),
-      lifeCycle.subscribe(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, (entries) => {
-        if (
-          entries.some(
-            (entry) => entry.entryType === RumPerformanceEntryType.RESOURCE && !isExcludedUrl(configuration, entry.name)
-          )
-        ) {
+      performanceResourceObservable.subscribe((entries) => {
+        if (entries.some((entry) => !isExcludedUrl(configuration, entry.name))) {
           notifyPageActivity()
         }
       }),

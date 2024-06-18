@@ -4,7 +4,7 @@ import { ViewLoadingType } from '../../../rawRumEvent.types'
 import type { TestSetupBuilder } from '../../../../test'
 import { createPerformanceEntry, setup } from '../../../../test'
 import { PAGE_ACTIVITY_END_DELAY, PAGE_ACTIVITY_VALIDATION_DELAY } from '../../waitPageActivityEnd'
-import { RumPerformanceEntryType } from '../../../browser/performanceCollection'
+import { RumPerformanceEntryType } from '../../../browser/performanceObservable'
 import { trackLoadingTime } from './trackLoadingTime'
 
 const BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY = (PAGE_ACTIVITY_VALIDATION_DELAY * 0.8) as Duration
@@ -25,10 +25,11 @@ describe('trackLoadingTime', () => {
     loadType = ViewLoadingType.ROUTE_CHANGE
     loadingTimeCallback = jasmine.createSpy('loadingTimeCallback')
     setupBuilder = setup()
-      .beforeBuild(({ lifeCycle, domMutationObservable, configuration }) => {
+      .beforeBuild(({ lifeCycle, domMutationObservable, performanceResourceObservable, configuration }) => {
         const loadingTimeTracking = trackLoadingTime(
           lifeCycle,
           domMutationObservable,
+          performanceResourceObservable,
           configuration,
           loadType,
           clocksOrigin(),

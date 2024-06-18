@@ -19,6 +19,7 @@ import {
   drainPreStartTelemetry,
 } from '@datadog/browser-core'
 import { createDOMMutationObservable } from '../browser/domMutationObservable'
+import type { RumPerformanceResourceTiming } from '../browser/performanceObservable'
 import { startPerformanceCollection } from '../browser/performanceCollection'
 import { startRumAssembly } from '../domain/assembly'
 import { startInternalContext } from '../domain/contexts/internalContext'
@@ -46,6 +47,7 @@ import type { CommonContext } from '../domain/contexts/commonContext'
 import { startDisplayContext } from '../domain/contexts/displayContext'
 import { startVitalCollection } from '../domain/vital/vitalCollection'
 import { startCiVisibilityContext } from '../domain/contexts/ciVisibilityContext'
+import { RumPerformanceEntryType, createPerformanceObservable } from '../browser/performanceObservable'
 import type { RecorderApi } from './rumPublicApi'
 
 export type StartRum = typeof startRum
@@ -121,6 +123,10 @@ export function startRum(
 
   const domMutationObservable = createDOMMutationObservable()
   const locationChangeObservable = createLocationChangeObservable(configuration, location)
+  const performanceResourceObservable = createPerformanceObservable(configuration, {
+    type: RumPerformanceEntryType.RESOURCE,
+    buffered: true,
+  })
 
   const {
     viewContexts,
@@ -136,15 +142,13 @@ export function startRum(
     session,
     locationChangeObservable,
     domMutationObservable,
+    performanceResourceObservable,
     getCommonContext,
     reportError
   )
   cleanupTasks.push(stopRumEventCollection)
 
   drainPreStartTelemetry()
-
-  startLongTaskCollection(lifeCycle, configuration)
-  startResourceCollection(lifeCycle, configuration, pageStateHistory)
 
   const {
     addTiming,
@@ -155,6 +159,7 @@ export function startRum(
     configuration,
     location,
     domMutationObservable,
+    performanceResourceObservable,
     locationChangeObservable,
     featureFlagContexts,
     pageStateHistory,
@@ -162,6 +167,15 @@ export function startRum(
     initialViewOptions
   )
   cleanupTasks.push(stopViewCollection)
+
+  startLongTaskCollection(lifeCycle, configuration)
+  const { stop: stopResourceCollection } = startResourceCollection(
+    lifeCycle,
+    configuration,
+    pageStateHistory,
+    performanceResourceObservable
+  )
+  cleanupTasks.push(stopResourceCollection)
 
   const { addError } = startErrorCollection(lifeCycle, configuration, pageStateHistory, featureFlagContexts)
 
@@ -213,6 +227,7 @@ export function startRumEventCollection(
   sessionManager: RumSessionManager,
   locationChangeObservable: Observable<LocationChange>,
   domMutationObservable: Observable<void>,
+  performanceResourceObservable: Observable<RumPerformanceResourceTiming[]>,
   getCommonContext: () => CommonContext,
   reportError: (error: RawError) => void
 ) {
@@ -224,6 +239,7 @@ export function startRumEventCollection(
   const { addAction, actionContexts } = startActionCollection(
     lifeCycle,
     domMutationObservable,
+    performanceResourceObservable,
     configuration,
     pageStateHistory
   )
