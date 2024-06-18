@@ -16,7 +16,7 @@ if (testReportDirectory) {
 
 module.exports = {
   basePath: '../..',
-  files: ['packages/*/+(src|test)/**/*.spec.ts', 'developer-extension/src/**/*.spec.ts', 'packages/rum/test/toto.css'],
+  files: ['packages/*/+(src|test)/**/*.spec.ts', 'packages/rum/test/toto.css'],
   frameworks: ['jasmine', 'webpack'],
   client: {
     jasmine: {
@@ -26,7 +26,6 @@ module.exports = {
   },
   preprocessors: {
     'packages/*/+(src|test)/**/*.ts': ['webpack', 'sourcemap'],
-    'developer-extension/src/**/*.ts': ['webpack', 'sourcemap'],
   },
   reporters,
   specReporter: {
