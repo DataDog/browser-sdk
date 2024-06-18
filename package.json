@@ -20,7 +20,7 @@
     "test": "yarn test:unit:watch",
     "test:unit": "karma start ./test/unit/karma.local.conf.js",
     "test:unit:watch": "yarn test:unit --no-single-run",
-    "test:unit:bs": "node ./scripts/test/bs-wrapper.js karma start test/unit/karma.bs.conf.js && karma start test/unit/karma.bs.conf.js --ext",
+    "test:unit:bs": "node ./scripts/test/bs-wrapper.js karma start test/unit/karma.bs.conf.js && node ./scripts/test/bs-wrapper.js karma start test/unit/karma.bs.conf.js --ext",
     "test:e2e": "yarn build && (cd test/app && rm -rf node_modules && yarn && yarn build) && wdio test/e2e/wdio.local.conf.ts",
     "test:e2e:bs": "yarn build && (cd test/app && rm -rf node_modules && yarn && yarn build) && node ./scripts/test/bs-wrapper.js wdio test/e2e/wdio.bs.conf.ts",
     "test:e2e:developer-extension": "yarn build && wdio test/e2e/wdio.developer-extension.conf.ts",

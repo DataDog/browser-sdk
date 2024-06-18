@@ -1,6 +1,5 @@
 const path = require('path')
-const karmaBase = require('./karma.base.conf')
-const karmaBaseConf = karmaBase(['packages/*/+(src|test)/**/*.spec.ts', 'developer-extension/src/**/*.spec.ts'])
+const karmaBaseConf = require('./karma.base.conf')
 
 module.exports = function (config) {
   config.set({

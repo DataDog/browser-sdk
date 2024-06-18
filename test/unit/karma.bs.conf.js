@@ -1,20 +1,21 @@
 const { getBuildInfos } = require('../envUtils')
-const karmaBaseConfig = require('./karma.base.conf')
+const karmaBaseConf = require('./karma.base.conf')
+let { browserConfigurations } = require('./browsers.conf')
 
 const isExtension = process.argv.includes('--ext')
-
-const testFiles = isExtension
-  ? ['packages/*/+(src|test)/**/*.spec.ts', 'developer-extension/src/**/*.spec.ts']
-  : ['packages/*/+(src|test)/**/*.spec.ts']
-const browserConfigurations = isExtension
-  ? require('../browsers.developer-extension.conf')
-  : require('../browsers.conf')
-const karmaBaseConf = karmaBaseConfig(testFiles)
+browserConfigurations = isExtension
+  ? browserConfigurations.filter((configuration) => !['ie', 'safari'].includes(configuration.name))
+  : browserConfigurations
 
 module.exports = function (config) {
   config.set({
     ...karmaBaseConf,
+    files: isExtension ? [...karmaBaseConf.files, 'developer-extension/src/**/*.spec.ts']: karmaBaseConf.files,
     plugins: [...karmaBaseConf.plugins, 'karma-browserstack-launcher'],
+    preprocessors: isExtension ? {
+      ...karmaBaseConf.preprocessors,
+      'developer-extension/src/**/*.ts': ['webpack', 'sourcemap'],
+    } : karmaBaseConf.preprocessors,
     reporters: [...karmaBaseConf.reporters, 'BrowserStack'],
     browsers: browserConfigurations.map((configuration) => configuration.sessionName),
     concurrency: 5,
