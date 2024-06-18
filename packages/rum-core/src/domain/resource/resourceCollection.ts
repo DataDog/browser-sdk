@@ -10,7 +10,6 @@ import {
   isNumber,
   ExperimentalFeature,
   isExperimentalFeatureEnabled,
-  display,
 } from '@datadog/browser-core'
 import type { RumConfiguration } from '../configuration'
 import type { RumPerformanceResourceTiming } from '../../browser/performanceObservable'

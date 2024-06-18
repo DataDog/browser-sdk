@@ -3,8 +3,8 @@ import { DOM_EVENT, ONE_MINUTE, addEventListeners, findLast } from '@datadog/bro
 import { LifeCycleEventType } from '../../lifeCycle'
 import type { LifeCycle } from '../../lifeCycle'
 import type { RumConfiguration } from '../../configuration'
-import { RumPerformanceEntryType } from '../../../browser/performanceCollection'
-import type { RumLargestContentfulPaintTiming } from '../../../browser/performanceCollection'
+import { RumPerformanceEntryType } from '../../../browser/performanceObservable'
+import type { RumLargestContentfulPaintTiming } from '../../../browser/performanceObservable'
 import { getSelectorFromElement } from '../../getSelectorFromElement'
 import type { FirstHidden } from './trackFirstHidden'
 

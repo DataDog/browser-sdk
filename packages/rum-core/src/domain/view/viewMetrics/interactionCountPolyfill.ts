@@ -16,7 +16,7 @@ import type {
   BrowserWindow,
   RumPerformanceEventTiming,
   RumPerformanceObserver,
-} from '../../../browser/performanceCollection'
+} from '../../../browser/performanceObservable'
 
 let observer: RumPerformanceObserver | undefined
 

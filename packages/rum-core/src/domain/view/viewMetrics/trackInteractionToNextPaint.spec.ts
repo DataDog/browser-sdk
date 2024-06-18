@@ -2,12 +2,12 @@ import type { Duration, RelativeTime } from '@datadog/browser-core'
 import { elapsed, resetExperimentalFeatures } from '@datadog/browser-core'
 import type { TestSetupBuilder } from '../../../../test'
 import { appendElement, appendText, createPerformanceEntry, setup } from '../../../../test'
-import { RumPerformanceEntryType } from '../../../browser/performanceCollection'
+import { RumPerformanceEntryType } from '../../../browser/performanceObservable'
 import type {
   BrowserWindow,
   RumFirstInputTiming,
   RumPerformanceEventTiming,
-} from '../../../browser/performanceCollection'
+} from '../../../browser/performanceObservable'
 import { ViewLoadingType } from '../../../rawRumEvent.types'
 import type { LifeCycle } from '../../lifeCycle'
 import { LifeCycleEventType } from '../../lifeCycle'

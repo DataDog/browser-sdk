@@ -1,5 +1,5 @@
 import type { ClocksState, Duration, Observable } from '@datadog/browser-core'
-import type { RumPerformanceResourceTiming } from 'packages/rum-core/src/browser/performanceObservable'
+import type { RumPerformanceResourceTiming } from '../../../browser/performanceObservable'
 import type { ViewLoadingType } from '../../../rawRumEvent.types'
 import type { RumConfiguration } from '../../configuration'
 import type { LifeCycle } from '../../lifeCycle'
