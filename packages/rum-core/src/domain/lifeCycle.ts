@@ -1,9 +1,9 @@
 import type { Context, PageExitEvent, RawError, RelativeTime } from '@datadog/browser-core'
 import { AbstractLifeCycle } from '@datadog/browser-core'
-import type { RumPerformanceEntry, RumPerformanceEventTiming } from '../browser/performanceObservable'
 import type { RumEventDomainContext } from '../domainContext.types'
 import type { RawRumEvent } from '../rawRumEvent.types'
 import type { RumEvent } from '../rumEvent.types'
+import type { CollectionRumPerformanceEntry } from '../browser/performanceCollection'
 import type { CommonContext } from './contexts/commonContext'
 import type { RequestCompleteEvent, RequestStartEvent } from './requestCollection'
 import type { AutoAction } from './action/actionCollection'
@@ -71,12 +71,10 @@ declare const LifeCycleEventTypeAsConst: {
   RAW_ERROR_COLLECTED: LifeCycleEventType.RAW_ERROR_COLLECTED
 }
 
-type SupportedRumPerformanceEntry = Exclude<RumPerformanceEntry, RumPerformanceEventTiming>
-
 // Note: this interface needs to be exported even if it is not used outside of this module, else TS
 // fails to build the rum-core package with error TS4058
 export interface LifeCycleEventMap {
-  [LifeCycleEventTypeAsConst.PERFORMANCE_ENTRIES_COLLECTED]: SupportedRumPerformanceEntry[]
+  [LifeCycleEventTypeAsConst.PERFORMANCE_ENTRIES_COLLECTED]: CollectionRumPerformanceEntry[]
   [LifeCycleEventTypeAsConst.AUTO_ACTION_COMPLETED]: AutoAction
   [LifeCycleEventTypeAsConst.BEFORE_VIEW_CREATED]: ViewCreatedEvent
   [LifeCycleEventTypeAsConst.VIEW_CREATED]: ViewCreatedEvent
