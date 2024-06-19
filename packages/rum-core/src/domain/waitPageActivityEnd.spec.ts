@@ -133,7 +133,7 @@ describe('createPageActivityObservable', () => {
 
     describe('excludedActivityUrls', () => {
       it('ignores resources that should be excluded by configuration', () => {
-        const { lifeCycle } = setupBuilder
+        const { performanceResourceObservable } = setupBuilder
           .withConfiguration({
             excludedActivityUrls: [
               /^https?:\/\/qux\.com.*/,
@@ -143,13 +143,13 @@ describe('createPageActivityObservable', () => {
           })
           .build()
 
-        lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [
+        performanceResourceObservable.notify([
           createPerformanceEntry(RumPerformanceEntryType.RESOURCE, { name: 'http://qux.com' }),
         ])
-        lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [
+        performanceResourceObservable.notify([
           createPerformanceEntry(RumPerformanceEntryType.RESOURCE, { name: 'http://bar.com' }),
         ])
-        lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [
+        performanceResourceObservable.notify([
           createPerformanceEntry(RumPerformanceEntryType.RESOURCE, { name: 'http://dynamic.com' }),
         ])
 

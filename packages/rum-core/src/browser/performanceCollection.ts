@@ -30,6 +30,8 @@ function supportPerformanceObject() {
   return window.performance !== undefined && 'getEntries' in performance
 }
 
+export type CollectionRumPerformanceEntry = Exclude<RumPerformanceEntry, RumPerformanceResourceTiming>
+
 export function startPerformanceCollection(lifeCycle: LifeCycle, configuration: RumConfiguration) {
   const cleanupTasks: Array<() => void> = []
 
@@ -246,8 +248,11 @@ function retrieveFirstInputTiming(configuration: RumConfiguration, callback: (ti
   }
 }
 
-function handleRumPerformanceEntries(lifeCycle: LifeCycle, entries: Array<PerformanceEntry | RumPerformanceEntry>) {
-  const rumPerformanceEntries = entries.filter((entry): entry is RumPerformanceEntry =>
+function handleRumPerformanceEntries(
+  lifeCycle: LifeCycle,
+  entries: Array<PerformanceEntry | CollectionRumPerformanceEntry>
+) {
+  const rumPerformanceEntries = entries.filter((entry): entry is CollectionRumPerformanceEntry =>
     objectHasValue(RumPerformanceEntryType, entry.entryType)
   )
 
