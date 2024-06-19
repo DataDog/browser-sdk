@@ -1,5 +1,6 @@
-import type { Observable, RawError, Duration, RelativeTime } from '@datadog/browser-core'
+import type { RawError, Duration, RelativeTime } from '@datadog/browser-core'
 import {
+  Observable,
   stopSessionManager,
   toServerDuration,
   ONE_SECOND,
@@ -15,7 +16,7 @@ import {
 import { createNewEvent, interceptRequests, initEventBridgeStub } from '@datadog/browser-core/test'
 import type { RumSessionManagerMock, TestSetupBuilder } from '../../test'
 import { createPerformanceEntry, createRumSessionManagerMock, noopRecorderApi, setup } from '../../test'
-import type { RumPerformanceResourceTiming } from '../browser/performanceObservable'
+import type { RumPerformanceLongTaskTiming, RumPerformanceResourceTiming } from '../browser/performanceObservable'
 import { RumPerformanceEntryType } from '../browser/performanceObservable'
 import type { LifeCycle } from '../domain/lifeCycle'
 import { LifeCycleEventType } from '../domain/lifeCycle'
@@ -46,6 +47,7 @@ function startRumStub(
   location: Location,
   domMutationObservable: Observable<void>,
   performanceResourceObservable: Observable<RumPerformanceResourceTiming[]>,
+  performanceLongTaskObservable: Observable<RumPerformanceLongTaskTiming[]>,
   locationChangeObservable: Observable<LocationChange>,
   pageStateHistory: PageStateHistory,
   reportError: (error: RawError) => void
@@ -77,7 +79,7 @@ function startRumStub(
     noopRecorderApi
   )
 
-  startLongTaskCollection(lifeCycle, configuration)
+  startLongTaskCollection(lifeCycle, configuration, performanceLongTaskObservable)
   return {
     stop: () => {
       rumEventCollectionStop()
@@ -94,7 +96,6 @@ describe('rum session', () => {
     if (isIE()) {
       pending('no full rum support')
     }
-
     setupBuilder = setup().beforeBuild(
       ({
         location,
@@ -114,6 +115,7 @@ describe('rum session', () => {
           location,
           domMutationObservable,
           performanceResourceObservable,
+          new Observable<RumPerformanceLongTaskTiming[]>(),
           locationChangeObservable,
           pageStateHistory,
           noop
@@ -177,6 +179,7 @@ describe('rum session keep alive', () => {
             location,
             domMutationObservable,
             performanceResourceObservable,
+            new Observable<RumPerformanceLongTaskTiming[]>(),
             locationChangeObservable,
             pageStateHistory,
             noop
@@ -226,8 +229,10 @@ describe('rum events url', () => {
 
   let setupBuilder: TestSetupBuilder
   let serverRumEvents: RumEvent[]
+  let performanceLongTaskObservable: Observable<RumPerformanceLongTaskTiming[]>
 
   beforeEach(() => {
+    performanceLongTaskObservable = new Observable<RumPerformanceLongTaskTiming[]>()
     setupBuilder = setup().beforeBuild(
       ({
         location,
@@ -247,6 +252,7 @@ describe('rum events url', () => {
           location,
           domMutationObservable,
           performanceResourceObservable,
+          performanceLongTaskObservable,
           locationChangeObservable,
           pageStateHistory,
           noop
@@ -256,16 +262,13 @@ describe('rum events url', () => {
   })
 
   it('should attach the url corresponding to the start of the event', () => {
-    const { lifeCycle, clock, changeLocation } = setupBuilder
-      .withFakeClock()
-      .withFakeLocation('http://foo.com/')
-      .build()
+    const { clock, changeLocation } = setupBuilder.withFakeClock().withFakeLocation('http://foo.com/').build()
     clock.tick(10)
     changeLocation('http://foo.com/?bar=bar')
     clock.tick(10)
     changeLocation('http://foo.com/?bar=qux')
 
-    lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [
+    performanceLongTaskObservable.notify([
       createPerformanceEntry(RumPerformanceEntryType.LONG_TASK, {
         startTime: (relativeNow() - 5) as RelativeTime,
       }),

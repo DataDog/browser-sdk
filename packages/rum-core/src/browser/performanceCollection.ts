@@ -21,6 +21,7 @@ import type {
   BrowserWindow,
   RumFirstInputTiming,
   RumPerformanceEntry,
+  RumPerformanceLongTaskTiming,
   RumPerformanceNavigationTiming,
   RumPerformanceResourceTiming,
 } from './performanceObservable'
@@ -30,7 +31,7 @@ function supportPerformanceObject() {
   return window.performance !== undefined && 'getEntries' in performance
 }
 
-export type CollectionRumPerformanceEntry = Exclude<RumPerformanceEntry, RumPerformanceResourceTiming>
+export type CollectionRumPerformanceEntry = Exclude<RumPerformanceEntry, RumPerformanceLongTaskTiming>
 
 export function startPerformanceCollection(lifeCycle: LifeCycle, configuration: RumConfiguration) {
   const cleanupTasks: Array<() => void> = []
@@ -46,11 +47,7 @@ export function startPerformanceCollection(lifeCycle: LifeCycle, configuration: 
     const handlePerformanceEntryList = monitor((entries: PerformanceObserverEntryList) =>
       handleRumPerformanceEntries(lifeCycle, entries.getEntries())
     )
-    const mainEntries = [
-      RumPerformanceEntryType.NAVIGATION,
-      RumPerformanceEntryType.LONG_TASK,
-      RumPerformanceEntryType.PAINT,
-    ]
+    const mainEntries = [RumPerformanceEntryType.NAVIGATION, RumPerformanceEntryType.PAINT]
     const experimentalEntries = [
       RumPerformanceEntryType.LARGEST_CONTENTFUL_PAINT,
       RumPerformanceEntryType.FIRST_INPUT,

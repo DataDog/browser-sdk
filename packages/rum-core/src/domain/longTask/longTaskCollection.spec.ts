@@ -1,62 +1,47 @@
-import type { RelativeTime, ServerDuration } from '@datadog/browser-core'
+import { Observable, type RelativeTime, type ServerDuration } from '@datadog/browser-core'
 import type { RumSessionManagerMock, TestSetupBuilder } from '../../../test'
 import { createPerformanceEntry, createRumSessionManagerMock, setup } from '../../../test'
+import type { RumPerformanceLongTaskTiming } from '../../browser/performanceObservable'
 import { RumPerformanceEntryType } from '../../browser/performanceObservable'
 import { RumEventType } from '../../rawRumEvent.types'
-import { LifeCycleEventType } from '../lifeCycle'
 import { startLongTaskCollection } from './longTaskCollection'
 
 describe('long task collection', () => {
   let setupBuilder: TestSetupBuilder
   let sessionManager: RumSessionManagerMock
   let trackLongTasks: boolean
+  let performanceLongTaskObservable: Observable<RumPerformanceLongTaskTiming[]>
 
   beforeEach(() => {
+    performanceLongTaskObservable = new Observable<RumPerformanceLongTaskTiming[]>()
     trackLongTasks = true
     sessionManager = createRumSessionManagerMock()
     setupBuilder = setup()
       .withSessionManager(sessionManager)
       .beforeBuild(({ lifeCycle, configuration }) => {
-        startLongTaskCollection(lifeCycle, { ...configuration, trackLongTasks })
+        startLongTaskCollection(lifeCycle, { ...configuration, trackLongTasks }, performanceLongTaskObservable)
       })
-  })
-
-  it('should only listen to long task performance entry', () => {
-    const { lifeCycle, rawRumEvents } = setupBuilder.build()
-    lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [
-      createPerformanceEntry(RumPerformanceEntryType.LONG_TASK),
-      createPerformanceEntry(RumPerformanceEntryType.NAVIGATION),
-      createPerformanceEntry(RumPerformanceEntryType.PAINT),
-    ])
-
-    expect(rawRumEvents.length).toBe(1)
   })
 
   it('should collect when trackLongTasks=true', () => {
     trackLongTasks = true
-    const { lifeCycle, rawRumEvents } = setupBuilder.build()
+    const { rawRumEvents } = setupBuilder.build()
 
-    lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [
-      createPerformanceEntry(RumPerformanceEntryType.LONG_TASK),
-    ])
+    performanceLongTaskObservable.notify([createPerformanceEntry(RumPerformanceEntryType.LONG_TASK)])
     expect(rawRumEvents.length).toBe(1)
   })
 
   it('should not collect when trackLongTasks=false', () => {
     trackLongTasks = false
-    const { lifeCycle, rawRumEvents } = setupBuilder.build()
+    const { rawRumEvents } = setupBuilder.build()
 
-    lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [
-      createPerformanceEntry(RumPerformanceEntryType.LONG_TASK),
-    ])
+    performanceLongTaskObservable.notify([createPerformanceEntry(RumPerformanceEntryType.LONG_TASK)])
     expect(rawRumEvents.length).toBe(0)
   })
 
   it('should create raw rum event from performance entry', () => {
-    const { lifeCycle, rawRumEvents } = setupBuilder.build()
-    lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [
-      createPerformanceEntry(RumPerformanceEntryType.LONG_TASK),
-    ])
+    const { rawRumEvents } = setupBuilder.build()
+    performanceLongTaskObservable.notify([createPerformanceEntry(RumPerformanceEntryType.LONG_TASK)])
 
     expect(rawRumEvents[0].startTime).toBe(1234 as RelativeTime)
     expect(rawRumEvents[0].rawRumEvent).toEqual({

@@ -29,7 +29,6 @@ describe('startPerformanceCollection', () => {
   })
   ;[
     RumPerformanceEntryType.NAVIGATION,
-    RumPerformanceEntryType.LONG_TASK,
     RumPerformanceEntryType.PAINT,
     RumPerformanceEntryType.LARGEST_CONTENTFUL_PAINT,
     RumPerformanceEntryType.FIRST_INPUT,
@@ -44,12 +43,13 @@ describe('startPerformanceCollection', () => {
       expect(entryCollectedCallback).toHaveBeenCalledWith([jasmine.objectContaining({ entryType })])
     })
   })
+  ;[RumPerformanceEntryType.LONG_TASK, RumPerformanceEntryType.RESOURCE].forEach((entryType) => {
+    it(`should not notify ${entryType} timings`, () => {
+      setupBuilder.build()
 
-  it('should not notify resource timings', () => {
-    setupBuilder.build()
+      notifyPerformanceEntry(createPerformanceEntry(RumPerformanceEntryType.RESOURCE))
 
-    notifyPerformanceEntry(createPerformanceEntry(RumPerformanceEntryType.RESOURCE))
-
-    expect(entryCollectedCallback).not.toHaveBeenCalled()
+      expect(entryCollectedCallback).not.toHaveBeenCalled()
+    })
   })
 })
