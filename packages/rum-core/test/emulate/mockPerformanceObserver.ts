@@ -35,7 +35,7 @@ export function mockPerformanceObserver() {
   return {
     notifyPerformanceEntry: (entry: RumPerformanceEntry) => {
       instances.forEach(({ callback, entryTypes }) => {
-        if (entryTypes && entryTypes.includes(entry.entryType)) {
+        if (entryTypes.includes(entry.entryType)) {
           callback(
             {
               getEntries: () => [entry] as PerformanceEntryList,

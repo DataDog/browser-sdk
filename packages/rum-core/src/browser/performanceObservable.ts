@@ -140,15 +140,12 @@ export type EntryTypeToReturnType = {
 
 export function createPerformanceObservable<T extends RumPerformanceEntryType>(
   configuration: RumConfiguration,
-  { type, buffered, durationThreshold }: { type: T; buffered?: boolean; durationThreshold?: number }
+  options: { type: T; buffered?: boolean; durationThreshold?: number }
 ) {
   return new Observable<Array<EntryTypeToReturnType[T]>>((observable) => {
     const cleanupTasks: Array<() => void> = []
 
-    const observeEntries = (
-      entryTypes: string[],
-      options?: PerformanceObserverInit & { durationThreshold?: number }
-    ) => {
+    const observeEntries = (options?: PerformanceObserverInit & { durationThreshold?: number }) => {
       const observer = new PerformanceObserver((entries) => {
         const rumResourceEntries = handleRumPerformanceEntries(
           configuration,
@@ -158,19 +155,15 @@ export function createPerformanceObservable<T extends RumPerformanceEntryType>(
           observable.notify(rumResourceEntries)
         }
       })
-      observer.observe(options ?? { entryTypes })
+      observer.observe(options)
       cleanupTasks.push(() => observer.disconnect())
     }
 
     if (window.PerformanceObserver) {
       try {
-        observeEntries([type], {
-          type,
-          buffered,
-          durationThreshold,
-        })
+        observeEntries(options)
       } catch {
-        observeEntries([type])
+        observeEntries({ entryTypes: [options.type] })
       }
     }
 
@@ -209,9 +202,9 @@ function handleRumPerformanceEntries<T extends RumPerformanceEntryType>(
   configuration: RumConfiguration,
   entries: Array<EntryTypeToReturnType[T]>
 ) {
-  return entries.filter((entry) => !isForbiddenResource(configuration, entry))
+  return entries.filter((entry) => isAllowedResource(configuration, entry))
 }
 
-function isForbiddenResource(configuration: RumConfiguration, entry: RumPerformanceEntry) {
-  return entry.entryType === RumPerformanceEntryType.RESOURCE && !isAllowedRequestUrl(configuration, entry.name)
+function isAllowedResource(configuration: RumConfiguration, entry: RumPerformanceEntry) {
+  return entry.entryType === RumPerformanceEntryType.RESOURCE && isAllowedRequestUrl(configuration, entry.name)
 }
