@@ -310,11 +310,15 @@ function JsonLine({
   )
 }
 
-function CopyMenuItem({ value, children }: { value: unknown; children: ReactNode }) {
+export function CopyMenuItem({ value, children }: { value: unknown; children: ReactNode }) {
   return (
     <Menu.Item
       onClick={() => {
-        copy(JSON.stringify(value, null, 2))
+        if (typeof value === 'object') {
+          copy(JSON.stringify(value, null, 2))
+        } else {
+          copy(String(value))
+        }
       }}
       leftSection={<IconCopy size={14} />}
     >
