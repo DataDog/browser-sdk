@@ -1,5 +1,5 @@
 import type { MockStorage } from '../../../test'
-import { mockClock, mockCookieProvider, mockLocalStorageProvider } from '../../../test'
+import { mockClock, mockCookie, mockLocalStorage } from '../../../test'
 import type { CookieOptions } from '../../browser/cookie'
 import { initCookieStrategy } from './storeStrategies/sessionInCookie'
 import { initLocalStorageStrategy } from './storeStrategies/sessionInLocalStorage'
@@ -16,17 +16,17 @@ const EXPIRED_SESSION: SessionState = { isExpired: '1' }
     {
       title: 'Cookie Storage',
       createSessionStoreStrategy: () => initCookieStrategy(cookieOptions),
-      storageProvider: mockCookieProvider,
+      mockStorage: mockCookie,
       storageKey: SESSION_STORE_KEY,
     },
     {
       title: 'Local Storage',
       createSessionStoreStrategy: () => initLocalStorageStrategy(),
-      storageProvider: mockLocalStorageProvider,
+      mockStorage: mockLocalStorage,
       storageKey: SESSION_STORE_KEY,
     },
   ] as const
-).forEach(({ title, createSessionStoreStrategy, storageProvider, storageKey }) => {
+).forEach(({ title, createSessionStoreStrategy, mockStorage, storageKey }) => {
   describe(`process operations mechanism with ${title}`, () => {
     const sessionStoreStrategy = createSessionStoreStrategy()
     let initialSession: SessionState
@@ -42,7 +42,7 @@ const EXPIRED_SESSION: SessionState = { isExpired: '1' }
       otherSession = { id: '456', created: String(now + 100) }
       processSpy = jasmine.createSpy('process')
       afterSpy = jasmine.createSpy('after')
-      storage = storageProvider.get()
+      storage = mockStorage()
     })
 
     describe('with lock access disabled', () => {
