@@ -112,10 +112,18 @@ describe('domMutationObservable', () => {
     const OriginalMutationObserverConstructor = window.MutationObserver
 
     beforeEach(() => {
+      if (isIE()) {
+        pending('dom mutation not available')
+      }
+
       zoneJsStub = stubZoneJs()
     })
 
     afterEach(() => {
+      if (isIE()) {
+        return
+      }
+
       zoneJsStub.restore()
       window.MutationObserver = OriginalMutationObserverConstructor
     })
