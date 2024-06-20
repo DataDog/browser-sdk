@@ -1,4 +1,4 @@
-import { collectAsyncCalls, stubEndpointBuilder, interceptRequests } from '../../test'
+import { collectAsyncCalls, mockEndpointBuilder, interceptRequests } from '../../test'
 import type { Request } from '../../test'
 import type { EndpointBuilder, Configuration } from '../domain/configuration'
 import { createEndpointBuilder } from '../domain/configuration'
@@ -19,7 +19,7 @@ describe('httpRequest', () => {
     configuration = {} as Configuration
     interceptor = interceptRequests()
     requests = interceptor.requests
-    endpointBuilder = stubEndpointBuilder(ENDPOINT_URL)
+    endpointBuilder = mockEndpointBuilder(ENDPOINT_URL)
     request = createHttpRequest(configuration, endpointBuilder, BATCH_BYTES_LIMIT, noop)
   })
 
@@ -126,7 +126,7 @@ describe('httpRequest', () => {
       }
 
       interceptor.withFetch(() => Promise.reject())
-      interceptor.withStubXhr((xhr) => {
+      interceptor.withMockXhr((xhr) => {
         setTimeout(() => {
           xhr.complete(429)
         })
@@ -145,7 +145,7 @@ describe('httpRequest', () => {
     })
 
     it('should be called with intake response when fallback to xhr due to size', (done) => {
-      interceptor.withStubXhr((xhr) => {
+      interceptor.withMockXhr((xhr) => {
         setTimeout(() => {
           xhr.complete(429)
         })
@@ -169,7 +169,7 @@ describe('httpRequest', () => {
       const onResponseSpy = jasmine.createSpy('xhrOnResponse')
       let count = 0
 
-      interceptor.withStubXhr((xhr) => {
+      interceptor.withMockXhr((xhr) => {
         count++
         setTimeout(() => {
           xhr.complete(count === 1 ? 200 : 202)

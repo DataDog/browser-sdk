@@ -1,5 +1,5 @@
-import { mockClock, stubZoneJs } from '../../test'
-import type { Clock } from '../../test'
+import { mockClock, mockZoneJs } from '../../test'
+import type { Clock, MockZoneJs } from '../../test'
 import { resetMonitor, startMonitorErrorCollection } from './monitor'
 import { setTimeout, clearTimeout, setInterval, clearInterval } from './timer'
 import { noop } from './utils/functionUtils'
@@ -17,15 +17,15 @@ import { noop } from './utils/functionUtils'
 ].forEach(({ name, setTimer, clearTimer }) => {
   describe(name, () => {
     let clock: Clock
-    let zoneJsStub: ReturnType<typeof stubZoneJs>
+    let zoneJs: MockZoneJs
 
     beforeEach(() => {
       clock = mockClock()
-      zoneJsStub = stubZoneJs()
+      zoneJs = mockZoneJs()
     })
 
     afterEach(() => {
-      zoneJsStub.restore()
+      zoneJs.restore()
       clock.cleanup()
       resetMonitor()
     })
@@ -48,7 +48,7 @@ import { noop } from './utils/functionUtils'
 
     it('does not use the Zone.js function', () => {
       const zoneJsSetTimerSpy = jasmine.createSpy()
-      zoneJsStub.replaceProperty(window, name, zoneJsSetTimerSpy)
+      zoneJs.replaceProperty(window, name, zoneJsSetTimerSpy)
 
       setTimer(noop)
       clock.tick(0)

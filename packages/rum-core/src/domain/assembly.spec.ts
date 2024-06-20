@@ -1,7 +1,7 @@
 import type { ClocksState, RelativeTime, TimeStamp } from '@datadog/browser-core'
 import { ErrorSource, ExperimentalFeature, ONE_MINUTE, display } from '@datadog/browser-core'
 import {
-  initEventBridgeStub,
+  mockEventBridge,
   cleanupSyntheticsWorkerValues,
   mockSyntheticsWorkerValues,
   mockExperimentalFeatures,
@@ -830,7 +830,7 @@ describe('rum assembly', () => {
       const { lifeCycle } = setupBuilder.build()
       notifyRawRumEvent(lifeCycle, { rawRumEvent: createRawRumEvent(RumEventType.VIEW) })
 
-      initEventBridgeStub()
+      mockEventBridge()
 
       notifyRawRumEvent(lifeCycle, { rawRumEvent: createRawRumEvent(RumEventType.VIEW) })
 

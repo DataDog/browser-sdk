@@ -1,12 +1,12 @@
-export interface StubStorage {
+export interface MockStorage {
   getSpy: jasmine.Spy
   setSpy: jasmine.Spy
   currentValue: (key: string) => string
   setCurrentValue: (key: string, value: string) => void
 }
 
-export const stubCookieProvider = {
-  get: (): StubStorage => {
+export const mockCookieProvider = {
+  get: (): MockStorage => {
     let cookie = ''
     return {
       getSpy: spyOnProperty(Document.prototype, 'cookie', 'get').and.callFake(() => cookie),
@@ -17,8 +17,8 @@ export const stubCookieProvider = {
   },
 }
 
-export const stubLocalStorageProvider = {
-  get: (): StubStorage => {
+export const mockLocalStorageProvider = {
+  get: (): MockStorage => {
     const store: Record<string, string> = {}
     spyOn(Storage.prototype, 'removeItem').and.callFake((key) => {
       delete store[key]

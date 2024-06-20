@@ -1,5 +1,5 @@
-import type { StubStorage } from '../../../test'
-import { mockClock, stubCookieProvider, stubLocalStorageProvider } from '../../../test'
+import type { MockStorage } from '../../../test'
+import { mockClock, mockCookieProvider, mockLocalStorageProvider } from '../../../test'
 import type { CookieOptions } from '../../browser/cookie'
 import { initCookieStrategy } from './storeStrategies/sessionInCookie'
 import { initLocalStorageStrategy } from './storeStrategies/sessionInLocalStorage'
@@ -16,24 +16,24 @@ const EXPIRED_SESSION: SessionState = { isExpired: '1' }
     {
       title: 'Cookie Storage',
       createSessionStoreStrategy: () => initCookieStrategy(cookieOptions),
-      stubStorageProvider: stubCookieProvider,
+      storageProvider: mockCookieProvider,
       storageKey: SESSION_STORE_KEY,
     },
     {
       title: 'Local Storage',
       createSessionStoreStrategy: () => initLocalStorageStrategy(),
-      stubStorageProvider: stubLocalStorageProvider,
+      storageProvider: mockLocalStorageProvider,
       storageKey: SESSION_STORE_KEY,
     },
   ] as const
-).forEach(({ title, createSessionStoreStrategy, stubStorageProvider, storageKey }) => {
+).forEach(({ title, createSessionStoreStrategy, storageProvider, storageKey }) => {
   describe(`process operations mechanism with ${title}`, () => {
     const sessionStoreStrategy = createSessionStoreStrategy()
     let initialSession: SessionState
     let otherSession: SessionState
     let processSpy: jasmine.Spy<jasmine.Func>
     let afterSpy: jasmine.Spy<jasmine.Func>
-    let stubStorage: StubStorage
+    let storage: MockStorage
     const now = Date.now()
 
     beforeEach(() => {
@@ -42,7 +42,7 @@ const EXPIRED_SESSION: SessionState = { isExpired: '1' }
       otherSession = { id: '456', created: String(now + 100) }
       processSpy = jasmine.createSpy('process')
       afterSpy = jasmine.createSpy('after')
-      stubStorage = stubStorageProvider.get()
+      storage = storageProvider.get()
     })
 
     describe('with lock access disabled', () => {
@@ -151,13 +151,13 @@ const EXPIRED_SESSION: SessionState = { isExpired: '1' }
         onPostPersistLockCheck?: OnLockCheck
       }) {
         const onLockChecks = [onInitialLockCheck, onAcquiredLockCheck, onPostProcessLockCheck, onPostPersistLockCheck]
-        stubStorage.getSpy.and.callFake(() => {
+        storage.getSpy.and.callFake(() => {
           const currentOnLockCheck = onLockChecks.shift()
           if (!currentOnLockCheck) {
-            return stubStorage.currentValue(storageKey)
+            return storage.currentValue(storageKey)
           }
           const { currentState, retryState } = currentOnLockCheck()
-          stubStorage.setCurrentValue(storageKey, toSessionString(retryState))
+          storage.setCurrentValue(storageKey, toSessionString(retryState))
           return buildSessionString(currentState)
         })
       }
@@ -227,9 +227,9 @@ const EXPIRED_SESSION: SessionState = { isExpired: '1' }
         const clock = mockClock()
 
         sessionStoreStrategy.persistSession(initialSession)
-        stubStorage.setSpy.calls.reset()
+        storage.setSpy.calls.reset()
 
-        stubStorage.getSpy.and.returnValue(buildSessionString({ ...initialSession, lock: 'locked' }))
+        storage.getSpy.and.returnValue(buildSessionString({ ...initialSession, lock: 'locked' }))
         processSessionStoreOperations({ process: processSpy, after: afterSpy }, sessionStoreStrategy)
 
         const lockMaxTries = sessionStoreStrategy.isLockEnabled ? LOCK_MAX_TRIES : 0
@@ -238,7 +238,7 @@ const EXPIRED_SESSION: SessionState = { isExpired: '1' }
         clock.tick(lockMaxTries * lockRetryDelay)
         expect(processSpy).not.toHaveBeenCalled()
         expect(afterSpy).not.toHaveBeenCalled()
-        expect(stubStorage.setSpy).not.toHaveBeenCalled()
+        expect(storage.setSpy).not.toHaveBeenCalled()
 
         clock.cleanup()
       })
