@@ -55,6 +55,10 @@ describe('trackInteractionToNextPaint', () => {
   })
 
   afterEach(() => {
+    if (!isInteractionToNextPaintSupported()) {
+      return
+    }
+
     resetExperimentalFeatures()
     interactionCountStub.clear()
   })

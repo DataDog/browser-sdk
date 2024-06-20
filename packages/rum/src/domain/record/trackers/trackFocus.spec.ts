@@ -20,6 +20,9 @@ describe('trackFocus', () => {
   })
 
   afterEach(() => {
+    if (isIE()) {
+      return
+    }
     focusTracker.stop()
   })
 

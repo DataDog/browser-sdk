@@ -53,6 +53,10 @@ describe('makeRecorderApi', () => {
   })
 
   afterEach(() => {
+    if (isIE()) {
+      return
+    }
+
     resetDeflateWorkerState()
     replayStats.resetReplayStats()
   })

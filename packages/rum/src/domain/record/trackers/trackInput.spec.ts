@@ -35,6 +35,9 @@ describe('trackInput', () => {
   })
 
   afterEach(() => {
+    if (isIE()) {
+      return
+    }
     inputTracker.stop()
     clock?.cleanup()
   })

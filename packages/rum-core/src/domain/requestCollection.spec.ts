@@ -53,6 +53,10 @@ describe('collect fetch', () => {
   })
 
   afterEach(() => {
+    if (isIE()) {
+      return
+    }
+
     stopFetchTracking()
     fetchStubManager.reset()
     window.onunhandledrejection = null
@@ -222,6 +226,10 @@ describe('collect xhr', () => {
   })
 
   afterEach(() => {
+    if (isIE()) {
+      return
+    }
+
     stopXhrTracking()
     stubXhrManager.reset()
   })

@@ -14,6 +14,10 @@ describe('getCssRulesString', () => {
     document.body.appendChild(styleNode)
   })
   afterEach(() => {
+    if (isIE()) {
+      return
+    }
+
     document.body.removeChild(styleNode)
   })
 

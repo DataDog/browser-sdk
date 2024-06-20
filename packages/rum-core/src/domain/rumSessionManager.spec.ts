@@ -46,6 +46,10 @@ describe('rum session manager', () => {
   })
 
   afterEach(() => {
+    if (isIE()) {
+      return
+    }
+
     // remove intervals first
     stopSessionManager()
     // flush pending callbacks to avoid random failures

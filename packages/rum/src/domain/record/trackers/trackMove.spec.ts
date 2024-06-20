@@ -31,6 +31,10 @@ describe('trackMove', () => {
   })
 
   afterEach(() => {
+    if (isIE()) {
+      return
+    }
+
     moveTracker.stop()
   })
 

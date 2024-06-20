@@ -76,6 +76,10 @@ describe('startRecording', () => {
   })
 
   afterEach(() => {
+    if (isIE()) {
+      return
+    }
+
     setSegmentBytesLimit()
     clock?.cleanup()
     resetDeflateWorkerState()

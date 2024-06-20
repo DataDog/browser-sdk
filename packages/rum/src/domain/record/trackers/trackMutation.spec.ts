@@ -72,6 +72,9 @@ describe('trackMutation', () => {
   })
 
   afterEach(() => {
+    if (isIE()) {
+      return
+    }
     mutationTracker.stop()
   })
 

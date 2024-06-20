@@ -40,6 +40,10 @@ describe('trackMouseInteraction', () => {
   })
 
   afterEach(() => {
+    if (isIE()) {
+      return
+    }
+
     mouseInteractionTracker.stop()
   })
 
@@ -120,6 +124,10 @@ describe('trackMouseInteraction', () => {
     })
 
     afterEach(() => {
+      if (!window.visualViewport) {
+        return
+      }
+
       delete (window.visualViewport as any).offsetTop
     })
 

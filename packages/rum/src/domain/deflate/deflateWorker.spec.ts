@@ -86,6 +86,10 @@ describe('startDeflateWorker', () => {
     })
 
     afterEach(() => {
+      if (isIE()) {
+        return
+      }
+
       resetTelemetry()
     })
 

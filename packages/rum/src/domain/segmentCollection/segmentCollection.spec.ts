@@ -78,6 +78,10 @@ describe('startSegmentCollection', () => {
   })
 
   afterEach(() => {
+    if (isIE()) {
+      return
+    }
+
     clock?.cleanup()
     stopSegmentCollection()
   })

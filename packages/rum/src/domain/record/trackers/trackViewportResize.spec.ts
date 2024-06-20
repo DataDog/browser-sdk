@@ -34,6 +34,9 @@ describe('trackViewportResize', () => {
   })
 
   afterEach(() => {
+    if (isIE()) {
+      return
+    }
     viewportResizeTracker.stop()
   })
 

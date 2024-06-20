@@ -33,6 +33,10 @@ describe('fetch proxy', () => {
   })
 
   afterEach(() => {
+    if (isIE()) {
+      return
+    }
+
     requestsTrackingSubscription.unsubscribe()
     contextEditionSubscription?.unsubscribe()
     fetchStubManager.reset()

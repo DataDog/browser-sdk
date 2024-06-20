@@ -28,6 +28,10 @@ describe('createScrollValuesObserver', () => {
     }
   })
   afterEach(() => {
+    if (isIE()) {
+      return
+    }
+
     subscription.unsubscribe()
     document.body.innerHTML = ''
   })

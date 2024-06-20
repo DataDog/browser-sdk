@@ -34,6 +34,10 @@ describe('trackMediaInteraction', () => {
   })
 
   afterEach(() => {
+    if (isIE()) {
+      return
+    }
+
     mediaInteractionTracker.stop()
   })
 

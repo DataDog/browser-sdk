@@ -18,6 +18,9 @@ describe('scroll', () => {
   })
 
   afterEach((done) => {
+    if (isIE()) {
+      return
+    }
     document.body.style.removeProperty('margin-bottom')
     window.scrollTo(0, 0)
 

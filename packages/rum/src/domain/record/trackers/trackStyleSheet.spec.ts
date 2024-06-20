@@ -32,6 +32,10 @@ describe('trackStyleSheet', () => {
   })
 
   afterEach(() => {
+    if (isIE()) {
+      return
+    }
+
     styleSheetTracker.stop()
     styleElement.remove()
   })
@@ -203,6 +207,9 @@ describe('StyleSheetObserver > getPathToNestedCSSRule', () => {
   })
 
   afterEach(() => {
+    if (isIE()) {
+      return
+    }
     styleElement.remove()
   })
 

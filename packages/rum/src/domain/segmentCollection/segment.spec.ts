@@ -39,6 +39,10 @@ describe('Segment', () => {
   })
 
   afterEach(() => {
+    if (isIE()) {
+      return
+    }
+
     setDebugMode(false)
   })
 

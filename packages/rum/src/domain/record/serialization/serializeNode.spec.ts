@@ -812,6 +812,10 @@ describe('serializeDocumentNode handles', function testAllowDomTree() {
 
   describe('with dynamic stylesheet', () => {
     afterEach(() => {
+      if (isIE()) {
+        pending('IE not supported')
+      }
+
       if (isAdoptedStyleSheetsSupported()) {
         document.adoptedStyleSheets = []
       }

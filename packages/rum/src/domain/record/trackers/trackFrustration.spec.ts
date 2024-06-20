@@ -46,6 +46,9 @@ describe('trackFrustration', () => {
   })
 
   afterEach(() => {
+    if (isIE()) {
+      return
+    }
     frustrationTracker.stop()
   })
 

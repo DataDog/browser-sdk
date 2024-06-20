@@ -37,6 +37,9 @@ describe('trackScroll', () => {
   })
 
   afterEach(() => {
+    if (isIE()) {
+      return
+    }
     scrollTracker.stop()
   })
 

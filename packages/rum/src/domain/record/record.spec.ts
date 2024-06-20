@@ -35,6 +35,10 @@ describe('record', () => {
   })
 
   afterEach(() => {
+    if (isIE()) {
+      return
+    }
+
     clock?.cleanup()
     recordApi?.stop()
   })

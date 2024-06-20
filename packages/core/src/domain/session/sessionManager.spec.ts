@@ -92,6 +92,10 @@ describe('startSessionManager', () => {
   })
 
   afterEach(() => {
+    if (isIE()) {
+      return
+    }
+
     // remove intervals first
     stopSessionManager()
     // flush pending callbacks to avoid random failures

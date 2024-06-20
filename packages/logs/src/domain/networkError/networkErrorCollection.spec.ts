@@ -57,6 +57,10 @@ describe('network error collection', () => {
   })
 
   afterEach(() => {
+    if (isIE()) {
+      return
+    }
+
     stopNetworkErrorCollection()
     fetchStubManager.reset()
   })
@@ -199,6 +203,10 @@ describe('computeFetchResponseText', () => {
   })
 
   afterEach(() => {
+    if (isIE()) {
+      return
+    }
+
     window.onunhandledrejection = null
   })
 
