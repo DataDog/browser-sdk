@@ -476,13 +476,6 @@ export type TelemetryBrowserFeaturesUsage =
       feature: 'start-duration-vital'
       [k: string]: unknown
     }
-  | {
-      /**
-       * addDurationVital API
-       */
-      feature: 'add-duration-vital'
-      [k: string]: unknown
-    }
 
 /**
  * Schema of common properties of Telemetry events
