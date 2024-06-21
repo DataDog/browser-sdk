@@ -55,6 +55,7 @@ function startRumStub(
     configuration,
     location,
     sessionManager,
+    pageStateHistory,
     locationChangeObservable,
     domMutationObservable,
     performanceResourceObservable,
