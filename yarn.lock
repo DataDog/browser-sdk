@@ -3272,7 +3272,7 @@ __metadata:
     eslint-plugin-import: "npm:2.29.1"
     eslint-plugin-jasmine: "npm:4.2.0"
     eslint-plugin-jsdoc: "npm:48.3.0"
-    eslint-plugin-local-rules: "npm:2.0.1"
+    eslint-plugin-local-rules: "npm:3.0.2"
     eslint-plugin-prefer-arrow: "npm:1.2.3"
     eslint-plugin-unicorn: "npm:54.0.0"
     express: "npm:4.19.2"
@@ -5355,10 +5355,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"eslint-plugin-local-rules@npm:2.0.1":
-  version: 2.0.1
-  resolution: "eslint-plugin-local-rules@npm:2.0.1"
-  checksum: 10c0/0f69a74ce9ccc3e0d5efd1adfa5890cf98f9a1eabd57eee4fc7581b7915954c4cf4f181522c90122d86210894ad93b0696f89d9f12c1cbafcc19646846a6f5e5
+"eslint-plugin-local-rules@npm:3.0.2":
+  version: 3.0.2
+  resolution: "eslint-plugin-local-rules@npm:3.0.2"
+  checksum: 10c0/2b88477b1ce43dcece02cae9a55956f6cefe646885fc2cf5dd5d1c1ba1436f5ab4d44dd38a199b5ace442631cdd2f945ab409cecac246d83a75e1f236a5e984a
   languageName: node
   linkType: hard
 
