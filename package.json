@@ -88,8 +88,7 @@
     "webpack-dev-middleware": "7.2.1"
   },
   "resolutions": {
-    "ansi-regex": "5.0.1",
-    "@mantine/core/type-fest": "4.20.1"
+    "puppeteer-core@npm:20.9.0/ws": "8.17.1"
   },
   "volta": {
     "node": "20.15.0",
