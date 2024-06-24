@@ -230,7 +230,7 @@ export function makeLogsPublicApi(startLogsImpl: StartLogs): LogsPublicApi {
         sanitize(conf.context) as object
       )
 
-      return customLoggers[name]!
+      return customLoggers[name]
     }),
 
     getLogger: monitor((name) => customLoggers[name]),
