@@ -76,7 +76,7 @@
     "minimatch": "9.0.4",
     "npm-run-all": "4.1.5",
     "prettier": "3.3.2",
-    "puppeteer": "22.11.0",
+    "puppeteer": "22.12.0",
     "terser-webpack-plugin": "5.3.10",
     "ts-loader": "9.5.1",
     "ts-node": "10.9.2",
@@ -88,9 +88,7 @@
     "webpack-dev-middleware": "7.2.1"
   },
   "resolutions": {
-    "ansi-regex": "5.0.1",
-    "@mantine/core/type-fest": "4.20.1",
-    "ws": "8.17.1"
+    "puppeteer-core@npm:20.9.0/ws": "8.17.1"
   },
   "volta": {
     "node": "20.14.0",
