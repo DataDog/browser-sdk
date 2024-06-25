@@ -1,8 +1,7 @@
-import { createMemoryRouter } from 'react-router-dom'
 import { initializeReactPlugin } from '../../../test/initializeReactPlugin'
-import { registerRouter } from './registerRouter'
+import { createMemoryRouter } from './createRouter'
 
-describe('registerRouter', () => {
+describe('createRouter', () => {
   let startViewSpy: jasmine.Spy<(name?: string | object) => void>
   let router: ReturnType<typeof createMemoryRouter>
 
@@ -20,7 +19,6 @@ describe('registerRouter', () => {
     router = createMemoryRouter([{ path: '/foo' }, { path: '/bar', children: [{ path: 'nested' }] }, { path: '*' }], {
       initialEntries: ['/foo'],
     })
-    registerRouter(router)
   })
 
   afterEach(() => {
