@@ -656,6 +656,7 @@ describe('serializeNodeWithId', () => {
 
       describe('caching', () => {
         it("caches the stylesheet's content", () => {
+          const document = new DOMParser().parseFromString('<!doctype html><html></html>', 'text/html')
           appendElement("<link rel='stylesheet' href='https://datadoghq.com/some/style.css' />", document.head)
           appendElement('<style>body { width: 100%; }</style>', document.head) as HTMLStyleElement
           appendElement('<div foo="bar" data-foo="data-bar"></div>', document.body)
@@ -668,6 +669,7 @@ describe('serializeNodeWithId', () => {
         })
 
         it('uses the cached stylesheet', () => {
+          const document = new DOMParser().parseFromString('<!doctype html><html></html>', 'text/html')
           appendElement("<link rel='stylesheet' href='https://datadoghq.com/some/style.css' />", document.head)
           appendElement('<style>body { width: 100%; }</style>', document.head) as HTMLStyleElement
           appendElement('<div foo="bar" data-foo="data-bar"></div>', document.body)
