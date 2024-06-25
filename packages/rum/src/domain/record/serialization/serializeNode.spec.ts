@@ -657,19 +657,18 @@ describe('serializeNodeWithId', () => {
       describe('caching', () => {
         it("caches the stylesheet's content", () => {
           appendElement("<link rel='stylesheet' href='https://datadoghq.com/some/style.css' />", document.head)
-          appendElement('<style>body { width: 100%; }</style>', document.head) as HTMLStyleElement
           appendElement('<div foo="bar" data-foo="data-bar"></div>', document.body)
 
           const cache = new Map()
 
-          serializeNodeWithId(document.head, DEFAULT_OPTIONS, cache)
+          serializeNodeWithId(document, DEFAULT_OPTIONS, cache)
 
+          // There is already a <style> in the document
           expect(cache.size).toEqual(2)
         })
 
         it('uses the cached stylesheet', () => {
           appendElement("<link rel='stylesheet' href='https://datadoghq.com/some/style.css' />", document.head)
-          appendElement('<style>body { width: 100%; }</style>', document.head) as HTMLStyleElement
           appendElement('<div foo="bar" data-foo="data-bar"></div>', document.body)
 
           const cache = new Map()
@@ -677,6 +676,8 @@ describe('serializeNodeWithId', () => {
 
           serializeNodeWithId(document, DEFAULT_OPTIONS, cache)
           serializeNodeWithId(document, DEFAULT_OPTIONS, cache)
+
+          // There is already a <style> in the document
           expect(spy).toHaveBeenCalledTimes(2)
         })
       })

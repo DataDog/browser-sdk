@@ -1,5 +1,5 @@
 import type { RumConfiguration, NodePrivacyLevel } from '@datadog/browser-rum-core'
-import type { SerializedNode } from 'packages/rum/src/types'
+import type { SerializedNode } from '../../../types'
 import type { ElementsScrollPositions } from '../elementsScrollPositions'
 import type { ShadowRootsController } from '../shadowRootsController'
 
