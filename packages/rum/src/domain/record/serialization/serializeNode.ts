@@ -22,12 +22,21 @@ import type {
 } from '../../../types'
 import { NodeType } from '../../../types'
 import { getSerializedNodeId, getValidTagName, setSerializedNodeId } from './serializationUtils'
-import type { SerializeOptions } from './serialization.types'
+import type { SerializeOptions, SerializedNodeCache } from './serialization.types'
 import { serializeStyleSheets } from './serializeStyleSheets'
 import { serializeAttributes } from './serializeAttributes'
 
-export function serializeNodeWithId(node: Node, options: SerializeOptions): SerializedNodeWithId | null {
-  const serializedNode = serializeNode(node, options)
+export function serializeNodeWithId(
+  node: Node,
+  options: SerializeOptions,
+  cache?: SerializedNodeCache
+): SerializedNodeWithId | null {
+  const serializedNodeId = getSerializedNodeId(node)
+  if (serializedNodeId && cache && cache.has(serializedNodeId)) {
+    return cache.get(serializedNodeId) as SerializedNodeWithId
+  }
+
+  const serializedNode = serializeNode(node, options, cache)
   if (!serializedNode) {
     return null
   }
@@ -40,6 +49,14 @@ export function serializeNodeWithId(node: Node, options: SerializeOptions): Seri
   if (options.serializedNodeIds) {
     options.serializedNodeIds.add(id)
   }
+
+  if (cache && node.nodeType === node.ELEMENT_NODE) {
+    const tagName = getValidTagName((node as Element).tagName)
+    if (tagName === 'link' || tagName === 'style') {
+      cache?.set(id, serializedNode)
+    }
+  }
+
   return serializedNodeWithId
 }
 
@@ -48,10 +65,14 @@ export function generateNextId(): number {
   return _nextId++
 }
 
-export function serializeChildNodes(node: Node, options: SerializeOptions): SerializedNodeWithId[] {
+export function serializeChildNodes(
+  node: Node,
+  options: SerializeOptions,
+  cache?: SerializedNodeCache
+): SerializedNodeWithId[] {
   const result: SerializedNodeWithId[] = []
   forEachChildNodes(node, (childNode) => {
-    const serializedChildNode = serializeNodeWithId(childNode, options)
+    const serializedChildNode = serializeNodeWithId(childNode, options, cache)
     if (serializedChildNode) {
       result.push(serializedChildNode)
     }
@@ -59,16 +80,16 @@ export function serializeChildNodes(node: Node, options: SerializeOptions): Seri
   return result
 }
 
-function serializeNode(node: Node, options: SerializeOptions): SerializedNode | undefined {
+function serializeNode(node: Node, options: SerializeOptions, cache?: SerializedNodeCache): SerializedNode | undefined {
   switch (node.nodeType) {
     case node.DOCUMENT_NODE:
-      return serializeDocumentNode(node as Document, options)
+      return serializeDocumentNode(node as Document, options, cache)
     case node.DOCUMENT_FRAGMENT_NODE:
-      return serializeDocumentFragmentNode(node as DocumentFragment, options)
+      return serializeDocumentFragmentNode(node as DocumentFragment, options, cache)
     case node.DOCUMENT_TYPE_NODE:
       return serializeDocumentTypeNode(node as DocumentType)
     case node.ELEMENT_NODE:
-      return serializeElementNode(node as Element, options)
+      return serializeElementNode(node as Element, options, cache)
     case node.TEXT_NODE:
       return serializeTextNode(node as Text, options)
     case node.CDATA_SECTION_NODE:
@@ -76,17 +97,22 @@ function serializeNode(node: Node, options: SerializeOptions): SerializedNode | 
   }
 }
 
-export function serializeDocumentNode(document: Document, options: SerializeOptions): DocumentNode {
+export function serializeDocumentNode(
+  document: Document,
+  options: SerializeOptions,
+  cache?: SerializedNodeCache
+): DocumentNode {
   return {
     type: NodeType.Document,
-    childNodes: serializeChildNodes(document, options),
+    childNodes: serializeChildNodes(document, options, cache),
     adoptedStyleSheets: serializeStyleSheets(document.adoptedStyleSheets),
   }
 }
 
 function serializeDocumentFragmentNode(
   element: DocumentFragment,
-  options: SerializeOptions
+  options: SerializeOptions,
+  cache?: SerializedNodeCache
 ): DocumentFragmentNode | undefined {
   const isShadowRoot = isNodeShadowRoot(element)
   if (isShadowRoot) {
@@ -95,7 +121,7 @@ function serializeDocumentFragmentNode(
 
   return {
     type: NodeType.DocumentFragment,
-    childNodes: serializeChildNodes(element, options),
+    childNodes: serializeChildNodes(element, options, cache),
     isShadowRoot,
     adoptedStyleSheets: isShadowRoot ? serializeStyleSheets(element.adoptedStyleSheets) : undefined,
   }
@@ -128,7 +154,11 @@ function serializeDocumentTypeNode(documentType: DocumentType): DocumentTypeNode
  * - fullscreen mode
  */
 
-function serializeElementNode(element: Element, options: SerializeOptions): ElementNode | undefined {
+function serializeElementNode(
+  element: Element,
+  options: SerializeOptions,
+  cache?: SerializedNodeCache
+): ElementNode | undefined {
   const tagName = getValidTagName(element.tagName)
   const isSVG = isSVGElement(element) || undefined
 
@@ -176,7 +206,7 @@ function serializeElementNode(element: Element, options: SerializeOptions): Elem
         ignoreWhiteSpace: tagName === 'head',
       })
     }
-    childNodes = serializeChildNodes(element, childNodesSerializationOptions)
+    childNodes = serializeChildNodes(element, childNodesSerializationOptions, cache)
   }
 
   return {

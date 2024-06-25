@@ -53,13 +53,16 @@ export function record(options: RecordOptions): RecordAPI {
 
   const shadowRootsController = initShadowRootsController(configuration, emitAndComputeStats, elementsScrollPositions)
 
+  const cache = new Map()
+
   const { stop: stopFullSnapshots } = startFullSnapshots(
     elementsScrollPositions,
     shadowRootsController,
     lifeCycle,
     configuration,
     flushMutations,
-    (records) => records.forEach((record) => emitAndComputeStats(record))
+    (records) => records.forEach((record) => emitAndComputeStats(record)),
+    cache
   )
 
   function flushMutations() {
@@ -77,7 +80,13 @@ export function record(options: RecordOptions): RecordAPI {
     trackViewportResize(configuration, emitAndComputeStats),
     trackInput(configuration, emitAndComputeStats),
     trackMediaInteraction(configuration, emitAndComputeStats),
-    trackStyleSheet(emitAndComputeStats),
+    trackStyleSheet((record) => {
+      emitAndComputeStats(record)
+
+      if (record.data.source === 8) {
+        cache.delete(record.data.id)
+      }
+    }),
     trackFocus(configuration, emitAndComputeStats),
     trackViewportResize(configuration, emitAndComputeStats),
     trackFrustration(lifeCycle, emitAndComputeStats, recordIds),
@@ -92,6 +101,7 @@ export function record(options: RecordOptions): RecordAPI {
       shadowRootsController.stop()
       trackers.forEach((tracker) => tracker.stop())
       stopFullSnapshots()
+      cache.clear()
     },
     flushMutations,
     shadowRootsController,

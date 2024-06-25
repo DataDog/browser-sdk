@@ -653,6 +653,33 @@ describe('serializeNodeWithId', () => {
           childNodes: [],
         })
       })
+
+      describe('caching', () => {
+        it("caches the stylesheet's content", () => {
+          appendElement("<link rel='stylesheet' href='https://datadoghq.com/some/style.css' />", document.head)
+          appendElement('<style>body { width: 100%; }</style>', document.head) as HTMLStyleElement
+          appendElement('<div foo="bar" data-foo="data-bar"></div>', document.body)
+
+          const cache = new Map()
+
+          serializeNodeWithId(document.head, DEFAULT_OPTIONS, cache)
+
+          expect(cache.size).toEqual(2)
+        })
+
+        it('uses the cached stylesheet', () => {
+          appendElement("<link rel='stylesheet' href='https://datadoghq.com/some/style.css' />", document.head)
+          appendElement('<style>body { width: 100%; }</style>', document.head) as HTMLStyleElement
+          appendElement('<div foo="bar" data-foo="data-bar"></div>', document.body)
+
+          const cache = new Map()
+          const spy = spyOn(cache, 'get').and.callThrough()
+
+          serializeNodeWithId(document, DEFAULT_OPTIONS, cache)
+          serializeNodeWithId(document, DEFAULT_OPTIONS, cache)
+          expect(spy).toHaveBeenCalledTimes(2)
+        })
+      })
     })
   })
 

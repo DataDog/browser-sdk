@@ -5,6 +5,7 @@ import type { BrowserRecord } from '../../types'
 import { RecordType } from '../../types'
 import type { ElementsScrollPositions } from './elementsScrollPositions'
 import type { ShadowRootsController } from './shadowRootsController'
+import type { SerializedNodeCache } from './serialization'
 import { SerializationContextStatus, serializeDocument } from './serialization'
 import { getVisualViewport } from './viewports'
 
@@ -14,7 +15,8 @@ export function startFullSnapshots(
   lifeCycle: LifeCycle,
   configuration: RumConfiguration,
   flushMutations: () => void,
-  fullSnapshotCallback: (records: BrowserRecord[]) => void
+  fullSnapshotCallback: (records: BrowserRecord[]) => void,
+  cache: SerializedNodeCache
 ) {
   const takeFullSnapshot = (
     timestamp = timeStampNow(),
@@ -44,7 +46,7 @@ export function startFullSnapshots(
       },
       {
         data: {
-          node: serializeDocument(document, configuration, serializationContext),
+          node: serializeDocument(document, configuration, serializationContext, cache),
           initialOffset: {
             left: getScrollX(),
             top: getScrollY(),
