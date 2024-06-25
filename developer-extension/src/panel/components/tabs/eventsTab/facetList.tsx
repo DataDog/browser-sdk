@@ -113,9 +113,7 @@ function FacetValue({
   allFacetValues: ExcludedFacetValues
   parentList: string[]
 }) {
-  useEffect(() => {
-    addFacetValues(facet, facetValue)
-  }, [facetValueCount])
+  addFacetValues(facet, facetValue)
 
   const isTopLevel = depth === 0
   const isSelected = !excludedFacetValues[facet.path] || !excludedFacetValues[facet.path].includes(facetValue)
