@@ -1,4 +1,6 @@
 import type { Subscription } from '@datadog/browser-core'
+import type { Clock } from '@datadog/browser-core/test'
+import { mockClock } from '@datadog/browser-core/test'
 import type { RumConfiguration } from '../domain/configuration'
 import { createPerformanceEntry, mockPerformanceObserver } from '../../test'
 import type { RumPerformanceEntry } from './performanceObservable'
@@ -9,8 +11,9 @@ describe('performanceObservable', () => {
   let performanceSubscription: Subscription
   const forbiddenUrl = 'https://forbidden.url'
   const allowedUrl = 'https://allowed.url'
-  let notifyPerformanceEntry: (entry: RumPerformanceEntry) => void
+  let notifyPerformanceEntries: (entries: RumPerformanceEntry[]) => void
   let observableCallback: jasmine.Spy
+  let clock: Clock
 
   beforeEach(() => {
     if (!window.PerformanceObserver) {
@@ -18,11 +21,13 @@ describe('performanceObservable', () => {
     }
     observableCallback = jasmine.createSpy()
     configuration = { isIntakeUrl: (url) => url === forbiddenUrl } as RumConfiguration
-    ;({ notifyPerformanceEntry } = mockPerformanceObserver())
+    ;({ notifyPerformanceEntries } = mockPerformanceObserver())
+    clock = mockClock()
   })
 
   afterEach(() => {
     performanceSubscription.unsubscribe()
+    clock.cleanup()
   })
 
   it('should notify performance resources', () => {
@@ -31,7 +36,7 @@ describe('performanceObservable', () => {
     })
     performanceSubscription = performanceResourceObservable.subscribe(observableCallback)
 
-    notifyPerformanceEntry(createPerformanceEntry(RumPerformanceEntryType.RESOURCE, { name: allowedUrl }))
+    notifyPerformanceEntries([createPerformanceEntry(RumPerformanceEntryType.RESOURCE, { name: allowedUrl })])
     expect(observableCallback).toHaveBeenCalledWith([jasmine.objectContaining({ name: allowedUrl })])
   })
 
@@ -41,7 +46,21 @@ describe('performanceObservable', () => {
     })
     performanceSubscription = performanceResourceObservable.subscribe(observableCallback)
 
-    notifyPerformanceEntry(createPerformanceEntry(RumPerformanceEntryType.RESOURCE, { name: forbiddenUrl }))
+    notifyPerformanceEntries([createPerformanceEntry(RumPerformanceEntryType.RESOURCE, { name: forbiddenUrl })])
     expect(observableCallback).not.toHaveBeenCalled()
+  })
+
+  it('should notify buffered performance resources asynchronously', () => {
+    // add the performance entry to the buffer
+    notifyPerformanceEntries([createPerformanceEntry(RumPerformanceEntryType.RESOURCE, { name: allowedUrl })])
+
+    const performanceResourceObservable = createPerformanceObservable(configuration, {
+      type: RumPerformanceEntryType.RESOURCE,
+      buffered: true,
+    })
+    performanceSubscription = performanceResourceObservable.subscribe(observableCallback)
+    expect(observableCallback).not.toHaveBeenCalled()
+    clock.tick(0)
+    expect(observableCallback).toHaveBeenCalledWith([jasmine.objectContaining({ name: allowedUrl })])
   })
 })

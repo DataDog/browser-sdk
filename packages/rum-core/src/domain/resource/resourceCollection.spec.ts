@@ -18,7 +18,7 @@ describe('resourceCollection', () => {
   let setupBuilder: TestSetupBuilder
   let trackResources: boolean
   let wasInPageStateDuringPeriodSpy: jasmine.Spy<jasmine.Func>
-  let notifyPerformanceEntry: (entry: RumPerformanceEntry) => void
+  let notifyPerformanceEntries: (entries: RumPerformanceEntry[]) => void
   function build() {
     const result = setupBuilder.build()
     // Reset the initial load events collected during the setup
@@ -28,7 +28,7 @@ describe('resourceCollection', () => {
 
   beforeEach(() => {
     trackResources = true
-    ;({ notifyPerformanceEntry } = mockPerformanceObserver())
+    ;({ notifyPerformanceEntries } = mockPerformanceObserver())
     setupBuilder = setup().beforeBuild(({ lifeCycle, pageStateHistory, configuration }) => {
       wasInPageStateDuringPeriodSpy = spyOn(pageStateHistory, 'wasInPageStateDuringPeriod')
       startResourceCollection(lifeCycle, { ...configuration, trackResources }, pageStateHistory)
@@ -45,7 +45,7 @@ describe('resourceCollection', () => {
       renderBlockingStatus: 'blocking',
       responseStart: 250 as RelativeTime,
     })
-    notifyPerformanceEntry(performanceEntry)
+    notifyPerformanceEntries([performanceEntry])
 
     expect(rawRumEvents[0].startTime).toBe(200 as RelativeTime)
     expect(rawRumEvents[0].rawRumEvent).toEqual({
@@ -127,7 +127,7 @@ describe('resourceCollection', () => {
       it('should not collect a resource from a performance entry', () => {
         const { rawRumEvents } = build()
 
-        notifyPerformanceEntry(createPerformanceEntry(RumPerformanceEntryType.RESOURCE))
+        notifyPerformanceEntries([createPerformanceEntry(RumPerformanceEntryType.RESOURCE)])
 
         expect(rawRumEvents.length).toBe(0)
       })
@@ -149,7 +149,7 @@ describe('resourceCollection', () => {
       it('should collect a resource from a performance entry', () => {
         const { rawRumEvents } = build()
 
-        notifyPerformanceEntry(createPerformanceEntry(RumPerformanceEntryType.RESOURCE, { traceId: '1234' }))
+        notifyPerformanceEntries([createPerformanceEntry(RumPerformanceEntryType.RESOURCE, { traceId: '1234' })])
 
         expect(rawRumEvents.length).toBe(1)
         expect((rawRumEvents[0].rawRumEvent as RawRumResourceEvent)._dd.discarded).toBeTrue()
@@ -269,14 +269,14 @@ describe('resourceCollection', () => {
   it('should discard 0 status code', () => {
     const { rawRumEvents } = build()
     const performanceEntry = createPerformanceEntry(RumPerformanceEntryType.RESOURCE, { responseStatus: 0 })
-    notifyPerformanceEntry(performanceEntry)
+    notifyPerformanceEntries([performanceEntry])
     expect((rawRumEvents[0].rawRumEvent as RawRumResourceEvent).resource.status_code).toBeUndefined()
   })
 
   describe('tracing info', () => {
     it('should be processed from traced initial document', () => {
       const { rawRumEvents } = build()
-      notifyPerformanceEntry(createPerformanceEntry(RumPerformanceEntryType.RESOURCE, { traceId: '1234' }))
+      notifyPerformanceEntries([createPerformanceEntry(RumPerformanceEntryType.RESOURCE, { traceId: '1234' })])
       const privateFields = (rawRumEvents[0].rawRumEvent as RawRumResourceEvent)._dd
       expect(privateFields).toBeDefined()
       expect(privateFields.trace_id).toBe('1234')

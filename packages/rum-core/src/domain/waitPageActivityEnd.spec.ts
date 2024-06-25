@@ -46,10 +46,10 @@ describe('createPageActivityObservable', () => {
 
   let setupBuilder: TestSetupBuilder
   let pageActivitySubscription: Subscription
-  let notifyPerformanceEntry: (entry: RumPerformanceEntry) => void
+  let notifyPerformanceEntries: (entries: RumPerformanceEntry[]) => void
 
   beforeEach(() => {
-    ;({ notifyPerformanceEntry } = mockPerformanceObserver())
+    ;({ notifyPerformanceEntries } = mockPerformanceObserver())
     setupBuilder = setup()
       .withConfiguration({ excludedActivityUrls: [EXCLUDED_FAKE_URL] })
       .beforeBuild(({ lifeCycle, domMutationObservable, configuration }) => {
@@ -66,7 +66,7 @@ describe('createPageActivityObservable', () => {
 
   it('emits an activity event on resource collected', () => {
     setupBuilder.build()
-    notifyPerformanceEntry(createPerformanceEntry(RumPerformanceEntryType.RESOURCE))
+    notifyPerformanceEntries([createPerformanceEntry(RumPerformanceEntryType.RESOURCE)])
 
     expect(events).toEqual([{ isBusy: false }])
   })
@@ -141,9 +141,11 @@ describe('createPageActivityObservable', () => {
           })
           .build()
 
-        notifyPerformanceEntry(createPerformanceEntry(RumPerformanceEntryType.RESOURCE, { name: 'http://qux.com' }))
-        notifyPerformanceEntry(createPerformanceEntry(RumPerformanceEntryType.RESOURCE, { name: 'http://bar.com' }))
-        notifyPerformanceEntry(createPerformanceEntry(RumPerformanceEntryType.RESOURCE, { name: 'http://dynamic.com' }))
+        notifyPerformanceEntries([
+          createPerformanceEntry(RumPerformanceEntryType.RESOURCE, { name: 'http://qux.com' }),
+          createPerformanceEntry(RumPerformanceEntryType.RESOURCE, { name: 'http://bar.com' }),
+          createPerformanceEntry(RumPerformanceEntryType.RESOURCE, { name: 'http://dynamic.com' }),
+        ])
 
         expect(events).toEqual([])
       })

@@ -1,5 +1,5 @@
 import type { Duration, RelativeTime } from '@datadog/browser-core'
-import { addEventListener, Observable } from '@datadog/browser-core'
+import { addEventListener, Observable, setTimeout, clearTimeout } from '@datadog/browser-core'
 import type { RumConfiguration } from '../domain/configuration'
 import { isAllowedRequestUrl } from '../domain/resource/resourceUtils'
 
@@ -144,8 +144,11 @@ export function createPerformanceObservable<T extends RumPerformanceEntryType>(
 ) {
   return new Observable<Array<EntryTypeToReturnType[T]>>((observable) => {
     let observer: PerformanceObserver | undefined
-    const observeEntries = (options?: PerformanceObserverInit & { durationThreshold?: number }) => {
-      observer = new PerformanceObserver((entries) => {
+    let timeoutId: number | undefined
+
+    if (window.PerformanceObserver) {
+      let isObserverInitializing = true
+      const handlePerformanceEntries = (entries: PerformanceObserverEntryList) => {
         const rumPerformanceEntries = filterRumPerformanceEntries(
           configuration,
           entries.getEntries() as Array<EntryTypeToReturnType[T]>
@@ -153,22 +156,27 @@ export function createPerformanceObservable<T extends RumPerformanceEntryType>(
         if (rumPerformanceEntries.length > 0) {
           observable.notify(rumPerformanceEntries)
         }
+      }
+      observer = new PerformanceObserver((entries) => {
+        // In Safari the performance observer callback is synchronous.
+        // Because the buffered performance entry list can be quite large we delay the computation to prevent the SDK from blocking the main thread on init
+        if (isObserverInitializing) {
+          timeoutId = setTimeout(() => handlePerformanceEntries(entries))
+        } else {
+          handlePerformanceEntries(entries)
+        }
       })
       observer.observe(options)
-    }
-
-    if (window.PerformanceObserver) {
-      try {
-        observeEntries(options)
-      } catch {
-        observeEntries({ entryTypes: [options.type] })
-      }
+      isObserverInitializing = false
     }
 
     manageResourceTimingBufferFull(configuration)
 
     return () => {
       observer?.disconnect()
+      if (timeoutId) {
+        clearTimeout(timeoutId)
+      }
     }
   })
 }
