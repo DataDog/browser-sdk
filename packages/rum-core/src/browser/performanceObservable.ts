@@ -143,20 +143,18 @@ export function createPerformanceObservable<T extends RumPerformanceEntryType>(
   options: { type: T; buffered?: boolean; durationThreshold?: number }
 ) {
   return new Observable<Array<EntryTypeToReturnType[T]>>((observable) => {
-    const cleanupTasks: Array<() => void> = []
-
+    let observer: PerformanceObserver | undefined
     const observeEntries = (options?: PerformanceObserverInit & { durationThreshold?: number }) => {
-      const observer = new PerformanceObserver((entries) => {
-        const rumResourceEntries = handleRumPerformanceEntries(
+      observer = new PerformanceObserver((entries) => {
+        const rumPerformanceEntries = filterRumPerformanceEntries(
           configuration,
           entries.getEntries() as Array<EntryTypeToReturnType[T]>
         )
-        if (rumResourceEntries.length > 0) {
-          observable.notify(rumResourceEntries)
+        if (rumPerformanceEntries.length > 0) {
+          observable.notify(rumPerformanceEntries)
         }
       })
       observer.observe(options)
-      cleanupTasks.push(() => observer.disconnect())
     }
 
     if (window.PerformanceObserver) {
@@ -167,10 +165,10 @@ export function createPerformanceObservable<T extends RumPerformanceEntryType>(
       }
     }
 
-    cleanupTasks.push(manageResourceTimingBufferFull(configuration))
+    manageResourceTimingBufferFull(configuration)
 
     return () => {
-      cleanupTasks.forEach((task) => task())
+      observer?.disconnect()
     }
   })
 }
@@ -200,7 +198,7 @@ export function supportPerformanceTimingEvent(entryType: RumPerformanceEntryType
   )
 }
 
-function handleRumPerformanceEntries<T extends RumPerformanceEntryType>(
+function filterRumPerformanceEntries<T extends RumPerformanceEntryType>(
   configuration: RumConfiguration,
   entries: Array<EntryTypeToReturnType[T]>
 ) {
