@@ -17,16 +17,13 @@ import {
   setTimeout,
   Observable,
 } from '@datadog/browser-core'
-
 import type { ViewCustomTimings } from '../../rawRumEvent.types'
 import { ViewLoadingType } from '../../rawRumEvent.types'
-
 import type { LifeCycle } from '../lifeCycle'
 import { LifeCycleEventType } from '../lifeCycle'
 import type { EventCounts } from '../trackEventCounts'
 import type { LocationChange } from '../../browser/locationChangeObservable'
 import type { RumConfiguration, RumInitConfiguration } from '../configuration'
-import type { RumPerformanceResourceTiming } from '../../browser/performanceObservable'
 import { trackViewEventCounts } from './trackViewEventCounts'
 import { trackInitialViewMetrics } from './viewMetrics/trackInitialViewMetrics'
 import type { InitialViewMetrics } from './viewMetrics/trackInitialViewMetrics'
@@ -84,7 +81,6 @@ export function trackViews(
   location: Location,
   lifeCycle: LifeCycle,
   domMutationObservable: Observable<void>,
-  performanceResourceObservable: Observable<RumPerformanceResourceTiming[]>,
   configuration: RumConfiguration,
   locationChangeObservable: Observable<LocationChange>,
   areViewsTrackedAutomatically: boolean,
@@ -104,7 +100,6 @@ export function trackViews(
     const newlyCreatedView = newView(
       lifeCycle,
       domMutationObservable,
-      performanceResourceObservable,
       configuration,
       location,
       loadingType,
@@ -168,7 +163,6 @@ export function trackViews(
 function newView(
   lifeCycle: LifeCycle,
   domMutationObservable: Observable<void>,
-  performanceResourceObservable: Observable<RumPerformanceResourceTiming[]>,
   configuration: RumConfiguration,
   initialLocation: Location,
   loadingType: ViewLoadingType,
@@ -221,7 +215,6 @@ function newView(
   } = trackCommonViewMetrics(
     lifeCycle,
     domMutationObservable,
-    performanceResourceObservable,
     configuration,
     scheduleViewUpdate,
     loadingType,

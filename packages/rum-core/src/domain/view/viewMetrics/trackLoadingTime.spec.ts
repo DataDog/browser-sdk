@@ -25,11 +25,10 @@ describe('trackLoadingTime', () => {
     loadType = ViewLoadingType.ROUTE_CHANGE
     loadingTimeCallback = jasmine.createSpy('loadingTimeCallback')
     setupBuilder = setup()
-      .beforeBuild(({ lifeCycle, domMutationObservable, performanceResourceObservable, configuration }) => {
+      .beforeBuild(({ lifeCycle, domMutationObservable, configuration }) => {
         const loadingTimeTracking = trackLoadingTime(
           lifeCycle,
           domMutationObservable,
-          performanceResourceObservable,
           configuration,
           loadType,
           clocksOrigin(),

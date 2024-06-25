@@ -58,14 +58,9 @@ describe('trackClickActions', () => {
 
     setupBuilder = setup()
       .withFakeClock()
-      .beforeBuild(({ lifeCycle, domMutationObservable, performanceResourceObservable, configuration }) => {
+      .beforeBuild(({ lifeCycle, domMutationObservable, configuration }) => {
         lifeCycle.subscribe(LifeCycleEventType.AUTO_ACTION_COMPLETED, pushEvent)
-        const trackClickActionsResult = trackClickActions(
-          lifeCycle,
-          domMutationObservable,
-          performanceResourceObservable,
-          configuration
-        )
+        const trackClickActionsResult = trackClickActions(lifeCycle, domMutationObservable, configuration)
         findActionId = trackClickActionsResult.actionContexts.findActionId
         return { stop: trackClickActionsResult.stop }
       })

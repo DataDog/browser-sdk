@@ -1,6 +1,5 @@
 import type { ClocksState, Duration, Observable } from '@datadog/browser-core'
 import { elapsed } from '@datadog/browser-core'
-import type { RumPerformanceResourceTiming } from '../../../browser/performanceObservable'
 import { waitPageActivityEnd } from '../../waitPageActivityEnd'
 import type { RumConfiguration } from '../../configuration'
 import type { LifeCycle } from '../../lifeCycle'
@@ -9,7 +8,6 @@ import { ViewLoadingType } from '../../../rawRumEvent.types'
 export function trackLoadingTime(
   lifeCycle: LifeCycle,
   domMutationObservable: Observable<void>,
-  performanceResourceObservable: Observable<RumPerformanceResourceTiming[]>,
   configuration: RumConfiguration,
   loadType: ViewLoadingType,
   viewStart: ClocksState,
@@ -25,21 +23,15 @@ export function trackLoadingTime(
     }
   }
 
-  const { stop } = waitPageActivityEnd(
-    lifeCycle,
-    domMutationObservable,
-    performanceResourceObservable,
-    configuration,
-    (event) => {
-      if (isWaitingForActivityLoadingTime) {
-        isWaitingForActivityLoadingTime = false
-        if (event.hadActivity) {
-          loadingTimeCandidates.push(elapsed(viewStart.timeStamp, event.end))
-        }
-        invokeCallbackIfAllCandidatesAreReceived()
+  const { stop } = waitPageActivityEnd(lifeCycle, domMutationObservable, configuration, (event) => {
+    if (isWaitingForActivityLoadingTime) {
+      isWaitingForActivityLoadingTime = false
+      if (event.hadActivity) {
+        loadingTimeCandidates.push(elapsed(viewStart.timeStamp, event.end))
       }
+      invokeCallbackIfAllCandidatesAreReceived()
     }
-  )
+  })
 
   return {
     stop,

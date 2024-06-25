@@ -3,7 +3,8 @@ import { Observable, ONE_SECOND, getTimeStamp } from '@datadog/browser-core'
 import type { Clock } from '@datadog/browser-core/test'
 import { mockClock } from '@datadog/browser-core/test'
 import type { TestSetupBuilder } from '../../test'
-import { createPerformanceEntry, setup } from '../../test'
+import { createPerformanceEntry, mockPerformanceObserver, setup } from '../../test'
+import type { RumPerformanceEntry } from '../browser/performanceObservable'
 import { RumPerformanceEntryType } from '../browser/performanceObservable'
 import { LifeCycleEventType } from './lifeCycle'
 import type { RequestCompleteEvent, RequestStartEvent } from './requestCollection'
@@ -45,17 +46,14 @@ describe('createPageActivityObservable', () => {
 
   let setupBuilder: TestSetupBuilder
   let pageActivitySubscription: Subscription
+  let notifyPerformanceEntry: (entry: RumPerformanceEntry) => void
 
   beforeEach(() => {
+    ;({ notifyPerformanceEntry } = mockPerformanceObserver())
     setupBuilder = setup()
       .withConfiguration({ excludedActivityUrls: [EXCLUDED_FAKE_URL] })
-      .beforeBuild(({ lifeCycle, domMutationObservable, performanceResourceObservable, configuration }) => {
-        const pageActivityObservable = createPageActivityObservable(
-          lifeCycle,
-          domMutationObservable,
-          performanceResourceObservable,
-          configuration
-        )
+      .beforeBuild(({ lifeCycle, domMutationObservable, configuration }) => {
+        const pageActivityObservable = createPageActivityObservable(lifeCycle, domMutationObservable, configuration)
         pageActivitySubscription = pageActivityObservable.subscribe(pushEvent)
       })
   })
@@ -67,8 +65,8 @@ describe('createPageActivityObservable', () => {
   })
 
   it('emits an activity event on resource collected', () => {
-    const { performanceResourceObservable } = setupBuilder.build()
-    performanceResourceObservable.notify([createPerformanceEntry(RumPerformanceEntryType.RESOURCE)])
+    setupBuilder.build()
+    notifyPerformanceEntry(createPerformanceEntry(RumPerformanceEntryType.RESOURCE))
 
     expect(events).toEqual([{ isBusy: false }])
   })
@@ -133,7 +131,7 @@ describe('createPageActivityObservable', () => {
 
     describe('excludedActivityUrls', () => {
       it('ignores resources that should be excluded by configuration', () => {
-        const { performanceResourceObservable } = setupBuilder
+        setupBuilder
           .withConfiguration({
             excludedActivityUrls: [
               /^https?:\/\/qux\.com.*/,
@@ -143,15 +141,9 @@ describe('createPageActivityObservable', () => {
           })
           .build()
 
-        performanceResourceObservable.notify([
-          createPerformanceEntry(RumPerformanceEntryType.RESOURCE, { name: 'http://qux.com' }),
-        ])
-        performanceResourceObservable.notify([
-          createPerformanceEntry(RumPerformanceEntryType.RESOURCE, { name: 'http://bar.com' }),
-        ])
-        performanceResourceObservable.notify([
-          createPerformanceEntry(RumPerformanceEntryType.RESOURCE, { name: 'http://dynamic.com' }),
-        ])
+        notifyPerformanceEntry(createPerformanceEntry(RumPerformanceEntryType.RESOURCE, { name: 'http://qux.com' }))
+        notifyPerformanceEntry(createPerformanceEntry(RumPerformanceEntryType.RESOURCE, { name: 'http://bar.com' }))
+        notifyPerformanceEntry(createPerformanceEntry(RumPerformanceEntryType.RESOURCE, { name: 'http://dynamic.com' }))
 
         expect(events).toEqual([])
       })

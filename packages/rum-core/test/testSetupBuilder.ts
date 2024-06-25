@@ -23,7 +23,6 @@ import type { ActionContexts } from '../src/domain/action/actionCollection'
 import type { RumSessionManager } from '../src/domain/rumSessionManager'
 import type { RawRumEvent, RumContext } from '../src/rawRumEvent.types'
 import type { DisplayContext } from '../src/domain/contexts/displayContext'
-import type { RumPerformanceResourceTiming } from '../src/browser/performanceObservable'
 import { validateRumFormat } from './formatValidation'
 import { createRumSessionManagerMock } from './mockRumSessionManager'
 
@@ -40,7 +39,6 @@ export interface TestSetupBuilder {
 
   clock: Clock | undefined
   domMutationObservable: Observable<void>
-  performanceResourceObservable: Observable<RumPerformanceResourceTiming[]>
   build: () => TestIO
 }
 
@@ -49,7 +47,6 @@ type BeforeBuildCallback = (buildContext: BuildContext) => void | { stop: () => 
 export interface BuildContext {
   lifeCycle: LifeCycle
   domMutationObservable: Observable<void>
-  performanceResourceObservable: Observable<RumPerformanceResourceTiming[]>
   locationChangeObservable: Observable<LocationChange>
   configuration: Readonly<RumConfiguration>
   sessionManager: RumSessionManager
@@ -69,7 +66,6 @@ export interface BuildContext {
 export interface TestIO {
   lifeCycle: LifeCycle
   domMutationObservable: Observable<void>
-  performanceResourceObservable: Observable<RumPerformanceResourceTiming[]>
   changeLocation: (to: string) => void
   clock: Clock
   fakeLocation: Partial<Location>
@@ -81,7 +77,6 @@ export function setup(): TestSetupBuilder {
   let sessionManager: RumSessionManager = createRumSessionManagerMock().setId('1234')
   const lifeCycle = new LifeCycle()
   const domMutationObservable = new Observable<void>()
-  const performanceResourceObservable = new Observable<RumPerformanceResourceTiming[]>()
   const locationChangeObservable = new Observable<LocationChange>()
   const cleanupTasks: Array<() => void> = []
   const beforeBuildTasks: BeforeBuildCallback[] = []
@@ -150,7 +145,6 @@ export function setup(): TestSetupBuilder {
 
   const setupBuilder: TestSetupBuilder = {
     domMutationObservable,
-    performanceResourceObservable,
     get clock() {
       return clock
     },
@@ -197,7 +191,6 @@ export function setup(): TestSetupBuilder {
         const result = task({
           lifeCycle,
           domMutationObservable,
-          performanceResourceObservable,
           locationChangeObservable,
           viewContexts,
           urlContexts,
@@ -222,7 +215,6 @@ export function setup(): TestSetupBuilder {
         fakeLocation,
         lifeCycle,
         domMutationObservable,
-        performanceResourceObservable,
         rawRumEvents,
         sessionManager,
         changeLocation,

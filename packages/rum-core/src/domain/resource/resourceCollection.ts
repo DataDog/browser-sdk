@@ -1,4 +1,4 @@
-import type { ClocksState, Duration, Observable } from '@datadog/browser-core'
+import type { ClocksState, Duration } from '@datadog/browser-core'
 import {
   combine,
   generateUUID,
@@ -12,7 +12,11 @@ import {
   isExperimentalFeatureEnabled,
 } from '@datadog/browser-core'
 import type { RumConfiguration } from '../configuration'
-import type { RumPerformanceResourceTiming } from '../../browser/performanceObservable'
+import {
+  RumPerformanceEntryType,
+  createPerformanceObservable,
+  type RumPerformanceResourceTiming,
+} from '../../browser/performanceObservable'
 import type { RumXhrResourceEventDomainContext, RumFetchResourceEventDomainContext } from '../../domainContext.types'
 import type { RawRumResourceEvent } from '../../rawRumEvent.types'
 import { RumEventType } from '../../rawRumEvent.types'
@@ -36,8 +40,7 @@ import { retrieveInitialDocumentResourceTiming } from './retrieveInitialDocument
 export function startResourceCollection(
   lifeCycle: LifeCycle,
   configuration: RumConfiguration,
-  pageStateHistory: PageStateHistory,
-  performanceResourceObservable: Observable<RumPerformanceResourceTiming[]>
+  pageStateHistory: PageStateHistory
 ) {
   lifeCycle.subscribe(LifeCycleEventType.REQUEST_COMPLETED, (request: RequestCompleteEvent) => {
     const rawEvent = processRequest(request, configuration, pageStateHistory)
@@ -46,7 +49,10 @@ export function startResourceCollection(
     }
   })
 
-  const performanceResourceSubscription = performanceResourceObservable.subscribe((entries) => {
+  const performanceResourceSubscription = createPerformanceObservable(configuration, {
+    type: RumPerformanceEntryType.RESOURCE,
+    buffered: true,
+  }).subscribe((entries) => {
     for (const entry of entries) {
       if (!isRequestKind(entry)) {
         const rawEvent = processResourceEntry(entry, configuration)

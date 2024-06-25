@@ -8,7 +8,7 @@ import {
   setTimeout,
   clearTimeout,
 } from '@datadog/browser-core'
-import type { RumPerformanceResourceTiming } from '../browser/performanceObservable'
+import { createPerformanceObservable, RumPerformanceEntryType } from '../browser/performanceObservable'
 import type { RumConfiguration } from './configuration'
 import type { LifeCycle } from './lifeCycle'
 import { LifeCycleEventType } from './lifeCycle'
@@ -57,17 +57,11 @@ export type PageActivityEndEvent = { hadActivity: true; end: TimeStamp } | { had
 export function waitPageActivityEnd(
   lifeCycle: LifeCycle,
   domMutationObservable: Observable<void>,
-  performanceResourceObservable: Observable<RumPerformanceResourceTiming[]>,
   configuration: RumConfiguration,
   pageActivityEndCallback: (event: PageActivityEndEvent) => void,
   maxDuration?: number
 ) {
-  const pageActivityObservable = createPageActivityObservable(
-    lifeCycle,
-    domMutationObservable,
-    performanceResourceObservable,
-    configuration
-  )
+  const pageActivityObservable = createPageActivityObservable(lifeCycle, domMutationObservable, configuration)
   return doWaitPageActivityEnd(pageActivityObservable, pageActivityEndCallback, maxDuration)
 }
 
@@ -124,7 +118,6 @@ export function doWaitPageActivityEnd(
 export function createPageActivityObservable(
   lifeCycle: LifeCycle,
   domMutationObservable: Observable<void>,
-  performanceResourceObservable: Observable<RumPerformanceResourceTiming[]>,
   configuration: RumConfiguration
 ): Observable<PageActivityEvent> {
   return new Observable<PageActivityEvent>((observable) => {
@@ -134,7 +127,7 @@ export function createPageActivityObservable(
 
     subscriptions.push(
       domMutationObservable.subscribe(notifyPageActivity),
-      performanceResourceObservable.subscribe((entries) => {
+      createPerformanceObservable(configuration, { type: RumPerformanceEntryType.RESOURCE }).subscribe((entries) => {
         if (entries.some((entry) => !isExcludedUrl(configuration, entry.name))) {
           notifyPageActivity()
         }

@@ -2,7 +2,7 @@ import type { Duration, RelativeTime, ServerDuration, TimeStamp } from '@datadog
 import { isIE, RequestType, ResourceType, ExperimentalFeature } from '@datadog/browser-core'
 import { mockExperimentalFeatures } from '@datadog/browser-core/test'
 import type { RumFetchResourceEventDomainContext, RumXhrResourceEventDomainContext } from '../../domainContext.types'
-import { setup, createPerformanceEntry } from '../../../test'
+import { setup, createPerformanceEntry, mockPerformanceObserver } from '../../../test'
 import type { TestSetupBuilder } from '../../../test'
 import type { RawRumResourceEvent } from '../../rawRumEvent.types'
 import { RumEventType } from '../../rawRumEvent.types'
@@ -10,6 +10,7 @@ import { LifeCycleEventType } from '../lifeCycle'
 import type { RequestCompleteEvent } from '../requestCollection'
 import { TraceIdentifier } from '../tracing/tracer'
 import { validateAndBuildRumConfiguration } from '../configuration'
+import type { RumPerformanceEntry } from '../../browser/performanceObservable'
 import { RumPerformanceEntryType } from '../../browser/performanceObservable'
 import { startResourceCollection } from './resourceCollection'
 
@@ -17,7 +18,7 @@ describe('resourceCollection', () => {
   let setupBuilder: TestSetupBuilder
   let trackResources: boolean
   let wasInPageStateDuringPeriodSpy: jasmine.Spy<jasmine.Func>
-
+  let notifyPerformanceEntry: (entry: RumPerformanceEntry) => void
   function build() {
     const result = setupBuilder.build()
     // Reset the initial load events collected during the setup
@@ -27,21 +28,15 @@ describe('resourceCollection', () => {
 
   beforeEach(() => {
     trackResources = true
-    setupBuilder = setup().beforeBuild(
-      ({ lifeCycle, pageStateHistory, performanceResourceObservable, configuration }) => {
-        wasInPageStateDuringPeriodSpy = spyOn(pageStateHistory, 'wasInPageStateDuringPeriod')
-        startResourceCollection(
-          lifeCycle,
-          { ...configuration, trackResources },
-          pageStateHistory,
-          performanceResourceObservable
-        )
-      }
-    )
+    ;({ notifyPerformanceEntry } = mockPerformanceObserver())
+    setupBuilder = setup().beforeBuild(({ lifeCycle, pageStateHistory, configuration }) => {
+      wasInPageStateDuringPeriodSpy = spyOn(pageStateHistory, 'wasInPageStateDuringPeriod')
+      startResourceCollection(lifeCycle, { ...configuration, trackResources }, pageStateHistory)
+    })
   })
 
   it('should create resource from performance entry', () => {
-    const { rawRumEvents, performanceResourceObservable } = build()
+    const { rawRumEvents } = build()
 
     const performanceEntry = createPerformanceEntry(RumPerformanceEntryType.RESOURCE, {
       encodedBodySize: 42,
@@ -50,7 +45,7 @@ describe('resourceCollection', () => {
       renderBlockingStatus: 'blocking',
       responseStart: 250 as RelativeTime,
     })
-    performanceResourceObservable.notify([performanceEntry])
+    notifyPerformanceEntry(performanceEntry)
 
     expect(rawRumEvents[0].startTime).toBe(200 as RelativeTime)
     expect(rawRumEvents[0].rawRumEvent).toEqual({
@@ -130,9 +125,9 @@ describe('resourceCollection', () => {
 
     describe('and resource is not traced', () => {
       it('should not collect a resource from a performance entry', () => {
-        const { rawRumEvents, performanceResourceObservable } = build()
+        const { rawRumEvents } = build()
 
-        performanceResourceObservable.notify([createPerformanceEntry(RumPerformanceEntryType.RESOURCE)])
+        notifyPerformanceEntry(createPerformanceEntry(RumPerformanceEntryType.RESOURCE))
 
         expect(rawRumEvents.length).toBe(0)
       })
@@ -152,11 +147,9 @@ describe('resourceCollection', () => {
 
     describe('and resource is traced', () => {
       it('should collect a resource from a performance entry', () => {
-        const { rawRumEvents, performanceResourceObservable } = build()
+        const { rawRumEvents } = build()
 
-        performanceResourceObservable.notify([
-          createPerformanceEntry(RumPerformanceEntryType.RESOURCE, { traceId: '1234' }),
-        ])
+        notifyPerformanceEntry(createPerformanceEntry(RumPerformanceEntryType.RESOURCE, { traceId: '1234' }))
 
         expect(rawRumEvents.length).toBe(1)
         expect((rawRumEvents[0].rawRumEvent as RawRumResourceEvent)._dd.discarded).toBeTrue()
@@ -274,18 +267,16 @@ describe('resourceCollection', () => {
   })
 
   it('should discard 0 status code', () => {
-    const { performanceResourceObservable, rawRumEvents } = build()
+    const { rawRumEvents } = build()
     const performanceEntry = createPerformanceEntry(RumPerformanceEntryType.RESOURCE, { responseStatus: 0 })
-    performanceResourceObservable.notify([performanceEntry])
+    notifyPerformanceEntry(performanceEntry)
     expect((rawRumEvents[0].rawRumEvent as RawRumResourceEvent).resource.status_code).toBeUndefined()
   })
 
   describe('tracing info', () => {
     it('should be processed from traced initial document', () => {
-      const { performanceResourceObservable, rawRumEvents } = build()
-      performanceResourceObservable.notify([
-        createPerformanceEntry(RumPerformanceEntryType.RESOURCE, { traceId: '1234' }),
-      ])
+      const { rawRumEvents } = build()
+      notifyPerformanceEntry(createPerformanceEntry(RumPerformanceEntryType.RESOURCE, { traceId: '1234' }))
       const privateFields = (rawRumEvents[0].rawRumEvent as RawRumResourceEvent)._dd
       expect(privateFields).toBeDefined()
       expect(privateFields.trace_id).toBe('1234')
@@ -322,7 +313,7 @@ describe('resourceCollection', () => {
     })
 
     it('should pull traceSampleRate from config if present', () => {
-      setupBuilder = setup().beforeBuild(({ lifeCycle, pageStateHistory, performanceResourceObservable }) => {
+      setupBuilder = setup().beforeBuild(({ lifeCycle, pageStateHistory }) => {
         startResourceCollection(
           lifeCycle,
           validateAndBuildRumConfiguration({
@@ -330,8 +321,7 @@ describe('resourceCollection', () => {
             applicationId: 'xxx',
             traceSampleRate: 60,
           })!,
-          pageStateHistory,
-          performanceResourceObservable
+          pageStateHistory
         )
       })
 
@@ -349,15 +339,14 @@ describe('resourceCollection', () => {
     })
 
     it('should not define rule_psr if traceSampleRate is undefined', () => {
-      setupBuilder = setup().beforeBuild(({ lifeCycle, pageStateHistory, performanceResourceObservable }) => {
+      setupBuilder = setup().beforeBuild(({ lifeCycle, pageStateHistory }) => {
         startResourceCollection(
           lifeCycle,
           validateAndBuildRumConfiguration({
             clientToken: 'xxx',
             applicationId: 'xxx',
           })!,
-          pageStateHistory,
-          performanceResourceObservable
+          pageStateHistory
         )
       })
 
@@ -375,7 +364,7 @@ describe('resourceCollection', () => {
     })
 
     it('should define rule_psr to 0 if traceSampleRate is set to 0', () => {
-      setupBuilder = setup().beforeBuild(({ lifeCycle, pageStateHistory, performanceResourceObservable }) => {
+      setupBuilder = setup().beforeBuild(({ lifeCycle, pageStateHistory }) => {
         startResourceCollection(
           lifeCycle,
           validateAndBuildRumConfiguration({
@@ -383,8 +372,7 @@ describe('resourceCollection', () => {
             applicationId: 'xxx',
             traceSampleRate: 0,
           })!,
-          pageStateHistory,
-          performanceResourceObservable
+          pageStateHistory
         )
       })
 

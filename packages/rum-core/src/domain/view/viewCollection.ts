@@ -10,7 +10,6 @@ import type { LocationChange } from '../../browser/locationChangeObservable'
 import type { RumConfiguration } from '../configuration'
 import type { FeatureFlagContexts } from '../contexts/featureFlagContext'
 import type { PageStateHistory } from '../contexts/pageStateHistory'
-import type { RumPerformanceResourceTiming } from '../../browser/performanceObservable'
 import type { ViewEvent, ViewOptions } from './trackViews'
 import { trackViews } from './trackViews'
 
@@ -19,7 +18,6 @@ export function startViewCollection(
   configuration: RumConfiguration,
   location: Location,
   domMutationObservable: Observable<void>,
-  performanceResourceObservable: Observable<RumPerformanceResourceTiming[]>,
   locationChangeObservable: Observable<LocationChange>,
   featureFlagContexts: FeatureFlagContexts,
   pageStateHistory: PageStateHistory,
@@ -36,7 +34,6 @@ export function startViewCollection(
     location,
     lifeCycle,
     domMutationObservable,
-    performanceResourceObservable,
     configuration,
     locationChangeObservable,
     !configuration.trackViewsManually,
