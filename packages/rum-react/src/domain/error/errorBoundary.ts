@@ -7,7 +7,7 @@ interface Props {
   children: React.ReactNode
 }
 
-export type Fallback = (parameters: { error: Error; resetError: () => void }) => React.ReactNode
+export type Fallback = React.ComponentType<{ error: Error; resetError: () => void }>
 
 type State =
   | {
@@ -41,7 +41,7 @@ export class ErrorBoundary extends React.Component<Props, State> {
 
   render() {
     if (this.state.didCatch) {
-      return this.props.fallback({
+      return React.createElement(this.props.fallback, {
         error: this.state.error,
         resetError: this.resetError,
       })
