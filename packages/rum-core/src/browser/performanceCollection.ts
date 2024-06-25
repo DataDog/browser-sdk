@@ -15,8 +15,7 @@ import {
 import type { RumConfiguration } from '../domain/configuration'
 import type { LifeCycle } from '../domain/lifeCycle'
 import { LifeCycleEventType } from '../domain/lifeCycle'
-import { FAKE_INITIAL_DOCUMENT, computeRelativePerformanceTiming } from '../domain/resource/resourceUtils'
-import { getDocumentTraceId } from '../domain/tracing/getDocumentTraceId'
+import { computeRelativePerformanceTiming } from '../domain/resource/resourceUtils'
 import type {
   BrowserWindow,
   RumFirstInputTiming,
@@ -114,44 +113,6 @@ export function startPerformanceCollection(lifeCycle: LifeCycle, configuration: 
   }
 }
 
-export function retrieveInitialDocumentResourceTiming(
-  configuration: RumConfiguration,
-  callback: (timing: RumPerformanceResourceTiming) => void
-) {
-  runOnReadyState(configuration, 'interactive', () => {
-    let timing: RumPerformanceResourceTiming
-
-    const forcedAttributes = {
-      entryType: RumPerformanceEntryType.RESOURCE as const,
-      initiatorType: FAKE_INITIAL_DOCUMENT,
-      traceId: getDocumentTraceId(document),
-      toJSON: () => assign({}, timing, { toJSON: undefined }),
-    }
-    if (
-      supportPerformanceTimingEvent(RumPerformanceEntryType.NAVIGATION) &&
-      performance.getEntriesByType(RumPerformanceEntryType.NAVIGATION).length > 0
-    ) {
-      const navigationEntry = performance.getEntriesByType(RumPerformanceEntryType.NAVIGATION)[0]
-      timing = assign(navigationEntry.toJSON() as RumPerformanceResourceTiming, forcedAttributes)
-    } else {
-      const relativePerformanceTiming = computeRelativePerformanceTiming()
-      timing = assign(
-        relativePerformanceTiming,
-        {
-          decodedBodySize: 0,
-          encodedBodySize: 0,
-          transferSize: 0,
-          renderBlockingStatus: 'non-blocking',
-          duration: relativePerformanceTiming.responseEnd,
-          name: window.location.href,
-          startTime: 0 as RelativeTime,
-        },
-        forcedAttributes
-      )
-    }
-    callback(timing)
-  })
-}
 function retrieveNavigationTiming(
   configuration: RumConfiguration,
   callback: (timing: RumPerformanceNavigationTiming) => void
