@@ -32,7 +32,8 @@ export function FacetList({
           } else if (!allFacetValues[facet.path]) {
             setAllFacetValues({ ...allFacetValues, [facet.path]: [facetValue] })
           }
-      }}} // add facetValue to allFacetValues
+        }
+      }} // add facetValue to allFacetValues
       allFacetValues={allFacetValues}
       parentList={[]}
     />
@@ -112,7 +113,6 @@ function FacetValue({
   allFacetValues: ExcludedFacetValues
   parentList: string[]
 }) {
-
   useEffect(() => {
     addFacetValues(facet, facetValue)
   }, [facetValueCount])
@@ -130,7 +130,8 @@ function FacetValue({
         }}
       />
       {/* <Text>{facetValueCount}</Text> */}
-      {excludedFacetValues[facet.path]?.includes(facetValue) || !allFacetValues[facet.path]?.includes(facetValue) ? null : (
+      {excludedFacetValues[facet.path]?.includes(facetValue) ||
+      !allFacetValues[facet.path]?.includes(facetValue) ? null : (
         <Button
           variant={isOnly ? 'filled' : 'outline'}
           size="compact-xs"
@@ -218,8 +219,8 @@ function toggleOnlyAllFacetValue(
   parentList: string[],
   value: FacetValue
 ): ExcludedFacetValues {
-
-  if (isOnly) { // when on Only mode, include all
+  if (isOnly) {
+    // when on Only mode, include all
     return {}
   }
 
