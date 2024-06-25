@@ -123,26 +123,29 @@ function FacetValue({
   const value = (
     <Flex justify="space-between" mt={isTopLevel ? 'xs' : SPACE_BETWEEN_CHECKBOX}>
       <Checkbox
-        label={`${facet.values?.[facetValue]?.label ?? facetValue} ${facetValueCount}`}
+        label={facet.values?.[facetValue]?.label ?? facetValue}
         checked={isSelected}
         onChange={() => {
           onExcludedFacetValuesChange(toggleExcludedFacetValue(facet, excludedFacetValues, facetValue))
         }}
       />
-      {/* <Text>{facetValueCount}</Text> */}
-      {excludedFacetValues[facet.path]?.includes(facetValue) ||
-      !allFacetValues[facet.path]?.includes(facetValue) ? null : (
-        <Button
-          variant={isOnly ? 'filled' : 'outline'}
-          size="compact-xs"
-          onClick={() => {
-            onExcludedFacetValuesChange(toggleOnlyAllFacetValue(facet, isOnly, allFacetValues, parentList, facetValue))
-            setIsOnly(!isOnly)
-          }}
-        >
-          {isOnly ? 'all' : 'only'}
-        </Button>
-      )}
+      <Flex justify="space-between" gap="md">
+        <Text>{facetValueCount}</Text>
+        {excludedFacetValues[facet.path]?.includes(facetValue) ||
+        !allFacetValues[facet.path]?.includes(facetValue) ? null : (
+          <Button
+            variant={isOnly ? 'filled' : 'light'}
+            size="compact-xs"
+            w="40px"
+            onClick={() => {
+              onExcludedFacetValuesChange(toggleOnlyAllFacetValue(facet, isOnly, allFacetValues, parentList, facetValue))
+              setIsOnly(!isOnly)
+            }}
+          >
+            {isOnly ? 'all' : 'only'}
+          </Button>
+        )}
+      </Flex>
     </Flex>
   )
 
