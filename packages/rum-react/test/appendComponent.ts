@@ -14,9 +14,7 @@ export function appendComponent(component: React.ReactNode) {
     root.render(component)
   })
   registerCleanupTask(() => {
-    flushSync(() => {
-      root.unmount()
-    })
+    root.unmount()
   })
   return container
 }
