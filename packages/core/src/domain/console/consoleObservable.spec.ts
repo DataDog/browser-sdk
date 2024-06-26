@@ -15,12 +15,12 @@ import { initConsoleObservable } from './consoleObservable'
   { api: ConsoleApiName.error },
 ].forEach(({ api }) => {
   describe(`console ${api} observable`, () => {
-    let consoleStub: jasmine.Spy
+    let consoleSpy: jasmine.Spy
     let consoleSubscription: Subscription
     let notifyLog: jasmine.Spy
 
     beforeEach(() => {
-      consoleStub = spyOn(console, api)
+      consoleSpy = spyOn(console, api)
       notifyLog = jasmine.createSpy('notifyLog')
 
       consoleSubscription = initConsoleObservable([api]).subscribe(notifyLog)
@@ -46,7 +46,7 @@ import { initConsoleObservable } from './consoleObservable'
     it('should keep original behavior', () => {
       console[api]('foo', 'bar')
 
-      expect(consoleStub).toHaveBeenCalledWith('foo', 'bar')
+      expect(consoleSpy).toHaveBeenCalledWith('foo', 'bar')
     })
 
     it('should format error instance', () => {

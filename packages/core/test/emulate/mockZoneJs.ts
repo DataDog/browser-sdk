@@ -1,6 +1,8 @@
 import type { BrowserWindowWithZoneJs } from '../../src/tools/getZoneJsOriginalValue'
 
-export function stubZoneJs() {
+export type MockZoneJs = ReturnType<typeof mockZoneJs>
+
+export function mockZoneJs() {
   const browserWindow = window as BrowserWindowWithZoneJs
   const restorers: Array<() => void> = []
 
