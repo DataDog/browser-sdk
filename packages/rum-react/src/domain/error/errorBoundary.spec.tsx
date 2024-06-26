@@ -1,6 +1,7 @@
 import React from 'react'
 import { flushSync } from 'react-dom'
 
+import { isIE } from '@datadog/browser-core'
 import { disableJasmineUncaughtExceptionTracking } from '../../../../core/test'
 import { appendComponent } from '../../../test/appendComponent'
 import { initializeReactPlugin } from '../../../test/initializeReactPlugin'
@@ -11,6 +12,9 @@ type FallbackFunctionComponent = Extract<Fallback, (...args: any[]) => any>
 
 describe('ErrorBoundary', () => {
   beforeEach(() => {
+    if (isIE()) {
+      pending('No support for IE')
+    }
     // Prevent React from displaying the error in the console
     spyOn(console, 'error')
     disableJasmineUncaughtExceptionTracking()
@@ -95,7 +99,7 @@ describe('ErrorBoundary', () => {
     const error = addErrorSpy.calls.first().args[0]
     expect(error.message).toBe('error')
     expect(error.name).toBe('ReactRenderingError')
-    expect(error.stack).toContain('at ComponentSpy')
+    expect(error.stack).toContain('ComponentSpy')
     expect(error.cause).toBe(originalError)
   })
 })
