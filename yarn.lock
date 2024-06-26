@@ -345,8 +345,8 @@ __metadata:
     react-dom: "npm:18.3.1"
     react-router-dom: "npm:6.23.1"
   peerDependencies:
-    "@datadog/browser-core": 5.19.0
-    "@datadog/browser-rum-core": 5.19.0
+    "@datadog/browser-core": 5.21.0
+    "@datadog/browser-rum-core": 5.21.0
     react: 18
     react-router-dom: 6
   peerDependenciesMeta:
