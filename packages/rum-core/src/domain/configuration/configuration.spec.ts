@@ -338,15 +338,8 @@ describe('validateAndBuildRumConfiguration', () => {
     it('defaults to false', () => {
       expect(validateAndBuildRumConfiguration(DEFAULT_INIT_CONFIGURATION)!.enablePrivacyForActionName).toBeFalse()
     })
-    it('is false when the feature is not enabled and the option is true', () => {
-      expect(
-        validateAndBuildRumConfiguration({ ...DEFAULT_INIT_CONFIGURATION, enablePrivacyForActionName: true })!
-          .enablePrivacyForActionName
-      ).toBeFalse()
-    })
 
-    it('is only true when the feature is enabled and the option is true', () => {
-      mockExperimentalFeatures([ExperimentalFeature.ENABLE_PRIVACY_FOR_ACTION_NAME])
+    it('is true when the option is true', () => {
       expect(validateAndBuildRumConfiguration(DEFAULT_INIT_CONFIGURATION)!.enablePrivacyForActionName).toBeFalse()
       expect(
         validateAndBuildRumConfiguration({ ...DEFAULT_INIT_CONFIGURATION, enablePrivacyForActionName: true })!
