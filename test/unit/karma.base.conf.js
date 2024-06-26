@@ -56,7 +56,7 @@ module.exports = {
     ignoreWarnings: [
       // we will see warnings about missing exports in some files
       // this is because we set transpileOnly option in ts-loader
-      { message: /export .* was not found in/ }
+      { message: /export .* was not found in/ },
     ],
   },
   webpackMiddleware: {
