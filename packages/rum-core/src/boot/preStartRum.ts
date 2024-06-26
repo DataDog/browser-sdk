@@ -126,7 +126,7 @@ export function createPreStartStrategy(
     trackingConsentState.tryToInit(configuration.trackingConsent)
     tryStartRum()
   }
-  
+
   return {
     init(initConfiguration, publicApi) {
       if (!initConfiguration) {
