@@ -1,5 +1,5 @@
 import { Box, Button, Card, Checkbox, Collapse, Flex, Text } from '@mantine/core'
-import React, { useEffect } from 'react'
+import React from 'react'
 import type { ExcludedFacetValues, FacetRegistry } from '../../../hooks/useEvents'
 import type { Facet } from '../../../facets.constants'
 import { FACET_ROOT, FacetValue } from '../../../facets.constants'
@@ -136,7 +136,9 @@ function FacetValue({
             size="compact-xs"
             w="40px"
             onClick={() => {
-              onExcludedFacetValuesChange(toggleOnlyAllFacetValue(facet, isOnly, allFacetValues, parentList, facetValue))
+              onExcludedFacetValuesChange(
+                toggleOnlyAllFacetValue(facet, isOnly, allFacetValues, parentList, facetValue)
+              )
               setIsOnly(!isOnly)
             }}
           >
