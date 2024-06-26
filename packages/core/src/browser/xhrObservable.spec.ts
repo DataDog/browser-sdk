@@ -1,5 +1,5 @@
 import type { Configuration } from '../domain/configuration'
-import { withXhr, stubXhr } from '../../test'
+import { withXhr, mockXhr } from '../../test'
 import { isIE } from '../tools/utils/browserDetection'
 import type { Subscription } from '../tools/observable'
 import type { XhrCompleteContext, XhrContext } from './xhrObservable'
@@ -9,15 +9,15 @@ describe('xhr observable', () => {
   let requestsTrackingSubscription: Subscription
   let contextEditionSubscription: Subscription | undefined
   let requests: XhrCompleteContext[]
-  let stubXhrManager: { reset(): void }
-  let originalXhrStubSend: XMLHttpRequest['send']
+  let mockXhrManager: { reset(): void }
+  let originalMockXhrSend: XMLHttpRequest['send']
   let configuration: Configuration
 
   beforeEach(() => {
-    stubXhrManager = stubXhr()
+    mockXhrManager = mockXhr()
     configuration = {} as Configuration
     // eslint-disable-next-line @typescript-eslint/unbound-method
-    originalXhrStubSend = XMLHttpRequest.prototype.send
+    originalMockXhrSend = XMLHttpRequest.prototype.send
 
     requests = []
     startTrackingRequests()
@@ -26,7 +26,7 @@ describe('xhr observable', () => {
   afterEach(() => {
     requestsTrackingSubscription.unsubscribe()
     contextEditionSubscription?.unsubscribe()
-    stubXhrManager.reset()
+    mockXhrManager.reset()
   })
 
   function startTrackingRequests() {
@@ -385,7 +385,7 @@ describe('xhr observable', () => {
       requestsTrackingSubscription.unsubscribe()
 
       // eslint-disable-next-line @typescript-eslint/unbound-method
-      expect(XMLHttpRequest.prototype.send).toBe(originalXhrStubSend)
+      expect(XMLHttpRequest.prototype.send).toBe(originalMockXhrSend)
     })
   })
 

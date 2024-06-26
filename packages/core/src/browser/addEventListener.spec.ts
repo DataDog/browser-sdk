@@ -1,5 +1,6 @@
 import type { Configuration } from '@datadog/browser-core'
-import { createNewEvent, stubZoneJs } from '../../test'
+import type { MockZoneJs } from '../../test'
+import { createNewEvent, mockZoneJs } from '../../test'
 import { noop } from '../tools/utils/functionUtils'
 import { addEventListener, DOM_EVENT } from './addEventListener'
 
@@ -7,21 +8,21 @@ describe('addEventListener', () => {
   let configuration: Configuration
 
   describe('Zone.js support', () => {
-    let zoneJsStub: ReturnType<typeof stubZoneJs>
+    let zoneJs: MockZoneJs
 
     beforeEach(() => {
       configuration = { allowUntrustedEvents: false } as Configuration
-      zoneJsStub = stubZoneJs()
+      zoneJs = mockZoneJs()
     })
 
     afterEach(() => {
-      zoneJsStub.restore()
+      zoneJs.restore()
     })
 
     it('uses the original addEventListener method instead of the method patched by Zone.js', () => {
       const zoneJsPatchedAddEventListener = jasmine.createSpy()
       const eventTarget = document.createElement('div')
-      zoneJsStub.replaceProperty(eventTarget, 'addEventListener', zoneJsPatchedAddEventListener)
+      zoneJs.replaceProperty(eventTarget, 'addEventListener', zoneJsPatchedAddEventListener)
 
       addEventListener(configuration, eventTarget, DOM_EVENT.CLICK, noop)
       expect(zoneJsPatchedAddEventListener).not.toHaveBeenCalled()
@@ -30,7 +31,7 @@ describe('addEventListener', () => {
     it('uses the original removeEventListener method instead of the method patched by Zone.js', () => {
       const zoneJsPatchedRemoveEventListener = jasmine.createSpy()
       const eventTarget = document.createElement('div')
-      zoneJsStub.replaceProperty(eventTarget, 'removeEventListener', zoneJsPatchedRemoveEventListener)
+      zoneJs.replaceProperty(eventTarget, 'removeEventListener', zoneJsPatchedRemoveEventListener)
 
       const { stop } = addEventListener(configuration, eventTarget, DOM_EVENT.CLICK, noop)
       stop()

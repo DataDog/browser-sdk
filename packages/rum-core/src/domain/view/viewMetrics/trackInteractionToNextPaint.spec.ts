@@ -20,14 +20,14 @@ import {
 
 describe('trackInteractionToNextPaint', () => {
   let setupBuilder: TestSetupBuilder
-  let interactionCountStub: ReturnType<typeof subInteractionCount>
+  let interactionCountMock: ReturnType<typeof mockInteractionCount>
   let getInteractionToNextPaint: ReturnType<typeof trackInteractionToNextPaint>['getInteractionToNextPaint']
   let setViewEnd: ReturnType<typeof trackInteractionToNextPaint>['setViewEnd']
   let viewStart: RelativeTime
 
   function newInteraction(lifeCycle: LifeCycle, overrides: Partial<RumPerformanceEventTiming | RumFirstInputTiming>) {
     if (overrides.interactionId) {
-      interactionCountStub.incrementInteractionCount()
+      interactionCountMock.incrementInteractionCount()
     }
     const entry = createPerformanceEntry(overrides.entryType || RumPerformanceEntryType.EVENT, overrides)
     lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [entry])
@@ -37,7 +37,7 @@ describe('trackInteractionToNextPaint', () => {
     if (!isInteractionToNextPaintSupported()) {
       pending('No INP support')
     }
-    interactionCountStub = subInteractionCount()
+    interactionCountMock = mockInteractionCount()
 
     viewStart = 0 as RelativeTime
     setupBuilder = setup().beforeBuild(({ lifeCycle, configuration }) => {
@@ -56,7 +56,7 @@ describe('trackInteractionToNextPaint', () => {
 
   afterEach(() => {
     resetExperimentalFeatures()
-    interactionCountStub.clear()
+    interactionCountMock.clear()
   })
 
   it('should return undefined when there are no interactions', () => {
@@ -140,7 +140,7 @@ describe('trackInteractionToNextPaint', () => {
 
   it('should return 0 when an interaction happened without generating a performance event (interaction duration below 40ms)', () => {
     setupBuilder.build()
-    interactionCountStub.setInteractionCount(1 as Duration) // assumes an interaction happened but no PERFORMANCE_ENTRIES_COLLECTED have been triggered
+    interactionCountMock.setInteractionCount(1 as Duration) // assumes an interaction happened but no PERFORMANCE_ENTRIES_COLLECTED have been triggered
     expect(getInteractionToNextPaint()).toEqual({ value: 0 as Duration })
   })
 
@@ -254,14 +254,14 @@ describe('trackInteractionToNextPaint', () => {
 })
 
 describe('trackViewInteractionCount', () => {
-  let interactionCountStub: ReturnType<typeof subInteractionCount>
+  let interactionCountMock: ReturnType<typeof mockInteractionCount>
 
   beforeEach(() => {
-    interactionCountStub = subInteractionCount()
-    interactionCountStub.setInteractionCount(5 as Duration)
+    interactionCountMock = mockInteractionCount()
+    interactionCountMock.setInteractionCount(5 as Duration)
   })
   afterEach(() => {
-    interactionCountStub.clear()
+    interactionCountMock.clear()
   })
 
   it('should count the interaction happening since the time origin when view loading type is initial_load', () => {
@@ -280,14 +280,14 @@ describe('trackViewInteractionCount', () => {
     const { getViewInteractionCount, stopViewInteractionCount } = trackViewInteractionCount(
       ViewLoadingType.ROUTE_CHANGE
     )
-    interactionCountStub.incrementInteractionCount()
+    interactionCountMock.incrementInteractionCount()
     stopViewInteractionCount()
-    interactionCountStub.incrementInteractionCount()
+    interactionCountMock.incrementInteractionCount()
     expect(getViewInteractionCount()).toEqual(1)
   })
 })
 
-function subInteractionCount() {
+function mockInteractionCount() {
   let interactionCount = 0
   const originalInteractionCount = Object.getOwnPropertyDescriptor(window.performance, 'interactionCount')
   Object.defineProperty(window.performance, 'interactionCount', { get: () => interactionCount, configurable: true })

@@ -29,73 +29,73 @@ describe('tracer', () => {
   })
 
   describe('traceXhr', () => {
-    interface XhrStub {
+    interface MockXhr {
       headers: { [name: string]: string }
       setRequestHeader(name: string, value: string): void
     }
-    let xhrStub: XhrStub
+    let xhr: MockXhr
 
     beforeEach(() => {
-      xhrStub = {
-        setRequestHeader(this: XhrStub, name: string, value: string) {
+      xhr = {
+        setRequestHeader(this: MockXhr, name: string, value: string) {
           this.headers[name] = value
         },
-        headers: {} as XhrStub['headers'],
+        headers: {} as MockXhr['headers'],
       }
     })
 
     it('should add traceId and spanId to context and add tracing headers', () => {
       const tracer = startTracer(configuration, sessionManager)
       const context = { ...ALLOWED_DOMAIN_CONTEXT }
-      tracer.traceXhr(context, xhrStub as unknown as XMLHttpRequest)
+      tracer.traceXhr(context, xhr as unknown as XMLHttpRequest)
 
       expect(context.traceId).toBeDefined()
       expect(context.spanId).toBeDefined()
-      expect(xhrStub.headers).toEqual(tracingHeadersFor(context.traceId!, context.spanId!, '1'))
+      expect(xhr.headers).toEqual(tracingHeadersFor(context.traceId!, context.spanId!, '1'))
     })
 
     it('should not trace request on disallowed domain', () => {
       const tracer = startTracer(configuration, sessionManager)
       const context = { ...DISALLOWED_DOMAIN_CONTEXT }
-      tracer.traceXhr(context, xhrStub as unknown as XMLHttpRequest)
+      tracer.traceXhr(context, xhr as unknown as XMLHttpRequest)
 
       expect(context.traceId).toBeUndefined()
       expect(context.spanId).toBeUndefined()
-      expect(xhrStub.headers).toEqual({})
+      expect(xhr.headers).toEqual({})
     })
 
     it('should not trace request during untracked session', () => {
       const tracer = startTracer(configuration, sessionManager.setNotTracked())
       const context = { ...ALLOWED_DOMAIN_CONTEXT }
-      tracer.traceXhr(context, xhrStub as unknown as XMLHttpRequest)
+      tracer.traceXhr(context, xhr as unknown as XMLHttpRequest)
 
       expect(context.traceId).toBeUndefined()
       expect(context.spanId).toBeUndefined()
-      expect(xhrStub.headers).toEqual({})
+      expect(xhr.headers).toEqual({})
     })
 
     it("should trace request with priority '1' when sampled", () => {
       spyOn(Math, 'random').and.callFake(() => 0)
       const tracer = startTracer({ ...configuration, traceSampleRate: 50 }, sessionManager)
       const context = { ...ALLOWED_DOMAIN_CONTEXT }
-      tracer.traceXhr(context, xhrStub as unknown as XMLHttpRequest)
+      tracer.traceXhr(context, xhr as unknown as XMLHttpRequest)
 
       expect(context.traceSampled).toBe(true)
       expect(context.traceId).toBeDefined()
       expect(context.spanId).toBeDefined()
-      expect(xhrStub.headers).toEqual(tracingHeadersFor(context.traceId!, context.spanId!, '1'))
+      expect(xhr.headers).toEqual(tracingHeadersFor(context.traceId!, context.spanId!, '1'))
     })
 
     it("should trace request with priority '0' when not sampled", () => {
       spyOn(Math, 'random').and.callFake(() => 1)
       const tracer = startTracer({ ...configuration, traceSampleRate: 50 }, sessionManager)
       const context = { ...ALLOWED_DOMAIN_CONTEXT }
-      tracer.traceXhr(context, xhrStub as unknown as XMLHttpRequest)
+      tracer.traceXhr(context, xhr as unknown as XMLHttpRequest)
 
       expect(context.traceSampled).toBe(false)
       expect(context.traceId).toBeDefined()
       expect(context.spanId).toBeDefined()
-      expect(xhrStub.headers).toEqual(tracingHeadersFor(context.traceId!, context.spanId!, '0'))
+      expect(xhr.headers).toEqual(tracingHeadersFor(context.traceId!, context.spanId!, '0'))
     })
 
     it("should trace request with sampled set to '0' in OTel headers when not sampled", () => {
@@ -109,9 +109,9 @@ describe('tracer', () => {
 
       const tracer = startTracer(configurationWithAllOtelHeaders, sessionManager)
       const context = { ...ALLOWED_DOMAIN_CONTEXT }
-      tracer.traceXhr(context, xhrStub as unknown as XMLHttpRequest)
+      tracer.traceXhr(context, xhr as unknown as XMLHttpRequest)
 
-      expect(xhrStub.headers).toEqual(
+      expect(xhr.headers).toEqual(
         jasmine.objectContaining({
           b3: jasmine.stringMatching(/^[0-9a-f]{16}-[0-9a-f]{16}-0$/),
           traceparent: jasmine.stringMatching(/^[0-9a-f]{2}-[0-9a-f]{32}-[0-9a-f]{16}-00$/),
@@ -129,7 +129,7 @@ describe('tracer', () => {
           (origin: string) => origin === 'http://dynamic.com',
         ],
       })!
-      const stub = xhrStub as unknown as XMLHttpRequest
+      const stub = xhr as unknown as XMLHttpRequest
 
       const tracer = startTracer(configurationWithTracingUrls, sessionManager)
 
@@ -157,9 +157,9 @@ describe('tracer', () => {
 
       const tracer = startTracer(configurationWithb3multi, sessionManager)
       const context = { ...ALLOWED_DOMAIN_CONTEXT }
-      tracer.traceXhr(context, xhrStub as unknown as XMLHttpRequest)
+      tracer.traceXhr(context, xhr as unknown as XMLHttpRequest)
 
-      expect(xhrStub.headers).toEqual(
+      expect(xhr.headers).toEqual(
         jasmine.objectContaining({
           'X-B3-TraceId': jasmine.stringMatching(/^[0-9a-f]{16}$/),
           'X-B3-SpanId': jasmine.stringMatching(/^[0-9a-f]{16}$/),
@@ -167,10 +167,10 @@ describe('tracer', () => {
         })
       )
 
-      expect(xhrStub.headers['x-datadog-origin']).toBeUndefined()
-      expect(xhrStub.headers['x-datadog-parent-id']).toBeUndefined()
-      expect(xhrStub.headers['x-datadog-trace-id']).toBeUndefined()
-      expect(xhrStub.headers['x-datadog-sampling-priority']).toBeUndefined()
+      expect(xhr.headers['x-datadog-origin']).toBeUndefined()
+      expect(xhr.headers['x-datadog-parent-id']).toBeUndefined()
+      expect(xhr.headers['x-datadog-trace-id']).toBeUndefined()
+      expect(xhr.headers['x-datadog-sampling-priority']).toBeUndefined()
     })
 
     it('should add headers for B3 (single) and tracecontext propagators', () => {
@@ -181,9 +181,9 @@ describe('tracer', () => {
 
       const tracer = startTracer(configurationWithB3andTracecontext, sessionManager)
       const context = { ...ALLOWED_DOMAIN_CONTEXT }
-      tracer.traceXhr(context, xhrStub as unknown as XMLHttpRequest)
+      tracer.traceXhr(context, xhr as unknown as XMLHttpRequest)
 
-      expect(xhrStub.headers).toEqual(
+      expect(xhr.headers).toEqual(
         jasmine.objectContaining({
           b3: jasmine.stringMatching(/^[0-9a-f]{16}-[0-9a-f]{16}-1$/),
           traceparent: jasmine.stringMatching(/^[0-9a-f]{2}-[0-9a-f]{32}-[0-9a-f]{16}-01$/),
@@ -199,12 +199,12 @@ describe('tracer', () => {
 
       const tracer = startTracer(configurationWithoutHeaders, sessionManager)
       const context = { ...ALLOWED_DOMAIN_CONTEXT }
-      tracer.traceXhr(context, xhrStub as unknown as XMLHttpRequest)
+      tracer.traceXhr(context, xhr as unknown as XMLHttpRequest)
 
-      expect(xhrStub.headers['b3']).toBeUndefined()
-      expect(xhrStub.headers['traceparent']).toBeUndefined()
-      expect(xhrStub.headers['x-datadog-trace-id']).toBeUndefined()
-      expect(xhrStub.headers['X-B3-TraceId']).toBeUndefined()
+      expect(xhr.headers['b3']).toBeUndefined()
+      expect(xhr.headers['traceparent']).toBeUndefined()
+      expect(xhr.headers['x-datadog-trace-id']).toBeUndefined()
+      expect(xhr.headers['X-B3-TraceId']).toBeUndefined()
     })
 
     it('should not add any headers when trace not sampled and config set to sampled', () => {
@@ -216,10 +216,10 @@ describe('tracer', () => {
 
       const tracer = startTracer(configurationWithInjectionParam, sessionManager)
       const context = { ...ALLOWED_DOMAIN_CONTEXT }
-      tracer.traceXhr(context, xhrStub as unknown as XMLHttpRequest)
+      tracer.traceXhr(context, xhr as unknown as XMLHttpRequest)
 
-      expect(xhrStub.headers['x-datadog-trace-id']).toBeUndefined()
-      expect(xhrStub.headers['x-datadog-sampling-priority']).toBeUndefined()
+      expect(xhr.headers['x-datadog-trace-id']).toBeUndefined()
+      expect(xhr.headers['x-datadog-sampling-priority']).toBeUndefined()
     })
 
     it('should add headers when trace sampled and config set to sampled', () => {
@@ -231,10 +231,10 @@ describe('tracer', () => {
 
       const tracer = startTracer(configurationWithInjectionParam, sessionManager)
       const context = { ...ALLOWED_DOMAIN_CONTEXT }
-      tracer.traceXhr(context, xhrStub as unknown as XMLHttpRequest)
+      tracer.traceXhr(context, xhr as unknown as XMLHttpRequest)
 
-      expect(xhrStub.headers['x-datadog-trace-id']).toBeDefined()
-      expect(xhrStub.headers['x-datadog-sampling-priority']).toBeDefined()
+      expect(xhr.headers['x-datadog-trace-id']).toBeDefined()
+      expect(xhr.headers['x-datadog-sampling-priority']).toBeDefined()
     })
 
     it('should add headers when trace not sampled and config set to all', () => {
@@ -246,10 +246,10 @@ describe('tracer', () => {
 
       const tracer = startTracer(configurationWithInjectionParam, sessionManager)
       const context = { ...ALLOWED_DOMAIN_CONTEXT }
-      tracer.traceXhr(context, xhrStub as unknown as XMLHttpRequest)
+      tracer.traceXhr(context, xhr as unknown as XMLHttpRequest)
 
-      expect(xhrStub.headers['x-datadog-trace-id']).toBeDefined()
-      expect(xhrStub.headers['x-datadog-sampling-priority']).toBeDefined()
+      expect(xhr.headers['x-datadog-trace-id']).toBeDefined()
+      expect(xhr.headers['x-datadog-sampling-priority']).toBeDefined()
     })
 
     it('should ignore wrong propagator types', () => {
@@ -260,12 +260,12 @@ describe('tracer', () => {
 
       const tracer = startTracer(configurationWithBadParams, sessionManager)
       const context = { ...ALLOWED_DOMAIN_CONTEXT }
-      tracer.traceXhr(context, xhrStub as unknown as XMLHttpRequest)
+      tracer.traceXhr(context, xhr as unknown as XMLHttpRequest)
 
-      expect(xhrStub.headers['b3']).toBeUndefined()
-      expect(xhrStub.headers['traceparent']).toBeUndefined()
-      expect(xhrStub.headers['x-datadog-trace-id']).toBeUndefined()
-      expect(xhrStub.headers['X-B3-TraceId']).toBeUndefined()
+      expect(xhr.headers['b3']).toBeUndefined()
+      expect(xhr.headers['traceparent']).toBeUndefined()
+      expect(xhr.headers['x-datadog-trace-id']).toBeUndefined()
+      expect(xhr.headers['X-B3-TraceId']).toBeUndefined()
     })
 
     it('should display an error when a matching function throws', () => {
@@ -281,7 +281,7 @@ describe('tracer', () => {
 
       const tracer = startTracer(configurationWithBadParams, sessionManager)
       const context = { ...ALLOWED_DOMAIN_CONTEXT }
-      tracer.traceXhr(context, xhrStub as unknown as XMLHttpRequest)
+      tracer.traceXhr(context, xhr as unknown as XMLHttpRequest)
 
       expect(displaySpy).toHaveBeenCalledTimes(1)
     })

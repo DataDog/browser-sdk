@@ -12,7 +12,7 @@ import {
   createTrackingConsentState,
   TrackingConsent,
 } from '@datadog/browser-core'
-import { createNewEvent, interceptRequests, initEventBridgeStub } from '@datadog/browser-core/test'
+import { createNewEvent, interceptRequests, mockEventBridge } from '@datadog/browser-core/test'
 import type { RumSessionManagerMock, TestSetupBuilder } from '../../test'
 import { createPerformanceEntry, createRumSessionManagerMock, noopRecorderApi, setup } from '../../test'
 import { RumPerformanceEntryType } from '../browser/performanceCollection'
@@ -354,8 +354,8 @@ describe('view events', () => {
   })
 
   it('sends a view update on page unload when bridge is present', () => {
-    const eventBridgeStub = initEventBridgeStub()
-    const sendSpy = spyOn(eventBridgeStub, 'send')
+    const eventBridge = mockEventBridge()
+    const sendSpy = spyOn(eventBridge, 'send')
 
     const VIEW_DURATION = ONE_SECOND as Duration
 

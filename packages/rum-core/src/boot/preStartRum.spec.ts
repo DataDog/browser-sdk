@@ -15,7 +15,7 @@ import {
 import type { Clock } from '@datadog/browser-core/test'
 import {
   cleanupSyntheticsWorkerValues,
-  initEventBridgeStub,
+  mockEventBridge,
   interceptRequests,
   mockClock,
   mockExperimentalFeatures,
@@ -112,21 +112,21 @@ describe('preStartRum', () => {
 
     describe('if event bridge present', () => {
       it('init should accept empty application id and client token', () => {
-        initEventBridgeStub()
+        mockEventBridge()
         const hybridInitConfiguration: HybridInitConfiguration = {}
         strategy.init(hybridInitConfiguration as RumInitConfiguration, PUBLIC_API)
         expect(display.error).not.toHaveBeenCalled()
       })
 
       it('should force session sample rate to 100', () => {
-        initEventBridgeStub()
+        mockEventBridge()
         const invalidConfiguration: HybridInitConfiguration = { sessionSampleRate: 50 }
         strategy.init(invalidConfiguration as RumInitConfiguration, PUBLIC_API)
         expect(strategy.initConfiguration?.sessionSampleRate).toEqual(100)
       })
 
       it('should set the default privacy level received from the bridge if the not provided in the init configuration', () => {
-        initEventBridgeStub({ privacyLevel: DefaultPrivacyLevel.ALLOW })
+        mockEventBridge({ privacyLevel: DefaultPrivacyLevel.ALLOW })
         const hybridInitConfiguration: HybridInitConfiguration = {}
         strategy.init(hybridInitConfiguration as RumInitConfiguration, PUBLIC_API)
         expect((strategy.initConfiguration as RumInitConfiguration)?.defaultPrivacyLevel).toEqual(
@@ -135,7 +135,7 @@ describe('preStartRum', () => {
       })
 
       it('should set the default privacy level from the init configuration if provided', () => {
-        initEventBridgeStub({ privacyLevel: DefaultPrivacyLevel.ALLOW })
+        mockEventBridge({ privacyLevel: DefaultPrivacyLevel.ALLOW })
         const hybridInitConfiguration: HybridInitConfiguration = { defaultPrivacyLevel: DefaultPrivacyLevel.MASK }
         strategy.init(hybridInitConfiguration as RumInitConfiguration, PUBLIC_API)
         expect((strategy.initConfiguration as RumInitConfiguration)?.defaultPrivacyLevel).toEqual(
@@ -144,7 +144,7 @@ describe('preStartRum', () => {
       })
 
       it('should set the default privacy level to "mask" if not provided in init configuration nor the bridge', () => {
-        initEventBridgeStub({ privacyLevel: undefined })
+        mockEventBridge({ privacyLevel: undefined })
         const hybridInitConfiguration: HybridInitConfiguration = {}
         strategy.init(hybridInitConfiguration as RumInitConfiguration, PUBLIC_API)
         expect((strategy.initConfiguration as RumInitConfiguration)?.defaultPrivacyLevel).toEqual(
@@ -153,7 +153,7 @@ describe('preStartRum', () => {
       })
 
       it('should initialize even if session cannot be handled', () => {
-        initEventBridgeStub()
+        mockEventBridge()
         spyOnProperty(document, 'cookie', 'get').and.returnValue('')
         strategy.init(DEFAULT_INIT_CONFIGURATION, PUBLIC_API)
         expect(doStartRumSpy).toHaveBeenCalled()
@@ -267,7 +267,7 @@ describe('preStartRum', () => {
         })
 
         it('if message bridge is present, does not create a deflate worker instance', () => {
-          initEventBridgeStub()
+          mockEventBridge()
 
           strategy.init(
             {
@@ -434,7 +434,7 @@ describe('preStartRum', () => {
         it('should start with the remote configuration when a remoteConfigurationId is provided', (done) => {
           mockExperimentalFeatures([ExperimentalFeature.REMOTE_CONFIGURATION])
 
-          interceptor.withStubXhr((xhr) => {
+          interceptor.withMockXhr((xhr) => {
             xhr.complete(200, '{"sessionSampleRate":50}')
 
             expect(doStartRumSpy.calls.mostRecent().args[0].sessionSampleRate).toEqual(50)
@@ -570,7 +570,7 @@ describe('preStartRum', () => {
 
     it('returns the initConfiguration with the remote configuration when a remoteConfigurationId is provided', (done) => {
       addExperimentalFeatures([ExperimentalFeature.REMOTE_CONFIGURATION])
-      interceptor.withStubXhr((xhr) => {
+      interceptor.withMockXhr((xhr) => {
         xhr.complete(200, '{"sessionSampleRate":50}')
 
         expect(strategy.initConfiguration?.sessionSampleRate).toEqual(50)

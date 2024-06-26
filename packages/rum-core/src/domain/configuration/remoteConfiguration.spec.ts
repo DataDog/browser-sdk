@@ -32,7 +32,7 @@ describe('remoteConfiguration', () => {
     })
 
     it('should fetch the remote configuration', (done) => {
-      interceptor.withStubXhr((xhr) => {
+      interceptor.withMockXhr((xhr) => {
         xhr.complete(200, '{"sessionSampleRate":50,"sessionReplaySampleRate":50,"defaultPrivacyLevel":"allow"}')
 
         expect(remoteConfigurationCallback).toHaveBeenCalledWith({
@@ -47,7 +47,7 @@ describe('remoteConfiguration', () => {
     })
 
     it('should print an error if the fetching as failed', (done) => {
-      interceptor.withStubXhr((xhr) => {
+      interceptor.withMockXhr((xhr) => {
         xhr.complete(500)
         expect(remoteConfigurationCallback).not.toHaveBeenCalled()
         expect(displayErrorSpy).toHaveBeenCalledOnceWith('Error fetching the remote configuration.')

@@ -16,8 +16,8 @@ import {
 import type { Clock, Request } from '@datadog/browser-core/test'
 import {
   interceptRequests,
-  stubEndpointBuilder,
-  initEventBridgeStub,
+  mockEndpointBuilder,
+  mockEventBridge,
   cleanupSyntheticsWorkerValues,
   mockSyntheticsWorkerValues,
   registerCleanupTask,
@@ -69,7 +69,7 @@ describe('logs', () => {
   beforeEach(() => {
     baseConfiguration = {
       ...validateAndBuildLogsConfiguration(initConfiguration)!,
-      logsEndpointBuilder: stubEndpointBuilder('https://localhost/v1/input/log'),
+      logsEndpointBuilder: mockEndpointBuilder('https://localhost/v1/input/log'),
       batchMessagesLimit: 1,
     }
     logger = new Logger((...params) => handleLog(...params), createCustomerDataTracker(noop))
@@ -136,7 +136,7 @@ describe('logs', () => {
     })
 
     it('should send bridge event when bridge is present', () => {
-      const sendSpy = spyOn(initEventBridgeStub(), 'send')
+      const sendSpy = spyOn(mockEventBridge(), 'send')
       ;({ handleLog, stop: stopLogs } = startLogs(
         initConfiguration,
         baseConfiguration,
@@ -159,7 +159,7 @@ describe('logs', () => {
 
   describe('sampling', () => {
     it('should be applied when event bridge is present', () => {
-      const sendSpy = spyOn(initEventBridgeStub(), 'send')
+      const sendSpy = spyOn(mockEventBridge(), 'send')
 
       let configuration = { ...baseConfiguration, sessionSampleRate: 0 }
       ;({ handleLog, stop: stopLogs } = startLogs(
@@ -222,7 +222,7 @@ describe('logs', () => {
     })
 
     it('does not create a session if event bridge is present', () => {
-      initEventBridgeStub()
+      mockEventBridge()
       ;({ handleLog, stop: stopLogs } = startLogs(
         initConfiguration,
         baseConfiguration,
