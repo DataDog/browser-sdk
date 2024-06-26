@@ -13,6 +13,8 @@ import {
   isExperimentalFeatureEnabled,
   initFeatureFlags,
   addTelemetryConfiguration,
+  initFetchObservable,
+  initXhrObservable,
 } from '@datadog/browser-core'
 import type { TrackingConsentState, DeflateWorker } from '@datadog/browser-core'
 import {
@@ -96,6 +98,10 @@ export function createPreStartStrategy(
       return
     }
 
+    // Instrumuent fetch and XHR to track network requests
+    initFetchObservable()
+    initXhrObservable(configuration)
+
     if (!eventBridgeAvailable && !configuration.sessionStoreStrategyType) {
       display.warn('No storage available for session. We will not send any data.')
       return
@@ -120,7 +126,7 @@ export function createPreStartStrategy(
     trackingConsentState.tryToInit(configuration.trackingConsent)
     tryStartRum()
   }
-
+  
   return {
     init(initConfiguration, publicApi) {
       if (!initConfiguration) {
