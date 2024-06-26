@@ -338,11 +338,13 @@ describe('validateAndBuildRumConfiguration', () => {
     it('defaults to false', () => {
       expect(validateAndBuildRumConfiguration(DEFAULT_INIT_CONFIGURATION)!.enablePrivacyForActionName).toBeFalse()
     })
-    it('is false when the feature is not enabled and the option is true', () => {
+
+    it('is true when the option is true', () => {
+      expect(validateAndBuildRumConfiguration(DEFAULT_INIT_CONFIGURATION)!.enablePrivacyForActionName).toBeFalse()
       expect(
         validateAndBuildRumConfiguration({ ...DEFAULT_INIT_CONFIGURATION, enablePrivacyForActionName: true })!
           .enablePrivacyForActionName
-      ).toBeFalse()
+      ).toBeTrue()
     })
   })
 
