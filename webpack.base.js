@@ -6,7 +6,7 @@ const { buildEnvKeys, getBuildEnvValue } = require('./scripts/lib/build-env')
 
 const tsconfigPath = path.join(__dirname, 'tsconfig.webpack.json')
 
-module.exports = ({ entry, mode, filename, types, ignoreWarnings, keepBuildEnvVariables }) => ({
+module.exports = ({ entry, mode, filename, types, keepBuildEnvVariables }) => ({
   entry,
   mode,
   output: {
@@ -33,7 +33,6 @@ module.exports = ({ entry, mode, filename, types, ignoreWarnings, keepBuildEnvVa
       },
     ],
   },
-  ignoreWarnings,
 
   resolve: {
     extensions: ['.ts', '.js'],
