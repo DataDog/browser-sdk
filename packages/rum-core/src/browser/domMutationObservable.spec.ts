@@ -117,7 +117,6 @@ describe('domMutationObservable', () => {
     })
 
     afterEach(() => {
-      zoneJs.restore()
       window.MutationObserver = OriginalMutationObserverConstructor
     })
 
