@@ -40,7 +40,7 @@ module.exports = {
   singleRun: true,
   webpack: {
     stats: 'minimal',
-    module: webpackConfig.module,
+    module: overrideTsLoaderRule(webpackConfig.module),
     resolve: webpackConfig.resolve,
     target: webpackConfig.target,
     devtool: false,
@@ -53,6 +53,11 @@ module.exports = {
       runtimeChunk: false,
       splitChunks: false,
     },
+    ignoreWarnings: [
+      // we will see warnings about missing exports in some files
+      // this is because we set transpileOnly option in ts-loader
+      { message: /export .* was not found in/ }
+    ],
   },
   webpackMiddleware: {
     stats: 'errors-only',
@@ -65,4 +70,21 @@ module.exports = {
   // Socket.io) does not consider that the browser crashed.
   pingTimeout: 60_000,
   browserNoActivityTimeout: 60_000,
+}
+
+function overrideTsLoaderRule(module) {
+  // We set transpileOnly to true to avoid type checking in unit tests
+  module.rules = module.rules.map((rule) => {
+    if (rule.loader === 'ts-loader') {
+      return {
+        ...rule,
+        options: {
+          ...rule.options,
+          transpileOnly: true,
+        },
+      }
+    }
+    return rule
+  })
+  return module
 }
