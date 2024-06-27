@@ -1,6 +1,6 @@
 import type { RelativeTime } from '@datadog/browser-core'
 import { DOM_EVENT, resetExperimentalFeatures } from '@datadog/browser-core'
-import { restorePageVisibility, setPageVisibility, createNewEvent } from '@datadog/browser-core/test'
+import { setPageVisibility, createNewEvent } from '@datadog/browser-core/test'
 import { RumPerformanceEntryType } from '../../../browser/performanceCollection'
 import type { TestSetupBuilder } from '../../../../test'
 import { appendElement, createPerformanceEntry, setup } from '../../../../test'
@@ -39,7 +39,6 @@ describe('trackLargestContentfulPaint', () => {
   })
 
   afterEach(() => {
-    restorePageVisibility()
     resetExperimentalFeatures()
   })
 
