@@ -150,9 +150,7 @@ function FacetValue({
           w="40px"
           disabled={!!(onlyFacet && onlyFacet !== facetValue)}
           onClick={() => {
-            onExcludedFacetValuesChange(
-              toggleOnlyAllFacetValue(facet, isOnly, allFacetValues, parentList, facetValue)
-            )
+            onExcludedFacetValuesChange(toggleOnlyAllFacetValue(facet, isOnly, allFacetValues, parentList, facetValue))
             setOnlyFacet(isOnly ? null : facetValue)
           }}
         >
