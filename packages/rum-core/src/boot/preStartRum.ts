@@ -98,10 +98,6 @@ export function createPreStartStrategy(
       return
     }
 
-    // Instrumuent fetch and XHR to track network requests
-    initFetchObservable()
-    initXhrObservable(configuration)
-
     if (!eventBridgeAvailable && !configuration.sessionStoreStrategyType) {
       display.warn('No storage available for session. We will not send any data.')
       return
@@ -123,6 +119,13 @@ export function createPreStartStrategy(
     }
 
     cachedConfiguration = configuration
+    // Instrumuent fetch and XHR to track network requests
+    // This is needed in case the consent is not granted and some cutsomer
+    // library (Apollo Client) is storing uninstrumented fetch or XHR to be used later
+    // The subscrption is needed so that the instrumentation process is completed
+    initFetchObservable().subscribe(noop)
+    initXhrObservable(configuration).subscribe(noop)
+
     trackingConsentState.tryToInit(configuration.trackingConsent)
     tryStartRum()
   }

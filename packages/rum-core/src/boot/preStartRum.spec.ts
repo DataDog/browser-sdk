@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/unbound-method */
 import type { DeflateWorker, RelativeTime, TimeStamp, TrackingConsentState } from '@datadog/browser-core'
 import {
   display,
@@ -37,6 +38,11 @@ const AUTO_CONFIGURATION = { ...DEFAULT_INIT_CONFIGURATION }
 const MANUAL_CONFIGURATION = { ...AUTO_CONFIGURATION, trackViewsManually: true }
 const FAKE_WORKER = {} as DeflateWorker
 const PUBLIC_API = {} as RumPublicApi
+const oldFetch = window.fetch
+const oldXHROpen = XMLHttpRequest.prototype.open
+const oldXHRSend = XMLHttpRequest.prototype.send
+const oldXHRAbort = XMLHttpRequest.prototype.abort
+
 
 describe('preStartRum', () => {
   let doStartRumSpy: jasmine.Spy<
@@ -691,6 +697,22 @@ describe('preStartRum', () => {
     beforeEach(() => {
       trackingConsentState = createTrackingConsentState()
       strategy = createPreStartStrategy({}, getCommonContextSpy, trackingConsentState, doStartRumSpy)
+    })
+
+    it('should instrument fetch and XHR even if tracking consent is not granted', () => {
+      strategy.init(
+        {
+          ...DEFAULT_INIT_CONFIGURATION,
+          trackingConsent: TrackingConsent.NOT_GRANTED,
+        },
+        PUBLIC_API
+      )
+
+      expect(window.fetch).not.toBe(oldFetch)
+
+      expect(XMLHttpRequest.prototype.open).not.toBe(oldXHROpen)
+      expect(XMLHttpRequest.prototype.send).not.toBe(oldXHRSend)
+      expect(XMLHttpRequest.prototype.abort).not.toBe(oldXHRAbort)
     })
 
     it('does not start rum if tracking consent is not granted at init', () => {
