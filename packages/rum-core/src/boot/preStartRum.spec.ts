@@ -43,7 +43,6 @@ const oldXHROpen = XMLHttpRequest.prototype.open
 const oldXHRSend = XMLHttpRequest.prototype.send
 const oldXHRAbort = XMLHttpRequest.prototype.abort
 
-
 describe('preStartRum', () => {
   let doStartRumSpy: jasmine.Spy<
     (
