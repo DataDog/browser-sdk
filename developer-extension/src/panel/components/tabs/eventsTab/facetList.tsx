@@ -15,6 +15,7 @@ export function FacetList({
   onExcludedFacetValuesChange: (newExcludedFacetValues: ExcludedFacetValues) => void
 }) {
   const [allFacetValues, setAllFacetValues] = React.useState<ExcludedFacetValues>({})
+  const [selectedFacet, setSelectedFacet] = React.useState<FacetValue | null>(null)
 
   return (
     <FacetField
@@ -38,6 +39,8 @@ export function FacetList({
       }}
       allFacetValues={allFacetValues}
       parentList={[]}
+      selectedFacet={selectedFacet}
+      setSelectedFacet={setSelectedFacet}
     />
   )
 }
@@ -51,6 +54,8 @@ function FacetField({
   addFacetValues,
   allFacetValues,
   parentList,
+  selectedFacet,
+  setSelectedFacet,
 }: {
   facet: Facet
   depth: number
@@ -60,6 +65,8 @@ function FacetField({
   addFacetValues: (facet: Facet, facetValue: FacetValue) => void
   allFacetValues: ExcludedFacetValues
   parentList: string[]
+  selectedFacet: FacetValue | null
+  setSelectedFacet: (facet: FacetValue | null) => void
 }) {
   const facetValueCounts = facetRegistry.getFacetValueCounts(facet.path)
 
@@ -84,6 +91,8 @@ function FacetField({
           addFacetValues={addFacetValues}
           allFacetValues={allFacetValues}
           parentList={parentList.includes(facetValue) ? parentList : [...parentList, facetValue]}
+          selectedFacet={selectedFacet}
+          setSelectedFacet={setSelectedFacet}
         />
       ))}
     </Box>
@@ -103,6 +112,8 @@ function FacetValue({
   addFacetValues,
   allFacetValues,
   parentList,
+  selectedFacet,
+  setSelectedFacet,
 }: {
   facet: Facet
   facetValue: FacetValue
@@ -114,12 +125,15 @@ function FacetValue({
   addFacetValues: (facet: Facet, facetValue: FacetValue) => void
   allFacetValues: ExcludedFacetValues
   parentList: string[]
+  selectedFacet: FacetValue | null
+  setSelectedFacet: (facet: FacetValue | null) => void
 }) {
   addFacetValues(facet, facetValue)
 
   const isTopLevel = depth === 0
   const isSelected = !excludedFacetValues[facet.path] || !excludedFacetValues[facet.path].includes(facetValue)
-  const [isOnly, setIsOnly] = React.useState(false)
+  // const [isOnly, setIsOnly] = React.useState(false)
+  const isOnly = selectedFacet === facetValue
   const value = (
     <Flex justify="space-between" mt={isTopLevel ? 'xs' : SPACE_BETWEEN_CHECKBOX}>
       <Checkbox
@@ -131,23 +145,25 @@ function FacetValue({
       />
       <Flex justify="space-between" gap="md">
         <Text>{facetValueCount}</Text>
-
-        {excludedFacetValues[facet.path]?.includes(facetValue) ? null : (
-          // show only button when the facet value is not excluded
-          <Button
-            variant={isOnly ? 'filled' : 'light'}
-            size="compact-xs"
-            w="40px"
-            onClick={() => {
-              onExcludedFacetValuesChange(
-                toggleOnlyAllFacetValue(facet, isOnly, allFacetValues, parentList, facetValue)
-              )
-              setIsOnly(!isOnly)
-            }}
-          >
-            {isOnly ? 'all' : 'only'}
-          </Button>
-        )}
+        <Button
+          variant={isOnly ? 'filled' : 'light'}
+          size="compact-xs"
+          w="40px"
+          disabled={!!(selectedFacet && selectedFacet !== facetValue)}
+          onClick={() => {
+            onExcludedFacetValuesChange(
+              toggleOnlyAllFacetValue(facet, selectedFacet === facetValue, allFacetValues, parentList, facetValue)
+            )
+            // setIsOnly(!isOnly)
+            if (selectedFacet === null) {
+              setSelectedFacet(facetValue)
+            } else {
+              setSelectedFacet(null)
+            }
+          }}
+        >
+          {selectedFacet === facetValue ? 'all' : 'only'}
+        </Button>
       </Flex>
     </Flex>
   )
@@ -167,6 +183,8 @@ function FacetValue({
             addFacetValues={addFacetValues}
             allFacetValues={allFacetValues}
             parentList={parentList.includes(facetValue) ? parentList : [...parentList, facetValue]}
+            selectedFacet={selectedFacet}
+            setSelectedFacet={setSelectedFacet}
           />
         ))}
       </Box>
