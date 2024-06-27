@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/unbound-method */
 import type { DeflateWorker, RelativeTime, TimeStamp, TrackingConsentState } from '@datadog/browser-core'
 import {
   display,
@@ -12,6 +11,8 @@ import {
   addExperimentalFeatures,
   ExperimentalFeature,
   resetExperimentalFeatures,
+  resetFetchObservable,
+  resetXhrObservable,
 } from '@datadog/browser-core'
 import type { Clock } from '@datadog/browser-core/test'
 import {
@@ -38,10 +39,6 @@ const AUTO_CONFIGURATION = { ...DEFAULT_INIT_CONFIGURATION }
 const MANUAL_CONFIGURATION = { ...AUTO_CONFIGURATION, trackViewsManually: true }
 const FAKE_WORKER = {} as DeflateWorker
 const PUBLIC_API = {} as RumPublicApi
-const oldFetch = window.fetch
-const oldXHROpen = XMLHttpRequest.prototype.open
-const oldXHRSend = XMLHttpRequest.prototype.send
-const oldXHRAbort = XMLHttpRequest.prototype.abort
 
 describe('preStartRum', () => {
   let doStartRumSpy: jasmine.Spy<
@@ -56,6 +53,11 @@ describe('preStartRum', () => {
   beforeEach(() => {
     doStartRumSpy = jasmine.createSpy()
     getCommonContextSpy = jasmine.createSpy()
+  })
+
+  afterEach(() => {
+    resetFetchObservable()
+    resetXhrObservable()
   })
 
   describe('configuration validation', () => {
@@ -699,6 +701,13 @@ describe('preStartRum', () => {
     })
 
     it('should instrument fetch and XHR even if tracking consent is not granted', () => {
+      const originalFetch = window.fetch
+      /* eslint-disable @typescript-eslint/unbound-method */
+      const originalXHROpen = XMLHttpRequest.prototype.open
+      const originalXHRSend = XMLHttpRequest.prototype.send
+      const originalXHRAbort = XMLHttpRequest.prototype.abort
+      /* eslint-disable @typescript-eslint/unbound-method */
+
       strategy.init(
         {
           ...DEFAULT_INIT_CONFIGURATION,
@@ -707,11 +716,13 @@ describe('preStartRum', () => {
         PUBLIC_API
       )
 
-      expect(window.fetch).not.toBe(oldFetch)
+      expect(window.fetch).not.toBe(originalFetch)
 
-      expect(XMLHttpRequest.prototype.open).not.toBe(oldXHROpen)
-      expect(XMLHttpRequest.prototype.send).not.toBe(oldXHRSend)
-      expect(XMLHttpRequest.prototype.abort).not.toBe(oldXHRAbort)
+      /* eslint-disable @typescript-eslint/unbound-method */
+      expect(XMLHttpRequest.prototype.open).not.toBe(originalXHROpen)
+      expect(XMLHttpRequest.prototype.send).not.toBe(originalXHRSend)
+      expect(XMLHttpRequest.prototype.abort).not.toBe(originalXHRAbort)
+      /* eslint-disable @typescript-eslint/unbound-method */
     })
 
     it('does not start rum if tracking consent is not granted at init', () => {
