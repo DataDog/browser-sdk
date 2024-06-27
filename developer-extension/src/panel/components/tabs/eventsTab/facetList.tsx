@@ -15,7 +15,7 @@ export function FacetList({
   onExcludedFacetValuesChange: (newExcludedFacetValues: ExcludedFacetValues) => void
 }) {
   const [allFacetValues, setAllFacetValues] = React.useState<ExcludedFacetValues>({})
-  const [selectedFacet, setSelectedFacet] = React.useState<FacetValue | null>(null)
+  const [onlyFacet, setOnlyFacet] = React.useState<FacetValue | null>(null)
 
   return (
     <FacetField
@@ -39,8 +39,8 @@ export function FacetList({
       }}
       allFacetValues={allFacetValues}
       parentList={[]}
-      selectedFacet={selectedFacet}
-      setSelectedFacet={setSelectedFacet}
+      onlyFacet={onlyFacet}
+      setOnlyFacet={setOnlyFacet}
     />
   )
 }
@@ -54,8 +54,8 @@ function FacetField({
   addFacetValues,
   allFacetValues,
   parentList,
-  selectedFacet,
-  setSelectedFacet,
+  onlyFacet,
+  setOnlyFacet,
 }: {
   facet: Facet
   depth: number
@@ -65,8 +65,8 @@ function FacetField({
   addFacetValues: (facet: Facet, facetValue: FacetValue) => void
   allFacetValues: ExcludedFacetValues
   parentList: string[]
-  selectedFacet: FacetValue | null
-  setSelectedFacet: (facet: FacetValue | null) => void
+  onlyFacet: FacetValue | null
+  setOnlyFacet: (facet: FacetValue | null) => void
 }) {
   const facetValueCounts = facetRegistry.getFacetValueCounts(facet.path)
 
@@ -91,8 +91,8 @@ function FacetField({
           addFacetValues={addFacetValues}
           allFacetValues={allFacetValues}
           parentList={parentList.includes(facetValue) ? parentList : [...parentList, facetValue]}
-          selectedFacet={selectedFacet}
-          setSelectedFacet={setSelectedFacet}
+          onlyFacet={onlyFacet}
+          setOnlyFacet={setOnlyFacet}
         />
       ))}
     </Box>
@@ -112,8 +112,8 @@ function FacetValue({
   addFacetValues,
   allFacetValues,
   parentList,
-  selectedFacet,
-  setSelectedFacet,
+  onlyFacet,
+  setOnlyFacet,
 }: {
   facet: Facet
   facetValue: FacetValue
@@ -125,15 +125,14 @@ function FacetValue({
   addFacetValues: (facet: Facet, facetValue: FacetValue) => void
   allFacetValues: ExcludedFacetValues
   parentList: string[]
-  selectedFacet: FacetValue | null
-  setSelectedFacet: (facet: FacetValue | null) => void
+  onlyFacet: FacetValue | null
+  setOnlyFacet: (facet: FacetValue | null) => void
 }) {
   addFacetValues(facet, facetValue)
 
   const isTopLevel = depth === 0
   const isSelected = !excludedFacetValues[facet.path] || !excludedFacetValues[facet.path].includes(facetValue)
-  // const [isOnly, setIsOnly] = React.useState(false)
-  const isOnly = selectedFacet === facetValue
+  const isOnly = onlyFacet === facetValue
   const value = (
     <Flex justify="space-between" mt={isTopLevel ? 'xs' : SPACE_BETWEEN_CHECKBOX}>
       <Checkbox
@@ -149,20 +148,15 @@ function FacetValue({
           variant={isOnly ? 'filled' : 'light'}
           size="compact-xs"
           w="40px"
-          disabled={!!(selectedFacet && selectedFacet !== facetValue)}
+          disabled={!!(onlyFacet && onlyFacet !== facetValue)}
           onClick={() => {
             onExcludedFacetValuesChange(
-              toggleOnlyAllFacetValue(facet, selectedFacet === facetValue, allFacetValues, parentList, facetValue)
+              toggleOnlyAllFacetValue(facet, isOnly, allFacetValues, parentList, facetValue)
             )
-            // setIsOnly(!isOnly)
-            if (selectedFacet === null) {
-              setSelectedFacet(facetValue)
-            } else {
-              setSelectedFacet(null)
-            }
+            setOnlyFacet(isOnly ? null : facetValue)
           }}
         >
-          {selectedFacet === facetValue ? 'all' : 'only'}
+          {isOnly ? 'all' : 'only'}
         </Button>
       </Flex>
     </Flex>
@@ -183,8 +177,8 @@ function FacetValue({
             addFacetValues={addFacetValues}
             allFacetValues={allFacetValues}
             parentList={parentList.includes(facetValue) ? parentList : [...parentList, facetValue]}
-            selectedFacet={selectedFacet}
-            setSelectedFacet={setSelectedFacet}
+            onlyFacet={onlyFacet}
+            setOnlyFacet={setOnlyFacet}
           />
         ))}
       </Box>
