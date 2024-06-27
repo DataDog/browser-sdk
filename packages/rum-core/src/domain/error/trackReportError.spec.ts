@@ -33,7 +33,6 @@ describe('trackReportError', () => {
   afterEach(() => {
     subscription.unsubscribe()
     clock.cleanup()
-    reportingObserver.reset()
   })
 
   it('should track reports', () => {
