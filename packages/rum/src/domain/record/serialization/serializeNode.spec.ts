@@ -663,7 +663,10 @@ describe('serializeNodeWithId', () => {
 
           const cache = new Map()
 
-          serializeNodeWithId(document, DEFAULT_OPTIONS, cache)
+          serializeNodeWithId(document, {
+            ...DEFAULT_OPTIONS,
+            serializationContext: { ...DEFAULT_SERIALIZATION_CONTEXT, styleSheetsCache: cache },
+          })
 
           expect(cache.size).toEqual(2)
         })
@@ -675,10 +678,16 @@ describe('serializeNodeWithId', () => {
           appendElement('<div foo="bar" data-foo="data-bar"></div>', document.body)
 
           const cache = new Map()
-          const spy = spyOn(cache, 'get').and.callThrough()
+          const options = {
+            ...DEFAULT_OPTIONS,
+            serializationContext: { ...DEFAULT_SERIALIZATION_CONTEXT, styleSheetsCache: cache },
+          }
 
-          serializeNodeWithId(document, DEFAULT_OPTIONS, cache)
-          serializeNodeWithId(document, DEFAULT_OPTIONS, cache)
+          const spy = spyOn(cache, 'get').and.callThrough()
+          serializeNodeWithId(document, options)
+          serializeNodeWithId(document, options)
+
+          serializeNodeWithId(document, DEFAULT_OPTIONS)
           expect(spy).toHaveBeenCalledTimes(2)
         })
       })

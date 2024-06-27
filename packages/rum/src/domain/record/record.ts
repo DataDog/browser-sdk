@@ -53,7 +53,7 @@ export function record(options: RecordOptions): RecordAPI {
 
   const shadowRootsController = initShadowRootsController(configuration, emitAndComputeStats, elementsScrollPositions)
 
-  const cache = new Map()
+  const styleSheetsCache = new Map()
 
   const { stop: stopFullSnapshots } = startFullSnapshots(
     elementsScrollPositions,
@@ -62,7 +62,7 @@ export function record(options: RecordOptions): RecordAPI {
     configuration,
     flushMutations,
     (records) => records.forEach((record) => emitAndComputeStats(record)),
-    cache
+    styleSheetsCache
   )
 
   function flushMutations() {
@@ -70,8 +70,27 @@ export function record(options: RecordOptions): RecordAPI {
     mutationTracker.flush()
   }
 
+  function invalidateCache(ids: Array<{ id: number }>) {
+    ids.filter(({ id }) => styleSheetsCache.has(id)).forEach(({ id }) => styleSheetsCache.delete(id))
+  }
+
   const recordIds = initRecordIds()
-  const mutationTracker = trackMutation(emitAndComputeStats, configuration, shadowRootsController, document)
+  const mutationTracker = trackMutation(
+    (record) => {
+      emitAndComputeStats(record)
+
+      // Invalidate the cache if any change happened on cached link or style stylesheet,
+      if (record.data.source === 0) {
+        invalidateCache(record.data.adds.map(({ parentId }) => ({ id: parentId })))
+        invalidateCache(record.data.attributes)
+        invalidateCache(record.data.removes)
+      }
+    },
+    configuration,
+    shadowRootsController,
+    document
+  )
+
   const trackers: Tracker[] = [
     mutationTracker,
     trackMove(configuration, emitAndComputeStats),
@@ -83,8 +102,9 @@ export function record(options: RecordOptions): RecordAPI {
     trackStyleSheet((record) => {
       emitAndComputeStats(record)
 
+      // Invalidate the cache if any change happened on cached link or style stylesheet,
       if (record.data.source === 8) {
-        cache.delete(record.data.id)
+        styleSheetsCache.delete(record.data.id)
       }
     }),
     trackFocus(configuration, emitAndComputeStats),
@@ -101,7 +121,7 @@ export function record(options: RecordOptions): RecordAPI {
       shadowRootsController.stop()
       trackers.forEach((tracker) => tracker.stop())
       stopFullSnapshots()
-      cache.clear()
+      styleSheetsCache.clear()
     },
     flushMutations,
     shadowRootsController,

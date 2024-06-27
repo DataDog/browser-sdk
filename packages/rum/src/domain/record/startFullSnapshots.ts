@@ -16,7 +16,7 @@ export function startFullSnapshots(
   configuration: RumConfiguration,
   flushMutations: () => void,
   fullSnapshotCallback: (records: BrowserRecord[]) => void,
-  cache: SerializedNodeCache
+  styleSheetsCache: SerializedNodeCache
 ) {
   const takeFullSnapshot = (
     timestamp = timeStampNow(),
@@ -24,6 +24,7 @@ export function startFullSnapshots(
       status: SerializationContextStatus.INITIAL_FULL_SNAPSHOT,
       elementsScrollPositions,
       shadowRootsController,
+      styleSheetsCache,
     }
   ) => {
     const { width, height } = getViewportDimension()
@@ -46,7 +47,7 @@ export function startFullSnapshots(
       },
       {
         data: {
-          node: serializeDocument(document, configuration, serializationContext, cache),
+          node: serializeDocument(document, configuration, serializationContext),
           initialOffset: {
             left: getScrollX(),
             top: getScrollY(),
@@ -76,6 +77,7 @@ export function startFullSnapshots(
         shadowRootsController,
         status: SerializationContextStatus.SUBSEQUENT_FULL_SNAPSHOT,
         elementsScrollPositions,
+        styleSheetsCache,
       })
     )
   })

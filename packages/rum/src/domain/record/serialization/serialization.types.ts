@@ -21,16 +21,19 @@ export type SerializationContext =
   | {
       status: SerializationContextStatus.MUTATION
       shadowRootsController: ShadowRootsController
+      styleSheetsCache?: SerializedNodeCache
     }
   | {
       status: SerializationContextStatus.INITIAL_FULL_SNAPSHOT
       elementsScrollPositions: ElementsScrollPositions
       shadowRootsController: ShadowRootsController
+      styleSheetsCache?: SerializedNodeCache
     }
   | {
       status: SerializationContextStatus.SUBSEQUENT_FULL_SNAPSHOT
       elementsScrollPositions: ElementsScrollPositions
       shadowRootsController: ShadowRootsController
+      styleSheetsCache?: SerializedNodeCache
     }
 
 export interface SerializeOptions {
