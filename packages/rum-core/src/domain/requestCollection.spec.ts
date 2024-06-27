@@ -54,7 +54,6 @@ describe('collect fetch', () => {
 
   afterEach(() => {
     stopFetchTracking()
-    mockFetchManager.reset()
     window.onunhandledrejection = null
   })
 
