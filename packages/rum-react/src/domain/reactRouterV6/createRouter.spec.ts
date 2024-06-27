@@ -1,4 +1,3 @@
-import { isIE } from '@datadog/browser-core'
 import { initializeReactPlugin } from '../../../test/initializeReactPlugin'
 import { createMemoryRouter } from './createRouter'
 
@@ -7,10 +6,6 @@ describe('createRouter', () => {
   let router: ReturnType<typeof createMemoryRouter>
 
   beforeEach(() => {
-    if (isIE()) {
-      pending('No support for IE')
-    }
-
     startViewSpy = jasmine.createSpy()
     initializeReactPlugin({
       configuration: {

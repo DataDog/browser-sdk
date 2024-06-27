@@ -1,5 +1,5 @@
 import type { RouteMatch } from 'react-router-dom'
-import { display, endsWith, startsWith } from '@datadog/browser-core'
+import { display } from '@datadog/browser-core'
 import { onReactPluginInit } from '../reactPlugin'
 
 export function startReactRouterView(routeMatches: RouteMatch[]) {
@@ -25,10 +25,10 @@ export function computeViewName(routeMatches: RouteMatch[]) {
       continue
     }
 
-    if (startsWith(path, '/')) {
+    if (path.startsWith('/')) {
       viewName = path
     } else {
-      if (!endsWith(viewName, '/')) {
+      if (!viewName.endsWith('/')) {
         viewName += '/'
       }
       viewName += path

@@ -4,7 +4,6 @@ const karmaBaseConf = require('./karma.base.conf')
 module.exports = function (config) {
   config.set({
     ...karmaBaseConf,
-    files: [...karmaBaseConf.files, 'developer-extension/src/**/*.spec.ts'],
     reporters: ['coverage-istanbul', ...karmaBaseConf.reporters],
     browsers: ['ChromeHeadlessNoSandbox'],
     coverageIstanbulReporter: {
@@ -16,10 +15,6 @@ module.exports = function (config) {
         base: 'ChromeHeadless',
         flags: ['--no-sandbox'],
       },
-    },
-    preprocessors: {
-      ...karmaBaseConf.preprocessors,
-      'developer-extension/src/**/*.ts': ['webpack', 'sourcemap'],
     },
     webpack: {
       ...karmaBaseConf.webpack,

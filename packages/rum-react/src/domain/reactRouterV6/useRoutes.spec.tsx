@@ -3,7 +3,6 @@ import { flushSync } from 'react-dom'
 
 import type { RouteObject } from 'react-router-dom'
 import { MemoryRouter, useNavigate } from 'react-router-dom'
-import { isIE } from '@datadog/browser-core'
 import { initializeReactPlugin } from '../../../test/initializeReactPlugin'
 import { appendComponent } from '../../../test/appendComponent'
 import { useRoutes } from './useRoutes'
@@ -12,9 +11,6 @@ describe('useRoutes', () => {
   let startViewSpy: jasmine.Spy<(name?: string | object) => void>
 
   beforeEach(() => {
-    if (isIE()) {
-      pending('No support for IE')
-    }
     startViewSpy = jasmine.createSpy()
     initializeReactPlugin({
       configuration: {

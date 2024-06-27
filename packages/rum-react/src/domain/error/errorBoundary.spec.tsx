@@ -1,7 +1,6 @@
 import React from 'react'
 import { flushSync } from 'react-dom'
 
-import { isIE } from '@datadog/browser-core'
 import { disableJasmineUncaughtExceptionTracking } from '../../../../core/test'
 import { appendComponent } from '../../../test/appendComponent'
 import { initializeReactPlugin } from '../../../test/initializeReactPlugin'
@@ -12,9 +11,6 @@ type FallbackFunctionComponent = Extract<Fallback, (...args: any[]) => any>
 
 describe('ErrorBoundary', () => {
   beforeEach(() => {
-    if (isIE()) {
-      pending('No support for IE')
-    }
     // Prevent React from displaying the error in the console
     spyOn(console, 'error')
     disableJasmineUncaughtExceptionTracking()
