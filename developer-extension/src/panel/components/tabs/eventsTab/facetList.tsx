@@ -24,16 +24,18 @@ export function FacetList({
       excludedFacetValues={excludedFacetValues}
       onExcludedFacetValuesChange={onExcludedFacetValuesChange}
       addFacetValues={(facet: Facet, facetValue: FacetValue) => {
+        // check if the facet value is already in allFacetValues
         if (!excludedFacetValues[facet.path] || !excludedFacetValues[facet.path].includes(facetValue)) {
-          // check if the facet value is already in allFacetValues
+          // if the facet path is in allFacetValues but not the value, add the facet value
           if (allFacetValues[facet.path] && !allFacetValues[facet.path].includes(facetValue)) {
             setAllFacetValues({ ...allFacetValues, [facet.path]: [...allFacetValues[facet.path], facetValue] })
+
             // if the facet path is not in allFacetValues, add it
           } else if (!allFacetValues[facet.path]) {
             setAllFacetValues({ ...allFacetValues, [facet.path]: [facetValue] })
           }
         }
-      }} // add facetValue to allFacetValues
+      }}
       allFacetValues={allFacetValues}
       parentList={[]}
     />
@@ -129,8 +131,9 @@ function FacetValue({
       />
       <Flex justify="space-between" gap="md">
         <Text>{facetValueCount}</Text>
-        {excludedFacetValues[facet.path]?.includes(facetValue) ||
-        !allFacetValues[facet.path]?.includes(facetValue) ? null : (
+
+        {excludedFacetValues[facet.path]?.includes(facetValue) ? null : (
+          // show only button when the facet value is not excluded
           <Button
             variant={isOnly ? 'filled' : 'light'}
             size="compact-xs"
