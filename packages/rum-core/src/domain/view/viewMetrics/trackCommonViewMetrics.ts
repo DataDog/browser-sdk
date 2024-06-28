@@ -45,7 +45,6 @@ export function trackCommonViewMetrics(
 
   const { stop: stopCLSTracking } = trackCumulativeLayoutShift(
     configuration,
-    lifeCycle,
     viewStart.relative,
     (cumulativeLayoutShift) => {
       commonViewMetrics.cumulativeLayoutShift = cumulativeLayoutShift
@@ -53,11 +52,7 @@ export function trackCommonViewMetrics(
     }
   )
 
-  const {
-    stop: stopINPTracking,
-    getInteractionToNextPaint,
-    setViewEnd,
-  } = trackInteractionToNextPaint(configuration, viewStart.relative, loadingType, lifeCycle)
+  const { stop: stopINPTracking, getInteractionToNextPaint, setViewEnd } = trackInteractionToNextPaint(configuration)
 
   return {
     stop: () => {
