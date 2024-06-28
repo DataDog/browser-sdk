@@ -78,7 +78,6 @@ describe('startSegmentCollection', () => {
   })
 
   afterEach(() => {
-    clock?.cleanup()
     stopSegmentCollection()
   })
 

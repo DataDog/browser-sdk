@@ -36,7 +36,6 @@ describe('trackInput', () => {
 
   afterEach(() => {
     inputTracker.stop()
-    clock?.cleanup()
   })
 
   it('collects input values when an "input" event is dispatched', () => {

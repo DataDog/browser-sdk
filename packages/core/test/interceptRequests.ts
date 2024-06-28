@@ -27,7 +27,6 @@ export function interceptRequests() {
   const originalSendBeacon = isSendBeaconSupported() && navigator.sendBeacon.bind(navigator)
   const originalRequest = window.Request
   const originalFetch = window.fetch
-  let xhrManager: { reset(): void } | undefined
 
   spyOn(XMLHttpRequest.prototype, 'open').and.callFake((_, url) => requests.push({ type: 'xhr', url } as Request))
   spyOn(XMLHttpRequest.prototype, 'send').and.callFake((body) => (requests[requests.length - 1].body = body as string))
@@ -66,7 +65,7 @@ export function interceptRequests() {
       window.fetch = newFetch
     },
     withMockXhr(onSend: (xhr: MockXhr) => void) {
-      xhrManager = mockXhr()
+      mockXhr()
       MockXhr.onSend = onSend
     },
     restore() {
@@ -79,7 +78,6 @@ export function interceptRequests() {
       if (originalFetch) {
         window.fetch = originalFetch
       }
-      xhrManager?.reset()
       MockXhr.onSend = noop
     },
   }

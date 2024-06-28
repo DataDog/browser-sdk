@@ -294,12 +294,6 @@ describe('preStartRum', () => {
         strategy = createPreStartStrategy({}, getCommonContextSpy, createTrackingConsentState(), doStartRumSpy)
       })
 
-      afterEach(() => {
-        if (clock) {
-          clock.cleanup()
-        }
-      })
-
       describe('when auto', () => {
         it('should start rum at init', () => {
           strategy.init(AUTO_CONFIGURATION, PUBLIC_API)

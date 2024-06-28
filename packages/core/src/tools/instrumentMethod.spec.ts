@@ -1,4 +1,4 @@
-import { mockClock, mockZoneJs, registerCleanupTask } from '../../test'
+import { mockClock, mockZoneJs } from '../../test'
 import type { Clock, MockZoneJs } from '../../test'
 import type { InstrumentedMethodCall } from './instrumentMethod'
 import { instrumentMethod, instrumentSetter } from './instrumentMethod'
@@ -196,9 +196,6 @@ describe('instrumentSetter', () => {
   beforeEach(() => {
     zoneJs = mockZoneJs()
     clock = mockClock()
-    registerCleanupTask(() => {
-      clock.cleanup()
-    })
   })
 
   it('replaces the original setter', () => {

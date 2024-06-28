@@ -17,10 +17,6 @@ describe('pageStateHistory', () => {
     registerCleanupTask(pageStateHistory.stop)
   })
 
-  afterEach(() => {
-    clock.cleanup()
-  })
-
   describe('findAll', () => {
     it('should have the current state when starting', () => {
       expect(pageStateHistory.findAll(0 as RelativeTime, 10 as RelativeTime)).toBeDefined()
