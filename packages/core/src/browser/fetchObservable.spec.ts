@@ -1,5 +1,5 @@
 import type { FetchStub, FetchStubManager, FetchStubPromise } from '../../test'
-import { stubFetch } from '../../test'
+import { registerCleanupTask, stubFetch } from '../../test'
 import { isIE } from '../tools/utils/browserDetection'
 import type { Subscription } from '../tools/observable'
 import type { FetchResolveContext, FetchContext } from './fetchObservable'
@@ -30,16 +30,12 @@ describe('fetch proxy', () => {
       }
     })
     fetchStub = window.fetch as FetchStub
-  })
 
-  afterEach(() => {
-    if (isIE()) {
-      return
-    }
-
-    requestsTrackingSubscription.unsubscribe()
-    contextEditionSubscription?.unsubscribe()
-    fetchStubManager.reset()
+    registerCleanupTask(() => {
+      requestsTrackingSubscription.unsubscribe()
+      contextEditionSubscription?.unsubscribe()
+      fetchStubManager.reset()
+    })
   })
 
   it('should track server error', (done) => {

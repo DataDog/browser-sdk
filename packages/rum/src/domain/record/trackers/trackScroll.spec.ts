@@ -1,5 +1,5 @@
 import { DefaultPrivacyLevel, isIE } from '@datadog/browser-core'
-import { createNewEvent } from '@datadog/browser-core/test'
+import { createNewEvent, registerCleanupTask } from '@datadog/browser-core/test'
 import type { RumConfiguration } from '@datadog/browser-rum-core'
 import { appendElement } from '../../../../../rum-core/test'
 import { serializeDocument, SerializationContextStatus } from '../serialization'
@@ -34,13 +34,10 @@ describe('trackScroll', () => {
       elementsScrollPositions,
     })
     scrollTracker = trackScroll(configuration, scrollCallback, elementsScrollPositions)
-  })
 
-  afterEach(() => {
-    if (isIE()) {
-      return
-    }
-    scrollTracker.stop()
+    registerCleanupTask(() => {
+      scrollTracker.stop()
+    })
   })
 
   it('collects scrolls', () => {

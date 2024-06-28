@@ -1,5 +1,5 @@
 import { isIE } from '@datadog/browser-core'
-import { stubZoneJs } from '@datadog/browser-core/test'
+import { registerCleanupTask, stubZoneJs } from '@datadog/browser-core/test'
 import { createDOMMutationObservable, getMutationObserverConstructor } from './domMutationObservable'
 
 // The MutationObserver invokes its callback in an event loop microtask, making this asynchronous.
@@ -117,15 +117,11 @@ describe('domMutationObservable', () => {
       }
 
       zoneJsStub = stubZoneJs()
-    })
 
-    afterEach(() => {
-      if (isIE()) {
-        return
-      }
-
-      zoneJsStub.restore()
-      window.MutationObserver = OriginalMutationObserverConstructor
+      registerCleanupTask(() => {
+        zoneJsStub.restore()
+        window.MutationObserver = OriginalMutationObserverConstructor
+      })
     })
 
     it('gets the original MutationObserver constructor from the "window" object (Zone.js >= 0.8.6)', () => {

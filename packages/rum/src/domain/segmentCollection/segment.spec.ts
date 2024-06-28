@@ -1,6 +1,7 @@
 import type { DeflateEncoder, TimeStamp } from '@datadog/browser-core'
 import { noop, setDebugMode, isIE, DeflateEncoderStreamId } from '@datadog/browser-core'
 import type { RumConfiguration } from '@datadog/browser-rum-core'
+import { registerCleanupTask } from '@datadog/browser-core/test'
 import { MockWorker } from '../../../test'
 import type { CreationReason, BrowserRecord, SegmentContext, BrowserSegment, BrowserSegmentMetadata } from '../../types'
 import { RecordType } from '../../types'
@@ -36,14 +37,10 @@ describe('Segment', () => {
     encoder = createDeflateEncoder(configuration, worker, DeflateEncoderStreamId.REPLAY)
     setDebugMode(true)
     resetReplayStats()
-  })
 
-  afterEach(() => {
-    if (isIE()) {
-      return
-    }
-
-    setDebugMode(false)
+    registerCleanupTask(() => {
+      setDebugMode(false)
+    })
   })
 
   it('writes a segment', () => {

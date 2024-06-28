@@ -1,5 +1,6 @@
 import type { Duration, RelativeTime } from '@datadog/browser-core'
 import { elapsed, resetExperimentalFeatures } from '@datadog/browser-core'
+import { registerCleanupTask } from '@datadog/browser-core/test'
 import type { TestSetupBuilder } from '../../../../test'
 import { appendElement, appendText, createPerformanceEntry, setup } from '../../../../test'
 import { RumPerformanceEntryType } from '../../../browser/performanceCollection'
@@ -52,15 +53,11 @@ describe('trackInteractionToNextPaint', () => {
 
       return interactionToNextPaintTracking
     })
-  })
 
-  afterEach(() => {
-    if (!isInteractionToNextPaintSupported()) {
-      return
-    }
-
-    resetExperimentalFeatures()
-    interactionCountStub.clear()
+    registerCleanupTask(() => {
+      resetExperimentalFeatures()
+      interactionCountStub.clear()
+    })
   })
 
   it('should return undefined when there are no interactions', () => {

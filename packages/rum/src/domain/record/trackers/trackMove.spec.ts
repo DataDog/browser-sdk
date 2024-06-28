@@ -1,5 +1,5 @@
 import { isIE } from '@datadog/browser-core'
-import { createNewEvent } from '@datadog/browser-core/test'
+import { createNewEvent, registerCleanupTask } from '@datadog/browser-core/test'
 import type { RumConfiguration } from '@datadog/browser-rum-core'
 import { SerializationContextStatus, serializeDocument } from '../serialization'
 import { createElementsScrollPositions } from '../elementsScrollPositions'
@@ -28,14 +28,10 @@ describe('trackMove', () => {
 
     mouseMoveCallbackSpy = jasmine.createSpy()
     moveTracker = trackMove(configuration, mouseMoveCallbackSpy)
-  })
 
-  afterEach(() => {
-    if (isIE()) {
-      return
-    }
-
-    moveTracker.stop()
+    registerCleanupTask(() => {
+      moveTracker.stop()
+    })
   })
 
   it('should generate mouse move record', () => {

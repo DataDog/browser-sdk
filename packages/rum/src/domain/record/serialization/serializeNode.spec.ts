@@ -1,6 +1,6 @@
 import { isIE, noop } from '@datadog/browser-core'
 import type { RumConfiguration } from '@datadog/browser-rum-core'
-import { isAdoptedStyleSheetsSupported } from '@datadog/browser-core/test'
+import { isAdoptedStyleSheetsSupported, registerCleanupTask } from '@datadog/browser-core/test'
 import {
   NodePrivacyLevel,
   PRIVACY_ATTR_NAME,
@@ -808,19 +808,15 @@ describe('serializeDocumentNode handles', function testAllowDomTree() {
     if (isIE()) {
       pending('IE not supported')
     }
-  })
 
-  describe('with dynamic stylesheet', () => {
-    afterEach(() => {
-      if (isIE()) {
-        pending('IE not supported')
-      }
-
+    registerCleanupTask(() => {
       if (isAdoptedStyleSheetsSupported()) {
         document.adoptedStyleSheets = []
       }
     })
+  })
 
+  describe('with dynamic stylesheet', () => {
     it('serializes a document with adoptedStyleSheets', () => {
       if (!isAdoptedStyleSheetsSupported()) {
         pending('no adoptedStyleSheets support')

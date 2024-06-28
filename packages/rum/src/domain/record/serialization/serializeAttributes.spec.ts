@@ -1,4 +1,5 @@
 import { isIE } from '@datadog/browser-core'
+import { registerCleanupTask } from '@datadog/browser-core/test'
 import { getCssRulesString } from './serializeAttributes'
 
 const CSS_FILE_URL = '/base/packages/rum/test/toto.css'
@@ -12,13 +13,10 @@ describe('getCssRulesString', () => {
     }
     styleNode = document.createElement('style')
     document.body.appendChild(styleNode)
-  })
-  afterEach(() => {
-    if (isIE()) {
-      return
-    }
 
-    document.body.removeChild(styleNode)
+    registerCleanupTask(() => {
+      document.body.removeChild(styleNode)
+    })
   })
 
   it('returns the CSS rules as a string', () => {

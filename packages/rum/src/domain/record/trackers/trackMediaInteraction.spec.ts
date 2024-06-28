@@ -1,5 +1,5 @@
 import { DefaultPrivacyLevel, isIE } from '@datadog/browser-core'
-import { createNewEvent } from '@datadog/browser-core/test'
+import { createNewEvent, registerCleanupTask } from '@datadog/browser-core/test'
 import type { RumConfiguration } from '@datadog/browser-rum-core'
 import { appendElement } from '../../../../../rum-core/test'
 import { serializeDocument, SerializationContextStatus } from '../serialization'
@@ -31,14 +31,10 @@ describe('trackMediaInteraction', () => {
       elementsScrollPositions: createElementsScrollPositions(),
     })
     mediaInteractionTracker = trackMediaInteraction(configuration, mediaInteractionCallback)
-  })
 
-  afterEach(() => {
-    if (isIE()) {
-      return
-    }
-
-    mediaInteractionTracker.stop()
+    registerCleanupTask(() => {
+      mediaInteractionTracker.stop()
+    })
   })
 
   it('collects play interactions', () => {
