@@ -199,13 +199,10 @@ describe('StyleSheetObserver > getPathToNestedCSSRule', () => {
     styleSheet.insertRule(firstMediaRule)
     styleSheet.insertRule(secondStyleRule)
     styleSheet.insertRule(firstStyleRule)
-  })
 
-  afterEach(() => {
-    if (isIE()) {
-      return
-    }
-    styleElement.remove()
+    registerCleanupTask(() => {
+      styleElement.remove()
+    })
   })
 
   it('should return undefined if the rule is not attached to a parent StyleSheet', () => {
