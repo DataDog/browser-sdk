@@ -137,7 +137,7 @@ function FacetValue({
     <Flex justify="space-between" mt={isTopLevel ? 'xs' : SPACE_BETWEEN_CHECKBOX}>
       <Checkbox
         label={facet.values?.[facetValue]?.label ?? facetValue}
-        checked={isSelected}
+        checked={isSelected && !onlyFacet}
         onChange={() => {
           onExcludedFacetValuesChange(toggleExcludedFacetValue(facet, excludedFacetValues, facetValue))
         }}
