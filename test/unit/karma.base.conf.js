@@ -16,7 +16,7 @@ if (testReportDirectory) {
 
 module.exports = {
   basePath: '../..',
-  files: ['packages/*/+(src|test)/**/*.spec.ts', 'packages/rum/test/toto.css'],
+  files: ['packages/*/+(src|test)/**/*.spec.ts', { pattern: 'packages/rum/test/toto.css', included: false }],
   frameworks: ['jasmine', 'webpack'],
   client: {
     jasmine: {
