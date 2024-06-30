@@ -21,6 +21,7 @@ import type { ShadowRootsController } from './shadowRootsController'
 import { initShadowRootsController } from './shadowRootsController'
 import { startFullSnapshots } from './startFullSnapshots'
 import { initRecordIds } from './recordIds'
+import type { SerializedNodeCache } from './serialization'
 
 export interface RecordOptions {
   emit?: (record: BrowserRecord) => void
@@ -33,6 +34,7 @@ export interface RecordAPI {
   stop: () => void
   flushMutations: () => void
   shadowRootsController: ShadowRootsController
+  styleSheetsCache: SerializedNodeCache
 }
 
 export function record(options: RecordOptions): RecordAPI {
@@ -125,5 +127,6 @@ export function record(options: RecordOptions): RecordAPI {
     },
     flushMutations,
     shadowRootsController,
+    styleSheetsCache,
   }
 }
