@@ -57,7 +57,6 @@ describe('network error collection', () => {
 
   afterEach(() => {
     stopNetworkErrorCollection()
-    mockFetchManager.reset()
   })
 
   it('should track server error', (done) => {

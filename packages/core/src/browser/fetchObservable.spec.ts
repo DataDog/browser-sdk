@@ -35,7 +35,6 @@ describe('fetch proxy', () => {
   afterEach(() => {
     requestsTrackingSubscription.unsubscribe()
     contextEditionSubscription?.unsubscribe()
-    mockFetchManager.reset()
   })
 
   it('should track server error', (done) => {

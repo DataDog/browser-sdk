@@ -49,10 +49,6 @@ describe('sendWithRetryStrategy', () => {
     }
   })
 
-  afterEach(() => {
-    clock.cleanup()
-  })
-
   describe('nominal cases:', () => {
     it('should send request when no bandwidth limit reached', () => {
       sendRequest()

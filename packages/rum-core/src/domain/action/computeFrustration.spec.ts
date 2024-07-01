@@ -87,10 +87,6 @@ describe('isRage', () => {
     clock = mockClock()
   })
 
-  afterEach(() => {
-    clock.cleanup()
-  })
-
   it('considers as rage three clicks happening at the same time', () => {
     expect(isRage([createFakeClick(), createFakeClick(), createFakeClick()])).toBe(true)
   })

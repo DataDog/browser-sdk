@@ -1,6 +1,6 @@
 import type { RelativeTime } from '@datadog/browser-core'
 import { DOM_EVENT } from '@datadog/browser-core'
-import { createNewEvent, restorePageVisibility, setPageVisibility } from '@datadog/browser-core/test'
+import { createNewEvent, setPageVisibility } from '@datadog/browser-core/test'
 import type { RumConfiguration } from '../../configuration'
 import { trackFirstHidden } from './trackFirstHidden'
 
@@ -13,7 +13,6 @@ describe('trackFirstHidden', () => {
   })
 
   afterEach(() => {
-    restorePageVisibility()
     firstHidden.stop()
   })
 

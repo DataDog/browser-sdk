@@ -224,8 +224,6 @@ export function setup(): TestSetupBuilder {
   }
   registerCleanupTask(() => {
     cleanupTasks.forEach((task) => task())
-    // perform these steps at the end to generate correct events in cleanup and validate them
-    clock?.cleanup()
     rawRumEventsCollected.unsubscribe()
   })
   return setupBuilder

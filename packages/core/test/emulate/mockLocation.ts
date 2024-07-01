@@ -1,4 +1,5 @@
 import { assign, buildUrl } from '../../src'
+import { registerCleanupTask } from '../registerCleanupTask'
 
 export function mockLocation(initialUrl: string) {
   const fakeLocation = buildLocation(initialUrl)
@@ -12,12 +13,14 @@ export function mockLocation(initialUrl: string) {
   }
 
   window.addEventListener('hashchange', hashchangeCallBack)
+
+  registerCleanupTask(() => {
+    window.removeEventListener('hashchange', hashchangeCallBack)
+    window.location.hash = ''
+  })
+
   return {
     location: fakeLocation,
-    cleanup: () => {
-      window.removeEventListener('hashchange', hashchangeCallBack)
-      window.location.hash = ''
-    },
   }
 }
 

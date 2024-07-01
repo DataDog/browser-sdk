@@ -182,10 +182,6 @@ describe('startDeflateWorker', () => {
       clock = mockClock()
     })
 
-    afterEach(() => {
-      clock.cleanup()
-    })
-
     it('displays an error message when the worker does not respond to the init action', () => {
       startDeflateWorkerWithDefaults()
       clock.tick(INITIALIZATION_TIME_OUT_DELAY)

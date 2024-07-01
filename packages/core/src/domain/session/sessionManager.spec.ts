@@ -1,4 +1,4 @@
-import { createNewEvent, expireCookie, mockClock, restorePageVisibility, setPageVisibility } from '../../../test'
+import { createNewEvent, expireCookie, mockClock, setPageVisibility } from '../../../test'
 import type { Clock } from '../../../test'
 import { getCookie, setCookie } from '../../browser/cookie'
 import type { RelativeTime } from '../../tools/utils/timeUtils'
@@ -96,7 +96,6 @@ describe('startSessionManager', () => {
     stopSessionManager()
     // flush pending callbacks to avoid random failures
     clock.tick(ONE_HOUR)
-    clock.cleanup()
   })
 
   describe('resume from a frozen tab ', () => {
@@ -357,10 +356,6 @@ describe('startSessionManager', () => {
   describe('automatic session expiration', () => {
     beforeEach(() => {
       setPageVisibility('hidden')
-    })
-
-    afterEach(() => {
-      restorePageVisibility()
     })
 
     it('should expire the session after expiration delay', () => {

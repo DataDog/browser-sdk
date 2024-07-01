@@ -20,13 +20,11 @@ import { noop } from './utils/functionUtils'
     let zoneJs: MockZoneJs
 
     beforeEach(() => {
-      clock = mockClock()
       zoneJs = mockZoneJs()
+      clock = mockClock()
     })
 
     afterEach(() => {
-      zoneJs.restore()
-      clock.cleanup()
       resetMonitor()
     })
 

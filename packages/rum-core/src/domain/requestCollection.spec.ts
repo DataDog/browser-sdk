@@ -1,6 +1,6 @@
 import type { Payload } from '@datadog/browser-core'
 import { isIE, RequestType } from '@datadog/browser-core'
-import type { MockFetch, MockFetchManager, MockXhrManager } from '@datadog/browser-core/test'
+import type { MockFetch, MockFetchManager } from '@datadog/browser-core/test'
 import { SPEC_ENDPOINTS, mockFetch, mockXhr, withXhr } from '@datadog/browser-core/test'
 import type { RumConfiguration } from './configuration'
 import { validateAndBuildRumConfiguration } from './configuration'
@@ -54,7 +54,6 @@ describe('collect fetch', () => {
 
   afterEach(() => {
     stopFetchTracking()
-    mockFetchManager.reset()
     window.onunhandledrejection = null
   })
 
@@ -193,7 +192,6 @@ describe('collect xhr', () => {
   let configuration: RumConfiguration
   let startSpy: jasmine.Spy<(requestStartEvent: RequestStartEvent) => void>
   let completeSpy: jasmine.Spy<(requestCompleteEvent: RequestCompleteEvent) => void>
-  let mockXhrManager: MockXhrManager
   let stopXhrTracking: () => void
 
   beforeEach(() => {
@@ -205,7 +203,7 @@ describe('collect xhr', () => {
       ...SPEC_ENDPOINTS,
       batchMessagesLimit: 1,
     }
-    mockXhrManager = mockXhr()
+    mockXhr()
     startSpy = jasmine.createSpy('requestStart')
     completeSpy = jasmine.createSpy('requestComplete')
     const lifeCycle = new LifeCycle()
@@ -223,7 +221,6 @@ describe('collect xhr', () => {
 
   afterEach(() => {
     stopXhrTracking()
-    mockXhrManager.reset()
   })
 
   it('should notify on request start', (done) => {

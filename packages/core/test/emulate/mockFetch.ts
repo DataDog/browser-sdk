@@ -1,4 +1,5 @@
 import { noop } from '../../src'
+import { registerCleanupTask } from '../registerCleanupTask'
 
 export type MockFetchManager = ReturnType<typeof mockFetch>
 
@@ -37,13 +38,14 @@ export function mockFetch() {
     return promise
   }) as typeof window.fetch
 
+  registerCleanupTask(() => {
+    window.fetch = originalFetch
+    allFetchCompleteCallback = noop
+  })
+
   return {
     whenAllComplete(callback: () => void) {
       allFetchCompleteCallback = callback
-    },
-    reset() {
-      window.fetch = originalFetch
-      allFetchCompleteCallback = noop
     },
   }
 }
