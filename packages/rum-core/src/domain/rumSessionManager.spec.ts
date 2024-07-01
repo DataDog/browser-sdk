@@ -16,7 +16,7 @@ import type { Clock } from '@datadog/browser-core/test'
 import {
   createNewEvent,
   expireCookie,
-  initEventBridgeStub,
+  mockEventBridge,
   mockClock,
   registerCleanupTask,
 } from '@datadog/browser-core/test'
@@ -238,12 +238,12 @@ describe('rum session manager', () => {
 
 describe('rum session manager stub', () => {
   it('should return a tracked session with replay allowed when the event bridge support records', () => {
-    initEventBridgeStub({ capabilities: [BridgeCapability.RECORDS] })
+    mockEventBridge({ capabilities: [BridgeCapability.RECORDS] })
     expect(startRumSessionManagerStub().findTrackedSession()!.sessionReplay).toEqual(SessionReplayState.SAMPLED)
   })
 
   it('should return a tracked session without replay allowed when the event bridge support records', () => {
-    initEventBridgeStub({ capabilities: [] })
+    mockEventBridge({ capabilities: [] })
     expect(startRumSessionManagerStub().findTrackedSession()!.sessionReplay).toEqual(SessionReplayState.OFF)
   })
 })

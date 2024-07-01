@@ -58,7 +58,7 @@ function incrementFacetValueCounts(fields: EventFields, facetValueCounts: FacetV
   valueCounts.set(fieldValue, (valueCounts.get(fieldValue) ?? 0) + 1)
 
   if (facet.values?.[fieldValue]?.facets) {
-    for (const childFacet of facet.values[fieldValue]!.facets!) {
+    for (const childFacet of facet.values[fieldValue].facets) {
       incrementFacetValueCounts(fields, facetValueCounts, childFacet)
     }
   }

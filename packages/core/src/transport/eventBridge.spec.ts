@@ -1,13 +1,13 @@
-import { initEventBridgeStub } from '../../test'
+import { mockEventBridge } from '../../test'
 import { DefaultPrivacyLevel } from '../domain/configuration'
-import type { DatadogEventBridge } from './eventBridge'
+import type { BrowserWindowWithEventBridge } from './eventBridge'
 import { getEventBridge, canUseEventBridge, BridgeCapability, bridgeSupports } from './eventBridge'
 
 describe('canUseEventBridge', () => {
   const allowedWebViewHosts = ['foo.bar']
 
   it('should detect when the bridge is present and the webView host is allowed', () => {
-    initEventBridgeStub({ allowedWebViewHosts })
+    mockEventBridge({ allowedWebViewHosts })
     expect(canUseEventBridge('foo.bar')).toBeTrue()
     expect(canUseEventBridge('baz.foo.bar')).toBeTrue()
     expect(canUseEventBridge('www.foo.bar')).toBeTrue()
@@ -15,14 +15,14 @@ describe('canUseEventBridge', () => {
   })
 
   it('should not detect when the bridge is present and the webView host is not allowed', () => {
-    initEventBridgeStub({ allowedWebViewHosts })
+    mockEventBridge({ allowedWebViewHosts })
     expect(canUseEventBridge('foo.com')).toBeFalse()
     expect(canUseEventBridge('foo.bar.baz')).toBeFalse()
     expect(canUseEventBridge('bazfoo.bar')).toBeFalse()
   })
 
   it('should not detect when the bridge on the parent domain if only the subdomain is allowed', () => {
-    initEventBridgeStub({ allowedWebViewHosts: ['baz.foo.bar'] })
+    mockEventBridge({ allowedWebViewHosts: ['baz.foo.bar'] })
     expect(canUseEventBridge('foo.bar')).toBeFalse()
   })
 
@@ -35,8 +35,8 @@ describe('event bridge send', () => {
   let sendSpy: jasmine.Spy<(msg: string) => void>
 
   beforeEach(() => {
-    const eventBridgeStub = initEventBridgeStub()
-    sendSpy = spyOn(eventBridgeStub, 'send')
+    const eventBridge = mockEventBridge()
+    sendSpy = spyOn(eventBridge, 'send')
   })
 
   it('should serialize sent events without view', () => {
@@ -57,11 +57,10 @@ describe('event bridge send', () => {
 })
 
 describe('event bridge getPrivacyLevel', () => {
-  let eventBridgeStub: DatadogEventBridge
   const bridgePrivacyLevel = DefaultPrivacyLevel.MASK
 
   beforeEach(() => {
-    eventBridgeStub = initEventBridgeStub({ privacyLevel: bridgePrivacyLevel })
+    mockEventBridge({ privacyLevel: bridgePrivacyLevel })
   })
 
   it('should return the privacy level', () => {
@@ -71,7 +70,7 @@ describe('event bridge getPrivacyLevel', () => {
   })
 
   it('should return undefined if getPrivacyLevel not present in the bridge', () => {
-    delete eventBridgeStub.getPrivacyLevel
+    delete (window as BrowserWindowWithEventBridge).DatadogEventBridge?.getPrivacyLevel
     const eventBridge = getEventBridge()!
 
     expect(eventBridge.getPrivacyLevel()).toBeUndefined()
@@ -79,12 +78,12 @@ describe('event bridge getPrivacyLevel', () => {
 
   describe('bridgeSupports', () => {
     it('should returns true when the bridge supports a capability', () => {
-      initEventBridgeStub({ capabilities: [BridgeCapability.RECORDS] })
+      mockEventBridge({ capabilities: [BridgeCapability.RECORDS] })
       expect(bridgeSupports(BridgeCapability.RECORDS)).toBeTrue()
     })
 
     it('should returns false when the bridge does not support a capability', () => {
-      initEventBridgeStub({ capabilities: [] })
+      mockEventBridge({ capabilities: [] })
       expect(bridgeSupports(BridgeCapability.RECORDS)).toBeFalse()
     })
   })

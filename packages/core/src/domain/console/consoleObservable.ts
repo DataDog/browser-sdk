@@ -25,7 +25,7 @@ export function initConsoleObservable(apis: ConsoleApiName[]) {
     if (!consoleObservablesByApi[api]) {
       consoleObservablesByApi[api] = createConsoleObservable(api)
     }
-    return consoleObservablesByApi[api]!
+    return consoleObservablesByApi[api]
   })
 
   return mergeObservables<ConsoleLog>(...consoleObservables)

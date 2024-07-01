@@ -2,7 +2,9 @@ import type { InterventionReport, ReportType } from '../../src/domain/report/bro
 import { noop } from '../../src/tools/utils/functionUtils'
 import { createNewEvent } from './createNewEvent'
 
-export function stubReportingObserver() {
+export type MockReportingObserver = ReturnType<typeof mockReportingObserver>
+
+export function mockReportingObserver() {
   const originalReportingObserver = window.ReportingObserver
   let callbacks: { [k: string]: ReportingObserverCallback[] } = {}
   let reportingObserver: ReportingObserver
@@ -43,7 +45,9 @@ export function stubReportingObserver() {
   }
 }
 
-export function stubCspEventListener() {
+export type MockCspEventListener = ReturnType<typeof mockCspEventListener>
+
+export function mockCspEventListener() {
   spyOn(document, 'addEventListener').and.callFake((_type: string, listener: EventListener) => {
     listeners.push(listener)
   })

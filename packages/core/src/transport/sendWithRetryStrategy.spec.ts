@@ -14,13 +14,13 @@ import type { Payload, HttpResponse } from './httpRequest'
 
 describe('sendWithRetryStrategy', () => {
   const ENDPOINT_TYPE = 'logs'
-  let sendStub: ReturnType<typeof newSendStub>
+  let sendMock: ReturnType<typeof mockSend>
   let state: RetryState
   let sendRequest: (payload?: Partial<Payload>) => void
   let clock: Clock
   let reportErrorSpy: jasmine.Spy<jasmine.Func>
 
-  function newSendStub() {
+  function mockSend() {
     const requests: Array<(r: HttpResponse) => void> = []
     return {
       sendStrategy: (_: Payload, onResponse: (r: HttpResponse) => void) => {
@@ -36,7 +36,7 @@ describe('sendWithRetryStrategy', () => {
   }
 
   beforeEach(() => {
-    sendStub = newSendStub()
+    sendMock = mockSend()
     state = newRetryState()
     clock = mockClock()
     reportErrorSpy = jasmine.createSpy('reportError')
@@ -45,7 +45,7 @@ describe('sendWithRetryStrategy', () => {
         data: payload?.data ?? 'a',
         bytesCount: payload?.bytesCount ?? 1,
       }
-      sendWithRetryStrategy(effectivePayload, state, sendStub.sendStrategy, ENDPOINT_TYPE, reportErrorSpy)
+      sendWithRetryStrategy(effectivePayload, state, sendMock.sendStrategy, ENDPOINT_TYPE, reportErrorSpy)
     }
   })
 
@@ -59,7 +59,7 @@ describe('sendWithRetryStrategy', () => {
       expect(state.bandwidthMonitor.ongoingRequestCount).toBe(1)
       expect(state.queuedPayloads.size()).toBe(0)
 
-      sendStub.respondWith(0, { status: 200 })
+      sendMock.respondWith(0, { status: 200 })
       expect(state.bandwidthMonitor.ongoingRequestCount).toBe(0)
       expect(state.queuedPayloads.size()).toBe(0)
     })
@@ -77,13 +77,13 @@ describe('sendWithRetryStrategy', () => {
       expect(state.bandwidthMonitor.ongoingRequestCount).toBe(3)
       expect(state.queuedPayloads.size()).toBe(0)
 
-      sendStub.respondWith(0, { status: 200 })
+      sendMock.respondWith(0, { status: 200 })
       expect(state.bandwidthMonitor.ongoingRequestCount).toBe(2)
 
-      sendStub.respondWith(1, { status: 200 })
+      sendMock.respondWith(1, { status: 200 })
       expect(state.bandwidthMonitor.ongoingRequestCount).toBe(1)
 
-      sendStub.respondWith(2, { status: 200 })
+      sendMock.respondWith(2, { status: 200 })
       expect(state.bandwidthMonitor.ongoingRequestCount).toBe(0)
     })
   })
@@ -129,7 +129,7 @@ describe('sendWithRetryStrategy', () => {
       sendRequest({ bytesCount: MAX_QUEUE_BYTES_COUNT })
       expect(state.queuedPayloads.isFull()).toBe(true)
 
-      sendStub.respondWith(0, { status: 200 })
+      sendMock.respondWith(0, { status: 200 })
       expect(reportErrorSpy).toHaveBeenCalled()
       expect(reportErrorSpy.calls.argsFor(0)[0]).toEqual(
         jasmine.objectContaining({
@@ -142,18 +142,18 @@ describe('sendWithRetryStrategy', () => {
       sendRequest({ bytesCount: MAX_QUEUE_BYTES_COUNT })
       expect(state.queuedPayloads.isFull()).toBe(true)
 
-      sendStub.respondWith(1, { status: 200 })
+      sendMock.respondWith(1, { status: 200 })
       expect(reportErrorSpy).not.toHaveBeenCalled()
     })
 
     it('should not report error when queue is full after resuming transport', () => {
       sendRequest()
-      sendStub.respondWith(0, { status: 500 })
+      sendMock.respondWith(0, { status: 500 })
       sendRequest({ bytesCount: MAX_QUEUE_BYTES_COUNT })
       expect(state.queuedPayloads.isFull()).toBe(true)
 
       clock.tick(INITIAL_BACKOFF_TIME)
-      sendStub.respondWith(1, { status: 200 })
+      sendMock.respondWith(1, { status: 200 })
 
       expect(reportErrorSpy).not.toHaveBeenCalled()
     })
@@ -168,7 +168,7 @@ describe('sendWithRetryStrategy', () => {
       expect(state.bandwidthMonitor.ongoingRequestCount).toBe(1)
       expect(state.queuedPayloads.size()).toBe(MAX_ONGOING_REQUESTS)
 
-      sendStub.respondWith(0, { status: 200 })
+      sendMock.respondWith(0, { status: 200 })
       expect(state.bandwidthMonitor.ongoingRequestCount).toBe(MAX_ONGOING_REQUESTS)
       expect(state.queuedPayloads.size()).toBe(0)
     })
@@ -181,11 +181,11 @@ describe('sendWithRetryStrategy', () => {
       expect(state.queuedPayloads.size()).toBe(3)
       expect(state.queuedPayloads.bytesCount).toBe(20 + (MAX_ONGOING_BYTES_COUNT - 15) + 10)
 
-      sendStub.respondWith(0, { status: 200 })
+      sendMock.respondWith(0, { status: 200 })
       expect(state.queuedPayloads.size()).toBe(2)
       expect(state.queuedPayloads.bytesCount).toBe(MAX_ONGOING_BYTES_COUNT - 15 + 10)
 
-      sendStub.respondWith(1, { status: 200 })
+      sendMock.respondWith(1, { status: 200 })
       expect(state.queuedPayloads.size()).toBe(0)
     })
   })
@@ -205,7 +205,7 @@ describe('sendWithRetryStrategy', () => {
       if (expectRetry) {
         it('should start queueing following requests', () => {
           sendRequest()
-          sendStub.respondWith(0, { status, type })
+          sendMock.respondWith(0, { status, type })
           expect(state.queuedPayloads.size()).toBe(1)
 
           sendRequest()
@@ -217,7 +217,7 @@ describe('sendWithRetryStrategy', () => {
         it('should send queued requests if another ongoing request succeed', () => {
           sendRequest()
           sendRequest()
-          sendStub.respondWith(0, { status, type })
+          sendMock.respondWith(0, { status, type })
           expect(state.bandwidthMonitor.ongoingRequestCount).toBe(1)
           expect(state.queuedPayloads.size()).toBe(1)
 
@@ -225,7 +225,7 @@ describe('sendWithRetryStrategy', () => {
           expect(state.bandwidthMonitor.ongoingRequestCount).toBe(1)
           expect(state.queuedPayloads.size()).toBe(2)
 
-          sendStub.respondWith(1, { status: 200 })
+          sendMock.respondWith(1, { status: 200 })
           expect(state.bandwidthMonitor.ongoingRequestCount).toBe(2)
           expect(state.queuedPayloads.size()).toBe(0)
         })
@@ -233,18 +233,18 @@ describe('sendWithRetryStrategy', () => {
         it('should add retry info to payloads', () => {
           sendRequest()
 
-          sendStub.respondWith(0, { status, type })
+          sendMock.respondWith(0, { status, type })
           expect(state.queuedPayloads.first().retry).toEqual({ count: 1, lastFailureStatus: status })
 
           clock.tick(INITIAL_BACKOFF_TIME)
 
-          sendStub.respondWith(1, { status, type })
+          sendMock.respondWith(1, { status, type })
           expect(state.queuedPayloads.first().retry).toEqual({ count: 2, lastFailureStatus: status })
         })
       } else {
         it('should not queue the payload for retry', () => {
           sendRequest()
-          sendStub.respondWith(0, { status, type })
+          sendMock.respondWith(0, { status, type })
           expect(state.queuedPayloads.size()).toBe(0)
         })
       }
@@ -254,16 +254,16 @@ describe('sendWithRetryStrategy', () => {
   describe('when transport down:', () => {
     it('should regularly try to send first queued request', () => {
       sendRequest()
-      sendStub.respondWith(0, { status: 500 })
+      sendMock.respondWith(0, { status: 500 })
       expect(state.bandwidthMonitor.ongoingRequestCount).toBe(0)
 
       clock.tick(INITIAL_BACKOFF_TIME)
       expect(state.bandwidthMonitor.ongoingRequestCount).toBe(1)
-      sendStub.respondWith(1, { status: 500 })
+      sendMock.respondWith(1, { status: 500 })
 
       clock.tick(2 * INITIAL_BACKOFF_TIME)
       expect(state.bandwidthMonitor.ongoingRequestCount).toBe(1)
-      sendStub.respondWith(2, { status: 500 })
+      sendMock.respondWith(2, { status: 500 })
 
       clock.tick(4 * INITIAL_BACKOFF_TIME)
       expect(state.bandwidthMonitor.ongoingRequestCount).toBe(1)
@@ -271,7 +271,7 @@ describe('sendWithRetryStrategy', () => {
 
     it('should send queued requests after first successful request', () => {
       sendRequest()
-      sendStub.respondWith(0, { status: 500 })
+      sendMock.respondWith(0, { status: 500 })
       sendRequest()
       sendRequest()
       sendRequest()
@@ -280,7 +280,7 @@ describe('sendWithRetryStrategy', () => {
 
       clock.tick(INITIAL_BACKOFF_TIME)
       expect(state.bandwidthMonitor.ongoingRequestCount).toBe(1)
-      sendStub.respondWith(1, { status: 200 })
+      sendMock.respondWith(1, { status: 200 })
 
       expect(state.bandwidthMonitor.ongoingRequestCount).toBe(3)
       expect(state.queuedPayloads.size()).toBe(0)
