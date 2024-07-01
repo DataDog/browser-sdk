@@ -61,6 +61,7 @@
     "eslint-plugin-unicorn": "54.0.0",
     "express": "4.19.2",
     "glob": "10.4.2",
+    "html-webpack-plugin": "5.6.0",
     "jasmine-core": "3.99.1",
     "json-schema-to-typescript": "bcaudan/json-schema-to-typescript#bcaudan/add-readonly-support",
     "karma": "6.4.3",
