@@ -1,4 +1,4 @@
-import type { Duration, RelativeTime } from '@datadog/browser-core'
+import type { Duration, RelativeTime, TimeoutId } from '@datadog/browser-core'
 import { addEventListener, Observable, setTimeout, clearTimeout } from '@datadog/browser-core'
 import type { RumConfiguration } from '../domain/configuration'
 import { isAllowedRequestUrl } from '../domain/resource/resourceUtils'
@@ -144,7 +144,7 @@ export function createPerformanceObservable<T extends RumPerformanceEntryType>(
 ) {
   return new Observable<Array<EntryTypeToReturnType[T]>>((observable) => {
     let observer: PerformanceObserver | undefined
-    let timeoutId: number | undefined
+    let timeoutId: TimeoutId | undefined
 
     if (window.PerformanceObserver) {
       let isObserverInitializing = true
