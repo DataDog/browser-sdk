@@ -40,10 +40,6 @@ export function initXhrObservable(configuration: Configuration) {
   return xhrObservable
 }
 
-export function resetXhrObservable() {
-  xhrObservable = undefined
-}
-
 function createXhrObservable(configuration: Configuration) {
   return new Observable<XhrContext>((observable) => {
     const { stop: stopInstrumentingStart } = instrumentMethod(XMLHttpRequest.prototype, 'open', openXhr)

@@ -14,7 +14,6 @@ import {
   initFeatureFlags,
   addTelemetryConfiguration,
   initFetchObservable,
-  initXhrObservable,
 } from '@datadog/browser-core'
 import type { TrackingConsentState, DeflateWorker } from '@datadog/browser-core'
 import {
@@ -124,7 +123,6 @@ export function createPreStartStrategy(
     // library (Apollo Client) is storing uninstrumented fetch or XHR to be used later
     // The subscrption is needed so that the instrumentation process is completed
     initFetchObservable().subscribe(noop)
-    initXhrObservable(configuration).subscribe(noop)
 
     trackingConsentState.tryToInit(configuration.trackingConsent)
     tryStartRum()

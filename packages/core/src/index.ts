@@ -94,7 +94,7 @@ export {
   resetInitCookies,
 } from './browser/cookie'
 export { CookieStore, WeakRef, WeakRefConstructor } from './browser/types'
-export { initXhrObservable, resetXhrObservable, XhrCompleteContext, XhrStartContext } from './browser/xhrObservable'
+export { initXhrObservable, XhrCompleteContext, XhrStartContext } from './browser/xhrObservable'
 export {
   initFetchObservable,
   resetFetchObservable,

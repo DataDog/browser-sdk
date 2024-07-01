@@ -12,7 +12,6 @@ import {
   ExperimentalFeature,
   resetExperimentalFeatures,
   resetFetchObservable,
-  resetXhrObservable,
   isIE,
 } from '@datadog/browser-core'
 import type { Clock } from '@datadog/browser-core/test'
@@ -58,7 +57,6 @@ describe('preStartRum', () => {
 
   afterEach(() => {
     resetFetchObservable()
-    resetXhrObservable()
   })
 
   describe('configuration validation', () => {
@@ -708,13 +706,8 @@ describe('preStartRum', () => {
         }
       })
 
-      it('should instrument fetch and XHR even if tracking consent is not granted', () => {
+      it('should instrument fetch even if tracking consent is not granted', () => {
         const originalFetch = window.fetch
-        /* eslint-disable @typescript-eslint/unbound-method */
-        const originalXHROpen = XMLHttpRequest.prototype.open
-        const originalXHRSend = XMLHttpRequest.prototype.send
-        const originalXHRAbort = XMLHttpRequest.prototype.abort
-        /* eslint-disable @typescript-eslint/unbound-method */
 
         strategy.init(
           {
@@ -725,12 +718,6 @@ describe('preStartRum', () => {
         )
 
         expect(window.fetch).not.toBe(originalFetch)
-
-        /* eslint-disable @typescript-eslint/unbound-method */
-        expect(XMLHttpRequest.prototype.open).not.toBe(originalXHROpen)
-        expect(XMLHttpRequest.prototype.send).not.toBe(originalXHRSend)
-        expect(XMLHttpRequest.prototype.abort).not.toBe(originalXHRAbort)
-        /* eslint-disable @typescript-eslint/unbound-method */
       })
     })
 
