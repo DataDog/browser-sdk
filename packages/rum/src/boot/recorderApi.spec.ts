@@ -2,7 +2,7 @@ import type { DeflateEncoder, DeflateWorker, DeflateWorkerAction } from '@datado
 import { BridgeCapability, PageExitReason, display, isIE } from '@datadog/browser-core'
 import type { RecorderApi, ViewContexts, LifeCycle, RumConfiguration } from '@datadog/browser-rum-core'
 import { LifeCycleEventType } from '@datadog/browser-rum-core'
-import { initEventBridgeStub, createNewEvent } from '@datadog/browser-core/test'
+import { mockEventBridge, createNewEvent, registerCleanupTask } from '@datadog/browser-core/test'
 import type { RumSessionManagerMock, TestSetupBuilder } from '../../../rum-core/test'
 import { createRumSessionManagerMock, setup } from '../../../rum-core/test'
 import type { CreateDeflateWorker } from '../domain/deflate'
@@ -50,11 +50,11 @@ describe('makeRecorderApi', () => {
         )
       }
     })
-  })
 
-  afterEach(() => {
-    resetDeflateWorkerState()
-    replayStats.resetReplayStats()
+    registerCleanupTask(() => {
+      resetDeflateWorkerState()
+      replayStats.resetReplayStats()
+    })
   })
 
   describe('recorder boot', () => {
@@ -200,7 +200,7 @@ describe('makeRecorderApi', () => {
 
     describe('if event bridge present', () => {
       it('should start recording when the bridge supports records', () => {
-        initEventBridgeStub({ capabilities: [BridgeCapability.RECORDS] })
+        mockEventBridge({ capabilities: [BridgeCapability.RECORDS] })
 
         setupBuilder.build()
         rumInit()
@@ -209,7 +209,7 @@ describe('makeRecorderApi', () => {
       })
 
       it('should not start recording when the bridge does not support records', () => {
-        initEventBridgeStub({ capabilities: [] })
+        mockEventBridge({ capabilities: [] })
 
         setupBuilder.build()
         rumInit()

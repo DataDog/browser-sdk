@@ -10,8 +10,6 @@ import {
   Observable,
   trackRuntimeError,
   NonErrorPrefix,
-  isExperimentalFeatureEnabled,
-  ExperimentalFeature,
 } from '@datadog/browser-core'
 import type { RumConfiguration } from '../configuration'
 import type { RawRumErrorEvent } from '../../rawRumEvent.types'
@@ -124,10 +122,7 @@ function processError(
 
   const domainContext: RumErrorEventDomainContext = {
     error: error.originalError,
-  }
-
-  if (isExperimentalFeatureEnabled(ExperimentalFeature.MICRO_FRONTEND)) {
-    domainContext.handlingStack = error.handlingStack
+    handlingStack: error.handlingStack,
   }
 
   return {

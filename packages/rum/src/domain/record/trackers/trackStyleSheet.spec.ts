@@ -1,5 +1,5 @@
 import { isIE } from '@datadog/browser-core'
-import { isFirefox } from '@datadog/browser-core/test'
+import { isFirefox, registerCleanupTask } from '@datadog/browser-core/test'
 import { serializeDocument, SerializationContextStatus } from '../serialization'
 import { createElementsScrollPositions } from '../elementsScrollPositions'
 import { IncrementalSource, RecordType } from '../../../types'
@@ -29,11 +29,10 @@ describe('trackStyleSheet', () => {
       status: SerializationContextStatus.INITIAL_FULL_SNAPSHOT,
       elementsScrollPositions: createElementsScrollPositions(),
     })
-  })
-
-  afterEach(() => {
-    styleSheetTracker.stop()
-    styleElement.remove()
+    registerCleanupTask(() => {
+      styleSheetTracker.stop()
+      styleElement.remove()
+    })
   })
 
   describe('observing high level css stylesheet', () => {
@@ -200,10 +199,10 @@ describe('StyleSheetObserver > getPathToNestedCSSRule', () => {
     styleSheet.insertRule(firstMediaRule)
     styleSheet.insertRule(secondStyleRule)
     styleSheet.insertRule(firstStyleRule)
-  })
 
-  afterEach(() => {
-    styleElement.remove()
+    registerCleanupTask(() => {
+      styleElement.remove()
+    })
   })
 
   it('should return undefined if the rule is not attached to a parent StyleSheet', () => {

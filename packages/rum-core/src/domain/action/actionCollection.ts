@@ -1,13 +1,5 @@
 import type { ClocksState, Context, Observable } from '@datadog/browser-core'
-import {
-  noop,
-  assign,
-  combine,
-  toServerDuration,
-  generateUUID,
-  isExperimentalFeatureEnabled,
-  ExperimentalFeature,
-} from '@datadog/browser-core'
+import { noop, assign, combine, toServerDuration, generateUUID } from '@datadog/browser-core'
 
 import { discardNegativeDuration } from '../discardNegativeDuration'
 import type { RawRumActionEvent } from '../../rawRumEvent.types'
@@ -114,11 +106,7 @@ function processAction(
 
   const domainContext: RumActionEventDomainContext = isAutoAction(action) ? { events: action.events } : {}
 
-  if (
-    !isAutoAction(action) &&
-    action.handlingStack &&
-    isExperimentalFeatureEnabled(ExperimentalFeature.MICRO_FRONTEND)
-  ) {
+  if (!isAutoAction(action) && action.handlingStack) {
     domainContext.handlingStack = action.handlingStack
   }
 

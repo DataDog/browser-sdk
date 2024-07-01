@@ -23,6 +23,7 @@ import {
 import type { CommonContext } from '../domain/contexts/commonContext'
 import type { ViewOptions } from '../domain/view/trackViews'
 import { fetchAndApplyRemoteConfiguration, serializeRumConfiguration } from '../domain/configuration'
+import { callPluginsMethod } from '../domain/plugins'
 import type { RumPublicApiOptions, Strategy } from './rumPublicApi'
 import type { StartRumResult } from './startRum'
 
@@ -121,7 +122,7 @@ export function createPreStartStrategy(
   }
 
   return {
-    init(initConfiguration) {
+    init(initConfiguration, publicApi) {
       if (!initConfiguration) {
         display.error('Missing configuration')
         return
@@ -138,6 +139,10 @@ export function createPreStartStrategy(
       // internal `ignoreInitIfSyntheticsWillInjectRum` option is here to bypass this condition.
       if (ignoreInitIfSyntheticsWillInjectRum && willSyntheticsInjectRum()) {
         return
+      }
+
+      if (isExperimentalFeatureEnabled(ExperimentalFeature.PLUGINS)) {
+        callPluginsMethod(initConfiguration.plugins, 'onInit', { initConfiguration, publicApi })
       }
 
       if (

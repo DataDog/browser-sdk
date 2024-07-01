@@ -153,8 +153,8 @@ export function setup(): TestSetupBuilder {
       fakeLocation = buildLocation(initialUrl)
       return setupBuilder
     },
-    withSessionManager(sessionManagerStub: RumSessionManager) {
-      sessionManager = sessionManagerStub
+    withSessionManager(stub: RumSessionManager) {
+      sessionManager = stub
       return setupBuilder
     },
     withConfiguration(overrides: Partial<RumConfiguration>) {

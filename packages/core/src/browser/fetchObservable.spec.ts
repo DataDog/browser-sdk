@@ -1,5 +1,5 @@
-import type { FetchStub, FetchStubManager, FetchStubPromise } from '../../test'
-import { stubFetch } from '../../test'
+import type { MockFetch, MockFetchManager } from '../../test'
+import { registerCleanupTask, mockFetch } from '../../test'
 import { isIE } from '../tools/utils/browserDetection'
 import type { Subscription } from '../tools/observable'
 import type { FetchResolveContext, FetchContext } from './fetchObservable'
@@ -9,19 +9,19 @@ describe('fetch proxy', () => {
   const FAKE_URL = 'http://fake-url/'
   const FAKE_RELATIVE_URL = '/fake-path'
   const NORMALIZED_FAKE_RELATIVE_URL = `${location.origin}/fake-path`
-  let fetchStub: (input: RequestInfo, init?: RequestInit) => FetchStubPromise
-  let fetchStubManager: FetchStubManager
+  let mockFetchManager: MockFetchManager
   let requestsTrackingSubscription: Subscription
   let contextEditionSubscription: Subscription | undefined
   let requests: FetchResolveContext[]
-  let originalFetchStub: typeof fetch
+  let originalMockFetch: typeof window.fetch
+  let fetch: MockFetch
 
   beforeEach(() => {
     if (isIE()) {
       pending('no fetch support')
     }
-    fetchStubManager = stubFetch()
-    originalFetchStub = window.fetch
+    mockFetchManager = mockFetch()
+    originalMockFetch = window.fetch
 
     requests = []
     requestsTrackingSubscription = initFetchObservable().subscribe((context) => {
@@ -29,19 +29,19 @@ describe('fetch proxy', () => {
         requests.push(context)
       }
     })
-    fetchStub = window.fetch as FetchStub
-  })
+    fetch = window.fetch as MockFetch
 
-  afterEach(() => {
-    requestsTrackingSubscription.unsubscribe()
-    contextEditionSubscription?.unsubscribe()
-    fetchStubManager.reset()
+    registerCleanupTask(() => {
+      requestsTrackingSubscription.unsubscribe()
+      contextEditionSubscription?.unsubscribe()
+      mockFetchManager.reset()
+    })
   })
 
   it('should track server error', (done) => {
-    fetchStub(FAKE_URL).resolveWith({ status: 500, responseText: 'fetch error' })
+    fetch(FAKE_URL).resolveWith({ status: 500, responseText: 'fetch error' })
 
-    fetchStubManager.whenAllComplete(() => {
+    mockFetchManager.whenAllComplete(() => {
       const request = requests[0]
       expect(request.method).toEqual('GET')
       expect(request.url).toEqual(FAKE_URL)
@@ -53,9 +53,9 @@ describe('fetch proxy', () => {
   })
 
   it('should track refused fetch', (done) => {
-    fetchStub(FAKE_URL).rejectWith(new Error('fetch error'))
+    fetch(FAKE_URL).rejectWith(new Error('fetch error'))
 
-    fetchStubManager.whenAllComplete(() => {
+    mockFetchManager.whenAllComplete(() => {
       const request = requests[0]
       expect(request.method).toEqual('GET')
       expect(request.url).toEqual(FAKE_URL)
@@ -68,9 +68,9 @@ describe('fetch proxy', () => {
   })
 
   it('should track aborted fetch', (done) => {
-    fetchStub(FAKE_URL).abort()
+    fetch(FAKE_URL).abort()
 
-    fetchStubManager.whenAllComplete(() => {
+    mockFetchManager.whenAllComplete(() => {
       const request = requests[0]
       expect(request.method).toEqual('GET')
       expect(request.url).toEqual(FAKE_URL)
@@ -84,9 +84,9 @@ describe('fetch proxy', () => {
 
   it('should track opaque fetch', (done) => {
     // https://fetch.spec.whatwg.org/#concept-filtered-response-opaque
-    fetchStub(FAKE_URL).resolveWith({ status: 0, type: 'opaque' })
+    fetch(FAKE_URL).resolveWith({ status: 0, type: 'opaque' })
 
-    fetchStubManager.whenAllComplete(() => {
+    mockFetchManager.whenAllComplete(() => {
       const request = requests[0]
       expect(request.method).toEqual('GET')
       expect(request.url).toEqual(FAKE_URL)
@@ -97,9 +97,9 @@ describe('fetch proxy', () => {
   })
 
   it('should track client error', (done) => {
-    fetchStub(FAKE_URL).resolveWith({ status: 400, responseText: 'Not found' })
+    fetch(FAKE_URL).resolveWith({ status: 400, responseText: 'Not found' })
 
-    fetchStubManager.whenAllComplete(() => {
+    mockFetchManager.whenAllComplete(() => {
       const request = requests[0]
       expect(request.method).toEqual('GET')
       expect(request.url).toEqual(FAKE_URL)
@@ -110,19 +110,19 @@ describe('fetch proxy', () => {
   })
 
   it('should get method from input', (done) => {
-    fetchStub(FAKE_URL).resolveWith({ status: 500 })
-    fetchStub(new Request(FAKE_URL)).resolveWith({ status: 500 })
-    fetchStub(new Request(FAKE_URL, { method: 'PUT' })).resolveWith({ status: 500 })
-    fetchStub(new Request(FAKE_URL, { method: 'PUT' }), { method: 'POST' }).resolveWith({ status: 500 })
-    fetchStub(new Request(FAKE_URL), { method: 'POST' }).resolveWith({ status: 500 })
-    fetchStub(FAKE_URL, { method: 'POST' }).resolveWith({ status: 500 })
-    fetchStub(FAKE_URL, { method: 'post' }).resolveWith({ status: 500 })
-    fetchStub(null as any).resolveWith({ status: 500 })
-    fetchStub({ method: 'POST' } as any).resolveWith({ status: 500 })
-    fetchStub(FAKE_URL, { method: null as any }).resolveWith({ status: 500 })
-    fetchStub(FAKE_URL, { method: undefined }).resolveWith({ status: 500 })
+    fetch(FAKE_URL).resolveWith({ status: 500 })
+    fetch(new Request(FAKE_URL)).resolveWith({ status: 500 })
+    fetch(new Request(FAKE_URL, { method: 'PUT' })).resolveWith({ status: 500 })
+    fetch(new Request(FAKE_URL, { method: 'PUT' }), { method: 'POST' }).resolveWith({ status: 500 })
+    fetch(new Request(FAKE_URL), { method: 'POST' }).resolveWith({ status: 500 })
+    fetch(FAKE_URL, { method: 'POST' }).resolveWith({ status: 500 })
+    fetch(FAKE_URL, { method: 'post' }).resolveWith({ status: 500 })
+    fetch(null as any).resolveWith({ status: 500 })
+    fetch({ method: 'POST' } as any).resolveWith({ status: 500 })
+    fetch(FAKE_URL, { method: null as any }).resolveWith({ status: 500 })
+    fetch(FAKE_URL, { method: undefined }).resolveWith({ status: 500 })
 
-    fetchStubManager.whenAllComplete(() => {
+    mockFetchManager.whenAllComplete(() => {
       expect(requests[0].method).toEqual('GET')
       expect(requests[1].method).toEqual('GET')
       expect(requests[2].method).toEqual('PUT')
@@ -140,18 +140,18 @@ describe('fetch proxy', () => {
   })
 
   it('should get the normalized url from input', (done) => {
-    fetchStub(FAKE_URL).rejectWith(new Error('fetch error'))
-    fetchStub(new Request(FAKE_URL)).rejectWith(new Error('fetch error'))
-    fetchStub(null as any).rejectWith(new Error('fetch error'))
-    fetchStub({
+    fetch(FAKE_URL).rejectWith(new Error('fetch error'))
+    fetch(new Request(FAKE_URL)).rejectWith(new Error('fetch error'))
+    fetch(null as any).rejectWith(new Error('fetch error'))
+    fetch({
       toString() {
         return FAKE_RELATIVE_URL
       },
     } as any).rejectWith(new Error('fetch error'))
-    fetchStub(FAKE_RELATIVE_URL).rejectWith(new Error('fetch error'))
-    fetchStub(new Request(FAKE_RELATIVE_URL)).rejectWith(new Error('fetch error'))
+    fetch(FAKE_RELATIVE_URL).rejectWith(new Error('fetch error'))
+    fetch(new Request(FAKE_RELATIVE_URL)).rejectWith(new Error('fetch error'))
 
-    fetchStubManager.whenAllComplete(() => {
+    mockFetchManager.whenAllComplete(() => {
       expect(requests[0].url).toEqual(FAKE_URL)
       expect(requests[1].url).toEqual(FAKE_URL)
       expect(requests[2].url).toMatch(/\/null$/)
@@ -163,12 +163,12 @@ describe('fetch proxy', () => {
   })
 
   it('should keep promise resolved behavior', (done) => {
-    const fetchStubPromise = fetchStub(FAKE_URL)
+    const mockFetchPromise = fetch(FAKE_URL)
     const spy = jasmine.createSpy()
-    fetchStubPromise.then(spy).catch(() => {
+    mockFetchPromise.then(spy).catch(() => {
       fail('Should not have thrown an error!')
     })
-    fetchStubPromise.resolveWith({ status: 500 })
+    mockFetchPromise.resolveWith({ status: 500 })
 
     setTimeout(() => {
       expect(spy).toHaveBeenCalled()
@@ -177,10 +177,10 @@ describe('fetch proxy', () => {
   })
 
   it('should keep promise rejected behavior', (done) => {
-    const fetchStubPromise = fetchStub(FAKE_URL)
+    const mockFetchPromise = fetch(FAKE_URL)
     const spy = jasmine.createSpy()
-    fetchStubPromise.catch(spy)
-    fetchStubPromise.rejectWith(new Error('fetch error'))
+    mockFetchPromise.catch(spy)
+    mockFetchPromise.rejectWith(new Error('fetch error'))
 
     setTimeout(() => {
       expect(spy).toHaveBeenCalled()
@@ -196,9 +196,9 @@ describe('fetch proxy', () => {
         context.foo = 'bar'
       }
     })
-    fetchStub(FAKE_URL).resolveWith({ status: 500, responseText: 'fetch error' })
+    fetch(FAKE_URL).resolveWith({ status: 500, responseText: 'fetch error' })
 
-    fetchStubManager.whenAllComplete(() => {
+    mockFetchManager.whenAllComplete(() => {
       expect((requests[0] as CustomContext).foo).toBe('bar')
       done()
     })
@@ -208,9 +208,9 @@ describe('fetch proxy', () => {
     it('should stop tracking requests', (done) => {
       requestsTrackingSubscription.unsubscribe()
 
-      fetchStub(FAKE_URL).resolveWith({ status: 200, responseText: 'ok' })
+      fetch(FAKE_URL).resolveWith({ status: 200, responseText: 'ok' })
 
-      fetchStubManager.whenAllComplete(() => {
+      mockFetchManager.whenAllComplete(() => {
         expect(requests).toEqual([])
         done()
       })
@@ -219,7 +219,7 @@ describe('fetch proxy', () => {
     it('should restore original window.fetch', () => {
       requestsTrackingSubscription.unsubscribe()
 
-      expect(window.fetch).toBe(originalFetchStub)
+      expect(window.fetch).toBe(originalMockFetch)
     })
   })
 })

@@ -22,7 +22,7 @@ export function findFullSnapshot({ records }: { records: BrowserRecord[] }): Bro
 
 // Returns all the VisualViewportRecords in a Segment, if any.
 export function findAllVisualViewports(segment: BrowserSegment): VisualViewportRecord[] {
-  return segment.records.filter((record) => record.type === RecordType.VisualViewport) as VisualViewportRecord[]
+  return segment.records.filter((record) => record.type === RecordType.VisualViewport)
 }
 
 // Returns the first IncrementalSnapshotRecord of a given source in a Segment, if any.
@@ -47,7 +47,7 @@ export function findAllIncrementalSnapshots(
 
 // Returns all the FrustrationRecords in the given Segment, if any.
 export function findAllFrustrationRecords(segment: BrowserSegment): FrustrationRecord[] {
-  return segment.records.filter((record) => record.type === RecordType.FrustrationRecord) as FrustrationRecord[]
+  return segment.records.filter((record) => record.type === RecordType.FrustrationRecord)
 }
 
 // Returns all the IncrementalSnapshotRecords of the given MouseInteraction source, if any

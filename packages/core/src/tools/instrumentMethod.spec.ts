@@ -1,5 +1,5 @@
-import { mockClock, stubZoneJs } from '../../test'
-import type { Clock } from '../../test'
+import { mockClock, mockZoneJs } from '../../test'
+import type { Clock, MockZoneJs } from '../../test'
 import type { InstrumentedMethodCall } from './instrumentMethod'
 import { instrumentMethod, instrumentSetter } from './instrumentMethod'
 import { noop } from './utils/functionUtils'
@@ -191,14 +191,14 @@ describe('instrumentMethod', () => {
 
 describe('instrumentSetter', () => {
   let clock: Clock
-  let zoneJsStub: ReturnType<typeof stubZoneJs>
+  let zoneJs: MockZoneJs
 
   beforeEach(() => {
     clock = mockClock()
-    zoneJsStub = stubZoneJs()
+    zoneJs = mockZoneJs()
   })
   afterEach(() => {
-    zoneJsStub.restore()
+    zoneJs.restore()
     clock.cleanup()
   })
 
@@ -261,7 +261,7 @@ describe('instrumentSetter', () => {
 
   it('does not use the Zone.js setTimeout function', () => {
     const zoneJsSetTimeoutSpy = jasmine.createSpy()
-    zoneJsStub.replaceProperty(window, 'setTimeout', zoneJsSetTimeoutSpy)
+    zoneJs.replaceProperty(window, 'setTimeout', zoneJsSetTimeoutSpy)
 
     const object = {} as { foo: number }
     Object.defineProperty(object, 'foo', { set: noop, configurable: true })

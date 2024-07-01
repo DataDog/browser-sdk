@@ -68,6 +68,7 @@ dev,npm-run-all,MIT,Copyright 2015 Toru Nagashima
 dev,pako,MIT,(C) 2014-2017 Vitaly Puzrin and Andrey Tupitsin
 dev,prettier,MIT,Copyright James Long and contributors
 dev,puppeteer,Apache-2.0,Copyright 2017 Google Inc.
+dev,react-router-dom,MIT,Copyright (c) React Training LLC 2015-2019 Copyright (c) Remix Software Inc. 2020-2021 Copyright (c) Shopify Inc. 2022-2023
 dev,style-loader,MIT,Copyright JS Foundation and other contributors
 dev,terser-webpack-plugin,MIT,Copyright JS Foundation and other contributors
 dev,ts-loader,MIT,Copyright 2015 TypeStrong

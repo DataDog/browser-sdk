@@ -46,7 +46,11 @@ export function stopLeakDetection() {
 function withLeakDetection(eventName: string, listener: EventListener) {
   const specWhenAdded = getCurrentJasmineSpec()
   const stackWhenAdded = new Error().stack
-  if (!specWhenAdded) {
+  if (
+    !specWhenAdded ||
+    // Ignore listeners added by React: React is adding listeners to DOM elements for synthetic events, and there is no way to remove them
+    stackWhenAdded?.includes('listenToAllSupportedEvents')
+  ) {
     return listener
   }
 
