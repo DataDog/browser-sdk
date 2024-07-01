@@ -1,6 +1,5 @@
 import type { ErrorWithCause } from '@datadog/browser-core'
-import { ErrorSource, ExperimentalFeature, noop, objectEntries } from '@datadog/browser-core'
-import { mockExperimentalFeatures } from '@datadog/browser-core/test'
+import { ErrorSource, noop, objectEntries } from '@datadog/browser-core'
 import type { RawConsoleLogsEvent } from '../../rawLogsEvent.types'
 import { validateAndBuildLogsConfiguration } from '../configuration'
 import type { RawLogsEventCollectedData } from '../lifeCycle'
@@ -51,23 +50,6 @@ describe('console collection', () => {
         origin: ErrorSource.CONSOLE,
         error: whatever(),
       })
-
-      expect(rawLogsEvents[0].domainContext).not.toBeDefined()
-
-      expect(consoleSpies[api]).toHaveBeenCalled()
-    })
-  })
-
-  objectEntries(LogStatusForApi).forEach(([api]) => {
-    it(`should add domainContext to logs from console.${api}`, () => {
-      mockExperimentalFeatures([ExperimentalFeature.MICRO_FRONTEND])
-      ;({ stop: stopConsoleCollection } = startConsoleCollection(
-        validateAndBuildLogsConfiguration({ ...initConfiguration, forwardConsoleLogs: 'all' })!,
-        lifeCycle
-      ))
-
-      /* eslint-disable-next-line no-console */
-      console[api as keyof typeof LogStatusForApi]('foo', 'bar')
 
       expect(rawLogsEvents[0].domainContext).toEqual({
         handlingStack: jasmine.any(String),

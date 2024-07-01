@@ -1,11 +1,5 @@
-import {
-  ExperimentalFeature,
-  type Duration,
-  type RelativeTime,
-  type ServerDuration,
-  type TimeStamp,
-} from '@datadog/browser-core'
-import { createNewEvent, mockExperimentalFeatures } from '@datadog/browser-core/test'
+import { type Duration, type RelativeTime, type ServerDuration, type TimeStamp } from '@datadog/browser-core'
+import { createNewEvent } from '@datadog/browser-core/test'
 import type { RawRumActionEvent } from '@datadog/browser-rum-core'
 import type { TestSetupBuilder } from '../../../test'
 import { setup } from '../../../test'
@@ -147,8 +141,6 @@ describe('actionCollection', () => {
 
   it('should create action with handling stack', () => {
     const { rawRumEvents } = setupBuilder.build()
-
-    mockExperimentalFeatures([ExperimentalFeature.MICRO_FRONTEND])
 
     addAction({
       name: 'foo',
