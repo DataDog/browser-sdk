@@ -3,7 +3,7 @@ import { unlinkSync, mkdirSync } from 'fs'
 import type { Options, Reporters } from '@wdio/types'
 import { browser, $, $$ } from '@wdio/globals'
 import { getRunId, getTestReportDirectory } from '../envUtils'
-import { APPLICATION_ID } from './lib/helpers/constants'
+import { APPLICATION_ID } from './lib/helpers/configuration'
 
 const reporters: Reporters.ReporterEntry[] = [['spec', { onlyFailures: true }]]
 let logsPath: string | undefined
