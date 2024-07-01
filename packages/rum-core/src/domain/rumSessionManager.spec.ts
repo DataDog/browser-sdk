@@ -13,7 +13,13 @@ import {
   BridgeCapability,
 } from '@datadog/browser-core'
 import type { Clock } from '@datadog/browser-core/test'
-import { createNewEvent, expireCookie, mockEventBridge, mockClock } from '@datadog/browser-core/test'
+import {
+  createNewEvent,
+  expireCookie,
+  mockEventBridge,
+  mockClock,
+  registerCleanupTask,
+} from '@datadog/browser-core/test'
 import type { RumConfiguration } from './configuration'
 import { validateAndBuildRumConfiguration } from './configuration'
 
@@ -43,14 +49,14 @@ describe('rum session manager', () => {
     lifeCycle = new LifeCycle()
     lifeCycle.subscribe(LifeCycleEventType.SESSION_EXPIRED, expireSessionSpy)
     lifeCycle.subscribe(LifeCycleEventType.SESSION_RENEWED, renewSessionSpy)
-  })
 
-  afterEach(() => {
-    // remove intervals first
-    stopSessionManager()
-    // flush pending callbacks to avoid random failures
-    clock.tick(new Date().getTime())
-    clock.cleanup()
+    registerCleanupTask(() => {
+      // remove intervals first
+      stopSessionManager()
+      // flush pending callbacks to avoid random failures
+      clock.tick(new Date().getTime())
+      clock.cleanup()
+    })
   })
 
   describe('cookie storage', () => {

@@ -1,6 +1,6 @@
 import { isIE, ErrorSource } from '@datadog/browser-core'
 import type { MockFetch, MockFetchManager } from '@datadog/browser-core/test'
-import { SPEC_ENDPOINTS, MockResponse, mockFetch } from '@datadog/browser-core/test'
+import { SPEC_ENDPOINTS, MockResponse, mockFetch, registerCleanupTask } from '@datadog/browser-core/test'
 import type { RawNetworkLogsEvent } from '../../rawLogsEvent.types'
 import type { LogsConfiguration } from '../configuration'
 import type { RawLogsEventCollectedData } from '../lifeCycle'
@@ -53,11 +53,11 @@ describe('network error collection', () => {
     lifeCycle.subscribe(LifeCycleEventType.RAW_LOG_COLLECTED, (rawLogsEvent) =>
       rawLogsEvents.push(rawLogsEvent as RawLogsEventCollectedData<RawNetworkLogsEvent>)
     )
-  })
 
-  afterEach(() => {
-    stopNetworkErrorCollection()
-    mockFetchManager.reset()
+    registerCleanupTask(() => {
+      stopNetworkErrorCollection()
+      mockFetchManager.reset()
+    })
   })
 
   it('should track server error', (done) => {
@@ -195,10 +195,10 @@ describe('computeFetchResponseText', () => {
 
     onunhandledrejectionSpy = jasmine.createSpy()
     window.onunhandledrejection = onunhandledrejectionSpy
-  })
 
-  afterEach(() => {
-    window.onunhandledrejection = null
+    registerCleanupTask(() => {
+      window.onunhandledrejection = null
+    })
   })
 
   it('computes response text from Response objects', (done) => {

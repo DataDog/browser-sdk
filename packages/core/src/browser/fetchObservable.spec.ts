@@ -1,5 +1,5 @@
 import type { MockFetch, MockFetchManager } from '../../test'
-import { mockFetch } from '../../test'
+import { registerCleanupTask, mockFetch } from '../../test'
 import { isIE } from '../tools/utils/browserDetection'
 import type { Subscription } from '../tools/observable'
 import type { FetchResolveContext, FetchContext } from './fetchObservable'
@@ -30,12 +30,12 @@ describe('fetch proxy', () => {
       }
     })
     fetch = window.fetch as MockFetch
-  })
 
-  afterEach(() => {
-    requestsTrackingSubscription.unsubscribe()
-    contextEditionSubscription?.unsubscribe()
-    mockFetchManager.reset()
+    registerCleanupTask(() => {
+      requestsTrackingSubscription.unsubscribe()
+      contextEditionSubscription?.unsubscribe()
+      mockFetchManager.reset()
+    })
   })
 
   it('should track server error', (done) => {

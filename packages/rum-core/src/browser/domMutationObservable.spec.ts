@@ -1,6 +1,6 @@
 import { isIE } from '@datadog/browser-core'
 import type { MockZoneJs } from '@datadog/browser-core/test'
-import { mockZoneJs } from '@datadog/browser-core/test'
+import { registerCleanupTask, mockZoneJs } from '@datadog/browser-core/test'
 import { createDOMMutationObservable, getMutationObserverConstructor } from './domMutationObservable'
 
 // The MutationObserver invokes its callback in an event loop microtask, making this asynchronous.
@@ -113,12 +113,16 @@ describe('domMutationObservable', () => {
     const OriginalMutationObserverConstructor = window.MutationObserver
 
     beforeEach(() => {
-      zoneJs = mockZoneJs()
-    })
+      if (isIE()) {
+        pending('dom mutation not available')
+      }
 
-    afterEach(() => {
-      zoneJs.restore()
-      window.MutationObserver = OriginalMutationObserverConstructor
+      zoneJs = mockZoneJs()
+
+      registerCleanupTask(() => {
+        zoneJs.restore()
+        window.MutationObserver = OriginalMutationObserverConstructor
+      })
     })
 
     it('gets the original MutationObserver constructor from the "window" object (Zone.js >= 0.8.6)', () => {
