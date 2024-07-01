@@ -15,7 +15,8 @@ export function startFullSnapshots(
   lifeCycle: LifeCycle,
   configuration: RumConfiguration,
   flushMutations: () => void,
-  fullSnapshotCallback: (records: BrowserRecord[]) => void
+  fullSnapshotPendingCallback: () => void,
+  fullSnapshotReadyCallback: (records: BrowserRecord[]) => void
 ) {
   const takeFullSnapshot = (
     timestamp = timeStampNow(),
@@ -65,13 +66,17 @@ export function startFullSnapshots(
     }
     return records
   }
-  fullSnapshotCallback(takeFullSnapshot())
+
+  fullSnapshotPendingCallback()
+  fullSnapshotReadyCallback(takeFullSnapshot())
+
   let cancelIdleCallback: (() => void) | undefined
   const { unsubscribe } = lifeCycle.subscribe(LifeCycleEventType.VIEW_CREATED, (view) => {
     flushMutations()
     function takeSubsequentFullSnapshot() {
       flushMutations()
-      fullSnapshotCallback(
+      fullSnapshotPendingCallback()
+      fullSnapshotReadyCallback(
         takeFullSnapshot(view.startClocks.timeStamp, {
           shadowRootsController,
           status: SerializationContextStatus.SUBSEQUENT_FULL_SNAPSHOT,

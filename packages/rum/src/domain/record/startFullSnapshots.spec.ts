@@ -12,7 +12,8 @@ import type { ShadowRootsController } from './shadowRootsController'
 describe('startFullSnapshots', () => {
   const viewStartClock = { relative: 1, timeStamp: 1 as TimeStamp }
   let lifeCycle: LifeCycle
-  let fullSnapshotCallback: jasmine.Spy<(records: BrowserRecord[]) => void>
+  let fullSnapshotPendingCallback: jasmine.Spy<() => void>
+  let fullSnapshotReadyCallback: jasmine.Spy<(records: BrowserRecord[]) => void>
   const originalRequestIdleCallback = window.requestIdleCallback
   const originalCancelIdleCallback = window.cancelIdleCallback
 
@@ -23,14 +24,17 @@ describe('startFullSnapshots', () => {
 
     lifeCycle = new LifeCycle()
     mockExperimentalFeatures([ExperimentalFeature.ASYNC_FULL_SNAPSHOT])
-    fullSnapshotCallback = jasmine.createSpy()
+    fullSnapshotPendingCallback = jasmine.createSpy('fullSnapshotPendingCallback')
+    fullSnapshotReadyCallback = jasmine.createSpy('fullSnapshotReadyCallback')
+
     startFullSnapshots(
       createElementsScrollPositions(),
       {} as ShadowRootsController,
       lifeCycle,
       {} as RumConfiguration,
       noop,
-      fullSnapshotCallback
+      fullSnapshotPendingCallback,
+      fullSnapshotReadyCallback
     )
   })
 
@@ -40,7 +44,8 @@ describe('startFullSnapshots', () => {
   })
 
   it('takes a full snapshot when startFullSnapshots is called', () => {
-    expect(fullSnapshotCallback).toHaveBeenCalledTimes(1)
+    expect(fullSnapshotPendingCallback).toHaveBeenCalledTimes(1)
+    expect(fullSnapshotReadyCallback).toHaveBeenCalledTimes(1)
   })
 
   it('takes a full snapshot when the view changes', () => {
@@ -52,7 +57,8 @@ describe('startFullSnapshots', () => {
 
     triggerIdleCallbacks()
 
-    expect(fullSnapshotCallback).toHaveBeenCalledTimes(2)
+    expect(fullSnapshotPendingCallback).toHaveBeenCalledTimes(2)
+    expect(fullSnapshotReadyCallback).toHaveBeenCalledTimes(2)
   })
 
   it('cancels the full snapshot if another view is created before it can it happens', () => {
@@ -67,7 +73,8 @@ describe('startFullSnapshots', () => {
     } as Partial<ViewCreatedEvent> as any)
 
     triggerIdleCallbacks()
-    expect(fullSnapshotCallback).toHaveBeenCalledTimes(2)
+    expect(fullSnapshotPendingCallback).toHaveBeenCalledTimes(2)
+    expect(fullSnapshotReadyCallback).toHaveBeenCalledTimes(2)
   })
 
   it('full snapshot related records should have the view change date', () => {
@@ -79,7 +86,7 @@ describe('startFullSnapshots', () => {
 
     triggerIdleCallbacks()
 
-    const records = fullSnapshotCallback.calls.mostRecent().args[0]
+    const records = fullSnapshotReadyCallback.calls.mostRecent().args[0]
     expect(records[0].timestamp).toEqual(1)
     expect(records[1].timestamp).toEqual(1)
     expect(records[2].timestamp).toEqual(1)

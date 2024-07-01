@@ -9,17 +9,27 @@ import { createElementsScrollPositions, startFullSnapshots } from '../domain/rec
 import type { ShadowRootsController } from '../domain/record'
 
 describe('startFullSnapshots', () => {
+  let lifeCycle: LifeCycle
+  let fullSnapshotPendingCallback: jasmine.Spy<() => void>
+  let fullSnapshotReadyCallback: jasmine.Spy<(records: BrowserRecord[]) => void>
+  const viewStartClock = { relative: 1, timeStamp: 1 as TimeStamp }
+  const originalRequestIdleCallback = window.requestIdleCallback
+  const originalCancelIdleCallback = window.cancelIdleCallback
+
   beforeEach(() => {
     lifeCycle = new LifeCycle()
     addExperimentalFeatures([ExperimentalFeature.ASYNC_FULL_SNAPSHOT])
-    fullSnapshotCallback = jasmine.createSpy()
+    fullSnapshotPendingCallback = jasmine.createSpy('fullSnapshotPendingCallback')
+    fullSnapshotReadyCallback = jasmine.createSpy('fullSnapshotReadyCallback')
+
     startFullSnapshots(
       createElementsScrollPositions(),
       {} as ShadowRootsController,
       lifeCycle,
       {} as RumConfiguration,
       noop,
-      fullSnapshotCallback
+      fullSnapshotPendingCallback,
+      fullSnapshotReadyCallback
     )
   })
 
@@ -27,11 +37,6 @@ describe('startFullSnapshots', () => {
     window.requestIdleCallback = originalRequestIdleCallback
     window.cancelIdleCallback = originalCancelIdleCallback
   })
-  const viewStartClock = { relative: 1, timeStamp: 1 as TimeStamp }
-  let lifeCycle: LifeCycle
-  let fullSnapshotCallback: jasmine.Spy<(records: BrowserRecord[]) => void>
-  const originalRequestIdleCallback = window.requestIdleCallback
-  const originalCancelIdleCallback = window.cancelIdleCallback
 
   it('should use requestAnimationFrame when requestIdleCallback is not defined', () => {
     window.requestIdleCallback = undefined as any
@@ -44,6 +49,7 @@ describe('startFullSnapshots', () => {
     } as Partial<ViewCreatedEvent> as any)
     triggerIdleCallbacks()
 
-    expect(fullSnapshotCallback).toHaveBeenCalledTimes(2)
+    expect(fullSnapshotPendingCallback).toHaveBeenCalledTimes(2)
+    expect(fullSnapshotReadyCallback).toHaveBeenCalledTimes(2)
   })
 })
