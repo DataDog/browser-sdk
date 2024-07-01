@@ -20,7 +20,7 @@ describe('performanceObservable', () => {
       pending('PerformanceObserver not supported')
     }
     observableCallback = jasmine.createSpy()
-    configuration = { isIntakeUrl: (url) => url === forbiddenUrl } as RumConfiguration
+    configuration = { isIntakeUrl: (url: string) => url === forbiddenUrl } as unknown as RumConfiguration
     ;({ notifyPerformanceEntries } = mockPerformanceObserver())
     clock = mockClock()
   })
