@@ -276,7 +276,7 @@ function newView(
       lifeCycle.notify(LifeCycleEventType.VIEW_ENDED, { endClocks })
       lifeCycle.notify(LifeCycleEventType.AFTER_VIEW_ENDED, { endClocks })
       clearInterval(keepAliveIntervalId)
-      setViewEnd(endClocks.relative)
+      setViewEnd()
       stopCommonViewMetricsTracking()
       triggerViewUpdate()
       setTimeout(() => {

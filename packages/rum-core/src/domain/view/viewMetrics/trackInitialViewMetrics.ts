@@ -8,7 +8,6 @@ import type { NavigationTimings } from './trackNavigationTimings'
 import { trackNavigationTimings } from './trackNavigationTimings'
 import type { LargestContentfulPaint } from './trackLargestContentfulPaint'
 import { trackLargestContentfulPaint } from './trackLargestContentfulPaint'
-import { trackFirstHidden } from './trackFirstHidden'
 
 export interface InitialViewMetrics {
   firstContentfulPaint?: Duration
@@ -31,24 +30,17 @@ export function trackInitialViewMetrics(
     scheduleViewUpdate()
   })
 
-  const firstHidden = trackFirstHidden(configuration)
-  const { stop: stopFCPTracking } = trackFirstContentfulPaint(lifeCycle, firstHidden, (firstContentfulPaint) => {
+  const { stop: stopFCPTracking } = trackFirstContentfulPaint((firstContentfulPaint) => {
     initialViewMetrics.firstContentfulPaint = firstContentfulPaint
     scheduleViewUpdate()
   })
 
-  const { stop: stopLCPTracking } = trackLargestContentfulPaint(
-    lifeCycle,
-    configuration,
-    firstHidden,
-    window,
-    (largestContentfulPaint) => {
-      initialViewMetrics.largestContentfulPaint = largestContentfulPaint
-      scheduleViewUpdate()
-    }
-  )
+  const { stop: stopLCPTracking } = trackLargestContentfulPaint(configuration, (largestContentfulPaint) => {
+    initialViewMetrics.largestContentfulPaint = largestContentfulPaint
+    scheduleViewUpdate()
+  })
 
-  const { stop: stopFIDTracking } = trackFirstInput(lifeCycle, configuration, firstHidden, (firstInput) => {
+  const { stop: stopFIDTracking } = trackFirstInput(configuration, (firstInput) => {
     initialViewMetrics.firstInput = firstInput
     scheduleViewUpdate()
   })
@@ -58,7 +50,6 @@ export function trackInitialViewMetrics(
     stopFCPTracking()
     stopLCPTracking()
     stopFIDTracking()
-    firstHidden.stop()
   }
 
   return {

@@ -1,13 +1,10 @@
 import type { Duration, RelativeTime } from '@datadog/browser-core'
-import { elapsed, find } from '@datadog/browser-core'
+import { noop } from '@datadog/browser-core'
+// eslint-disable-next-line local-rules/disallow-side-effects
+import { onFID } from 'web-vitals/attribution'
 import { isElementNode } from '../../../browser/htmlDomUtils'
 import type { RumConfiguration } from '../../configuration'
-import type { LifeCycle } from '../../lifeCycle'
-import { LifeCycleEventType } from '../../lifeCycle'
-import { RumPerformanceEntryType } from '../../../browser/performanceCollection'
-import type { RumFirstInputTiming } from '../../../browser/performanceCollection'
 import { getSelectorFromElement } from '../../getSelectorFromElement'
-import type { FirstHidden } from './trackFirstHidden'
 
 export interface FirstInput {
   delay: Duration
@@ -23,40 +20,19 @@ export interface FirstInput {
  * Documentation: https://web.dev/fid/
  * Reference implementation: https://github.com/GoogleChrome/web-vitals/blob/master/src/getFID.ts
  */
-export function trackFirstInput(
-  lifeCycle: LifeCycle,
-  configuration: RumConfiguration,
-  firstHidden: FirstHidden,
-  callback: (firstInput: FirstInput) => void
-) {
-  const { unsubscribe: unsubscribeLifeCycle } = lifeCycle.subscribe(
-    LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED,
-    (entries) => {
-      const firstInputEntry = find(
-        entries,
-        (entry): entry is RumFirstInputTiming =>
-          entry.entryType === RumPerformanceEntryType.FIRST_INPUT && entry.startTime < firstHidden.timeStamp
-      )
-      if (firstInputEntry) {
-        const firstInputDelay = elapsed(firstInputEntry.startTime, firstInputEntry.processingStart)
-        let firstInputTargetSelector
-
-        if (firstInputEntry.target && isElementNode(firstInputEntry.target)) {
-          firstInputTargetSelector = getSelectorFromElement(firstInputEntry.target, configuration.actionNameAttribute)
-        }
-
-        callback({
-          // Ensure firstInputDelay to be positive, see
-          // https://bugs.chromium.org/p/chromium/issues/detail?id=1185815
-          delay: firstInputDelay >= 0 ? firstInputDelay : (0 as Duration),
-          time: firstInputEntry.startTime,
-          targetSelector: firstInputTargetSelector,
-        })
-      }
-    }
-  )
+export function trackFirstInput(configuration: RumConfiguration, callback: (firstInput: FirstInput) => void) {
+  onFID((fid) => {
+    callback({
+      delay: fid.value as Duration,
+      time: fid.attribution.eventTime as RelativeTime,
+      targetSelector:
+        fid.attribution.eventEntry.target && isElementNode(fid.attribution.eventEntry.target)
+          ? getSelectorFromElement(fid.attribution.eventEntry.target, configuration.actionNameAttribute)
+          : undefined,
+    })
+  })
 
   return {
-    stop: unsubscribeLifeCycle,
+    stop: noop,
   }
 }
