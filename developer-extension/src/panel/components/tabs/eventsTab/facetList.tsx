@@ -1,4 +1,4 @@
-import { Box, Card, Checkbox, Collapse, Flex, Text } from '@mantine/core'
+import { Box, Button, Card, Checkbox, Collapse, Flex, Text } from '@mantine/core'
 import React from 'react'
 import type { ExcludedFacetValues, FacetRegistry } from '../../../hooks/useEvents'
 import type { Facet } from '../../../facets.constants'
@@ -14,6 +14,9 @@ export function FacetList({
   excludedFacetValues: ExcludedFacetValues
   onExcludedFacetValuesChange: (newExcludedFacetValues: ExcludedFacetValues) => void
 }) {
+  const [allFacetValues, setAllFacetValues] = React.useState<ExcludedFacetValues>({})
+  const [onlyFacet, setOnlyFacet] = React.useState<FacetValue | null>(null)
+
   return (
     <FacetField
       facet={FACET_ROOT}
@@ -21,6 +24,23 @@ export function FacetList({
       facetRegistry={facetRegistry}
       excludedFacetValues={excludedFacetValues}
       onExcludedFacetValuesChange={onExcludedFacetValuesChange}
+      addFacetValues={(facet: Facet, facetValue: FacetValue) => {
+        // check if the facet value is already in allFacetValues
+        if (!excludedFacetValues[facet.path] || !excludedFacetValues[facet.path].includes(facetValue)) {
+          // if the facet path is in allFacetValues but not the value, add the facet value
+          if (allFacetValues[facet.path] && !allFacetValues[facet.path].includes(facetValue)) {
+            setAllFacetValues({ ...allFacetValues, [facet.path]: [...allFacetValues[facet.path], facetValue] })
+
+            // if the facet path is not in allFacetValues, add it
+          } else if (!allFacetValues[facet.path]) {
+            setAllFacetValues({ ...allFacetValues, [facet.path]: [facetValue] })
+          }
+        }
+      }}
+      allFacetValues={allFacetValues}
+      parentList={[]}
+      onlyFacet={onlyFacet}
+      setOnlyFacet={setOnlyFacet}
     />
   )
 }
@@ -31,12 +51,22 @@ function FacetField({
   facetRegistry,
   excludedFacetValues,
   onExcludedFacetValuesChange,
+  addFacetValues,
+  allFacetValues,
+  parentList,
+  onlyFacet,
+  setOnlyFacet,
 }: {
   facet: Facet
   depth: number
   facetRegistry: FacetRegistry
   excludedFacetValues: ExcludedFacetValues
   onExcludedFacetValuesChange: (newExcludedFacetValues: ExcludedFacetValues) => void
+  addFacetValues: (facet: Facet, facetValue: FacetValue) => void
+  allFacetValues: ExcludedFacetValues
+  parentList: string[]
+  onlyFacet: FacetValue | null
+  setOnlyFacet: (facet: FacetValue | null) => void
 }) {
   const facetValueCounts = facetRegistry.getFacetValueCounts(facet.path)
 
@@ -58,6 +88,11 @@ function FacetField({
           facetRegistry={facetRegistry}
           excludedFacetValues={excludedFacetValues}
           onExcludedFacetValuesChange={onExcludedFacetValuesChange}
+          addFacetValues={addFacetValues}
+          allFacetValues={allFacetValues}
+          parentList={parentList.includes(facetValue) ? parentList : [...parentList, facetValue]}
+          onlyFacet={onlyFacet}
+          setOnlyFacet={setOnlyFacet}
         />
       ))}
     </Box>
@@ -74,6 +109,11 @@ function FacetValue({
   facetRegistry,
   excludedFacetValues,
   onExcludedFacetValuesChange,
+  addFacetValues,
+  allFacetValues,
+  parentList,
+  onlyFacet,
+  setOnlyFacet,
 }: {
   facet: Facet
   facetValue: FacetValue
@@ -82,19 +122,41 @@ function FacetValue({
   facetRegistry: FacetRegistry
   excludedFacetValues: ExcludedFacetValues
   onExcludedFacetValuesChange: (newExcludedFacetValues: ExcludedFacetValues) => void
+  addFacetValues: (facet: Facet, facetValue: FacetValue) => void
+  allFacetValues: ExcludedFacetValues
+  parentList: string[]
+  onlyFacet: FacetValue | null
+  setOnlyFacet: (facet: FacetValue | null) => void
 }) {
+  addFacetValues(facet, facetValue)
+
   const isTopLevel = depth === 0
   const isSelected = !excludedFacetValues[facet.path] || !excludedFacetValues[facet.path].includes(facetValue)
+  const isOnly = onlyFacet === facetValue
   const value = (
     <Flex justify="space-between" mt={isTopLevel ? 'xs' : SPACE_BETWEEN_CHECKBOX}>
       <Checkbox
         label={facet.values?.[facetValue]?.label ?? facetValue}
-        checked={isSelected}
+        checked={isSelected && !onlyFacet}
         onChange={() => {
           onExcludedFacetValuesChange(toggleExcludedFacetValue(facet, excludedFacetValues, facetValue))
         }}
       />
-      <Text>{facetValueCount}</Text>
+      <Flex justify="space-between" gap="md">
+        <Text>{facetValueCount}</Text>
+        <Button
+          variant={isOnly ? 'filled' : 'light'}
+          size="compact-xs"
+          w="40px"
+          disabled={!!(onlyFacet && onlyFacet !== facetValue)}
+          onClick={() => {
+            onExcludedFacetValuesChange(toggleOnlyAllFacetValue(facet, isOnly, allFacetValues, parentList, facetValue))
+            setOnlyFacet(isOnly ? null : facetValue)
+          }}
+        >
+          {isOnly ? 'all' : 'only'}
+        </Button>
+      </Flex>
     </Flex>
   )
 
@@ -110,6 +172,11 @@ function FacetValue({
             depth={depth + 1}
             excludedFacetValues={excludedFacetValues}
             onExcludedFacetValuesChange={onExcludedFacetValuesChange}
+            addFacetValues={addFacetValues}
+            allFacetValues={allFacetValues}
+            parentList={parentList.includes(facetValue) ? parentList : [...parentList, facetValue]}
+            onlyFacet={onlyFacet}
+            setOnlyFacet={setOnlyFacet}
           />
         ))}
       </Box>
@@ -159,4 +226,48 @@ function toggleExcludedFacetValue(
   }
 
   return newExcludedFacetValues
+}
+
+function toggleOnlyAllFacetValue(
+  facet: Facet,
+  isOnly: boolean,
+  allFacetValues: ExcludedFacetValues,
+  parentList: string[],
+  value: FacetValue
+): ExcludedFacetValues {
+  if (isOnly) {
+    // when on Only mode, include all
+    return {}
+  }
+
+  const newExcludedFacetValues = { ...allFacetValues }
+
+  // search for the facetValue and delete it
+  newExcludedFacetValues[facet.path] = newExcludedFacetValues[facet.path].filter((v) => v !== value)
+
+  // deep iterate all values and remove all parents of the facetValue
+  const keys = Object.keys(newExcludedFacetValues)
+  for (let i = 0; i < keys.length; i++) {
+    const key = keys[i]
+    const values = newExcludedFacetValues[key]
+    for (let j = 0; j < values.length; j++) {
+      const v = values[j]
+      if (parentList.includes(v)) {
+        newExcludedFacetValues[key] = newExcludedFacetValues[key].filter((v) => !parentList.includes(v))
+      }
+    }
+  }
+
+  // deep iterate all values and remove children of the facetValue
+  const children = getAllChildren(facet)
+  children?.forEach((child) => {
+    newExcludedFacetValues[child.path] = []
+  })
+
+  return newExcludedFacetValues
+}
+
+const getAllChildren = (facet: Facet): Facet[] => {
+  const children = facet.values ? Object.values(facet.values).flatMap((value) => value?.facets ?? []) : []
+  return children.concat(children.flatMap(getAllChildren))
 }
