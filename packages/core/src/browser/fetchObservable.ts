@@ -39,6 +39,10 @@ export function initFetchObservable() {
   return fetchObservable
 }
 
+export function resetFetchObservable() {
+  fetchObservable = undefined
+}
+
 function createFetchObservable() {
   return new Observable<FetchContext>((observable) => {
     if (!window.fetch) {
