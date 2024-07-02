@@ -11,7 +11,7 @@ import {
   CustomerDataCompressionStatus,
   timeStampToClocks,
 } from '@datadog/browser-core'
-import { cleanupSyntheticsWorkerValues } from '@datadog/browser-core/test'
+import { cleanupSyntheticsWorkerValues, mockExperimentalFeatures } from '@datadog/browser-core/test'
 import type { TestSetupBuilder } from '../../test'
 import { setup, noopRecorderApi } from '../../test'
 import { ActionType } from '../rawRumEvent.types'
@@ -860,12 +860,10 @@ describe('rum public api', () => {
 
   describe('updateViewName', () => {
     let updateViewNameSpy: jasmine.Spy<ReturnType<StartRum>['updateViewName']>
-    let displaySpy: jasmine.Spy<() => void>
     let rumPublicApi: RumPublicApi
 
     beforeEach(() => {
       updateViewNameSpy = jasmine.createSpy()
-      displaySpy = spyOn(display, 'error')
       rumPublicApi = makeRumPublicApi(
         () => ({
           ...noopStartRum(),
@@ -875,13 +873,19 @@ describe('rum public api', () => {
       )
     })
 
-    it('should update the view name', () => {
+    it('should not expose update view name api when ff is disabled', () => {
+      const rumPublicApi = makeRumPublicApi(noopStartRum, noopRecorderApi)
       rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
+      expect((rumPublicApi as any).updateViewName).toBeUndefined()
+    })
 
-      rumPublicApi.updateViewName('foo')
+    it('should update the view name', () => {
+      mockExperimentalFeatures([ExperimentalFeature.UPDATE_VIEW_NAME])
+      rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-call
+      ;(rumPublicApi as any).updateViewName('foo')
 
-      expect(updateViewNameSpy.calls.argsFor(0)[0]).toEqual('foo')
-      expect(displaySpy).not.toHaveBeenCalled()
+      expect(updateViewNameSpy).toHaveBeenCalledWith('foo')
     })
   })
 })
