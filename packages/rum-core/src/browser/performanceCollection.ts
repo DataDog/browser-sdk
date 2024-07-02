@@ -1,11 +1,9 @@
-import type { Duration, RelativeTime, TimeStamp } from '@datadog/browser-core'
+import type { Duration, RelativeTime } from '@datadog/browser-core'
 import {
   dateNow,
   assign,
   addEventListeners,
   DOM_EVENT,
-  getRelativeTime,
-  isNumber,
   monitor,
   setTimeout,
   relativeNow,
@@ -17,165 +15,37 @@ import {
 import type { RumConfiguration } from '../domain/configuration'
 import type { LifeCycle } from '../domain/lifeCycle'
 import { LifeCycleEventType } from '../domain/lifeCycle'
-import { FAKE_INITIAL_DOCUMENT, isAllowedRequestUrl } from '../domain/resource/resourceUtils'
-
-import { getDocumentTraceId } from '../domain/tracing/getDocumentTraceId'
-
-type RumPerformanceObserverConstructor = new (callback: PerformanceObserverCallback) => RumPerformanceObserver
-
-export interface BrowserWindow extends Window {
-  PerformanceObserver: RumPerformanceObserverConstructor
-  performance: Performance & { interactionCount?: number }
-}
-
-export interface RumPerformanceObserver extends PerformanceObserver {
-  observe(options?: PerformanceObserverInit & { durationThreshold: number }): void
-}
-
-// We want to use a real enum (i.e. not a const enum) here, to be able to check whether an arbitrary
-// string is an expected performance entry
-// eslint-disable-next-line no-restricted-syntax
-export enum RumPerformanceEntryType {
-  EVENT = 'event',
-  FIRST_INPUT = 'first-input',
-  LARGEST_CONTENTFUL_PAINT = 'largest-contentful-paint',
-  LAYOUT_SHIFT = 'layout-shift',
-  LONG_TASK = 'longtask',
-  NAVIGATION = 'navigation',
-  PAINT = 'paint',
-  RESOURCE = 'resource',
-}
-
-export interface RumPerformanceResourceTiming {
-  entryType: RumPerformanceEntryType.RESOURCE
-  initiatorType: string
-  responseStatus?: number
-  name: string
-  startTime: RelativeTime
-  duration: Duration
-  fetchStart: RelativeTime
-  domainLookupStart: RelativeTime
-  domainLookupEnd: RelativeTime
-  connectStart: RelativeTime
-  secureConnectionStart: RelativeTime
-  connectEnd: RelativeTime
-  requestStart: RelativeTime
-  responseStart: RelativeTime
-  responseEnd: RelativeTime
-  redirectStart: RelativeTime
-  redirectEnd: RelativeTime
-  decodedBodySize: number
-  encodedBodySize: number
-  transferSize: number
-  renderBlockingStatus?: string
-  traceId?: string
-  toJSON(): Omit<PerformanceEntry, 'toJSON'>
-}
-
-export interface RumPerformanceLongTaskTiming {
-  name: string
-  entryType: RumPerformanceEntryType.LONG_TASK
-  startTime: RelativeTime
-  duration: Duration
-  toJSON(): Omit<PerformanceEntry, 'toJSON'>
-}
-
-export interface RumPerformancePaintTiming {
-  entryType: RumPerformanceEntryType.PAINT
-  name: 'first-paint' | 'first-contentful-paint'
-  startTime: RelativeTime
-}
-
-export interface RumPerformanceNavigationTiming {
-  entryType: RumPerformanceEntryType.NAVIGATION
-  domComplete: RelativeTime
-  domContentLoadedEventEnd: RelativeTime
-  domInteractive: RelativeTime
-  loadEventEnd: RelativeTime
-  responseStart: RelativeTime
-}
-
-export interface RumLargestContentfulPaintTiming {
-  entryType: RumPerformanceEntryType.LARGEST_CONTENTFUL_PAINT
-  startTime: RelativeTime
-  size: number
-  element?: Element
-  toJSON(): Omit<RumLargestContentfulPaintTiming, 'toJSON'>
-}
-
-export interface RumFirstInputTiming {
-  entryType: RumPerformanceEntryType.FIRST_INPUT
-  startTime: RelativeTime
-  processingStart: RelativeTime
-  processingEnd: RelativeTime
-  duration: Duration
-  target?: Node
-  interactionId?: number
-  name: string
-}
-
-export interface RumPerformanceEventTiming {
-  entryType: RumPerformanceEntryType.EVENT
-  startTime: RelativeTime
-  processingStart: RelativeTime
-  processingEnd: RelativeTime
-  duration: Duration
-  interactionId?: number
-  target?: Node
-  name: string
-}
-
-export interface RumLayoutShiftTiming {
-  entryType: RumPerformanceEntryType.LAYOUT_SHIFT
-  startTime: RelativeTime
-  value: number
-  hadRecentInput: boolean
-  sources?: Array<{
-    node?: Node
-  }>
-}
-
-export type RumPerformanceEntry =
-  | RumPerformanceResourceTiming
-  | RumPerformanceLongTaskTiming
-  | RumPerformancePaintTiming
-  | RumPerformanceNavigationTiming
-  | RumLargestContentfulPaintTiming
-  | RumFirstInputTiming
-  | RumPerformanceEventTiming
-  | RumLayoutShiftTiming
+import { computeRelativePerformanceTiming } from '../domain/resource/resourceUtils'
+import type {
+  BrowserWindow,
+  RumFirstInputTiming,
+  RumPerformanceEntry,
+  RumPerformanceNavigationTiming,
+  RumPerformanceResourceTiming,
+} from './performanceObservable'
+import { RumPerformanceEntryType, supportPerformanceTimingEvent } from './performanceObservable'
 
 function supportPerformanceObject() {
   return window.performance !== undefined && 'getEntries' in performance
 }
 
-export function supportPerformanceTimingEvent(entryType: RumPerformanceEntryType) {
-  return (
-    window.PerformanceObserver &&
-    PerformanceObserver.supportedEntryTypes !== undefined &&
-    PerformanceObserver.supportedEntryTypes.includes(entryType)
-  )
-}
+export type CollectionRumPerformanceEntry = Exclude<RumPerformanceEntry, RumPerformanceResourceTiming>
 
 export function startPerformanceCollection(lifeCycle: LifeCycle, configuration: RumConfiguration) {
   const cleanupTasks: Array<() => void> = []
-  retrieveInitialDocumentResourceTiming(configuration, (timing) => {
-    handleRumPerformanceEntries(lifeCycle, configuration, [timing])
-  })
 
   if (supportPerformanceObject()) {
     const performanceEntries = performance.getEntries()
     // Because the performance entry list can be quite large
     // delay the computation to prevent the SDK from blocking the main thread on init
-    setTimeout(() => handleRumPerformanceEntries(lifeCycle, configuration, performanceEntries))
+    setTimeout(() => handleRumPerformanceEntries(lifeCycle, performanceEntries))
   }
 
   if (window.PerformanceObserver) {
     const handlePerformanceEntryList = monitor((entries: PerformanceObserverEntryList) =>
-      handleRumPerformanceEntries(lifeCycle, configuration, entries.getEntries())
+      handleRumPerformanceEntries(lifeCycle, entries.getEntries())
     )
     const mainEntries = [
-      RumPerformanceEntryType.RESOURCE,
       RumPerformanceEntryType.NAVIGATION,
       RumPerformanceEntryType.LONG_TASK,
       RumPerformanceEntryType.PAINT,
@@ -227,12 +97,12 @@ export function startPerformanceCollection(lifeCycle: LifeCycle, configuration: 
   }
   if (!supportPerformanceTimingEvent(RumPerformanceEntryType.NAVIGATION)) {
     retrieveNavigationTiming(configuration, (timing) => {
-      handleRumPerformanceEntries(lifeCycle, configuration, [timing])
+      handleRumPerformanceEntries(lifeCycle, [timing])
     })
   }
   if (!supportPerformanceTimingEvent(RumPerformanceEntryType.FIRST_INPUT)) {
     const { stop: stopFirstInputTiming } = retrieveFirstInputTiming(configuration, (timing) => {
-      handleRumPerformanceEntries(lifeCycle, configuration, [timing])
+      handleRumPerformanceEntries(lifeCycle, [timing])
     })
     cleanupTasks.push(stopFirstInputTiming)
   }
@@ -241,45 +111,6 @@ export function startPerformanceCollection(lifeCycle: LifeCycle, configuration: 
       cleanupTasks.forEach((task) => task())
     },
   }
-}
-
-export function retrieveInitialDocumentResourceTiming(
-  configuration: RumConfiguration,
-  callback: (timing: RumPerformanceResourceTiming) => void
-) {
-  runOnReadyState(configuration, 'interactive', () => {
-    let timing: RumPerformanceResourceTiming
-
-    const forcedAttributes = {
-      entryType: RumPerformanceEntryType.RESOURCE as const,
-      initiatorType: FAKE_INITIAL_DOCUMENT,
-      traceId: getDocumentTraceId(document),
-      toJSON: () => assign({}, timing, { toJSON: undefined }),
-    }
-    if (
-      supportPerformanceTimingEvent(RumPerformanceEntryType.NAVIGATION) &&
-      performance.getEntriesByType(RumPerformanceEntryType.NAVIGATION).length > 0
-    ) {
-      const navigationEntry = performance.getEntriesByType(RumPerformanceEntryType.NAVIGATION)[0]
-      timing = assign(navigationEntry.toJSON() as RumPerformanceResourceTiming, forcedAttributes)
-    } else {
-      const relativePerformanceTiming = computeRelativePerformanceTiming()
-      timing = assign(
-        relativePerformanceTiming,
-        {
-          decodedBodySize: 0,
-          encodedBodySize: 0,
-          transferSize: 0,
-          renderBlockingStatus: 'non-blocking',
-          duration: relativePerformanceTiming.responseEnd,
-          name: window.location.href,
-          startTime: 0 as RelativeTime,
-        },
-        forcedAttributes
-      )
-    }
-    callback(timing)
-  })
 }
 
 function retrieveNavigationTiming(
@@ -378,35 +209,15 @@ function retrieveFirstInputTiming(configuration: RumConfiguration, callback: (ti
   }
 }
 
-export type RelativePerformanceTiming = {
-  -readonly [key in keyof Omit<PerformanceTiming, 'toJSON'>]: RelativeTime
-}
-
-function computeRelativePerformanceTiming() {
-  const result: Partial<RelativePerformanceTiming> = {}
-  const timing = performance.timing
-  for (const key in timing) {
-    if (isNumber(timing[key as keyof PerformanceTiming])) {
-      const numberKey = key as keyof RelativePerformanceTiming
-      const timingElement = timing[numberKey] as TimeStamp
-      result[numberKey] = timingElement === 0 ? (0 as RelativeTime) : getRelativeTime(timingElement)
-    }
-  }
-  return result as RelativePerformanceTiming
-}
-
 function handleRumPerformanceEntries(
   lifeCycle: LifeCycle,
-  configuration: RumConfiguration,
-  entries: Array<PerformanceEntry | RumPerformanceEntry>
+  entries: Array<PerformanceEntry | CollectionRumPerformanceEntry>
 ) {
-  const rumPerformanceEntries = entries.filter((entry): entry is RumPerformanceEntry =>
+  const rumPerformanceEntries = entries.filter((entry): entry is CollectionRumPerformanceEntry =>
     objectHasValue(RumPerformanceEntryType, entry.entryType)
   )
 
-  const rumAllowedPerformanceEntries = rumPerformanceEntries.filter(
-    (entry) => !isIncompleteNavigation(entry) && !isForbiddenResource(configuration, entry)
-  )
+  const rumAllowedPerformanceEntries = rumPerformanceEntries.filter((entry) => !isIncompleteNavigation(entry))
 
   if (rumAllowedPerformanceEntries.length) {
     lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, rumAllowedPerformanceEntries)
@@ -415,8 +226,4 @@ function handleRumPerformanceEntries(
 
 function isIncompleteNavigation(entry: RumPerformanceEntry) {
   return entry.entryType === RumPerformanceEntryType.NAVIGATION && entry.loadEventEnd <= 0
-}
-
-function isForbiddenResource(configuration: RumConfiguration, entry: RumPerformanceEntry) {
-  return entry.entryType === RumPerformanceEntryType.RESOURCE && !isAllowedRequestUrl(configuration, entry.name)
 }

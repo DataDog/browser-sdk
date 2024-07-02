@@ -1,6 +1,6 @@
 import { ExperimentalFeature, type Duration, type RelativeTime, type ServerDuration } from '@datadog/browser-core'
 import { SPEC_ENDPOINTS, mockExperimentalFeatures } from '@datadog/browser-core/test'
-import { RumPerformanceEntryType, type RumPerformanceResourceTiming } from '../../browser/performanceCollection'
+import { RumPerformanceEntryType, type RumPerformanceResourceTiming } from '../../browser/performanceObservable'
 import type { RumConfiguration } from '../configuration'
 import { validateAndBuildRumConfiguration } from '../configuration'
 import {

@@ -53,6 +53,17 @@ describe('observable', () => {
     expect(onFirstSubscribe).toHaveBeenCalledTimes(1)
   })
 
+  it('should notify the first subscriber if the onFirstSubscribe callback notifies synchronously ', () => {
+    const onFirstSubscribe = jasmine.createSpy('callback').and.callFake((observable: Observable<void>) => {
+      observable.notify()
+    })
+    observable = new Observable(onFirstSubscribe)
+    observable.subscribe(subscriber)
+
+    expect(onFirstSubscribe).toHaveBeenCalledTimes(1)
+    expect(subscriber).toHaveBeenCalledTimes(1)
+  })
+
   it('should pass the observable instance to the onFirstSubscribe callback', () => {
     const onFirstSubscribe = jasmine.createSpy('callback')
     observable = new Observable(onFirstSubscribe)

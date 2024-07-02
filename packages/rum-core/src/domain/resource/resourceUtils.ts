@@ -1,17 +1,19 @@
-import type { RelativeTime, ServerDuration } from '@datadog/browser-core'
+import type { RelativeTime, ServerDuration, TimeStamp } from '@datadog/browser-core'
 import {
   addTelemetryDebug,
   elapsed,
   ExperimentalFeature,
   getPathName,
+  getRelativeTime,
   includes,
   isExperimentalFeatureEnabled,
+  isNumber,
   isValidUrl,
   ResourceType,
   toServerDuration,
 } from '@datadog/browser-core'
 
-import type { RumPerformanceResourceTiming } from '../../browser/performanceCollection'
+import type { RumPerformanceResourceTiming } from '../../browser/performanceObservable'
 
 import type { PerformanceResourceDetailsElement } from '../../rawRumEvent.types'
 import type { RumConfiguration } from '../configuration'
@@ -214,4 +216,21 @@ export function isLongDataUrl(url: string): boolean {
 
 export function sanitizeDataUrl(url: string): string {
   return `${url.match(DATA_URL_REGEX)![0]}[...]`
+}
+
+export type RelativePerformanceTiming = {
+  -readonly [key in keyof Omit<PerformanceTiming, 'toJSON'>]: RelativeTime
+}
+
+export function computeRelativePerformanceTiming() {
+  const result: Partial<RelativePerformanceTiming> = {}
+  const timing = performance.timing
+  for (const key in timing) {
+    if (isNumber(timing[key as keyof PerformanceTiming])) {
+      const numberKey = key as keyof RelativePerformanceTiming
+      const timingElement = timing[numberKey] as TimeStamp
+      result[numberKey] = timingElement === 0 ? (0 as RelativeTime) : getRelativeTime(timingElement)
+    }
+  }
+  return result as RelativePerformanceTiming
 }

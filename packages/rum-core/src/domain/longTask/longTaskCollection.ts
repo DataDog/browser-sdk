@@ -3,7 +3,7 @@ import type { RawRumLongTaskEvent } from '../../rawRumEvent.types'
 import { RumEventType } from '../../rawRumEvent.types'
 import type { LifeCycle } from '../lifeCycle'
 import { LifeCycleEventType } from '../lifeCycle'
-import { RumPerformanceEntryType } from '../../browser/performanceCollection'
+import { RumPerformanceEntryType } from '../../browser/performanceObservable'
 import type { RumConfiguration } from '../configuration'
 
 export function startLongTaskCollection(lifeCycle: LifeCycle, configuration: RumConfiguration) {

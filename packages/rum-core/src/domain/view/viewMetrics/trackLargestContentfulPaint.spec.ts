@@ -1,7 +1,7 @@
 import type { RelativeTime } from '@datadog/browser-core'
 import { DOM_EVENT, resetExperimentalFeatures } from '@datadog/browser-core'
 import { restorePageVisibility, setPageVisibility, createNewEvent } from '@datadog/browser-core/test'
-import { RumPerformanceEntryType } from '../../../browser/performanceCollection'
+import { RumPerformanceEntryType } from '../../../browser/performanceObservable'
 import type { TestSetupBuilder } from '../../../../test'
 import { appendElement, createPerformanceEntry, setup } from '../../../../test'
 import { LifeCycleEventType } from '../../lifeCycle'

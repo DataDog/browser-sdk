@@ -15,7 +15,7 @@ import {
 import { createNewEvent, interceptRequests, mockEventBridge } from '@datadog/browser-core/test'
 import type { RumSessionManagerMock, TestSetupBuilder } from '../../test'
 import { createPerformanceEntry, createRumSessionManagerMock, noopRecorderApi, setup } from '../../test'
-import { RumPerformanceEntryType } from '../browser/performanceCollection'
+import { RumPerformanceEntryType } from '../browser/performanceObservable'
 import type { LifeCycle } from '../domain/lifeCycle'
 import { LifeCycleEventType } from '../domain/lifeCycle'
 import { SESSION_KEEP_ALIVE_INTERVAL, THROTTLE_VIEW_UPDATE_PERIOD } from '../domain/view/trackViews'
@@ -53,6 +53,7 @@ function startRumStub(
     configuration,
     location,
     sessionManager,
+    pageStateHistory,
     locationChangeObservable,
     domMutationObservable,
     () => ({

@@ -3,7 +3,7 @@ import { resetExperimentalFeatures, elapsed, ONE_SECOND } from '@datadog/browser
 import type { TestSetupBuilder } from '../../../../test'
 import { appendElement, appendText, createPerformanceEntry, setup } from '../../../../test'
 import { LifeCycleEventType } from '../../lifeCycle'
-import { RumPerformanceEntryType } from '../../../browser/performanceCollection'
+import { RumPerformanceEntryType } from '../../../browser/performanceObservable'
 import type { CumulativeLayoutShift } from './trackCumulativeLayoutShift'
 import { MAX_WINDOW_DURATION, trackCumulativeLayoutShift } from './trackCumulativeLayoutShift'
 

@@ -2,8 +2,8 @@ import type { RelativeTime } from '@datadog/browser-core'
 import { ONE_MINUTE, find } from '@datadog/browser-core'
 import type { LifeCycle } from '../../lifeCycle'
 import { LifeCycleEventType } from '../../lifeCycle'
-import type { RumPerformancePaintTiming } from '../../../browser/performanceCollection'
-import { RumPerformanceEntryType } from '../../../browser/performanceCollection'
+import type { RumPerformancePaintTiming } from '../../../browser/performanceObservable'
+import { RumPerformanceEntryType } from '../../../browser/performanceObservable'
 import type { FirstHidden } from './trackFirstHidden'
 
 // Discard FCP timings above a certain delay to avoid incorrect data

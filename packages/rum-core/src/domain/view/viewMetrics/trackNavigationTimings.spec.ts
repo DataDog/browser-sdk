@@ -1,5 +1,5 @@
 import type { Duration } from '@datadog/browser-core'
-import { RumPerformanceEntryType } from '../../../browser/performanceCollection'
+import { RumPerformanceEntryType } from '../../../browser/performanceObservable'
 import type { TestSetupBuilder } from '../../../../test'
 import { createPerformanceEntry, setup } from '../../../../test'
 import { LifeCycleEventType } from '../../lifeCycle'

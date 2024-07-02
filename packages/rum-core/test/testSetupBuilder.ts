@@ -39,7 +39,6 @@ export interface TestSetupBuilder {
 
   clock: Clock | undefined
   domMutationObservable: Observable<void>
-
   build: () => TestIO
 }
 
