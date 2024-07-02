@@ -1,4 +1,5 @@
 import type { RumConfiguration, NodePrivacyLevel } from '@datadog/browser-rum-core'
+import type { SerializedNode } from '../../../types'
 import type { ElementsScrollPositions } from '../elementsScrollPositions'
 import type { ShadowRootsController } from '../shadowRootsController'
 
@@ -20,16 +21,19 @@ export type SerializationContext =
   | {
       status: SerializationContextStatus.MUTATION
       shadowRootsController: ShadowRootsController
+      styleSheetsCache?: SerializedNodeCache
     }
   | {
       status: SerializationContextStatus.INITIAL_FULL_SNAPSHOT
       elementsScrollPositions: ElementsScrollPositions
       shadowRootsController: ShadowRootsController
+      styleSheetsCache?: SerializedNodeCache
     }
   | {
       status: SerializationContextStatus.SUBSEQUENT_FULL_SNAPSHOT
       elementsScrollPositions: ElementsScrollPositions
       shadowRootsController: ShadowRootsController
+      styleSheetsCache?: SerializedNodeCache
     }
 
 export interface SerializeOptions {
@@ -41,3 +45,5 @@ export interface SerializeOptions {
 }
 
 export type NodeWithSerializedNode = Node & { s: 'Node with serialized node' }
+
+export type SerializedNodeCache = Map<number, SerializedNode>
