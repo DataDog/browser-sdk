@@ -245,15 +245,6 @@ export interface RumPublicApi extends PublicApi {
    * See [Browser Session Replay](https://docs.datadoghq.com/real_user_monitoring/session_replay/browser) for further information.
    */
   stopSessionReplayRecording: () => void
-
-  /**
-   * Update View Name.
-   *
-   * Enable to manually change the name of the current view.
-   *
-   * See [Override default RUM view names](https://docs.datadoghq.com/real_user_monitoring/browser/advanced_configuration/#override-default-rum-view-names) for further information.
-   */
-  updateViewName: (name: string) => void
 }
 
 export interface RecorderApi {
@@ -361,6 +352,19 @@ export function makeRumPublicApi(
             })
           }
         )
+      }
+
+      if (isExperimentalFeatureEnabled(ExperimentalFeature.UPDATE_VIEW_NAME)) {
+        /**
+         * Update View Name.
+         *
+         * Enable to manually change the name of the current view.
+         * @param name name of the view
+         * See [Override default RUM view names](https://docs.datadoghq.com/real_user_monitoring/browser/advanced_configuration/#override-default-rum-view-names) for further information.
+         */
+        ;(rumPublicApi as any).updateViewName = monitor((name: string) => {
+          strategy.updateViewName(name)
+        })
       }
 
       if (configuration.storeContextsAcrossPages) {
@@ -487,10 +491,6 @@ export function makeRumPublicApi(
     clearUser: monitor(() => userContextManager.clearContext()),
 
     startView,
-
-    updateViewName: (name) => {
-      strategy.updateViewName(name)
-    },
 
     stopSession: monitor(() => {
       strategy.stopSession()
