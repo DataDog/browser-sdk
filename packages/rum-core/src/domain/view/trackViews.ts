@@ -267,7 +267,9 @@ function newView(
   }
 
   return {
-    name,
+    get name() {
+      return name
+    },
     service,
     version,
     stopObservable,
