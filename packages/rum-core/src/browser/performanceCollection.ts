@@ -44,6 +44,7 @@ export enum RumPerformanceEntryType {
   NAVIGATION = 'navigation',
   PAINT = 'paint',
   RESOURCE = 'resource',
+  LONG_ANIMATION_FRAME = 'long-animation-frame',
 }
 
 export interface RumPerformanceResourceTiming {
@@ -135,6 +136,42 @@ export interface RumLayoutShiftTiming {
   }>
 }
 
+// Documentation https://developer.chrome.com/docs/web-platform/long-animation-frames#better-attribution
+export type RumPerformanceScriptTiming = {
+  duration: Duration
+  entryType: 'script'
+  executionStart: RelativeTime
+  forcedStyleAndLayoutDuration: Duration
+  invoker: string // e.g. "https://static.datadoghq.com/static/c/93085/chunk-bc4db53278fd4c77a637.min.js"
+  invokerType:
+    | 'user-callback'
+    | 'event-listener'
+    | 'resolve-promise'
+    | 'reject-promise'
+    | 'classic-script'
+    | 'module-script'
+  name: 'script'
+  pauseDuration: Duration
+  sourceCharPosition: number
+  sourceFunctionName: string
+  sourceURL: string
+  startTime: RelativeTime
+  window: Window
+  windowAttribution: string
+}
+
+export interface RumPerformanceLongAnimationFrameTiming {
+  blockingDuration: Duration
+  duration: Duration
+  entryType: RumPerformanceEntryType.LONG_ANIMATION_FRAME
+  firstUIEventTimestamp: RelativeTime
+  name: 'long-animation-frame'
+  renderStart: RelativeTime
+  scripts: PerformanceTiming[]
+  startTime: RelativeTime
+  styleAndLayoutStart: RelativeTime
+}
+
 export type RumPerformanceEntry =
   | RumPerformanceResourceTiming
   | RumPerformanceLongTaskTiming
@@ -144,6 +181,7 @@ export type RumPerformanceEntry =
   | RumFirstInputTiming
   | RumPerformanceEventTiming
   | RumLayoutShiftTiming
+  | RumPerformanceLongAnimationFrameTiming
 
 function supportPerformanceObject() {
   return window.performance !== undefined && 'getEntries' in performance
@@ -185,6 +223,7 @@ export function startPerformanceCollection(lifeCycle: LifeCycle, configuration: 
       RumPerformanceEntryType.FIRST_INPUT,
       RumPerformanceEntryType.LAYOUT_SHIFT,
       RumPerformanceEntryType.EVENT,
+      RumPerformanceEntryType.LONG_ANIMATION_FRAME,
     ]
 
     try {
