@@ -1,5 +1,5 @@
 import { DefaultPrivacyLevel, isIE } from '@datadog/browser-core'
-import { createNewEvent } from '@datadog/browser-core/test'
+import { createNewEvent, registerCleanupTask } from '@datadog/browser-core/test'
 import type { RumConfiguration } from '@datadog/browser-rum-core'
 import { serializeDocument, SerializationContextStatus } from '../serialization'
 import type { ElementsScrollPositions } from '../elementsScrollPositions'
@@ -31,10 +31,10 @@ describe('trackViewportResize', () => {
     })
 
     viewportResizeTracker = tackVisualViewportResize(configuration, visualViewportResizeCallback)
-  })
 
-  afterEach(() => {
-    viewportResizeTracker.stop()
+    registerCleanupTask(() => {
+      viewportResizeTracker.stop()
+    })
   })
 
   it('collects visual viewport on resize', () => {

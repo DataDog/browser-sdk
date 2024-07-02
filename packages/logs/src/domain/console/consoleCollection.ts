@@ -1,12 +1,5 @@
 import type { Context, ClocksState, ConsoleLog } from '@datadog/browser-core'
-import {
-  timeStampNow,
-  ConsoleApiName,
-  ErrorSource,
-  initConsoleObservable,
-  isExperimentalFeatureEnabled,
-  ExperimentalFeature,
-} from '@datadog/browser-core'
+import { timeStampNow, ConsoleApiName, ErrorSource, initConsoleObservable } from '@datadog/browser-core'
 import type { LogsConfiguration } from '../configuration'
 import type { LifeCycle, RawLogsEventCollectedData } from '../lifeCycle'
 import { LifeCycleEventType } from '../lifeCycle'
@@ -44,12 +37,9 @@ export function startConsoleCollection(configuration: LogsConfiguration, lifeCyc
             : undefined,
         status: LogStatusForApi[log.api],
       },
-    }
-
-    if (isExperimentalFeatureEnabled(ExperimentalFeature.MICRO_FRONTEND)) {
-      collectedData.domainContext = {
+      domainContext: {
         handlingStack: log.handlingStack,
-      }
+      },
     }
 
     lifeCycle.notify(LifeCycleEventType.RAW_LOG_COLLECTED, collectedData)

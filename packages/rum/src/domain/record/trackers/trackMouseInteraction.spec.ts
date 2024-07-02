@@ -1,5 +1,5 @@
 import { DOM_EVENT, DefaultPrivacyLevel, isIE } from '@datadog/browser-core'
-import { createNewEvent } from '@datadog/browser-core/test'
+import { createNewEvent, registerCleanupTask } from '@datadog/browser-core/test'
 import type { RumConfiguration } from '@datadog/browser-rum-core'
 import { appendElement } from '../../../../../rum-core/test'
 import { IncrementalSource, MouseInteractionType, RecordType } from '../../../types'
@@ -37,10 +37,10 @@ describe('trackMouseInteraction', () => {
     mouseInteractionCallbackSpy = jasmine.createSpy()
     recordIds = initRecordIds()
     mouseInteractionTracker = trackMouseInteraction(configuration, mouseInteractionCallbackSpy, recordIds)
-  })
 
-  afterEach(() => {
-    mouseInteractionTracker.stop()
+    registerCleanupTask(() => {
+      mouseInteractionTracker.stop()
+    })
   })
 
   it('should generate click record', () => {
@@ -120,6 +120,10 @@ describe('trackMouseInteraction', () => {
     })
 
     afterEach(() => {
+      if (!window.visualViewport) {
+        return
+      }
+
       delete (window.visualViewport as any).offsetTop
     })
 

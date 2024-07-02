@@ -2,7 +2,7 @@ import { DefaultPrivacyLevel, findLast, isIE } from '@datadog/browser-core'
 import type { RumConfiguration, ViewCreatedEvent } from '@datadog/browser-rum-core'
 import { LifeCycle, LifeCycleEventType } from '@datadog/browser-rum-core'
 import type { Clock } from '@datadog/browser-core/test'
-import { createNewEvent, collectAsyncCalls } from '@datadog/browser-core/test'
+import { createNewEvent, collectAsyncCalls, registerCleanupTask } from '@datadog/browser-core/test'
 import { findElement, findFullSnapshot, findNode, recordsPerFullSnapshot } from '../../../test'
 import type {
   BrowserIncrementalSnapshotRecord,
@@ -32,11 +32,11 @@ describe('record', () => {
     }
 
     emitSpy = jasmine.createSpy()
-  })
 
-  afterEach(() => {
-    clock?.cleanup()
-    recordApi?.stop()
+    registerCleanupTask(() => {
+      clock?.cleanup()
+      recordApi?.stop()
+    })
   })
 
   it('captures stylesheet rules', (done) => {

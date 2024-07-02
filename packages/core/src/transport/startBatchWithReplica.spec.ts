@@ -1,4 +1,4 @@
-import { stubEndpointBuilder } from '../../test'
+import { mockEndpointBuilder } from '../../test'
 import type { PageExitEvent } from '../browser/pageExitObservable'
 import type { Configuration } from '../domain/configuration'
 import type { RawError } from '../domain/error/error.types'
@@ -20,7 +20,7 @@ describe('startBatchWithReplica', () => {
     pageExitObservable = new Observable()
     sessionExpireObservable = new Observable()
     batchConfiguration = {
-      endpoint: stubEndpointBuilder('https://example.com'),
+      endpoint: mockEndpointBuilder('https://example.com'),
       encoder: createIdentityEncoder(),
     }
   })

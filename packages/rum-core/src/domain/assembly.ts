@@ -56,6 +56,11 @@ const USER_CUSTOMIZABLE_FIELD_PATHS: ModifiableFieldPaths = {
   context: 'object',
 }
 
+const ROOT_MODIFIABLE_FIELD_PATHS: ModifiableFieldPaths = {
+  service: 'string',
+  version: 'string',
+}
+
 let modifiableFieldPathsByEvent: { [key in RumEventType]: ModifiableFieldPaths }
 
 type Mutable<T> = { -readonly [P in keyof T]: T[P] }
@@ -72,16 +77,6 @@ export function startRumAssembly(
   getCommonContext: () => CommonContext,
   reportError: (error: RawError) => void
 ) {
-  // TODO: lift this declaration to module level once feature flag is removed
-  const ROOT_MODIFIABLE_FIELD_PATHS: ModifiableFieldPaths = isExperimentalFeatureEnabled(
-    ExperimentalFeature.MICRO_FRONTEND
-  )
-    ? {
-        service: 'string',
-        version: 'string',
-      }
-    : {}
-
   modifiableFieldPathsByEvent = {
     [RumEventType.VIEW]: VIEW_MODIFIABLE_FIELD_PATHS,
     [RumEventType.ERROR]: assign(

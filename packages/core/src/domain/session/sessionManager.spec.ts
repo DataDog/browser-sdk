@@ -1,4 +1,11 @@
-import { createNewEvent, expireCookie, mockClock, restorePageVisibility, setPageVisibility } from '../../../test'
+import {
+  createNewEvent,
+  expireCookie,
+  mockClock,
+  registerCleanupTask,
+  restorePageVisibility,
+  setPageVisibility,
+} from '../../../test'
 import type { Clock } from '../../../test'
 import { getCookie, setCookie } from '../../browser/cookie'
 import type { RelativeTime } from '../../tools/utils/timeUtils'
@@ -89,14 +96,14 @@ describe('startSessionManager', () => {
       pending('no full rum support')
     }
     clock = mockClock()
-  })
 
-  afterEach(() => {
-    // remove intervals first
-    stopSessionManager()
-    // flush pending callbacks to avoid random failures
-    clock.tick(ONE_HOUR)
-    clock.cleanup()
+    registerCleanupTask(() => {
+      // remove intervals first
+      stopSessionManager()
+      // flush pending callbacks to avoid random failures
+      clock.tick(ONE_HOUR)
+      clock.cleanup()
+    })
   })
 
   describe('resume from a frozen tab ', () => {
