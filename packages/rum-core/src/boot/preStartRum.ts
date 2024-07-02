@@ -118,9 +118,9 @@ export function createPreStartStrategy(
     }
 
     cachedConfiguration = configuration
-    // Instrumuent fetch and XHR to track network requests
+    // Instrumuent fetch to track network requests
     // This is needed in case the consent is not granted and some cutsomer
-    // library (Apollo Client) is storing uninstrumented fetch or XHR to be used later
+    // library (Apollo Client) is storing uninstrumented fetch to be used later
     // The subscrption is needed so that the instrumentation process is completed
     initFetchObservable().subscribe(noop)
 
