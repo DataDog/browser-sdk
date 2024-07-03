@@ -655,7 +655,7 @@ describe('preStartRum', () => {
 
       const name = 'foo'
       strategy.updateViewName(name)
-      strategy.init(DEFAULT_INIT_CONFIGURATION)
+      strategy.init(DEFAULT_INIT_CONFIGURATION, PUBLIC_API)
       expect(updateViewNameSpy).toHaveBeenCalledOnceWith(name)
     })
 
