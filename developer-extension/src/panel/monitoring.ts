@@ -1,7 +1,7 @@
 import { datadogRum } from '@datadog/browser-rum'
 import { datadogLogs } from '@datadog/browser-logs'
 import packageJson from '../../package.json'
-import { DEFAULT_PANEL_TAB } from '../common/constants'
+import { DEFAULT_PANEL_TAB } from '../common/panelTabConstants'
 
 export function initMonitoring() {
   datadogRum.init({

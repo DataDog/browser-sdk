@@ -1,6 +1,5 @@
 import type { Duration, RelativeTime, ServerDuration, TimeStamp } from '@datadog/browser-core'
-import { isIE, RequestType, ResourceType, ExperimentalFeature } from '@datadog/browser-core'
-import { mockExperimentalFeatures } from '@datadog/browser-core/test'
+import { isIE, RequestType, ResourceType } from '@datadog/browser-core'
 import type { RumFetchResourceEventDomainContext, RumXhrResourceEventDomainContext } from '../../domainContext.types'
 import { setup, createPerformanceEntry } from '../../../test'
 import type { TestSetupBuilder } from '../../../test'
@@ -12,6 +11,8 @@ import { TraceIdentifier } from '../tracing/tracer'
 import { validateAndBuildRumConfiguration } from '../configuration'
 import { RumPerformanceEntryType } from '../../browser/performanceCollection'
 import { startResourceCollection } from './resourceCollection'
+
+const HANDLING_STACK_REGEX = /^Error: \n\s+at <anonymous> @/
 
 describe('resourceCollection', () => {
   let setupBuilder: TestSetupBuilder
@@ -106,6 +107,7 @@ describe('resourceCollection', () => {
       requestInit: undefined,
       error: undefined,
       isAborted: false,
+      handlingStack: jasmine.stringMatching(HANDLING_STACK_REGEX),
     })
   })
 
@@ -226,6 +228,7 @@ describe('resourceCollection', () => {
       requestInit: { headers: { foo: 'bar' } },
       error: undefined,
       isAborted: false,
+      handlingStack: jasmine.stringMatching(HANDLING_STACK_REGEX),
     })
   })
   ;[null, undefined, 42, {}].forEach((input: any) => {
@@ -387,35 +390,27 @@ describe('resourceCollection', () => {
     })
   })
 
-  describe('with micro-frontend feature flag enabled', () => {
-    const HANDLING_STACK_REGEX = /^Error: \n\s+at <anonymous> @/
+  it('should collect handlingStack from completed fetch request', () => {
+    if (isIE()) {
+      pending('No IE support')
+    }
 
-    beforeEach(() => {
-      mockExperimentalFeatures([ExperimentalFeature.MICRO_FRONTEND])
-    })
+    const { lifeCycle, rawRumEvents } = setupBuilder.build()
+    const response = new Response()
+    lifeCycle.notify(LifeCycleEventType.REQUEST_COMPLETED, createCompletedRequest({ response }))
+    const domainContext = rawRumEvents[0].domainContext as RumFetchResourceEventDomainContext
 
-    it('should collect handlingStack from completed fetch request', () => {
-      if (isIE()) {
-        pending('No IE support')
-      }
+    expect(domainContext.handlingStack).toMatch(HANDLING_STACK_REGEX)
+  })
 
-      const { lifeCycle, rawRumEvents } = setupBuilder.build()
-      const response = new Response()
-      lifeCycle.notify(LifeCycleEventType.REQUEST_COMPLETED, createCompletedRequest({ response }))
-      const domainContext = rawRumEvents[0].domainContext as RumFetchResourceEventDomainContext
+  it('should collect handlingStack from completed XHR request', () => {
+    const { lifeCycle, rawRumEvents } = setupBuilder.build()
+    const xhr = new XMLHttpRequest()
+    lifeCycle.notify(LifeCycleEventType.REQUEST_COMPLETED, createCompletedRequest({ xhr }))
 
-      expect(domainContext.handlingStack).toMatch(HANDLING_STACK_REGEX)
-    })
+    const domainContext = rawRumEvents[0].domainContext as RumXhrResourceEventDomainContext
 
-    it('should collect handlingStack from completed XHR request', () => {
-      const { lifeCycle, rawRumEvents } = setupBuilder.build()
-      const xhr = new XMLHttpRequest()
-      lifeCycle.notify(LifeCycleEventType.REQUEST_COMPLETED, createCompletedRequest({ xhr }))
-
-      const domainContext = rawRumEvents[0].domainContext as RumXhrResourceEventDomainContext
-
-      expect(domainContext.handlingStack).toMatch(HANDLING_STACK_REGEX)
-    })
+    expect(domainContext.handlingStack).toMatch(HANDLING_STACK_REGEX)
   })
 })
 

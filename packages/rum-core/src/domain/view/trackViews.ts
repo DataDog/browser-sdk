@@ -27,7 +27,7 @@ import type { LifeCycle } from '../lifeCycle'
 import { LifeCycleEventType } from '../lifeCycle'
 import type { EventCounts } from '../trackEventCounts'
 import type { LocationChange } from '../../browser/locationChangeObservable'
-import type { RumConfiguration } from '../configuration'
+import type { RumConfiguration, RumInitConfiguration } from '../configuration'
 import { trackViewEventCounts } from './trackViewEventCounts'
 import { trackInitialViewMetrics } from './viewMetrics/trackInitialViewMetrics'
 import type { InitialViewMetrics } from './viewMetrics/trackInitialViewMetrics'
@@ -77,8 +77,8 @@ export const KEEP_TRACKING_AFTER_VIEW_DELAY = 5 * ONE_MINUTE
 
 export interface ViewOptions {
   name?: string
-  service?: string
-  version?: string
+  service?: RumInitConfiguration['service']
+  version?: RumInitConfiguration['version']
 }
 
 export function trackViews(
@@ -191,8 +191,8 @@ function newView(
   let version: string | undefined
   if (viewOptions) {
     name = viewOptions.name
-    service = viewOptions.service
-    version = viewOptions.version
+    service = viewOptions.service || undefined
+    version = viewOptions.version || undefined
   }
 
   const viewCreatedEvent = {

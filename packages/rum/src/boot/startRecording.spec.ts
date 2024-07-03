@@ -3,7 +3,7 @@ import { PageExitReason, DefaultPrivacyLevel, noop, isIE, DeflateEncoderStreamId
 import type { LifeCycle, ViewCreatedEvent, RumConfiguration } from '@datadog/browser-rum-core'
 import { LifeCycleEventType, startViewContexts } from '@datadog/browser-rum-core'
 import type { Clock } from '@datadog/browser-core/test'
-import { collectAsyncCalls, createNewEvent, initEventBridgeStub } from '@datadog/browser-core/test'
+import { collectAsyncCalls, createNewEvent, mockEventBridge, registerCleanupTask } from '@datadog/browser-core/test'
 import type { ViewEndedEvent } from 'packages/rum-core/src/domain/view/trackViews'
 import type { RumSessionManagerMock, TestSetupBuilder } from '../../../rum-core/test'
 import { appendElement, createRumSessionManagerMock, setup } from '../../../rum-core/test'
@@ -73,12 +73,12 @@ describe('startRecording', () => {
           },
         }
       })
-  })
 
-  afterEach(() => {
-    setSegmentBytesLimit()
-    clock?.cleanup()
-    resetDeflateWorkerState()
+    registerCleanupTask(() => {
+      setSegmentBytesLimit()
+      clock?.cleanup()
+      resetDeflateWorkerState()
+    })
   })
 
   it('sends recorded segments with valid context', async () => {
@@ -222,9 +222,9 @@ describe('startRecording', () => {
   })
 
   it('should send records through the bridge when it is present', () => {
-    const eventBridgeStub = initEventBridgeStub()
+    const eventBridge = mockEventBridge()
     const { lifeCycle } = setupBuilder.build()
-    const sendSpy = spyOn(eventBridgeStub, 'send')
+    const sendSpy = spyOn(eventBridge, 'send')
 
     // send click record
     document.body.dispatchEvent(createNewEvent('click', { clientX: 1, clientY: 2 }))

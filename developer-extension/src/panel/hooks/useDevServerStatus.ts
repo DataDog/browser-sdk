@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { DEV_LOGS_URL } from '../../common/constants'
+import { DEV_LOGS_URL } from '../../common/packagesUrlConstants'
 
 const REFRESH_DELAY = 2000
 const CHECKING_STATUS_DELAY = 500

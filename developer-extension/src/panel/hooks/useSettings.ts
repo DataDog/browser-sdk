@@ -1,5 +1,5 @@
 import { useEffect, useReducer } from 'react'
-import { SESSION_STORAGE_SETTINGS_KEY } from '../../common/constants'
+import { SESSION_STORAGE_SETTINGS_KEY } from '../../common/sessionKeyConstant'
 import { EventListeners } from '../../common/eventListeners'
 import { createLogger } from '../../common/logger'
 import { evalInWindow } from '../evalInWindow'

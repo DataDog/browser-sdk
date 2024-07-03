@@ -1,6 +1,5 @@
+import { disableJasmineUncaughtExceptionTracking, collectAsyncCalls } from '../../../test'
 import { Observable } from '../../tools/observable'
-import { collectAsyncCalls } from '../../../test'
-import { noop } from '../../tools/utils/functionUtils'
 import { isIE } from '../../tools/utils/browserDetection'
 import type { UnhandledErrorCallback } from './trackRuntimeError'
 import { instrumentOnError, instrumentUnhandledRejection, trackRuntimeError } from './trackRuntimeError'
@@ -53,8 +52,7 @@ describe('trackRuntimeError', () => {
     if (isIE()) {
       pending('no promise support')
     }
-    // Disable Jasmine's uncaught error handling because it also forward unhandled rejection to onerror. cf: https://github.com/jasmine/jasmine/pull/1860
-    window.onerror = () => noop
+    disableJasmineUncaughtExceptionTracking()
 
     setTimeout(() => {
       void Promise.reject(new Error(ERROR_MESSAGE))
