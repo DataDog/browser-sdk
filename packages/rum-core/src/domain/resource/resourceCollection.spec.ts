@@ -280,6 +280,7 @@ describe('resourceCollection', () => {
       const privateFields = (rawRumEvents[0].rawRumEvent as RawRumResourceEvent)._dd
       expect(privateFields).toBeDefined()
       expect(privateFields.trace_id).toBe('1234')
+      expect(privateFields.span_id).toEqual(jasmine.any(String))
     })
 
     it('should be processed from sampled completed request', () => {
