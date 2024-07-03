@@ -72,14 +72,14 @@ describe('API calls and events around init', () => {
       window.DD_RUM!.addError('before init')
       window.DD_RUM!.addAction('before init')
       window.DD_RUM!.addTiming('before init')
-      window.DD_RUM!.updateViewName('before init')
+      // global.updateViewName('before init') TODO uncomment when the api is not behind a ff anymore
 
       setTimeout(() => window.DD_RUM!.init(configuration), 10)
       setTimeout(() => {
         window.DD_RUM!.addError('before manual view')
         window.DD_RUM!.addAction('before manual view')
         window.DD_RUM!.addTiming('before manual view')
-        window.DD_RUM!.updateViewName('before manual view')
+        // global.updateViewName('before manual view') TODO uncomment when the api is not behind a ff anymore
       }, 20)
 
       setTimeout(() => window.DD_RUM!.startView('manual view'), 30)
@@ -88,7 +88,8 @@ describe('API calls and events around init', () => {
         window.DD_RUM!.addError('after manual view')
         window.DD_RUM!.addAction('after manual view')
         window.DD_RUM!.addTiming('after manual view')
-        window.DD_RUM!.updateViewName('after manual view')
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-call
+        ;(window.DD_RUM as any).updateViewName('after manual view')
       }, 40)
     })
     .run(async ({ intakeRegistry }) => {
