@@ -69,21 +69,17 @@ describe('API calls and events around init', () => {
     .withRum({ trackViewsManually: true, enableExperimentalFeatures: ['update_view_name'] })
     .withRumSlim()
     .withRumInit((configuration) => {
-      const global = window.DD_RUM! as any
-
       window.DD_RUM!.addError('before init')
       window.DD_RUM!.addAction('before init')
       window.DD_RUM!.addTiming('before init')
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-call
-      global.updateViewName('before init')
+      window.DD_RUM!.updateViewName('before init')
 
       setTimeout(() => window.DD_RUM!.init(configuration), 10)
       setTimeout(() => {
         window.DD_RUM!.addError('before manual view')
         window.DD_RUM!.addAction('before manual view')
         window.DD_RUM!.addTiming('before manual view')
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-call
-        global.updateViewName('before manual view')
+        window.DD_RUM!.updateViewName('before manual view')
       }, 20)
 
       setTimeout(() => window.DD_RUM!.startView('manual view'), 30)
@@ -92,8 +88,7 @@ describe('API calls and events around init', () => {
         window.DD_RUM!.addError('after manual view')
         window.DD_RUM!.addAction('after manual view')
         window.DD_RUM!.addTiming('after manual view')
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-call
-        global.updateViewName('after manual view')
+        window.DD_RUM!.updateViewName('after manual view')
       }, 40)
     })
     .run(async ({ intakeRegistry }) => {
