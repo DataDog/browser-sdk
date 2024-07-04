@@ -93,7 +93,7 @@ export {
   deleteCookie,
   resetInitCookies,
 } from './browser/cookie'
-export { CookieStore, WeakRef, WeakRefConstructor } from './browser/browser.types'
+export { CookieStore, WeakRef, WeakRefConstructor } from './browser/dom.custom.types'
 export { initXhrObservable, XhrCompleteContext, XhrStartContext } from './browser/xhrObservable'
 export {
   initFetchObservable,
