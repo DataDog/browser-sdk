@@ -5,7 +5,7 @@ import { IncrementalSource, RecordType } from '../../../types'
 import type { BrowserIncrementalSnapshotRecord, ViewportResizeData, VisualViewportRecord } from '../../../types'
 import { getVisualViewport } from '../viewports'
 import { assembleIncrementalSnapshot } from '../assembly'
-import type { Tracker } from './types'
+import type { Tracker } from './tracker.types'
 
 const VISUAL_VIEWPORT_OBSERVER_THRESHOLD = 200
 

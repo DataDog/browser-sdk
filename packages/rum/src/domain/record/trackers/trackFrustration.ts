@@ -3,7 +3,7 @@ import { ActionType, RumEventType, LifeCycleEventType } from '@datadog/browser-r
 import type { FrustrationRecord } from '../../../types'
 import { RecordType } from '../../../types'
 import type { RecordIds } from '../recordIds'
-import type { Tracker } from './types'
+import type { Tracker } from './tracker.types'
 
 export type FrustrationCallback = (record: FrustrationRecord) => void
 
