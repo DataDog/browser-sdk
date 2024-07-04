@@ -11,6 +11,8 @@ import {
   addExperimentalFeatures,
   ExperimentalFeature,
   resetExperimentalFeatures,
+  resetFetchObservable,
+  isIE,
 } from '@datadog/browser-core'
 import type { Clock } from '@datadog/browser-core/test'
 import {
@@ -51,6 +53,10 @@ describe('preStartRum', () => {
   beforeEach(() => {
     doStartRumSpy = jasmine.createSpy()
     getCommonContextSpy = jasmine.createSpy()
+  })
+
+  afterEach(() => {
+    resetFetchObservable()
   })
 
   describe('configuration validation', () => {
@@ -704,6 +710,28 @@ describe('preStartRum', () => {
     beforeEach(() => {
       trackingConsentState = createTrackingConsentState()
       strategy = createPreStartStrategy({}, getCommonContextSpy, trackingConsentState, doStartRumSpy)
+    })
+
+    describe('basic methods instrumentation', () => {
+      beforeEach(() => {
+        if (isIE()) {
+          pending('No support for IE')
+        }
+      })
+
+      it('should instrument fetch even if tracking consent is not granted', () => {
+        const originalFetch = window.fetch
+
+        strategy.init(
+          {
+            ...DEFAULT_INIT_CONFIGURATION,
+            trackingConsent: TrackingConsent.NOT_GRANTED,
+          },
+          PUBLIC_API
+        )
+
+        expect(window.fetch).not.toBe(originalFetch)
+      })
     })
 
     it('does not start rum if tracking consent is not granted at init', () => {
