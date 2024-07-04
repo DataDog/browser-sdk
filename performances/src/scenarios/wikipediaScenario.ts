@@ -1,4 +1,4 @@
-import type { Scenario } from '../types'
+import type { Scenario } from '../profilingTypes'
 
 export const wikipediaScenario: Scenario = {
   description: `# Wikipedia

@@ -1,4 +1,4 @@
-import type { BackgroundToDevtoolsMessage, DevtoolsToBackgroundMessage } from '../common/types'
+import type { BackgroundToDevtoolsMessage, DevtoolsToBackgroundMessage } from '../common/extension.types'
 import { isDisconnectError } from '../common/isDisconnectError'
 import { createLogger } from '../common/logger'
 import { EventListeners } from '../common/eventListeners'

@@ -3,7 +3,7 @@ import { IncrementalSource } from '../../../types'
 import type { StyleSheetRuleData, BrowserIncrementalSnapshotRecord } from '../../../types'
 import { getSerializedNodeId, hasSerializedNode } from '../serialization'
 import { assembleIncrementalSnapshot } from '../assembly'
-import type { Tracker } from './types'
+import type { Tracker } from './tracker.types'
 
 type GroupingCSSRuleTypes = typeof CSSGroupingRule | typeof CSSMediaRule | typeof CSSSupportsRule
 

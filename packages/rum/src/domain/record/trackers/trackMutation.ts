@@ -31,7 +31,7 @@ import {
 import { createMutationBatch } from '../mutationBatch'
 import type { ShadowRootCallBack, ShadowRootsController } from '../shadowRootsController'
 import { assembleIncrementalSnapshot } from '../assembly'
-import type { Tracker } from './types'
+import type { Tracker } from './tracker.types'
 
 export type MutationCallBack = (incrementalSnapshotRecord: BrowserIncrementalSnapshotRecord) => void
 
