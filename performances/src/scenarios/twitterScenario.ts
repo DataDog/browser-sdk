@@ -1,5 +1,5 @@
 import { trackNetwork } from '../trackNetwork'
-import type { Scenario } from '../profilingTypes'
+import type { Scenario } from '../profiling.types'
 
 export const twitterScenario: Scenario = {
   description: `# Twitter

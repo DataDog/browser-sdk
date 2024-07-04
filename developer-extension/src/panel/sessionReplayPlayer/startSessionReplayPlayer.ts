@@ -2,8 +2,8 @@ import type { BrowserRecord } from '../../../../packages/rum/src/types'
 import { IncrementalSource, RecordType } from '../../../../packages/rum/src/types'
 import { createLogger } from '../../common/logger'
 import { onBackgroundMessage } from '../backgroundScriptConnection'
-import type { MessageBridgeUp } from './startSessionReplayPlayerTypes'
-import { MessageBridgeDownType, MessageBridgeUpLogLevel, MessageBridgeUpType } from './startSessionReplayPlayerTypes'
+import type { MessageBridgeUp } from './startSessionReplayPlayer.types'
+import { MessageBridgeDownType, MessageBridgeUpLogLevel, MessageBridgeUpType } from './startSessionReplayPlayer.types'
 
 const sandboxLogger = createLogger('sandbox')
 
