@@ -1,7 +1,14 @@
 import { mockClock, mockEventBridge } from '@datadog/browser-core/test'
 import type { Clock } from '@datadog/browser-core/test'
 import type { TimeStamp, TrackingConsentState } from '@datadog/browser-core'
-import { ONE_SECOND, TrackingConsent, createTrackingConsentState, display, isIE } from '@datadog/browser-core'
+import {
+  ONE_SECOND,
+  TrackingConsent,
+  createTrackingConsentState,
+  display,
+  isIE,
+  resetFetchObservable,
+} from '@datadog/browser-core'
 import type { CommonContext } from '../rawLogsEvent.types'
 import type { HybridInitConfiguration, LogsConfiguration, LogsInitConfiguration } from '../domain/configuration'
 import type { Logger } from '../domain/logger'
@@ -35,6 +42,10 @@ describe('preStartLogs', () => {
     getCommonContextSpy = jasmine.createSpy()
     strategy = createPreStartStrategy(getCommonContextSpy, createTrackingConsentState(), doStartLogsSpy)
     clock = mockClock()
+  })
+
+  afterEach(() => {
+    resetFetchObservable()
   })
 
   describe('configuration validation', () => {
