@@ -285,6 +285,7 @@ export interface Strategy {
   stopSession: StartRumResult['stopSession']
   addTiming: StartRumResult['addTiming']
   startView: StartRumResult['startView']
+  updateViewName: StartRumResult['updateViewName']
   addAction: StartRumResult['addAction']
   addError: StartRumResult['addError']
   addFeatureFlagEvaluation: StartRumResult['addFeatureFlagEvaluation']
@@ -351,6 +352,19 @@ export function makeRumPublicApi(
             })
           }
         )
+      }
+
+      if (isExperimentalFeatureEnabled(ExperimentalFeature.UPDATE_VIEW_NAME)) {
+        /**
+         * Update View Name.
+         *
+         * Enable to manually change the name of the current view.
+         * @param name name of the view
+         * See [Override default RUM view names](https://docs.datadoghq.com/real_user_monitoring/browser/advanced_configuration/#override-default-rum-view-names) for further information.
+         */
+        ;(rumPublicApi as any).updateViewName = monitor((name: string) => {
+          strategy.updateViewName(name)
+        })
       }
 
       if (configuration.storeContextsAcrossPages) {

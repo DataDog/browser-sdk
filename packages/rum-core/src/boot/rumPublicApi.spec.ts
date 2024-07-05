@@ -11,6 +11,7 @@ import {
   CustomerDataCompressionStatus,
   timeStampToClocks,
 } from '@datadog/browser-core'
+import { mockExperimentalFeatures } from '@datadog/browser-core/test'
 import type { TestSetupBuilder } from '../../test'
 import { setup, noopRecorderApi } from '../../test'
 import { ActionType } from '../rawRumEvent.types'
@@ -24,6 +25,7 @@ const noopStartRum = (): ReturnType<StartRum> => ({
   addTiming: () => undefined,
   addFeatureFlagEvaluation: () => undefined,
   startView: () => undefined,
+  updateViewName: () => undefined,
   getInternalContext: () => undefined,
   lifeCycle: {} as any,
   viewContexts: {} as any,
@@ -850,5 +852,36 @@ describe('rum public api', () => {
   it('should provide sdk version', () => {
     const rumPublicApi = makeRumPublicApi(noopStartRum, noopRecorderApi)
     expect(rumPublicApi.version).toBe('test')
+  })
+
+  describe('updateViewName', () => {
+    let updateViewNameSpy: jasmine.Spy<ReturnType<StartRum>['updateViewName']>
+    let rumPublicApi: RumPublicApi
+
+    beforeEach(() => {
+      updateViewNameSpy = jasmine.createSpy()
+      rumPublicApi = makeRumPublicApi(
+        () => ({
+          ...noopStartRum(),
+          updateViewName: updateViewNameSpy,
+        }),
+        noopRecorderApi
+      )
+    })
+
+    it('should not expose update view name api when ff is disabled', () => {
+      const rumPublicApi = makeRumPublicApi(noopStartRum, noopRecorderApi)
+      rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
+      expect((rumPublicApi as any).updateViewName).toBeUndefined()
+    })
+
+    it('should update the view name', () => {
+      mockExperimentalFeatures([ExperimentalFeature.UPDATE_VIEW_NAME])
+      rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-call
+      ;(rumPublicApi as any).updateViewName('foo')
+
+      expect(updateViewNameSpy).toHaveBeenCalledWith('foo')
+    })
   })
 })

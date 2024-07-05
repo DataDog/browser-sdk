@@ -66,19 +66,20 @@ describe('API calls and events around init', () => {
     })
 
   createTest('should be associated to corresponding views when views are manually tracked')
-    .withRum({ trackViewsManually: true })
+    .withRum({ trackViewsManually: true, enableExperimentalFeatures: ['update_view_name'] })
     .withRumSlim()
     .withRumInit((configuration) => {
       window.DD_RUM!.addError('before init')
       window.DD_RUM!.addAction('before init')
       window.DD_RUM!.addTiming('before init')
+      // global.updateViewName('before init') TODO uncomment when the api is not behind a ff anymore
 
       setTimeout(() => window.DD_RUM!.init(configuration), 10)
-
       setTimeout(() => {
         window.DD_RUM!.addError('before manual view')
         window.DD_RUM!.addAction('before manual view')
         window.DD_RUM!.addTiming('before manual view')
+        // global.updateViewName('before manual view') TODO uncomment when the api is not behind a ff anymore
       }, 20)
 
       setTimeout(() => window.DD_RUM!.startView('manual view'), 30)
@@ -87,13 +88,15 @@ describe('API calls and events around init', () => {
         window.DD_RUM!.addError('after manual view')
         window.DD_RUM!.addAction('after manual view')
         window.DD_RUM!.addTiming('after manual view')
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-call
+        ;(window.DD_RUM as any).updateViewName('after manual view')
       }, 40)
     })
     .run(async ({ intakeRegistry }) => {
       await flushEvents()
 
       const initialView = intakeRegistry.rumViewEvents[0]
-      expect(initialView.view.name).toBe('manual view')
+      expect(initialView.view.name).toBe('after manual view')
       expect(initialView.view.custom_timings).toEqual({
         before_init: jasmine.any(Number),
         before_manual_view: jasmine.any(Number),

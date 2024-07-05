@@ -1,7 +1,9 @@
 import { DEFAULT_REQUEST_ERROR_RESPONSE_LENGTH_LIMIT } from '@datadog/browser-logs/cjs/domain/configuration'
 import { createTest, flushEvents } from '../lib/framework'
-import { APPLICATION_ID, UNREACHABLE_URL } from '../lib/helpers/constants'
+import { APPLICATION_ID } from '../lib/helpers/configuration'
 import { flushBrowserLogs, withBrowserLogs } from '../lib/helpers/browser'
+
+const UNREACHABLE_URL = 'http://localhost:9999/unreachable'
 
 describe('logs', () => {
   createTest('send logs')

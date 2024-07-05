@@ -11,6 +11,8 @@ import {
   addExperimentalFeatures,
   ExperimentalFeature,
   resetExperimentalFeatures,
+  resetFetchObservable,
+  isIE,
 } from '@datadog/browser-core'
 import type { Clock } from '@datadog/browser-core/test'
 import {
@@ -50,6 +52,10 @@ describe('preStartRum', () => {
   beforeEach(() => {
     doStartRumSpy = jasmine.createSpy()
     getCommonContextSpy = jasmine.createSpy()
+  })
+
+  afterEach(() => {
+    resetFetchObservable()
   })
 
   describe('configuration validation', () => {
@@ -283,13 +289,16 @@ describe('preStartRum', () => {
       let strategy: Strategy
       let startViewSpy: jasmine.Spy<StartRumResult['startView']>
       let addTimingSpy: jasmine.Spy<StartRumResult['addTiming']>
+      let updateViewNameSpy: jasmine.Spy<StartRumResult['updateViewName']>
 
       beforeEach(() => {
         startViewSpy = jasmine.createSpy('startView')
         addTimingSpy = jasmine.createSpy('addTiming')
+        updateViewNameSpy = jasmine.createSpy('updateViewName')
         doStartRumSpy.and.returnValue({
           startView: startViewSpy,
           addTiming: addTimingSpy,
+          updateViewName: updateViewNameSpy,
         } as unknown as StartRumResult)
         strategy = createPreStartStrategy({}, getCommonContextSpy, createTrackingConsentState(), doStartRumSpy)
       })
@@ -634,6 +643,16 @@ describe('preStartRum', () => {
       expect(addTimingSpy).toHaveBeenCalledOnceWith(name, time)
     })
 
+    it('updateViewName', () => {
+      const updateViewNameSpy = jasmine.createSpy()
+      doStartRumSpy.and.returnValue({ updateViewName: updateViewNameSpy } as unknown as StartRumResult)
+
+      const name = 'foo'
+      strategy.updateViewName(name)
+      strategy.init(DEFAULT_INIT_CONFIGURATION, PUBLIC_API)
+      expect(updateViewNameSpy).toHaveBeenCalledOnceWith(name)
+    })
+
     it('addFeatureFlagEvaluation', () => {
       const addFeatureFlagEvaluationSpy = jasmine.createSpy()
       doStartRumSpy.and.returnValue({
@@ -679,6 +698,28 @@ describe('preStartRum', () => {
     beforeEach(() => {
       trackingConsentState = createTrackingConsentState()
       strategy = createPreStartStrategy({}, getCommonContextSpy, trackingConsentState, doStartRumSpy)
+    })
+
+    describe('basic methods instrumentation', () => {
+      beforeEach(() => {
+        if (isIE()) {
+          pending('No support for IE')
+        }
+      })
+
+      it('should instrument fetch even if tracking consent is not granted', () => {
+        const originalFetch = window.fetch
+
+        strategy.init(
+          {
+            ...DEFAULT_INIT_CONFIGURATION,
+            trackingConsent: TrackingConsent.NOT_GRANTED,
+          },
+          PUBLIC_API
+        )
+
+        expect(window.fetch).not.toBe(originalFetch)
+      })
     })
 
     it('does not start rum if tracking consent is not granted at init', () => {

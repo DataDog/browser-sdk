@@ -1,6 +1,6 @@
 import type { RelativeTime, TimeStamp, ErrorWithCause } from '@datadog/browser-core'
-import { ErrorHandling, ErrorSource, ExperimentalFeature, NO_ERROR_STACK_PRESENT_MESSAGE } from '@datadog/browser-core'
-import { FAKE_CSP_VIOLATION_EVENT, mockExperimentalFeatures } from '@datadog/browser-core/test'
+import { ErrorHandling, ErrorSource, NO_ERROR_STACK_PRESENT_MESSAGE } from '@datadog/browser-core'
+import { FAKE_CSP_VIOLATION_EVENT } from '@datadog/browser-core/test'
 import type { TestSetupBuilder } from '../../../test'
 import { setup } from '../../../test'
 import type { RawRumErrorEvent } from '../../rawRumEvent.types'
@@ -87,7 +87,10 @@ describe('error collection', () => {
           },
           savedCommonContext: undefined,
           startTime: 1234 as RelativeTime,
-          domainContext: { error },
+          domainContext: {
+            error,
+            handlingStack: 'Error: handling foo',
+          },
         })
       })
     })
@@ -202,6 +205,7 @@ describe('error collection', () => {
       })
       expect(rawRumEvents[0].domainContext).toEqual({
         error: { foo: 'bar' },
+        handlingStack: 'Error: handling foo',
       })
     })
 
@@ -223,8 +227,6 @@ describe('error collection', () => {
 
     it('should include handling stack', () => {
       const { rawRumEvents } = setupBuilder.build()
-
-      mockExperimentalFeatures([ExperimentalFeature.MICRO_FRONTEND])
 
       addError({
         error: new Error('foo'),
@@ -250,6 +252,7 @@ describe('error collection', () => {
           startClocks: { relative: 1234 as RelativeTime, timeStamp: 123456789 as TimeStamp },
           type: 'foo',
           originalError: error,
+          handlingStack: 'Error: handling foo',
         },
       })
 
@@ -261,7 +264,7 @@ describe('error collection', () => {
           message: 'hello',
           source: ErrorSource.CUSTOM,
           stack: 'bar',
-          handling_stack: undefined,
+          handling_stack: 'Error: handling foo',
           type: 'foo',
           handling: undefined,
           source_type: 'browser',
@@ -276,6 +279,7 @@ describe('error collection', () => {
       })
       expect(rawRumEvents[0].domainContext).toEqual({
         error,
+        handlingStack: 'Error: handling foo',
       })
     })
 

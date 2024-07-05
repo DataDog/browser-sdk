@@ -6,8 +6,9 @@ const webpackConfig = require('../../webpack.base')({
 })
 const { getTestReportDirectory } = require('../envUtils')
 const jasmineSeedReporterPlugin = require('./jasmineSeedReporterPlugin')
+const karmaSkippedFailedReporterPlugin = require('./karmaSkippedFailedReporterPlugin')
 
-const reporters = ['spec', 'jasmine-seed']
+const reporters = ['spec', 'jasmine-seed', 'karma-skipped-failed']
 
 const testReportDirectory = getTestReportDirectory()
 if (testReportDirectory) {
@@ -16,7 +17,11 @@ if (testReportDirectory) {
 
 module.exports = {
   basePath: '../..',
-  files: ['packages/*/+(src|test)/**/*.spec.ts', 'packages/rum/test/toto.css'],
+  files: [
+    'packages/*/@(src|test)/**/*.spec.@(ts|tsx)',
+    'developer-extension/@(src|test)/**/*.spec.@(ts|tsx)',
+    { pattern: 'packages/rum/test/toto.css', included: false },
+  ],
   frameworks: ['jasmine', 'webpack'],
   client: {
     jasmine: {
@@ -25,7 +30,7 @@ module.exports = {
     },
   },
   preprocessors: {
-    'packages/*/+(src|test)/**/*.ts': ['webpack', 'sourcemap'],
+    '**/*.+(ts|tsx)': ['webpack', 'sourcemap'],
   },
   reporters,
   specReporter: {
@@ -40,7 +45,7 @@ module.exports = {
   singleRun: true,
   webpack: {
     stats: 'minimal',
-    module: webpackConfig.module,
+    module: overrideTsLoaderRule(webpackConfig.module),
     resolve: webpackConfig.resolve,
     target: webpackConfig.target,
     devtool: false,
@@ -53,16 +58,38 @@ module.exports = {
       runtimeChunk: false,
       splitChunks: false,
     },
+    ignoreWarnings: [
+      // we will see warnings about missing exports in some files
+      // this is because we set transpileOnly option in ts-loader
+      { message: /export .* was not found in/ },
+    ],
   },
   webpackMiddleware: {
     stats: 'errors-only',
     logLevel: 'warn',
   },
-  plugins: ['karma-*', jasmineSeedReporterPlugin],
+  plugins: ['karma-*', jasmineSeedReporterPlugin, karmaSkippedFailedReporterPlugin],
 
   // Running tests on low performance environments (ex: BrowserStack) can block JS execution for a
   // few seconds. We need to increase those two timeout values to make sure Karma (and underlying
   // Socket.io) does not consider that the browser crashed.
   pingTimeout: 60_000,
   browserNoActivityTimeout: 60_000,
+}
+
+function overrideTsLoaderRule(module) {
+  // We set transpileOnly to true to avoid type checking in unit tests
+  module.rules = module.rules.map((rule) => {
+    if (rule.loader === 'ts-loader') {
+      return {
+        ...rule,
+        options: {
+          ...rule.options,
+          transpileOnly: true,
+        },
+      }
+    }
+    return rule
+  })
+  return module
 }

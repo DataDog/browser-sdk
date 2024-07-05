@@ -1,7 +1,7 @@
 import { DefaultPrivacyLevel, findLast, isIE } from '@datadog/browser-core'
 import type { RumConfiguration, ViewCreatedEvent } from '@datadog/browser-rum-core'
 import { LifeCycle, LifeCycleEventType } from '@datadog/browser-rum-core'
-import { createNewEvent, collectAsyncCalls } from '@datadog/browser-core/test'
+import { createNewEvent, collectAsyncCalls, registerCleanupTask } from '@datadog/browser-core/test'
 import { findElement, findFullSnapshot, findNode, recordsPerFullSnapshot } from '../../../test'
 import type {
   BrowserIncrementalSnapshotRecord,
@@ -30,10 +30,10 @@ describe('record', () => {
     }
 
     emitSpy = jasmine.createSpy()
-  })
 
-  afterEach(() => {
-    recordApi?.stop()
+    registerCleanupTask(() => {
+      recordApi?.stop()
+    })
   })
 
   it('captures stylesheet rules', (done) => {
@@ -407,6 +407,60 @@ describe('record', () => {
       const shadowRoot = host.attachShadow({ mode: 'open' })
       return shadowRoot
     }
+  })
+
+  describe('StyleSheets caching', () => {
+    it('should cache the stylesheet rules and reuse them for the next full snapshot', () => {
+      const styleElement = appendElement('<style></style>', document.head) as HTMLStyleElement
+
+      startRecording()
+
+      expect(recordApi.styleSheetsCache.size).toEqual(1)
+
+      const styleSheet = styleElement.sheet as CSSStyleSheet
+      styleSheet.insertRule('body { color:  #ccc; }')
+
+      expect(recordApi.styleSheetsCache.size).toEqual(0)
+    })
+
+    it('should invalidate on dom attribute change', () => {
+      const styleElement = appendElement('<style></style>', document.head) as HTMLStyleElement
+
+      startRecording()
+
+      expect(recordApi.styleSheetsCache.size).toEqual(1)
+
+      styleElement.setAttribute('data-toto', 'titi')
+      recordApi.flushMutations()
+
+      expect(recordApi.styleSheetsCache.size).toEqual(0)
+    })
+
+    it('should invalidate on dom insert', () => {
+      const styleElement = appendElement('<style></style>', document.head) as HTMLStyleElement
+
+      startRecording()
+
+      expect(recordApi.styleSheetsCache.size).toEqual(1)
+
+      appendElement('<div></div>', styleElement) as HTMLStyleElement
+      recordApi.flushMutations()
+
+      expect(recordApi.styleSheetsCache.size).toEqual(0)
+    })
+
+    it('should invalidate on dom remove', () => {
+      const styleElement = appendElement('<style></style>', document.head) as HTMLStyleElement
+
+      startRecording()
+
+      expect(recordApi.styleSheetsCache.size).toEqual(1)
+
+      document.head.removeChild(styleElement)
+      recordApi.flushMutations()
+
+      expect(recordApi.styleSheetsCache.size).toEqual(0)
+    })
   })
 
   describe('updates record replay stats', () => {

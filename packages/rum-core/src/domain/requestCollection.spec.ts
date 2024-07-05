@@ -1,7 +1,7 @@
 import type { Payload } from '@datadog/browser-core'
 import { isIE, RequestType } from '@datadog/browser-core'
 import type { MockFetch, MockFetchManager } from '@datadog/browser-core/test'
-import { SPEC_ENDPOINTS, mockFetch, mockXhr, withXhr } from '@datadog/browser-core/test'
+import { SPEC_ENDPOINTS, mockFetch, mockXhr, registerCleanupTask, withXhr } from '@datadog/browser-core/test'
 import type { RumConfiguration } from './configuration'
 import { validateAndBuildRumConfiguration } from './configuration'
 import { LifeCycle, LifeCycleEventType } from './lifeCycle'
@@ -50,11 +50,11 @@ describe('collect fetch', () => {
     window.onunhandledrejection = (ev: PromiseRejectionEvent) => {
       throw new Error(`unhandled rejected promise \n    ${ev.reason as string}`)
     }
-  })
 
-  afterEach(() => {
-    stopFetchTracking()
-    window.onunhandledrejection = null
+    registerCleanupTask(() => {
+      stopFetchTracking()
+      window.onunhandledrejection = null
+    })
   })
 
   it('should notify on request start', (done) => {
@@ -217,10 +217,10 @@ describe('collect xhr', () => {
       },
     }
     ;({ stop: stopXhrTracking } = trackXhr(lifeCycle, configuration, tracerStub as Tracer))
-  })
 
-  afterEach(() => {
-    stopXhrTracking()
+    registerCleanupTask(() => {
+      stopXhrTracking()
+    })
   })
 
   it('should notify on request start', (done) => {

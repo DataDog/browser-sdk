@@ -11,6 +11,7 @@ describe('startFullSnapshots', () => {
   const viewStartClock = { relative: 1, timeStamp: 1 as TimeStamp }
   let lifeCycle: LifeCycle
   let fullSnapshotCallback: jasmine.Spy<(records: BrowserRecord[]) => void>
+  const cache = new Map()
 
   beforeEach(() => {
     if (isIE()) {
@@ -25,7 +26,8 @@ describe('startFullSnapshots', () => {
       lifeCycle,
       {} as RumConfiguration,
       noop,
-      fullSnapshotCallback
+      fullSnapshotCallback,
+      cache
     )
   })
 

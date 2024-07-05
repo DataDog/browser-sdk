@@ -3,7 +3,7 @@ import { DeflateEncoderStreamId, PageExitReason, isIE } from '@datadog/browser-c
 import type { ViewContexts, ViewContext, RumConfiguration } from '@datadog/browser-rum-core'
 import { LifeCycle, LifeCycleEventType } from '@datadog/browser-rum-core'
 import type { Clock } from '@datadog/browser-core/test'
-import { mockClock } from '@datadog/browser-core/test'
+import { mockClock, registerCleanupTask } from '@datadog/browser-core/test'
 import { createRumSessionManagerMock } from '../../../../rum-core/test'
 import type { BrowserRecord, SegmentContext } from '../../types'
 import { RecordType } from '../../types'
@@ -75,10 +75,10 @@ describe('startSegmentCollection', () => {
       httpRequestSpy,
       createDeflateEncoder(configuration, worker, DeflateEncoderStreamId.REPLAY)
     ))
-  })
 
-  afterEach(() => {
-    stopSegmentCollection()
+    registerCleanupTask(() => {
+      stopSegmentCollection()
+    })
   })
 
   describe('initial segment', () => {

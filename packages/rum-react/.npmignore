@@ -1,0 +1,7 @@
+*
+!/cjs/**/*
+!/esm/**/*
+!/src/**/*
+/src/**/*.spec.ts
+/src/**/*.specHelper.ts
+!/react-router-v6/*

@@ -2,6 +2,7 @@ import { isIE, relativeNow, timeStampNow } from '@datadog/browser-core'
 import type { RawRumActionEvent } from '@datadog/browser-rum-core'
 import { ActionType, LifeCycle, LifeCycleEventType, RumEventType, FrustrationType } from '@datadog/browser-rum-core'
 import type { RawRumEventCollectedData } from 'packages/rum-core/src/domain/lifeCycle'
+import { registerCleanupTask } from '@datadog/browser-core/test'
 import { RecordType } from '../../../types'
 import type { RecordIds } from '../recordIds'
 import { initRecordIds } from '../recordIds'
@@ -43,10 +44,10 @@ describe('trackFrustration', () => {
       },
       domainContext: { events: [mouseEvent] },
     }
-  })
 
-  afterEach(() => {
-    frustrationTracker.stop()
+    registerCleanupTask(() => {
+      frustrationTracker.stop()
+    })
   })
 
   it('calls callback if the raw data inserted is a click action', () => {

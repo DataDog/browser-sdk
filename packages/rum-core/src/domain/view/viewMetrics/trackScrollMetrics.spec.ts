@@ -1,6 +1,6 @@
 import type { Duration, RelativeTime, Subscription, TimeStamp } from '@datadog/browser-core'
 import { DOM_EVENT, Observable, isIE } from '@datadog/browser-core'
-import { createNewEvent } from '@datadog/browser-core/test'
+import { createNewEvent, registerCleanupTask } from '@datadog/browser-core/test'
 import type { TestSetupBuilder } from '../../../../test'
 import { setup } from '../../../../test'
 import type { RumConfiguration } from '../../configuration'
@@ -26,10 +26,11 @@ describe('createScrollValuesObserver', () => {
     if (isIE()) {
       pending('IE not supported')
     }
-  })
-  afterEach(() => {
-    subscription.unsubscribe()
-    document.body.innerHTML = ''
+
+    registerCleanupTask(() => {
+      subscription.unsubscribe()
+      document.body.innerHTML = ''
+    })
   })
 
   it('should produce a value when scrolling', () => {

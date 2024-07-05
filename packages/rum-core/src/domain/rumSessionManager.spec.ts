@@ -38,6 +38,9 @@ describe('rum session manager', () => {
       pending('no full rum support')
     }
     clock = mockClock(() => {
+      // remove intervals first
+      stopSessionManager()
+      // flush pending callbacks to avoid random failures
       clock.tick(new Date().getTime())
     })
     expireSessionSpy = jasmine.createSpy('expireSessionSpy')
@@ -45,11 +48,6 @@ describe('rum session manager', () => {
     lifeCycle = new LifeCycle()
     lifeCycle.subscribe(LifeCycleEventType.SESSION_EXPIRED, expireSessionSpy)
     lifeCycle.subscribe(LifeCycleEventType.SESSION_RENEWED, renewSessionSpy)
-  })
-
-  afterEach(() => {
-    // remove intervals first
-    stopSessionManager()
   })
 
   describe('cookie storage', () => {
