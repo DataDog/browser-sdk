@@ -20,7 +20,7 @@ module.exports = {
   files: [
     'packages/*/@(src|test)/**/*.spec.@(ts|tsx)',
     'developer-extension/@(src|test)/**/*.spec.@(ts|tsx)',
-    { pattern: 'packages/rum/test/toto.css', included: false },
+    'packages/rum/test/toto.css',
   ],
   frameworks: ['jasmine', 'webpack'],
   client: {
