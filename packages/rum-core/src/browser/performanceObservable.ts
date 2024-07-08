@@ -1,5 +1,5 @@
 import type { Duration, RelativeTime, TimeoutId } from '@datadog/browser-core'
-import { addEventListener, Observable, setTimeout, clearTimeout } from '@datadog/browser-core'
+import { addEventListener, Observable, setTimeout, clearTimeout, monitor, includes } from '@datadog/browser-core'
 import type { RumConfiguration } from '../domain/configuration'
 import { isAllowedRequestUrl } from '../domain/resource/resourceUtils'
 
@@ -148,25 +148,45 @@ export function createPerformanceObservable<T extends RumPerformanceEntryType>(
 
     if (window.PerformanceObserver) {
       let isObserverInitializing = true
-      const handlePerformanceEntries = (entries: PerformanceObserverEntryList) => {
+      const handlePerformanceEntries = (entries: PerformanceEntryList) => {
         const rumPerformanceEntries = filterRumPerformanceEntries(
           configuration,
-          entries.getEntries() as Array<EntryTypeToReturnType[T]>
+          entries as Array<EntryTypeToReturnType[T]>
         )
         if (rumPerformanceEntries.length > 0) {
           observable.notify(rumPerformanceEntries)
         }
       }
-      observer = new PerformanceObserver((entries) => {
-        // In Safari the performance observer callback is synchronous.
-        // Because the buffered performance entry list can be quite large we delay the computation to prevent the SDK from blocking the main thread on init
-        if (isObserverInitializing) {
-          timeoutId = setTimeout(() => handlePerformanceEntries(entries))
-        } else {
-          handlePerformanceEntries(entries)
+      observer = new PerformanceObserver(
+        monitor((entries) => {
+          // In Safari the performance observer callback is synchronous.
+          // Because the buffered performance entry list can be quite large we delay the computation to prevent the SDK from blocking the main thread on init
+          if (isObserverInitializing) {
+            timeoutId = setTimeout(() => handlePerformanceEntries(entries.getEntries()))
+          } else {
+            handlePerformanceEntries(entries.getEntries())
+          }
+        })
+      )
+      try {
+        observer.observe(options)
+      } catch {
+        // Some old browser versions (<= chrome 74 ) don't support the PerformanceObserver type and buffered options
+        // In these cases, fallback to getEntriesByType and PerformanceObserver with entryTypes
+        // TODO: remove this fallback in the next major version
+        const fallbackSupportedEntryTypes = [
+          RumPerformanceEntryType.RESOURCE,
+          RumPerformanceEntryType.NAVIGATION,
+          RumPerformanceEntryType.LONG_TASK,
+          RumPerformanceEntryType.PAINT,
+        ]
+        if (includes(fallbackSupportedEntryTypes, options.type)) {
+          if (options.buffered) {
+            timeoutId = setTimeout(() => handlePerformanceEntries(performance.getEntriesByType(options.type)))
+          }
+          observer.observe({ entryTypes: [options.type] })
         }
-      })
-      observer.observe(options)
+      }
       isObserverInitializing = false
     }
 
