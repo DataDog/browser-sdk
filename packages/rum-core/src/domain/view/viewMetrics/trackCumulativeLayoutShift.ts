@@ -3,8 +3,8 @@ import type { Duration, RelativeTime, WeakRef, WeakRefConstructor } from '@datad
 import { isElementNode } from '../../../browser/htmlDomUtils'
 import type { LifeCycle } from '../../lifeCycle'
 import { LifeCycleEventType } from '../../lifeCycle'
-import type { RumLayoutShiftTiming } from '../../../browser/performanceCollection'
-import { supportPerformanceTimingEvent, RumPerformanceEntryType } from '../../../browser/performanceCollection'
+import type { RumLayoutShiftTiming } from '../../../browser/performanceObservable'
+import { supportPerformanceTimingEvent, RumPerformanceEntryType } from '../../../browser/performanceObservable'
 import { getSelectorFromElement } from '../../getSelectorFromElement'
 import type { RumConfiguration } from '../../configuration'
 

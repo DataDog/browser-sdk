@@ -3,8 +3,9 @@ import { Observable, ONE_SECOND, getTimeStamp } from '@datadog/browser-core'
 import type { Clock } from '@datadog/browser-core/test'
 import { mockClock } from '@datadog/browser-core/test'
 import type { TestSetupBuilder } from '../../test'
-import { createPerformanceEntry, setup } from '../../test'
-import { RumPerformanceEntryType } from '../browser/performanceCollection'
+import { createPerformanceEntry, mockPerformanceObserver, setup } from '../../test'
+import type { RumPerformanceEntry } from '../browser/performanceObservable'
+import { RumPerformanceEntryType } from '../browser/performanceObservable'
 import { LifeCycleEventType } from './lifeCycle'
 import type { RequestCompleteEvent, RequestStartEvent } from './requestCollection'
 import type { PageActivityEvent, PageActivityEndEvent } from './waitPageActivityEnd'
@@ -45,8 +46,10 @@ describe('createPageActivityObservable', () => {
 
   let setupBuilder: TestSetupBuilder
   let pageActivitySubscription: Subscription
+  let notifyPerformanceEntries: (entries: RumPerformanceEntry[]) => void
 
   beforeEach(() => {
+    ;({ notifyPerformanceEntries } = mockPerformanceObserver())
     setupBuilder = setup()
       .withConfiguration({ excludedActivityUrls: [EXCLUDED_FAKE_URL] })
       .beforeBuild(({ lifeCycle, domMutationObservable, configuration }) => {
@@ -62,10 +65,9 @@ describe('createPageActivityObservable', () => {
   })
 
   it('emits an activity event on resource collected', () => {
-    const { lifeCycle } = setupBuilder.build()
-    lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [
-      createPerformanceEntry(RumPerformanceEntryType.RESOURCE),
-    ])
+    setupBuilder.build()
+    notifyPerformanceEntries([createPerformanceEntry(RumPerformanceEntryType.RESOURCE)])
+
     expect(events).toEqual([{ isBusy: false }])
   })
 
@@ -129,7 +131,7 @@ describe('createPageActivityObservable', () => {
 
     describe('excludedActivityUrls', () => {
       it('ignores resources that should be excluded by configuration', () => {
-        const { lifeCycle } = setupBuilder
+        setupBuilder
           .withConfiguration({
             excludedActivityUrls: [
               /^https?:\/\/qux\.com.*/,
@@ -139,13 +141,9 @@ describe('createPageActivityObservable', () => {
           })
           .build()
 
-        lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [
+        notifyPerformanceEntries([
           createPerformanceEntry(RumPerformanceEntryType.RESOURCE, { name: 'http://qux.com' }),
-        ])
-        lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [
           createPerformanceEntry(RumPerformanceEntryType.RESOURCE, { name: 'http://bar.com' }),
-        ])
-        lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [
           createPerformanceEntry(RumPerformanceEntryType.RESOURCE, { name: 'http://dynamic.com' }),
         ])
 
