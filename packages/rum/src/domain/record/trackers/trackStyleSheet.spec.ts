@@ -6,7 +6,7 @@ import { IncrementalSource, RecordType } from '../../../types'
 import type { StyleSheetCallback } from './trackStyleSheet'
 import { trackStyleSheet, getPathToNestedCSSRule } from './trackStyleSheet'
 import { DEFAULT_CONFIGURATION, DEFAULT_SHADOW_ROOT_CONTROLLER } from './trackers.specHelper'
-import type { Tracker } from './types'
+import type { Tracker } from './tracker.types'
 
 describe('trackStyleSheet', () => {
   let styleSheetTracker: Tracker

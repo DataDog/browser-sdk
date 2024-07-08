@@ -8,7 +8,7 @@ import { IncrementalSource, MediaInteractionType, RecordType } from '../../../ty
 import type { InputCallback } from './trackInput'
 import { DEFAULT_CONFIGURATION, DEFAULT_SHADOW_ROOT_CONTROLLER } from './trackers.specHelper'
 import { trackMediaInteraction } from './trackMediaInteraction'
-import type { Tracker } from './types'
+import type { Tracker } from './tracker.types'
 
 describe('trackMediaInteraction', () => {
   let mediaInteractionTracker: Tracker

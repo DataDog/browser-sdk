@@ -4,7 +4,7 @@ import { DevServerStatus, useDevServerStatus } from '../../hooks/useDevServerSta
 import { useSettings } from '../../hooks/useSettings'
 import { Columns } from '../columns'
 import { TabBase } from '../tabBase'
-import type { DevBundlesOverride, EventCollectionStrategy } from '../../../common/types'
+import type { DevBundlesOverride, EventCollectionStrategy } from '../../../common/extension.types'
 
 export function SettingsTab() {
   const devServerStatus = useDevServerStatus()

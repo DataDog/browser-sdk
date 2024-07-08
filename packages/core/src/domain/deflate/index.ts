@@ -1,1 +1,1 @@
-export * from './types'
+export * from './deflate.types'

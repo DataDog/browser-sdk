@@ -1,4 +1,4 @@
-import type { DevtoolsToBackgroundMessage } from '../common/types'
+import type { DevtoolsToBackgroundMessage } from '../common/extension.types'
 import { EventListeners } from '../common/eventListeners'
 import { createLogger } from '../common/logger'
 

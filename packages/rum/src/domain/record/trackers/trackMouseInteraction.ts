@@ -8,7 +8,7 @@ import { getEventTarget } from '../eventsUtils'
 import { getSerializedNodeId, hasSerializedNode } from '../serialization'
 import type { RecordIds } from '../recordIds'
 import { tryToComputeCoordinates } from './trackMove'
-import type { Tracker } from './types'
+import type { Tracker } from './tracker.types'
 
 const eventTypeToMouseInteraction = {
   // Listen for pointerup DOM events instead of mouseup for MouseInteraction/MouseUp records. This

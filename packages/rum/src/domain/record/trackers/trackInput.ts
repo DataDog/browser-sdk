@@ -6,7 +6,7 @@ import type { BrowserIncrementalSnapshotRecord, InputData, InputState } from '..
 import { getEventTarget } from '../eventsUtils'
 import { getElementInputValue, getSerializedNodeId, hasSerializedNode } from '../serialization'
 import { assembleIncrementalSnapshot } from '../assembly'
-import type { Tracker } from './types'
+import type { Tracker } from './tracker.types'
 
 export type InputCallback = (incrementalSnapshotRecord: BrowserIncrementalSnapshotRecord) => void
 

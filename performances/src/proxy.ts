@@ -3,7 +3,7 @@ import type { IncomingMessage, ServerResponse } from 'http'
 import { createServer } from 'https'
 import type { AddressInfo } from 'net'
 import { pki, md } from 'node-forge'
-import type { RequestStatsForHost } from './types'
+import type { RequestStatsForHost } from './profiling.types'
 
 export interface Proxy {
   origin: string

@@ -1,4 +1,4 @@
-import type { NetRequestRulesOptions } from '../../common/types'
+import type { NetRequestRulesOptions } from '../../common/extension.types'
 import { DEV_LOGS_URL, DEV_RUM_SLIM_URL, DEV_RUM_URL } from '../../common/packagesUrlConstants'
 import { INTAKE_DOMAINS } from '../../common/intakeDomainConstants'
 import { createLogger } from '../../common/logger'

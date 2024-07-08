@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import type { SdkEvent } from '../../sdkEvent'
-import type { EventCollectionStrategy } from '../../../common/types'
+import type { EventCollectionStrategy } from '../../../common/extension.types'
 import type { EventFilters } from './eventFilters'
 import { DEFAULT_FILTERS, applyEventFilters } from './eventFilters'
 import type { EventCollection } from './eventCollection'

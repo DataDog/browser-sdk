@@ -6,7 +6,7 @@ import { IncrementalSource, MediaInteractionType } from '../../../types'
 import { getEventTarget } from '../eventsUtils'
 import { getSerializedNodeId, hasSerializedNode } from '../serialization'
 import { assembleIncrementalSnapshot } from '../assembly'
-import type { Tracker } from './types'
+import type { Tracker } from './tracker.types'
 
 export type MediaInteractionCallback = (incrementalSnapshotRecord: BrowserIncrementalSnapshotRecord) => void
 
