@@ -20,6 +20,7 @@ describe('trackLargestContentfulPaint', () => {
     configuration = {} as RumConfiguration
     lcpCallback = jasmine.createSpy()
     eventTarget = document.createElement('div') as unknown as Window
+    setPageVisibility('visible')
     setupBuilder = setup().beforeBuild(({ lifeCycle }) => {
       const firstHidden = trackFirstHidden(configuration)
       const largestContentfulPaint = trackLargestContentfulPaint(
