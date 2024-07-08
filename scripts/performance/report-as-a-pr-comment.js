@@ -32,7 +32,8 @@ async function reportAsPrComment(localBundleSizes, memoryLocalPerformance) {
     memoryBasePerformance,
     memoryLocalPerformance,
     cpuBasePerformance,
-    cpuLocalPerformance
+    cpuLocalPerformance,
+    pr.number
   )
   await updateOrAddComment(message, pr.number, commentId)
 }
@@ -109,7 +110,8 @@ function createMessage(
   memoryBasePerformance,
   memoryLocalPerformance,
   cpuBasePerformance,
-  cpuLocalPerformance
+  cpuLocalPerformance,
+  prNumber
 ) {
   let highIncreaseDetected = false
   const bundleRows = differenceBundle.map((diff, index) => {
@@ -173,6 +175,8 @@ function createMessage(
     rows: memoryRows,
   })
   message += '\n</details>\n\n'
+
+  message += `🔗 [RealWorld](https://datadoghq.dev/browser-sdk-test-playground/realworld-scenario/?prNumber=${prNumber})\n\n`
 
   return message
 }

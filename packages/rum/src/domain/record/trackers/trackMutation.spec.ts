@@ -1,6 +1,6 @@
 import { DefaultPrivacyLevel, isIE } from '@datadog/browser-core'
 import type { RumConfiguration } from '@datadog/browser-rum-core'
-import { collectAsyncCalls } from '@datadog/browser-core/test'
+import { collectAsyncCalls, registerCleanupTask } from '@datadog/browser-core/test'
 import {
   NodePrivacyLevel,
   PRIVACY_ATTR_NAME,
@@ -69,10 +69,10 @@ describe('trackMutation', () => {
     }
 
     sandbox = appendElement('<div id="sandbox"></div>')
-  })
 
-  afterEach(() => {
-    mutationTracker.stop()
+    registerCleanupTask(() => {
+      mutationTracker.stop()
+    })
   })
 
   describe('childList mutation records', () => {

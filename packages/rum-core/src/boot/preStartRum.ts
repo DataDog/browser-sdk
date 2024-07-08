@@ -13,6 +13,7 @@ import {
   isExperimentalFeatureEnabled,
   initFeatureFlags,
   addTelemetryConfiguration,
+  initFetchObservable,
 } from '@datadog/browser-core'
 import type { TrackingConsentState, DeflateWorker } from '@datadog/browser-core'
 import {
@@ -25,6 +26,7 @@ import type { ViewOptions } from '../domain/view/trackViews'
 import type { DurationVital } from '../domain/vital/vitalCollection'
 import { createVitalInstance } from '../domain/vital/vitalCollection'
 import { fetchAndApplyRemoteConfiguration, serializeRumConfiguration } from '../domain/configuration'
+import { callPluginsMethod } from '../domain/plugins'
 import type { RumPublicApiOptions, Strategy } from './rumPublicApi'
 import type { StartRumResult } from './startRum'
 
@@ -118,6 +120,12 @@ export function createPreStartStrategy(
     }
 
     cachedConfiguration = configuration
+    // Instrumuent fetch to track network requests
+    // This is needed in case the consent is not granted and some cutsomer
+    // library (Apollo Client) is storing uninstrumented fetch to be used later
+    // The subscrption is needed so that the instrumentation process is completed
+    initFetchObservable().subscribe(noop)
+
     trackingConsentState.tryToInit(configuration.trackingConsent)
     tryStartRum()
   }
@@ -127,7 +135,7 @@ export function createPreStartStrategy(
   }
 
   return {
-    init(initConfiguration) {
+    init(initConfiguration, publicApi) {
       if (!initConfiguration) {
         display.error('Missing configuration')
         return
@@ -144,6 +152,10 @@ export function createPreStartStrategy(
       // internal `ignoreInitIfSyntheticsWillInjectRum` option is here to bypass this condition.
       if (ignoreInitIfSyntheticsWillInjectRum && willSyntheticsInjectRum()) {
         return
+      }
+
+      if (isExperimentalFeatureEnabled(ExperimentalFeature.PLUGINS)) {
+        callPluginsMethod(initConfiguration.plugins, 'onInit', { initConfiguration, publicApi })
       }
 
       if (
@@ -178,6 +190,10 @@ export function createPreStartStrategy(
         firstStartViewCall = { options, callback }
         tryStartRum()
       }
+    },
+
+    updateViewName(name) {
+      bufferApiCalls.add((startRumResult) => startRumResult.updateViewName(name))
     },
 
     addAction(action, commonContext = getCommonContext()) {

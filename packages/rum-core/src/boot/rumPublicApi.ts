@@ -281,12 +281,13 @@ export interface RumPublicApiOptions {
 const RUM_STORAGE_KEY = 'rum'
 
 export interface Strategy {
-  init: (initConfiguration: RumInitConfiguration) => void
+  init: (initConfiguration: RumInitConfiguration, publicApi: RumPublicApi) => void
   initConfiguration: RumInitConfiguration | undefined
   getInternalContext: StartRumResult['getInternalContext']
   stopSession: StartRumResult['stopSession']
   addTiming: StartRumResult['addTiming']
   startView: StartRumResult['startView']
+  updateViewName: StartRumResult['updateViewName']
   addAction: StartRumResult['addAction']
   addError: StartRumResult['addError']
   addFeatureFlagEvaluation: StartRumResult['addFeatureFlagEvaluation']
@@ -372,6 +373,19 @@ export function makeRumPublicApi(
         ;(rumPublicApi as any).stopDurationVital = noop
       }
 
+      if (isExperimentalFeatureEnabled(ExperimentalFeature.UPDATE_VIEW_NAME)) {
+        /**
+         * Update View Name.
+         *
+         * Enable to manually change the name of the current view.
+         * @param name name of the view
+         * See [Override default RUM view names](https://docs.datadoghq.com/real_user_monitoring/browser/advanced_configuration/#override-default-rum-view-names) for further information.
+         */
+        ;(rumPublicApi as any).updateViewName = monitor((name: string) => {
+          strategy.updateViewName(name)
+        })
+      }
+
       if (configuration.storeContextsAcrossPages) {
         storeContextManager(configuration, globalContextManager, RUM_STORAGE_KEY, CustomerDataType.GlobalContext)
         storeContextManager(configuration, userContextManager, RUM_STORAGE_KEY, CustomerDataType.User)
@@ -415,8 +429,8 @@ export function makeRumPublicApi(
     strategy.startView(sanitizedOptions)
     addTelemetryUsage({ feature: 'start-view' })
   })
-  const rumPublicApi = makePublicApi<RumPublicApi>({
-    init: monitor((initConfiguration) => strategy.init(initConfiguration)),
+  const rumPublicApi: RumPublicApi = makePublicApi<RumPublicApi>({
+    init: monitor((initConfiguration) => strategy.init(initConfiguration, rumPublicApi)),
 
     setTrackingConsent: monitor((trackingConsent) => {
       trackingConsentState.update(trackingConsent)

@@ -8,8 +8,6 @@ import {
   relativeToClocks,
   assign,
   isNumber,
-  ExperimentalFeature,
-  isExperimentalFeatureEnabled,
 } from '@datadog/browser-core'
 import type { RumConfiguration } from '../configuration'
 import type { RumPerformanceResourceTiming } from '../../browser/performanceCollection'
@@ -22,6 +20,7 @@ import type { RawRumEventCollectedData, LifeCycle } from '../lifeCycle'
 import type { RequestCompleteEvent } from '../requestCollection'
 import type { PageStateHistory } from '../contexts/pageStateHistory'
 import { PageState } from '../contexts/pageStateHistory'
+import { TraceIdentifier } from '../tracing/tracer'
 import { matchRequestTiming } from './matchRequestTiming'
 import {
   computePerformanceResourceDetails,
@@ -94,7 +93,8 @@ function processRequest(
     tracingInfo,
     correspondingTimingOverrides
   )
-  const collectedData = {
+
+  return {
     startTime: startClocks.relative,
     rawRumEvent: resourceEvent,
     domainContext: {
@@ -105,14 +105,9 @@ function processRequest(
       requestInit: request.init,
       error: request.error,
       isAborted: request.isAborted,
+      handlingStack: request.handlingStack,
     } as RumFetchResourceEventDomainContext | RumXhrResourceEventDomainContext,
   }
-
-  if (isExperimentalFeatureEnabled(ExperimentalFeature.MICRO_FRONTEND)) {
-    collectedData.domainContext.handlingStack = request.handlingStack
-  }
-
-  return collectedData
 }
 
 function processResourceEntry(
@@ -190,6 +185,7 @@ function computeEntryTracingInfo(entry: RumPerformanceResourceTiming, configurat
   return {
     _dd: {
       trace_id: entry.traceId,
+      span_id: new TraceIdentifier().toDecimalString(),
       rule_psr: getRulePsr(configuration),
     },
   }

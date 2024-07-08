@@ -16,6 +16,7 @@ import {
 } from '@datadog/browser-core'
 import type { RumEventDomainContext } from '../../domainContext.types'
 import type { RumEvent } from '../../rumEvent.types'
+import type { RumPlugin } from '../plugins'
 import { isTracingOption } from '../tracing/tracer'
 import type { PropagatorType, TracingOption } from '../tracing/tracer.types'
 
@@ -124,6 +125,13 @@ export interface RumInitConfiguration extends InitConfiguration {
    * Enables collection of long task events.
    */
   trackLongTasks?: boolean | undefined
+
+  /**
+   * List of plugins to enable. The plugins API is unstable and experimental, and may change without
+   * notice. Please use only plugins provided by Datadog matching the version of the SDK you are
+   * using.
+   */
+  plugins?: RumPlugin[] | undefined
 }
 
 export type HybridInitConfiguration = Omit<RumInitConfiguration, 'applicationId' | 'clientToken'>
@@ -149,6 +157,7 @@ export interface RumConfiguration extends Configuration {
   subdomain?: string
   customerDataTelemetrySampleRate: number
   traceContextInjection: TraceContextInjection
+  plugins: RumPlugin[]
 }
 
 export function validateAndBuildRumConfiguration(
@@ -207,13 +216,12 @@ export function validateAndBuildRumConfiguration(
       defaultPrivacyLevel: objectHasValue(DefaultPrivacyLevel, initConfiguration.defaultPrivacyLevel)
         ? initConfiguration.defaultPrivacyLevel
         : DefaultPrivacyLevel.MASK,
-      enablePrivacyForActionName:
-        isExperimentalFeatureEnabled(ExperimentalFeature.ENABLE_PRIVACY_FOR_ACTION_NAME) &&
-        !!initConfiguration.enablePrivacyForActionName,
+      enablePrivacyForActionName: !!initConfiguration.enablePrivacyForActionName,
       customerDataTelemetrySampleRate: 1,
       traceContextInjection: objectHasValue(TraceContextInjection, initConfiguration.traceContextInjection)
         ? initConfiguration.traceContextInjection
         : TraceContextInjection.ALL,
+      plugins: (isExperimentalFeatureEnabled(ExperimentalFeature.PLUGINS) && initConfiguration.plugins) || [],
     },
     baseConfiguration
   )
@@ -296,6 +304,9 @@ export function serializeRumConfiguration(configuration: RumInitConfiguration) {
       track_user_interactions: configuration.trackUserInteractions,
       track_resources: configuration.trackResources,
       track_long_task: configuration.trackLongTasks,
+      plugins: configuration.plugins?.map((plugin) =>
+        assign({ name: plugin.name }, plugin.getConfigurationTelemetry?.())
+      ),
     },
     baseSerializedConfiguration
   ) satisfies RawTelemetryConfiguration

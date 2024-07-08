@@ -1,5 +1,14 @@
 import type { Context, Duration, RelativeTime } from '@datadog/browser-core'
-import { PageExitReason, timeStampNow, display, relativeToClocks, relativeNow } from '@datadog/browser-core'
+import {
+  PageExitReason,
+  timeStampNow,
+  display,
+  relativeToClocks,
+  relativeNow,
+  ExperimentalFeature,
+} from '@datadog/browser-core'
+
+import { mockExperimentalFeatures } from '@datadog/browser-core/test'
 import type { TestSetupBuilder } from '../../../test'
 import { createPerformanceEntry, setup } from '../../../test'
 import { RumEventType, ViewLoadingType } from '../../rawRumEvent.types'
@@ -800,6 +809,19 @@ describe('start view', () => {
     )
   })
 
+  it('should ignore null service/version', () => {
+    setupBuilder.build()
+    const { getViewUpdate, startView } = viewTest
+
+    startView({ service: null, version: null })
+    expect(getViewUpdate(2)).toEqual(
+      jasmine.objectContaining({
+        service: undefined,
+        version: undefined,
+      })
+    )
+  })
+
   it('should use the provided clock to stop the current view and start the new one', () => {
     const { clock } = setupBuilder.withFakeClock().build()
     const { getViewUpdate, startView } = viewTest
@@ -897,4 +919,45 @@ describe('view event count', () => {
       view: viewTest.getLatestViewContext(),
     } as RumEvent & Context
   }
+
+  describe('update view name', () => {
+    let setupBuilder: TestSetupBuilder
+    let viewTest: ViewTest
+
+    beforeEach(() => {
+      setupBuilder = setup().beforeBuild((buildContext) => {
+        viewTest = setupViewTest(buildContext)
+        return viewTest
+      })
+    })
+
+    it('should update an undefined view name if the experimental feature is enabled', () => {
+      mockExperimentalFeatures([ExperimentalFeature.UPDATE_VIEW_NAME])
+      setupBuilder.build()
+      const { getViewUpdate, startView, updateViewName } = viewTest
+
+      startView()
+      updateViewName('foo')
+      expect(getViewUpdate(3).name).toEqual('foo')
+    })
+
+    it('should update a defined view name if the experimental feature is enabled', () => {
+      mockExperimentalFeatures([ExperimentalFeature.UPDATE_VIEW_NAME])
+      setupBuilder.build()
+      const { getViewUpdate, startView, updateViewName } = viewTest
+
+      startView({ name: 'initial view name' })
+      updateViewName('foo')
+      expect(getViewUpdate(3).name).toEqual('foo')
+    })
+
+    it('should not update a defined view name if the experimental feature is not enabled', () => {
+      setupBuilder.build()
+      const { getViewUpdate, startView, updateViewName } = viewTest
+
+      startView({ name: 'initial view name' })
+      updateViewName('foo')
+      expect(getViewUpdate(2).name).toEqual('initial view name')
+    })
+  })
 })

@@ -26,8 +26,14 @@ export function applyEventFilters(filters: EventFilters, events: SdkEvent[], fac
   filteredEvents = filterExcludedFacets(filteredEvents, filters.excludedFacetValues, facetRegistry)
 
   if (filters.query) {
-    const query = parseQuery(filters.query)
-    filteredEvents = filteredEvents.filter(query.match)
+    const queryParts: string[][] = parseQuery(filters.query)
+    const matchQuery = (event: SdkEvent) =>
+      queryParts.every((queryPart) => {
+        // Hack it to restore the whitespace
+        const searchTerm = queryPart.length > 1 ? queryPart[1].replaceAll(/\\\s+/gm, ' ') : ''
+        return matchQueryPart(event, queryPart[0], searchTerm)
+      })
+    filteredEvents = filteredEvents.filter(matchQuery)
   }
 
   if (!filters.outdatedVersions) {
@@ -73,20 +79,38 @@ function filterOutdatedVersions(events: SdkEvent[]): SdkEvent[] {
   return events.filter((event) => !outdatedEvents.has(event))
 }
 
-function parseQuery(query: string) {
+export function parseQuery(query: string) {
   const queryParts = query
-    .split(' ')
+    .split(/(?<!\\)\s/g) // Hack it to escape whitespace with backslashes
     .filter((queryPart) => queryPart)
     .map((queryPart) => queryPart.split(':'))
 
-  return {
-    match: (event: SdkEvent) =>
-      queryParts.every((queryPart) => matchQueryPart(event, queryPart[0], queryPart.length ? queryPart[1] : '')),
+  return queryParts
+}
+
+export function matchWithWildcard(value: string, searchTerm: string): boolean {
+  value = value.toLowerCase()
+  searchTerm = searchTerm.toLowerCase()
+  if (!searchTerm.includes('*')) {
+    return value.includes(searchTerm)
   }
+  const searchTerms = searchTerm.toLowerCase().split('*')
+  let lastIndex = 0
+  for (const term of searchTerms) {
+    const index = value.indexOf(term, lastIndex)
+    if (index === -1) {
+      return false
+    }
+    lastIndex = index + term.length
+  }
+  return true
 }
 
 function matchQueryPart(json: unknown, searchKey: string, searchTerm: string, jsonPath = ''): boolean {
-  if (jsonPath.endsWith(searchKey) && String(json).startsWith(searchTerm)) {
+  if (searchKey.toLowerCase() === 'description') {
+    return matchWithWildcard(JSON.stringify(json), searchTerm)
+  }
+  if (jsonPath.endsWith(searchKey) && matchWithWildcard(String(json), searchTerm)) {
     return true
   }
 

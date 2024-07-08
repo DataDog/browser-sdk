@@ -16,7 +16,7 @@ import type {
 import type { SdkEvent } from '../../../sdkEvent'
 import { isTelemetryEvent, isLogEvent, isRumEvent } from '../../../sdkEvent'
 import { formatDate, formatDuration } from '../../../formatNumber'
-import { defaultFormatValue, Json } from '../../json'
+import { CopyMenuItem, defaultFormatValue, Json } from '../../json'
 import { LazyCollapse } from '../../lazyCollapse'
 import type { FacetRegistry } from '../../../hooks/useEvents'
 import { useSdkInfos } from '../../../hooks/useSdkInfos'
@@ -76,23 +76,29 @@ export const EventRow = React.memo(
     const [isCollapsed, setIsCollapsed] = useState(true)
     const jsonRef = useRef<HTMLDivElement>(null)
 
-    function getMenuItemsForPath(path: string) {
+    function getMenuItemsForPath(path: string, value?: unknown) {
+      const menuItems: ReactNode[] = []
+
       const newColumn: EventListColumn = { type: 'field', path }
-      if (!path || includesColumn(columns, newColumn)) {
-        return null
+      if (path && !includesColumn(columns, newColumn)) {
+        menuItems.push(
+          <>
+            <Menu.Item
+              onClick={() => {
+                onColumnsChange(addColumn(columns, newColumn))
+              }}
+              leftSection={<IconColumnInsertRight size={14} />}
+            >
+              Add column
+            </Menu.Item>
+          </>
+        )
       }
-      return (
-        <>
-          <Menu.Item
-            onClick={() => {
-              onColumnsChange(addColumn(columns, newColumn))
-            }}
-            leftSection={<IconColumnInsertRight size={14} />}
-          >
-            Add column
-          </Menu.Item>
-        </>
-      )
+      if (typeof value === 'string') {
+        const searchTerm = String(value).replace(/ /g, '\\ ')
+        menuItems.push(<CopyMenuItem value={`${path}:${searchTerm}`}>Copy search query</CopyMenuItem>)
+      }
+      return <>{menuItems}</>
     }
 
     return (
@@ -156,7 +162,9 @@ export const EventRow = React.memo(
                     <Json
                       value={value}
                       defaultCollapseLevel={0}
-                      getMenuItemsForPath={(path) => getMenuItemsForPath(path ? `${column.path}.${path}` : column.path)}
+                      getMenuItemsForPath={(path) =>
+                        getMenuItemsForPath(path ? `${column.path}.${path}` : column.path, value)
+                      }
                       formatValue={(path, value) => formatValue(path ? `${column.path}.${path}` : column.path, value)}
                     />
                   )}

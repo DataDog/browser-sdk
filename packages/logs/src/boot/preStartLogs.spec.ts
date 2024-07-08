@@ -1,6 +1,13 @@
-import { mockClock, type Clock, initEventBridgeStub } from '@datadog/browser-core/test'
+import { mockClock, type Clock, mockEventBridge } from '@datadog/browser-core/test'
 import type { TimeStamp, TrackingConsentState } from '@datadog/browser-core'
-import { ONE_SECOND, TrackingConsent, createTrackingConsentState, display } from '@datadog/browser-core'
+import {
+  ONE_SECOND,
+  TrackingConsent,
+  createTrackingConsentState,
+  display,
+  isIE,
+  resetFetchObservable,
+} from '@datadog/browser-core'
 import type { CommonContext } from '../rawLogsEvent.types'
 import type { HybridInitConfiguration, LogsConfiguration, LogsInitConfiguration } from '../domain/configuration'
 import type { Logger } from '../domain/logger'
@@ -37,6 +44,7 @@ describe('preStartLogs', () => {
   })
 
   afterEach(() => {
+    resetFetchObservable()
     clock.cleanup()
   })
 
@@ -96,7 +104,7 @@ describe('preStartLogs', () => {
 
     describe('if event bridge present', () => {
       beforeEach(() => {
-        initEventBridgeStub()
+        mockEventBridge()
       })
 
       it('init should accept empty client token', () => {
@@ -206,6 +214,25 @@ describe('preStartLogs', () => {
     beforeEach(() => {
       trackingConsentState = createTrackingConsentState()
       strategy = createPreStartStrategy(getCommonContextSpy, trackingConsentState, doStartLogsSpy)
+    })
+
+    describe('basic methods instrumentation', () => {
+      beforeEach(() => {
+        if (isIE()) {
+          pending('No support for IE')
+        }
+      })
+
+      it('should instrument fetch even if tracking consent is not granted', () => {
+        const originalFetch = window.fetch
+
+        strategy.init({
+          ...DEFAULT_INIT_CONFIGURATION,
+          trackingConsent: TrackingConsent.NOT_GRANTED,
+        })
+
+        expect(window.fetch).not.toBe(originalFetch)
+      })
     })
 
     it('does not start logs if tracking consent is not granted at init', () => {

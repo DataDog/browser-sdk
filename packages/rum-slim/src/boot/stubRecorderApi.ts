@@ -2,7 +2,7 @@ import { noop } from '@datadog/browser-core'
 import type { LifeCycle, RumConfiguration } from '@datadog/browser-rum-core'
 import { getSessionReplayLink } from '../domain/getSessionReplayLink'
 
-export function makeStubRecorderApi() {
+export function makeRecorderApiStub() {
   let getSessionReplayLinkStrategy = noop as () => string | undefined
   return {
     start: noop,

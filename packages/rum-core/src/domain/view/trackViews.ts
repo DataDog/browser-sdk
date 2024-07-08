@@ -16,6 +16,8 @@ import {
   clearInterval,
   setTimeout,
   Observable,
+  isExperimentalFeatureEnabled,
+  ExperimentalFeature,
 } from '@datadog/browser-core'
 
 import type { ViewCustomTimings } from '../../rawRumEvent.types'
@@ -25,7 +27,7 @@ import type { LifeCycle } from '../lifeCycle'
 import { LifeCycleEventType } from '../lifeCycle'
 import type { EventCounts } from '../trackEventCounts'
 import type { LocationChange } from '../../browser/locationChangeObservable'
-import type { RumConfiguration } from '../configuration'
+import type { RumConfiguration, RumInitConfiguration } from '../configuration'
 import { trackViewEventCounts } from './trackViewEventCounts'
 import { trackInitialViewMetrics } from './viewMetrics/trackInitialViewMetrics'
 import type { InitialViewMetrics } from './viewMetrics/trackInitialViewMetrics'
@@ -75,8 +77,8 @@ export const KEEP_TRACKING_AFTER_VIEW_DELAY = 5 * ONE_MINUTE
 
 export interface ViewOptions {
   name?: string
-  service?: string
-  version?: string
+  service?: RumInitConfiguration['service']
+  version?: RumInitConfiguration['version']
 }
 
 export function trackViews(
@@ -154,6 +156,10 @@ export function trackViews(
       currentView.end({ endClocks: startClocks })
       currentView = startNewView(ViewLoadingType.ROUTE_CHANGE, startClocks, options)
     },
+    updateViewName: (name: string) => {
+      currentView.updateViewName(name)
+    },
+
     stop: () => {
       locationChangeSubscription?.unsubscribe()
       currentView.end()
@@ -185,8 +191,8 @@ function newView(
   let version: string | undefined
   if (viewOptions) {
     name = viewOptions.name
-    service = viewOptions.service
-    version = viewOptions.version
+    service = viewOptions.service || undefined
+    version = viewOptions.version || undefined
   }
 
   const viewCreatedEvent = {
@@ -261,7 +267,9 @@ function newView(
   }
 
   return {
-    name,
+    get name() {
+      return name
+    },
     service,
     version,
     stopObservable,
@@ -296,6 +304,13 @@ function newView(
       const relativeTime = looksLikeRelativeTime(time) ? time : elapsed(startClocks.timeStamp, time)
       customTimings[sanitizeTiming(name)] = relativeTime
       scheduleViewUpdate()
+    },
+    updateViewName(updatedName: string) {
+      if (!isExperimentalFeatureEnabled(ExperimentalFeature.UPDATE_VIEW_NAME)) {
+        return
+      }
+      name = updatedName
+      triggerViewUpdate()
     },
   }
 }

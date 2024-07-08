@@ -1,6 +1,6 @@
 import { DefaultPrivacyLevel, isIE } from '@datadog/browser-core'
 import type { Clock } from '@datadog/browser-core/test'
-import { createNewEvent, mockClock } from '@datadog/browser-core/test'
+import { createNewEvent, mockClock, registerCleanupTask } from '@datadog/browser-core/test'
 import type { RumConfiguration } from '@datadog/browser-rum-core'
 import { PRIVACY_ATTR_NAME, PRIVACY_ATTR_VALUE_MASK_USER_INPUT } from '@datadog/browser-rum-core'
 import { appendElement } from '../../../../../rum-core/test'
@@ -32,11 +32,11 @@ describe('trackInput', () => {
       status: SerializationContextStatus.INITIAL_FULL_SNAPSHOT,
       elementsScrollPositions: createElementsScrollPositions(),
     })
-  })
 
-  afterEach(() => {
-    inputTracker.stop()
-    clock?.cleanup()
+    registerCleanupTask(() => {
+      inputTracker.stop()
+      clock?.cleanup()
+    })
   })
 
   it('collects input values when an "input" event is dispatched', () => {

@@ -1,13 +1,13 @@
 {
   "name": "@datadog/browser-sdk-developer-extension",
-  "version": "5.21.0",
+  "version": "5.22.0",
   "private": true,
   "scripts": {
     "build": "rm -rf dist && webpack --mode production",
     "dev": "webpack --mode development --watch"
   },
   "devDependencies": {
-    "@tabler/icons-react": "3.5.0",
+    "@tabler/icons-react": "3.7.0",
     "@types/chrome": "0.0.268",
     "@types/react": "18.3.3",
     "@types/react-dom": "18.3.0",
@@ -16,14 +16,14 @@
     "css-loader": "7.1.2",
     "html-webpack-plugin": "5.6.0",
     "style-loader": "4.0.0",
-    "webpack": "5.91.0"
+    "webpack": "5.92.1"
   },
   "dependencies": {
     "@datadog/browser-core": "workspace:*",
     "@datadog/browser-logs": "workspace:*",
     "@datadog/browser-rum": "workspace:*",
-    "@mantine/core": "7.10.1",
-    "@mantine/hooks": "7.10.1",
+    "@mantine/core": "7.11.1",
+    "@mantine/hooks": "7.11.1",
     "clsx": "2.1.1",
     "react": "18.3.1",
     "react-dom": "18.3.1"
