@@ -4,7 +4,8 @@ import { supportPerformanceTimingEvent, RumPerformanceEntryType } from '../../br
 import type { RumPerformanceResourceTiming } from '../../browser/performanceObservable'
 import type { RumConfiguration } from '../configuration'
 import { getDocumentTraceId } from '../tracing/getDocumentTraceId'
-import { FAKE_INITIAL_DOCUMENT, computeRelativePerformanceTiming } from './resourceUtils'
+import { computeRelativePerformanceTiming } from '../../browser/performanceUtils'
+import { FAKE_INITIAL_DOCUMENT } from './resourceUtils'
 
 export function retrieveInitialDocumentResourceTiming(
   configuration: RumConfiguration,

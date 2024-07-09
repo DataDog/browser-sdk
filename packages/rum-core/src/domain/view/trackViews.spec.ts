@@ -10,10 +10,11 @@ import {
 
 import { mockExperimentalFeatures } from '@datadog/browser-core/test'
 import type { TestSetupBuilder } from '../../../test'
-import { createPerformanceEntry, setup } from '../../../test'
+import { createPerformanceEntry, mockPerformanceObserver, setup } from '../../../test'
 import { RumEventType, ViewLoadingType } from '../../rawRumEvent.types'
 import type { RumEvent } from '../../rumEvent.types'
 import { LifeCycleEventType } from '../lifeCycle'
+import type { RumPerformanceEntry } from '../../browser/performanceObservable'
 import { RumPerformanceEntryType } from '../../browser/performanceObservable'
 import type { ViewEvent } from './trackViews'
 import { SESSION_KEEP_ALIVE_INTERVAL, THROTTLE_VIEW_UPDATE_PERIOD, KEEP_TRACKING_AFTER_VIEW_DELAY } from './trackViews'
@@ -372,8 +373,11 @@ describe('view loading type', () => {
 describe('view metrics', () => {
   let setupBuilder: TestSetupBuilder
   let viewTest: ViewTest
+  let notifyPerformanceEntries: (entries: RumPerformanceEntry[]) => void
 
   beforeEach(() => {
+    ;({ notifyPerformanceEntries } = mockPerformanceObserver())
+
     setupBuilder = setup()
       .withFakeLocation('/foo')
       .beforeBuild((buildContext) => {
@@ -432,14 +436,14 @@ describe('view metrics', () => {
 
   describe('initial view metrics', () => {
     it('should be updated when notified with a PERFORMANCE_ENTRY_COLLECTED event (throttled)', () => {
-      const { lifeCycle, clock } = setupBuilder.withFakeClock().build()
+      const { clock } = setupBuilder.withFakeClock().build()
       const { getViewUpdateCount, getViewUpdate } = viewTest
       expect(getViewUpdateCount()).toEqual(1)
       expect(getViewUpdate(0).initialViewMetrics).toEqual({})
 
       const navigationEntry = createPerformanceEntry(RumPerformanceEntryType.NAVIGATION)
       clock.tick(navigationEntry.responseStart) // ensure now > responseStart
-      lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [navigationEntry])
+      notifyPerformanceEntries([navigationEntry])
 
       expect(getViewUpdateCount()).toEqual(1)
 
@@ -466,8 +470,9 @@ describe('view metrics', () => {
       lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [
         createPerformanceEntry(RumPerformanceEntryType.PAINT),
         lcpEntry,
-        createPerformanceEntry(RumPerformanceEntryType.NAVIGATION),
       ])
+      notifyPerformanceEntries([createPerformanceEntry(RumPerformanceEntryType.NAVIGATION)])
+
       clock.tick(THROTTLE_VIEW_UPDATE_PERIOD)
 
       const latestUpdate = getViewUpdate(getViewUpdateCount() - 1)
@@ -486,8 +491,8 @@ describe('view metrics', () => {
       lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [
         createPerformanceEntry(RumPerformanceEntryType.PAINT),
         createPerformanceEntry(RumPerformanceEntryType.LARGEST_CONTENTFUL_PAINT),
-        createPerformanceEntry(RumPerformanceEntryType.NAVIGATION),
       ])
+      notifyPerformanceEntries([createPerformanceEntry(RumPerformanceEntryType.NAVIGATION)])
       clock.tick(THROTTLE_VIEW_UPDATE_PERIOD)
 
       const latestUpdate = getViewUpdate(getViewUpdateCount() - 1)
@@ -517,8 +522,8 @@ describe('view metrics', () => {
         lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [
           createPerformanceEntry(RumPerformanceEntryType.PAINT),
           createPerformanceEntry(RumPerformanceEntryType.LARGEST_CONTENTFUL_PAINT),
-          createPerformanceEntry(RumPerformanceEntryType.NAVIGATION),
         ])
+        notifyPerformanceEntries([createPerformanceEntry(RumPerformanceEntryType.NAVIGATION)])
 
         clock.tick(THROTTLE_VIEW_UPDATE_PERIOD)
 

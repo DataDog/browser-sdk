@@ -1,6 +1,6 @@
 import { registerCleanupTask } from '@datadog/browser-core/test'
 import { includes } from '@datadog/browser-core'
-import type { RumPerformanceEntry } from '../../src/browser/performanceObservable'
+import { type RumPerformanceEntry } from '../../src/browser/performanceObservable'
 
 type PerformanceObserverInstance = {
   callback: PerformanceObserverCallback
@@ -13,7 +13,7 @@ export function mockPerformanceObserver({ typeSupported } = { typeSupported: tru
   let performanceObserver: PerformanceObserver
   let bufferedEntries: RumPerformanceEntry[] = []
 
-  window.PerformanceObserver = function (callback: PerformanceObserverCallback) {
+  const mock = (callback: PerformanceObserverCallback) => {
     const instance = { callback, entryTypes: [] as string[] }
 
     performanceObserver = {
@@ -35,7 +35,10 @@ export function mockPerformanceObserver({ typeSupported } = { typeSupported: tru
       },
     }
     return performanceObserver
-  } as unknown as typeof originalPerformanceObserver
+  }
+  mock.supportedEntryTypes = originalPerformanceObserver?.supportedEntryTypes
+
+  window.PerformanceObserver = mock as unknown as typeof window.PerformanceObserver
 
   registerCleanupTask(() => {
     window.PerformanceObserver = originalPerformanceObserver
@@ -63,5 +66,25 @@ export function mockPerformanceObserver({ typeSupported } = { typeSupported: tru
       bufferedEntries.push(...entries)
       instances.forEach((instance) => notify(instance, entries))
     },
+  }
+}
+
+export function mockPerformanceTiming() {
+  const timings = {
+    domComplete: 456,
+    domContentLoadedEventEnd: 345,
+    domContentLoadedEventStart: 0,
+    domInteractive: 234,
+    loadEventEnd: 567,
+    loadEventStart: 567,
+    // navigationStart: 0,
+    responseStart: 123,
+    unloadEventEnd: 0,
+    unloadEventStart: 0,
+  } as typeof performance.timing
+  const properties = Object.keys(timings) as Array<keyof typeof performance.timing>
+
+  for (const propertyName of properties) {
+    spyOnProperty(performance.timing, propertyName, 'get').and.callFake(() => timings[propertyName])
   }
 }
