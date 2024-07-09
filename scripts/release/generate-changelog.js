@@ -10,8 +10,8 @@ const { spawnCommand, printError, runMain } = require('../lib/execution-utils')
 const { command } = require('../lib/command')
 const { modifyFile } = require('../lib/files-utils')
 
-const CHANGELOG_FILE = 'CHANGELOG.md'
-const CONTRIBUTING_FILE = 'CONTRIBUTING.md'
+const CHANGELOG_FILE = '../../CHANGELOG.md'
+const CONTRIBUTING_FILE = '../../CONTRIBUTING.md'
 const PUBLIC_EMOJI_PRIORITY = ['💥', '✨', '🐛', '⚡️', '📝', '⚗️']
 const INTERNAL_EMOJI_PRIORITY = ['👷', '🎨', '🧪', '✅', '👌', '♻️']
 const EMOJI_REGEX = /^\p{Emoji_Presentation}/u
@@ -108,7 +108,7 @@ ${internalChanges.join('\n')}
 
 function sortByEmojiPriority(a, b, priorityList) {
   const getFirstRelevantEmoji = (text) => {
-    const matches = text.match(EMOJI_REGEX) || [] // Ensures only the first emoji is matched
+    const matches = text.match(EMOJI_REGEX) || []
     return matches.find((emoji) => priorityList.includes(emoji))
   }
 
@@ -116,8 +116,6 @@ function sortByEmojiPriority(a, b, priorityList) {
   const emojiB = getFirstRelevantEmoji(b)
   const indexA = emojiA ? priorityList.indexOf(emojiA) : Number.MAX_VALUE
   const indexB = emojiB ? priorityList.indexOf(emojiB) : Number.MAX_VALUE
-
-  console.log(`Comparing ${a} (index ${indexA}) to ${b} (index ${indexB})`) // Debugging line
 
   return indexA - indexB
 }
