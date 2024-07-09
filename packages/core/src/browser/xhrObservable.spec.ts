@@ -1,6 +1,6 @@
 import type { Configuration } from '../domain/configuration'
 import { withXhr, mockXhr } from '../../test'
-import { isIE } from '../tools/utils/browserDetection'
+
 import type { Subscription } from '../tools/observable'
 import type { XhrCompleteContext, XhrContext } from './xhrObservable'
 import { initXhrObservable } from './xhrObservable'
@@ -346,9 +346,6 @@ describe('xhr observable', () => {
   })
 
   it('should track request to URL object', (done) => {
-    if (isIE()) {
-      pending('IE not supported')
-    }
     withXhr({
       setup(xhr) {
         xhr.open('GET', new URL('http://example.com/path'))

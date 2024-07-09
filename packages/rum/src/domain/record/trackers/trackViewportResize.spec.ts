@@ -1,4 +1,4 @@
-import { DefaultPrivacyLevel, isIE } from '@datadog/browser-core'
+import { DefaultPrivacyLevel } from '@datadog/browser-core'
 import { createNewEvent, registerCleanupTask } from '@datadog/browser-core/test'
 import type { RumConfiguration } from '@datadog/browser-rum-core'
 import { serializeDocument, SerializationContextStatus } from '../serialization'
@@ -17,9 +17,6 @@ describe('trackViewportResize', () => {
   let elementsScrollPositions: ElementsScrollPositions
 
   beforeEach(() => {
-    if (isIE()) {
-      pending('IE not supported')
-    }
     configuration = { defaultPrivacyLevel: DefaultPrivacyLevel.ALLOW } as RumConfiguration
     elementsScrollPositions = createElementsScrollPositions()
     visualViewportResizeCallback = jasmine.createSpy()

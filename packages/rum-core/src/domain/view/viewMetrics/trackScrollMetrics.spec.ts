@@ -1,5 +1,5 @@
 import type { Duration, RelativeTime, Subscription, TimeStamp } from '@datadog/browser-core'
-import { DOM_EVENT, Observable, isIE } from '@datadog/browser-core'
+import { DOM_EVENT, Observable } from '@datadog/browser-core'
 import { createNewEvent, registerCleanupTask } from '@datadog/browser-core/test'
 import type { TestSetupBuilder } from '../../../../test'
 import { setup } from '../../../../test'
@@ -23,10 +23,6 @@ describe('createScrollValuesObserver', () => {
   }
 
   beforeEach(() => {
-    if (isIE()) {
-      pending('IE not supported')
-    }
-
     registerCleanupTask(() => {
       subscription.unsubscribe()
       document.body.innerHTML = ''

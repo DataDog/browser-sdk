@@ -1,4 +1,4 @@
-import { cssEscape, elementMatches, getClassList, getParentElement } from '../browser/polyfills'
+import { cssEscape, getClassList } from '../browser/polyfills'
 import { DEFAULT_PROGRAMMATIC_ACTION_NAME_ATTRIBUTE } from './action/getActionNameFromElement'
 
 /**
@@ -72,7 +72,7 @@ export function getSelectorFromElement(
     targetElementSelector =
       uniqueSelectorAmongChildren || combineSelector(getPositionSelector(currentElement), targetElementSelector)
 
-    currentElement = getParentElement(currentElement)
+    currentElement = currentElement.parentElement
   }
 
   return targetElementSelector
@@ -137,7 +137,7 @@ function getStableAttributeSelector(element: Element, actionNameAttribute: strin
 }
 
 function getPositionSelector(element: Element): string {
-  let sibling = getParentElement(element)!.firstElementChild
+  let sibling = element.parentElement!.firstElementChild
   let elementIndex = 1
 
   while (sibling && sibling !== element) {
@@ -252,7 +252,7 @@ export function isSelectorUniqueAmongSiblings(
     // If the child selector is undefined (meaning `currentElement` is the target element, not one
     // of its ancestor), we need to use `matches` to check if the sibling is matching the selector,
     // as `querySelector` only returns a descendant of the element.
-    isSiblingMatching = (sibling) => elementMatches(sibling, currentElementSelector)
+    isSiblingMatching = (sibling) => sibling.matches(currentElementSelector)
   } else {
     const scopedSelector = supportScopeSelector()
       ? combineSelector(`${currentElementSelector}:scope`, childSelector)
@@ -260,7 +260,7 @@ export function isSelectorUniqueAmongSiblings(
     isSiblingMatching = (sibling) => sibling.querySelector(scopedSelector) !== null
   }
 
-  const parent = getParentElement(currentElement)!
+  const parent = currentElement.parentElement!
   let sibling = parent.firstElementChild
   while (sibling) {
     if (sibling !== currentElement && isSiblingMatching(sibling)) {
@@ -290,7 +290,7 @@ export function supportScopeSelector() {
 }
 
 /**
- * Polyfill-utility for the `isConnected` property not supported in IE11
+ * Polyfill-utility for the `isConnected` property not supported in Edge <=18
  */
 function isConnected(element: Element): boolean {
   if (

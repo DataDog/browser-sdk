@@ -12,7 +12,6 @@ import {
   ExperimentalFeature,
   resetExperimentalFeatures,
   resetFetchObservable,
-  isIE,
 } from '@datadog/browser-core'
 import type { Clock } from '@datadog/browser-core/test'
 import {
@@ -716,12 +715,6 @@ describe('preStartRum', () => {
     })
 
     describe('basic methods instrumentation', () => {
-      beforeEach(() => {
-        if (isIE()) {
-          pending('No support for IE')
-        }
-      })
-
       it('should instrument fetch even if tracking consent is not granted', () => {
         const originalFetch = window.fetch
 

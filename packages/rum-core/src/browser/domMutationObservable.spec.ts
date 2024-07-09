@@ -1,4 +1,3 @@
-import { isIE } from '@datadog/browser-core'
 import type { MockZoneJs } from '@datadog/browser-core/test'
 import { registerCleanupTask, mockZoneJs } from '@datadog/browser-core/test'
 import { createDOMMutationObservable, getMutationObserverConstructor } from './domMutationObservable'
@@ -8,12 +7,6 @@ import { createDOMMutationObservable, getMutationObserverConstructor } from './d
 const DOM_MUTATION_OBSERVABLE_DURATION = 16
 
 describe('domMutationObservable', () => {
-  beforeEach(() => {
-    if (isIE()) {
-      pending('dom mutation not available')
-    }
-  })
-
   function domMutationSpec(mutate: (root: HTMLElement) => void, { expectedMutations }: { expectedMutations: number }) {
     return (done: DoneFn) => {
       const root = document.createElement('div')
@@ -113,10 +106,6 @@ describe('domMutationObservable', () => {
     const OriginalMutationObserverConstructor = window.MutationObserver
 
     beforeEach(() => {
-      if (isIE()) {
-        pending('dom mutation not available')
-      }
-
       zoneJs = mockZoneJs()
 
       registerCleanupTask(() => {
