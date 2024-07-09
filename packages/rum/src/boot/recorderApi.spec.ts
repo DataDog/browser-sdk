@@ -1,5 +1,5 @@
 import type { DeflateEncoder, DeflateWorker, DeflateWorkerAction } from '@datadog/browser-core'
-import { BridgeCapability, PageExitReason, display, isIE } from '@datadog/browser-core'
+import { BridgeCapability, PageExitReason, display } from '@datadog/browser-core'
 import type { RecorderApi, ViewContexts, LifeCycle, RumConfiguration } from '@datadog/browser-rum-core'
 import { LifeCycleEventType } from '@datadog/browser-rum-core'
 import { mockEventBridge, createNewEvent, registerCleanupTask } from '@datadog/browser-core/test'
@@ -24,9 +24,6 @@ describe('makeRecorderApi', () => {
   let startSessionReplayRecordingManually: boolean
 
   beforeEach(() => {
-    if (isIE()) {
-      pending('IE not supported')
-    }
     startSessionReplayRecordingManually = false
 
     mockWorker = new MockWorker()

@@ -1,4 +1,4 @@
-import { DefaultPrivacyLevel, findLast, isIE } from '@datadog/browser-core'
+import { DefaultPrivacyLevel, findLast } from '@datadog/browser-core'
 import type { RumConfiguration, ViewCreatedEvent } from '@datadog/browser-rum-core'
 import { LifeCycle, LifeCycleEventType } from '@datadog/browser-rum-core'
 import type { Clock } from '@datadog/browser-core/test'
@@ -27,10 +27,6 @@ describe('record', () => {
   const FAKE_VIEW_ID = '123'
 
   beforeEach(() => {
-    if (isIE()) {
-      pending('IE not supported')
-    }
-
     emitSpy = jasmine.createSpy()
 
     registerCleanupTask(() => {
