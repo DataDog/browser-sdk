@@ -16,8 +16,8 @@ describe('trackCumulativeLayoutShift', () => {
 
   beforeEach(() => {
     if (
-      !('PerformanceObserver' in window) ||
-      !('supportedEntryTypes' in PerformanceObserver) ||
+      !window.PerformanceObserver ||
+      !PerformanceObserver.supportedEntryTypes ||
       !PerformanceObserver.supportedEntryTypes.includes('layout-shift')
     ) {
       pending('No LayoutShift API support')
