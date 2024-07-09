@@ -26,7 +26,7 @@ describe('performanceObservable', () => {
 
   afterEach(() => {
     performanceSubscription?.unsubscribe()
-    clock.cleanup()
+    clock?.cleanup()
   })
 
   describe('primary strategy when type supported', () => {
