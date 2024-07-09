@@ -77,7 +77,6 @@ export function setup(): TestSetupBuilder {
   let sessionManager: RumSessionManager = createRumSessionManagerMock().setId('1234')
   const lifeCycle = new LifeCycle()
   const domMutationObservable = new Observable<void>()
-  const locationChangeObservable = new Observable<LocationChange>()
   const cleanupTasks: Array<() => void> = []
   const beforeBuildTasks: BeforeBuildCallback[] = []
   const rawRumEvents: RawRumEventCollectedData[] = []
@@ -134,13 +133,9 @@ export function setup(): TestSetupBuilder {
     validateRumEventFormat(data.rawRumEvent)
   })
 
+  const locationChangeSetup = setupLocationObserver()
   function changeLocation(to: string) {
-    const currentLocation = { ...fakeLocation }
-    assign(fakeLocation, buildLocation(to, fakeLocation.href))
-    locationChangeObservable.notify({
-      oldLocation: currentLocation as Location,
-      newLocation: fakeLocation as Location,
-    })
+    locationChangeSetup.changeLocation(fakeLocation, to)
   }
 
   const setupBuilder: TestSetupBuilder = {
@@ -191,7 +186,7 @@ export function setup(): TestSetupBuilder {
         const result = task({
           lifeCycle,
           domMutationObservable,
-          locationChangeObservable,
+          locationChangeObservable: locationChangeSetup.observable,
           viewContexts,
           urlContexts,
           actionContexts,
@@ -262,4 +257,19 @@ function validateRumEventFormat(rawRumEvent: RawRumEvent) {
     },
   }
   validateRumFormat(combine(fakeContext as RumContext & Context, rawRumEvent))
+}
+
+export function setupLocationObserver() {
+  const locationChangeObservable = new Observable<LocationChange>()
+
+  function changeLocation(fakeLocation: Partial<Location>, to: string) {
+    const currentLocation = { ...fakeLocation }
+    assign(fakeLocation, buildLocation(to, fakeLocation.href))
+    locationChangeObservable.notify({
+      oldLocation: currentLocation as Location,
+      newLocation: fakeLocation as Location,
+    })
+  }
+
+  return { observable: locationChangeObservable, changeLocation }
 }
