@@ -1,36 +1,37 @@
 import type { RelativeTime } from '@datadog/browser-core'
 import { setPageVisibility } from '@datadog/browser-core/test'
 import { RumPerformanceEntryType } from '../../../browser/performanceObservable'
-import type { TestSetupBuilder } from '../../../../test'
-import { createPerformanceEntry, setup } from '../../../../test'
-import { LifeCycleEventType } from '../../lifeCycle'
+import { createPerformanceEntry } from '../../../../test'
+import { LifeCycle, LifeCycleEventType } from '../../lifeCycle'
 import type { RumConfiguration } from '../../configuration'
 import { FCP_MAXIMUM_DELAY, trackFirstContentfulPaint } from './trackFirstContentfulPaint'
 import { trackFirstHidden } from './trackFirstHidden'
 
 describe('trackFirstContentfulPaint', () => {
-  let setupBuilder: TestSetupBuilder
+  const lifeCycle = new LifeCycle()
   let fcpCallback: jasmine.Spy<(value: RelativeTime) => void>
-  let configuration: RumConfiguration
+  let cleanup: () => void
+
+  function startTrackingFCP() {
+    fcpCallback = jasmine.createSpy()
+    const firstHidden = trackFirstHidden({} as RumConfiguration)
+    const firstContentfulPaint = trackFirstContentfulPaint(lifeCycle, firstHidden, fcpCallback)
+
+    cleanup = () => {
+      firstHidden.stop()
+      firstContentfulPaint.stop()
+    }
+  }
 
   beforeEach(() => {
-    configuration = {} as RumConfiguration
-    fcpCallback = jasmine.createSpy()
-    setupBuilder = setup().beforeBuild(({ lifeCycle }) => {
-      const firstHidden = trackFirstHidden(configuration)
-      const firstContentfulPaint = trackFirstContentfulPaint(lifeCycle, firstHidden, fcpCallback)
-      return {
-        stop() {
-          firstHidden.stop()
-          firstContentfulPaint.stop()
-        },
-      }
-    })
+    startTrackingFCP()
+  })
+
+  afterEach(() => {
+    cleanup()
   })
 
   it('should provide the first contentful paint timing', () => {
-    const { lifeCycle } = setupBuilder.build()
-
     lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [
       createPerformanceEntry(RumPerformanceEntryType.PAINT),
     ])
@@ -40,8 +41,12 @@ describe('trackFirstContentfulPaint', () => {
   })
 
   it('should be discarded if the page is hidden', () => {
+    // stop the previous setup from the beforeEach
+    cleanup()
+
     setPageVisibility('hidden')
-    const { lifeCycle } = setupBuilder.build()
+    startTrackingFCP()
+
     lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [
       createPerformanceEntry(RumPerformanceEntryType.PAINT),
     ])
@@ -49,8 +54,6 @@ describe('trackFirstContentfulPaint', () => {
   })
 
   it('should be discarded if it is reported after a long time', () => {
-    const { lifeCycle } = setupBuilder.build()
-
     lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [
       createPerformanceEntry(RumPerformanceEntryType.PAINT, { startTime: FCP_MAXIMUM_DELAY as RelativeTime }),
     ])
