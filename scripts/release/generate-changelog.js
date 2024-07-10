@@ -13,7 +13,7 @@ const { modifyFile } = require('../lib/files-utils')
 const CHANGELOG_FILE = 'CHANGELOG.md'
 const CONTRIBUTING_FILE = 'CONTRIBUTING.md'
 const PUBLIC_EMOJI_PRIORITY = ['💥', '✨', '🐛', '⚡️', '📝', '⚗️']
-const INTERNAL_EMOJI_PRIORITY = ['👷', '🎨', '🧪', '✅', '👌', '♻️']
+const INTERNAL_EMOJI_PRIORITY = ['👷', '🎨', '🧪', '✅', '👌', '♻️', '🔧', '📄', '🔇', '🔊', '📦']
 const EMOJI_REGEX = /^\p{Emoji_Presentation}/u
 runMain(async () => {
   if (!process.env.EDITOR) {
@@ -83,41 +83,36 @@ function getChangesList() {
 
   changes.forEach((entry) => {
     let trimmedEntry = entry.trim()
-    if (INTERNAL_EMOJI_PRIORITY.some((emoji) => trimmedEntry.startsWith(emoji))) {
-      internalChanges.push(entry)
-    } else {
+    if (PUBLIC_EMOJI_PRIORITY.some((emoji) => trimmedEntry.startsWith(emoji))) {
       publicChanges.push(entry)
+    } else {
+      internalChanges.push(entry)
     }
   })
 
-  internalChanges = internalChanges
-    .sort((a, b) => sortByEmojiPriority(a, b, INTERNAL_EMOJI_PRIORITY))
-    .map((entry) => `- ${entry}`)
-  publicChanges = publicChanges
-    .sort((a, b) => sortByEmojiPriority(a, b, PUBLIC_EMOJI_PRIORITY))
-    .map((entry) => `- ${entry}`)
+  const sortAndFormat = (entries, priority) =>
+    entries.sort((a, b) => sortByEmojiPriority(a, b, priority)).map((entry) => `- ${entry}`)
+  internalChanges = sortAndFormat(internalChanges, INTERNAL_EMOJI_PRIORITY)
+  publicChanges = sortAndFormat(publicChanges, PUBLIC_EMOJI_PRIORITY)
 
   return `
 **Public Changes:**
+
 ${publicChanges.join('\n')}
 
 **Internal Changes:**
+
 ${internalChanges.join('\n')}
 `.replace(/\(#(\d+)\)/gm, (_, id) => `([#${id}](https://github.com/DataDog/browser-sdk/pull/${id}))`)
 }
 
 function sortByEmojiPriority(a, b, priorityList) {
-  const getFirstRelevantEmoji = (text) => {
+  const getFirstRelevantEmojiIndex = (text) => {
     const matches = text.match(EMOJI_REGEX) || []
-    return matches.find((emoji) => priorityList.includes(emoji))
+    const emoji = matches.find((emoji) => priorityList.includes(emoji))
+    return emoji ? priorityList.indexOf(emoji) : Number.MAX_VALUE
   }
-
-  const emojiA = getFirstRelevantEmoji(a)
-  const emojiB = getFirstRelevantEmoji(b)
-  const indexA = emojiA ? priorityList.indexOf(emojiA) : Number.MAX_VALUE
-  const indexB = emojiB ? priorityList.indexOf(emojiB) : Number.MAX_VALUE
-
-  return indexA - indexB
+  return getFirstRelevantEmojiIndex(a) - getFirstRelevantEmojiIndex(b)
 }
 
 function emojiNameToUnicode(changes) {
