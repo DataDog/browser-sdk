@@ -9,13 +9,13 @@ import type { UrlContexts } from './urlContexts'
 import { startUrlContexts } from './urlContexts'
 
 describe('urlContexts', () => {
-  const fakeLocation = buildLocation('http://fake-url.com')
   const lifeCycle = new LifeCycle()
   let clock: Clock
   let changeLocation: (to: string) => void
   let urlContexts: UrlContexts
 
   beforeEach(() => {
+    const fakeLocation = buildLocation('http://fake-url.com')
     clock = mockClock()
     const setupResult = setupLocationObserver()
     changeLocation = (to: string) => setupResult.changeLocation(fakeLocation, to)
