@@ -9,11 +9,10 @@ describe('locationChangeObservable', () => {
   let observer: jasmine.Spy<(locationChange: LocationChange) => void>
   let subscription: Subscription
   let fakeLocation: Partial<Location>
-  let cleanupLocation: () => void
   let configuration: RumConfiguration
 
   beforeEach(() => {
-    ;({ location: fakeLocation, cleanup: cleanupLocation } = mockLocation('/foo'))
+    ;({ location: fakeLocation } = mockLocation('/foo'))
     configuration = {} as RumConfiguration
     observable = createLocationChangeObservable(configuration, fakeLocation as Location)
     observer = jasmine.createSpy('obs')
@@ -22,7 +21,6 @@ describe('locationChangeObservable', () => {
 
   afterEach(() => {
     subscription.unsubscribe()
-    cleanupLocation()
   })
 
   it('should notify observers on history change', () => {

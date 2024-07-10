@@ -1,5 +1,5 @@
 import type { RelativeTime } from '@datadog/browser-core'
-import { restorePageVisibility, setPageVisibility } from '@datadog/browser-core/test'
+import { setPageVisibility } from '@datadog/browser-core/test'
 import { RumPerformanceEntryType } from '../../../browser/performanceObservable'
 import type { TestSetupBuilder } from '../../../../test'
 import { createPerformanceEntry, setup } from '../../../../test'
@@ -26,10 +26,6 @@ describe('trackFirstContentfulPaint', () => {
         },
       }
     })
-  })
-
-  afterEach(() => {
-    restorePageVisibility()
   })
 
   it('should provide the first contentful paint timing', () => {

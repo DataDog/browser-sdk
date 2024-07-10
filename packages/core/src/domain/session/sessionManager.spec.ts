@@ -1,11 +1,4 @@
-import {
-  createNewEvent,
-  expireCookie,
-  mockClock,
-  registerCleanupTask,
-  restorePageVisibility,
-  setPageVisibility,
-} from '../../../test'
+import { createNewEvent, expireCookie, mockClock, registerCleanupTask, setPageVisibility } from '../../../test'
 import type { Clock } from '../../../test'
 import { getCookie, setCookie } from '../../browser/cookie'
 import type { RelativeTime } from '../../tools/utils/timeUtils'
@@ -95,14 +88,14 @@ describe('startSessionManager', () => {
     if (isIE()) {
       pending('no full rum support')
     }
-    clock = mockClock()
+    clock = mockClock(() => {
+      // flush pending callbacks to avoid random failures
+      clock.tick(ONE_HOUR)
+    })
 
     registerCleanupTask(() => {
       // remove intervals first
       stopSessionManager()
-      // flush pending callbacks to avoid random failures
-      clock.tick(ONE_HOUR)
-      clock.cleanup()
     })
   })
 
@@ -364,10 +357,6 @@ describe('startSessionManager', () => {
   describe('automatic session expiration', () => {
     beforeEach(() => {
       setPageVisibility('hidden')
-    })
-
-    afterEach(() => {
-      restorePageVisibility()
     })
 
     it('should expire the session after expiration delay', () => {
