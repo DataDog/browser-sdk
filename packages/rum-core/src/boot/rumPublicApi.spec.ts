@@ -1,6 +1,5 @@
 import type { RelativeTime, Context, DeflateWorker, CustomerDataTrackerManager, TimeStamp } from '@datadog/browser-core'
 import {
-  clocksNow,
   addExperimentalFeatures,
   ExperimentalFeature,
   resetExperimentalFeatures,
@@ -14,7 +13,8 @@ import {
 import { mockExperimentalFeatures } from '@datadog/browser-core/test'
 import type { TestSetupBuilder } from '../../test'
 import { setup, noopRecorderApi } from '../../test'
-import { ActionType } from '../rawRumEvent.types'
+import { ActionType, VitalType } from '../rawRumEvent.types'
+import type { DurationVitalInstance } from '../domain/vital/vitalCollection'
 import type { RumPublicApi, RecorderApi } from './rumPublicApi'
 import { makeRumPublicApi } from './rumPublicApi'
 import type { StartRum } from './startRum'
@@ -31,8 +31,8 @@ const noopStartRum = (): ReturnType<StartRum> => ({
   viewContexts: {} as any,
   session: {} as any,
   stopSession: () => undefined,
-  startDurationVital: () => undefined,
-  stopDurationVital: () => undefined,
+  startDurationVital: () => ({ stop: () => undefined }) as DurationVitalInstance,
+  addDurationVital: () => undefined,
   stop: () => undefined,
 })
 const DEFAULT_INIT_CONFIGURATION = { applicationId: 'xxx', clientToken: 'xxx' }
@@ -762,37 +762,16 @@ describe('rum public api', () => {
       )
       rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
       // eslint-disable-next-line @typescript-eslint/no-unsafe-call
-      ;(rumPublicApi as any).startDurationVital('foo', { context: { foo: 'bar' } })
+      ;(rumPublicApi as any).startDurationVital('foo', { context: { foo: 'bar' }, details: 'details-value' })
       expect(startDurationVitalSpy).toHaveBeenCalledWith({
         name: 'foo',
-        startClocks: clocksNow(),
+        details: 'details-value',
         context: { foo: 'bar' },
-      })
-    })
-
-    it('should call startDurationVital with provided startTime when ff is enabled', () => {
-      addExperimentalFeatures([ExperimentalFeature.CUSTOM_VITALS])
-      const startDurationVitalSpy = jasmine.createSpy()
-      const rumPublicApi = makeRumPublicApi(
-        () => ({
-          ...noopStartRum(),
-          startDurationVital: startDurationVitalSpy,
-        }),
-        noopRecorderApi
-      )
-      const startTime = 1707755888000 as TimeStamp
-      rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-call
-      ;(rumPublicApi as any).startDurationVital('foo', { startTime })
-      expect(startDurationVitalSpy).toHaveBeenCalledWith({
-        name: 'foo',
-        startClocks: timeStampToClocks(startTime),
-        context: undefined,
       })
     })
   })
 
-  describe('stopDurationVital', () => {
+  describe('addDurationVital', () => {
     beforeEach(() => {
       setup().withFakeClock().build()
     })
@@ -801,50 +780,38 @@ describe('rum public api', () => {
       resetExperimentalFeatures()
     })
 
-    it('should not expose stopDurationVital when ff is disabled', () => {
+    it('should not expose addDurationVital when ff is disabled', () => {
       const rumPublicApi = makeRumPublicApi(noopStartRum, noopRecorderApi)
       rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
-      expect((rumPublicApi as any).stopDurationVital).toBeUndefined()
+      expect((rumPublicApi as any).addDurationVital).toBeUndefined()
     })
 
-    it('should call stopDurationVital on the startRum result when ff is enabled', () => {
+    it('should call addDurationVital on the startRum result when ff is enabled', () => {
       addExperimentalFeatures([ExperimentalFeature.CUSTOM_VITALS])
-      const stopDurationVitalSpy = jasmine.createSpy()
+      const addDurationVitalSpy = jasmine.createSpy()
       const rumPublicApi = makeRumPublicApi(
         () => ({
           ...noopStartRum(),
-          stopDurationVital: stopDurationVitalSpy,
+          addDurationVital: addDurationVitalSpy,
         }),
         noopRecorderApi
       )
+      const startTime = 1707755888000 as TimeStamp
       rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
       // eslint-disable-next-line @typescript-eslint/no-unsafe-call
-      ;(rumPublicApi as any).stopDurationVital('foo', { context: { foo: 'bar' } })
-      expect(stopDurationVitalSpy).toHaveBeenCalledWith({
-        name: 'foo',
-        stopClocks: clocksNow(),
+      ;(rumPublicApi as any).addDurationVital('foo', {
+        startTime,
+        duration: 100,
         context: { foo: 'bar' },
+        details: 'details-value',
       })
-    })
-
-    it('should call stopDurationVital with provided stopTime when ff is enabled', () => {
-      addExperimentalFeatures([ExperimentalFeature.CUSTOM_VITALS])
-      const stopDurationVitalSpy = jasmine.createSpy()
-      const rumPublicApi = makeRumPublicApi(
-        () => ({
-          ...noopStartRum(),
-          stopDurationVital: stopDurationVitalSpy,
-        }),
-        noopRecorderApi
-      )
-      const stopTime = 1707755888000 as TimeStamp
-      rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-call
-      ;(rumPublicApi as any).stopDurationVital('foo', { stopTime })
-      expect(stopDurationVitalSpy).toHaveBeenCalledWith({
+      expect(addDurationVitalSpy).toHaveBeenCalledWith({
         name: 'foo',
-        stopClocks: timeStampToClocks(stopTime),
-        context: undefined,
+        startClocks: timeStampToClocks(startTime),
+        duration: 100,
+        context: { foo: 'bar' },
+        details: 'details-value',
+        type: VitalType.DURATION,
       })
     })
   })

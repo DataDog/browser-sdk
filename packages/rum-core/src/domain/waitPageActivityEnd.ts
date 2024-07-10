@@ -8,7 +8,7 @@ import {
   setTimeout,
   clearTimeout,
 } from '@datadog/browser-core'
-import { RumPerformanceEntryType } from '../browser/performanceCollection'
+import { createPerformanceObservable, RumPerformanceEntryType } from '../browser/performanceObservable'
 import type { RumConfiguration } from './configuration'
 import type { LifeCycle } from './lifeCycle'
 import { LifeCycleEventType } from './lifeCycle'
@@ -127,12 +127,8 @@ export function createPageActivityObservable(
 
     subscriptions.push(
       domMutationObservable.subscribe(notifyPageActivity),
-      lifeCycle.subscribe(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, (entries) => {
-        if (
-          entries.some(
-            (entry) => entry.entryType === RumPerformanceEntryType.RESOURCE && !isExcludedUrl(configuration, entry.name)
-          )
-        ) {
+      createPerformanceObservable(configuration, { type: RumPerformanceEntryType.RESOURCE }).subscribe((entries) => {
+        if (entries.some((entry) => !isExcludedUrl(configuration, entry.name))) {
           notifyPageActivity()
         }
       }),

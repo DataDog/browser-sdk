@@ -7,7 +7,7 @@ import { getSerializedNodeId, hasSerializedNode } from '../serialization'
 import { IncrementalSource } from '../../../types'
 import type { BrowserIncrementalSnapshotRecord, ScrollData } from '../../../types'
 import { assembleIncrementalSnapshot } from '../assembly'
-import type { Tracker } from './types'
+import type { Tracker } from './tracker.types'
 
 const SCROLL_OBSERVER_THRESHOLD = 100
 

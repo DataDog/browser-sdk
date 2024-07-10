@@ -3,7 +3,7 @@ import { SESSION_STORAGE_SETTINGS_KEY } from '../../common/sessionKeyConstant'
 import { EventListeners } from '../../common/eventListeners'
 import { createLogger } from '../../common/logger'
 import { evalInWindow } from '../evalInWindow'
-import type { Settings } from '../../common/types'
+import type { Settings } from '../../common/extension.types'
 
 const logger = createLogger('useSettings')
 

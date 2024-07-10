@@ -8,7 +8,7 @@ import type { RecordIds } from '../recordIds'
 import { initRecordIds } from '../recordIds'
 import type { FrustrationCallback } from './trackFrustration'
 import { trackFrustration } from './trackFrustration'
-import type { Tracker } from './types'
+import type { Tracker } from './tracker.types'
 
 describe('trackFrustration', () => {
   const lifeCycle = new LifeCycle()

@@ -23,6 +23,8 @@ import {
 } from '../domain/configuration'
 import type { CommonContext } from '../domain/contexts/commonContext'
 import type { ViewOptions } from '../domain/view/trackViews'
+import type { DurationVital } from '../domain/vital/vitalCollection'
+import { createVitalInstance } from '../domain/vital/vitalCollection'
 import { fetchAndApplyRemoteConfiguration, serializeRumConfiguration } from '../domain/configuration'
 import { callPluginsMethod } from '../domain/plugins'
 import type { RumPublicApiOptions, Strategy } from './rumPublicApi'
@@ -128,6 +130,10 @@ export function createPreStartStrategy(
     tryStartRum()
   }
 
+  const addDurationVital = (vital: DurationVital) => {
+    bufferApiCalls.add((startRumResult) => startRumResult.addDurationVital(vital))
+  }
+
   return {
     init(initConfiguration, publicApi) {
       if (!initConfiguration) {
@@ -203,12 +209,10 @@ export function createPreStartStrategy(
     },
 
     startDurationVital(vitalStart) {
-      bufferApiCalls.add((startRumResult) => startRumResult.startDurationVital(vitalStart))
+      return createVitalInstance((vital) => addDurationVital(vital), vitalStart)
     },
 
-    stopDurationVital(vitalStart) {
-      bufferApiCalls.add((startRumResult) => startRumResult.stopDurationVital(vitalStart))
-    },
+    addDurationVital,
   }
 }
 

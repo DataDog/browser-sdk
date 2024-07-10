@@ -1,9 +1,9 @@
-import type { BrowserRecord } from '../../../../packages/rum/src/types'
-import { IncrementalSource, RecordType } from '../../../../packages/rum/src/types'
+import { IncrementalSource, RecordType } from '@datadog/browser-rum/src/types'
+import type { BrowserRecord } from '@datadog/browser-rum/src/types'
 import { createLogger } from '../../common/logger'
 import { onBackgroundMessage } from '../backgroundScriptConnection'
-import type { MessageBridgeUp } from './types'
-import { MessageBridgeDownType, MessageBridgeUpLogLevel, MessageBridgeUpType } from './types'
+import type { MessageBridgeUp } from './sessionReplayPlayer.types'
+import { MessageBridgeDownType, MessageBridgeUpLogLevel, MessageBridgeUpType } from './sessionReplayPlayer.types'
 
 const sandboxLogger = createLogger('sandbox')
 

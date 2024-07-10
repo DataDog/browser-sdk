@@ -1,5 +1,5 @@
 import { useEffect } from 'react'
-import type { NetRequestRulesOptions } from '../../common/types'
+import type { NetRequestRulesOptions } from '../../common/extension.types'
 import { sendMessageToBackground } from '../backgroundScriptConnection'
 
 export function useNetworkRules({

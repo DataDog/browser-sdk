@@ -9,7 +9,7 @@ import { IncrementalSource, RecordType } from '../../../types'
 import type { InputCallback } from './trackInput'
 import { DEFAULT_CONFIGURATION, DEFAULT_SHADOW_ROOT_CONTROLLER } from './trackers.specHelper'
 import { trackScroll } from './trackScroll'
-import type { Tracker } from './types'
+import type { Tracker } from './tracker.types'
 
 describe('trackScroll', () => {
   let scrollTracker: Tracker

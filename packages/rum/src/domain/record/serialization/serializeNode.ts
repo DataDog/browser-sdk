@@ -27,12 +27,6 @@ import { serializeStyleSheets } from './serializeStyleSheets'
 import { serializeAttributes } from './serializeAttributes'
 
 export function serializeNodeWithId(node: Node, options: SerializeOptions): SerializedNodeWithId | null {
-  const styleSheetsCache = options.serializationContext.styleSheetsCache
-  const serializedNodeId = getSerializedNodeId(node)
-  if (serializedNodeId && styleSheetsCache && styleSheetsCache.has(serializedNodeId)) {
-    return styleSheetsCache.get(serializedNodeId) as SerializedNodeWithId
-  }
-
   const serializedNode = serializeNode(node, options)
   if (!serializedNode) {
     return null
@@ -46,16 +40,6 @@ export function serializeNodeWithId(node: Node, options: SerializeOptions): Seri
   if (options.serializedNodeIds) {
     options.serializedNodeIds.add(id)
   }
-
-  if (styleSheetsCache && node.nodeType === node.ELEMENT_NODE) {
-    const tagName = getValidTagName((node as Element).tagName)
-    const isCSSLink = (node as HTMLLinkElement).rel === 'stylesheet'
-
-    if ((tagName === 'link' && isCSSLink) || tagName === 'style') {
-      styleSheetsCache.set(id, serializedNode)
-    }
-  }
-
   return serializedNodeWithId
 }
 

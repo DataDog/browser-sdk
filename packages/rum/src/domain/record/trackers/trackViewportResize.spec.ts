@@ -8,7 +8,7 @@ import { RecordType } from '../../../types'
 import { DEFAULT_CONFIGURATION, DEFAULT_SHADOW_ROOT_CONTROLLER } from './trackers.specHelper'
 import type { VisualViewportResizeCallback } from './trackViewportResize'
 import { tackVisualViewportResize } from './trackViewportResize'
-import type { Tracker } from './types'
+import type { Tracker } from './tracker.types'
 
 describe('trackViewportResize', () => {
   let viewportResizeTracker: Tracker

@@ -409,60 +409,6 @@ describe('record', () => {
     }
   })
 
-  describe('StyleSheets caching', () => {
-    it('should cache the stylesheet rules and reuse them for the next full snapshot', () => {
-      const styleElement = appendElement('<style></style>', document.head) as HTMLStyleElement
-
-      startRecording()
-
-      expect(recordApi.styleSheetsCache.size).toEqual(1)
-
-      const styleSheet = styleElement.sheet as CSSStyleSheet
-      styleSheet.insertRule('body { color:  #ccc; }')
-
-      expect(recordApi.styleSheetsCache.size).toEqual(0)
-    })
-
-    it('should invalidate on dom attribute change', () => {
-      const styleElement = appendElement('<style></style>', document.head) as HTMLStyleElement
-
-      startRecording()
-
-      expect(recordApi.styleSheetsCache.size).toEqual(1)
-
-      styleElement.setAttribute('data-toto', 'titi')
-      recordApi.flushMutations()
-
-      expect(recordApi.styleSheetsCache.size).toEqual(0)
-    })
-
-    it('should invalidate on dom insert', () => {
-      const styleElement = appendElement('<style></style>', document.head) as HTMLStyleElement
-
-      startRecording()
-
-      expect(recordApi.styleSheetsCache.size).toEqual(1)
-
-      appendElement('<div></div>', styleElement) as HTMLStyleElement
-      recordApi.flushMutations()
-
-      expect(recordApi.styleSheetsCache.size).toEqual(0)
-    })
-
-    it('should invalidate on dom remove', () => {
-      const styleElement = appendElement('<style></style>', document.head) as HTMLStyleElement
-
-      startRecording()
-
-      expect(recordApi.styleSheetsCache.size).toEqual(1)
-
-      document.head.removeChild(styleElement)
-      recordApi.flushMutations()
-
-      expect(recordApi.styleSheetsCache.size).toEqual(0)
-    })
-  })
-
   describe('updates record replay stats', () => {
     it('when recording new records', () => {
       resetReplayStats()

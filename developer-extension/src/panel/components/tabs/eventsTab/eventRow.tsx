@@ -347,12 +347,17 @@ function LongTaskDescription({ event }: { event: RumLongTaskEvent }) {
 }
 
 function VitalDescription({ event }: { event: RumVitalEvent }) {
-  const vitalName = Object.keys(event.vital.custom!)[0]
-  const vitalValue = event.vital.custom![vitalName]
+  const vitalName = event.vital.name
+  const vitalValue = event.vital.duration
+  const vitalDetails = event.vital.details
   return (
     <>
-      Custom <Emphasis>{event.vital.type}</Emphasis> vital: <Emphasis>{vitalName}</Emphasis> of{' '}
-      <Emphasis>{vitalValue}</Emphasis>
+      Custom <Emphasis>{event.vital.type}</Emphasis> vital:{' '}
+      <Emphasis>
+        {vitalName}
+        {vitalDetails && ` - ${vitalDetails}`}
+      </Emphasis>{' '}
+      of <Emphasis>{vitalValue}</Emphasis>
     </>
   )
 }

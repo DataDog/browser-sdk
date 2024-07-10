@@ -8,17 +8,7 @@ import {
   relativeNow,
   ResourceType,
 } from '@datadog/browser-core'
-import type {
-  RumFirstInputTiming,
-  RumLargestContentfulPaintTiming,
-  RumLayoutShiftTiming,
-  RumPerformanceEventTiming,
-  RumPerformanceLongTaskTiming,
-  RumPerformanceNavigationTiming,
-  RumPerformancePaintTiming,
-  RumPerformanceResourceTiming,
-} from '../src/browser/performanceCollection'
-import { RumPerformanceEntryType } from '../src/browser/performanceCollection'
+import { RumPerformanceEntryType, type EntryTypeToReturnType } from '../src/browser/performanceObservable'
 import type { RawRumEvent } from '../src/rawRumEvent.types'
 import { VitalType, ActionType, RumEventType, ViewLoadingType } from '../src/rawRumEvent.types'
 
@@ -48,9 +38,7 @@ export function createRawRumEvent(type: RumEventType, overrides?: Context): RawR
             id: generateUUID(),
             type: VitalType.DURATION,
             name: 'timing',
-            custom: {
-              timing: 0 as ServerDuration,
-            },
+            duration: 0 as ServerDuration,
           },
         },
         overrides
@@ -133,17 +121,6 @@ export function createRawRumEvent(type: RumEventType, overrides?: Context): RawR
         overrides
       )
   }
-}
-
-type EntryTypeToReturnType = {
-  [RumPerformanceEntryType.EVENT]: RumPerformanceEventTiming
-  [RumPerformanceEntryType.FIRST_INPUT]: RumFirstInputTiming
-  [RumPerformanceEntryType.LARGEST_CONTENTFUL_PAINT]: RumLargestContentfulPaintTiming
-  [RumPerformanceEntryType.LAYOUT_SHIFT]: RumLayoutShiftTiming
-  [RumPerformanceEntryType.PAINT]: RumPerformancePaintTiming
-  [RumPerformanceEntryType.LONG_TASK]: RumPerformanceLongTaskTiming
-  [RumPerformanceEntryType.NAVIGATION]: RumPerformanceNavigationTiming
-  [RumPerformanceEntryType.RESOURCE]: RumPerformanceResourceTiming
 }
 
 export function createPerformanceEntry<T extends RumPerformanceEntryType>(
