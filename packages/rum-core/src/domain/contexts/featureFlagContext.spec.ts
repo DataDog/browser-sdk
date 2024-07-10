@@ -1,6 +1,6 @@
 import type { CustomerDataTracker, RelativeTime } from '@datadog/browser-core'
-import { relativeToClocks, createCustomerDataTracker, noop, } from '@datadog/browser-core'
-import type { Clock} from '@datadog/browser-core/test';
+import { relativeToClocks, createCustomerDataTracker, noop } from '@datadog/browser-core'
+import type { Clock } from '@datadog/browser-core/test'
 import { mockClock } from '@datadog/browser-core/test'
 import { LifeCycle, LifeCycleEventType } from '../lifeCycle'
 import type { ViewCreatedEvent, ViewEndedEvent } from '../view/trackViews'

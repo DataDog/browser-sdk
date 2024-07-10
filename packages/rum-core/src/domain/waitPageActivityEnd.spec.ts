@@ -1,12 +1,11 @@
 import type { RelativeTime, Subscription } from '@datadog/browser-core'
 import { Observable, ONE_SECOND, getTimeStamp } from '@datadog/browser-core'
 import type { Clock } from '@datadog/browser-core/test'
-import { mockClock } from '@datadog/browser-core/test'
-import type { TestSetupBuilder } from '../../test'
-import { createPerformanceEntry, mockPerformanceObserver, setup } from '../../test'
+import { mockClock, SPEC_ENDPOINTS } from '@datadog/browser-core/test'
+import { createPerformanceEntry, mockPerformanceObserver } from '../../test'
 import type { RumPerformanceEntry } from '../browser/performanceObservable'
 import { RumPerformanceEntryType } from '../browser/performanceObservable'
-import { LifeCycleEventType } from './lifeCycle'
+import { LifeCycle, LifeCycleEventType } from './lifeCycle'
 import type { RequestCompleteEvent, RequestStartEvent } from './requestCollection'
 import type { PageActivityEvent, PageActivityEndEvent } from './waitPageActivityEnd'
 import {
@@ -15,6 +14,8 @@ import {
   doWaitPageActivityEnd,
   createPageActivityObservable,
 } from './waitPageActivityEnd'
+import type { RumConfiguration } from './configuration'
+import { validateAndBuildRumConfiguration } from './configuration'
 
 // Used to wait some time after the creation of an action
 const BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY = PAGE_ACTIVITY_VALIDATION_DELAY * 0.8
@@ -41,38 +42,56 @@ function eventsCollector<T>() {
   }
 }
 
+const RUM_CONFIGURATION: RumConfiguration = {
+  ...validateAndBuildRumConfiguration({
+    clientToken: 'xxx',
+    applicationId: 'AppId',
+    trackResources: true,
+    trackLongTasks: true,
+  })!,
+  ...SPEC_ENDPOINTS,
+}
+
 describe('createPageActivityObservable', () => {
   const { events, pushEvent } = eventsCollector<PageActivityEvent>()
 
-  let setupBuilder: TestSetupBuilder
+  const lifeCycle = new LifeCycle()
+  const domMutationObservable = new Observable<void>()
   let pageActivitySubscription: Subscription
   let notifyPerformanceEntries: (entries: RumPerformanceEntry[]) => void
 
+  function startListeningToPageActivities(
+    extraConfiguration: Partial<RumConfiguration> = { excludedActivityUrls: [EXCLUDED_FAKE_URL] }
+  ) {
+    pageActivitySubscription?.unsubscribe()
+    const pageActivityObservable = createPageActivityObservable(lifeCycle, domMutationObservable, {
+      ...RUM_CONFIGURATION,
+      ...extraConfiguration,
+    })
+    pageActivitySubscription = pageActivityObservable.subscribe(pushEvent)
+  }
+
   beforeEach(() => {
     ;({ notifyPerformanceEntries } = mockPerformanceObserver())
-    setupBuilder = setup()
-      .withConfiguration({ excludedActivityUrls: [EXCLUDED_FAKE_URL] })
-      .beforeBuild(({ lifeCycle, domMutationObservable, configuration }) => {
-        const pageActivityObservable = createPageActivityObservable(lifeCycle, domMutationObservable, configuration)
-        pageActivitySubscription = pageActivityObservable.subscribe(pushEvent)
-      })
+    startListeningToPageActivities()
+  })
+
+  afterEach(() => {
+    pageActivitySubscription?.unsubscribe()
   })
 
   it('emits an activity event on dom mutation', () => {
-    const { domMutationObservable } = setupBuilder.build()
     domMutationObservable.notify()
     expect(events).toEqual([{ isBusy: false }])
   })
 
   it('emits an activity event on resource collected', () => {
-    setupBuilder.build()
     notifyPerformanceEntries([createPerformanceEntry(RumPerformanceEntryType.RESOURCE)])
 
     expect(events).toEqual([{ isBusy: false }])
   })
 
   it('does not emit an activity event when a navigation occurs', () => {
-    const { lifeCycle } = setupBuilder.build()
     lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [
       createPerformanceEntry(RumPerformanceEntryType.NAVIGATION),
     ])
@@ -81,13 +100,12 @@ describe('createPageActivityObservable', () => {
 
   it('emits an activity event when `window.open` is used', () => {
     spyOn(window, 'open')
-    setupBuilder.build()
+    startListeningToPageActivities()
     window.open('toto')
     expect(events).toEqual([{ isBusy: false }])
   })
 
   it('stops emitting activities after calling stop()', () => {
-    const { domMutationObservable } = setupBuilder.build()
     domMutationObservable.notify()
     expect(events).toEqual([{ isBusy: false }])
 
@@ -101,26 +119,22 @@ describe('createPageActivityObservable', () => {
 
   describe('programmatic requests', () => {
     it('emits an activity event when a request starts', () => {
-      const { lifeCycle } = setupBuilder.build()
       lifeCycle.notify(LifeCycleEventType.REQUEST_STARTED, makeFakeRequestStartEvent(10))
       expect(events).toEqual([{ isBusy: true }])
     })
 
     it('emits an activity event when a request completes', () => {
-      const { lifeCycle } = setupBuilder.build()
       lifeCycle.notify(LifeCycleEventType.REQUEST_STARTED, makeFakeRequestStartEvent(10))
       lifeCycle.notify(LifeCycleEventType.REQUEST_COMPLETED, makeFakeRequestCompleteEvent(10))
       expect(events).toEqual([{ isBusy: true }, { isBusy: false }])
     })
 
     it('ignores requests that has started before', () => {
-      const { lifeCycle } = setupBuilder.build()
       lifeCycle.notify(LifeCycleEventType.REQUEST_COMPLETED, makeFakeRequestCompleteEvent(10))
       expect(events).toEqual([])
     })
 
     it('keeps emitting busy events while all requests are not completed', () => {
-      const { lifeCycle } = setupBuilder.build()
       lifeCycle.notify(LifeCycleEventType.REQUEST_STARTED, makeFakeRequestStartEvent(10))
       lifeCycle.notify(LifeCycleEventType.REQUEST_STARTED, makeFakeRequestStartEvent(11))
       lifeCycle.notify(LifeCycleEventType.REQUEST_COMPLETED, makeFakeRequestCompleteEvent(9))
@@ -131,15 +145,13 @@ describe('createPageActivityObservable', () => {
 
     describe('excludedActivityUrls', () => {
       it('ignores resources that should be excluded by configuration', () => {
-        setupBuilder
-          .withConfiguration({
-            excludedActivityUrls: [
-              /^https?:\/\/qux\.com.*/,
-              'http://bar.com',
-              (url: string) => url === 'http://dynamic.com',
-            ],
-          })
-          .build()
+        startListeningToPageActivities({
+          excludedActivityUrls: [
+            /^https?:\/\/qux\.com.*/,
+            'http://bar.com',
+            (url: string) => url === 'http://dynamic.com',
+          ],
+        })
 
         notifyPerformanceEntries([
           createPerformanceEntry(RumPerformanceEntryType.RESOURCE, { name: 'http://qux.com' }),
@@ -151,14 +163,12 @@ describe('createPageActivityObservable', () => {
       })
 
       it('ignores requests that should be excluded by configuration', () => {
-        const { lifeCycle } = setupBuilder.build()
         lifeCycle.notify(LifeCycleEventType.REQUEST_STARTED, makeFakeRequestStartEvent(10, EXCLUDED_FAKE_URL))
         lifeCycle.notify(LifeCycleEventType.REQUEST_COMPLETED, makeFakeRequestCompleteEvent(10, EXCLUDED_FAKE_URL))
         expect(events).toEqual([])
       })
 
       it("ignored requests don't interfere with pending requests count", () => {
-        const { lifeCycle } = setupBuilder.build()
         lifeCycle.notify(LifeCycleEventType.REQUEST_STARTED, makeFakeRequestStartEvent(9))
         lifeCycle.notify(LifeCycleEventType.REQUEST_STARTED, makeFakeRequestStartEvent(10, EXCLUDED_FAKE_URL))
         lifeCycle.notify(LifeCycleEventType.REQUEST_COMPLETED, makeFakeRequestCompleteEvent(10, EXCLUDED_FAKE_URL))
