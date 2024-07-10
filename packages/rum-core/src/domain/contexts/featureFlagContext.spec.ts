@@ -1,38 +1,35 @@
 import type { CustomerDataTracker, RelativeTime } from '@datadog/browser-core'
-import { relativeToClocks, createCustomerDataTracker, noop } from '@datadog/browser-core'
-import type { TestSetupBuilder } from '../../../test'
-import { setup } from '../../../test'
-import { LifeCycleEventType } from '../lifeCycle'
+import { relativeToClocks, createCustomerDataTracker, noop, } from '@datadog/browser-core'
+import type { Clock} from '@datadog/browser-core/test';
+import { mockClock } from '@datadog/browser-core/test'
+import { LifeCycle, LifeCycleEventType } from '../lifeCycle'
 import type { ViewCreatedEvent, ViewEndedEvent } from '../view/trackViews'
 import type { FeatureFlagContexts } from './featureFlagContext'
 import { startFeatureFlagContexts } from './featureFlagContext'
 
 describe('featureFlagContexts', () => {
-  let setupBuilder: TestSetupBuilder
+  const lifeCycle = new LifeCycle()
+  let clock: Clock
   let customerDataTracker: CustomerDataTracker
   let featureFlagContexts: FeatureFlagContexts
 
   beforeEach(() => {
-    setupBuilder = setup().beforeBuild(({ lifeCycle }) => {
-      customerDataTracker = createCustomerDataTracker(noop)
-      featureFlagContexts = startFeatureFlagContexts(lifeCycle, customerDataTracker)
-    })
+    clock = mockClock()
+    customerDataTracker = createCustomerDataTracker(noop)
+    featureFlagContexts = startFeatureFlagContexts(lifeCycle, customerDataTracker)
   })
 
   afterEach(() => {
+    clock.cleanup()
     featureFlagContexts.stop()
   })
 
   it('should return undefined before the initial view', () => {
-    setupBuilder.build()
-
     expect(featureFlagContexts.findFeatureFlagEvaluations()).toBeUndefined()
   })
 
   describe('addFeatureFlagEvaluation', () => {
     it('should add feature flag evaluations of any type', () => {
-      const { lifeCycle } = setupBuilder.build()
-
       lifeCycle.notify(LifeCycleEventType.BEFORE_VIEW_CREATED, {
         startClocks: relativeToClocks(0 as RelativeTime),
       } as ViewCreatedEvent)
@@ -53,8 +50,6 @@ describe('featureFlagContexts', () => {
     })
 
     it('should replace existing feature flag evaluation to the current context', () => {
-      const { lifeCycle } = setupBuilder.build()
-
       lifeCycle.notify(LifeCycleEventType.BEFORE_VIEW_CREATED, {
         startClocks: relativeToClocks(0 as RelativeTime),
       } as ViewCreatedEvent)
@@ -69,8 +64,6 @@ describe('featureFlagContexts', () => {
     })
 
     it('should notify the customer data tracker on feature flag evaluation', () => {
-      const { lifeCycle } = setupBuilder.build()
-
       const updateCustomerDataSpy = spyOn(customerDataTracker, 'updateCustomerData')
 
       lifeCycle.notify(LifeCycleEventType.BEFORE_VIEW_CREATED, {
@@ -89,14 +82,10 @@ describe('featureFlagContexts', () => {
      * (which seems unlikely) and this event would anyway be rejected by lack of view id
      */
     it('should return undefined when no current view', () => {
-      setupBuilder.build()
-
       expect(featureFlagContexts.findFeatureFlagEvaluations()).toBeUndefined()
     })
 
     it('should clear feature flag context on new view', () => {
-      const { lifeCycle } = setupBuilder.build()
-
       lifeCycle.notify(LifeCycleEventType.BEFORE_VIEW_CREATED, {
         startClocks: relativeToClocks(0 as RelativeTime),
       } as ViewCreatedEvent)
@@ -113,8 +102,6 @@ describe('featureFlagContexts', () => {
     })
 
     it('should return the feature flag context corresponding to the start time', () => {
-      const { lifeCycle, clock } = setupBuilder.withFakeClock().build()
-
       lifeCycle.notify(LifeCycleEventType.BEFORE_VIEW_CREATED, {
         startClocks: relativeToClocks(0 as RelativeTime),
       } as ViewCreatedEvent)
