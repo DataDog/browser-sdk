@@ -44,7 +44,6 @@ describe('startFullSnapshots', () => {
   })
 
   it('takes a full snapshot when startFullSnapshots is called', () => {
-    expect(fullSnapshotPendingCallback).toHaveBeenCalledTimes(1)
     expect(fullSnapshotReadyCallback).toHaveBeenCalledTimes(1)
   })
 
@@ -57,7 +56,7 @@ describe('startFullSnapshots', () => {
 
     triggerIdleCallbacks()
 
-    expect(fullSnapshotPendingCallback).toHaveBeenCalledTimes(2)
+    expect(fullSnapshotPendingCallback).toHaveBeenCalledTimes(1)
     expect(fullSnapshotReadyCallback).toHaveBeenCalledTimes(2)
   })
 

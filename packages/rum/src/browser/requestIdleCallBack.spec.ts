@@ -49,7 +49,7 @@ describe('startFullSnapshots', () => {
     } as Partial<ViewCreatedEvent> as any)
     triggerIdleCallbacks()
 
-    expect(fullSnapshotPendingCallback).toHaveBeenCalledTimes(2)
+    expect(fullSnapshotPendingCallback).toHaveBeenCalledTimes(1)
     expect(fullSnapshotReadyCallback).toHaveBeenCalledTimes(2)
   })
 })

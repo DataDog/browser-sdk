@@ -67,7 +67,6 @@ export function startFullSnapshots(
     return records
   }
 
-  fullSnapshotPendingCallback()
   fullSnapshotReadyCallback(takeFullSnapshot())
 
   let cancelIdleCallback: (() => void) | undefined
@@ -75,7 +74,6 @@ export function startFullSnapshots(
     flushMutations()
     function takeSubsequentFullSnapshot() {
       flushMutations()
-      fullSnapshotPendingCallback()
       fullSnapshotReadyCallback(
         takeFullSnapshot(view.startClocks.timeStamp, {
           shadowRootsController,
@@ -89,7 +87,7 @@ export function startFullSnapshots(
       if (cancelIdleCallback) {
         cancelIdleCallback()
       }
-
+      fullSnapshotPendingCallback()
       cancelIdleCallback = requestIdleCallback(takeSubsequentFullSnapshot)
     } else {
       takeSubsequentFullSnapshot()

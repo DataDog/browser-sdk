@@ -422,6 +422,23 @@ describe('record', () => {
     })
   })
 
+  describe('it should not record when full snapshot is pending', () => {
+    it('ignores any record while a full snapshot is pending', () => {
+      lifeCycle = new LifeCycle()
+      recordApi = record({
+        emit: emitSpy,
+        configuration: { defaultPrivacyLevel: DefaultPrivacyLevel.ALLOW } as RumConfiguration,
+        lifeCycle,
+        viewContexts: {
+          findView: () => ({ id: FAKE_VIEW_ID, startClocks: {} }),
+        } as any,
+        defineSnapshotPending: true,
+      })
+      const records = getEmittedRecords()
+      expect(records.length).toBe(0)
+    })
+  })
+
   function startRecording() {
     lifeCycle = new LifeCycle()
     recordApi = record({
