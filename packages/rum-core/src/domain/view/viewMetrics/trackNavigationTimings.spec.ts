@@ -8,10 +8,16 @@ import { trackNavigationTimings } from './trackNavigationTimings'
 describe('trackNavigationTimings', () => {
   const lifeCycle = new LifeCycle()
   let navigationTimingsCallback: jasmine.Spy<(timings: NavigationTimings) => void>
+  let cleanup: () => void
 
   beforeEach(() => {
     navigationTimingsCallback = jasmine.createSpy()
-    trackNavigationTimings(lifeCycle, navigationTimingsCallback)
+    const result = trackNavigationTimings(lifeCycle, navigationTimingsCallback)
+    cleanup = result.stop
+  })
+
+  afterEach(() => {
+    cleanup()
   })
 
   it('should provide navigation timing', () => {
