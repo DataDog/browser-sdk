@@ -30,10 +30,10 @@ export function startViewContexts(lifeCycle: LifeCycle): ViewContexts {
     viewContextHistory.closeActive(endClocks.relative)
   })
 
-  lifeCycle.subscribe(LifeCycleEventType.VIEW_UPDATED, (data: ViewEvent) => {
-    const currentView = viewContextHistory.find()
-    if (currentView && data.name) {
-      currentView.name = data.name
+  lifeCycle.subscribe(LifeCycleEventType.VIEW_UPDATED, (viewUpdate: ViewEvent) => {
+    const currentView = viewContextHistory.find(viewUpdate.startClocks.relative)
+    if (currentView && viewUpdate.name) {
+      currentView.name = viewUpdate.name
     }
   })
 

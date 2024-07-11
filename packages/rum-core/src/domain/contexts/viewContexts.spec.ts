@@ -1,64 +1,15 @@
-import type { RelativeTime, Duration, TimeStamp } from '@datadog/browser-core'
+import type { RelativeTime } from '@datadog/browser-core'
 import { relativeToClocks, CLEAR_OLD_VALUES_INTERVAL } from '@datadog/browser-core'
 import type { TestSetupBuilder } from '../../../test'
 import { setup } from '../../../test'
 import { LifeCycleEventType } from '../lifeCycle'
 import type { ViewCreatedEvent, ViewEvent } from '../view/trackViews'
-import { ViewLoadingType } from '../../rawRumEvent.types'
 import type { ViewContexts } from './viewContexts'
 import { startViewContexts, VIEW_CONTEXT_TIME_OUT_DELAY } from './viewContexts'
 
 describe('viewContexts', () => {
   const FAKE_ID = 'fake'
   const startClocks = relativeToClocks(10 as RelativeTime)
-  const VIEW: ViewEvent = {
-    customTimings: {
-      bar: 20 as Duration,
-      foo: 10 as Duration,
-    },
-    documentVersion: 3,
-    duration: 100 as Duration,
-    eventCounts: {
-      errorCount: 10,
-      longTaskCount: 10,
-      resourceCount: 10,
-      actionCount: 10,
-      frustrationCount: 10,
-    },
-    id: 'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee',
-    name: 'Fake Name',
-    isActive: false,
-    loadingType: ViewLoadingType.INITIAL_LOAD,
-    location: {} as Location,
-    startClocks: { relative: 1234 as RelativeTime, timeStamp: 123456789 as TimeStamp },
-    initialViewMetrics: {
-      navigationTimings: {
-        firstByte: 10 as Duration,
-        domComplete: 10 as Duration,
-        domContentLoaded: 10 as Duration,
-        domInteractive: 10 as Duration,
-        loadEvent: 10 as Duration,
-      },
-      firstInput: {
-        delay: 12 as Duration,
-        time: 10 as RelativeTime,
-      },
-      firstContentfulPaint: 10 as Duration,
-      largestContentfulPaint: { value: 10 as RelativeTime },
-    },
-    commonViewMetrics: {
-      loadingTime: 20 as Duration,
-      cumulativeLayoutShift: { value: 1, time: 100 as Duration },
-      interactionToNextPaint: { value: 10 as Duration, time: 100 as Duration },
-      scroll: {
-        maxDepth: 2000,
-        maxScrollHeight: 3000,
-        maxScrollHeightTime: 4000000000 as Duration,
-        maxDepthScrollTop: 1000,
-      },
-    },
-    sessionIsActive: true,
-  }
 
   function buildViewCreatedEvent(partialViewCreatedEvent: Partial<ViewCreatedEvent> = {}): ViewCreatedEvent {
     return {
@@ -157,17 +108,11 @@ describe('viewContexts', () => {
 
     it('should update the view name for the current context', () => {
       const { lifeCycle } = setupBuilder.build()
-      lifeCycle.notify(
-        LifeCycleEventType.BEFORE_VIEW_CREATED,
-        buildViewCreatedEvent({
-          id: '0',
-          name: 'foo',
-          startClocks: relativeToClocks(10 as RelativeTime),
-          service: 'test',
-          version: '1',
-        })
-      )
-      lifeCycle.notify(LifeCycleEventType.VIEW_UPDATED, VIEW)
+      lifeCycle.notify(LifeCycleEventType.BEFORE_VIEW_CREATED, buildViewCreatedEvent({ name: 'foo' }))
+      lifeCycle.notify(LifeCycleEventType.VIEW_UPDATED, {
+        startClocks,
+        name: 'Fake Name',
+      } as ViewEvent)
       expect(viewContexts.findView()!.name).toBe('Fake Name')
     })
   })
