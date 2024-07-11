@@ -1,36 +1,34 @@
 import type { Duration, RelativeTime } from '@datadog/browser-core'
 import { RumPerformanceEntryType } from '../../../browser/performanceObservable'
-import type { TestSetupBuilder } from '../../../../test'
-import { createPerformanceEntry, setup } from '../../../../test'
-import { LifeCycleEventType } from '../../lifeCycle'
+import { createPerformanceEntry } from '../../../../test'
+import { LifeCycle, LifeCycleEventType } from '../../lifeCycle'
 import type { RumConfiguration } from '../../configuration'
 import { trackInitialViewMetrics } from './trackInitialViewMetrics'
 
 describe('trackInitialViewMetrics', () => {
-  let setupBuilder: TestSetupBuilder
+  const lifeCycle = new LifeCycle()
   let scheduleViewUpdateSpy: jasmine.Spy<() => void>
   let trackInitialViewMetricsResult: ReturnType<typeof trackInitialViewMetrics>
   let setLoadEventSpy: jasmine.Spy<(loadEvent: Duration) => void>
-  let configuration: RumConfiguration
 
   beforeEach(() => {
-    configuration = {} as RumConfiguration
+    const configuration = {} as RumConfiguration
     scheduleViewUpdateSpy = jasmine.createSpy()
     setLoadEventSpy = jasmine.createSpy()
 
-    setupBuilder = setup().beforeBuild(({ lifeCycle }) => {
-      trackInitialViewMetricsResult = trackInitialViewMetrics(
-        lifeCycle,
-        configuration,
-        setLoadEventSpy,
-        scheduleViewUpdateSpy
-      )
-      return trackInitialViewMetricsResult
-    })
+    trackInitialViewMetricsResult = trackInitialViewMetrics(
+      lifeCycle,
+      configuration,
+      setLoadEventSpy,
+      scheduleViewUpdateSpy
+    )
+  })
+
+  afterEach(() => {
+    trackInitialViewMetricsResult.stop()
   })
 
   it('should merge metrics from various sources', () => {
-    const { lifeCycle } = setupBuilder.build()
     lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [
       createPerformanceEntry(RumPerformanceEntryType.NAVIGATION),
       createPerformanceEntry(RumPerformanceEntryType.PAINT),
@@ -56,8 +54,6 @@ describe('trackInitialViewMetrics', () => {
   })
 
   it('calls the `setLoadEvent` callback when the loadEvent timing is known', () => {
-    const { lifeCycle } = setupBuilder.build()
-
     lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [
       createPerformanceEntry(RumPerformanceEntryType.NAVIGATION),
       createPerformanceEntry(RumPerformanceEntryType.PAINT),
