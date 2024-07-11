@@ -20,7 +20,6 @@ describe('featureFlagContexts', () => {
   })
 
   afterEach(() => {
-    clock.cleanup()
     featureFlagContexts.stop()
   })
 
