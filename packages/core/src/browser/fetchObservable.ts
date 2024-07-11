@@ -96,10 +96,17 @@ function afterSend(
   responsePromise: Promise<Response>,
   startContext: FetchStartContext
 ) {
-  const reportFetch = (response: Response | Error) => {
+  const reportFetch = (response: Response | Error, isRejected: boolean = false) => {
     const context = startContext as unknown as FetchResolveContext
     context.state = 'resolve'
-    if ('stack' in response || response instanceof Error) {
+
+    // When fetch is instrumented to return something else than a Response | Error
+    if (typeof response !== 'object') {
+      if (isRejected) {
+        context.status = 0
+        context.error = response
+      }
+    } else if ('stack' in response || response instanceof Error) {
       context.status = 0
       context.isAborted = response instanceof DOMException && response.code === DOMException.ABORT_ERR
       context.error = response
@@ -112,5 +119,8 @@ function afterSend(
     observable.notify(context)
   }
 
-  responsePromise.then(monitor(reportFetch), monitor(reportFetch))
+  responsePromise.then(
+    monitor((response) => reportFetch(response)),
+    monitor((error) => reportFetch(error, true))
+  )
 }
