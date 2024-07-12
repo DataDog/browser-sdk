@@ -19,7 +19,6 @@ describe('report observable', () => {
   })
 
   afterEach(() => {
-    reportingObserver.reset()
     consoleSubscription.unsubscribe()
   })
   ;[RawReportType.deprecation, RawReportType.intervention].forEach((type) => {

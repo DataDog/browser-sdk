@@ -1,11 +1,7 @@
-import { cleanupSyntheticsWorkerValues, mockSyntheticsWorkerValues } from '../../../../core/test'
+import { mockSyntheticsWorkerValues } from '../../../../core/test'
 import { getSyntheticsContext } from './syntheticsContext'
 
 describe('getSyntheticsContext', () => {
-  afterEach(() => {
-    cleanupSyntheticsWorkerValues()
-  })
-
   it('sets the synthetics context defined by global variables', () => {
     mockSyntheticsWorkerValues({ publicId: 'foo', resultId: 'bar' }, 'globals')
 

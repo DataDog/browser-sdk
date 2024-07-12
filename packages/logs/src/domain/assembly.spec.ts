@@ -415,9 +415,9 @@ describe('logs limitation', () => {
   })
 
   afterEach(() => {
-    clock.cleanup()
     serverLogs = []
   })
+
   it('should not apply to agent logs', () => {
     lifeCycle.notify(LifeCycleEventType.RAW_LOG_COLLECTED, {
       rawLogsEvent: { ...DEFAULT_MESSAGE, origin: ErrorSource.AGENT, status: 'error', message: 'foo' },

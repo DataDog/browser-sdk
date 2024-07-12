@@ -27,15 +27,15 @@ describe('logs session manager', () => {
   let clock: Clock
 
   beforeEach(() => {
-    clock = mockClock()
+    clock = mockClock(() => {
+      // flush pending callbacks to avoid random failures
+      clock.tick(new Date().getTime())
+    })
   })
 
   afterEach(() => {
     // remove intervals first
     stopSessionManager()
-    // flush pending callbacks to avoid random failures
-    clock.tick(new Date().getTime())
-    clock.cleanup()
   })
 
   it('when tracked should store tracking type and session id', () => {

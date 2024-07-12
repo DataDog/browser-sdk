@@ -1,4 +1,5 @@
-import { mockClock, type Clock, mockEventBridge } from '@datadog/browser-core/test'
+import { mockClock, mockEventBridge } from '@datadog/browser-core/test'
+import type { Clock } from '@datadog/browser-core/test'
 import type { TimeStamp, TrackingConsentState } from '@datadog/browser-core'
 import {
   ONE_SECOND,
@@ -45,7 +46,6 @@ describe('preStartLogs', () => {
 
   afterEach(() => {
     resetFetchObservable()
-    clock.cleanup()
   })
 
   describe('configuration validation', () => {
