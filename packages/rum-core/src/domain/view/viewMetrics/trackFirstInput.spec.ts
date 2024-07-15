@@ -1,5 +1,5 @@
 import { type Duration, type RelativeTime, resetExperimentalFeatures } from '@datadog/browser-core'
-import { setPageVisibility } from '@datadog/browser-core/test'
+import { registerCleanupTask, setPageVisibility } from '@datadog/browser-core/test'
 import { appendElement, appendText, createPerformanceEntry } from '../../../../test'
 import { LifeCycle, LifeCycleEventType } from '../../lifeCycle'
 import type { RumConfiguration } from '../../configuration'
@@ -12,31 +12,23 @@ describe('firstInputTimings', () => {
   const lifeCycle = new LifeCycle()
   let fitCallback: jasmine.Spy<(firstInput: FirstInput) => void>
   let configuration: RumConfiguration
-  let cleanup: () => void
 
   function startFirstInputTracking() {
-    const firstHidden = trackFirstHidden(configuration)
-    const firstInputTimings = trackFirstInput(lifeCycle, configuration, firstHidden, fitCallback)
-
-    cleanup = () => {
-      firstHidden.stop()
-      firstInputTimings.stop()
-    }
-  }
-
-  beforeEach(() => {
     configuration = {} as RumConfiguration
     fitCallback = jasmine.createSpy()
 
-    startFirstInputTracking()
-  })
+    const firstHidden = trackFirstHidden(configuration)
+    const firstInputTimings = trackFirstInput(lifeCycle, configuration, firstHidden, fitCallback)
 
-  afterEach(() => {
-    cleanup()
-    resetExperimentalFeatures()
-  })
+    registerCleanupTask(() => {
+      firstHidden.stop()
+      firstInputTimings.stop()
+      resetExperimentalFeatures()
+    })
+  }
 
   it('should provide the first input timings', () => {
+    startFirstInputTracking()
     lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [
       createPerformanceEntry(RumPerformanceEntryType.FIRST_INPUT),
     ])
@@ -49,6 +41,7 @@ describe('firstInputTimings', () => {
   })
 
   it('should provide the first input target selector', () => {
+    startFirstInputTracking()
     lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [
       createPerformanceEntry(RumPerformanceEntryType.FIRST_INPUT, {
         target: appendElement('<button id="fid-target-element"></button>'),
@@ -63,6 +56,7 @@ describe('firstInputTimings', () => {
   })
 
   it("should not provide the first input target if it's not a DOM element", () => {
+    startFirstInputTracking()
     lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [
       createPerformanceEntry(RumPerformanceEntryType.FIRST_INPUT, {
         target: appendText('text'),
@@ -77,9 +71,6 @@ describe('firstInputTimings', () => {
   })
 
   it('should be discarded if the page is hidden', () => {
-    // stop the current tracking from beforeEach
-    cleanup()
-
     setPageVisibility('hidden')
     startFirstInputTracking()
 
@@ -91,6 +82,7 @@ describe('firstInputTimings', () => {
   })
 
   it('should be adjusted to 0 if the computed value would be negative due to browser timings imprecisions', () => {
+    startFirstInputTracking()
     lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [
       createPerformanceEntry(RumPerformanceEntryType.FIRST_INPUT, {
         processingStart: 900 as RelativeTime,

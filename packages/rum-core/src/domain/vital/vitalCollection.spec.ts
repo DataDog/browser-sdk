@@ -1,6 +1,7 @@
-import type { Duration, Subscription } from '@datadog/browser-core'
-import { mockClock, type Clock } from '@datadog/browser-core/test'
+import type { Duration } from '@datadog/browser-core'
+import { mockClock, registerCleanupTask, type Clock } from '@datadog/browser-core/test'
 import { clocksNow } from '@datadog/browser-core'
+import { validateRumEventFormat } from '../../../test'
 import type { RawRumEvent, RawRumVitalEvent } from '../../rawRumEvent.types'
 import { VitalType, RumEventType } from '../../rawRumEvent.types'
 import type { RawRumEventCollectedData } from '../lifeCycle'
@@ -22,20 +23,20 @@ describe('vitalCollection', () => {
   let clock: Clock
   let vitalCollection: ReturnType<typeof startVitalCollection>
   let wasInPageStateDuringPeriodSpy: jasmine.Spy<jasmine.Func>
-  let eventsSubscription: Subscription
 
   beforeEach(() => {
     clock = mockClock()
     wasInPageStateDuringPeriodSpy = spyOn(pageStateHistory, 'wasInPageStateDuringPeriod')
     vitalCollection = startVitalCollection(lifeCycle, pageStateHistory)
-    eventsSubscription = lifeCycle.subscribe(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, (data) => {
+    const eventsSubscription = lifeCycle.subscribe(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, (data) => {
       rawRumEvents.push(data)
+      validateRumEventFormat(data.rawRumEvent)
     })
-  })
 
-  afterEach(() => {
-    eventsSubscription.unsubscribe()
-    rawRumEvents = []
+    registerCleanupTask(() => {
+      eventsSubscription.unsubscribe()
+      rawRumEvents = []
+    })
   })
 
   describe('custom duration', () => {

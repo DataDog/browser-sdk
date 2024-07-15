@@ -1,4 +1,5 @@
 import type { Duration, RelativeTime } from '@datadog/browser-core'
+import { registerCleanupTask } from '@datadog/browser-core/test'
 import { RumPerformanceEntryType } from '../../../browser/performanceObservable'
 import { createPerformanceEntry } from '../../../../test'
 import { LifeCycle, LifeCycleEventType } from '../../lifeCycle'
@@ -22,10 +23,8 @@ describe('trackInitialViewMetrics', () => {
       setLoadEventSpy,
       scheduleViewUpdateSpy
     )
-  })
 
-  afterEach(() => {
-    trackInitialViewMetricsResult.stop()
+    registerCleanupTask(trackInitialViewMetricsResult.stop)
   })
 
   it('should merge metrics from various sources', () => {

@@ -63,7 +63,6 @@ describe('createPageActivityObservable', () => {
   function startListeningToPageActivities(
     extraConfiguration: Partial<RumConfiguration> = { excludedActivityUrls: [EXCLUDED_FAKE_URL] }
   ) {
-    pageActivitySubscription?.unsubscribe()
     const pageActivityObservable = createPageActivityObservable(lifeCycle, domMutationObservable, {
       ...RUM_CONFIGURATION,
       ...extraConfiguration,
@@ -73,25 +72,27 @@ describe('createPageActivityObservable', () => {
 
   beforeEach(() => {
     ;({ notifyPerformanceEntries } = mockPerformanceObserver())
-    startListeningToPageActivities()
   })
 
   afterEach(() => {
-    pageActivitySubscription?.unsubscribe()
+    pageActivitySubscription.unsubscribe()
   })
 
   it('emits an activity event on dom mutation', () => {
+    startListeningToPageActivities()
     domMutationObservable.notify()
     expect(events).toEqual([{ isBusy: false }])
   })
 
   it('emits an activity event on resource collected', () => {
+    startListeningToPageActivities()
     notifyPerformanceEntries([createPerformanceEntry(RumPerformanceEntryType.RESOURCE)])
 
     expect(events).toEqual([{ isBusy: false }])
   })
 
   it('does not emit an activity event when a navigation occurs', () => {
+    startListeningToPageActivities()
     lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [
       createPerformanceEntry(RumPerformanceEntryType.NAVIGATION),
     ])
@@ -106,6 +107,7 @@ describe('createPageActivityObservable', () => {
   })
 
   it('stops emitting activities after calling stop()', () => {
+    startListeningToPageActivities()
     domMutationObservable.notify()
     expect(events).toEqual([{ isBusy: false }])
 
@@ -119,22 +121,26 @@ describe('createPageActivityObservable', () => {
 
   describe('programmatic requests', () => {
     it('emits an activity event when a request starts', () => {
+      startListeningToPageActivities()
       lifeCycle.notify(LifeCycleEventType.REQUEST_STARTED, makeFakeRequestStartEvent(10))
       expect(events).toEqual([{ isBusy: true }])
     })
 
     it('emits an activity event when a request completes', () => {
+      startListeningToPageActivities()
       lifeCycle.notify(LifeCycleEventType.REQUEST_STARTED, makeFakeRequestStartEvent(10))
       lifeCycle.notify(LifeCycleEventType.REQUEST_COMPLETED, makeFakeRequestCompleteEvent(10))
       expect(events).toEqual([{ isBusy: true }, { isBusy: false }])
     })
 
     it('ignores requests that has started before', () => {
+      startListeningToPageActivities()
       lifeCycle.notify(LifeCycleEventType.REQUEST_COMPLETED, makeFakeRequestCompleteEvent(10))
       expect(events).toEqual([])
     })
 
     it('keeps emitting busy events while all requests are not completed', () => {
+      startListeningToPageActivities()
       lifeCycle.notify(LifeCycleEventType.REQUEST_STARTED, makeFakeRequestStartEvent(10))
       lifeCycle.notify(LifeCycleEventType.REQUEST_STARTED, makeFakeRequestStartEvent(11))
       lifeCycle.notify(LifeCycleEventType.REQUEST_COMPLETED, makeFakeRequestCompleteEvent(9))
@@ -163,12 +169,14 @@ describe('createPageActivityObservable', () => {
       })
 
       it('ignores requests that should be excluded by configuration', () => {
+        startListeningToPageActivities()
         lifeCycle.notify(LifeCycleEventType.REQUEST_STARTED, makeFakeRequestStartEvent(10, EXCLUDED_FAKE_URL))
         lifeCycle.notify(LifeCycleEventType.REQUEST_COMPLETED, makeFakeRequestCompleteEvent(10, EXCLUDED_FAKE_URL))
         expect(events).toEqual([])
       })
 
       it("ignored requests don't interfere with pending requests count", () => {
+        startListeningToPageActivities()
         lifeCycle.notify(LifeCycleEventType.REQUEST_STARTED, makeFakeRequestStartEvent(9))
         lifeCycle.notify(LifeCycleEventType.REQUEST_STARTED, makeFakeRequestStartEvent(10, EXCLUDED_FAKE_URL))
         lifeCycle.notify(LifeCycleEventType.REQUEST_COMPLETED, makeFakeRequestCompleteEvent(10, EXCLUDED_FAKE_URL))

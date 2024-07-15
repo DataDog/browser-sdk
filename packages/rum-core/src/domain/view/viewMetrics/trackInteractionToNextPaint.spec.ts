@@ -23,8 +23,6 @@ describe('trackInteractionToNextPaint', () => {
   let interactionCountMock: ReturnType<typeof mockInteractionCount>
   let getInteractionToNextPaint: ReturnType<typeof trackInteractionToNextPaint>['getInteractionToNextPaint']
   let setViewEnd: ReturnType<typeof trackInteractionToNextPaint>['setViewEnd']
-  let cleanup: () => void
-  let viewStart: RelativeTime
 
   function newInteraction(lifeCycle: LifeCycle, overrides: Partial<RumPerformanceEventTiming | RumFirstInputTiming>) {
     if (overrides.interactionId) {
@@ -34,7 +32,9 @@ describe('trackInteractionToNextPaint', () => {
     lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [entry])
   }
 
-  function startINPTracking() {
+  function startINPTracking(viewStart = 0 as RelativeTime) {
+    interactionCountMock = mockInteractionCount()
+
     const interactionToNextPaintTracking = trackInteractionToNextPaint(
       {} as RumConfiguration,
       viewStart,
@@ -43,30 +43,27 @@ describe('trackInteractionToNextPaint', () => {
     )
     getInteractionToNextPaint = interactionToNextPaintTracking.getInteractionToNextPaint
     setViewEnd = interactionToNextPaintTracking.setViewEnd
-    cleanup = interactionToNextPaintTracking.stop
+
+    registerCleanupTask(() => {
+      interactionToNextPaintTracking.stop
+      resetExperimentalFeatures()
+      interactionCountMock.clear()
+    })
   }
 
   beforeEach(() => {
     if (!isInteractionToNextPaintSupported()) {
       pending('No INP support')
     }
-    interactionCountMock = mockInteractionCount()
-
-    viewStart = 0 as RelativeTime
-    startINPTracking()
-
-    registerCleanupTask(() => {
-      cleanup()
-      resetExperimentalFeatures()
-      interactionCountMock.clear()
-    })
   })
 
   it('should return undefined when there are no interactions', () => {
+    startINPTracking()
     expect(getInteractionToNextPaint()).toEqual(undefined)
   })
 
   it('should ignore entries without interactionId', () => {
+    startINPTracking()
     newInteraction(lifeCycle, {
       interactionId: undefined,
     })
@@ -74,6 +71,7 @@ describe('trackInteractionToNextPaint', () => {
   })
 
   it('should ignore entries that starts out of the view time bounds', () => {
+    startINPTracking()
     setViewEnd(10 as RelativeTime)
 
     newInteraction(lifeCycle, {
@@ -90,6 +88,7 @@ describe('trackInteractionToNextPaint', () => {
   })
 
   it('should take into account entries that starts in view time bounds but finish after view end', () => {
+    startINPTracking()
     setViewEnd(10 as RelativeTime)
 
     newInteraction(lifeCycle, {
@@ -105,6 +104,7 @@ describe('trackInteractionToNextPaint', () => {
   })
 
   it('should cap INP value', () => {
+    startINPTracking()
     newInteraction(lifeCycle, {
       interactionId: 1,
       duration: (MAX_INP_VALUE + 1) as Duration,
@@ -119,6 +119,7 @@ describe('trackInteractionToNextPaint', () => {
   })
 
   it('should return the p98 worst interaction', () => {
+    startINPTracking()
     for (let index = 1; index <= 100; index++) {
       newInteraction(lifeCycle, {
         duration: index as Duration,
@@ -134,11 +135,13 @@ describe('trackInteractionToNextPaint', () => {
   })
 
   it('should return 0 when an interaction happened without generating a performance event (interaction duration below 40ms)', () => {
+    startINPTracking()
     interactionCountMock.setInteractionCount(1 as Duration) // assumes an interaction happened but no PERFORMANCE_ENTRIES_COLLECTED have been triggered
     expect(getInteractionToNextPaint()).toEqual({ value: 0 as Duration })
   })
 
   it('should take first-input entry into account', () => {
+    startINPTracking()
     newInteraction(lifeCycle, {
       interactionId: 1,
       entryType: RumPerformanceEntryType.FIRST_INPUT,
@@ -152,6 +155,7 @@ describe('trackInteractionToNextPaint', () => {
   })
 
   it('should replace the entry in the list of worst interactions when an entry with the same interactionId exist', () => {
+    startINPTracking()
     for (let index = 1; index <= 100; index++) {
       newInteraction(lifeCycle, {
         duration: index as Duration,
@@ -168,10 +172,8 @@ describe('trackInteractionToNextPaint', () => {
   })
 
   it('should get the time from the beginning of the view', () => {
-    // stop the current tracking from beforeEach
-    cleanup()
-    viewStart = 100 as RelativeTime
-    startINPTracking()
+    const viewStart = 100 as RelativeTime
+    startINPTracking(viewStart)
 
     const interactionStart = 110 as RelativeTime
     newInteraction(lifeCycle, {
@@ -184,6 +186,7 @@ describe('trackInteractionToNextPaint', () => {
 
   describe('target selector', () => {
     it('should be returned', () => {
+      startINPTracking()
       newInteraction(lifeCycle, {
         interactionId: 2,
         target: appendElement('<button id="inp-target-element"></button>'),
@@ -193,6 +196,7 @@ describe('trackInteractionToNextPaint', () => {
     })
 
     it("should not be returned if it's not a DOM element", () => {
+      startINPTracking()
       newInteraction(lifeCycle, {
         interactionId: 2,
         target: appendText('text'),
@@ -202,6 +206,7 @@ describe('trackInteractionToNextPaint', () => {
     })
 
     it('should not be recomputed if the INP has not changed', () => {
+      startINPTracking()
       const element = appendElement('<button id="foo"></button>')
       newInteraction(lifeCycle, {
         interactionId: 1,
@@ -221,6 +226,7 @@ describe('trackInteractionToNextPaint', () => {
     })
 
     it('should be recomputed if the INP has changed', () => {
+      startINPTracking()
       newInteraction(lifeCycle, {
         interactionId: 1,
         duration: 10 as Duration,

@@ -1,7 +1,7 @@
 import type { CustomerDataTracker, RelativeTime } from '@datadog/browser-core'
 import { relativeToClocks, createCustomerDataTracker, noop } from '@datadog/browser-core'
 import type { Clock } from '@datadog/browser-core/test'
-import { mockClock } from '@datadog/browser-core/test'
+import { mockClock, registerCleanupTask } from '@datadog/browser-core/test'
 import { LifeCycle, LifeCycleEventType } from '../lifeCycle'
 import type { ViewCreatedEvent, ViewEndedEvent } from '../view/trackViews'
 import type { FeatureFlagContexts } from './featureFlagContext'
@@ -17,10 +17,10 @@ describe('featureFlagContexts', () => {
     clock = mockClock()
     customerDataTracker = createCustomerDataTracker(noop)
     featureFlagContexts = startFeatureFlagContexts(lifeCycle, customerDataTracker)
-  })
 
-  afterEach(() => {
-    featureFlagContexts.stop()
+    registerCleanupTask(() => {
+      featureFlagContexts.stop()
+    })
   })
 
   it('should return undefined before the initial view', () => {

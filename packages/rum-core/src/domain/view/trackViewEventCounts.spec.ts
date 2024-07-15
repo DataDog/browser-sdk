@@ -1,4 +1,5 @@
 import type { Context } from '@datadog/browser-core'
+import { registerCleanupTask } from '@datadog/browser-core/test'
 import type { RumEvent } from '../../rumEvent.types'
 import { LifeCycle, LifeCycleEventType } from '../lifeCycle'
 import { RumEventType } from '../../rawRumEvent.types'
@@ -6,17 +7,13 @@ import { trackViewEventCounts } from './trackViewEventCounts'
 
 describe('trackViewEventCounts', () => {
   const lifeCycle = new LifeCycle()
-  let viewEventCountsTracking: ReturnType<typeof trackViewEventCounts>
   let onChange: () => void
 
   beforeEach(() => {
     onChange = jasmine.createSpy('onChange')
 
-    viewEventCountsTracking = trackViewEventCounts(lifeCycle, 'view-id', onChange)
-  })
-
-  afterEach(() => {
-    viewEventCountsTracking.stop()
+    const viewEventCountsTracking = trackViewEventCounts(lifeCycle, 'view-id', onChange)
+    registerCleanupTask(viewEventCountsTracking.stop)
   })
 
   it('should track events count', () => {

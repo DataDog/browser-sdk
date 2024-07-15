@@ -1,4 +1,5 @@
 import type { Duration } from '@datadog/browser-core'
+import { registerCleanupTask } from '@datadog/browser-core/test'
 import { RumPerformanceEntryType } from '../../../browser/performanceObservable'
 import { createPerformanceEntry } from '../../../../test'
 import { LifeCycle, LifeCycleEventType } from '../../lifeCycle'
@@ -8,16 +9,12 @@ import { trackNavigationTimings } from './trackNavigationTimings'
 describe('trackNavigationTimings', () => {
   const lifeCycle = new LifeCycle()
   let navigationTimingsCallback: jasmine.Spy<(timings: NavigationTimings) => void>
-  let cleanup: () => void
 
   beforeEach(() => {
     navigationTimingsCallback = jasmine.createSpy()
-    const result = trackNavigationTimings(lifeCycle, navigationTimingsCallback)
-    cleanup = result.stop
-  })
+    const trackNavigationTimingsResult = trackNavigationTimings(lifeCycle, navigationTimingsCallback)
 
-  afterEach(() => {
-    cleanup()
+    registerCleanupTask(trackNavigationTimingsResult.stop)
   })
 
   it('should provide navigation timing', () => {

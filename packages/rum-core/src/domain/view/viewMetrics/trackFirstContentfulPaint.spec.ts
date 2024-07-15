@@ -1,5 +1,5 @@
 import type { RelativeTime } from '@datadog/browser-core'
-import { setPageVisibility } from '@datadog/browser-core/test'
+import { registerCleanupTask, setPageVisibility } from '@datadog/browser-core/test'
 import { RumPerformanceEntryType } from '../../../browser/performanceObservable'
 import { createPerformanceEntry } from '../../../../test'
 import { LifeCycle, LifeCycleEventType } from '../../lifeCycle'
@@ -10,28 +10,20 @@ import { trackFirstHidden } from './trackFirstHidden'
 describe('trackFirstContentfulPaint', () => {
   const lifeCycle = new LifeCycle()
   let fcpCallback: jasmine.Spy<(value: RelativeTime) => void>
-  let cleanup: () => void
 
   function startTrackingFCP() {
     fcpCallback = jasmine.createSpy()
     const firstHidden = trackFirstHidden({} as RumConfiguration)
     const firstContentfulPaint = trackFirstContentfulPaint(lifeCycle, firstHidden, fcpCallback)
 
-    cleanup = () => {
+    registerCleanupTask(() => {
       firstHidden.stop()
       firstContentfulPaint.stop()
-    }
+    })
   }
 
-  beforeEach(() => {
-    startTrackingFCP()
-  })
-
-  afterEach(() => {
-    cleanup()
-  })
-
   it('should provide the first contentful paint timing', () => {
+    startTrackingFCP()
     lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [
       createPerformanceEntry(RumPerformanceEntryType.PAINT),
     ])
@@ -41,9 +33,6 @@ describe('trackFirstContentfulPaint', () => {
   })
 
   it('should be discarded if the page is hidden', () => {
-    // stop the previous setup from the beforeEach
-    cleanup()
-
     setPageVisibility('hidden')
     startTrackingFCP()
 
@@ -54,6 +43,7 @@ describe('trackFirstContentfulPaint', () => {
   })
 
   it('should be discarded if it is reported after a long time', () => {
+    startTrackingFCP()
     lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [
       createPerformanceEntry(RumPerformanceEntryType.PAINT, { startTime: FCP_MAXIMUM_DELAY as RelativeTime }),
     ])

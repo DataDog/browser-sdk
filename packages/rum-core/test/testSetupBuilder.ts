@@ -228,7 +228,7 @@ export function setup(): TestSetupBuilder {
   return setupBuilder
 }
 
-function validateRumEventFormat(rawRumEvent: RawRumEvent) {
+export function validateRumEventFormat(rawRumEvent: RawRumEvent) {
   const fakeId = '00000000-aaaa-0000-aaaa-000000000000'
   const fakeContext: RumContext = {
     _dd: {

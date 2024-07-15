@@ -1,6 +1,6 @@
 import type { RelativeTime } from '@datadog/browser-core'
 import { DOM_EVENT, resetExperimentalFeatures } from '@datadog/browser-core'
-import { setPageVisibility, createNewEvent } from '@datadog/browser-core/test'
+import { setPageVisibility, createNewEvent, registerCleanupTask } from '@datadog/browser-core/test'
 import { RumPerformanceEntryType } from '../../../browser/performanceObservable'
 import { appendElement, createPerformanceEntry } from '../../../../test'
 import { LifeCycle, LifeCycleEventType } from '../../lifeCycle'
@@ -13,7 +13,6 @@ describe('trackLargestContentfulPaint', () => {
   const lifeCycle = new LifeCycle()
   let lcpCallback: jasmine.Spy<(lcp: LargestContentfulPaint) => void>
   let eventTarget: Window
-  let cleanup: () => void
 
   function startLCPTracking() {
     const firstHidden = trackFirstHidden({} as RumConfiguration)
@@ -25,24 +24,20 @@ describe('trackLargestContentfulPaint', () => {
       lcpCallback
     )
 
-    cleanup = () => {
+    registerCleanupTask(() => {
       firstHidden.stop()
       largestContentfulPaint.stop()
-    }
+      resetExperimentalFeatures()
+    })
   }
 
   beforeEach(() => {
     lcpCallback = jasmine.createSpy()
     eventTarget = document.createElement('div') as unknown as Window
-    startLCPTracking()
-  })
-
-  afterEach(() => {
-    cleanup()
-    resetExperimentalFeatures()
   })
 
   it('should provide the largest contentful paint timing', () => {
+    startLCPTracking()
     lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [
       createPerformanceEntry(RumPerformanceEntryType.LARGEST_CONTENTFUL_PAINT),
     ])
@@ -51,6 +46,7 @@ describe('trackLargestContentfulPaint', () => {
   })
 
   it('should provide the largest contentful paint target selector', () => {
+    startLCPTracking()
     lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [
       createPerformanceEntry(RumPerformanceEntryType.LARGEST_CONTENTFUL_PAINT, {
         element: appendElement('<button id="lcp-target-element"></button>'),
@@ -61,6 +57,7 @@ describe('trackLargestContentfulPaint', () => {
   })
 
   it('should be discarded if it is reported after a user interaction', () => {
+    startLCPTracking()
     eventTarget.dispatchEvent(createNewEvent(DOM_EVENT.KEY_DOWN, { timeStamp: 1 }))
 
     lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [
@@ -71,9 +68,6 @@ describe('trackLargestContentfulPaint', () => {
   })
 
   it('should be discarded if the page is hidden', () => {
-    // stop the current tracking from beforeEach
-    cleanup()
-
     setPageVisibility('hidden')
     startLCPTracking()
 
@@ -85,6 +79,7 @@ describe('trackLargestContentfulPaint', () => {
   })
 
   it('should be discarded if it is reported after a long time', () => {
+    startLCPTracking()
     lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [
       createPerformanceEntry(RumPerformanceEntryType.LARGEST_CONTENTFUL_PAINT, {
         startTime: LCP_MAXIMUM_DELAY as RelativeTime,
@@ -95,6 +90,7 @@ describe('trackLargestContentfulPaint', () => {
   })
 
   it('should be discarded if it has a size inferior to the previous LCP entry', () => {
+    startLCPTracking()
     lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [
       createPerformanceEntry(RumPerformanceEntryType.LARGEST_CONTENTFUL_PAINT, {
         startTime: 1 as RelativeTime,
@@ -113,6 +109,7 @@ describe('trackLargestContentfulPaint', () => {
   })
 
   it('should notify multiple times when the size is bigger than the previous entry', () => {
+    startLCPTracking()
     lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [
       createPerformanceEntry(RumPerformanceEntryType.LARGEST_CONTENTFUL_PAINT, {
         startTime: 1 as RelativeTime,
