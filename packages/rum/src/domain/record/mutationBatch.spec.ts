@@ -23,6 +23,7 @@ describe('createMutationBatch', () => {
 
   afterEach(() => {
     mutationBatch.stop()
+    clock.cleanup()
   })
 
   it('calls the callback asynchronously after MUTATION_PROCESS_MIN_DELAY', () => {

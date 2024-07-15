@@ -18,6 +18,7 @@ describe('valueHistory', () => {
 
   afterEach(() => {
     valueHistory.stop()
+    clock.cleanup()
   })
 
   describe('find', () => {

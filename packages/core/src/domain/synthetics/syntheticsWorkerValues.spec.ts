@@ -1,7 +1,11 @@
-import { mockSyntheticsWorkerValues } from '../../../test'
+import { mockSyntheticsWorkerValues, cleanupSyntheticsWorkerValues } from '../../../test'
 import { getSyntheticsResultId, getSyntheticsTestId, willSyntheticsInjectRum } from './syntheticsWorkerValues'
 
 describe('syntheticsWorkerValues', () => {
+  afterEach(() => {
+    cleanupSyntheticsWorkerValues()
+  })
+
   describe('willSyntheticsInjectRum', () => {
     it('returns false if nothing is defined', () => {
       mockSyntheticsWorkerValues({}, 'globals')

@@ -18,6 +18,7 @@ import {
   interceptRequests,
   mockEndpointBuilder,
   mockEventBridge,
+  cleanupSyntheticsWorkerValues,
   mockSyntheticsWorkerValues,
   registerCleanupTask,
   mockClock,
@@ -204,6 +205,10 @@ describe('logs', () => {
   })
 
   describe('logs session creation', () => {
+    afterEach(() => {
+      cleanupSyntheticsWorkerValues()
+    })
+
     it('creates a session on normal conditions', () => {
       ;({ handleLog, stop: stopLogs } = startLogs(
         initConfiguration,
@@ -247,6 +252,9 @@ describe('logs', () => {
     let clock: Clock
     beforeEach(() => {
       clock = mockClock()
+    })
+    afterEach(() => {
+      clock.cleanup()
     })
 
     it('sends logs without session id when the session expires ', () => {

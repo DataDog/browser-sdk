@@ -23,6 +23,10 @@ describe('customerDataTracker', () => {
     displaySpy = spyOn(display, 'warn')
   })
 
+  afterEach(() => {
+    clock.cleanup()
+  })
+
   it('should warn if the context bytes limit is reached', () => {
     const customerDataTracker = createCustomerDataTrackerManager(
       CustomerDataCompressionStatus.Disabled

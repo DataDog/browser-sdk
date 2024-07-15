@@ -2,12 +2,15 @@ import type { TimeStamp, HttpRequest } from '@datadog/browser-core'
 import { PageExitReason, DefaultPrivacyLevel, noop, isIE, DeflateEncoderStreamId } from '@datadog/browser-core'
 import type { LifeCycle, ViewCreatedEvent, RumConfiguration } from '@datadog/browser-rum-core'
 import { LifeCycleEventType, startViewContexts } from '@datadog/browser-rum-core'
+import type { Clock } from '@datadog/browser-core/test'
 import { collectAsyncCalls, createNewEvent, mockEventBridge, registerCleanupTask } from '@datadog/browser-core/test'
 import type { ViewEndedEvent } from 'packages/rum-core/src/domain/view/trackViews'
 import type { RumSessionManagerMock, TestSetupBuilder } from '../../../rum-core/test'
 import { appendElement, createRumSessionManagerMock, setup } from '../../../rum-core/test'
+
 import { recordsPerFullSnapshot, readReplayPayload } from '../../test'
 import { setSegmentBytesLimit } from '../domain/segmentCollection'
+
 import { RecordType } from '../types'
 import { resetReplayStats } from '../domain/replayStats'
 import { createDeflateEncoder, resetDeflateWorkerState, startDeflateWorker } from '../domain/deflate'
@@ -22,6 +25,7 @@ describe('startRecording', () => {
   let textField: HTMLInputElement
   let requestSendSpy: jasmine.Spy<HttpRequest['sendOnExit']>
   let stopRecording: () => void
+  let clock: Clock | undefined
   let configuration: RumConfiguration
 
   beforeEach(() => {
@@ -72,6 +76,7 @@ describe('startRecording', () => {
 
     registerCleanupTask(() => {
       setSegmentBytesLimit()
+      clock?.cleanup()
       resetDeflateWorkerState()
     })
   })
