@@ -9,11 +9,12 @@ describe('xhr observable', () => {
   let requestsTrackingSubscription: Subscription
   let contextEditionSubscription: Subscription | undefined
   let requests: XhrCompleteContext[]
+  let mockXhrManager: { reset(): void }
   let originalMockXhrSend: XMLHttpRequest['send']
   let configuration: Configuration
 
   beforeEach(() => {
-    mockXhr()
+    mockXhrManager = mockXhr()
     configuration = {} as Configuration
     // eslint-disable-next-line @typescript-eslint/unbound-method
     originalMockXhrSend = XMLHttpRequest.prototype.send
@@ -25,6 +26,7 @@ describe('xhr observable', () => {
   afterEach(() => {
     requestsTrackingSubscription.unsubscribe()
     contextEditionSubscription?.unsubscribe()
+    mockXhrManager.reset()
   })
 
   function startTrackingRequests() {

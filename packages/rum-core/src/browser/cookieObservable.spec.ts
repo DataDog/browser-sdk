@@ -22,6 +22,7 @@ describe('cookieObservable', () => {
     if (originalSupportedEntryTypes) {
       Object.defineProperty(window, 'cookieStore', originalSupportedEntryTypes)
     }
+    clock.cleanup()
     deleteCookie(COOKIE_NAME)
   })
 

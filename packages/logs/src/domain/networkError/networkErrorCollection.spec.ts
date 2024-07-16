@@ -56,6 +56,7 @@ describe('network error collection', () => {
 
     registerCleanupTask(() => {
       stopNetworkErrorCollection()
+      mockFetchManager.reset()
     })
   })
 
