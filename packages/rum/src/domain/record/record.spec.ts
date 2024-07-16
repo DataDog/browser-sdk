@@ -1,6 +1,7 @@
 import { DefaultPrivacyLevel, findLast, isIE } from '@datadog/browser-core'
 import type { RumConfiguration, ViewCreatedEvent } from '@datadog/browser-rum-core'
 import { LifeCycle, LifeCycleEventType } from '@datadog/browser-rum-core'
+import type { Clock } from '@datadog/browser-core/test'
 import { createNewEvent, collectAsyncCalls, registerCleanupTask } from '@datadog/browser-core/test'
 import { findElement, findFullSnapshot, findNode, recordsPerFullSnapshot } from '../../../test'
 import type {
@@ -22,6 +23,7 @@ describe('record', () => {
   let recordApi: RecordAPI
   let lifeCycle: LifeCycle
   let emitSpy: jasmine.Spy<(record: BrowserRecord) => void>
+  let clock: Clock | undefined
   const FAKE_VIEW_ID = '123'
 
   beforeEach(() => {
@@ -32,6 +34,7 @@ describe('record', () => {
     emitSpy = jasmine.createSpy()
 
     registerCleanupTask(() => {
+      clock?.cleanup()
       recordApi?.stop()
     })
   })

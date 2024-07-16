@@ -1,5 +1,3 @@
-import { registerCleanupTask } from '../registerCleanupTask'
-
 export function setPageVisibility(visibility: 'visible' | 'hidden') {
   Object.defineProperty(document, 'visibilityState', {
     get() {
@@ -7,7 +5,8 @@ export function setPageVisibility(visibility: 'visible' | 'hidden') {
     },
     configurable: true,
   })
-  registerCleanupTask(() => {
-    delete (document as any).visibilityState
-  })
+}
+
+export function restorePageVisibility() {
+  delete (document as any).visibilityState
 }

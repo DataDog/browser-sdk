@@ -1,5 +1,4 @@
 import type { BrowserWindowWithZoneJs } from '../../src/tools/getZoneJsOriginalValue'
-import { registerCleanupTask } from '../registerCleanupTask'
 
 export type MockZoneJs = ReturnType<typeof mockZoneJs>
 
@@ -13,12 +12,11 @@ export function mockZoneJs() {
 
   browserWindow.Zone = { __symbol__: getSymbol }
 
-  registerCleanupTask(() => {
-    delete browserWindow.Zone
-    restorers.forEach((restorer) => restorer())
-  })
-
   return {
+    restore: () => {
+      delete browserWindow.Zone
+      restorers.forEach((restorer) => restorer())
+    },
     getSymbol,
     replaceProperty<Target, Name extends keyof Target & string>(target: Target, name: Name, replacement: Target[Name]) {
       const original = target[name]

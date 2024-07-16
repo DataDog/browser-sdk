@@ -34,6 +34,10 @@ describe('flushController', () => {
     flushController.flushObservable.subscribe(flushSpy)
   })
 
+  afterEach(() => {
+    clock.cleanup()
+  })
+
   it('when flushing, the event contains a reason, the bytes count and the messages count', () => {
     const messagesCount = 3
     for (let i = 0; i < messagesCount; i += 1) {

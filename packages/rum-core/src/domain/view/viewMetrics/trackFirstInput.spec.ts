@@ -1,5 +1,5 @@
 import { type Duration, type RelativeTime, resetExperimentalFeatures } from '@datadog/browser-core'
-import { setPageVisibility } from '@datadog/browser-core/test'
+import { restorePageVisibility, setPageVisibility } from '@datadog/browser-core/test'
 import type { TestSetupBuilder } from '../../../../test'
 import { appendElement, appendText, createPerformanceEntry, setup } from '../../../../test'
 import { LifeCycleEventType } from '../../lifeCycle'
@@ -32,6 +32,7 @@ describe('firstInputTimings', () => {
   })
 
   afterEach(() => {
+    restorePageVisibility()
     resetExperimentalFeatures()
   })
 
