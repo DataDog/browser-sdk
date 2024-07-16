@@ -1,5 +1,5 @@
 import type { Configuration } from '../domain/configuration'
-import { createNewEvent, setPageVisibility, registerCleanupTask } from '../../test'
+import { createNewEvent, restorePageVisibility, setPageVisibility, registerCleanupTask } from '../../test'
 import type { PageExitEvent } from './pageExitObservable'
 import { PageExitReason, createPageExitObservable } from './pageExitObservable'
 
@@ -11,6 +11,10 @@ describe('createPageExitObservable', () => {
     onExitSpy = jasmine.createSpy()
     configuration = {} as Configuration
     registerCleanupTask(createPageExitObservable(configuration).subscribe(onExitSpy).unsubscribe)
+  })
+
+  afterEach(() => {
+    restorePageVisibility()
   })
 
   it('notifies when the page fires beforeunload', () => {

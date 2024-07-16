@@ -16,6 +16,7 @@ import {
 } from '@datadog/browser-core'
 import type { Clock } from '@datadog/browser-core/test'
 import {
+  cleanupSyntheticsWorkerValues,
   mockEventBridge,
   interceptRequests,
   mockClock,
@@ -167,6 +168,10 @@ describe('preStartRum', () => {
   })
 
   describe('init', () => {
+    afterEach(() => {
+      cleanupSyntheticsWorkerValues()
+    })
+
     it('should not initialize if session cannot be handled and bridge is not present', () => {
       spyOnProperty(document, 'cookie', 'get').and.returnValue('')
       const displaySpy = spyOn(display, 'warn')
@@ -301,6 +306,12 @@ describe('preStartRum', () => {
           updateViewName: updateViewNameSpy,
         } as unknown as StartRumResult)
         strategy = createPreStartStrategy({}, getCommonContextSpy, createTrackingConsentState(), doStartRumSpy)
+      })
+
+      afterEach(() => {
+        if (clock) {
+          clock.cleanup()
+        }
       })
 
       describe('when auto', () => {
@@ -535,6 +546,7 @@ describe('preStartRum', () => {
     })
 
     afterEach(() => {
+      cleanupSyntheticsWorkerValues()
       interceptor.restore()
       resetExperimentalFeatures()
     })

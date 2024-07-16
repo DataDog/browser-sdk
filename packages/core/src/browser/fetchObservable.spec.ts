@@ -34,6 +34,7 @@ describe('fetch proxy', () => {
     registerCleanupTask(() => {
       requestsTrackingSubscription.unsubscribe()
       contextEditionSubscription?.unsubscribe()
+      mockFetchManager.reset()
     })
   })
 

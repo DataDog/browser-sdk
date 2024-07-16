@@ -194,8 +194,12 @@ describe('instrumentSetter', () => {
   let zoneJs: MockZoneJs
 
   beforeEach(() => {
-    zoneJs = mockZoneJs()
     clock = mockClock()
+    zoneJs = mockZoneJs()
+  })
+  afterEach(() => {
+    zoneJs.restore()
+    clock.cleanup()
   })
 
   it('replaces the original setter', () => {

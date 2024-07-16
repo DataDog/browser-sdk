@@ -14,6 +14,10 @@ describe('functionUtils', () => {
       spy = jasmine.createSpy()
     })
 
+    afterEach(() => {
+      clock.cleanup()
+    })
+
     describe('when {leading: false, trailing:false}', () => {
       beforeEach(() => {
         throttled = throttle(spy, 2, { leading: false, trailing: false }).throttled
