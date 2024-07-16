@@ -7,6 +7,7 @@ import {
   createCustomerDataTracker,
   noop,
 } from '@datadog/browser-core'
+import type { Clock } from '@datadog/browser-core/test'
 import { mockClock } from '@datadog/browser-core/test'
 import type { CommonContext, RawLoggerLogsEvent } from '../../rawLogsEvent.types'
 import type { RawLogsEventCollectedData } from '../lifeCycle'
@@ -24,6 +25,7 @@ describe('logger collection', () => {
   let handleLog: ReturnType<typeof startLoggerCollection>['handleLog']
   let logger: Logger
   let rawLogsEvents: Array<RawLogsEventCollectedData<RawLoggerLogsEvent>>
+  let clock: Clock
 
   beforeEach(() => {
     rawLogsEvents = []
@@ -34,7 +36,11 @@ describe('logger collection', () => {
     spyOn(console, 'error').and.callFake(() => true)
     logger = new Logger((...params) => handleLog(...params), createCustomerDataTracker(noop))
     ;({ handleLog: handleLog } = startLoggerCollection(lifeCycle))
-    mockClock()
+    clock = mockClock()
+  })
+
+  afterEach(() => {
+    clock.cleanup()
   })
 
   describe('when handle type is set to "console"', () => {

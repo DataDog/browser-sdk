@@ -1,6 +1,6 @@
 import type { RelativeTime } from '@datadog/browser-core'
 import { DOM_EVENT, resetExperimentalFeatures } from '@datadog/browser-core'
-import { setPageVisibility, createNewEvent } from '@datadog/browser-core/test'
+import { restorePageVisibility, setPageVisibility, createNewEvent } from '@datadog/browser-core/test'
 import { RumPerformanceEntryType } from '../../../browser/performanceObservable'
 import type { TestSetupBuilder } from '../../../../test'
 import { appendElement, createPerformanceEntry, setup } from '../../../../test'
@@ -20,7 +20,6 @@ describe('trackLargestContentfulPaint', () => {
     configuration = {} as RumConfiguration
     lcpCallback = jasmine.createSpy()
     eventTarget = document.createElement('div') as unknown as Window
-    setPageVisibility('visible')
     setupBuilder = setup().beforeBuild(({ lifeCycle }) => {
       const firstHidden = trackFirstHidden(configuration)
       const largestContentfulPaint = trackLargestContentfulPaint(
@@ -40,6 +39,7 @@ describe('trackLargestContentfulPaint', () => {
   })
 
   afterEach(() => {
+    restorePageVisibility()
     resetExperimentalFeatures()
   })
 
