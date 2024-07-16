@@ -12,7 +12,7 @@ const { modifyFile } = require('../lib/files-utils')
 
 const CHANGELOG_FILE = '../../CHANGELOG.md'
 const CONTRIBUTING_FILE = '../../CONTRIBUTING.md'
-const PUBLIC_EMOJI_PRIORITY = ['💥', '✨', '🐛', '⚡️', '📝', '⚗️']
+const PUBLIC_EMOJI_PRIORITY = ['💥', '✨', '🐛', '⚡', '📝']
 const INTERNAL_EMOJI_PRIORITY = [
   '👷',
   '🔧',
@@ -25,8 +25,11 @@ const INTERNAL_EMOJI_PRIORITY = [
   '🔊', // telemetry
   '👌',
   '📄',
+  '⚗️', // experiment
 ]
 const EMOJI_REGEX = /^\p{Emoji_Presentation}/u
+const PACKAGES = ['rum', 'logs', 'rum-slim', 'rum-react', 'worker']
+
 runMain(async () => {
   if (!process.env.EDITOR) {
     printError('Please configure your environment variable EDITOR')
@@ -86,7 +89,7 @@ function getChangesList() {
   const lastTagHash = command`git rev-list --tags --max-count=1`.run().trim()
   const lastTagName = command`git describe --tags ${lastTagHash}`.run()
 
-  const commits = command`git log ${lastTagName.trimEnd()}..HEAD --pretty=format:%s`.run()
+  const commits = command`git log ${[`${lastTagName.trimEnd()}..HEAD`, '--pretty=format:%H %s']}`.run()
   const changesWithEmojis = emojiNameToUnicode(commits)
 
   let changes = changesWithEmojis.split('\n').filter(isNotVersionEntry)
@@ -95,10 +98,16 @@ function getChangesList() {
 
   changes.forEach((entry) => {
     let trimmedEntry = entry.trim()
-    if (PUBLIC_EMOJI_PRIORITY.some((emoji) => trimmedEntry.startsWith(emoji))) {
-      publicChanges.push(entry)
+    const hash = trimmedEntry.split(' ')[0]
+    const message = trimmedEntry.slice(trimmedEntry.indexOf(' ') + 1)
+    const affectedPackages = getAffectedPackages(hash)
+
+    const formattedPackages = affectedPackages.map((pkg) => `[${pkg.toUpperCase()}]`).join(' ')
+
+    if (PUBLIC_EMOJI_PRIORITY.some((emoji) => message.startsWith(emoji))) {
+      publicChanges.push(`${message} ${formattedPackages}`)
     } else {
-      internalChanges.push(entry)
+      internalChanges.push(`${message} ${formattedPackages}`)
     }
   })
 
@@ -116,6 +125,25 @@ ${publicChanges.join('\n')}
 
 ${internalChanges.join('\n')}
 `.replace(/\(#(\d+)\)/gm, (_, id) => `([#${id}](https://github.com/DataDog/browser-sdk/pull/${id}))`)
+}
+
+function getAffectedPackages(hash) {
+  const changedFiles = command`git diff-tree --no-commit-id --name-only -r ${hash}`.run().trim().split('\n')
+  const affectedPackages = new Set()
+
+  changedFiles.forEach((file) => {
+    if (file.startsWith('packages/rum-core')) {
+      affectedPackages.add('rum')
+      affectedPackages.add('rum-slim')
+    }
+    PACKAGES.forEach((pkg) => {
+      if (file.startsWith(`packages/${pkg}`)) {
+        affectedPackages.add(pkg)
+      }
+    })
+  })
+
+  return Array.from(affectedPackages)
 }
 
 function sortByEmojiPriority(a, b, priorityList) {
