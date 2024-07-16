@@ -10,9 +10,10 @@ const { spawnCommand, printError, runMain } = require('../lib/execution-utils')
 const { command } = require('../lib/command')
 const { modifyFile } = require('../lib/files-utils')
 
-const CHANGELOG_FILE = '../../CHANGELOG.md'
-const CONTRIBUTING_FILE = '../../CONTRIBUTING.md'
-const PUBLIC_EMOJI_PRIORITY = ['💥', '✨', '🐛', '⚡️', '📝', '⚗️']
+const CHANGELOG_FILE = 'CHANGELOG.md'
+const CONTRIBUTING_FILE = 'CONTRIBUTING.md'
+const PUBLIC_EMOJI_PRIORITY = ['💥', '✨', '🐛', '⚡', '📝']
+
 const INTERNAL_EMOJI_PRIORITY = [
   '👷',
   '🔧',
@@ -25,6 +26,7 @@ const INTERNAL_EMOJI_PRIORITY = [
   '🔊', // telemetry
   '👌',
   '📄',
+  '⚗️', // experiment
 ]
 const EMOJI_REGEX = /^\p{Emoji_Presentation}/u
 runMain(async () => {
