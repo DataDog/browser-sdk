@@ -3,7 +3,7 @@ import { relativeToClocks, CLEAR_OLD_VALUES_INTERVAL } from '@datadog/browser-co
 import type { TestSetupBuilder } from '../../../test'
 import { setup } from '../../../test'
 import { LifeCycleEventType } from '../lifeCycle'
-import type { ViewCreatedEvent } from '../view/trackViews'
+import type { ViewCreatedEvent, ViewEvent } from '../view/trackViews'
 import type { ViewContexts } from './viewContexts'
 import { startViewContexts, VIEW_CONTEXT_TIME_OUT_DELAY } from './viewContexts'
 
@@ -104,6 +104,16 @@ describe('viewContexts', () => {
 
       lifeCycle.notify(LifeCycleEventType.BEFORE_VIEW_CREATED, buildViewCreatedEvent({ name: 'Fake name' }))
       expect(viewContexts.findView()!.name).toBe('Fake name')
+    })
+
+    it('should update the view name for the current context', () => {
+      const { lifeCycle } = setupBuilder.build()
+      lifeCycle.notify(LifeCycleEventType.BEFORE_VIEW_CREATED, buildViewCreatedEvent({ name: 'foo' }))
+      lifeCycle.notify(LifeCycleEventType.VIEW_UPDATED, {
+        startClocks,
+        name: 'Fake Name',
+      } as ViewEvent)
+      expect(viewContexts.findView()!.name).toBe('Fake Name')
     })
   })
 
