@@ -1,4 +1,4 @@
-import { type Duration, type RelativeTime, resetExperimentalFeatures } from '@datadog/browser-core'
+import { type Duration, type RelativeTime } from '@datadog/browser-core'
 import { registerCleanupTask, setPageVisibility } from '@datadog/browser-core/test'
 import { appendElement, appendText, createPerformanceEntry } from '../../../../test'
 import { LifeCycle, LifeCycleEventType } from '../../lifeCycle'
@@ -23,7 +23,6 @@ describe('firstInputTimings', () => {
     registerCleanupTask(() => {
       firstHidden.stop()
       firstInputTimings.stop()
-      resetExperimentalFeatures()
     })
   }
 
