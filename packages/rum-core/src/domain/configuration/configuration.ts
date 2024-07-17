@@ -11,8 +11,6 @@ import {
   isPercentage,
   objectHasValue,
   validateAndBuildConfiguration,
-  isExperimentalFeatureEnabled,
-  ExperimentalFeature,
 } from '@datadog/browser-core'
 import type { RumEventDomainContext } from '../../domainContext.types'
 import type { RumEvent } from '../../rumEvent.types'

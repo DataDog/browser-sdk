@@ -1,10 +1,6 @@
 import type { InitConfiguration } from '@datadog/browser-core'
-import { DefaultPrivacyLevel, display, ExperimentalFeature, TraceContextInjection } from '@datadog/browser-core'
-import {
-  EXHAUSTIVE_INIT_CONFIGURATION,
-  mockExperimentalFeatures,
-  SERIALIZED_EXHAUSTIVE_INIT_CONFIGURATION,
-} from '@datadog/browser-core/test'
+import { DefaultPrivacyLevel, display, TraceContextInjection } from '@datadog/browser-core'
+import { EXHAUSTIVE_INIT_CONFIGURATION, SERIALIZED_EXHAUSTIVE_INIT_CONFIGURATION } from '@datadog/browser-core/test'
 import type {
   ExtractTelemetryConfiguration,
   CamelToSnakeCase,
