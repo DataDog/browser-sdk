@@ -1,11 +1,10 @@
+const { readdirSync } = require('fs')
 const { runMain } = require('../lib/execution-utils')
 const { modifyFile } = require('../lib/files-utils')
 const { command } = require('../lib/command')
 const { browserSdkVersion } = require('../lib/browser-sdk-version')
 
-const JSON_FILES = ['rum', 'rum-slim', 'logs', 'rum-react'].map(
-  (packageName) => `./packages/${packageName}/package.json`
-)
+const JSON_FILES = readdirSync('./packages').map((packageName) => `./packages/${packageName}/package.json`)
 
 // This script updates the peer dependency versions between rum and logs packages to match the new
 // version during a release.
@@ -26,7 +25,7 @@ runMain(async () => {
 
 function updateJsonPeerDependencies(content) {
   const json = JSON.parse(content)
-  Object.keys(json.peerDependencies)
+  Object.keys(json.peerDependencies || [])
     .filter((key) => key.startsWith('@datadog'))
     .forEach((key) => {
       json.peerDependencies[key] = browserSdkVersion
