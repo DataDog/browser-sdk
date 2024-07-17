@@ -13,8 +13,39 @@
 > 📝 - Documentation.
 >
 > ⚗ - Experimental.
+>
+> See [Gitmoji](https://gitmoji.dev/) for a guide on the emojis used.
 
 ---
+
+## v5.23.0
+
+**Public Changes:**
+
+- ✨ [RUM-4781] Update Custom Web Vitals API ([#2801](https://github.com/DataDog/browser-sdk/pull/2801))
+- ✨ [RUM-4819] Add an experimental 'updateViewName' API ([#2808](https://github.com/DataDog/browser-sdk/pull/2808))
+- 🐛 Update path for contributing and changelog file ([#2867](https://github.com/DataDog/browser-sdk/pull/2867))
+- 🐛 Fix update view name api in context history ([#2853](https://github.com/DataDog/browser-sdk/pull/2853))
+- 🐛 [RUM-958] Fix performance observable compatibility with old browser version ([#2850](https://github.com/DataDog/browser-sdk/pull/2850))
+- 🐛 [RUM-5209] provide a span id for the initial document trace ([#2844](https://github.com/DataDog/browser-sdk/pull/2844))
+
+**Internal Changes:**
+
+- 👷 Update all non-major dependencies ([#2861](https://github.com/DataDog/browser-sdk/pull/2861))
+- 👷 Bump staging to staging-29
+- 👷 Update all non-major dependencies ([#2848](https://github.com/DataDog/browser-sdk/pull/2848))
+- 👷 Bump staging to staging-28
+- 👷 Update all non-major dependencies ([#2839](https://github.com/DataDog/browser-sdk/pull/2839))
+- 👷 Upgrade engine.io and socket.io-adapter packages to fix ws vulnerability ([#2842](https://github.com/DataDog/browser-sdk/pull/2842))
+- 🎨 Instrument fetch and XHR before trying to init consent ([#2834](https://github.com/DataDog/browser-sdk/pull/2834))
+- 🧪 Ensure skipped test do not fail ([#2821](https://github.com/DataDog/browser-sdk/pull/2821))
+- Update rum-react peerDependencies ([#2870](https://github.com/DataDog/browser-sdk/pull/2870))
+- ♻️ Get rid of setupBuilder from simple unit tests - pt 1 ([#2858](https://github.com/DataDog/browser-sdk/pull/2858))
+- ♻️ [RUM-159] Categorize changes as public or internal in the CHANGELOG ([#2851](https://github.com/DataDog/browser-sdk/pull/2851))
+- ♻️ [RUM-958] Use a performance observable instead of the lifecycle ([#2818](https://github.com/DataDog/browser-sdk/pull/2818))
+- ♻️ [RUM-67] Specialise type files ([#2845](https://github.com/DataDog/browser-sdk/pull/2845))
+- Specialise constant files ([#2841](https://github.com/DataDog/browser-sdk/pull/2841))
+- ⚗️✨ [RUM-4469] introduce an experimental React integration ([#2824](https://github.com/DataDog/browser-sdk/pull/2824))
 
 ## v5.22.0
 
