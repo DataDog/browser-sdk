@@ -117,7 +117,7 @@ describe('API calls and events around init', () => {
         intakeRegistry,
         { name: 'before init', viewId: initialView.view.id },
         { name: 'before manual view', viewId: initialView.view.id },
-        { name: 'after manual view', viewId: initialView.view.id }
+        { name: 'after manual view', viewId: initialView.view.id, viewName: 'after manual view' }
       )
     })
 })
@@ -173,12 +173,18 @@ function expectToHaveErrors(events: IntakeRegistry, ...errors: Array<{ message: 
   }
 }
 
-function expectToHaveActions(events: IntakeRegistry, ...actions: Array<{ name: string; viewId: string }>) {
+function expectToHaveActions(
+  events: IntakeRegistry,
+  ...actions: Array<{ name: string; viewId: string; viewName?: string }>
+) {
   expect(events.rumActionEvents.length).toBe(actions.length)
   for (let i = 0; i < actions.length; i++) {
     const registryAction = events.rumActionEvents[i]
     const expectedAction = actions[i]
     expect(registryAction.action.target!.name).toBe(expectedAction.name)
     expect(registryAction.view.id).toBe(expectedAction.viewId)
+    if (i === 0 && expectedAction.viewName) {
+      expect(registryAction.view.name).toBe(expectedAction.viewName)
+    }
   }
 }

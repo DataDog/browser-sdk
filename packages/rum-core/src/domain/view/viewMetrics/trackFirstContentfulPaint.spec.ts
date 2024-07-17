@@ -1,5 +1,5 @@
 import type { RelativeTime } from '@datadog/browser-core'
-import { registerCleanupTask, setPageVisibility } from '@datadog/browser-core/test'
+import { registerCleanupTask, restorePageVisibility, setPageVisibility } from '@datadog/browser-core/test'
 import { RumPerformanceEntryType } from '../../../browser/performanceObservable'
 import { createPerformanceEntry } from '../../../../test'
 import { LifeCycle, LifeCycleEventType } from '../../lifeCycle'
@@ -19,6 +19,7 @@ describe('trackFirstContentfulPaint', () => {
     registerCleanupTask(() => {
       firstHidden.stop()
       firstContentfulPaint.stop()
+      restorePageVisibility()
     })
   }
 

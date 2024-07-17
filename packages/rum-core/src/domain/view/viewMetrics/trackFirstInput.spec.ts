@@ -1,5 +1,5 @@
 import { type Duration, type RelativeTime } from '@datadog/browser-core'
-import { registerCleanupTask, setPageVisibility } from '@datadog/browser-core/test'
+import { registerCleanupTask, restorePageVisibility, setPageVisibility } from '@datadog/browser-core/test'
 import { appendElement, appendText, createPerformanceEntry } from '../../../../test'
 import { LifeCycle, LifeCycleEventType } from '../../lifeCycle'
 import type { RumConfiguration } from '../../configuration'
@@ -23,6 +23,7 @@ describe('firstInputTimings', () => {
     registerCleanupTask(() => {
       firstHidden.stop()
       firstInputTimings.stop()
+      restorePageVisibility()
     })
   }
 

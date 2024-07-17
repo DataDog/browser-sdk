@@ -202,6 +202,10 @@ describe('doWaitPageActivityEnd', () => {
     clock = mockClock()
   })
 
+  afterEach(() => {
+    clock.cleanup()
+  })
+
   it('should notify the callback after `EXPIRE_DELAY` when there is no activity', () => {
     doWaitPageActivityEnd(new Observable(), idlPageActivityCallbackSpy)
 

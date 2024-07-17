@@ -15,6 +15,10 @@ describe('addEventListener', () => {
       zoneJs = mockZoneJs()
     })
 
+    afterEach(() => {
+      zoneJs.restore()
+    })
+
     it('uses the original addEventListener method instead of the method patched by Zone.js', () => {
       const zoneJsPatchedAddEventListener = jasmine.createSpy()
       const eventTarget = document.createElement('div')

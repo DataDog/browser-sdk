@@ -239,6 +239,8 @@ const EXPIRED_SESSION: SessionState = { isExpired: '1' }
         expect(processSpy).not.toHaveBeenCalled()
         expect(afterSpy).not.toHaveBeenCalled()
         expect(storage.setSpy).not.toHaveBeenCalled()
+
+        clock.cleanup()
       })
 
       it('should execute cookie accesses in order', (done) => {

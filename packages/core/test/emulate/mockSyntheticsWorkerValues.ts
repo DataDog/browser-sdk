@@ -6,7 +6,6 @@ import {
   SYNTHETICS_RESULT_ID_COOKIE_NAME,
   SYNTHETICS_TEST_ID_COOKIE_NAME,
 } from '../../src/domain/synthetics/syntheticsWorkerValues'
-import { registerCleanupTask } from '../registerCleanupTask'
 
 // Duration to create a cookie lasting at least until the end of the test
 const COOKIE_DURATION = ONE_MINUTE
@@ -38,14 +37,14 @@ export function mockSyntheticsWorkerValues(
       break
   }
   resetInitCookies()
+}
 
-  registerCleanupTask(() => {
-    delete (window as BrowserWindow)._DATADOG_SYNTHETICS_PUBLIC_ID
-    delete (window as BrowserWindow)._DATADOG_SYNTHETICS_RESULT_ID
-    delete (window as BrowserWindow)._DATADOG_SYNTHETICS_INJECTS_RUM
-    deleteCookie(SYNTHETICS_TEST_ID_COOKIE_NAME)
-    deleteCookie(SYNTHETICS_RESULT_ID_COOKIE_NAME)
-    deleteCookie(SYNTHETICS_INJECTS_RUM_COOKIE_NAME)
-    resetInitCookies()
-  })
+export function cleanupSyntheticsWorkerValues() {
+  delete (window as BrowserWindow)._DATADOG_SYNTHETICS_PUBLIC_ID
+  delete (window as BrowserWindow)._DATADOG_SYNTHETICS_RESULT_ID
+  delete (window as BrowserWindow)._DATADOG_SYNTHETICS_INJECTS_RUM
+  deleteCookie(SYNTHETICS_TEST_ID_COOKIE_NAME)
+  deleteCookie(SYNTHETICS_RESULT_ID_COOKIE_NAME)
+  deleteCookie(SYNTHETICS_INJECTS_RUM_COOKIE_NAME)
+  resetInitCookies()
 }
