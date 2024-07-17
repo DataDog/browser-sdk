@@ -34,7 +34,7 @@ describe('trackNavigationTimings', () => {
 
   it('should provide navigation timing', () => {
     ;({ notifyPerformanceEntries } = mockPerformanceObserver())
-    stop = trackNavigationTimings({} as RumConfiguration, navigationTimingsCallback).stop
+    ;({ stop } = trackNavigationTimings({} as RumConfiguration, navigationTimingsCallback))
     notifyPerformanceEntries([createPerformanceEntry(RumPerformanceEntryType.NAVIGATION)])
 
     expect(navigationTimingsCallback).toHaveBeenCalledOnceWith({
@@ -48,7 +48,7 @@ describe('trackNavigationTimings', () => {
 
   it('should discard incomplete navigation timing', () => {
     ;({ notifyPerformanceEntries } = mockPerformanceObserver())
-    stop = trackNavigationTimings({} as RumConfiguration, navigationTimingsCallback).stop
+    ;({ stop } = trackNavigationTimings({} as RumConfiguration, navigationTimingsCallback))
     notifyPerformanceEntries([
       createPerformanceEntry(RumPerformanceEntryType.NAVIGATION, { loadEventEnd: 0 as RelativeTime }),
     ])
@@ -60,8 +60,7 @@ describe('trackNavigationTimings', () => {
     clock = mockClock(new Date(0))
     mockPerformanceTiming()
     removePerformanceObserver()
-
-    stop = trackNavigationTimings({} as RumConfiguration, navigationTimingsCallback).stop
+    ;({ stop } = trackNavigationTimings({} as RumConfiguration, navigationTimingsCallback))
     clock.tick(0)
 
     expect(navigationTimingsCallback).toHaveBeenCalledOnceWith({

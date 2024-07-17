@@ -1,5 +1,6 @@
 import type { Duration } from '@datadog/browser-core'
-import { assign, forEach, relativeNow, runOnReadyState } from '@datadog/browser-core'
+import { assign, forEach, noop, relativeNow, runOnReadyState } from '@datadog/browser-core'
+import type { RelativePerformanceTiming } from '../../../browser/performanceUtils'
 import { computeRelativePerformanceTiming } from '../../../browser/performanceUtils'
 import type { RumPerformanceNavigationTiming } from '../../../browser/performanceObservable'
 import {
@@ -21,25 +22,26 @@ export function trackNavigationTimings(
   configuration: RumConfiguration,
   callback: (timings: NavigationTimings) => void
 ) {
-  const processEntry = (entry: RumPerformanceNavigationTiming) => {
+  const processEntry = (entry: RumPerformanceNavigationTiming | RelativePerformanceTiming) => {
     if (!isIncompleteNavigation(entry)) {
       callback(processNavigationEntry(entry))
     }
   }
 
-  const { unsubscribe: stop } = createPerformanceObservable(configuration, {
-    type: RumPerformanceEntryType.NAVIGATION,
-    buffered: true,
-  }).subscribe((entries) => forEach(entries, processEntry))
-
-  if (!supportPerformanceTimingEvent(RumPerformanceEntryType.NAVIGATION)) {
+  let stop = noop
+  if (supportPerformanceTimingEvent(RumPerformanceEntryType.NAVIGATION)) {
+    ;({ unsubscribe: stop } = createPerformanceObservable(configuration, {
+      type: RumPerformanceEntryType.NAVIGATION,
+      buffered: true,
+    }).subscribe((entries) => forEach(entries, processEntry)))
+  } else {
     retrieveNavigationTiming(configuration, processEntry)
   }
 
   return { stop }
 }
 
-function processNavigationEntry(entry: RumPerformanceNavigationTiming): NavigationTimings {
+function processNavigationEntry(entry: RumPerformanceNavigationTiming | RelativePerformanceTiming): NavigationTimings {
   return {
     domComplete: entry.domComplete,
     domContentLoaded: entry.domContentLoadedEventEnd,
@@ -53,20 +55,16 @@ function processNavigationEntry(entry: RumPerformanceNavigationTiming): Navigati
   }
 }
 
-function isIncompleteNavigation(entry: RumPerformanceNavigationTiming) {
+function isIncompleteNavigation(entry: RumPerformanceNavigationTiming | RelativePerformanceTiming) {
   return entry.loadEventEnd <= 0
 }
 
 function retrieveNavigationTiming(
   configuration: RumConfiguration,
-  callback: (timing: RumPerformanceNavigationTiming) => void
+  callback: (timing: RelativePerformanceTiming) => void
 ) {
   function sendFakeTiming() {
-    callback(
-      assign(computeRelativePerformanceTiming(), {
-        entryType: RumPerformanceEntryType.NAVIGATION as const,
-      })
-    )
+    callback(computeRelativePerformanceTiming())
   }
 
   runOnReadyState(configuration, 'complete', () => {

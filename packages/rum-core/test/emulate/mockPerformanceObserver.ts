@@ -77,7 +77,6 @@ export function mockPerformanceTiming() {
     domInteractive: 234,
     loadEventEnd: 567,
     loadEventStart: 567,
-    // navigationStart: 0,
     responseStart: 123,
     unloadEventEnd: 0,
     unloadEventStart: 0,
