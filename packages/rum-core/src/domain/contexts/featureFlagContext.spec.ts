@@ -19,6 +19,7 @@ describe('featureFlagContexts', () => {
     featureFlagContexts = startFeatureFlagContexts(lifeCycle, customerDataTracker)
 
     registerCleanupTask(() => {
+      clock.cleanup()
       featureFlagContexts.stop()
     })
   })

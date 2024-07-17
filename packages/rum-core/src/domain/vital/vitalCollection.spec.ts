@@ -36,6 +36,7 @@ describe('vitalCollection', () => {
     registerCleanupTask(() => {
       eventsSubscription.unsubscribe()
       rawRumEvents = []
+      clock.cleanup()
     })
   })
 
