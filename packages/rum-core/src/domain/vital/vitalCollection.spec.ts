@@ -1,30 +1,48 @@
 import type { Duration } from '@datadog/browser-core'
+import { mockClock, registerCleanupTask, type Clock } from '@datadog/browser-core/test'
 import { clocksNow } from '@datadog/browser-core'
-import type { TestSetupBuilder } from '../../../test'
-import { setup } from '../../../test'
-import type { RawRumVitalEvent } from '../../rawRumEvent.types'
+import { validateRumEventFormat } from '../../../test'
+import type { RawRumEvent, RawRumVitalEvent } from '../../rawRumEvent.types'
 import { VitalType, RumEventType } from '../../rawRumEvent.types'
+import type { RawRumEventCollectedData } from '../lifeCycle'
+import { LifeCycle, LifeCycleEventType } from '../lifeCycle'
+import type { PageStateHistory } from '../contexts/pageStateHistory'
 import { createVitalInstance, startVitalCollection } from './vitalCollection'
 
+const pageStateHistory: PageStateHistory = {
+  findAll: () => undefined,
+  addPageState: () => {},
+  stop: () => {},
+  wasInPageStateAt: () => false,
+  wasInPageStateDuringPeriod: () => false,
+}
+
 describe('vitalCollection', () => {
-  let setupBuilder: TestSetupBuilder
+  const lifeCycle = new LifeCycle()
+  let rawRumEvents: Array<RawRumEventCollectedData<RawRumEvent>> = []
+  let clock: Clock
   let vitalCollection: ReturnType<typeof startVitalCollection>
   let wasInPageStateDuringPeriodSpy: jasmine.Spy<jasmine.Func>
 
   beforeEach(() => {
-    setupBuilder = setup()
-      .withFakeClock()
-      .beforeBuild(({ lifeCycle, pageStateHistory }) => {
-        wasInPageStateDuringPeriodSpy = spyOn(pageStateHistory, 'wasInPageStateDuringPeriod')
-        vitalCollection = startVitalCollection(lifeCycle, pageStateHistory)
-      })
+    clock = mockClock()
+    wasInPageStateDuringPeriodSpy = spyOn(pageStateHistory, 'wasInPageStateDuringPeriod')
+    vitalCollection = startVitalCollection(lifeCycle, pageStateHistory)
+    const eventsSubscription = lifeCycle.subscribe(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, (data) => {
+      rawRumEvents.push(data)
+      validateRumEventFormat(data.rawRumEvent)
+    })
+
+    registerCleanupTask(() => {
+      eventsSubscription.unsubscribe()
+      rawRumEvents = []
+      clock.cleanup()
+    })
   })
 
   describe('custom duration', () => {
     describe('createVitalInstance', () => {
       it('should create duration vital from a vital instance', () => {
-        const { clock } = setupBuilder.build()
-
         const cbSpy = jasmine.createSpy()
 
         const vital = createVitalInstance(cbSpy, { name: 'foo' })
@@ -53,8 +71,6 @@ describe('vitalCollection', () => {
       })
 
       it('should create multiple duration vitals from createVitalInstance', () => {
-        const { clock } = setupBuilder.build()
-
         const cbSpy = jasmine.createSpy()
 
         const vital1 = createVitalInstance(cbSpy, { name: 'foo', details: 'component 1' })
@@ -108,8 +124,6 @@ describe('vitalCollection', () => {
     })
 
     it('should create a vital from start API', () => {
-      const { rawRumEvents, clock } = setupBuilder.build()
-
       const vital = vitalCollection.startDurationVital({
         name: 'foo',
         context: { foo: 'bar' },
@@ -127,8 +141,6 @@ describe('vitalCollection', () => {
     })
 
     it('should create a vital from add API', () => {
-      const { rawRumEvents } = setupBuilder.build()
-
       vitalCollection.addDurationVital({
         name: 'foo',
         type: VitalType.DURATION,
@@ -145,7 +157,6 @@ describe('vitalCollection', () => {
     })
 
     it('should discard a vital for which a frozen state happened', () => {
-      const { rawRumEvents } = setupBuilder.build()
       wasInPageStateDuringPeriodSpy.and.returnValue(true)
 
       vitalCollection.addDurationVital({
@@ -160,8 +171,6 @@ describe('vitalCollection', () => {
   })
 
   it('should collect raw rum event from duration vital', () => {
-    const { rawRumEvents } = setupBuilder.build()
-
     const vital = createVitalInstance(vitalCollection.addDurationVital, { name: 'foo' })
     vital.stop()
 
