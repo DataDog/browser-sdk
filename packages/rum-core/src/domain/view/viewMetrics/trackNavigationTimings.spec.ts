@@ -1,24 +1,23 @@
 import type { Duration } from '@datadog/browser-core'
+import { registerCleanupTask } from '@datadog/browser-core/test'
 import { RumPerformanceEntryType } from '../../../browser/performanceObservable'
-import type { TestSetupBuilder } from '../../../../test'
-import { createPerformanceEntry, setup } from '../../../../test'
-import { LifeCycleEventType } from '../../lifeCycle'
+import { createPerformanceEntry } from '../../../../test'
+import { LifeCycle, LifeCycleEventType } from '../../lifeCycle'
 import type { NavigationTimings } from './trackNavigationTimings'
 import { trackNavigationTimings } from './trackNavigationTimings'
 
 describe('trackNavigationTimings', () => {
-  let setupBuilder: TestSetupBuilder
+  const lifeCycle = new LifeCycle()
   let navigationTimingsCallback: jasmine.Spy<(timings: NavigationTimings) => void>
 
   beforeEach(() => {
     navigationTimingsCallback = jasmine.createSpy()
+    const trackNavigationTimingsResult = trackNavigationTimings(lifeCycle, navigationTimingsCallback)
 
-    setupBuilder = setup().beforeBuild(({ lifeCycle }) => trackNavigationTimings(lifeCycle, navigationTimingsCallback))
+    registerCleanupTask(trackNavigationTimingsResult.stop)
   })
 
   it('should provide navigation timing', () => {
-    const { lifeCycle } = setupBuilder.build()
-
     lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [
       createPerformanceEntry(RumPerformanceEntryType.NAVIGATION),
     ])

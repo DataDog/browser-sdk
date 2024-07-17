@@ -1,24 +1,22 @@
 import type { Context } from '@datadog/browser-core'
+import { registerCleanupTask } from '@datadog/browser-core/test'
 import type { RumEvent } from '../../rumEvent.types'
-import { LifeCycleEventType } from '../lifeCycle'
-import type { TestSetupBuilder } from '../../../test'
-import { setup } from '../../../test'
+import { LifeCycle, LifeCycleEventType } from '../lifeCycle'
 import { RumEventType } from '../../rawRumEvent.types'
 import { trackViewEventCounts } from './trackViewEventCounts'
 
 describe('trackViewEventCounts', () => {
-  let setupBuilder: TestSetupBuilder
+  const lifeCycle = new LifeCycle()
   let onChange: () => void
 
   beforeEach(() => {
     onChange = jasmine.createSpy('onChange')
 
-    setupBuilder = setup().beforeBuild(({ lifeCycle }) => trackViewEventCounts(lifeCycle, 'view-id', onChange))
+    const viewEventCountsTracking = trackViewEventCounts(lifeCycle, 'view-id', onChange)
+    registerCleanupTask(viewEventCountsTracking.stop)
   })
 
   it('should track events count', () => {
-    const { lifeCycle } = setupBuilder.build()
-
     lifeCycle.notify(LifeCycleEventType.RUM_EVENT_COLLECTED, {
       type: RumEventType.ERROR,
       view: { id: 'view-id' },
@@ -28,8 +26,6 @@ describe('trackViewEventCounts', () => {
   })
 
   it('should not count child events unrelated to the view', () => {
-    const { lifeCycle } = setupBuilder.build()
-
     lifeCycle.notify(LifeCycleEventType.RUM_EVENT_COLLECTED, {
       type: RumEventType.ERROR,
       view: { id: 'unrelated-view-id' },
