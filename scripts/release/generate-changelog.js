@@ -12,9 +12,23 @@ const { modifyFile } = require('../lib/files-utils')
 
 const CHANGELOG_FILE = 'CHANGELOG.md'
 const CONTRIBUTING_FILE = 'CONTRIBUTING.md'
-const EMOJI_PRIORITY = ['💥', '✨', '🐛', '⚗️', '♻️']
-const START_WITH_EMOJI = /^\p{Emoji_Presentation}/u
+const PUBLIC_EMOJI_PRIORITY = ['💥', '✨', '🐛', '⚡', '📝']
 
+const INTERNAL_EMOJI_PRIORITY = [
+  '👷',
+  '🔧',
+  '📦', // build conf
+  '♻️',
+  '🎨', // refactoring
+  '🧪',
+  '✅', // tests
+  '🔇',
+  '🔊', // telemetry
+  '👌',
+  '📄',
+  '⚗️', // experiment
+]
+const EMOJI_REGEX = /^\p{Emoji_Presentation}/u
 runMain(async () => {
   if (!process.env.EDITOR) {
     printError('Please configure your environment variable EDITOR')
@@ -64,6 +78,8 @@ async function getEmojisLegend() {
     }
   }
 
+  lines.push('>', '> See [Gitmoji](https://gitmoji.dev/) for a guide on the emojis used.')
+
   return lines.join('\n')
 }
 
@@ -73,30 +89,44 @@ function getChangesList() {
   const lastTagName = command`git describe --tags ${lastTagHash}`.run()
 
   const commits = command`git log ${lastTagName.trimEnd()}..HEAD --pretty=format:%s`.run()
-
   const changesWithEmojis = emojiNameToUnicode(commits)
 
-  const allowedChanges = changesWithEmojis
-    .split('\n')
-    .filter(isNotVersionEntry)
-    .filter(isNotMaintenanceEntry)
-    .sort(byEmojiPriority)
-    .map((entry) => `- ${entry}`)
-    .join('\n')
+  let changes = changesWithEmojis.split('\n').filter(isNotVersionEntry)
+  let internalChanges = []
+  let publicChanges = []
 
-  // changes with pull request links
-  return allowedChanges.replace(
-    /\(#(\d+)\)/gm,
-    (_, id) => `([#${id}](https://github.com/DataDog/browser-sdk/pull/${id}))`
-  )
+  changes.forEach((entry) => {
+    let trimmedEntry = entry.trim()
+    if (PUBLIC_EMOJI_PRIORITY.some((emoji) => trimmedEntry.startsWith(emoji))) {
+      publicChanges.push(entry)
+    } else {
+      internalChanges.push(entry)
+    }
+  })
+
+  const sortAndFormat = (entries, priority) =>
+    entries.sort((a, b) => sortByEmojiPriority(a, b, priority)).map((entry) => `- ${entry}`)
+  internalChanges = sortAndFormat(internalChanges, INTERNAL_EMOJI_PRIORITY)
+  publicChanges = sortAndFormat(publicChanges, PUBLIC_EMOJI_PRIORITY)
+
+  return `
+**Public Changes:**
+
+${publicChanges.join('\n')}
+
+**Internal Changes:**
+
+${internalChanges.join('\n')}
+`.replace(/\(#(\d+)\)/gm, (_, id) => `([#${id}](https://github.com/DataDog/browser-sdk/pull/${id}))`)
 }
 
-function isNotVersionEntry(line) {
-  return !/^v\d+\.\d+\.\d+/.test(line)
-}
-
-function isNotMaintenanceEntry(line) {
-  return !/^👷/.test(line)
+function sortByEmojiPriority(a, b, priorityList) {
+  const getFirstRelevantEmojiIndex = (text) => {
+    const matches = text.match(EMOJI_REGEX) || []
+    const emoji = matches.find((emoji) => priorityList.includes(emoji))
+    return emoji ? priorityList.indexOf(emoji) : Number.MAX_VALUE
+  }
+  return getFirstRelevantEmojiIndex(a) - getFirstRelevantEmojiIndex(b)
 }
 
 function emojiNameToUnicode(changes) {
@@ -104,22 +134,6 @@ function emojiNameToUnicode(changes) {
   return changes.replace(emojiNameRegex, (emoji) => emojiNameMap.get(emoji) || emoji)
 }
 
-function byEmojiPriority(a, b) {
-  const priorityA = computeEmojiPriority(a)
-  const priorityB = computeEmojiPriority(b)
-  if (priorityA < priorityB) {
-    return -1
-  }
-  if (priorityB > priorityA) {
-    return 1
-  }
-  return 0
-}
-
-function computeEmojiPriority(entry) {
-  const match = START_WITH_EMOJI.exec(entry)
-  if (match && EMOJI_PRIORITY.includes(match[0])) {
-    return EMOJI_PRIORITY.indexOf(match[0])
-  }
-  return Number.MAX_VALUE
+function isNotVersionEntry(line) {
+  return !/^v\d+\.\d+\.\d+/.test(line)
 }
