@@ -20,16 +20,13 @@ describe('trackNavigationTimings', () => {
 
     registerCleanupTask(() => {
       window.PerformanceObserver = originalPerformanceObserver
+      stop()
+      clock?.cleanup()
     })
   }
 
   beforeEach(() => {
     navigationTimingsCallback = jasmine.createSpy()
-  })
-
-  afterEach(() => {
-    stop()
-    clock?.cleanup()
   })
 
   it('should provide navigation timing', () => {

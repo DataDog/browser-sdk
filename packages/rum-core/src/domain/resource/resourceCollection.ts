@@ -39,7 +39,8 @@ import { retrieveInitialDocumentResourceTiming } from './retrieveInitialDocument
 export function startResourceCollection(
   lifeCycle: LifeCycle,
   configuration: RumConfiguration,
-  pageStateHistory: PageStateHistory
+  pageStateHistory: PageStateHistory,
+  retrieveInitialDocumentResourceTimingImpl = retrieveInitialDocumentResourceTiming
 ) {
   lifeCycle.subscribe(LifeCycleEventType.REQUEST_COMPLETED, (request: RequestCompleteEvent) => {
     const rawEvent = processRequest(request, configuration, pageStateHistory)
@@ -62,7 +63,7 @@ export function startResourceCollection(
     }
   })
 
-  retrieveInitialDocumentResourceTiming(configuration, (timing) => {
+  retrieveInitialDocumentResourceTimingImpl(configuration, (timing) => {
     const rawEvent = processResourceEntry(timing, configuration)
     if (rawEvent) {
       lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, rawEvent)

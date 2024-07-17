@@ -1,5 +1,5 @@
 import type { Duration } from '@datadog/browser-core'
-import { assign, forEach, noop, relativeNow, runOnReadyState } from '@datadog/browser-core'
+import { forEach, setTimeout, noop, relativeNow, runOnReadyState } from '@datadog/browser-core'
 import type { RelativePerformanceTiming } from '../../../browser/performanceUtils'
 import { computeRelativePerformanceTiming } from '../../../browser/performanceUtils'
 import type { RumPerformanceNavigationTiming } from '../../../browser/performanceObservable'
@@ -63,13 +63,8 @@ function retrieveNavigationTiming(
   configuration: RumConfiguration,
   callback: (timing: RelativePerformanceTiming) => void
 ) {
-  function sendFakeTiming() {
-    callback(computeRelativePerformanceTiming())
-  }
-
   runOnReadyState(configuration, 'complete', () => {
     // Send it a bit after the actual load event, so the "loadEventEnd" timing is accurate
-    // eslint-disable-next-line local-rules/disallow-zone-js-patched-values
-    setTimeout(sendFakeTiming)
+    setTimeout(() => callback(computeRelativePerformanceTiming()))
   })
 }
