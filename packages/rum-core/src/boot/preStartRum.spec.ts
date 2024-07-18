@@ -477,14 +477,10 @@ describe('preStartRum', () => {
     })
 
     describe('plugins', () => {
-      beforeEach(() => {
-        mockExperimentalFeatures([ExperimentalFeature.PLUGINS])
-      })
-
       it('calls the onInit method on provided plugins', () => {
         const plugin = { name: 'a', onInit: jasmine.createSpy() }
         const strategy = createPreStartStrategy({}, getCommonContextSpy, createTrackingConsentState(), doStartRumSpy)
-        const initConfiguration = { ...DEFAULT_INIT_CONFIGURATION, plugins: [plugin] }
+        const initConfiguration: RumInitConfiguration = { ...DEFAULT_INIT_CONFIGURATION, betaPlugins: [plugin] }
         strategy.init(initConfiguration, PUBLIC_API)
 
         expect(plugin.onInit).toHaveBeenCalledWith({
@@ -504,7 +500,7 @@ describe('preStartRum', () => {
         const strategy = createPreStartStrategy({}, getCommonContextSpy, createTrackingConsentState(), doStartRumSpy)
         strategy.init(
           {
-            plugins: [plugin],
+            betaPlugins: [plugin],
           } as RumInitConfiguration,
           PUBLIC_API
         )
