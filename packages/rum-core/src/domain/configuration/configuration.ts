@@ -58,7 +58,7 @@ export interface RumInitConfiguration extends InitConfiguration {
    * A list of request URLs used to inject tracing headers.
    * See [Connect RUM and Traces](https://docs.datadoghq.com/real_user_monitoring/platform/connect_rum_and_traces/?tab=browserrum) for further information.
    */
-  allowedTracingUrls?: Array<MatchOption | TracingOption> | undefined
+  allowedTracingUrls?: Array | undefined
 
   /**
    * The percentage of requests to trace: 100 for all, 0 for none.
@@ -132,7 +132,7 @@ export interface RumInitConfiguration extends InitConfiguration {
   betaPlugins?: RumPlugin[] | undefined
 }
 
-export type HybridInitConfiguration = Omit<RumInitConfiguration, 'applicationId' | 'clientToken'>
+export type HybridInitConfiguration = Omit
 
 export interface RumConfiguration extends Configuration {
   // Built from init configuration
