@@ -8,8 +8,7 @@ import { reactPlugin, ErrorBoundary } from '@datadog/browser-rum-react'
 datadogRum.init({
   applicationId: 'xxx',
   clientToken: 'xxx',
-  enableExperimentalFeatures: ['plugins'],
-  plugins: [reactPlugin({ router: true })],
+  betaPlugins: [reactPlugin({ router: true })],
 })
 
 const router = createBrowserRouter(

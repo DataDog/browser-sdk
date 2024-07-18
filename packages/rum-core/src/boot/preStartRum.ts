@@ -154,9 +154,7 @@ export function createPreStartStrategy(
         return
       }
 
-      if (isExperimentalFeatureEnabled(ExperimentalFeature.PLUGINS)) {
-        callPluginsMethod(initConfiguration.plugins, 'onInit', { initConfiguration, publicApi })
-      }
+      callPluginsMethod(initConfiguration.betaPlugins, 'onInit', { initConfiguration, publicApi })
 
       if (
         initConfiguration.remoteConfigurationId &&
