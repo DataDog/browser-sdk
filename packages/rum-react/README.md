@@ -15,7 +15,7 @@ npm install @datadog/browser-rum @datadog/browser-rum-react
 
 ### Initialization
 
-To enable the React integration, you need to pass the `reactPlugin` to the `betaPlugins` option of the `datadogRum.init` method:
+To enable the React integration, pass the `reactPlugin` to the `betaPlugins` option of the `datadogRum.init` method:
 
 ```javascript
 import { datadogRum } from '@datadog/browser-rum'
@@ -31,9 +31,9 @@ datadogRum.init({
 
 ### Error Tracking
 
-To track React component rendering errors, we offer two options:
+To track React component rendering errors, use one of the following:
 
-- A basic `ErrorBoundary` component (see [React documentation](https://react.dev/reference/react/Component#catching-rendering-errors-with-an-error-boundary)) that will catch errors and report them to Datadog.
+- A basic `ErrorBoundary` component (see [React documentation](https://react.dev/reference/react/Component#catching-rendering-errors-with-an-error-boundary)) that catches errors and reports them to Datadog.
 - A function that you can use to report errors from your own `ErrorBoundary` component.
 
 #### `ErrorBoundary` usage
@@ -77,11 +77,11 @@ class MyErrorBoundary extends React.Component {
 
 ### React Router integration
 
-`react-router` v6 allows to declare routes using the following methods:
+`react-router` v6 allows you to declare routes using the following methods:
 
-- Creating routers with [`createMemoryRouter`](https://reactrouter.com/en/main/routers/create-memory-router), [`createHashRouter`](https://reactrouter.com/en/main/routers/create-hash-router), and [`createBrowserRouter`](https://reactrouter.com/en/main/routers/create-browser-router) functions.
-- Using the [`useRoutes`](https://reactrouter.com/en/main/hooks/use-routes) hook.
-- Using the [`Routes`](https://reactrouter.com/en/main/components/routes) component.
+- Create routers with [`createMemoryRouter`](https://reactrouter.com/en/main/routers/create-memory-router), [`createHashRouter`](https://reactrouter.com/en/main/routers/create-hash-router), and [`createBrowserRouter`](https://reactrouter.com/en/main/routers/create-browser-router) functions.
+- Use the [`useRoutes`](https://reactrouter.com/en/main/hooks/use-routes) hook.
+- Use the [`Routes`](https://reactrouter.com/en/main/components/routes) component.
 
 To track route changes with the Datadog RUM Browser SDK, first initialize the `reactPlugin` with the `router: true` option, then replace those functions with the same functions from `@datadog/browser-rum-react/react-router-v6`. Example:
 
