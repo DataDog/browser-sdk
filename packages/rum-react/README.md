@@ -33,7 +33,7 @@ datadogRum.init({
 
 To track React component rendering errors, use one of the following:
 
-- A basic `ErrorBoundary` component (see [React documentation](https://react.dev/reference/react/Component#catching-rendering-errors-with-an-error-boundary)) that catches errors and reports them to Datadog.
+- A basic `ErrorBoundary` component (see [React documentation][1]) that catches errors and reports them to Datadog.
 - A function that you can use to report errors from your own `ErrorBoundary` component.
 
 #### `ErrorBoundary` usage
@@ -79,9 +79,9 @@ class MyErrorBoundary extends React.Component {
 
 `react-router` v6 allows you to declare routes using the following methods:
 
-- Create routers with [`createMemoryRouter`](https://reactrouter.com/en/main/routers/create-memory-router), [`createHashRouter`](https://reactrouter.com/en/main/routers/create-hash-router), and [`createBrowserRouter`](https://reactrouter.com/en/main/routers/create-browser-router) functions.
-- Use the [`useRoutes`](https://reactrouter.com/en/main/hooks/use-routes) hook.
-- Use the [`Routes`](https://reactrouter.com/en/main/components/routes) component.
+- Create routers with [`createMemoryRouter`][2], [`createHashRouter`][3], and [`createBrowserRouter`][4] functions.
+- Use the [`useRoutes`][5] hook.
+- Use the [`Routes`][6] component.
 
 To track route changes with the Datadog RUM Browser SDK, first initialize the `reactPlugin` with the `router: true` option, then replace those functions with the same functions from `@datadog/browser-rum-react/react-router-v6`. Example:
 
@@ -107,3 +107,10 @@ const router = createBrowserRouter([
 
 ReactDOM.createRoot(document.getElementById('root')).render(<RouterProvider router={router} />)
 ```
+
+[1]: https://react.dev/reference/react/Component#catching-rendering-errors-with-an-error-boundary
+[2]: https://reactrouter.com/en/main/routers/create-memory-router
+[3]: https://reactrouter.com/en/main/routers/create-hash-router
+[4]: https://reactrouter.com/en/main/routers/create-browser-router
+[5]: https://reactrouter.com/en/main/hooks/use-routes
+[6]: https://reactrouter.com/en/main/components/routes
