@@ -1,12 +1,10 @@
 const path = require('path')
-const fs = require('fs')
 const webpack = require('webpack')
 const TsconfigPathsPlugin = require('tsconfig-paths-webpack-plugin')
 const TerserPlugin = require('terser-webpack-plugin')
 const { buildEnvKeys, getBuildEnvValue } = require('./scripts/lib/build-env')
 
 const tsconfigPath = path.join(__dirname, 'tsconfig.webpack.json')
-// const cacheFileName = path.join(__dirname, 'cache.json');
 const TERSER_CACHE = {};
 
 module.exports = ({ entry, mode, filename, types, keepBuildEnvVariables, plugins }) => ({
