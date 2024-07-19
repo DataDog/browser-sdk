@@ -124,8 +124,8 @@ function injectHeadersIfTracingAllowed(
     return
   }
 
-  context.traceId = new TraceIdentifier()
-  context.spanId = new TraceIdentifier()
+  context.traceId = traceIdentifier()
+  context.spanId = traceIdentifier()
 
   inject(makeTracingHeaders(context.traceId, context.spanId, context.traceSampled, tracingOption.propagatorTypes))
 }
@@ -193,17 +193,23 @@ function makeTracingHeaders(
 }
 
 /* eslint-disable no-bitwise */
-export class TraceIdentifier {
-  private buffer: Uint8Array = new Uint8Array(8)
+export interface TraceIdentifier {
+  toDecimalString: () => string
+  toPaddedHexadecimalString: () => string
+}
 
-  constructor() {
-    getCrypto().getRandomValues(this.buffer)
-    this.buffer[0] = this.buffer[0] & 0x7f // force 63-bit
+export function traceIdentifier(): TraceIdentifier {
+  const buffer: Uint8Array = new Uint8Array(8)
+  getCrypto().getRandomValues(buffer)
+  buffer[0] = buffer[0] & 0x7f // force 63-bit
+
+  function readInt32(offset: number) {
+    return buffer[offset] * 16777216 + (buffer[offset + 1] << 16) + (buffer[offset + 2] << 8) + buffer[offset + 3]
   }
 
-  toString(radix: number) {
-    let high = this.readInt32(0)
-    let low = this.readInt32(4)
+  function toString(radix: number) {
+    let high = readInt32(0)
+    let low = readInt32(4)
     let str = ''
 
     do {
@@ -219,25 +225,21 @@ export class TraceIdentifier {
   /**
    * Format used everywhere except the trace intake
    */
-  toDecimalString() {
-    return this.toString(10)
+  function toDecimalString() {
+    return toString(10)
   }
 
   /**
    * Format used by OTel headers
    */
-  toPaddedHexadecimalString() {
-    const traceId = this.toString(16)
+  function toPaddedHexadecimalString() {
+    const traceId = toString(16)
     return Array(17 - traceId.length).join('0') + traceId
   }
 
-  private readInt32(offset: number) {
-    return (
-      this.buffer[offset] * 16777216 +
-      (this.buffer[offset + 1] << 16) +
-      (this.buffer[offset + 2] << 8) +
-      this.buffer[offset + 3]
-    )
+  return {
+    toDecimalString,
+    toPaddedHexadecimalString,
   }
 }
 /* eslint-enable no-bitwise */
