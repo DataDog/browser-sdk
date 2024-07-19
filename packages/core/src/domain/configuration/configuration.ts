@@ -205,17 +205,17 @@ function isDatadogSite(site: string) {
 
 export function validateAndBuildConfiguration(initConfiguration: InitConfiguration): Configuration | undefined {
   if (!initConfiguration || !initConfiguration.clientToken) {
-    display.error('Client Token is not configured, we will not send any data.')
+    display.error('Client Token is not set, no data will be sent.')
     return
   }
 
   if (initConfiguration.sessionSampleRate !== undefined && !isPercentage(initConfiguration.sessionSampleRate)) {
-    display.error('Session Sample Rate should be a number between 0 and 100')
+    display.error('Session Sample Rate must be a number between 0 and 100')
     return
   }
 
   if (initConfiguration.telemetrySampleRate !== undefined && !isPercentage(initConfiguration.telemetrySampleRate)) {
-    display.error('Telemetry Sample Rate should be a number between 0 and 100')
+    display.error('Telemetry Sample Rate must be a number between 0 and 100')
     return
   }
 
@@ -223,7 +223,7 @@ export function validateAndBuildConfiguration(initConfiguration: InitConfigurati
     initConfiguration.telemetryConfigurationSampleRate !== undefined &&
     !isPercentage(initConfiguration.telemetryConfigurationSampleRate)
   ) {
-    display.error('Telemetry Configuration Sample Rate should be a number between 0 and 100')
+    display.error('Telemetry Configuration Sample Rate must be a number between 0 and 100')
     return
   }
 
@@ -231,7 +231,7 @@ export function validateAndBuildConfiguration(initConfiguration: InitConfigurati
     initConfiguration.telemetryUsageSampleRate !== undefined &&
     !isPercentage(initConfiguration.telemetryUsageSampleRate)
   ) {
-    display.error('Telemetry Usage Sample Rate should be a number between 0 and 100')
+    display.error('Telemetry Usage Sample Rate must be a number between 0 and 100')
     return
   }
 
