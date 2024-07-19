@@ -5,7 +5,6 @@ const TerserPlugin = require('terser-webpack-plugin')
 const { buildEnvKeys, getBuildEnvValue } = require('./scripts/lib/build-env')
 
 const tsconfigPath = path.join(__dirname, 'tsconfig.webpack.json')
-
 module.exports = ({ entry, mode, filename, types, keepBuildEnvVariables, plugins }) => ({
   entry,
   mode,
@@ -49,9 +48,9 @@ module.exports = ({ entry, mode, filename, types, keepBuildEnvVariables, plugins
         extractComments: false,
         terserOptions: {
           mangle: {
-            properties: true,
-            keep_fnames: true,
-            keep_classnames: true,
+            properties: {
+              reserved: ['version', 'onReady', 'init', 'setTrackingConsent', 'setGlobalContext', 'getGlobalContext', 'setGlobalContextProperty', 'removeGlobalContextProperty', 'clearGlobalContext', 'getInternalContext', 'getInitConfiguration', 'addAction', 'addError', 'addTiming', 'setUser', 'getUser', 'setUserProperty', 'removeUserProperty', 'clearUser', 'startView', 'stopSession', 'addFeatureFlagEvaluation', 'getSessionReplayLink', 'startSessionReplayRecording', 'stopSessionReplayRecording', 'startDurationVital', 'addDurationVital', 'stopDurationVital'],
+            },
           },
           compress: {
             drop_console: true,
