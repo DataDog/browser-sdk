@@ -49,9 +49,10 @@ module.exports = ({ entry, mode, filename, types, keepBuildEnvVariables, plugins
         terserOptions: {
           mangle: {
             properties: {
-              reserved: ['version', 'onReady', 'init', 'setTrackingConsent', 'setGlobalContext', 'getGlobalContext', 'setGlobalContextProperty', 'removeGlobalContextProperty', 'clearGlobalContext', 'getInternalContext', 'getInitConfiguration', 'addAction', 'addError', 'addTiming', 'setUser', 'getUser', 'setUserProperty', 'removeUserProperty', 'clearUser', 'startView', 'stopSession', 'addFeatureFlagEvaluation', 'getSessionReplayLink', 'startSessionReplayRecording', 'stopSessionReplayRecording', 'startDurationVital', 'addDurationVital', 'stopDurationVital'],
+              reserved: ['version', 'onReady', 'init', 'setTrackingConsent', 'setGlobalContext', 'getGlobalContext', 'setGlobalContextProperty', 'removeGlobalContextProperty', 'clearGlobalContext', 'getInternalContext', 'getInitConfiguration', 'addAction', 'addError', 'addTiming', 'setUser', 'getUser', 'setUserProperty', 'removeUserProperty', 'clearUser', 'startView', 'stopSession', 'addFeatureFlagEvaluation', 'getSessionReplayLink', 'startSessionReplayRecording', 'stopSessionReplayRecording', 'startDurationVital', 'addDurationVital', 'stopDurationVital','createLogger', 'getLogger', 'logger'],
             },
           },
+          nameCache: {},
           compress: {
             drop_console: true,
             unsafe_math: true,
