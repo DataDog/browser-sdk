@@ -33,7 +33,7 @@ datadogRum.init({
 
 To track React component rendering errors, use one of the following:
 
-- A basic `ErrorBoundary` component (see [React documentation][1]) that catches errors and reports them to Datadog.
+- An `ErrorBoundary` component (see [React documentation][1]) that catches errors and reports them to Datadog.
 - A function that you can use to report errors from your own `ErrorBoundary` component.
 
 #### `ErrorBoundary` usage
@@ -79,11 +79,11 @@ class MyErrorBoundary extends React.Component {
 
 `react-router` v6 allows you to declare routes using the following methods:
 
-- Create routers with [`createMemoryRouter`][2], [`createHashRouter`][3], and [`createBrowserRouter`][4] functions.
+- Create routers with [`createMemoryRouter`][2], [`createHashRouter`][3], or [`createBrowserRouter`][4] functions.
 - Use the [`useRoutes`][5] hook.
 - Use the [`Routes`][6] component.
 
-To track route changes with the Datadog RUM Browser SDK, first initialize the `reactPlugin` with the `router: true` option, then replace those functions with the same functions from `@datadog/browser-rum-react/react-router-v6`. Example:
+To track route changes with the Datadog RUM Browser SDK, first initialize the `reactPlugin` with the `router: true` option, then replace those functions with their equivalent from `@datadog/browser-rum-react/react-router-v6`. Example:
 
 ```javascript
 import { RouterProvider } from 'react-router-dom'
