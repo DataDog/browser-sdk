@@ -3369,100 +3369,6 @@ function deflateEnd(strm) {
   strm.state = null
   return status === BUSY_STATE ? err(strm, Z_DATA_ERROR) : Z_OK
 }
-/* =========================================================================
- * Initializes the compression dictionary from the given byte
- * sequence without producing any compressed output.
- */
-
-function deflateSetDictionary(strm, dictionary) {
-  var dictLength = dictionary.length
-
-  if (
-    !strm ||
-    /* == Z_NULL */
-    !strm.state
-    /* == Z_NULL */
-  ) {
-    return Z_STREAM_ERROR
-  }
-
-  var s = strm.state
-  var wrap = s.wrap
-
-  if (wrap === 2 || (wrap === 1 && s.status !== INIT_STATE) || s.lookahead) {
-    return Z_STREAM_ERROR
-  }
-  /* when using zlib wrappers, compute Adler-32 for provided dictionary */
-
-  if (wrap === 1) {
-    /* adler32(strm->adler, dictionary, dictLength); */
-    strm.adler = adler32_1(strm.adler, dictionary, dictLength, 0)
-  }
-
-  s.wrap = 0
-  /* avoid computing Adler-32 in read_buf */
-
-  /* if dictionary would fill window, just replace the history */
-
-  if (dictLength >= s.w_size) {
-    if (wrap === 0) {
-      /* already empty otherwise */
-
-      /** * CLEAR_HASH(s); ** */
-      zero(s.head) // Fill with NIL (= 0);
-
-      s.strstart = 0
-      s.block_start = 0
-      s.insert = 0
-    }
-    /* use the tail */
-    // dictionary = dictionary.slice(dictLength - s.w_size);
-
-    var tmpDict = new Uint8Array(s.w_size)
-    tmpDict.set(dictionary.subarray(dictLength - s.w_size, dictLength), 0)
-    dictionary = tmpDict
-    dictLength = s.w_size
-  }
-  /* insert dictionary into window and hash */
-
-  var avail = strm.avail_in
-  var next = strm.next_in
-  var input = strm.input
-  strm.avail_in = dictLength
-  strm.next_in = 0
-  strm.input = dictionary
-  fill_window(s)
-
-  while (s.lookahead >= MIN_MATCH$1) {
-    var str = s.strstart
-    var n = s.lookahead - (MIN_MATCH$1 - 1)
-
-    do {
-      /* UPDATE_HASH(s, s->ins_h, s->window[str + MIN_MATCH-1]); */
-      s.ins_h = HASH(s, s.ins_h, s.window[str + MIN_MATCH$1 - 1])
-      s.prev[str & s.w_mask] = s.head[s.ins_h]
-      s.head[s.ins_h] = str
-      str++
-    } while (--n)
-
-    s.strstart = str
-    s.lookahead = MIN_MATCH$1 - 1
-    fill_window(s)
-  }
-
-  s.strstart += s.lookahead
-  s.block_start = s.strstart
-  s.insert = s.lookahead
-  s.lookahead = 0
-  s.match_length = s.prev_length = MIN_MATCH$1 - 1
-  s.match_available = 0
-  strm.next_in = next
-  strm.input = input
-  strm.avail_in = avail
-  s.wrap = wrap
-  return Z_OK
-}
-
 /* Not implemented
   module.exports.deflateBound = deflateBound;
   module.exports.deflateCopy = deflateCopy;
@@ -3619,7 +3525,6 @@ var toString = Object.prototype.toString
  *
  * - `memLevel`
  * - `strategy`
- * - `dictionary`
  *
  * [http://zlib.net/manual.html#Advanced](http://zlib.net/manual.html#Advanced)
  * for more information on these.
@@ -3684,25 +3589,8 @@ export function Deflate() {
   if (opt.header) {
     deflateSetHeader(this.strm, opt.header)
   }
-
-  if (opt.dictionary) {
-    var dict // Convert data if needed
-
-    if (toString.call(opt.dictionary) === '[object ArrayBuffer]') {
-      dict = new Uint8Array(opt.dictionary)
-    } else {
-      dict = opt.dictionary
-    }
-
-    status = deflateSetDictionary(this.strm, dict)
-
-    if (status !== Z_OK) {
-      throw new Error(messages[status])
-    }
-
-    this._dict_set = true
-  }
 }
+
 /**
  * Deflate#push(data[, flush_mode]) -> Boolean
  * - data (Uint8Array|ArrayBuffer|String): input data. Strings will be
