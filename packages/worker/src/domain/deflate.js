@@ -1559,61 +1559,6 @@ function adler32(adler, buf, len, pos) {
 
 var adler32_1 = adler32
 
-// So write code to minimize size - no pregenerated tables
-// and array tools dependencies.
-// (C) 1995-2013 Jean-loup Gailly and Mark Adler
-// (C) 2014-2017 Vitaly Puzrin and Andrey Tupitsin
-//
-// This software is provided 'as-is', without any express or implied
-// warranty. In no event will the authors be held liable for any damages
-// arising from the use of this software.
-//
-// Permission is granted to anyone to use this software for any purpose,
-// including commercial applications, and to alter it and redistribute it
-// freely, subject to the following restrictions:
-//
-// 1. The origin of this software must not be misrepresented; you must not
-//   claim that you wrote the original software. If you use this software
-//   in a product, an acknowledgment in the product documentation would be
-//   appreciated but is not required.
-// 2. Altered source versions must be plainly marked as such, and must not be
-//   misrepresented as being the original software.
-// 3. This notice may not be removed or altered from any source distribution.
-// Use ordinary array, since untyped makes no boost here
-
-function makeTable() {
-  var c
-  var table = []
-
-  for (var n = 0; n < 256; n++) {
-    c = n
-
-    for (var k = 0; k < 8; k++) {
-      c = c & 1 ? 0xedb88320 ^ (c >>> 1) : c >>> 1
-    }
-
-    table[n] = c
-  }
-
-  return table
-} // Create table on load. Just 255 signed longs. Not a problem.
-
-var crcTable = new Uint32Array(makeTable())
-
-function crc32(crc, buf, len, pos) {
-  var t = crcTable
-  var end = pos + len
-  crc ^= -1
-
-  for (var i = pos; i < end; i++) {
-    crc = (crc >>> 8) ^ t[(crc ^ buf[i]) & 0xff]
-  }
-
-  return crc ^ -1 // >>> 0;
-}
-
-var crc32_1 = crc32
-
 // (C) 2014-2017 Vitaly Puzrin and Andrey Tupitsin
 //
 // This software is provided 'as-is', without any express or implied
@@ -1787,8 +1732,6 @@ var BS_FINISH_STARTED = 3
 var BS_FINISH_DONE = 4
 /* finish done, accept no more input or output */
 
-var OS_CODE = 0x03 // Unix :) . Don't detect, use this default.
-
 function err(strm, errorCode) {
   strm.msg = messages[errorCode]
   return errorCode
@@ -1844,9 +1787,6 @@ function flush_block_only(s, last) {
   flush_pending(s.strm)
 }
 
-function put_byte(s, b) {
-  s.pending_buf[s.pending++] = b
-}
 /* =========================================================================
  * Put a short in the pending buffer. The 16-bit value is put in MSB order.
  * IN assertion: the stream state is correct and there is enough room in
@@ -1884,8 +1824,6 @@ function read_buf(strm, buf, start, size) {
 
   if (strm.state.wrap === 1) {
     strm.adler = adler32_1(strm.adler, buf, len, start)
-  } else if (strm.state.wrap === 2) {
-    strm.adler = crc32_1(strm.adler, buf, len, start)
   }
 
   strm.next_in += len
@@ -2629,7 +2567,7 @@ function DeflateState() {
   this.pending = 0
   /* nb of bytes in the pending buffer */
 
-  this.wrap = 0
+  this.wrap = 1
   /* bit 0 true for zlib, bit 1 true for gzip */
 
   this.gzindex = 0
@@ -2876,11 +2814,8 @@ function deflateResetKeep(strm) {
     /* was made negative by deflate(..., Z_FINISH); */
   }
 
-  s.status = s.wrap ? INIT_STATE : BUSY_STATE
-  strm.adler =
-    s.wrap === 2
-      ? 0 // crc32(0, Z_NULL, 0)
-      : 1 // adler32(0, Z_NULL, 0)
+  s.status = INIT_STATE
+  strm.adler = 1 // adler32(0, Z_NULL, 0)
 
   s.last_flush = Z_NO_FLUSH
 
@@ -2905,8 +2840,6 @@ function deflateInit2(strm, method, memLevel, strategy) {
     return Z_STREAM_ERROR
   }
 
-  var wrap = 1
-
   if (memLevel < 1 || memLevel > MAX_MEM_LEVEL || method !== Z_DEFLATED || strategy < 0 || strategy > Z_FIXED) {
     return err(strm, Z_STREAM_ERROR)
   }
@@ -2916,7 +2849,6 @@ function deflateInit2(strm, method, memLevel, strategy) {
   var s = new DeflateState()
   strm.state = s
   s.strm = strm
-  s.wrap = wrap
   s.w_bits = 15
   s.w_size = 1 << s.w_bits
   s.w_mask = s.w_size - 1
@@ -2967,81 +2899,32 @@ function deflate(strm, flush) {
   /* Write the header */
 
   if (s.status === INIT_STATE) {
-    if (s.wrap === 2) {
-      // GZIP header
-      strm.adler = 0 // crc32(0L, Z_NULL, 0);
+    var header = (Z_DEFLATED + ((s.w_bits - 8) << 4)) << 8
+    var level_flags = -1
 
-      put_byte(s, 31)
-      put_byte(s, 139)
-      put_byte(s, 8)
-
-      if (!s.gzhead) {
-        // s->gzhead == Z_NULL
-        put_byte(s, 0)
-        put_byte(s, 0)
-        put_byte(s, 0)
-        put_byte(s, 0)
-        put_byte(s, 0)
-        put_byte(s, s.strategy >= Z_HUFFMAN_ONLY ? 4 : 0)
-        put_byte(s, OS_CODE)
-        s.status = BUSY_STATE
-      } else {
-        put_byte(
-          s,
-          (s.gzhead.text ? 1 : 0) +
-            (s.gzhead.hcrc ? 2 : 0) +
-            (!s.gzhead.extra ? 0 : 4) +
-            (!s.gzhead.name ? 0 : 8) +
-            (!s.gzhead.comment ? 0 : 16)
-        )
-        put_byte(s, s.gzhead.time & 0xff)
-        put_byte(s, (s.gzhead.time >> 8) & 0xff)
-        put_byte(s, (s.gzhead.time >> 16) & 0xff)
-        put_byte(s, (s.gzhead.time >> 24) & 0xff)
-        put_byte(s, s.strategy >= Z_HUFFMAN_ONLY ? 4 : 0)
-        put_byte(s, s.gzhead.os & 0xff)
-
-        if (s.gzhead.extra && s.gzhead.extra.length) {
-          put_byte(s, s.gzhead.extra.length & 0xff)
-          put_byte(s, (s.gzhead.extra.length >> 8) & 0xff)
-        }
-
-        if (s.gzhead.hcrc) {
-          strm.adler = crc32_1(strm.adler, s.pending_buf, s.pending, 0)
-        }
-
-        s.gzindex = 0
-        s.status = EXTRA_STATE
-      }
-    } // DEFLATE header
-    else {
-      var header = (Z_DEFLATED + ((s.w_bits - 8) << 4)) << 8
-      var level_flags = -1
-
-      if (s.strategy >= Z_HUFFMAN_ONLY) {
-        level_flags = 0
-      } else {
-        level_flags = 2
-      }
-
-      header |= level_flags << 6
-
-      if (s.strstart !== 0) {
-        header |= PRESET_DICT
-      }
-
-      header += 31 - (header % 31)
-      s.status = BUSY_STATE
-      putShortMSB(s, header)
-      /* Save the adler32 of the preset dictionary: */
-
-      if (s.strstart !== 0) {
-        putShortMSB(s, strm.adler >>> 16)
-        putShortMSB(s, strm.adler & 0xffff)
-      }
-
-      strm.adler = 1 // adler32(0L, Z_NULL, 0);
+    if (s.strategy >= Z_HUFFMAN_ONLY) {
+      level_flags = 0
+    } else {
+      level_flags = 2
     }
+
+    header |= level_flags << 6
+
+    if (s.strstart !== 0) {
+      header |= PRESET_DICT
+    }
+
+    header += 31 - (header % 31)
+    s.status = BUSY_STATE
+    putShortMSB(s, header)
+    /* Save the adler32 of the preset dictionary: */
+
+    if (s.strstart !== 0) {
+      putShortMSB(s, strm.adler >>> 16)
+      putShortMSB(s, strm.adler & 0xffff)
+    }
+
+    strm.adler = 1 // adler32(0L, Z_NULL, 0);
   } // #ifdef GZIP
 
   if (s.status === EXTRA_STATE) {
@@ -3163,19 +3046,8 @@ function deflate(strm, flush) {
   }
   /* Write the trailer */
 
-  if (s.wrap === 2) {
-    put_byte(s, strm.adler & 0xff)
-    put_byte(s, (strm.adler >> 8) & 0xff)
-    put_byte(s, (strm.adler >> 16) & 0xff)
-    put_byte(s, (strm.adler >> 24) & 0xff)
-    put_byte(s, strm.total_in & 0xff)
-    put_byte(s, (strm.total_in >> 8) & 0xff)
-    put_byte(s, (strm.total_in >> 16) & 0xff)
-    put_byte(s, (strm.total_in >> 24) & 0xff)
-  } else {
-    putShortMSB(s, strm.adler >>> 16)
-    putShortMSB(s, strm.adler & 0xffff)
-  }
+  putShortMSB(s, strm.adler >>> 16)
+  putShortMSB(s, strm.adler & 0xffff)
 
   flush_pending(strm)
   /* If avail_out is zero, the application will call deflate again
@@ -3380,8 +3252,6 @@ var toString = Object.prototype.toString
  * Additional options, for internal needs:
  *
  * * `chunkSize` - size of generated data chunks (16K by default)
- * * `raw` (Boolean) - do raw deflate
- * * `gzip` (Boolean) - create gzip wrapper
  * ** `text` (Boolean) - true if compressed data believed to be text
  * ** `time` (Number) - modification time, unix timestamp
  * ** `os` (Number) - operation system code
