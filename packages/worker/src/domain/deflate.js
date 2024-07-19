@@ -1374,42 +1374,36 @@ function _tr_flush_block(
 
   /* Build the Huffman trees unless a stored block is forced */
 
-  if (s.level > 0) {
-    /* Check if the file is binary or text */
-    if (s.strm.data_type === Z_UNKNOWN) {
-      s.strm.data_type = detect_data_type(s)
-    }
-    /* Construct the literal and distance trees */
+  /* Check if the file is binary or text */
+  if (s.strm.data_type === Z_UNKNOWN) {
+    s.strm.data_type = detect_data_type(s)
+  }
+  /* Construct the literal and distance trees */
 
-    build_tree(s, s.l_desc) // Tracev((stderr, "\nlit data: dyn %ld, stat %ld", s->opt_len,
-    //        s->static_len));
+  build_tree(s, s.l_desc) // Tracev((stderr, "\nlit data: dyn %ld, stat %ld", s->opt_len,
+  //        s->static_len));
 
-    build_tree(s, s.d_desc) // Tracev((stderr, "\ndist data: dyn %ld, stat %ld", s->opt_len,
-    //        s->static_len));
+  build_tree(s, s.d_desc) // Tracev((stderr, "\ndist data: dyn %ld, stat %ld", s->opt_len,
+  //        s->static_len));
 
-    /* At this point, opt_len and static_len are the total bit lengths of
-     * the compressed block data, excluding the tree representations.
-     */
+  /* At this point, opt_len and static_len are the total bit lengths of
+   * the compressed block data, excluding the tree representations.
+   */
 
-    /* Build the bit length tree for the above two trees, and get the index
-     * in bl_order of the last bit length code to send.
-     */
+  /* Build the bit length tree for the above two trees, and get the index
+   * in bl_order of the last bit length code to send.
+   */
 
-    max_blindex = build_bl_tree(s)
-    /* Determine the best encoding. Compute the block lengths in bytes. */
+  max_blindex = build_bl_tree(s)
+  /* Determine the best encoding. Compute the block lengths in bytes. */
 
-    opt_lenb = (s.opt_len + 3 + 7) >>> 3
-    static_lenb = (s.static_len + 3 + 7) >>> 3 // Tracev((stderr, "\nopt %lu(%lu) stat %lu(%lu) stored %lu lit %u ",
-    //        opt_lenb, s->opt_len, static_lenb, s->static_len, stored_len,
-    //        s->last_lit));
+  opt_lenb = (s.opt_len + 3 + 7) >>> 3
+  static_lenb = (s.static_len + 3 + 7) >>> 3 // Tracev((stderr, "\nopt %lu(%lu) stat %lu(%lu) stored %lu lit %u ",
+  //        opt_lenb, s->opt_len, static_lenb, s->static_len, stored_len,
+  //        s->last_lit));
 
-    if (static_lenb <= opt_lenb) {
-      opt_lenb = static_lenb
-    }
-  } else {
-    // Assert(buf != (char*)0, "lost buf");
-    opt_lenb = static_lenb = stored_len + 5
-    /* force a stored block */
+  if (static_lenb <= opt_lenb) {
+    opt_lenb = static_lenb
   }
 
   if (stored_len + 4 <= opt_lenb && buf !== -1) {
@@ -1704,7 +1698,6 @@ var Z_BUF_ERROR = -5
 // Z_VERSION_ERROR: -6,
 
 /* compression levels */
-var Z_DEFAULT_COMPRESSION = -1
 var Z_FILTERED = 1
 var Z_HUFFMAN_ONLY = 2
 var Z_RLE = 3
@@ -2849,29 +2842,8 @@ function Config(good_length, max_lazy, nice_length, max_chain, func) {
   this.func = func
 }
 
-var configuration_table = [
-  /*      good lazy nice chain */
-  new Config(0, 0, 0, 0, deflate_stored),
-  /* 0 store only */
-  new Config(4, 4, 8, 4, deflate_fast),
-  /* 1 max speed, no lazy matches */
-  new Config(4, 5, 16, 8, deflate_fast),
-  /* 2 */
-  new Config(4, 6, 32, 32, deflate_fast),
-  /* 3 */
-  new Config(4, 4, 16, 16, deflate_slow),
-  /* 4 lazy matches */
-  new Config(8, 16, 32, 32, deflate_slow),
-  /* 5 */
-  new Config(8, 16, 128, 128, deflate_slow),
-  /* 6 */
-  new Config(8, 32, 128, 256, deflate_slow),
-  /* 7 */
-  new Config(32, 128, 258, 1024, deflate_slow),
-  /* 8 */
-  new Config(32, 258, 258, 4096, deflate_slow),
-  /* 9 max compression */
-]
+var configuration = new Config(8, 16, 128, 128, deflate_slow)
+
 /* ===========================================================================
  * Initialize the "longest match" routines for a new zlib stream
  */
@@ -2885,10 +2857,10 @@ function lm_init(s) {
   /* Set the default configuration parameters:
    */
 
-  s.max_lazy_match = configuration_table[s.level].max_lazy
-  s.good_match = configuration_table[s.level].good_length
-  s.nice_match = configuration_table[s.level].nice_length
-  s.max_chain_length = configuration_table[s.level].max_chain
+  s.max_lazy_match = configuration.max_lazy
+  s.good_match = configuration.good_length
+  s.nice_match = configuration.nice_length
+  s.max_chain_length = configuration.max_chain
   s.strstart = 0
   s.block_start = 0
   s.lookahead = 0
@@ -3028,9 +3000,6 @@ function DeflateState() {
    * greater than this length. This saves time but degrades compression.
    * max_insert_length is used only for compression levels <= 3.
    */
-
-  this.level = 0
-  /* compression level (1..9) */
 
   this.strategy = 0
   /* favor or force Huffman coding */
@@ -3206,17 +3175,13 @@ function deflateSetHeader(strm, head) {
   return Z_OK
 }
 
-function deflateInit2(strm, level, method, windowBits, memLevel, strategy) {
+function deflateInit2(strm, method, windowBits, memLevel, strategy) {
   if (!strm) {
     // === Z_NULL
     return Z_STREAM_ERROR
   }
 
   var wrap = 1
-
-  if (level === Z_DEFAULT_COMPRESSION) {
-    level = 6
-  }
 
   if (windowBits < 0) {
     /* suppress zlib wrapper */
@@ -3235,8 +3200,6 @@ function deflateInit2(strm, level, method, windowBits, memLevel, strategy) {
     method !== Z_DEFLATED ||
     windowBits < 8 ||
     windowBits > 15 ||
-    level < 0 ||
-    level > 9 ||
     strategy < 0 ||
     strategy > Z_FIXED
   ) {
@@ -3279,7 +3242,6 @@ function deflateInit2(strm, level, method, windowBits, memLevel, strategy) {
   s.d_buf = 1 * s.lit_bufsize // s->l_buf = s->pending_buf + (1+sizeof(ush))*s->lit_bufsize;
 
   s.l_buf = (1 + 2) * s.lit_bufsize
-  s.level = level
   s.strategy = strategy
   s.method = method
   return deflateReset(strm)
@@ -3322,7 +3284,7 @@ function deflate(strm, flush) {
         put_byte(s, 0)
         put_byte(s, 0)
         put_byte(s, 0)
-        put_byte(s, s.level === 9 ? 2 : s.strategy >= Z_HUFFMAN_ONLY || s.level < 2 ? 4 : 0)
+        put_byte(s, s.strategy >= Z_HUFFMAN_ONLY ? 4 : 0)
         put_byte(s, OS_CODE)
         s.status = BUSY_STATE
       } else {
@@ -3338,7 +3300,7 @@ function deflate(strm, flush) {
         put_byte(s, (s.gzhead.time >> 8) & 0xff)
         put_byte(s, (s.gzhead.time >> 16) & 0xff)
         put_byte(s, (s.gzhead.time >> 24) & 0xff)
-        put_byte(s, s.level === 9 ? 2 : s.strategy >= Z_HUFFMAN_ONLY || s.level < 2 ? 4 : 0)
+        put_byte(s, s.strategy >= Z_HUFFMAN_ONLY ? 4 : 0)
         put_byte(s, s.gzhead.os & 0xff)
 
         if (s.gzhead.extra && s.gzhead.extra.length) {
@@ -3358,14 +3320,10 @@ function deflate(strm, flush) {
       var header = (Z_DEFLATED + ((s.w_bits - 8) << 4)) << 8
       var level_flags = -1
 
-      if (s.strategy >= Z_HUFFMAN_ONLY || s.level < 2) {
+      if (s.strategy >= Z_HUFFMAN_ONLY) {
         level_flags = 0
-      } else if (s.level < 6) {
-        level_flags = 1
-      } else if (s.level === 6) {
-        level_flags = 2
       } else {
-        level_flags = 3
+        level_flags = 2
       }
 
       header |= level_flags << 6
@@ -3572,7 +3530,7 @@ function deflate(strm, flush) {
         ? deflate_huff(s, flush)
         : s.strategy === Z_RLE
           ? deflate_rle(s, flush)
-          : configuration_table[s.level].func(s, flush)
+          : configuration.func(s, flush)
 
     if (bstate === BS_FINISH_STARTED || bstate === BS_FINISH_DONE) {
       s.status = FINISH_STATE
@@ -3941,7 +3899,6 @@ var toString = Object.prototype.toString
  * Creates new deflator instance with specified params. Throws exception
  * on bad params. Supported options:
  *
- * - `level`
  * - `windowBits`
  * - `memLevel`
  * - `strategy`
@@ -3971,7 +3928,7 @@ var toString = Object.prototype.toString
  *   , chunk1 = new Uint8Array([1,2,3,4,5,6,7,8,9])
  *   , chunk2 = new Uint8Array([10,11,12,13,14,15,16,17,18,19]);
  *
- * const deflate = new pako.Deflate({ level: 3});
+ * const deflate = new pako.Deflate();
  *
  * deflate.push(chunk1, false);
  * deflate.push(chunk2, true);  // true -> last chunk
@@ -3984,7 +3941,6 @@ var toString = Object.prototype.toString
 
 export function Deflate() {
   this.options = {
-    level: Z_DEFAULT_COMPRESSION,
     method: Z_DEFLATED,
     chunkSize: 16384,
     windowBits: 15,
@@ -4009,7 +3965,7 @@ export function Deflate() {
 
   this.strm = new zstream()
   this.strm.avail_out = 0
-  var status = deflateInit2(this.strm, opt.level, opt.method, opt.windowBits, opt.memLevel, opt.strategy)
+  var status = deflateInit2(this.strm, opt.method, opt.windowBits, opt.memLevel, opt.strategy)
 
   if (status !== Z_OK) {
     throw new Error(messages[status])
