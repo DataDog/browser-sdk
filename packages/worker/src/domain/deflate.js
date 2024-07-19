@@ -2915,7 +2915,7 @@ function deflateSetHeader(strm, head) {
   return Z_OK
 }
 
-function deflateInit2(strm, method, windowBits, memLevel, strategy) {
+function deflateInit2(strm, method, memLevel, strategy) {
   if (!strm) {
     // === Z_NULL
     return Z_STREAM_ERROR
@@ -2923,32 +2923,10 @@ function deflateInit2(strm, method, windowBits, memLevel, strategy) {
 
   var wrap = 1
 
-  if (windowBits < 0) {
-    /* suppress zlib wrapper */
-    wrap = 0
-    windowBits = -windowBits
-  } else if (windowBits > 15) {
-    wrap = 2
-    /* write gzip wrapper instead */
-
-    windowBits -= 16
-  }
-
-  if (
-    memLevel < 1 ||
-    memLevel > MAX_MEM_LEVEL ||
-    method !== Z_DEFLATED ||
-    windowBits < 8 ||
-    windowBits > 15 ||
-    strategy < 0 ||
-    strategy > Z_FIXED
-  ) {
+  if (memLevel < 1 || memLevel > MAX_MEM_LEVEL || method !== Z_DEFLATED || strategy < 0 || strategy > Z_FIXED) {
     return err(strm, Z_STREAM_ERROR)
   }
 
-  if (windowBits === 8) {
-    windowBits = 9
-  }
   /* until 256-byte window bug fixed */
 
   var s = new DeflateState()
@@ -2956,7 +2934,7 @@ function deflateInit2(strm, method, windowBits, memLevel, strategy) {
   s.strm = strm
   s.wrap = wrap
   s.gzhead = null
-  s.w_bits = windowBits
+  s.w_bits = 15
   s.w_size = 1 << s.w_bits
   s.w_mask = s.w_size - 1
   s.hash_bits = memLevel + 7
@@ -3639,7 +3617,6 @@ var toString = Object.prototype.toString
  * Creates new deflator instance with specified params. Throws exception
  * on bad params. Supported options:
  *
- * - `windowBits`
  * - `memLevel`
  * - `strategy`
  * - `dictionary`
@@ -3683,17 +3660,10 @@ export function Deflate() {
   this.options = {
     method: Z_DEFLATED,
     chunkSize: 16384,
-    windowBits: 15,
     memLevel: 8,
     strategy: Z_DEFAULT_STRATEGY,
   }
   var opt = this.options
-
-  if (opt.raw && opt.windowBits > 0) {
-    opt.windowBits = -opt.windowBits
-  } else if (opt.gzip && opt.windowBits > 0 && opt.windowBits < 16) {
-    opt.windowBits += 16
-  }
 
   this.err = 0 // error code, if happens (0 = Z_OK)
 
@@ -3705,7 +3675,7 @@ export function Deflate() {
 
   this.strm = new zstream()
   this.strm.avail_out = 0
-  var status = deflateInit2(this.strm, opt.method, opt.windowBits, opt.memLevel, opt.strategy)
+  var status = deflateInit2(this.strm, opt.method, opt.memLevel, opt.strategy)
 
   if (status !== Z_OK) {
     throw new Error(messages[status])
