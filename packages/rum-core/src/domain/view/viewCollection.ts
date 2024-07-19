@@ -69,53 +69,28 @@ function processViewUpdate(
       frustration: {
         count: view.eventCounts.frustrationCount,
       },
-      cumulative_layout_shift:
-        view.commonViewMetrics.cumulativeLayoutShift && view.commonViewMetrics.cumulativeLayoutShift.value,
-      cumulative_layout_shift_time: toServerDuration(
-        view.commonViewMetrics.cumulativeLayoutShift && view.commonViewMetrics.cumulativeLayoutShift.time
-      ),
-      cumulative_layout_shift_target_selector:
-        view.commonViewMetrics.cumulativeLayoutShift && view.commonViewMetrics.cumulativeLayoutShift.targetSelector,
-      first_byte: toServerDuration(
-        view.initialViewMetrics.navigationTimings && view.initialViewMetrics.navigationTimings.firstByte
-      ),
-      dom_complete: toServerDuration(
-        view.initialViewMetrics.navigationTimings && view.initialViewMetrics.navigationTimings.domComplete
-      ),
-      dom_content_loaded: toServerDuration(
-        view.initialViewMetrics.navigationTimings && view.initialViewMetrics.navigationTimings.domContentLoaded
-      ),
-      dom_interactive: toServerDuration(
-        view.initialViewMetrics.navigationTimings && view.initialViewMetrics.navigationTimings.domInteractive
-      ),
+      cumulative_layout_shift: view.commonViewMetrics.cumulativeLayoutShift?.value,
+      cumulative_layout_shift_time: toServerDuration(view.commonViewMetrics.cumulativeLayoutShift?.time),
+      cumulative_layout_shift_target_selector: view.commonViewMetrics.cumulativeLayoutShift?.targetSelector,
+      first_byte: toServerDuration(view.initialViewMetrics.navigationTimings?.firstByte),
+      dom_complete: toServerDuration(view.initialViewMetrics.navigationTimings?.domComplete),
+      dom_content_loaded: toServerDuration(view.initialViewMetrics.navigationTimings?.domContentLoaded),
+      dom_interactive: toServerDuration(view.initialViewMetrics.navigationTimings?.domInteractive),
       error: {
         count: view.eventCounts.errorCount,
       },
       first_contentful_paint: toServerDuration(view.initialViewMetrics.firstContentfulPaint),
-      first_input_delay: toServerDuration(
-        view.initialViewMetrics.firstInput && view.initialViewMetrics.firstInput.delay
-      ),
-      first_input_time: toServerDuration(view.initialViewMetrics.firstInput && view.initialViewMetrics.firstInput.time),
-      first_input_target_selector:
-        view.initialViewMetrics.firstInput && view.initialViewMetrics.firstInput.targetSelector,
-      interaction_to_next_paint: toServerDuration(
-        view.commonViewMetrics.interactionToNextPaint && view.commonViewMetrics.interactionToNextPaint.value
-      ),
-      interaction_to_next_paint_time: toServerDuration(
-        view.commonViewMetrics.interactionToNextPaint && view.commonViewMetrics.interactionToNextPaint.time
-      ),
-      interaction_to_next_paint_target_selector:
-        view.commonViewMetrics.interactionToNextPaint && view.commonViewMetrics.interactionToNextPaint.targetSelector,
+      first_input_delay: toServerDuration(view.initialViewMetrics.firstInput?.delay),
+      first_input_time: toServerDuration(view.initialViewMetrics.firstInput?.time),
+      first_input_target_selector: view.initialViewMetrics.firstInput?.targetSelector,
+      interaction_to_next_paint: toServerDuration(view.commonViewMetrics.interactionToNextPaint?.value),
+      interaction_to_next_paint_time: toServerDuration(view.commonViewMetrics.interactionToNextPaint?.time),
+      interaction_to_next_paint_target_selector: view.commonViewMetrics.interactionToNextPaint?.targetSelector,
       is_active: view.isActive,
       name: view.name,
-      largest_contentful_paint: toServerDuration(
-        view.initialViewMetrics.largestContentfulPaint && view.initialViewMetrics.largestContentfulPaint.value
-      ),
-      largest_contentful_paint_target_selector:
-        view.initialViewMetrics.largestContentfulPaint && view.initialViewMetrics.largestContentfulPaint.targetSelector,
-      load_event: toServerDuration(
-        view.initialViewMetrics.navigationTimings && view.initialViewMetrics.navigationTimings.loadEvent
-      ),
+      largest_contentful_paint: toServerDuration(view.initialViewMetrics.largestContentfulPaint?.value),
+      largest_contentful_paint_target_selector: view.initialViewMetrics.largestContentfulPaint?.targetSelector,
+      load_event: toServerDuration(view.initialViewMetrics.navigationTimings?.loadEvent),
       loading_time: discardNegativeDuration(toServerDuration(view.commonViewMetrics.loadingTime)),
       loading_type: view.loadingType,
       long_task: {
@@ -133,9 +108,7 @@ function processViewUpdate(
             max_depth: view.commonViewMetrics.scroll.maxDepth,
             max_depth_scroll_top: view.commonViewMetrics.scroll.maxDepthScrollTop,
             max_scroll_height: view.commonViewMetrics.scroll.maxScrollHeight,
-            max_scroll_height_time: toServerDuration(
-              view.commonViewMetrics.scroll && view.commonViewMetrics.scroll.maxScrollHeightTime
-            ),
+            max_scroll_height_time: toServerDuration(view.commonViewMetrics.scroll.maxScrollHeightTime),
           },
         }
       : undefined,
