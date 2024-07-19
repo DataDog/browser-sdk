@@ -1786,7 +1786,6 @@ var Z_FILTERED = constants.Z_FILTERED
 var Z_HUFFMAN_ONLY = constants.Z_HUFFMAN_ONLY
 var Z_RLE = constants.Z_RLE
 var Z_FIXED$1 = constants.Z_FIXED
-var Z_DEFAULT_STRATEGY = constants.Z_DEFAULT_STRATEGY
 var Z_UNKNOWN$1 = constants.Z_UNKNOWN
 var Z_DEFLATED = constants.Z_DEFLATED
 /* ============================================================================ */
@@ -1794,10 +1793,6 @@ var Z_DEFLATED = constants.Z_DEFLATED
 var MAX_MEM_LEVEL = 9
 /* Maximum value for memLevel in deflateInit2 */
 
-var MAX_WBITS = 15
-/* 32K LZ77 window */
-
-var DEF_MEM_LEVEL = 8
 var LENGTH_CODES$1 = 29
 /* number of length codes, not counting the special END_BLOCK code */
 
@@ -3341,10 +3336,6 @@ var deflateInit2 = function deflateInit2(strm, level, method, windowBits, memLev
   return deflateReset(strm)
 }
 
-var deflateInit = function deflateInit(strm, level) {
-  return deflateInit2(strm, level, Z_DEFLATED, MAX_WBITS, DEF_MEM_LEVEL, Z_DEFAULT_STRATEGY)
-}
-
 var deflate = function deflate(strm, flush) {
   var beg
   var val // for gzip header write only
@@ -3726,7 +3717,7 @@ var deflate = function deflate(strm, flush) {
   return s.pending !== 0 ? Z_OK : Z_STREAM_END
 }
 
-var deflateEnd = function deflateEnd(strm) {
+function deflateEnd(strm) {
   if (
     !strm ||
     /* == Z_NULL */
@@ -3758,7 +3749,7 @@ var deflateEnd = function deflateEnd(strm) {
  * sequence without producing any compressed output.
  */
 
-var deflateSetDictionary = function deflateSetDictionary(strm, dictionary) {
+function deflateSetDictionary(strm, dictionary) {
   var dictLength = dictionary.length
 
   if (
@@ -3847,15 +3838,6 @@ var deflateSetDictionary = function deflateSetDictionary(strm, dictionary) {
   return Z_OK
 }
 
-var deflateInit_1 = deflateInit
-var deflateInit2_1 = deflateInit2
-var deflateReset_1 = deflateReset
-var deflateResetKeep_1 = deflateResetKeep
-var deflateSetHeader_1 = deflateSetHeader
-var deflate_2 = deflate
-var deflateEnd_1 = deflateEnd
-var deflateSetDictionary_1 = deflateSetDictionary
-var deflateInfo = 'pako deflate (from Nodeca project)'
 /* Not implemented
   module.exports.deflateBound = deflateBound;
   module.exports.deflateCopy = deflateCopy;
@@ -3864,18 +3846,6 @@ var deflateInfo = 'pako deflate (from Nodeca project)'
   module.exports.deflatePrime = deflatePrime;
   module.exports.deflateTune = deflateTune;
   */
-
-var deflate_1 = {
-  deflateInit: deflateInit_1,
-  deflateInit2: deflateInit2_1,
-  deflateReset: deflateReset_1,
-  deflateResetKeep: deflateResetKeep_1,
-  deflateSetHeader: deflateSetHeader_1,
-  deflate: deflate_2,
-  deflateEnd: deflateEnd_1,
-  deflateSetDictionary: deflateSetDictionary_1,
-  deflateInfo,
-}
 
 // Join array of chunks to single array.
 function flattenChunks(chunks) {
@@ -4103,14 +4073,14 @@ export function Deflate() {
 
   this.strm = new zstream()
   this.strm.avail_out = 0
-  var status = deflate_1.deflateInit2(this.strm, opt.level, opt.method, opt.windowBits, opt.memLevel, opt.strategy)
+  var status = deflateInit2(this.strm, opt.level, opt.method, opt.windowBits, opt.memLevel, opt.strategy)
 
   if (status !== Z_OK$1) {
     throw new Error(messages[status])
   }
 
   if (opt.header) {
-    deflate_1.deflateSetHeader(this.strm, opt.header)
+    deflateSetHeader(this.strm, opt.header)
   }
 
   if (opt.dictionary) {
@@ -4122,7 +4092,7 @@ export function Deflate() {
       dict = opt.dictionary
     }
 
-    status = deflate_1.deflateSetDictionary(this.strm, dict)
+    status = deflateSetDictionary(this.strm, dict)
 
     if (status !== Z_OK$1) {
       throw new Error(messages[status])
@@ -4193,14 +4163,14 @@ Deflate.prototype.push = function (data, flush_mode) {
       continue
     }
 
-    status = deflate_1.deflate(strm, _flush_mode) // Ended => flush and finish
+    status = deflate(strm, _flush_mode) // Ended => flush and finish
 
     if (status === Z_STREAM_END$1) {
       if (strm.next_out > 0) {
         this.onData(strm.output.subarray(0, strm.next_out))
       }
 
-      status = deflate_1.deflateEnd(this.strm)
+      status = deflateEnd(this.strm)
       this.onEnd(status)
       this.ended = true
       return status === Z_OK$1
