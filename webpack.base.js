@@ -1,10 +1,13 @@
 const path = require('path')
+const fs = require('fs')
 const webpack = require('webpack')
 const TsconfigPathsPlugin = require('tsconfig-paths-webpack-plugin')
 const TerserPlugin = require('terser-webpack-plugin')
 const { buildEnvKeys, getBuildEnvValue } = require('./scripts/lib/build-env')
 
 const tsconfigPath = path.join(__dirname, 'tsconfig.webpack.json')
+// const cacheFileName = path.join(__dirname, 'cache.json');
+const TERSER_CACHE = {};
 
 module.exports = ({ entry, mode, filename, types, keepBuildEnvVariables, plugins }) => ({
   entry,
@@ -13,7 +16,7 @@ module.exports = ({ entry, mode, filename, types, keepBuildEnvVariables, plugins
     filename,
     path: path.resolve('./bundle'),
   },
-  target: ['web', 'es5'],
+  target: ['web', 'es2018'],
   devtool: false,
   module: {
     rules: [
@@ -47,6 +50,24 @@ module.exports = ({ entry, mode, filename, types, keepBuildEnvVariables, plugins
     minimizer: [
       new TerserPlugin({
         extractComments: false,
+        terserOptions: {
+          mangle: {
+            properties: true,
+          },
+          compress: {
+            drop_console: true,
+            expression: true,
+            hoist_funs: true,
+            module: true,
+            unsafe_arrows: true,
+            unsafe_Function: true,
+            unsafe_math: true,
+            unsafe_proto: true,
+            unsafe_regexp: true,
+            unsafe_undefined: true,
+          },
+          nameCache: TERSER_CACHE,
+        },
       }),
     ],
   },
