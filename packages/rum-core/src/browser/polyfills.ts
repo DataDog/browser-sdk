@@ -62,7 +62,7 @@ export function getClassList(element: Element): DOMTokenList | string[] {
     return element.classList
   }
 
-  const classes = element.getAttribute('class')?.trim()
+  const classes = (element.getAttribute('class') || '').trim()
   return classes ? classes.split(/\s+/) : []
 }
 

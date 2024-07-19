@@ -193,7 +193,9 @@ export function createPerformanceObservable<T extends RumPerformanceEntryType>(
     manageResourceTimingBufferFull(configuration)
 
     return () => {
-      observer?.disconnect()
+      if (observer) {
+        observer.disconnect()
+      }
       if (timeoutId) {
         clearTimeout(timeoutId)
       }
@@ -210,7 +212,9 @@ function manageResourceTimingBufferFull(configuration: RumConfiguration) {
     })
   }
   return () => {
-    resourceTimingBufferFullListener?.stop()
+    if (resourceTimingBufferFullListener) {
+      resourceTimingBufferFullListener.stop()
+    }
   }
 }
 
