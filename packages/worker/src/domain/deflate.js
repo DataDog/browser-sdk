@@ -196,7 +196,7 @@ function TreeDesc(dyn_tree, stat_desc) {
   /* the corresponding static tree */
 }
 
-var d_code = function d_code(dist) {
+function d_code(dist) {
   return dist < 256 ? _dist_code[dist] : _dist_code[256 + (dist >>> 7)]
 }
 /* ===========================================================================
@@ -204,7 +204,7 @@ var d_code = function d_code(dist) {
  * IN assertion: there is enough room in pendingBuf.
  */
 
-var put_short = function put_short(s, w) {
+function put_short(s, w) {
   //    put_byte(s, (uch)((w) & 0xff));
   //    put_byte(s, (uch)((ush)(w) >> 8));
   s.pending_buf[s.pending++] = w & 0xff
@@ -215,7 +215,7 @@ var put_short = function put_short(s, w) {
  * IN assertion: length <= 16 and value fits in length bits.
  */
 
-var send_bits = function send_bits(s, value, length) {
+function send_bits(s, value, length) {
   if (s.bi_valid > Buf_size - length) {
     s.bi_buf |= (value << s.bi_valid) & 0xffff
     put_short(s, s.bi_buf)
@@ -227,7 +227,7 @@ var send_bits = function send_bits(s, value, length) {
   }
 }
 
-var send_code = function send_code(s, c, tree) {
+function send_code(s, c, tree) {
   send_bits(
     s,
     tree[c * 2],
@@ -242,7 +242,7 @@ var send_code = function send_code(s, c, tree) {
  * IN assertion: 1 <= len <= 15
  */
 
-var bi_reverse = function bi_reverse(code, len) {
+function bi_reverse(code, len) {
   var res = 0
 
   do {
@@ -257,7 +257,7 @@ var bi_reverse = function bi_reverse(code, len) {
  * Flush the bit buffer, keeping at most 7 bits in it.
  */
 
-var bi_flush = function bi_flush(s) {
+function bi_flush(s) {
   if (s.bi_valid === 16) {
     put_short(s, s.bi_buf)
     s.bi_buf = 0
@@ -279,7 +279,7 @@ var bi_flush = function bi_flush(s) {
  *     not null.
  */
 
-var gen_bitlen = function gen_bitlen(
+function gen_bitlen(
   s,
   desc //    deflate_state *s; //    tree_desc *desc;    /* the tree descriptor */
 ) {
@@ -441,7 +441,7 @@ var gen_bitlen = function gen_bitlen(
  *     zero code length.
  */
 
-var gen_codes = function gen_codes(
+function gen_codes(
   tree,
   max_code,
   bl_count
@@ -493,7 +493,7 @@ var gen_codes = function gen_codes(
  * Initialize the various 'constant' tables.
  */
 
-var tr_static_init = function tr_static_init() {
+function tr_static_init() {
   var n
   /* iterates over tree elements */
 
@@ -630,7 +630,7 @@ var tr_static_init = function tr_static_init() {
  * Initialize a new block.
  */
 
-var init_block = function init_block(s) {
+function init_block(s) {
   var n
   /* iterates over tree elements */
 
@@ -664,7 +664,7 @@ var init_block = function init_block(s) {
  * Flush the bit buffer and align the output on a byte boundary
  */
 
-var bi_windup = function bi_windup(s) {
+function bi_windup(s) {
   if (s.bi_valid > 8) {
     put_short(s, s.bi_buf)
   } else if (s.bi_valid > 0) {
@@ -680,7 +680,7 @@ var bi_windup = function bi_windup(s) {
  * one's complement if requested.
  */
 
-var copy_block = function copy_block(
+function copy_block(
   s,
   buf,
   len,
@@ -709,7 +709,7 @@ var copy_block = function copy_block(
  * the subtrees have equal frequency. This minimizes the worst case length.
  */
 
-var smaller = function smaller(tree, n, m, depth) {
+function smaller(tree, n, m, depth) {
   var _n2 = n * 2
 
   var _m2 = m * 2
@@ -733,7 +733,7 @@ var smaller = function smaller(tree, n, m, depth) {
  * two sons).
  */
 
-var pqdownheap = function pqdownheap(
+function pqdownheap(
   s,
   tree,
   k
@@ -772,7 +772,7 @@ var pqdownheap = function pqdownheap(
  * Send the block data compressed using the given Huffman trees
  */
 
-var compress_block = function compress_block(
+function compress_block(
   s,
   ltree,
   dtree
@@ -854,7 +854,7 @@ var compress_block = function compress_block(
  *     also updated if stree is not null. The field max_code is set.
  */
 
-var build_tree = function build_tree(
+function build_tree(
   s,
   desc //    deflate_state *s; //    tree_desc *desc; /* the tree descriptor */
 ) {
@@ -1001,7 +1001,7 @@ var build_tree = function build_tree(
  * in the bit length tree.
  */
 
-var scan_tree = function scan_tree(
+function scan_tree(
   s,
   tree,
   max_code
@@ -1084,7 +1084,7 @@ var scan_tree = function scan_tree(
  * bl_tree.
  */
 
-var send_tree = function send_tree(
+function send_tree(
   s,
   tree,
   max_code
@@ -1170,7 +1170,7 @@ var send_tree = function send_tree(
  * bl_order of the last bit length code to send.
  */
 
-var build_bl_tree = function build_bl_tree(s) {
+function build_bl_tree(s) {
   var max_blindex
   /* index of last bit length code of non zero freq */
 
@@ -1212,7 +1212,7 @@ var build_bl_tree = function build_bl_tree(s) {
  * IN assertion: lcodes >= 257, dcodes >= 1, blcodes >= 4.
  */
 
-var send_all_trees = function send_all_trees(
+function send_all_trees(
   s,
   lcodes,
   dcodes,
@@ -1264,7 +1264,7 @@ var send_all_trees = function send_all_trees(
  * IN assertion: the fields Freq of dyn_ltree are set.
  */
 
-var detect_data_type = function detect_data_type(s) {
+function detect_data_type(s) {
   /* black_mask is the bit mask of black-listed bytes
    * set bits 0..6, 14..25, and 28..31
    * 0xf3ffc07f = binary 11110011111111111100000001111111
@@ -1320,7 +1320,7 @@ var static_init_done = false
  * Initialize the tree data structures for a new zlib stream.
  */
 
-var _tr_init = function _tr_init(s) {
+function _tr_init(s) {
   if (!static_init_done) {
     tr_static_init()
     static_init_done = true
@@ -1339,7 +1339,7 @@ var _tr_init = function _tr_init(s) {
  * Send a stored block
  */
 
-var _tr_stored_block = function _tr_stored_block(
+function _tr_stored_block(
   s,
   buf,
   stored_len,
@@ -1360,7 +1360,7 @@ var _tr_stored_block = function _tr_stored_block(
  * This takes 10 bits, of which 7 may remain in the bit buffer.
  */
 
-var _tr_align = function _tr_align(s) {
+function _tr_align(s) {
   send_bits(s, STATIC_TREES << 1, 3)
   send_code(s, END_BLOCK, static_ltree)
   bi_flush(s)
@@ -1370,7 +1370,7 @@ var _tr_align = function _tr_align(s) {
  * trees or store, and output the encoded block to the zip file.
  */
 
-var _tr_flush_block = function _tr_flush_block(
+function _tr_flush_block(
   s,
   buf,
   stored_len,
@@ -1462,7 +1462,7 @@ var _tr_flush_block = function _tr_flush_block(
  * the current block must be flushed.
  */
 
-var _tr_tally = function _tr_tally(
+function _tr_tally(
   s,
   dist,
   lc
@@ -1554,7 +1554,7 @@ var trees = {
 //   misrepresented as being the original software.
 // 3. This notice may not be removed or altered from any source distribution.
 
-var adler32 = function adler32(adler, buf, len, pos) {
+function adler32(adler, buf, len, pos) {
   var s1 = (adler & 0xffff) | 0
   var s2 = ((adler >>> 16) & 0xffff) | 0
   var n = 0
@@ -1602,7 +1602,7 @@ var adler32_1 = adler32
 // 3. This notice may not be removed or altered from any source distribution.
 // Use ordinary array, since untyped makes no boost here
 
-var makeTable = function makeTable() {
+function makeTable() {
   var c
   var table = []
 
@@ -1621,7 +1621,7 @@ var makeTable = function makeTable() {
 
 var crcTable = new Uint32Array(makeTable())
 
-var crc32 = function crc32(crc, buf, len, pos) {
+function crc32(crc, buf, len, pos) {
   var t = crcTable
   var end = pos + len
   crc ^= -1
@@ -1839,24 +1839,16 @@ var BS_FINISH_DONE = 4
 
 var OS_CODE = 0x03 // Unix :) . Don't detect, use this default.
 
-var err = function err(strm, errorCode) {
+function err(strm, errorCode) {
   strm.msg = messages[errorCode]
   return errorCode
 }
 
-var rank = function rank(f) {
+function rank(f) {
   return (f << 1) - (f > 4 ? 9 : 0)
 }
 
-var zero$1 = function zero(buf) {
-  var len = buf.length
-
-  while (--len >= 0) {
-    buf[len] = 0
-  }
-}
-
-var HASH_ZLIB = function HASH_ZLIB(s, prev, data) {
+function HASH_ZLIB(s, prev, data) {
   return ((prev << s.hash_shift) ^ data) & s.hash_mask
 } // This hash causes less collisions, https://github.com/nodeca/pako/issues/135
 // But breaks binary compatibility
@@ -1870,7 +1862,7 @@ var HASH = HASH_ZLIB
  * (See also read_buf()).
  */
 
-var flush_pending = function flush_pending(strm) {
+function flush_pending(strm) {
   var s = strm.state // _tr_flush_bits(s);
 
   var len = s.pending
@@ -1895,14 +1887,14 @@ var flush_pending = function flush_pending(strm) {
   }
 }
 
-var flush_block_only = function flush_block_only(s, last) {
+function flush_block_only(s, last) {
   _tr_flush_block$1(s, s.block_start >= 0 ? s.block_start : -1, s.strstart - s.block_start, last)
 
   s.block_start = s.strstart
   flush_pending(s.strm)
 }
 
-var put_byte = function put_byte(s, b) {
+function put_byte(s, b) {
   s.pending_buf[s.pending++] = b
 }
 /* =========================================================================
@@ -1911,7 +1903,7 @@ var put_byte = function put_byte(s, b) {
  * pending_buf.
  */
 
-var putShortMSB = function putShortMSB(s, b) {
+function putShortMSB(s, b) {
   //  put_byte(s, (Byte)(b >> 8));
   //  put_byte(s, (Byte)(b & 0xff));
   s.pending_buf[s.pending++] = (b >>> 8) & 0xff
@@ -1925,7 +1917,7 @@ var putShortMSB = function putShortMSB(s, b) {
  * (See also flush_pending()).
  */
 
-var read_buf = function read_buf(strm, buf, start, size) {
+function read_buf(strm, buf, start, size) {
   var len = strm.avail_in
 
   if (len > size) {
@@ -1960,7 +1952,7 @@ var read_buf = function read_buf(strm, buf, start, size) {
  * OUT assertion: the match length is not greater than s->lookahead.
  */
 
-var longest_match = function longest_match(s, cur_match) {
+function longest_match(s, cur_match) {
   var chain_length = s.max_chain_length
   /* max hash chain length */
 
@@ -2091,7 +2083,7 @@ var longest_match = function longest_match(s, cur_match) {
  *    option -- not supported here).
  */
 
-var fill_window = function fill_window(s) {
+function fill_window(s) {
   var _w_size = s.w_size
   var p
   var n
@@ -2248,7 +2240,7 @@ var fill_window = function fill_window(s) {
  * window to pending_buf.
  */
 
-var deflate_stored = function deflate_stored(s, flush) {
+function deflate_stored(s, flush) {
   /* Stored blocks are limited to 0xffff bytes, pending_buf is limited
    * to pending_buf_size, and each stored block has a 5 byte header:
    */
@@ -2349,7 +2341,7 @@ var deflate_stored = function deflate_stored(s, flush) {
  * matches. It is used only for the fast compression options.
  */
 
-var deflate_fast = function deflate_fast(s, flush) {
+function deflate_fast(s, flush) {
   var hash_head
   /* head of the hash chain */
 
@@ -2506,7 +2498,7 @@ var deflate_fast = function deflate_fast(s, flush) {
  * no better match at the next window position.
  */
 
-var deflate_slow = function deflate_slow(s, flush) {
+function deflate_slow(s, flush) {
   var hash_head
   /* head of hash chain */
 
@@ -2697,7 +2689,7 @@ var deflate_slow = function deflate_slow(s, flush) {
  * deflate switches away from Z_RLE.)
  */
 
-var deflate_rle = function deflate_rle(s, flush) {
+function deflate_rle(s, flush) {
   var bflush
   /* set if current block must be flushed */
 
@@ -2821,7 +2813,7 @@ var deflate_rle = function deflate_rle(s, flush) {
  * (It will be regenerated if this run of deflate switches away from Huffman.)
  */
 
-var deflate_huff = function deflate_huff(s, flush) {
+function deflate_huff(s, flush) {
   var bflush
   /* set if current block must be flushed */
 
@@ -2927,11 +2919,11 @@ var configuration_table = [
  * Initialize the "longest match" routines for a new zlib stream
  */
 
-var lm_init = function lm_init(s) {
+function lm_init(s) {
   s.window_size = 2 * s.w_size
   /** * CLEAR_HASH(s); ** */
 
-  zero$1(s.head) // Fill with NIL (= 0);
+  zero(s.head) // Fill with NIL (= 0);
 
   /* Set the default configuration parameters:
    */
@@ -3104,9 +3096,9 @@ function DeflateState() {
   this.dyn_ltree = new Uint16Array(HEAP_SIZE$1 * 2)
   this.dyn_dtree = new Uint16Array((2 * D_CODES$1 + 1) * 2)
   this.bl_tree = new Uint16Array((2 * BL_CODES$1 + 1) * 2)
-  zero$1(this.dyn_ltree)
-  zero$1(this.dyn_dtree)
-  zero$1(this.bl_tree)
+  zero(this.dyn_ltree)
+  zero(this.dyn_dtree)
+  zero(this.bl_tree)
   this.l_desc = null
   /* desc. for literal tree */
 
@@ -3124,7 +3116,7 @@ function DeflateState() {
   this.heap = new Uint16Array(2 * L_CODES$1 + 1)
   /* heap used to build the Huffman trees */
 
-  zero$1(this.heap)
+  zero(this.heap)
   this.heap_len = 0
   /* number of elements in the heap */
 
@@ -3137,7 +3129,7 @@ function DeflateState() {
 
   this.depth = new Uint16Array(2 * L_CODES$1 + 1) // uch depth[2*L_CODES+1];
 
-  zero$1(this.depth)
+  zero(this.depth)
   /* Depth of each subtree used as tie breaker for trees of equal frequency
    */
 
@@ -3205,7 +3197,7 @@ function DeflateState() {
    */
 }
 
-var deflateResetKeep = function deflateResetKeep(strm) {
+function deflateResetKeep(strm) {
   if (!strm || !strm.state) {
     return err(strm, Z_STREAM_ERROR)
   }
@@ -3234,7 +3226,7 @@ var deflateResetKeep = function deflateResetKeep(strm) {
   return Z_OK
 }
 
-var deflateReset = function deflateReset(strm) {
+function deflateReset(strm) {
   var ret = deflateResetKeep(strm)
 
   if (ret === Z_OK) {
@@ -3244,7 +3236,7 @@ var deflateReset = function deflateReset(strm) {
   return ret
 }
 
-var deflateSetHeader = function deflateSetHeader(strm, head) {
+function deflateSetHeader(strm, head) {
   if (!strm || !strm.state) {
     return Z_STREAM_ERROR
   }
@@ -3257,7 +3249,7 @@ var deflateSetHeader = function deflateSetHeader(strm, head) {
   return Z_OK
 }
 
-var deflateInit2 = function deflateInit2(strm, level, method, windowBits, memLevel, strategy) {
+function deflateInit2(strm, level, method, windowBits, memLevel, strategy) {
   if (!strm) {
     // === Z_NULL
     return Z_STREAM_ERROR
@@ -3336,7 +3328,7 @@ var deflateInit2 = function deflateInit2(strm, level, method, windowBits, memLev
   return deflateReset(strm)
 }
 
-var deflate = function deflate(strm, flush) {
+function deflate(strm, flush) {
   var beg
   var val // for gzip header write only
 
@@ -3659,7 +3651,7 @@ var deflate = function deflate(strm, flush) {
           /** * CLEAR_HASH(s); ** */
 
           /* forget history */
-          zero$1(s.head) // Fill with NIL (= 0);
+          zero(s.head) // Fill with NIL (= 0);
 
           if (s.lookahead === 0) {
             s.strstart = 0
@@ -3784,7 +3776,7 @@ function deflateSetDictionary(strm, dictionary) {
       /* already empty otherwise */
 
       /** * CLEAR_HASH(s); ** */
-      zero$1(s.head) // Fill with NIL (= 0);
+      zero(s.head) // Fill with NIL (= 0);
 
       s.strstart = 0
       s.block_start = 0
