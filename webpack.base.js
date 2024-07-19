@@ -5,7 +5,6 @@ const TerserPlugin = require('terser-webpack-plugin')
 const { buildEnvKeys, getBuildEnvValue } = require('./scripts/lib/build-env')
 
 const tsconfigPath = path.join(__dirname, 'tsconfig.webpack.json')
-const TERSER_CACHE = {};
 
 module.exports = ({ entry, mode, filename, types, keepBuildEnvVariables, plugins }) => ({
   entry,
@@ -49,20 +48,13 @@ module.exports = ({ entry, mode, filename, types, keepBuildEnvVariables, plugins
       new TerserPlugin({
         extractComments: false,
         terserOptions: {
-          mangle: {
-            properties: true,
-            keep_fnames: true,
-          },
           compress: {
             drop_console: true,
-            expression: true,
-            module: true,
             unsafe_math: true,
             unsafe_proto: true,
             unsafe_regexp: true,
             unsafe_undefined: true,
           },
-          nameCache: TERSER_CACHE,
         },
       }),
     ],
