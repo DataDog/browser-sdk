@@ -144,7 +144,7 @@ export function makeRecorderApi(
 
       startStrategy = (options?: StartRecordingOptions) => {
         const session = sessionManager.findTrackedSession()
-        if (!session || (session.sessionReplay === SessionReplayState.OFF && !options?.force)) {
+        if (!session || (session.sessionReplay === SessionReplayState.OFF && (!options || !options.force))) {
           state = { status: RecorderStatus.IntentToStart }
           return
         }
@@ -181,7 +181,7 @@ export function makeRecorderApi(
           }
         })
 
-        if (options?.force && session.sessionReplay === SessionReplayState.OFF) {
+        if (options && options.force && session.sessionReplay === SessionReplayState.OFF) {
           sessionManager.setForcedReplay()
         }
       }
