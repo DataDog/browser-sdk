@@ -50,12 +50,12 @@ describe('validateAndBuildConfiguration', () => {
   describe('validate init configuration', () => {
     it('requires the InitConfiguration to be defined', () => {
       expect(validateAndBuildConfiguration(undefined as unknown as InitConfiguration)).toBeUndefined()
-      expect(displaySpy).toHaveBeenCalledOnceWith('Client Token is not configured, we will not send any data.')
+      expect(displaySpy).toHaveBeenCalledOnceWith('Client Token is not set, no data will be sent.')
     })
 
     it('requires clientToken to be defined', () => {
       expect(validateAndBuildConfiguration({} as unknown as InitConfiguration)).toBeUndefined()
-      expect(displaySpy).toHaveBeenCalledOnceWith('Client Token is not configured, we will not send any data.')
+      expect(displaySpy).toHaveBeenCalledOnceWith('Client Token is not set, no data will be sent.')
     })
 
     it("shouldn't display any error if the configuration is correct", () => {
@@ -67,13 +67,13 @@ describe('validateAndBuildConfiguration', () => {
       expect(
         validateAndBuildConfiguration({ clientToken, sessionSampleRate: 'foo' } as unknown as InitConfiguration)
       ).toBeUndefined()
-      expect(displaySpy).toHaveBeenCalledOnceWith('Session Sample Rate should be a number between 0 and 100')
+      expect(displaySpy).toHaveBeenCalledOnceWith('Session Sample Rate must be a number between 0 and 100')
 
       displaySpy.calls.reset()
       expect(
         validateAndBuildConfiguration({ clientToken, sessionSampleRate: 200 } as unknown as InitConfiguration)
       ).toBeUndefined()
-      expect(displaySpy).toHaveBeenCalledOnceWith('Session Sample Rate should be a number between 0 and 100')
+      expect(displaySpy).toHaveBeenCalledOnceWith('Session Sample Rate must be a number between 0 and 100')
 
       displaySpy.calls.reset()
       validateAndBuildConfiguration({ clientToken: 'yes', sessionSampleRate: 1 })
@@ -84,13 +84,13 @@ describe('validateAndBuildConfiguration', () => {
       expect(
         validateAndBuildConfiguration({ clientToken, telemetrySampleRate: 'foo' } as unknown as InitConfiguration)
       ).toBeUndefined()
-      expect(displaySpy).toHaveBeenCalledOnceWith('Telemetry Sample Rate should be a number between 0 and 100')
+      expect(displaySpy).toHaveBeenCalledOnceWith('Telemetry Sample Rate must be a number between 0 and 100')
 
       displaySpy.calls.reset()
       expect(
         validateAndBuildConfiguration({ clientToken, telemetrySampleRate: 200 } as unknown as InitConfiguration)
       ).toBeUndefined()
-      expect(displaySpy).toHaveBeenCalledOnceWith('Telemetry Sample Rate should be a number between 0 and 100')
+      expect(displaySpy).toHaveBeenCalledOnceWith('Telemetry Sample Rate must be a number between 0 and 100')
 
       displaySpy.calls.reset()
       validateAndBuildConfiguration({ clientToken: 'yes', telemetrySampleRate: 1 })

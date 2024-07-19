@@ -170,12 +170,12 @@ export function validateAndBuildRumConfiguration(
     initConfiguration.sessionReplaySampleRate !== undefined &&
     !isPercentage(initConfiguration.sessionReplaySampleRate)
   ) {
-    display.error('Session Replay Sample Rate should be a number between 0 and 100')
+    display.error('Session Replay Sample Rate must be a number between 0 and 100')
     return
   }
 
   if (initConfiguration.traceSampleRate !== undefined && !isPercentage(initConfiguration.traceSampleRate)) {
-    display.error('Trace Sample Rate should be a number between 0 and 100')
+    display.error('Trace Sample Rate must be a number between 0 and 100')
     return
   }
 

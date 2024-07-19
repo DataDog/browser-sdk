@@ -47,18 +47,14 @@ describe('validateAndBuildRumConfiguration', () => {
       expect(
         validateAndBuildRumConfiguration({ ...DEFAULT_INIT_CONFIGURATION, sessionReplaySampleRate: 'foo' as any })
       ).toBeUndefined()
-      expect(displayErrorSpy).toHaveBeenCalledOnceWith(
-        'Session Replay Sample Rate should be a number between 0 and 100'
-      )
+      expect(displayErrorSpy).toHaveBeenCalledOnceWith('Session Replay Sample Rate must be a number between 0 and 100')
 
       displayErrorSpy.calls.reset()
 
       expect(
         validateAndBuildRumConfiguration({ ...DEFAULT_INIT_CONFIGURATION, sessionReplaySampleRate: 200 })
       ).toBeUndefined()
-      expect(displayErrorSpy).toHaveBeenCalledOnceWith(
-        'Session Replay Sample Rate should be a number between 0 and 100'
-      )
+      expect(displayErrorSpy).toHaveBeenCalledOnceWith('Session Replay Sample Rate must be a number between 0 and 100')
     })
   })
 
@@ -77,11 +73,11 @@ describe('validateAndBuildRumConfiguration', () => {
       expect(
         validateAndBuildRumConfiguration({ ...DEFAULT_INIT_CONFIGURATION, traceSampleRate: 'foo' as any })
       ).toBeUndefined()
-      expect(displayErrorSpy).toHaveBeenCalledOnceWith('Trace Sample Rate should be a number between 0 and 100')
+      expect(displayErrorSpy).toHaveBeenCalledOnceWith('Trace Sample Rate must be a number between 0 and 100')
 
       displayErrorSpy.calls.reset()
       expect(validateAndBuildRumConfiguration({ ...DEFAULT_INIT_CONFIGURATION, traceSampleRate: 200 })).toBeUndefined()
-      expect(displayErrorSpy).toHaveBeenCalledOnceWith('Trace Sample Rate should be a number between 0 and 100')
+      expect(displayErrorSpy).toHaveBeenCalledOnceWith('Trace Sample Rate must be a number between 0 and 100')
     })
   })
 
