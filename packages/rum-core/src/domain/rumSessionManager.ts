@@ -93,7 +93,7 @@ export function startRumSessionManager(
  */
 export function startRumSessionManagerStub(): RumSessionManager {
   const session: RumSession = {
-    id: '00000000-aaaa-0000-aaaa-000000000000',
+    id: '0',
     sessionReplay: bridgeSupports(BridgeCapability.RECORDS) ? SessionReplayState.SAMPLED : SessionReplayState.OFF,
   }
   return {

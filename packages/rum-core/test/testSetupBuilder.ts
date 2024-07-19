@@ -231,7 +231,7 @@ export function setup(): TestSetupBuilder {
 }
 
 export function validateRumEventFormat(rawRumEvent: RawRumEvent) {
-  const fakeId = '00000000-aaaa-0000-aaaa-000000000000'
+  const fakeId = '0'
   const fakeContext: RumContext = {
     _dd: {
       format_version: 2,

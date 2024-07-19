@@ -6,6 +6,7 @@ import { jsonStringify } from '../tools/serialisation/jsonStringify'
 import type { Subscription } from '../tools/observable'
 import type { Encoder, EncoderResult } from '../tools/encoder'
 import { computeBytesCount } from '../tools/utils/byteUtils'
+import { RUM_LINK } from '../domain/context/customerDataTracker'
 import type { HttpRequest, Payload } from './httpRequest'
 import type { FlushController, FlushEvent } from './flushController'
 
@@ -81,7 +82,7 @@ export class Batch {
 
     if (estimatedMessageBytesCount >= this.messageBytesLimit) {
       display.warn(
-        `Discarded a message whose size was bigger than the maximum allowed size ${this.messageBytesLimit}KB. More details: ${DOCS_ORIGIN}/real_user_monitoring/browser/troubleshooting/#technical-limitations`
+        `Discarded a message whose size was bigger than the maximum allowed size ${this.messageBytesLimit}KB. More details: ${DOCS_ORIGIN}${RUM_LINK}#technical-limitations`
       )
       return
     }

@@ -56,10 +56,7 @@ module.exports = ({ entry, mode, filename, types, keepBuildEnvVariables, plugins
           compress: {
             drop_console: true,
             expression: true,
-            hoist_funs: true,
             module: true,
-            unsafe_arrows: true,
-            unsafe_Function: true,
             unsafe_math: true,
             unsafe_proto: true,
             unsafe_regexp: true,

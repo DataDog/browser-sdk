@@ -2,9 +2,9 @@ import { ONE_MINUTE } from '../../src/tools/utils/timeUtils'
 import { deleteCookie, resetInitCookies, setCookie } from '../../src/browser/cookie'
 import type { BrowserWindow } from '../../src/domain/synthetics/syntheticsWorkerValues'
 import {
-  SYNTHETICS_INJECTS_RUM_COOKIE_NAME,
-  SYNTHETICS_RESULT_ID_COOKIE_NAME,
-  SYNTHETICS_TEST_ID_COOKIE_NAME,
+  S8S_INJECTS_RUM_COOKIE_NAME,
+  S8S_RESULT_ID_COOKIE_NAME,
+  S8S_TEST_ID_COOKIE_NAME,
 } from '../../src/domain/synthetics/syntheticsWorkerValues'
 
 // Duration to create a cookie lasting at least until the end of the test
@@ -20,19 +20,19 @@ export function mockSyntheticsWorkerValues(
 ) {
   switch (method) {
     case 'globals':
-      ;(window as BrowserWindow)._DATADOG_SYNTHETICS_PUBLIC_ID = publicId
-      ;(window as BrowserWindow)._DATADOG_SYNTHETICS_RESULT_ID = resultId
-      ;(window as BrowserWindow)._DATADOG_SYNTHETICS_INJECTS_RUM = injectsRum
+      ;(window as BrowserWindow)._DD_S8S_PUBLIC_ID = publicId
+      ;(window as BrowserWindow)._DD_S8S_RESULT_ID = resultId
+      ;(window as BrowserWindow)._DD_S8S_INJECTS_RUM = injectsRum
       break
     case 'cookies':
       if (publicId !== undefined) {
-        setCookie(SYNTHETICS_TEST_ID_COOKIE_NAME, publicId, COOKIE_DURATION)
+        setCookie(S8S_TEST_ID_COOKIE_NAME, publicId, COOKIE_DURATION)
       }
       if (resultId !== undefined) {
-        setCookie(SYNTHETICS_RESULT_ID_COOKIE_NAME, resultId, COOKIE_DURATION)
+        setCookie(S8S_RESULT_ID_COOKIE_NAME, resultId, COOKIE_DURATION)
       }
       if (injectsRum !== undefined) {
-        setCookie(SYNTHETICS_INJECTS_RUM_COOKIE_NAME, injectsRum, COOKIE_DURATION)
+        setCookie(S8S_INJECTS_RUM_COOKIE_NAME, injectsRum, COOKIE_DURATION)
       }
       break
   }
@@ -40,11 +40,11 @@ export function mockSyntheticsWorkerValues(
 }
 
 export function cleanupSyntheticsWorkerValues() {
-  delete (window as BrowserWindow)._DATADOG_SYNTHETICS_PUBLIC_ID
-  delete (window as BrowserWindow)._DATADOG_SYNTHETICS_RESULT_ID
-  delete (window as BrowserWindow)._DATADOG_SYNTHETICS_INJECTS_RUM
-  deleteCookie(SYNTHETICS_TEST_ID_COOKIE_NAME)
-  deleteCookie(SYNTHETICS_RESULT_ID_COOKIE_NAME)
-  deleteCookie(SYNTHETICS_INJECTS_RUM_COOKIE_NAME)
+  delete (window as BrowserWindow)._DD_S8S_PUBLIC_ID
+  delete (window as BrowserWindow)._DD_S8S_RESULT_ID
+  delete (window as BrowserWindow)._DD_S8S_INJECTS_RUM
+  deleteCookie(S8S_TEST_ID_COOKIE_NAME)
+  deleteCookie(S8S_RESULT_ID_COOKIE_NAME)
+  deleteCookie(S8S_INJECTS_RUM_COOKIE_NAME)
   resetInitCookies()
 }

@@ -216,7 +216,7 @@ export function createPreStartStrategy(
 
 function overrideInitConfigurationForBridge(initConfiguration: RumInitConfiguration): RumInitConfiguration {
   return assign({}, initConfiguration, {
-    applicationId: '00000000-aaaa-0000-aaaa-000000000000',
+    applicationId: '0',
     clientToken: 'empty',
     sessionSampleRate: 100,
     defaultPrivacyLevel: initConfiguration.defaultPrivacyLevel ?? getEventBridge()?.getPrivacyLevel(),

@@ -6,6 +6,8 @@ import { DOCS_ORIGIN, display } from '../../tools/display'
 import { isEmptyObject } from '../../tools/utils/objectUtils'
 import type { CustomerDataType } from './contextConstants'
 
+export const RUM_LINK = '/real_user_monitoring/browser/troubleshooting/'
+
 // RUM and logs batch bytes limit is 16KB
 // ensure that we leave room for other event attributes and maintain a decent amount of event per batch
 // (3KB (customer data) + 1KB (other attributes)) * 4 (events per batch) = 16KB
@@ -129,6 +131,6 @@ function displayCustomerDataLimitReachedWarning(bytesCountLimit: number) {
   display.warn(
     `Customer data exceeds the recommended ${
       bytesCountLimit / ONE_KIBI_BYTE
-    }KiB threshold. More details: ${DOCS_ORIGIN}/real_user_monitoring/browser/troubleshooting/#customer-data-exceeds-the-recommended-threshold-warning`
+    }KiB threshold. More details: ${DOCS_ORIGIN}${RUM_LINK}#customer-data-exceeds-the-recommended-threshold-warning`
   )
 }
