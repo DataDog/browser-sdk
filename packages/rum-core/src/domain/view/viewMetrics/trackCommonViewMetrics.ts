@@ -39,11 +39,11 @@ export function trackCommonViewMetrics(
     }
   )
 
-  const { stop: stopScrollMetricsTracking } = trackScrollMetrics(configuration, viewStart, (newScrollMetrics) => {
+  const stopScrollMetricsTracking = trackScrollMetrics(configuration, viewStart, (newScrollMetrics) => {
     commonViewMetrics.scroll = newScrollMetrics
   })
 
-  const { stop: stopCLSTracking } = trackCumulativeLayoutShift(
+  const stopCLSTracking = trackCumulativeLayoutShift(
     configuration,
     lifeCycle,
     viewStart.relative,

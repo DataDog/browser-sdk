@@ -31,7 +31,5 @@ export function trackFirstContentfulPaint(
       }
     }
   )
-  return {
-    stop: unsubscribeLifeCycle,
-  }
+  return unsubscribeLifeCycle
 }

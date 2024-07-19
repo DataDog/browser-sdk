@@ -14,12 +14,12 @@ export interface ProvidedError {
 
 export function startRuntimeErrorCollection(configuration: LogsConfiguration, lifeCycle: LifeCycle) {
   if (!configuration.forwardErrorsToLogs) {
-    return { stop: noop }
+    return noop
   }
 
   const rawErrorObservable = new Observable<RawError>()
 
-  const { stop: stopRuntimeErrorTracking } = trackRuntimeError(rawErrorObservable)
+  const stopRuntimeErrorTracking = trackRuntimeError(rawErrorObservable)
 
   const rawErrorSubscription = rawErrorObservable.subscribe((rawError) => {
     lifeCycle.notify(LifeCycleEventType.RAW_LOG_COLLECTED, {
@@ -37,10 +37,8 @@ export function startRuntimeErrorCollection(configuration: LogsConfiguration, li
     })
   })
 
-  return {
-    stop: () => {
-      stopRuntimeErrorTracking()
-      rawErrorSubscription.unsubscribe()
-    },
+  return () => {
+    stopRuntimeErrorTracking()
+    rawErrorSubscription.unsubscribe()
   }
 }

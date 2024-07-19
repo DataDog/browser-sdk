@@ -25,19 +25,19 @@ export function trackInitialViewMetrics(
 ) {
   const initialViewMetrics: InitialViewMetrics = {}
 
-  const { stop: stopNavigationTracking } = trackNavigationTimings(lifeCycle, (navigationTimings) => {
+  const stopNavigationTracking = trackNavigationTimings(lifeCycle, (navigationTimings) => {
     setLoadEvent(navigationTimings.loadEvent)
     initialViewMetrics.navigationTimings = navigationTimings
     scheduleViewUpdate()
   })
 
   const firstHidden = trackFirstHidden(configuration)
-  const { stop: stopFCPTracking } = trackFirstContentfulPaint(lifeCycle, firstHidden, (firstContentfulPaint) => {
+  const stopFCPTracking = trackFirstContentfulPaint(lifeCycle, firstHidden, (firstContentfulPaint) => {
     initialViewMetrics.firstContentfulPaint = firstContentfulPaint
     scheduleViewUpdate()
   })
 
-  const { stop: stopLCPTracking } = trackLargestContentfulPaint(
+  const stopLCPTracking = trackLargestContentfulPaint(
     lifeCycle,
     configuration,
     firstHidden,
@@ -48,7 +48,7 @@ export function trackInitialViewMetrics(
     }
   )
 
-  const { stop: stopFIDTracking } = trackFirstInput(lifeCycle, configuration, firstHidden, (firstInput) => {
+  const stopFIDTracking = trackFirstInput(lifeCycle, configuration, firstHidden, (firstInput) => {
     initialViewMetrics.firstInput = firstInput
     scheduleViewUpdate()
   })

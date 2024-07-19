@@ -112,7 +112,7 @@ export function doWaitPageActivityEnd(
     stop()
     pageActivityEndCallback(event)
   }
-  return { stop }
+  return stop
 }
 
 export function createPageActivityObservable(
@@ -156,7 +156,7 @@ export function createPageActivityObservable(
       })
     )
 
-    const { stop: stopTrackingWindowOpen } = trackWindowOpen(notifyPageActivity)
+    const stopTrackingWindowOpen = trackWindowOpen(notifyPageActivity)
 
     return () => {
       stopTrackingWindowOpen()

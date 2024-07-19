@@ -58,9 +58,7 @@ export function trackScrollMetrics(
     }
   })
 
-  return {
-    stop: () => subscription.unsubscribe(),
-  }
+  return () => subscription.unsubscribe()
 }
 
 export interface ScrollValues {
@@ -103,14 +101,14 @@ export function createScrollValuesObservable(
       const observerTarget = document.scrollingElement || document.documentElement
       const resizeObserver = new ResizeObserver(monitor(throttledNotify.throttled))
       resizeObserver.observe(observerTarget)
-      const eventListener = addEventListener(configuration, window, DOM_EVENT.SCROLL, throttledNotify.throttled, {
+      const stopEventListener = addEventListener(configuration, window, DOM_EVENT.SCROLL, throttledNotify.throttled, {
         passive: true,
       })
 
       return () => {
         throttledNotify.cancel()
         resizeObserver.unobserve(observerTarget)
-        eventListener.stop()
+        stopEventListener()
       }
     }
   })

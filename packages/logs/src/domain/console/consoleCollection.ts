@@ -45,9 +45,5 @@ export function startConsoleCollection(configuration: LogsConfiguration, lifeCyc
     lifeCycle.notify(LifeCycleEventType.RAW_LOG_COLLECTED, collectedData)
   })
 
-  return {
-    stop: () => {
-      consoleSubscription.unsubscribe()
-    },
-  }
+  return () => consoleSubscription.unsubscribe()
 }

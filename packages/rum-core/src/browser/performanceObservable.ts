@@ -201,7 +201,7 @@ export function createPerformanceObservable<T extends RumPerformanceEntryType>(
   })
 }
 
-let resourceTimingBufferFullListener: { stop: () => void }
+let resourceTimingBufferFullListener: () => void | undefined
 function manageResourceTimingBufferFull(configuration: RumConfiguration) {
   if (!resourceTimingBufferFullListener && supportPerformanceObject() && 'addEventListener' in performance) {
     // https://bugzilla.mozilla.org/show_bug.cgi?id=1559377
@@ -210,7 +210,7 @@ function manageResourceTimingBufferFull(configuration: RumConfiguration) {
     })
   }
   return () => {
-    resourceTimingBufferFullListener?.stop()
+    resourceTimingBufferFullListener?.()
   }
 }
 

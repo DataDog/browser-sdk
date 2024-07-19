@@ -40,9 +40,7 @@ export function trackCumulativeLayoutShift(
   callback: (cumulativeLayoutShift: CumulativeLayoutShift) => void
 ) {
   if (!isLayoutShiftSupported()) {
-    return {
-      stop: noop,
-    }
+    return noop
   }
 
   let maxClsValue = 0
@@ -81,9 +79,7 @@ export function trackCumulativeLayoutShift(
     }
   })
 
-  return {
-    stop,
-  }
+  return stop
 }
 
 function getTargetFromSource(sources?: Array<{ node?: Node }>) {

@@ -10,8 +10,8 @@ export function createLocationChangeObservable(configuration: RumConfiguration, 
   let currentLocation = shallowClone(location)
 
   return new Observable<LocationChange>((observable) => {
-    const { stop: stopHistoryTracking } = trackHistory(configuration, onLocationChange)
-    const { stop: stopHashTracking } = trackHash(configuration, onLocationChange)
+    const stopHistoryTracking = trackHistory(configuration, onLocationChange)
+    const stopHashTracking = trackHash(configuration, onLocationChange)
 
     function onLocationChange() {
       if (currentLocation.href === location.href) {
@@ -33,20 +33,18 @@ export function createLocationChangeObservable(configuration: RumConfiguration, 
 }
 
 function trackHistory(configuration: RumConfiguration, onHistoryChange: () => void) {
-  const { stop: stopInstrumentingPushState } = instrumentMethod(history, 'pushState', ({ onPostCall }) => {
+  const stopInstrumentingPushState = instrumentMethod(history, 'pushState', ({ onPostCall }) => {
     onPostCall(onHistoryChange)
   })
-  const { stop: stopInstrumentingReplaceState } = instrumentMethod(history, 'replaceState', ({ onPostCall }) => {
+  const stopInstrumentingReplaceState = instrumentMethod(history, 'replaceState', ({ onPostCall }) => {
     onPostCall(onHistoryChange)
   })
-  const { stop: removeListener } = addEventListener(configuration, window, DOM_EVENT.POP_STATE, onHistoryChange)
+  const removeListener = addEventListener(configuration, window, DOM_EVENT.POP_STATE, onHistoryChange)
 
-  return {
-    stop: () => {
-      stopInstrumentingPushState()
-      stopInstrumentingReplaceState()
-      removeListener()
-    },
+  return () => {
+    stopInstrumentingPushState()
+    stopInstrumentingReplaceState()
+    removeListener()
   }
 }
 

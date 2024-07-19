@@ -51,9 +51,7 @@ export function startReportCollection(configuration: LogsConfiguration, lifeCycl
     }
   )
 
-  return {
-    stop: () => {
-      reportSubscription.unsubscribe()
-    },
+  return () => {
+    reportSubscription.unsubscribe()
   }
 }

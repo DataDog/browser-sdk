@@ -31,5 +31,5 @@ export function trackNavigationTimings(lifeCycle: LifeCycle, callback: (timings:
     }
   })
 
-  return { stop }
+  return stop
 }

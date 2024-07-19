@@ -69,11 +69,7 @@ export function startResourceCollection(
     }
   })
 
-  return {
-    stop: () => {
-      performanceResourceSubscription.unsubscribe()
-    },
-  }
+  return () => performanceResourceSubscription.unsubscribe()
 }
 
 function processRequest(

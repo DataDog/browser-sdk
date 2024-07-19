@@ -84,14 +84,9 @@ export function startPerformanceCollection(lifeCycle: LifeCycle, configuration: 
 
     if (supportPerformanceObject() && 'addEventListener' in performance) {
       // https://bugzilla.mozilla.org/show_bug.cgi?id=1559377
-      const { stop: removePerformanceListener } = addEventListener(
-        configuration,
-        performance,
-        'resourcetimingbufferfull',
-        () => {
-          performance.clearResourceTimings()
-        }
-      )
+      const removePerformanceListener = addEventListener(configuration, performance, 'resourcetimingbufferfull', () => {
+        performance.clearResourceTimings()
+      })
       cleanupTasks.push(removePerformanceListener)
     }
   }
@@ -101,16 +96,12 @@ export function startPerformanceCollection(lifeCycle: LifeCycle, configuration: 
     })
   }
   if (!supportPerformanceTimingEvent(RumPerformanceEntryType.FIRST_INPUT)) {
-    const { stop: stopFirstInputTiming } = retrieveFirstInputTiming(configuration, (timing) => {
+    const stopFirstInputTiming = retrieveFirstInputTiming(configuration, (timing) => {
       handleRumPerformanceEntries(lifeCycle, [timing])
     })
     cleanupTasks.push(stopFirstInputTiming)
   }
-  return {
-    stop: () => {
-      cleanupTasks.forEach((task) => task())
-    },
-  }
+  return () => cleanupTasks.forEach((task) => task())
 }
 
 function retrieveNavigationTiming(
@@ -139,7 +130,7 @@ function retrieveFirstInputTiming(configuration: RumConfiguration, callback: (ti
   const startTimeStamp = dateNow()
   let timingSent = false
 
-  const { stop: removeEventListeners } = addEventListeners(
+  const removeEventListeners = addEventListeners(
     configuration,
     window,
     [DOM_EVENT.CLICK, DOM_EVENT.MOUSE_DOWN, DOM_EVENT.KEY_DOWN, DOM_EVENT.TOUCH_START, DOM_EVENT.POINTER_DOWN],
@@ -170,7 +161,7 @@ function retrieveFirstInputTiming(configuration: RumConfiguration, callback: (ti
     { passive: true, capture: true }
   )
 
-  return { stop: removeEventListeners }
+  return removeEventListeners
 
   /**
    * Pointer events are a special case, because they can trigger main or compositor thread behavior.

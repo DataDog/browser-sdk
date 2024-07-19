@@ -23,7 +23,7 @@ export function trackLoadingTime(
     }
   }
 
-  const { stop } = waitPageActivityEnd(lifeCycle, domMutationObservable, configuration, (event) => {
+  const stopwaitPageActivityEnd = waitPageActivityEnd(lifeCycle, domMutationObservable, configuration, (event) => {
     if (isWaitingForActivityLoadingTime) {
       isWaitingForActivityLoadingTime = false
       if (event.hadActivity) {
@@ -34,7 +34,7 @@ export function trackLoadingTime(
   })
 
   return {
-    stop,
+    stop: stopwaitPageActivityEnd,
     setLoadEvent: (loadEvent: Duration) => {
       if (isWaitingForLoadEvent) {
         isWaitingForLoadEvent = false

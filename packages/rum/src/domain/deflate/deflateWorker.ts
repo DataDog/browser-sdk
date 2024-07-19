@@ -101,10 +101,10 @@ export function doStartDeflateWorker(
 ) {
   try {
     const worker = createDeflateWorkerImpl(configuration)
-    const { stop: removeErrorListener } = addEventListener(configuration, worker, 'error', (error) => {
+    const removeErrorListener = addEventListener(configuration, worker, 'error', (error) => {
       onError(configuration, source, error)
     })
-    const { stop: removeMessageListener } = addEventListener(
+    const removeMessageListener = addEventListener(
       configuration,
       worker,
       'message',

@@ -34,7 +34,7 @@ export function trackLargestContentfulPaint(
   // browser should not send largest-contentful-paint entries after a user interact with the page,
   // but the web-vitals reference implementation uses this as a safeguard.
   let firstInteractionTimestamp = Infinity
-  const { stop: stopEventListener } = addEventListeners(
+  const stopEventListener = addEventListeners(
     configuration,
     eventTarget,
     [DOM_EVENT.POINTER_DOWN, DOM_EVENT.KEY_DOWN],
@@ -75,10 +75,8 @@ export function trackLargestContentfulPaint(
     }
   )
 
-  return {
-    stop: () => {
-      stopEventListener()
-      unsubscribeLifeCycle()
-    },
+  return () => {
+    stopEventListener()
+    unsubscribeLifeCycle()
   }
 }

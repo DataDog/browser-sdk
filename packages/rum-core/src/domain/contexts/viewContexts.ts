@@ -53,8 +53,6 @@ export function startViewContexts(lifeCycle: LifeCycle): ViewContexts {
 
   return {
     findView: (startTime) => viewContextHistory.find(startTime),
-    stop: () => {
-      viewContextHistory.stop()
-    },
+    stop: () => viewContextHistory.stop(),
   }
 }

@@ -53,7 +53,7 @@ export function record(options: RecordOptions): RecordAPI {
 
   const shadowRootsController = initShadowRootsController(configuration, emitAndComputeStats, elementsScrollPositions)
 
-  const { stop: stopFullSnapshots } = startFullSnapshots(
+  const stopFullSnapshots = startFullSnapshots(
     elementsScrollPositions,
     shadowRootsController,
     lifeCycle,
@@ -70,7 +70,7 @@ export function record(options: RecordOptions): RecordAPI {
   const recordIds = initRecordIds()
   const mutationTracker = trackMutation(emitAndComputeStats, configuration, shadowRootsController, document)
   const trackers: Tracker[] = [
-    mutationTracker,
+    mutationTracker.stop,
     trackMove(configuration, emitAndComputeStats),
     trackMouseInteraction(configuration, emitAndComputeStats, recordIds),
     trackScroll(configuration, emitAndComputeStats, elementsScrollPositions, document),
@@ -90,7 +90,7 @@ export function record(options: RecordOptions): RecordAPI {
   return {
     stop: () => {
       shadowRootsController.stop()
-      trackers.forEach((tracker) => tracker.stop())
+      trackers.forEach((stop) => stop())
       stopFullSnapshots()
     },
     flushMutations,

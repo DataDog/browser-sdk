@@ -81,10 +81,8 @@ export function trackStyleSheet(styleSheetCb: StyleSheetCallback): Tracker {
     )
   }
 
-  return {
-    stop: () => {
-      instrumentationStoppers.forEach((stopper) => stopper.stop())
-    },
+  return () => {
+    instrumentationStoppers.forEach((stop) => stop())
   }
 }
 

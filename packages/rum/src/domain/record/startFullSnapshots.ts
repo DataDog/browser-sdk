@@ -78,7 +78,5 @@ export function startFullSnapshots(
     )
   })
 
-  return {
-    stop: unsubscribe,
-  }
+  return unsubscribe
 }

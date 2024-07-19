@@ -20,7 +20,7 @@ export function trackInput(
 
   const isShadowRoot = target !== document
 
-  const { stop: stopEventListeners } = addEventListeners(
+  const stopEventListeners = addEventListeners(
     configuration,
     target,
     // The 'input' event bubbles across shadow roots, so we don't have to listen for it on shadow
@@ -53,17 +53,15 @@ export function trackInput(
       instrumentSetter(HTMLSelectElement.prototype, 'selectedIndex', onElementChange),
     ]
     stopPropertySetterInstrumentation = () => {
-      instrumentationStoppers.forEach((stopper) => stopper.stop())
+      instrumentationStoppers.forEach((stop) => stop())
     }
   } else {
     stopPropertySetterInstrumentation = noop
   }
 
-  return {
-    stop: () => {
-      stopPropertySetterInstrumentation()
-      stopEventListeners()
-    },
+  return () => {
+    stopPropertySetterInstrumentation()
+    stopEventListeners()
   }
 
   function onElementChange(target: HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement) {

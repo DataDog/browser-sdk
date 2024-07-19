@@ -20,7 +20,7 @@ import { StatusType } from '../logger/isAuthorized'
 
 export function startNetworkErrorCollection(configuration: LogsConfiguration, lifeCycle: LifeCycle) {
   if (!configuration.forwardErrorsToLogs) {
-    return { stop: noop }
+    return noop
   }
 
   const xhrSubscription = initXhrObservable(configuration).subscribe((context) => {
@@ -71,11 +71,9 @@ export function startNetworkErrorCollection(configuration: LogsConfiguration, li
     }
   }
 
-  return {
-    stop: () => {
-      xhrSubscription.unsubscribe()
-      fetchSubscription.unsubscribe()
-    },
+  return () => {
+    xhrSubscription.unsubscribe()
+    fetchSubscription.unsubscribe()
   }
 }
 

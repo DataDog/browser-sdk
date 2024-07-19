@@ -21,14 +21,12 @@ export function trackRuntimeError(errorObservable: Observable<RawError>) {
     })
     errorObservable.notify(rawError)
   }
-  const { stop: stopInstrumentingOnError } = instrumentOnError(handleRuntimeError)
-  const { stop: stopInstrumentingOnUnhandledRejection } = instrumentUnhandledRejection(handleRuntimeError)
+  const stopInstrumentingOnError = instrumentOnError(handleRuntimeError)
+  const stopInstrumentingOnUnhandledRejection = instrumentUnhandledRejection(handleRuntimeError)
 
-  return {
-    stop: () => {
-      stopInstrumentingOnError()
-      stopInstrumentingOnUnhandledRejection()
-    },
+  return () => {
+    stopInstrumentingOnError()
+    stopInstrumentingOnUnhandledRejection()
   }
 }
 

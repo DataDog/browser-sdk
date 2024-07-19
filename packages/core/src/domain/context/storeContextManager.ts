@@ -7,7 +7,7 @@ import type { CustomerDataType } from './contextConstants'
 
 const CONTEXT_STORE_KEY_PREFIX = '_dd_c'
 
-const storageListeners: Array<{ stop: () => void }> = []
+const storageListeners: Array<() => void> = []
 
 export function storeContextManager(
   configuration: Configuration,
@@ -47,5 +47,5 @@ export function buildStorageKey(productKey: string, customerDataType: CustomerDa
 }
 
 export function removeStorageListeners() {
-  storageListeners.map((listener) => listener.stop())
+  storageListeners.map((listener) => listener())
 }

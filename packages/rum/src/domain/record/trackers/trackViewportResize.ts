@@ -21,10 +21,8 @@ export function trackViewportResize(
     viewportResizeCb(assembleIncrementalSnapshot<ViewportResizeData>(IncrementalSource.ViewportResize, data))
   })
 
-  return {
-    stop: () => {
-      viewportResizeSubscription.unsubscribe()
-    },
+  return () => {
+    viewportResizeSubscription.unsubscribe()
   }
 }
 
@@ -34,7 +32,7 @@ export function tackVisualViewportResize(
 ): Tracker {
   const visualViewport = window.visualViewport
   if (!visualViewport) {
-    return { stop: noop }
+    return noop
   }
   const { throttled: updateDimension, cancel: cancelThrottle } = throttle(
     () => {
@@ -49,7 +47,7 @@ export function tackVisualViewportResize(
       trailing: false,
     }
   )
-  const { stop: removeListener } = addEventListeners(
+  const removeListener = addEventListeners(
     configuration,
     visualViewport,
     [DOM_EVENT.RESIZE, DOM_EVENT.SCROLL],
@@ -60,10 +58,8 @@ export function tackVisualViewportResize(
     }
   )
 
-  return {
-    stop: () => {
-      removeListener()
-      cancelThrottle()
-    },
+  return () => {
+    removeListener()
+    cancelThrottle()
   }
 }

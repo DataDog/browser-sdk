@@ -12,7 +12,7 @@ export function trackFirstHidden(configuration: RumConfiguration, eventTarget: W
     timeStamp = 0 as RelativeTime
   } else {
     timeStamp = Infinity as RelativeTime
-    ;({ stop: stopListeners } = addEventListeners(
+    stopListeners = addEventListeners(
       configuration,
       eventTarget,
       [DOM_EVENT.PAGE_HIDE, DOM_EVENT.VISIBILITY_CHANGE],
@@ -23,7 +23,7 @@ export function trackFirstHidden(configuration: RumConfiguration, eventTarget: W
         }
       },
       { capture: true }
-    ))
+    )
   }
 
   return {

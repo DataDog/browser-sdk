@@ -18,7 +18,7 @@ export interface PageExitEvent {
 
 export function createPageExitObservable(configuration: Configuration): Observable<PageExitEvent> {
   return new Observable<PageExitEvent>((observable) => {
-    const { stop: stopListeners } = addEventListeners(
+    const stopListeners = addEventListeners(
       configuration,
       window,
       [DOM_EVENT.VISIBILITY_CHANGE, DOM_EVENT.FREEZE],
@@ -42,7 +42,7 @@ export function createPageExitObservable(configuration: Configuration): Observab
 
     const stopBeforeUnloadListener = addEventListener(configuration, window, DOM_EVENT.BEFORE_UNLOAD, () => {
       observable.notify({ reason: PageExitReason.UNLOADING })
-    }).stop
+    })
 
     return () => {
       stopListeners()

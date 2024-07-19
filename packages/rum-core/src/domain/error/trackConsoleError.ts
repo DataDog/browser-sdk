@@ -14,9 +14,5 @@ export function trackConsoleError(errorObservable: Observable<RawError>) {
     })
   )
 
-  return {
-    stop: () => {
-      subscription.unsubscribe()
-    },
-  }
+  return () => subscription.unsubscribe()
 }

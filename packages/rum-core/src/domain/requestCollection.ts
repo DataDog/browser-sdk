@@ -109,7 +109,7 @@ export function trackXhr(lifeCycle: LifeCycle, configuration: RumConfiguration, 
     }
   })
 
-  return { stop: () => subscription.unsubscribe() }
+  return subscription.unsubscribe
 }
 
 export function trackFetch(lifeCycle: LifeCycle, configuration: RumConfiguration, tracer: Tracer) {
@@ -154,7 +154,7 @@ export function trackFetch(lifeCycle: LifeCycle, configuration: RumConfiguration
         break
     }
   })
-  return { stop: () => subscription.unsubscribe() }
+  return subscription.unsubscribe
 }
 
 function getNextRequestIndex() {

@@ -103,7 +103,7 @@ export function stopSessionManager() {
 }
 
 function trackActivity(configuration: Configuration, expandOrRenewSession: () => void) {
-  const { stop } = addEventListeners(
+  const stop = addEventListeners(
     configuration,
     window,
     [DOM_EVENT.CLICK, DOM_EVENT.TOUCH_START, DOM_EVENT.KEY_DOWN, DOM_EVENT.SCROLL],
@@ -120,7 +120,7 @@ function trackVisibility(configuration: Configuration, expandSession: () => void
     }
   }
 
-  const { stop } = addEventListener(configuration, document, DOM_EVENT.VISIBILITY_CHANGE, expandSessionWhenVisible)
+  const stop = addEventListener(configuration, document, DOM_EVENT.VISIBILITY_CHANGE, expandSessionWhenVisible)
   stopCallbacks.push(stop)
 
   const visibilityCheckInterval = setInterval(expandSessionWhenVisible, VISIBILITY_CHECK_DELAY)
@@ -130,6 +130,6 @@ function trackVisibility(configuration: Configuration, expandSession: () => void
 }
 
 function trackResume(configuration: Configuration, cb: () => void) {
-  const { stop } = addEventListener(configuration, window, DOM_EVENT.RESUME, cb, { capture: true })
+  const stop = addEventListener(configuration, window, DOM_EVENT.RESUME, cb, { capture: true })
   stopCallbacks.push(stop)
 }

@@ -31,9 +31,5 @@ export function trackFrustration(
     }
   })
 
-  return {
-    stop: () => {
-      frustrationSubscription.unsubscribe()
-    },
-  }
+  return () => frustrationSubscription.unsubscribe()
 }

@@ -168,7 +168,7 @@ export function makeRecorderApi(
             return
           }
 
-          const { stop: stopRecording } = startRecordingImpl(
+          const stopRecording = startRecordingImpl(
             lifeCycle,
             configuration,
             sessionManager,

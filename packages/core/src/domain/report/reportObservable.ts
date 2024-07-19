@@ -63,13 +63,11 @@ function createReportObservable(reportTypes: ReportType[]) {
 }
 
 function createCspViolationReportObservable(configuration: Configuration) {
-  return new Observable<RawReport>((observable) => {
-    const { stop } = addEventListener(configuration, document, DOM_EVENT.SECURITY_POLICY_VIOLATION, (event) => {
+  return new Observable<RawReport>((observable) =>
+    addEventListener(configuration, document, DOM_EVENT.SECURITY_POLICY_VIOLATION, (event) => {
       observable.notify(buildRawReportFromCspViolation(event))
     })
-
-    return stop
-  })
+  )
 }
 
 function buildRawReportFromReport(report: DeprecationReport | InterventionReport): RawReport {

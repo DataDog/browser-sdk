@@ -42,7 +42,7 @@ export function trackMove(configuration: RumConfiguration, moveCb: MousemoveCall
     }
   )
 
-  const { stop: removeListener } = addEventListeners(
+  const removeListener = addEventListeners(
     configuration,
     document,
     [DOM_EVENT.MOUSE_MOVE, DOM_EVENT.TOUCH_MOVE],
@@ -53,11 +53,9 @@ export function trackMove(configuration: RumConfiguration, moveCb: MousemoveCall
     }
   )
 
-  return {
-    stop: () => {
-      removeListener()
-      cancelThrottle()
-    },
+  return () => {
+    removeListener()
+    cancelThrottle()
   }
 }
 

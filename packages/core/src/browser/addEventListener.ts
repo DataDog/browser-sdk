@@ -137,7 +137,5 @@ export function addEventListeners<Target extends EventTarget, EventName extends 
     eventNames.forEach((eventName) => remove.call(eventTarget, eventName, listenerWithMonitor, options))
   }
 
-  return {
-    stop,
-  }
+  return stop
 }

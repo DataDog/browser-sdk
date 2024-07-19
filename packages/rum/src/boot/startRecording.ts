@@ -52,9 +52,5 @@ export function startRecording(
   })
   cleanupTasks.push(stopRecording)
 
-  return {
-    stop: () => {
-      cleanupTasks.forEach((task) => task())
-    },
-  }
+  return () => cleanupTasks.forEach((task) => task())
 }

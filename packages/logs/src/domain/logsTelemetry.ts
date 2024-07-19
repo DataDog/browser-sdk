@@ -67,8 +67,6 @@ export function startLogsTelemetry(
   addTelemetryConfiguration(serializeLogsConfiguration(initConfiguration))
   return {
     telemetry,
-    stop: () => {
-      cleanupTasks.forEach((task) => task())
-    },
+    stop: () => cleanupTasks.forEach((task) => task()),
   }
 }

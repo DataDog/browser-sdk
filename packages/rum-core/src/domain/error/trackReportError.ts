@@ -26,9 +26,5 @@ export function trackReportError(configuration: RumConfiguration, errorObservabl
     return errorObservable.notify(rawError)
   })
 
-  return {
-    stop: () => {
-      subscription.unsubscribe()
-    },
-  }
+  return () => subscription.unsubscribe()
 }

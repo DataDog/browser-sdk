@@ -25,7 +25,7 @@ export function createDeflateEncoder(
     data: string
   }> = []
 
-  const { stop: removeMessageListener } = addEventListener(
+  const removeMessageListener = addEventListener(
     configuration,
     worker,
     'message',

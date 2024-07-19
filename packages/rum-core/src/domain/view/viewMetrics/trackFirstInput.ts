@@ -56,7 +56,5 @@ export function trackFirstInput(
     }
   )
 
-  return {
-    stop: unsubscribeLifeCycle,
-  }
+  return unsubscribeLifeCycle
 }

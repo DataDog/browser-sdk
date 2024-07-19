@@ -18,9 +18,7 @@ export interface DurationVitalStop {
   details?: string
 }
 
-export interface DurationVitalInstance {
-  stop: (options?: DurationVitalStop) => void
-}
+export type DurationVitalInstance = (options?: DurationVitalStop) => void
 
 export interface DurationVital {
   name: string
@@ -58,16 +56,14 @@ export function createVitalInstance(
   const startClocks = clocksNow()
   let stopClocks: ClocksState | undefined
 
-  return {
-    stop: (vitalStop) => {
-      if (stopClocks) {
-        return
-      }
+  return (vitalStop) => {
+    if (stopClocks) {
+      return
+    }
 
-      stopClocks = clocksNow()
+    stopClocks = clocksNow()
 
-      stopCallback(buildDurationVital(vitalStart, startClocks, vitalStop, stopClocks))
-    },
+    stopCallback(buildDurationVital(vitalStart, startClocks, vitalStop, stopClocks))
   }
 }
 

@@ -42,9 +42,9 @@ export function initXhrObservable(configuration: Configuration) {
 
 function createXhrObservable(configuration: Configuration) {
   return new Observable<XhrContext>((observable) => {
-    const { stop: stopInstrumentingStart } = instrumentMethod(XMLHttpRequest.prototype, 'open', openXhr)
+    const stopInstrumentingStart = instrumentMethod(XMLHttpRequest.prototype, 'open', openXhr)
 
-    const { stop: stopInstrumentingSend } = instrumentMethod(
+    const stopInstrumentingSend = instrumentMethod(
       XMLHttpRequest.prototype,
       'send',
       (call) => {
@@ -53,7 +53,7 @@ function createXhrObservable(configuration: Configuration) {
       { computeHandlingStack: true }
     )
 
-    const { stop: stopInstrumentingAbort } = instrumentMethod(XMLHttpRequest.prototype, 'abort', abortXhr)
+    const stopInstrumentingAbort = instrumentMethod(XMLHttpRequest.prototype, 'abort', abortXhr)
 
     return () => {
       stopInstrumentingStart()
@@ -90,7 +90,7 @@ function sendXhr(
 
   let hasBeenReported = false
 
-  const { stop: stopInstrumentingOnReadyStateChange } = instrumentMethod(xhr, 'onreadystatechange', () => {
+  const stopInstrumentingOnReadyStateChange = instrumentMethod(xhr, 'onreadystatechange', () => {
     if (xhr.readyState === XMLHttpRequest.DONE) {
       // Try to report the XHR as soon as possible, because the XHR may be mutated by the
       // application during a future event. For example, Angular is calling .abort() on
@@ -115,7 +115,7 @@ function sendXhr(
     observable.notify(shallowClone(completeContext))
   }
 
-  const { stop: unsubscribeLoadEndListener } = addEventListener(configuration, xhr, 'loadend', onEnd)
+  const unsubscribeLoadEndListener = addEventListener(configuration, xhr, 'loadend', onEnd)
 
   observable.notify(startContext)
 }

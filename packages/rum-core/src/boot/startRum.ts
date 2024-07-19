@@ -162,7 +162,7 @@ export function startRum(
   )
   cleanupTasks.push(stopViewCollection)
 
-  const { stop: stopResourceCollection } = startResourceCollection(lifeCycle, configuration, pageStateHistory)
+  const stopResourceCollection = startResourceCollection(lifeCycle, configuration, pageStateHistory)
   cleanupTasks.push(stopResourceCollection)
 
   startLongTaskCollection(lifeCycle, configuration)
@@ -170,7 +170,7 @@ export function startRum(
   const { addError } = startErrorCollection(lifeCycle, configuration, pageStateHistory, featureFlagContexts)
 
   startRequestCollection(lifeCycle, configuration, session)
-  const { stop: stopPerformanceCollection } = startPerformanceCollection(lifeCycle, configuration)
+  const stopPerformanceCollection = startPerformanceCollection(lifeCycle, configuration)
   cleanupTasks.push(stopPerformanceCollection)
 
   const vitalCollection = startVitalCollection(lifeCycle, pageStateHistory)
@@ -196,9 +196,7 @@ export function startRum(
     getInternalContext: internalContext.get,
     startDurationVital: vitalCollection.startDurationVital,
     addDurationVital: vitalCollection.addDurationVital,
-    stop: () => {
-      cleanupTasks.forEach((task) => task())
-    },
+    stop: () => cleanupTasks.forEach((task) => task()),
   }
 }
 
@@ -255,12 +253,9 @@ export function startRumEventCollection(
     addAction,
     actionContexts,
     stop: () => {
-      ciVisibilityContext.stop()
-      displayContext.stop()
-      pageStateHistory.stop()
-      urlContexts.stop()
-      viewContexts.stop()
-      pageStateHistory.stop()
+      ;[ciVisibilityContext, displayContext, pageStateHistory, urlContexts, viewContexts, pageStateHistory].forEach(
+        ({ stop }) => stop()
+      )
     },
   }
 }

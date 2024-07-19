@@ -22,7 +22,6 @@ export function createViewportObservable(configuration: RumConfiguration) {
     }, 200)
 
     return addEventListener(configuration, window, DOM_EVENT.RESIZE, updateDimension, { capture: true, passive: true })
-      .stop
   })
 }
 

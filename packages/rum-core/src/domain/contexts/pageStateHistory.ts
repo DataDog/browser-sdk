@@ -48,7 +48,7 @@ export function startPageStateHistory(
   let currentPageState: PageState
   addPageState(getPageState(), relativeNow())
 
-  const { stop: stopEventListeners } = addEventListeners(
+  const stopEventListeners = addEventListeners(
     configuration,
     window,
     [

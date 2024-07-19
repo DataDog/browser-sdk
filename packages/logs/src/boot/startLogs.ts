@@ -76,8 +76,6 @@ export function startLogs(
   return {
     handleLog,
     getInternalContext: internalContext.get,
-    stop: () => {
-      cleanupTasks.forEach((task) => task())
-    },
+    stop: () => cleanupTasks.forEach((task) => task()),
   }
 }

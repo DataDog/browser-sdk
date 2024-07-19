@@ -210,9 +210,7 @@ export function startSessionStore<TrackingType extends string>(
       expireSession()
       synchronizeSession(getExpiredSessionState())
     },
-    stop: () => {
-      clearInterval(watchSessionTimeoutId)
-    },
+    stop: () => clearInterval(watchSessionTimeoutId),
     updateSessionState,
   }
 }

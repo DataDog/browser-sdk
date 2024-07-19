@@ -15,9 +15,7 @@ export function trackViewEnd(lifeCycle: LifeCycle, viewEndCb: ViewEndCallback): 
     })
   })
 
-  return {
-    stop: () => {
-      viewEndSubscription.unsubscribe()
-    },
+  return () => {
+    viewEndSubscription.unsubscribe()
   }
 }

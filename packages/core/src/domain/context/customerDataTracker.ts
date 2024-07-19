@@ -119,9 +119,7 @@ export function createCustomerDataTracker(checkCustomerDataLimit: () => void) {
     },
     resetCustomerData: resetBytesCount,
     getBytesCount: () => bytesCountCache,
-    stop: () => {
-      cancelComputeBytesCount()
-    },
+    stop: () => cancelComputeBytesCount(),
   }
 }
 

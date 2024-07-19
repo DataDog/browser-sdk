@@ -77,7 +77,7 @@ export function trackClickActions(
 
   lifeCycle.subscribe(LifeCycleEventType.VIEW_ENDED, stopClickChain)
 
-  const { stop: stopActionEventsListener } = listenActionEvents<{
+  const stopActionEventsListener = listenActionEvents<{
     clickActionBase: ClickActionBase
     hadActivityOnPointerDown: () => boolean
   }>(configuration, {
@@ -122,9 +122,7 @@ export function trackClickActions(
   }
 
   function stopClickChain() {
-    if (currentClickChain) {
-      currentClickChain.stop()
-    }
+    currentClickChain?.stop()
   }
 }
 
@@ -176,7 +174,7 @@ function startClickAction(
   const click = newClick(lifeCycle, history, getUserActivity, clickActionBase, startEvent)
   appendClickToClickChain(click)
 
-  const { stop: stopWaitPageActivityEnd } = waitPageActivityEnd(
+  const stopWaitPageActivityEnd = waitPageActivityEnd(
     lifeCycle,
     domMutationObservable,
     configuration,

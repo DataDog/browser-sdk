@@ -31,15 +31,15 @@ export const initShadowRootsController = (
       }
       const mutationTracker = trackMutation(callback, configuration, shadowRootsController, shadowRoot)
       // The change event does not bubble up across the shadow root, we have to listen on the shadow root
-      const inputTracker = trackInput(configuration, callback, shadowRoot)
+      const stopInputTracker = trackInput(configuration, callback, shadowRoot)
       // The scroll event does not bubble up across the shadow root, we have to listen on the shadow root
-      const scrollTracker = trackScroll(configuration, callback, elementsScrollPositions, shadowRoot)
+      const stopScrollTracker = trackScroll(configuration, callback, elementsScrollPositions, shadowRoot)
       controllerByShadowRoot.set(shadowRoot, {
         flush: () => mutationTracker.flush(),
         stop: () => {
           mutationTracker.stop()
-          inputTracker.stop()
-          scrollTracker.stop()
+          stopInputTracker()
+          stopScrollTracker()
         },
       })
     },
@@ -52,12 +52,8 @@ export const initShadowRootsController = (
       entry.stop()
       controllerByShadowRoot.delete(shadowRoot)
     },
-    stop: () => {
-      controllerByShadowRoot.forEach(({ stop }) => stop())
-    },
-    flush: () => {
-      controllerByShadowRoot.forEach(({ flush }) => flush())
-    },
+    stop: () => controllerByShadowRoot.forEach(({ stop }) => stop()),
+    flush: () => controllerByShadowRoot.forEach(({ flush }) => flush()),
   }
   return shadowRootsController
 }

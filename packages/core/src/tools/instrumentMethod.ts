@@ -80,7 +80,7 @@ export function instrumentMethod<TARGET extends { [key: string]: any }, METHOD e
     if (startsWith(method, 'on')) {
       original = noop as TARGET[METHOD]
     } else {
-      return { stop: noop }
+      return noop
     }
   }
 
@@ -120,14 +120,12 @@ export function instrumentMethod<TARGET extends { [key: string]: any }, METHOD e
 
   targetPrototype[method] = instrumentation as TARGET[METHOD]
 
-  return {
-    stop: () => {
-      stopped = true
-      // If the instrumentation has been removed by a third party, keep the last one
-      if (targetPrototype[method] === instrumentation) {
-        targetPrototype[method] = original
-      }
-    },
+  return () => {
+    stopped = true
+    // If the instrumentation has been removed by a third party, keep the last one
+    if (targetPrototype[method] === instrumentation) {
+      targetPrototype[method] = original
+    }
   }
 }
 
@@ -138,7 +136,7 @@ export function instrumentSetter<TARGET extends { [key: string]: any }, PROPERTY
 ) {
   const originalDescriptor = Object.getOwnPropertyDescriptor(targetPrototype, property)
   if (!originalDescriptor || !originalDescriptor.set || !originalDescriptor.configurable) {
-    return { stop: noop }
+    return noop
   }
 
   const stoppedInstrumentation = noop
@@ -160,12 +158,10 @@ export function instrumentSetter<TARGET extends { [key: string]: any }, PROPERTY
     set: instrumentationWrapper,
   })
 
-  return {
-    stop: () => {
-      if (Object.getOwnPropertyDescriptor(targetPrototype, property)?.set === instrumentationWrapper) {
-        Object.defineProperty(targetPrototype, property, originalDescriptor)
-      }
-      instrumentation = stoppedInstrumentation
-    },
+  return () => {
+    if (Object.getOwnPropertyDescriptor(targetPrototype, property)?.set === instrumentationWrapper) {
+      Object.defineProperty(targetPrototype, property, originalDescriptor)
+    }
+    instrumentation = stoppedInstrumentation
   }
 }

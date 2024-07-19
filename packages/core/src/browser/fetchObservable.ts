@@ -49,11 +49,9 @@ function createFetchObservable() {
       return
     }
 
-    const { stop } = instrumentMethod(window, 'fetch', (call) => beforeSend(call, observable), {
+    return instrumentMethod(window, 'fetch', (call) => beforeSend(call, observable), {
       computeHandlingStack: true,
     })
-
-    return stop
   })
 }
 

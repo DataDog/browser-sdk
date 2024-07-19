@@ -92,11 +92,7 @@ export function listenActionEvents<ClickContext>(
     ),
   ]
 
-  return {
-    stop: () => {
-      listeners.forEach((listener) => listener.stop())
-    },
-  }
+  return () => listeners.forEach((stop) => stop())
 }
 
 function isSelectionEmpty(): boolean {
