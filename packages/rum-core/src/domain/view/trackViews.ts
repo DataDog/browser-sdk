@@ -159,7 +159,9 @@ export function trackViews(
     },
 
     stop: () => {
-      locationChangeSubscription?.unsubscribe()
+      if (locationChangeSubscription) {
+        locationChangeSubscription.unsubscribe()
+      }
       currentView.end()
       activeViews.forEach((view) => view.stop())
     },

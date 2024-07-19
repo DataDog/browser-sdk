@@ -79,7 +79,9 @@ export function interceptRequests() {
       if (originalFetch) {
         window.fetch = originalFetch
       }
-      xhrManager?.reset()
+      if (xhrManager) {
+        xhrManager.reset()
+      }
       MockXhr.onSend = noop
     },
   }
