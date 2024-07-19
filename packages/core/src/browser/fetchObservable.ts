@@ -2,6 +2,7 @@ import type { InstrumentedMethodCall } from '../tools/instrumentMethod'
 import { instrumentMethod } from '../tools/instrumentMethod'
 import { monitor } from '../tools/monitor'
 import { Observable } from '../tools/observable'
+import { assign } from '../tools/utils/polyfills'
 import type { ClocksState } from '../tools/utils/timeUtils'
 import { clocksNow } from '../tools/utils/timeUtils'
 import { normalizeUrl } from '../tools/utils/urlPolyfill'
@@ -96,31 +97,31 @@ function afterSend(
   responsePromise: Promise<Response>,
   startContext: FetchStartContext
 ) {
-  const reportFetch = (response: Response | Error, isRejected: boolean = false) => {
-    const context = startContext as unknown as FetchResolveContext
-    context.state = 'resolve'
+  const context = startContext as unknown as FetchResolveContext
 
-    // When fetch is instrumented to return something else than a Response | Error
-    if (typeof response !== 'object') {
-      if (isRejected) {
-        context.status = 0
-        context.error = response
-      }
-    } else if ('stack' in response || response instanceof Error) {
-      context.status = 0
-      context.isAborted = response instanceof DOMException && response.code === DOMException.ABORT_ERR
-      context.error = response
-    } else if ('status' in response) {
-      context.response = response
-      context.responseType = response.type
-      context.status = response.status
-      context.isAborted = false
-    }
+  function reportFetch(partialContext: Partial<FetchResolveContext>) {
+    context.state = 'resolve'
+    assign(context, partialContext)
     observable.notify(context)
   }
 
   responsePromise.then(
-    monitor((response) => reportFetch(response)),
-    monitor((error) => reportFetch(error, true))
+    monitor((response) => {
+      reportFetch({
+        response,
+        responseType: response.type,
+        status: response.status,
+        isAborted: false,
+      })
+    }),
+    monitor((error: Error) => {
+      const isAborted =
+        context.init?.signal?.aborted || (error instanceof DOMException && error.code === DOMException.ABORT_ERR)
+      reportFetch({
+        status: 0,
+        isAborted,
+        error,
+      })
+    })
   )
 }
