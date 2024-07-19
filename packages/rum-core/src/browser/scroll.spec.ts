@@ -29,7 +29,7 @@ describe('scroll', () => {
     // Those events don't seem to be triggered consistently on safari though, so stop waiting after a while.
     if (shouldWaitForWindowScrollEvent) {
       const STOP_WAITING_FOR_SCROLL = 2000
-      const { stop: removeScrollListener } = addEventListener(
+      const removeScrollListener = addEventListener(
         configuration,
         window,
         DOM_EVENT.SCROLL,

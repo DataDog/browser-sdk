@@ -11,7 +11,7 @@ import { tackVisualViewportResize } from './trackViewportResize'
 import type { Tracker } from './tracker.types'
 
 describe('trackViewportResize', () => {
-  let viewportResizeTracker: Tracker
+  let stopViewportResizeTracker: Tracker
   let visualViewportResizeCallback: jasmine.Spy<VisualViewportResizeCallback>
   let configuration: RumConfiguration
   let elementsScrollPositions: ElementsScrollPositions
@@ -30,10 +30,10 @@ describe('trackViewportResize', () => {
       elementsScrollPositions,
     })
 
-    viewportResizeTracker = tackVisualViewportResize(configuration, visualViewportResizeCallback)
+    stopViewportResizeTracker = tackVisualViewportResize(configuration, visualViewportResizeCallback)
 
     registerCleanupTask(() => {
-      viewportResizeTracker.stop()
+      stopViewportResizeTracker()
     })
   })
 

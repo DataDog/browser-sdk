@@ -11,7 +11,7 @@ import { trackMediaInteraction } from './trackMediaInteraction'
 import type { Tracker } from './tracker.types'
 
 describe('trackMediaInteraction', () => {
-  let mediaInteractionTracker: Tracker
+  let stopMediaInteractionTracker: Tracker
   let mediaInteractionCallback: jasmine.Spy<InputCallback>
   let audio: HTMLAudioElement
   let configuration: RumConfiguration
@@ -30,10 +30,10 @@ describe('trackMediaInteraction', () => {
       status: SerializationContextStatus.INITIAL_FULL_SNAPSHOT,
       elementsScrollPositions: createElementsScrollPositions(),
     })
-    mediaInteractionTracker = trackMediaInteraction(configuration, mediaInteractionCallback)
+    stopMediaInteractionTracker = trackMediaInteraction(configuration, mediaInteractionCallback)
 
     registerCleanupTask(() => {
-      mediaInteractionTracker.stop()
+      stopMediaInteractionTracker()
     })
   })
 

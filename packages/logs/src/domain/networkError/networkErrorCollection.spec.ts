@@ -37,10 +37,7 @@ describe('network error collection', () => {
 
   function startCollection(forwardErrorsToLogs = true) {
     mockFetchManager = mockFetch()
-    ;({ stop: stopNetworkErrorCollection } = startNetworkErrorCollection(
-      { ...CONFIGURATION, forwardErrorsToLogs },
-      lifeCycle
-    ))
+    stopNetworkErrorCollection = startNetworkErrorCollection({ ...CONFIGURATION, forwardErrorsToLogs }, lifeCycle)
     fetch = window.fetch as MockFetch
   }
 

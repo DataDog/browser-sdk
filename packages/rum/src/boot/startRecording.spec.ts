@@ -65,7 +65,7 @@ describe('startRecording', () => {
           deflateEncoder,
           httpRequest
         )
-        stopRecording = recording ? recording.stop : noop
+        stopRecording = recording
         return {
           stop: () => {
             stopRecording()

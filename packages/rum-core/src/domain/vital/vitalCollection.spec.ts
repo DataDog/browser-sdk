@@ -45,9 +45,9 @@ describe('vitalCollection', () => {
       it('should create duration vital from a vital instance', () => {
         const cbSpy = jasmine.createSpy()
 
-        const vital = createVitalInstance(cbSpy, { name: 'foo' })
+        const stopVital = createVitalInstance(cbSpy, { name: 'foo' })
         clock.tick(100)
-        vital.stop({})
+        stopVital({})
 
         expect(cbSpy).toHaveBeenCalledOnceWith(jasmine.objectContaining({ name: 'foo', duration: 100 }))
       })
@@ -63,9 +63,9 @@ describe('vitalCollection', () => {
       it('should not create multiple duration vitals by calling "stop" on the same vital instance multiple times', () => {
         const cbSpy = jasmine.createSpy()
 
-        const vital = createVitalInstance(cbSpy, { name: 'foo' })
-        vital.stop()
-        vital.stop()
+        const stopVital = createVitalInstance(cbSpy, { name: 'foo' })
+        stopVital()
+        stopVital()
 
         expect(cbSpy).toHaveBeenCalledTimes(1)
       })
@@ -73,13 +73,13 @@ describe('vitalCollection', () => {
       it('should create multiple duration vitals from createVitalInstance', () => {
         const cbSpy = jasmine.createSpy()
 
-        const vital1 = createVitalInstance(cbSpy, { name: 'foo', details: 'component 1' })
+        const stopVital1 = createVitalInstance(cbSpy, { name: 'foo', details: 'component 1' })
         clock.tick(100)
-        const vital2 = createVitalInstance(cbSpy, { name: 'foo', details: 'component 2' })
+        const stopVital2 = createVitalInstance(cbSpy, { name: 'foo', details: 'component 2' })
         clock.tick(100)
-        vital2.stop()
+        stopVital2()
         clock.tick(100)
-        vital1.stop()
+        stopVital1()
 
         expect(cbSpy).toHaveBeenCalledTimes(2)
         expect(cbSpy.calls.argsFor(0)).toEqual([jasmine.objectContaining({ details: 'component 2', duration: 100 })])
@@ -89,10 +89,10 @@ describe('vitalCollection', () => {
       it('should merge createVitalInstance and vital instance details', () => {
         const cbSpy = jasmine.createSpy()
 
-        createVitalInstance(cbSpy, { name: 'both-undefined' }).stop()
-        createVitalInstance(cbSpy, { name: 'start-defined', details: 'start-defined' }).stop()
-        createVitalInstance(cbSpy, { name: 'stop-defined' }).stop({ details: 'stop-defined' })
-        createVitalInstance(cbSpy, { name: 'both-defined', details: 'start-defined' }).stop({ details: 'stop-defined' })
+        createVitalInstance(cbSpy, { name: 'both-undefined' })()
+        createVitalInstance(cbSpy, { name: 'start-defined', details: 'start-defined' })()
+        createVitalInstance(cbSpy, { name: 'stop-defined' })({ details: 'stop-defined' })
+        createVitalInstance(cbSpy, { name: 'both-defined', details: 'start-defined' })({ details: 'stop-defined' })
 
         expect(cbSpy).toHaveBeenCalledTimes(4)
         expect(cbSpy.calls.argsFor(0)).toEqual([jasmine.objectContaining({ details: undefined })])
@@ -104,13 +104,13 @@ describe('vitalCollection', () => {
       it('should merge createVitalInstance and vital instance contexts', () => {
         const cbSpy = jasmine.createSpy()
 
-        createVitalInstance(cbSpy, { name: 'both-undefined' }).stop()
-        createVitalInstance(cbSpy, { name: 'start-defined', context: { start: 'defined' } }).stop()
-        createVitalInstance(cbSpy, { name: 'stop-defined' }).stop({ context: { stop: 'defined' } })
-        createVitalInstance(cbSpy, { name: 'both-defined', context: { start: 'defined' } }).stop({
+        createVitalInstance(cbSpy, { name: 'both-undefined' })()
+        createVitalInstance(cbSpy, { name: 'start-defined', context: { start: 'defined' } })()
+        createVitalInstance(cbSpy, { name: 'stop-defined' })({ context: { stop: 'defined' } })
+        createVitalInstance(cbSpy, { name: 'both-defined', context: { start: 'defined' } })({
           context: { stop: 'defined' },
         })
-        createVitalInstance(cbSpy, { name: 'stop-precedence', context: { precedence: 'start' } }).stop({
+        createVitalInstance(cbSpy, { name: 'stop-precedence', context: { precedence: 'start' } })({
           context: { precedence: 'stop' },
         })
 
@@ -124,7 +124,7 @@ describe('vitalCollection', () => {
     })
 
     it('should create a vital from start API', () => {
-      const vital = vitalCollection.startDurationVital({
+      const stopVital = vitalCollection.startDurationVital({
         name: 'foo',
         context: { foo: 'bar' },
         details: 'baz',
@@ -132,7 +132,7 @@ describe('vitalCollection', () => {
 
       clock.tick(100)
 
-      vital.stop()
+      stopVital()
 
       expect(rawRumEvents.length).toBe(1)
       expect((rawRumEvents[0].rawRumEvent as RawRumVitalEvent).vital.duration).toBe(100000000)
@@ -171,8 +171,8 @@ describe('vitalCollection', () => {
   })
 
   it('should collect raw rum event from duration vital', () => {
-    const vital = createVitalInstance(vitalCollection.addDurationVital, { name: 'foo' })
-    vital.stop()
+    const stopVital = createVitalInstance(vitalCollection.addDurationVital, { name: 'foo' })
+    stopVital()
 
     expect(rawRumEvents[0].startTime).toEqual(jasmine.any(Number))
     expect(rawRumEvents[0].rawRumEvent).toEqual({

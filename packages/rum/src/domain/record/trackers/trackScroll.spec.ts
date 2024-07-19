@@ -12,7 +12,7 @@ import { trackScroll } from './trackScroll'
 import type { Tracker } from './tracker.types'
 
 describe('trackScroll', () => {
-  let scrollTracker: Tracker
+  let stopScrollTracker: Tracker
   let scrollCallback: jasmine.Spy<InputCallback>
   let div: HTMLDivElement
   let configuration: RumConfiguration
@@ -33,10 +33,10 @@ describe('trackScroll', () => {
       status: SerializationContextStatus.INITIAL_FULL_SNAPSHOT,
       elementsScrollPositions,
     })
-    scrollTracker = trackScroll(configuration, scrollCallback, elementsScrollPositions)
+    stopScrollTracker = trackScroll(configuration, scrollCallback, elementsScrollPositions)
 
     registerCleanupTask(() => {
-      scrollTracker.stop()
+      stopScrollTracker()
     })
   })
 

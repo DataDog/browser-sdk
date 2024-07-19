@@ -14,11 +14,11 @@ describe('trackFirstContentfulPaint', () => {
   function startTrackingFCP() {
     fcpCallback = jasmine.createSpy()
     const firstHidden = trackFirstHidden({} as RumConfiguration)
-    const firstContentfulPaint = trackFirstContentfulPaint(lifeCycle, firstHidden, fcpCallback)
+    const stopFirstContentfulPaint = trackFirstContentfulPaint(lifeCycle, firstHidden, fcpCallback)
 
     registerCleanupTask(() => {
       firstHidden.stop()
-      firstContentfulPaint.stop()
+      stopFirstContentfulPaint()
       restorePageVisibility()
     })
   }

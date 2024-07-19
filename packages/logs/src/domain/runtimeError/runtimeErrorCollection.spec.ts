@@ -32,7 +32,7 @@ describe('runtime error collection', () => {
   })
 
   it('should send runtime errors', (done) => {
-    ;({ stop: stopRuntimeErrorCollection } = startRuntimeErrorCollection(configuration, lifeCycle))
+    stopRuntimeErrorCollection = startRuntimeErrorCollection(configuration, lifeCycle)
     setTimeout(() => {
       throw new Error('error!')
     })
@@ -61,7 +61,7 @@ describe('runtime error collection', () => {
 
     nestedError.cause = deepNestedError
     error.cause = nestedError
-    ;({ stop: stopRuntimeErrorCollection } = startRuntimeErrorCollection(configuration, lifeCycle))
+    stopRuntimeErrorCollection = startRuntimeErrorCollection(configuration, lifeCycle)
     setTimeout(() => {
       throw error
     })
@@ -96,10 +96,10 @@ describe('runtime error collection', () => {
   })
 
   it('should not send runtime errors when forwardErrorsToLogs is false', (done) => {
-    ;({ stop: stopRuntimeErrorCollection } = startRuntimeErrorCollection(
+    stopRuntimeErrorCollection = startRuntimeErrorCollection(
       { ...configuration, forwardErrorsToLogs: false },
       lifeCycle
-    ))
+    )
 
     setTimeout(() => {
       throw new Error('error!')

@@ -7,16 +7,16 @@ import type { Tracker } from './tracker.types'
 describe('trackViewEnd', () => {
   let lifeCycle: LifeCycle
   let viewEndCb: jasmine.Spy<ViewEndCallback>
-  let viewEndTracker: Tracker
+  let stopViewEndTracker: Tracker
 
   beforeEach(() => {
     lifeCycle = new LifeCycle()
     viewEndCb = jasmine.createSpy()
-    viewEndTracker = trackViewEnd(lifeCycle, viewEndCb)
+    stopViewEndTracker = trackViewEnd(lifeCycle, viewEndCb)
   })
 
   afterEach(() => {
-    viewEndTracker.stop()
+    stopViewEndTracker()
   })
 
   it('should generate view end record', () => {

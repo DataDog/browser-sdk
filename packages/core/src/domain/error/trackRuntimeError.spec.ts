@@ -29,7 +29,7 @@ describe('trackRuntimeError', () => {
     notifyError = jasmine.createSpy()
     const errorObservable = new Observable<RawError>()
     errorObservable.subscribe((e: RawError) => notifyError(e) as void)
-    ;({ stop: stopRuntimeErrorTracking } = trackRuntimeError(errorObservable))
+    stopRuntimeErrorTracking = trackRuntimeError(errorObservable)
   })
 
   afterEach(() => {
@@ -80,7 +80,7 @@ describe('instrumentOnError', () => {
     onErrorSpy = jasmine.createSpy()
     window.onerror = onErrorSpy
     callbackSpy = jasmine.createSpy()
-    ;({ stop: stopCollectingUnhandledError } = instrumentOnError(callbackSpy))
+    stopCollectingUnhandledError = instrumentOnError(callbackSpy)
   })
 
   afterEach(() => {
@@ -289,7 +289,7 @@ describe('instrumentUnhandledRejection', () => {
     originalOnUnhandledRejectionHandler = window.onunhandledrejection
     onUnhandledrejectionSpy = jasmine.createSpy()
     window.onunhandledrejection = onUnhandledrejectionSpy
-    ;({ stop: stopCollectingUnhandledError } = instrumentUnhandledRejection(callbackSpy))
+    stopCollectingUnhandledError = instrumentUnhandledRejection(callbackSpy)
   })
 
   afterEach(() => {

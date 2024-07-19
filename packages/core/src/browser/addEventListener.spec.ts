@@ -33,7 +33,7 @@ describe('addEventListener', () => {
       const eventTarget = document.createElement('div')
       zoneJs.replaceProperty(eventTarget, 'removeEventListener', zoneJsPatchedRemoveEventListener)
 
-      const { stop } = addEventListener(configuration, eventTarget, DOM_EVENT.CLICK, noop)
+      const stop = addEventListener(configuration, eventTarget, DOM_EVENT.CLICK, noop)
       stop()
       expect(zoneJsPatchedRemoveEventListener).not.toHaveBeenCalled()
     })

@@ -18,11 +18,11 @@ describe('firstInputTimings', () => {
     fitCallback = jasmine.createSpy()
 
     const firstHidden = trackFirstHidden(configuration)
-    const firstInputTimings = trackFirstInput(lifeCycle, configuration, firstHidden, fitCallback)
+    const stopFirstInputTimings = trackFirstInput(lifeCycle, configuration, firstHidden, fitCallback)
 
     registerCleanupTask(() => {
       firstHidden.stop()
-      firstInputTimings.stop()
+      stopFirstInputTimings()
       restorePageVisibility()
     })
   }

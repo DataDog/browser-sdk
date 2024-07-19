@@ -44,7 +44,7 @@ describe('collect fetch', () => {
         context.spanId = new TraceIdentifier()
       },
     }
-    ;({ stop: stopFetchTracking } = trackFetch(lifeCycle, configuration, tracerStub as Tracer))
+    stopFetchTracking = trackFetch(lifeCycle, configuration, tracerStub as Tracer)
 
     fetch = window.fetch as MockFetch
     window.onunhandledrejection = (ev: PromiseRejectionEvent) => {
@@ -218,7 +218,7 @@ describe('collect xhr', () => {
         context.spanId = new TraceIdentifier()
       },
     }
-    ;({ stop: stopXhrTracking } = trackXhr(lifeCycle, configuration, tracerStub as Tracer))
+    stopXhrTracking = trackXhr(lifeCycle, configuration, tracerStub as Tracer)
 
     registerCleanupTask(() => {
       stopXhrTracking()

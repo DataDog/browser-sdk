@@ -14,7 +14,7 @@ describe('startPerformanceCollection', () => {
     ;({ notifyPerformanceEntries } = mockPerformanceObserver())
 
     setupBuilder = setup().beforeBuild(({ lifeCycle, configuration }) => {
-      const { stop } = startPerformanceCollection(lifeCycle, configuration)
+      const stop = startPerformanceCollection(lifeCycle, configuration)
       const subscription = lifeCycle.subscribe(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, entryCollectedCallback)
       return {
         stop() {

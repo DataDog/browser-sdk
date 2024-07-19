@@ -31,7 +31,7 @@ const noopStartRum = (): ReturnType<StartRum> => ({
   viewContexts: {} as any,
   session: {} as any,
   stopSession: () => undefined,
-  startDurationVital: () => ({ stop: () => undefined }) as DurationVitalInstance,
+  startDurationVital: () => (() => undefined) as DurationVitalInstance,
   addDurationVital: () => undefined,
   stop: () => undefined,
 })

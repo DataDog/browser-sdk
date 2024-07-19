@@ -31,10 +31,10 @@ describe('reports', () => {
   })
 
   it('should send reports', () => {
-    ;({ stop: stopReportCollection } = startReportCollection(
+    stopReportCollection = startReportCollection(
       validateAndBuildLogsConfiguration({ ...initConfiguration, forwardReports: ['intervention'] })!,
       lifeCycle
-    ))
+    )
 
     reportingObserver.raiseReport('intervention')
     expect(rawLogsEvents[0].rawLogsEvent).toEqual({
@@ -50,20 +50,20 @@ describe('reports', () => {
   })
 
   it('should not send reports when forwardReports init option not specified', () => {
-    ;({ stop: stopReportCollection } = startReportCollection(
+    stopReportCollection = startReportCollection(
       validateAndBuildLogsConfiguration({ ...initConfiguration })!,
       lifeCycle
-    ))
+    )
     reportingObserver.raiseReport('intervention')
 
     expect(rawLogsEvents.length).toEqual(0)
   })
 
   it('should add the source file information to the message for non error reports', () => {
-    ;({ stop: stopReportCollection } = startReportCollection(
+    stopReportCollection = startReportCollection(
       validateAndBuildLogsConfiguration({ ...initConfiguration, forwardReports: ['deprecation'] })!,
       lifeCycle
-    ))
+    )
 
     reportingObserver.raiseReport('deprecation')
 

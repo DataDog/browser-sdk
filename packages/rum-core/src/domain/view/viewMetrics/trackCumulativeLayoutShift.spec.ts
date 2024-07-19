@@ -30,10 +30,10 @@ describe('trackCumulativeLayoutShift', () => {
       get: () => (isLayoutShiftSupported ? ['layout-shift'] : []),
     })
 
-    const clsTrackingesult = trackCumulativeLayoutShift({} as RumConfiguration, lifeCycle, viewStart, clsCallback)
+    const stopClsTrackingesult = trackCumulativeLayoutShift({} as RumConfiguration, lifeCycle, viewStart, clsCallback)
 
     registerCleanupTask(() => {
-      clsTrackingesult.stop()
+      stopClsTrackingesult()
       if (originalSupportedEntryTypes) {
         Object.defineProperty(PerformanceObserver, 'supportedEntryTypes', originalSupportedEntryTypes)
       }

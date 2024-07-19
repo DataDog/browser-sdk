@@ -21,7 +21,7 @@ describe('trackLargestContentfulPaint', () => {
 
   function startLCPTracking() {
     const firstHidden = trackFirstHidden({} as RumConfiguration)
-    const largestContentfulPaint = trackLargestContentfulPaint(
+    const stopLargestContentfulPaint = trackLargestContentfulPaint(
       lifeCycle,
       {} as RumConfiguration,
       firstHidden,
@@ -31,7 +31,7 @@ describe('trackLargestContentfulPaint', () => {
 
     registerCleanupTask(() => {
       firstHidden.stop()
-      largestContentfulPaint.stop()
+      stopLargestContentfulPaint()
       restorePageVisibility()
     })
   }

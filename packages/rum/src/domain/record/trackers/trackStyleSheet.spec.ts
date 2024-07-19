@@ -9,7 +9,7 @@ import { DEFAULT_CONFIGURATION, DEFAULT_SHADOW_ROOT_CONTROLLER } from './tracker
 import type { Tracker } from './tracker.types'
 
 describe('trackStyleSheet', () => {
-  let styleSheetTracker: Tracker
+  let stopStyleSheetTracker: Tracker
   let styleSheetCallbackSpy: jasmine.Spy<StyleSheetCallback>
   let styleElement: HTMLStyleElement
   let styleSheet: CSSStyleSheet
@@ -30,7 +30,7 @@ describe('trackStyleSheet', () => {
       elementsScrollPositions: createElementsScrollPositions(),
     })
     registerCleanupTask(() => {
-      styleSheetTracker.stop()
+      stopStyleSheetTracker()
       styleElement.remove()
     })
   })
@@ -38,7 +38,7 @@ describe('trackStyleSheet', () => {
   describe('observing high level css stylesheet', () => {
     describe('when inserting rules into stylesheet', () => {
       it('should capture CSSStyleRule insertion when no index is provided', () => {
-        styleSheetTracker = trackStyleSheet(styleSheetCallbackSpy)
+        stopStyleSheetTracker = trackStyleSheet(styleSheetCallbackSpy)
         styleSheet.insertRule(styleRule)
 
         expect(styleSheetCallbackSpy).toHaveBeenCalledWith({
@@ -55,7 +55,7 @@ describe('trackStyleSheet', () => {
       it('should capture CSSStyleRule insertion when index is provided', () => {
         const index = 0
 
-        styleSheetTracker = trackStyleSheet(styleSheetCallbackSpy)
+        stopStyleSheetTracker = trackStyleSheet(styleSheetCallbackSpy)
         styleSheet.insertRule(styleRule, index)
 
         expect(styleSheetCallbackSpy).toHaveBeenCalledWith({
@@ -75,7 +75,7 @@ describe('trackStyleSheet', () => {
         styleSheet.insertRule(styleRule)
         const index = 0
 
-        styleSheetTracker = trackStyleSheet(styleSheetCallbackSpy)
+        stopStyleSheetTracker = trackStyleSheet(styleSheetCallbackSpy)
         styleSheet.deleteRule(index)
 
         expect(styleSheetCallbackSpy).toHaveBeenCalledWith({
@@ -98,7 +98,7 @@ describe('trackStyleSheet', () => {
         styleSheet.insertRule('.main {opacity: 0}')
         const groupingRule = (styleSheet.cssRules[1] as CSSGroupingRule).cssRules[0] as CSSGroupingRule
 
-        styleSheetTracker = trackStyleSheet(styleSheetCallbackSpy)
+        stopStyleSheetTracker = trackStyleSheet(styleSheetCallbackSpy)
         groupingRule.insertRule(styleRule, 1)
 
         expect(styleSheetCallbackSpy).toHaveBeenCalledWith({
@@ -123,7 +123,7 @@ describe('trackStyleSheet', () => {
         const groupingRule = parentRule.cssRules[0] as CSSGroupingRule
         parentRule.deleteRule(0)
 
-        styleSheetTracker = trackStyleSheet(styleSheetCallbackSpy)
+        stopStyleSheetTracker = trackStyleSheet(styleSheetCallbackSpy)
         groupingRule.insertRule(styleRule, 0)
 
         expect(styleSheetCallbackSpy).not.toHaveBeenCalled()
@@ -136,7 +136,7 @@ describe('trackStyleSheet', () => {
         styleSheet.insertRule('.main {opacity: 0}')
         const groupingRule = (styleSheet.cssRules[1] as CSSGroupingRule).cssRules[0] as CSSGroupingRule
 
-        styleSheetTracker = trackStyleSheet(styleSheetCallbackSpy)
+        stopStyleSheetTracker = trackStyleSheet(styleSheetCallbackSpy)
         groupingRule.deleteRule(0)
 
         expect(styleSheetCallbackSpy).toHaveBeenCalledWith({
@@ -161,7 +161,7 @@ describe('trackStyleSheet', () => {
         const groupingRule = parentRule.cssRules[0] as CSSGroupingRule
         parentRule.deleteRule(0)
 
-        styleSheetTracker = trackStyleSheet(styleSheetCallbackSpy)
+        stopStyleSheetTracker = trackStyleSheet(styleSheetCallbackSpy)
         groupingRule.deleteRule(0)
 
         expect(styleSheetCallbackSpy).not.toHaveBeenCalled()

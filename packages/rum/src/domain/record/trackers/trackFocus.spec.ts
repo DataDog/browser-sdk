@@ -6,7 +6,7 @@ import { trackFocus, type FocusCallback } from './trackFocus'
 import type { Tracker } from './tracker.types'
 
 describe('trackFocus', () => {
-  let focusTracker: Tracker
+  let stopFocusTracker: Tracker
   let focusCallback: jasmine.Spy<FocusCallback>
   let configuration: RumConfiguration
 
@@ -16,10 +16,10 @@ describe('trackFocus', () => {
     }
     configuration = { defaultPrivacyLevel: DefaultPrivacyLevel.ALLOW } as RumConfiguration
     focusCallback = jasmine.createSpy()
-    focusTracker = trackFocus(configuration, focusCallback)
+    stopFocusTracker = trackFocus(configuration, focusCallback)
 
     registerCleanupTask(() => {
-      focusTracker.stop()
+      stopFocusTracker()
     })
   })
 

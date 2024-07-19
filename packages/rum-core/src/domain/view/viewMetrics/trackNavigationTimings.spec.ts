@@ -12,9 +12,9 @@ describe('trackNavigationTimings', () => {
 
   beforeEach(() => {
     navigationTimingsCallback = jasmine.createSpy()
-    const trackNavigationTimingsResult = trackNavigationTimings(lifeCycle, navigationTimingsCallback)
+    const stopTrackNavigationTimingsResult = trackNavigationTimings(lifeCycle, navigationTimingsCallback)
 
-    registerCleanupTask(trackNavigationTimingsResult.stop)
+    registerCleanupTask(stopTrackNavigationTimingsResult)
   })
 
   it('should provide navigation timing', () => {

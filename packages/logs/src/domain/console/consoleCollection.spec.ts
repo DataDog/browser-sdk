@@ -35,10 +35,10 @@ describe('console collection', () => {
 
   objectEntries(LogStatusForApi).forEach(([api, status]) => {
     it(`should collect ${status} logs from console.${api}`, () => {
-      ;({ stop: stopConsoleCollection } = startConsoleCollection(
+      stopConsoleCollection = startConsoleCollection(
         validateAndBuildLogsConfiguration({ ...initConfiguration, forwardConsoleLogs: 'all' })!,
         lifeCycle
-      ))
+      )
 
       /* eslint-disable-next-line no-console */
       console[api as keyof typeof LogStatusForApi]('foo', 'bar')
@@ -60,10 +60,10 @@ describe('console collection', () => {
   })
 
   it('console error should have an error object defined', () => {
-    ;({ stop: stopConsoleCollection } = startConsoleCollection(
+    stopConsoleCollection = startConsoleCollection(
       validateAndBuildLogsConfiguration({ ...initConfiguration, forwardErrorsToLogs: true })!,
       lifeCycle
-    ))
+    )
 
     /* eslint-disable-next-line no-console */
     console.error('foo', 'bar')
@@ -76,10 +76,10 @@ describe('console collection', () => {
   })
 
   it('should retrieve fingerprint from console error', () => {
-    ;({ stop: stopConsoleCollection } = startConsoleCollection(
+    stopConsoleCollection = startConsoleCollection(
       validateAndBuildLogsConfiguration({ ...initConfiguration, forwardErrorsToLogs: true })!,
       lifeCycle
-    ))
+    )
     interface DatadogError extends Error {
       dd_fingerprint?: string
     }
@@ -97,10 +97,10 @@ describe('console collection', () => {
   })
 
   it('should retrieve causes from console error', () => {
-    ;({ stop: stopConsoleCollection } = startConsoleCollection(
+    stopConsoleCollection = startConsoleCollection(
       validateAndBuildLogsConfiguration({ ...initConfiguration, forwardErrorsToLogs: true })!,
       lifeCycle
-    ))
+    )
     const error = new Error('High level error') as ErrorWithCause
     error.stack = 'Error: High level error'
 

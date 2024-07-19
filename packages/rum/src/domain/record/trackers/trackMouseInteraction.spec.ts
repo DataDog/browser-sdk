@@ -14,7 +14,7 @@ import type { Tracker } from './tracker.types'
 
 describe('trackMouseInteraction', () => {
   let mouseInteractionCallbackSpy: jasmine.Spy<MouseInteractionCallback>
-  let mouseInteractionTracker: Tracker
+  let stopMouseInteractionTracker: Tracker
   let recordIds: RecordIds
   let a: HTMLAnchorElement
   let configuration: RumConfiguration
@@ -36,10 +36,10 @@ describe('trackMouseInteraction', () => {
 
     mouseInteractionCallbackSpy = jasmine.createSpy()
     recordIds = initRecordIds()
-    mouseInteractionTracker = trackMouseInteraction(configuration, mouseInteractionCallbackSpy, recordIds)
+    stopMouseInteractionTracker = trackMouseInteraction(configuration, mouseInteractionCallbackSpy, recordIds)
 
     registerCleanupTask(() => {
-      mouseInteractionTracker.stop()
+      stopMouseInteractionTracker()
     })
   })
 

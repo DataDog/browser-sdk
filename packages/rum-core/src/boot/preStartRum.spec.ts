@@ -682,8 +682,8 @@ describe('preStartRum', () => {
 
       const vitalStart = { name: 'timing' }
 
-      const vital = strategy.startDurationVital(vitalStart)
-      vital.stop()
+      const stopVital = strategy.startDurationVital(vitalStart)
+      stopVital()
 
       strategy.init(DEFAULT_INIT_CONFIGURATION, PUBLIC_API)
       expect(addDurationVitalSpy).toHaveBeenCalled()

@@ -11,7 +11,7 @@ import type { Tracker } from './tracker.types'
 
 describe('trackMove', () => {
   let mouseMoveCallbackSpy: jasmine.Spy<MousemoveCallBack>
-  let moveTracker: Tracker
+  let stopMoveTracker: Tracker
   let configuration: RumConfiguration
 
   beforeEach(() => {
@@ -27,10 +27,10 @@ describe('trackMove', () => {
     })
 
     mouseMoveCallbackSpy = jasmine.createSpy()
-    moveTracker = trackMove(configuration, mouseMoveCallbackSpy)
+    stopMoveTracker = trackMove(configuration, mouseMoveCallbackSpy)
 
     registerCleanupTask(() => {
-      moveTracker.stop()
+      stopMoveTracker()
     })
   })
 
