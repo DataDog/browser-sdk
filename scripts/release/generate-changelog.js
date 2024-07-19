@@ -1,6 +1,7 @@
 'use strict'
 
 const util = require('util')
+const { readdirSync } = require('fs')
 const readFile = util.promisify(require('fs').readFile)
 
 const emojiNameMap = require('emoji-name-map')
@@ -28,7 +29,7 @@ const INTERNAL_EMOJI_PRIORITY = [
   '⚗️', // experiment
 ]
 const EMOJI_REGEX = /^\p{Emoji_Presentation}/u
-const PACKAGES = ['rum', 'logs', 'rum-slim', 'rum-react', 'worker']
+const PACKAGES = readdirSync('../../packages').filter((name) => name !== 'core' && name !== 'rum-core')
 
 runMain(async () => {
   if (!process.env.EDITOR) {
