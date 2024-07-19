@@ -51,6 +51,7 @@ module.exports = ({ entry, mode, filename, types, keepBuildEnvVariables, plugins
         terserOptions: {
           mangle: {
             properties: true,
+            keep_fnames: true,
           },
           compress: {
             drop_console: true,

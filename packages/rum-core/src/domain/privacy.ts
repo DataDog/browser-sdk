@@ -24,7 +24,7 @@ export const PRIVACY_CLASS_PREFIX = 'dd-privacy-'
 
 // Private Replacement Templates
 export const CENSORED_STRING_MARK = '***'
-export const CENSORED_IMG_MARK = 'data:image/gif;base64,R0lGODlhAQABAIAAAMLCwgAAACH5BAAAAAAALAAAAAABAAEAAAICRAEAOw=='
+export const CENSORED_IMG_MARK = 'data:image/gif;base64,AAAA=='
 
 export const FORM_PRIVATE_TAG_NAMES: { [tagName: string]: true } = {
   INPUT: true,

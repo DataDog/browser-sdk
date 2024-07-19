@@ -1,5 +1,5 @@
 import type { RumConfiguration } from '@datadog/browser-rum-core'
-import { NodePrivacyLevel, PRIVACY_ATTR_NAME } from '@datadog/browser-rum-core'
+import { CENSORED_IMG_MARK, NodePrivacyLevel, PRIVACY_ATTR_NAME } from '@datadog/browser-rum-core'
 import { display, noop, objectValues } from '@datadog/browser-core'
 import type { SerializedNodeWithId } from '../../../types'
 import { serializeNodeWithId, SerializationContextStatus, createElementsScrollPositions } from '..'
@@ -249,7 +249,7 @@ export const AST_MASK = {
               type: 2,
               tagName: 'img',
               attributes: {
-                src: 'data:image/gif;base64,R0lGODlhAQABAIAAAMLCwgAAACH5BAAAAAAALAAAAAABAAEAAAICRAEAOw==',
+                src: CENSORED_IMG_MARK,
               },
               childNodes: [],
             },
