@@ -2632,9 +2632,6 @@ function DeflateState() {
   this.wrap = 0
   /* bit 0 true for zlib, bit 1 true for gzip */
 
-  this.gzhead = null
-  /* gzip header information to write */
-
   this.gzindex = 0
   /* where in extra, name, or comment */
 
@@ -2902,19 +2899,6 @@ function deflateReset(strm) {
   return ret
 }
 
-function deflateSetHeader(strm, head) {
-  if (!strm || !strm.state) {
-    return Z_STREAM_ERROR
-  }
-
-  if (strm.state.wrap !== 2) {
-    return Z_STREAM_ERROR
-  }
-
-  strm.state.gzhead = head
-  return Z_OK
-}
-
 function deflateInit2(strm, method, memLevel, strategy) {
   if (!strm) {
     // === Z_NULL
@@ -2933,7 +2917,6 @@ function deflateInit2(strm, method, memLevel, strategy) {
   strm.state = s
   s.strm = strm
   s.wrap = wrap
-  s.gzhead = null
   s.w_bits = 15
   s.w_size = 1 << s.w_bits
   s.w_mask = s.w_size - 1
@@ -2966,9 +2949,6 @@ function deflateInit2(strm, method, memLevel, strategy) {
 }
 
 function deflate(strm, flush) {
-  var beg
-  var val // for gzip header write only
-
   if (!strm || !strm.state || flush > Z_BLOCK || flush < 0) {
     return strm ? err(strm, Z_STREAM_ERROR) : Z_STREAM_ERROR
   }
@@ -3065,151 +3045,19 @@ function deflate(strm, flush) {
   } // #ifdef GZIP
 
   if (s.status === EXTRA_STATE) {
-    if (
-      s.gzhead.extra
-      /* != Z_NULL */
-    ) {
-      beg = s.pending
-      /* start of bytes to update crc */
-
-      while (s.gzindex < (s.gzhead.extra.length & 0xffff)) {
-        if (s.pending === s.pending_buf_size) {
-          if (s.gzhead.hcrc && s.pending > beg) {
-            strm.adler = crc32_1(strm.adler, s.pending_buf, s.pending - beg, beg)
-          }
-
-          flush_pending(strm)
-          beg = s.pending
-
-          if (s.pending === s.pending_buf_size) {
-            break
-          }
-        }
-
-        put_byte(s, s.gzhead.extra[s.gzindex] & 0xff)
-        s.gzindex++
-      }
-
-      if (s.gzhead.hcrc && s.pending > beg) {
-        strm.adler = crc32_1(strm.adler, s.pending_buf, s.pending - beg, beg)
-      }
-
-      if (s.gzindex === s.gzhead.extra.length) {
-        s.gzindex = 0
-        s.status = NAME_STATE
-      }
-    } else {
-      s.status = NAME_STATE
-    }
+    s.status = NAME_STATE
   }
 
   if (s.status === NAME_STATE) {
-    if (
-      s.gzhead.name
-      /* != Z_NULL */
-    ) {
-      beg = s.pending
-      /* start of bytes to update crc */
-      // int val;
-
-      do {
-        if (s.pending === s.pending_buf_size) {
-          if (s.gzhead.hcrc && s.pending > beg) {
-            strm.adler = crc32_1(strm.adler, s.pending_buf, s.pending - beg, beg)
-          }
-
-          flush_pending(strm)
-          beg = s.pending
-
-          if (s.pending === s.pending_buf_size) {
-            val = 1
-            break
-          }
-        } // JS specific: little magic to add zero terminator to end of string
-
-        if (s.gzindex < s.gzhead.name.length) {
-          val = s.gzhead.name.charCodeAt(s.gzindex++) & 0xff
-        } else {
-          val = 0
-        }
-
-        put_byte(s, val)
-      } while (val !== 0)
-
-      if (s.gzhead.hcrc && s.pending > beg) {
-        strm.adler = crc32_1(strm.adler, s.pending_buf, s.pending - beg, beg)
-      }
-
-      if (val === 0) {
-        s.gzindex = 0
-        s.status = COMMENT_STATE
-      }
-    } else {
-      s.status = COMMENT_STATE
-    }
+    s.status = COMMENT_STATE
   }
 
   if (s.status === COMMENT_STATE) {
-    if (
-      s.gzhead.comment
-      /* != Z_NULL */
-    ) {
-      beg = s.pending
-      /* start of bytes to update crc */
-      // int val;
-
-      do {
-        if (s.pending === s.pending_buf_size) {
-          if (s.gzhead.hcrc && s.pending > beg) {
-            strm.adler = crc32_1(strm.adler, s.pending_buf, s.pending - beg, beg)
-          }
-
-          flush_pending(strm)
-          beg = s.pending
-
-          if (s.pending === s.pending_buf_size) {
-            val = 1
-            break
-          }
-        } // JS specific: little magic to add zero terminator to end of string
-
-        if (s.gzindex < s.gzhead.comment.length) {
-          val = s.gzhead.comment.charCodeAt(s.gzindex++) & 0xff
-        } else {
-          val = 0
-        }
-
-        put_byte(s, val)
-      } while (val !== 0)
-
-      if (s.gzhead.hcrc && s.pending > beg) {
-        strm.adler = crc32_1(strm.adler, s.pending_buf, s.pending - beg, beg)
-      }
-
-      if (val === 0) {
-        s.status = HCRC_STATE
-      }
-    } else {
-      s.status = HCRC_STATE
-    }
+    s.status = HCRC_STATE
   }
 
   if (s.status === HCRC_STATE) {
-    if (s.gzhead.hcrc) {
-      if (s.pending + 2 > s.pending_buf_size) {
-        flush_pending(strm)
-      }
-
-      if (s.pending + 2 <= s.pending_buf_size) {
-        put_byte(s, strm.adler & 0xff)
-        put_byte(s, (strm.adler >> 8) & 0xff)
-        strm.adler = 0 // crc32(0L, Z_NULL, 0);
-
-        s.status = BUSY_STATE
-      }
-    } else {
-      s.status = BUSY_STATE
-    }
+    s.status = BUSY_STATE
   } // #endif
 
   /* Flush as much pending output as possible */
@@ -3534,7 +3382,6 @@ var toString = Object.prototype.toString
  * * `chunkSize` - size of generated data chunks (16K by default)
  * * `raw` (Boolean) - do raw deflate
  * * `gzip` (Boolean) - create gzip wrapper
- * * `header` (Object) - custom header for gzip
  * ** `text` (Boolean) - true if compressed data believed to be text
  * ** `time` (Number) - modification time, unix timestamp
  * ** `os` (Number) - operation system code
@@ -3584,10 +3431,6 @@ export function Deflate() {
 
   if (status !== Z_OK) {
     throw new Error(messages[status])
-  }
-
-  if (opt.header) {
-    deflateSetHeader(this.strm, opt.header)
   }
 }
 
