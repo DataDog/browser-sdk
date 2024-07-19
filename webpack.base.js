@@ -14,7 +14,7 @@ module.exports = ({ entry, mode, filename, types, keepBuildEnvVariables, plugins
     filename,
     path: path.resolve('./bundle'),
   },
-  target: ['web', 'es2018'],
+  target: ['web', 'es5'],
   devtool: false,
   module: {
     rules: [
