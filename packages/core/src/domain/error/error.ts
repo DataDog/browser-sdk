@@ -35,7 +35,7 @@ export function computeRawError({
     ? toStackTraceString(stackTrace)
     : NO_ERROR_STACK_PRESENT_MESSAGE
   const causes = isErrorInstance ? flattenErrorCauses(originalError as ErrorWithCause, source) : undefined
-  const type = stackTrace?.name
+  const type = stackTrace ? stackTrace.name : undefined
   const fingerprint = tryToGetFingerprint(originalError)
 
   return {
