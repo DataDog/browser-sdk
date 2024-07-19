@@ -48,6 +48,12 @@ module.exports = ({ entry, mode, filename, types, keepBuildEnvVariables, plugins
       new TerserPlugin({
         extractComments: false,
         terserOptions: {
+          mangle: {
+            properties: {
+              regex: /^__/,
+              undeclared: true,
+            }
+          },
           compress: {
             drop_console: true,
             unsafe_math: true,
