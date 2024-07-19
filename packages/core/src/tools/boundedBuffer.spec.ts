@@ -1,9 +1,9 @@
-import { BoundedBuffer } from './boundedBuffer'
+import { boundedBuffer } from './boundedBuffer'
 
 describe('BoundedBuffer', () => {
   it('collect and drain the callbacks', () => {
     const spy = jasmine.createSpy<() => void>()
-    const buffered = new BoundedBuffer()
+    const buffered = boundedBuffer()
 
     buffered.add(spy)
     expect(spy.calls.count()).toBe(0)
@@ -17,7 +17,7 @@ describe('BoundedBuffer', () => {
 
   it('store at most 500 callbacks', () => {
     const spy = jasmine.createSpy<() => void>()
-    const buffered = new BoundedBuffer()
+    const buffered = boundedBuffer()
     const limit = 500
 
     for (let i = 0; i < limit + 1; i += 1) {
@@ -30,7 +30,7 @@ describe('BoundedBuffer', () => {
 
   it('removes a callback', () => {
     const spy = jasmine.createSpy<() => void>()
-    const buffered = new BoundedBuffer()
+    const buffered = boundedBuffer()
 
     buffered.add(spy)
     buffered.remove(spy)

@@ -17,7 +17,7 @@ import { NonErrorPrefix } from '../error/error.types'
 import type { StackTrace } from '../../tools/stackTrace/computeStackTrace'
 import { computeStackTrace } from '../../tools/stackTrace/computeStackTrace'
 import { getConnectivity } from '../connectivity'
-import { BoundedBuffer } from '../../tools/boundedBuffer'
+import { boundedBuffer } from '../../tools/boundedBuffer'
 import type { TelemetryEvent } from './telemetryEvent.types'
 import type {
   RawTelemetryConfiguration,
@@ -53,7 +53,7 @@ export interface Telemetry {
 const TELEMETRY_EXCLUDED_SITES: string[] = [INTAKE_SITE_US1_FED]
 
 // eslint-disable-next-line local-rules/disallow-side-effects
-let preStartTelemetryBuffer = new BoundedBuffer()
+let preStartTelemetryBuffer = boundedBuffer()
 let onRawTelemetryEventCollected = (event: RawTelemetryEvent) => {
   preStartTelemetryBuffer.add(() => onRawTelemetryEventCollected(event))
 }
@@ -144,7 +144,7 @@ export function drainPreStartTelemetry() {
 }
 
 export function resetTelemetry() {
-  preStartTelemetryBuffer = new BoundedBuffer()
+  preStartTelemetryBuffer = boundedBuffer()
   onRawTelemetryEventCollected = (event: RawTelemetryEvent) => {
     preStartTelemetryBuffer.add(() => onRawTelemetryEventCollected(event))
   }
