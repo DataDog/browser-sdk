@@ -19,21 +19,6 @@
 //   misrepresented as being the original software.
 // 3. This notice may not be removed or altered from any source distribution.
 
-/* Public constants ========================================================== */
-
-/* =========================================================================== */
-// const Z_FILTERED          = 1;
-// const Z_HUFFMAN_ONLY      = 2;
-// const Z_RLE               = 3;
-
-var Z_FIXED = 4 // const Z_DEFAULT_STRATEGY  = 0;
-
-/* Possible values of the data_type field (though see inflate()) */
-
-var Z_BINARY = 0
-var Z_TEXT = 1 // const Z_ASCII             = 1; // = Z_TEXT
-
-var Z_UNKNOWN = 2
 /* ============================================================================ */
 
 function zero(buf) {
@@ -1700,49 +1685,40 @@ var messages = {
 //   misrepresented as being the original software.
 // 3. This notice may not be removed or altered from any source distribution.
 
-export var constants = {
-  /* Allowed flush values; see deflate() and inflate() below for details */
-  Z_NO_FLUSH: 0,
-  Z_PARTIAL_FLUSH: 1,
-  Z_SYNC_FLUSH: 2,
-  Z_FULL_FLUSH: 3,
-  Z_FINISH: 4,
-  Z_BLOCK: 5,
-  Z_TREES: 6,
+/* Allowed flush values; see deflate() and inflate() below for details */
+var Z_NO_FLUSH = 0
+var Z_PARTIAL_FLUSH = 1
+export var Z_SYNC_FLUSH = 2
+var Z_FULL_FLUSH = 3
+var Z_FINISH = 4
+var Z_BLOCK = 5
 
-  /* Return codes for the compression/decompression functions. Negative values
-   * are errors, positive values are used for special but normal events.
-   */
-  Z_OK: 0,
-  Z_STREAM_END: 1,
-  Z_NEED_DICT: 2,
-  Z_ERRNO: -1,
-  Z_STREAM_ERROR: -2,
-  Z_DATA_ERROR: -3,
-  Z_MEM_ERROR: -4,
-  Z_BUF_ERROR: -5,
-  // Z_VERSION_ERROR: -6,
+/* Return codes for the compression/decompression functions. Negative values
+ * are errors, positive values are used for special but normal events.
+ */
+var Z_OK = 0
+var Z_STREAM_END = 1
+var Z_STREAM_ERROR = -2
+var Z_DATA_ERROR = -3
+var Z_BUF_ERROR = -5
+// Z_VERSION_ERROR: -6,
 
-  /* compression levels */
-  Z_NO_COMPRESSION: 0,
-  Z_BEST_SPEED: 1,
-  Z_BEST_COMPRESSION: 9,
-  Z_DEFAULT_COMPRESSION: -1,
-  Z_FILTERED: 1,
-  Z_HUFFMAN_ONLY: 2,
-  Z_RLE: 3,
-  Z_FIXED: 4,
-  Z_DEFAULT_STRATEGY: 0,
+/* compression levels */
+var Z_DEFAULT_COMPRESSION = -1
+var Z_FILTERED = 1
+var Z_HUFFMAN_ONLY = 2
+var Z_RLE = 3
+var Z_FIXED = 4
+var Z_DEFAULT_STRATEGY = 0
 
-  /* Possible values of the data_type field (though see inflate()) */
-  Z_BINARY: 0,
-  Z_TEXT: 1,
-  // Z_ASCII:                1, // = Z_TEXT (deprecated)
-  Z_UNKNOWN: 2,
+/* Possible values of the data_type field (though see inflate()) */
+var Z_BINARY = 0
+var Z_TEXT = 1
+// Z_ASCII:                1, // = Z_TEXT (deprecated)
+var Z_UNKNOWN = 2
 
-  /* The deflate compression method */
-  Z_DEFLATED: 8, // Z_NULL:                 null // Use -1 or null inline, depending on var type
-}
+/* The deflate compression method */
+var Z_DEFLATED = 8 // Z_NULL:                 null // Use -1 or null inline, depending on var type
 
 // (C) 2014-2017 Vitaly Puzrin and Andrey Tupitsin
 //
@@ -1770,25 +1746,6 @@ var _tr_align$1 = trees._tr_align
 /* Public constants ========================================================== */
 
 /* =========================================================================== */
-
-var Z_NO_FLUSH = constants.Z_NO_FLUSH
-var Z_PARTIAL_FLUSH = constants.Z_PARTIAL_FLUSH
-var Z_FULL_FLUSH = constants.Z_FULL_FLUSH
-var Z_FINISH = constants.Z_FINISH
-var Z_BLOCK = constants.Z_BLOCK
-var Z_OK = constants.Z_OK
-var Z_STREAM_END = constants.Z_STREAM_END
-var Z_STREAM_ERROR = constants.Z_STREAM_ERROR
-var Z_DATA_ERROR = constants.Z_DATA_ERROR
-var Z_BUF_ERROR = constants.Z_BUF_ERROR
-var Z_DEFAULT_COMPRESSION = constants.Z_DEFAULT_COMPRESSION
-var Z_FILTERED = constants.Z_FILTERED
-var Z_HUFFMAN_ONLY = constants.Z_HUFFMAN_ONLY
-var Z_RLE = constants.Z_RLE
-var Z_FIXED$1 = constants.Z_FIXED
-var Z_UNKNOWN$1 = constants.Z_UNKNOWN
-var Z_DEFLATED = constants.Z_DEFLATED
-/* ============================================================================ */
 
 var MAX_MEM_LEVEL = 9
 /* Maximum value for memLevel in deflateInit2 */
@@ -3203,7 +3160,7 @@ function deflateResetKeep(strm) {
   }
 
   strm.total_in = strm.total_out = 0
-  strm.data_type = Z_UNKNOWN$1
+  strm.data_type = Z_UNKNOWN
   var s = strm.state
   s.pending = 0
   s.pending_out = 0
@@ -3281,7 +3238,7 @@ function deflateInit2(strm, level, method, windowBits, memLevel, strategy) {
     level < 0 ||
     level > 9 ||
     strategy < 0 ||
-    strategy > Z_FIXED$1
+    strategy > Z_FIXED
   ) {
     return err(strm, Z_STREAM_ERROR)
   }
@@ -3938,19 +3895,6 @@ var zstream = ZStream
 
 // eslint-disable-next-line @typescript-eslint/unbound-method
 var toString = Object.prototype.toString
-/* Public constants ========================================================== */
-
-/* =========================================================================== */
-
-var Z_NO_FLUSH$1 = constants.Z_NO_FLUSH
-var Z_SYNC_FLUSH = constants.Z_SYNC_FLUSH
-var Z_FULL_FLUSH$1 = constants.Z_FULL_FLUSH
-var Z_FINISH$1 = constants.Z_FINISH
-var Z_OK$1 = constants.Z_OK
-var Z_STREAM_END$1 = constants.Z_STREAM_END
-var Z_DEFAULT_COMPRESSION$1 = constants.Z_DEFAULT_COMPRESSION
-var Z_DEFAULT_STRATEGY$1 = constants.Z_DEFAULT_STRATEGY
-var Z_DEFLATED$1 = constants.Z_DEFLATED
 /* =========================================================================== */
 
 /**
@@ -4040,12 +3984,12 @@ var Z_DEFLATED$1 = constants.Z_DEFLATED
 
 export function Deflate() {
   this.options = {
-    level: Z_DEFAULT_COMPRESSION$1,
-    method: Z_DEFLATED$1,
+    level: Z_DEFAULT_COMPRESSION,
+    method: Z_DEFLATED,
     chunkSize: 16384,
     windowBits: 15,
     memLevel: 8,
-    strategy: Z_DEFAULT_STRATEGY$1,
+    strategy: Z_DEFAULT_STRATEGY,
   }
   var opt = this.options
 
@@ -4067,7 +4011,7 @@ export function Deflate() {
   this.strm.avail_out = 0
   var status = deflateInit2(this.strm, opt.level, opt.method, opt.windowBits, opt.memLevel, opt.strategy)
 
-  if (status !== Z_OK$1) {
+  if (status !== Z_OK) {
     throw new Error(messages[status])
   }
 
@@ -4086,7 +4030,7 @@ export function Deflate() {
 
     status = deflateSetDictionary(this.strm, dict)
 
-    if (status !== Z_OK$1) {
+    if (status !== Z_OK) {
       throw new Error(messages[status])
     }
 
@@ -4130,7 +4074,7 @@ Deflate.prototype.push = function (data, flush_mode) {
   if (flush_mode === ~~flush_mode) {
     _flush_mode = flush_mode
   } else {
-    _flush_mode = flush_mode === true ? Z_FINISH$1 : Z_NO_FLUSH$1
+    _flush_mode = flush_mode === true ? Z_FINISH : Z_NO_FLUSH
   } // Convert data if needed
 
   if (toString.call(data) === '[object ArrayBuffer]') {
@@ -4149,7 +4093,7 @@ Deflate.prototype.push = function (data, flush_mode) {
       strm.avail_out = chunkSize
     } // Make sure avail_out > 6 to avoid repeating markers
 
-    if ((_flush_mode === Z_SYNC_FLUSH || _flush_mode === Z_FULL_FLUSH$1) && strm.avail_out <= 6) {
+    if ((_flush_mode === Z_SYNC_FLUSH || _flush_mode === Z_FULL_FLUSH) && strm.avail_out <= 6) {
       this.onData(strm.output.subarray(0, strm.next_out))
       strm.avail_out = 0
       continue
@@ -4157,7 +4101,7 @@ Deflate.prototype.push = function (data, flush_mode) {
 
     status = deflate(strm, _flush_mode) // Ended => flush and finish
 
-    if (status === Z_STREAM_END$1) {
+    if (status === Z_STREAM_END) {
       if (strm.next_out > 0) {
         this.onData(strm.output.subarray(0, strm.next_out))
       }
@@ -4165,7 +4109,7 @@ Deflate.prototype.push = function (data, flush_mode) {
       status = deflateEnd(this.strm)
       this.onEnd(status)
       this.ended = true
-      return status === Z_OK$1
+      return status === Z_OK
     } // Flush if out buffer full
 
     if (strm.avail_out === 0) {
@@ -4209,7 +4153,7 @@ Deflate.prototype.onData = function (chunk) {
 
 Deflate.prototype.onEnd = function (status) {
   // On success - join
-  if (status === Z_OK$1) {
+  if (status === Z_OK) {
     this.result = flattenChunks(this.chunks)
   }
 

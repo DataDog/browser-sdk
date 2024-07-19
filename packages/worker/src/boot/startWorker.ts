@@ -1,7 +1,7 @@
 /* eslint-disable local-rules/disallow-zone-js-patched-values */
 import type { DeflateWorkerAction, DeflateWorkerResponse } from '@datadog/browser-core'
 import { concatBuffers } from '@datadog/browser-core'
-import { Deflate, constants, string2buf } from '../domain/deflate'
+import { Deflate, Z_SYNC_FLUSH, string2buf } from '../domain/deflate'
 
 declare const __BUILD_ENV__SDK_VERSION__: string
 
@@ -63,7 +63,7 @@ function handleAction(streams: Map<number, Deflate>, message: DeflateWorkerActio
 
       // TextEncoder is not supported on old browser version like Edge 18, therefore we use string2buf
       const binaryData = string2buf(message.data)
-      deflate.push(binaryData, constants.Z_SYNC_FLUSH)
+      deflate.push(binaryData, Z_SYNC_FLUSH)
 
       return {
         type: 'wrote',
@@ -89,7 +89,7 @@ function handleAction(streams: Map<number, Deflate>, message: DeflateWorkerActio
  * * an adler32 checksum as specified in https://www.rfc-editor.org/rfc/rfc1950.html#page-4
  *
  * This is essentially what pako writes to the stream when invoking `deflate.push('',
- * constants.Z_FINISH)` operation after some data has been pushed with "Z_SYNC_FLUSH", but doing so
+ * Z_FINISH)` operation after some data has been pushed with "Z_SYNC_FLUSH", but doing so
  * ends the stream and no more data can be pushed into it.
  *
  * Since we want to let the main thread end the stream synchronously at any point without needing to
