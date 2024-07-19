@@ -1416,7 +1416,7 @@ function _tr_flush_block(
      * transform a block into a stored block.
      */
     _tr_stored_block(s, buf, stored_len, last)
-  } else if (s.strategy === Z_FIXED || static_lenb === opt_lenb) {
+  } else if (static_lenb === opt_lenb) {
     send_bits(s, (STATIC_TREES << 1) + (last ? 1 : 0), 3)
     compress_block(s, static_ltree, static_dtree)
   } else {
@@ -1641,13 +1641,6 @@ var Z_STREAM_ERROR = -2
 var Z_DATA_ERROR = -3
 var Z_BUF_ERROR = -5
 // Z_VERSION_ERROR: -6,
-
-/* compression levels */
-var Z_FILTERED = 1
-var Z_HUFFMAN_ONLY = 2
-var Z_RLE = 3
-var Z_FIXED = 4
-var Z_DEFAULT_STRATEGY = 0
 
 /* Possible values of the data_type field (though see inflate()) */
 var Z_BINARY = 0
@@ -2191,7 +2184,8 @@ function deflate_slow(s, flush) {
 
       if (
         s.match_length <= 5 &&
-        (s.strategy === Z_FILTERED || (s.match_length === MIN_MATCH$1 && s.strstart - s.match_start > 4096))
+        s.match_length === MIN_MATCH$1 &&
+        s.strstart - s.match_start > 4096
         /* TOO_FAR */
       ) {
         /* If prev_match is also MIN_MATCH, match_start is garbage
@@ -2311,201 +2305,7 @@ function deflate_slow(s, flush) {
 
   return BS_BLOCK_DONE
 }
-/* ===========================================================================
- * For Z_RLE, simply look for runs of bytes, generate matches only of distance
- * one.  Do not maintain a hash table.  (It will be regenerated if this run of
- * deflate switches away from Z_RLE.)
- */
 
-function deflate_rle(s, flush) {
-  var bflush
-  /* set if current block must be flushed */
-
-  var prev
-  /* byte at distance one to match */
-
-  var scan
-  var strend
-  /* scan goes up to strend for length of run */
-
-  var _win = s.window
-
-  for (;;) {
-    /* Make sure that we always have enough lookahead, except
-     * at the end of the input file. We need MAX_MATCH bytes
-     * for the longest run, plus one for the unrolled loop.
-     */
-    if (s.lookahead <= MAX_MATCH$1) {
-      fill_window(s)
-
-      if (s.lookahead <= MAX_MATCH$1 && flush === Z_NO_FLUSH) {
-        return BS_NEED_MORE
-      }
-
-      if (s.lookahead === 0) {
-        break
-      }
-      /* flush the current block */
-    }
-    /* See how many times the previous byte repeats */
-
-    s.match_length = 0
-
-    if (s.lookahead >= MIN_MATCH$1 && s.strstart > 0) {
-      scan = s.strstart - 1
-      prev = _win[scan]
-
-      if (prev === _win[++scan] && prev === _win[++scan] && prev === _win[++scan]) {
-        strend = s.strstart + MAX_MATCH$1
-
-        do {
-          /* jshint noempty:false */
-        } while (
-          prev === _win[++scan] &&
-          prev === _win[++scan] &&
-          prev === _win[++scan] &&
-          prev === _win[++scan] &&
-          prev === _win[++scan] &&
-          prev === _win[++scan] &&
-          prev === _win[++scan] &&
-          prev === _win[++scan] &&
-          scan < strend
-        )
-
-        s.match_length = MAX_MATCH$1 - (strend - scan)
-
-        if (s.match_length > s.lookahead) {
-          s.match_length = s.lookahead
-        }
-      } // Assert(scan <= s->window+(uInt)(s->window_size-1), "wild scan");
-    }
-    /* Emit match if have run of MIN_MATCH or longer, else emit literal */
-
-    if (s.match_length >= MIN_MATCH$1) {
-      // check_match(s, s.strstart, s.strstart - 1, s.match_length);
-
-      /** * _tr_tally_dist(s, 1, s.match_length - MIN_MATCH, bflush); ** */
-      bflush = _tr_tally$1(s, 1, s.match_length - MIN_MATCH$1)
-      s.lookahead -= s.match_length
-      s.strstart += s.match_length
-      s.match_length = 0
-    } else {
-      /* No match, output a literal byte */
-      // Tracevv((stderr,"%c", s->window[s->strstart]));
-
-      /** * _tr_tally_lit(s, s.window[s.strstart], bflush); ** */
-      bflush = _tr_tally$1(s, 0, s.window[s.strstart])
-      s.lookahead--
-      s.strstart++
-    }
-
-    if (bflush) {
-      /** * FLUSH_BLOCK(s, 0); ** */
-      flush_block_only(s, false)
-
-      if (s.strm.avail_out === 0) {
-        return BS_NEED_MORE
-      }
-      /***/
-    }
-  }
-
-  s.insert = 0
-
-  if (flush === Z_FINISH) {
-    /** * FLUSH_BLOCK(s, 1); ** */
-    flush_block_only(s, true)
-
-    if (s.strm.avail_out === 0) {
-      return BS_FINISH_STARTED
-    }
-    /***/
-
-    return BS_FINISH_DONE
-  }
-
-  if (s.last_lit) {
-    /** * FLUSH_BLOCK(s, 0); ** */
-    flush_block_only(s, false)
-
-    if (s.strm.avail_out === 0) {
-      return BS_NEED_MORE
-    }
-    /***/
-  }
-
-  return BS_BLOCK_DONE
-}
-/* ===========================================================================
- * For Z_HUFFMAN_ONLY, do not look for matches.  Do not maintain a hash table.
- * (It will be regenerated if this run of deflate switches away from Huffman.)
- */
-
-function deflate_huff(s, flush) {
-  var bflush
-  /* set if current block must be flushed */
-
-  for (;;) {
-    /* Make sure that we have a literal to write. */
-    if (s.lookahead === 0) {
-      fill_window(s)
-
-      if (s.lookahead === 0) {
-        if (flush === Z_NO_FLUSH) {
-          return BS_NEED_MORE
-        }
-
-        break
-        /* flush the current block */
-      }
-    }
-    /* Output a literal byte */
-
-    s.match_length = 0 // Tracevv((stderr,"%c", s->window[s->strstart]));
-
-    /** * _tr_tally_lit(s, s.window[s.strstart], bflush); ** */
-
-    bflush = _tr_tally$1(s, 0, s.window[s.strstart])
-    s.lookahead--
-    s.strstart++
-
-    if (bflush) {
-      /** * FLUSH_BLOCK(s, 0); ** */
-      flush_block_only(s, false)
-
-      if (s.strm.avail_out === 0) {
-        return BS_NEED_MORE
-      }
-      /***/
-    }
-  }
-
-  s.insert = 0
-
-  if (flush === Z_FINISH) {
-    /** * FLUSH_BLOCK(s, 1); ** */
-    flush_block_only(s, true)
-
-    if (s.strm.avail_out === 0) {
-      return BS_FINISH_STARTED
-    }
-    /***/
-
-    return BS_FINISH_DONE
-  }
-
-  if (s.last_lit) {
-    /** * FLUSH_BLOCK(s, 0); ** */
-    flush_block_only(s, false)
-
-    if (s.strm.avail_out === 0) {
-      return BS_NEED_MORE
-    }
-    /***/
-  }
-
-  return BS_BLOCK_DONE
-}
 /* Values for max_lazy_match, good_match and max_chain_length, depending on
  * the desired pack level (0..9). The values given below have been tuned to
  * exclude worst case performance for pathological files. Better values may be
@@ -2676,9 +2476,6 @@ function DeflateState() {
    * max_insert_length is used only for compression levels <= 3.
    */
 
-  this.strategy = 0
-  /* favor or force Huffman coding */
-
   this.good_match = 0
   /* Use a faster search when the previous match is longer than this */
 
@@ -2834,13 +2631,13 @@ function deflateReset(strm) {
   return ret
 }
 
-function deflateInit2(strm, method, memLevel, strategy) {
+function deflateInit2(strm, method, memLevel) {
   if (!strm) {
     // === Z_NULL
     return Z_STREAM_ERROR
   }
 
-  if (memLevel < 1 || memLevel > MAX_MEM_LEVEL || method !== Z_DEFLATED || strategy < 0 || strategy > Z_FIXED) {
+  if (memLevel < 1 || memLevel > MAX_MEM_LEVEL || method !== Z_DEFLATED) {
     return err(strm, Z_STREAM_ERROR)
   }
 
@@ -2875,7 +2672,6 @@ function deflateInit2(strm, method, memLevel, strategy) {
   s.d_buf = 1 * s.lit_bufsize // s->l_buf = s->pending_buf + (1+sizeof(ush))*s->lit_bufsize;
 
   s.l_buf = (1 + 2) * s.lit_bufsize
-  s.strategy = strategy
   s.method = method
   return deflateReset(strm)
 }
@@ -2902,11 +2698,7 @@ function deflate(strm, flush) {
     var header = (Z_DEFLATED + ((s.w_bits - 8) << 4)) << 8
     var level_flags = -1
 
-    if (s.strategy >= Z_HUFFMAN_ONLY) {
-      level_flags = 0
-    } else {
-      level_flags = 2
-    }
+    level_flags = 2
 
     header |= level_flags << 6
 
@@ -2974,12 +2766,7 @@ function deflate(strm, flush) {
    */
 
   if (strm.avail_in !== 0 || s.lookahead !== 0 || (flush !== Z_NO_FLUSH && s.status !== FINISH_STATE)) {
-    var bstate =
-      s.strategy === Z_HUFFMAN_ONLY
-        ? deflate_huff(s, flush)
-        : s.strategy === Z_RLE
-          ? deflate_rle(s, flush)
-          : configuration.func(s, flush)
+    var bstate = configuration.func(s, flush)
 
     if (bstate === BS_FINISH_STARTED || bstate === BS_FINISH_DONE) {
       s.status = FINISH_STATE
@@ -3244,7 +3031,6 @@ var toString = Object.prototype.toString
  * on bad params. Supported options:
  *
  * - `memLevel`
- * - `strategy`
  *
  * [http://zlib.net/manual.html#Advanced](http://zlib.net/manual.html#Advanced)
  * for more information on these.
@@ -3283,7 +3069,6 @@ export function Deflate() {
     method: Z_DEFLATED,
     chunkSize: 16384,
     memLevel: 8,
-    strategy: Z_DEFAULT_STRATEGY,
   }
   var opt = this.options
 
@@ -3297,7 +3082,7 @@ export function Deflate() {
 
   this.strm = new zstream()
   this.strm.avail_out = 0
-  var status = deflateInit2(this.strm, opt.method, opt.memLevel, opt.strategy)
+  var status = deflateInit2(this.strm, opt.method, opt.memLevel)
 
   if (status !== Z_OK) {
     throw new Error(messages[status])
