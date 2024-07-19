@@ -7,8 +7,8 @@ import type { CreationReason, BrowserRecord, SegmentContext, BrowserSegment, Bro
 import { RecordType } from '../../types'
 import { getReplayStats, resetReplayStats } from '../replayStats'
 import { createDeflateEncoder } from '../deflate'
-import type { AddRecordCallback, FlushCallback } from './segment'
-import { Segment } from './segment'
+import type { AddRecordCallback, FlushCallback, Segment } from './segment'
+import { segmentFactory } from './segment'
 
 const CONTEXT: SegmentContext = { application: { id: 'a' }, view: { id: 'b' }, session: { id: 'c' } }
 const RECORD_TIMESTAMP = 10 as TimeStamp
@@ -265,7 +265,7 @@ describe('Segment', () => {
     context?: SegmentContext
     creationReason?: CreationReason
   } = {}) {
-    return new Segment(encoder, context, creationReason)
+    return segmentFactory({ encoder, context, creationReason })
   }
 })
 
