@@ -225,7 +225,7 @@ function shouldSend(
     }
   }
 
-  const rateLimitReached = eventRateLimiters[event.type] && eventRateLimiters[event.type].isLimitReached()
+  const rateLimitReached = eventRateLimiters[event.type]?.isLimitReached()
 
   return !rateLimitReached
 }
