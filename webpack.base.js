@@ -49,10 +49,9 @@ module.exports = ({ entry, mode, filename, types, keepBuildEnvVariables, plugins
         extractComments: false,
         terserOptions: {
           mangle: {
-            properties: {
-              regex: /^__/,
-              undeclared: true,
-            }
+            properties: true,
+            keep_fnames: true,
+            keep_classnames: true,
           },
           compress: {
             drop_console: true,
