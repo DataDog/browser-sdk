@@ -184,9 +184,9 @@ function getDepenciesRecursively(pkg) {
     for (let dependency of Object.keys(pkgJson.dependencies)) {
       dependency = dependency.substring(dependency.indexOf('-') + 1)
       dependencies.add(dependency)
-      for (const transitiveDependency of getDepenciesRecursively(dependency)) {
-        const coreTransitiveDependency = transitiveDependency.substring(dependency.indexOf('-') + 1)
-        dependencies.add(coreTransitiveDependency)
+      for (let transitiveDependency of getDepenciesRecursively(dependency)) {
+        transitiveDependency = transitiveDependency.substring(dependency.indexOf('-') + 1)
+        dependencies.add(transitiveDependency)
       }
     }
   }
