@@ -1,5 +1,5 @@
 import type { RelativeTime, ClocksState } from '@datadog/browser-core'
-import { SESSION_TIME_OUT_DELAY, ValueHistory } from '@datadog/browser-core'
+import { SESSION_TIME_OUT_DELAY, valueHistoryFactory } from '@datadog/browser-core'
 import type { LifeCycle } from '../lifeCycle'
 import { LifeCycleEventType } from '../lifeCycle'
 import type { ViewCreatedEvent, ViewEvent } from '../view/trackViews'
@@ -20,7 +20,7 @@ export interface ViewContexts {
 }
 
 export function startViewContexts(lifeCycle: LifeCycle): ViewContexts {
-  const viewContextHistory = new ValueHistory<ViewContext>(VIEW_CONTEXT_TIME_OUT_DELAY)
+  const viewContextHistory = valueHistoryFactory<ViewContext>({ expireDelay: VIEW_CONTEXT_TIME_OUT_DELAY })
 
   lifeCycle.subscribe(LifeCycleEventType.BEFORE_VIEW_CREATED, (view) => {
     viewContextHistory.add(buildViewContext(view), view.startClocks.relative)
