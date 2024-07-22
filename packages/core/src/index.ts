@@ -119,12 +119,7 @@ export {
   CustomerDataCompressionStatus,
 } from './domain/context/customerDataTracker'
 export { CustomerDataType } from './domain/context/contextConstants'
-export {
-  valueHistoryFactory,
-  ValueHistory,
-  ValueHistoryEntry,
-  CLEAR_OLD_VALUES_INTERVAL,
-} from './tools/valueHistory'
+export { valueHistoryFactory, ValueHistory, ValueHistoryEntry, CLEAR_OLD_VALUES_INTERVAL } from './tools/valueHistory'
 export { readBytesFromStream } from './tools/readBytesFromStream'
 export { STORAGE_POLL_DELAY } from './domain/session/sessionStore'
 export { SESSION_STORE_KEY } from './domain/session/storeStrategies/sessionStoreStrategy'
