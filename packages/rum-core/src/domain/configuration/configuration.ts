@@ -8,9 +8,9 @@ import {
   DefaultPrivacyLevel,
   TraceContextInjection,
   display,
-  isPercentage,
   objectHasValue,
   validateAndBuildConfiguration,
+  isSampleRate,
 } from '@datadog/browser-core'
 import type { RumEventDomainContext } from '../../domainContext.types'
 import type { RumEvent } from '../../rumEvent.types'
@@ -167,15 +167,9 @@ export function validateAndBuildRumConfiguration(
   }
 
   if (
-    initConfiguration.sessionReplaySampleRate !== undefined &&
-    !isPercentage(initConfiguration.sessionReplaySampleRate)
+    !isSampleRate(initConfiguration.sessionReplaySampleRate, 'Session Replay') ||
+    !isSampleRate(initConfiguration.traceSampleRate, 'Trace')
   ) {
-    display.error('Session Replay Sample Rate should be a number between 0 and 100')
-    return
-  }
-
-  if (initConfiguration.traceSampleRate !== undefined && !isPercentage(initConfiguration.traceSampleRate)) {
-    display.error('Trace Sample Rate should be a number between 0 and 100')
     return
   }
 
@@ -229,34 +223,33 @@ export function validateAndBuildRumConfiguration(
  * Validates allowedTracingUrls and converts match options to tracing options
  */
 function validateAndBuildTracingOptions(initConfiguration: RumInitConfiguration): TracingOption[] | undefined {
-  if (initConfiguration.allowedTracingUrls !== undefined) {
-    if (!Array.isArray(initConfiguration.allowedTracingUrls)) {
-      display.error('Allowed Tracing URLs should be an array')
-      return
-    }
-    if (initConfiguration.allowedTracingUrls.length !== 0 && initConfiguration.service === undefined) {
-      display.error('Service needs to be configured when tracing is enabled')
-      return
-    }
-    // Convert from (MatchOption | TracingOption) to TracingOption, remove unknown properties
-    const tracingOptions: TracingOption[] = []
-    initConfiguration.allowedTracingUrls.forEach((option) => {
-      if (isMatchOption(option)) {
-        tracingOptions.push({ match: option, propagatorTypes: DEFAULT_PROPAGATOR_TYPES })
-      } else if (isTracingOption(option)) {
-        tracingOptions.push(option)
-      } else {
-        display.warn(
-          'Allowed Tracing Urls parameters should be a string, RegExp, function, or an object. Ignoring parameter',
-          option
-        )
-      }
-    })
-
-    return tracingOptions
+  if (initConfiguration.allowedTracingUrls === undefined) {
+    return []
   }
+  if (!Array.isArray(initConfiguration.allowedTracingUrls)) {
+    display.error('Allowed Tracing URLs should be an array')
+    return
+  }
+  if (initConfiguration.allowedTracingUrls.length !== 0 && initConfiguration.service === undefined) {
+    display.error('Service needs to be configured when tracing is enabled')
+    return
+  }
+  // Convert from (MatchOption | TracingOption) to TracingOption, remove unknown properties
+  const tracingOptions: TracingOption[] = []
+  initConfiguration.allowedTracingUrls.forEach((option) => {
+    if (isMatchOption(option)) {
+      tracingOptions.push({ match: option, propagatorTypes: DEFAULT_PROPAGATOR_TYPES })
+    } else if (isTracingOption(option)) {
+      tracingOptions.push(option)
+    } else {
+      display.warn(
+        'Allowed Tracing Urls parameters should be a string, RegExp, function, or an object. Ignoring parameter',
+        option
+      )
+    }
+  })
 
-  return []
+  return tracingOptions
 }
 
 /**

@@ -1,7 +1,7 @@
 import type { RumEvent } from '../../../../rum-core/src'
 import { EXHAUSTIVE_INIT_CONFIGURATION, SERIALIZED_EXHAUSTIVE_INIT_CONFIGURATION } from '../../../test'
 import type { ExtractTelemetryConfiguration, MapInitConfigurationKey } from '../../../test'
-import { DOCS_ORIGIN, display } from '../../tools/display'
+import { DOCS_ORIGIN, MORE_DETAILS, display } from '../../tools/display'
 import {
   ExperimentalFeature,
   isExperimentalFeatureEnabled,
@@ -209,7 +209,7 @@ describe('validateAndBuildConfiguration', () => {
     it('should validate the site parameter', () => {
       validateAndBuildConfiguration({ clientToken, site: 'foo.com' })
       expect(displaySpy).toHaveBeenCalledOnceWith(
-        `Site should be a valid Datadog site. Learn more here: ${DOCS_ORIGIN}/getting_started/site/.`
+        `Site should be a valid Datadog site. ${MORE_DETAILS} ${DOCS_ORIGIN}/getting_started/site/.`
       )
     })
   })
