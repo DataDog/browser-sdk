@@ -106,7 +106,7 @@ export { createPageExitObservable, PageExitEvent, PageExitReason, isPageExitReas
 export * from './browser/addEventListener'
 export * from './tools/timer'
 export { initConsoleObservable, resetConsoleObservable, ConsoleLog } from './domain/console/consoleObservable'
-export { BoundedBuffer } from './tools/boundedBuffer'
+export { boundedBuffer, BoundedBuffer } from './tools/boundedBuffer'
 export { catchUserErrors } from './tools/catchUserErrors'
 export { createContextManager, ContextManager } from './domain/context/contextManager'
 export { storeContextManager, removeStorageListeners } from './domain/context/storeContextManager'
