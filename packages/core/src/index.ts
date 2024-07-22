@@ -121,7 +121,7 @@ export {
 export { CustomerDataType } from './domain/context/contextConstants'
 export {
   valueHistoryFactory,
-  type ValueHistory,
+  ValueHistory,
   ValueHistoryEntry,
   CLEAR_OLD_VALUES_INTERVAL,
 } from './tools/valueHistory'
