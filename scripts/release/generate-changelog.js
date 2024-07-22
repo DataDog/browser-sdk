@@ -146,7 +146,9 @@ function getAffectedPackages(hash) {
       if (file.startsWith(`packages/${pkg}`)) {
         if (PACKAGES_REVERSE_DEPENDENCIES.has(pkg)) {
           PACKAGES_REVERSE_DEPENDENCIES.get(pkg).forEach((dependentPkg) => {
-            affectedPackages.add(dependentPkg)
+            if (!PACKAGES_REVERSE_DEPENDENCIES.has(dependentPkg)) {
+              affectedPackages.add(dependentPkg)
+            }
           })
         } else {
           affectedPackages.add(pkg)
