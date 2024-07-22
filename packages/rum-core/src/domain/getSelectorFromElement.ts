@@ -1,4 +1,4 @@
-import { cssEscape, getClassList } from '../browser/polyfills'
+import { getClassList } from '../browser/polyfills'
 import { DEFAULT_PROGRAMMATIC_ACTION_NAME_ATTRIBUTE } from './action/getActionNameFromElement'
 
 /**
@@ -91,7 +91,7 @@ function isGeneratedValue(value: string) {
 
 function getIDSelector(element: Element): string | undefined {
   if (element.id && !isGeneratedValue(element.id)) {
-    return `#${cssEscape(element.id)}`
+    return `#${CSS.escape(element.id)}`
   }
 }
 
@@ -106,12 +106,12 @@ function getClassSelector(element: Element): string | undefined {
       continue
     }
 
-    return `${cssEscape(element.tagName)}.${cssEscape(className)}`
+    return `${CSS.escape(element.tagName)}.${CSS.escape(className)}`
   }
 }
 
 function getTagNameSelector(element: Element): string {
-  return cssEscape(element.tagName)
+  return CSS.escape(element.tagName)
 }
 
 function getStableAttributeSelector(element: Element, actionNameAttribute: string | undefined): string | undefined {
@@ -131,7 +131,7 @@ function getStableAttributeSelector(element: Element, actionNameAttribute: strin
 
   function getAttributeSelector(attributeName: string) {
     if (element.hasAttribute(attributeName)) {
-      return `${cssEscape(element.tagName)}[${attributeName}="${cssEscape(element.getAttribute(attributeName)!)}"]`
+      return `${CSS.escape(element.tagName)}[${attributeName}="${CSS.escape(element.getAttribute(attributeName)!)}"]`
     }
   }
 }
@@ -147,7 +147,7 @@ function getPositionSelector(element: Element): string {
     sibling = sibling.nextElementSibling
   }
 
-  return `${cssEscape(element.tagName)}:nth-of-type(${elementIndex})`
+  return `${CSS.escape(element.tagName)}:nth-of-type(${elementIndex})`
 }
 
 function findSelector(

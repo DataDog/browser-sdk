@@ -1,5 +1,5 @@
 import { instrumentSetter, assign, DOM_EVENT, addEventListeners, forEach, noop } from '@datadog/browser-core'
-import { NodePrivacyLevel, getNodePrivacyLevel, shouldMaskNode, cssEscape } from '@datadog/browser-rum-core'
+import { NodePrivacyLevel, getNodePrivacyLevel, shouldMaskNode } from '@datadog/browser-rum-core'
 import type { RumConfiguration } from '@datadog/browser-rum-core'
 import { IncrementalSource } from '../../../types'
 import type { BrowserIncrementalSnapshotRecord, InputData, InputState } from '../../../types'
@@ -94,7 +94,7 @@ export function trackInput(
     // If a radio was checked, other radios with the same name attribute will be unchecked.
     const name = target.name
     if (type === 'radio' && name && (target as HTMLInputElement).checked) {
-      forEach(document.querySelectorAll(`input[type="radio"][name="${cssEscape(name)}"]`), (el: Element) => {
+      forEach(document.querySelectorAll(`input[type="radio"][name="${CSS.escape(name)}"]`), (el: Element) => {
         if (el !== target) {
           // TODO: Consider the privacy implications for various differing input privacy levels
           cbWithDedup(el, { isChecked: false })

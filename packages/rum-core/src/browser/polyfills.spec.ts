@@ -1,14 +1,5 @@
 import { appendElement } from '../../test'
-import { cssEscape, getClassList } from './polyfills'
-
-describe('cssEscape', () => {
-  it('should escape a string', () => {
-    expect(cssEscape('.foo#bar')).toEqual('\\.foo\\#bar')
-    expect(cssEscape('()[]{}')).toEqual('\\(\\)\\[\\]\\{\\}')
-    expect(cssEscape('--a')).toEqual('--a')
-    expect(cssEscape('\0')).toEqual('\ufffd')
-  })
-})
+import { getClassList } from './polyfills'
 
 describe('getClassList', () => {
   it('should return the classList of an element that supports the classList property', () => {
