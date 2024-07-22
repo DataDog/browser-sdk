@@ -1,4 +1,4 @@
-import { display, isIE, objectEntries, TraceContextInjection } from '@datadog/browser-core'
+import { display, objectEntries, TraceContextInjection } from '@datadog/browser-core'
 import type { RumSessionManagerMock } from '../../../test'
 import { createRumSessionManagerMock } from '../../../test'
 import type { RumFetchResolveContext, RumFetchStartContext, RumXhrStartContext } from '../requestCollection'
@@ -288,12 +288,6 @@ describe('tracer', () => {
   })
 
   describe('traceFetch', () => {
-    beforeEach(() => {
-      if (isIE()) {
-        pending('no fetch support')
-      }
-    })
-
     it('should add traceId and spanId to context, and add tracing headers', () => {
       const context: Partial<RumFetchStartContext> = { ...ALLOWED_DOMAIN_CONTEXT }
       const tracer = startTracer(configuration, sessionManager)

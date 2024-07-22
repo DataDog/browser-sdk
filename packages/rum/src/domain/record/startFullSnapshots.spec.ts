@@ -1,7 +1,7 @@
 import type { RumConfiguration, ViewCreatedEvent } from '@datadog/browser-rum-core'
 import { LifeCycle, LifeCycleEventType } from '@datadog/browser-rum-core'
 import type { TimeStamp } from '@datadog/browser-core'
-import { isIE, noop } from '@datadog/browser-core'
+import { noop } from '@datadog/browser-core'
 import type { BrowserRecord } from '../../types'
 import { startFullSnapshots } from './startFullSnapshots'
 import { createElementsScrollPositions } from './elementsScrollPositions'
@@ -13,10 +13,6 @@ describe('startFullSnapshots', () => {
   let fullSnapshotCallback: jasmine.Spy<(records: BrowserRecord[]) => void>
 
   beforeEach(() => {
-    if (isIE()) {
-      pending('IE not supported')
-    }
-
     lifeCycle = new LifeCycle()
     fullSnapshotCallback = jasmine.createSpy()
     startFullSnapshots(
