@@ -1,4 +1,4 @@
-const { browserConfigurations } = require('../browsers.conf')
+const { browserConfigurations } = require('../browsers.unit.conf')
 const { getBuildInfos } = require('../envUtils')
 const karmaBaseConf = require('./karma.base.conf')
 
