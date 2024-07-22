@@ -46,7 +46,7 @@ module.exports = ({ entry, mode, filename, types, keepBuildEnvVariables, plugins
     minimizer: [
       new TerserPlugin({
         extractComments: false,
-        terserOptions: filename.includes('logs') ? {} : {
+        terserOptions: filename !== 'datadog-rum.js' ? {} : {
           mangle: {
             properties: {
               reserved: ['version', 'onReady', 'init', 'setTrackingConsent', 'setGlobalContext', 'getGlobalContext', 'setGlobalContextProperty', 'removeGlobalContextProperty', 'clearGlobalContext', 'getInternalContext', 'getInitConfiguration', 'addAction', 'addError', 'addTiming', 'setUser', 'getUser', 'setUserProperty', 'removeUserProperty', 'clearUser', 'startView', 'stopSession', 'addFeatureFlagEvaluation', 'getSessionReplayLink', 'startSessionReplayRecording', 'stopSessionReplayRecording', 'startDurationVital', 'addDurationVital', 'stopDurationVital','createLogger', 'getLogger', 'logger'],
