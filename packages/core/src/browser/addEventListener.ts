@@ -4,9 +4,7 @@ import type { CookieStore, CookieStoreEventMap, VisualViewport, VisualViewportEv
 
 export type TrustableEvent<E extends Event = Event> = E & { __ddIsTrusted?: boolean }
 
-// We want to use a real enum (i.e. not a const enum) here, to be able to iterate over it to automatically add _ddIsTrusted in e2e tests
-// eslint-disable-next-line no-restricted-syntax
-export enum DOM_EVENT {
+export const enum DOM_EVENT {
   BEFORE_UNLOAD = 'beforeunload',
   CLICK = 'click',
   DBL_CLICK = 'dblclick',
