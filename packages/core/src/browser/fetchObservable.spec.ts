@@ -1,6 +1,5 @@
 import type { MockFetch, MockFetchManager } from '../../test'
 import { registerCleanupTask, mockFetch } from '../../test'
-
 import type { Subscription } from '../tools/observable'
 import type { FetchResolveContext, FetchContext } from './fetchObservable'
 import { initFetchObservable } from './fetchObservable'

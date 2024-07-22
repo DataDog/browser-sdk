@@ -29,7 +29,6 @@ describe('sanitize', () => {
       function testFunction() {
         return true
       }
-
       expect(sanitize(testFunction)).toBe('[Function] testFunction')
     })
 
@@ -97,7 +96,6 @@ describe('sanitize', () => {
         ['a', 13],
         ['b', 37],
       ])
-
       expect(sanitize(map)).toBe('[Map]')
     })
 

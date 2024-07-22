@@ -1,6 +1,5 @@
 import type { Configuration } from '../domain/configuration'
 import { withXhr, mockXhr } from '../../test'
-
 import type { Subscription } from '../tools/observable'
 import type { XhrCompleteContext, XhrContext } from './xhrObservable'
 import { initXhrObservable } from './xhrObservable'

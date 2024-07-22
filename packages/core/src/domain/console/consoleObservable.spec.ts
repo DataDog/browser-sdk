@@ -103,7 +103,6 @@ describe('console error observable', () => {
   it('should extract stack from first error', () => {
     console.error(new TypeError('foo'), new TypeError('bar'))
     const stack = (notifyLog.calls.mostRecent().args[0] as ConsoleLog).stack
-
     expect(stack).toContain('TypeError: foo')
   })
 

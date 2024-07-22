@@ -1,5 +1,4 @@
 import pako from 'pako'
-
 import type { BrowserSegment, BrowserSegmentMetadata } from '../../types'
 import { readReplayPayload } from '../../../test'
 import { buildReplayPayload } from './buildReplayPayload'
