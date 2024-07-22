@@ -8,7 +8,7 @@ import { LifeCycle, LifeCycleEventType } from './lifeCycle'
 import type { RequestCompleteEvent, RequestStartEvent } from './requestCollection'
 import { trackFetch, trackXhr } from './requestCollection'
 import type { Tracer } from './tracing/tracer'
-import { clearTracingIfNeeded, TraceIdentifier } from './tracing/tracer'
+import { clearTracingIfNeeded, traceIdentifier } from './tracing/tracer'
 
 const DEFAULT_PAYLOAD = {} as Payload
 
@@ -40,8 +40,8 @@ describe('collect fetch', () => {
     const tracerStub: Partial<Tracer> = {
       clearTracingIfNeeded,
       traceFetch: (context) => {
-        context.traceId = new TraceIdentifier()
-        context.spanId = new TraceIdentifier()
+        context.traceId = traceIdentifier()
+        context.spanId = traceIdentifier()
       },
     }
     ;({ stop: stopFetchTracking } = trackFetch(lifeCycle, configuration, tracerStub as Tracer))
@@ -214,8 +214,8 @@ describe('collect xhr', () => {
     const tracerStub: Partial<Tracer> = {
       clearTracingIfNeeded,
       traceXhr: (context) => {
-        context.traceId = new TraceIdentifier()
-        context.spanId = new TraceIdentifier()
+        context.traceId = traceIdentifier()
+        context.spanId = traceIdentifier()
       },
     }
     ;({ stop: stopXhrTracking } = trackXhr(lifeCycle, configuration, tracerStub as Tracer))
