@@ -1,5 +1,5 @@
 import type { Options } from '@wdio/types'
-import { browserConfigurations } from '../browsers.conf'
+import { browserConfigurations } from '../browsers.e2e.conf'
 import { getBuildInfos } from '../envUtils'
 import { config as baseConfig } from './wdio.base.conf'
 
