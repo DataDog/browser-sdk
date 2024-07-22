@@ -1,6 +1,7 @@
 'use strict'
 
 const util = require('util')
+const fs = require('fs')
 const { readdirSync } = require('fs')
 const readFile = util.promisify(require('fs').readFile)
 
@@ -29,7 +30,8 @@ const INTERNAL_EMOJI_PRIORITY = [
   '⚗️', // experiment
 ]
 const EMOJI_REGEX = /^\p{Emoji_Presentation}/u
-const PACKAGES = readdirSync('../../packages').filter((name) => name !== 'core' && name !== 'rum-core')
+const PACKAGES = readdirSync('../../packages').filter((name) => !name.endsWith('.DS_Store'))
+const PACKAGES_REVERSE_DEPENDENCIES = new Map()
 
 runMain(async () => {
   if (!process.env.EDITOR) {
@@ -37,6 +39,14 @@ runMain(async () => {
     process.exit(1)
   }
 
+  PACKAGES.forEach((pkg) => {
+    for (const dependency of getDepenciesRecursively(pkg)) {
+      if (!PACKAGES_REVERSE_DEPENDENCIES.has(dependency)) {
+        PACKAGES_REVERSE_DEPENDENCIES.set(dependency, new Set())
+      }
+      PACKAGES_REVERSE_DEPENDENCIES.get(dependency).add(pkg)
+    }
+  })
   const emojisLegend = await getEmojisLegend()
   const changesList = getChangesList()
 
@@ -131,19 +141,19 @@ ${internalChanges.join('\n')}
 function getAffectedPackages(hash) {
   const changedFiles = command`git diff-tree --no-commit-id --name-only -r ${hash}`.run().trim().split('\n')
   const affectedPackages = new Set()
-
   changedFiles.forEach((file) => {
-    if (file.startsWith('packages/rum-core')) {
-      affectedPackages.add('rum')
-      affectedPackages.add('rum-slim')
-    }
     PACKAGES.forEach((pkg) => {
       if (file.startsWith(`packages/${pkg}`)) {
-        affectedPackages.add(pkg)
+        if (PACKAGES_REVERSE_DEPENDENCIES.has(pkg)) {
+          PACKAGES_REVERSE_DEPENDENCIES.get(pkg).forEach((dependentPkg) => {
+            affectedPackages.add(dependentPkg)
+          })
+        } else {
+          affectedPackages.add(pkg)
+        }
       }
     })
   })
-
   return Array.from(affectedPackages)
 }
 
@@ -163,4 +173,20 @@ function emojiNameToUnicode(changes) {
 
 function isNotVersionEntry(line) {
   return !/^v\d+\.\d+\.\d+/.test(line)
+}
+
+function getDepenciesRecursively(pkg) {
+  const pkgJson = JSON.parse(fs.readFileSync(`packages/${pkg}/package.json`, { encoding: 'utf-8' }))
+  const dependencies = new Set()
+  if (pkgJson.dependencies) {
+    for (let dependency of Object.keys(pkgJson.dependencies)) {
+      dependency = dependency.substring(dependency.indexOf('-') + 1)
+      dependencies.add(dependency)
+      for (const transitiveDependency of getDepenciesRecursively(dependency)) {
+        const coreTransitiveDependency = transitiveDependency.substring(dependency.indexOf('-') + 1)
+        dependencies.add(coreTransitiveDependency)
+      }
+    }
+  }
+  return dependencies
 }
