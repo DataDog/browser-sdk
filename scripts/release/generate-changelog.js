@@ -30,7 +30,7 @@ const INTERNAL_EMOJI_PRIORITY = [
   '⚗️', // experiment
 ]
 const EMOJI_REGEX = /^\p{Emoji_Presentation}/u
-const PACKAGES = readdirSync('../../packages').filter((name) => !name.endsWith('.DS_Store'))
+const PACKAGES = readdirSync('packages').filter((name) => !name.endsWith('.DS_Store'))
 const PACKAGES_REVERSE_DEPENDENCIES = new Map()
 
 runMain(async () => {
