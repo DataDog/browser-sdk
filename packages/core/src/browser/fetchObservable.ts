@@ -115,11 +115,10 @@ function afterSend(
       })
     }),
     monitor((error: Error) => {
-      const isAborted =
-        context.init?.signal?.aborted || (error instanceof DOMException && error.code === DOMException.ABORT_ERR)
       reportFetch({
         status: 0,
-        isAborted,
+        isAborted:
+          context.init?.signal?.aborted || (error instanceof DOMException && error.code === DOMException.ABORT_ERR),
         error,
       })
     })

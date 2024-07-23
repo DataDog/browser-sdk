@@ -14,7 +14,7 @@ export function mockFetch() {
     }
   }
 
-  window.fetch = (() => {
+  window.fetch = ((...[, init]) => {
     pendingRequests += 1
     let resolve: (response: Response) => unknown
     let reject: (error: Error) => unknown
@@ -33,6 +33,10 @@ export function mockFetch() {
     promise.abort = () => {
       promise.rejectWith(new DOMException('The user aborted a request', 'AbortError'))
     }
+
+    init?.signal?.addEventListener('abort', () => {
+      promise.rejectWith(init.signal?.reason)
+    })
 
     return promise
   }) as typeof window.fetch

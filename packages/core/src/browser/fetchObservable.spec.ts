@@ -82,6 +82,23 @@ describe('fetch proxy', () => {
     })
   })
 
+  it('should track fetch aborted by AbortController', (done) => {
+    const controller = new AbortController()
+    void fetch(FAKE_URL, { signal: controller.signal })
+    controller.abort('AbortError')
+
+    mockFetchManager.whenAllComplete(() => {
+      const request = requests[0]
+      expect(request.method).toEqual('GET')
+      expect(request.url).toEqual(FAKE_URL)
+      expect(request.status).toEqual(0)
+      expect(request.isAborted).toBe(true)
+      expect(request.error).toEqual(controller.signal.reason)
+      expect(request.handlingStack).toBeDefined()
+      done()
+    })
+  })
+
   it('should track opaque fetch', (done) => {
     // https://fetch.spec.whatwg.org/#concept-filtered-response-opaque
     fetch(FAKE_URL).resolveWith({ status: 0, type: 'opaque' })
