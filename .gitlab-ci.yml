@@ -30,6 +30,10 @@ stages:
 .base-configuration:
   tags: ['runner:main', 'size:large']
   image: $CI_IMAGE
+  retry:
+    max: 2
+    when:
+      - runner_system_failure
 
 ########################################################################################################################
 # Branch selection helpers
