@@ -4,7 +4,6 @@ import {
   performDraw,
   isNumber,
   assign,
-  find,
   getType,
   isMatchOption,
   matchList,
@@ -112,7 +111,7 @@ function injectHeadersIfTracingAllowed(
     return
   }
 
-  const tracingOption = find(configuration.allowedTracingUrls, (tracingOption: TracingOption) =>
+  const tracingOption = configuration.allowedTracingUrls.find((tracingOption: TracingOption) =>
     matchList([tracingOption.match], context.url!, true)
   )
   if (!tracingOption) {
