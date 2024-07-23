@@ -30,8 +30,19 @@ const INTERNAL_EMOJI_PRIORITY = [
   '⚗️', // experiment
 ]
 const EMOJI_REGEX = /^\p{Emoji_Presentation}/u
-const PACKAGES = readdirSync('packages').filter((name) => !name.endsWith('.DS_Store'))
-const PACKAGES_REVERSE_DEPENDENCIES = new Map()
+const PACKAGES_DIRECTORY_NAMES = readdirSync('packages')
+const PACKAGES_REVERSE_DEPENDENCIES = (() => {
+  const result = new Map()
+  PACKAGES_DIRECTORY_NAMES.forEach((packageDirectoryName) => {
+    for (const dependency of getDepenciesRecursively(packageDirectoryName)) {
+      if (!result.has(dependency)) {
+        result.set(dependency, new Set())
+      }
+      result.get(dependency).add(packageDirectoryName)
+    }
+  })
+  return result
+})()
 
 runMain(async () => {
   if (!process.env.EDITOR) {
@@ -39,14 +50,6 @@ runMain(async () => {
     process.exit(1)
   }
 
-  PACKAGES.forEach((pkg) => {
-    for (const dependency of getDepenciesRecursively(pkg)) {
-      if (!PACKAGES_REVERSE_DEPENDENCIES.has(dependency)) {
-        PACKAGES_REVERSE_DEPENDENCIES.set(dependency, new Set())
-      }
-      PACKAGES_REVERSE_DEPENDENCIES.get(dependency).add(pkg)
-    }
-  })
   const emojisLegend = await getEmojisLegend()
   const changesList = getChangesList()
 
@@ -113,7 +116,9 @@ function getChangesList() {
     const message = trimmedEntry.slice(trimmedEntry.indexOf(' ') + 1)
     const affectedPackages = getAffectedPackages(hash)
 
-    const formattedPackages = affectedPackages.map((pkg) => `[${pkg.toUpperCase()}]`).join(' ')
+    const formattedPackages = affectedPackages
+      .map((packageDirectoryName) => `[${packageDirectoryName.toUpperCase()}]`)
+      .join(' ')
 
     if (PUBLIC_EMOJI_PRIORITY.some((emoji) => message.startsWith(emoji))) {
       publicChanges.push(`${message} ${formattedPackages}`)
@@ -141,22 +146,33 @@ ${internalChanges.join('\n')}
 function getAffectedPackages(hash) {
   const changedFiles = command`git diff-tree --no-commit-id --name-only -r ${hash}`.run().trim().split('\n')
   const affectedPackages = new Set()
-  changedFiles.forEach((file) => {
-    PACKAGES.forEach((pkg) => {
-      if (file.startsWith(`packages/${pkg}`)) {
-        if (PACKAGES_REVERSE_DEPENDENCIES.has(pkg)) {
-          PACKAGES_REVERSE_DEPENDENCIES.get(pkg).forEach((dependentPkg) => {
-            if (!PACKAGES_REVERSE_DEPENDENCIES.has(dependentPkg)) {
-              affectedPackages.add(dependentPkg)
-            }
-          })
-        } else {
-          affectedPackages.add(pkg)
-        }
+
+  changedFiles.forEach((filePath) => {
+    const packageDirectoryName = getPackageDirectoryNameFromFilePath(filePath)
+    if (packageDirectoryName) {
+      if (!isToplevelPackage(packageDirectoryName)) {
+        PACKAGES_REVERSE_DEPENDENCIES.get(packageDirectoryName).forEach((dependentPackageDirectoryName) => {
+          if (isToplevelPackage(dependentPackageDirectoryName)) {
+            affectedPackages.add(dependentPackageDirectoryName)
+          }
+        })
+      } else {
+        affectedPackages.add(packageDirectoryName)
       }
-    })
+    }
   })
+
   return Array.from(affectedPackages)
+}
+
+function getPackageDirectoryNameFromFilePath(filePath) {
+  if (filePath.startsWith('packages/')) {
+    return filePath.split('/')[1]
+  }
+}
+
+function isToplevelPackage(packageDirectoryName) {
+  return !PACKAGES_REVERSE_DEPENDENCIES.has(packageDirectoryName)
 }
 
 function sortByEmojiPriority(a, b, priorityList) {
@@ -176,16 +192,22 @@ function emojiNameToUnicode(changes) {
 function isNotVersionEntry(line) {
   return !/^v\d+\.\d+\.\d+/.test(line)
 }
+function getPackageDirectoryNameFromPackageName(packageName) {
+  if (packageName.startsWith('@datadog/browser-')) {
+    return packageName.slice('@datadog/browser-'.length)
+  }
+}
 
-function getDepenciesRecursively(pkg) {
-  const pkgJson = JSON.parse(fs.readFileSync(`packages/${pkg}/package.json`, { encoding: 'utf-8' }))
+function getDepenciesRecursively(packageDirectoryName) {
+  const packageDirectoryNameJson = JSON.parse(
+    fs.readFileSync(`packages/${packageDirectoryName}/package.json`, { encoding: 'utf-8' })
+  )
   const dependencies = new Set()
-  if (pkgJson.dependencies) {
-    for (let dependency of Object.keys(pkgJson.dependencies)) {
-      dependency = dependency.substring(dependency.indexOf('-') + 1)
-      dependencies.add(dependency)
-      for (let transitiveDependency of getDepenciesRecursively(dependency)) {
-        transitiveDependency = transitiveDependency.substring(dependency.indexOf('-') + 1)
+  if (packageDirectoryNameJson.dependencies) {
+    for (const dependencyPackageName of Object.keys(packageDirectoryNameJson.dependencies)) {
+      const packageDirectoryName = getPackageDirectoryNameFromPackageName(dependencyPackageName)
+      dependencies.add(packageDirectoryName)
+      for (let transitiveDependency of getDepenciesRecursively(packageDirectoryName)) {
         dependencies.add(transitiveDependency)
       }
     }
