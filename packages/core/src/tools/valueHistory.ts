@@ -17,7 +17,7 @@ export interface ValueHistoryEntry<T> {
 export const CLEAR_OLD_VALUES_INTERVAL = ONE_MINUTE
 
 /**
- * Store and keep track of values spans. This whole class assumes that values are added in
+ * Store and keep track of values spans. This whole cache assumes that values are added in
  * chronological order (i.e. all entries have an increasing start time).
  */
 export interface ValueHistory<Value> {
