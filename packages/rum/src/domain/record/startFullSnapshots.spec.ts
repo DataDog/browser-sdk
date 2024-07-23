@@ -1,100 +1,86 @@
-import { LifeCycleEventType, getScrollX, getScrollY, getViewportDimension } from '@datadog/browser-rum-core'
-import type { RumConfiguration, LifeCycle } from '@datadog/browser-rum-core'
-import { timeStampNow, isExperimentalFeatureEnabled, ExperimentalFeature } from '@datadog/browser-core'
-import { requestIdleCallback } from '../../browser/requestIdleCallback'
+import type { RumConfiguration, ViewCreatedEvent } from '@datadog/browser-rum-core'
+import { LifeCycle, LifeCycleEventType } from '@datadog/browser-rum-core'
+import type { TimeStamp } from '@datadog/browser-core'
+import { isIE, noop } from '@datadog/browser-core'
+import { mockExperimentalFeatures, mockRequestIdleCallback } from '@datadog/browser-core/test'
 import type { BrowserRecord } from '../../types'
-import { RecordType } from '../../types'
-import type { ElementsScrollPositions } from './elementsScrollPositions'
+import { ExperimentalFeature } from '../../../../core/src/tools/experimentalFeatures'
+import { startFullSnapshots } from './startFullSnapshots'
+import { createElementsScrollPositions } from './elementsScrollPositions'
 import type { ShadowRootsController } from './shadowRootsController'
-import { SerializationContextStatus, serializeDocument } from './serialization'
-import { getVisualViewport } from './viewports'
 
-export function startFullSnapshots(
-  elementsScrollPositions: ElementsScrollPositions,
-  shadowRootsController: ShadowRootsController,
-  lifeCycle: LifeCycle,
-  configuration: RumConfiguration,
-  flushMutations: () => void,
-  fullSnapshotPendingCallback: () => void,
-  fullSnapshotReadyCallback: (records: BrowserRecord[]) => void
-) {
-  const takeFullSnapshot = (
-    timestamp = timeStampNow(),
-    serializationContext = {
-      status: SerializationContextStatus.INITIAL_FULL_SNAPSHOT,
-      elementsScrollPositions,
-      shadowRootsController,
-    }
-  ) => {
-    const { width, height } = getViewportDimension()
-    const records: BrowserRecord[] = [
-      {
-        data: {
-          height,
-          href: window.location.href,
-          width,
-        },
-        type: RecordType.Meta,
-        timestamp,
-      },
-      {
-        data: {
-          has_focus: document.hasFocus(),
-        },
-        type: RecordType.Focus,
-        timestamp,
-      },
-      {
-        data: {
-          node: serializeDocument(document, configuration, serializationContext),
-          initialOffset: {
-            left: getScrollX(),
-            top: getScrollY(),
-          },
-        },
-        type: RecordType.FullSnapshot,
-        timestamp,
-      },
-    ]
+describe('startFullSnapshots', () => {
+  const viewStartClock = { relative: 1, timeStamp: 1 as TimeStamp }
+  let lifeCycle: LifeCycle
+  let fullSnapshotPendingCallback: jasmine.Spy<() => void>
+  let fullSnapshotReadyCallback: jasmine.Spy<(records: BrowserRecord[]) => void>
 
-    if (window.visualViewport) {
-      records.push({
-        data: getVisualViewport(window.visualViewport),
-        type: RecordType.VisualViewport,
-        timestamp,
-      })
-    }
-    return records
-  }
-
-  fullSnapshotReadyCallback(takeFullSnapshot())
-
-  let cancelIdleCallback: (() => void) | undefined
-  const { unsubscribe } = lifeCycle.subscribe(LifeCycleEventType.VIEW_CREATED, (view) => {
-    flushMutations()
-    function takeSubsequentFullSnapshot() {
-      flushMutations()
-      fullSnapshotReadyCallback(
-        takeFullSnapshot(view.startClocks.timeStamp, {
-          shadowRootsController,
-          status: SerializationContextStatus.SUBSEQUENT_FULL_SNAPSHOT,
-          elementsScrollPositions,
-        })
-      )
+  beforeEach(() => {
+    if (isIE()) {
+      pending('IE not supported')
     }
 
-    if (isExperimentalFeatureEnabled(ExperimentalFeature.ASYNC_FULL_SNAPSHOT)) {
-      if (cancelIdleCallback) {
-        cancelIdleCallback()
-      }
-      fullSnapshotPendingCallback()
-      cancelIdleCallback = requestIdleCallback(takeSubsequentFullSnapshot)
-    } else {
-      takeSubsequentFullSnapshot()
-    }
+    lifeCycle = new LifeCycle()
+    mockExperimentalFeatures([ExperimentalFeature.ASYNC_FULL_SNAPSHOT])
+    fullSnapshotPendingCallback = jasmine.createSpy('fullSnapshotPendingCallback')
+    fullSnapshotReadyCallback = jasmine.createSpy('fullSnapshotReadyCallback')
+
+    startFullSnapshots(
+      createElementsScrollPositions(),
+      {} as ShadowRootsController,
+      lifeCycle,
+      {} as RumConfiguration,
+      noop,
+      fullSnapshotPendingCallback,
+      fullSnapshotReadyCallback
+    )
   })
 
-  return {
-    stop: unsubscribe,
-  }
-}
+  it('takes a full snapshot when startFullSnapshots is called', () => {
+    expect(fullSnapshotReadyCallback).toHaveBeenCalledTimes(1)
+  })
+
+  it('takes a full snapshot when the view changes', () => {
+    const { triggerIdleCallbacks } = mockRequestIdleCallback()
+
+    lifeCycle.notify(LifeCycleEventType.VIEW_CREATED, {
+      startClocks: viewStartClock,
+    } as Partial<ViewCreatedEvent> as any)
+
+    triggerIdleCallbacks()
+
+    expect(fullSnapshotPendingCallback).toHaveBeenCalledTimes(1)
+    expect(fullSnapshotReadyCallback).toHaveBeenCalledTimes(2)
+  })
+
+  it('cancels the full snapshot if another view is created before it can it happens', () => {
+    const { triggerIdleCallbacks } = mockRequestIdleCallback()
+
+    lifeCycle.notify(LifeCycleEventType.VIEW_CREATED, {
+      startClocks: viewStartClock,
+    } as Partial<ViewCreatedEvent> as any)
+
+    lifeCycle.notify(LifeCycleEventType.VIEW_CREATED, {
+      startClocks: viewStartClock,
+    } as Partial<ViewCreatedEvent> as any)
+
+    triggerIdleCallbacks()
+    expect(fullSnapshotPendingCallback).toHaveBeenCalledTimes(2)
+    expect(fullSnapshotReadyCallback).toHaveBeenCalledTimes(2)
+  })
+
+  it('full snapshot related records should have the view change date', () => {
+    const { triggerIdleCallbacks } = mockRequestIdleCallback()
+
+    lifeCycle.notify(LifeCycleEventType.VIEW_CREATED, {
+      startClocks: viewStartClock,
+    } as Partial<ViewCreatedEvent> as any)
+
+    triggerIdleCallbacks()
+
+    const records = fullSnapshotReadyCallback.calls.mostRecent().args[0]
+    expect(records[0].timestamp).toEqual(1)
+    expect(records[1].timestamp).toEqual(1)
+    expect(records[2].timestamp).toEqual(1)
+  })
+})
