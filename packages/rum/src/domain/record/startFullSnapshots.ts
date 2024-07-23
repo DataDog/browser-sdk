@@ -95,6 +95,9 @@ export function startFullSnapshots(
   })
 
   return {
-    stop: unsubscribe,
+    stop: () => {
+      unsubscribe()
+      cancelIdleCallback?.()
+    },
   }
 }

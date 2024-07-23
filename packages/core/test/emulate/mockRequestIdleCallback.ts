@@ -6,8 +6,10 @@ let cancelIdleCallbackSpy: jasmine.Spy
 export function mockRequestIdleCallback() {
   const callbacks = new Map<number, () => void>()
 
+  let idCounter = 0
+
   function addCallback(callback: (...params: any[]) => any) {
-    const id = Math.random()
+    const id = ++idCounter
     callbacks.set(id, callback)
     return id
   }
