@@ -1,5 +1,5 @@
 import { catchUserErrors } from '../../tools/catchUserErrors'
-import { DOCS_ORIGIN, display } from '../../tools/display'
+import { DOCS_ORIGIN, MORE_DETAILS, display } from '../../tools/display'
 import type { RawTelemetryConfiguration } from '../telemetry'
 import type { Duration } from '../../tools/utils/timeUtils'
 import { ONE_SECOND } from '../../tools/utils/timeUtils'
@@ -191,7 +191,7 @@ export interface Configuration extends TransportConfiguration {
   messageBytesLimit: number
 }
 
-function checkIfString(tag: unknown, tagName: string): tag is string | undefined | null {
+function isString(tag: unknown, tagName: string): tag is string | undefined | null {
   if (tag !== undefined && tag !== null && typeof tag !== 'string') {
     display.error(`${tagName} must be defined as a string`)
     return false
@@ -199,8 +199,20 @@ function checkIfString(tag: unknown, tagName: string): tag is string | undefined
   return true
 }
 
-function isDatadogSite(site: string) {
-  return /(datadog|ddog|datad0g|dd0g)/.test(site)
+function isDatadogSite(site: unknown) {
+  if (site && typeof site === 'string' && !/(datadog|ddog|datad0g|dd0g)/.test(site)) {
+    display.error(`Site should be a valid Datadog site. ${MORE_DETAILS} ${DOCS_ORIGIN}/getting_started/site/.`)
+    return false
+  }
+  return true
+}
+
+export function isSampleRate(sampleRate: unknown, name: string) {
+  if (sampleRate !== undefined && !isPercentage(sampleRate)) {
+    display.error(`${name} Sample Rate should be a number between 0 and 100`)
+    return false
+  }
+  return true
 }
 
 export function validateAndBuildConfiguration(initConfiguration: InitConfiguration): Configuration | undefined {
@@ -209,41 +221,16 @@ export function validateAndBuildConfiguration(initConfiguration: InitConfigurati
     return
   }
 
-  if (initConfiguration.sessionSampleRate !== undefined && !isPercentage(initConfiguration.sessionSampleRate)) {
-    display.error('Session Sample Rate should be a number between 0 and 100')
-    return
-  }
-
-  if (initConfiguration.telemetrySampleRate !== undefined && !isPercentage(initConfiguration.telemetrySampleRate)) {
-    display.error('Telemetry Sample Rate should be a number between 0 and 100')
-    return
-  }
-
   if (
-    initConfiguration.telemetryConfigurationSampleRate !== undefined &&
-    !isPercentage(initConfiguration.telemetryConfigurationSampleRate)
+    !isDatadogSite(initConfiguration.site) ||
+    !isSampleRate(initConfiguration.sessionSampleRate, 'Session') ||
+    !isSampleRate(initConfiguration.telemetrySampleRate, 'Telemetry') ||
+    !isSampleRate(initConfiguration.telemetryConfigurationSampleRate, 'Telemetry Configuration') ||
+    !isSampleRate(initConfiguration.telemetryUsageSampleRate, 'Telemetry Usage') ||
+    !isString(initConfiguration.version, 'Version') ||
+    !isString(initConfiguration.env, 'Env') ||
+    !isString(initConfiguration.service, 'Service')
   ) {
-    display.error('Telemetry Configuration Sample Rate should be a number between 0 and 100')
-    return
-  }
-
-  if (
-    initConfiguration.telemetryUsageSampleRate !== undefined &&
-    !isPercentage(initConfiguration.telemetryUsageSampleRate)
-  ) {
-    display.error('Telemetry Usage Sample Rate should be a number between 0 and 100')
-    return
-  }
-
-  if (!checkIfString(initConfiguration.version, 'Version')) {
-    return
-  }
-
-  if (!checkIfString(initConfiguration.env, 'Env')) {
-    return
-  }
-
-  if (!checkIfString(initConfiguration.service, 'Service')) {
     return
   }
 
@@ -252,11 +239,6 @@ export function validateAndBuildConfiguration(initConfiguration: InitConfigurati
     !objectHasValue(TrackingConsent, initConfiguration.trackingConsent)
   ) {
     display.error('Tracking Consent should be either "granted" or "not-granted"')
-    return
-  }
-
-  if (initConfiguration.site && !isDatadogSite(initConfiguration.site)) {
-    display.error(`Site should be a valid Datadog site. Learn more here: ${DOCS_ORIGIN}/getting_started/site/.`)
     return
   }
 
