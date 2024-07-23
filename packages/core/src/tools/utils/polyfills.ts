@@ -1,9 +1,3 @@
-export function includes(candidate: string, search: string): boolean
-export function includes<T>(candidate: T[], search: T): boolean
-export function includes(candidate: string | unknown[], search: any) {
-  return candidate.indexOf(search) !== -1
-}
-
 export function find<T, S extends T>(
   array: ArrayLike<T>,
   predicate: (item: T, index: number) => item is S

@@ -2,7 +2,6 @@ import { toStackTraceString } from '../../tools/stackTrace/handlingStack'
 import { monitor } from '../../tools/monitor'
 import { mergeObservables, Observable } from '../../tools/observable'
 import { addEventListener, DOM_EVENT } from '../../browser/addEventListener'
-import { includes } from '../../tools/utils/polyfills'
 import { safeTruncate } from '../../tools/utils/stringUtils'
 import type { Configuration } from '../configuration'
 import type { ReportType, InterventionReport, DeprecationReport } from './browser.types'
@@ -26,7 +25,7 @@ export interface RawReport {
 export function initReportObservable(configuration: Configuration, apis: RawReportType[]) {
   const observables: Array<Observable<RawReport>> = []
 
-  if (includes(apis, RawReportType.cspViolation)) {
+  if (apis.includes(RawReportType.cspViolation)) {
     observables.push(createCspViolationReportObservable(configuration))
   }
 

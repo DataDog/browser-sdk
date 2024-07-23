@@ -9,7 +9,7 @@ import { Observable } from '../../tools/observable'
 import { timeStampNow } from '../../tools/utils/timeUtils'
 import { displayIfDebugEnabled, startMonitorErrorCollection } from '../../tools/monitor'
 import { sendToExtension } from '../../tools/sendToExtension'
-import { includes, assign } from '../../tools/utils/polyfills'
+import { assign } from '../../tools/utils/polyfills'
 import { performDraw } from '../../tools/utils/numberUtils'
 import { jsonStringify } from '../../tools/serialisation/jsonStringify'
 import { combine } from '../../tools/mergeInto'
@@ -64,7 +64,7 @@ export function startTelemetry(telemetryService: TelemetryService, configuration
   const alreadySentEvents = new Set<string>()
 
   const telemetryEnabled =
-    !includes(TELEMETRY_EXCLUDED_SITES, configuration.site) && performDraw(configuration.telemetrySampleRate)
+    !TELEMETRY_EXCLUDED_SITES.includes(configuration.site) && performDraw(configuration.telemetrySampleRate)
 
   const telemetryEnabledPerType = {
     [TelemetryType.log]: telemetryEnabled,

@@ -1,4 +1,4 @@
-import { endsWith, includes } from '../tools/utils/polyfills'
+import { endsWith } from '../tools/utils/polyfills'
 import { getGlobalObject } from '../tools/getGlobalObject'
 import type { DefaultPrivacyLevel } from '../domain/configuration'
 
@@ -43,7 +43,7 @@ export function getEventBridge<T, E>() {
 
 export function bridgeSupports(capability: BridgeCapability): boolean {
   const bridge = getEventBridge()
-  return !!bridge && includes(bridge.getCapabilities(), capability)
+  return !!bridge && bridge.getCapabilities().includes(capability)
 }
 
 export function canUseEventBridge(currentHost = getGlobalObject<Window>().location?.hostname): boolean {

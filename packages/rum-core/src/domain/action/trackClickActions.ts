@@ -1,6 +1,5 @@
 import type { Duration, ClocksState, RelativeTime, TimeStamp, ValueHistory } from '@datadog/browser-core'
 import {
-  includes,
   timeStampNow,
   Observable,
   assign,
@@ -266,7 +265,7 @@ function newClick(
     lifeCycle,
     isChildEvent: (event) =>
       event.action !== undefined &&
-      (Array.isArray(event.action.id) ? includes(event.action.id, id) : event.action.id === id),
+      (Array.isArray(event.action.id) ? event.action.id.includes(id) : event.action.id === id),
   })
   let status = ClickStatus.ONGOING
   let activityEndTime: undefined | TimeStamp
