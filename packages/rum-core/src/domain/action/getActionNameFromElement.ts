@@ -46,23 +46,9 @@ export function getActionNameFromElement(
 }
 
 function getActionNameFromElementProgrammatically(targetElement: Element, programmaticAttribute: string) {
-  let elementWithAttribute
   // We don't use getActionNameFromElementForStrategies here, because we want to consider all parents,
   // without limit. It is up to the user to declare a relevant naming strategy.
-  // If available, use element.closest() to match get the attribute from the element or any of its
-  // parent.  Else fallback to a more traditional implementation.
-  if (supportsElementClosest()) {
-    elementWithAttribute = targetElement.closest(`[${programmaticAttribute}]`)
-  } else {
-    let element: Element | null = targetElement
-    while (element) {
-      if (element.hasAttribute(programmaticAttribute)) {
-        elementWithAttribute = element
-        break
-      }
-      element = element.parentElement
-    }
-  }
+  const elementWithAttribute = targetElement.closest(`[${programmaticAttribute}]`)
 
   if (!elementWithAttribute) {
     return
@@ -249,18 +235,4 @@ function supportsLabelProperty() {
     supportsLabelPropertyResult = 'labels' in HTMLInputElement.prototype
   }
   return supportsLabelPropertyResult
-}
-
-/**
- * Returns true if the browser supports the element.closest method.  This should be the case
- * everywhere except on Internet Explorer.
- * Note: The result is computed lazily, because we don't want any DOM access when the SDK is
- * evaluated.
- */
-let supportsElementClosestResult: boolean | undefined
-function supportsElementClosest() {
-  if (supportsElementClosestResult === undefined) {
-    supportsElementClosestResult = 'closest' in HTMLElement.prototype
-  }
-  return supportsElementClosestResult
 }
