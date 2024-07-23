@@ -65,10 +65,6 @@ export function objectEntries<T = unknown>(object: { [key: string]: T }): Array<
   return Object.keys(object).map((key) => [key, object[key]])
 }
 
-export function startsWith(candidate: string, search: string) {
-  return candidate.slice(0, search.length) === search
-}
-
 export function endsWith(candidate: string, search: string) {
   return candidate.slice(-search.length) === search
 }

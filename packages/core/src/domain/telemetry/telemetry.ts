@@ -9,7 +9,7 @@ import { Observable } from '../../tools/observable'
 import { timeStampNow } from '../../tools/utils/timeUtils'
 import { displayIfDebugEnabled, startMonitorErrorCollection } from '../../tools/monitor'
 import { sendToExtension } from '../../tools/sendToExtension'
-import { startsWith, arrayFrom, includes, assign } from '../../tools/utils/polyfills'
+import { arrayFrom, includes, assign } from '../../tools/utils/polyfills'
 import { performDraw } from '../../tools/utils/numberUtils'
 import { jsonStringify } from '../../tools/serialisation/jsonStringify'
 import { combine } from '../../tools/mergeInto'
@@ -220,7 +220,7 @@ export function formatError(e: unknown) {
 
 export function scrubCustomerFrames(stackTrace: StackTrace) {
   stackTrace.stack = stackTrace.stack.filter(
-    (frame) => !frame.url || ALLOWED_FRAME_URLS.some((allowedFrameUrl) => startsWith(frame.url!, allowedFrameUrl))
+    (frame) => !frame.url || ALLOWED_FRAME_URLS.some((allowedFrameUrl) => frame.url!.startsWith(allowedFrameUrl))
   )
   return stackTrace
 }
