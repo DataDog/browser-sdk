@@ -1,4 +1,4 @@
-import { safeTruncate, find } from '@datadog/browser-core'
+import { safeTruncate } from '@datadog/browser-core'
 import { NodePrivacyLevel, getPrivacySelector } from '../privacy'
 import type { RumConfiguration } from '../configuration'
 
@@ -65,18 +65,9 @@ type NameStrategy = (
 
 const priorityStrategies: NameStrategy[] = [
   // associated LABEL text
-  (element, userProgrammaticAttribute, privacy) => {
-    // Edge < 18 does not support element.labels, so we fallback to a CSS selector based on the element id
-    // instead
-    if (supportsLabelProperty()) {
-      if ('labels' in element && element.labels && element.labels.length > 0) {
-        return getTextualContent(element.labels[0], userProgrammaticAttribute)
-      }
-    } else if (element.id) {
-      const label =
-        element.ownerDocument &&
-        find(element.ownerDocument.querySelectorAll('label'), (label) => label.htmlFor === element.id)
-      return label && getTextualContent(label, userProgrammaticAttribute, privacy)
+  (element, userProgrammaticAttribute) => {
+    if ('labels' in element && element.labels && element.labels.length > 0) {
+      return getTextualContent(element.labels[0], userProgrammaticAttribute)
     }
   },
   // INPUT button (and associated) value
@@ -221,18 +212,4 @@ function getTextualContent(
   }
 
   return element.textContent
-}
-
-/**
- * Returns true if the browser supports the element.labels property.  This should be the case
- * everywhere except on Edge <18
- * Note: The result is computed lazily, because we don't want any DOM access when the SDK is
- * evaluated.
- */
-let supportsLabelPropertyResult: boolean | undefined
-function supportsLabelProperty() {
-  if (supportsLabelPropertyResult === undefined) {
-    supportsLabelPropertyResult = 'labels' in HTMLInputElement.prototype
-  }
-  return supportsLabelPropertyResult
 }
