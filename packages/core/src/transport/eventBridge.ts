@@ -1,4 +1,3 @@
-import { endsWith } from '../tools/utils/polyfills'
 import { getGlobalObject } from '../tools/getGlobalObject'
 import type { DefaultPrivacyLevel } from '../domain/configuration'
 
@@ -52,7 +51,7 @@ export function canUseEventBridge(currentHost = getGlobalObject<Window>().locati
     !!bridge &&
     bridge
       .getAllowedWebViewHosts()
-      .some((allowedHost) => currentHost === allowedHost || endsWith(currentHost, `.${allowedHost}`))
+      .some((allowedHost) => currentHost === allowedHost || currentHost.endsWith(`.${allowedHost}`))
   )
 }
 

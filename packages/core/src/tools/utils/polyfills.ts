@@ -18,16 +18,14 @@ export function forEach<List extends { [index: number]: any }>(
   Array.prototype.forEach.call(list, callback as any)
 }
 
+// TODO remove after updating target to es2018
 export function objectValues<T = unknown>(object: { [key: string]: T }) {
   return Object.keys(object).map((key) => object[key])
 }
 
+// TODO remove after updating target to es2018
 export function objectEntries<T = unknown>(object: { [key: string]: T }): Array<[string, T]> {
   return Object.keys(object).map((key) => [key, object[key]])
-}
-
-export function endsWith(candidate: string, search: string) {
-  return candidate.slice(-search.length) === search
 }
 
 interface Assignable {
