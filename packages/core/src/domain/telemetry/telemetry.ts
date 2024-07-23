@@ -9,7 +9,7 @@ import { Observable } from '../../tools/observable'
 import { timeStampNow } from '../../tools/utils/timeUtils'
 import { displayIfDebugEnabled, startMonitorErrorCollection } from '../../tools/monitor'
 import { sendToExtension } from '../../tools/sendToExtension'
-import { arrayFrom, includes, assign } from '../../tools/utils/polyfills'
+import { includes, assign } from '../../tools/utils/polyfills'
 import { performDraw } from '../../tools/utils/numberUtils'
 import { jsonStringify } from '../../tools/serialisation/jsonStringify'
 import { combine } from '../../tools/mergeInto'
@@ -107,7 +107,7 @@ export function startTelemetry(telemetryService: TelemetryService, configuration
           runtime_env: runtimeEnvInfo,
           connectivity: getConnectivity(),
         }),
-        experimental_features: arrayFrom(getExperimentalFeatures()),
+        experimental_features: Array.from(getExperimentalFeatures()),
       },
       contextProvider !== undefined ? contextProvider() : {}
     ) as TelemetryEvent & Context
