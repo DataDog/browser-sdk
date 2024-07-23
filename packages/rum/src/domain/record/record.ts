@@ -22,13 +22,11 @@ import { initShadowRootsController } from './shadowRootsController'
 import { startFullSnapshots } from './startFullSnapshots'
 import { initRecordIds } from './recordIds'
 
-let isFullSnapshotPending = false
 export interface RecordOptions {
   emit?: (record: BrowserRecord) => void
   configuration: RumConfiguration
   lifeCycle: LifeCycle
   viewContexts: ViewContexts
-  defineSnapshotPending?: boolean
 }
 
 export interface RecordAPI {
@@ -38,11 +36,13 @@ export interface RecordAPI {
 }
 
 export function record(options: RecordOptions): RecordAPI {
-  const { emit, configuration, lifeCycle, defineSnapshotPending } = options
+  const { emit, configuration, lifeCycle } = options
   // runtime checks for user options
   if (!emit) {
     throw new Error('emit function is required')
   }
+
+  let isFullSnapshotPending = false
 
   const emitAndComputeStats = (record: BrowserRecord) => {
     if (!isFullSnapshotPending) {
@@ -67,7 +67,7 @@ export function record(options: RecordOptions): RecordAPI {
       isFullSnapshotPending = true
     },
     (records) => {
-      isFullSnapshotPending = defineSnapshotPending ? true : false
+      isFullSnapshotPending = false
       records.forEach((record) => emitAndComputeStats(record))
     }
   )
