@@ -1,4 +1,4 @@
-import { DOCS_ORIGIN, display } from '../tools/display'
+import { DOCS_TROUBLESHOOTING, MORE_DETAILS, display } from '../tools/display'
 import type { Context } from '../tools/serialisation/context'
 import { objectValues } from '../tools/utils/polyfills'
 import { isPageExitReason } from '../browser/pageExitObservable'
@@ -81,7 +81,7 @@ export class Batch {
 
     if (estimatedMessageBytesCount >= this.messageBytesLimit) {
       display.warn(
-        `Discarded a message whose size was bigger than the maximum allowed size ${this.messageBytesLimit}KB. More details: ${DOCS_ORIGIN}/real_user_monitoring/browser/troubleshooting/#technical-limitations`
+        `Discarded a message whose size was bigger than the maximum allowed size ${this.messageBytesLimit}KB. ${MORE_DETAILS} ${DOCS_TROUBLESHOOTING}/#technical-limitations`
       )
       return
     }
