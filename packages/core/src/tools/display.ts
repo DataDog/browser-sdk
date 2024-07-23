@@ -52,3 +52,5 @@ export const display: Display = {
 }
 
 export const DOCS_ORIGIN = 'https://docs.datadoghq.com'
+export const DOCS_TROUBLESHOOTING = `${DOCS_ORIGIN}/real_user_monitoring/browser/troubleshooting`
+export const MORE_DETAILS = 'More details:'

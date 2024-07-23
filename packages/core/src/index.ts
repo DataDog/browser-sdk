@@ -6,6 +6,7 @@ export {
   TraceContextInjection,
   EndpointBuilder,
   serializeConfiguration,
+  isSampleRate,
   INTAKE_SITE_STAGING,
   INTAKE_SITE_US1,
   INTAKE_SITE_US1_FED,

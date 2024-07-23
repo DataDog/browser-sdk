@@ -25,6 +25,7 @@ const DEFAULT_RUM_CONFIGURATION = {
   telemetrySampleRate: 100,
   telemetryConfigurationSampleRate: 100,
   enableExperimentalFeatures: [],
+  allowUntrustedEvents: true,
 }
 
 const DEFAULT_LOGS_CONFIGURATION = {

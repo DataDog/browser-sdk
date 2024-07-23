@@ -3,6 +3,7 @@ export {
   InitConfiguration,
   DefaultPrivacyLevel,
   TraceContextInjection,
+  isSampleRate,
   validateAndBuildConfiguration,
   serializeConfiguration,
 } from './configuration'
