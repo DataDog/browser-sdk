@@ -14,8 +14,6 @@ describe('startFullSnapshots', () => {
   let lifeCycle: LifeCycle
   let fullSnapshotPendingCallback: jasmine.Spy<() => void>
   let fullSnapshotReadyCallback: jasmine.Spy<(records: BrowserRecord[]) => void>
-  const originalRequestIdleCallback = window.requestIdleCallback
-  const originalCancelIdleCallback = window.cancelIdleCallback
 
   beforeEach(() => {
     if (isIE()) {
@@ -36,11 +34,6 @@ describe('startFullSnapshots', () => {
       fullSnapshotPendingCallback,
       fullSnapshotReadyCallback
     )
-  })
-
-  afterEach(() => {
-    window.requestIdleCallback = originalRequestIdleCallback
-    window.cancelIdleCallback = originalCancelIdleCallback
   })
 
   it('takes a full snapshot when startFullSnapshots is called', () => {

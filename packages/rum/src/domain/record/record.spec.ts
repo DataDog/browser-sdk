@@ -2,7 +2,13 @@ import { DefaultPrivacyLevel, findLast, isIE } from '@datadog/browser-core'
 import type { RumConfiguration, ViewCreatedEvent } from '@datadog/browser-rum-core'
 import { LifeCycle, LifeCycleEventType } from '@datadog/browser-rum-core'
 import type { Clock } from '@datadog/browser-core/test'
-import { createNewEvent, collectAsyncCalls, mockRequestIdleCallback } from '@datadog/browser-core/test'
+import {
+  createNewEvent,
+  collectAsyncCalls,
+  mockRequestIdleCallback,
+  mockExperimentalFeatures,
+} from '@datadog/browser-core/test'
+import { ExperimentalFeature } from '../../../../core/src/tools/experimentalFeatures'
 import { findElement, findFullSnapshot, findNode, recordsPerFullSnapshot } from '../../../test'
 import type {
   BrowserIncrementalSnapshotRecord,
@@ -424,13 +430,16 @@ describe('record', () => {
 
   describe('it should not record when full snapshot is pending', () => {
     it('ignores any record while a full snapshot is pending', () => {
+      mockExperimentalFeatures([ExperimentalFeature.ASYNC_FULL_SNAPSHOT])
       mockRequestIdleCallback()
       startRecording()
       newView()
 
+      emitSpy.calls.reset()
+
       window.dispatchEvent(createNewEvent('focus'))
 
-      expect(emitSpy).toHaveBeenCalled()
+      expect(getEmittedRecords().find((record) => record.type === RecordType.Focus)).toBeUndefined()
     })
   })
 

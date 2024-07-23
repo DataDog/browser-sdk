@@ -4,6 +4,8 @@ describe('requestIdleCallback', () => {
   let requestAnimationFrameSpy: jasmine.Spy
   let cancelAnimationFrameSpy: jasmine.Spy
   let callback: jasmine.Spy
+  const originalRequestIdleCallback = window.requestIdleCallback
+  const originalCancelIdleCallback = window.cancelIdleCallback
 
   beforeEach(() => {
     requestAnimationFrameSpy = spyOn(window, 'requestAnimationFrame').and.callFake((cb) => {
@@ -12,6 +14,11 @@ describe('requestIdleCallback', () => {
     })
     cancelAnimationFrameSpy = spyOn(window, 'cancelAnimationFrame')
     callback = jasmine.createSpy('callback')
+  })
+
+  afterEach(() => {
+    window.requestIdleCallback = originalRequestIdleCallback
+    window.cancelIdleCallback = originalCancelIdleCallback
   })
 
   it('should use requestAnimationFrame when requestIdleCallback is not defined', () => {
