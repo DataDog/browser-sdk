@@ -1,4 +1,3 @@
-import { getClassList } from '../browser/polyfills'
 import { DEFAULT_PROGRAMMATIC_ACTION_NAME_ATTRIBUTE } from './action/getActionNameFromElement'
 
 /**
@@ -99,7 +98,7 @@ function getClassSelector(element: Element): string | undefined {
   if (element.tagName === 'BODY') {
     return
   }
-  const classList = getClassList(element)
+  const classList = element.classList
   for (let i = 0; i < classList.length; i += 1) {
     const className = classList[i]
     if (isGeneratedValue(className)) {
