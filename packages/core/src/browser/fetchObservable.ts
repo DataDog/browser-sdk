@@ -2,6 +2,7 @@ import type { InstrumentedMethodCall } from '../tools/instrumentMethod'
 import { instrumentMethod } from '../tools/instrumentMethod'
 import { monitor } from '../tools/monitor'
 import { Observable } from '../tools/observable'
+import { assign } from '../tools/utils/polyfills'
 import type { ClocksState } from '../tools/utils/timeUtils'
 import { clocksNow } from '../tools/utils/timeUtils'
 import { normalizeUrl } from '../tools/utils/urlPolyfill'
@@ -96,21 +97,30 @@ function afterSend(
   responsePromise: Promise<Response>,
   startContext: FetchStartContext
 ) {
-  const reportFetch = (response: Response | Error) => {
-    const context = startContext as unknown as FetchResolveContext
+  const context = startContext as unknown as FetchResolveContext
+
+  function reportFetch(partialContext: Partial<FetchResolveContext>) {
     context.state = 'resolve'
-    if ('stack' in response || response instanceof Error) {
-      context.status = 0
-      context.isAborted = response instanceof DOMException && response.code === DOMException.ABORT_ERR
-      context.error = response
-    } else if ('status' in response) {
-      context.response = response
-      context.responseType = response.type
-      context.status = response.status
-      context.isAborted = false
-    }
+    assign(context, partialContext)
     observable.notify(context)
   }
 
-  responsePromise.then(monitor(reportFetch), monitor(reportFetch))
+  responsePromise.then(
+    monitor((response) => {
+      reportFetch({
+        response,
+        responseType: response.type,
+        status: response.status,
+        isAborted: false,
+      })
+    }),
+    monitor((error: Error) => {
+      reportFetch({
+        status: 0,
+        isAborted:
+          context.init?.signal?.aborted || (error instanceof DOMException && error.code === DOMException.ABORT_ERR),
+        error,
+      })
+    })
+  )
 }
