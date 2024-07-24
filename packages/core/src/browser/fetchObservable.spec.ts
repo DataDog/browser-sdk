@@ -82,6 +82,23 @@ describe('fetch proxy', () => {
     })
   })
 
+  it('should track fetch aborted by AbortController', (done) => {
+    const controller = new AbortController()
+    void fetch(FAKE_URL, { signal: controller.signal })
+    controller.abort('AbortError')
+
+    mockFetchManager.whenAllComplete(() => {
+      const request = requests[0]
+      expect(request.method).toEqual('GET')
+      expect(request.url).toEqual(FAKE_URL)
+      expect(request.status).toEqual(0)
+      expect(request.isAborted).toBe(true)
+      expect(request.error).toEqual(controller.signal.reason)
+      expect(request.handlingStack).toBeDefined()
+      done()
+    })
+  })
+
   it('should track opaque fetch', (done) => {
     // https://fetch.spec.whatwg.org/#concept-filtered-response-opaque
     fetch(FAKE_URL).resolveWith({ status: 0, type: 'opaque' })
@@ -162,7 +179,7 @@ describe('fetch proxy', () => {
     })
   })
 
-  it('should keep promise resolved behavior', (done) => {
+  it('should keep promise resolved behavior for Response', (done) => {
     const mockFetchPromise = fetch(FAKE_URL)
     const spy = jasmine.createSpy()
     mockFetchPromise.then(spy).catch(() => {
@@ -176,11 +193,37 @@ describe('fetch proxy', () => {
     })
   })
 
-  it('should keep promise rejected behavior', (done) => {
+  it('should keep promise resolved behavior for any other type', (done) => {
+    const mockFetchPromise = fetch(FAKE_URL)
+    const spy = jasmine.createSpy()
+    mockFetchPromise.then(spy).catch(() => {
+      fail('Should not have thrown an error!')
+    })
+    mockFetchPromise.resolveWith('response' as any)
+
+    setTimeout(() => {
+      expect(spy).toHaveBeenCalled()
+      done()
+    })
+  })
+
+  it('should keep promise rejected behavior for Error', (done) => {
     const mockFetchPromise = fetch(FAKE_URL)
     const spy = jasmine.createSpy()
     mockFetchPromise.catch(spy)
     mockFetchPromise.rejectWith(new Error('fetch error'))
+
+    setTimeout(() => {
+      expect(spy).toHaveBeenCalled()
+      done()
+    })
+  })
+
+  it('should keep promise rejected behavior for any other type', (done) => {
+    const mockFetchPromise = fetch(FAKE_URL)
+    const spy = jasmine.createSpy()
+    mockFetchPromise.catch(spy)
+    mockFetchPromise.rejectWith('fetch error' as any)
 
     setTimeout(() => {
       expect(spy).toHaveBeenCalled()
