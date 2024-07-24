@@ -77,7 +77,7 @@ export function instrumentMethod<TARGET extends { [key: string]: any }, METHOD e
   let original = targetPrototype[method]
 
   if (typeof original !== 'function') {
-    if (startsWith(method, 'on')) {
+    if (method in targetPrototype && startsWith(method, 'on')) {
       original = noop as TARGET[METHOD]
     } else {
       return { stop: noop }

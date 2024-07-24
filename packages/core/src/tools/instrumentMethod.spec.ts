@@ -37,7 +37,7 @@ describe('instrumentMethod', () => {
   })
 
   it('sets an event handler even if it was originally undefined', () => {
-    const object: { onevent?: () => void } = {}
+    const object: { onevent?: () => void } = { onevent: undefined }
 
     const instrumentationSpy = jasmine.createSpy()
     instrumentMethod(object, 'onevent', instrumentationSpy)

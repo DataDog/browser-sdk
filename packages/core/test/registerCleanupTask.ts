@@ -5,5 +5,8 @@ export function registerCleanupTask(task: () => void) {
 }
 
 afterEach(() => {
-  cleanupTasks.splice(0).forEach((task) => task())
+  cleanupTasks
+    .splice(0)
+    .reverse()
+    .forEach((task) => task())
 })
