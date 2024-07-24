@@ -52,6 +52,10 @@ describe('trackRuntimeError', () => {
     if (isIE()) {
       pending('no promise support')
     }
+
+    if (!('onunhandledrejection' in window)) {
+      pending('onunhandledrejection is not supported')
+    }
     disableJasmineUncaughtExceptionTracking()
 
     setTimeout(() => {

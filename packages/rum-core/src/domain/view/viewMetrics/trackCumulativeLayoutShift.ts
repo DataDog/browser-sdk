@@ -46,7 +46,6 @@ export function trackCumulativeLayoutShift(
   }
 
   let maxClsValue = 0
-  // WeakRef is not supported in IE11 and Safari mobile, but so is the layout shift API, so this code won't be executed in these browsers
   let maxClsTarget: WeakRef<HTMLElement> | undefined
   let maxClsStartTime: Duration | undefined
 
@@ -138,5 +137,5 @@ function slidingSessionWindow() {
  * Check whether `layout-shift` is supported by the browser.
  */
 export function isLayoutShiftSupported() {
-  return supportPerformanceTimingEvent(RumPerformanceEntryType.LAYOUT_SHIFT)
+  return supportPerformanceTimingEvent(RumPerformanceEntryType.LAYOUT_SHIFT) && 'WeakRef' in window
 }
