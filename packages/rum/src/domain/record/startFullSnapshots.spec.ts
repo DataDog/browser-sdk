@@ -4,6 +4,7 @@ import type { TimeStamp } from '@datadog/browser-core'
 import { isIE, noop } from '@datadog/browser-core'
 import { mockExperimentalFeatures, mockRequestIdleCallback } from '@datadog/browser-core/test'
 import type { BrowserRecord } from '../../types'
+import { RecordType } from '../../types'
 import { ExperimentalFeature } from '../../../../core/src/tools/experimentalFeatures'
 import { startFullSnapshots } from './startFullSnapshots'
 import { createElementsScrollPositions } from './elementsScrollPositions'
@@ -82,5 +83,58 @@ describe('startFullSnapshots', () => {
     expect(records[0].timestamp).toEqual(1)
     expect(records[1].timestamp).toEqual(1)
     expect(records[2].timestamp).toEqual(1)
+  })
+
+  it('full snapshot records should contain Meta, Focus, FullSnapshot', () => {
+    const records = fullSnapshotReadyCallback.calls.mostRecent().args[0]
+
+    expect(records).toEqual(
+      jasmine.arrayContaining([
+        {
+          data: {
+            height: jasmine.any(Number),
+            href: window.location.href,
+            width: jasmine.any(Number),
+          },
+          type: RecordType.Meta,
+          timestamp: jasmine.any(Number),
+        },
+        {
+          data: {
+            has_focus: document.hasFocus(),
+          },
+          type: RecordType.Focus,
+          timestamp: jasmine.any(Number),
+        },
+        {
+          data: {
+            node: jasmine.any(Object),
+            initialOffset: {
+              left: jasmine.any(Number),
+              top: jasmine.any(Number),
+            },
+          },
+          type: RecordType.FullSnapshot,
+          timestamp: jasmine.any(Number),
+        },
+      ])
+    )
+  })
+
+  it('full snapshot records should contain visualViewport when supported', () => {
+    if (!window.visualViewport) {
+      pending('visualViewport not supported')
+    }
+    const records = fullSnapshotReadyCallback.calls.mostRecent().args[0]
+
+    expect(records).toEqual(
+      jasmine.arrayContaining([
+        {
+          data: jasmine.any(Object),
+          type: RecordType.VisualViewport,
+          timestamp: jasmine.any(Number),
+        },
+      ])
+    )
   })
 })
