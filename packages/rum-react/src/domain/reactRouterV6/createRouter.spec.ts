@@ -6,6 +6,10 @@ describe('createRouter', () => {
   let router: ReturnType<typeof createMemoryRouter>
 
   beforeEach(() => {
+    if (!window.AbortController) {
+      pending('createMemoryRouter rely on AbortController')
+    }
+
     startViewSpy = jasmine.createSpy()
     initializeReactPlugin({
       configuration: {
@@ -22,7 +26,7 @@ describe('createRouter', () => {
   })
 
   afterEach(() => {
-    router.dispose()
+    router?.dispose()
   })
 
   it('creates a new view when the router is created', () => {
