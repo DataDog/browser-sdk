@@ -47,14 +47,10 @@ describe('collect fetch', () => {
     ;({ stop: stopFetchTracking } = trackFetch(lifeCycle, configuration, tracerStub as Tracer))
 
     fetch = window.fetch as MockFetch
-    window.onunhandledrejection = (ev: PromiseRejectionEvent) => {
-      throw new Error(`unhandled rejected promise \n    ${ev.reason as string}`)
-    }
 
     registerCleanupTask(() => {
       stopFetchTracking()
       mockFetchManager.reset()
-      window.onunhandledrejection = null
     })
   })
 

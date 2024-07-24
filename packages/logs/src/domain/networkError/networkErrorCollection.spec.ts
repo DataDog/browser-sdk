@@ -186,19 +186,10 @@ describe('computeXhrResponseData', () => {
 })
 
 describe('computeFetchResponseText', () => {
-  let onunhandledrejectionSpy: jasmine.Spy
-
   beforeEach(() => {
     if (isIE()) {
       pending('IE does not support the fetch API')
     }
-
-    onunhandledrejectionSpy = jasmine.createSpy()
-    window.onunhandledrejection = onunhandledrejectionSpy
-
-    registerCleanupTask(() => {
-      window.onunhandledrejection = null
-    })
   })
 
   it('computes response text from Response objects', (done) => {
