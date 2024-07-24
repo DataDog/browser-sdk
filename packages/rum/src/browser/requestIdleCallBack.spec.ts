@@ -1,33 +1,48 @@
 import { requestIdleCallback } from './requestIdleCallback'
 
 describe('requestIdleCallback', () => {
-  let requestAnimationFrameSpy: jasmine.Spy
-  let cancelAnimationFrameSpy: jasmine.Spy
   let callback: jasmine.Spy
   const originalRequestIdleCallback = window.requestIdleCallback
-  const originalCancelIdleCallback = window.cancelIdleCallback
 
   beforeEach(() => {
-    requestAnimationFrameSpy = spyOn(window, 'requestAnimationFrame').and.callFake((cb) => {
-      cb(0)
-      return 123
-    })
-    cancelAnimationFrameSpy = spyOn(window, 'cancelAnimationFrame')
     callback = jasmine.createSpy('callback')
   })
 
   afterEach(() => {
-    window.requestIdleCallback = originalRequestIdleCallback
-    window.cancelIdleCallback = originalCancelIdleCallback
+    if (originalRequestIdleCallback) {
+      window.requestIdleCallback = originalRequestIdleCallback
+    }
   })
 
-  it('should use requestAnimationFrame when requestIdleCallback is not defined', () => {
-    window.requestIdleCallback = undefined as any
-    window.cancelIdleCallback = undefined as any
+  it('should use requestIdleCallback when supported', () => {
+    if (!window.requestIdleCallback) {
+      pending('requestIdleCallback not supported')
+    }
+    spyOn(window, 'requestIdleCallback').and.callFake((cb) => {
+      cb({} as IdleDeadline)
+      return 123
+    })
+    spyOn(window, 'cancelIdleCallback')
 
     const cancel = requestIdleCallback(callback)
-    expect(requestAnimationFrameSpy).toHaveBeenCalled()
+    expect(window.requestIdleCallback).toHaveBeenCalled()
     cancel()
-    expect(cancelAnimationFrameSpy).toHaveBeenCalledWith(123)
+    expect(window.cancelIdleCallback).toHaveBeenCalledWith(123)
+  })
+
+  it('should use requestAnimationFrame when requestIdleCallback is not supported', () => {
+    if (window.requestIdleCallback) {
+      window.requestIdleCallback = undefined as any
+    }
+    spyOn(window, 'requestAnimationFrame').and.callFake((cb) => {
+      cb(1)
+      return 123
+    })
+    spyOn(window, 'cancelAnimationFrame')
+
+    const cancel = requestIdleCallback(callback)
+    expect(window.requestAnimationFrame).toHaveBeenCalled()
+    cancel()
+    expect(window.cancelAnimationFrame).toHaveBeenCalledWith(123)
   })
 })
