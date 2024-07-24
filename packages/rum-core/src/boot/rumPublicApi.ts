@@ -331,8 +331,8 @@ export function makeRumPublicApi(
             addTelemetryUsage({ feature: 'start-duration-vital' })
             return strategy.startDurationVital({
               name: sanitize(name)!,
-              context: sanitize(options?.context) as Context,
-              details: sanitize(options?.details) as string | undefined,
+              context: sanitize(options && options.context) as Context,
+              details: sanitize(options && options.details) as string | undefined,
             })
           }
         )
@@ -355,8 +355,8 @@ export function makeRumPublicApi(
               type: VitalType.DURATION,
               startClocks: timeStampToClocks(options.startTime as TimeStamp),
               duration: options.duration as Duration,
-              context: sanitize(options?.context) as Context,
-              details: sanitize(options?.details) as string | undefined,
+              context: sanitize(options && options.context) as Context,
+              details: sanitize(options && options.details) as string | undefined,
             })
           }
         )
@@ -524,7 +524,7 @@ export function makeRumPublicApi(
     getSessionReplayLink: monitor(() => recorderApi.getSessionReplayLink()),
     startSessionReplayRecording: monitor((options?: StartRecordingOptions) => {
       recorderApi.start(options)
-      addTelemetryUsage({ feature: 'start-session-replay-recording', force: options?.force })
+      addTelemetryUsage({ feature: 'start-session-replay-recording', force: options && options.force })
     }),
 
     stopSessionReplayRecording: monitor(() => recorderApi.stop()),

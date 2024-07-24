@@ -193,7 +193,9 @@ export function createPerformanceObservable<T extends RumPerformanceEntryType>(
     manageResourceTimingBufferFull(configuration)
 
     return () => {
-      observer?.disconnect()
+      if (observer) {
+        observer.disconnect()
+      }
       if (timeoutId) {
         clearTimeout(timeoutId)
       }

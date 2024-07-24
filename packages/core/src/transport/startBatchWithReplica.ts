@@ -62,7 +62,9 @@ export function startBatchWithReplica<T extends Context>(
 
     stop: () => {
       primaryBatch.stop()
-      replicaBatch?.stop()
+      if (replicaBatch) {
+        replicaBatch.stop()
+      }
     },
   }
 }

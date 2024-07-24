@@ -59,7 +59,9 @@ export function sanitize(source: unknown, maxCharacterCount = SANITIZE_DEFAULT_M
     containerQueue,
     visitedObjectsWithPath
   )
-  let accumulatedCharacterCount = JSON.stringify(sanitizedData)?.length || 0
+  const serializedSanitizedData = JSON.stringify(sanitizedData)
+  let accumulatedCharacterCount = serializedSanitizedData ? serializedSanitizedData.length : 0
+
   if (accumulatedCharacterCount > maxCharacterCount) {
     warnOverCharacterLimit(maxCharacterCount, 'discarded', source)
     return undefined

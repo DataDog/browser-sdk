@@ -226,6 +226,7 @@ function shouldSend(
   }
 
   const rateLimitReached = eventRateLimiters[event.type]?.isLimitReached()
+
   return !rateLimitReached
 }
 
