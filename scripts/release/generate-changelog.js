@@ -2,7 +2,6 @@
 
 const util = require('util')
 const fs = require('fs')
-const { readdirSync } = require('fs')
 const readFile = util.promisify(require('fs').readFile)
 
 const emojiNameMap = require('emoji-name-map')
@@ -11,6 +10,7 @@ const { browserSdkVersion } = require('../lib/browser-sdk-version')
 const { spawnCommand, printError, runMain } = require('../lib/execution-utils')
 const { command } = require('../lib/command')
 const { modifyFile } = require('../lib/files-utils')
+const { packagesDirectoryNames } = require('./packages-directory-names')
 
 const CHANGELOG_FILE = 'CHANGELOG.md'
 const CONTRIBUTING_FILE = 'CONTRIBUTING.md'
@@ -31,11 +31,9 @@ const INTERNAL_EMOJI_PRIORITY = [
 ]
 const EMOJI_REGEX = /^\p{Emoji_Presentation}/u
 
-const PACKAGES_DIRECTORY_NAMES = readdirSync('packages')
-
 const PACKAGES_REVERSE_DEPENDENCIES = (() => {
   const result = new Map()
-  PACKAGES_DIRECTORY_NAMES.forEach((packageDirectoryName) => {
+  packagesDirectoryNames.forEach((packageDirectoryName) => {
     for (const dependency of getDepenciesRecursively(packageDirectoryName)) {
       if (!result.has(dependency)) {
         result.set(dependency, new Set())
@@ -215,8 +213,4 @@ function getDepenciesRecursively(packageDirectoryName) {
     }
   }
   return dependencies
-}
-
-module.exports = {
-  packagesDirectoryNames: PACKAGES_DIRECTORY_NAMES,
 }

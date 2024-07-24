@@ -2,7 +2,7 @@ const { runMain } = require('../lib/execution-utils')
 const { modifyFile } = require('../lib/files-utils')
 const { command } = require('../lib/command')
 const { browserSdkVersion } = require('../lib/browser-sdk-version')
-const { packagesDirectoryNames } = require('./generate-changelog')
+const { packagesDirectoryNames } = require('./packages-directory-names')
 
 const JSON_FILES = packagesDirectoryNames.map((packageName) => `./packages/${packageName}/package.json`)
 
