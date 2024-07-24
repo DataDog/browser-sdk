@@ -48,6 +48,10 @@ describe('trackRuntimeError', () => {
   })
 
   it('should collect unhandled rejection', (done) => {
+    if (!('onunhandledrejection' in window)) {
+      pending('onunhandledrejection is not supported')
+    }
+
     disableJasmineUncaughtExceptionTracking()
 
     setTimeout(() => {

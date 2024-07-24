@@ -9,8 +9,8 @@ export function mockCookie(): MockStorage {
   let cookie = ''
 
   return {
-    getSpy: spyOnProperty(Document.prototype, 'cookie', 'get').and.callFake(() => cookie),
-    setSpy: spyOnProperty(Document.prototype, 'cookie', 'set').and.callFake((newCookie) => (cookie = newCookie)),
+    getSpy: spyOnProperty(document, 'cookie', 'get').and.callFake(() => cookie),
+    setSpy: spyOnProperty(document, 'cookie', 'set').and.callFake((newCookie) => (cookie = newCookie)),
     currentValue: () => cookie,
     setCurrentValue: (key, newCookie) => (cookie = `${key}=${newCookie}`),
   }

@@ -220,6 +220,7 @@ function supportPerformanceObject() {
 
 export function supportPerformanceTimingEvent(entryType: RumPerformanceEntryType) {
   return (
+    (window as any).WeakRef !== undefined &&
     window.PerformanceObserver &&
     PerformanceObserver.supportedEntryTypes !== undefined &&
     PerformanceObserver.supportedEntryTypes.includes(entryType)

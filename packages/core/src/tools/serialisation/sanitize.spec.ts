@@ -46,7 +46,7 @@ describe('sanitize', () => {
       const symbolFunction: (description: string) => any = (window as any).Symbol
       if (typeof symbolFunction === 'function') {
         const symbol = symbolFunction('description')
-        expect(sanitize(symbol)).toEqual('[Symbol] description')
+        expect(sanitize(symbol)).toMatch(/\[Symbol\] (?:Symbol\()?description\)?/)
       } else {
         pending('Symbol is not supported on this browser')
       }

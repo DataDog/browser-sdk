@@ -17,6 +17,9 @@ describe('trackViewportResize', () => {
   let elementsScrollPositions: ElementsScrollPositions
 
   beforeEach(() => {
+    if (!window.visualViewport) {
+      pending('visualViewport not supported')
+    }
     configuration = { defaultPrivacyLevel: DefaultPrivacyLevel.ALLOW } as RumConfiguration
     elementsScrollPositions = createElementsScrollPositions()
     visualViewportResizeCallback = jasmine.createSpy()
