@@ -1,7 +1,6 @@
 import { relativeNow, timeStampNow } from '@datadog/browser-core'
-import type { RawRumActionEvent } from '@datadog/browser-rum-core'
+import type { RawRumActionEvent, RawRumEventCollectedData } from '@datadog/browser-rum-core'
 import { ActionType, FrustrationType, RumEventType } from '@datadog/browser-rum-core'
-import type { RawRumEventCollectedData } from 'packages/rum-core/src/domain/lifeCycle'
 
 export function createRumFrustrationEvent(mouseEvent: MouseEvent): RawRumEventCollectedData<RawRumActionEvent> {
   return {

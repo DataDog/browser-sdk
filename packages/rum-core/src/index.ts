@@ -22,7 +22,7 @@ export {
 } from './domainContext.types'
 export { ReplayStats, ActionType, RumEventType, FrustrationType, RawRumActionEvent } from './rawRumEvent.types'
 export { startRum } from './boot/startRum'
-export { LifeCycle, LifeCycleEventType } from './domain/lifeCycle'
+export { LifeCycle, LifeCycleEventType, RawRumEventCollectedData } from './domain/lifeCycle'
 export { ViewCreatedEvent } from './domain/view/trackViews'
 export { ViewContexts, ViewContext, startViewContexts } from './domain/contexts/viewContexts'
 export { RumSessionManager, RumSession } from './domain/rumSessionManager'
