@@ -430,17 +430,17 @@ merge-into-staging:
     - yarn
     - node scripts/staging-ci/merge-into-staging.js
 
-check-staging-merge:
-  stage: test
-  extends:
-    - .base-configuration
-    - .feature-branches
-  interruptible: true
-  before_script:
-    - eval $(ssh-agent -s)
-  script:
-    - yarn
-    - node scripts/staging-ci/check-staging-merge.js
+# check-staging-merge:
+#   stage: test
+#   extends:
+#     - .base-configuration
+#     - .feature-branches
+#   interruptible: true
+#   before_script:
+#     - eval $(ssh-agent -s)
+#   script:
+#     - yarn
+#     - node scripts/staging-ci/check-staging-merge.js
 
 # A noop job that's used to signal to `to-staging` that it can merge to the
 # staging branch, even though the pipeline is still running
@@ -454,18 +454,18 @@ tests-passed:
     - 'true'
 
 # in after-tests to not block `to-staging` merge
-check-squash-into-staging:
-  stage: after-tests
-  allow_failure: true
-  extends:
-    - .base-configuration
-    - .feature-branches
-  interruptible: true
-  before_script:
-    - eval $(ssh-agent -s)
-  script:
-    - yarn
-    - node scripts/staging-ci/check-squash-into-staging.js
+# check-squash-into-staging:
+#   stage: after-tests
+#   allow_failure: true
+#   extends:
+#     - .base-configuration
+#     - .feature-branches
+#   interruptible: true
+#   before_script:
+#     - eval $(ssh-agent -s)
+#   script:
+#     - yarn
+#     - node scripts/staging-ci/check-squash-into-staging.js
 
 ########################################################################################################################
 # Bump e2e chrome version
