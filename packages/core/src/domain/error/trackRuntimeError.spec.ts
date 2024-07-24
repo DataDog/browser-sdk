@@ -285,7 +285,7 @@ describe('instrumentUnhandledRejection', () => {
   })
 
   afterEach(() => {
-    stopCollectingUnhandledError()
+    stopCollectingUnhandledError?.()
   })
 
   it('should call original unhandled rejection handler', () => {
