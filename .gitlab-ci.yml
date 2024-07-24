@@ -1,12 +1,12 @@
 variables:
   CURRENT_STAGING: staging-30
   APP: 'browser-sdk'
-  CURRENT_CI_IMAGE: 68
+  CURRENT_CI_IMAGE: 69
   BUILD_STABLE_REGISTRY: 'registry.ddbuild.io'
   CI_IMAGE: '$BUILD_STABLE_REGISTRY/ci/$APP:$CURRENT_CI_IMAGE'
   GIT_REPOSITORY: 'git@github.com:DataDog/browser-sdk.git'
   MAIN_BRANCH: 'main'
-  CHROME_PACKAGE_VERSION: 126.0.6478.55-1
+  CHROME_PACKAGE_VERSION: 127.0.6533.72-1
 
 cache:
   key:
