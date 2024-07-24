@@ -18,7 +18,8 @@ export function trackFrustration(
       data.rawRumEvent.action.type === ActionType.CLICK &&
       data.rawRumEvent.action.frustration?.type?.length &&
       'events' in data.domainContext &&
-      data.domainContext.events?.length
+      data.domainContext.events &&
+      data.domainContext.events.length
     ) {
       frustrationCb({
         timestamp: data.rawRumEvent.date,

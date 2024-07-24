@@ -39,7 +39,7 @@ export function startLogsAssembly(
       const log = combine(
         {
           service: configuration.service,
-          session_id: session?.id,
+          session_id: session ? session.id : undefined,
           // Insert user first to allow overrides from global context
           usr: !isEmptyObject(commonContext.user) ? commonContext.user : undefined,
           view: commonContext.view,

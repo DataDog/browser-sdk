@@ -338,7 +338,7 @@ function processAttributesMutations(
   const handledElements = new Map<Element, Set<string>>()
   const filteredMutations = mutations.filter((mutation) => {
     const handledAttributes = handledElements.get(mutation.target)
-    if (handledAttributes?.has(mutation.attributeName!)) {
+    if (handledAttributes && handledAttributes.has(mutation.attributeName!)) {
       return false
     }
     if (!handledAttributes) {
