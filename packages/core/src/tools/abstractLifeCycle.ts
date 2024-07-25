@@ -16,6 +16,7 @@ type EventTypesWithoutData<EventMap> = {
   [K in keyof EventMap]: EventMap[K] extends void ? K : never
 }[keyof EventMap]
 
+// eslint-disable-next-line no-restricted-syntax
 export class AbstractLifeCycle<EventMap> {
   private callbacks: { [key in keyof EventMap]?: Array<(data: any) => void> } = {}
 

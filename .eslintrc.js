@@ -231,6 +231,10 @@ module.exports = {
         'no-restricted-syntax': [
           'error',
           {
+            selector: 'ClassDeclaration',
+            message: 'Classes are not allowed. Use functions instead.',
+          },
+          {
             selector: 'ObjectExpression > SpreadElement',
             message: 'Object spread is not authorized. Please use "assign" from the core package utils instead.',
           },

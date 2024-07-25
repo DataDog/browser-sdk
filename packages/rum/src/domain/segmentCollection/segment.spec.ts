@@ -7,8 +7,8 @@ import type { CreationReason, BrowserRecord, SegmentContext, BrowserSegment, Bro
 import { RecordType } from '../../types'
 import { getReplayStats, resetReplayStats } from '../replayStats'
 import { createDeflateEncoder } from '../deflate'
-import type { AddRecordCallback, FlushCallback } from './segment'
-import { Segment } from './segment'
+import type { AddRecordCallback, FlushCallback, Segment } from './segment'
+import { createSegment } from './segment'
 
 const CONTEXT: SegmentContext = { application: { id: 'a' }, view: { id: 'b' }, session: { id: 'c' } }
 const RECORD_TIMESTAMP = 10 as TimeStamp
@@ -42,7 +42,7 @@ describe('Segment', () => {
   it('writes a segment', () => {
     const addRecordCallbackSpy = jasmine.createSpy<AddRecordCallback>()
     const flushCallbackSpy = jasmine.createSpy<FlushCallback>()
-    const segment = createSegment()
+    const segment = createTestSegment()
     segment.addRecord(RECORD, addRecordCallbackSpy)
 
     worker.processAllMessages()
@@ -74,7 +74,7 @@ describe('Segment', () => {
 
   it('compressed bytes count is updated when a record is added', () => {
     const addRecordCallbackSpy = jasmine.createSpy<AddRecordCallback>()
-    const segment = createSegment()
+    const segment = createTestSegment()
     segment.addRecord(RECORD, addRecordCallbackSpy)
     worker.processAllMessages()
     expect(addRecordCallbackSpy).toHaveBeenCalledOnceWith(
@@ -84,7 +84,7 @@ describe('Segment', () => {
 
   it('calls the flush callback with metadata and encoder output as argument', () => {
     const flushCallbackSpy = jasmine.createSpy<FlushCallback>()
-    const segment = createSegment()
+    const segment = createTestSegment()
     segment.addRecord(RECORD, noop)
     segment.flush(flushCallbackSpy)
     worker.processAllMessages()
@@ -115,11 +115,11 @@ describe('Segment', () => {
   it('resets the encoder when a segment is flushed', () => {
     const flushCallbackSpy = jasmine.createSpy<FlushCallback>()
 
-    const segment1 = createSegment({ creationReason: 'init' })
+    const segment1 = createTestSegment({ creationReason: 'init' })
     segment1.addRecord(RECORD, noop)
     segment1.flush(flushCallbackSpy)
 
-    const segment2 = createSegment({ creationReason: 'segment_duration_limit' })
+    const segment2 = createTestSegment({ creationReason: 'segment_duration_limit' })
     segment2.addRecord(FULL_SNAPSHOT_RECORD, noop)
     segment2.flush(flushCallbackSpy)
 
@@ -129,7 +129,7 @@ describe('Segment', () => {
   })
 
   it('throws when trying to flush an empty segment', () => {
-    const segment = createSegment()
+    const segment = createTestSegment()
     expect(() => segment.flush(noop)).toThrowError('Empty segment flushed')
   })
 
@@ -137,7 +137,7 @@ describe('Segment', () => {
     describe('when adding a record', () => {
       let segment: Segment
       beforeEach(() => {
-        segment = createSegment()
+        segment = createTestSegment()
         segment.addRecord({ type: RecordType.ViewEnd, timestamp: 10 as TimeStamp }, noop)
         segment.addRecord({ type: RecordType.ViewEnd, timestamp: 15 as TimeStamp }, noop)
       })
@@ -167,19 +167,19 @@ describe('Segment', () => {
 
     describe('has_full_snapshot', () => {
       it('sets has_full_snapshot to false if a segment has a no FullSnapshot', () => {
-        const segment = createSegment()
+        const segment = createTestSegment()
         segment.addRecord(RECORD, noop)
         expect(flushAndGetMetadata(segment).has_full_snapshot).toEqual(false)
       })
 
       it('sets has_full_snapshot to true if a segment has a FullSnapshot', () => {
-        const segment = createSegment()
+        const segment = createTestSegment()
         segment.addRecord(FULL_SNAPSHOT_RECORD, noop)
         expect(flushAndGetMetadata(segment).has_full_snapshot).toEqual(true)
       })
 
       it("doesn't overrides has_full_snapshot to false once it has been set to true", () => {
-        const segment = createSegment()
+        const segment = createTestSegment()
         segment.addRecord(FULL_SNAPSHOT_RECORD, noop)
         segment.addRecord(RECORD, noop)
         expect(flushAndGetMetadata(segment).has_full_snapshot).toEqual(true)
@@ -188,25 +188,25 @@ describe('Segment', () => {
 
     describe('index_in_view', () => {
       it('increments index_in_view every time a segment is created for the same view', () => {
-        const segment1 = createSegment()
+        const segment1 = createTestSegment()
         segment1.addRecord(RECORD, noop)
         expect(flushAndGetMetadata(segment1).index_in_view).toBe(0)
 
-        const segment2 = createSegment()
+        const segment2 = createTestSegment()
         segment2.addRecord(RECORD, noop)
         expect(flushAndGetMetadata(segment2).index_in_view).toBe(1)
 
-        const segment3 = createSegment()
+        const segment3 = createTestSegment()
         segment3.addRecord(RECORD, noop)
         expect(flushAndGetMetadata(segment3).index_in_view).toBe(2)
       })
 
       it('resets segments_count when creating a segment for a new view', () => {
-        const segment1 = createSegment()
+        const segment1 = createTestSegment()
         segment1.addRecord(RECORD, noop)
         expect(flushAndGetMetadata(segment1).index_in_view).toBe(0)
 
-        const segment2 = createSegment({ context: { ...CONTEXT, view: { id: 'view-2' } } })
+        const segment2 = createTestSegment({ context: { ...CONTEXT, view: { id: 'view-2' } } })
         segment2.addRecord(RECORD, noop)
         expect(flushAndGetMetadata(segment2).index_in_view).toBe(0)
       })
@@ -228,7 +228,7 @@ describe('Segment', () => {
     })
 
     it('when creating a segment', () => {
-      createSegment()
+      createTestSegment()
       worker.processAllMessages()
       expect(getReplayStats('b')).toEqual(
         jasmine.objectContaining({
@@ -240,7 +240,7 @@ describe('Segment', () => {
     })
 
     it('when flushing a segment', () => {
-      const segment = createSegment()
+      const segment = createTestSegment()
       segment.addRecord(RECORD, noop)
       segment.flush(noop)
       worker.processAllMessages()
@@ -254,14 +254,14 @@ describe('Segment', () => {
     })
   })
 
-  function createSegment({
+  function createTestSegment({
     context = CONTEXT,
     creationReason = 'init',
   }: {
     context?: SegmentContext
     creationReason?: CreationReason
   } = {}) {
-    return new Segment(encoder, context, creationReason)
+    return createSegment({ encoder, context, creationReason })
   }
 })
 

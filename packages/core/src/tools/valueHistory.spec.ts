@@ -2,7 +2,7 @@ import type { Clock } from '../../test'
 import { mockClock } from '../../test'
 import type { Duration, RelativeTime } from './utils/timeUtils'
 import { addDuration, ONE_MINUTE } from './utils/timeUtils'
-import { CLEAR_OLD_VALUES_INTERVAL, ValueHistory } from './valueHistory'
+import { CLEAR_OLD_VALUES_INTERVAL, type ValueHistory, createValueHistory } from './valueHistory'
 
 const EXPIRE_DELAY = 10 * ONE_MINUTE
 const MAX_ENTRIES = 5
@@ -13,7 +13,7 @@ describe('valueHistory', () => {
 
   beforeEach(() => {
     clock = mockClock()
-    valueHistory = new ValueHistory(EXPIRE_DELAY, MAX_ENTRIES)
+    valueHistory = createValueHistory({ expireDelay: EXPIRE_DELAY, maxEntries: MAX_ENTRIES })
   })
 
   afterEach(() => {
