@@ -1,7 +1,7 @@
 export { trackMove } from './trackMove'
 export { trackMouseInteraction } from './trackMouseInteraction'
 export { trackScroll } from './trackScroll'
-export { trackViewportResize, tackVisualViewportResize } from './trackViewportResize'
+export { trackViewportResize, trackVisualViewportResize } from './trackViewportResize'
 export { trackMediaInteraction } from './trackMediaInteraction'
 export { trackStyleSheet } from './trackStyleSheet'
 export { trackFocus } from './trackFocus'

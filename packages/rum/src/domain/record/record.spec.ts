@@ -3,14 +3,19 @@ import type { RumConfiguration, ViewCreatedEvent } from '@datadog/browser-rum-co
 import { LifeCycle, LifeCycleEventType } from '@datadog/browser-rum-core'
 import type { Clock } from '@datadog/browser-core/test'
 import { createNewEvent, collectAsyncCalls, registerCleanupTask } from '@datadog/browser-core/test'
-import { findElement, findFullSnapshot, findNode, recordsPerFullSnapshot } from '../../../test'
+import {
+  findElement,
+  findFullSnapshot,
+  findNode,
+  recordsPerFullSnapshot,
+  createRumFrustrationEvent,
+} from '../../../test'
 import type {
   BrowserIncrementalSnapshotRecord,
   BrowserMutationData,
   BrowserRecord,
   DocumentFragmentNode,
   ElementNode,
-  FocusRecord,
   ScrollData,
 } from '../../types'
 import { NodeType, RecordType, IncrementalSource } from '../../types'
@@ -143,64 +148,6 @@ describe('record', () => {
       expect(records[i++].type).toEqual(RecordType.FullSnapshot)
 
       done()
-    })
-  })
-
-  describe('Focus records', () => {
-    let hasFocus: boolean
-
-    beforeEach(() => {
-      hasFocus = true
-      spyOn(Document.prototype, 'hasFocus').and.callFake(() => hasFocus)
-    })
-
-    it('adds an initial Focus record when starting to record', () => {
-      startRecording()
-      expect(getEmittedRecords()[1]).toEqual({
-        type: RecordType.Focus,
-        timestamp: jasmine.any(Number),
-        data: {
-          has_focus: true,
-        },
-      })
-    })
-
-    it('adds a Focus record on focus', () => {
-      startRecording()
-      emitSpy.calls.reset()
-
-      window.dispatchEvent(createNewEvent('focus'))
-      expect(getEmittedRecords()[0].type).toBe(RecordType.Focus)
-    })
-
-    it('adds a Focus record on blur', () => {
-      startRecording()
-      emitSpy.calls.reset()
-
-      window.dispatchEvent(createNewEvent('blur'))
-      expect(getEmittedRecords()[0].type).toBe(RecordType.Focus)
-    })
-
-    it('adds a Focus record on when taking a full snapshot', () => {
-      startRecording()
-      emitSpy.calls.reset()
-
-      // trigger full snapshot by starting a new view
-      newView()
-
-      expect(getEmittedRecords()[1].type).toBe(RecordType.Focus)
-    })
-
-    it('set has_focus to true if the document has the focus', () => {
-      hasFocus = true
-      startRecording()
-      expect((getEmittedRecords()[1] as FocusRecord).data.has_focus).toBe(true)
-    })
-
-    it("set has_focus to false if the document doesn't have the focus", () => {
-      hasFocus = false
-      startRecording()
-      expect((getEmittedRecords()[1] as FocusRecord).data.has_focus).toBe(false)
     })
   })
 
@@ -419,6 +366,95 @@ describe('record', () => {
 
       const records = getEmittedRecords()
       expect(getReplayStats(FAKE_VIEW_ID)?.records_count).toEqual(records.length)
+    })
+  })
+
+  describe('should collect records', () => {
+    let div: HTMLDivElement
+    let input: HTMLInputElement
+    let audio: HTMLAudioElement
+    beforeEach(() => {
+      div = appendElement('<div target></div>') as HTMLDivElement
+      input = appendElement('<input target />') as HTMLInputElement
+      audio = appendElement('<audio controls autoplay target></audio>') as HTMLAudioElement
+      startRecording()
+      emitSpy.calls.reset()
+    })
+
+    it('move', () => {
+      document.body.dispatchEvent(createNewEvent('mousemove', { clientX: 1, clientY: 2 }))
+      expect(getEmittedRecords()[0].type).toBe(RecordType.IncrementalSnapshot)
+      expect((getEmittedRecords()[0] as BrowserIncrementalSnapshotRecord).data.source).toBe(IncrementalSource.MouseMove)
+    })
+
+    it('interaction', () => {
+      document.body.dispatchEvent(createNewEvent('click', { clientX: 1, clientY: 2 }))
+      expect((getEmittedRecords()[0] as BrowserIncrementalSnapshotRecord).data.source).toBe(
+        IncrementalSource.MouseInteraction
+      )
+    })
+
+    it('scroll', () => {
+      div.dispatchEvent(createNewEvent('scroll', { target: div }))
+
+      expect(getEmittedRecords()[0].type).toBe(RecordType.IncrementalSnapshot)
+      expect((getEmittedRecords()[0] as BrowserIncrementalSnapshotRecord).data.source).toBe(IncrementalSource.Scroll)
+    })
+
+    it('viewport resize', () => {
+      window.dispatchEvent(createNewEvent('resize'))
+
+      expect(getEmittedRecords()[0].type).toBe(RecordType.IncrementalSnapshot)
+      expect((getEmittedRecords()[0] as BrowserIncrementalSnapshotRecord).data.source).toBe(
+        IncrementalSource.ViewportResize
+      )
+    })
+
+    it('input', () => {
+      input.value = 'newValue'
+      input.dispatchEvent(createNewEvent('input', { target: input }))
+
+      expect(getEmittedRecords()[0].type).toBe(RecordType.IncrementalSnapshot)
+      expect((getEmittedRecords()[0] as BrowserIncrementalSnapshotRecord).data.source).toBe(IncrementalSource.Input)
+    })
+
+    it('media interaction', () => {
+      audio.dispatchEvent(createNewEvent('play', { target: audio }))
+
+      expect(getEmittedRecords()[0].type).toBe(RecordType.IncrementalSnapshot)
+      expect((getEmittedRecords()[0] as BrowserIncrementalSnapshotRecord).data.source).toBe(
+        IncrementalSource.MediaInteraction
+      )
+    })
+
+    it('focus', () => {
+      window.dispatchEvent(createNewEvent('blur'))
+
+      expect(getEmittedRecords()[0].type).toBe(RecordType.Focus)
+    })
+
+    it('visual viewport resize', () => {
+      if (!window.visualViewport) {
+        pending('visualViewport not supported')
+      }
+
+      visualViewport!.dispatchEvent(createNewEvent('resize'))
+      expect(getEmittedRecords()[0].type).toBe(RecordType.VisualViewport)
+    })
+
+    it('frustration', () => {
+      lifeCycle.notify(
+        LifeCycleEventType.RAW_RUM_EVENT_COLLECTED,
+        createRumFrustrationEvent(new MouseEvent('pointerup'))
+      )
+
+      expect(getEmittedRecords()[0].type).toBe(RecordType.FrustrationRecord)
+    })
+
+    it('view end event', () => {
+      lifeCycle.notify(LifeCycleEventType.VIEW_ENDED, {} as any)
+
+      expect(getEmittedRecords()[0].type).toBe(RecordType.ViewEnd)
     })
   })
 
