@@ -33,6 +33,7 @@ export const config: Options.Testrunner = {
           sessionName: configuration.sessionName,
           projectName: 'browser sdk e2e',
           buildName: getBuildInfos(),
+          seleniumLogs: true,
         },
       })
     ),
