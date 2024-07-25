@@ -8,21 +8,21 @@ export interface BoundedBuffer<T = void> {
   drain: (arg: T) => void
 }
 
-export function boundedBuffer<T = void>(): BoundedBuffer<T> {
+export function createBoundedBuffer<T = void>(): BoundedBuffer<T> {
   const buffer: Array<(arg: T) => void> = []
 
-  function add(callback: (arg: T) => void) {
+  const add: BoundedBuffer<T>['add'] = (callback: (arg: T) => void) => {
     const length = buffer.push(callback)
     if (length > BUFFER_LIMIT) {
       buffer.splice(0, 1)
     }
   }
 
-  function remove(callback: (arg: T) => void) {
+  const remove: BoundedBuffer<T>['remove'] = (callback: (arg: T) => void) => {
     removeItem(buffer, callback)
   }
 
-  function drain(arg: T) {
+  const drain = (arg: T) => {
     buffer.forEach((callback) => callback(arg))
     buffer.length = 0
   }

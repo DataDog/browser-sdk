@@ -124,8 +124,8 @@ function injectHeadersIfTracingAllowed(
     return
   }
 
-  context.traceId = traceIdentifier()
-  context.spanId = traceIdentifier()
+  context.traceId = createTraceIdentifier()
+  context.spanId = createTraceIdentifier()
 
   inject(makeTracingHeaders(context.traceId, context.spanId, context.traceSampled, tracingOption.propagatorTypes))
 }
@@ -198,7 +198,7 @@ export interface TraceIdentifier {
   toPaddedHexadecimalString: () => string
 }
 
-export function traceIdentifier(): TraceIdentifier {
+export function createTraceIdentifier(): TraceIdentifier {
   const buffer: Uint8Array = new Uint8Array(8)
   getCrypto().getRandomValues(buffer)
   buffer[0] = buffer[0] & 0x7f // force 63-bit

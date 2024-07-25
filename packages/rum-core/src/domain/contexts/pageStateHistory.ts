@@ -1,7 +1,7 @@
 import type { Duration, RelativeTime } from '@datadog/browser-core'
 import {
   elapsed,
-  valueHistoryFactory,
+  createValueHistory,
   SESSION_TIME_OUT_DELAY,
   toServerDuration,
   addEventListeners,
@@ -40,7 +40,7 @@ export function startPageStateHistory(
   configuration: RumConfiguration,
   maxPageStateEntriesSelectable = MAX_PAGE_STATE_ENTRIES_SELECTABLE
 ): PageStateHistory {
-  const pageStateEntryHistory = valueHistoryFactory<PageStateEntry>({
+  const pageStateEntryHistory = createValueHistory<PageStateEntry>({
     expireDelay: PAGE_STATE_CONTEXT_TIME_OUT_DELAY,
     maxEntries: MAX_PAGE_STATE_ENTRIES,
   })

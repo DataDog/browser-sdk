@@ -18,7 +18,7 @@ interface ProxyStats {
   reset: () => void
 }
 
-function proxyStatsFactory(): ProxyStats {
+function createProxyStats(): ProxyStats {
   const statsByHost = new Map<string, { requestsSize: number; requestsCount: number }>()
 
   function addRequest(request: IncomingMessage, size: number) {
@@ -53,7 +53,7 @@ function proxyStatsFactory(): ProxyStats {
 export function startProxy() {
   return new Promise<Proxy>((resolve, reject) => {
     const { key, cert, spkiFingerprint } = createSelfSignedCertificate()
-    const stats = proxyStatsFactory()
+    const stats = createProxyStats()
     const server = createServer({ key, cert })
     server.on('error', reject)
     server.on('request', (req: IncomingMessage, res: ServerResponse) => {

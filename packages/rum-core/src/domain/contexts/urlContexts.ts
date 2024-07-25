@@ -1,5 +1,5 @@
 import type { RelativeTime, Observable } from '@datadog/browser-core'
-import { SESSION_TIME_OUT_DELAY, relativeNow, valueHistoryFactory } from '@datadog/browser-core'
+import { SESSION_TIME_OUT_DELAY, relativeNow, createValueHistory } from '@datadog/browser-core'
 import type { LocationChange } from '../../browser/locationChangeObservable'
 import type { LifeCycle } from '../lifeCycle'
 import { LifeCycleEventType } from '../lifeCycle'
@@ -27,7 +27,7 @@ export function startUrlContexts(
   locationChangeObservable: Observable<LocationChange>,
   location: Location
 ) {
-  const urlContextHistory = valueHistoryFactory<UrlContext>({ expireDelay: URL_CONTEXT_TIME_OUT_DELAY })
+  const urlContextHistory = createValueHistory<UrlContext>({ expireDelay: URL_CONTEXT_TIME_OUT_DELAY })
 
   let previousViewUrl: string | undefined
 

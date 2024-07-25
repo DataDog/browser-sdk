@@ -15,30 +15,7 @@ export interface Batch {
   stop: () => void
 }
 
-function formatPayloadFromEncoder(encoderResult: EncoderResult): Payload {
-  let data: string | Blob
-  if (typeof encoderResult.output === 'string') {
-    data = encoderResult.output
-  } else {
-    data = new Blob([encoderResult.output], {
-      // This will set the 'Content-Type: text/plain' header. Reasoning:
-      // * The intake rejects the request if there is no content type.
-      // * The browser will issue CORS preflight requests if we set it to 'application/json', which
-      // could induce higher intake load (and maybe has other impacts).
-      // * Also it's not quite JSON, since we are concatenating multiple JSON objects separated by
-      // new lines.
-      type: 'text/plain',
-    })
-  }
-
-  return {
-    data,
-    bytesCount: encoderResult.outputBytesCount,
-    encoding: encoderResult.encoding,
-  }
-}
-
-export function batchFactory({
+export function createBatch({
   encoder,
   request,
   flushController,
@@ -140,5 +117,28 @@ export function batchFactory({
     add: addOrUpdate,
     upsert: addOrUpdate,
     stop: flushSubscription.unsubscribe,
+  }
+}
+
+function formatPayloadFromEncoder(encoderResult: EncoderResult): Payload {
+  let data: string | Blob
+  if (typeof encoderResult.output === 'string') {
+    data = encoderResult.output
+  } else {
+    data = new Blob([encoderResult.output], {
+      // This will set the 'Content-Type: text/plain' header. Reasoning:
+      // * The intake rejects the request if there is no content type.
+      // * The browser will issue CORS preflight requests if we set it to 'application/json', which
+      // could induce higher intake load (and maybe has other impacts).
+      // * Also it's not quite JSON, since we are concatenating multiple JSON objects separated by
+      // new lines.
+      type: 'text/plain',
+    })
+  }
+
+  return {
+    data,
+    bytesCount: encoderResult.outputBytesCount,
+    encoding: encoderResult.encoding,
   }
 }

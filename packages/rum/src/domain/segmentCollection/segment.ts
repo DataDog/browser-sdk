@@ -13,7 +13,7 @@ export interface Segment {
   flush: (callback: FlushCallback) => void
 }
 
-export function segmentFactory({
+export function createSegment({
   context,
   creationReason,
   encoder,

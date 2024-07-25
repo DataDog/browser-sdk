@@ -10,7 +10,7 @@ import {
   clocksNow,
   ONE_SECOND,
   elapsed,
-  valueHistoryFactory,
+  createValueHistory,
 } from '@datadog/browser-core'
 import type { FrustrationType } from '../../rawRumEvent.types'
 import { ActionType } from '../../rawRumEvent.types'
@@ -67,7 +67,7 @@ export function trackClickActions(
   domMutationObservable: Observable<void>,
   configuration: RumConfiguration
 ) {
-  const history: ClickActionIdHistory = valueHistoryFactory({ expireDelay: ACTION_CONTEXT_TIME_OUT_DELAY })
+  const history: ClickActionIdHistory = createValueHistory({ expireDelay: ACTION_CONTEXT_TIME_OUT_DELAY })
   const stopObservable = new Observable<void>()
   let currentClickChain: ClickChain | undefined
 

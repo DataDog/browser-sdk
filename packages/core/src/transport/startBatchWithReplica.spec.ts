@@ -5,7 +5,7 @@ import type { RawError } from '../domain/error/error.types'
 import { createIdentityEncoder } from '../tools/encoder'
 import { Observable } from '../tools/observable'
 import { noop } from '../tools/utils/functionUtils'
-import type { batchFactory } from './batch'
+import type { createBatch } from './batch'
 import type { FlushController } from './flushController'
 import type { BatchConfiguration } from './startBatchWithReplica'
 import { startBatchWithReplica } from './startBatchWithReplica'
@@ -18,7 +18,7 @@ describe('startBatchWithReplica', () => {
   let batchConfiguration: BatchConfiguration
   let batchFactoryAddSpy: jasmine.Spy
   let batchFactoryUpsertSpy: jasmine.Spy
-  let batchFactoryFakeImpl: typeof batchFactory
+  let batchFactoryFakeImpl: typeof createBatch
 
   beforeEach(() => {
     pageExitObservable = new Observable()

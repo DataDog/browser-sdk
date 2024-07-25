@@ -1,5 +1,5 @@
 import type { RelativeTime, ContextValue, Context, CustomerDataTracker } from '@datadog/browser-core'
-import { SESSION_TIME_OUT_DELAY, valueHistoryFactory } from '@datadog/browser-core'
+import { SESSION_TIME_OUT_DELAY, createValueHistory } from '@datadog/browser-core'
 import type { LifeCycle } from '../lifeCycle'
 import { LifeCycleEventType } from '../lifeCycle'
 
@@ -26,7 +26,7 @@ export function startFeatureFlagContexts(
   lifeCycle: LifeCycle,
   customerDataTracker: CustomerDataTracker
 ): FeatureFlagContexts {
-  const featureFlagContexts = valueHistoryFactory<FeatureFlagContext>({
+  const featureFlagContexts = createValueHistory<FeatureFlagContext>({
     expireDelay: FEATURE_FLAG_CONTEXT_TIME_OUT_DELAY,
   })
 

@@ -3,7 +3,7 @@ import { createMockFlushController } from '../../test'
 import { display } from '../tools/display'
 import type { Encoder } from '../tools/encoder'
 import { createIdentityEncoder } from '../tools/encoder'
-import { batchFactory, type Batch } from './batch'
+import { createBatch, type Batch } from './batch'
 import type { HttpRequest } from './httpRequest'
 
 describe('batch', () => {
@@ -30,7 +30,7 @@ describe('batch', () => {
     } satisfies HttpRequest
     flushController = createMockFlushController()
     encoder = createIdentityEncoder()
-    batch = batchFactory({ encoder, request: transport, flushController, messageBytesLimit: MESSAGE_BYTES_LIMIT })
+    batch = createBatch({ encoder, request: transport, flushController, messageBytesLimit: MESSAGE_BYTES_LIMIT })
   })
 
   it('should send a message', () => {

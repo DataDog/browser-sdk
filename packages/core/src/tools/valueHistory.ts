@@ -30,7 +30,7 @@ export interface ValueHistory<Value> {
   stop: () => void
 }
 
-export function valueHistoryFactory<Value>({
+export function createValueHistory<Value>({
   expireDelay,
   maxEntries,
 }: {

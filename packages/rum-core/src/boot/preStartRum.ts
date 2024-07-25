@@ -1,5 +1,5 @@
 import {
-  boundedBuffer,
+  createBoundedBuffer,
   display,
   canUseEventBridge,
   displayAlreadyInitializedError,
@@ -40,7 +40,7 @@ export function createPreStartStrategy(
     initialViewOptions?: ViewOptions
   ) => StartRumResult
 ): Strategy {
-  const bufferApiCalls = boundedBuffer<StartRumResult>()
+  const bufferApiCalls = createBoundedBuffer<StartRumResult>()
   let firstStartViewCall:
     | { options: ViewOptions | undefined; callback: (startRumResult: StartRumResult) => void }
     | undefined

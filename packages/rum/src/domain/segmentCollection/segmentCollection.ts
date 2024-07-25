@@ -5,7 +5,7 @@ import { LifeCycleEventType } from '@datadog/browser-rum-core'
 import type { BrowserRecord, CreationReason, SegmentContext } from '../../types'
 import { buildReplayPayload } from './buildReplayPayload'
 import type { FlushReason, Segment } from './segment'
-import { segmentFactory } from './segment'
+import { createSegment } from './segment'
 
 export const SEGMENT_DURATION_LIMIT = 30 * ONE_SECOND
 /**
@@ -136,7 +136,7 @@ export function doStartSegmentCollection(
 
         state = {
           status: SegmentCollectionStatus.SegmentPending,
-          segment: segmentFactory({ encoder, context, creationReason: state.nextSegmentCreationReason }),
+          segment: createSegment({ encoder, context, creationReason: state.nextSegmentCreationReason }),
           expirationTimeoutId: setTimeout(() => {
             flushSegment('segment_duration_limit')
           }, SEGMENT_DURATION_LIMIT),
