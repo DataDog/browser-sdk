@@ -1,6 +1,7 @@
 import { LifeCycleEventType, getScrollX, getScrollY, getViewportDimension } from '@datadog/browser-rum-core'
 import type { RumConfiguration, LifeCycle } from '@datadog/browser-rum-core'
-import { timeStampNow } from '@datadog/browser-core'
+import { timeStampNow, isExperimentalFeatureEnabled, ExperimentalFeature } from '@datadog/browser-core'
+import { requestIdleCallback } from '../../browser/requestIdleCallback'
 import type { BrowserRecord } from '../../types'
 import { RecordType } from '../../types'
 import type { ElementsScrollPositions } from './elementsScrollPositions'
@@ -14,7 +15,8 @@ export function startFullSnapshots(
   lifeCycle: LifeCycle,
   configuration: RumConfiguration,
   flushMutations: () => void,
-  fullSnapshotCallback: (records: BrowserRecord[]) => void
+  fullSnapshotPendingCallback: () => void,
+  fullSnapshotReadyCallback: (records: BrowserRecord[]) => void
 ) {
   const takeFullSnapshot = (
     timestamp = timeStampNow(),
@@ -65,20 +67,37 @@ export function startFullSnapshots(
     return records
   }
 
-  fullSnapshotCallback(takeFullSnapshot())
+  fullSnapshotReadyCallback(takeFullSnapshot())
 
+  let cancelIdleCallback: (() => void) | undefined
   const { unsubscribe } = lifeCycle.subscribe(LifeCycleEventType.VIEW_CREATED, (view) => {
     flushMutations()
-    fullSnapshotCallback(
-      takeFullSnapshot(view.startClocks.timeStamp, {
-        shadowRootsController,
-        status: SerializationContextStatus.SUBSEQUENT_FULL_SNAPSHOT,
-        elementsScrollPositions,
-      })
-    )
+    function takeSubsequentFullSnapshot() {
+      flushMutations()
+      fullSnapshotReadyCallback(
+        takeFullSnapshot(view.startClocks.timeStamp, {
+          shadowRootsController,
+          status: SerializationContextStatus.SUBSEQUENT_FULL_SNAPSHOT,
+          elementsScrollPositions,
+        })
+      )
+    }
+
+    if (isExperimentalFeatureEnabled(ExperimentalFeature.ASYNC_FULL_SNAPSHOT)) {
+      if (cancelIdleCallback) {
+        cancelIdleCallback()
+      }
+      fullSnapshotPendingCallback()
+      cancelIdleCallback = requestIdleCallback(takeSubsequentFullSnapshot)
+    } else {
+      takeSubsequentFullSnapshot()
+    }
   })
 
   return {
-    stop: unsubscribe,
+    stop: () => {
+      unsubscribe()
+      cancelIdleCallback?.()
+    },
   }
 }
