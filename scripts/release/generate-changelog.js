@@ -10,7 +10,7 @@ const { browserSdkVersion } = require('../lib/browser-sdk-version')
 const { spawnCommand, printError, runMain } = require('../lib/execution-utils')
 const { command } = require('../lib/command')
 const { modifyFile } = require('../lib/files-utils')
-const { packagesDirectoryNames } = require('./packages-directory-names')
+const { packagesDirectoryNames } = require('../lib/packages-directory-names')
 
 const CHANGELOG_FILE = 'CHANGELOG.md'
 const CONTRIBUTING_FILE = 'CONTRIBUTING.md'
