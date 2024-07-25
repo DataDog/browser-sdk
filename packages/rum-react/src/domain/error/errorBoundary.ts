@@ -21,6 +21,7 @@ type State =
 
 const INITIAL_STATE: State = { didCatch: false, error: null }
 
+// eslint-disable-next-line no-restricted-syntax
 export class ErrorBoundary extends React.Component<Props, State> {
   constructor(props: Props) {
     super(props)

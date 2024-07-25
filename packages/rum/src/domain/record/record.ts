@@ -15,6 +15,7 @@ import {
   trackStyleSheet,
   trackViewEnd,
   trackViewportResize,
+  trackVisualViewportResize,
 } from './trackers'
 import { createElementsScrollPositions } from './elementsScrollPositions'
 import type { ShadowRootsController } from './shadowRootsController'
@@ -42,11 +43,15 @@ export function record(options: RecordOptions): RecordAPI {
     throw new Error('emit function is required')
   }
 
+  let isFullSnapshotPending = false
+
   const emitAndComputeStats = (record: BrowserRecord) => {
-    emit(record)
-    sendToExtension('record', { record })
-    const view = options.viewContexts.findView()!
-    replayStats.addRecord(view.id)
+    if (!isFullSnapshotPending) {
+      emit(record)
+      sendToExtension('record', { record })
+      const view = options.viewContexts.findView()!
+      replayStats.addRecord(view.id)
+    }
   }
 
   const elementsScrollPositions = createElementsScrollPositions()
@@ -59,7 +64,13 @@ export function record(options: RecordOptions): RecordAPI {
     lifeCycle,
     configuration,
     flushMutations,
-    (records) => records.forEach((record) => emitAndComputeStats(record))
+    () => {
+      isFullSnapshotPending = true
+    },
+    (records) => {
+      isFullSnapshotPending = false
+      records.forEach((record) => emitAndComputeStats(record))
+    }
   )
 
   function flushMutations() {
@@ -79,7 +90,7 @@ export function record(options: RecordOptions): RecordAPI {
     trackMediaInteraction(configuration, emitAndComputeStats),
     trackStyleSheet(emitAndComputeStats),
     trackFocus(configuration, emitAndComputeStats),
-    trackViewportResize(configuration, emitAndComputeStats),
+    trackVisualViewportResize(configuration, emitAndComputeStats),
     trackFrustration(lifeCycle, emitAndComputeStats, recordIds),
     trackViewEnd(lifeCycle, (viewEndRecord) => {
       flushMutations()

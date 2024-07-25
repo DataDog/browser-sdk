@@ -32,7 +32,7 @@ export type HandlerType = (typeof HandlerType)[keyof typeof HandlerType]
 export const STATUSES = Object.keys(StatusType) as StatusType[]
 
 // note: it is safe to merge declarations as long as the methods are actually defined on the prototype
-// eslint-disable-next-line @typescript-eslint/no-unsafe-declaration-merging
+// eslint-disable-next-line @typescript-eslint/no-unsafe-declaration-merging, no-restricted-syntax
 export class Logger {
   private contextManager: ContextManager
 
