@@ -7,7 +7,7 @@ import type { RawRumResourceEvent } from '../../rawRumEvent.types'
 import { RumEventType } from '../../rawRumEvent.types'
 import { LifeCycleEventType } from '../lifeCycle'
 import type { RequestCompleteEvent } from '../requestCollection'
-import { TraceIdentifier } from '../tracing/tracer'
+import { createTraceIdentifier } from '../tracing/tracer'
 import { validateAndBuildRumConfiguration } from '../configuration'
 import type { RumPerformanceEntry } from '../../browser/performanceObservable'
 import { RumPerformanceEntryType } from '../../browser/performanceObservable'
@@ -163,8 +163,8 @@ describe('resourceCollection', () => {
           LifeCycleEventType.REQUEST_COMPLETED,
           createCompletedRequest({
             type: RequestType.XHR,
-            traceId: new TraceIdentifier(),
-            spanId: new TraceIdentifier(),
+            traceId: createTraceIdentifier(),
+            spanId: createTraceIdentifier(),
             traceSampled: true,
           })
         )
@@ -292,8 +292,8 @@ describe('resourceCollection', () => {
         LifeCycleEventType.REQUEST_COMPLETED,
         createCompletedRequest({
           traceSampled: true,
-          spanId: new TraceIdentifier(),
-          traceId: new TraceIdentifier(),
+          spanId: createTraceIdentifier(),
+          traceId: createTraceIdentifier(),
         })
       )
       const privateFields = (rawRumEvents[0].rawRumEvent as RawRumResourceEvent)._dd
@@ -307,8 +307,8 @@ describe('resourceCollection', () => {
         LifeCycleEventType.REQUEST_COMPLETED,
         createCompletedRequest({
           traceSampled: false,
-          spanId: new TraceIdentifier(),
-          traceId: new TraceIdentifier(),
+          spanId: createTraceIdentifier(),
+          traceId: createTraceIdentifier(),
         })
       )
       const privateFields = (rawRumEvents[0].rawRumEvent as RawRumResourceEvent)._dd
@@ -334,8 +334,8 @@ describe('resourceCollection', () => {
         LifeCycleEventType.REQUEST_COMPLETED,
         createCompletedRequest({
           traceSampled: true,
-          spanId: new TraceIdentifier(),
-          traceId: new TraceIdentifier(),
+          spanId: createTraceIdentifier(),
+          traceId: createTraceIdentifier(),
         })
       )
       const privateFields = (rawRumEvents[0].rawRumEvent as RawRumResourceEvent)._dd
@@ -359,8 +359,8 @@ describe('resourceCollection', () => {
         LifeCycleEventType.REQUEST_COMPLETED,
         createCompletedRequest({
           traceSampled: true,
-          spanId: new TraceIdentifier(),
-          traceId: new TraceIdentifier(),
+          spanId: createTraceIdentifier(),
+          traceId: createTraceIdentifier(),
         })
       )
       const privateFields = (rawRumEvents[0].rawRumEvent as RawRumResourceEvent)._dd
@@ -385,8 +385,8 @@ describe('resourceCollection', () => {
         LifeCycleEventType.REQUEST_COMPLETED,
         createCompletedRequest({
           traceSampled: true,
-          spanId: new TraceIdentifier(),
-          traceId: new TraceIdentifier(),
+          spanId: createTraceIdentifier(),
+          traceId: createTraceIdentifier(),
         })
       )
       const privateFields = (rawRumEvents[0].rawRumEvent as RawRumResourceEvent)._dd
