@@ -5,7 +5,8 @@ import type { RawError } from '../domain/error/error.types'
 import { createIdentityEncoder } from '../tools/encoder'
 import { Observable } from '../tools/observable'
 import { noop } from '../tools/utils/functionUtils'
-import { Batch } from './batch'
+import type { createBatch } from './batch'
+import type { FlushController } from './flushController'
 import type { BatchConfiguration } from './startBatchWithReplica'
 import { startBatchWithReplica } from './startBatchWithReplica'
 
@@ -15,6 +16,9 @@ describe('startBatchWithReplica', () => {
   let pageExitObservable: Observable<PageExitEvent>
   let sessionExpireObservable: Observable<void>
   let batchConfiguration: BatchConfiguration
+  let batchFactoryAddSpy: jasmine.Spy
+  let batchFactoryUpsertSpy: jasmine.Spy
+  let batchFactoryFakeImpl: typeof createBatch
 
   beforeEach(() => {
     pageExitObservable = new Observable()
@@ -23,77 +27,84 @@ describe('startBatchWithReplica', () => {
       endpoint: mockEndpointBuilder('https://example.com'),
       encoder: createIdentityEncoder(),
     }
+
+    batchFactoryAddSpy = jasmine.createSpy()
+    batchFactoryUpsertSpy = jasmine.createSpy()
+    batchFactoryFakeImpl = () => ({
+      flushController: {} as FlushController,
+      add: batchFactoryAddSpy,
+      upsert: batchFactoryUpsertSpy,
+      stop: noop,
+    })
   })
 
   it('adds a message to a batch and its replica', () => {
-    const batchAddSpy = spyOn(Batch.prototype, 'add')
-
     const batch = startBatchWithReplica(
       DEFAULT_CONFIGURATION,
       batchConfiguration,
       batchConfiguration,
       reportError,
       pageExitObservable,
-      sessionExpireObservable
+      sessionExpireObservable,
+      batchFactoryFakeImpl
     )
+
     batch.add({ foo: true })
-    expect(batchAddSpy.calls.thisFor(0)).not.toBe(batchAddSpy.calls.thisFor(1))
-    expect(batchAddSpy).toHaveBeenCalledTimes(2)
-    expect(batchAddSpy.calls.argsFor(0)).toEqual([{ foo: true }])
-    expect(batchAddSpy.calls.argsFor(1)).toEqual([{ foo: true }])
+    expect(batchFactoryAddSpy.calls.thisFor(0)).not.toBe(batchFactoryAddSpy.calls.thisFor(1))
+    expect(batchFactoryAddSpy).toHaveBeenCalledTimes(2)
+    expect(batchFactoryAddSpy.calls.argsFor(0)).toEqual([{ foo: true }])
+    expect(batchFactoryAddSpy.calls.argsFor(1)).toEqual([{ foo: true }])
   })
 
   it('does not add a message to the replica if no replica is specified', () => {
-    const batchAddSpy = spyOn(Batch.prototype, 'add')
-
     const batch = startBatchWithReplica(
       DEFAULT_CONFIGURATION,
       batchConfiguration,
       undefined,
       reportError,
       pageExitObservable,
-      sessionExpireObservable
+      sessionExpireObservable,
+      batchFactoryFakeImpl
     )
+
     batch.add({ foo: true })
-    expect(batchAddSpy).toHaveBeenCalledTimes(1)
+    expect(batchFactoryAddSpy).toHaveBeenCalledTimes(1)
   })
 
   it("does not add a message to the replica if it shouldn't be replicated", () => {
-    const batchAddSpy = spyOn(Batch.prototype, 'add')
-
     const batch = startBatchWithReplica(
       DEFAULT_CONFIGURATION,
       batchConfiguration,
       batchConfiguration,
       reportError,
       pageExitObservable,
-      sessionExpireObservable
+      sessionExpireObservable,
+      batchFactoryFakeImpl
     )
+
     batch.add({ foo: true }, false)
-    expect(batchAddSpy).toHaveBeenCalledTimes(1)
+    expect(batchFactoryAddSpy).toHaveBeenCalledTimes(1)
   })
 
   it('upserts a message to a batch and its replica', () => {
-    const batchUpsertSpy = spyOn(Batch.prototype, 'upsert')
-
     const batch = startBatchWithReplica(
       DEFAULT_CONFIGURATION,
       batchConfiguration,
       batchConfiguration,
       reportError,
       pageExitObservable,
-      sessionExpireObservable
+      sessionExpireObservable,
+      batchFactoryFakeImpl
     )
+
     batch.upsert({ foo: true }, 'message-id')
-    expect(batchUpsertSpy).toHaveBeenCalledTimes(2)
-    expect(batchUpsertSpy.calls.thisFor(0)).not.toBe(batchUpsertSpy.calls.thisFor(1))
-    expect(batchUpsertSpy.calls.argsFor(0)).toEqual([{ foo: true }, 'message-id'])
-    expect(batchUpsertSpy.calls.argsFor(1)).toEqual([{ foo: true }, 'message-id'])
+    expect(batchFactoryUpsertSpy).toHaveBeenCalledTimes(2)
+    expect(batchFactoryUpsertSpy.calls.thisFor(0)).not.toBe(batchFactoryUpsertSpy.calls.thisFor(1))
+    expect(batchFactoryUpsertSpy.calls.argsFor(0)).toEqual([{ foo: true }, 'message-id'])
+    expect(batchFactoryUpsertSpy.calls.argsFor(1)).toEqual([{ foo: true }, 'message-id'])
   })
 
   it('transforms a message when adding it to the replica', () => {
-    const batchAddSpy = spyOn(Batch.prototype, 'add')
-
     const batch = startBatchWithReplica(
       DEFAULT_CONFIGURATION,
       batchConfiguration,
@@ -103,16 +114,16 @@ describe('startBatchWithReplica', () => {
       },
       reportError,
       pageExitObservable,
-      sessionExpireObservable
+      sessionExpireObservable,
+      batchFactoryFakeImpl
     )
+
     batch.add({ foo: true })
-    expect(batchAddSpy.calls.argsFor(0)).toEqual([{ foo: true }])
-    expect(batchAddSpy.calls.argsFor(1)).toEqual([{ foo: true, bar: true }])
+    expect(batchFactoryAddSpy.calls.argsFor(0)).toEqual([{ foo: true }])
+    expect(batchFactoryAddSpy.calls.argsFor(1)).toEqual([{ foo: true, bar: true }])
   })
 
   it('transforms a message when upserting it to the replica', () => {
-    const batchUpsertSpy = spyOn(Batch.prototype, 'upsert')
-
     const batch = startBatchWithReplica<{ foo?: boolean; bar?: boolean }>(
       DEFAULT_CONFIGURATION,
       batchConfiguration,
@@ -122,10 +133,12 @@ describe('startBatchWithReplica', () => {
       },
       reportError,
       pageExitObservable,
-      sessionExpireObservable
+      sessionExpireObservable,
+      batchFactoryFakeImpl
     )
+
     batch.upsert({ foo: true }, 'message-id')
-    expect(batchUpsertSpy.calls.argsFor(0)).toEqual([{ foo: true }, 'message-id'])
-    expect(batchUpsertSpy.calls.argsFor(1)).toEqual([{ foo: true, bar: true }, 'message-id'])
+    expect(batchFactoryUpsertSpy.calls.argsFor(0)).toEqual([{ foo: true }, 'message-id'])
+    expect(batchFactoryUpsertSpy.calls.argsFor(1)).toEqual([{ foo: true, bar: true }, 'message-id'])
   })
 })
