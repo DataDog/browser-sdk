@@ -1,7 +1,7 @@
 import type { RumConfiguration, ViewCreatedEvent } from '@datadog/browser-rum-core'
 import { LifeCycle, LifeCycleEventType } from '@datadog/browser-rum-core'
 import type { TimeStamp } from '@datadog/browser-core'
-import { isIE, noop } from '@datadog/browser-core'
+import { noop } from '@datadog/browser-core'
 import { mockExperimentalFeatures, mockRequestIdleCallback } from '@datadog/browser-core/test'
 import type { BrowserRecord } from '../../types'
 import { ExperimentalFeature } from '../../../../core/src/tools/experimentalFeatures'
@@ -17,10 +17,6 @@ describe('startFullSnapshots', () => {
   let fullSnapshotReadyCallback: jasmine.Spy<(records: BrowserRecord[]) => void>
 
   beforeEach(() => {
-    if (isIE()) {
-      pending('IE not supported')
-    }
-
     lifeCycle = new LifeCycle()
     mockExperimentalFeatures([ExperimentalFeature.ASYNC_FULL_SNAPSHOT])
     fullSnapshotPendingCallback = jasmine.createSpy('fullSnapshotPendingCallback')

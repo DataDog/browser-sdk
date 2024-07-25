@@ -1,5 +1,5 @@
 import type { Payload } from '@datadog/browser-core'
-import { isIE, RequestType } from '@datadog/browser-core'
+import { RequestType } from '@datadog/browser-core'
 import type { MockFetch, MockFetchManager, MockXhrManager } from '@datadog/browser-core/test'
 import { registerCleanupTask, SPEC_ENDPOINTS, mockFetch, mockXhr, withXhr } from '@datadog/browser-core/test'
 import type { RumConfiguration } from './configuration'
@@ -22,9 +22,6 @@ describe('collect fetch', () => {
   let stopFetchTracking: () => void
 
   beforeEach(() => {
-    if (isIE()) {
-      pending('no fetch support')
-    }
     configuration = {
       ...validateAndBuildRumConfiguration({ clientToken: 'xxx', applicationId: 'xxx' })!,
       ...SPEC_ENDPOINTS,
@@ -197,9 +194,6 @@ describe('collect xhr', () => {
   let stopXhrTracking: () => void
 
   beforeEach(() => {
-    if (isIE()) {
-      pending('no fetch support')
-    }
     configuration = {
       ...validateAndBuildRumConfiguration({ clientToken: 'xxx', applicationId: 'xxx' })!,
       ...SPEC_ENDPOINTS,
