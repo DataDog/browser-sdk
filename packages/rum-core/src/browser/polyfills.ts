@@ -68,6 +68,7 @@ export function getClassList(element: Element): DOMTokenList | string[] {
 
 // ie11 supports WeakMap but not WeakSet
 const PLACEHOLDER = 1
+// eslint-disable-next-line no-restricted-syntax
 export class WeakSet<T extends object> {
   private map = new WeakMap<T, typeof PLACEHOLDER>()
 

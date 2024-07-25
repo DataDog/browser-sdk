@@ -2,6 +2,7 @@ export interface Subscription {
   unsubscribe: () => void
 }
 
+// eslint-disable-next-line no-restricted-syntax
 export class Observable<T> {
   private observers: Array<(data: T) => void> = []
   private onLastUnsubscribe?: () => void
