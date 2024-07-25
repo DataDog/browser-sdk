@@ -134,7 +134,7 @@ export function isTracingSupported() {
   return getCrypto() !== undefined
 }
 
-function getCrypto() {
+export function getCrypto() {
   return window.crypto || (window as any).msCrypto
 }
 
