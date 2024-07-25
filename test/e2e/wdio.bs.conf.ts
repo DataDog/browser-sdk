@@ -28,7 +28,7 @@ export const config: Options.Testrunner = {
           deviceName: configuration.device,
 
           appiumVersion: '1.22.0',
-          seleniumVersion: '4.1.2',
+          seleniumVersion: '3.141.59',
 
           sessionName: configuration.sessionName,
           projectName: 'browser sdk e2e',
