@@ -1,4 +1,4 @@
-import { elapsed, noop, ONE_MINUTE } from '@datadog/browser-core'
+import { addTelemetryDebug, elapsed, noop, ONE_MINUTE } from '@datadog/browser-core'
 import type { Duration, RelativeTime } from '@datadog/browser-core'
 import { RumPerformanceEntryType, supportPerformanceTimingEvent } from '../../../browser/performanceObservable'
 import type { RumFirstInputTiming, RumPerformanceEventTiming } from '../../../browser/performanceObservable'
@@ -74,6 +74,9 @@ export function trackInteractionToNextPaint(
           configuration.actionNameAttribute
         )
       } else {
+        addTelemetryDebug('INP target is null or not an element node', {
+          interactionToNextPaintStartTime,
+        })
         interactionToNextPaintTargetSelector = undefined
       }
     }
