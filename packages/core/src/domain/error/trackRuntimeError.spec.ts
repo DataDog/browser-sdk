@@ -1,5 +1,6 @@
 import { disableJasmineUncaughtExceptionTracking, collectAsyncCalls, registerCleanupTask } from '../../../test'
 import { Observable } from '../../tools/observable'
+import { isIE } from '../../tools/utils/browserDetection'
 import type { UnhandledErrorCallback } from './trackRuntimeError'
 import { instrumentOnError, instrumentUnhandledRejection, trackRuntimeError } from './trackRuntimeError'
 import type { RawError } from './error.types'
