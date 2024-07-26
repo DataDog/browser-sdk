@@ -14,7 +14,7 @@ describe('createMutationBatch', () => {
     processMutationBatchSpy = jasmine.createSpy()
     mutationBatch = createMutationBatch(processMutationBatchSpy)
     const requestIdleCallbackMock: any = (callback: () => void) => callback()
-    if ('requestIdleCallback' in window) {
+    if (!window.requestIdleCallback) {
       requestIdleCallbackSpy = spyOn(window, 'requestIdleCallback').and.callFake(requestIdleCallbackMock)
     } else {
       requestIdleCallbackSpy = spyOn(window as Window, 'requestAnimationFrame').and.callFake(requestIdleCallbackMock)
