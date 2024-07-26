@@ -45,9 +45,10 @@ describe('trackRuntimeError', () => {
       pending('no promise support')
     }
 
-    if (!onUnhandledrejectionSpy) {
+    if (!('onunhandledrejection' in window)) {
       pending('onunhandledrejection not supported')
     }
+
     disableJasmineUncaughtExceptionTracking()
 
     setTimeout(() => {
@@ -280,11 +281,12 @@ describe('instrumentUnhandledRejection', () => {
   const ERROR_MESSAGE = 'foo'
 
   beforeEach(() => {
-    callbackSpy = jasmine.createSpy()
-    onUnhandledrejectionSpy = setupOnUnhandledrejectionSpy()
-    if (!onUnhandledrejectionSpy) {
+    if (!('onunhandledrejection' in window)) {
       pending('onunhandledrejection not supported')
     }
+
+    callbackSpy = jasmine.createSpy()
+    onUnhandledrejectionSpy = setupOnUnhandledrejectionSpy()
     ;({ stop: stopCollectingUnhandledError } = instrumentUnhandledRejection(callbackSpy))
   })
 
@@ -312,10 +314,6 @@ describe('instrumentUnhandledRejection', () => {
 })
 
 function setupOnUnhandledrejectionSpy() {
-  if (!('onunhandledrejection' in window)) {
-    return null
-  }
-
   const originalOnUnhandledRejectionHandler: Window['onunhandledrejection'] = window.onunhandledrejection
   const onUnhandledrejectionSpy = jasmine.createSpy()
 
