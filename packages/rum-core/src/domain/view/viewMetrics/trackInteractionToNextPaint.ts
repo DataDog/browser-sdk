@@ -1,4 +1,11 @@
-import { addTelemetryDebug, elapsed, ExperimentalFeature, isExperimentalFeatureEnabled, noop, ONE_MINUTE } from '@datadog/browser-core'
+import {
+  addTelemetryDebug,
+  elapsed,
+  ExperimentalFeature,
+  isExperimentalFeatureEnabled,
+  noop,
+  ONE_MINUTE,
+} from '@datadog/browser-core'
 import type { Duration, RelativeTime } from '@datadog/browser-core'
 import { RumPerformanceEntryType, supportPerformanceTimingEvent } from '../../../browser/performanceObservable'
 import type { RumFirstInputTiming, RumPerformanceEventTiming } from '../../../browser/performanceObservable'
@@ -79,7 +86,7 @@ export function trackInteractionToNextPaint(
           })
         }
       } else {
-        if(isInpEnabled) {
+        if (isInpEnabled) {
           addTelemetryDebug('INP target is null or not an element node', {
             hasTarget: !!inpTarget,
             targetIsConnected: inpTarget ? inpTarget.isConnected : null,
