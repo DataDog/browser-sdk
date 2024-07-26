@@ -7,7 +7,7 @@ type PerformanceObserverInstance = {
   entryTypes: string[]
 }
 
-export function mockPerformanceObserver({ typeSupported } = { typeSupported: true }) {
+export function mockPerformanceObserver({ typeSupported = true, emulateAllEntryTypesUnsupported = false } = {}) {
   const originalPerformanceObserver = window.PerformanceObserver
   const instances = new Set<PerformanceObserverInstance>()
   let performanceObserver: PerformanceObserver
@@ -22,7 +22,10 @@ export function mockPerformanceObserver({ typeSupported } = { typeSupported: tru
       },
       observe({ entryTypes, type, buffered }: PerformanceObserverInit) {
         if (!typeSupported && type) {
-          throw new Error("Uncaught TypeError: Failed to execute 'observe' on 'PerformanceObserver")
+          throw new TypeError("Failed to execute 'observe' on 'PerformanceObserver")
+        }
+        if (emulateAllEntryTypesUnsupported) {
+          throw new TypeError('entryTypes contained only unsupported types')
         }
         instance.entryTypes = entryTypes || (type ? [type] : [])
         instances.add(instance)
