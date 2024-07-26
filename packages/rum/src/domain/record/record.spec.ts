@@ -1,8 +1,15 @@
-import { DefaultPrivacyLevel, findLast, isIE } from '@datadog/browser-core'
+import { DefaultPrivacyLevel, findLast } from '@datadog/browser-core'
 import type { RumConfiguration, ViewCreatedEvent } from '@datadog/browser-rum-core'
 import { LifeCycle, LifeCycleEventType } from '@datadog/browser-rum-core'
 import type { Clock } from '@datadog/browser-core/test'
-import { createNewEvent, collectAsyncCalls, registerCleanupTask } from '@datadog/browser-core/test'
+import {
+  createNewEvent,
+  collectAsyncCalls,
+  registerCleanupTask,
+  mockRequestIdleCallback,
+  mockExperimentalFeatures,
+} from '@datadog/browser-core/test'
+import { ExperimentalFeature } from '../../../../core/src/tools/experimentalFeatures'
 import {
   findElement,
   findFullSnapshot,
@@ -32,10 +39,6 @@ describe('record', () => {
   const FAKE_VIEW_ID = '123'
 
   beforeEach(() => {
-    if (isIE()) {
-      pending('IE not supported')
-    }
-
     emitSpy = jasmine.createSpy()
 
     registerCleanupTask(() => {
@@ -357,6 +360,21 @@ describe('record', () => {
       const shadowRoot = host.attachShadow({ mode: 'open' })
       return shadowRoot
     }
+  })
+
+  describe('it should not record when full snapshot is pending', () => {
+    it('ignores any record while a full snapshot is pending', () => {
+      mockExperimentalFeatures([ExperimentalFeature.ASYNC_FULL_SNAPSHOT])
+      mockRequestIdleCallback()
+      startRecording()
+      newView()
+
+      emitSpy.calls.reset()
+
+      window.dispatchEvent(createNewEvent('focus'))
+
+      expect(getEmittedRecords().find((record) => record.type === RecordType.Focus)).toBeUndefined()
+    })
   })
 
   describe('updates record replay stats', () => {

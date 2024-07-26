@@ -1,4 +1,4 @@
-import { DefaultPrivacyLevel, isIE } from '@datadog/browser-core'
+import { DefaultPrivacyLevel } from '@datadog/browser-core'
 import { createNewEvent, registerCleanupTask } from '@datadog/browser-core/test'
 import type { RumConfiguration } from '@datadog/browser-rum-core'
 import { serializeDocument, SerializationContextStatus } from '../serialization'

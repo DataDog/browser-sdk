@@ -1,4 +1,4 @@
-import { isIE, ErrorSource } from '@datadog/browser-core'
+import { ErrorSource } from '@datadog/browser-core'
 import type { MockFetch, MockFetchManager } from '@datadog/browser-core/test'
 import { SPEC_ENDPOINTS, MockResponse, mockFetch, registerCleanupTask } from '@datadog/browser-core/test'
 import type { RawNetworkLogsEvent } from '../../rawLogsEvent.types'
@@ -45,9 +45,6 @@ describe('network error collection', () => {
   }
 
   beforeEach(() => {
-    if (isIE()) {
-      pending('no fetch support')
-    }
     rawLogsEvents = []
     lifeCycle = new LifeCycle()
     lifeCycle.subscribe(LifeCycleEventType.RAW_LOG_COLLECTED, (rawLogsEvent) =>

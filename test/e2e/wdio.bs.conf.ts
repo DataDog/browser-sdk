@@ -11,7 +11,6 @@ export const config: Options.Testrunner = {
   capabilities: browserConfigurations
     .filter(
       (configuration) =>
-        configuration.sessionName !== 'IE' &&
         // Safari mobile on iOS <= 14.0 does not support
         // the way we flush events on page change
         // TODO check newer version on browserstack
