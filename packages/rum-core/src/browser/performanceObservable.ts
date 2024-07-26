@@ -186,7 +186,18 @@ export function createPerformanceObservable<T extends RumPerformanceEntryType>(
         if (options.buffered) {
           timeoutId = setTimeout(() => handlePerformanceEntries(performance.getEntriesByType(options.type)))
         }
-        observer.observe({ entryTypes: [options.type] })
+        try {
+          observer.observe({ entryTypes: [options.type] })
+        } catch {
+          // Old versions of Safari are throwing "entryTypes contained only unsupported types"
+          // errors when observing only unsupported entry types.
+          //
+          // We could use `supportPerformanceTimingEvent` to make sure we don't invoke
+          // `observer.observe` with an unsupported entry type, but Safari 11 and 12 don't support
+          // `Performance.supportedEntryTypes`, so doing so would lose support for these versions
+          // even if they do support the entry type.
+          return
+        }
       }
     }
     isObserverInitializing = false
