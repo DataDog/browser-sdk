@@ -1,4 +1,4 @@
-import { ErrorSource, isIE, isIE } from '@datadog/browser-core'
+import { ErrorSource, isIE } from '@datadog/browser-core'
 import type { MockFetch, MockFetchManager } from '@datadog/browser-core/test'
 import { SPEC_ENDPOINTS, MockResponse, mockFetch, registerCleanupTask } from '@datadog/browser-core/test'
 import type { RawNetworkLogsEvent } from '../../rawLogsEvent.types'
