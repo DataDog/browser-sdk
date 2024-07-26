@@ -25,7 +25,7 @@ export function trackInitialViewMetrics(
 ) {
   const initialViewMetrics: InitialViewMetrics = {}
 
-  const { stop: stopNavigationTracking } = trackNavigationTimings(lifeCycle, (navigationTimings) => {
+  const { stop: stopNavigationTracking } = trackNavigationTimings(configuration, (navigationTimings) => {
     setLoadEvent(navigationTimings.loadEvent)
     initialViewMetrics.navigationTimings = navigationTimings
     scheduleViewUpdate()

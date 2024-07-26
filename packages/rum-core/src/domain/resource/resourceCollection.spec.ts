@@ -1,5 +1,5 @@
 import type { Duration, RelativeTime, ServerDuration, TimeStamp } from '@datadog/browser-core'
-import { RequestType, ResourceType } from '@datadog/browser-core'
+import { RequestType, ResourceType, noop } from '@datadog/browser-core'
 import type { RumFetchResourceEventDomainContext, RumXhrResourceEventDomainContext } from '../../domainContext.types'
 import { setup, createPerformanceEntry, mockPerformanceObserver } from '../../../test'
 import type { TestSetupBuilder } from '../../../test'
@@ -32,7 +32,7 @@ describe('resourceCollection', () => {
     ;({ notifyPerformanceEntries } = mockPerformanceObserver())
     setupBuilder = setup().beforeBuild(({ lifeCycle, pageStateHistory, configuration }) => {
       wasInPageStateDuringPeriodSpy = spyOn(pageStateHistory, 'wasInPageStateDuringPeriod')
-      startResourceCollection(lifeCycle, { ...configuration, trackResources }, pageStateHistory)
+      startResourceCollection(lifeCycle, { ...configuration, trackResources }, pageStateHistory, noop)
     })
   })
 
@@ -319,7 +319,8 @@ describe('resourceCollection', () => {
             applicationId: 'xxx',
             traceSampleRate: 60,
           })!,
-          pageStateHistory
+          pageStateHistory,
+          noop
         )
       })
 
@@ -344,7 +345,8 @@ describe('resourceCollection', () => {
             clientToken: 'xxx',
             applicationId: 'xxx',
           })!,
-          pageStateHistory
+          pageStateHistory,
+          noop
         )
       })
 
@@ -370,7 +372,8 @@ describe('resourceCollection', () => {
             applicationId: 'xxx',
             traceSampleRate: 0,
           })!,
-          pageStateHistory
+          pageStateHistory,
+          noop
         )
       })
 

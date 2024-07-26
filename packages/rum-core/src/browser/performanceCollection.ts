@@ -1,13 +1,11 @@
 import type { Duration, RelativeTime } from '@datadog/browser-core'
 import {
   dateNow,
-  assign,
   addEventListeners,
   DOM_EVENT,
   monitor,
   setTimeout,
   relativeNow,
-  runOnReadyState,
   addEventListener,
   objectHasValue,
 } from '@datadog/browser-core'
@@ -15,12 +13,10 @@ import {
 import type { RumConfiguration } from '../domain/configuration'
 import type { LifeCycle } from '../domain/lifeCycle'
 import { LifeCycleEventType } from '../domain/lifeCycle'
-import { computeRelativePerformanceTiming } from '../domain/resource/resourceUtils'
 import type {
   BrowserWindow,
   RumFirstInputTiming,
   RumPerformanceEntry,
-  RumPerformanceNavigationTiming,
   RumPerformanceResourceTiming,
 } from './performanceObservable'
 import { RumPerformanceEntryType, supportPerformanceTimingEvent } from './performanceObservable'
@@ -45,11 +41,7 @@ export function startPerformanceCollection(lifeCycle: LifeCycle, configuration: 
     const handlePerformanceEntryList = monitor((entries: PerformanceObserverEntryList) =>
       handleRumPerformanceEntries(lifeCycle, entries.getEntries())
     )
-    const mainEntries = [
-      RumPerformanceEntryType.NAVIGATION,
-      RumPerformanceEntryType.LONG_TASK,
-      RumPerformanceEntryType.PAINT,
-    ]
+    const mainEntries = [RumPerformanceEntryType.LONG_TASK, RumPerformanceEntryType.PAINT]
     const experimentalEntries = [
       RumPerformanceEntryType.LARGEST_CONTENTFUL_PAINT,
       RumPerformanceEntryType.FIRST_INPUT,
@@ -95,11 +87,7 @@ export function startPerformanceCollection(lifeCycle: LifeCycle, configuration: 
       cleanupTasks.push(removePerformanceListener)
     }
   }
-  if (!supportPerformanceTimingEvent(RumPerformanceEntryType.NAVIGATION)) {
-    retrieveNavigationTiming(configuration, (timing) => {
-      handleRumPerformanceEntries(lifeCycle, [timing])
-    })
-  }
+
   if (!supportPerformanceTimingEvent(RumPerformanceEntryType.FIRST_INPUT)) {
     const { stop: stopFirstInputTiming } = retrieveFirstInputTiming(configuration, (timing) => {
       handleRumPerformanceEntries(lifeCycle, [timing])
@@ -111,24 +99,6 @@ export function startPerformanceCollection(lifeCycle: LifeCycle, configuration: 
       cleanupTasks.forEach((task) => task())
     },
   }
-}
-
-function retrieveNavigationTiming(
-  configuration: RumConfiguration,
-  callback: (timing: RumPerformanceNavigationTiming) => void
-) {
-  function sendFakeTiming() {
-    callback(
-      assign(computeRelativePerformanceTiming(), {
-        entryType: RumPerformanceEntryType.NAVIGATION as const,
-      })
-    )
-  }
-
-  runOnReadyState(configuration, 'complete', () => {
-    // Send it a bit after the actual load event, so the "loadEventEnd" timing is accurate
-    setTimeout(sendFakeTiming)
-  })
 }
 
 /**
@@ -217,13 +187,7 @@ function handleRumPerformanceEntries(
     objectHasValue(RumPerformanceEntryType, entry.entryType)
   )
 
-  const rumAllowedPerformanceEntries = rumPerformanceEntries.filter((entry) => !isIncompleteNavigation(entry))
-
-  if (rumAllowedPerformanceEntries.length) {
-    lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, rumAllowedPerformanceEntries)
+  if (rumPerformanceEntries.length) {
+    lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, rumPerformanceEntries)
   }
-}
-
-function isIncompleteNavigation(entry: RumPerformanceEntry) {
-  return entry.entryType === RumPerformanceEntryType.NAVIGATION && entry.loadEventEnd <= 0
 }
