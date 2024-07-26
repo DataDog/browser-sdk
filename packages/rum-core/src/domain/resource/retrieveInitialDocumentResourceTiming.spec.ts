@@ -11,6 +11,7 @@ describe('rum initial document resource', () => {
       const toJsonTiming = timing.toJSON()
       expect(toJsonTiming.entryType).toEqual(timing.entryType)
       expect(toJsonTiming.duration).toEqual(timing.duration)
+      expect((toJsonTiming as any).toJSON).toBeUndefined()
       done()
     })
   })

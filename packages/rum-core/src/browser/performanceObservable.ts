@@ -232,9 +232,9 @@ function filterRumPerformanceEntries<T extends RumPerformanceEntryType>(
   configuration: RumConfiguration,
   entries: Array<EntryTypeToReturnType[T]>
 ) {
-  return entries.filter((entry) => isAllowedResource(configuration, entry))
+  return entries.filter((entry) => !isForbiddenResource(configuration, entry))
 }
 
-function isAllowedResource(configuration: RumConfiguration, entry: RumPerformanceEntry) {
-  return entry.entryType === RumPerformanceEntryType.RESOURCE && isAllowedRequestUrl(configuration, entry.name)
+function isForbiddenResource(configuration: RumConfiguration, entry: RumPerformanceEntry) {
+  return entry.entryType === RumPerformanceEntryType.RESOURCE && !isAllowedRequestUrl(configuration, entry.name)
 }
