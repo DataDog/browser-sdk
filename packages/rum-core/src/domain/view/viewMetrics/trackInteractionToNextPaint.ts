@@ -65,18 +65,19 @@ export function trackInteractionToNextPaint(
 
     const newInteraction = longestInteractions.estimateP98Interaction()
     if (newInteraction && newInteraction.duration !== interactionToNextPaint) {
+      const inpTarget = newInteraction.target
       interactionToNextPaint = newInteraction.duration
       interactionToNextPaintStartTime = elapsed(viewStart, newInteraction.startTime)
 
-      if (newInteraction.target && isElementNode(newInteraction.target)) {
-        interactionToNextPaintTargetSelector = getSelectorFromElement(
-          newInteraction.target,
-          configuration.actionNameAttribute
-        )
+      addTelemetryDebug('INP target is null or not an element node', {
+        hasTarget: !!inpTarget,
+        targetIsConnected: inpTarget ? inpTarget.isConnected : null,
+        inp: newInteraction.duration,
+      })
+
+      if (inpTarget && isElementNode(inpTarget)) {
+        interactionToNextPaintTargetSelector = getSelectorFromElement(inpTarget, configuration.actionNameAttribute)
       } else {
-        addTelemetryDebug('INP target is null or not an element node', {
-          interactionToNextPaintStartTime,
-        })
         interactionToNextPaintTargetSelector = undefined
       }
     }
