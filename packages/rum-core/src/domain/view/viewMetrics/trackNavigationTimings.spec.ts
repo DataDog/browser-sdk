@@ -1,29 +1,67 @@
-import type { Duration } from '@datadog/browser-core'
-import { registerCleanupTask } from '@datadog/browser-core/test'
+import type { Duration, RelativeTime } from '@datadog/browser-core'
+import type { Clock } from '@datadog/browser-core/test'
+import { mockClock, registerCleanupTask } from '@datadog/browser-core/test'
+import type { RumPerformanceEntry } from '../../../browser/performanceObservable'
 import { RumPerformanceEntryType } from '../../../browser/performanceObservable'
-import { createPerformanceEntry } from '../../../../test'
-import { LifeCycle, LifeCycleEventType } from '../../lifeCycle'
+import { createPerformanceEntry, mockPerformanceObserver, mockPerformanceTiming } from '../../../../test'
+import type { RumConfiguration } from '../../configuration'
 import type { NavigationTimings } from './trackNavigationTimings'
 import { trackNavigationTimings } from './trackNavigationTimings'
 
 describe('trackNavigationTimings', () => {
-  const lifeCycle = new LifeCycle()
   let navigationTimingsCallback: jasmine.Spy<(timings: NavigationTimings) => void>
+  let notifyPerformanceEntries: (entries: RumPerformanceEntry[]) => void
+  let stop: () => void
+  let clock: Clock
+
+  function removePerformanceObserver() {
+    const originalPerformanceObserver = window.PerformanceObserver
+    window.PerformanceObserver = undefined as any
+
+    registerCleanupTask(() => {
+      window.PerformanceObserver = originalPerformanceObserver
+      stop()
+      clock?.cleanup()
+    })
+  }
 
   beforeEach(() => {
     navigationTimingsCallback = jasmine.createSpy()
-    const trackNavigationTimingsResult = trackNavigationTimings(lifeCycle, navigationTimingsCallback)
-
-    registerCleanupTask(trackNavigationTimingsResult.stop)
   })
 
   it('should provide navigation timing', () => {
-    lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [
-      createPerformanceEntry(RumPerformanceEntryType.NAVIGATION),
-    ])
+    ;({ notifyPerformanceEntries } = mockPerformanceObserver())
+    ;({ stop } = trackNavigationTimings({} as RumConfiguration, navigationTimingsCallback))
+    notifyPerformanceEntries([createPerformanceEntry(RumPerformanceEntryType.NAVIGATION)])
 
     expect(navigationTimingsCallback).toHaveBeenCalledOnceWith({
       firstByte: 123 as Duration,
+      domComplete: 456 as Duration,
+      domContentLoaded: 345 as Duration,
+      domInteractive: 234 as Duration,
+      loadEvent: 567 as Duration,
+    })
+  })
+
+  it('should discard incomplete navigation timing', () => {
+    ;({ notifyPerformanceEntries } = mockPerformanceObserver())
+    ;({ stop } = trackNavigationTimings({} as RumConfiguration, navigationTimingsCallback))
+    notifyPerformanceEntries([
+      createPerformanceEntry(RumPerformanceEntryType.NAVIGATION, { loadEventEnd: 0 as RelativeTime }),
+    ])
+
+    expect(navigationTimingsCallback).not.toHaveBeenCalled()
+  })
+
+  it('should provide navigation timing when navigation timing is not supported ', () => {
+    clock = mockClock(new Date(0))
+    mockPerformanceTiming()
+    removePerformanceObserver()
+    ;({ stop } = trackNavigationTimings({} as RumConfiguration, navigationTimingsCallback))
+    clock.tick(0)
+
+    expect(navigationTimingsCallback).toHaveBeenCalledOnceWith({
+      firstByte: undefined,
       domComplete: 456 as Duration,
       domContentLoaded: 345 as Duration,
       domInteractive: 234 as Duration,

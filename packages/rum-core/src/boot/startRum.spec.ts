@@ -13,7 +13,13 @@ import {
 } from '@datadog/browser-core'
 import { createNewEvent, interceptRequests, mockEventBridge } from '@datadog/browser-core/test'
 import type { RumSessionManagerMock, TestSetupBuilder } from '../../test'
-import { createPerformanceEntry, createRumSessionManagerMock, noopRecorderApi, setup } from '../../test'
+import {
+  createPerformanceEntry,
+  createRumSessionManagerMock,
+  mockPerformanceObserver,
+  noopRecorderApi,
+  setup,
+} from '../../test'
 import { RumPerformanceEntryType } from '../browser/performanceObservable'
 import type { LifeCycle } from '../domain/lifeCycle'
 import { LifeCycleEventType } from '../domain/lifeCycle'
@@ -278,10 +284,8 @@ describe('rum events url', () => {
   })
 
   it('should keep the same URL when updating an ended view', () => {
-    const { lifeCycle, clock, changeLocation } = setupBuilder
-      .withFakeClock()
-      .withFakeLocation('http://foo.com/')
-      .build()
+    const { notifyPerformanceEntries } = mockPerformanceObserver()
+    const { clock, changeLocation } = setupBuilder.withFakeClock().withFakeLocation('http://foo.com/').build()
 
     clock.tick(VIEW_DURATION)
 
@@ -289,9 +293,7 @@ describe('rum events url', () => {
 
     serverRumEvents.length = 0
 
-    lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [
-      createPerformanceEntry(RumPerformanceEntryType.NAVIGATION),
-    ])
+    notifyPerformanceEntries([createPerformanceEntry(RumPerformanceEntryType.NAVIGATION)])
     clock.tick(THROTTLE_VIEW_UPDATE_PERIOD)
 
     expect(serverRumEvents.length).toEqual(1)
