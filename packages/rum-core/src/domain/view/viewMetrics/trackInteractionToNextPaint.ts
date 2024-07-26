@@ -1,4 +1,4 @@
-import { addTelemetryDebug, elapsed, noop, ONE_MINUTE } from '@datadog/browser-core'
+import { addTelemetryDebug, elapsed, ExperimentalFeature, isExperimentalFeatureEnabled, noop, ONE_MINUTE } from '@datadog/browser-core'
 import type { Duration, RelativeTime } from '@datadog/browser-core'
 import { RumPerformanceEntryType, supportPerformanceTimingEvent } from '../../../browser/performanceObservable'
 import type { RumFirstInputTiming, RumPerformanceEventTiming } from '../../../browser/performanceObservable'
@@ -68,16 +68,25 @@ export function trackInteractionToNextPaint(
       const inpTarget = newInteraction.target
       interactionToNextPaint = newInteraction.duration
       interactionToNextPaintStartTime = elapsed(viewStart, newInteraction.startTime)
-
-      addTelemetryDebug('INP target is null or not an element node', {
-        hasTarget: !!inpTarget,
-        targetIsConnected: inpTarget ? inpTarget.isConnected : null,
-        inp: newInteraction.duration,
-      })
+      const isInpEnabled = isExperimentalFeatureEnabled(ExperimentalFeature.WEB_VITALS_INP)
 
       if (inpTarget && isElementNode(inpTarget)) {
         interactionToNextPaintTargetSelector = getSelectorFromElement(inpTarget, configuration.actionNameAttribute)
+        if (!interactionToNextPaintTargetSelector && isInpEnabled) {
+          addTelemetryDebug('INP target selector is null', {
+            targetIsConnected: inpTarget.isConnected,
+            inp: newInteraction.duration,
+          })
+        }
       } else {
+        if(isInpEnabled) {
+          addTelemetryDebug('INP target is null or not an element node', {
+            hasTarget: !!inpTarget,
+            targetIsConnected: inpTarget ? inpTarget.isConnected : null,
+            inp: newInteraction.duration,
+          })
+        }
+
         interactionToNextPaintTargetSelector = undefined
       }
     }
