@@ -71,8 +71,18 @@ export function startPerformanceCollection(lifeCycle: LifeCycle, configuration: 
     }
 
     const mainObserver = new PerformanceObserver(handlePerformanceEntryList)
-    mainObserver.observe({ entryTypes: mainEntries })
-    cleanupTasks.push(() => mainObserver.disconnect())
+    try {
+      mainObserver.observe({ entryTypes: mainEntries })
+      cleanupTasks.push(() => mainObserver.disconnect())
+    } catch {
+      // Old versions of Safari are throwing "entryTypes contained only unsupported types"
+      // errors when observing only unsupported entry types.
+      //
+      // We could use `supportPerformanceTimingEvent` to make sure we don't invoke
+      // `observer.observe` with an unsupported entry type, but Safari 11 and 12 don't support
+      // `Performance.supportedEntryTypes`, so doing so would lose support for these versions
+      // even if they do support the entry type.
+    }
 
     if (supportPerformanceObject() && 'addEventListener' in performance) {
       // https://bugzilla.mozilla.org/show_bug.cgi?id=1559377
