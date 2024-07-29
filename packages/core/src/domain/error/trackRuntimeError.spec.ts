@@ -9,8 +9,8 @@ describe('trackRuntimeError', () => {
   const ERROR_MESSAGE = 'foo'
 
   let originalOnErrorHandler: OnErrorEventHandler
+  let onUnhandledrejectionSpy: jasmine.Spy
   let onErrorSpy: jasmine.Spy
-  let onUnhandledrejectionSpy: jasmine.Spy | null
   let notifyError: jasmine.Spy
   let stopRuntimeErrorTracking: () => void
 
@@ -18,7 +18,9 @@ describe('trackRuntimeError', () => {
     originalOnErrorHandler = window.onerror
     onErrorSpy = jasmine.createSpy()
     window.onerror = onErrorSpy
+
     onUnhandledrejectionSpy = setupOnUnhandledrejectionSpy()
+
     notifyError = jasmine.createSpy()
     const errorObservable = new Observable<RawError>()
     errorObservable.subscribe((e: RawError) => notifyError(e) as void)
@@ -55,7 +57,7 @@ describe('trackRuntimeError', () => {
       void Promise.reject(new Error(ERROR_MESSAGE))
     })
 
-    collectAsyncCalls(onUnhandledrejectionSpy as jasmine.Spy, 1, () => {
+    collectAsyncCalls(onUnhandledrejectionSpy, 1, () => {
       expect(notifyError).toHaveBeenCalledOnceWith(jasmine.objectContaining({ message: ERROR_MESSAGE }))
       done()
     })
@@ -314,14 +316,16 @@ describe('instrumentUnhandledRejection', () => {
 })
 
 function setupOnUnhandledrejectionSpy() {
-  const originalOnUnhandledRejectionHandler: Window['onunhandledrejection'] = window.onunhandledrejection
   const onUnhandledrejectionSpy = jasmine.createSpy()
+  const originalOnUnhandledRejectionHandler: Window['onunhandledrejection'] = window.onunhandledrejection
 
-  window.onunhandledrejection = onUnhandledrejectionSpy
+  if ('onunhandledrejection' in window) {
+    window.onunhandledrejection = onUnhandledrejectionSpy
 
-  registerCleanupTask(() => {
-    window.onunhandledrejection = originalOnUnhandledRejectionHandler
-  })
+    registerCleanupTask(() => {
+      window.onunhandledrejection = originalOnUnhandledRejectionHandler
+    })
+  }
 
   return onUnhandledrejectionSpy
 }
