@@ -1,10 +1,10 @@
-const { readdirSync } = require('fs')
 const { runMain } = require('../lib/execution-utils')
 const { modifyFile } = require('../lib/files-utils')
 const { command } = require('../lib/command')
 const { browserSdkVersion } = require('../lib/browser-sdk-version')
+const { packagesDirectoryNames } = require('../lib/packages-directory-names')
 
-const JSON_FILES = readdirSync('./packages').map((packageName) => `./packages/${packageName}/package.json`)
+const JSON_FILES = packagesDirectoryNames.map((packageName) => `./packages/${packageName}/package.json`)
 
 // This script updates the peer dependency versions between rum and logs packages to match the new
 // version during a release.

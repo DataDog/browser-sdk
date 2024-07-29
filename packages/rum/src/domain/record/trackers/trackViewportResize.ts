@@ -28,7 +28,7 @@ export function trackViewportResize(
   }
 }
 
-export function tackVisualViewportResize(
+export function trackVisualViewportResize(
   configuration: RumConfiguration,
   visualViewportResizeCb: VisualViewportResizeCallback
 ): Tracker {

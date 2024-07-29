@@ -1,6 +1,6 @@
 import type { TrackingConsentState } from '@datadog/browser-core'
 import {
-  BoundedBuffer,
+  createBoundedBuffer,
   assign,
   canUseEventBridge,
   display,
@@ -24,7 +24,7 @@ export function createPreStartStrategy(
   trackingConsentState: TrackingConsentState,
   doStartLogs: (initConfiguration: LogsInitConfiguration, configuration: LogsConfiguration) => StartLogsResult
 ): Strategy {
-  const bufferApiCalls = new BoundedBuffer<StartLogsResult>()
+  const bufferApiCalls = createBoundedBuffer<StartLogsResult>()
   let cachedInitConfiguration: LogsInitConfiguration | undefined
   let cachedConfiguration: LogsConfiguration | undefined
   const trackingConsentStateSubscription = trackingConsentState.observable.subscribe(tryStartLogs)

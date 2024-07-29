@@ -1,5 +1,5 @@
 import type { Duration, RelativeTime, ServerDuration, TimeStamp } from '@datadog/browser-core'
-import { isIE, RequestType, ResourceType } from '@datadog/browser-core'
+import { isIE, noop, RequestType, ResourceType } from '@datadog/browser-core'
 import type { RumFetchResourceEventDomainContext, RumXhrResourceEventDomainContext } from '../../domainContext.types'
 import { setup, createPerformanceEntry, mockPerformanceObserver } from '../../../test'
 import type { TestSetupBuilder } from '../../../test'
@@ -7,7 +7,7 @@ import type { RawRumResourceEvent } from '../../rawRumEvent.types'
 import { RumEventType } from '../../rawRumEvent.types'
 import { LifeCycleEventType } from '../lifeCycle'
 import type { RequestCompleteEvent } from '../requestCollection'
-import { TraceIdentifier } from '../tracing/tracer'
+import { createTraceIdentifier } from '../tracing/tracer'
 import { validateAndBuildRumConfiguration } from '../configuration'
 import type { RumPerformanceEntry } from '../../browser/performanceObservable'
 import { RumPerformanceEntryType } from '../../browser/performanceObservable'
@@ -32,7 +32,7 @@ describe('resourceCollection', () => {
     ;({ notifyPerformanceEntries } = mockPerformanceObserver())
     setupBuilder = setup().beforeBuild(({ lifeCycle, pageStateHistory, configuration }) => {
       wasInPageStateDuringPeriodSpy = spyOn(pageStateHistory, 'wasInPageStateDuringPeriod')
-      startResourceCollection(lifeCycle, { ...configuration, trackResources }, pageStateHistory)
+      startResourceCollection(lifeCycle, { ...configuration, trackResources }, pageStateHistory, noop)
     })
   })
 
@@ -163,8 +163,8 @@ describe('resourceCollection', () => {
           LifeCycleEventType.REQUEST_COMPLETED,
           createCompletedRequest({
             type: RequestType.XHR,
-            traceId: new TraceIdentifier(),
-            spanId: new TraceIdentifier(),
+            traceId: createTraceIdentifier(),
+            spanId: createTraceIdentifier(),
             traceSampled: true,
           })
         )
@@ -292,8 +292,8 @@ describe('resourceCollection', () => {
         LifeCycleEventType.REQUEST_COMPLETED,
         createCompletedRequest({
           traceSampled: true,
-          spanId: new TraceIdentifier(),
-          traceId: new TraceIdentifier(),
+          spanId: createTraceIdentifier(),
+          traceId: createTraceIdentifier(),
         })
       )
       const privateFields = (rawRumEvents[0].rawRumEvent as RawRumResourceEvent)._dd
@@ -307,8 +307,8 @@ describe('resourceCollection', () => {
         LifeCycleEventType.REQUEST_COMPLETED,
         createCompletedRequest({
           traceSampled: false,
-          spanId: new TraceIdentifier(),
-          traceId: new TraceIdentifier(),
+          spanId: createTraceIdentifier(),
+          traceId: createTraceIdentifier(),
         })
       )
       const privateFields = (rawRumEvents[0].rawRumEvent as RawRumResourceEvent)._dd
@@ -325,7 +325,8 @@ describe('resourceCollection', () => {
             applicationId: 'xxx',
             traceSampleRate: 60,
           })!,
-          pageStateHistory
+          pageStateHistory,
+          noop
         )
       })
 
@@ -334,8 +335,8 @@ describe('resourceCollection', () => {
         LifeCycleEventType.REQUEST_COMPLETED,
         createCompletedRequest({
           traceSampled: true,
-          spanId: new TraceIdentifier(),
-          traceId: new TraceIdentifier(),
+          spanId: createTraceIdentifier(),
+          traceId: createTraceIdentifier(),
         })
       )
       const privateFields = (rawRumEvents[0].rawRumEvent as RawRumResourceEvent)._dd
@@ -350,7 +351,8 @@ describe('resourceCollection', () => {
             clientToken: 'xxx',
             applicationId: 'xxx',
           })!,
-          pageStateHistory
+          pageStateHistory,
+          noop
         )
       })
 
@@ -359,8 +361,8 @@ describe('resourceCollection', () => {
         LifeCycleEventType.REQUEST_COMPLETED,
         createCompletedRequest({
           traceSampled: true,
-          spanId: new TraceIdentifier(),
-          traceId: new TraceIdentifier(),
+          spanId: createTraceIdentifier(),
+          traceId: createTraceIdentifier(),
         })
       )
       const privateFields = (rawRumEvents[0].rawRumEvent as RawRumResourceEvent)._dd
@@ -376,7 +378,8 @@ describe('resourceCollection', () => {
             applicationId: 'xxx',
             traceSampleRate: 0,
           })!,
-          pageStateHistory
+          pageStateHistory,
+          noop
         )
       })
 
@@ -385,8 +388,8 @@ describe('resourceCollection', () => {
         LifeCycleEventType.REQUEST_COMPLETED,
         createCompletedRequest({
           traceSampled: true,
-          spanId: new TraceIdentifier(),
-          traceId: new TraceIdentifier(),
+          spanId: createTraceIdentifier(),
+          traceId: createTraceIdentifier(),
         })
       )
       const privateFields = (rawRumEvents[0].rawRumEvent as RawRumResourceEvent)._dd

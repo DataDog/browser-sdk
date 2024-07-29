@@ -2,16 +2,14 @@ import type { TestSetupBuilder } from '../../test'
 import { createPerformanceEntry, mockPerformanceObserver, setup } from '../../test'
 import { LifeCycleEventType } from '../domain/lifeCycle'
 import { startPerformanceCollection } from './performanceCollection'
-import { RumPerformanceEntryType, type RumPerformanceEntry } from './performanceObservable'
+import { RumPerformanceEntryType } from './performanceObservable'
 
 describe('startPerformanceCollection', () => {
-  let notifyPerformanceEntries: (entry: RumPerformanceEntry[]) => void
   let entryCollectedCallback: jasmine.Spy
   let setupBuilder: TestSetupBuilder
 
   beforeEach(() => {
     entryCollectedCallback = jasmine.createSpy()
-    ;({ notifyPerformanceEntries } = mockPerformanceObserver())
 
     setupBuilder = setup().beforeBuild(({ lifeCycle, configuration }) => {
       const { stop } = startPerformanceCollection(lifeCycle, configuration)
@@ -25,7 +23,6 @@ describe('startPerformanceCollection', () => {
     })
   })
   ;[
-    RumPerformanceEntryType.NAVIGATION,
     RumPerformanceEntryType.LONG_TASK,
     RumPerformanceEntryType.PAINT,
     RumPerformanceEntryType.LARGEST_CONTENTFUL_PAINT,
@@ -34,6 +31,7 @@ describe('startPerformanceCollection', () => {
     RumPerformanceEntryType.EVENT,
   ].forEach((entryType) => {
     it(`should notify ${entryType}`, () => {
+      const { notifyPerformanceEntries } = mockPerformanceObserver()
       setupBuilder.build()
 
       notifyPerformanceEntries([createPerformanceEntry(entryType)])
@@ -41,11 +39,24 @@ describe('startPerformanceCollection', () => {
       expect(entryCollectedCallback).toHaveBeenCalledWith([jasmine.objectContaining({ entryType })])
     })
   })
+  ;[(RumPerformanceEntryType.NAVIGATION, RumPerformanceEntryType.RESOURCE)].forEach((entryType) => {
+    it(`should not notify ${entryType} timings`, () => {
+      const { notifyPerformanceEntries } = mockPerformanceObserver()
+      setupBuilder.build()
 
-  it('should not notify resource timings', () => {
+      notifyPerformanceEntries([createPerformanceEntry(RumPerformanceEntryType.RESOURCE)])
+
+      expect(entryCollectedCallback).not.toHaveBeenCalled()
+    })
+  })
+
+  it('should handle exceptions coming from performance observer .observe()', () => {
+    const { notifyPerformanceEntries } = mockPerformanceObserver({
+      emulateAllEntryTypesUnsupported: true,
+    })
     setupBuilder.build()
 
-    notifyPerformanceEntries([createPerformanceEntry(RumPerformanceEntryType.RESOURCE)])
+    expect(() => notifyPerformanceEntries([createPerformanceEntry(RumPerformanceEntryType.RESOURCE)])).not.toThrow()
 
     expect(entryCollectedCallback).not.toHaveBeenCalled()
   })

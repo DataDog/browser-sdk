@@ -107,7 +107,7 @@ export { createPageExitObservable, PageExitEvent, PageExitReason, isPageExitReas
 export * from './browser/addEventListener'
 export * from './tools/timer'
 export { initConsoleObservable, resetConsoleObservable, ConsoleLog } from './domain/console/consoleObservable'
-export { BoundedBuffer } from './tools/boundedBuffer'
+export { createBoundedBuffer, BoundedBuffer } from './tools/boundedBuffer'
 export { catchUserErrors } from './tools/catchUserErrors'
 export { createContextManager, ContextManager } from './domain/context/contextManager'
 export { storeContextManager, removeStorageListeners } from './domain/context/storeContextManager'
@@ -120,7 +120,7 @@ export {
   CustomerDataCompressionStatus,
 } from './domain/context/customerDataTracker'
 export { CustomerDataType } from './domain/context/contextConstants'
-export { ValueHistory, ValueHistoryEntry, CLEAR_OLD_VALUES_INTERVAL } from './tools/valueHistory'
+export { createValueHistory, ValueHistory, ValueHistoryEntry, CLEAR_OLD_VALUES_INTERVAL } from './tools/valueHistory'
 export { readBytesFromStream } from './tools/readBytesFromStream'
 export { STORAGE_POLL_DELAY } from './domain/session/sessionStore'
 export { SESSION_STORE_KEY } from './domain/session/storeStrategies/sessionStoreStrategy'

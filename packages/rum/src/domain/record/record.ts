@@ -15,6 +15,7 @@ import {
   trackStyleSheet,
   trackViewEnd,
   trackViewportResize,
+  trackVisualViewportResize,
 } from './trackers'
 import { createElementsScrollPositions } from './elementsScrollPositions'
 import type { ShadowRootsController } from './shadowRootsController'
@@ -79,7 +80,7 @@ export function record(options: RecordOptions): RecordAPI {
     trackMediaInteraction(configuration, emitAndComputeStats),
     trackStyleSheet(emitAndComputeStats),
     trackFocus(configuration, emitAndComputeStats),
-    trackViewportResize(configuration, emitAndComputeStats),
+    trackVisualViewportResize(configuration, emitAndComputeStats),
     trackFrustration(lifeCycle, emitAndComputeStats, recordIds),
     trackViewEnd(lifeCycle, (viewEndRecord) => {
       flushMutations()
