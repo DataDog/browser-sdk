@@ -18,6 +18,12 @@
 
 ---
 
+## v5.23.3
+
+**Internal Changes:**
+
+- 👷 disable test-performance job ([#2904](https://github.com/DataDog/browser-sdk/pull/2904))
+
 ## v5.23.2
 
 **Public Changes:**
