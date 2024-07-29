@@ -18,6 +18,12 @@
 
 ---
 
+## v5.23.2
+
+**Public Changes:**
+
+- 🐛 fix unexpected exception when no entry type is supported in PerformanceObserver ([#2899](https://github.com/DataDog/browser-sdk/pull/2899)) [RUM] [RUM-SLIM]
+
 ## v5.23.1
 
 **Public Changes:**

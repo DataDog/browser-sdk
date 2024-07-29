@@ -1,13 +1,13 @@
 {
   "name": "@datadog/browser-worker",
-  "version": "5.23.1",
+  "version": "5.23.2",
   "license": "Apache-2.0",
   "main": "bundle/worker.js",
   "scripts": {
     "build": "rm -rf bundle && webpack --mode=production"
   },
   "dependencies": {
-    "@datadog/browser-core": "5.23.1"
+    "@datadog/browser-core": "5.23.2"
   },
   "repository": {
     "type": "git",
