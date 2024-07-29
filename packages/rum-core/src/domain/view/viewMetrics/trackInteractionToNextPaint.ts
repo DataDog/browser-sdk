@@ -75,7 +75,7 @@ export function trackInteractionToNextPaint(
       const inpTarget = newInteraction.target
       interactionToNextPaint = newInteraction.duration
       interactionToNextPaintStartTime = elapsed(viewStart, newInteraction.startTime)
-      const isInpEnabled = isExperimentalFeatureEnabled(ExperimentalFeature.WEB_VITALS_INP)
+      const isInpEnabled = isExperimentalFeatureEnabled(ExperimentalFeature.NULL_INP_TELEMETRY)
 
       if (inpTarget && isElementNode(inpTarget)) {
         interactionToNextPaintTargetSelector = getSelectorFromElement(inpTarget, configuration.actionNameAttribute)
