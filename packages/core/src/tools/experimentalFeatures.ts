@@ -19,6 +19,7 @@ export enum ExperimentalFeature {
   TOLERANT_RESOURCE_TIMINGS = 'tolerant_resource_timings',
   REMOTE_CONFIGURATION = 'remote_configuration',
   UPDATE_VIEW_NAME = 'update_view_name',
+  WEB_VITALS_INP = 'web_vitals_inp',
 }
 
 const enabledExperimentalFeatures: Set<ExperimentalFeature> = new Set()
