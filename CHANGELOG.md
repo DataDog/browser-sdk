@@ -18,6 +18,41 @@
 
 ---
 
+## v5.23.3
+
+**Internal Changes:**
+
+- 👷 disable test-performance job ([#2904](https://github.com/DataDog/browser-sdk/pull/2904))
+
+## v5.23.2
+
+**Public Changes:**
+
+- 🐛 fix unexpected exception when no entry type is supported in PerformanceObserver ([#2899](https://github.com/DataDog/browser-sdk/pull/2899)) [RUM] [RUM-SLIM]
+
+## v5.23.1
+
+**Public Changes:**
+
+- 🐛 Fix replay visual viewport resize support ([#2891](https://github.com/DataDog/browser-sdk/pull/2891)) [RUM] [RUM-SLIM]
+- 🐛 Handle non-object response and error ([#2860](https://github.com/DataDog/browser-sdk/pull/2860)) [LOGS] [RUM] [RUM-SLIM] [WORKER]
+- ⚡️ Remove classes in favour of functions ([#2885](https://github.com/DataDog/browser-sdk/pull/2885)) [LOGS] [RUM] [RUM-SLIM] [WORKER] [RUM-REACT]
+- ⚡ Performance Friday Reduce Bundle Size ([#2875](https://github.com/DataDog/browser-sdk/pull/2875)) [LOGS] [RUM] [RUM-SLIM] [WORKER]
+- ⚡️Reduce bundle size: simplify config, use const enum, remove str redundancies ([#2877](https://github.com/DataDog/browser-sdk/pull/2877)) [LOGS] [RUM] [RUM-SLIM] [WORKER]
+- 📝 [RUM-152] Add packages name modified next to commit in CHANGELOG ([#2889](https://github.com/DataDog/browser-sdk/pull/2889))
+- 📝 [RUM-5172] add react integration documentation ([#2873](https://github.com/DataDog/browser-sdk/pull/2873)) [RUM-REACT]
+
+**Internal Changes:**
+
+- 👷 Bump chrome to 127.0.6533.72-1 ([#2890](https://github.com/DataDog/browser-sdk/pull/2890))
+- 👷 retry gitlab jobs on runner_system_failure ([#2886](https://github.com/DataDog/browser-sdk/pull/2886))
+- 👷 Update all non-major dependencies ([#2881](https://github.com/DataDog/browser-sdk/pull/2881)) [RUM-REACT]
+- 👷 Bump staging to staging-30
+- 👷 Update dependency minimatch to v10 ([#2863](https://github.com/DataDog/browser-sdk/pull/2863))
+- 👷 Update dependency glob to v11 ([#2862](https://github.com/DataDog/browser-sdk/pull/2862))
+- ♻️ [RUM-5294] Use performanceObserver for navigation entries ([#2855](https://github.com/DataDog/browser-sdk/pull/2855)) [RUM] [RUM-SLIM]
+- ⚗️ enable plugins as a beta feature ([#2872](https://github.com/DataDog/browser-sdk/pull/2872)) [LOGS] [RUM] [RUM-SLIM] [WORKER]
+
 ## v5.23.0
 
 **Public Changes:**
