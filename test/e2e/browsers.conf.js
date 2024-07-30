@@ -1,36 +1,29 @@
 // Capabilities: https://www.browserstack.com/automate/capabilities
 
 /**
- * @type {import('./browsers.conf').BrowserConfigurations}
+ * @type {import('../browsers.conf').BrowserConfigurations}
  */
 const browserConfigurations = [
   {
     sessionName: 'Edge',
     name: 'Edge',
-    version: '80.0',
+    version: '100.0',
     os: 'Windows',
     osVersion: '11',
   },
   {
     sessionName: 'Firefox',
     name: 'Firefox',
-    version: '67.0',
+    version: '91.0',
     os: 'Windows',
     osVersion: '11',
   },
   {
     sessionName: 'Safari desktop',
     name: 'Safari',
-    version: '12.1',
+    version: '14.1',
     os: 'OS X',
-    osVersion: 'Mojave',
-  },
-  {
-    sessionName: 'Chrome desktop',
-    name: 'Chrome',
-    version: '63.0',
-    os: 'Windows',
-    osVersion: '11',
+    osVersion: 'Big Sur',
   },
   {
     sessionName: 'Chrome mobile',
@@ -38,20 +31,6 @@ const browserConfigurations = [
     os: 'android',
     osVersion: '12.0',
     device: 'Google Pixel 6 Pro',
-  },
-  {
-    sessionName: 'Safari mobile',
-    name: 'safari',
-    os: 'ios',
-    osVersion: '14',
-    device: 'iPhone 11',
-  },
-  {
-    sessionName: 'IE',
-    name: 'IE',
-    version: '11.0',
-    os: 'Windows',
-    osVersion: '10',
   },
 ]
 

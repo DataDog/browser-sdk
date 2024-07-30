@@ -1,29 +1,36 @@
 // Capabilities: https://www.browserstack.com/automate/capabilities
 
 /**
- * @type {import('./browsers.conf').BrowserConfigurations}
+ * @type {import('../browsers.conf').BrowserConfigurations}
  */
 const browserConfigurations = [
   {
     sessionName: 'Edge',
     name: 'Edge',
-    version: '100.0',
+    version: '80.0',
     os: 'Windows',
     osVersion: '11',
   },
   {
     sessionName: 'Firefox',
     name: 'Firefox',
-    version: '91.0',
+    version: '67.0',
     os: 'Windows',
     osVersion: '11',
   },
   {
     sessionName: 'Safari desktop',
     name: 'Safari',
-    version: '14.1',
+    version: '12.1',
     os: 'OS X',
-    osVersion: 'Big Sur',
+    osVersion: 'Mojave',
+  },
+  {
+    sessionName: 'Chrome desktop',
+    name: 'Chrome',
+    version: '63.0',
+    os: 'Windows',
+    osVersion: '11',
   },
   {
     sessionName: 'Chrome mobile',
