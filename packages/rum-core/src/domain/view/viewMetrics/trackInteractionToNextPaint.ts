@@ -75,26 +75,19 @@ export function trackInteractionToNextPaint(
       const inpTarget = newInteraction.target
       interactionToNextPaint = newInteraction.duration
       interactionToNextPaintStartTime = elapsed(viewStart, newInteraction.startTime)
-      const isTelEnabled = isExperimentalFeatureEnabled(ExperimentalFeature.NULL_INP_TELEMETRY)
 
       if (inpTarget && isElementNode(inpTarget)) {
         interactionToNextPaintTargetSelector = getSelectorFromElement(inpTarget, configuration.actionNameAttribute)
-        if (!interactionToNextPaintTargetSelector && isTelEnabled) {
-          addTelemetryDebug('INP target selector is null', {
-            targetIsConnected: inpTarget.isConnected,
-            inp: newInteraction.duration,
-          })
-        }
       } else {
-        if (isTelEnabled) {
-          addTelemetryDebug('INP target is null or not an element node', {
-            hasTarget: !!inpTarget,
-            targetIsConnected: inpTarget ? inpTarget.isConnected : null,
-            inp: newInteraction.duration,
-          })
-        }
-
         interactionToNextPaintTargetSelector = undefined
+      }
+      if (!interactionToNextPaintTargetSelector && isExperimentalFeatureEnabled(ExperimentalFeature.NULL_INP_TELEMETRY)) {
+         addTelemetryDebug('Fail to get INP target selector', {
+           hasTarget: !!inpTarget,
+           targetIsConnected: inpTarget ? inpTarget.isConnected : undefined,
+           targetIsElementNode: inpTarget ? isElementNode(inpTarget) : undefined,
+           inp: newInteraction.duration
+         })
       }
     }
   })
