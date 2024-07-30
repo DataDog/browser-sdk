@@ -183,17 +183,6 @@ describe('computeXhrResponseData', () => {
 })
 
 describe('computeFetchResponseText', () => {
-  let onunhandledrejectionSpy: jasmine.Spy
-
-  beforeEach(() => {
-    onunhandledrejectionSpy = jasmine.createSpy()
-    window.onunhandledrejection = onunhandledrejectionSpy
-
-    registerCleanupTask(() => {
-      window.onunhandledrejection = null
-    })
-  })
-
   it('computes response text from Response objects', (done) => {
     computeFetchResponseText(new MockResponse({ responseText: 'foo' }), CONFIGURATION, (responseText) => {
       expect(responseText).toBe('foo')
