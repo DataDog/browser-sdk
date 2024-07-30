@@ -79,6 +79,10 @@ describe('fetch proxy', () => {
   })
 
   it('should track fetch aborted by AbortController', (done) => {
+    if (!window.AbortController) {
+      pending('AbortController is not supported')
+    }
+
     const controller = new AbortController()
     void fetch(FAKE_URL, { signal: controller.signal })
     controller.abort('AbortError')

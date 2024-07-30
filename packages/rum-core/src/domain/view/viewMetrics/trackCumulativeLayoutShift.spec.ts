@@ -6,7 +6,7 @@ import { LifeCycle, LifeCycleEventType } from '../../lifeCycle'
 import { RumPerformanceEntryType } from '../../../browser/performanceObservable'
 import type { RumConfiguration } from '../../configuration'
 import type { CumulativeLayoutShift } from './trackCumulativeLayoutShift'
-import { MAX_WINDOW_DURATION, trackCumulativeLayoutShift } from './trackCumulativeLayoutShift'
+import { isLayoutShiftSupported, MAX_WINDOW_DURATION, trackCumulativeLayoutShift } from './trackCumulativeLayoutShift'
 
 interface StartCLSTrackingArgs {
   viewStart: RelativeTime
@@ -41,11 +41,7 @@ describe('trackCumulativeLayoutShift', () => {
   }
 
   beforeEach(() => {
-    if (
-      !window.PerformanceObserver ||
-      !PerformanceObserver.supportedEntryTypes ||
-      !PerformanceObserver.supportedEntryTypes.includes('layout-shift')
-    ) {
+    if (!isLayoutShiftSupported()) {
       pending('No LayoutShift API support')
     }
   })

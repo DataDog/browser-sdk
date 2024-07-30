@@ -1,5 +1,8 @@
 // Capabilities: https://www.browserstack.com/automate/capabilities
 
+/**
+ * @type {import('../browsers.conf').BrowserConfigurations}
+ */
 const browserConfigurations = [
   {
     sessionName: 'Edge',
@@ -28,13 +31,6 @@ const browserConfigurations = [
     os: 'android',
     osVersion: '12.0',
     device: 'Google Pixel 6 Pro',
-  },
-  {
-    sessionName: 'Safari mobile',
-    name: 'safari',
-    os: 'ios',
-    osVersion: '14',
-    device: 'iPhone 11',
   },
 ]
 
