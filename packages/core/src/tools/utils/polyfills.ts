@@ -11,13 +11,6 @@ export function findLast<T, S extends T>(
   return undefined
 }
 
-export function forEach<List extends { [index: number]: any }>(
-  list: List,
-  callback: (value: List[number], index: number, parent: List) => void
-) {
-  Array.prototype.forEach.call(list, callback as any)
-}
-
 // TODO remove after updating target to es2018
 export function objectValues<T = unknown>(object: { [key: string]: T }) {
   return Object.keys(object).map((key) => object[key])
@@ -32,6 +25,8 @@ interface Assignable {
   [key: string]: any
 }
 
+// TODO: Object.assign generates larger bundle size than this polyfill.
+// try with spread operator after updating target to es2018
 export function assign<T, U>(target: T, source: U): T & U
 export function assign<T, U, V>(target: T, source1: U, source2: V): T & U & V
 export function assign<T, U, V, W>(target: T, source1: U, source2: V, source3: W): T & U & V & W
