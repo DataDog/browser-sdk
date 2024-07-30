@@ -13,7 +13,7 @@ export function mockPerformanceObserver({ typeSupported = true, emulateAllEntryT
   let performanceObserver: PerformanceObserver
   let bufferedEntries: RumPerformanceEntry[] = []
 
-  const mock = (callback: PerformanceObserverCallback) => {
+  const mock = function (callback: PerformanceObserverCallback) {
     const instance = { callback, entryTypes: [] as string[] }
 
     performanceObserver = {
