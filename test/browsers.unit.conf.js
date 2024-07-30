@@ -46,6 +46,13 @@ const browserConfigurations = [
     osVersion: '14',
     device: 'iPhone 11',
   },
+  {
+    sessionName: 'IE',
+    name: 'IE',
+    version: '11.0',
+    os: 'Windows',
+    osVersion: '10',
+  },
 ]
 
 module.exports = {
