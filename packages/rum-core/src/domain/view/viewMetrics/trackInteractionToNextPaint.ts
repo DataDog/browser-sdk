@@ -81,13 +81,16 @@ export function trackInteractionToNextPaint(
       } else {
         interactionToNextPaintTargetSelector = undefined
       }
-      if (!interactionToNextPaintTargetSelector && isExperimentalFeatureEnabled(ExperimentalFeature.NULL_INP_TELEMETRY)) {
-         addTelemetryDebug('Fail to get INP target selector', {
-           hasTarget: !!inpTarget,
-           targetIsConnected: inpTarget ? inpTarget.isConnected : undefined,
-           targetIsElementNode: inpTarget ? isElementNode(inpTarget) : undefined,
-           inp: newInteraction.duration
-         })
+      if (
+        !interactionToNextPaintTargetSelector &&
+        isExperimentalFeatureEnabled(ExperimentalFeature.NULL_INP_TELEMETRY)
+      ) {
+        addTelemetryDebug('Fail to get INP target selector', {
+          hasTarget: !!inpTarget,
+          targetIsConnected: inpTarget ? inpTarget.isConnected : undefined,
+          targetIsElementNode: inpTarget ? isElementNode(inpTarget) : undefined,
+          inp: newInteraction.duration,
+        })
       }
     }
   })
