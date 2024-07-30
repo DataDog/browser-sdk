@@ -1,4 +1,4 @@
-import { disableJasmineUncaughtExceptionTracking, collectAsyncCalls } from '../../../test'
+import { disableJasmineUncaughtExceptionTracking, collectAsyncCalls, registerCleanupTask } from '../../../test'
 import { Observable } from '../../tools/observable'
 import { isIE } from '../../tools/utils/browserDetection'
 import type { UnhandledErrorCallback } from './trackRuntimeError'
@@ -9,11 +9,8 @@ describe('trackRuntimeError', () => {
   const ERROR_MESSAGE = 'foo'
 
   let originalOnErrorHandler: OnErrorEventHandler
-  let onErrorSpy: jasmine.Spy
-
-  let originalOnUnhandledRejectionHandler: Window['onunhandledrejection']
   let onUnhandledrejectionSpy: jasmine.Spy
-
+  let onErrorSpy: jasmine.Spy
   let notifyError: jasmine.Spy
   let stopRuntimeErrorTracking: () => void
 
@@ -22,9 +19,7 @@ describe('trackRuntimeError', () => {
     onErrorSpy = jasmine.createSpy()
     window.onerror = onErrorSpy
 
-    originalOnUnhandledRejectionHandler = window.onunhandledrejection
-    onUnhandledrejectionSpy = jasmine.createSpy()
-    window.onunhandledrejection = onUnhandledrejectionSpy
+    onUnhandledrejectionSpy = setupOnUnhandledrejectionSpy()
 
     notifyError = jasmine.createSpy()
     const errorObservable = new Observable<RawError>()
@@ -35,7 +30,6 @@ describe('trackRuntimeError', () => {
   afterEach(() => {
     stopRuntimeErrorTracking()
     window.onerror = originalOnErrorHandler
-    window.onunhandledrejection = originalOnUnhandledRejectionHandler
   })
 
   it('should collect unhandled error', (done) => {
@@ -52,6 +46,11 @@ describe('trackRuntimeError', () => {
     if (isIE()) {
       pending('no promise support')
     }
+
+    if (!('onunhandledrejection' in window)) {
+      pending('onunhandledrejection not supported')
+    }
+
     disableJasmineUncaughtExceptionTracking()
 
     setTimeout(() => {
@@ -278,23 +277,23 @@ describe('instrumentOnError', () => {
 })
 
 describe('instrumentUnhandledRejection', () => {
-  let originalOnUnhandledRejectionHandler: Window['onunhandledrejection']
-  let onUnhandledrejectionSpy: jasmine.Spy
+  let onUnhandledrejectionSpy: jasmine.Spy | null
   let stopCollectingUnhandledError: () => void
   let callbackSpy: jasmine.Spy<UnhandledErrorCallback>
   const ERROR_MESSAGE = 'foo'
 
   beforeEach(() => {
+    if (!('onunhandledrejection' in window)) {
+      pending('onunhandledrejection not supported')
+    }
+
     callbackSpy = jasmine.createSpy()
-    originalOnUnhandledRejectionHandler = window.onunhandledrejection
-    onUnhandledrejectionSpy = jasmine.createSpy()
-    window.onunhandledrejection = onUnhandledrejectionSpy
+    onUnhandledrejectionSpy = setupOnUnhandledrejectionSpy()
     ;({ stop: stopCollectingUnhandledError } = instrumentUnhandledRejection(callbackSpy))
   })
 
   afterEach(() => {
-    window.onunhandledrejection = originalOnUnhandledRejectionHandler
-    stopCollectingUnhandledError()
+    stopCollectingUnhandledError?.()
   })
 
   it('should call original unhandled rejection handler', () => {
@@ -315,3 +314,18 @@ describe('instrumentUnhandledRejection', () => {
     expect(stack).toBeDefined()
   })
 })
+
+function setupOnUnhandledrejectionSpy() {
+  const onUnhandledrejectionSpy = jasmine.createSpy()
+  const originalOnUnhandledRejectionHandler: Window['onunhandledrejection'] = window.onunhandledrejection
+
+  if ('onunhandledrejection' in window) {
+    window.onunhandledrejection = onUnhandledrejectionSpy
+
+    registerCleanupTask(() => {
+      window.onunhandledrejection = originalOnUnhandledRejectionHandler
+    })
+  }
+
+  return onUnhandledrejectionSpy
+}
