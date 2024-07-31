@@ -54,7 +54,6 @@ module.exports = {
   initGitConfig,
   fetchPR,
   getLastCommonCommit,
-  BASE_BRANCH: process.env.MAIN_BRANCH,
   LOCAL_BRANCH: process.env.CI_COMMIT_REF_NAME,
   GITHUB_TOKEN,
 }
