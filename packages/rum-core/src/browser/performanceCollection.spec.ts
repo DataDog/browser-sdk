@@ -1,26 +1,28 @@
-import type { TestSetupBuilder } from '../../test'
-import { createPerformanceEntry, mockPerformanceObserver, setup } from '../../test'
-import { LifeCycleEventType } from '../domain/lifeCycle'
+import { createPerformanceEntry, mockPerformanceObserver } from '../../test'
+import type { RumConfiguration } from '../domain/configuration'
+import { LifeCycle, LifeCycleEventType } from '../domain/lifeCycle'
 import { startPerformanceCollection } from './performanceCollection'
 import { RumPerformanceEntryType } from './performanceObservable'
 
 describe('startPerformanceCollection', () => {
+  const lifeCycle = new LifeCycle()
+  const configuration = {} as RumConfiguration
   let entryCollectedCallback: jasmine.Spy
-  let setupBuilder: TestSetupBuilder
+  let stopPerformanceCollection: () => void
 
-  beforeEach(() => {
+  function setupStartPerformanceCollection() {
     entryCollectedCallback = jasmine.createSpy()
+    const { stop } = startPerformanceCollection(lifeCycle, configuration)
+    const subscription = lifeCycle.subscribe(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, entryCollectedCallback)
 
-    setupBuilder = setup().beforeBuild(({ lifeCycle, configuration }) => {
-      const { stop } = startPerformanceCollection(lifeCycle, configuration)
-      const subscription = lifeCycle.subscribe(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, entryCollectedCallback)
-      return {
-        stop() {
-          stop()
-          subscription.unsubscribe()
-        },
-      }
-    })
+    stopPerformanceCollection = () => {
+      stop()
+      subscription.unsubscribe()
+    }
+  }
+
+  afterEach(() => {
+    stopPerformanceCollection()
   })
   ;[
     RumPerformanceEntryType.LONG_TASK,
@@ -32,7 +34,7 @@ describe('startPerformanceCollection', () => {
   ].forEach((entryType) => {
     it(`should notify ${entryType}`, () => {
       const { notifyPerformanceEntries } = mockPerformanceObserver()
-      setupBuilder.build()
+      setupStartPerformanceCollection()
 
       notifyPerformanceEntries([createPerformanceEntry(entryType)])
 
@@ -42,7 +44,7 @@ describe('startPerformanceCollection', () => {
   ;[(RumPerformanceEntryType.NAVIGATION, RumPerformanceEntryType.RESOURCE)].forEach((entryType) => {
     it(`should not notify ${entryType} timings`, () => {
       const { notifyPerformanceEntries } = mockPerformanceObserver()
-      setupBuilder.build()
+      setupStartPerformanceCollection()
 
       notifyPerformanceEntries([createPerformanceEntry(RumPerformanceEntryType.RESOURCE)])
 
@@ -54,7 +56,7 @@ describe('startPerformanceCollection', () => {
     const { notifyPerformanceEntries } = mockPerformanceObserver({
       emulateAllEntryTypesUnsupported: true,
     })
-    setupBuilder.build()
+    setupStartPerformanceCollection()
 
     expect(() => notifyPerformanceEntries([createPerformanceEntry(RumPerformanceEntryType.RESOURCE)])).not.toThrow()
 
