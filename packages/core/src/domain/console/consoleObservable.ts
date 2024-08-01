@@ -5,17 +5,17 @@ import { callMonitored } from '../../tools/monitor'
 import { sanitize } from '../../tools/serialisation/sanitize'
 import { find } from '../../tools/utils/polyfills'
 import { jsonStringify } from '../../tools/serialisation/jsonStringify'
-import type { RawErrorCause } from '../error/error.types'
+import type { RawError } from '../error/error.types'
+import { ErrorHandling, ErrorSource } from '../error/error.types'
 import { computeStackTrace } from '../../tools/stackTrace/computeStackTrace'
 import { createHandlingStack, toStackTraceString, formatErrorMessage } from '../../tools/stackTrace/handlingStack'
+import { clocksNow } from '../../tools/utils/timeUtils'
 
 export interface ConsoleLog {
   message: string
   api: ConsoleApiName
-  stack?: string
+  error?: RawError
   handlingStack: string
-  fingerprint?: string
-  causes?: RawErrorCause[]
 }
 
 let consoleObservablesByApi: { [k in ConsoleApiName]?: Observable<ConsoleLog> } = {}
@@ -56,24 +56,28 @@ function createConsoleObservable(api: ConsoleApiName) {
 
 function buildConsoleLog(params: unknown[], api: ConsoleApiName, handlingStack: string): ConsoleLog {
   const message = params.map((param) => formatConsoleParameters(param)).join(' ')
-  let stack
-  let fingerprint
-  let causes
+  let error: RawError | undefined
 
   if (api === ConsoleApiName.error) {
     const firstErrorParam = find(params, (param: unknown): param is Error => param instanceof Error)
-    stack = firstErrorParam ? toStackTraceString(computeStackTrace(firstErrorParam)) : undefined
-    fingerprint = tryToGetFingerprint(firstErrorParam)
-    causes = firstErrorParam ? flattenErrorCauses(firstErrorParam, 'console') : undefined
+
+    error = {
+      stack: firstErrorParam ? toStackTraceString(computeStackTrace(firstErrorParam)) : undefined,
+      fingerprint: tryToGetFingerprint(firstErrorParam),
+      causes: firstErrorParam ? flattenErrorCauses(firstErrorParam, 'console') : undefined,
+      startClocks: clocksNow(),
+      message,
+      source: ErrorSource.CONSOLE,
+      handling: ErrorHandling.HANDLED,
+      handlingStack,
+    }
   }
 
   return {
     api,
     message,
-    stack,
+    error,
     handlingStack,
-    fingerprint,
-    causes,
   }
 }
 

@@ -27,14 +27,13 @@ export function startConsoleCollection(configuration: LogsConfiguration, lifeCyc
         date: timeStampNow(),
         message: log.message,
         origin: ErrorSource.CONSOLE,
-        error:
-          log.api === ConsoleApiName.error
-            ? {
-                stack: log.stack,
-                fingerprint: log.fingerprint,
-                causes: log.causes,
-              }
-            : undefined,
+        error: log.error
+          ? {
+              stack: log.error.stack,
+              fingerprint: log.error.fingerprint,
+              causes: log.error.causes,
+            }
+          : undefined,
         status: LogStatusForApi[log.api],
       },
       domainContext: {
