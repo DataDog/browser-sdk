@@ -52,5 +52,5 @@ export function createPageExitObservable(configuration: Configuration): Observab
 }
 
 export function isPageExitReason(reason: string): reason is PageExitReason {
-  return objectValues(PageExitReason).includes(reason as any)
+  return objectValues(PageExitReason).includes(reason as PageExitReason)
 }
