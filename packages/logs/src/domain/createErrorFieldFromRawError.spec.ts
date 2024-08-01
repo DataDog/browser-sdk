@@ -28,6 +28,7 @@ describe('createErrorFieldFromRawError', () => {
       stack: 'quuz',
       causes: [],
       fingerprint: 'corge',
+      handling: ErrorHandling.HANDLED,
     })
   })
 

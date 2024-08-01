@@ -17,5 +17,6 @@ export function createErrorFieldFromRawError(
     message: includeMessage ? rawError.message : undefined,
     causes: rawError.causes,
     fingerprint: rawError.fingerprint,
+    handling: rawError.handling,
   }
 }

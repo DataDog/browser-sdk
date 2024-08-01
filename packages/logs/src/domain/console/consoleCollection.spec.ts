@@ -1,5 +1,5 @@
 import type { ErrorWithCause } from '@datadog/browser-core'
-import { ErrorSource, noop, objectEntries } from '@datadog/browser-core'
+import { ErrorHandling, ErrorSource, noop, objectEntries } from '@datadog/browser-core'
 import type { RawConsoleLogsEvent } from '../../rawLogsEvent.types'
 import { validateAndBuildLogsConfiguration } from '../configuration'
 import type { RawLogsEventCollectedData } from '../lifeCycle'
@@ -72,6 +72,7 @@ describe('console collection', () => {
       stack: undefined,
       fingerprint: undefined,
       causes: undefined,
+      handling: ErrorHandling.HANDLED,
       kind: undefined,
       message: undefined,
     })
@@ -95,6 +96,7 @@ describe('console collection', () => {
       stack: jasmine.any(String),
       fingerprint: 'my-fingerprint',
       causes: undefined,
+      handling: ErrorHandling.HANDLED,
       kind: undefined,
       message: undefined,
     })
@@ -122,6 +124,7 @@ describe('console collection', () => {
 
     expect(rawLogsEvents[0].rawLogsEvent.error).toEqual({
       stack: jasmine.any(String),
+      handling: ErrorHandling.HANDLED,
       causes: [
         {
           source: ErrorSource.CONSOLE,

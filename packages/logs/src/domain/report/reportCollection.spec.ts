@@ -1,4 +1,4 @@
-import { ErrorSource, noop } from '@datadog/browser-core'
+import { ErrorHandling, ErrorSource, noop } from '@datadog/browser-core'
 import type { MockReportingObserver } from '@datadog/browser-core/test'
 import { mockReportingObserver } from '@datadog/browser-core/test'
 import type { RawReportLogsEvent } from '../../rawLogsEvent.types'
@@ -41,6 +41,7 @@ describe('reports', () => {
       error: {
         kind: 'NavigatorVibrate',
         stack: jasmine.any(String),
+        handling: ErrorHandling.UNHANDLED,
         causes: undefined,
         fingerprint: undefined,
         message: undefined,

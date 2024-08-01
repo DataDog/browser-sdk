@@ -44,6 +44,7 @@ describe('runtime error collection', () => {
           kind: 'Error',
           stack: jasmine.any(String),
           causes: undefined,
+          handling: ErrorHandling.UNHANDLED,
           fingerprint: undefined,
           message: undefined,
         },
@@ -78,6 +79,7 @@ describe('runtime error collection', () => {
         error: {
           kind: 'Error',
           stack: jasmine.any(String),
+          handling: ErrorHandling.UNHANDLED,
           causes: [
             {
               source: ErrorSource.SOURCE,
