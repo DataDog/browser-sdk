@@ -1,10 +1,13 @@
 import type { RelativeTime, Duration } from '@datadog/browser-core'
-import { addDuration, clocksOrigin } from '@datadog/browser-core'
+import { addDuration, clocksOrigin, Observable } from '@datadog/browser-core'
+import type { Clock } from '@datadog/browser-core/test'
+import { mockClock } from '@datadog/browser-core/test'
 import { ViewLoadingType } from '../../../rawRumEvent.types'
-import type { TestSetupBuilder } from '../../../../test'
-import { createPerformanceEntry, setup } from '../../../../test'
+import { createPerformanceEntry } from '../../../../test'
 import { PAGE_ACTIVITY_END_DELAY, PAGE_ACTIVITY_VALIDATION_DELAY } from '../../waitPageActivityEnd'
 import { RumPerformanceEntryType } from '../../../browser/performanceObservable'
+import { LifeCycle } from '../../lifeCycle'
+import type { RumConfiguration } from '../../configuration'
 import { trackLoadingTime } from './trackLoadingTime'
 
 const BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY = (PAGE_ACTIVITY_VALIDATION_DELAY * 0.8) as Duration
@@ -16,38 +19,44 @@ const LOAD_EVENT_BEFORE_ACTIVITY_TIMING = (BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY
 const LOAD_EVENT_AFTER_ACTIVITY_TIMING = (BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY * 1.2) as RelativeTime
 
 describe('trackLoadingTime', () => {
-  let setupBuilder: TestSetupBuilder
+  const lifeCycle = new LifeCycle()
+  let clock: Clock
+  let domMutationObservable: Observable<void>
   let loadingTimeCallback: jasmine.Spy<(loadingTime: Duration) => void>
-  let loadType: ViewLoadingType
   let setLoadEvent: (loadEvent: Duration) => void
+  let stopLoadingTimeTracking: () => void
+
+  function startLoadingTimeTracking(loadType: ViewLoadingType = ViewLoadingType.ROUTE_CHANGE) {
+    const loadingTimeTracking = trackLoadingTime(
+      lifeCycle,
+      domMutationObservable,
+      {} as RumConfiguration,
+      loadType,
+      clocksOrigin(),
+      loadingTimeCallback
+    )
+    setLoadEvent = loadingTimeTracking.setLoadEvent
+    stopLoadingTimeTracking = loadingTimeTracking.stop
+  }
 
   beforeEach(() => {
-    loadType = ViewLoadingType.ROUTE_CHANGE
-    loadingTimeCallback = jasmine.createSpy('loadingTimeCallback')
-    setupBuilder = setup()
-      .beforeBuild(({ lifeCycle, domMutationObservable, configuration }) => {
-        const loadingTimeTracking = trackLoadingTime(
-          lifeCycle,
-          domMutationObservable,
-          configuration,
-          loadType,
-          clocksOrigin(),
-          loadingTimeCallback
-        )
-        setLoadEvent = loadingTimeTracking.setLoadEvent
-        return loadingTimeTracking
-      })
-      .withFakeClock()
+    clock = mockClock()
+    domMutationObservable = new Observable()
+    loadingTimeCallback = jasmine.createSpy<(loadingTime: Duration) => void>()
+  })
+
+  afterEach(() => {
+    stopLoadingTimeTracking()
+    clock.cleanup()
   })
 
   it('should have an undefined loading time if there is no activity on a route change', () => {
-    setupBuilder.build()
-
+    startLoadingTimeTracking()
     expect(loadingTimeCallback).not.toHaveBeenCalled()
   })
 
   it('should have a loading time equal to the activity time if there is a unique activity on a route change', () => {
-    const { domMutationObservable, clock } = setupBuilder.build()
+    startLoadingTimeTracking()
 
     clock.tick(BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY)
     domMutationObservable.notify()
@@ -57,8 +66,8 @@ describe('trackLoadingTime', () => {
   })
 
   it('should use loadEventEnd for initial view when having no activity', () => {
-    loadType = ViewLoadingType.INITIAL_LOAD
-    const { clock } = setupBuilder.build()
+    const loadType = ViewLoadingType.INITIAL_LOAD
+    startLoadingTimeTracking(loadType)
 
     const entry = createPerformanceEntry(RumPerformanceEntryType.NAVIGATION)
 
@@ -69,8 +78,8 @@ describe('trackLoadingTime', () => {
   })
 
   it('should use loadEventEnd for initial view when load event is bigger than computed loading time', () => {
-    loadType = ViewLoadingType.INITIAL_LOAD
-    const { domMutationObservable, clock } = setupBuilder.build()
+    const loadType = ViewLoadingType.INITIAL_LOAD
+    startLoadingTimeTracking(loadType)
 
     clock.tick(BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY)
 
@@ -82,8 +91,8 @@ describe('trackLoadingTime', () => {
   })
 
   it('should use computed loading time for initial view when load event is smaller than computed loading time', () => {
-    loadType = ViewLoadingType.INITIAL_LOAD
-    const { domMutationObservable, clock } = setupBuilder.build()
+    const loadType = ViewLoadingType.INITIAL_LOAD
+    startLoadingTimeTracking(loadType)
 
     clock.tick(BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY)
 
@@ -96,16 +105,16 @@ describe('trackLoadingTime', () => {
   })
 
   it('should use computed loading time from time origin for initial view', () => {
-    loadType = ViewLoadingType.INITIAL_LOAD
+    const loadType = ViewLoadingType.INITIAL_LOAD
 
     // introduce a gap between time origin and tracking start
     // ensure that `load event > activity delay` and `load event < activity delay + clock gap`
     // to make the test fail if the clock gap is not correctly taken into account
     const CLOCK_GAP = (LOAD_EVENT_AFTER_ACTIVITY_TIMING - BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY + 1) as Duration
 
-    setupBuilder.clock!.tick(CLOCK_GAP)
+    clock.tick(CLOCK_GAP)
 
-    const { domMutationObservable, clock } = setupBuilder.build()
+    startLoadingTimeTracking(loadType)
 
     clock.tick(BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY)
 
