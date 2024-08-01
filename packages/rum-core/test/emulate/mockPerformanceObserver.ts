@@ -1,5 +1,5 @@
 import { registerCleanupTask } from '@datadog/browser-core/test'
-import { includes, objectValues } from '@datadog/browser-core'
+import { objectValues } from '@datadog/browser-core'
 import { RumPerformanceEntryType, type RumPerformanceEntry } from '../../src/browser/performanceObservable'
 
 export function mockPerformanceObserver({ typeSupported = true, emulateAllEntryTypesUnsupported = false } = {}) {
@@ -46,7 +46,7 @@ export function mockPerformanceObserver({ typeSupported = true, emulateAllEntryT
   })
 
   function notify(observer: MockPerformanceObserver, entries: RumPerformanceEntry[]) {
-    const filteredEntries = entries.filter((entry) => includes(observer.entryTypes, entry.entryType))
+    const filteredEntries = entries.filter((entry) => observer.entryTypes.includes(entry.entryType))
     if (!filteredEntries.length) {
       return
     }

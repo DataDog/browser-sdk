@@ -8,7 +8,6 @@ import {
   removeDuplicates,
   ConsoleApiName,
   RawReportType,
-  includes,
   objectValues,
 } from '@datadog/browser-core'
 import type { LogsEvent } from '../logsEvent.types'
@@ -90,7 +89,7 @@ export function validateAndBuildLogsConfiguration(
     return
   }
 
-  if (initConfiguration.forwardErrorsToLogs && !includes(forwardConsoleLogs, ConsoleApiName.error)) {
+  if (initConfiguration.forwardErrorsToLogs && !forwardConsoleLogs.includes(ConsoleApiName.error)) {
     forwardConsoleLogs.push(ConsoleApiName.error)
   }
 
@@ -115,7 +114,7 @@ export function validateAndBuildForwardOption<T>(
     return []
   }
 
-  if (!(option === 'all' || (Array.isArray(option) && option.every((api) => includes(allowedValues, api))))) {
+  if (!(option === 'all' || (Array.isArray(option) && option.every((api) => allowedValues.includes(api))))) {
     display.error(`${label} should be "all" or an array with allowed values "${allowedValues.join('", "')}"`)
     return
   }

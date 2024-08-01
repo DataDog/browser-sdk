@@ -1,5 +1,5 @@
 import type { Duration, RelativeTime, ServerDuration, TimeStamp } from '@datadog/browser-core'
-import { RequestType, ResourceType, noop } from '@datadog/browser-core'
+import { noop, RequestType, ResourceType } from '@datadog/browser-core'
 import type { RumFetchResourceEventDomainContext, RumXhrResourceEventDomainContext } from '../../domainContext.types'
 import { setup, createPerformanceEntry, mockPerformanceObserver } from '../../../test'
 import type { TestSetupBuilder } from '../../../test'

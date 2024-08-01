@@ -1,7 +1,6 @@
 import type { Configuration, InitConfiguration, MatchOption, RawTelemetryConfiguration } from '@datadog/browser-core'
 import {
   getType,
-  arrayFrom,
   isMatchOption,
   serializeConfiguration,
   assign,
@@ -269,7 +268,7 @@ function getSelectedTracingPropagators(configuration: RumInitConfiguration): Pro
     })
   }
 
-  return arrayFrom(usedTracingPropagators)
+  return Array.from(usedTracingPropagators)
 }
 
 export function serializeRumConfiguration(configuration: RumInitConfiguration) {
