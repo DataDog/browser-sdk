@@ -45,24 +45,26 @@ async function computeMemoryPerformance() {
   const benchmarkUrl = pr
     ? `https://datadoghq.dev/browser-sdk-test-playground/performance/memory?prNumber=${pr.number}`
     : 'https://datadoghq.dev/browser-sdk-test-playground/performance/memory'
-  for (const test of TESTS) {
-    const testName = test.name
-    const testButton = test.button
-    const testProperty = test.property
-    const allBytesMeasurements = []
-    const allPercentageMeasurements = []
-    for (let j = 0; j < NUMBER_OF_RUNS; j++) {
-      const { medianPercentage, medianBytes } = await runTest(testButton, benchmarkUrl)
-      allPercentageMeasurements.push(medianPercentage)
-      allBytesMeasurements.push(medianBytes)
-    }
-    const sdkMemoryPercentage = average(allPercentageMeasurements)
-    const sdkMemoryBytes = average(allBytesMeasurements)
-    console.log(
-      `Average percentage of memory used by SDK for ${testName} over ${NUMBER_OF_RUNS} runs: ${sdkMemoryPercentage}%  for ${sdkMemoryBytes} bytes`
-    )
-    results.push({ testProperty, sdkMemoryBytes, sdkMemoryPercentage })
-  }
+  await Promise.all(
+    TESTS.map(async (test) => {
+      const testName = test.name
+      const testButton = test.button
+      const testProperty = test.property
+      const allBytesMeasurements = []
+      const allPercentageMeasurements = []
+      for (let j = 0; j < NUMBER_OF_RUNS; j++) {
+        const { medianPercentage, medianBytes } = await runTest(testButton, benchmarkUrl)
+        allPercentageMeasurements.push(medianPercentage)
+        allBytesMeasurements.push(medianBytes)
+      }
+      const sdkMemoryPercentage = average(allPercentageMeasurements)
+      const sdkMemoryBytes = average(allBytesMeasurements)
+      console.log(
+        `Average percentage of memory used by SDK for ${testName} over ${NUMBER_OF_RUNS} runs: ${sdkMemoryPercentage}%  for ${sdkMemoryBytes} bytes`
+      )
+      results.push({ testProperty, sdkMemoryBytes, sdkMemoryPercentage })
+    })
+  )
   return results
 }
 
