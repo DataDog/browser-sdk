@@ -257,7 +257,6 @@ export function startRumEventCollection(
     stop: () => {
       ciVisibilityContext.stop()
       displayContext.stop()
-      pageStateHistory.stop()
       urlContexts.stop()
       viewContexts.stop()
       pageStateHistory.stop()
