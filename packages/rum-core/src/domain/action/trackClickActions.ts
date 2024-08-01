@@ -315,7 +315,6 @@ function newClick(
 
       const { resourceCount, errorCount, longTaskCount } = eventCountsSubscription.eventCounts
       const clickAction: ClickAction = {
-        // type: ActionType.CLICK as const,
         duration: activityEndTime && elapsed(startClocks.timeStamp, activityEndTime),
         startClocks,
         id,

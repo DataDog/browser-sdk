@@ -11,13 +11,13 @@ export function findLast<T, S extends T>(
   return undefined
 }
 
-// keep wrapper function as it is better minified by babel and will result in smaller bundle size
+// Keep the following wrapper functions as it can be mangled and will result in smaller bundle size that using
+// the native Object.values and Object.entries directly
 
 export function objectValues<T = unknown>(object: { [key: string]: T }) {
   return Object.values(object)
 }
 
-// TODO remove after updating target to es2018
 export function objectEntries<T = unknown>(object: { [key: string]: T }): Array<[string, T]> {
   return Object.entries(object)
 }
