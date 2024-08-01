@@ -146,43 +146,43 @@ function makeTracingHeaders(
   traceSampled: boolean,
   propagatorTypes: PropagatorType[]
 ): TracingHeaders {
-  let tracingHeaders: TracingHeaders = {}
+  const tracingHeaders: TracingHeaders = {}
 
   propagatorTypes.forEach((propagatorType) => {
     switch (propagatorType) {
       case 'datadog': {
-        tracingHeaders = {
+        Object.assign(tracingHeaders, {
           'x-datadog-origin': 'rum',
           'x-datadog-parent-id': spanId.toDecimalString(),
           'x-datadog-sampling-priority': traceSampled ? '1' : '0',
           'x-datadog-trace-id': traceId.toDecimalString(),
-        }
+        })
         break
       }
       // https://www.w3.org/TR/trace-context/
       case 'tracecontext': {
-        tracingHeaders = {
+        Object.assign(tracingHeaders, {
           traceparent: `00-0000000000000000${traceId.toPaddedHexadecimalString()}-${spanId.toPaddedHexadecimalString()}-0${
             traceSampled ? '1' : '0'
           }`,
-        }
+        })
         break
       }
       // https://github.com/openzipkin/b3-propagation
       case 'b3': {
-        tracingHeaders = {
+        Object.assign(tracingHeaders, {
           b3: `${traceId.toPaddedHexadecimalString()}-${spanId.toPaddedHexadecimalString()}-${
             traceSampled ? '1' : '0'
           }`,
-        }
+        })
         break
       }
       case 'b3multi': {
-        tracingHeaders = {
+        Object.assign(tracingHeaders, {
           'X-B3-TraceId': traceId.toPaddedHexadecimalString(),
           'X-B3-SpanId': spanId.toPaddedHexadecimalString(),
           'X-B3-Sampled': traceSampled ? '1' : '0',
-        }
+        })
         break
       }
     }
