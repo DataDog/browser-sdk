@@ -1,8 +1,8 @@
 import type { RelativeTime } from '@datadog/browser-core'
 import { relativeToClocks, CLEAR_OLD_VALUES_INTERVAL } from '@datadog/browser-core'
-import type { TestSetupBuilder } from '../../../test'
-import { setup } from '../../../test'
-import { LifeCycleEventType } from '../lifeCycle'
+import type { Clock } from '@datadog/browser-core/test'
+import { mockClock, registerCleanupTask } from '@datadog/browser-core/test'
+import { LifeCycle, LifeCycleEventType } from '../lifeCycle'
 import type { ViewCreatedEvent, ViewEvent } from '../view/trackViews'
 import type { ViewContexts } from './viewContexts'
 import { startViewContexts, VIEW_CONTEXT_TIME_OUT_DELAY } from './viewContexts'
@@ -10,6 +10,7 @@ import { startViewContexts, VIEW_CONTEXT_TIME_OUT_DELAY } from './viewContexts'
 describe('viewContexts', () => {
   const FAKE_ID = 'fake'
   const startClocks = relativeToClocks(10 as RelativeTime)
+  const lifeCycle = new LifeCycle()
 
   function buildViewCreatedEvent(partialViewCreatedEvent: Partial<ViewCreatedEvent> = {}): ViewCreatedEvent {
     return {
@@ -19,28 +20,25 @@ describe('viewContexts', () => {
     }
   }
 
-  let setupBuilder: TestSetupBuilder
+  let clock: Clock
   let viewContexts: ViewContexts
 
   beforeEach(() => {
-    setupBuilder = setup()
-      .withFakeLocation('http://fake-url.com')
-      .beforeBuild(({ lifeCycle }) => {
-        viewContexts = startViewContexts(lifeCycle)
-        return viewContexts
-      })
+    clock = mockClock()
+    viewContexts = startViewContexts(lifeCycle)
+
+    registerCleanupTask(() => {
+      viewContexts.stop()
+      clock.cleanup()
+    })
   })
 
   describe('findView', () => {
     it('should return undefined when there is no current view and no startTime', () => {
-      setupBuilder.build()
-
       expect(viewContexts.findView()).toBeUndefined()
     })
 
     it('should return the current view context when there is no start time', () => {
-      const { lifeCycle } = setupBuilder.build()
-
       lifeCycle.notify(LifeCycleEventType.BEFORE_VIEW_CREATED, buildViewCreatedEvent())
 
       expect(viewContexts.findView()).toBeDefined()
@@ -48,8 +46,6 @@ describe('viewContexts', () => {
     })
 
     it('should return the view context corresponding to startTime', () => {
-      const { lifeCycle } = setupBuilder.build()
-
       lifeCycle.notify(
         LifeCycleEventType.BEFORE_VIEW_CREATED,
         buildViewCreatedEvent({ startClocks: relativeToClocks(10 as RelativeTime), id: 'view 1' })
@@ -73,8 +69,6 @@ describe('viewContexts', () => {
     })
 
     it('should return undefined when no view context corresponding to startTime', () => {
-      const { lifeCycle } = setupBuilder.build()
-
       lifeCycle.notify(
         LifeCycleEventType.BEFORE_VIEW_CREATED,
         buildViewCreatedEvent({ startClocks: relativeToClocks(10 as RelativeTime), id: 'view 1' })
@@ -90,8 +84,6 @@ describe('viewContexts', () => {
     })
 
     it('should set the current view context on BEFORE_VIEW_CREATED', () => {
-      const { lifeCycle } = setupBuilder.build()
-
       lifeCycle.notify(LifeCycleEventType.BEFORE_VIEW_CREATED, buildViewCreatedEvent())
       const newViewId = 'fake 2'
       lifeCycle.notify(LifeCycleEventType.BEFORE_VIEW_CREATED, buildViewCreatedEvent({ id: newViewId }))
@@ -100,14 +92,11 @@ describe('viewContexts', () => {
     })
 
     it('should return the view name with the view', () => {
-      const { lifeCycle } = setupBuilder.build()
-
       lifeCycle.notify(LifeCycleEventType.BEFORE_VIEW_CREATED, buildViewCreatedEvent({ name: 'Fake name' }))
       expect(viewContexts.findView()!.name).toBe('Fake name')
     })
 
     it('should update the view name for the current context', () => {
-      const { lifeCycle } = setupBuilder.build()
       lifeCycle.notify(LifeCycleEventType.BEFORE_VIEW_CREATED, buildViewCreatedEvent({ name: 'foo' }))
       lifeCycle.notify(LifeCycleEventType.VIEW_UPDATED, {
         startClocks,
@@ -119,8 +108,6 @@ describe('viewContexts', () => {
 
   describe('history contexts', () => {
     it('should be cleared on SESSION_RENEWED', () => {
-      const { lifeCycle } = setupBuilder.build()
-
       lifeCycle.notify(
         LifeCycleEventType.BEFORE_VIEW_CREATED,
         buildViewCreatedEvent({
@@ -147,8 +134,6 @@ describe('viewContexts', () => {
     })
 
     it('should be cleared when too old', () => {
-      const { lifeCycle, clock } = setupBuilder.withFakeClock().build()
-
       const originalTime = performance.now()
       const originalClocks = relativeToClocks(originalTime as RelativeTime)
       const targetTime = (originalTime + 5) as RelativeTime
