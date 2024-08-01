@@ -1,5 +1,5 @@
 export function shallowClone<T>(object: T): T & Record<string, never> {
-  return Object.assign({}, object)
+  return { ...object } as T & Record<string, never>
 }
 
 export function objectHasValue<T extends { [key: string]: unknown }>(object: T, value: unknown): value is T[keyof T] {

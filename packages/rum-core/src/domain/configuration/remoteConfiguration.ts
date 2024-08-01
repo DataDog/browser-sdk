@@ -23,7 +23,7 @@ export function applyRemoteConfiguration(
   initConfiguration: RumInitConfiguration,
   remoteInitConfiguration: RumRemoteConfiguration
 ) {
-  return Object.assign({}, initConfiguration, remoteInitConfiguration)
+  return { ...initConfiguration, ...remoteInitConfiguration }
 }
 
 export function fetchRemoteConfiguration(
