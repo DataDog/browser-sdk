@@ -1,7 +1,5 @@
-import { assign } from './polyfills'
-
 export function shallowClone<T>(object: T): T & Record<string, never> {
-  return assign({}, object)
+  return Object.assign({}, object)
 }
 
 export function objectHasValue<T extends { [key: string]: unknown }>(object: T, value: unknown): value is T[keyof T] {

@@ -1,4 +1,4 @@
-import { instrumentSetter, assign, DOM_EVENT, addEventListeners, noop } from '@datadog/browser-core'
+import { instrumentSetter, DOM_EVENT, addEventListeners, noop } from '@datadog/browser-core'
 import { NodePrivacyLevel, getNodePrivacyLevel, shouldMaskNode } from '@datadog/browser-rum-core'
 import type { RumConfiguration } from '@datadog/browser-rum-core'
 import { IncrementalSource } from '../../../types'
@@ -118,15 +118,10 @@ export function trackInput(
     ) {
       lastInputStateMap.set(target, inputState)
       inputCb(
-        assembleIncrementalSnapshot<InputData>(
-          IncrementalSource.Input,
-          assign(
-            {
-              id: getSerializedNodeId(target),
-            },
-            inputState
-          )
-        )
+        assembleIncrementalSnapshot<InputData>(IncrementalSource.Input, {
+          id: getSerializedNodeId(target),
+          ...inputState,
+        })
       )
     }
   }

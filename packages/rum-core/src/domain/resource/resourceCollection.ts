@@ -6,7 +6,6 @@ import {
   ResourceType,
   toServerDuration,
   relativeToClocks,
-  assign,
   isNumber,
 } from '@datadog/browser-core'
 import type { RumConfiguration } from '../configuration'
@@ -173,14 +172,12 @@ function processResourceEntry(
 function computePerformanceEntryMetrics(timing: RumPerformanceResourceTiming) {
   const { renderBlockingStatus } = timing
   return {
-    resource: assign(
-      {
-        duration: computePerformanceResourceDuration(timing),
-        render_blocking_status: renderBlockingStatus,
-      },
-      computeSize(timing),
-      computePerformanceResourceDetails(timing)
-    ),
+    resource: {
+      duration: computePerformanceResourceDuration(timing),
+      render_blocking_status: renderBlockingStatus,
+      ...computeSize(timing),
+      ...computePerformanceResourceDetails(timing),
+    },
   }
 }
 

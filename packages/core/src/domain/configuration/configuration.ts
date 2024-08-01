@@ -6,7 +6,6 @@ import { ONE_SECOND } from '../../tools/utils/timeUtils'
 import { isPercentage } from '../../tools/utils/numberUtils'
 import { ONE_KIBI_BYTE } from '../../tools/utils/byteUtils'
 import { objectHasValue } from '../../tools/utils/objectUtils'
-import { assign } from '../../tools/utils/polyfills'
 import { selectSessionStoreStrategyType } from '../session/sessionStore'
 import type { SessionStoreStrategyType } from '../session/storeStrategies/sessionStoreStrategy'
 import { TrackingConsent } from '../trackingConsent'
@@ -242,43 +241,41 @@ export function validateAndBuildConfiguration(initConfiguration: InitConfigurati
     return
   }
 
-  return assign(
-    {
-      beforeSend:
-        initConfiguration.beforeSend && catchUserErrors(initConfiguration.beforeSend, 'beforeSend threw an error:'),
-      sessionStoreStrategyType: selectSessionStoreStrategyType(initConfiguration),
-      sessionSampleRate: initConfiguration.sessionSampleRate ?? 100,
-      telemetrySampleRate: initConfiguration.telemetrySampleRate ?? 20,
-      telemetryConfigurationSampleRate: initConfiguration.telemetryConfigurationSampleRate ?? 5,
-      telemetryUsageSampleRate: initConfiguration.telemetryUsageSampleRate ?? 5,
-      service: initConfiguration.service || undefined,
-      silentMultipleInit: !!initConfiguration.silentMultipleInit,
-      allowUntrustedEvents: !!initConfiguration.allowUntrustedEvents,
-      trackingConsent: initConfiguration.trackingConsent ?? TrackingConsent.GRANTED,
-      storeContextsAcrossPages: !!initConfiguration.storeContextsAcrossPages,
-      /**
-       * beacon payload max queue size implementation is 64kb
-       * ensure that we leave room for logs, rum and potential other users
-       */
-      batchBytesLimit: 16 * ONE_KIBI_BYTE,
+  return {
+    beforeSend:
+      initConfiguration.beforeSend && catchUserErrors(initConfiguration.beforeSend, 'beforeSend threw an error:'),
+    sessionStoreStrategyType: selectSessionStoreStrategyType(initConfiguration),
+    sessionSampleRate: initConfiguration.sessionSampleRate ?? 100,
+    telemetrySampleRate: initConfiguration.telemetrySampleRate ?? 20,
+    telemetryConfigurationSampleRate: initConfiguration.telemetryConfigurationSampleRate ?? 5,
+    telemetryUsageSampleRate: initConfiguration.telemetryUsageSampleRate ?? 5,
+    service: initConfiguration.service || undefined,
+    silentMultipleInit: !!initConfiguration.silentMultipleInit,
+    allowUntrustedEvents: !!initConfiguration.allowUntrustedEvents,
+    trackingConsent: initConfiguration.trackingConsent ?? TrackingConsent.GRANTED,
+    storeContextsAcrossPages: !!initConfiguration.storeContextsAcrossPages,
+    /**
+     * beacon payload max queue size implementation is 64kb
+     * ensure that we leave room for logs, rum and potential other users
+     */
+    batchBytesLimit: 16 * ONE_KIBI_BYTE,
 
-      eventRateLimiterThreshold: 3000,
-      maxTelemetryEventsPerPage: 15,
+    eventRateLimiterThreshold: 3000,
+    maxTelemetryEventsPerPage: 15,
 
-      /**
-       * flush automatically, aim to be lower than ALB connection timeout
-       * to maximize connection reuse.
-       */
-      flushTimeout: (30 * ONE_SECOND) as Duration,
+    /**
+     * flush automatically, aim to be lower than ALB connection timeout
+     * to maximize connection reuse.
+     */
+    flushTimeout: (30 * ONE_SECOND) as Duration,
 
-      /**
-       * Logs intake limit
-       */
-      batchMessagesLimit: 50,
-      messageBytesLimit: 256 * ONE_KIBI_BYTE,
-    },
-    computeTransportConfiguration(initConfiguration)
-  )
+    /**
+     * Logs intake limit
+     */
+    batchMessagesLimit: 50,
+    messageBytesLimit: 256 * ONE_KIBI_BYTE,
+    ...computeTransportConfiguration(initConfiguration),
+  }
 }
 
 export function serializeConfiguration(initConfiguration: InitConfiguration) {

@@ -1,5 +1,5 @@
 import type { DefaultPrivacyLevel } from '@datadog/browser-core'
-import { display, addEventListener, assign } from '@datadog/browser-core'
+import { display, addEventListener } from '@datadog/browser-core'
 import type { RumInitConfiguration } from './configuration'
 
 export const REMOTE_CONFIGURATION_URL = 'https://d3uc069fcn7uxw.cloudfront.net/configuration'
@@ -23,7 +23,7 @@ export function applyRemoteConfiguration(
   initConfiguration: RumInitConfiguration,
   remoteInitConfiguration: RumRemoteConfiguration
 ) {
-  return assign({}, initConfiguration, remoteInitConfiguration)
+  return Object.assign({}, initConfiguration, remoteInitConfiguration)
 }
 
 export function fetchRemoteConfiguration(

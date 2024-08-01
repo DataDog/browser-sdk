@@ -11,33 +11,12 @@ export function findLast<T, S extends T>(
   return undefined
 }
 
-// TODO remove after updating target to es2018
+// keep wrapper function as it is better minified by babel and will result in smaller bundle size
+
 export function objectValues<T = unknown>(object: { [key: string]: T }) {
-  return Object.keys(object).map((key) => object[key])
+  return Object.values(object)
 }
 
-// TODO remove after updating target to es2018
 export function objectEntries<T = unknown>(object: { [key: string]: T }): Array<[string, T]> {
-  return Object.keys(object).map((key) => [key, object[key]])
-}
-
-interface Assignable {
-  [key: string]: any
-}
-
-// TODO: Object.assign generates larger bundle size than this polyfill.
-// try with spread operator after updating target to es2018
-export function assign<T, U>(target: T, source: U): T & U
-export function assign<T, U, V>(target: T, source1: U, source2: V): T & U & V
-export function assign<T, U, V, W>(target: T, source1: U, source2: V, source3: W): T & U & V & W
-export function assign<T, U, V, W, X>(target: T, source1: U, source2: V, source3: W, source4: X): T & U & V & W & X
-export function assign(target: Assignable, ...toAssign: Assignable[]) {
-  toAssign.forEach((source: Assignable) => {
-    for (const key in source) {
-      if (Object.prototype.hasOwnProperty.call(source, key)) {
-        target[key] = source[key]
-      }
-    }
-  })
-  return target
+  return Object.entries(object)
 }

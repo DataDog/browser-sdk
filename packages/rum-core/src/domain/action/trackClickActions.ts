@@ -2,7 +2,6 @@ import type { Duration, ClocksState, RelativeTime, TimeStamp, ValueHistory } fro
 import {
   timeStampNow,
   Observable,
-  assign,
   getRelativeTime,
   ONE_MINUTE,
   generateUUID,
@@ -315,23 +314,22 @@ function newClick(
       }
 
       const { resourceCount, errorCount, longTaskCount } = eventCountsSubscription.eventCounts
-      const clickAction: ClickAction = assign(
-        {
-          type: ActionType.CLICK as const,
-          duration: activityEndTime && elapsed(startClocks.timeStamp, activityEndTime),
-          startClocks,
-          id,
-          frustrationTypes,
-          counts: {
-            resourceCount,
-            errorCount,
-            longTaskCount,
-          },
-          events: domEvents ?? [startEvent],
-          event: startEvent,
+      const clickAction: ClickAction = {
+        // type: ActionType.CLICK as const,
+        duration: activityEndTime && elapsed(startClocks.timeStamp, activityEndTime),
+        startClocks,
+        id,
+        frustrationTypes,
+        counts: {
+          resourceCount,
+          errorCount,
+          longTaskCount,
         },
-        clickActionBase
-      )
+        events: domEvents ?? [startEvent],
+        event: startEvent,
+        ...clickActionBase,
+      }
+
       lifeCycle.notify(LifeCycleEventType.AUTO_ACTION_COMPLETED, clickAction)
       status = ClickStatus.FINALIZED
     },
