@@ -9,7 +9,6 @@ import { Observable } from '../../tools/observable'
 import { timeStampNow } from '../../tools/utils/timeUtils'
 import { displayIfDebugEnabled, startMonitorErrorCollection } from '../../tools/monitor'
 import { sendToExtension } from '../../tools/sendToExtension'
-import { assign } from '../../tools/utils/polyfills'
 import { performDraw } from '../../tools/utils/numberUtils'
 import { jsonStringify } from '../../tools/serialisation/jsonStringify'
 import { combine } from '../../tools/mergeInto'
@@ -160,29 +159,21 @@ export function isTelemetryReplicationAllowed(configuration: Configuration) {
 
 export function addTelemetryDebug(message: string, context?: Context) {
   displayIfDebugEnabled(ConsoleApiName.debug, message, context)
-  onRawTelemetryEventCollected(
-    assign(
-      {
-        type: TelemetryType.log,
-        message,
-        status: StatusType.debug,
-      },
-      context
-    )
-  )
+  onRawTelemetryEventCollected({
+    type: TelemetryType.log,
+    message,
+    status: StatusType.debug,
+    ...context,
+  })
 }
 
 export function addTelemetryError(e: unknown, context?: Context) {
-  onRawTelemetryEventCollected(
-    assign(
-      {
-        type: TelemetryType.log,
-        status: StatusType.error,
-      },
-      formatError(e),
-      context
-    )
-  )
+  onRawTelemetryEventCollected({
+    type: TelemetryType.log,
+    status: StatusType.error,
+    ...formatError(e),
+    ...context,
+  })
 }
 
 export function addTelemetryConfiguration(configuration: RawTelemetryConfiguration) {

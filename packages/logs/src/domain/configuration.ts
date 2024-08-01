@@ -1,7 +1,6 @@
 import type { Configuration, InitConfiguration, RawTelemetryConfiguration } from '@datadog/browser-core'
 import {
   serializeConfiguration,
-  assign,
   ONE_KIBI_BYTE,
   validateAndBuildConfiguration,
   display,
@@ -93,16 +92,14 @@ export function validateAndBuildLogsConfiguration(
     forwardConsoleLogs.push(ConsoleApiName.error)
   }
 
-  return assign(
-    {
-      forwardErrorsToLogs: initConfiguration.forwardErrorsToLogs !== false,
-      forwardConsoleLogs,
-      forwardReports,
-      requestErrorResponseLengthLimit: DEFAULT_REQUEST_ERROR_RESPONSE_LENGTH_LIMIT,
-      sendLogsAfterSessionExpiration: !!initConfiguration.sendLogsAfterSessionExpiration,
-    },
-    baseConfiguration
-  )
+  return {
+    forwardErrorsToLogs: initConfiguration.forwardErrorsToLogs !== false,
+    forwardConsoleLogs,
+    forwardReports,
+    requestErrorResponseLengthLimit: DEFAULT_REQUEST_ERROR_RESPONSE_LENGTH_LIMIT,
+    sendLogsAfterSessionExpiration: !!initConfiguration.sendLogsAfterSessionExpiration,
+    ...baseConfiguration,
+  }
 }
 
 export function validateAndBuildForwardOption<T>(
@@ -125,14 +122,12 @@ export function validateAndBuildForwardOption<T>(
 export function serializeLogsConfiguration(configuration: LogsInitConfiguration) {
   const baseSerializedInitConfiguration = serializeConfiguration(configuration)
 
-  return assign(
-    {
-      forward_errors_to_logs: configuration.forwardErrorsToLogs,
-      forward_console_logs: configuration.forwardConsoleLogs,
-      forward_reports: configuration.forwardReports,
-      use_pci_intake: configuration.usePciIntake,
-      send_logs_after_session_expiration: configuration.sendLogsAfterSessionExpiration,
-    },
-    baseSerializedInitConfiguration
-  ) satisfies RawTelemetryConfiguration
+  return {
+    forward_errors_to_logs: configuration.forwardErrorsToLogs,
+    forward_console_logs: configuration.forwardConsoleLogs,
+    forward_reports: configuration.forwardReports,
+    use_pci_intake: configuration.usePciIntake,
+    send_logs_after_session_expiration: configuration.sendLogsAfterSessionExpiration,
+    ...baseSerializedInitConfiguration,
+  } satisfies RawTelemetryConfiguration
 }
