@@ -64,7 +64,7 @@ export function startCustomerDataTelemetry(
 
     updateMeasure(
       currentBatchMeasures.featureFlagBytes,
-      [RumEventType.VIEW, RumEventType.ERROR].includes(event.type as any)
+      [RumEventType.VIEW, RumEventType.ERROR].includes(event.type as RumEventType)
         ? customerDataTrackerManager.getOrCreateTracker(CustomerDataType.FeatureFlag).getBytesCount()
         : 0
     )
