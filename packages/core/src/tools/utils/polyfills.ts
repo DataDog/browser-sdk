@@ -18,7 +18,6 @@ export function objectValues<T = unknown>(object: { [key: string]: T }) {
   return Object.values(object)
 }
 
-// TODO remove after updating target to es2018
 export function objectEntries<T = unknown>(object: { [key: string]: T }): Array<[string, T]> {
   return Object.entries(object)
 }
