@@ -160,7 +160,7 @@ type GenericBeforeSendCallback = (event: any, context?: any) => unknown
  */
 type ProxyFn = (options: { path: string; parameters: string }) => string
 
-interface ReplicaUserConfiguration {
+export interface ReplicaUserConfiguration {
   applicationId?: string
   clientToken: string
 }
