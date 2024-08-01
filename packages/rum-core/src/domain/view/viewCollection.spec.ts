@@ -1,12 +1,17 @@
+import { noop, Observable } from '@datadog/browser-core'
 import type { Duration, RelativeTime, ServerDuration, TimeStamp } from '@datadog/browser-core'
-import { resetExperimentalFeatures } from '@datadog/browser-core'
+import { SPEC_ENDPOINTS } from '@datadog/browser-core/test'
 import type { RecorderApi } from '../../boot/rumPublicApi'
-import type { TestSetupBuilder } from '../../../test'
-import { setup, noopRecorderApi } from '../../../test'
-import type { RawRumViewEvent } from '../../rawRumEvent.types'
+import { noopRecorderApi, validateRumEventFormat } from '../../../test'
+import type { RawRumEvent, RawRumViewEvent } from '../../rawRumEvent.types'
 import { RumEventType, ViewLoadingType } from '../../rawRumEvent.types'
-import { LifeCycleEventType } from '../lifeCycle'
+import type { RawRumEventCollectedData } from '../lifeCycle'
+import { LifeCycle, LifeCycleEventType } from '../lifeCycle'
+import type { PageStateHistory } from '../contexts/pageStateHistory'
 import { PageState } from '../contexts/pageStateHistory'
+import { validateAndBuildRumConfiguration, type RumConfiguration } from '../configuration'
+import type { FeatureFlagContexts } from '../contexts/featureFlagContext'
+import type { LocationChange } from '../../browser/locationChangeObservable'
 import type { ViewEvent } from './trackViews'
 import { startViewCollection } from './viewCollection'
 
@@ -59,51 +64,81 @@ const VIEW: ViewEvent = {
   sessionIsActive: true,
 }
 
+const baseFeatureFlagContexts: FeatureFlagContexts = {
+  findFeatureFlagEvaluations: () => undefined,
+  addFeatureFlagEvaluation: noop,
+  stop: noop,
+}
+const baseConfiguration: RumConfiguration = {
+  ...validateAndBuildRumConfiguration({
+    clientToken: 'xxx',
+    applicationId: 'FAKE_APP_ID',
+    trackResources: true,
+    trackLongTasks: true,
+  })!,
+  ...SPEC_ENDPOINTS,
+}
+const pageStateHistory: PageStateHistory = {
+  findAll: () => [
+    { start: 0 as ServerDuration, state: PageState.ACTIVE },
+    { start: 10 as ServerDuration, state: PageState.PASSIVE },
+  ],
+  addPageState: noop,
+  stop: noop,
+  wasInPageStateAt: () => false,
+  wasInPageStateDuringPeriod: () => false,
+}
+
 describe('viewCollection', () => {
-  let setupBuilder: TestSetupBuilder
+  const lifeCycle = new LifeCycle()
+  let configuration: RumConfiguration
+  let featureFlagContexts: FeatureFlagContexts
   let getReplayStatsSpy: jasmine.Spy<RecorderApi['getReplayStats']>
+  let rawRumEvents: Array<RawRumEventCollectedData<RawRumEvent>> = []
+  let stopViewCollection: () => void
+
+  function setupViewCollection() {
+    const domMutationObservable = new Observable<void>()
+    const locationChangeObservable = new Observable<LocationChange>()
+
+    const collectionResult = startViewCollection(
+      lifeCycle,
+      configuration,
+      location,
+      domMutationObservable,
+      locationChangeObservable,
+      featureFlagContexts,
+      pageStateHistory,
+      {
+        ...noopRecorderApi,
+        getReplayStats: getReplayStatsSpy,
+      }
+    )
+
+    const eventsSubscription = lifeCycle.subscribe(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, (data) => {
+      rawRumEvents.push(data)
+      validateRumEventFormat(data.rawRumEvent)
+    })
+
+    stopViewCollection = () => {
+      collectionResult.stop()
+      eventsSubscription.unsubscribe()
+    }
+  }
 
   beforeEach(() => {
-    setupBuilder = setup()
-      .withPageStateHistory({
-        findAll: () => [
-          { start: 0 as ServerDuration, state: PageState.ACTIVE },
-          { start: 10 as ServerDuration, state: PageState.PASSIVE },
-        ],
-      })
-      .beforeBuild(
-        ({
-          lifeCycle,
-          configuration,
-          featureFlagContexts,
-          domMutationObservable,
-          locationChangeObservable,
-          pageStateHistory,
-        }) => {
-          getReplayStatsSpy = jasmine.createSpy()
-          return startViewCollection(
-            lifeCycle,
-            configuration,
-            location,
-            domMutationObservable,
-            locationChangeObservable,
-            featureFlagContexts,
-            pageStateHistory,
-            {
-              ...noopRecorderApi,
-              getReplayStats: getReplayStatsSpy,
-            }
-          )
-        }
-      )
+    getReplayStatsSpy = jasmine.createSpy()
+    configuration = baseConfiguration
+    featureFlagContexts = baseFeatureFlagContexts
   })
 
   afterEach(() => {
-    resetExperimentalFeatures()
+    stopViewCollection()
+    rawRumEvents = []
   })
 
   it('should create view from view update', () => {
-    const { lifeCycle, rawRumEvents } = setupBuilder.build()
+    setupViewCollection()
     lifeCycle.notify(LifeCycleEventType.VIEW_UPDATED, VIEW)
 
     expect(rawRumEvents[rawRumEvents.length - 1].startTime).toBe(1234 as RelativeTime)
@@ -182,13 +217,14 @@ describe('viewCollection', () => {
   })
 
   it('should set session.is_active to false if the session is inactive', () => {
-    const { lifeCycle, rawRumEvents } = setupBuilder.build()
+    setupViewCollection()
     lifeCycle.notify(LifeCycleEventType.VIEW_UPDATED, { ...VIEW, sessionIsActive: false })
+
     expect((rawRumEvents[rawRumEvents.length - 1].rawRumEvent as RawRumViewEvent).session.is_active).toBe(false)
   })
 
   it('should include replay information if available', () => {
-    const { lifeCycle, rawRumEvents } = setupBuilder.build()
+    setupViewCollection()
     getReplayStatsSpy.and.returnValue({ segments_count: 4, records_count: 10, segments_total_raw_size: 1000 })
 
     lifeCycle.notify(LifeCycleEventType.VIEW_UPDATED, VIEW)
@@ -205,9 +241,8 @@ describe('viewCollection', () => {
   })
 
   it('should include feature flags', () => {
-    const { lifeCycle, rawRumEvents } = setupBuilder
-      .withFeatureFlagContexts({ findFeatureFlagEvaluations: () => ({ feature: 'foo' }) })
-      .build()
+    featureFlagContexts = { ...baseFeatureFlagContexts, findFeatureFlagEvaluations: () => ({ feature: 'foo' }) }
+    setupViewCollection()
 
     const view: ViewEvent = { ...VIEW, commonViewMetrics: { loadingTime: -20 as Duration } }
     lifeCycle.notify(LifeCycleEventType.VIEW_UPDATED, view)
@@ -217,7 +252,7 @@ describe('viewCollection', () => {
   })
 
   it('should discard negative loading time', () => {
-    const { lifeCycle, rawRumEvents } = setupBuilder.build()
+    setupViewCollection()
     const view: ViewEvent = { ...VIEW, commonViewMetrics: { loadingTime: -20 as Duration } }
     lifeCycle.notify(LifeCycleEventType.VIEW_UPDATED, view)
     const rawRumViewEvent = rawRumEvents[rawRumEvents.length - 1].rawRumEvent as RawRumViewEvent
@@ -226,32 +261,36 @@ describe('viewCollection', () => {
   })
 
   it('should not include scroll metrics when there are not scroll metrics in the raw event', () => {
-    const { lifeCycle, rawRumEvents } = setupBuilder.build()
+    setupViewCollection()
     lifeCycle.notify(LifeCycleEventType.VIEW_UPDATED, { ...VIEW, commonViewMetrics: { scroll: undefined } })
     const rawRumViewEvent = rawRumEvents[rawRumEvents.length - 1].rawRumEvent as RawRumViewEvent
 
     expect(rawRumViewEvent.display?.scroll).toBeUndefined()
   })
 
-  it('should include configuration.start_session_replay_recording_manually value', () => {
-    // when configured to false
-    let { lifeCycle, rawRumEvents } = setupBuilder
-      .withConfiguration({ startSessionReplayRecordingManually: false })
-      .build()
-    lifeCycle.notify(LifeCycleEventType.VIEW_UPDATED, VIEW)
-    expect(
-      (rawRumEvents[rawRumEvents.length - 1].rawRumEvent as RawRumViewEvent)._dd.configuration
-        .start_session_replay_recording_manually
-    ).toBe(false)
+  describe('with configuration.start_session_replay_recording_manually set', () => {
+    it('should include startSessionReplayRecordingManually false', () => {
+      // when configured to false
+      configuration = { ...baseConfiguration, startSessionReplayRecordingManually: false }
+      setupViewCollection()
+      lifeCycle.notify(LifeCycleEventType.VIEW_UPDATED, VIEW)
 
-    // when configured to true
-    ;({ lifeCycle, rawRumEvents } = setupBuilder
-      .withConfiguration({ startSessionReplayRecordingManually: true })
-      .build())
-    lifeCycle.notify(LifeCycleEventType.VIEW_UPDATED, VIEW)
-    expect(
-      (rawRumEvents[rawRumEvents.length - 1].rawRumEvent as RawRumViewEvent)._dd.configuration
-        .start_session_replay_recording_manually
-    ).toBe(true)
+      expect(
+        (rawRumEvents[rawRumEvents.length - 1].rawRumEvent as RawRumViewEvent)._dd.configuration
+          .start_session_replay_recording_manually
+      ).toBe(false)
+    })
+
+    it('should include startSessionReplayRecordingManually true', () => {
+      // when configured to true
+      configuration = { ...baseConfiguration, startSessionReplayRecordingManually: true }
+      setupViewCollection()
+      lifeCycle.notify(LifeCycleEventType.VIEW_UPDATED, VIEW)
+
+      expect(
+        (rawRumEvents[rawRumEvents.length - 1].rawRumEvent as RawRumViewEvent)._dd.configuration
+          .start_session_replay_recording_manually
+      ).toBe(true)
+    })
   })
 })
