@@ -1,15 +1,10 @@
 import type { Context, ClocksState } from '@datadog/browser-core'
-import {
-  timeStampNow,
-  ErrorSource,
-  getFileFromStackTraceString,
-  initReportObservable,
-  ErrorHandling,
-} from '@datadog/browser-core'
+import { timeStampNow, ErrorSource, getFileFromStackTraceString, initReportObservable } from '@datadog/browser-core'
 import type { LogsConfiguration } from '../configuration'
 import type { LifeCycle } from '../lifeCycle'
 import { LifeCycleEventType } from '../lifeCycle'
 import { StatusType } from '../logger/isAuthorized'
+import { createErrorFieldFromRawError } from '../createErrorFieldFromRawError'
 
 export interface ProvidedError {
   startClocks: ClocksState
@@ -25,10 +20,7 @@ export function startReportCollection(configuration: LogsConfiguration, lifeCycl
     const status = rawError.originalError.type === 'deprecation' ? StatusType.warn : StatusType.error
 
     if (status === StatusType.error) {
-      error = {
-        kind: rawError.type,
-        stack: rawError.stack,
-      }
+      error = createErrorFieldFromRawError(rawError)
     } else if (rawError.stack) {
       message += ` Found in ${getFileFromStackTraceString(rawError.stack)!}`
     }

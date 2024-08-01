@@ -72,6 +72,8 @@ describe('console collection', () => {
       stack: undefined,
       fingerprint: undefined,
       causes: undefined,
+      kind: undefined,
+      message: undefined,
     })
   })
 
@@ -93,6 +95,8 @@ describe('console collection', () => {
       stack: jasmine.any(String),
       fingerprint: 'my-fingerprint',
       causes: undefined,
+      kind: undefined,
+      message: undefined,
     })
   })
 
@@ -118,7 +122,6 @@ describe('console collection', () => {
 
     expect(rawLogsEvents[0].rawLogsEvent.error).toEqual({
       stack: jasmine.any(String),
-      fingerprint: undefined,
       causes: [
         {
           source: ErrorSource.CONSOLE,
@@ -133,6 +136,9 @@ describe('console collection', () => {
           message: 'Low level error',
         },
       ],
+      fingerprint: undefined,
+      kind: undefined,
+      message: undefined,
     })
   })
 })

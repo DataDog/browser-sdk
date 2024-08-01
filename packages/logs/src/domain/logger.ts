@@ -15,6 +15,7 @@ import {
 
 import type { RawLoggerLogsEvent } from '../rawLogsEvent.types'
 import { isAuthorized, StatusType } from './logger/isAuthorized'
+import { createErrorFieldFromRawError } from './createErrorFieldFromRawError'
 
 export interface LogsMessage {
   message: string
@@ -72,12 +73,7 @@ export class Logger {
         startClocks: clocksNow(),
       })
 
-      errorContext = {
-        stack: rawError.stack,
-        kind: rawError.type,
-        message: rawError.message,
-        causes: rawError.causes,
-      }
+      errorContext = createErrorFieldFromRawError(rawError, { includeMessage: true })
     }
 
     const sanitizedMessageContext = sanitize(messageContext) as Context

@@ -41,6 +41,9 @@ describe('reports', () => {
       error: {
         kind: 'NavigatorVibrate',
         stack: jasmine.any(String),
+        causes: undefined,
+        fingerprint: undefined,
+        message: undefined,
       },
       date: jasmine.any(Number),
       message: 'intervention: foo bar',

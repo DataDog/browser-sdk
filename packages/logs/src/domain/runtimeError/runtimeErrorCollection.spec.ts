@@ -40,7 +40,13 @@ describe('runtime error collection', () => {
     setTimeout(() => {
       expect(rawLogsEvents[0].rawLogsEvent).toEqual({
         date: jasmine.any(Number),
-        error: { kind: 'Error', stack: jasmine.any(String), causes: undefined },
+        error: {
+          kind: 'Error',
+          stack: jasmine.any(String),
+          causes: undefined,
+          fingerprint: undefined,
+          message: undefined,
+        },
         message: 'error!',
         status: StatusType.error,
         origin: ErrorSource.SOURCE,
@@ -86,6 +92,8 @@ describe('runtime error collection', () => {
               message: 'Low level error',
             },
           ],
+          fingerprint: undefined,
+          message: undefined,
         },
         message: 'High level error',
         status: StatusType.error,

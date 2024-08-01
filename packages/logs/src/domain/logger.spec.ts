@@ -51,6 +51,7 @@ describe('Logger', () => {
             message: 'My Error',
             stack: jasmine.stringMatching(/^SyntaxError: My Error/),
             causes: undefined,
+            fingerprint: undefined,
           },
         })
       })
@@ -108,10 +109,11 @@ describe('Logger', () => {
         message: 'message',
         context: {
           error: {
-            kind: undefined,
             message: 'Provided "My Error"',
             stack: NO_ERROR_STACK_PRESENT_MESSAGE,
+            kind: undefined,
             causes: undefined,
+            fingerprint: undefined,
           },
         },
         status: 'error',
@@ -161,6 +163,7 @@ describe('Logger', () => {
                   stack: 'TypeError: Low level error',
                 },
               ],
+              fingerprint: undefined,
             },
           },
         })
