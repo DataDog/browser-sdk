@@ -13,7 +13,6 @@ import {
   createHandlingStack,
 } from '@datadog/browser-core'
 
-import type { RawLoggerLogsEvent } from '../rawLogsEvent.types'
 import { isAuthorized, StatusType } from './logger/isAuthorized'
 import { createErrorFieldFromRawError } from './createErrorFieldFromRawError'
 
@@ -60,12 +59,12 @@ export class Logger {
     error?: Error,
     handlingStack?: string
   ) {
-    let errorContext: RawLoggerLogsEvent['error']
+    const sanitizedMessageContext = sanitize(messageContext) as Context
+    let context: Context
 
     if (error !== undefined && error !== null) {
-      const stackTrace = error instanceof Error ? computeStackTrace(error) : undefined
       const rawError = computeRawError({
-        stackTrace,
+        stackTrace: error instanceof Error ? computeStackTrace(error) : undefined,
         originalError: error,
         nonErrorPrefix: NonErrorPrefix.PROVIDED,
         source: ErrorSource.LOGGER,
@@ -73,14 +72,15 @@ export class Logger {
         startClocks: clocksNow(),
       })
 
-      errorContext = createErrorFieldFromRawError(rawError, { includeMessage: true })
+      context = combine(
+        {
+          error: createErrorFieldFromRawError(rawError, { includeMessage: true }),
+        },
+        sanitizedMessageContext
+      )
+    } else {
+      context = sanitizedMessageContext
     }
-
-    const sanitizedMessageContext = sanitize(messageContext) as Context
-
-    const context = errorContext
-      ? (combine({ error: errorContext }, sanitizedMessageContext) as Context)
-      : sanitizedMessageContext
 
     this.handleLogStrategy(
       {
