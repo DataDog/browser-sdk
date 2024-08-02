@@ -1,6 +1,7 @@
 const puppeteer = require('puppeteer')
 const { fetchPR, LOCAL_BRANCH } = require('../../lib/git-utils')
-const NUMBER_OF_RUNS = 40 // Rule of thumb: this should be enough to get a good average
+const NUMBER_OF_RUNS = 30 // Rule of thumb: this should be enough to get a good average
+const BATCH_SIZE = 2
 const TESTS = [
   {
     name: 'RUM - add global context',
@@ -45,13 +46,23 @@ async function computeMemoryPerformance() {
   const benchmarkUrl = pr
     ? `https://datadoghq.dev/browser-sdk-test-playground/performance/memory?prNumber=${pr.number}`
     : 'https://datadoghq.dev/browser-sdk-test-playground/performance/memory'
+
+  for (let i = 0; i < TESTS.length; i += BATCH_SIZE) {
+    await runTests(TESTS.slice(i, i + BATCH_SIZE), benchmarkUrl, (result) => results.push(result))
+  }
+
+  return results
+}
+
+async function runTests(tests, benchmarkUrl, cb) {
   await Promise.all(
-    TESTS.map(async (test) => {
+    tests.map(async (test) => {
       const testName = test.name
       const testButton = test.button
       const testProperty = test.property
       const allBytesMeasurements = []
       const allPercentageMeasurements = []
+      console.log(`Running test for: ${testButton}`)
       for (let j = 0; j < NUMBER_OF_RUNS; j++) {
         const { medianPercentage, medianBytes } = await runTest(testButton, benchmarkUrl)
         allPercentageMeasurements.push(medianPercentage)
@@ -62,10 +73,9 @@ async function computeMemoryPerformance() {
       console.log(
         `Average percentage of memory used by SDK for ${testName} over ${NUMBER_OF_RUNS} runs: ${sdkMemoryPercentage}%  for ${sdkMemoryBytes} bytes`
       )
-      results.push({ testProperty, sdkMemoryBytes, sdkMemoryPercentage })
+      cb({ testProperty, sdkMemoryBytes, sdkMemoryPercentage })
     })
   )
-  return results
 }
 
 async function runTest(testButton, benchmarkUrl) {
@@ -90,7 +100,6 @@ async function runTest(testButton, benchmarkUrl) {
     samplingInterval: 50,
   })
 
-  console.log(`Running test for: ${testButton}`)
   await button.click()
   const { profile } = await client.send('HeapProfiler.stopSampling')
   const measurementsPercentage = []
