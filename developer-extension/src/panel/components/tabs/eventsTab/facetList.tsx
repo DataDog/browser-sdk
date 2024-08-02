@@ -86,7 +86,6 @@ function FacetValue({
 }) {
   const isTopLevel = depth === 0
   const facetSelectState = computeSelectionState(facetValuesFilter, facetRegistry, facet, facetValue)
-  // console.log(facetSelectState, facetValuesFilter)
   const isCollapsed =
     !facetValuesFilter.facetValues[facet.path] || !facetValuesFilter.facetValues[facet.path].includes(facetValue)
   const isSelected =
@@ -168,8 +167,12 @@ function toggleFacetValue(
   facetValuesFilter: FacetValuesFilter,
   value: FacetValue
 ): FacetValuesFilter {
-  const currentValues = facetValuesFilter.facetValues[facet.path]
-
+  let currentValues = facetValuesFilter.facetValues[facet.path]
+  if (type !== facetValuesFilter.type) {
+    if (type === 'include') {
+      currentValues = []
+    }
+  }
   const newFacetValues = { ...facetValuesFilter.facetValues }
 
   if (!currentValues) {
