@@ -1,6 +1,6 @@
 'use strict'
 
-const { printLog, printError, runMain, fetchHandlingError } = require('../lib/execution-utils')
+const { printLog, runMain, fetchHandlingError } = require('../lib/execution-utils')
 const { command } = require('../lib/command')
 
 const REPOSITORY = process.env.APP
@@ -20,13 +20,10 @@ runMain(async () => {
   )
   const jsonResponse = await rawResponse.json()
 
-  printLog(jsonResponse)
-
   const isSuccess = jsonResponse.state.feedbacks[0].level === SUCESS_FEEDBACK_LEVEL
   const message = jsonResponse.state.feedbacks[0].message
 
   if (!isSuccess) {
-    printError(message)
     throw new Error(message)
   }
 
