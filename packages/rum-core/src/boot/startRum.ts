@@ -17,6 +17,7 @@ import {
   addTelemetryDebug,
   CustomerDataType,
   drainPreStartTelemetry,
+  noop,
 } from '@datadog/browser-core'
 import { createDOMMutationObservable } from '../browser/domMutationObservable'
 import { startPerformanceCollection } from '../browser/performanceCollection'
@@ -257,6 +258,7 @@ export function startRumEventCollection(
     stop: () => {
       ciVisibilityContext.stop()
       displayContext.stop()
+      noop()
       pageStateHistory.stop()
       urlContexts.stop()
       viewContexts.stop()
