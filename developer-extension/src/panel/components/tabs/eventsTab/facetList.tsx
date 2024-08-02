@@ -97,7 +97,14 @@ function FacetValue({
         checked={facetSelectState === 'selected'}
         indeterminate={facetSelectState === 'partial-selected'}
         onChange={() => {
-          onExcludedFacetValuesChange(toggleExcludedFacetValue(facet, facetValuesFilter, facetValue))
+          if (isOnly && !facetValuesFilter.facetValues[facet.path]?.includes(facetValue)) {
+            facetValuesFilter.facetValues = {
+              [facet.path]: [facetValue],
+            }
+            onExcludedFacetValuesChange(facetValuesFilter)
+          } else {
+            onExcludedFacetValuesChange(toggleFacetValue('exclude', facet, facetValuesFilter, facetValue))
+          }
         }}
       />
       <Text>{facetValueCount}</Text>
@@ -149,32 +156,6 @@ function FacetValue({
       {children}
     </>
   )
-}
-
-function toggleExcludedFacetValue(
-  facet: Facet,
-  excludedFacetValues: FacetValuesFilter,
-  value: FacetValue
-): FacetValuesFilter {
-  const currentExcludedValues = excludedFacetValues.facetValues[facet.path]
-
-  const newExcludedFacetValues = { ...excludedFacetValues.facetValues }
-
-  if (!currentExcludedValues) {
-    // Add exclusion. Nothing was excluded yet, create a new list
-    newExcludedFacetValues[facet.path] = [value]
-  } else if (!currentExcludedValues.includes(value)) {
-    // Add exclusion. Some other values are already excluded, add it to the list
-    newExcludedFacetValues[facet.path] = currentExcludedValues.concat(value)
-  } else if (currentExcludedValues.length === 1) {
-    // Remove exclusion. If it's the only value, delete the list altogether.
-    delete newExcludedFacetValues[facet.path]
-  } else {
-    // Remove exclusion. Filter out the the value from the existing list.
-    newExcludedFacetValues[facet.path] = currentExcludedValues.filter((other) => other !== value)
-  }
-
-  return {type: 'exclude', facetValues: newExcludedFacetValues}
 }
 
 function toggleFacetValue(

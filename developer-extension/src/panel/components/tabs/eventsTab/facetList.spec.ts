@@ -1,7 +1,8 @@
 import type { RumActionEvent, RumResourceEvent } from '@datadog/browser-rum'
-import { FacetRegistry, FacetValuesFilter } from '../../../hooks/useEvents'
+import { FacetRegistry } from '../../../hooks/useEvents'
+import type { FacetValuesFilter } from '../../../hooks/useEvents'
 import { FACET_ROOT } from '../../../facets.constants'
-
+import type { Facet } from '../../../facets.constants'
 import { computeSelectionState } from './computeFacetState'
 
 const rumResourceXHREvent = {
@@ -28,7 +29,7 @@ const rumCustomActionEvent = {
 } as RumActionEvent
 
 // test that computeSelectionState returns the correct state
-fdescribe('computeSelectionState', () => {
+describe('computeSelectionState', () => {
   describe('include mode', () => {
     it('returns "selected" when the facet is in the filter', () => {
       const facetValuesFilter: FacetValuesFilter = {
@@ -37,7 +38,10 @@ fdescribe('computeSelectionState', () => {
           'resource.type': ['xhr'],
         },
       }
-      const facet = FACET_ROOT.values?.rum
+      const facet = {
+        path: 'resource.type',
+        label: 'Resource Type',
+      }
 
       const facetRegistry = new FacetRegistry()
       facetRegistry.addEvent(rumResourceXHREvent)
@@ -52,20 +56,7 @@ fdescribe('computeSelectionState', () => {
           'resource.type': ['xhr'],
         },
       }
-      const facet = {
-        path: 'type',
-        label: 'Type',
-        values: {
-          action: {
-            facets: [
-              {
-                path: 'resource.type',
-                label: 'Resource Type',
-              },
-            ],
-          },
-        },
-      }
+      const facet = FACET_ROOT.values!.rum?.facets![0] as Facet
       const facetValue = 'resource'
       const facetRegistry = new FacetRegistry()
       facetRegistry.addEvent(rumResourceXHREvent)
@@ -81,18 +72,8 @@ fdescribe('computeSelectionState', () => {
         },
       }
       const facet = {
-        path: 'type',
-        label: 'Type',
-        values: {
-          action: {
-            facets: [
-              {
-                path: 'action.type',
-                label: 'Action Type',
-              },
-            ],
-          },
-        },
+        path: 'action.type',
+        label: 'Action Type',
       }
 
       const facetValue = 'action'
@@ -111,8 +92,10 @@ fdescribe('computeSelectionState', () => {
           'resource.type': ['xhr'],
         },
       }
-      const facet = FACET_ROOT.values?.rum
-
+      const facet = {
+        path: 'resource.type',
+        label: 'Resource Type',
+      }
       const facetRegistry = new FacetRegistry()
       facetRegistry.addEvent(rumResourceXHREvent)
       const facetValue = 'xhr'
@@ -125,7 +108,8 @@ fdescribe('computeSelectionState', () => {
           'resource.type': ['xhr'],
         },
       }
-      const facet = FACET_ROOT
+      const facet = FACET_ROOT.values!.rum?.facets![0] as Facet
+
       const facetValue = 'resource'
       const facetRegistry = new FacetRegistry()
       facetRegistry.addEvent(rumResourceXHREvent)
@@ -141,19 +125,10 @@ fdescribe('computeSelectionState', () => {
         },
       }
       const facet = {
-        path: 'type',
-        label: 'Type',
-        values: {
-          action: {
-            facets: [
-              {
-                path: 'action.type',
-                label: 'Action Type',
-              },
-            ],
-          },
-        },
+        path: 'action.type',
+        label: 'Action Type',
       }
+
       const facetValue = 'action'
       const facetRegistry = new FacetRegistry()
       facetRegistry.addEvent(rumResourceXHREvent)
