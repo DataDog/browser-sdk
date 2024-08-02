@@ -427,7 +427,7 @@ merge-into-staging:
   stage: test
   extends:
     - .base-configuration
-    - .main
+    - .test-allowed-branches
   before_script:
     - eval $(ssh-agent -s)
   script:
