@@ -424,7 +424,7 @@ staging-reset-scheduled-failure:
     - staging-reset-scheduled
 
 merge-into-staging:
-  stage: pre-deploy
+  stage: test
   extends:
     - .base-configuration
     - .main
