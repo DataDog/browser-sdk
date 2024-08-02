@@ -87,8 +87,10 @@ function FacetValue({
   const isTopLevel = depth === 0
   const facetSelectState = computeSelectionState(facetValuesFilter, facetRegistry, facet, facetValue)
   // console.log(facetSelectState, facetValuesFilter)
-  const isCollapsed = !facetValuesFilter.facetValues[facet.path] || !facetValuesFilter.facetValues[facet.path].includes(facetValue)
-  const isSelected = facetValuesFilter.facetValues[facet.path] && facetValuesFilter.facetValues[facet.path].includes(facetValue)
+  const isCollapsed =
+    !facetValuesFilter.facetValues[facet.path] || !facetValuesFilter.facetValues[facet.path].includes(facetValue)
+  const isSelected =
+    facetValuesFilter.facetValues[facet.path] && facetValuesFilter.facetValues[facet.path].includes(facetValue)
   const isOnly = facetValuesFilter.type === 'include' && Object.keys(facetValuesFilter.facetValues).length === 1
   const value = (
     <Flex justify="space-between" mt={isTopLevel ? 'xs' : SPACE_BETWEEN_CHECKBOX}>
@@ -117,7 +119,9 @@ function FacetValue({
           const filterType = isOnly ? 'exclude' : 'include'
           onExcludedFacetValuesChange(toggleFacetValue(filterType, facet, facetValuesFilter, facetValue))
         }}
-      >{isOnly && isSelected ? 'all' : 'only'}</Button>
+      >
+        {isOnly && isSelected ? 'all' : 'only'}
+      </Button>
     </Flex>
   )
 
@@ -164,7 +168,6 @@ function toggleFacetValue(
   facetValuesFilter: FacetValuesFilter,
   value: FacetValue
 ): FacetValuesFilter {
-
   const currentValues = facetValuesFilter.facetValues[facet.path]
 
   const newFacetValues = { ...facetValuesFilter.facetValues }

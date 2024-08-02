@@ -52,7 +52,6 @@ export function computeSelectionState(
   return 'unselected'
 }
 
-
 export const getAllChildren = (facet: Facet, facetValue: FacetValue): Facet[] => {
   const children =
     facet.values && Object.keys(facet.values).includes(facetValue)

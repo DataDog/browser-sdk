@@ -10,13 +10,13 @@ export interface EventFilters {
   outdatedVersions: boolean
 }
 
-export type FacetValuesFilter = {type: 'include' | 'exclude', facetValues: FacetValues}
+export type FacetValuesFilter = { type: 'include' | 'exclude'; facetValues: FacetValues }
 export interface FacetValues {
   [facetPath: string]: string[]
 }
 
 export const DEFAULT_FILTERS: EventFilters = {
-  facetValuesFilter: {type: 'exclude', facetValues: {}},
+  facetValuesFilter: { type: 'exclude', facetValues: {} },
   query: '',
   outdatedVersions: false,
 }
@@ -49,7 +49,7 @@ function filterExcludedFacets(
   facetValuesFilter: FacetValuesFilter,
   facetRegistry: FacetRegistry
 ): SdkEvent[] {
-  if(facetValuesFilter.type === 'exclude') {
+  if (facetValuesFilter.type === 'exclude') {
     const excludedFacetValues = facetValuesFilter.facetValues
     return events.filter(
       (event) =>
@@ -60,15 +60,13 @@ function filterExcludedFacets(
         )
     )
   } else if (facetValuesFilter.type === 'include') {
-    console.log('filter include', facetValuesFilter.facetValues)
     const includedFacetValues = facetValuesFilter.facetValues
-    return events.filter(
-      (event) =>
-        Object.entries(includedFacetValues).every(([facetPath, includedValues]) =>
-          (includedValues as Array<FieldMultiValue | undefined>).includes(
-            facetRegistry.getFieldValueForEvent(event, facetPath)
-          )
+    return events.filter((event) =>
+      Object.entries(includedFacetValues).every(([facetPath, includedValues]) =>
+        (includedValues as Array<FieldMultiValue | undefined>).includes(
+          facetRegistry.getFieldValueForEvent(event, facetPath)
         )
+      )
     )
   }
   return events
