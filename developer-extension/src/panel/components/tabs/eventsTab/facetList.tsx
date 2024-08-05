@@ -22,6 +22,7 @@ export function FacetList({
       facetRegistry={facetRegistry}
       facetValuesFilter={facetValuesFilter}
       onExcludedFacetValuesChange={onExcludedFacetValuesChange}
+      parentList={[]}
     />
   )
 }
@@ -31,12 +32,14 @@ function FacetField({
   depth,
   facetRegistry,
   facetValuesFilter,
+  parentList,
   onExcludedFacetValuesChange,
 }: {
   facet: Facet
   depth: number
   facetRegistry: FacetRegistry
   facetValuesFilter: FacetValuesFilter
+    parentList: string[]
   onExcludedFacetValuesChange: (newExcludedFacetValues: FacetValuesFilter) => void
 }) {
   const facetValueCounts = facetRegistry.getFacetValueCounts(facet.path)
@@ -58,6 +61,7 @@ function FacetField({
           depth={depth}
           facetRegistry={facetRegistry}
           facetValuesFilter={facetValuesFilter}
+          parentList={parentList.includes(facetValue) ? parentList : [...parentList, facetValue]}
           onExcludedFacetValuesChange={onExcludedFacetValuesChange}
         />
       ))}
@@ -74,6 +78,7 @@ function FacetValue({
   depth,
   facetRegistry,
   facetValuesFilter,
+  parentList,
   onExcludedFacetValuesChange,
 }: {
   facet: Facet
@@ -82,10 +87,11 @@ function FacetValue({
   depth: number
   facetRegistry: FacetRegistry
   facetValuesFilter: FacetValuesFilter
+    parentList: string[]
   onExcludedFacetValuesChange: (newExcludedFacetValues: FacetValuesFilter) => void
 }) {
   const isTopLevel = depth === 0
-  const facetSelectState = computeSelectionState(facetValuesFilter, facetRegistry, facet, facetValue)
+  const facetSelectState = computeSelectionState(facetValuesFilter, facetRegistry, facet, facetValue, parentList)
   const isCollapsed =
     !facetValuesFilter.facetValues[facet.path] || !facetValuesFilter.facetValues[facet.path].includes(facetValue)
   const isSelected =
@@ -126,7 +132,7 @@ function FacetValue({
 
   const childFacets = facet.values?.[facetValue]?.facets
   const children = childFacets && (
-    <Collapse in={isCollapsed}>
+    <Collapse in={isCollapsed || isOnly}>
       <Box className={classes.facetChildren} data-top-level={isTopLevel ? true : undefined}>
         {childFacets.map((facet) => (
           <FacetField
@@ -135,6 +141,7 @@ function FacetValue({
             facetRegistry={facetRegistry}
             depth={depth + 1}
             facetValuesFilter={facetValuesFilter}
+            parentList={parentList.includes(facetValue) ? parentList : [...parentList, facetValue]}
             onExcludedFacetValuesChange={onExcludedFacetValuesChange}
           />
         ))}

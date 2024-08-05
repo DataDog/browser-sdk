@@ -6,17 +6,23 @@ export function computeSelectionState(
   facetValuesFilter: FacetValuesFilter,
   facetRegistry: FacetRegistry,
   facet: Facet,
-  facetValue: FacetValue
+  facetValue: FacetValue,
+  parentList: string[]
 ): SelectionState {
   const childrenFacets = getAllChildren(facet, facetValue)
   // we cannot know how many children in total there are, so we need to have facetRegistry
   const children = childrenFacets.flatMap((child) => facetRegistry.getFacetChildrenValues(child.path))
-  const filteredFacetValues = childrenFacets.flatMap((child) => facetValuesFilter.facetValues[child.path] ?? [])
-  filteredFacetValues.push(...(facetValuesFilter.facetValues[facet.path] ?? []))
+  const filteredFacetValues = Object.values(facetValuesFilter.facetValues).flat()
   const ifFilterEmpty = Object.keys(facetValuesFilter.facetValues).length === 0
+
   if (facetValuesFilter.type === 'include') {
     if (ifFilterEmpty) {
       return 'unselected'
+    }
+    for (const parent of parentList) {
+      if (filteredFacetValues.includes(parent)) {
+        return 'selected'
+      }
     }
     // if facet.value is in facetValueFilter, then it should be selected
     if (filteredFacetValues.includes(facetValue)) {
