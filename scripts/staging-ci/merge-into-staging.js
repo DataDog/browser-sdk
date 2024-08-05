@@ -1,6 +1,6 @@
 'use strict'
 
-const { printLog, runMain, fetchHandlingError } = require('../lib/execution-utils')
+const { printLog, runMain } = require('../lib/execution-utils')
 const { command } = require('../lib/command')
 
 const REPOSITORY = process.env.APP
@@ -10,8 +10,8 @@ const DEVFLOW_API_URL = 'https://devflow-api.us1.ddbuild.io/internal/api/v2/devf
 const SUCESS_FEEDBACK_LEVEL = 'FEEDBACK_LEVEL_INFO'
 
 runMain(async () => {
-  printLog(command`authanywhere --audience sdm --raw | jwt decode`.run())
-  const rawResponse = await fetchHandlingError(
+  printLog(`TOKEN=${DEVFLOW_AUTH_TOKEN}`)
+  const rawResponse = await fetch(
     `${DEVFLOW_API_URL}/update-branch?repository=${REPOSITORY}&branch=${CURRENT_STAGING}`,
     {
       headers: {
@@ -20,6 +20,8 @@ runMain(async () => {
     }
   )
   const jsonResponse = await rawResponse.json()
+
+  printLog(jsonResponse)
 
   const isSuccess = jsonResponse.state.feedbacks[0].level === SUCESS_FEEDBACK_LEVEL
   const message = jsonResponse.state.feedbacks[0].message
