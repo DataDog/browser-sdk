@@ -169,7 +169,9 @@ function Entry({
   }
 
   const handleClearClick = () => {
-    onChange && onChange(null)
+    if (onChange) {
+      onChange(null)
+    }
     reloadPage()
   }
 

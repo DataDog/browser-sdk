@@ -94,13 +94,12 @@ module.exports = {
         'ts-check': 'allow-with-description',
       },
     ],
-    '@typescript-eslint/ban-types': [
+    '@typescript-eslint/no-restricted-types': [
       'error',
       {
         types: {
           /* eslint-disable id-denylist */
           Object: { message: 'Avoid using the `Object` type. Did you mean `object`?' },
-          object: false,
           Function: { message: 'Avoid using the `Function` type. Prefer a specific function type, like `() => void`.' },
           Boolean: { message: 'Avoid using the `Boolean` type. Did you mean `boolean`?' },
           Number: { message: 'Avoid using the `Number` type. Did you mean `number`?' },
