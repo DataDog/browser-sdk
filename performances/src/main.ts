@@ -37,9 +37,9 @@ Options:
   }
   const scenarios = [twitterScenario, wikipediaScenario]
 
-  for (const { description, run } of scenarios) {
-    const results = await profileScenario(options, run)
-    console.log(`${description}\n\n${formatProfilingResults(results)}`)
+  for (const scenario of scenarios) {
+    const results = await profileScenario(options, (page, takeMesurements) => scenario.run(page, takeMesurements))
+    console.log(`${scenario.description}\n\n${formatProfilingResults(results)}`)
   }
 
   proxy.stop()
