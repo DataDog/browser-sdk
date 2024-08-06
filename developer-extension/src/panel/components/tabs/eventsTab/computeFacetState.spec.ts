@@ -31,6 +31,23 @@ const rumCustomActionEvent = {
 // test that computeSelectionState returns the correct state
 describe('computeSelectionState', () => {
   describe('include mode', () => {
+    it('returns "unselected" when the filter is empty', () => {
+      const facetValuesFilter: FacetValuesFilter = {
+        type: 'include',
+        facetValues: {},
+      }
+      const facet = {
+        path: 'resource.type',
+        label: 'Resource Type',
+      }
+
+      const facetRegistry = new FacetRegistry()
+      facetRegistry.addEvent(rumResourceXHREvent)
+      const facetValue = 'xhr'
+      expect(
+        computeSelectionState(facetValuesFilter, facetRegistry, facet, facetValue, ['rum', 'resource', 'xhr'])
+      ).toBe('unselected')
+    })
     it('returns "selected" when the facet is in the filter', () => {
       const facetValuesFilter: FacetValuesFilter = {
         type: 'include',
@@ -68,6 +85,23 @@ describe('computeSelectionState', () => {
       )
     })
 
+    it('returns "selected" when all children are in the filter', () => {
+      const facetValuesFilter: FacetValuesFilter = {
+        type: 'include',
+        facetValues: {
+          'resource.type': ['xhr', 'beacon'],
+        },
+      }
+      const facet = FACET_ROOT.values!.rum?.facets![0] as Facet
+      const facetValue = 'resource'
+      const facetRegistry = new FacetRegistry()
+      facetRegistry.addEvent(rumResourceXHREvent)
+      facetRegistry.addEvent(rumResourceBeaconEvent)
+      expect(computeSelectionState(facetValuesFilter, facetRegistry, facet, facetValue, ['rum', 'resource'])).toBe(
+        'selected'
+      )
+    })
+
     it('returns "unselected" when the facet or children are not in the filter', () => {
       const facetValuesFilter: FacetValuesFilter = {
         type: 'include',
@@ -91,6 +125,23 @@ describe('computeSelectionState', () => {
   })
 
   describe('exclude mode', () => {
+    it('returns "selected" when the filter is empty', () => {
+      const facetValuesFilter: FacetValuesFilter = {
+        type: 'exclude',
+        facetValues: {},
+      }
+      const facet = {
+        path: 'resource.type',
+        label: 'Resource Type',
+      }
+      const facetRegistry = new FacetRegistry()
+      facetRegistry.addEvent(rumResourceXHREvent)
+      const facetValue = 'xhr'
+      expect(
+        computeSelectionState(facetValuesFilter, facetRegistry, facet, facetValue, ['rum', 'resource', 'xhr'])
+      ).toBe('selected')
+    })
+
     it('returns "unselected" when the facet is in the filter', () => {
       const facetValuesFilter: FacetValuesFilter = {
         type: 'exclude',
@@ -124,6 +175,23 @@ describe('computeSelectionState', () => {
       facetRegistry.addEvent(rumResourceBeaconEvent)
       expect(computeSelectionState(facetValuesFilter, facetRegistry, facet, facetValue, ['rum', 'resource'])).toBe(
         'partial-selected'
+      )
+    })
+
+    it('returns "unelected" when all children are in the filter', () => {
+      const facetValuesFilter: FacetValuesFilter = {
+        type: 'exclude',
+        facetValues: {
+          'resource.type': ['xhr', 'beacon'],
+        },
+      }
+      const facet = FACET_ROOT.values!.rum?.facets![0] as Facet
+      const facetValue = 'resource'
+      const facetRegistry = new FacetRegistry()
+      facetRegistry.addEvent(rumResourceXHREvent)
+      facetRegistry.addEvent(rumResourceBeaconEvent)
+      expect(computeSelectionState(facetValuesFilter, facetRegistry, facet, facetValue, ['rum', 'resource'])).toBe(
+        'unselected'
       )
     })
 
