@@ -47,6 +47,7 @@ export function startPerformanceCollection(lifeCycle: LifeCycle, configuration: 
       RumPerformanceEntryType.FIRST_INPUT,
       RumPerformanceEntryType.LAYOUT_SHIFT,
       RumPerformanceEntryType.EVENT,
+      RumPerformanceEntryType.LONG_ANIMATION_FRAME,
     ]
 
     try {

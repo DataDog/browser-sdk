@@ -10,6 +10,7 @@ import type {
   DefaultPrivacyLevel,
   Connectivity,
   Csp,
+  RelativeTime,
 } from '@datadog/browser-core'
 import type { PageState } from './domain/contexts/pageStateHistory'
 
@@ -20,6 +21,11 @@ export const enum RumEventType {
   VIEW = 'view',
   RESOURCE = 'resource',
   VITAL = 'vital',
+}
+
+export const enum RumLongTaskEntryType {
+  LONG_TASK = 'long-task',
+  LONG_ANIMATION_FRAME = 'long-animation-frame',
 }
 
 export interface RawRumResourceEvent {
@@ -170,7 +176,48 @@ export interface RawRumLongTaskEvent {
   type: RumEventType.LONG_TASK
   long_task: {
     id: string
+    entry_type: RumLongTaskEntryType.LONG_TASK
     duration: ServerDuration
+  }
+  _dd: {
+    discarded: boolean
+  }
+}
+
+export type InvokerType =
+  | 'user-callback'
+  | 'event-listener'
+  | 'resolve-promise'
+  | 'reject-promise'
+  | 'classic-script'
+  | 'module-script'
+
+export interface RawRumLongAnimationFrameEvent {
+  date: TimeStamp
+  type: RumEventType.LONG_TASK // LoAF are ingested as Long Task
+  long_task: {
+    id: string
+    entry_type: RumLongTaskEntryType.LONG_ANIMATION_FRAME
+    duration: ServerDuration
+    blocking_duration: ServerDuration
+    first_ui_event_timestamp: RelativeTime
+    name: 'long-animation-frame'
+    render_start: ServerDuration
+    start_time: ServerDuration
+    style_and_layout_start: ServerDuration
+    scripts: Array<{
+      duration: ServerDuration
+      pause_duration: ServerDuration
+      source_url: string
+      source_function_name: string
+      source_char_position: number
+      start_time: ServerDuration
+      window_attribution: string
+      forced_style_and_layout_duration: ServerDuration
+      invoker_type: InvokerType
+      invoker: string
+      execution_start: ServerDuration
+    }>
   }
   _dd: {
     discarded: boolean
@@ -250,6 +297,7 @@ export type RawRumEvent =
   | RawRumResourceEvent
   | RawRumViewEvent
   | RawRumLongTaskEvent
+  | RawRumLongAnimationFrameEvent
   | RawRumActionEvent
   | RawRumVitalEvent
 

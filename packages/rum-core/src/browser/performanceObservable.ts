@@ -23,6 +23,7 @@ export enum RumPerformanceEntryType {
   LARGEST_CONTENTFUL_PAINT = 'largest-contentful-paint',
   LAYOUT_SHIFT = 'layout-shift',
   LONG_TASK = 'longtask',
+  LONG_ANIMATION_FRAME = 'long-animation-frame',
   NAVIGATION = 'navigation',
   PAINT = 'paint',
   RESOURCE = 'resource',
@@ -117,9 +118,46 @@ export interface RumLayoutShiftTiming {
   }>
 }
 
+// Documentation https://developer.chrome.com/docs/web-platform/long-animation-frames#better-attribution
+export type RumPerformanceScriptTiming = {
+  duration: Duration
+  entryType: 'script'
+  executionStart: RelativeTime
+  forcedStyleAndLayoutDuration: Duration
+  invoker: string // e.g. "https://static.datadoghq.com/static/c/93085/chunk-bc4db53278fd4c77a637.min.js"
+  invokerType:
+    | 'user-callback'
+    | 'event-listener'
+    | 'resolve-promise'
+    | 'reject-promise'
+    | 'classic-script'
+    | 'module-script'
+  name: 'script'
+  pauseDuration: Duration
+  sourceCharPosition: number
+  sourceFunctionName: string
+  sourceURL: string
+  startTime: RelativeTime
+  window: Window
+  windowAttribution: string
+}
+
+export interface RumPerformanceLongAnimationFrameTiming {
+  blockingDuration: Duration
+  duration: Duration
+  entryType: RumPerformanceEntryType.LONG_ANIMATION_FRAME
+  firstUIEventTimestamp: RelativeTime
+  name: 'long-animation-frame'
+  renderStart: RelativeTime
+  scripts: RumPerformanceScriptTiming[]
+  startTime: RelativeTime
+  styleAndLayoutStart: RelativeTime
+}
+
 export type RumPerformanceEntry =
   | RumPerformanceResourceTiming
   | RumPerformanceLongTaskTiming
+  | RumPerformanceLongAnimationFrameTiming
   | RumPerformancePaintTiming
   | RumPerformanceNavigationTiming
   | RumLargestContentfulPaintTiming
@@ -134,6 +172,7 @@ export type EntryTypeToReturnType = {
   [RumPerformanceEntryType.LAYOUT_SHIFT]: RumLayoutShiftTiming
   [RumPerformanceEntryType.PAINT]: RumPerformancePaintTiming
   [RumPerformanceEntryType.LONG_TASK]: RumPerformanceLongTaskTiming
+  [RumPerformanceEntryType.LONG_ANIMATION_FRAME]: RumPerformanceLongAnimationFrameTiming
   [RumPerformanceEntryType.NAVIGATION]: RumPerformanceNavigationTiming
   [RumPerformanceEntryType.RESOURCE]: RumPerformanceResourceTiming
 }
@@ -180,6 +219,7 @@ export function createPerformanceObservable<T extends RumPerformanceEntryType>(
         RumPerformanceEntryType.RESOURCE,
         RumPerformanceEntryType.NAVIGATION,
         RumPerformanceEntryType.LONG_TASK,
+        RumPerformanceEntryType.LONG_ANIMATION_FRAME,
         RumPerformanceEntryType.PAINT,
       ]
       if (includes(fallbackSupportedEntryTypes, options.type)) {
