@@ -11,24 +11,39 @@ import { computeStackTrace } from '../../tools/stackTrace/computeStackTrace'
 import { createHandlingStack, toStackTraceString, formatErrorMessage } from '../../tools/stackTrace/handlingStack'
 import { clocksNow } from '../../tools/utils/timeUtils'
 
-export interface ConsoleLog {
+export type ConsoleLog = NonErrorConsoleLog | ErrorConsoleLog
+
+interface NonErrorConsoleLog extends ConsoleLogBase {
+  api: Exclude<ConsoleApiName, typeof ConsoleApiName.error>
+  error: undefined
+}
+
+export interface ErrorConsoleLog extends ConsoleLogBase {
+  api: typeof ConsoleApiName.error
+  error: RawError
+}
+
+interface ConsoleLogBase {
   message: string
   api: ConsoleApiName
-  error?: RawError
   handlingStack: string
 }
 
-let consoleObservablesByApi: { [k in ConsoleApiName]?: Observable<ConsoleLog> } = {}
+type ConsoleLogForApi<T extends ConsoleApiName> = T extends typeof ConsoleApiName.error
+  ? ErrorConsoleLog
+  : NonErrorConsoleLog
 
-export function initConsoleObservable(apis: ConsoleApiName[]) {
+let consoleObservablesByApi: { [K in ConsoleApiName]?: Observable<ConsoleLogForApi<K>> } = {}
+
+export function initConsoleObservable<T extends ConsoleApiName[]>(apis: T): Observable<ConsoleLogForApi<T[number]>> {
   const consoleObservables = apis.map((api) => {
     if (!consoleObservablesByApi[api]) {
-      consoleObservablesByApi[api] = createConsoleObservable(api)
+      consoleObservablesByApi[api] = createConsoleObservable(api) as any // we are sure that the observable created for this api will yield the expected ConsoleLog type
     }
-    return consoleObservablesByApi[api]
+    return consoleObservablesByApi[api] as unknown as Observable<ConsoleLogForApi<T[number]>>
   })
 
-  return mergeObservables<ConsoleLog>(...consoleObservables)
+  return mergeObservables(...consoleObservables)
 }
 
 export function resetConsoleObservable() {
@@ -78,7 +93,7 @@ function buildConsoleLog(params: unknown[], api: ConsoleApiName, handlingStack: 
     message,
     error,
     handlingStack,
-  }
+  } as ConsoleLog
 }
 
 function formatConsoleParameters(param: unknown) {

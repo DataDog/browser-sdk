@@ -2,7 +2,7 @@
 import { isIE } from '../../tools/utils/browserDetection'
 import { ConsoleApiName } from '../../tools/display'
 import type { Subscription } from '../../tools/observable'
-import type { ConsoleLog } from './consoleObservable'
+import type { ErrorConsoleLog } from './consoleObservable'
 import { initConsoleObservable } from './consoleObservable'
 
 // prettier: avoid formatting issue
@@ -79,7 +79,7 @@ import { initConsoleObservable } from './consoleObservable'
 
 describe('console error observable', () => {
   let consoleSubscription: Subscription
-  let notifyLog: jasmine.Spy<(consoleLog: ConsoleLog) => void>
+  let notifyLog: jasmine.Spy<(consoleLog: ErrorConsoleLog) => void>
 
   beforeEach(() => {
     spyOn(console, 'error').and.callFake(() => true)
@@ -103,7 +103,7 @@ describe('console error observable', () => {
 
   it('should extract stack from first error', () => {
     console.error(new TypeError('foo'), new TypeError('bar'))
-    const stack = notifyLog.calls.mostRecent().args[0].error!.stack
+    const stack = notifyLog.calls.mostRecent().args[0].error.stack
     if (!isIE()) {
       expect(stack).toMatch(/^TypeError: foo\s+at/)
     } else {
@@ -122,7 +122,7 @@ describe('console error observable', () => {
     console.error(error)
 
     const consoleLog = notifyLog.calls.mostRecent().args[0]
-    expect(consoleLog.error!.fingerprint).toBe('my-fingerprint')
+    expect(consoleLog.error.fingerprint).toBe('my-fingerprint')
   })
 
   it('should sanitize error fingerprint', () => {
@@ -133,6 +133,6 @@ describe('console error observable', () => {
     console.error(error)
 
     const consoleLog = notifyLog.calls.mostRecent().args[0]
-    expect(consoleLog.error!.fingerprint).toBe('2')
+    expect(consoleLog.error.fingerprint).toBe('2')
   })
 })
