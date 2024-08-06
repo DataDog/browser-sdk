@@ -10,7 +10,7 @@ import {
 } from '@datadog/browser-core'
 import { RumPerformanceEntryType, type EntryTypeToReturnType } from '../src/browser/performanceObservable'
 import type { RawRumEvent } from '../src/rawRumEvent.types'
-import { VitalType, ActionType, RumEventType, ViewLoadingType } from '../src/rawRumEvent.types'
+import { VitalType, ActionType, RumEventType, ViewLoadingType, RumLongTaskEntryType } from '../src/rawRumEvent.types'
 
 export function createRawRumEvent(type: RumEventType, overrides?: Context): RawRumEvent {
   switch (type) {
@@ -51,6 +51,7 @@ export function createRawRumEvent(type: RumEventType, overrides?: Context): RawR
           long_task: {
             id: generateUUID(),
             duration: 0 as ServerDuration,
+            entry_type: RumLongTaskEntryType.LONG_TASK,
           },
           _dd: {
             discarded: false,
