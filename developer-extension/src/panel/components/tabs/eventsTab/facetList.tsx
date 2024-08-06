@@ -39,7 +39,7 @@ function FacetField({
   depth: number
   facetRegistry: FacetRegistry
   facetValuesFilter: FacetValuesFilter
-    parentList: string[]
+  parentList: string[]
   onExcludedFacetValuesChange: (newExcludedFacetValues: FacetValuesFilter) => void
 }) {
   const facetValueCounts = facetRegistry.getFacetValueCounts(facet.path)
@@ -87,14 +87,15 @@ function FacetValue({
   depth: number
   facetRegistry: FacetRegistry
   facetValuesFilter: FacetValuesFilter
-    parentList: string[]
+  parentList: string[]
   onExcludedFacetValuesChange: (newExcludedFacetValues: FacetValuesFilter) => void
 }) {
   const isTopLevel = depth === 0
   const facetSelectState = computeSelectionState(facetValuesFilter, facetRegistry, facet, facetValue, parentList)
   const isCollapsed =
     !facetValuesFilter.facetValues[facet.path] || !facetValuesFilter.facetValues[facet.path].includes(facetValue)
-  const isFiltered = facetValuesFilter.facetValues[facet.path] && facetValuesFilter.facetValues[facet.path].includes(facetValue)
+  const isFiltered =
+    facetValuesFilter.facetValues[facet.path] && facetValuesFilter.facetValues[facet.path].includes(facetValue)
   const isOnly = facetValuesFilter.type === 'include' && Object.keys(facetValuesFilter.facetValues).length === 1
   const value = (
     <Flex justify="space-between" mt={isTopLevel ? 'xs' : SPACE_BETWEEN_CHECKBOX}>
@@ -103,15 +104,7 @@ function FacetValue({
         checked={facetSelectState === 'selected'}
         indeterminate={facetSelectState === 'partial-selected'}
         onChange={() => {
-          if (isOnly && !facetValuesFilter.facetValues[facet.path]?.includes(facetValue)) {
-            // when switching from only to include, remove all existing filter values
-            facetValuesFilter.facetValues = {
-              [facet.path]: [facetValue],
-            }
-            onExcludedFacetValuesChange(facetValuesFilter)
-          } else {
-            onExcludedFacetValuesChange(toggleFacetValue('exclude', facet, facetValuesFilter, facetValue))
-          }
+          onExcludedFacetValuesChange(toggleFacetValue(facetValuesFilter.type, facet, facetValuesFilter, facetValue))
         }}
       />
       <Text>{facetValueCount}</Text>
@@ -125,7 +118,7 @@ function FacetValue({
           onExcludedFacetValuesChange(toggleFacetValue(filterType, facet, facetValuesFilter, facetValue))
         }}
       >
-        {isOnly && isFiltered ? 'all' : 'only'}
+        {isOnly && facetSelectState === 'selected' ? 'all' : 'only'}
       </Button>
     </Flex>
   )
@@ -180,7 +173,8 @@ function toggleFacetValue(
   if (type !== facetValuesFilter.type) {
     // when switching from exclude to include, remove all existing filter values
     return {
-      type, facetValues: type === 'include' ? { [facet.path]: [value] } : {},
+      type,
+      facetValues: type === 'include' ? { [facet.path]: [value] } : {},
     }
   }
 
