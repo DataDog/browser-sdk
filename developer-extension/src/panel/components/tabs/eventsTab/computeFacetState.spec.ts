@@ -46,7 +46,9 @@ describe('computeSelectionState', () => {
       const facetRegistry = new FacetRegistry()
       facetRegistry.addEvent(rumResourceXHREvent)
       const facetValue = 'xhr'
-      expect(computeSelectionState(facetValuesFilter, facetRegistry, facet, facetValue)).toBe('selected')
+      expect(
+        computeSelectionState(facetValuesFilter, facetRegistry, facet, facetValue, ['rum', 'resource', 'xhr'])
+      ).toBe('selected')
     })
 
     it('returns "partial-selected" when some children are in the filter', () => {
@@ -61,7 +63,9 @@ describe('computeSelectionState', () => {
       const facetRegistry = new FacetRegistry()
       facetRegistry.addEvent(rumResourceXHREvent)
       facetRegistry.addEvent(rumResourceBeaconEvent)
-      expect(computeSelectionState(facetValuesFilter, facetRegistry, facet, facetValue)).toBe('partial-selected')
+      expect(computeSelectionState(facetValuesFilter, facetRegistry, facet, facetValue, ['rum', 'resource'])).toBe(
+        'partial-selected'
+      )
     })
 
     it('returns "unselected" when the facet or children are not in the filter', () => {
@@ -80,7 +84,9 @@ describe('computeSelectionState', () => {
       const facetRegistry = new FacetRegistry()
       facetRegistry.addEvent(rumResourceXHREvent)
       facetRegistry.addEvent(rumCustomActionEvent)
-      expect(computeSelectionState(facetValuesFilter, facetRegistry, facet, facetValue)).toBe('unselected')
+      expect(computeSelectionState(facetValuesFilter, facetRegistry, facet, facetValue, ['rum', 'action'])).toBe(
+        'unselected'
+      )
     })
   })
 
@@ -99,7 +105,9 @@ describe('computeSelectionState', () => {
       const facetRegistry = new FacetRegistry()
       facetRegistry.addEvent(rumResourceXHREvent)
       const facetValue = 'xhr'
-      expect(computeSelectionState(facetValuesFilter, facetRegistry, facet, facetValue)).toBe('unselected')
+      expect(
+        computeSelectionState(facetValuesFilter, facetRegistry, facet, facetValue, ['rum', 'resource', 'xhr'])
+      ).toBe('unselected')
     })
     it('returns "partial-selected" when some children are in the filter', () => {
       const facetValuesFilter: FacetValuesFilter = {
@@ -114,7 +122,9 @@ describe('computeSelectionState', () => {
       const facetRegistry = new FacetRegistry()
       facetRegistry.addEvent(rumResourceXHREvent)
       facetRegistry.addEvent(rumResourceBeaconEvent)
-      expect(computeSelectionState(facetValuesFilter, facetRegistry, facet, facetValue)).toBe('partial-selected')
+      expect(computeSelectionState(facetValuesFilter, facetRegistry, facet, facetValue, ['rum', 'resource'])).toBe(
+        'partial-selected'
+      )
     })
 
     it('returns "selected" when the facet or children are not in the filter', () => {
@@ -133,7 +143,9 @@ describe('computeSelectionState', () => {
       const facetRegistry = new FacetRegistry()
       facetRegistry.addEvent(rumResourceXHREvent)
       facetRegistry.addEvent(rumCustomActionEvent)
-      expect(computeSelectionState(facetValuesFilter, facetRegistry, facet, facetValue)).toBe('selected')
+      expect(computeSelectionState(facetValuesFilter, facetRegistry, facet, facetValue, ['rum', 'action'])).toBe(
+        'selected'
+      )
     })
   })
 })
