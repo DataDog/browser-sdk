@@ -94,8 +94,7 @@ function FacetValue({
   const facetSelectState = computeSelectionState(facetValuesFilter, facetRegistry, facet, facetValue, parentList)
   const isCollapsed =
     !facetValuesFilter.facetValues[facet.path] || !facetValuesFilter.facetValues[facet.path].includes(facetValue)
-  const isSelected =
-    facetValuesFilter.facetValues[facet.path] && facetValuesFilter.facetValues[facet.path].includes(facetValue)
+  const isFiltered = facetValuesFilter.facetValues[facet.path] && facetValuesFilter.facetValues[facet.path].includes(facetValue)
   const isOnly = facetValuesFilter.type === 'include' && Object.keys(facetValuesFilter.facetValues).length === 1
   const value = (
     <Flex justify="space-between" mt={isTopLevel ? 'xs' : SPACE_BETWEEN_CHECKBOX}>
@@ -105,6 +104,7 @@ function FacetValue({
         indeterminate={facetSelectState === 'partial-selected'}
         onChange={() => {
           if (isOnly && !facetValuesFilter.facetValues[facet.path]?.includes(facetValue)) {
+            // when switching from only to include, remove all existing filter values
             facetValuesFilter.facetValues = {
               [facet.path]: [facetValue],
             }
@@ -116,16 +116,16 @@ function FacetValue({
       />
       <Text>{facetValueCount}</Text>
       <Button
-        variant={isOnly && isSelected ? 'filled' : 'light'}
+        variant={isOnly && isFiltered ? 'filled' : 'light'}
         size="compact-xs"
         w="40px"
-        disabled={isOnly && !isSelected}
+        disabled={isOnly && !isFiltered}
         onClick={() => {
           const filterType = isOnly ? 'exclude' : 'include'
           onExcludedFacetValuesChange(toggleFacetValue(filterType, facet, facetValuesFilter, facetValue))
         }}
       >
-        {isOnly && isSelected ? 'all' : 'only'}
+        {isOnly && isFiltered ? 'all' : 'only'}
       </Button>
     </Flex>
   )
@@ -152,7 +152,7 @@ function FacetValue({
   if (isTopLevel) {
     return (
       <Card shadow="sm" padding="sm" radius="md" withBorder mb="md">
-        <Card.Section withBorder={isSelected} inheritPadding pb="xs">
+        <Card.Section withBorder={isFiltered} inheritPadding pb="xs">
           {value}
         </Card.Section>
         <Card.Section inheritPadding>{children}</Card.Section>
@@ -174,25 +174,27 @@ function toggleFacetValue(
   facetValuesFilter: FacetValuesFilter,
   value: FacetValue
 ): FacetValuesFilter {
-  let currentValues = facetValuesFilter.facetValues[facet.path]
-  if (type !== facetValuesFilter.type) {
-    if (type === 'include') {
-      currentValues = []
-    }
-  }
+  const currentValues = facetValuesFilter.facetValues[facet.path]
   const newFacetValues = { ...facetValuesFilter.facetValues }
 
+  if (type !== facetValuesFilter.type) {
+    // when switching from exclude to include, remove all existing filter values
+    return {
+      type, facetValues: type === 'include' ? { [facet.path]: [value] } : {},
+    }
+  }
+
   if (!currentValues) {
-    // Add exclusion. Nothing was excluded yet, create a new list
+    // Add exclusion or inclusion. Nothing was excluded yet, create a new list
     newFacetValues[facet.path] = [value]
   } else if (!currentValues.includes(value)) {
-    // Add exclusion. Some other values are already excluded, add it to the list
+    // Add exclusion or inclusion. Some other values are already added, add it to the list
     newFacetValues[facet.path] = currentValues.concat(value)
   } else if (currentValues.length === 1) {
-    // Remove exclusion. If it's the only value, delete the list altogether.
+    // Remove exclusion or inclusion. If it's the only value, delete the list altogether.
     delete newFacetValues[facet.path]
   } else {
-    // Remove exclusion. Filter out the the value from the existing list.
+    // Remove exclusion or inclusion. Filter out the the value from the existing list.
     newFacetValues[facet.path] = currentValues.filter((other) => other !== value)
   }
 
