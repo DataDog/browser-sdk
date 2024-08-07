@@ -5,7 +5,7 @@ const { command } = require('../lib/command')
 
 const REPOSITORY = process.env.APP
 const CURRENT_STAGING = process.env.CURRENT_STAGING
-const DEVFLOW_AUTH_TOKEN = command`authanywhere --audience sdm`.run().split(' ')[2].trim()
+const DEVFLOW_AUTH_TOKEN = command`authanywhere --audience sdm --raw`.run()
 const DEVFLOW_API_URL = 'https://devflow-api.us1.ddbuild.io/internal/api/v2/devflow/execute/'
 const SUCESS_FEEDBACK_LEVEL = 'FEEDBACK_LEVEL_INFO'
 
