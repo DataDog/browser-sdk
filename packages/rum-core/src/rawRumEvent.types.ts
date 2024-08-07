@@ -201,22 +201,20 @@ export interface RawRumLongAnimationFrameEvent {
     duration: ServerDuration
     blocking_duration: ServerDuration
     first_ui_event_timestamp: RelativeTime
-    name: 'long-animation-frame'
-    render_start: ServerDuration
-    start_time: ServerDuration
-    style_and_layout_start: ServerDuration
+    render_start: RelativeTime
+    style_and_layout_start: RelativeTime
     scripts: Array<{
       duration: ServerDuration
       pause_duration: ServerDuration
+      forced_style_and_layout_duration: ServerDuration
+      start_time: RelativeTime
+      execution_start: RelativeTime
       source_url: string
       source_function_name: string
       source_char_position: number
-      start_time: ServerDuration
-      window_attribution: string
-      forced_style_and_layout_duration: ServerDuration
-      invoker_type: InvokerType
       invoker: string
-      execution_start: ServerDuration
+      invoker_type: InvokerType
+      window_attribution: string
     }>
   }
   _dd: {
