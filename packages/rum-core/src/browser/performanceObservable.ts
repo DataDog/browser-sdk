@@ -219,7 +219,6 @@ export function createPerformanceObservable<T extends RumPerformanceEntryType>(
         RumPerformanceEntryType.RESOURCE,
         RumPerformanceEntryType.NAVIGATION,
         RumPerformanceEntryType.LONG_TASK,
-        RumPerformanceEntryType.LONG_ANIMATION_FRAME,
         RumPerformanceEntryType.PAINT,
       ]
       if (includes(fallbackSupportedEntryTypes, options.type)) {

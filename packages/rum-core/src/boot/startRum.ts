@@ -169,7 +169,10 @@ export function startRum(
   cleanupTasks.push(stopResourceCollection)
 
   if (isExperimentalFeatureEnabled(ExperimentalFeature.LONG_ANIMATION_FRAME)) {
-    startLongAnimationFrameCollection(lifeCycle, configuration)
+    if (configuration.trackLongTasks) {
+      const { stop: stopLongAnimationFrameCollection } = startLongAnimationFrameCollection(lifeCycle, configuration)
+      cleanupTasks.push(stopLongAnimationFrameCollection)
+    }
   } else {
     startLongTaskCollection(lifeCycle, configuration)
   }

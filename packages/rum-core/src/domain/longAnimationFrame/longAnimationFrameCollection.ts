@@ -3,20 +3,17 @@ import type { RawRumLongAnimationFrameEvent } from '../../rawRumEvent.types'
 import { RumEventType, RumLongTaskEntryType } from '../../rawRumEvent.types'
 import type { LifeCycle } from '../lifeCycle'
 import { LifeCycleEventType } from '../lifeCycle'
-import { RumPerformanceEntryType } from '../../browser/performanceObservable'
+import { createPerformanceObservable, RumPerformanceEntryType } from '../../browser/performanceObservable'
 import type { RumConfiguration } from '../configuration'
 
 export function startLongAnimationFrameCollection(lifeCycle: LifeCycle, configuration: RumConfiguration) {
-  lifeCycle.subscribe(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, (entries) => {
+  const performanceResourceSubscription = createPerformanceObservable(configuration, {
+    type: RumPerformanceEntryType.LONG_ANIMATION_FRAME,
+    buffered: true,
+  }).subscribe((entries) => {
     for (const entry of entries) {
-      if (entry.entryType !== RumPerformanceEntryType.LONG_ANIMATION_FRAME) {
-        break
-      }
-      if (!configuration.trackLongTasks) {
-        break
-      }
-
       const startClocks = relativeToClocks(entry.startTime)
+
       const rawRumEvent: RawRumLongAnimationFrameEvent = {
         date: startClocks.timeStamp,
         long_task: {
@@ -46,6 +43,7 @@ export function startLongAnimationFrameCollection(lifeCycle: LifeCycle, configur
           discarded: false,
         },
       }
+
       lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, {
         rawRumEvent,
         startTime: startClocks.relative,
@@ -53,4 +51,8 @@ export function startLongAnimationFrameCollection(lifeCycle: LifeCycle, configur
       })
     }
   })
+
+  return {
+    stop: () => performanceResourceSubscription.unsubscribe(),
+  }
 }
