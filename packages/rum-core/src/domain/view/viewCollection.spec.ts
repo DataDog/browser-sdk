@@ -1,13 +1,12 @@
 import { noop, Observable } from '@datadog/browser-core'
 import type { Duration, RelativeTime, ServerDuration, TimeStamp } from '@datadog/browser-core'
-import { SPEC_ENDPOINTS } from '@datadog/browser-core/test'
+import { registerCleanupTask, SPEC_ENDPOINTS } from '@datadog/browser-core/test'
 import type { RecorderApi } from '../../boot/rumPublicApi'
-import { noopRecorderApi, validateRumEventFormat } from '../../../test'
+import { collectAndValidateRawRumEvents, mockPageStateHistory, noopRecorderApi } from '../../../test'
 import type { RawRumEvent, RawRumViewEvent } from '../../rawRumEvent.types'
 import { RumEventType, ViewLoadingType } from '../../rawRumEvent.types'
 import type { RawRumEventCollectedData } from '../lifeCycle'
 import { LifeCycle, LifeCycleEventType } from '../lifeCycle'
-import type { PageStateHistory } from '../contexts/pageStateHistory'
 import { PageState } from '../contexts/pageStateHistory'
 import { validateAndBuildRumConfiguration, type RumConfiguration } from '../configuration'
 import type { FeatureFlagContexts } from '../contexts/featureFlagContext'
@@ -78,16 +77,11 @@ const baseConfiguration: RumConfiguration = {
   })!,
   ...SPEC_ENDPOINTS,
 }
-const pageStateHistory: PageStateHistory = {
+const pageStateHistory = mockPageStateHistory({
   findAll: () => [
     { start: 0 as ServerDuration, state: PageState.ACTIVE },
     { start: 10 as ServerDuration, state: PageState.PASSIVE },
-  ],
-  addPageState: noop,
-  stop: noop,
-  wasInPageStateAt: () => false,
-  wasInPageStateDuringPeriod: () => false,
-}
+  ]})
 
 describe('viewCollection', () => {
   const lifeCycle = new LifeCycle()
@@ -95,7 +89,6 @@ describe('viewCollection', () => {
   let featureFlagContexts: FeatureFlagContexts
   let getReplayStatsSpy: jasmine.Spy<RecorderApi['getReplayStats']>
   let rawRumEvents: Array<RawRumEventCollectedData<RawRumEvent>> = []
-  let stopViewCollection: () => void
 
   function setupViewCollection() {
     const domMutationObservable = new Observable<void>()
@@ -115,26 +108,18 @@ describe('viewCollection', () => {
       }
     )
 
-    const eventsSubscription = lifeCycle.subscribe(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, (data) => {
-      rawRumEvents.push(data)
-      validateRumEventFormat(data.rawRumEvent)
-    })
+    rawRumEvents = collectAndValidateRawRumEvents(lifeCycle)
 
-    stopViewCollection = () => {
+    registerCleanupTask(() => {
       collectionResult.stop()
-      eventsSubscription.unsubscribe()
-    }
+      rawRumEvents = []
+    })
   }
 
   beforeEach(() => {
     getReplayStatsSpy = jasmine.createSpy()
     configuration = baseConfiguration
     featureFlagContexts = baseFeatureFlagContexts
-  })
-
-  afterEach(() => {
-    stopViewCollection()
-    rawRumEvents = []
   })
 
   it('should create view from view update', () => {

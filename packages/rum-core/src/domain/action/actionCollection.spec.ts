@@ -1,40 +1,30 @@
 import type { Duration, RelativeTime, ServerDuration, TimeStamp } from '@datadog/browser-core'
-import { noop, Observable } from '@datadog/browser-core'
+import {  Observable } from '@datadog/browser-core'
 import { createNewEvent, registerCleanupTask } from '@datadog/browser-core/test'
 import type { RawRumActionEvent, RawRumEventCollectedData, RumConfiguration } from '@datadog/browser-rum-core'
-import { validateRumEventFormat } from '../../../test'
+import { collectAndValidateRawRumEvents, mockPageStateHistory } from '../../../test'
 import type { RawRumEvent } from '../../rawRumEvent.types'
 import { RumEventType, ActionType } from '../../rawRumEvent.types'
 import { LifeCycle, LifeCycleEventType } from '../lifeCycle'
-import type { PageStateHistory } from '../contexts/pageStateHistory'
 import { startActionCollection } from './actionCollection'
 
-const pageStateHistory: PageStateHistory = {
-  findAll: () => undefined,
-  addPageState: noop,
-  stop: noop,
-  wasInPageStateAt: () => true,
-  wasInPageStateDuringPeriod: () => false,
-}
+const basePageStateHistory = mockPageStateHistory({wasInPageStateAt: () => true})
 
 describe('actionCollection', () => {
   const lifeCycle = new LifeCycle()
   let addAction: ReturnType<typeof startActionCollection>['addAction']
-  let rawRumEvents: Array<RawRumEventCollectedData<RawRumEvent>> = []
+  let rawRumEvents: Array<RawRumEventCollectedData<RawRumEvent>>
 
   beforeEach(() => {
     const configuration = {} as RumConfiguration
     const domMutationObservable = new Observable<void>()
 
-    ;({ addAction } = startActionCollection(lifeCycle, domMutationObservable, configuration, pageStateHistory))
 
-    const eventsSubscription = lifeCycle.subscribe(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, (data) => {
-      rawRumEvents.push(data)
-      validateRumEventFormat(data.rawRumEvent)
-    })
+    ;({ addAction } = startActionCollection(lifeCycle, domMutationObservable, configuration, basePageStateHistory))
+
+    rawRumEvents = collectAndValidateRawRumEvents(lifeCycle)
 
     registerCleanupTask(() => {
-      eventsSubscription.unsubscribe()
       rawRumEvents = []
     })
   })

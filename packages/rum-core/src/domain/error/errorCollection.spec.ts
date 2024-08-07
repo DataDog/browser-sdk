@@ -1,13 +1,12 @@
 import type { RelativeTime, TimeStamp, ErrorWithCause } from '@datadog/browser-core'
 import { ErrorHandling, ErrorSource, NO_ERROR_STACK_PRESENT_MESSAGE, noop } from '@datadog/browser-core'
-import { FAKE_CSP_VIOLATION_EVENT } from '@datadog/browser-core/test'
-import { validateRumEventFormat } from '../../../test'
+import { FAKE_CSP_VIOLATION_EVENT, registerCleanupTask } from '@datadog/browser-core/test'
+import { collectAndValidateRawRumEvents, mockPageStateHistory } from '../../../test'
 import type { RawRumErrorEvent, RawRumEvent } from '../../rawRumEvent.types'
 import { RumEventType } from '../../rawRumEvent.types'
 import type { RawRumEventCollectedData } from '../lifeCycle'
 import { LifeCycle, LifeCycleEventType } from '../lifeCycle'
 import type { FeatureFlagContexts } from '../contexts/featureFlagContext'
-import type { PageStateHistory } from '../contexts/pageStateHistory'
 import { doStartErrorCollection } from './errorCollection'
 
 const baseFeatureFlagContexts: FeatureFlagContexts = {
@@ -16,36 +15,22 @@ const baseFeatureFlagContexts: FeatureFlagContexts = {
   stop: noop,
 }
 
-const pageStateHistory: PageStateHistory = {
-  findAll: () => undefined,
-  addPageState: noop,
-  stop: noop,
-  wasInPageStateAt: () => true,
-  wasInPageStateDuringPeriod: () => false,
-}
+const basePageStateHistory = mockPageStateHistory({wasInPageStateAt: () => true})
 
 describe('error collection', () => {
   let lifeCycle: LifeCycle
   let rawRumEvents: Array<RawRumEventCollectedData<RawRumEvent>> = []
   let addError: ReturnType<typeof doStartErrorCollection>['addError']
-  let stopErrorCollection: () => void
 
   function setupErrorCollection(featureFlagContexts: FeatureFlagContexts = baseFeatureFlagContexts) {
     lifeCycle = new LifeCycle()
-    ;({ addError } = doStartErrorCollection(lifeCycle, pageStateHistory, featureFlagContexts))
+    ;({ addError } = doStartErrorCollection(lifeCycle, basePageStateHistory, featureFlagContexts))
 
-    const eventsSubscription = lifeCycle.subscribe(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, (data) => {
-      rawRumEvents.push(data)
-      validateRumEventFormat(data.rawRumEvent)
+    rawRumEvents = collectAndValidateRawRumEvents(lifeCycle)
+    registerCleanupTask(() => {
+      rawRumEvents = []
     })
-
-    stopErrorCollection = eventsSubscription.unsubscribe
   }
-
-  afterEach(() => {
-    stopErrorCollection()
-    rawRumEvents = []
-  })
 
   describe('addError', () => {
     ;[

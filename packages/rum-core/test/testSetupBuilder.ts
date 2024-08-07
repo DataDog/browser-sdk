@@ -25,6 +25,7 @@ import type { RawRumEvent, RumContext } from '../src/rawRumEvent.types'
 import type { DisplayContext } from '../src/domain/contexts/displayContext'
 import { validateRumFormat } from './formatValidation'
 import { createRumSessionManagerMock } from './mockRumSessionManager'
+import { mockPageStateHistory } from './mockPageStateHistory'
 
 export interface TestSetupBuilder {
   withFakeLocation: (initialUrl: string) => TestSetupBuilder
@@ -110,13 +111,7 @@ export function setup(): TestSetupBuilder {
     customerDataTrackerManager.getOrCreateTracker(CustomerDataType.GlobalContext)
   )
   const userContextManager = createContextManager(customerDataTrackerManager.getOrCreateTracker(CustomerDataType.User))
-  let pageStateHistory: PageStateHistory = {
-    findAll: () => undefined,
-    addPageState: noop,
-    stop: noop,
-    wasInPageStateAt: () => false,
-    wasInPageStateDuringPeriod: () => false,
-  }
+  let pageStateHistory = mockPageStateHistory()
   const FAKE_APP_ID = 'appId'
   const configuration: RumConfiguration = {
     ...validateAndBuildRumConfiguration({

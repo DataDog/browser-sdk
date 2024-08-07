@@ -1,7 +1,8 @@
 import type { Duration, RelativeTime, ServerDuration, TimeStamp } from '@datadog/browser-core'
 import { isIE, noop, RequestType, ResourceType } from '@datadog/browser-core'
+import { registerCleanupTask } from '@datadog/browser-core/test'
 import type { RumFetchResourceEventDomainContext, RumXhrResourceEventDomainContext } from '../../domainContext.types'
-import { createPerformanceEntry, mockPerformanceObserver, validateRumEventFormat } from '../../../test'
+import { collectAndValidateRawRumEvents, createPerformanceEntry, mockPageStateHistory, mockPerformanceObserver } from '../../../test'
 import type { RawRumEvent, RawRumResourceEvent } from '../../rawRumEvent.types'
 import { RumEventType } from '../../rawRumEvent.types'
 import type { RawRumEventCollectedData } from '../lifeCycle'
@@ -12,7 +13,6 @@ import type { RumConfiguration } from '../configuration'
 import { validateAndBuildRumConfiguration } from '../configuration'
 import type { RumPerformanceEntry } from '../../browser/performanceObservable'
 import { RumPerformanceEntryType } from '../../browser/performanceObservable'
-import type { PageStateHistory } from '../contexts/pageStateHistory'
 import { startResourceCollection } from './resourceCollection'
 
 const HANDLING_STACK_REGEX = /^Error: \n\s+at <anonymous> @/
@@ -22,20 +22,13 @@ const baseConfiguration: RumConfiguration = {
     applicationId: 'FAKE_APP_ID',
   })!,
 }
-const pageStateHistory: PageStateHistory = {
-  findAll: () => undefined,
-  addPageState: noop,
-  stop: noop,
-  wasInPageStateAt: () => false,
-  wasInPageStateDuringPeriod: () => false,
-}
+const pageStateHistory = mockPageStateHistory()
 
 describe('resourceCollection', () => {
   let lifeCycle: LifeCycle
   let wasInPageStateDuringPeriodSpy: jasmine.Spy<jasmine.Func>
   let notifyPerformanceEntries: (entries: RumPerformanceEntry[]) => void
   let rawRumEvents: Array<RawRumEventCollectedData<RawRumEvent>> = []
-  let stopResourceCollection: () => void
 
   function setupResourceCollection(partialConfig: Partial<RumConfiguration> = { trackResources: true }) {
     lifeCycle = new LifeCycle()
@@ -46,25 +39,17 @@ describe('resourceCollection', () => {
       noop
     )
 
-    const eventsSubscription = lifeCycle.subscribe(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, (data) => {
-      rawRumEvents.push(data)
-      validateRumEventFormat(data.rawRumEvent)
-    })
+    rawRumEvents = collectAndValidateRawRumEvents(lifeCycle)
 
-    stopResourceCollection = () => {
+    registerCleanupTask(() => {
       startResult.stop()
-      eventsSubscription.unsubscribe()
-    }
+      rawRumEvents = []
+    })
   }
 
   beforeEach(() => {
     ;({ notifyPerformanceEntries } = mockPerformanceObserver())
     wasInPageStateDuringPeriodSpy = spyOn(pageStateHistory, 'wasInPageStateDuringPeriod')
-  })
-
-  afterEach(() => {
-    stopResourceCollection()
-    rawRumEvents = []
   })
 
   it('should create resource from performance entry', () => {

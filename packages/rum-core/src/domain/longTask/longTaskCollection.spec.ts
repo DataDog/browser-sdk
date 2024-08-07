@@ -1,5 +1,6 @@
 import type { RelativeTime, ServerDuration } from '@datadog/browser-core'
-import { createPerformanceEntry, mockPerformanceObserver, validateRumEventFormat } from '../../../test'
+import { registerCleanupTask } from '@datadog/browser-core/test'
+import { collectAndValidateRawRumEvents, createPerformanceEntry, mockPerformanceObserver } from '../../../test'
 import { RumPerformanceEntryType } from '../../browser/performanceObservable'
 import type { RawRumEvent } from '../../rawRumEvent.types'
 import { RumEventType } from '../../rawRumEvent.types'
@@ -11,24 +12,16 @@ import { startLongTaskCollection } from './longTaskCollection'
 describe('long task collection', () => {
   let lifeCycle = new LifeCycle()
   let rawRumEvents: Array<RawRumEventCollectedData<RawRumEvent>> = []
-  let stopLongTaskCollection: () => void
 
   function setupLongTaskCollection(trackLongTasks = true) {
     lifeCycle = new LifeCycle()
     startLongTaskCollection(lifeCycle, { trackLongTasks } as RumConfiguration)
 
-    const eventsSubscription = lifeCycle.subscribe(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, (data) => {
-      rawRumEvents.push(data)
-      validateRumEventFormat(data.rawRumEvent)
+    rawRumEvents = collectAndValidateRawRumEvents(lifeCycle)
+    registerCleanupTask(() => {
+      rawRumEvents = []
     })
-
-    stopLongTaskCollection = eventsSubscription.unsubscribe
   }
-
-  afterEach(() => {
-    stopLongTaskCollection()
-    rawRumEvents = []
-  })
 
   it('should only listen to long task performance entry', () => {
     const { notifyPerformanceEntries } = mockPerformanceObserver()
