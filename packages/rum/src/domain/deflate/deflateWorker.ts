@@ -2,7 +2,6 @@ import type { DeflateWorker, DeflateWorkerResponse } from '@datadog/browser-core
 import {
   addTelemetryError,
   display,
-  includes,
   addEventListener,
   setTimeout,
   ONE_SECOND,
@@ -173,8 +172,8 @@ function onError(configuration: RumConfiguration, source: string, error: unknown
 
 function isMessageCspRelated(message: string) {
   return (
-    includes(message, 'Content Security Policy') ||
+    message.includes('Content Security Policy') ||
     // Related to `require-trusted-types-for` CSP: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Security-Policy/require-trusted-types-for
-    includes(message, "requires 'TrustedScriptURL'")
+    message.includes("requires 'TrustedScriptURL'")
   )
 }

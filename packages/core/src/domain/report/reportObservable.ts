@@ -2,7 +2,6 @@ import { toStackTraceString } from '../../tools/stackTrace/handlingStack'
 import { monitor } from '../../tools/monitor'
 import { mergeObservables, Observable } from '../../tools/observable'
 import { addEventListener, DOM_EVENT } from '../../browser/addEventListener'
-import { assign, includes } from '../../tools/utils/polyfills'
 import { safeTruncate } from '../../tools/utils/stringUtils'
 import type { Configuration } from '../configuration'
 import type { RawError } from '../error/error.types'
@@ -25,7 +24,7 @@ export type RawReportError = RawError & {
 export function initReportObservable(configuration: Configuration, apis: RawReportType[]) {
   const observables: Array<Observable<RawReportError>> = []
 
-  if (includes(apis, RawReportType.cspViolation)) {
+  if (apis.includes(RawReportType.cspViolation)) {
     observables.push(createCspViolationReportObservable(configuration))
   }
 
@@ -102,13 +101,12 @@ function buildRawReportErrorFromCspViolation(event: SecurityPolicyViolationEvent
 }
 
 function buildRawReportError(partial: Omit<RawReportError, 'startClocks' | 'source' | 'handling'>): RawReportError {
-  return assign(
-    {
-      startClocks: clocksNow(),
-      source: ErrorSource.REPORT,
-      handling: ErrorHandling.UNHANDLED,
-    },
-    partial
+  return {
+    startClocks: clocksNow(),
+    source: ErrorSource.REPORT,
+    handling: ErrorHandling.UNHANDLED,
+    ...partial
+  },
   )
 }
 

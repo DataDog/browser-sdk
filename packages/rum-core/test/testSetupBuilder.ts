@@ -1,6 +1,5 @@
 import type { Context, ContextManager, CustomerDataTrackerManager, TimeStamp } from '@datadog/browser-core'
 import {
-  assign,
   combine,
   createContextManager,
   createCustomerDataTrackerManager,
@@ -136,7 +135,7 @@ export function setup(): TestSetupBuilder {
 
   function changeLocation(to: string) {
     const currentLocation = { ...fakeLocation }
-    assign(fakeLocation, buildLocation(to, fakeLocation.href))
+    Object.assign(fakeLocation, buildLocation(to, fakeLocation.href))
     locationChangeObservable.notify({
       oldLocation: currentLocation as Location,
       newLocation: fakeLocation as Location,
@@ -158,7 +157,7 @@ export function setup(): TestSetupBuilder {
       return setupBuilder
     },
     withConfiguration(overrides: Partial<RumConfiguration>) {
-      assign(configuration, overrides)
+      Object.assign(configuration, overrides)
       return setupBuilder
     },
     withViewContexts(stub: Partial<ViewContexts>) {

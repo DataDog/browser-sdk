@@ -1,5 +1,5 @@
-import { isIE } from '@datadog/browser-core'
 import type { RumConfiguration, ViewContexts } from '@datadog/browser-rum-core'
+import { registerCleanupTask } from '@datadog/browser-core/test'
 import { createRumSessionManagerMock } from '../../../rum-core/test'
 import { getSessionReplayLink } from './getSessionReplayLink'
 import { addRecord, resetReplayStats } from './replayStats'
@@ -18,11 +18,7 @@ describe('getReplayLink', () => {
 
     const link = getSessionReplayLink(DEFAULT_CONFIGURATION, sessionManager, viewContexts, true)
 
-    expect(link).toBe(
-      isIE()
-        ? 'https://dd.datad0g.com/rum/replay/sessions/session-id-1?error-type=browser-not-supported'
-        : 'https://dd.datad0g.com/rum/replay/sessions/session-id-1?'
-    )
+    expect(link).toBe('https://dd.datad0g.com/rum/replay/sessions/session-id-1?')
   })
 
   it('should return the replay link', () => {
@@ -44,11 +40,7 @@ describe('getReplayLink', () => {
       true
     )
 
-    expect(link).toBe(
-      isIE()
-        ? 'https://toto.datadoghq.com/rum/replay/sessions/session-id-1?error-type=browser-not-supported&seed=view-id-1&from=123456'
-        : 'https://toto.datadoghq.com/rum/replay/sessions/session-id-1?seed=view-id-1&from=123456'
-    )
+    expect(link).toBe('https://toto.datadoghq.com/rum/replay/sessions/session-id-1?seed=view-id-1&from=123456')
   })
 
   it('should return link when replay is forced', () => {
@@ -74,11 +66,7 @@ describe('getReplayLink', () => {
       true
     )
 
-    expect(link).toBe(
-      isIE()
-        ? 'https://toto.datadoghq.com/rum/replay/sessions/session-id-1?error-type=browser-not-supported&seed=view-id-1&from=123456'
-        : 'https://toto.datadoghq.com/rum/replay/sessions/session-id-1?seed=view-id-1&from=123456'
-    )
+    expect(link).toBe('https://toto.datadoghq.com/rum/replay/sessions/session-id-1?seed=view-id-1&from=123456')
   })
 
   it('return a param if replay is sampled out', () => {
@@ -98,9 +86,8 @@ describe('getReplayLink', () => {
       viewContexts,
       true
     )
-    const errorType = isIE() ? 'browser-not-supported' : 'incorrect-session-plan'
     expect(link).toBe(
-      `https://app.datadoghq.com/rum/replay/sessions/session-id-1?error-type=${errorType}&seed=view-id-1&from=123456`
+      'https://app.datadoghq.com/rum/replay/sessions/session-id-1?error-type=incorrect-session-plan&seed=view-id-1&from=123456'
     )
   })
 
@@ -117,8 +104,7 @@ describe('getReplayLink', () => {
       true
     )
 
-    const errorType = isIE() ? 'browser-not-supported' : 'rum-not-tracked'
-    expect(link).toBe(`https://app.datadoghq.com/rum/replay/sessions/no-session-id?error-type=${errorType}`)
+    expect(link).toBe('https://app.datadoghq.com/rum/replay/sessions/no-session-id?error-type=rum-not-tracked')
   })
 
   it('should add a param if the replay was not started', () => {
@@ -139,9 +125,43 @@ describe('getReplayLink', () => {
       false
     )
 
-    const errorType = isIE() ? 'browser-not-supported' : 'replay-not-started'
     expect(link).toBe(
-      `https://app.datadoghq.com/rum/replay/sessions/session-id-1?error-type=${errorType}&seed=view-id-1&from=123456`
+      'https://app.datadoghq.com/rum/replay/sessions/session-id-1?error-type=replay-not-started&seed=view-id-1&from=123456'
     )
+  })
+
+  describe('browser not supported', () => {
+    beforeEach(() => {
+      // browser support function rely on Array.from being a function.
+      const original = Array.from
+      Array.from = undefined as any
+
+      registerCleanupTask(() => {
+        Array.from = original
+      })
+    })
+
+    it('should add a param if the browser is not supported', () => {
+      const sessionManager = createRumSessionManagerMock().setId('session-id-1')
+      const viewContexts = {
+        findView: () => ({
+          id: 'view-id-1',
+          startClocks: {
+            timeStamp: 123456,
+          },
+        }),
+      } as ViewContexts
+
+      const link = getSessionReplayLink(
+        { ...DEFAULT_CONFIGURATION, site: 'datadoghq.com' },
+        sessionManager,
+        viewContexts,
+        false
+      )
+
+      expect(link).toBe(
+        'https://app.datadoghq.com/rum/replay/sessions/session-id-1?error-type=browser-not-supported&seed=view-id-1&from=123456'
+      )
+    })
   })
 })

@@ -1,5 +1,5 @@
 import type { Duration, RelativeTime, TimeoutId } from '@datadog/browser-core'
-import { addEventListener, Observable, setTimeout, clearTimeout, monitor, includes } from '@datadog/browser-core'
+import { addEventListener, Observable, setTimeout, clearTimeout, monitor } from '@datadog/browser-core'
 import type { RumConfiguration } from '../domain/configuration'
 import { isAllowedRequestUrl } from '../domain/resource/resourceUtils'
 
@@ -182,7 +182,7 @@ export function createPerformanceObservable<T extends RumPerformanceEntryType>(
         RumPerformanceEntryType.LONG_TASK,
         RumPerformanceEntryType.PAINT,
       ]
-      if (includes(fallbackSupportedEntryTypes, options.type)) {
+      if (fallbackSupportedEntryTypes.includes(options.type)) {
         if (options.buffered) {
           timeoutId = setTimeout(() => handlePerformanceEntries(performance.getEntriesByType(options.type)))
         }
