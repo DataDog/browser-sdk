@@ -81,7 +81,8 @@ const pageStateHistory = mockPageStateHistory({
   findAll: () => [
     { start: 0 as ServerDuration, state: PageState.ACTIVE },
     { start: 10 as ServerDuration, state: PageState.PASSIVE },
-  ]})
+  ],
+})
 
 describe('viewCollection', () => {
   const lifeCycle = new LifeCycle()

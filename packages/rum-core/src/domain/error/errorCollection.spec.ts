@@ -15,7 +15,7 @@ const baseFeatureFlagContexts: FeatureFlagContexts = {
   stop: noop,
 }
 
-const basePageStateHistory = mockPageStateHistory({wasInPageStateAt: () => true})
+const basePageStateHistory = mockPageStateHistory({ wasInPageStateAt: () => true })
 
 describe('error collection', () => {
   let lifeCycle: LifeCycle

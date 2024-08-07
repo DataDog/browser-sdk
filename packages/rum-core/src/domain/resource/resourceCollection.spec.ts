@@ -2,7 +2,12 @@ import type { Duration, RelativeTime, ServerDuration, TimeStamp } from '@datadog
 import { isIE, noop, RequestType, ResourceType } from '@datadog/browser-core'
 import { registerCleanupTask } from '@datadog/browser-core/test'
 import type { RumFetchResourceEventDomainContext, RumXhrResourceEventDomainContext } from '../../domainContext.types'
-import { collectAndValidateRawRumEvents, createPerformanceEntry, mockPageStateHistory, mockPerformanceObserver } from '../../../test'
+import {
+  collectAndValidateRawRumEvents,
+  createPerformanceEntry,
+  mockPageStateHistory,
+  mockPerformanceObserver,
+} from '../../../test'
 import type { RawRumEvent, RawRumResourceEvent } from '../../rawRumEvent.types'
 import { RumEventType } from '../../rawRumEvent.types'
 import type { RawRumEventCollectedData } from '../lifeCycle'
