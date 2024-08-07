@@ -72,6 +72,7 @@ describe('network error collection', () => {
         origin: ErrorSource.NETWORK,
         error: {
           stack: 'Server error',
+          handling: undefined,
         },
         http: {
           method: 'GET',
