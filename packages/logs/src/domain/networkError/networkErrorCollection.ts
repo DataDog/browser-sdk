@@ -57,6 +57,8 @@ export function startNetworkErrorCollection(configuration: LogsConfiguration, li
           date: request.startClocks.timeStamp,
           error: {
             stack: (responseData as string) || 'Failed to load',
+            // We don't know if the error was handled or not, so we set it to undefined
+            handling: undefined,
           },
           http: {
             method: request.method as any, // Cast resource method because of case mismatch cf issue RUMF-1152

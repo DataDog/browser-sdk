@@ -2,13 +2,15 @@ import type { MockCspEventListener, MockReportingObserver } from '../../../test'
 import { mockReportingObserver, mockCspEventListener, FAKE_CSP_VIOLATION_EVENT } from '../../../test'
 import type { Subscription } from '../../tools/observable'
 import type { Configuration } from '../configuration'
+import { ErrorHandling, ErrorSource } from '../error/error.types'
+import type { RawReportError } from './reportObservable'
 import { initReportObservable, RawReportType } from './reportObservable'
 
 describe('report observable', () => {
   let reportingObserver: MockReportingObserver
   let cspEventListener: MockCspEventListener
   let consoleSubscription: Subscription
-  let notifyReport: jasmine.Spy
+  let notifyReport: jasmine.Spy<(reportError: RawReportError) => void>
   let configuration: Configuration
 
   beforeEach(() => {
@@ -32,8 +34,7 @@ describe('report observable', () => {
       expect(report).toEqual(
         jasmine.objectContaining({
           message: `${type}: foo bar`,
-          subtype: 'NavigatorVibrate',
-          type,
+          type: 'NavigatorVibrate',
         })
       )
     })
@@ -54,12 +55,15 @@ describe('report observable', () => {
     cspEventListener.dispatchEvent()
 
     expect(notifyReport).toHaveBeenCalledOnceWith({
+      startClocks: jasmine.any(Object),
+      source: ErrorSource.REPORT,
       message: "csp_violation: 'blob' blocked by 'worker-src' directive",
-      type: 'csp_violation',
-      subtype: 'worker-src',
-      originalReport: FAKE_CSP_VIOLATION_EVENT,
+      type: 'worker-src',
+      originalError: FAKE_CSP_VIOLATION_EVENT,
       stack: `worker-src: 'blob' blocked by 'worker-src' directive of the policy "worker-src 'none'"
   at <anonymous> @ http://foo.bar/index.js:17:8`,
+      handling: ErrorHandling.UNHANDLED,
+      csp: { disposition: 'enforce' },
     })
   })
 })

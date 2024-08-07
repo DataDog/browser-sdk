@@ -1,5 +1,5 @@
 import type { ErrorWithCause } from '@datadog/browser-core'
-import { NO_ERROR_STACK_PRESENT_MESSAGE, createCustomerDataTracker, noop } from '@datadog/browser-core'
+import { ErrorHandling, NO_ERROR_STACK_PRESENT_MESSAGE, createCustomerDataTracker, noop } from '@datadog/browser-core'
 import type { LogsMessage } from './logger'
 import { HandlerType, Logger, STATUSES } from './logger'
 import { StatusType } from './logger/isAuthorized'
@@ -51,6 +51,8 @@ describe('Logger', () => {
             message: 'My Error',
             stack: jasmine.stringMatching(/^SyntaxError: My Error/),
             causes: undefined,
+            handling: ErrorHandling.HANDLED,
+            fingerprint: undefined,
           },
         })
       })
@@ -108,10 +110,12 @@ describe('Logger', () => {
         message: 'message',
         context: {
           error: {
-            kind: undefined,
             message: 'Provided "My Error"',
             stack: NO_ERROR_STACK_PRESENT_MESSAGE,
+            kind: undefined,
             causes: undefined,
+            handling: ErrorHandling.HANDLED,
+            fingerprint: undefined,
           },
         },
         status: 'error',
@@ -152,6 +156,7 @@ describe('Logger', () => {
               stack: 'Error: High level error',
               kind: 'Error',
               message: 'High level error',
+              handling: ErrorHandling.HANDLED,
               causes: [
                 { message: 'Mid level error', source: 'logger', type: 'Error', stack: 'Error: Mid level error' },
                 {
@@ -161,6 +166,7 @@ describe('Logger', () => {
                   stack: 'TypeError: Low level error',
                 },
               ],
+              fingerprint: undefined,
             },
           },
         })

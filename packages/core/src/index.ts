@@ -25,7 +25,7 @@ export { trackRuntimeError } from './domain/error/trackRuntimeError'
 export { computeStackTrace, StackTrace } from './tools/stackTrace/computeStackTrace'
 export { defineGlobal, makePublicApi, PublicApi } from './boot/init'
 export { displayAlreadyInitializedError } from './boot/displayAlreadyInitializedError'
-export { initReportObservable, RawReport, RawReportType } from './domain/report/reportObservable'
+export { initReportObservable, RawReportType } from './domain/report/reportObservable'
 export {
   startTelemetry,
   Telemetry,

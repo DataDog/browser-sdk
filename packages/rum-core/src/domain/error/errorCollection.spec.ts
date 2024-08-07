@@ -294,6 +294,7 @@ describe('error collection', () => {
           startClocks: { relative: 1234 as RelativeTime, timeStamp: 123456789 as TimeStamp },
           type: 'foo',
           originalError: FAKE_CSP_VIOLATION_EVENT,
+          handling: ErrorHandling.HANDLED,
           csp: {
             disposition: FAKE_CSP_VIOLATION_EVENT.disposition,
           },
