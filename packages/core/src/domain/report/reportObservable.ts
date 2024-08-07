@@ -105,9 +105,8 @@ function buildRawReportError(partial: Omit<RawReportError, 'startClocks' | 'sour
     startClocks: clocksNow(),
     source: ErrorSource.REPORT,
     handling: ErrorHandling.UNHANDLED,
-    ...partial
-  },
-  )
+    ...partial,
+  }
 }
 
 function buildStack(
