@@ -153,7 +153,7 @@ test-performance:
     - yarn
     - yarn build:bundle
     - node ./scripts/deploy/deploy.js staging pull-request pull-request
-    - node scripts/performance/index.js
+    - node ./scripts/performance/index.js
 
 build-bundle:
   extends:
