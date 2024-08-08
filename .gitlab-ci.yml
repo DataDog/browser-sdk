@@ -28,7 +28,7 @@ stages:
   - notify
 
 .base-configuration:
-  tags: ['runner:main', 'size:large']
+  tags: ['arch:amd64', 'size:large']
   image: $CI_IMAGE
   retry:
     max: 2
