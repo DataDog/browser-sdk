@@ -9,7 +9,7 @@ import { PageState } from '../contexts/pageStateHistory'
 
 export interface DurationVitalOptions {
   context?: Context
-  details?: string
+  description?: string
 }
 
 export interface DurationVitalReference {
@@ -21,7 +21,7 @@ export interface DurationVitalStart {
   name: string
   startClocks: ClocksState
   context?: Context
-  details?: string
+  description?: string
 }
 
 export interface DurationVital {
@@ -29,7 +29,7 @@ export interface DurationVital {
   type: VitalType.DURATION
   startClocks: ClocksState
   duration: Duration
-  details?: string
+  description?: string
   context?: Context
 }
 
@@ -78,7 +78,7 @@ export function startDurationVital(
     name,
     startClocks: clocksNow(),
     context: options.context,
-    details: options.details,
+    description: options.description,
   }
 
   const reference: DurationVitalReference = { __dd_vital_reference: true, stop: noop }
@@ -122,7 +122,7 @@ function buildDurationVital(
     startClocks,
     duration: elapsed(startClocks.timeStamp, stopClocks.timeStamp),
     context: combine(vitalStart.context, stopOptions.context),
-    details: stopOptions.details ?? vitalStart.details,
+    description: stopOptions.description ?? vitalStart.description,
   }
 }
 
@@ -134,7 +134,7 @@ function processVital(vital: DurationVital, valueComputedBySdk: boolean): RawRum
       type: vital.type,
       name: vital.name,
       duration: toServerDuration(vital.duration),
-      details: vital.details,
+      description: vital.description,
     },
     type: RumEventType.VITAL,
   }

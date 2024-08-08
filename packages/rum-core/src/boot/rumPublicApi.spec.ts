@@ -767,9 +767,9 @@ describe('rum public api', () => {
       )
       rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
       // eslint-disable-next-line @typescript-eslint/no-unsafe-call
-      ;(rumPublicApi as any).startDurationVital('foo', { context: { foo: 'bar' }, details: 'details-value' })
+      ;(rumPublicApi as any).startDurationVital('foo', { context: { foo: 'bar' }, description: 'description-value' })
       expect(startDurationVitalSpy).toHaveBeenCalledWith('foo', {
-        details: 'details-value',
+        description: 'description-value',
         context: { foo: 'bar' },
       })
     })
@@ -807,14 +807,14 @@ describe('rum public api', () => {
         startTime,
         duration: 100,
         context: { foo: 'bar' },
-        details: 'details-value',
+        description: 'description-value',
       })
       expect(addDurationVitalSpy).toHaveBeenCalledWith({
         name: 'foo',
         startClocks: timeStampToClocks(startTime),
         duration: 100,
         context: { foo: 'bar' },
-        details: 'details-value',
+        description: 'description-value',
         type: VitalType.DURATION,
       })
     })

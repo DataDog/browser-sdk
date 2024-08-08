@@ -85,39 +85,43 @@ describe('vitalCollection', () => {
       it('should create multiple duration vitals from multiple vital refs', () => {
         const cbSpy = jasmine.createSpy()
 
-        const vitalRef1 = startDurationVital(vitalsState, 'foo', { details: 'component 1' })
+        const vitalRef1 = startDurationVital(vitalsState, 'foo', { description: 'component 1' })
         clock.tick(100)
-        const vitalRef2 = startDurationVital(vitalsState, 'foo', { details: 'component 2' })
+        const vitalRef2 = startDurationVital(vitalsState, 'foo', { description: 'component 2' })
         clock.tick(100)
         stopDurationVital(cbSpy, vitalsState, vitalRef2)
         clock.tick(100)
         stopDurationVital(cbSpy, vitalsState, vitalRef1)
 
         expect(cbSpy).toHaveBeenCalledTimes(2)
-        expect(cbSpy.calls.argsFor(0)).toEqual([jasmine.objectContaining({ details: 'component 2', duration: 100 })])
-        expect(cbSpy.calls.argsFor(1)).toEqual([jasmine.objectContaining({ details: 'component 1', duration: 300 })])
+        expect(cbSpy.calls.argsFor(0)).toEqual([
+          jasmine.objectContaining({ description: 'component 2', duration: 100 }),
+        ])
+        expect(cbSpy.calls.argsFor(1)).toEqual([
+          jasmine.objectContaining({ description: 'component 1', duration: 300 }),
+        ])
       })
 
-      it('should merge startDurationVital and stopDurationVital details', () => {
+      it('should merge startDurationVital and stopDurationVital description', () => {
         const cbSpy = jasmine.createSpy()
 
         startDurationVital(vitalsState, 'both-undefined')
         stopDurationVital(cbSpy, vitalsState, 'both-undefined')
 
-        startDurationVital(vitalsState, 'start-defined', { details: 'start-defined' })
+        startDurationVital(vitalsState, 'start-defined', { description: 'start-defined' })
         stopDurationVital(cbSpy, vitalsState, 'start-defined')
 
         startDurationVital(vitalsState, 'stop-defined')
-        stopDurationVital(cbSpy, vitalsState, 'stop-defined', { details: 'stop-defined' })
+        stopDurationVital(cbSpy, vitalsState, 'stop-defined', { description: 'stop-defined' })
 
-        startDurationVital(vitalsState, 'both-defined', { details: 'start-defined' })
-        stopDurationVital(cbSpy, vitalsState, 'both-defined', { details: 'stop-defined' })
+        startDurationVital(vitalsState, 'both-defined', { description: 'start-defined' })
+        stopDurationVital(cbSpy, vitalsState, 'both-defined', { description: 'stop-defined' })
 
         expect(cbSpy).toHaveBeenCalledTimes(4)
-        expect(cbSpy.calls.argsFor(0)).toEqual([jasmine.objectContaining({ details: undefined })])
-        expect(cbSpy.calls.argsFor(1)).toEqual([jasmine.objectContaining({ details: 'start-defined' })])
-        expect(cbSpy.calls.argsFor(2)).toEqual([jasmine.objectContaining({ details: 'stop-defined' })])
-        expect(cbSpy.calls.argsFor(3)).toEqual([jasmine.objectContaining({ details: 'stop-defined' })])
+        expect(cbSpy.calls.argsFor(0)).toEqual([jasmine.objectContaining({ description: undefined })])
+        expect(cbSpy.calls.argsFor(1)).toEqual([jasmine.objectContaining({ description: 'start-defined' })])
+        expect(cbSpy.calls.argsFor(2)).toEqual([jasmine.objectContaining({ description: 'stop-defined' })])
+        expect(cbSpy.calls.argsFor(3)).toEqual([jasmine.objectContaining({ description: 'stop-defined' })])
       })
 
       it('should merge startDurationVital and stopDurationVital contexts', () => {
@@ -158,7 +162,7 @@ describe('vitalCollection', () => {
     it('should create a vital from start API using name', () => {
       vitalCollection.startDurationVital('foo', {
         context: { foo: 'bar' },
-        details: 'baz',
+        description: 'baz',
       })
 
       clock.tick(100)
@@ -167,14 +171,14 @@ describe('vitalCollection', () => {
 
       expect(rawRumEvents.length).toBe(1)
       expect((rawRumEvents[0].rawRumEvent as RawRumVitalEvent).vital.duration).toBe(100000000)
-      expect((rawRumEvents[0].rawRumEvent as RawRumVitalEvent).vital.details).toBe('baz')
+      expect((rawRumEvents[0].rawRumEvent as RawRumVitalEvent).vital.description).toBe('baz')
       expect(rawRumEvents[0].customerContext).toEqual({ foo: 'bar' })
     })
 
     it('should create a vital from start API using ref', () => {
       const vital = vitalCollection.startDurationVital('foo', {
         context: { foo: 'bar' },
-        details: 'baz',
+        description: 'baz',
       })
 
       clock.tick(100)
@@ -183,7 +187,7 @@ describe('vitalCollection', () => {
 
       expect(rawRumEvents.length).toBe(1)
       expect((rawRumEvents[0].rawRumEvent as RawRumVitalEvent).vital.duration).toBe(100000000)
-      expect((rawRumEvents[0].rawRumEvent as RawRumVitalEvent).vital.details).toBe('baz')
+      expect((rawRumEvents[0].rawRumEvent as RawRumVitalEvent).vital.description).toBe('baz')
       expect(rawRumEvents[0].customerContext).toEqual({ foo: 'bar' })
     })
 
@@ -194,12 +198,12 @@ describe('vitalCollection', () => {
         startClocks: clocksNow(),
         duration: 100 as Duration,
         context: { foo: 'bar' },
-        details: 'baz',
+        description: 'baz',
       })
 
       expect(rawRumEvents.length).toBe(1)
       expect((rawRumEvents[0].rawRumEvent as RawRumVitalEvent).vital.duration).toBe(100000000)
-      expect((rawRumEvents[0].rawRumEvent as RawRumVitalEvent).vital.details).toBe('baz')
+      expect((rawRumEvents[0].rawRumEvent as RawRumVitalEvent).vital.description).toBe('baz')
       expect(rawRumEvents[0].customerContext).toEqual({ foo: 'bar' })
     })
 
@@ -229,7 +233,7 @@ describe('vitalCollection', () => {
         type: VitalType.DURATION,
         name: 'foo',
         duration: 0,
-        details: undefined,
+        description: undefined,
       },
       type: RumEventType.VITAL,
       _dd: {

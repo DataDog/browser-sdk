@@ -33,7 +33,6 @@ import {
   displayAlreadyInitializedError,
   createTrackingConsentState,
   timeStampToClocks,
-  noop,
 } from '@datadog/browser-core'
 import type { LifeCycle } from '../domain/lifeCycle'
 import type { ViewContexts } from '../domain/contexts/viewContexts'
@@ -44,6 +43,7 @@ import type { RumConfiguration, RumInitConfiguration } from '../domain/configura
 import type { ViewOptions } from '../domain/view/trackViews'
 import { buildCommonContext } from '../domain/contexts/commonContext'
 import type { InternalContext } from '../domain/contexts/internalContext'
+import type { DurationVitalReference } from '../domain/vital/vitalCollection'
 import { createCustomVitalsState } from '../domain/vital/vitalCollection'
 import { createPreStartStrategy } from './preStartRum'
 import type { StartRum, StartRumResult } from './startRum'
@@ -327,14 +327,15 @@ export function makeRumPublicApi(
          *
          * @param name name of the custom vital
          * @param options.context custom context attached to the vital
-         * @param options.details  Details of the vital.
+         * @param options.description Description of the vital
+         * @returns reference to the custom vital
          */
         ;(rumPublicApi as any).startDurationVital = monitor(
-          (name: string, options?: { context?: object; details?: string }) => {
+          (name: string, options?: { context?: object; description?: string }) => {
             addTelemetryUsage({ feature: 'start-duration-vital' })
             return strategy.startDurationVital(sanitize(name)!, {
               context: sanitize(options && options.context) as Context,
-              details: sanitize(options && options.details) as string | undefined,
+              description: sanitize(options && options.description) as string | undefined,
             })
           }
         )
@@ -347,10 +348,10 @@ export function makeRumPublicApi(
          * @param options.startTime epoch timestamp of the start of the custom vital
          * @param options.duration duration of the custom vital
          * @param options.context custom context attached to the vital
-         * @param options.details  Details of the vital.
+         * @param options.description  Descritpion of the vital
          */
         ;(rumPublicApi as any).addDurationVital = monitor(
-          (name: string, options: { startTime: number; duration: number; context?: object; details?: string }) => {
+          (name: string, options: { startTime: number; duration: number; context?: object; description?: string }) => {
             addTelemetryUsage({ feature: 'add-duration-vital' })
             strategy.addDurationVital({
               name: sanitize(name)!,
@@ -358,21 +359,28 @@ export function makeRumPublicApi(
               startClocks: timeStampToClocks(options.startTime as TimeStamp),
               duration: options.duration as Duration,
               context: sanitize(options && options.context) as Context,
-              details: sanitize(options && options.details) as string | undefined,
+              description: sanitize(options && options.description) as string | undefined,
             })
           }
         )
 
         /**
-         * @deprecated
          * Stop a custom duration vital
          * stored in @vital.custom.<name>
          *
-         * @param name name of the custom vital
+         * @param nameOrRef name of the custom vital or the reference to the custom vital
          * @param options.context custom context attached to the vital
-         * @param options.stopTime epoch timestamp of the stop of the custom vital (if not set, will use current time)
+         * @param options.description Description of the vital
          */
-        ;(rumPublicApi as any).stopDurationVital = noop
+        ;(rumPublicApi as any).stopDurationVital = monitor(
+          (nameOrRef: string | DurationVitalReference, options?: { context?: object; description?: string }) => {
+            addTelemetryUsage({ feature: 'start-duration-vital' })
+            return strategy.stopDurationVital(typeof nameOrRef === 'string' ? sanitize(nameOrRef)! : nameOrRef, {
+              context: sanitize(options && options.context) as Context,
+              description: sanitize(options && options.description) as string | undefined,
+            })
+          }
+        )
       }
 
       if (isExperimentalFeatureEnabled(ExperimentalFeature.UPDATE_VIEW_NAME)) {
