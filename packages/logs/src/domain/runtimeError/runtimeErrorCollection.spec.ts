@@ -1,5 +1,5 @@
 import type { ErrorWithCause } from '@datadog/browser-core'
-import { ErrorSource } from '@datadog/browser-core'
+import { ErrorSource, ErrorHandling } from '@datadog/browser-core'
 import type { RawRuntimeLogsEvent } from '../../rawLogsEvent.types'
 import type { LogsConfiguration } from '../configuration'
 import { StatusType } from '../logger/isAuthorized'
@@ -40,7 +40,14 @@ describe('runtime error collection', () => {
     setTimeout(() => {
       expect(rawLogsEvents[0].rawLogsEvent).toEqual({
         date: jasmine.any(Number),
-        error: { kind: 'Error', stack: jasmine.any(String), causes: undefined },
+        error: {
+          kind: 'Error',
+          stack: jasmine.any(String),
+          causes: undefined,
+          handling: ErrorHandling.UNHANDLED,
+          fingerprint: undefined,
+          message: undefined,
+        },
         message: 'error!',
         status: StatusType.error,
         origin: ErrorSource.SOURCE,
@@ -72,6 +79,7 @@ describe('runtime error collection', () => {
         error: {
           kind: 'Error',
           stack: jasmine.any(String),
+          handling: ErrorHandling.UNHANDLED,
           causes: [
             {
               source: ErrorSource.SOURCE,
@@ -86,6 +94,8 @@ describe('runtime error collection', () => {
               message: 'Low level error',
             },
           ],
+          fingerprint: undefined,
+          message: undefined,
         },
         message: 'High level error',
         status: StatusType.error,
