@@ -44,6 +44,7 @@ import type { RumConfiguration, RumInitConfiguration } from '../domain/configura
 import type { ViewOptions } from '../domain/view/trackViews'
 import { buildCommonContext } from '../domain/contexts/commonContext'
 import type { InternalContext } from '../domain/contexts/internalContext'
+import { createCustomVitalsState } from '../domain/vital/vitalCollection'
 import { createPreStartStrategy } from './preStartRum'
 import type { StartRum, StartRumResult } from './startRum'
 
@@ -292,6 +293,7 @@ export interface Strategy {
   addError: StartRumResult['addError']
   addFeatureFlagEvaluation: StartRumResult['addFeatureFlagEvaluation']
   startDurationVital: StartRumResult['startDurationVital']
+  stopDurationVital: StartRumResult['stopDurationVital']
   addDurationVital: StartRumResult['addDurationVital']
 }
 
@@ -306,6 +308,7 @@ export function makeRumPublicApi(
   )
   const userContextManager = createContextManager(customerDataTrackerManager.getOrCreateTracker(CustomerDataType.User))
   const trackingConsentState = createTrackingConsentState()
+  const customVitalsState = createCustomVitalsState()
 
   function getCommonContext() {
     return buildCommonContext(globalContextManager, userContextManager, recorderApi)
@@ -315,7 +318,7 @@ export function makeRumPublicApi(
     options,
     getCommonContext,
     trackingConsentState,
-
+    customVitalsState,
     (configuration, deflateWorker, initialViewOptions) => {
       if (isExperimentalFeatureEnabled(ExperimentalFeature.CUSTOM_VITALS)) {
         /**
@@ -329,8 +332,7 @@ export function makeRumPublicApi(
         ;(rumPublicApi as any).startDurationVital = monitor(
           (name: string, options?: { context?: object; details?: string }) => {
             addTelemetryUsage({ feature: 'start-duration-vital' })
-            return strategy.startDurationVital({
-              name: sanitize(name)!,
+            return strategy.startDurationVital(sanitize(name)!, {
               context: sanitize(options && options.context) as Context,
               details: sanitize(options && options.details) as string | undefined,
             })
@@ -404,7 +406,8 @@ export function makeRumPublicApi(
         deflateWorker && options.createDeflateEncoder
           ? (streamId) => options.createDeflateEncoder!(configuration, deflateWorker, streamId)
           : createIdentityEncoder,
-        trackingConsentState
+        trackingConsentState,
+        customVitalsState
       )
 
       recorderApi.onRumStart(
