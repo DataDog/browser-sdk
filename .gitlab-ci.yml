@@ -28,7 +28,8 @@ stages:
   - notify
 
 .base-configuration:
-  tags: ['runner:main', 'size:large']
+  tags:
+    - 'arch:amd64'
   image: $CI_IMAGE
   retry:
     max: 2
@@ -153,7 +154,7 @@ test-performance:
     - yarn
     - yarn build:bundle
     - node ./scripts/deploy/deploy.js staging pull-request pull-request
-    - node scripts/performance/index.js
+    - node ./scripts/performance/index.js
 
 build-bundle:
   extends:
