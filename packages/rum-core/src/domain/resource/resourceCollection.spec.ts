@@ -48,7 +48,6 @@ describe('resourceCollection', () => {
 
     registerCleanupTask(() => {
       startResult.stop()
-      rawRumEvents = []
     })
   }
 

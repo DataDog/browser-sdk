@@ -1,6 +1,6 @@
 import type { Duration, RelativeTime, ServerDuration, TimeStamp } from '@datadog/browser-core'
 import { Observable } from '@datadog/browser-core'
-import { createNewEvent, registerCleanupTask } from '@datadog/browser-core/test'
+import { createNewEvent } from '@datadog/browser-core/test'
 import type { RawRumActionEvent, RawRumEventCollectedData, RumConfiguration } from '@datadog/browser-rum-core'
 import { collectAndValidateRawRumEvents, mockPageStateHistory } from '../../../test'
 import type { RawRumEvent } from '../../rawRumEvent.types'
@@ -22,10 +22,6 @@ describe('actionCollection', () => {
     ;({ addAction } = startActionCollection(lifeCycle, domMutationObservable, configuration, basePageStateHistory))
 
     rawRumEvents = collectAndValidateRawRumEvents(lifeCycle)
-
-    registerCleanupTask(() => {
-      rawRumEvents = []
-    })
   })
 
   it('should create action from auto action', () => {

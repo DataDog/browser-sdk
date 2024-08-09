@@ -1,5 +1,4 @@
 import type { RelativeTime, ServerDuration } from '@datadog/browser-core'
-import { registerCleanupTask } from '@datadog/browser-core/test'
 import { collectAndValidateRawRumEvents, createPerformanceEntry, mockPerformanceObserver } from '../../../test'
 import { RumPerformanceEntryType } from '../../browser/performanceObservable'
 import type { RawRumEvent } from '../../rawRumEvent.types'
@@ -18,9 +17,6 @@ describe('long task collection', () => {
     startLongTaskCollection(lifeCycle, { trackLongTasks } as RumConfiguration)
 
     rawRumEvents = collectAndValidateRawRumEvents(lifeCycle)
-    registerCleanupTask(() => {
-      rawRumEvents = []
-    })
   }
 
   it('should only listen to long task performance entry', () => {

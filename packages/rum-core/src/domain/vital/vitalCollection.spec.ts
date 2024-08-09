@@ -25,7 +25,6 @@ describe('vitalCollection', () => {
     rawRumEvents = collectAndValidateRawRumEvents(lifeCycle)
 
     registerCleanupTask(() => {
-      rawRumEvents = []
       clock.cleanup()
     })
   })

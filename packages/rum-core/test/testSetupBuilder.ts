@@ -1,7 +1,6 @@
-import type { Context, ContextManager, CustomerDataTrackerManager, TimeStamp } from '@datadog/browser-core'
+import type { ContextManager, CustomerDataTrackerManager } from '@datadog/browser-core'
 import {
   assign,
-  combine,
   createContextManager,
   createCustomerDataTrackerManager,
   CustomerDataType,
@@ -18,12 +17,11 @@ import type { PageStateHistory } from '../src/domain/contexts/pageStateHistory'
 import type { UrlContexts } from '../src/domain/contexts/urlContexts'
 import type { ViewContexts } from '../src/domain/contexts/viewContexts'
 import type { RawRumEventCollectedData } from '../src/domain/lifeCycle'
-import { LifeCycle, LifeCycleEventType } from '../src/domain/lifeCycle'
+import { LifeCycle } from '../src/domain/lifeCycle'
 import type { ActionContexts } from '../src/domain/action/actionCollection'
 import type { RumSessionManager } from '../src/domain/rumSessionManager'
-import type { RawRumEvent, RumContext } from '../src/rawRumEvent.types'
 import type { DisplayContext } from '../src/domain/contexts/displayContext'
-import { validateRumFormat } from './formatValidation'
+import { collectAndValidateRawRumEvents } from './formatValidation'
 import { createRumSessionManagerMock } from './mockRumSessionManager'
 import { mockPageStateHistory } from './mockPageStateHistory'
 
@@ -81,7 +79,6 @@ export function setup(): TestSetupBuilder {
   const locationChangeObservable = new Observable<LocationChange>()
   const cleanupTasks: Array<() => void> = []
   const beforeBuildTasks: BeforeBuildCallback[] = []
-  const rawRumEvents: RawRumEventCollectedData[] = []
 
   let clock: Clock
   let fakeLocation: Partial<Location> = location
@@ -123,12 +120,6 @@ export function setup(): TestSetupBuilder {
     ...SPEC_ENDPOINTS,
   }
 
-  // ensure that events generated before build are collected
-  const rawRumEventsCollected = lifeCycle.subscribe(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, (data) => {
-    rawRumEvents.push(data)
-    validateRumEventFormat(data.rawRumEvent)
-  })
-
   function changeLocation(to: string) {
     const currentLocation = { ...fakeLocation }
     assign(fakeLocation, buildLocation(to, fakeLocation.href))
@@ -137,6 +128,8 @@ export function setup(): TestSetupBuilder {
       newLocation: fakeLocation as Location,
     })
   }
+
+  const rawRumEvents = collectAndValidateRawRumEvents(lifeCycle)
 
   const setupBuilder: TestSetupBuilder = {
     domMutationObservable,
@@ -222,41 +215,6 @@ export function setup(): TestSetupBuilder {
     if (clock) {
       clock.cleanup()
     }
-    rawRumEventsCollected.unsubscribe()
   })
   return setupBuilder
-}
-
-export function validateRumEventFormat(rawRumEvent: RawRumEvent) {
-  const fakeId = '00000000-aaaa-0000-aaaa-000000000000'
-  const fakeContext: RumContext = {
-    _dd: {
-      format_version: 2,
-      drift: 0,
-      configuration: {
-        session_sample_rate: 40,
-        session_replay_sample_rate: 60,
-      },
-    },
-    application: {
-      id: fakeId,
-    },
-    date: 0 as TimeStamp,
-    source: 'browser',
-    session: {
-      id: fakeId,
-      type: 'user',
-    },
-    view: {
-      id: fakeId,
-      referrer: '',
-      url: 'fake url',
-    },
-    connectivity: {
-      status: 'connected',
-      interfaces: ['wifi'],
-      effective_type: '4g',
-    },
-  }
-  validateRumFormat(combine(fakeContext as RumContext & Context, rawRumEvent))
 }

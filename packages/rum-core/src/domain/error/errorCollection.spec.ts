@@ -1,6 +1,6 @@
 import type { RelativeTime, TimeStamp, ErrorWithCause } from '@datadog/browser-core'
 import { ErrorHandling, ErrorSource, NO_ERROR_STACK_PRESENT_MESSAGE, noop } from '@datadog/browser-core'
-import { FAKE_CSP_VIOLATION_EVENT, registerCleanupTask } from '@datadog/browser-core/test'
+import { FAKE_CSP_VIOLATION_EVENT } from '@datadog/browser-core/test'
 import { collectAndValidateRawRumEvents, mockPageStateHistory } from '../../../test'
 import type { RawRumErrorEvent, RawRumEvent } from '../../rawRumEvent.types'
 import { RumEventType } from '../../rawRumEvent.types'
@@ -27,9 +27,6 @@ describe('error collection', () => {
     ;({ addError } = doStartErrorCollection(lifeCycle, basePageStateHistory, featureFlagContexts))
 
     rawRumEvents = collectAndValidateRawRumEvents(lifeCycle)
-    registerCleanupTask(() => {
-      rawRumEvents = []
-    })
   }
 
   describe('addError', () => {

@@ -113,7 +113,6 @@ describe('viewCollection', () => {
 
     registerCleanupTask(() => {
       collectionResult.stop()
-      rawRumEvents = []
     })
   }
 
