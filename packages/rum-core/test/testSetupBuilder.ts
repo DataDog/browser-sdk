@@ -1,6 +1,5 @@
 import type { ContextManager, CustomerDataTrackerManager } from '@datadog/browser-core'
 import {
-  combine,
   createContextManager,
   createCustomerDataTrackerManager,
   CustomerDataType,

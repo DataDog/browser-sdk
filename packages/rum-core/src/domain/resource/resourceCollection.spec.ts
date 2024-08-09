@@ -388,7 +388,6 @@ describe('resourceCollection', () => {
 
   it('should collect handlingStack from completed fetch request', () => {
     setupResourceCollection()
-    const { lifeCycle, rawRumEvents } = build()
     const response = new Response()
     lifeCycle.notify(LifeCycleEventType.REQUEST_COMPLETED, createCompletedRequest({ response }))
     const domainContext = rawRumEvents[0].domainContext as RumFetchResourceEventDomainContext
