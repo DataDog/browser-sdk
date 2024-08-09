@@ -17,6 +17,8 @@ import {
   addTelemetryDebug,
   CustomerDataType,
   drainPreStartTelemetry,
+  isExperimentalFeatureEnabled,
+  ExperimentalFeature,
 } from '@datadog/browser-core'
 import { createDOMMutationObservable } from '../browser/domMutationObservable'
 import { startPerformanceCollection } from '../browser/performanceCollection'
@@ -47,6 +49,7 @@ import type { CommonContext } from '../domain/contexts/commonContext'
 import { startDisplayContext } from '../domain/contexts/displayContext'
 import { startVitalCollection } from '../domain/vital/vitalCollection'
 import { startCiVisibilityContext } from '../domain/contexts/ciVisibilityContext'
+import { startLongAnimationFrameCollection } from '../domain/longAnimationFrame/longAnimationFrameCollection'
 import type { RecorderApi } from './rumPublicApi'
 
 export type StartRum = typeof startRum
@@ -165,7 +168,14 @@ export function startRum(
   const { stop: stopResourceCollection } = startResourceCollection(lifeCycle, configuration, pageStateHistory)
   cleanupTasks.push(stopResourceCollection)
 
-  startLongTaskCollection(lifeCycle, configuration)
+  if (isExperimentalFeatureEnabled(ExperimentalFeature.LONG_ANIMATION_FRAME)) {
+    if (configuration.trackLongTasks) {
+      const { stop: stopLongAnimationFrameCollection } = startLongAnimationFrameCollection(lifeCycle, configuration)
+      cleanupTasks.push(stopLongAnimationFrameCollection)
+    }
+  } else {
+    startLongTaskCollection(lifeCycle, configuration)
+  }
 
   const { addError } = startErrorCollection(lifeCycle, configuration, pageStateHistory, featureFlagContexts)
 
