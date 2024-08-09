@@ -1,33 +1,33 @@
 import type { RelativeTime, TimeStamp, ErrorWithCause } from '@datadog/browser-core'
-import { ErrorHandling, ErrorSource, NO_ERROR_STACK_PRESENT_MESSAGE } from '@datadog/browser-core'
+import { ErrorHandling, ErrorSource, NO_ERROR_STACK_PRESENT_MESSAGE, noop } from '@datadog/browser-core'
 import { FAKE_CSP_VIOLATION_EVENT } from '@datadog/browser-core/test'
-import type { TestSetupBuilder } from '../../../test'
-import { setup } from '../../../test'
-import type { RawRumErrorEvent } from '../../rawRumEvent.types'
+import { collectAndValidateRawRumEvents, mockPageStateHistory } from '../../../test'
+import type { RawRumErrorEvent, RawRumEvent } from '../../rawRumEvent.types'
 import { RumEventType } from '../../rawRumEvent.types'
-import { LifeCycleEventType } from '../lifeCycle'
+import type { RawRumEventCollectedData } from '../lifeCycle'
+import { LifeCycle, LifeCycleEventType } from '../lifeCycle'
+import type { FeatureFlagContexts } from '../contexts/featureFlagContext'
 import { doStartErrorCollection } from './errorCollection'
 
-describe('error collection', () => {
-  let setupBuilder: TestSetupBuilder
-  let addError: ReturnType<typeof doStartErrorCollection>['addError']
-  const viewContextsStub = {
-    findView: jasmine.createSpy('findView').and.returnValue({
-      id: 'abcde',
-      name: 'foo',
-    }),
-  }
+const baseFeatureFlagContexts: FeatureFlagContexts = {
+  findFeatureFlagEvaluations: () => undefined,
+  addFeatureFlagEvaluation: noop,
+  stop: noop,
+}
 
-  beforeEach(() => {
-    setupBuilder = setup()
-      .withViewContexts(viewContextsStub)
-      .withPageStateHistory({
-        wasInPageStateAt: () => true,
-      })
-      .beforeBuild(({ lifeCycle, pageStateHistory, featureFlagContexts }) => {
-        ;({ addError } = doStartErrorCollection(lifeCycle, pageStateHistory, featureFlagContexts))
-      })
-  })
+const basePageStateHistory = mockPageStateHistory({ wasInPageStateAt: () => true })
+
+describe('error collection', () => {
+  let lifeCycle: LifeCycle
+  let rawRumEvents: Array<RawRumEventCollectedData<RawRumEvent>> = []
+  let addError: ReturnType<typeof doStartErrorCollection>['addError']
+
+  function setupErrorCollection(featureFlagContexts: FeatureFlagContexts = baseFeatureFlagContexts) {
+    lifeCycle = new LifeCycle()
+    ;({ addError } = doStartErrorCollection(lifeCycle, basePageStateHistory, featureFlagContexts))
+
+    rawRumEvents = collectAndValidateRawRumEvents(lifeCycle)
+  }
 
   describe('addError', () => {
     ;[
@@ -54,7 +54,7 @@ describe('error collection', () => {
       },
     ].forEach(({ testCase, error, message, type, stack }) => {
       it(`notifies a raw rum error event from ${testCase}`, () => {
-        const { rawRumEvents } = setupBuilder.build()
+        setupErrorCollection()
 
         addError({
           error,
@@ -96,7 +96,7 @@ describe('error collection', () => {
     })
 
     it('should extract causes from error', () => {
-      const { rawRumEvents } = setupBuilder.build()
+      setupErrorCollection()
       const error1 = new Error('foo') as ErrorWithCause
       const error2 = new Error('bar') as ErrorWithCause
       const error3 = new Error('biz') as ErrorWithCause
@@ -121,7 +121,7 @@ describe('error collection', () => {
     })
 
     it('should extract fingerprint from error', () => {
-      const { rawRumEvents } = setupBuilder.build()
+      setupErrorCollection()
 
       interface DatadogError extends Error {
         dd_fingerprint?: string
@@ -139,7 +139,7 @@ describe('error collection', () => {
     })
 
     it('should sanitize error fingerprint', () => {
-      const { rawRumEvents } = setupBuilder.build()
+      setupErrorCollection()
 
       const error = new Error('foo')
       ;(error as any).dd_fingerprint = 2
@@ -154,7 +154,7 @@ describe('error collection', () => {
     })
 
     it('should save the specified customer context', () => {
-      const { rawRumEvents } = setupBuilder.build()
+      setupErrorCollection()
       addError({
         context: { foo: 'bar' },
         error: new Error('foo'),
@@ -167,7 +167,7 @@ describe('error collection', () => {
     })
 
     it('should save the global context', () => {
-      const { rawRumEvents } = setupBuilder.build()
+      setupErrorCollection()
       addError(
         {
           error: new Error('foo'),
@@ -182,7 +182,7 @@ describe('error collection', () => {
     })
 
     it('should save the user', () => {
-      const { rawRumEvents } = setupBuilder.build()
+      setupErrorCollection()
       addError(
         {
           error: new Error('foo'),
@@ -197,7 +197,7 @@ describe('error collection', () => {
     })
 
     it('should include non-Error values in domain context', () => {
-      const { rawRumEvents } = setupBuilder.build()
+      setupErrorCollection()
       addError({
         error: { foo: 'bar' },
         handlingStack: 'Error: handling foo',
@@ -210,9 +210,11 @@ describe('error collection', () => {
     })
 
     it('should include feature flags', () => {
-      const { rawRumEvents } = setupBuilder
-        .withFeatureFlagContexts({ findFeatureFlagEvaluations: () => ({ feature: 'foo' }) })
-        .build()
+      const featureFlagContexts: FeatureFlagContexts = {
+        ...baseFeatureFlagContexts,
+        findFeatureFlagEvaluations: () => ({ feature: 'foo' }),
+      }
+      setupErrorCollection(featureFlagContexts)
 
       addError({
         error: { foo: 'bar' },
@@ -226,7 +228,7 @@ describe('error collection', () => {
     })
 
     it('should include handling stack', () => {
-      const { rawRumEvents } = setupBuilder.build()
+      setupErrorCollection()
 
       addError({
         error: new Error('foo'),
@@ -242,7 +244,7 @@ describe('error collection', () => {
 
   describe('RAW_ERROR_COLLECTED LifeCycle event', () => {
     it('should create error event from collected error', () => {
-      const { rawRumEvents, lifeCycle } = setupBuilder.build()
+      setupErrorCollection()
       const error = new Error('hello')
       lifeCycle.notify(LifeCycleEventType.RAW_ERROR_COLLECTED, {
         error: {
@@ -284,7 +286,7 @@ describe('error collection', () => {
     })
 
     it('should extract disposition from Security Policy Violation Events', () => {
-      const { rawRumEvents, lifeCycle } = setupBuilder.build()
+      setupErrorCollection()
 
       lifeCycle.notify(LifeCycleEventType.RAW_ERROR_COLLECTED, {
         error: {
