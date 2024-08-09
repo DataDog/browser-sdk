@@ -1,11 +1,9 @@
-import { type Context, type TimeStamp, type RelativeTime, type ServerDuration, combine } from '@datadog/browser-core'
+import { type RelativeTime, type ServerDuration } from '@datadog/browser-core'
 import { registerCleanupTask } from '@datadog/browser-core/test'
-import { createPerformanceEntry, mockPerformanceObserver, validateRumFormat } from '../../../test'
+import { collectAndValidateRawRumEvents, createPerformanceEntry, mockPerformanceObserver } from '../../../test'
 import { RumPerformanceEntryType } from '../../browser/performanceObservable'
-import type { RawRumEvent, RumContext } from '../../rawRumEvent.types'
 import { RumEventType, RumLongTaskEntryType } from '../../rawRumEvent.types'
-import type { RawRumEventCollectedData } from '../lifeCycle'
-import { LifeCycle, LifeCycleEventType } from '../lifeCycle'
+import { LifeCycle } from '../lifeCycle'
 import type { RumConfiguration } from '../configuration'
 import { startLongAnimationFrameCollection } from './longAnimationFrameCollection'
 
@@ -97,52 +95,4 @@ function setupLongAnimationFrameCollection() {
     notifyPerformanceEntries,
     rawRumEvents,
   }
-}
-
-// TODO: replace with packages/rum-core/test/eventFormatValidation.ts from this PR https://github.com/DataDog/browser-sdk/pull/2913
-function collectAndValidateRawRumEvents(lifeCycle: LifeCycle) {
-  const rawRumEvents: Array<RawRumEventCollectedData<RawRumEvent>> = []
-  const subscription = lifeCycle.subscribe(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, (data) => {
-    rawRumEvents.push(data)
-    validateRumEventFormat(data.rawRumEvent)
-  })
-  registerCleanupTask(() => {
-    subscription.unsubscribe()
-  })
-
-  return rawRumEvents
-}
-
-function validateRumEventFormat(rawRumEvent: RawRumEvent) {
-  const fakeId = '00000000-aaaa-0000-aaaa-000000000000'
-  const fakeContext: RumContext = {
-    _dd: {
-      format_version: 2,
-      drift: 0,
-      configuration: {
-        session_sample_rate: 40,
-        session_replay_sample_rate: 60,
-      },
-    },
-    application: {
-      id: fakeId,
-    },
-    date: 0 as TimeStamp,
-    source: 'browser',
-    session: {
-      id: fakeId,
-      type: 'user',
-    },
-    view: {
-      id: fakeId,
-      referrer: '',
-      url: 'fake url',
-    },
-    connectivity: {
-      status: 'connected',
-      interfaces: ['wifi'],
-      effective_type: '4g',
-    },
-  }
-  validateRumFormat(combine(fakeContext as RumContext & Context, rawRumEvent))
 }
