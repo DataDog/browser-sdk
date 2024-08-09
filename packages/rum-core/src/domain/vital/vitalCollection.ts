@@ -1,5 +1,5 @@
 import type { ClocksState, Duration, Context } from '@datadog/browser-core'
-import { clocksNow, combine, elapsed, generateUUID, noop, toServerDuration } from '@datadog/browser-core'
+import { clocksNow, combine, elapsed, generateUUID, toServerDuration } from '@datadog/browser-core'
 import type { LifeCycle, RawRumEventCollectedData } from '../lifeCycle'
 import { LifeCycleEventType } from '../lifeCycle'
 import type { RawRumVitalEvent } from '../../rawRumEvent.types'
@@ -14,7 +14,6 @@ export interface DurationVitalOptions {
 
 export interface DurationVitalReference {
   __dd_vital_reference: true
-  stop: () => void
 }
 
 export interface DurationVitalStart {
@@ -81,7 +80,7 @@ export function startDurationVital(
     description: options.description,
   }
 
-  const reference: DurationVitalReference = { __dd_vital_reference: true, stop: noop }
+  const reference: DurationVitalReference = { __dd_vital_reference: true }
 
   vitalsByName.set(name, vital)
   vitalsByReference.set(reference, vital)

@@ -375,7 +375,7 @@ export function makeRumPublicApi(
         ;(rumPublicApi as any).stopDurationVital = monitor(
           (nameOrRef: string | DurationVitalReference, options?: { context?: object; description?: string }) => {
             addTelemetryUsage({ feature: 'start-duration-vital' })
-            return strategy.stopDurationVital(typeof nameOrRef === 'string' ? sanitize(nameOrRef)! : nameOrRef, {
+            strategy.stopDurationVital(typeof nameOrRef === 'string' ? sanitize(nameOrRef)! : nameOrRef, {
               context: sanitize(options && options.context) as Context,
               description: sanitize(options && options.description) as string | undefined,
             })
