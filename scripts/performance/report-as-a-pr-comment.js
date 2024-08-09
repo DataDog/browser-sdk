@@ -3,7 +3,7 @@ const { fetchHandlingError } = require('../lib/execution-utils')
 const { LOCAL_BRANCH, GITHUB_TOKEN, getLastCommonCommit, fetchPR } = require('../lib/git-utils')
 const { fetchPerformanceMetrics } = require('./fetch-performance-metrics')
 const PR_COMMENT_HEADER = 'Bundles Sizes Evolution'
-const PR_COMMENTER_AUTH_TOKEN = command`authanywhere`.run().split(' ')[2].trim()
+const PR_COMMENTER_AUTH_TOKEN = command`authanywhere --raw`.run()
 // The value is set to 5% as it's around 10 times the average value for small PRs.
 const SIZE_INCREASE_THRESHOLD = 5
 const LOCAL_COMMIT_SHA = process.env.CI_COMMIT_SHORT_SHA
