@@ -9,7 +9,6 @@ import {
 import type { Clock } from '../../../test'
 import { getCookie, setCookie } from '../../browser/cookie'
 import type { RelativeTime } from '../../tools/utils/timeUtils'
-import { isIE } from '../../tools/utils/browserDetection'
 import { DOM_EVENT } from '../../browser/addEventListener'
 import { ONE_HOUR, ONE_SECOND } from '../../tools/utils/timeUtils'
 import type { Configuration } from '../configuration'
@@ -92,9 +91,6 @@ describe('startSessionManager', () => {
   }
 
   beforeEach(() => {
-    if (isIE()) {
-      pending('no full rum support')
-    }
     clock = mockClock()
 
     registerCleanupTask(() => {

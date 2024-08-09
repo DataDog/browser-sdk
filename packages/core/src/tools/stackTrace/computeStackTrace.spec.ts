@@ -124,12 +124,7 @@ Error: foo
     }
 
     function baz() {
-      try {
-        // Throw error for IE
-        throw new Error()
-      } catch (ex) {
-        return computeStackTrace(ex)
-      }
+      return computeStackTrace(new Error())
     }
 
     const trace = foo()

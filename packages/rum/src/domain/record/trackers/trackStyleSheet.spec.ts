@@ -1,4 +1,3 @@
-import { isIE } from '@datadog/browser-core'
 import { isFirefox, registerCleanupTask } from '@datadog/browser-core/test'
 import { serializeDocument, SerializationContextStatus } from '../serialization'
 import { createElementsScrollPositions } from '../elementsScrollPositions'
@@ -16,9 +15,6 @@ describe('trackStyleSheet', () => {
   const styleRule = '.selector-1 { color: #fff }'
 
   beforeEach(() => {
-    if (isIE()) {
-      pending('IE not supported')
-    }
     styleSheetCallbackSpy = jasmine.createSpy()
     styleElement = document.createElement('style')
     document.head.appendChild(styleElement)
@@ -188,9 +184,6 @@ describe('StyleSheetObserver > getPathToNestedCSSRule', () => {
   let styleSheet: CSSStyleSheet
   let styleElement: HTMLStyleElement
   beforeEach(() => {
-    if (isIE()) {
-      pending('IE not supported')
-    }
     styleElement = document.createElement('style')
     document.head.appendChild(styleElement)
     styleSheet = styleElement.sheet!

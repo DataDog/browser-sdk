@@ -1,7 +1,7 @@
-import { isIE, isSafari } from '@datadog/browser-core'
+import { isSafari } from '@datadog/browser-core'
 import { parseQuery, matchWithWildcard } from './eventFilters'
 
-if (!isIE() && !isSafari()) {
+if (!isSafari()) {
   describe('parseQuery', () => {
     it('return a simple field', () => {
       expect(parseQuery('foo:bar')).toEqual([['foo', 'bar']])

@@ -1,4 +1,3 @@
-import { isIE } from '@datadog/browser-core'
 import type { TelemetryEvent } from '../../../../../../packages/core/src/domain/telemetry'
 import type { LogsEvent } from '../../../../../../packages/logs/src/logsEvent.types'
 import type { RumEvent } from '../../../../../../packages/rum-core/src/rumEvent.types'
@@ -14,11 +13,6 @@ const LOG_EVENT = {
 } as LogsEvent
 
 describe('getIntakeUrlForEvent', () => {
-  beforeEach(() => {
-    if (isIE()) {
-      pending('IE not supported')
-    }
-  })
   it('should return undefined when RUM is not present', () => {
     expect(getIntakeUrlForEvent({} as any, RUM_ERROR_EVENT)).toBeUndefined()
   })

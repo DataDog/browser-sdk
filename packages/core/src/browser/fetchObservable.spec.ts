@@ -1,6 +1,5 @@
 import type { MockFetch, MockFetchManager } from '../../test'
 import { registerCleanupTask, mockFetch } from '../../test'
-import { isIE } from '../tools/utils/browserDetection'
 import type { Subscription } from '../tools/observable'
 import type { FetchResolveContext, FetchContext } from './fetchObservable'
 import { initFetchObservable } from './fetchObservable'
@@ -17,9 +16,6 @@ describe('fetch proxy', () => {
   let fetch: MockFetch
 
   beforeEach(() => {
-    if (isIE()) {
-      pending('no fetch support')
-    }
     mockFetchManager = mockFetch()
     originalMockFetch = window.fetch
 

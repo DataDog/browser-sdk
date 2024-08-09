@@ -1,5 +1,5 @@
 import type { RelativeTime } from '@datadog/browser-core'
-import { ONE_MINUTE, find } from '@datadog/browser-core'
+import { ONE_MINUTE } from '@datadog/browser-core'
 import type { LifeCycle } from '../../lifeCycle'
 import { LifeCycleEventType } from '../../lifeCycle'
 import type { RumPerformancePaintTiming } from '../../../browser/performanceObservable'
@@ -18,8 +18,7 @@ export function trackFirstContentfulPaint(
   const { unsubscribe: unsubscribeLifeCycle } = lifeCycle.subscribe(
     LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED,
     (entries) => {
-      const fcpEntry = find(
-        entries,
+      const fcpEntry = entries.find(
         (entry): entry is RumPerformancePaintTiming =>
           entry.entryType === RumPerformanceEntryType.PAINT &&
           entry.name === 'first-contentful-paint' &&

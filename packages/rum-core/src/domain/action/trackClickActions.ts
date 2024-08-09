@@ -1,9 +1,7 @@
 import type { Duration, ClocksState, RelativeTime, TimeStamp, ValueHistory } from '@datadog/browser-core'
 import {
-  includes,
   timeStampNow,
   Observable,
-  assign,
   getRelativeTime,
   ONE_MINUTE,
   generateUUID,
@@ -266,7 +264,7 @@ function newClick(
     lifeCycle,
     isChildEvent: (event) =>
       event.action !== undefined &&
-      (Array.isArray(event.action.id) ? includes(event.action.id, id) : event.action.id === id),
+      (Array.isArray(event.action.id) ? event.action.id.includes(id) : event.action.id === id),
   })
   let status = ClickStatus.ONGOING
   let activityEndTime: undefined | TimeStamp
@@ -316,23 +314,21 @@ function newClick(
       }
 
       const { resourceCount, errorCount, longTaskCount } = eventCountsSubscription.eventCounts
-      const clickAction: ClickAction = assign(
-        {
-          type: ActionType.CLICK as const,
-          duration: activityEndTime && elapsed(startClocks.timeStamp, activityEndTime),
-          startClocks,
-          id,
-          frustrationTypes,
-          counts: {
-            resourceCount,
-            errorCount,
-            longTaskCount,
-          },
-          events: domEvents ?? [startEvent],
-          event: startEvent,
+      const clickAction: ClickAction = {
+        duration: activityEndTime && elapsed(startClocks.timeStamp, activityEndTime),
+        startClocks,
+        id,
+        frustrationTypes,
+        counts: {
+          resourceCount,
+          errorCount,
+          longTaskCount,
         },
-        clickActionBase
-      )
+        events: domEvents ?? [startEvent],
+        event: startEvent,
+        ...clickActionBase,
+      }
+
       lifeCycle.notify(LifeCycleEventType.AUTO_ACTION_COMPLETED, clickAction)
       status = ClickStatus.FINALIZED
     },
