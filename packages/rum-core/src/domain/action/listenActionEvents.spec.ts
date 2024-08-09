@@ -246,7 +246,7 @@ describe('listenActionEvents', () => {
     beforeMouseUp,
     target = document.body,
     clickEventIsPrimary = undefined,
-  }: { beforeMouseUp?(): void; target?: Node; clickEventIsPrimary?: boolean } = {}) {
+  }: { beforeMouseUp?(this: void): void; target?: Node; clickEventIsPrimary?: boolean } = {}) {
     window.dispatchEvent(createNewEvent('pointerdown', { target, isPrimary: true }))
     window.dispatchEvent(createNewEvent('mousedown', { target }))
     beforeMouseUp?.()

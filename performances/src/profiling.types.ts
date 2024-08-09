@@ -3,7 +3,7 @@ import type { Proxy } from './proxy'
 
 export interface Scenario {
   description: string
-  run(page: Page, takeMeasurements: () => Promise<void>): Promise<void>
+  run(this: void, page: Page, takeMeasurements: () => Promise<void>): Promise<void>
 }
 
 export interface ProfilingOptions {
