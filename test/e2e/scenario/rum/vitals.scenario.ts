@@ -13,7 +13,7 @@ describe('vital collection', () => {
         const vital = global.startDurationVital('foo')
         setTimeout(() => {
           // eslint-disable-next-line @typescript-eslint/no-unsafe-call
-          vital.stop()
+          global.stopDurationVital(vital)
           done()
         }, 5)
       })
