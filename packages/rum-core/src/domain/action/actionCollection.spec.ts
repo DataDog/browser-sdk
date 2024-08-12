@@ -1,29 +1,30 @@
-import { type Duration, type RelativeTime, type ServerDuration, type TimeStamp } from '@datadog/browser-core'
+import type { Duration, RelativeTime, ServerDuration, TimeStamp } from '@datadog/browser-core'
+import { Observable } from '@datadog/browser-core'
 import { createNewEvent } from '@datadog/browser-core/test'
-import type { RawRumActionEvent } from '@datadog/browser-rum-core'
-import type { TestSetupBuilder } from '../../../test'
-import { setup } from '../../../test'
+import type { RawRumActionEvent, RawRumEventCollectedData, RumConfiguration } from '@datadog/browser-rum-core'
+import { collectAndValidateRawRumEvents, mockPageStateHistory } from '../../../test'
+import type { RawRumEvent } from '../../rawRumEvent.types'
 import { RumEventType, ActionType } from '../../rawRumEvent.types'
-import { LifeCycleEventType } from '../lifeCycle'
+import { LifeCycle, LifeCycleEventType } from '../lifeCycle'
 import { startActionCollection } from './actionCollection'
 
+const basePageStateHistory = mockPageStateHistory({ wasInPageStateAt: () => true })
+
 describe('actionCollection', () => {
-  let setupBuilder: TestSetupBuilder
+  const lifeCycle = new LifeCycle()
   let addAction: ReturnType<typeof startActionCollection>['addAction']
+  let rawRumEvents: Array<RawRumEventCollectedData<RawRumEvent>>
 
   beforeEach(() => {
-    setupBuilder = setup()
-      .withPageStateHistory({
-        wasInPageStateAt: () => true,
-      })
-      .beforeBuild(({ lifeCycle, configuration, domMutationObservable, pageStateHistory }) => {
-        ;({ addAction } = startActionCollection(lifeCycle, domMutationObservable, configuration, pageStateHistory))
-      })
+    const configuration = {} as RumConfiguration
+    const domMutationObservable = new Observable<void>()
+
+    ;({ addAction } = startActionCollection(lifeCycle, domMutationObservable, configuration, basePageStateHistory))
+
+    rawRumEvents = collectAndValidateRawRumEvents(lifeCycle)
   })
 
   it('should create action from auto action', () => {
-    const { lifeCycle, rawRumEvents } = setupBuilder.build()
-
     const event = createNewEvent('pointerup', { target: document.createElement('button') })
     lifeCycle.notify(LifeCycleEventType.AUTO_ACTION_COMPLETED, {
       counts: {
@@ -94,7 +95,6 @@ describe('actionCollection', () => {
   })
 
   it('should create action from custom action', () => {
-    const { rawRumEvents } = setupBuilder.build()
     addAction({
       name: 'foo',
       startClocks: { relative: 1234 as RelativeTime, timeStamp: 123456789 as TimeStamp },
@@ -119,7 +119,6 @@ describe('actionCollection', () => {
     expect(rawRumEvents[0].domainContext).toEqual({})
   })
   it('should not set the loading time field of the action', () => {
-    const { lifeCycle, rawRumEvents } = setupBuilder.build()
     const event = createNewEvent('pointerup', { target: document.createElement('button') })
     lifeCycle.notify(LifeCycleEventType.AUTO_ACTION_COMPLETED, {
       counts: {
@@ -140,8 +139,6 @@ describe('actionCollection', () => {
   })
 
   it('should create action with handling stack', () => {
-    const { rawRumEvents } = setupBuilder.build()
-
     addAction({
       name: 'foo',
       startClocks: { relative: 1234 as RelativeTime, timeStamp: 123456789 as TimeStamp },
