@@ -368,13 +368,13 @@ export function makeRumPublicApi(
          * Stop a custom duration vital
          * stored in @vital.custom.<name>
          *
-         * @param nameOrRef name of the custom vital or the reference to the custom vital
+         * @param nameOrRef name of the custom vital or the reference to it
          * @param options.context custom context attached to the vital
          * @param options.description Description of the vital
          */
         ;(rumPublicApi as any).stopDurationVital = monitor(
           (nameOrRef: string | DurationVitalReference, options?: { context?: object; description?: string }) => {
-            addTelemetryUsage({ feature: 'start-duration-vital' })
+            addTelemetryUsage({ feature: 'stop-duration-vital' })
             strategy.stopDurationVital(typeof nameOrRef === 'string' ? sanitize(nameOrRef)! : nameOrRef, {
               context: sanitize(options && options.context) as Context,
               description: sanitize(options && options.description) as string | undefined,
