@@ -1,4 +1,4 @@
-import { isSafari } from '@datadog/browser-core'
+import { isSafari } from '../../../../../packages/core/src/tools/utils/browserDetection'
 import { parseQuery, matchWithWildcard } from './eventFilters'
 
 if (!isSafari()) {
