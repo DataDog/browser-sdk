@@ -1,5 +1,5 @@
 import type { Duration } from '@datadog/browser-core'
-import { forEach, setTimeout, noop, relativeNow, runOnReadyState } from '@datadog/browser-core'
+import { setTimeout, noop, relativeNow, runOnReadyState } from '@datadog/browser-core'
 import type { RelativePerformanceTiming } from '../../../browser/performanceUtils'
 import { computeRelativePerformanceTiming } from '../../../browser/performanceUtils'
 import type { RumPerformanceNavigationTiming } from '../../../browser/performanceObservable'
@@ -33,7 +33,7 @@ export function trackNavigationTimings(
     ;({ unsubscribe: stop } = createPerformanceObservable(configuration, {
       type: RumPerformanceEntryType.NAVIGATION,
       buffered: true,
-    }).subscribe((entries) => forEach(entries, processEntry)))
+    }).subscribe((entries) => entries.forEach(processEntry)))
   } else {
     retrieveNavigationTiming(configuration, processEntry)
   }

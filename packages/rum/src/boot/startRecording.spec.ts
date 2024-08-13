@@ -1,5 +1,5 @@
 import type { TimeStamp, HttpRequest } from '@datadog/browser-core'
-import { PageExitReason, DefaultPrivacyLevel, noop, isIE, DeflateEncoderStreamId } from '@datadog/browser-core'
+import { PageExitReason, DefaultPrivacyLevel, noop, DeflateEncoderStreamId } from '@datadog/browser-core'
 import type { LifeCycle, ViewCreatedEvent, RumConfiguration } from '@datadog/browser-rum-core'
 import { LifeCycleEventType, startViewContexts } from '@datadog/browser-rum-core'
 import type { Clock } from '@datadog/browser-core/test'
@@ -29,9 +29,6 @@ describe('startRecording', () => {
   let configuration: RumConfiguration
 
   beforeEach(() => {
-    if (isIE()) {
-      pending('IE not supported')
-    }
     configuration = {} as RumConfiguration
     resetReplayStats()
     sessionManager = createRumSessionManagerMock()
