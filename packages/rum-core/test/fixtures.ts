@@ -184,36 +184,34 @@ export function createPerformanceEntry<T extends RumPerformanceEntryType>(
       return { ...entry, toJSON: () => entry }
     }
     case RumPerformanceEntryType.LONG_ANIMATION_FRAME: {
-      const entry = assign(
-        {
-          name: 'long-animation-frame',
-          entryType: RumPerformanceEntryType.LONG_ANIMATION_FRAME,
-          startTime: 1234 as RelativeTime,
-          duration: 82 as Duration,
-          renderStart: 1421.5 as RelativeTime,
-          styleAndLayoutStart: 1428 as RelativeTime,
-          firstUIEventTimestamp: 0 as RelativeTime,
-          blockingDuration: 0 as Duration,
-          scripts: [
-            {
-              name: 'script',
-              entryType: 'script',
-              startTime: 1348 as RelativeTime,
-              duration: 6 as Duration,
-              invoker: 'http://example.com/script.js',
-              invokerType: 'classic-script',
-              windowAttribution: 'self',
-              executionStart: 1348.7 as RelativeTime,
-              forcedStyleAndLayoutDuration: 0 as Duration,
-              pauseDuration: 0 as Duration,
-              sourceURL: 'http://example.com/script.js',
-              sourceFunctionName: '',
-              sourceCharPosition: 9876,
-            },
-          ],
-        },
-        overrides
-      ) as EntryTypeToReturnType[T]
+      const entry = {
+        name: 'long-animation-frame',
+        entryType: RumPerformanceEntryType.LONG_ANIMATION_FRAME,
+        startTime: 1234 as RelativeTime,
+        duration: 82 as Duration,
+        renderStart: 1421.5 as RelativeTime,
+        styleAndLayoutStart: 1428 as RelativeTime,
+        firstUIEventTimestamp: 0 as RelativeTime,
+        blockingDuration: 0 as Duration,
+        scripts: [
+          {
+            name: 'script',
+            entryType: 'script',
+            startTime: 1348 as RelativeTime,
+            duration: 6 as Duration,
+            invoker: 'http://example.com/script.js',
+            invokerType: 'classic-script',
+            windowAttribution: 'self',
+            executionStart: 1348.7 as RelativeTime,
+            forcedStyleAndLayoutDuration: 0 as Duration,
+            pauseDuration: 0 as Duration,
+            sourceURL: 'http://example.com/script.js',
+            sourceFunctionName: '',
+            sourceCharPosition: 9876,
+          },
+        ],
+        ...overrides,
+      } as EntryTypeToReturnType[T]
 
       return { ...entry, toJSON: () => entry }
     }
