@@ -1,17 +1,20 @@
 'use strict'
 
-const { printLog, runMain, fetchHandlingError } = require('../lib/execution-utils')
-const { command } = require('../lib/command')
+const { parseArgs } = require('node:util')
+const { printLog, runMain, fetchHandlingError } = require('./lib/execution-utils')
+const { command } = require('./lib/command')
 
 const REPOSITORY = process.env.APP
-const CURRENT_STAGING = process.env.CURRENT_STAGING
 const DEVFLOW_AUTH_TOKEN = command`authanywhere --audience sdm --raw`.run()
 const DEVFLOW_API_URL = 'https://devflow-api.us1.ddbuild.io/internal/api/v2/devflow/execute/'
 const SUCESS_FEEDBACK_LEVEL = 'FEEDBACK_LEVEL_INFO'
 
 runMain(async () => {
+  const args = parseArgs({ allowPositionals: true })
+  const [branch] = args.positionals
+
   const rawResponse = await fetchHandlingError(
-    `${DEVFLOW_API_URL}/update-branch?repository=${REPOSITORY}&branch=${CURRENT_STAGING}`,
+    `${DEVFLOW_API_URL}/update-branch?repository=${REPOSITORY}&branch=${branch}`,
     {
       headers: {
         Authorization: `Bearer ${DEVFLOW_AUTH_TOKEN}`,
