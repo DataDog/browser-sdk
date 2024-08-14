@@ -84,6 +84,7 @@ export interface RawRumErrorEvent {
 export interface RawRumViewEvent {
   date: TimeStamp
   type: RumEventType.VIEW
+  context?: Context
   view: {
     loading_type: ViewLoadingType
     first_byte?: ServerDuration

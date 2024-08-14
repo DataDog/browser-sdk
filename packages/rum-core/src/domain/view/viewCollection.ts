@@ -24,12 +24,12 @@ export function startViewCollection(
   recorderApi: RecorderApi,
   initialViewOptions?: ViewOptions
 ) {
-  lifeCycle.subscribe(LifeCycleEventType.VIEW_UPDATED, (view) =>
+  lifeCycle.subscribe(LifeCycleEventType.VIEW_UPDATED, (view) => {
     lifeCycle.notify(
       LifeCycleEventType.RAW_RUM_EVENT_COLLECTED,
       processViewUpdate(view, configuration, featureFlagContexts, recorderApi, pageStateHistory)
     )
-  )
+  })
   return trackViews(
     location,
     lifeCycle,
@@ -127,6 +127,7 @@ function processViewUpdate(
     )
   }
   return {
+    customerContext: view.context,
     rawRumEvent: viewEvent,
     startTime: view.startClocks.relative,
     domainContext: {
