@@ -13,14 +13,32 @@ runMain(async () => {
   const args = parseArgs({ allowPositionals: true })
   const [branch] = args.positionals
 
-  const rawResponse = await fetchHandlingError(
-    `${DEVFLOW_API_URL}/update-branch?repository=${REPOSITORY}&branch=${branch}`,
-    {
-      headers: {
-        Authorization: `Bearer ${DEVFLOW_AUTH_TOKEN}`,
-      },
-    }
-  )
+  await updateBranch(branch)
+
+  // `update-branch` allways skips CI, so we need to trigger it manually
+  await triggerCi(branch)
+})
+
+async function updateBranch(branch) {
+  const message = await devFlow('update-branch', { branch })
+
+  printLog(message)
+}
+
+async function triggerCi(branch) {
+  const message = await devFlow('trigger-ci', { ref: branch })
+
+  printLog(message)
+}
+
+async function devFlow(action, options) {
+  const params = getDevFlowURLSearchParams(options)
+  const rawResponse = await fetchHandlingError(`${DEVFLOW_API_URL}/${action}?${params}`, {
+    headers: {
+      Authorization: `Bearer ${DEVFLOW_AUTH_TOKEN}`,
+    },
+  })
+
   const jsonResponse = await rawResponse.json()
 
   const isSuccess = jsonResponse.state.feedbacks[0].level === SUCESS_FEEDBACK_LEVEL
@@ -30,5 +48,14 @@ runMain(async () => {
     throw new Error(message)
   }
 
-  printLog(message)
-})
+  return message
+}
+
+function getDevFlowURLSearchParams(options) {
+  const params = new URLSearchParams({
+    repository: REPOSITORY,
+    ...options,
+  })
+
+  return params.toString()
+}
