@@ -6,6 +6,7 @@ variables:
   CI_IMAGE: '$BUILD_STABLE_REGISTRY/ci/$APP:$CURRENT_CI_IMAGE'
   GIT_REPOSITORY: 'git@github.com:DataDog/browser-sdk.git'
   MAIN_BRANCH: 'main'
+  NEXT_MAJOR_BRANCH: 'v6'
   CHROME_PACKAGE_VERSION: 127.0.6533.72-1
 
 cache:
@@ -63,6 +64,11 @@ stages:
       - /^staging-[0-9]+$/
       - /^release\//
       - schedules
+
+.next-major-branch:
+  only:
+    refs:
+      - $NEXT_MAJOR_BRANCH
 
 .staging:
   only:
@@ -294,6 +300,17 @@ deploy-feature:
     - yarn
     - yarn build:bundle
     - node ./scripts/deploy/deploy.js staging $SUFFIX root
+
+deploy-next-major-canary:
+  stage: deploy
+  extends:
+    - .base-configuration
+    - .next-major-branch
+  script:
+    - export BUILD_MODE=canary
+    - yarn
+    - yarn build:bundle
+    - node ./scripts/deploy/deploy.js staging ${NEXT_MAJOR_BRANCH}-canary root
 
 deploy-staging:
   stage: deploy
