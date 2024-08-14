@@ -29,13 +29,16 @@ export const config: Options.Testrunner = {
     })
   ),
   logLevels: {
-    '@wdio/browserstack-service': 'info',
+    '@wdio/browserstack-service': 'debug',
   },
   services: [
     [
       'browserstack',
       {
         browserstackLocal: true,
+        opts: {
+          verbose: true,
+        },
       },
     ],
   ],
