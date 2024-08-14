@@ -17,6 +17,7 @@ describe('long animation frames collection', () => {
     expect(rawRumEvents[0].startTime).toBe(1234 as RelativeTime)
     expect(rawRumEvents[0].rawRumEvent).toEqual({
       date: jasmine.any(Number),
+      start_time: 1234 as RelativeTime,
       long_task: {
         id: jasmine.any(String),
         entry_type: RumLongTaskEntryType.LONG_ANIMATION_FRAME,

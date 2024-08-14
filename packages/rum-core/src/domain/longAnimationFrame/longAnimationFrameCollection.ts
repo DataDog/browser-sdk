@@ -16,6 +16,7 @@ export function startLongAnimationFrameCollection(lifeCycle: LifeCycle, configur
 
       const rawRumEvent: RawRumLongAnimationFrameEvent = {
         date: startClocks.timeStamp,
+        start_time: entry.startTime,
         long_task: {
           id: generateUUID(),
           entry_type: RumLongTaskEntryType.LONG_ANIMATION_FRAME,

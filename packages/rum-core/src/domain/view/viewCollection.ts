@@ -126,6 +126,9 @@ function processViewUpdate(
       toServerDuration as (duration: Duration) => ServerDuration
     )
   }
+  if (view.commonViewMetrics.interactionToNextPaint?.loafs) {
+    viewEvent.view.inp_loafs = view.commonViewMetrics.interactionToNextPaint?.loafs // TODO: Add this fiedl to rum-envents-format
+  }
   return {
     rawRumEvent: viewEvent,
     startTime: view.startClocks.relative,

@@ -42,6 +42,10 @@ export function toServerDuration(duration: Duration | undefined) {
   return round(duration * 1e6, 0) as ServerDuration
 }
 
+export function fromServerDuration(duration: number) {
+  return (duration / 10e6) as Duration
+}
+
 export function dateNow() {
   // Do not use `Date.now` because sometimes websites are wrongly "polyfilling" it. For example, we
   // had some users using a very old version of `datejs`, which patched `Date.now` to return a Date

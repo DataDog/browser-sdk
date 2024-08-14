@@ -2,6 +2,7 @@ import {
   addTelemetryDebug,
   elapsed,
   ExperimentalFeature,
+  fromServerDuration,
   isExperimentalFeatureEnabled,
   noop,
   ONE_MINUTE,
@@ -11,7 +12,8 @@ import { RumPerformanceEntryType, supportPerformanceTimingEvent } from '../../..
 import type { RumFirstInputTiming, RumPerformanceEventTiming } from '../../../browser/performanceObservable'
 import { LifeCycleEventType } from '../../lifeCycle'
 import type { LifeCycle } from '../../lifeCycle'
-import { ViewLoadingType } from '../../../rawRumEvent.types'
+import type { RawRumLongAnimationFrameEvent } from '../../../rawRumEvent.types'
+import { RumEventType, ViewLoadingType } from '../../../rawRumEvent.types'
 import { getSelectorFromElement } from '../../getSelectorFromElement'
 import { isElementNode } from '../../../browser/htmlDomUtils'
 import type { RumConfiguration } from '../../configuration'
@@ -26,6 +28,7 @@ export interface InteractionToNextPaint {
   value: Duration
   targetSelector?: string
   time?: Duration
+  loafs?: string[]
 }
 /**
  * Track the interaction to next paint (INP).
@@ -55,6 +58,18 @@ export function trackInteractionToNextPaint(
   let interactionToNextPaint = -1 as Duration
   let interactionToNextPaintTargetSelector: string | undefined
   let interactionToNextPaintStartTime: Duration | undefined
+
+  const pendingLoaf: RawRumLongAnimationFrameEvent[] = []
+  let stoptrackingLoaf = noop
+
+  if (isExperimentalFeatureEnabled(ExperimentalFeature.LONG_ANIMATION_FRAME)) {
+    stoptrackingLoaf = lifeCycle.subscribe(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, (entry) => {
+      if (entry.rawRumEvent.type === RumEventType.LONG_TASK) {
+        // TODO: clear these at some point to avoid memory leak
+        pendingLoaf.push(entry.rawRumEvent as RawRumLongAnimationFrameEvent)
+      }
+    }).unsubscribe
+  }
 
   const { unsubscribe: stop } = lifeCycle.subscribe(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, (entries) => {
     for (const entry of entries) {
@@ -100,11 +115,19 @@ export function trackInteractionToNextPaint(
       // If no INP duration where captured because of the performanceObserver 40ms threshold
       // but the view interaction count > 0 then report 0
       if (interactionToNextPaint >= 0) {
-        return {
+        const inp: InteractionToNextPaint = {
           value: Math.min(interactionToNextPaint, MAX_INP_VALUE) as Duration,
           targetSelector: interactionToNextPaintTargetSelector,
           time: interactionToNextPaintStartTime,
         }
+
+        const inpLoafs = getInterectingLoafs(inp.value, inp.time as Duration, pendingLoaf)
+
+        if (inpLoafs.length) {
+          inp.loafs = inpLoafs
+        }
+
+        return inp
       } else if (getViewInteractionCount()) {
         return {
           value: 0 as Duration,
@@ -115,7 +138,10 @@ export function trackInteractionToNextPaint(
       viewEnd = viewEndTime
       stopViewInteractionCount()
     },
-    stop,
+    stop: () => {
+      stop()
+      stoptrackingLoaf()
+    },
   }
 }
 
@@ -192,4 +218,22 @@ export function isInteractionToNextPaintSupported() {
     window.PerformanceEventTiming &&
     'interactionId' in PerformanceEventTiming.prototype
   )
+}
+
+function getInterectingLoafs(inpDuration: Duration, inpStartTime: Duration, loafs: RawRumLongAnimationFrameEvent[]) {
+  const inpLoafs: string[] = []
+
+  for (const loaf of loafs) {
+    if (loaf.start_time + fromServerDuration(loaf.long_task.duration) < inpStartTime) {
+      continue
+    }
+
+    if (loaf.start_time > inpStartTime + inpDuration) {
+      continue
+    }
+
+    inpLoafs.push(loaf.long_task.id)
+  }
+
+  return inpLoafs
 }

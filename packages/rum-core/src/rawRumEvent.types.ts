@@ -100,6 +100,7 @@ export interface RawRumViewEvent {
     interaction_to_next_paint?: ServerDuration
     interaction_to_next_paint_time?: ServerDuration
     interaction_to_next_paint_target_selector?: string
+    inp_loafs?: string[]
     cumulative_layout_shift?: number
     cumulative_layout_shift_time?: ServerDuration
     cumulative_layout_shift_target_selector?: string
@@ -194,6 +195,7 @@ export type InvokerType =
 
 export interface RawRumLongAnimationFrameEvent {
   date: TimeStamp
+  start_time: number
   type: RumEventType.LONG_TASK // LoAF are ingested as Long Task
   long_task: {
     id: string
