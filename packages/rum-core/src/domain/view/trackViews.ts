@@ -56,8 +56,8 @@ export interface ViewCreatedEvent {
   name?: string
   service?: string
   version?: string
-  startClocks: ClocksState
   context?: Context
+  startClocks: ClocksState
 }
 
 export interface ViewEndedEvent {
