@@ -924,6 +924,8 @@ describe('view event count', () => {
     } as RumEvent & Context
   }
 
+  describe('view specific context', () => {})
+
   describe('update view name', () => {
     let setupBuilder: TestSetupBuilder
     let viewTest: ViewTest

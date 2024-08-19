@@ -240,7 +240,7 @@ describe('rum assembly', () => {
           })
         })
 
-        it('should reject modification on context field for view events', () => {
+        it('should accept modification on context field for view events', () => {
           const { lifeCycle } = setupBuilder
             .withConfiguration({
               beforeSend: (event) => {
@@ -253,7 +253,7 @@ describe('rum assembly', () => {
             rawRumEvent: createRawRumEvent(RumEventType.VIEW),
           })
 
-          expect(serverRumEvents[0].context).toBeUndefined()
+          expect(serverRumEvents[0].context).toEqual({ foo: 'bar' })
         })
 
         it('should reject replacing the context field to non-object', () => {
