@@ -199,7 +199,7 @@ function newView(
     name = viewOptions.name
     service = viewOptions.service || undefined
     version = viewOptions.version || undefined
-    context = viewOptions.context || undefined
+    context = isExperimentalFeatureEnabled(ExperimentalFeature.VIEW_SPECIFIC_CONTEXT) ? viewOptions.context : undefined
   }
 
   const viewCreatedEvent = {
@@ -254,7 +254,6 @@ function newView(
     cancelScheduleViewUpdate()
     documentVersion += 1
     const currentEnd = endClocks === undefined ? timeStampNow() : endClocks.timeStamp
-
     lifeCycle.notify(LifeCycleEventType.VIEW_UPDATED, {
       customTimings,
       documentVersion,

@@ -123,8 +123,9 @@ describe('API calls and events around init', () => {
 })
 
 describe('beforeSend', () => {
-  createTest('allows to edit events context')
+  createTest('allows to edit events context with feature flag')
     .withRum({
+      enableExperimentalFeatures: ['view_specific_context'],
       beforeSend: (event: any) => {
         event.context!.foo = 'bar'
         return true
@@ -142,6 +143,7 @@ describe('beforeSend', () => {
 
   createTest('allows to replace events context')
     .withRum({
+      enableExperimentalFeatures: ['view_specific_context'],
       beforeSend: (event) => {
         event.context = { foo: 'bar' }
         return true

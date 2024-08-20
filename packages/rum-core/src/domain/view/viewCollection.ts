@@ -1,5 +1,11 @@
 import type { Duration, ServerDuration, Observable } from '@datadog/browser-core'
-import { isEmptyObject, mapValues, toServerDuration } from '@datadog/browser-core'
+import {
+  ExperimentalFeature,
+  isEmptyObject,
+  isExperimentalFeatureEnabled,
+  mapValues,
+  toServerDuration,
+} from '@datadog/browser-core'
 import { discardNegativeDuration } from '../discardNegativeDuration'
 import type { RecorderApi } from '../../boot/rumPublicApi'
 import type { RawRumViewEvent } from '../../rawRumEvent.types'
@@ -126,8 +132,9 @@ function processViewUpdate(
       toServerDuration as (duration: Duration) => ServerDuration
     )
   }
+
   return {
-    customerContext: view.context,
+    customerContext: isExperimentalFeatureEnabled(ExperimentalFeature.VIEW_SPECIFIC_CONTEXT) ? view.context : undefined,
     rawRumEvent: viewEvent,
     startTime: view.startClocks.relative,
     domainContext: {
