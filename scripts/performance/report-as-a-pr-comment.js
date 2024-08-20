@@ -1,6 +1,6 @@
 const { command } = require('../lib/command')
 const { fetchHandlingError } = require('../lib/execution-utils')
-const { LOCAL_BRANCH, BASE_BRANCH, GITHUB_TOKEN, getLastCommonCommit, fetchPR } = require('../lib/git-utils')
+const { LOCAL_BRANCH, GITHUB_TOKEN, getLastCommonCommit, fetchPR } = require('../lib/git-utils')
 const { fetchPerformanceMetrics } = require('./fetch-performance-metrics')
 const PR_COMMENT_HEADER = 'Bundles Sizes Evolution'
 const PR_COMMENTER_AUTH_TOKEN = command`authanywhere`.run().split(' ')[2].trim()
@@ -9,12 +9,12 @@ const SIZE_INCREASE_THRESHOLD = 5
 const LOCAL_COMMIT_SHA = process.env.CI_COMMIT_SHORT_SHA
 
 async function reportAsPrComment(localBundleSizes, memoryLocalPerformance) {
-  const lastCommonCommit = getLastCommonCommit(BASE_BRANCH, LOCAL_BRANCH)
   const pr = await fetchPR(LOCAL_BRANCH)
   if (!pr) {
     console.log('No pull requests found for the branch')
     return
   }
+  const lastCommonCommit = getLastCommonCommit(pr.base.ref, LOCAL_BRANCH)
   const packageNames = Object.keys(localBundleSizes)
   const testNames = memoryLocalPerformance.map((obj) => obj.testProperty)
   const baseBundleSizes = await fetchPerformanceMetrics('bundle', packageNames, lastCommonCommit)

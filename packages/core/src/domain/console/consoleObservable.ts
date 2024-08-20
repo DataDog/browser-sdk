@@ -5,30 +5,45 @@ import { callMonitored } from '../../tools/monitor'
 import { sanitize } from '../../tools/serialisation/sanitize'
 import { find } from '../../tools/utils/polyfills'
 import { jsonStringify } from '../../tools/serialisation/jsonStringify'
-import type { RawErrorCause } from '../error/error.types'
+import type { RawError } from '../error/error.types'
+import { ErrorHandling, ErrorSource } from '../error/error.types'
 import { computeStackTrace } from '../../tools/stackTrace/computeStackTrace'
 import { createHandlingStack, toStackTraceString, formatErrorMessage } from '../../tools/stackTrace/handlingStack'
+import { clocksNow } from '../../tools/utils/timeUtils'
 
-export interface ConsoleLog {
-  message: string
-  api: ConsoleApiName
-  stack?: string
-  handlingStack: string
-  fingerprint?: string
-  causes?: RawErrorCause[]
+export type ConsoleLog = NonErrorConsoleLog | ErrorConsoleLog
+
+interface NonErrorConsoleLog extends ConsoleLogBase {
+  api: Exclude<ConsoleApiName, typeof ConsoleApiName.error>
+  error: undefined
 }
 
-let consoleObservablesByApi: { [k in ConsoleApiName]?: Observable<ConsoleLog> } = {}
+export interface ErrorConsoleLog extends ConsoleLogBase {
+  api: typeof ConsoleApiName.error
+  error: RawError
+}
 
-export function initConsoleObservable(apis: ConsoleApiName[]) {
+interface ConsoleLogBase {
+  message: string
+  api: ConsoleApiName
+  handlingStack: string
+}
+
+type ConsoleLogForApi<T extends ConsoleApiName> = T extends typeof ConsoleApiName.error
+  ? ErrorConsoleLog
+  : NonErrorConsoleLog
+
+let consoleObservablesByApi: { [K in ConsoleApiName]?: Observable<ConsoleLogForApi<K>> } = {}
+
+export function initConsoleObservable<T extends ConsoleApiName[]>(apis: T): Observable<ConsoleLogForApi<T[number]>> {
   const consoleObservables = apis.map((api) => {
     if (!consoleObservablesByApi[api]) {
-      consoleObservablesByApi[api] = createConsoleObservable(api)
+      consoleObservablesByApi[api] = createConsoleObservable(api) as any // we are sure that the observable created for this api will yield the expected ConsoleLog type
     }
-    return consoleObservablesByApi[api]
+    return consoleObservablesByApi[api] as unknown as Observable<ConsoleLogForApi<T[number]>>
   })
 
-  return mergeObservables<ConsoleLog>(...consoleObservables)
+  return mergeObservables(...consoleObservables)
 }
 
 export function resetConsoleObservable() {
@@ -56,25 +71,29 @@ function createConsoleObservable(api: ConsoleApiName) {
 
 function buildConsoleLog(params: unknown[], api: ConsoleApiName, handlingStack: string): ConsoleLog {
   const message = params.map((param) => formatConsoleParameters(param)).join(' ')
-  let stack
-  let fingerprint
-  let causes
+  let error: RawError | undefined
 
   if (api === ConsoleApiName.error) {
     const firstErrorParam = find(params, (param: unknown): param is Error => param instanceof Error)
-    stack = firstErrorParam ? toStackTraceString(computeStackTrace(firstErrorParam)) : undefined
-    fingerprint = tryToGetFingerprint(firstErrorParam)
-    causes = firstErrorParam ? flattenErrorCauses(firstErrorParam, 'console') : undefined
+
+    error = {
+      stack: firstErrorParam ? toStackTraceString(computeStackTrace(firstErrorParam)) : undefined,
+      fingerprint: tryToGetFingerprint(firstErrorParam),
+      causes: firstErrorParam ? flattenErrorCauses(firstErrorParam, 'console') : undefined,
+      startClocks: clocksNow(),
+      message,
+      source: ErrorSource.CONSOLE,
+      handling: ErrorHandling.HANDLED,
+      handlingStack,
+    }
   }
 
   return {
     api,
     message,
-    stack,
+    error,
     handlingStack,
-    fingerprint,
-    causes,
-  }
+  } as ConsoleLog
 }
 
 function formatConsoleParameters(param: unknown) {

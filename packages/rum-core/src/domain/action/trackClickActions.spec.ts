@@ -1,12 +1,20 @@
 import type { Context, Duration } from '@datadog/browser-core'
-import { addDuration, clocksNow, timeStampNow, relativeNow, DefaultPrivacyLevel } from '@datadog/browser-core'
-import { createNewEvent } from '@datadog/browser-core/test'
-import type { TestSetupBuilder } from '../../../test'
-import { setup, createFakeClick } from '../../../test'
+import {
+  addDuration,
+  clocksNow,
+  timeStampNow,
+  relativeNow,
+  DefaultPrivacyLevel,
+  Observable,
+} from '@datadog/browser-core'
+import type { Clock } from '@datadog/browser-core/test'
+import { createNewEvent, mockClock } from '@datadog/browser-core/test'
+import { createFakeClick } from '../../../test'
 import { RumEventType, ActionType, FrustrationType } from '../../rawRumEvent.types'
 import type { RumEvent } from '../../rumEvent.types'
-import { LifeCycleEventType } from '../lifeCycle'
+import { LifeCycle, LifeCycleEventType } from '../lifeCycle'
 import { PAGE_ACTIVITY_VALIDATION_DELAY } from '../waitPageActivityEnd'
+import type { RumConfiguration } from '../configuration'
 import type { ActionContexts } from './actionCollection'
 import type { ClickAction } from './trackClickActions'
 import { finalizeClicks, CLICK_ACTION_MAX_DURATION, trackClickActions } from './trackClickActions'
@@ -33,14 +41,37 @@ function eventsCollector<T>() {
 }
 
 describe('trackClickActions', () => {
+  let lifeCycle: LifeCycle
+  let domMutationObservable: Observable<void>
+  let clock: Clock
+
   const { events, pushEvent } = eventsCollector<ClickAction>()
   let button: HTMLButtonElement
   let emptyElement: HTMLHRElement
   let input: HTMLInputElement
-  let setupBuilder: TestSetupBuilder
   let findActionId: ActionContexts['findActionId']
+  let stopClickActionsTracking: () => void
+
+  function startClickActionsTracking(partialConfig: Partial<RumConfiguration> = {}) {
+    const subscription = lifeCycle.subscribe(LifeCycleEventType.AUTO_ACTION_COMPLETED, pushEvent)
+    const trackClickActionsResult = trackClickActions(
+      lifeCycle,
+      domMutationObservable,
+      partialConfig as RumConfiguration
+    )
+
+    findActionId = trackClickActionsResult.actionContexts.findActionId
+    stopClickActionsTracking = () => {
+      trackClickActionsResult.stop()
+      subscription.unsubscribe()
+    }
+  }
 
   beforeEach(() => {
+    lifeCycle = new LifeCycle()
+    clock = mockClock()
+    domMutationObservable = new Observable<void>()
+
     button = document.createElement('button')
     button.type = 'button'
     button.id = 'button'
@@ -55,25 +86,18 @@ describe('trackClickActions', () => {
     input = document.createElement('input')
     input.value = 'foo bar'
     document.body.appendChild(input)
-
-    setupBuilder = setup()
-      .withFakeClock()
-      .beforeBuild(({ lifeCycle, domMutationObservable, configuration }) => {
-        lifeCycle.subscribe(LifeCycleEventType.AUTO_ACTION_COMPLETED, pushEvent)
-        const trackClickActionsResult = trackClickActions(lifeCycle, domMutationObservable, configuration)
-        findActionId = trackClickActionsResult.actionContexts.findActionId
-        return { stop: trackClickActionsResult.stop }
-      })
   })
 
   afterEach(() => {
+    stopClickActionsTracking()
+    clock.cleanup()
     button.parentNode!.removeChild(button)
     emptyElement.parentNode!.removeChild(emptyElement)
     input.parentNode!.removeChild(input)
   })
 
   it('starts a click action when clicking on an element', () => {
-    const { clock } = setupBuilder.build()
+    startClickActionsTracking()
     const pointerDownClocks = clocksNow()
     emulateClick({ activity: {} })
     expect(findActionId()).not.toBeUndefined()
@@ -108,7 +132,7 @@ describe('trackClickActions', () => {
   })
 
   it('should keep track of previously validated click actions', () => {
-    const { clock } = setupBuilder.build()
+    startClickActionsTracking()
     const pointerDownStart = relativeNow()
     emulateClick({ activity: {} })
     clock.tick(EXPIRE_DELAY)
@@ -117,7 +141,7 @@ describe('trackClickActions', () => {
   })
 
   it('counts errors occurring during the click action', () => {
-    const { lifeCycle, domMutationObservable, clock } = setupBuilder.build()
+    startClickActionsTracking()
 
     emulateClick({ activity: {} })
 
@@ -139,7 +163,7 @@ describe('trackClickActions', () => {
   })
 
   it('does not count child events unrelated to the click action', () => {
-    const { lifeCycle, clock } = setupBuilder.build()
+    startClickActionsTracking()
 
     emulateClick({ activity: {} })
 
@@ -156,7 +180,7 @@ describe('trackClickActions', () => {
   })
 
   it('should take the name from user-configured attribute', () => {
-    const { clock } = setupBuilder.withConfiguration({ actionNameAttribute: 'data-my-custom-attribute' }).build()
+    startClickActionsTracking({ actionNameAttribute: 'data-my-custom-attribute' })
 
     button.setAttribute('data-my-custom-attribute', 'test-1')
     emulateClick({ activity: {} })
@@ -167,7 +191,7 @@ describe('trackClickActions', () => {
   })
 
   it('discards any click action with a negative duration', () => {
-    const { clock } = setupBuilder.build()
+    startClickActionsTracking()
     emulateClick({ activity: { delay: -1 } })
     expect(findActionId()!.length).toEqual(2)
     clock.tick(EXPIRE_DELAY)
@@ -177,7 +201,7 @@ describe('trackClickActions', () => {
   })
 
   it('ongoing click action is stopped on view end', () => {
-    const { lifeCycle, clock } = setupBuilder.build()
+    startClickActionsTracking()
     emulateClick({ activity: { delay: BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY } })
 
     clock.tick(BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY)
@@ -191,7 +215,7 @@ describe('trackClickActions', () => {
   })
 
   it('collect click actions even if another one is ongoing', () => {
-    const { clock } = setupBuilder.build()
+    startClickActionsTracking()
 
     const firstPointerDownTimeStamp = timeStampNow()
     emulateClick({ activity: {} })
@@ -205,7 +229,7 @@ describe('trackClickActions', () => {
   })
 
   it('collect click actions even if nothing happens after a click (dead click)', () => {
-    const { clock } = setupBuilder.build()
+    startClickActionsTracking()
     emulateClick()
 
     clock.tick(EXPIRE_DELAY)
@@ -215,7 +239,7 @@ describe('trackClickActions', () => {
   })
 
   it('does not set a duration for dead clicks', () => {
-    const { clock } = setupBuilder.build()
+    startClickActionsTracking()
     emulateClick()
 
     clock.tick(EXPIRE_DELAY)
@@ -224,7 +248,7 @@ describe('trackClickActions', () => {
   })
 
   it('collect click actions even if it fails to find a name', () => {
-    const { clock } = setupBuilder.build()
+    startClickActionsTracking()
     emulateClick({ activity: {}, target: emptyElement })
     expect(findActionId()!.length).toBeGreaterThan(0)
     clock.tick(EXPIRE_DELAY)
@@ -234,11 +258,11 @@ describe('trackClickActions', () => {
 
   describe('with enablePrivacyForActionName false', () => {
     it('extracts action name when default privacy level is mask', () => {
-      setupBuilder.withConfiguration({
+      startClickActionsTracking({
         defaultPrivacyLevel: DefaultPrivacyLevel.MASK,
         enablePrivacyForActionName: false,
       })
-      const { clock } = setupBuilder.build()
+
       emulateClick({ activity: {} })
       expect(findActionId()).not.toBeUndefined()
       clock.tick(EXPIRE_DELAY)
@@ -250,23 +274,21 @@ describe('trackClickActions', () => {
 
   describe('with enablePrivacyForActionName true', () => {
     it('does not track click actions when html override set hidden', () => {
-      setupBuilder.withConfiguration({
+      button.setAttribute('data-dd-privacy', 'hidden')
+      startClickActionsTracking({
         enablePrivacyForActionName: true,
       })
-      button.setAttribute('data-dd-privacy', 'hidden')
 
-      const { clock } = setupBuilder.build()
       emulateClick({ activity: {} })
       clock.tick(EXPIRE_DELAY)
 
       expect(events.length).toBe(0)
     })
     it('get placeholder when defaultPrivacyLevel is mask without programmatically declared action name', () => {
-      setupBuilder.withConfiguration({
+      startClickActionsTracking({
         defaultPrivacyLevel: DefaultPrivacyLevel.MASK,
         enablePrivacyForActionName: true,
       })
-      const { clock } = setupBuilder.build()
 
       emulateClick({ activity: {} })
       expect(findActionId()).not.toBeUndefined()
@@ -279,7 +301,7 @@ describe('trackClickActions', () => {
 
   describe('rage clicks', () => {
     it('considers a chain of three clicks or more as a single action with "rage" frustration type', () => {
-      const { clock } = setupBuilder.build()
+      startClickActionsTracking()
       const firstPointerDownTimeStamp = timeStampNow()
       const activityDelay = 5
       emulateClick({ activity: { delay: activityDelay } })
@@ -296,7 +318,7 @@ describe('trackClickActions', () => {
     })
 
     it('should contain original events from of rage sequence', () => {
-      const { clock } = setupBuilder.build()
+      startClickActionsTracking()
       const activityDelay = 5
       emulateClick({ activity: { delay: activityDelay } })
       emulateClick({ activity: { delay: activityDelay } })
@@ -309,7 +331,7 @@ describe('trackClickActions', () => {
     })
 
     it('aggregates frustration Types from all clicks', () => {
-      const { lifeCycle, clock } = setupBuilder.build()
+      startClickActionsTracking()
 
       // Dead
       emulateClick()
@@ -337,7 +359,7 @@ describe('trackClickActions', () => {
 
   describe('error clicks', () => {
     it('considers a "click with activity" followed by an error as a click action with "error" frustration type', () => {
-      const { lifeCycle, clock } = setupBuilder.build()
+      startClickActionsTracking()
 
       emulateClick({ activity: {} })
       lifeCycle.notify(LifeCycleEventType.RUM_EVENT_COLLECTED, createFakeErrorEvent())
@@ -348,7 +370,7 @@ describe('trackClickActions', () => {
     })
 
     it('considers a "click without activity" followed by an error as a click action with "error" (and "dead") frustration type', () => {
-      const { lifeCycle, clock } = setupBuilder.build()
+      startClickActionsTracking()
 
       emulateClick()
       lifeCycle.notify(LifeCycleEventType.RUM_EVENT_COLLECTED, createFakeErrorEvent())
@@ -363,7 +385,7 @@ describe('trackClickActions', () => {
 
   describe('dead clicks', () => {
     it('considers a "click without activity" as a dead click', () => {
-      const { clock } = setupBuilder.build()
+      startClickActionsTracking()
 
       emulateClick()
 
@@ -373,7 +395,7 @@ describe('trackClickActions', () => {
     })
 
     it('does not consider a click with activity happening on pointerdown as a dead click', () => {
-      const { clock } = setupBuilder.build()
+      startClickActionsTracking()
 
       emulateClick({ activity: { on: 'pointerdown' } })
 
@@ -383,7 +405,7 @@ describe('trackClickActions', () => {
     })
 
     it('activity happening on pointerdown is not taken into account for the action duration', () => {
-      const { clock } = setupBuilder.build()
+      startClickActionsTracking()
 
       emulateClick({ activity: { on: 'pointerdown' } })
 
@@ -393,7 +415,7 @@ describe('trackClickActions', () => {
     })
 
     it('does not consider a click with activity happening on pointerup as a dead click', () => {
-      const { clock } = setupBuilder.build()
+      startClickActionsTracking()
 
       emulateClick({ activity: { on: 'pointerup' } })
 
@@ -427,7 +449,7 @@ describe('trackClickActions', () => {
     }
     target.dispatchEvent(createNewEvent('pointerdown', eventProperties))
     emulateActivityIfNeeded('pointerdown')
-    setupBuilder.clock!.tick(EMULATED_CLICK_DURATION)
+    clock!.tick(EMULATED_CLICK_DURATION)
     target.dispatchEvent(createNewEvent('pointerup', eventProperties))
     emulateActivityIfNeeded('pointerup')
     target.dispatchEvent(createNewEvent('click', eventProperties))
@@ -438,12 +460,12 @@ describe('trackClickActions', () => {
         const delay = activity.delay ?? BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY
         if (delay < 0) {
           // Do not use `.tick()` here because negative clock tick does not work since jasmine 4: https://github.com/jasmine/jasmine/pull/1948
-          setupBuilder.clock!.setDate(new Date(Date.now() + delay))
+          clock!.setDate(new Date(Date.now() + delay))
         } else {
-          setupBuilder.clock!.tick(delay)
+          clock!.tick(delay)
         }
         // Since we don't collect dom mutations for this test, manually dispatch one
-        setupBuilder.domMutationObservable.notify()
+        domMutationObservable.notify()
       }
     }
   }

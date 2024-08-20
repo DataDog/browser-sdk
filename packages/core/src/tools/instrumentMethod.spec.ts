@@ -37,7 +37,7 @@ describe('instrumentMethod', () => {
   })
 
   it('sets an event handler even if it was originally undefined', () => {
-    const object: { onevent?: () => void } = {}
+    const object: { onevent?: () => void } = { onevent: undefined }
 
     const instrumentationSpy = jasmine.createSpy()
     instrumentMethod(object, 'onevent', instrumentationSpy)
@@ -46,6 +46,15 @@ describe('instrumentMethod', () => {
 
     object.onevent!()
     expect(instrumentationSpy).toHaveBeenCalled()
+  })
+
+  it('do not set an event handler even if the event is not supported (i.e. property does not exist on object)', () => {
+    const object: { onevent?: () => void } = {}
+
+    const instrumentationSpy = jasmine.createSpy()
+    instrumentMethod(object, 'onevent', instrumentationSpy)
+
+    expect('onevent' in object).toBeFalse()
   })
 
   it('calls the instrumentation with method target and parameters', () => {
