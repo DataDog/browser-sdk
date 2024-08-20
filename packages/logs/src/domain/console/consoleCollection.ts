@@ -5,6 +5,7 @@ import type { LifeCycle, RawLogsEventCollectedData } from '../lifeCycle'
 import { LifeCycleEventType } from '../lifeCycle'
 import { StatusType } from '../logger/isAuthorized'
 import type { RawLogsEvent } from '../../rawLogsEvent.types'
+import { createErrorFieldFromRawError } from '../createErrorFieldFromRawError'
 
 export interface ProvidedError {
   startClocks: ClocksState
@@ -27,14 +28,7 @@ export function startConsoleCollection(configuration: LogsConfiguration, lifeCyc
         date: timeStampNow(),
         message: log.message,
         origin: ErrorSource.CONSOLE,
-        error:
-          log.api === ConsoleApiName.error
-            ? {
-                stack: log.stack,
-                fingerprint: log.fingerprint,
-                causes: log.causes,
-              }
-            : undefined,
+        error: log.error && createErrorFieldFromRawError(log.error),
         status: LogStatusForApi[log.api],
       },
       domainContext: {

@@ -1,21 +1,14 @@
 import type { Duration } from '@datadog/browser-core'
 import { mockClock, registerCleanupTask, type Clock } from '@datadog/browser-core/test'
 import { clocksNow } from '@datadog/browser-core'
-import { validateRumEventFormat } from '../../../test'
+import { collectAndValidateRawRumEvents, mockPageStateHistory } from '../../../test'
 import type { RawRumEvent, RawRumVitalEvent } from '../../rawRumEvent.types'
 import { VitalType, RumEventType } from '../../rawRumEvent.types'
 import type { RawRumEventCollectedData } from '../lifeCycle'
-import { LifeCycle, LifeCycleEventType } from '../lifeCycle'
-import type { PageStateHistory } from '../contexts/pageStateHistory'
+import { LifeCycle } from '../lifeCycle'
 import { createVitalInstance, startVitalCollection } from './vitalCollection'
 
-const pageStateHistory: PageStateHistory = {
-  findAll: () => undefined,
-  addPageState: () => {},
-  stop: () => {},
-  wasInPageStateAt: () => false,
-  wasInPageStateDuringPeriod: () => false,
-}
+const pageStateHistory = mockPageStateHistory()
 
 describe('vitalCollection', () => {
   const lifeCycle = new LifeCycle()
@@ -28,14 +21,10 @@ describe('vitalCollection', () => {
     clock = mockClock()
     wasInPageStateDuringPeriodSpy = spyOn(pageStateHistory, 'wasInPageStateDuringPeriod')
     vitalCollection = startVitalCollection(lifeCycle, pageStateHistory)
-    const eventsSubscription = lifeCycle.subscribe(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, (data) => {
-      rawRumEvents.push(data)
-      validateRumEventFormat(data.rawRumEvent)
-    })
+
+    rawRumEvents = collectAndValidateRawRumEvents(lifeCycle)
 
     registerCleanupTask(() => {
-      eventsSubscription.unsubscribe()
-      rawRumEvents = []
       clock.cleanup()
     })
   })

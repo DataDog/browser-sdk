@@ -1,6 +1,6 @@
 import { toServerDuration, relativeToClocks, generateUUID } from '@datadog/browser-core'
 import type { RawRumLongTaskEvent } from '../../rawRumEvent.types'
-import { RumEventType } from '../../rawRumEvent.types'
+import { RumEventType, RumLongTaskEntryType } from '../../rawRumEvent.types'
 import type { LifeCycle } from '../lifeCycle'
 import { LifeCycleEventType } from '../lifeCycle'
 import { RumPerformanceEntryType } from '../../browser/performanceObservable'
@@ -20,6 +20,7 @@ export function startLongTaskCollection(lifeCycle: LifeCycle, configuration: Rum
         date: startClocks.timeStamp,
         long_task: {
           id: generateUUID(),
+          entry_type: RumLongTaskEntryType.LONG_TASK,
           duration: toServerDuration(entry.duration),
         },
         type: RumEventType.LONG_TASK,

@@ -1,43 +1,63 @@
 import type { Duration, RelativeTime, ServerDuration, TimeStamp } from '@datadog/browser-core'
 import { isIE, noop, RequestType, ResourceType } from '@datadog/browser-core'
+import { registerCleanupTask } from '@datadog/browser-core/test'
 import type { RumFetchResourceEventDomainContext, RumXhrResourceEventDomainContext } from '../../domainContext.types'
-import { setup, createPerformanceEntry, mockPerformanceObserver } from '../../../test'
-import type { TestSetupBuilder } from '../../../test'
-import type { RawRumResourceEvent } from '../../rawRumEvent.types'
+import {
+  collectAndValidateRawRumEvents,
+  createPerformanceEntry,
+  mockPageStateHistory,
+  mockPerformanceObserver,
+} from '../../../test'
+import type { RawRumEvent, RawRumResourceEvent } from '../../rawRumEvent.types'
 import { RumEventType } from '../../rawRumEvent.types'
-import { LifeCycleEventType } from '../lifeCycle'
+import type { RawRumEventCollectedData } from '../lifeCycle'
+import { LifeCycle, LifeCycleEventType } from '../lifeCycle'
 import type { RequestCompleteEvent } from '../requestCollection'
 import { createTraceIdentifier } from '../tracing/tracer'
+import type { RumConfiguration } from '../configuration'
 import { validateAndBuildRumConfiguration } from '../configuration'
 import type { RumPerformanceEntry } from '../../browser/performanceObservable'
 import { RumPerformanceEntryType } from '../../browser/performanceObservable'
 import { startResourceCollection } from './resourceCollection'
 
 const HANDLING_STACK_REGEX = /^Error: \n\s+at <anonymous> @/
+const baseConfiguration: RumConfiguration = {
+  ...validateAndBuildRumConfiguration({
+    clientToken: 'xxx',
+    applicationId: 'FAKE_APP_ID',
+  })!,
+}
+const pageStateHistory = mockPageStateHistory()
 
 describe('resourceCollection', () => {
-  let setupBuilder: TestSetupBuilder
-  let trackResources: boolean
+  let lifeCycle: LifeCycle
   let wasInPageStateDuringPeriodSpy: jasmine.Spy<jasmine.Func>
   let notifyPerformanceEntries: (entries: RumPerformanceEntry[]) => void
-  function build() {
-    const result = setupBuilder.build()
-    // Reset the initial load events collected during the setup
-    result.rawRumEvents.length = 0
-    return result
+  let rawRumEvents: Array<RawRumEventCollectedData<RawRumEvent>> = []
+
+  function setupResourceCollection(partialConfig: Partial<RumConfiguration> = { trackResources: true }) {
+    lifeCycle = new LifeCycle()
+    const startResult = startResourceCollection(
+      lifeCycle,
+      { ...baseConfiguration, ...partialConfig },
+      pageStateHistory,
+      noop
+    )
+
+    rawRumEvents = collectAndValidateRawRumEvents(lifeCycle)
+
+    registerCleanupTask(() => {
+      startResult.stop()
+    })
   }
 
   beforeEach(() => {
-    trackResources = true
     ;({ notifyPerformanceEntries } = mockPerformanceObserver())
-    setupBuilder = setup().beforeBuild(({ lifeCycle, pageStateHistory, configuration }) => {
-      wasInPageStateDuringPeriodSpy = spyOn(pageStateHistory, 'wasInPageStateDuringPeriod')
-      startResourceCollection(lifeCycle, { ...configuration, trackResources }, pageStateHistory, noop)
-    })
+    wasInPageStateDuringPeriodSpy = spyOn(pageStateHistory, 'wasInPageStateDuringPeriod')
   })
 
   it('should create resource from performance entry', () => {
-    const { rawRumEvents } = build()
+    setupResourceCollection()
 
     const performanceEntry = createPerformanceEntry(RumPerformanceEntryType.RESOURCE, {
       encodedBodySize: 42,
@@ -76,7 +96,7 @@ describe('resourceCollection', () => {
   })
 
   it('should create resource from completed XHR request', () => {
-    const { lifeCycle, rawRumEvents } = build()
+    setupResourceCollection()
     const xhr = new XMLHttpRequest()
     lifeCycle.notify(
       LifeCycleEventType.REQUEST_COMPLETED,
@@ -121,13 +141,9 @@ describe('resourceCollection', () => {
   })
 
   describe('when trackResource is false', () => {
-    beforeEach(() => {
-      trackResources = false
-    })
-
     describe('and resource is not traced', () => {
       it('should not collect a resource from a performance entry', () => {
-        const { rawRumEvents } = build()
+        setupResourceCollection({ trackResources: false })
 
         notifyPerformanceEntries([createPerformanceEntry(RumPerformanceEntryType.RESOURCE)])
 
@@ -135,7 +151,7 @@ describe('resourceCollection', () => {
       })
 
       it('should not collect a resource from a completed XHR request', () => {
-        const { lifeCycle, rawRumEvents } = build()
+        setupResourceCollection({ trackResources: false })
         lifeCycle.notify(
           LifeCycleEventType.REQUEST_COMPLETED,
           createCompletedRequest({
@@ -149,7 +165,7 @@ describe('resourceCollection', () => {
 
     describe('and resource is traced', () => {
       it('should collect a resource from a performance entry', () => {
-        const { rawRumEvents } = build()
+        setupResourceCollection({ trackResources: false })
 
         notifyPerformanceEntries([createPerformanceEntry(RumPerformanceEntryType.RESOURCE, { traceId: '1234' })])
 
@@ -158,7 +174,7 @@ describe('resourceCollection', () => {
       })
 
       it('should collect a resource from a completed XHR request', () => {
-        const { lifeCycle, rawRumEvents } = build()
+        setupResourceCollection({ trackResources: false })
         lifeCycle.notify(
           LifeCycleEventType.REQUEST_COMPLETED,
           createCompletedRequest({
@@ -176,7 +192,7 @@ describe('resourceCollection', () => {
   })
 
   it('should not have a duration if a frozen state happens during the request and no performance entry matches', () => {
-    const { lifeCycle, rawRumEvents } = build()
+    setupResourceCollection()
     const mockXHR = createCompletedRequest()
 
     wasInPageStateDuringPeriodSpy.and.returnValue(true)
@@ -191,7 +207,7 @@ describe('resourceCollection', () => {
     if (isIE()) {
       pending('No IE support')
     }
-    const { lifeCycle, rawRumEvents } = build()
+    setupResourceCollection()
     const response = new Response()
     lifeCycle.notify(
       LifeCycleEventType.REQUEST_COMPLETED,
@@ -243,7 +259,7 @@ describe('resourceCollection', () => {
       if (isIE()) {
         pending('No IE support')
       }
-      const { lifeCycle, rawRumEvents } = build()
+      setupResourceCollection()
       lifeCycle.notify(
         LifeCycleEventType.REQUEST_COMPLETED,
         createCompletedRequest({
@@ -258,7 +274,7 @@ describe('resourceCollection', () => {
   })
 
   it('should include the error in failed fetch requests', () => {
-    const { lifeCycle, rawRumEvents } = build()
+    setupResourceCollection()
     const error = new Error()
     lifeCycle.notify(LifeCycleEventType.REQUEST_COMPLETED, createCompletedRequest({ error }))
 
@@ -270,7 +286,7 @@ describe('resourceCollection', () => {
   })
 
   it('should discard 0 status code', () => {
-    const { rawRumEvents } = build()
+    setupResourceCollection()
     const performanceEntry = createPerformanceEntry(RumPerformanceEntryType.RESOURCE, { responseStatus: 0 })
     notifyPerformanceEntries([performanceEntry])
     expect((rawRumEvents[0].rawRumEvent as RawRumResourceEvent).resource.status_code).toBeUndefined()
@@ -278,7 +294,7 @@ describe('resourceCollection', () => {
 
   describe('tracing info', () => {
     it('should be processed from traced initial document', () => {
-      const { rawRumEvents } = build()
+      setupResourceCollection()
       notifyPerformanceEntries([createPerformanceEntry(RumPerformanceEntryType.RESOURCE, { traceId: '1234' })])
       const privateFields = (rawRumEvents[0].rawRumEvent as RawRumResourceEvent)._dd
       expect(privateFields).toBeDefined()
@@ -287,7 +303,7 @@ describe('resourceCollection', () => {
     })
 
     it('should be processed from sampled completed request', () => {
-      const { lifeCycle, rawRumEvents } = build()
+      setupResourceCollection()
       lifeCycle.notify(
         LifeCycleEventType.REQUEST_COMPLETED,
         createCompletedRequest({
@@ -302,7 +318,7 @@ describe('resourceCollection', () => {
     })
 
     it('should not be processed from not sampled completed request', () => {
-      const { lifeCycle, rawRumEvents } = build()
+      setupResourceCollection()
       lifeCycle.notify(
         LifeCycleEventType.REQUEST_COMPLETED,
         createCompletedRequest({
@@ -317,20 +333,13 @@ describe('resourceCollection', () => {
     })
 
     it('should pull traceSampleRate from config if present', () => {
-      setupBuilder = setup().beforeBuild(({ lifeCycle, pageStateHistory }) => {
-        startResourceCollection(
-          lifeCycle,
-          validateAndBuildRumConfiguration({
-            clientToken: 'xxx',
-            applicationId: 'xxx',
-            traceSampleRate: 60,
-          })!,
-          pageStateHistory,
-          noop
-        )
-      })
+      const config = validateAndBuildRumConfiguration({
+        clientToken: 'xxx',
+        applicationId: 'xxx',
+        traceSampleRate: 60,
+      })!
+      setupResourceCollection(config)
 
-      const { lifeCycle, rawRumEvents } = build()
       lifeCycle.notify(
         LifeCycleEventType.REQUEST_COMPLETED,
         createCompletedRequest({
@@ -344,19 +353,12 @@ describe('resourceCollection', () => {
     })
 
     it('should not define rule_psr if traceSampleRate is undefined', () => {
-      setupBuilder = setup().beforeBuild(({ lifeCycle, pageStateHistory }) => {
-        startResourceCollection(
-          lifeCycle,
-          validateAndBuildRumConfiguration({
-            clientToken: 'xxx',
-            applicationId: 'xxx',
-          })!,
-          pageStateHistory,
-          noop
-        )
-      })
+      const config = validateAndBuildRumConfiguration({
+        clientToken: 'xxx',
+        applicationId: 'xxx',
+      })!
+      setupResourceCollection(config)
 
-      const { lifeCycle, rawRumEvents } = build()
       lifeCycle.notify(
         LifeCycleEventType.REQUEST_COMPLETED,
         createCompletedRequest({
@@ -370,20 +372,13 @@ describe('resourceCollection', () => {
     })
 
     it('should define rule_psr to 0 if traceSampleRate is set to 0', () => {
-      setupBuilder = setup().beforeBuild(({ lifeCycle, pageStateHistory }) => {
-        startResourceCollection(
-          lifeCycle,
-          validateAndBuildRumConfiguration({
-            clientToken: 'xxx',
-            applicationId: 'xxx',
-            traceSampleRate: 0,
-          })!,
-          pageStateHistory,
-          noop
-        )
-      })
+      const config = validateAndBuildRumConfiguration({
+        clientToken: 'xxx',
+        applicationId: 'xxx',
+        traceSampleRate: 0,
+      })!
+      setupResourceCollection(config)
 
-      const { lifeCycle, rawRumEvents } = build()
       lifeCycle.notify(
         LifeCycleEventType.REQUEST_COMPLETED,
         createCompletedRequest({
@@ -402,7 +397,7 @@ describe('resourceCollection', () => {
       pending('No IE support')
     }
 
-    const { lifeCycle, rawRumEvents } = build()
+    setupResourceCollection()
     const response = new Response()
     lifeCycle.notify(LifeCycleEventType.REQUEST_COMPLETED, createCompletedRequest({ response }))
     const domainContext = rawRumEvents[0].domainContext as RumFetchResourceEventDomainContext
@@ -411,7 +406,7 @@ describe('resourceCollection', () => {
   })
 
   it('should collect handlingStack from completed XHR request', () => {
-    const { lifeCycle, rawRumEvents } = build()
+    setupResourceCollection()
     const xhr = new XMLHttpRequest()
     lifeCycle.notify(LifeCycleEventType.REQUEST_COMPLETED, createCompletedRequest({ xhr }))
 
