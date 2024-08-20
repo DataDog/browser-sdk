@@ -6,8 +6,6 @@ import {
   relativeToClocks,
   relativeNow,
   ExperimentalFeature,
-  resetExperimentalFeatures,
-  addExperimentalFeatures,
 } from '@datadog/browser-core'
 
 import { mockExperimentalFeatures } from '@datadog/browser-core/test'
