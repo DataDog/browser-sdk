@@ -11,6 +11,9 @@ import {
   ONE_SECOND,
   elapsed,
   createValueHistory,
+  isExperimentalFeatureEnabled,
+  ExperimentalFeature,
+  addTelemetryDebug,
 } from '@datadog/browser-core'
 import type { FrustrationType } from '../../rawRumEvent.types'
 import { ActionType } from '../../rawRumEvent.types'
@@ -61,6 +64,7 @@ type ClickActionIdHistory = ValueHistory<ClickAction['id']>
 // Maximum duration for click actions
 export const CLICK_ACTION_MAX_DURATION = 10 * ONE_SECOND
 export const ACTION_CONTEXT_TIME_OUT_DELAY = 5 * ONE_MINUTE // arbitrary
+export const interactionSelectorMap = new Map<number, string | undefined>() // key is timestamp
 
 export function trackClickActions(
   lifeCycle: LifeCycle,
@@ -200,6 +204,19 @@ function startClickAction(
     },
     CLICK_ACTION_MAX_DURATION
   )
+
+  const selector = clickActionBase.target?.selector
+
+  // save selector in InteractionTargetMap
+  if (isExperimentalFeatureEnabled(ExperimentalFeature.NULL_INP_TELEMETRY)) {
+    if (!selector) {
+      addTelemetryDebug('Fail to get selector from element', {
+        hasTarget: !!clickActionBase.target,
+        timeStamp: startEvent.timeStamp,
+      })
+    }
+    interactionSelectorMap.set(startEvent.timeStamp, selector)
+  }
 
   const viewEndedSubscription = lifeCycle.subscribe(LifeCycleEventType.VIEW_ENDED, ({ endClocks }) => {
     click.stop(endClocks.timeStamp)
