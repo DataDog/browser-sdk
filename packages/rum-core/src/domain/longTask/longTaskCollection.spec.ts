@@ -2,7 +2,7 @@ import type { RelativeTime, ServerDuration } from '@datadog/browser-core'
 import { collectAndValidateRawRumEvents, createPerformanceEntry, mockPerformanceObserver } from '../../../test'
 import { RumPerformanceEntryType } from '../../browser/performanceObservable'
 import type { RawRumEvent } from '../../rawRumEvent.types'
-import { RumEventType } from '../../rawRumEvent.types'
+import { RumEventType, RumLongTaskEntryType } from '../../rawRumEvent.types'
 import type { RawRumEventCollectedData } from '../lifeCycle'
 import { LifeCycle, LifeCycleEventType } from '../lifeCycle'
 import type { RumConfiguration } from '../configuration'
@@ -61,6 +61,7 @@ describe('long task collection', () => {
       date: jasmine.any(Number),
       long_task: {
         id: jasmine.any(String),
+        entry_type: RumLongTaskEntryType.LONG_TASK,
         duration: (100 * 1e6) as ServerDuration,
       },
       type: RumEventType.LONG_TASK,

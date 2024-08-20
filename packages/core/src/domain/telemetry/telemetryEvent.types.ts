@@ -134,6 +134,10 @@ export type TelemetryConfigurationEvent = CommonTelemetryProperties & {
        */
       start_session_replay_recording_manually?: boolean
       /**
+       * Whether Session Replay should automatically start a recording when enabled
+       */
+      start_recording_immediately?: boolean
+      /**
        * Whether a proxy is used
        */
       use_proxy?: boolean
@@ -478,6 +482,13 @@ export type TelemetryBrowserFeaturesUsage =
     }
   | {
       /**
+       * stopDurationVital API
+       */
+      feature: 'stop-duration-vital'
+      [k: string]: unknown
+    }
+  | {
+      /**
        * addDurationVital API
        */
       feature: 'add-duration-vital'
@@ -513,7 +524,7 @@ export interface CommonTelemetryProperties {
   /**
    * The source of this event
    */
-  readonly source: 'android' | 'ios' | 'browser' | 'flutter' | 'react-native' | 'unity'
+  readonly source: 'android' | 'ios' | 'browser' | 'flutter' | 'react-native' | 'unity' | 'kotlin-multiplatform'
   /**
    * The version of the SDK generating the telemetry event
    */
