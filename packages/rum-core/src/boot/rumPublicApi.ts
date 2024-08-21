@@ -348,7 +348,7 @@ export function makeRumPublicApi(
          * @param options.startTime epoch timestamp of the start of the custom vital
          * @param options.duration duration of the custom vital
          * @param options.context custom context attached to the vital
-         * @param options.description  Descritpion of the vital
+         * @param options.description  Description of the vital
          */
         ;(rumPublicApi as any).addDurationVital = monitor(
           (name: string, options: { startTime: number; duration: number; context?: object; description?: string }) => {
