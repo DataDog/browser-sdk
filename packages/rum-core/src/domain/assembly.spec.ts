@@ -594,6 +594,20 @@ describe('rum assembly', () => {
         })
       )
     })
+
+    it('should have view custom context', () => {
+      const { lifeCycle } = setupBuilder.build()
+      findView = () => ({
+        id: '7890',
+        name: 'view name',
+        startClocks: {} as ClocksState,
+        customerContext: { foo: 'bar' },
+      })
+      notifyRawRumEvent(lifeCycle, {
+        rawRumEvent: createRawRumEvent(RumEventType.ACTION),
+      })
+      expect(serverRumEvents[0].context).toEqual({ foo: 'bar' })
+    })
   })
 
   describe('service and version', () => {

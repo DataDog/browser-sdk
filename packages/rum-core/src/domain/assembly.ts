@@ -184,7 +184,11 @@ export function startRumAssembly(
         }
 
         const serverRumEvent = combine(rumContext as RumContext & Context, rawRumEvent) as RumEvent & Context
-        serverRumEvent.context = combine(commonContext.context, customerContext)
+        serverRumEvent.context = combine(
+          commonContext.context,
+          customerContext,
+          serverRumEvent.type !== 'view' ? viewContext.customerContext : undefined
+        )
 
         if (!('has_replay' in serverRumEvent.session)) {
           ;(serverRumEvent.session as Mutable<RumEvent['session']>).has_replay = commonContext.hasReplay
