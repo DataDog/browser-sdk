@@ -241,13 +241,18 @@ function computeClickActionBase(
   configuration: RumConfiguration
 ): ClickActionBase {
   const rect = event.target.getBoundingClientRect()
+  const selector = getSelectorFromElement(event.target, configuration.actionNameAttribute)
+
+  if (isExperimentalFeatureEnabled(ExperimentalFeature.NULL_INP_TELEMETRY)) {
+    interactionSelectorMap.set(event.timeStamp, selector)
+  }
 
   return {
     type: ActionType.CLICK,
     target: {
       width: Math.round(rect.width),
       height: Math.round(rect.height),
-      selector: getSelectorFromElement(event.target, configuration.actionNameAttribute),
+      selector,
     },
     position: {
       // Use clientX and Y because for SVG element offsetX and Y are relatives to the <svg> element
