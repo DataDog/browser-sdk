@@ -38,6 +38,16 @@ describe('buildTag', () => {
     expectWarning()
   })
 
+  it('shows a warning when using non latin uppercase letters like in Greek', () => {
+    buildTag('env', 'Δοκιμή')
+    expectWarning()
+  })
+
+  it('do not shows a warning when non latin characters are neither uppercase or lowercase (p{Lo}) like Japanese', () => {
+    buildTag('env', 'てすと')
+    expect(displaySpy).not.toHaveBeenCalled()
+  })
+
   it('forbids to craft multiple tags by passing a value with a comma', () => {
     expect(buildTag('env', 'foo,bar')).toBe('env:foo_bar')
     expectWarning()

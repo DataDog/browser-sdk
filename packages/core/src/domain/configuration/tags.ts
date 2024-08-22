@@ -23,15 +23,13 @@ export function buildTags(configuration: InitConfiguration): string[] {
   return tags
 }
 
-const FORBIDDEN_CHARACTERS = /[^a-z0-9_:./-]/
-
 export function buildTag(key: string, rawValue: string) {
   // See https://docs.datadoghq.com/getting_started/tagging/#defining-tags for tags syntax. Note
   // that the backend may not follow the exact same rules, so we only want to display an informal
   // warning.
   const valueSizeLimit = TAG_SIZE_LIMIT - key.length - 1
 
-  if (rawValue.length > valueSizeLimit || FORBIDDEN_CHARACTERS.test(rawValue)) {
+  if (rawValue.length > valueSizeLimit || hasForbiddenCharacters(rawValue)) {
     display.warn(
       `${key} value doesn't meet tag requirements and will be sanitized. ${MORE_DETAILS} ${DOCS_ORIGIN}/getting_started/tagging/#defining-tags`
     )
@@ -42,4 +40,18 @@ export function buildTag(key: string, rawValue: string) {
   const sanitizedValue = rawValue.replace(/,/g, '_')
 
   return `${key}:${sanitizedValue}`
+}
+
+function hasForbiddenCharacters(rawValue: string) {
+  // Unicode property escapes is not supported in all browsers, so we use a try/catch.
+  // Todo: Remove the try/catch when dropping IE11.
+  try {
+    // We use the Unicode property escapes to match any character that is a letter including other languages like Chinese, Japanese, etc.
+    // p{Ll} matches a lowercase letter.
+    // p{Lo} matches a letter that is neither uppercase nor lowercase (ex: Japanese characters).
+    // See https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Regular_expressions/Unicode_character_class_escape#unicode_property_escapes_vs._character_classes
+    return new RegExp('[^(\\p{Ll}|\\p{Lo})0-9_:./-]', 'u').test(rawValue)
+  } catch {
+    return false
+  }
 }
