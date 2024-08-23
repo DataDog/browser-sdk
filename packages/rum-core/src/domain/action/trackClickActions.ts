@@ -205,17 +205,10 @@ function startClickAction(
     CLICK_ACTION_MAX_DURATION
   )
 
-  const selector = clickActionBase.target?.selector
-
-  // save selector in InteractionTargetMap
   if (isExperimentalFeatureEnabled(ExperimentalFeature.NULL_INP_TELEMETRY)) {
-    if (!selector) {
-      addTelemetryDebug('Fail to get selector from element', {
-        hasTarget: !!clickActionBase.target,
-        timeStamp: startEvent.timeStamp,
-      })
+    if (clickActionBase.target) {
+      interactionSelectorMap.set(startEvent.timeStamp, clickActionBase.target?.selector)
     }
-    interactionSelectorMap.set(startEvent.timeStamp, selector)
   }
 
   const viewEndedSubscription = lifeCycle.subscribe(LifeCycleEventType.VIEW_ENDED, ({ endClocks }) => {
