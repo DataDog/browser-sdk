@@ -13,7 +13,6 @@ import {
   createValueHistory,
   isExperimentalFeatureEnabled,
   ExperimentalFeature,
-  addTelemetryDebug,
 } from '@datadog/browser-core'
 import type { FrustrationType } from '../../rawRumEvent.types'
 import { ActionType } from '../../rawRumEvent.types'
