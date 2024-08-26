@@ -88,6 +88,7 @@ export function trackInteractionToNextPaint(
       ) {
         if (interactionSelectorMap.has(newInteraction.startTime)) {
           interactionToNextPaintTargetSelector = interactionSelectorMap.get(newInteraction.startTime)
+          interactionSelectorMap.delete(newInteraction.startTime)
         }
         addTelemetryDebug('Fail to get INP target selector', {
           hasTarget: !!inpTarget,

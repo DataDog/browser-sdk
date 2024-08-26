@@ -204,12 +204,6 @@ function startClickAction(
     CLICK_ACTION_MAX_DURATION
   )
 
-  if (isExperimentalFeatureEnabled(ExperimentalFeature.NULL_INP_TELEMETRY)) {
-    if (clickActionBase.target) {
-      interactionSelectorMap.set(startEvent.timeStamp, clickActionBase.target?.selector)
-    }
-  }
-
   const viewEndedSubscription = lifeCycle.subscribe(LifeCycleEventType.VIEW_ENDED, ({ endClocks }) => {
     click.stop(endClocks.timeStamp)
   })
