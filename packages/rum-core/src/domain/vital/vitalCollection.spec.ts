@@ -53,7 +53,19 @@ describe('vitalCollection', () => {
         expect(cbSpy).toHaveBeenCalledOnceWith(jasmine.objectContaining({ name: 'foo', duration: 100 }))
       })
 
-      it('should not create multiple duration vitals by calling "stopDurationVital" on the same vital multiple times', () => {
+      it('should only create a single duration vital from a vital name', () => {
+        const cbSpy = jasmine.createSpy()
+
+        startDurationVital(vitalsState, 'foo')
+        clock.tick(100)
+        stopDurationVital(cbSpy, vitalsState, 'foo')
+        clock.tick(100)
+        stopDurationVital(cbSpy, vitalsState, 'foo')
+
+        expect(cbSpy).toHaveBeenCalledOnceWith(jasmine.objectContaining({ name: 'foo', duration: 100 }))
+      })
+
+      it('should not create multiple duration vitals by calling "stopDurationVital" on the same vital ref multiple times', () => {
         const cbSpy = jasmine.createSpy()
 
         const vital = startDurationVital(vitalsState, 'foo')
@@ -61,8 +73,10 @@ describe('vitalCollection', () => {
         stopDurationVital(cbSpy, vitalsState, vital)
 
         expect(cbSpy).toHaveBeenCalledTimes(1)
+      })
 
-        cbSpy.calls.reset()
+      it('should not create multiple duration vitals by calling "stopDurationVital" on the same vital name multiple times', () => {
+        const cbSpy = jasmine.createSpy()
 
         startDurationVital(vitalsState, 'bar')
         stopDurationVital(cbSpy, vitalsState, 'bar')
