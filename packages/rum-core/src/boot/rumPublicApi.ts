@@ -322,7 +322,10 @@ export function makeRumPublicApi(
     (configuration, deflateWorker, initialViewOptions) => {
       if (isExperimentalFeatureEnabled(ExperimentalFeature.CUSTOM_VITALS)) {
         /**
-         * Start a custom duration vital
+         * Start a custom duration vital.
+         *
+         * If you plan to have multiple durations for the same vital, you should use the reference returned by this method.
+         *
          * stored in @vital.custom.<name>
          *
          * @param name name of the custom vital
