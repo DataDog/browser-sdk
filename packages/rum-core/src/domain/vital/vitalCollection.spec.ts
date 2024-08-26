@@ -160,7 +160,9 @@ describe('vitalCollection', () => {
         expect(cbSpy.calls.argsFor(3)[0].context).toEqual({ start: 'defined', stop: 'defined' })
         expect(cbSpy.calls.argsFor(4)[0].context).toEqual({ precedence: 'stop' })
       })
+    })
 
+    describe('startVitalCollection', () => {
       it('should create a vital from start API using name', () => {
         vitalCollection.startDurationVital('foo', {
           context: { foo: 'bar' },
@@ -245,9 +247,7 @@ describe('vitalCollection', () => {
         })
         expect(rawRumEvents[0].domainContext).toEqual({})
       })
-    })
 
-    describe('addDurationVital', () => {
       it('should create a vital from add API', () => {
         vitalCollection.addDurationVital({
           name: 'foo',
