@@ -80,9 +80,12 @@ export function startDurationVital(
     description: options.description,
   }
 
+  // To avoid leaking implementation details of the vital, we return a reference to it.
   const reference: DurationVitalReference = { __dd_vital_reference: true }
 
   vitalsByName.set(name, vital)
+
+  // To avoid memory leaks caused by the creation of numerous references (e.g., from improper useEffect implementations), we use a WeakMap.
   vitalsByReference.set(reference, vital)
 
   return reference
