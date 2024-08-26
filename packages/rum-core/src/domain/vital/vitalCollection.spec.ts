@@ -160,91 +160,122 @@ describe('vitalCollection', () => {
         expect(cbSpy.calls.argsFor(3)[0].context).toEqual({ start: 'defined', stop: 'defined' })
         expect(cbSpy.calls.argsFor(4)[0].context).toEqual({ precedence: 'stop' })
       })
-    })
 
-    it('should create a vital from start API using name', () => {
-      vitalCollection.startDurationVital('foo', {
-        context: { foo: 'bar' },
-        description: 'baz',
+      it('should create a vital from start API using name', () => {
+        vitalCollection.startDurationVital('foo', {
+          context: { foo: 'bar' },
+          description: 'baz',
+        })
+
+        clock.tick(100)
+
+        vitalCollection.stopDurationVital('foo')
+
+        expect(rawRumEvents.length).toBe(1)
+        expect((rawRumEvents[0].rawRumEvent as RawRumVitalEvent).vital.duration).toBe(100000000)
+        expect((rawRumEvents[0].rawRumEvent as RawRumVitalEvent).vital.description).toBe('baz')
+        expect(rawRumEvents[0].customerContext).toEqual({ foo: 'bar' })
       })
 
-      clock.tick(100)
+      it('should create a vital from start API using ref', () => {
+        const vital = vitalCollection.startDurationVital('foo', {
+          context: { foo: 'bar' },
+          description: 'baz',
+        })
 
-      vitalCollection.stopDurationVital('foo')
+        clock.tick(100)
 
-      expect(rawRumEvents.length).toBe(1)
-      expect((rawRumEvents[0].rawRumEvent as RawRumVitalEvent).vital.duration).toBe(100000000)
-      expect((rawRumEvents[0].rawRumEvent as RawRumVitalEvent).vital.description).toBe('baz')
-      expect(rawRumEvents[0].customerContext).toEqual({ foo: 'bar' })
-    })
+        vitalCollection.stopDurationVital(vital)
 
-    it('should create a vital from start API using ref', () => {
-      const vital = vitalCollection.startDurationVital('foo', {
-        context: { foo: 'bar' },
-        description: 'baz',
+        expect(rawRumEvents.length).toBe(1)
+        expect((rawRumEvents[0].rawRumEvent as RawRumVitalEvent).vital.duration).toBe(100000000)
+        expect((rawRumEvents[0].rawRumEvent as RawRumVitalEvent).vital.description).toBe('baz')
+        expect(rawRumEvents[0].customerContext).toEqual({ foo: 'bar' })
       })
 
-      clock.tick(100)
+      it('should create a vital from add API', () => {
+        vitalCollection.addDurationVital({
+          name: 'foo',
+          type: VitalType.DURATION,
+          startClocks: clocksNow(),
+          duration: 100 as Duration,
+          context: { foo: 'bar' },
+          description: 'baz',
+        })
 
-      vitalCollection.stopDurationVital(vital)
-
-      expect(rawRumEvents.length).toBe(1)
-      expect((rawRumEvents[0].rawRumEvent as RawRumVitalEvent).vital.duration).toBe(100000000)
-      expect((rawRumEvents[0].rawRumEvent as RawRumVitalEvent).vital.description).toBe('baz')
-      expect(rawRumEvents[0].customerContext).toEqual({ foo: 'bar' })
-    })
-
-    it('should create a vital from add API', () => {
-      vitalCollection.addDurationVital({
-        name: 'foo',
-        type: VitalType.DURATION,
-        startClocks: clocksNow(),
-        duration: 100 as Duration,
-        context: { foo: 'bar' },
-        description: 'baz',
+        expect(rawRumEvents.length).toBe(1)
+        expect((rawRumEvents[0].rawRumEvent as RawRumVitalEvent).vital.duration).toBe(100000000)
+        expect((rawRumEvents[0].rawRumEvent as RawRumVitalEvent).vital.description).toBe('baz')
+        expect(rawRumEvents[0].customerContext).toEqual({ foo: 'bar' })
       })
 
-      expect(rawRumEvents.length).toBe(1)
-      expect((rawRumEvents[0].rawRumEvent as RawRumVitalEvent).vital.duration).toBe(100000000)
-      expect((rawRumEvents[0].rawRumEvent as RawRumVitalEvent).vital.description).toBe('baz')
-      expect(rawRumEvents[0].customerContext).toEqual({ foo: 'bar' })
-    })
+      it('should discard a vital for which a frozen state happened', () => {
+        wasInPageStateDuringPeriodSpy.and.returnValue(true)
 
-    it('should discard a vital for which a frozen state happened', () => {
-      wasInPageStateDuringPeriodSpy.and.returnValue(true)
+        vitalCollection.addDurationVital({
+          name: 'foo',
+          type: VitalType.DURATION,
+          startClocks: clocksNow(),
+          duration: 100 as Duration,
+        })
 
-      vitalCollection.addDurationVital({
-        name: 'foo',
-        type: VitalType.DURATION,
-        startClocks: clocksNow(),
-        duration: 100 as Duration,
+        expect(rawRumEvents.length).toBe(0)
       })
 
-      expect(rawRumEvents.length).toBe(0)
-    })
-  })
+      it('should collect raw rum event from duration vital', () => {
+        vitalCollection.startDurationVital('foo')
+        vitalCollection.stopDurationVital('foo')
 
-  it('should collect raw rum event from duration vital', () => {
-    vitalCollection.startDurationVital('foo')
-    vitalCollection.stopDurationVital('foo')
-
-    expect(rawRumEvents[0].startTime).toEqual(jasmine.any(Number))
-    expect(rawRumEvents[0].rawRumEvent).toEqual({
-      date: jasmine.any(Number),
-      vital: {
-        id: jasmine.any(String),
-        type: VitalType.DURATION,
-        name: 'foo',
-        duration: 0,
-        description: undefined,
-      },
-      type: RumEventType.VITAL,
-      _dd: {
-        vital: {
-          computed_value: true,
-        },
-      },
+        expect(rawRumEvents[0].startTime).toEqual(jasmine.any(Number))
+        expect(rawRumEvents[0].rawRumEvent).toEqual({
+          date: jasmine.any(Number),
+          vital: {
+            id: jasmine.any(String),
+            type: VitalType.DURATION,
+            name: 'foo',
+            duration: 0,
+            description: undefined,
+          },
+          type: RumEventType.VITAL,
+          _dd: {
+            vital: {
+              computed_value: true,
+            },
+          },
+        })
+        expect(rawRumEvents[0].domainContext).toEqual({})
+      })
     })
-    expect(rawRumEvents[0].domainContext).toEqual({})
+
+    describe('addDurationVital', () => {
+      it('should create a vital from add API', () => {
+        vitalCollection.addDurationVital({
+          name: 'foo',
+          type: VitalType.DURATION,
+          startClocks: clocksNow(),
+          duration: 100 as Duration,
+          context: { foo: 'bar' },
+          description: 'baz',
+        })
+
+        expect(rawRumEvents.length).toBe(1)
+        expect((rawRumEvents[0].rawRumEvent as RawRumVitalEvent).vital.duration).toBe(100000000)
+        expect((rawRumEvents[0].rawRumEvent as RawRumVitalEvent).vital.description).toBe('baz')
+        expect(rawRumEvents[0].customerContext).toEqual({ foo: 'bar' })
+      })
+
+      it('should discard a vital for which a frozen state happened', () => {
+        wasInPageStateDuringPeriodSpy.and.returnValue(true)
+
+        vitalCollection.addDurationVital({
+          name: 'foo',
+          type: VitalType.DURATION,
+          startClocks: clocksNow(),
+          duration: 100 as Duration,
+        })
+
+        expect(rawRumEvents.length).toBe(0)
+      })
+    })
   })
 })
