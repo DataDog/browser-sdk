@@ -29,7 +29,6 @@ import { startViewContexts } from '../domain/contexts/viewContexts'
 import { startRequestCollection } from '../domain/requestCollection'
 import { startActionCollection } from '../domain/action/actionCollection'
 import { startErrorCollection } from '../domain/error/errorCollection'
-import { startLongTaskCollection } from '../domain/longTask/longTaskCollection'
 import { startResourceCollection } from '../domain/resource/resourceCollection'
 import { startViewCollection } from '../domain/view/viewCollection'
 import type { RumSessionManager } from '../domain/rumSessionManager'
@@ -174,7 +173,13 @@ export function startRum(
       cleanupTasks.push(stopLongAnimationFrameCollection)
     }
   } else {
-    startLongTaskCollection(lifeCycle, configuration)
+    if (configuration.trackLongTasks) {
+      import('../domain/longTask/longTaskCollection')
+        .then(({ startLongTaskCollection }) => {
+          startLongTaskCollection(lifeCycle, configuration)
+        })
+        .catch((_error) => {})
+    }
   }
 
   const { addError } = startErrorCollection(lifeCycle, configuration, pageStateHistory, featureFlagContexts)
