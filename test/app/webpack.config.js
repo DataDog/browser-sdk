@@ -2,22 +2,7 @@ const path = require('path')
 
 module.exports = (_env, argv) => ({
   entry: './app.ts',
-  target: ['web', 'es5'],
-  module: {
-    rules: [
-      {
-        test: /\.ts$/,
-        use: 'ts-loader',
-      },
-    ],
-  },
-  resolve: {
-    extensions: ['.ts', '.js'],
-  },
-  optimization: {
-    // Display stack trace when SSR test fail
-    minimize: argv.mode === 'development',
-  },
+  target: ['web', 'es2020'],
   output: {
     path: path.resolve(__dirname, 'dist'),
     filename: 'app.js',

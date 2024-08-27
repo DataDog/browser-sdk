@@ -3,6 +3,9 @@
   "version": "0.0.0",
   "scripts": {
     "build": "webpack --mode=production",
+    "esbuild": "esbuild app.ts --target=es2020 --bundle --splitting --format=esm --outdir=dist/",
+    "rollup": "rollup --config rollup.config.js",
+    "parcel": "parcel build app.ts --dist-dir dist",
     "compat:tsc": "tsc -p tsconfig.json",
     "compat:ssr": "webpack --mode=development && node dist/app.js"
   },
@@ -10,7 +13,11 @@
     "@datadog/browser-core": "portal:../../packages/core",
     "@datadog/browser-logs": "portal:../../packages/logs",
     "@datadog/browser-rum": "portal:../../packages/rum",
-    "@datadog/browser-rum-core": "portal:../../packages/rum-core"
+    "@datadog/browser-rum-core": "portal:../../packages/rum-core",
+    "@rollup/plugin-commonjs": "26.0.1",
+    "@rollup/plugin-node-resolve": "15.2.3",
+    "@rollup/plugin-terser": "0.4.4",
+    "rollup-plugin-typescript2": "0.36.0"
   },
   "resolutions": {
     "@datadog/browser-core": "portal:../../packages/core",
@@ -19,6 +26,9 @@
     "@datadog/browser-worker": "portal:../../packages/worker"
   },
   "devDependencies": {
+    "esbuild": "0.23.1",
+    "parcel": "2.12.0",
+    "rollup": "4.21.0",
     "ts-loader": "6.2.1",
     "typescript": "3.8.2",
     "webpack": "5.76.0"

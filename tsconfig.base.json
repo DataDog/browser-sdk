@@ -14,9 +14,9 @@
     "types": [],
     "lib": ["ES2016", "DOM"],
 
-    "paths": {
-      "@datadog/browser-core": ["./packages/core/src"],
-      "@datadog/browser-rum-core": ["./packages/rum-core/src"]
-    }
+    // "paths": {
+    //   "@datadog/browser-core": ["./packages/core/src"],
+    //   "@datadog/browser-rum-core": ["./packages/rum-core/src"]
+    // }
   }
 }

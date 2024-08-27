@@ -1,24 +1,15 @@
-import { datadogLogs } from '@datadog/browser-logs'
 import { datadogRum } from '@datadog/browser-rum'
 
-declare global {
-  interface Window {
-    LOGS_INIT?: () => void
-    RUM_INIT?: () => void
-  }
-}
-
-if (typeof window !== 'undefined') {
-  if (window.LOGS_INIT) {
-    window.LOGS_INIT()
-  }
-
-  if (window.RUM_INIT) {
-    window.RUM_INIT()
-  }
-} else {
-  // compat test
-  datadogLogs.init({ clientToken: 'xxx', beforeSend: undefined })
-  datadogRum.init({ clientToken: 'xxx', applicationId: 'xxx', beforeSend: undefined })
-  datadogRum.setUser({ id: undefined })
-}
+datadogRum.init({
+  clientToken: 'pub6306e4c6ea97090902a7ccaa3641c52b',
+  applicationId: '40d8ca4b-2ac0-481f-b16e-f110699ecff6',
+  sessionReplaySampleRate: 100,
+  trackResources: true,
+  trackLongTasks: true,
+  telemetrySampleRate: 100,
+  telemetryConfigurationSampleRate: 100,
+  telemetryUsageSampleRate: 100,
+  enableExperimentalFeatures: ['custom_vitals'],
+  service: 'service',
+  site: 'datad0g.com',
+})

@@ -2,10 +2,10 @@
   "compilerOptions": {
     "outDir": "./dist/",
     "strict": true,
-    "module": "commonjs",
+    "module": "ES2020",
     "moduleResolution": "node",
-    "target": "es5",
-    "lib": ["ES2015", "DOM"],
+    "target": "esNext",
+    "lib": ["es2020", "DOM"],
     "types": []
   }
 }
