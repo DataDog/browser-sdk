@@ -50,7 +50,7 @@ function hasForbiddenCharacters(rawValue: string) {
     // p{Ll} matches a lowercase letter.
     // p{Lo} matches a letter that is neither uppercase nor lowercase (ex: Japanese characters).
     // See https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Regular_expressions/Unicode_character_class_escape#unicode_property_escapes_vs._character_classes
-    return new RegExp('[^(\\p{Ll}|\\p{Lo})0-9_:./-]', 'u').test(rawValue)
+    return new RegExp('[^\\p{Ll}\\p{Lo}0-9_:./-]', 'u').test(rawValue)
   } catch {
     return false
   }
