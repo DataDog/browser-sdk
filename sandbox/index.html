@@ -3,28 +3,20 @@
   <head>
     <meta charset="UTF-8" />
     <title>Sandbox</title>
-    <script src="http://localhost:8080/datadog-rum.js"></script>
-    <script src="http://localhost:8080/datadog-logs.js"></script>
-    <script>
-      DD_RUM.init({
-        clientToken: 'xxx',
-        applicationId: 'xxx',
-        sessionReplaySampleRate: 100,
-        trackResources: true,
-        trackLongTasks: true,
-        telemetrySampleRate: 100,
-        telemetryConfigurationSampleRate: 100,
-        telemetryUsageSampleRate: 100,
-        enableExperimentalFeatures: [],
-      })
-      DD_LOGS.init({
-        clientToken: 'xxx',
-        telemetrySampleRate: 100,
-        telemetryConfigurationSampleRate: 100,
-        telemetryUsageSampleRate: 100,
-        enableExperimentalFeatures: [],
-      })
-    </script>
+    <script type="module" src="./app.js"></script>
   </head>
-  <body></body>
+  <body>
+    <button id="long-task">Trigger long task</button>
+  </body>
+  <script>
+    document.querySelector('#long-task').addEventListener('click', () => {
+      const start = performance.now()
+      //wait for 51ms
+      while (performance.now() - start < 51) {
+        // do nothing
+      }
+
+      console.log('Long task took:', performance.now() - start)
+    })
+  </script>
 </html>

@@ -15,6 +15,8 @@ const { printLog } = require('./lib/execution-utils')
 const sandboxPath = path.join(__dirname, '../sandbox')
 const port = 8080
 
+const ROOT = path.join(__dirname, '../')
+
 const app = express()
 app.use(createStaticSandboxApp())
 app.use('/react-app', createReactApp())
@@ -32,8 +34,12 @@ function createStaticSandboxApp() {
   // Redirect suffixed files
   app.use((req, res, next) => {
     const matches = /(.*)-(canary|staging|v\d*)\.js/.exec(req.url)
+    const matchesNpm = /\/(.*\.js)/.exec(req.url)
+
     if (matches) {
       res.redirect(`${matches[1]}.js`)
+    } else if (matchesNpm) {
+      res.sendFile(path.join(ROOT, `test/app/dist/${matchesNpm[1]}`))
     } else {
       next()
     }
