@@ -1,8 +1,14 @@
-import { noop, Observable } from '@datadog/browser-core'
+import { Observable } from '@datadog/browser-core'
 import type { Duration, RelativeTime, ServerDuration, TimeStamp } from '@datadog/browser-core'
 import { registerCleanupTask } from '@datadog/browser-core/test'
 import type { RecorderApi } from '../../boot/rumPublicApi'
-import { collectAndValidateRawRumEvents, mockFeatureFlagContexts, mockPageStateHistory, mockRumConfiguration, noopRecorderApi } from '../../../test'
+import {
+  collectAndValidateRawRumEvents,
+  mockFeatureFlagContexts,
+  mockPageStateHistory,
+  mockRumConfiguration,
+  noopRecorderApi,
+} from '../../../test'
 import type { RawRumEvent, RawRumViewEvent } from '../../rawRumEvent.types'
 import { RumEventType, ViewLoadingType } from '../../rawRumEvent.types'
 import type { RawRumEventCollectedData } from '../lifeCycle'

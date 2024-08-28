@@ -37,8 +37,8 @@ export function mockDisplayContext(): DisplayContext {
 
 export function mockFeatureFlagContexts(): FeatureFlagContexts {
   return {
-  findFeatureFlagEvaluations: () => undefined,
-  addFeatureFlagEvaluation: noop,
-  stop: noop,
-}
+    findFeatureFlagEvaluations: () => undefined,
+    addFeatureFlagEvaluation: noop,
+    stop: noop,
+  }
 }

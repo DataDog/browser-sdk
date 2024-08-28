@@ -1,5 +1,5 @@
 import { ExperimentalFeature, type Duration, type RelativeTime, type ServerDuration } from '@datadog/browser-core'
-import {  mockExperimentalFeatures } from '@datadog/browser-core/test'
+import { mockExperimentalFeatures } from '@datadog/browser-core/test'
 import { RumPerformanceEntryType, type RumPerformanceResourceTiming } from '../../browser/performanceObservable'
 import type { RumConfiguration } from '../configuration'
 import { mockRumConfiguration } from '../../../test'
