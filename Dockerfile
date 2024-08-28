@@ -7,6 +7,7 @@ RUN test -n "$CHROME_PACKAGE_VERSION" || (echo "\nCHROME_PACKAGE_VERSION not set
 
 # Install Chrome deps
 RUN apt-get update && apt-get install -y -q --no-install-recommends \
+        libgcc-s1 \
         libgtk-3-dev \
         libx11-xcb1  \
         libnss3 \
