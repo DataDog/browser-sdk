@@ -31,18 +31,14 @@ RUN curl --silent --show-error --fail http://dl.google.com/linux/chrome/deb/pool
     && rm google-chrome.deb
 
 
-# Install python
-RUN apt-get install -y -q --no-install-recommends python
-
-# Install pip
-RUN set -x \
- && curl -OL https://bootstrap.pypa.io/pip/2.7/get-pip.py \
- && python get-pip.py \
- && rm get-pip.py
-
 # Install AWS cli
+# https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html
 RUN set -x \
- && pip install awscli
+  && apt-get install -y -q --no-install-recommends unzip \
+  && cd /tmp \
+  && curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip" \
+  && unzip awscliv2.zip \
+  && ./aws/install
 
 # Deploy deps
 RUN apt-get install -y -q --no-install-recommends jq
