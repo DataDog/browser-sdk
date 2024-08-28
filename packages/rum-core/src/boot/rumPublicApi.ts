@@ -208,6 +208,10 @@ export interface RumPublicApi extends PublicApi {
     (options: ViewOptions): void
   }
 
+  setViewContext: (context: object) => void
+
+  setViewContextProperty: (key: any, value: any) => void
+
   /**
    * Stop the session. A new session will start at the next user interaction with the page.
    */
@@ -288,6 +292,8 @@ export interface Strategy {
   addTiming: StartRumResult['addTiming']
   startView: StartRumResult['startView']
   updateViewName: StartRumResult['updateViewName']
+  setViewContext: StartRumResult['setViewContext']
+  setViewContextProperty: StartRumResult['setViewContextProperty']
   addAction: StartRumResult['addAction']
   addError: StartRumResult['addError']
   addFeatureFlagEvaluation: StartRumResult['addFeatureFlagEvaluation']
@@ -432,6 +438,7 @@ export function makeRumPublicApi(
     strategy.startView(sanitizedOptions)
     addTelemetryUsage({ feature: 'start-view' })
   })
+
   const rumPublicApi: RumPublicApi = makePublicApi<RumPublicApi>({
     init: monitor((initConfiguration) => strategy.init(initConfiguration, rumPublicApi)),
 
@@ -513,6 +520,10 @@ export function makeRumPublicApi(
     clearUser: monitor(() => userContextManager.clearContext()),
 
     startView,
+
+    setViewContext,
+
+    setViewContextProperty,
 
     stopSession: monitor(() => {
       strategy.stopSession()

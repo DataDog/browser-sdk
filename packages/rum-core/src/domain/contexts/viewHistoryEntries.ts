@@ -20,7 +20,7 @@ export interface ViewHistoryEntries {
   stop: () => void
 }
 
-export function startViewHistoryEntries(lifeCycle: LifeCycle): ViewHistoryEntries {
+export function startViewHistory(lifeCycle: LifeCycle): ViewHistoryEntries {
   const viewValueHistory = createValueHistory<ViewHistoryEntry>({ expireDelay: VIEW_CONTEXT_TIME_OUT_DELAY })
 
   lifeCycle.subscribe(LifeCycleEventType.BEFORE_VIEW_CREATED, (view) => {
@@ -35,6 +35,9 @@ export function startViewHistoryEntries(lifeCycle: LifeCycle): ViewHistoryEntrie
     const currentView = viewValueHistory.find(viewUpdate.startClocks.relative)
     if (currentView && viewUpdate.name) {
       currentView.name = viewUpdate.name
+    }
+    if (currentView && viewUpdate.context) {
+      currentView.context = viewUpdate.context
     }
   })
 
