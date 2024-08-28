@@ -1,4 +1,4 @@
-FROM node:20.15.0-buster-slim
+FROM node:20.15.0-bookworm-slim
 
 ARG CHROME_PACKAGE_VERSION
 
