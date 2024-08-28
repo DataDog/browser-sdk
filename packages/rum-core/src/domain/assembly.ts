@@ -69,7 +69,7 @@ export function startRumAssembly(
   configuration: RumConfiguration,
   lifeCycle: LifeCycle,
   sessionManager: RumSessionManager,
-  viewContexts: ViewHistoryEntries,
+  viewHistoryEntries: ViewHistoryEntries,
   urlContexts: UrlContexts,
   actionContexts: ActionContexts,
   displayContext: DisplayContext,
@@ -138,10 +138,10 @@ export function startRumAssembly(
   lifeCycle.subscribe(
     LifeCycleEventType.RAW_RUM_EVENT_COLLECTED,
     ({ startTime, rawRumEvent, domainContext, savedCommonContext, customerContext }) => {
-      const viewContext = viewContexts.findView(startTime)
+      const viewHistoryEntry = viewHistoryEntries.findView(startTime)
       const urlContext = urlContexts.findUrl(startTime)
       const session = sessionManager.findTrackedSession(startTime)
-      if (session && viewContext && urlContext) {
+      if (session && viewHistoryEntry && urlContext) {
         const commonContext = savedCommonContext || getCommonContext()
         const actionId = actionContexts.findActionId(startTime)
 
@@ -159,8 +159,8 @@ export function startRumAssembly(
             id: configuration.applicationId,
           },
           date: timeStampNow(),
-          service: viewContext.service || configuration.service,
-          version: viewContext.version || configuration.version,
+          service: viewHistoryEntry.service || configuration.service,
+          version: viewHistoryEntry.version || configuration.version,
           source: 'browser',
           session: {
             id: session.id,
@@ -171,8 +171,8 @@ export function startRumAssembly(
                 : SessionType.USER,
           },
           view: {
-            id: viewContext.id,
-            name: viewContext.name,
+            id: viewHistoryEntry.id,
+            name: viewHistoryEntry.name,
             url: urlContext.url,
             referrer: urlContext.referrer,
           },
@@ -184,7 +184,7 @@ export function startRumAssembly(
         }
 
         const serverRumEvent = combine(rumContext as RumContext & Context, rawRumEvent) as RumEvent & Context
-        serverRumEvent.context = combine(commonContext.context, viewContext.customerContext, customerContext)
+        serverRumEvent.context = combine(commonContext.context, viewHistoryEntry.context, customerContext)
 
         if (!('has_replay' in serverRumEvent.session)) {
           ;(serverRumEvent.session as Mutable<RumEvent['session']>).has_replay = commonContext.hasReplay

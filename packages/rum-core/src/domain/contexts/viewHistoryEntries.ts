@@ -9,7 +9,7 @@ export const VIEW_CONTEXT_TIME_OUT_DELAY = SESSION_TIME_OUT_DELAY
 export interface ViewHistoryEntry {
   service?: string
   version?: string
-  customerContext?: Context | undefined
+  context?: Context | undefined
   id: string
   name?: string
   startClocks: ClocksState
@@ -46,7 +46,7 @@ export function startViewHistoryEntries(lifeCycle: LifeCycle): ViewHistoryEntrie
     return {
       service: view.service,
       version: view.version,
-      customerContext: view.context,
+      context: view.context,
       id: view.id,
       name: view.name,
       startClocks: view.startClocks,

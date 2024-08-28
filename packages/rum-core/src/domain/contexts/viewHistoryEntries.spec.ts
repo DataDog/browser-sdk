@@ -7,7 +7,7 @@ import type { ViewCreatedEvent, ViewEvent } from '../view/trackViews'
 import type { ViewHistoryEntries } from './viewHistoryEntries'
 import { startViewHistoryEntries, VIEW_CONTEXT_TIME_OUT_DELAY } from './viewHistoryEntries'
 
-describe('viewContexts', () => {
+describe('viewHistoryEntries', () => {
   const FAKE_ID = 'fake'
   const startClocks = relativeToClocks(10 as RelativeTime)
   const lifeCycle = new LifeCycle()
@@ -173,7 +173,7 @@ describe('viewContexts', () => {
         })
       )
       expect(viewHistoryEntries.findView()).toBeDefined()
-      expect(viewHistoryEntries.findView()!.customerContext).toEqual({
+      expect(viewHistoryEntries.findView()!.context).toEqual({
         foo: 'bar',
       })
     })

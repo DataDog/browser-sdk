@@ -453,9 +453,15 @@ describe('rum assembly', () => {
   describe('priority of rum context', () => {
     it('should prioritize view customer context over global context', () => {
       const { lifeCycle } = setupBuilder.build()
+
       commonContext.context = { foo: 'bar' }
+      findView = () => ({
+        id: '7890',
+        name: 'view name',
+        startClocks: {} as ClocksState,
+        context: { foo: 'baz' },
+      })
       notifyRawRumEvent(lifeCycle, {
-        customerContext: { foo: 'baz' },
         rawRumEvent: createRawRumEvent(RumEventType.VIEW),
       })
 
@@ -468,7 +474,7 @@ describe('rum assembly', () => {
         id: '7890',
         name: 'view name',
         startClocks: {} as ClocksState,
-        customerContext: { foo: 'bar' },
+        context: { foo: 'bar' },
       })
       notifyRawRumEvent(lifeCycle, {
         customerContext: { foo: 'baz' },
@@ -630,7 +636,7 @@ describe('rum assembly', () => {
         id: '7890',
         name: 'view name',
         startClocks: {} as ClocksState,
-        customerContext: { foo: 'bar' },
+        context: { foo: 'bar' },
       })
       notifyRawRumEvent(lifeCycle, {
         rawRumEvent: createRawRumEvent(RumEventType.ACTION),
