@@ -25,7 +25,7 @@ const alreadyMatchedEntries = new WeakSet<PerformanceEntry>()
  * - then, if a single timing match, return the timing
  * - otherwise we can't decide, return undefined
  */
-export function matchRequestTiming(request: RequestCompleteEvent) {
+export function matchRequestResourceEntry(request: RequestCompleteEvent) {
   if (!performance || !('getEntriesByName' in performance)) {
     return
   }

@@ -24,7 +24,7 @@ import type { RequestCompleteEvent } from '../requestCollection'
 import type { PageStateHistory } from '../contexts/pageStateHistory'
 import { PageState } from '../contexts/pageStateHistory'
 import { createTraceIdentifier } from '../tracing/tracer'
-import { matchRequestTiming } from './matchRequestTiming'
+import { matchRequestResourceEntry } from './matchRequestResourceEntry'
 import {
   computePerformanceResourceDetails,
   computeResourceEntryDuration,
@@ -82,7 +82,7 @@ function processRequest(
   configuration: RumConfiguration,
   pageStateHistory: PageStateHistory
 ): RawRumEventCollectedData<RawRumResourceEvent> | undefined {
-  const matchingTiming = matchRequestTiming(request)
+  const matchingTiming = matchRequestResourceEntry(request)
   const startClocks = matchingTiming ? relativeToClocks(matchingTiming.startTime) : request.startClocks
   const tracingInfo = computeRequestTracingInfo(request, configuration)
   if (!configuration.trackResources && !tracingInfo) {
