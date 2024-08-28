@@ -25,7 +25,7 @@ import { startPerformanceCollection } from '../browser/performanceCollection'
 import { startRumAssembly } from '../domain/assembly'
 import { startInternalContext } from '../domain/contexts/internalContext'
 import { LifeCycle, LifeCycleEventType } from '../domain/lifeCycle'
-import { startViewContexts } from '../domain/contexts/viewContexts'
+import { startViewHistoryEntries } from '../domain/contexts/viewHistoryEntries'
 import { startRequestCollection } from '../domain/requestCollection'
 import { startActionCollection } from '../domain/action/actionCollection'
 import { startErrorCollection } from '../domain/error/errorCollection'
@@ -232,7 +232,7 @@ export function startRumEventCollection(
   getCommonContext: () => CommonContext,
   reportError: (error: RawError) => void
 ) {
-  const viewContexts = startViewContexts(lifeCycle)
+  const viewContexts = startViewHistoryEntries(lifeCycle)
   const urlContexts = startUrlContexts(lifeCycle, locationChangeObservable, location)
 
   const { addAction, actionContexts } = startActionCollection(

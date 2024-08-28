@@ -1,6 +1,6 @@
 import type { ClocksState, HttpRequest, TimeStamp } from '@datadog/browser-core'
 import { DeflateEncoderStreamId, PageExitReason, isIE } from '@datadog/browser-core'
-import type { ViewContexts, ViewContext, RumConfiguration } from '@datadog/browser-rum-core'
+import type { ViewHistoryEntries, ViewHistoryEntry, RumConfiguration } from '@datadog/browser-rum-core'
 import { LifeCycle, LifeCycleEventType } from '@datadog/browser-rum-core'
 import type { Clock } from '@datadog/browser-core/test'
 import { mockClock, registerCleanupTask, restorePageVisibility } from '@datadog/browser-core/test'
@@ -281,7 +281,7 @@ describe('startSegmentCollection', () => {
 })
 
 describe('computeSegmentContext', () => {
-  const DEFAULT_VIEW_CONTEXT: ViewContext = { id: '123', startClocks: {} as ClocksState }
+  const DEFAULT_VIEW_CONTEXT: ViewHistoryEntry = { id: '123', startClocks: {} as ClocksState }
   const DEFAULT_SESSION = createRumSessionManagerMock().setId('456')
 
   it('returns a segment context', () => {
@@ -306,7 +306,7 @@ describe('computeSegmentContext', () => {
     ).toBeUndefined()
   })
 
-  function mockViewContexts(view: ViewContext | undefined): ViewContexts {
+  function mockViewContexts(view: ViewHistoryEntry | undefined): ViewHistoryEntries {
     // eslint-disable-next-line @typescript-eslint/no-unsafe-return
     return {
       findView() {

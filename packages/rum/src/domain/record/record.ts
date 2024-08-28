@@ -1,5 +1,5 @@
 import { sendToExtension } from '@datadog/browser-core'
-import type { LifeCycle, RumConfiguration, ViewContexts } from '@datadog/browser-rum-core'
+import type { LifeCycle, RumConfiguration, ViewHistoryEntries } from '@datadog/browser-rum-core'
 import type { BrowserRecord } from '../../types'
 import * as replayStats from '../replayStats'
 import type { Tracker } from './trackers'
@@ -27,7 +27,7 @@ export interface RecordOptions {
   emit?: (record: BrowserRecord) => void
   configuration: RumConfiguration
   lifeCycle: LifeCycle
-  viewContexts: ViewContexts
+  viewContexts: ViewHistoryEntries
 }
 
 export interface RecordAPI {

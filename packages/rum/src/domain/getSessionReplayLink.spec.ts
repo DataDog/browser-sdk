@@ -1,5 +1,5 @@
 import { isIE } from '@datadog/browser-core'
-import type { RumConfiguration, ViewContexts } from '@datadog/browser-rum-core'
+import type { RumConfiguration, ViewHistoryEntries } from '@datadog/browser-rum-core'
 import { createRumSessionManagerMock } from '../../../rum-core/test'
 import { getSessionReplayLink } from './getSessionReplayLink'
 import { addRecord, resetReplayStats } from './replayStats'
@@ -14,7 +14,7 @@ describe('getReplayLink', () => {
   })
   it('should return url without query param if no view', () => {
     const sessionManager = createRumSessionManagerMock().setId('session-id-1')
-    const viewContexts = { findView: () => undefined } as ViewContexts
+    const viewContexts = { findView: () => undefined } as ViewHistoryEntries
 
     const link = getSessionReplayLink(DEFAULT_CONFIGURATION, sessionManager, viewContexts, true)
 
@@ -34,7 +34,7 @@ describe('getReplayLink', () => {
           timeStamp: 123456,
         },
       }),
-    } as ViewContexts
+    } as ViewHistoryEntries
     addRecord('view-id-1')
 
     const link = getSessionReplayLink(
@@ -64,7 +64,7 @@ describe('getReplayLink', () => {
           timeStamp: 123456,
         },
       }),
-    } as ViewContexts
+    } as ViewHistoryEntries
     addRecord('view-id-1')
 
     const link = getSessionReplayLink(
@@ -90,7 +90,7 @@ describe('getReplayLink', () => {
           timeStamp: 123456,
         },
       }),
-    } as ViewContexts
+    } as ViewHistoryEntries
 
     const link = getSessionReplayLink(
       { ...DEFAULT_CONFIGURATION, site: 'datadoghq.com' },
@@ -108,7 +108,7 @@ describe('getReplayLink', () => {
     const sessionManager = createRumSessionManagerMock().setNotTracked()
     const viewContexts = {
       findView: () => undefined,
-    } as ViewContexts
+    } as ViewHistoryEntries
 
     const link = getSessionReplayLink(
       { ...DEFAULT_CONFIGURATION, site: 'datadoghq.com' },
@@ -130,7 +130,7 @@ describe('getReplayLink', () => {
           timeStamp: 123456,
         },
       }),
-    } as ViewContexts
+    } as ViewHistoryEntries
 
     const link = getSessionReplayLink(
       { ...DEFAULT_CONFIGURATION, site: 'datadoghq.com' },

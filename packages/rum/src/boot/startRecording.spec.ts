@@ -1,7 +1,7 @@
 import type { TimeStamp, HttpRequest } from '@datadog/browser-core'
 import { PageExitReason, DefaultPrivacyLevel, noop, isIE, DeflateEncoderStreamId } from '@datadog/browser-core'
 import type { LifeCycle, ViewCreatedEvent, RumConfiguration } from '@datadog/browser-rum-core'
-import { LifeCycleEventType, startViewContexts } from '@datadog/browser-rum-core'
+import { LifeCycleEventType, startViewHistoryEntries } from '@datadog/browser-rum-core'
 import type { Clock } from '@datadog/browser-core/test'
 import { collectAsyncCalls, createNewEvent, mockEventBridge, registerCleanupTask } from '@datadog/browser-core/test'
 import type { ViewEndedEvent } from 'packages/rum-core/src/domain/view/trackViews'
@@ -54,7 +54,7 @@ describe('startRecording', () => {
         }
 
         const deflateEncoder = createDeflateEncoder(configuration, worker!, DeflateEncoderStreamId.REPLAY)
-        const viewContexts = startViewContexts(lifeCycle)
+        const viewContexts = startViewHistoryEntries(lifeCycle)
         initialView(lifeCycle)
 
         const recording = startRecording(

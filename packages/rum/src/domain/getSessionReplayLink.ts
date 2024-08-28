@@ -1,11 +1,11 @@
-import type { RumConfiguration, RumSessionManager, ViewContexts, RumSession } from '@datadog/browser-rum-core'
+import type { RumConfiguration, RumSessionManager, ViewHistoryEntries, RumSession } from '@datadog/browser-rum-core'
 import { getSessionReplayUrl, SessionReplayState } from '@datadog/browser-rum-core'
 import { isBrowserSupported } from '../boot/isBrowserSupported'
 
 export function getSessionReplayLink(
   configuration: RumConfiguration,
   sessionManager: RumSessionManager,
-  viewContexts: ViewContexts,
+  viewContexts: ViewHistoryEntries,
   isRecordingStarted: boolean
 ): string | undefined {
   const session = sessionManager.findTrackedSession()

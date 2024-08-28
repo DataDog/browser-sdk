@@ -18,7 +18,7 @@ import { startRumAssembly } from './assembly'
 import type { LifeCycle, RawRumEventCollectedData } from './lifeCycle'
 import { LifeCycleEventType } from './lifeCycle'
 import type { RumConfiguration } from './configuration'
-import type { ViewContext } from './contexts/viewContexts'
+import type { ViewHistoryEntry } from './contexts/viewHistoryEntries'
 import type { CommonContext } from './contexts/commonContext'
 import type { CiVisibilityContext } from './contexts/ciVisibilityContext'
 
@@ -27,7 +27,7 @@ describe('rum assembly', () => {
   let commonContext: CommonContext
   let serverRumEvents: RumEvent[]
   let extraConfigurationOptions: Partial<RumConfiguration> = {}
-  let findView: () => ViewContext
+  let findView: () => ViewHistoryEntry
   let reportErrorSpy: jasmine.Spy<jasmine.Func>
   let ciVisibilityContext: { test_execution_id: string } | undefined
 

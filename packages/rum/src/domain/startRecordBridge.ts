@@ -1,8 +1,8 @@
 import { getEventBridge } from '@datadog/browser-core'
-import type { ViewContexts } from '@datadog/browser-rum-core'
+import type { ViewHistoryEntries } from '@datadog/browser-rum-core'
 import type { BrowserRecord } from '../types'
 
-export function startRecordBridge(viewContexts: ViewContexts) {
+export function startRecordBridge(viewContexts: ViewHistoryEntries) {
   const bridge = getEventBridge<'record', BrowserRecord>()!
 
   return {

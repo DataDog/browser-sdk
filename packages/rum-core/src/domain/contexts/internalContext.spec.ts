@@ -4,12 +4,12 @@ import type { TestSetupBuilder } from '../../../test'
 import type { ActionContexts } from '../action/actionCollection'
 import type { RumSessionManager } from '../rumSessionManager'
 import { startInternalContext } from './internalContext'
-import type { ViewContexts } from './viewContexts'
+import type { ViewHistoryEntries } from './viewHistoryEntries'
 import type { UrlContexts } from './urlContexts'
 
 describe('internal context', () => {
   let setupBuilder: TestSetupBuilder
-  let viewContextsStub: Partial<ViewContexts>
+  let viewContextsStub: Partial<ViewHistoryEntries>
   let actionContextsStub: ActionContexts
   let findUrlSpy: jasmine.Spy<UrlContexts['findUrl']>
   let findSessionSpy: jasmine.Spy<RumSessionManager['findTrackedSession']>
