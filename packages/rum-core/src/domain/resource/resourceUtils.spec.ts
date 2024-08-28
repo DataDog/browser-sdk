@@ -6,7 +6,7 @@ import { validateAndBuildRumConfiguration } from '../configuration'
 import {
   MAX_ATTRIBUTE_VALUE_CHAR_LENGTH,
   computePerformanceResourceDetails,
-  computePerformanceResourceDuration,
+  computeResourceEntryDuration,
   computeResourceKind,
   isAllowedRequestUrl,
   isLongDataUrl,
@@ -277,15 +277,13 @@ describe('computePerformanceResourceDetails', () => {
   })
 })
 
-describe('computePerformanceResourceDuration', () => {
+describe('computeResourceEntryDuration', () => {
   it('should return the entry duration', () => {
-    expect(computePerformanceResourceDuration(generateResourceWith({}))).toBe(50e6 as ServerDuration)
+    expect(computeResourceEntryDuration(generateResourceWith({}))).toBe(50e6 as ServerDuration)
   })
 
   it('should use other available timing if the duration is 0', () => {
-    expect(computePerformanceResourceDuration(generateResourceWith({ duration: 0 as Duration }))).toBe(
-      50e6 as ServerDuration
-    )
+    expect(computeResourceEntryDuration(generateResourceWith({ duration: 0 as Duration }))).toBe(50e6 as ServerDuration)
   })
 })
 

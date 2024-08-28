@@ -75,7 +75,7 @@ export function isRequestKind(timing: RumPerformanceResourceTiming) {
   return timing.initiatorType === 'xmlhttprequest' || timing.initiatorType === 'fetch'
 }
 
-export function computePerformanceResourceDuration(entry: RumPerformanceResourceTiming): ServerDuration {
+export function computeResourceEntryDuration(entry: RumPerformanceResourceTiming): ServerDuration {
   const { duration, startTime, responseEnd } = entry
 
   // Safari duration is always 0 on timings blocked by cross origin policies.

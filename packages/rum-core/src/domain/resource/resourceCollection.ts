@@ -27,7 +27,7 @@ import { createTraceIdentifier } from '../tracing/tracer'
 import { matchRequestTiming } from './matchRequestTiming'
 import {
   computePerformanceResourceDetails,
-  computePerformanceResourceDuration,
+  computeResourceEntryDuration,
   computeResourceKind,
   computeSize,
   isRequestKind,
@@ -175,7 +175,7 @@ function computePerformanceEntryMetrics(timing: RumPerformanceResourceTiming) {
   return {
     resource: assign(
       {
-        duration: computePerformanceResourceDuration(timing),
+        duration: computeResourceEntryDuration(timing),
         render_blocking_status: renderBlockingStatus,
       },
       computeSize(timing),
