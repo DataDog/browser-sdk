@@ -1,14 +1,14 @@
 import { noop, Observable } from '@datadog/browser-core'
 import type { Duration, RelativeTime, ServerDuration, TimeStamp } from '@datadog/browser-core'
-import { registerCleanupTask, SPEC_ENDPOINTS } from '@datadog/browser-core/test'
+import { registerCleanupTask } from '@datadog/browser-core/test'
 import type { RecorderApi } from '../../boot/rumPublicApi'
-import { collectAndValidateRawRumEvents, mockPageStateHistory, noopRecorderApi } from '../../../test'
+import { collectAndValidateRawRumEvents, mockFeatureFlagContexts, mockPageStateHistory, mockRumConfiguration, noopRecorderApi } from '../../../test'
 import type { RawRumEvent, RawRumViewEvent } from '../../rawRumEvent.types'
 import { RumEventType, ViewLoadingType } from '../../rawRumEvent.types'
 import type { RawRumEventCollectedData } from '../lifeCycle'
 import { LifeCycle, LifeCycleEventType } from '../lifeCycle'
 import { PageState } from '../contexts/pageStateHistory'
-import { validateAndBuildRumConfiguration, type RumConfiguration } from '../configuration'
+import type { RumConfiguration } from '../configuration'
 import type { FeatureFlagContexts } from '../contexts/featureFlagContext'
 import type { LocationChange } from '../../browser/locationChangeObservable'
 import type { ViewEvent } from './trackViews'
@@ -63,20 +63,8 @@ const VIEW: ViewEvent = {
   sessionIsActive: true,
 }
 
-const baseFeatureFlagContexts: FeatureFlagContexts = {
-  findFeatureFlagEvaluations: () => undefined,
-  addFeatureFlagEvaluation: noop,
-  stop: noop,
-}
-const baseConfiguration: RumConfiguration = {
-  ...validateAndBuildRumConfiguration({
-    clientToken: 'xxx',
-    applicationId: 'FAKE_APP_ID',
-    trackResources: true,
-    trackLongTasks: true,
-  })!,
-  ...SPEC_ENDPOINTS,
-}
+const baseFeatureFlagContexts = mockFeatureFlagContexts()
+const baseConfiguration = mockRumConfiguration()
 const pageStateHistory = mockPageStateHistory({
   findAll: () => [
     { start: 0 as ServerDuration, state: PageState.ACTIVE },
