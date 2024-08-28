@@ -128,7 +128,6 @@ function processViewUpdate(
   }
 
   return {
-    customerContext: view.context,
     rawRumEvent: viewEvent,
     startTime: view.startClocks.relative,
     domainContext: {

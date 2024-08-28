@@ -426,6 +426,9 @@ export function makeRumPublicApi(
     (options: ViewOptions): void
   } = monitor((options?: string | ViewOptions) => {
     const sanitizedOptions = typeof options === 'object' ? options : { name: options }
+    if (sanitizedOptions.context) {
+      customerDataTrackerManager.getOrCreateTracker(CustomerDataType.View).updateCustomerData(sanitizedOptions.context)
+    }
     strategy.startView(sanitizedOptions)
     addTelemetryUsage({ feature: 'start-view' })
   })
