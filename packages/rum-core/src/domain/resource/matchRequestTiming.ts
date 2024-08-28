@@ -3,7 +3,7 @@ import { addDuration } from '@datadog/browser-core'
 import type { RumPerformanceResourceTiming } from '../../browser/performanceObservable'
 import type { RequestCompleteEvent } from '../requestCollection'
 import { WeakSet } from '../../browser/polyfills'
-import { isValidEntry } from './resourceUtils'
+import { hasValidResourceEntryTimings } from './resourceUtils'
 
 interface Timing {
   startTime: RelativeTime
@@ -37,7 +37,7 @@ export function matchRequestTiming(request: RequestCompleteEvent) {
 
   const candidates = sameNameEntries
     .filter((entry) => !alreadyMatchedEntries.has(entry))
-    .filter((entry) => isValidEntry(entry))
+    .filter((entry) => hasValidResourceEntryTimings(entry))
     .filter((entry) =>
       isBetween(
         entry,
