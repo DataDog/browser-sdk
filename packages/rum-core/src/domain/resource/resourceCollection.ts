@@ -136,7 +136,7 @@ function processResourceEntry(
   configuration: RumConfiguration
 ): RawRumEventCollectedData<RawRumResourceEvent> | undefined {
   const startClocks = relativeToClocks(entry.startTime)
-  const tracingInfo = computeEntryTracingInfo(entry, configuration)
+  const tracingInfo = computeResourceEntryTracingInfo(entry, configuration)
   if (!configuration.trackResources && !tracingInfo) {
     return
   }
@@ -198,7 +198,7 @@ function computeRequestTracingInfo(request: RequestCompleteEvent, configuration:
   }
 }
 
-function computeEntryTracingInfo(entry: RumPerformanceResourceTiming, configuration: RumConfiguration) {
+function computeResourceEntryTracingInfo(entry: RumPerformanceResourceTiming, configuration: RumConfiguration) {
   const hasBeenTraced = entry.traceId
   if (!hasBeenTraced) {
     return undefined
