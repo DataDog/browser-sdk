@@ -7,7 +7,7 @@ import {
   MAX_ATTRIBUTE_VALUE_CHAR_LENGTH,
   computePerformanceResourceDetails,
   computeResourceEntryDuration,
-  computeResourceKind,
+  computeResourceEntryType,
   isAllowedRequestUrl,
   isLongDataUrl,
   sanitizeDataUrl,
@@ -35,7 +35,7 @@ function generateResourceWith(overrides: Partial<RumPerformanceResourceTiming>) 
   return completeTiming as RumPerformanceResourceTiming
 }
 
-describe('computeResourceKind', () => {
+describe('computeResourceEntryType', () => {
   ;[
     {
       description: 'file extension with query params',
@@ -72,7 +72,7 @@ describe('computeResourceKind', () => {
     }) => {
       it(`should compute resource kind: ${description}`, () => {
         const entry = generateResourceWith({ initiatorType, name })
-        expect(computeResourceKind(entry)).toEqual(expected)
+        expect(computeResourceEntryType(entry)).toEqual(expected)
       })
     }
   )

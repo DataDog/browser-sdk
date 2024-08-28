@@ -28,7 +28,7 @@ import { matchRequestTiming } from './matchRequestTiming'
 import {
   computePerformanceResourceDetails,
   computeResourceEntryDuration,
-  computeResourceKind,
+  computeResourceEntryType,
   computeSize,
   isRequestKind,
   isLongDataUrl,
@@ -141,7 +141,7 @@ function processResourceEntry(
     return
   }
 
-  const type = computeResourceKind(entry)
+  const type = computeResourceEntryType(entry)
   const entryMetrics = computeResourceEntryMetrics(entry)
 
   const resourceEvent = combine(

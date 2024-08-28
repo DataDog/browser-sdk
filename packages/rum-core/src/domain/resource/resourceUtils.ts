@@ -47,15 +47,15 @@ const RESOURCE_TYPES: Array<[ResourceType, (initiatorType: string, path: string)
   ],
 ]
 
-export function computeResourceKind(timing: RumPerformanceResourceTiming) {
-  const url = timing.name
+export function computeResourceEntryType(entry: RumPerformanceResourceTiming) {
+  const url = entry.name
   if (!isValidUrl(url)) {
-    addTelemetryDebug(`Failed to construct URL for "${timing.name}"`)
+    addTelemetryDebug(`Failed to construct URL for "${entry.name}"`)
     return ResourceType.OTHER
   }
   const path = getPathName(url)
   for (const [type, isType] of RESOURCE_TYPES) {
-    if (isType(timing.initiatorType, path)) {
+    if (isType(entry.initiatorType, path)) {
       return type
     }
   }
