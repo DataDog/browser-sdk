@@ -166,17 +166,11 @@ export function trackViews(
       currentView.end({ endClocks: startClocks })
       currentView = startNewView(ViewLoadingType.ROUTE_CHANGE, startClocks, options)
     },
-    setViewContext(newContext: Context) {
-      if (!isExperimentalFeatureEnabled(ExperimentalFeature.VIEW_SPECIFIC_CONTEXT)) {
-        return
-      }
-      currentView.updateViewContext(newContext)
+    setViewContext: (newContext: Context) => {
+      currentView.setViewContext(newContext)
     },
-    setViewContextProperty(key: string, value: ContextValue) {
-      if (!isExperimentalFeatureEnabled(ExperimentalFeature.VIEW_SPECIFIC_CONTEXT)) {
-        return
-      }
-      currentView.updateViewContextProperty(key, value)
+    setViewContextProperty: (key: string, value: ContextValue) => {
+      currentView.setViewContextProperty(key, value)
     },
     updateViewName: (name: string) => {
       currentView.updateViewName(name)
@@ -334,14 +328,14 @@ function newView(
       customTimings[sanitizeTiming(name)] = relativeTime
       scheduleViewUpdate()
     },
-    updateViewContext(newContext: Context) {
+    setViewContext(newContext: Context) {
       if (!isExperimentalFeatureEnabled(ExperimentalFeature.VIEW_SPECIFIC_CONTEXT)) {
         return
       }
       context = newContext
       triggerViewUpdate()
     },
-    updateViewContextProperty(key: string, value: ContextValue) {
+    setViewContextProperty(key: string, value: ContextValue) {
       if (!isExperimentalFeatureEnabled(ExperimentalFeature.VIEW_SPECIFIC_CONTEXT)) {
         return
       }
