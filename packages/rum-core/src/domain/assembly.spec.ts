@@ -18,7 +18,7 @@ import { startRumAssembly } from './assembly'
 import type { LifeCycle, RawRumEventCollectedData } from './lifeCycle'
 import { LifeCycleEventType } from './lifeCycle'
 import type { RumConfiguration } from './configuration'
-import type { ViewContext } from './contexts/viewContexts'
+import type { ViewHistoryEntry } from './contexts/viewHistoryEntries'
 import type { CommonContext } from './contexts/commonContext'
 import type { CiVisibilityContext } from './contexts/ciVisibilityContext'
 
@@ -27,7 +27,7 @@ describe('rum assembly', () => {
   let commonContext: CommonContext
   let serverRumEvents: RumEvent[]
   let extraConfigurationOptions: Partial<RumConfiguration> = {}
-  let findView: () => ViewContext
+  let findView: () => ViewHistoryEntry
   let reportErrorSpy: jasmine.Spy<jasmine.Func>
   let ciVisibilityContext: { test_execution_id: string } | undefined
 
@@ -453,9 +453,15 @@ describe('rum assembly', () => {
   describe('priority of rum context', () => {
     it('should prioritize view customer context over global context', () => {
       const { lifeCycle } = setupBuilder.build()
+
       commonContext.context = { foo: 'bar' }
+      findView = () => ({
+        id: '7890',
+        name: 'view name',
+        startClocks: {} as ClocksState,
+        context: { foo: 'baz' },
+      })
       notifyRawRumEvent(lifeCycle, {
-        customerContext: { foo: 'baz' },
         rawRumEvent: createRawRumEvent(RumEventType.VIEW),
       })
 
@@ -468,7 +474,7 @@ describe('rum assembly', () => {
         id: '7890',
         name: 'view name',
         startClocks: {} as ClocksState,
-        customerContext: { foo: 'bar' },
+        context: { foo: 'bar' },
       })
       notifyRawRumEvent(lifeCycle, {
         customerContext: { foo: 'baz' },
@@ -630,7 +636,7 @@ describe('rum assembly', () => {
         id: '7890',
         name: 'view name',
         startClocks: {} as ClocksState,
-        customerContext: { foo: 'bar' },
+        context: { foo: 'bar' },
       })
       notifyRawRumEvent(lifeCycle, {
         rawRumEvent: createRawRumEvent(RumEventType.ACTION),

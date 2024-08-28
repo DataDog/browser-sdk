@@ -1,4 +1,12 @@
-import type { Duration, ClocksState, TimeStamp, Subscription, RelativeTime, Context } from '@datadog/browser-core'
+import type {
+  Duration,
+  ClocksState,
+  TimeStamp,
+  Subscription,
+  RelativeTime,
+  Context,
+  ContextValue,
+} from '@datadog/browser-core'
 import {
   noop,
   PageExitReason,
@@ -158,6 +166,12 @@ export function trackViews(
       currentView.end({ endClocks: startClocks })
       currentView = startNewView(ViewLoadingType.ROUTE_CHANGE, startClocks, options)
     },
+    setViewContext: (newContext: Context) => {
+      currentView.setViewContext(newContext)
+    },
+    setViewContextProperty: (key: string, value: ContextValue) => {
+      currentView.setViewContextProperty(key, value)
+    },
     updateViewName: (name: string) => {
       currentView.updateViewName(name)
     },
@@ -313,6 +327,21 @@ function newView(
       const relativeTime = looksLikeRelativeTime(time) ? time : elapsed(startClocks.timeStamp, time)
       customTimings[sanitizeTiming(name)] = relativeTime
       scheduleViewUpdate()
+    },
+    setViewContext(newContext: Context) {
+      if (!isExperimentalFeatureEnabled(ExperimentalFeature.VIEW_SPECIFIC_CONTEXT)) {
+        return
+      }
+      context = newContext
+      triggerViewUpdate()
+    },
+    setViewContextProperty(key: string, value: ContextValue) {
+      if (!isExperimentalFeatureEnabled(ExperimentalFeature.VIEW_SPECIFIC_CONTEXT)) {
+        return
+      }
+      context = context ?? {}
+      context[key] = value
+      triggerViewUpdate()
     },
     updateViewName(updatedName: string) {
       if (!isExperimentalFeatureEnabled(ExperimentalFeature.UPDATE_VIEW_NAME)) {

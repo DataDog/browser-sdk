@@ -1,6 +1,6 @@
 import type { RawError, HttpRequest, DeflateEncoder } from '@datadog/browser-core'
 import { createHttpRequest, addTelemetryDebug, canUseEventBridge } from '@datadog/browser-core'
-import type { LifeCycle, ViewContexts, RumConfiguration, RumSessionManager } from '@datadog/browser-rum-core'
+import type { LifeCycle, ViewHistoryEntries, RumConfiguration, RumSessionManager } from '@datadog/browser-rum-core'
 import { LifeCycleEventType } from '@datadog/browser-rum-core'
 
 import { record } from '../domain/record'
@@ -12,7 +12,7 @@ export function startRecording(
   lifeCycle: LifeCycle,
   configuration: RumConfiguration,
   sessionManager: RumSessionManager,
-  viewContexts: ViewContexts,
+  viewContexts: ViewHistoryEntries,
   encoder: DeflateEncoder,
   httpRequest?: HttpRequest
 ) {

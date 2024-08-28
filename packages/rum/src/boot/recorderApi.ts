@@ -10,7 +10,7 @@ import {
 } from '@datadog/browser-core'
 import type {
   LifeCycle,
-  ViewContexts,
+  ViewHistoryEntries,
   RumSessionManager,
   RecorderApi,
   RumConfiguration,
@@ -95,7 +95,7 @@ export function makeRecorderApi(
       lifeCycle: LifeCycle,
       configuration: RumConfiguration,
       sessionManager: RumSessionManager,
-      viewContexts: ViewContexts,
+      viewContexts: ViewHistoryEntries,
       worker
     ) => {
       if (configuration.startSessionReplayRecordingManually) {
