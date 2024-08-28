@@ -21,6 +21,6 @@
     "access": "public"
   },
   "devDependencies": {
-    "webpack": "5.93.0"
+    "webpack": "5.94.0"
   }
 }
