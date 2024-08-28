@@ -91,7 +91,7 @@ function processRequest(
 
   const type = request.type === RequestType.XHR ? ResourceType.XHR : ResourceType.FETCH
 
-  const correspondingTimingOverrides = matchingTiming ? computePerformanceEntryMetrics(matchingTiming) : undefined
+  const correspondingTimingOverrides = matchingTiming ? computeResourceEntryMetrics(matchingTiming) : undefined
 
   const duration = computeRequestDuration(pageStateHistory, startClocks, request.duration)
 
@@ -142,7 +142,7 @@ function processResourceEntry(
   }
 
   const type = computeResourceKind(entry)
-  const entryMetrics = computePerformanceEntryMetrics(entry)
+  const entryMetrics = computeResourceEntryMetrics(entry)
 
   const resourceEvent = combine(
     {
@@ -170,16 +170,16 @@ function processResourceEntry(
   }
 }
 
-function computePerformanceEntryMetrics(timing: RumPerformanceResourceTiming) {
-  const { renderBlockingStatus } = timing
+function computeResourceEntryMetrics(entry: RumPerformanceResourceTiming) {
+  const { renderBlockingStatus } = entry
   return {
     resource: assign(
       {
-        duration: computeResourceEntryDuration(timing),
+        duration: computeResourceEntryDuration(entry),
         render_blocking_status: renderBlockingStatus,
       },
-      computeSize(timing),
-      computePerformanceResourceDetails(timing)
+      computeSize(entry),
+      computePerformanceResourceDetails(entry)
     ),
   }
 }
