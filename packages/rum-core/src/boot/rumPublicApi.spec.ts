@@ -10,9 +10,14 @@ import {
   CustomerDataCompressionStatus,
   timeStampToClocks,
 } from '@datadog/browser-core'
-import { cleanupSyntheticsWorkerValues, mockExperimentalFeatures } from '@datadog/browser-core/test'
-import type { TestSetupBuilder } from '../../test'
-import { setup, noopRecorderApi } from '../../test'
+import type { Clock } from '@datadog/browser-core/test'
+import {
+  cleanupSyntheticsWorkerValues,
+  mockClock,
+  mockExperimentalFeatures,
+  registerCleanupTask,
+} from '@datadog/browser-core/test'
+import { noopRecorderApi } from '../../test'
 import { ActionType, VitalType } from '../rawRumEvent.types'
 import type { DurationVitalReference } from '../domain/vital/vitalCollection'
 import type { RumPublicApi, RecorderApi } from './rumPublicApi'
@@ -45,10 +50,7 @@ describe('rum public api', () => {
 
     beforeEach(() => {
       startRumSpy = jasmine.createSpy().and.callFake(noopStartRum)
-    })
-
-    afterEach(() => {
-      cleanupSyntheticsWorkerValues()
+      registerCleanupTask(cleanupSyntheticsWorkerValues)
     })
 
     describe('deflate worker', () => {
@@ -158,7 +160,7 @@ describe('rum public api', () => {
   describe('addAction', () => {
     let addActionSpy: jasmine.Spy<ReturnType<StartRum>['addAction']>
     let rumPublicApi: RumPublicApi
-    let setupBuilder: TestSetupBuilder
+    let clock: Clock
 
     beforeEach(() => {
       addActionSpy = jasmine.createSpy()
@@ -169,7 +171,11 @@ describe('rum public api', () => {
         }),
         noopRecorderApi
       )
-      setupBuilder = setup()
+      clock = mockClock()
+
+      registerCleanupTask(() => {
+        clock.cleanup()
+      })
     })
 
     it('allows sending actions before init', () => {
@@ -207,8 +213,6 @@ describe('rum public api', () => {
 
     describe('save context when sending an action', () => {
       it('saves the date', () => {
-        const { clock } = setupBuilder.withFakeClock().build()
-
         clock.tick(ONE_SECOND)
         rumPublicApi.addAction('foo')
 
@@ -260,7 +264,7 @@ describe('rum public api', () => {
   describe('addError', () => {
     let addErrorSpy: jasmine.Spy<ReturnType<StartRum>['addError']>
     let rumPublicApi: RumPublicApi
-    let setupBuilder: TestSetupBuilder
+    let clock: Clock
 
     beforeEach(() => {
       addErrorSpy = jasmine.createSpy()
@@ -271,7 +275,11 @@ describe('rum public api', () => {
         }),
         noopRecorderApi
       )
-      setupBuilder = setup()
+      clock = mockClock()
+
+      registerCleanupTask(() => {
+        clock.cleanup()
+      })
     })
 
     it('allows capturing an error before init', () => {
@@ -307,8 +315,6 @@ describe('rum public api', () => {
 
     describe('save context when capturing an error', () => {
       it('saves the date', () => {
-        const { clock } = setupBuilder.withFakeClock().build()
-
         clock.tick(ONE_SECOND)
         rumPublicApi.addError(new Error('foo'))
 
@@ -665,11 +671,11 @@ describe('rum public api', () => {
 
     beforeEach(() => {
       rumPublicApi = makeRumPublicApi(noopStartRum, noopRecorderApi)
-    })
 
-    afterEach(() => {
-      localStorage.clear()
-      removeStorageListeners()
+      registerCleanupTask(() => {
+        localStorage.clear()
+        removeStorageListeners()
+      })
     })
 
     it('when disabled, should store contexts only in memory', () => {
@@ -741,12 +747,14 @@ describe('rum public api', () => {
   })
 
   describe('startDurationVital', () => {
+    let clock: Clock
     beforeEach(() => {
-      setup().withFakeClock().build()
-    })
+      clock = mockClock()
 
-    afterEach(() => {
-      resetExperimentalFeatures()
+      registerCleanupTask(() => {
+        resetExperimentalFeatures()
+        clock.cleanup()
+      })
     })
 
     it('should not expose startDurationVital when ff is disabled', () => {
@@ -776,12 +784,14 @@ describe('rum public api', () => {
   })
 
   describe('addDurationVital', () => {
+    let clock: Clock
     beforeEach(() => {
-      setup().withFakeClock().build()
-    })
+      clock = mockClock()
 
-    afterEach(() => {
-      resetExperimentalFeatures()
+      registerCleanupTask(() => {
+        clock.cleanup()
+        resetExperimentalFeatures()
+      })
     })
 
     it('should not expose addDurationVital when ff is disabled', () => {
