@@ -7,7 +7,7 @@
     "dev": "webpack --mode development --watch"
   },
   "devDependencies": {
-    "@tabler/icons-react": "3.12.0",
+    "@tabler/icons-react": "3.14.0",
     "@types/chrome": "0.0.270",
     "@types/react": "18.3.4",
     "@types/react-dom": "18.3.0",
@@ -16,7 +16,7 @@
     "css-loader": "7.1.2",
     "html-webpack-plugin": "5.6.0",
     "style-loader": "4.0.0",
-    "webpack": "5.93.0"
+    "webpack": "5.94.0"
   },
   "dependencies": {
     "@datadog/browser-core": "workspace:*",

@@ -52,9 +52,9 @@
     "emoji-name-map": "1.2.9",
     "eslint": "8.57.0",
     "eslint-config-prettier": "9.1.0",
-    "eslint-module-utils": "2.8.1",
+    "eslint-module-utils": "2.8.2",
     "eslint-plugin-import": "2.29.1",
-    "eslint-plugin-jasmine": "4.2.0",
+    "eslint-plugin-jasmine": "4.2.1",
     "eslint-plugin-jsdoc": "48.11.0",
     "eslint-plugin-local-rules": "3.0.2",
     "eslint-plugin-prefer-arrow": "1.2.3",
@@ -77,23 +77,23 @@
     "minimatch": "10.0.1",
     "npm-run-all": "4.1.5",
     "prettier": "3.3.3",
-    "puppeteer": "23.1.1",
+    "puppeteer": "23.2.0",
     "terser-webpack-plugin": "5.3.10",
     "ts-loader": "9.5.1",
     "ts-node": "10.9.2",
     "tsconfig-paths-webpack-plugin": "4.1.0",
     "typescript": "5.5.4",
     "webdriverio": "8.40.3",
-    "webpack": "5.93.0",
+    "webpack": "5.94.0",
     "webpack-cli": "5.1.4",
-    "webpack-dev-middleware": "7.4.1"
+    "webpack-dev-middleware": "7.4.2"
   },
   "resolutions": {
     "puppeteer-core@npm:20.9.0/ws": "8.17.1"
   },
   "volta": {
-    "node": "20.16.0",
+    "node": "20.17.0",
     "yarn": "1.22.22"
   },
-  "packageManager": "yarn@4.4.0"
+  "packageManager": "yarn@4.4.1"
 }
