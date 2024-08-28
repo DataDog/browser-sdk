@@ -174,7 +174,7 @@ export function startRum(
     }
   } else {
     if (configuration.trackLongTasks) {
-      import('../domain/longTask/longTaskCollection')
+      import(/* webpackChunkName: "long-task" */ '../domain/longTask/longTaskCollection')
         .then(({ startLongTaskCollection }) => {
           startLongTaskCollection(lifeCycle, configuration)
         })

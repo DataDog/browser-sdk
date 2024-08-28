@@ -6,15 +6,17 @@
   "module": "esm/entries/main.js",
   "types": "cjs/entries/main.d.ts",
   "scripts": {
-    "build": "run-p build:cjs build:esm build:bundle",
-    "build:bundle": "rm -rf bundle && webpack --mode=production",
+    "build": "run-p build:cjs build:esm build:bundle && yarn build:bundle:esm",
+    "build:bundle": "rm -rf bundle && webpack --mode=development",
+    "build:bundle:esm": "esbuild esm/entries/main.js --bundle --splitting --format=esm --outdir=bundle-esm/ --entry-names=datadog-rum && yarn replace-build-env bundle-esm",
     "build:cjs": "rm -rf cjs && tsc -p tsconfig.cjs.json && yarn replace-build-env cjs",
     "build:esm": "rm -rf esm && tsc -p tsconfig.esm.json && yarn replace-build-env esm",
     "replace-build-env": "node ../../scripts/build/replace-build-env.js"
   },
   "dependencies": {
     "@datadog/browser-core": "5.23.3",
-    "@datadog/browser-rum-core": "5.23.3"
+    "@datadog/browser-rum-core": "5.23.3",
+    "esbuild": "0.23.1"
   },
   "peerDependencies": {
     "@datadog/browser-logs": "5.23.3"

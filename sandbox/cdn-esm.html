@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>CDN esm</title>
+    <script src="http://localhost:8080/datadog-rum-esm.js"></script>
+
+    <script>
+      import("http://localhost:8080/datadog-rum-esm.js").then((module) => {
+        module.datadogRum.init({
+          clientToken: 'xxx',
+          applicationId: 'xxx',
+          sessionReplaySampleRate: 100,
+          trackResources: true,
+          trackLongTasks: true,
+          telemetrySampleRate: 100,
+          telemetryConfigurationSampleRate: 100,
+          telemetryUsageSampleRate: 100,
+          enableExperimentalFeatures: [],
+        });
+      });
+    </script>
+</html>
