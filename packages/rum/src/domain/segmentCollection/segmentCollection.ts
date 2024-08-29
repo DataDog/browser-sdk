@@ -49,7 +49,7 @@ export function startSegmentCollection(
 ) {
   return doStartSegmentCollection(
     lifeCycle,
-    () => computeSegmentContext(configuration.applicationId, sessionManager, view),
+    () => computeSegmentContext(configuration.applicationId, sessionManager, viewHistory),
     httpRequest,
     encoder
   )
