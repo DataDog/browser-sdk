@@ -1,7 +1,7 @@
 import type { RelativeTime } from '@datadog/browser-core'
 import type { ActionContexts } from '../action/actionCollection'
 import type { RumSessionManager } from '../rumSessionManager'
-import type { ViewHistoryEntries } from './viewHistoryEntries'
+import type { ViewHistory } from './viewHistoryEntries'
 import type { UrlContexts } from './urlContexts'
 
 export interface InternalContext {
@@ -25,7 +25,7 @@ export interface InternalContext {
 export function startInternalContext(
   applicationId: string,
   sessionManager: RumSessionManager,
-  viewHistoryEntries: ViewHistoryEntries,
+  viewHistoryEntries: ViewHistory,
   actionContexts: ActionContexts,
   urlContexts: UrlContexts
 ) {

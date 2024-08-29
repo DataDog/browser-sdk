@@ -35,7 +35,7 @@ import {
   timeStampToClocks,
 } from '@datadog/browser-core'
 import type { LifeCycle } from '../domain/lifeCycle'
-import type { ViewHistoryEntries } from '../domain/contexts/viewHistoryEntries'
+import type { ViewHistory } from '../domain/contexts/viewHistoryEntries'
 import type { RumSessionManager } from '../domain/rumSessionManager'
 import type { ReplayStats } from '../rawRumEvent.types'
 import { ActionType, VitalType } from '../rawRumEvent.types'
@@ -209,10 +209,6 @@ export interface RumPublicApi extends PublicApi {
     (options: ViewOptions): void
   }
 
-  setViewContext: (context: object) => void
-
-  setViewContextProperty: (key: any, value: any) => void
-
   /**
    * Stop the session. A new session will start at the next user interaction with the page.
    */
@@ -299,7 +295,7 @@ export interface RecorderApi {
     lifeCycle: LifeCycle,
     configuration: RumConfiguration,
     sessionManager: RumSessionManager,
-    viewHistoryEntries: ViewHistoryEntries,
+    viewHistoryEntries: ViewHistory,
     deflateWorker: DeflateWorker | undefined
   ) => void
   isRecording: () => boolean
@@ -377,6 +373,29 @@ export function makeRumPublicApi(
         })
       }
 
+      if (isExperimentalFeatureEnabled(ExperimentalFeature.VIEW_SPECIFIC_CONTEXT)) {
+        /**
+         * Set View Context.
+         *
+         * Enable to manually set the context of the current view.
+         * @param context context of the view
+         */
+        ;(rumPublicApi as any).setViewContext = monitor((context: Context) => {
+          strategy.setViewContext(context)
+        })
+
+        /**
+         * Set View Context Property.
+         *
+         * Enable to manually set a property of the context of the current view.
+         * @param key key of the property
+         * @param value value of the property
+         */
+        ;(rumPublicApi as any).setViewContextProperty = monitor((key: string, value: any) => {
+          strategy.setViewContextProperty(key, value)
+        })
+      }
+
       if (configuration.storeContextsAcrossPages) {
         storeContextManager(configuration, globalContextManager, RUM_STORAGE_KEY, CustomerDataType.GlobalContext)
         storeContextManager(configuration, userContextManager, RUM_STORAGE_KEY, CustomerDataType.User)
@@ -403,7 +422,7 @@ export function makeRumPublicApi(
         startRumResult.lifeCycle,
         configuration,
         startRumResult.session,
-        startRumResult.viewContexts,
+        startRumResult.viewHistory,
         deflateWorker
       )
 
@@ -506,10 +525,6 @@ export function makeRumPublicApi(
     clearUser: monitor(() => userContextManager.clearContext()),
 
     startView,
-
-    setViewContext,
-
-    setViewContextProperty,
 
     stopSession: monitor(() => {
       strategy.stopSession()

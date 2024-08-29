@@ -15,7 +15,7 @@ import { validateAndBuildRumConfiguration } from '../src/domain/configuration'
 import type { FeatureFlagContexts } from '../src/domain/contexts/featureFlagContext'
 import type { PageStateHistory } from '../src/domain/contexts/pageStateHistory'
 import type { UrlContexts } from '../src/domain/contexts/urlContexts'
-import type { ViewHistoryEntries } from '../src/domain/contexts/viewHistoryEntries'
+import type { ViewHistory } from '../src/domain/contexts/viewHistoryEntries'
 import type { RawRumEventCollectedData } from '../src/domain/lifeCycle'
 import { LifeCycle } from '../src/domain/lifeCycle'
 import type { ActionContexts } from '../src/domain/action/actionCollection'
@@ -29,7 +29,7 @@ export interface TestSetupBuilder {
   withFakeLocation: (initialUrl: string) => TestSetupBuilder
   withSessionManager: (sessionManager: RumSessionManager) => TestSetupBuilder
   withConfiguration: (overrides: Partial<RumConfiguration>) => TestSetupBuilder
-  withViewContexts: (stub: Partial<ViewHistoryEntries>) => TestSetupBuilder
+  withviewHistory: (stub: Partial<ViewHistory>) => TestSetupBuilder
   withActionContexts: (stub: ActionContexts) => TestSetupBuilder
   withPageStateHistory: (stub: Partial<PageStateHistory>) => TestSetupBuilder
   withFeatureFlagContexts: (stub: Partial<FeatureFlagContexts>) => TestSetupBuilder
@@ -51,7 +51,7 @@ export interface BuildContext {
   sessionManager: RumSessionManager
   location: Location
   applicationId: string
-  viewContexts: ViewHistoryEntries
+  viewHistory: ViewHistory
   actionContexts: ActionContexts
   displayContext: DisplayContext
   pageStateHistory: PageStateHistory
@@ -82,7 +82,7 @@ export function setup(): TestSetupBuilder {
 
   let clock: Clock
   let fakeLocation: Partial<Location> = location
-  let viewContexts: ViewHistoryEntries
+  let viewHistory: ViewHistory
   const urlContexts: UrlContexts = {
     findUrl: () => ({
       url: fakeLocation.href!,
@@ -149,8 +149,8 @@ export function setup(): TestSetupBuilder {
       assign(configuration, overrides)
       return setupBuilder
     },
-    withViewContexts(stub: Partial<ViewHistoryEntries>) {
-      viewContexts = stub as ViewHistoryEntries
+    withviewHistory(stub: Partial<ViewHistory>) {
+      viewHistory = stub as ViewHistory
       return setupBuilder
     },
     withActionContexts(stub: ActionContexts) {
@@ -180,7 +180,7 @@ export function setup(): TestSetupBuilder {
           lifeCycle,
           domMutationObservable,
           locationChangeObservable,
-          viewContexts,
+          viewHistory,
           urlContexts,
           actionContexts,
           displayContext,

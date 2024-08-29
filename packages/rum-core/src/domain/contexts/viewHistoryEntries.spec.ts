@@ -4,8 +4,8 @@ import type { Clock } from '@datadog/browser-core/test'
 import { mockClock, registerCleanupTask } from '@datadog/browser-core/test'
 import { LifeCycle, LifeCycleEventType } from '../lifeCycle'
 import type { ViewCreatedEvent, ViewEvent } from '../view/trackViews'
-import type { ViewHistoryEntries } from './viewHistoryEntries'
-import { startViewHistoryEntries, VIEW_CONTEXT_TIME_OUT_DELAY } from './viewHistoryEntries'
+import type { ViewHistory } from './viewHistoryEntries'
+import { startViewHistory, VIEW_CONTEXT_TIME_OUT_DELAY } from './viewHistoryEntries'
 
 describe('viewHistoryEntries', () => {
   const FAKE_ID = 'fake'
@@ -21,11 +21,11 @@ describe('viewHistoryEntries', () => {
   }
 
   let clock: Clock
-  let viewHistoryEntries: ViewHistoryEntries
+  let viewHistoryEntries: ViewHistory
 
   beforeEach(() => {
     clock = mockClock()
-    viewHistoryEntries = startViewHistoryEntries(lifeCycle)
+    viewHistoryEntries = startViewHistory(lifeCycle)
 
     registerCleanupTask(() => {
       viewHistoryEntries.stop()
