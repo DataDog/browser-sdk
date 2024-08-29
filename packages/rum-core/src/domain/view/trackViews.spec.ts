@@ -10,7 +10,7 @@ import {
 } from '@datadog/browser-core'
 
 import type { Clock } from '@datadog/browser-core/test'
-import { buildLocation, mockClock, mockExperimentalFeatures, registerCleanupTask } from '@datadog/browser-core/test'
+import { mockClock, mockExperimentalFeatures, registerCleanupTask } from '@datadog/browser-core/test'
 import type { BuildContext } from '../../../test'
 import { createPerformanceEntry, mockPerformanceObserver, setupLocationObserver } from '../../../test'
 import { RumEventType, ViewLoadingType } from '../../rawRumEvent.types'
@@ -950,19 +950,18 @@ describe('view event count', () => {
 })
 
 function setupViewTracking(lifeCycle: LifeCycle, initialViewOptions: ViewOptions | undefined = undefined) {
-  const fakeLocation = buildLocation('/foo')
   const domMutationObservable = new Observable<void>()
   const configuration = {} as RumConfiguration
-  const locationChangeSetup = setupLocationObserver(fakeLocation)
+  const locationChangeSetup = setupLocationObserver('/foo')
 
   const changeLocation = locationChangeSetup.changeLocation
   const viewTest = setupViewTest(
     {
       lifeCycle,
-      location: fakeLocation,
+      location: locationChangeSetup.fakeLocation,
       domMutationObservable,
       configuration,
-      locationChangeObservable: locationChangeSetup.observable,
+      locationChangeObservable: locationChangeSetup.locationChangeObservable,
     } as BuildContext,
     initialViewOptions
   )
