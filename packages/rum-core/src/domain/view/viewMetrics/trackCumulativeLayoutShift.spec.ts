@@ -1,10 +1,9 @@
 import type { RelativeTime } from '@datadog/browser-core'
 import { registerCleanupTask } from '@datadog/browser-core/test'
 import { resetExperimentalFeatures, elapsed, ONE_SECOND } from '@datadog/browser-core'
-import { appendElement, appendText, createPerformanceEntry } from '../../../../test'
+import { appendElement, appendText, createPerformanceEntry, mockRumConfiguration } from '../../../../test'
 import { LifeCycle, LifeCycleEventType } from '../../lifeCycle'
 import { RumPerformanceEntryType } from '../../../browser/performanceObservable'
-import type { RumConfiguration } from '../../configuration'
 import type { CumulativeLayoutShift } from './trackCumulativeLayoutShift'
 import { isLayoutShiftSupported, MAX_WINDOW_DURATION, trackCumulativeLayoutShift } from './trackCumulativeLayoutShift'
 
@@ -30,7 +29,7 @@ describe('trackCumulativeLayoutShift', () => {
       get: () => (isLayoutShiftSupported ? ['layout-shift'] : []),
     })
 
-    const clsTrackingesult = trackCumulativeLayoutShift({} as RumConfiguration, lifeCycle, viewStart, clsCallback)
+    const clsTrackingesult = trackCumulativeLayoutShift(mockRumConfiguration(), lifeCycle, viewStart, clsCallback)
 
     registerCleanupTask(() => {
       clsTrackingesult.stop()

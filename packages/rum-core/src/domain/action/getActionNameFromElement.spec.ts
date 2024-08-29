@@ -1,9 +1,8 @@
-import { appendElement } from '../../../test'
+import { appendElement, mockRumConfiguration } from '../../../test'
 import { NodePrivacyLevel } from '../privacy'
-import type { RumConfiguration } from '../configuration'
 import { getActionNameFromElement } from './getActionNameFromElement'
 
-const defaultConfiguration = {} as RumConfiguration
+const defaultConfiguration = mockRumConfiguration()
 
 describe('getActionNameFromElement', () => {
   it('extracts the textual content of an element', () => {

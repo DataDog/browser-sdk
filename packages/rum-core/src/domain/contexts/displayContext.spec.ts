@@ -1,14 +1,12 @@
-import type { RumConfiguration } from '../configuration'
+import { mockRumConfiguration } from '../../../test'
 import type { DisplayContext } from './displayContext'
 import { startDisplayContext } from './displayContext'
 
 describe('displayContext', () => {
-  let configuration: RumConfiguration
   let displayContext: DisplayContext
 
   beforeEach(() => {
-    configuration = {} as RumConfiguration
-    displayContext = startDisplayContext(configuration)
+    displayContext = startDisplayContext(mockRumConfiguration())
   })
 
   afterEach(() => {

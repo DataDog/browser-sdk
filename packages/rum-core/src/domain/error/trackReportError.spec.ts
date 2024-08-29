@@ -8,7 +8,7 @@ import {
   mockCspEventListener,
   mockReportingObserver,
 } from '@datadog/browser-core/test'
-import type { RumConfiguration } from '../configuration'
+import { mockRumConfiguration } from '../../../test'
 import { trackReportError } from './trackReportError'
 
 describe('trackReportError', () => {
@@ -18,10 +18,9 @@ describe('trackReportError', () => {
   let clock: Clock
   let reportingObserver: MockReportingObserver
   let cspEventListener: MockCspEventListener
-  let configuration: RumConfiguration
+  const configuration = mockRumConfiguration()
 
   beforeEach(() => {
-    configuration = {} as RumConfiguration
     errorObservable = new Observable()
     notifyLog = jasmine.createSpy('notifyLog')
     reportingObserver = mockReportingObserver()

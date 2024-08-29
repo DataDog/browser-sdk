@@ -3,11 +3,10 @@ import { addDuration, clocksOrigin, Observable } from '@datadog/browser-core'
 import type { Clock } from '@datadog/browser-core/test'
 import { mockClock } from '@datadog/browser-core/test'
 import { ViewLoadingType } from '../../../rawRumEvent.types'
-import { createPerformanceEntry } from '../../../../test'
+import { createPerformanceEntry, mockRumConfiguration } from '../../../../test'
 import { PAGE_ACTIVITY_END_DELAY, PAGE_ACTIVITY_VALIDATION_DELAY } from '../../waitPageActivityEnd'
 import { RumPerformanceEntryType } from '../../../browser/performanceObservable'
 import { LifeCycle } from '../../lifeCycle'
-import type { RumConfiguration } from '../../configuration'
 import { trackLoadingTime } from './trackLoadingTime'
 
 const BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY = (PAGE_ACTIVITY_VALIDATION_DELAY * 0.8) as Duration
@@ -30,7 +29,7 @@ describe('trackLoadingTime', () => {
     const loadingTimeTracking = trackLoadingTime(
       lifeCycle,
       domMutationObservable,
-      {} as RumConfiguration,
+      mockRumConfiguration(),
       loadType,
       clocksOrigin(),
       loadingTimeCallback

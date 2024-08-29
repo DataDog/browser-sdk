@@ -5,7 +5,7 @@ import { LifeCycle, LifeCycleEventType, startViewContexts } from '@datadog/brows
 import { collectAsyncCalls, createNewEvent, mockEventBridge, registerCleanupTask } from '@datadog/browser-core/test'
 import type { ViewEndedEvent } from 'packages/rum-core/src/domain/view/trackViews'
 import type { RumSessionManagerMock } from '../../../rum-core/test'
-import { appendElement, createRumSessionManagerMock } from '../../../rum-core/test'
+import { appendElement, createRumSessionManagerMock, mockRumConfiguration } from '../../../rum-core/test'
 
 import { recordsPerFullSnapshot, readReplayPayload } from '../../test'
 import { setSegmentBytesLimit } from '../domain/segmentCollection'
@@ -27,10 +27,7 @@ describe('startRecording', () => {
   let configuration: RumConfiguration
 
   function setupStartRecording() {
-    configuration = {
-      defaultPrivacyLevel: DefaultPrivacyLevel.ALLOW,
-      applicationId: 'appId',
-    } as unknown as RumConfiguration
+    configuration = mockRumConfiguration({ defaultPrivacyLevel: DefaultPrivacyLevel.ALLOW })
     resetReplayStats()
     const worker = startDeflateWorker(configuration, 'Session Replay', noop)
 

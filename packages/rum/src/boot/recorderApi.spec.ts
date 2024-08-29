@@ -1,10 +1,10 @@
 import type { DeflateEncoder, DeflateWorker, DeflateWorkerAction } from '@datadog/browser-core'
 import { BridgeCapability, PageExitReason, display, isIE } from '@datadog/browser-core'
-import type { RecorderApi, ViewContexts, RumConfiguration, RumSessionManager } from '@datadog/browser-rum-core'
+import type { RecorderApi, ViewContexts, RumSessionManager } from '@datadog/browser-rum-core'
 import { LifeCycle, LifeCycleEventType } from '@datadog/browser-rum-core'
 import { mockEventBridge, createNewEvent, registerCleanupTask } from '@datadog/browser-core/test'
 import type { RumSessionManagerMock } from '../../../rum-core/test'
-import { createRumSessionManagerMock } from '../../../rum-core/test'
+import { createRumSessionManagerMock, mockRumConfiguration } from '../../../rum-core/test'
 import type { CreateDeflateWorker } from '../domain/deflate'
 import { MockWorker } from '../../test'
 import { resetDeflateWorkerState } from '../domain/deflate'
@@ -34,7 +34,7 @@ describe('makeRecorderApi', () => {
     rumInit = ({ worker } = {}) => {
       recorderApi.onRumStart(
         lifeCycle,
-        { startSessionReplayRecordingManually } as RumConfiguration,
+        mockRumConfiguration({ startSessionReplayRecordingManually }),
         sessionManager,
         {} as ViewContexts,
         worker
