@@ -1,4 +1,11 @@
-import { addTelemetryDebug, elapsed, ExperimentalFeature, isExperimentalFeatureEnabled, noop, ONE_MINUTE } from '@datadog/browser-core'
+import {
+  addTelemetryDebug,
+  elapsed,
+  ExperimentalFeature,
+  isExperimentalFeatureEnabled,
+  noop,
+  ONE_MINUTE,
+} from '@datadog/browser-core'
 import type { Duration, RelativeTime } from '@datadog/browser-core'
 import { RumPerformanceEntryType, supportPerformanceTimingEvent } from '../../../browser/performanceObservable'
 import type { RumFirstInputTiming, RumPerformanceEventTiming } from '../../../browser/performanceObservable'
