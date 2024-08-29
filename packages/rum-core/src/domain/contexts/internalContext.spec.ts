@@ -4,19 +4,19 @@ import type { TestSetupBuilder } from '../../../test'
 import type { ActionContexts } from '../action/actionCollection'
 import type { RumSessionManager } from '../rumSessionManager'
 import { startInternalContext } from './internalContext'
-import type { ViewHistoryEntries } from './viewHistoryEntries'
+import type { ViewHistory } from './viewHistoryEntries'
 import type { UrlContexts } from './urlContexts'
 
 describe('internal context', () => {
   let setupBuilder: TestSetupBuilder
-  let viewContextsStub: Partial<ViewHistoryEntries>
+  let viewHistoryStub: Partial<ViewHistory>
   let actionContextsStub: ActionContexts
   let findUrlSpy: jasmine.Spy<UrlContexts['findUrl']>
   let findSessionSpy: jasmine.Spy<RumSessionManager['findTrackedSession']>
   let internalContext: ReturnType<typeof startInternalContext>
 
   beforeEach(() => {
-    viewContextsStub = {
+    viewHistoryStub = {
       findView: jasmine.createSpy('findView').and.returnValue({
         id: 'abcde',
         name: 'foo',
@@ -27,12 +27,12 @@ describe('internal context', () => {
     }
     setupBuilder = setup()
       .withSessionManager(createRumSessionManagerMock().setId('456'))
-      .withViewContexts(viewContextsStub)
+      .withviewHistory(viewHistoryStub)
       .withActionContexts(actionContextsStub)
-      .beforeBuild(({ applicationId, sessionManager, viewContexts, urlContexts, actionContexts }) => {
+      .beforeBuild(({ applicationId, sessionManager, viewHistory, urlContexts, actionContexts }) => {
         findUrlSpy = spyOn(urlContexts, 'findUrl').and.callThrough()
         findSessionSpy = spyOn(sessionManager, 'findTrackedSession').and.callThrough()
-        internalContext = startInternalContext(applicationId, sessionManager, viewContexts, actionContexts, urlContexts)
+        internalContext = startInternalContext(applicationId, sessionManager, viewHistory, actionContexts, urlContexts)
       })
   })
 
@@ -64,7 +64,7 @@ describe('internal context', () => {
 
     internalContext.get(123)
 
-    expect(viewContextsStub.findView).toHaveBeenCalledWith(123)
+    expect(viewHistoryStub.findView).toHaveBeenCalledWith(123)
     expect(actionContextsStub.findActionId).toHaveBeenCalledWith(123 as RelativeTime)
     expect(findUrlSpy).toHaveBeenCalledWith(123 as RelativeTime)
     expect(findSessionSpy).toHaveBeenCalledWith(123 as RelativeTime)

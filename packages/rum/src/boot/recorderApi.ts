@@ -10,7 +10,7 @@ import {
 } from '@datadog/browser-core'
 import type {
   LifeCycle,
-  ViewHistoryEntries,
+  ViewHistory,
   RumSessionManager,
   RecorderApi,
   RumConfiguration,
@@ -95,7 +95,7 @@ export function makeRecorderApi(
       lifeCycle: LifeCycle,
       configuration: RumConfiguration,
       sessionManager: RumSessionManager,
-      viewContexts: ViewHistoryEntries,
+      viewHistory: ViewHistory,
       worker
     ) => {
       if (configuration.startSessionReplayRecordingManually) {
@@ -172,7 +172,7 @@ export function makeRecorderApi(
             lifeCycle,
             configuration,
             sessionManager,
-            viewContexts,
+            viewHistory,
             deflateEncoder
           )
           state = {
@@ -201,7 +201,7 @@ export function makeRecorderApi(
       }
 
       getSessionReplayLinkStrategy = () =>
-        getSessionReplayLink(configuration, sessionManager, viewContexts, state.status !== RecorderStatus.Stopped)
+        getSessionReplayLink(configuration, sessionManager, viewHistory, state.status !== RecorderStatus.Stopped)
 
       if (state.status === RecorderStatus.IntentToStart) {
         startStrategy()

@@ -27,7 +27,7 @@ import { getSyntheticsContext } from './contexts/syntheticsContext'
 import type { CiVisibilityContext } from './contexts/ciVisibilityContext'
 import type { LifeCycle } from './lifeCycle'
 import { LifeCycleEventType } from './lifeCycle'
-import type { ViewHistoryEntries } from './contexts/viewHistoryEntries'
+import type { ViewHistory } from './contexts/viewHistoryEntries'
 import { SessionReplayState, type RumSessionManager } from './rumSessionManager'
 import type { UrlContexts } from './contexts/urlContexts'
 import type { RumConfiguration } from './configuration'
@@ -69,7 +69,7 @@ export function startRumAssembly(
   configuration: RumConfiguration,
   lifeCycle: LifeCycle,
   sessionManager: RumSessionManager,
-  viewHistoryEntries: ViewHistoryEntries,
+  viewHistoryEntries: ViewHistory,
   urlContexts: UrlContexts,
   actionContexts: ActionContexts,
   displayContext: DisplayContext,

@@ -1,6 +1,6 @@
 import type { DeflateEncoder, DeflateWorker, DeflateWorkerAction } from '@datadog/browser-core'
 import { BridgeCapability, PageExitReason, display, isIE } from '@datadog/browser-core'
-import type { RecorderApi, ViewHistoryEntries, LifeCycle, RumConfiguration } from '@datadog/browser-rum-core'
+import type { RecorderApi, ViewHistory, LifeCycle, RumConfiguration } from '@datadog/browser-rum-core'
 import { LifeCycleEventType } from '@datadog/browser-rum-core'
 import { mockEventBridge, createNewEvent, registerCleanupTask } from '@datadog/browser-core/test'
 import type { RumSessionManagerMock, TestSetupBuilder } from '../../../rum-core/test'
@@ -45,7 +45,7 @@ describe('makeRecorderApi', () => {
           lifeCycle,
           { startSessionReplayRecordingManually } as RumConfiguration,
           sessionManager,
-          {} as ViewHistoryEntries,
+          {} as ViewHistory,
           worker
         )
       }

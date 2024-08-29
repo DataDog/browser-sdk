@@ -15,12 +15,12 @@ export interface ViewHistoryEntry {
   startClocks: ClocksState
 }
 
-export interface ViewHistoryEntries {
+export interface ViewHistory {
   findView: (startTime?: RelativeTime) => ViewHistoryEntry | undefined
   stop: () => void
 }
 
-export function startViewHistory(lifeCycle: LifeCycle): ViewHistoryEntries {
+export function startViewHistory(lifeCycle: LifeCycle): ViewHistory {
   const viewValueHistory = createValueHistory<ViewHistoryEntry>({ expireDelay: VIEW_CONTEXT_TIME_OUT_DELAY })
 
   lifeCycle.subscribe(LifeCycleEventType.BEFORE_VIEW_CREATED, (view) => {

@@ -46,14 +46,14 @@ describe('rum assembly', () => {
     ciVisibilityContext = undefined
 
     setupBuilder = setup()
-      .withViewContexts({
+      .withviewHistory({
         findView: () => findView(),
       })
       .withActionContexts({
         findActionId: () => '7890',
       })
       .beforeBuild(
-        ({ configuration, lifeCycle, sessionManager, viewContexts, urlContexts, actionContexts, displayContext }) => {
+        ({ configuration, lifeCycle, sessionManager, viewHistory, urlContexts, actionContexts, displayContext }) => {
           serverRumEvents = []
           lifeCycle.subscribe(LifeCycleEventType.RUM_EVENT_COLLECTED, (serverRumEvent) =>
             serverRumEvents.push(serverRumEvent)
@@ -62,7 +62,7 @@ describe('rum assembly', () => {
             { ...configuration, ...extraConfigurationOptions },
             lifeCycle,
             sessionManager,
-            viewContexts,
+            viewHistory,
             urlContexts,
             actionContexts,
             displayContext,
