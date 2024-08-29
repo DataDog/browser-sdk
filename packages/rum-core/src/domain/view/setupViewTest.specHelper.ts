@@ -1,12 +1,23 @@
-import type { BuildContext } from '../../../test'
+import type { Observable } from '@datadog/browser-core'
+import type { LocationChange } from '../../browser/locationChangeObservable'
+import type { RumConfiguration } from '../configuration'
+import type { LifeCycle } from '../lifeCycle'
 import { LifeCycleEventType } from '../lifeCycle'
 import type { ViewEvent, ViewOptions } from './trackViews'
 import { trackViews } from './trackViews'
 
 export type ViewTest = ReturnType<typeof setupViewTest>
 
+interface ViewTrackingContext {
+  lifeCycle: LifeCycle
+  domMutationObservable: Observable<void>
+  locationChangeObservable: Observable<LocationChange>
+  configuration: Readonly<RumConfiguration>
+  location: Location
+}
+
 export function setupViewTest(
-  { lifeCycle, location, domMutationObservable, configuration, locationChangeObservable }: BuildContext,
+  { lifeCycle, location, domMutationObservable, configuration, locationChangeObservable }: ViewTrackingContext,
   initialViewOptions?: ViewOptions
 ) {
   const {

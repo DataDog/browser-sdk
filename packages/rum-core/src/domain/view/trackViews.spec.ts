@@ -11,7 +11,6 @@ import {
 
 import type { Clock } from '@datadog/browser-core/test'
 import { mockClock, mockExperimentalFeatures, registerCleanupTask } from '@datadog/browser-core/test'
-import type { BuildContext } from '../../../test'
 import { createPerformanceEntry, mockPerformanceObserver, setupLocationObserver } from '../../../test'
 import { RumEventType, ViewLoadingType } from '../../rawRumEvent.types'
 import type { RumEvent } from '../../rumEvent.types'
@@ -962,7 +961,7 @@ function setupViewTracking(lifeCycle: LifeCycle, initialViewOptions: ViewOptions
       domMutationObservable,
       configuration,
       locationChangeObservable: locationChangeSetup.locationChangeObservable,
-    } as BuildContext,
+    },
     initialViewOptions
   )
 
