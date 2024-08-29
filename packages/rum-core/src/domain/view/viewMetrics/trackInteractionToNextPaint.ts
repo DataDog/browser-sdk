@@ -1,11 +1,4 @@
-import {
-  addTelemetryDebug,
-  elapsed,
-  ExperimentalFeature,
-  isExperimentalFeatureEnabled,
-  noop,
-  ONE_MINUTE,
-} from '@datadog/browser-core'
+import { addTelemetryDebug, elapsed, ExperimentalFeature, isExperimentalFeatureEnabled, noop, ONE_MINUTE } from '@datadog/browser-core'
 import type { Duration, RelativeTime } from '@datadog/browser-core'
 import { RumPerformanceEntryType, supportPerformanceTimingEvent } from '../../../browser/performanceObservable'
 import type { RumFirstInputTiming, RumPerformanceEventTiming } from '../../../browser/performanceObservable'
@@ -77,8 +70,11 @@ export function trackInteractionToNextPaint(
       interactionToNextPaint = newInteraction.duration
       interactionToNextPaintStartTime = elapsed(viewStart, newInteraction.startTime)
 
-      if (inpTarget && isElementNode(inpTarget)) {
-        interactionToNextPaintTargetSelector = getSelectorFromElement(inpTarget, configuration.actionNameAttribute)
+      if (newInteraction.target && isElementNode(newInteraction.target)) {
+        interactionToNextPaintTargetSelector = getSelectorFromElement(
+          newInteraction.target,
+          configuration.actionNameAttribute
+        )
       } else {
         interactionToNextPaintTargetSelector = undefined
       }

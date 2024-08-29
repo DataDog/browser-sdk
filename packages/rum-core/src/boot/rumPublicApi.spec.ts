@@ -14,7 +14,7 @@ import { cleanupSyntheticsWorkerValues, mockExperimentalFeatures } from '@datado
 import type { TestSetupBuilder } from '../../test'
 import { setup, noopRecorderApi } from '../../test'
 import { ActionType, VitalType } from '../rawRumEvent.types'
-import type { DurationVitalInstance } from '../domain/vital/vitalCollection'
+import type { DurationVitalReference } from '../domain/vital/vitalCollection'
 import type { RumPublicApi, RecorderApi } from './rumPublicApi'
 import { makeRumPublicApi } from './rumPublicApi'
 import type { StartRum } from './startRum'
@@ -31,7 +31,8 @@ const noopStartRum = (): ReturnType<StartRum> => ({
   viewContexts: {} as any,
   session: {} as any,
   stopSession: () => undefined,
-  startDurationVital: () => ({ stop: () => undefined }) as DurationVitalInstance,
+  startDurationVital: () => ({}) as DurationVitalReference,
+  stopDurationVital: () => undefined,
   addDurationVital: () => undefined,
   stop: () => undefined,
 })
@@ -766,10 +767,9 @@ describe('rum public api', () => {
       )
       rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
       // eslint-disable-next-line @typescript-eslint/no-unsafe-call
-      ;(rumPublicApi as any).startDurationVital('foo', { context: { foo: 'bar' }, details: 'details-value' })
-      expect(startDurationVitalSpy).toHaveBeenCalledWith({
-        name: 'foo',
-        details: 'details-value',
+      ;(rumPublicApi as any).startDurationVital('foo', { context: { foo: 'bar' }, description: 'description-value' })
+      expect(startDurationVitalSpy).toHaveBeenCalledWith('foo', {
+        description: 'description-value',
         context: { foo: 'bar' },
       })
     })
@@ -807,14 +807,14 @@ describe('rum public api', () => {
         startTime,
         duration: 100,
         context: { foo: 'bar' },
-        details: 'details-value',
+        description: 'description-value',
       })
       expect(addDurationVitalSpy).toHaveBeenCalledWith({
         name: 'foo',
         startClocks: timeStampToClocks(startTime),
         duration: 100,
         context: { foo: 'bar' },
-        details: 'details-value',
+        description: 'description-value',
         type: VitalType.DURATION,
       })
     })

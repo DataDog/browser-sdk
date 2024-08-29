@@ -18,6 +18,42 @@
 
 ---
 
+## v5.24.0
+
+**Public Changes:**
+
+- ✨ [RUM-5778] Custom Vitals Collection V3 ([#2929](https://github.com/DataDog/browser-sdk/pull/2929)) [RUM] [RUM-SLIM]
+- 🐛 bundle size: calculate diff from PR base instead of main ([#2910](https://github.com/DataDog/browser-sdk/pull/2910))
+
+**Internal Changes:**
+
+- 👷 Update dependency eslint-plugin-jsdoc to v50 ([#2932](https://github.com/DataDog/browser-sdk/pull/2932))
+- 👷 Update all non-major dependencies ([#2948](https://github.com/DataDog/browser-sdk/pull/2948)) [WORKER]
+- 👷 Bump staging to staging-35
+- 👷 Update all non-major dependencies ([#2941](https://github.com/DataDog/browser-sdk/pull/2941)) [RUM-REACT]
+- 👷 Bump staging to staging-34
+- 👷 use devflow to merge main into staging ([#2927](https://github.com/DataDog/browser-sdk/pull/2927))
+- 👷 Update all non-major dependencies ([#2920](https://github.com/DataDog/browser-sdk/pull/2920)) [RUM] [RUM-SLIM] [RUM-REACT]
+- 👷 Update dependency puppeteer to v23 ([#2933](https://github.com/DataDog/browser-sdk/pull/2933))
+- 👷 Bump staging to staging-33
+- 👷 upgrade gitlab runner ([#2928](https://github.com/DataDog/browser-sdk/pull/2928))
+- 👷 [RUM-5673] Improve `test-performance` execution time ([#2914](https://github.com/DataDog/browser-sdk/pull/2914))
+- 👷 Bump staging to staging-32
+- 👷 use devflow to merge main into staging ([#2917](https://github.com/DataDog/browser-sdk/pull/2917))
+- 👷 Update all non-major dependencies ([#2900](https://github.com/DataDog/browser-sdk/pull/2900))
+- 👷 Update dependency eslint-plugin-unicorn to v55 ([#2901](https://github.com/DataDog/browser-sdk/pull/2901))
+- 👷 Update dependency @types/node to v22 ([#2902](https://github.com/DataDog/browser-sdk/pull/2902))
+- 🎨 Refactor spec files and remove test setup builder ([#2913](https://github.com/DataDog/browser-sdk/pull/2913)) [RUM] [RUM-SLIM]
+- 🧪 Update browser matrix for tests ([#2884](https://github.com/DataDog/browser-sdk/pull/2884)) [LOGS] [RUM] [RUM-SLIM] [WORKER] [RUM-REACT]
+- Revert "[RUM-5590] Add telemetry for INP null target ([#2895](https://github.com/DataDog/browser-sdk/pull/2895))" ([#2955](https://github.com/DataDog/browser-sdk/pull/2955)) [RUM] [RUM-SLIM]
+- Fix history API instrumentation ([#2944](https://github.com/DataDog/browser-sdk/pull/2944)) [LOGS] [RUM] [RUM-SLIM] [WORKER]
+- [RUM-5705] Collect Long Animation Frames ([#2924](https://github.com/DataDog/browser-sdk/pull/2924)) [LOGS] [RUM] [RUM-SLIM] [WORKER]
+- ✨ [RUM-5712] add error.handling to logs ([#2918](https://github.com/DataDog/browser-sdk/pull/2918)) [LOGS] [RUM] [RUM-SLIM] [WORKER]
+- Revert "👷 use devflow to merge main into staging ([#2917](https://github.com/DataDog/browser-sdk/pull/2917))" ([#2922](https://github.com/DataDog/browser-sdk/pull/2922))
+- ♻️ remove duplicate pageStateHistory.stop() ([#2912](https://github.com/DataDog/browser-sdk/pull/2912)) [RUM] [RUM-SLIM]
+- [RUM-5590] Add telemetry for INP null target ([#2895](https://github.com/DataDog/browser-sdk/pull/2895)) [LOGS] [RUM] [RUM-SLIM] [WORKER]
+- Revert "👷 disable test-performance job ([#2904](https://github.com/DataDog/browser-sdk/pull/2904))" ([#2906](https://github.com/DataDog/browser-sdk/pull/2906))
+
 ## v5.23.3
 
 **Internal Changes:**

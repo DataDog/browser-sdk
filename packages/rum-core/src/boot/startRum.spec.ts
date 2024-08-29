@@ -34,6 +34,7 @@ import type { RumConfiguration } from '../domain/configuration'
 import { RumEventType } from '../rawRumEvent.types'
 import { startFeatureFlagContexts } from '../domain/contexts/featureFlagContext'
 import type { PageStateHistory } from '../domain/contexts/pageStateHistory'
+import { createCustomVitalsState } from '../domain/vital/vitalCollection'
 import { startRum, startRumEventCollection } from './startRum'
 
 function collectServerEvents(lifeCycle: LifeCycle) {
@@ -322,7 +323,8 @@ describe('view events', () => {
         () => ({ user: {}, context: {}, hasReplay: undefined }),
         undefined,
         createIdentityEncoder,
-        createTrackingConsentState(TrackingConsent.GRANTED)
+        createTrackingConsentState(TrackingConsent.GRANTED),
+        createCustomVitalsState()
       )
     )
     interceptor = interceptRequests()
