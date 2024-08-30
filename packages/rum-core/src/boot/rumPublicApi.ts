@@ -251,11 +251,10 @@ export interface RumPublicApi extends PublicApi {
 
   /**
    * Add a custom duration vital
-   * stored in @vital.custom.<name>
    *
    * @param name name of the custom vital
    * @param options.startTime epoch timestamp of the start of the custom vital
-   * @param options.duration duration of the custom vital
+   * @param options.duration duration of the custom vital in millisecond
    * @param options.context custom context attached to the vital
    * @param options.description  Description of the vital
    */
@@ -269,8 +268,6 @@ export interface RumPublicApi extends PublicApi {
    *
    * If you plan to have multiple durations for the same vital, you should use the reference returned by this method.
    *
-   * stored in @vital.custom.<name>
-   *
    * @param name name of the custom vital
    * @param options.context custom context attached to the vital
    * @param options.description Description of the vital
@@ -280,7 +277,6 @@ export interface RumPublicApi extends PublicApi {
 
   /**
    * Stop a custom duration vital
-   * stored in @vital.custom.<name>
    *
    * @param nameOrRef name of the custom vital or the reference to it
    * @param options.context custom context attached to the vital
@@ -519,21 +515,19 @@ export function makeRumPublicApi(
 
     stopSessionReplayRecording: monitor(() => recorderApi.stop()),
 
-    addDurationVital: monitor(
-      (name: string, options: { startTime: number; duration: number; context?: object; description?: string }) => {
-        addTelemetryUsage({ feature: 'add-duration-vital' })
-        strategy.addDurationVital({
-          name: sanitize(name)!,
-          type: VitalType.DURATION,
-          startClocks: timeStampToClocks(options.startTime as TimeStamp),
-          duration: options.duration as Duration,
-          context: sanitize(options && options.context) as Context,
-          description: sanitize(options && options.description) as string | undefined,
-        })
-      }
-    ),
+    addDurationVital: monitor((name, options) => {
+      addTelemetryUsage({ feature: 'add-duration-vital' })
+      strategy.addDurationVital({
+        name: sanitize(name)!,
+        type: VitalType.DURATION,
+        startClocks: timeStampToClocks(options.startTime as TimeStamp),
+        duration: options.duration as Duration,
+        context: sanitize(options && options.context) as Context,
+        description: sanitize(options && options.description) as string | undefined,
+      })
+    }),
 
-    startDurationVital: monitor((name: string, options?: { context?: object; description?: string }) => {
+    startDurationVital: monitor((name, options) => {
       addTelemetryUsage({ feature: 'start-duration-vital' })
       return strategy.startDurationVital(sanitize(name)!, {
         context: sanitize(options && options.context) as Context,
@@ -541,15 +535,13 @@ export function makeRumPublicApi(
       })
     }),
 
-    stopDurationVital: monitor(
-      (nameOrRef: string | DurationVitalReference, options?: { context?: object; description?: string }) => {
-        addTelemetryUsage({ feature: 'stop-duration-vital' })
-        strategy.stopDurationVital(typeof nameOrRef === 'string' ? sanitize(nameOrRef)! : nameOrRef, {
-          context: sanitize(options && options.context) as Context,
-          description: sanitize(options && options.description) as string | undefined,
-        })
-      }
-    ),
+    stopDurationVital: monitor((nameOrRef, options) => {
+      addTelemetryUsage({ feature: 'stop-duration-vital' })
+      strategy.stopDurationVital(typeof nameOrRef === 'string' ? sanitize(nameOrRef)! : nameOrRef, {
+        context: sanitize(options && options.context) as Context,
+        description: sanitize(options && options.description) as string | undefined,
+      })
+    }),
   })
 
   return rumPublicApi
