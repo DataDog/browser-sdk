@@ -29,7 +29,7 @@ import {
   computePerformanceResourceDetails,
   computeResourceEntryDuration,
   computeResourceEntryType,
-  computeSize,
+  computeResourceEntrySize,
   isRequestKind,
   isLongDataUrl,
   sanitizeDataUrl,
@@ -178,7 +178,7 @@ function computeResourceEntryMetrics(entry: RumPerformanceResourceTiming) {
         duration: computeResourceEntryDuration(entry),
         render_blocking_status: renderBlockingStatus,
       },
-      computeSize(entry),
+      computeResourceEntrySize(entry),
       computePerformanceResourceDetails(entry)
     ),
   }

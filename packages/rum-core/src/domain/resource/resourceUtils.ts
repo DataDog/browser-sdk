@@ -175,7 +175,7 @@ function formatTiming(origin: RelativeTime, start: RelativeTime, end: RelativeTi
   }
 }
 
-export function computeSize(entry: RumPerformanceResourceTiming) {
+export function computeResourceEntrySize(entry: RumPerformanceResourceTiming) {
   // Make sure a request actually occurred
   if (entry.startTime < entry.responseStart) {
     const { encodedBodySize, decodedBodySize, transferSize } = entry
