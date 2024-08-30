@@ -25,15 +25,17 @@ const noopStartRum = (): ReturnType<StartRum> => ({
   addTiming: () => undefined,
   addFeatureFlagEvaluation: () => undefined,
   startView: () => undefined,
+  setViewContext: () => undefined,
+  setViewContextProperty: () => undefined,
   updateViewName: () => undefined,
   getInternalContext: () => undefined,
-  lifeCycle: {} as any,
-  viewContexts: {} as any,
   session: {} as any,
   stopSession: () => undefined,
   startDurationVital: () => ({ stop: () => undefined }) as DurationVitalInstance,
   addDurationVital: () => undefined,
   stop: () => undefined,
+  lifeCycle: {} as any,
+  viewHistory: {} as any,
 })
 const DEFAULT_INIT_CONFIGURATION = { applicationId: 'xxx', clientToken: 'xxx' }
 const FAKE_WORKER = {} as DeflateWorker
@@ -858,6 +860,40 @@ describe('rum public api', () => {
       ;(rumPublicApi as any).updateViewName('foo')
 
       expect(updateViewNameSpy).toHaveBeenCalledWith('foo')
+    })
+  })
+
+  describe('set view specific context', () => {
+    it('should set view specific context with setViewContext', () => {
+      const setViewContextSpy = jasmine.createSpy()
+      const rumPublicApi = makeRumPublicApi(
+        () => ({
+          ...noopStartRum(),
+          setViewContext: setViewContextSpy,
+        }),
+        noopRecorderApi
+      )
+      rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-call
+      ;(rumPublicApi as any).setViewContext({ foo: 'bar' })
+
+      expect(setViewContextSpy).toHaveBeenCalledWith({ foo: 'bar' })
+    })
+
+    it('should set view specific context with setViewContextProperty', () => {
+      const setViewContextPropertySpy = jasmine.createSpy()
+      const rumPublicApi = makeRumPublicApi(
+        () => ({
+          ...noopStartRum(),
+          setViewContextProperty: setViewContextPropertySpy,
+        }),
+        noopRecorderApi
+      )
+      rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-call
+      ;(rumPublicApi as any).setViewContextProperty('foo', 'bar')
+
+      expect(setViewContextPropertySpy).toHaveBeenCalledWith('foo', 'bar')
     })
   })
 })
