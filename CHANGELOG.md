@@ -18,6 +18,16 @@
 
 ---
 
+## v5.25.0
+
+**Public Changes:**
+
+- Remove custom_vitals FF ([#2957](https://github.com/DataDog/browser-sdk/pull/2957)) [LOGS] [RUM] [RUM-SLIM] [WORKER]
+
+**Internal Changes:**
+
+- 👷 don't print log messages twice in unit tests ([#2959](https://github.com/DataDog/browser-sdk/pull/2959))
+
 ## v5.24.0
 
 **Public Changes:**
