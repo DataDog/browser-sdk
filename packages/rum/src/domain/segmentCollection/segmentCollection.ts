@@ -6,6 +6,7 @@ import type { BrowserRecord, CreationReason, SegmentContext } from '../../types'
 import { buildReplayPayload } from './buildReplayPayload'
 import type { FlushReason, Segment } from './segment'
 import { createSegment } from './segment'
+import { interactionSelectorMap } from 'packages/rum-core/src/domain/action/trackClickActions'
 
 export const SEGMENT_DURATION_LIMIT = 30 * ONE_SECOND
 /**
@@ -87,6 +88,7 @@ export function doStartSegmentCollection(
 
   const { unsubscribe: unsubscribeViewCreated } = lifeCycle.subscribe(LifeCycleEventType.VIEW_CREATED, () => {
     flushSegment('view_change')
+    interactionSelectorMap.clear()
   })
 
   const { unsubscribe: unsubscribePageExited } = lifeCycle.subscribe(
