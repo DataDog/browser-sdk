@@ -30,7 +30,7 @@ import {
   computeResourceEntryDuration,
   computeResourceEntryType,
   computeResourceEntrySize,
-  isRequestKind,
+  isResourceEntryRequestType,
   isLongDataUrl,
   sanitizeDataUrl,
 } from './resourceUtils'
@@ -54,7 +54,7 @@ export function startResourceCollection(
     buffered: true,
   }).subscribe((entries) => {
     for (const entry of entries) {
-      if (!isRequestKind(entry)) {
+      if (!isResourceEntryRequestType(entry)) {
         const rawEvent = processResourceEntry(entry, configuration)
         if (rawEvent) {
           lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, rawEvent)
