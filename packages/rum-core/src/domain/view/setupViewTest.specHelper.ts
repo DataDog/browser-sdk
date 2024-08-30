@@ -26,7 +26,7 @@ export function setupViewTest(
   const { handler: viewEndHandler, getViewEvent: getViewEnd, getHandledCount: getViewEndCount } = spyOnViews('view end')
   lifeCycle.subscribe(LifeCycleEventType.VIEW_ENDED, viewEndHandler)
 
-  const { stop, startView, updateViewName, addTiming } = trackViews(
+  const { stop, startView, updateViewName, setViewContext, setViewContextProperty, addTiming } = trackViews(
     location,
     lifeCycle,
     domMutationObservable,
@@ -38,6 +38,8 @@ export function setupViewTest(
   return {
     stop,
     startView,
+    setViewContext,
+    setViewContextProperty,
     updateViewName,
     addTiming,
     getViewUpdate,

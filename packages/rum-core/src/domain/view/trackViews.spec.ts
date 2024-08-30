@@ -965,6 +965,24 @@ describe('view event count', () => {
       startView({ context: { foo: 'bar' } })
       expect(getViewUpdate(2).context).toBeUndefined()
     })
+
+    it('should set view context with setViewContext', () => {
+      mockExperimentalFeatures([ExperimentalFeature.VIEW_SPECIFIC_CONTEXT])
+      setupBuilder.build()
+      const { getViewUpdate, setViewContext } = viewTest
+
+      setViewContext({ foo: 'bar' })
+      expect(getViewUpdate(1).context).toEqual({ foo: 'bar' })
+    })
+
+    it('should set view context with setViewContextProperty', () => {
+      mockExperimentalFeatures([ExperimentalFeature.VIEW_SPECIFIC_CONTEXT])
+      setupBuilder.build()
+      const { getViewUpdate, setViewContextProperty } = viewTest
+
+      setViewContextProperty('foo', 'bar')
+      expect(getViewUpdate(1).context).toEqual({ foo: 'bar' })
+    })
   })
 
   describe('update view name', () => {

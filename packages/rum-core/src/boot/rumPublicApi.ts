@@ -380,6 +380,7 @@ export function makeRumPublicApi(
          * Enable to manually set the context of the current view.
          * @param context context of the view
          */
+        // no-dd-sa:typescript-best-practices/no-explicit-any
         ;(rumPublicApi as any).setViewContext = monitor((context: Context) => {
           strategy.setViewContext(context)
         })
@@ -391,6 +392,7 @@ export function makeRumPublicApi(
          * @param key key of the property
          * @param value value of the property
          */
+        // no-dd-sa:typescript-best-practices/no-explicit-any
         ;(rumPublicApi as any).setViewContextProperty = monitor((key: string, value: any) => {
           strategy.setViewContextProperty(key, value)
         })
