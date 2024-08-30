@@ -865,20 +865,25 @@ describe('rum public api', () => {
   })
 
   describe('set view specific context', () => {
-
+    let rumPublicApi: RumPublicApi
+    let setViewContextSpy: jasmine.Spy<ReturnType<StartRum>['setViewContext']>
+    let setViewContextPropertySpy: jasmine.Spy<ReturnType<StartRum>['setViewContextProperty']>
     beforeEach(() => {
-      mockExperimentalFeatures([ExperimentalFeature.VIEW_SPECIFIC_CONTEXT])
-    })
-
-    it('should set view specific context with setViewContext', () => {
-      const setViewContextSpy = jasmine.createSpy()
-      const rumPublicApi = makeRumPublicApi(
+      setViewContextSpy = jasmine.createSpy()
+      setViewContextPropertySpy = jasmine.createSpy()
+      rumPublicApi = makeRumPublicApi(
         () => ({
           ...noopStartRum(),
           setViewContext: setViewContextSpy,
+          setViewContextProperty: setViewContextPropertySpy,
         }),
         noopRecorderApi
       )
+    })
+
+    it('should set view specific context with setViewContext', () => {
+      mockExperimentalFeatures([ExperimentalFeature.VIEW_SPECIFIC_CONTEXT])
+
       rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
       /* eslint-disable @typescript-eslint/no-unsafe-call */
       // no-dd-sa:typescript-best-practices/no-explicit-any
@@ -888,20 +893,21 @@ describe('rum public api', () => {
     })
 
     it('should set view specific context with setViewContextProperty', () => {
-      const setViewContextPropertySpy = jasmine.createSpy()
-      const rumPublicApi = makeRumPublicApi(
-        () => ({
-          ...noopStartRum(),
-          setViewContextProperty: setViewContextPropertySpy,
-        }),
-        noopRecorderApi
-      )
+      mockExperimentalFeatures([ExperimentalFeature.VIEW_SPECIFIC_CONTEXT])
+
       rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
       /* eslint-disable @typescript-eslint/no-unsafe-call */
       // no-dd-sa:typescript-best-practices/no-explicit-any
       ;(rumPublicApi as any).setViewContextProperty('foo', 'bar')
 
       expect(setViewContextPropertySpy).toHaveBeenCalledWith('foo', 'bar')
+    })
+
+    it('should not set view specific context when ff is disabled', () => {
+      rumPublicApi = makeRumPublicApi(noopStartRum, noopRecorderApi)
+      rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
+      expect((rumPublicApi as any).setViewContext).toBeUndefined()
+      expect((rumPublicApi as any).setViewContextProperty).toBeUndefined()
     })
   })
 })

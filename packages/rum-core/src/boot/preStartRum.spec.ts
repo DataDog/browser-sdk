@@ -651,6 +651,24 @@ describe('preStartRum', () => {
       expect(addTimingSpy).toHaveBeenCalledOnceWith(name, time)
     })
 
+    it('setViewContext', () => {
+      const setViewContextSpy = jasmine.createSpy()
+      doStartRumSpy.and.returnValue({ setViewContext: setViewContextSpy } as unknown as StartRumResult)
+
+      strategy.setViewContext({ foo: 'bar' })
+      strategy.init(DEFAULT_INIT_CONFIGURATION, PUBLIC_API)
+      expect(setViewContextSpy).toHaveBeenCalledOnceWith({ foo: 'bar' })
+    })
+
+    it('setViewContextProperty', () => {
+      const setViewContextPropertySpy = jasmine.createSpy()
+      doStartRumSpy.and.returnValue({ setViewContextProperty: setViewContextPropertySpy } as unknown as StartRumResult)
+
+      strategy.setViewContextProperty('foo', 'bar')
+      strategy.init(DEFAULT_INIT_CONFIGURATION, PUBLIC_API)
+      expect(setViewContextPropertySpy).toHaveBeenCalledOnceWith('foo', 'bar')
+    })
+
     it('updateViewName', () => {
       const updateViewNameSpy = jasmine.createSpy()
       doStartRumSpy.and.returnValue({ updateViewName: updateViewNameSpy } as unknown as StartRumResult)
