@@ -1,12 +1,11 @@
 import type { DeflateEncoder, HttpRequest, TimeoutId } from '@datadog/browser-core'
 import { isPageExitReason, ONE_SECOND, clearTimeout, setTimeout } from '@datadog/browser-core'
 import type { LifeCycle, ViewContexts, RumSessionManager, RumConfiguration } from '@datadog/browser-rum-core'
-import { LifeCycleEventType } from '@datadog/browser-rum-core'
+import { LifeCycleEventType, interactionSelectorMap } from '@datadog/browser-rum-core'
 import type { BrowserRecord, CreationReason, SegmentContext } from '../../types'
 import { buildReplayPayload } from './buildReplayPayload'
 import type { FlushReason, Segment } from './segment'
 import { createSegment } from './segment'
-import { interactionSelectorMap } from 'packages/rum-core/src/domain/action/trackClickActions'
 
 export const SEGMENT_DURATION_LIMIT = 30 * ONE_SECOND
 /**
