@@ -117,6 +117,18 @@ describe('matchRequestResourceEntry', () => {
     expect(matchingEntry).toEqual(undefined)
   })
 
+  it('should not match entry with invalid duration', () => {
+    const entry = createPerformanceEntry(RumPerformanceEntryType.RESOURCE, {
+      duration: -1 as Duration,
+    })
+
+    entries.push(entry)
+
+    const matchingEntry = matchRequestResourceEntry(FAKE_REQUEST as RequestCompleteEvent)
+
+    expect(matchingEntry).toEqual(undefined)
+  })
+
   it('[without tolerant_resource_timings] should not match invalid entry nested in the request ', () => {
     const entry = createPerformanceEntry(RumPerformanceEntryType.RESOURCE, {
       // fetchStart < startTime is invalid

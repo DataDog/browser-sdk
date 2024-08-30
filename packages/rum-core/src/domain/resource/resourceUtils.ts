@@ -135,6 +135,10 @@ export function computePerformanceResourceDetails(
   return details
 }
 
+export function hasValidResourceEntryDuration(entry: RumPerformanceResourceTiming) {
+  return entry.duration >= 0
+}
+
 export function hasValidResourceEntryTimings(entry: RumPerformanceResourceTiming) {
   if (isExperimentalFeatureEnabled(ExperimentalFeature.TOLERANT_RESOURCE_TIMINGS)) {
     return true
