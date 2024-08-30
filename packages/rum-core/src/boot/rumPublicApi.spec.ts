@@ -29,13 +29,14 @@ const noopStartRum = (): ReturnType<StartRum> => ({
   setViewContextProperty: () => undefined,
   updateViewName: () => undefined,
   getInternalContext: () => undefined,
+  lifeCycle: {} as any,
+  // no-dd-sa:typescript-best-practices/no-explicit-any
+  viewHistory: {} as any,
   session: {} as any,
   stopSession: () => undefined,
   startDurationVital: () => ({ stop: () => undefined }) as DurationVitalInstance,
   addDurationVital: () => undefined,
   stop: () => undefined,
-  lifeCycle: {} as any,
-  viewHistory: {} as any,
 })
 const DEFAULT_INIT_CONFIGURATION = { applicationId: 'xxx', clientToken: 'xxx' }
 const FAKE_WORKER = {} as DeflateWorker
@@ -864,6 +865,11 @@ describe('rum public api', () => {
   })
 
   describe('set view specific context', () => {
+
+    beforeEach(() => {
+      mockExperimentalFeatures([ExperimentalFeature.VIEW_SPECIFIC_CONTEXT])
+    })
+
     it('should set view specific context with setViewContext', () => {
       const setViewContextSpy = jasmine.createSpy()
       const rumPublicApi = makeRumPublicApi(
@@ -874,7 +880,8 @@ describe('rum public api', () => {
         noopRecorderApi
       )
       rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-call
+      /* eslint-disable @typescript-eslint/no-unsafe-call */
+      // no-dd-sa:typescript-best-practices/no-explicit-any
       ;(rumPublicApi as any).setViewContext({ foo: 'bar' })
 
       expect(setViewContextSpy).toHaveBeenCalledWith({ foo: 'bar' })
@@ -890,7 +897,8 @@ describe('rum public api', () => {
         noopRecorderApi
       )
       rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-call
+      /* eslint-disable @typescript-eslint/no-unsafe-call */
+      // no-dd-sa:typescript-best-practices/no-explicit-any
       ;(rumPublicApi as any).setViewContextProperty('foo', 'bar')
 
       expect(setViewContextPropertySpy).toHaveBeenCalledWith('foo', 'bar')
