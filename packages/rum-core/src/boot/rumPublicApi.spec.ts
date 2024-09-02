@@ -599,8 +599,13 @@ describe('rum public api', () => {
       const startViewSpy = jasmine.createSpy()
       const rumPublicApi = makeRumPublicApi(() => ({ ...noopStartRum(), startView: startViewSpy }), noopRecorderApi)
       rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
-      rumPublicApi.startView({ name: 'foo', service: 'bar', version: 'baz' })
-      expect(startViewSpy.calls.argsFor(0)[0]).toEqual({ name: 'foo', service: 'bar', version: 'baz' })
+      rumPublicApi.startView({ name: 'foo', service: 'bar', version: 'baz', context: { foo: 'bar' } })
+      expect(startViewSpy.calls.argsFor(0)[0]).toEqual({
+        name: 'foo',
+        service: 'bar',
+        version: 'baz',
+        context: { foo: 'bar' },
+      })
     })
   })
 
