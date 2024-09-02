@@ -33,12 +33,16 @@ export function createLocationChangeObservable(configuration: RumConfiguration, 
 }
 
 function trackHistory(configuration: RumConfiguration, onHistoryChange: () => void) {
-  const { stop: stopInstrumentingPushState } = instrumentMethod(history, 'pushState', ({ onPostCall }) => {
+  const { stop: stopInstrumentingPushState } = instrumentMethod(History.prototype, 'pushState', ({ onPostCall }) => {
     onPostCall(onHistoryChange)
   })
-  const { stop: stopInstrumentingReplaceState } = instrumentMethod(history, 'replaceState', ({ onPostCall }) => {
-    onPostCall(onHistoryChange)
-  })
+  const { stop: stopInstrumentingReplaceState } = instrumentMethod(
+    History.prototype,
+    'replaceState',
+    ({ onPostCall }) => {
+      onPostCall(onHistoryChange)
+    }
+  )
   const { stop: removeListener } = addEventListener(configuration, window, DOM_EVENT.POP_STATE, onHistoryChange)
 
   return {

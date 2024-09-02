@@ -2,7 +2,7 @@ import { buildUrl } from '../../src'
 
 export function mockLocation(initialUrl: string) {
   const fakeLocation = buildLocation(initialUrl)
-  spyOn(history, 'pushState').and.callFake((_: any, __: string, pathname: string) => {
+  spyOn(History.prototype, 'pushState').and.callFake((_: any, __: string, pathname: string) => {
     Object.assign(fakeLocation, buildLocation(pathname, fakeLocation.href))
   })
 
