@@ -47,6 +47,7 @@ import type { PageStateHistory } from '../domain/contexts/pageStateHistory'
 import { startPageStateHistory } from '../domain/contexts/pageStateHistory'
 import type { CommonContext } from '../domain/contexts/commonContext'
 import { startDisplayContext } from '../domain/contexts/displayContext'
+import type { CustomVitalsState } from '../domain/vital/vitalCollection'
 import { startVitalCollection } from '../domain/vital/vitalCollection'
 import { startCiVisibilityContext } from '../domain/contexts/ciVisibilityContext'
 import { startLongAnimationFrameCollection } from '../domain/longAnimationFrame/longAnimationFrameCollection'
@@ -66,7 +67,8 @@ export function startRum(
   // `startRum` and its subcomponents assume tracking consent is granted initially and starts
   // collecting logs unconditionally. As such, `startRum` should be called with a
   // `trackingConsentState` set to "granted".
-  trackingConsentState: TrackingConsentState
+  trackingConsentState: TrackingConsentState,
+  customVitalsState: CustomVitalsState
 ) {
   const cleanupTasks: Array<() => void> = []
   const lifeCycle = new LifeCycle()
@@ -183,7 +185,7 @@ export function startRum(
   const { stop: stopPerformanceCollection } = startPerformanceCollection(lifeCycle, configuration)
   cleanupTasks.push(stopPerformanceCollection)
 
-  const vitalCollection = startVitalCollection(lifeCycle, pageStateHistory)
+  const vitalCollection = startVitalCollection(lifeCycle, pageStateHistory, customVitalsState)
   const internalContext = startInternalContext(
     configuration.applicationId,
     session,
@@ -205,6 +207,7 @@ export function startRum(
     stopSession: () => session.expire(),
     getInternalContext: internalContext.get,
     startDurationVital: vitalCollection.startDurationVital,
+    stopDurationVital: vitalCollection.stopDurationVital,
     addDurationVital: vitalCollection.addDurationVital,
     stop: () => {
       cleanupTasks.forEach((task) => task())
