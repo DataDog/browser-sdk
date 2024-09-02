@@ -1,4 +1,4 @@
-import { assign, buildUrl } from '../../src'
+import { buildUrl } from '../../src'
 
 export function mockLocation(initialUrl: string) {
   const fakeLocation = buildLocation(initialUrl)
