@@ -1,0 +1,6 @@
+rulesets:
+  - typescript-best-practices:
+    rules:
+      no-explicit-any:
+        ignore:
+          - "packages/rum-core/src/boot/rumPublicApi.ts"
