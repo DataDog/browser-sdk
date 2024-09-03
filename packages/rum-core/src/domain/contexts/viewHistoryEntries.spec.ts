@@ -178,4 +178,22 @@ describe('viewHistoryEntries', () => {
       })
     })
   })
+
+  describe('custom context', () => {
+    it('should be set on view creation', () => {
+      lifeCycle.notify(
+        LifeCycleEventType.BEFORE_VIEW_CREATED,
+        buildViewCreatedEvent({
+          id: 'view 1',
+          context: {
+            foo: 'bar',
+          },
+        })
+      )
+      expect(viewContexts.findView()).toBeDefined()
+      expect(viewContexts.findView()!.customerContext).toEqual({
+        foo: 'bar',
+      })
+    })
+  })
 })

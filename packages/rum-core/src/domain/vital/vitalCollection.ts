@@ -7,19 +7,20 @@ import { RumEventType, VitalType } from '../../rawRumEvent.types'
 import type { PageStateHistory } from '../contexts/pageStateHistory'
 import { PageState } from '../contexts/pageStateHistory'
 
+export interface DurationVitalOptions {
+  context?: Context
+  description?: string
+}
+
+export interface DurationVitalReference {
+  __dd_vital_reference: true
+}
+
 export interface DurationVitalStart {
   name: string
+  startClocks: ClocksState
   context?: Context
-  details?: string
-}
-
-export interface DurationVitalStop {
-  context?: Context
-  details?: string
-}
-
-export interface DurationVitalInstance {
-  stop: (options?: DurationVitalStop) => void
+  description?: string
 }
 
 export interface DurationVital {
@@ -27,11 +28,26 @@ export interface DurationVital {
   type: VitalType.DURATION
   startClocks: ClocksState
   duration: Duration
-  details?: string
+  description?: string
   context?: Context
 }
 
-export function startVitalCollection(lifeCycle: LifeCycle, pageStateHistory: PageStateHistory) {
+export interface CustomVitalsState {
+  vitalsByName: Map<string, DurationVitalStart>
+  vitalsByReference: WeakMap<DurationVitalReference, DurationVitalStart>
+}
+
+export function createCustomVitalsState() {
+  const vitalsByName = new Map<string, DurationVitalStart>()
+  const vitalsByReference = new WeakMap<DurationVitalReference, DurationVitalStart>()
+  return { vitalsByName, vitalsByReference }
+}
+
+export function startVitalCollection(
+  lifeCycle: LifeCycle,
+  pageStateHistory: PageStateHistory,
+  customVitalsState: CustomVitalsState
+) {
   function isValid(vital: DurationVital) {
     return !pageStateHistory.wasInPageStateDuringPeriod(PageState.FROZEN, vital.startClocks.relative, vital.duration)
   }
@@ -44,37 +60,62 @@ export function startVitalCollection(lifeCycle: LifeCycle, pageStateHistory: Pag
 
   return {
     addDurationVital,
-    startDurationVital: (startVital: DurationVitalStart) =>
-      createVitalInstance((vital) => {
-        addDurationVital(vital)
-      }, startVital),
+    startDurationVital: (name: string, options: DurationVitalOptions = {}) =>
+      startDurationVital(customVitalsState, name, options),
+    stopDurationVital: (nameOrRef: string | DurationVitalReference, options: DurationVitalOptions = {}) => {
+      stopDurationVital(addDurationVital, customVitalsState, nameOrRef, options)
+    },
   }
 }
 
-export function createVitalInstance(
+export function startDurationVital(
+  { vitalsByName, vitalsByReference }: CustomVitalsState,
+  name: string,
+  options: DurationVitalOptions = {}
+) {
+  const vital = {
+    name,
+    startClocks: clocksNow(),
+    context: options.context,
+    description: options.description,
+  }
+
+  // To avoid leaking implementation details of the vital, we return a reference to it.
+  const reference: DurationVitalReference = { __dd_vital_reference: true }
+
+  vitalsByName.set(name, vital)
+
+  // To avoid memory leaks caused by the creation of numerous references (e.g., from improper useEffect implementations), we use a WeakMap.
+  vitalsByReference.set(reference, vital)
+
+  return reference
+}
+
+export function stopDurationVital(
   stopCallback: (vital: DurationVital) => void,
-  vitalStart: DurationVitalStart
-): DurationVitalInstance {
-  const startClocks = clocksNow()
-  let stopClocks: ClocksState | undefined
+  { vitalsByName, vitalsByReference }: CustomVitalsState,
+  nameOrRef: string | DurationVitalReference,
+  options: DurationVitalOptions = {}
+) {
+  const vitalStart = typeof nameOrRef === 'string' ? vitalsByName.get(nameOrRef) : vitalsByReference.get(nameOrRef)
 
-  return {
-    stop: (vitalStop) => {
-      if (stopClocks) {
-        return
-      }
+  if (!vitalStart) {
+    return
+  }
 
-      stopClocks = clocksNow()
+  stopCallback(buildDurationVital(vitalStart, vitalStart.startClocks, options, clocksNow()))
 
-      stopCallback(buildDurationVital(vitalStart, startClocks, vitalStop, stopClocks))
-    },
+  if (typeof nameOrRef === 'string') {
+    vitalsByName.delete(nameOrRef)
+  } else {
+    vitalsByReference.delete(nameOrRef)
   }
 }
 
 function buildDurationVital(
   vitalStart: DurationVitalStart,
   startClocks: ClocksState,
-  vitalStop: DurationVitalStop = {},
+  stopOptions: DurationVitalOptions,
   stopClocks: ClocksState
 ): DurationVital {
   return {
@@ -82,8 +123,8 @@ function buildDurationVital(
     type: VitalType.DURATION,
     startClocks,
     duration: elapsed(startClocks.timeStamp, stopClocks.timeStamp),
-    context: combine(vitalStart.context, vitalStop.context),
-    details: vitalStop.details ?? vitalStart.details,
+    context: combine(vitalStart.context, stopOptions.context),
+    description: stopOptions.description ?? vitalStart.description,
   }
 }
 
@@ -95,7 +136,7 @@ function processVital(vital: DurationVital, valueComputedBySdk: boolean): RawRum
       type: vital.type,
       name: vital.name,
       duration: toServerDuration(vital.duration),
-      details: vital.details,
+      description: vital.description,
     },
     type: RumEventType.VITAL,
   }

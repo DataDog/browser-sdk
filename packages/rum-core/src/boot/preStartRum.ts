@@ -23,8 +23,8 @@ import {
 } from '../domain/configuration'
 import type { CommonContext } from '../domain/contexts/commonContext'
 import type { ViewOptions } from '../domain/view/trackViews'
-import type { DurationVital } from '../domain/vital/vitalCollection'
-import { createVitalInstance } from '../domain/vital/vitalCollection'
+import type { DurationVital, CustomVitalsState } from '../domain/vital/vitalCollection'
+import { startDurationVital, stopDurationVital } from '../domain/vital/vitalCollection'
 import { fetchAndApplyRemoteConfiguration, serializeRumConfiguration } from '../domain/configuration'
 import { callPluginsMethod } from '../domain/plugins'
 import type { RumPublicApiOptions, Strategy } from './rumPublicApi'
@@ -34,6 +34,7 @@ export function createPreStartStrategy(
   { ignoreInitIfSyntheticsWillInjectRum, startDeflateWorker }: RumPublicApiOptions,
   getCommonContext: () => CommonContext,
   trackingConsentState: TrackingConsentState,
+  customVitalsState: CustomVitalsState,
   doStartRum: (
     configuration: RumConfiguration,
     deflateWorker: DeflateWorker | undefined,
@@ -41,6 +42,7 @@ export function createPreStartStrategy(
   ) => StartRumResult
 ): Strategy {
   const bufferApiCalls = createBoundedBuffer<StartRumResult>()
+
   let firstStartViewCall:
     | { options: ViewOptions | undefined; callback: (startRumResult: StartRumResult) => void }
     | undefined
@@ -214,8 +216,12 @@ export function createPreStartStrategy(
       bufferApiCalls.add((startRumResult) => startRumResult.addFeatureFlagEvaluation(key, value))
     },
 
-    startDurationVital(vitalStart) {
-      return createVitalInstance((vital) => addDurationVital(vital), vitalStart)
+    startDurationVital(name, options) {
+      return startDurationVital(customVitalsState, name, options)
+    },
+
+    stopDurationVital(name, options) {
+      stopDurationVital(addDurationVital, customVitalsState, name, options)
     },
 
     addDurationVital,
