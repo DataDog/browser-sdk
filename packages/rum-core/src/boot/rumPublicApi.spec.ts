@@ -28,7 +28,6 @@ const noopStartRum = (): ReturnType<StartRum> => ({
   updateViewName: () => undefined,
   getInternalContext: () => undefined,
   lifeCycle: {} as any,
-  // no-dd-sa:typescript-best-practices/no-explicit-any
   viewHistory: {} as any,
   session: {} as any,
   stopSession: () => undefined,
@@ -890,7 +889,6 @@ describe('rum public api', () => {
 
       rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
       /* eslint-disable @typescript-eslint/no-unsafe-call */
-      // no-dd-sa:typescript-best-practices/no-explicit-any
       ;(rumPublicApi as any).setViewContext({ foo: 'bar' })
 
       expect(setViewContextSpy).toHaveBeenCalledWith({ foo: 'bar' })
@@ -901,7 +899,6 @@ describe('rum public api', () => {
 
       rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
       /* eslint-disable @typescript-eslint/no-unsafe-call */
-      // no-dd-sa:typescript-best-practices/no-explicit-any
       ;(rumPublicApi as any).setViewContextProperty('foo', 'bar')
 
       expect(setViewContextPropertySpy).toHaveBeenCalledWith('foo', 'bar')
