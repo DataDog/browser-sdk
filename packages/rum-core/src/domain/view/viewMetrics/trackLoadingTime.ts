@@ -20,13 +20,11 @@ export function trackLoadingTime(
   const firstHidden = trackFirstHidden(configuration)
 
   function invokeCallbackIfAllCandidatesAreReceived() {
-    if (
-      firstHidden.timeStamp !== 0 &&
-      !isWaitingForActivityLoadingTime &&
-      !isWaitingForLoadEvent &&
-      loadingTimeCandidates.length > 0
-    ) {
-      callback(Math.max(...loadingTimeCandidates) as Duration)
+    if (!isWaitingForActivityLoadingTime && !isWaitingForLoadEvent && loadingTimeCandidates.length > 0) {
+      const loadingTime = Math.max(...loadingTimeCandidates)
+      if (loadingTime < firstHidden.timeStamp) {
+        callback(loadingTime as Duration)
+      }
     }
   }
 
