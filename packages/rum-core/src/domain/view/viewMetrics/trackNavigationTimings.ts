@@ -1,14 +1,8 @@
-import type { Duration } from '@datadog/browser-core'
-import { forEach, setTimeout, noop, relativeNow, runOnReadyState } from '@datadog/browser-core'
-import type { TimingsFromDeprecatedPerformanceTiming } from '../../../browser/performanceUtils'
-import { computeTimingsFromDeprecatedPerformanceTiming } from '../../../browser/performanceUtils'
+import type { Duration, TimeoutId } from '@datadog/browser-core'
+import { setTimeout, relativeNow, runOnReadyState, clearTimeout } from '@datadog/browser-core'
 import type { RumPerformanceNavigationTiming } from '../../../browser/performanceObservable'
-import {
-  createPerformanceObservable,
-  RumPerformanceEntryType,
-  supportPerformanceTimingEvent,
-} from '../../../browser/performanceObservable'
 import type { RumConfiguration } from '../../configuration'
+import { getNavigationEntry } from '../../../browser/performanceUtils'
 
 export interface NavigationTimings {
   domComplete: Duration
@@ -18,32 +12,28 @@ export interface NavigationTimings {
   firstByte: Duration | undefined
 }
 
+// This is a subset of "RumPerformanceNavigationTiming" that only contains the relevant fields for
+// computing navigation timings. This is useful to mock the navigation entry in tests.
+export type RelevantNavigationTiming = Pick<
+  RumPerformanceNavigationTiming,
+  'domComplete' | 'domContentLoadedEventEnd' | 'domInteractive' | 'loadEventEnd' | 'responseStart'
+>
+
 export function trackNavigationTimings(
   configuration: RumConfiguration,
-  callback: (timings: NavigationTimings) => void
+  callback: (timings: NavigationTimings) => void,
+  getNavigationEntryImpl: () => RelevantNavigationTiming = getNavigationEntry
 ) {
-  const processEntry = (entry: RumPerformanceNavigationTiming | TimingsFromDeprecatedPerformanceTiming) => {
+  return waitAfterLoadEvent(configuration, () => {
+    const entry = getNavigationEntryImpl()
+
     if (!isIncompleteNavigation(entry)) {
       callback(processNavigationEntry(entry))
     }
-  }
-
-  let stop = noop
-  if (supportPerformanceTimingEvent(RumPerformanceEntryType.NAVIGATION)) {
-    ;({ unsubscribe: stop } = createPerformanceObservable(configuration, {
-      type: RumPerformanceEntryType.NAVIGATION,
-      buffered: true,
-    }).subscribe((entries) => forEach(entries, processEntry)))
-  } else {
-    retrieveNavigationTiming(configuration, processEntry)
-  }
-
-  return { stop }
+  })
 }
 
-function processNavigationEntry(
-  entry: RumPerformanceNavigationTiming | TimingsFromDeprecatedPerformanceTiming
-): NavigationTimings {
+function processNavigationEntry(entry: RelevantNavigationTiming): NavigationTimings {
   return {
     domComplete: entry.domComplete,
     domContentLoaded: entry.domContentLoadedEventEnd,
@@ -57,16 +47,20 @@ function processNavigationEntry(
   }
 }
 
-function isIncompleteNavigation(entry: RumPerformanceNavigationTiming | TimingsFromDeprecatedPerformanceTiming) {
+function isIncompleteNavigation(entry: RelevantNavigationTiming) {
   return entry.loadEventEnd <= 0
 }
 
-function retrieveNavigationTiming(
-  configuration: RumConfiguration,
-  callback: (timing: TimingsFromDeprecatedPerformanceTiming) => void
-) {
-  runOnReadyState(configuration, 'complete', () => {
-    // Send it a bit after the actual load event, so the "loadEventEnd" timing is accurate
-    setTimeout(() => callback(computeTimingsFromDeprecatedPerformanceTiming()))
+function waitAfterLoadEvent(configuration: RumConfiguration, callback: () => void) {
+  let timeoutId: TimeoutId | undefined
+  const { stop: stopOnReadyState } = runOnReadyState(configuration, 'complete', () => {
+    // Invoke the callback a bit after the actual load event, so the "loadEventEnd" timing is accurate
+    timeoutId = setTimeout(() => callback())
   })
+  return {
+    stop: () => {
+      stopOnReadyState()
+      clearTimeout(timeoutId)
+    },
+  }
 }
