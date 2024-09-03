@@ -966,7 +966,7 @@ describe('view event count', () => {
       expect(getViewUpdate(2).context).toBeUndefined()
     })
 
-    it('should set view context with setViewContext', () =>{
+    it('should set view context with setViewContext', () => {
       mockExperimentalFeatures([ExperimentalFeature.VIEW_SPECIFIC_CONTEXT])
       setupBuilder.build()
       const { getViewUpdate, setViewContext } = viewTest

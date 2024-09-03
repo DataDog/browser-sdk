@@ -1,4 +1,12 @@
-import type { Duration, ClocksState, TimeStamp, Subscription, RelativeTime, Context, ContextValue } from '@datadog/browser-core'
+import type {
+  Duration,
+  ClocksState,
+  TimeStamp,
+  Subscription,
+  RelativeTime,
+  Context,
+  ContextValue,
+} from '@datadog/browser-core'
 import {
   noop,
   PageExitReason,
