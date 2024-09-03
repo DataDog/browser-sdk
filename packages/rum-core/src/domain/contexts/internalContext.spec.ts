@@ -4,7 +4,7 @@ import type { TestSetupBuilder } from '../../../test'
 import type { ActionContexts } from '../action/actionCollection'
 import type { RumSessionManager } from '../rumSessionManager'
 import { startInternalContext } from './internalContext'
-import type { ViewHistory } from './viewHistoryEntries'
+import type { ViewHistory } from './viewHistory'
 import type { UrlContexts } from './urlContexts'
 
 describe('internal context', () => {

@@ -983,6 +983,17 @@ describe('view event count', () => {
       setViewContextProperty('foo', 'bar')
       expect(getViewUpdate(1).context).toEqual({ foo: 'bar' })
     })
+
+    it('should not set view context if the feature is not enabled', () => {
+      setupBuilder.build()
+      const { getViewUpdate, setViewContext, setViewContextProperty } = viewTest
+
+      setViewContext({ foo: 'bar' })
+      expect(getViewUpdate(1)).toBeUndefined()
+
+      setViewContextProperty('foo', 'bar')
+      expect(getViewUpdate(1)).toBeUndefined()
+    })
   })
 
   describe('update view name', () => {

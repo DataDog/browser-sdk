@@ -35,7 +35,7 @@ import {
   timeStampToClocks,
 } from '@datadog/browser-core'
 import type { LifeCycle } from '../domain/lifeCycle'
-import type { ViewHistory } from '../domain/contexts/viewHistoryEntries'
+import type { ViewHistory } from '../domain/contexts/viewHistory'
 import type { RumSessionManager } from '../domain/rumSessionManager'
 import type { ReplayStats } from '../rawRumEvent.types'
 import { ActionType, VitalType } from '../rawRumEvent.types'

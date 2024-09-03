@@ -24,7 +24,7 @@ export { ReplayStats, ActionType, RumEventType, FrustrationType, RawRumActionEve
 export { startRum } from './boot/startRum'
 export { LifeCycle, LifeCycleEventType, RawRumEventCollectedData } from './domain/lifeCycle'
 export { ViewCreatedEvent } from './domain/view/trackViews'
-export { ViewHistoryEntry, ViewHistory, startViewHistory } from './domain/contexts/viewHistoryEntries'
+export { ViewHistoryEntry, ViewHistory, startViewHistory } from './domain/contexts/viewHistory'
 export { RumSessionManager, RumSession } from './domain/rumSessionManager'
 export { getMutationObserverConstructor } from './browser/domMutationObservable'
 export { initViewportObservable, getViewportDimension, ViewportDimension } from './browser/viewportObservable'

@@ -18,7 +18,7 @@ import { startRumAssembly } from './assembly'
 import type { LifeCycle, RawRumEventCollectedData } from './lifeCycle'
 import { LifeCycleEventType } from './lifeCycle'
 import type { RumConfiguration } from './configuration'
-import type { ViewHistoryEntry } from './contexts/viewHistoryEntries'
+import type { ViewHistoryEntry } from './contexts/viewHistory'
 import type { CommonContext } from './contexts/commonContext'
 import type { CiVisibilityContext } from './contexts/ciVisibilityContext'
 
