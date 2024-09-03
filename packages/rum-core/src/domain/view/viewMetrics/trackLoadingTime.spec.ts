@@ -1,7 +1,7 @@
 import type { RelativeTime, Duration } from '@datadog/browser-core'
 import { addDuration, clocksOrigin, Observable } from '@datadog/browser-core'
 import type { Clock } from '@datadog/browser-core/test'
-import { mockClock } from '@datadog/browser-core/test'
+import { mockClock, setPageVisibility, restorePageVisibility } from '@datadog/browser-core/test'
 import { ViewLoadingType } from '../../../rawRumEvent.types'
 import { createPerformanceEntry } from '../../../../test'
 import { PAGE_ACTIVITY_END_DELAY, PAGE_ACTIVITY_VALIDATION_DELAY } from '../../waitPageActivityEnd'
@@ -47,6 +47,7 @@ describe('trackLoadingTime', () => {
 
   afterEach(() => {
     stopLoadingTimeTracking()
+    restorePageVisibility()
     clock.cleanup()
   })
 
@@ -124,5 +125,12 @@ describe('trackLoadingTime', () => {
     clock.tick(AFTER_PAGE_ACTIVITY_END_DELAY)
 
     expect(loadingTimeCallback).toHaveBeenCalledOnceWith(addDuration(BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY, CLOCK_GAP))
+  })
+
+  it('should discard loading time if page is hidden before activity', () => {
+    setPageVisibility('hidden')
+    startLoadingTimeTracking()
+
+    expect(loadingTimeCallback).not.toHaveBeenCalled()
   })
 })

@@ -4,6 +4,7 @@ import { waitPageActivityEnd } from '../../waitPageActivityEnd'
 import type { RumConfiguration } from '../../configuration'
 import type { LifeCycle } from '../../lifeCycle'
 import { ViewLoadingType } from '../../../rawRumEvent.types'
+import { trackFirstHidden } from './trackFirstHidden'
 
 export function trackLoadingTime(
   lifeCycle: LifeCycle,
@@ -16,9 +17,15 @@ export function trackLoadingTime(
   let isWaitingForLoadEvent = loadType === ViewLoadingType.INITIAL_LOAD
   let isWaitingForActivityLoadingTime = true
   const loadingTimeCandidates: Duration[] = []
+  const firstHidden = trackFirstHidden(configuration)
 
   function invokeCallbackIfAllCandidatesAreReceived() {
-    if (!isWaitingForActivityLoadingTime && !isWaitingForLoadEvent && loadingTimeCandidates.length > 0) {
+    if (
+      firstHidden.timeStamp !== 0 &&
+      !isWaitingForActivityLoadingTime &&
+      !isWaitingForLoadEvent &&
+      loadingTimeCandidates.length > 0
+    ) {
       callback(Math.max(...loadingTimeCandidates) as Duration)
     }
   }
@@ -34,7 +41,10 @@ export function trackLoadingTime(
   })
 
   return {
-    stop,
+    stop: () => {
+      stop()
+      firstHidden.stop()
+    },
     setLoadEvent: (loadEvent: Duration) => {
       if (isWaitingForLoadEvent) {
         isWaitingForLoadEvent = false
