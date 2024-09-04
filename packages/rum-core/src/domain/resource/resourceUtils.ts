@@ -135,6 +135,12 @@ export function computePerformanceResourceDetails(
   return details
 }
 
+/**
+ * Entries with negative duration are unexpected and should be dismissed. The intake will ignore RUM
+ * Resource events with negative durations anyway.
+ * Since Chromium 128, more entries have unexpected negative durations, see
+ * https://issues.chromium.org/issues/363031537
+ */
 export function hasValidResourceEntryDuration(entry: RumPerformanceResourceTiming) {
   return entry.duration >= 0
 }
