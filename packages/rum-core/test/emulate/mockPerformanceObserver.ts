@@ -89,6 +89,8 @@ export function mockPerformanceTiming() {
   const properties = Object.keys(timings) as Array<keyof typeof performance.timing>
 
   for (const propertyName of properties) {
-    spyOnProperty(performance.timing, propertyName, 'get').and.callFake(() => timings[propertyName])
+    spyOnProperty(performance.timing, propertyName, 'get').and.callFake(
+      () => performance.timing.navigationStart + (timings[propertyName] as number)
+    )
   }
 }
