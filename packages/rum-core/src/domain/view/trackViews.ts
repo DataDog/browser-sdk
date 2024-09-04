@@ -1,4 +1,4 @@
-import type { Duration, ClocksState, TimeStamp, Subscription, RelativeTime } from '@datadog/browser-core'
+import type { Duration, ClocksState, TimeStamp, Subscription, RelativeTime, Context } from '@datadog/browser-core'
 import {
   noop,
   PageExitReason,
@@ -37,6 +37,7 @@ export interface ViewEvent {
   name?: string
   service?: string
   version?: string
+  context?: Context
   location: Readonly<Location>
   commonViewMetrics: CommonViewMetrics
   initialViewMetrics: InitialViewMetrics
@@ -55,6 +56,7 @@ export interface ViewCreatedEvent {
   name?: string
   service?: string
   version?: string
+  context?: Context
   startClocks: ClocksState
 }
 
@@ -77,6 +79,7 @@ export interface ViewOptions {
   name?: string
   service?: RumInitConfiguration['service']
   version?: RumInitConfiguration['version']
+  context?: Context
 }
 
 export function trackViews(
@@ -122,6 +125,7 @@ export function trackViews(
         name: currentView.name,
         service: currentView.service,
         version: currentView.version,
+        context: currentView.context,
       })
     })
 
@@ -189,10 +193,13 @@ function newView(
   let name: string | undefined
   let service: string | undefined
   let version: string | undefined
+  let context: Context | undefined
+
   if (viewOptions) {
     name = viewOptions.name
     service = viewOptions.service || undefined
     version = viewOptions.version || undefined
+    context = isExperimentalFeatureEnabled(ExperimentalFeature.VIEW_SPECIFIC_CONTEXT) ? viewOptions.context : undefined
   }
 
   const viewCreatedEvent = {
@@ -201,6 +208,7 @@ function newView(
     startClocks,
     service,
     version,
+    context,
   }
   lifeCycle.notify(LifeCycleEventType.BEFORE_VIEW_CREATED, viewCreatedEvent)
   lifeCycle.notify(LifeCycleEventType.VIEW_CREATED, viewCreatedEvent)
@@ -246,7 +254,6 @@ function newView(
     cancelScheduleViewUpdate()
     documentVersion += 1
     const currentEnd = endClocks === undefined ? timeStampNow() : endClocks.timeStamp
-
     lifeCycle.notify(LifeCycleEventType.VIEW_UPDATED, {
       customTimings,
       documentVersion,
@@ -254,6 +261,7 @@ function newView(
       name,
       service,
       version,
+      context,
       loadingType,
       location,
       startClocks,
@@ -272,6 +280,7 @@ function newView(
     },
     service,
     version,
+    context,
     stopObservable,
     end(options: { endClocks?: ClocksState; sessionIsActive?: boolean } = {}) {
       if (endClocks) {

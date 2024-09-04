@@ -77,7 +77,9 @@ export function startRumAssembly(
   reportError: (error: RawError) => void
 ) {
   modifiableFieldPathsByEvent = {
-    [RumEventType.VIEW]: VIEW_MODIFIABLE_FIELD_PATHS,
+    [RumEventType.VIEW]: isExperimentalFeatureEnabled(ExperimentalFeature.VIEW_SPECIFIC_CONTEXT)
+      ? { ...USER_CUSTOMIZABLE_FIELD_PATHS, ...VIEW_MODIFIABLE_FIELD_PATHS }
+      : VIEW_MODIFIABLE_FIELD_PATHS,
     [RumEventType.ERROR]: {
       'error.message': 'string',
       'error.stack': 'string',
@@ -179,7 +181,7 @@ export function startRumAssembly(
         }
 
         const serverRumEvent = combine(rumContext as RumContext & Context, rawRumEvent) as RumEvent & Context
-        serverRumEvent.context = combine(commonContext.context, customerContext)
+        serverRumEvent.context = combine(commonContext.context, viewContext.customerContext, customerContext)
 
         if (!('has_replay' in serverRumEvent.session)) {
           ;(serverRumEvent.session as Mutable<RumEvent['session']>).has_replay = commonContext.hasReplay

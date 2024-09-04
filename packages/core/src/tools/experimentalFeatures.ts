@@ -20,6 +20,7 @@ export enum ExperimentalFeature {
   UPDATE_VIEW_NAME = 'update_view_name',
   NULL_INP_TELEMETRY = 'null_inp_telemetry',
   LONG_ANIMATION_FRAME = 'long_animation_frame',
+  VIEW_SPECIFIC_CONTEXT = 'view_specific_context',
 }
 
 const enabledExperimentalFeatures: Set<ExperimentalFeature> = new Set()

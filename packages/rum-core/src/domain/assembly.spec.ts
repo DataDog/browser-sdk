@@ -240,6 +240,23 @@ describe('rum assembly', () => {
           })
         })
 
+        it('should accept modification on context field for view events', () => {
+          mockExperimentalFeatures([ExperimentalFeature.VIEW_SPECIFIC_CONTEXT])
+          const { lifeCycle } = setupBuilder
+            .withConfiguration({
+              beforeSend: (event) => {
+                event.context.foo = 'bar'
+              },
+            })
+            .build()
+
+          notifyRawRumEvent(lifeCycle, {
+            rawRumEvent: createRawRumEvent(RumEventType.VIEW),
+          })
+
+          expect(serverRumEvents[0].context).toEqual({ foo: 'bar' })
+        })
+
         it('should reject modification on context field for view events', () => {
           const { lifeCycle } = setupBuilder
             .withConfiguration({
@@ -433,6 +450,35 @@ describe('rum assembly', () => {
     })
   })
 
+  describe('priority of rum context', () => {
+    it('should prioritize view customer context over global context', () => {
+      const { lifeCycle } = setupBuilder.build()
+      commonContext.context = { foo: 'bar' }
+      notifyRawRumEvent(lifeCycle, {
+        customerContext: { foo: 'baz' },
+        rawRumEvent: createRawRumEvent(RumEventType.VIEW),
+      })
+
+      expect(serverRumEvents[0].context!.foo).toBe('baz')
+    })
+
+    it('should prioritize child customer context over inherited view context', () => {
+      const { lifeCycle } = setupBuilder.build()
+      findView = () => ({
+        id: '7890',
+        name: 'view name',
+        startClocks: {} as ClocksState,
+        customerContext: { foo: 'bar' },
+      })
+      notifyRawRumEvent(lifeCycle, {
+        customerContext: { foo: 'baz' },
+        rawRumEvent: createRawRumEvent(RumEventType.ACTION),
+      })
+
+      expect(serverRumEvents[0].context!.foo).toBe('baz')
+    })
+  })
+
   describe('rum global context', () => {
     it('should be merged with event attributes', () => {
       const { lifeCycle } = setupBuilder.build()
@@ -576,6 +622,20 @@ describe('rum assembly', () => {
           name: 'view name',
         })
       )
+    })
+
+    it('child event should have view customer context', () => {
+      const { lifeCycle } = setupBuilder.build()
+      findView = () => ({
+        id: '7890',
+        name: 'view name',
+        startClocks: {} as ClocksState,
+        customerContext: { foo: 'bar' },
+      })
+      notifyRawRumEvent(lifeCycle, {
+        rawRumEvent: createRawRumEvent(RumEventType.ACTION),
+      })
+      expect(serverRumEvents[0].context).toEqual({ foo: 'bar' })
     })
   })
 
