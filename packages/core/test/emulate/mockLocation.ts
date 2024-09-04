@@ -1,9 +1,9 @@
-import { assign, buildUrl } from '../../src'
+import { buildUrl } from '../../src'
 
 export function mockLocation(initialUrl: string) {
   const fakeLocation = buildLocation(initialUrl)
   spyOn(History.prototype, 'pushState').and.callFake((_: any, __: string, pathname: string) => {
-    assign(fakeLocation, buildLocation(pathname, fakeLocation.href))
+    Object.assign(fakeLocation, buildLocation(pathname, fakeLocation.href))
   })
 
   function hashchangeCallBack() {
