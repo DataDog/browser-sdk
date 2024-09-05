@@ -45,7 +45,7 @@ describe('rum assembly', () => {
 
   function setupAssemblyTest() {
     startRumAssembly(
-      { ...mockRumConfiguration(), ...partialRumConfig },
+      mockRumConfiguration(partialRumConfig),
       lifeCycle,
       sessionManager,
       { ...mockViewContexts(), findView: () => findView() },

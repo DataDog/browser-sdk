@@ -50,7 +50,6 @@ import { startRum, startRumEventCollection } from './startRum'
 function collectServerEvents(lifeCycle: LifeCycle) {
   const serverRumEvents: RumEvent[] = []
   lifeCycle.subscribe(LifeCycleEventType.RUM_EVENT_COLLECTED, (serverRumEvent) => {
-    // console.log('serverRumEvent', serverRumEvent.view.url)
     serverRumEvents.push(serverRumEvent)
   })
   return serverRumEvents
@@ -222,6 +221,7 @@ describe('rum events url', () => {
 
   let changeLocation: (to: string) => void
   let lifeCycle: LifeCycle
+  let clock: Clock
   let serverRumEvents: RumEvent[]
   let stop: () => void
 
@@ -250,6 +250,7 @@ describe('rum events url', () => {
     serverRumEvents = collectServerEvents(lifeCycle)
 
     registerCleanupTask(() => {
+      clock?.cleanup()
       stop()
     })
   })
@@ -265,57 +266,47 @@ describe('rum events url', () => {
     expect(serverRumEvents[1].view.url).toEqual('http://foo.com/bar')
   })
 
-  describe('when clock ticks', () => {
-    let clock: Clock
+  it('should attach the url corresponding to the start of the event', () => {
+    clock = mockClock()
+    setupViewUrlTest()
+    clock.tick(10)
+    changeLocation('http://foo.com/?bar=bar')
+    clock.tick(10)
+    changeLocation('http://foo.com/?bar=qux')
 
-    beforeEach(() => {
-      clock = mockClock()
+    lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [
+      createPerformanceEntry(RumPerformanceEntryType.LONG_TASK, {
+        startTime: (relativeNow() - 5) as RelativeTime,
+      }),
+    ])
 
-      registerCleanupTask(() => {
-        clock.cleanup()
-      })
-    })
+    clock.tick(THROTTLE_VIEW_UPDATE_PERIOD)
 
-    it('should attach the url corresponding to the start of the event', () => {
-      setupViewUrlTest()
-      clock.tick(10)
-      changeLocation('http://foo.com/?bar=bar')
-      clock.tick(10)
-      changeLocation('http://foo.com/?bar=qux')
+    expect(serverRumEvents.length).toBe(3)
+    const [firstViewUpdate, longTaskEvent, lastViewUpdate] = serverRumEvents
 
-      lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [
-        createPerformanceEntry(RumPerformanceEntryType.LONG_TASK, {
-          startTime: (relativeNow() - 5) as RelativeTime,
-        }),
-      ])
+    expect(firstViewUpdate.view.url).toBe('http://foo.com/')
+    expect(lastViewUpdate.view.url).toBe('http://foo.com/')
 
-      clock.tick(THROTTLE_VIEW_UPDATE_PERIOD)
+    expect(longTaskEvent.view.url).toBe('http://foo.com/?bar=bar')
+  })
 
-      expect(serverRumEvents.length).toBe(3)
-      const [firstViewUpdate, longTaskEvent, lastViewUpdate] = serverRumEvents
+  it('should keep the same URL when updating an ended view', () => {
+    clock = mockClock()
+    const { notifyPerformanceEntries } = mockPerformanceObserver()
+    setupViewUrlTest()
 
-      expect(firstViewUpdate.view.url).toBe('http://foo.com/')
-      expect(lastViewUpdate.view.url).toBe('http://foo.com/')
+    clock.tick(VIEW_DURATION)
 
-      expect(longTaskEvent.view.url).toBe('http://foo.com/?bar=bar')
-    })
+    changeLocation('/bar')
 
-    it('should keep the same URL when updating an ended view', () => {
-      const { notifyPerformanceEntries } = mockPerformanceObserver()
-      setupViewUrlTest()
+    serverRumEvents.length = 0
 
-      clock.tick(VIEW_DURATION)
+    notifyPerformanceEntries([createPerformanceEntry(RumPerformanceEntryType.NAVIGATION)])
+    clock.tick(THROTTLE_VIEW_UPDATE_PERIOD)
 
-      changeLocation('/bar')
-
-      serverRumEvents.length = 0
-
-      notifyPerformanceEntries([createPerformanceEntry(RumPerformanceEntryType.NAVIGATION)])
-      clock.tick(THROTTLE_VIEW_UPDATE_PERIOD)
-
-      expect(serverRumEvents.length).toEqual(1)
-      expect(serverRumEvents[0].view.url).toEqual('http://foo.com/')
-    })
+    expect(serverRumEvents.length).toEqual(1)
+    expect(serverRumEvents[0].view.url).toEqual('http://foo.com/')
   })
 })
 

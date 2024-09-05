@@ -40,8 +40,8 @@ describe('internal context', () => {
   }
 
   it('should return current internal context', () => {
-    const sessionManagerr = createRumSessionManagerMock().setId('456')
-    const internalContext = setupInternalContext(sessionManagerr)
+    const sessionManager = createRumSessionManagerMock().setId('456')
+    const internalContext = setupInternalContext(sessionManager)
 
     expect(internalContext.get()).toEqual({
       application_id: 'appId',
@@ -59,14 +59,14 @@ describe('internal context', () => {
   })
 
   it("should return undefined if the session isn't tracked", () => {
-    const sessionManagerr = createRumSessionManagerMock().setNotTracked()
-    const internalContext = setupInternalContext(sessionManagerr)
+    const sessionManager = createRumSessionManagerMock().setNotTracked()
+    const internalContext = setupInternalContext(sessionManager)
     expect(internalContext.get()).toEqual(undefined)
   })
 
   it('should return internal context corresponding to startTime', () => {
-    const sessionManagerr = createRumSessionManagerMock().setId('456')
-    const internalContext = setupInternalContext(sessionManagerr)
+    const sessionManager = createRumSessionManagerMock().setId('456')
+    const internalContext = setupInternalContext(sessionManager)
 
     internalContext.get(123)
 

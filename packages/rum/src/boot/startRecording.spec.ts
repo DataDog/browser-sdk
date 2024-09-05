@@ -1,6 +1,6 @@
 import type { TimeStamp, HttpRequest } from '@datadog/browser-core'
 import { PageExitReason, DefaultPrivacyLevel, noop, isIE, DeflateEncoderStreamId } from '@datadog/browser-core'
-import type { ViewCreatedEvent, RumConfiguration } from '@datadog/browser-rum-core'
+import type { ViewCreatedEvent } from '@datadog/browser-rum-core'
 import { LifeCycle, LifeCycleEventType, startViewContexts } from '@datadog/browser-rum-core'
 import { collectAsyncCalls, createNewEvent, mockEventBridge, registerCleanupTask } from '@datadog/browser-core/test'
 import type { ViewEndedEvent } from 'packages/rum-core/src/domain/view/trackViews'
@@ -24,10 +24,9 @@ describe('startRecording', () => {
   let textField: HTMLInputElement
   let requestSendSpy: jasmine.Spy<HttpRequest['sendOnExit']>
   let stopRecording: () => void
-  let configuration: RumConfiguration
 
   function setupStartRecording() {
-    configuration = mockRumConfiguration({ defaultPrivacyLevel: DefaultPrivacyLevel.ALLOW })
+    const configuration = mockRumConfiguration({ defaultPrivacyLevel: DefaultPrivacyLevel.ALLOW })
     resetReplayStats()
     const worker = startDeflateWorker(configuration, 'Session Replay', noop)
 

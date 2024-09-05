@@ -1,6 +1,5 @@
-import type { Observable } from '@datadog/browser-core'
-import type { LocationChange } from '../../browser/locationChangeObservable'
-import type { RumConfiguration } from '../configuration'
+import { Observable } from '@datadog/browser-core'
+import { mockRumConfiguration, setupLocationObserver } from '../../../test'
 import type { LifeCycle } from '../lifeCycle'
 import { LifeCycleEventType } from '../lifeCycle'
 import type { ViewEvent, ViewOptions } from './trackViews'
@@ -10,16 +9,14 @@ export type ViewTest = ReturnType<typeof setupViewTest>
 
 interface ViewTrackingContext {
   lifeCycle: LifeCycle
-  domMutationObservable: Observable<void>
-  locationChangeObservable: Observable<LocationChange>
-  configuration: Readonly<RumConfiguration>
-  location: Location
+  initalLocation?: string
 }
 
-export function setupViewTest(
-  { lifeCycle, location, domMutationObservable, configuration, locationChangeObservable }: ViewTrackingContext,
-  initialViewOptions?: ViewOptions
-) {
+export function setupViewTest({ lifeCycle, initalLocation }: ViewTrackingContext, initialViewOptions?: ViewOptions) {
+  const domMutationObservable = new Observable<void>()
+  const configuration = mockRumConfiguration()
+  const { locationChangeObservable, changeLocation } = setupLocationObserver(initalLocation)
+
   const {
     handler: viewUpdateHandler,
     getViewEvent: getViewUpdate,
@@ -49,6 +46,7 @@ export function setupViewTest(
   return {
     stop,
     startView,
+    changeLocation,
     updateViewName,
     addTiming,
     getViewUpdate,

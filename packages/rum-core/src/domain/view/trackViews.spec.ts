@@ -4,25 +4,19 @@ import {
   timeStampNow,
   display,
   relativeToClocks,
-  Observable,
   relativeNow,
   ExperimentalFeature,
 } from '@datadog/browser-core'
 
 import type { Clock } from '@datadog/browser-core/test'
 import { mockClock, mockExperimentalFeatures, registerCleanupTask } from '@datadog/browser-core/test'
-import {
-  createPerformanceEntry,
-  mockPerformanceObserver,
-  mockRumConfiguration,
-  setupLocationObserver,
-} from '../../../test'
+import { createPerformanceEntry, mockPerformanceObserver } from '../../../test'
 import { RumEventType, ViewLoadingType } from '../../rawRumEvent.types'
 import type { RumEvent } from '../../rumEvent.types'
 import { LifeCycle, LifeCycleEventType } from '../lifeCycle'
 import type { RumPerformanceEntry } from '../../browser/performanceObservable'
 import { RumPerformanceEntryType } from '../../browser/performanceObservable'
-import type { ViewEvent, ViewOptions } from './trackViews'
+import type { ViewEvent } from './trackViews'
 import { SESSION_KEEP_ALIVE_INTERVAL, THROTTLE_VIEW_UPDATE_PERIOD, KEEP_TRACKING_AFTER_VIEW_DELAY } from './trackViews'
 import type { ViewTest } from './setupViewTest.specHelper'
 import { setupViewTest } from './setupViewTest.specHelper'
@@ -34,9 +28,8 @@ describe('track views automatically', () => {
   let viewTest: ViewTest
 
   beforeEach(() => {
-    const setupResult = setupViewTracking(lifeCycle, { name: 'initial view name' })
-    changeLocation = setupResult.changeLocation
-    viewTest = setupResult.viewTest
+    viewTest = setupViewTest({ lifeCycle, initalLocation: '/foo' }, { name: 'initial view name' })
+    changeLocation = viewTest.changeLocation
 
     registerCleanupTask(() => {
       viewTest.stop()
@@ -115,14 +108,16 @@ describe('view lifecycle', () => {
     lifeCycle = new LifeCycle()
     notifySpy = spyOn(lifeCycle, 'notify').and.callThrough()
 
-    const setupResult = setupViewTracking(lifeCycle, {
-      name: 'initial view name',
-      service: 'initial service',
-      version: 'initial version',
-    })
+    viewTest = setupViewTest(
+      { lifeCycle, initalLocation: '/foo' },
+      {
+        name: 'initial view name',
+        service: 'initial service',
+        version: 'initial version',
+      }
+    )
 
-    changeLocation = setupResult.changeLocation
-    viewTest = setupResult.viewTest
+    changeLocation = viewTest.changeLocation
 
     registerCleanupTask(() => {
       viewTest.stop()
@@ -343,8 +338,7 @@ describe('view loading type', () => {
   beforeEach(() => {
     clock = mockClock()
 
-    const setupResult = setupViewTracking(lifeCycle)
-    viewTest = setupResult.viewTest
+    viewTest = setupViewTest({ lifeCycle })
 
     registerCleanupTask(() => {
       viewTest.stop()
@@ -377,9 +371,7 @@ describe('view metrics', () => {
   beforeEach(() => {
     clock = mockClock()
     ;({ notifyPerformanceEntries } = mockPerformanceObserver())
-
-    const setupResult = setupViewTracking(lifeCycle)
-    viewTest = setupResult.viewTest
+    viewTest = setupViewTest({ lifeCycle })
 
     registerCleanupTask(() => {
       viewTest.stop()
@@ -572,8 +564,7 @@ describe('view is active', () => {
   let viewTest: ViewTest
 
   beforeEach(() => {
-    const setupResult = setupViewTracking(lifeCycle)
-    viewTest = setupResult.viewTest
+    viewTest = setupViewTest({ lifeCycle })
 
     registerCleanupTask(() => {
       viewTest.stop()
@@ -603,8 +594,7 @@ describe('view custom timings', () => {
 
   beforeEach(() => {
     clock = mockClock()
-    const setupResult = setupViewTracking(lifeCycle)
-    viewTest = setupResult.viewTest
+    viewTest = setupViewTest({ lifeCycle, initalLocation: '/foo' })
 
     registerCleanupTask(() => {
       viewTest.stop()
@@ -738,8 +728,7 @@ describe('start view', () => {
 
   beforeEach(() => {
     clock = mockClock()
-    const setupResult = setupViewTracking(lifeCycle)
-    viewTest = setupResult.viewTest
+    viewTest = setupViewTest({ lifeCycle })
 
     registerCleanupTask(() => {
       viewTest.stop()
@@ -845,7 +834,7 @@ describe('view event count', () => {
   })
 
   it('should be updated when notified with a RUM_EVENT_COLLECTED event', () => {
-    viewTest = setupViewTracking(lifeCycle).viewTest
+    viewTest = setupViewTest({ lifeCycle })
     const { getViewUpdate, getViewUpdateCount } = viewTest
 
     lifeCycle.notify(LifeCycleEventType.RUM_EVENT_COLLECTED, createFakeActionEvent())
@@ -856,7 +845,7 @@ describe('view event count', () => {
   })
 
   it('should take child events occurring on view end into account', () => {
-    viewTest = setupViewTracking(lifeCycle).viewTest
+    viewTest = setupViewTest({ lifeCycle })
     const { getViewUpdate, getViewUpdateCount } = viewTest
 
     lifeCycle.subscribe(LifeCycleEventType.VIEW_ENDED, () => {
@@ -869,7 +858,7 @@ describe('view event count', () => {
   })
 
   it('should be updated for 5 min after view end', () => {
-    viewTest = setupViewTracking(lifeCycle).viewTest
+    viewTest = setupViewTest({ lifeCycle })
     const { getViewUpdate, getViewUpdateCount, getViewCreateCount, startView } = viewTest
     startView()
     expect(getViewCreateCount()).toEqual(2)
@@ -890,7 +879,7 @@ describe('view event count', () => {
   })
 
   it('should not be updated 5 min after view end', () => {
-    viewTest = setupViewTracking(lifeCycle).viewTest
+    viewTest = setupViewTest({ lifeCycle })
     const { getViewUpdate, getViewUpdateCount, getViewCreateCount, startView } = viewTest
     startView()
     expect(getViewCreateCount()).toEqual(2)
@@ -920,7 +909,7 @@ describe('view event count', () => {
   describe('update view name', () => {
     it('should update an undefined view name if the experimental feature is enabled', () => {
       mockExperimentalFeatures([ExperimentalFeature.UPDATE_VIEW_NAME])
-      viewTest = setupViewTracking(lifeCycle).viewTest
+      viewTest = setupViewTest({ lifeCycle })
 
       const { getViewUpdate, startView, updateViewName } = viewTest
 
@@ -931,7 +920,7 @@ describe('view event count', () => {
 
     it('should update a defined view name if the experimental feature is enabled', () => {
       mockExperimentalFeatures([ExperimentalFeature.UPDATE_VIEW_NAME])
-      viewTest = setupViewTracking(lifeCycle).viewTest
+      viewTest = setupViewTest({ lifeCycle })
 
       const { getViewUpdate, startView, updateViewName } = viewTest
 
@@ -941,7 +930,7 @@ describe('view event count', () => {
     })
 
     it('should not update a defined view name if the experimental feature is not enabled', () => {
-      viewTest = setupViewTracking(lifeCycle).viewTest
+      viewTest = setupViewTest({ lifeCycle })
 
       const { getViewUpdate, startView, updateViewName } = viewTest
 
@@ -951,23 +940,3 @@ describe('view event count', () => {
     })
   })
 })
-
-function setupViewTracking(lifeCycle: LifeCycle, initialViewOptions: ViewOptions | undefined = undefined) {
-  const domMutationObservable = new Observable<void>()
-  const configuration = mockRumConfiguration()
-  const locationChangeSetup = setupLocationObserver('/foo')
-
-  const changeLocation = locationChangeSetup.changeLocation
-  const viewTest = setupViewTest(
-    {
-      lifeCycle,
-      location: locationChangeSetup.fakeLocation,
-      domMutationObservable,
-      configuration,
-      locationChangeObservable: locationChangeSetup.locationChangeObservable,
-    },
-    initialViewOptions
-  )
-
-  return { changeLocation, viewTest }
-}
