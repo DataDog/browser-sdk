@@ -1,7 +1,7 @@
 import type { Duration } from '@datadog/browser-core'
 import { forEach, setTimeout, noop, relativeNow, runOnReadyState } from '@datadog/browser-core'
-import type { RelativePerformanceTiming } from '../../../browser/performanceUtils'
-import { computeRelativePerformanceTiming } from '../../../browser/performanceUtils'
+import type { TimingsFromDeprecatedPerformanceTiming } from '../../../browser/performanceUtils'
+import { computeTimingsFromDeprecatedPerformanceTiming } from '../../../browser/performanceUtils'
 import type { RumPerformanceNavigationTiming } from '../../../browser/performanceObservable'
 import {
   createPerformanceObservable,
@@ -22,7 +22,7 @@ export function trackNavigationTimings(
   configuration: RumConfiguration,
   callback: (timings: NavigationTimings) => void
 ) {
-  const processEntry = (entry: RumPerformanceNavigationTiming | RelativePerformanceTiming) => {
+  const processEntry = (entry: RumPerformanceNavigationTiming | TimingsFromDeprecatedPerformanceTiming) => {
     if (!isIncompleteNavigation(entry)) {
       callback(processNavigationEntry(entry))
     }
@@ -41,7 +41,9 @@ export function trackNavigationTimings(
   return { stop }
 }
 
-function processNavigationEntry(entry: RumPerformanceNavigationTiming | RelativePerformanceTiming): NavigationTimings {
+function processNavigationEntry(
+  entry: RumPerformanceNavigationTiming | TimingsFromDeprecatedPerformanceTiming
+): NavigationTimings {
   return {
     domComplete: entry.domComplete,
     domContentLoaded: entry.domContentLoadedEventEnd,
@@ -55,16 +57,16 @@ function processNavigationEntry(entry: RumPerformanceNavigationTiming | Relative
   }
 }
 
-function isIncompleteNavigation(entry: RumPerformanceNavigationTiming | RelativePerformanceTiming) {
+function isIncompleteNavigation(entry: RumPerformanceNavigationTiming | TimingsFromDeprecatedPerformanceTiming) {
   return entry.loadEventEnd <= 0
 }
 
 function retrieveNavigationTiming(
   configuration: RumConfiguration,
-  callback: (timing: RelativePerformanceTiming) => void
+  callback: (timing: TimingsFromDeprecatedPerformanceTiming) => void
 ) {
   runOnReadyState(configuration, 'complete', () => {
     // Send it a bit after the actual load event, so the "loadEventEnd" timing is accurate
-    setTimeout(() => callback(computeRelativePerformanceTiming()))
+    setTimeout(() => callback(computeTimingsFromDeprecatedPerformanceTiming()))
   })
 }
