@@ -30,6 +30,7 @@
     "directory": "packages/rum"
   },
   "devDependencies": {
+    "@microsoft/api-extractor": "7.47.7",
     "@types/pako": "2.0.3",
     "pako": "2.1.0"
   },

@@ -1,0 +1,71 @@
+/**
+ * Config file for API Extractor.  For more info, please visit: https://api-extractor.com
+ */
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/api-extractor/v7/api-extractor.schema.json",
+
+  // TODO
+  // "extends": "../../api-extractor-base.json"
+
+  "mainEntryPointFilePath": "esm/entries/main.d.ts",
+
+  "bundledPackages": ["@datadog/*"],
+
+  "enumMemberOrder": "preserve",
+
+  "compiler": {
+    // TODO: maybe remove?
+    "tsconfigFilePath": "tsconfig.esm.json"
+  },
+
+  "apiReport": {
+    "enabled": false
+  },
+
+  "docModel": {
+    "enabled": true,
+
+    /**
+     * The output path for the doc model file.  The file extension should be ".api.json".
+     *
+     * The path is resolved relative to the folder of the config file that contains the setting; to change this,
+     * prepend a folder token such as "<projectFolder>".
+     *
+     * SUPPORTED TOKENS: <projectFolder>, <packageName>, <unscopedPackageName>
+     * DEFAULT VALUE: "<projectFolder>/temp/<unscopedPackageName>.api.json"
+     */
+    // "apiJsonFilePath": "<projectFolder>/temp/<unscopedPackageName>.api.json",
+
+    "projectFolderUrl": "https://github.com/DataDog/browser-sdk/tree/main/packages/rum"
+  },
+
+  "dtsRollup": {
+    "enabled": false
+  },
+
+  "tsdocMetadata": {
+    // TODO: Do we need this?
+    "enabled": true,
+    "tsdocMetadataFilePath": "<projectFolder>/temp/tsdoc-metadata.json"
+  },
+
+  "messages": {
+    "compilerMessageReporting": {
+      "default": {
+        "logLevel": "error"
+      }
+    },
+
+    "extractorMessageReporting": {
+      "default": {
+        "logLevel": "warning"
+      }
+    },
+
+    "tsdocMessageReporting": {
+      "default": {
+        "logLevel": "warning"
+      }
+    }
+  }
+}

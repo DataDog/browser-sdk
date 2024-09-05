@@ -32,6 +32,9 @@ export {
 export { DefaultPrivacyLevel } from '@datadog/browser-core'
 
 const recorderApi = makeRecorderApi(startRecording)
+/**
+ * @public
+ */
 export const datadogRum = makeRumPublicApi(startRum, recorderApi, { startDeflateWorker, createDeflateEncoder })
 
 interface BrowserWindow extends Window {

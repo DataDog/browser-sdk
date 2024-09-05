@@ -387,6 +387,7 @@ __metadata:
   dependencies:
     "@datadog/browser-core": "npm:5.25.0"
     "@datadog/browser-rum-core": "npm:5.25.0"
+    "@microsoft/api-extractor": "npm:7.47.7"
     "@types/pako": "npm:2.0.3"
     pako: "npm:2.1.0"
   peerDependencies:
@@ -3541,6 +3542,8 @@ __metadata:
   dependencies:
     "@jsdevtools/coverage-istanbul-loader": "npm:3.0.5"
     "@microsoft/api-extractor": "npm:7.47.7"
+    "@microsoft/api-extractor-model": "npm:7.29.6"
+    "@microsoft/tsdoc": "npm:0.15.0"
     "@types/chrome": "npm:0.0.270"
     "@types/connect-busboy": "npm:1.0.3"
     "@types/cors": "npm:2.8.17"
