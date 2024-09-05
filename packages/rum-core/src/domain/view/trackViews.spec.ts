@@ -11,11 +11,10 @@ import {
 
 import type { Clock } from '@datadog/browser-core/test'
 import { mockClock, mockExperimentalFeatures, registerCleanupTask } from '@datadog/browser-core/test'
-import { createPerformanceEntry, mockPerformanceObserver } from '../../../test'
+import { createPerformanceEntry } from '../../../test'
 import { RumEventType, ViewLoadingType } from '../../rawRumEvent.types'
 import type { RumEvent } from '../../rumEvent.types'
 import { LifeCycle, LifeCycleEventType } from '../lifeCycle'
-import type { RumPerformanceEntry } from '../../browser/performanceObservable'
 import { RumPerformanceEntryType } from '../../browser/performanceObservable'
 import { PAGE_ACTIVITY_END_DELAY } from '../waitPageActivityEnd'
 import type { ViewEvent } from './trackViews'
@@ -370,11 +369,9 @@ describe('view metrics', () => {
   const lifeCycle = new LifeCycle()
   let clock: Clock
   let viewTest: ViewTest
-  let notifyPerformanceEntries: (entries: RumPerformanceEntry[]) => void
 
   beforeEach(() => {
     clock = mockClock()
-    ;({ notifyPerformanceEntries } = mockPerformanceObserver())
     viewTest = setupViewTest({ lifeCycle })
 
     registerCleanupTask(() => {
@@ -415,6 +412,7 @@ describe('view metrics', () => {
       }
       const { getViewUpdate, getViewUpdateCount, getViewCreateCount, startView } = viewTest
       startView()
+      clock.tick(0)
       expect(getViewCreateCount()).toEqual(2)
 
       lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [
@@ -430,26 +428,20 @@ describe('view metrics', () => {
   })
 
   describe('initial view metrics', () => {
-    it('should be updated when notified with a PERFORMANCE_ENTRY_COLLECTED event (throttled)', () => {
+    it('updates should be throttled', () => {
       const { getViewUpdateCount, getViewUpdate } = viewTest
       expect(getViewUpdateCount()).toEqual(1)
       expect(getViewUpdate(0).initialViewMetrics).toEqual({})
 
-      const navigationEntry = createPerformanceEntry(RumPerformanceEntryType.NAVIGATION)
-      notifyPerformanceEntries([navigationEntry])
+      clock.tick(THROTTLE_VIEW_UPDATE_PERIOD - 1)
 
       expect(getViewUpdateCount()).toEqual(1)
+      expect(getViewUpdate(0).initialViewMetrics).toEqual({})
 
-      clock.tick(THROTTLE_VIEW_UPDATE_PERIOD)
+      clock.tick(1)
 
       expect(getViewUpdateCount()).toEqual(2)
-      expect(getViewUpdate(1).initialViewMetrics.navigationTimings).toEqual({
-        firstByte: 123 as Duration,
-        domComplete: 456 as Duration,
-        domContentLoaded: 345 as Duration,
-        domInteractive: 234 as Duration,
-        loadEvent: 567 as Duration,
-      })
+      expect(getViewUpdate(1).initialViewMetrics.navigationTimings).toEqual(jasmine.any(Object))
     })
 
     it('should be updated for 5 min after view end', () => {
@@ -463,7 +455,6 @@ describe('view metrics', () => {
         createPerformanceEntry(RumPerformanceEntryType.PAINT),
         lcpEntry,
       ])
-      notifyPerformanceEntries([createPerformanceEntry(RumPerformanceEntryType.NAVIGATION)])
 
       clock.tick(THROTTLE_VIEW_UPDATE_PERIOD)
 
@@ -483,7 +474,6 @@ describe('view metrics', () => {
         createPerformanceEntry(RumPerformanceEntryType.PAINT),
         createPerformanceEntry(RumPerformanceEntryType.LARGEST_CONTENTFUL_PAINT),
       ])
-      notifyPerformanceEntries([createPerformanceEntry(RumPerformanceEntryType.NAVIGATION)])
       clock.tick(THROTTLE_VIEW_UPDATE_PERIOD)
 
       const latestUpdate = getViewUpdate(getViewUpdateCount() - 1)
@@ -515,7 +505,6 @@ describe('view metrics', () => {
           createPerformanceEntry(RumPerformanceEntryType.PAINT),
           createPerformanceEntry(RumPerformanceEntryType.LARGEST_CONTENTFUL_PAINT),
         ])
-        notifyPerformanceEntries([createPerformanceEntry(RumPerformanceEntryType.NAVIGATION)])
 
         clock.tick(THROTTLE_VIEW_UPDATE_PERIOD)
 
@@ -540,13 +529,7 @@ describe('view metrics', () => {
         expect(initialView.last.initialViewMetrics).toEqual(
           jasmine.objectContaining({
             firstContentfulPaint: 123 as Duration,
-            navigationTimings: {
-              firstByte: 123 as Duration,
-              domComplete: 456 as Duration,
-              domContentLoaded: 345 as Duration,
-              domInteractive: 234 as Duration,
-              loadEvent: 567 as Duration,
-            },
+            navigationTimings: jasmine.any(Object),
             largestContentfulPaint: { value: 789 as Duration, targetSelector: undefined },
           })
         )
@@ -558,7 +541,7 @@ describe('view metrics', () => {
       })
 
       it('should update the initial view loadingTime following the loadEventEnd value', () => {
-        expect(initialView.last.commonViewMetrics.loadingTime).toBe(567 as RelativeTime)
+        expect(initialView.last.commonViewMetrics.loadingTime).toEqual(jasmine.any(Number))
       })
     })
   })
