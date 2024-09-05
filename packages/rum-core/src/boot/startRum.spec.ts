@@ -5,7 +5,6 @@ import {
   ONE_SECOND,
   findLast,
   noop,
-  isIE,
   relativeNow,
   createIdentityEncoder,
   createCustomerDataTracker,
@@ -95,10 +94,6 @@ describe('rum session', () => {
   let serverRumEvents: RumEvent[]
 
   beforeEach(() => {
-    if (isIE()) {
-      pending('no full rum support')
-    }
-
     setupBuilder = setup().beforeBuild(
       ({
         location,
@@ -153,9 +148,6 @@ describe('rum session keep alive', () => {
   let serverRumEvents: RumEvent[]
 
   beforeEach(() => {
-    if (isIE()) {
-      pending('no full rum support')
-    }
     sessionManager = createRumSessionManagerMock().setId('1234')
     setupBuilder = setup()
       .withFakeClock()

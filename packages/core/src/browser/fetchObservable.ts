@@ -2,7 +2,6 @@ import type { InstrumentedMethodCall } from '../tools/instrumentMethod'
 import { instrumentMethod } from '../tools/instrumentMethod'
 import { monitor } from '../tools/monitor'
 import { Observable } from '../tools/observable'
-import { assign } from '../tools/utils/polyfills'
 import type { ClocksState } from '../tools/utils/timeUtils'
 import { clocksNow } from '../tools/utils/timeUtils'
 import { normalizeUrl } from '../tools/utils/urlPolyfill'
@@ -101,7 +100,7 @@ function afterSend(
 
   function reportFetch(partialContext: Partial<FetchResolveContext>) {
     context.state = 'resolve'
-    assign(context, partialContext)
+    Object.assign(context, partialContext)
     observable.notify(context)
   }
 
