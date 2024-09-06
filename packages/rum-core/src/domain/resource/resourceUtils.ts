@@ -13,16 +13,16 @@ import {
 
 import type { RumPerformanceResourceTiming } from '../../browser/performanceObservable'
 
-import type { PerformanceResourceDetailsElement } from '../../rawRumEvent.types'
+import type { ResourceEntryDetailsElement } from '../../rawRumEvent.types'
 import type { RumConfiguration } from '../configuration'
 
-export interface PerformanceResourceDetails {
-  redirect?: PerformanceResourceDetailsElement
-  dns?: PerformanceResourceDetailsElement
-  connect?: PerformanceResourceDetailsElement
-  ssl?: PerformanceResourceDetailsElement
-  first_byte?: PerformanceResourceDetailsElement
-  download?: PerformanceResourceDetailsElement
+export interface ResourceEntryDetails {
+  redirect?: ResourceEntryDetailsElement
+  dns?: ResourceEntryDetailsElement
+  connect?: ResourceEntryDetailsElement
+  ssl?: ResourceEntryDetailsElement
+  first_byte?: ResourceEntryDetailsElement
+  download?: ResourceEntryDetailsElement
 }
 
 export const FAKE_INITIAL_DOCUMENT = 'initial_document'
@@ -86,9 +86,7 @@ export function computeResourceEntryDuration(entry: RumPerformanceResourceTiming
   return toServerDuration(duration)
 }
 
-export function computePerformanceResourceDetails(
-  entry: RumPerformanceResourceTiming
-): PerformanceResourceDetails | undefined {
+export function computeResourceEntryDetails(entry: RumPerformanceResourceTiming): ResourceEntryDetails | undefined {
   if (!hasValidResourceEntryTimings(entry)) {
     return undefined
   }
@@ -107,7 +105,7 @@ export function computePerformanceResourceDetails(
     responseEnd,
   } = entry
 
-  const details: PerformanceResourceDetails = {
+  const details: ResourceEntryDetails = {
     download: formatTiming(startTime, responseStart, responseEnd),
     first_byte: formatTiming(startTime, requestStart, responseStart),
   }

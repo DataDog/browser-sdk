@@ -26,7 +26,7 @@ import { PageState } from '../contexts/pageStateHistory'
 import { createTraceIdentifier } from '../tracing/tracer'
 import { matchRequestResourceEntry } from './matchRequestResourceEntry'
 import {
-  computePerformanceResourceDetails,
+  computeResourceEntryDetails,
   computeResourceEntryDuration,
   computeResourceEntryType,
   computeResourceEntrySize,
@@ -179,7 +179,7 @@ function computeResourceEntryMetrics(entry: RumPerformanceResourceTiming) {
         render_blocking_status: renderBlockingStatus,
       },
       computeResourceEntrySize(entry),
-      computePerformanceResourceDetails(entry)
+      computeResourceEntryDetails(entry)
     ),
   }
 }

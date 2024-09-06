@@ -5,7 +5,7 @@ import type { RumConfiguration } from '../configuration'
 import { validateAndBuildRumConfiguration } from '../configuration'
 import {
   MAX_ATTRIBUTE_VALUE_CHAR_LENGTH,
-  computePerformanceResourceDetails,
+  computeResourceEntryDetails,
   computeResourceEntryDuration,
   computeResourceEntryType,
   isAllowedRequestUrl,
@@ -78,10 +78,10 @@ describe('computeResourceEntryType', () => {
   )
 })
 
-describe('computePerformanceResourceDetails', () => {
+describe('computeResourceEntryDetails', () => {
   it('should not compute entry without detailed timings', () => {
     expect(
-      computePerformanceResourceDetails(
+      computeResourceEntryDetails(
         generateResourceWith({
           connectEnd: 0 as RelativeTime,
           connectStart: 0 as RelativeTime,
@@ -97,8 +97,8 @@ describe('computePerformanceResourceDetails', () => {
     ).toBeUndefined()
   })
 
-  it('should compute timings from entry', () => {
-    expect(computePerformanceResourceDetails(generateResourceWith({}))).toEqual({
+  it('should compute details from entry', () => {
+    expect(computeResourceEntryDetails(generateResourceWith({}))).toEqual({
       connect: { start: 5e6 as ServerDuration, duration: 2e6 as ServerDuration },
       dns: { start: 3e6 as ServerDuration, duration: 1e6 as ServerDuration },
       download: { start: 40e6 as ServerDuration, duration: 10e6 as ServerDuration },
@@ -110,7 +110,7 @@ describe('computePerformanceResourceDetails', () => {
 
   it('should not compute redirect timing when no redirect', () => {
     expect(
-      computePerformanceResourceDetails(
+      computeResourceEntryDetails(
         generateResourceWith({
           fetchStart: 10 as RelativeTime,
           redirectEnd: 0 as RelativeTime,
@@ -128,7 +128,7 @@ describe('computePerformanceResourceDetails', () => {
 
   it('should not compute dns timing when persistent connection or cache', () => {
     expect(
-      computePerformanceResourceDetails(
+      computeResourceEntryDetails(
         generateResourceWith({
           domainLookupEnd: 12 as RelativeTime,
           domainLookupStart: 12 as RelativeTime,
@@ -146,7 +146,7 @@ describe('computePerformanceResourceDetails', () => {
 
   it('should not compute ssl timing when no secure connection', () => {
     expect(
-      computePerformanceResourceDetails(
+      computeResourceEntryDetails(
         generateResourceWith({
           secureConnectionStart: 0 as RelativeTime,
         })
@@ -162,7 +162,7 @@ describe('computePerformanceResourceDetails', () => {
 
   it('should not compute ssl timing when persistent connection', () => {
     expect(
-      computePerformanceResourceDetails(
+      computeResourceEntryDetails(
         generateResourceWith({
           connectEnd: 12 as RelativeTime,
           connectStart: 12 as RelativeTime,
@@ -181,7 +181,7 @@ describe('computePerformanceResourceDetails', () => {
 
   it('should not compute connect timing when persistent connection', () => {
     expect(
-      computePerformanceResourceDetails(
+      computeResourceEntryDetails(
         generateResourceWith({
           connectEnd: 12 as RelativeTime,
           connectStart: 12 as RelativeTime,
@@ -242,20 +242,20 @@ describe('computePerformanceResourceDetails', () => {
     },
   ].forEach(({ reason, timing, ...overrides }) => {
     it(`[without tolerant-resource-timings] should not compute entry when ${reason}`, () => {
-      expect(computePerformanceResourceDetails(generateResourceWith(overrides))).toBeUndefined()
+      expect(computeResourceEntryDetails(generateResourceWith(overrides))).toBeUndefined()
     })
 
     if (timing) {
       it(`[with tolerant-resource-timings] should not include the '${timing}' timing when ${reason}`, () => {
         mockExperimentalFeatures([ExperimentalFeature.TOLERANT_RESOURCE_TIMINGS])
-        expect(computePerformanceResourceDetails(generateResourceWith(overrides))![timing]).toBeUndefined()
+        expect(computeResourceEntryDetails(generateResourceWith(overrides))![timing]).toBeUndefined()
       })
     }
   })
 
   it('should allow really fast document resource', () => {
     expect(
-      computePerformanceResourceDetails(
+      computeResourceEntryDetails(
         generateResourceWith({
           connectEnd: 10 as RelativeTime,
           connectStart: 10 as RelativeTime,
