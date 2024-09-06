@@ -1,4 +1,4 @@
-import type { RelativeTime, ClocksState } from '@datadog/browser-core'
+import type { RelativeTime, ClocksState, Context } from '@datadog/browser-core'
 import { SESSION_TIME_OUT_DELAY, createValueHistory } from '@datadog/browser-core'
 import type { LifeCycle } from '../lifeCycle'
 import { LifeCycleEventType } from '../lifeCycle'
@@ -9,6 +9,7 @@ export const VIEW_CONTEXT_TIME_OUT_DELAY = SESSION_TIME_OUT_DELAY
 export interface ViewContext {
   service?: string
   version?: string
+  customerContext?: Context | undefined
   id: string
   name?: string
   startClocks: ClocksState
@@ -45,6 +46,7 @@ export function startViewContexts(lifeCycle: LifeCycle): ViewContexts {
     return {
       service: view.service,
       version: view.version,
+      customerContext: view.context,
       id: view.id,
       name: view.name,
       startClocks: view.startClocks,

@@ -924,6 +924,49 @@ describe('view event count', () => {
     } as RumEvent & Context
   }
 
+  describe('view specific context', () => {
+    let setupBuilder: TestSetupBuilder
+    let viewTest: ViewTest
+
+    beforeEach(() => {
+      setupBuilder = setup()
+        .withFakeLocation('/foo')
+        .beforeBuild((buildContext) => {
+          viewTest = setupViewTest(buildContext)
+          return viewTest
+        })
+    })
+
+    it('should update view context if startView has context parameter', () => {
+      mockExperimentalFeatures([ExperimentalFeature.VIEW_SPECIFIC_CONTEXT])
+      setupBuilder.build()
+      const { getViewUpdate, startView } = viewTest
+
+      startView({ context: { foo: 'bar' } })
+      expect(getViewUpdate(2).context).toEqual({ foo: 'bar' })
+    })
+
+    it('should replace current context set on view event', () => {
+      mockExperimentalFeatures([ExperimentalFeature.VIEW_SPECIFIC_CONTEXT])
+      setupBuilder.build()
+      const { getViewUpdate, startView } = viewTest
+
+      startView({ context: { foo: 'bar' } })
+      expect(getViewUpdate(2).context).toEqual({ foo: 'bar' })
+
+      startView({ context: { bar: 'baz' } })
+      expect(getViewUpdate(4).context).toEqual({ bar: 'baz' })
+    })
+
+    it('should not update view context if the feature is not enabled', () => {
+      setupBuilder.build()
+      const { getViewUpdate, startView } = viewTest
+
+      startView({ context: { foo: 'bar' } })
+      expect(getViewUpdate(2).context).toBeUndefined()
+    })
+  })
+
   describe('update view name', () => {
     let setupBuilder: TestSetupBuilder
     let viewTest: ViewTest

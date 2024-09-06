@@ -126,6 +126,7 @@ function processViewUpdate(
       toServerDuration as (duration: Duration) => ServerDuration
     )
   }
+
   return {
     rawRumEvent: viewEvent,
     startTime: view.startClocks.relative,

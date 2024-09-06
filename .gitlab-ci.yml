@@ -450,7 +450,18 @@ merge-into-staging:
     - eval $(ssh-agent -s)
   script:
     - yarn
-    - node scripts/staging-ci/merge-into-staging.js
+    - node scripts/update-branch.js $CURRENT_STAGING
+
+merge-into-next-major:
+  stage: pre-deploy
+  extends:
+    - .base-configuration
+    - .main
+  before_script:
+    - eval $(ssh-agent -s)
+  script:
+    - yarn
+    - node scripts/update-branch.js $NEXT_MAJOR_BRANCH
 
 # check-staging-merge:
 #   stage: test
