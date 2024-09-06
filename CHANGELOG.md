@@ -18,6 +18,22 @@
 
 ---
 
+## v5.26.0
+
+**Public Changes:**
+
+- ✨ [RUM-5775] Make view local context writable ([#2939](https://github.com/DataDog/browser-sdk/pull/2939)) [LOGS] [RUM] [RUM-SLIM] [WORKER]
+- 🐛 Allow both history and History prototype to be patched by 3rd party ([#2968](https://github.com/DataDog/browser-sdk/pull/2968)) [LOGS] [RUM] [RUM-SLIM] [WORKER]
+- 🐛 [RUM-5920] Fix tags format warning ([#2947](https://github.com/DataDog/browser-sdk/pull/2947)) [LOGS] [RUM] [RUM-SLIM] [WORKER]
+
+**Internal Changes:**
+
+- 👷 Bump micromatch from 4.0.4 to 4.0.8 ([#2970](https://github.com/DataDog/browser-sdk/pull/2970))
+- 👷 add job to merge main into next major feature branch (v6) ([#2935](https://github.com/DataDog/browser-sdk/pull/2935))
+- 👷 Update all non-major dependencies ([#2962](https://github.com/DataDog/browser-sdk/pull/2962)) [RUM-REACT]
+- 👷 Bump staging to staging-36
+- Bump micromatch from 4.0.5 to 4.0.8 in /test/app ([#2971](https://github.com/DataDog/browser-sdk/pull/2971))
+
 ## v5.25.0
 
 **Public Changes:**
