@@ -6,6 +6,7 @@ import {
   relativeToClocks,
   relativeNow,
   ExperimentalFeature,
+  resetExperimentalFeatures,
 } from '@datadog/browser-core'
 
 import type { Clock } from '@datadog/browser-core/test'
@@ -830,6 +831,7 @@ describe('view event count', () => {
     registerCleanupTask(() => {
       viewTest.stop()
       clock.cleanup()
+      resetExperimentalFeatures()
     })
   })
 
@@ -905,6 +907,37 @@ describe('view event count', () => {
       view: viewTest.getLatestViewContext(),
     } as RumEvent & Context
   }
+
+  describe('view specific context', () => {
+    it('should update view context if startView has context parameter', () => {
+      mockExperimentalFeatures([ExperimentalFeature.VIEW_SPECIFIC_CONTEXT])
+      viewTest = setupViewTest({ lifeCycle })
+      const { getViewUpdate, startView } = viewTest
+
+      startView({ context: { foo: 'bar' } })
+      expect(getViewUpdate(2).context).toEqual({ foo: 'bar' })
+    })
+
+    it('should replace current context set on view event', () => {
+      mockExperimentalFeatures([ExperimentalFeature.VIEW_SPECIFIC_CONTEXT])
+      viewTest = setupViewTest({ lifeCycle })
+      const { getViewUpdate, startView } = viewTest
+
+      startView({ context: { foo: 'bar' } })
+      expect(getViewUpdate(2).context).toEqual({ foo: 'bar' })
+
+      startView({ context: { bar: 'baz' } })
+      expect(getViewUpdate(4).context).toEqual({ bar: 'baz' })
+    })
+
+    it('should not update view context if the feature is not enabled', () => {
+      viewTest = setupViewTest({ lifeCycle })
+      const { getViewUpdate, startView } = viewTest
+
+      startView({ context: { foo: 'bar' } })
+      expect(getViewUpdate(2).context).toBeUndefined()
+    })
+  })
 
   describe('update view name', () => {
     it('should update an undefined view name if the experimental feature is enabled', () => {
