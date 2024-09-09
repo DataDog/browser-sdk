@@ -3,7 +3,7 @@ import { addDuration } from '@datadog/browser-core'
 import type { RumPerformanceResourceTiming } from '../../browser/performanceObservable'
 import type { RequestCompleteEvent } from '../requestCollection'
 import { WeakSet } from '../../browser/polyfills'
-import { isValidEntry } from './resourceUtils'
+import { hasValidResourceEntryDuration, hasValidResourceEntryTimings } from './resourceUtils'
 
 interface Timing {
   startTime: RelativeTime
@@ -25,7 +25,7 @@ const alreadyMatchedEntries = new WeakSet<PerformanceEntry>()
  * - then, if a single timing match, return the timing
  * - otherwise we can't decide, return undefined
  */
-export function matchRequestTiming(request: RequestCompleteEvent) {
+export function matchRequestResourceEntry(request: RequestCompleteEvent) {
   if (!performance || !('getEntriesByName' in performance)) {
     return
   }
@@ -37,7 +37,7 @@ export function matchRequestTiming(request: RequestCompleteEvent) {
 
   const candidates = sameNameEntries
     .filter((entry) => !alreadyMatchedEntries.has(entry))
-    .filter((entry) => isValidEntry(entry))
+    .filter((entry) => hasValidResourceEntryDuration(entry) && hasValidResourceEntryTimings(entry))
     .filter((entry) =>
       isBetween(
         entry,
