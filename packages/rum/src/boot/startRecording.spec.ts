@@ -59,9 +59,6 @@ describe('startRecording', () => {
   }
 
   beforeEach(() => {
-    if (isIE()) {
-      pending('IE not supported')
-    }
     sessionManager = createRumSessionManagerMock()
     viewId = 'view-id'
 
