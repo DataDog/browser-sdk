@@ -1,5 +1,5 @@
 import type { TimeStamp, HttpRequest } from '@datadog/browser-core'
-import { PageExitReason, DefaultPrivacyLevel, noop, isIE, DeflateEncoderStreamId } from '@datadog/browser-core'
+import { PageExitReason, DefaultPrivacyLevel, noop, DeflateEncoderStreamId } from '@datadog/browser-core'
 import type { ViewCreatedEvent } from '@datadog/browser-rum-core'
 import { LifeCycle, LifeCycleEventType, startViewContexts } from '@datadog/browser-rum-core'
 import { collectAsyncCalls, createNewEvent, mockEventBridge, registerCleanupTask } from '@datadog/browser-core/test'
