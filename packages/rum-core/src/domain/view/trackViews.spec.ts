@@ -266,24 +266,26 @@ describe('view lifecycle', () => {
   describe('session keep alive', () => {
     it('should emit a view update periodically', () => {
       const { getViewUpdateCount } = viewTest
+      clock.tick(THROTTLE_VIEW_UPDATE_PERIOD) // make sure we don't have pending update
 
-      expect(getViewUpdateCount()).toEqual(1)
+      const previousViewUpdateCount = getViewUpdateCount()
 
       clock.tick(SESSION_KEEP_ALIVE_INTERVAL)
 
-      expect(getViewUpdateCount()).toEqual(2)
+      expect(getViewUpdateCount()).toEqual(previousViewUpdateCount + 1)
     })
 
     it('should not send periodical updates after the session has expired', () => {
       const { getViewUpdateCount } = viewTest
+      clock.tick(THROTTLE_VIEW_UPDATE_PERIOD) // make sure we don't have pending update
 
       lifeCycle.notify(LifeCycleEventType.SESSION_EXPIRED)
 
-      expect(getViewUpdateCount()).toBe(2)
+      const previousViewUpdateCount = getViewUpdateCount()
 
       clock.tick(SESSION_KEEP_ALIVE_INTERVAL)
 
-      expect(getViewUpdateCount()).toBe(2)
+      expect(getViewUpdateCount()).toBe(previousViewUpdateCount)
     })
   })
 
@@ -606,9 +608,11 @@ describe('view custom timings', () => {
   })
 
   it('should add custom timing to current view', () => {
+    clock.tick(0)
     const { getViewUpdate, startView, addTiming } = viewTest
 
     startView()
+
     const currentViewId = getViewUpdate(2).id
     clock.tick(20)
     addTiming('foo')
@@ -710,6 +714,7 @@ describe('view custom timings', () => {
   })
 
   it('should not add custom timing when the session has expired', () => {
+    clock.tick(0)
     const { getViewUpdateCount, addTiming } = viewTest
 
     lifeCycle.notify(LifeCycleEventType.SESSION_EXPIRED)
