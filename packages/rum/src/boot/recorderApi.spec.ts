@@ -1,10 +1,10 @@
 import type { DeflateEncoder, DeflateWorker, DeflateWorkerAction } from '@datadog/browser-core'
 import { BridgeCapability, PageExitReason, display, isIE } from '@datadog/browser-core'
-import type { RecorderApi, ViewContexts, RumSessionManager } from '@datadog/browser-rum-core'
+import type { RecorderApi, RumSessionManager } from '@datadog/browser-rum-core'
 import { LifeCycle, LifeCycleEventType } from '@datadog/browser-rum-core'
 import { mockEventBridge, createNewEvent, registerCleanupTask } from '@datadog/browser-core/test'
 import type { RumSessionManagerMock } from '../../../rum-core/test'
-import { createRumSessionManagerMock, mockRumConfiguration } from '../../../rum-core/test'
+import { createRumSessionManagerMock, mockRumConfiguration, mockViewContexts } from '../../../rum-core/test'
 import type { CreateDeflateWorker } from '../domain/deflate'
 import { MockWorker } from '../../test'
 import { resetDeflateWorkerState } from '../domain/deflate'
@@ -13,7 +13,7 @@ import type { StartRecording } from './recorderApi'
 import { makeRecorderApi } from './recorderApi'
 
 describe('makeRecorderApi', () => {
-  let lifeCycle = new LifeCycle()
+  let lifeCycle: LifeCycle
   let recorderApi: RecorderApi
   let startRecordingSpy: jasmine.Spy<StartRecording>
   let stopRecordingSpy: jasmine.Spy<() => void>
@@ -21,9 +21,19 @@ describe('makeRecorderApi', () => {
   let createDeflateWorkerSpy: jasmine.Spy<CreateDeflateWorker>
 
   let rumInit: (options?: { worker?: DeflateWorker }) => void
-  let startSessionReplayRecordingManually: boolean
 
-  function setupRecorderApi(sessionManager: RumSessionManager = createRumSessionManagerMock().setId('1234')) {
+  function setupRecorderApi({
+    sessionManager,
+    startSessionReplayRecordingManually,
+  }: { sessionManager?: RumSessionManager; startSessionReplayRecordingManually?: boolean } = {}) {
+    if (isIE()) {
+      pending('IE not supported')
+    }
+
+    mockWorker = new MockWorker()
+    createDeflateWorkerSpy = jasmine.createSpy('createDeflateWorkerSpy').and.callFake(() => mockWorker)
+    spyOn(display, 'error')
+
     lifeCycle = new LifeCycle()
     stopRecordingSpy = jasmine.createSpy('stopRecording')
     startRecordingSpy = jasmine.createSpy('startRecording').and.callFake(() => ({
@@ -34,29 +44,18 @@ describe('makeRecorderApi', () => {
     rumInit = ({ worker } = {}) => {
       recorderApi.onRumStart(
         lifeCycle,
-        mockRumConfiguration({ startSessionReplayRecordingManually }),
-        sessionManager,
-        {} as ViewContexts,
+        mockRumConfiguration({ startSessionReplayRecordingManually: startSessionReplayRecordingManually ?? false }),
+        sessionManager ?? createRumSessionManagerMock().setId('1234'),
+        mockViewContexts(),
         worker
       )
     }
-  }
-
-  beforeEach(() => {
-    if (isIE()) {
-      pending('IE not supported')
-    }
-    startSessionReplayRecordingManually = false
-
-    mockWorker = new MockWorker()
-    createDeflateWorkerSpy = jasmine.createSpy('createDeflateWorkerSpy').and.callFake(() => mockWorker)
-    spyOn(display, 'error')
 
     registerCleanupTask(() => {
       resetDeflateWorkerState()
       replayStats.resetReplayStats()
     })
-  })
+  }
 
   describe('recorder boot', () => {
     describe('with automatic start', () => {
@@ -79,16 +78,14 @@ describe('makeRecorderApi', () => {
 
     describe('with manual start', () => {
       it('does not start recording when init() is called', () => {
-        startSessionReplayRecordingManually = true
-        setupRecorderApi()
+        setupRecorderApi({ startSessionReplayRecordingManually: true })
         expect(startRecordingSpy).not.toHaveBeenCalled()
         rumInit()
         expect(startRecordingSpy).not.toHaveBeenCalled()
       })
 
       it('does not start recording after the DOM is loaded', () => {
-        startSessionReplayRecordingManually = true
-        setupRecorderApi()
+        setupRecorderApi({ startSessionReplayRecordingManually: true })
         const { triggerOnDomLoaded } = mockDocumentReadyState()
         rumInit()
         expect(startRecordingSpy).not.toHaveBeenCalled()
@@ -99,12 +96,8 @@ describe('makeRecorderApi', () => {
   })
 
   describe('recorder start', () => {
-    beforeEach(() => {
-      startSessionReplayRecordingManually = true
-    })
-
     it('ignores additional start calls while recording is already started', () => {
-      setupRecorderApi()
+      setupRecorderApi({ startSessionReplayRecordingManually: true })
       rumInit()
       recorderApi.start()
       recorderApi.start()
@@ -113,7 +106,7 @@ describe('makeRecorderApi', () => {
     })
 
     it('ignores restart before the DOM is loaded', () => {
-      setupRecorderApi()
+      setupRecorderApi({ startSessionReplayRecordingManually: true })
       const { triggerOnDomLoaded } = mockDocumentReadyState()
       rumInit()
       recorderApi.stop()
@@ -123,14 +116,20 @@ describe('makeRecorderApi', () => {
     })
 
     it('ignores start calls if the session is not tracked', () => {
-      setupRecorderApi(createRumSessionManagerMock().setNotTracked())
+      setupRecorderApi({
+        sessionManager: createRumSessionManagerMock().setNotTracked(),
+        startSessionReplayRecordingManually: true,
+      })
       rumInit()
       recorderApi.start()
       expect(startRecordingSpy).not.toHaveBeenCalled()
     })
 
     it('ignores start calls if the session is tracked without session replay', () => {
-      setupRecorderApi(createRumSessionManagerMock().setTrackedWithoutSessionReplay())
+      setupRecorderApi({
+        sessionManager: createRumSessionManagerMock().setTrackedWithoutSessionReplay(),
+        startSessionReplayRecordingManually: true,
+      })
       rumInit()
       recorderApi.start()
       expect(startRecordingSpy).not.toHaveBeenCalled()
@@ -140,8 +139,11 @@ describe('makeRecorderApi', () => {
       const setForcedReplaySpy = jasmine.createSpy()
 
       setupRecorderApi({
-        ...createRumSessionManagerMock().setTrackedWithoutSessionReplay(),
-        setForcedReplay: setForcedReplaySpy,
+        sessionManager: {
+          ...createRumSessionManagerMock().setTrackedWithoutSessionReplay(),
+          setForcedReplay: setForcedReplaySpy,
+        },
+        startSessionReplayRecordingManually: true,
       })
 
       rumInit()
@@ -151,7 +153,7 @@ describe('makeRecorderApi', () => {
     })
 
     it('uses the previously created worker if available', () => {
-      setupRecorderApi()
+      setupRecorderApi({ startSessionReplayRecordingManually: true })
       rumInit({ worker: mockWorker })
       recorderApi.start()
       expect(createDeflateWorkerSpy).not.toHaveBeenCalled()
@@ -159,7 +161,7 @@ describe('makeRecorderApi', () => {
     })
 
     it('does not start recording if worker creation fails', () => {
-      setupRecorderApi()
+      setupRecorderApi({ startSessionReplayRecordingManually: true })
       rumInit()
       createDeflateWorkerSpy.and.throwError('Crash')
       recorderApi.start()
@@ -167,7 +169,7 @@ describe('makeRecorderApi', () => {
     })
 
     it('stops recording if worker initialization fails', () => {
-      setupRecorderApi()
+      setupRecorderApi({ startSessionReplayRecordingManually: true })
       rumInit()
       recorderApi.start()
 
@@ -177,7 +179,7 @@ describe('makeRecorderApi', () => {
     })
 
     it('restarting the recording should not reset the worker action id', () => {
-      setupRecorderApi()
+      setupRecorderApi({ startSessionReplayRecordingManually: true })
       rumInit()
       recorderApi.start()
 
@@ -210,7 +212,7 @@ describe('makeRecorderApi', () => {
       it('should not start recording when the bridge does not support records', () => {
         mockEventBridge({ capabilities: [] })
 
-        setupRecorderApi()
+        setupRecorderApi({ startSessionReplayRecordingManually: true })
         rumInit()
         recorderApi.start()
         expect(startRecordingSpy).not.toHaveBeenCalled()
@@ -230,7 +232,7 @@ describe('makeRecorderApi', () => {
       })
 
       it('does not start recording', () => {
-        setupRecorderApi()
+        setupRecorderApi({ startSessionReplayRecordingManually: true })
         recorderApi.start()
         rumInit()
         expect(startRecordingSpy).not.toHaveBeenCalled()
@@ -262,7 +264,7 @@ describe('makeRecorderApi', () => {
     let sessionManager: RumSessionManagerMock
     beforeEach(() => {
       sessionManager = createRumSessionManagerMock()
-      setupRecorderApi(sessionManager)
+      setupRecorderApi({ sessionManager })
     })
 
     // prevent getting records after the before_unload event has been triggered.

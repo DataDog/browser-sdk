@@ -29,7 +29,7 @@ describe('track views automatically', () => {
   let viewTest: ViewTest
 
   beforeEach(() => {
-    viewTest = setupViewTest({ lifeCycle, initalLocation: '/foo' }, { name: 'initial view name' })
+    viewTest = setupViewTest({ lifeCycle, initialLocation: '/foo' }, { name: 'initial view name' })
     changeLocation = viewTest.changeLocation
 
     registerCleanupTask(() => {
@@ -110,7 +110,7 @@ describe('view lifecycle', () => {
     notifySpy = spyOn(lifeCycle, 'notify').and.callThrough()
 
     viewTest = setupViewTest(
-      { lifeCycle, initalLocation: '/foo' },
+      { lifeCycle, initialLocation: '/foo' },
       {
         name: 'initial view name',
         service: 'initial service',
@@ -595,7 +595,7 @@ describe('view custom timings', () => {
 
   beforeEach(() => {
     clock = mockClock()
-    viewTest = setupViewTest({ lifeCycle, initalLocation: '/foo' })
+    viewTest = setupViewTest({ lifeCycle, initialLocation: '/foo' })
 
     registerCleanupTask(() => {
       viewTest.stop()

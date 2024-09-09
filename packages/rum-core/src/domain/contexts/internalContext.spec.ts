@@ -10,29 +10,32 @@ import type { UrlContexts } from './urlContexts'
 describe('internal context', () => {
   let findUrlSpy: jasmine.Spy<UrlContexts['findUrl']>
   let findSessionSpy: jasmine.Spy<RumSessionManager['findTrackedSession']>
-  const viewContexts: ViewContexts = {
-    findView: jasmine.createSpy('findView').and.returnValue({
-      id: 'abcde',
-      name: 'foo',
-    }),
-    stop: noop,
-  }
-
-  const actionContexts: ActionContexts = {
-    findActionId: jasmine.createSpy('findActionId').and.returnValue('7890'),
-  }
-
-  const fakeLocation = buildLocation('/foo')
-
-  const urlContexts: UrlContexts = {
-    findUrl: () => ({
-      url: fakeLocation.href,
-      referrer: document.referrer,
-    }),
-    stop: noop,
-  }
+  let fakeLocation: Location
+  let viewContexts: ViewContexts
+  let actionContexts: ActionContexts
 
   function setupInternalContext(sessionManager: RumSessionManager) {
+    viewContexts = {
+      findView: jasmine.createSpy('findView').and.returnValue({
+        id: 'abcde',
+        name: 'foo',
+      }),
+      stop: noop,
+    }
+
+    actionContexts = {
+      findActionId: jasmine.createSpy('findActionId').and.returnValue('7890'),
+    }
+
+    fakeLocation = buildLocation('/foo')
+
+    const urlContexts: UrlContexts = {
+      findUrl: () => ({
+        url: fakeLocation.href,
+        referrer: document.referrer,
+      }),
+      stop: noop,
+    }
     findSessionSpy = spyOn(sessionManager, 'findTrackedSession').and.callThrough()
     findUrlSpy = spyOn(urlContexts, 'findUrl').and.callThrough()
 

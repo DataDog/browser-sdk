@@ -9,13 +9,13 @@ export type ViewTest = ReturnType<typeof setupViewTest>
 
 interface ViewTrackingContext {
   lifeCycle: LifeCycle
-  initalLocation?: string
+  initialLocation?: string
 }
 
-export function setupViewTest({ lifeCycle, initalLocation }: ViewTrackingContext, initialViewOptions?: ViewOptions) {
+export function setupViewTest({ lifeCycle, initialLocation }: ViewTrackingContext, initialViewOptions?: ViewOptions) {
   const domMutationObservable = new Observable<void>()
   const configuration = mockRumConfiguration()
-  const { locationChangeObservable, changeLocation } = setupLocationObserver(initalLocation)
+  const { locationChangeObservable, changeLocation } = setupLocationObserver(initialLocation)
 
   const {
     handler: viewUpdateHandler,
