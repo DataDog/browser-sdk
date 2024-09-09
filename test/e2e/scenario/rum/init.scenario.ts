@@ -123,8 +123,9 @@ describe('API calls and events around init', () => {
 })
 
 describe('beforeSend', () => {
-  createTest('allows to edit non-view events context')
+  createTest('allows to edit events context with feature flag')
     .withRum({
+      enableExperimentalFeatures: ['view_specific_context'],
       beforeSend: (event: any) => {
         event.context!.foo = 'bar'
         return true
@@ -135,13 +136,14 @@ describe('beforeSend', () => {
       await flushEvents()
 
       const initialView = intakeRegistry.rumViewEvents[0]
-      expect(initialView.context).not.toEqual(jasmine.objectContaining({ foo: 'bar' }))
+      expect(initialView.context).toEqual(jasmine.objectContaining({ foo: 'bar' }))
       const initialDocument = intakeRegistry.rumResourceEvents[0]
       expect(initialDocument.context).toEqual(jasmine.objectContaining({ foo: 'bar' }))
     })
 
-  createTest('allows to replace non-view events context')
+  createTest('allows to replace events context')
     .withRum({
+      enableExperimentalFeatures: ['view_specific_context'],
       beforeSend: (event) => {
         event.context = { foo: 'bar' }
         return true
@@ -157,7 +159,7 @@ describe('beforeSend', () => {
       await flushEvents()
 
       const initialView = intakeRegistry.rumViewEvents[0]
-      expect(initialView.context).toEqual(jasmine.objectContaining({ foo: 'baz', zig: 'zag' }))
+      expect(initialView.context).toEqual(jasmine.objectContaining({ foo: 'bar' }))
       const initialDocument = intakeRegistry.rumResourceEvents[0]
       expect(initialDocument.context).toEqual(jasmine.objectContaining({ foo: 'bar' }))
     })

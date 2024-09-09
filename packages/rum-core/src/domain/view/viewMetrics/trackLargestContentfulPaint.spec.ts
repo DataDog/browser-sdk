@@ -7,9 +7,8 @@ import {
   registerCleanupTask,
 } from '@datadog/browser-core/test'
 import { RumPerformanceEntryType } from '../../../browser/performanceObservable'
-import { appendElement, createPerformanceEntry } from '../../../../test'
+import { appendElement, createPerformanceEntry, mockRumConfiguration } from '../../../../test'
 import { LifeCycle, LifeCycleEventType } from '../../lifeCycle'
-import type { RumConfiguration } from '../../configuration'
 import type { LargestContentfulPaint } from './trackLargestContentfulPaint'
 import { LCP_MAXIMUM_DELAY, trackLargestContentfulPaint } from './trackLargestContentfulPaint'
 import { trackFirstHidden } from './trackFirstHidden'
@@ -20,10 +19,10 @@ describe('trackLargestContentfulPaint', () => {
   let eventTarget: Window
 
   function startLCPTracking() {
-    const firstHidden = trackFirstHidden({} as RumConfiguration)
+    const firstHidden = trackFirstHidden(mockRumConfiguration())
     const largestContentfulPaint = trackLargestContentfulPaint(
       lifeCycle,
-      {} as RumConfiguration,
+      mockRumConfiguration(),
       firstHidden,
       eventTarget,
       lcpCallback

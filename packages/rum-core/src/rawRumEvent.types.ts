@@ -43,12 +43,12 @@ export interface RawRumResourceEvent {
     decoded_body_size?: number
     transfer_size?: number
     render_blocking_status?: string
-    redirect?: PerformanceResourceDetailsElement
-    dns?: PerformanceResourceDetailsElement
-    connect?: PerformanceResourceDetailsElement
-    ssl?: PerformanceResourceDetailsElement
-    first_byte?: PerformanceResourceDetailsElement
-    download?: PerformanceResourceDetailsElement
+    redirect?: ResourceEntryDetailsElement
+    dns?: ResourceEntryDetailsElement
+    connect?: ResourceEntryDetailsElement
+    ssl?: ResourceEntryDetailsElement
+    first_byte?: ResourceEntryDetailsElement
+    download?: ResourceEntryDetailsElement
   }
   _dd: {
     trace_id?: string
@@ -59,7 +59,7 @@ export interface RawRumResourceEvent {
   }
 }
 
-export interface PerformanceResourceDetailsElement {
+export interface ResourceEntryDetailsElement {
   duration: ServerDuration
   start: ServerDuration
 }

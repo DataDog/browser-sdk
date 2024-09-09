@@ -1,10 +1,14 @@
 import { type RelativeTime, type ServerDuration } from '@datadog/browser-core'
 import { registerCleanupTask } from '@datadog/browser-core/test'
-import { collectAndValidateRawRumEvents, createPerformanceEntry, mockPerformanceObserver } from '../../../test'
+import {
+  collectAndValidateRawRumEvents,
+  createPerformanceEntry,
+  mockPerformanceObserver,
+  mockRumConfiguration,
+} from '../../../test'
 import { RumPerformanceEntryType } from '../../browser/performanceObservable'
 import { RumEventType, RumLongTaskEntryType } from '../../rawRumEvent.types'
 import { LifeCycle } from '../lifeCycle'
-import type { RumConfiguration } from '../configuration'
 import { startLongAnimationFrameCollection } from './longAnimationFrameCollection'
 
 describe('long animation frames collection', () => {
@@ -81,11 +85,13 @@ describe('long animation frames collection', () => {
 
 function setupLongAnimationFrameCollection() {
   const lifeCycle = new LifeCycle()
-  const configuration = {} as RumConfiguration
 
   const notifyPerformanceEntries = mockPerformanceObserver().notifyPerformanceEntries
   const rawRumEvents = collectAndValidateRawRumEvents(lifeCycle)
-  const { stop: stopLongAnimationFrameCollection } = startLongAnimationFrameCollection(lifeCycle, configuration)
+  const { stop: stopLongAnimationFrameCollection } = startLongAnimationFrameCollection(
+    lifeCycle,
+    mockRumConfiguration()
+  )
 
   registerCleanupTask(() => {
     stopLongAnimationFrameCollection()

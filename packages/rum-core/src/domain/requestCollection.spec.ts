@@ -2,8 +2,7 @@ import type { Payload } from '@datadog/browser-core'
 import { isIE, RequestType } from '@datadog/browser-core'
 import type { MockFetch, MockFetchManager, MockXhrManager } from '@datadog/browser-core/test'
 import { registerCleanupTask, SPEC_ENDPOINTS, mockFetch, mockXhr, withXhr } from '@datadog/browser-core/test'
-import type { RumConfiguration } from './configuration'
-import { validateAndBuildRumConfiguration } from './configuration'
+import { mockRumConfiguration } from '../../test'
 import { LifeCycle, LifeCycleEventType } from './lifeCycle'
 import type { RequestCompleteEvent, RequestStartEvent } from './requestCollection'
 import { trackFetch, trackXhr } from './requestCollection'
@@ -13,7 +12,6 @@ import { clearTracingIfNeeded, createTraceIdentifier } from './tracing/tracer'
 const DEFAULT_PAYLOAD = {} as Payload
 
 describe('collect fetch', () => {
-  let configuration: RumConfiguration
   const FAKE_URL = 'http://fake-url/'
   let fetch: MockFetch
   let mockFetchManager: MockFetchManager
@@ -25,11 +23,7 @@ describe('collect fetch', () => {
     if (isIE()) {
       pending('no fetch support')
     }
-    configuration = {
-      ...validateAndBuildRumConfiguration({ clientToken: 'xxx', applicationId: 'xxx' })!,
-      ...SPEC_ENDPOINTS,
-      batchMessagesLimit: 1,
-    }
+    const configuration = mockRumConfiguration({ batchMessagesLimit: 1 })
     mockFetchManager = mockFetch()
 
     startSpy = jasmine.createSpy('requestStart')
@@ -186,7 +180,6 @@ describe('collect fetch', () => {
 })
 
 describe('collect xhr', () => {
-  let configuration: RumConfiguration
   let startSpy: jasmine.Spy<(requestStartEvent: RequestStartEvent) => void>
   let completeSpy: jasmine.Spy<(requestCompleteEvent: RequestCompleteEvent) => void>
   let mockXhrManager: MockXhrManager
@@ -196,11 +189,7 @@ describe('collect xhr', () => {
     if (isIE()) {
       pending('no fetch support')
     }
-    configuration = {
-      ...validateAndBuildRumConfiguration({ clientToken: 'xxx', applicationId: 'xxx' })!,
-      ...SPEC_ENDPOINTS,
-      batchMessagesLimit: 1,
-    }
+    const configuration = mockRumConfiguration({ batchMessagesLimit: 1 })
     mockXhrManager = mockXhr()
     startSpy = jasmine.createSpy('requestStart')
     completeSpy = jasmine.createSpy('requestComplete')

@@ -33,11 +33,15 @@ export function createLocationChangeObservable(configuration: RumConfiguration, 
 }
 
 function trackHistory(configuration: RumConfiguration, onHistoryChange: () => void) {
-  const { stop: stopInstrumentingPushState } = instrumentMethod(History.prototype, 'pushState', ({ onPostCall }) => {
-    onPostCall(onHistoryChange)
-  })
+  const { stop: stopInstrumentingPushState } = instrumentMethod(
+    getHistoryInstrumentationTarget('pushState'),
+    'pushState',
+    ({ onPostCall }) => {
+      onPostCall(onHistoryChange)
+    }
+  )
   const { stop: stopInstrumentingReplaceState } = instrumentMethod(
-    History.prototype,
+    getHistoryInstrumentationTarget('replaceState'),
     'replaceState',
     ({ onPostCall }) => {
       onPostCall(onHistoryChange)
@@ -56,4 +60,10 @@ function trackHistory(configuration: RumConfiguration, onHistoryChange: () => vo
 
 function trackHash(configuration: RumConfiguration, onHashChange: () => void) {
   return addEventListener(configuration, window, DOM_EVENT.HASH_CHANGE, onHashChange)
+}
+
+function getHistoryInstrumentationTarget(methodName: 'pushState' | 'replaceState') {
+  // Ideally we should always instument the method on the prototype, however some frameworks (e.g [Next.js](https://github.com/vercel/next.js/blob/d3f5532065f3e3bb84fb54bd2dfd1a16d0f03a21/packages/next/src/client/components/app-router.tsx#L429))
+  // are wrapping the instance method. In that case we should also wrap the instance method.
+  return Object.prototype.hasOwnProperty.call(history, methodName) ? history : History.prototype
 }
