@@ -1,9 +1,9 @@
-import type { RumConfiguration } from '../configuration'
+import { mockRumConfiguration } from '../../../test'
 import { retrieveInitialDocumentResourceTiming } from './retrieveInitialDocumentResourceTiming'
 
 describe('rum initial document resource', () => {
   it('creates a resource timing for the initial document', (done) => {
-    retrieveInitialDocumentResourceTiming({} as RumConfiguration, (timing) => {
+    retrieveInitialDocumentResourceTiming(mockRumConfiguration(), (timing) => {
       expect(timing.entryType).toBe('resource')
       expect(timing.duration).toBeGreaterThan(0)
 

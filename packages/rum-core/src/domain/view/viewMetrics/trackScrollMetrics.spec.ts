@@ -2,12 +2,12 @@ import type { Duration, RelativeTime, Subscription, TimeStamp } from '@datadog/b
 import { DOM_EVENT, Observable } from '@datadog/browser-core'
 import type { Clock } from '@datadog/browser-core/test'
 import { createNewEvent, mockClock, registerCleanupTask } from '@datadog/browser-core/test'
-import type { RumConfiguration } from '../../configuration'
+import { mockRumConfiguration } from '../../../../test'
 import type { ScrollMetrics, ScrollValues } from './trackScrollMetrics'
 import { createScrollValuesObservable, trackScrollMetrics } from './trackScrollMetrics'
 
 describe('createScrollValuesObserver', () => {
-  const scrollObservable = createScrollValuesObservable({} as RumConfiguration, 0)
+  const scrollObservable = createScrollValuesObservable(mockRumConfiguration(), 0)
   let subscription: Subscription
 
   const newScroll = () => {
@@ -53,7 +53,7 @@ describe('trackScrollMetrics', () => {
     scrollMetricsCallback = jasmine.createSpy()
     clock = mockClock()
     trackScrollMetrics(
-      {} as RumConfiguration,
+      mockRumConfiguration(),
       { relative: 0 as RelativeTime, timeStamp: 0 as TimeStamp },
       scrollMetricsCallback,
       scrollObservable

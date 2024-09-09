@@ -1,7 +1,7 @@
 import type { Duration, RelativeTime } from '@datadog/browser-core'
 import { elapsed, resetExperimentalFeatures } from '@datadog/browser-core'
 import { registerCleanupTask } from '@datadog/browser-core/test'
-import { appendElement, appendText, createPerformanceEntry } from '../../../../test'
+import { appendElement, appendText, createPerformanceEntry, mockRumConfiguration } from '../../../../test'
 import { RumPerformanceEntryType } from '../../../browser/performanceObservable'
 import type {
   BrowserWindow,
@@ -10,7 +10,6 @@ import type {
 } from '../../../browser/performanceObservable'
 import { ViewLoadingType } from '../../../rawRumEvent.types'
 import { LifeCycle, LifeCycleEventType } from '../../lifeCycle'
-import type { RumConfiguration } from '../../configuration'
 import {
   trackInteractionToNextPaint,
   trackViewInteractionCount,
@@ -36,7 +35,7 @@ describe('trackInteractionToNextPaint', () => {
     interactionCountMock = mockInteractionCount()
 
     const interactionToNextPaintTracking = trackInteractionToNextPaint(
-      {} as RumConfiguration,
+      mockRumConfiguration(),
       viewStart,
       ViewLoadingType.INITIAL_LOAD,
       lifeCycle

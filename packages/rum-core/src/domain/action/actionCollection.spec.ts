@@ -1,8 +1,8 @@
 import type { Duration, RelativeTime, ServerDuration, TimeStamp } from '@datadog/browser-core'
 import { Observable } from '@datadog/browser-core'
 import { createNewEvent } from '@datadog/browser-core/test'
-import type { RawRumActionEvent, RawRumEventCollectedData, RumConfiguration } from '@datadog/browser-rum-core'
-import { collectAndValidateRawRumEvents, mockPageStateHistory } from '../../../test'
+import type { RawRumActionEvent, RawRumEventCollectedData } from '@datadog/browser-rum-core'
+import { collectAndValidateRawRumEvents, mockPageStateHistory, mockRumConfiguration } from '../../../test'
 import type { RawRumEvent } from '../../rawRumEvent.types'
 import { RumEventType, ActionType } from '../../rawRumEvent.types'
 import { LifeCycle, LifeCycleEventType } from '../lifeCycle'
@@ -16,10 +16,14 @@ describe('actionCollection', () => {
   let rawRumEvents: Array<RawRumEventCollectedData<RawRumEvent>>
 
   beforeEach(() => {
-    const configuration = {} as RumConfiguration
     const domMutationObservable = new Observable<void>()
 
-    ;({ addAction } = startActionCollection(lifeCycle, domMutationObservable, configuration, basePageStateHistory))
+    ;({ addAction } = startActionCollection(
+      lifeCycle,
+      domMutationObservable,
+      mockRumConfiguration(),
+      basePageStateHistory
+    ))
 
     rawRumEvents = collectAndValidateRawRumEvents(lifeCycle)
   })

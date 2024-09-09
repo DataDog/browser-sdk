@@ -3,8 +3,12 @@ import type { Clock } from '@datadog/browser-core/test'
 import { mockClock, registerCleanupTask } from '@datadog/browser-core/test'
 import type { RumPerformanceEntry } from '../../../browser/performanceObservable'
 import { RumPerformanceEntryType } from '../../../browser/performanceObservable'
-import { createPerformanceEntry, mockPerformanceObserver, mockPerformanceTiming } from '../../../../test'
-import type { RumConfiguration } from '../../configuration'
+import {
+  createPerformanceEntry,
+  mockPerformanceObserver,
+  mockPerformanceTiming,
+  mockRumConfiguration,
+} from '../../../../test'
 import type { NavigationTimings } from './trackNavigationTimings'
 import { trackNavigationTimings } from './trackNavigationTimings'
 
@@ -31,7 +35,7 @@ describe('trackNavigationTimings', () => {
 
   it('should provide navigation timing', () => {
     ;({ notifyPerformanceEntries } = mockPerformanceObserver())
-    ;({ stop } = trackNavigationTimings({} as RumConfiguration, navigationTimingsCallback))
+    ;({ stop } = trackNavigationTimings(mockRumConfiguration(), navigationTimingsCallback))
     notifyPerformanceEntries([createPerformanceEntry(RumPerformanceEntryType.NAVIGATION)])
 
     expect(navigationTimingsCallback).toHaveBeenCalledOnceWith({
@@ -45,7 +49,7 @@ describe('trackNavigationTimings', () => {
 
   it('should discard incomplete navigation timing', () => {
     ;({ notifyPerformanceEntries } = mockPerformanceObserver())
-    ;({ stop } = trackNavigationTimings({} as RumConfiguration, navigationTimingsCallback))
+    ;({ stop } = trackNavigationTimings(mockRumConfiguration(), navigationTimingsCallback))
     notifyPerformanceEntries([
       createPerformanceEntry(RumPerformanceEntryType.NAVIGATION, { loadEventEnd: 0 as RelativeTime }),
     ])
@@ -57,7 +61,7 @@ describe('trackNavigationTimings', () => {
     clock = mockClock(new Date(0))
     mockPerformanceTiming()
     removePerformanceObserver()
-    ;({ stop } = trackNavigationTimings({} as RumConfiguration, navigationTimingsCallback))
+    ;({ stop } = trackNavigationTimings(mockRumConfiguration(), navigationTimingsCallback))
     clock.tick(0)
 
     expect(navigationTimingsCallback).toHaveBeenCalledOnceWith({

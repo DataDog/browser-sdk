@@ -1,7 +1,7 @@
 import type { Duration, RelativeTime, TimeoutId } from '@datadog/browser-core'
 import { addEventListener, Observable, setTimeout, clearTimeout, monitor } from '@datadog/browser-core'
 import type { RumConfiguration } from '../domain/configuration'
-import { isAllowedRequestUrl } from '../domain/resource/resourceUtils'
+import { hasValidResourceEntryDuration, isAllowedRequestUrl } from '../domain/resource/resourceUtils'
 
 type RumPerformanceObserverConstructor = new (callback: PerformanceObserverCallback) => RumPerformanceObserver
 
@@ -283,5 +283,8 @@ function filterRumPerformanceEntries<T extends RumPerformanceEntryType>(
 }
 
 function isForbiddenResource(configuration: RumConfiguration, entry: RumPerformanceEntry) {
-  return entry.entryType === RumPerformanceEntryType.RESOURCE && !isAllowedRequestUrl(configuration, entry.name)
+  return (
+    entry.entryType === RumPerformanceEntryType.RESOURCE &&
+    (!isAllowedRequestUrl(configuration, entry.name) || !hasValidResourceEntryDuration(entry))
+  )
 }

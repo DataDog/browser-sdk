@@ -23,13 +23,13 @@ import type { RequestCompleteEvent } from '../requestCollection'
 import type { PageStateHistory } from '../contexts/pageStateHistory'
 import { PageState } from '../contexts/pageStateHistory'
 import { createTraceIdentifier } from '../tracing/tracer'
-import { matchRequestTiming } from './matchRequestTiming'
+import { matchRequestResourceEntry } from './matchRequestResourceEntry'
 import {
-  computePerformanceResourceDetails,
-  computePerformanceResourceDuration,
-  computeResourceKind,
-  computeSize,
-  isRequestKind,
+  computeResourceEntryDetails,
+  computeResourceEntryDuration,
+  computeResourceEntryType,
+  computeResourceEntrySize,
+  isResourceEntryRequestType,
   isLongDataUrl,
   sanitizeDataUrl,
 } from './resourceUtils'
@@ -53,7 +53,7 @@ export function startResourceCollection(
     buffered: true,
   }).subscribe((entries) => {
     for (const entry of entries) {
-      if (!isRequestKind(entry)) {
+      if (!isResourceEntryRequestType(entry)) {
         const rawEvent = processResourceEntry(entry, configuration)
         if (rawEvent) {
           lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, rawEvent)
@@ -81,7 +81,7 @@ function processRequest(
   configuration: RumConfiguration,
   pageStateHistory: PageStateHistory
 ): RawRumEventCollectedData<RawRumResourceEvent> | undefined {
-  const matchingTiming = matchRequestTiming(request)
+  const matchingTiming = matchRequestResourceEntry(request)
   const startClocks = matchingTiming ? relativeToClocks(matchingTiming.startTime) : request.startClocks
   const tracingInfo = computeRequestTracingInfo(request, configuration)
   if (!configuration.trackResources && !tracingInfo) {
@@ -90,7 +90,7 @@ function processRequest(
 
   const type = request.type === RequestType.XHR ? ResourceType.XHR : ResourceType.FETCH
 
-  const correspondingTimingOverrides = matchingTiming ? computePerformanceEntryMetrics(matchingTiming) : undefined
+  const correspondingTimingOverrides = matchingTiming ? computeResourceEntryMetrics(matchingTiming) : undefined
 
   const duration = computeRequestDuration(pageStateHistory, startClocks, request.duration)
 
@@ -135,13 +135,13 @@ function processResourceEntry(
   configuration: RumConfiguration
 ): RawRumEventCollectedData<RawRumResourceEvent> | undefined {
   const startClocks = relativeToClocks(entry.startTime)
-  const tracingInfo = computeEntryTracingInfo(entry, configuration)
+  const tracingInfo = computeResourceEntryTracingInfo(entry, configuration)
   if (!configuration.trackResources && !tracingInfo) {
     return
   }
 
-  const type = computeResourceKind(entry)
-  const entryMetrics = computePerformanceEntryMetrics(entry)
+  const type = computeResourceEntryType(entry)
+  const entryMetrics = computeResourceEntryMetrics(entry)
 
   const resourceEvent = combine(
     {
@@ -169,14 +169,14 @@ function processResourceEntry(
   }
 }
 
-function computePerformanceEntryMetrics(timing: RumPerformanceResourceTiming) {
-  const { renderBlockingStatus } = timing
+function computeResourceEntryMetrics(entry: RumPerformanceResourceTiming) {
+  const { renderBlockingStatus } = entry
   return {
     resource: {
-      duration: computePerformanceResourceDuration(timing),
+      duration: computeResourceEntryDuration(entry),
       render_blocking_status: renderBlockingStatus,
-      ...computeSize(timing),
-      ...computePerformanceResourceDetails(timing),
+      ...computeResourceEntrySize(entry),
+      ...computeResourceEntryDetails(entry),
     },
   }
 }
@@ -195,7 +195,7 @@ function computeRequestTracingInfo(request: RequestCompleteEvent, configuration:
   }
 }
 
-function computeEntryTracingInfo(entry: RumPerformanceResourceTiming, configuration: RumConfiguration) {
+function computeResourceEntryTracingInfo(entry: RumPerformanceResourceTiming, configuration: RumConfiguration) {
   const hasBeenTraced = entry.traceId
   if (!hasBeenTraced) {
     return undefined
