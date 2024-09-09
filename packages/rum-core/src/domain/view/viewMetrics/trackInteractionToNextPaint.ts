@@ -124,7 +124,10 @@ export function trackInteractionToNextPaint(
       viewEnd = viewEndTime
       stopViewInteractionCount()
     },
-    stop,
+    stop: () => {
+      stop()
+      interactionSelectorMap.clear()
+    },
   }
 }
 
