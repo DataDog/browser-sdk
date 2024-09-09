@@ -1,11 +1,15 @@
 import type { RelativeTime, ServerDuration } from '@datadog/browser-core'
-import { collectAndValidateRawRumEvents, createPerformanceEntry, mockPerformanceObserver } from '../../../test'
+import {
+  collectAndValidateRawRumEvents,
+  createPerformanceEntry,
+  mockPerformanceObserver,
+  mockRumConfiguration,
+} from '../../../test'
 import { RumPerformanceEntryType } from '../../browser/performanceObservable'
 import type { RawRumEvent } from '../../rawRumEvent.types'
 import { RumEventType, RumLongTaskEntryType } from '../../rawRumEvent.types'
 import type { RawRumEventCollectedData } from '../lifeCycle'
 import { LifeCycle, LifeCycleEventType } from '../lifeCycle'
-import type { RumConfiguration } from '../configuration'
 import { startLongTaskCollection } from './longTaskCollection'
 
 describe('long task collection', () => {
@@ -14,7 +18,7 @@ describe('long task collection', () => {
 
   function setupLongTaskCollection(trackLongTasks = true) {
     lifeCycle = new LifeCycle()
-    startLongTaskCollection(lifeCycle, { trackLongTasks } as RumConfiguration)
+    startLongTaskCollection(lifeCycle, mockRumConfiguration({ trackLongTasks }))
 
     rawRumEvents = collectAndValidateRawRumEvents(lifeCycle)
   }

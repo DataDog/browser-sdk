@@ -9,7 +9,7 @@ import {
 } from '@datadog/browser-core'
 import type { Clock } from '@datadog/browser-core/test'
 import { createNewEvent, mockClock } from '@datadog/browser-core/test'
-import { createFakeClick } from '../../../test'
+import { createFakeClick, mockRumConfiguration } from '../../../test'
 import { RumEventType, ActionType, FrustrationType } from '../../rawRumEvent.types'
 import type { RumEvent } from '../../rumEvent.types'
 import { LifeCycle, LifeCycleEventType } from '../lifeCycle'
@@ -57,7 +57,7 @@ describe('trackClickActions', () => {
     const trackClickActionsResult = trackClickActions(
       lifeCycle,
       domMutationObservable,
-      partialConfig as RumConfiguration
+      mockRumConfiguration(partialConfig)
     )
 
     findActionId = trackClickActionsResult.actionContexts.findActionId

@@ -8,6 +8,7 @@ import {
 } from '@datadog/browser-core'
 import type { Clock } from '@datadog/browser-core/test'
 import { mockClock } from '@datadog/browser-core/test'
+import { mockRumConfiguration } from '../../test'
 import { RumEventType } from '../rawRumEvent.types'
 import type { RumEvent } from '../rumEvent.types'
 import { LifeCycle, LifeCycleEventType } from './lifeCycle'
@@ -22,11 +23,11 @@ describe('customerDataTelemetry', () => {
   let lifeCycle: LifeCycle
   const viewEvent = { type: RumEventType.VIEW } as RumEvent & Context
 
-  const baseConfiguration = {
+  const config: Partial<RumConfiguration> = {
     telemetrySampleRate: 100,
     customerDataTelemetrySampleRate: 100,
     maxTelemetryEventsPerPage: 2,
-  } as RumConfiguration
+  }
 
   function generateBatch({
     eventNumber,
@@ -51,7 +52,8 @@ describe('customerDataTelemetry', () => {
     })
   }
 
-  function setupCustomerTlemertyCollection(configuration: RumConfiguration = baseConfiguration) {
+  function setupCustomerTlemertyCollection(partialConfig: Partial<RumConfiguration> = config) {
+    const configuration = mockRumConfiguration(partialConfig)
     batchFlushObservable = new Observable()
     lifeCycle = new LifeCycle()
     fakeContextBytesCount = 1
@@ -145,7 +147,7 @@ describe('customerDataTelemetry', () => {
     setupCustomerTlemertyCollection({
       telemetrySampleRate: 100,
       customerDataTelemetrySampleRate: 0,
-    } as RumConfiguration)
+    })
 
     generateBatch({ eventNumber: 1 })
     clock.tick(MEASURES_PERIOD_DURATION)

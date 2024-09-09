@@ -1,18 +1,16 @@
 import { registerCleanupTask } from '@datadog/browser-core/test'
-import { createPerformanceEntry, mockPerformanceObserver } from '../../test'
-import type { RumConfiguration } from '../domain/configuration'
+import { createPerformanceEntry, mockPerformanceObserver, mockRumConfiguration } from '../../test'
 import { LifeCycle, LifeCycleEventType } from '../domain/lifeCycle'
 import { startPerformanceCollection } from './performanceCollection'
 import { RumPerformanceEntryType } from './performanceObservable'
 
 describe('startPerformanceCollection', () => {
   const lifeCycle = new LifeCycle()
-  const configuration = {} as RumConfiguration
   let entryCollectedCallback: jasmine.Spy
 
   function setupStartPerformanceCollection() {
     entryCollectedCallback = jasmine.createSpy()
-    const { stop } = startPerformanceCollection(lifeCycle, configuration)
+    const { stop } = startPerformanceCollection(lifeCycle, mockRumConfiguration())
     const subscription = lifeCycle.subscribe(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, entryCollectedCallback)
 
     registerCleanupTask(() => {

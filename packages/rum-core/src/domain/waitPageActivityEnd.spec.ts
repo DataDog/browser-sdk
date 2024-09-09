@@ -1,8 +1,8 @@
 import type { RelativeTime, Subscription } from '@datadog/browser-core'
 import { Observable, ONE_SECOND, getTimeStamp } from '@datadog/browser-core'
 import type { Clock } from '@datadog/browser-core/test'
-import { mockClock, SPEC_ENDPOINTS } from '@datadog/browser-core/test'
-import { createPerformanceEntry, mockPerformanceObserver } from '../../test'
+import { mockClock } from '@datadog/browser-core/test'
+import { createPerformanceEntry, mockPerformanceObserver, mockRumConfiguration } from '../../test'
 import type { RumPerformanceEntry } from '../browser/performanceObservable'
 import { RumPerformanceEntryType } from '../browser/performanceObservable'
 import { LifeCycle, LifeCycleEventType } from './lifeCycle'
@@ -15,7 +15,6 @@ import {
   createPageActivityObservable,
 } from './waitPageActivityEnd'
 import type { RumConfiguration } from './configuration'
-import { validateAndBuildRumConfiguration } from './configuration'
 
 // Used to wait some time after the creation of an action
 const BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY = PAGE_ACTIVITY_VALIDATION_DELAY * 0.8
@@ -42,15 +41,7 @@ function eventsCollector<T>() {
   }
 }
 
-const RUM_CONFIGURATION: RumConfiguration = {
-  ...validateAndBuildRumConfiguration({
-    clientToken: 'xxx',
-    applicationId: 'AppId',
-    trackResources: true,
-    trackLongTasks: true,
-  })!,
-  ...SPEC_ENDPOINTS,
-}
+const RUM_CONFIGURATION = mockRumConfiguration()
 
 describe('createPageActivityObservable', () => {
   const { events, pushEvent } = eventsCollector<PageActivityEvent>()

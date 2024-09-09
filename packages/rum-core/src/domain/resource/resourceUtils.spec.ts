@@ -1,8 +1,8 @@
 import { ExperimentalFeature, type Duration, type RelativeTime, type ServerDuration } from '@datadog/browser-core'
-import { SPEC_ENDPOINTS, mockExperimentalFeatures } from '@datadog/browser-core/test'
+import { mockExperimentalFeatures } from '@datadog/browser-core/test'
 import { RumPerformanceEntryType, type RumPerformanceResourceTiming } from '../../browser/performanceObservable'
 import type { RumConfiguration } from '../configuration'
-import { validateAndBuildRumConfiguration } from '../configuration'
+import { mockRumConfiguration } from '../../../test'
 import {
   MAX_ATTRIBUTE_VALUE_CHAR_LENGTH,
   computeResourceEntryDetails,
@@ -291,10 +291,7 @@ describe('shouldTrackResource', () => {
   let configuration: RumConfiguration
 
   beforeEach(() => {
-    configuration = {
-      ...validateAndBuildRumConfiguration({ clientToken: 'xxx', applicationId: 'xxx' })!,
-      ...SPEC_ENDPOINTS,
-    }
+    configuration = mockRumConfiguration()
   })
 
   it('should exclude requests on intakes endpoints', () => {
