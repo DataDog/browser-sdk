@@ -85,6 +85,7 @@
     "ts-loader": "9.5.1",
     "ts-node": "10.9.2",
     "tsconfig-paths-webpack-plugin": "4.1.0",
+    "typedoc": "0.26.6",
     "typescript": "5.5.4",
     "webdriverio": "8.40.5",
     "webpack": "5.94.0",
