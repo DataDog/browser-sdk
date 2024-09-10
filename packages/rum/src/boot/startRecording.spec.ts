@@ -40,14 +40,7 @@ describe('startRecording', () => {
     const viewHistory = startViewHistory(lifeCycle)
     initialView(lifeCycle)
 
-    const recording = startRecording(
-      lifeCycle,
-      configuration,
-      sessionManager,
-      viewHistory,
-      deflateEncoder,
-      httpRequest
-    )
+    const recording = startRecording(lifeCycle, configuration, sessionManager, viewHistory, deflateEncoder, httpRequest)
     stopRecording = recording ? recording.stop : noop
 
     registerCleanupTask(() => {

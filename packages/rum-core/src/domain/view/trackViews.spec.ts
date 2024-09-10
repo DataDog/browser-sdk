@@ -940,7 +940,7 @@ describe('view event count', () => {
 
     it('should set view context with setViewContext', () => {
       mockExperimentalFeatures([ExperimentalFeature.VIEW_SPECIFIC_CONTEXT])
-      setupBuilder.build()
+      viewTest = setupViewTest({ lifeCycle })
       const { getViewUpdate, setViewContext } = viewTest
 
       setViewContext({ foo: 'bar' })
@@ -949,7 +949,7 @@ describe('view event count', () => {
 
     it('should set view context with setViewContextProperty', () => {
       mockExperimentalFeatures([ExperimentalFeature.VIEW_SPECIFIC_CONTEXT])
-      setupBuilder.build()
+      viewTest = setupViewTest({ lifeCycle })
       const { getViewUpdate, setViewContextProperty } = viewTest
 
       setViewContextProperty('foo', 'bar')
@@ -957,7 +957,7 @@ describe('view event count', () => {
     })
 
     it('should not set view context if the feature is not enabled', () => {
-      setupBuilder.build()
+      viewTest = setupViewTest({ lifeCycle })
       const { getViewUpdate, setViewContext, setViewContextProperty } = viewTest
 
       setViewContext({ foo: 'bar' })
