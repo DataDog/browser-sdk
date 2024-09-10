@@ -1,9 +1,8 @@
 import type { RelativeTime } from '@datadog/browser-core'
 import { registerCleanupTask, restorePageVisibility, setPageVisibility } from '@datadog/browser-core/test'
 import { RumPerformanceEntryType } from '../../../browser/performanceObservable'
-import { createPerformanceEntry } from '../../../../test'
+import { createPerformanceEntry, mockRumConfiguration } from '../../../../test'
 import { LifeCycle, LifeCycleEventType } from '../../lifeCycle'
-import type { RumConfiguration } from '../../configuration'
 import { FCP_MAXIMUM_DELAY, trackFirstContentfulPaint } from './trackFirstContentfulPaint'
 import { trackFirstHidden } from './trackFirstHidden'
 
@@ -13,7 +12,7 @@ describe('trackFirstContentfulPaint', () => {
 
   function startTrackingFCP() {
     fcpCallback = jasmine.createSpy()
-    const firstHidden = trackFirstHidden({} as RumConfiguration)
+    const firstHidden = trackFirstHidden(mockRumConfiguration())
     const firstContentfulPaint = trackFirstContentfulPaint(lifeCycle, firstHidden, fcpCallback)
 
     registerCleanupTask(() => {

@@ -1,13 +1,13 @@
 {
   "name": "@datadog/browser-sdk-developer-extension",
-  "version": "5.25.0",
+  "version": "5.26.0",
   "private": true,
   "scripts": {
     "build": "rm -rf dist && webpack --mode production",
     "dev": "webpack --mode development --watch"
   },
   "devDependencies": {
-    "@tabler/icons-react": "3.14.0",
+    "@tabler/icons-react": "3.15.0",
     "@types/chrome": "0.0.270",
     "@types/react": "18.3.5",
     "@types/react-dom": "18.3.0",

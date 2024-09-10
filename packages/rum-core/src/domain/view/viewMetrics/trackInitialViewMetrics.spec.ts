@@ -2,9 +2,8 @@ import type { Duration, RelativeTime } from '@datadog/browser-core'
 import { registerCleanupTask } from '@datadog/browser-core/test'
 import type { RumPerformanceEntry } from '../../../browser/performanceObservable'
 import { RumPerformanceEntryType } from '../../../browser/performanceObservable'
-import { createPerformanceEntry, mockPerformanceObserver } from '../../../../test'
+import { createPerformanceEntry, mockPerformanceObserver, mockRumConfiguration } from '../../../../test'
 import { LifeCycle, LifeCycleEventType } from '../../lifeCycle'
-import type { RumConfiguration } from '../../configuration'
 import { trackInitialViewMetrics } from './trackInitialViewMetrics'
 
 describe('trackInitialViewMetrics', () => {
@@ -16,7 +15,7 @@ describe('trackInitialViewMetrics', () => {
 
   beforeEach(() => {
     lifeCycle = new LifeCycle()
-    const configuration = {} as RumConfiguration
+    const configuration = mockRumConfiguration()
     scheduleViewUpdateSpy = jasmine.createSpy()
     setLoadEventSpy = jasmine.createSpy()
     ;({ notifyPerformanceEntries } = mockPerformanceObserver())

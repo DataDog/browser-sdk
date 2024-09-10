@@ -1,11 +1,12 @@
 variables:
-  CURRENT_STAGING: staging-36
+  CURRENT_STAGING: staging-37
   APP: 'browser-sdk'
   CURRENT_CI_IMAGE: 69
   BUILD_STABLE_REGISTRY: 'registry.ddbuild.io'
   CI_IMAGE: '$BUILD_STABLE_REGISTRY/ci/$APP:$CURRENT_CI_IMAGE'
   GIT_REPOSITORY: 'git@github.com:DataDog/browser-sdk.git'
   MAIN_BRANCH: 'main'
+  NEXT_MAJOR_BRANCH: 'v6'
   CHROME_PACKAGE_VERSION: 127.0.6533.72-1
 
 cache:
@@ -150,6 +151,7 @@ test-performance:
     - .base-configuration
     - .test-allowed-branches
   interruptible: true
+  allow_failure: true
   script:
     - yarn
     - yarn build:bundle
@@ -433,7 +435,18 @@ merge-into-staging:
     - eval $(ssh-agent -s)
   script:
     - yarn
-    - node scripts/staging-ci/merge-into-staging.js
+    - node scripts/update-branch.js $CURRENT_STAGING
+
+merge-into-next-major:
+  stage: pre-deploy
+  extends:
+    - .base-configuration
+    - .main
+  before_script:
+    - eval $(ssh-agent -s)
+  script:
+    - yarn
+    - node scripts/update-branch.js $NEXT_MAJOR_BRANCH
 
 check-staging-merge:
   stage: test

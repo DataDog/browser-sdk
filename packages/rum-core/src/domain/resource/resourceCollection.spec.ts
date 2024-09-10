@@ -7,6 +7,7 @@ import {
   createPerformanceEntry,
   mockPageStateHistory,
   mockPerformanceObserver,
+  mockRumConfiguration,
 } from '../../../test'
 import type { RawRumEvent, RawRumResourceEvent } from '../../rawRumEvent.types'
 import { RumEventType } from '../../rawRumEvent.types'
@@ -21,12 +22,7 @@ import { RumPerformanceEntryType } from '../../browser/performanceObservable'
 import { startResourceCollection } from './resourceCollection'
 
 const HANDLING_STACK_REGEX = /^Error: \n\s+at <anonymous> @/
-const baseConfiguration: RumConfiguration = {
-  ...validateAndBuildRumConfiguration({
-    clientToken: 'xxx',
-    applicationId: 'FAKE_APP_ID',
-  })!,
-}
+const baseConfiguration = mockRumConfiguration()
 const pageStateHistory = mockPageStateHistory()
 
 describe('resourceCollection', () => {

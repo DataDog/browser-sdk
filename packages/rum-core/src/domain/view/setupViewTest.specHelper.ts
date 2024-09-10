@@ -1,14 +1,22 @@
-import type { BuildContext } from '../../../test'
+import { Observable } from '@datadog/browser-core'
+import { mockRumConfiguration, setupLocationObserver } from '../../../test'
+import type { LifeCycle } from '../lifeCycle'
 import { LifeCycleEventType } from '../lifeCycle'
 import type { ViewEvent, ViewOptions } from './trackViews'
 import { trackViews } from './trackViews'
 
 export type ViewTest = ReturnType<typeof setupViewTest>
 
-export function setupViewTest(
-  { lifeCycle, location, domMutationObservable, configuration, locationChangeObservable }: BuildContext,
-  initialViewOptions?: ViewOptions
-) {
+interface ViewTrackingContext {
+  lifeCycle: LifeCycle
+  initialLocation?: string
+}
+
+export function setupViewTest({ lifeCycle, initialLocation }: ViewTrackingContext, initialViewOptions?: ViewOptions) {
+  const domMutationObservable = new Observable<void>()
+  const configuration = mockRumConfiguration()
+  const { locationChangeObservable, changeLocation } = setupLocationObserver(initialLocation)
+
   const {
     handler: viewUpdateHandler,
     getViewEvent: getViewUpdate,
@@ -40,6 +48,7 @@ export function setupViewTest(
     startView,
     setViewContext,
     setViewContextProperty,
+    changeLocation,
     updateViewName,
     addTiming,
     getViewUpdate,

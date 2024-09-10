@@ -1,5 +1,5 @@
 import { createNewEvent } from '@datadog/browser-core/test'
-import type { RumConfiguration } from '../configuration'
+import { mockRumConfiguration } from '../../../test'
 import type { ActionEventsHooks } from './listenActionEvents'
 import { listenActionEvents } from './listenActionEvents'
 
@@ -9,15 +9,13 @@ describe('listenActionEvents', () => {
     onPointerDown: jasmine.Spy<ActionEventsHooks<object>['onPointerDown']>
   }
   let stopListenEvents: () => void
-  let configuration: RumConfiguration
 
   beforeEach(() => {
-    configuration = {} as RumConfiguration
     actionEventsHooks = {
       onPointerUp: jasmine.createSpy(),
       onPointerDown: jasmine.createSpy().and.returnValue({}),
     }
-    ;({ stop: stopListenEvents } = listenActionEvents(configuration, actionEventsHooks))
+    ;({ stop: stopListenEvents } = listenActionEvents(mockRumConfiguration(), actionEventsHooks))
   })
 
   afterEach(() => {

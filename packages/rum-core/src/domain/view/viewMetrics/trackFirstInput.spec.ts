@@ -1,8 +1,7 @@
 import { type Duration, type RelativeTime } from '@datadog/browser-core'
 import { registerCleanupTask, restorePageVisibility, setPageVisibility } from '@datadog/browser-core/test'
-import { appendElement, appendText, createPerformanceEntry } from '../../../../test'
+import { appendElement, appendText, createPerformanceEntry, mockRumConfiguration } from '../../../../test'
 import { LifeCycle, LifeCycleEventType } from '../../lifeCycle'
-import type { RumConfiguration } from '../../configuration'
 import { RumPerformanceEntryType } from '../../../browser/performanceObservable'
 import type { FirstInput } from './trackFirstInput'
 import { trackFirstInput } from './trackFirstInput'
@@ -11,10 +10,9 @@ import { trackFirstHidden } from './trackFirstHidden'
 describe('firstInputTimings', () => {
   const lifeCycle = new LifeCycle()
   let fitCallback: jasmine.Spy<(firstInput: FirstInput) => void>
-  let configuration: RumConfiguration
 
   function startFirstInputTracking() {
-    configuration = {} as RumConfiguration
+    const configuration = mockRumConfiguration()
     fitCallback = jasmine.createSpy()
 
     const firstHidden = trackFirstHidden(configuration)
