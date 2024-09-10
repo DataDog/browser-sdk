@@ -308,9 +308,10 @@ deploy-next-major-canary:
     - .next-major-branch
   script:
     - export BUILD_MODE=canary
+    - VERSION=$(node -p -e "require('./lerna.json').version")
     - yarn
     - yarn build:bundle
-    - node ./scripts/deploy/deploy.js staging ${NEXT_MAJOR_BRANCH}-canary root
+    - node ./scripts/deploy/deploy.js staging v${VERSION%%.*}-canary root
 
 deploy-staging:
   stage: deploy
