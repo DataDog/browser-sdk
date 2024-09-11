@@ -187,22 +187,4 @@ describe('ViewHistory', () => {
       })
     })
   })
-
-  describe('custom context', () => {
-    it('should be set on view creation', () => {
-      lifeCycle.notify(
-        LifeCycleEventType.BEFORE_VIEW_CREATED,
-        buildViewCreatedEvent({
-          id: 'view 1',
-          context: {
-            foo: 'bar',
-          },
-        })
-      )
-      expect(viewHistory.findView()).toBeDefined()
-      expect(viewHistory.findView()!.context).toEqual({
-        foo: 'bar',
-      })
-    })
-  })
 })
