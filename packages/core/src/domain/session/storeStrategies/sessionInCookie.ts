@@ -1,5 +1,7 @@
 import { isChromium } from '../../../tools/utils/browserDetection'
+import { ExperimentalFeature, isExperimentalFeatureEnabled } from '../../../tools/experimentalFeatures'
 import type { CookieOptions } from '../../../browser/cookie'
+import { generateAnonymousId, setAnonymousIdInStorage } from '../../user'
 import { getCurrentSite, areCookiesAuthorized, getCookie, setCookie } from '../../../browser/cookie'
 import type { InitConfiguration } from '../../configuration'
 import { tryOldCookiesMigration } from '../oldCookiesMigration'
@@ -33,12 +35,18 @@ export function initCookieStrategy(cookieOptions: CookieOptions): SessionStoreSt
 
 function persistSessionCookie(options: CookieOptions) {
   return (session: SessionState) => {
+    if(!session.device && isExperimentalFeatureEnabled(ExperimentalFeature.ANONYMOUS_USER_TRACKING)) {
+      // expire session but maintain the anonymous id
+      session.device = generateAnonymousId()
+      setAnonymousIdInStorage('Cookie', session.device)
+    }
     setCookie(SESSION_STORE_KEY, toSessionString(session), SESSION_EXPIRATION_DELAY, options)
   }
 }
 
 function expireSessionCookie(options: CookieOptions) {
-  setCookie(SESSION_STORE_KEY, toSessionString(getExpiredSessionState()), SESSION_TIME_OUT_DELAY, options)
+  const expiredSessionState = getExpiredSessionState()
+  setCookie(SESSION_STORE_KEY, toSessionString(expiredSessionState), SESSION_TIME_OUT_DELAY, options)
 }
 
 function retrieveSessionCookie(): SessionState {

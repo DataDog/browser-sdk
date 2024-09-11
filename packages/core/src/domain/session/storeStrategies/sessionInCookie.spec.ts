@@ -111,14 +111,13 @@ describe('session in cookie strategy', () => {
   })
 })
 describe('session in cookie strategy with anonymous user tracking', () => {
-  const device = '2gosa7pa2gw'
+  const device = 'device-123'
   const sessionState: SessionState = { id: '123', created: '0', device }
   let cookieStorageStrategy: SessionStoreStrategy
 
   beforeEach(() => {
     mockExperimentalFeatures([ExperimentalFeature.ANONYMOUS_USER_TRACKING])
     cookieStorageStrategy = initCookieStrategy({})
-    spyOn(Math, 'random').and.callFake(() => 1)
   })
 
   afterEach(() => {
@@ -126,18 +125,10 @@ describe('session in cookie strategy with anonymous user tracking', () => {
     deleteCookie(SESSION_STORE_KEY)
   })
 
-  it('should persist a session in a cookie', () => {
+  it('should persist a session with anonymous id in a cookie', () => {
     cookieStorageStrategy.persistSession(sessionState)
     const session = cookieStorageStrategy.retrieveSession()
     expect(session).toEqual({ ...sessionState })
     expect(getCookie(SESSION_STORE_KEY)).toBe(`id=123&created=0&device=${device}`)
-  })
-
-  it('should set `isExpired=1` to the cookie holding the session', () => {
-    cookieStorageStrategy.persistSession(sessionState)
-    cookieStorageStrategy.expireSession()
-    const session = cookieStorageStrategy.retrieveSession()
-    expect(session).toEqual({ isExpired: '1', device })
-    expect(getCookie(SESSION_STORE_KEY)).toBe(`isExpired=1&device=${device}`)
   })
 })

@@ -1,8 +1,8 @@
-import { generateAnonymousId } from '../../browser/cookie'
 import { ExperimentalFeature, isExperimentalFeatureEnabled } from '../../tools/experimentalFeatures'
 import { isEmptyObject } from '../../tools/utils/objectUtils'
 import { objectEntries } from '../../tools/utils/polyfills'
 import { dateNow } from '../../tools/utils/timeUtils'
+import { getAnonymousIdFromStorage } from '../user'
 import { SESSION_EXPIRATION_DELAY, SESSION_TIME_OUT_DELAY } from './sessionConstants'
 
 const SESSION_ENTRY_REGEXP = /^([a-zA-Z]+)=([a-z0-9-]+)$/
@@ -20,9 +20,14 @@ export interface SessionState {
 }
 
 export function getExpiredSessionState(): SessionState {
-  return {
+  const expiredSessionState: SessionState = {
     isExpired: EXPIRED,
   }
+  if(isExperimentalFeatureEnabled(ExperimentalFeature.ANONYMOUS_USER_TRACKING)) {
+    // persist the anonymous id in the expired session state
+    expiredSessionState.device = getAnonymousIdFromStorage()
+  }
+  return expiredSessionState
 }
 
 export function isSessionInNotStartedState(session: SessionState) {
@@ -52,9 +57,6 @@ export function expandSessionState(session: SessionState) {
 }
 
 export function toSessionString(session: SessionState) {
-  if (isExperimentalFeatureEnabled(ExperimentalFeature.ANONYMOUS_USER_TRACKING)) {
-    Object.assign(session, { device: generateAnonymousId() })
-  }
   return objectEntries(session)
     .map(([key, value]) => `${key}=${value}`)
     .join(SESSION_ENTRY_SEPARATOR)

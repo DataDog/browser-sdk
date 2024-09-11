@@ -93,9 +93,12 @@ export {
   setCookie,
   deleteCookie,
   resetInitCookies,
+} from './browser/cookie'
+export {
   getAnonymousIdFromStorage,
   generateAnonymousId,
-} from './browser/cookie'
+  setAnonymousIdInStorage,
+} from './domain/user'
 export { CookieStore, WeakRef, WeakRefConstructor } from './browser/browser.types'
 export { initXhrObservable, XhrCompleteContext, XhrStartContext } from './browser/xhrObservable'
 export {

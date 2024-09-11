@@ -27,41 +27,6 @@ export function setCookie(name: string, value: string, expireDelay: number = 0, 
   document.cookie = `${name}=${value};${expires};path=/;samesite=${sameSite}${domain}${secure}${partitioned}`
 }
 
-export function generateAnonymousId() {
-  return Math.floor(Math.random() * Math.pow(2, 53)).toString(36)
-}
-
-export function getAnonymousIdFromStorage(sessionStoreStrategyType: string) {
-  let sessionString: string = ''
-  if (sessionStoreStrategyType === 'Cookie') {
-    const matches = /_dd_s=(\w+)/.exec(document.cookie)
-    if (matches) {
-      sessionString = matches[1]
-    }
-  } else {
-    sessionString = localStorage.getItem(SESSION_STORE_KEY) ?? ''
-  }
-
-  if (sessionString) {
-    const device = /device=([w]+)/.exec(sessionString)
-    if (!device) {
-      const newDevice = generateAnonymousId()
-      const newSessionString = `${sessionString}&device=${newDevice}`
-      setAnonymousIdInStorage(sessionStoreStrategyType, newSessionString)
-      return newDevice
-    }
-    return device[1]
-  }
-}
-
-export function setAnonymousIdInStorage(sessionStoreStrategyType: string, sessionString: string) {
-  if (sessionStoreStrategyType === 'Cookie') {
-    setCookie(SESSION_STORE_KEY, sessionString)
-  } else {
-    localStorage.setItem(SESSION_STORE_KEY, sessionString)
-  }
-}
-
 export function getCookie(name: string) {
   return findCommaSeparatedValue(document.cookie, name)
 }

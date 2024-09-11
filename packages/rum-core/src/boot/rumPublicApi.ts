@@ -34,6 +34,8 @@ import {
   createTrackingConsentState,
   timeStampToClocks,
   getAnonymousIdFromStorage,
+  setAnonymousIdInStorage,
+  generateAnonymousId,
 } from '@datadog/browser-core'
 import type { LifeCycle } from '../domain/lifeCycle'
 import type { ViewContexts } from '../domain/contexts/viewContexts'
@@ -48,7 +50,6 @@ import type { DurationVitalReference } from '../domain/vital/vitalCollection'
 import { createCustomVitalsState } from '../domain/vital/vitalCollection'
 import { createPreStartStrategy } from './preStartRum'
 import type { StartRum, StartRumResult } from './startRum'
-
 export interface StartRecordingOptions {
   force: boolean
 }
@@ -378,13 +379,15 @@ export function makeRumPublicApi(
          * Enable anonymous user tracking feature flag
          * TODO next major release: include this feature by default
          */
-        // const sessionStoreStrategyType = selectSessionStoreStrategyType(configuration)
-        const { sessionStoreStrategyType } = configuration
-        userContextManager.setContext({
-          anonymous_id: getAnonymousIdFromStorage(sessionStoreStrategyType ? sessionStoreStrategyType.type : ''),
-        })
-      }
+        let anonymousId = getAnonymousIdFromStorage();
 
+        if(!anonymousId) {
+          anonymousId = generateAnonymousId()
+          userContextManager.setContextProperty('anonymous_id', anonymousId)
+          const { type } = configuration.sessionStoreStrategyType ?? { type: 'LocalStorage' }
+          setAnonymousIdInStorage(type, anonymousId)
+        }
+      }
       if (configuration.storeContextsAcrossPages) {
         storeContextManager(configuration, globalContextManager, RUM_STORAGE_KEY, CustomerDataType.GlobalContext)
         storeContextManager(configuration, userContextManager, RUM_STORAGE_KEY, CustomerDataType.User)
