@@ -5,7 +5,7 @@ import {
   ExperimentalFeature,
   isExperimentalFeatureEnabled,
   noop,
-  ONE_HOUR,
+  ONE_DAY,
   ONE_MINUTE,
 } from '@datadog/browser-core'
 import type { Duration, RelativeTime } from '@datadog/browser-core'
@@ -129,7 +129,7 @@ export function trackInteractionToNextPaint(
     stop: () => {
       stop()
       interactionSelectorMap.forEach((_, key) => {
-        if (dateNow() - key > ONE_HOUR) {
+        if (dateNow() - key > ONE_DAY) {
           interactionSelectorMap.delete(key)
         }
       })
