@@ -14,7 +14,8 @@
   },
   "dependencies": {
     "@datadog/browser-core": "5.26.0",
-    "@datadog/browser-rum-core": "5.26.0"
+    "@datadog/browser-rum-core": "5.26.0",
+    "webpack-bundle-analyzer": "4.10.2"
   },
   "peerDependencies": {
     "@datadog/browser-logs": "5.26.0"
@@ -31,6 +32,7 @@
   },
   "devDependencies": {
     "@types/pako": "2.0.3",
+    "@types/webpack-bundle-analyzer": "^4",
     "pako": "2.1.0"
   },
   "volta": {
