@@ -1,9 +1,11 @@
 import {
   addTelemetryDebug,
+  dateNow,
   elapsed,
   ExperimentalFeature,
   isExperimentalFeatureEnabled,
   noop,
+  ONE_HOUR,
   ONE_MINUTE,
 } from '@datadog/browser-core'
 import type { Duration, RelativeTime } from '@datadog/browser-core'
@@ -126,7 +128,11 @@ export function trackInteractionToNextPaint(
     },
     stop: () => {
       stop()
-      interactionSelectorMap.clear()
+      interactionSelectorMap.forEach((_, key) => {
+        if (dateNow() - key > ONE_HOUR) {
+          interactionSelectorMap.delete(key)
+        }
+      })
     },
   }
 }

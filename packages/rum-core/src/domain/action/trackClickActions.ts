@@ -179,6 +179,13 @@ function startClickAction(
   const click = newClick(lifeCycle, history, getUserActivity, clickActionBase, startEvent)
   appendClickToClickChain(click)
 
+  if (clickActionBase.target && isExperimentalFeatureEnabled(ExperimentalFeature.NULL_INP_TELEMETRY)) {
+    const { selector } = clickActionBase.target
+    if (selector) {
+      interactionSelectorMap.set(startEvent.timeStamp, selector)
+    }
+  }
+
   const { stop: stopWaitPageActivityEnd } = waitPageActivityEnd(
     lifeCycle,
     domMutationObservable,
