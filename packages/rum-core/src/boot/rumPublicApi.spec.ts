@@ -910,7 +910,7 @@ describe('rum public api', () => {
       expect(setViewContextPropertySpy).toHaveBeenCalledWith('foo', 'bar')
     })
 
-    it('should not set view specific context when ff is disabled', () => {
+    it('should not expose view specific context when ff is disabled', () => {
       rumPublicApi = makeRumPublicApi(noopStartRum, noopRecorderApi)
       rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
       expect((rumPublicApi as any).setViewContext).toBeUndefined()
