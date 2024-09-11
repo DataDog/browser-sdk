@@ -35,7 +35,7 @@ export function initCookieStrategy(cookieOptions: CookieOptions): SessionStoreSt
 
 function persistSessionCookie(options: CookieOptions) {
   return (session: SessionState) => {
-    if(!session.device && isExperimentalFeatureEnabled(ExperimentalFeature.ANONYMOUS_USER_TRACKING)) {
+    if (!session.device && isExperimentalFeatureEnabled(ExperimentalFeature.ANONYMOUS_USER_TRACKING)) {
       // expire session but maintain the anonymous id
       session.device = generateAnonymousId()
       setAnonymousIdInStorage('Cookie', session.device)

@@ -34,7 +34,7 @@ export function checkUser(newUser: User): boolean {
   return isValid
 }
 
-export function getAnonymousIdFromStorage() : string | undefined {
+export function getAnonymousIdFromStorage(): string | undefined {
   let matches = /device=([w]+)/.exec(document.cookie)
   if (matches) {
     return matches[1]

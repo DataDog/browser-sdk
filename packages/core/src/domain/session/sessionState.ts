@@ -23,7 +23,7 @@ export function getExpiredSessionState(): SessionState {
   const expiredSessionState: SessionState = {
     isExpired: EXPIRED,
   }
-  if(isExperimentalFeatureEnabled(ExperimentalFeature.ANONYMOUS_USER_TRACKING)) {
+  if (isExperimentalFeatureEnabled(ExperimentalFeature.ANONYMOUS_USER_TRACKING)) {
     // persist the anonymous id in the expired session state
     expiredSessionState.device = getAnonymousIdFromStorage()
   }

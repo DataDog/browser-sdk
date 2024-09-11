@@ -379,9 +379,9 @@ export function makeRumPublicApi(
          * Enable anonymous user tracking feature flag
          * TODO next major release: include this feature by default
          */
-        let anonymousId = getAnonymousIdFromStorage();
+        let anonymousId = getAnonymousIdFromStorage()
 
-        if(!anonymousId) {
+        if (!anonymousId) {
           anonymousId = generateAnonymousId()
           userContextManager.setContextProperty('anonymous_id', anonymousId)
           const { type } = configuration.sessionStoreStrategyType ?? { type: 'LocalStorage' }
