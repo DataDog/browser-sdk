@@ -1,9 +1,0 @@
-rulesets:
-  - typescript-best-practices:
-    rules:
-      no-explicit-any:
-        ignore:
-          - '**'
-      no-unsafe-assignment:
-        ignore:
-          - '**'
