@@ -33,6 +33,7 @@ import {
   displayAlreadyInitializedError,
   createTrackingConsentState,
   timeStampToClocks,
+  getAnonymousIdFromStorage,
 } from '@datadog/browser-core'
 import type { LifeCycle } from '../domain/lifeCycle'
 import type { ViewContexts } from '../domain/contexts/viewContexts'
@@ -368,6 +369,19 @@ export function makeRumPublicApi(
          */
         ;(rumPublicApi as any).updateViewName = monitor((name: string) => {
           strategy.updateViewName(name)
+        })
+      }
+      if (isExperimentalFeatureEnabled(ExperimentalFeature.ANONYMOUS_USER_TRACKING)) {
+        /**
+         * Set the anonymous user id to all events, stored in `@usr.anonymous_id`
+         *
+         * Enable anonymous user tracking feature flag
+         * TODO next major release: include this feature by default
+         */
+        // const sessionStoreStrategyType = selectSessionStoreStrategyType(configuration)
+        const { sessionStoreStrategyType } = configuration
+        userContextManager.setContext({
+          anonymous_id: getAnonymousIdFromStorage(sessionStoreStrategyType ? sessionStoreStrategyType.type : ''),
         })
       }
 

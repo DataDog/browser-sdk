@@ -1,3 +1,5 @@
+import { generateAnonymousId } from '../../browser/cookie'
+import { ExperimentalFeature, isExperimentalFeatureEnabled } from '../../tools/experimentalFeatures'
 import { isEmptyObject } from '../../tools/utils/objectUtils'
 import { objectEntries } from '../../tools/utils/polyfills'
 import { dateNow } from '../../tools/utils/timeUtils'
@@ -50,6 +52,9 @@ export function expandSessionState(session: SessionState) {
 }
 
 export function toSessionString(session: SessionState) {
+  if (isExperimentalFeatureEnabled(ExperimentalFeature.ANONYMOUS_USER_TRACKING)) {
+    Object.assign(session, { device: generateAnonymousId() })
+  }
   return objectEntries(session)
     .map(([key, value]) => `${key}=${value}`)
     .join(SESSION_ENTRY_SEPARATOR)

@@ -1,6 +1,9 @@
 import { display } from '../tools/display'
-import { ONE_MINUTE, ONE_SECOND } from '../tools/utils/timeUtils'
+import { ONE_MINUTE, ONE_SECOND, ONE_YEAR } from '../tools/utils/timeUtils'
 import { findCommaSeparatedValue, findCommaSeparatedValues, generateUUID } from '../tools/utils/stringUtils'
+import { SESSION_STORE_KEY } from '../domain/session/storeStrategies/sessionStoreStrategy'
+// import type { SessionStoreStrategyType } from '../domain/session/storeStrategies/sessionStoreStrategy'
+import { ExperimentalFeature, isExperimentalFeatureEnabled } from '../tools/experimentalFeatures'
 
 export interface CookieOptions {
   secure?: boolean
@@ -9,15 +12,54 @@ export interface CookieOptions {
   domain?: string
 }
 
-export function setCookie(name: string, value: string, expireDelay: number, options?: CookieOptions) {
+export function setCookie(name: string, value: string, expireDelay: number = 0, options?: CookieOptions) {
   const date = new Date()
   date.setTime(date.getTime() + expireDelay)
-  const expires = `expires=${date.toUTCString()}`
+  let expires = `expires=${date.toUTCString()}`
   const sameSite = options && options.crossSite ? 'none' : 'strict'
   const domain = options && options.domain ? `;domain=${options.domain}` : ''
   const secure = options && options.secure ? ';secure' : ''
   const partitioned = options && options.partitioned ? ';partitioned' : ''
+  // we cannot read from cookie directly here because lock is not yet acquired
+  if (isExperimentalFeatureEnabled(ExperimentalFeature.ANONYMOUS_USER_TRACKING) && name === SESSION_STORE_KEY) {
+    expires = `max-age=${ONE_YEAR}`
+  }
   document.cookie = `${name}=${value};${expires};path=/;samesite=${sameSite}${domain}${secure}${partitioned}`
+}
+
+export function generateAnonymousId() {
+  return Math.floor(Math.random() * Math.pow(2, 53)).toString(36)
+}
+
+export function getAnonymousIdFromStorage(sessionStoreStrategyType: string) {
+  let sessionString: string = ''
+  if (sessionStoreStrategyType === 'Cookie') {
+    const matches = /_dd_s=(\w+)/.exec(document.cookie)
+    if (matches) {
+      sessionString = matches[1]
+    }
+  } else {
+    sessionString = localStorage.getItem(SESSION_STORE_KEY) ?? ''
+  }
+
+  if (sessionString) {
+    const device = /device=([w]+)/.exec(sessionString)
+    if (!device) {
+      const newDevice = generateAnonymousId()
+      const newSessionString = `${sessionString}&device=${newDevice}`
+      setAnonymousIdInStorage(sessionStoreStrategyType, newSessionString)
+      return newDevice
+    }
+    return device[1]
+  }
+}
+
+export function setAnonymousIdInStorage(sessionStoreStrategyType: string, sessionString: string) {
+  if (sessionStoreStrategyType === 'Cookie') {
+    setCookie(SESSION_STORE_KEY, sessionString)
+  } else {
+    localStorage.setItem(SESSION_STORE_KEY, sessionString)
+  }
 }
 
 export function getCookie(name: string) {

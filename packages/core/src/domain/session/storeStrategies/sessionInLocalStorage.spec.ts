@@ -1,9 +1,15 @@
+import { mockExperimentalFeatures } from '../../../../test'
+import { ExperimentalFeature } from '../../../tools/experimentalFeatures'
 import { type SessionState } from '../sessionState'
 import { selectLocalStorageStrategy, initLocalStorageStrategy } from './sessionInLocalStorage'
 import { SESSION_STORE_KEY } from './sessionStoreStrategy'
 
 describe('session in local storage strategy', () => {
   const sessionState: SessionState = { id: '123', created: '0' }
+  beforeEach(() => {
+    mockExperimentalFeatures([ExperimentalFeature.ANONYMOUS_USER_TRACKING])
+    spyOn(Math, 'random').and.returnValue(1)
+  })
 
   afterEach(() => {
     window.localStorage.clear()
@@ -33,8 +39,8 @@ describe('session in local storage strategy', () => {
     localStorageStrategy.persistSession(sessionState)
     localStorageStrategy.expireSession()
     const session = localStorageStrategy?.retrieveSession()
-    expect(session).toEqual({ isExpired: '1' })
-    expect(window.localStorage.getItem(SESSION_STORE_KEY)).toBe('isExpired=1')
+    expect(session).toEqual({ isExpired: '1', device: '2gosa7pa2gw' })
+    expect(window.localStorage.getItem(SESSION_STORE_KEY)).toBe('isExpired=1&device=2gosa7pa2gw')
   })
 
   it('should not interfere with other keys present in local storage', () => {
