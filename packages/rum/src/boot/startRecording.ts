@@ -56,7 +56,7 @@ export function startRecording(
 
   function flushCachedRecords() {
     if (getCachedRecords) {
-      const {addRecord: addRecordToSegment} = initSegemntCollection()
+      const { addRecord: addRecordToSegment } = initSegemntCollection()
       const records = getCachedRecords()
       records.forEach(addRecordToSegment)
 
