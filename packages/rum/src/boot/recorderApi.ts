@@ -144,7 +144,7 @@ export function makeRecorderApi(
 
       startStrategy = (options?: StartRecordingOptions) => {
         const session = sessionManager.findTrackedSession()
-        if (!session || (session.sessionReplay === SessionReplayState.OFF && (!options || !options.force))) {
+        if (!session) {
           state = { status: RecorderStatus.IntentToStart }
           return
         }
@@ -168,13 +168,16 @@ export function makeRecorderApi(
             return
           }
 
-          const { stop: stopRecording } = startRecordingImpl(
+          const { stop: stopRecording, flushCachedRecords } = startRecordingImpl(
             lifeCycle,
             configuration,
             sessionManager,
             viewHistory,
             deflateEncoder
           )
+          if (options && options.force && session.sessionReplay === SessionReplayState.OFF) {
+            flushCachedRecords()
+          }
           state = {
             status: RecorderStatus.Started,
             stopRecording,

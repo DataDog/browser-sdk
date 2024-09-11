@@ -1,12 +1,13 @@
 import type { RawError, HttpRequest, DeflateEncoder } from '@datadog/browser-core'
 import { createHttpRequest, addTelemetryDebug, canUseEventBridge } from '@datadog/browser-core'
 import type { LifeCycle, ViewHistory, RumConfiguration, RumSessionManager } from '@datadog/browser-rum-core'
-import { LifeCycleEventType } from '@datadog/browser-rum-core'
+import { LifeCycleEventType, SessionReplayState } from '@datadog/browser-rum-core'
 
 import { record } from '../domain/record'
 import { startSegmentCollection, SEGMENT_BYTES_LIMIT } from '../domain/segmentCollection'
 import type { BrowserRecord } from '../types'
 import { startRecordBridge } from '../domain/startRecordBridge'
+import { startRecordsCaching } from '../domain/recordsCaching'
 
 export function startRecording(
   lifeCycle: LifeCycle,
@@ -28,8 +29,9 @@ export function startRecording(
     createHttpRequest(configuration, configuration.sessionReplayEndpointBuilder, SEGMENT_BYTES_LIMIT, reportError)
 
   let addRecord: (record: BrowserRecord) => void
+  let getCachedRecords: () => BrowserRecord[]
 
-  if (!canUseEventBridge()) {
+  const initSegemntCollection = () => {
     const segmentCollection = startSegmentCollection(
       lifeCycle,
       configuration,
@@ -38,10 +40,28 @@ export function startRecording(
       replayRequest,
       encoder
     )
-    addRecord = segmentCollection.addRecord
     cleanupTasks.push(segmentCollection.stop)
+    return { addRecord: segmentCollection.addRecord }
+  }
+  const session = sessionManager.findTrackedSession()!
+  if (!canUseEventBridge()) {
+    if (session.sessionReplay === SessionReplayState.OFF) {
+      ;({ addRecord, getRecords: getCachedRecords } = startRecordsCaching())
+    } else {
+      ;({ addRecord } = initSegemntCollection())
+    }
   } else {
     ;({ addRecord } = startRecordBridge(viewHistory))
+  }
+
+  function flushCachedRecords() {
+    if (getCachedRecords) {
+      const {addRecord: addRecordToSegment} = initSegemntCollection()
+      const records = getCachedRecords()
+      records.forEach(addRecordToSegment)
+
+      addRecord = addRecordToSegment
+    }
   }
 
   const { stop: stopRecording } = record({
@@ -53,6 +73,7 @@ export function startRecording(
   cleanupTasks.push(stopRecording)
 
   return {
+    flushCachedRecords,
     stop: () => {
       cleanupTasks.forEach((task) => task())
     },
