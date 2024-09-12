@@ -1,5 +1,5 @@
-import type { RelativeTime, Subscription } from '@datadog/browser-core'
-import { Observable, ONE_SECOND, getTimeStamp } from '@datadog/browser-core'
+import type { Subscription } from '@datadog/browser-core'
+import { Observable, ONE_SECOND } from '@datadog/browser-core'
 import type { Clock } from '@datadog/browser-core/test'
 import { mockClock } from '@datadog/browser-core/test'
 import { createPerformanceEntry, mockPerformanceObserver, mockRumConfiguration } from '../../test'
@@ -219,7 +219,7 @@ describe('doWaitPageActivityEnd', () => {
 
     expect(idlPageActivityCallbackSpy).toHaveBeenCalledOnceWith({
       hadActivity: true,
-      end: getTimeStamp(BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY as RelativeTime),
+      end: clock.timeStamp(BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY),
     })
   })
 
@@ -240,7 +240,7 @@ describe('doWaitPageActivityEnd', () => {
 
       expect(idlPageActivityCallbackSpy).toHaveBeenCalledOnceWith({
         hadActivity: true,
-        end: getTimeStamp((extendCount * BEFORE_PAGE_ACTIVITY_END_DELAY) as RelativeTime),
+        end: clock.timeStamp(extendCount * BEFORE_PAGE_ACTIVITY_END_DELAY),
       })
     })
 
@@ -265,7 +265,7 @@ describe('doWaitPageActivityEnd', () => {
 
       expect(idlPageActivityCallbackSpy).toHaveBeenCalledOnceWith({
         hadActivity: true,
-        end: getTimeStamp(MAX_DURATION as RelativeTime),
+        end: clock.timeStamp(MAX_DURATION),
       })
     })
   })
@@ -285,7 +285,7 @@ describe('doWaitPageActivityEnd', () => {
 
       expect(idlPageActivityCallbackSpy).toHaveBeenCalledOnceWith({
         hadActivity: true,
-        end: getTimeStamp((BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY + PAGE_ACTIVITY_END_DELAY * 2) as RelativeTime),
+        end: clock.timeStamp(BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY + PAGE_ACTIVITY_END_DELAY * 2),
       })
     })
 
@@ -300,7 +300,7 @@ describe('doWaitPageActivityEnd', () => {
 
       expect(idlPageActivityCallbackSpy).toHaveBeenCalledOnceWith({
         hadActivity: true,
-        end: getTimeStamp(MAX_DURATION as RelativeTime),
+        end: clock.timeStamp(MAX_DURATION),
       })
     })
   })

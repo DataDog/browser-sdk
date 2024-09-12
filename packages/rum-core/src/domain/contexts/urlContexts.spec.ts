@@ -1,6 +1,6 @@
 import { mockClock, registerCleanupTask, type Clock } from '@datadog/browser-core/test'
 import type { RelativeTime } from '@datadog/browser-core'
-import { relativeToClocks } from '@datadog/browser-core'
+import { clocksNow, relativeToClocks } from '@datadog/browser-core'
 import { setupLocationObserver } from '../../../test'
 import { LifeCycle, LifeCycleEventType } from '../lifeCycle'
 import type { ViewCreatedEvent, ViewEndedEvent } from '../view/trackViews'
@@ -75,16 +75,16 @@ describe('urlContexts', () => {
 
   it('should return the url context corresponding to the start time', () => {
     lifeCycle.notify(LifeCycleEventType.BEFORE_VIEW_CREATED, {
-      startClocks: relativeToClocks(0 as RelativeTime),
+      startClocks: clocksNow(),
     } as ViewCreatedEvent)
 
     clock.tick(10)
     changeLocation('/foo')
     lifeCycle.notify(LifeCycleEventType.AFTER_VIEW_ENDED, {
-      endClocks: relativeToClocks(10 as RelativeTime),
+      endClocks: clocksNow(),
     } as ViewEndedEvent)
     lifeCycle.notify(LifeCycleEventType.BEFORE_VIEW_CREATED, {
-      startClocks: relativeToClocks(10 as RelativeTime),
+      startClocks: clocksNow(),
     } as ViewCreatedEvent)
 
     clock.tick(10)
@@ -93,25 +93,25 @@ describe('urlContexts', () => {
     clock.tick(10)
     changeLocation('/qux')
     lifeCycle.notify(LifeCycleEventType.AFTER_VIEW_ENDED, {
-      endClocks: relativeToClocks(30 as RelativeTime),
+      endClocks: clocksNow(),
     } as ViewEndedEvent)
     lifeCycle.notify(LifeCycleEventType.BEFORE_VIEW_CREATED, {
-      startClocks: relativeToClocks(30 as RelativeTime),
+      startClocks: clocksNow(),
     } as ViewCreatedEvent)
 
-    expect(urlContexts.findUrl(5 as RelativeTime)).toEqual({
+    expect(urlContexts.findUrl(clock.relative(5))).toEqual({
       url: 'http://fake-url.com/',
       referrer: document.referrer,
     })
-    expect(urlContexts.findUrl(15 as RelativeTime)).toEqual({
+    expect(urlContexts.findUrl(clock.relative(15))).toEqual({
       url: 'http://fake-url.com/foo',
       referrer: 'http://fake-url.com/',
     })
-    expect(urlContexts.findUrl(25 as RelativeTime)).toEqual({
+    expect(urlContexts.findUrl(clock.relative(25))).toEqual({
       url: 'http://fake-url.com/foo#bar',
       referrer: 'http://fake-url.com/',
     })
-    expect(urlContexts.findUrl(35 as RelativeTime)).toEqual({
+    expect(urlContexts.findUrl(clock.relative(35))).toEqual({
       url: 'http://fake-url.com/qux',
       referrer: 'http://fake-url.com/foo',
     })

@@ -1,4 +1,4 @@
-import type { RelativeTime, ServerDuration, Duration } from '@datadog/browser-core'
+import type { ServerDuration, Duration } from '@datadog/browser-core'
 import type { Clock } from '../../../../core/test'
 import { mockClock, registerCleanupTask } from '../../../../core/test'
 import { mockRumConfiguration } from '../../../test'
@@ -22,11 +22,11 @@ describe('pageStateHistory', () => {
 
   describe('findAll', () => {
     it('should have the current state when starting', () => {
-      expect(pageStateHistory.findAll(0 as RelativeTime, 10 as RelativeTime)).toBeDefined()
+      expect(pageStateHistory.findAll(clock.relative(0), 10 as Duration)).toBeDefined()
     })
 
     it('should return undefined if the time period is out of history bounds', () => {
-      expect(pageStateHistory.findAll(-10 as RelativeTime, 0 as RelativeTime)).not.toBeDefined()
+      expect(pageStateHistory.findAll(clock.relative(-10), 0 as Duration)).not.toBeDefined()
     })
 
     it('should return the correct page states for the given time period', () => {
@@ -49,8 +49,8 @@ describe('pageStateHistory', () => {
       event time                  15<-------->35
       */
       const event = {
-        startTime: 15 as RelativeTime,
-        duration: 20 as RelativeTime,
+        startTime: clock.relative(15),
+        duration: 20 as Duration,
       }
       expect(pageStateHistory.findAll(event.startTime, event.duration)).toEqual([
         {
@@ -77,7 +77,7 @@ describe('pageStateHistory', () => {
       clock.tick(10)
       pageStateHistory.addPageState(PageState.PASSIVE)
 
-      expect(pageStateHistory.findAll(0 as RelativeTime, Infinity as RelativeTime)?.length).toEqual(
+      expect(pageStateHistory.findAll(clock.relative(0), Infinity as Duration)?.length).toEqual(
         maxPageStateEntriesSelectable
       )
     })
@@ -90,7 +90,7 @@ describe('pageStateHistory', () => {
       clock.tick(10)
       pageStateHistory.addPageState(PageState.PASSIVE)
 
-      expect(pageStateHistory.wasInPageStateAt(PageState.ACTIVE, 0 as RelativeTime)).toEqual(true)
+      expect(pageStateHistory.wasInPageStateAt(PageState.ACTIVE, clock.relative(0))).toEqual(true)
     })
 
     it('should return false if the page was not in the given state at the given time', () => {
@@ -101,7 +101,7 @@ describe('pageStateHistory', () => {
       pageStateHistory.addPageState(PageState.ACTIVE)
       clock.tick(10)
       pageStateHistory.addPageState(PageState.PASSIVE)
-      expect(pageStateHistory.wasInPageStateAt(PageState.ACTIVE, 11 as RelativeTime)).toEqual(false)
+      expect(pageStateHistory.wasInPageStateAt(PageState.ACTIVE, clock.relative(11))).toEqual(false)
     })
   })
 
@@ -114,7 +114,7 @@ describe('pageStateHistory', () => {
       pageStateHistory.addPageState(PageState.HIDDEN)
       clock.tick(10)
 
-      expect(pageStateHistory.wasInPageStateDuringPeriod(PageState.PASSIVE, 0 as RelativeTime, 30 as Duration)).toEqual(
+      expect(pageStateHistory.wasInPageStateDuringPeriod(PageState.PASSIVE, clock.relative(0), 30 as Duration)).toEqual(
         true
       )
     })
@@ -127,7 +127,7 @@ describe('pageStateHistory', () => {
       pageStateHistory.addPageState(PageState.HIDDEN)
       clock.tick(10)
 
-      expect(pageStateHistory.wasInPageStateDuringPeriod(PageState.FROZEN, 0 as RelativeTime, 30 as Duration)).toEqual(
+      expect(pageStateHistory.wasInPageStateDuringPeriod(PageState.FROZEN, clock.relative(0), 30 as Duration)).toEqual(
         false
       )
     })
@@ -136,7 +136,7 @@ describe('pageStateHistory', () => {
       // pageStateHistory is initialized with the current page state
       // look for a period before the initialization to make sure there is no page state
       expect(
-        pageStateHistory.wasInPageStateDuringPeriod(PageState.ACTIVE, -40 as RelativeTime, 30 as Duration)
+        pageStateHistory.wasInPageStateDuringPeriod(PageState.ACTIVE, clock.relative(-40), 30 as Duration)
       ).toEqual(false)
     })
   })
