@@ -26,8 +26,9 @@ import type { ViewOptions } from '../domain/view/trackViews'
 import type { DurationVital, CustomVitalsState } from '../domain/vital/vitalCollection'
 import { startDurationVital, stopDurationVital } from '../domain/vital/vitalCollection'
 import { fetchAndApplyRemoteConfiguration, serializeRumConfiguration } from '../domain/configuration'
-import { callPluginsMethod } from '../domain/plugins'
-import type { RumPublicApiOptions, Strategy } from './rumPublicApi'
+import type { RumPlugin } from '../domain/plugins'
+import { callPluginsMethod, loadLazyPlugins } from '../domain/plugins'
+import type { RumPublicApi, RumPublicApiOptions, Strategy } from './rumPublicApi'
 import type { StartRumResult } from './startRum'
 
 export function createPreStartStrategy(
@@ -38,7 +39,8 @@ export function createPreStartStrategy(
   doStartRum: (
     configuration: RumConfiguration,
     deflateWorker: DeflateWorker | undefined,
-    initialViewOptions?: ViewOptions
+    initialViewOptions?: ViewOptions,
+    plugins?: RumPlugin[]
   ) => StartRumResult
 ): Strategy {
   const bufferApiCalls = createBoundedBuffer<StartRumResult>()
@@ -50,6 +52,7 @@ export function createPreStartStrategy(
 
   let cachedInitConfiguration: RumInitConfiguration | undefined
   let cachedConfiguration: RumConfiguration | undefined
+  let plugins: RumPlugin[] = []
 
   const trackingConsentStateSubscription = trackingConsentState.observable.subscribe(tryStartRum)
 
@@ -76,12 +79,12 @@ export function createPreStartStrategy(
       initialViewOptions = firstStartViewCall.options
     }
 
-    const startRumResult = doStartRum(cachedConfiguration, deflateWorker, initialViewOptions)
+    const startRumResult = doStartRum(cachedConfiguration, deflateWorker, initialViewOptions, plugins)
 
     bufferApiCalls.drain(startRumResult)
   }
 
-  function doInit(initConfiguration: RumInitConfiguration) {
+  async function doInit(initConfiguration: RumInitConfiguration, publicApi: RumPublicApi) {
     const eventBridgeAvailable = canUseEventBridge()
     if (eventBridgeAvailable) {
       initConfiguration = overrideInitConfigurationForBridge(initConfiguration)
@@ -121,11 +124,19 @@ export function createPreStartStrategy(
       }
     }
 
+    const lazyLoadedPlugins = await loadLazyPlugins(['action']) // look at how to pass the required plugins from the init config
+    if (!lazyLoadedPlugins) {
+      return
+    }
+    plugins = lazyLoadedPlugins.concat(configuration.plugins ?? [])
+
+    callPluginsMethod(plugins, 'onInit', { initConfiguration, publicApi })
+
     cachedConfiguration = configuration
-    // Instrumuent fetch to track network requests
-    // This is needed in case the consent is not granted and some cutsomer
-    // library (Apollo Client) is storing uninstrumented fetch to be used later
-    // The subscrption is needed so that the instrumentation process is completed
+    // Instrument fetch to track network requests
+    // This is needed in case the consent is not granted and some customer
+    // library (Apollo Client) is storing un-instrumented fetch to be used later
+    // The subscription is needed so that the instrumentation process is completed
     initFetchObservable().subscribe(noop)
 
     trackingConsentState.tryToInit(configuration.trackingConsent)
@@ -137,7 +148,8 @@ export function createPreStartStrategy(
   }
 
   return {
-    init(initConfiguration, publicApi) {
+    // eslint-disable-next-line @typescript-eslint/no-misused-promises
+    async init(initConfiguration, publicApi) {
       if (!initConfiguration) {
         display.error('Missing configuration')
         return
@@ -156,16 +168,18 @@ export function createPreStartStrategy(
         return
       }
 
-      callPluginsMethod(initConfiguration.betaPlugins, 'onInit', { initConfiguration, publicApi })
-
       if (
         initConfiguration.remoteConfigurationId &&
         isExperimentalFeatureEnabled(ExperimentalFeature.REMOTE_CONFIGURATION)
       ) {
-        fetchAndApplyRemoteConfiguration(initConfiguration, doInit)
-      } else {
-        doInit(initConfiguration)
+        const overriddenConfiguration = await fetchAndApplyRemoteConfiguration(initConfiguration)
+        if (!overriddenConfiguration) {
+          return
+        }
+        initConfiguration = overriddenConfiguration
       }
+
+      await doInit(initConfiguration, publicApi)
     },
 
     get initConfiguration() {

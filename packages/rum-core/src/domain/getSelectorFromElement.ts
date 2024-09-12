@@ -1,5 +1,5 @@
 import { cssEscape, elementMatches, getClassList, getParentElement } from '../browser/polyfills'
-import { DEFAULT_PROGRAMMATIC_ACTION_NAME_ATTRIBUTE } from './action/getActionNameFromElement'
+import { DEFAULT_PROGRAMMATIC_ACTION_NAME_ATTRIBUTE } from './privacy'
 
 /**
  * Stable attributes are attributes that are commonly used to identify parts of a UI (ex:

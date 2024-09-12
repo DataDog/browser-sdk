@@ -357,7 +357,7 @@ export function makeRumPublicApi(
     getCommonContext,
     trackingConsentState,
     customVitalsState,
-    (configuration, deflateWorker, initialViewOptions) => {
+    (configuration, deflateWorker, initialViewOptions, plugins) => {
       if (isExperimentalFeatureEnabled(ExperimentalFeature.UPDATE_VIEW_NAME)) {
         /**
          * Update View Name.
@@ -390,7 +390,8 @@ export function makeRumPublicApi(
           ? (streamId) => options.createDeflateEncoder!(configuration, deflateWorker, streamId)
           : createIdentityEncoder,
         trackingConsentState,
-        customVitalsState
+        customVitalsState,
+        plugins
       )
 
       recorderApi.onRumStart(

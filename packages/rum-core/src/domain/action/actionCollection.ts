@@ -1,6 +1,5 @@
 import type { ClocksState, Context, Observable } from '@datadog/browser-core'
 import { noop, assign, combine, toServerDuration, generateUUID } from '@datadog/browser-core'
-
 import { discardNegativeDuration } from '../discardNegativeDuration'
 import type { RawRumActionEvent } from '../../rawRumEvent.types'
 import { ActionType, RumEventType } from '../../rawRumEvent.types'
@@ -57,7 +56,7 @@ export function startActionCollection(
   }
 }
 
-function processAction(
+export function processAction(
   action: AutoAction | CustomAction,
   pageStateHistory: PageStateHistory
 ): RawRumEventCollectedData<RawRumActionEvent> {

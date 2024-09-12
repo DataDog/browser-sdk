@@ -8,6 +8,7 @@
   "scripts": {
     "build": "run-p build:cjs build:esm build:bundle",
     "build:bundle": "rm -rf bundle && webpack --mode=production",
+    "build:bundle:esbuild": "rm -rf bundle && node ./esbuild.build.js",
     "build:cjs": "rm -rf cjs && tsc -p tsconfig.cjs.json && yarn replace-build-env cjs",
     "build:esm": "rm -rf esm && tsc -p tsconfig.esm.json && yarn replace-build-env esm",
     "replace-build-env": "node ../../scripts/build/replace-build-env.js"
@@ -33,7 +34,10 @@
   "devDependencies": {
     "@types/pako": "2.0.3",
     "@types/webpack-bundle-analyzer": "^4",
-    "pako": "2.1.0"
+    "esbuild": "0.23.1",
+    "esbuild-plugin-compressor": "1.0.1",
+    "pako": "2.1.0",
+    "typescript": "5.6.2"
   },
   "volta": {
     "extends": "../../package.json"

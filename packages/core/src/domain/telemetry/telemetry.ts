@@ -45,7 +45,7 @@ export const enum TelemetryService {
 }
 
 export interface Telemetry {
-  setContextProvider: (provider: () => Context) => void
+  onTelemetryEvent: (callback: (event: TelemetryEvent) => void) => void
   observable: Observable<TelemetryEvent & Context>
   enabled: boolean
 }
@@ -59,7 +59,7 @@ let onRawTelemetryEventCollected = (event: RawTelemetryEvent) => {
 }
 
 export function startTelemetry(telemetryService: TelemetryService, configuration: Configuration): Telemetry {
-  let contextProvider: () => Context
+  let telemetryEventCallback: (event: TelemetryEvent) => void
   const observable = new Observable<TelemetryEvent & Context>()
   const alreadySentEvents = new Set<string>()
 
@@ -93,29 +93,29 @@ export function startTelemetry(telemetryService: TelemetryService, configuration
     event: RawTelemetryEvent,
     runtimeEnvInfo: RuntimeEnvInfo
   ): TelemetryEvent & Context {
-    return combine(
-      {
-        type: 'telemetry' as const,
-        date: timeStampNow(),
-        service: telemetryService,
-        version: __BUILD_ENV__SDK_VERSION__,
-        source: 'browser' as const,
-        _dd: {
-          format_version: 2 as const,
-        },
-        telemetry: combine(event, {
-          runtime_env: runtimeEnvInfo,
-          connectivity: getConnectivity(),
-        }),
-        experimental_features: arrayFrom(getExperimentalFeatures()),
+    const telemetryEvent = {
+      type: 'telemetry' as const,
+      date: timeStampNow(),
+      service: telemetryService,
+      version: __BUILD_ENV__SDK_VERSION__,
+      source: 'browser' as const,
+      _dd: {
+        format_version: 2 as const,
       },
-      contextProvider !== undefined ? contextProvider() : {}
-    ) as TelemetryEvent & Context
+      telemetry: combine(event, {
+        runtime_env: runtimeEnvInfo,
+        connectivity: getConnectivity(),
+      }),
+      experimental_features: arrayFrom(getExperimentalFeatures()),
+    } as TelemetryEvent & Context
+    telemetryEventCallback(telemetryEvent)
+
+    return telemetryEvent
   }
 
   return {
-    setContextProvider: (provider: () => Context) => {
-      contextProvider = provider
+    onTelemetryEvent: (callback: (event: TelemetryEvent) => void) => {
+      telemetryEventCallback = callback
     },
     observable,
     enabled: telemetryEnabled,

@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <title>Sandbox</title>
-    <script src="http://localhost:8080/datadog-rum.js"></script>
+    <!-- <script src="http://localhost:8080/datadog-rum.js"></script>
     <script src="http://localhost:8080/datadog-logs.js"></script>
     <script>
       DD_RUM.init({
@@ -23,6 +23,14 @@
         telemetryConfigurationSampleRate: 100,
         telemetryUsageSampleRate: 100,
         enableExperimentalFeatures: [],
+      })
+    </script> -->
+    <script>
+      import('./module-one.js').then((module) => {
+        console.log('module-one', module)
+      })
+      import('./module-two.js').then((module) => {
+        console.log('module-one', module)
       })
     </script>
   </head>
