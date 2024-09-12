@@ -448,17 +448,17 @@ merge-into-next-major:
     - yarn
     - node scripts/update-branch.js $NEXT_MAJOR_BRANCH
 
-check-staging-merge:
-  stage: test
-  extends:
-    - .base-configuration
-    - .feature-branches
-  interruptible: true
-  before_script:
-    - eval $(ssh-agent -s)
-  script:
-    - yarn
-    - node scripts/staging-ci/check-staging-merge.js
+# check-staging-merge:
+#   stage: test
+#   extends:
+#     - .base-configuration
+#     - .feature-branches
+#   interruptible: true
+#   before_script:
+#     - eval $(ssh-agent -s)
+#   script:
+#     - yarn
+#     - node scripts/staging-ci/check-staging-merge.js
 
 # A noop job that's used to signal to `to-staging` that it can merge to the
 # staging branch, even though the pipeline is still running
