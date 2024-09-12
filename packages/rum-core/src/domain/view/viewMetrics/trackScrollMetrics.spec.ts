@@ -1,4 +1,4 @@
-import type { Duration, RelativeTime, Subscription, TimeStamp } from '@datadog/browser-core'
+import type { RelativeTime, Subscription, TimeStamp } from '@datadog/browser-core'
 import { DOM_EVENT, Observable } from '@datadog/browser-core'
 import type { Clock } from '@datadog/browser-core/test'
 import { createNewEvent, mockClock, registerCleanupTask } from '@datadog/browser-core/test'
@@ -75,7 +75,7 @@ describe('trackScrollMetrics', () => {
     expect(scrollMetricsCallback).toHaveBeenCalledOnceWith({
       maxDepth: 700,
       maxScrollHeight: 2000,
-      maxScrollHeightTime: 100 as Duration,
+      maxScrollHeightTime: clock.relative(100),
       maxDepthScrollTop: 100,
     })
   })
@@ -85,7 +85,7 @@ describe('trackScrollMetrics', () => {
     expect(scrollMetricsCallback).toHaveBeenCalledOnceWith({
       maxDepth: 700,
       maxScrollHeight: 2000,
-      maxScrollHeightTime: 100 as Duration,
+      maxScrollHeightTime: clock.relative(100),
       maxDepthScrollTop: 100,
     })
   })
@@ -96,7 +96,7 @@ describe('trackScrollMetrics', () => {
     expect(scrollMetricsCallback).toHaveBeenCalledOnceWith({
       maxDepth: 700,
       maxScrollHeight: 2000,
-      maxScrollHeightTime: 100 as Duration,
+      maxScrollHeightTime: clock.relative(100),
       maxDepthScrollTop: 100,
     })
   })

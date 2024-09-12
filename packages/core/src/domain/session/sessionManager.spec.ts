@@ -8,7 +8,6 @@ import {
 } from '../../../test'
 import type { Clock } from '../../../test'
 import { getCookie, setCookie } from '../../browser/cookie'
-import type { RelativeTime } from '../../tools/utils/timeUtils'
 import { DOM_EVENT } from '../../browser/addEventListener'
 import { ONE_HOUR, ONE_SECOND } from '../../tools/utils/timeUtils'
 import type { Configuration } from '../configuration'
@@ -540,13 +539,11 @@ describe('startSessionManager', () => {
       const secondSessionId = sessionManager.findSession()!.id
       const secondSessionTrackingType = sessionManager.findSession()!.trackingType
 
-      expect(sessionManager.findSession((5 * ONE_SECOND) as RelativeTime)!.id).toBe(firstSessionId)
-      expect(sessionManager.findSession((5 * ONE_SECOND) as RelativeTime)!.trackingType).toBe(firstSessionTrackingType)
-      expect(sessionManager.findSession((15 * ONE_SECOND) as RelativeTime)).toBeUndefined()
-      expect(sessionManager.findSession((25 * ONE_SECOND) as RelativeTime)!.id).toBe(secondSessionId)
-      expect(sessionManager.findSession((25 * ONE_SECOND) as RelativeTime)!.trackingType).toBe(
-        secondSessionTrackingType
-      )
+      expect(sessionManager.findSession(clock.relative(5 * ONE_SECOND))!.id).toBe(firstSessionId)
+      expect(sessionManager.findSession(clock.relative(5 * ONE_SECOND))!.trackingType).toBe(firstSessionTrackingType)
+      expect(sessionManager.findSession(clock.relative(15 * ONE_SECOND))).toBeUndefined()
+      expect(sessionManager.findSession(clock.relative(25 * ONE_SECOND))!.id).toBe(secondSessionId)
+      expect(sessionManager.findSession(clock.relative(25 * ONE_SECOND))!.trackingType).toBe(secondSessionTrackingType)
     })
 
     describe('option `returnInactive` is true', () => {
@@ -561,9 +558,9 @@ describe('startSessionManager', () => {
         // 10s to 20s: no session
         clock.tick(10 * ONE_SECOND)
 
-        expect(sessionManager.findSession((15 * ONE_SECOND) as RelativeTime, { returnInactive: true })).toBeDefined()
+        expect(sessionManager.findSession(clock.relative(15 * ONE_SECOND), { returnInactive: true })).toBeDefined()
 
-        expect(sessionManager.findSession((15 * ONE_SECOND) as RelativeTime, { returnInactive: false })).toBeUndefined()
+        expect(sessionManager.findSession(clock.relative(15 * ONE_SECOND), { returnInactive: false })).toBeUndefined()
       })
     })
 

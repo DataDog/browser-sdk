@@ -58,14 +58,14 @@ describe('trackNavigationTimings', () => {
   })
 
   it('should provide navigation timing when navigation timing is not supported ', () => {
-    clock = mockClock(new Date(0))
+    clock = mockClock()
     mockPerformanceTiming()
     removePerformanceObserver()
     ;({ stop } = trackNavigationTimings(mockRumConfiguration(), navigationTimingsCallback))
     clock.tick(0)
 
     expect(navigationTimingsCallback).toHaveBeenCalledOnceWith({
-      firstByte: undefined,
+      firstByte: 123 as Duration,
       domComplete: 456 as Duration,
       domContentLoaded: 345 as Duration,
       domInteractive: 234 as Duration,

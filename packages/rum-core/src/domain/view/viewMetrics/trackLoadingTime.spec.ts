@@ -1,5 +1,5 @@
 import type { RelativeTime, Duration } from '@datadog/browser-core'
-import { addDuration, clocksOrigin, Observable } from '@datadog/browser-core'
+import { clocksOrigin, Observable } from '@datadog/browser-core'
 import type { Clock } from '@datadog/browser-core/test'
 import { mockClock, setPageVisibility, restorePageVisibility } from '@datadog/browser-core/test'
 import { ViewLoadingType } from '../../../rawRumEvent.types'
@@ -62,7 +62,7 @@ describe('trackLoadingTime', () => {
     domMutationObservable.notify()
     clock.tick(AFTER_PAGE_ACTIVITY_END_DELAY)
 
-    expect(loadingTimeCallback).toHaveBeenCalledOnceWith(BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY)
+    expect(loadingTimeCallback).toHaveBeenCalledOnceWith(clock.relative(BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY))
   })
 
   it('should use loadEventEnd for initial view when having no activity', () => {
@@ -83,11 +83,11 @@ describe('trackLoadingTime', () => {
 
     clock.tick(BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY)
 
-    setLoadEvent(LOAD_EVENT_AFTER_ACTIVITY_TIMING)
+    setLoadEvent(clock.relative(LOAD_EVENT_AFTER_ACTIVITY_TIMING))
     domMutationObservable.notify()
     clock.tick(AFTER_PAGE_ACTIVITY_END_DELAY)
 
-    expect(loadingTimeCallback).toHaveBeenCalledOnceWith(LOAD_EVENT_AFTER_ACTIVITY_TIMING)
+    expect(loadingTimeCallback).toHaveBeenCalledOnceWith(clock.relative(LOAD_EVENT_AFTER_ACTIVITY_TIMING))
   })
 
   it('should use computed loading time for initial view when load event is smaller than computed loading time', () => {
@@ -96,12 +96,12 @@ describe('trackLoadingTime', () => {
 
     clock.tick(BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY)
 
-    setLoadEvent(LOAD_EVENT_BEFORE_ACTIVITY_TIMING)
+    setLoadEvent(clock.relative(LOAD_EVENT_BEFORE_ACTIVITY_TIMING))
 
     domMutationObservable.notify()
     clock.tick(AFTER_PAGE_ACTIVITY_END_DELAY)
 
-    expect(loadingTimeCallback).toHaveBeenCalledOnceWith(BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY)
+    expect(loadingTimeCallback).toHaveBeenCalledOnceWith(clock.relative(BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY))
   })
 
   it('should use computed loading time from time origin for initial view', () => {
@@ -118,12 +118,14 @@ describe('trackLoadingTime', () => {
 
     clock.tick(BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY)
 
-    setLoadEvent(LOAD_EVENT_BEFORE_ACTIVITY_TIMING)
+    setLoadEvent(clock.relative(LOAD_EVENT_BEFORE_ACTIVITY_TIMING))
 
     domMutationObservable.notify()
     clock.tick(AFTER_PAGE_ACTIVITY_END_DELAY)
 
-    expect(loadingTimeCallback).toHaveBeenCalledOnceWith(addDuration(BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY, CLOCK_GAP))
+    expect(loadingTimeCallback).toHaveBeenCalledOnceWith(
+      clock.relative(BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY + CLOCK_GAP)
+    )
   })
 
   it('should discard loading time if page is hidden before activity', () => {
