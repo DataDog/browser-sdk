@@ -67,8 +67,8 @@ stages:
 
 .next-major-branch:
   only:
-    refs:
-      - $NEXT_MAJOR_BRANCH
+    variables:
+      - $CI_COMMIT_REF_NAME == $NEXT_MAJOR_BRANCH
 
 .staging:
   only:
