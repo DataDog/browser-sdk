@@ -408,15 +408,15 @@ describe('rum assembly', () => {
 
   describe('priority of rum context', () => {
     it('should prioritize view customer context over global context', () => {
-      const { lifeCycle, serverRumEvents, setFindView, commonContext } = setupAssemblyTestWithDefaults()
-      commonContext.context = { foo: 'bar' }
-      const newFindView = () => ({
-        id: '7890',
-        name: 'view name',
-        startClocks: {} as ClocksState,
-        context: { foo: 'baz' },
+      const { lifeCycle, serverRumEvents, commonContext } = setupAssemblyTestWithDefaults({
+        findView: () => ({
+          id: '7890',
+          name: 'view name',
+          startClocks: {} as ClocksState,
+          context: { foo: 'baz' },
+        }),
       })
-      setFindView(newFindView)
+      commonContext.context = { foo: 'bar' }
 
       notifyRawRumEvent(lifeCycle, {
         rawRumEvent: createRawRumEvent(RumEventType.VIEW),
@@ -426,15 +426,14 @@ describe('rum assembly', () => {
     })
 
     it('should prioritize child customer context over inherited view context', () => {
-      const { lifeCycle, serverRumEvents, setFindView } = setupAssemblyTestWithDefaults()
-      const newFindView = () => ({
-        id: '7890',
-        name: 'view name',
-        startClocks: {} as ClocksState,
-        context: { foo: 'bar' },
+      const { lifeCycle, serverRumEvents } = setupAssemblyTestWithDefaults({
+        findView: () => ({
+          id: '7890',
+          name: 'view name',
+          startClocks: {} as ClocksState,
+          context: { foo: 'bar' },
+        }),
       })
-      setFindView(newFindView)
-
       notifyRawRumEvent(lifeCycle, {
         customerContext: { foo: 'baz' },
         rawRumEvent: createRawRumEvent(RumEventType.ACTION),
@@ -590,15 +589,14 @@ describe('rum assembly', () => {
     })
 
     it('child event should have view customer context', () => {
-      const { lifeCycle, serverRumEvents, setFindView } = setupAssemblyTestWithDefaults()
-      const newFindView = () => ({
-        id: '7890',
-        name: 'view name',
-        startClocks: {} as ClocksState,
-        context: { foo: 'bar' },
+      const { lifeCycle, serverRumEvents } = setupAssemblyTestWithDefaults({
+        findView: () => ({
+          id: '7890',
+          name: 'view name',
+          startClocks: {} as ClocksState,
+          context: { foo: 'bar' },
+        }),
       })
-      setFindView(newFindView)
-
       notifyRawRumEvent(lifeCycle, {
         rawRumEvent: createRawRumEvent(RumEventType.ACTION),
       })
@@ -622,17 +620,15 @@ describe('rum assembly', () => {
     })
 
     it('should be overridden by the view context', () => {
-      const { lifeCycle, serverRumEvents, setFindView } = setupAssemblyTestWithDefaults({
+      const { lifeCycle, serverRumEvents } = setupAssemblyTestWithDefaults({
         partialConfiguration: extraConfigurationOptions,
+        findView: () => ({
+          service: 'new service',
+          version: 'new version',
+          id: '1234',
+          startClocks: {} as ClocksState,
+        }),
       })
-
-      const newFindView = () => ({
-        service: 'new service',
-        version: 'new version',
-        id: '1234',
-        startClocks: {} as ClocksState,
-      })
-      setFindView(newFindView)
 
       notifyRawRumEvent(lifeCycle, {
         rawRumEvent: createRawRumEvent(RumEventType.ACTION),
@@ -1001,12 +997,14 @@ interface AssemblyTestParams {
   partialConfiguration?: Partial<RumConfiguration>
   sessionManager?: RumSessionManager
   ciVisibilityContext?: Record<string, string>
+  findView?: ViewHistory['findView']
 }
 
 function setupAssemblyTestWithDefaults({
   partialConfiguration,
   sessionManager,
   ciVisibilityContext,
+  findView = () => ({ id: '7890', name: 'view name', startClocks: {} as ClocksState }),
 }: AssemblyTestParams = {}) {
   const lifeCycle = new LifeCycle()
   const reportErrorSpy = jasmine.createSpy('reportError')
@@ -1021,12 +1019,6 @@ function setupAssemblyTestWithDefaults({
   const subscription = lifeCycle.subscribe(LifeCycleEventType.RUM_EVENT_COLLECTED, (serverRumEvent) => {
     serverRumEvents.push(serverRumEvent)
   })
-
-  let findView: ViewHistory['findView'] = () => ({ id: '7890', name: 'view name', startClocks: {} as ClocksState })
-
-  const setFindView = (newFindView: ViewHistory['findView']) => {
-    findView = newFindView
-  }
 
   startRumAssembly(
     mockRumConfiguration(partialConfiguration),
@@ -1046,5 +1038,5 @@ function setupAssemblyTestWithDefaults({
     cleanupSyntheticsWorkerValues()
   })
 
-  return { lifeCycle, reportErrorSpy, serverRumEvents, commonContext, setFindView }
+  return { lifeCycle, reportErrorSpy, serverRumEvents, commonContext }
 }
