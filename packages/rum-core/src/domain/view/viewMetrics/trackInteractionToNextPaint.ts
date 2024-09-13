@@ -1,11 +1,9 @@
 import {
   addTelemetryDebug,
-  dateNow,
   elapsed,
   ExperimentalFeature,
   isExperimentalFeatureEnabled,
   noop,
-  ONE_DAY,
   ONE_HOUR,
   ONE_MINUTE,
 } from '@datadog/browser-core'
