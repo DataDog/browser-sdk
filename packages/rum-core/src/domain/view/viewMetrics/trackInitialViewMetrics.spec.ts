@@ -31,9 +31,11 @@ describe('trackInitialViewMetrics', () => {
   })
 
   it('should merge metrics from various sources', () => {
-    notifyPerformanceEntries([createPerformanceEntry(RumPerformanceEntryType.NAVIGATION)])
-    lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [
+    notifyPerformanceEntries([
+      createPerformanceEntry(RumPerformanceEntryType.NAVIGATION),
       createPerformanceEntry(RumPerformanceEntryType.PAINT),
+    ])
+    lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [
       createPerformanceEntry(RumPerformanceEntryType.FIRST_INPUT),
     ])
 

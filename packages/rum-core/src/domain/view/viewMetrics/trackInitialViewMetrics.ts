@@ -32,7 +32,7 @@ export function trackInitialViewMetrics(
   })
 
   const firstHidden = trackFirstHidden(configuration)
-  const { stop: stopFCPTracking } = trackFirstContentfulPaint(lifeCycle, firstHidden, (firstContentfulPaint) => {
+  const { stop: stopFCPTracking } = trackFirstContentfulPaint(configuration, firstHidden, (firstContentfulPaint) => {
     initialViewMetrics.firstContentfulPaint = firstContentfulPaint
     scheduleViewUpdate()
   })

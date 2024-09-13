@@ -21,7 +21,6 @@ describe('startPerformanceCollection', () => {
 
   ;[
     RumPerformanceEntryType.LONG_TASK,
-    RumPerformanceEntryType.PAINT,
     RumPerformanceEntryType.LARGEST_CONTENTFUL_PAINT,
     RumPerformanceEntryType.FIRST_INPUT,
     RumPerformanceEntryType.LAYOUT_SHIFT,
@@ -36,16 +35,18 @@ describe('startPerformanceCollection', () => {
       expect(entryCollectedCallback).toHaveBeenCalledWith([jasmine.objectContaining({ entryType })])
     })
   })
-  ;[(RumPerformanceEntryType.NAVIGATION, RumPerformanceEntryType.RESOURCE)].forEach((entryType) => {
-    it(`should not notify ${entryType} timings`, () => {
-      const { notifyPerformanceEntries } = mockPerformanceObserver()
-      setupStartPerformanceCollection()
+  ;[(RumPerformanceEntryType.NAVIGATION, RumPerformanceEntryType.RESOURCE, RumPerformanceEntryType.PAINT)].forEach(
+    (entryType) => {
+      it(`should not notify ${entryType} timings`, () => {
+        const { notifyPerformanceEntries } = mockPerformanceObserver()
+        setupStartPerformanceCollection()
 
-      notifyPerformanceEntries([createPerformanceEntry(RumPerformanceEntryType.RESOURCE)])
+        notifyPerformanceEntries([createPerformanceEntry(RumPerformanceEntryType.RESOURCE)])
 
-      expect(entryCollectedCallback).not.toHaveBeenCalled()
-    })
-  })
+        expect(entryCollectedCallback).not.toHaveBeenCalled()
+      })
+    }
+  )
 
   it('should handle exceptions coming from performance observer .observe()', () => {
     const { notifyPerformanceEntries } = mockPerformanceObserver({
