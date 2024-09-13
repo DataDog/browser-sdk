@@ -43,7 +43,6 @@ export function startPerformanceCollection(lifeCycle: LifeCycle, configuration: 
     )
     const mainEntries = [RumPerformanceEntryType.LONG_TASK, RumPerformanceEntryType.PAINT]
     const experimentalEntries = [
-      RumPerformanceEntryType.LARGEST_CONTENTFUL_PAINT,
       RumPerformanceEntryType.FIRST_INPUT,
       RumPerformanceEntryType.LAYOUT_SHIFT,
       RumPerformanceEntryType.EVENT,
