@@ -20,7 +20,7 @@ export function setCookie(name: string, value: string, expireDelay: number = 0, 
   const domain = options && options.domain ? `;domain=${options.domain}` : ''
   const secure = options && options.secure ? ';secure' : ''
   const partitioned = options && options.partitioned ? ';partitioned' : ''
-  // we cannot read from cookie directly here because lock is not yet acquired
+  // we cannot read from cookie here because it will affect cookie locking
   if (isExperimentalFeatureEnabled(ExperimentalFeature.ANONYMOUS_USER_TRACKING) && name === SESSION_STORE_KEY) {
     expires = `max-age=${ONE_YEAR}`
   }

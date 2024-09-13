@@ -1,5 +1,5 @@
 import { ExperimentalFeature, resetExperimentalFeatures } from '../../../tools/experimentalFeatures'
-import { mockExperimentalFeatures } from '../../../../test'
+import { mockCookie, mockExperimentalFeatures } from '../../../../test'
 import { setCookie, deleteCookie, getCookie, getCurrentSite } from '../../../browser/cookie'
 import { type SessionState } from '../sessionState'
 import { buildCookieOptions, selectCookieStrategy, initCookieStrategy } from './sessionInCookie'
@@ -130,5 +130,23 @@ describe('session in cookie strategy with anonymous user tracking', () => {
     const session = cookieStorageStrategy.retrieveSession()
     expect(session).toEqual({ ...sessionState })
     expect(getCookie(SESSION_STORE_KEY)).toBe(`id=123&created=0&device=${device}`)
+  })
+
+  it('should expire a session with anonymous id in a cookie', () => {
+    mockCookie(`id=123&created=0&device=${device}`)
+
+    cookieStorageStrategy.persistSession(sessionState)
+    cookieStorageStrategy.expireSession()
+    const session = cookieStorageStrategy.retrieveSession()
+    expect(session).toEqual({ isExpired: '1', device })
+    expect(getCookie(SESSION_STORE_KEY)).toBe(`isExpired=1&device=${device}`)
+  })
+
+  it('should return a new anonymous id if session cookie does not exist', () => {
+    setCookie(SESSION_STORE_KEY, '{test:42}', 1000)
+    spyOn(Math, 'random').and.returnValue(1)
+    const session = cookieStorageStrategy.retrieveSession()
+    expect(session).toEqual({ device: '2gosa7pa2gw' })
+    expect(getCookie(SESSION_STORE_KEY)).toBe('device=2gosa7pa2gw')
   })
 })

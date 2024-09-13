@@ -40,7 +40,16 @@ function persistInLocalStorage(sessionState: SessionState) {
 
 function retrieveSessionFromLocalStorage(): SessionState {
   const sessionString = localStorage.getItem(SESSION_STORE_KEY)
-  return toSessionState(sessionString)
+  const sessionState = toSessionState(sessionString)
+  let device = sessionState.device
+
+  if (isExperimentalFeatureEnabled(ExperimentalFeature.ANONYMOUS_USER_TRACKING) && !device) {
+    // init device id if it does not exist or if session cookie does not exist
+    device = generateAnonymousId()
+    setAnonymousIdInStorage('LocalStorage', device)
+    sessionState.device = device
+  }
+  return sessionState
 }
 
 function expireSessionFromLocalStorage() {

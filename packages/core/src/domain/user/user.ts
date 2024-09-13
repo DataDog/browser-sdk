@@ -35,12 +35,12 @@ export function checkUser(newUser: User): boolean {
 }
 
 export function getAnonymousIdFromStorage(): string | undefined {
-  let matches = /device=([w]+)/.exec(document.cookie)
+  let matches = /device=([\w-]+)/.exec(document.cookie)
   if (matches) {
     return matches[1]
   }
 
-  matches = /device=([w]+)/.exec(localStorage.getItem(SESSION_STORE_KEY) ?? '')
+  matches = /device=(\w+)/.exec(localStorage.getItem(SESSION_STORE_KEY) ?? '')
   if (matches) {
     return matches[1]
   }
