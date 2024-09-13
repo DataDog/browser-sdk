@@ -389,7 +389,128 @@ export type TelemetryUsageEvent = CommonTelemetryProperties & {
      * Telemetry type
      */
     type: 'usage'
+
     usage: TelemetryCommonFeaturesUsage | TelemetryBrowserFeaturesUsage
+    [k: string]: unknown
+  }
+  [k: string]: unknown
+}
+/**
+ * Schema of common properties of Telemetry events
+ */
+export type CommonTelemetryProperties = {
+  /**
+   * Internal properties
+   */
+  _dd: {
+    /**
+     * Version of the RUM event format
+     */
+    readonly format_version: 2
+    [k: string]: unknown
+  }
+  /**
+   * Telemetry event type. Should specify telemetry only.
+   */
+  readonly type: 'telemetry'
+  /**
+   * Start of the event in ms from epoch
+   */
+  date: number
+  /**
+   * The SDK generating the telemetry event
+   */
+  service: string
+  /**
+   * The source of this event
+   */
+  readonly source: 'android' | 'ios' | 'browser' | 'flutter' | 'react-native' | 'unity' | 'kotlin-multiplatform'
+  /**
+   * The version of the SDK generating the telemetry event
+   */
+  version: string
+  /**
+   * Application properties
+   */
+  readonly application?: {
+    /**
+     * UUID of the application
+     */
+    id: string
+    [k: string]: unknown
+  }
+  /**
+   * Session properties
+   */
+  session?: {
+    /**
+     * UUID of the session
+     */
+    id: string
+    [k: string]: unknown
+  }
+  /**
+   * View properties
+   */
+  view?: {
+    /**
+     * UUID of the view
+     */
+    id: string
+    [k: string]: unknown
+  }
+  /**
+   * Action properties
+   */
+  action?: {
+    /**
+     * UUID of the action
+     */
+    id: string
+    [k: string]: unknown
+  }
+  /**
+   * Enabled experimental features
+   */
+  readonly experimental_features?: string[]
+
+  telemetry?: {
+    /**
+     * Device properties
+     */
+    device?: {
+      /**
+       * Architecture of the device
+       */
+      architecture?: string
+      /**
+       * Brand of the device
+       */
+      brand?: string
+      /**
+       * Model of the device
+       */
+      model?: string
+      [k: string]: unknown
+    }
+    /**
+     * OS properties
+     */
+    os?: {
+      /**
+       * Build of the OS
+       */
+      build?: string
+      /**
+       * Name of the OS
+       */
+      name?: string
+      /**
+       * Version of the OS
+       */
+      version?: string
+      [k: string]: unknown
+    }
     [k: string]: unknown
   }
   [k: string]: unknown
@@ -494,123 +615,3 @@ export type TelemetryBrowserFeaturesUsage =
       feature: 'add-duration-vital'
       [k: string]: unknown
     }
-
-/**
- * Schema of common properties of Telemetry events
- */
-export interface CommonTelemetryProperties {
-  /**
-   * Internal properties
-   */
-  _dd: {
-    /**
-     * Version of the RUM event format
-     */
-    readonly format_version: 2
-    [k: string]: unknown
-  }
-  /**
-   * Telemetry event type. Should specify telemetry only.
-   */
-  readonly type: 'telemetry'
-  /**
-   * Start of the event in ms from epoch
-   */
-  date: number
-  /**
-   * The SDK generating the telemetry event
-   */
-  service: string
-  /**
-   * The source of this event
-   */
-  readonly source: 'android' | 'ios' | 'browser' | 'flutter' | 'react-native' | 'unity' | 'kotlin-multiplatform'
-  /**
-   * The version of the SDK generating the telemetry event
-   */
-  version: string
-  /**
-   * Application properties
-   */
-  readonly application?: {
-    /**
-     * UUID of the application
-     */
-    id: string
-    [k: string]: unknown
-  }
-  /**
-   * Session properties
-   */
-  session?: {
-    /**
-     * UUID of the session
-     */
-    id: string
-    [k: string]: unknown
-  }
-  /**
-   * View properties
-   */
-  view?: {
-    /**
-     * UUID of the view
-     */
-    id: string
-    [k: string]: unknown
-  }
-  /**
-   * Action properties
-   */
-  action?: {
-    /**
-     * UUID of the action
-     */
-    id: string
-    [k: string]: unknown
-  }
-  /**
-   * Enabled experimental features
-   */
-  readonly experimental_features?: string[]
-  telemetry?: {
-    /**
-     * Device properties
-     */
-    device?: {
-      /**
-       * Architecture of the device
-       */
-      architecture?: string
-      /**
-       * Brand of the device
-       */
-      brand?: string
-      /**
-       * Model of the device
-       */
-      model?: string
-      [k: string]: unknown
-    }
-    /**
-     * OS properties
-     */
-    os?: {
-      /**
-       * Build of the OS
-       */
-      build?: string
-      /**
-       * Name of the OS
-       */
-      name?: string
-      /**
-       * Version of the OS
-       */
-      version?: string
-      [k: string]: unknown
-    }
-    [k: string]: unknown
-  }
-  [k: string]: unknown
-}

@@ -14,771 +14,6 @@ export type RumEvent =
   | RumViewEvent
   | RumVitalEvent
 /**
- * Schema of all properties of an Action event
- */
-export type RumActionEvent = CommonProperties &
-  ViewContainerSchema & {
-    /**
-     * RUM event type
-     */
-    readonly type: 'action'
-    /**
-     * Action properties
-     */
-    readonly action: {
-      /**
-       * Type of the action
-       */
-      readonly type: 'custom' | 'click' | 'tap' | 'scroll' | 'swipe' | 'application_start' | 'back'
-      /**
-       * UUID of the action
-       */
-      readonly id?: string
-      /**
-       * Duration in ns to the action is considered loaded
-       */
-      readonly loading_time?: number
-      /**
-       * Action target properties
-       */
-      readonly target?: {
-        /**
-         * Target name
-         */
-        name: string
-        [k: string]: unknown
-      }
-      /**
-       * Action frustration properties
-       */
-      readonly frustration?: {
-        /**
-         * Action frustration types
-         */
-        readonly type: ('rage_click' | 'dead_click' | 'error_click' | 'rage_tap' | 'error_tap')[]
-        [k: string]: unknown
-      }
-      /**
-       * Properties of the errors of the action
-       */
-      readonly error?: {
-        /**
-         * Number of errors that occurred on the action
-         */
-        readonly count: number
-        [k: string]: unknown
-      }
-      /**
-       * Properties of the crashes of the action
-       */
-      readonly crash?: {
-        /**
-         * Number of crashes that occurred on the action
-         */
-        readonly count: number
-        [k: string]: unknown
-      }
-      /**
-       * Properties of the long tasks of the action
-       */
-      readonly long_task?: {
-        /**
-         * Number of long tasks that occurred on the action
-         */
-        readonly count: number
-        [k: string]: unknown
-      }
-      /**
-       * Properties of the resources of the action
-       */
-      readonly resource?: {
-        /**
-         * Number of resources that occurred on the action
-         */
-        readonly count: number
-        [k: string]: unknown
-      }
-      [k: string]: unknown
-    }
-    /**
-     * View properties
-     */
-    readonly view?: {
-      /**
-       * Is the action starting in the foreground (focus in browser)
-       */
-      readonly in_foreground?: boolean
-      [k: string]: unknown
-    }
-    /**
-     * Internal properties
-     */
-    _dd?: {
-      /**
-       * Action properties
-       */
-      readonly action?: {
-        /**
-         * Action position properties
-         */
-        readonly position?: {
-          /**
-           * X coordinate relative to the target element of the action (in pixels)
-           */
-          readonly x: number
-          /**
-           * Y coordinate relative to the target element of the action (in pixels)
-           */
-          readonly y: number
-          [k: string]: unknown
-        }
-        /**
-         * Target properties
-         */
-        target?: {
-          /**
-           * CSS selector path of the target element
-           */
-          readonly selector?: string
-          /**
-           * Width of the target element (in pixels)
-           */
-          readonly width?: number
-          /**
-           * Height of the target element (in pixels)
-           */
-          readonly height?: number
-          [k: string]: unknown
-        }
-        [k: string]: unknown
-      }
-      [k: string]: unknown
-    }
-    [k: string]: unknown
-  }
-/**
- * Schema of all properties of an Error event
- */
-export type RumErrorEvent = CommonProperties &
-  ActionChildProperties &
-  ViewContainerSchema & {
-    /**
-     * RUM event type
-     */
-    readonly type: 'error'
-    /**
-     * Error properties
-     */
-    readonly error: {
-      /**
-       * UUID of the error
-       */
-      readonly id?: string
-      /**
-       * Error message
-       */
-      message: string
-      /**
-       * Source of the error
-       */
-      readonly source: 'network' | 'source' | 'console' | 'logger' | 'agent' | 'webview' | 'custom' | 'report'
-      /**
-       * Stacktrace of the error
-       */
-      stack?: string
-      /**
-       * Causes of the error
-       */
-      causes?: {
-        /**
-         * Error message
-         */
-        message: string
-        /**
-         * The type of the error
-         */
-        readonly type?: string
-        /**
-         * Stacktrace of the error
-         */
-        stack?: string
-        /**
-         * Source of the error
-         */
-        readonly source: 'network' | 'source' | 'console' | 'logger' | 'agent' | 'webview' | 'custom' | 'report'
-        [k: string]: unknown
-      }[]
-      /**
-       * Whether this error crashed the host application
-       */
-      readonly is_crash?: boolean
-      /**
-       * Fingerprint used for Error Tracking custom grouping
-       */
-      fingerprint?: string
-      /**
-       * The type of the error
-       */
-      readonly type?: string
-      /**
-       * The specific category of the error. It provides a high-level grouping for different types of errors.
-       */
-      readonly category?: 'ANR' | 'App Hang' | 'Exception' | 'Watchdog Termination' | 'Memory Warning'
-      /**
-       * Whether the error has been handled manually in the source code or not
-       */
-      readonly handling?: 'handled' | 'unhandled'
-      /**
-       * Handling call stack
-       */
-      readonly handling_stack?: string
-      /**
-       * Source type of the error (the language or platform impacting the error stacktrace format)
-       */
-      readonly source_type?:
-        | 'android'
-        | 'browser'
-        | 'ios'
-        | 'react-native'
-        | 'flutter'
-        | 'roku'
-        | 'ndk'
-        | 'ios+il2cpp'
-        | 'ndk+il2cpp'
-      /**
-       * Resource properties of the error
-       */
-      readonly resource?: {
-        /**
-         * HTTP method of the resource
-         */
-        readonly method: 'POST' | 'GET' | 'HEAD' | 'PUT' | 'DELETE' | 'PATCH' | 'TRACE' | 'OPTIONS' | 'CONNECT'
-        /**
-         * HTTP Status code of the resource
-         */
-        readonly status_code: number
-        /**
-         * URL of the resource
-         */
-        url: string
-        /**
-         * The provider for this resource
-         */
-        readonly provider?: {
-          /**
-           * The domain name of the provider
-           */
-          readonly domain?: string
-          /**
-           * The user friendly name of the provider
-           */
-          readonly name?: string
-          /**
-           * The type of provider
-           */
-          readonly type?:
-            | 'ad'
-            | 'advertising'
-            | 'analytics'
-            | 'cdn'
-            | 'content'
-            | 'customer-success'
-            | 'first party'
-            | 'hosting'
-            | 'marketing'
-            | 'other'
-            | 'social'
-            | 'tag-manager'
-            | 'utility'
-            | 'video'
-          [k: string]: unknown
-        }
-        [k: string]: unknown
-      }
-      /**
-       * Description of each thread in the process when error happened.
-       */
-      threads?: {
-        /**
-         * Name of the thread (e.g. 'Thread 0').
-         */
-        readonly name: string
-        /**
-         * Tells if the thread crashed.
-         */
-        readonly crashed: boolean
-        /**
-         * Unsymbolicated stack trace of the given thread.
-         */
-        readonly stack: string
-        /**
-         * Platform-specific state of the thread when its state was captured (CPU registers dump for iOS, thread state enum for Android, etc.).
-         */
-        readonly state?: string
-        [k: string]: unknown
-      }[]
-      /**
-       * Description of each binary image (native libraries; for Android: .so files) loaded or referenced by the process/application.
-       */
-      readonly binary_images?: {
-        /**
-         * Build UUID that uniquely identifies the binary image.
-         */
-        readonly uuid: string
-        /**
-         * Name of the library.
-         */
-        readonly name: string
-        /**
-         * Determines if it's a system or user library.
-         */
-        readonly is_system: boolean
-        /**
-         * Library's load address (hexadecimal).
-         */
-        readonly load_address?: string
-        /**
-         * Max value from the library address range (hexadecimal).
-         */
-        readonly max_address?: string
-        /**
-         * CPU architecture from the library.
-         */
-        readonly arch?: string
-        [k: string]: unknown
-      }[]
-      /**
-       * A boolean value saying if any of the stack traces was truncated due to minification.
-       */
-      readonly was_truncated?: boolean
-      /**
-       * Platform-specific metadata of the error event.
-       */
-      readonly meta?: {
-        /**
-         * The CPU architecture of the process that crashed.
-         */
-        readonly code_type?: string
-        /**
-         * Parent process information.
-         */
-        readonly parent_process?: string
-        /**
-         * A client-generated 16-byte UUID of the incident.
-         */
-        readonly incident_identifier?: string
-        /**
-         * The name of the crashed process.
-         */
-        readonly process?: string
-        /**
-         * The name of the corresponding BSD termination signal. (in case of iOS crash)
-         */
-        readonly exception_type?: string
-        /**
-         * CPU specific information about the exception encoded into 64-bit hexadecimal number preceded by the signal code.
-         */
-        readonly exception_codes?: string
-        /**
-         * The location of the executable.
-         */
-        readonly path?: string
-        [k: string]: unknown
-      }
-      /**
-       * Content Security Violation properties
-       */
-      readonly csp?: {
-        /**
-         * In the context of CSP errors, indicates how the violated policy is configured to be treated by the user agent.
-         */
-        readonly disposition?: 'enforce' | 'report'
-        [k: string]: unknown
-      }
-      /**
-       * Time since application start when error happened (in milliseconds)
-       */
-      readonly time_since_app_start?: number
-      [k: string]: unknown
-    }
-    /**
-     * Properties of App Hang and ANR errors
-     */
-    readonly freeze?: {
-      /**
-       * Duration of the main thread freeze (in ns)
-       */
-      readonly duration: number
-      [k: string]: unknown
-    }
-    /**
-     * View properties
-     */
-    readonly view?: {
-      /**
-       * Is the error starting in the foreground (focus in browser)
-       */
-      readonly in_foreground?: boolean
-      [k: string]: unknown
-    }
-    /**
-     * Feature flags properties
-     */
-    readonly feature_flags?: {
-      [k: string]: unknown
-    }
-    [k: string]: unknown
-  }
-/**
- * Schema of all properties of a Long Task event
- */
-export type RumLongTaskEvent = CommonProperties &
-  ActionChildProperties &
-  ViewContainerSchema & {
-    /**
-     * RUM event type
-     */
-    readonly type: 'long_task'
-    /**
-     * Long Task properties
-     */
-    readonly long_task: {
-      /**
-       * UUID of the long task or long animation frame
-       */
-      readonly id?: string
-      /**
-       * Type of the event: long task or long animation frame
-       */
-      readonly entry_type?: 'long-task' | 'long-animation-frame'
-      /**
-       * Duration in ns of the long task or long animation frame
-       */
-      readonly duration: number
-      /**
-       * Duration in ns for which the animation frame was being blocked
-       */
-      readonly blocking_duration?: number
-      /**
-       * Start time of the rendering cycle, which includes requestAnimationFrame callbacks, style and layout calculation, resize observer and intersection observer callbacks
-       */
-      readonly render_start?: number
-      /**
-       * Start time of the time period spent in style and layout calculations
-       */
-      readonly style_and_layout_start?: number
-      /**
-       * Start time of of the first UI event (mouse/keyboard and so on) to be handled during the course of this frame
-       */
-      readonly first_ui_event_timestamp?: number
-      /**
-       * Whether this long task is considered a frozen frame
-       */
-      readonly is_frozen_frame?: boolean
-      /**
-       * A list of long scripts that were executed over the course of the long frame
-       */
-      readonly scripts?: {
-        /**
-         * Duration in ns between startTime and when the subsequent microtask queue has finished processing
-         */
-        readonly duration?: number
-        /**
-         * Duration in ns of the total time spent in 'pausing' synchronous operations (alert, synchronous XHR)
-         */
-        readonly pause_duration?: number
-        /**
-         * Duration in ns of the the total time spent processing forced layout and style inside this function
-         */
-        readonly forced_style_and_layout_duration?: number
-        /**
-         * Time the entry function was invoked
-         */
-        readonly start_time?: number
-        /**
-         * Time after compilation
-         */
-        readonly execution_start?: number
-        /**
-         * The script resource name where available (or empty if not found)
-         */
-        readonly source_url?: string
-        /**
-         * The script function name where available (or empty if not found)
-         */
-        readonly source_function_name?: string
-        /**
-         * The script character position where available (or -1 if not found)
-         */
-        readonly source_char_position?: number
-        /**
-         * Information about the invoker of the script
-         */
-        readonly invoker?: string
-        /**
-         * Type of the invoker of the script
-         */
-        readonly invoker_type?:
-          | 'user-callback'
-          | 'event-listener'
-          | 'resolve-promise'
-          | 'reject-promise'
-          | 'classic-script'
-          | 'module-script'
-        /**
-         * The container (the top-level document, or an <iframe>) the long animation frame occurred in
-         */
-        readonly window_attribution?: string
-        [k: string]: unknown
-      }[]
-      [k: string]: unknown
-    }
-    /**
-     * Internal properties
-     */
-    readonly _dd?: {
-      /**
-       * Whether the long task should be discarded or indexed
-       */
-      readonly discarded?: boolean
-      [k: string]: unknown
-    }
-    [k: string]: unknown
-  }
-/**
- * Schema of all properties of a Resource event
- */
-export type RumResourceEvent = CommonProperties &
-  ActionChildProperties &
-  ViewContainerSchema & {
-    /**
-     * RUM event type
-     */
-    readonly type: 'resource'
-    /**
-     * Resource properties
-     */
-    readonly resource: {
-      /**
-       * UUID of the resource
-       */
-      readonly id?: string
-      /**
-       * Resource type
-       */
-      readonly type:
-        | 'document'
-        | 'xhr'
-        | 'beacon'
-        | 'fetch'
-        | 'css'
-        | 'js'
-        | 'image'
-        | 'font'
-        | 'media'
-        | 'other'
-        | 'native'
-      /**
-       * HTTP method of the resource
-       */
-      readonly method?: 'POST' | 'GET' | 'HEAD' | 'PUT' | 'DELETE' | 'PATCH' | 'TRACE' | 'OPTIONS' | 'CONNECT'
-      /**
-       * URL of the resource
-       */
-      url: string
-      /**
-       * HTTP status code of the resource
-       */
-      readonly status_code?: number
-      /**
-       * Duration of the resource
-       */
-      readonly duration?: number
-      /**
-       * Size in octet of the resource response body
-       */
-      readonly size?: number
-      /**
-       * Size in octet of the resource before removing any applied content encodings
-       */
-      readonly encoded_body_size?: number
-      /**
-       * Size in octet of the resource after removing any applied encoding
-       */
-      readonly decoded_body_size?: number
-      /**
-       * Size in octet of the fetched resource
-       */
-      readonly transfer_size?: number
-      /**
-       * Render blocking status of the resource
-       */
-      readonly render_blocking_status?: 'blocking' | 'non-blocking'
-      /**
-       * Redirect phase properties
-       */
-      readonly redirect?: {
-        /**
-         * Duration in ns of the resource redirect phase
-         */
-        readonly duration: number
-        /**
-         * Duration in ns between start of the request and start of the redirect phase
-         */
-        readonly start: number
-        [k: string]: unknown
-      }
-      /**
-       * DNS phase properties
-       */
-      readonly dns?: {
-        /**
-         * Duration in ns of the resource dns phase
-         */
-        readonly duration: number
-        /**
-         * Duration in ns between start of the request and start of the dns phase
-         */
-        readonly start: number
-        [k: string]: unknown
-      }
-      /**
-       * Connect phase properties
-       */
-      readonly connect?: {
-        /**
-         * Duration in ns of the resource connect phase
-         */
-        readonly duration: number
-        /**
-         * Duration in ns between start of the request and start of the connect phase
-         */
-        readonly start: number
-        [k: string]: unknown
-      }
-      /**
-       * SSL phase properties
-       */
-      readonly ssl?: {
-        /**
-         * Duration in ns of the resource ssl phase
-         */
-        readonly duration: number
-        /**
-         * Duration in ns between start of the request and start of the ssl phase
-         */
-        readonly start: number
-        [k: string]: unknown
-      }
-      /**
-       * First Byte phase properties
-       */
-      readonly first_byte?: {
-        /**
-         * Duration in ns of the resource first byte phase
-         */
-        readonly duration: number
-        /**
-         * Duration in ns between start of the request and start of the first byte phase
-         */
-        readonly start: number
-        [k: string]: unknown
-      }
-      /**
-       * Download phase properties
-       */
-      readonly download?: {
-        /**
-         * Duration in ns of the resource download phase
-         */
-        readonly duration: number
-        /**
-         * Duration in ns between start of the request and start of the download phase
-         */
-        readonly start: number
-        [k: string]: unknown
-      }
-      /**
-       * The provider for this resource
-       */
-      readonly provider?: {
-        /**
-         * The domain name of the provider
-         */
-        readonly domain?: string
-        /**
-         * The user friendly name of the provider
-         */
-        readonly name?: string
-        /**
-         * The type of provider
-         */
-        readonly type?:
-          | 'ad'
-          | 'advertising'
-          | 'analytics'
-          | 'cdn'
-          | 'content'
-          | 'customer-success'
-          | 'first party'
-          | 'hosting'
-          | 'marketing'
-          | 'other'
-          | 'social'
-          | 'tag-manager'
-          | 'utility'
-          | 'video'
-        [k: string]: unknown
-      }
-      /**
-       * GraphQL requests parameters
-       */
-      readonly graphql?: {
-        /**
-         * Type of the GraphQL operation
-         */
-        readonly operationType: 'query' | 'mutation' | 'subscription'
-        /**
-         * Name of the GraphQL operation
-         */
-        readonly operationName?: string
-        /**
-         * Content of the GraphQL operation
-         */
-        payload?: string
-        /**
-         * String representation of the operation variables
-         */
-        variables?: string
-        [k: string]: unknown
-      }
-      [k: string]: unknown
-    }
-    /**
-     * Internal properties
-     */
-    readonly _dd?: {
-      /**
-       * span identifier in decimal format
-       */
-      readonly span_id?: string
-      /**
-       * trace identifier in decimal format
-       */
-      readonly trace_id?: string
-      /**
-       * trace sample rate in decimal format
-       */
-      readonly rule_psr?: number
-      /**
-       * Whether the resource should be discarded or indexed
-       */
-      readonly discarded?: boolean
-      [k: string]: unknown
-    }
-    [k: string]: unknown
-  }
-/**
  * Schema of all properties of a View event
  */
 export type RumViewEvent = CommonProperties &
@@ -1128,6 +363,422 @@ export type RumViewEvent = CommonProperties &
     [k: string]: unknown
   }
 /**
+ * Schema of all properties of an Error event
+ */
+export type RumErrorEvent = CommonProperties &
+  ActionChildProperties &
+  ViewContainerSchema & {
+    /**
+     * RUM event type
+     */
+    readonly type: 'error'
+    /**
+     * Error properties
+     */
+    readonly error: {
+      /**
+       * UUID of the error
+       */
+      readonly id?: string
+      /**
+       * Error message
+       */
+      message: string
+      /**
+       * Source of the error
+       */
+      readonly source: 'network' | 'source' | 'console' | 'logger' | 'agent' | 'webview' | 'custom' | 'report'
+      /**
+       * Stacktrace of the error
+       */
+      stack?: string
+      /**
+       * Causes of the error
+       */
+      causes?: {
+        /**
+         * Error message
+         */
+        message: string
+        /**
+         * The type of the error
+         */
+        readonly type?: string
+        /**
+         * Stacktrace of the error
+         */
+        stack?: string
+        /**
+         * Source of the error
+         */
+        readonly source: 'network' | 'source' | 'console' | 'logger' | 'agent' | 'webview' | 'custom' | 'report'
+        [k: string]: unknown
+      }[]
+      /**
+       * Whether this error crashed the host application
+       */
+      readonly is_crash?: boolean
+      /**
+       * Fingerprint used for Error Tracking custom grouping
+       */
+      fingerprint?: string
+      /**
+       * The type of the error
+       */
+      readonly type?: string
+      /**
+       * The specific category of the error. It provides a high-level grouping for different types of errors.
+       */
+      readonly category?: 'ANR' | 'App Hang' | 'Exception' | 'Watchdog Termination' | 'Memory Warning'
+      /**
+       * Whether the error has been handled manually in the source code or not
+       */
+      readonly handling?: 'handled' | 'unhandled'
+      /**
+       * Handling call stack
+       */
+      readonly handling_stack?: string
+      /**
+       * Source type of the error (the language or platform impacting the error stacktrace format)
+       */
+      readonly source_type?:
+        | 'android'
+        | 'browser'
+        | 'ios'
+        | 'react-native'
+        | 'flutter'
+        | 'roku'
+        | 'ndk'
+        | 'ios+il2cpp'
+        | 'ndk+il2cpp'
+      /**
+       * Resource properties of the error
+       */
+      readonly resource?: {
+        /**
+         * HTTP method of the resource
+         */
+        readonly method: 'POST' | 'GET' | 'HEAD' | 'PUT' | 'DELETE' | 'PATCH' | 'TRACE' | 'OPTIONS' | 'CONNECT'
+        /**
+         * HTTP Status code of the resource
+         */
+        readonly status_code: number
+        /**
+         * URL of the resource
+         */
+        url: string
+        /**
+         * The provider for this resource
+         */
+        readonly provider?: {
+          /**
+           * The domain name of the provider
+           */
+          readonly domain?: string
+          /**
+           * The user friendly name of the provider
+           */
+          readonly name?: string
+          /**
+           * The type of provider
+           */
+          readonly type?:
+            | 'ad'
+            | 'advertising'
+            | 'analytics'
+            | 'cdn'
+            | 'content'
+            | 'customer-success'
+            | 'first party'
+            | 'hosting'
+            | 'marketing'
+            | 'other'
+            | 'social'
+            | 'tag-manager'
+            | 'utility'
+            | 'video'
+          [k: string]: unknown
+        }
+        [k: string]: unknown
+      }
+      /**
+       * Description of each thread in the process when error happened.
+       */
+      threads?: {
+        /**
+         * Name of the thread (e.g. 'Thread 0').
+         */
+        readonly name: string
+        /**
+         * Tells if the thread crashed.
+         */
+        readonly crashed: boolean
+        /**
+         * Unsymbolicated stack trace of the given thread.
+         */
+        readonly stack: string
+        /**
+         * Platform-specific state of the thread when its state was captured (CPU registers dump for iOS, thread state enum for Android, etc.).
+         */
+        readonly state?: string
+        [k: string]: unknown
+      }[]
+      /**
+       * Description of each binary image (native libraries; for Android: .so files) loaded or referenced by the process/application.
+       */
+      readonly binary_images?: {
+        /**
+         * Build UUID that uniquely identifies the binary image.
+         */
+        readonly uuid: string
+        /**
+         * Name of the library.
+         */
+        readonly name: string
+        /**
+         * Determines if it's a system or user library.
+         */
+        readonly is_system: boolean
+        /**
+         * Library's load address (hexadecimal).
+         */
+        readonly load_address?: string
+        /**
+         * Max value from the library address range (hexadecimal).
+         */
+        readonly max_address?: string
+        /**
+         * CPU architecture from the library.
+         */
+        readonly arch?: string
+        [k: string]: unknown
+      }[]
+      /**
+       * A boolean value saying if any of the stack traces was truncated due to minification.
+       */
+      readonly was_truncated?: boolean
+      /**
+       * Platform-specific metadata of the error event.
+       */
+      readonly meta?: {
+        /**
+         * The CPU architecture of the process that crashed.
+         */
+        readonly code_type?: string
+        /**
+         * Parent process information.
+         */
+        readonly parent_process?: string
+        /**
+         * A client-generated 16-byte UUID of the incident.
+         */
+        readonly incident_identifier?: string
+        /**
+         * The name of the crashed process.
+         */
+        readonly process?: string
+        /**
+         * The name of the corresponding BSD termination signal. (in case of iOS crash)
+         */
+        readonly exception_type?: string
+        /**
+         * CPU specific information about the exception encoded into 64-bit hexadecimal number preceded by the signal code.
+         */
+        readonly exception_codes?: string
+        /**
+         * The location of the executable.
+         */
+        readonly path?: string
+        [k: string]: unknown
+      }
+      /**
+       * Content Security Violation properties
+       */
+      readonly csp?: {
+        /**
+         * In the context of CSP errors, indicates how the violated policy is configured to be treated by the user agent.
+         */
+        readonly disposition?: 'enforce' | 'report'
+        [k: string]: unknown
+      }
+      /**
+       * Time since application start when error happened (in milliseconds)
+       */
+      readonly time_since_app_start?: number
+      [k: string]: unknown
+    }
+    /**
+     * Properties of App Hang and ANR errors
+     */
+    readonly freeze?: {
+      /**
+       * Duration of the main thread freeze (in ns)
+       */
+      readonly duration: number
+      [k: string]: unknown
+    }
+    /**
+     * View properties
+     */
+    readonly view?: {
+      /**
+       * Is the error starting in the foreground (focus in browser)
+       */
+      readonly in_foreground?: boolean
+      [k: string]: unknown
+    }
+    /**
+     * Feature flags properties
+     */
+    readonly feature_flags?: {
+      [k: string]: unknown
+    }
+    [k: string]: unknown
+  }
+/**
+ * Schema of all properties of an Action event
+ */
+export type RumActionEvent = CommonProperties &
+  ViewContainerSchema & {
+    /**
+     * RUM event type
+     */
+    readonly type: 'action'
+    /**
+     * Action properties
+     */
+    readonly action: {
+      /**
+       * Type of the action
+       */
+      readonly type: 'custom' | 'click' | 'tap' | 'scroll' | 'swipe' | 'application_start' | 'back'
+      /**
+       * UUID of the action
+       */
+      readonly id?: string
+      /**
+       * Duration in ns to the action is considered loaded
+       */
+      readonly loading_time?: number
+      /**
+       * Action target properties
+       */
+      readonly target?: {
+        /**
+         * Target name
+         */
+        name: string
+        [k: string]: unknown
+      }
+      /**
+       * Action frustration properties
+       */
+      readonly frustration?: {
+        /**
+         * Action frustration types
+         */
+        readonly type: ('rage_click' | 'dead_click' | 'error_click' | 'rage_tap' | 'error_tap')[]
+        [k: string]: unknown
+      }
+      /**
+       * Properties of the errors of the action
+       */
+      readonly error?: {
+        /**
+         * Number of errors that occurred on the action
+         */
+        readonly count: number
+        [k: string]: unknown
+      }
+      /**
+       * Properties of the crashes of the action
+       */
+      readonly crash?: {
+        /**
+         * Number of crashes that occurred on the action
+         */
+        readonly count: number
+        [k: string]: unknown
+      }
+      /**
+       * Properties of the long tasks of the action
+       */
+      readonly long_task?: {
+        /**
+         * Number of long tasks that occurred on the action
+         */
+        readonly count: number
+        [k: string]: unknown
+      }
+      /**
+       * Properties of the resources of the action
+       */
+      readonly resource?: {
+        /**
+         * Number of resources that occurred on the action
+         */
+        readonly count: number
+        [k: string]: unknown
+      }
+      [k: string]: unknown
+    }
+    /**
+     * View properties
+     */
+    readonly view?: {
+      /**
+       * Is the action starting in the foreground (focus in browser)
+       */
+      readonly in_foreground?: boolean
+      [k: string]: unknown
+    }
+    /**
+     * Internal properties
+     */
+    _dd?: {
+      /**
+       * Action properties
+       */
+      readonly action?: {
+        /**
+         * Action position properties
+         */
+        readonly position?: {
+          /**
+           * X coordinate relative to the target element of the action (in pixels)
+           */
+          readonly x: number
+          /**
+           * Y coordinate relative to the target element of the action (in pixels)
+           */
+          readonly y: number
+          [k: string]: unknown
+        }
+        /**
+         * Target properties
+         */
+        target?: {
+          /**
+           * CSS selector path of the target element
+           */
+          readonly selector?: string
+          /**
+           * Width of the target element (in pixels)
+           */
+          readonly width?: number
+          /**
+           * Height of the target element (in pixels)
+           */
+          readonly height?: number
+          [k: string]: unknown
+        }
+        [k: string]: unknown
+      }
+      [k: string]: unknown
+    }
+    [k: string]: unknown
+  }
+/**
  * Schema of all properties of a Vital event
  */
 export type RumVitalEvent = CommonProperties &
@@ -1186,11 +837,431 @@ export type RumVitalEvent = CommonProperties &
     }
     [k: string]: unknown
   }
-
+/**
+ * Schema of properties for a technical performance metric
+ */
+export type RumPerfMetric = {
+  /**
+   * The minimum value seen for this metric during the view's lifetime.
+   */
+  readonly min: number
+  /**
+   * The maximum value seen for this metric during the view's lifetime.
+   */
+  readonly max: number
+  /**
+   * The average value for this metric during the view's lifetime.
+   */
+  readonly average: number
+  /**
+   * The maximum possible value we could see for this metric, if such a max is relevant and can vary from session to session.
+   */
+  readonly metric_max?: number
+  [k: string]: unknown
+}
+/**
+ * Schema of all properties of a Resource event
+ */
+export type RumResourceEvent = CommonProperties &
+  ActionChildProperties &
+  ViewContainerSchema & {
+    /**
+     * RUM event type
+     */
+    readonly type: 'resource'
+    /**
+     * Resource properties
+     */
+    readonly resource: {
+      /**
+       * UUID of the resource
+       */
+      readonly id?: string
+      /**
+       * Resource type
+       */
+      readonly type:
+        | 'document'
+        | 'xhr'
+        | 'beacon'
+        | 'fetch'
+        | 'css'
+        | 'js'
+        | 'image'
+        | 'font'
+        | 'media'
+        | 'other'
+        | 'native'
+      /**
+       * HTTP method of the resource
+       */
+      readonly method?: 'POST' | 'GET' | 'HEAD' | 'PUT' | 'DELETE' | 'PATCH' | 'TRACE' | 'OPTIONS' | 'CONNECT'
+      /**
+       * URL of the resource
+       */
+      url: string
+      /**
+       * HTTP status code of the resource
+       */
+      readonly status_code?: number
+      /**
+       * Duration of the resource
+       */
+      readonly duration?: number
+      /**
+       * Size in octet of the resource response body
+       */
+      readonly size?: number
+      /**
+       * Size in octet of the resource before removing any applied content encodings
+       */
+      readonly encoded_body_size?: number
+      /**
+       * Size in octet of the resource after removing any applied encoding
+       */
+      readonly decoded_body_size?: number
+      /**
+       * Size in octet of the fetched resource
+       */
+      readonly transfer_size?: number
+      /**
+       * Render blocking status of the resource
+       */
+      readonly render_blocking_status?: 'blocking' | 'non-blocking'
+      /**
+       * Redirect phase properties
+       */
+      readonly redirect?: {
+        /**
+         * Duration in ns of the resource redirect phase
+         */
+        readonly duration: number
+        /**
+         * Duration in ns between start of the request and start of the redirect phase
+         */
+        readonly start: number
+        [k: string]: unknown
+      }
+      /**
+       * DNS phase properties
+       */
+      readonly dns?: {
+        /**
+         * Duration in ns of the resource dns phase
+         */
+        readonly duration: number
+        /**
+         * Duration in ns between start of the request and start of the dns phase
+         */
+        readonly start: number
+        [k: string]: unknown
+      }
+      /**
+       * Connect phase properties
+       */
+      readonly connect?: {
+        /**
+         * Duration in ns of the resource connect phase
+         */
+        readonly duration: number
+        /**
+         * Duration in ns between start of the request and start of the connect phase
+         */
+        readonly start: number
+        [k: string]: unknown
+      }
+      /**
+       * SSL phase properties
+       */
+      readonly ssl?: {
+        /**
+         * Duration in ns of the resource ssl phase
+         */
+        readonly duration: number
+        /**
+         * Duration in ns between start of the request and start of the ssl phase
+         */
+        readonly start: number
+        [k: string]: unknown
+      }
+      /**
+       * First Byte phase properties
+       */
+      readonly first_byte?: {
+        /**
+         * Duration in ns of the resource first byte phase
+         */
+        readonly duration: number
+        /**
+         * Duration in ns between start of the request and start of the first byte phase
+         */
+        readonly start: number
+        [k: string]: unknown
+      }
+      /**
+       * Download phase properties
+       */
+      readonly download?: {
+        /**
+         * Duration in ns of the resource download phase
+         */
+        readonly duration: number
+        /**
+         * Duration in ns between start of the request and start of the download phase
+         */
+        readonly start: number
+        [k: string]: unknown
+      }
+      /**
+       * The provider for this resource
+       */
+      readonly provider?: {
+        /**
+         * The domain name of the provider
+         */
+        readonly domain?: string
+        /**
+         * The user friendly name of the provider
+         */
+        readonly name?: string
+        /**
+         * The type of provider
+         */
+        readonly type?:
+          | 'ad'
+          | 'advertising'
+          | 'analytics'
+          | 'cdn'
+          | 'content'
+          | 'customer-success'
+          | 'first party'
+          | 'hosting'
+          | 'marketing'
+          | 'other'
+          | 'social'
+          | 'tag-manager'
+          | 'utility'
+          | 'video'
+        [k: string]: unknown
+      }
+      /**
+       * GraphQL requests parameters
+       */
+      readonly graphql?: {
+        /**
+         * Type of the GraphQL operation
+         */
+        readonly operationType: 'query' | 'mutation' | 'subscription'
+        /**
+         * Name of the GraphQL operation
+         */
+        readonly operationName?: string
+        /**
+         * Content of the GraphQL operation
+         */
+        payload?: string
+        /**
+         * String representation of the operation variables
+         */
+        variables?: string
+        [k: string]: unknown
+      }
+      [k: string]: unknown
+    }
+    /**
+     * Internal properties
+     */
+    readonly _dd?: {
+      /**
+       * span identifier in decimal format
+       */
+      readonly span_id?: string
+      /**
+       * trace identifier in decimal format
+       */
+      readonly trace_id?: string
+      /**
+       * trace sample rate in decimal format
+       */
+      readonly rule_psr?: number
+      /**
+       * Whether the resource should be discarded or indexed
+       */
+      readonly discarded?: boolean
+      [k: string]: unknown
+    }
+    [k: string]: unknown
+  }
+/**
+ * Schema of all properties of a Long Task event
+ */
+export type RumLongTaskEvent = CommonProperties &
+  ActionChildProperties &
+  ViewContainerSchema & {
+    /**
+     * RUM event type
+     */
+    readonly type: 'long_task'
+    /**
+     * Long Task properties
+     */
+    readonly long_task: {
+      /**
+       * UUID of the long task or long animation frame
+       */
+      readonly id?: string
+      /**
+       * Type of the event: long task or long animation frame
+       */
+      readonly entry_type?: 'long-task' | 'long-animation-frame'
+      /**
+       * Duration in ns of the long task or long animation frame
+       */
+      readonly duration: number
+      /**
+       * Duration in ns for which the animation frame was being blocked
+       */
+      readonly blocking_duration?: number
+      /**
+       * Start time of the rendering cycle, which includes requestAnimationFrame callbacks, style and layout calculation, resize observer and intersection observer callbacks
+       */
+      readonly render_start?: number
+      /**
+       * Start time of the time period spent in style and layout calculations
+       */
+      readonly style_and_layout_start?: number
+      /**
+       * Start time of of the first UI event (mouse/keyboard and so on) to be handled during the course of this frame
+       */
+      readonly first_ui_event_timestamp?: number
+      /**
+       * Whether this long task is considered a frozen frame
+       */
+      readonly is_frozen_frame?: boolean
+      /**
+       * A list of long scripts that were executed over the course of the long frame
+       */
+      readonly scripts?: {
+        /**
+         * Duration in ns between startTime and when the subsequent microtask queue has finished processing
+         */
+        readonly duration?: number
+        /**
+         * Duration in ns of the total time spent in 'pausing' synchronous operations (alert, synchronous XHR)
+         */
+        readonly pause_duration?: number
+        /**
+         * Duration in ns of the the total time spent processing forced layout and style inside this function
+         */
+        readonly forced_style_and_layout_duration?: number
+        /**
+         * Time the entry function was invoked
+         */
+        readonly start_time?: number
+        /**
+         * Time after compilation
+         */
+        readonly execution_start?: number
+        /**
+         * The script resource name where available (or empty if not found)
+         */
+        readonly source_url?: string
+        /**
+         * The script function name where available (or empty if not found)
+         */
+        readonly source_function_name?: string
+        /**
+         * The script character position where available (or -1 if not found)
+         */
+        readonly source_char_position?: number
+        /**
+         * Information about the invoker of the script
+         */
+        readonly invoker?: string
+        /**
+         * Type of the invoker of the script
+         */
+        readonly invoker_type?:
+          | 'user-callback'
+          | 'event-listener'
+          | 'resolve-promise'
+          | 'reject-promise'
+          | 'classic-script'
+          | 'module-script'
+        /**
+         * The container (the top-level document, or an <iframe>) the long animation frame occurred in
+         */
+        readonly window_attribution?: string
+        [k: string]: unknown
+      }[]
+      [k: string]: unknown
+    }
+    /**
+     * Internal properties
+     */
+    readonly _dd?: {
+      /**
+       * Whether the long task should be discarded or indexed
+       */
+      readonly discarded?: boolean
+      [k: string]: unknown
+    }
+    [k: string]: unknown
+  }
+/**
+ * Schema of all properties of events that can have parent actions
+ */
+export type ActionChildProperties = {
+  /**
+   * Action properties
+   */
+  readonly action?: {
+    /**
+     * UUID of the action
+     */
+    readonly id: string | string[]
+    [k: string]: unknown
+  }
+  [k: string]: unknown
+}
+/**
+ * View Container schema for views that are nested (webviews in mobile)
+ */
+export type ViewContainerSchema = {
+  /**
+   * View Container properties (view wrapping the current view)
+   */
+  readonly container?: {
+    /**
+     * Attributes of the view's container
+     */
+    readonly view: {
+      /**
+       * ID of the parent view
+       */
+      readonly id: string
+      [k: string]: unknown
+    }
+    /**
+     * Source of the parent view
+     */
+    readonly source:
+      | 'android'
+      | 'ios'
+      | 'browser'
+      | 'flutter'
+      | 'react-native'
+      | 'roku'
+      | 'unity'
+      | 'kotlin-multiplatform'
+    [k: string]: unknown
+  }
+  [k: string]: unknown
+}
 /**
  * Schema of common properties of RUM events
  */
-export interface CommonProperties {
+export type CommonProperties = {
   /**
    * Start of the event in ms from epoch
    */
@@ -1484,77 +1555,5 @@ export interface CommonProperties {
   context?: {
     [k: string]: unknown
   }
-  [k: string]: unknown
-}
-/**
- * View Container schema for views that are nested (webviews in mobile)
- */
-export interface ViewContainerSchema {
-  /**
-   * View Container properties (view wrapping the current view)
-   */
-  readonly container?: {
-    /**
-     * Attributes of the view's container
-     */
-    readonly view: {
-      /**
-       * ID of the parent view
-       */
-      readonly id: string
-      [k: string]: unknown
-    }
-    /**
-     * Source of the parent view
-     */
-    readonly source:
-      | 'android'
-      | 'ios'
-      | 'browser'
-      | 'flutter'
-      | 'react-native'
-      | 'roku'
-      | 'unity'
-      | 'kotlin-multiplatform'
-    [k: string]: unknown
-  }
-  [k: string]: unknown
-}
-/**
- * Schema of all properties of events that can have parent actions
- */
-export interface ActionChildProperties {
-  /**
-   * Action properties
-   */
-  readonly action?: {
-    /**
-     * UUID of the action
-     */
-    readonly id: string | string[]
-    [k: string]: unknown
-  }
-  [k: string]: unknown
-}
-/**
- * Schema of properties for a technical performance metric
- */
-export interface RumPerfMetric {
-  /**
-   * The minimum value seen for this metric during the view's lifetime.
-   */
-  readonly min: number
-  /**
-   * The maximum value seen for this metric during the view's lifetime.
-   */
-  readonly max: number
-  /**
-   * The average value for this metric during the view's lifetime.
-   */
-  readonly average: number
-  /**
-   * The maximum possible value we could see for this metric, if such a max is relevant and can vary from session to session.
-   */
-  readonly metric_max?: number
   [k: string]: unknown
 }
