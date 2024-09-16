@@ -28,6 +28,7 @@ import {
   createRumSessionManagerMock,
   mockDocumentReadyState,
   mockPageStateHistory,
+  mockPerformanceObserver,
   mockRumConfiguration,
   noopRecorderApi,
   setupLocationObserver,
