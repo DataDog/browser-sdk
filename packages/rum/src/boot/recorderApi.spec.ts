@@ -4,7 +4,12 @@ import type { RecorderApi, RumSessionManager } from '@datadog/browser-rum-core'
 import { LifeCycle, LifeCycleEventType } from '@datadog/browser-rum-core'
 import { mockEventBridge, registerCleanupTask } from '@datadog/browser-core/test'
 import type { RumSessionManagerMock } from '../../../rum-core/test'
-import { createRumSessionManagerMock, mockDocumentReadyState, mockRumConfiguration, mockViewHistory } from '../../../rum-core/test'
+import {
+  createRumSessionManagerMock,
+  mockDocumentReadyState,
+  mockRumConfiguration,
+  mockViewHistory,
+} from '../../../rum-core/test'
 import type { CreateDeflateWorker } from '../domain/deflate'
 import { MockWorker } from '../../test'
 import { resetDeflateWorkerState } from '../domain/deflate'
