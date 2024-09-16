@@ -1,13 +1,13 @@
-import type { RelativeTime } from '@datadog/browser-core'
+import type { Context, RelativeTime } from '@datadog/browser-core'
 import { relativeToClocks, CLEAR_OLD_VALUES_INTERVAL } from '@datadog/browser-core'
 import type { Clock } from '@datadog/browser-core/test'
 import { mockClock, registerCleanupTask } from '@datadog/browser-core/test'
 import { LifeCycle, LifeCycleEventType } from '../lifeCycle'
 import type { ViewCreatedEvent, ViewEvent } from '../view/trackViews'
-import type { ViewContexts } from './viewContexts'
-import { startViewContexts, VIEW_CONTEXT_TIME_OUT_DELAY } from './viewContexts'
+import type { ViewHistory } from './viewHistory'
+import { startViewHistory, VIEW_CONTEXT_TIME_OUT_DELAY } from './viewHistory'
 
-describe('viewContexts', () => {
+describe('ViewHistory', () => {
   const FAKE_ID = 'fake'
   const startClocks = relativeToClocks(10 as RelativeTime)
   const lifeCycle = new LifeCycle()
@@ -21,28 +21,28 @@ describe('viewContexts', () => {
   }
 
   let clock: Clock
-  let viewContexts: ViewContexts
+  let viewHistory: ViewHistory
 
   beforeEach(() => {
     clock = mockClock()
-    viewContexts = startViewContexts(lifeCycle)
+    viewHistory = startViewHistory(lifeCycle)
 
     registerCleanupTask(() => {
-      viewContexts.stop()
+      viewHistory.stop()
       clock.cleanup()
     })
   })
 
   describe('findView', () => {
     it('should return undefined when there is no current view and no startTime', () => {
-      expect(viewContexts.findView()).toBeUndefined()
+      expect(viewHistory.findView()).toBeUndefined()
     })
 
     it('should return the current view context when there is no start time', () => {
       lifeCycle.notify(LifeCycleEventType.BEFORE_VIEW_CREATED, buildViewCreatedEvent())
 
-      expect(viewContexts.findView()).toBeDefined()
-      expect(viewContexts.findView()!.id).toEqual(FAKE_ID)
+      expect(viewHistory.findView()).toBeDefined()
+      expect(viewHistory.findView()!.id).toEqual(FAKE_ID)
     })
 
     it('should return the view context corresponding to startTime', () => {
@@ -63,9 +63,9 @@ describe('viewContexts', () => {
         buildViewCreatedEvent({ startClocks: relativeToClocks(30 as RelativeTime), id: 'view 3' })
       )
 
-      expect(viewContexts.findView(15 as RelativeTime)!.id).toEqual('view 1')
-      expect(viewContexts.findView(20 as RelativeTime)!.id).toEqual('view 2')
-      expect(viewContexts.findView(40 as RelativeTime)!.id).toEqual('view 3')
+      expect(viewHistory.findView(15 as RelativeTime)!.id).toEqual('view 1')
+      expect(viewHistory.findView(20 as RelativeTime)!.id).toEqual('view 2')
+      expect(viewHistory.findView(40 as RelativeTime)!.id).toEqual('view 3')
     })
 
     it('should return undefined when no view context corresponding to startTime', () => {
@@ -80,7 +80,7 @@ describe('viewContexts', () => {
       )
       lifeCycle.notify(LifeCycleEventType.AFTER_VIEW_ENDED, { endClocks: relativeToClocks(20 as RelativeTime) })
 
-      expect(viewContexts.findView(5 as RelativeTime)).not.toBeDefined()
+      expect(viewHistory.findView(5 as RelativeTime)).not.toBeDefined()
     })
 
     it('should set the current view context on BEFORE_VIEW_CREATED', () => {
@@ -88,12 +88,12 @@ describe('viewContexts', () => {
       const newViewId = 'fake 2'
       lifeCycle.notify(LifeCycleEventType.BEFORE_VIEW_CREATED, buildViewCreatedEvent({ id: newViewId }))
 
-      expect(viewContexts.findView()!.id).toEqual(newViewId)
+      expect(viewHistory.findView()!.id).toEqual(newViewId)
     })
 
     it('should return the view name with the view', () => {
       lifeCycle.notify(LifeCycleEventType.BEFORE_VIEW_CREATED, buildViewCreatedEvent({ name: 'Fake name' }))
-      expect(viewContexts.findView()!.name).toBe('Fake name')
+      expect(viewHistory.findView()!.name).toBe('Fake name')
     })
 
     it('should update the view name for the current context', () => {
@@ -102,7 +102,16 @@ describe('viewContexts', () => {
         startClocks,
         name: 'Fake Name',
       } as ViewEvent)
-      expect(viewContexts.findView()!.name).toBe('Fake Name')
+      expect(viewHistory.findView()!.name).toBe('Fake Name')
+    })
+
+    it('should update the view context for the current context', () => {
+      lifeCycle.notify(LifeCycleEventType.BEFORE_VIEW_CREATED, buildViewCreatedEvent({ context: { foo: 'bar' } }))
+      lifeCycle.notify(LifeCycleEventType.VIEW_UPDATED, {
+        startClocks,
+        context: { bar: 'foo' } as Context,
+      } as ViewEvent)
+      expect(viewHistory.findView()!.context).toEqual({ bar: 'foo' })
     })
   })
 
@@ -124,13 +133,13 @@ describe('viewContexts', () => {
         })
       )
 
-      expect(viewContexts.findView(15 as RelativeTime)).toBeDefined()
-      expect(viewContexts.findView(25 as RelativeTime)).toBeDefined()
+      expect(viewHistory.findView(15 as RelativeTime)).toBeDefined()
+      expect(viewHistory.findView(25 as RelativeTime)).toBeDefined()
 
       lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED)
 
-      expect(viewContexts.findView(15 as RelativeTime)).toBeUndefined()
-      expect(viewContexts.findView(25 as RelativeTime)).toBeUndefined()
+      expect(viewHistory.findView(15 as RelativeTime)).toBeUndefined()
+      expect(viewHistory.findView(25 as RelativeTime)).toBeUndefined()
     })
 
     it('should be cleared when too old', () => {
@@ -154,10 +163,10 @@ describe('viewContexts', () => {
       )
 
       clock.tick(10)
-      expect(viewContexts.findView(targetTime)).toBeDefined()
+      expect(viewHistory.findView(targetTime)).toBeDefined()
 
       clock.tick(VIEW_CONTEXT_TIME_OUT_DELAY + CLEAR_OLD_VALUES_INTERVAL)
-      expect(viewContexts.findView(targetTime)).toBeUndefined()
+      expect(viewHistory.findView(targetTime)).toBeUndefined()
     })
   })
 
@@ -172,8 +181,8 @@ describe('viewContexts', () => {
           },
         })
       )
-      expect(viewContexts.findView()).toBeDefined()
-      expect(viewContexts.findView()!.customerContext).toEqual({
+      expect(viewHistory.findView()).toBeDefined()
+      expect(viewHistory.findView()!.context).toEqual({
         foo: 'bar',
       })
     })

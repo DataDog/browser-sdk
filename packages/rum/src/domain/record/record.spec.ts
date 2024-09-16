@@ -460,7 +460,7 @@ describe('record', () => {
       emit: emitSpy,
       configuration: { defaultPrivacyLevel: DefaultPrivacyLevel.ALLOW } as RumConfiguration,
       lifeCycle,
-      viewContexts: {
+      viewHistory: {
         findView: () => ({ id: FAKE_VIEW_ID, startClocks: {} }),
       } as any,
     })
