@@ -4,18 +4,18 @@ import { createRumSessionManagerMock } from '../../../test'
 import type { ActionContexts } from '../action/actionCollection'
 import type { RumSessionManager } from '../rumSessionManager'
 import { startInternalContext } from './internalContext'
-import type { ViewContexts } from './viewContexts'
+import type { ViewHistory } from './viewHistory'
 import type { UrlContexts } from './urlContexts'
 
 describe('internal context', () => {
   let findUrlSpy: jasmine.Spy<UrlContexts['findUrl']>
   let findSessionSpy: jasmine.Spy<RumSessionManager['findTrackedSession']>
   let fakeLocation: Location
-  let viewContexts: ViewContexts
+  let viewHistory: ViewHistory
   let actionContexts: ActionContexts
 
   function setupInternalContext(sessionManager: RumSessionManager) {
-    viewContexts = {
+    viewHistory = {
       findView: jasmine.createSpy('findView').and.returnValue({
         id: 'abcde',
         name: 'foo',
@@ -39,7 +39,7 @@ describe('internal context', () => {
     findSessionSpy = spyOn(sessionManager, 'findTrackedSession').and.callThrough()
     findUrlSpy = spyOn(urlContexts, 'findUrl').and.callThrough()
 
-    return startInternalContext('appId', sessionManager, viewContexts, actionContexts, urlContexts)
+    return startInternalContext('appId', sessionManager, viewHistory, actionContexts, urlContexts)
   }
 
   it('should return current internal context', () => {
@@ -73,7 +73,7 @@ describe('internal context', () => {
 
     internalContext.get(123)
 
-    expect(viewContexts.findView).toHaveBeenCalledWith(123 as RelativeTime)
+    expect(viewHistory.findView).toHaveBeenCalledWith(123 as RelativeTime)
     expect(actionContexts.findActionId).toHaveBeenCalledWith(123 as RelativeTime)
     expect(findUrlSpy).toHaveBeenCalledWith(123 as RelativeTime)
     expect(findSessionSpy).toHaveBeenCalledWith(123 as RelativeTime)
