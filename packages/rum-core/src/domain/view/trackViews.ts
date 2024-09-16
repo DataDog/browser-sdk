@@ -136,7 +136,7 @@ export function trackViews(
         name: currentView.name,
         service: currentView.service,
         version: currentView.version,
-        context: currentView.context,
+        context: currentView.contextManager.getContext(),
       })
     })
 
@@ -170,15 +170,9 @@ export function trackViews(
       currentView = startNewView(ViewLoadingType.ROUTE_CHANGE, startClocks, options)
     },
     setViewContext: (context: Context) => {
-      if (!isExperimentalFeatureEnabled(ExperimentalFeature.VIEW_SPECIFIC_CONTEXT)) {
-        return // TODO: remove this check when the feature is enabled by default
-      }
       currentView.contextManager.setContext(context)
     },
     setViewContextProperty: (key: string, value: ContextValue) => {
-      if (!isExperimentalFeatureEnabled(ExperimentalFeature.VIEW_SPECIFIC_CONTEXT)) {
-        return // TODO: remove this check when the feature is enabled by default
-      }
       currentView.contextManager.setContextProperty(key, value)
     },
     updateViewName: (name: string) => {
@@ -211,8 +205,7 @@ function newView(
   let documentVersion = 0
   let endClocks: ClocksState | undefined
   const location = shallowClone(initialLocation)
-  const viewCustomerDataManager = createCustomerDataTrackerManager()
-  const contextManager = createContextManager(viewCustomerDataManager.getOrCreateTracker(CustomerDataType.View))
+  const contextManager = createContextManager()
 
   let sessionIsActive = true
   let name: string | undefined
@@ -312,7 +305,6 @@ function newView(
     },
     service,
     version,
-    context,
     contextManager,
     stopObservable,
     end(options: { endClocks?: ClocksState; sessionIsActive?: boolean } = {}) {
