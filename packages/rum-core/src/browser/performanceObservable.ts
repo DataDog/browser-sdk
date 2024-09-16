@@ -69,7 +69,7 @@ export interface RumPerformancePaintTiming {
   startTime: RelativeTime
 }
 
-export interface RumPerformanceNavigationTiming {
+export interface RumPerformanceNavigationTiming extends Omit<RumPerformanceResourceTiming, 'entryType'> {
   entryType: RumPerformanceEntryType.NAVIGATION
   initiatorType: 'navigation'
   name: string
@@ -78,24 +78,6 @@ export interface RumPerformanceNavigationTiming {
   domContentLoadedEventEnd: RelativeTime
   domInteractive: RelativeTime
   loadEventEnd: RelativeTime
-
-  // Same as RumPerformanceNavigationTiming
-  startTime: RelativeTime
-  duration: Duration
-  fetchStart: RelativeTime
-  domainLookupStart: RelativeTime
-  domainLookupEnd: RelativeTime
-  connectStart: RelativeTime
-  secureConnectionStart: RelativeTime
-  connectEnd: RelativeTime
-  requestStart: RelativeTime
-  responseStart: RelativeTime
-  responseEnd: RelativeTime
-  redirectStart: RelativeTime
-  redirectEnd: RelativeTime
-  decodedBodySize: number
-  encodedBodySize: number
-  transferSize: number
 
   toJSON(): Omit<RumPerformanceNavigationTiming, 'toJSON'>
 }
