@@ -1,8 +1,8 @@
-import { Observable } from '@datadog/browser-core'
+import { Observable, deepClone } from '@datadog/browser-core'
 import { mockRumConfiguration, setupLocationObserver } from '../../../test'
 import type { LifeCycle } from '../lifeCycle'
 import { LifeCycleEventType } from '../lifeCycle'
-import type { ViewEvent, ViewOptions } from './trackViews'
+import type { ViewCreatedEvent, ViewEvent, ViewOptions, ViewEndedEvent } from './trackViews'
 import { trackViews } from './trackViews'
 
 export type ViewTest = ReturnType<typeof setupViewTest>
@@ -21,17 +21,21 @@ export function setupViewTest({ lifeCycle, initialLocation }: ViewTrackingContex
     handler: viewUpdateHandler,
     getViewEvent: getViewUpdate,
     getHandledCount: getViewUpdateCount,
-  } = spyOnViews('view update')
+  } = spyOnViews<ViewEvent>()
   lifeCycle.subscribe(LifeCycleEventType.VIEW_UPDATED, viewUpdateHandler)
 
   const {
     handler: viewCreateHandler,
     getViewEvent: getViewCreate,
     getHandledCount: getViewCreateCount,
-  } = spyOnViews('view create')
+  } = spyOnViews<ViewCreatedEvent>()
   lifeCycle.subscribe(LifeCycleEventType.VIEW_CREATED, viewCreateHandler)
 
-  const { handler: viewEndHandler, getViewEvent: getViewEnd, getHandledCount: getViewEndCount } = spyOnViews('view end')
+  const {
+    handler: viewEndHandler,
+    getViewEvent: getViewEnd,
+    getHandledCount: getViewEndCount,
+  } = spyOnViews<ViewEndedEvent>()
   lifeCycle.subscribe(LifeCycleEventType.VIEW_ENDED, viewEndHandler)
 
   const { stop, startView, updateViewName, setViewContext, setViewContextProperty, addTiming } = trackViews(
@@ -63,16 +67,19 @@ export function setupViewTest({ lifeCycle, initialLocation }: ViewTrackingContex
   }
 }
 
-function spyOnViews(name?: string) {
-  const handler = jasmine.createSpy(name)
+function spyOnViews<Event>() {
+  const events: Event[] = []
 
-  function getViewEvent(index: number) {
-    return handler.calls.argsFor(index)[0] as ViewEvent
+  return {
+    handler: (event: Event) => {
+      events.push(
+        // Some properties can be mutated later
+        deepClone(event)
+      )
+    },
+
+    getViewEvent: (index: number) => events[index],
+
+    getHandledCount: () => events.length,
   }
-
-  function getHandledCount() {
-    return handler.calls.count()
-  }
-
-  return { handler, getViewEvent, getHandledCount }
 }
