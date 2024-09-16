@@ -4,15 +4,15 @@
     "experimentalDecorators": true,
     "esModuleInterop": true,
     "importHelpers": false,
+    "module": "ES2020",
     "moduleResolution": "node",
     "resolveJsonModule": true,
     "strict": true,
-    "target": "es5",
+    "target": "es2020",
     "sourceMap": true,
     "jsx": "react",
-
     "types": [],
-    "lib": ["ES2016", "DOM"],
+    "lib": ["ES2020", "DOM"],
 
     "paths": {
       "@datadog/browser-core": ["./packages/core/src"],

@@ -1,14 +1,13 @@
 import { safeTruncate, isIE, find } from '@datadog/browser-core'
 import { getParentElement } from '../../browser/polyfills'
-import { NodePrivacyLevel, getPrivacySelector } from '../privacy'
+import { DEFAULT_PROGRAMMATIC_ACTION_NAME_ATTRIBUTE, NodePrivacyLevel, getPrivacySelector } from '../privacy'
 import type { RumConfiguration } from '../configuration'
 
 /**
  * Get the action name from the attribute 'data-dd-action-name' on the element or any of its parent.
  * It can also be retrieved from a user defined attribute.
  */
-export const DEFAULT_PROGRAMMATIC_ACTION_NAME_ATTRIBUTE = 'data-dd-action-name'
-export const ACTION_NAME_PLACEHOLDER = 'Masked Element'
+const ACTION_NAME_PLACEHOLDER = 'Masked Element'
 export function getActionNameFromElement(
   element: Element,
   { enablePrivacyForActionName, actionNameAttribute: userProgrammaticAttribute }: RumConfiguration,

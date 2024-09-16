@@ -2,6 +2,8 @@ import { DefaultPrivacyLevel } from '@datadog/browser-core'
 import { isElementNode, getParentNode, isTextNode } from '../browser/htmlDomUtils'
 import { elementMatches } from '../browser/polyfills'
 
+export const DEFAULT_PROGRAMMATIC_ACTION_NAME_ATTRIBUTE = 'data-dd-action-name'
+
 export const NodePrivacyLevel = {
   IGNORE: 'ignore',
   HIDDEN: 'hidden',

@@ -1,6 +1,7 @@
-import type { RelativeTime } from '@datadog/browser-core'
-import type { ActionContexts } from '../action/actionCollection'
+import { assign, type RelativeTime } from '@datadog/browser-core'
 import type { RumSessionManager } from '../rumSessionManager'
+import type { RumPlugin } from '../plugins'
+import { getPluginsInternalContext } from '../plugins'
 import type { ViewContexts } from './viewContexts'
 import type { UrlContexts } from './urlContexts'
 
@@ -23,10 +24,10 @@ export interface InternalContext {
  * to not break compatibility with logs data format
  */
 export function startInternalContext(
+  plugins: RumPlugin[],
   applicationId: string,
   sessionManager: RumSessionManager,
   viewContexts: ViewContexts,
-  actionContexts: ActionContexts,
   urlContexts: UrlContexts
 ) {
   return {
@@ -35,13 +36,14 @@ export function startInternalContext(
       const urlContext = urlContexts.findUrl(startTime as RelativeTime)
       const session = sessionManager.findTrackedSession(startTime as RelativeTime)
       if (session && viewContext && urlContext) {
-        const actionId = actionContexts.findActionId(startTime as RelativeTime)
-        return {
+        const pluginsInternalContext = getPluginsInternalContext(plugins, startTime as RelativeTime)
+        const internalContext = assign(pluginsInternalContext, {
           application_id: applicationId,
           session_id: session.id,
-          user_action: actionId ? { id: actionId } : undefined,
           view: { id: viewContext.id, name: viewContext.name, referrer: urlContext.referrer, url: urlContext.url },
-        }
+        })
+
+        return internalContext
       }
     },
   }
