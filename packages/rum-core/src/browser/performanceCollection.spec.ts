@@ -23,9 +23,7 @@ describe('startPerformanceCollection', () => {
     RumPerformanceEntryType.LONG_TASK,
     RumPerformanceEntryType.PAINT,
     RumPerformanceEntryType.LARGEST_CONTENTFUL_PAINT,
-    RumPerformanceEntryType.FIRST_INPUT,
     RumPerformanceEntryType.LAYOUT_SHIFT,
-    RumPerformanceEntryType.EVENT,
   ].forEach((entryType) => {
     it(`should notify ${entryType}`, () => {
       const { notifyPerformanceEntries } = mockPerformanceObserver()
@@ -36,7 +34,12 @@ describe('startPerformanceCollection', () => {
       expect(entryCollectedCallback).toHaveBeenCalledWith([jasmine.objectContaining({ entryType })])
     })
   })
-  ;[(RumPerformanceEntryType.NAVIGATION, RumPerformanceEntryType.RESOURCE)].forEach((entryType) => {
+  ;[
+    RumPerformanceEntryType.NAVIGATION,
+    RumPerformanceEntryType.RESOURCE,
+    RumPerformanceEntryType.FIRST_INPUT,
+    RumPerformanceEntryType.EVENT,
+  ].forEach((entryType) => {
     it(`should not notify ${entryType} timings`, () => {
       const { notifyPerformanceEntries } = mockPerformanceObserver()
       setupStartPerformanceCollection()

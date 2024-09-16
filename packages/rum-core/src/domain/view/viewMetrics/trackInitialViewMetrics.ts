@@ -48,7 +48,7 @@ export function trackInitialViewMetrics(
     }
   )
 
-  const { stop: stopFIDTracking } = trackFirstInput(lifeCycle, configuration, firstHidden, (firstInput) => {
+  const { stop: stopFIDTracking } = trackFirstInput(configuration, firstHidden, (firstInput) => {
     initialViewMetrics.firstInput = firstInput
     scheduleViewUpdate()
   })

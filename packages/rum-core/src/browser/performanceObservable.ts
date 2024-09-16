@@ -2,6 +2,7 @@ import type { Duration, RelativeTime, TimeoutId } from '@datadog/browser-core'
 import { addEventListener, Observable, setTimeout, clearTimeout, monitor, includes } from '@datadog/browser-core'
 import type { RumConfiguration } from '../domain/configuration'
 import { hasValidResourceEntryDuration, isAllowedRequestUrl } from '../domain/resource/resourceUtils'
+import { retrieveFirstInputTiming } from './firstInputPolyfill'
 
 type RumPerformanceObserverConstructor = new (callback: PerformanceObserverCallback) => RumPerformanceObserver
 
@@ -11,7 +12,7 @@ export interface BrowserWindow extends Window {
 }
 
 export interface RumPerformanceObserver extends PerformanceObserver {
-  observe(options?: PerformanceObserverInit & { durationThreshold: number }): void
+  observe(options?: PerformanceObserverInit & { durationThreshold?: number }): void
 }
 
 // We want to use a real enum (i.e. not a const enum) here, to be able to check whether an arbitrary
@@ -243,8 +244,21 @@ export function createPerformanceObservable<T extends RumPerformanceEntryType>(
 
     manageResourceTimingBufferFull(configuration)
 
+    let stopFirstInputTiming: (() => void) | undefined
+    if (
+      !supportPerformanceTimingEvent(RumPerformanceEntryType.FIRST_INPUT) &&
+      options.type === RumPerformanceEntryType.FIRST_INPUT
+    ) {
+      ;({ stop: stopFirstInputTiming } = retrieveFirstInputTiming(configuration, (timing) => {
+        handlePerformanceEntries([timing])
+      }))
+    }
+
     return () => {
       observer.disconnect()
+      if (stopFirstInputTiming) {
+        stopFirstInputTiming()
+      }
       clearTimeout(timeoutId)
     }
   })

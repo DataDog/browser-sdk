@@ -31,10 +31,12 @@ describe('trackInitialViewMetrics', () => {
   })
 
   it('should merge metrics from various sources', () => {
-    notifyPerformanceEntries([createPerformanceEntry(RumPerformanceEntryType.NAVIGATION)])
+    notifyPerformanceEntries([
+      createPerformanceEntry(RumPerformanceEntryType.NAVIGATION),
+      createPerformanceEntry(RumPerformanceEntryType.FIRST_INPUT),
+    ])
     lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [
       createPerformanceEntry(RumPerformanceEntryType.PAINT),
-      createPerformanceEntry(RumPerformanceEntryType.FIRST_INPUT),
     ])
 
     expect(scheduleViewUpdateSpy).toHaveBeenCalledTimes(3)
@@ -56,10 +58,12 @@ describe('trackInitialViewMetrics', () => {
   })
 
   it('calls the `setLoadEvent` callback when the loadEvent timing is known', () => {
-    notifyPerformanceEntries([createPerformanceEntry(RumPerformanceEntryType.NAVIGATION)])
+    notifyPerformanceEntries([
+      createPerformanceEntry(RumPerformanceEntryType.NAVIGATION),
+      createPerformanceEntry(RumPerformanceEntryType.FIRST_INPUT),
+    ])
     lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [
       createPerformanceEntry(RumPerformanceEntryType.PAINT),
-      createPerformanceEntry(RumPerformanceEntryType.FIRST_INPUT),
     ])
 
     expect(setLoadEventSpy).toHaveBeenCalledOnceWith(567 as Duration)
