@@ -1,6 +1,5 @@
 import type { Duration, RelativeTime } from '@datadog/browser-core'
-import { ExperimentalFeature, isIE, relativeToClocks } from '@datadog/browser-core'
-import { mockExperimentalFeatures } from '@datadog/browser-core/test'
+import { isIE, relativeToClocks } from '@datadog/browser-core'
 import type { GlobalPerformanceBufferMock } from '../../../test'
 import { createPerformanceEntry, mockGlobalPerformanceBuffer } from '../../../test'
 import type { RumPerformanceResourceTiming } from '../../browser/performanceObservable'
@@ -144,7 +143,7 @@ describe('matchRequestResourceEntry', () => {
     expect(matchingEntry).toEqual(undefined)
   })
 
-  it('[without tolerant_resource_timings] should not match invalid entry nested in the request ', () => {
+  it('should not match invalid entry nested in the request ', () => {
     const entry = createPerformanceEntry(RumPerformanceEntryType.RESOURCE, {
       name: FAKE_URL,
       // fetchStart < startTime is invalid
@@ -156,21 +155,5 @@ describe('matchRequestResourceEntry', () => {
     const matchingEntry = matchRequestResourceEntry(FAKE_REQUEST as RequestCompleteEvent)
 
     expect(matchingEntry).toEqual(undefined)
-  })
-
-  it('[with tolerant_resource_timings] should match invalid entry nested in the request ', () => {
-    mockExperimentalFeatures([ExperimentalFeature.TOLERANT_RESOURCE_TIMINGS])
-    const entry = createPerformanceEntry(RumPerformanceEntryType.RESOURCE, {
-      name: FAKE_URL,
-      // fetchStart < startTime is invalid
-      fetchStart: 0 as RelativeTime,
-      startTime: 200 as RelativeTime,
-    })
-
-    globalPerformanceObjectMock.addPerformanceEntry(entry)
-
-    const matchingEntry = matchRequestResourceEntry(FAKE_REQUEST as RequestCompleteEvent)
-
-    expect(matchingEntry).toBeDefined()
   })
 })
