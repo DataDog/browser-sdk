@@ -10,7 +10,7 @@ import type { AutoAction } from './action/actionCollection'
 import type { ViewEvent, ViewCreatedEvent, ViewEndedEvent } from './view/trackViews'
 
 export const enum LifeCycleEventType {
-  // Contexts (like viewContexts) should be opened using prefixed BEFORE_XXX events and closed using prefixed AFTER_XXX events
+  // Contexts (like viewHistory) should be opened using prefixed BEFORE_XXX events and closed using prefixed AFTER_XXX events
   // It ensures the context is available during the non prefixed event callbacks
   PERFORMANCE_ENTRIES_COLLECTED,
   AUTO_ACTION_COMPLETED,
