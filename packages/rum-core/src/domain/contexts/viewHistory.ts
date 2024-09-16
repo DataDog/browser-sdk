@@ -6,47 +6,50 @@ import type { ViewCreatedEvent, ViewEvent } from '../view/trackViews'
 
 export const VIEW_CONTEXT_TIME_OUT_DELAY = SESSION_TIME_OUT_DELAY
 
-export interface ViewContext {
+export interface ViewHistoryEntry {
   service?: string
   version?: string
-  customerContext?: Context | undefined
+  context?: Context | undefined
   id: string
   name?: string
   startClocks: ClocksState
 }
 
-export interface ViewContexts {
-  findView: (startTime?: RelativeTime) => ViewContext | undefined
+export interface ViewHistory {
+  findView: (startTime?: RelativeTime) => ViewHistoryEntry | undefined
   stop: () => void
 }
 
-export function startViewContexts(lifeCycle: LifeCycle): ViewContexts {
-  const viewContextHistory = createValueHistory<ViewContext>({ expireDelay: VIEW_CONTEXT_TIME_OUT_DELAY })
+export function startViewHistory(lifeCycle: LifeCycle): ViewHistory {
+  const viewValueHistory = createValueHistory<ViewHistoryEntry>({ expireDelay: VIEW_CONTEXT_TIME_OUT_DELAY })
 
   lifeCycle.subscribe(LifeCycleEventType.BEFORE_VIEW_CREATED, (view) => {
-    viewContextHistory.add(buildViewContext(view), view.startClocks.relative)
+    viewValueHistory.add(buildViewHistoryEntry(view), view.startClocks.relative)
   })
 
   lifeCycle.subscribe(LifeCycleEventType.AFTER_VIEW_ENDED, ({ endClocks }) => {
-    viewContextHistory.closeActive(endClocks.relative)
+    viewValueHistory.closeActive(endClocks.relative)
   })
 
   lifeCycle.subscribe(LifeCycleEventType.VIEW_UPDATED, (viewUpdate: ViewEvent) => {
-    const currentView = viewContextHistory.find(viewUpdate.startClocks.relative)
+    const currentView = viewValueHistory.find(viewUpdate.startClocks.relative)
     if (currentView && viewUpdate.name) {
       currentView.name = viewUpdate.name
+    }
+    if (currentView && viewUpdate.context) {
+      currentView.context = viewUpdate.context
     }
   })
 
   lifeCycle.subscribe(LifeCycleEventType.SESSION_RENEWED, () => {
-    viewContextHistory.reset()
+    viewValueHistory.reset()
   })
 
-  function buildViewContext(view: ViewCreatedEvent) {
+  function buildViewHistoryEntry(view: ViewCreatedEvent) {
     return {
       service: view.service,
       version: view.version,
-      customerContext: view.context,
+      context: view.context,
       id: view.id,
       name: view.name,
       startClocks: view.startClocks,
@@ -54,9 +57,9 @@ export function startViewContexts(lifeCycle: LifeCycle): ViewContexts {
   }
 
   return {
-    findView: (startTime) => viewContextHistory.find(startTime),
+    findView: (startTime) => viewValueHistory.find(startTime),
     stop: () => {
-      viewContextHistory.stop()
+      viewValueHistory.stop()
     },
   }
 }

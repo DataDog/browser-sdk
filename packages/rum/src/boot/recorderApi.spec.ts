@@ -2,9 +2,14 @@ import type { DeflateEncoder, DeflateWorker, DeflateWorkerAction } from '@datado
 import { BridgeCapability, PageExitReason, display, isIE } from '@datadog/browser-core'
 import type { RecorderApi, RumSessionManager } from '@datadog/browser-rum-core'
 import { LifeCycle, LifeCycleEventType } from '@datadog/browser-rum-core'
-import { mockEventBridge, createNewEvent, registerCleanupTask } from '@datadog/browser-core/test'
+import { mockEventBridge, registerCleanupTask } from '@datadog/browser-core/test'
 import type { RumSessionManagerMock } from '../../../rum-core/test'
-import { createRumSessionManagerMock, mockRumConfiguration, mockViewContexts } from '../../../rum-core/test'
+import {
+  createRumSessionManagerMock,
+  mockDocumentReadyState,
+  mockRumConfiguration,
+  mockViewHistory,
+} from '../../../rum-core/test'
 import type { CreateDeflateWorker } from '../domain/deflate'
 import { MockWorker } from '../../test'
 import { resetDeflateWorkerState } from '../domain/deflate'
@@ -46,7 +51,7 @@ describe('makeRecorderApi', () => {
         lifeCycle,
         mockRumConfiguration({ startSessionReplayRecordingManually: startSessionReplayRecordingManually ?? false }),
         sessionManager ?? createRumSessionManagerMock().setId('1234'),
-        mockViewContexts(),
+        mockViewHistory(),
         worker
       )
     }
@@ -555,14 +560,3 @@ describe('makeRecorderApi', () => {
     })
   })
 })
-
-function mockDocumentReadyState() {
-  let readyState: DocumentReadyState = 'loading'
-  spyOnProperty(Document.prototype, 'readyState', 'get').and.callFake(() => readyState)
-  return {
-    triggerOnDomLoaded: () => {
-      readyState = 'interactive'
-      window.dispatchEvent(createNewEvent('DOMContentLoaded'))
-    },
-  }
-}
