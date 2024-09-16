@@ -18,6 +18,16 @@
 
 ---
 
+## v6.0.0-alpha.0
+
+**Internal Changes:**
+
+- 💥 remove Object.\* Polyfills ([#2908](https://github.com/DataDog/browser-sdk/pull/2908)) [LOGS] [RUM] [RUM-SLIM] [WORKER]
+- 💥 remove some polyfills ([#2857](https://github.com/DataDog/browser-sdk/pull/2857)) [LOGS] [RUM] [RUM-SLIM] [WORKER]
+- 💥 build using ES2018 target ([#2882](https://github.com/DataDog/browser-sdk/pull/2882)) [RUM] [RUM-SLIM]
+- 💥 [RUM-5282] Remove ie11 tests ([#2856](https://github.com/DataDog/browser-sdk/pull/2856)) [LOGS] [RUM] [RUM-SLIM] [WORKER]
+- 🧪 Update browser matrix for tests ([#2884](https://github.com/DataDog/browser-sdk/pull/2884)) [LOGS] [RUM] [RUM-SLIM] [WORKER] [RUM-REACT]
+
 ## v5.26.0
 
 **Public Changes:**

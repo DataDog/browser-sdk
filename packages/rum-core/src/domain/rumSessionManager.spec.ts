@@ -3,7 +3,6 @@ import {
   STORAGE_POLL_DELAY,
   SESSION_STORE_KEY,
   getCookie,
-  isIE,
   setCookie,
   stopSessionManager,
   ONE_SECOND,
@@ -40,9 +39,6 @@ describe('rum session manager', () => {
   let clock: Clock
 
   beforeEach(() => {
-    if (isIE()) {
-      pending('no full rum support')
-    }
     clock = mockClock()
     expireSessionSpy = jasmine.createSpy('expireSessionSpy')
     renewSessionSpy = jasmine.createSpy('renewSessionSpy')
