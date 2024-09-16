@@ -27,8 +27,6 @@ import {
   isExperimentalFeatureEnabled,
   ExperimentalFeature,
   createContextManager,
-  createCustomerDataTrackerManager,
-  CustomerDataType,
 } from '@datadog/browser-core'
 import type { ViewCustomTimings } from '../../rawRumEvent.types'
 import { ViewLoadingType } from '../../rawRumEvent.types'
