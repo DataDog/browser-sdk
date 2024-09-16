@@ -412,7 +412,7 @@ describe('view metrics', () => {
       }
       const { getViewUpdate, getViewUpdateCount, getViewCreateCount, startView } = viewTest
       startView()
-      clock.tick(0)
+      clock.tick(0) // run immediate timeouts (mostly for `trackNavigationTimings`)
       expect(getViewCreateCount()).toEqual(2)
 
       lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [
@@ -591,7 +591,7 @@ describe('view custom timings', () => {
   })
 
   it('should add custom timing to current view', () => {
-    clock.tick(0)
+    clock.tick(0) // run immediate timeouts (mostly for `trackNavigationTimings`)
     const { getViewUpdate, startView, addTiming } = viewTest
 
     startView()
@@ -697,7 +697,7 @@ describe('view custom timings', () => {
   })
 
   it('should not add custom timing when the session has expired', () => {
-    clock.tick(0)
+    clock.tick(0) // run immediate timeouts (mostly for `trackNavigationTimings`)
     const { getViewUpdateCount, addTiming } = viewTest
 
     lifeCycle.notify(LifeCycleEventType.SESSION_EXPIRED)
