@@ -4,8 +4,8 @@ import {
   ExperimentalFeature,
   isExperimentalFeatureEnabled,
   noop,
-  ONE_HOUR,
   ONE_MINUTE,
+  ONE_SECOND,
 } from '@datadog/browser-core'
 import type { Duration, RelativeTime } from '@datadog/browser-core'
 import { RumPerformanceEntryType, supportPerformanceTimingEvent } from '../../../browser/performanceObservable'
@@ -102,6 +102,11 @@ export function trackInteractionToNextPaint(
           isFoundInMap: !!interactionToNextPaintTargetSelector,
         })
       }
+      interactionSelectorMap.forEach((_, key) => {
+        if (key > 10 * ONE_SECOND) {
+          interactionSelectorMap.delete(key)
+        }
+      })
     }
   })
 
@@ -125,14 +130,7 @@ export function trackInteractionToNextPaint(
       viewEnd = viewEndTime
       stopViewInteractionCount()
     },
-    stop: () => {
-      stop()
-      interactionSelectorMap.forEach((_, key) => {
-        if (key > ONE_HOUR) {
-          interactionSelectorMap.delete(key)
-        }
-      })
-    },
+    stop,
   }
 }
 
