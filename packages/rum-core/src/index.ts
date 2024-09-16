@@ -39,3 +39,4 @@ export { isLongDataUrl, sanitizeDataUrl, MAX_ATTRIBUTE_VALUE_CHAR_LENGTH } from 
 export * from './domain/privacy'
 export { SessionReplayState } from './domain/rumSessionManager'
 export type { RumPlugin } from './domain/plugins'
+export { interactionSelectorMap } from './domain/action/trackClickActions'

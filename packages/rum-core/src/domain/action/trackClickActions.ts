@@ -11,6 +11,8 @@ import {
   ONE_SECOND,
   elapsed,
   createValueHistory,
+  isExperimentalFeatureEnabled,
+  ExperimentalFeature,
 } from '@datadog/browser-core'
 import type { FrustrationType } from '../../rawRumEvent.types'
 import { ActionType } from '../../rawRumEvent.types'
@@ -61,6 +63,7 @@ type ClickActionIdHistory = ValueHistory<ClickAction['id']>
 // Maximum duration for click actions
 export const CLICK_ACTION_MAX_DURATION = 10 * ONE_SECOND
 export const ACTION_CONTEXT_TIME_OUT_DELAY = 5 * ONE_MINUTE // arbitrary
+export const interactionSelectorMap = new Map<number, string | undefined>() // key is timestamp
 
 export function trackClickActions(
   lifeCycle: LifeCycle,
@@ -176,6 +179,13 @@ function startClickAction(
   const click = newClick(lifeCycle, history, getUserActivity, clickActionBase, startEvent)
   appendClickToClickChain(click)
 
+  if (clickActionBase.target && isExperimentalFeatureEnabled(ExperimentalFeature.NULL_INP_TELEMETRY)) {
+    const { selector } = clickActionBase.target
+    if (selector) {
+      interactionSelectorMap.set(startEvent.timeStamp, selector)
+    }
+  }
+
   const { stop: stopWaitPageActivityEnd } = waitPageActivityEnd(
     lifeCycle,
     domMutationObservable,
@@ -224,13 +234,18 @@ function computeClickActionBase(
   configuration: RumConfiguration
 ): ClickActionBase {
   const rect = event.target.getBoundingClientRect()
+  const selector = getSelectorFromElement(event.target, configuration.actionNameAttribute)
+
+  if (isExperimentalFeatureEnabled(ExperimentalFeature.NULL_INP_TELEMETRY)) {
+    interactionSelectorMap.set(event.timeStamp, selector)
+  }
 
   return {
     type: ActionType.CLICK,
     target: {
       width: Math.round(rect.width),
       height: Math.round(rect.height),
-      selector: getSelectorFromElement(event.target, configuration.actionNameAttribute),
+      selector,
     },
     position: {
       // Use clientX and Y because for SVG element offsetX and Y are relatives to the <svg> element
