@@ -11,10 +11,11 @@ import {
 
 import type { Clock } from '@datadog/browser-core/test'
 import { mockClock, mockExperimentalFeatures, registerCleanupTask } from '@datadog/browser-core/test'
-import { createPerformanceEntry } from '../../../test'
+import { createPerformanceEntry, mockPerformanceObserver } from '../../../test'
 import { RumEventType, ViewLoadingType } from '../../rawRumEvent.types'
 import type { RumEvent } from '../../rumEvent.types'
 import { LifeCycle, LifeCycleEventType } from '../lifeCycle'
+import type { RumPerformanceEntry } from '../../browser/performanceObservable'
 import { RumPerformanceEntryType } from '../../browser/performanceObservable'
 import { PAGE_ACTIVITY_END_DELAY } from '../waitPageActivityEnd'
 import type { ViewEvent } from './trackViews'
@@ -369,8 +370,11 @@ describe('view metrics', () => {
   const lifeCycle = new LifeCycle()
   let clock: Clock
   let viewTest: ViewTest
+  let notifyPerformanceEntries: (entries: RumPerformanceEntry[]) => void
 
   beforeEach(() => {
+    ;({ notifyPerformanceEntries } = mockPerformanceObserver())
+
     clock = mockClock()
     viewTest = setupViewTest({ lifeCycle })
 
@@ -453,8 +457,8 @@ describe('view metrics', () => {
       clock.tick(KEEP_TRACKING_AFTER_VIEW_DELAY - 1)
       lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [
         createPerformanceEntry(RumPerformanceEntryType.PAINT),
-        lcpEntry,
       ])
+      notifyPerformanceEntries([createPerformanceEntry(RumPerformanceEntryType.NAVIGATION), lcpEntry])
 
       clock.tick(THROTTLE_VIEW_UPDATE_PERIOD)
 
@@ -503,6 +507,9 @@ describe('view metrics', () => {
 
         lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [
           createPerformanceEntry(RumPerformanceEntryType.PAINT),
+        ])
+        notifyPerformanceEntries([
+          createPerformanceEntry(RumPerformanceEntryType.NAVIGATION),
           createPerformanceEntry(RumPerformanceEntryType.LARGEST_CONTENTFUL_PAINT),
         ])
 
