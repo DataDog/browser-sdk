@@ -35,15 +35,10 @@ async function generateTypesFromSchema(typesPath, schemaPath, options = {}) {
   printLog(`Compiling ${schemaPath}...`)
 
   const resolvedSchema = readAndResolveAllSchemas(schemaPath)
-
-  let todo = new Set([resolvedSchema])
   let namedTypes = []
-  while (todo.size > 0) {
-    let schema = todo.values().next().value
-    console.log(schema.title)
-    namedTypes.push(generateNamedType(schema, todo))
-    todo.delete(schema)
-  }
+  generate(resolvedSchema, (namedType) => {
+    namedTypes.push(namedType)
+  })
 
   // const order = [
   //  'RumEvent',
@@ -110,65 +105,26 @@ function readAndResolveAllSchemas(schemaPath, cache = new Map()) {
   if (cache.has(schemaPath)) {
     return cache.get(schemaPath)
   }
-  let schema
-  try {
-    schema = JSON.parse(fs.readFileSync(schemaPath, 'utf8'))
-  } catch (error) {
-    throw new Error(`Failed to read schema from ${schemaPath}: ${error.message}`)
-  }
-  delete schema.$id
-  delete schema.$schema
-  delete schema.$comment
-
-  const resolvedSchema = resolveAllSchemas(schema, schemaPath)
-  cache.set(schemaPath, resolvedSchema)
-  return resolvedSchema
-
-  function resolveAllSchemas(schema) {
+  const schema = JSON.parse(fs.readFileSync(schemaPath, 'utf8'))
+  traverseSchema(schema, (schema) => {
     if (schema.$ref) {
-      return readAndResolveAllSchemas(path.join(path.dirname(schemaPath), schema.$ref), cache)
+      Object.assign(schema, readAndResolveAllSchemas(path.join(path.dirname(schemaPath), schema.$ref), cache))
+      delete schema.$ref
     }
+  })
+  cache.set(schemaPath, schema)
+  return schema
 
-    if (schema.allOf) {
-      schema.allOf = schema.allOf.map((subSchema) => resolveAllSchemas(subSchema, schemaPath))
-    }
-    if (schema.oneOf) {
-      schema.oneOf = schema.oneOf.map((subSchema) => resolveAllSchemas(subSchema, schemaPath))
-    }
-    if (schema.properties) {
-      schema.properties = Object.fromEntries(
-        Object.entries(schema.properties).map(([propertyName, propertySchema]) => [
-          propertyName,
-          resolveAllSchemas(propertySchema, schemaPath),
-        ])
-      )
-    }
-    return schema
+  function traverseSchema(schema, cb) {
+    cb(schema)
+    schema.allOf?.forEach((subSchema) => traverseSchema(subSchema, cb))
+    schema.oneOf?.forEach((subSchema) => traverseSchema(subSchema, cb))
+    schema.anyOf?.forEach((subSchema) => traverseSchema(subSchema, cb))
+    Object.values(schema.properties || {}).forEach((subSchema) => traverseSchema(subSchema, cb))
   }
 }
 
-function generateNamedType(schema, todo) {
-  if (!schema.title) {
-    throw new Error('Schema must have a title')
-  }
-
-  const { comment, type } = generate(schema, todo)
-  return `${comment}\nexport type ${schema.title} = ${type}\n`
-}
-
-function generate(schema, todo) {
-  function generateChild(childSchema) {
-    if (childSchema.title) {
-      todo.delete(childSchema)
-      todo.add(childSchema)
-      return {
-        comment: '',
-        type: childSchema.title,
-      }
-    }
-    return generate(childSchema, todo)
-  }
-
+function generate(schema, emitNamedType) {
   let generatedType
   if (schema.enum) {
     generatedType = schema.enum.map((value) => JSON.stringify(value)).join(' | ')
@@ -183,7 +139,7 @@ function generate(schema, todo) {
     // type A = B & C & D
     generatedType = schema.allOf
       .map((subSchema) => {
-        let { comment, type } = generateChild(subSchema, todo)
+        let { comment, type } = generate(subSchema, emitNamedType)
         return `${comment} ${type}`
       })
       .join(' & ')
@@ -191,7 +147,7 @@ function generate(schema, todo) {
     // type A = B | C | D
     generatedType = (schema.oneOf || schema.anyOf)
       .map((subSchema) => {
-        let { comment, type } = generateChild(subSchema, todo)
+        let { comment, type } = generate(subSchema, emitNamedType)
         return `${comment} ${type}`
       })
       .join(' | ')
@@ -204,7 +160,7 @@ function generate(schema, todo) {
   } else if (schema.type === 'string') {
     generatedType = 'string'
   } else if (schema.type === 'array') {
-    const { comment, type } = generateChild(schema.items, todo)
+    const { comment, type } = generate(schema.items, emitNamedType)
     // TODO: handle comment
     generatedType = `(${type})[]`
   } else {
@@ -217,7 +173,7 @@ function generate(schema, todo) {
           if (propertySchema.readOnly) {
             modifier = 'readonly '
           }
-          const { comment, type } = generateChild(propertySchema, todo)
+          const { comment, type } = generate(propertySchema, emitNamedType)
           const optionalModifier = requiredProperties.includes(propertyName) ? '' : '?'
           return ` ${comment}\n${modifier} ${propertyName}${optionalModifier}: ${type},\n`
         })
@@ -230,7 +186,7 @@ function generate(schema, todo) {
     if (schema.additionalProperties === true || schema.additionalProperties === undefined) {
       generatedAdditionalProperties = '[k: string]: unknown\n'
     } else if (schema.additionalProperties) {
-      const { comment, type } = generateChild(schema.additionalProperties, todo)
+      const { comment, type } = generate(schema.additionalProperties, emitNamedType)
       generatedAdditionalProperties = `${comment}\n[k: string]: ${type}\n`
     } else {
       generatedAdditionalProperties = ''
@@ -246,17 +202,13 @@ function generate(schema, todo) {
     comment = ''
   }
 
-  // if (schema.title) {
-  //  // namedTypes.set(schema.title, {
-  //  //  name: schema.title,
-  //  //  dependencies,
-  //  //  type: `${comment}\nexport type ${schema.title} = ${generatedType}\n`,
-  //  // })
-  //  return {
-  //    comment: '',
-  //    type: schema.title,
-  //  }
-  // }
+  if (schema.title) {
+    emitNamedType(`${comment}\nexport type ${schema.title} = ${generatedType}\n`)
+    return {
+      comment: '',
+      type: schema.title,
+    }
+  }
 
   return {
     comment,
