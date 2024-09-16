@@ -2,10 +2,8 @@ import type { RelativeTime, ServerDuration } from '@datadog/browser-core'
 import {
   addTelemetryDebug,
   elapsed,
-  ExperimentalFeature,
   getPathName,
   includes,
-  isExperimentalFeatureEnabled,
   isValidUrl,
   ResourceType,
   toServerDuration,
@@ -144,10 +142,6 @@ export function hasValidResourceEntryDuration(entry: RumPerformanceResourceTimin
 }
 
 export function hasValidResourceEntryTimings(entry: RumPerformanceResourceTiming) {
-  if (isExperimentalFeatureEnabled(ExperimentalFeature.TOLERANT_RESOURCE_TIMINGS)) {
-    return true
-  }
-
   // Ensure timings are in the right order. On top of filtering out potential invalid
   // RumPerformanceResourceTiming, it will ignore entries from requests where timings cannot be
   // collected, for example cross origin requests without a "Timing-Allow-Origin" header allowing

@@ -15,7 +15,6 @@ import { objectHasValue } from './utils/objectUtils'
 // eslint-disable-next-line no-restricted-syntax
 export enum ExperimentalFeature {
   WRITABLE_RESOURCE_GRAPHQL = 'writable_resource_graphql',
-  TOLERANT_RESOURCE_TIMINGS = 'tolerant_resource_timings',
   REMOTE_CONFIGURATION = 'remote_configuration',
   UPDATE_VIEW_NAME = 'update_view_name',
   LONG_ANIMATION_FRAME = 'long_animation_frame',
