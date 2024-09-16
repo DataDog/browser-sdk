@@ -52,10 +52,10 @@ describe('session in local storage strategy', () => {
     expect(window.localStorage.getItem('test')).toEqual('hello')
   })
 
-  it('should return an empty object if session string is invalid', () => {
+  it('should return a device id even if session string is invalid', () => {
     const localStorageStrategy = initLocalStorageStrategy()
     localStorage.setItem(SESSION_STORE_KEY, '{test:42}')
     const session = localStorageStrategy?.retrieveSession()
-    expect(session).toEqual({})
+    expect(session).toEqual({ device: '2gosa7pa2gw' })
   })
 })

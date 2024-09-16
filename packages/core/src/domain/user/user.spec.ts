@@ -1,4 +1,4 @@
-import { mockCookie } from 'packages/core/test'
+import { mockCookie } from '../../../test'
 import { display } from '../../tools/display'
 import {
   checkUser,
