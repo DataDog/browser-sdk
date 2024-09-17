@@ -12,6 +12,7 @@ import {
   isExperimentalFeatureEnabled,
   ExperimentalFeature,
   getConnectivity,
+  retrieveAnonymousId,
 } from '@datadog/browser-core'
 import type { RumEventDomainContext } from '../domainContext.types'
 import type {
@@ -195,6 +196,14 @@ export function startRumAssembly(
         }
 
         if (!isEmptyObject(commonContext.user)) {
+          if (
+            isExperimentalFeatureEnabled(ExperimentalFeature.ANONYMOUS_USER_TRACKING) &&
+            !commonContext.user.anonymous_id
+          ) {
+            const { type } = configuration.sessionStoreStrategyType ?? { type: 'LocalStorage' }
+            commonContext.user.anonymous_id = retrieveAnonymousId(type)
+          }
+
           ;(serverRumEvent.usr as Mutable<RumEvent['usr']>) = commonContext.user as User & Context
         }
 

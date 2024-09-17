@@ -59,6 +59,16 @@ export function setAnonymousIdInStorage(sessionStoreStrategyType: string, device
   }
 }
 
+export function retrieveAnonymousId(sessionStoreStrategyType: string): string {
+  let anonymousId = getAnonymousIdFromStorage()
+
+  if (!anonymousId) {
+    anonymousId = generateAnonymousId()
+    setAnonymousIdInStorage(sessionStoreStrategyType, anonymousId)
+  }
+  return anonymousId
+}
+
 export function generateAnonymousId() {
   return Math.floor(Math.random() * Math.pow(2, 53)).toString(36)
 }

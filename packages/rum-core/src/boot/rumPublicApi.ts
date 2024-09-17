@@ -33,9 +33,7 @@ import {
   displayAlreadyInitializedError,
   createTrackingConsentState,
   timeStampToClocks,
-  getAnonymousIdFromStorage,
-  setAnonymousIdInStorage,
-  generateAnonymousId,
+  retrieveAnonymousId,
 } from '@datadog/browser-core'
 import type { LifeCycle } from '../domain/lifeCycle'
 import type { ViewHistory } from '../domain/contexts/viewHistory'
@@ -381,13 +379,8 @@ export function makeRumPublicApi(
          * Enable anonymous user tracking feature flag
          * TODO next major release: include this feature by default
          */
-        let anonymousId = getAnonymousIdFromStorage()
-
-        if (!anonymousId) {
-          anonymousId = generateAnonymousId()
-          const { type } = configuration.sessionStoreStrategyType ?? { type: 'LocalStorage' }
-          setAnonymousIdInStorage(type, anonymousId)
-        }
+        const { type } = configuration.sessionStoreStrategyType ?? { type: 'LocalStorage' }
+        const anonymousId = retrieveAnonymousId(type)
         userContextManager.setContextProperty('anonymous_id', anonymousId)
       }
       if (isExperimentalFeatureEnabled(ExperimentalFeature.VIEW_SPECIFIC_CONTEXT)) {
