@@ -1,5 +1,5 @@
 import type { Duration, RelativeTime } from '@datadog/browser-core'
-import { isIE, relativeToClocks } from '@datadog/browser-core'
+import { relativeToClocks } from '@datadog/browser-core'
 import { createPerformanceEntry } from '../../../test'
 import type { RumPerformanceResourceTiming } from '../../browser/performanceObservable'
 import { RumPerformanceEntryType } from '../../browser/performanceObservable'
@@ -15,9 +15,6 @@ describe('matchRequestResourceEntry', () => {
   let entries: RumPerformanceResourceTiming[]
 
   beforeEach(() => {
-    if (isIE()) {
-      pending('no full rum support')
-    }
     entries = []
     spyOn(performance, 'getEntriesByName').and.returnValue(entries)
   })

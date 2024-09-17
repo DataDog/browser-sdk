@@ -1,5 +1,5 @@
 import type { DeflateEncoder, DeflateWorker, DeflateWorkerAction } from '@datadog/browser-core'
-import { BridgeCapability, PageExitReason, display, isIE } from '@datadog/browser-core'
+import { BridgeCapability, PageExitReason, display } from '@datadog/browser-core'
 import type { RecorderApi, RumSessionManager } from '@datadog/browser-rum-core'
 import { LifeCycle, LifeCycleEventType } from '@datadog/browser-rum-core'
 import { mockEventBridge, createNewEvent, registerCleanupTask } from '@datadog/browser-core/test'
@@ -26,10 +26,6 @@ describe('makeRecorderApi', () => {
     sessionManager,
     startSessionReplayRecordingManually,
   }: { sessionManager?: RumSessionManager; startSessionReplayRecordingManually?: boolean } = {}) {
-    if (isIE()) {
-      pending('IE not supported')
-    }
-
     mockWorker = new MockWorker()
     createDeflateWorkerSpy = jasmine.createSpy('createDeflateWorkerSpy').and.callFake(() => mockWorker)
     spyOn(display, 'error')

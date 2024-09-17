@@ -1,7 +1,6 @@
 import type { Context, RawError, ClocksState } from '@datadog/browser-core'
 import {
   isEmptyObject,
-  assign,
   ErrorSource,
   generateUUID,
   computeRawError,
@@ -54,16 +53,11 @@ export function doStartErrorCollection(
   featureFlagContexts: FeatureFlagContexts
 ) {
   lifeCycle.subscribe(LifeCycleEventType.RAW_ERROR_COLLECTED, ({ error, customerContext, savedCommonContext }) => {
-    lifeCycle.notify(
-      LifeCycleEventType.RAW_RUM_EVENT_COLLECTED,
-      assign(
-        {
-          customerContext,
-          savedCommonContext,
-        },
-        processError(error, pageStateHistory, featureFlagContexts)
-      )
-    )
+    lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, {
+      customerContext,
+      savedCommonContext,
+      ...processError(error, pageStateHistory, featureFlagContexts),
+    })
   })
 
   return {

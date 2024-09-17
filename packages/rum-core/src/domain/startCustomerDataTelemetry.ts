@@ -1,12 +1,5 @@
 import type { Context, CustomerDataTrackerManager, FlushEvent, Observable, Telemetry } from '@datadog/browser-core'
-import {
-  includes,
-  performDraw,
-  ONE_SECOND,
-  addTelemetryDebug,
-  setInterval,
-  CustomerDataType,
-} from '@datadog/browser-core'
+import { performDraw, ONE_SECOND, addTelemetryDebug, setInterval, CustomerDataType } from '@datadog/browser-core'
 import { RumEventType } from '../rawRumEvent.types'
 import type { RumEvent } from '../rumEvent.types'
 import type { RumConfiguration } from './configuration'
@@ -71,7 +64,7 @@ export function startCustomerDataTelemetry(
 
     updateMeasure(
       currentBatchMeasures.featureFlagBytes,
-      includes([RumEventType.VIEW, RumEventType.ERROR], event.type)
+      [RumEventType.VIEW, RumEventType.ERROR].includes(event.type as RumEventType)
         ? customerDataTrackerManager.getOrCreateTracker(CustomerDataType.FeatureFlag).getBytesCount()
         : 0
     )
