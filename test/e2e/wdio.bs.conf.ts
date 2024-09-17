@@ -37,7 +37,7 @@ export const config: Options.Testrunner = {
       {
         browserstackLocal: true,
         opts: {
-          verbose: true,
+          verbose: 'true',
         },
       },
     ],
