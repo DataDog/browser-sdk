@@ -1,5 +1,7 @@
 import { isChromium } from '../../../tools/utils/browserDetection'
+import { ExperimentalFeature, isExperimentalFeatureEnabled } from '../../../tools/experimentalFeatures'
 import type { CookieOptions } from '../../../browser/cookie'
+import { generateAnonymousId, setAnonymousIdInStorage } from '../../user'
 import { getCurrentSite, areCookiesAuthorized, getCookie, setCookie } from '../../../browser/cookie'
 import type { InitConfiguration } from '../../configuration'
 import { tryOldCookiesMigration } from '../oldCookiesMigration'
@@ -33,17 +35,33 @@ export function initCookieStrategy(cookieOptions: CookieOptions): SessionStoreSt
 
 function persistSessionCookie(options: CookieOptions) {
   return (session: SessionState) => {
+    if (!session.device && isExperimentalFeatureEnabled(ExperimentalFeature.ANONYMOUS_USER_TRACKING)) {
+      // if there is no device id, generate one and store it in the cookie
+      session.device = generateAnonymousId()
+      setAnonymousIdInStorage('Cookie', session.device)
+    }
     setCookie(SESSION_STORE_KEY, toSessionString(session), SESSION_EXPIRATION_DELAY, options)
   }
 }
 
 function expireSessionCookie(options: CookieOptions) {
-  setCookie(SESSION_STORE_KEY, toSessionString(getExpiredSessionState()), SESSION_TIME_OUT_DELAY, options)
+  const expiredSessionState = getExpiredSessionState()
+  setCookie(SESSION_STORE_KEY, toSessionString(expiredSessionState), SESSION_TIME_OUT_DELAY, options)
 }
 
 function retrieveSessionCookie(): SessionState {
   const sessionString = getCookie(SESSION_STORE_KEY)
-  return toSessionState(sessionString)
+  const sessionState = toSessionState(sessionString)
+  let device = sessionState.device
+
+  if (isExperimentalFeatureEnabled(ExperimentalFeature.ANONYMOUS_USER_TRACKING) && !device) {
+    // init device id if it does not exist or if session cookie does not exist
+    device = generateAnonymousId()
+    setAnonymousIdInStorage('Cookie', device)
+    sessionState.device = device
+  }
+
+  return sessionState
 }
 
 export function buildCookieOptions(initConfiguration: InitConfiguration) {
