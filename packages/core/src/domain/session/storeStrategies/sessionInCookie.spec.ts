@@ -132,6 +132,14 @@ describe('session in cookie strategy with anonymous user tracking', () => {
     expect(getCookie(SESSION_STORE_KEY)).toBe(`id=123&created=0&device=${device}`)
   })
 
+  it('should persist a session with anonymous id in a cookie when it is not present', () => {
+    setCookie(SESSION_STORE_KEY, 'id=123&created=0')
+    cookieStorageStrategy.persistSession(sessionState)
+    const session = cookieStorageStrategy.retrieveSession()
+    expect(session).toEqual({ ...sessionState })
+    expect(getCookie(SESSION_STORE_KEY)).toBe(`id=123&created=0&device=${device}`)
+  })
+
   it('should expire a session with anonymous id in a cookie', () => {
     mockCookie(`id=123&created=0&device=${device}`)
 
@@ -142,8 +150,8 @@ describe('session in cookie strategy with anonymous user tracking', () => {
     expect(getCookie(SESSION_STORE_KEY)).toBe(`isExpired=1&device=${device}`)
   })
 
-  it('should return a new anonymous id if session cookie does not exist', () => {
-    setCookie(SESSION_STORE_KEY, '{test:42}', 1000)
+  it('should return a new anonymous id if session cookie is not valid', () => {
+    setCookie(SESSION_STORE_KEY, '{test:42}')
     spyOn(Math, 'random').and.returnValue(1)
     const session = cookieStorageStrategy.retrieveSession()
     expect(session).toEqual({ device: '2gosa7pa2gw' })
@@ -151,7 +159,7 @@ describe('session in cookie strategy with anonymous user tracking', () => {
   })
 
   it('should set a new anonymous id if session cookie does not contain device id', () => {
-    setCookie(SESSION_STORE_KEY, 'id=123&created=0', 1000)
+    setCookie(SESSION_STORE_KEY, 'id=123&created=0')
     spyOn(Math, 'random').and.returnValue(1)
     const session = cookieStorageStrategy.retrieveSession()
     expect(session).toEqual({ id: '123', created: '0', device: '2gosa7pa2gw' })
