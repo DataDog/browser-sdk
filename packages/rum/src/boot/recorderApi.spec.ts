@@ -8,7 +8,7 @@ import {
   createRumSessionManagerMock,
   mockDocumentReadyState,
   mockRumConfiguration,
-  mockViewContexts,
+  mockViewHistory,
 } from '../../../rum-core/test'
 import type { CreateDeflateWorker } from '../domain/deflate'
 import { MockWorker } from '../../test'
@@ -51,7 +51,7 @@ describe('makeRecorderApi', () => {
         lifeCycle,
         mockRumConfiguration({ startSessionReplayRecordingManually: startSessionReplayRecordingManually ?? false }),
         sessionManager ?? createRumSessionManagerMock().setId('1234'),
-        mockViewContexts(),
+        mockViewHistory(),
         worker
       )
     }

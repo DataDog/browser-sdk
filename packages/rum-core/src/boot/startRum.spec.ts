@@ -28,6 +28,7 @@ import {
   createRumSessionManagerMock,
   mockDocumentReadyState,
   mockPageStateHistory,
+  mockPerformanceObserver,
   mockRumConfiguration,
   noopRecorderApi,
   setupLocationObserver,
@@ -268,13 +269,15 @@ describe('rum events url', () => {
 
   it('should attach the url corresponding to the start of the event', () => {
     clock = mockClock()
+    const { notifyPerformanceEntries } = mockPerformanceObserver()
+
     setupViewUrlTest()
     clock.tick(10)
     changeLocation('http://foo.com/?bar=bar')
     clock.tick(10)
     changeLocation('http://foo.com/?bar=qux')
 
-    lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [
+    notifyPerformanceEntries([
       createPerformanceEntry(RumPerformanceEntryType.LONG_TASK, {
         startTime: (relativeNow() - 5) as RelativeTime,
       }),
