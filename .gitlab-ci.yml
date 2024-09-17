@@ -17,16 +17,7 @@ cache:
     - .yarn/cache
 
 stages:
-  - task
-  - ci-image
-  - test
-  - after-tests
   - browserstack
-  - pre-deploy
-  - deploy:canary
-  - notify:canary
-  - deploy
-  - notify
 
 .base-configuration:
   tags:
