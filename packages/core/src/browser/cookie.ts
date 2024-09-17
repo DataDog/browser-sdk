@@ -2,7 +2,6 @@ import { display } from '../tools/display'
 import { ONE_MINUTE, ONE_SECOND, ONE_YEAR } from '../tools/utils/timeUtils'
 import { findCommaSeparatedValue, findCommaSeparatedValues, generateUUID } from '../tools/utils/stringUtils'
 import { SESSION_STORE_KEY } from '../domain/session/storeStrategies/sessionStoreStrategy'
-// import type { SessionStoreStrategyType } from '../domain/session/storeStrategies/sessionStoreStrategy'
 import { ExperimentalFeature, isExperimentalFeatureEnabled } from '../tools/experimentalFeatures'
 
 export interface CookieOptions {

@@ -149,4 +149,12 @@ describe('session in cookie strategy with anonymous user tracking', () => {
     expect(session).toEqual({ device: '2gosa7pa2gw' })
     expect(getCookie(SESSION_STORE_KEY)).toBe('device=2gosa7pa2gw')
   })
+
+  it('should set a new anonymous id if session cookie does not contain device id', () => {
+    setCookie(SESSION_STORE_KEY, 'id=123&created=0', 1000)
+    spyOn(Math, 'random').and.returnValue(1)
+    const session = cookieStorageStrategy.retrieveSession()
+    expect(session).toEqual({ id: '123', created: '0', device: '2gosa7pa2gw' })
+    expect(getCookie(SESSION_STORE_KEY)).toBe('id=123&created=0&device=2gosa7pa2gw')
+  })
 })
