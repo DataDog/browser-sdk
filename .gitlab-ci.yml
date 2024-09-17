@@ -271,7 +271,7 @@ e2e-bs:
   timeout: 30 minutes
   artifacts:
     when: always
-    paths: ['test-report/e2e-bs/specs.log']
+    paths: ['test-report/e2e-bs/specs.log', 'local.log']
     reports:
       junit: test-report/e2e-bs/*.xml
   script:
