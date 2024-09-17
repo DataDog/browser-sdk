@@ -1,19 +1,21 @@
 import type { RelativeTime } from '@datadog/browser-core'
 import { registerCleanupTask, restorePageVisibility, setPageVisibility } from '@datadog/browser-core/test'
+import type { RumPerformanceEntry } from '../../../browser/performanceObservable'
 import { RumPerformanceEntryType } from '../../../browser/performanceObservable'
-import { createPerformanceEntry, mockRumConfiguration } from '../../../../test'
-import { LifeCycle, LifeCycleEventType } from '../../lifeCycle'
+import { createPerformanceEntry, mockPerformanceObserver, mockRumConfiguration } from '../../../../test'
 import { FCP_MAXIMUM_DELAY, trackFirstContentfulPaint } from './trackFirstContentfulPaint'
 import { trackFirstHidden } from './trackFirstHidden'
 
 describe('trackFirstContentfulPaint', () => {
-  const lifeCycle = new LifeCycle()
   let fcpCallback: jasmine.Spy<(value: RelativeTime) => void>
+  let notifyPerformanceEntries: (entries: RumPerformanceEntry[]) => void
 
   function startTrackingFCP() {
+    ;({ notifyPerformanceEntries } = mockPerformanceObserver())
+
     fcpCallback = jasmine.createSpy()
     const firstHidden = trackFirstHidden(mockRumConfiguration())
-    const firstContentfulPaint = trackFirstContentfulPaint(lifeCycle, firstHidden, fcpCallback)
+    const firstContentfulPaint = trackFirstContentfulPaint(mockRumConfiguration(), firstHidden, fcpCallback)
 
     registerCleanupTask(() => {
       firstHidden.stop()
@@ -24,9 +26,7 @@ describe('trackFirstContentfulPaint', () => {
 
   it('should provide the first contentful paint timing', () => {
     startTrackingFCP()
-    lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [
-      createPerformanceEntry(RumPerformanceEntryType.PAINT),
-    ])
+    notifyPerformanceEntries([createPerformanceEntry(RumPerformanceEntryType.PAINT)])
 
     expect(fcpCallback).toHaveBeenCalledTimes(1 as RelativeTime)
     expect(fcpCallback).toHaveBeenCalledWith(123 as RelativeTime)
@@ -36,15 +36,13 @@ describe('trackFirstContentfulPaint', () => {
     setPageVisibility('hidden')
     startTrackingFCP()
 
-    lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [
-      createPerformanceEntry(RumPerformanceEntryType.PAINT),
-    ])
+    notifyPerformanceEntries([createPerformanceEntry(RumPerformanceEntryType.PAINT)])
     expect(fcpCallback).not.toHaveBeenCalled()
   })
 
   it('should be discarded if it is reported after a long time', () => {
     startTrackingFCP()
-    lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [
+    notifyPerformanceEntries([
       createPerformanceEntry(RumPerformanceEntryType.PAINT, { startTime: FCP_MAXIMUM_DELAY as RelativeTime }),
     ])
     expect(fcpCallback).not.toHaveBeenCalled()

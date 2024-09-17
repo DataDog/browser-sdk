@@ -506,10 +506,11 @@ describe('view metrics', () => {
 
         expect(getViewUpdateCount()).toEqual(3)
 
-        lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [
+        notifyPerformanceEntries([
           createPerformanceEntry(RumPerformanceEntryType.PAINT),
+          createPerformanceEntry(RumPerformanceEntryType.NAVIGATION),
+          createPerformanceEntry(RumPerformanceEntryType.LARGEST_CONTENTFUL_PAINT),
         ])
-        notifyPerformanceEntries([createPerformanceEntry(RumPerformanceEntryType.LARGEST_CONTENTFUL_PAINT)])
 
         clock.tick(THROTTLE_VIEW_UPDATE_PERIOD)
 
