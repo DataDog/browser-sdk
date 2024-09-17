@@ -10,7 +10,6 @@ import type {
   DefaultPrivacyLevel,
   Connectivity,
   Csp,
-  RelativeTime,
 } from '@datadog/browser-core'
 import type { PageState } from './domain/contexts/pageStateHistory'
 
@@ -200,15 +199,15 @@ export interface RawRumLongAnimationFrameEvent {
     entry_type: RumLongTaskEntryType.LONG_ANIMATION_FRAME
     duration: ServerDuration
     blocking_duration: ServerDuration
-    first_ui_event_timestamp: RelativeTime
-    render_start: RelativeTime
-    style_and_layout_start: RelativeTime
+    first_ui_event_timestamp: ServerDuration
+    render_start: ServerDuration
+    style_and_layout_start: ServerDuration
     scripts: Array<{
       duration: ServerDuration
       pause_duration: ServerDuration
       forced_style_and_layout_duration: ServerDuration
-      start_time: RelativeTime
-      execution_start: RelativeTime
+      start_time: ServerDuration
+      execution_start: ServerDuration
       source_url: string
       source_function_name: string
       source_char_position: number
