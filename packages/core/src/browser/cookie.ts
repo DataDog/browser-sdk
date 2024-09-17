@@ -1,6 +1,9 @@
 import { display } from '../tools/display'
-import { ONE_MINUTE, ONE_SECOND } from '../tools/utils/timeUtils'
+import { ONE_MINUTE, ONE_SECOND, ONE_YEAR } from '../tools/utils/timeUtils'
 import { findCommaSeparatedValue, findCommaSeparatedValues, generateUUID } from '../tools/utils/stringUtils'
+import { SESSION_STORE_KEY } from '../domain/session/storeStrategies/sessionStoreStrategy'
+// import type { SessionStoreStrategyType } from '../domain/session/storeStrategies/sessionStoreStrategy'
+import { ExperimentalFeature, isExperimentalFeatureEnabled } from '../tools/experimentalFeatures'
 
 export interface CookieOptions {
   secure?: boolean
@@ -9,14 +12,18 @@ export interface CookieOptions {
   domain?: string
 }
 
-export function setCookie(name: string, value: string, expireDelay: number, options?: CookieOptions) {
+export function setCookie(name: string, value: string, expireDelay: number = 0, options?: CookieOptions) {
   const date = new Date()
   date.setTime(date.getTime() + expireDelay)
-  const expires = `expires=${date.toUTCString()}`
+  let expires = `expires=${date.toUTCString()}`
   const sameSite = options && options.crossSite ? 'none' : 'strict'
   const domain = options && options.domain ? `;domain=${options.domain}` : ''
   const secure = options && options.secure ? ';secure' : ''
   const partitioned = options && options.partitioned ? ';partitioned' : ''
+  // we cannot read from cookie here because it will affect cookie locking
+  if (isExperimentalFeatureEnabled(ExperimentalFeature.ANONYMOUS_USER_TRACKING) && name === SESSION_STORE_KEY) {
+    expires = `max-age=${ONE_YEAR}`
+  }
   document.cookie = `${name}=${value};${expires};path=/;samesite=${sameSite}${domain}${secure}${partitioned}`
 }
 

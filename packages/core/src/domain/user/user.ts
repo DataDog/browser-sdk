@@ -1,7 +1,9 @@
 import type { Context } from '../../tools/serialisation/context'
+import { SESSION_STORE_KEY } from '../session/storeStrategies/sessionStoreStrategy'
 import { display } from '../../tools/display'
 import { getType } from '../../tools/utils/typeUtils'
 import { assign } from '../../tools/utils/polyfills'
+import { setCookie } from '../../browser/cookie'
 import type { User } from './user.types'
 
 /**
@@ -30,4 +32,28 @@ export function checkUser(newUser: User): boolean {
     display.error('Unsupported user:', newUser)
   }
   return isValid
+}
+
+export function getAnonymousIdFromStorage(): string | undefined {
+  let matches = /device=([\w-]+)/.exec(document.cookie)
+  if (matches) {
+    return matches[1]
+  }
+
+  matches = /device=(\w+)/.exec(localStorage.getItem(SESSION_STORE_KEY) ?? '')
+  if (matches) {
+    return matches[1]
+  }
+}
+
+export function setAnonymousIdInStorage(sessionStoreStrategyType: string, device: string) {
+  if (sessionStoreStrategyType === 'Cookie') {
+    setCookie(SESSION_STORE_KEY, `device=${device}`)
+  } else {
+    localStorage.setItem(SESSION_STORE_KEY, `device=${device}`)
+  }
+}
+
+export function generateAnonymousId() {
+  return Math.floor(Math.random() * Math.pow(2, 53)).toString(36)
 }
