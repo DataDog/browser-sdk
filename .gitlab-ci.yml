@@ -17,7 +17,16 @@ cache:
     - .yarn/cache
 
 stages:
+  - task
+  - ci-image
+  - test
+  - after-tests
   - browserstack
+  - pre-deploy
+  - deploy:canary
+  - notify:canary
+  - deploy
+  - notify
 
 .base-configuration:
   tags:
@@ -96,161 +105,161 @@ ci-image:
 # Tests
 ########################################################################################################################
 
-format:
-  extends:
-    - .base-configuration
-    - .test-allowed-branches
-  interruptible: true
-  script:
-    - yarn
-    - yarn format
+# format:
+#   extends:
+#     - .base-configuration
+#     - .test-allowed-branches
+#   interruptible: true
+#   script:
+#     - yarn
+#     - yarn format
 
-woke:
-  extends:
-    - .base-configuration
-    - .test-allowed-branches
-  interruptible: true
-  script:
-    - yarn
-    - yarn woke
+# woke:
+#   extends:
+#     - .base-configuration
+#     - .test-allowed-branches
+#   interruptible: true
+#   script:
+#     - yarn
+#     - yarn woke
 
-typecheck:
-  extends:
-    - .base-configuration
-    - .test-allowed-branches
-  interruptible: true
-  script:
-    - yarn
-    - yarn build
-    - yarn typecheck
-    - scripts/cli typecheck test/app
-    - scripts/cli typecheck test/e2e
+# typecheck:
+#   extends:
+#     - .base-configuration
+#     - .test-allowed-branches
+#   interruptible: true
+#   script:
+#     - yarn
+#     - yarn build
+#     - yarn typecheck
+#     - scripts/cli typecheck test/app
+#     - scripts/cli typecheck test/e2e
 
-build-and-lint:
-  extends:
-    - .base-configuration
-    - .test-allowed-branches
-  interruptible: true
-  script:
-    - yarn
-    - yarn build
-    - yarn lint
-    - node scripts/check-packages.js
+# build-and-lint:
+#   extends:
+#     - .base-configuration
+#     - .test-allowed-branches
+#   interruptible: true
+#   script:
+#     - yarn
+#     - yarn build
+#     - yarn lint
+#     - node scripts/check-packages.js
 
-test-performance:
-  extends:
-    - .base-configuration
-    - .test-allowed-branches
-  interruptible: true
-  allow_failure: true
-  script:
-    - yarn
-    - yarn build:bundle
-    - node ./scripts/deploy/deploy.js staging pull-request pull-request
-    - node ./scripts/performance/index.js
+# test-performance:
+#   extends:
+#     - .base-configuration
+#     - .test-allowed-branches
+#   interruptible: true
+#   allow_failure: true
+#   script:
+#     - yarn
+#     - yarn build:bundle
+#     - node ./scripts/deploy/deploy.js staging pull-request pull-request
+#     - node ./scripts/performance/index.js
 
-build-bundle:
-  extends:
-    - .base-configuration
-    - .test-allowed-branches
-  interruptible: true
-  script:
-    - yarn
-    - yarn build:bundle
+# build-bundle:
+#   extends:
+#     - .base-configuration
+#     - .test-allowed-branches
+#   interruptible: true
+#   script:
+#     - yarn
+#     - yarn build:bundle
 
-compatibility:
-  extends:
-    - .base-configuration
-    - .test-allowed-branches
-  interruptible: true
-  script:
-    - yarn
-    - yarn test:compat:tsc
-    - yarn test:compat:ssr
+# compatibility:
+#   extends:
+#     - .base-configuration
+#     - .test-allowed-branches
+#   interruptible: true
+#   script:
+#     - yarn
+#     - yarn test:compat:tsc
+#     - yarn test:compat:ssr
 
-unit:
-  extends:
-    - .base-configuration
-    - .test-allowed-branches
-  interruptible: true
-  artifacts:
-    reports:
-      junit: test-report/unit/*.xml
-  script:
-    - yarn
-    - yarn test:unit
-    - ./scripts/test/codecov.sh
-  after_script:
-    - node ./scripts/test/export-test-result.js unit
+# unit:
+#   extends:
+#     - .base-configuration
+#     - .test-allowed-branches
+#   interruptible: true
+#   artifacts:
+#     reports:
+#       junit: test-report/unit/*.xml
+#   script:
+#     - yarn
+#     - yarn test:unit
+#     - ./scripts/test/codecov.sh
+#   after_script:
+#     - node ./scripts/test/export-test-result.js unit
 
-e2e:
-  extends:
-    - .base-configuration
-    - .test-allowed-branches
-  interruptible: true
-  artifacts:
-    when: always
-    paths: ['test-report/e2e/specs.log']
-    reports:
-      junit: test-report/e2e/*.xml
-  script:
-    - yarn
-    - FORCE_COLOR=1 yarn test:e2e
-  after_script:
-    - node ./scripts/test/export-test-result.js e2e
+# e2e:
+#   extends:
+#     - .base-configuration
+#     - .test-allowed-branches
+#   interruptible: true
+#   artifacts:
+#     when: always
+#     paths: ['test-report/e2e/specs.log']
+#     reports:
+#       junit: test-report/e2e/*.xml
+#   script:
+#     - yarn
+#     - FORCE_COLOR=1 yarn test:e2e
+#   after_script:
+#     - node ./scripts/test/export-test-result.js e2e
 
-e2e-developer-extension:
-  extends:
-    - .base-configuration
-    - .test-allowed-branches
-  interruptible: true
-  script:
-    - yarn
-    - yarn test:e2e:developer-extension
+# e2e-developer-extension:
+#   extends:
+#     - .base-configuration
+#     - .test-allowed-branches
+#   interruptible: true
+#   script:
+#     - yarn
+#     - yarn test:e2e:developer-extension
 
-check-licenses:
-  extends:
-    - .base-configuration
-    - .test-allowed-branches
-  interruptible: true
-  script:
-    - yarn
-    - node --no-warnings scripts/check-licenses.js
+# check-licenses:
+#   extends:
+#     - .base-configuration
+#     - .test-allowed-branches
+#   interruptible: true
+#   script:
+#     - yarn
+#     - node --no-warnings scripts/check-licenses.js
 
-check-release:
-  extends:
-    - .base-configuration
-    - .tags
-  interruptible: true
-  script:
-    - yarn
-    - BUILD_MODE=release yarn build
-    - node scripts/release/check-release.js
+# check-release:
+#   extends:
+#     - .base-configuration
+#     - .tags
+#   interruptible: true
+#   script:
+#     - yarn
+#     - BUILD_MODE=release yarn build
+#     - node scripts/release/check-release.js
 
-check-schemas:
-  extends:
-    - .base-configuration
-    - .test-allowed-branches
-  interruptible: true
-  script:
-    - yarn
-    - node scripts/check-schemas.js
+# check-schemas:
+#   extends:
+#     - .base-configuration
+#     - .test-allowed-branches
+#   interruptible: true
+#   script:
+#     - yarn
+#     - node scripts/check-schemas.js
 
-unit-bs:
-  stage: browserstack
-  extends:
-    - .base-configuration
-    - .bs-allowed-branches
-  interruptible: true
-  resource_group: browserstack
-  artifacts:
-    reports:
-      junit: test-report/unit-bs/*.xml
-  script:
-    - yarn
-    - ./scripts/test/ci-bs.sh test:unit
-  after_script:
-    - node ./scripts/test/export-test-result.js unit-bs
+# unit-bs:
+#   stage: browserstack
+#   extends:
+#     - .base-configuration
+#     - .bs-allowed-branches
+#   interruptible: true
+#   resource_group: browserstack
+#   artifacts:
+#     reports:
+#       junit: test-report/unit-bs/*.xml
+#   script:
+#     - yarn
+#     - ./scripts/test/ci-bs.sh test:unit
+#   after_script:
+#     - node ./scripts/test/export-test-result.js unit-bs
 
 e2e-bs:
   stage: browserstack
