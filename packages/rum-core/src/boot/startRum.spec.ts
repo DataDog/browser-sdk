@@ -26,6 +26,7 @@ import type { RumSessionManagerMock } from '../../test'
 import {
   createPerformanceEntry,
   createRumSessionManagerMock,
+  mockDocumentReadyState,
   mockPageStateHistory,
   mockPerformanceObserver,
   mockRumConfiguration,
@@ -295,7 +296,7 @@ describe('rum events url', () => {
 
   it('should keep the same URL when updating an ended view', () => {
     clock = mockClock()
-    const { notifyPerformanceEntries } = mockPerformanceObserver()
+    const { triggerOnLoad } = mockDocumentReadyState()
     setupViewUrlTest()
 
     clock.tick(VIEW_DURATION)
@@ -304,7 +305,7 @@ describe('rum events url', () => {
 
     serverRumEvents.length = 0
 
-    notifyPerformanceEntries([createPerformanceEntry(RumPerformanceEntryType.NAVIGATION)])
+    triggerOnLoad()
     clock.tick(THROTTLE_VIEW_UPDATE_PERIOD)
 
     expect(serverRumEvents.length).toEqual(1)

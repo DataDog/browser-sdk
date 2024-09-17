@@ -69,13 +69,17 @@ export interface RumPerformancePaintTiming {
   startTime: RelativeTime
 }
 
-export interface RumPerformanceNavigationTiming {
+export interface RumPerformanceNavigationTiming extends Omit<RumPerformanceResourceTiming, 'entryType'> {
   entryType: RumPerformanceEntryType.NAVIGATION
+  initiatorType: 'navigation'
+  name: string
+
   domComplete: RelativeTime
   domContentLoadedEventEnd: RelativeTime
   domInteractive: RelativeTime
   loadEventEnd: RelativeTime
-  responseStart: RelativeTime
+
+  toJSON(): Omit<RumPerformanceNavigationTiming, 'toJSON'>
 }
 
 export interface RumLargestContentfulPaintTiming {
