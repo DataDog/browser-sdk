@@ -383,10 +383,10 @@ export function makeRumPublicApi(
 
         if (!anonymousId) {
           anonymousId = generateAnonymousId()
-          userContextManager.setContextProperty('anonymous_id', anonymousId)
           const { type } = configuration.sessionStoreStrategyType ?? { type: 'LocalStorage' }
           setAnonymousIdInStorage(type, anonymousId)
         }
+        userContextManager.setContextProperty('anonymous_id', anonymousId)
       }
       if (configuration.storeContextsAcrossPages) {
         storeContextManager(configuration, globalContextManager, RUM_STORAGE_KEY, CustomerDataType.GlobalContext)
