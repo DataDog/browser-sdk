@@ -4,7 +4,7 @@ import type { RecorderApi, RumSessionManager } from '@datadog/browser-rum-core'
 import { LifeCycle, LifeCycleEventType } from '@datadog/browser-rum-core'
 import { mockEventBridge, createNewEvent, registerCleanupTask } from '@datadog/browser-core/test'
 import type { RumSessionManagerMock } from '../../../rum-core/test'
-import { createRumSessionManagerMock, mockRumConfiguration, mockViewContexts } from '../../../rum-core/test'
+import { createRumSessionManagerMock, mockRumConfiguration, mockViewHistory } from '../../../rum-core/test'
 import type { CreateDeflateWorker } from '../domain/deflate'
 import { MockWorker } from '../../test'
 import { resetDeflateWorkerState } from '../domain/deflate'
@@ -46,7 +46,7 @@ describe('makeRecorderApi', () => {
         lifeCycle,
         mockRumConfiguration({ startSessionReplayRecordingManually: startSessionReplayRecordingManually ?? false }),
         sessionManager ?? createRumSessionManagerMock().setId('1234'),
-        mockViewContexts(),
+        mockViewHistory(),
         worker
       )
     }

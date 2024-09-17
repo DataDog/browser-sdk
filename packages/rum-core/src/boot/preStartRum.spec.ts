@@ -1,4 +1,4 @@
-import type { DeflateWorker, Duration, RelativeTime, TimeStamp, TrackingConsentState } from '@datadog/browser-core'
+import type { DeflateWorker, Duration, TimeStamp, TrackingConsentState } from '@datadog/browser-core'
 import {
   display,
   getTimeStamp,
@@ -357,8 +357,8 @@ describe('preStartRum', () => {
           expect(startViewSpy).toHaveBeenCalled()
           expect(startViewSpy.calls.argsFor(0)[0]).toEqual({ name: 'foo' })
           expect(startViewSpy.calls.argsFor(0)[1]).toEqual({
-            relative: 10 as RelativeTime,
-            timeStamp: jasmine.any(Number) as unknown as TimeStamp,
+            relative: clock.relative(10),
+            timeStamp: clock.timeStamp(10),
           })
         })
       })
@@ -415,7 +415,7 @@ describe('preStartRum', () => {
           expect(doStartRumSpy).toHaveBeenCalled()
           const initialViewOptions: ViewOptions | undefined = doStartRumSpy.calls.argsFor(0)[2]
           expect(initialViewOptions).toEqual({ name: 'foo' })
-          expect(startViewSpy).toHaveBeenCalledOnceWith({ name: 'bar' }, relativeToClocks(20 as RelativeTime))
+          expect(startViewSpy).toHaveBeenCalledOnceWith({ name: 'bar' }, relativeToClocks(clock.relative(20)))
         })
 
         it('calling init then startView should start rum', () => {
@@ -448,10 +448,10 @@ describe('preStartRum', () => {
           expect(addTimingSpy).toHaveBeenCalledTimes(2)
 
           expect(addTimingSpy.calls.argsFor(0)[0]).toEqual('first')
-          expect(addTimingSpy.calls.argsFor(0)[1]).toEqual(getTimeStamp(10 as RelativeTime))
+          expect(addTimingSpy.calls.argsFor(0)[1]).toEqual(getTimeStamp(clock.relative(10)))
 
           expect(addTimingSpy.calls.argsFor(1)[0]).toEqual('second')
-          expect(addTimingSpy.calls.argsFor(1)[1]).toEqual(getTimeStamp(30 as RelativeTime))
+          expect(addTimingSpy.calls.argsFor(1)[1]).toEqual(getTimeStamp(clock.relative(30)))
         })
       })
     })
@@ -732,6 +732,24 @@ describe('preStartRum', () => {
       strategy.addTiming(name, time)
       strategy.init(DEFAULT_INIT_CONFIGURATION, PUBLIC_API)
       expect(addTimingSpy).toHaveBeenCalledOnceWith(name, time)
+    })
+
+    it('setViewContext', () => {
+      const setViewContextSpy = jasmine.createSpy()
+      doStartRumSpy.and.returnValue({ setViewContext: setViewContextSpy } as unknown as StartRumResult)
+
+      strategy.setViewContext({ foo: 'bar' })
+      strategy.init(DEFAULT_INIT_CONFIGURATION, PUBLIC_API)
+      expect(setViewContextSpy).toHaveBeenCalledOnceWith({ foo: 'bar' })
+    })
+
+    it('setViewContextProperty', () => {
+      const setViewContextPropertySpy = jasmine.createSpy()
+      doStartRumSpy.and.returnValue({ setViewContextProperty: setViewContextPropertySpy } as unknown as StartRumResult)
+
+      strategy.setViewContextProperty('foo', 'bar')
+      strategy.init(DEFAULT_INIT_CONFIGURATION, PUBLIC_API)
+      expect(setViewContextPropertySpy).toHaveBeenCalledOnceWith('foo', 'bar')
     })
 
     it('updateViewName', () => {

@@ -38,7 +38,6 @@ export function trackInitialViewMetrics(
   })
 
   const { stop: stopLCPTracking } = trackLargestContentfulPaint(
-    lifeCycle,
     configuration,
     firstHidden,
     window,

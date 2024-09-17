@@ -268,13 +268,15 @@ describe('rum events url', () => {
 
   it('should attach the url corresponding to the start of the event', () => {
     clock = mockClock()
+    const { notifyPerformanceEntries } = mockPerformanceObserver()
+
     setupViewUrlTest()
     clock.tick(10)
     changeLocation('http://foo.com/?bar=bar')
     clock.tick(10)
     changeLocation('http://foo.com/?bar=qux')
 
-    lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [
+    notifyPerformanceEntries([
       createPerformanceEntry(RumPerformanceEntryType.LONG_TASK, {
         startTime: (relativeNow() - 5) as RelativeTime,
       }),
@@ -351,7 +353,7 @@ describe('view events', () => {
 
     setupViewCollectionTest()
 
-    clock.tick(VIEW_DURATION)
+    clock.tick(VIEW_DURATION - relativeNow())
     window.dispatchEvent(createNewEvent('beforeunload'))
 
     const lastRumEvents = interceptor.requests[interceptor.requests.length - 1].body
@@ -373,7 +375,7 @@ describe('view events', () => {
 
     setupViewCollectionTest()
 
-    clock.tick(VIEW_DURATION)
+    clock.tick(VIEW_DURATION - relativeNow())
     window.dispatchEvent(createNewEvent('beforeunload'))
 
     const lastBridgeMessage = JSON.parse(sendSpy.calls.mostRecent().args[0]) as {

@@ -38,7 +38,7 @@ import {
   generateAnonymousId,
 } from '@datadog/browser-core'
 import type { LifeCycle } from '../domain/lifeCycle'
-import type { ViewContexts } from '../domain/contexts/viewContexts'
+import type { ViewHistory } from '../domain/contexts/viewHistory'
 import type { RumSessionManager } from '../domain/rumSessionManager'
 import type { ReplayStats } from '../rawRumEvent.types'
 import { ActionType, VitalType } from '../rawRumEvent.types'
@@ -297,7 +297,7 @@ export interface RecorderApi {
     lifeCycle: LifeCycle,
     configuration: RumConfiguration,
     sessionManager: RumSessionManager,
-    viewContexts: ViewContexts,
+    viewHistory: ViewHistory,
     deflateWorker: DeflateWorker | undefined
   ) => void
   isRecording: () => boolean
@@ -329,6 +329,8 @@ export interface Strategy {
   addTiming: StartRumResult['addTiming']
   startView: StartRumResult['startView']
   updateViewName: StartRumResult['updateViewName']
+  setViewContext: StartRumResult['setViewContext']
+  setViewContextProperty: StartRumResult['setViewContextProperty']
   addAction: StartRumResult['addAction']
   addError: StartRumResult['addError']
   addFeatureFlagEvaluation: StartRumResult['addFeatureFlagEvaluation']
@@ -388,6 +390,29 @@ export function makeRumPublicApi(
         }
         userContextManager.setContextProperty('anonymous_id', anonymousId)
       }
+      if (isExperimentalFeatureEnabled(ExperimentalFeature.VIEW_SPECIFIC_CONTEXT)) {
+        /**
+         * Set View Context.
+         *
+         * Enable to manually set the context of the current view.
+         * @param context context of the view
+         */
+        ;(rumPublicApi as any).setViewContext = monitor((context: Context) => {
+          strategy.setViewContext(context)
+        })
+
+        /**
+         * Set View Context Property.
+         *
+         * Enable to manually set a property of the context of the current view.
+         * @param key key of the property
+         * @param value value of the property
+         */
+        ;(rumPublicApi as any).setViewContextProperty = monitor((key: string, value: any) => {
+          strategy.setViewContextProperty(key, value)
+        })
+      }
+
       if (configuration.storeContextsAcrossPages) {
         storeContextManager(configuration, globalContextManager, RUM_STORAGE_KEY, CustomerDataType.GlobalContext)
         storeContextManager(configuration, userContextManager, RUM_STORAGE_KEY, CustomerDataType.User)
@@ -414,7 +439,7 @@ export function makeRumPublicApi(
         startRumResult.lifeCycle,
         configuration,
         startRumResult.session,
-        startRumResult.viewContexts,
+        startRumResult.viewHistory,
         deflateWorker
       )
 
@@ -435,6 +460,7 @@ export function makeRumPublicApi(
     strategy.startView(sanitizedOptions)
     addTelemetryUsage({ feature: 'start-view' })
   })
+
   const rumPublicApi: RumPublicApi = makePublicApi<RumPublicApi>({
     init: monitor((initConfiguration) => strategy.init(initConfiguration, rumPublicApi)),
 

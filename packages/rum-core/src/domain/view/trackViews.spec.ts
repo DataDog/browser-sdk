@@ -17,6 +17,7 @@ import type { RumEvent } from '../../rumEvent.types'
 import { LifeCycle, LifeCycleEventType } from '../lifeCycle'
 import type { RumPerformanceEntry } from '../../browser/performanceObservable'
 import { RumPerformanceEntryType } from '../../browser/performanceObservable'
+import { PAGE_ACTIVITY_END_DELAY } from '../waitPageActivityEnd'
 import type { ViewEvent } from './trackViews'
 import { SESSION_KEEP_ALIVE_INTERVAL, THROTTLE_VIEW_UPDATE_PERIOD, KEEP_TRACKING_AFTER_VIEW_DELAY } from './trackViews'
 import type { ViewTest } from './setupViewTest.specHelper'
@@ -265,24 +266,26 @@ describe('view lifecycle', () => {
   describe('session keep alive', () => {
     it('should emit a view update periodically', () => {
       const { getViewUpdateCount } = viewTest
+      clock.tick(THROTTLE_VIEW_UPDATE_PERIOD) // make sure we don't have pending update
 
-      expect(getViewUpdateCount()).toEqual(1)
+      const previousViewUpdateCount = getViewUpdateCount()
 
       clock.tick(SESSION_KEEP_ALIVE_INTERVAL)
 
-      expect(getViewUpdateCount()).toEqual(2)
+      expect(getViewUpdateCount()).toEqual(previousViewUpdateCount + 1)
     })
 
     it('should not send periodical updates after the session has expired', () => {
       const { getViewUpdateCount } = viewTest
+      clock.tick(THROTTLE_VIEW_UPDATE_PERIOD) // make sure we don't have pending update
 
       lifeCycle.notify(LifeCycleEventType.SESSION_EXPIRED)
 
-      expect(getViewUpdateCount()).toBe(2)
+      const previousViewUpdateCount = getViewUpdateCount()
 
       clock.tick(SESSION_KEEP_ALIVE_INTERVAL)
 
-      expect(getViewUpdateCount()).toBe(2)
+      expect(getViewUpdateCount()).toBe(previousViewUpdateCount)
     })
   })
 
@@ -402,7 +405,7 @@ describe('view metrics', () => {
       expect(getViewUpdate(1).commonViewMetrics.cumulativeLayoutShift).toEqual({
         value: 0.1,
         targetSelector: undefined,
-        time: 0 as Duration,
+        time: clock.relative(0),
       })
     })
 
@@ -433,7 +436,6 @@ describe('view metrics', () => {
       expect(getViewUpdate(0).initialViewMetrics).toEqual({})
 
       const navigationEntry = createPerformanceEntry(RumPerformanceEntryType.NAVIGATION)
-      clock.tick(navigationEntry.responseStart) // ensure now > responseStart
       notifyPerformanceEntries([navigationEntry])
 
       expect(getViewUpdateCount()).toEqual(1)
@@ -459,9 +461,8 @@ describe('view metrics', () => {
       clock.tick(KEEP_TRACKING_AFTER_VIEW_DELAY - 1)
       lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [
         createPerformanceEntry(RumPerformanceEntryType.PAINT),
-        lcpEntry,
       ])
-      notifyPerformanceEntries([createPerformanceEntry(RumPerformanceEntryType.NAVIGATION)])
+      notifyPerformanceEntries([createPerformanceEntry(RumPerformanceEntryType.NAVIGATION), lcpEntry])
 
       clock.tick(THROTTLE_VIEW_UPDATE_PERIOD)
 
@@ -492,26 +493,30 @@ describe('view metrics', () => {
     describe('when load event happening after initial view end', () => {
       let initialView: { init: ViewEvent; end: ViewEvent; last: ViewEvent }
       let secondView: { init: ViewEvent; last: ViewEvent }
-      const VIEW_DURATION = 100 as Duration
+      let viewDuration: Duration
 
       beforeEach(() => {
         const { getViewUpdateCount, getViewUpdate, startView } = viewTest
 
         expect(getViewUpdateCount()).toEqual(1)
 
-        clock.tick(VIEW_DURATION)
+        // `loadingTime` relies on the "page activity". To make sure we have a valid value, we need
+        // to wait for the page activity time to be known.
+        clock.tick(PAGE_ACTIVITY_END_DELAY)
+
+        viewDuration = relativeNow()
 
         startView()
-
-        clock.tick(VIEW_DURATION)
 
         expect(getViewUpdateCount()).toEqual(3)
 
         lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [
           createPerformanceEntry(RumPerformanceEntryType.PAINT),
+        ])
+        notifyPerformanceEntries([
+          createPerformanceEntry(RumPerformanceEntryType.NAVIGATION),
           createPerformanceEntry(RumPerformanceEntryType.LARGEST_CONTENTFUL_PAINT),
         ])
-        notifyPerformanceEntries([createPerformanceEntry(RumPerformanceEntryType.NAVIGATION)])
 
         clock.tick(THROTTLE_VIEW_UPDATE_PERIOD)
 
@@ -549,8 +554,8 @@ describe('view metrics', () => {
       })
 
       it('should not update the initial view duration when updating it with new timings', () => {
-        expect(initialView.end.duration).toBe(VIEW_DURATION)
-        expect(initialView.last.duration).toBe(VIEW_DURATION)
+        expect(initialView.end.duration).toBe(viewDuration)
+        expect(initialView.last.duration).toBe(viewDuration)
       })
 
       it('should update the initial view loadingTime following the loadEventEnd value', () => {
@@ -604,9 +609,11 @@ describe('view custom timings', () => {
   })
 
   it('should add custom timing to current view', () => {
+    clock.tick(0)
     const { getViewUpdate, startView, addTiming } = viewTest
 
     startView()
+
     const currentViewId = getViewUpdate(2).id
     clock.tick(20)
     addTiming('foo')
@@ -631,8 +638,8 @@ describe('view custom timings', () => {
 
     const view = getViewUpdate(1)
     expect(view.customTimings).toEqual({
-      bar: 30 as Duration,
-      foo: 20 as Duration,
+      bar: clock.relative(30),
+      foo: clock.relative(20),
     })
   })
 
@@ -649,8 +656,8 @@ describe('view custom timings', () => {
 
     let view = getViewUpdate(1)
     expect(view.customTimings).toEqual({
-      bar: 30 as Duration,
-      foo: 20 as Duration,
+      bar: clock.relative(30),
+      foo: clock.relative(20),
     })
 
     clock.tick(20)
@@ -660,8 +667,8 @@ describe('view custom timings', () => {
 
     view = getViewUpdate(2)
     expect(view.customTimings).toEqual({
-      bar: 30 as Duration,
-      foo: (THROTTLE_VIEW_UPDATE_PERIOD + 50) as Duration,
+      bar: clock.relative(30),
+      foo: clock.relative(THROTTLE_VIEW_UPDATE_PERIOD + 50),
     })
   })
 
@@ -674,7 +681,7 @@ describe('view custom timings', () => {
     clock.tick(THROTTLE_VIEW_UPDATE_PERIOD)
 
     expect(getViewUpdate(1).customTimings).toEqual({
-      foo: 1234 as Duration,
+      foo: clock.relative(1234),
     })
   })
 
@@ -687,7 +694,7 @@ describe('view custom timings', () => {
     clock.tick(THROTTLE_VIEW_UPDATE_PERIOD)
 
     expect(getViewUpdate(1).customTimings).toEqual({
-      foo: 1234 as Duration,
+      foo: clock.relative(1234),
     })
   })
 
@@ -702,12 +709,13 @@ describe('view custom timings', () => {
     clock.tick(THROTTLE_VIEW_UPDATE_PERIOD)
 
     expect(getViewUpdate(1).customTimings).toEqual({
-      'foo_bar-qux.@zip_21_$____': 1234 as Duration,
+      'foo_bar-qux.@zip_21_$____': clock.relative(1234),
     })
     expect(displaySpy).toHaveBeenCalled()
   })
 
   it('should not add custom timing when the session has expired', () => {
+    clock.tick(0)
     const { getViewUpdateCount, addTiming } = viewTest
 
     lifeCycle.notify(LifeCycleEventType.SESSION_EXPIRED)
@@ -751,11 +759,11 @@ describe('start view', () => {
     expect(getViewUpdate(1).id).toBe(initialViewId)
     expect(getViewUpdate(1).isActive).toBe(false)
     expect(getViewUpdate(1).startClocks.relative).toBe(0 as RelativeTime)
-    expect(getViewUpdate(1).duration).toBe(10 as Duration)
+    expect(getViewUpdate(1).duration).toBe(clock.relative(10))
 
     expect(getViewUpdate(2).id).not.toBe(initialViewId)
     expect(getViewUpdate(2).isActive).toBe(true)
-    expect(getViewUpdate(2).startClocks.relative).toBe(10 as RelativeTime)
+    expect(getViewUpdate(2).startClocks.relative).toBe(clock.relative(10))
   })
 
   it('should name the view', () => {
@@ -936,6 +944,24 @@ describe('view event count', () => {
 
       startView({ context: { foo: 'bar' } })
       expect(getViewUpdate(2).context).toBeUndefined()
+    })
+
+    it('should set view context with setViewContext', () => {
+      mockExperimentalFeatures([ExperimentalFeature.VIEW_SPECIFIC_CONTEXT])
+      viewTest = setupViewTest({ lifeCycle })
+      const { getViewUpdate, setViewContext } = viewTest
+
+      setViewContext({ foo: 'bar' })
+      expect(getViewUpdate(1).context).toEqual({ foo: 'bar' })
+    })
+
+    it('should set view context with setViewContextProperty', () => {
+      mockExperimentalFeatures([ExperimentalFeature.VIEW_SPECIFIC_CONTEXT])
+      viewTest = setupViewTest({ lifeCycle })
+      const { getViewUpdate, setViewContextProperty } = viewTest
+
+      setViewContextProperty('foo', 'bar')
+      expect(getViewUpdate(1).context).toEqual({ foo: 'bar' })
     })
   })
 

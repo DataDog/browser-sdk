@@ -41,9 +41,8 @@ export function startPerformanceCollection(lifeCycle: LifeCycle, configuration: 
     const handlePerformanceEntryList = monitor((entries: PerformanceObserverEntryList) =>
       handleRumPerformanceEntries(lifeCycle, entries.getEntries())
     )
-    const mainEntries = [RumPerformanceEntryType.LONG_TASK, RumPerformanceEntryType.PAINT]
+    const mainEntries = [RumPerformanceEntryType.PAINT]
     const experimentalEntries = [
-      RumPerformanceEntryType.LARGEST_CONTENTFUL_PAINT,
       RumPerformanceEntryType.FIRST_INPUT,
       RumPerformanceEntryType.LAYOUT_SHIFT,
       RumPerformanceEntryType.EVENT,

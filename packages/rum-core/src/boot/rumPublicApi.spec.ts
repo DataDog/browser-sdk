@@ -28,10 +28,12 @@ const noopStartRum = (): ReturnType<StartRum> => ({
   addTiming: () => undefined,
   addFeatureFlagEvaluation: () => undefined,
   startView: () => undefined,
+  setViewContext: () => undefined,
+  setViewContextProperty: () => undefined,
   updateViewName: () => undefined,
   getInternalContext: () => undefined,
   lifeCycle: {} as any,
-  viewContexts: {} as any,
+  viewHistory: {} as any,
   session: {} as any,
   stopSession: () => undefined,
   startDurationVital: () => ({}) as DurationVitalReference,
@@ -217,7 +219,7 @@ describe('rum public api', () => {
         clock.tick(ONE_SECOND)
         rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
 
-        expect(addActionSpy.calls.argsFor(0)[0].startClocks.relative as number).toEqual(ONE_SECOND)
+        expect(addActionSpy.calls.argsFor(0)[0].startClocks.relative as number).toEqual(clock.relative(ONE_SECOND))
       })
 
       it('stores a deep copy of the global context', () => {
@@ -319,7 +321,7 @@ describe('rum public api', () => {
         clock.tick(ONE_SECOND)
         rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
 
-        expect(addErrorSpy.calls.argsFor(0)[0].startClocks.relative as number).toEqual(ONE_SECOND)
+        expect(addErrorSpy.calls.argsFor(0)[0].startClocks.relative as number).toEqual(clock.relative(ONE_SECOND))
       })
 
       it('stores a deep copy of the global context', () => {
@@ -868,6 +870,51 @@ describe('rum public api', () => {
       ;(rumPublicApi as any).updateViewName('foo')
 
       expect(updateViewNameSpy).toHaveBeenCalledWith('foo')
+    })
+  })
+
+  describe('set view specific context', () => {
+    let rumPublicApi: RumPublicApi
+    let setViewContextSpy: jasmine.Spy<ReturnType<StartRum>['setViewContext']>
+    let setViewContextPropertySpy: jasmine.Spy<ReturnType<StartRum>['setViewContextProperty']>
+    beforeEach(() => {
+      setViewContextSpy = jasmine.createSpy()
+      setViewContextPropertySpy = jasmine.createSpy()
+      rumPublicApi = makeRumPublicApi(
+        () => ({
+          ...noopStartRum(),
+          setViewContext: setViewContextSpy,
+          setViewContextProperty: setViewContextPropertySpy,
+        }),
+        noopRecorderApi
+      )
+    })
+
+    it('should set view specific context with setViewContext', () => {
+      mockExperimentalFeatures([ExperimentalFeature.VIEW_SPECIFIC_CONTEXT])
+
+      rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
+      /* eslint-disable @typescript-eslint/no-unsafe-call */
+      ;(rumPublicApi as any).setViewContext({ foo: 'bar' })
+
+      expect(setViewContextSpy).toHaveBeenCalledWith({ foo: 'bar' })
+    })
+
+    it('should set view specific context with setViewContextProperty', () => {
+      mockExperimentalFeatures([ExperimentalFeature.VIEW_SPECIFIC_CONTEXT])
+
+      rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
+      /* eslint-disable @typescript-eslint/no-unsafe-call */
+      ;(rumPublicApi as any).setViewContextProperty('foo', 'bar')
+
+      expect(setViewContextPropertySpy).toHaveBeenCalledWith('foo', 'bar')
+    })
+
+    it('should not expose view specific context when ff is disabled', () => {
+      rumPublicApi = makeRumPublicApi(noopStartRum, noopRecorderApi)
+      rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
+      expect((rumPublicApi as any).setViewContext).toBeUndefined()
+      expect((rumPublicApi as any).setViewContextProperty).toBeUndefined()
     })
   })
 
