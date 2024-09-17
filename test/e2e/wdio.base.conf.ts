@@ -40,7 +40,7 @@ export const config: OptionsWithLogsPath = {
   exclude: ['./scenario/developer-extension/*.scenario.ts'],
   capabilities: [],
   maxInstances: 5,
-  logLevel: 'warn',
+  logLevel: 'debug',
   bail: 0,
   waitforTimeout: 10000,
   connectionRetryTimeout: 90000,
