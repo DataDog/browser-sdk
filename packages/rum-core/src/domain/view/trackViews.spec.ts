@@ -376,6 +376,7 @@ describe('view metrics', () => {
     ;({ notifyPerformanceEntries } = mockPerformanceObserver())
 
     clock = mockClock()
+    ;({ notifyPerformanceEntries } = mockPerformanceObserver())
     viewTest = setupViewTest({ lifeCycle })
 
     registerCleanupTask(() => {
@@ -416,7 +417,7 @@ describe('view metrics', () => {
       }
       const { getViewUpdate, getViewUpdateCount, getViewCreateCount, startView } = viewTest
       startView()
-      clock.tick(0)
+      clock.tick(0) // run immediate timeouts (mostly for `trackNavigationTimings`)
       expect(getViewCreateCount()).toEqual(2)
 
       lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [
@@ -508,10 +509,7 @@ describe('view metrics', () => {
         lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [
           createPerformanceEntry(RumPerformanceEntryType.PAINT),
         ])
-        notifyPerformanceEntries([
-          createPerformanceEntry(RumPerformanceEntryType.NAVIGATION),
-          createPerformanceEntry(RumPerformanceEntryType.LARGEST_CONTENTFUL_PAINT),
-        ])
+        notifyPerformanceEntries([createPerformanceEntry(RumPerformanceEntryType.LARGEST_CONTENTFUL_PAINT)])
 
         clock.tick(THROTTLE_VIEW_UPDATE_PERIOD)
 
@@ -598,7 +596,7 @@ describe('view custom timings', () => {
   })
 
   it('should add custom timing to current view', () => {
-    clock.tick(0)
+    clock.tick(0) // run immediate timeouts (mostly for `trackNavigationTimings`)
     const { getViewUpdate, startView, addTiming } = viewTest
 
     startView()
@@ -704,7 +702,7 @@ describe('view custom timings', () => {
   })
 
   it('should not add custom timing when the session has expired', () => {
-    clock.tick(0)
+    clock.tick(0) // run immediate timeouts (mostly for `trackNavigationTimings`)
     const { getViewUpdateCount, addTiming } = viewTest
 
     lifeCycle.notify(LifeCycleEventType.SESSION_EXPIRED)
