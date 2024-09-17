@@ -21,7 +21,6 @@ export function trackFirstContentfulPaint(
     const fcpEntry = find(
       entries,
       (entry): entry is RumPerformancePaintTiming =>
-        entry.entryType === RumPerformanceEntryType.PAINT &&
         entry.name === 'first-contentful-paint' &&
         entry.startTime < firstHidden.timeStamp &&
         entry.startTime < FCP_MAXIMUM_DELAY
