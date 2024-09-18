@@ -16,7 +16,7 @@ const FIRST_EMOJI_REGEX = /\p{Emoji_Presentation}/u
  */
 exports.addNewChangesToChangelog = async (previousContent) => {
   const emojisLegend = await getEmojisLegend()
-  const changesList = getChangesList()
+  const changeLists = getChangeLists()
 
   return `\
 # Changelog
@@ -27,7 +27,7 @@ ${emojisLegend}
 
 ## v${browserSdkVersion}
 
-${changesList}
+${changeLists}
 ${previousContent.slice(previousContent.indexOf('\n##'))}`
 }
 
@@ -54,12 +54,12 @@ async function getEmojisLegend() {
   return lines.join('\n')
 }
 
-function getChangesList() {
+function getChangeLists() {
   const lastTagName = getLastReleaseTagName()
   const commits = command`git log ${[`${lastTagName}..HEAD`, '--pretty=format:%H %s']}`.run().split('\n')
 
-  let internalChanges = []
-  let publicChanges = []
+  const internalChanges = []
+  const publicChanges = []
 
   commits.forEach((commit) => {
     const spaceIndex = commit.indexOf(' ')
@@ -78,19 +78,12 @@ function getChangesList() {
     }
   })
 
-  const sort = (entries, priority) => entries.sort((a, b) => sortByEmojiPriority(a, b, priority))
-  internalChanges = sort(internalChanges, INTERNAL_EMOJI_PRIORITY)
-  publicChanges = sort(publicChanges, PUBLIC_EMOJI_PRIORITY)
-
-  return `
-**Public Changes:**
-
-${publicChanges.join('\n')}
-
-**Internal Changes:**
-
-${internalChanges.join('\n')}
-`
+  return [
+    formatChangeList('Public Changes', publicChanges, PUBLIC_EMOJI_PRIORITY),
+    formatChangeList('Internal Changes', internalChanges, INTERNAL_EMOJI_PRIORITY),
+  ]
+    .filter(Boolean)
+    .join('\n\n')
 }
 
 function getLastReleaseTagName() {
@@ -108,6 +101,15 @@ function sortByEmojiPriority(a, b, priorityList) {
     return emoji && priorityList.includes(emoji) ? priorityList.indexOf(emoji) : Number.MAX_VALUE
   }
   return getFirstRelevantEmojiIndex(a) - getFirstRelevantEmojiIndex(b)
+}
+
+function formatChangeList(title, changes, priority) {
+  if (!changes.length) {
+    return ''
+  }
+
+  const formatedList = changes.sort((a, b) => sortByEmojiPriority(a, b, priority)).join('\n')
+  return `**${title}:**\n\n${formatedList}`
 }
 
 function formatChange(hash, message) {
