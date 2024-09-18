@@ -1,11 +1,12 @@
 const { readFile } = require('fs/promises')
+const fs = require('fs')
 
 const emojiNameMap = require('emoji-name-map')
 
 const { browserSdkVersion } = require('../../../lib/browserSdkVersion')
 const { command } = require('../../../lib/command')
 const { getAffectedPackages } = require('./getAffectedPackages')
-const { CONTRIBUTING_FILE, PUBLIC_EMOJI_PRIORITY, INTERNAL_EMOJI_PRIORITY } = require('./constants')
+const { CHANGELOG_FILE, CONTRIBUTING_FILE, PUBLIC_EMOJI_PRIORITY, INTERNAL_EMOJI_PRIORITY } = require('./constants')
 
 const EMOJI_REGEX = /^\p{Emoji_Presentation}/u
 
@@ -54,11 +55,8 @@ async function getEmojisLegend() {
 }
 
 function getChangesList() {
-  command`git fetch --tags -f -q`.run()
-  const lastTagHash = command`git rev-list --tags --max-count=1`.run().trim()
-  const lastTagName = command`git describe --tags ${lastTagHash}`.run()
-
-  const commits = command`git log ${[`${lastTagName.trimEnd()}..HEAD`, '--pretty=format:%H %s']}`.run()
+  const lastTagName = getLastReleaseTagName()
+  const commits = command`git log ${[`${lastTagName}..HEAD`, '--pretty=format:%H %s']}`.run()
   const changesWithEmojis = emojiNameToUnicode(commits)
 
   let changes = changesWithEmojis.split('\n').filter(isNotVersionEntry)
@@ -96,6 +94,15 @@ ${publicChanges.join('\n')}
 
 ${internalChanges.join('\n')}
 `.replace(/\(#(\d+)\)/gm, (_, id) => `([#${id}](https://github.com/DataDog/browser-sdk/pull/${id}))`)
+}
+
+function getLastReleaseTagName() {
+  const changelog = fs.readFileSync(CHANGELOG_FILE, { encoding: 'utf-8' })
+  const match = changelog.match(/^## (v\d+\.\d+\.\d+.*)/m)
+  if (!match) {
+    throw new Error('Could not find the last release version in the changelog')
+  }
+  return match[1]
 }
 
 function sortByEmojiPriority(a, b, priorityList) {
