@@ -4,6 +4,7 @@ import type { NodePrivacyLevel } from '@datadog/browser-rum-core'
 import type { NodeWithSerializedNode } from './serialization.types'
 
 const serializedNodeIds = new WeakMap<Node, number>()
+const serializedNodesByIds = new Map<number, Node>()
 
 export function hasSerializedNode(node: Node): node is NodeWithSerializedNode {
   return serializedNodeIds.has(node)
@@ -26,8 +27,13 @@ export function getSerializedNodeId(node: Node) {
   return serializedNodeIds.get(node)
 }
 
+export function getSerializedNodeById(serializeNodeId: number): Node | undefined {
+  return serializedNodesByIds.get(serializeNodeId)
+}
+
 export function setSerializedNodeId(node: Node, serializeNodeId: number) {
   serializedNodeIds.set(node, serializeNodeId)
+  serializedNodesByIds.set(serializeNodeId, node)
 }
 
 /**
