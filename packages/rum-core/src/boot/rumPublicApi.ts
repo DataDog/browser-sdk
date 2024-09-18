@@ -362,6 +362,23 @@ export function makeRumPublicApi(
     trackingConsentState,
     customVitalsState,
     (configuration, deflateWorker, initialViewOptions) => {
+      if (isExperimentalFeatureEnabled(ExperimentalFeature.ANONYMOUS_USER_TRACKING)) {
+        /**
+         * Set the anonymous user id to all events, stored in `@usr.anonymous_id`
+         *
+         * Enable anonymous user tracking feature flag
+         * TODO next major release: include this feature by default
+         */
+        let anonymousId = getAnonymousIdFromStorage()
+
+        if (!anonymousId) {
+          anonymousId = generateAnonymousId()
+          const { type } = configuration.sessionStoreStrategyType ?? { type: 'LocalStorage' }
+          setAnonymousIdInStorage(type, anonymousId)
+        }
+        userContextManager.setContextProperty('anonymous_id', anonymousId)
+      }
+
       if (configuration.storeContextsAcrossPages) {
         storeContextManager(configuration, globalContextManager, RUM_STORAGE_KEY, CustomerDataType.GlobalContext)
         storeContextManager(configuration, userContextManager, RUM_STORAGE_KEY, CustomerDataType.User)
@@ -448,22 +465,6 @@ export function makeRumPublicApi(
         ;(rumPublicApi as any).setViewContextProperty = monitor((key: string, value: any) => {
           strategy.setViewContextProperty(key, value)
         })
-      }
-      if (isExperimentalFeatureEnabled(ExperimentalFeature.ANONYMOUS_USER_TRACKING)) {
-        /**
-         * Set the anonymous user id to all events, stored in `@usr.anonymous_id`
-         *
-         * Enable anonymous user tracking feature flag
-         * TODO next major release: include this feature by default
-         */
-        let anonymousId = getAnonymousIdFromStorage()
-
-        if (!anonymousId) {
-          anonymousId = generateAnonymousId()
-          const { type } = configuration.sessionStoreStrategyType ?? { type: 'LocalStorage' }
-          setAnonymousIdInStorage(type, anonymousId)
-        }
-        userContextManager.setContextProperty('anonymous_id', anonymousId)
       }
     }),
 
