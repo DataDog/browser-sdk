@@ -8,7 +8,7 @@ const { command } = require('../../../lib/command')
 const { getAffectedPackages } = require('./getAffectedPackages')
 const { CHANGELOG_FILE, CONTRIBUTING_FILE, PUBLIC_EMOJI_PRIORITY, INTERNAL_EMOJI_PRIORITY } = require('./constants')
 
-const EMOJI_REGEX = /^\p{Emoji_Presentation}/u
+const FIRST_EMOJI_REGEX = /\p{Emoji_Presentation}/u
 
 /**
  * @param previousContent {string}
@@ -56,37 +56,31 @@ async function getEmojisLegend() {
 
 function getChangesList() {
   const lastTagName = getLastReleaseTagName()
-  const commits = command`git log ${[`${lastTagName}..HEAD`, '--pretty=format:%H %s']}`.run()
-  const changesWithEmojis = emojiNameToUnicode(commits)
+  const commits = command`git log ${[`${lastTagName}..HEAD`, '--pretty=format:%H %s']}`.run().split('\n')
 
-  let changes = changesWithEmojis.split('\n')
   let internalChanges = []
   let publicChanges = []
 
-  changes.forEach((entry) => {
+  commits.forEach((entry) => {
     let trimmedEntry = entry.trim()
     const hash = trimmedEntry.split(' ')[0]
     const message = trimmedEntry.slice(trimmedEntry.indexOf(' ') + 1)
     if (isVersionMessage(message)) {
       return
     }
-    const affectedPackages = getAffectedPackages(hash)
 
-    const formattedPackages = affectedPackages
-      .map((packageDirectoryName) => `[${packageDirectoryName.toUpperCase()}]`)
-      .join(' ')
-
-    if (PUBLIC_EMOJI_PRIORITY.some((emoji) => message.startsWith(emoji))) {
-      publicChanges.push(`${message} ${formattedPackages}`)
+    const change = formatChange(hash, message)
+    const emoji = findFirstEmoji(change)
+    if (PUBLIC_EMOJI_PRIORITY.includes(emoji)) {
+      publicChanges.push(change)
     } else {
-      internalChanges.push(`${message} ${formattedPackages}`)
+      internalChanges.push(change)
     }
   })
 
-  const sortAndFormat = (entries, priority) =>
-    entries.sort((a, b) => sortByEmojiPriority(a, b, priority)).map((entry) => `- ${entry}`)
-  internalChanges = sortAndFormat(internalChanges, INTERNAL_EMOJI_PRIORITY)
-  publicChanges = sortAndFormat(publicChanges, PUBLIC_EMOJI_PRIORITY)
+  const sort = (entries, priority) => entries.sort((a, b) => sortByEmojiPriority(a, b, priority))
+  internalChanges = sort(internalChanges, INTERNAL_EMOJI_PRIORITY)
+  publicChanges = sort(publicChanges, PUBLIC_EMOJI_PRIORITY)
 
   return `
 **Public Changes:**
@@ -96,7 +90,7 @@ ${publicChanges.join('\n')}
 **Internal Changes:**
 
 ${internalChanges.join('\n')}
-`.replace(/\(#(\d+)\)/gm, (_, id) => `([#${id}](https://github.com/DataDog/browser-sdk/pull/${id}))`)
+`
 }
 
 function getLastReleaseTagName() {
@@ -110,16 +104,37 @@ function getLastReleaseTagName() {
 
 function sortByEmojiPriority(a, b, priorityList) {
   const getFirstRelevantEmojiIndex = (text) => {
-    const matches = text.match(EMOJI_REGEX) || []
+    const matches = text.match(FIRST_EMOJI_REGEX) || []
     const emoji = matches.find((emoji) => priorityList.includes(emoji))
     return emoji ? priorityList.indexOf(emoji) : Number.MAX_VALUE
   }
   return getFirstRelevantEmojiIndex(a) - getFirstRelevantEmojiIndex(b)
 }
 
-function emojiNameToUnicode(changes) {
-  const emojiNameRegex = new RegExp(/:[^:\s]*(?:::[^:\s]*)*:/, 'gm')
-  return changes.replace(emojiNameRegex, (emoji) => emojiNameMap.get(emoji) || emoji)
+function formatChange(hash, message) {
+  let change = `- ${message}`
+
+  const affectedPackages = getAffectedPackages(hash)
+  if (affectedPackages.length > 0) {
+    const formattedPackages = affectedPackages
+      .map((packageDirectoryName) => `[${packageDirectoryName.toUpperCase()}]`)
+      .join(' ')
+    change += ` ${formattedPackages}`
+  }
+
+  return addLinksToGithubIssues(emojiNameToUnicode(change))
+}
+
+function emojiNameToUnicode(message) {
+  return message.replace(/:[^:\s]*(?:::[^:\s]*)*:/g, (emoji) => emojiNameMap.get(emoji) || emoji)
+}
+
+function addLinksToGithubIssues(message) {
+  return message.replace(/\(#(\d+)\)/gm, (_, id) => `([#${id}](https://github.com/DataDog/browser-sdk/pull/${id}))`)
+}
+
+function findFirstEmoji(message) {
+  return message.match(FIRST_EMOJI_REGEX)?.[0]
 }
 
 function isVersionMessage(line) {
