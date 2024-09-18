@@ -61,10 +61,10 @@ function getChangesList() {
   let internalChanges = []
   let publicChanges = []
 
-  commits.forEach((entry) => {
-    let trimmedEntry = entry.trim()
-    const hash = trimmedEntry.split(' ')[0]
-    const message = trimmedEntry.slice(trimmedEntry.indexOf(' ') + 1)
+  commits.forEach((commit) => {
+    const spaceIndex = commit.indexOf(' ')
+    const hash = commit.slice(0, spaceIndex)
+    const message = commit.slice(spaceIndex + 1)
     if (isVersionMessage(message)) {
       return
     }
@@ -104,9 +104,8 @@ function getLastReleaseTagName() {
 
 function sortByEmojiPriority(a, b, priorityList) {
   const getFirstRelevantEmojiIndex = (text) => {
-    const matches = text.match(FIRST_EMOJI_REGEX) || []
-    const emoji = matches.find((emoji) => priorityList.includes(emoji))
-    return emoji ? priorityList.indexOf(emoji) : Number.MAX_VALUE
+    const emoji = findFirstEmoji(text)
+    return emoji && priorityList.includes(emoji) ? priorityList.indexOf(emoji) : Number.MAX_VALUE
   }
   return getFirstRelevantEmojiIndex(a) - getFirstRelevantEmojiIndex(b)
 }
