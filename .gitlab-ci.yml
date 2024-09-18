@@ -1,7 +1,7 @@
 variables:
   CURRENT_STAGING: staging-38
   APP: 'browser-sdk'
-  CURRENT_CI_IMAGE: 71
+  CURRENT_CI_IMAGE: 72
   BUILD_STABLE_REGISTRY: 'registry.ddbuild.io'
   CI_IMAGE: '$BUILD_STABLE_REGISTRY/ci/$APP:$CURRENT_CI_IMAGE'
   GIT_REPOSITORY: 'git@github.com:DataDog/browser-sdk.git'
