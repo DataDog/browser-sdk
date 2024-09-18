@@ -89,7 +89,7 @@
     "webpack-dev-middleware": "7.4.2"
   },
   "resolutions": {
-    "puppeteer-core@npm:20.9.0/ws": "8.17.1"
+    "puppeteer-core@npm:21.11.0/ws": "8.17.1"
   },
   "volta": {
     "node": "20.17.0",
