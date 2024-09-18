@@ -59,7 +59,7 @@ function getChangesList() {
   const commits = command`git log ${[`${lastTagName}..HEAD`, '--pretty=format:%H %s']}`.run()
   const changesWithEmojis = emojiNameToUnicode(commits)
 
-  let changes = changesWithEmojis.split('\n').filter(isNotVersionEntry)
+  let changes = changesWithEmojis.split('\n')
   let internalChanges = []
   let publicChanges = []
 
@@ -67,6 +67,9 @@ function getChangesList() {
     let trimmedEntry = entry.trim()
     const hash = trimmedEntry.split(' ')[0]
     const message = trimmedEntry.slice(trimmedEntry.indexOf(' ') + 1)
+    if (isVersionMessage(message)) {
+      return
+    }
     const affectedPackages = getAffectedPackages(hash)
 
     const formattedPackages = affectedPackages
@@ -119,6 +122,6 @@ function emojiNameToUnicode(changes) {
   return changes.replace(emojiNameRegex, (emoji) => emojiNameMap.get(emoji) || emoji)
 }
 
-function isNotVersionEntry(line) {
-  return !/^v\d+\.\d+\.\d+/.test(line)
+function isVersionMessage(line) {
+  return /^v\d+\.\d+\.\d+/.test(line)
 }
