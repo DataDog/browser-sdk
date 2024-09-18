@@ -1,10 +1,9 @@
-import type { RelativeTime } from '@datadog/browser-core'
 import { runOnReadyState } from '@datadog/browser-core'
-import { supportPerformanceTimingEvent, RumPerformanceEntryType } from '../../browser/performanceObservable'
+import { RumPerformanceEntryType } from '../../browser/performanceObservable'
 import type { RumPerformanceResourceTiming } from '../../browser/performanceObservable'
 import type { RumConfiguration } from '../configuration'
 import { getDocumentTraceId } from '../tracing/getDocumentTraceId'
-import { computeRelativePerformanceTiming } from '../../browser/performanceUtils'
+import { getNavigationEntry } from '../../browser/performanceUtils'
 import { FAKE_INITIAL_DOCUMENT } from './resourceUtils'
 
 export function retrieveInitialDocumentResourceTiming(
@@ -12,37 +11,12 @@ export function retrieveInitialDocumentResourceTiming(
   callback: (timing: RumPerformanceResourceTiming) => void
 ) {
   runOnReadyState(configuration, 'interactive', () => {
-    let timing: RumPerformanceResourceTiming
-
-    const forcedAttributes = {
+    const entry: RumPerformanceResourceTiming = Object.assign(getNavigationEntry().toJSON(), {
       entryType: RumPerformanceEntryType.RESOURCE as const,
       initiatorType: FAKE_INITIAL_DOCUMENT,
       traceId: getDocumentTraceId(document),
-      toJSON: () => ({ ...timing, toJSON: undefined }),
-    }
-    if (
-      supportPerformanceTimingEvent(RumPerformanceEntryType.NAVIGATION) &&
-      performance.getEntriesByType(RumPerformanceEntryType.NAVIGATION).length > 0
-    ) {
-      const navigationEntry = performance.getEntriesByType(RumPerformanceEntryType.NAVIGATION)[0]
-      timing = {
-        ...(navigationEntry.toJSON() as RumPerformanceResourceTiming),
-        ...forcedAttributes,
-      }
-    } else {
-      const relativePerformanceTiming = computeRelativePerformanceTiming()
-      timing = {
-        ...relativePerformanceTiming,
-        decodedBodySize: 0,
-        encodedBodySize: 0,
-        transferSize: 0,
-        renderBlockingStatus: 'non-blocking',
-        duration: relativePerformanceTiming.responseEnd,
-        name: window.location.href,
-        startTime: 0 as RelativeTime,
-        ...forcedAttributes,
-      }
-    }
-    callback(timing)
+      toJSON: () => ({ ...entry, toJSON: undefined }),
+    })
+    callback(entry)
   })
 }
