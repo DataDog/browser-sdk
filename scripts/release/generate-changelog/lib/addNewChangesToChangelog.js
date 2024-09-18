@@ -8,7 +8,7 @@ const { command } = require('../../../lib/command')
 const { getAffectedPackages } = require('./getAffectedPackages')
 const { CHANGELOG_FILE, CONTRIBUTING_FILE, PUBLIC_EMOJI_PRIORITY, INTERNAL_EMOJI_PRIORITY } = require('./constants')
 
-const FIRST_EMOJI_REGEX = /\p{Emoji_Presentation}/u
+const FIRST_EMOJI_REGEX = /\p{Extended_Pictographic}/u
 
 /**
  * @param previousContent {string}
