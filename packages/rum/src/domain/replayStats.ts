@@ -58,7 +58,7 @@ function deleteOldestStats() {
     const toDelete = statsPerView.keys().next().value
     if (toDelete) {
       statsPerView.delete(toDelete)
-    } 
+    }
   } else {
     // IE11 doesn't support map.keys
     let isFirst = true
