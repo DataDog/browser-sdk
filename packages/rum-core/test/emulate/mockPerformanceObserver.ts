@@ -1,49 +1,43 @@
 import { registerCleanupTask } from '@datadog/browser-core/test'
-import { includes, objectValues } from '@datadog/browser-core'
+import { objectValues } from '@datadog/browser-core'
 import { RumPerformanceEntryType, type RumPerformanceEntry } from '../../src/browser/performanceObservable'
-
-type PerformanceObserverInstance = {
-  callback: PerformanceObserverCallback
-  entryTypes: string[]
-}
 
 export function mockPerformanceObserver({ typeSupported = true, emulateAllEntryTypesUnsupported = false } = {}) {
   const originalPerformanceObserver = window.PerformanceObserver
-  const instances = new Set<PerformanceObserverInstance>()
-  let performanceObserver: PerformanceObserver
+  const instances = new Set<MockPerformanceObserver>()
   let bufferedEntries: RumPerformanceEntry[] = []
 
-  const mock = (callback: PerformanceObserverCallback) => {
-    const instance = { callback, entryTypes: [] as string[] }
+  class MockPerformanceObserver {
+    static supportedEntryTypes = objectValues(RumPerformanceEntryType)
 
-    performanceObserver = {
-      disconnect() {
-        instances.delete(instance)
-      },
-      observe({ entryTypes, type, buffered }: PerformanceObserverInit) {
-        if (!typeSupported && type) {
-          throw new TypeError("Failed to execute 'observe' on 'PerformanceObserver")
-        }
-        if (emulateAllEntryTypesUnsupported) {
-          throw new TypeError('entryTypes contained only unsupported types')
-        }
-        instance.entryTypes = entryTypes || (type ? [type] : [])
-        instances.add(instance)
-        if (buffered) {
-          notify(instance, bufferedEntries)
-        }
-      },
-      takeRecords() {
-        return []
-      },
+    public entryTypes: string[] = []
+
+    constructor(public callback: PerformanceObserverCallback) {}
+
+    disconnect() {
+      instances.delete(this)
     }
-    return performanceObserver
+
+    observe({ entryTypes, type, buffered }: PerformanceObserverInit) {
+      if (!typeSupported && type) {
+        throw new TypeError("Failed to execute 'observe' on 'PerformanceObserver")
+      }
+      if (emulateAllEntryTypesUnsupported) {
+        throw new TypeError('entryTypes contained only unsupported types')
+      }
+      this.entryTypes = entryTypes || (type ? [type] : [])
+      instances.add(this)
+      if (buffered) {
+        notify(this, bufferedEntries)
+      }
+    }
+
+    takeRecords() {
+      return []
+    }
   }
 
-  mock.supportedEntryTypes = objectValues(RumPerformanceEntryType)
-  mock.supportedEntryTypes.includes = (entryType) => includes(mock.supportedEntryTypes, entryType)
-
-  window.PerformanceObserver = mock as unknown as typeof window.PerformanceObserver
+  window.PerformanceObserver = MockPerformanceObserver
 
   registerCleanupTask(() => {
     window.PerformanceObserver = originalPerformanceObserver
@@ -51,18 +45,18 @@ export function mockPerformanceObserver({ typeSupported = true, emulateAllEntryT
     bufferedEntries = []
   })
 
-  function notify({ callback, entryTypes }: PerformanceObserverInstance, entries: RumPerformanceEntry[]) {
-    const filteredEntries = entries.filter((entry) => includes(entryTypes, entry.entryType))
+  function notify(observer: MockPerformanceObserver, entries: RumPerformanceEntry[]) {
+    const filteredEntries = entries.filter((entry) => observer.entryTypes.includes(entry.entryType))
     if (!filteredEntries.length) {
       return
     }
-    callback(
+    observer.callback(
       {
         getEntries: () => filteredEntries as PerformanceEntryList,
         getEntriesByName: () => filteredEntries as PerformanceEntryList,
         getEntriesByType: () => filteredEntries as PerformanceEntryList,
       },
-      performanceObserver
+      observer
     )
   }
 

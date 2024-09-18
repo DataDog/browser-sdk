@@ -1,5 +1,3 @@
-import { isIE } from '@datadog/browser-core'
-
 import type { RumConfiguration } from '@datadog/browser-rum-core'
 import {
   STABLE_ATTRIBUTES,
@@ -13,12 +11,6 @@ import { serializeAttribute } from './serializeAttribute'
 const DEFAULT_CONFIGURATION = {} as RumConfiguration
 
 describe('serializeAttribute', () => {
-  beforeEach(() => {
-    if (isIE()) {
-      pending('IE not supported')
-    }
-  })
-
   it('truncates "data:" URIs after long string length', () => {
     const node = document.createElement('p')
 
