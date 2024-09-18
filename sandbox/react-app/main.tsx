@@ -29,6 +29,10 @@ const router = createBrowserRouter(
           path: 'test-error-boundary',
           Component: TestErrorBoundaryPage,
         },
+        {
+          path: '*',
+          Component: WildCardPage,
+        },
       ],
     },
   ],
@@ -63,6 +67,11 @@ function HomePage() {
 function UserPage() {
   const { id } = useParams()
   return <h1>User {id}</h1>
+}
+
+function WildCardPage() {
+  const path = useParams()['*']
+  return <h1>Wildcard: {path}</h1>
 }
 
 export function TestErrorBoundaryPage() {
