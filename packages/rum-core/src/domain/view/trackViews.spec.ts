@@ -459,7 +459,7 @@ describe('view metrics', () => {
       lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [
         createPerformanceEntry(RumPerformanceEntryType.PAINT),
       ])
-      notifyPerformanceEntries([createPerformanceEntry(RumPerformanceEntryType.NAVIGATION), lcpEntry])
+      notifyPerformanceEntries([lcpEntry])
 
       clock.tick(THROTTLE_VIEW_UPDATE_PERIOD)
 
@@ -508,7 +508,6 @@ describe('view metrics', () => {
 
         notifyPerformanceEntries([
           createPerformanceEntry(RumPerformanceEntryType.PAINT),
-          createPerformanceEntry(RumPerformanceEntryType.NAVIGATION),
           createPerformanceEntry(RumPerformanceEntryType.LARGEST_CONTENTFUL_PAINT),
         ])
 
