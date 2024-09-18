@@ -1,5 +1,5 @@
 import type { Duration, RelativeTime } from '@datadog/browser-core'
-import { isIE, relativeToClocks } from '@datadog/browser-core'
+import { relativeToClocks } from '@datadog/browser-core'
 import type { GlobalPerformanceBufferMock } from '../../../test'
 import { createPerformanceEntry, mockGlobalPerformanceBuffer } from '../../../test'
 import type { RumPerformanceResourceTiming } from '../../browser/performanceObservable'
@@ -18,9 +18,6 @@ describe('matchRequestResourceEntry', () => {
   let globalPerformanceObjectMock: GlobalPerformanceBufferMock
 
   beforeEach(() => {
-    if (isIE()) {
-      pending('no full rum support')
-    }
     globalPerformanceObjectMock = mockGlobalPerformanceBuffer()
   })
 
