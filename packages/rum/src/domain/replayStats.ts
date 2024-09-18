@@ -54,5 +54,8 @@ function deleteOldestStats() {
   if (!statsPerView) {
     return
   }
-  statsPerView.delete(statsPerView.keys().next().value)
+  const toDelete = statsPerView.keys().next().value
+  if (toDelete) {
+    statsPerView.delete(toDelete)
+  }
 }
