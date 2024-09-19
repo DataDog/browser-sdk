@@ -1,5 +1,4 @@
 import {
-  addTelemetryDebug,
   elapsed,
   ExperimentalFeature,
   isExperimentalFeatureEnabled,
@@ -74,7 +73,6 @@ export function trackInteractionToNextPaint(
 
     const newInteraction = longestInteractions.estimateP98Interaction()
     if (newInteraction && newInteraction.duration !== interactionToNextPaint) {
-      const inpTarget = newInteraction.target
       interactionToNextPaint = newInteraction.duration
       interactionToNextPaintStartTime = elapsed(viewStart, newInteraction.startTime)
 
@@ -94,13 +92,6 @@ export function trackInteractionToNextPaint(
           interactionToNextPaintTargetSelector = interactionSelectorMap.get(newInteraction.startTime)
           interactionSelectorMap.delete(newInteraction.startTime)
         }
-        addTelemetryDebug('Fail to get INP target selector', {
-          hasTarget: !!inpTarget,
-          targetIsConnected: inpTarget ? inpTarget.isConnected : undefined,
-          targetIsElementNode: inpTarget ? isElementNode(inpTarget) : undefined,
-          inp: newInteraction.duration,
-          isFoundInMap: !!interactionToNextPaintTargetSelector,
-        })
       }
       interactionSelectorMap.forEach((_, key) => {
         if (key > 10 * ONE_SECOND) {
