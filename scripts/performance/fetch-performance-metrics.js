@@ -1,5 +1,5 @@
 const { getOrg2ApiKey, getOrg2AppKey } = require('../lib/secrets')
-const { fetchHandlingError } = require('../lib/execution-utils')
+const { fetchHandlingError } = require('../lib/executionUtils')
 const ONE_DAY_IN_SECOND = 24 * 60 * 60
 
 function fetchPerformanceMetrics(type, names, commitId) {

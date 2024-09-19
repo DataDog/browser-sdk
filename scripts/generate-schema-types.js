@@ -2,7 +2,7 @@ const fs = require('fs')
 const path = require('path')
 const { compileFromFile } = require('json-schema-to-typescript')
 const prettier = require('prettier')
-const { printLog, runMain } = require('./lib/execution-utils')
+const { printLog, runMain } = require('./lib/executionUtils')
 
 const schemasDirectoryPath = path.join(__dirname, '../rum-events-format/schemas')
 const prettierConfigPath = path.join(__dirname, '../.prettierrc.yml')

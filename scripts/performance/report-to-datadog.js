@@ -1,6 +1,6 @@
-const { fetchHandlingError } = require('../lib/execution-utils')
+const { fetchHandlingError } = require('../lib/executionUtils')
 const { getOrg2ApiKey } = require('../lib/secrets')
-const { browserSdkVersion } = require('../lib/browser-sdk-version')
+const { browserSdkVersion } = require('../lib/browserSdkVersion')
 const LOG_INTAKE_URL = 'https://http-intake.logs.datadoghq.com/api/v2/logs'
 const LOG_INTAKE_REQUEST_HEADERS = {
   'DD-API-KEY': getOrg2ApiKey(),

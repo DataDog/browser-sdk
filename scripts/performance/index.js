@@ -1,4 +1,4 @@
-const { runMain } = require('../lib/execution-utils')
+const { runMain } = require('../lib/executionUtils')
 const { reportAsPrComment } = require('./report-as-a-pr-comment')
 const { reportToDatadog } = require('./report-to-datadog')
 const { calculateBundleSizes } = require('./bundle-size/compute-bundle-size')

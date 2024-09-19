@@ -1,7 +1,7 @@
 const { readFileSync } = require('fs')
 const path = require('path')
 const execSync = require('child_process').execSync
-const { browserSdkVersion } = require('./browser-sdk-version')
+const { browserSdkVersion } = require('./browserSdkVersion')
 const { command } = require('./command')
 
 /**

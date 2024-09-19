@@ -10,7 +10,7 @@ const rumSlimConfig = require('../packages/rum-slim/webpack.config')
 const rumConfig = require('../packages/rum/webpack.config')
 const workerConfig = require('../packages/worker/webpack.config')
 const webpackBase = require('../webpack.base')
-const { printLog } = require('./lib/execution-utils')
+const { printLog } = require('./lib/executionUtils')
 
 const sandboxPath = path.join(__dirname, '../sandbox')
 const port = 8080

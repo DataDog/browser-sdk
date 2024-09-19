@@ -1,6 +1,6 @@
 const { command } = require('../lib/command')
-const { fetchHandlingError } = require('../lib/execution-utils')
-const { LOCAL_BRANCH, GITHUB_TOKEN, getLastCommonCommit, fetchPR } = require('../lib/git-utils')
+const { fetchHandlingError } = require('../lib/executionUtils')
+const { LOCAL_BRANCH, GITHUB_TOKEN, getLastCommonCommit, fetchPR } = require('../lib/gitUtils')
 const { fetchPerformanceMetrics } = require('./fetch-performance-metrics')
 const PR_COMMENT_HEADER = 'Bundles Sizes Evolution'
 const PR_COMMENTER_AUTH_TOKEN = command`authanywhere --raw`.run()

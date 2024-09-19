@@ -6,11 +6,11 @@ const readFile = util.promisify(require('fs').readFile)
 
 const emojiNameMap = require('emoji-name-map')
 
-const { browserSdkVersion } = require('../lib/browser-sdk-version')
-const { spawnCommand, printError, runMain } = require('../lib/execution-utils')
+const { browserSdkVersion } = require('../lib/browserSdkVersion')
+const { spawnCommand, printError, runMain } = require('../lib/executionUtils')
 const { command } = require('../lib/command')
-const { modifyFile } = require('../lib/files-utils')
-const { packagesDirectoryNames } = require('../lib/packages-directory-names')
+const { modifyFile } = require('../lib/filesUtils')
+const { packagesDirectoryNames } = require('../lib/packagesDirectoryNames')
 
 const CHANGELOG_FILE = 'CHANGELOG.md'
 const CONTRIBUTING_FILE = 'CONTRIBUTING.md'
