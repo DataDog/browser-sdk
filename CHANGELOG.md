@@ -18,6 +18,32 @@
 
 ---
 
+## v5.27.0
+
+**Public Changes**
+
+- ✨ Discard loading time when page is hidden ([#2965](https://github.com/DataDog/browser-sdk/pull/2965)) [RUM] [RUM-SLIM]
+- 🐛 [RUM-5785] fix missing navigation timings on Safari ([#2964](https://github.com/DataDog/browser-sdk/pull/2964)) [LOGS] [RUM] [RUM-SLIM] [WORKER]
+- 🐛 convert long animation frame times to nanoseconds ([#2994](https://github.com/DataDog/browser-sdk/pull/2994)) [RUM] [RUM-SLIM]
+- 🐛 [RUM-94] ignore performance resource timings with negative duration ([#2958](https://github.com/DataDog/browser-sdk/pull/2958)) [RUM] [RUM-SLIM]
+
+**Internal Changes**
+
+- 👷 Update all non-major dependencies ([#2992](https://github.com/DataDog/browser-sdk/pull/2992)) [RUM-REACT] [RUM]
+- 👷 timeout e2e-bs ci job after 30 minutes ([#2999](https://github.com/DataDog/browser-sdk/pull/2999))
+- 👷 Bump staging to staging-38
+- 👷 Bump chrome to 128.0.6613.84-1 ([#2946](https://github.com/DataDog/browser-sdk/pull/2946))
+- 👷 allow job 'test-performance' to fail ([#2980](https://github.com/DataDog/browser-sdk/pull/2980))
+- 👷 Update all non-major dependencies ([#2975](https://github.com/DataDog/browser-sdk/pull/2975))
+- 👷 Bump staging to staging-37
+- 🎨 [RUM-6203] Expose experimental features in init method ([#3006](https://github.com/DataDog/browser-sdk/pull/3006)) [RUM] [RUM-SLIM]
+- 🎨 [RUM-5100] Move away from testbuilder in test files - Pt 3 ([#2952](https://github.com/DataDog/browser-sdk/pull/2952)) [RUM] [RUM-SLIM]
+- ✅♻️ do not mock `navigationStart` in `mockClock` ([#2979](https://github.com/DataDog/browser-sdk/pull/2979)) [LOGS] [RUM] [RUM-SLIM] [WORKER]
+- ♻️ [RUM-6181] Use performanceObserver for LCP entries ([#2990](https://github.com/DataDog/browser-sdk/pull/2990)) [RUM] [RUM-SLIM]
+- 🔥 cleanup unused Experimental Features ([#2996](https://github.com/DataDog/browser-sdk/pull/2996)) [LOGS] [RUM] [RUM-SLIM] [WORKER]
+- ♻️ [RUM-6180] Use performanceObserver for long-task entries ([#2989](https://github.com/DataDog/browser-sdk/pull/2989)) [RUM] [RUM-SLIM]
+- ⚗️✨ [RUM 5983] Add set view context apis ([#2967](https://github.com/DataDog/browser-sdk/pull/2967)) [LOGS] [RUM] [RUM-SLIM] [WORKER]
+
 ## v5.26.0
 
 **Public Changes:**
