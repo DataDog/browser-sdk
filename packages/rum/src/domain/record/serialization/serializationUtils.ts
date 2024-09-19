@@ -1,10 +1,11 @@
 import { buildUrl } from '@datadog/browser-core'
 import { getParentNode, isNodeShadowRoot, CENSORED_STRING_MARK, shouldMaskNode } from '@datadog/browser-rum-core'
 import type { NodePrivacyLevel } from '@datadog/browser-rum-core'
+import type { SerializedNodeWithId } from '../../../types'
 import type { NodeWithSerializedNode } from './serialization.types'
 
 const serializedNodeIds = new WeakMap<Node, number>()
-const serializedNodesByIds = new Map<number, Node>()
+const serializedNodesByIds = new Map<number, SerializedNodeWithId>()
 
 export function hasSerializedNode(node: Node): node is NodeWithSerializedNode {
   return serializedNodeIds.has(node)
@@ -27,13 +28,20 @@ export function getSerializedNodeId(node: Node) {
   return serializedNodeIds.get(node)
 }
 
-export function getSerializedNodeById(serializeNodeId: number): Node | undefined {
+export function getSerializedNodeById(serializeNodeId: number): SerializedNodeWithId | undefined {
   return serializedNodesByIds.get(serializeNodeId)
 }
 
 export function setSerializedNodeId(node: Node, serializeNodeId: number) {
   serializedNodeIds.set(node, serializeNodeId)
-  serializedNodesByIds.set(serializeNodeId, node)
+}
+
+export function setSerializedNodeWithId(id: number, node: SerializedNodeWithId) {
+  serializedNodesByIds.set(id, node)
+}
+
+export function getSerialisedNodeMap(): Map<number, SerializedNodeWithId> {
+  return serializedNodesByIds
 }
 
 /**
