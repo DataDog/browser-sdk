@@ -16,6 +16,8 @@ describe('trackInitialViewMetrics', () => {
   let notifyPerformanceEntries: (entries: RumPerformanceEntry[]) => void
 
   beforeEach(() => {
+    ;({ notifyPerformanceEntries } = mockPerformanceObserver())
+
     lifeCycle = new LifeCycle()
     ;({ notifyPerformanceEntries } = mockPerformanceObserver())
 
@@ -36,7 +38,10 @@ describe('trackInitialViewMetrics', () => {
   })
 
   it('should merge metrics from various sources', () => {
-    notifyPerformanceEntries([createPerformanceEntry(RumPerformanceEntryType.PAINT)])
+    notifyPerformanceEntries([
+      createPerformanceEntry(RumPerformanceEntryType.NAVIGATION),
+      createPerformanceEntry(RumPerformanceEntryType.PAINT),
+    ])
     lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [
       createPerformanceEntry(RumPerformanceEntryType.FIRST_INPUT),
     ])
@@ -55,8 +60,8 @@ describe('trackInitialViewMetrics', () => {
   })
 
   it('calls the `setLoadEvent` callback when the loadEvent timing is known', () => {
+    notifyPerformanceEntries([createPerformanceEntry(RumPerformanceEntryType.PAINT)])
     lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [
-      createPerformanceEntry(RumPerformanceEntryType.PAINT),
       createPerformanceEntry(RumPerformanceEntryType.FIRST_INPUT),
     ])
     clock.tick(0)
