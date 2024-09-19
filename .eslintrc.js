@@ -204,6 +204,7 @@ module.exports = {
       rules: {
         'unicorn/filename-case': ['error', { case: 'kebabCase' }],
         'local-rules/secure-command-execution': 'error',
+        'local-rules/disallow-non-scripts': 'error',
       },
     },
     {
