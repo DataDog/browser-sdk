@@ -10,15 +10,17 @@ const rumSlimConfig = require('../packages/rum-slim/webpack.config')
 const rumConfig = require('../packages/rum/webpack.config')
 const workerConfig = require('../packages/worker/webpack.config')
 const webpackBase = require('../webpack.base')
-const { printLog } = require('./lib/executionUtils')
+const { printLog, runMain } = require('./lib/executionUtils')
 
 const sandboxPath = path.join(__dirname, '../sandbox')
 const port = 8080
 
-const app = express()
-app.use(createStaticSandboxApp())
-app.use('/react-app', createReactApp())
-app.listen(port, () => printLog(`Server listening on port ${port}.`))
+runMain(() => {
+  const app = express()
+  app.use(createStaticSandboxApp())
+  app.use('/react-app', createReactApp())
+  app.listen(port, () => printLog(`Server listening on port ${port}.`))
+})
 
 function createStaticSandboxApp() {
   const app = express()
