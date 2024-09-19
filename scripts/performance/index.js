@@ -1,9 +1,9 @@
 const { runMain } = require('../lib/executionUtils')
-const { reportAsPrComment } = require('./report-as-a-pr-comment')
-const { reportToDatadog } = require('./report-to-datadog')
-const { calculateBundleSizes } = require('./bundle-size/compute-bundle-size')
-const { computeCpuPerformance } = require('./cpu-performance/compute-cpu-performance')
-const { computeMemoryPerformance } = require('./memory-performance/compute-memory-performance')
+const { reportAsPrComment } = require('./lib/reportAsAPrComment')
+const { reportToDatadog } = require('./lib/reportToDatadog')
+const { calculateBundleSizes } = require('./lib/computeBundleSize')
+const { computeCpuPerformance } = require('./lib/computeCpuPerformance')
+const { computeMemoryPerformance } = require('./lib/computeMemoryPerformance')
 
 runMain(async () => {
   const localBundleSizes = calculateBundleSizes()
