@@ -26,6 +26,7 @@ import type { RumSessionManagerMock } from '../../test'
 import {
   createPerformanceEntry,
   createRumSessionManagerMock,
+  mockDocumentReadyState,
   mockPageStateHistory,
   mockPerformanceObserver,
   mockRumConfiguration,
@@ -268,13 +269,15 @@ describe('rum events url', () => {
 
   it('should attach the url corresponding to the start of the event', () => {
     clock = mockClock()
+    const { notifyPerformanceEntries } = mockPerformanceObserver()
+
     setupViewUrlTest()
     clock.tick(10)
     changeLocation('http://foo.com/?bar=bar')
     clock.tick(10)
     changeLocation('http://foo.com/?bar=qux')
 
-    lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [
+    notifyPerformanceEntries([
       createPerformanceEntry(RumPerformanceEntryType.LONG_TASK, {
         startTime: (relativeNow() - 5) as RelativeTime,
       }),
@@ -293,7 +296,7 @@ describe('rum events url', () => {
 
   it('should keep the same URL when updating an ended view', () => {
     clock = mockClock()
-    const { notifyPerformanceEntries } = mockPerformanceObserver()
+    const { triggerOnLoad } = mockDocumentReadyState()
     setupViewUrlTest()
 
     clock.tick(VIEW_DURATION)
@@ -302,7 +305,7 @@ describe('rum events url', () => {
 
     serverRumEvents.length = 0
 
-    notifyPerformanceEntries([createPerformanceEntry(RumPerformanceEntryType.NAVIGATION)])
+    triggerOnLoad()
     clock.tick(THROTTLE_VIEW_UPDATE_PERIOD)
 
     expect(serverRumEvents.length).toEqual(1)

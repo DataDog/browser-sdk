@@ -19,12 +19,7 @@ describe('startPerformanceCollection', () => {
     })
   }
 
-  ;[
-    RumPerformanceEntryType.LONG_TASK,
-    RumPerformanceEntryType.PAINT,
-    RumPerformanceEntryType.LARGEST_CONTENTFUL_PAINT,
-    RumPerformanceEntryType.LAYOUT_SHIFT,
-  ].forEach((entryType) => {
+  ;[RumPerformanceEntryType.LAYOUT_SHIFT].forEach((entryType) => {
     it(`should notify ${entryType}`, () => {
       const { notifyPerformanceEntries } = mockPerformanceObserver()
       setupStartPerformanceCollection()
@@ -37,6 +32,9 @@ describe('startPerformanceCollection', () => {
   ;[
     RumPerformanceEntryType.NAVIGATION,
     RumPerformanceEntryType.RESOURCE,
+    RumPerformanceEntryType.LONG_TASK,
+    RumPerformanceEntryType.LARGEST_CONTENTFUL_PAINT,
+    RumPerformanceEntryType.PAINT,
     RumPerformanceEntryType.FIRST_INPUT,
     RumPerformanceEntryType.EVENT,
   ].forEach((entryType) => {

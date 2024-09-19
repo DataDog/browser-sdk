@@ -415,6 +415,7 @@ describe('view metrics', () => {
       }
       const { getViewUpdate, getViewUpdateCount, getViewCreateCount, startView } = viewTest
       startView()
+      clock.tick(0) // run immediate timeouts (mostly for `trackNavigationTimings`)
       expect(getViewCreateCount()).toEqual(2)
 
       lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [
@@ -430,26 +431,20 @@ describe('view metrics', () => {
   })
 
   describe('initial view metrics', () => {
-    it('should be updated when notified with a PERFORMANCE_ENTRY_COLLECTED event (throttled)', () => {
+    it('updates should be throttled', () => {
       const { getViewUpdateCount, getViewUpdate } = viewTest
       expect(getViewUpdateCount()).toEqual(1)
       expect(getViewUpdate(0).initialViewMetrics).toEqual({})
 
-      const navigationEntry = createPerformanceEntry(RumPerformanceEntryType.NAVIGATION)
-      notifyPerformanceEntries([navigationEntry])
+      clock.tick(THROTTLE_VIEW_UPDATE_PERIOD - 1)
 
       expect(getViewUpdateCount()).toEqual(1)
+      expect(getViewUpdate(0).initialViewMetrics).toEqual({})
 
-      clock.tick(THROTTLE_VIEW_UPDATE_PERIOD)
+      clock.tick(1)
 
       expect(getViewUpdateCount()).toEqual(2)
-      expect(getViewUpdate(1).initialViewMetrics.navigationTimings).toEqual({
-        firstByte: 123 as Duration,
-        domComplete: 456 as Duration,
-        domContentLoaded: 345 as Duration,
-        domInteractive: 234 as Duration,
-        loadEvent: 567 as Duration,
-      })
+      expect(getViewUpdate(1).initialViewMetrics.navigationTimings).toEqual(jasmine.any(Object))
     })
 
     it('should be updated for 5 min after view end', () => {
@@ -459,11 +454,8 @@ describe('view metrics', () => {
 
       const lcpEntry = createPerformanceEntry(RumPerformanceEntryType.LARGEST_CONTENTFUL_PAINT)
       clock.tick(KEEP_TRACKING_AFTER_VIEW_DELAY - 1)
-      lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [
-        createPerformanceEntry(RumPerformanceEntryType.PAINT),
-        lcpEntry,
-      ])
-      notifyPerformanceEntries([createPerformanceEntry(RumPerformanceEntryType.NAVIGATION)])
+
+      notifyPerformanceEntries([createPerformanceEntry(RumPerformanceEntryType.PAINT), lcpEntry])
 
       clock.tick(THROTTLE_VIEW_UPDATE_PERIOD)
 
@@ -479,11 +471,12 @@ describe('view metrics', () => {
       expect(getViewCreateCount()).toEqual(2)
 
       clock.tick(KEEP_TRACKING_AFTER_VIEW_DELAY)
-      lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [
+
+      notifyPerformanceEntries([
         createPerformanceEntry(RumPerformanceEntryType.PAINT),
         createPerformanceEntry(RumPerformanceEntryType.LARGEST_CONTENTFUL_PAINT),
       ])
-      notifyPerformanceEntries([createPerformanceEntry(RumPerformanceEntryType.NAVIGATION)])
+
       clock.tick(THROTTLE_VIEW_UPDATE_PERIOD)
 
       const latestUpdate = getViewUpdate(getViewUpdateCount() - 1)
@@ -511,11 +504,11 @@ describe('view metrics', () => {
 
         expect(getViewUpdateCount()).toEqual(3)
 
-        lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [
+        notifyPerformanceEntries([
           createPerformanceEntry(RumPerformanceEntryType.PAINT),
+          createPerformanceEntry(RumPerformanceEntryType.NAVIGATION),
           createPerformanceEntry(RumPerformanceEntryType.LARGEST_CONTENTFUL_PAINT),
         ])
-        notifyPerformanceEntries([createPerformanceEntry(RumPerformanceEntryType.NAVIGATION)])
 
         clock.tick(THROTTLE_VIEW_UPDATE_PERIOD)
 
@@ -540,13 +533,7 @@ describe('view metrics', () => {
         expect(initialView.last.initialViewMetrics).toEqual(
           jasmine.objectContaining({
             firstContentfulPaint: 123 as Duration,
-            navigationTimings: {
-              firstByte: 123 as Duration,
-              domComplete: 456 as Duration,
-              domContentLoaded: 345 as Duration,
-              domInteractive: 234 as Duration,
-              loadEvent: 567 as Duration,
-            },
+            navigationTimings: jasmine.any(Object),
             largestContentfulPaint: { value: 789 as Duration, targetSelector: undefined },
           })
         )
@@ -558,7 +545,7 @@ describe('view metrics', () => {
       })
 
       it('should update the initial view loadingTime following the loadEventEnd value', () => {
-        expect(initialView.last.commonViewMetrics.loadingTime).toBe(567 as RelativeTime)
+        expect(initialView.last.commonViewMetrics.loadingTime).toEqual(jasmine.any(Number))
       })
     })
   })
@@ -608,7 +595,7 @@ describe('view custom timings', () => {
   })
 
   it('should add custom timing to current view', () => {
-    clock.tick(0)
+    clock.tick(0) // run immediate timeouts (mostly for `trackNavigationTimings`)
     const { getViewUpdate, startView, addTiming } = viewTest
 
     startView()
@@ -714,7 +701,7 @@ describe('view custom timings', () => {
   })
 
   it('should not add custom timing when the session has expired', () => {
-    clock.tick(0)
+    clock.tick(0) // run immediate timeouts (mostly for `trackNavigationTimings`)
     const { getViewUpdateCount, addTiming } = viewTest
 
     lifeCycle.notify(LifeCycleEventType.SESSION_EXPIRED)
@@ -943,6 +930,24 @@ describe('view event count', () => {
 
       startView({ context: { foo: 'bar' } })
       expect(getViewUpdate(2).context).toBeUndefined()
+    })
+
+    it('should set view context with setViewContext', () => {
+      mockExperimentalFeatures([ExperimentalFeature.VIEW_SPECIFIC_CONTEXT])
+      viewTest = setupViewTest({ lifeCycle })
+      const { getViewUpdate, setViewContext } = viewTest
+
+      setViewContext({ foo: 'bar' })
+      expect(getViewUpdate(1).context).toEqual({ foo: 'bar' })
+    })
+
+    it('should set view context with setViewContextProperty', () => {
+      mockExperimentalFeatures([ExperimentalFeature.VIEW_SPECIFIC_CONTEXT])
+      viewTest = setupViewTest({ lifeCycle })
+      const { getViewUpdate, setViewContextProperty } = viewTest
+
+      setViewContextProperty('foo', 'bar')
+      expect(getViewUpdate(1).context).toEqual({ foo: 'bar' })
     })
   })
 

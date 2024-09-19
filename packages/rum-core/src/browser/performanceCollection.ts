@@ -2,22 +2,14 @@ import { monitor, setTimeout, addEventListener, objectHasValue } from '@datadog/
 import type { RumConfiguration } from '../domain/configuration'
 import type { LifeCycle } from '../domain/lifeCycle'
 import { LifeCycleEventType } from '../domain/lifeCycle'
-import type {
-  BrowserWindow,
-  RumFirstInputTiming,
-  RumPerformanceEntry,
-  RumPerformanceResourceTiming,
-} from './performanceObservable'
+import type { BrowserWindow, RumLayoutShiftTiming } from './performanceObservable'
 import { RumPerformanceEntryType } from './performanceObservable'
 
 function supportPerformanceObject() {
   return window.performance !== undefined && 'getEntries' in performance
 }
 
-export type CollectionRumPerformanceEntry = Exclude<
-  RumPerformanceEntry,
-  RumPerformanceResourceTiming | RumFirstInputTiming
->
+export type CollectionRumPerformanceEntry = RumLayoutShiftTiming
 
 export function startPerformanceCollection(lifeCycle: LifeCycle, configuration: RumConfiguration) {
   const cleanupTasks: Array<() => void> = []
@@ -33,8 +25,7 @@ export function startPerformanceCollection(lifeCycle: LifeCycle, configuration: 
     const handlePerformanceEntryList = monitor((entries: PerformanceObserverEntryList) =>
       handleRumPerformanceEntries(lifeCycle, entries.getEntries())
     )
-    const mainEntries = [RumPerformanceEntryType.LONG_TASK, RumPerformanceEntryType.PAINT]
-    const experimentalEntries = [RumPerformanceEntryType.LARGEST_CONTENTFUL_PAINT, RumPerformanceEntryType.LAYOUT_SHIFT]
+    const experimentalEntries = [RumPerformanceEntryType.LAYOUT_SHIFT, RumPerformanceEntryType.EVENT]
 
     try {
       // Experimental entries are not retrieved by performance.getEntries()
@@ -51,21 +42,19 @@ export function startPerformanceCollection(lifeCycle: LifeCycle, configuration: 
     } catch (e) {
       // Some old browser versions (ex: chrome 67) don't support the PerformanceObserver type and buffered options
       // In these cases, fallback to PerformanceObserver with entryTypes
-      mainEntries.push(...experimentalEntries)
-    }
-
-    const mainObserver = new PerformanceObserver(handlePerformanceEntryList)
-    try {
-      mainObserver.observe({ entryTypes: mainEntries })
-      cleanupTasks.push(() => mainObserver.disconnect())
-    } catch {
-      // Old versions of Safari are throwing "entryTypes contained only unsupported types"
-      // errors when observing only unsupported entry types.
-      //
-      // We could use `supportPerformanceTimingEvent` to make sure we don't invoke
-      // `observer.observe` with an unsupported entry type, but Safari 11 and 12 don't support
-      // `Performance.supportedEntryTypes`, so doing so would lose support for these versions
-      // even if they do support the entry type.
+      const mainObserver = new PerformanceObserver(handlePerformanceEntryList)
+      try {
+        mainObserver.observe({ entryTypes: experimentalEntries })
+        cleanupTasks.push(() => mainObserver.disconnect())
+      } catch {
+        // Old versions of Safari are throwing "entryTypes contained only unsupported types"
+        // errors when observing only unsupported entry types.
+        //
+        // We could use `supportPerformanceTimingEvent` to make sure we don't invoke
+        // `observer.observe` with an unsupported entry type, but Safari 11 and 12 don't support
+        // `Performance.supportedEntryTypes`, so doing so would lose support for these versions
+        // even if they do support the entry type.
+      }
     }
 
     if (supportPerformanceObject() && 'addEventListener' in performance) {

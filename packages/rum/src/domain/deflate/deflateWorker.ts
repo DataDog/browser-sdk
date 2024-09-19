@@ -10,7 +10,7 @@ import {
 } from '@datadog/browser-core'
 import type { RumConfiguration } from '@datadog/browser-rum-core'
 
-export const INITIALIZATION_TIME_OUT_DELAY = 10 * ONE_SECOND
+export const INITIALIZATION_TIME_OUT_DELAY = 30 * ONE_SECOND
 
 declare const __BUILD_ENV__WORKER_STRING__: string
 
