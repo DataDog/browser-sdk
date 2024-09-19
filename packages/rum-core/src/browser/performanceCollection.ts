@@ -25,7 +25,7 @@ export function startPerformanceCollection(lifeCycle: LifeCycle, configuration: 
     const handlePerformanceEntryList = monitor((entries: PerformanceObserverEntryList) =>
       handleRumPerformanceEntries(lifeCycle, entries.getEntries())
     )
-    const experimentalEntries = [RumPerformanceEntryType.LAYOUT_SHIFT, RumPerformanceEntryType.EVENT]
+    const experimentalEntries = [RumPerformanceEntryType.LAYOUT_SHIFT]
 
     try {
       // Experimental entries are not retrieved by performance.getEntries()

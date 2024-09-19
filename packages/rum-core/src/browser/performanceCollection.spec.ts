@@ -42,7 +42,7 @@ describe('startPerformanceCollection', () => {
       const { notifyPerformanceEntries } = mockPerformanceObserver()
       setupStartPerformanceCollection()
 
-      notifyPerformanceEntries([createPerformanceEntry(RumPerformanceEntryType.RESOURCE)])
+      notifyPerformanceEntries([createPerformanceEntry(entryType)])
 
       expect(entryCollectedCallback).not.toHaveBeenCalled()
     })
