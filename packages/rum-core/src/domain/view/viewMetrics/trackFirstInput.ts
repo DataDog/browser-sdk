@@ -32,8 +32,7 @@ export function trackFirstInput(
   }).subscribe((entries) => {
     const firstInputEntry = find(
       entries,
-      (entry): entry is RumFirstInputTiming =>
-        entry.entryType === RumPerformanceEntryType.FIRST_INPUT && entry.startTime < firstHidden.timeStamp
+      (entry): entry is RumFirstInputTiming => entry.startTime < firstHidden.timeStamp
     )
     if (firstInputEntry) {
       const firstInputDelay = elapsed(firstInputEntry.startTime, firstInputEntry.processingStart)

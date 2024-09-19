@@ -86,7 +86,7 @@ export function trackInteractionToNextPaint(
   const eventSubscription = createPerformanceObservable(configuration, {
     type: RumPerformanceEntryType.EVENT,
     // durationThreshold only impact PerformanceEventTiming entries used for INP computation which requires a threshold at 40 (default is 104ms)
-    // cf: https://github.com/GoogleChrome/web-vitals/blob/3806160ffbc93c3c4abf210a167b81228172b31c/src/onINP.ts#L209
+    // cf: https://github.com/GoogleChrome/web-vitals/blob/3806160ffbc93c3c4abf210a167b81228172b31c/src/onINP.ts#L202-L210
     durationThreshold: 40,
     buffered: true,
   }).subscribe(handleEntries)
