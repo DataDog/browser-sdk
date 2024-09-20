@@ -19,12 +19,7 @@ describe('startPerformanceCollection', () => {
     })
   }
 
-  ;[
-    RumPerformanceEntryType.PAINT,
-    RumPerformanceEntryType.FIRST_INPUT,
-    RumPerformanceEntryType.LAYOUT_SHIFT,
-    RumPerformanceEntryType.EVENT,
-  ].forEach((entryType) => {
+  ;[RumPerformanceEntryType.LAYOUT_SHIFT].forEach((entryType) => {
     it(`should notify ${entryType}`, () => {
       const { notifyPerformanceEntries } = mockPerformanceObserver()
       setupStartPerformanceCollection()
@@ -39,12 +34,15 @@ describe('startPerformanceCollection', () => {
     RumPerformanceEntryType.RESOURCE,
     RumPerformanceEntryType.LONG_TASK,
     RumPerformanceEntryType.LARGEST_CONTENTFUL_PAINT,
+    RumPerformanceEntryType.PAINT,
+    RumPerformanceEntryType.FIRST_INPUT,
+    RumPerformanceEntryType.EVENT,
   ].forEach((entryType) => {
     it(`should not notify ${entryType} timings`, () => {
       const { notifyPerformanceEntries } = mockPerformanceObserver()
       setupStartPerformanceCollection()
 
-      notifyPerformanceEntries([createPerformanceEntry(RumPerformanceEntryType.RESOURCE)])
+      notifyPerformanceEntries([createPerformanceEntry(entryType)])
 
       expect(entryCollectedCallback).not.toHaveBeenCalled()
     })

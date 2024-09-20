@@ -1,7 +1,13 @@
 import type { Duration, Subscription } from '@datadog/browser-core'
 import type { Clock } from '@datadog/browser-core/test'
 import { mockClock } from '@datadog/browser-core/test'
-import { createPerformanceEntry, mockPerformanceObserver, mockRumConfiguration } from '../../test'
+import type { GlobalPerformanceBufferMock } from '../../test'
+import {
+  createPerformanceEntry,
+  mockGlobalPerformanceBuffer,
+  mockPerformanceObserver,
+  mockRumConfiguration,
+} from '../../test'
 import { RumPerformanceEntryType, createPerformanceObservable } from './performanceObservable'
 
 describe('performanceObservable', () => {
@@ -76,11 +82,10 @@ describe('performanceObservable', () => {
   })
 
   describe('fallback strategy when type not supported', () => {
-    let bufferedEntries: PerformanceEntryList
+    let globalPerformanceBufferMock: GlobalPerformanceBufferMock
 
     beforeEach(() => {
-      bufferedEntries = []
-      spyOn(performance, 'getEntriesByType').and.callFake(() => bufferedEntries)
+      globalPerformanceBufferMock = mockGlobalPerformanceBuffer()
     })
 
     it('should notify performance resources when type not supported', () => {
@@ -97,7 +102,9 @@ describe('performanceObservable', () => {
     it('should notify buffered performance resources when type not supported', () => {
       mockPerformanceObserver({ typeSupported: false })
       // add the performance entry to the buffer
-      bufferedEntries = [createPerformanceEntry(RumPerformanceEntryType.RESOURCE, { name: allowedUrl })]
+      globalPerformanceBufferMock.addPerformanceEntry(
+        createPerformanceEntry(RumPerformanceEntryType.RESOURCE, { name: allowedUrl })
+      )
 
       const performanceResourceObservable = createPerformanceObservable(configuration, {
         type: RumPerformanceEntryType.RESOURCE,

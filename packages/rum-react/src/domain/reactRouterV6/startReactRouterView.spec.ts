@@ -81,4 +81,18 @@ describe('computeViewName', () => {
       ] as RouteMatch[])
     ).toBe('/foo/bar/:id/')
   })
+
+  it('replaces match-all routes with the actual path', () => {
+    expect(
+      computeViewName([
+        { route: { path: '/foo' } },
+        {
+          params: { '*': 'bar' },
+          pathname: '/bar',
+          pathnameBase: '/',
+          route: { path: '*' },
+        },
+      ] as RouteMatch[])
+    ).toBe('/foo/bar')
+  })
 })

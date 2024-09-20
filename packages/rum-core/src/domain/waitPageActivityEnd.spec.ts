@@ -84,9 +84,9 @@ describe('createPageActivityObservable', () => {
 
   it('does not emit an activity event when a navigation occurs', () => {
     startListeningToPageActivities()
-    lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [
-      createPerformanceEntry(RumPerformanceEntryType.NAVIGATION),
-    ])
+
+    notifyPerformanceEntries([createPerformanceEntry(RumPerformanceEntryType.NAVIGATION)])
+
     expect(events).toEqual([])
   })
 
