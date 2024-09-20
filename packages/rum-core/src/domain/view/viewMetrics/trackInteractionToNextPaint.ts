@@ -1,11 +1,4 @@
-import {
-  elapsed,
-  ExperimentalFeature,
-  isExperimentalFeatureEnabled,
-  noop,
-  ONE_MINUTE,
-  ONE_SECOND,
-} from '@datadog/browser-core'
+import { elapsed, noop, ONE_MINUTE } from '@datadog/browser-core'
 import type { Duration, RelativeTime } from '@datadog/browser-core'
 import { RumPerformanceEntryType, supportPerformanceTimingEvent } from '../../../browser/performanceObservable'
 import type { RumFirstInputTiming, RumPerformanceEventTiming } from '../../../browser/performanceObservable'
@@ -77,27 +70,14 @@ export function trackInteractionToNextPaint(
       interactionToNextPaintStartTime = elapsed(viewStart, newInteraction.startTime)
 
       if (newInteraction.target && isElementNode(newInteraction.target)) {
-        interactionToNextPaintTargetSelector = getSelectorFromElement(
-          newInteraction.target,
-          configuration.actionNameAttribute
-        )
+        interactionToNextPaintTargetSelector =
+          interactionSelectorMap.get(newInteraction.startTime) ||
+          getSelectorFromElement(newInteraction.target, configuration.actionNameAttribute)
+
+        interactionSelectorMap.delete(newInteraction.startTime)
       } else {
         interactionToNextPaintTargetSelector = undefined
       }
-      if (
-        !interactionToNextPaintTargetSelector &&
-        isExperimentalFeatureEnabled(ExperimentalFeature.NULL_INP_TELEMETRY)
-      ) {
-        if (interactionSelectorMap.has(newInteraction.startTime)) {
-          interactionToNextPaintTargetSelector = interactionSelectorMap.get(newInteraction.startTime)
-          interactionSelectorMap.delete(newInteraction.startTime)
-        }
-      }
-      interactionSelectorMap.forEach((_, key) => {
-        if (key > 10 * ONE_SECOND) {
-          interactionSelectorMap.delete(key)
-        }
-      })
     }
   })
 

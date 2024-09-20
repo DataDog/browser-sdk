@@ -425,15 +425,37 @@ describe('trackClickActions', () => {
     })
   })
 
+  describe('interactionSelectorMap', () => {
+    it('pointer down is added to the map', () => {
+      startClickActionsTracking()
+      const setInteractionMapSpy = spyOn(Map.prototype, 'set').and.callThrough()
+      emulateClick({ activity: { on: 'pointerdown' } })
+      expect(setInteractionMapSpy).toHaveBeenCalled()
+    })
+
+    it('clear outdated entries when pointer up', () => {
+      startClickActionsTracking()
+      const deleteInteractionMapSpy = spyOn(Map.prototype, 'delete').and.callThrough()
+
+      emulateClick({ activity: { on: 'pointerdown' }, eventProperty: { timeStamp: 0 } })
+      clock.tick(EXPIRE_DELAY)
+      emulateClick({ activity: { on: 'pointerdown' }, eventProperty: { timeStamp: 10 } })
+
+      expect(deleteInteractionMapSpy).toHaveBeenCalled()
+    })
+  })
+
   function emulateClick({
     target = button,
     activity,
+    eventProperty,
   }: {
     target?: HTMLElement
     activity?: {
       delay?: number
       on?: 'pointerup' | 'click' | 'pointerdown'
     }
+    eventProperty?: { [key: string]: any }
   } = {}) {
     const targetPosition = target.getBoundingClientRect()
     const offsetX = targetPosition.width / 2
@@ -446,6 +468,7 @@ describe('trackClickActions', () => {
       offsetY,
       timeStamp: timeStampNow(),
       isPrimary: true,
+      ...eventProperty,
     }
     target.dispatchEvent(createNewEvent('pointerdown', eventProperties))
     emulateActivityIfNeeded('pointerdown')

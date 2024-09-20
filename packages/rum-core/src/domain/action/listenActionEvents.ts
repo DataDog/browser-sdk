@@ -1,7 +1,8 @@
 import { addEventListener, DOM_EVENT } from '@datadog/browser-core'
+import type { RelativeTime } from '@datadog/browser-core'
 import type { RumConfiguration } from '../configuration'
 
-export type MouseEventOnElement = PointerEvent & { target: Element }
+export type MouseEventOnElement = PointerEvent & { target: Element; timeStamp: RelativeTime }
 
 export interface UserActivity {
   selection: boolean

@@ -240,6 +240,20 @@ describe('trackInteractionToNextPaint', () => {
 
       expect(getInteractionToNextPaint()?.targetSelector).toEqual('#bar')
     })
+
+    it('should check interactionSelectorMap for entries', () => {
+      startINPTracking()
+      const getInteractionMapSpy = spyOn(Map.prototype, 'get').and.callThrough()
+      const deleteInteractionMapSpy = spyOn(Map.prototype, 'delete').and.callThrough()
+
+      newInteraction(lifeCycle, {
+        interactionId: 1,
+        duration: 10 as Duration,
+        target: appendElement('<button id="foo"></button>'),
+      })
+      expect(getInteractionMapSpy).toHaveBeenCalled()
+      expect(deleteInteractionMapSpy).toHaveBeenCalled()
+    })
   })
 })
 

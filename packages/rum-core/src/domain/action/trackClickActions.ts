@@ -13,6 +13,7 @@ import {
   createValueHistory,
   isExperimentalFeatureEnabled,
   ExperimentalFeature,
+  relativeNow,
 } from '@datadog/browser-core'
 import type { FrustrationType } from '../../rawRumEvent.types'
 import { ActionType } from '../../rawRumEvent.types'
@@ -63,7 +64,15 @@ type ClickActionIdHistory = ValueHistory<ClickAction['id']>
 // Maximum duration for click actions
 export const CLICK_ACTION_MAX_DURATION = 10 * ONE_SECOND
 export const ACTION_CONTEXT_TIME_OUT_DELAY = 5 * ONE_MINUTE // arbitrary
-export const interactionSelectorMap = new Map<number, string | undefined>() // key is timestamp
+export const interactionSelectorMap = new Map<RelativeTime, string | undefined>() // key is relative time
+
+export const deleteOutdatedInteractionSelectors = () => {
+  interactionSelectorMap.forEach((_, key) => {
+    if (relativeNow() - key > 10 * ONE_SECOND) {
+      interactionSelectorMap.delete(key)
+    }
+  })
+}
 
 export function trackClickActions(
   lifeCycle: LifeCycle,
@@ -182,7 +191,9 @@ function startClickAction(
   if (clickActionBase.target && isExperimentalFeatureEnabled(ExperimentalFeature.NULL_INP_TELEMETRY)) {
     const { selector } = clickActionBase.target
     if (selector) {
+      // save the selector for the interaction to next paint
       interactionSelectorMap.set(startEvent.timeStamp, selector)
+      deleteOutdatedInteractionSelectors()
     }
   }
 
@@ -236,9 +247,8 @@ function computeClickActionBase(
   const rect = event.target.getBoundingClientRect()
   const selector = getSelectorFromElement(event.target, configuration.actionNameAttribute)
 
-  if (isExperimentalFeatureEnabled(ExperimentalFeature.NULL_INP_TELEMETRY)) {
-    interactionSelectorMap.set(event.timeStamp, selector)
-  }
+  interactionSelectorMap.set(event.timeStamp, selector)
+  deleteOutdatedInteractionSelectors()
 
   return {
     type: ActionType.CLICK,
