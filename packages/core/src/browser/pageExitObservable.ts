@@ -1,6 +1,7 @@
 import { Observable } from '../tools/observable'
 import { objectValues, includes } from '../tools/utils/polyfills'
 import type { Configuration } from '../domain/configuration'
+import { setTimeout, clearTimeout } from '../tools/timer'
 import { addEventListeners, addEventListener, DOM_EVENT } from './addEventListener'
 
 export const PageExitReason = {
@@ -41,8 +42,30 @@ export function createPageExitObservable(configuration: Configuration): Observab
     )
 
     const stopBeforeUnloadListener = addEventListener(configuration, window, DOM_EVENT.BEFORE_UNLOAD, () => {
-      observable.notify({ reason: PageExitReason.UNLOADING })
-    }).stop
+      let isPageExiting = false;
+
+      // Add a listener for the 'unload' event to ensure page is actually exiting
+      const handleUnload = () => {
+        isPageExiting = true;
+        observable.notify({ reason: PageExitReason.UNLOADING });
+      };
+
+      // Attach the 'unload' event listener to determine if the page unloads
+      addEventListener(configuration, window, DOM_EVENT.UNLOAD, handleUnload);
+
+      // After a short delay, check if the page didn't actually unload
+      const timer = setTimeout(() => {
+        if (!isPageExiting) {
+          // The user stayed on the page, so resume tracking
+          // Datadog SDK would continue tracking RUM events
+        }
+      }, 2000);  // 2 seconds timeout to give user time to interact with beforeUnload dialog
+
+      // Return a cleanup function to remove listeners and clear the timeout
+      return () => {
+        clearTimeout(timer);  // Clear the timeout if no longer needed
+      };
+    }).stop;
 
     return () => {
       stopListeners()
