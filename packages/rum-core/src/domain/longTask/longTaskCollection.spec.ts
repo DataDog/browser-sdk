@@ -10,7 +10,7 @@ import { RumPerformanceEntryType } from '../../browser/performanceObservable'
 import type { RawRumEvent } from '../../rawRumEvent.types'
 import { RumEventType, RumLongTaskEntryType } from '../../rawRumEvent.types'
 import type { RawRumEventCollectedData } from '../lifeCycle'
-import { LifeCycle, LifeCycleEventType } from '../lifeCycle'
+import { LifeCycle } from '../lifeCycle'
 import { startLongTaskCollection } from './longTaskCollection'
 
 describe('long task collection', () => {
@@ -33,8 +33,6 @@ describe('long task collection', () => {
     notifyPerformanceEntries([
       createPerformanceEntry(RumPerformanceEntryType.NAVIGATION),
       createPerformanceEntry(RumPerformanceEntryType.LONG_TASK),
-    ])
-    lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [
       createPerformanceEntry(RumPerformanceEntryType.PAINT),
     ])
 
