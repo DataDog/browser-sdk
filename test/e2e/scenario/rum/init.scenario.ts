@@ -129,7 +129,13 @@ describe('API calls and events around init', () => {
       // eslint-disable-next-line @typescript-eslint/no-unsafe-call
       ;(window.DD_RUM as any).setViewContext({ foo: 'bar' })
       // eslint-disable-next-line @typescript-eslint/no-unsafe-call
-      ;(window.DD_RUM as any).setViewContextProperty('foo', 'baz')
+      ;(window.DD_RUM as any).setViewContextProperty('bar', 'foo')
+    })
+    .run(async ({ intakeRegistry }) => {
+      await flushEvents()
+
+      const initialView = intakeRegistry.rumViewEvents[0]
+      expect(initialView.context).toEqual(jasmine.objectContaining({ foo: 'bar', bar: 'foo' }))
     })
 })
 
