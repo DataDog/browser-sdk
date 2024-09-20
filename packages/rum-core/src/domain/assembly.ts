@@ -195,15 +195,15 @@ export function startRumAssembly(
             session.sessionReplay === SessionReplayState.SAMPLED
         }
 
+        if (
+          // TODO: remove ff and should always add anonymous user id
+          isExperimentalFeatureEnabled(ExperimentalFeature.ANONYMOUS_USER_TRACKING) &&
+          !commonContext.user.anonymous_id
+        ) {
+          const { type } = configuration.sessionStoreStrategyType ?? { type: 'LocalStorage' }
+          commonContext.user.anonymous_id = retrieveAnonymousId(type)
+        }
         if (!isEmptyObject(commonContext.user)) {
-          if (
-            isExperimentalFeatureEnabled(ExperimentalFeature.ANONYMOUS_USER_TRACKING) &&
-            !commonContext.user.anonymous_id
-          ) {
-            const { type } = configuration.sessionStoreStrategyType ?? { type: 'LocalStorage' }
-            commonContext.user.anonymous_id = retrieveAnonymousId(type)
-          }
-
           ;(serverRumEvent.usr as Mutable<RumEvent['usr']>) = commonContext.user as User & Context
         }
 
