@@ -120,6 +120,17 @@ describe('API calls and events around init', () => {
         { name: 'after manual view', viewId: initialView.view.id, viewName: 'after manual view' }
       )
     })
+
+  createTest('should be able to set view context')
+    .withRum({ enableExperimentalFeatures: ['view_specific_context'] })
+    .withRumSlim()
+    .withRumInit((configuration) => {
+      window.DD_RUM!.init(configuration)
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-call
+      ;(window.DD_RUM as any).setViewContext({ foo: 'bar' })
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-call
+      ;(window.DD_RUM as any).setViewContextProperty('foo', 'baz')
+    })
 })
 
 describe('beforeSend', () => {
