@@ -6,6 +6,7 @@ export type TrustableEvent<E extends Event = Event> = E & { __ddIsTrusted?: bool
 
 export const enum DOM_EVENT {
   BEFORE_UNLOAD = 'beforeunload',
+  UNLOAD = 'unload',
   CLICK = 'click',
   DBL_CLICK = 'dblclick',
   KEY_DOWN = 'keydown',
