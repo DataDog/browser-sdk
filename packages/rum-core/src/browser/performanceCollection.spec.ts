@@ -19,30 +19,30 @@ describe('startPerformanceCollection', () => {
     })
   }
 
-  ;[RumPerformanceEntryType.FIRST_INPUT, RumPerformanceEntryType.LAYOUT_SHIFT, RumPerformanceEntryType.EVENT].forEach(
-    (entryType) => {
-      it(`should notify ${entryType}`, () => {
-        const { notifyPerformanceEntries } = mockPerformanceObserver()
-        setupStartPerformanceCollection()
+  ;[RumPerformanceEntryType.LAYOUT_SHIFT].forEach((entryType) => {
+    it(`should notify ${entryType}`, () => {
+      const { notifyPerformanceEntries } = mockPerformanceObserver()
+      setupStartPerformanceCollection()
 
-        notifyPerformanceEntries([createPerformanceEntry(entryType)])
+      notifyPerformanceEntries([createPerformanceEntry(entryType)])
 
-        expect(entryCollectedCallback).toHaveBeenCalledWith([jasmine.objectContaining({ entryType })])
-      })
-    }
-  )
+      expect(entryCollectedCallback).toHaveBeenCalledWith([jasmine.objectContaining({ entryType })])
+    })
+  })
   ;[
     RumPerformanceEntryType.NAVIGATION,
     RumPerformanceEntryType.RESOURCE,
     RumPerformanceEntryType.LONG_TASK,
     RumPerformanceEntryType.LARGEST_CONTENTFUL_PAINT,
     RumPerformanceEntryType.PAINT,
+    RumPerformanceEntryType.FIRST_INPUT,
+    RumPerformanceEntryType.EVENT,
   ].forEach((entryType) => {
     it(`should not notify ${entryType} timings`, () => {
       const { notifyPerformanceEntries } = mockPerformanceObserver()
       setupStartPerformanceCollection()
 
-      notifyPerformanceEntries([createPerformanceEntry(RumPerformanceEntryType.RESOURCE)])
+      notifyPerformanceEntries([createPerformanceEntry(entryType)])
 
       expect(entryCollectedCallback).not.toHaveBeenCalled()
     })

@@ -456,10 +456,8 @@ describe('view metrics', () => {
 
       const lcpEntry = createPerformanceEntry(RumPerformanceEntryType.LARGEST_CONTENTFUL_PAINT)
       clock.tick(KEEP_TRACKING_AFTER_VIEW_DELAY - 1)
-      lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [
-        createPerformanceEntry(RumPerformanceEntryType.PAINT),
-      ])
-      notifyPerformanceEntries([lcpEntry])
+
+      notifyPerformanceEntries([createPerformanceEntry(RumPerformanceEntryType.PAINT), lcpEntry])
 
       clock.tick(THROTTLE_VIEW_UPDATE_PERIOD)
 
@@ -475,10 +473,12 @@ describe('view metrics', () => {
       expect(getViewCreateCount()).toEqual(2)
 
       clock.tick(KEEP_TRACKING_AFTER_VIEW_DELAY)
-      lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [
+
+      notifyPerformanceEntries([
         createPerformanceEntry(RumPerformanceEntryType.PAINT),
         createPerformanceEntry(RumPerformanceEntryType.LARGEST_CONTENTFUL_PAINT),
       ])
+
       clock.tick(THROTTLE_VIEW_UPDATE_PERIOD)
 
       const latestUpdate = getViewUpdate(getViewUpdateCount() - 1)
@@ -508,6 +508,7 @@ describe('view metrics', () => {
 
         notifyPerformanceEntries([
           createPerformanceEntry(RumPerformanceEntryType.PAINT),
+          createPerformanceEntry(RumPerformanceEntryType.NAVIGATION),
           createPerformanceEntry(RumPerformanceEntryType.LARGEST_CONTENTFUL_PAINT),
         ])
 

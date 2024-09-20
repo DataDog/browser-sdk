@@ -4,11 +4,9 @@ import { mockClock, registerCleanupTask } from '@datadog/browser-core/test'
 import type { RumPerformanceEntry } from '../../../browser/performanceObservable'
 import { RumPerformanceEntryType } from '../../../browser/performanceObservable'
 import { createPerformanceEntry, mockPerformanceObserver, mockRumConfiguration } from '../../../../test'
-import { LifeCycle, LifeCycleEventType } from '../../lifeCycle'
 import { trackInitialViewMetrics } from './trackInitialViewMetrics'
 
 describe('trackInitialViewMetrics', () => {
-  let lifeCycle: LifeCycle
   let clock: Clock
   let scheduleViewUpdateSpy: jasmine.Spy<() => void>
   let trackInitialViewMetricsResult: ReturnType<typeof trackInitialViewMetrics>
@@ -18,21 +16,13 @@ describe('trackInitialViewMetrics', () => {
   beforeEach(() => {
     ;({ notifyPerformanceEntries } = mockPerformanceObserver())
 
-    lifeCycle = new LifeCycle()
-    ;({ notifyPerformanceEntries } = mockPerformanceObserver())
-
     const configuration = mockRumConfiguration()
     scheduleViewUpdateSpy = jasmine.createSpy()
     setLoadEventSpy = jasmine.createSpy()
     clock = mockClock()
     registerCleanupTask(clock.cleanup)
 
-    trackInitialViewMetricsResult = trackInitialViewMetrics(
-      lifeCycle,
-      configuration,
-      setLoadEventSpy,
-      scheduleViewUpdateSpy
-    )
+    trackInitialViewMetricsResult = trackInitialViewMetrics(configuration, setLoadEventSpy, scheduleViewUpdateSpy)
 
     registerCleanupTask(trackInitialViewMetricsResult.stop)
   })
@@ -41,10 +31,9 @@ describe('trackInitialViewMetrics', () => {
     notifyPerformanceEntries([
       createPerformanceEntry(RumPerformanceEntryType.NAVIGATION),
       createPerformanceEntry(RumPerformanceEntryType.PAINT),
-    ])
-    lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [
       createPerformanceEntry(RumPerformanceEntryType.FIRST_INPUT),
     ])
+
     clock.tick(0)
 
     expect(scheduleViewUpdateSpy).toHaveBeenCalledTimes(3)
@@ -60,10 +49,11 @@ describe('trackInitialViewMetrics', () => {
   })
 
   it('calls the `setLoadEvent` callback when the loadEvent timing is known', () => {
-    notifyPerformanceEntries([createPerformanceEntry(RumPerformanceEntryType.PAINT)])
-    lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [
+    notifyPerformanceEntries([
+      createPerformanceEntry(RumPerformanceEntryType.PAINT),
       createPerformanceEntry(RumPerformanceEntryType.FIRST_INPUT),
     ])
+
     clock.tick(0)
 
     expect(setLoadEventSpy).toHaveBeenCalledOnceWith(jasmine.any(Number))
