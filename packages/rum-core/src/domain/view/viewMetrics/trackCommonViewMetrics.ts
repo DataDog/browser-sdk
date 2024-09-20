@@ -45,7 +45,6 @@ export function trackCommonViewMetrics(
 
   const { stop: stopCLSTracking } = trackCumulativeLayoutShift(
     configuration,
-    lifeCycle,
     viewStart.relative,
     (cumulativeLayoutShift) => {
       commonViewMetrics.cumulativeLayoutShift = cumulativeLayoutShift
