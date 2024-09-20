@@ -26,12 +26,18 @@ export function computeViewName(routeMatches: RouteMatch[]) {
     }
 
     if (path.startsWith('/')) {
+      // Absolute path, replace the current view name
       viewName = path
     } else {
+      // Relative path, append to the current view name
       if (!viewName.endsWith('/')) {
         viewName += '/'
       }
-      viewName += path
+      if (path === '*') {
+        viewName += routeMatch.params['*']!
+      } else {
+        viewName += path
+      }
     }
   }
 
