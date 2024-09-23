@@ -17,8 +17,8 @@ describe('createPageExitObservable', () => {
     restorePageVisibility()
   })
 
-  it('notifies when the page fires beforeunload', () => {
-    window.dispatchEvent(createNewEvent('beforeunload'))
+  it('notifies when the page fires unload', () => {
+    window.dispatchEvent(createNewEvent('unload'))
 
     expect(onExitSpy).toHaveBeenCalledOnceWith({ reason: PageExitReason.UNLOADING })
   })
