@@ -75,6 +75,22 @@ export interface RumPublicApi extends PublicApi {
    * See [User tracking consent](https://docs.datadoghq.com/real_user_monitoring/browser/advanced_configuration/#user-tracking-consent) for further information.
    */
   setTrackingConsent: (trackingConsent: TrackingConsent) => void
+
+  /**
+   * Set View Context.
+   *
+   * Enable to manually set the context of the current view.
+   * @param context context of the view
+   */
+  setViewContext: (context: Context) => void
+  /**
+   * Set View Context Property.
+   *
+   * Enable to manually set a property of the context of the current view.
+   * @param key key of the property
+   * @param value value of the property
+   */
+  setViewContextProperty: (key: string, value: any) => void
   /**
    * Set the global context information to all events, stored in `@context`
    *
@@ -425,33 +441,19 @@ export function makeRumPublicApi(
           strategy.updateViewName(name)
         })
       }
-      if (isExperimentalFeatureEnabled(ExperimentalFeature.VIEW_SPECIFIC_CONTEXT)) {
-        /**
-         * Set View Context.
-         *
-         * Enable to manually set the context of the current view.
-         * @param context context of the view
-         */
-        ;(rumPublicApi as any).setViewContext = monitor((context: Context) => {
-          strategy.setViewContext(context)
-        })
-
-        /**
-         * Set View Context Property.
-         *
-         * Enable to manually set a property of the context of the current view.
-         * @param key key of the property
-         * @param value value of the property
-         */
-        ;(rumPublicApi as any).setViewContextProperty = monitor((key: string, value: any) => {
-          strategy.setViewContextProperty(key, value)
-        })
-      }
     }),
 
     setTrackingConsent: monitor((trackingConsent) => {
       trackingConsentState.update(trackingConsent)
       addTelemetryUsage({ feature: 'set-tracking-consent', tracking_consent: trackingConsent })
+    }),
+
+    setViewContext: monitor((context: Context) => {
+      strategy.setViewContext(context)
+    }),
+
+    setViewContextProperty: monitor((key: string, value: any) => {
+      strategy.setViewContextProperty(key, value)
     }),
 
     setGlobalContext: monitor((context) => {

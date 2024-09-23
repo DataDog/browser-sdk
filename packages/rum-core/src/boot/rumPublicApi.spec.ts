@@ -891,8 +891,6 @@ describe('rum public api', () => {
     })
 
     it('should set view specific context with setViewContext', () => {
-      mockExperimentalFeatures([ExperimentalFeature.VIEW_SPECIFIC_CONTEXT])
-
       rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
       /* eslint-disable @typescript-eslint/no-unsafe-call */
       ;(rumPublicApi as any).setViewContext({ foo: 'bar' })
@@ -901,20 +899,11 @@ describe('rum public api', () => {
     })
 
     it('should set view specific context with setViewContextProperty', () => {
-      mockExperimentalFeatures([ExperimentalFeature.VIEW_SPECIFIC_CONTEXT])
-
       rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
       /* eslint-disable @typescript-eslint/no-unsafe-call */
       ;(rumPublicApi as any).setViewContextProperty('foo', 'bar')
 
       expect(setViewContextPropertySpy).toHaveBeenCalledWith('foo', 'bar')
-    })
-
-    it('should not expose view specific context when ff is disabled', () => {
-      rumPublicApi = makeRumPublicApi(noopStartRum, noopRecorderApi)
-      rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
-      expect((rumPublicApi as any).setViewContext).toBeUndefined()
-      expect((rumPublicApi as any).setViewContextProperty).toBeUndefined()
     })
   })
 })
