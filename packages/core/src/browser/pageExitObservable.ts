@@ -5,7 +5,7 @@ import { addEventListeners, addEventListener, DOM_EVENT } from './addEventListen
 
 export const PageExitReason = {
   HIDDEN: 'visibility_hidden',
-  UNLOADING: 'before_unload',
+  UNLOADING: 'unload',
   PAGEHIDE: 'page_hide',
   FROZEN: 'page_frozen',
 } as const
@@ -40,7 +40,7 @@ export function createPageExitObservable(configuration: Configuration): Observab
       { capture: true }
     )
 
-    const stopBeforeUnloadListener = addEventListener(configuration, window, DOM_EVENT.BEFORE_UNLOAD, () => {
+    const stopBeforeUnloadListener = addEventListener(configuration, window, DOM_EVENT.UNLOAD, () => {
       observable.notify({ reason: PageExitReason.UNLOADING })
     }).stop
 
