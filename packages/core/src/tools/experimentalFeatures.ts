@@ -18,7 +18,6 @@ export enum ExperimentalFeature {
   TOLERANT_RESOURCE_TIMINGS = 'tolerant_resource_timings',
   REMOTE_CONFIGURATION = 'remote_configuration',
   UPDATE_VIEW_NAME = 'update_view_name',
-  NULL_INP_TELEMETRY = 'null_inp_telemetry',
   LONG_ANIMATION_FRAME = 'long_animation_frame',
   VIEW_SPECIFIC_CONTEXT = 'view_specific_context',
 }

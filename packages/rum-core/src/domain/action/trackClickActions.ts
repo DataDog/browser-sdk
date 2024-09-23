@@ -11,8 +11,6 @@ import {
   ONE_SECOND,
   elapsed,
   createValueHistory,
-  isExperimentalFeatureEnabled,
-  ExperimentalFeature,
   relativeNow,
 } from '@datadog/browser-core'
 import type { FrustrationType } from '../../rawRumEvent.types'
