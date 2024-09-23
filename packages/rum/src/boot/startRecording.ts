@@ -1,5 +1,5 @@
 import type { RawError, HttpRequest, DeflateEncoder } from '@datadog/browser-core'
-import { createHttpRequest, addTelemetryDebug, canUseEventBridge } from '@datadog/browser-core'
+import { createHttpRequest, addTelemetryDebug, canUseEventBridge, noop } from '@datadog/browser-core'
 import type { LifeCycle, ViewHistory, RumConfiguration, RumSessionManager } from '@datadog/browser-rum-core'
 import { LifeCycleEventType, SessionReplayState } from '@datadog/browser-rum-core'
 
@@ -29,7 +29,7 @@ export function startRecording(
     createHttpRequest(configuration, configuration.sessionReplayEndpointBuilder, SEGMENT_BYTES_LIMIT, reportError)
 
   let addRecord: (record: BrowserRecord) => void
-  let getCachedRecords: () => BrowserRecord[]
+  let flushCachedRecords: () => void = noop
 
   const initSegemntCollection = () => {
     const segmentCollection = startSegmentCollection(
@@ -43,25 +43,37 @@ export function startRecording(
     cleanupTasks.push(segmentCollection.stop)
     return { addRecord: segmentCollection.addRecord }
   }
-  const session = sessionManager.findTrackedSession()!
-  if (!canUseEventBridge()) {
-    if (session.sessionReplay === SessionReplayState.OFF) {
-      ;({ addRecord, getRecords: getCachedRecords } = startRecordsCaching())
-    } else {
-      ;({ addRecord } = initSegemntCollection())
+
+  const initRecordsCollectionAndForwarding = () => {
+    const session = sessionManager.findTrackedSession()!
+    let shouldCache = session.sessionReplay === SessionReplayState.OFF
+
+    const { addRecord: addToCache, getRecords: getFromCache } = startRecordsCaching()
+    const { addRecord: addToSegment } = initSegemntCollection()
+
+    const addRecord = (record: BrowserRecord) => {
+      if (shouldCache) {
+        addToCache(record)
+      } else {
+        addToSegment(record)
+      }
     }
-  } else {
-    ;({ addRecord } = startRecordBridge(viewHistory))
+
+    const flushCachedRecords = () => {
+      if (shouldCache) {
+        shouldCache = false
+        const records = getFromCache()
+        records.forEach(addToSegment)
+      }
+    }
+
+    return { addRecord, flushCachedRecords }
   }
 
-  function flushCachedRecords() {
-    if (getCachedRecords) {
-      const { addRecord: addRecordToSegment } = initSegemntCollection()
-      const records = getCachedRecords()
-      records.forEach(addRecordToSegment)
-
-      addRecord = addRecordToSegment
-    }
+  if (!canUseEventBridge()) {
+    ;({ addRecord, flushCachedRecords } = initRecordsCollectionAndForwarding())
+  } else {
+    ;({ addRecord } = startRecordBridge(viewHistory))
   }
 
   const { stop: stopRecording } = record({
