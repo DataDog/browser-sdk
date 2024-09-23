@@ -426,14 +426,21 @@ describe('trackClickActions', () => {
   })
 
   describe('interactionSelectorMap', () => {
-    it('pointer down is added to the map', () => {
+    it('should add pointer down to the map', () => {
       startClickActionsTracking()
       const setInteractionMapSpy = spyOn(Map.prototype, 'set').and.callThrough()
       emulateClick({ activity: { on: 'pointerdown' } })
       expect(setInteractionMapSpy).toHaveBeenCalled()
     })
 
-    it('clear outdated entries when pointer up', () => {
+    it('should add pointerup to the map', () => {
+      startClickActionsTracking()
+      const setInteractionMapSpy = spyOn(Map.prototype, 'set').and.callThrough()
+      emulateClick({ activity: { on: 'pointerup' } })
+      expect(setInteractionMapSpy).toHaveBeenCalled()
+    })
+
+    it('should clear outdated entries when pointer up', () => {
       startClickActionsTracking()
       const deleteInteractionMapSpy = spyOn(Map.prototype, 'delete').and.callThrough()
 

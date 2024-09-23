@@ -188,7 +188,7 @@ function startClickAction(
   const click = newClick(lifeCycle, history, getUserActivity, clickActionBase, startEvent)
   appendClickToClickChain(click)
 
-  if (clickActionBase.target && isExperimentalFeatureEnabled(ExperimentalFeature.NULL_INP_TELEMETRY)) {
+  if (clickActionBase.target) {
     const { selector } = clickActionBase.target
     if (selector) {
       // save the selector for the interaction to next paint
