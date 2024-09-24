@@ -19,6 +19,7 @@ export enum ExperimentalFeature {
   UPDATE_VIEW_NAME = 'update_view_name',
   LONG_ANIMATION_FRAME = 'long_animation_frame',
   VIEW_SPECIFIC_CONTEXT = 'view_specific_context',
+  ANONYMOUS_USER_TRACKING = 'anonymous_user_tracking',
 }
 
 const enabledExperimentalFeatures: Set<ExperimentalFeature> = new Set()

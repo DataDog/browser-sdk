@@ -1,11 +1,10 @@
+import { ExperimentalFeature, isExperimentalFeatureEnabled } from '../../tools/experimentalFeatures'
 import { isEmptyObject } from '../../tools/utils/objectUtils'
 import { objectEntries } from '../../tools/utils/polyfills'
 import { dateNow } from '../../tools/utils/timeUtils'
+import { getAnonymousIdFromStorage } from '../user'
 import { SESSION_EXPIRATION_DELAY, SESSION_TIME_OUT_DELAY } from './sessionConstants'
-
-const SESSION_ENTRY_REGEXP = /^([a-zA-Z]+)=([a-z0-9-]+)$/
-const SESSION_ENTRY_SEPARATOR = '&'
-
+import { isValidSessionString, SESSION_ENTRY_REGEXP, SESSION_ENTRY_SEPARATOR } from './sessionStateValidation'
 export const EXPIRED = '1'
 
 export interface SessionState {
@@ -18,9 +17,14 @@ export interface SessionState {
 }
 
 export function getExpiredSessionState(): SessionState {
-  return {
+  const expiredSessionState: SessionState = {
     isExpired: EXPIRED,
   }
+  if (isExperimentalFeatureEnabled(ExperimentalFeature.ANONYMOUS_USER_TRACKING)) {
+    // persist the anonymous id in the expired session state
+    expiredSessionState.device = getAnonymousIdFromStorage()
+  }
+  return expiredSessionState
 }
 
 export function isSessionInNotStartedState(session: SessionState) {
@@ -67,11 +71,4 @@ export function toSessionState(sessionString: string | undefined | null) {
     })
   }
   return session
-}
-
-function isValidSessionString(sessionString: string | undefined | null): sessionString is string {
-  return (
-    !!sessionString &&
-    (sessionString.indexOf(SESSION_ENTRY_SEPARATOR) !== -1 || SESSION_ENTRY_REGEXP.test(sessionString))
-  )
 }

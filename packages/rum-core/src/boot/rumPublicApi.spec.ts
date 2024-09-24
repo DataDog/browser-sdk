@@ -917,4 +917,19 @@ describe('rum public api', () => {
       expect((rumPublicApi as any).setViewContextProperty).toBeUndefined()
     })
   })
+
+  describe('anonymous user tracking', () => {
+    it('should not track anonymous user by default', () => {
+      const rumPublicApi = makeRumPublicApi(noopStartRum, noopRecorderApi)
+      rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
+      expect(rumPublicApi.getUser()).toEqual({})
+    })
+
+    it('should track anonymous user when feature enabled', () => {
+      const rumPublicApi = makeRumPublicApi(noopStartRum, noopRecorderApi)
+      mockExperimentalFeatures([ExperimentalFeature.ANONYMOUS_USER_TRACKING])
+      rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
+      expect(rumPublicApi.getUser()).toEqual({ anonymous_id: jasmine.any(String) })
+    })
+  })
 })

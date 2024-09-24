@@ -1,4 +1,6 @@
+import { ExperimentalFeature, isExperimentalFeatureEnabled } from '../../../tools/experimentalFeatures'
 import { generateUUID } from '../../../tools/utils/stringUtils'
+import { generateAnonymousId, setAnonymousIdInStorage } from '../../user'
 import type { SessionState } from '../sessionState'
 import { toSessionString, toSessionState, getExpiredSessionState } from '../sessionState'
 import type { SessionStoreStrategy, SessionStoreStrategyType } from './sessionStoreStrategy'
@@ -29,12 +31,25 @@ export function initLocalStorageStrategy(): SessionStoreStrategy {
 }
 
 function persistInLocalStorage(sessionState: SessionState) {
+  if (!sessionState.device && isExperimentalFeatureEnabled(ExperimentalFeature.ANONYMOUS_USER_TRACKING)) {
+    sessionState.device = generateAnonymousId()
+    setAnonymousIdInStorage('LocalStorage', sessionState.device)
+  }
   localStorage.setItem(SESSION_STORE_KEY, toSessionString(sessionState))
 }
 
 function retrieveSessionFromLocalStorage(): SessionState {
   const sessionString = localStorage.getItem(SESSION_STORE_KEY)
-  return toSessionState(sessionString)
+  const sessionState = toSessionState(sessionString)
+  let device = sessionState.device
+
+  if (isExperimentalFeatureEnabled(ExperimentalFeature.ANONYMOUS_USER_TRACKING) && !device) {
+    // init device id if it does not exist or if session cookie does not exist
+    device = generateAnonymousId()
+    setAnonymousIdInStorage('LocalStorage', device)
+    sessionState.device = device
+  }
+  return sessionState
 }
 
 function expireSessionFromLocalStorage() {

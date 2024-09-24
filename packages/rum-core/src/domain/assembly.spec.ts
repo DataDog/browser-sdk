@@ -838,6 +838,19 @@ describe('rum assembly', () => {
     })
   })
 
+  describe('anonymous user id context', () => {
+    it('includes the anonymous user id context', () => {
+      mockExperimentalFeatures([ExperimentalFeature.ANONYMOUS_USER_TRACKING])
+      const { lifeCycle, serverRumEvents } = setupAssemblyTestWithDefaults()
+
+      notifyRawRumEvent(lifeCycle, {
+        rawRumEvent: createRawRumEvent(RumEventType.VIEW),
+      })
+
+      expect(serverRumEvents[0].usr!.anonymous_id).toBeDefined()
+    })
+  })
+
   describe('if event bridge detected', () => {
     it('includes the browser sdk version', () => {
       const { lifeCycle, serverRumEvents } = setupAssemblyTestWithDefaults()
