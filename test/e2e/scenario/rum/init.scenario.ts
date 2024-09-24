@@ -128,9 +128,9 @@ describe('API calls and events around init', () => {
     .withRumInit((configuration) => {
       window.DD_RUM!.init(configuration)
       // eslint-disable-next-line @typescript-eslint/no-unsafe-call
-      ;(window.DD_RUM as any).setViewContext({ foo: 'bar' })
+      window.DD_RUM!.setViewContext({ foo: 'bar' })
       // eslint-disable-next-line @typescript-eslint/no-unsafe-call
-      ;(window.DD_RUM as any).setViewContextProperty('bar', 'foo')
+      window.DD_RUM!.setViewContextProperty('bar', 'foo')
 
       // context should populate the context of the children events
       window.DD_RUM!.addAction('custom action')
