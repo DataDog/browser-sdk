@@ -3,7 +3,7 @@ import { setCookie } from './browser'
 
 export async function renewSession() {
   await expireSession()
-  const documentElement = await $('html')
+  const documentElement = $('html')
   await documentElement.click()
 
   expect(await findSessionCookie()).not.toContain('isExpired=1')

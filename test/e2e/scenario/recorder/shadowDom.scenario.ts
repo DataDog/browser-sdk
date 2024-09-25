@@ -245,7 +245,7 @@ describe('recorder with shadow DOM', () => {
       <my-div />
     `)
     .run(async ({ intakeRegistry }) => {
-      const div = await getNodeInsideShadowDom('my-div', 'div')
+      const div = getNodeInsideShadowDom('my-div', 'div')
       await div.click()
       await flushEvents()
       expect(intakeRegistry.replaySegments.length).toBe(1)
@@ -301,7 +301,7 @@ describe('recorder with shadow DOM', () => {
       <my-scrollable-div id="host" />
     `)
     .run(async ({ intakeRegistry }) => {
-      const button = await getNodeInsideShadowDom('my-scrollable-div', 'button')
+      const button = getNodeInsideShadowDom('my-scrollable-div', 'button')
 
       // Triggering scrollTo from the test itself is not allowed
       // Thus, a callback to scroll the div was added to the button 'click' event
@@ -338,8 +338,8 @@ function findElementsInShadowDom(node: SerializedNodeWithId, id: string) {
   return { shadowHost, shadowRoot, input, text, textContent }
 }
 
-async function getNodeInsideShadowDom(hostTag: string, selector: string) {
-  const host = await $(hostTag)
+function getNodeInsideShadowDom(hostTag: string, selector: string) {
+  const host = $(hostTag)
   return host.shadow$(selector)
 }
 

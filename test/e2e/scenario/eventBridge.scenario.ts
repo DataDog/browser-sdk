@@ -15,7 +15,7 @@ describe('bridge present', () => {
       </script>
     `)
     .run(async ({ intakeRegistry }) => {
-      const button = await $('button')
+      const button = $('button')
       await button.click()
       // wait for click chain to close
       await browser.pause(1000)

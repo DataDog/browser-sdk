@@ -79,7 +79,7 @@ describe('rum sessions', () => {
         await browser.execute(() => {
           window.DD_RUM!.stopSession()
         })
-        await (await $('html')).click()
+        await $('html').click()
 
         // The session is not created right away, let's wait until we see a cookie
         await browser.waitUntil(async () => Boolean(await findSessionCookie()))
@@ -126,7 +126,7 @@ describe('rum sessions', () => {
         // Cookies are cached for 1s, wait until the cache expires
         await browser.pause(1100)
 
-        await (await $('html')).click()
+        await $('html').click()
 
         await browser.pause(1100)
 

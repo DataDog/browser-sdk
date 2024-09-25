@@ -24,7 +24,7 @@ describe('rum errors', () => {
     .withRum()
     .withBody(createBody('console.error("oh snap")'))
     .run(async ({ intakeRegistry, baseUrl }) => {
-      const button = await $('button')
+      const button = $('button')
       await button.click()
 
       await flushEvents()
@@ -44,7 +44,7 @@ describe('rum errors', () => {
     .withRum()
     .withBody(createBody('console.error("Foo:", foo())'))
     .run(async ({ intakeRegistry, baseUrl }) => {
-      const button = await $('button')
+      const button = $('button')
       await button.click()
 
       await flushEvents()
@@ -65,7 +65,7 @@ describe('rum errors', () => {
     .withRum()
     .withBody(createBody('throw foo()'))
     .run(async ({ intakeRegistry, baseUrl }) => {
-      const button = await $('button')
+      const button = $('button')
       await button.click()
 
       await flushEvents()
@@ -85,7 +85,7 @@ describe('rum errors', () => {
     .withRum()
     .withBody(createBody('Promise.reject(foo())'))
     .run(async ({ intakeRegistry, baseUrl }) => {
-      const button = await $('button')
+      const button = $('button')
       await button.click()
 
       await flushEvents()
@@ -105,7 +105,7 @@ describe('rum errors', () => {
     .withRum()
     .withBody(createBody('DD_RUM.addError(foo())'))
     .run(async ({ intakeRegistry, baseUrl }) => {
-      const button = await $('button')
+      const button = $('button')
       await button.click()
 
       await flushEvents()
@@ -137,7 +137,7 @@ describe('rum errors', () => {
       `)
       )
       .run(async ({ intakeRegistry, baseUrl }) => {
-        const button = await $('button')
+        const button = $('button')
         await button.click()
 
         await flushEvents()
