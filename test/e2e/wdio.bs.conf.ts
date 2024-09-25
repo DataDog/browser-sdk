@@ -1,9 +1,8 @@
-import type { Options } from '@wdio/types'
 import { getBuildInfos } from '../envUtils'
 import { browserConfigurations } from './browsers.conf'
 import { config as baseConfig } from './wdio.base.conf'
 
-export const config: Options.Testrunner = {
+export const config: WebdriverIO.Config = {
   ...baseConfig,
 
   specFileRetries: 1,

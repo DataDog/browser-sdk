@@ -1,6 +1,6 @@
 import path from 'path'
 import { unlinkSync, mkdirSync } from 'fs'
-import type { Options, Reporters } from '@wdio/types'
+import type { Reporters } from '@wdio/types'
 import { browser, $, $$ } from '@wdio/globals'
 import { getRunId, getTestReportDirectory } from '../envUtils'
 import { APPLICATION_ID } from './lib/helpers/configuration'
@@ -28,15 +28,10 @@ if (testReportDirectory) {
   logsPath = 'specs.log'
 }
 
-type OptionsWithLogsPath = Options.Testrunner & { logsPath?: string }
-export const config: OptionsWithLogsPath = {
+type ConfigWithLogsPath = WebdriverIO.Config & { logsPath?: string }
+export const config: ConfigWithLogsPath = {
   runner: 'local',
-  autoCompileOpts: {
-    autoCompile: true,
-    tsNodeOpts: {
-      project: './tsconfig.json',
-    },
-  },
+  tsConfigPath: './tsconfig.json',
   // We do not inject @wdio globals to keep Jasmine's expect
   injectGlobals: false,
   specs: ['./scenario/**/*.scenario.ts'],
