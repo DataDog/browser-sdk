@@ -28,8 +28,8 @@ describe('Session Stores', () => {
         const logsContext = await browser.execute(() => window.DD_LOGS?.getInternalContext())
         const rumContext = await browser.execute(() => window.DD_RUM?.getInternalContext())
 
-        expect(logsContext).not.toBeNull()
-        expect(rumContext).toBeNull()
+        expect(logsContext).toBeDefined()
+        expect(rumContext).not.toBeDefined()
       })
   })
 
