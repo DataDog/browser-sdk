@@ -128,9 +128,9 @@ describe('API calls and events around init', () => {
     .withRumInit((configuration) => {
       window.DD_RUM!.init(configuration)
       // eslint-disable-next-line @typescript-eslint/no-unsafe-call
-      ;(window.DD_RUM as any).setViewContext({ foo: 'bar' })
+      window.DD_RUM!.setViewContext({ foo: 'bar' })
       // eslint-disable-next-line @typescript-eslint/no-unsafe-call
-      ;(window.DD_RUM as any).setViewContextProperty('bar', 'foo')
+      window.DD_RUM!.setViewContextProperty('bar', 'foo')
 
       // context should populate the context of the children events
       window.DD_RUM!.addAction('custom action')
@@ -182,7 +182,6 @@ describe('API calls and events around init', () => {
 describe('beforeSend', () => {
   createTest('allows to edit events context with feature flag')
     .withRum({
-      enableExperimentalFeatures: ['view_specific_context'],
       beforeSend: (event: any) => {
         event.context!.foo = 'bar'
         return true
@@ -200,7 +199,6 @@ describe('beforeSend', () => {
 
   createTest('allows to replace events context')
     .withRum({
-      enableExperimentalFeatures: ['view_specific_context'],
       beforeSend: (event) => {
         event.context = { foo: 'bar' }
         return true
