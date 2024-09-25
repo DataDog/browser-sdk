@@ -81,6 +81,6 @@ async function getSessionIdFromLocalStorage(): Promise<string | undefined> {
 }
 
 async function getSessionIdFromCookie(): Promise<string | undefined> {
-  const [cookie] = await browser.getCookies([SESSION_STORE_KEY])
+  const [cookie] = await browser.getCookies({ name: SESSION_STORE_KEY })
   return cookie.value.match(SESSION_ID_REGEX)?.[1]
 }

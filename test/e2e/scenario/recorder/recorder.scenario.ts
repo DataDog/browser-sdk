@@ -826,7 +826,7 @@ describe('recorder', () => {
         await browser.execute(() => {
           window.DD_RUM!.startSessionReplayRecording({ force: true })
         })
-        const [cookie] = await browser.getCookies([SESSION_STORE_KEY])
+        const [cookie] = await browser.getCookies({ name: SESSION_STORE_KEY })
         expect(cookie.value).toContain('forcedReplay=1')
 
         await flushEvents()
