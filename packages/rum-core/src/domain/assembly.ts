@@ -77,9 +77,7 @@ export function startRumAssembly(
   reportError: (error: RawError) => void
 ) {
   modifiableFieldPathsByEvent = {
-    [RumEventType.VIEW]: isExperimentalFeatureEnabled(ExperimentalFeature.VIEW_SPECIFIC_CONTEXT)
-      ? { ...USER_CUSTOMIZABLE_FIELD_PATHS, ...VIEW_MODIFIABLE_FIELD_PATHS }
-      : VIEW_MODIFIABLE_FIELD_PATHS,
+    [RumEventType.VIEW]: { ...USER_CUSTOMIZABLE_FIELD_PATHS, ...VIEW_MODIFIABLE_FIELD_PATHS },
     [RumEventType.ERROR]: {
       'error.message': 'string',
       'error.stack': 'string',
