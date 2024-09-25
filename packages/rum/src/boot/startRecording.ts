@@ -31,7 +31,7 @@ export function startRecording(
   let addRecord: (record: BrowserRecord) => void
   let flushCachedRecords: () => void = noop
 
-  const initSegemntCollection = () => {
+  const initSegmentCollection = () => {
     const segmentCollection = startSegmentCollection(
       lifeCycle,
       configuration,
@@ -44,40 +44,26 @@ export function startRecording(
     return { addRecord: segmentCollection.addRecord }
   }
 
-  const initRecordsCollectionAndForwarding = () => {
-    const session = sessionManager.findTrackedSession()!
-    let shouldCache = session.sessionReplay === SessionReplayState.OFF
-
-    const { addRecord: addToCache, getRecords: getFromCache } = startRecordsCaching()
-    const { addRecord: addToSegment } = initSegemntCollection()
-
-    const addRecord = (record: BrowserRecord) => {
-      if (shouldCache) {
-        addToCache(record)
-      } else {
-        addToSegment(record)
-      }
-    }
-
-    const flushCachedRecords = () => {
-      if (shouldCache) {
-        shouldCache = false
-        const records = getFromCache()
-        records.forEach(addToSegment)
-      }
-    }
-
-    return { addRecord, flushCachedRecords }
-  }
-
   if (!canUseEventBridge()) {
-    ;({ addRecord, flushCachedRecords } = initRecordsCollectionAndForwarding())
+    const session = sessionManager.findTrackedSession()!
+    if (session.sessionReplay === SessionReplayState.OFF) {
+      const cacheInitResult = startRecordsCaching()
+      addRecord = cacheInitResult.addRecord
+
+      flushCachedRecords = () => {
+        ;({ addRecord } = initSegmentCollection())
+        const records = cacheInitResult.getRecords()
+        records.forEach((record: BrowserRecord) => addRecord(record))
+      }
+    } else {
+      ;({ addRecord } = initSegmentCollection())
+    }
   } else {
     ;({ addRecord } = startRecordBridge(viewHistory))
   }
 
   const { stop: stopRecording } = record({
-    emit: addRecord,
+    emit: (record) => addRecord(record),
     configuration,
     lifeCycle,
     viewHistory,
