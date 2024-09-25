@@ -1,5 +1,5 @@
 import type { DeflateEncoder, TimeStamp } from '@datadog/browser-core'
-import { noop, setDebugMode, isIE, DeflateEncoderStreamId } from '@datadog/browser-core'
+import { noop, setDebugMode, DeflateEncoderStreamId } from '@datadog/browser-core'
 import type { RumConfiguration } from '@datadog/browser-rum-core'
 import { registerCleanupTask } from '@datadog/browser-core/test'
 import { MockWorker } from '../../../test'
@@ -29,10 +29,6 @@ describe('Segment', () => {
   let encoder: DeflateEncoder
 
   beforeEach(() => {
-    if (isIE()) {
-      pending('IE not supported')
-    }
-
     worker = new MockWorker()
     encoder = createDeflateEncoder(configuration, worker, DeflateEncoderStreamId.REPLAY)
     setDebugMode(true)

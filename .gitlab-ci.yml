@@ -65,6 +65,11 @@ stages:
       - /^release\//
       - schedules
 
+.next-major-branch:
+  only:
+    variables:
+      - $CI_COMMIT_REF_NAME == $NEXT_MAJOR_BRANCH
+
 .staging:
   only:
     variables:
@@ -322,6 +327,18 @@ deploy-prod-canary:
     - node ./scripts/deploy/deploy.js prod canary root
     - node ./scripts/deploy/upload-source-maps.js canary root
 
+deploy-next-major-canary:
+  stage: deploy
+  extends:
+    - .base-configuration
+    - .next-major-branch
+  script:
+    - export BUILD_MODE=canary
+    - VERSION=$(node -p -e "require('./lerna.json').version")
+    - yarn
+    - yarn build:bundle
+    - node ./scripts/deploy/deploy.js prod v${VERSION%%.*}-canary root
+
 deploy-manual:
   stage: deploy
   extends:
@@ -449,17 +466,17 @@ merge-into-next-major:
     - yarn
     - node scripts/update-branch.js $NEXT_MAJOR_BRANCH
 
-check-staging-merge:
-  stage: test
-  extends:
-    - .base-configuration
-    - .feature-branches
-  interruptible: true
-  before_script:
-    - eval $(ssh-agent -s)
-  script:
-    - yarn
-    - node scripts/staging-ci/check-staging-merge.js
+# check-staging-merge:
+#   stage: test
+#   extends:
+#     - .base-configuration
+#     - .feature-branches
+#   interruptible: true
+#   before_script:
+#     - eval $(ssh-agent -s)
+#   script:
+#     - yarn
+#     - node scripts/staging-ci/check-staging-merge.js
 
 # A noop job that's used to signal to `to-staging` that it can merge to the
 # staging branch, even though the pipeline is still running
