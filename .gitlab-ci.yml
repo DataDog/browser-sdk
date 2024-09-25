@@ -7,7 +7,7 @@ variables:
   GIT_REPOSITORY: 'git@github.com:DataDog/browser-sdk.git'
   MAIN_BRANCH: 'main'
   NEXT_MAJOR_BRANCH: 'v6'
-  CHROME_PACKAGE_VERSION: 128.0.6613.84-1
+  CHROME_PACKAGE_VERSION: 129.0.6668.58-1
 
 cache:
   key:
