@@ -2,7 +2,13 @@ import type { ClocksState, Context, Observable } from '@datadog/browser-core'
 import { noop, assign, combine, toServerDuration, generateUUID } from '@datadog/browser-core'
 
 import { discardNegativeDuration } from '../discardNegativeDuration'
-import type { RawRumActionEvent } from '../../rawRumEvent.types'
+import type {
+  RawRumActionEvent,
+  RawRumErrorEvent,
+  RawRumEvent,
+  RawRumLongTaskEvent,
+  RawRumResourceEvent,
+} from '../../rawRumEvent.types'
 import { ActionType, RumEventType } from '../../rawRumEvent.types'
 import type { LifeCycle, RawRumEventCollectedData } from '../lifeCycle'
 import { LifeCycleEventType } from '../lifeCycle'
@@ -11,6 +17,7 @@ import type { CommonContext } from '../contexts/commonContext'
 import type { PageStateHistory } from '../contexts/pageStateHistory'
 import { PageState } from '../contexts/pageStateHistory'
 import type { RumActionEventDomainContext } from '../../domainContext.types'
+import { HookNames, type Hooks } from '../../hooks'
 import type { ActionContexts, ClickAction } from './trackClickActions'
 import { trackClickActions } from './trackClickActions'
 
@@ -27,6 +34,7 @@ export interface CustomAction {
 export type AutoAction = ClickAction
 
 export function startActionCollection(
+  hooks: Hooks,
   lifeCycle: LifeCycle,
   domMutationObservable: Observable<void>,
   configuration: RumConfiguration,
@@ -41,8 +49,13 @@ export function startActionCollection(
     actionContexts = trackClickActions(lifeCycle, domMutationObservable, configuration).actionContexts
   }
 
-  return {
-    addAction: (action: CustomAction, savedCommonContext?: CommonContext) => {
+  hooks.register(HookNames.Event, ({ event, startTime }) => {
+    const actionId = actionContexts.findActionId(startTime)
+    event.action = needToAssembleWithAction(event) && actionId ? { id: actionId } : undefined
+  })
+
+  hooks.register(HookNames.Api, (api: any) => {
+    api.addAction = (action: CustomAction, savedCommonContext?: CommonContext) => {
       lifeCycle.notify(
         LifeCycleEventType.RAW_RUM_EVENT_COLLECTED,
         assign(
@@ -52,9 +65,14 @@ export function startActionCollection(
           processAction(action, pageStateHistory)
         )
       )
-    },
-    actionContexts,
-  }
+    }
+  })
+}
+
+function needToAssembleWithAction(
+  event: RawRumEvent
+): event is RawRumErrorEvent | RawRumResourceEvent | RawRumLongTaskEvent {
+  return [RumEventType.ERROR, RumEventType.RESOURCE, RumEventType.LONG_TASK].indexOf(event.type) !== -1
 }
 
 function processAction(

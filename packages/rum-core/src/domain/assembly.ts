@@ -14,15 +14,10 @@ import {
   getConnectivity,
 } from '@datadog/browser-core'
 import type { RumEventDomainContext } from '../domainContext.types'
-import type {
-  RawRumErrorEvent,
-  RawRumEvent,
-  RawRumLongTaskEvent,
-  RawRumResourceEvent,
-  RumContext,
-} from '../rawRumEvent.types'
+import type { RumContext } from '../rawRumEvent.types'
 import { RumEventType } from '../rawRumEvent.types'
 import type { RumEvent } from '../rumEvent.types'
+import { HookNames, type Hooks } from '../hooks'
 import { getSyntheticsContext } from './contexts/syntheticsContext'
 import type { CiVisibilityContext } from './contexts/ciVisibilityContext'
 import type { LifeCycle } from './lifeCycle'
@@ -31,7 +26,6 @@ import type { ViewHistory } from './contexts/viewHistory'
 import { SessionReplayState, type RumSessionManager } from './rumSessionManager'
 import type { UrlContexts } from './contexts/urlContexts'
 import type { RumConfiguration } from './configuration'
-import type { ActionContexts } from './action/actionCollection'
 import type { DisplayContext } from './contexts/displayContext'
 import type { CommonContext } from './contexts/commonContext'
 import type { ModifiableFieldPaths } from './limitModification'
@@ -63,15 +57,15 @@ const ROOT_MODIFIABLE_FIELD_PATHS: ModifiableFieldPaths = {
 
 let modifiableFieldPathsByEvent: { [key in RumEventType]: ModifiableFieldPaths }
 
-type Mutable<T> = { -readonly [P in keyof T]: T[P] }
+export type Mutable<T> = { -readonly [P in keyof T]: T[P] }
 
 export function startRumAssembly(
   configuration: RumConfiguration,
+  hooks: Hooks,
   lifeCycle: LifeCycle,
   sessionManager: RumSessionManager,
   viewHistory: ViewHistory,
   urlContexts: UrlContexts,
-  actionContexts: ActionContexts,
   displayContext: DisplayContext,
   ciVisibilityContext: CiVisibilityContext,
   getCommonContext: () => CommonContext,
@@ -141,7 +135,6 @@ export function startRumAssembly(
       const session = sessionManager.findTrackedSession(startTime)
       if (session && viewHistoryEntry && urlContext) {
         const commonContext = savedCommonContext || getCommonContext()
-        const actionId = actionContexts.findActionId(startTime)
 
         const rumContext: RumContext = {
           _dd: {
@@ -174,7 +167,6 @@ export function startRumAssembly(
             url: urlContext.url,
             referrer: urlContext.referrer,
           },
-          action: needToAssembleWithAction(rawRumEvent) && actionId ? { id: actionId } : undefined,
           synthetics: syntheticsContext,
           ci_test: ciVisibilityContext.get(),
           display: displayContext.get(),
@@ -195,6 +187,8 @@ export function startRumAssembly(
         if (!isEmptyObject(commonContext.user)) {
           ;(serverRumEvent.usr as Mutable<RumEvent['usr']>) = commonContext.user as User & Context
         }
+
+        hooks.triggerHook(HookNames.Event, { event: serverRumEvent, startTime })
 
         if (shouldSend(serverRumEvent, configuration.beforeSend, domainContext, eventRateLimiters)) {
           if (isEmptyObject(serverRumEvent.context)) {
@@ -228,10 +222,4 @@ function shouldSend(
   const rateLimitReached = eventRateLimiters[event.type]?.isLimitReached()
 
   return !rateLimitReached
-}
-
-function needToAssembleWithAction(
-  event: RawRumEvent
-): event is RawRumErrorEvent | RawRumResourceEvent | RawRumLongTaskEvent {
-  return [RumEventType.ERROR, RumEventType.RESOURCE, RumEventType.LONG_TASK].indexOf(event.type) !== -1
 }

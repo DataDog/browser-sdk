@@ -50,6 +50,8 @@ import type { CustomVitalsState } from '../domain/vital/vitalCollection'
 import { startVitalCollection } from '../domain/vital/vitalCollection'
 import { startCiVisibilityContext } from '../domain/contexts/ciVisibilityContext'
 import { startLongAnimationFrameCollection } from '../domain/longAnimationFrame/longAnimationFrameCollection'
+import type { Hooks } from '../hooks'
+import { HookNames, startHooks } from '../hooks'
 import type { RecorderApi } from './rumPublicApi'
 
 export type StartRum = typeof startRum
@@ -70,6 +72,7 @@ export function startRum(
   customVitalsState: CustomVitalsState
 ) {
   const cleanupTasks: Array<() => void> = []
+  const hooks = startHooks()
   const lifeCycle = new LifeCycle()
 
   lifeCycle.subscribe(LifeCycleEventType.RUM_EVENT_COLLECTED, (event) => sendToExtension('rum', event))
@@ -85,9 +88,9 @@ export function startRum(
     view: {
       id: viewHistory.findView()?.id,
     },
-    action: {
-      id: actionContexts.findActionId(),
-    },
+    // action: {
+    //   id: actionContexts.findActionId(),
+    // },
   }))
 
   const reportError = (error: RawError) => {
@@ -130,10 +133,10 @@ export function startRum(
   const {
     viewHistory,
     urlContexts,
-    actionContexts,
     addAction,
     stop: stopRumEventCollection,
   } = startRumEventCollection(
+    hooks,
     lifeCycle,
     configuration,
     location,
@@ -193,8 +196,11 @@ export function startRum(
     urlContexts
   )
 
+  const api = {}
+  hooks.triggerHook(HookNames.Api, api)
+
   return {
-    addAction,
+    ...api,
     addError,
     addTiming,
     addFeatureFlagEvaluation: featureFlagContexts.addFeatureFlagEvaluation,
@@ -226,6 +232,7 @@ function startRumTelemetry(configuration: RumConfiguration) {
 }
 
 export function startRumEventCollection(
+  hooks: Hooks,
   lifeCycle: LifeCycle,
   configuration: RumConfiguration,
   location: Location,
@@ -239,23 +246,18 @@ export function startRumEventCollection(
   const viewHistory = startViewHistory(lifeCycle)
   const urlContexts = startUrlContexts(lifeCycle, locationChangeObservable, location)
 
-  const { addAction, actionContexts } = startActionCollection(
-    lifeCycle,
-    domMutationObservable,
-    configuration,
-    pageStateHistory
-  )
+  const { addAction } = startActionCollection(hooks, lifeCycle, domMutationObservable, configuration, pageStateHistory)
 
   const displayContext = startDisplayContext(configuration)
   const ciVisibilityContext = startCiVisibilityContext(configuration)
 
   startRumAssembly(
     configuration,
+    hooks,
     lifeCycle,
     sessionManager,
     viewHistory,
     urlContexts,
-    actionContexts,
     displayContext,
     ciVisibilityContext,
     getCommonContext,
@@ -267,7 +269,6 @@ export function startRumEventCollection(
     pageStateHistory,
     urlContexts,
     addAction,
-    actionContexts,
     stop: () => {
       ciVisibilityContext.stop()
       displayContext.stop()
