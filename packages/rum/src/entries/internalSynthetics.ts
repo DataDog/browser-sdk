@@ -5,6 +5,7 @@
  * WARNING: this module is not intended for public usages, and won't follow semver for breaking
  * changes.
  */
+import type { StartRum } from '@datadog/browser-rum-core'
 import { makeRumPublicApi, startRum } from '@datadog/browser-rum-core'
 
 import { startRecording } from '../boot/startRecording'
@@ -16,5 +17,7 @@ export { DefaultPrivacyLevel } from '@datadog/browser-core'
 // have side effects.
 /* eslint-disable local-rules/disallow-side-effects */
 const recorderApi = makeRecorderApi(startRecording)
-export const datadogRum = makeRumPublicApi(startRum, recorderApi, { ignoreInitIfSyntheticsWillInjectRum: false })
+export const datadogRum = makeRumPublicApi(startRum as StartRum, recorderApi, {
+  ignoreInitIfSyntheticsWillInjectRum: false,
+})
 /* eslint-enable local-rules/disallow-side-effects */

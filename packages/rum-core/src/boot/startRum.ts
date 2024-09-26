@@ -19,6 +19,7 @@ import {
   drainPreStartTelemetry,
   isExperimentalFeatureEnabled,
   ExperimentalFeature,
+  assign,
 } from '@datadog/browser-core'
 import { createDOMMutationObservable } from '../browser/domMutationObservable'
 import { startPerformanceCollection } from '../browser/performanceCollection'
@@ -27,6 +28,7 @@ import { startInternalContext } from '../domain/contexts/internalContext'
 import { LifeCycle, LifeCycleEventType } from '../domain/lifeCycle'
 import { startViewContexts } from '../domain/contexts/viewContexts'
 import { startRequestCollection } from '../domain/requestCollection'
+import type { ActionPublicApi } from '../domain/action/actionCollection'
 import { startActionCollection } from '../domain/action/actionCollection'
 import { startErrorCollection } from '../domain/error/errorCollection'
 import { startLongTaskCollection } from '../domain/longTask/longTaskCollection'
@@ -51,10 +53,13 @@ import type { CustomVitalsState } from '../domain/vital/vitalCollection'
 import { startVitalCollection } from '../domain/vital/vitalCollection'
 import { startCiVisibilityContext } from '../domain/contexts/ciVisibilityContext'
 import { startLongAnimationFrameCollection } from '../domain/longAnimationFrame/longAnimationFrameCollection'
+import type { Hooks } from '../hooks'
+import { HookNames, startHooks } from '../hooks'
+import { trackViewsInteractionToNextPaint } from '../domain/view/viewMetrics/trackInteractionToNextPaint'
 import type { RecorderApi } from './rumPublicApi'
 
-export type StartRum = typeof startRum
-export type StartRumResult = ReturnType<StartRum>
+export type StartRum = (...args: Parameters<typeof startRum>) => StartRumResult
+export type StartRumResult = ReturnType<typeof startRum> & ActionPublicApi
 
 export function startRum(
   configuration: RumConfiguration,
@@ -71,25 +76,26 @@ export function startRum(
   customVitalsState: CustomVitalsState
 ) {
   const cleanupTasks: Array<() => void> = []
+  const hooks = startHooks()
   const lifeCycle = new LifeCycle()
 
   lifeCycle.subscribe(LifeCycleEventType.RUM_EVENT_COLLECTED, (event) => sendToExtension('rum', event))
 
   const telemetry = startRumTelemetry(configuration)
-  telemetry.setContextProvider(() => ({
-    application: {
-      id: configuration.applicationId,
-    },
-    session: {
-      id: session.findTrackedSession()?.id,
-    },
-    view: {
-      id: viewContexts.findView()?.id,
-    },
-    action: {
-      id: actionContexts.findActionId(),
-    },
-  }))
+  telemetry.onTelemetryEvent((telemetryEvent) => {
+    telemetryEvent = assign(telemetryEvent, {
+      application: {
+        id: configuration.applicationId,
+      },
+      session: {
+        id: session.findTrackedSession()?.id,
+      },
+      view: {
+        id: viewContexts.findView()?.id,
+      },
+    })
+    return hooks.triggerHook(HookNames.TelemetryEvent, { event: telemetryEvent })
+  })
 
   const reportError = (error: RawError) => {
     lifeCycle.notify(LifeCycleEventType.RAW_ERROR_COLLECTED, { error })
@@ -131,10 +137,9 @@ export function startRum(
   const {
     viewContexts,
     urlContexts,
-    actionContexts,
-    addAction,
     stop: stopRumEventCollection,
   } = startRumEventCollection(
+    hooks,
     lifeCycle,
     configuration,
     location,
@@ -186,16 +191,11 @@ export function startRum(
   cleanupTasks.push(stopPerformanceCollection)
 
   const vitalCollection = startVitalCollection(lifeCycle, pageStateHistory, customVitalsState)
-  const internalContext = startInternalContext(
-    configuration.applicationId,
-    session,
-    viewContexts,
-    actionContexts,
-    urlContexts
-  )
+  const internalContext = startInternalContext(hooks, configuration.applicationId, session, viewContexts, urlContexts)
 
-  return {
-    addAction,
+  const api = hooks.triggerHook(HookNames.Api, {})
+
+  return assign(api, {
     addError,
     addTiming,
     addFeatureFlagEvaluation: featureFlagContexts.addFeatureFlagEvaluation,
@@ -212,7 +212,7 @@ export function startRum(
     stop: () => {
       cleanupTasks.forEach((task) => task())
     },
-  }
+  })
 }
 
 function startRumTelemetry(configuration: RumConfiguration) {
@@ -225,6 +225,7 @@ function startRumTelemetry(configuration: RumConfiguration) {
 }
 
 export function startRumEventCollection(
+  hooks: Hooks,
   lifeCycle: LifeCycle,
   configuration: RumConfiguration,
   location: Location,
@@ -250,11 +251,11 @@ export function startRumEventCollection(
 
   startRumAssembly(
     configuration,
+    hooks,
     lifeCycle,
     sessionManager,
     viewContexts,
     urlContexts,
-    actionContexts,
     displayContext,
     ciVisibilityContext,
     getCommonContext,
@@ -265,8 +266,6 @@ export function startRumEventCollection(
     viewContexts,
     pageStateHistory,
     urlContexts,
-    addAction,
-    actionContexts,
     stop: () => {
       ciVisibilityContext.stop()
       displayContext.stop()

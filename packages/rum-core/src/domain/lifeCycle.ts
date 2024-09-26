@@ -18,6 +18,7 @@ export const enum LifeCycleEventType {
   VIEW_CREATED,
   VIEW_UPDATED,
   VIEW_ENDED,
+  VIEW_STOPPED,
   AFTER_VIEW_ENDED,
   REQUEST_STARTED,
   REQUEST_COMPLETED,
@@ -60,6 +61,7 @@ declare const LifeCycleEventTypeAsConst: {
   VIEW_CREATED: LifeCycleEventType.VIEW_CREATED
   VIEW_UPDATED: LifeCycleEventType.VIEW_UPDATED
   VIEW_ENDED: LifeCycleEventType.VIEW_ENDED
+  VIEW_STOPPED: LifeCycleEventType.VIEW_STOPPED
   AFTER_VIEW_ENDED: LifeCycleEventType.AFTER_VIEW_ENDED
   REQUEST_STARTED: LifeCycleEventType.REQUEST_STARTED
   REQUEST_COMPLETED: LifeCycleEventType.REQUEST_COMPLETED
@@ -80,6 +82,7 @@ export interface LifeCycleEventMap {
   [LifeCycleEventTypeAsConst.VIEW_CREATED]: ViewCreatedEvent
   [LifeCycleEventTypeAsConst.VIEW_UPDATED]: ViewEvent
   [LifeCycleEventTypeAsConst.VIEW_ENDED]: ViewEndedEvent
+  [LifeCycleEventTypeAsConst.VIEW_STOPPED]: void
   [LifeCycleEventTypeAsConst.AFTER_VIEW_ENDED]: ViewEndedEvent
   [LifeCycleEventTypeAsConst.REQUEST_STARTED]: RequestStartEvent
   [LifeCycleEventTypeAsConst.REQUEST_COMPLETED]: RequestCompleteEvent
