@@ -18,6 +18,26 @@
 
 ---
 
+## v5.28.0
+
+**Public Changes:**
+
+- ✨ replace react-router wildcard routes with their actual path name ([#3023](https://github.com/DataDog/browser-sdk/pull/3023)) [RUM-REACT]
+- 🐛 fix to redirect v6-canary bundles urls to local dev bundles ([#3021](https://github.com/DataDog/browser-sdk/pull/3021))
+
+**Internal Changes:**
+
+- 👷 Update all non-major dependencies ([#3030](https://github.com/DataDog/browser-sdk/pull/3030)) [RUM-REACT]
+- 👷 Bump staging to staging-39
+- 👷 Bump webpack from 5.76.0 to 5.94.0 in /test/app ([#3013](https://github.com/DataDog/browser-sdk/pull/3013))
+- ♻️ [RUM-6278] Use performance observer for layout shift entries ([#3028](https://github.com/DataDog/browser-sdk/pull/3028)) [RUM] [RUM-SLIM]
+- ✨ [RUM 4813] Remove feature flag for view specific context ([#3031](https://github.com/DataDog/browser-sdk/pull/3031)) [LOGS] [RUM] [RUM-SLIM] [WORKER]
+- 🐛 fix to redirect v6-canary bundles urls to local dev bundles ([#3021](https://github.com/DataDog/browser-sdk/pull/3021))
+- 👷 [RUM 6237] Add e2e test for view context API init ([#3025](https://github.com/DataDog/browser-sdk/pull/3025))
+- ♻️ [RUM-6188] Use performanceObserver for first input and event entries ([#2995](https://github.com/DataDog/browser-sdk/pull/2995)) [RUM] [RUM-SLIM]
+- ♻️ [RUM-6184] Use performanceObserver for paint entries ([#2991](https://github.com/DataDog/browser-sdk/pull/2991)) [RUM] [RUM-SLIM]
+- ✨ Increase INITIALIZATION_TIME_OUT_DELAY ([#3017](https://github.com/DataDog/browser-sdk/pull/3017)) [RUM]
+
 ## v5.27.0
 
 **Public Changes**
