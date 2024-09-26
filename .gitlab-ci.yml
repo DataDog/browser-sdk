@@ -273,7 +273,7 @@ e2e-bs:
     - .bs-allowed-branches
   interruptible: true
   resource_group: browserstack
-  timeout: 30 minutes
+  timeout: 35 minutes
   artifacts:
     when: always
     paths: ['test-report/e2e-bs/specs.log']
