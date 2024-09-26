@@ -442,7 +442,9 @@ merge-into-next-major:
   stage: pre-deploy
   extends:
     - .base-configuration
-    - .main
+  only:
+    refs:
+      - main
   before_script:
     - eval $(ssh-agent -s)
   script:
