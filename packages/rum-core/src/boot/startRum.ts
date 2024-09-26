@@ -239,12 +239,7 @@ export function startRumEventCollection(
   const viewContexts = startViewContexts(lifeCycle)
   const urlContexts = startUrlContexts(lifeCycle, locationChangeObservable, location)
 
-  const { addAction, actionContexts } = startActionCollection(
-    lifeCycle,
-    domMutationObservable,
-    configuration,
-    pageStateHistory
-  )
+  startActionCollection(hooks, lifeCycle, domMutationObservable, configuration, pageStateHistory)
 
   const displayContext = startDisplayContext(configuration)
   const ciVisibilityContext = startCiVisibilityContext(configuration)

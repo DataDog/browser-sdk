@@ -11,6 +11,9 @@ import type { CommonContext } from '../contexts/commonContext'
 import type { PageStateHistory } from '../contexts/pageStateHistory'
 import { PageState } from '../contexts/pageStateHistory'
 import type { RumActionEventDomainContext } from '../../domainContext.types'
+import { HookNames, type Hooks } from '../../hooks'
+import type { RumEvent } from '../../rumEvent.types'
+import type { Mutable } from '../assembly'
 import type { ActionContexts, ClickAction } from './trackClickActions'
 import { trackClickActions } from './trackClickActions'
 
@@ -26,7 +29,11 @@ export interface CustomAction {
 
 export type AutoAction = ClickAction
 
+export type ActionPublicApi = {
+  addAction: (action: CustomAction, savedCommonContext?: CommonContext) => void
+}
 export function startActionCollection(
+  hooks: Hooks,
   lifeCycle: LifeCycle,
   domMutationObservable: Observable<void>,
   configuration: RumConfiguration,
@@ -41,8 +48,22 @@ export function startActionCollection(
     actionContexts = trackClickActions(lifeCycle, domMutationObservable, configuration).actionContexts
   }
 
-  return {
-    addAction: (action: CustomAction, savedCommonContext?: CommonContext) => {
+  hooks.register(HookNames.Event, ({ event, startTime }) => {
+    const actionId = actionContexts.findActionId(startTime)
+    if (needToAssembleWithAction(event) && actionId) {
+      ;(event.action as Mutable<RumEvent['action']>) = { id: actionId }
+    }
+    return { event, startTime }
+  })
+
+  hooks.register(HookNames.InternalContext, ({ internalContext, startTime }) => {
+    const actionId = actionContexts.findActionId(startTime)
+    internalContext.user_action = actionId ? { id: actionId } : undefined
+    return { internalContext, startTime }
+  })
+
+  hooks.register(HookNames.Api, (api) => {
+    api.addAction = (action: CustomAction, savedCommonContext?: CommonContext) => {
       lifeCycle.notify(
         LifeCycleEventType.RAW_RUM_EVENT_COLLECTED,
         assign(
@@ -52,9 +73,13 @@ export function startActionCollection(
           processAction(action, pageStateHistory)
         )
       )
-    },
-    actionContexts,
-  }
+    }
+    return api
+  })
+}
+
+function needToAssembleWithAction(event: RumEvent) {
+  return [RumEventType.ERROR, RumEventType.RESOURCE, RumEventType.LONG_TASK].indexOf(event.type as RumEventType) !== -1
 }
 
 function processAction(
