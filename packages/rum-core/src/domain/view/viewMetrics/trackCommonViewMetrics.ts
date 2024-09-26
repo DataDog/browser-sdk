@@ -5,7 +5,6 @@ import type { LifeCycle } from '../../lifeCycle'
 import type { CumulativeLayoutShift } from './trackCumulativeLayoutShift'
 import { trackCumulativeLayoutShift } from './trackCumulativeLayoutShift'
 import type { InteractionToNextPaint } from './trackInteractionToNextPaint'
-import { trackInteractionToNextPaint } from './trackInteractionToNextPaint'
 import { trackLoadingTime } from './trackLoadingTime'
 import type { ScrollMetrics } from './trackScrollMetrics'
 import { trackScrollMetrics } from './trackScrollMetrics'
@@ -53,24 +52,13 @@ export function trackCommonViewMetrics(
     }
   )
 
-  const {
-    stop: stopINPTracking,
-    getInteractionToNextPaint,
-    setViewEnd,
-  } = trackInteractionToNextPaint(configuration, viewStart.relative, loadingType, lifeCycle)
-
   return {
     stop: () => {
       stopLoadingTimeTracking()
       stopCLSTracking()
       stopScrollMetricsTracking()
     },
-    stopINPTracking,
     setLoadEvent,
-    setViewEnd,
-    getCommonViewMetrics: () => {
-      commonViewMetrics.interactionToNextPaint = getInteractionToNextPaint()
-      return commonViewMetrics
-    },
+    getCommonViewMetrics: () => commonViewMetrics,
   }
 }

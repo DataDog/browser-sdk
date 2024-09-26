@@ -58,6 +58,7 @@ export interface ViewCreatedEvent {
   version?: string
   context?: Context
   startClocks: ClocksState
+  loadingType: ViewLoadingType
 }
 
 export interface ViewEndedEvent {
@@ -209,6 +210,7 @@ function newView(
     service,
     version,
     context,
+    loadingType,
   }
   lifeCycle.notify(LifeCycleEventType.BEFORE_VIEW_CREATED, viewCreatedEvent)
   lifeCycle.notify(LifeCycleEventType.VIEW_CREATED, viewCreatedEvent)
@@ -224,9 +226,7 @@ function newView(
 
   const {
     setLoadEvent,
-    setViewEnd,
     stop: stopCommonViewMetricsTracking,
-    stopINPTracking,
     getCommonViewMetrics,
   } = trackCommonViewMetrics(
     lifeCycle,
@@ -293,7 +293,6 @@ function newView(
       lifeCycle.notify(LifeCycleEventType.VIEW_ENDED, { endClocks })
       lifeCycle.notify(LifeCycleEventType.AFTER_VIEW_ENDED, { endClocks })
       clearInterval(keepAliveIntervalId)
-      setViewEnd(endClocks.relative)
       stopCommonViewMetricsTracking()
       triggerViewUpdate()
       setTimeout(() => {
@@ -301,9 +300,10 @@ function newView(
       }, KEEP_TRACKING_AFTER_VIEW_DELAY)
     },
     stop() {
+      lifeCycle.notify(LifeCycleEventType.VIEW_STOPPED)
+
       stopInitialViewMetricsTracking()
       stopEventCountsTracking()
-      stopINPTracking()
       stopObservable.notify()
     },
     addTiming(name: string, time: RelativeTime | TimeStamp) {

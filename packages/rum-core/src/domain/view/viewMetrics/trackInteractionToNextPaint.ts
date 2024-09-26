@@ -1,5 +1,16 @@
-import { elapsed, noop, ONE_MINUTE } from '@datadog/browser-core'
+import {
+  assign,
+  createValueHistory,
+  elapsed,
+  noop,
+  ONE_MINUTE,
+  SESSION_TIME_OUT_DELAY,
+  toServerDuration,
+} from '@datadog/browser-core'
 import type { Duration, RelativeTime } from '@datadog/browser-core'
+import type { RumEvent } from '../../../rumEvent.types'
+import type { Hooks } from '../../../hooks'
+import { HookNames } from '../../../hooks'
 import { RumPerformanceEntryType, supportPerformanceTimingEvent } from '../../../browser/performanceObservable'
 import type { RumFirstInputTiming, RumPerformanceEventTiming } from '../../../browser/performanceObservable'
 import { LifeCycleEventType } from '../../lifeCycle'
@@ -8,12 +19,52 @@ import { ViewLoadingType } from '../../../rawRumEvent.types'
 import { getSelectorFromElement } from '../../getSelectorFromElement'
 import { isElementNode } from '../../../browser/htmlDomUtils'
 import type { RumConfiguration } from '../../configuration'
+import type { Mutable } from '../../assembly'
 import { getInteractionCount, initInteractionCountPolyfill } from './interactionCountPolyfill'
 
 // Arbitrary value to prevent unnecessary memory usage on views with lots of interactions.
 const MAX_INTERACTION_ENTRIES = 10
 // Arbitrary value to cap INP outliers
 export const MAX_INP_VALUE = (1 * ONE_MINUTE) as Duration
+
+export function trackViewsInteractionToNextPaint(configuration: RumConfiguration, hooks: Hooks, lifeCycle: LifeCycle) {
+  const inpContextHistory = createValueHistory<() => InteractionToNextPaint | undefined>({
+    expireDelay: SESSION_TIME_OUT_DELAY,
+  })
+
+  lifeCycle.subscribe(LifeCycleEventType.VIEW_CREATED, (view) => {
+    const { stop, setViewEnd, getInteractionToNextPaint } = trackInteractionToNextPaint(
+      configuration,
+      view.startClocks.relative,
+      view.loadingType,
+      lifeCycle
+    )
+    inpContextHistory.add(getInteractionToNextPaint, view.startClocks.relative)
+
+    lifeCycle.subscribe(LifeCycleEventType.VIEW_ENDED, (viewEnd) => {
+      setViewEnd(viewEnd.endClocks.relative)
+    })
+
+    lifeCycle.subscribe(LifeCycleEventType.VIEW_STOPPED, () => {
+      stop()
+    })
+  })
+
+  hooks.register(HookNames.Event, ({ event, startTime }) => {
+    if (event.type === 'view') {
+      const getInteractionToNextPaint = inpContextHistory.find(startTime)!
+      const inp = getInteractionToNextPaint()
+      if (inp) {
+        ;(event.view as Mutable<RumEvent['view']>) = assign(event.view, {
+          interaction_to_next_paint: toServerDuration(inp.value),
+          interaction_to_next_paint_time: toServerDuration(inp.time),
+          interaction_to_next_paint_target_selector: inp.targetSelector,
+        })
+      }
+    }
+    return { event, startTime }
+  })
+}
 
 export interface InteractionToNextPaint {
   value: Duration

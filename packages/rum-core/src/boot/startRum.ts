@@ -154,6 +154,8 @@ export function startRum(
 
   drainPreStartTelemetry()
 
+  trackViewsInteractionToNextPaint(configuration, hooks, lifeCycle)
+
   const {
     addTiming,
     startView,
