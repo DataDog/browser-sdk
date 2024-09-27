@@ -52,6 +52,7 @@ export function startRecording(
 
       flushCachedRecords = () => {
         ;({ addRecord } = initSegmentCollection())
+        cacheInitResult.squashCachedRecords()
         const records = cacheInitResult.getRecords()
         records.forEach((record: BrowserRecord) => addRecord(record))
       }

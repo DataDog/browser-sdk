@@ -7,9 +7,12 @@
     <script src="http://localhost:8080/datadog-logs.js"></script>
     <script>
       DD_RUM.init({
-        clientToken: 'xxx',
-        applicationId: 'xxx',
-        sessionReplaySampleRate: 100,
+        clientToken: 'pub64d1526f63507c3418682fede3b3f174',
+        applicationId: '68dc2f06-75e7-435e-ac44-de7318f6e14e',
+        sessionSampleRate: 100,
+        sessionReplaySampleRate: 0,
+        site: 'datad0g.com',
+        service: 'poc-snippet',
         trackResources: true,
         trackLongTasks: true,
         telemetrySampleRate: 100,
@@ -17,14 +20,219 @@
         telemetryUsageSampleRate: 100,
         enableExperimentalFeatures: [],
       })
-      DD_LOGS.init({
-        clientToken: 'xxx',
-        telemetrySampleRate: 100,
-        telemetryConfigurationSampleRate: 100,
-        telemetryUsageSampleRate: 100,
-        enableExperimentalFeatures: [],
-      })
     </script>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        padding: 20px;
+        background-color: #f4f4f9;
+      }
+      h1 {
+        text-align: center;
+        color: teal;
+        margin-bottom: 30px;
+      }
+      .content {
+        text-align: center;
+        margin-top: 30px;
+      }
+      .content p {
+        display: none;
+        font-size: 18px;
+        color: #555;
+      }
+      .box {
+        width: 200px;
+        height: 200px;
+        margin: 20px auto;
+        background-color: #ccc;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+      }
+      .input-section {
+        margin-top: 30px;
+      }
+      input {
+        padding: 10px;
+        margin: 10px;
+        width: 80%;
+        font-size: 16px;
+      }
+      .alert-text {
+        color: red;
+        font-weight: bold;
+        margin-top: 20px;
+      }
+    </style>
   </head>
-  <body></body>
+  <body>
+    <h1>Interactive Page with Buttons and More Content!</h1>
+  
+    <div class="content">
+      <!-- Change Background Color Button -->
+      <button
+        onclick="changeBackground()"
+        style="padding: 10px 20px; background-color: #28a745; color: white; border: none; cursor: pointer"
+      >
+        Change Background Color
+      </button>
+  
+      <!-- Show/Hide Text Button -->
+      <button
+        onclick="toggleText()"
+        style="padding: 10px 20px; background-color: #007bff; color: white; border: none; cursor: pointer"
+      >
+        Show/Hide Text
+      </button>
+  
+      <!-- Show Alert Button -->
+      <button
+        onclick="showAlert()"
+        style="padding: 10px 20px; background-color: #ffc107; color: white; border: none; cursor: pointer"
+      >
+        Show Alert
+      </button>
+  
+      <p id="hiddenText" style="margin-top: 20px">This is some hidden text that you can show or hide!</p>
+  
+      <!-- Box Section -->
+      <div class="box" id="box" style="border: 1px solid #000; padding: 20px; margin-top: 20px">
+        <p>Box Content</p>
+      </div>
+  
+      <!-- Change Box Color -->
+      <button
+        onclick="changeBoxColor()"
+        style="padding: 10px 20px; background-color: #6c757d; color: white; border: none; cursor: pointer"
+      >
+        Change Box Color
+      </button>
+  
+      <!-- Add Text to Box -->
+      <button
+        onclick="addBoxText()"
+        style="padding: 10px 20px; background-color: #17a2b8; color: white; border: none; cursor: pointer"
+      >
+        Add Text to Box
+      </button>
+  
+      <!-- Input and Alert Section -->
+      <div class="input-section" style="margin-top: 20px">
+        <input type="text" id="userInput" placeholder="Type something here..." />
+        <button
+          onclick="displayAlert()"
+          style="padding: 10px 20px; background-color: #e83e8c; color: white; border: none; cursor: pointer"
+        >
+          Show Input in Alert
+        </button>
+        <p id="alertText" class="alert-text"></p>
+      </div>
+  
+      <!-- Add/Remove Elements Section -->
+      <div class="dom-modification" style="margin-top: 40px">
+        <!-- Add Element Button -->
+        <button
+          onclick="addElement()"
+          style="padding: 10px 20px; background-color: #007bff; color: white; border: none; cursor: pointer"
+        >
+          Add Element
+        </button>
+  
+        <!-- Remove Last Element Button -->
+        <button
+          onclick="removeLastElement()"
+          style="padding: 10px 20px; background-color: #dc3545; color: white; border: none; cursor: pointer"
+        >
+          Remove Last Element
+        </button>
+  
+        <!-- Change Box Text Button -->
+        <button
+          onclick="changeBoxText()"
+          style="padding: 10px 20px; background-color: #ffc107; color: white; border: none; cursor: pointer"
+        >
+          Change Box Text
+        </button>
+  
+        <div id="elementContainer" style="margin-top: 20px; border: 1px solid #ddd; padding: 20px">
+          <p>This is the initial element. Click "Add Element" to add more.</p>
+        </div>
+      </div>
+    </div>
+  
+    <script>
+      // Function to change the background color
+      function changeBackground() {
+        document.body.style.backgroundColor = getRandomColor();
+      }
+  
+      // Function to toggle visibility of text
+      function toggleText() {
+        var text = document.getElementById("hiddenText");
+        text.style.display = text.style.display === "none" ? "block" : "none";
+      }
+  
+      // Function to show an alert
+      function showAlert() {
+        alert("You clicked the alert button!");
+      }
+  
+      // Utility function to get a random color
+      function getRandomColor() {
+        var letters = "0123456789ABCDEF";
+        var color = "#";
+        for (var i = 0; i < 6; i++) {
+          color += letters[Math.floor(Math.random() * 16)];
+        }
+        return color;
+      }
+  
+      // Function to change the box color
+      function changeBoxColor() {
+        document.getElementById("box").style.backgroundColor = getRandomColor();
+      }
+  
+      // Function to add text to the box
+      function addBoxText() {
+        var box = document.getElementById("box");
+        box.innerHTML += "<p>New Text Added to the Box!</p>";
+      }
+  
+      // Function to display an alert with input text
+      function displayAlert() {
+        var input = document.getElementById("userInput").value;
+        if (input) {
+          alert("You entered: " + input);
+        } else {
+          document.getElementById("alertText").innerHTML = "Please enter something!";
+        }
+      }
+  
+      // Function to add a new element to the DOM
+      function addElement() {
+        var container = document.getElementById("elementContainer");
+        var newElement = document.createElement("p");
+        newElement.innerText = "This is a new dynamically added element.";
+        container.appendChild(newElement);
+      }
+  
+      // Function to remove the last added element
+      function removeLastElement() {
+        var container = document.getElementById("elementContainer");
+        var lastElement = container.lastElementChild;
+        if (container.childElementCount > 1) {
+          container.removeChild(lastElement);
+        } else {
+          alert("No more elements to remove!");
+        }
+      }
+  
+      // Function to change the text inside the box
+      function changeBoxText() {
+        var box = document.getElementById("box");
+        box.innerHTML = "<p>The box text has been changed!</p>";
+      }
+    </script>
+  </body>  
 </html>
