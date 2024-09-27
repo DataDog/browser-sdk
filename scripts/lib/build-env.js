@@ -18,6 +18,11 @@ const BUILD_MODES = [
   'canary',
 ]
 
+/**
+ * Allows to define which sdk setup to send to the telemetry.
+ */
+const SDK_SETUPS = ['npm', 'cdn']
+
 const buildEnvCache = new Map()
 
 const buildEnvFactories = {
@@ -35,6 +40,7 @@ const buildEnvFactories = {
         return 'dev'
     }
   },
+  SDK_SETUP: () => getSdkSetup(),
   WORKER_STRING: () => {
     const workerPath = path.join(__dirname, '../../packages/worker')
     // Make sure the worker is built
@@ -68,5 +74,16 @@ function getBuildMode() {
     return process.env.BUILD_MODE
   }
   console.log(`Invalid build mode "${process.env.BUILD_MODE}". Possible build modes are: ${BUILD_MODES.join(', ')}`)
+  process.exit(1)
+}
+
+function getSdkSetup() {
+  if (!process.env.SDK_SETUP) {
+    return SDK_SETUPS[0] // npm
+  }
+  if (SDK_SETUPS.includes(process.env.SDK_SETUP)) {
+    return process.env.SDK_SETUP
+  }
+  console.log(`Invalid SDK setup "${process.env.SDK_SETUP}". Possible build modes are: ${SDK_SETUPS.join(', ')}`)
   process.exit(1)
 }
