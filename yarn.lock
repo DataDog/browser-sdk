@@ -1705,27 +1705,27 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/express-serve-static-core@npm:*, @types/express-serve-static-core@npm:^4.17.33":
-  version: 4.17.34
-  resolution: "@types/express-serve-static-core@npm:4.17.34"
+"@types/express-serve-static-core@npm:*, @types/express-serve-static-core@npm:^5.0.0":
+  version: 5.0.0
+  resolution: "@types/express-serve-static-core@npm:5.0.0"
   dependencies:
     "@types/node": "npm:*"
     "@types/qs": "npm:*"
     "@types/range-parser": "npm:*"
     "@types/send": "npm:*"
-  checksum: 10c0/4d148c424f5633b00bcdf4a5d9889c514c8accd9ea4356a95454d5fd6d9c61b88d5c693a22c83f4516eeaa1c3d1011b7c2c838b460142b756c55d5c5fd29935c
+  checksum: 10c0/671a67a5b367e19aa634dcd515364212490f10efb938fc1097082085a883ccb11c81ec96a3c2b5cc67d5756e5cb1ccbf1de192806f8193bb7de341994beb4ea6
   languageName: node
   linkType: hard
 
-"@types/express@npm:*, @types/express@npm:4.17.21":
-  version: 4.17.21
-  resolution: "@types/express@npm:4.17.21"
+"@types/express@npm:*, @types/express@npm:5.0.0":
+  version: 5.0.0
+  resolution: "@types/express@npm:5.0.0"
   dependencies:
     "@types/body-parser": "npm:*"
-    "@types/express-serve-static-core": "npm:^4.17.33"
+    "@types/express-serve-static-core": "npm:^5.0.0"
     "@types/qs": "npm:*"
     "@types/serve-static": "npm:*"
-  checksum: 10c0/12e562c4571da50c7d239e117e688dc434db1bac8be55613294762f84fd77fbd0658ccd553c7d3ab02408f385bc93980992369dd30e2ecd2c68c358e6af8fabf
+  checksum: 10c0/0d74b53aefa69c3b3817ee9b5145fd50d7dbac52a8986afc2d7500085c446656d0b6dc13158c04e2d9f18f4324d4d93b0452337c5ff73dd086dca3e4ff11f47b
   languageName: node
   linkType: hard
 
@@ -3399,7 +3399,7 @@ __metadata:
     "@types/chrome": "npm:0.0.271"
     "@types/connect-busboy": "npm:1.0.3"
     "@types/cors": "npm:2.8.17"
-    "@types/express": "npm:4.17.21"
+    "@types/express": "npm:5.0.0"
     "@types/jasmine": "npm:3.10.18"
     "@typescript-eslint/eslint-plugin": "npm:7.18.0"
     "@typescript-eslint/parser": "npm:7.18.0"
