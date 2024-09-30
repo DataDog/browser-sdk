@@ -1,6 +1,7 @@
 export {
   getElementInputValue,
   getSerializedNodeId,
+  getSerializedNodeMap,
   hasSerializedNode,
   nodeAndAncestorsHaveSerializedNode,
 } from './serializationUtils'
