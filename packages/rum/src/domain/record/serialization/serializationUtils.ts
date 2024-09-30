@@ -40,7 +40,7 @@ export function setSerializedNodeWithId(id: number, node: SerializedNodeWithId) 
   serializedNodesByIds.set(id, node)
 }
 
-export function getSerialisedNodeMap(): Map<number, SerializedNodeWithId> {
+export function getSerializedNodeMap(): Map<number, SerializedNodeWithId> {
   return serializedNodesByIds
 }
 

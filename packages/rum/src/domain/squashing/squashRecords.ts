@@ -8,7 +8,7 @@ import type {
   VisualViewportRecord,
 } from '../../types'
 import { IncrementalSource, RecordType } from '../../types'
-import { getSerialisedNodeMap } from '../record'
+import { getSerializedNodeMap } from '../record'
 import { applyDomMutation } from './applyDomMutation'
 import { applyInputMutation } from './applyInputMutation'
 import { applyScrollMutation } from './applyScrollMutation'
@@ -25,12 +25,11 @@ interface SqaushingMutatedRecords {
 }
 
 export function squashRecords(records: BrowserRecord[], squashingTimestamp: TimeStamp): BrowserRecord[] {
-  // If any of the basic records is missing, return the original records
   if (records.length === 0) {
     return records
   }
 
-  const serializedNodeMap = getSerialisedNodeMap()
+  const serializedNodeMap = getSerializedNodeMap()
 
   const squashingMutatedRecords: SqaushingMutatedRecords = {
     fullsnapshotRecord: find(records, (record) => record.type === RecordType.FullSnapshot)!,
@@ -88,13 +87,12 @@ export function squashRecords(records: BrowserRecord[], squashingTimestamp: Time
             // Discard VisualViewportRecord
             delete squashingMutatedRecords.visualViewportRecord
             break
-          // Need to handle element Focus & Hover based on MouseInteraction Record
+          // TODO: Handle DOM Element Focus & Hover using MouseInteraction Record
         }
         break
     }
   }
 
-  // Update timings of records (add -50 ms) to give timeto unsquashed records
   return finaliseSquashing(squashingMutatedRecords, squashingTimestamp)
 }
 

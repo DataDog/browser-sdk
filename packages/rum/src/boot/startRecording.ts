@@ -47,14 +47,21 @@ export function startRecording(
   if (!canUseEventBridge()) {
     const session = sessionManager.findTrackedSession()!
     if (session.sessionReplay === SessionReplayState.OFF) {
-      const cacheInitResult = startRecordsCaching()
+      const cacheInitResult = startRecordsCaching(lifeCycle)
       addRecord = cacheInitResult.addRecord
 
       flushCachedRecords = () => {
+        // Stop squashing scheduled task
+        cacheInitResult.clearCachingInterval()
+        // Switch records forwarding to segment collection
         ;({ addRecord } = initSegmentCollection())
+        // Perform squashing of cached records
         cacheInitResult.squashCachedRecords()
+        // Add all cached records to the segments
         const records = cacheInitResult.getRecords()
         records.forEach((record: BrowserRecord) => addRecord(record))
+        // Stop caching and clear the cache
+        cacheInitResult.stop()
       }
     } else {
       ;({ addRecord } = initSegmentCollection())
