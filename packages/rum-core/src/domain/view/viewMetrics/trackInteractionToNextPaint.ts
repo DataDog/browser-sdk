@@ -20,7 +20,11 @@ export const MAX_INP_VALUE = (1 * ONE_MINUTE) as Duration
 export interface InteractionToNextPaint {
   value: Duration
   targetSelector?: string
+  type?: string
   time?: Duration
+  input?: Duration
+  process?: Duration
+  render?: Duration
 }
 /**
  * Track the interaction to next paint (INP).
@@ -48,7 +52,11 @@ export function trackInteractionToNextPaint(
   const longestInteractions = trackLongestInteractions(getViewInteractionCount)
   let interactionToNextPaint = -1 as Duration
   let interactionToNextPaintTargetSelector: string | undefined
+  let interactionToNextPaintType: string | undefined
   let interactionToNextPaintStartTime: Duration | undefined
+  let interactionToNextPaintInputTime: Duration | undefined
+  let interactionToNextPaintProcessingTime: Duration | undefined
+  let interactionToNextPaintRenderTime: Duration | undefined
 
   function handleEntries(entries: Array<RumPerformanceEventTiming | RumFirstInputTiming>) {
     for (const entry of entries) {
@@ -65,7 +73,11 @@ export function trackInteractionToNextPaint(
     const newInteraction = longestInteractions.estimateP98Interaction()
     if (newInteraction && newInteraction.duration !== interactionToNextPaint) {
       interactionToNextPaint = newInteraction.duration
+      interactionToNextPaintType = newInteraction.name
       interactionToNextPaintStartTime = elapsed(viewStart, newInteraction.startTime)
+      interactionToNextPaintInputTime = elapsed(newInteraction.startTime, newInteraction.processingStart)
+      interactionToNextPaintProcessingTime = elapsed(newInteraction.processingStart, newInteraction.processingEnd)
+      interactionToNextPaintRenderTime = elapsed(newInteraction.processingEnd, (newInteraction.startTime + newInteraction.duration) as RelativeTime)
 
       if (newInteraction.target && isElementNode(newInteraction.target)) {
         interactionToNextPaintTargetSelector = getSelectorFromElement(
@@ -99,7 +111,11 @@ export function trackInteractionToNextPaint(
         return {
           value: Math.min(interactionToNextPaint, MAX_INP_VALUE) as Duration,
           targetSelector: interactionToNextPaintTargetSelector,
+          type: interactionToNextPaintType,
           time: interactionToNextPaintStartTime,
+          input: interactionToNextPaintInputTime,
+          process: interactionToNextPaintProcessingTime,
+          render: interactionToNextPaintRenderTime
         }
       } else if (getViewInteractionCount()) {
         return {

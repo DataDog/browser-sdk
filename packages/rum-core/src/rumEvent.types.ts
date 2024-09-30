@@ -844,6 +844,18 @@ export type RumViewEvent = CommonProperties &
        */
       readonly interaction_to_next_paint_time?: number
       /**
+       * Duration in ns between interaction and start of processing
+       */
+      readonly interaction_to_next_paint_input?: number
+      /**
+       * Duration in ns between start and end of processing
+       */
+      readonly interaction_to_next_paint_process?: number
+      /**
+       * Duration in ns between end of processing and end of the INP
+       */
+      readonly interaction_to_next_paint_render?: number
+      /**
        * CSS selector path of the interacted element corresponding to INP
        */
       readonly interaction_to_next_paint_target_selector?: string
