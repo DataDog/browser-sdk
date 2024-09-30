@@ -860,6 +860,10 @@ export type RumViewEvent = CommonProperties &
        */
       readonly interaction_to_next_paint_target_selector?: string
       /**
+       * Interaction type corresponding to INP
+       */
+      readonly interaction_to_next_paint_target_type?: string
+      /**
        * Total layout shift score that occurred on the view
        */
       readonly cumulative_layout_shift?: number

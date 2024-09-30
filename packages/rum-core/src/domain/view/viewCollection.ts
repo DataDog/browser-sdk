@@ -86,6 +86,7 @@ function processViewUpdate(
       interaction_to_next_paint: toServerDuration(view.commonViewMetrics.interactionToNextPaint?.value),
       interaction_to_next_paint_time: toServerDuration(view.commonViewMetrics.interactionToNextPaint?.time),
       interaction_to_next_paint_target_selector: view.commonViewMetrics.interactionToNextPaint?.targetSelector,
+      interaction_to_next_paint_type: view.commonViewMetrics.interactionToNextPaint?.type,
       interaction_to_next_paint_input: toServerDuration(view.commonViewMetrics.interactionToNextPaint?.input),
       interaction_to_next_paint_process: toServerDuration(view.commonViewMetrics.interactionToNextPaint?.process),
       interaction_to_next_paint_render: toServerDuration(view.commonViewMetrics.interactionToNextPaint?.render),

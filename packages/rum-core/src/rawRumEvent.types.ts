@@ -102,6 +102,7 @@ export interface RawRumViewEvent {
     interaction_to_next_paint_process?: ServerDuration
     interaction_to_next_paint_render?: ServerDuration
     interaction_to_next_paint_target_selector?: string
+    interaction_to_next_paint_type?: string
     cumulative_layout_shift?: number
     cumulative_layout_shift_time?: ServerDuration
     cumulative_layout_shift_target_selector?: string

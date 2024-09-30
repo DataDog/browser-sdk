@@ -58,7 +58,13 @@ const VIEW: ViewEvent = {
   commonViewMetrics: {
     loadingTime: 20 as Duration,
     cumulativeLayoutShift: { value: 1, time: 100 as Duration },
-    interactionToNextPaint: { value: 10 as Duration, time: 100 as Duration, input: 2 as Duration, process: 5 as Duration, render: 3 as Duration },
+    interactionToNextPaint: {
+      value: 10 as Duration,
+      time: 100 as Duration,
+      input: 2 as Duration,
+      process: 5 as Duration,
+      render: 3 as Duration,
+    },
     scroll: {
       maxDepth: 2000,
       maxScrollHeight: 3000,
@@ -154,6 +160,7 @@ describe('viewCollection', () => {
         first_input_target_selector: undefined,
         interaction_to_next_paint: (10 * 1e6) as ServerDuration,
         interaction_to_next_paint_target_selector: undefined,
+        interaction_to_next_paint_type: undefined,
         interaction_to_next_paint_time: (100 * 1e6) as ServerDuration,
         interaction_to_next_paint_input: (2 * 1e6) as ServerDuration,
         interaction_to_next_paint_process: (5 * 1e6) as ServerDuration,
