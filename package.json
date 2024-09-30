@@ -11,7 +11,7 @@
     "postinstall": "scripts/cli init_submodule",
     "build": "lerna run build --stream",
     "build:bundle": "lerna run build:bundle --stream",
-    "format": "prettier --write .",
+    "format": "prettier --check .",
     "lint": "scripts/cli lint .",
     "typecheck": "scripts/cli typecheck . && scripts/cli typecheck developer-extension",
     "dev": "node scripts/dev-server.js",

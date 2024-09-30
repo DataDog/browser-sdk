@@ -18,12 +18,10 @@ interface SqaushingMutatedRecords {
   metaRecord: MetaRecord
   focusRecord: FocusRecord
   visualViewportRecord?: VisualViewportRecord
-  frustrationRecord?: BrowserRecord
   cssRulesRecords?: BrowserRecord[]
   mediaInteractionRecords?: BrowserRecord[]
   mouseHoverRecord?: BrowserRecord
   mouseFocusRecord?: BrowserRecord
-  mousePositionRecord?: BrowserRecord
 }
 
 export function squashRecords(records: BrowserRecord[], squashingTimestamp: TimeStamp): BrowserRecord[] {
@@ -33,14 +31,13 @@ export function squashRecords(records: BrowserRecord[], squashingTimestamp: Time
   }
 
   const serializedNodeMap = getSerialisedNodeMap()
+
   const squashingMutatedRecords: SqaushingMutatedRecords = {
     fullsnapshotRecord: find(records, (record) => record.type === RecordType.FullSnapshot)!,
     metaRecord: find(records, (record) => record.type === RecordType.Meta)!,
     focusRecord: find(records, (record) => record.type === RecordType.Focus)!,
     visualViewportRecord: find(records, (record) => record.type === RecordType.VisualViewport),
   }
-
-  const unsquashedRecords: BrowserRecord[] = []
 
   for (const record of records) {
     switch (record.type) {
@@ -91,19 +88,14 @@ export function squashRecords(records: BrowserRecord[], squashingTimestamp: Time
             // Discard VisualViewportRecord
             delete squashingMutatedRecords.visualViewportRecord
             break
-          default:
-            unsquashedRecords.push(record)
-            break
+          // Need to handle element Focus & Hover based on MouseInteraction Record
         }
-        break
-      default:
-        unsquashedRecords.push(record)
         break
     }
   }
 
   // Update timings of records (add -50 ms) to give timeto unsquashed records
-  return finaliseSquashing(squashingMutatedRecords, unsquashedRecords, squashingTimestamp)
+  return finaliseSquashing(squashingMutatedRecords, squashingTimestamp)
 }
 
 function finaliseStyleRulesSquashing(cssRulesRecords?: BrowserRecord[]): BrowserRecord | undefined {
@@ -156,20 +148,19 @@ function finaliseMediaInteractionSquashing(mediaInteractionRecords?: BrowserReco
   }
 }
 
-function finaliseSquashing(
-  state: SqaushingMutatedRecords,
-  unsquashedRecords: BrowserRecord[],
-  timestamp: TimeStamp
-): BrowserRecord[] {
+function finaliseSquashing(state: SqaushingMutatedRecords, timestamp: TimeStamp): BrowserRecord[] {
   const squashedRecords: BrowserRecord[] = []
   const styleSheetRuleRecord = finaliseStyleRulesSquashing(state.cssRulesRecords)
   const mediaInteractionRecord = finaliseMediaInteractionSquashing(state.mediaInteractionRecords)
 
-  squashedRecords.push(assign(state.metaRecord, { timestamp }))
-  squashedRecords.push(assign(state.focusRecord, { timestamp }))
-  squashedRecords.push(assign(state.fullsnapshotRecord, { timestamp }))
+  // To avoid that FS records have the same timestamp as other records needing FS rendered and finalised
+  const correctedTimestamp = (timestamp - 50) as TimeStamp
+
+  squashedRecords.push(assign(state.metaRecord, { timestamp: correctedTimestamp }))
+  squashedRecords.push(assign(state.focusRecord, { timestamp: correctedTimestamp }))
+  squashedRecords.push(assign(state.fullsnapshotRecord, { timestamp: correctedTimestamp }))
   if (state.visualViewportRecord) {
-    squashedRecords.push(assign(state.visualViewportRecord, { timestamp }))
+    squashedRecords.push(assign(state.visualViewportRecord, { timestamp: correctedTimestamp }))
   }
 
   if (styleSheetRuleRecord) {
@@ -180,13 +171,10 @@ function finaliseSquashing(
   }
 
   squashedRecords
-    .concat(unsquashedRecords)
     .sort((r1, r2) => r1.timestamp - r2.timestamp)
     .forEach((record) => {
       record.timestamp = timestamp
     })
-
-    console.log('SQUASHING RESULT', squashedRecords)
 
   return squashedRecords
 }

@@ -21,7 +21,12 @@ import type {
   TextNode,
 } from '../../../types'
 import { NodeType } from '../../../types'
-import { getSerializedNodeId, getValidTagName, setSerializedNodeId } from './serializationUtils'
+import {
+  getSerializedNodeId,
+  getValidTagName,
+  setSerializedNodeId,
+  setSerializedNodeWithId,
+} from './serializationUtils'
 import type { SerializeOptions } from './serialization.types'
 import { serializeStyleSheets } from './serializeStyleSheets'
 import { serializeAttributes } from './serializeAttributes'
@@ -40,6 +45,7 @@ export function serializeNodeWithId(node: Node, options: SerializeOptions): Seri
   if (options.serializedNodeIds) {
     options.serializedNodeIds.add(id)
   }
+  setSerializedNodeWithId(id, serializedNodeWithId)
   return serializedNodeWithId
 }
 

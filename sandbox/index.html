@@ -68,7 +68,7 @@
   </head>
   <body>
     <h1>Interactive Page with Buttons and More Content!</h1>
-  
+
     <div class="content">
       <!-- Change Background Color Button -->
       <button
@@ -77,7 +77,7 @@
       >
         Change Background Color
       </button>
-  
+
       <!-- Show/Hide Text Button -->
       <button
         onclick="toggleText()"
@@ -85,7 +85,7 @@
       >
         Show/Hide Text
       </button>
-  
+
       <!-- Show Alert Button -->
       <button
         onclick="showAlert()"
@@ -93,14 +93,14 @@
       >
         Show Alert
       </button>
-  
+
       <p id="hiddenText" style="margin-top: 20px">This is some hidden text that you can show or hide!</p>
-  
+
       <!-- Box Section -->
       <div class="box" id="box" style="border: 1px solid #000; padding: 20px; margin-top: 20px">
         <p>Box Content</p>
       </div>
-  
+
       <!-- Change Box Color -->
       <button
         onclick="changeBoxColor()"
@@ -108,7 +108,7 @@
       >
         Change Box Color
       </button>
-  
+
       <!-- Add Text to Box -->
       <button
         onclick="addBoxText()"
@@ -116,7 +116,7 @@
       >
         Add Text to Box
       </button>
-  
+
       <!-- Input and Alert Section -->
       <div class="input-section" style="margin-top: 20px">
         <input type="text" id="userInput" placeholder="Type something here..." />
@@ -128,7 +128,7 @@
         </button>
         <p id="alertText" class="alert-text"></p>
       </div>
-  
+
       <!-- Add/Remove Elements Section -->
       <div class="dom-modification" style="margin-top: 40px">
         <!-- Add Element Button -->
@@ -138,7 +138,7 @@
         >
           Add Element
         </button>
-  
+
         <!-- Remove Last Element Button -->
         <button
           onclick="removeLastElement()"
@@ -146,7 +146,7 @@
         >
           Remove Last Element
         </button>
-  
+
         <!-- Change Box Text Button -->
         <button
           onclick="changeBoxText()"
@@ -154,85 +154,85 @@
         >
           Change Box Text
         </button>
-  
+
         <div id="elementContainer" style="margin-top: 20px; border: 1px solid #ddd; padding: 20px">
           <p>This is the initial element. Click "Add Element" to add more.</p>
         </div>
       </div>
     </div>
-  
+
     <script>
       // Function to change the background color
       function changeBackground() {
-        document.body.style.backgroundColor = getRandomColor();
+        document.body.style.backgroundColor = getRandomColor()
       }
-  
+
       // Function to toggle visibility of text
       function toggleText() {
-        var text = document.getElementById("hiddenText");
-        text.style.display = text.style.display === "none" ? "block" : "none";
+        var text = document.getElementById('hiddenText')
+        text.style.display = text.style.display === 'none' ? 'block' : 'none'
       }
-  
+
       // Function to show an alert
       function showAlert() {
-        alert("You clicked the alert button!");
+        alert('You clicked the alert button!')
       }
-  
+
       // Utility function to get a random color
       function getRandomColor() {
-        var letters = "0123456789ABCDEF";
-        var color = "#";
+        var letters = '0123456789ABCDEF'
+        var color = '#'
         for (var i = 0; i < 6; i++) {
-          color += letters[Math.floor(Math.random() * 16)];
+          color += letters[Math.floor(Math.random() * 16)]
         }
-        return color;
+        return color
       }
-  
+
       // Function to change the box color
       function changeBoxColor() {
-        document.getElementById("box").style.backgroundColor = getRandomColor();
+        document.getElementById('box').style.backgroundColor = getRandomColor()
       }
-  
+
       // Function to add text to the box
       function addBoxText() {
-        var box = document.getElementById("box");
-        box.innerHTML += "<p>New Text Added to the Box!</p>";
+        var box = document.getElementById('box')
+        box.innerHTML += '<p>New Text Added to the Box!</p>'
       }
-  
+
       // Function to display an alert with input text
       function displayAlert() {
-        var input = document.getElementById("userInput").value;
+        var input = document.getElementById('userInput').value
         if (input) {
-          alert("You entered: " + input);
+          alert('You entered: ' + input)
         } else {
-          document.getElementById("alertText").innerHTML = "Please enter something!";
+          document.getElementById('alertText').innerHTML = 'Please enter something!'
         }
       }
-  
+
       // Function to add a new element to the DOM
       function addElement() {
-        var container = document.getElementById("elementContainer");
-        var newElement = document.createElement("p");
-        newElement.innerText = "This is a new dynamically added element.";
-        container.appendChild(newElement);
+        var container = document.getElementById('elementContainer')
+        var newElement = document.createElement('p')
+        newElement.innerText = 'This is a new dynamically added element.'
+        container.appendChild(newElement)
       }
-  
+
       // Function to remove the last added element
       function removeLastElement() {
-        var container = document.getElementById("elementContainer");
-        var lastElement = container.lastElementChild;
+        var container = document.getElementById('elementContainer')
+        var lastElement = container.lastElementChild
         if (container.childElementCount > 1) {
-          container.removeChild(lastElement);
+          container.removeChild(lastElement)
         } else {
-          alert("No more elements to remove!");
+          alert('No more elements to remove!')
         }
       }
-  
+
       // Function to change the text inside the box
       function changeBoxText() {
-        var box = document.getElementById("box");
-        box.innerHTML = "<p>The box text has been changed!</p>";
+        var box = document.getElementById('box')
+        box.innerHTML = '<p>The box text has been changed!</p>'
       }
     </script>
-  </body>  
+  </body>
 </html>
