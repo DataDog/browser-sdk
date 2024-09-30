@@ -84,6 +84,6 @@ function getSdkSetup() {
   if (SDK_SETUPS.includes(process.env.SDK_SETUP)) {
     return process.env.SDK_SETUP
   }
-  console.log(`Invalid SDK setup "${process.env.SDK_SETUP}". Possible build modes are: ${SDK_SETUPS.join(', ')}`)
+  console.log(`Invalid SDK setup "${process.env.SDK_SETUP}". Possible SDK setups are: ${SDK_SETUPS.join(', ')}`)
   process.exit(1)
 }
