@@ -1,6 +1,5 @@
 import type { Duration } from '@datadog/browser-core'
 import type { RumConfiguration } from '../../configuration'
-import type { LifeCycle } from '../../lifeCycle'
 import { trackFirstContentfulPaint } from './trackFirstContentfulPaint'
 import type { FirstInput } from './trackFirstInput'
 import { trackFirstInput } from './trackFirstInput'
@@ -18,7 +17,6 @@ export interface InitialViewMetrics {
 }
 
 export function trackInitialViewMetrics(
-  lifeCycle: LifeCycle,
   configuration: RumConfiguration,
   setLoadEvent: (loadEnd: Duration) => void,
   scheduleViewUpdate: () => void
@@ -32,7 +30,7 @@ export function trackInitialViewMetrics(
   })
 
   const firstHidden = trackFirstHidden(configuration)
-  const { stop: stopFCPTracking } = trackFirstContentfulPaint(lifeCycle, firstHidden, (firstContentfulPaint) => {
+  const { stop: stopFCPTracking } = trackFirstContentfulPaint(configuration, firstHidden, (firstContentfulPaint) => {
     initialViewMetrics.firstContentfulPaint = firstContentfulPaint
     scheduleViewUpdate()
   })
@@ -47,7 +45,7 @@ export function trackInitialViewMetrics(
     }
   )
 
-  const { stop: stopFIDTracking } = trackFirstInput(lifeCycle, configuration, firstHidden, (firstInput) => {
+  const { stop: stopFIDTracking } = trackFirstInput(configuration, firstHidden, (firstInput) => {
     initialViewMetrics.firstInput = firstInput
     scheduleViewUpdate()
   })

@@ -21,7 +21,6 @@ import {
   ExperimentalFeature,
 } from '@datadog/browser-core'
 import { createDOMMutationObservable } from '../browser/domMutationObservable'
-import { startPerformanceCollection } from '../browser/performanceCollection'
 import { startRumAssembly } from '../domain/assembly'
 import { startInternalContext } from '../domain/contexts/internalContext'
 import { LifeCycle, LifeCycleEventType } from '../domain/lifeCycle'
@@ -184,8 +183,6 @@ export function startRum(
   const { addError } = startErrorCollection(lifeCycle, configuration, pageStateHistory, featureFlagContexts)
 
   startRequestCollection(lifeCycle, configuration, session)
-  const { stop: stopPerformanceCollection } = startPerformanceCollection(lifeCycle, configuration)
-  cleanupTasks.push(stopPerformanceCollection)
 
   const vitalCollection = startVitalCollection(lifeCycle, pageStateHistory, customVitalsState)
   const internalContext = startInternalContext(

@@ -317,7 +317,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@datadog/browser-core@npm:5.27.0, @datadog/browser-core@workspace:*, @datadog/browser-core@workspace:packages/core":
+"@datadog/browser-core@npm:5.28.0, @datadog/browser-core@workspace:*, @datadog/browser-core@workspace:packages/core":
   version: 0.0.0-use.local
   resolution: "@datadog/browser-core@workspace:packages/core"
   languageName: unknown
@@ -327,20 +327,20 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@datadog/browser-logs@workspace:packages/logs"
   dependencies:
-    "@datadog/browser-core": "npm:5.27.0"
+    "@datadog/browser-core": "npm:5.28.0"
   peerDependencies:
-    "@datadog/browser-rum": 5.27.0
+    "@datadog/browser-rum": 5.28.0
   peerDependenciesMeta:
     "@datadog/browser-rum":
       optional: true
   languageName: unknown
   linkType: soft
 
-"@datadog/browser-rum-core@npm:5.27.0, @datadog/browser-rum-core@workspace:packages/rum-core":
+"@datadog/browser-rum-core@npm:5.28.0, @datadog/browser-rum-core@workspace:packages/rum-core":
   version: 0.0.0-use.local
   resolution: "@datadog/browser-rum-core@workspace:packages/rum-core"
   dependencies:
-    "@datadog/browser-core": "npm:5.27.0"
+    "@datadog/browser-core": "npm:5.28.0"
     ajv: "npm:6.12.6"
   languageName: unknown
   linkType: soft
@@ -349,14 +349,14 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@datadog/browser-rum-react@workspace:packages/rum-react"
   dependencies:
-    "@types/react": "npm:18.3.7"
+    "@types/react": "npm:18.3.8"
     "@types/react-dom": "npm:18.3.0"
     react: "npm:18.3.1"
     react-dom: "npm:18.3.1"
     react-router-dom: "npm:6.26.2"
   peerDependencies:
-    "@datadog/browser-core": 5.27.0
-    "@datadog/browser-rum-core": 5.27.0
+    "@datadog/browser-core": 5.28.0
+    "@datadog/browser-rum-core": 5.28.0
     react: 18
     react-router-dom: 6
   peerDependenciesMeta:
@@ -371,10 +371,10 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@datadog/browser-rum-slim@workspace:packages/rum-slim"
   dependencies:
-    "@datadog/browser-core": "npm:5.27.0"
-    "@datadog/browser-rum-core": "npm:5.27.0"
+    "@datadog/browser-core": "npm:5.28.0"
+    "@datadog/browser-rum-core": "npm:5.28.0"
   peerDependencies:
-    "@datadog/browser-logs": 5.27.0
+    "@datadog/browser-logs": 5.28.0
   peerDependenciesMeta:
     "@datadog/browser-logs":
       optional: true
@@ -385,12 +385,12 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@datadog/browser-rum@workspace:packages/rum"
   dependencies:
-    "@datadog/browser-core": "npm:5.27.0"
-    "@datadog/browser-rum-core": "npm:5.27.0"
+    "@datadog/browser-core": "npm:5.28.0"
+    "@datadog/browser-rum-core": "npm:5.28.0"
     "@types/pako": "npm:2.0.3"
     pako: "npm:2.1.0"
   peerDependencies:
-    "@datadog/browser-logs": 5.27.0
+    "@datadog/browser-logs": 5.28.0
   peerDependenciesMeta:
     "@datadog/browser-logs":
       optional: true
@@ -408,7 +408,7 @@ __metadata:
     "@mantine/hooks": "npm:7.12.2"
     "@tabler/icons-react": "npm:3.17.0"
     "@types/chrome": "npm:0.0.271"
-    "@types/react": "npm:18.3.7"
+    "@types/react": "npm:18.3.8"
     "@types/react-dom": "npm:18.3.0"
     "@webextension-toolbox/webpack-webextension-plugin": "npm:3.3.1"
     clsx: "npm:2.1.1"
@@ -426,7 +426,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@datadog/browser-worker@workspace:packages/worker"
   dependencies:
-    "@datadog/browser-core": "npm:5.27.0"
+    "@datadog/browser-core": "npm:5.28.0"
     webpack: "npm:5.94.0"
   languageName: unknown
   linkType: soft
@@ -1947,13 +1947,13 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/react@npm:*, @types/react@npm:18.3.7":
-  version: 18.3.7
-  resolution: "@types/react@npm:18.3.7"
+"@types/react@npm:*, @types/react@npm:18.3.8":
+  version: 18.3.8
+  resolution: "@types/react@npm:18.3.8"
   dependencies:
     "@types/prop-types": "npm:*"
     csstype: "npm:^3.0.2"
-  checksum: 10c0/460f40eadf1fd035344b2ff9061d5c2314db9403f76d05fff7724c78543737c95829e1628567c63d27b542647867eca5b6f284dfd38f1d3b70754f32c4cbecb7
+  checksum: 10c0/367312c9fe276639ecb142265e090a4dd04bb39f8d718cbab546de3f1ddcfddeff415e1147d0fc40f734badaa7420b7b109d511bd4304b2c4c9c36164612fdf8
   languageName: node
   linkType: hard
 
@@ -3419,8 +3419,8 @@ __metadata:
     eslint-config-prettier: "npm:9.1.0"
     eslint-module-utils: "npm:2.11.0"
     eslint-plugin-import: "npm:2.30.0"
-    eslint-plugin-jasmine: "npm:4.2.1"
-    eslint-plugin-jsdoc: "npm:50.2.3"
+    eslint-plugin-jasmine: "npm:4.2.2"
+    eslint-plugin-jsdoc: "npm:50.2.4"
     eslint-plugin-local-rules: "npm:3.0.2"
     eslint-plugin-prefer-arrow: "npm:1.2.3"
     eslint-plugin-unicorn: "npm:55.0.0"
@@ -3442,7 +3442,7 @@ __metadata:
     minimatch: "npm:10.0.1"
     npm-run-all: "npm:4.1.5"
     prettier: "npm:3.3.3"
-    puppeteer: "npm:23.3.1"
+    puppeteer: "npm:23.4.0"
     terser-webpack-plugin: "npm:5.3.10"
     ts-loader: "npm:9.5.1"
     ts-node: "npm:10.9.2"
@@ -4814,14 +4814,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"devtools-protocol@npm:0.0.1330662":
-  version: 0.0.1330662
-  resolution: "devtools-protocol@npm:0.0.1330662"
-  checksum: 10c0/358b088b570aa7ad92a8d93c58075c759ff38ecc15adbb55a501d73b9119bafaa256cdd6c1a87bdd48ceaf1cd9678807222776a2870476fd53429d7e36b5206a
-  languageName: node
-  linkType: hard
-
-"devtools-protocol@npm:^0.0.1342118":
+"devtools-protocol@npm:0.0.1342118, devtools-protocol@npm:^0.0.1342118":
   version: 0.0.1342118
   resolution: "devtools-protocol@npm:0.0.1342118"
   checksum: 10c0/7ed1b8285629c5121be33757bcbe8b2272bf4bb907c2ac0ac979900413bc06ee52bf6d6de054c0db2459931343d02ee8acb539a64fd49a5d8a440decb7808998
@@ -5523,16 +5516,16 @@ __metadata:
   languageName: node
   linkType: hard
 
-"eslint-plugin-jasmine@npm:4.2.1":
-  version: 4.2.1
-  resolution: "eslint-plugin-jasmine@npm:4.2.1"
-  checksum: 10c0/65560cb73017a73df4c59fd4adb30c871a46588fb990590fe0bec624b8af0abe7af406c73603f7ee44308e60be902b8bdf12b99361bcafed7b6c85adcb02c23e
+"eslint-plugin-jasmine@npm:4.2.2":
+  version: 4.2.2
+  resolution: "eslint-plugin-jasmine@npm:4.2.2"
+  checksum: 10c0/dccc3b54f3312b4917b4e9c816c9d128a264a36fa127ea65a72587cb47c7d094dc92f1bcbb40ae6770d68c5f5bbbb02b263bd6e4d6d8b7b35427c46bca1f20e6
   languageName: node
   linkType: hard
 
-"eslint-plugin-jsdoc@npm:50.2.3":
-  version: 50.2.3
-  resolution: "eslint-plugin-jsdoc@npm:50.2.3"
+"eslint-plugin-jsdoc@npm:50.2.4":
+  version: 50.2.4
+  resolution: "eslint-plugin-jsdoc@npm:50.2.4"
   dependencies:
     "@es-joy/jsdoccomment": "npm:~0.48.0"
     are-docs-informative: "npm:^0.0.2"
@@ -5547,7 +5540,7 @@ __metadata:
     synckit: "npm:^0.9.1"
   peerDependencies:
     eslint: ^7.0.0 || ^8.0.0 || ^9.0.0
-  checksum: 10c0/244bfc815a082fac2d22867b6efb5ed25dd2a76e08ae1a6b83a522360a44138eea03d23450db947d969d015c17953a0925bad3926ce51856150a20e23fe6a954
+  checksum: 10c0/9635726563213781dd18ee07459cc85ca4aca0f3b45bf02504cd880cb78757ef627578a0f9e5d412c401abcd7f6bab6d78f79198572b982ad2a71a74e03a416f
   languageName: node
   linkType: hard
 
@@ -10670,7 +10663,7 @@ __metadata:
     "@types/node": "npm:22.5.5"
     "@types/node-forge": "npm:1.3.11"
     node-forge: "npm:1.3.1"
-    puppeteer: "npm:23.3.1"
+    puppeteer: "npm:23.4.0"
     ts-node: "npm:10.9.2"
   languageName: unknown
   linkType: soft
@@ -11062,17 +11055,17 @@ __metadata:
   languageName: node
   linkType: hard
 
-"puppeteer-core@npm:23.3.1":
-  version: 23.3.1
-  resolution: "puppeteer-core@npm:23.3.1"
+"puppeteer-core@npm:23.4.0":
+  version: 23.4.0
+  resolution: "puppeteer-core@npm:23.4.0"
   dependencies:
     "@puppeteer/browsers": "npm:2.4.0"
     chromium-bidi: "npm:0.6.5"
     debug: "npm:^4.3.7"
-    devtools-protocol: "npm:0.0.1330662"
+    devtools-protocol: "npm:0.0.1342118"
     typed-query-selector: "npm:^2.12.0"
     ws: "npm:^8.18.0"
-  checksum: 10c0/332033ef668150689c87f8cbce2991b868dde2d973053618d57a6dc53af4b264a31dd6ee2e3c4ce5af293e4628e0fda258fe2b5267ab7755c043a40ddc743b07
+  checksum: 10c0/6a335324fa5d42962bbf99ac5bd16e4497bd896e38299f75bbce92c91cf7835c3acc96c5c8bdfc1c0293da48a4185ed9898508ebe8f4287dfdf98f1722f187bf
   languageName: node
   linkType: hard
 
@@ -11090,19 +11083,19 @@ __metadata:
   languageName: node
   linkType: hard
 
-"puppeteer@npm:23.3.1":
-  version: 23.3.1
-  resolution: "puppeteer@npm:23.3.1"
+"puppeteer@npm:23.4.0":
+  version: 23.4.0
+  resolution: "puppeteer@npm:23.4.0"
   dependencies:
     "@puppeteer/browsers": "npm:2.4.0"
     chromium-bidi: "npm:0.6.5"
     cosmiconfig: "npm:^9.0.0"
-    devtools-protocol: "npm:0.0.1330662"
-    puppeteer-core: "npm:23.3.1"
+    devtools-protocol: "npm:0.0.1342118"
+    puppeteer-core: "npm:23.4.0"
     typed-query-selector: "npm:^2.12.0"
   bin:
     puppeteer: lib/cjs/puppeteer/node/cli.js
-  checksum: 10c0/707021dfdedd46fb38bf8366648d22bb3060c2d311b97fca787302d620262e4f1fca0411c0348ee97cd8ea810265bf4d9bba5f1e9e8f10472f4149394e790bba
+  checksum: 10c0/392d0e63a93e33aa2b168ecdd177ad9eb35421f8109ad2beaa965a4a31c1dac3e6939e593fa6dfb7ba51444dbfcad38bd651de0f783f121eb62f0d10d94db416
   languageName: node
   linkType: hard
 

@@ -393,9 +393,7 @@ describe('view metrics', () => {
       expect(getViewUpdateCount()).toEqual(1)
       expect(getViewUpdate(0).initialViewMetrics).toEqual({})
 
-      lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [
-        createPerformanceEntry(RumPerformanceEntryType.LAYOUT_SHIFT),
-      ])
+      notifyPerformanceEntries([createPerformanceEntry(RumPerformanceEntryType.LAYOUT_SHIFT)])
 
       expect(getViewUpdateCount()).toEqual(1)
 
@@ -418,9 +416,7 @@ describe('view metrics', () => {
       clock.tick(0) // run immediate timeouts (mostly for `trackNavigationTimings`)
       expect(getViewCreateCount()).toEqual(2)
 
-      lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [
-        createPerformanceEntry(RumPerformanceEntryType.LAYOUT_SHIFT),
-      ])
+      notifyPerformanceEntries([createPerformanceEntry(RumPerformanceEntryType.LAYOUT_SHIFT)])
 
       clock.tick(THROTTLE_VIEW_UPDATE_PERIOD)
 
@@ -454,10 +450,8 @@ describe('view metrics', () => {
 
       const lcpEntry = createPerformanceEntry(RumPerformanceEntryType.LARGEST_CONTENTFUL_PAINT)
       clock.tick(KEEP_TRACKING_AFTER_VIEW_DELAY - 1)
-      lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [
-        createPerformanceEntry(RumPerformanceEntryType.PAINT),
-      ])
-      notifyPerformanceEntries([lcpEntry])
+
+      notifyPerformanceEntries([createPerformanceEntry(RumPerformanceEntryType.PAINT), lcpEntry])
 
       clock.tick(THROTTLE_VIEW_UPDATE_PERIOD)
 
@@ -473,10 +467,12 @@ describe('view metrics', () => {
       expect(getViewCreateCount()).toEqual(2)
 
       clock.tick(KEEP_TRACKING_AFTER_VIEW_DELAY)
-      lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [
+
+      notifyPerformanceEntries([
         createPerformanceEntry(RumPerformanceEntryType.PAINT),
         createPerformanceEntry(RumPerformanceEntryType.LARGEST_CONTENTFUL_PAINT),
       ])
+
       clock.tick(THROTTLE_VIEW_UPDATE_PERIOD)
 
       const latestUpdate = getViewUpdate(getViewUpdateCount() - 1)
@@ -504,10 +500,11 @@ describe('view metrics', () => {
 
         expect(getViewUpdateCount()).toEqual(3)
 
-        lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [
+        notifyPerformanceEntries([
           createPerformanceEntry(RumPerformanceEntryType.PAINT),
+          createPerformanceEntry(RumPerformanceEntryType.NAVIGATION),
+          createPerformanceEntry(RumPerformanceEntryType.LARGEST_CONTENTFUL_PAINT),
         ])
-        notifyPerformanceEntries([createPerformanceEntry(RumPerformanceEntryType.LARGEST_CONTENTFUL_PAINT)])
 
         clock.tick(THROTTLE_VIEW_UPDATE_PERIOD)
 
@@ -903,7 +900,6 @@ describe('view event count', () => {
 
   describe('view specific context', () => {
     it('should update view context if startView has context parameter', () => {
-      mockExperimentalFeatures([ExperimentalFeature.VIEW_SPECIFIC_CONTEXT])
       viewTest = setupViewTest({ lifeCycle })
       const { getViewUpdate, startView } = viewTest
 
@@ -912,7 +908,6 @@ describe('view event count', () => {
     })
 
     it('should replace current context set on view event', () => {
-      mockExperimentalFeatures([ExperimentalFeature.VIEW_SPECIFIC_CONTEXT])
       viewTest = setupViewTest({ lifeCycle })
       const { getViewUpdate, startView } = viewTest
 
@@ -923,16 +918,7 @@ describe('view event count', () => {
       expect(getViewUpdate(4).context).toEqual({ bar: 'baz' })
     })
 
-    it('should not update view context if the feature is not enabled', () => {
-      viewTest = setupViewTest({ lifeCycle })
-      const { getViewUpdate, startView } = viewTest
-
-      startView({ context: { foo: 'bar' } })
-      expect(getViewUpdate(2).context).toBeUndefined()
-    })
-
     it('should set view context with setViewContext', () => {
-      mockExperimentalFeatures([ExperimentalFeature.VIEW_SPECIFIC_CONTEXT])
       viewTest = setupViewTest({ lifeCycle })
       const { getViewUpdate, setViewContext } = viewTest
 
@@ -941,7 +927,6 @@ describe('view event count', () => {
     })
 
     it('should set view context with setViewContextProperty', () => {
-      mockExperimentalFeatures([ExperimentalFeature.VIEW_SPECIFIC_CONTEXT])
       viewTest = setupViewTest({ lifeCycle })
       const { getViewUpdate, setViewContextProperty } = viewTest
 

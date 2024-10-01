@@ -1,3 +1,4 @@
+import type { Context } from '@datadog/browser-core'
 import type { IntakeRegistry } from '../../lib/framework'
 import { flushEvents, createTest } from '../../lib/framework'
 import { withBrowserLogs } from '../../lib/helpers/browser'
@@ -120,12 +121,67 @@ describe('API calls and events around init', () => {
         { name: 'after manual view', viewId: initialView.view.id, viewName: 'after manual view' }
       )
     })
+
+  createTest('should be able to set view context')
+    .withRum({ enableExperimentalFeatures: ['view_specific_context'] })
+    .withRumSlim()
+    .withRumInit((configuration) => {
+      window.DD_RUM!.init(configuration)
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-call
+      window.DD_RUM!.setViewContext({ foo: 'bar' })
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-call
+      window.DD_RUM!.setViewContextProperty('bar', 'foo')
+
+      // context should populate the context of the children events
+      window.DD_RUM!.addAction('custom action')
+      window.DD_RUM!.addError('custom error')
+
+      // context should not populate the context of the next view
+      setTimeout(() => window.DD_RUM!.startView('manual view'), 10)
+      setTimeout(() => {
+        window.DD_RUM!.addAction('after manual view')
+        window.DD_RUM!.addError('after manual view')
+      }, 20)
+    })
+    .run(async ({ intakeRegistry }) => {
+      await flushEvents()
+
+      const initialView = intakeRegistry.rumViewEvents[0]
+      const nextView = intakeRegistry.rumViewEvents[1]
+
+      expect(initialView.context).toEqual(jasmine.objectContaining({ foo: 'bar', bar: 'foo' }))
+      expect(nextView.context!.foo).toBeUndefined()
+
+      expectToHaveActions(
+        intakeRegistry,
+        {
+          name: 'custom action',
+          viewId: initialView.view.id,
+          context: { foo: 'bar', bar: 'foo' },
+        },
+        {
+          name: 'after manual view',
+          viewId: nextView.view.id,
+        }
+      )
+      expectToHaveErrors(
+        intakeRegistry,
+        {
+          message: 'Provided "custom error"',
+          viewId: initialView.view.id,
+          context: { foo: 'bar', bar: 'foo' },
+        },
+        {
+          message: 'Provided "after manual view"',
+          viewId: nextView.view.id,
+        }
+      )
+    })
 })
 
 describe('beforeSend', () => {
   createTest('allows to edit events context with feature flag')
     .withRum({
-      enableExperimentalFeatures: ['view_specific_context'],
       beforeSend: (event: any) => {
         event.context!.foo = 'bar'
         return true
@@ -143,7 +199,6 @@ describe('beforeSend', () => {
 
   createTest('allows to replace events context')
     .withRum({
-      enableExperimentalFeatures: ['view_specific_context'],
       beforeSend: (event) => {
         event.context = { foo: 'bar' }
         return true
@@ -165,19 +220,25 @@ describe('beforeSend', () => {
     })
 })
 
-function expectToHaveErrors(events: IntakeRegistry, ...errors: Array<{ message: string; viewId: string }>) {
+function expectToHaveErrors(
+  events: IntakeRegistry,
+  ...errors: Array<{ message: string; viewId: string; context?: Context }>
+) {
   expect(events.rumErrorEvents.length).toBe(errors.length)
   for (let i = 0; i < errors.length; i++) {
     const registryError = events.rumErrorEvents[i]
     const expectedError = errors[i]
     expect(registryError.error.message).toBe(expectedError.message)
     expect(registryError.view.id).toBe(expectedError.viewId)
+    if (expectedError.context) {
+      expect(registryError.context).toEqual(jasmine.objectContaining(expectedError.context))
+    }
   }
 }
 
 function expectToHaveActions(
   events: IntakeRegistry,
-  ...actions: Array<{ name: string; viewId: string; viewName?: string }>
+  ...actions: Array<{ name: string; viewId: string; viewName?: string; context?: Context }>
 ) {
   expect(events.rumActionEvents.length).toBe(actions.length)
   for (let i = 0; i < actions.length; i++) {
@@ -187,6 +248,9 @@ function expectToHaveActions(
     expect(registryAction.view.id).toBe(expectedAction.viewId)
     if (i === 0 && expectedAction.viewName) {
       expect(registryAction.view.name).toBe(expectedAction.viewName)
+    }
+    if (expectedAction.context) {
+      expect(registryAction.context).toEqual(jasmine.objectContaining(expectedAction.context))
     }
   }
 }

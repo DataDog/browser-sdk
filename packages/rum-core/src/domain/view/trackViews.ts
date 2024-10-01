@@ -215,7 +215,7 @@ function newView(
     name = viewOptions.name
     service = viewOptions.service || undefined
     version = viewOptions.version || undefined
-    if (isExperimentalFeatureEnabled(ExperimentalFeature.VIEW_SPECIFIC_CONTEXT) && viewOptions.context) {
+    if (viewOptions.context) {
       context = viewOptions.context
       // use ContextManager to update the context so we always sanitize it
       contextManager.setContext(context)
@@ -259,7 +259,7 @@ function newView(
 
   const { stop: stopInitialViewMetricsTracking, initialViewMetrics } =
     loadingType === ViewLoadingType.INITIAL_LOAD
-      ? trackInitialViewMetrics(lifeCycle, configuration, setLoadEvent, scheduleViewUpdate)
+      ? trackInitialViewMetrics(configuration, setLoadEvent, scheduleViewUpdate)
       : { stop: noop, initialViewMetrics: {} as InitialViewMetrics }
 
   const { stop: stopEventCountsTracking, eventCounts } = trackViewEventCounts(lifeCycle, id, scheduleViewUpdate)
@@ -282,9 +282,7 @@ function newView(
       name,
       service,
       version,
-      context: isExperimentalFeatureEnabled(ExperimentalFeature.VIEW_SPECIFIC_CONTEXT)
-        ? contextManager.getContext()
-        : undefined,
+      context: contextManager.getContext(),
       loadingType,
       location,
       startClocks,

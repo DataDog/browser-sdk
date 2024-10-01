@@ -1,10 +1,12 @@
 import { round, find, ONE_SECOND, noop, elapsed } from '@datadog/browser-core'
 import type { Duration, RelativeTime, WeakRef, WeakRefConstructor } from '@datadog/browser-core'
 import { isElementNode } from '../../../browser/htmlDomUtils'
-import type { LifeCycle } from '../../lifeCycle'
-import { LifeCycleEventType } from '../../lifeCycle'
 import type { RumLayoutShiftTiming } from '../../../browser/performanceObservable'
-import { supportPerformanceTimingEvent, RumPerformanceEntryType } from '../../../browser/performanceObservable'
+import {
+  supportPerformanceTimingEvent,
+  RumPerformanceEntryType,
+  createPerformanceObservable,
+} from '../../../browser/performanceObservable'
 import { getSelectorFromElement } from '../../getSelectorFromElement'
 import type { RumConfiguration } from '../../configuration'
 
@@ -35,7 +37,6 @@ declare const WeakRef: WeakRefConstructor
  */
 export function trackCumulativeLayoutShift(
   configuration: RumConfiguration,
-  lifeCycle: LifeCycle,
   viewStart: RelativeTime,
   callback: (cumulativeLayoutShift: CumulativeLayoutShift) => void
 ) {
@@ -55,9 +56,12 @@ export function trackCumulativeLayoutShift(
   })
 
   const window = slidingSessionWindow()
-  const { unsubscribe: stop } = lifeCycle.subscribe(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, (entries) => {
+  const performanceSubscription = createPerformanceObservable(configuration, {
+    type: RumPerformanceEntryType.LAYOUT_SHIFT,
+    buffered: true,
+  }).subscribe((entries) => {
     for (const entry of entries) {
-      if (entry.entryType === RumPerformanceEntryType.LAYOUT_SHIFT && !entry.hadRecentInput) {
+      if (!entry.hadRecentInput) {
         const { cumulatedValue, isMaxValue } = window.update(entry)
 
         if (isMaxValue) {
@@ -81,7 +85,9 @@ export function trackCumulativeLayoutShift(
   })
 
   return {
-    stop,
+    stop: () => {
+      performanceSubscription.unsubscribe()
+    },
   }
 }
 
