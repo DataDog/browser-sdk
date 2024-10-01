@@ -3,9 +3,9 @@
  * Usage:
  * node check-monitors.js us1,eu1,...
  */
-const { printLog, runMain, fetchHandlingError } = require('../lib/execution-utils')
+const { printLog, runMain, fetchHandlingError } = require('../lib/executionUtils')
 const { getTelemetryOrgApiKey, getTelemetryOrgApplicationKey } = require('../lib/secrets')
-const { siteByDatacenter } = require('../lib/datadog-sites')
+const { siteByDatacenter } = require('../lib/datadogSites')
 
 const monitorIdsByDatacenter = {
   us1: [72055549, 68975047, 110519972],

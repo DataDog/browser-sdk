@@ -1,8 +1,8 @@
-const { fetchHandlingError } = require('../../lib/execution-utils')
+const { fetchHandlingError } = require('../../lib/executionUtils')
 const { getOrg2ApiKey, getOrg2AppKey } = require('../../lib/secrets')
-const { timeout } = require('../../lib/execution-utils')
-const { fetchPR, LOCAL_BRANCH } = require('../../lib/git-utils')
-const { LOCAL_COMMIT_SHA } = require('../report-as-a-pr-comment')
+const { timeout } = require('../../lib/executionUtils')
+const { fetchPR, LOCAL_BRANCH } = require('../../lib/gitUtils')
+const { LOCAL_COMMIT_SHA } = require('./reportAsAPrComment')
 const API_KEY = getOrg2ApiKey()
 const APP_KEY = getOrg2AppKey()
 const TIMEOUT_IN_MS = 15000

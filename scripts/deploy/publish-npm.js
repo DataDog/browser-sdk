@@ -1,5 +1,5 @@
 const fs = require('fs')
-const { printLog, runMain } = require('../lib/execution-utils')
+const { printLog, runMain } = require('../lib/executionUtils')
 const { command } = require('../lib/command')
 const { getNpmToken } = require('../lib/secrets')
 
