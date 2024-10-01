@@ -2,7 +2,7 @@
 const webstore = (...args) => import('chrome-webstore-upload').then(({ default: webstore }) => webstore(...args))
 const fs = require('node:fs')
 
-const { printLog, runMain } = require('../lib/execution-utils')
+const { printLog, runMain } = require('../lib/executionUtils')
 const { command } = require('../lib/command')
 const {
   getChromeWebStoreClientId,
