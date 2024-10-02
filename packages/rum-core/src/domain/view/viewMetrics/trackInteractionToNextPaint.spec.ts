@@ -9,6 +9,7 @@ import type {
   RumPerformanceEventTiming,
 } from '../../../browser/performanceObservable'
 import { ViewLoadingType } from '../../../rawRumEvent.types'
+import { interactionSelectorCache } from '../../action/interactionSelectorCache'
 import { LifeCycle, LifeCycleEventType } from '../../lifeCycle'
 import {
   trackInteractionToNextPaint,
@@ -241,18 +242,20 @@ describe('trackInteractionToNextPaint', () => {
       expect(getInteractionToNextPaint()?.targetSelector).toEqual('#bar')
     })
 
-    it('should check interactionSelectorMap for entries', () => {
+    it('should check interactionSelectorCache for entries', () => {
       startINPTracking()
-      const getInteractionMapSpy = spyOn(Map.prototype, 'get').and.callThrough()
-      const deleteInteractionMapSpy = spyOn(Map.prototype, 'delete').and.callThrough()
+      const { set: setSelectorInCache, interactionSelectors } = interactionSelectorCache
+      setSelectorInCache(10 as RelativeTime, '#foo')
 
       newInteraction(lifeCycle, {
         interactionId: 1,
-        duration: 10 as Duration,
-        target: appendElement('<button id="foo"></button>'),
+        duration: 1 as Duration,
+        startTime: 10 as RelativeTime,
+        target: undefined,
       })
-      expect(getInteractionMapSpy).toHaveBeenCalled()
-      expect(deleteInteractionMapSpy).toHaveBeenCalled()
+
+      expect(getInteractionToNextPaint()?.targetSelector).toEqual('#foo')
+      expect(interactionSelectors.get(10 as RelativeTime)).toBeUndefined()
     })
   })
 })

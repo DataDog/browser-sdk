@@ -1,4 +1,4 @@
-import type { Context, Duration } from '@datadog/browser-core'
+import type { Context, Duration, RelativeTime } from '@datadog/browser-core'
 import {
   addDuration,
   clocksNow,
@@ -17,8 +17,9 @@ import { PAGE_ACTIVITY_VALIDATION_DELAY } from '../waitPageActivityEnd'
 import type { RumConfiguration } from '../configuration'
 import type { ActionContexts } from './actionCollection'
 import type { ClickAction } from './trackClickActions'
-import { finalizeClicks, CLICK_ACTION_MAX_DURATION, trackClickActions } from './trackClickActions'
+import { finalizeClicks, trackClickActions } from './trackClickActions'
 import { MAX_DURATION_BETWEEN_CLICKS } from './clickChain'
+import { interactionSelectorCache, CLICK_ACTION_MAX_DURATION } from './interactionSelectorCache'
 
 // Used to wait some time after the creation of an action
 const BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY = PAGE_ACTIVITY_VALIDATION_DELAY * 0.8
@@ -149,7 +150,6 @@ describe('trackClickActions', () => {
     clock.tick(BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY)
     domMutationObservable.notify()
     lifeCycle.notify(LifeCycleEventType.RUM_EVENT_COLLECTED, createFakeErrorEvent())
-
     clock.tick(EXPIRE_DELAY)
     lifeCycle.notify(LifeCycleEventType.RUM_EVENT_COLLECTED, createFakeErrorEvent())
 
@@ -425,30 +425,28 @@ describe('trackClickActions', () => {
     })
   })
 
-  describe('interactionSelectorMap', () => {
+  describe('interactionSelectorCache', () => {
+    const { get: getSelectorFromCache } = interactionSelectorCache
     it('should add pointer down to the map', () => {
       startClickActionsTracking()
-      const setInteractionMapSpy = spyOn(Map.prototype, 'set').and.callThrough()
-      emulateClick({ activity: { on: 'pointerdown' } })
-      expect(setInteractionMapSpy).toHaveBeenCalled()
+      emulateClick({ activity: { on: 'pointerdown' }, eventProperty: { timeStamp: 0 } })
+      expect(getSelectorFromCache(0 as RelativeTime)).toBe('#button')
     })
 
     it('should add pointerup to the map', () => {
       startClickActionsTracking()
-      const setInteractionMapSpy = spyOn(Map.prototype, 'set').and.callThrough()
-      emulateClick({ activity: { on: 'pointerup' } })
-      expect(setInteractionMapSpy).toHaveBeenCalled()
+      emulateClick({ activity: { on: 'pointerup' }, eventProperty: { timeStamp: 0 } })
+      expect(getSelectorFromCache(0 as RelativeTime)).toBe('#button')
     })
 
     it('should clear outdated entries when pointer up', () => {
       startClickActionsTracking()
-      const deleteInteractionMapSpy = spyOn(Map.prototype, 'delete').and.callThrough()
 
       emulateClick({ activity: { on: 'pointerdown' }, eventProperty: { timeStamp: 0 } })
       clock.tick(EXPIRE_DELAY)
       emulateClick({ activity: { on: 'pointerdown' }, eventProperty: { timeStamp: 10 } })
 
-      expect(deleteInteractionMapSpy).toHaveBeenCalled()
+      expect(getSelectorFromCache(0 as RelativeTime)).toBeUndefined()
     })
   })
 

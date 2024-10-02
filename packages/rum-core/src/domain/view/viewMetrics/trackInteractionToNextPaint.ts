@@ -7,8 +7,8 @@ import type { LifeCycle } from '../../lifeCycle'
 import { ViewLoadingType } from '../../../rawRumEvent.types'
 import { getSelectorFromElement } from '../../getSelectorFromElement'
 import { isElementNode } from '../../../browser/htmlDomUtils'
+import { interactionSelectorCache } from '../../action/interactionSelectorCache'
 import type { RumConfiguration } from '../../configuration'
-import { interactionSelectorMap } from '../../action/trackClickActions'
 import { getInteractionCount, initInteractionCountPolyfill } from './interactionCountPolyfill'
 
 // Arbitrary value to prevent unnecessary memory usage on views with lots of interactions.
@@ -68,15 +68,12 @@ export function trackInteractionToNextPaint(
     if (newInteraction && newInteraction.duration !== interactionToNextPaint) {
       interactionToNextPaint = newInteraction.duration
       interactionToNextPaintStartTime = elapsed(viewStart, newInteraction.startTime)
-
-      if (newInteraction.target && isElementNode(newInteraction.target)) {
-        interactionToNextPaintTargetSelector =
-          interactionSelectorMap.get(newInteraction.startTime) ||
-          getSelectorFromElement(newInteraction.target, configuration.actionNameAttribute)
-
-        interactionSelectorMap.delete(newInteraction.startTime)
-      } else {
-        interactionToNextPaintTargetSelector = undefined
+      interactionToNextPaintTargetSelector = interactionSelectorCache.get(newInteraction.startTime)
+      if (!interactionToNextPaintTargetSelector && newInteraction.target && isElementNode(newInteraction.target)) {
+        interactionToNextPaintTargetSelector = getSelectorFromElement(
+          newInteraction.target,
+          configuration.actionNameAttribute
+        )
       }
     }
   })

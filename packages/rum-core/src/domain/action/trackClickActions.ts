@@ -8,10 +8,8 @@ import {
   ONE_MINUTE,
   generateUUID,
   clocksNow,
-  ONE_SECOND,
   elapsed,
   createValueHistory,
-  relativeNow,
 } from '@datadog/browser-core'
 import type { FrustrationType } from '../../rawRumEvent.types'
 import { ActionType } from '../../rawRumEvent.types'
@@ -28,6 +26,7 @@ import { getActionNameFromElement } from './getActionNameFromElement'
 import type { MouseEventOnElement, UserActivity } from './listenActionEvents'
 import { listenActionEvents } from './listenActionEvents'
 import { computeFrustration } from './computeFrustration'
+import { CLICK_ACTION_MAX_DURATION, interactionSelectorCache } from './interactionSelectorCache'
 
 interface ActionCounts {
   errorCount: number
@@ -59,18 +58,7 @@ export interface ActionContexts {
 
 type ClickActionIdHistory = ValueHistory<ClickAction['id']>
 
-// Maximum duration for click actions
-export const CLICK_ACTION_MAX_DURATION = 10 * ONE_SECOND
 export const ACTION_CONTEXT_TIME_OUT_DELAY = 5 * ONE_MINUTE // arbitrary
-export const interactionSelectorMap = new Map<RelativeTime, string | undefined>() // key is relative time
-
-export const deleteOutdatedInteractionSelectors = () => {
-  interactionSelectorMap.forEach((_, key) => {
-    if (relativeNow() - key > 10 * ONE_SECOND) {
-      interactionSelectorMap.delete(key)
-    }
-  })
-}
 
 export function trackClickActions(
   lifeCycle: LifeCycle,
@@ -189,9 +177,7 @@ function startClickAction(
   if (clickActionBase.target) {
     const { selector } = clickActionBase.target
     if (selector) {
-      // save the selector for the interaction to next paint
-      interactionSelectorMap.set(startEvent.timeStamp, selector)
-      deleteOutdatedInteractionSelectors()
+      interactionSelectorCache.set(startEvent.timeStamp, selector)
     }
   }
 
@@ -244,9 +230,9 @@ function computeClickActionBase(
 ): ClickActionBase {
   const rect = event.target.getBoundingClientRect()
   const selector = getSelectorFromElement(event.target, configuration.actionNameAttribute)
-
-  interactionSelectorMap.set(event.timeStamp, selector)
-  deleteOutdatedInteractionSelectors()
+  if (selector) {
+    interactionSelectorCache.set(event.timeStamp, selector)
+  }
 
   return {
     type: ActionType.CLICK,
