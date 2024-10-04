@@ -448,6 +448,10 @@ export type RumLongTaskEvent = CommonProperties &
        */
       readonly id?: string
       /**
+       * Start time of the long animation frame
+       */
+      readonly start_time?: number
+      /**
        * Type of the event: long task or long animation frame
        */
       readonly entry_type?: 'long-task' | 'long-animation-frame'
