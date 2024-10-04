@@ -202,6 +202,7 @@ export interface RawRumLongAnimationFrameEvent {
     first_ui_event_timestamp: ServerDuration
     render_start: ServerDuration
     style_and_layout_start: ServerDuration
+    start_time: ServerDuration
     scripts: Array<{
       duration: ServerDuration
       pause_duration: ServerDuration
