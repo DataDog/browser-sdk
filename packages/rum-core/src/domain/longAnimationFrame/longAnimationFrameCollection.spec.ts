@@ -29,6 +29,7 @@ describe('long animation frames collection', () => {
         first_ui_event_timestamp: 0 as ServerDuration,
         render_start: 1_421_500_000 as ServerDuration,
         style_and_layout_start: 1_428_000_000 as ServerDuration,
+        start_time: 1_234_000_000 as ServerDuration,
         scripts: [
           {
             duration: (6 * 1e6) as ServerDuration,
