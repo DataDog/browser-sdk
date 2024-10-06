@@ -29,7 +29,7 @@ describe('recorder', () => {
     .withRum()
     .run(async ({ intakeRegistry }) => {
       await browser.execute(() => document.documentElement.outerHTML)
-      const html = await $('html')
+      const html = $('html')
       await html.click()
       await flushEvents()
 
@@ -466,19 +466,19 @@ describe('recorder', () => {
         </form>
       `)
       .run(async ({ intakeRegistry }) => {
-        const textInput = await $('#text-input')
+        const textInput = $('#text-input')
         await textInput.setValue('test')
 
-        const radioInput = await $('#radio-input')
+        const radioInput = $('#radio-input')
         await radioInput.click()
 
-        const checkboxInput = await $('#checkbox-input')
+        const checkboxInput = $('#checkbox-input')
         await checkboxInput.click()
 
-        const textarea = await $('#textarea')
+        const textarea = $('#textarea')
         await textarea.setValue('textarea test')
 
-        const select = await $('#select')
+        const select = $('#select')
         await select.selectByAttribute('value', '2')
 
         await flushEvents()
@@ -529,16 +529,16 @@ describe('recorder', () => {
         <input type="password" id="fourth" name="fourth" />
       `)
       .run(async ({ intakeRegistry }) => {
-        const firstInput = await $('#first')
+        const firstInput = $('#first')
         await firstInput.setValue('foo')
 
-        const secondInput = await $('#second')
+        const secondInput = $('#second')
         await secondInput.setValue('bar')
 
-        const thirdInput = await $('#third')
+        const thirdInput = $('#third')
         await thirdInput.setValue('baz')
 
-        const fourthInput = await $('#fourth')
+        const fourthInput = $('#fourth')
         await fourthInput.setValue('quux')
 
         await flushEvents()
@@ -561,10 +561,10 @@ describe('recorder', () => {
         <input type="text" id="by-classname" class="dd-privacy-mask" />
       `)
       .run(async ({ intakeRegistry }) => {
-        const firstInput = await $('#by-data-attribute')
+        const firstInput = $('#by-data-attribute')
         await firstInput.setValue('foo')
 
-        const secondInput = await $('#by-classname')
+        const secondInput = $('#by-classname')
         await secondInput.setValue('bar')
 
         await flushEvents()
@@ -665,7 +665,7 @@ describe('recorder', () => {
       .withRum({ trackUserInteractions: true })
       .withSetup(bundleSetup)
       .run(async ({ intakeRegistry }) => {
-        const html = await $('html')
+        const html = $('html')
         await html.click()
         await flushEvents()
 
@@ -695,7 +695,7 @@ describe('recorder', () => {
         />
       `)
       .run(async ({ intakeRegistry }) => {
-        const button = await $('#my-button')
+        const button = $('#my-button')
         await Promise.all([button.click(), button.click(), button.click(), button.click()])
         await flushEvents()
 
@@ -828,7 +828,7 @@ describe('recorder', () => {
         await browser.execute(() => {
           window.DD_RUM!.startSessionReplayRecording({ force: true })
         })
-        const [cookie] = await browser.getCookies([SESSION_STORE_KEY])
+        const [cookie] = await browser.getCookies({ name: SESSION_STORE_KEY })
         expect(cookie.value).toContain('forcedReplay=1')
 
         await flushEvents()

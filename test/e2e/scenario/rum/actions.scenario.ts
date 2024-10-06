@@ -14,7 +14,7 @@ describe('action collection', () => {
       </script>
     `)
     .run(async ({ intakeRegistry }) => {
-      const button = await $('button')
+      const button = $('button')
       await button.click()
       await flushEvents()
       const actionEvents = intakeRegistry.rumActionEvents
@@ -73,7 +73,7 @@ describe('action collection', () => {
       </script>
     `)
     .run(async ({ intakeRegistry }) => {
-      const button = await $('button')
+      const button = $('button')
       await button.click()
       await flushEvents()
       const actionEvents = intakeRegistry.rumActionEvents
@@ -100,7 +100,7 @@ describe('action collection', () => {
         </script>
       `)
       .run(async ({ intakeRegistry }) => {
-        const button = await $('button')
+        const button = $('button')
         await button.click()
         await flushEvents()
         const actionEvents = intakeRegistry.rumActionEvents
@@ -122,7 +122,7 @@ describe('action collection', () => {
       </script>
     `)
     .run(async ({ intakeRegistry }) => {
-      const button = await $('button')
+      const button = $('button')
       await button.click()
       await waitForServersIdle()
       await flushEvents()
@@ -169,7 +169,7 @@ describe('action collection', () => {
       </script>
     `)
     .run(async ({ intakeRegistry }) => {
-      const button = await $('button')
+      const button = $('button')
       await button.click()
       await flushEvents()
       const actionEvents = intakeRegistry.rumActionEvents
@@ -195,7 +195,7 @@ describe('action collection', () => {
       </script>
     `)
     .run(async ({ intakeRegistry }) => {
-      const button = await $('button')
+      const button = $('button')
       await button.click()
       await flushEvents()
       const actionEvents = intakeRegistry.rumActionEvents
@@ -215,7 +215,7 @@ describe('action collection', () => {
     .withRum({ trackUserInteractions: true })
     .withBody(html` <button>click me</button> `)
     .run(async ({ intakeRegistry }) => {
-      const button = await $('button')
+      const button = $('button')
       await button.click()
       await flushEvents()
       const actionEvents = intakeRegistry.rumActionEvents
@@ -230,7 +230,7 @@ describe('action collection', () => {
     .withRum({ trackUserInteractions: true })
     .withBody(html` <input type="checkbox" /> `)
     .run(async ({ intakeRegistry }) => {
-      const input = await $('input')
+      const input = $('input')
       await input.click()
       await flushEvents()
       const actionEvents = intakeRegistry.rumActionEvents
@@ -243,7 +243,7 @@ describe('action collection', () => {
     .withRum({ trackUserInteractions: true })
     .withBody(html` <input type="range" /> `)
     .run(async ({ intakeRegistry }) => {
-      const input = await $('input')
+      const input = $('input')
       await input.click({ x: 10 })
       await flushEvents()
       const actionEvents = intakeRegistry.rumActionEvents
@@ -256,7 +256,7 @@ describe('action collection', () => {
     .withRum({ trackUserInteractions: true })
     .withBody(html` <input type="radio" checked /> `)
     .run(async ({ intakeRegistry }) => {
-      const input = await $('input')
+      const input = $('input')
       await input.click()
       await flushEvents()
       const actionEvents = intakeRegistry.rumActionEvents
@@ -269,7 +269,7 @@ describe('action collection', () => {
     .withRum({ trackUserInteractions: true })
     .withBody(html` <input type="text" /> `)
     .run(async ({ intakeRegistry }) => {
-      const input = await $('input')
+      const input = $('input')
       await input.click()
       await flushEvents()
       const actionEvents = intakeRegistry.rumActionEvents
@@ -292,7 +292,7 @@ describe('action collection', () => {
       </div>
     `)
     .run(async ({ intakeRegistry }) => {
-      const button = await $('button')
+      const button = $('button')
       await button.click()
 
       await flushEvents()
@@ -316,7 +316,7 @@ describe('action collection', () => {
       </div>
     `)
     .run(async ({ intakeRegistry }) => {
-      const button = await $('button')
+      const button = $('button')
       await Promise.all([button.click(), button.click(), button.click()])
 
       await flushEvents()
@@ -339,7 +339,7 @@ describe('action collection', () => {
     `)
     .run(async ({ intakeRegistry }) => {
       const windowHandle = await browser.getWindowHandle()
-      const button = await $('button')
+      const button = $('button')
       await button.click()
       // Ideally, we would close the newly created window. But on Safari desktop (at least), it is
       // not possible to do so: calling `browser.closeWindow()` is failing with "no such window:
@@ -365,7 +365,7 @@ describe('action collection', () => {
       </script>
     `)
     .run(async ({ intakeRegistry }) => {
-      const button = await $('button')
+      const button = $('button')
       await Promise.all([button.click(), button.click(), button.click()])
       await flushEvents()
       const actionEvents = intakeRegistry.rumActionEvents
@@ -386,7 +386,7 @@ describe('action collection', () => {
       </script>
     `)
     .run(async ({ intakeRegistry }) => {
-      const button = await $('button')
+      const button = $('button')
       await button.click()
       await flushEvents()
       const actionEvents = intakeRegistry.rumActionEvents
