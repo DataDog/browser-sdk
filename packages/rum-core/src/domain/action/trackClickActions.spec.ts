@@ -428,24 +428,35 @@ describe('trackClickActions', () => {
   describe('interactionSelectorCache', () => {
     it('should add pointer down to the map', () => {
       startClickActionsTracking()
-      emulateClick({ activity: { on: 'pointerdown' }, eventProperty: { timeStamp: 0 } })
-      expect(getInteractionSelector(0 as RelativeTime)).toBe('#button')
+      const timeStamp = relativeNow()
+
+      emulateClick({
+        activity: { on: 'pointerdown' },
+        eventProperty: { timeStamp },
+      })
+      expect(getInteractionSelector(timeStamp)).toBe('#button')
     })
 
     it('should add pointerup to the map', () => {
       startClickActionsTracking()
-      emulateClick({ activity: { on: 'pointerup' }, eventProperty: { timeStamp: 0 } })
-      expect(getInteractionSelector(0 as RelativeTime)).toBe('#button')
+      const timeStamp = relativeNow()
+
+      emulateClick({
+        activity: { on: 'pointerup' },
+        eventProperty: { timeStamp },
+      })
+      expect(getInteractionSelector(timeStamp)).toBe('#button')
     })
 
     it('should clear outdated entries when pointer up', () => {
       startClickActionsTracking()
+      const timeStamp = relativeNow()
 
-      emulateClick({ activity: { on: 'pointerdown' }, eventProperty: { timeStamp: 0 } })
+      emulateClick({ activity: { on: 'pointerdown' }, eventProperty: { timeStamp } })
       clock.tick(EXPIRE_DELAY)
-      emulateClick({ activity: { on: 'pointerdown' }, eventProperty: { timeStamp: 10 } })
+      emulateClick({ activity: { on: 'pointerup' }, eventProperty: { timeStamp: relativeNow() } })
 
-      expect(getInteractionSelector(0 as RelativeTime)).toBeUndefined()
+      expect(getInteractionSelector(timeStamp)).toBeUndefined()
     })
   })
 

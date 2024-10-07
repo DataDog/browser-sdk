@@ -1,5 +1,5 @@
 import type { Duration, RelativeTime } from '@datadog/browser-core'
-import { elapsed, resetExperimentalFeatures } from '@datadog/browser-core'
+import { elapsed, relativeNow, resetExperimentalFeatures } from '@datadog/browser-core'
 import { registerCleanupTask } from '@datadog/browser-core/test'
 import {
   appendElement,
@@ -251,17 +251,18 @@ describe('trackInteractionToNextPaint', () => {
 
     it('should check interactionSelectorCache for entries', () => {
       startINPTracking()
-      updateInteractionSelector(1 as RelativeTime, '#foo')
+      const startTime = relativeNow()
+      updateInteractionSelector(startTime, '#foo')
 
       newInteraction({
         interactionId: 1,
         duration: 1 as Duration,
-        startTime: 1 as RelativeTime,
+        startTime,
         target: undefined,
       })
 
       expect(getInteractionToNextPaint()?.targetSelector).toEqual('#foo')
-      expect(getInteractionSelector(1 as RelativeTime)).toBeUndefined()
+      expect(getInteractionSelector(startTime)).toBeUndefined()
     })
   })
 })
