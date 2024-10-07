@@ -19,7 +19,7 @@ import type { ActionContexts } from './actionCollection'
 import type { ClickAction } from './trackClickActions'
 import { finalizeClicks, trackClickActions } from './trackClickActions'
 import { MAX_DURATION_BETWEEN_CLICKS } from './clickChain'
-import { interactionSelectorCache, CLICK_ACTION_MAX_DURATION } from './interactionSelectorCache'
+import { getInteractionSelector, CLICK_ACTION_MAX_DURATION } from './interactionSelectorCache'
 
 // Used to wait some time after the creation of an action
 const BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY = PAGE_ACTIVITY_VALIDATION_DELAY * 0.8
@@ -426,17 +426,16 @@ describe('trackClickActions', () => {
   })
 
   describe('interactionSelectorCache', () => {
-    const { get: getSelectorFromCache } = interactionSelectorCache
     it('should add pointer down to the map', () => {
       startClickActionsTracking()
       emulateClick({ activity: { on: 'pointerdown' }, eventProperty: { timeStamp: 0 } })
-      expect(getSelectorFromCache(0 as RelativeTime)).toBe('#button')
+      expect(getInteractionSelector(0 as RelativeTime)).toBe('#button')
     })
 
     it('should add pointerup to the map', () => {
       startClickActionsTracking()
       emulateClick({ activity: { on: 'pointerup' }, eventProperty: { timeStamp: 0 } })
-      expect(getSelectorFromCache(0 as RelativeTime)).toBe('#button')
+      expect(getInteractionSelector(0 as RelativeTime)).toBe('#button')
     })
 
     it('should clear outdated entries when pointer up', () => {
@@ -446,7 +445,7 @@ describe('trackClickActions', () => {
       clock.tick(EXPIRE_DELAY)
       emulateClick({ activity: { on: 'pointerdown' }, eventProperty: { timeStamp: 10 } })
 
-      expect(getSelectorFromCache(0 as RelativeTime)).toBeUndefined()
+      expect(getInteractionSelector(0 as RelativeTime)).toBeUndefined()
     })
   })
 

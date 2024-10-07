@@ -9,7 +9,7 @@ import type {
   RumPerformanceEventTiming,
 } from '../../../browser/performanceObservable'
 import { ViewLoadingType } from '../../../rawRumEvent.types'
-import { interactionSelectorCache } from '../../action/interactionSelectorCache'
+import { getInteractionSelector, setInteractionSelector } from '../../action/interactionSelectorCache'
 import { LifeCycle, LifeCycleEventType } from '../../lifeCycle'
 import {
   trackInteractionToNextPaint,
@@ -244,18 +244,17 @@ describe('trackInteractionToNextPaint', () => {
 
     it('should check interactionSelectorCache for entries', () => {
       startINPTracking()
-      const { set: setSelectorInCache, interactionSelectors } = interactionSelectorCache
-      setSelectorInCache(10 as RelativeTime, '#foo')
+      setInteractionSelector(1 as RelativeTime, '#foo')
 
       newInteraction(lifeCycle, {
         interactionId: 1,
         duration: 1 as Duration,
-        startTime: 10 as RelativeTime,
+        startTime: 1 as RelativeTime,
         target: undefined,
       })
 
       expect(getInteractionToNextPaint()?.targetSelector).toEqual('#foo')
-      expect(interactionSelectors.get(10 as RelativeTime)).toBeUndefined()
+      expect(getInteractionSelector(1 as RelativeTime)).toBeUndefined()
     })
   })
 })
