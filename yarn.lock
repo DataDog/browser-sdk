@@ -349,17 +349,23 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@datadog/browser-rum-react@workspace:packages/rum-react"
   dependencies:
+    "@datadog/browser-core": "npm:5.28.0"
+    "@datadog/browser-rum-core": "npm:5.28.0"
     "@types/react": "npm:18.3.8"
     "@types/react-dom": "npm:18.3.0"
     react: "npm:18.3.1"
     react-dom: "npm:18.3.1"
     react-router-dom: "npm:6.26.2"
   peerDependencies:
-    "@datadog/browser-core": 5.28.0
-    "@datadog/browser-rum-core": 5.28.0
+    "@datadog/browser-rum": 5.28.0
+    "@datadog/browser-rum-slim": 5.28.0
     react: 18
     react-router-dom: 6
   peerDependenciesMeta:
+    "@datadog/browser-rum":
+      optional: true
+    "@datadog/browser-rum-slim":
+      optional: true
     react:
       optional: true
     react-router-dom:
