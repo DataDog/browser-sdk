@@ -1,4 +1,4 @@
-import type { Context, Duration, RelativeTime } from '@datadog/browser-core'
+import type { Context, Duration } from '@datadog/browser-core'
 import {
   addDuration,
   clocksNow,
@@ -430,10 +430,7 @@ describe('trackClickActions', () => {
       startClickActionsTracking()
       const timeStamp = relativeNow()
 
-      emulateClick({
-        activity: { on: 'pointerdown' },
-        eventProperty: { timeStamp },
-      })
+      button.dispatchEvent(createNewEvent('pointerdown', { timeStamp }))
       expect(getInteractionSelector(timeStamp)).toBe('#button')
     })
 
@@ -441,20 +438,17 @@ describe('trackClickActions', () => {
       startClickActionsTracking()
       const timeStamp = relativeNow()
 
-      emulateClick({
-        activity: { on: 'pointerup' },
-        eventProperty: { timeStamp },
-      })
+      button.dispatchEvent(createNewEvent('pointerdown', { timeStamp }))
       expect(getInteractionSelector(timeStamp)).toBe('#button')
     })
 
-    it('should clear outdated entries when pointer up', () => {
+    it('should clear outdated entries', () => {
       startClickActionsTracking()
       const timeStamp = relativeNow()
 
-      emulateClick({ activity: { on: 'pointerdown' }, eventProperty: { timeStamp } })
+      emulateClick({ eventProperty: { timeStamp } })
       clock.tick(EXPIRE_DELAY)
-      emulateClick({ activity: { on: 'pointerup' }, eventProperty: { timeStamp: relativeNow() } })
+      emulateClick({ eventProperty: { timeStamp: relativeNow() } })
 
       expect(getInteractionSelector(timeStamp)).toBeUndefined()
     })
