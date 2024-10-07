@@ -174,12 +174,11 @@ function startClickAction(
   const click = newClick(lifeCycle, history, getUserActivity, clickActionBase, startEvent)
   appendClickToClickChain(click)
 
-  if (clickActionBase.target) {
-    const { selector } = clickActionBase.target
-    if (selector) {
-      setInteractionSelector(startEvent.timeStamp, selector)
-    }
+  const selector = clickActionBase?.target?.selector
+  if (selector) {
+    setInteractionSelector(startEvent.timeStamp, selector)
   }
+
 
   const { stop: stopWaitPageActivityEnd } = waitPageActivityEnd(
     lifeCycle,
