@@ -35,7 +35,7 @@ import {
   timeStampToClocks,
 } from '@datadog/browser-core'
 import type { LifeCycle } from '../domain/lifeCycle'
-import type { ViewContexts } from '../domain/contexts/viewContexts'
+import type { ViewHistory } from '../domain/contexts/viewHistory'
 import type { RumSessionManager } from '../domain/rumSessionManager'
 import type { ReplayStats } from '../rawRumEvent.types'
 import { ActionType, VitalType } from '../rawRumEvent.types'
@@ -75,6 +75,22 @@ export interface RumPublicApi extends PublicApi {
    * See [User tracking consent](https://docs.datadoghq.com/real_user_monitoring/browser/advanced_configuration/#user-tracking-consent) for further information.
    */
   setTrackingConsent: (trackingConsent: TrackingConsent) => void
+
+  /**
+   * Set View Context.
+   *
+   * Enable to manually set the context of the current view.
+   * @param context context of the view
+   */
+  setViewContext: (context: Context) => void
+  /**
+   * Set View Context Property.
+   *
+   * Enable to manually set a property of the context of the current view.
+   * @param key key of the property
+   * @param value value of the property
+   */
+  setViewContextProperty: (key: string, value: any) => void
   /**
    * Set the global context information to all events, stored in `@context`
    *
@@ -295,7 +311,7 @@ export interface RecorderApi {
     lifeCycle: LifeCycle,
     configuration: RumConfiguration,
     sessionManager: RumSessionManager,
-    viewContexts: ViewContexts,
+    viewHistory: ViewHistory,
     deflateWorker: DeflateWorker | undefined
   ) => void
   isRecording: () => boolean
@@ -327,6 +343,8 @@ export interface Strategy {
   addTiming: StartRumResult['addTiming']
   startView: StartRumResult['startView']
   updateViewName: StartRumResult['updateViewName']
+  setViewContext: StartRumResult['setViewContext']
+  setViewContextProperty: StartRumResult['setViewContextProperty']
   addAction: StartRumResult['addAction']
   addError: StartRumResult['addError']
   addFeatureFlagEvaluation: StartRumResult['addFeatureFlagEvaluation']
@@ -358,19 +376,6 @@ export function makeRumPublicApi(
     trackingConsentState,
     customVitalsState,
     (configuration, deflateWorker, initialViewOptions) => {
-      if (isExperimentalFeatureEnabled(ExperimentalFeature.UPDATE_VIEW_NAME)) {
-        /**
-         * Update View Name.
-         *
-         * Enable to manually change the name of the current view.
-         * @param name name of the view
-         * See [Override default RUM view names](https://docs.datadoghq.com/real_user_monitoring/browser/advanced_configuration/#override-default-rum-view-names) for further information.
-         */
-        ;(rumPublicApi as any).updateViewName = monitor((name: string) => {
-          strategy.updateViewName(name)
-        })
-      }
-
       if (configuration.storeContextsAcrossPages) {
         storeContextManager(configuration, globalContextManager, RUM_STORAGE_KEY, CustomerDataType.GlobalContext)
         storeContextManager(configuration, userContextManager, RUM_STORAGE_KEY, CustomerDataType.User)
@@ -397,7 +402,7 @@ export function makeRumPublicApi(
         startRumResult.lifeCycle,
         configuration,
         startRumResult.session,
-        startRumResult.viewContexts,
+        startRumResult.viewHistory,
         deflateWorker
       )
 
@@ -418,12 +423,37 @@ export function makeRumPublicApi(
     strategy.startView(sanitizedOptions)
     addTelemetryUsage({ feature: 'start-view' })
   })
+
   const rumPublicApi: RumPublicApi = makePublicApi<RumPublicApi>({
-    init: monitor((initConfiguration) => strategy.init(initConfiguration, rumPublicApi)),
+    init: monitor((initConfiguration) => {
+      strategy.init(initConfiguration, rumPublicApi)
+
+      // Add experimental features here
+      if (isExperimentalFeatureEnabled(ExperimentalFeature.UPDATE_VIEW_NAME)) {
+        /**
+         * Update View Name.
+         *
+         * Enable to manually change the name of the current view.
+         * @param name name of the view
+         * See [Override default RUM view names](https://docs.datadoghq.com/real_user_monitoring/browser/advanced_configuration/#override-default-rum-view-names) for further information.
+         */
+        ;(rumPublicApi as any).updateViewName = monitor((name: string) => {
+          strategy.updateViewName(name)
+        })
+      }
+    }),
 
     setTrackingConsent: monitor((trackingConsent) => {
       trackingConsentState.update(trackingConsent)
       addTelemetryUsage({ feature: 'set-tracking-consent', tracking_consent: trackingConsent })
+    }),
+
+    setViewContext: monitor((context: Context) => {
+      strategy.setViewContext(context)
+    }),
+
+    setViewContextProperty: monitor((key: string, value: any) => {
+      strategy.setViewContextProperty(key, value)
     }),
 
     setGlobalContext: monitor((context) => {

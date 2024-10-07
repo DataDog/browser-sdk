@@ -21,7 +21,7 @@
   "devDependencies": {
     "ts-loader": "6.2.1",
     "typescript": "3.8.2",
-    "webpack": "5.76.0"
+    "webpack": "5.94.0"
   },
   "volta": {
     "extends": "../../package.json"

@@ -18,6 +18,52 @@
 
 ---
 
+## v5.28.0
+
+**Public Changes:**
+
+- ✨ replace react-router wildcard routes with their actual path name ([#3023](https://github.com/DataDog/browser-sdk/pull/3023)) [RUM-REACT]
+- 🐛 fix to redirect v6-canary bundles urls to local dev bundles ([#3021](https://github.com/DataDog/browser-sdk/pull/3021))
+
+**Internal Changes:**
+
+- 👷 Update all non-major dependencies ([#3030](https://github.com/DataDog/browser-sdk/pull/3030)) [RUM-REACT]
+- 👷 Bump staging to staging-39
+- 👷 Bump webpack from 5.76.0 to 5.94.0 in /test/app ([#3013](https://github.com/DataDog/browser-sdk/pull/3013))
+- ♻️ [RUM-6278] Use performance observer for layout shift entries ([#3028](https://github.com/DataDog/browser-sdk/pull/3028)) [RUM] [RUM-SLIM]
+- ✨ [RUM 4813] Remove feature flag for view specific context ([#3031](https://github.com/DataDog/browser-sdk/pull/3031)) [LOGS] [RUM] [RUM-SLIM] [WORKER]
+- 🐛 fix to redirect v6-canary bundles urls to local dev bundles ([#3021](https://github.com/DataDog/browser-sdk/pull/3021))
+- 👷 [RUM 6237] Add e2e test for view context API init ([#3025](https://github.com/DataDog/browser-sdk/pull/3025))
+- ♻️ [RUM-6188] Use performanceObserver for first input and event entries ([#2995](https://github.com/DataDog/browser-sdk/pull/2995)) [RUM] [RUM-SLIM]
+- ♻️ [RUM-6184] Use performanceObserver for paint entries ([#2991](https://github.com/DataDog/browser-sdk/pull/2991)) [RUM] [RUM-SLIM]
+- ✨ Increase INITIALIZATION_TIME_OUT_DELAY ([#3017](https://github.com/DataDog/browser-sdk/pull/3017)) [RUM]
+
+## v5.27.0
+
+**Public Changes**
+
+- ✨ Discard loading time when page is hidden ([#2965](https://github.com/DataDog/browser-sdk/pull/2965)) [RUM] [RUM-SLIM]
+- 🐛 [RUM-5785] fix missing navigation timings on Safari ([#2964](https://github.com/DataDog/browser-sdk/pull/2964)) [LOGS] [RUM] [RUM-SLIM] [WORKER]
+- 🐛 convert long animation frame times to nanoseconds ([#2994](https://github.com/DataDog/browser-sdk/pull/2994)) [RUM] [RUM-SLIM]
+- 🐛 [RUM-94] ignore performance resource timings with negative duration ([#2958](https://github.com/DataDog/browser-sdk/pull/2958)) [RUM] [RUM-SLIM]
+
+**Internal Changes**
+
+- 👷 Update all non-major dependencies ([#2992](https://github.com/DataDog/browser-sdk/pull/2992)) [RUM-REACT] [RUM]
+- 👷 timeout e2e-bs ci job after 30 minutes ([#2999](https://github.com/DataDog/browser-sdk/pull/2999))
+- 👷 Bump staging to staging-38
+- 👷 Bump chrome to 128.0.6613.84-1 ([#2946](https://github.com/DataDog/browser-sdk/pull/2946))
+- 👷 allow job 'test-performance' to fail ([#2980](https://github.com/DataDog/browser-sdk/pull/2980))
+- 👷 Update all non-major dependencies ([#2975](https://github.com/DataDog/browser-sdk/pull/2975))
+- 👷 Bump staging to staging-37
+- 🎨 [RUM-6203] Expose experimental features in init method ([#3006](https://github.com/DataDog/browser-sdk/pull/3006)) [RUM] [RUM-SLIM]
+- 🎨 [RUM-5100] Move away from testbuilder in test files - Pt 3 ([#2952](https://github.com/DataDog/browser-sdk/pull/2952)) [RUM] [RUM-SLIM]
+- ✅♻️ do not mock `navigationStart` in `mockClock` ([#2979](https://github.com/DataDog/browser-sdk/pull/2979)) [LOGS] [RUM] [RUM-SLIM] [WORKER]
+- ♻️ [RUM-6181] Use performanceObserver for LCP entries ([#2990](https://github.com/DataDog/browser-sdk/pull/2990)) [RUM] [RUM-SLIM]
+- 🔥 cleanup unused Experimental Features ([#2996](https://github.com/DataDog/browser-sdk/pull/2996)) [LOGS] [RUM] [RUM-SLIM] [WORKER]
+- ♻️ [RUM-6180] Use performanceObserver for long-task entries ([#2989](https://github.com/DataDog/browser-sdk/pull/2989)) [RUM] [RUM-SLIM]
+- ⚗️✨ [RUM 5983] Add set view context apis ([#2967](https://github.com/DataDog/browser-sdk/pull/2967)) [LOGS] [RUM] [RUM-SLIM] [WORKER]
+
 ## v5.26.0
 
 **Public Changes:**

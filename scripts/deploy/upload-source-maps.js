@@ -1,18 +1,18 @@
 'use strict'
 
 const path = require('path')
-const { printLog, runMain } = require('../lib/execution-utils')
+const { printLog, runMain } = require('../lib/executionUtils')
 const { command } = require('../lib/command')
-const { getBuildEnvValue } = require('../lib/build-env')
+const { getBuildEnvValue } = require('../lib/buildEnv')
 const { getTelemetryOrgApiKey } = require('../lib/secrets')
-const { siteByDatacenter } = require('../lib/datadog-sites')
+const { siteByDatacenter } = require('../lib/datadogSites')
 const {
   buildRootUploadPath,
   buildDatacenterUploadPath,
   buildBundleFolder,
   buildBundleFileName,
   packages,
-} = require('./lib/deployment-utils')
+} = require('./lib/deploymentUtils')
 
 /**
  * Upload source maps to datadog

@@ -1,4 +1,4 @@
-const { fetchHandlingError } = require('../lib/execution-utils')
+const { fetchHandlingError } = require('../lib/executionUtils')
 
 async function browserStackRequest(url, options) {
   const response = await fetchHandlingError(url, {

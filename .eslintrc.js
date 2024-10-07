@@ -160,7 +160,7 @@ module.exports = {
     'import/no-default-export': 'error',
     'import/no-duplicates': 'error',
     'import/no-extraneous-dependencies': 'error',
-    'import/no-unresolved': 'error',
+    'import/no-unresolved': ['error', { commonjs: true }],
     'import/no-useless-path-segments': 'error',
     'import/order': 'error',
 
@@ -200,9 +200,11 @@ module.exports = {
     },
     {
       files: ['scripts/**/*.js', 'packages/*/scripts/**/*.js'],
+      excludedFiles: ['**/lib/**'],
       rules: {
         'unicorn/filename-case': ['error', { case: 'kebabCase' }],
         'local-rules/secure-command-execution': 'error',
+        'local-rules/disallow-non-scripts': 'error',
       },
     },
     {

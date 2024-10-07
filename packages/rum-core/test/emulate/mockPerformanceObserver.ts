@@ -73,22 +73,3 @@ export function mockPerformanceObserver({ typeSupported = true, emulateAllEntryT
     },
   }
 }
-
-export function mockPerformanceTiming() {
-  const timings = {
-    domComplete: 456,
-    domContentLoadedEventEnd: 345,
-    domContentLoadedEventStart: 0,
-    domInteractive: 234,
-    loadEventEnd: 567,
-    loadEventStart: 567,
-    responseStart: 123,
-    unloadEventEnd: 0,
-    unloadEventStart: 0,
-  } as typeof performance.timing
-  const properties = Object.keys(timings) as Array<keyof typeof performance.timing>
-
-  for (const propertyName of properties) {
-    spyOnProperty(performance.timing, propertyName, 'get').and.callFake(() => timings[propertyName])
-  }
-}

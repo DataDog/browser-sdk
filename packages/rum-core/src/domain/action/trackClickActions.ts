@@ -179,7 +179,6 @@ function startClickAction(
     setInteractionSelector(startEvent.timeStamp, selector)
   }
 
-
   const { stop: stopWaitPageActivityEnd } = waitPageActivityEnd(
     lifeCycle,
     domMutationObservable,

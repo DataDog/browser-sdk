@@ -1,4 +1,4 @@
-FROM node:20.15.0-buster-slim
+FROM node:20.18.0-bookworm-slim
 
 ARG CHROME_PACKAGE_VERSION
 
@@ -7,6 +7,7 @@ RUN test -n "$CHROME_PACKAGE_VERSION" || (echo "\nCHROME_PACKAGE_VERSION not set
 
 # Install Chrome deps
 RUN apt-get update && apt-get install -y -q --no-install-recommends \
+        libgcc-s1 \
         libgtk-3-dev \
         libx11-xcb1  \
         libnss3 \
@@ -30,21 +31,14 @@ RUN curl --silent --show-error --fail http://dl.google.com/linux/chrome/deb/pool
     && rm google-chrome.deb
 
 
-# Install python
-RUN apt-get install -y -q --no-install-recommends python
-
-# Install pip
-RUN set -x \
- && curl -OL https://bootstrap.pypa.io/pip/2.7/get-pip.py \
- && python get-pip.py \
- && rm get-pip.py
-
 # Install AWS cli
+# https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html
 RUN set -x \
- && pip install awscli
-
-# Deploy deps
-RUN apt-get install -y -q --no-install-recommends jq
+  && apt-get install -y -q --no-install-recommends unzip \
+  && cd /tmp \
+  && curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip" \
+  && unzip awscliv2.zip \
+  && ./aws/install
 
 # Node fsevents deps
 RUN apt-get install -y -q --no-install-recommends g++ build-essential
@@ -67,21 +61,21 @@ RUN apt-get -y install git
 RUN apt-get -y install procps
 
 # Woke
-RUN set -o pipefail && curl -sSfL https://git.io/getwoke | \
-  bash -s -- -b /usr/local/bin v0.17.1
+RUN set -o pipefail \
+  && curl -sSfL https://git.io/getwoke | bash -s -- -b /usr/local/bin v0.17.1
 
 # Codecov https://docs.codecov.com/docs/codecov-uploader
-RUN apt-get -y install gnupg coreutils
-RUN set -o pipefail && curl https://keybase.io/codecovsecurity/pgp_keys.asc | gpg --no-default-keyring --keyring trustedkeys.gpg --import
-RUN CODECOV_UPLOADER_VERSION=v0.1.15 \
+RUN apt-get -y install gnupg coreutils \
+  && set -o pipefail && curl https://keybase.io/codecovsecurity/pgp_keys.asc | gpg --no-default-keyring --keyring trustedkeys.gpg --import \
+  && CODECOV_UPLOADER_VERSION=v0.1.15 \
   && curl -Os https://uploader.codecov.io/${CODECOV_UPLOADER_VERSION}/linux/codecov \
   && curl -Os https://uploader.codecov.io/${CODECOV_UPLOADER_VERSION}/linux/codecov.SHA256SUM \
-  && curl -Os https://uploader.codecov.io/${CODECOV_UPLOADER_VERSION}/linux/codecov.SHA256SUM.sig
-RUN gpgv codecov.SHA256SUM.sig codecov.SHA256SUM
-RUN shasum -a 256 -c codecov.SHA256SUM
-RUN chmod +x codecov
-RUN mv codecov /usr/local/bin
-RUN rm codecov.*
+  && curl -Os https://uploader.codecov.io/${CODECOV_UPLOADER_VERSION}/linux/codecov.SHA256SUM.sig \
+  && gpgv codecov.SHA256SUM.sig codecov.SHA256SUM \
+  && shasum -a 256 -c codecov.SHA256SUM \
+  && chmod +x codecov \
+  && mv codecov /usr/local/bin \
+  && rm codecov.*
 
 # Install authanywhere for pull request commenter token
 RUN if [ $(uname -m) = x86_64 ]; then AAA="amd64"; else AAA="arm64"; fi; curl -OL "binaries.ddbuild.io/dd-source/authanywhere/LATEST/authanywhere-linux-${AAA}" && mv "authanywhere-linux-${AAA}" /bin/authanywhere && chmod +x /bin/authanywhere 

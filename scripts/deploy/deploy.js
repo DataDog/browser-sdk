@@ -1,7 +1,7 @@
 'use strict'
 
-const { printLog, runMain } = require('../lib/execution-utils')
-const { fetchPR, LOCAL_BRANCH } = require('../lib/git-utils')
+const { printLog, runMain } = require('../lib/executionUtils')
+const { fetchPR, LOCAL_BRANCH } = require('../lib/gitUtils')
 const { command } = require('../lib/command')
 
 const {
@@ -11,7 +11,7 @@ const {
   buildBundleFileName,
   buildPullRequestUploadPath,
   packages,
-} = require('./lib/deployment-utils')
+} = require('./lib/deploymentUtils')
 
 const ONE_MINUTE_IN_SECOND = 60
 const ONE_HOUR_IN_SECOND = 60 * ONE_MINUTE_IN_SECOND

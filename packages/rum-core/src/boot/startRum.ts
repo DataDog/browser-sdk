@@ -21,11 +21,10 @@ import {
   ExperimentalFeature,
 } from '@datadog/browser-core'
 import { createDOMMutationObservable } from '../browser/domMutationObservable'
-import { startPerformanceCollection } from '../browser/performanceCollection'
 import { startRumAssembly } from '../domain/assembly'
 import { startInternalContext } from '../domain/contexts/internalContext'
 import { LifeCycle, LifeCycleEventType } from '../domain/lifeCycle'
-import { startViewContexts } from '../domain/contexts/viewContexts'
+import { startViewHistory } from '../domain/contexts/viewHistory'
 import { startRequestCollection } from '../domain/requestCollection'
 import { startActionCollection } from '../domain/action/actionCollection'
 import { startErrorCollection } from '../domain/error/errorCollection'
@@ -84,7 +83,7 @@ export function startRum(
       id: session.findTrackedSession()?.id,
     },
     view: {
-      id: viewContexts.findView()?.id,
+      id: viewHistory.findView()?.id,
     },
     action: {
       id: actionContexts.findActionId(),
@@ -129,7 +128,7 @@ export function startRum(
   const locationChangeObservable = createLocationChangeObservable(configuration, location)
   const pageStateHistory = startPageStateHistory(configuration)
   const {
-    viewContexts,
+    viewHistory,
     urlContexts,
     actionContexts,
     addAction,
@@ -153,6 +152,8 @@ export function startRum(
     addTiming,
     startView,
     updateViewName,
+    setViewContext,
+    setViewContextProperty,
     stop: stopViewCollection,
   } = startViewCollection(
     lifeCycle,
@@ -182,14 +183,12 @@ export function startRum(
   const { addError } = startErrorCollection(lifeCycle, configuration, pageStateHistory, featureFlagContexts)
 
   startRequestCollection(lifeCycle, configuration, session)
-  const { stop: stopPerformanceCollection } = startPerformanceCollection(lifeCycle, configuration)
-  cleanupTasks.push(stopPerformanceCollection)
 
   const vitalCollection = startVitalCollection(lifeCycle, pageStateHistory, customVitalsState)
   const internalContext = startInternalContext(
     configuration.applicationId,
     session,
-    viewContexts,
+    viewHistory,
     actionContexts,
     urlContexts
   )
@@ -200,9 +199,11 @@ export function startRum(
     addTiming,
     addFeatureFlagEvaluation: featureFlagContexts.addFeatureFlagEvaluation,
     startView,
+    setViewContext,
+    setViewContextProperty,
     updateViewName,
     lifeCycle,
-    viewContexts,
+    viewHistory,
     session,
     stopSession: () => session.expire(),
     getInternalContext: internalContext.get,
@@ -235,7 +236,7 @@ export function startRumEventCollection(
   getCommonContext: () => CommonContext,
   reportError: (error: RawError) => void
 ) {
-  const viewContexts = startViewContexts(lifeCycle)
+  const viewHistory = startViewHistory(lifeCycle)
   const urlContexts = startUrlContexts(lifeCycle, locationChangeObservable, location)
 
   const { addAction, actionContexts } = startActionCollection(
@@ -252,7 +253,7 @@ export function startRumEventCollection(
     configuration,
     lifeCycle,
     sessionManager,
-    viewContexts,
+    viewHistory,
     urlContexts,
     actionContexts,
     displayContext,
@@ -262,7 +263,7 @@ export function startRumEventCollection(
   )
 
   return {
-    viewContexts,
+    viewHistory,
     pageStateHistory,
     urlContexts,
     addAction,
@@ -271,7 +272,7 @@ export function startRumEventCollection(
       ciVisibilityContext.stop()
       displayContext.stop()
       urlContexts.stop()
-      viewContexts.stop()
+      viewHistory.stop()
       pageStateHistory.stop()
     },
   }

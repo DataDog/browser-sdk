@@ -1,7 +1,7 @@
 'use strict'
 
 const { parseArgs } = require('node:util')
-const { printLog, runMain, fetchHandlingError } = require('./lib/execution-utils')
+const { printLog, runMain, fetchHandlingError } = require('./lib/executionUtils')
 const { command } = require('./lib/command')
 
 const REPOSITORY = process.env.APP

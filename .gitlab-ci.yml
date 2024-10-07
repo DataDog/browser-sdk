@@ -1,13 +1,13 @@
 variables:
-  CURRENT_STAGING: staging-37
+  CURRENT_STAGING: staging-41
   APP: 'browser-sdk'
-  CURRENT_CI_IMAGE: 69
+  CURRENT_CI_IMAGE: 71
   BUILD_STABLE_REGISTRY: 'registry.ddbuild.io'
   CI_IMAGE: '$BUILD_STABLE_REGISTRY/ci/$APP:$CURRENT_CI_IMAGE'
   GIT_REPOSITORY: 'git@github.com:DataDog/browser-sdk.git'
   MAIN_BRANCH: 'main'
   NEXT_MAJOR_BRANCH: 'v6'
-  CHROME_PACKAGE_VERSION: 127.0.6533.72-1
+  CHROME_PACKAGE_VERSION: 129.0.6668.58-1
 
 cache:
   key:
@@ -151,6 +151,7 @@ test-performance:
     - .base-configuration
     - .test-allowed-branches
   interruptible: true
+  allow_failure: true
   script:
     - yarn
     - yarn build:bundle
@@ -267,6 +268,7 @@ e2e-bs:
     - .bs-allowed-branches
   interruptible: true
   resource_group: browserstack
+  timeout: 35 minutes
   artifacts:
     when: always
     paths: ['test-report/e2e-bs/specs.log']
@@ -440,7 +442,9 @@ merge-into-next-major:
   stage: pre-deploy
   extends:
     - .base-configuration
-    - .main
+  only:
+    refs:
+      - main
   before_script:
     - eval $(ssh-agent -s)
   script:

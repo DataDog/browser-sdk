@@ -1,51 +1,44 @@
 import type { Duration, RelativeTime } from '@datadog/browser-core'
-import { registerCleanupTask } from '@datadog/browser-core/test'
+import type { Clock } from '@datadog/browser-core/test'
+import { mockClock, registerCleanupTask } from '@datadog/browser-core/test'
 import type { RumPerformanceEntry } from '../../../browser/performanceObservable'
 import { RumPerformanceEntryType } from '../../../browser/performanceObservable'
 import { createPerformanceEntry, mockPerformanceObserver, mockRumConfiguration } from '../../../../test'
-import { LifeCycle, LifeCycleEventType } from '../../lifeCycle'
 import { trackInitialViewMetrics } from './trackInitialViewMetrics'
 
 describe('trackInitialViewMetrics', () => {
-  let lifeCycle: LifeCycle
+  let clock: Clock
   let scheduleViewUpdateSpy: jasmine.Spy<() => void>
   let trackInitialViewMetricsResult: ReturnType<typeof trackInitialViewMetrics>
   let setLoadEventSpy: jasmine.Spy<(loadEvent: Duration) => void>
   let notifyPerformanceEntries: (entries: RumPerformanceEntry[]) => void
 
   beforeEach(() => {
-    lifeCycle = new LifeCycle()
+    ;({ notifyPerformanceEntries } = mockPerformanceObserver())
+
     const configuration = mockRumConfiguration()
     scheduleViewUpdateSpy = jasmine.createSpy()
     setLoadEventSpy = jasmine.createSpy()
-    ;({ notifyPerformanceEntries } = mockPerformanceObserver())
+    clock = mockClock()
+    registerCleanupTask(clock.cleanup)
 
-    trackInitialViewMetricsResult = trackInitialViewMetrics(
-      lifeCycle,
-      configuration,
-      setLoadEventSpy,
-      scheduleViewUpdateSpy
-    )
+    trackInitialViewMetricsResult = trackInitialViewMetrics(configuration, setLoadEventSpy, scheduleViewUpdateSpy)
 
     registerCleanupTask(trackInitialViewMetricsResult.stop)
   })
 
   it('should merge metrics from various sources', () => {
-    notifyPerformanceEntries([createPerformanceEntry(RumPerformanceEntryType.NAVIGATION)])
-    lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [
+    notifyPerformanceEntries([
+      createPerformanceEntry(RumPerformanceEntryType.NAVIGATION),
       createPerformanceEntry(RumPerformanceEntryType.PAINT),
       createPerformanceEntry(RumPerformanceEntryType.FIRST_INPUT),
     ])
 
+    clock.tick(0)
+
     expect(scheduleViewUpdateSpy).toHaveBeenCalledTimes(3)
     expect(trackInitialViewMetricsResult.initialViewMetrics).toEqual({
-      navigationTimings: {
-        firstByte: 123 as Duration,
-        domComplete: 456 as Duration,
-        domContentLoaded: 345 as Duration,
-        domInteractive: 234 as Duration,
-        loadEvent: 567 as Duration,
-      },
+      navigationTimings: jasmine.any(Object),
       firstContentfulPaint: 123 as Duration,
       firstInput: {
         delay: 100 as Duration,
@@ -56,12 +49,13 @@ describe('trackInitialViewMetrics', () => {
   })
 
   it('calls the `setLoadEvent` callback when the loadEvent timing is known', () => {
-    notifyPerformanceEntries([createPerformanceEntry(RumPerformanceEntryType.NAVIGATION)])
-    lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [
+    notifyPerformanceEntries([
       createPerformanceEntry(RumPerformanceEntryType.PAINT),
       createPerformanceEntry(RumPerformanceEntryType.FIRST_INPUT),
     ])
 
-    expect(setLoadEventSpy).toHaveBeenCalledOnceWith(567 as Duration)
+    clock.tick(0)
+
+    expect(setLoadEventSpy).toHaveBeenCalledOnceWith(jasmine.any(Number))
   })
 })
