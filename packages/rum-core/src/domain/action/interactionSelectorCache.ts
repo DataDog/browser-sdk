@@ -11,7 +11,7 @@ export const getInteractionSelector = (relativeTimestamp: RelativeTime) => {
   return selector
 }
 
-export const setInteractionSelector = (relativeTimestamp: RelativeTime, selector: string) => {
+export const updateInteractionSelector = (relativeTimestamp: RelativeTime, selector: string) => {
   interactionSelectorCache.set(relativeTimestamp, selector)
   interactionSelectorCache.forEach((_, relativeTimestamp) => {
     if (elapsed(relativeTimestamp, relativeNow()) > CLICK_ACTION_MAX_DURATION) {

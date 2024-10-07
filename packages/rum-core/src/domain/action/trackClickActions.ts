@@ -26,7 +26,7 @@ import { getActionNameFromElement } from './getActionNameFromElement'
 import type { MouseEventOnElement, UserActivity } from './listenActionEvents'
 import { listenActionEvents } from './listenActionEvents'
 import { computeFrustration } from './computeFrustration'
-import { CLICK_ACTION_MAX_DURATION, setInteractionSelector } from './interactionSelectorCache'
+import { CLICK_ACTION_MAX_DURATION, updateInteractionSelector } from './interactionSelectorCache'
 
 interface ActionCounts {
   errorCount: number
@@ -176,7 +176,7 @@ function startClickAction(
 
   const selector = clickActionBase?.target?.selector
   if (selector) {
-    setInteractionSelector(startEvent.timeStamp, selector)
+    updateInteractionSelector(startEvent.timeStamp, selector)
   }
 
   const { stop: stopWaitPageActivityEnd } = waitPageActivityEnd(
@@ -229,7 +229,7 @@ function computeClickActionBase(
   const rect = event.target.getBoundingClientRect()
   const selector = getSelectorFromElement(event.target, configuration.actionNameAttribute)
   if (selector) {
-    setInteractionSelector(event.timeStamp, selector)
+    updateInteractionSelector(event.timeStamp, selector)
   }
 
   return {

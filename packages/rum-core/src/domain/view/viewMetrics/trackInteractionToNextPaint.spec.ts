@@ -16,7 +16,7 @@ import type {
   RumPerformanceEventTiming,
 } from '../../../browser/performanceObservable'
 import { ViewLoadingType } from '../../../rawRumEvent.types'
-import { getInteractionSelector, setInteractionSelector } from '../../action/interactionSelectorCache'
+import { getInteractionSelector, updateInteractionSelector } from '../../action/interactionSelectorCache'
 import {
   trackInteractionToNextPaint,
   trackViewInteractionCount,
@@ -251,7 +251,7 @@ describe('trackInteractionToNextPaint', () => {
 
     it('should check interactionSelectorCache for entries', () => {
       startINPTracking()
-      setInteractionSelector(1 as RelativeTime, '#foo')
+      updateInteractionSelector(1 as RelativeTime, '#foo')
 
       newInteraction({
         interactionId: 1,
