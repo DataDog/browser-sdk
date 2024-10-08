@@ -23,12 +23,10 @@ describe('trackCumulativeLayoutShift', () => {
   let clsCallback: jasmine.Spy<(csl: CumulativeLayoutShift) => void>
   let notifyPerformanceEntries: (entries: RumPerformanceEntry[]) => void
 
-  function startCLSTracking(
-    { viewStart, isLayoutShiftSupported }: StartCLSTrackingArgs = {
-      viewStart: 0 as RelativeTime,
-      isLayoutShiftSupported: true,
-    }
-  ) {
+  function startCLSTracking({
+    viewStart = 0 as RelativeTime,
+    isLayoutShiftSupported = true,
+  }: Partial<StartCLSTrackingArgs> = {}) {
     ;({ notifyPerformanceEntries } = mockPerformanceObserver())
 
     clsCallback = jasmine.createSpy()
@@ -79,6 +77,18 @@ describe('trackCumulativeLayoutShift', () => {
       value: 0.3,
       time: 2 as RelativeTime,
       targetSelector: undefined,
+    })
+  })
+
+  it('should ignore layout shifts that happen before the view start', () => {
+    startCLSTracking({ viewStart: 100 as RelativeTime })
+    notifyPerformanceEntries([
+      createPerformanceEntry(RumPerformanceEntryType.LAYOUT_SHIFT, { value: 0.1, startTime: 1 as RelativeTime }),
+    ])
+
+    expect(clsCallback).toHaveBeenCalledTimes(1)
+    expect(clsCallback.calls.mostRecent().args[0]).toEqual({
+      value: 0,
     })
   })
 
