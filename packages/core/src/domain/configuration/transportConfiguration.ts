@@ -1,4 +1,4 @@
-import { objectValues, assign } from '../../tools/utils/polyfills'
+import { objectValues, assign, includes } from '../../tools/utils/polyfills'
 import type { InitConfiguration } from './configuration'
 import type { EndpointBuilder } from './endpointBuilder'
 import { createEndpointBuilder } from './endpointBuilder'
@@ -31,7 +31,7 @@ export function computeTransportConfiguration(initConfiguration: InitConfigurati
 
   return assign(
     {
-      isIntakeUrl: (url: string) => intakeUrlPatterns.some((intakeEndpoint) => url.includes(intakeEndpoint)),
+      isIntakeUrl: (url: string) => intakeUrlPatterns.some((intakeEndpoint) => includes(url, intakeEndpoint)),
       replica: replicaConfiguration,
       site,
     },
