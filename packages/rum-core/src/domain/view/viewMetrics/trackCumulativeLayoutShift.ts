@@ -61,25 +61,27 @@ export function trackCumulativeLayoutShift(
     buffered: true,
   }).subscribe((entries) => {
     for (const entry of entries) {
-      if (!entry.hadRecentInput) {
-        const { cumulatedValue, isMaxValue } = window.update(entry)
+      if (entry.hadRecentInput || entry.startTime < viewStart) {
+        continue
+      }
 
-        if (isMaxValue) {
-          const target = getTargetFromSource(entry.sources)
-          maxClsTarget = target ? new WeakRef(target) : undefined
-          maxClsStartTime = elapsed(viewStart, entry.startTime)
-        }
+      const { cumulatedValue, isMaxValue } = window.update(entry)
 
-        if (cumulatedValue > maxClsValue) {
-          maxClsValue = cumulatedValue
-          const target = maxClsTarget?.deref()
+      if (isMaxValue) {
+        const target = getTargetFromSource(entry.sources)
+        maxClsTarget = target ? new WeakRef(target) : undefined
+        maxClsStartTime = elapsed(viewStart, entry.startTime)
+      }
 
-          callback({
-            value: round(maxClsValue, 4),
-            targetSelector: target && getSelectorFromElement(target, configuration.actionNameAttribute),
-            time: maxClsStartTime,
-          })
-        }
+      if (cumulatedValue > maxClsValue) {
+        maxClsValue = cumulatedValue
+        const target = maxClsTarget?.deref()
+
+        callback({
+          value: round(maxClsValue, 4),
+          targetSelector: target && getSelectorFromElement(target, configuration.actionNameAttribute),
+          time: maxClsStartTime,
+        })
       }
     }
   })
