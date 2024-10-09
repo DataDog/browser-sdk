@@ -1,5 +1,5 @@
 import { type Duration, type RelativeTime } from '@datadog/browser-core'
-import { registerCleanupTask, restorePageVisibility, setPageVisibility } from '@datadog/browser-core/test'
+import { registerCleanupTask, setPageVisibility } from '@datadog/browser-core/test'
 import {
   appendElement,
   appendText,
@@ -29,7 +29,6 @@ describe('firstInputTimings', () => {
     registerCleanupTask(() => {
       firstHidden.stop()
       firstInputTimings.stop()
-      restorePageVisibility()
     })
   }
 

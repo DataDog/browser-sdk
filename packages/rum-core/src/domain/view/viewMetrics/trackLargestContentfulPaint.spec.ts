@@ -1,11 +1,6 @@
 import type { RelativeTime } from '@datadog/browser-core'
 import { DOM_EVENT } from '@datadog/browser-core'
-import {
-  setPageVisibility,
-  createNewEvent,
-  restorePageVisibility,
-  registerCleanupTask,
-} from '@datadog/browser-core/test'
+import { setPageVisibility, createNewEvent, registerCleanupTask } from '@datadog/browser-core/test'
 import type { RumPerformanceEntry } from '../../../browser/performanceObservable'
 import { RumPerformanceEntryType } from '../../../browser/performanceObservable'
 import { appendElement, createPerformanceEntry, mockPerformanceObserver, mockRumConfiguration } from '../../../../test'
@@ -32,7 +27,6 @@ describe('trackLargestContentfulPaint', () => {
     registerCleanupTask(() => {
       firstHidden.stop()
       largestContentfulPaint.stop()
-      restorePageVisibility()
     })
   }
 

@@ -1,6 +1,6 @@
 import type { RelativeTime } from '@datadog/browser-core'
 import { DOM_EVENT } from '@datadog/browser-core'
-import { createNewEvent, restorePageVisibility, setPageVisibility } from '@datadog/browser-core/test'
+import { createNewEvent, setPageVisibility } from '@datadog/browser-core/test'
 import { mockRumConfiguration } from '../../../../test'
 import { trackFirstHidden } from './trackFirstHidden'
 
@@ -9,7 +9,6 @@ describe('trackFirstHidden', () => {
   let firstHidden: { timeStamp: RelativeTime; stop: () => void }
 
   afterEach(() => {
-    restorePageVisibility()
     firstHidden.stop()
   })
 
