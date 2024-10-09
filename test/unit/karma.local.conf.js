@@ -18,7 +18,7 @@ module.exports = function (config) {
     },
     webpack: {
       ...karmaBaseConf.webpack,
-      optimization: process.argv.includes('scope') ? { runtimeChunk: false } : karmaBaseConf.webpack.optimization,
+      optimization: { runtimeChunk: false },
       module: withIstanbulRule(karmaBaseConf.webpack.module),
     },
     sourceMapLoader: {
