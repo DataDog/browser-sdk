@@ -1,4 +1,3 @@
-import type { MockZoneJs } from '../../test'
 import { mockZoneJs } from '../../test'
 
 import type { BrowserWindowWithZoneJs } from './getZoneJsOriginalValue'
