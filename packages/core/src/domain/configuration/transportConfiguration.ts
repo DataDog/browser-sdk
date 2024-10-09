@@ -1,5 +1,4 @@
 import { objectValues, assign } from '../../tools/utils/polyfills'
-import { buildUrl } from '../../tools/utils/urlPolyfill'
 import type { InitConfiguration } from './configuration'
 import type { EndpointBuilder } from './endpointBuilder'
 import { createEndpointBuilder } from './endpointBuilder'
@@ -28,24 +27,16 @@ export function computeTransportConfiguration(initConfiguration: InitConfigurati
 
   const endpointBuilders = computeEndpointBuilders(initConfiguration, tags)
   const intakeUrlPrefixes = computeIntakeUrlPrefixes(endpointBuilders, site)
-
   const replicaConfiguration = computeReplicaConfiguration(initConfiguration, intakeUrlPrefixes, tags)
 
   return assign(
     {
-      isIntakeUrl: (url: string) =>
-        intakeUrlPrefixes.some((intakeEndpoint) => url.indexOf(intakeEndpoint) === 0) ||
-        checkAllIntakes(buildUrl(url), site),
+      isIntakeUrl: (url: string) => intakeUrlPrefixes.some((intakeEndpoint) => url.includes(intakeEndpoint)),
       replica: replicaConfiguration,
       site,
     },
     endpointBuilders
   )
-}
-
-function checkAllIntakes(url: URL | HTMLAnchorElement, site: string) {
-  const { hostname, pathname } = url
-  return (hostname.endsWith(`.${site}`) || hostname.endsWith(`-${site}`)) && pathname === '/api/v2/rum'
 }
 
 function computeEndpointBuilders(initConfiguration: InitConfiguration, tags: string[]) {
@@ -84,10 +75,10 @@ function computeIntakeUrlPrefixes(
   endpointBuilders: ReturnType<typeof computeEndpointBuilders>,
   site: string
 ): string[] {
-  const intakeUrlPrefixes = objectValues(endpointBuilders).map((builder) => builder.urlPrefix)
+  const intakeUrlPrefixes = objectValues(endpointBuilders).map((builder) => `${builder.urlPattern}`)
 
   if (site === INTAKE_SITE_US1) {
-    intakeUrlPrefixes.push(`https://${PCI_INTAKE_HOST_US1}/`)
+    intakeUrlPrefixes.push(`${PCI_INTAKE_HOST_US1}/`)
   }
 
   return intakeUrlPrefixes

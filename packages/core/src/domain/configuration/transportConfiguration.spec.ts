@@ -101,6 +101,11 @@ describe('transportConfiguration', () => {
         expect(configuration.isIntakeUrl(`https://${intakeDomain}/api/v2/rum?xxx`)).toBe(true)
         expect(configuration.isIntakeUrl(`https://${intakeDomain}/api/v2/logs?xxx`)).toBe(true)
         expect(configuration.isIntakeUrl(`https://${intakeDomain}/api/v2/replay?xxx`)).toBe(true)
+
+        // test with old versions of the intake domain
+        expect(configuration.isIntakeUrl(`https://rum.${intakeDomain}/api/v2/rum?xxx`)).toBe(true)
+        expect(configuration.isIntakeUrl(`https://replay.${intakeDomain}/api/v2/replay?xxx`)).toBe(true)
+        expect(configuration.isIntakeUrl(`https://logs.${intakeDomain}/api/v2/logs?xxx`)).toBe(true)
       })
     })
 
