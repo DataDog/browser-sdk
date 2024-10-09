@@ -75,11 +75,11 @@ function computeIntakeUrlPatterns(
   endpointBuilders: ReturnType<typeof computeEndpointBuilders>,
   site: string
 ): string[] {
-  const intakeUrlPrefixes = objectValues(endpointBuilders).map((builder) => builder.urlPattern)
+  const intakeUrlPatterns = objectValues(endpointBuilders).map((builder) => builder.urlPattern)
 
   if (site === INTAKE_SITE_US1) {
-    intakeUrlPrefixes.push(`${PCI_INTAKE_HOST_US1}/`)
+    intakeUrlPatterns.push(`${PCI_INTAKE_HOST_US1}/`)
   }
 
-  return intakeUrlPrefixes
+  return intakeUrlPatterns
 }
