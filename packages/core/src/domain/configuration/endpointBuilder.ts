@@ -35,7 +35,7 @@ export function createEndpointBuilder(
     },
     urlPrefix,
     trackType,
-    urlPattern: urlPrefix.replace('https://', ''),
+    urlPattern: urlPrefix.replace(HTTPS_PREFIX, ''),
   }
 }
 

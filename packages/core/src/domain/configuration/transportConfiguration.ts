@@ -26,12 +26,12 @@ export function computeTransportConfiguration(initConfiguration: InitConfigurati
   const tags = buildTags(initConfiguration)
 
   const endpointBuilders = computeEndpointBuilders(initConfiguration, tags)
-  const intakeUrlPrefixes = computeIntakeUrlPrefixes(endpointBuilders, site)
-  const replicaConfiguration = computeReplicaConfiguration(initConfiguration, intakeUrlPrefixes, tags)
+  const intakeUrlPatterns = computeIntakeUrlPatterns(endpointBuilders, site)
+  const replicaConfiguration = computeReplicaConfiguration(initConfiguration, intakeUrlPatterns, tags)
 
   return assign(
     {
-      isIntakeUrl: (url: string) => intakeUrlPrefixes.some((intakeEndpoint) => url.includes(intakeEndpoint)),
+      isIntakeUrl: (url: string) => intakeUrlPatterns.some((intakeEndpoint) => url.includes(intakeEndpoint)),
       replica: replicaConfiguration,
       site,
     },
@@ -71,11 +71,11 @@ function computeReplicaConfiguration(
   return assign({ applicationId: initConfiguration.replica.applicationId }, replicaEndpointBuilders)
 }
 
-function computeIntakeUrlPrefixes(
+function computeIntakeUrlPatterns(
   endpointBuilders: ReturnType<typeof computeEndpointBuilders>,
   site: string
 ): string[] {
-  const intakeUrlPrefixes = objectValues(endpointBuilders).map((builder) => `${builder.urlPattern}`)
+  const intakeUrlPrefixes = objectValues(endpointBuilders).map((builder) => builder.urlPattern)
 
   if (site === INTAKE_SITE_US1) {
     intakeUrlPrefixes.push(`${PCI_INTAKE_HOST_US1}/`)
