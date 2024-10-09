@@ -1,4 +1,4 @@
-import { mockClock, mockZoneJs } from '../../test'
+import { mockClock, mockZoneJs, registerCleanupTask } from '../../test'
 import type { Clock, MockZoneJs } from '../../test'
 import { resetMonitor, startMonitorErrorCollection } from './monitor'
 import { setTimeout, clearTimeout, setInterval, clearInterval } from './timer'
@@ -22,12 +22,10 @@ import { noop } from './utils/functionUtils'
     beforeEach(() => {
       clock = mockClock()
       zoneJs = mockZoneJs()
-    })
-
-    afterEach(() => {
-      zoneJs.restore()
-      clock.cleanup()
-      resetMonitor()
+      registerCleanupTask(() => {
+        clock.cleanup()
+        resetMonitor()
+      })
     })
 
     it('executes the callback asynchronously', () => {
