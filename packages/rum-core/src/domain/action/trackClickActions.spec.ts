@@ -430,7 +430,7 @@ describe('trackClickActions', () => {
       startClickActionsTracking()
       const timeStamp = relativeNow()
 
-      button.dispatchEvent(createNewEvent('pointerdown', { timeStamp }))
+      emulateClick({ eventProperty: { timeStamp } })
       expect(getInteractionSelector(timeStamp)).toBe('#button')
     })
 
@@ -438,7 +438,7 @@ describe('trackClickActions', () => {
       startClickActionsTracking()
       const timeStamp = relativeNow()
 
-      button.dispatchEvent(createNewEvent('pointerdown', { timeStamp }))
+      emulateClick({ eventProperty: { timeStamp } })
       expect(getInteractionSelector(timeStamp)).toBe('#button')
     })
 
