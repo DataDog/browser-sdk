@@ -1,4 +1,3 @@
-import { arrayFrom } from '@datadog/browser-core'
 import { registerCleanupTask } from '@datadog/browser-core/test'
 
 export function appendText(text: string, container: Element | ShadowRoot = document.body): Text {
@@ -17,7 +16,7 @@ export function appendElement(html: string, container: Element | ShadowRoot = do
   tmp.innerHTML = html.trim()
 
   const target = tmp.querySelector('[target]') || tmp.children[0]
-  const nodes = arrayFrom(tmp.childNodes)
+  const nodes = Array.from(tmp.childNodes)
 
   nodes.forEach((node) => container.appendChild(node))
 

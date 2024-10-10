@@ -3,7 +3,6 @@ import { mergeObservables, Observable } from '../../tools/observable'
 import { ConsoleApiName, globalConsole } from '../../tools/display'
 import { callMonitored } from '../../tools/monitor'
 import { sanitize } from '../../tools/serialisation/sanitize'
-import { find } from '../../tools/utils/polyfills'
 import { jsonStringify } from '../../tools/serialisation/jsonStringify'
 import type { RawError } from '../error/error.types'
 import { ErrorHandling, ErrorSource } from '../error/error.types'
@@ -74,7 +73,7 @@ function buildConsoleLog(params: unknown[], api: ConsoleApiName, handlingStack: 
   let error: RawError | undefined
 
   if (api === ConsoleApiName.error) {
-    const firstErrorParam = find(params, (param: unknown): param is Error => param instanceof Error)
+    const firstErrorParam = params.find((param: unknown): param is Error => param instanceof Error)
 
     error = {
       stack: firstErrorParam ? toStackTraceString(computeStackTrace(firstErrorParam)) : undefined,

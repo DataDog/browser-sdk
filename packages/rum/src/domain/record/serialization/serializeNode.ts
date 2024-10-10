@@ -9,7 +9,6 @@ import {
   PRIVACY_ATTR_NAME,
   PRIVACY_ATTR_VALUE_HIDDEN,
 } from '@datadog/browser-rum-core'
-import { assign } from '@datadog/browser-core'
 import type {
   DocumentFragmentNode,
   DocumentNode,
@@ -171,10 +170,11 @@ function serializeElementNode(element: Element, options: SerializeOptions): Elem
     if (options.parentNodePrivacyLevel === nodePrivacyLevel && options.ignoreWhiteSpace === (tagName === 'head')) {
       childNodesSerializationOptions = options
     } else {
-      childNodesSerializationOptions = assign({}, options, {
+      childNodesSerializationOptions = {
+        ...options,
         parentNodePrivacyLevel: nodePrivacyLevel,
         ignoreWhiteSpace: tagName === 'head',
-      })
+      }
     }
     childNodes = serializeChildNodes(element, childNodesSerializationOptions)
   }
