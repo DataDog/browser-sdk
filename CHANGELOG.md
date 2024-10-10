@@ -18,6 +18,27 @@
 
 ---
 
+## v5.28.1
+
+**Public Changes:**
+
+- 🐛 ignore layout shifts that happen before view start ([#3058](https://github.com/DataDog/browser-sdk/pull/3058)) [RUM] [RUM-SLIM]
+- 🐛 add missing start_time field ([#3050](https://github.com/DataDog/browser-sdk/pull/3050)) [RUM] [RUM-SLIM]
+
+**Internal Changes:**
+
+- 👷🐛 fix generate-changelog script ([#3052](https://github.com/DataDog/browser-sdk/pull/3052))
+- 👷 Update Node.js to v22 ([#3049](https://github.com/DataDog/browser-sdk/pull/3049))
+- 👷 sync rum-events-format ([#3053](https://github.com/DataDog/browser-sdk/pull/3053)) [LOGS] [RUM] [RUM-SLIM] [WORKER]
+- 👷 Update all non-major dependencies ([#3046](https://github.com/DataDog/browser-sdk/pull/3046)) [RUM-REACT] [WORKER]
+- 👷 Bump staging to staging-41
+- 👷 Bump staging to staging-40
+- 👷 allow release to be merged into next major feature branch ([#3043](https://github.com/DataDog/browser-sdk/pull/3043))
+- 👷 bump e2e-bs ci job timeout to 35 minutes ([#3044](https://github.com/DataDog/browser-sdk/pull/3044))
+- 👷 Bump chrome to 129.0.6668.58-1 ([#3035](https://github.com/DataDog/browser-sdk/pull/3035))
+- 🔊 Add SDK setup telemetry ([#3045](https://github.com/DataDog/browser-sdk/pull/3045)) [LOGS] [RUM] [RUM-SLIM] [WORKER]
+- 🚨 enforce `scripts/` files conventions ([#3022](https://github.com/DataDog/browser-sdk/pull/3022))
+
 ## v5.28.0
 
 **Public Changes:**
