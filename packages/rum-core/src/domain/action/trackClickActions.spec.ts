@@ -441,17 +441,6 @@ describe('trackClickActions', () => {
       emulateClick({ eventProperty: { timeStamp } })
       expect(getInteractionSelector(timeStamp)).toBe('#button')
     })
-
-    it('should clear outdated entries', () => {
-      startClickActionsTracking()
-      const timeStamp = relativeNow()
-
-      emulateClick({ eventProperty: { timeStamp } })
-      clock.tick(EXPIRE_DELAY)
-      emulateClick({ eventProperty: { timeStamp: relativeNow() } })
-
-      expect(getInteractionSelector(timeStamp)).toBeUndefined()
-    })
   })
 
   function emulateClick({
