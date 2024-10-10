@@ -9,6 +9,7 @@ import type { RumFirstInputTiming, RumPerformanceEventTiming } from '../../../br
 import { ViewLoadingType } from '../../../rawRumEvent.types'
 import { getSelectorFromElement } from '../../getSelectorFromElement'
 import { isElementNode } from '../../../browser/htmlDomUtils'
+import { getInteractionSelector } from '../../action/interactionSelectorCache'
 import type { RumConfiguration } from '../../configuration'
 import { getInteractionCount, initInteractionCountPolyfill } from './interactionCountPolyfill'
 
@@ -66,14 +67,12 @@ export function trackInteractionToNextPaint(
     if (newInteraction && newInteraction.duration !== interactionToNextPaint) {
       interactionToNextPaint = newInteraction.duration
       interactionToNextPaintStartTime = elapsed(viewStart, newInteraction.startTime)
-
-      if (newInteraction.target && isElementNode(newInteraction.target)) {
+      interactionToNextPaintTargetSelector = getInteractionSelector(newInteraction.startTime)
+      if (!interactionToNextPaintTargetSelector && newInteraction.target && isElementNode(newInteraction.target)) {
         interactionToNextPaintTargetSelector = getSelectorFromElement(
           newInteraction.target,
           configuration.actionNameAttribute
         )
-      } else {
-        interactionToNextPaintTargetSelector = undefined
       }
     }
   }
