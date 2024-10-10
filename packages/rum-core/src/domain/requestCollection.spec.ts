@@ -1,5 +1,5 @@
 import type { Payload } from '@datadog/browser-core'
-import { isIE, RequestType } from '@datadog/browser-core'
+import { RequestType } from '@datadog/browser-core'
 import type { MockFetch, MockFetchManager, MockXhrManager } from '@datadog/browser-core/test'
 import { registerCleanupTask, SPEC_ENDPOINTS, mockFetch, mockXhr, withXhr } from '@datadog/browser-core/test'
 import { mockRumConfiguration } from '../../test'
@@ -20,9 +20,6 @@ describe('collect fetch', () => {
   let stopFetchTracking: () => void
 
   beforeEach(() => {
-    if (isIE()) {
-      pending('no fetch support')
-    }
     const configuration = mockRumConfiguration({ batchMessagesLimit: 1 })
     mockFetchManager = mockFetch()
 
@@ -186,9 +183,6 @@ describe('collect xhr', () => {
   let stopXhrTracking: () => void
 
   beforeEach(() => {
-    if (isIE()) {
-      pending('no fetch support')
-    }
     const configuration = mockRumConfiguration({ batchMessagesLimit: 1 })
     mockXhrManager = mockXhr()
     startSpy = jasmine.createSpy('requestStart')
