@@ -8,6 +8,8 @@ import { INTAKE_SITE_US1, INTAKE_SITE_FED_STAGING, PCI_INTAKE_HOST_US1 } from '.
 // replaced at build time
 declare const __BUILD_ENV__SDK_VERSION__: string
 
+const HTTPS_PREFIX = 'https://'
+
 export type TrackType = 'logs' | 'rum' | 'replay'
 export type ApiType =
   | 'xhr'
@@ -25,14 +27,15 @@ export function createEndpointBuilder(
   configurationTags: string[]
 ) {
   const buildUrlWithParameters = createEndpointUrlWithParametersBuilder(initConfiguration, trackType)
-
+  const urlPrefix = buildUrlWithParameters('')
   return {
     build(api: ApiType, payload: Payload) {
       const parameters = buildEndpointParameters(initConfiguration, trackType, configurationTags, api, payload)
       return buildUrlWithParameters(parameters)
     },
-    urlPrefix: buildUrlWithParameters(''),
+    urlPrefix,
     trackType,
+    urlPattern: urlPrefix.replace(HTTPS_PREFIX, ''),
   }
 }
 
@@ -55,7 +58,7 @@ function createEndpointUrlWithParametersBuilder(
     return (parameters) => proxy({ path, parameters })
   }
   const host = buildEndpointHost(trackType, initConfiguration)
-  return (parameters) => `https://${host}${path}?${parameters}`
+  return (parameters) => `${HTTPS_PREFIX}${host}${path}?${parameters}`
 }
 
 function buildEndpointHost(trackType: TrackType, initConfiguration: InitConfiguration & { usePciIntake?: boolean }) {
