@@ -44,7 +44,6 @@ describe('collect fetch', () => {
 
     registerCleanupTask(() => {
       stopFetchTracking()
-      mockFetchManager.reset()
     })
   })
 

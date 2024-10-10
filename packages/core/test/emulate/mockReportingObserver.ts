@@ -1,5 +1,6 @@
 import type { InterventionReport, ReportType } from '../../src/domain/report/browser.types'
 import { noop } from '../../src/tools/utils/functionUtils'
+import { registerCleanupTask } from '../registerCleanupTask'
 import { createNewEvent } from './createNewEvent'
 
 export type MockReportingObserver = ReturnType<typeof mockReportingObserver>
@@ -32,15 +33,16 @@ export function mockReportingObserver() {
     return reportingObserver
   } as unknown as typeof originalReportingObserver
 
+  registerCleanupTask(() => {
+    window.ReportingObserver = originalReportingObserver
+    callbacks = {}
+  })
+
   return {
     raiseReport(type: ReportType) {
       if (callbacks[type]) {
         callbacks[type].forEach((callback) => callback([{ ...FAKE_REPORT, type }], reportingObserver))
       }
-    },
-    reset() {
-      window.ReportingObserver = originalReportingObserver
-      callbacks = {}
     },
   }
 }
