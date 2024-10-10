@@ -18,6 +18,7 @@ module.exports = function (config) {
     },
     webpack: {
       ...karmaBaseConf.webpack,
+      optimization: { runtimeChunk: false },
       module: withIstanbulRule(karmaBaseConf.webpack.module),
     },
     sourceMapLoader: {
