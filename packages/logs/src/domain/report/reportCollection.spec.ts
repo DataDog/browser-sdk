@@ -26,7 +26,6 @@ describe('reports', () => {
   })
 
   afterEach(() => {
-    reportingObserver.reset()
     stopReportCollection()
   })
 
