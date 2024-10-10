@@ -23,10 +23,6 @@ describe('httpRequest', () => {
     request = createHttpRequest(configuration, endpointBuilder, BATCH_BYTES_LIMIT, noop)
   })
 
-  afterEach(() => {
-    interceptor.restore()
-  })
-
   describe('send', () => {
     it('should use xhr when fetch keepalive is not available', () => {
       interceptor.withRequest(false)
@@ -269,10 +265,6 @@ describe('httpRequest intake parameters', () => {
     requests = interceptor.requests
     endpointBuilder = createEndpointBuilder({ clientToken }, 'logs', [])
     request = createHttpRequest(configuration, endpointBuilder, BATCH_BYTES_LIMIT, noop)
-  })
-
-  afterEach(() => {
-    interceptor.restore()
   })
 
   it('should have a unique request id', () => {

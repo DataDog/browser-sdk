@@ -82,7 +82,6 @@ describe('logs', () => {
   afterEach(() => {
     delete window.DD_RUM
     stopSessionManager()
-    interceptor.restore()
   })
 
   describe('request', () => {

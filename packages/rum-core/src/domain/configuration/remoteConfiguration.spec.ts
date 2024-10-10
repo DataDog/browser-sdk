@@ -20,9 +20,6 @@ describe('remoteConfiguration', () => {
     displayErrorSpy = spyOn(display, 'error')
   })
 
-  afterEach(() => {
-    interceptor.restore()
-  })
   describe('fetchRemoteConfiguration', () => {
     const configuration = { remoteConfigurationId: 'xxx' } as RumInitConfiguration
     let remoteConfigurationCallback: jasmine.Spy

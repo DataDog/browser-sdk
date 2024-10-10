@@ -1,6 +1,7 @@
 import type { EndpointBuilder } from '../src'
 import { noop } from '../src'
 import { mockXhr, MockXhr } from './emulate/mockXhr'
+import { registerCleanupTask } from './registerCleanupTask'
 
 export const SPEC_ENDPOINTS = {
   logsEndpointBuilder: mockEndpointBuilder('https://logs-intake.com/v1/input/abcde?foo=bar'),
@@ -52,6 +53,22 @@ export function interceptRequests() {
     return 'fetch' in window && 'keepalive' in new window.Request('')
   }
 
+  registerCleanupTask(() => {
+    if (originalSendBeacon) {
+      navigator.sendBeacon = originalSendBeacon
+    }
+    if (originalRequest) {
+      window.Request = originalRequest
+    }
+    if (originalFetch) {
+      window.fetch = originalFetch
+    }
+    if (xhrManager) {
+      xhrManager.reset()
+    }
+    MockXhr.onSend = noop
+  })
+
   return {
     requests,
     isSendBeaconSupported,
@@ -68,21 +85,6 @@ export function interceptRequests() {
     withMockXhr(onSend: (xhr: MockXhr) => void) {
       xhrManager = mockXhr()
       MockXhr.onSend = onSend
-    },
-    restore() {
-      if (originalSendBeacon) {
-        navigator.sendBeacon = originalSendBeacon
-      }
-      if (originalRequest) {
-        window.Request = originalRequest
-      }
-      if (originalFetch) {
-        window.fetch = originalFetch
-      }
-      if (xhrManager) {
-        xhrManager.reset()
-      }
-      MockXhr.onSend = noop
     },
   }
 }
