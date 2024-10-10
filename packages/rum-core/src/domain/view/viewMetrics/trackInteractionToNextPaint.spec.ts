@@ -81,14 +81,20 @@ describe('trackInteractionToNextPaint', () => {
     setViewEnd(10 as RelativeTime)
 
     newInteraction({
+      name: 'pointerup',
       interactionId: 1,
       duration: 10 as Duration,
       startTime: -1 as RelativeTime,
+      processingStart: 0 as RelativeTime,
+      processingEnd: 6 as RelativeTime,
     })
     newInteraction({
+      name: 'pointerup',
       interactionId: 2,
       duration: 10 as Duration,
       startTime: 11 as RelativeTime,
+      processingStart: 12 as RelativeTime,
+      processingEnd: 16 as RelativeTime,
     })
     expect(getInteractionToNextPaint()).toEqual(undefined)
   })
@@ -98,29 +104,43 @@ describe('trackInteractionToNextPaint', () => {
     setViewEnd(10 as RelativeTime)
 
     newInteraction({
+      name: 'pointerup',
       interactionId: 1,
       duration: 100 as Duration,
       startTime: 1 as RelativeTime,
+      processingStart: 2 as RelativeTime,
+      processingEnd: 80 as RelativeTime,
     })
     expect(getInteractionToNextPaint()).toEqual({
       value: 100 as Duration,
       targetSelector: undefined,
       time: 1 as RelativeTime,
+      type: 'pointerup',
+      input: 1 as Duration,
+      process: 78 as Duration,
+      render: 21 as Duration,
     })
   })
 
   it('should cap INP value', () => {
     startINPTracking()
     newInteraction({
+      name: 'pointerup',
       interactionId: 1,
       duration: (MAX_INP_VALUE + 1) as Duration,
-      startTime: 1 as RelativeTime,
+      startTime: 10 as RelativeTime,
+      processingStart: 15 as RelativeTime,
+      processingEnd: 80 as RelativeTime,
     })
 
     expect(getInteractionToNextPaint()).toEqual({
       value: MAX_INP_VALUE,
       targetSelector: undefined,
-      time: 1 as RelativeTime,
+      time: 10 as RelativeTime,
+      type: 'pointerup',
+      input: 5 as Duration,
+      process: 65 as Duration,
+      render: (MAX_INP_VALUE + 10 - 80 + 1) as Duration,
     })
   })
 
@@ -130,13 +150,20 @@ describe('trackInteractionToNextPaint', () => {
       newInteraction({
         duration: index as Duration,
         interactionId: index,
-        startTime: index as RelativeTime,
+        startTime: 1 as RelativeTime,
+        name: 'pointerup',
+        processingStart: 1 as RelativeTime,
+        processingEnd: index as RelativeTime,
       })
     }
     expect(getInteractionToNextPaint()).toEqual({
       value: 98 as Duration,
       targetSelector: undefined,
-      time: 98 as RelativeTime,
+      time: 1 as RelativeTime,
+      type: 'pointerup',
+      input: 0 as RelativeTime,
+      process: 97 as RelativeTime,
+      render: 1 as RelativeTime,
     })
   })
 
@@ -152,11 +179,18 @@ describe('trackInteractionToNextPaint', () => {
       interactionId: 1,
       entryType: RumPerformanceEntryType.FIRST_INPUT,
       startTime: 1 as RelativeTime,
+      name: 'pointerup',
+      processingStart: 1 as RelativeTime,
+      processingEnd: 5 as RelativeTime,
     })
     expect(getInteractionToNextPaint()).toEqual({
       value: 40 as Duration,
       targetSelector: undefined,
       time: 1 as RelativeTime,
+      type: 'pointerup',
+      input: 0 as RelativeTime,
+      process: 4 as RelativeTime,
+      render: 36 as RelativeTime,
     })
   })
 
@@ -166,14 +200,21 @@ describe('trackInteractionToNextPaint', () => {
       newInteraction({
         duration: index as Duration,
         interactionId: 1,
-        startTime: index as RelativeTime,
+        startTime: 1 as RelativeTime,
+        name: 'pointerup',
+        processingStart: 1 as RelativeTime,
+        processingEnd: index as RelativeTime,
       })
     }
     // the p98 return 100 which shows that the entry has been updated
     expect(getInteractionToNextPaint()).toEqual({
       value: 100 as Duration,
       targetSelector: undefined,
-      time: 100 as RelativeTime,
+      time: 1 as RelativeTime,
+      type: 'pointerup',
+      input: 0 as Duration,
+      process: 99 as Duration,
+      render: 1 as Duration,
     })
   })
 
