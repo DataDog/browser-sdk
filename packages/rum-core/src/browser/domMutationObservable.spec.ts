@@ -109,7 +109,6 @@ describe('domMutationObservable', () => {
       zoneJs = mockZoneJs()
 
       registerCleanupTask(() => {
-        zoneJs.restore()
         window.MutationObserver = OriginalMutationObserverConstructor
       })
     })
