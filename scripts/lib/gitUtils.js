@@ -3,7 +3,7 @@ const fs = require('fs')
 
 const { command } = require('../lib/command')
 const { getGithubDeployKey, getGithubAccessToken } = require('./secrets')
-const { fetchHandlingError } = require('./execution-utils')
+const { fetchHandlingError } = require('./executionUtils')
 
 const GITHUB_TOKEN = getGithubAccessToken()
 

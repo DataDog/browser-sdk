@@ -1,8 +1,14 @@
 import type { RelativeTime } from '@datadog/browser-core'
 import { registerCleanupTask } from '@datadog/browser-core/test'
 import { resetExperimentalFeatures, elapsed, ONE_SECOND } from '@datadog/browser-core'
-import { appendElement, appendText, createPerformanceEntry, mockRumConfiguration } from '../../../../test'
-import { LifeCycle, LifeCycleEventType } from '../../lifeCycle'
+import {
+  appendElement,
+  appendText,
+  createPerformanceEntry,
+  mockPerformanceObserver,
+  mockRumConfiguration,
+} from '../../../../test'
+import type { RumPerformanceEntry } from '../../../browser/performanceObservable'
 import { RumPerformanceEntryType } from '../../../browser/performanceObservable'
 import type { CumulativeLayoutShift } from './trackCumulativeLayoutShift'
 import { isLayoutShiftSupported, MAX_WINDOW_DURATION, trackCumulativeLayoutShift } from './trackCumulativeLayoutShift'
@@ -13,26 +19,26 @@ interface StartCLSTrackingArgs {
 }
 
 describe('trackCumulativeLayoutShift', () => {
-  const lifeCycle = new LifeCycle()
   let originalSupportedEntryTypes: PropertyDescriptor | undefined
   let clsCallback: jasmine.Spy<(csl: CumulativeLayoutShift) => void>
+  let notifyPerformanceEntries: (entries: RumPerformanceEntry[]) => void
 
-  function startCLSTracking(
-    { viewStart, isLayoutShiftSupported }: StartCLSTrackingArgs = {
-      viewStart: 0 as RelativeTime,
-      isLayoutShiftSupported: true,
-    }
-  ) {
+  function startCLSTracking({
+    viewStart = 0 as RelativeTime,
+    isLayoutShiftSupported = true,
+  }: Partial<StartCLSTrackingArgs> = {}) {
+    ;({ notifyPerformanceEntries } = mockPerformanceObserver())
+
     clsCallback = jasmine.createSpy()
     originalSupportedEntryTypes = Object.getOwnPropertyDescriptor(PerformanceObserver, 'supportedEntryTypes')
     Object.defineProperty(PerformanceObserver, 'supportedEntryTypes', {
       get: () => (isLayoutShiftSupported ? ['layout-shift'] : []),
     })
 
-    const clsTrackingesult = trackCumulativeLayoutShift(mockRumConfiguration(), lifeCycle, viewStart, clsCallback)
+    const clsTrackingResult = trackCumulativeLayoutShift(mockRumConfiguration(), viewStart, clsCallback)
 
     registerCleanupTask(() => {
-      clsTrackingesult.stop()
+      clsTrackingResult.stop()
       if (originalSupportedEntryTypes) {
         Object.defineProperty(PerformanceObserver, 'supportedEntryTypes', originalSupportedEntryTypes)
       }
@@ -58,11 +64,11 @@ describe('trackCumulativeLayoutShift', () => {
 
   it('should accumulate layout shift values for the first session window', () => {
     startCLSTracking()
-    lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [
+    notifyPerformanceEntries([
       createPerformanceEntry(RumPerformanceEntryType.LAYOUT_SHIFT, { value: 0.1, startTime: 1 as RelativeTime }),
     ])
 
-    lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [
+    notifyPerformanceEntries([
       createPerformanceEntry(RumPerformanceEntryType.LAYOUT_SHIFT, { value: 0.2, startTime: 2 as RelativeTime }),
     ])
 
@@ -74,15 +80,23 @@ describe('trackCumulativeLayoutShift', () => {
     })
   })
 
-  it('should round the cumulative layout shift value to 4 decimals', () => {
-    startCLSTracking()
-    lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [
-      createPerformanceEntry(RumPerformanceEntryType.LAYOUT_SHIFT, { value: 1.23456789 }),
+  it('should ignore layout shifts that happen before the view start', () => {
+    startCLSTracking({ viewStart: 100 as RelativeTime })
+    notifyPerformanceEntries([
+      createPerformanceEntry(RumPerformanceEntryType.LAYOUT_SHIFT, { value: 0.1, startTime: 1 as RelativeTime }),
     ])
 
-    lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [
-      createPerformanceEntry(RumPerformanceEntryType.LAYOUT_SHIFT, { value: 1.11111111111 }),
-    ])
+    expect(clsCallback).toHaveBeenCalledTimes(1)
+    expect(clsCallback.calls.mostRecent().args[0]).toEqual({
+      value: 0,
+    })
+  })
+
+  it('should round the cumulative layout shift value to 4 decimals', () => {
+    startCLSTracking()
+    notifyPerformanceEntries([createPerformanceEntry(RumPerformanceEntryType.LAYOUT_SHIFT, { value: 1.23456789 })])
+
+    notifyPerformanceEntries([createPerformanceEntry(RumPerformanceEntryType.LAYOUT_SHIFT, { value: 1.11111111111 })])
 
     expect(clsCallback).toHaveBeenCalledTimes(3)
     expect(clsCallback.calls.mostRecent().args[0].value).toEqual(2.3457)
@@ -90,7 +104,7 @@ describe('trackCumulativeLayoutShift', () => {
 
   it('should ignore entries with recent input', () => {
     startCLSTracking()
-    lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [
+    notifyPerformanceEntries([
       createPerformanceEntry(RumPerformanceEntryType.LAYOUT_SHIFT, {
         value: 0.1,
         hadRecentInput: true,
@@ -106,14 +120,14 @@ describe('trackCumulativeLayoutShift', () => {
   it('should create a new session window if the gap is more than 1 second', () => {
     startCLSTracking()
     // first session window
-    lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [
+    notifyPerformanceEntries([
       createPerformanceEntry(RumPerformanceEntryType.LAYOUT_SHIFT, { value: 0.1, startTime: 0 as RelativeTime }),
     ])
-    lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [
+    notifyPerformanceEntries([
       createPerformanceEntry(RumPerformanceEntryType.LAYOUT_SHIFT, { value: 0.2, startTime: 1 as RelativeTime }),
     ])
     // second session window
-    lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [
+    notifyPerformanceEntries([
       createPerformanceEntry(RumPerformanceEntryType.LAYOUT_SHIFT, {
         value: 0.1,
         startTime: (1 + ONE_SECOND) as RelativeTime,
@@ -131,7 +145,7 @@ describe('trackCumulativeLayoutShift', () => {
   it('should create a new session window if the current session window is more than 5 second', () => {
     startCLSTracking()
     for (let i = 1; i <= 7; i++) {
-      lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [
+      notifyPerformanceEntries([
         createPerformanceEntry(RumPerformanceEntryType.LAYOUT_SHIFT, {
           value: 0.1,
           startTime: (i * 999) as RelativeTime,
@@ -150,27 +164,27 @@ describe('trackCumulativeLayoutShift', () => {
   it('should get the max value sessions', () => {
     startCLSTracking()
     // first session window: { value: 0.3, time: 1 }
-    lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [
+    notifyPerformanceEntries([
       createPerformanceEntry(RumPerformanceEntryType.LAYOUT_SHIFT, { value: 0.1, startTime: 0 as RelativeTime }),
     ])
-    lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [
+    notifyPerformanceEntries([
       createPerformanceEntry(RumPerformanceEntryType.LAYOUT_SHIFT, { value: 0.2, startTime: 1 as RelativeTime }),
     ])
 
     // second session window: { value: 0.5, time: 5002 }
-    lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [
+    notifyPerformanceEntries([
       createPerformanceEntry(RumPerformanceEntryType.LAYOUT_SHIFT, {
         value: 0.1,
         startTime: (MAX_WINDOW_DURATION + 1) as RelativeTime,
       }),
     ])
-    lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [
+    notifyPerformanceEntries([
       createPerformanceEntry(RumPerformanceEntryType.LAYOUT_SHIFT, {
         value: 0.2,
         startTime: (MAX_WINDOW_DURATION + 2) as RelativeTime,
       }),
     ])
-    lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [
+    notifyPerformanceEntries([
       createPerformanceEntry(RumPerformanceEntryType.LAYOUT_SHIFT, {
         value: 0.2,
         startTime: (MAX_WINDOW_DURATION + 3) as RelativeTime,
@@ -178,13 +192,13 @@ describe('trackCumulativeLayoutShift', () => {
     ])
 
     // third session window: { value: 0.4, time: 10003 }
-    lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [
+    notifyPerformanceEntries([
       createPerformanceEntry(RumPerformanceEntryType.LAYOUT_SHIFT, {
         value: 0.2,
         startTime: (2 * MAX_WINDOW_DURATION + 3) as RelativeTime,
       }),
     ])
-    lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [
+    notifyPerformanceEntries([
       createPerformanceEntry(RumPerformanceEntryType.LAYOUT_SHIFT, {
         value: 0.2,
         startTime: (2 * MAX_WINDOW_DURATION + 4) as RelativeTime,
@@ -204,7 +218,7 @@ describe('trackCumulativeLayoutShift', () => {
     startCLSTracking({ viewStart, isLayoutShiftSupported: true })
 
     const shiftStart = 110 as RelativeTime
-    lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [
+    notifyPerformanceEntries([
       createPerformanceEntry(RumPerformanceEntryType.LAYOUT_SHIFT, { value: 0.1, startTime: shiftStart }),
     ])
 
@@ -221,7 +235,7 @@ describe('trackCumulativeLayoutShift', () => {
       const textNode = appendText('text')
       const divElement = appendElement('<div id="div-element"></div>')
 
-      lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [
+      notifyPerformanceEntries([
         createPerformanceEntry(RumPerformanceEntryType.LAYOUT_SHIFT, {
           sources: [{ node: textNode }, { node: divElement }, { node: textNode }],
         }),
@@ -234,7 +248,7 @@ describe('trackCumulativeLayoutShift', () => {
     it('should not return the target element when the element is detached from the DOM before the performance entry event is triggered', () => {
       startCLSTracking()
       // first session window
-      lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [
+      notifyPerformanceEntries([
         createPerformanceEntry(RumPerformanceEntryType.LAYOUT_SHIFT, {
           value: 0.2,
           startTime: 0 as RelativeTime,
@@ -247,7 +261,7 @@ describe('trackCumulativeLayoutShift', () => {
       const divElement = appendElement('<div id="div-element"></div>')
       divElement.remove()
 
-      lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [
+      notifyPerformanceEntries([
         createPerformanceEntry(RumPerformanceEntryType.LAYOUT_SHIFT, {
           value: 0.2,
           startTime: 1001 as RelativeTime,
@@ -264,28 +278,28 @@ describe('trackCumulativeLayoutShift', () => {
       const divElement = appendElement('<div id="div-element"></div>')
 
       // first session window:  { value: 0.5, time: 1, targetSelector: '#div-element' }
-      lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [
+      notifyPerformanceEntries([
         createPerformanceEntry(RumPerformanceEntryType.LAYOUT_SHIFT, { value: 0.1, startTime: 0 as RelativeTime }),
       ])
-      lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [
+      notifyPerformanceEntries([
         createPerformanceEntry(RumPerformanceEntryType.LAYOUT_SHIFT, {
           value: 0.2,
           startTime: 1 as RelativeTime,
           sources: [{ node: divElement }],
         }),
       ])
-      lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [
+      notifyPerformanceEntries([
         createPerformanceEntry(RumPerformanceEntryType.LAYOUT_SHIFT, { value: 0.2, startTime: 2 as RelativeTime }),
       ])
 
       // second session window:  { value: 0.4, time: 5002, targetSelector: undefined }
-      lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [
+      notifyPerformanceEntries([
         createPerformanceEntry(RumPerformanceEntryType.LAYOUT_SHIFT, {
           value: 0.2,
           startTime: (MAX_WINDOW_DURATION + 2) as RelativeTime,
         }),
       ])
-      lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [
+      notifyPerformanceEntries([
         createPerformanceEntry(RumPerformanceEntryType.LAYOUT_SHIFT, {
           value: 0.2,
           startTime: (MAX_WINDOW_DURATION + 3) as RelativeTime,

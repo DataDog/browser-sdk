@@ -24,6 +24,7 @@ export function startLongAnimationFrameCollection(lifeCycle: LifeCycle, configur
           first_ui_event_timestamp: toServerDuration(entry.firstUIEventTimestamp),
           render_start: toServerDuration(entry.renderStart),
           style_and_layout_start: toServerDuration(entry.styleAndLayoutStart),
+          start_time: toServerDuration(entry.startTime),
           scripts: entry.scripts.map((script) => ({
             duration: toServerDuration(script.duration),
             pause_duration: toServerDuration(script.pauseDuration),

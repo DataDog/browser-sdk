@@ -1,22 +1,22 @@
 {
   "name": "@datadog/browser-logs",
-  "version": "5.27.0",
+  "version": "5.28.1",
   "license": "Apache-2.0",
   "main": "cjs/entries/main.js",
   "module": "esm/entries/main.js",
   "types": "cjs/entries/main.d.ts",
   "scripts": {
     "build": "run-p build:cjs build:esm build:bundle",
-    "build:bundle": "rm -rf bundle && webpack --mode=production",
+    "build:bundle": "rm -rf bundle && SDK_SETUP=cdn webpack --mode=production",
     "build:cjs": "rm -rf cjs && tsc -p tsconfig.cjs.json && yarn replace-build-env cjs",
     "build:esm": "rm -rf esm && tsc -p tsconfig.esm.json && yarn replace-build-env esm",
     "replace-build-env": "node ../../scripts/build/replace-build-env.js"
   },
   "dependencies": {
-    "@datadog/browser-core": "5.27.0"
+    "@datadog/browser-core": "5.28.1"
   },
   "peerDependencies": {
-    "@datadog/browser-rum": "5.27.0"
+    "@datadog/browser-rum": "5.28.1"
   },
   "peerDependenciesMeta": {
     "@datadog/browser-rum": {

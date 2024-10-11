@@ -14,9 +14,9 @@
 // after killing it. There might be a better way of prematurely aborting the test command if we need
 // to in the future.
 
-const { spawnCommand, printLog, runMain, timeout } = require('../lib/execution-utils')
+const { spawnCommand, printLog, runMain, timeout } = require('../lib/executionUtils')
 const { command } = require('../lib/command')
-const { browserStackRequest } = require('../lib/bs-utils')
+const { browserStackRequest } = require('../lib/bsUtils')
 
 const AVAILABILITY_CHECK_DELAY = 30_000
 const BS_BUILD_URL = 'https://api.browserstack.com/automate/builds.json?status=running'

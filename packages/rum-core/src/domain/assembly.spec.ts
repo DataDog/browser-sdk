@@ -197,7 +197,6 @@ describe('rum assembly', () => {
         })
 
         it('should accept modification on context field for view events', () => {
-          mockExperimentalFeatures([ExperimentalFeature.VIEW_SPECIFIC_CONTEXT])
           const { lifeCycle, serverRumEvents } = setupAssemblyTestWithDefaults({
             partialConfiguration: {
               beforeSend: (event) => {
@@ -211,22 +210,6 @@ describe('rum assembly', () => {
           })
 
           expect(serverRumEvents[0].context).toEqual({ foo: 'bar' })
-        })
-
-        it('should reject modification on context field for view events', () => {
-          const { lifeCycle, serverRumEvents } = setupAssemblyTestWithDefaults({
-            partialConfiguration: {
-              beforeSend: (event) => {
-                event.context.foo = 'bar'
-              },
-            },
-          })
-
-          notifyRawRumEvent(lifeCycle, {
-            rawRumEvent: createRawRumEvent(RumEventType.VIEW),
-          })
-
-          expect(serverRumEvents[0].context).toBeUndefined()
         })
 
         it('should reject replacing the context field to non-object', () => {
