@@ -49,6 +49,10 @@ describe('check user function', () => {
 describe('check anonymous id storage functions', () => {
   const sessionStoreStrategyType = 'Cookie'
 
+  beforeAll(() => {
+    mockCookie()
+  })
+
   it('should generate a random anonymous id', () => {
     const id = generateAnonymousId()
     expect(id).toMatch(/^[a-z0-9]+$/)
@@ -56,20 +60,18 @@ describe('check anonymous id storage functions', () => {
 
   it('should set and get an anonymous id from cookie', () => {
     const anonymousId = 'abc'
-    mockCookie()
     setAnonymousIdInStorage(sessionStoreStrategyType, anonymousId)
     expect(getAnonymousIdFromStorage()).toBe(anonymousId)
   })
 
   it('should set and get an anonymous id from local storage', () => {
     const anonymousId = 'abc'
-    localStorage.setItem('aid', anonymousId)
     setAnonymousIdInStorage('LocalStorage', anonymousId)
     expect(getAnonymousIdFromStorage()).toBe(anonymousId)
   })
 
   it('should generate and set an anonymous id if none is found', () => {
     retrieveAnonymousId(sessionStoreStrategyType)
-    expect(getAnonymousIdFromStorage()).not.toBeUndefined()
+    expect(getAnonymousIdFromStorage()).toBeDefined()
   })
 })
