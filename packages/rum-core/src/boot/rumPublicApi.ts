@@ -388,17 +388,7 @@ export function makeRumPublicApi(
           strategy.updateViewName(name)
         })
       }
-      if (isExperimentalFeatureEnabled(ExperimentalFeature.ANONYMOUS_USER_TRACKING)) {
-        /**
-         * Set the anonymous user id to all events, stored in `@usr.anonymous_id`
-         *
-         * Enable anonymous user tracking feature flag
-         * TODO next major release: include this feature by default
-         */
-        const { type } = configuration.sessionStoreStrategyType ?? { type: 'LocalStorage' }
-        const anonymousId = retrieveAnonymousId(type)
-        userContextManager.setContextProperty('anonymous_id', anonymousId)
-      }
+
       if (isExperimentalFeatureEnabled(ExperimentalFeature.VIEW_SPECIFIC_CONTEXT)) {
         /**
          * Set View Context.
