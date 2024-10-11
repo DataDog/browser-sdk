@@ -35,21 +35,21 @@ export function checkUser(newUser: User): boolean {
 }
 
 export function getAnonymousIdFromStorage(): string | undefined {
-  let matches = /device=([\w-]+)/.exec(document.cookie)
+  let matches = /aid=([\w-]+)/.exec(document.cookie)
   if (matches) {
     return matches[1]
   }
 
-  matches = /device=(\w+)/.exec(localStorage.getItem(SESSION_STORE_KEY) ?? '')
+  matches = /aid=(\w+)/.exec(localStorage.getItem(SESSION_STORE_KEY) ?? '')
   if (matches) {
     return matches[1]
   }
 }
 
-export function setAnonymousIdInStorage(sessionStoreStrategyType: string, device: string) {
+export function setAnonymousIdInStorage(sessionStoreStrategyType: string, anonymousId: string) {
   let sessionString =
     sessionStoreStrategyType === 'Cookie' ? getCookie(SESSION_STORE_KEY) : localStorage.getItem(SESSION_STORE_KEY)
-  sessionString = isValidSessionString(sessionString) ? `${sessionString}&device=${device}` : `device=${device}`
+  sessionString = isValidSessionString(sessionString) ? `${sessionString}&aid=${anonymousId}` : `aid=${anonymousId}`
 
   if (sessionStoreStrategyType === 'Cookie') {
     setCookie(SESSION_STORE_KEY, sessionString)

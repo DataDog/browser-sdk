@@ -31,9 +31,9 @@ export function initLocalStorageStrategy(): SessionStoreStrategy {
 }
 
 function persistInLocalStorage(sessionState: SessionState) {
-  if (!sessionState.device && isExperimentalFeatureEnabled(ExperimentalFeature.ANONYMOUS_USER_TRACKING)) {
-    sessionState.device = generateAnonymousId()
-    setAnonymousIdInStorage('LocalStorage', sessionState.device)
+  if (!sessionState.anonymousId && isExperimentalFeatureEnabled(ExperimentalFeature.ANONYMOUS_USER_TRACKING)) {
+    sessionState.anonymousId = generateAnonymousId()
+    setAnonymousIdInStorage('LocalStorage', sessionState.anonymousId)
   }
   localStorage.setItem(SESSION_STORE_KEY, toSessionString(sessionState))
 }
@@ -41,13 +41,13 @@ function persistInLocalStorage(sessionState: SessionState) {
 function retrieveSessionFromLocalStorage(): SessionState {
   const sessionString = localStorage.getItem(SESSION_STORE_KEY)
   const sessionState = toSessionState(sessionString)
-  let device = sessionState.device
+  let anonymousId = sessionState.anonymousId
 
-  if (isExperimentalFeatureEnabled(ExperimentalFeature.ANONYMOUS_USER_TRACKING) && !device) {
+  if (isExperimentalFeatureEnabled(ExperimentalFeature.ANONYMOUS_USER_TRACKING) && !anonymousId) {
     // init device id if it does not exist or if session cookie does not exist
-    device = generateAnonymousId()
-    setAnonymousIdInStorage('LocalStorage', device)
-    sessionState.device = device
+    anonymousId = generateAnonymousId()
+    setAnonymousIdInStorage('LocalStorage', anonymousId)
+    sessionState.anonymousId = anonymousId
   }
   return sessionState
 }

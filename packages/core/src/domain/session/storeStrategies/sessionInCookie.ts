@@ -35,10 +35,10 @@ export function initCookieStrategy(cookieOptions: CookieOptions): SessionStoreSt
 
 function persistSessionCookie(options: CookieOptions) {
   return (session: SessionState) => {
-    if (!session.device && isExperimentalFeatureEnabled(ExperimentalFeature.ANONYMOUS_USER_TRACKING)) {
-      // if there is no device id, generate one and store it in the cookie
-      session.device = generateAnonymousId()
-      setAnonymousIdInStorage('Cookie', session.device)
+    if (!session.anonymousId && isExperimentalFeatureEnabled(ExperimentalFeature.ANONYMOUS_USER_TRACKING)) {
+      // if there is no anonymous id, generate one and store it in the cookie
+      session.anonymousId = generateAnonymousId()
+      setAnonymousIdInStorage('Cookie', session.anonymousId)
     }
     setCookie(SESSION_STORE_KEY, toSessionString(session), SESSION_EXPIRATION_DELAY, options)
   }
@@ -52,13 +52,13 @@ function expireSessionCookie(options: CookieOptions) {
 function retrieveSessionCookie(): SessionState {
   const sessionString = getCookie(SESSION_STORE_KEY)
   const sessionState = toSessionState(sessionString)
-  let device = sessionState.device
+  let anonymousId = sessionState.anonymousId
 
-  if (isExperimentalFeatureEnabled(ExperimentalFeature.ANONYMOUS_USER_TRACKING) && !device) {
-    // init device id if it does not exist or if session cookie does not exist
-    device = generateAnonymousId()
-    setAnonymousIdInStorage('Cookie', device)
-    sessionState.device = device
+  if (isExperimentalFeatureEnabled(ExperimentalFeature.ANONYMOUS_USER_TRACKING) && !anonymousId) {
+    // init anonymous id if it does not exist or if session cookie does not exist
+    anonymousId = generateAnonymousId()
+    setAnonymousIdInStorage('Cookie', anonymousId)
+    sessionState.anonymousId = anonymousId
   }
 
   return sessionState

@@ -39,8 +39,8 @@ describe('session in local storage strategy', () => {
     localStorageStrategy.persistSession(sessionState)
     localStorageStrategy.expireSession()
     const session = localStorageStrategy?.retrieveSession()
-    expect(session).toEqual({ isExpired: '1', device: '2gosa7pa2gw' })
-    expect(window.localStorage.getItem(SESSION_STORE_KEY)).toBe('isExpired=1&device=2gosa7pa2gw')
+    expect(session).toEqual({ isExpired: '1', anonymousId: '2gosa7pa2gw' })
+    expect(window.localStorage.getItem(SESSION_STORE_KEY)).toBe('isExpired=1&aid=2gosa7pa2gw')
   })
 
   it('should not interfere with other keys present in local storage', () => {
@@ -52,10 +52,10 @@ describe('session in local storage strategy', () => {
     expect(window.localStorage.getItem('test')).toEqual('hello')
   })
 
-  it('should return a device id even if session string is invalid', () => {
+  it('should return a anonymous id even if session string is invalid', () => {
     const localStorageStrategy = initLocalStorageStrategy()
     localStorage.setItem(SESSION_STORE_KEY, '{test:42}')
     const session = localStorageStrategy?.retrieveSession()
-    expect(session).toEqual({ device: '2gosa7pa2gw' })
+    expect(session).toEqual({ anonymousId: '2gosa7pa2gw' })
   })
 })

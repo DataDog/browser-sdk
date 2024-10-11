@@ -4,6 +4,7 @@ import {
   checkUser,
   generateAnonymousId,
   getAnonymousIdFromStorage,
+  retrieveAnonymousId,
   sanitizeUser,
   setAnonymousIdInStorage,
 } from './user'
@@ -54,18 +55,21 @@ describe('check anonymous id storage functions', () => {
   })
 
   it('should set and get an anonymous id from cookie', () => {
-    const device = 'abc'
+    const anonymousId = 'abc'
     mockCookie()
-    setAnonymousIdInStorage(sessionStoreStrategyType, device)
-
-    expect(getAnonymousIdFromStorage()).toBe(device)
+    setAnonymousIdInStorage(sessionStoreStrategyType, anonymousId)
+    expect(getAnonymousIdFromStorage()).toBe(anonymousId)
   })
 
   it('should set and get an anonymous id from local storage', () => {
-    const device = 'abc'
-    localStorage.setItem('device', device)
-    setAnonymousIdInStorage('LocalStorage', device)
+    const anonymousId = 'abc'
+    localStorage.setItem('aid', anonymousId)
+    setAnonymousIdInStorage('LocalStorage', anonymousId)
+    expect(getAnonymousIdFromStorage()).toBe(anonymousId)
+  })
 
-    expect(getAnonymousIdFromStorage()).toBe(device)
+  it('should generate and set an anonymous id if none is found', () => {
+    retrieveAnonymousId(sessionStoreStrategyType)
+    expect(getAnonymousIdFromStorage()).not.toBeUndefined()
   })
 })

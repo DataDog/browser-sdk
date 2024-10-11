@@ -22,7 +22,7 @@ export function getExpiredSessionState(): SessionState {
   }
   if (isExperimentalFeatureEnabled(ExperimentalFeature.ANONYMOUS_USER_TRACKING)) {
     // persist the anonymous id in the expired session state
-    expiredSessionState.device = getAnonymousIdFromStorage()
+    expiredSessionState.anonymousId = getAnonymousIdFromStorage()
   }
   return expiredSessionState
 }
@@ -54,9 +54,12 @@ export function expandSessionState(session: SessionState) {
 }
 
 export function toSessionString(session: SessionState) {
-  return objectEntries(session)
-    .map(([key, value]) => `${key}=${value}`)
-    .join(SESSION_ENTRY_SEPARATOR)
+  return (
+    objectEntries(session)
+      // we use `aid` as a key for anonymousId
+      .map(([key, value]) => (key === 'anonymousId' ? `aid=${value}` : `${key}=${value}`))
+      .join(SESSION_ENTRY_SEPARATOR)
+  )
 }
 
 export function toSessionState(sessionString: string | undefined | null) {
@@ -66,7 +69,12 @@ export function toSessionState(sessionString: string | undefined | null) {
       const matches = SESSION_ENTRY_REGEXP.exec(entry)
       if (matches !== null) {
         const [, key, value] = matches
-        session[key] = value
+        if (key === 'aid') {
+          // we use `aid` as a key for anonymousId
+          session.anonymousId = value
+        } else {
+          session[key] = value
+        }
       }
     })
   }
