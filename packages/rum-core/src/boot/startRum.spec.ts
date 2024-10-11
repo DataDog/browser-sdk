@@ -332,7 +332,6 @@ describe('view events', () => {
     registerCleanupTask(() => {
       stop()
       stopSessionManager()
-      interceptor.restore()
       clock.cleanup()
     })
   })

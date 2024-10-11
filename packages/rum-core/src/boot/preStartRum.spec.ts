@@ -462,10 +462,6 @@ describe('preStartRum', () => {
         interceptor = interceptRequests()
       })
 
-      afterEach(() => {
-        interceptor.restore()
-      })
-
       describe('when remote_configuration ff is enabled', () => {
         it('should start with the remote configuration when a remoteConfigurationId is provided', (done) => {
           mockExperimentalFeatures([ExperimentalFeature.REMOTE_CONFIGURATION])
@@ -612,7 +608,6 @@ describe('preStartRum', () => {
 
     afterEach(() => {
       cleanupSyntheticsWorkerValues()
-      interceptor.restore()
       resetExperimentalFeatures()
     })
 
