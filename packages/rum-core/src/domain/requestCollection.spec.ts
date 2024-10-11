@@ -181,7 +181,6 @@ describe('collect fetch', () => {
 describe('collect xhr', () => {
   let startSpy: jasmine.Spy<(requestStartEvent: RequestStartEvent) => void>
   let completeSpy: jasmine.Spy<(requestCompleteEvent: RequestCompleteEvent) => void>
-  let mockXhrManager: MockXhrManager
   let stopXhrTracking: () => void
 
   beforeEach(() => {
@@ -189,7 +188,7 @@ describe('collect xhr', () => {
       pending('no fetch support')
     }
     const configuration = mockRumConfiguration({ batchMessagesLimit: 1 })
-    mockXhrManager = mockXhr()
+    mockXhr()
     startSpy = jasmine.createSpy('requestStart')
     completeSpy = jasmine.createSpy('requestComplete')
     const lifeCycle = new LifeCycle()
@@ -206,7 +205,6 @@ describe('collect xhr', () => {
 
     registerCleanupTask(() => {
       stopXhrTracking()
-      mockXhrManager.reset()
     })
   })
 
