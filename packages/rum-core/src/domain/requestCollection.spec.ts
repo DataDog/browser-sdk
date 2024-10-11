@@ -1,6 +1,6 @@
 import type { Payload } from '@datadog/browser-core'
 import { isIE, RequestType } from '@datadog/browser-core'
-import type { MockFetch, MockFetchManager, MockXhrManager } from '@datadog/browser-core/test'
+import type { MockFetch, MockFetchManager } from '@datadog/browser-core/test'
 import { registerCleanupTask, SPEC_ENDPOINTS, mockFetch, mockXhr, withXhr } from '@datadog/browser-core/test'
 import { mockRumConfiguration } from '../../test'
 import { LifeCycle, LifeCycleEventType } from './lifeCycle'

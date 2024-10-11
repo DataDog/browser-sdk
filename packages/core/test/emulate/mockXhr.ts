@@ -2,8 +2,6 @@ import { isServerError, noop } from '../../src'
 import { registerCleanupTask } from '../registerCleanupTask'
 import { createNewEvent } from './createNewEvent'
 
-export type MockXhrManager = ReturnType<typeof mockXhr>
-
 export function mockXhr() {
   const originalXhr = XMLHttpRequest
 

@@ -1,6 +1,6 @@
 import type { TelemetryEvent } from '@datadog/browser-core'
 import { startTelemetry, TelemetryService } from '@datadog/browser-core'
-import { mockSyntheticsWorkerValues, cleanupSyntheticsWorkerValues } from '@datadog/browser-core/test'
+import { mockSyntheticsWorkerValues } from '@datadog/browser-core/test'
 import { validateAndBuildLogsConfiguration } from '../configuration'
 import { resetRUMInternalContext, getRUMInternalContext } from './rumInternalContext'
 
@@ -40,10 +40,6 @@ describe('getRUMInternalContext', () => {
       )
       telemetrySpy = jasmine.createSpy()
       telemetry.observable.subscribe(telemetrySpy)
-    })
-
-    afterEach(() => {
-      cleanupSyntheticsWorkerValues()
     })
 
     it('uses the global variable created when the synthetics worker is injecting RUM', () => {
