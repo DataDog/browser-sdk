@@ -58,7 +58,7 @@
     "eslint-plugin-jsdoc": "50.3.1",
     "eslint-plugin-local-rules": "3.0.2",
     "eslint-plugin-prefer-arrow": "1.2.3",
-    "eslint-plugin-unicorn": "55.0.0",
+    "eslint-plugin-unicorn": "56.0.0",
     "express": "4.21.0",
     "glob": "11.0.0",
     "html-webpack-plugin": "5.6.0",
