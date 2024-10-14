@@ -9,12 +9,7 @@ import {
   timeStampToClocks,
 } from '@datadog/browser-core'
 import type { Clock } from '@datadog/browser-core/test'
-import {
-  cleanupSyntheticsWorkerValues,
-  mockClock,
-  mockExperimentalFeatures,
-  registerCleanupTask,
-} from '@datadog/browser-core/test'
+import { mockClock, mockExperimentalFeatures, registerCleanupTask } from '@datadog/browser-core/test'
 import { noopRecorderApi } from '../../test'
 import { ActionType, VitalType } from '../rawRumEvent.types'
 import type { DurationVitalReference } from '../domain/vital/vitalCollection'
@@ -50,7 +45,6 @@ describe('rum public api', () => {
 
     beforeEach(() => {
       startRumSpy = jasmine.createSpy().and.callFake(noopStartRum)
-      registerCleanupTask(cleanupSyntheticsWorkerValues)
     })
 
     describe('deflate worker', () => {
