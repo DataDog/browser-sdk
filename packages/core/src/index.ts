@@ -108,6 +108,7 @@ export {
 export { createPageExitObservable, PageExitEvent, PageExitReason, isPageExitReason } from './browser/pageExitObservable'
 export * from './browser/addEventListener'
 export { requestIdleCallback } from './tools/requestIdleCallback'
+export * from './tools/taskQueue'
 export * from './tools/timer'
 export { initConsoleObservable, resetConsoleObservable, ConsoleLog } from './domain/console/consoleObservable'
 export { createBoundedBuffer, BoundedBuffer } from './tools/boundedBuffer'
