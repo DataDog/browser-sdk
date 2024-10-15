@@ -1,6 +1,6 @@
 import type { Payload } from '@datadog/browser-core'
 import { RequestType } from '@datadog/browser-core'
-import type { MockFetch, MockFetchManager, MockXhrManager } from '@datadog/browser-core/test'
+import type { MockFetch, MockFetchManager } from '@datadog/browser-core/test'
 import { registerCleanupTask, SPEC_ENDPOINTS, mockFetch, mockXhr, withXhr } from '@datadog/browser-core/test'
 import { mockRumConfiguration } from '../../test'
 import { LifeCycle, LifeCycleEventType } from './lifeCycle'
@@ -178,12 +178,11 @@ describe('collect fetch', () => {
 describe('collect xhr', () => {
   let startSpy: jasmine.Spy<(requestStartEvent: RequestStartEvent) => void>
   let completeSpy: jasmine.Spy<(requestCompleteEvent: RequestCompleteEvent) => void>
-  let mockXhrManager: MockXhrManager
   let stopXhrTracking: () => void
 
   beforeEach(() => {
     const configuration = mockRumConfiguration({ batchMessagesLimit: 1 })
-    mockXhrManager = mockXhr()
+    mockXhr()
     startSpy = jasmine.createSpy('requestStart')
     completeSpy = jasmine.createSpy('requestComplete')
     const lifeCycle = new LifeCycle()
@@ -200,7 +199,6 @@ describe('collect xhr', () => {
 
     registerCleanupTask(() => {
       stopXhrTracking()
-      mockXhrManager.reset()
     })
   })
 
