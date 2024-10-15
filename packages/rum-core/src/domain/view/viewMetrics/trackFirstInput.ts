@@ -1,5 +1,5 @@
 import type { Duration, RelativeTime } from '@datadog/browser-core'
-import { elapsed, find } from '@datadog/browser-core'
+import { elapsed } from '@datadog/browser-core'
 import { isElementNode } from '../../../browser/htmlDomUtils'
 import type { RumConfiguration } from '../../configuration'
 import { createPerformanceObservable, RumPerformanceEntryType } from '../../../browser/performanceObservable'
@@ -30,8 +30,7 @@ export function trackFirstInput(
     type: RumPerformanceEntryType.FIRST_INPUT,
     buffered: true,
   }).subscribe((entries) => {
-    const firstInputEntry = find(
-      entries,
+    const firstInputEntry = entries.find(
       (entry): entry is RumFirstInputTiming => entry.startTime < firstHidden.timeStamp
     )
     if (firstInputEntry) {
