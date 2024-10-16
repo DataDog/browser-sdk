@@ -7,6 +7,8 @@ const DEFAULT_PAYLOAD = {} as Payload
 describe('transportConfiguration', () => {
   const clientToken = 'some_client_token'
   const internalAnalyticsSubdomain = 'ia-rum-intake'
+  const intakeParameters = 'ddsource=browser&ddtags=sdk_version'
+
   describe('site', () => {
     it('should use US site by default', () => {
       const configuration = computeTransportConfiguration({ clientToken })
@@ -84,6 +86,7 @@ describe('transportConfiguration', () => {
   })
 
   describe('isIntakeUrl', () => {
+    const v1IntakePath = `/v1/input/${clientToken}`
     ;[
       { site: 'datadoghq.eu', intakeDomain: 'browser-intake-datadoghq.eu' },
       { site: 'datadoghq.com', intakeDomain: 'browser-intake-datadoghq.com' },
@@ -98,9 +101,28 @@ describe('transportConfiguration', () => {
       it(`should detect intake request for ${site} site`, () => {
         const configuration = computeTransportConfiguration({ clientToken, site })
 
-        expect(configuration.isIntakeUrl(`https://${intakeDomain}/api/v2/rum?xxx`)).toBe(true)
-        expect(configuration.isIntakeUrl(`https://${intakeDomain}/api/v2/logs?xxx`)).toBe(true)
-        expect(configuration.isIntakeUrl(`https://${intakeDomain}/api/v2/replay?xxx`)).toBe(true)
+        expect(configuration.isIntakeUrl(`https://${intakeDomain}/api/v2/rum?${intakeParameters}`)).toBe(true)
+        expect(configuration.isIntakeUrl(`https://${intakeDomain}/api/v2/logs?${intakeParameters}`)).toBe(true)
+        expect(configuration.isIntakeUrl(`https://${intakeDomain}/api/v2/replay?${intakeParameters}`)).toBe(true)
+      })
+
+      it(`should detect older versions of the ${site} site`, () => {
+        const configuration = computeTransportConfiguration({ clientToken, site })
+
+        // v4 intake endpoints
+        expect(configuration.isIntakeUrl(`https://rum.${intakeDomain}/api/v2/rum?${intakeParameters}`)).toBe(true)
+        expect(configuration.isIntakeUrl(`https://logs.${intakeDomain}/api/v2/logs?${intakeParameters}`)).toBe(true)
+        expect(configuration.isIntakeUrl(`https://replay.${intakeDomain}/api/v2/replay?${intakeParameters}`)).toBe(true)
+
+        // pre-v4 intake endpoints
+        expect(configuration.isIntakeUrl(`https://rum.${intakeDomain}${v1IntakePath}?${intakeParameters}`)).toBe(true)
+        expect(configuration.isIntakeUrl(`https://logs.${intakeDomain}${v1IntakePath}?${intakeParameters}`)).toBe(true)
+        expect(
+          configuration.isIntakeUrl(`https://rum-http-intake.logs.${site}${v1IntakePath}?${intakeParameters}`)
+        ).toBe(true)
+        expect(
+          configuration.isIntakeUrl(`https://browser-http-intake.logs.${site}${v1IntakePath}?${intakeParameters}`)
+        ).toBe(true)
       })
     })
 
@@ -109,7 +131,9 @@ describe('transportConfiguration', () => {
         clientToken,
         internalAnalyticsSubdomain,
       })
-      expect(configuration.isIntakeUrl(`https://${internalAnalyticsSubdomain}.datadoghq.com/api/v2/rum?xxx`)).toBe(true)
+      expect(
+        configuration.isIntakeUrl(`https://${internalAnalyticsSubdomain}.datadoghq.com/api/v2/rum?${intakeParameters}`)
+      ).toBe(true)
     })
 
     it('should not detect non intake request', () => {
@@ -124,7 +148,9 @@ describe('transportConfiguration', () => {
           proxy: 'https://www.proxy.com',
         })
         expect(
-          configuration.isIntakeUrl(`https://www.proxy.com/?ddforward=${encodeURIComponent('/api/v2/rum?foo=bar')}`)
+          configuration.isIntakeUrl(
+            `https://www.proxy.com/?ddforward=${encodeURIComponent(`/api/v2/rum?${intakeParameters}`)}`
+          )
         ).toBe(true)
 
         configuration = computeTransportConfiguration({
@@ -133,7 +159,7 @@ describe('transportConfiguration', () => {
         })
         expect(
           configuration.isIntakeUrl(
-            `https://www.proxy.com/custom/path?ddforward=${encodeURIComponent('/api/v2/rum?foo=bar')}`
+            `https://www.proxy.com/custom/path?ddforward=${encodeURIComponent(`/api/v2/rum?${intakeParameters}`)}`
           )
         ).toBe(true)
       })
@@ -160,15 +186,21 @@ describe('transportConfiguration', () => {
           internalAnalyticsSubdomain,
         })
 
-        expect(configuration.isIntakeUrl(`https://${internalAnalyticsSubdomain}.datadoghq.com/api/v2/rum?xxx`)).toBe(
-          true
-        )
-        expect(configuration.isIntakeUrl(`https://${internalAnalyticsSubdomain}.datadoghq.com/api/v2/logs?xxx`)).toBe(
-          true
-        )
-        expect(configuration.isIntakeUrl(`https://${internalAnalyticsSubdomain}.datadoghq.com/api/v2/replay?xxx`)).toBe(
-          false
-        )
+        expect(
+          configuration.isIntakeUrl(
+            `https://${internalAnalyticsSubdomain}.datadoghq.com/api/v2/rum?${intakeParameters}`
+          )
+        ).toBe(true)
+        expect(
+          configuration.isIntakeUrl(
+            `https://${internalAnalyticsSubdomain}.datadoghq.com/api/v2/logs?${intakeParameters}`
+          )
+        ).toBe(true)
+        expect(
+          configuration.isIntakeUrl(
+            `https://${internalAnalyticsSubdomain}.datadoghq.com/api/v2/replay?${intakeParameters}`
+          )
+        ).toBe(true)
       })
     })
   })

@@ -3,7 +3,7 @@ import type { InitConfiguration } from './configuration'
 import type { EndpointBuilder } from './endpointBuilder'
 import { createEndpointBuilder } from './endpointBuilder'
 import { buildTags } from './tags'
-import { INTAKE_SITE_US1, PCI_INTAKE_HOST_US1 } from './intakeSites'
+import { INTAKE_SITE_US1 } from './intakeSites'
 
 export interface TransportConfiguration {
   logsEndpointBuilder: EndpointBuilder
@@ -26,13 +26,13 @@ export function computeTransportConfiguration(initConfiguration: InitConfigurati
   const tags = buildTags(initConfiguration)
 
   const endpointBuilders = computeEndpointBuilders(initConfiguration, tags)
-  const intakeUrlPrefixes = computeIntakeUrlPrefixes(endpointBuilders, site)
+  const intakeUrlPrefixes = objectValues(endpointBuilders).map((builder) => builder.urlPrefix)
 
   const replicaConfiguration = computeReplicaConfiguration(initConfiguration, intakeUrlPrefixes, tags)
 
   return assign(
     {
-      isIntakeUrl: (url: string) => intakeUrlPrefixes.some((intakeEndpoint) => url.indexOf(intakeEndpoint) === 0),
+      isIntakeUrl: (url: string) => hasIntakeParameters(url),
       replica: replicaConfiguration,
       site,
     },
@@ -72,15 +72,7 @@ function computeReplicaConfiguration(
   return assign({ applicationId: initConfiguration.replica.applicationId }, replicaEndpointBuilders)
 }
 
-function computeIntakeUrlPrefixes(
-  endpointBuilders: ReturnType<typeof computeEndpointBuilders>,
-  site: string
-): string[] {
-  const intakeUrlPrefixes = objectValues(endpointBuilders).map((builder) => builder.urlPrefix)
-
-  if (site === INTAKE_SITE_US1) {
-    intakeUrlPrefixes.push(`https://${PCI_INTAKE_HOST_US1}/`)
-  }
-
-  return intakeUrlPrefixes
+function hasIntakeParameters(url: string) {
+  // check if tags is present in the query string
+  return url.indexOf('ddsource') !== -1 || url.indexOf('ddtags') !== -1
 }
