@@ -122,6 +122,7 @@ export function makeRecorderApi(
       })
 
       let cachedDeflateEncoder: DeflateEncoder | undefined
+      let flushCachedRecords: () => void = noop
 
       function getOrCreateDeflateEncoder() {
         if (!cachedDeflateEncoder) {
@@ -144,12 +145,20 @@ export function makeRecorderApi(
 
       startStrategy = (options?: StartRecordingOptions) => {
         const session = sessionManager.findTrackedSession()
-        if (!session || (session.sessionReplay === SessionReplayState.OFF && (!options || !options.force))) {
+        if (!session) {
           state = { status: RecorderStatus.IntentToStart }
           return
         }
 
-        if (state.status === RecorderStatus.Starting || state.status === RecorderStatus.Started) {
+        if (state.status === RecorderStatus.Starting) {
+          return
+        }
+
+        if (state.status === RecorderStatus.Started) {
+          if (options && options.force && session.sessionReplay === SessionReplayState.OFF) {
+            flushCachedRecords()
+            sessionManager.setForcedReplay()
+          }
           return
         }
 
@@ -168,7 +177,7 @@ export function makeRecorderApi(
             return
           }
 
-          const { stop: stopRecording } = startRecordingImpl(
+          const { stop: stopRecording, flushCachedRecords: stopCaching } = startRecordingImpl(
             lifeCycle,
             configuration,
             sessionManager,
@@ -179,11 +188,8 @@ export function makeRecorderApi(
             status: RecorderStatus.Started,
             stopRecording,
           }
+          flushCachedRecords = stopCaching
         })
-
-        if (options && options.force && session.sessionReplay === SessionReplayState.OFF) {
-          sessionManager.setForcedReplay()
-        }
       }
 
       stopStrategy = () => {
