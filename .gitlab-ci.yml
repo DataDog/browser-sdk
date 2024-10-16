@@ -462,6 +462,9 @@ merge-into-next-major:
   only:
     refs:
       - main
+  except:
+    refs:
+      - schedules
   before_script:
     - eval $(ssh-agent -s)
   script:
