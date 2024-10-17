@@ -1,7 +1,7 @@
 {
   "name": "@datadog/browser-rum-react",
   "private": true,
-  "version": "5.28.1",
+  "version": "6.0.0-alpha.0",
   "license": "Apache-2.0",
   "main": "cjs/entries/main.js",
   "module": "esm/entries/main.js",
@@ -12,8 +12,8 @@
     "build:esm": "rm -rf esm && tsc -p tsconfig.esm.json"
   },
   "dependencies": {
-    "@datadog/browser-core": "5.28.1",
-    "@datadog/browser-rum-core": "5.28.1"
+    "@datadog/browser-core": "6.0.0-alpha.0",
+    "@datadog/browser-rum-core": "6.0.0-alpha.0"
   },
   "peerDependencies": {
     "react": "18",

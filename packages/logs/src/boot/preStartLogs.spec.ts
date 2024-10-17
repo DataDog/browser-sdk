@@ -5,7 +5,6 @@ import {
   TrackingConsent,
   createTrackingConsentState,
   display,
-  isIE,
   resetFetchObservable,
 } from '@datadog/browser-core'
 import type { CommonContext } from '../rawLogsEvent.types'
@@ -217,12 +216,6 @@ describe('preStartLogs', () => {
     })
 
     describe('basic methods instrumentation', () => {
-      beforeEach(() => {
-        if (isIE()) {
-          pending('No support for IE')
-        }
-      })
-
       it('should instrument fetch even if tracking consent is not granted', () => {
         const originalFetch = window.fetch
 

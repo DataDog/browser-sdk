@@ -1,6 +1,5 @@
 import { catchUserErrors } from '../tools/catchUserErrors'
 import { setDebugMode } from '../tools/monitor'
-import { assign } from '../tools/utils/polyfills'
 import { display } from '../tools/display'
 
 // replaced at build time
@@ -21,19 +20,16 @@ export interface PublicApi {
 }
 
 export function makePublicApi<T extends PublicApi>(stub: Omit<T, keyof PublicApi>): T {
-  const publicApi = assign(
-    {
-      version: __BUILD_ENV__SDK_VERSION__,
-
-      // This API method is intentionally not monitored, since the only thing executed is the
-      // user-provided 'callback'.  All SDK usages executed in the callback should be monitored, and
-      // we don't want to interfere with the user uncaught exceptions.
-      onReady(callback: () => void) {
-        callback()
-      },
+  const publicApi = {
+    version: __BUILD_ENV__SDK_VERSION__,
+    // This API method is intentionally not monitored, since the only thing executed is the
+    // user-provided 'callback'.  All SDK usages executed in the callback should be monitored, and
+    // we don't want to interfere with the user uncaught exceptions.
+    onReady(callback: () => void) {
+      callback()
     },
-    stub
-  )
+    ...stub,
+  }
 
   // Add a "hidden" property to set debug mode. We define it that way to hide it
   // as much as possible but of course it's not a real protection.
