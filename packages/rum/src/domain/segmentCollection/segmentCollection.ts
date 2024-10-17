@@ -14,8 +14,11 @@ import { buildReplayPayload } from './buildReplayPayload'
 import type { FlushReason, Segment } from './segment'
 import { createSegment } from './segment'
 
-export const SEGMENT_DURATION_LIMIT = () =>
-  isExperimentalFeatureEnabled(ExperimentalFeature.REDUCE_SEGMENT_LIMIT_BATCH_TIME) ? 5 * ONE_SECOND : 30 * ONE_SECOND
+export function getSegmentDurationLimit() {
+  return isExperimentalFeatureEnabled(ExperimentalFeature.REDUCE_SEGMENT_LIMIT_BATCH_TIME)
+    ? 5 * ONE_SECOND
+    : 30 * ONE_SECOND
+}
 /**
  * beacon payload max queue size implementation is 64kb
  * ensure that we leave room for logs, rum and potential other users
@@ -147,7 +150,7 @@ export function doStartSegmentCollection(
           segment: createSegment({ encoder, context, creationReason: state.nextSegmentCreationReason }),
           expirationTimeoutId: setTimeout(() => {
             flushSegment('segment_duration_limit')
-          }, SEGMENT_DURATION_LIMIT()),
+          }, getSegmentDurationLimit()),
         }
       }
 
