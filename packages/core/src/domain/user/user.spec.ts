@@ -1,5 +1,13 @@
+import { mockCookie } from '../../../test'
 import { display } from '../../tools/display'
-import { checkUser, sanitizeUser } from './user'
+import {
+  checkUser,
+  generateAnonymousId,
+  getAnonymousIdFromStorage,
+  retrieveAnonymousId,
+  sanitizeUser,
+  setAnonymousIdInStorage,
+} from './user'
 import type { User } from './user.types'
 
 describe('sanitize user function', () => {
@@ -35,5 +43,35 @@ describe('check user function', () => {
     expect(checkUser(nullUser)).toBe(false)
     expect(checkUser(invalidUser)).toBe(false)
     expect(display.error).toHaveBeenCalledTimes(3)
+  })
+})
+
+describe('check anonymous id storage functions', () => {
+  const sessionStoreStrategyType = 'Cookie'
+
+  beforeAll(() => {
+    mockCookie()
+  })
+
+  it('should generate a random anonymous id', () => {
+    const id = generateAnonymousId()
+    expect(id).toMatch(/^[a-z0-9]+$/)
+  })
+
+  it('should set and get an anonymous id from cookie', () => {
+    const anonymousId = 'abc'
+    setAnonymousIdInStorage(sessionStoreStrategyType, anonymousId)
+    expect(getAnonymousIdFromStorage()).toBe(anonymousId)
+  })
+
+  it('should set and get an anonymous id from local storage', () => {
+    const anonymousId = 'abc'
+    setAnonymousIdInStorage('LocalStorage', anonymousId)
+    expect(getAnonymousIdFromStorage()).toBe(anonymousId)
+  })
+
+  it('should generate and set an anonymous id if none is found', () => {
+    retrieveAnonymousId(sessionStoreStrategyType)
+    expect(getAnonymousIdFromStorage()).toBeDefined()
   })
 })
