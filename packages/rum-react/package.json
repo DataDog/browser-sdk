@@ -11,13 +11,21 @@
     "build:cjs": "rm -rf cjs && tsc -p tsconfig.cjs.json",
     "build:esm": "rm -rf esm && tsc -p tsconfig.esm.json"
   },
-  "peerDependencies": {
+  "dependencies": {
     "@datadog/browser-core": "5.28.1",
-    "@datadog/browser-rum-core": "5.28.1",
+    "@datadog/browser-rum-core": "5.28.1"
+  },
+  "peerDependencies": {
     "react": "18",
     "react-router-dom": "6"
   },
   "peerDependenciesMeta": {
+    "@datadog/browser-rum": {
+      "optional": true
+    },
+    "@datadog/browser-rum-slim": {
+      "optional": true
+    },
     "react": {
       "optional": true
     },
