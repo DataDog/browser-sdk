@@ -18,6 +18,7 @@ export enum ExperimentalFeature {
   REMOTE_CONFIGURATION = 'remote_configuration',
   UPDATE_VIEW_NAME = 'update_view_name',
   LONG_ANIMATION_FRAME = 'long_animation_frame',
+  REDUCE_SEGMENT_LIMIT_BATCH_TIME = 'reduce_segment_limit_batch_time',
 }
 
 const enabledExperimentalFeatures: Set<ExperimentalFeature> = new Set()
