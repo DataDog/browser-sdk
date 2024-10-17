@@ -1,4 +1,4 @@
-import { objectValues, assign } from '../../tools/utils/polyfills'
+import { assign, includes } from '../../tools/utils/polyfills'
 import type { InitConfiguration } from './configuration'
 import type { EndpointBuilder } from './endpointBuilder'
 import { createEndpointBuilder } from './endpointBuilder'
@@ -26,13 +26,11 @@ export function computeTransportConfiguration(initConfiguration: InitConfigurati
   const tags = buildTags(initConfiguration)
 
   const endpointBuilders = computeEndpointBuilders(initConfiguration, tags)
-  const intakeUrlPrefixes = objectValues(endpointBuilders).map((builder) => builder.urlPrefix)
-
-  const replicaConfiguration = computeReplicaConfiguration(initConfiguration, intakeUrlPrefixes, tags)
+  const replicaConfiguration = computeReplicaConfiguration(initConfiguration, tags)
 
   return assign(
     {
-      isIntakeUrl: (url: string) => hasIntakeParameters(url),
+      isIntakeUrl,
       replica: replicaConfiguration,
       site,
     },
@@ -50,7 +48,6 @@ function computeEndpointBuilders(initConfiguration: InitConfiguration, tags: str
 
 function computeReplicaConfiguration(
   initConfiguration: InitConfiguration,
-  intakeUrlPrefixes: string[],
   tags: string[]
 ): ReplicaConfiguration | undefined {
   if (!initConfiguration.replica) {
@@ -67,12 +64,10 @@ function computeReplicaConfiguration(
     rumEndpointBuilder: createEndpointBuilder(replicaConfiguration, 'rum', tags),
   }
 
-  intakeUrlPrefixes.push(...objectValues(replicaEndpointBuilders).map((builder) => builder.urlPrefix))
-
   return assign({ applicationId: initConfiguration.replica.applicationId }, replicaEndpointBuilders)
 }
 
-function hasIntakeParameters(url: string) {
+export function isIntakeUrl(url: string) {
   // check if tags is present in the query string
-  return url.indexOf('ddsource') !== -1 || url.indexOf('ddtags') !== -1
+  return includes(url, 'ddsource') && includes(url, 'ddtags')
 }
