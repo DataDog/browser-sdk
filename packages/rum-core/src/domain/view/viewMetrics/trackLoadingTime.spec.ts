@@ -1,7 +1,7 @@
 import type { RelativeTime, Duration } from '@datadog/browser-core'
 import { clocksOrigin, Observable } from '@datadog/browser-core'
 import type { Clock } from '@datadog/browser-core/test'
-import { mockClock, setPageVisibility, restorePageVisibility } from '@datadog/browser-core/test'
+import { mockClock, setPageVisibility } from '@datadog/browser-core/test'
 import { ViewLoadingType } from '../../../rawRumEvent.types'
 import { createPerformanceEntry, mockRumConfiguration } from '../../../../test'
 import { PAGE_ACTIVITY_END_DELAY, PAGE_ACTIVITY_VALIDATION_DELAY } from '../../waitPageActivityEnd'
@@ -46,7 +46,6 @@ describe('trackLoadingTime', () => {
 
   afterEach(() => {
     stopLoadingTimeTracking()
-    restorePageVisibility()
     clock.cleanup()
   })
 
