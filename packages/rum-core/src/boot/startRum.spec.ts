@@ -6,7 +6,6 @@ import {
   ONE_SECOND,
   findLast,
   noop,
-  isIE,
   relativeNow,
   createIdentityEncoder,
   createCustomerDataTracker,
@@ -107,10 +106,6 @@ describe('rum session', () => {
   let sessionManager: RumSessionManagerMock
 
   beforeEach(() => {
-    if (isIE()) {
-      pending('no full rum support')
-    }
-
     lifeCycle = new LifeCycle()
     sessionManager = createRumSessionManagerMock().setId('42')
     const domMutationObservable = new Observable<void>()
@@ -158,9 +153,6 @@ describe('rum session keep alive', () => {
   let serverRumEvents: RumEvent[]
 
   beforeEach(() => {
-    if (isIE()) {
-      pending('no full rum support')
-    }
     lifeCycle = new LifeCycle()
     clock = mockClock()
     sessionManager = createRumSessionManagerMock().setId('1234')

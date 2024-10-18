@@ -4,7 +4,6 @@ import { ONE_SECOND, dateNow } from '../../tools/utils/timeUtils'
 import { throttle } from '../../tools/utils/functionUtils'
 import { generateUUID } from '../../tools/utils/stringUtils'
 import type { InitConfiguration } from '../configuration'
-import { assign } from '../../tools/utils/polyfills'
 import { selectCookieStrategy, initCookieStrategy } from './storeStrategies/sessionInCookie'
 import type { SessionStoreStrategyType } from './storeStrategies/sessionStoreStrategy'
 import {
@@ -190,7 +189,7 @@ export function startSessionStore<TrackingType extends string>(
   function updateSessionState(partialSessionState: Partial<SessionState>) {
     processSessionStoreOperations(
       {
-        process: (sessionState) => assign({}, sessionState, partialSessionState),
+        process: (sessionState) => ({ ...sessionState, ...partialSessionState }),
         after: synchronizeSession,
       },
       sessionStoreStrategy

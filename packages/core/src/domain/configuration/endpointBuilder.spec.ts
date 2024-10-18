@@ -1,5 +1,4 @@
 import type { BuildEnvWindow } from '../../../test'
-import { startsWith } from '../../tools/utils/polyfills'
 import type { Payload } from '../../transport'
 import type { InitConfiguration } from './configuration'
 import { createEndpointBuilder } from './endpointBuilder'
@@ -69,12 +68,11 @@ describe('endpointBuilder', () => {
     })
 
     it('normalizes the proxy url', () => {
-      expect(
-        startsWith(
-          createEndpointBuilder({ ...initConfiguration, proxy: '/path' }, 'rum', []).build('xhr', DEFAULT_PAYLOAD),
-          `${location.origin}/path?ddforward`
-        )
-      ).toBeTrue()
+      const endpoint = createEndpointBuilder({ ...initConfiguration, proxy: '/path' }, 'rum', []).build(
+        'xhr',
+        DEFAULT_PAYLOAD
+      )
+      expect(endpoint.startsWith(`${location.origin}/path?ddforward`)).toBeTrue()
     })
 
     it('should allow to fully control the proxy url', () => {

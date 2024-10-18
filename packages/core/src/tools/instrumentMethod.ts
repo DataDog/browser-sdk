@@ -1,7 +1,6 @@
 import { setTimeout } from './timer'
 import { callMonitored } from './monitor'
 import { noop } from './utils/functionUtils'
-import { arrayFrom, startsWith } from './utils/polyfills'
 import { createHandlingStack } from './stackTrace/handlingStack'
 
 /**
@@ -77,7 +76,7 @@ export function instrumentMethod<TARGET extends { [key: string]: any }, METHOD e
   let original = targetPrototype[method]
 
   if (typeof original !== 'function') {
-    if (method in targetPrototype && startsWith(method, 'on')) {
+    if (method in targetPrototype && method.startsWith('on')) {
       original = noop as TARGET[METHOD]
     } else {
       return { stop: noop }
@@ -92,7 +91,7 @@ export function instrumentMethod<TARGET extends { [key: string]: any }, METHOD e
       return original.apply(this, arguments as unknown as Parameters<TARGET[METHOD]>)
     }
 
-    const parameters = arrayFrom(arguments) as Parameters<TARGET[METHOD]>
+    const parameters = Array.from(arguments) as Parameters<TARGET[METHOD]>
 
     let postCallCallback: PostCallCallback<TARGET, METHOD> | undefined
 

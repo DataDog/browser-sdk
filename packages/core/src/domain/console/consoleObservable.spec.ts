@@ -1,5 +1,4 @@
 /* eslint-disable no-console */
-import { isIE } from '../../tools/utils/browserDetection'
 import { ConsoleApiName } from '../../tools/display'
 import type { Subscription } from '../../tools/observable'
 import type { ErrorConsoleLog } from './consoleObservable'
@@ -104,11 +103,7 @@ describe('console error observable', () => {
   it('should extract stack from first error', () => {
     console.error(new TypeError('foo'), new TypeError('bar'))
     const stack = notifyLog.calls.mostRecent().args[0].error.stack
-    if (!isIE()) {
-      expect(stack).toMatch(/^TypeError: foo\s+at/)
-    } else {
-      expect(stack).toContain('TypeError: foo')
-    }
+    expect(stack).toContain('TypeError: foo')
   })
 
   it('should retrieve fingerprint from error', () => {

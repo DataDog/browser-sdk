@@ -1,4 +1,3 @@
-import { isIE } from '@datadog/browser-core'
 import type { RawRumActionEvent } from '@datadog/browser-rum-core'
 import { ActionType, LifeCycle, LifeCycleEventType } from '@datadog/browser-rum-core'
 import type { RawRumEventCollectedData } from 'packages/rum-core/src/domain/lifeCycle'
@@ -20,9 +19,6 @@ describe('trackFrustration', () => {
   let recordIds: RecordIds
 
   beforeEach(() => {
-    if (isIE()) {
-      pending('IE not supported')
-    }
     mouseEvent = new MouseEvent('pointerup')
     frustrationsCallbackSpy = jasmine.createSpy()
     recordIds = initRecordIds()

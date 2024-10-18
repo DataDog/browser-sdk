@@ -1,4 +1,3 @@
-import { cssEscape, elementMatches, getClassList, getParentElement } from '../browser/polyfills'
 import { DEFAULT_PROGRAMMATIC_ACTION_NAME_ATTRIBUTE } from './action/getActionNameFromElement'
 
 /**
@@ -72,7 +71,7 @@ export function getSelectorFromElement(
     targetElementSelector =
       uniqueSelectorAmongChildren || combineSelector(getPositionSelector(currentElement), targetElementSelector)
 
-    currentElement = getParentElement(currentElement)
+    currentElement = currentElement.parentElement
   }
 
   return targetElementSelector
@@ -91,7 +90,7 @@ function isGeneratedValue(value: string) {
 
 function getIDSelector(element: Element): string | undefined {
   if (element.id && !isGeneratedValue(element.id)) {
-    return `#${cssEscape(element.id)}`
+    return `#${CSS.escape(element.id)}`
   }
 }
 
@@ -99,19 +98,19 @@ function getClassSelector(element: Element): string | undefined {
   if (element.tagName === 'BODY') {
     return
   }
-  const classList = getClassList(element)
+  const classList = element.classList
   for (let i = 0; i < classList.length; i += 1) {
     const className = classList[i]
     if (isGeneratedValue(className)) {
       continue
     }
 
-    return `${cssEscape(element.tagName)}.${cssEscape(className)}`
+    return `${CSS.escape(element.tagName)}.${CSS.escape(className)}`
   }
 }
 
 function getTagNameSelector(element: Element): string {
-  return cssEscape(element.tagName)
+  return CSS.escape(element.tagName)
 }
 
 function getStableAttributeSelector(element: Element, actionNameAttribute: string | undefined): string | undefined {
@@ -131,13 +130,13 @@ function getStableAttributeSelector(element: Element, actionNameAttribute: strin
 
   function getAttributeSelector(attributeName: string) {
     if (element.hasAttribute(attributeName)) {
-      return `${cssEscape(element.tagName)}[${attributeName}="${cssEscape(element.getAttribute(attributeName)!)}"]`
+      return `${CSS.escape(element.tagName)}[${attributeName}="${CSS.escape(element.getAttribute(attributeName)!)}"]`
     }
   }
 }
 
 function getPositionSelector(element: Element): string {
-  let sibling = getParentElement(element)!.firstElementChild
+  let sibling = element.parentElement!.firstElementChild
   let elementIndex = 1
 
   while (sibling && sibling !== element) {
@@ -147,7 +146,7 @@ function getPositionSelector(element: Element): string {
     sibling = sibling.nextElementSibling
   }
 
-  return `${cssEscape(element.tagName)}:nth-of-type(${elementIndex})`
+  return `${CSS.escape(element.tagName)}:nth-of-type(${elementIndex})`
 }
 
 function findSelector(
@@ -252,7 +251,7 @@ export function isSelectorUniqueAmongSiblings(
     // If the child selector is undefined (meaning `currentElement` is the target element, not one
     // of its ancestor), we need to use `matches` to check if the sibling is matching the selector,
     // as `querySelector` only returns a descendant of the element.
-    isSiblingMatching = (sibling) => elementMatches(sibling, currentElementSelector)
+    isSiblingMatching = (sibling) => sibling.matches(currentElementSelector)
   } else {
     const scopedSelector = supportScopeSelector()
       ? combineSelector(`${currentElementSelector}:scope`, childSelector)
@@ -260,7 +259,7 @@ export function isSelectorUniqueAmongSiblings(
     isSiblingMatching = (sibling) => sibling.querySelector(scopedSelector) !== null
   }
 
-  const parent = getParentElement(currentElement)!
+  const parent = currentElement.parentElement!
   let sibling = parent.firstElementChild
   while (sibling) {
     if (sibling !== currentElement && isSiblingMatching(sibling)) {
@@ -290,7 +289,7 @@ export function supportScopeSelector() {
 }
 
 /**
- * Polyfill-utility for the `isConnected` property not supported in IE11
+ * Polyfill-utility for the `isConnected` property not supported in Edge <=18
  */
 function isConnected(element: Element): boolean {
   if (
