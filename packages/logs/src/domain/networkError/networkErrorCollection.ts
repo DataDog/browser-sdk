@@ -11,6 +11,7 @@ import {
   readBytesFromStream,
   tryToClone,
   isServerError,
+  isIntakeUrl,
 } from '@datadog/browser-core'
 import type { LogsConfiguration } from '../configuration'
 import type { LifeCycle } from '../lifeCycle'
@@ -35,7 +36,7 @@ export function startNetworkErrorCollection(configuration: LogsConfiguration, li
   })
 
   function handleResponse(type: RequestType, request: XhrCompleteContext | FetchResolveContext) {
-    if (!configuration.isIntakeUrl(request.url) && (isRejected(request) || isServerError(request.status))) {
+    if (!isIntakeUrl(request.url) && (isRejected(request) || isServerError(request.status))) {
       if ('xhr' in request) {
         computeXhrResponseData(request.xhr, configuration, onResponseDataAvailable)
       } else if (request.response) {
