@@ -23,7 +23,6 @@ describe('collect fetch', () => {
     if (isIE()) {
       pending('no fetch support')
     }
-    const configuration = mockRumConfiguration({ batchMessagesLimit: 1 })
     mockFetchManager = mockFetch()
 
     startSpy = jasmine.createSpy('requestStart')
@@ -38,7 +37,7 @@ describe('collect fetch', () => {
         context.spanId = createTraceIdentifier()
       },
     }
-    ;({ stop: stopFetchTracking } = trackFetch(lifeCycle, configuration, tracerStub as Tracer))
+    ;({ stop: stopFetchTracking } = trackFetch(lifeCycle, tracerStub as Tracer))
 
     fetch = window.fetch as MockFetch
 

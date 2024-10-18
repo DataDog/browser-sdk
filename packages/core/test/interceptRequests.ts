@@ -1,15 +1,12 @@
 import type { EndpointBuilder } from '../src'
-import { noop } from '../src'
+import { INTAKE_TAGS, noop } from '../src'
 import { mockXhr, MockXhr } from './emulate/mockXhr'
 
-export const SPEC_ENDPOINTS = {
-  logsEndpointBuilder: mockEndpointBuilder('https://logs-intake.com/v1/input/abcde?foo=bar'),
-  rumEndpointBuilder: mockEndpointBuilder('https://rum-intake.com/v1/input/abcde?foo=bar'),
+const INTAKE_PARAMS = INTAKE_TAGS.join('&')
 
-  isIntakeUrl: (url: string) => {
-    const intakeUrls = ['https://logs-intake.com/v1/input/', 'https://rum-intake.com/v1/input/']
-    return intakeUrls.some((intakeUrl) => url.indexOf(intakeUrl) === 0)
-  },
+export const SPEC_ENDPOINTS = {
+  logsEndpointBuilder: mockEndpointBuilder(`https://mock.com/abcde?${INTAKE_PARAMS}`),
+  rumEndpointBuilder: mockEndpointBuilder(`https://mock.com/abcde?${INTAKE_PARAMS}`),
 }
 
 export function mockEndpointBuilder(url: string) {

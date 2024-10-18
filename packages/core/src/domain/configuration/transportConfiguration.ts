@@ -3,13 +3,12 @@ import type { InitConfiguration } from './configuration'
 import type { EndpointBuilder } from './endpointBuilder'
 import { createEndpointBuilder } from './endpointBuilder'
 import { buildTags } from './tags'
-import { INTAKE_SITE_US1 } from './intakeSites'
+import { INTAKE_SITE_US1, INTAKE_TAGS } from './intakeSites'
 
 export interface TransportConfiguration {
   logsEndpointBuilder: EndpointBuilder
   rumEndpointBuilder: EndpointBuilder
   sessionReplayEndpointBuilder: EndpointBuilder
-  isIntakeUrl: (url: string) => boolean
   replica?: ReplicaConfiguration
   site: string
 }
@@ -30,7 +29,6 @@ export function computeTransportConfiguration(initConfiguration: InitConfigurati
 
   return assign(
     {
-      isIntakeUrl,
       replica: replicaConfiguration,
       site,
     },
@@ -67,7 +65,7 @@ function computeReplicaConfiguration(
   return assign({ applicationId: initConfiguration.replica.applicationId }, replicaEndpointBuilders)
 }
 
-export function isIntakeUrl(url: string) {
+export function isIntakeUrl(url: string): boolean {
   // check if tags is present in the query string
-  return includes(url, 'ddsource') && includes(url, 'ddtags')
+  return INTAKE_TAGS.every((param) => includes(url, param))
 }
