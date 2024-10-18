@@ -85,6 +85,19 @@ stages:
     refs:
       - tags
 
+###########################################################################################################################
+# Resource allocation
+###########################################################################################################################
+
+.resource-allocation-4-cpus:
+  variables:
+    WORKERS: 2
+    KUBERNETES_CPU_REQUEST: 4
+    KUBERNETES_CPU_LIMIT: 4
+    KUBERNETES_MEMORY_REQUEST: 16Gi
+    KUBERNETES_MEMORY_LIMIT: 16Gi
+    NODE_OPTIONS: '--max-old-space-size=16000'
+
 ########################################################################################################################
 # CI image
 ########################################################################################################################
@@ -266,6 +279,7 @@ e2e-bs:
   extends:
     - .base-configuration
     - .bs-allowed-branches
+    - .resource-allocation-4-cpus
   interruptible: true
   resource_group: browserstack
   timeout: 35 minutes
