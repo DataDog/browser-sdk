@@ -36,6 +36,14 @@ export class FacetRegistry {
     return this.allEventFieldPaths
   }
 
+  getFacetChildrenValues(fieldPath: FieldPath): FacetValue[] {
+    const facetValues = this.facetValueCounts.get(fieldPath)
+    if (!facetValues) {
+      return []
+    }
+    return Array.from(facetValues.keys())
+  }
+
   clear() {
     this.facetValueCounts.clear()
   }
