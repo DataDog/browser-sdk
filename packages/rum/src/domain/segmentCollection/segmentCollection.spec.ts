@@ -13,7 +13,7 @@ import {
   computeSegmentContext,
   doStartSegmentCollection,
   SEGMENT_BYTES_LIMIT,
-  SEGMENT_DURATION_LIMIT,
+  getSegmentDurationLimit,
 } from './segmentCollection'
 
 const CONTEXT: SegmentContext = { application: { id: 'a' }, view: { id: 'b' }, session: { id: 'c' } }
@@ -26,7 +26,7 @@ const VERY_BIG_RECORD: BrowserRecord = {
   data: Array(SEGMENT_BYTES_LIMIT).join('a') as any,
 }
 
-const BEFORE_SEGMENT_DURATION_LIMIT = SEGMENT_DURATION_LIMIT * 0.9
+const BEFORE_SEGMENT_DURATION_LIMIT = getSegmentDurationLimit() * 0.9
 
 describe('startSegmentCollection', () => {
   let stopSegmentCollection: () => void
@@ -237,7 +237,7 @@ describe('startSegmentCollection', () => {
       it('uses `httpRequest.send` when sending the segment', () => {
         clock = mockClock()
         addRecordAndFlushSegment(() => {
-          clock!.tick(SEGMENT_DURATION_LIMIT)
+          clock!.tick(getSegmentDurationLimit())
         })
         expect(httpRequestSpy.send).toHaveBeenCalled()
       })
@@ -245,7 +245,7 @@ describe('startSegmentCollection', () => {
       it('next segment is created because of the segment duration limit has been reached', async () => {
         clock = mockClock()
         addRecordAndFlushSegment(() => {
-          clock!.tick(SEGMENT_DURATION_LIMIT)
+          clock!.tick(getSegmentDurationLimit())
         })
         addRecordAndFlushSegment()
         expect((await readMostRecentMetadata(httpRequestSpy.sendOnExit)).creation_reason).toBe('segment_duration_limit')
