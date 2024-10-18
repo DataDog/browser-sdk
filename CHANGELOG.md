@@ -18,6 +18,26 @@
 
 ---
 
+## v5.29.0
+
+**Public Changes:**
+
+- 🐛 [RUM-6483] Investigate reducing the batch time limit for Replay ([#3077](https://github.com/DataDog/browser-sdk/pull/3077)) [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+
+**Internal Changes:**
+
+- 👷 Bump chrome to 130.0.6723.58-1 ([#3074](https://github.com/DataDog/browser-sdk/pull/3074))
+- 👷 skip merge into next major on scheduled pipelines ([#3075](https://github.com/DataDog/browser-sdk/pull/3075))
+- 👷 Update all non-major dependencies ([#3070](https://github.com/DataDog/browser-sdk/pull/3070)) [RUM-REACT]
+- 👷 Update dependency eslint-plugin-unicorn to v56 ([#3071](https://github.com/DataDog/browser-sdk/pull/3071))
+- 👷 Bump staging to staging-42
+- 🔧 [RUM-6226] tweak rum-react dependencies ([#3054](https://github.com/DataDog/browser-sdk/pull/3054)) [RUM-REACT]
+- ♻️ Use registerCleanupTask for mock cleanups ([#3069](https://github.com/DataDog/browser-sdk/pull/3069)) [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+- ♻️ [RUM-5101] Use registerCleanupTask for interceptor cleanup ([#3065](https://github.com/DataDog/browser-sdk/pull/3065)) [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+- [RUM 5088] Reduce INP Null Target ([#2950](https://github.com/DataDog/browser-sdk/pull/2950)) [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+- ♻️ [RUM-5101] Use registerCleanupTask for fetch and report cleanups ([#3066](https://github.com/DataDog/browser-sdk/pull/3066)) [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+- ♻️ Use registerCleanupTask for zonejs cleanup ([#3060](https://github.com/DataDog/browser-sdk/pull/3060)) [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+
 ## v5.28.1
 
 **Public Changes:**
