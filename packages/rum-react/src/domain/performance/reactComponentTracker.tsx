@@ -93,8 +93,6 @@ export const ReactComponentTracker = ({
 
     const totalRenderTime = renderDuration + effectDuration + layoutEffectDuration
 
-    console.log('>>>', { totalRenderTime, addDurationVital })
-
     addDurationVital(`${componentName}`, {
       startTime: renderTimer.getStartTime(),
       duration: totalRenderTime,

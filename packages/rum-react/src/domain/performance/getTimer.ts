@@ -7,7 +7,7 @@ export function getTimer(name: string) {
 
   function startTimer() {
     const start = performance.mark(`${name}-${id}`)
-    startTime = start.startTime
+    startTime = performance.timeOrigin + start.startTime
   }
 
   function stopTimer() {
