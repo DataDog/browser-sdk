@@ -1,7 +1,7 @@
-import { generateUUID } from '@datadog/browser-core'
+import { v4 as uuid } from 'uuid'
 
 export function getTimer(name: string) {
-  const id = generateUUID()
+  const id = uuid()
   let measure: PerformanceMeasure
   let startTime: number
 
