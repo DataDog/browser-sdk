@@ -41,8 +41,8 @@ async function uploadAndPublish() {
     printLog('Uploading the archive')
     await api.uploadExisting(zipFile, token)
 
-    printLog('Publishing to trusted testers')
-    await api.publish('trustedTesters')
+    printLog('Publishing')
+    await api.publish()
   } catch (err) {
     const body = err?.response?.body
     if (body) {
