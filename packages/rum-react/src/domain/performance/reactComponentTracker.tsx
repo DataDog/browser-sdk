@@ -1,69 +1,10 @@
 import * as React from 'react'
 import { getTimer } from './getTimer'
 import { addDurationVital } from './addDurationVital'
-// import { count } from './count'
-
-// const SAFETY_BURST_DEBOUNCE_DELAY = 50 // ms
-
-// const useReactMountTracker = (
-//   _: string,
-//   context: object,
-//   {
-//     isEnabled = true,
-//     burstDebounce = 500,
-//   }: {
-//     isEnabled?: boolean
-//     burstDebounce?: number
-//   }
-// ) => {
-//   // useUserActionCounts(componentName, id, isEnabled)
-
-//   const burstTimeout = React.useRef<ReturnType<typeof setTimeout> | false>()
-//   const burstRenderCount = React.useRef(0)
-
-//   // we do this to guard against sending too many metrics
-//   const debounceDelay = Math.max(burstDebounce, SAFETY_BURST_DEBOUNCE_DELAY)
-//   burstRenderCount.current += 1
-//   if (burstTimeout.current) {
-//     clearTimeout(burstTimeout.current)
-//   }
-
-//   burstTimeout.current =
-//     isEnabled &&
-//     setTimeout(() => {
-//       burstTimeout.current = undefined
-//       // emit the amount of renders in a given burst
-//       count({
-//         name: 'react.burst_renders',
-//         value: burstRenderCount.current,
-//         context: {
-//           ...context,
-//           debounce: burstDebounce,
-//         },
-//       })
-//       burstRenderCount.current = 0
-//     }, debounceDelay)
-
-//   React.useEffect(() => {
-//     if (isEnabled) {
-//       count({ name: 'react.mount', context })
-//     }
-
-//     return () => {
-//       if (burstTimeout.current) {
-//         clearTimeout(burstTimeout.current)
-//       }
-//       burstTimeout.current = undefined
-//     }
-//     // FIXME: Update the dependency list to be exhaustive, and delete this comment.
-//   }, [])
-// }
 
 export const ReactComponentTracker = ({
   name: componentName,
-  //   context: contextProp,
   children,
-  //   burstDebounce = 500,
 }: {
   name: string
   context?: object
@@ -72,19 +13,9 @@ export const ReactComponentTracker = ({
 }) => {
   const isFirstRender = React.useRef(true)
 
-  //   const context = {
-  //     component: componentName,
-  //     isFirstRender: isFirstRender.current,
-  //     ...contextProp,
-  //   }
-
-  //   useReactMountRecorder(componentName, context, {
-  //     burstDebounce,
-  //   })
-
-  const renderTimer = getTimer('render')
-  const effectTimer = getTimer('effect')
-  const layoutEffectTimer = getTimer('layout effect')
+  const renderTimer = getTimer()
+  const effectTimer = getTimer()
+  const layoutEffectTimer = getTimer()
 
   const onEffectEnd = () => {
     const renderDuration = renderTimer.getDuration()
@@ -164,4 +95,3 @@ function LifeCycle({
   React.useEffect(onEffect)
   return null
 }
-//
