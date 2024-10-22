@@ -2,7 +2,7 @@ import { getTimer } from './getTimer'
 
 describe('getTimer', () => {
   it('is able to measure time', () => {
-    const timer = getTimer('test')
+    const timer = getTimer()
 
     timer.startTimer()
     setTimeout(() => {
