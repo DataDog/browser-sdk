@@ -104,6 +104,7 @@ function processRequest(
         duration,
         method: request.method,
         status_code: request.status,
+        request_protocol: request.protocol,
         url: isLongDataUrl(request.url) ? sanitizeDataUrl(request.url) : request.url,
       },
       type: RumEventType.RESOURCE as const,
@@ -152,6 +153,7 @@ function processResourceEntry(
         type,
         url: entry.name,
         status_code: discardZeroStatus(entry.responseStatus),
+        request_protocol: discardEmptyProtocol(entry.nextHopProtocol),
       },
       type: RumEventType.RESOURCE as const,
       _dd: {
@@ -231,4 +233,13 @@ function computeRequestDuration(pageStateHistory: PageStateHistory, startClocks:
  */
 function discardZeroStatus(statusCode: number | undefined): number | undefined {
   return statusCode === 0 ? undefined : statusCode
+}
+
+/**
+ * The 'nextHopProtocol' is an empty string for cross-origin resources without CORS headers,
+ * meaning the protocol is unknown, and we shouldn't report it.
+ * https://developer.mozilla.org/en-US/docs/Web/API/PerformanceResourceTiming/nextHopProtocol#cross-origin_resources
+ */
+function discardEmptyProtocol(requestProtocol: string | undefined): string | undefined {
+  return requestProtocol === '' ? undefined : requestProtocol
 }

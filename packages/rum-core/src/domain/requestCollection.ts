@@ -44,6 +44,7 @@ export interface RequestCompleteEvent {
   method: string
   url: string
   status: number
+  protocol?: string
   responseType?: string
   startClocks: ClocksState
   duration: Duration
