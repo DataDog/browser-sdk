@@ -80,7 +80,6 @@ describe('resourceCollection', () => {
         first_byte: jasmine.any(Object),
         status_code: 200,
         request_protocol: 'HTTP/1.0',
-
         render_blocking_status: 'blocking',
       },
       type: RumEventType.RESOURCE,
