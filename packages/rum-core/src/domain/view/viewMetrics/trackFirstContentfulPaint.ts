@@ -1,5 +1,5 @@
 import type { RelativeTime } from '@datadog/browser-core'
-import { ONE_MINUTE, find } from '@datadog/browser-core'
+import { ONE_MINUTE } from '@datadog/browser-core'
 import type { RumPerformancePaintTiming } from '../../../browser/performanceObservable'
 import { createPerformanceObservable, RumPerformanceEntryType } from '../../../browser/performanceObservable'
 import type { RumConfiguration } from '../../configuration'
@@ -18,8 +18,7 @@ export function trackFirstContentfulPaint(
     type: RumPerformanceEntryType.PAINT,
     buffered: true,
   }).subscribe((entries) => {
-    const fcpEntry = find(
-      entries,
+    const fcpEntry = entries.find(
       (entry): entry is RumPerformancePaintTiming =>
         entry.name === 'first-contentful-paint' &&
         entry.startTime < firstHidden.timeStamp &&
