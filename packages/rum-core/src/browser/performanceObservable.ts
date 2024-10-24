@@ -59,6 +59,7 @@ export interface RumPerformanceResourceTiming {
   decodedBodySize: number
   encodedBodySize: number
   transferSize: number
+  nextHopProtocol?: string
   renderBlockingStatus?: string
   traceId?: string
   toJSON(): Omit<PerformanceEntry, 'toJSON'>

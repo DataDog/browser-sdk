@@ -703,6 +703,10 @@ export type RumResourceEvent = CommonProperties &
         [k: string]: unknown
       }
       /**
+       * Network protocol used to fetch the resource (e.g., 'http/1.1', 'h2')
+       */
+      readonly protocol?: string
+      /**
        * The provider for this resource
        */
       readonly provider?: {

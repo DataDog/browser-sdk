@@ -48,6 +48,7 @@ export interface RawRumResourceEvent {
     ssl?: ResourceEntryDetailsElement
     first_byte?: ResourceEntryDetailsElement
     download?: ResourceEntryDetailsElement
+    protocol?: string
   }
   _dd: {
     trace_id?: string
