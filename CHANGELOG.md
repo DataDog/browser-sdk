@@ -18,6 +18,15 @@
 
 ---
 
+## v5.29.1
+
+**Internal Changes:**
+
+- 👷 CI - Enable yarn strategy on the repository ([#3079](https://github.com/DataDog/browser-sdk/pull/3079))
+- 👷 publish chrome extension to all users ([#3084](https://github.com/DataDog/browser-sdk/pull/3084))
+- 👷 CI - assign static resources for e2e-bs job ([#3080](https://github.com/DataDog/browser-sdk/pull/3080))
+- 👷 Enable reduced Session Replay data batch time limit ([#3088](https://github.com/DataDog/browser-sdk/pull/3088)) [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+
 ## v5.29.0
 
 **Public Changes:**
