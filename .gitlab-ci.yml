@@ -64,6 +64,8 @@ stages:
       - /^staging-[0-9]+$/
       - /^release\//
       - schedules
+    variables:
+      - $CI_COMMIT_REF_NAME == $NEXT_MAJOR_BRANCH
 
 .next-major-branch:
   only:
