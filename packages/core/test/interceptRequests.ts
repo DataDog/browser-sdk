@@ -1,8 +1,8 @@
 import type { EndpointBuilder } from '../src'
-import { INTAKE_TAGS, noop } from '../src'
+import { INTAKE_URL_PARAMETERS, noop } from '../src'
 import { mockXhr, MockXhr } from './emulate/mockXhr'
 
-const INTAKE_PARAMS = INTAKE_TAGS.join('&')
+const INTAKE_PARAMS = INTAKE_URL_PARAMETERS.join('&')
 
 export const SPEC_ENDPOINTS = {
   logsEndpointBuilder: mockEndpointBuilder(`https://mock.com/abcde?${INTAKE_PARAMS}`),

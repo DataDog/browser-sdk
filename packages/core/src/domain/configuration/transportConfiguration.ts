@@ -3,7 +3,7 @@ import type { InitConfiguration } from './configuration'
 import type { EndpointBuilder } from './endpointBuilder'
 import { createEndpointBuilder } from './endpointBuilder'
 import { buildTags } from './tags'
-import { INTAKE_SITE_US1, INTAKE_TAGS } from './intakeSites'
+import { INTAKE_SITE_US1, INTAKE_URL_PARAMETERS } from './intakeSites'
 
 export interface TransportConfiguration {
   logsEndpointBuilder: EndpointBuilder
@@ -67,5 +67,5 @@ function computeReplicaConfiguration(
 
 export function isIntakeUrl(url: string): boolean {
   // check if tags is present in the query string
-  return INTAKE_TAGS.every((param) => includes(url, param))
+  return INTAKE_URL_PARAMETERS.every((param) => includes(url, param))
 }

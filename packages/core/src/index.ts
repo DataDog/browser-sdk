@@ -11,7 +11,7 @@ export {
   INTAKE_SITE_US1,
   INTAKE_SITE_US1_FED,
   INTAKE_SITE_EU1,
-  INTAKE_TAGS,
+  INTAKE_URL_PARAMETERS,
   isIntakeUrl,
 } from './domain/configuration'
 export { TrackingConsent, TrackingConsentState, createTrackingConsentState } from './domain/trackingConsent'
