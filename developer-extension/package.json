@@ -1,6 +1,6 @@
 {
   "name": "@datadog/browser-sdk-developer-extension",
-  "version": "5.29.0",
+  "version": "5.29.1",
   "private": true,
   "scripts": {
     "build": "rm -rf dist && webpack --mode production",
