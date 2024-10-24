@@ -1,7 +1,5 @@
 import { type Duration, type RelativeTime, type ServerDuration } from '@datadog/browser-core'
 import { RumPerformanceEntryType, type RumPerformanceResourceTiming } from '../../browser/performanceObservable'
-import type { RumConfiguration } from '../configuration'
-import { mockRumConfiguration } from '../../../test'
 import {
   MAX_ATTRIBUTE_VALUE_CHAR_LENGTH,
   computeResourceEntryDetails,
@@ -274,22 +272,17 @@ describe('computeResourceEntryDuration', () => {
 })
 
 describe('shouldTrackResource', () => {
-  let configuration: RumConfiguration
-
-  beforeEach(() => {
-    configuration = mockRumConfiguration()
-  })
-
+  const intakeParameters = 'ddsource=browser&ddtags=sdk_version'
   it('should exclude requests on intakes endpoints', () => {
-    expect(isAllowedRequestUrl(configuration, 'https://rum-intake.com/v1/input/abcde?foo=bar')).toBe(false)
+    expect(isAllowedRequestUrl(`https://rum-intake.com/v1/input/abcde?${intakeParameters}`)).toBe(false)
   })
 
   it('should exclude requests on intakes endpoints with different client parameters', () => {
-    expect(isAllowedRequestUrl(configuration, 'https://rum-intake.com/v1/input/wxyz?foo=qux')).toBe(false)
+    expect(isAllowedRequestUrl(`https://rum-intake.com/v1/input/wxyz?${intakeParameters}`)).toBe(false)
   })
 
   it('should allow requests on non intake domains', () => {
-    expect(isAllowedRequestUrl(configuration, 'https://my-domain.com/hello?a=b')).toBe(true)
+    expect(isAllowedRequestUrl('https://my-domain.com/hello?a=b')).toBe(true)
   })
 })
 

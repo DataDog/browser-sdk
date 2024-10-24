@@ -12,8 +12,8 @@ import { RumPerformanceEntryType, createPerformanceObservable } from './performa
 
 describe('performanceObservable', () => {
   let performanceSubscription: Subscription | undefined
-  const configuration = mockRumConfiguration({ isIntakeUrl: (url: string) => url === forbiddenUrl })
-  const forbiddenUrl = 'https://forbidden.url'
+  const configuration = mockRumConfiguration()
+  const forbiddenUrl = 'https://forbidden.url/abce?ddsource=browser&ddtags=sdk_version'
   const allowedUrl = 'https://allowed.url'
   let observableCallback: jasmine.Spy
   let clock: Clock
@@ -43,7 +43,7 @@ describe('performanceObservable', () => {
       expect(observableCallback).toHaveBeenCalledWith([jasmine.objectContaining({ name: allowedUrl })])
     })
 
-    it('should not notify performance resources with forbidden url', () => {
+    it('should not notify performance resources with intake url', () => {
       const { notifyPerformanceEntries } = mockPerformanceObserver()
       const performanceResourceObservable = createPerformanceObservable(configuration, {
         type: RumPerformanceEntryType.RESOURCE,
