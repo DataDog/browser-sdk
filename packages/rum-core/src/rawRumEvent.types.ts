@@ -37,7 +37,6 @@ export interface RawRumResourceEvent {
     url: string
     method?: string
     status_code?: number
-    request_protocol?: string
     size?: number
     encoded_body_size?: number
     decoded_body_size?: number
@@ -49,6 +48,7 @@ export interface RawRumResourceEvent {
     ssl?: ResourceEntryDetailsElement
     first_byte?: ResourceEntryDetailsElement
     download?: ResourceEntryDetailsElement
+    protocol?: string
   }
   _dd: {
     trace_id?: string

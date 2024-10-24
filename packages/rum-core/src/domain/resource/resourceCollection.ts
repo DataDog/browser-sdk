@@ -104,7 +104,7 @@ function processRequest(
         duration,
         method: request.method,
         status_code: request.status,
-        request_protocol: request.protocol,
+        protocol: request.protocol,
         url: isLongDataUrl(request.url) ? sanitizeDataUrl(request.url) : request.url,
       },
       type: RumEventType.RESOURCE as const,
@@ -153,7 +153,7 @@ function processResourceEntry(
         type,
         url: entry.name,
         status_code: discardZeroStatus(entry.responseStatus),
-        request_protocol: discardEmptyProtocol(entry.nextHopProtocol),
+        protocol: discardEmptyProtocol(entry.nextHopProtocol),
       },
       type: RumEventType.RESOURCE as const,
       _dd: {
