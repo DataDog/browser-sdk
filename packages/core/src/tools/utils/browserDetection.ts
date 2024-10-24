@@ -1,13 +1,8 @@
 // Exported only for tests
 export const enum Browser {
-  IE,
   CHROMIUM,
   SAFARI,
   OTHER,
-}
-
-export function isIE() {
-  return detectBrowserCached() === Browser.IE
 }
 
 export function isChromium() {
@@ -38,10 +33,6 @@ export function detectBrowser(browserWindow: Window = window) {
     (/safari/i.test(userAgent) && !/chrome|android/i.test(userAgent))
   ) {
     return Browser.SAFARI
-  }
-
-  if ((browserWindow.document as any).documentMode) {
-    return Browser.IE
   }
 
   return Browser.OTHER

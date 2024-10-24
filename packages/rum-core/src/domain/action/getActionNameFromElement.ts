@@ -1,5 +1,4 @@
-import { safeTruncate, isIE, find } from '@datadog/browser-core'
-import { getParentElement } from '../../browser/polyfills'
+import { safeTruncate } from '@datadog/browser-core'
 import { NodePrivacyLevel, getPrivacySelector } from '../privacy'
 import type { RumConfiguration } from '../configuration'
 
@@ -47,23 +46,9 @@ export function getActionNameFromElement(
 }
 
 function getActionNameFromElementProgrammatically(targetElement: Element, programmaticAttribute: string) {
-  let elementWithAttribute
   // We don't use getActionNameFromElementForStrategies here, because we want to consider all parents,
   // without limit. It is up to the user to declare a relevant naming strategy.
-  // If available, use element.closest() to match get the attribute from the element or any of its
-  // parent.  Else fallback to a more traditional implementation.
-  if (supportsElementClosest()) {
-    elementWithAttribute = targetElement.closest(`[${programmaticAttribute}]`)
-  } else {
-    let element: Element | null = targetElement
-    while (element) {
-      if (element.hasAttribute(programmaticAttribute)) {
-        elementWithAttribute = element
-        break
-      }
-      element = getParentElement(element)
-    }
-  }
+  const elementWithAttribute = targetElement.closest(`[${programmaticAttribute}]`)
 
   if (!elementWithAttribute) {
     return
@@ -80,18 +65,9 @@ type NameStrategy = (
 
 const priorityStrategies: NameStrategy[] = [
   // associated LABEL text
-  (element, userProgrammaticAttribute, privacy) => {
-    // IE does not support element.labels, so we fallback to a CSS selector based on the element id
-    // instead
-    if (supportsLabelProperty()) {
-      if ('labels' in element && element.labels && element.labels.length > 0) {
-        return getTextualContent(element.labels[0], userProgrammaticAttribute)
-      }
-    } else if (element.id) {
-      const label =
-        element.ownerDocument &&
-        find(element.ownerDocument.querySelectorAll('label'), (label) => label.htmlFor === element.id)
-      return label && getTextualContent(label, userProgrammaticAttribute, privacy)
+  (element, userProgrammaticAttribute) => {
+    if ('labels' in element && element.labels && element.labels.length > 0) {
+      return getTextualContent(element.labels[0], userProgrammaticAttribute)
     }
   },
   // INPUT button (and associated) value
@@ -174,7 +150,7 @@ function getActionNameFromElementForStrategies(
     if (element.nodeName === 'FORM') {
       break
     }
-    element = getParentElement(element)
+    element = element.parentElement
     recursionCounter += 1
   }
 }
@@ -218,12 +194,6 @@ function getTextualContent(
       }
     }
 
-    if (!supportsInnerTextScriptAndStyleRemoval()) {
-      // remove the inner text of SCRIPT and STYLES from the result. This is a bit dirty, but should
-      // be relatively fast and work in most cases.
-      removeTextFromElements('script, style')
-    }
-
     // remove the text of elements with programmatic attribute value
     removeTextFromElements(`[${DEFAULT_PROGRAMMATIC_ACTION_NAME_ATTRIBUTE}]`)
 
@@ -242,53 +212,4 @@ function getTextualContent(
   }
 
   return element.textContent
-}
-
-/**
- * Returns true if element.innerText excludes the text from inline SCRIPT and STYLE element. This
- * should be the case everywhere except on Internet Explorer 10 and 11 (see [1])
- *
- * The innerText property relies on what is actually rendered to compute its output, so to check if
- * it actually excludes SCRIPT and STYLE content, a solution would be to create a style element, set
- * its content to '*', inject it in the document body, and check if the style element innerText
- * property returns '*'. Using a new `document` instance won't work as it is not rendered.
- *
- * This solution requires specific CSP rules (see [2]) to be set by the customer. We want to avoid
- * this, so instead we rely on browser detection. In case of false negative, the impact should be
- * low, since we rely on this result to remove the SCRIPT and STYLE innerText (which will be empty)
- * from a parent element innerText.
- *
- * [1]: https://web.archive.org/web/20210602165716/http://perfectionkills.com/the-poor-misunderstood-innerText/#diff-with-textContent
- * [2]: https://github.com/DataDog/browser-sdk/issues/1084
- */
-function supportsInnerTextScriptAndStyleRemoval() {
-  return !isIE()
-}
-
-/**
- * Returns true if the browser supports the element.labels property.  This should be the case
- * everywhere except on Internet Explorer.
- * Note: The result is computed lazily, because we don't want any DOM access when the SDK is
- * evaluated.
- */
-let supportsLabelPropertyResult: boolean | undefined
-function supportsLabelProperty() {
-  if (supportsLabelPropertyResult === undefined) {
-    supportsLabelPropertyResult = 'labels' in HTMLInputElement.prototype
-  }
-  return supportsLabelPropertyResult
-}
-
-/**
- * Returns true if the browser supports the element.closest method.  This should be the case
- * everywhere except on Internet Explorer.
- * Note: The result is computed lazily, because we don't want any DOM access when the SDK is
- * evaluated.
- */
-let supportsElementClosestResult: boolean | undefined
-function supportsElementClosest() {
-  if (supportsElementClosestResult === undefined) {
-    supportsElementClosestResult = 'closest' in HTMLElement.prototype
-  }
-  return supportsElementClosestResult
 }

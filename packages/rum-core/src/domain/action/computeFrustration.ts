@@ -1,6 +1,5 @@
 import { ONE_SECOND } from '@datadog/browser-core'
 import { FrustrationType } from '../../rawRumEvent.types'
-import { elementMatches } from '../../browser/polyfills'
 import type { Click } from './trackClickActions'
 
 const MIN_CLICKS_PER_SECOND_TO_CONSIDER_RAGE = 3
@@ -68,5 +67,5 @@ export function isDead(click: Click) {
   if (click.hasPageActivity || click.getUserActivity().input || click.getUserActivity().scroll) {
     return false
   }
-  return !elementMatches(click.event.target, DEAD_CLICK_EXCLUDE_SELECTOR)
+  return !click.event.target.matches(DEAD_CLICK_EXCLUDE_SELECTOR)
 }
