@@ -1,15 +1,14 @@
-import { objectValues, assign } from '../../tools/utils/polyfills'
+import { assign, includes } from '../../tools/utils/polyfills'
 import type { InitConfiguration } from './configuration'
 import type { EndpointBuilder } from './endpointBuilder'
 import { createEndpointBuilder } from './endpointBuilder'
 import { buildTags } from './tags'
-import { INTAKE_SITE_US1, PCI_INTAKE_HOST_US1 } from './intakeSites'
+import { INTAKE_SITE_US1, INTAKE_URL_PARAMETERS } from './intakeSites'
 
 export interface TransportConfiguration {
   logsEndpointBuilder: EndpointBuilder
   rumEndpointBuilder: EndpointBuilder
   sessionReplayEndpointBuilder: EndpointBuilder
-  isIntakeUrl: (url: string) => boolean
   replica?: ReplicaConfiguration
   site: string
 }
@@ -26,13 +25,10 @@ export function computeTransportConfiguration(initConfiguration: InitConfigurati
   const tags = buildTags(initConfiguration)
 
   const endpointBuilders = computeEndpointBuilders(initConfiguration, tags)
-  const intakeUrlPrefixes = computeIntakeUrlPrefixes(endpointBuilders, site)
-
-  const replicaConfiguration = computeReplicaConfiguration(initConfiguration, intakeUrlPrefixes, tags)
+  const replicaConfiguration = computeReplicaConfiguration(initConfiguration, tags)
 
   return assign(
     {
-      isIntakeUrl: (url: string) => intakeUrlPrefixes.some((intakeEndpoint) => url.indexOf(intakeEndpoint) === 0),
       replica: replicaConfiguration,
       site,
     },
@@ -50,7 +46,6 @@ function computeEndpointBuilders(initConfiguration: InitConfiguration, tags: str
 
 function computeReplicaConfiguration(
   initConfiguration: InitConfiguration,
-  intakeUrlPrefixes: string[],
   tags: string[]
 ): ReplicaConfiguration | undefined {
   if (!initConfiguration.replica) {
@@ -67,20 +62,10 @@ function computeReplicaConfiguration(
     rumEndpointBuilder: createEndpointBuilder(replicaConfiguration, 'rum', tags),
   }
 
-  intakeUrlPrefixes.push(...objectValues(replicaEndpointBuilders).map((builder) => builder.urlPrefix))
-
   return assign({ applicationId: initConfiguration.replica.applicationId }, replicaEndpointBuilders)
 }
 
-function computeIntakeUrlPrefixes(
-  endpointBuilders: ReturnType<typeof computeEndpointBuilders>,
-  site: string
-): string[] {
-  const intakeUrlPrefixes = objectValues(endpointBuilders).map((builder) => builder.urlPrefix)
-
-  if (site === INTAKE_SITE_US1) {
-    intakeUrlPrefixes.push(`https://${PCI_INTAKE_HOST_US1}/`)
-  }
-
-  return intakeUrlPrefixes
+export function isIntakeUrl(url: string): boolean {
+  // check if tags is present in the query string
+  return INTAKE_URL_PARAMETERS.every((param) => includes(url, param))
 }

@@ -7,12 +7,12 @@ import {
   isValidUrl,
   ResourceType,
   toServerDuration,
+  isIntakeUrl,
 } from '@datadog/browser-core'
 
 import type { RumPerformanceResourceTiming } from '../../browser/performanceObservable'
 
 import type { ResourceEntryDetailsElement } from '../../rawRumEvent.types'
-import type { RumConfiguration } from '../configuration'
 
 export interface ResourceEntryDetails {
   redirect?: ResourceEntryDetailsElement
@@ -205,8 +205,8 @@ export function computeResourceEntrySize(entry: RumPerformanceResourceTiming) {
   }
 }
 
-export function isAllowedRequestUrl(configuration: RumConfiguration, url: string) {
-  return url && !configuration.isIntakeUrl(url)
+export function isAllowedRequestUrl(url: string) {
+  return url && !isIntakeUrl(url)
 }
 
 const DATA_URL_REGEX = /data:(.+)?(;base64)?,/g
