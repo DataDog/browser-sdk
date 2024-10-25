@@ -176,6 +176,15 @@ function formatTiming(origin: RelativeTime, start: RelativeTime, end: RelativeTi
   }
 }
 
+/**
+ * The 'nextHopProtocol' is an empty string for cross-origin resources without CORS headers,
+ * meaning the protocol is unknown, and we shouldn't report it.
+ * https://developer.mozilla.org/en-US/docs/Web/API/PerformanceResourceTiming/nextHopProtocol#cross-origin_resources
+ */
+export function computeResourceEntryProtocol(entry: RumPerformanceResourceTiming) {
+  return entry.nextHopProtocol === '' ? undefined : entry.nextHopProtocol
+}
+
 export function computeResourceEntrySize(entry: RumPerformanceResourceTiming) {
   // Make sure a request actually occurred
   if (entry.startTime < entry.responseStart) {
