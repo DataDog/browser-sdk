@@ -1,4 +1,4 @@
-import { objectValues, assign } from '../../tools/utils/polyfills'
+import { objectValues } from '../../tools/utils/polyfills'
 import type { InitConfiguration } from './configuration'
 import type { EndpointBuilder } from './endpointBuilder'
 import { createEndpointBuilder } from './endpointBuilder'
@@ -30,14 +30,12 @@ export function computeTransportConfiguration(initConfiguration: InitConfigurati
 
   const replicaConfiguration = computeReplicaConfiguration(initConfiguration, intakeUrlPrefixes, tags)
 
-  return assign(
-    {
-      isIntakeUrl: (url: string) => intakeUrlPrefixes.some((intakeEndpoint) => url.indexOf(intakeEndpoint) === 0),
-      replica: replicaConfiguration,
-      site,
-    },
-    endpointBuilders
-  )
+  return {
+    isIntakeUrl: (url: string) => intakeUrlPrefixes.some((intakeEndpoint) => url.indexOf(intakeEndpoint) === 0),
+    replica: replicaConfiguration,
+    site,
+    ...endpointBuilders,
+  }
 }
 
 function computeEndpointBuilders(initConfiguration: InitConfiguration, tags: string[]) {
@@ -57,10 +55,11 @@ function computeReplicaConfiguration(
     return
   }
 
-  const replicaConfiguration: InitConfiguration = assign({}, initConfiguration, {
+  const replicaConfiguration: InitConfiguration = {
+    ...initConfiguration,
     site: INTAKE_SITE_US1,
     clientToken: initConfiguration.replica.clientToken,
-  })
+  }
 
   const replicaEndpointBuilders = {
     logsEndpointBuilder: createEndpointBuilder(replicaConfiguration, 'logs', tags),
@@ -69,7 +68,10 @@ function computeReplicaConfiguration(
 
   intakeUrlPrefixes.push(...objectValues(replicaEndpointBuilders).map((builder) => builder.urlPrefix))
 
-  return assign({ applicationId: initConfiguration.replica.applicationId }, replicaEndpointBuilders)
+  return {
+    applicationId: initConfiguration.replica.applicationId,
+    ...replicaEndpointBuilders,
+  }
 }
 
 function computeIntakeUrlPrefixes(

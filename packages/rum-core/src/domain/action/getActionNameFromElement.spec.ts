@@ -269,7 +269,7 @@ describe('getActionNameFromElement', () => {
     expect(name).toBe('foo')
   })
 
-  it('computes an action name on SVG elements (IE does not support parentElement property on them)', () => {
+  it('computes an action name on SVG elements', () => {
     const name = getActionNameFromElement(
       appendElement(`
        <button>

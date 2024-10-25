@@ -1,5 +1,5 @@
 import type { Duration, RelativeTime, ServerDuration, TimeStamp } from '@datadog/browser-core'
-import { isIE, noop, RequestType, ResourceType } from '@datadog/browser-core'
+import { noop, RequestType, ResourceType } from '@datadog/browser-core'
 import { registerCleanupTask } from '@datadog/browser-core/test'
 import type { RumFetchResourceEventDomainContext, RumXhrResourceEventDomainContext } from '../../domainContext.types'
 import {
@@ -202,9 +202,6 @@ describe('resourceCollection', () => {
   })
 
   it('should create resource from completed fetch request', () => {
-    if (isIE()) {
-      pending('No IE support')
-    }
     setupResourceCollection()
     const response = new Response()
     lifeCycle.notify(
@@ -255,9 +252,6 @@ describe('resourceCollection', () => {
     it(`should support ${
       typeof input === 'object' ? JSON.stringify(input) : String(input)
     } as fetch input parameter`, () => {
-      if (isIE()) {
-        pending('No IE support')
-      }
       setupResourceCollection()
       lifeCycle.notify(
         LifeCycleEventType.REQUEST_COMPLETED,
@@ -392,10 +386,6 @@ describe('resourceCollection', () => {
   })
 
   it('should collect handlingStack from completed fetch request', () => {
-    if (isIE()) {
-      pending('No IE support')
-    }
-
     setupResourceCollection()
     const response = new Response()
     lifeCycle.notify(LifeCycleEventType.REQUEST_COMPLETED, createCompletedRequest({ response }))
