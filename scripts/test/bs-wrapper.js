@@ -54,7 +54,6 @@ function runTests() {
     })
 
     let output = ''
-    let isKilled = false
     let timeoutId
 
     child.stdout.pipe(process.stdout)
@@ -63,27 +62,25 @@ function runTests() {
     child.stderr.pipe(process.stderr)
     child.stderr.on('data', onOutput)
 
-    child.on('exit', (code) => {
-      resolve(!isKilled && code === 0)
+    child.on('exit', (code, signal) => {
+      resolve(!signal && code === 0)
     })
 
     function onOutput(data) {
       output += data
 
+      clearTimeout(timeoutId)
+
       if (hasUnrecoverableFailure(output)) {
         killIt('unrecoverable failure')
+      } else {
+        timeoutId = setTimeout(() => killIt('no output timeout'), NO_OUTPUT_TIMEOUT)
       }
-
-      clearTimeout(timeoutId)
-      setTimeout(() => killIt('no output timeout'), NO_OUTPUT_TIMEOUT)
     }
 
     function killIt(message) {
-      if (!isKilled) {
-        printError(`Killing the browserstack job because of ${message}`)
-        isKilled = true
-        child.kill('SIGTERM')
-      }
+      printError(`Killing the browserstack job because of ${message}`)
+      child.kill('SIGTERM')
     }
   })
 }
