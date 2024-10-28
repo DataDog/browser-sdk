@@ -12,8 +12,6 @@ import type {
 } from '@datadog/browser-core'
 import {
   addTelemetryUsage,
-  isExperimentalFeatureEnabled,
-  ExperimentalFeature,
   CustomerDataType,
   assign,
   createContextManager,
@@ -342,7 +340,7 @@ export interface Strategy {
   stopSession: StartRumResult['stopSession']
   addTiming: StartRumResult['addTiming']
   startView: StartRumResult['startView']
-  updateViewName: StartRumResult['updateViewName']
+  setViewName: StartRumResult['setViewName']
   setViewContext: StartRumResult['setViewContext']
   setViewContextProperty: StartRumResult['setViewContextProperty']
   addAction: StartRumResult['addAction']
@@ -429,18 +427,16 @@ export function makeRumPublicApi(
       strategy.init(initConfiguration, rumPublicApi)
 
       // Add experimental features here
-      if (isExperimentalFeatureEnabled(ExperimentalFeature.UPDATE_VIEW_NAME)) {
-        /**
-         * Update View Name.
-         *
-         * Enable to manually change the name of the current view.
-         * @param name name of the view
-         * See [Override default RUM view names](https://docs.datadoghq.com/real_user_monitoring/browser/advanced_configuration/#override-default-rum-view-names) for further information.
-         */
-        ;(rumPublicApi as any).updateViewName = monitor((name: string) => {
-          strategy.updateViewName(name)
-        })
-      }
+      /**
+       * Update View Name.
+       *
+       * Enable to manually change the name of the current view.
+       * @param name name of the view
+       * See [Override default RUM view names](https://docs.datadoghq.com/real_user_monitoring/browser/advanced_configuration/#override-default-rum-view-names) for further information.
+       */
+      ;(rumPublicApi as any).setViewName = monitor((name: string) => {
+        strategy.setViewName(name)
+      })
     }),
 
     setTrackingConsent: monitor((trackingConsent) => {

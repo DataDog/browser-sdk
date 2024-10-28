@@ -192,8 +192,8 @@ export function createPreStartStrategy(
       }
     },
 
-    updateViewName(name) {
-      bufferApiCalls.add((startRumResult) => startRumResult.updateViewName(name))
+    setViewName(name) {
+      bufferApiCalls.add((startRumResult) => startRumResult.setViewName(name))
     },
 
     setViewContext(context) {

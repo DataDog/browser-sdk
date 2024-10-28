@@ -1,6 +1,5 @@
 import type { RelativeTime, Context, DeflateWorker, CustomerDataTrackerManager, TimeStamp } from '@datadog/browser-core'
 import {
-  ExperimentalFeature,
   ONE_SECOND,
   display,
   DefaultPrivacyLevel,
@@ -9,7 +8,7 @@ import {
   timeStampToClocks,
 } from '@datadog/browser-core'
 import type { Clock } from '@datadog/browser-core/test'
-import { mockClock, mockExperimentalFeatures, registerCleanupTask } from '@datadog/browser-core/test'
+import { mockClock, registerCleanupTask } from '@datadog/browser-core/test'
 import { noopRecorderApi } from '../../test'
 import { ActionType, VitalType } from '../rawRumEvent.types'
 import type { DurationVitalReference } from '../domain/vital/vitalCollection'
@@ -25,7 +24,7 @@ const noopStartRum = (): ReturnType<StartRum> => ({
   startView: () => undefined,
   setViewContext: () => undefined,
   setViewContextProperty: () => undefined,
-  updateViewName: () => undefined,
+  setViewName: () => undefined,
   getInternalContext: () => undefined,
   lifeCycle: {} as any,
   viewHistory: {} as any,
@@ -836,34 +835,27 @@ describe('rum public api', () => {
     expect(rumPublicApi.version).toBe('test')
   })
 
-  describe('updateViewName', () => {
-    let updateViewNameSpy: jasmine.Spy<ReturnType<StartRum>['updateViewName']>
+  describe('setViewName', () => {
+    let setViewNameSpy: jasmine.Spy<ReturnType<StartRum>['setViewName']>
     let rumPublicApi: RumPublicApi
 
     beforeEach(() => {
-      updateViewNameSpy = jasmine.createSpy()
+      setViewNameSpy = jasmine.createSpy()
       rumPublicApi = makeRumPublicApi(
         () => ({
           ...noopStartRum(),
-          updateViewName: updateViewNameSpy,
+          setViewName: setViewNameSpy,
         }),
         noopRecorderApi
       )
     })
 
-    it('should not expose update view name api when ff is disabled', () => {
-      const rumPublicApi = makeRumPublicApi(noopStartRum, noopRecorderApi)
-      rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
-      expect((rumPublicApi as any).updateViewName).toBeUndefined()
-    })
-
     it('should update the view name', () => {
-      mockExperimentalFeatures([ExperimentalFeature.UPDATE_VIEW_NAME])
       rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
       // eslint-disable-next-line @typescript-eslint/no-unsafe-call
-      ;(rumPublicApi as any).updateViewName('foo')
+      ;(rumPublicApi as any).setViewName('foo')
 
-      expect(updateViewNameSpy).toHaveBeenCalledWith('foo')
+      expect(setViewNameSpy).toHaveBeenCalledWith('foo')
     })
   })
 
