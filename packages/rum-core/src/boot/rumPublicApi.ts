@@ -75,6 +75,15 @@ export interface RumPublicApi extends PublicApi {
   setTrackingConsent: (trackingConsent: TrackingConsent) => void
 
   /**
+   * Update View Name.
+   *
+   * Enable to manually change the name of the current view.
+   * @param name name of the view
+   * See [Override default RUM view names](https://docs.datadoghq.com/real_user_monitoring/browser/advanced_configuration/#override-default-rum-view-names) for further information.
+   */
+  setViewName: (name: string) => void
+
+  /**
    * Set View Context.
    *
    * Enable to manually set the context of the current view.
@@ -425,23 +434,15 @@ export function makeRumPublicApi(
   const rumPublicApi: RumPublicApi = makePublicApi<RumPublicApi>({
     init: monitor((initConfiguration) => {
       strategy.init(initConfiguration, rumPublicApi)
-
-      // Add experimental features here
-      /**
-       * Update View Name.
-       *
-       * Enable to manually change the name of the current view.
-       * @param name name of the view
-       * See [Override default RUM view names](https://docs.datadoghq.com/real_user_monitoring/browser/advanced_configuration/#override-default-rum-view-names) for further information.
-       */
-      ;(rumPublicApi as any).setViewName = monitor((name: string) => {
-        strategy.setViewName(name)
-      })
     }),
 
     setTrackingConsent: monitor((trackingConsent) => {
       trackingConsentState.update(trackingConsent)
       addTelemetryUsage({ feature: 'set-tracking-consent', tracking_consent: trackingConsent })
+    }),
+
+    setViewName: monitor((name: string) => {
+      strategy.setViewName(name)
     }),
 
     setViewContext: monitor((context: Context) => {

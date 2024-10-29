@@ -852,8 +852,7 @@ describe('rum public api', () => {
 
     it('should update the view name', () => {
       rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-call
-      ;(rumPublicApi as any).setViewName('foo')
+      rumPublicApi.setViewName('foo')
 
       expect(setViewNameSpy).toHaveBeenCalledWith('foo')
     })

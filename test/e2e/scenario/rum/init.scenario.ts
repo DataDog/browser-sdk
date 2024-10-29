@@ -89,8 +89,7 @@ describe('API calls and events around init', () => {
         window.DD_RUM!.addError('after manual view')
         window.DD_RUM!.addAction('after manual view')
         window.DD_RUM!.addTiming('after manual view')
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-call
-        ;(window.DD_RUM as any).setViewName('after manual view')
+        window.DD_RUM!.setViewName('after manual view')
       }, 40)
     })
     .run(async ({ intakeRegistry }) => {
