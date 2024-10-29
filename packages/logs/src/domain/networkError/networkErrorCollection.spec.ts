@@ -92,7 +92,7 @@ describe('network error collection', () => {
 
   it('should not track intake error', (done) => {
     startCollection()
-    fetch('https://logs-intake.com/v1/input/send?foo=bar').resolveWith(DEFAULT_REQUEST)
+    fetch('https://logs-intake.com/v1/input/send?ddsource=browser&ddtags=sdk_version').resolveWith(DEFAULT_REQUEST)
 
     mockFetchManager.whenAllComplete(() => {
       expect(rawLogsEvents.length).toEqual(0)

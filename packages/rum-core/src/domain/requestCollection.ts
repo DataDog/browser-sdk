@@ -68,13 +68,13 @@ export function startRequestCollection(
 ) {
   const tracer = startTracer(configuration, sessionManager)
   trackXhr(lifeCycle, configuration, tracer)
-  trackFetch(lifeCycle, configuration, tracer)
+  trackFetch(lifeCycle, tracer)
 }
 
 export function trackXhr(lifeCycle: LifeCycle, configuration: RumConfiguration, tracer: Tracer) {
   const subscription = initXhrObservable(configuration).subscribe((rawContext) => {
     const context = rawContext as RumXhrStartContext | RumXhrCompleteContext
-    if (!isAllowedRequestUrl(configuration, context.url)) {
+    if (!isAllowedRequestUrl(context.url)) {
       return
     }
 
@@ -112,10 +112,10 @@ export function trackXhr(lifeCycle: LifeCycle, configuration: RumConfiguration, 
   return { stop: () => subscription.unsubscribe() }
 }
 
-export function trackFetch(lifeCycle: LifeCycle, configuration: RumConfiguration, tracer: Tracer) {
+export function trackFetch(lifeCycle: LifeCycle, tracer: Tracer) {
   const subscription = initFetchObservable().subscribe((rawContext) => {
     const context = rawContext as RumFetchResolveContext | RumFetchStartContext
-    if (!isAllowedRequestUrl(configuration, context.url)) {
+    if (!isAllowedRequestUrl(context.url)) {
       return
     }
 
