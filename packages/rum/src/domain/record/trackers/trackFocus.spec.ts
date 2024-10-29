@@ -1,4 +1,4 @@
-import { DefaultPrivacyLevel, isIE } from '@datadog/browser-core'
+import { DefaultPrivacyLevel } from '@datadog/browser-core'
 import { createNewEvent, registerCleanupTask } from '@datadog/browser-core/test'
 import type { RumConfiguration } from '@datadog/browser-rum-core'
 import { RecordType } from '../../../types'
@@ -11,9 +11,6 @@ describe('trackFocus', () => {
   let configuration: RumConfiguration
 
   beforeEach(() => {
-    if (isIE()) {
-      pending('IE not supported')
-    }
     configuration = { defaultPrivacyLevel: DefaultPrivacyLevel.ALLOW } as RumConfiguration
     focusCallback = jasmine.createSpy()
     focusTracker = trackFocus(configuration, focusCallback)
