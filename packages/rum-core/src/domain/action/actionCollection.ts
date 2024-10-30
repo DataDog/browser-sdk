@@ -83,6 +83,7 @@ function processAction(
           action: {
             target: action.target,
             position: action.position,
+            name_source: action.namingSource,
           },
         },
       }

@@ -114,6 +114,7 @@ describe('trackClickActions', () => {
         duration: BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY as Duration,
         id: jasmine.any(String),
         name: 'Click me',
+        namingSource: 'standard_attribute',
         startClocks: {
           relative: addDuration(pointerDownClocks.relative, EMULATED_CLICK_DURATION),
           timeStamp: addDuration(pointerDownClocks.timeStamp, EMULATED_CLICK_DURATION),

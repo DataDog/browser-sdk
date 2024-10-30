@@ -40,6 +40,7 @@ describe('actionCollection', () => {
       duration: 100 as Duration,
       id: 'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee',
       name: 'foo',
+      namingSource: 'text_content',
       startClocks: { relative: 1234 as RelativeTime, timeStamp: 123456789 as TimeStamp },
       type: ActionType.CLICK,
       event,
@@ -86,6 +87,7 @@ describe('actionCollection', () => {
             width: 1,
             height: 2,
           },
+          name_source: 'text_content',
           position: {
             x: 1,
             y: 2,
@@ -136,6 +138,7 @@ describe('actionCollection', () => {
       frustrationTypes: [],
       id: 'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee',
       name: 'foo',
+      namingSource: 'text_content',
       startClocks: { relative: 0 as RelativeTime, timeStamp: 0 as TimeStamp },
       type: ActionType.CLICK,
     })

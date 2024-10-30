@@ -49,6 +49,7 @@ describe('action collection', () => {
                 width: jasmine.any(Number),
                 height: jasmine.any(Number),
               }),
+              name_source: 'standard_attribute',
               position: {
                 x: jasmine.any(Number),
                 y: jasmine.any(Number),
