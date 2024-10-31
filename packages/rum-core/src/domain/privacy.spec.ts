@@ -176,6 +176,11 @@ describe('getNodeSelfPrivacyLevel', () => {
       expected: NodePrivacyLevel.MASK,
     },
     {
+      msg: 'is an "input" element and has an autocomplete attribute ending with "-password" (forced override)',
+      html: '<input type="text" class="dd-privacy-allow" autocomplete="foo-password">',
+      expected: NodePrivacyLevel.MASK,
+    },
+    {
       msg: 'is an "input" element and has an autocomplete attribute not starting with "cc-"',
       html: '<input type="text" autocomplete="email">',
       expected: undefined,
