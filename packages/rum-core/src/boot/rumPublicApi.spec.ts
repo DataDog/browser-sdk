@@ -850,7 +850,7 @@ describe('rum public api', () => {
       )
     })
 
-    it('should update the view name', () => {
+    it('should set the view name', () => {
       rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
       rumPublicApi.setViewName('foo')
 

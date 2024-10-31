@@ -935,7 +935,7 @@ describe('view event count', () => {
   })
 
   describe('set view name', () => {
-    it('should update an undefined view name', () => {
+    it('should set an undefined view name', () => {
       viewTest = setupViewTest({ lifeCycle })
 
       const { getViewUpdate, startView, setViewName } = viewTest
