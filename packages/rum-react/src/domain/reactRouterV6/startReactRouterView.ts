@@ -20,10 +20,12 @@ export function computeViewName(routeMatches: RouteMatch[]) {
   let viewName = '/'
 
   for (const routeMatch of routeMatches) {
-    const path = routeMatch.route.path
+    let path = routeMatch.route.path
     if (!path) {
       continue
     }
+
+    path = substitutePathWildcards(path, routeMatch.params, routeMatch === routeMatches[routeMatches.length - 1])
 
     if (path.startsWith('/')) {
       // Absolute path, replace the current view name
@@ -33,13 +35,27 @@ export function computeViewName(routeMatches: RouteMatch[]) {
       if (!viewName.endsWith('/')) {
         viewName += '/'
       }
-      if (path === '*') {
-        viewName += routeMatch.params['*']!
-      } else {
-        viewName += path
-      }
+      viewName += path
     }
   }
 
   return viewName
+}
+
+function substitutePathWildcards(
+  path: string,
+  params: Record<string, string | undefined>,
+  isLastMatchingRoute: boolean
+) {
+  if (!path.includes('*') || !params['*']) {
+    return path
+  }
+
+  if (isLastMatchingRoute) {
+    // Only replace the asterisk for the last matching route
+    return path.replace(/\*/, params['*'])
+  }
+
+  // Else remove the asterisk (and a potential slash preceding it)
+  return path.replace(/\/?\*/, '')
 }
