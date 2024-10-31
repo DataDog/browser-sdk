@@ -75,7 +75,7 @@ export interface RumPublicApi extends PublicApi {
   setTrackingConsent: (trackingConsent: TrackingConsent) => void
 
   /**
-   * Update View Name.
+   * Set View Name.
    *
    * Enable to manually change the name of the current view.
    * @param name name of the view

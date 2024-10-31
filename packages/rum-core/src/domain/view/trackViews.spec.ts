@@ -934,7 +934,7 @@ describe('view event count', () => {
     })
   })
 
-  describe('update view name', () => {
+  describe('set view name', () => {
     it('should update an undefined view name', () => {
       viewTest = setupViewTest({ lifeCycle })
 
@@ -945,7 +945,7 @@ describe('view event count', () => {
       expect(getViewUpdate(3).name).toEqual('foo')
     })
 
-    it('should update a defined view name if the experimental feature is enabled', () => {
+    it('should set a defined view name', () => {
       viewTest = setupViewTest({ lifeCycle })
 
       const { getViewUpdate, startView, setViewName } = viewTest
@@ -953,16 +953,6 @@ describe('view event count', () => {
       startView({ name: 'initial view name' })
       setViewName('foo')
       expect(getViewUpdate(3).name).toEqual('foo')
-    })
-
-    it('should not update a defined view name if the experimental feature is not enabled', () => {
-      viewTest = setupViewTest({ lifeCycle })
-
-      const { getViewUpdate, startView, setViewName } = viewTest
-
-      startView({ name: 'initial view name' })
-      setViewName('foo')
-      expect(getViewUpdate(2).name).toEqual('initial view name')
     })
   })
 })
