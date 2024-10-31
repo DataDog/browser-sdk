@@ -115,11 +115,8 @@ export function getNodeSelfPrivacyLevel(node: Node): NodePrivacyLevel | undefine
       return NodePrivacyLevel.MASK
     }
     const autocomplete = inputElement.getAttribute('autocomplete')
-      // Handle input[autocomplete=cc-number/cc-csc/cc-exp/cc-exp-month/cc-exp-year/new-password/current-password]
-    if (autocomplete && (
-      autocomplete.startsWith('cc-') ||
-      autocomplete.endsWith('-password')
-    )) {
+    // Handle input[autocomplete=cc-number/cc-csc/cc-exp/cc-exp-month/cc-exp-year/new-password/current-password]
+    if (autocomplete && (autocomplete.startsWith('cc-') || autocomplete.endsWith('-password'))) {
       return NodePrivacyLevel.MASK
     }
   }
