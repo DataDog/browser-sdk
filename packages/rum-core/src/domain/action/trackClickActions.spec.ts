@@ -17,8 +17,9 @@ import { PAGE_ACTIVITY_VALIDATION_DELAY } from '../waitPageActivityEnd'
 import type { RumConfiguration } from '../configuration'
 import type { ActionContexts } from './actionCollection'
 import type { ClickAction } from './trackClickActions'
-import { finalizeClicks, CLICK_ACTION_MAX_DURATION, trackClickActions } from './trackClickActions'
+import { finalizeClicks, trackClickActions } from './trackClickActions'
 import { MAX_DURATION_BETWEEN_CLICKS } from './clickChain'
+import { getInteractionSelector, CLICK_ACTION_MAX_DURATION } from './interactionSelectorCache'
 
 // Used to wait some time after the creation of an action
 const BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY = PAGE_ACTIVITY_VALIDATION_DELAY * 0.8
@@ -149,7 +150,6 @@ describe('trackClickActions', () => {
     clock.tick(BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY)
     domMutationObservable.notify()
     lifeCycle.notify(LifeCycleEventType.RUM_EVENT_COLLECTED, createFakeErrorEvent())
-
     clock.tick(EXPIRE_DELAY)
     lifeCycle.notify(LifeCycleEventType.RUM_EVENT_COLLECTED, createFakeErrorEvent())
 
@@ -425,15 +425,35 @@ describe('trackClickActions', () => {
     })
   })
 
+  describe('interactionSelectorCache', () => {
+    it('should add pointer down to the map', () => {
+      startClickActionsTracking()
+      const timeStamp = relativeNow()
+
+      emulateClick({ eventProperty: { timeStamp } })
+      expect(getInteractionSelector(timeStamp)).toBe('#button')
+    })
+
+    it('should add pointerup to the map', () => {
+      startClickActionsTracking()
+      const timeStamp = relativeNow()
+
+      emulateClick({ eventProperty: { timeStamp } })
+      expect(getInteractionSelector(timeStamp)).toBe('#button')
+    })
+  })
+
   function emulateClick({
     target = button,
     activity,
+    eventProperty,
   }: {
     target?: HTMLElement
     activity?: {
       delay?: number
       on?: 'pointerup' | 'click' | 'pointerdown'
     }
+    eventProperty?: { [key: string]: any }
   } = {}) {
     const targetPosition = target.getBoundingClientRect()
     const offsetX = targetPosition.width / 2
@@ -446,6 +466,7 @@ describe('trackClickActions', () => {
       offsetY,
       timeStamp: timeStampNow(),
       isPrimary: true,
+      ...eventProperty,
     }
     target.dispatchEvent(createNewEvent('pointerdown', eventProperties))
     emulateActivityIfNeeded('pointerdown')

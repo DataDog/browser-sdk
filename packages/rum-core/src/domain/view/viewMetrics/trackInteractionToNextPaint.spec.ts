@@ -1,5 +1,5 @@
 import type { Duration, RelativeTime } from '@datadog/browser-core'
-import { elapsed, resetExperimentalFeatures } from '@datadog/browser-core'
+import { elapsed, relativeNow, resetExperimentalFeatures } from '@datadog/browser-core'
 import { registerCleanupTask } from '@datadog/browser-core/test'
 import {
   appendElement,
@@ -16,6 +16,7 @@ import type {
   RumPerformanceEventTiming,
 } from '../../../browser/performanceObservable'
 import { ViewLoadingType } from '../../../rawRumEvent.types'
+import { getInteractionSelector, updateInteractionSelector } from '../../action/interactionSelectorCache'
 import {
   trackInteractionToNextPaint,
   trackViewInteractionCount,
@@ -246,6 +247,22 @@ describe('trackInteractionToNextPaint', () => {
       })
 
       expect(getInteractionToNextPaint()?.targetSelector).toEqual('#bar')
+    })
+
+    it('should check interactionSelectorCache for entries', () => {
+      startINPTracking()
+      const startTime = relativeNow()
+      updateInteractionSelector(startTime, '#foo')
+
+      newInteraction({
+        interactionId: 1,
+        duration: 1 as Duration,
+        startTime,
+        target: undefined,
+      })
+
+      expect(getInteractionToNextPaint()?.targetSelector).toEqual('#foo')
+      expect(getInteractionSelector(startTime)).toBeUndefined()
     })
   })
 })

@@ -3,7 +3,6 @@ import { ErrorSource, ExperimentalFeature, ONE_MINUTE, display } from '@datadog/
 import type { Clock } from '@datadog/browser-core/test'
 import {
   mockEventBridge,
-  cleanupSyntheticsWorkerValues,
   mockSyntheticsWorkerValues,
   mockExperimentalFeatures,
   setNavigatorOnLine,
@@ -1018,7 +1017,6 @@ function setupAssemblyTestWithDefaults({
 
   registerCleanupTask(() => {
     subscription.unsubscribe()
-    cleanupSyntheticsWorkerValues()
   })
 
   return { lifeCycle, reportErrorSpy, serverRumEvents, commonContext }

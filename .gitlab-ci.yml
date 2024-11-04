@@ -1,13 +1,13 @@
 variables:
-  CURRENT_STAGING: staging-41
+  CURRENT_STAGING: staging-45
   APP: 'browser-sdk'
-  CURRENT_CI_IMAGE: 73
+  CURRENT_CI_IMAGE: 74
   BUILD_STABLE_REGISTRY: 'registry.ddbuild.io'
   CI_IMAGE: '$BUILD_STABLE_REGISTRY/ci/$APP:$CURRENT_CI_IMAGE'
   GIT_REPOSITORY: 'git@github.com:DataDog/browser-sdk.git'
   MAIN_BRANCH: 'main'
   NEXT_MAJOR_BRANCH: 'v6'
-  CHROME_PACKAGE_VERSION: 129.0.6668.58-1
+  CHROME_PACKAGE_VERSION: 130.0.6723.58-1
 
 cache:
   key:
@@ -84,6 +84,19 @@ stages:
   only:
     refs:
       - tags
+
+###########################################################################################################################
+# Resource allocation
+###########################################################################################################################
+
+.resource-allocation-4-cpus:
+  variables:
+    WORKERS: 2
+    KUBERNETES_CPU_REQUEST: 4
+    KUBERNETES_CPU_LIMIT: 4
+    KUBERNETES_MEMORY_REQUEST: 16Gi
+    KUBERNETES_MEMORY_LIMIT: 16Gi
+    NODE_OPTIONS: '--max-old-space-size=16000'
 
 ########################################################################################################################
 # CI image
@@ -266,6 +279,7 @@ e2e-bs:
   extends:
     - .base-configuration
     - .bs-allowed-branches
+    - .resource-allocation-4-cpus
   interruptible: true
   resource_group: browserstack
   timeout: 35 minutes
@@ -445,6 +459,9 @@ merge-into-next-major:
   only:
     refs:
       - main
+  except:
+    refs:
+      - schedules
   before_script:
     - eval $(ssh-agent -s)
   script:

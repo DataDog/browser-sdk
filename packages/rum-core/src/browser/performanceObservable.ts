@@ -59,6 +59,7 @@ export interface RumPerformanceResourceTiming {
   decodedBodySize: number
   encodedBodySize: number
   transferSize: number
+  nextHopProtocol?: string
   renderBlockingStatus?: string
   traceId?: string
   toJSON(): Omit<PerformanceEntry, 'toJSON'>
@@ -192,10 +193,7 @@ export function createPerformanceObservable<T extends RumPerformanceEntryType>(
     }
 
     const handlePerformanceEntries = (entries: PerformanceEntryList) => {
-      const rumPerformanceEntries = filterRumPerformanceEntries(
-        configuration,
-        entries as Array<EntryTypeToReturnType[T]>
-      )
+      const rumPerformanceEntries = filterRumPerformanceEntries(entries as Array<EntryTypeToReturnType[T]>)
       if (rumPerformanceEntries.length > 0) {
         observable.notify(rumPerformanceEntries)
       }
@@ -293,16 +291,13 @@ export function supportPerformanceTimingEvent(entryType: RumPerformanceEntryType
   )
 }
 
-function filterRumPerformanceEntries<T extends RumPerformanceEntryType>(
-  configuration: RumConfiguration,
-  entries: Array<EntryTypeToReturnType[T]>
-) {
-  return entries.filter((entry) => !isForbiddenResource(configuration, entry))
+function filterRumPerformanceEntries<T extends RumPerformanceEntryType>(entries: Array<EntryTypeToReturnType[T]>) {
+  return entries.filter((entry) => !isForbiddenResource(entry))
 }
 
-function isForbiddenResource(configuration: RumConfiguration, entry: RumPerformanceEntry) {
+function isForbiddenResource(entry: RumPerformanceEntry) {
   return (
     entry.entryType === RumPerformanceEntryType.RESOURCE &&
-    (!isAllowedRequestUrl(configuration, entry.name) || !hasValidResourceEntryDuration(entry))
+    (!isAllowedRequestUrl(entry.name) || !hasValidResourceEntryDuration(entry))
   )
 }

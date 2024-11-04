@@ -1,6 +1,6 @@
 import type { Payload } from '@datadog/browser-core'
 import { isIE, RequestType } from '@datadog/browser-core'
-import type { MockFetch, MockFetchManager, MockXhrManager } from '@datadog/browser-core/test'
+import type { MockFetch, MockFetchManager } from '@datadog/browser-core/test'
 import { registerCleanupTask, SPEC_ENDPOINTS, mockFetch, mockXhr, withXhr } from '@datadog/browser-core/test'
 import { mockRumConfiguration } from '../../test'
 import { LifeCycle, LifeCycleEventType } from './lifeCycle'
@@ -23,7 +23,6 @@ describe('collect fetch', () => {
     if (isIE()) {
       pending('no fetch support')
     }
-    const configuration = mockRumConfiguration({ batchMessagesLimit: 1 })
     mockFetchManager = mockFetch()
 
     startSpy = jasmine.createSpy('requestStart')
@@ -38,13 +37,12 @@ describe('collect fetch', () => {
         context.spanId = createTraceIdentifier()
       },
     }
-    ;({ stop: stopFetchTracking } = trackFetch(lifeCycle, configuration, tracerStub as Tracer))
+    ;({ stop: stopFetchTracking } = trackFetch(lifeCycle, tracerStub as Tracer))
 
     fetch = window.fetch as MockFetch
 
     registerCleanupTask(() => {
       stopFetchTracking()
-      mockFetchManager.reset()
     })
   })
 
@@ -182,7 +180,6 @@ describe('collect fetch', () => {
 describe('collect xhr', () => {
   let startSpy: jasmine.Spy<(requestStartEvent: RequestStartEvent) => void>
   let completeSpy: jasmine.Spy<(requestCompleteEvent: RequestCompleteEvent) => void>
-  let mockXhrManager: MockXhrManager
   let stopXhrTracking: () => void
 
   beforeEach(() => {
@@ -190,7 +187,7 @@ describe('collect xhr', () => {
       pending('no fetch support')
     }
     const configuration = mockRumConfiguration({ batchMessagesLimit: 1 })
-    mockXhrManager = mockXhr()
+    mockXhr()
     startSpy = jasmine.createSpy('requestStart')
     completeSpy = jasmine.createSpy('requestComplete')
     const lifeCycle = new LifeCycle()
@@ -207,7 +204,6 @@ describe('collect xhr', () => {
 
     registerCleanupTask(() => {
       stopXhrTracking()
-      mockXhrManager.reset()
     })
   })
 

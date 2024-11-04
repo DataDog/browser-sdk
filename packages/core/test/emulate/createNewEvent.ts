@@ -1,11 +1,9 @@
+import type { MouseEventOnElement } from '@datadog/browser-rum-core'
 import type { TrustableEvent } from '../../src'
 import { objectEntries } from '../../src'
 
 export function createNewEvent(eventName: 'click', properties?: Partial<MouseEvent>): MouseEvent
-export function createNewEvent(
-  eventName: 'pointerup',
-  properties?: Partial<PointerEvent>
-): PointerEvent & { target: Element }
+export function createNewEvent(eventName: 'pointerup', properties?: Partial<PointerEvent>): MouseEventOnElement
 export function createNewEvent(eventName: 'message', properties?: Partial<MessageEvent>): MessageEvent
 export function createNewEvent(
   eventName: 'securitypolicyviolation',

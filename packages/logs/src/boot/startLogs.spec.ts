@@ -18,7 +18,6 @@ import {
   interceptRequests,
   mockEndpointBuilder,
   mockEventBridge,
-  cleanupSyntheticsWorkerValues,
   mockSyntheticsWorkerValues,
   registerCleanupTask,
   mockClock,
@@ -82,7 +81,6 @@ describe('logs', () => {
   afterEach(() => {
     delete window.DD_RUM
     stopSessionManager()
-    interceptor.restore()
   })
 
   describe('request', () => {
@@ -205,10 +203,6 @@ describe('logs', () => {
   })
 
   describe('logs session creation', () => {
-    afterEach(() => {
-      cleanupSyntheticsWorkerValues()
-    })
-
     it('creates a session on normal conditions', () => {
       ;({ handleLog, stop: stopLogs } = startLogs(
         initConfiguration,
