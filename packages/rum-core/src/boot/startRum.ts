@@ -151,7 +151,7 @@ export function startRum(
   const {
     addTiming,
     startView,
-    updateViewName,
+    setViewName,
     setViewContext,
     setViewContextProperty,
     stop: stopViewCollection,
@@ -201,7 +201,7 @@ export function startRum(
     startView,
     setViewContext,
     setViewContextProperty,
-    updateViewName,
+    setViewName,
     lifeCycle,
     viewHistory,
     session,

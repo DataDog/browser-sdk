@@ -24,8 +24,6 @@ import {
   clearInterval,
   setTimeout,
   Observable,
-  isExperimentalFeatureEnabled,
-  ExperimentalFeature,
   createContextManager,
 } from '@datadog/browser-core'
 import type { ViewCustomTimings } from '../../rawRumEvent.types'
@@ -173,8 +171,8 @@ export function trackViews(
     setViewContextProperty: (key: string, value: ContextValue) => {
       currentView.contextManager.setContextProperty(key, value)
     },
-    updateViewName: (name: string) => {
-      currentView.updateViewName(name)
+    setViewName: (name: string) => {
+      currentView.setViewName(name)
     },
 
     stop: () => {
@@ -335,10 +333,7 @@ function newView(
       customTimings[sanitizeTiming(name)] = relativeTime
       scheduleViewUpdate()
     },
-    updateViewName(updatedName: string) {
-      if (!isExperimentalFeatureEnabled(ExperimentalFeature.UPDATE_VIEW_NAME)) {
-        return
-      }
+    setViewName(updatedName: string) {
       name = updatedName
       triggerViewUpdate()
     },

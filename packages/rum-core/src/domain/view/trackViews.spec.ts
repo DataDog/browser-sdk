@@ -5,12 +5,11 @@ import {
   display,
   relativeToClocks,
   relativeNow,
-  ExperimentalFeature,
   resetExperimentalFeatures,
 } from '@datadog/browser-core'
 
 import type { Clock } from '@datadog/browser-core/test'
-import { mockClock, mockExperimentalFeatures, registerCleanupTask } from '@datadog/browser-core/test'
+import { mockClock, registerCleanupTask } from '@datadog/browser-core/test'
 import { createPerformanceEntry, mockPerformanceObserver } from '../../../test'
 import { RumEventType, ViewLoadingType } from '../../rawRumEvent.types'
 import type { RumEvent } from '../../rumEvent.types'
@@ -935,37 +934,25 @@ describe('view event count', () => {
     })
   })
 
-  describe('update view name', () => {
-    it('should update an undefined view name if the experimental feature is enabled', () => {
-      mockExperimentalFeatures([ExperimentalFeature.UPDATE_VIEW_NAME])
+  describe('set view name', () => {
+    it('should set an undefined view name', () => {
       viewTest = setupViewTest({ lifeCycle })
 
-      const { getViewUpdate, startView, updateViewName } = viewTest
+      const { getViewUpdate, startView, setViewName } = viewTest
 
       startView()
-      updateViewName('foo')
+      setViewName('foo')
       expect(getViewUpdate(3).name).toEqual('foo')
     })
 
-    it('should update a defined view name if the experimental feature is enabled', () => {
-      mockExperimentalFeatures([ExperimentalFeature.UPDATE_VIEW_NAME])
+    it('should set a defined view name', () => {
       viewTest = setupViewTest({ lifeCycle })
 
-      const { getViewUpdate, startView, updateViewName } = viewTest
+      const { getViewUpdate, startView, setViewName } = viewTest
 
       startView({ name: 'initial view name' })
-      updateViewName('foo')
+      setViewName('foo')
       expect(getViewUpdate(3).name).toEqual('foo')
-    })
-
-    it('should not update a defined view name if the experimental feature is not enabled', () => {
-      viewTest = setupViewTest({ lifeCycle })
-
-      const { getViewUpdate, startView, updateViewName } = viewTest
-
-      startView({ name: 'initial view name' })
-      updateViewName('foo')
-      expect(getViewUpdate(2).name).toEqual('initial view name')
     })
   })
 })
