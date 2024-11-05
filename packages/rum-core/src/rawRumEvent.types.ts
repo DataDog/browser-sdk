@@ -49,6 +49,7 @@ export interface RawRumResourceEvent {
     first_byte?: ResourceEntryDetailsElement
     download?: ResourceEntryDetailsElement
     protocol?: string
+    content_type?: string
   }
   _dd: {
     trace_id?: string

@@ -186,6 +186,10 @@ export function computeResourceEntryProtocol(entry: RumPerformanceResourceTiming
   return entry.nextHopProtocol === '' ? undefined : entry.nextHopProtocol
 }
 
+export function computeResourceContentType(entry: RumPerformanceResourceTiming) {
+  return entry.contentType === '' ? undefined : entry.contentType
+}
+
 export function computeResourceEntrySize(entry: RumPerformanceResourceTiming) {
   // Make sure a request actually occurred
   if (entry.startTime < entry.responseStart) {

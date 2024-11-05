@@ -260,6 +260,7 @@ export function createPerformanceEntry<T extends RumPerformanceEntryType>(
           startTime: 200 as RelativeTime,
           responseStatus: 200,
           nextHopProtocol: 'HTTP/1.0',
+          contentType: 'text/html',
         },
         overrides
       ) as EntryTypeToReturnType[T]
