@@ -56,6 +56,7 @@ module.exports = {
       // with all dependencies shared.  Our test suite does not support sharing dependencies, each
       // spec bundle should include its own copy of dependencies.
       runtimeChunk: false,
+      splitChunks: false,
     },
     ignoreWarnings: [
       // we will see warnings about missing exports in some files
