@@ -412,6 +412,7 @@ __metadata:
     "@mantine/hooks": "npm:7.13.4"
     "@tabler/icons-react": "npm:3.21.0"
     "@types/chrome": "npm:0.0.279"
+    "@types/minimatch": "npm:5.1.2"
     "@types/react": "npm:18.3.12"
     "@types/react-dom": "npm:18.3.1"
     "@webextension-toolbox/webpack-webextension-plugin": "npm:3.3.1"
@@ -419,6 +420,7 @@ __metadata:
     copy-webpack-plugin: "npm:12.0.2"
     css-loader: "npm:7.1.2"
     html-webpack-plugin: "npm:5.6.3"
+    minimatch: "npm:5.1.2"
     react: "npm:18.3.1"
     react-dom: "npm:18.3.1"
     style-loader: "npm:4.0.0"
@@ -1861,7 +1863,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/minimatch@npm:*":
+"@types/minimatch@npm:*, @types/minimatch@npm:5.1.2":
   version: 5.1.2
   resolution: "@types/minimatch@npm:5.1.2"
   checksum: 10c0/83cf1c11748891b714e129de0585af4c55dd4c2cafb1f1d5233d79246e5e1e19d1b5ad9e8db449667b3ffa2b6c80125c429dbee1054e9efb45758dbc4e118562
@@ -9235,6 +9237,15 @@ __metadata:
   dependencies:
     brace-expansion: "npm:^1.1.7"
   checksum: 10c0/f398652d0d260137c289c270a4ac98ebe0a27cd316fa0fac72b096e96cbdc89f71d80d47ac7065c716ba3b0b730783b19180bd85a35f9247535d2adfe96bba76
+  languageName: node
+  linkType: hard
+
+"minimatch@npm:5.1.2":
+  version: 5.1.2
+  resolution: "minimatch@npm:5.1.2"
+  dependencies:
+    brace-expansion: "npm:^2.0.1"
+  checksum: 10c0/1376e34455e8eb1a493ea648571a0c449b99c44753aa3a562204b68dfea3ebd40193b9132d67c0e4adddeb9311a53173252664aafeba6516e5101c99fb6d0171
   languageName: node
   linkType: hard
 

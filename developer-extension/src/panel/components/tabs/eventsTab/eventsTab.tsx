@@ -1,12 +1,10 @@
 import React from 'react'
-import { Center, Text } from '@mantine/core'
-import type { EventFilters, FacetRegistry } from '../../../hooks/useEvents'
-import { TabBase } from '../../tabBase'
-import type { SdkEvent } from '../../../sdkEvent'
-import { EventsTabTop } from './eventsTabTop'
-import { EventsList } from './eventsList'
-import { EventsTabSide } from './eventsTabSide'
-import type { EventListColumn } from './columnUtils'
+import {Center, Text} from '@mantine/core'
+import type {EventFilters, FacetRegistry} from '../../../hooks/useEvents'
+import type {SdkEvent} from '../../../sdkEvent'
+import {EventsTabTop} from './eventsTabTop'
+import {EventsList} from './eventsList'
+import type {EventListColumn} from './columnUtils'
 
 interface EventsTabProps {
   events: SdkEvent[]
@@ -28,25 +26,23 @@ export function EventsTab({
   clear,
 }: EventsTabProps) {
   return (
-    <TabBase
-      top={<EventsTabTop filters={filters} onFiltersChange={onFiltersChange} clear={clear} />}
-      leftSide={<EventsTabSide filters={filters} onFiltersChange={onFiltersChange} facetRegistry={facetRegistry} />}
-    >
-      {events.length === 0 || !facetRegistry ? (
-        <Center>
-          <Text size="xl" c="dimmed" fw="bold">
-            No events
-          </Text>
-        </Center>
-      ) : (
-        <EventsList
-          events={events}
-          filters={filters}
-          facetRegistry={facetRegistry}
-          columns={columns}
-          onColumnsChange={onColumnsChange}
-        />
-      )}
-    </TabBase>
+      <div>
+        <EventsTabTop filters={filters} onFiltersChange={onFiltersChange} clear={clear} />
+        {events.length === 0 || !facetRegistry ? (
+            <Center>
+              <Text size="xl" c="dimmed" fw="bold">
+                No events
+              </Text>
+            </Center>
+        ) : (
+            <EventsList
+                events={events}
+                filters={filters}
+                facetRegistry={facetRegistry}
+                columns={columns}
+                onColumnsChange={onColumnsChange}
+            />
+        )}
+      </div>
   )
 }

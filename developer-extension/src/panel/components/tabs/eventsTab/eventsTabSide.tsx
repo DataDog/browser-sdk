@@ -20,7 +20,6 @@ export function EventsTabSide({
         onChange={(e) => onFiltersChange({ ...filters, outdatedVersions: !e.target.checked })}
         mb="sm"
       />
-
       {facetRegistry && (
         <FacetList
           facetRegistry={facetRegistry}

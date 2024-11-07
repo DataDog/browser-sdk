@@ -1,10 +1,10 @@
-import { Table, Badge, Menu } from '@mantine/core'
-import { IconCopy, IconDotsVertical, IconColumnInsertRight } from '@tabler/icons-react'
-import type { ComponentPropsWithoutRef, ReactNode } from 'react'
-import React, { useRef, useState } from 'react'
+import {Badge, Menu, Table} from '@mantine/core'
+import {IconColumnInsertRight, IconCopy, IconDotsVertical} from '@tabler/icons-react'
+import type {ComponentPropsWithoutRef, ReactNode} from 'react'
+import React, {useRef, useState} from 'react'
 import clsx from 'clsx'
-import type { TelemetryEvent } from '../../../../../../packages/core/src/domain/telemetry'
-import type { LogsEvent } from '../../../../../../packages/logs/src/logsEvent.types'
+import type {TelemetryEvent} from '../../../../../../packages/core/src/domain/telemetry'
+import type {LogsEvent} from '../../../../../../packages/logs/src/logsEvent.types'
 import type {
   RumActionEvent,
   RumErrorEvent,
@@ -13,18 +13,18 @@ import type {
   RumViewEvent,
   RumVitalEvent,
 } from '../../../../../../packages/rum-core/src/rumEvent.types'
-import type { SdkEvent } from '../../../sdkEvent'
-import { isTelemetryEvent, isLogEvent, isRumEvent } from '../../../sdkEvent'
-import { formatDate, formatDuration } from '../../../formatNumber'
-import { CopyMenuItem, defaultFormatValue, Json } from '../../json'
-import { LazyCollapse } from '../../lazyCollapse'
-import type { FacetRegistry } from '../../../hooks/useEvents'
-import { useSdkInfos } from '../../../hooks/useSdkInfos'
-import type { EventListColumn } from './columnUtils'
-import { addColumn, includesColumn } from './columnUtils'
+import type {SdkEvent} from '../../../sdkEvent'
+import {isLogEvent, isRumEvent, isTelemetryEvent} from '../../../sdkEvent'
+import {formatDate, formatDuration} from '../../../formatNumber'
+import {CopyMenuItem, defaultFormatValue, Json} from '../../json'
+import {LazyCollapse} from '../../lazyCollapse'
+import type {FacetRegistry} from '../../../hooks/useEvents'
+import {useSdkInfos} from '../../../hooks/useSdkInfos'
+import type {EventListColumn} from './columnUtils'
+import {addColumn, includesColumn} from './columnUtils'
 import * as classes from './eventRow.module.css'
-import { RowButton } from './rowButton'
-import { canCopyEvent, copyEventAsCurl, copyEventAsFetch } from './copyEvent'
+import {RowButton} from './rowButton'
+import {canCopyEvent, copyEventAsCurl, copyEventAsFetch} from './copyEvent'
 
 const RUM_EVENT_TYPE_COLOR = {
   action: 'violet',
