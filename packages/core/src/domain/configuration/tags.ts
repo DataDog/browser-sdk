@@ -4,7 +4,7 @@ import type { InitConfiguration } from './configuration'
 export const TAG_SIZE_LIMIT = 200
 
 export function buildTags(configuration: InitConfiguration): string[] {
-  const { env, service, version, datacenter } = configuration
+  const { env, service, version, datacenter,ddtags } = configuration
   const tags = []
 
   if (env) {
@@ -19,7 +19,14 @@ export function buildTags(configuration: InitConfiguration): string[] {
   if (datacenter) {
     tags.push(buildTag('datacenter', datacenter))
   }
-
+  if (ddtags) {
+    ddtags.forEach((tag) =>{
+        const [key, value] = tag.split(':');
+        if (key && value) {
+            tags.push(buildTag(key, value));
+        }
+    })
+  }
   return tags
 }
 

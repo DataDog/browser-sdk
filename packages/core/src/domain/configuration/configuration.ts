@@ -97,7 +97,10 @@ export interface InitConfiguration {
    * The application’s version, for example: 1.2.3, 6c44da20, and 2020.02.13. Follows the [tag syntax requirements](https://docs.datadoghq.com/getting_started/tagging/#define-tags).
    */
   version?: string | undefined | null
-
+  /**
+   * Tags to add to all events. Follows the [tag syntax requirements](https://docs.datadoghq.com/getting_started/tagging/#define-tags).
+   */
+  ddtags?: string[] | undefined
   // cookie options
   /**
    * Whether a secure cross-site session cookie is used
