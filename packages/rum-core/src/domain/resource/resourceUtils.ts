@@ -186,6 +186,11 @@ export function computeResourceEntryProtocol(entry: RumPerformanceResourceTiming
   return entry.nextHopProtocol === '' ? undefined : entry.nextHopProtocol
 }
 
+/**
+ * Excludes unsupported MIME types or cases where the resource fetch failed due to CORS restrictions.
+ * This helps prevent undefined or meaningless data from being processed.
+ * https://developer.mozilla.org/en-US/docs/Web/API/PerformanceResourceTiming/contentType
+ */
 export function computeResourceContentType(entry: RumPerformanceResourceTiming) {
   return entry.contentType === '' ? undefined : entry.contentType
 }
