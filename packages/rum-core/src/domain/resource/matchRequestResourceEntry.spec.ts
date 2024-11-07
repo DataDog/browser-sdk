@@ -148,6 +148,7 @@ describe('matchRequestResourceEntry', () => {
       name: FAKE_URL,
       // fetchStart < startTime is invalid
       fetchStart: 0 as RelativeTime,
+      workerStart: 0 as RelativeTime,
       startTime: 200 as RelativeTime,
     })
     globalPerformanceObjectMock.addPerformanceEntry(entry)
