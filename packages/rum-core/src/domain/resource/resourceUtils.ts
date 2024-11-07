@@ -155,7 +155,7 @@ export function hasValidResourceEntryTimings(entry: RumPerformanceResourceTiming
   // it.
   const areCommonTimingsInOrder = areInOrder(
     entry.startTime,
-    entry.workerStart,
+    ...(entry.workerStart > 0 ? [entry.workerStart] : []),
     entry.fetchStart,
     entry.domainLookupStart,
     entry.domainLookupEnd,
