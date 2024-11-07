@@ -3,6 +3,7 @@ import { INTAKE_DOMAINS } from '../../../common/intakeDomainConstants'
 import { onBackgroundMessage } from '../../backgroundScriptConnection'
 import { isRumViewEvent, type SdkEvent } from '../../sdkEvent'
 import { FacetRegistry } from './facetRegistry'
+import { ActionMap } from './trackingEvents'
 
 const MAXIMUM_LOGGED_EVENTS = 1000
 
@@ -10,20 +11,23 @@ export type EventCollection = ReturnType<typeof startEventCollection>
 
 export function startEventCollection(strategy: EventCollectionStrategy, onEventsChanged: (events: SdkEvent[]) => void) {
   let events: SdkEvent[] = []
+  const actionMap = new ActionMap()
   const facetRegistry = new FacetRegistry()
 
   const listenToEvents = strategy === 'requests' ? listenEventsFromRequests : listenEventsFromSdk
   const { stop } = listenToEvents((newEvents) => {
+    // TODO remove events from facet registry when they are out of retention
     for (const event of newEvents) {
       facetRegistry.addEvent(event)
     }
 
-    // TODO remove events from facet registry when they are out of retention
-    events = [...newEvents, ...events].sort(compareEvents).slice(0, MAXIMUM_LOGGED_EVENTS)
+    events = [...newEvents, ...events]
+    events = actionMap.filter(events).sort(compareEvents).slice(0, MAXIMUM_LOGGED_EVENTS)
     onEventsChanged(events)
-  })
+  });
 
   return {
+    actionMap,
     facetRegistry,
     clear: () => {
       events = []

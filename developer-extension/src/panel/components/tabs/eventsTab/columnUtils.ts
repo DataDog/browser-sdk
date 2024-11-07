@@ -1,5 +1,6 @@
 export type EventListColumn =
   | { type: 'date' }
+  | { type: 'buttons' }
   | { type: 'description' }
   | { type: 'type' }
   | { type: 'field'; path: string }
@@ -30,7 +31,9 @@ export function moveColumn(columns: EventListColumn[], columnToMove: EventListCo
 }
 
 export function getColumnTitle(column: EventListColumn) {
-  return column.type === 'date'
+  return column.type === 'buttons'
+  ? 'xxx' :
+      column.type === 'date'
     ? 'Date'
     : column.type === 'description'
       ? 'Description'

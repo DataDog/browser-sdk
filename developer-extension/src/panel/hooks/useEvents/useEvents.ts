@@ -5,6 +5,7 @@ import type { EventFilters } from './eventFilters'
 import { DEFAULT_FILTERS, applyEventFilters } from './eventFilters'
 import type { EventCollection } from './eventCollection'
 import { startEventCollection } from './eventCollection'
+import { ActionMap } from './trackingEvents'
 
 const MAXIMUM_DISPLAYED_EVENTS = 100
 
@@ -44,14 +45,18 @@ export function useEvents({
     }
   }, [preserveEvents])
 
-  const facetRegistry = eventCollectionRef.current?.facetRegistry
+  const eventCollection = eventCollectionRef.current;
+  const facetRegistry = eventCollection?.facetRegistry
+  const actionMap = eventCollection?.actionMap
   return {
     events: facetRegistry
       ? applyEventFilters(filters, events, facetRegistry).slice(0, MAXIMUM_DISPLAYED_EVENTS)
       : events,
+    setEvents,
     filters,
     setFilters,
     clear: clearEvents,
     facetRegistry,
+    actionMap
   }
 }

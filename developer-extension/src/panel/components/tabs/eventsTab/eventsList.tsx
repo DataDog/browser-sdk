@@ -8,17 +8,22 @@ import { EventRow } from './eventRow'
 import { ColumnDrag } from './columnDrag'
 import * as classes from './eventsList.module.css'
 import { EventsListHeader } from './eventsListHeader'
+import {ActionMap} from "../../../hooks/useEvents/trackingEvents";
 
 export function EventsList({
   events,
+  setEvents,
   filters,
   facetRegistry,
+  actionMap,
   columns,
   onColumnsChange,
 }: {
   events: SdkEvent[]
+  setEvents: (events: SdkEvent[]) => void
   filters: EventFilters
   facetRegistry: FacetRegistry
+  actionMap: ActionMap
   columns: EventListColumn[]
   onColumnsChange: (columns: EventListColumn[]) => void
 }) {
@@ -50,9 +55,12 @@ export function EventsList({
             <EventRow
               key={getEventRenderingKey(event, !filters.outdatedVersions)}
               event={event}
+              events={events}
+              setEvents={setEvents}
               columns={columns}
               onColumnsChange={onColumnsChange}
               facetRegistry={facetRegistry}
+              actionMap={actionMap}
             />
           ))}
         </Table.Tbody>

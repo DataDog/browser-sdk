@@ -13,8 +13,12 @@ import { SettingsTab } from './tabs/settingsTab'
 import { InfosTab } from './tabs/infosTab'
 import { EventsTab, DEFAULT_COLUMNS } from './tabs/eventsTab'
 import { ReplayTab } from './tabs/replayTab'
+import { TrackingEventsTab } from './tabs/trackingEventsTab'
+import { TrackingEventsJsonTab } from './tabs/trackingEventsJsonTab'
 
 import * as classes from './panel.module.css'
+import {EventListColumn} from "./tabs/eventsTab/columnUtils";
+import {MapEventsTab} from "./tabs/mapEventsTab";
 
 export function Panel() {
   const [settings] = useSettings()
@@ -23,9 +27,19 @@ export function Panel() {
   useNetworkRules(settings)
   useDebugMode(settings.debugMode)
 
-  const { events, filters, setFilters, clear, facetRegistry } = useEvents(settings)
+  const { events, setEvents, filters, setFilters, clear, facetRegistry, actionMap } = useEvents(settings)
 
-  const [columns, setColumns] = useState(DEFAULT_COLUMNS)
+  const defaultCols: EventListColumn[] = [
+      { type: 'date' },
+      { type: 'buttons' },
+//      { type: 'type' },
+ //     { type: 'description' },
+      { type: 'field', path: 'action.type' },
+      { type: 'field', path: 'action.target.name' },
+//      { type: 'field', path: '_dd.action.target.selector' },
+  ];
+  const [columns, setColumns] = useState(defaultCols);
+
 
   const [activeTab, setActiveTab] = useState<string | null>(DEFAULT_PANEL_TAB)
   function updateActiveTab(activeTab: string | null) {
@@ -37,6 +51,9 @@ export function Panel() {
     <Tabs color="violet" value={activeTab} className={classes.tabs} onChange={updateActiveTab}>
       <Tabs.List className={classes.topBox} data-dd-privacy="allow">
         <div className={classes.tabBox}>
+            <Tabs.Tab value={PanelTabs.MapEvents}>Map Events</Tabs.Tab>
+            <Tabs.Tab value={PanelTabs.TrackingEvents}>Tracking Events</Tabs.Tab>
+            <Tabs.Tab value={PanelTabs.TrackingEventsJson}>Tracking Events JSON</Tabs.Tab>
           <Tabs.Tab value={PanelTabs.Events}>Events</Tabs.Tab>
           <Tabs.Tab
             value={PanelTabs.Infos}
@@ -75,10 +92,25 @@ export function Panel() {
         </Anchor>
       </Tabs.List>
 
+        <Tabs.Panel value={PanelTabs.MapEvents} className={classes.tab}>
+            <MapEventsTab
+                events={events}
+                setEvents={setEvents}
+                actionMap={actionMap}
+            />
+        </Tabs.Panel>
+        <Tabs.Panel value={PanelTabs.TrackingEvents} className={classes.tab}>
+            <TrackingEventsTab actionMap={actionMap} />
+        </Tabs.Panel>
+        <Tabs.Panel value={PanelTabs.TrackingEventsJson} className={classes.tab}>
+            <TrackingEventsJsonTab actionMap={actionMap} />
+        </Tabs.Panel>
       <Tabs.Panel value={PanelTabs.Events} className={classes.tab}>
         <EventsTab
           events={events}
+          setEvents={setEvents}
           facetRegistry={facetRegistry}
+          actionMap={actionMap}
           filters={filters}
           onFiltersChange={setFilters}
           columns={columns}

@@ -1,4 +1,4 @@
-import { Table, Badge, Menu } from '@mantine/core'
+import { Table, Badge, Button, Menu } from '@mantine/core'
 import { IconCopy, IconDotsVertical, IconColumnInsertRight } from '@tabler/icons-react'
 import type { ComponentPropsWithoutRef, ReactNode } from 'react'
 import React, { useRef, useState } from 'react'
@@ -25,6 +25,7 @@ import { addColumn, includesColumn } from './columnUtils'
 import * as classes from './eventRow.module.css'
 import { RowButton } from './rowButton'
 import { canCopyEvent, copyEventAsCurl, copyEventAsFetch } from './copyEvent'
+import {ActionMap, sdkEventToActionMapEntry} from "../../../hooks/useEvents/trackingEvents";
 
 const RUM_EVENT_TYPE_COLOR = {
   action: 'violet',
@@ -64,13 +65,19 @@ const RESOURCE_TYPE_LABELS: Record<string, string | undefined> = {
 export const EventRow = React.memo(
   ({
     event,
+    events,
+    setEvents,
     columns,
     facetRegistry,
+    actionMap,
     onColumnsChange,
   }: {
     event: SdkEvent
+    events: SdkEvent[]
+    setEvents: (events: SdkEvent[]) => void
     columns: EventListColumn[]
     facetRegistry: FacetRegistry
+    actionMap: ActionMap
     onColumnsChange: (newColumn: EventListColumn[]) => void
   }) => {
     const [isCollapsed, setIsCollapsed] = useState(true)
@@ -153,6 +160,27 @@ export const EventRow = React.memo(
                     </Badge>
                   )}
                 </Cell>
+              )
+            case 'buttons':
+              return (
+                  <Cell key="buttons">
+                    <div>
+                      <Button color="red" onClick={(clickEvt) => {
+                        actionMap.add(sdkEventToActionMapEntry(event as RumActionEvent, false, ""));
+                        setEvents(actionMap.filter(events))
+                      }}
+                      >
+                        skip
+                      </Button>
+                      <Button color="green" onClick={(clickEvt) => {
+                        actionMap.add(sdkEventToActionMapEntry(event as RumActionEvent, true, "xxx"));
+                        setEvents(actionMap.filter(events))
+                      }}
+                      >
+                        tag
+                      </Button>
+                    </div>
+                  </Cell>
               )
             case 'field': {
               const value = facetRegistry.getFieldValueForEvent(event, column.path)
