@@ -105,7 +105,7 @@ describe('validateAndBuildConfiguration', () => {
       expect(configuration?.sessionStoreStrategyType).toBeUndefined()
     })
 
-    it('should contain cookie in the configuration by default', () => {
+    it('should contain cookie strategy in the configuration by default', () => {
       const configuration = validateAndBuildConfiguration({ clientToken, allowFallbackToLocalStorage: false })
       expect(configuration?.sessionStoreStrategyType).toEqual({
         type: 'Cookie',
@@ -113,7 +113,7 @@ describe('validateAndBuildConfiguration', () => {
       })
     })
 
-    it('should contain cookie in the configuration when fallback is enabled and cookies are available', () => {
+    it('should contain cookie strategy in the configuration when fallback is enabled and cookies are available', () => {
       const configuration = validateAndBuildConfiguration({ clientToken, allowFallbackToLocalStorage: true })
       expect(configuration?.sessionStoreStrategyType).toEqual({
         type: 'Cookie',
@@ -121,13 +121,13 @@ describe('validateAndBuildConfiguration', () => {
       })
     })
 
-    it('should contain local storage in the configuration when fallback is enabled and cookies are not available', () => {
+    it('should contain localStorage strategy in the configuration when localStorage fallback is enabled and cookies are not available', () => {
       spyOnProperty(document, 'cookie', 'get').and.returnValue('')
       const configuration = validateAndBuildConfiguration({ clientToken, allowFallbackToLocalStorage: true })
       expect(configuration?.sessionStoreStrategyType).toEqual({ type: 'LocalStorage' })
     })
 
-    it('should not contain any storage if both cookies and local storage are unavailable', () => {
+    it('should not contain any strategy if both cookies and local storage are unavailable', () => {
       spyOnProperty(document, 'cookie', 'get').and.returnValue('')
       spyOn(Storage.prototype, 'getItem').and.throwError('unavailable')
       const configuration = validateAndBuildConfiguration({ clientToken, allowFallbackToLocalStorage: true })
