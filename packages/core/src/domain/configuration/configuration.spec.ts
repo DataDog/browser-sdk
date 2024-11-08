@@ -102,10 +102,36 @@ describe('validateAndBuildConfiguration', () => {
   describe('sessionStoreStrategyType', () => {
     it('is present in the returned configuration', () => {
       const configuration = validateAndBuildConfiguration({ clientToken })
-      expect(configuration!.sessionStoreStrategyType).toEqual({
+      expect(configuration!.sessionStoreStrategyType).toBeUndefined()
+    })
+
+    it('should contain cookie in the configuration by default', () => {
+      const configuration = validateAndBuildConfiguration({ clientToken, allowFallbackToLocalStorage: false })
+      expect(configuration?.sessionStoreStrategyType).toEqual({
         type: SessionPersistence.COOKIE,
         cookieOptions: { secure: false, crossSite: false, partitioned: false },
       })
+    })
+
+    it('should contain cookie in the configuration when fallback is enabled and cookies are available', () => {
+      const configuration = validateAndBuildConfiguration({ clientToken, allowFallbackToLocalStorage: true })
+      expect(configuration?.sessionStoreStrategyType).toEqual({
+        type: SessionPersistence.COOKIE,
+        cookieOptions: { secure: false, crossSite: false, partitioned: false },
+      })
+    })
+
+    it('should contain local storage in the configuration when fallback is enabled and cookies are not available', () => {
+      spyOnProperty(document, 'cookie', 'get').and.returnValue('')
+      const configuration = validateAndBuildConfiguration({ clientToken, allowFallbackToLocalStorage: true })
+      expect(configuration?.sessionStoreStrategyType).toEqual({ type: SessionPersistence.LOCAL_STORAGE })
+    })
+
+    it('should not contain any storage if both cookies and local storage are unavailable', () => {
+      spyOnProperty(document, 'cookie', 'get').and.returnValue('')
+      spyOn(Storage.prototype, 'getItem').and.throwError('unavailable')
+      const configuration = validateAndBuildConfiguration({ clientToken, allowFallbackToLocalStorage: true })
+      expect(configuration?.sessionStoreStrategyType).toBeUndefined()
     })
   })
 
