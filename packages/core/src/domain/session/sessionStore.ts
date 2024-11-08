@@ -16,6 +16,7 @@ import {
 import type { SessionState } from './sessionState'
 import { initLocalStorageStrategy, selectLocalStorageStrategy } from './storeStrategies/sessionInLocalStorage'
 import { processSessionStoreOperations } from './sessionStoreOperations'
+import { selectInMemorySessionStoreStrategy } from './storeStrategies/sessionInMemory'
 
 export interface SessionStore {
   expandOrRenewSession: () => void
@@ -47,6 +48,9 @@ export function selectSessionStoreStrategyType(
   let sessionStoreStrategyType = selectCookieStrategy(initConfiguration)
   if (!sessionStoreStrategyType && initConfiguration.allowFallbackToLocalStorage) {
     sessionStoreStrategyType = selectLocalStorageStrategy()
+  }
+  if (!sessionStoreStrategyType && initConfiguration.allowFallbackToInMemoryStorage) {
+    sessionStoreStrategyType = selectInMemorySessionStoreStrategy()
   }
   return sessionStoreStrategyType
 }

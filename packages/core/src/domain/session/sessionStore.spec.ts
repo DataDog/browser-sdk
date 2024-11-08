@@ -57,38 +57,63 @@ function resetSessionInStore() {
 
 describe('session store', () => {
   describe('getSessionStoreStrategyType', () => {
-    it('should return a type cookie when cookies are available', () => {
+    it('should return a type cookie when cookies are available and fallbacks are enabled', () => {
       const sessionStoreStrategyType = selectSessionStoreStrategyType({
         clientToken: 'abc',
         allowFallbackToLocalStorage: true,
+        allowFallbackToInMemoryStorage: true,
       })
       expect(sessionStoreStrategyType).toEqual(jasmine.objectContaining({ type: 'Cookie' }))
     })
 
-    it('should report undefined when cookies are not available, and fallback is not allowed', () => {
+    it('should report undefined when cookies are not available, and fallbacks are not allowed', () => {
       spyOnProperty(document, 'cookie', 'get').and.returnValue('')
       const sessionStoreStrategyType = selectSessionStoreStrategyType({
         clientToken: 'abc',
         allowFallbackToLocalStorage: false,
+        allowFallbackToInMemoryStorage: false,
       })
       expect(sessionStoreStrategyType).toBeUndefined()
     })
 
-    it('should fallback to localStorage when cookies are not available', () => {
+    it('should fallback to localStorage when cookies are not available and in-memory fallback is not allowed', () => {
       spyOnProperty(document, 'cookie', 'get').and.returnValue('')
       const sessionStoreStrategyType = selectSessionStoreStrategyType({
         clientToken: 'abc',
         allowFallbackToLocalStorage: true,
+        allowFallbackToInMemoryStorage: false,
       })
       expect(sessionStoreStrategyType).toEqual({ type: 'LocalStorage' })
     })
 
-    it('should report undefined when no storage is available', () => {
+    it('should fallback to in-memory when cookies are not available and localStorage fallback is not allowed', () => {
+      spyOnProperty(document, 'cookie', 'get').and.returnValue('')
+      const sessionStoreStrategyType = selectSessionStoreStrategyType({
+        clientToken: 'abc',
+        allowFallbackToLocalStorage: false,
+        allowFallbackToInMemoryStorage: true,
+      })
+      expect(sessionStoreStrategyType).toEqual({ type: 'InMemory' })
+    })
+
+    it('should fallback to in-memory when cookies are not available and localStorage is allowed, but not available', () => {
       spyOnProperty(document, 'cookie', 'get').and.returnValue('')
       spyOn(Storage.prototype, 'getItem').and.throwError('unavailable')
       const sessionStoreStrategyType = selectSessionStoreStrategyType({
         clientToken: 'abc',
         allowFallbackToLocalStorage: true,
+        allowFallbackToInMemoryStorage: true,
+      })
+      expect(sessionStoreStrategyType).toEqual({ type: 'InMemory' })
+    })
+
+    it('should report undefined when no storage is available and in-memory fallback is not allowed', () => {
+      spyOnProperty(document, 'cookie', 'get').and.returnValue('')
+      spyOn(Storage.prototype, 'getItem').and.throwError('unavailable')
+      const sessionStoreStrategyType = selectSessionStoreStrategyType({
+        clientToken: 'abc',
+        allowFallbackToLocalStorage: true,
+        allowFallbackToInMemoryStorage: false,
       })
       expect(sessionStoreStrategyType).toBeUndefined()
     })

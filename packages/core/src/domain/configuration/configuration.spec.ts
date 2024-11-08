@@ -109,13 +109,15 @@ describe('validateAndBuildConfiguration', () => {
       type: 'LocalStorage',
     } satisfies SessionStoreStrategyType
 
+    const inMemoryStrategy = { type: 'InMemory' } satisfies SessionStoreStrategyType
+
     const testCases: Array<
       {
         description: string
         disableCookies?: boolean
         disableStorage?: boolean
         expectedStrategyType: Configuration['sessionStoreStrategyType']
-      } & Pick<InitConfiguration, 'allowFallbackToLocalStorage'>
+      } & Pick<InitConfiguration, 'allowFallbackToInMemoryStorage' | 'allowFallbackToLocalStorage'>
     > = [
       {
         description: 'allowFallbackToLocalStorage should not be enabled by default',
@@ -123,12 +125,12 @@ describe('validateAndBuildConfiguration', () => {
         expectedStrategyType: undefined,
       },
       {
-        description: 'should contain cookie strategy in the configuration by default',
-        expectedStrategyType: cookieStrategy,
+        description: 'allowFallbackToInMemoryStorage should not be enabled by default',
+        disableCookies: true,
+        expectedStrategyType: undefined,
       },
       {
-        description:
-          'should contain cookie strategy in the configuration when fallback is enabled and cookies are available',
+        description: 'should contain cookie strategy in the configuration by default',
         expectedStrategyType: cookieStrategy,
       },
       {
@@ -139,10 +141,34 @@ describe('validateAndBuildConfiguration', () => {
         expectedStrategyType: localStorageStrategy,
       },
       {
-        description: 'should not contain any strategy if both cookies and local storage are unavailable',
+        description:
+          'should contain localStorage strategy in the configuration when localStorage and in-memory fallbacks are enabled, and cookies are not available',
+        disableCookies: true,
+        allowFallbackToLocalStorage: true,
+        allowFallbackToInMemoryStorage: true,
+        expectedStrategyType: localStorageStrategy,
+      },
+      {
+        description:
+          'should contain in-memory strategy if fallback is enabled while cookies are disabled, and localStorage fallback is disabled',
+        disableCookies: true,
+        allowFallbackToInMemoryStorage: true,
+        expectedStrategyType: inMemoryStrategy,
+      },
+      {
+        description:
+          'should contain in-memory strategy if fallback is enabled while cookies are disabled, and localStorage is unavailable',
         disableCookies: true,
         disableStorage: true,
         allowFallbackToLocalStorage: true,
+        allowFallbackToInMemoryStorage: true,
+        expectedStrategyType: inMemoryStrategy,
+      },
+      {
+        description:
+          'should not contain any strategy if both cookies and local storage are unavailable, and in-memory fallback is disabled',
+        disableCookies: true,
+        disableStorage: true,
         expectedStrategyType: undefined,
       },
     ]
