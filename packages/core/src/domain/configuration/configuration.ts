@@ -49,6 +49,13 @@ export interface InitConfiguration {
    */
   silentMultipleInit?: boolean | undefined
   /**
+   * Allows the use of an in-memory store when cookies cannot be set, and localStorage is either disallowed or disabled.
+   *
+   * *Only for use with single-page applications. All page loads will start a new session, likely resulting in an increase in total number of RUM sessions*
+   * @default false
+   */
+  allowFallbackToInMemoryStorage?: boolean | undefined
+  /**
    * Allows the use of localStorage when cookies cannot be set. This enables the RUM Browser SDK to run in environments that do not provide cookie support.
    * See [Monitor Electron Applications Using the Browser SDK](https://docs.datadoghq.com/real_user_monitoring/guide/monitor-electron-applications-using-browser-sdk) for further information.
    * @default false
