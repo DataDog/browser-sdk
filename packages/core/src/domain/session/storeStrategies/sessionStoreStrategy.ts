@@ -7,6 +7,7 @@ export const SESSION_STORE_KEY = '_dd_s'
 export type SessionStoreStrategyType =
   | { type: typeof SessionPersistence.COOKIE; cookieOptions: CookieOptions }
   | { type: typeof SessionPersistence.LOCAL_STORAGE }
+  | { type: typeof SessionPersistence.IN_MEMORY }
 
 export interface SessionStoreStrategy {
   isLockEnabled: boolean
