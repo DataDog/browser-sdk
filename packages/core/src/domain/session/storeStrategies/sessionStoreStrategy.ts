@@ -3,7 +3,10 @@ import type { SessionState } from '../sessionState'
 
 export const SESSION_STORE_KEY = '_dd_s'
 
-export type SessionStoreStrategyType = { type: 'Cookie'; cookieOptions: CookieOptions } | { type: 'LocalStorage' }
+export type SessionStoreStrategyType =
+  | { type: 'Cookie'; cookieOptions: CookieOptions }
+  | { type: 'LocalStorage' }
+  | { type: 'InMemory' }
 
 export interface SessionStoreStrategy {
   isLockEnabled: boolean
