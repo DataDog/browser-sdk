@@ -182,6 +182,23 @@ describe('httpRequest', () => {
         done()
       }, 100)
     })
+
+    it('should handle synthetic events events', (done) => {
+      const onResponseSpy = jasmine.createSpy('xhrOnResponse')
+
+      interceptor.withMockXhr((xhr) => {
+        const syntheticEvent = new Event('loadend')
+
+        setTimeout(() => xhr.dispatchEvent(syntheticEvent))
+      })
+
+      sendXHR('foo', '', onResponseSpy)
+
+      setTimeout(() => {
+        expect(onResponseSpy).toHaveBeenCalledTimes(1)
+        done()
+      }, 100)
+    })
   })
 
   describe('sendOnExit', () => {

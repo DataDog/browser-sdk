@@ -49,11 +49,12 @@ class MockEventEmitter {
     this.listeners[name] = this.listeners[name].filter((listener) => listener !== callback)
   }
 
-  protected dispatchEvent(name: string) {
-    if (!this.listeners[name]) {
+  dispatchEvent(evt: Event) {
+    if (!this.listeners[evt.type]) {
       return
     }
-    this.listeners[name].forEach((listener) => listener.apply(this, [createNewEvent(name)]))
+
+    this.listeners[evt.type].forEach((listener) => listener.apply(this, [evt]))
   }
 }
 
@@ -85,8 +86,8 @@ export class MockXhr extends MockEventEmitter {
     this.hasEnded = true
     this.readyState = XMLHttpRequest.DONE
     this.onreadystatechange()
-    this.dispatchEvent('abort')
-    this.dispatchEvent('loadend')
+    this.dispatchEvent(createNewEvent('abort'))
+    this.dispatchEvent(createNewEvent('loadend'))
   }
 
   complete(status: number, response?: string) {
@@ -102,11 +103,11 @@ export class MockXhr extends MockEventEmitter {
     this.onreadystatechange()
 
     if (status >= 200 && status < 500) {
-      this.dispatchEvent('load')
+      this.dispatchEvent(createNewEvent('load'))
     }
     if (isServerError(status)) {
-      this.dispatchEvent('error')
+      this.dispatchEvent(createNewEvent('error'))
     }
-    this.dispatchEvent('loadend')
+    this.dispatchEvent(createNewEvent('loadend'))
   }
 }

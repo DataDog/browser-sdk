@@ -127,6 +127,7 @@ export function sendXHR(url: string, data: Payload['data'], onResponse?: (r: Htt
     request.setRequestHeader('Content-Type', data.type)
   }
   addEventListener(
+    // allow untrusted event to acount for synthetic event dispatched by third party xhr wrapper
     { allowUntrustedEvents: true },
     request,
     'loadend',
