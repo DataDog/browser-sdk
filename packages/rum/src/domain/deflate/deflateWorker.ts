@@ -26,25 +26,32 @@ export const enum DeflateWorkerStatus {
   Initialized,
 }
 
-type DeflateWorkerState =
-  | {
-      status: DeflateWorkerStatus.Nil
-    }
-  | {
-      status: DeflateWorkerStatus.Loading
-      worker: DeflateWorker
-      stop: () => void
-      initializationFailureCallbacks: Array<() => void>
-    }
-  | {
-      status: DeflateWorkerStatus.Error
-    }
-  | {
-      status: DeflateWorkerStatus.Initialized
-      worker: DeflateWorker
-      stop: () => void
-      version: string
-    }
+type DefaleWorkerNil = {
+  status: DeflateWorkerStatus.Nil
+  initializationFailureCallbacks: Array<() => void>
+  initializationSuccessCallbacks: Array<(worker: DeflateWorker) => void>
+}
+
+type DefaleWorkerLoading = {
+  status: DeflateWorkerStatus.Loading
+  worker: DeflateWorker
+  stop: () => void
+  initializationFailureCallbacks: Array<() => void>
+  initializationSuccessCallbacks: Array<(worker: DeflateWorker) => void>
+}
+
+type DefaleWorkerError = {
+  status: DeflateWorkerStatus.Error
+}
+
+type DefaleWorkerInitialized = {
+  status: DeflateWorkerStatus.Initialized
+  worker: DeflateWorker
+  stop: () => void
+  version: string
+}
+
+type DeflateWorkerState = DefaleWorkerNil | DefaleWorkerLoading | DefaleWorkerError | DefaleWorkerInitialized
 
 export type CreateDeflateWorker = typeof createDeflateWorker
 
@@ -52,25 +59,31 @@ function createDeflateWorker(configuration: RumConfiguration): DeflateWorker {
   return new Worker(configuration.workerUrl || URL.createObjectURL(new Blob([__BUILD_ENV__WORKER_STRING__])))
 }
 
-let state: DeflateWorkerState = { status: DeflateWorkerStatus.Nil }
+let state: DeflateWorkerState = {
+  status: DeflateWorkerStatus.Nil,
+  initializationFailureCallbacks: [],
+  initializationSuccessCallbacks: [],
+}
 
 export function startDeflateWorker(
   configuration: RumConfiguration,
   source: string,
   onInitializationFailure: () => void,
+  onInitializationSuccess: (worker: DeflateWorker) => void,
   createDeflateWorkerImpl = createDeflateWorker
 ) {
+  if (state.status === DeflateWorkerStatus.Nil || state.status === DeflateWorkerStatus.Loading) {
+    state.initializationFailureCallbacks.push(onInitializationFailure)
+    state.initializationSuccessCallbacks.push(onInitializationSuccess)
+  }
+
   if (state.status === DeflateWorkerStatus.Nil) {
     // doStartDeflateWorker updates the state to "loading" or "error"
     doStartDeflateWorker(configuration, source, createDeflateWorkerImpl)
   }
 
-  switch (state.status) {
-    case DeflateWorkerStatus.Loading:
-      state.initializationFailureCallbacks.push(onInitializationFailure)
-      return state.worker
-    case DeflateWorkerStatus.Initialized:
-      return state.worker
+  if (state.status === DeflateWorkerStatus.Loading || state.status === DeflateWorkerStatus.Initialized) {
+    return state.worker
   }
 }
 
@@ -78,7 +91,7 @@ export function resetDeflateWorkerState() {
   if (state.status === DeflateWorkerStatus.Initialized || state.status === DeflateWorkerStatus.Loading) {
     state.stop()
   }
-  state = { status: DeflateWorkerStatus.Nil }
+  state = { status: DeflateWorkerStatus.Nil, initializationFailureCallbacks: [], initializationSuccessCallbacks: [] }
 }
 
 export function getDeflateWorkerStatus() {
@@ -99,6 +112,10 @@ export function doStartDeflateWorker(
   source: string,
   createDeflateWorkerImpl = createDeflateWorker
 ) {
+  if (state.status !== DeflateWorkerStatus.Nil) {
+    return
+  }
+
   try {
     const worker = createDeflateWorkerImpl(configuration)
     const { stop: removeErrorListener } = addEventListener(configuration, worker, 'error', (error) => {
@@ -123,7 +140,13 @@ export function doStartDeflateWorker(
       removeMessageListener()
     }
 
-    state = { status: DeflateWorkerStatus.Loading, worker, stop, initializationFailureCallbacks: [] }
+    state = {
+      status: DeflateWorkerStatus.Loading,
+      worker,
+      stop,
+      initializationFailureCallbacks: state.initializationFailureCallbacks,
+      initializationSuccessCallbacks: state.initializationSuccessCallbacks,
+    }
   } catch (error) {
     onError(configuration, source, error)
   }
@@ -131,21 +154,24 @@ export function doStartDeflateWorker(
 
 function onTimeout(source: string) {
   if (state.status === DeflateWorkerStatus.Loading) {
-    display.error(`${source} failed to start: a timeout occurred while initializing the Worker`)
-    state.initializationFailureCallbacks.forEach((callback) => callback())
+    const { initializationFailureCallbacks } = state
+    display.error(`${source}: a timeout occurred while initializing the Worker`)
+    initializationFailureCallbacks.forEach((callback) => callback())
     state = { status: DeflateWorkerStatus.Error }
   }
 }
 
 function onInitialized(version: string) {
   if (state.status === DeflateWorkerStatus.Loading) {
+    const { initializationSuccessCallbacks } = state
     state = { status: DeflateWorkerStatus.Initialized, worker: state.worker, stop: state.stop, version }
+    initializationSuccessCallbacks.forEach((callback) => callback((state as DefaleWorkerInitialized).worker))
   }
 }
 
 function onError(configuration: RumConfiguration, source: string, error: unknown, streamId?: number) {
   if (state.status === DeflateWorkerStatus.Loading || state.status === DeflateWorkerStatus.Nil) {
-    display.error(`${source} failed to start: an error occurred while creating the Worker:`, error)
+    display.error(`${source}: an error occurred while creating the Worker:`, error)
     if (error instanceof Event || (error instanceof Error && isMessageCspRelated(error.message))) {
       let baseMessage
       if (configuration.workerUrl) {
@@ -159,10 +185,9 @@ function onError(configuration: RumConfiguration, source: string, error: unknown
     } else {
       addTelemetryError(error)
     }
-    if (state.status === DeflateWorkerStatus.Loading) {
-      state.initializationFailureCallbacks.forEach((callback) => callback())
-    }
+    const { initializationFailureCallbacks } = state
     state = { status: DeflateWorkerStatus.Error }
+    initializationFailureCallbacks.forEach((callback) => callback())
   } else {
     addTelemetryError(error, {
       worker_version: state.status === DeflateWorkerStatus.Initialized && state.version,

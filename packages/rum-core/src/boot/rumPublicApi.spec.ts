@@ -12,7 +12,7 @@ import { mockClock, registerCleanupTask } from '@datadog/browser-core/test'
 import { noopRecorderApi } from '../../test'
 import { ActionType, VitalType } from '../rawRumEvent.types'
 import type { DurationVitalReference } from '../domain/vital/vitalCollection'
-import type { RumPublicApi, RecorderApi } from './rumPublicApi'
+import type { RumPublicApi, RecorderApi, RumPublicApiOptions } from './rumPublicApi'
 import { makeRumPublicApi } from './rumPublicApi'
 import type { StartRum } from './startRum'
 
@@ -37,6 +37,15 @@ const noopStartRum = (): ReturnType<StartRum> => ({
 })
 const DEFAULT_INIT_CONFIGURATION = { applicationId: 'xxx', clientToken: 'xxx' }
 const FAKE_WORKER = {} as DeflateWorker
+const startDeflateWorker: RumPublicApiOptions['startDeflateWorker'] = (
+  _configuration,
+  _source,
+  _onInitializationFailure,
+  onInitializationSuccess
+) => {
+  onInitializationSuccess(FAKE_WORKER)
+  return FAKE_WORKER
+}
 
 describe('rum public api', () => {
   describe('init', () => {
@@ -60,7 +69,7 @@ describe('rum public api', () => {
             onRumStart: recorderApiOnRumStartSpy,
           },
           {
-            startDeflateWorker: () => FAKE_WORKER,
+            startDeflateWorker,
           }
         )
       })
@@ -77,7 +86,7 @@ describe('rum public api', () => {
     describe('customer data trackers', () => {
       it('should set the compression status to disabled if `compressIntakeRequests` is false', () => {
         const rumPublicApi = makeRumPublicApi(startRumSpy, noopRecorderApi, {
-          startDeflateWorker: () => FAKE_WORKER,
+          startDeflateWorker,
         })
 
         rumPublicApi.init({
@@ -91,7 +100,7 @@ describe('rum public api', () => {
 
       it('should set the compression status to enabled if `compressIntakeRequests` is true', () => {
         const rumPublicApi = makeRumPublicApi(startRumSpy, noopRecorderApi, {
-          startDeflateWorker: () => FAKE_WORKER,
+          startDeflateWorker,
         })
 
         rumPublicApi.init({

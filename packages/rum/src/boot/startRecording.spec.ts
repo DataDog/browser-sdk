@@ -28,7 +28,7 @@ describe('startRecording', () => {
   function setupStartRecording() {
     const configuration = mockRumConfiguration({ defaultPrivacyLevel: DefaultPrivacyLevel.ALLOW })
     resetReplayStats()
-    const worker = startDeflateWorker(configuration, 'Session Replay', noop)
+    const worker = startDeflateWorker(configuration, 'Session Replay', noop, noop)
 
     requestSendSpy = jasmine.createSpy()
     const httpRequest = {

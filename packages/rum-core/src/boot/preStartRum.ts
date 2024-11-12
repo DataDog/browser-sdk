@@ -16,6 +16,7 @@ import {
   initFetchObservable,
 } from '@datadog/browser-core'
 import type { TrackingConsentState, DeflateWorker } from '@datadog/browser-core'
+import { DeflateWorkerStatus, getDeflateWorkerStatus } from '../../../rum/src/domain/deflate'
 import {
   validateAndBuildRumConfiguration,
   type RumConfiguration,
@@ -46,15 +47,20 @@ export function createPreStartStrategy(
   let firstStartViewCall:
     | { options: ViewOptions | undefined; callback: (startRumResult: StartRumResult) => void }
     | undefined
-  let deflateWorker: DeflateWorker | undefined
 
   let cachedInitConfiguration: RumInitConfiguration | undefined
   let cachedConfiguration: RumConfiguration | undefined
 
-  const trackingConsentStateSubscription = trackingConsentState.observable.subscribe(tryStartRum)
+  const trackingConsentStateSubscription = trackingConsentState.observable.subscribe(() => tryStartRum())
 
-  function tryStartRum() {
-    if (!cachedInitConfiguration || !cachedConfiguration || !trackingConsentState.isGranted()) {
+  function tryStartRum(deflateWorker?: DeflateWorker) {
+    if (!cachedInitConfiguration || !cachedConfiguration || getDeflateWorkerStatus() === DeflateWorkerStatus.Loading) {
+      return
+    }
+
+    trackingConsentState.tryToInit(cachedConfiguration.trackingConsent)
+
+    if (!trackingConsentState.isGranted()) {
       return
     }
 
@@ -101,35 +107,34 @@ export function createPreStartStrategy(
       return
     }
 
+    cachedConfiguration = configuration
+
     if (!eventBridgeAvailable && !configuration.sessionStoreStrategyType) {
       display.warn('No storage available for session. We will not send any data.')
       return
     }
 
-    if (configuration.compressIntakeRequests && !eventBridgeAvailable && startDeflateWorker) {
-      deflateWorker = startDeflateWorker(
-        configuration,
-        'Datadog RUM',
-        // Worker initialization can fail asynchronously, especially in Firefox where even CSP
-        // issues are reported asynchronously. For now, the SDK will continue its execution even if
-        // data won't be sent to Datadog. We could improve this behavior in the future.
-        noop
-      )
-      if (!deflateWorker) {
-        // `startDeflateWorker` should have logged an error message explaining the issue
-        return
-      }
-    }
-
-    cachedConfiguration = configuration
     // Instrumuent fetch to track network requests
-    // This is needed in case the consent is not granted and some cutsomer
+    // This is needed in case the consent is not granted and some customer
     // library (Apollo Client) is storing uninstrumented fetch to be used later
     // The subscrption is needed so that the instrumentation process is completed
     initFetchObservable().subscribe(noop)
 
-    trackingConsentState.tryToInit(configuration.trackingConsent)
-    tryStartRum()
+    if (configuration.compressIntakeRequests && !eventBridgeAvailable && startDeflateWorker) {
+      startDeflateWorker(
+        configuration,
+        'Datadog RUM',
+        () => {
+          display.warn(
+            'Datadog RUM: no compression worker available for session. Intake requests will not be compressed.'
+          )
+          tryStartRum()
+        },
+        (worker) => tryStartRum(worker)
+      )
+    } else {
+      tryStartRum()
+    }
   }
 
   const addDurationVital = (vital: DurationVital) => {

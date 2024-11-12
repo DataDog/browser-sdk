@@ -29,7 +29,7 @@ import { ActionType, VitalType } from '../rawRumEvent.types'
 import type { CustomAction } from '../domain/action/actionCollection'
 import type { RumPlugin } from '../domain/plugins'
 import { createCustomVitalsState } from '../domain/vital/vitalCollection'
-import type { RumPublicApi, Strategy } from './rumPublicApi'
+import type { RumPublicApi, RumPublicApiOptions, Strategy } from './rumPublicApi'
 import type { StartRumResult } from './startRum'
 import { createPreStartStrategy } from './preStartRum'
 
@@ -230,7 +230,16 @@ describe('preStartRum', () => {
       let startDeflateWorkerSpy: jasmine.Spy
 
       beforeEach(() => {
-        startDeflateWorkerSpy = jasmine.createSpy().and.returnValue(FAKE_WORKER)
+        const fakeStartDeflateWorker: RumPublicApiOptions['startDeflateWorker'] = (
+          _configuration,
+          _source,
+          _onInitializationFailure,
+          onInitializationSuccess
+        ) => {
+          onInitializationSuccess(FAKE_WORKER)
+          return FAKE_WORKER
+        }
+        startDeflateWorkerSpy = jasmine.createSpy().and.callFake(fakeStartDeflateWorker)
 
         strategy = createPreStartStrategy(
           {

@@ -17,6 +17,7 @@ export enum ExperimentalFeature {
   WRITABLE_RESOURCE_GRAPHQL = 'writable_resource_graphql',
   REMOTE_CONFIGURATION = 'remote_configuration',
   LONG_ANIMATION_FRAME = 'long_animation_frame',
+  COMPRESS_INTAKE_REQUEST = 'compress_intake_request',
 }
 
 const enabledExperimentalFeatures: Set<ExperimentalFeature> = new Set()

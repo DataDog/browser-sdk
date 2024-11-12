@@ -32,6 +32,7 @@ import {
   createTrackingConsentState,
   timeStampToClocks,
 } from '@datadog/browser-core'
+import { DeflateWorkerStatus, getDeflateWorkerStatus } from '../../../rum/src/domain/deflate'
 import type { LifeCycle } from '../domain/lifeCycle'
 import type { ViewHistory } from '../domain/contexts/viewHistory'
 import type { RumSessionManager } from '../domain/rumSessionManager'
@@ -331,7 +332,8 @@ export interface RumPublicApiOptions {
   startDeflateWorker?: (
     configuration: RumConfiguration,
     source: string,
-    onInitializationFailure: () => void
+    onInitializationFailure: () => void,
+    onInitializationSuccess: (worker: DeflateWorker) => void
   ) => DeflateWorker | undefined
   createDeflateEncoder?: (
     configuration: RumConfiguration,
@@ -377,6 +379,10 @@ export function makeRumPublicApi(
     return buildCommonContext(globalContextManager, userContextManager, recorderApi)
   }
 
+  function useCompression(deflateWorker: DeflateWorker | undefined): deflateWorker is DeflateWorker {
+    return !!deflateWorker && getDeflateWorkerStatus() !== DeflateWorkerStatus.Error
+  }
+
   let strategy = createPreStartStrategy(
     options,
     getCommonContext,
@@ -389,8 +395,13 @@ export function makeRumPublicApi(
       }
 
       customerDataTrackerManager.setCompressionStatus(
-        deflateWorker ? CustomerDataCompressionStatus.Enabled : CustomerDataCompressionStatus.Disabled
+        useCompression(deflateWorker) ? CustomerDataCompressionStatus.Enabled : CustomerDataCompressionStatus.Disabled
       )
+
+      const createEncoder =
+        useCompression(deflateWorker) && options.createDeflateEncoder
+          ? (streamId: DeflateEncoderStreamId) => options.createDeflateEncoder!(configuration, deflateWorker, streamId)
+          : createIdentityEncoder
 
       const startRumResult = startRumImpl(
         configuration,
@@ -398,9 +409,7 @@ export function makeRumPublicApi(
         customerDataTrackerManager,
         getCommonContext,
         initialViewOptions,
-        deflateWorker && options.createDeflateEncoder
-          ? (streamId) => options.createDeflateEncoder!(configuration, deflateWorker, streamId)
-          : createIdentityEncoder,
+        createEncoder,
         trackingConsentState,
         customVitalsState
       )

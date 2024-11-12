@@ -38,12 +38,16 @@ describe('transport', () => {
         .run(async ({ intakeRegistry }) => {
           await flushEvents()
 
-          // Some non-deflate request can still be sent because on some browsers the Worker fails
-          // asynchronously
           expect(intakeRegistry.rumRequests.filter((request) => request.encoding === 'deflate').length).toBe(0)
 
+          // Compression is disabled but requests are still sent uncompressed
+          // 6 requests are sent: 1 telemetry, 1 view, 1 CSP error, and 3 resources
+          expect(intakeRegistry.rumRequests.filter((request) => request.encoding === null)[0].events.length).toBe(6)
+
           await withBrowserLogs((logs) => {
-            const failedToStartLog = logs.find((log) => log.message.includes('Datadog RUM failed to start'))
+            const failedToStartLog = logs.find((log) =>
+              log.message.includes('Datadog RUM: no compression worker available')
+            )
             const cspDocLog = logs.find((log) => log.message.includes('Please make sure CSP'))
             expect(failedToStartLog).withContext("'Failed to start' log").toBeTruthy()
             expect(cspDocLog).withContext("'CSP doc' log").toBeTruthy()

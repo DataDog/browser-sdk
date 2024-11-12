@@ -7,6 +7,7 @@ import {
   PageExitReason,
   BridgeCapability,
   bridgeSupports,
+  display,
 } from '@datadog/browser-core'
 import type {
   LifeCycle,
@@ -130,8 +131,12 @@ export function makeRecorderApi(
               configuration,
               'Datadog Session Replay',
               () => {
+                display.error(
+                  'Datadog Session Replay: no worker available for session. Session replay will not be available.'
+                )
                 stopStrategy()
               },
+              noop,
               createDeflateWorkerImpl
             )
           }

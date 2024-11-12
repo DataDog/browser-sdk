@@ -14,6 +14,7 @@ describe('startDeflateWorker', () => {
   let mockWorker: MockWorker
   let createDeflateWorkerSpy: jasmine.Spy<CreateDeflateWorker>
   let onInitializationFailureSpy: jasmine.Spy<() => void>
+  let onInitializationSuccessSpy: jasmine.Spy<(worker: Worker) => void>
 
   function startDeflateWorkerWithDefaults({
     configuration = {},
@@ -26,6 +27,7 @@ describe('startDeflateWorker', () => {
       configuration as RumConfiguration,
       source,
       onInitializationFailureSpy,
+      onInitializationSuccessSpy,
       createDeflateWorkerSpy
     )
   }
@@ -189,17 +191,13 @@ describe('startDeflateWorker', () => {
     it('displays an error message when the worker does not respond to the init action', () => {
       startDeflateWorkerWithDefaults()
       clock.tick(INITIALIZATION_TIME_OUT_DELAY)
-      expect(displaySpy).toHaveBeenCalledOnceWith(
-        'Session Replay failed to start: a timeout occurred while initializing the Worker'
-      )
+      expect(displaySpy).toHaveBeenCalledOnceWith('Session Replay: a timeout occurred while initializing the Worker')
     })
 
     it('displays a customized error message', () => {
       startDeflateWorkerWithDefaults({ source: 'Foo' })
       clock.tick(INITIALIZATION_TIME_OUT_DELAY)
-      expect(displaySpy).toHaveBeenCalledOnceWith(
-        'Foo failed to start: a timeout occurred while initializing the Worker'
-      )
+      expect(displaySpy).toHaveBeenCalledOnceWith('Foo: a timeout occurred while initializing the Worker')
     })
   })
 
@@ -221,7 +219,7 @@ describe('startDeflateWorker', () => {
       createDeflateWorkerSpy.and.throwError(UNKNOWN_ERROR)
       startDeflateWorkerWithDefaults()
       expect(displaySpy).toHaveBeenCalledOnceWith(
-        'Session Replay failed to start: an error occurred while creating the Worker:',
+        'Session Replay: an error occurred while creating the Worker:',
         UNKNOWN_ERROR
       )
     })
@@ -229,10 +227,7 @@ describe('startDeflateWorker', () => {
     it('displays a customized error message', () => {
       createDeflateWorkerSpy.and.throwError(UNKNOWN_ERROR)
       startDeflateWorkerWithDefaults({ source: 'Foo' })
-      expect(displaySpy).toHaveBeenCalledOnceWith(
-        'Foo failed to start: an error occurred while creating the Worker:',
-        UNKNOWN_ERROR
-      )
+      expect(displaySpy).toHaveBeenCalledOnceWith('Foo: an error occurred while creating the Worker:', UNKNOWN_ERROR)
     })
 
     it('reports unknown errors to telemetry', () => {

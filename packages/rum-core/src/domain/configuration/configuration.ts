@@ -11,6 +11,8 @@ import {
   objectHasValue,
   validateAndBuildConfiguration,
   isSampleRate,
+  isExperimentalFeatureEnabled,
+  ExperimentalFeature,
 } from '@datadog/browser-core'
 import type { RumEventDomainContext } from '../../domainContext.types'
 import type { RumEvent } from '../../rumEvent.types'
@@ -199,7 +201,11 @@ export function validateAndBuildRumConfiguration(
       allowedTracingUrls,
       excludedActivityUrls: initConfiguration.excludedActivityUrls ?? [],
       workerUrl: initConfiguration.workerUrl,
-      compressIntakeRequests: !!initConfiguration.compressIntakeRequests,
+      compressIntakeRequests:
+        (initConfiguration.compressIntakeRequests ??
+        isExperimentalFeatureEnabled(ExperimentalFeature.COMPRESS_INTAKE_REQUEST))
+          ? true
+          : false,
       trackUserInteractions: !!initConfiguration.trackUserInteractions,
       trackViewsManually: !!initConfiguration.trackViewsManually,
       trackResources: !!initConfiguration.trackResources,
