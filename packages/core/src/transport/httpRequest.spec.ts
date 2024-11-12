@@ -183,7 +183,7 @@ describe('httpRequest', () => {
       }, 100)
     })
 
-    it('should handle synthetic events events', (done) => {
+    it('should handle synthetic events', (done) => {
       const onResponseSpy = jasmine.createSpy('xhrOnResponse')
 
       interceptor.withMockXhr((xhr) => {
