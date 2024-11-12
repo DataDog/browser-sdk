@@ -187,7 +187,7 @@ describe('httpRequest', () => {
       const onResponseSpy = jasmine.createSpy('xhrOnResponse')
 
       interceptor.withMockXhr((xhr) => {
-        const syntheticEvent = createNewEvent('loadend', {}, false)
+        const syntheticEvent = createNewEvent('loadend', { __ddIsTrusted: false })
 
         setTimeout(() => xhr.dispatchEvent(syntheticEvent))
       })
