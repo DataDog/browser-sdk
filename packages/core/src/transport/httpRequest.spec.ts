@@ -1,4 +1,4 @@
-import { collectAsyncCalls, mockEndpointBuilder, interceptRequests } from '../../test'
+import { collectAsyncCalls, mockEndpointBuilder, interceptRequests, createNewEvent } from '../../test'
 import type { Request } from '../../test'
 import type { EndpointBuilder } from '../domain/configuration'
 import { createEndpointBuilder } from '../domain/configuration'
@@ -187,7 +187,7 @@ describe('httpRequest', () => {
       const onResponseSpy = jasmine.createSpy('xhrOnResponse')
 
       interceptor.withMockXhr((xhr) => {
-        const syntheticEvent = new Event('loadend')
+        const syntheticEvent = createNewEvent('loadend', {}, false)
 
         setTimeout(() => xhr.dispatchEvent(syntheticEvent))
       })
