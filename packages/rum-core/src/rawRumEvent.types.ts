@@ -250,6 +250,7 @@ export interface RawRumActionEvent {
         width?: number
         height?: number
       }
+      name_source?: string
       position?: {
         x: number
         y: number

@@ -9,11 +9,16 @@ import type { RumConfiguration } from '../configuration'
  */
 export const DEFAULT_PROGRAMMATIC_ACTION_NAME_ATTRIBUTE = 'data-dd-action-name'
 export const ACTION_NAME_PLACEHOLDER = 'Masked Element'
+
+type ActionName = {
+  name: string
+  namingSource: string
+}
 export function getActionNameFromElement(
   element: Element,
   { enablePrivacyForActionName, actionNameAttribute: userProgrammaticAttribute }: RumConfiguration,
   nodePrivacyLevel?: NodePrivacyLevel
-): string {
+): ActionName {
   // Proceed to get the action name in two steps:
   // * first, get the name programmatically, explicitly defined by the user.
   // * then, use strategies that are known to return good results. Those strategies will be used on
@@ -25,25 +30,39 @@ export function getActionNameFromElement(
     (userProgrammaticAttribute && getActionNameFromElementProgrammatically(element, userProgrammaticAttribute))
 
   if (nodePrivacyLevel === NodePrivacyLevel.MASK) {
-    return defaultActionName || ACTION_NAME_PLACEHOLDER
+    return defaultActionName
+      ? { name: defaultActionName, namingSource: 'custom_attribute' }
+      : {
+          name: ACTION_NAME_PLACEHOLDER,
+          namingSource: 'mask_placeholder',
+        }
+  }
+  if (defaultActionName) {
+    return {
+      name: defaultActionName,
+      namingSource: 'custom_attribute',
+    }
+  }
+  const standardName = getActionNameFromElementForStrategies(
+    element,
+    userProgrammaticAttribute,
+    priorityStrategies,
+    enablePrivacyForActionName
+  )
+  if (standardName) {
+    return { name: standardName, namingSource: 'standard_attribute' }
   }
 
-  return (
-    defaultActionName ||
-    getActionNameFromElementForStrategies(
-      element,
-      userProgrammaticAttribute,
-      priorityStrategies,
-      enablePrivacyForActionName
-    ) ||
-    getActionNameFromElementForStrategies(
-      element,
-      userProgrammaticAttribute,
-      fallbackStrategies,
-      enablePrivacyForActionName
-    ) ||
-    ''
-  )
+  return {
+    name:
+      getActionNameFromElementForStrategies(
+        element,
+        userProgrammaticAttribute,
+        fallbackStrategies,
+        enablePrivacyForActionName
+      ) || '',
+    namingSource: 'text_content',
+  }
 }
 
 function getActionNameFromElementProgrammatically(targetElement: Element, programmaticAttribute: string) {

@@ -33,8 +33,35 @@ export { DefaultPrivacyLevel } from '@datadog/browser-core'
 
 const recorderApi = makeRecorderApi(startRecording)
 export const datadogRum = makeRumPublicApi(startRum, recorderApi, { startDeflateWorker, createDeflateEncoder })
-
+// function intiActionNameAllowlist() {
+//   if (!getGlobalObject<BrowserWindow>()) {
+//     return
+//   }
+//   // check if it is staging
+//   if (
+//     !getGlobalObject<BrowserWindow>().location ||
+//     !getGlobalObject<BrowserWindow>().location.hostname.includes('datad0g')
+//   ) {
+//     return
+//   }
+//   if (!getGlobalObject<BrowserWindow>().DD_ALLOWLIST_DICTIONARY) {
+//     fetch('/static/v/dist.allowed-strings.json')
+//       .then((response) => {
+//         response
+//           .json()
+//           .then((data) => defineGlobal(getGlobalObject<BrowserWindow>(), 'DD_ALLOWLIST_DICTIONARY', data))
+//           .catch((error) => {
+//             addTelemetryDebug('Failed to parse allowed strings', error)
+//           })
+//       })
+//       .catch((error) => {
+//         addTelemetryDebug('Failed to download allowed strings', error)
+//       })
+//   }
+// }
 interface BrowserWindow extends Window {
   DD_RUM?: RumPublicApi
+  DD_ALLOWLIST_DICTIONARY?: { [key: string]: boolean }
 }
 defineGlobal(getGlobalObject<BrowserWindow>(), 'DD_RUM', datadogRum)
+// intiActionNameAllowlist()
