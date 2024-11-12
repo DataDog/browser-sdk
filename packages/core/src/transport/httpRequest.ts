@@ -1,4 +1,4 @@
-import type { EndpointBuilder, Configuration } from '../domain/configuration'
+import type { EndpointBuilder } from '../domain/configuration'
 import { addTelemetryError } from '../domain/telemetry'
 import type { Context } from '../tools/serialisation/context'
 import { monitor } from '../tools/monitor'
@@ -35,14 +35,13 @@ export interface RetryInfo {
 }
 
 export function createHttpRequest(
-  configuration: Configuration,
   endpointBuilder: EndpointBuilder,
   bytesLimit: number,
   reportError: (error: RawError) => void
 ) {
   const retryState = newRetryState()
   const sendStrategyForRetry = (payload: Payload, onResponse: (r: HttpResponse) => void) =>
-    fetchKeepAliveStrategy(configuration, endpointBuilder, bytesLimit, payload, onResponse)
+    fetchKeepAliveStrategy(endpointBuilder, bytesLimit, payload, onResponse)
 
   return {
     send: (payload: Payload) => {
@@ -53,17 +52,12 @@ export function createHttpRequest(
      * keep using sendBeaconStrategy on exit
      */
     sendOnExit: (payload: Payload) => {
-      sendBeaconStrategy(configuration, endpointBuilder, bytesLimit, payload)
+      sendBeaconStrategy(endpointBuilder, bytesLimit, payload)
     },
   }
 }
 
-function sendBeaconStrategy(
-  configuration: Configuration,
-  endpointBuilder: EndpointBuilder,
-  bytesLimit: number,
-  payload: Payload
-) {
+function sendBeaconStrategy(endpointBuilder: EndpointBuilder, bytesLimit: number, payload: Payload) {
   const canUseBeacon = !!navigator.sendBeacon && payload.bytesCount < bytesLimit
   if (canUseBeacon) {
     try {
@@ -79,7 +73,7 @@ function sendBeaconStrategy(
   }
 
   const xhrUrl = endpointBuilder.build('xhr', payload)
-  sendXHR(configuration, xhrUrl, payload.data)
+  sendXHR(xhrUrl, payload.data)
 }
 
 let hasReportedBeaconError = false
@@ -92,7 +86,6 @@ function reportBeaconError(e: unknown) {
 }
 
 export function fetchKeepAliveStrategy(
-  configuration: Configuration,
   endpointBuilder: EndpointBuilder,
   bytesLimit: number,
   payload: Payload,
@@ -106,12 +99,12 @@ export function fetchKeepAliveStrategy(
       monitor(() => {
         const xhrUrl = endpointBuilder.build('xhr', payload)
         // failed to queue the request
-        sendXHR(configuration, xhrUrl, payload.data, onResponse)
+        sendXHR(xhrUrl, payload.data, onResponse)
       })
     )
   } else {
     const xhrUrl = endpointBuilder.build('xhr', payload)
-    sendXHR(configuration, xhrUrl, payload.data, onResponse)
+    sendXHR(xhrUrl, payload.data, onResponse)
   }
 }
 
@@ -124,12 +117,7 @@ function isKeepAliveSupported() {
   }
 }
 
-export function sendXHR(
-  configuration: Configuration,
-  url: string,
-  data: Payload['data'],
-  onResponse?: (r: HttpResponse) => void
-) {
+export function sendXHR(url: string, data: Payload['data'], onResponse?: (r: HttpResponse) => void) {
   const request = new XMLHttpRequest()
   request.open('POST', url, true)
   if (data instanceof Blob) {
@@ -139,7 +127,7 @@ export function sendXHR(
     request.setRequestHeader('Content-Type', data.type)
   }
   addEventListener(
-    configuration,
+    { allowUntrustedEvents: true },
     request,
     'loadend',
     () => {
