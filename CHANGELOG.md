@@ -18,6 +18,22 @@
 
 ---
 
+## v5.30.0
+
+**Public Changes:**
+
+- ✨ add new privacy rule for autocomplete password value ([#3094](https://github.com/DataDog/browser-sdk/pull/3094)) [RUM] [RUM-REACT] [RUM-SLIM]
+- ✨[RUM-5090] Collect ressource protocol ([#3087](https://github.com/DataDog/browser-sdk/pull/3087)) [RUM] [RUM-REACT] [RUM-SLIM]
+- 🐛 allow untrusted event for httpRequest xhr event listeners ([#3123](https://github.com/DataDog/browser-sdk/pull/3123)) [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+
+**Internal Changes:**
+
+- 👷 [RUM-6562] Enable and rename update view name API ([#3099](https://github.com/DataDog/browser-sdk/pull/3099)) [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+- 👷 Update all non-major dependencies ([#3082](https://github.com/DataDog/browser-sdk/pull/3082)) [RUM-REACT]
+- 👷[IR-30972] Include older version intake urls matching ([#3059](https://github.com/DataDog/browser-sdk/pull/3059)) [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+- 👷 disable datadog static analysis ([#3091](https://github.com/DataDog/browser-sdk/pull/3091))
+- ✅👷 kill browserstack execution early ([#3096](https://github.com/DataDog/browser-sdk/pull/3096))
+
 ## v5.29.1
 
 **Internal Changes:**
