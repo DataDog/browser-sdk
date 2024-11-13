@@ -32,7 +32,7 @@ describe('tracking consent', () => {
           window.DD_RUM!.setTrackingConsent('not-granted')
         })
 
-        const htmlElement = await $('html')
+        const htmlElement = $('html')
         await htmlElement.click()
 
         await flushEvents()
