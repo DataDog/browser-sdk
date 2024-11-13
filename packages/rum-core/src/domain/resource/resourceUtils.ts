@@ -3,7 +3,6 @@ import {
   addTelemetryDebug,
   elapsed,
   getPathName,
-  includes,
   isValidUrl,
   ResourceType,
   toServerDuration,
@@ -35,13 +34,13 @@ const RESOURCE_TYPES: Array<[ResourceType, (initiatorType: string, path: string)
   [
     ResourceType.IMAGE,
     (initiatorType: string, path: string) =>
-      includes(['image', 'img', 'icon'], initiatorType) || /\.(gif|jpg|jpeg|tiff|png|svg|ico)$/i.exec(path) !== null,
+      ['image', 'img', 'icon'].includes(initiatorType) || /\.(gif|jpg|jpeg|tiff|png|svg|ico)$/i.exec(path) !== null,
   ],
   [ResourceType.FONT, (_: string, path: string) => /\.(woff|eot|woff2|ttf)$/i.exec(path) !== null],
   [
     ResourceType.MEDIA,
     (initiatorType: string, path: string) =>
-      includes(['audio', 'video'], initiatorType) || /\.(mp3|mp4)$/i.exec(path) !== null,
+      ['audio', 'video'].includes(initiatorType) || /\.(mp3|mp4)$/i.exec(path) !== null,
   ],
 ]
 
