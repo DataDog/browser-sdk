@@ -1,4 +1,3 @@
-export * from './mockWorker'
 export * from './recordsPerFullSnapshot'
 export * from './mutationPayloadValidator'
 export * from './nodes'

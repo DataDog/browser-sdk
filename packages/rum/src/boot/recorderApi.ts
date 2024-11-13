@@ -16,17 +16,18 @@ import type {
   RecorderApi,
   RumConfiguration,
   StartRecordingOptions,
+  CreateDeflateWorker,
 } from '@datadog/browser-rum-core'
-import { LifeCycleEventType, SessionReplayState } from '@datadog/browser-rum-core'
-import { getReplayStats as getReplayStatsImpl } from '../domain/replayStats'
-import { getSessionReplayLink } from '../domain/getSessionReplayLink'
-import type { CreateDeflateWorker } from '../domain/deflate'
 import {
+  LifeCycleEventType,
+  SessionReplayState,
   createDeflateEncoder,
   startDeflateWorker,
   DeflateWorkerStatus,
   getDeflateWorkerStatus,
-} from '../domain/deflate'
+} from '@datadog/browser-rum-core'
+import { getReplayStats as getReplayStatsImpl } from '../domain/replayStats'
+import { getSessionReplayLink } from '../domain/getSessionReplayLink'
 
 import type { startRecording } from './startRecording'
 import { isBrowserSupported } from './isBrowserSupported'

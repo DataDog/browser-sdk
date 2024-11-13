@@ -8,7 +8,7 @@ import {
   ONE_SECOND,
   DOCS_ORIGIN,
 } from '@datadog/browser-core'
-import type { RumConfiguration } from '@datadog/browser-rum-core'
+import type { RumConfiguration } from '../configuration'
 
 export const INITIALIZATION_TIME_OUT_DELAY = 30 * ONE_SECOND
 

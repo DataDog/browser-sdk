@@ -32,7 +32,7 @@ import {
   createTrackingConsentState,
   timeStampToClocks,
 } from '@datadog/browser-core'
-import { DeflateWorkerStatus, getDeflateWorkerStatus } from '../../../rum/src/domain/deflate'
+import { DeflateWorkerStatus, getDeflateWorkerStatus } from '../domain/deflate'
 import type { LifeCycle } from '../domain/lifeCycle'
 import type { ViewHistory } from '../domain/contexts/viewHistory'
 import type { RumSessionManager } from '../domain/rumSessionManager'

@@ -16,7 +16,7 @@ import {
   initFetchObservable,
 } from '@datadog/browser-core'
 import type { TrackingConsentState, DeflateWorker } from '@datadog/browser-core'
-import { DeflateWorkerStatus, getDeflateWorkerStatus } from '../../../rum/src/domain/deflate'
+import { DeflateWorkerStatus, getDeflateWorkerStatus } from '../domain/deflate'
 import {
   validateAndBuildRumConfiguration,
   type RumConfiguration,

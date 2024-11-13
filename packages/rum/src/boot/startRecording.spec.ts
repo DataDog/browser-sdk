@@ -1,7 +1,14 @@
 import type { TimeStamp, HttpRequest } from '@datadog/browser-core'
 import { PageExitReason, DefaultPrivacyLevel, noop, isIE, DeflateEncoderStreamId } from '@datadog/browser-core'
 import type { ViewCreatedEvent } from '@datadog/browser-rum-core'
-import { LifeCycle, LifeCycleEventType, startViewHistory } from '@datadog/browser-rum-core'
+import {
+  createDeflateEncoder,
+  LifeCycle,
+  LifeCycleEventType,
+  resetDeflateWorkerState,
+  startDeflateWorker,
+  startViewHistory,
+} from '@datadog/browser-rum-core'
 import { collectAsyncCalls, createNewEvent, mockEventBridge, registerCleanupTask } from '@datadog/browser-core/test'
 import type { ViewEndedEvent } from 'packages/rum-core/src/domain/view/trackViews'
 import type { RumSessionManagerMock } from '../../../rum-core/test'
@@ -12,7 +19,6 @@ import { setSegmentBytesLimit } from '../domain/segmentCollection'
 
 import { RecordType } from '../types'
 import { resetReplayStats } from '../domain/replayStats'
-import { createDeflateEncoder, resetDeflateWorkerState, startDeflateWorker } from '../domain/deflate'
 import { startRecording } from './startRecording'
 
 const VIEW_TIMESTAMP = 1 as TimeStamp

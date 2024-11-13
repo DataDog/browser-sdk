@@ -5,8 +5,8 @@ import type {
   DeflateWorker,
   EncoderResult,
 } from '@datadog/browser-core'
-import type { RumConfiguration } from '@datadog/browser-rum-core'
 import { addEventListener, addTelemetryDebug, assign, concatBuffers } from '@datadog/browser-core'
+import type { RumConfiguration } from '../configuration'
 
 export function createDeflateEncoder(
   configuration: RumConfiguration,
