@@ -68,7 +68,7 @@ describe('computeViewName', () => {
       ['/foo > /foo/bar > /foo/bar/:id',
                               '/foo/bar/1',   '/foo/bar/:id'],
 
-      // Wildcards
+      // Splats
       ['*',                   '/foo/1',       '/foo/1'],
       ['/foo/*',              '/foo/1',       '/foo/1'],
       ['/foo > *',            '/foo/1',       '/foo/1'],
@@ -89,6 +89,9 @@ describe('computeViewName', () => {
 
   cases.forEach(([routePaths, path, expectedViewName]) => {
     it(`compute the right view name for paths ${routePaths}`, () => {
+      // Convert the routePaths representing nested routes paths delimited by ' > ' to an actual
+      // react-router route object. Example: '/foo > bar > :p' would be turned into
+      // { path: '/foo', children: [{ path: 'bar', children: [{ path: ':p' }] }] }
       const route = routePaths
         .split(' > ')
         .reduceRight(
