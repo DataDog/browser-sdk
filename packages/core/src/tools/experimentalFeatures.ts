@@ -16,7 +16,6 @@ import { objectHasValue } from './utils/objectUtils'
 export enum ExperimentalFeature {
   WRITABLE_RESOURCE_GRAPHQL = 'writable_resource_graphql',
   REMOTE_CONFIGURATION = 'remote_configuration',
-  UPDATE_VIEW_NAME = 'update_view_name',
   LONG_ANIMATION_FRAME = 'long_animation_frame',
 }
 
