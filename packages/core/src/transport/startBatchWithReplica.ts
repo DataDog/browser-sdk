@@ -32,7 +32,7 @@ export function startBatchWithReplica<T extends Context>(
   function createBatchFromConfig(configuration: Configuration, { endpoint, encoder }: BatchConfiguration) {
     return batchFactoryImp({
       encoder,
-      request: createHttpRequest(configuration, endpoint, configuration.batchBytesLimit, reportError),
+      request: createHttpRequest(endpoint, configuration.batchBytesLimit, reportError),
       flushController: createFlushController({
         messagesLimit: configuration.batchMessagesLimit,
         bytesLimit: configuration.batchBytesLimit,

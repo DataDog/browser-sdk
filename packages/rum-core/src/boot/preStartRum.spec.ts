@@ -305,16 +305,16 @@ describe('preStartRum', () => {
       let strategy: Strategy
       let startViewSpy: jasmine.Spy<StartRumResult['startView']>
       let addTimingSpy: jasmine.Spy<StartRumResult['addTiming']>
-      let updateViewNameSpy: jasmine.Spy<StartRumResult['updateViewName']>
+      let setViewNameSpy: jasmine.Spy<StartRumResult['setViewName']>
 
       beforeEach(() => {
         startViewSpy = jasmine.createSpy('startView')
         addTimingSpy = jasmine.createSpy('addTiming')
-        updateViewNameSpy = jasmine.createSpy('updateViewName')
+        setViewNameSpy = jasmine.createSpy('setViewName')
         doStartRumSpy.and.returnValue({
           startView: startViewSpy,
           addTiming: addTimingSpy,
-          updateViewName: updateViewNameSpy,
+          setViewName: setViewNameSpy,
         } as unknown as StartRumResult)
         strategy = createPreStartStrategy(
           {},
@@ -741,14 +741,14 @@ describe('preStartRum', () => {
       expect(setViewContextPropertySpy).toHaveBeenCalledOnceWith('foo', 'bar')
     })
 
-    it('updateViewName', () => {
-      const updateViewNameSpy = jasmine.createSpy()
-      doStartRumSpy.and.returnValue({ updateViewName: updateViewNameSpy } as unknown as StartRumResult)
+    it('setViewName', () => {
+      const setViewNameSpy = jasmine.createSpy()
+      doStartRumSpy.and.returnValue({ setViewName: setViewNameSpy } as unknown as StartRumResult)
 
       const name = 'foo'
-      strategy.updateViewName(name)
+      strategy.setViewName(name)
       strategy.init(DEFAULT_INIT_CONFIGURATION, PUBLIC_API)
-      expect(updateViewNameSpy).toHaveBeenCalledOnceWith(name)
+      expect(setViewNameSpy).toHaveBeenCalledOnceWith(name)
     })
 
     it('addFeatureFlagEvaluation', () => {
