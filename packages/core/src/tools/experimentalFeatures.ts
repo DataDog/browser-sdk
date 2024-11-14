@@ -18,6 +18,7 @@ export enum ExperimentalFeature {
   REMOTE_CONFIGURATION = 'remote_configuration',
   UPDATE_VIEW_NAME = 'update_view_name',
   LONG_ANIMATION_FRAME = 'long_animation_frame',
+  ACTION_NAME_MASKING = 'action_name_masking',
 }
 
 const enabledExperimentalFeatures: Set<ExperimentalFeature> = new Set()

@@ -9,41 +9,56 @@ import type { RumConfiguration } from '../configuration'
  */
 export const DEFAULT_PROGRAMMATIC_ACTION_NAME_ATTRIBUTE = 'data-dd-action-name'
 export const ACTION_NAME_PLACEHOLDER = 'Masked Element'
+
+type ActionName = {
+  name: string
+  namingSource: string
+}
 export function getActionNameFromElement(
   element: Element,
   { enablePrivacyForActionName, actionNameAttribute: userProgrammaticAttribute }: RumConfiguration,
   nodePrivacyLevel?: NodePrivacyLevel
-): string {
+): ActionName {
   // Proceed to get the action name in two steps:
   // * first, get the name programmatically, explicitly defined by the user.
-  // * then, use strategies that are known to return good results. Those strategies will be used on
-  //   the element and a few parents, but it's likely that they won't succeed at all.
+  // * then, if privacy is set to mask, return a placeholder for the undefined.
+  // * if privacy is not set to mask, use strategies that are known to return good results.
+  //   Those strategies will be used on the element and a few parents, but it's likely that they won't succeed at all.
   // * if no name is found this way, use strategies returning less accurate names as a fallback.
   //   Those are much likely to succeed.
   const defaultActionName =
     getActionNameFromElementProgrammatically(element, DEFAULT_PROGRAMMATIC_ACTION_NAME_ATTRIBUTE) ||
     (userProgrammaticAttribute && getActionNameFromElementProgrammatically(element, userProgrammaticAttribute))
 
-  if (nodePrivacyLevel === NodePrivacyLevel.MASK) {
-    return defaultActionName || ACTION_NAME_PLACEHOLDER
+  if (defaultActionName) {
+    return { name: defaultActionName, namingSource: 'custom_attribute' }
+  } else if (nodePrivacyLevel === NodePrivacyLevel.MASK) {
+    return { name: ACTION_NAME_PLACEHOLDER, namingSource: 'mask_placeholder' }
   }
 
-  return (
-    defaultActionName ||
-    getActionNameFromElementForStrategies(
-      element,
-      userProgrammaticAttribute,
-      priorityStrategies,
-      enablePrivacyForActionName
-    ) ||
-    getActionNameFromElementForStrategies(
-      element,
-      userProgrammaticAttribute,
-      fallbackStrategies,
-      enablePrivacyForActionName
-    ) ||
-    ''
+  const standardName = getActionNameFromElementForStrategies(
+    element,
+    userProgrammaticAttribute,
+    priorityStrategies,
+    enablePrivacyForActionName
   )
+  if (standardName) {
+    return { name: standardName, namingSource: 'standard_attribute' }
+  }
+
+  const fallbackName = getActionNameFromElementForStrategies(
+    element,
+    userProgrammaticAttribute,
+    fallbackStrategies,
+    enablePrivacyForActionName
+  )
+
+  return fallbackName
+    ? {
+        name: fallbackName,
+        namingSource: 'text_content',
+      }
+    : { name: '', namingSource: 'blank_placeholder' }
 }
 
 function getActionNameFromElementProgrammatically(targetElement: Element, programmaticAttribute: string) {
