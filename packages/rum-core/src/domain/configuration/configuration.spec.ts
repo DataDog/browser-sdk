@@ -1,6 +1,10 @@
 import type { InitConfiguration } from '@datadog/browser-core'
-import { DefaultPrivacyLevel, display, TraceContextInjection } from '@datadog/browser-core'
-import { EXHAUSTIVE_INIT_CONFIGURATION, SERIALIZED_EXHAUSTIVE_INIT_CONFIGURATION } from '@datadog/browser-core/test'
+import { DefaultPrivacyLevel, display, ExperimentalFeature, TraceContextInjection } from '@datadog/browser-core'
+import {
+  EXHAUSTIVE_INIT_CONFIGURATION,
+  mockExperimentalFeatures,
+  SERIALIZED_EXHAUSTIVE_INIT_CONFIGURATION,
+} from '@datadog/browser-core/test'
 import type {
   ExtractTelemetryConfiguration,
   CamelToSnakeCase,
@@ -451,6 +455,27 @@ describe('validateAndBuildRumConfiguration', () => {
         betaPlugins: [plugin],
       })
       expect(configuration!.plugins).toEqual([plugin])
+    })
+  })
+
+  describe('compressIntakeRequests', () => {
+    it('should be set to true by default if feature flag is enabled', () => {
+      mockExperimentalFeatures([ExperimentalFeature.COMPRESS_INTAKE_REQUEST])
+
+      const configuration = validateAndBuildRumConfiguration({
+        ...DEFAULT_INIT_CONFIGURATION,
+      })
+      expect(configuration!.compressIntakeRequests).toBeTrue()
+    })
+
+    it('should be set to false if feature flag is enabled but customer configured it to false', () => {
+      mockExperimentalFeatures([ExperimentalFeature.COMPRESS_INTAKE_REQUEST])
+
+      const configuration = validateAndBuildRumConfiguration({
+        ...DEFAULT_INIT_CONFIGURATION,
+        compressIntakeRequests: false,
+      })
+      expect(configuration!.compressIntakeRequests).toBeFalse()
     })
   })
 })

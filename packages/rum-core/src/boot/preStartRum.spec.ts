@@ -278,8 +278,17 @@ describe('preStartRum', () => {
           expect(worker).toBeDefined()
         })
 
-        it('aborts the initialization if it fails to create a deflate worker', () => {
-          startDeflateWorkerSpy.and.returnValue(undefined)
+        it('starts rum without worker if it fails to create a deflate worker', () => {
+          const fakeStartDeflateWorker: RumPublicApiOptions['startDeflateWorker'] = (
+            _configuration,
+            _source,
+            onInitializationFailure,
+            _onInitializationSuccess
+          ) => {
+            onInitializationFailure()
+            return undefined
+          }
+          startDeflateWorkerSpy.and.callFake(fakeStartDeflateWorker)
 
           strategy.init(
             {
@@ -289,7 +298,9 @@ describe('preStartRum', () => {
             PUBLIC_API
           )
 
-          expect(doStartRumSpy).not.toHaveBeenCalled()
+          expect(doStartRumSpy).toHaveBeenCalled()
+          const worker: DeflateWorker | undefined = doStartRumSpy.calls.mostRecent().args[1]
+          expect(worker).toBeUndefined()
         })
 
         it('if message bridge is present, does not create a deflate worker instance', () => {

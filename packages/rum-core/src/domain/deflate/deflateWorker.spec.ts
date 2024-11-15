@@ -35,6 +35,7 @@ describe('startDeflateWorker', () => {
   beforeEach(() => {
     mockWorker = new MockWorker()
     onInitializationFailureSpy = jasmine.createSpy('onInitializationFailureSpy')
+    onInitializationSuccessSpy = jasmine.createSpy('onInitializationSuccessSpy')
     createDeflateWorkerSpy = jasmine.createSpy('createDeflateWorkerSpy').and.callFake(() => mockWorker)
   })
 
@@ -49,6 +50,7 @@ describe('startDeflateWorker', () => {
 
     mockWorker.processAllMessages()
     expect(onInitializationFailureSpy).not.toHaveBeenCalled()
+    expect(onInitializationSuccessSpy).toHaveBeenCalledWith(mockWorker)
   })
 
   it('uses the previously created worker during loading', () => {
@@ -68,6 +70,7 @@ describe('startDeflateWorker', () => {
 
     mockWorker.processAllMessages()
     expect(onInitializationFailureSpy).not.toHaveBeenCalled()
+    expect(onInitializationSuccessSpy).toHaveBeenCalledWith(mockWorker)
   })
 
   describe('worker CSP error', () => {
@@ -130,7 +133,7 @@ describe('startDeflateWorker', () => {
         )
       })
 
-      it('calls the initialization failure callback when of an error occurs during loading', () => {
+      it('calls the initialization failure callback when an error occurs during loading', () => {
         startDeflateWorkerWithDefaults()
         mockWorker.dispatchErrorEvent()
         expect(onInitializationFailureSpy).toHaveBeenCalledTimes(1)

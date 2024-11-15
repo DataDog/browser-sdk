@@ -111,6 +111,30 @@ describe('rum public api', () => {
         const customerDataTrackerManager: CustomerDataTrackerManager = startRumSpy.calls.mostRecent().args[2]
         expect(customerDataTrackerManager.getCompressionStatus()).toBe(CustomerDataCompressionStatus.Enabled)
       })
+
+      it('should set the compression status to disabled if `compressIntakeRequests` is true but deflate worker fails to initilize', () => {
+        const startDeflateWorker: RumPublicApiOptions['startDeflateWorker'] = (
+          _configuration,
+          _source,
+          onInitializationFailure,
+          _onInitializationSuccess
+        ) => {
+          onInitializationFailure()
+          return undefined
+        }
+
+        const rumPublicApi = makeRumPublicApi(startRumSpy, noopRecorderApi, {
+          startDeflateWorker,
+        })
+
+        rumPublicApi.init({
+          ...DEFAULT_INIT_CONFIGURATION,
+          compressIntakeRequests: true,
+        })
+
+        const customerDataTrackerManager: CustomerDataTrackerManager = startRumSpy.calls.mostRecent().args[2]
+        expect(customerDataTrackerManager.getCompressionStatus()).toBe(CustomerDataCompressionStatus.Disabled)
+      })
     })
   })
 
