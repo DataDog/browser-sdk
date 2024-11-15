@@ -12,7 +12,7 @@ export const ACTION_NAME_PLACEHOLDER = 'Masked Element'
 
 type ActionName = {
   name: string
-  namingSource: string
+  nameSource: string
 }
 export function getActionNameFromElement(
   element: Element,
@@ -31,34 +31,25 @@ export function getActionNameFromElement(
     (userProgrammaticAttribute && getActionNameFromElementProgrammatically(element, userProgrammaticAttribute))
 
   if (defaultActionName) {
-    return { name: defaultActionName, namingSource: 'custom_attribute' }
+    return { name: defaultActionName, nameSource: 'custom_attribute' }
   } else if (nodePrivacyLevel === NodePrivacyLevel.MASK) {
-    return { name: ACTION_NAME_PLACEHOLDER, namingSource: 'mask_placeholder' }
+    return { name: ACTION_NAME_PLACEHOLDER, nameSource: 'mask_placeholder' }
   }
 
-  const standardName = getActionNameFromElementForStrategies(
-    element,
-    userProgrammaticAttribute,
-    priorityStrategies,
-    enablePrivacyForActionName
+  return (
+    getActionNameFromElementForStrategies(
+      element,
+      userProgrammaticAttribute,
+      priorityStrategies,
+      enablePrivacyForActionName
+    ) ||
+    getActionNameFromElementForStrategies(
+      element,
+      userProgrammaticAttribute,
+      fallbackStrategies,
+      enablePrivacyForActionName
+    ) || { name: '', nameSource: 'blank' }
   )
-  if (standardName) {
-    return { name: standardName, namingSource: 'standard_attribute' }
-  }
-
-  const fallbackName = getActionNameFromElementForStrategies(
-    element,
-    userProgrammaticAttribute,
-    fallbackStrategies,
-    enablePrivacyForActionName
-  )
-
-  return fallbackName
-    ? {
-        name: fallbackName,
-        namingSource: 'text_content',
-      }
-    : { name: '', namingSource: 'blank_placeholder' }
 }
 
 function getActionNameFromElementProgrammatically(targetElement: Element, programmaticAttribute: string) {
@@ -91,7 +82,7 @@ type NameStrategy = (
   element: Element | HTMLElement | HTMLInputElement | HTMLSelectElement,
   userProgrammaticAttribute: string | undefined,
   privacyEnabledActionName?: boolean
-) => string | undefined | null
+) => ActionName | string | undefined | null
 
 const priorityStrategies: NameStrategy[] = [
   // associated LABEL text
@@ -100,13 +91,13 @@ const priorityStrategies: NameStrategy[] = [
     // instead
     if (supportsLabelProperty()) {
       if ('labels' in element && element.labels && element.labels.length > 0) {
-        return getTextualContent(element.labels[0], userProgrammaticAttribute)
+        return getActionNameFromTextualContent(element.labels[0], userProgrammaticAttribute)
       }
     } else if (element.id) {
       const label =
         element.ownerDocument &&
         find(element.ownerDocument.querySelectorAll('label'), (label) => label.htmlFor === element.id)
-      return label && getTextualContent(label, userProgrammaticAttribute, privacy)
+      return label && getActionNameFromTextualContent(label, userProgrammaticAttribute, privacy)
     }
   },
   // INPUT button (and associated) value
@@ -115,14 +106,14 @@ const priorityStrategies: NameStrategy[] = [
       const input = element as HTMLInputElement
       const type = input.getAttribute('type')
       if (type === 'button' || type === 'submit' || type === 'reset') {
-        return input.value
+        return { name: input.value, nameSource: 'text_content' }
       }
     }
   },
   // BUTTON, LABEL or button-like element text
   (element, userProgrammaticAttribute, privacyEnabledActionName) => {
     if (element.nodeName === 'BUTTON' || element.nodeName === 'LABEL' || element.getAttribute('role') === 'button') {
-      return getTextualContent(element, userProgrammaticAttribute, privacyEnabledActionName)
+      return getActionNameFromTextualContent(element, userProgrammaticAttribute, privacyEnabledActionName)
     }
   },
   (element) => element.getAttribute('aria-label'),
@@ -130,12 +121,15 @@ const priorityStrategies: NameStrategy[] = [
   (element, userProgrammaticAttribute, privacyEnabledActionName) => {
     const labelledByAttribute = element.getAttribute('aria-labelledby')
     if (labelledByAttribute) {
-      return labelledByAttribute
-        .split(/\s+/)
-        .map((id) => getElementById(element, id))
-        .filter((label): label is HTMLElement => Boolean(label))
-        .map((element) => getTextualContent(element, userProgrammaticAttribute, privacyEnabledActionName))
-        .join(' ')
+      return {
+        name: labelledByAttribute
+          .split(/\s+/)
+          .map((id) => getElementById(element, id))
+          .filter((label): label is HTMLElement => Boolean(label))
+          .map((element) => getTextualContent(element, userProgrammaticAttribute, privacyEnabledActionName))
+          .join(' '),
+        nameSource: 'text_content',
+      }
     }
   },
   (element) => element.getAttribute('alt'),
@@ -145,14 +139,14 @@ const priorityStrategies: NameStrategy[] = [
   // SELECT first OPTION text
   (element, userProgrammaticAttribute) => {
     if ('options' in element && element.options.length > 0) {
-      return getTextualContent(element.options[0], userProgrammaticAttribute)
+      return getActionNameFromTextualContent(element.options[0], userProgrammaticAttribute)
     }
   },
 ]
 
 const fallbackStrategies: NameStrategy[] = [
   (element, userProgrammaticAttribute, privacyEnabledActionName) =>
-    getTextualContent(element, userProgrammaticAttribute, privacyEnabledActionName),
+    getActionNameFromTextualContent(element, userProgrammaticAttribute, privacyEnabledActionName),
 ]
 
 /**
@@ -176,11 +170,13 @@ function getActionNameFromElementForStrategies(
     element.nodeName !== 'HEAD'
   ) {
     for (const strategy of strategies) {
-      const name = strategy(element, userProgrammaticAttribute, privacyEnabledActionName)
-      if (typeof name === 'string') {
+      const actionName = strategy(element, userProgrammaticAttribute, privacyEnabledActionName)
+      if (actionName) {
+        const { name, nameSource } =
+          typeof actionName === 'string' ? { name: actionName, nameSource: 'standard_attribute' } : actionName
         const trimmedName = name.trim()
         if (trimmedName) {
-          return truncate(normalizeWhitespace(trimmedName))
+          return { name: truncate(normalizeWhitespace(trimmedName)), nameSource }
         }
       }
     }
@@ -207,7 +203,14 @@ function getElementById(refElement: Element, id: string) {
   // document.getElementById won't work.
   return refElement.ownerDocument ? refElement.ownerDocument.getElementById(id) : null
 }
-
+function getActionNameFromTextualContent(
+  element: Element | HTMLElement,
+  userProgrammaticAttribute: string | undefined,
+  privacyEnabledActionName?: boolean
+): ActionName | undefined {
+  const name = getTextualContent(element, userProgrammaticAttribute, privacyEnabledActionName)
+  return name ? { name, nameSource: 'text_content' } : undefined
+}
 function getTextualContent(
   element: Element | HTMLElement,
   userProgrammaticAttribute: string | undefined,

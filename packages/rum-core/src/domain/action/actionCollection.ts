@@ -92,7 +92,7 @@ function processAction(
             target: action.target,
             position: action.position,
             name_source: isExperimentalFeatureEnabled(ExperimentalFeature.ACTION_NAME_MASKING)
-              ? action.namingSource
+              ? action.nameSource
               : undefined,
           },
         },

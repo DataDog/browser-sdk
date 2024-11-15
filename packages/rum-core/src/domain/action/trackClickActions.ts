@@ -38,7 +38,7 @@ export interface ClickAction {
   type: ActionType.CLICK
   id: string
   name: string
-  namingSource: string
+  nameSource: string
   target?: {
     selector: string | undefined
     width: number
@@ -220,7 +220,7 @@ function startClickAction(
   })
 }
 
-type ClickActionBase = Pick<ClickAction, 'type' | 'name' | 'namingSource' | 'target' | 'position'>
+type ClickActionBase = Pick<ClickAction, 'type' | 'name' | 'nameSource' | 'target' | 'position'>
 
 function computeClickActionBase(
   event: MouseEventOnElement,
@@ -247,7 +247,7 @@ function computeClickActionBase(
       y: Math.round(event.clientY - rect.top),
     },
     name: actionName.name,
-    namingSource: actionName.namingSource,
+    nameSource: actionName.nameSource,
   }
 }
 
