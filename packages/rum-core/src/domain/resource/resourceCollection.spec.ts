@@ -1,5 +1,5 @@
-import type { Duration, RelativeTime, ServerDuration, TimeStamp } from '@datadog/browser-core'
-import { isIE, noop, RequestType, ResourceType } from '@datadog/browser-core'
+import type { Duration, RelativeTime, ServerDuration, TaskQueue, TimeStamp } from '@datadog/browser-core'
+import { createTaskQueue, isIE, noop, RequestType, ResourceType } from '@datadog/browser-core'
 import { registerCleanupTask } from '@datadog/browser-core/test'
 import type { RumFetchResourceEventDomainContext, RumXhrResourceEventDomainContext } from '../../domainContext.types'
 import {
@@ -30,13 +30,18 @@ describe('resourceCollection', () => {
   let wasInPageStateDuringPeriodSpy: jasmine.Spy<jasmine.Func>
   let notifyPerformanceEntries: (entries: RumPerformanceEntry[]) => void
   let rawRumEvents: Array<RawRumEventCollectedData<RawRumEvent>> = []
+  let taskQueuePushSpy: jasmine.Spy<TaskQueue['push']>
 
   function setupResourceCollection(partialConfig: Partial<RumConfiguration> = { trackResources: true }) {
     lifeCycle = new LifeCycle()
+    const taskQueue = createTaskQueue()
+    // Run tasks immediately to simplify general tests
+    taskQueuePushSpy = spyOn(taskQueue, 'push').and.callFake((task) => task())
     const startResult = startResourceCollection(
       lifeCycle,
       { ...baseConfiguration, ...partialConfig },
       pageStateHistory,
+      taskQueue,
       noop
     )
 
@@ -412,6 +417,27 @@ describe('resourceCollection', () => {
     const domainContext = rawRumEvents[0].domainContext as RumXhrResourceEventDomainContext
 
     expect(domainContext.handlingStack).toMatch(HANDLING_STACK_REGEX)
+  })
+
+  it('collects handle resources in different tasks', () => {
+    setupResourceCollection()
+    // Don't run the tasks immediately
+    taskQueuePushSpy.and.callFake(noop)
+
+    notifyPerformanceEntries([
+      createPerformanceEntry(RumPerformanceEntryType.RESOURCE),
+      createPerformanceEntry(RumPerformanceEntryType.RESOURCE),
+      createPerformanceEntry(RumPerformanceEntryType.RESOURCE),
+    ])
+
+    expect(taskQueuePushSpy).toHaveBeenCalledTimes(3)
+
+    expect(rawRumEvents.length).toBe(0)
+
+    taskQueuePushSpy.calls.allArgs().forEach(([task], index) => {
+      task()
+      expect(rawRumEvents.length).toBe(index + 1)
+    })
   })
 })
 
