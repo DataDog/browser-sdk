@@ -1,6 +1,7 @@
 import { isServerError, noop } from '../../src'
 import { registerCleanupTask } from '../registerCleanupTask'
 import { createNewEvent } from './createNewEvent'
+import { MockEventTarget } from './mockEventTarget'
 
 export function mockXhr() {
   const originalXhr = XMLHttpRequest
@@ -30,35 +31,7 @@ export function withXhr({
   setup(xhr as unknown as MockXhr)
 }
 
-class MockEventEmitter {
-  public listeners: { [k: string]: Array<(event: Event) => void> } = {}
-
-  addEventListener(name: string, callback: () => void) {
-    if (!this.listeners[name]) {
-      this.listeners[name] = []
-    }
-
-    this.listeners[name].push(callback)
-  }
-
-  removeEventListener(name: string, callback: () => void) {
-    if (!this.listeners[name]) {
-      throw new Error(`Can't remove a listener. Event "${name}" doesn't exits.`)
-    }
-
-    this.listeners[name] = this.listeners[name].filter((listener) => listener !== callback)
-  }
-
-  dispatchEvent(evt: Event) {
-    if (!this.listeners[evt.type]) {
-      return
-    }
-
-    this.listeners[evt.type].forEach((listener) => listener.apply(this, [evt]))
-  }
-}
-
-export class MockXhr extends MockEventEmitter {
+export class MockXhr extends MockEventTarget {
   public static onSend: (xhr: MockXhr) => void | undefined
   public response: string | undefined = undefined
   public responseText: string | undefined = undefined
