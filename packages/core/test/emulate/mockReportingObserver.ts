@@ -50,9 +50,12 @@ export function mockReportingObserver() {
 export type MockCspEventListener = ReturnType<typeof mockCspEventListener>
 
 export function mockCspEventListener() {
-  spyOn(document, 'addEventListener').and.callFake((_type: string, listener: EventListener) => {
-    listeners.push(listener)
-  })
+  // The  stopLeakDetection function of the global after each hook will reset the EventTarget.prototype.addEventListener
+  EventTarget.prototype.addEventListener = jasmine
+    .createSpy()
+    .and.callFake((_type: string, listener: EventListener) => {
+      listeners.push(listener)
+    })
 
   const listeners: EventListener[] = []
 

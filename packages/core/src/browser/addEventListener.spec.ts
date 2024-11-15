@@ -1,6 +1,7 @@
-import type { Configuration } from '@datadog/browser-core'
-import type { MockZoneJs } from '../../test'
+import { isIE } from '../tools/utils/browserDetection'
+import type { Configuration } from '../domain/configuration'
 import { createNewEvent, mockZoneJs } from '../../test'
+import type { MockZoneJs } from '../../test'
 import { noop } from '../tools/utils/functionUtils'
 import { addEventListener, DOM_EVENT } from './addEventListener'
 
@@ -33,6 +34,54 @@ describe('addEventListener', () => {
       stop()
       expect(zoneJsPatchedRemoveEventListener).not.toHaveBeenCalled()
     })
+  })
+
+  it('Use the EventTarget.prototype.addEventListener when the eventTarget is an instance of EventTarget', () => {
+    if (isIE()) {
+      pending('EventTarget not supported in IE')
+    }
+
+    const addEventListenerSpy = jasmine.createSpy()
+    const removeEventListenerSpy = jasmine.createSpy()
+
+    // The  stopLeakDetection function of the global after each hook will reset the EventTarget.prototype.addEventListener
+    EventTarget.prototype.addEventListener = addEventListenerSpy
+    EventTarget.prototype.removeEventListener = removeEventListenerSpy
+
+    const htmlDivElement = document.createElement('div')
+    htmlDivElement.addEventListener = jasmine.createSpy()
+    htmlDivElement.removeEventListener = jasmine.createSpy()
+
+    const { stop } = addEventListener({ allowUntrustedEvents: false }, htmlDivElement, DOM_EVENT.CLICK, noop)
+
+    const event = createNewEvent(DOM_EVENT.CLICK)
+    htmlDivElement.dispatchEvent(event)
+    stop()
+
+    // eslint-disable-next-line @typescript-eslint/unbound-method
+    expect(htmlDivElement.addEventListener).not.toHaveBeenCalled()
+    // eslint-disable-next-line @typescript-eslint/unbound-method
+    expect(htmlDivElement.removeEventListener).not.toHaveBeenCalled()
+
+    expect(addEventListenerSpy).toHaveBeenCalled()
+    expect(removeEventListenerSpy).toHaveBeenCalled()
+  })
+
+  it('Use the addEventListener method when the eventTarget is not an instance of EventTarget', () => {
+    const listener = jasmine.createSpy()
+
+    const customEventTarget = {
+      addEventListener: jasmine.createSpy(),
+      removeEventListener: jasmine.createSpy(),
+    } as unknown as EventTarget
+
+    const { stop } = addEventListener({ allowUntrustedEvents: false }, customEventTarget, 'change', listener)
+    stop()
+
+    // eslint-disable-next-line @typescript-eslint/unbound-method
+    expect(customEventTarget.addEventListener).toHaveBeenCalled()
+    // eslint-disable-next-line @typescript-eslint/unbound-method
+    expect(customEventTarget.removeEventListener).toHaveBeenCalled()
   })
 
   describe('Untrusted event', () => {
