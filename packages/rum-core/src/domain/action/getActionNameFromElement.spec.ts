@@ -1,6 +1,6 @@
 import { appendElement, mockRumConfiguration } from '../../../test'
 import { NodePrivacyLevel } from '../privacy'
-import { getActionNameFromElement } from './getActionNameFromElement'
+import { ActionNameSource, getActionNameFromElement } from './getActionNameFromElement'
 
 const defaultConfiguration = mockRumConfiguration()
 
@@ -506,7 +506,7 @@ describe('getActionNameFromElement', () => {
           },
           NodePrivacyLevel.MASK
         )
-      ).toEqual({ name: 'Masked Element', nameSource: 'mask_placeholder' })
+      ).toEqual({ name: 'Masked Element', nameSource: ActionNameSource.MASK_PLACEHOLDER })
     })
 
     it('extracts default attribute text when privacyEnabledActionName is true', () => {
@@ -520,7 +520,7 @@ describe('getActionNameFromElement', () => {
           defaultConfiguration,
           NodePrivacyLevel.ALLOW
         )
-      ).toEqual({ name: 'foo', nameSource: 'custom_attribute' })
+      ).toEqual({ name: 'foo', nameSource: ActionNameSource.CUSTOM_ATTRIBUTE })
     })
 
     it('extracts user defined attribute text when privacyEnabledActionName is true', () => {
@@ -537,7 +537,7 @@ describe('getActionNameFromElement', () => {
           },
           NodePrivacyLevel.ALLOW
         )
-      ).toEqual({ name: 'foo', nameSource: 'custom_attribute' })
+      ).toEqual({ name: 'foo', nameSource: ActionNameSource.CUSTOM_ATTRIBUTE })
     })
 
     describe('with html tag privacy override when privacyEnabledActionName is true', () => {
@@ -552,7 +552,7 @@ describe('getActionNameFromElement', () => {
             defaultConfiguration,
             NodePrivacyLevel.ALLOW
           )
-        ).toEqual({ name: 'foo', nameSource: 'text_content' })
+        ).toEqual({ name: 'foo', nameSource: ActionNameSource.TEXT_CONTENT })
       })
 
       it('returns placeholder when privacy level is mask', () => {
@@ -569,7 +569,7 @@ describe('getActionNameFromElement', () => {
             },
             NodePrivacyLevel.MASK
           )
-        ).toEqual({ name: 'Masked Element', nameSource: 'mask_placeholder' })
+        ).toEqual({ name: 'Masked Element', nameSource: ActionNameSource.MASK_PLACEHOLDER })
       })
 
       it('inherit privacy level and does not fallback to masked child text', () => {
@@ -592,7 +592,7 @@ describe('getActionNameFromElement', () => {
             },
             NodePrivacyLevel.ALLOW
           )
-        ).toEqual({ name: 'foo', nameSource: 'text_content' })
+        ).toEqual({ name: 'foo', nameSource: ActionNameSource.TEXT_CONTENT })
       })
       it('fallback to children but not the masked one with mixed class name and attribute', () => {
         expect(
@@ -614,7 +614,7 @@ describe('getActionNameFromElement', () => {
             },
             NodePrivacyLevel.ALLOW
           )
-        ).toEqual({ name: 'bar foo', nameSource: 'text_content' })
+        ).toEqual({ name: 'bar foo', nameSource: ActionNameSource.TEXT_CONTENT })
       })
 
       it('inherit privacy level and does not fallback to masked child text with mixed classname and attribute', () => {
@@ -637,7 +637,7 @@ describe('getActionNameFromElement', () => {
             },
             NodePrivacyLevel.ALLOW
           )
-        ).toEqual({ name: 'foo', nameSource: 'text_content' })
+        ).toEqual({ name: 'foo', nameSource: ActionNameSource.TEXT_CONTENT })
       })
       it('fallback to children but not the masked one with class names', () => {
         expect(
@@ -659,7 +659,7 @@ describe('getActionNameFromElement', () => {
             },
             NodePrivacyLevel.ALLOW
           )
-        ).toEqual({ name: 'bar foo', nameSource: 'text_content' })
+        ).toEqual({ name: 'bar foo', nameSource: ActionNameSource.TEXT_CONTENT })
       })
     })
   })

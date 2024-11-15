@@ -9,11 +9,18 @@ import type { RumConfiguration } from '../configuration'
  */
 export const DEFAULT_PROGRAMMATIC_ACTION_NAME_ATTRIBUTE = 'data-dd-action-name'
 export const ACTION_NAME_PLACEHOLDER = 'Masked Element'
-
+export const enum ActionNameSource {
+  CUSTOM_ATTRIBUTE = 'custom_attribute',
+  MASK_PLACEHOLDER = 'mask_placeholder',
+  TEXT_CONTENT = 'text_content',
+  STANDARD_ATTRIBUTE = 'standard_attribute',
+  BLANK = 'blank',
+}
 type ActionName = {
   name: string
-  nameSource: string
+  nameSource: ActionNameSource
 }
+
 export function getActionNameFromElement(
   element: Element,
   { enablePrivacyForActionName, actionNameAttribute: userProgrammaticAttribute }: RumConfiguration,
@@ -31,9 +38,9 @@ export function getActionNameFromElement(
     (userProgrammaticAttribute && getActionNameFromElementProgrammatically(element, userProgrammaticAttribute))
 
   if (defaultActionName) {
-    return { name: defaultActionName, nameSource: 'custom_attribute' }
+    return { name: defaultActionName, nameSource: ActionNameSource.CUSTOM_ATTRIBUTE }
   } else if (nodePrivacyLevel === NodePrivacyLevel.MASK) {
-    return { name: ACTION_NAME_PLACEHOLDER, nameSource: 'mask_placeholder' }
+    return { name: ACTION_NAME_PLACEHOLDER, nameSource: ActionNameSource.MASK_PLACEHOLDER }
   }
 
   return (
@@ -48,7 +55,7 @@ export function getActionNameFromElement(
       userProgrammaticAttribute,
       fallbackStrategies,
       enablePrivacyForActionName
-    ) || { name: '', nameSource: 'blank' }
+    ) || { name: '', nameSource: ActionNameSource.BLANK }
   )
 }
 
@@ -106,7 +113,7 @@ const priorityStrategies: NameStrategy[] = [
       const input = element as HTMLInputElement
       const type = input.getAttribute('type')
       if (type === 'button' || type === 'submit' || type === 'reset') {
-        return { name: input.value, nameSource: 'text_content' }
+        return { name: input.value, nameSource: ActionNameSource.TEXT_CONTENT }
       }
     }
   },
@@ -128,7 +135,7 @@ const priorityStrategies: NameStrategy[] = [
           .filter((label): label is HTMLElement => Boolean(label))
           .map((element) => getTextualContent(element, userProgrammaticAttribute, privacyEnabledActionName))
           .join(' '),
-        nameSource: 'text_content',
+        nameSource: ActionNameSource.TEXT_CONTENT,
       }
     }
   },
@@ -173,7 +180,9 @@ function getActionNameFromElementForStrategies(
       const actionName = strategy(element, userProgrammaticAttribute, privacyEnabledActionName)
       if (actionName) {
         const { name, nameSource } =
-          typeof actionName === 'string' ? { name: actionName, nameSource: 'standard_attribute' } : actionName
+          typeof actionName === 'string'
+            ? { name: actionName, nameSource: ActionNameSource.STANDARD_ATTRIBUTE }
+            : actionName
         const trimmedName = name.trim()
         if (trimmedName) {
           return { name: truncate(normalizeWhitespace(trimmedName)), nameSource }
@@ -203,14 +212,16 @@ function getElementById(refElement: Element, id: string) {
   // document.getElementById won't work.
   return refElement.ownerDocument ? refElement.ownerDocument.getElementById(id) : null
 }
+
 function getActionNameFromTextualContent(
   element: Element | HTMLElement,
   userProgrammaticAttribute: string | undefined,
   privacyEnabledActionName?: boolean
 ): ActionName | undefined {
   const name = getTextualContent(element, userProgrammaticAttribute, privacyEnabledActionName)
-  return name ? { name, nameSource: 'text_content' } : undefined
+  return name ? { name, nameSource: ActionNameSource.TEXT_CONTENT } : undefined
 }
+
 function getTextualContent(
   element: Element | HTMLElement,
   userProgrammaticAttribute: string | undefined,
