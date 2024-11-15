@@ -108,6 +108,9 @@ describe('logs', () => {
         message: 'message',
         service: 'service',
         session_id: jasmine.any(String),
+        session: {
+          id: jasmine.any(String),
+        },
         status: StatusType.warn,
         view: {
           referrer: 'common_referrer',
