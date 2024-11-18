@@ -204,11 +204,10 @@ describe('instrumentSetter', () => {
 
   beforeEach(() => {
     clock = mockClock()
-    zoneJs = mockZoneJs()
-
     registerCleanupTask(() => {
       clock.cleanup()
     })
+    zoneJs = mockZoneJs()
   })
 
   it('replaces the original setter', () => {

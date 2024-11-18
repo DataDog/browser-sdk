@@ -317,7 +317,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@datadog/browser-core@npm:5.30.0, @datadog/browser-core@workspace:*, @datadog/browser-core@workspace:packages/core":
+"@datadog/browser-core@npm:5.30.1, @datadog/browser-core@workspace:*, @datadog/browser-core@workspace:packages/core":
   version: 0.0.0-use.local
   resolution: "@datadog/browser-core@workspace:packages/core"
   languageName: unknown
@@ -327,20 +327,20 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@datadog/browser-logs@workspace:packages/logs"
   dependencies:
-    "@datadog/browser-core": "npm:5.30.0"
+    "@datadog/browser-core": "npm:5.30.1"
   peerDependencies:
-    "@datadog/browser-rum": 5.30.0
+    "@datadog/browser-rum": 5.30.1
   peerDependenciesMeta:
     "@datadog/browser-rum":
       optional: true
   languageName: unknown
   linkType: soft
 
-"@datadog/browser-rum-core@npm:5.30.0, @datadog/browser-rum-core@workspace:packages/rum-core":
+"@datadog/browser-rum-core@npm:5.30.1, @datadog/browser-rum-core@workspace:packages/rum-core":
   version: 0.0.0-use.local
   resolution: "@datadog/browser-rum-core@workspace:packages/rum-core"
   dependencies:
-    "@datadog/browser-core": "npm:5.30.0"
+    "@datadog/browser-core": "npm:5.30.1"
     ajv: "npm:6.12.6"
   languageName: unknown
   linkType: soft
@@ -349,8 +349,8 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@datadog/browser-rum-react@workspace:packages/rum-react"
   dependencies:
-    "@datadog/browser-core": "npm:5.30.0"
-    "@datadog/browser-rum-core": "npm:5.30.0"
+    "@datadog/browser-core": "npm:5.30.1"
+    "@datadog/browser-rum-core": "npm:5.30.1"
     "@types/react": "npm:18.3.12"
     "@types/react-dom": "npm:18.3.1"
     react: "npm:18.3.1"
@@ -375,10 +375,10 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@datadog/browser-rum-slim@workspace:packages/rum-slim"
   dependencies:
-    "@datadog/browser-core": "npm:5.30.0"
-    "@datadog/browser-rum-core": "npm:5.30.0"
+    "@datadog/browser-core": "npm:5.30.1"
+    "@datadog/browser-rum-core": "npm:5.30.1"
   peerDependencies:
-    "@datadog/browser-logs": 5.30.0
+    "@datadog/browser-logs": 5.30.1
   peerDependenciesMeta:
     "@datadog/browser-logs":
       optional: true
@@ -389,12 +389,12 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@datadog/browser-rum@workspace:packages/rum"
   dependencies:
-    "@datadog/browser-core": "npm:5.30.0"
-    "@datadog/browser-rum-core": "npm:5.30.0"
+    "@datadog/browser-core": "npm:5.30.1"
+    "@datadog/browser-rum-core": "npm:5.30.1"
     "@types/pako": "npm:2.0.3"
     pako: "npm:2.1.0"
   peerDependencies:
-    "@datadog/browser-logs": 5.30.0
+    "@datadog/browser-logs": 5.30.1
   peerDependenciesMeta:
     "@datadog/browser-logs":
       optional: true
@@ -408,10 +408,10 @@ __metadata:
     "@datadog/browser-core": "workspace:*"
     "@datadog/browser-logs": "workspace:*"
     "@datadog/browser-rum": "workspace:*"
-    "@mantine/core": "npm:7.14.0"
-    "@mantine/hooks": "npm:7.14.0"
+    "@mantine/core": "npm:7.14.1"
+    "@mantine/hooks": "npm:7.14.1"
     "@tabler/icons-react": "npm:3.22.0"
-    "@types/chrome": "npm:0.0.280"
+    "@types/chrome": "npm:0.0.283"
     "@types/react": "npm:18.3.12"
     "@types/react-dom": "npm:18.3.1"
     "@webextension-toolbox/webpack-webextension-plugin": "npm:3.3.1"
@@ -430,7 +430,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@datadog/browser-worker@workspace:packages/worker"
   dependencies:
-    "@datadog/browser-core": "npm:5.30.0"
+    "@datadog/browser-core": "npm:5.30.1"
     webpack: "npm:5.96.1"
   languageName: unknown
   linkType: soft
@@ -844,9 +844,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@mantine/core@npm:7.14.0":
-  version: 7.14.0
-  resolution: "@mantine/core@npm:7.14.0"
+"@mantine/core@npm:7.14.1":
+  version: 7.14.1
+  resolution: "@mantine/core@npm:7.14.1"
   dependencies:
     "@floating-ui/react": "npm:^0.26.27"
     clsx: "npm:^2.1.1"
@@ -855,19 +855,19 @@ __metadata:
     react-textarea-autosize: "npm:8.5.4"
     type-fest: "npm:^4.26.1"
   peerDependencies:
-    "@mantine/hooks": 7.14.0
+    "@mantine/hooks": 7.14.1
     react: ^18.x || ^19.x
     react-dom: ^18.x || ^19.x
-  checksum: 10c0/ac694c278f7aa34db053da5baf6ffcccd3e8e980569025e4071800a3d6c82b79038d7484377a4a186dd5295051fe306b0cde7eb56fca082c949de409a5b826d4
+  checksum: 10c0/0226848f77db72bc1640f898091447e8b1a6f38f5c47c173858443fad991f062f40f68eae67625164e924035467cc616d91bdbf59c21fa093d9b26e4e73d6103
   languageName: node
   linkType: hard
 
-"@mantine/hooks@npm:7.14.0":
-  version: 7.14.0
-  resolution: "@mantine/hooks@npm:7.14.0"
+"@mantine/hooks@npm:7.14.1":
+  version: 7.14.1
+  resolution: "@mantine/hooks@npm:7.14.1"
   peerDependencies:
     react: ^18.x || ^19.x
-  checksum: 10c0/90bef2c1c97175a647bbe3c6b8d75b843741113201ccd78ac654e64ba80435837421b2b30b6262f635d23d63fb7a9afbbb98d29a0179fb6a6d0541dccd3ebfff
+  checksum: 10c0/c93578dd1c8f6b538e427ecce18393a558c3f7450303b5c784d2f6dde5cf1ced71b3050d8db5b02dcc07e85353fa7c22eb123cdbe3c73759b9a8155992eecc2a
   languageName: node
   linkType: hard
 
@@ -1672,13 +1672,13 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/chrome@npm:0.0.280":
-  version: 0.0.280
-  resolution: "@types/chrome@npm:0.0.280"
+"@types/chrome@npm:0.0.283":
+  version: 0.0.283
+  resolution: "@types/chrome@npm:0.0.283"
   dependencies:
     "@types/filesystem": "npm:*"
     "@types/har-format": "npm:*"
-  checksum: 10c0/fb4ee8d67d9a306c2be826da8516f9e584cfbbed5d5693b809aabaf1e5a777c728fe6239e9bfcb1065a38f80b59a4db59e5576df521cc0b9bf0db445722efe67
+  checksum: 10c0/7c6517d3184b603eddb8ab9bae4c3177542b0826941637d937a7fad29aa20edbac9fc8cf0ca37809e7f3a5c445374b426a5dc67d640ceffd352e3f5f447e3f67
   languageName: node
   linkType: hard
 
@@ -3437,7 +3437,7 @@ __metadata:
   resolution: "browser-sdk@workspace:."
   dependencies:
     "@jsdevtools/coverage-istanbul-loader": "npm:3.0.5"
-    "@types/chrome": "npm:0.0.280"
+    "@types/chrome": "npm:0.0.283"
     "@types/connect-busboy": "npm:1.0.3"
     "@types/cors": "npm:2.8.17"
     "@types/express": "npm:4.17.21"
@@ -3483,11 +3483,11 @@ __metadata:
     minimatch: "npm:10.0.1"
     npm-run-all: "npm:4.1.5"
     prettier: "npm:3.3.3"
-    puppeteer: "npm:23.7.1"
+    puppeteer: "npm:23.8.0"
     terser-webpack-plugin: "npm:5.3.10"
     ts-loader: "npm:9.5.1"
     ts-node: "npm:10.9.2"
-    tsconfig-paths-webpack-plugin: "npm:4.1.0"
+    tsconfig-paths-webpack-plugin: "npm:4.2.0"
     typescript: "npm:5.6.3"
     webdriverio: "npm:8.40.6"
     webpack: "npm:5.96.1"
@@ -4852,10 +4852,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"devtools-protocol@npm:0.0.1354347":
-  version: 0.0.1354347
-  resolution: "devtools-protocol@npm:0.0.1354347"
-  checksum: 10c0/c3b6106eca257d870aca6f56ec6520b25c970051c5dcf847091201f4a635d12ba3821171de966f65beaa9b06c9dc1a77b43b6e4c5533eb1a5a7ef0b8b2972491
+"devtools-protocol@npm:0.0.1367902":
+  version: 0.0.1367902
+  resolution: "devtools-protocol@npm:0.0.1367902"
+  checksum: 10c0/be4017f2bfd04474d718daca0e88e062f4afceb2f311662d717f4eae5bda3473da748a68ff1bf2326a67ce35c37af33932190fe8ef1d36c8ef22576befdc57c4
   languageName: node
   linkType: hard
 
@@ -10718,7 +10718,7 @@ __metadata:
     "@types/node": "npm:22.9.0"
     "@types/node-forge": "npm:1.3.11"
     node-forge: "npm:1.3.1"
-    puppeteer: "npm:23.7.1"
+    puppeteer: "npm:23.8.0"
     ts-node: "npm:10.9.2"
   languageName: unknown
   linkType: soft
@@ -11099,17 +11099,17 @@ __metadata:
   languageName: node
   linkType: hard
 
-"puppeteer-core@npm:23.7.1":
-  version: 23.7.1
-  resolution: "puppeteer-core@npm:23.7.1"
+"puppeteer-core@npm:23.8.0":
+  version: 23.8.0
+  resolution: "puppeteer-core@npm:23.8.0"
   dependencies:
     "@puppeteer/browsers": "npm:2.4.1"
     chromium-bidi: "npm:0.8.0"
     debug: "npm:^4.3.7"
-    devtools-protocol: "npm:0.0.1354347"
+    devtools-protocol: "npm:0.0.1367902"
     typed-query-selector: "npm:^2.12.0"
     ws: "npm:^8.18.0"
-  checksum: 10c0/018e3c7d508238f4aaa2075ab1db84f77ecbb65487c57dc876caf598d0e5f3d12fa8404a7511e9864aa51c64139d166552aa0450c82ff05c119aee32d2e7a672
+  checksum: 10c0/6282881e6be1535082f879ccf585e02cb22fde5ce45072d71a8a1fcad5e9be3d27157e8be4728bec2344b300aa96437c4c820a00e01f1577f27b971980e1bced
   languageName: node
   linkType: hard
 
@@ -11127,19 +11127,19 @@ __metadata:
   languageName: node
   linkType: hard
 
-"puppeteer@npm:23.7.1":
-  version: 23.7.1
-  resolution: "puppeteer@npm:23.7.1"
+"puppeteer@npm:23.8.0":
+  version: 23.8.0
+  resolution: "puppeteer@npm:23.8.0"
   dependencies:
     "@puppeteer/browsers": "npm:2.4.1"
     chromium-bidi: "npm:0.8.0"
     cosmiconfig: "npm:^9.0.0"
-    devtools-protocol: "npm:0.0.1354347"
-    puppeteer-core: "npm:23.7.1"
+    devtools-protocol: "npm:0.0.1367902"
+    puppeteer-core: "npm:23.8.0"
     typed-query-selector: "npm:^2.12.0"
   bin:
     puppeteer: lib/cjs/puppeteer/node/cli.js
-  checksum: 10c0/4b99e6b55444d327221095440b97565d7eac54a628c12d0556d999ae59cf29277916e62872535f14e6fabb6affaec90157fafad68d45016560d3eaa36c7e696e
+  checksum: 10c0/e113118aeb9dc500f363b3e4c00db3ae8db85ef8624913b38bd631128cec2d6b203774c074bf5d07c64ba912dd6b4d39de41c2b30ffaf562843092f9ef105838
   languageName: node
   linkType: hard
 
@@ -12684,10 +12684,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"tapable@npm:^2.0.0, tapable@npm:^2.1.1, tapable@npm:^2.2.0":
-  version: 2.2.0
-  resolution: "tapable@npm:2.2.0"
-  checksum: 10c0/3d404f474bbea65fe9ea2d00d48b332bc9ed7e841b683fa9d202edef5f2a18028e3ef5a65b96b164ef1b29ce16d5e4b1a5c165b3fa20ae80183c351892cea974
+"tapable@npm:^2.0.0, tapable@npm:^2.1.1, tapable@npm:^2.2.0, tapable@npm:^2.2.1":
+  version: 2.2.1
+  resolution: "tapable@npm:2.2.1"
+  checksum: 10c0/bc40e6efe1e554d075469cedaba69a30eeb373552aaf41caeaaa45bf56ffacc2674261b106245bd566b35d8f3329b52d838e851ee0a852120acae26e622925c9
   languageName: node
   linkType: hard
 
@@ -13023,14 +13023,15 @@ __metadata:
   languageName: node
   linkType: hard
 
-"tsconfig-paths-webpack-plugin@npm:4.1.0":
-  version: 4.1.0
-  resolution: "tsconfig-paths-webpack-plugin@npm:4.1.0"
+"tsconfig-paths-webpack-plugin@npm:4.2.0":
+  version: 4.2.0
+  resolution: "tsconfig-paths-webpack-plugin@npm:4.2.0"
   dependencies:
     chalk: "npm:^4.1.0"
     enhanced-resolve: "npm:^5.7.0"
+    tapable: "npm:^2.2.1"
     tsconfig-paths: "npm:^4.1.2"
-  checksum: 10c0/c030e867e70a3f6d1799fdffa209c3a35e1435ad99aac01946b9ebb0fa8208b7b508c1dfe8c8e13d6a2ef70c75b4db062fbfd3c1f3362c69b6c65ffd4a50e226
+  checksum: 10c0/495c5ab7c1cb079217d98fe25d61def01e4bab38047c7ab25ec11876cc8c697ff01f43ea6c9933181875e51e49835407fc71afd92ea6cca1ba1bebf513dfb510
   languageName: node
   linkType: hard
 

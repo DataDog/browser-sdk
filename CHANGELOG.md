@@ -18,6 +18,19 @@
 
 ---
 
+## v5.30.1
+
+**Public Changes:**
+
+- 🐛 [RUM-6226][rum-react] improve routes wildcard substitution ([#3105](https://github.com/DataDog/browser-sdk/pull/3105)) [RUM-REACT]
+- ⚡️ [RUM-6929] delay resource collection ([#3102](https://github.com/DataDog/browser-sdk/pull/3102)) [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+- Add @session.id in Logs along to @session_id ([#3125](https://github.com/DataDog/browser-sdk/pull/3125)) [LOGS]
+
+**Internal Changes:**
+
+- 👷 do not include staging bump commit to changelog ([#3129](https://github.com/DataDog/browser-sdk/pull/3129))
+- 👷 Update all non-major dependencies ([#3106](https://github.com/DataDog/browser-sdk/pull/3106)) [RUM-REACT] [WORKER]
+
 ## v5.30.0
 
 **Public Changes:**
