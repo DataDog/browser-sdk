@@ -14,6 +14,7 @@ import type { RumPerformanceResourceTiming } from '../../browser/performanceObse
 import type { ResourceEntryDetailsElement } from '../../rawRumEvent.types'
 
 export interface ResourceEntryDetails {
+  worker?: ResourceEntryDetailsElement
   redirect?: ResourceEntryDetailsElement
   dns?: ResourceEntryDetailsElement
   connect?: ResourceEntryDetailsElement
@@ -90,6 +91,7 @@ export function computeResourceEntryDetails(entry: RumPerformanceResourceTiming)
   const {
     startTime,
     fetchStart,
+    workerStart,
     redirectStart,
     redirectEnd,
     domainLookupStart,
@@ -105,6 +107,11 @@ export function computeResourceEntryDetails(entry: RumPerformanceResourceTiming)
   const details: ResourceEntryDetails = {
     download: formatTiming(startTime, responseStart, responseEnd),
     first_byte: formatTiming(startTime, requestStart, responseStart),
+  }
+
+  // Make sure a worker processing time is recorded
+  if (workerStart < fetchStart) {
+    details.worker = formatTiming(startTime, workerStart, fetchStart)
   }
 
   // Make sure a connection occurred
