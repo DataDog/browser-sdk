@@ -619,6 +619,20 @@ export type RumResourceEvent = CommonProperties &
        */
       readonly render_blocking_status?: 'blocking' | 'non-blocking'
       /**
+       * Worker phase properties
+       */
+      readonly worker?: {
+        /**
+         * Duration in nanoseconds of the resource worker phase
+         */
+        readonly duration: number
+        /**
+         * Duration in nanoseconds between start of the request and start of the worker phase
+         */
+        readonly start: number
+        [k: string]: unknown
+      }
+      /**
        * Redirect phase properties
        */
       readonly redirect?: {
@@ -803,6 +817,14 @@ export type RumViewEvent = CommonProperties &
        * Duration in ns to the view is considered loaded
        */
       readonly loading_time?: number
+      /**
+       * Duration in ns from the moment the view was started until all the initial network requests settled
+       */
+      readonly network_settled_time?: number
+      /**
+       * Duration in ns to from the last interaction on previous view to the moment the current view was displayed
+       */
+      readonly interaction_to_next_view_time?: number
       /**
        * Type of the loading of the view
        */
