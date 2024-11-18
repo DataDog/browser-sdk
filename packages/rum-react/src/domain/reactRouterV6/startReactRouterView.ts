@@ -58,7 +58,7 @@ function substitutePathSplats(path: string, params: Record<string, string | unde
     !path.includes('*') ||
     // In some edge cases, react-router does not provide the `*` parameter, so we don't know what to
     // replace it with. In this case, we keep the asterisk.
-    !params['*']
+    params['*'] === undefined
   ) {
     return path
   }
