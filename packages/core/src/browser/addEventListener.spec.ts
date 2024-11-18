@@ -1,6 +1,6 @@
 import { isIE } from '../tools/utils/browserDetection'
 import type { Configuration } from '../domain/configuration'
-import { createNewEvent, mockZoneJs } from '../../test'
+import { createNewEvent, mockZoneJs, registerCleanupTask } from '../../test'
 import type { MockZoneJs } from '../../test'
 import { noop } from '../tools/utils/functionUtils'
 import { addEventListener, DOM_EVENT } from './addEventListener'
@@ -41,12 +41,18 @@ describe('addEventListener', () => {
       pending('EventTarget not supported in IE')
     }
 
-    const addEventListenerSpy = jasmine.createSpy()
-    const removeEventListenerSpy = jasmine.createSpy()
+    // eslint-disable-next-line @typescript-eslint/unbound-method
+    const originalAddEventListener = EventTarget.prototype.addEventListener
+    // eslint-disable-next-line @typescript-eslint/unbound-method
+    const originalRemoveEventListener = EventTarget.prototype.removeEventListener
 
-    // The  stopLeakDetection function of the global after each hook will reset the EventTarget.prototype.addEventListener
-    EventTarget.prototype.addEventListener = addEventListenerSpy
-    EventTarget.prototype.removeEventListener = removeEventListenerSpy
+    EventTarget.prototype.addEventListener = jasmine.createSpy()
+    EventTarget.prototype.removeEventListener = jasmine.createSpy()
+
+    registerCleanupTask(() => {
+      EventTarget.prototype.addEventListener = originalAddEventListener
+      EventTarget.prototype.removeEventListener = originalRemoveEventListener
+    })
 
     const htmlDivElement = document.createElement('div')
     htmlDivElement.addEventListener = jasmine.createSpy()
@@ -63,8 +69,10 @@ describe('addEventListener', () => {
     // eslint-disable-next-line @typescript-eslint/unbound-method
     expect(htmlDivElement.removeEventListener).not.toHaveBeenCalled()
 
-    expect(addEventListenerSpy).toHaveBeenCalled()
-    expect(removeEventListenerSpy).toHaveBeenCalled()
+    // eslint-disable-next-line @typescript-eslint/unbound-method
+    expect(EventTarget.prototype.addEventListener).toHaveBeenCalled()
+    // eslint-disable-next-line @typescript-eslint/unbound-method
+    expect(EventTarget.prototype.removeEventListener).toHaveBeenCalled()
   })
 
   it('Use the addEventListener method when the eventTarget is not an instance of EventTarget', () => {
