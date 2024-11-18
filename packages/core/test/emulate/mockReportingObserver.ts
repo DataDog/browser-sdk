@@ -50,16 +50,8 @@ export function mockReportingObserver() {
 export type MockCspEventListener = ReturnType<typeof mockCspEventListener>
 
 export function mockCspEventListener() {
-  // eslint-disable-next-line @typescript-eslint/unbound-method
-  const originalAddEventListener = EventTarget.prototype.addEventListener
-  EventTarget.prototype.addEventListener = jasmine
-    .createSpy()
-    .and.callFake((_type: string, listener: EventListener) => {
-      listeners.push(listener)
-    })
-
-  registerCleanupTask(() => {
-    EventTarget.prototype.addEventListener = originalAddEventListener
+  spyOn(document, 'addEventListener').and.callFake((_type: string, listener: EventListener) => {
+    listeners.push(listener)
   })
 
   const listeners: EventListener[] = []
