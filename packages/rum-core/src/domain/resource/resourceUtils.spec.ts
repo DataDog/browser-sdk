@@ -1,4 +1,4 @@
-import { type Duration, type RelativeTime, type ServerDuration } from '@datadog/browser-core'
+import { assign, type Duration, type RelativeTime, type ServerDuration } from '@datadog/browser-core'
 import { RumPerformanceEntryType, type RumPerformanceResourceTiming } from '../../browser/performanceObservable'
 import {
   MAX_ATTRIBUTE_VALUE_CHAR_LENGTH,
@@ -11,7 +11,7 @@ import {
 } from './resourceUtils'
 
 function generateResourceWith(overrides: Partial<RumPerformanceResourceTiming>) {
-  const completeTiming: Partial<RumPerformanceResourceTiming> = {
+  const completeTiming: RumPerformanceResourceTiming = {
     connectEnd: 17 as RelativeTime,
     connectStart: 15 as RelativeTime,
     domainLookupEnd: 14 as RelativeTime,
@@ -27,9 +27,17 @@ function generateResourceWith(overrides: Partial<RumPerformanceResourceTiming>) 
     responseStart: 50 as RelativeTime,
     secureConnectionStart: 16 as RelativeTime,
     startTime: 10 as RelativeTime,
+    workerStart: 0 as RelativeTime,
+
+    initiatorType: 'script',
+    decodedBodySize: 0,
+    encodedBodySize: 0,
+    transferSize: 0,
+    toJSON: () => assign({}, completeTiming, { toJSON: undefined }),
+
     ...overrides,
   }
-  return completeTiming as RumPerformanceResourceTiming
+  return completeTiming
 }
 
 describe('computeResourceEntryType', () => {
