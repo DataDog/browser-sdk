@@ -89,7 +89,7 @@ type NameStrategy = (
   element: Element | HTMLElement | HTMLInputElement | HTMLSelectElement,
   userProgrammaticAttribute: string | undefined,
   privacyEnabledActionName?: boolean
-) => ActionName | string | undefined | null
+) => ActionName | undefined | null
 
 const priorityStrategies: NameStrategy[] = [
   // associated LABEL text
@@ -123,7 +123,7 @@ const priorityStrategies: NameStrategy[] = [
       return getActionNameFromTextualContent(element, userProgrammaticAttribute, privacyEnabledActionName)
     }
   },
-  (element) => element.getAttribute('aria-label'),
+  (element) => getActionNameFromStandardAttribute(element, 'aria-label'),
   // associated element text designated by the aria-labelledby attribute
   (element, userProgrammaticAttribute, privacyEnabledActionName) => {
     const labelledByAttribute = element.getAttribute('aria-labelledby')
@@ -139,10 +139,10 @@ const priorityStrategies: NameStrategy[] = [
       }
     }
   },
-  (element) => element.getAttribute('alt'),
-  (element) => element.getAttribute('name'),
-  (element) => element.getAttribute('title'),
-  (element) => element.getAttribute('placeholder'),
+  (element) => getActionNameFromStandardAttribute(element, 'alt'),
+  (element) => getActionNameFromStandardAttribute(element, 'name'),
+  (element) => getActionNameFromStandardAttribute(element, 'title'),
+  (element) => getActionNameFromStandardAttribute(element, 'placeholder'),
   // SELECT first OPTION text
   (element, userProgrammaticAttribute) => {
     if ('options' in element && element.options.length > 0) {
@@ -179,11 +179,8 @@ function getActionNameFromElementForStrategies(
     for (const strategy of strategies) {
       const actionName = strategy(element, userProgrammaticAttribute, privacyEnabledActionName)
       if (actionName) {
-        const { name, nameSource } =
-          typeof actionName === 'string'
-            ? { name: actionName, nameSource: ActionNameSource.STANDARD_ATTRIBUTE }
-            : actionName
-        const trimmedName = name.trim()
+        const { name, nameSource } = actionName
+        const trimmedName = name && name.trim()
         if (trimmedName) {
           return { name: truncate(normalizeWhitespace(trimmedName)), nameSource }
         }
@@ -213,13 +210,22 @@ function getElementById(refElement: Element, id: string) {
   return refElement.ownerDocument ? refElement.ownerDocument.getElementById(id) : null
 }
 
+function getActionNameFromStandardAttribute(element: Element | HTMLElement, attribute: string): ActionName {
+  return {
+    name: element.getAttribute(attribute) || '',
+    nameSource: ActionNameSource.STANDARD_ATTRIBUTE,
+  }
+}
+
 function getActionNameFromTextualContent(
   element: Element | HTMLElement,
   userProgrammaticAttribute: string | undefined,
   privacyEnabledActionName?: boolean
-): ActionName | undefined {
-  const name = getTextualContent(element, userProgrammaticAttribute, privacyEnabledActionName)
-  return name ? { name, nameSource: ActionNameSource.TEXT_CONTENT } : undefined
+): ActionName {
+  return {
+    name: getTextualContent(element, userProgrammaticAttribute, privacyEnabledActionName) || '',
+    nameSource: ActionNameSource.TEXT_CONTENT,
+  }
 }
 
 function getTextualContent(
