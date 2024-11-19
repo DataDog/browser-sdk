@@ -28,7 +28,7 @@ export function computeRawError({
   source,
   handling,
 }: RawErrorParams): RawError {
-  const isErrorInstance = originalError instanceof Error
+  const isErrorInstance = isError(originalError)
 
   const message = computeMessage(stackTrace, isErrorInstance, nonErrorPrefix, originalError)
   const stack = hasUsableStack(isErrorInstance, stackTrace)
@@ -80,19 +80,21 @@ function hasUsableStack(isErrorInstance: boolean, stackTrace?: StackTrace): stac
 }
 
 export function tryToGetFingerprint(originalError: unknown) {
-  return originalError instanceof Error && 'dd_fingerprint' in originalError
-    ? String(originalError.dd_fingerprint)
-    : undefined
+  return isError(originalError) && 'dd_fingerprint' in originalError ? String(originalError.dd_fingerprint) : undefined
 }
 
 export function getFileFromStackTraceString(stack: string) {
   return /@ (.+)/.exec(stack)?.[1]
 }
 
+export function isError(error: unknown): error is Error {
+  return Object.prototype.toString.call(error) === '[object Error]'
+}
+
 export function flattenErrorCauses(error: ErrorWithCause, parentSource: ErrorSource): RawErrorCause[] | undefined {
   let currentError = error
   const causes: RawErrorCause[] = []
-  while (currentError?.cause instanceof Error && causes.length < 10) {
+  while (isError(currentError?.cause) && causes.length < 10) {
     const stackTrace = computeStackTrace(currentError.cause)
     causes.push({
       message: currentError.cause.message,
