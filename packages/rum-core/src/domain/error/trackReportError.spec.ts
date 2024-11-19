@@ -23,6 +23,9 @@ describe('trackReportError', () => {
   let configuration: RumConfiguration
 
   beforeEach(() => {
+    if (!window.ReportingObserver) {
+      pending('ReportingObserver not supported')
+    }
     configuration = mockRumConfiguration()
     errorObservable = new Observable()
     notifyLog = jasmine.createSpy('notifyLog')

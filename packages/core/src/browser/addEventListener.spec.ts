@@ -1,6 +1,7 @@
-import type { Configuration } from '@datadog/browser-core'
+import { isIE } from '../tools/utils/browserDetection'
+import type { Configuration } from '../domain/configuration'
+import { createNewEvent, mockZoneJs, registerCleanupTask } from '../../test'
 import type { MockZoneJs } from '../../test'
-import { createNewEvent, mockZoneJs } from '../../test'
 import { noop } from '../tools/utils/functionUtils'
 import { addEventListener, DOM_EVENT } from './addEventListener'
 
@@ -33,6 +34,62 @@ describe('addEventListener', () => {
       stop()
       expect(zoneJsPatchedRemoveEventListener).not.toHaveBeenCalled()
     })
+  })
+
+  it('Use the EventTarget.prototype.addEventListener when the eventTarget is an instance of EventTarget', () => {
+    if (isIE()) {
+      pending('EventTarget not supported in IE')
+    }
+
+    // eslint-disable-next-line @typescript-eslint/unbound-method
+    const originalAddEventListener = EventTarget.prototype.addEventListener
+    // eslint-disable-next-line @typescript-eslint/unbound-method
+    const originalRemoveEventListener = EventTarget.prototype.removeEventListener
+
+    EventTarget.prototype.addEventListener = jasmine.createSpy()
+    EventTarget.prototype.removeEventListener = jasmine.createSpy()
+
+    registerCleanupTask(() => {
+      EventTarget.prototype.addEventListener = originalAddEventListener
+      EventTarget.prototype.removeEventListener = originalRemoveEventListener
+    })
+
+    const htmlDivElement = document.createElement('div')
+    htmlDivElement.addEventListener = jasmine.createSpy()
+    htmlDivElement.removeEventListener = jasmine.createSpy()
+
+    const { stop } = addEventListener({ allowUntrustedEvents: false }, htmlDivElement, DOM_EVENT.CLICK, noop)
+
+    const event = createNewEvent(DOM_EVENT.CLICK)
+    htmlDivElement.dispatchEvent(event)
+    stop()
+
+    // eslint-disable-next-line @typescript-eslint/unbound-method
+    expect(htmlDivElement.addEventListener).not.toHaveBeenCalled()
+    // eslint-disable-next-line @typescript-eslint/unbound-method
+    expect(htmlDivElement.removeEventListener).not.toHaveBeenCalled()
+
+    // eslint-disable-next-line @typescript-eslint/unbound-method
+    expect(EventTarget.prototype.addEventListener).toHaveBeenCalled()
+    // eslint-disable-next-line @typescript-eslint/unbound-method
+    expect(EventTarget.prototype.removeEventListener).toHaveBeenCalled()
+  })
+
+  it('Use the addEventListener method when the eventTarget is not an instance of EventTarget', () => {
+    const listener = jasmine.createSpy()
+
+    const customEventTarget = {
+      addEventListener: jasmine.createSpy(),
+      removeEventListener: jasmine.createSpy(),
+    } as unknown as EventTarget
+
+    const { stop } = addEventListener({ allowUntrustedEvents: false }, customEventTarget, 'change', listener)
+    stop()
+
+    // eslint-disable-next-line @typescript-eslint/unbound-method
+    expect(customEventTarget.addEventListener).toHaveBeenCalled()
+    // eslint-disable-next-line @typescript-eslint/unbound-method
+    expect(customEventTarget.removeEventListener).toHaveBeenCalled()
   })
 
   describe('Untrusted event', () => {
