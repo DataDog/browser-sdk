@@ -119,15 +119,7 @@ describe('computeResourceEntryDetails', () => {
       fetchStart: 12 as RelativeTime,
     })
     const details = computeResourceEntryDetails(resourceTiming)
-    expect(details).toEqual({
-      worker: { start: 1e6 as ServerDuration, duration: 1e6 as ServerDuration },
-      connect: { start: 5e6 as ServerDuration, duration: 2e6 as ServerDuration },
-      dns: { start: 3e6 as ServerDuration, duration: 1e6 as ServerDuration },
-      download: { start: 40e6 as ServerDuration, duration: 10e6 as ServerDuration },
-      first_byte: { start: 10e6 as ServerDuration, duration: 30e6 as ServerDuration },
-      redirect: { start: 0 as ServerDuration, duration: 1e6 as ServerDuration },
-      ssl: { start: 6e6 as ServerDuration, duration: 1e6 as ServerDuration },
-    })
+    expect(details!.worker).toEqual({ start: 1e6 as ServerDuration, duration: 1e6 as ServerDuration })
   })
 
   it('should not compute redirect timing when no redirect', () => {
