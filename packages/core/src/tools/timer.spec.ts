@@ -21,11 +21,11 @@ import { noop } from './utils/functionUtils'
 
     beforeEach(() => {
       clock = mockClock()
-      zoneJs = mockZoneJs()
       registerCleanupTask(() => {
         clock.cleanup()
         resetMonitor()
       })
+      zoneJs = mockZoneJs()
     })
 
     it('executes the callback asynchronously', () => {
