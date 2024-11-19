@@ -70,9 +70,11 @@ describe('computeViewName', () => {
 
       // Splats
       ['*',                   '/foo/1',       '/foo/1'],
+      ['*',                   '/',            '/'],
       ['/foo/*',              '/foo/1',       '/foo/1'],
       ['/foo > *',            '/foo/1',       '/foo/1'],
       ['* > *',               '/foo/1',       '/foo/1'],
+      ['* > *',               '/',            '/'],
       ['/foo/* > *',          '/foo/1',       '/foo/1'],
       ['* > foo/*',           '/foo/1',       '/foo/1'],
       ['/foo/* > bar/*',      '/foo/bar/1',   '/foo/bar/1'],
