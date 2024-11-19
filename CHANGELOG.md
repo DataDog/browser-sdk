@@ -18,6 +18,20 @@
 
 ---
 
+## v5.31.0
+
+**Public Changes:**
+
+- 🐛 Use EventTarget.prototype.addEventListener instead of the method ([#3137](https://github.com/DataDog/browser-sdk/pull/3137)) [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+- [RUM-6801] Collect resource worker processing time ([#3118](https://github.com/DataDog/browser-sdk/pull/3118)) [RUM] [RUM-REACT] [RUM-SLIM]
+- Fix trackViewsManually JS doc comment ([#3117](https://github.com/DataDog/browser-sdk/pull/3117)) [RUM] [RUM-REACT] [RUM-SLIM]
+
+**Internal Changes:**
+
+- 👷 Update all non-major dependencies ([#3139](https://github.com/DataDog/browser-sdk/pull/3139))
+- 👷 Bump chrome to 131.0.6778.69-1 ([#3127](https://github.com/DataDog/browser-sdk/pull/3127))
+- ✅ Fix test cleanup tasks order ([#3141](https://github.com/DataDog/browser-sdk/pull/3141)) [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+
 ## v5.30.1
 
 **Public Changes:**
