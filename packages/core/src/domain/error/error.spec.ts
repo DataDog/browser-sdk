@@ -1,9 +1,9 @@
 import { clocksNow } from '../../tools/utils/timeUtils'
 import type { StackTrace } from '../../tools/stackTrace/computeStackTrace'
+import { registerCleanupTask } from '../../../test'
 import { computeRawError, getFileFromStackTraceString, flattenErrorCauses, isError } from './error'
 import type { RawErrorCause, ErrorWithCause } from './error.types'
 import { ErrorHandling, ErrorSource, NonErrorPrefix } from './error.types'
-import { registerCleanupTask } from '../../../test'
 
 describe('computeRawError', () => {
   const ERROR_INSTANCE = new TypeError('oh snap!')
