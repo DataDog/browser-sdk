@@ -1,7 +1,15 @@
 import type { Context } from '@datadog/browser-core'
 import type { IntakeRegistry } from '../../lib/framework'
-import { flushEvents, createTest } from '../../lib/framework'
+import { flushEvents, createTest, injectRumWithPuppeteer } from '../../lib/framework'
 import { withBrowserLogs } from '../../lib/helpers/browser'
+
+describe('Inject RUM with Puppeteer', () => {
+  // S8s tests inject RUM with puppeteer evaluateOnNewDocument
+  it('should not throw error', async () => {
+    const isInjected = await injectRumWithPuppeteer()
+    expect(isInjected).toBe(true)
+  })
+})
 
 describe('API calls and events around init', () => {
   createTest('should display a console log when calling init without configuration')

@@ -1,4 +1,4 @@
-export { createTest } from './createTest'
+export { createTest, injectRumWithPuppeteer } from './createTest'
 export { bundleSetup, html } from './pageSetups'
 export { IntakeRegistry } from './intakeRegistry'
 export { getTestServers, waitForServersIdle } from './httpServers'
