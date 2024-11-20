@@ -25,7 +25,7 @@ module.exports = ({ entry, mode, filename, types, keepBuildEnvVariables, plugins
           configFile: tsconfigPath,
           onlyCompileBundledFiles: true,
           compilerOptions: {
-            module: 'es6',
+            module: 'es2020',
             allowJs: true,
             types: types || [],
           },
@@ -44,6 +44,7 @@ module.exports = ({ entry, mode, filename, types, keepBuildEnvVariables, plugins
   },
 
   optimization: {
+    chunkIds: 'named',
     minimizer: [
       new TerserPlugin({
         extractComments: false,
