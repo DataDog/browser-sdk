@@ -18,6 +18,13 @@
 
 ---
 
+## v5.31.1
+
+**Public Changes:**
+
+- 🐛 skip worker timing when no worker is used ([#3147](https://github.com/DataDog/browser-sdk/pull/3147)) [RUM] [RUM-REACT] [RUM-SLIM]
+- ⚗️🐛 [RUM-6226] fix for empty splats ([#3142](https://github.com/DataDog/browser-sdk/pull/3142)) [RUM-REACT]
+
 ## v5.31.0
 
 **Public Changes:**
