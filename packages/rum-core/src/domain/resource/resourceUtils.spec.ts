@@ -1,4 +1,4 @@
-import { type Duration, type RelativeTime, type ServerDuration } from '@datadog/browser-core'
+import { assign, type Duration, type RelativeTime, type ServerDuration } from '@datadog/browser-core'
 import { RumPerformanceEntryType, type RumPerformanceResourceTiming } from '../../browser/performanceObservable'
 import {
   MAX_ATTRIBUTE_VALUE_CHAR_LENGTH,
@@ -11,7 +11,7 @@ import {
 } from './resourceUtils'
 
 function generateResourceWith(overrides: Partial<RumPerformanceResourceTiming>) {
-  const completeTiming: Partial<RumPerformanceResourceTiming> = {
+  const completeTiming: RumPerformanceResourceTiming = {
     connectEnd: 17 as RelativeTime,
     connectStart: 15 as RelativeTime,
     domainLookupEnd: 14 as RelativeTime,
@@ -27,9 +27,17 @@ function generateResourceWith(overrides: Partial<RumPerformanceResourceTiming>) 
     responseStart: 50 as RelativeTime,
     secureConnectionStart: 16 as RelativeTime,
     startTime: 10 as RelativeTime,
+    workerStart: 0 as RelativeTime,
+
+    initiatorType: 'script',
+    decodedBodySize: 0,
+    encodedBodySize: 0,
+    transferSize: 0,
+    toJSON: () => assign({}, completeTiming, { toJSON: undefined }),
+
     ...overrides,
   }
-  return completeTiming as RumPerformanceResourceTiming
+  return completeTiming
 }
 
 describe('computeResourceEntryType', () => {
@@ -111,15 +119,7 @@ describe('computeResourceEntryDetails', () => {
       fetchStart: 12 as RelativeTime,
     })
     const details = computeResourceEntryDetails(resourceTiming)
-    expect(details).toEqual({
-      worker: { start: 1e6 as ServerDuration, duration: 1e6 as ServerDuration },
-      connect: { start: 5e6 as ServerDuration, duration: 2e6 as ServerDuration },
-      dns: { start: 3e6 as ServerDuration, duration: 1e6 as ServerDuration },
-      download: { start: 40e6 as ServerDuration, duration: 10e6 as ServerDuration },
-      first_byte: { start: 10e6 as ServerDuration, duration: 30e6 as ServerDuration },
-      redirect: { start: 0 as ServerDuration, duration: 1e6 as ServerDuration },
-      ssl: { start: 6e6 as ServerDuration, duration: 1e6 as ServerDuration },
-    })
+    expect(details!.worker).toEqual({ start: 1e6 as ServerDuration, duration: 1e6 as ServerDuration })
   })
 
   it('should not compute redirect timing when no redirect', () => {

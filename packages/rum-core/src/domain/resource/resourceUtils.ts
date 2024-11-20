@@ -110,7 +110,7 @@ export function computeResourceEntryDetails(entry: RumPerformanceResourceTiming)
   }
 
   // Make sure a worker processing time is recorded
-  if (workerStart < fetchStart) {
+  if (0 < workerStart && workerStart < fetchStart) {
     details.worker = formatTiming(startTime, workerStart, fetchStart)
   }
 
