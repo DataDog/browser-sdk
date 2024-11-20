@@ -3,10 +3,11 @@ import {
   DeflateEncoderStreamId,
   canUseEventBridge,
   noop,
-  runOnReadyState,
   PageExitReason,
   BridgeCapability,
   bridgeSupports,
+  asyncRunOnReadyState,
+  monitorError,
 } from '@datadog/browser-core'
 import type {
   LifeCycle,
@@ -61,7 +62,7 @@ type RecorderState =
 type StartStrategyFn = (options?: StartRecordingOptions) => void
 
 export function makeRecorderApi(
-  startRecordingImpl: StartRecording,
+  loadRecorder: () => Promise<StartRecording>,
   createDeflateWorkerImpl?: CreateDeflateWorker
 ): RecorderApi {
   if ((canUseEventBridge() && !bridgeSupports(BridgeCapability.RECORDS)) || !isBrowserSupported()) {
@@ -155,34 +156,42 @@ export function makeRecorderApi(
 
         state = { status: RecorderStatus.Starting }
 
-        runOnReadyState(configuration, 'interactive', () => {
-          if (state.status !== RecorderStatus.Starting) {
-            return
-          }
-
-          const deflateEncoder = getOrCreateDeflateEncoder()
-          if (!deflateEncoder) {
-            state = {
-              status: RecorderStatus.Stopped,
-            }
-            return
-          }
-
-          const { stop: stopRecording } = startRecordingImpl(
-            lifeCycle,
-            configuration,
-            sessionManager,
-            viewHistory,
-            deflateEncoder
-          )
-          state = {
-            status: RecorderStatus.Started,
-            stopRecording,
-          }
-        })
+        doStart().catch(monitorError)
 
         if (options && options.force && session.sessionReplay === SessionReplayState.OFF) {
           sessionManager.setForcedReplay()
+        }
+      }
+
+      const doStart = async () => {
+        const [startRecordingImpl] = await Promise.all([
+          loadRecorder(),
+          asyncRunOnReadyState(configuration, 'interactive'),
+        ])
+
+        if (state.status !== RecorderStatus.Starting) {
+          return
+        }
+
+        const deflateEncoder = getOrCreateDeflateEncoder()
+        if (!deflateEncoder) {
+          state = {
+            status: RecorderStatus.Stopped,
+          }
+          return
+        }
+
+        const { stop: stopRecording } = startRecordingImpl(
+          lifeCycle,
+          configuration,
+          sessionManager,
+          viewHistory,
+          deflateEncoder
+        )
+
+        state = {
+          status: RecorderStatus.Started,
+          stopRecording,
         }
       }
 
