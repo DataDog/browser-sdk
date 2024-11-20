@@ -74,7 +74,7 @@ function buildConsoleLog(params: unknown[], api: ConsoleApiName, handlingStack: 
   let error: RawError | undefined
 
   if (api === ConsoleApiName.error) {
-    const firstErrorParam = find(params, (param: unknown): param is Error => isError(param))
+    const firstErrorParam = find(params, isError)
 
     error = {
       stack: firstErrorParam ? toStackTraceString(computeStackTrace(firstErrorParam)) : undefined,
