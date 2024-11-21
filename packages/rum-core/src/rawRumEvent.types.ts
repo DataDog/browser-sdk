@@ -109,6 +109,7 @@ export interface RawRumViewEvent {
     }
     largest_contentful_paint?: ServerDuration
     largest_contentful_paint_target_selector?: string
+    largest_contentful_paint_resource_url?: string
     dom_interactive?: ServerDuration
     dom_content_loaded?: ServerDuration
     dom_complete?: ServerDuration
