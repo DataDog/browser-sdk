@@ -1,8 +1,9 @@
 const path = require('path')
 
-module.exports = (_env, argv) => ({
+module.exports = ({ target, optimization, mode }) => ({
+  mode,
   entry: './app.ts',
-  target: ['web', 'es5'],
+  target,
   module: {
     rules: [
       {
@@ -14,10 +15,7 @@ module.exports = (_env, argv) => ({
   resolve: {
     extensions: ['.ts', '.js'],
   },
-  optimization: {
-    // Display stack trace when SSR test fail
-    minimize: argv.mode === 'development',
-  },
+  optimization,
   output: {
     path: path.resolve(__dirname, 'dist'),
     filename: 'app.js',
