@@ -6,7 +6,6 @@ import {
   ResourceType,
   toServerDuration,
   relativeToClocks,
-  assign,
   isNumber,
   createTaskQueue,
 } from '@datadog/browser-core'
@@ -178,14 +177,12 @@ function processResourceEntry(
 function computeResourceEntryMetrics(entry: RumPerformanceResourceTiming) {
   const { renderBlockingStatus } = entry
   return {
-    resource: assign(
-      {
-        duration: computeResourceEntryDuration(entry),
-        render_blocking_status: renderBlockingStatus,
-      },
-      computeResourceEntrySize(entry),
-      computeResourceEntryDetails(entry)
-    ),
+    resource: {
+      duration: computeResourceEntryDuration(entry),
+      render_blocking_status: renderBlockingStatus,
+      ...computeResourceEntrySize(entry),
+      ...computeResourceEntryDetails(entry),
+    },
   }
 }
 

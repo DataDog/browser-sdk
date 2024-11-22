@@ -1,4 +1,3 @@
-import { isIE } from '../utils/browserDetection'
 import { display } from '../display'
 import { createNewEvent } from '../../../test'
 import { sanitize } from './sanitize'
@@ -30,12 +29,7 @@ describe('sanitize', () => {
       function testFunction() {
         return true
       }
-      if (isIE()) {
-        // IE does not provide access to function name
-        expect(sanitize(testFunction)).toBe('[Function] unknown')
-      } else {
-        expect(sanitize(testFunction)).toBe('[Function] testFunction')
-      }
+      expect(sanitize(testFunction)).toBe('[Function] testFunction')
     })
 
     it('should handle bigint', () => {
@@ -102,19 +96,10 @@ describe('sanitize', () => {
         ['a', 13],
         ['b', 37],
       ])
-      if (isIE()) {
-        // IE does not distinguish maps, weakmaps, sets... from generic objects
-        expect(sanitize(map)).toEqual({})
-      } else {
-        expect(sanitize(map)).toBe('[Map]')
-      }
+      expect(sanitize(map)).toBe('[Map]')
     })
 
     it('should survive when toStringTag throws', () => {
-      if (isIE()) {
-        pending('IE does not support Symbols')
-      }
-
       class CannotSerialize {
         get [Symbol.toStringTag]() {
           throw Error('Cannot serialize')
@@ -229,12 +214,7 @@ describe('sanitize', () => {
       const obj = { b: 42, toJSON: faulty }
 
       // Since toJSON throws, sanitize falls back to serialize property by property
-      if (isIE()) {
-        // IE does not provide access to function name
-        expect(sanitize(obj)).toEqual({ b: 42, toJSON: '[Function] unknown' })
-      } else {
-        expect(sanitize(obj)).toEqual({ b: 42, toJSON: '[Function] faulty' })
-      }
+      expect(sanitize(obj)).toEqual({ b: 42, toJSON: '[Function] faulty' })
     })
   })
 
