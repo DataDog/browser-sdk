@@ -1,5 +1,13 @@
 import type { ClocksState, Context, Observable } from '@datadog/browser-core'
-import { noop, assign, combine, toServerDuration, generateUUID } from '@datadog/browser-core'
+import {
+  noop,
+  assign,
+  combine,
+  toServerDuration,
+  generateUUID,
+  ExperimentalFeature,
+  isExperimentalFeatureEnabled,
+} from '@datadog/browser-core'
 
 import { discardNegativeDuration } from '../discardNegativeDuration'
 import type { RawRumActionEvent } from '../../rawRumEvent.types'
@@ -83,6 +91,9 @@ function processAction(
           action: {
             target: action.target,
             position: action.position,
+            name_source: isExperimentalFeatureEnabled(ExperimentalFeature.ACTION_NAME_MASKING)
+              ? action.nameSource
+              : undefined,
           },
         },
       }

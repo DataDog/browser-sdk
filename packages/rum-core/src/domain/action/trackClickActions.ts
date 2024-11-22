@@ -38,6 +38,7 @@ export interface ClickAction {
   type: ActionType.CLICK
   id: string
   name: string
+  nameSource: string
   target?: {
     selector: string | undefined
     width: number
@@ -219,7 +220,7 @@ function startClickAction(
   })
 }
 
-type ClickActionBase = Pick<ClickAction, 'type' | 'name' | 'target' | 'position'>
+type ClickActionBase = Pick<ClickAction, 'type' | 'name' | 'nameSource' | 'target' | 'position'>
 
 function computeClickActionBase(
   event: MouseEventOnElement,
@@ -231,6 +232,7 @@ function computeClickActionBase(
   if (selector) {
     updateInteractionSelector(event.timeStamp, selector)
   }
+  const actionName = getActionNameFromElement(event.target, configuration, nodePrivacyLevel)
 
   return {
     type: ActionType.CLICK,
@@ -244,7 +246,8 @@ function computeClickActionBase(
       x: Math.round(event.clientX - rect.left),
       y: Math.round(event.clientY - rect.top),
     },
-    name: getActionNameFromElement(event.target, configuration, nodePrivacyLevel),
+    name: actionName.name,
+    nameSource: actionName.nameSource,
   }
 }
 
