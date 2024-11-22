@@ -1,5 +1,6 @@
 const path = require('path')
 
+const filename = 'app.js'
 module.exports = ({ target, optimization, mode }) => ({
   mode,
   entry: './app.ts',
@@ -18,6 +19,7 @@ module.exports = ({ target, optimization, mode }) => ({
   optimization,
   output: {
     path: path.resolve(__dirname, 'dist'),
-    filename: 'app.js',
+    filename,
+    chunkFilename: `chunks/[name]-[contenthash]-${filename}`,
   },
 })
