@@ -1,6 +1,6 @@
 import type { Duration, RelativeTime, ServerDuration, TimeStamp } from '@datadog/browser-core'
-import { Observable } from '@datadog/browser-core'
-import { createNewEvent } from '@datadog/browser-core/test'
+import { ExperimentalFeature, Observable } from '@datadog/browser-core'
+import { createNewEvent, mockExperimentalFeatures } from '@datadog/browser-core/test'
 import type { RawRumActionEvent, RawRumEventCollectedData } from '@datadog/browser-rum-core'
 import { collectAndValidateRawRumEvents, mockPageStateHistory, mockRumConfiguration } from '../../../test'
 import type { RawRumEvent } from '../../rawRumEvent.types'
@@ -28,7 +28,8 @@ describe('actionCollection', () => {
     rawRumEvents = collectAndValidateRawRumEvents(lifeCycle)
   })
 
-  it('should create action from auto action', () => {
+  it('should create action from auto action with name source', () => {
+    mockExperimentalFeatures([ExperimentalFeature.ACTION_NAME_MASKING])
     const event = createNewEvent('pointerup', { target: document.createElement('button') })
     lifeCycle.notify(LifeCycleEventType.AUTO_ACTION_COMPLETED, {
       counts: {
@@ -40,6 +41,7 @@ describe('actionCollection', () => {
       duration: 100 as Duration,
       id: 'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee',
       name: 'foo',
+      nameSource: 'text_content',
       startClocks: { relative: 1234 as RelativeTime, timeStamp: 123456789 as TimeStamp },
       type: ActionType.CLICK,
       event,
@@ -86,6 +88,7 @@ describe('actionCollection', () => {
             width: 1,
             height: 2,
           },
+          name_source: 'text_content',
           position: {
             x: 1,
             y: 2,
@@ -136,6 +139,7 @@ describe('actionCollection', () => {
       frustrationTypes: [],
       id: 'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee',
       name: 'foo',
+      nameSource: 'text_content',
       startClocks: { relative: 0 as RelativeTime, timeStamp: 0 as TimeStamp },
       type: ActionType.CLICK,
     })
