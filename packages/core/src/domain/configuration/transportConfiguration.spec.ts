@@ -1,5 +1,6 @@
 import type { Payload } from '../../transport'
 import { computeTransportConfiguration, isIntakeUrl } from './transportConfiguration'
+import type { Site } from './intakeSites'
 import { INTAKE_SITE_FED_STAGING } from './intakeSites'
 
 const DEFAULT_PAYLOAD = {} as Payload
@@ -17,15 +18,15 @@ describe('transportConfiguration', () => {
     })
 
     it('should use logs intake domain for fed staging', () => {
-      const configuration = computeTransportConfiguration({ clientToken, site: INTAKE_SITE_FED_STAGING })
+      const configuration = computeTransportConfiguration({ clientToken, site: INTAKE_SITE_FED_STAGING as Site })
       expect(configuration.rumEndpointBuilder.build('xhr', DEFAULT_PAYLOAD)).toContain('http-intake.logs.dd0g-gov.com')
       expect(configuration.site).toBe(INTAKE_SITE_FED_STAGING)
     })
 
     it('should use site value when set', () => {
-      const configuration = computeTransportConfiguration({ clientToken, site: 'foo.com' })
-      expect(configuration.rumEndpointBuilder.build('xhr', DEFAULT_PAYLOAD)).toContain('foo.com')
-      expect(configuration.site).toBe('foo.com')
+      const configuration = computeTransportConfiguration({ clientToken, site: 'datadoghq.com' })
+      expect(configuration.rumEndpointBuilder.build('xhr', DEFAULT_PAYLOAD)).toContain('datadoghq.com')
+      expect(configuration.site).toBe('datadoghq.com')
     })
   })
 
@@ -41,7 +42,7 @@ describe('transportConfiguration', () => {
     it('should not use internal analytics subdomain value when set for other sites', () => {
       const configuration = computeTransportConfiguration({
         clientToken,
-        site: 'foo.bar',
+        site: 'us3.datadoghq.com',
         internalAnalyticsSubdomain,
       })
       expect(configuration.rumEndpointBuilder.build('xhr', DEFAULT_PAYLOAD)).not.toContain(internalAnalyticsSubdomain)
