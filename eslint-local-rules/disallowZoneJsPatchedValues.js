@@ -28,7 +28,7 @@ module.exports = {
     schema: [],
   },
   create(context) {
-    const parserServices = context.parserServices
+    const parserServices = context.sourceCode.parserServices
     const checker = parserServices.program.getTypeChecker()
 
     return {
