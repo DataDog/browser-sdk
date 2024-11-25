@@ -1,9 +1,10 @@
 import { isChromium } from '../../../tools/utils/browserDetection'
+import { ExperimentalFeature, isExperimentalFeatureEnabled } from '../../../tools/experimentalFeatures'
 import type { CookieOptions } from '../../../browser/cookie'
 import { getCurrentSite, areCookiesAuthorized, getCookie, setCookie } from '../../../browser/cookie'
 import type { InitConfiguration } from '../../configuration'
 import { tryOldCookiesMigration } from '../oldCookiesMigration'
-import { SESSION_EXPIRATION_DELAY, SESSION_TIME_OUT_DELAY } from '../sessionConstants'
+import { SESSION_COOKIE_EXPIRATION_DELAY, SESSION_EXPIRATION_DELAY, SESSION_TIME_OUT_DELAY } from '../sessionConstants'
 import type { SessionState } from '../sessionState'
 import { toSessionString, toSessionState, getExpiredSessionState } from '../sessionState'
 import type { SessionStoreStrategy, SessionStoreStrategyType } from './sessionStoreStrategy'
@@ -39,7 +40,14 @@ function persistSessionCookie(options: CookieOptions) {
 
 function expireSessionCookie(options: CookieOptions, sessionState: SessionState) {
   const expiredSessionState = getExpiredSessionState(sessionState)
-  setCookie(SESSION_STORE_KEY, toSessionString(expiredSessionState), SESSION_TIME_OUT_DELAY, options)
+  setCookie(
+    SESSION_STORE_KEY,
+    toSessionString(expiredSessionState),
+    isExperimentalFeatureEnabled(ExperimentalFeature.ANONYMOUS_USER_TRACKING)
+      ? SESSION_COOKIE_EXPIRATION_DELAY
+      : SESSION_TIME_OUT_DELAY,
+    options
+  )
 }
 
 function retrieveSessionCookie(): SessionState {
