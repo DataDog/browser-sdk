@@ -1,4 +1,4 @@
-import { type Context } from '@datadog/browser-core'
+import type { Context } from '@datadog/browser-core'
 import type { IntakeRegistry } from '../../lib/framework'
 import { flushEvents, createTest } from '../../lib/framework'
 import { withBrowserLogs } from '../../lib/helpers/browser'
