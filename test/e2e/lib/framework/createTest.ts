@@ -1,4 +1,3 @@
-import * as fs from 'fs'
 import type { LogsInitConfiguration } from '@datadog/browser-logs'
 import type { RumInitConfiguration } from '@datadog/browser-rum-core'
 import { DefaultPrivacyLevel } from '@datadog/browser-rum'
@@ -15,7 +14,6 @@ import type { SetupFactory, SetupOptions } from './pageSetups'
 import { DEFAULT_SETUPS, npmSetup } from './pageSetups'
 import { createIntakeServerApp } from './serverApps/intake'
 import { createMockServerApp } from './serverApps/mock'
-import { RUM_BUNDLE } from './sdkBuilds'
 
 const DEFAULT_RUM_CONFIGURATION = {
   applicationId: APPLICATION_ID,
@@ -229,34 +227,4 @@ async function tearDownTest({ intakeRegistry }: TestContext) {
     expect(logs.filter((l) => (l as any).level === 'SEVERE')).toEqual([])
   })
   await deleteAllCookies()
-}
-
-export async function injectRumWithPuppeteer() {
-  const ddRUM = fs.readFileSync(RUM_BUNDLE, 'utf8')
-  const puppeteerBrowser = await browser.getPuppeteer()
-  let injected = true
-
-  await browser.call(async () => {
-    const page = await puppeteerBrowser.newPage()
-    await page.evaluateOnNewDocument(
-      `
-        if (location.href !== 'about:blank') {
-          ${ddRUM}
-          window.DD_RUM._setDebug(true)
-          window.DD_RUM.init({
-            applicationId: ${APPLICATION_ID},
-            clientToken: ${CLIENT_TOKEN},
-          })
-          window.DD_RUM.startView()
-        }
-      `
-    )
-    page.on('console', (msg) => {
-      if (msg.type() === 'error') {
-        injected = false
-      }
-    })
-    await page.goto('https://webdriver.io')
-  })
-  return injected
 }
