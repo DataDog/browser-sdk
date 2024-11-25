@@ -2,7 +2,7 @@ import type { InitConfiguration } from './configuration'
 import type { EndpointBuilder } from './endpointBuilder'
 import { createEndpointBuilder } from './endpointBuilder'
 import { buildTags } from './tags'
-import type { SiteWithStaging } from './intakeSites'
+import type { Site } from './intakeSites'
 import { INTAKE_SITE_US1, INTAKE_URL_PARAMETERS } from './intakeSites'
 
 export interface TransportConfiguration {
@@ -10,7 +10,7 @@ export interface TransportConfiguration {
   rumEndpointBuilder: EndpointBuilder
   sessionReplayEndpointBuilder: EndpointBuilder
   replica?: ReplicaConfiguration
-  site: SiteWithStaging
+  site: Site
 }
 
 export interface ReplicaConfiguration {
