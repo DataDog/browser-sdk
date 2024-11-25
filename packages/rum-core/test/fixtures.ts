@@ -224,6 +224,7 @@ export function createPerformanceEntry<T extends RumPerformanceEntryType>(
         domainLookupStart: 200 as RelativeTime,
         duration: 100 as Duration,
         entryType: RumPerformanceEntryType.RESOURCE,
+        workerStart: 200 as RelativeTime,
         fetchStart: 200 as RelativeTime,
         name: 'https://resource.com/valid',
         redirectEnd: 200 as RelativeTime,
@@ -234,6 +235,7 @@ export function createPerformanceEntry<T extends RumPerformanceEntryType>(
         secureConnectionStart: 200 as RelativeTime,
         startTime: 200 as RelativeTime,
         responseStatus: 200,
+        nextHopProtocol: 'HTTP/1.0',
         ...overrides,
       } as EntryTypeToReturnType[T]
 

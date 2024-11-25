@@ -46,8 +46,10 @@ export interface RawRumResourceEvent {
     dns?: ResourceEntryDetailsElement
     connect?: ResourceEntryDetailsElement
     ssl?: ResourceEntryDetailsElement
+    worker?: ResourceEntryDetailsElement
     first_byte?: ResourceEntryDetailsElement
     download?: ResourceEntryDetailsElement
+    protocol?: string
   }
   _dd: {
     trace_id?: string
@@ -249,6 +251,7 @@ export interface RawRumActionEvent {
         width?: number
         height?: number
       }
+      name_source?: string
       position?: {
         x: number
         y: number

@@ -67,7 +67,7 @@ describe('API calls and events around init', () => {
     })
 
   createTest('should be associated to corresponding views when views are manually tracked')
-    .withRum({ trackViewsManually: true, enableExperimentalFeatures: ['update_view_name'] })
+    .withRum({ trackViewsManually: true })
     .withRumSlim()
     .withRumInit((configuration) => {
       window.DD_RUM!.addError('before init')
@@ -89,8 +89,7 @@ describe('API calls and events around init', () => {
         window.DD_RUM!.addError('after manual view')
         window.DD_RUM!.addAction('after manual view')
         window.DD_RUM!.addTiming('after manual view')
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-call
-        ;(window.DD_RUM as any).updateViewName('after manual view')
+        window.DD_RUM!.setViewName('after manual view')
       }, 40)
     })
     .run(async ({ intakeRegistry }) => {

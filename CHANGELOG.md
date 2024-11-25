@@ -18,6 +18,84 @@
 
 ---
 
+## v5.31.1
+
+**Public Changes:**
+
+- 🐛 skip worker timing when no worker is used ([#3147](https://github.com/DataDog/browser-sdk/pull/3147)) [RUM] [RUM-REACT] [RUM-SLIM]
+- ⚗️🐛 [RUM-6226] fix for empty splats ([#3142](https://github.com/DataDog/browser-sdk/pull/3142)) [RUM-REACT]
+
+## v5.31.0
+
+**Public Changes:**
+
+- 🐛 Use EventTarget.prototype.addEventListener instead of the method ([#3137](https://github.com/DataDog/browser-sdk/pull/3137)) [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+- [RUM-6801] Collect resource worker processing time ([#3118](https://github.com/DataDog/browser-sdk/pull/3118)) [RUM] [RUM-REACT] [RUM-SLIM]
+- Fix trackViewsManually JS doc comment ([#3117](https://github.com/DataDog/browser-sdk/pull/3117)) [RUM] [RUM-REACT] [RUM-SLIM]
+
+**Internal Changes:**
+
+- 👷 Update all non-major dependencies ([#3139](https://github.com/DataDog/browser-sdk/pull/3139))
+- 👷 Bump chrome to 131.0.6778.69-1 ([#3127](https://github.com/DataDog/browser-sdk/pull/3127))
+- ✅ Fix test cleanup tasks order ([#3141](https://github.com/DataDog/browser-sdk/pull/3141)) [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+
+## v5.30.1
+
+**Public Changes:**
+
+- 🐛 [RUM-6226][rum-react] improve routes wildcard substitution ([#3105](https://github.com/DataDog/browser-sdk/pull/3105)) [RUM-REACT]
+- ⚡️ [RUM-6929] delay resource collection ([#3102](https://github.com/DataDog/browser-sdk/pull/3102)) [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+- Add @session.id in Logs along to @session_id ([#3125](https://github.com/DataDog/browser-sdk/pull/3125)) [LOGS]
+
+**Internal Changes:**
+
+- 👷 do not include staging bump commit to changelog ([#3129](https://github.com/DataDog/browser-sdk/pull/3129))
+- 👷 Update all non-major dependencies ([#3106](https://github.com/DataDog/browser-sdk/pull/3106)) [RUM-REACT] [WORKER]
+
+## v5.30.0
+
+**Public Changes:**
+
+- ✨ add new privacy rule for autocomplete password value ([#3094](https://github.com/DataDog/browser-sdk/pull/3094)) [RUM] [RUM-REACT] [RUM-SLIM]
+- ✨[RUM-5090] Collect ressource protocol ([#3087](https://github.com/DataDog/browser-sdk/pull/3087)) [RUM] [RUM-REACT] [RUM-SLIM]
+- 🐛 allow untrusted event for httpRequest xhr event listeners ([#3123](https://github.com/DataDog/browser-sdk/pull/3123)) [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+
+**Internal Changes:**
+
+- 👷 [RUM-6562] Enable and rename update view name API ([#3099](https://github.com/DataDog/browser-sdk/pull/3099)) [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+- 👷 Update all non-major dependencies ([#3082](https://github.com/DataDog/browser-sdk/pull/3082)) [RUM-REACT]
+- 👷[IR-30972] Include older version intake urls matching ([#3059](https://github.com/DataDog/browser-sdk/pull/3059)) [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+- 👷 disable datadog static analysis ([#3091](https://github.com/DataDog/browser-sdk/pull/3091))
+- ✅👷 kill browserstack execution early ([#3096](https://github.com/DataDog/browser-sdk/pull/3096))
+
+## v5.29.1
+
+**Internal Changes:**
+
+- 👷 CI - Enable yarn strategy on the repository ([#3079](https://github.com/DataDog/browser-sdk/pull/3079))
+- 👷 publish chrome extension to all users ([#3084](https://github.com/DataDog/browser-sdk/pull/3084))
+- 👷 CI - assign static resources for e2e-bs job ([#3080](https://github.com/DataDog/browser-sdk/pull/3080))
+- 👷 Enable reduced Session Replay data batch time limit ([#3088](https://github.com/DataDog/browser-sdk/pull/3088)) [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+
+## v5.29.0
+
+**Public Changes:**
+
+- 🐛 [RUM-6483] Investigate reducing the batch time limit for Replay ([#3077](https://github.com/DataDog/browser-sdk/pull/3077)) [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+
+**Internal Changes:**
+
+- 👷 Bump chrome to 130.0.6723.58-1 ([#3074](https://github.com/DataDog/browser-sdk/pull/3074))
+- 👷 skip merge into next major on scheduled pipelines ([#3075](https://github.com/DataDog/browser-sdk/pull/3075))
+- 👷 Update all non-major dependencies ([#3070](https://github.com/DataDog/browser-sdk/pull/3070)) [RUM-REACT]
+- 👷 Update dependency eslint-plugin-unicorn to v56 ([#3071](https://github.com/DataDog/browser-sdk/pull/3071))
+- 🔧 [RUM-6226] tweak rum-react dependencies ([#3054](https://github.com/DataDog/browser-sdk/pull/3054)) [RUM-REACT]
+- ♻️ Use registerCleanupTask for mock cleanups ([#3069](https://github.com/DataDog/browser-sdk/pull/3069)) [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+- ♻️ [RUM-5101] Use registerCleanupTask for interceptor cleanup ([#3065](https://github.com/DataDog/browser-sdk/pull/3065)) [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+- [RUM 5088] Reduce INP Null Target ([#2950](https://github.com/DataDog/browser-sdk/pull/2950)) [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+- ♻️ [RUM-5101] Use registerCleanupTask for fetch and report cleanups ([#3066](https://github.com/DataDog/browser-sdk/pull/3066)) [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+- ♻️ Use registerCleanupTask for zonejs cleanup ([#3060](https://github.com/DataDog/browser-sdk/pull/3060)) [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+
 ## v5.28.1
 
 **Public Changes:**
@@ -31,8 +109,6 @@
 - 👷 Update Node.js to v22 ([#3049](https://github.com/DataDog/browser-sdk/pull/3049))
 - 👷 sync rum-events-format ([#3053](https://github.com/DataDog/browser-sdk/pull/3053)) [LOGS] [RUM] [RUM-SLIM] [WORKER]
 - 👷 Update all non-major dependencies ([#3046](https://github.com/DataDog/browser-sdk/pull/3046)) [RUM-REACT] [WORKER]
-- 👷 Bump staging to staging-41
-- 👷 Bump staging to staging-40
 - 👷 allow release to be merged into next major feature branch ([#3043](https://github.com/DataDog/browser-sdk/pull/3043))
 - 👷 bump e2e-bs ci job timeout to 35 minutes ([#3044](https://github.com/DataDog/browser-sdk/pull/3044))
 - 👷 Bump chrome to 129.0.6668.58-1 ([#3035](https://github.com/DataDog/browser-sdk/pull/3035))
@@ -49,7 +125,6 @@
 **Internal Changes:**
 
 - 👷 Update all non-major dependencies ([#3030](https://github.com/DataDog/browser-sdk/pull/3030)) [RUM-REACT]
-- 👷 Bump staging to staging-39
 - 👷 Bump webpack from 5.76.0 to 5.94.0 in /test/app ([#3013](https://github.com/DataDog/browser-sdk/pull/3013))
 - ♻️ [RUM-6278] Use performance observer for layout shift entries ([#3028](https://github.com/DataDog/browser-sdk/pull/3028)) [RUM] [RUM-SLIM]
 - ✨ [RUM 4813] Remove feature flag for view specific context ([#3031](https://github.com/DataDog/browser-sdk/pull/3031)) [LOGS] [RUM] [RUM-SLIM] [WORKER]
@@ -72,11 +147,9 @@
 
 - 👷 Update all non-major dependencies ([#2992](https://github.com/DataDog/browser-sdk/pull/2992)) [RUM-REACT] [RUM]
 - 👷 timeout e2e-bs ci job after 30 minutes ([#2999](https://github.com/DataDog/browser-sdk/pull/2999))
-- 👷 Bump staging to staging-38
 - 👷 Bump chrome to 128.0.6613.84-1 ([#2946](https://github.com/DataDog/browser-sdk/pull/2946))
 - 👷 allow job 'test-performance' to fail ([#2980](https://github.com/DataDog/browser-sdk/pull/2980))
 - 👷 Update all non-major dependencies ([#2975](https://github.com/DataDog/browser-sdk/pull/2975))
-- 👷 Bump staging to staging-37
 - 🎨 [RUM-6203] Expose experimental features in init method ([#3006](https://github.com/DataDog/browser-sdk/pull/3006)) [RUM] [RUM-SLIM]
 - 🎨 [RUM-5100] Move away from testbuilder in test files - Pt 3 ([#2952](https://github.com/DataDog/browser-sdk/pull/2952)) [RUM] [RUM-SLIM]
 - ✅♻️ do not mock `navigationStart` in `mockClock` ([#2979](https://github.com/DataDog/browser-sdk/pull/2979)) [LOGS] [RUM] [RUM-SLIM] [WORKER]
@@ -108,7 +181,6 @@
 - 👷 Bump micromatch from 4.0.4 to 4.0.8 ([#2970](https://github.com/DataDog/browser-sdk/pull/2970))
 - 👷 add job to merge main into next major feature branch (v6) ([#2935](https://github.com/DataDog/browser-sdk/pull/2935))
 - 👷 Update all non-major dependencies ([#2962](https://github.com/DataDog/browser-sdk/pull/2962)) [RUM-REACT]
-- 👷 Bump staging to staging-36
 - Bump micromatch from 4.0.5 to 4.0.8 in /test/app ([#2971](https://github.com/DataDog/browser-sdk/pull/2971))
 
 ## v5.25.0
@@ -132,16 +204,12 @@
 
 - 👷 Update dependency eslint-plugin-jsdoc to v50 ([#2932](https://github.com/DataDog/browser-sdk/pull/2932))
 - 👷 Update all non-major dependencies ([#2948](https://github.com/DataDog/browser-sdk/pull/2948)) [WORKER]
-- 👷 Bump staging to staging-35
 - 👷 Update all non-major dependencies ([#2941](https://github.com/DataDog/browser-sdk/pull/2941)) [RUM-REACT]
-- 👷 Bump staging to staging-34
 - 👷 use devflow to merge main into staging ([#2927](https://github.com/DataDog/browser-sdk/pull/2927))
 - 👷 Update all non-major dependencies ([#2920](https://github.com/DataDog/browser-sdk/pull/2920)) [RUM] [RUM-SLIM] [RUM-REACT]
 - 👷 Update dependency puppeteer to v23 ([#2933](https://github.com/DataDog/browser-sdk/pull/2933))
-- 👷 Bump staging to staging-33
 - 👷 upgrade gitlab runner ([#2928](https://github.com/DataDog/browser-sdk/pull/2928))
 - 👷 [RUM-5673] Improve `test-performance` execution time ([#2914](https://github.com/DataDog/browser-sdk/pull/2914))
-- 👷 Bump staging to staging-32
 - 👷 use devflow to merge main into staging ([#2917](https://github.com/DataDog/browser-sdk/pull/2917))
 - 👷 Update all non-major dependencies ([#2900](https://github.com/DataDog/browser-sdk/pull/2900))
 - 👷 Update dependency eslint-plugin-unicorn to v55 ([#2901](https://github.com/DataDog/browser-sdk/pull/2901))
@@ -186,7 +254,6 @@
 - 👷 Bump chrome to 127.0.6533.72-1 ([#2890](https://github.com/DataDog/browser-sdk/pull/2890))
 - 👷 retry gitlab jobs on runner_system_failure ([#2886](https://github.com/DataDog/browser-sdk/pull/2886))
 - 👷 Update all non-major dependencies ([#2881](https://github.com/DataDog/browser-sdk/pull/2881)) [RUM-REACT]
-- 👷 Bump staging to staging-30
 - 👷 Update dependency minimatch to v10 ([#2863](https://github.com/DataDog/browser-sdk/pull/2863))
 - 👷 Update dependency glob to v11 ([#2862](https://github.com/DataDog/browser-sdk/pull/2862))
 - ♻️ [RUM-5294] Use performanceObserver for navigation entries ([#2855](https://github.com/DataDog/browser-sdk/pull/2855)) [RUM] [RUM-SLIM]
@@ -206,9 +273,7 @@
 **Internal Changes:**
 
 - 👷 Update all non-major dependencies ([#2861](https://github.com/DataDog/browser-sdk/pull/2861))
-- 👷 Bump staging to staging-29
 - 👷 Update all non-major dependencies ([#2848](https://github.com/DataDog/browser-sdk/pull/2848))
-- 👷 Bump staging to staging-28
 - 👷 Update all non-major dependencies ([#2839](https://github.com/DataDog/browser-sdk/pull/2839))
 - 👷 Upgrade engine.io and socket.io-adapter packages to fix ws vulnerability ([#2842](https://github.com/DataDog/browser-sdk/pull/2842))
 - 🎨 Instrument fetch and XHR before trying to init consent ([#2834](https://github.com/DataDog/browser-sdk/pull/2834))

@@ -65,7 +65,7 @@ function getChangeLists() {
     const spaceIndex = commit.indexOf(' ')
     const hash = commit.slice(0, spaceIndex)
     const message = commit.slice(spaceIndex + 1)
-    if (isVersionMessage(message)) {
+    if (isVersionMessage(message) || isStagingBumpMessage(message)) {
       return
     }
 
@@ -140,4 +140,8 @@ function findFirstEmoji(message) {
 
 function isVersionMessage(line) {
   return /^v\d+\.\d+\.\d+/.test(line)
+}
+
+function isStagingBumpMessage(line) {
+  return /Bump staging to staging-\d+/.test(line)
 }

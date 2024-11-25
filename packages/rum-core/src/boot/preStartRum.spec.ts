@@ -15,7 +15,6 @@ import {
 } from '@datadog/browser-core'
 import type { Clock } from '@datadog/browser-core/test'
 import {
-  cleanupSyntheticsWorkerValues,
   mockEventBridge,
   interceptRequests,
   mockClock,
@@ -174,10 +173,6 @@ describe('preStartRum', () => {
   })
 
   describe('init', () => {
-    afterEach(() => {
-      cleanupSyntheticsWorkerValues()
-    })
-
     it('should not initialize if session cannot be handled and bridge is not present', () => {
       spyOnProperty(document, 'cookie', 'get').and.returnValue('')
       const displaySpy = spyOn(display, 'warn')
@@ -309,16 +304,16 @@ describe('preStartRum', () => {
       let strategy: Strategy
       let startViewSpy: jasmine.Spy<StartRumResult['startView']>
       let addTimingSpy: jasmine.Spy<StartRumResult['addTiming']>
-      let updateViewNameSpy: jasmine.Spy<StartRumResult['updateViewName']>
+      let setViewNameSpy: jasmine.Spy<StartRumResult['setViewName']>
 
       beforeEach(() => {
         startViewSpy = jasmine.createSpy('startView')
         addTimingSpy = jasmine.createSpy('addTiming')
-        updateViewNameSpy = jasmine.createSpy('updateViewName')
+        setViewNameSpy = jasmine.createSpy('setViewName')
         doStartRumSpy.and.returnValue({
           startView: startViewSpy,
           addTiming: addTimingSpy,
-          updateViewName: updateViewNameSpy,
+          setViewName: setViewNameSpy,
         } as unknown as StartRumResult)
         strategy = createPreStartStrategy(
           {},
@@ -460,10 +455,6 @@ describe('preStartRum', () => {
 
       beforeEach(() => {
         interceptor = interceptRequests()
-      })
-
-      afterEach(() => {
-        interceptor.restore()
       })
 
       describe('when remote_configuration ff is enabled', () => {
@@ -611,8 +602,6 @@ describe('preStartRum', () => {
     })
 
     afterEach(() => {
-      cleanupSyntheticsWorkerValues()
-      interceptor.restore()
       resetExperimentalFeatures()
     })
 
@@ -751,14 +740,14 @@ describe('preStartRum', () => {
       expect(setViewContextPropertySpy).toHaveBeenCalledOnceWith('foo', 'bar')
     })
 
-    it('updateViewName', () => {
-      const updateViewNameSpy = jasmine.createSpy()
-      doStartRumSpy.and.returnValue({ updateViewName: updateViewNameSpy } as unknown as StartRumResult)
+    it('setViewName', () => {
+      const setViewNameSpy = jasmine.createSpy()
+      doStartRumSpy.and.returnValue({ setViewName: setViewNameSpy } as unknown as StartRumResult)
 
       const name = 'foo'
-      strategy.updateViewName(name)
+      strategy.setViewName(name)
       strategy.init(DEFAULT_INIT_CONFIGURATION, PUBLIC_API)
-      expect(updateViewNameSpy).toHaveBeenCalledOnceWith(name)
+      expect(setViewNameSpy).toHaveBeenCalledOnceWith(name)
     })
 
     it('addFeatureFlagEvaluation', () => {

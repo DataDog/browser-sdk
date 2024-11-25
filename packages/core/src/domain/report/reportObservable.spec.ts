@@ -14,6 +14,9 @@ describe('report observable', () => {
   let configuration: Configuration
 
   beforeEach(() => {
+    if (!window.ReportingObserver) {
+      pending('ReportingObserver not supported')
+    }
     configuration = {} as Configuration
     reportingObserver = mockReportingObserver()
     cspEventListener = mockCspEventListener()

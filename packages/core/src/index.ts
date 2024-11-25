@@ -11,6 +11,8 @@ export {
   INTAKE_SITE_US1,
   INTAKE_SITE_US1_FED,
   INTAKE_SITE_EU1,
+  INTAKE_URL_PARAMETERS,
+  isIntakeUrl,
 } from './domain/configuration'
 export { TrackingConsent, TrackingConsentState, createTrackingConsentState } from './domain/trackingConsent'
 export {
@@ -106,6 +108,8 @@ export {
 } from './browser/fetchObservable'
 export { createPageExitObservable, PageExitEvent, PageExitReason, isPageExitReason } from './browser/pageExitObservable'
 export * from './browser/addEventListener'
+export { requestIdleCallback } from './tools/requestIdleCallback'
+export * from './tools/taskQueue'
 export * from './tools/timer'
 export { initConsoleObservable, resetConsoleObservable, ConsoleLog } from './domain/console/consoleObservable'
 export { createBoundedBuffer, BoundedBuffer } from './tools/boundedBuffer'

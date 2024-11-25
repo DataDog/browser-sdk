@@ -26,6 +26,7 @@ export function getNavigationEntry(): RumPerformanceNavigationTiming {
     decodedBodySize: 0,
     encodedBodySize: 0,
     transferSize: 0,
+    workerStart: 0 as RelativeTime,
     toJSON: () => ({ ...entry, toJSON: undefined }),
     ...timings,
   }

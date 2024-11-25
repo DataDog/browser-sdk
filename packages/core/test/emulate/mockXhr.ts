@@ -1,18 +1,16 @@
 import { isServerError, noop } from '../../src'
+import { registerCleanupTask } from '../registerCleanupTask'
 import { createNewEvent } from './createNewEvent'
-
-export type MockXhrManager = ReturnType<typeof mockXhr>
+import { MockEventTarget } from './mockEventTarget'
 
 export function mockXhr() {
   const originalXhr = XMLHttpRequest
 
   window.XMLHttpRequest = MockXhr as any
 
-  return {
-    reset() {
-      window.XMLHttpRequest = originalXhr
-    },
-  }
+  registerCleanupTask(() => {
+    window.XMLHttpRequest = originalXhr
+  })
 }
 
 export function withXhr({
@@ -33,34 +31,7 @@ export function withXhr({
   setup(xhr as unknown as MockXhr)
 }
 
-class MockEventEmitter {
-  public listeners: { [k: string]: Array<(event: Event) => void> } = {}
-
-  addEventListener(name: string, callback: () => void) {
-    if (!this.listeners[name]) {
-      this.listeners[name] = []
-    }
-
-    this.listeners[name].push(callback)
-  }
-
-  removeEventListener(name: string, callback: () => void) {
-    if (!this.listeners[name]) {
-      throw new Error(`Can't remove a listener. Event "${name}" doesn't exits.`)
-    }
-
-    this.listeners[name] = this.listeners[name].filter((listener) => listener !== callback)
-  }
-
-  protected dispatchEvent(name: string) {
-    if (!this.listeners[name]) {
-      return
-    }
-    this.listeners[name].forEach((listener) => listener.apply(this, [createNewEvent(name)]))
-  }
-}
-
-export class MockXhr extends MockEventEmitter {
+export class MockXhr extends MockEventTarget {
   public static onSend: (xhr: MockXhr) => void | undefined
   public response: string | undefined = undefined
   public responseText: string | undefined = undefined
@@ -88,8 +59,8 @@ export class MockXhr extends MockEventEmitter {
     this.hasEnded = true
     this.readyState = XMLHttpRequest.DONE
     this.onreadystatechange()
-    this.dispatchEvent('abort')
-    this.dispatchEvent('loadend')
+    this.dispatchEvent(createNewEvent('abort'))
+    this.dispatchEvent(createNewEvent('loadend'))
   }
 
   complete(status: number, response?: string) {
@@ -105,11 +76,11 @@ export class MockXhr extends MockEventEmitter {
     this.onreadystatechange()
 
     if (status >= 200 && status < 500) {
-      this.dispatchEvent('load')
+      this.dispatchEvent(createNewEvent('load'))
     }
     if (isServerError(status)) {
-      this.dispatchEvent('error')
+      this.dispatchEvent(createNewEvent('error'))
     }
-    this.dispatchEvent('loadend')
+    this.dispatchEvent(createNewEvent('loadend'))
   }
 }

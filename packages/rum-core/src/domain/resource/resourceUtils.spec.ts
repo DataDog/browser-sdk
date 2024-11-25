@@ -1,7 +1,5 @@
 import { type Duration, type RelativeTime, type ServerDuration } from '@datadog/browser-core'
 import { RumPerformanceEntryType, type RumPerformanceResourceTiming } from '../../browser/performanceObservable'
-import type { RumConfiguration } from '../configuration'
-import { mockRumConfiguration } from '../../../test'
 import {
   MAX_ATTRIBUTE_VALUE_CHAR_LENGTH,
   computeResourceEntryDetails,
@@ -13,7 +11,7 @@ import {
 } from './resourceUtils'
 
 function generateResourceWith(overrides: Partial<RumPerformanceResourceTiming>) {
-  const completeTiming: Partial<RumPerformanceResourceTiming> = {
+  const completeTiming: RumPerformanceResourceTiming = {
     connectEnd: 17 as RelativeTime,
     connectStart: 15 as RelativeTime,
     domainLookupEnd: 14 as RelativeTime,
@@ -29,9 +27,17 @@ function generateResourceWith(overrides: Partial<RumPerformanceResourceTiming>) 
     responseStart: 50 as RelativeTime,
     secureConnectionStart: 16 as RelativeTime,
     startTime: 10 as RelativeTime,
+    workerStart: 0 as RelativeTime,
+
+    initiatorType: 'script',
+    decodedBodySize: 0,
+    encodedBodySize: 0,
+    transferSize: 0,
+    toJSON: () => ({ ...completeTiming, toJSON: undefined }),
+
     ...overrides,
   }
-  return completeTiming as RumPerformanceResourceTiming
+  return completeTiming
 }
 
 describe('computeResourceEntryType', () => {
@@ -105,6 +111,15 @@ describe('computeResourceEntryDetails', () => {
       redirect: { start: 0 as ServerDuration, duration: 1e6 as ServerDuration },
       ssl: { start: 6e6 as ServerDuration, duration: 1e6 as ServerDuration },
     })
+  })
+
+  it('should compute worker timing when workerStart < fetchStart', () => {
+    const resourceTiming = generateResourceWith({
+      workerStart: 11 as RelativeTime,
+      fetchStart: 12 as RelativeTime,
+    })
+    const details = computeResourceEntryDetails(resourceTiming)
+    expect(details!.worker).toEqual({ start: 1e6 as ServerDuration, duration: 1e6 as ServerDuration })
   })
 
   it('should not compute redirect timing when no redirect', () => {
@@ -274,22 +289,17 @@ describe('computeResourceEntryDuration', () => {
 })
 
 describe('shouldTrackResource', () => {
-  let configuration: RumConfiguration
-
-  beforeEach(() => {
-    configuration = mockRumConfiguration()
-  })
-
+  const intakeParameters = 'ddsource=browser&ddtags=sdk_version'
   it('should exclude requests on intakes endpoints', () => {
-    expect(isAllowedRequestUrl(configuration, 'https://rum-intake.com/v1/input/abcde?foo=bar')).toBe(false)
+    expect(isAllowedRequestUrl(`https://rum-intake.com/v1/input/abcde?${intakeParameters}`)).toBe(false)
   })
 
   it('should exclude requests on intakes endpoints with different client parameters', () => {
-    expect(isAllowedRequestUrl(configuration, 'https://rum-intake.com/v1/input/wxyz?foo=qux')).toBe(false)
+    expect(isAllowedRequestUrl(`https://rum-intake.com/v1/input/wxyz?${intakeParameters}`)).toBe(false)
   })
 
   it('should allow requests on non intake domains', () => {
-    expect(isAllowedRequestUrl(configuration, 'https://my-domain.com/hello?a=b')).toBe(true)
+    expect(isAllowedRequestUrl('https://my-domain.com/hello?a=b')).toBe(true)
   })
 })
 

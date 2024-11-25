@@ -6,14 +6,15 @@ import {
   isValidUrl,
   ResourceType,
   toServerDuration,
+  isIntakeUrl,
 } from '@datadog/browser-core'
 
 import type { RumPerformanceResourceTiming } from '../../browser/performanceObservable'
 
 import type { ResourceEntryDetailsElement } from '../../rawRumEvent.types'
-import type { RumConfiguration } from '../configuration'
 
 export interface ResourceEntryDetails {
+  worker?: ResourceEntryDetailsElement
   redirect?: ResourceEntryDetailsElement
   dns?: ResourceEntryDetailsElement
   connect?: ResourceEntryDetailsElement
@@ -90,6 +91,7 @@ export function computeResourceEntryDetails(entry: RumPerformanceResourceTiming)
   const {
     startTime,
     fetchStart,
+    workerStart,
     redirectStart,
     redirectEnd,
     domainLookupStart,
@@ -105,6 +107,11 @@ export function computeResourceEntryDetails(entry: RumPerformanceResourceTiming)
   const details: ResourceEntryDetails = {
     download: formatTiming(startTime, responseStart, responseEnd),
     first_byte: formatTiming(startTime, requestStart, responseStart),
+  }
+
+  // Make sure a worker processing time is recorded
+  if (0 < workerStart && workerStart < fetchStart) {
+    details.worker = formatTiming(startTime, workerStart, fetchStart)
   }
 
   // Make sure a connection occurred
@@ -176,6 +183,15 @@ function formatTiming(origin: RelativeTime, start: RelativeTime, end: RelativeTi
   }
 }
 
+/**
+ * The 'nextHopProtocol' is an empty string for cross-origin resources without CORS headers,
+ * meaning the protocol is unknown, and we shouldn't report it.
+ * https://developer.mozilla.org/en-US/docs/Web/API/PerformanceResourceTiming/nextHopProtocol#cross-origin_resources
+ */
+export function computeResourceEntryProtocol(entry: RumPerformanceResourceTiming) {
+  return entry.nextHopProtocol === '' ? undefined : entry.nextHopProtocol
+}
+
 export function computeResourceEntrySize(entry: RumPerformanceResourceTiming) {
   // Make sure a request actually occurred
   if (entry.startTime < entry.responseStart) {
@@ -195,8 +211,8 @@ export function computeResourceEntrySize(entry: RumPerformanceResourceTiming) {
   }
 }
 
-export function isAllowedRequestUrl(configuration: RumConfiguration, url: string) {
-  return url && !configuration.isIntakeUrl(url)
+export function isAllowedRequestUrl(url: string) {
+  return url && !isIntakeUrl(url)
 }
 
 const DATA_URL_REGEX = /data:(.+)?(;base64)?,/g

@@ -21,6 +21,7 @@ describe('getNavigationEntry', () => {
       duration: jasmine.any(Number),
 
       fetchStart: jasmine.any(Number),
+      workerStart: jasmine.any(Number),
       domainLookupStart: jasmine.any(Number),
       domainLookupEnd: jasmine.any(Number),
       connectStart: jasmine.any(Number),
