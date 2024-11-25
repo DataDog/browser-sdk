@@ -37,7 +37,7 @@ describe('session in local storage strategy', () => {
   it('should set `isExpired=1` to the local storage item holding the session', () => {
     const localStorageStrategy = initLocalStorageStrategy()
     localStorageStrategy.persistSession(sessionState)
-    localStorageStrategy.expireSession()
+    localStorageStrategy.expireSession(sessionState)
     const session = localStorageStrategy?.retrieveSession()
     expect(session).toEqual({ isExpired: '1', anonymousId: '2gosa7pa2gw' })
     expect(window.localStorage.getItem(SESSION_STORE_KEY)).toBe('isExpired=1&aid=2gosa7pa2gw')
@@ -48,14 +48,7 @@ describe('session in local storage strategy', () => {
     const localStorageStrategy = initLocalStorageStrategy()
     localStorageStrategy.persistSession(sessionState)
     localStorageStrategy.retrieveSession()
-    localStorageStrategy.expireSession()
+    localStorageStrategy.expireSession(sessionState)
     expect(window.localStorage.getItem('test')).toEqual('hello')
-  })
-
-  it('should return a anonymous id even if session string is invalid', () => {
-    const localStorageStrategy = initLocalStorageStrategy()
-    localStorage.setItem(SESSION_STORE_KEY, '{test:42}')
-    const session = localStorageStrategy?.retrieveSession()
-    expect(session).toEqual({ anonymousId: '2gosa7pa2gw' })
   })
 })

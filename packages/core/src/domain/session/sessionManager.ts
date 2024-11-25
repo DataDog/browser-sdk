@@ -27,6 +27,7 @@ export interface SessionContext<TrackingType extends string> extends Context {
   id: string
   trackingType: TrackingType
   isReplayForced: boolean
+  anonymousId?: string
 }
 
 export const VISIBILITY_CHECK_DELAY = ONE_MINUTE

@@ -2,7 +2,7 @@ import { ExperimentalFeature, isExperimentalFeatureEnabled } from '../../tools/e
 import { isEmptyObject } from '../../tools/utils/objectUtils'
 import { objectEntries } from '../../tools/utils/polyfills'
 import { dateNow } from '../../tools/utils/timeUtils'
-import { getAnonymousIdFromStorage } from '../user'
+import { generateAnonymousId } from '../user'
 import { SESSION_EXPIRATION_DELAY, SESSION_TIME_OUT_DELAY } from './sessionConstants'
 import { isValidSessionString, SESSION_ENTRY_REGEXP, SESSION_ENTRY_SEPARATOR } from './sessionStateValidation'
 export const EXPIRED = '1'
@@ -16,13 +16,16 @@ export interface SessionState {
   [key: string]: string | undefined
 }
 
-export function getExpiredSessionState(): SessionState {
+export function getExpiredSessionState(previousSessionState: SessionState | undefined): SessionState {
   const expiredSessionState: SessionState = {
     isExpired: EXPIRED,
   }
   if (isExperimentalFeatureEnabled(ExperimentalFeature.ANONYMOUS_USER_TRACKING)) {
-    // persist the anonymous id in the expired session state
-    expiredSessionState.anonymousId = getAnonymousIdFromStorage()
+    if (previousSessionState?.anonymousId) {
+      expiredSessionState.anonymousId = previousSessionState?.anonymousId
+    } else {
+      expiredSessionState.anonymousId = generateAnonymousId()
+    }
   }
   return expiredSessionState
 }
