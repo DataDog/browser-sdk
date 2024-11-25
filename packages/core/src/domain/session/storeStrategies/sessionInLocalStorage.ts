@@ -14,7 +14,7 @@ export function selectLocalStorageStrategy(): SessionStoreStrategyType | undefin
     const retrievedId = localStorage.getItem(testKey)
     localStorage.removeItem(testKey)
     return id === retrievedId ? { type: 'LocalStorage' } : undefined
-  } catch (e) {
+  } catch {
     return undefined
   }
 }
