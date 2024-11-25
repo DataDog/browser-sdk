@@ -10,6 +10,7 @@ prod,@tabler/icons-react,MIT,Copyright (c) 2020-2023 Paweł Kuna
 prod,clsx,MIT,Copyright (c) Luke Edwards <luke.edwards05@gmail.com> (lukeed.com)
 prod,react,MIT,Copyright (c) Facebook, Inc. and its affiliates.
 prod,react-dom,MIT,Copyright (c) Facebook, Inc. and its affiliates.
+dev,@eslint/js,MIT,Copyright OpenJS Foundation and other contributors, <www.openjsf.org>
 dev,@jsdevtools/coverage-istanbul-loader,MIT,Copyright (c) 2015 James Messinger
 dev,@types/chrome,MIT,Copyright Microsoft Corporation
 dev,@types/connect-busboy,MIT,Copyright Microsoft Corporation
@@ -21,8 +22,6 @@ dev,@types/node-forge,MIT,Copyright Microsoft Corporation
 dev,@types/pako,MIT,Copyright Microsoft Corporation
 dev,@types/react,MIT,Copyright Microsoft Corporation
 dev,@types/react-dom,MIT,Copyright Microsoft Corporation
-dev,@typescript-eslint/eslint-plugin,MIT,Copyright JS Foundation and other contributors
-dev,@typescript-eslint/parser,MIT,Copyright JS Foundation and other contributors
 dev,@wdio/browserstack-service,MIT,Copyright JS Foundation and other contributors
 dev,@wdio/cli,MIT,Copyright JS Foundation and other contributors
 dev,@wdio/jasmine-framework,MIT,Copyright JS Foundation and other contributors
@@ -75,6 +74,7 @@ dev,ts-loader,MIT,Copyright 2015 TypeStrong
 dev,ts-node,MIT,Copyright 2014 Blake Embrey
 dev,tsconfig-paths-webpack-plugin,MIT,Copyright 2016 Jonas Kello
 dev,typescript,Apache-2.0,Copyright Microsoft Corporation
+dev,typescript-eslint,MIT,Copyright (c) 2019 typescript-eslint and other contributors
 dev,webdriverio,MIT,Copyright JS Foundation and other contributors
 dev,webpack,MIT,Copyright JS Foundation and other contributors
 dev,webpack-cli,MIT,Copyright JS Foundation and other contributors
