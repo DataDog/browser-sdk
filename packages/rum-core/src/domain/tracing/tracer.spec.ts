@@ -115,6 +115,7 @@ describe('tracer', () => {
         jasmine.objectContaining({
           b3: jasmine.stringMatching(/^[0-9a-f]{16}-[0-9a-f]{16}-0$/),
           traceparent: jasmine.stringMatching(/^[0-9a-f]{2}-[0-9a-f]{32}-[0-9a-f]{16}-00$/),
+          tracestate: 'dd=s:0;o:rum',
           'X-B3-Sampled': '0',
         })
       )
@@ -187,6 +188,7 @@ describe('tracer', () => {
         jasmine.objectContaining({
           b3: jasmine.stringMatching(/^[0-9a-f]{16}-[0-9a-f]{16}-1$/),
           traceparent: jasmine.stringMatching(/^[0-9a-f]{2}-[0-9a-f]{32}-[0-9a-f]{16}-01$/),
+          tracestate: 'dd=s:1;o:rum',
         })
       )
     })
@@ -203,6 +205,7 @@ describe('tracer', () => {
 
       expect(xhr.headers['b3']).toBeUndefined()
       expect(xhr.headers['traceparent']).toBeUndefined()
+      expect(xhr.headers['tracestate']).toBeUndefined()
       expect(xhr.headers['x-datadog-trace-id']).toBeUndefined()
       expect(xhr.headers['X-B3-TraceId']).toBeUndefined()
     })
@@ -264,6 +267,7 @@ describe('tracer', () => {
 
       expect(xhr.headers['b3']).toBeUndefined()
       expect(xhr.headers['traceparent']).toBeUndefined()
+      expect(xhr.headers['tracestate']).toBeUndefined()
       expect(xhr.headers['x-datadog-trace-id']).toBeUndefined()
       expect(xhr.headers['X-B3-TraceId']).toBeUndefined()
     })
@@ -542,6 +546,7 @@ describe('tracer', () => {
         jasmine.arrayContaining([
           ['b3', jasmine.stringMatching(/^[0-9a-f]{16}-[0-9a-f]{16}-1$/)],
           ['traceparent', jasmine.stringMatching(/^[0-9a-f]{2}-[0-9a-f]{32}-[0-9a-f]{16}-01$/)],
+          ['tracestate', 'dd=s:1;o:rum'],
         ])
       )
     })
@@ -558,6 +563,7 @@ describe('tracer', () => {
 
       expect(context.init!.headers).not.toContain(jasmine.arrayContaining(['b3']))
       expect(context.init!.headers).not.toContain(jasmine.arrayContaining(['traceparent']))
+      expect(context.init!.headers).not.toContain(jasmine.arrayContaining(['tracestate']))
       expect(context.init!.headers).not.toContain(jasmine.arrayContaining(['x-datadog-trace-id']))
       expect(context.init!.headers).not.toContain(jasmine.arrayContaining(['X-B3-TraceId']))
     })

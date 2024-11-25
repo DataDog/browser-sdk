@@ -165,6 +165,7 @@ function makeTracingHeaders(
           traceparent: `00-0000000000000000${traceId.toPaddedHexadecimalString()}-${spanId.toPaddedHexadecimalString()}-0${
             traceSampled ? '1' : '0'
           }`,
+          tracestate: `dd=s:${traceSampled ? '1' : '0'};o:rum`,
         })
         break
       }
