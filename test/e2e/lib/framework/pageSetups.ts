@@ -21,10 +21,10 @@ export interface SetupOptions {
 
 export type SetupFactory = (options: SetupOptions, servers: Servers) => string
 
-const isBrowserStack =
-  'services' in browser.options &&
-  browser.options.services &&
-  browser.options.services.some((service) => (Array.isArray(service) ? service[0] : service) === 'browserstack')
+const isBrowserStack = false
+// 'services' in browser.options &&
+// browser.options.services &&
+// browser.options.services.some((service) => (Array.isArray(service) ? service[0] : service) === 'browserstack')
 
 const isContinuousIntegration = Boolean(process.env.CI_JOB_ID)
 
