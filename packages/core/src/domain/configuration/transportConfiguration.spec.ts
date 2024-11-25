@@ -6,7 +6,6 @@ const DEFAULT_PAYLOAD = {} as Payload
 
 describe('transportConfiguration', () => {
   const clientToken = 'some_client_token'
-  const internalAnalyticsSubdomain = 'ia-rum-intake'
   const intakeParameters = 'ddsource=browser&ddtags=sdk_version'
 
   describe('site', () => {
@@ -26,25 +25,6 @@ describe('transportConfiguration', () => {
       const configuration = computeTransportConfiguration({ clientToken, site: 'foo.com' })
       expect(configuration.rumEndpointBuilder.build('xhr', DEFAULT_PAYLOAD)).toContain('foo.com')
       expect(configuration.site).toBe('foo.com')
-    })
-  })
-
-  describe('internalAnalyticsSubdomain', () => {
-    it('should use internal analytics subdomain value when set for datadoghq.com site', () => {
-      const configuration = computeTransportConfiguration({
-        clientToken,
-        internalAnalyticsSubdomain,
-      })
-      expect(configuration.rumEndpointBuilder.build('xhr', DEFAULT_PAYLOAD)).toContain(internalAnalyticsSubdomain)
-    })
-
-    it('should not use internal analytics subdomain value when set for other sites', () => {
-      const configuration = computeTransportConfiguration({
-        clientToken,
-        site: 'foo.bar',
-        internalAnalyticsSubdomain,
-      })
-      expect(configuration.rumEndpointBuilder.build('xhr', DEFAULT_PAYLOAD)).not.toContain(internalAnalyticsSubdomain)
     })
   })
 
@@ -119,9 +99,7 @@ describe('transportConfiguration', () => {
     })
 
     it('should detect internal analytics intake request for datadoghq.com site', () => {
-      expect(isIntakeUrl(`https://${internalAnalyticsSubdomain}.datadoghq.com/api/v2/rum?${intakeParameters}`)).toBe(
-        true
-      )
+      expect(isIntakeUrl(`https://app.datadoghq.com/api/v2/rum?${intakeParameters}`)).toBe(true)
     })
 
     it('should not detect non intake request', () => {
@@ -151,15 +129,9 @@ describe('transportConfiguration', () => {
       { site: 'ap1.datadoghq.com' },
     ].forEach(({ site }) => {
       it(`should detect replica intake request for site ${site}`, () => {
-        expect(isIntakeUrl(`https://${internalAnalyticsSubdomain}.datadoghq.com/api/v2/rum?${intakeParameters}`)).toBe(
-          true
-        )
-        expect(isIntakeUrl(`https://${internalAnalyticsSubdomain}.datadoghq.com/api/v2/logs?${intakeParameters}`)).toBe(
-          true
-        )
-        expect(
-          isIntakeUrl(`https://${internalAnalyticsSubdomain}.datadoghq.com/api/v2/replay?${intakeParameters}`)
-        ).toBe(true)
+        expect(isIntakeUrl(`https://app.datadoghq.com/api/v2/rum?${intakeParameters}`)).toBe(true)
+        expect(isIntakeUrl(`https://app.datadoghq.com/api/v2/logs?${intakeParameters}`)).toBe(true)
+        expect(isIntakeUrl(`https://app.datadoghq.com/api/v2/replay?${intakeParameters}`)).toBe(true)
       })
     })
   })

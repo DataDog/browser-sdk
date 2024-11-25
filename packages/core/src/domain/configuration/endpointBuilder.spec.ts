@@ -41,15 +41,6 @@ describe('endpointBuilder', () => {
         createEndpointBuilder(initConfiguration, 'rum', []).build('xhr', { ...DEFAULT_PAYLOAD, encoding: 'deflate' })
       ).toContain('&dd-evp-encoding=deflate')
     })
-
-    it('should not start with ddsource for internal analytics mode', () => {
-      const url = createEndpointBuilder({ ...initConfiguration, internalAnalyticsSubdomain: 'foo' }, 'rum', []).build(
-        'xhr',
-        DEFAULT_PAYLOAD
-      )
-      expect(url).not.toContain('/rum?ddsource')
-      expect(url).toContain('ddsource=browser')
-    })
   })
 
   describe('proxy configuration', () => {

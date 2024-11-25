@@ -59,14 +59,10 @@ function createEndpointUrlWithParametersBuilder(
 }
 
 function buildEndpointHost(trackType: TrackType, initConfiguration: InitConfiguration & { usePciIntake?: boolean }) {
-  const { site = INTAKE_SITE_US1, internalAnalyticsSubdomain } = initConfiguration
+  const { site = INTAKE_SITE_US1 } = initConfiguration
 
   if (trackType === 'logs' && initConfiguration.usePciIntake && site === INTAKE_SITE_US1) {
     return PCI_INTAKE_HOST_US1
-  }
-
-  if (internalAnalyticsSubdomain && site === INTAKE_SITE_US1) {
-    return `${internalAnalyticsSubdomain}.${INTAKE_SITE_US1}`
   }
 
   if (site === INTAKE_SITE_FED_STAGING) {
@@ -83,7 +79,7 @@ function buildEndpointHost(trackType: TrackType, initConfiguration: InitConfigur
  * request, as they change randomly.
  */
 function buildEndpointParameters(
-  { clientToken, internalAnalyticsSubdomain }: InitConfiguration,
+  { clientToken }: InitConfiguration,
   trackType: TrackType,
   configurationTags: string[],
   api: ApiType,
@@ -109,10 +105,6 @@ function buildEndpointParameters(
 
   if (trackType === 'rum') {
     parameters.push(`batch_time=${timeStampNow()}`)
-  }
-
-  if (internalAnalyticsSubdomain) {
-    parameters.reverse()
   }
 
   return parameters.join('&')
