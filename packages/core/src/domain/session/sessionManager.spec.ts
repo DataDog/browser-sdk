@@ -158,6 +158,11 @@ describe('startSessionManager', () => {
       expectSessionIdToNotBeDefined(sessionManager)
       expectTrackingTypeToBe(sessionManager, FIRST_PRODUCT_KEY, FakeTrackingType.NOT_TRACKED)
     })
+
+    it('should always return an anonymous id', () => {
+      const sessionManager = startSessionManagerWithDefaults({ computeSessionState: () => NOT_TRACKED_SESSION_STATE })
+      expect(sessionManager.getAnonymousId()).toBeDefined()
+    })
   })
 
   describe('computeSessionState', () => {

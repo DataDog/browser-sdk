@@ -81,7 +81,7 @@ export function startRumSessionManager(
             : session.isReplayForced
               ? SessionReplayState.FORCED
               : SessionReplayState.OFF,
-        anonymousId: session.anonymousId!,
+        anonymousId: sessionManager.getAnonymousId(),
       }
     },
     expire: sessionManager.expire,

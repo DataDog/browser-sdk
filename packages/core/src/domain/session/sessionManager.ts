@@ -7,6 +7,7 @@ import { DOM_EVENT, addEventListener, addEventListeners } from '../../browser/ad
 import { clearInterval, setInterval } from '../../tools/timer'
 import type { Configuration } from '../configuration'
 import type { TrackingConsentState } from '../trackingConsent'
+import { generateAnonymousId } from '../user'
 import { SESSION_TIME_OUT_DELAY } from './sessionConstants'
 import { startSessionStore } from './sessionStore'
 import type { SessionState } from './sessionState'
@@ -21,13 +22,13 @@ export interface SessionManager<TrackingType extends string> {
   sessionStateUpdateObservable: Observable<{ previousState: SessionState; newState: SessionState }>
   expire: () => void
   updateSessionState: (state: Partial<SessionState>) => void
+  getAnonymousId: () => string | undefined
 }
 
 export interface SessionContext<TrackingType extends string> extends Context {
   id: string
   trackingType: TrackingType
   isReplayForced: boolean
-  anonymousId?: string
 }
 
 export const VISIBILITY_CHECK_DELAY = ONE_MINUTE
@@ -97,6 +98,10 @@ export function startSessionManager<TrackingType extends string>(
     sessionStateUpdateObservable: sessionStore.sessionStateUpdateObservable,
     expire: sessionStore.expire,
     updateSessionState: sessionStore.updateSessionState,
+    getAnonymousId: () => {
+      sessionStore.getSession().anonymousId ?? sessionStore.updateSessionState({ anonymousId: generateAnonymousId() })
+      return sessionStore.getSession().anonymousId
+    },
   }
 }
 

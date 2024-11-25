@@ -3,7 +3,6 @@ import { SessionReplayState, type RumSessionManager } from '../src/domain/rumSes
 
 export interface RumSessionManagerMock extends RumSessionManager {
   setId(id: string): RumSessionManagerMock
-  setAnonymousId(id: string): RumSessionManagerMock
   setNotTracked(): RumSessionManagerMock
   setTrackedWithoutSessionReplay(): RumSessionManagerMock
   setTrackedWithSessionReplay(): RumSessionManagerMock
@@ -22,7 +21,6 @@ export function createRumSessionManagerMock(): RumSessionManagerMock {
   let id = DEFAULT_ID
   let sessionStatus: SessionStatus = SessionStatus.TRACKED_WITH_SESSION_REPLAY
   let forcedReplay: boolean = false
-  let anonymousId = 'device_123'
   return {
     findTrackedSession() {
       if (
@@ -39,7 +37,7 @@ export function createRumSessionManagerMock(): RumSessionManagerMock {
             : forcedReplay
               ? SessionReplayState.FORCED
               : SessionReplayState.OFF,
-        anonymousId,
+        anonymousId: 'device-123',
       }
     },
     expire() {
@@ -49,10 +47,6 @@ export function createRumSessionManagerMock(): RumSessionManagerMock {
     expireObservable: new Observable(),
     setId(newId) {
       id = newId
-      return this
-    },
-    setAnonymousId(newId) {
-      anonymousId = newId
       return this
     },
     setNotTracked() {
