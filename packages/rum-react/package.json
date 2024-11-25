@@ -1,6 +1,5 @@
 {
   "name": "@datadog/browser-rum-react",
-  "private": true,
   "version": "5.31.1",
   "license": "Apache-2.0",
   "main": "cjs/entries/main.js",
