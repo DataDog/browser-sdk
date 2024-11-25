@@ -12,7 +12,7 @@ npm install @datadog/browser-rum @datadog/browser-rum-react
 
 ### Initialization
 
-To enable the React integration, pass the `reactPlugin` to the `betaPlugins` option of the `datadogRum.init` method:
+To enable the React integration, pass the `reactPlugin` to the `plugins` option of the `datadogRum.init` method:
 
 ```javascript
 import { datadogRum } from '@datadog/browser-rum'
@@ -22,7 +22,7 @@ datadogRum.init({
   applicationId: ...,
   clientToken: ...,
   ...
-  betaPlugins: [reactPlugin()],
+  plugins: [reactPlugin()],
 })
 ```
 
@@ -91,7 +91,7 @@ import { createBrowserRouter } from '@datadog/browser-rum-react/react-router-v6'
 
 datadogRum.init({
   ...
-  betaPlugins: [reactPlugin({ router: true })],
+  plugins: [reactPlugin({ router: true })],
 })
 
 const router = createBrowserRouter([

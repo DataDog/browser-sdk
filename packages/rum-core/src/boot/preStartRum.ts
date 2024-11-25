@@ -156,7 +156,7 @@ export function createPreStartStrategy(
         return
       }
 
-      callPluginsMethod(initConfiguration.betaPlugins, 'onInit', { initConfiguration, publicApi })
+      callPluginsMethod(initConfiguration.plugins, 'onInit', { initConfiguration, publicApi })
 
       if (
         initConfiguration.remoteConfigurationId &&
