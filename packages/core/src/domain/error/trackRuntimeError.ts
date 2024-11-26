@@ -3,7 +3,7 @@ import type { Observable } from '../../tools/observable'
 import { clocksNow } from '../../tools/utils/timeUtils'
 import type { StackTrace } from '../../tools/stackTrace/computeStackTrace'
 import { computeStackTrace, computeStackTraceFromOnErrorMessage } from '../../tools/stackTrace/computeStackTrace'
-import { computeRawError } from './error'
+import { computeRawError, isError } from './error'
 import type { RawError } from './error.types'
 import { ErrorHandling, ErrorSource, NonErrorPrefix } from './error.types'
 
@@ -35,7 +35,7 @@ export function trackRuntimeError(errorObservable: Observable<RawError>) {
 export function instrumentOnError(callback: UnhandledErrorCallback) {
   return instrumentMethod(window, 'onerror', ({ parameters: [messageObj, url, line, column, errorObj] }) => {
     let stackTrace
-    if (errorObj instanceof Error) {
+    if (isError(errorObj)) {
       stackTrace = computeStackTrace(errorObj)
     } else {
       stackTrace = computeStackTraceFromOnErrorMessage(messageObj, url, line, column)

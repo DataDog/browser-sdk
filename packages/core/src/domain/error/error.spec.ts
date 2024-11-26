@@ -1,6 +1,7 @@
 import { clocksNow } from '../../tools/utils/timeUtils'
 import type { StackTrace } from '../../tools/stackTrace/computeStackTrace'
-import { computeRawError, getFileFromStackTraceString, flattenErrorCauses } from './error'
+import { registerCleanupTask } from '../../../test'
+import { computeRawError, getFileFromStackTraceString, flattenErrorCauses, isError } from './error'
 import type { RawErrorCause, ErrorWithCause } from './error.types'
 import { ErrorHandling, ErrorSource, NonErrorPrefix } from './error.types'
 
@@ -298,5 +299,17 @@ describe('flattenErrorCauses', () => {
     error.cause = error
     const errorCauses = flattenErrorCauses(error, ErrorSource.LOGGER)
     expect(errorCauses?.length).toEqual(10)
+  })
+})
+
+describe('isError', () => {
+  it('should correctly identify an error object from a different window context', () => {
+    const iframe = document.createElement('iframe')
+    document.body.appendChild(iframe)
+    registerCleanupTask(() => document.body.removeChild(iframe))
+
+    const iframeWindow = iframe.contentWindow as Window & { Error: ErrorConstructor }
+
+    expect(isError(new iframeWindow.Error())).toBe(true)
   })
 })
