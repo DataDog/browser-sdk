@@ -18,6 +18,14 @@
 
 ---
 
+## v5.31.2
+
+**Public Changes:**
+
+- ✨ [RUM-7371] move React integration out of beta ([#3160](https://github.com/DataDog/browser-sdk/pull/3160)) [RUM] [RUM-REACT] [RUM-SLIM]
+- ✨ [RUM-6956] Add action name source ([#3115](https://github.com/DataDog/browser-sdk/pull/3115)) [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+- 🐛 [RUM-6411] RUM should not crash with puppeteer injection ([#3153](https://github.com/DataDog/browser-sdk/pull/3153)) [RUM] [RUM-REACT] [RUM-SLIM]
+
 ## v5.31.1
 
 **Public Changes:**
