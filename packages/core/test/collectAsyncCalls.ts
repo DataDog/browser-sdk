@@ -2,7 +2,7 @@ import { getCurrentJasmineSpec } from './getCurrentJasmineSpec'
 
 export function collectAsyncCalls<F extends jasmine.Func>(
   spy: jasmine.Spy<F>,
-  expectedCallsCount: number
+  expectedCallsCount = 1
 ): Promise<jasmine.Calls<F>> {
   return new Promise((resolve, reject) => {
     const currentSpec = getCurrentJasmineSpec()
@@ -27,7 +27,9 @@ export function collectAsyncCalls<F extends jasmine.Func>(
     }) as F)
 
     function extraCallDetected() {
-      reject(new Error(`Unexpected extra call for spec '${currentSpec!.fullName}'`))
+      const message = `Unexpected extra call for spec '${currentSpec!.fullName}'`
+      fail(message)
+      reject(new Error(message))
     }
   })
 }

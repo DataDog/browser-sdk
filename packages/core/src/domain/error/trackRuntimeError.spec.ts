@@ -36,7 +36,7 @@ describe('trackRuntimeError', () => {
       throw new Error(ERROR_MESSAGE)
     })
 
-    await collectAsyncCalls(onErrorSpy, 1)
+    await collectAsyncCalls(onErrorSpy)
     expect(notifyError).toHaveBeenCalledOnceWith(jasmine.objectContaining({ message: ERROR_MESSAGE }))
   })
 
@@ -51,7 +51,7 @@ describe('trackRuntimeError', () => {
       void Promise.reject(new Error(ERROR_MESSAGE))
     })
 
-    await collectAsyncCalls(onUnhandledrejectionSpy, 1)
+    await collectAsyncCalls(onUnhandledrejectionSpy)
     expect(notifyError).toHaveBeenCalledOnceWith(jasmine.objectContaining({ message: ERROR_MESSAGE }))
   })
 })
@@ -84,7 +84,7 @@ describe('instrumentOnError', () => {
       throw new Error(ERROR_MESSAGE)
     })
 
-    await collectAsyncCalls(onErrorSpy, 1)
+    await collectAsyncCalls(onErrorSpy)
     expect(onErrorSpy).toHaveBeenCalled()
   })
 
@@ -94,7 +94,7 @@ describe('instrumentOnError', () => {
       throw error
     })
 
-    await collectAsyncCalls(onErrorSpy, 1)
+    await collectAsyncCalls(onErrorSpy)
     expect(onErrorSpy).toHaveBeenCalled()
     const [stack, originalError] = callbackSpy.calls.mostRecent().args
     expect(originalError).toBe(error)
@@ -107,7 +107,7 @@ describe('instrumentOnError', () => {
       // eslint-disable-next-line no-throw-literal
       throw error
     })
-    await collectAsyncCalls(onErrorSpy, 1)
+    await collectAsyncCalls(onErrorSpy)
     const [stack, originalError] = callbackSpy.calls.mostRecent().args
     expect(originalError).toBe(error)
     expect(stack).toBeDefined()
@@ -119,7 +119,7 @@ describe('instrumentOnError', () => {
       // eslint-disable-next-line no-throw-literal
       throw error
     })
-    await collectAsyncCalls(onErrorSpy, 1)
+    await collectAsyncCalls(onErrorSpy)
     const [stack, originalError] = callbackSpy.calls.mostRecent().args
     expect(originalError).toBe(error)
     expect(stack).toBeDefined()
@@ -162,7 +162,7 @@ describe('instrumentOnError', () => {
         window.onerror!(error)
       })
 
-      await collectAsyncCalls(onErrorSpy, 1)
+      await collectAsyncCalls(onErrorSpy)
       const [stack, originalError] = callbackSpy.calls.mostRecent().args
       expect(originalError).toBe(error)
       expect(stack).toBeDefined()

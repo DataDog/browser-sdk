@@ -100,7 +100,7 @@ describe('trackMutation', () => {
 
       expect(mutationCallbackSpy).not.toHaveBeenCalled()
 
-      await collectAsyncCalls(mutationCallbackSpy, 1)
+      await collectAsyncCalls(mutationCallbackSpy)
     })
 
     it('does not emit a mutation when a node is appended to a unknown node', () => {
