@@ -70,7 +70,7 @@ describe('httpRequest', () => {
       })
     })
 
-    it('should use retry strategy', async () => {
+    it('should use retry strategy', (done) => {
       if (!interceptor.isFetchKeepAliveSupported()) {
         pending('no fetch keepalive support')
       }
@@ -90,7 +90,7 @@ describe('httpRequest', () => {
 
       request.send({ data: '{"foo":"bar1"}\n{"foo":"bar2"}', bytesCount: 10 })
 
-      await collectAsyncCalls(fetchSpy, 2)
+      collectAsyncCalls(fetchSpy, 2, () => done())
     })
   })
 

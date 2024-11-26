@@ -31,16 +31,17 @@ describe('trackRuntimeError', () => {
     window.onerror = originalOnErrorHandler
   })
 
-  it('should collect unhandled error', async () => {
+  it('should collect unhandled error', (done) => {
     setTimeout(() => {
       throw new Error(ERROR_MESSAGE)
     })
-
-    await collectAsyncCalls(onErrorSpy, 1)
-    expect(notifyError).toHaveBeenCalledOnceWith(jasmine.objectContaining({ message: ERROR_MESSAGE }))
+    collectAsyncCalls(onErrorSpy, 1, () => {
+      expect(notifyError).toHaveBeenCalledOnceWith(jasmine.objectContaining({ message: ERROR_MESSAGE }))
+      done()
+    })
   })
 
-  it('should collect unhandled rejection', async () => {
+  it('should collect unhandled rejection', (done) => {
     if (!('onunhandledrejection' in window)) {
       pending('onunhandledrejection not supported')
     }
@@ -51,8 +52,10 @@ describe('trackRuntimeError', () => {
       void Promise.reject(new Error(ERROR_MESSAGE))
     })
 
-    await collectAsyncCalls(onUnhandledrejectionSpy, 1)
-    expect(notifyError).toHaveBeenCalledOnceWith(jasmine.objectContaining({ message: ERROR_MESSAGE }))
+    collectAsyncCalls(onUnhandledrejectionSpy, 1, () => {
+      expect(notifyError).toHaveBeenCalledOnceWith(jasmine.objectContaining({ message: ERROR_MESSAGE }))
+      done()
+    })
   })
 })
 
@@ -79,50 +82,55 @@ describe('instrumentOnError', () => {
     stopCollectingUnhandledError()
   })
 
-  it('should call original error handler', async () => {
+  it('should call original error handler', (done) => {
     setTimeout(() => {
       throw new Error(ERROR_MESSAGE)
     })
-
-    await collectAsyncCalls(onErrorSpy, 1)
-    expect(onErrorSpy).toHaveBeenCalled()
+    collectAsyncCalls(onErrorSpy, 1, () => {
+      expect(onErrorSpy).toHaveBeenCalled()
+      done()
+    })
   })
 
-  it('should notify unhandled error instance', async () => {
+  it('should notify unhandled error instance', (done) => {
     const error = new Error(ERROR_MESSAGE)
     setTimeout(() => {
       throw error
     })
-
-    await collectAsyncCalls(onErrorSpy, 1)
-    expect(onErrorSpy).toHaveBeenCalled()
-    const [stack, originalError] = callbackSpy.calls.mostRecent().args
-    expect(originalError).toBe(error)
-    expect(stack).toBeDefined()
+    collectAsyncCalls(onErrorSpy, 1, () => {
+      const [stack, originalError] = callbackSpy.calls.mostRecent().args
+      expect(originalError).toBe(error)
+      expect(stack).toBeDefined()
+      done()
+    })
   })
 
-  it('should notify unhandled string', async () => {
+  it('should notify unhandled string', (done) => {
     const error = 'foo' as any
     setTimeout(() => {
       // eslint-disable-next-line no-throw-literal
       throw error
     })
-    await collectAsyncCalls(onErrorSpy, 1)
-    const [stack, originalError] = callbackSpy.calls.mostRecent().args
-    expect(originalError).toBe(error)
-    expect(stack).toBeDefined()
+    collectAsyncCalls(onErrorSpy, 1, () => {
+      const [stack, originalError] = callbackSpy.calls.mostRecent().args
+      expect(originalError).toBe(error)
+      expect(stack).toBeDefined()
+      done()
+    })
   })
 
-  it('should notify unhandled object', async () => {
+  it('should notify unhandled object', (done) => {
     const error = { a: 'foo' } as any
     setTimeout(() => {
       // eslint-disable-next-line no-throw-literal
       throw error
     })
-    await collectAsyncCalls(onErrorSpy, 1)
-    const [stack, originalError] = callbackSpy.calls.mostRecent().args
-    expect(originalError).toBe(error)
-    expect(stack).toBeDefined()
+    collectAsyncCalls(onErrorSpy, 1, () => {
+      const [stack, originalError] = callbackSpy.calls.mostRecent().args
+      expect(originalError).toBe(error)
+      expect(stack).toBeDefined()
+      done()
+    })
   })
 
   describe('uncaught exception handling', () => {
@@ -156,16 +164,18 @@ describe('instrumentOnError', () => {
   })
 
   describe('should handle direct onerror calls', () => {
-    it('with objects', async () => {
+    it('with objects', (done) => {
       const error = { foo: 'bar' } as any
       setTimeout(() => {
         window.onerror!(error)
       })
 
-      await collectAsyncCalls(onErrorSpy, 1)
-      const [stack, originalError] = callbackSpy.calls.mostRecent().args
-      expect(originalError).toBe(error)
-      expect(stack).toBeDefined()
+      collectAsyncCalls(onErrorSpy, 1, () => {
+        const [stack, originalError] = callbackSpy.calls.mostRecent().args
+        expect(originalError).toBe(error)
+        expect(stack).toBeDefined()
+        done()
+      })
     })
 
     describe('with undefined arguments', () => {

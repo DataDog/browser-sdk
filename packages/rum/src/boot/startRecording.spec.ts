@@ -252,7 +252,9 @@ describe('startRecording', () => {
   }
 
   async function readSentRequests(expectedSentRequestCount: number) {
-    const calls = await collectAsyncCalls(requestSendSpy, expectedSentRequestCount)
+    const calls = await new Promise<jasmine.Calls<HttpRequest['sendOnExit']>>((resolve) =>
+      collectAsyncCalls(requestSendSpy, expectedSentRequestCount, resolve)
+    )
     return Promise.all(calls.all().map((call) => readReplayPayload(call.args[0])))
   }
 })
