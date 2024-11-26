@@ -245,6 +245,7 @@ export function createPerformanceEntry<T extends RumPerformanceEntryType>(
           connectEnd: 200 as RelativeTime,
           connectStart: 200 as RelativeTime,
           renderBlockingStatus: 'non-blocking',
+          deliveryType: 'cache',
           domainLookupEnd: 200 as RelativeTime,
           domainLookupStart: 200 as RelativeTime,
           duration: 100 as Duration,
