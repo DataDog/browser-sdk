@@ -193,8 +193,23 @@ export function computeResourceEntryProtocol(entry: RumPerformanceResourceTiming
   return entry.nextHopProtocol === '' ? undefined : entry.nextHopProtocol
 }
 
+/**
+ * Handles the 'deliveryType' property to distinguish between supported values ('cache', 'navigational-prefetch'),
+ * undefined (unsupported in some browsers), and other cases ('-' for unknown or unrecognized values).
+ * https://developer.mozilla.org/en-US/docs/Web/API/PerformanceResourceTiming/deliveryType
+ */
 export function computeResourceEntryDeliveryType(entry: RumPerformanceResourceTiming): deliveryType | undefined {
-  return entry.deliveryType === '' ? undefined : entry.deliveryType
+  const deliveryType = entry.deliveryType
+
+  if (deliveryType === undefined) {
+    return undefined
+  }
+
+  if (deliveryType === 'cache' || deliveryType === 'navigational-prefetch') {
+    return deliveryType
+  }
+
+  return '-'
 }
 
 export function computeResourceEntrySize(entry: RumPerformanceResourceTiming) {

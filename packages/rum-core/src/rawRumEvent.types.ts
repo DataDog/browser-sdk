@@ -186,7 +186,7 @@ export interface RawRumLongTaskEvent {
   }
 }
 
-export type deliveryType = 'cache' | 'navigational-prefetch' | 'unknown' | ''
+export type deliveryType = 'cache' | 'navigational-prefetch' | '-' | undefined
 
 export type InvokerType =
   | 'user-callback'
