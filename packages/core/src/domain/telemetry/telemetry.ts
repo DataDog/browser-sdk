@@ -1,6 +1,6 @@
 import type { Context } from '../../tools/serialisation/context'
 import { ConsoleApiName } from '../../tools/display'
-import { NO_ERROR_STACK_PRESENT_MESSAGE } from '../error/error'
+import { NO_ERROR_STACK_PRESENT_MESSAGE, isError } from '../error/error'
 import { toStackTraceString } from '../../tools/stackTrace/handlingStack'
 import { getExperimentalFeatures } from '../../tools/experimentalFeatures'
 import type { Configuration } from '../configuration'
@@ -193,7 +193,7 @@ export function addTelemetryUsage(usage: RawTelemetryUsage) {
 }
 
 export function formatError(e: unknown) {
-  if (e instanceof Error) {
+  if (isError(e)) {
     const stackTrace = computeStackTrace(e)
     return {
       error: {

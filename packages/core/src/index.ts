@@ -85,7 +85,12 @@ export { sendToExtension } from './tools/sendToExtension'
 export { runOnReadyState } from './browser/runOnReadyState'
 export { getZoneJsOriginalValue } from './tools/getZoneJsOriginalValue'
 export { instrumentMethod, instrumentSetter, InstrumentedMethodCall } from './tools/instrumentMethod'
-export { computeRawError, getFileFromStackTraceString, NO_ERROR_STACK_PRESENT_MESSAGE } from './domain/error/error'
+export {
+  computeRawError,
+  getFileFromStackTraceString,
+  isError,
+  NO_ERROR_STACK_PRESENT_MESSAGE,
+} from './domain/error/error'
 export { NonErrorPrefix } from './domain/error/error.types'
 export { Context, ContextArray, ContextValue } from './tools/serialisation/context'
 export {

@@ -9,6 +9,7 @@ import {
   Observable,
   trackRuntimeError,
   NonErrorPrefix,
+  isError,
 } from '@datadog/browser-core'
 import type { RumConfiguration } from '../configuration'
 import type { RawRumErrorEvent } from '../../rawRumEvent.types'
@@ -65,7 +66,7 @@ export function doStartErrorCollection(
       { error, handlingStack, startClocks, context: customerContext }: ProvidedError,
       savedCommonContext?: CommonContext
     ) => {
-      const stackTrace = error instanceof Error ? computeStackTrace(error) : undefined
+      const stackTrace = isError(error) ? computeStackTrace(error) : undefined
       const rawError = computeRawError({
         stackTrace,
         originalError: error,

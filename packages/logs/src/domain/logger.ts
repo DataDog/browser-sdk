@@ -11,6 +11,7 @@ import {
   sanitize,
   NonErrorPrefix,
   createHandlingStack,
+  isError,
 } from '@datadog/browser-core'
 
 import { isAuthorized, StatusType } from './logger/isAuthorized'
@@ -64,7 +65,7 @@ export class Logger {
 
     if (error !== undefined && error !== null) {
       const rawError = computeRawError({
-        stackTrace: error instanceof Error ? computeStackTrace(error) : undefined,
+        stackTrace: isError(error) ? computeStackTrace(error) : undefined,
         originalError: error,
         nonErrorPrefix: NonErrorPrefix.PROVIDED,
         source: ErrorSource.LOGGER,
