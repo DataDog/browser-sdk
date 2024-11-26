@@ -516,7 +516,7 @@ describe('preStartRum', () => {
           createCustomVitalsState(),
           doStartRumSpy
         )
-        const initConfiguration: RumInitConfiguration = { ...DEFAULT_INIT_CONFIGURATION, betaPlugins: [plugin] }
+        const initConfiguration: RumInitConfiguration = { ...DEFAULT_INIT_CONFIGURATION, plugins: [plugin] }
         strategy.init(initConfiguration, PUBLIC_API)
 
         expect(plugin.onInit).toHaveBeenCalledWith({
@@ -542,7 +542,7 @@ describe('preStartRum', () => {
         )
         strategy.init(
           {
-            betaPlugins: [plugin],
+            plugins: [plugin],
           } as RumInitConfiguration,
           PUBLIC_API
         )

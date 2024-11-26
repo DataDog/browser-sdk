@@ -127,7 +127,7 @@ export interface RumInitConfiguration extends InitConfiguration {
    * notice. Please use only plugins provided by Datadog matching the version of the SDK you are
    * using.
    */
-  betaPlugins?: RumPlugin[] | undefined
+  plugins?: RumPlugin[] | undefined
 }
 
 export type HybridInitConfiguration = Omit<RumInitConfiguration, 'applicationId' | 'clientToken'>
@@ -210,7 +210,7 @@ export function validateAndBuildRumConfiguration(
     traceContextInjection: objectHasValue(TraceContextInjection, initConfiguration.traceContextInjection)
       ? initConfiguration.traceContextInjection
       : TraceContextInjection.ALL,
-    plugins: initConfiguration.betaPlugins || [],
+    plugins: initConfiguration.plugins || [],
     ...baseConfiguration,
   }
 }
@@ -290,7 +290,7 @@ export function serializeRumConfiguration(configuration: RumInitConfiguration) {
     track_user_interactions: configuration.trackUserInteractions,
     track_resources: configuration.trackResources,
     track_long_task: configuration.trackLongTasks,
-    plugins: configuration.betaPlugins?.map((plugin) => ({
+    plugins: configuration.plugins?.map((plugin) => ({
       name: plugin.name,
       ...plugin.getConfigurationTelemetry?.(),
     })),
