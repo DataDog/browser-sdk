@@ -126,11 +126,11 @@ export interface InitConfiguration {
    */
   enableExperimentalFeatures?: string[] | undefined
   /**
-   * [Internal option] Configure the dual chipping to another datacenter
+   * [Internal option] Configure the dual shipping to another datacenter
    */
   replica?: ReplicaUserConfiguration | undefined
   /**
-   * [Internal option] Set the datacenter from where the data is dual chipped
+   * [Internal option] Set the datacenter from where the data is dual shipped
    */
   datacenter?: string
   /**
@@ -150,10 +150,11 @@ export interface InitConfiguration {
 type GenericBeforeSendCallback = (event: any, context?: any) => unknown
 
 /**
+ * host: datadoghq.com
  * path: /api/vX/product
  * parameters: xxx=yyy&zzz=aaa
  */
-type ProxyFn = (options: { path: string; parameters: string }) => string
+type ProxyFn = (options: { host: string; path: string; parameters: string }) => string
 
 export interface ReplicaUserConfiguration {
   applicationId?: string
