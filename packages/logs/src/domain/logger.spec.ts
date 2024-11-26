@@ -249,6 +249,47 @@ describe('Logger', () => {
     })
   })
 
+  describe('error handling in logImplementation', () => {
+    it('should compute stackTrace when error is an instance of Error', () => {
+      const error = new Error('Test error')
+      logger.log('Test message', undefined, StatusType.error, error)
+
+      const loggedError = getLoggedMessage(0).context?.error
+
+      expect(loggedError).toEqual({
+        message: 'Test error',
+        stack: jasmine.stringMatching(/^Error: Test error/),
+        kind: 'Error',
+        causes: undefined,
+        handling: ErrorHandling.HANDLED,
+        fingerprint: undefined,
+      })
+    })
+
+    it('should not compute stackTrace when error is not an instance of Error', () => {
+      const nonErrorObject = { message: 'Not an Error instance', stack: 'Fake stack trace' }
+      logger.log('Test message', undefined, StatusType.error, nonErrorObject as any)
+
+      const loggedError = getLoggedMessage(0).context?.error
+
+      expect(loggedError).toEqual({
+        message: 'Provided {"message":"Not an Error instance","stack":"Fake stack trace"}',
+        stack: NO_ERROR_STACK_PRESENT_MESSAGE,
+        kind: undefined,
+        causes: undefined,
+        handling: ErrorHandling.HANDLED,
+        fingerprint: undefined,
+      })
+    })
+
+    it('should not include error context when error is undefined', () => {
+      logger.log('Test message', undefined, StatusType.error, undefined)
+
+      const loggedMessage = getLoggedMessage(0)
+      expect(loggedMessage.context).toBeUndefined()
+    })
+  })
+
   describe('handler type', () => {
     it('should be "http" by default', () => {
       logger.debug('message')
