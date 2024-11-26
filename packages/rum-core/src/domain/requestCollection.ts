@@ -20,8 +20,9 @@ import type { RumConfiguration } from './configuration'
 import type { LifeCycle } from './lifeCycle'
 import { LifeCycleEventType } from './lifeCycle'
 import { isAllowedRequestUrl } from './resource/resourceUtils'
-import type { TraceIdentifier, Tracer } from './tracing/tracer'
+import type { Tracer } from './tracing/tracer'
 import { startTracer } from './tracing/tracer'
+import type { TraceIdentifier } from './tracing/identifier'
 
 export interface CustomContext {
   requestIndex: number

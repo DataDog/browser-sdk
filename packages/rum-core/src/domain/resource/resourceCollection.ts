@@ -24,7 +24,7 @@ import type { RawRumEventCollectedData, LifeCycle } from '../lifeCycle'
 import type { RequestCompleteEvent } from '../requestCollection'
 import type { PageStateHistory } from '../contexts/pageStateHistory'
 import { PageState } from '../contexts/pageStateHistory'
-import { createTraceIdentifier } from '../tracing/tracer'
+import { createTraceIdentifier } from '../tracing/identifier'
 import { matchRequestResourceEntry } from './matchRequestResourceEntry'
 import {
   computeResourceEntryDetails,

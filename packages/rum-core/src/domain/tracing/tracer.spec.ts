@@ -4,8 +4,9 @@ import { createRumSessionManagerMock } from '../../../test'
 import type { RumFetchResolveContext, RumFetchStartContext, RumXhrStartContext } from '../requestCollection'
 import type { RumConfiguration, RumInitConfiguration } from '../configuration'
 import { validateAndBuildRumConfiguration } from '../configuration'
-import { getCrypto } from '../../browser/crypto'
-import { startTracer, createTraceIdentifier, type TraceIdentifier } from './tracer'
+import { startTracer } from './tracer'
+import type { TraceIdentifier } from './identifier'
+import { createTraceIdentifier } from './identifier'
 
 describe('tracer', () => {
   let configuration: RumConfiguration
@@ -645,22 +646,6 @@ describe('tracer', () => {
       expect(context.traceId).toBeDefined()
       expect(context.spanId).toBeDefined()
     })
-  })
-})
-
-describe('TraceIdentifier', () => {
-  it('should generate id', () => {
-    const identifier = createTraceIdentifier()
-
-    expect(identifier.toDecimalString()).toMatch(/^\d+$/)
-  })
-
-  it('should pad the string to 16 characters', () => {
-    spyOn(getCrypto() as any, 'getRandomValues').and.callFake((buffer: Uint8Array) => {
-      buffer[buffer.length - 1] = 0x01
-    })
-    const identifier = createTraceIdentifier()
-    expect(identifier.toPaddedHexadecimalString()).toEqual('0000000000000001')
   })
 })
 

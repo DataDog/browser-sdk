@@ -7,7 +7,8 @@ import { LifeCycle, LifeCycleEventType } from './lifeCycle'
 import type { RequestCompleteEvent, RequestStartEvent } from './requestCollection'
 import { trackFetch, trackXhr } from './requestCollection'
 import type { Tracer } from './tracing/tracer'
-import { clearTracingIfNeeded, createTraceIdentifier } from './tracing/tracer'
+import { clearTracingIfNeeded } from './tracing/tracer'
+import { createTraceIdentifier } from './tracing/identifier'
 
 const DEFAULT_PAYLOAD = {} as Payload
 
