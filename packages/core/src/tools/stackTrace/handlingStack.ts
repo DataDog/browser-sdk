@@ -1,5 +1,4 @@
 import { callMonitored } from '../monitor'
-import { noop } from '../utils/functionUtils'
 import type { StackTrace } from './computeStackTrace'
 import { computeStackTrace } from './computeStackTrace'
 
@@ -19,15 +18,6 @@ export function createHandlingStack(): string {
   const internalFramesToSkip = 2
   const error = new Error()
   let formattedStack: string
-
-  // IE needs to throw the error to fill in the stack trace
-  if (!error.stack) {
-    try {
-      throw error
-    } catch (e) {
-      noop()
-    }
-  }
 
   callMonitored(() => {
     const stackTrace = computeStackTrace(error)
