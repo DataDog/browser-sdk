@@ -2,6 +2,7 @@ import type { Duration, RelativeTime, TimeoutId } from '@datadog/browser-core'
 import { addEventListener, Observable, setTimeout, clearTimeout, monitor, includes } from '@datadog/browser-core'
 import type { RumConfiguration } from '../domain/configuration'
 import { hasValidResourceEntryDuration, isAllowedRequestUrl } from '../domain/resource/resourceUtils'
+import type { deliveryType } from '../rawRumEvent.types'
 import { retrieveFirstInputTiming } from './firstInputPolyfill'
 
 type RumPerformanceObserverConstructor = new (callback: PerformanceObserverCallback) => RumPerformanceObserver
@@ -63,6 +64,7 @@ export interface RumPerformanceResourceTiming {
   nextHopProtocol?: string
   renderBlockingStatus?: string
   traceId?: string
+  deliveryType?: deliveryType
   toJSON(): Omit<PerformanceEntry, 'toJSON'>
 }
 

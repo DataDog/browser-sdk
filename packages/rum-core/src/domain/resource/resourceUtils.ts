@@ -12,7 +12,7 @@ import {
 
 import type { RumPerformanceResourceTiming } from '../../browser/performanceObservable'
 
-import type { ResourceEntryDetailsElement } from '../../rawRumEvent.types'
+import type { deliveryType, ResourceEntryDetailsElement } from '../../rawRumEvent.types'
 
 export interface ResourceEntryDetails {
   worker?: ResourceEntryDetailsElement
@@ -191,6 +191,10 @@ function formatTiming(origin: RelativeTime, start: RelativeTime, end: RelativeTi
  */
 export function computeResourceEntryProtocol(entry: RumPerformanceResourceTiming) {
   return entry.nextHopProtocol === '' ? undefined : entry.nextHopProtocol
+}
+
+export function computeResourceEntryDeliveryType(entry: RumPerformanceResourceTiming): deliveryType | undefined {
+  return entry.deliveryType === '' ? undefined : entry.deliveryType
 }
 
 export function computeResourceEntrySize(entry: RumPerformanceResourceTiming) {
