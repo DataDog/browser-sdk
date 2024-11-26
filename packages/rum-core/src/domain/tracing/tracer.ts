@@ -18,6 +18,7 @@ import type {
   RumXhrStartContext,
 } from '../requestCollection'
 import type { RumSessionManager } from '../rumSessionManager'
+import { getCrypto } from '../../browser/crypto'
 import type { PropagatorType, TracingOption } from './tracer.types'
 
 export interface Tracer {
@@ -132,10 +133,6 @@ function injectHeadersIfTracingAllowed(
 
 export function isTracingSupported() {
   return getCrypto() !== undefined
-}
-
-export function getCrypto() {
-  return window.crypto || (window as any).msCrypto
 }
 
 /**

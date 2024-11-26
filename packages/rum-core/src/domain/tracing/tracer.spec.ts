@@ -4,7 +4,8 @@ import { createRumSessionManagerMock } from '../../../test'
 import type { RumFetchResolveContext, RumFetchStartContext, RumXhrStartContext } from '../requestCollection'
 import type { RumConfiguration, RumInitConfiguration } from '../configuration'
 import { validateAndBuildRumConfiguration } from '../configuration'
-import { startTracer, createTraceIdentifier, type TraceIdentifier, getCrypto } from './tracer'
+import { getCrypto } from '../../browser/crypto'
+import { startTracer, createTraceIdentifier, type TraceIdentifier } from './tracer'
 
 describe('tracer', () => {
   let configuration: RumConfiguration
