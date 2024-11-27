@@ -20,7 +20,7 @@ import type {
 import type { RumSessionManager } from '../rumSessionManager'
 import { getCrypto } from '../../browser/crypto'
 import type { PropagatorType, TracingOption } from './tracer.types'
-import { createTraceIdentifier, type TraceIdentifier } from './identifier'
+import { createTraceIdentifier, toPaddedHexadecimalString, type TraceIdentifier } from './identifier'
 
 export interface Tracer {
   traceFetch: (context: Partial<RumFetchStartContext>) => void
@@ -153,16 +153,16 @@ function makeTracingHeaders(
       case 'datadog': {
         assign(tracingHeaders, {
           'x-datadog-origin': 'rum',
-          'x-datadog-parent-id': spanId.toDecimalString(),
+          'x-datadog-parent-id': spanId.toString(),
           'x-datadog-sampling-priority': traceSampled ? '1' : '0',
-          'x-datadog-trace-id': traceId.toDecimalString(),
+          'x-datadog-trace-id': traceId.toString(),
         })
         break
       }
       // https://www.w3.org/TR/trace-context/
       case 'tracecontext': {
         assign(tracingHeaders, {
-          traceparent: `00-0000000000000000${traceId.toPaddedHexadecimalString()}-${spanId.toPaddedHexadecimalString()}-0${
+          traceparent: `00-0000000000000000${toPaddedHexadecimalString(traceId)}-${toPaddedHexadecimalString(spanId)}-0${
             traceSampled ? '1' : '0'
           }`,
         })
@@ -171,16 +171,14 @@ function makeTracingHeaders(
       // https://github.com/openzipkin/b3-propagation
       case 'b3': {
         assign(tracingHeaders, {
-          b3: `${traceId.toPaddedHexadecimalString()}-${spanId.toPaddedHexadecimalString()}-${
-            traceSampled ? '1' : '0'
-          }`,
+          b3: `${toPaddedHexadecimalString(traceId)}-${toPaddedHexadecimalString(spanId)}-${traceSampled ? '1' : '0'}`,
         })
         break
       }
       case 'b3multi': {
         assign(tracingHeaders, {
-          'X-B3-TraceId': traceId.toPaddedHexadecimalString(),
-          'X-B3-SpanId': spanId.toPaddedHexadecimalString(),
+          'X-B3-TraceId': toPaddedHexadecimalString(traceId),
+          'X-B3-SpanId': toPaddedHexadecimalString(spanId),
           'X-B3-Sampled': traceSampled ? '1' : '0',
         })
         break

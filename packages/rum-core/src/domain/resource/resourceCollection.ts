@@ -196,8 +196,8 @@ function computeRequestTracingInfo(request: RequestCompleteEvent, configuration:
   }
   return {
     _dd: {
-      span_id: request.spanId!.toDecimalString(),
-      trace_id: request.traceId!.toDecimalString(),
+      span_id: request.spanId!.toString(),
+      trace_id: request.traceId!.toString(),
       rule_psr: getRulePsr(configuration),
     },
   }
@@ -211,7 +211,7 @@ function computeResourceEntryTracingInfo(entry: RumPerformanceResourceTiming, co
   return {
     _dd: {
       trace_id: entry.traceId,
-      span_id: createTraceIdentifier().toDecimalString(),
+      span_id: createTraceIdentifier().toString(),
       rule_psr: getRulePsr(configuration),
     },
   }

@@ -660,9 +660,9 @@ function toPlainObject(headers: Headers) {
 function tracingHeadersFor(traceId: TraceIdentifier, spanId: TraceIdentifier, samplingPriority: '1' | '0') {
   return {
     'x-datadog-origin': 'rum',
-    'x-datadog-parent-id': spanId.toDecimalString(),
+    'x-datadog-parent-id': spanId.toString(),
     'x-datadog-sampling-priority': samplingPriority,
-    'x-datadog-trace-id': traceId.toDecimalString(),
+    'x-datadog-trace-id': traceId.toString(),
   }
 }
 
