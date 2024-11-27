@@ -9,7 +9,7 @@ describe('identifier', () => {
     })
 
     it('formats using base 16', () => {
-      mockRandomValues((buffer) => (buffer[buffer.length - 1] = 0xff))
+      mockRandomValues((buffer) => (buffer[0] = 0xff))
       const identifier = createTraceIdentifier()
       expect(identifier.toString(16)).toEqual('ff')
     })
@@ -32,7 +32,7 @@ describe('identifier', () => {
 
 describe('toPaddedHexadecimalString', () => {
   it('should pad the string to 16 characters', () => {
-    mockRandomValues((buffer) => (buffer[buffer.length - 1] = 0x01))
+    mockRandomValues((buffer) => (buffer[0] = 0x01))
     const identifier = createTraceIdentifier()
     expect(toPaddedHexadecimalString(identifier)).toEqual('0000000000000001')
   })

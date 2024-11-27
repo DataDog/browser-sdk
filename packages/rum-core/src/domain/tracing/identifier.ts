@@ -22,22 +22,18 @@ export function createSpanIdentifier() {
   return createIdentifier(63) as SpanIdentifier
 }
 
-/* eslint-disable no-bitwise */
 export function createIdentifier(bits: 63 | 64): BaseIdentifier {
-  const buffer: Uint8Array = new Uint8Array(8)
+  const buffer: Uint32Array = new Uint32Array(2)
   getCrypto().getRandomValues(buffer)
   if (bits === 63) {
-    buffer[0] = buffer[0] & 0x7f // force 63-bit
-  }
-
-  function readInt32(offset: number) {
-    return buffer[offset] * 16777216 + (buffer[offset + 1] << 16) + (buffer[offset + 2] << 8) + buffer[offset + 3]
+    // eslint-disable-next-line no-bitwise
+    buffer[buffer.length - 1] >>>= 1 // force 63-bit
   }
 
   return {
     toString(radix = 10) {
-      let high = readInt32(0)
-      let low = readInt32(4)
+      let high = buffer[1]
+      let low = buffer[0]
       let str = ''
 
       do {
@@ -51,7 +47,6 @@ export function createIdentifier(bits: 63 | 64): BaseIdentifier {
     },
   }
 }
-/* eslint-enable no-bitwise */
 
 export function toPaddedHexadecimalString(id: BaseIdentifier) {
   const traceId = id.toString(16)
