@@ -50,11 +50,6 @@ describe('session in cookie strategy', () => {
       expect(cookieOptions).toEqual({ secure: true, crossSite: false, partitioned: false })
     })
 
-    it('should be secure and crossSite when `useCrossSiteSessionCookie` is truthy', () => {
-      const cookieOptions = buildCookieOptions({ clientToken, useCrossSiteSessionCookie: true })
-      expect(cookieOptions).toEqual({ secure: true, crossSite: true, partitioned: false })
-    })
-
     it('should be secure, crossSite and partitioned when `usePartitionedCrossSiteSessionCookie` is truthy', () => {
       const cookieOptions = buildCookieOptions({ clientToken, usePartitionedCrossSiteSessionCookie: true })
       expect(cookieOptions).toEqual({ secure: true, crossSite: true, partitioned: true })
@@ -78,12 +73,6 @@ describe('session in cookie strategy', () => {
         cookieOptions: {},
         cookieString: /^dd_cookie_test_[\w-]+=[^;]*;expires=[^;]+;path=\/;samesite=strict$/,
         description: 'should set samesite to strict by default',
-      },
-      {
-        initConfiguration: { clientToken: 'abc', useCrossSiteSessionCookie: true },
-        cookieOptions: { crossSite: true, secure: true },
-        cookieString: /^dd_cookie_test_[\w-]+=[^;]*;expires=[^;]+;path=\/;samesite=none;secure$/,
-        description: 'should set samesite to none and secure to true for crossSite',
       },
       {
         initConfiguration: { clientToken: 'abc', useSecureSessionCookie: true },
