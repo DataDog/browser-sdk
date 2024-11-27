@@ -12,7 +12,7 @@
     "jsx": "react",
 
     "types": [],
-    "lib": ["ES2016", "DOM"],
+    "lib": ["ES2020", "DOM"],
 
     "paths": {
       "@datadog/browser-core": ["./packages/core/src"],

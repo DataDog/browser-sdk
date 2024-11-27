@@ -22,9 +22,38 @@ export function createSpanIdentifier() {
   return createIdentifier(63) as SpanIdentifier
 }
 
-export function createIdentifier(bits: 63 | 64): BaseIdentifier {
-  const buffer: Uint32Array = new Uint32Array(2)
-  getCrypto().getRandomValues(buffer)
+let createIdentifierImplementationCache: ((bits: 63 | 64) => BaseIdentifier) | undefined
+
+function createIdentifier(bits: 63 | 64): BaseIdentifier {
+  if (!createIdentifierImplementationCache) {
+    createIdentifierImplementationCache = areBigIntIdentifiersSupported()
+      ? createIdentifierUsingBigInt
+      : createIdentifierUsingUint32Array
+  }
+  return createIdentifierImplementationCache(bits)
+}
+
+export function areBigIntIdentifiersSupported() {
+  try {
+    crypto.getRandomValues(new BigUint64Array(1))
+    return true
+  } catch {
+    return false
+  }
+}
+
+function createIdentifierUsingBigInt(bits: 63 | 64): BaseIdentifier {
+  let id = crypto.getRandomValues(new BigUint64Array(1))[0]
+  if (bits === 63) {
+    // eslint-disable-next-line no-bitwise
+    id >>= BigInt('1')
+  }
+  return id
+}
+
+// TODO: remove this when all browser we support have BigInt support
+function createIdentifierUsingUint32Array(bits: 63 | 64): BaseIdentifier {
+  const buffer = getCrypto().getRandomValues(new Uint32Array(2))
   if (bits === 63) {
     // eslint-disable-next-line no-bitwise
     buffer[buffer.length - 1] >>>= 1 // force 63-bit
