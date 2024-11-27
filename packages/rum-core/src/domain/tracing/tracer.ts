@@ -1,7 +1,6 @@
 import {
   objectEntries,
   shallowClone,
-  performDraw,
   isNumber,
   assign,
   find,
@@ -22,6 +21,7 @@ import { getCrypto } from '../../browser/crypto'
 import type { PropagatorType, TracingOption } from './tracer.types'
 import type { SpanIdentifier, TraceIdentifier } from './identifier'
 import { createSpanIdentifier, createTraceIdentifier, toPaddedHexadecimalString } from './identifier'
+import { isTraceSampled } from './sampler'
 
 export interface Tracer {
   traceFetch: (context: Partial<RumFetchStartContext>) => void
@@ -121,13 +121,15 @@ function injectHeadersIfTracingAllowed(
   if (!tracingOption) {
     return
   }
-  context.traceSampled = !isNumber(configuration.traceSampleRate) || performDraw(configuration.traceSampleRate)
+  const traceId = createTraceIdentifier()
+  context.traceSampled =
+    !isNumber(configuration.traceSampleRate) || isTraceSampled(traceId, configuration.traceSampleRate)
 
   if (!context.traceSampled && configuration.traceContextInjection !== TraceContextInjection.ALL) {
     return
   }
 
-  context.traceId = createTraceIdentifier()
+  context.traceId = traceId
   context.spanId = createSpanIdentifier()
 
   inject(makeTracingHeaders(context.traceId, context.spanId, context.traceSampled, tracingOption.propagatorTypes))

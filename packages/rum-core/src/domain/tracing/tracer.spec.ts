@@ -77,8 +77,7 @@ describe('tracer', () => {
     })
 
     it("should trace request with priority '1' when sampled", () => {
-      spyOn(Math, 'random').and.callFake(() => 0)
-      const tracer = startTracer({ ...configuration, traceSampleRate: 50 }, sessionManager)
+      const tracer = startTracer({ ...configuration, traceSampleRate: 100 }, sessionManager)
       const context = { ...ALLOWED_DOMAIN_CONTEXT }
       tracer.traceXhr(context, xhr as unknown as XMLHttpRequest)
 
@@ -89,8 +88,7 @@ describe('tracer', () => {
     })
 
     it("should trace request with priority '0' when not sampled", () => {
-      spyOn(Math, 'random').and.callFake(() => 1)
-      const tracer = startTracer({ ...configuration, traceSampleRate: 50 }, sessionManager)
+      const tracer = startTracer({ ...configuration, traceSampleRate: 0 }, sessionManager)
       const context = { ...ALLOWED_DOMAIN_CONTEXT }
       tracer.traceXhr(context, xhr as unknown as XMLHttpRequest)
 
@@ -101,11 +99,9 @@ describe('tracer', () => {
     })
 
     it("should trace request with sampled set to '0' in OTel headers when not sampled", () => {
-      spyOn(Math, 'random').and.callFake(() => 1)
-
       const configurationWithAllOtelHeaders = validateAndBuildRumConfiguration({
         ...INIT_CONFIGURATION,
-        traceSampleRate: 50,
+        traceSampleRate: 0,
         allowedTracingUrls: [{ match: window.location.origin, propagatorTypes: ['b3', 'tracecontext', 'b3multi'] }],
       })!
 
@@ -459,8 +455,7 @@ describe('tracer', () => {
     it("should trace request with priority '1' when sampled", () => {
       const context: Partial<RumFetchStartContext> = { ...ALLOWED_DOMAIN_CONTEXT }
 
-      spyOn(Math, 'random').and.callFake(() => 0)
-      const tracer = startTracer({ ...configuration, traceSampleRate: 50 }, sessionManager)
+      const tracer = startTracer({ ...configuration, traceSampleRate: 100 }, sessionManager)
       tracer.traceFetch(context)
 
       expect(context.traceSampled).toBe(true)
@@ -472,8 +467,7 @@ describe('tracer', () => {
     it("should trace request with priority '0' when not sampled", () => {
       const context: Partial<RumFetchStartContext> = { ...ALLOWED_DOMAIN_CONTEXT }
 
-      spyOn(Math, 'random').and.callFake(() => 1)
-      const tracer = startTracer({ ...configuration, traceSampleRate: 50 }, sessionManager)
+      const tracer = startTracer({ ...configuration, traceSampleRate: 0 }, sessionManager)
       tracer.traceFetch(context)
 
       expect(context.traceSampled).toBe(false)
