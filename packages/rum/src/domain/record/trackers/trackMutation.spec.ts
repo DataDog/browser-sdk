@@ -92,7 +92,7 @@ describe('trackMutation', () => {
       })
     })
 
-    it('processes mutations asynchronously', (done) => {
+    it('processes mutations asynchronously', async () => {
       serializeDocumentWithDefaults()
       const { mutationCallbackSpy } = startMutationCollection()
 
@@ -100,7 +100,7 @@ describe('trackMutation', () => {
 
       expect(mutationCallbackSpy).not.toHaveBeenCalled()
 
-      collectAsyncCalls(mutationCallbackSpy, 1, () => done())
+      await collectAsyncCalls(mutationCallbackSpy)
     })
 
     it('does not emit a mutation when a node is appended to a unknown node', () => {
