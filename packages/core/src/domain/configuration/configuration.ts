@@ -11,6 +11,7 @@ import type { SessionStoreStrategyType } from '../session/storeStrategies/sessio
 import { TrackingConsent } from '../trackingConsent'
 import type { TransportConfiguration } from './transportConfiguration'
 import { computeTransportConfiguration } from './transportConfiguration'
+import type { Site } from './intakeSites'
 
 export const DefaultPrivacyLevel = {
   ALLOW: 'allow',
@@ -81,7 +82,7 @@ export interface InitConfiguration {
    * The Datadog [site](https://docs.datadoghq.com/getting_started/site) parameter of your organization.
    * @default datadoghq.com
    */
-  site?: string | undefined
+  site?: Site | undefined
 
   // tag and context options
   /**

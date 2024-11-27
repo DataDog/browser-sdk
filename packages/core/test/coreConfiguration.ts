@@ -20,7 +20,7 @@ export const EXHAUSTIVE_INIT_CONFIGURATION: Required<InitConfiguration> = {
   storeContextsAcrossPages: true,
   trackingConsent: 'not-granted',
   proxy: 'proxy',
-  site: 'site',
+  site: 'datadoghq.com',
   service: 'service',
   env: 'env',
   version: 'version',
