@@ -5,7 +5,7 @@ import { getSessionReplayLink } from './getSessionReplayLink'
 import { addRecord, resetReplayStats } from './replayStats'
 
 const DEFAULT_CONFIGURATION = {
-  site: 'datad0g.com',
+  site: 'datadoghq.com',
 } as RumConfiguration
 
 describe('getReplayLink', () => {
@@ -18,7 +18,7 @@ describe('getReplayLink', () => {
 
     const link = getSessionReplayLink(DEFAULT_CONFIGURATION, sessionManager, viewHistory, true)
 
-    expect(link).toBe('https://dd.datad0g.com/rum/replay/sessions/session-id-1?')
+    expect(link).toBe('https://app.datadoghq.com/rum/replay/sessions/session-id-1?')
   })
 
   it('should return the replay link', () => {
@@ -34,7 +34,7 @@ describe('getReplayLink', () => {
     addRecord('view-id-1')
 
     const link = getSessionReplayLink(
-      { ...DEFAULT_CONFIGURATION, site: 'datadoghq.com', subdomain: 'toto' },
+      { ...DEFAULT_CONFIGURATION, subdomain: 'toto' },
       sessionManager,
       viewHistory,
       true
@@ -60,7 +60,7 @@ describe('getReplayLink', () => {
     addRecord('view-id-1')
 
     const link = getSessionReplayLink(
-      { ...DEFAULT_CONFIGURATION, site: 'datadoghq.com', subdomain: 'toto' },
+      { ...DEFAULT_CONFIGURATION, subdomain: 'toto' },
       sessionManager,
       viewHistory,
       true
@@ -80,12 +80,7 @@ describe('getReplayLink', () => {
       }),
     } as ViewHistory
 
-    const link = getSessionReplayLink(
-      { ...DEFAULT_CONFIGURATION, site: 'datadoghq.com' },
-      sessionManager,
-      viewHistory,
-      true
-    )
+    const link = getSessionReplayLink(DEFAULT_CONFIGURATION, sessionManager, viewHistory, true)
     expect(link).toBe(
       'https://app.datadoghq.com/rum/replay/sessions/session-id-1?error-type=incorrect-session-plan&seed=view-id-1&from=123456'
     )
@@ -97,12 +92,7 @@ describe('getReplayLink', () => {
       findView: () => undefined,
     } as ViewHistory
 
-    const link = getSessionReplayLink(
-      { ...DEFAULT_CONFIGURATION, site: 'datadoghq.com' },
-      sessionManager,
-      viewHistory,
-      true
-    )
+    const link = getSessionReplayLink(DEFAULT_CONFIGURATION, sessionManager, viewHistory, true)
 
     expect(link).toBe('https://app.datadoghq.com/rum/replay/sessions/no-session-id?error-type=rum-not-tracked')
   })
@@ -118,12 +108,7 @@ describe('getReplayLink', () => {
       }),
     } as ViewHistory
 
-    const link = getSessionReplayLink(
-      { ...DEFAULT_CONFIGURATION, site: 'datadoghq.com' },
-      sessionManager,
-      viewHistory,
-      false
-    )
+    const link = getSessionReplayLink(DEFAULT_CONFIGURATION, sessionManager, viewHistory, false)
 
     expect(link).toBe(
       'https://app.datadoghq.com/rum/replay/sessions/session-id-1?error-type=replay-not-started&seed=view-id-1&from=123456'
@@ -152,12 +137,7 @@ describe('getReplayLink', () => {
         }),
       } as ViewHistory
 
-      const link = getSessionReplayLink(
-        { ...DEFAULT_CONFIGURATION, site: 'datadoghq.com' },
-        sessionManager,
-        viewContexts,
-        false
-      )
+      const link = getSessionReplayLink(DEFAULT_CONFIGURATION, sessionManager, viewContexts, false)
 
       expect(link).toBe(
         'https://app.datadoghq.com/rum/replay/sessions/session-id-1?error-type=browser-not-supported&seed=view-id-1&from=123456'
