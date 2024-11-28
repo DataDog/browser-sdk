@@ -6,7 +6,7 @@ export function mockClock() {
   jasmine.clock().install()
   jasmine.clock().mockDate()
 
-  const timeOrigin = performance.timing.navigationStart // TODO: use performance.timeOrigin when we drop IE11 support
+  const timeOrigin = performance.timing.navigationStart // @see getNavigationStart() in timeUtils.ts
   const timeStampStart = Date.now()
   const relativeStart = timeStampStart - timeOrigin
 
