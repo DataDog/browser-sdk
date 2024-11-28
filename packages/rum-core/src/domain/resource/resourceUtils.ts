@@ -196,7 +196,7 @@ export function computeResourceEntryProtocol(entry: RumPerformanceResourceTiming
 /**
  * Handles the 'deliveryType' property to distinguish between supported values ('cache', 'navigational-prefetch'),
  * undefined (unsupported in some browsers), and other cases ('-' for unknown or unrecognized values).
- * see https://developer.mozilla.org/en-US/docs/Web/API/PerformanceResourceTiming/deliveryType
+ * see: https://developer.mozilla.org/en-US/docs/Web/API/PerformanceResourceTiming/deliveryType
  */
 export function computeResourceEntryDeliveryType(entry: RumPerformanceResourceTiming): DeliveryType | undefined {
   return entry.deliveryType === '' ? 'other' : (entry.deliveryType as DeliveryType)
