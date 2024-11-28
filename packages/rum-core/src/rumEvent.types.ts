@@ -150,6 +150,16 @@ export type RumActionEvent = CommonProperties &
           readonly height?: number
           [k: string]: unknown
         }
+        /**
+         * The strategy of how the auto click action name is computed
+         */
+        name_source?:
+          | 'custom_attribute'
+          | 'mask_placeholder'
+          | 'standard_attribute'
+          | 'text_content'
+          | 'mask_disallowed'
+          | 'blank'
         [k: string]: unknown
       }
       [k: string]: unknown
@@ -720,6 +730,10 @@ export type RumResourceEvent = CommonProperties &
        * Network protocol used to fetch the resource (e.g., 'http/1.1', 'h2')
        */
       readonly protocol?: string
+      /**
+       * Delivery type of the resource
+       */
+      readonly delivery_type?: 'cache' | 'navigational-prefetch' | 'other'
       /**
        * The provider for this resource
        */

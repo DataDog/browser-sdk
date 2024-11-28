@@ -31,6 +31,7 @@ import {
   computeResourceEntryType,
   computeResourceEntrySize,
   computeResourceEntryProtocol,
+  computeResourceEntryDeliveryType,
   isResourceEntryRequestType,
   isLongDataUrl,
   sanitizeDataUrl,
@@ -108,6 +109,7 @@ function processRequest(
         status_code: request.status,
         protocol: matchingTiming && computeResourceEntryProtocol(matchingTiming),
         url: isLongDataUrl(request.url) ? sanitizeDataUrl(request.url) : request.url,
+        delivery_type: matchingTiming && computeResourceEntryDeliveryType(matchingTiming),
       },
       type: RumEventType.RESOURCE as const,
       _dd: {
@@ -156,6 +158,7 @@ function processResourceEntry(
         url: entry.name,
         status_code: discardZeroStatus(entry.responseStatus),
         protocol: computeResourceEntryProtocol(entry),
+        delivery_type: computeResourceEntryDeliveryType(entry),
       },
       type: RumEventType.RESOURCE as const,
       _dd: {
