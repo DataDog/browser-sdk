@@ -8,7 +8,8 @@
   "scripts": {
     "build": "run-p build:cjs build:esm",
     "build:cjs": "rm -rf cjs && tsc -p tsconfig.cjs.json",
-    "build:esm": "rm -rf esm && tsc -p tsconfig.esm.json"
+    "build:esm": "rm -rf esm && tsc -p tsconfig.esm.json",
+    "prepack": "yarn ../.. build"
   },
   "dependencies": {
     "@datadog/browser-core": "5.32.0",
