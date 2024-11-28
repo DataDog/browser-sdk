@@ -12,7 +12,7 @@ import {
 
 import type { RumPerformanceResourceTiming } from '../../browser/performanceObservable'
 
-import type { deliveryType, ResourceEntryDetailsElement } from '../../rawRumEvent.types'
+import type { DeliveryType, ResourceEntryDetailsElement } from '../../rawRumEvent.types'
 
 export interface ResourceEntryDetails {
   worker?: ResourceEntryDetailsElement
@@ -196,20 +196,10 @@ export function computeResourceEntryProtocol(entry: RumPerformanceResourceTiming
 /**
  * Handles the 'deliveryType' property to distinguish between supported values ('cache', 'navigational-prefetch'),
  * undefined (unsupported in some browsers), and other cases ('-' for unknown or unrecognized values).
- * https://developer.mozilla.org/en-US/docs/Web/API/PerformanceResourceTiming/deliveryType
+ * see https://developer.mozilla.org/en-US/docs/Web/API/PerformanceResourceTiming/deliveryType
  */
-export function computeResourceEntryDeliveryType(entry: RumPerformanceResourceTiming): deliveryType | undefined {
-  const deliveryType = entry.deliveryType
-
-  if (deliveryType === undefined) {
-    return undefined
-  }
-
-  if (deliveryType === 'cache' || deliveryType === 'navigational-prefetch') {
-    return deliveryType
-  }
-
-  return '-'
+export function computeResourceEntryDeliveryType(entry: RumPerformanceResourceTiming): DeliveryType | undefined {
+  return entry.deliveryType === '' ? 'other' : (entry.deliveryType as DeliveryType)
 }
 
 export function computeResourceEntrySize(entry: RumPerformanceResourceTiming) {

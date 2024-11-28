@@ -50,7 +50,7 @@ export interface RawRumResourceEvent {
     first_byte?: ResourceEntryDetailsElement
     download?: ResourceEntryDetailsElement
     protocol?: string
-    delivery_type?: deliveryType
+    delivery_type?: DeliveryType
   }
   _dd: {
     trace_id?: string
@@ -186,7 +186,7 @@ export interface RawRumLongTaskEvent {
   }
 }
 
-export type deliveryType = 'cache' | 'navigational-prefetch' | '-' | undefined
+export type DeliveryType = 'cache' | 'navigational-prefetch' | 'other'
 
 export type InvokerType =
   | 'user-callback'
