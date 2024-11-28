@@ -26,12 +26,10 @@ export function startLogsAssembly(
     ({ rawLogsEvent, messageContext = undefined, savedCommonContext = undefined, domainContext }) => {
       const startTime = getRelativeTime(rawLogsEvent.date)
       const session = sessionManager.findTrackedSession(startTime)
+      const hasInactiveSession = sessionManager.findTrackedSession(startTime, { returnInactive: true })
+      const shouldSendLog = session || hasInactiveSession
 
-      if (
-        !session &&
-        (!configuration.sendLogsAfterSessionExpiration ||
-          !sessionManager.findTrackedSession(startTime, { returnInactive: true }))
-      ) {
+      if (!shouldSendLog) {
         return
       }
 
