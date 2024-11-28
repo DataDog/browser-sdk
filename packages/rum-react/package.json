@@ -9,7 +9,7 @@
     "build": "run-p build:cjs build:esm",
     "build:cjs": "rm -rf cjs && tsc -p tsconfig.cjs.json",
     "build:esm": "rm -rf esm && tsc -p tsconfig.esm.json",
-    "prepack": "npm run build # need 'npm run' because the build currently relies on hoisting"
+    "prepack": "npm run build"
   },
   "dependencies": {
     "@datadog/browser-core": "5.32.0",
