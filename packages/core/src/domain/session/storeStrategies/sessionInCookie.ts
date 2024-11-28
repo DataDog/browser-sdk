@@ -50,11 +50,8 @@ export function buildCookieOptions(initConfiguration: InitConfiguration) {
   const cookieOptions: CookieOptions = {}
 
   cookieOptions.secure =
-    !!initConfiguration.useSecureSessionCookie ||
-    !!initConfiguration.usePartitionedCrossSiteSessionCookie ||
-    !!initConfiguration.useCrossSiteSessionCookie
-  cookieOptions.crossSite =
-    !!initConfiguration.usePartitionedCrossSiteSessionCookie || !!initConfiguration.useCrossSiteSessionCookie
+    !!initConfiguration.useSecureSessionCookie || !!initConfiguration.usePartitionedCrossSiteSessionCookie
+  cookieOptions.crossSite = !!initConfiguration.usePartitionedCrossSiteSessionCookie
   cookieOptions.partitioned = !!initConfiguration.usePartitionedCrossSiteSessionCookie
 
   if (initConfiguration.trackSessionAcrossSubdomains) {

@@ -100,12 +100,6 @@ export interface InitConfiguration {
 
   // cookie options
   /**
-   * Whether a secure cross-site session cookie is used
-   * @default false
-   * @deprecated use usePartitionedCrossSiteSessionCookie instead
-   */
-  useCrossSiteSessionCookie?: boolean | undefined
-  /**
    * Use a partitioned secure cross-site session cookie. This allows the RUM Browser SDK to run when the site is loaded from another one (iframe). Implies `useSecureSessionCookie`.
    * @default false
    */
@@ -286,7 +280,6 @@ export function serializeConfiguration(initConfiguration: InitConfiguration) {
     telemetry_configuration_sample_rate: initConfiguration.telemetryConfigurationSampleRate,
     telemetry_usage_sample_rate: initConfiguration.telemetryUsageSampleRate,
     use_before_send: !!initConfiguration.beforeSend,
-    use_cross_site_session_cookie: initConfiguration.useCrossSiteSessionCookie,
     use_partitioned_cross_site_session_cookie: initConfiguration.usePartitionedCrossSiteSessionCookie,
     use_secure_session_cookie: initConfiguration.useSecureSessionCookie,
     use_proxy: !!initConfiguration.proxy,
