@@ -65,6 +65,7 @@ describe('resourceCollection', () => {
       decodedBodySize: 51,
       transferSize: 63,
       renderBlockingStatus: 'blocking',
+      deliveryType: 'cache',
       responseStart: 250 as RelativeTime,
     })
     notifyPerformanceEntries([performanceEntry])
@@ -85,6 +86,7 @@ describe('resourceCollection', () => {
         first_byte: jasmine.any(Object),
         status_code: 200,
         protocol: 'HTTP/1.0',
+        delivery_type: 'cache',
         render_blocking_status: 'blocking',
       },
       type: RumEventType.RESOURCE,
@@ -122,6 +124,7 @@ describe('resourceCollection', () => {
         duration: (100 * 1e6) as ServerDuration,
         method: 'GET',
         status_code: 200,
+        delivery_type: undefined,
         protocol: undefined,
         type: ResourceType.XHR,
         url: 'https://resource.com/valid',
@@ -236,6 +239,7 @@ describe('resourceCollection', () => {
         duration: (100 * 1e6) as ServerDuration,
         method: 'GET',
         status_code: 200,
+        delivery_type: undefined,
         protocol: undefined,
         type: ResourceType.FETCH,
         url: 'https://resource.com/valid',
