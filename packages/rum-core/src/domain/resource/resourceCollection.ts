@@ -24,7 +24,7 @@ import type { RawRumEventCollectedData, LifeCycle } from '../lifeCycle'
 import type { RequestCompleteEvent } from '../requestCollection'
 import type { PageStateHistory } from '../contexts/pageStateHistory'
 import { PageState } from '../contexts/pageStateHistory'
-import { createTraceIdentifier } from '../tracing/identifier'
+import { createSpanIdentifier } from '../tracing/identifier'
 import { matchRequestResourceEntry } from './matchRequestResourceEntry'
 import {
   computeResourceEntryDetails,
@@ -211,7 +211,7 @@ function computeResourceEntryTracingInfo(entry: RumPerformanceResourceTiming, co
   return {
     _dd: {
       trace_id: entry.traceId,
-      span_id: createTraceIdentifier().toString(),
+      span_id: createSpanIdentifier().toString(),
       rule_psr: getRulePsr(configuration),
     },
   }

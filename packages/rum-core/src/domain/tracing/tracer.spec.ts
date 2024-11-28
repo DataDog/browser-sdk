@@ -5,8 +5,8 @@ import type { RumFetchResolveContext, RumFetchStartContext, RumXhrStartContext }
 import type { RumConfiguration, RumInitConfiguration } from '../configuration'
 import { validateAndBuildRumConfiguration } from '../configuration'
 import { startTracer } from './tracer'
-import type { TraceIdentifier } from './identifier'
-import { createTraceIdentifier } from './identifier'
+import type { SpanIdentifier, TraceIdentifier } from './identifier'
+import { createSpanIdentifier, createTraceIdentifier } from './identifier'
 
 describe('tracer', () => {
   let configuration: RumConfiguration
@@ -624,9 +624,9 @@ describe('tracer', () => {
       const context: RumFetchResolveContext = {
         status: 0,
 
-        spanId: createTraceIdentifier(),
+        spanId: createSpanIdentifier(),
         traceId: createTraceIdentifier(),
-      } as any
+      } satisfies Partial<RumFetchResolveContext> as any
       tracer.clearTracingIfNeeded(context)
 
       expect(context.traceId).toBeUndefined()
@@ -638,9 +638,9 @@ describe('tracer', () => {
       const context: RumFetchResolveContext = {
         status: 200,
 
-        spanId: createTraceIdentifier(),
+        spanId: createSpanIdentifier(),
         traceId: createTraceIdentifier(),
-      } as any
+      } satisfies Partial<RumFetchResolveContext> as any
       tracer.clearTracingIfNeeded(context)
 
       expect(context.traceId).toBeDefined()
@@ -657,7 +657,7 @@ function toPlainObject(headers: Headers) {
   return result
 }
 
-function tracingHeadersFor(traceId: TraceIdentifier, spanId: TraceIdentifier, samplingPriority: '1' | '0') {
+function tracingHeadersFor(traceId: TraceIdentifier, spanId: SpanIdentifier, samplingPriority: '1' | '0') {
   return {
     'x-datadog-origin': 'rum',
     'x-datadog-parent-id': spanId.toString(),
@@ -666,7 +666,7 @@ function tracingHeadersFor(traceId: TraceIdentifier, spanId: TraceIdentifier, sa
   }
 }
 
-function tracingHeadersAsArrayFor(traceId: TraceIdentifier, spanId: TraceIdentifier, samplingPriority: '1' | '0') {
+function tracingHeadersAsArrayFor(traceId: TraceIdentifier, spanId: SpanIdentifier, samplingPriority: '1' | '0') {
   return objectEntries(tracingHeadersFor(traceId, spanId, samplingPriority))
 }
 

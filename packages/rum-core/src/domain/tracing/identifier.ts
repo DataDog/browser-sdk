@@ -1,14 +1,34 @@
 import { getCrypto } from '../../browser/crypto'
 
-/* eslint-disable no-bitwise */
-export interface TraceIdentifier {
+interface BaseIdentifier {
   toString(radix?: number): string
 }
 
-export function createTraceIdentifier(): TraceIdentifier {
+export interface TraceIdentifier extends BaseIdentifier {
+  // We use a brand to distinguish between TraceIdentifier and SpanIdentifier, else TypeScript
+  // considers them as the same type
+  __brand: 'traceIdentifier'
+}
+
+export interface SpanIdentifier extends BaseIdentifier {
+  __brand: 'spanIdentifier'
+}
+
+export function createTraceIdentifier() {
+  return createIdentifier(64) as TraceIdentifier
+}
+
+export function createSpanIdentifier() {
+  return createIdentifier(63) as SpanIdentifier
+}
+
+/* eslint-disable no-bitwise */
+export function createIdentifier(bits: 63 | 64): BaseIdentifier {
   const buffer: Uint8Array = new Uint8Array(8)
   getCrypto().getRandomValues(buffer)
-  buffer[0] = buffer[0] & 0x7f // force 63-bit
+  if (bits === 63) {
+    buffer[0] = buffer[0] & 0x7f // force 63-bit
+  }
 
   function readInt32(offset: number) {
     return buffer[offset] * 16777216 + (buffer[offset + 1] << 16) + (buffer[offset + 2] << 8) + buffer[offset + 3]
@@ -33,7 +53,7 @@ export function createTraceIdentifier(): TraceIdentifier {
 }
 /* eslint-enable no-bitwise */
 
-export function toPaddedHexadecimalString(id: TraceIdentifier) {
+export function toPaddedHexadecimalString(id: BaseIdentifier) {
   const traceId = id.toString(16)
   return Array(17 - traceId.length).join('0') + traceId
 }

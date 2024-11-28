@@ -20,7 +20,8 @@ import type {
 import type { RumSessionManager } from '../rumSessionManager'
 import { getCrypto } from '../../browser/crypto'
 import type { PropagatorType, TracingOption } from './tracer.types'
-import { createTraceIdentifier, toPaddedHexadecimalString, type TraceIdentifier } from './identifier'
+import type { SpanIdentifier, TraceIdentifier } from './identifier'
+import { createSpanIdentifier, createTraceIdentifier, toPaddedHexadecimalString } from './identifier'
 
 export interface Tracer {
   traceFetch: (context: Partial<RumFetchStartContext>) => void
@@ -127,7 +128,7 @@ function injectHeadersIfTracingAllowed(
   }
 
   context.traceId = createTraceIdentifier()
-  context.spanId = createTraceIdentifier()
+  context.spanId = createSpanIdentifier()
 
   inject(makeTracingHeaders(context.traceId, context.spanId, context.traceSampled, tracingOption.propagatorTypes))
 }
@@ -142,7 +143,7 @@ export function isTracingSupported() {
  */
 function makeTracingHeaders(
   traceId: TraceIdentifier,
-  spanId: TraceIdentifier,
+  spanId: SpanIdentifier,
   traceSampled: boolean,
   propagatorTypes: PropagatorType[]
 ): TracingHeaders {
