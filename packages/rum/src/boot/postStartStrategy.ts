@@ -1,4 +1,5 @@
 import {
+  LifeCycleEventType,
   SessionReplayState,
   type LifeCycle,
   type RumConfiguration,
@@ -6,7 +7,7 @@ import {
   type StartRecordingOptions,
   type ViewHistory,
 } from '@datadog/browser-rum-core'
-import { runOnReadyState, type DeflateEncoder } from '@datadog/browser-core'
+import { PageExitReason, runOnReadyState, type DeflateEncoder } from '@datadog/browser-core'
 import { getSessionReplayLink } from '../domain/getSessionReplayLink'
 import type { startRecording } from './startRecording'
 
@@ -23,16 +24,12 @@ export const enum RecorderStatus {
   // The recorder is started, it records the session.
   Started,
 }
-export type RecorderState = {
-  status: RecorderStatus
-  setStatus: (status: RecorderStatus) => void
-  statusEqual: (status: RecorderStatus) => boolean
-}
 
 export interface Strategy {
-  startStrategy: (options?: StartRecordingOptions) => void
-  stopStrategy: () => void
-  getSessionReplayLinkStrategy: () => string | undefined
+  start: (options?: StartRecordingOptions) => void
+  stop: () => void
+  isRecording: () => boolean
+  getSessionReplayLink: () => string | undefined
 }
 
 export function createPostStartStrategy(
@@ -41,63 +38,87 @@ export function createPostStartStrategy(
   sessionManager: RumSessionManager,
   viewHistory: ViewHistory,
   startRecordingImpl: StartRecording,
-  getOrCreateDeflateEncoder: () => DeflateEncoder | undefined,
-  state: RecorderState
+  getOrCreateDeflateEncoder: () => DeflateEncoder | undefined
 ): Strategy {
+  let status = RecorderStatus.Stopped
+
+  lifeCycle.subscribe(LifeCycleEventType.SESSION_EXPIRED, () => {
+    if (status === RecorderStatus.Starting || status === RecorderStatus.Started) {
+      stop()
+      status = RecorderStatus.IntentToStart
+    }
+  })
+
+  // Stop the recorder on page unload to avoid sending records after the page is ended.
+  lifeCycle.subscribe(LifeCycleEventType.PAGE_EXITED, (pageExitEvent) => {
+    if (pageExitEvent.reason === PageExitReason.UNLOADING) {
+      stop()
+    }
+  })
+
+  lifeCycle.subscribe(LifeCycleEventType.SESSION_RENEWED, () => {
+    if (status === RecorderStatus.IntentToStart) {
+      start()
+    }
+  })
+
+  function start(options?: StartRecordingOptions) {
+    const session = sessionManager.findTrackedSession()
+    if (!session || (session.sessionReplay === SessionReplayState.OFF && (!options || !options.force))) {
+      status = RecorderStatus.IntentToStart
+      return
+    }
+
+    if (status === RecorderStatus.Starting || status === RecorderStatus.Started) {
+      return
+    }
+
+    status = RecorderStatus.Starting
+
+    runOnReadyState(configuration, 'interactive', () => {
+      if (status !== RecorderStatus.Starting) {
+        return
+      }
+
+      const deflateEncoder = getOrCreateDeflateEncoder()
+      if (!deflateEncoder) {
+        status = RecorderStatus.Stopped
+        return
+      }
+
+      ;({ stop: stopRecording } = startRecordingImpl(
+        lifeCycle,
+        configuration,
+        sessionManager,
+        viewHistory,
+        deflateEncoder
+      ))
+
+      status = RecorderStatus.Started
+    })
+
+    if (options && options.force && session.sessionReplay === SessionReplayState.OFF) {
+      sessionManager.setForcedReplay()
+    }
+  }
+
+  function stop() {
+    if (status === RecorderStatus.Stopped) {
+      return
+    }
+
+    stopRecording?.()
+
+    status = RecorderStatus.Stopped
+  }
+
   let stopRecording: () => void
   return {
-    startStrategy(options?: StartRecordingOptions) {
-      const session = sessionManager.findTrackedSession()
-      if (!session || (session.sessionReplay === SessionReplayState.OFF && (!options || !options.force))) {
-        state.setStatus(RecorderStatus.IntentToStart)
-        return
-      }
-
-      if (state.statusEqual(RecorderStatus.Starting) || state.statusEqual(RecorderStatus.Started)) {
-        return
-      }
-
-      state.setStatus(RecorderStatus.Starting)
-
-      runOnReadyState(configuration, 'interactive', () => {
-        if (state.status !== RecorderStatus.Starting) {
-          return
-        }
-
-        const deflateEncoder = getOrCreateDeflateEncoder()
-        if (!deflateEncoder) {
-          state.setStatus(RecorderStatus.Stopped)
-          return
-        }
-
-        ;({ stop: stopRecording } = startRecordingImpl(
-          lifeCycle,
-          configuration,
-          sessionManager,
-          viewHistory,
-          deflateEncoder
-        ))
-
-        state.setStatus(RecorderStatus.Started)
-      })
-
-      if (options && options.force && session.sessionReplay === SessionReplayState.OFF) {
-        sessionManager.setForcedReplay()
-      }
+    start,
+    stop,
+    getSessionReplayLink() {
+      return getSessionReplayLink(configuration, sessionManager, viewHistory, status !== RecorderStatus.Stopped)
     },
-
-    stopStrategy() {
-      if (state.statusEqual(RecorderStatus.Stopped)) {
-        return
-      }
-
-      stopRecording?.()
-
-      state.setStatus(RecorderStatus.Stopped)
-    },
-
-    getSessionReplayLinkStrategy() {
-      return getSessionReplayLink(configuration, sessionManager, viewHistory, state.status !== RecorderStatus.Stopped)
-    },
+    isRecording: () => status === RecorderStatus.Started,
   }
 }

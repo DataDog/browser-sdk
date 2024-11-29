@@ -2,7 +2,6 @@ import type { DeflateEncoder, DeflateWorker } from '@datadog/browser-core'
 import {
   canUseEventBridge,
   noop,
-  PageExitReason,
   BridgeCapability,
   bridgeSupports,
   DeflateEncoderStreamId,
@@ -15,7 +14,6 @@ import type {
   RumConfiguration,
   StartRecordingOptions,
 } from '@datadog/browser-rum-core'
-import { LifeCycleEventType } from '@datadog/browser-rum-core'
 import { getReplayStats as getReplayStatsImpl } from '../domain/replayStats'
 import type { CreateDeflateWorker } from '../domain/deflate'
 import {
@@ -25,8 +23,8 @@ import {
   startDeflateWorker,
 } from '../domain/deflate'
 import { isBrowserSupported } from './isBrowserSupported'
-import type { RecorderState, StartRecording, Strategy } from './postStartStrategy'
-import { createPostStartStrategy, RecorderStatus } from './postStartStrategy'
+import type { StartRecording, Strategy } from './postStartStrategy'
+import { createPostStartStrategy } from './postStartStrategy'
 
 export function makeRecorderApi(
   startRecordingImpl: StartRecording,
@@ -43,22 +41,13 @@ export function makeRecorderApi(
     }
   }
 
-  const state: RecorderState = {
-    status: RecorderStatus.IntentToStart,
-    setStatus(updatedStatus: RecorderStatus) {
-      state.status = updatedStatus
-    },
-    statusEqual(status: RecorderStatus) {
-      return state.status === status
-    },
-  }
-
-  let strategies: Strategy = createPreStartStrategy(state)
+  // eslint-disable-next-line prefer-const
+  let { strategy, getStatus: getPreStartStatus } = createPreStartStrategy()
 
   return {
-    start: (options?: StartRecordingOptions) => strategies.startStrategy(options),
-    stop: () => strategies.stopStrategy(),
-    getSessionReplayLink: () => strategies.getSessionReplayLinkStrategy(),
+    start: (options?: StartRecordingOptions) => strategy.start(options),
+    stop: () => strategy.stop(),
+    getSessionReplayLink: () => strategy.getSessionReplayLink(),
     onRumStart,
     isRecording: () =>
       // The worker is started optimistically, meaning we could have started to record but its
@@ -83,7 +72,7 @@ export function makeRecorderApi(
       //
       // In the future, when the compression worker will also be used for RUM data, this will be
       // less important since no RUM event will be sent when the worker fails to initialize.
-      getDeflateWorkerStatus() === DeflateWorkerStatus.Initialized && state.status === RecorderStatus.Started,
+      getDeflateWorkerStatus() === DeflateWorkerStatus.Initialized && strategy.isRecording(),
 
     getReplayStats: (viewId) =>
       getDeflateWorkerStatus() === DeflateWorkerStatus.Initialized ? getReplayStatsImpl(viewId) : undefined,
@@ -96,29 +85,6 @@ export function makeRecorderApi(
     viewHistory: ViewHistory,
     worker: DeflateWorker | undefined
   ) {
-    if (configuration.startSessionReplayRecordingManually) {
-      state.setStatus(RecorderStatus.Stopped)
-    }
-    lifeCycle.subscribe(LifeCycleEventType.SESSION_EXPIRED, () => {
-      if (state.status === RecorderStatus.Starting || state.status === RecorderStatus.Started) {
-        strategies.stopStrategy()
-        state.setStatus(RecorderStatus.IntentToStart)
-      }
-    })
-
-    // Stop the recorder on page unload to avoid sending records after the page is ended.
-    lifeCycle.subscribe(LifeCycleEventType.PAGE_EXITED, (pageExitEvent) => {
-      if (pageExitEvent.reason === PageExitReason.UNLOADING) {
-        strategies.stopStrategy()
-      }
-    })
-
-    lifeCycle.subscribe(LifeCycleEventType.SESSION_RENEWED, () => {
-      if (state.status === RecorderStatus.IntentToStart) {
-        strategies.startStrategy()
-      }
-    })
-
     let cachedDeflateEncoder: DeflateEncoder | undefined
 
     function getOrCreateDeflateEncoder() {
@@ -127,7 +93,7 @@ export function makeRecorderApi(
           configuration,
           'Datadog Session Replay',
           () => {
-            strategies.stopStrategy()
+            strategy.stop()
           },
           createDeflateWorkerImpl
         )
@@ -139,30 +105,44 @@ export function makeRecorderApi(
       return cachedDeflateEncoder
     }
 
-    strategies = createPostStartStrategy(
+    strategy = createPostStartStrategy(
       configuration,
       lifeCycle,
       sessionManager,
       viewHistory,
       startRecordingImpl,
-      getOrCreateDeflateEncoder,
-      state
+      getOrCreateDeflateEncoder
     )
 
-    if (state.status === RecorderStatus.IntentToStart) {
-      strategies.startStrategy()
+    const preStartStatus = getPreStartStatus()
+    if (
+      preStartStatus === PreStartRecorderStatus.HadManualStart ||
+      (preStartStatus === PreStartRecorderStatus.None && !configuration.startSessionReplayRecordingManually)
+    ) {
+      strategy.start()
     }
   }
 }
 
-export function createPreStartStrategy(state: RecorderState): Strategy {
+const enum PreStartRecorderStatus {
+  None,
+  HadManualStart,
+  HadManualStop,
+}
+
+export function createPreStartStrategy(): { strategy: Strategy; getStatus: () => PreStartRecorderStatus } {
+  let status = PreStartRecorderStatus.None
   return {
-    startStrategy(_options?: StartRecordingOptions) {
-      state.setStatus(RecorderStatus.IntentToStart)
+    strategy: {
+      start() {
+        status = PreStartRecorderStatus.HadManualStart
+      },
+      stop() {
+        status = PreStartRecorderStatus.HadManualStop
+      },
+      getSessionReplayLink: noop as () => string | undefined,
+      isRecording: () => false,
     },
-    stopStrategy() {
-      state.setStatus(RecorderStatus.Stopped)
-    },
-    getSessionReplayLinkStrategy: noop as () => string | undefined,
+    getStatus: () => status,
   }
 }
