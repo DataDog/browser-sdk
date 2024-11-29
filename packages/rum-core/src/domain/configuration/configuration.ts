@@ -120,6 +120,7 @@ export interface RumInitConfiguration extends InitConfiguration {
   trackResources?: boolean | undefined
   /**
    * Enables collection of long task events.
+   * @default true
    */
   trackLongTasks?: boolean | undefined
 
@@ -201,7 +202,7 @@ export function validateAndBuildRumConfiguration(
     trackUserInteractions: !!initConfiguration.trackUserInteractions,
     trackViewsManually: !!initConfiguration.trackViewsManually,
     trackResources: !!(initConfiguration.trackResources ?? true),
-    trackLongTasks: !!initConfiguration.trackLongTasks,
+    trackLongTasks: !!(initConfiguration.trackLongTasks ?? true),
     subdomain: initConfiguration.subdomain,
     defaultPrivacyLevel: objectHasValue(DefaultPrivacyLevel, initConfiguration.defaultPrivacyLevel)
       ? initConfiguration.defaultPrivacyLevel
