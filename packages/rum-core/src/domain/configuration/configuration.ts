@@ -115,6 +115,7 @@ export interface RumInitConfiguration extends InitConfiguration {
   trackViewsManually?: boolean | undefined
   /**
    * Enables collection of resource events.
+   * @default true
    */
   trackResources?: boolean | undefined
   /**
@@ -199,7 +200,7 @@ export function validateAndBuildRumConfiguration(
     compressIntakeRequests: !!initConfiguration.compressIntakeRequests,
     trackUserInteractions: !!initConfiguration.trackUserInteractions,
     trackViewsManually: !!initConfiguration.trackViewsManually,
-    trackResources: !!initConfiguration.trackResources,
+    trackResources: !!(initConfiguration.trackResources ?? true),
     trackLongTasks: !!initConfiguration.trackLongTasks,
     subdomain: initConfiguration.subdomain,
     defaultPrivacyLevel: objectHasValue(DefaultPrivacyLevel, initConfiguration.defaultPrivacyLevel)
