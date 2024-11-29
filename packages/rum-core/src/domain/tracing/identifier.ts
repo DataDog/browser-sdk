@@ -1,3 +1,4 @@
+import { ExperimentalFeature, isExperimentalFeatureEnabled } from '@datadog/browser-core'
 import { getCrypto } from '../../browser/crypto'
 
 interface BaseIdentifier {
@@ -26,9 +27,10 @@ let createIdentifierImplementationCache: ((bits: 63 | 64) => BaseIdentifier) | u
 
 function createIdentifier(bits: 63 | 64): BaseIdentifier {
   if (!createIdentifierImplementationCache) {
-    createIdentifierImplementationCache = areBigIntIdentifiersSupported()
-      ? createIdentifierUsingBigInt
-      : createIdentifierUsingUint32Array
+    createIdentifierImplementationCache =
+      isExperimentalFeatureEnabled(ExperimentalFeature.CONSISTENT_TRACE_SAMPLING) && areBigIntIdentifiersSupported()
+        ? createIdentifierUsingBigInt
+        : createIdentifierUsingUint32Array
   }
   return createIdentifierImplementationCache(bits)
 }
