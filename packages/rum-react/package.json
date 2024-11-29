@@ -7,8 +7,9 @@
   "types": "cjs/entries/main.d.ts",
   "scripts": {
     "build": "run-p build:cjs build:esm",
-    "build:cjs": "rm -rf cjs && tsc -p tsconfig.cjs.json",
-    "build:esm": "rm -rf esm && tsc -p tsconfig.esm.json"
+    "build:cjs": "rm -rf cjs && tsc -p tsconfig.cjs.json --noCheck",
+    "build:esm": "rm -rf esm && tsc -p tsconfig.esm.json --noCheck",
+    "prepack": "npm run build"
   },
   "dependencies": {
     "@datadog/browser-core": "5.32.0",
