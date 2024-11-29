@@ -266,9 +266,17 @@ describe('validateAndBuildRumConfiguration', () => {
   })
 
   describe('startSessionReplayRecordingManually', () => {
-    it('defaults to false', () => {
+    it('defaults to true if sessionReplaySampleRate is 0', () => {
       expect(
-        validateAndBuildRumConfiguration(DEFAULT_INIT_CONFIGURATION)!.startSessionReplayRecordingManually
+        validateAndBuildRumConfiguration({ ...DEFAULT_INIT_CONFIGURATION, sessionReplaySampleRate: 0 })!
+          .startSessionReplayRecordingManually
+      ).toBeTrue()
+    })
+
+    it('defaults to false if sessionReplaySampleRate is not 0', () => {
+      expect(
+        validateAndBuildRumConfiguration({ ...DEFAULT_INIT_CONFIGURATION, sessionReplaySampleRate: 50 })!
+          .startSessionReplayRecordingManually
       ).toBeFalse()
     })
 
