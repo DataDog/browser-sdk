@@ -3,8 +3,6 @@ import {
   shallowClone,
   performDraw,
   isNumber,
-  assign,
-  find,
   getType,
   isMatchOption,
   matchList,
@@ -112,7 +110,7 @@ function injectHeadersIfTracingAllowed(
     return
   }
 
-  const tracingOption = find(configuration.allowedTracingUrls, (tracingOption: TracingOption) =>
+  const tracingOption = configuration.allowedTracingUrls.find((tracingOption: TracingOption) =>
     matchList([tracingOption.match], context.url!, true)
   )
   if (!tracingOption) {
@@ -153,7 +151,7 @@ function makeTracingHeaders(
   propagatorTypes.forEach((propagatorType) => {
     switch (propagatorType) {
       case 'datadog': {
-        assign(tracingHeaders, {
+        Object.assign(tracingHeaders, {
           'x-datadog-origin': 'rum',
           'x-datadog-parent-id': spanId.toDecimalString(),
           'x-datadog-sampling-priority': traceSampled ? '1' : '0',
@@ -163,16 +161,17 @@ function makeTracingHeaders(
       }
       // https://www.w3.org/TR/trace-context/
       case 'tracecontext': {
-        assign(tracingHeaders, {
+        Object.assign(tracingHeaders, {
           traceparent: `00-0000000000000000${traceId.toPaddedHexadecimalString()}-${spanId.toPaddedHexadecimalString()}-0${
             traceSampled ? '1' : '0'
           }`,
+          tracestate: `dd=s:${traceSampled ? '1' : '0'};o:rum`,
         })
         break
       }
       // https://github.com/openzipkin/b3-propagation
       case 'b3': {
-        assign(tracingHeaders, {
+        Object.assign(tracingHeaders, {
           b3: `${traceId.toPaddedHexadecimalString()}-${spanId.toPaddedHexadecimalString()}-${
             traceSampled ? '1' : '0'
           }`,
@@ -180,7 +179,7 @@ function makeTracingHeaders(
         break
       }
       case 'b3multi': {
-        assign(tracingHeaders, {
+        Object.assign(tracingHeaders, {
           'X-B3-TraceId': traceId.toPaddedHexadecimalString(),
           'X-B3-SpanId': spanId.toPaddedHexadecimalString(),
           'X-B3-Sampled': traceSampled ? '1' : '0',

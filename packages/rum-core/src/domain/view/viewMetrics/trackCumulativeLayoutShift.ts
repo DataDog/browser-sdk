@@ -1,4 +1,4 @@
-import { round, find, ONE_SECOND, noop, elapsed } from '@datadog/browser-core'
+import { round, ONE_SECOND, noop, elapsed } from '@datadog/browser-core'
 import type { Duration, RelativeTime, WeakRef, WeakRefConstructor } from '@datadog/browser-core'
 import { isElementNode } from '../../../browser/htmlDomUtils'
 import type { RumLayoutShiftTiming } from '../../../browser/performanceObservable'
@@ -98,7 +98,7 @@ function getTargetFromSource(sources?: Array<{ node?: Node }>) {
     return
   }
 
-  return find(sources, (source): source is { node: HTMLElement } => !!source.node && isElementNode(source.node))?.node
+  return sources.find((source): source is { node: HTMLElement } => !!source.node && isElementNode(source.node))?.node
 }
 
 export const MAX_WINDOW_DURATION = 5 * ONE_SECOND
