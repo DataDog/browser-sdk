@@ -218,8 +218,8 @@ describe('validateAndBuildRumConfiguration', () => {
   })
 
   describe('trackUserInteractions', () => {
-    it('defaults to false', () => {
-      expect(validateAndBuildRumConfiguration(DEFAULT_INIT_CONFIGURATION)!.trackUserInteractions).toBeFalse()
+    it('defaults to true', () => {
+      expect(validateAndBuildRumConfiguration(DEFAULT_INIT_CONFIGURATION)!.trackUserInteractions).toBeTrue()
     })
 
     it('is set to provided value', () => {
