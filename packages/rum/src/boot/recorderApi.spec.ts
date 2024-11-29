@@ -463,8 +463,10 @@ describe('makeRecorderApi', () => {
 
   describe('isRecording', () => {
     it('is false when recording has not been started', () => {
-      setupRecorderApi()
+      setupRecorderApi({ startSessionReplayRecordingManually: true })
       rumInit()
+
+      mockWorker.processAllMessages()
 
       expect(recorderApi.isRecording()).toBeFalse()
     })
@@ -518,8 +520,11 @@ describe('makeRecorderApi', () => {
     const VIEW_ID = 'xxx'
 
     it('is undefined when recording has not been started', () => {
-      setupRecorderApi()
+      setupRecorderApi({ startSessionReplayRecordingManually: true })
       rumInit()
+
+      replayStats.addSegment(VIEW_ID)
+      mockWorker.processAllMessages()
 
       expect(recorderApi.getReplayStats(VIEW_ID)).toBeUndefined()
     })
