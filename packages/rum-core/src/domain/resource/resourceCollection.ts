@@ -8,6 +8,7 @@ import {
   relativeToClocks,
   assign,
   isNumber,
+  createTaskQueue,
 } from '@datadog/browser-core'
 import type { RumConfiguration } from '../configuration'
 import {
@@ -31,6 +32,7 @@ import {
   computeResourceEntryType,
   computeResourceEntrySize,
   computeResourceEntryProtocol,
+  computeResourceEntryDeliveryType,
   isResourceEntryRequestType,
   isLongDataUrl,
   sanitizeDataUrl,
@@ -41,13 +43,11 @@ export function startResourceCollection(
   lifeCycle: LifeCycle,
   configuration: RumConfiguration,
   pageStateHistory: PageStateHistory,
+  taskQueue = createTaskQueue(),
   retrieveInitialDocumentResourceTimingImpl = retrieveInitialDocumentResourceTiming
 ) {
   lifeCycle.subscribe(LifeCycleEventType.REQUEST_COMPLETED, (request: RequestCompleteEvent) => {
-    const rawEvent = processRequest(request, configuration, pageStateHistory)
-    if (rawEvent) {
-      lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, rawEvent)
-    }
+    handleResource(() => processRequest(request, configuration, pageStateHistory))
   })
 
   const performanceResourceSubscription = createPerformanceObservable(configuration, {
@@ -56,20 +56,23 @@ export function startResourceCollection(
   }).subscribe((entries) => {
     for (const entry of entries) {
       if (!isResourceEntryRequestType(entry)) {
-        const rawEvent = processResourceEntry(entry, configuration)
-        if (rawEvent) {
-          lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, rawEvent)
-        }
+        handleResource(() => processResourceEntry(entry, configuration))
       }
     }
   })
 
   retrieveInitialDocumentResourceTimingImpl(configuration, (timing) => {
-    const rawEvent = processResourceEntry(timing, configuration)
-    if (rawEvent) {
-      lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, rawEvent)
-    }
+    handleResource(() => processResourceEntry(timing, configuration))
   })
+
+  function handleResource(computeRawEvent: () => RawRumEventCollectedData<RawRumResourceEvent> | undefined) {
+    taskQueue.push(() => {
+      const rawEvent = computeRawEvent()
+      if (rawEvent) {
+        lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, rawEvent)
+      }
+    })
+  }
 
   return {
     stop: () => {
@@ -107,6 +110,7 @@ function processRequest(
         status_code: request.status,
         protocol: matchingTiming && computeResourceEntryProtocol(matchingTiming),
         url: isLongDataUrl(request.url) ? sanitizeDataUrl(request.url) : request.url,
+        delivery_type: matchingTiming && computeResourceEntryDeliveryType(matchingTiming),
       },
       type: RumEventType.RESOURCE as const,
       _dd: {
@@ -155,6 +159,7 @@ function processResourceEntry(
         url: entry.name,
         status_code: discardZeroStatus(entry.responseStatus),
         protocol: computeResourceEntryProtocol(entry),
+        delivery_type: computeResourceEntryDeliveryType(entry),
       },
       type: RumEventType.RESOURCE as const,
       _dd: {

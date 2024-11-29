@@ -150,6 +150,16 @@ export type RumActionEvent = CommonProperties &
           readonly height?: number
           [k: string]: unknown
         }
+        /**
+         * The strategy of how the auto click action name is computed
+         */
+        name_source?:
+          | 'custom_attribute'
+          | 'mask_placeholder'
+          | 'standard_attribute'
+          | 'text_content'
+          | 'mask_disallowed'
+          | 'blank'
         [k: string]: unknown
       }
       [k: string]: unknown
@@ -619,6 +629,20 @@ export type RumResourceEvent = CommonProperties &
        */
       readonly render_blocking_status?: 'blocking' | 'non-blocking'
       /**
+       * Worker phase properties
+       */
+      readonly worker?: {
+        /**
+         * Duration in nanoseconds of the resource worker phase
+         */
+        readonly duration: number
+        /**
+         * Duration in nanoseconds between start of the request and start of the worker phase
+         */
+        readonly start: number
+        [k: string]: unknown
+      }
+      /**
        * Redirect phase properties
        */
       readonly redirect?: {
@@ -706,6 +730,10 @@ export type RumResourceEvent = CommonProperties &
        * Network protocol used to fetch the resource (e.g., 'http/1.1', 'h2')
        */
       readonly protocol?: string
+      /**
+       * Delivery type of the resource
+       */
+      readonly delivery_type?: 'cache' | 'navigational-prefetch' | 'other'
       /**
        * The provider for this resource
        */
@@ -803,6 +831,14 @@ export type RumViewEvent = CommonProperties &
        * Duration in ns to the view is considered loaded
        */
       readonly loading_time?: number
+      /**
+       * Duration in ns from the moment the view was started until all the initial network requests settled
+       */
+      readonly network_settled_time?: number
+      /**
+       * Duration in ns to from the last interaction on previous view to the moment the current view was displayed
+       */
+      readonly interaction_to_next_view_time?: number
       /**
        * Type of the loading of the view
        */

@@ -1,4 +1,4 @@
-import { flattenErrorCauses, tryToGetFingerprint } from '../error/error'
+import { flattenErrorCauses, isError, tryToGetFingerprint } from '../error/error'
 import { mergeObservables, Observable } from '../../tools/observable'
 import { ConsoleApiName, globalConsole } from '../../tools/display'
 import { callMonitored } from '../../tools/monitor'
@@ -74,7 +74,7 @@ function buildConsoleLog(params: unknown[], api: ConsoleApiName, handlingStack: 
   let error: RawError | undefined
 
   if (api === ConsoleApiName.error) {
-    const firstErrorParam = find(params, (param: unknown): param is Error => param instanceof Error)
+    const firstErrorParam = find(params, isError)
 
     error = {
       stack: firstErrorParam ? toStackTraceString(computeStackTrace(firstErrorParam)) : undefined,
@@ -100,7 +100,7 @@ function formatConsoleParameters(param: unknown) {
   if (typeof param === 'string') {
     return sanitize(param)
   }
-  if (param instanceof Error) {
+  if (isError(param)) {
     return formatErrorMessage(computeStackTrace(param))
   }
   return jsonStringify(sanitize(param), undefined, 2)

@@ -266,9 +266,17 @@ describe('validateAndBuildRumConfiguration', () => {
   })
 
   describe('startSessionReplayRecordingManually', () => {
-    it('defaults to false', () => {
+    it('defaults to true if sessionReplaySampleRate is 0', () => {
       expect(
-        validateAndBuildRumConfiguration(DEFAULT_INIT_CONFIGURATION)!.startSessionReplayRecordingManually
+        validateAndBuildRumConfiguration({ ...DEFAULT_INIT_CONFIGURATION, sessionReplaySampleRate: 0 })!
+          .startSessionReplayRecordingManually
+      ).toBeTrue()
+    })
+
+    it('defaults to false if sessionReplaySampleRate is not 0', () => {
+      expect(
+        validateAndBuildRumConfiguration({ ...DEFAULT_INIT_CONFIGURATION, sessionReplaySampleRate: 50 })!
+          .startSessionReplayRecordingManually
       ).toBeFalse()
     })
 
@@ -448,7 +456,7 @@ describe('validateAndBuildRumConfiguration', () => {
       }
       const configuration = validateAndBuildRumConfiguration({
         ...DEFAULT_INIT_CONFIGURATION,
-        betaPlugins: [plugin],
+        plugins: [plugin],
       })
       expect(configuration!.plugins).toEqual([plugin])
     })
@@ -478,7 +486,7 @@ describe('serializeRumConfiguration', () => {
       trackResources: true,
       trackLongTasks: true,
       remoteConfigurationId: '123',
-      betaPlugins: [{ name: 'foo', getConfigurationTelemetry: () => ({ bar: true }) }],
+      plugins: [{ name: 'foo', getConfigurationTelemetry: () => ({ bar: true }) }],
     }
 
     type MapRumInitConfigurationKey<Key extends string> = Key extends keyof InitConfiguration
@@ -489,9 +497,7 @@ describe('serializeRumConfiguration', () => {
           ? 'track_long_task' // oops
           : Key extends 'applicationId' | 'subdomain' | 'remoteConfigurationId'
             ? never
-            : Key extends 'betaPlugins' // renamed during public beta
-              ? 'plugins'
-              : CamelToSnakeCase<Key>
+            : CamelToSnakeCase<Key>
 
     // By specifying the type here, we can ensure that serializeConfiguration is returning an
     // object containing all expected properties.

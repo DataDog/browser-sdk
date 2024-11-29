@@ -46,6 +46,7 @@ export interface RumPerformanceResourceTiming {
   startTime: RelativeTime
   duration: Duration
   fetchStart: RelativeTime
+  workerStart: RelativeTime
   domainLookupStart: RelativeTime
   domainLookupEnd: RelativeTime
   connectStart: RelativeTime
@@ -62,6 +63,7 @@ export interface RumPerformanceResourceTiming {
   nextHopProtocol?: string
   renderBlockingStatus?: string
   traceId?: string
+  deliveryType?: 'cache' | 'navigational-prefetch' | ''
   toJSON(): Omit<PerformanceEntry, 'toJSON'>
 }
 

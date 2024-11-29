@@ -46,9 +46,11 @@ export interface RawRumResourceEvent {
     dns?: ResourceEntryDetailsElement
     connect?: ResourceEntryDetailsElement
     ssl?: ResourceEntryDetailsElement
+    worker?: ResourceEntryDetailsElement
     first_byte?: ResourceEntryDetailsElement
     download?: ResourceEntryDetailsElement
     protocol?: string
+    delivery_type?: DeliveryType
   }
   _dd: {
     trace_id?: string
@@ -184,6 +186,8 @@ export interface RawRumLongTaskEvent {
   }
 }
 
+export type DeliveryType = 'cache' | 'navigational-prefetch' | 'other'
+
 export type InvokerType =
   | 'user-callback'
   | 'event-listener'
@@ -250,6 +254,7 @@ export interface RawRumActionEvent {
         width?: number
         height?: number
       }
+      name_source?: string
       position?: {
         x: number
         y: number

@@ -85,7 +85,12 @@ export { sendToExtension } from './tools/sendToExtension'
 export { runOnReadyState } from './browser/runOnReadyState'
 export { getZoneJsOriginalValue } from './tools/getZoneJsOriginalValue'
 export { instrumentMethod, instrumentSetter, InstrumentedMethodCall } from './tools/instrumentMethod'
-export { computeRawError, getFileFromStackTraceString, NO_ERROR_STACK_PRESENT_MESSAGE } from './domain/error/error'
+export {
+  computeRawError,
+  getFileFromStackTraceString,
+  isError,
+  NO_ERROR_STACK_PRESENT_MESSAGE,
+} from './domain/error/error'
 export { NonErrorPrefix } from './domain/error/error.types'
 export { Context, ContextArray, ContextValue } from './tools/serialisation/context'
 export {
@@ -107,6 +112,8 @@ export {
 } from './browser/fetchObservable'
 export { createPageExitObservable, PageExitEvent, PageExitReason, isPageExitReason } from './browser/pageExitObservable'
 export * from './browser/addEventListener'
+export { requestIdleCallback } from './tools/requestIdleCallback'
+export * from './tools/taskQueue'
 export * from './tools/timer'
 export { initConsoleObservable, resetConsoleObservable, ConsoleLog } from './domain/console/consoleObservable'
 export { createBoundedBuffer, BoundedBuffer } from './tools/boundedBuffer'

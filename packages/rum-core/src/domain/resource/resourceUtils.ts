@@ -12,9 +12,10 @@ import {
 
 import type { RumPerformanceResourceTiming } from '../../browser/performanceObservable'
 
-import type { ResourceEntryDetailsElement } from '../../rawRumEvent.types'
+import type { ResourceEntryDetailsElement, DeliveryType } from '../../rawRumEvent.types'
 
 export interface ResourceEntryDetails {
+  worker?: ResourceEntryDetailsElement
   redirect?: ResourceEntryDetailsElement
   dns?: ResourceEntryDetailsElement
   connect?: ResourceEntryDetailsElement
@@ -91,6 +92,7 @@ export function computeResourceEntryDetails(entry: RumPerformanceResourceTiming)
   const {
     startTime,
     fetchStart,
+    workerStart,
     redirectStart,
     redirectEnd,
     domainLookupStart,
@@ -106,6 +108,11 @@ export function computeResourceEntryDetails(entry: RumPerformanceResourceTiming)
   const details: ResourceEntryDetails = {
     download: formatTiming(startTime, responseStart, responseEnd),
     first_byte: formatTiming(startTime, requestStart, responseStart),
+  }
+
+  // Make sure a worker processing time is recorded
+  if (0 < workerStart && workerStart < fetchStart) {
+    details.worker = formatTiming(startTime, workerStart, fetchStart)
   }
 
   // Make sure a connection occurred
@@ -184,6 +191,15 @@ function formatTiming(origin: RelativeTime, start: RelativeTime, end: RelativeTi
  */
 export function computeResourceEntryProtocol(entry: RumPerformanceResourceTiming) {
   return entry.nextHopProtocol === '' ? undefined : entry.nextHopProtocol
+}
+
+/**
+ * Handles the 'deliveryType' property to distinguish between supported values ('cache', 'navigational-prefetch'),
+ * undefined (unsupported in some browsers), and other cases ('other' for unknown or unrecognized values).
+ * see: https://developer.mozilla.org/en-US/docs/Web/API/PerformanceResourceTiming/deliveryType
+ */
+export function computeResourceEntryDeliveryType(entry: RumPerformanceResourceTiming): DeliveryType | undefined {
+  return entry.deliveryType === '' ? 'other' : entry.deliveryType
 }
 
 export function computeResourceEntrySize(entry: RumPerformanceResourceTiming) {

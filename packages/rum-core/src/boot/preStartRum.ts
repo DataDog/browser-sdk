@@ -156,7 +156,7 @@ export function createPreStartStrategy(
         return
       }
 
-      callPluginsMethod(initConfiguration.betaPlugins, 'onInit', { initConfiguration, publicApi })
+      callPluginsMethod(initConfiguration.plugins, 'onInit', { initConfiguration, publicApi })
 
       if (
         initConfiguration.remoteConfigurationId &&
@@ -192,8 +192,8 @@ export function createPreStartStrategy(
       }
     },
 
-    updateViewName(name) {
-      bufferApiCalls.add((startRumResult) => startRumResult.updateViewName(name))
+    setViewName(name) {
+      bufferApiCalls.add((startRumResult) => startRumResult.setViewName(name))
     },
 
     setViewContext(context) {
