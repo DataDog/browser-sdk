@@ -23,8 +23,9 @@ import {
   startDeflateWorker,
 } from '../domain/deflate'
 import { isBrowserSupported } from './isBrowserSupported'
-import type { StartRecording, Strategy } from './postStartStrategy'
+import type { StartRecording } from './postStartStrategy'
 import { createPostStartStrategy } from './postStartStrategy'
+import { createPreStartStrategy } from './preStartStrategy'
 
 export function makeRecorderApi(
   startRecordingImpl: StartRecording,
@@ -42,7 +43,7 @@ export function makeRecorderApi(
   }
 
   // eslint-disable-next-line prefer-const
-  let { strategy, getStatus: getPreStartStatus } = createPreStartStrategy()
+  let { strategy, shouldStartImmediately } = createPreStartStrategy()
 
   return {
     start: (options?: StartRecordingOptions) => strategy.start(options),
@@ -114,35 +115,8 @@ export function makeRecorderApi(
       getOrCreateDeflateEncoder
     )
 
-    const preStartStatus = getPreStartStatus()
-    if (
-      preStartStatus === PreStartRecorderStatus.HadManualStart ||
-      (preStartStatus === PreStartRecorderStatus.None && !configuration.startSessionReplayRecordingManually)
-    ) {
+    if (shouldStartImmediately(configuration)) {
       strategy.start()
     }
-  }
-}
-
-const enum PreStartRecorderStatus {
-  None,
-  HadManualStart,
-  HadManualStop,
-}
-
-export function createPreStartStrategy(): { strategy: Strategy; getStatus: () => PreStartRecorderStatus } {
-  let status = PreStartRecorderStatus.None
-  return {
-    strategy: {
-      start() {
-        status = PreStartRecorderStatus.HadManualStart
-      },
-      stop() {
-        status = PreStartRecorderStatus.HadManualStop
-      },
-      getSessionReplayLink: noop as () => string | undefined,
-      isRecording: () => false,
-    },
-    getStatus: () => status,
   }
 }

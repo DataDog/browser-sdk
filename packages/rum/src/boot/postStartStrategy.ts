@@ -1,12 +1,12 @@
-import {
-  LifeCycleEventType,
-  SessionReplayState,
-  type LifeCycle,
-  type RumConfiguration,
-  type RumSessionManager,
-  type StartRecordingOptions,
-  type ViewHistory,
+import type {
+  LifeCycle,
+  RumConfiguration,
+  RumSessionManager,
+  StartRecordingOptions,
+  ViewHistory,
+  RumSession,
 } from '@datadog/browser-rum-core'
+import { LifeCycleEventType, SessionReplayState } from '@datadog/browser-rum-core'
 import { PageExitReason, runOnReadyState, type DeflateEncoder } from '@datadog/browser-core'
 import { getSessionReplayLink } from '../domain/getSessionReplayLink'
 import type { startRecording } from './startRecording'
@@ -64,12 +64,12 @@ export function createPostStartStrategy(
 
   function start(options?: StartRecordingOptions) {
     const session = sessionManager.findTrackedSession()
-    if (!session || (session.sessionReplay === SessionReplayState.OFF && (!options || !options.force))) {
+    if (canStartRecording(session, options)) {
       status = RecorderStatus.IntentToStart
       return
     }
 
-    if (status === RecorderStatus.Starting || status === RecorderStatus.Started) {
+    if (isRecordingInProgress(status)) {
       return
     }
 
@@ -97,17 +97,15 @@ export function createPostStartStrategy(
       status = RecorderStatus.Started
     })
 
-    if (options && options.force && session.sessionReplay === SessionReplayState.OFF) {
+    if (shouldForceReplay(session!, options)) {
       sessionManager.setForcedReplay()
     }
   }
 
   function stop() {
-    if (status === RecorderStatus.Stopped) {
-      return
+    if (status !== RecorderStatus.Stopped && status === RecorderStatus.Started) {
+      stopRecording?.()
     }
-
-    stopRecording?.()
 
     status = RecorderStatus.Stopped
   }
@@ -121,4 +119,16 @@ export function createPostStartStrategy(
     },
     isRecording: () => status === RecorderStatus.Started,
   }
+}
+
+function canStartRecording(session: RumSession | undefined, options?: StartRecordingOptions) {
+  return !session || (session.sessionReplay === SessionReplayState.OFF && (!options || !options.force))
+}
+
+function isRecordingInProgress(status: RecorderStatus) {
+  return status === RecorderStatus.Starting || status === RecorderStatus.Started
+}
+
+function shouldForceReplay(session: RumSession, options?: StartRecordingOptions) {
+  return options && options.force && session.sessionReplay === SessionReplayState.OFF
 }
