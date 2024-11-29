@@ -20,6 +20,26 @@ module.exports = {
       './performances/tsconfig.json',
     ],
     sourceType: 'module',
+
+    // Without this option, typescript-eslint fails to lint .js files because we don't use
+    // `allowJs: true` in the TypeScript configuration. Same issue as
+    // https://github.com/typescript-eslint/typescript-eslint/issues/9749.
+    //
+    // Enabling `allowJs` would be a better solution, but right now it's not possible because of a
+    // pretty small reason with big implications: `webpack.base.js` includes
+    // `tsconfig-paths-webpack-plugin`, and this file includes Node.js types via a <reference>
+    // directive (see https://unpkg.com/browse/tsconfig-paths-webpack-plugin@4.2.0/lib/plugin.d.ts).
+    //
+    // Because of this, Node.js types are included in the whole project, and because some of them
+    // are slightly different from the DOM/Browser types, some annoying typecheck errors are raised.
+    //
+    // So, ideally, we should:
+    // * add `allowJs: true` in the TypeScript configuration
+    // * have different tsconfig.json configurations for packages and scripts
+    // * when typechecking, run `tsc` multiple time with each configuration (like we do for the
+    //   developer-extension)
+    // * then remove this option
+    disallowAutomaticSingleRunInference: true,
   },
   plugins: [
     'eslint-plugin-import',
@@ -60,7 +80,6 @@ module.exports = {
     'no-return-await': 'error',
     'no-sequences': 'error',
     'no-template-curly-in-string': 'error',
-    'no-throw-literal': 'error',
     'no-undef-init': 'error',
     'no-unreachable': 'error',
     'no-useless-concat': 'error',
@@ -94,14 +113,12 @@ module.exports = {
         'ts-check': 'allow-with-description',
       },
     ],
-    '@typescript-eslint/ban-types': [
+    '@typescript-eslint/no-restricted-types': [
       'error',
       {
         types: {
           /* eslint-disable id-denylist */
           Object: { message: 'Avoid using the `Object` type. Did you mean `object`?' },
-          object: false,
-          Function: { message: 'Avoid using the `Function` type. Prefer a specific function type, like `() => void`.' },
           Boolean: { message: 'Avoid using the `Boolean` type. Did you mean `boolean`?' },
           Number: { message: 'Avoid using the `Number` type. Did you mean `number`?' },
           String: { message: 'Avoid using the `String` type. Did you mean `string`?' },
@@ -154,6 +171,7 @@ module.exports = {
     '@typescript-eslint/no-unsafe-argument': 'off',
     '@typescript-eslint/no-unsafe-member-access': 'off',
     '@typescript-eslint/no-unused-vars': ['error', { args: 'all', argsIgnorePattern: '^_', vars: 'all' }],
+    '@typescript-eslint/no-unused-expressions': 'off',
     '@typescript-eslint/triple-slash-reference': ['error', { path: 'always', types: 'prefer-import', lib: 'always' }],
 
     'import/no-cycle': 'error',
@@ -281,7 +299,7 @@ module.exports = {
         node: true,
       },
       rules: {
-        '@typescript-eslint/no-var-requires': 'off',
+        '@typescript-eslint/no-require-imports': 'off',
       },
     },
     {
