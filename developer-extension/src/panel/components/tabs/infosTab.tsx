@@ -9,11 +9,13 @@ import { TabBase } from '../tabBase'
 import { createLogger } from '../../../common/logger'
 import { formatDate } from '../../formatNumber'
 import { useSettings } from '../../hooks/useSettings'
+import { useEnvInfo } from '../../hooks/useEnvInfo'
 
 const logger = createLogger('infosTab')
 
 export function InfosTab() {
   const infos = useSdkInfos()
+  const env = useEnvInfo()
   const [settings, setSetting] = useSettings()
 
   if (!infos) {
@@ -54,6 +56,7 @@ export function InfosTab() {
             </>
           )}
         </Columns.Column>
+        <Columns.Column title="Env">{env}</Columns.Column>
         <Columns.Column title="RUM">
           {infos.rum && (
             <>
