@@ -5,9 +5,7 @@ export interface MockStorage {
   setCurrentValue: (key: string, value: string) => void
 }
 
-export function mockCookie(): MockStorage {
-  let cookie = ''
-
+export function mockCookie(cookie: string = ''): MockStorage {
   return {
     getSpy: spyOnProperty(document, 'cookie', 'get').and.callFake(() => cookie),
     setSpy: spyOnProperty(document, 'cookie', 'set').and.callFake((newCookie) => (cookie = newCookie)),

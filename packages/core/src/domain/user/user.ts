@@ -30,3 +30,7 @@ export function checkUser(newUser: User): boolean {
   }
   return isValid
 }
+
+export function generateAnonymousId() {
+  return Math.floor(Math.random() * Math.pow(2, 53)).toString(36)
+}
