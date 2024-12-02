@@ -1,4 +1,5 @@
 import * as os from 'os'
+import type { BrowserContext } from '@playwright/test'
 
 // To keep tests sane, ensure we got a fixed list of possible platforms and browser names.
 const validPlatformNames = ['windows', 'macos', 'linux', 'ios', 'android'] as const
@@ -79,16 +80,10 @@ export async function flushBrowserLogs() {
   })
 }
 
+// TODO, see if we can use the browser context to clear cookies or we should keep the previous hack
 // wdio method does not work for some browsers
-export function deleteAllCookies() {
-  return browser.execute(() => {
-    const cookies = document.cookie.split(';')
-    for (const cookie of cookies) {
-      const eqPos = cookie.indexOf('=')
-      const name = eqPos > -1 ? cookie.substr(0, eqPos) : cookie
-      document.cookie = `${name}=;expires=Thu, 01 Jan 1970 00:00:00 GMT;samesite=strict`
-    }
-  })
+export function deleteAllCookies(context: BrowserContext) {
+  return context.clearCookies()
 }
 
 export function setCookie(name: string, value: string, expiresDelay: number = 0) {
