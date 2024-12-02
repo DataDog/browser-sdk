@@ -118,7 +118,6 @@ describe('session in cookie strategy with anonymous user tracking', () => {
   beforeEach(() => {
     mockExperimentalFeatures([ExperimentalFeature.ANONYMOUS_USER_TRACKING])
     cookieStorageStrategy = initCookieStrategy({})
-    spyOn(Math, 'random').and.returnValue(1)
   })
 
   afterEach(() => {

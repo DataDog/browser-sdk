@@ -34,8 +34,7 @@ function persistInLocalStorage(sessionState: SessionState) {
 
 function retrieveSessionFromLocalStorage(): SessionState {
   const sessionString = localStorage.getItem(SESSION_STORE_KEY)
-  const sessionState = toSessionState(sessionString)
-  return sessionState
+  return toSessionState(sessionString)
 }
 
 function expireSessionFromLocalStorage(previousSessionState: SessionState) {

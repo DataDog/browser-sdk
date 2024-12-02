@@ -1,4 +1,3 @@
-import { mockCookie } from '../../../test'
 import { display } from '../../tools/display'
 import { checkUser, generateAnonymousId, sanitizeUser } from './user'
 import type { User } from './user.types'
@@ -40,12 +39,7 @@ describe('check user function', () => {
 })
 
 describe('check anonymous id storage functions', () => {
-  beforeAll(() => {
-    mockCookie()
-  })
-
   it('should generate a random anonymous id', () => {
-    const id = generateAnonymousId()
-    expect(id).toMatch(/^[a-z0-9]+$/)
+    expect(generateAnonymousId()).toMatch(/^[a-z0-9]+$/)
   })
 })
