@@ -377,6 +377,8 @@ export function makeRumPublicApi(
     return buildCommonContext(globalContextManager, userContextManager, recorderApi)
   }
 
+  let setUser: (user: User) => void
+
   let strategy = createPreStartStrategy(
     options,
     getCommonContext,
@@ -405,6 +407,7 @@ export function makeRumPublicApi(
         customVitalsState
       )
 
+      setUser = startRumResult.setUser
       recorderApi.onRumStart(
         startRumResult.lifeCycle,
         configuration,
@@ -510,6 +513,7 @@ export function makeRumPublicApi(
       if (checkUser(newUser)) {
         userContextManager.setContext(sanitizeUser(newUser as Context))
       }
+      setUser(newUser)
       addTelemetryUsage({ feature: 'set-user' })
     }),
 
@@ -518,6 +522,9 @@ export function makeRumPublicApi(
     setUserProperty: monitor((key, property) => {
       const sanitizedProperty = sanitizeUser({ [key]: property })[key]
       userContextManager.setContextProperty(key, sanitizedProperty)
+
+      setUser(userContextManager.getContext())
+
       addTelemetryUsage({ feature: 'set-user' })
     }),
 
