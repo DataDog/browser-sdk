@@ -8,6 +8,11 @@ export type BackgroundToDevtoolsMessage = {
   message: SdkMessage
 }
 
+export type BackgroundTestResult = {
+  id: string
+  status: 'running' | 'passed' | 'failed'
+}
+
 export type DevtoolsToBackgroundMessage = {
   type: 'update-net-request-rules'
   options: NetRequestRulesOptions
@@ -41,6 +46,10 @@ export type SdkMessage =
         record: BrowserRecord
         segment: BrowserSegmentMetadata
       }
+    }
+  | {
+      type: 'test-result'
+      payload: BackgroundTestResult
     }
 
 export type EventCollectionStrategy = 'sdk' | 'requests'
