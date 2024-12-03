@@ -1,6 +1,7 @@
 import React, { useEffect, useReducer, useState } from 'react'
 import { Button, Grid, Text } from '@mantine/core'
 import type { BackgroundTestResult } from 'src/common/extension.types'
+import { useEnvInfo } from '../../../hooks/useEnvInfo'
 import { onBackgroundMessage } from '../../../backgroundScriptConnection'
 import { evalInWindow } from '../../../evalInWindow'
 import { TabBase } from '../../tabBase'
@@ -114,6 +115,7 @@ const sanitize = function (s: string) {
 
 export function DiagnosticTab() {
   const [results, dispatchResult] = useReducer(resultReducer, {})
+  const env = useEnvInfo()
   useSetupTestInBackgroundScript(dispatchResult)
 
   function runTest(test: Test | Test[]) {
@@ -155,6 +157,18 @@ export function DiagnosticTab() {
     <TabBase>
       <Grid mt="sm" mx="sm">
         <Grid.Col span={{ md: 8, sm: 12 }}>
+          <Text size={'xl'}>Framework</Text>
+          {env?.map((e) => (
+            <Text>
+              {e.name} : {e.version}
+            </Text>
+          ))}
+        </Grid.Col>
+      </Grid>
+
+      <Grid mt="sm" mx="sm">
+        <Grid.Col span={{ md: 8, sm: 12 }}>
+          <Text size={'xl'}>Diagnostic</Text>
           <Button onClick={onClick}>Run Diagnostic</Button>
           Test run: {Object.keys(results).length} (
           {Object.values(results).filter((result) => result.status === 'passed').length} passed,{' '}
