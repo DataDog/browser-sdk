@@ -121,6 +121,7 @@ export class MockResponse implements Response {
   blob = notYetImplemented
   formData = notYetImplemented
   json = notYetImplemented
+  bytes = notYetImplemented
 
   /* eslint-enable @typescript-eslint/member-ordering */
   get ok() {
