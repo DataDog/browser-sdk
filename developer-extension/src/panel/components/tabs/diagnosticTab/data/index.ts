@@ -3,7 +3,7 @@ import { data as custom } from './custom'
 import { data as es5 } from './es5'
 import { data as es6 } from './es6'
 import { data as es2016plus } from './es2016plus'
-import { data as esnext } from './esnext'
+// import { data as esnext } from './esnext'
 
 export const data: Test[] = [
   {

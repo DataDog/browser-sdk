@@ -7,7 +7,7 @@ import { data as testData } from './data'
 
 // This is not a unit test
 // eslint-disable-next-line local-rules/disallow-test-import-export-from-src
-import { TestResult } from './testResult'
+import { TestResult, TestSummary } from './testResult'
 
 export function DiagnosticTab() {
   const { reset, results, run } = useTest()
@@ -36,9 +36,7 @@ export function DiagnosticTab() {
         <Grid.Col span={{ md: 8, sm: 12 }}>
           <Text size={'xl'}>Diagnostic</Text>
           <Button onClick={onClickRunDiagnostic}>Run Diagnostic</Button>
-          Test run: {Object.keys(results).length} (
-          {Object.values(results).filter((result) => result.status === 'passed').length} passed,{' '}
-          {Object.values(results).filter((result) => result.status === 'failed').length} failed)
+          <TestSummary results={results} />
           <TestResult test={testData} results={results} />
         </Grid.Col>
       </Grid>

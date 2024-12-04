@@ -44,3 +44,25 @@ const STATUS_TO_EMOJI = {
 function Status({ status }: { status: BackgroundTestResult['status'] }) {
   return <Text component="span">{STATUS_TO_EMOJI[status] || '❓'}</Text>
 }
+
+export function TestSummary({ results }: { results: { [key: string]: BackgroundTestResult } }) {
+  const counts = countTestbyStatus(results)
+
+  return (
+    <Text component="span">{`Test Run: ${Object.keys(results).length} (${counts.passed} passed, ${counts.running} running, ${counts.failed} failed)`}</Text>
+  )
+}
+
+export function countTestbyStatus(results: { [key: string]: BackgroundTestResult }) {
+  const counts = {
+    passed: 0,
+    failed: 0,
+    running: 0,
+  }
+
+  for (const result of Object.values(results)) {
+    counts[result.status]++
+  }
+
+  return counts
+}
