@@ -49,9 +49,8 @@ function openSurvey(vocConfig: VocConfig, onSavedSurvey: (payload: any) => void)
   display.log('openSurvey', vocConfig)
 
   const iframe = createIframe()
-  iframe.onload = () => showIframe(iframe)
-  // iframe.src = `https://localhost:8443/static-apps/voice-of-customer/?vocConfig=${encodeURIComponent(JSON.stringify(vocConfig))}`
-  iframe.src = `https://voice-of-customer-676e09666aefef944418bb3f8d752453.static-app.us1.staging.dog?vocConfig=${encodeURIComponent(JSON.stringify(vocConfig))}`
+  iframe.src = `https://localhost:8443/static-apps/voice-of-customer/?vocConfig=${encodeURIComponent(JSON.stringify(vocConfig))}`
+  // iframe.src = `https://voice-of-customer-676e09666aefef944418bb3f8d752453.static-app.us1.staging.dog?vocConfig=${encodeURIComponent(JSON.stringify(vocConfig))}`
   document.body.appendChild(iframe)
 
   // Add listener for close message from the iframe
@@ -59,6 +58,9 @@ function openSurvey(vocConfig: VocConfig, onSavedSurvey: (payload: any) => void)
     switch (event.data?.type) {
       case 'dd-rum-close-survey':
         closeIframe(iframe)
+        break
+      case 'dd-rum-open-survey':
+        showIframe(iframe)
         break
       case 'dd-rum-survey-response':
         display.log('Survey response:', event.data.payload)
@@ -73,8 +75,6 @@ function openSurvey(vocConfig: VocConfig, onSavedSurvey: (payload: any) => void)
       }
     }
   })
-
-  showIframe(iframe)
 }
 
 function closeIframe(iframe: HTMLIFrameElement) {
