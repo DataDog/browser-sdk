@@ -37,7 +37,13 @@ const SVELTE: Environment = {
 const SENTRY: Environment = {
   name: 'Sentry',
   object: '__SENTRY__',
-  version: 'target => target.hub._version',
+  version: 'target => target.hub?._version || target.version ',
 }
 
-export const ENVIRONMENTS = [REACT, ANGULAR, VUE, SVELTE, SENTRY]
+const SEGMENT: Environment = {
+  name: 'Segment',
+  object: 'analytics',
+  version: 'target => target.VERSION',
+}
+
+export const ENVIRONMENTS = [REACT, ANGULAR, VUE, SVELTE, SENTRY, SEGMENT]

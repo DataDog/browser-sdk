@@ -53,8 +53,8 @@ export function useEnvInfo() {
         }
       }
 
-      return [${ENVIRONMENTS?.map((env) => `getEnvironment("${env.name}", "${env.property}", "${env.attribute}", "${env.object}", ${env.version})`).join(',')}]
-              .filter(env => !!env)
+      return [${ENVIRONMENTS?.map((env) => `getEnvironment("${env.name}", "${env.property ?? ''}", "${env.attribute ?? ''}", "${env.object ?? ''}", ${env.version})`).join(',')}]
+        .filter(env => !!env)
       `
     )
       .then((res) => setEnv(res as any))
