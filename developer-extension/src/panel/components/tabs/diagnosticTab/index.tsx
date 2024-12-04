@@ -157,7 +157,7 @@ export function DiagnosticTab() {
     <TabBase>
       <Grid mt="sm" mx="sm">
         <Grid.Col span={{ md: 8, sm: 12 }}>
-          <Text size={'xl'}>Framework</Text>
+          <Text size={'xl'}>Libraries:</Text>
           {env?.map((e) => (
             <Text>
               {e.name} : {e.version}

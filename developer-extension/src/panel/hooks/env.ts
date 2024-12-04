@@ -3,6 +3,7 @@ export interface Environment {
   version?: string
   attribute?: string
   property?: string
+  object?: string
 }
 
 const REACT: Environment = {
@@ -17,20 +18,26 @@ const ANGULAR: Environment = {
   name: 'Angular',
   attribute: 'ng-version',
   // eslint-disable-next-line quotes
-  version: `node => node.getAttribute('ng-version')`,
+  version: `target => target.getAttribute('ng-version')`,
 }
 
 // document.querySelector("*[data-v-app]").__vue_app__.version
 const VUE: Environment = {
   name: 'Vue',
   attribute: 'data-v-app',
-  version: 'node => node.__vue_app__?.version',
+  version: 'target => target.__vue_app__?.version',
 }
 
 const SVELTE: Environment = {
   name: 'Svelte',
   property: '__svelte_meta',
-  version: 'node => "unknown"',
+  version: 'target => "unknown"',
 }
 
-export const ENVIRONMENTS = [REACT, ANGULAR, VUE, SVELTE]
+const SENTRY: Environment = {
+  name: 'Sentry',
+  object: '__SENTRY__',
+  version: 'target => target.hub._version',
+}
+
+export const ENVIRONMENTS = [REACT, ANGULAR, VUE, SVELTE, SENTRY]

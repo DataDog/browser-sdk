@@ -66,7 +66,7 @@ export function Panel() {
           >
             Settings
           </Tabs.Tab>
-          <Tabs.Tab value={PanelTabs.Dignostics}>Disgnostic</Tabs.Tab>
+          <Tabs.Tab value={PanelTabs.Dignostics}>Diagnostic</Tabs.Tab>
         </div>
         <Anchor
           className={classes.link}
