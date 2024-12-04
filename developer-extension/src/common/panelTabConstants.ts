@@ -1,9 +1,9 @@
 export const enum PanelTabs {
+  Diagnostics = 'diagnostics',
   Events = 'events',
   Infos = 'infos',
-  Settings = 'settings',
   Replay = 'replay',
-  Dignostics = 'diagnostics',
+  Settings = 'settings',
 }
 
 export const DEFAULT_PANEL_TAB = PanelTabs.Events

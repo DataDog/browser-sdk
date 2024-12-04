@@ -1,17 +1,18 @@
 import React from 'react'
-import { Button, Grid, Text } from '@mantine/core'
+import { Box, Button, Flex, Grid } from '@mantine/core'
 import { setupTestResultCallback, useTest } from '../../../hooks/useTest'
-import { useEnvInfo } from '../../../hooks/useEnvInfo'
 import { TabBase } from '../../tabBase'
+import { Columns } from '../../columns'
 import { data as testData } from './data'
+import { ApiDiagnosticsTable } from './apiDiagnosticsTable'
+import { EnvironmentInfoTable } from './environmentInfoTable'
 
 // This is not a unit test
 // eslint-disable-next-line local-rules/disallow-test-import-export-from-src
 import { TestResult, TestSummary } from './testResult'
 
-export function DiagnosticTab() {
+export function DiagnosticsTab() {
   const { reset, results, run } = useTest()
-  const env = useEnvInfo()
 
   function onClickRunDiagnostic() {
     reset()
@@ -21,25 +22,25 @@ export function DiagnosticTab() {
 
   return (
     <TabBase>
-      <Grid mt="sm" mx="sm">
-        <Grid.Col span={{ md: 8, sm: 12 }}>
-          <Text size={'xl'}>Libraries:</Text>
-          {env?.map((e) => (
-            <Text>
-              {e.name} : {e.version}
-            </Text>
-          ))}
-        </Grid.Col>
-      </Grid>
-
-      <Grid mt="sm" mx="sm">
-        <Grid.Col span={{ md: 8, sm: 12 }}>
-          <Text size={'xl'}>Diagnostic</Text>
-          <Button onClick={onClickRunDiagnostic}>Run Diagnostic</Button>
-          <TestSummary results={results} />
-          <TestResult test={testData} results={results} />
-        </Grid.Col>
-      </Grid>
+      <Columns>
+        <Columns.Column title='Behavior'>
+          <Grid mt="sm" mx="sm">
+            <Grid.Col span={{ md: 8, sm: 12 }}>
+              <Flex direction='column'>
+                <Button onClick={onClickRunDiagnostic}>Run Diagnostic</Button>
+                <Box style={{ width: '1px', height: '1em ' }}></Box>
+                <TestSummary results={results} />
+                <Box style={{ width: '1px', height: '1em ' }}></Box>
+                <TestResult test={testData} results={results} />
+              </Flex>
+            </Grid.Col>
+          </Grid>
+        </Columns.Column>
+        <Columns.Column title='Environment'>
+          <EnvironmentInfoTable />
+          <ApiDiagnosticsTable />
+        </Columns.Column>
+      </Columns>
     </TabBase>
   )
 }

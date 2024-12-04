@@ -13,7 +13,7 @@ import { SettingsTab } from './tabs/settingsTab'
 import { InfosTab } from './tabs/infosTab'
 import { EventsTab, DEFAULT_COLUMNS } from './tabs/eventsTab'
 import { ReplayTab } from './tabs/replayTab'
-import { DiagnosticTab } from './tabs/diagnosticTab'
+import { DiagnosticsTab } from './tabs/diagnosticTab'
 
 import * as classes from './panel.module.css'
 
@@ -66,7 +66,7 @@ export function Panel() {
           >
             Settings
           </Tabs.Tab>
-          <Tabs.Tab value={PanelTabs.Dignostics}>Diagnostic</Tabs.Tab>
+          <Tabs.Tab value={PanelTabs.Diagnostics}>Diagnostics</Tabs.Tab>
         </div>
         <Anchor
           className={classes.link}
@@ -97,8 +97,8 @@ export function Panel() {
       <Tabs.Panel value={PanelTabs.Settings} className={classes.tab}>
         <SettingsTab />
       </Tabs.Panel>
-      <Tabs.Panel value={PanelTabs.Dignostics} className={classes.tab}>
-        <DiagnosticTab />
+      <Tabs.Panel value={PanelTabs.Diagnostics} className={classes.tab}>
+        <DiagnosticsTab />
       </Tabs.Panel>
     </Tabs>
   )
