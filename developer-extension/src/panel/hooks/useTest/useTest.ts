@@ -25,18 +25,18 @@ function resultReducer(state: { [key: string]: BackgroundTestResult }, action: B
 export function useTest() {
   const [results, dispatchResult] = useReducer(resultReducer, {})
   const reset = useCallback(() => dispatchResult('reset'), [])
-  const run = useCallback((test: Test | Test[]) => {
+  const run = useCallback((test: Test | Test[], prefix: string = '') => {
     if (Array.isArray(test)) {
-      return test.forEach((test) => run(test))
+      return test.forEach((test) => run(test, prefix))
     }
 
     if (test.subtests) {
-      return test.subtests.forEach((subtest) => run(subtest))
+      return test.subtests.forEach((subtest) => run(subtest, `${prefix}${test.name} > `))
     }
 
     if (test.exec) {
       const name = test.name
-      const id = sanitize(name)
+      const id = sanitize(`${prefix}${name}`)
 
       dispatchResult({ id, status: 'running' })
       const expr = extractTestCode(test.exec)

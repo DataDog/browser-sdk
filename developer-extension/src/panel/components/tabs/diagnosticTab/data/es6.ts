@@ -8656,9 +8656,8 @@ export const data = [
       ].map(function (m) {
         const eqFn = ' === "function"'
         const name = m.name
-        m.name = `%TypedArray%${name}`
         // TODO: fix this eval
-        m.exec = `(function(){return false;})()`
+        // m.name = `%TypedArray%${name}`
         // m.exec = eval(
         //   `0,function(){/*\nreturn typeof ${[
         //     'Int8Array',
@@ -8672,7 +8671,14 @@ export const data = [
         //     'Float64Array',
         //   ].join(`${name + eqFn} &&\n    typeof `)}${name}${eqFn};\n*/}`
         // )
-        return m
+        return {
+          name: `%TypedArray%${name}`,
+          category: m.category,
+          exec() {
+            return false
+          },
+          res: m.res,
+        }
       })
     ),
   },

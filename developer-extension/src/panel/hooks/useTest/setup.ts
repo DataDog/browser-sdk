@@ -7,13 +7,37 @@ const TEST_RESULT_CALLBACK = '__dd_testResultCallback'
 
 const logger = createLogger('DiagnosticTab')
 
+const ENV = `
+var global = window
+
+global.__createIterableObject = function (arr, methods) {
+  methods = methods || {};
+  if (typeof Symbol !== 'function' || !Symbol.iterator) {
+    return {};
+  }
+  arr.length++;
+  var iterator = {
+    next: function() {
+      return { value: arr.shift(), done: arr.length <= 0 };
+    },
+    'return': methods['return'],
+    'throw': methods['throw']
+  };
+  var iterable = {};
+  iterable[Symbol.iterator] = function(){ return iterator; }
+  return iterable;
+}
+`
+
 export function testScriptSync(expr: string, id: string) {
   try {
     void evalInWindow(`
       (function () {
+        ${ENV}
         try {
           ${expr}
         } catch(err) {
+          console.error('${id}', err)
           return false
         }
       })() ? ${TEST_RESULT_CALLBACK}('${id}', 'passed') : ${TEST_RESULT_CALLBACK}('${id}', 'failed')
@@ -28,6 +52,7 @@ export function testScriptAsync(expr: string, id: string) {
   try {
     void evalInWindow(`
       (function () {
+        ${ENV}
         var asyncTestPassed = () => ${TEST_RESULT_CALLBACK}('${id}', 'passed')
         var asyncTestFailed = () => ${TEST_RESULT_CALLBACK}('${id}', 'failed')
         try {

@@ -22,8 +22,8 @@ export const data: Test[] = [
     name: 'ECMAScript 2016+',
     subtests: es2016plus,
   },
-  {
-    name: 'ECMAScript Next',
-    subtests: esnext,
-  },
+  // {
+  //   name: 'ECMAScript Next',
+  //   subtests: esnext,
+  // },
 ]

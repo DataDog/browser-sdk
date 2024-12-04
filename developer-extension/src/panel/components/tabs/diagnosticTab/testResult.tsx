@@ -7,12 +7,14 @@ import type { Test } from '../../../hooks/useTest'
 export function TestResult({
   test,
   results,
+  prefix = '',
 }: {
   test: Test | Test[]
   results: { [key: string]: BackgroundTestResult }
+  prefix?: string
 }) {
   if (Array.isArray(test)) {
-    return test.map((test) => <TestResult key={test.name} test={test} results={results} />)
+    return test.map((test) => <TestResult key={test.name} test={test} results={results} prefix={prefix} />)
   }
 
   if (test.subtests) {
@@ -20,7 +22,7 @@ export function TestResult({
       <>
         <Text fw={500}>{test.name}</Text>
         <div style={{ marginLeft: 20 }}>
-          <TestResult test={test.subtests} results={results} />
+          <TestResult test={test.subtests} results={results} prefix={`${prefix}${test.name} > `} />
         </div>
       </>
     )
@@ -28,7 +30,7 @@ export function TestResult({
 
   return (
     <Text>
-      {test.name}: <Status status={results[sanitize(test.name)]?.status} />
+      {test.name}: <Status status={results[sanitize(prefix + test.name)]?.status} />
     </Text>
   )
 }
