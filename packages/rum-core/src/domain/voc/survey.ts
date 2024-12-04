@@ -49,7 +49,6 @@ function openSurvey(vocConfig: VocConfig, onSavedSurvey: (payload: any) => void)
   display.log('openSurvey', vocConfig)
 
   const iframe = createIframe()
-  iframe.onload = () => showIframe(iframe)
   iframe.src = `https://localhost:8443/static-apps/voice-of-customer/?vocConfig=${encodeURIComponent(JSON.stringify(vocConfig))}`
   // iframe.src = `https://voice-of-customer-676e09666aefef944418bb3f8d752453.static-app.us1.staging.dog?vocConfig=${encodeURIComponent(JSON.stringify(vocConfig))}`
   document.body.appendChild(iframe)
@@ -61,7 +60,11 @@ function openSurvey(vocConfig: VocConfig, onSavedSurvey: (payload: any) => void)
         closeIframe(iframe)
         break
       case 'dd-rum-open-survey':
-        showIframe(iframe)
+        const { width, height } = event.data.payload
+        display.log('Open survey:', event)
+        // iframe.style.width = `${width}px`
+        // iframe.style.height = `${height}px`
+        // showIframe(iframe, 0)
         break
       case 'dd-rum-survey-response':
         display.log('Survey response:', event.data.payload)
@@ -70,8 +73,11 @@ function openSurvey(vocConfig: VocConfig, onSavedSurvey: (payload: any) => void)
         break
       case 'iframe-resize': {
         const { width, height } = event.data.payload
-        iframe.style.width = `${width}px`
-        iframe.style.height = `${height}px`
+        if (width > 0 && height > 0) {
+          iframe.style.width = `${width}px`
+          iframe.style.height = `${height}px`
+          showIframe(iframe, 1)
+        }
         break
       }
     }
@@ -96,7 +102,8 @@ function closeIframe(iframe: HTMLIFrameElement) {
   )
 }
 
-function showIframe(iframe: HTMLIFrameElement) {
+function showIframe(iframe: HTMLIFrameElement, opacity: number) {
+  display.log('iframe', iframe)
   if (!iframe) {
     display.warn('Iframe not initialized. Call injectIframe() first.')
     return
@@ -117,7 +124,7 @@ function createIframe() {
     width: '300px',
     height: '292px',
     border: 'none',
-    display: 'none',
+    display: 'block',
     opacity: '0',
     boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
     transition: 'opacity 0.3s ease, transform 0.5s ease',
