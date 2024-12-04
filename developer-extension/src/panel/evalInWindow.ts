@@ -52,7 +52,7 @@ export async function runInWindow<Result>(action: () => Result): Promise<Result>
       throw new Error('Failed to evaluate async code: exceeded retry time limit')
     }
 
-    await wait(10);
+    await wait(10)
 
     result = await evalInInspectedWindow(`(() => {
         const result = window['${resultVar}']

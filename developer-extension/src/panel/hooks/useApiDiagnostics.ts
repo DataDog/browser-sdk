@@ -3,19 +3,23 @@ import { runInWindow } from '../evalInWindow'
 
 export type ApiDiagnosticLevel = 'info' | 'warning' | 'error'
 
-export type ApiPathComponent = {
-  type: 'prototype'
-  name: string
-} | {
-  type: 'value'
-  name: string
-} | {
-  type: 'get'
-  name: string
-} | {
-  type: 'set'
-  name: string
-}
+export type ApiPathComponent =
+  | {
+      type: 'prototype'
+      name: string
+    }
+  | {
+      type: 'value'
+      name: string
+    }
+  | {
+      type: 'get'
+      name: string
+    }
+  | {
+      type: 'set'
+      name: string
+    }
 
 export type ApiDiagnostic = {
   subject: ApiPathComponent[]
@@ -23,21 +27,23 @@ export type ApiDiagnostic = {
   message: string
 }
 
-export type ApiDiagnosticsResult = {
-  status: 'success'
-  diagnostics: ApiDiagnostic[]
-} | {
-  status: 'error'
-  error: Error
-}
+export type ApiDiagnosticsResult =
+  | {
+      status: 'success'
+      diagnostics: ApiDiagnostic[]
+    }
+  | {
+      status: 'error'
+      error: Error
+    }
 
 export function useApiDiagnostics() {
   const [result, setResult] = useState<ApiDiagnosticsResult | undefined>(undefined)
 
   useEffect(() => {
     getDiagnostics()
-      .then(diagnostics => setResult({ status: 'success', diagnostics }))
-      .catch(error => setResult({ status: 'error', error }))
+      .then((diagnostics) => setResult({ status: 'success', diagnostics }))
+      .catch((error) => setResult({ status: 'error', error }))
   }, [])
 
   return result
@@ -46,16 +52,14 @@ export function useApiDiagnostics() {
 type ApiDiagnosticReporter = (diagnostic: ApiDiagnostic) => void
 
 type PropertyToCheck = {
-  path: ApiPathComponent[],
-  cleanValue: unknown,
-  usedValue: unknown,
+  path: ApiPathComponent[]
+  cleanValue: unknown
+  usedValue: unknown
 }
 
 function getDiagnostics(): Promise<ApiDiagnostic[]> {
   return runInWindow((): Promise<ApiDiagnostic[]> => {
-    const withCleanWindow = async <Result,>(
-      callback: (window: Window
-      ) => Result): Promise<Result> => {
+    const withCleanWindow = async <Result>(callback: (window: Window) => Result): Promise<Result> => {
       let container
       try {
         container = document.createElement('div')
@@ -69,13 +73,13 @@ function getDiagnostics(): Promise<ApiDiagnostic[]> {
         iframe.style.position = 'absolute'
         iframe.style.pointerEvents = 'none'
 
-        const loaded = new Promise(resolve => {
+        const loaded = new Promise((resolve) => {
           iframe.addEventListener('load', resolve)
         })
 
         shadowRoot.appendChild(iframe)
         document.body.appendChild(container)
-        await loaded;
+        await loaded
 
         if (!iframe.contentWindow) {
           throw new Error('Failed to load diagnostic iframe')
@@ -102,12 +106,7 @@ function getDiagnostics(): Promise<ApiDiagnostic[]> {
       return { object: prototype, name }
     }
 
-    const checkValue = (
-      path: ApiPathComponent[],
-      clean: any,
-      used: any,
-      report: ApiDiagnosticReporter,
-    ) => {
+    const checkValue = (path: ApiPathComponent[], clean: any, used: any, report: ApiDiagnosticReporter) => {
       if (!Object.is(clean, used)) {
         report({
           subject: path,
@@ -123,7 +122,7 @@ function getDiagnostics(): Promise<ApiDiagnostic[]> {
       _clean: Function,
       // eslint-disable-next-line @typescript-eslint/ban-types
       used: Function,
-      report: ApiDiagnosticReporter,
+      report: ApiDiagnosticReporter
     ) => {
       if (!used.toString().includes('[native code]')) {
         report({
@@ -138,7 +137,7 @@ function getDiagnostics(): Promise<ApiDiagnostic[]> {
       path: ApiPathComponent[],
       clean: object | null,
       used: object | null,
-      report: ApiDiagnosticReporter,
+      report: ApiDiagnosticReporter
     ) => {
       if (clean === null && used === null) {
         return
@@ -159,7 +158,7 @@ function getDiagnostics(): Promise<ApiDiagnostic[]> {
       path: ApiPathComponent[],
       clean: object,
       used: object,
-      visited: Set<object>,
+      visited: Set<object>
     ): PropertyToCheck[] => {
       // Do not visit objects we've already visited.
       if (visited.has(clean)) {
@@ -213,7 +212,7 @@ function getDiagnostics(): Promise<ApiDiagnostic[]> {
     const checkProperty = (
       property: PropertyToCheck,
       visited: Set<object>,
-      report: ApiDiagnosticReporter,
+      report: ApiDiagnosticReporter
     ): PropertyToCheck[] => {
       const { path, cleanValue, usedValue } = property
 
@@ -233,7 +232,7 @@ function getDiagnostics(): Promise<ApiDiagnostic[]> {
         case 'bigint':
         case 'string':
         case 'symbol':
-          checkValue(path, cleanValue, usedValue, report);
+          checkValue(path, cleanValue, usedValue, report)
           return []
 
         case 'object':
@@ -269,12 +268,7 @@ function getDiagnostics(): Promise<ApiDiagnostic[]> {
       // We visit properties in BFS order to ensure that we generate names
       // with as few path components as possible when an object is reachable
       // via multiple paths. (Not uncommon for prototypes!)
-      const properties = collectPropertiesToCheck(
-        [{ type: 'value', name: 'window' }],
-        clean,
-        window,
-        visited
-      )
+      const properties = collectPropertiesToCheck([{ type: 'value', name: 'window' }], clean, window, visited)
       while (properties.length) {
         const property = properties.shift()!
         properties.push(...checkProperty(property, visited, reporter))

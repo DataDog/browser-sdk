@@ -23,10 +23,10 @@ export function DiagnosticsTab() {
   return (
     <TabBase>
       <Columns>
-        <Columns.Column title='Behavior'>
+        <Columns.Column title="Behavior">
           <Grid mt="sm" mx="sm">
             <Grid.Col span={{ md: 8, sm: 12 }}>
-              <Flex direction='column'>
+              <Flex direction="column">
                 <Button onClick={onClickRunDiagnostic}>Run Diagnostic</Button>
                 <Box style={{ width: '1px', height: '1em ' }}></Box>
                 <TestSummary results={results} />
@@ -36,7 +36,7 @@ export function DiagnosticsTab() {
             </Grid.Col>
           </Grid>
         </Columns.Column>
-        <Columns.Column title='Environment'>
+        <Columns.Column title="Environment">
           <EnvironmentInfoTable />
           <ApiDiagnosticsTable />
         </Columns.Column>
