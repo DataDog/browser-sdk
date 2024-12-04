@@ -27,7 +27,8 @@ export function initTriggers() {
   const triggers = getTriggers()
   display.log('Triggers:', triggers)
   return {
-    getByAction: (actionName: string) => triggers.filter((trigger) => trigger.triggerActionName === actionName),
+    getByAction: (actionName: string) =>
+      triggers.filter((trigger) => trigger.triggerActionName.replace('click on ', '') === actionName),
     getByUserEmail: (email: string) => triggers.filter((trigger) => trigger.trackedUserEmails.includes(email)),
   }
 }
