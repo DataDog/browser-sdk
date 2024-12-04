@@ -47,7 +47,9 @@ const EXPIRED_SESSION: SessionState = { isExpired: '1' }
 
     describe('with lock access disabled', () => {
       beforeEach(() => {
-        sessionStoreStrategy.isLockEnabled && pending('lock-access required')
+        if (sessionStoreStrategy.isLockEnabled) {
+          pending('lock-access required')
+        }
       })
 
       it('should persist session when process returns a value', () => {
@@ -99,7 +101,9 @@ const EXPIRED_SESSION: SessionState = { isExpired: '1' }
 
     describe('with lock access enabled', () => {
       beforeEach(() => {
-        !sessionStoreStrategy.isLockEnabled && pending('lock-access not enabled')
+        if (!sessionStoreStrategy.isLockEnabled) {
+          pending('lock-access not enabled')
+        }
       })
 
       it('should persist session when process returns a value', () => {
