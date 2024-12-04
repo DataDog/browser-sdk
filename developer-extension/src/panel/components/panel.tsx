@@ -10,6 +10,7 @@ import { DEFAULT_PANEL_TAB, PanelTabs } from '../../common/panelTabConstants'
 import type { Settings } from '../../common/extension.types'
 import { useDebugMode } from '../hooks/useDebugMode'
 import { SettingsTab } from './tabs/settingsTab'
+import { DiagnosticsTab } from './tabs/diagnosticsTab'
 import { InfosTab } from './tabs/infosTab'
 import { EventsTab, DEFAULT_COLUMNS } from './tabs/eventsTab'
 import { ReplayTab } from './tabs/replayTab'
@@ -37,6 +38,7 @@ export function Panel() {
     <Tabs color="violet" value={activeTab} className={classes.tabs} onChange={updateActiveTab}>
       <Tabs.List className={classes.topBox} data-dd-privacy="allow">
         <div className={classes.tabBox}>
+          <Tabs.Tab value={PanelTabs.Diagnostics}>Diagnostics</Tabs.Tab>
           <Tabs.Tab value={PanelTabs.Events}>Events</Tabs.Tab>
           <Tabs.Tab
             value={PanelTabs.Infos}
@@ -75,6 +77,9 @@ export function Panel() {
         </Anchor>
       </Tabs.List>
 
+      <Tabs.Panel value={PanelTabs.Diagnostics} className={classes.tab}>
+        <DiagnosticsTab />
+      </Tabs.Panel>
       <Tabs.Panel value={PanelTabs.Events} className={classes.tab}>
         <EventsTab
           events={events}
