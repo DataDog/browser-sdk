@@ -1,3 +1,4 @@
+import { data as custom } from './custom'
 import { data as es5 } from './es5'
 import { data as es6 } from './es6'
 import { data as es2016plus } from './es2016plus'
@@ -14,6 +15,10 @@ export interface Test {
 }
 
 export const data: Test[] = [
+  {
+    name: 'Custom',
+    subtests: custom,
+  },
   {
     name: 'ECMAScript 5',
     subtests: es5,

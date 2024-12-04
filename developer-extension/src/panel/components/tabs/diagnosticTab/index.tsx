@@ -36,6 +36,7 @@ function testScriptAsync(expr: string, id: string) {
     void evalInWindow(`
       (function () {
         var asyncTestPassed = () => ${TEST_RESULT_CALLBACK}('${id}', 'passed')
+        var asyncTestFailed = () => ${TEST_RESULT_CALLBACK}('${id}', 'failed')
         try {
           ${expr}
         } catch(err) {
@@ -124,21 +125,20 @@ export function DiagnosticTab() {
     }
 
     if (test.subtests) {
-      test.subtests.forEach((subtest) => runTest(subtest))
+      return test.subtests.forEach((subtest) => runTest(subtest))
     }
 
     if (test.exec) {
       const name = test.name
       const id = sanitize(name)
 
+      dispatchResult({ id, status: 'running' })
       const expr = extractTestCode(test.exec)
 
       if (!expr) {
         logger.error('Failed to extract test code from:', test.exec)
         return
       }
-
-      dispatchResult({ id, status: 'running' })
 
       const status = ASYNC_TEST_REGEX.test(expr) ? testScriptAsync(expr, id) : testScriptSync(expr, id)
 

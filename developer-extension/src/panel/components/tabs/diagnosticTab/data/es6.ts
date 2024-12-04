@@ -8658,6 +8658,7 @@ export const data = [
         const name = m.name
         m.name = `%TypedArray%${name}`
         // TODO: fix this eval
+        m.exec = `(function(){return false;})()`
         // m.exec = eval(
         //   `0,function(){/*\nreturn typeof ${[
         //     'Int8Array',
@@ -23989,6 +23990,9 @@ export const data = [
             mdn: `https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Math/${m}`,
             // TODO: fix this eval
             // exec: eval(`0,function(){/*\n  return typeof Math.${m}${eqFn};\n*/}`),
+            exec() {
+              return false
+            },
             res: methods[m],
           }
         })
