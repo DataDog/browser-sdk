@@ -25,6 +25,7 @@ export type VocConfig = VocConfigFreeText | VocConfigScale
 
 export function initTriggers() {
   const triggers = getTriggers()
+  display.log('Triggers:', triggers)
   return {
     getByAction: (actionName: string) => triggers.filter((trigger) => trigger.triggerActionName === actionName),
     getByUserEmail: (email: string) => triggers.filter((trigger) => trigger.trackedUserEmails.includes(email)),

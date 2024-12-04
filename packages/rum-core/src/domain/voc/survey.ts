@@ -11,6 +11,7 @@ interface BrowserWindow {
 }
 
 export function startSurveyCollection(lifeCycle: LifeCycle) {
+  display.log('Starting survey collection')
   const { getByAction, getByUserEmail } = initTriggers()
   const triggeredSurveys = new Set<VocConfig>()
 
@@ -24,7 +25,7 @@ export function startSurveyCollection(lifeCycle: LifeCycle) {
   }
 
   function savedSurvey(payload: Context) {
-    ;(window as BrowserWindow).DD_RUM?.addAction('voc', payload)
+    ;(window as BrowserWindow).DD_RUM?.addAction('voc-answered', payload)
   }
 
   lifeCycle.subscribe(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, (event) => {
@@ -45,9 +46,12 @@ export function startSurveyCollection(lifeCycle: LifeCycle) {
 }
 
 function openSurvey(vocConfig: VocConfig, onSavedSurvey: (payload: any) => void) {
+  display.log('openSurvey', vocConfig)
+
   const iframe = createIframe()
   iframe.onload = () => showIframe(iframe)
-  iframe.src = `http://localhost:8080/form.html?vocConfig=${encodeURIComponent(JSON.stringify(vocConfig))}`
+  // iframe.src = `https://localhost:8443/static-apps/voice-of-customer/?vocConfig=${encodeURIComponent(JSON.stringify(vocConfig))}`
+  iframe.src = `https://voice-of-customer-676e09666aefef944418bb3f8d752453.static-app.us1.staging.dog?vocConfig=${encodeURIComponent(JSON.stringify(vocConfig))}`
   document.body.appendChild(iframe)
 
   // Add listener for close message from the iframe
@@ -57,6 +61,7 @@ function openSurvey(vocConfig: VocConfig, onSavedSurvey: (payload: any) => void)
         closeIframe(iframe)
         break
       case 'dd-rum-survey-response':
+        display.log('Survey response:', event.data.payload)
         onSavedSurvey(event.data.payload)
         closeIframe(iframe)
         break
@@ -98,7 +103,7 @@ function showIframe(iframe: HTMLIFrameElement) {
   iframe.style.display = 'block'
   setTimeout(() => {
     iframe.style.opacity = '1'
-  }, 0) // Allow the display change to take effect
+  }, 0)
 }
 
 function createIframe() {
