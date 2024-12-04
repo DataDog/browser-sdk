@@ -13,6 +13,13 @@ const REACT: Environment = {
   version: `node => Object.keys(node).some(p => p.startsWith("__reactRootContainer")) ? "<= 17" : Object.keys(node).some(p => p.startsWith("__reactContainer")) ? ">= 18" : "??"`,
 }
 
+const NEXTJS: Environment = {
+  name: 'NextJS',
+  object: 'next',
+  // eslint-disable-next-line quotes
+  version: `node => node.version`,
+}
+
 // document.querySelector("*[ng-version]").getAttribute("ng-version")
 const ANGULAR: Environment = {
   name: 'Angular',
@@ -43,7 +50,7 @@ const SENTRY: Environment = {
 const SEGMENT: Environment = {
   name: 'Segment',
   object: 'analytics',
-  version: 'target => target.VERSION',
+  version: 'target => target.SNIPPET_VERSION || target.VERSION',
 }
 
-export const ENVIRONMENTS = [REACT, ANGULAR, VUE, SVELTE, SENTRY, SEGMENT]
+export const ENVIRONMENTS = [REACT, ANGULAR, VUE, SVELTE, SENTRY, SEGMENT, NEXTJS]
