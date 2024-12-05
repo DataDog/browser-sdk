@@ -15,7 +15,7 @@
         telemetrySampleRate: 100,
         telemetryConfigurationSampleRate: 100,
         telemetryUsageSampleRate: 100,
-        collectFeatureFlagsOn: []
+        enableExperimentalFeatures: [],
       })
       DD_LOGS.init({
         clientToken: 'xxx',
@@ -25,15 +25,6 @@
         enableExperimentalFeatures: [],
       })
     </script>
-    <script>
-        DD_RUM.addFeatureFlagEvaluation('test', 'test');
-        window.DD_RUM.startDurationVital("dropdownRendering")
-        window.DD_RUM.stopDurationVital("dropdownRendering")
-        throw new Error("This is an error");
-    </script>
   </head>
-  <body>
-    <h1>Welcome to the Sandbox</h1>
-    <img src="large-image.jpg" alt="Large Image" />
-  </body>
+  <body></body>
 </html>
