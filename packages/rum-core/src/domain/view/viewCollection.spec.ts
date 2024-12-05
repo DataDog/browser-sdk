@@ -174,7 +174,6 @@ describe('viewCollection', () => {
         has_replay: undefined,
         is_active: undefined,
       },
-      feature_flags: undefined,
       display: {
         scroll: {
           max_depth: 2000,

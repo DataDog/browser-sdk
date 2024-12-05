@@ -285,6 +285,7 @@ export interface RawRumVitalEvent {
     description?: string
     duration: number
   }
+  feature_flags?: Context
   _dd?: {
     vital: {
       computed_value: true
