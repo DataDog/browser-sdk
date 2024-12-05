@@ -2,7 +2,6 @@ import {
   objectEntries,
   shallowClone,
   performDraw,
-  isNumber,
   assign,
   find,
   getType,
