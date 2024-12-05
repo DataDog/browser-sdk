@@ -39,11 +39,6 @@ export interface LogsInitConfiguration extends InitConfiguration {
    * @default false
    */
   usePciIntake?: boolean
-  /**
-   * Keep sending logs after the session expiration.
-   * @default false
-   */
-  sendLogsAfterSessionExpiration?: boolean | undefined // TODO next major: remove this option and make it the default behaviour
 }
 
 export type HybridInitConfiguration = Omit<LogsInitConfiguration, 'clientToken'>
@@ -53,7 +48,6 @@ export interface LogsConfiguration extends Configuration {
   forwardConsoleLogs: ConsoleApiName[]
   forwardReports: RawReportType[]
   requestErrorResponseLengthLimit: number
-  sendLogsAfterSessionExpiration: boolean
 }
 
 /**
@@ -97,7 +91,6 @@ export function validateAndBuildLogsConfiguration(
     forwardConsoleLogs,
     forwardReports,
     requestErrorResponseLengthLimit: DEFAULT_REQUEST_ERROR_RESPONSE_LENGTH_LIMIT,
-    sendLogsAfterSessionExpiration: !!initConfiguration.sendLogsAfterSessionExpiration,
     ...baseConfiguration,
   }
 }
@@ -127,7 +120,6 @@ export function serializeLogsConfiguration(configuration: LogsInitConfiguration)
     forward_console_logs: configuration.forwardConsoleLogs,
     forward_reports: configuration.forwardReports,
     use_pci_intake: configuration.usePciIntake,
-    send_logs_after_session_expiration: configuration.sendLogsAfterSessionExpiration,
     ...baseSerializedInitConfiguration,
   } satisfies RawTelemetryConfiguration
 }
