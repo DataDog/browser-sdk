@@ -100,6 +100,7 @@ export interface RumInitConfiguration extends InitConfiguration {
   /**
    * Enables automatic collection of users actions.
    * See [Tracking User Actions](https://docs.datadoghq.com/real_user_monitoring/browser/tracking_user_actions) for further information.
+   * @default true
    */
   trackUserInteractions?: boolean | undefined
   /**
@@ -115,10 +116,12 @@ export interface RumInitConfiguration extends InitConfiguration {
   trackViewsManually?: boolean | undefined
   /**
    * Enables collection of resource events.
+   * @default true
    */
   trackResources?: boolean | undefined
   /**
    * Enables collection of long task events.
+   * @default true
    */
   trackLongTasks?: boolean | undefined
 
@@ -202,10 +205,10 @@ export function validateAndBuildRumConfiguration(
     excludedActivityUrls: initConfiguration.excludedActivityUrls ?? [],
     workerUrl: initConfiguration.workerUrl,
     compressIntakeRequests: !!initConfiguration.compressIntakeRequests,
-    trackUserInteractions: !!initConfiguration.trackUserInteractions,
+    trackUserInteractions: !!(initConfiguration.trackUserInteractions ?? true),
     trackViewsManually: !!initConfiguration.trackViewsManually,
-    trackResources: !!initConfiguration.trackResources,
-    trackLongTasks: !!initConfiguration.trackLongTasks,
+    trackResources: !!(initConfiguration.trackResources ?? true),
+    trackLongTasks: !!(initConfiguration.trackLongTasks ?? true),
     subdomain: initConfiguration.subdomain,
     defaultPrivacyLevel: objectHasValue(DefaultPrivacyLevel, initConfiguration.defaultPrivacyLevel)
       ? initConfiguration.defaultPrivacyLevel
