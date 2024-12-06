@@ -24,7 +24,7 @@ import type { RawRumEventCollectedData, LifeCycle } from '../lifeCycle'
 import type { RequestCompleteEvent } from '../requestCollection'
 import type { PageStateHistory } from '../contexts/pageStateHistory'
 import { PageState } from '../contexts/pageStateHistory'
-import { createTraceIdentifier } from '../tracing/tracer'
+import { createSpanIdentifier } from '../tracing/identifier'
 import { matchRequestResourceEntry } from './matchRequestResourceEntry'
 import {
   computeResourceEntryDetails,
@@ -199,8 +199,8 @@ function computeRequestTracingInfo(request: RequestCompleteEvent, configuration:
   }
   return {
     _dd: {
-      span_id: request.spanId!.toDecimalString(),
-      trace_id: request.traceId!.toDecimalString(),
+      span_id: request.spanId!.toString(),
+      trace_id: request.traceId!.toString(),
       rule_psr: getRulePsr(configuration),
     },
   }
@@ -214,7 +214,7 @@ function computeResourceEntryTracingInfo(entry: RumPerformanceResourceTiming, co
   return {
     _dd: {
       trace_id: entry.traceId,
-      span_id: createTraceIdentifier().toDecimalString(),
+      span_id: createSpanIdentifier().toString(),
       rule_psr: getRulePsr(configuration),
     },
   }
