@@ -24,9 +24,9 @@ export function EventsTabSide({
       {facetRegistry && (
         <FacetList
           facetRegistry={facetRegistry}
-          excludedFacetValues={filters.excludedFacetValues}
+          facetValuesFilter={filters.facetValuesFilter}
           onExcludedFacetValuesChange={(newExcludedFacetValues) =>
-            onFiltersChange({ ...filters, excludedFacetValues: newExcludedFacetValues })
+            onFiltersChange({ ...filters, facetValuesFilter: newExcludedFacetValues })
           }
         />
       )}
