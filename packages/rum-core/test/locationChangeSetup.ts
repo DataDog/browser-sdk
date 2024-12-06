@@ -1,5 +1,5 @@
 import { buildLocation } from '@datadog/browser-core/test'
-import { assign, Observable } from '@datadog/browser-core'
+import { Observable } from '@datadog/browser-core'
 import type { LocationChange } from '../src/browser/locationChangeObservable'
 
 export function setupLocationObserver(initialLocation?: string) {
@@ -8,7 +8,7 @@ export function setupLocationObserver(initialLocation?: string) {
 
   function changeLocation(to: string) {
     const currentLocation = { ...fakeLocation }
-    assign(fakeLocation, buildLocation(to, fakeLocation.href))
+    Object.assign(fakeLocation, buildLocation(to, fakeLocation.href))
     locationChangeObservable.notify({
       oldLocation: currentLocation as Location,
       newLocation: fakeLocation,

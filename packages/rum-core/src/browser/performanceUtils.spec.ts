@@ -1,4 +1,4 @@
-import { isIE, type RelativeTime } from '@datadog/browser-core'
+import { type RelativeTime } from '@datadog/browser-core'
 import type { RumPerformanceNavigationTiming } from './performanceObservable'
 import { RumPerformanceEntryType } from './performanceObservable'
 import { getNavigationEntry } from './performanceUtils'
@@ -25,9 +25,7 @@ describe('getNavigationEntry', () => {
       domainLookupStart: jasmine.any(Number),
       domainLookupEnd: jasmine.any(Number),
       connectStart: jasmine.any(Number),
-      ...(isIE()
-        ? ({} as unknown as { secureConnectionStart: RelativeTime })
-        : { secureConnectionStart: jasmine.any(Number) }),
+      secureConnectionStart: jasmine.any(Number),
       connectEnd: jasmine.any(Number),
       requestStart: jasmine.any(Number),
       responseStart: jasmine.any(Number),

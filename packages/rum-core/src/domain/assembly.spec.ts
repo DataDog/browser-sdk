@@ -9,6 +9,7 @@ import {
   setNavigatorConnection,
   registerCleanupTask,
   mockClock,
+  mockCookie,
 } from '@datadog/browser-core/test'
 import {
   createRumSessionManagerMock,
@@ -819,7 +820,6 @@ describe('rum assembly', () => {
       expect(serverRumEvents[0].synthetics).toBeTruthy()
     })
   })
-
   describe('if event bridge detected', () => {
     it('includes the browser sdk version', () => {
       const { lifeCycle, serverRumEvents } = setupAssemblyTestWithDefaults()
@@ -844,6 +844,22 @@ describe('rum assembly', () => {
       })
 
       expect(serverRumEvents[0].ci_test).toBeTruthy()
+    })
+  })
+
+  describe('anonymous user id context', () => {
+    it('includes the anonymous user id context', () => {
+      mockExperimentalFeatures([ExperimentalFeature.ANONYMOUS_USER_TRACKING])
+
+      const { lifeCycle, serverRumEvents } = setupAssemblyTestWithDefaults()
+
+      mockCookie('expired=1&aid=123')
+
+      notifyRawRumEvent(lifeCycle, {
+        rawRumEvent: createRawRumEvent(RumEventType.VIEW),
+      })
+
+      expect(serverRumEvents[0].usr!.anonymous_id).toBeDefined()
     })
   })
 
