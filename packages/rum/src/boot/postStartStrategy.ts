@@ -7,7 +7,7 @@ import type {
   RumSession,
 } from '@datadog/browser-rum-core'
 import { LifeCycleEventType, SessionReplayState } from '@datadog/browser-rum-core'
-import { PageExitReason, runOnReadyState, type DeflateEncoder } from '@datadog/browser-core'
+import { asyncRunOnReadyState, monitorError, PageExitReason, type DeflateEncoder } from '@datadog/browser-core'
 import { getSessionReplayLink } from '../domain/getSessionReplayLink'
 import type { startRecording } from './startRecording'
 
@@ -37,10 +37,11 @@ export function createPostStartStrategy(
   lifeCycle: LifeCycle,
   sessionManager: RumSessionManager,
   viewHistory: ViewHistory,
-  startRecordingImpl: StartRecording,
+  loadRecorder: () => Promise<StartRecording>,
   getOrCreateDeflateEncoder: () => DeflateEncoder | undefined
 ): Strategy {
   let status = RecorderStatus.Stopped
+  let stopRecording: () => void
 
   lifeCycle.subscribe(LifeCycleEventType.SESSION_EXPIRED, () => {
     if (status === RecorderStatus.Starting || status === RecorderStatus.Started) {
@@ -62,6 +63,30 @@ export function createPostStartStrategy(
     }
   })
 
+  const doStart = async () => {
+    const [startRecordingImpl] = await Promise.all([loadRecorder(), asyncRunOnReadyState(configuration, 'interactive')])
+
+    if (status !== RecorderStatus.Starting) {
+      return
+    }
+
+    const deflateEncoder = getOrCreateDeflateEncoder()
+    if (!deflateEncoder) {
+      status = RecorderStatus.Stopped
+      return
+    }
+
+    ;({ stop: stopRecording } = startRecordingImpl(
+      lifeCycle,
+      configuration,
+      sessionManager,
+      viewHistory,
+      deflateEncoder
+    ))
+
+    status = RecorderStatus.Started
+  }
+
   function start(options?: StartRecordingOptions) {
     const session = sessionManager.findTrackedSession()
     if (canStartRecording(session, options)) {
@@ -75,27 +100,7 @@ export function createPostStartStrategy(
 
     status = RecorderStatus.Starting
 
-    runOnReadyState(configuration, 'interactive', () => {
-      if (status !== RecorderStatus.Starting) {
-        return
-      }
-
-      const deflateEncoder = getOrCreateDeflateEncoder()
-      if (!deflateEncoder) {
-        status = RecorderStatus.Stopped
-        return
-      }
-
-      ;({ stop: stopRecording } = startRecordingImpl(
-        lifeCycle,
-        configuration,
-        sessionManager,
-        viewHistory,
-        deflateEncoder
-      ))
-
-      status = RecorderStatus.Started
-    })
+    doStart().catch(monitorError)
 
     if (shouldForceReplay(session!, options)) {
       sessionManager.setForcedReplay()
@@ -103,14 +108,13 @@ export function createPostStartStrategy(
   }
 
   function stop() {
-    if (status !== RecorderStatus.Stopped && status === RecorderStatus.Started) {
+    if (status === RecorderStatus.Started) {
       stopRecording?.()
     }
 
     status = RecorderStatus.Stopped
   }
 
-  let stopRecording: () => void
   return {
     start,
     stop,

@@ -123,6 +123,11 @@ export function createMockServerApp(servers: Servers, setup: string): MockServer
     res.sendFile(sdkBuilds.RUM_BUNDLE)
   })
 
+  app.get('/chunks/:name-:hash-datadog-rum.js', (req, res) => {
+    const { name, hash } = req.params
+    res.sendFile(sdkBuilds.rumBundleRecorderChunk(name, hash))
+  })
+
   app.get('/datadog-rum-slim.js', (_req, res) => {
     res.sendFile(sdkBuilds.RUM_SLIM_BUNDLE)
   })
@@ -133,6 +138,11 @@ export function createMockServerApp(servers: Servers, setup: string): MockServer
 
   app.get('/app.js', (_req, res) => {
     res.sendFile(sdkBuilds.NPM_BUNDLE)
+  })
+
+  app.get('/chunks/:name-:hash-app.js', (req, res) => {
+    const { name, hash } = req.params
+    res.sendFile(sdkBuilds.npmBundleChunks(name, hash))
   })
 
   return Object.assign(app, {
