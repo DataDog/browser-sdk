@@ -75,7 +75,7 @@ export function processSessionStoreOperations(
   }
   if (processedSession) {
     if (isSessionInExpiredState(processedSession)) {
-      expireSession()
+      expireSession(processedSession)
     } else {
       expandSessionState(processedSession)
       isLockEnabled ? persistWithLock(processedSession) : persistSession(processedSession)

@@ -88,7 +88,7 @@ export interface RumInitConfiguration extends InitConfiguration {
    */
   sessionReplaySampleRate?: number | undefined
   /**
-   * If the session is sampled for Session Replay, only start the recording when `startSessionReplayRecording()` is called, instead of at the beginning of the session.
+   * If the session is sampled for Session Replay, only start the recording when `startSessionReplayRecording()` is called, instead of at the beginning of the session. Default: if startSessionReplayRecording is 0, true; otherwise, false.
    * See [Session Replay Usage](https://docs.datadoghq.com/real_user_monitoring/session_replay/browser/#usage) for further information.
    */
   startSessionReplayRecordingManually?: boolean | undefined
@@ -186,12 +186,17 @@ export function validateAndBuildRumConfiguration(
     return
   }
 
+  const sessionReplaySampleRate = initConfiguration.sessionReplaySampleRate ?? 0
+
   return {
     applicationId: initConfiguration.applicationId,
     version: initConfiguration.version || undefined,
     actionNameAttribute: initConfiguration.actionNameAttribute,
-    sessionReplaySampleRate: initConfiguration.sessionReplaySampleRate ?? 0,
-    startSessionReplayRecordingManually: !!initConfiguration.startSessionReplayRecordingManually,
+    sessionReplaySampleRate,
+    startSessionReplayRecordingManually:
+      initConfiguration.startSessionReplayRecordingManually !== undefined
+        ? !!initConfiguration.startSessionReplayRecordingManually
+        : sessionReplaySampleRate === 0,
     traceSampleRate: initConfiguration.traceSampleRate,
     allowedTracingUrls,
     excludedActivityUrls: initConfiguration.excludedActivityUrls ?? [],

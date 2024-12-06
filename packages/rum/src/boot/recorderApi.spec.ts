@@ -14,8 +14,8 @@ import type { CreateDeflateWorker } from '../domain/deflate'
 import { MockWorker } from '../../test'
 import { resetDeflateWorkerState } from '../domain/deflate'
 import * as replayStats from '../domain/replayStats'
-import type { StartRecording } from './recorderApi'
 import { makeRecorderApi } from './recorderApi'
+import type { StartRecording } from './postStartStrategy'
 
 describe('makeRecorderApi', () => {
   let lifeCycle: LifeCycle
@@ -538,6 +538,8 @@ describe('makeRecorderApi', () => {
       setupRecorderApi({ startSessionReplayRecordingManually: true })
       rumInit()
 
+      mockWorker.processAllMessages()
+
       expect(recorderApi.isRecording()).toBeFalse()
     })
 
@@ -595,6 +597,9 @@ describe('makeRecorderApi', () => {
     it('is undefined when recording has not been started', () => {
       setupRecorderApi({ startSessionReplayRecordingManually: true })
       rumInit()
+
+      replayStats.addSegment(VIEW_ID)
+      mockWorker.processAllMessages()
 
       expect(recorderApi.getReplayStats(VIEW_ID)).toBeUndefined()
     })
