@@ -2,7 +2,6 @@ import {
   objectEntries,
   shallowClone,
   performDraw,
-  isNumber,
   assign,
   find,
   getType,
@@ -118,9 +117,11 @@ function injectHeadersIfTracingAllowed(
   if (!tracingOption) {
     return
   }
-  context.traceSampled = !isNumber(configuration.traceSampleRate) || performDraw(configuration.traceSampleRate)
+  context.traceSampled = performDraw(configuration.traceSampleRate)
 
-  if (!context.traceSampled && configuration.traceContextInjection !== TraceContextInjection.ALL) {
+  const shouldInjectHeaders = context.traceSampled || configuration.traceContextInjection === TraceContextInjection.ALL
+
+  if (!shouldInjectHeaders) {
     return
   }
 

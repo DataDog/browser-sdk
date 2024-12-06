@@ -7,7 +7,6 @@ import {
   toServerDuration,
   relativeToClocks,
   assign,
-  isNumber,
   createTaskQueue,
 } from '@datadog/browser-core'
 import type { RumConfiguration } from '../configuration'
@@ -201,7 +200,7 @@ function computeRequestTracingInfo(request: RequestCompleteEvent, configuration:
     _dd: {
       span_id: request.spanId!.toDecimalString(),
       trace_id: request.traceId!.toDecimalString(),
-      rule_psr: getRulePsr(configuration),
+      rule_psr: configuration.rulePsr,
     },
   }
 }
@@ -215,16 +214,9 @@ function computeResourceEntryTracingInfo(entry: RumPerformanceResourceTiming, co
     _dd: {
       trace_id: entry.traceId,
       span_id: createTraceIdentifier().toDecimalString(),
-      rule_psr: getRulePsr(configuration),
+      rule_psr: configuration.rulePsr,
     },
   }
-}
-
-/**
- * @returns number between 0 and 1 which represents trace sample rate
- */
-function getRulePsr(configuration: RumConfiguration) {
-  return isNumber(configuration.traceSampleRate) ? configuration.traceSampleRate / 100 : undefined
 }
 
 function computeRequestDuration(pageStateHistory: PageStateHistory, startClocks: ClocksState, duration: Duration) {
