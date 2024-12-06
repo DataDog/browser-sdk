@@ -53,6 +53,7 @@ export interface WeakRefConstructor {
 
 // Those are native API types that are not official supported by TypeScript yet
 
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
 export interface CookieStore extends EventTarget {}
 
 export interface CookieStoreEventMap {
@@ -65,5 +66,3 @@ export type CookieChangeEvent = Event & {
   changed: CookieChangeItem[]
   deleted: CookieChangeItem[]
 }
-
-export interface CookieStore extends EventTarget {}

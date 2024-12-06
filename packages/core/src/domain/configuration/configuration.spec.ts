@@ -155,6 +155,7 @@ describe('validateAndBuildConfiguration', () => {
     it('should catch errors and log them', () => {
       const myError = 'Ooops!'
       const beforeSend = () => {
+        // eslint-disable-next-line @typescript-eslint/only-throw-error
         throw myError
       }
       const configuration = validateAndBuildConfiguration({ clientToken, beforeSend })!

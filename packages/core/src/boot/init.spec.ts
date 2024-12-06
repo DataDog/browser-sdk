@@ -34,6 +34,7 @@ describe('defineGlobal', () => {
   it('catches the errors thrown by the queued callbacks', () => {
     const myError = 'Ooops!'
     const onReady = () => {
+      // eslint-disable-next-line @typescript-eslint/only-throw-error
       throw myError
     }
     const myGlobal: any = {

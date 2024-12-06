@@ -18,8 +18,8 @@ describe('logs entry', () => {
     (
       logsMessage: LogsMessage,
       logger: Logger,
-      commonContext?: CommonContext | undefined,
-      date?: TimeStamp | undefined
+      commonContext: CommonContext | undefined,
+      date: TimeStamp | undefined
     ) => void
   >
   let startLogs: jasmine.Spy<StartLogs>
