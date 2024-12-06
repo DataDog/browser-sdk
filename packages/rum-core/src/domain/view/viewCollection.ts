@@ -49,7 +49,6 @@ function processViewUpdate(
   pageStateHistory: PageStateHistory
 ): RawRumEventCollectedData<RawRumViewEvent> {
   const replayStats = recorderApi.getReplayStats(view.id)
-  const featureFlagContext = featureFlagContexts.findFeatureFlagEvaluations(view.startClocks.relative)
   const pageStates = pageStateHistory.findAll(view.startClocks.relative, view.duration)
   const viewEvent: RawRumViewEvent = {
     _dd: {
@@ -101,7 +100,6 @@ function processViewUpdate(
       },
       time_spent: toServerDuration(view.duration),
     },
-    feature_flags: featureFlagContext && !isEmptyObject(featureFlagContext) ? featureFlagContext : undefined,
     display: view.commonViewMetrics.scroll
       ? {
           scroll: {
@@ -125,6 +123,13 @@ function processViewUpdate(
       view.customTimings,
       toServerDuration as (duration: Duration) => ServerDuration
     )
+  }
+
+  if (configuration.collectFeatureFlagsOn.has('view')) {
+    const featureFlagContext = featureFlagContexts.findFeatureFlagEvaluations(view.startClocks.relative)
+    if (featureFlagContext && !isEmptyObject(featureFlagContext)) {
+      viewEvent.feature_flags = featureFlagContext
+    }
   }
 
   return {

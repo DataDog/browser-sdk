@@ -1,10 +1,12 @@
 import type { Duration } from '@datadog/browser-core'
 import { mockClock, registerCleanupTask, type Clock } from '@datadog/browser-core/test'
-import { clocksNow } from '@datadog/browser-core'
+import { clocksNow, noop } from '@datadog/browser-core'
 import { collectAndValidateRawRumEvents, mockPageStateHistory } from '../../../test'
 import type { RawRumEvent, RawRumVitalEvent } from '../../rawRumEvent.types'
 import { VitalType, RumEventType } from '../../rawRumEvent.types'
 import type { RawRumEventCollectedData } from '../lifeCycle'
+import type { FeatureFlagContexts } from '../contexts/featureFlagContext'
+import type { FeatureFlagEvent } from '../configuration'
 import { LifeCycle } from '../lifeCycle'
 import { startDurationVital, stopDurationVital, startVitalCollection, createCustomVitalsState } from './vitalCollection'
 
@@ -12,17 +14,31 @@ const pageStateHistory = mockPageStateHistory()
 
 const vitalsState = createCustomVitalsState()
 
+const baseFeatureFlagContexts: FeatureFlagContexts = {
+  findFeatureFlagEvaluations: () => undefined,
+  addFeatureFlagEvaluation: noop,
+  stop: noop,
+}
+
 describe('vitalCollection', () => {
   const lifeCycle = new LifeCycle()
   let rawRumEvents: Array<RawRumEventCollectedData<RawRumEvent>> = []
   let clock: Clock
   let vitalCollection: ReturnType<typeof startVitalCollection>
   let wasInPageStateDuringPeriodSpy: jasmine.Spy<jasmine.Func>
+  const featureFlagContexts: FeatureFlagContexts = baseFeatureFlagContexts
+  let collectFeatureFlagsOn = new Set<FeatureFlagEvent>()
 
   beforeEach(() => {
     clock = mockClock()
     wasInPageStateDuringPeriodSpy = spyOn(pageStateHistory, 'wasInPageStateDuringPeriod')
-    vitalCollection = startVitalCollection(lifeCycle, pageStateHistory, vitalsState)
+    vitalCollection = startVitalCollection(
+      lifeCycle,
+      pageStateHistory,
+      vitalsState,
+      featureFlagContexts,
+      collectFeatureFlagsOn
+    )
 
     rawRumEvents = collectAndValidateRawRumEvents(lifeCycle)
 
@@ -276,6 +292,83 @@ describe('vitalCollection', () => {
 
         expect(rawRumEvents.length).toBe(0)
       })
+    })
+  })
+  describe('feature flags integration', () => {
+    it('should include feature flags when "vital" is in collectFeatureFlagsOn', () => {
+      collectFeatureFlagsOn = new Set<FeatureFlagEvent>(['vital'])
+      featureFlagContexts.findFeatureFlagEvaluations = jasmine.createSpy().and.returnValue({
+        feature_flag_key: 'feature_flag_value',
+      })
+
+      vitalCollection = startVitalCollection(
+        lifeCycle,
+        pageStateHistory,
+        vitalsState,
+        featureFlagContexts,
+        collectFeatureFlagsOn
+      )
+
+      vitalCollection.addDurationVital({
+        name: 'foo',
+        type: VitalType.DURATION,
+        startClocks: clocksNow(),
+        duration: 100 as Duration,
+      })
+
+      expect(rawRumEvents.length).toBe(1)
+      const event = rawRumEvents[0].rawRumEvent as RawRumVitalEvent
+      expect(event.feature_flags).toEqual({ feature_flag_key: 'feature_flag_value' })
+    })
+
+    it('should not include feature flags when "vital" is not in collectFeatureFlagsOn', () => {
+      collectFeatureFlagsOn = new Set<FeatureFlagEvent>()
+      featureFlagContexts.findFeatureFlagEvaluations = jasmine.createSpy().and.returnValue({
+        feature_flag_key: 'feature_flag_value',
+      })
+
+      vitalCollection = startVitalCollection(
+        lifeCycle,
+        pageStateHistory,
+        vitalsState,
+        featureFlagContexts,
+        collectFeatureFlagsOn
+      )
+
+      vitalCollection.addDurationVital({
+        name: 'foo',
+        type: VitalType.DURATION,
+        startClocks: clocksNow(),
+        duration: 100 as Duration,
+      })
+
+      expect(rawRumEvents.length).toBe(1)
+      const event = rawRumEvents[0].rawRumEvent as RawRumVitalEvent
+      expect(event.feature_flags).toBeUndefined()
+    })
+
+    it('should not include feature flags if none are available', () => {
+      collectFeatureFlagsOn = new Set<FeatureFlagEvent>(['vital'])
+      featureFlagContexts.findFeatureFlagEvaluations = jasmine.createSpy().and.returnValue(undefined)
+
+      vitalCollection = startVitalCollection(
+        lifeCycle,
+        pageStateHistory,
+        vitalsState,
+        featureFlagContexts,
+        collectFeatureFlagsOn
+      )
+
+      vitalCollection.addDurationVital({
+        name: 'foo',
+        type: VitalType.DURATION,
+        startClocks: clocksNow(),
+        duration: 100 as Duration,
+      })
+
+      expect(rawRumEvents.length).toBe(1)
+      const event = rawRumEvents[0].rawRumEvent as RawRumVitalEvent
+      expect(event.feature_flags).toBeUndefined()
     })
   })
 })
