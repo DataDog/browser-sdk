@@ -14,8 +14,8 @@ import type { CreateDeflateWorker } from '../domain/deflate'
 import { MockWorker } from '../../test'
 import { resetDeflateWorkerState } from '../domain/deflate'
 import * as replayStats from '../domain/replayStats'
-import type { StartRecording } from './recorderApi'
 import { makeRecorderApi } from './recorderApi'
+import type { StartRecording } from './postStartStrategy'
 
 describe('makeRecorderApi', () => {
   let lifeCycle: LifeCycle
