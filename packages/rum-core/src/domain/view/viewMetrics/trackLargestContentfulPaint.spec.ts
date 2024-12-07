@@ -45,7 +45,11 @@ describe('trackLargestContentfulPaint', () => {
     startLCPTracking()
     notifyPerformanceEntries([createPerformanceEntry(RumPerformanceEntryType.LARGEST_CONTENTFUL_PAINT)])
 
-    expect(lcpCallback).toHaveBeenCalledOnceWith({ value: 789 as RelativeTime, targetSelector: undefined })
+    expect(lcpCallback).toHaveBeenCalledOnceWith({
+      value: 789 as RelativeTime,
+      targetSelector: undefined,
+      resourceUrl: undefined,
+    })
   })
 
   it('should provide the largest contentful paint target selector', () => {
@@ -56,7 +60,26 @@ describe('trackLargestContentfulPaint', () => {
       }),
     ])
 
-    expect(lcpCallback).toHaveBeenCalledOnceWith({ value: 789 as RelativeTime, targetSelector: '#lcp-target-element' })
+    expect(lcpCallback).toHaveBeenCalledOnceWith({
+      value: 789 as RelativeTime,
+      targetSelector: '#lcp-target-element',
+      resourceUrl: undefined,
+    })
+  })
+
+  it('should provide the largest contentful paint target url', () => {
+    startLCPTracking()
+    notifyPerformanceEntries([
+      createPerformanceEntry(RumPerformanceEntryType.LARGEST_CONTENTFUL_PAINT, {
+        url: 'https://example.com/lcp-resource',
+      }),
+    ])
+
+    expect(lcpCallback).toHaveBeenCalledOnceWith({
+      value: 789 as RelativeTime,
+      targetSelector: undefined,
+      resourceUrl: 'https://example.com/lcp-resource',
+    })
   })
 
   it('should be discarded if it is reported after a user interaction', () => {
