@@ -11,6 +11,7 @@ import {
   objectHasValue,
   validateAndBuildConfiguration,
   isSampleRate,
+  isNumber,
 } from '@datadog/browser-core'
 import type { RumEventDomainContext } from '../../domainContext.types'
 import type { RumEvent } from '../../rumEvent.types'
@@ -137,7 +138,8 @@ export type HybridInitConfiguration = Omit<RumInitConfiguration, 'applicationId'
 export interface RumConfiguration extends Configuration {
   // Built from init configuration
   actionNameAttribute: string | undefined
-  traceSampleRate: number | undefined
+  traceSampleRate: number
+  rulePsr: number | undefined
   allowedTracingUrls: TracingOption[]
   excludedActivityUrls: MatchOption[]
   workerUrl: string | undefined
@@ -200,7 +202,8 @@ export function validateAndBuildRumConfiguration(
         initConfiguration.startSessionReplayRecordingManually !== undefined
           ? !!initConfiguration.startSessionReplayRecordingManually
           : sessionReplaySampleRate === 0,
-      traceSampleRate: initConfiguration.traceSampleRate,
+      traceSampleRate: initConfiguration.traceSampleRate ?? 100,
+      rulePsr: isNumber(initConfiguration.traceSampleRate) ? initConfiguration.traceSampleRate / 100 : undefined,
       allowedTracingUrls,
       excludedActivityUrls: initConfiguration.excludedActivityUrls ?? [],
       workerUrl: initConfiguration.workerUrl,
