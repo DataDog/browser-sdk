@@ -22,7 +22,7 @@ export enum ExperimentalFeature {
 
 const enabledExperimentalFeatures: Set<ExperimentalFeature> = new Set()
 
-export function initFeatureFlags(enableExperimentalFeatures?: string[] | undefined) {
+export function initFeatureFlags(enableExperimentalFeatures: string[] | undefined) {
   if (Array.isArray(enableExperimentalFeatures)) {
     addExperimentalFeatures(
       enableExperimentalFeatures.filter((flag): flag is ExperimentalFeature =>

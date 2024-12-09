@@ -52,7 +52,7 @@ describe('trackInteractionToNextPaint', () => {
     setViewEnd = interactionToNextPaintTracking.setViewEnd
 
     registerCleanupTask(() => {
-      interactionToNextPaintTracking.stop
+      interactionToNextPaintTracking.stop()
       resetExperimentalFeatures()
       interactionCountMock.clear()
     })

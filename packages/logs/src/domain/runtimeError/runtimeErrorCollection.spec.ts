@@ -70,6 +70,7 @@ describe('runtime error collection', () => {
     error.cause = nestedError
     ;({ stop: stopRuntimeErrorCollection } = startRuntimeErrorCollection(configuration, lifeCycle))
     setTimeout(() => {
+      // eslint-disable-next-line @typescript-eslint/only-throw-error
       throw error
     })
 

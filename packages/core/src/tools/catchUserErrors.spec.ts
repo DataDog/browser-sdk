@@ -11,6 +11,7 @@ describe('catchUserErrors', () => {
     const displaySpy = spyOn(display, 'error')
     const myError = 'Ooops!'
     const wrappedFn = catchUserErrors(() => {
+      // eslint-disable-next-line @typescript-eslint/only-throw-error
       throw myError
     }, 'Error during callback')
     expect(wrappedFn()).toBe(undefined)
