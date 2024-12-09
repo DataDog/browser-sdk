@@ -1,7 +1,7 @@
 import type { RelativeTime, TimeStamp, ErrorWithCause } from '@datadog/browser-core'
 import { ErrorHandling, ErrorSource, NO_ERROR_STACK_PRESENT_MESSAGE, noop } from '@datadog/browser-core'
 import { FAKE_CSP_VIOLATION_EVENT } from '@datadog/browser-core/test'
-import { collectAndValidateRawRumEvents, mockPageStateHistory } from '../../../test'
+import { collectAndValidateRawRumEvents, mockPageStateHistory, mockRumConfiguration } from '../../../test'
 import type { RawRumErrorEvent, RawRumEvent } from '../../rawRumEvent.types'
 import { RumEventType } from '../../rawRumEvent.types'
 import type { RawRumEventCollectedData } from '../lifeCycle'
@@ -21,10 +21,10 @@ describe('error collection', () => {
   let lifeCycle: LifeCycle
   let rawRumEvents: Array<RawRumEventCollectedData<RawRumEvent>> = []
   let addError: ReturnType<typeof doStartErrorCollection>['addError']
-
+  const configuration = mockRumConfiguration()
   function setupErrorCollection(featureFlagContexts: FeatureFlagContexts = baseFeatureFlagContexts) {
     lifeCycle = new LifeCycle()
-    ;({ addError } = doStartErrorCollection(lifeCycle, basePageStateHistory, featureFlagContexts))
+    ;({ addError } = doStartErrorCollection(lifeCycle, basePageStateHistory, featureFlagContexts, configuration))
 
     rawRumEvents = collectAndValidateRawRumEvents(lifeCycle)
   }
@@ -215,7 +215,6 @@ describe('error collection', () => {
         findFeatureFlagEvaluations: () => ({ feature: 'foo' }),
       }
       setupErrorCollection(featureFlagContexts)
-
       addError({
         error: { foo: 'bar' },
         handlingStack: 'Error: handling foo',
