@@ -464,7 +464,7 @@ describe('validateAndBuildRumConfiguration', () => {
   describe('collectFeatureFlagsOn', () => {
     it('defaults to an empty set', () => {
       const configuration = validateAndBuildRumConfiguration(DEFAULT_INIT_CONFIGURATION)!
-      expect(configuration.collectFeatureFlagsOn).toEqual(new Set())
+      expect(configuration.collectFeatureFlagsOn).toEqual([])
     })
 
     it('accepts valid event types', () => {
@@ -472,7 +472,7 @@ describe('validateAndBuildRumConfiguration', () => {
         ...DEFAULT_INIT_CONFIGURATION,
         collectFeatureFlagsOn: ['view', 'error', 'vital'],
       })!
-      expect(configuration.collectFeatureFlagsOn).toEqual(new Set(['view', 'error', 'vital']))
+      expect(configuration.collectFeatureFlagsOn).toEqual(['view', 'error', 'vital'])
       expect(displayWarnSpy).not.toHaveBeenCalled()
     })
 
@@ -481,7 +481,7 @@ describe('validateAndBuildRumConfiguration', () => {
         ...DEFAULT_INIT_CONFIGURATION,
         collectFeatureFlagsOn: ['view', 'invalid_event' as any, 'error'],
       })!
-      expect(configuration.collectFeatureFlagsOn).toEqual(new Set(['view', 'error']))
+      expect(configuration.collectFeatureFlagsOn).toEqual(['view', 'error'])
       expect(displayWarnSpy).toHaveBeenCalledOnceWith(
         "Unknown event type 'invalid_event' in collectFeatureFlagsOn configuration."
       )

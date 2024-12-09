@@ -11,6 +11,7 @@ import {
   objectHasValue,
   validateAndBuildConfiguration,
   isSampleRate,
+  includes,
 } from '@datadog/browser-core'
 import type { RumEventDomainContext } from '../../domainContext.types'
 import type { RumEvent } from '../../rumEvent.types'
@@ -163,18 +164,18 @@ export interface RumConfiguration extends Configuration {
   customerDataTelemetrySampleRate: number
   traceContextInjection: TraceContextInjection
   plugins: RumPlugin[]
-  collectFeatureFlagsOn: Set<FeatureFlagEvent>
+  collectFeatureFlagsOn: FeatureFlagEvent[]
 }
 
 export function validateAndBuildRumConfiguration(
   initConfiguration: RumInitConfiguration
 ): RumConfiguration | undefined {
-  const collectFeatureFlagsOn: Set<FeatureFlagEvent> = new Set()
+  const collectFeatureFlagsOn: FeatureFlagEvent[] = []
   if (Array.isArray(initConfiguration.collectFeatureFlagsOn)) {
-    const validEventTypes = ['view', 'error', 'vital'] as const
+    const validEventTypes = ['view', 'error', 'vital']
     initConfiguration.collectFeatureFlagsOn.forEach((eventType) => {
-      if (validEventTypes.includes(eventType)) {
-        collectFeatureFlagsOn.add(eventType)
+      if (includes(validEventTypes, eventType)) {
+        collectFeatureFlagsOn.push(eventType)
       } else {
         display.warn(`Unknown event type '${eventType}' in collectFeatureFlagsOn configuration.`)
       }
@@ -238,7 +239,7 @@ export function validateAndBuildRumConfiguration(
         ? initConfiguration.traceContextInjection
         : TraceContextInjection.ALL,
       plugins: initConfiguration.plugins || [],
-      collectFeatureFlagsOn: new Set(collectFeatureFlagsOn),
+      collectFeatureFlagsOn,
     },
     baseConfiguration
   )

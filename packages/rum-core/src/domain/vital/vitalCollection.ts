@@ -1,5 +1,13 @@
 import type { ClocksState, Duration, Context } from '@datadog/browser-core'
-import { clocksNow, combine, elapsed, generateUUID, toServerDuration, isEmptyObject } from '@datadog/browser-core'
+import {
+  clocksNow,
+  combine,
+  elapsed,
+  generateUUID,
+  toServerDuration,
+  isEmptyObject,
+  includes,
+} from '@datadog/browser-core'
 import type { LifeCycle, RawRumEventCollectedData } from '../lifeCycle'
 import { LifeCycleEventType } from '../lifeCycle'
 import type { RawRumVitalEvent } from '../../rawRumEvent.types'
@@ -50,7 +58,7 @@ export function startVitalCollection(
   pageStateHistory: PageStateHistory,
   customVitalsState: CustomVitalsState,
   featureFlagContexts: FeatureFlagContexts,
-  collectFeatureFlagsOn: Set<FeatureFlagEvent>
+  collectFeatureFlagsOn: FeatureFlagEvent[]
 ) {
   function isValid(vital: DurationVital) {
     return !pageStateHistory.wasInPageStateDuringPeriod(PageState.FROZEN, vital.startClocks.relative, vital.duration)
@@ -139,7 +147,7 @@ function processVital(
   vital: DurationVital,
   valueComputedBySdk: boolean,
   featureFlagContexts: FeatureFlagContexts,
-  collectFeatureFlagsOn: Set<FeatureFlagEvent>
+  collectFeatureFlagsOn: FeatureFlagEvent[]
 ): RawRumEventCollectedData<RawRumVitalEvent> {
   const rawRumEvent: RawRumVitalEvent = {
     date: vital.startClocks.timeStamp,
@@ -161,7 +169,7 @@ function processVital(
     }
   }
 
-  if (collectFeatureFlagsOn.has('vital')) {
+  if (includes(collectFeatureFlagsOn, 'vital')) {
     const featureFlagContext = featureFlagContexts.findFeatureFlagEvaluations(vital.startClocks.relative)
     if (featureFlagContext && !isEmptyObject(featureFlagContext)) {
       rawRumEvent.feature_flags = featureFlagContext

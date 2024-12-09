@@ -27,11 +27,12 @@ describe('vitalCollection', () => {
   let vitalCollection: ReturnType<typeof startVitalCollection>
   let wasInPageStateDuringPeriodSpy: jasmine.Spy<jasmine.Func>
   const featureFlagContexts: FeatureFlagContexts = baseFeatureFlagContexts
-  let collectFeatureFlagsOn = new Set<FeatureFlagEvent>()
+  let collectFeatureFlagsOn: FeatureFlagEvent[] = []
 
   beforeEach(() => {
     clock = mockClock()
     wasInPageStateDuringPeriodSpy = spyOn(pageStateHistory, 'wasInPageStateDuringPeriod')
+    collectFeatureFlagsOn = []
     vitalCollection = startVitalCollection(
       lifeCycle,
       pageStateHistory,
@@ -296,18 +297,10 @@ describe('vitalCollection', () => {
   })
   describe('feature flags integration', () => {
     it('should include feature flags when "vital" is in collectFeatureFlagsOn', () => {
-      collectFeatureFlagsOn = new Set<FeatureFlagEvent>(['vital'])
+      collectFeatureFlagsOn.push('vital')
       featureFlagContexts.findFeatureFlagEvaluations = jasmine.createSpy().and.returnValue({
         feature_flag_key: 'feature_flag_value',
       })
-
-      vitalCollection = startVitalCollection(
-        lifeCycle,
-        pageStateHistory,
-        vitalsState,
-        featureFlagContexts,
-        collectFeatureFlagsOn
-      )
 
       vitalCollection.addDurationVital({
         name: 'foo',
@@ -322,18 +315,9 @@ describe('vitalCollection', () => {
     })
 
     it('should not include feature flags when "vital" is not in collectFeatureFlagsOn', () => {
-      collectFeatureFlagsOn = new Set<FeatureFlagEvent>()
       featureFlagContexts.findFeatureFlagEvaluations = jasmine.createSpy().and.returnValue({
         feature_flag_key: 'feature_flag_value',
       })
-
-      vitalCollection = startVitalCollection(
-        lifeCycle,
-        pageStateHistory,
-        vitalsState,
-        featureFlagContexts,
-        collectFeatureFlagsOn
-      )
 
       vitalCollection.addDurationVital({
         name: 'foo',
@@ -348,16 +332,8 @@ describe('vitalCollection', () => {
     })
 
     it('should not include feature flags if none are available', () => {
-      collectFeatureFlagsOn = new Set<FeatureFlagEvent>(['vital'])
+      collectFeatureFlagsOn.push('vital')
       featureFlagContexts.findFeatureFlagEvaluations = jasmine.createSpy().and.returnValue(undefined)
-
-      vitalCollection = startVitalCollection(
-        lifeCycle,
-        pageStateHistory,
-        vitalsState,
-        featureFlagContexts,
-        collectFeatureFlagsOn
-      )
 
       vitalCollection.addDurationVital({
         name: 'foo',

@@ -11,8 +11,9 @@ import {
   trackRuntimeError,
   NonErrorPrefix,
   isError,
+  includes,
 } from '@datadog/browser-core'
-import type { RumConfiguration } from '../configuration'
+import type { FeatureFlagEvent, RumConfiguration } from '../configuration'
 import type { RawRumErrorEvent } from '../../rawRumEvent.types'
 import { RumEventType } from '../../rawRumEvent.types'
 import type { LifeCycle, RawRumEventCollectedData } from '../lifeCycle'
@@ -97,7 +98,7 @@ function processError(
   error: RawError,
   pageStateHistory: PageStateHistory,
   featureFlagContexts: FeatureFlagContexts,
-  collectFeatureFlagsOn: Set<'view' | 'error' | 'vital'>
+  collectFeatureFlagsOn: FeatureFlagEvent[]
 ): RawRumEventCollectedData<RawRumErrorEvent> {
   const rawRumEvent: RawRumErrorEvent = {
     date: error.startClocks.timeStamp,
@@ -118,7 +119,7 @@ function processError(
     view: { in_foreground: pageStateHistory.wasInPageStateAt(PageState.ACTIVE, error.startClocks.relative) },
   }
 
-  if (collectFeatureFlagsOn.has('error')) {
+  if (includes(collectFeatureFlagsOn, 'error')) {
     const featureFlagContext = featureFlagContexts.findFeatureFlagEvaluations(error.startClocks.relative)
     if (featureFlagContext && !isEmptyObject(featureFlagContext)) {
       rawRumEvent.feature_flags = featureFlagContext

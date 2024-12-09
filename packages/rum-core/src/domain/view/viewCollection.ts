@@ -1,5 +1,5 @@
 import type { Duration, ServerDuration, Observable } from '@datadog/browser-core'
-import { isEmptyObject, mapValues, toServerDuration } from '@datadog/browser-core'
+import { isEmptyObject, mapValues, toServerDuration, includes } from '@datadog/browser-core'
 import { discardNegativeDuration } from '../discardNegativeDuration'
 import type { RecorderApi } from '../../boot/rumPublicApi'
 import type { RawRumViewEvent } from '../../rawRumEvent.types'
@@ -125,7 +125,7 @@ function processViewUpdate(
     )
   }
 
-  if (configuration.collectFeatureFlagsOn.has('view')) {
+  if (includes(configuration.collectFeatureFlagsOn, 'view')) {
     const featureFlagContext = featureFlagContexts.findFeatureFlagEvaluations(view.startClocks.relative)
     if (featureFlagContext && !isEmptyObject(featureFlagContext)) {
       viewEvent.feature_flags = featureFlagContext
