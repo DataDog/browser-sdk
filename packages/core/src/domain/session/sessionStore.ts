@@ -4,7 +4,6 @@ import { ONE_SECOND, dateNow } from '../../tools/utils/timeUtils'
 import { throttle } from '../../tools/utils/functionUtils'
 import { generateUUID } from '../../tools/utils/stringUtils'
 import type { InitConfiguration } from '../configuration'
-import { assign } from '../../tools/utils/polyfills'
 import { selectCookieStrategy, initCookieStrategy } from './storeStrategies/sessionInCookie'
 import type { SessionStoreStrategyType } from './storeStrategies/sessionStoreStrategy'
 import {
@@ -117,7 +116,8 @@ export function startSessionStore<TrackingType extends string>(
   function watchSession() {
     processSessionStoreOperations(
       {
-        process: (sessionState) => (isSessionInExpiredState(sessionState) ? getExpiredSessionState() : undefined),
+        process: (sessionState) =>
+          isSessionInExpiredState(sessionState) ? getExpiredSessionState(sessionState) : undefined,
         after: synchronizeSession,
       },
       sessionStoreStrategy
@@ -126,7 +126,7 @@ export function startSessionStore<TrackingType extends string>(
 
   function synchronizeSession(sessionState: SessionState) {
     if (isSessionInExpiredState(sessionState)) {
-      sessionState = getExpiredSessionState()
+      sessionState = getExpiredSessionState(sessionState)
     }
     if (hasSessionInCache()) {
       if (isSessionInCacheOutdated(sessionState)) {
@@ -144,7 +144,7 @@ export function startSessionStore<TrackingType extends string>(
       {
         process: (sessionState) => {
           if (isSessionInNotStartedState(sessionState)) {
-            return getExpiredSessionState()
+            return getExpiredSessionState(sessionState)
           }
         },
         after: (sessionState) => {
@@ -178,7 +178,7 @@ export function startSessionStore<TrackingType extends string>(
   }
 
   function expireSessionInCache() {
-    sessionCache = getExpiredSessionState()
+    sessionCache = getExpiredSessionState(sessionCache)
     expireObservable.notify()
   }
 
@@ -190,7 +190,7 @@ export function startSessionStore<TrackingType extends string>(
   function updateSessionState(partialSessionState: Partial<SessionState>) {
     processSessionStoreOperations(
       {
-        process: (sessionState) => assign({}, sessionState, partialSessionState),
+        process: (sessionState) => ({ ...sessionState, ...partialSessionState }),
         after: synchronizeSession,
       },
       sessionStoreStrategy
@@ -207,8 +207,8 @@ export function startSessionStore<TrackingType extends string>(
     restartSession: startSession,
     expire: () => {
       cancelExpandOrRenewSession()
-      expireSession()
-      synchronizeSession(getExpiredSessionState())
+      expireSession(sessionCache)
+      synchronizeSession(getExpiredSessionState(sessionCache))
     },
     stop: () => {
       clearInterval(watchSessionTimeoutId)

@@ -85,12 +85,7 @@ export { sendToExtension } from './tools/sendToExtension'
 export { runOnReadyState } from './browser/runOnReadyState'
 export { getZoneJsOriginalValue } from './tools/getZoneJsOriginalValue'
 export { instrumentMethod, instrumentSetter, InstrumentedMethodCall } from './tools/instrumentMethod'
-export {
-  computeRawError,
-  getFileFromStackTraceString,
-  isError,
-  NO_ERROR_STACK_PRESENT_MESSAGE,
-} from './domain/error/error'
+export { computeRawError, getFileFromStackTraceString, NO_ERROR_STACK_PRESENT_MESSAGE } from './domain/error/error'
 export { NonErrorPrefix } from './domain/error/error.types'
 export { Context, ContextArray, ContextValue } from './tools/serialisation/context'
 export {
@@ -101,6 +96,7 @@ export {
   deleteCookie,
   resetInitCookies,
 } from './browser/cookie'
+export { generateAnonymousId } from './domain/user'
 export { CookieStore, WeakRef, WeakRefConstructor } from './browser/browser.types'
 export { initXhrObservable, XhrCompleteContext, XhrStartContext } from './browser/xhrObservable'
 export {
