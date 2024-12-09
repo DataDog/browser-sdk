@@ -5,6 +5,7 @@
     "esModuleInterop": true,
     "importHelpers": false,
     "moduleResolution": "node",
+    "module": "ES2020",
     "resolveJsonModule": true,
     "strict": true,
     "target": "ES2018",

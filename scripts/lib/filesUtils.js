@@ -12,6 +12,17 @@ function readCiFileVariable(variableName) {
   return regexp.exec(ciFileContent)?.[1]
 }
 
+async function forEachFile(directoryPath, callback) {
+  for (const entry of fs.readdirSync(directoryPath, { withFileTypes: true })) {
+    const entryPath = `${directoryPath}/${entry.name}`
+    if (entry.isFile()) {
+      await callback(entryPath)
+    } else if (entry.isDirectory()) {
+      await forEachFile(entryPath, callback)
+    }
+  }
+}
+
 async function replaceCiFileVariable(variableName, value) {
   await modifyFile(CI_FILE, (content) =>
     content.replace(new RegExp(`${variableName}: .*`), `${variableName}: ${value}`)
@@ -53,4 +64,5 @@ module.exports = {
   replaceCiFileVariable,
   modifyFile,
   findBrowserSdkPackageJsonFiles,
+  forEachFile,
 }

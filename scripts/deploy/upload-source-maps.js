@@ -6,6 +6,7 @@ const { command } = require('../lib/command')
 const { getBuildEnvValue } = require('../lib/buildEnv')
 const { getTelemetryOrgApiKey } = require('../lib/secrets')
 const { siteByDatacenter } = require('../lib/datadogSites')
+const { forEachFile } = require('../lib/filesUtils')
 const {
   buildRootUploadPath,
   buildDatacenterUploadPath,
@@ -33,39 +34,53 @@ function getSitesByVersion(version) {
   }
 }
 
-runMain(() => {
+runMain(async () => {
   for (const { packageName, service } of packages) {
-    const bundleFolder = buildBundleFolder(packageName)
-    for (const uploadPathType of uploadPathTypes) {
+    await uploadSourceMaps(packageName, service)
+  }
+  printLog('Source maps upload done.')
+})
+
+async function uploadSourceMaps(packageName, service) {
+  const bundleFolder = buildBundleFolder(packageName)
+
+  for (const uploadPathType of uploadPathTypes) {
+    await forEachFile(bundleFolder, (bundlePath) => {
+      if (!bundlePath.endsWith('.js.map')) {
+        return
+      }
+      const relativeBundlePath = bundlePath.replace(`${bundleFolder}/`, '')
+
       let sites
       let uploadPath
       if (uploadPathType === 'root') {
         sites = getSitesByVersion(version)
-        uploadPath = buildRootUploadPath(packageName, version)
-        renameFilesWithVersionSuffix(packageName, bundleFolder)
+        uploadPath = buildRootUploadPath(relativeBundlePath, version)
+        renameFilesWithVersionSuffix(relativeBundlePath, bundleFolder)
       } else {
         sites = [siteByDatacenter[uploadPathType]]
         uploadPath = buildDatacenterUploadPath(uploadPathType, packageName, version)
       }
       const prefix = path.dirname(`/${uploadPath}`)
-      uploadSourceMaps(packageName, service, prefix, bundleFolder, sites)
-    }
+      uploadToDatadog(packageName, service, prefix, bundleFolder, sites)
+    })
   }
-  printLog('Source maps upload done.')
-})
+}
 
-function renameFilesWithVersionSuffix(packageName, bundleFolder) {
+function renameFilesWithVersionSuffix(filePath, bundleFolder) {
   // The datadog-ci CLI is taking a directory as an argument. It will scan every source map files in
   // it and upload those along with the minified bundle. The file names must match the one from the
   // CDN, thus we need to rename the bundles with the right suffix.
-  for (const extension of ['js', 'js.map']) {
-    const bundlePath = `${bundleFolder}/${buildBundleFileName(packageName, extension)}`
-    const uploadPath = `${bundleFolder}/${buildRootUploadPath(packageName, version, extension)}`
+  for (const extension of ['.js', '.js.map']) {
+    const temp = filePath.replace('.js.map', extension)
+    const bundlePath = `${bundleFolder}/${buildBundleFileName(temp)}`
+    const uploadPath = `${bundleFolder}/${buildRootUploadPath(temp, version)}`
+
     command`mv ${bundlePath} ${uploadPath}`.run()
   }
 }
 
-function uploadSourceMaps(packageName, service, prefix, bundleFolder, sites) {
+function uploadToDatadog(packageName, service, prefix, bundleFolder, sites) {
   for (const site of sites) {
     printLog(`Uploading ${packageName} source maps with prefix ${prefix} for ${site}...`)
 
