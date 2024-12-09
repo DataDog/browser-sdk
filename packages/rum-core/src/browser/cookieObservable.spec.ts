@@ -13,6 +13,7 @@ describe('cookieObservable', () => {
   let originalSupportedEntryTypes: PropertyDescriptor | undefined
   let clock: Clock
   beforeEach(() => {
+    deleteCookie(COOKIE_NAME)
     clock = mockClock()
     originalSupportedEntryTypes = Object.getOwnPropertyDescriptor(window, 'cookieStore')
   })
@@ -23,7 +24,6 @@ describe('cookieObservable', () => {
       Object.defineProperty(window, 'cookieStore', originalSupportedEntryTypes)
     }
     clock.cleanup()
-    deleteCookie(COOKIE_NAME)
   })
 
   it('should notify observers on cookie change', (done) => {

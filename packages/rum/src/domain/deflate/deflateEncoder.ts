@@ -6,7 +6,7 @@ import type {
   EncoderResult,
 } from '@datadog/browser-core'
 import type { RumConfiguration } from '@datadog/browser-rum-core'
-import { addEventListener, addTelemetryDebug, assign, concatBuffers } from '@datadog/browser-core'
+import { addEventListener, addTelemetryDebug, concatBuffers } from '@datadog/browser-core'
 
 export function createDeflateEncoder(
   configuration: RumConfiguration,
@@ -126,9 +126,7 @@ export function createDeflateEncoder(
         })
         .join('')
 
-      return assign(consumeResult(), {
-        pendingData,
-      })
+      return { ...consumeResult(), pendingData }
     },
 
     estimateEncodedBytesCount(data) {

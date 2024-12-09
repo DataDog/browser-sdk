@@ -9,7 +9,7 @@ export interface CookieOptions {
   domain?: string
 }
 
-export function setCookie(name: string, value: string, expireDelay: number, options?: CookieOptions) {
+export function setCookie(name: string, value: string, expireDelay: number = 0, options?: CookieOptions) {
   const date = new Date()
   date.setTime(date.getTime() + expireDelay)
   const expires = `expires=${date.toUTCString()}`

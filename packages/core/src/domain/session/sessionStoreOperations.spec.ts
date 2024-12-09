@@ -37,7 +37,7 @@ const EXPIRED_SESSION: SessionState = { isExpired: '1' }
     const now = Date.now()
 
     beforeEach(() => {
-      sessionStoreStrategy.expireSession()
+      sessionStoreStrategy.expireSession(initialSession)
       initialSession = { id: '123', created: String(now) }
       otherSession = { id: '456', created: String(now + 100) }
       processSpy = jasmine.createSpy('process')

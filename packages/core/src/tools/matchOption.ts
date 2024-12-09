@@ -1,4 +1,3 @@
-import { startsWith } from './utils/polyfills'
 import { display } from './display'
 import { getType } from './utils/typeUtils'
 
@@ -22,7 +21,7 @@ export function matchList(list: MatchOption[], value: string, useStartsWith = fa
       } else if (item instanceof RegExp) {
         return item.test(value)
       } else if (typeof item === 'string') {
-        return useStartsWith ? startsWith(value, item) : item === value
+        return useStartsWith ? value.startsWith(item) : item === value
       }
     } catch (e) {
       display.error(e)
