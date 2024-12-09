@@ -50,6 +50,7 @@ import type { CustomVitalsState } from '../domain/vital/vitalCollection'
 import { startVitalCollection } from '../domain/vital/vitalCollection'
 import { startCiVisibilityContext } from '../domain/contexts/ciVisibilityContext'
 import { startLongAnimationFrameCollection } from '../domain/longAnimationFrame/longAnimationFrameCollection'
+import { startSurveyCollection } from '../domain/voc/survey'
 import type { RecorderApi } from './rumPublicApi'
 
 export type StartRum = typeof startRum
@@ -124,6 +125,8 @@ export function startRum(
     startRumEventBridge(lifeCycle)
   }
 
+  const { setUser } = startSurveyCollection(lifeCycle)
+
   const domMutationObservable = createDOMMutationObservable()
   const locationChangeObservable = createLocationChangeObservable(configuration, location)
   const pageStateHistory = startPageStateHistory(configuration)
@@ -194,6 +197,7 @@ export function startRum(
   )
 
   return {
+    setUser,
     addAction,
     addError,
     addTiming,

@@ -100,6 +100,7 @@ export {
   setCookie,
   deleteCookie,
   resetInitCookies,
+  getCurrentSite,
 } from './browser/cookie'
 export { CookieStore, WeakRef, WeakRefConstructor } from './browser/browser.types'
 export { initXhrObservable, XhrCompleteContext, XhrStartContext } from './browser/xhrObservable'
