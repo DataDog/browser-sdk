@@ -9,5 +9,5 @@ export interface SessionStoreStrategy {
   isLockEnabled: boolean
   persistSession: (session: SessionState) => void
   retrieveSession: () => SessionState
-  expireSession: () => void
+  expireSession: (previousSessionState: SessionState) => void
 }
