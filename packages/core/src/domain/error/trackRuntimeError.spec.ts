@@ -1,6 +1,5 @@
 import { disableJasmineUncaughtExceptionTracking, collectAsyncCalls, registerCleanupTask } from '../../../test'
 import { Observable } from '../../tools/observable'
-import { isIE } from '../../tools/utils/browserDetection'
 import type { UnhandledErrorCallback } from './trackRuntimeError'
 import { instrumentOnError, instrumentUnhandledRejection, trackRuntimeError } from './trackRuntimeError'
 import type { RawError } from './error.types'
@@ -32,21 +31,16 @@ describe('trackRuntimeError', () => {
     window.onerror = originalOnErrorHandler
   })
 
-  it('should collect unhandled error', (done) => {
+  it('should collect unhandled error', async () => {
     setTimeout(() => {
       throw new Error(ERROR_MESSAGE)
     })
-    collectAsyncCalls(onErrorSpy, 1, () => {
-      expect(notifyError).toHaveBeenCalledOnceWith(jasmine.objectContaining({ message: ERROR_MESSAGE }))
-      done()
-    })
+
+    await collectAsyncCalls(onErrorSpy)
+    expect(notifyError).toHaveBeenCalledOnceWith(jasmine.objectContaining({ message: ERROR_MESSAGE }))
   })
 
-  it('should collect unhandled rejection', (done) => {
-    if (isIE()) {
-      pending('no promise support')
-    }
-
+  it('should collect unhandled rejection', async () => {
     if (!('onunhandledrejection' in window)) {
       pending('onunhandledrejection not supported')
     }
@@ -57,10 +51,8 @@ describe('trackRuntimeError', () => {
       void Promise.reject(new Error(ERROR_MESSAGE))
     })
 
-    collectAsyncCalls(onUnhandledrejectionSpy, 1, () => {
-      expect(notifyError).toHaveBeenCalledOnceWith(jasmine.objectContaining({ message: ERROR_MESSAGE }))
-      done()
-    })
+    await collectAsyncCalls(onUnhandledrejectionSpy)
+    expect(notifyError).toHaveBeenCalledOnceWith(jasmine.objectContaining({ message: ERROR_MESSAGE }))
   })
 })
 
@@ -87,55 +79,50 @@ describe('instrumentOnError', () => {
     stopCollectingUnhandledError()
   })
 
-  it('should call original error handler', (done) => {
+  it('should call original error handler', async () => {
     setTimeout(() => {
       throw new Error(ERROR_MESSAGE)
     })
-    collectAsyncCalls(onErrorSpy, 1, () => {
-      expect(onErrorSpy).toHaveBeenCalled()
-      done()
-    })
+
+    await collectAsyncCalls(onErrorSpy)
+    expect(onErrorSpy).toHaveBeenCalled()
   })
 
-  it('should notify unhandled error instance', (done) => {
+  it('should notify unhandled error instance', async () => {
     const error = new Error(ERROR_MESSAGE)
     setTimeout(() => {
       throw error
     })
-    collectAsyncCalls(onErrorSpy, 1, () => {
-      const [stack, originalError] = callbackSpy.calls.mostRecent().args
-      expect(originalError).toBe(error)
-      expect(stack).toBeDefined()
-      done()
-    })
+
+    await collectAsyncCalls(onErrorSpy)
+    expect(onErrorSpy).toHaveBeenCalled()
+    const [stack, originalError] = callbackSpy.calls.mostRecent().args
+    expect(originalError).toBe(error)
+    expect(stack).toBeDefined()
   })
 
-  it('should notify unhandled string', (done) => {
+  it('should notify unhandled string', async () => {
     const error = 'foo' as any
     setTimeout(() => {
       // eslint-disable-next-line no-throw-literal
       throw error
     })
-    collectAsyncCalls(onErrorSpy, 1, () => {
-      const [stack, originalError] = callbackSpy.calls.mostRecent().args
-      expect(originalError).toBe(error)
-      expect(stack).toBeDefined()
-      done()
-    })
+    await collectAsyncCalls(onErrorSpy)
+    const [stack, originalError] = callbackSpy.calls.mostRecent().args
+    expect(originalError).toBe(error)
+    expect(stack).toBeDefined()
   })
 
-  it('should notify unhandled object', (done) => {
+  it('should notify unhandled object', async () => {
     const error = { a: 'foo' } as any
     setTimeout(() => {
       // eslint-disable-next-line no-throw-literal
       throw error
     })
-    collectAsyncCalls(onErrorSpy, 1, () => {
-      const [stack, originalError] = callbackSpy.calls.mostRecent().args
-      expect(originalError).toBe(error)
-      expect(stack).toBeDefined()
-      done()
-    })
+    await collectAsyncCalls(onErrorSpy)
+    const [stack, originalError] = callbackSpy.calls.mostRecent().args
+    expect(originalError).toBe(error)
+    expect(stack).toBeDefined()
   })
 
   describe('uncaught exception handling', () => {
@@ -169,18 +156,16 @@ describe('instrumentOnError', () => {
   })
 
   describe('should handle direct onerror calls', () => {
-    it('with objects', (done) => {
+    it('with objects', async () => {
       const error = { foo: 'bar' } as any
       setTimeout(() => {
         window.onerror!(error)
       })
 
-      collectAsyncCalls(onErrorSpy, 1, () => {
-        const [stack, originalError] = callbackSpy.calls.mostRecent().args
-        expect(originalError).toBe(error)
-        expect(stack).toBeDefined()
-        done()
-      })
+      await collectAsyncCalls(onErrorSpy)
+      const [stack, originalError] = callbackSpy.calls.mostRecent().args
+      expect(originalError).toBe(error)
+      expect(stack).toBeDefined()
     })
 
     describe('with undefined arguments', () => {

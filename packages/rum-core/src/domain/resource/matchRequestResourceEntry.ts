@@ -2,7 +2,6 @@ import type { Duration, RelativeTime } from '@datadog/browser-core'
 import { addDuration } from '@datadog/browser-core'
 import type { RumPerformanceResourceTiming } from '../../browser/performanceObservable'
 import type { RequestCompleteEvent } from '../requestCollection'
-import { WeakSet } from '../../browser/polyfills'
 import { hasValidResourceEntryDuration, hasValidResourceEntryTimings } from './resourceUtils'
 
 interface Timing {

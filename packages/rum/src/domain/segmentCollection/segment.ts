@@ -1,5 +1,4 @@
 import type { Encoder, EncoderResult } from '@datadog/browser-core'
-import { assign } from '@datadog/browser-core'
 import type { BrowserRecord, BrowserSegmentMetadata, CreationReason, SegmentContext } from '../../types'
 import { RecordType } from '../../types'
 import * as replayStats from '../replayStats'
@@ -24,18 +23,17 @@ export function createSegment({
 }): Segment {
   let encodedBytesCount = 0
   const viewId = context.view.id
-  const metadata: BrowserSegmentMetadata = assign(
-    {
-      start: Infinity,
-      end: -Infinity,
-      creation_reason: creationReason,
-      records_count: 0,
-      has_full_snapshot: false,
-      index_in_view: replayStats.getSegmentsCount(viewId),
-      source: 'browser' as const,
-    },
-    context
-  )
+  const metadata: BrowserSegmentMetadata = {
+    start: Infinity,
+    end: -Infinity,
+    creation_reason: creationReason,
+    records_count: 0,
+    has_full_snapshot: false,
+    index_in_view: replayStats.getSegmentsCount(viewId),
+    source: 'browser' as const,
+    ...context,
+  }
+
   replayStats.addSegment(viewId)
 
   function addRecord(record: BrowserRecord, callback: AddRecordCallback): void {
