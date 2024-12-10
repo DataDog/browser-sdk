@@ -14,11 +14,11 @@ import { RumEventType } from '../../rawRumEvent.types'
 import type { RawRumEventCollectedData } from '../lifeCycle'
 import { LifeCycle, LifeCycleEventType } from '../lifeCycle'
 import type { RequestCompleteEvent } from '../requestCollection'
-import { createTraceIdentifier } from '../tracing/tracer'
 import type { RumConfiguration } from '../configuration'
 import { validateAndBuildRumConfiguration } from '../configuration'
 import type { RumPerformanceEntry } from '../../browser/performanceObservable'
 import { RumPerformanceEntryType } from '../../browser/performanceObservable'
+import { createSpanIdentifier, createTraceIdentifier } from '../tracing/identifier'
 import { startResourceCollection } from './resourceCollection'
 
 const HANDLING_STACK_REGEX = /^Error: \n\s+at <anonymous> @/
@@ -186,7 +186,7 @@ describe('resourceCollection', () => {
           createCompletedRequest({
             type: RequestType.XHR,
             traceId: createTraceIdentifier(),
-            spanId: createTraceIdentifier(),
+            spanId: createSpanIdentifier(),
             traceSampled: true,
           })
         )
@@ -316,7 +316,7 @@ describe('resourceCollection', () => {
         LifeCycleEventType.REQUEST_COMPLETED,
         createCompletedRequest({
           traceSampled: true,
-          spanId: createTraceIdentifier(),
+          spanId: createSpanIdentifier(),
           traceId: createTraceIdentifier(),
         })
       )
@@ -331,7 +331,7 @@ describe('resourceCollection', () => {
         LifeCycleEventType.REQUEST_COMPLETED,
         createCompletedRequest({
           traceSampled: false,
-          spanId: createTraceIdentifier(),
+          spanId: createSpanIdentifier(),
           traceId: createTraceIdentifier(),
         })
       )
@@ -352,7 +352,7 @@ describe('resourceCollection', () => {
         LifeCycleEventType.REQUEST_COMPLETED,
         createCompletedRequest({
           traceSampled: true,
-          spanId: createTraceIdentifier(),
+          spanId: createSpanIdentifier(),
           traceId: createTraceIdentifier(),
         })
       )
@@ -371,7 +371,7 @@ describe('resourceCollection', () => {
         LifeCycleEventType.REQUEST_COMPLETED,
         createCompletedRequest({
           traceSampled: true,
-          spanId: createTraceIdentifier(),
+          spanId: createSpanIdentifier(),
           traceId: createTraceIdentifier(),
         })
       )
@@ -391,7 +391,7 @@ describe('resourceCollection', () => {
         LifeCycleEventType.REQUEST_COMPLETED,
         createCompletedRequest({
           traceSampled: true,
-          spanId: createTraceIdentifier(),
+          spanId: createSpanIdentifier(),
           traceId: createTraceIdentifier(),
         })
       )
