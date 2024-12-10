@@ -30,7 +30,7 @@ export function Panel() {
   const [activeTab, setActiveTab] = useState<string | null>(DEFAULT_PANEL_TAB)
   function updateActiveTab(activeTab: string | null) {
     setActiveTab(activeTab)
-    activeTab && datadogRum.startView(activeTab)
+    datadogRum.startView(activeTab!)
   }
 
   return (

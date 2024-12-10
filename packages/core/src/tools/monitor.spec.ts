@@ -20,13 +20,13 @@ describe('monitor', () => {
 
       @monitored
       monitoredStringErrorThrowing() {
-        // eslint-disable-next-line no-throw-literal
+        // eslint-disable-next-line @typescript-eslint/only-throw-error
         throw 'string error'
       }
 
       @monitored
       monitoredObjectErrorThrowing() {
-        // eslint-disable-next-line no-throw-literal
+        // eslint-disable-next-line @typescript-eslint/only-throw-error
         throw { foo: 'bar' }
       }
 
