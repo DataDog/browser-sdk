@@ -155,7 +155,7 @@ describe('getSelectorFromElement', () => {
     })
   })
 
-  it('should compute a CSS selector on SVG elements (IE does not support classList nor parentElement properties on them)', () => {
+  it('should compute a CSS selector on SVG elements', () => {
     const element = appendElement('<svg class="foo"></svg>')
     expect(getSelector(element)).toBe('BODY>svg.foo')
   })

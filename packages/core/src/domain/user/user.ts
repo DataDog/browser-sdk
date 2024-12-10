@@ -1,7 +1,6 @@
 import type { Context } from '../../tools/serialisation/context'
 import { display } from '../../tools/display'
 import { getType } from '../../tools/utils/typeUtils'
-import { assign } from '../../tools/utils/polyfills'
 import type { User } from './user.types'
 
 /**
@@ -11,7 +10,7 @@ import type { User } from './user.types'
  */
 export function sanitizeUser(newUser: Context): Context {
   // We shallow clone only to prevent mutation of user data.
-  const user = assign({}, newUser)
+  const user = { ...newUser }
   const keys = ['id', 'name', 'email']
   keys.forEach((key) => {
     if (key in user) {
@@ -30,4 +29,8 @@ export function checkUser(newUser: User): boolean {
     display.error('Unsupported user:', newUser)
   }
   return isValid
+}
+
+export function generateAnonymousId() {
+  return Math.floor(Math.random() * Math.pow(2, 53)).toString(36)
 }
