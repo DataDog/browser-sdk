@@ -11,6 +11,7 @@ import {
   objectHasValue,
   validateAndBuildConfiguration,
   isSampleRate,
+  includes,
 } from '@datadog/browser-core'
 import type { RumEventDomainContext } from '../../domainContext.types'
 import type { RumEvent } from '../../rumEvent.types'
@@ -130,7 +131,14 @@ export interface RumInitConfiguration extends InitConfiguration {
    * using.
    */
   plugins?: RumPlugin[] | undefined
+
+  /**
+   * Enables collection of features flags in chosen events.
+   */
+  collectFeatureFlagsOn?: FeatureFlagEvent[]
 }
+
+export type FeatureFlagEvent = 'view' | 'error' | 'vital'
 
 export type HybridInitConfiguration = Omit<RumInitConfiguration, 'applicationId' | 'clientToken'>
 
@@ -156,11 +164,23 @@ export interface RumConfiguration extends Configuration {
   customerDataTelemetrySampleRate: number
   traceContextInjection: TraceContextInjection
   plugins: RumPlugin[]
+  collectFeatureFlagsOn: FeatureFlagEvent[]
 }
 
 export function validateAndBuildRumConfiguration(
   initConfiguration: RumInitConfiguration
 ): RumConfiguration | undefined {
+  const collectFeatureFlagsOn: FeatureFlagEvent[] = []
+  if (Array.isArray(initConfiguration.collectFeatureFlagsOn)) {
+    const validEventTypes = ['view', 'error', 'vital']
+    initConfiguration.collectFeatureFlagsOn.forEach((eventType) => {
+      if (includes(validEventTypes, eventType)) {
+        collectFeatureFlagsOn.push(eventType)
+      } else {
+        display.warn(`Unknown event type '${eventType}' in collectFeatureFlagsOn configuration.`)
+      }
+    })
+  }
   if (!initConfiguration.applicationId) {
     display.error('Application ID is not configured, no RUM data will be collected.')
     return
@@ -219,6 +239,7 @@ export function validateAndBuildRumConfiguration(
         ? initConfiguration.traceContextInjection
         : TraceContextInjection.ALL,
       plugins: initConfiguration.plugins || [],
+      collectFeatureFlagsOn,
     },
     baseConfiguration
   )
@@ -303,6 +324,7 @@ export function serializeRumConfiguration(configuration: RumInitConfiguration) {
       plugins: configuration.plugins?.map((plugin) =>
         assign({ name: plugin.name }, plugin.getConfigurationTelemetry?.())
       ),
+      collect_feature_flags_on: configuration.collectFeatureFlagsOn,
     },
     baseSerializedConfiguration
   ) satisfies RawTelemetryConfiguration
