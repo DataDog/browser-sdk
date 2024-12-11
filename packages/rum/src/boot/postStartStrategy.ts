@@ -100,6 +100,7 @@ export function createPostStartStrategy(
 
     status = RecorderStatus.Starting
 
+    // Intentionally not awaiting doStart() to keep it asynchronous
     doStart().catch(monitorError)
 
     if (shouldForceReplay(session!, options)) {

@@ -39,7 +39,7 @@ describe('makeRecorderApi', () => {
     stopRecordingSpy = jasmine.createSpy('stopRecording')
     startRecordingSpy = jasmine.createSpy('startRecording')
 
-    // Workaround because using resolveTo(startRecordingSpy) is not was not working
+    // Workaround because using resolveTo(startRecordingSpy) was not working
     loadRecorderSpy = jasmine.createSpy('loadRecorder').and.resolveTo((...args: any) => {
       startRecordingSpy(...args)
       return {
