@@ -172,7 +172,6 @@ function makeTracingHeaders(
       }
       // https://github.com/openzipkin/b3-propagation
       case 'b3': {
-        assign(tracingHeaders, {
         Object.assign(tracingHeaders, {
           b3: `${toPaddedHexadecimalString(traceId)}-${toPaddedHexadecimalString(spanId)}-${traceSampled ? '1' : '0'}`,
         })
