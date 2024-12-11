@@ -4,7 +4,9 @@ import { createRumSessionManagerMock } from '../../../test'
 import type { RumFetchResolveContext, RumFetchStartContext, RumXhrStartContext } from '../requestCollection'
 import type { RumConfiguration, RumInitConfiguration } from '../configuration'
 import { validateAndBuildRumConfiguration } from '../configuration'
-import { startTracer, createTraceIdentifier, type TraceIdentifier, getCrypto } from './tracer'
+import { startTracer } from './tracer'
+import type { SpanIdentifier, TraceIdentifier } from './identifier'
+import { createSpanIdentifier, createTraceIdentifier } from './identifier'
 
 describe('tracer', () => {
   let configuration: RumConfiguration
@@ -75,8 +77,7 @@ describe('tracer', () => {
     })
 
     it("should trace request with priority '1' when sampled", () => {
-      spyOn(Math, 'random').and.callFake(() => 0)
-      const tracer = startTracer({ ...configuration, traceSampleRate: 50 }, sessionManager)
+      const tracer = startTracer({ ...configuration, traceSampleRate: 100 }, sessionManager)
       const context = { ...ALLOWED_DOMAIN_CONTEXT }
       tracer.traceXhr(context, xhr as unknown as XMLHttpRequest)
 
@@ -87,8 +88,7 @@ describe('tracer', () => {
     })
 
     it("should trace request with priority '0' when not sampled", () => {
-      spyOn(Math, 'random').and.callFake(() => 1)
-      const tracer = startTracer({ ...configuration, traceSampleRate: 50 }, sessionManager)
+      const tracer = startTracer({ ...configuration, traceSampleRate: 0 }, sessionManager)
       const context = { ...ALLOWED_DOMAIN_CONTEXT }
       tracer.traceXhr(context, xhr as unknown as XMLHttpRequest)
 
@@ -99,11 +99,9 @@ describe('tracer', () => {
     })
 
     it("should trace request with sampled set to '0' in OTel headers when not sampled", () => {
-      spyOn(Math, 'random').and.callFake(() => 1)
-
       const configurationWithAllOtelHeaders = validateAndBuildRumConfiguration({
         ...INIT_CONFIGURATION,
-        traceSampleRate: 50,
+        traceSampleRate: 0,
         allowedTracingUrls: [{ match: window.location.origin, propagatorTypes: ['b3', 'tracecontext', 'b3multi'] }],
       })!
 
@@ -455,8 +453,7 @@ describe('tracer', () => {
     it("should trace request with priority '1' when sampled", () => {
       const context: Partial<RumFetchStartContext> = { ...ALLOWED_DOMAIN_CONTEXT }
 
-      spyOn(Math, 'random').and.callFake(() => 0)
-      const tracer = startTracer({ ...configuration, traceSampleRate: 50 }, sessionManager)
+      const tracer = startTracer({ ...configuration, traceSampleRate: 100 }, sessionManager)
       tracer.traceFetch(context)
 
       expect(context.traceSampled).toBe(true)
@@ -468,8 +465,7 @@ describe('tracer', () => {
     it("should trace request with priority '0' when not sampled", () => {
       const context: Partial<RumFetchStartContext> = { ...ALLOWED_DOMAIN_CONTEXT }
 
-      spyOn(Math, 'random').and.callFake(() => 1)
-      const tracer = startTracer({ ...configuration, traceSampleRate: 50 }, sessionManager)
+      const tracer = startTracer({ ...configuration, traceSampleRate: 0 }, sessionManager)
       tracer.traceFetch(context)
 
       expect(context.traceSampled).toBe(false)
@@ -622,9 +618,9 @@ describe('tracer', () => {
       const context: RumFetchResolveContext = {
         status: 0,
 
-        spanId: createTraceIdentifier(),
+        spanId: createSpanIdentifier(),
         traceId: createTraceIdentifier(),
-      } as any
+      } satisfies Partial<RumFetchResolveContext> as any
       tracer.clearTracingIfNeeded(context)
 
       expect(context.traceId).toBeUndefined()
@@ -636,30 +632,14 @@ describe('tracer', () => {
       const context: RumFetchResolveContext = {
         status: 200,
 
-        spanId: createTraceIdentifier(),
+        spanId: createSpanIdentifier(),
         traceId: createTraceIdentifier(),
-      } as any
+      } satisfies Partial<RumFetchResolveContext> as any
       tracer.clearTracingIfNeeded(context)
 
       expect(context.traceId).toBeDefined()
       expect(context.spanId).toBeDefined()
     })
-  })
-})
-
-describe('TraceIdentifier', () => {
-  it('should generate id', () => {
-    const identifier = createTraceIdentifier()
-
-    expect(identifier.toDecimalString()).toMatch(/^\d+$/)
-  })
-
-  it('should pad the string to 16 characters', () => {
-    spyOn(getCrypto() as any, 'getRandomValues').and.callFake((buffer: Uint8Array) => {
-      buffer[buffer.length - 1] = 0x01
-    })
-    const identifier = createTraceIdentifier()
-    expect(identifier.toPaddedHexadecimalString()).toEqual('0000000000000001')
   })
 })
 
@@ -671,16 +651,16 @@ function toPlainObject(headers: Headers) {
   return result
 }
 
-function tracingHeadersFor(traceId: TraceIdentifier, spanId: TraceIdentifier, samplingPriority: '1' | '0') {
+function tracingHeadersFor(traceId: TraceIdentifier, spanId: SpanIdentifier, samplingPriority: '1' | '0') {
   return {
     'x-datadog-origin': 'rum',
-    'x-datadog-parent-id': spanId.toDecimalString(),
+    'x-datadog-parent-id': spanId.toString(),
     'x-datadog-sampling-priority': samplingPriority,
-    'x-datadog-trace-id': traceId.toDecimalString(),
+    'x-datadog-trace-id': traceId.toString(),
   }
 }
 
-function tracingHeadersAsArrayFor(traceId: TraceIdentifier, spanId: TraceIdentifier, samplingPriority: '1' | '0') {
+function tracingHeadersAsArrayFor(traceId: TraceIdentifier, spanId: SpanIdentifier, samplingPriority: '1' | '0') {
   return objectEntries(tracingHeadersFor(traceId, spanId, samplingPriority))
 }
 
