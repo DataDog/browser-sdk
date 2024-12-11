@@ -37,6 +37,6 @@ function retrieveSessionFromLocalStorage(): SessionState {
   return toSessionState(sessionString)
 }
 
-function expireSessionFromLocalStorage() {
-  persistInLocalStorage(getExpiredSessionState())
+function expireSessionFromLocalStorage(previousSessionState: SessionState) {
+  persistInLocalStorage(getExpiredSessionState(previousSessionState))
 }
