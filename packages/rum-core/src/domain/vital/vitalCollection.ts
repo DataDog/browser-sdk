@@ -1,13 +1,6 @@
 import type { ClocksState, Duration, Context } from '@datadog/browser-core'
-import {
-  clocksNow,
-  combine,
-  elapsed,
-  generateUUID,
-  toServerDuration,
-  isEmptyObject,
-  includes,
-} from '@datadog/browser-core'
+import { clocksNow, combine, elapsed, generateUUID, toServerDuration } from '@datadog/browser-core'
+import { enableFeatureFlagsCollection } from '../collectFeatureFlags'
 import type { LifeCycle, RawRumEventCollectedData } from '../lifeCycle'
 import { LifeCycleEventType } from '../lifeCycle'
 import type { RawRumVitalEvent } from '../../rawRumEvent.types'
@@ -169,12 +162,13 @@ function processVital(
     }
   }
 
-  if (includes(collectFeatureFlagsOn, 'vital')) {
-    const featureFlagContext = featureFlagContexts.findFeatureFlagEvaluations(vital.startClocks.relative)
-    if (featureFlagContext && !isEmptyObject(featureFlagContext)) {
-      rawRumEvent.feature_flags = featureFlagContext
-    }
-  }
+  enableFeatureFlagsCollection(
+    'vital',
+    vital.startClocks.relative,
+    collectFeatureFlagsOn,
+    featureFlagContexts,
+    rawRumEvent
+  )
 
   return {
     rawRumEvent,

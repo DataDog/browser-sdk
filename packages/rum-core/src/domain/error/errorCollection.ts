@@ -1,6 +1,5 @@
 import type { Context, RawError, ClocksState } from '@datadog/browser-core'
 import {
-  isEmptyObject,
   assign,
   ErrorSource,
   generateUUID,
@@ -11,8 +10,8 @@ import {
   trackRuntimeError,
   NonErrorPrefix,
   isError,
-  includes,
 } from '@datadog/browser-core'
+import { enableFeatureFlagsCollection } from '../collectFeatureFlags'
 import type { FeatureFlagEvent, RumConfiguration } from '../configuration'
 import type { RawRumErrorEvent } from '../../rawRumEvent.types'
 import { RumEventType } from '../../rawRumEvent.types'
@@ -119,12 +118,13 @@ function processError(
     view: { in_foreground: pageStateHistory.wasInPageStateAt(PageState.ACTIVE, error.startClocks.relative) },
   }
 
-  if (includes(collectFeatureFlagsOn, 'error')) {
-    const featureFlagContext = featureFlagContexts.findFeatureFlagEvaluations(error.startClocks.relative)
-    if (featureFlagContext && !isEmptyObject(featureFlagContext)) {
-      rawRumEvent.feature_flags = featureFlagContext
-    }
-  }
+  enableFeatureFlagsCollection(
+    'error',
+    error.startClocks.relative,
+    collectFeatureFlagsOn,
+    featureFlagContexts,
+    rawRumEvent
+  )
 
   const domainContext: RumErrorEventDomainContext = {
     error: error.originalError,
