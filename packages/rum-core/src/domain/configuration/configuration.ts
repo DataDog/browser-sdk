@@ -100,6 +100,7 @@ export interface RumInitConfiguration extends InitConfiguration {
   /**
    * Enables automatic collection of users actions.
    * See [Tracking User Actions](https://docs.datadoghq.com/real_user_monitoring/browser/tracking_user_actions) for further information.
+   * @default true
    */
   trackUserInteractions?: boolean | undefined
   /**
@@ -115,10 +116,12 @@ export interface RumInitConfiguration extends InitConfiguration {
   trackViewsManually?: boolean | undefined
   /**
    * Enables collection of resource events.
+   * @default true
    */
   trackResources?: boolean | undefined
   /**
    * Enables collection of long task events.
+   * @default true
    */
   trackLongTasks?: boolean | undefined
 
