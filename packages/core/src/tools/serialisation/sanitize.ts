@@ -213,7 +213,6 @@ function sanitizePrimitivesAndFunctions(value: PrimitivesAndFunctions) {
  */
 function sanitizeObjects(value: object): string | sanitizedEvent {
   try {
-    // Handle events - Keep a simple implementation to avoid breaking changes
     if (value instanceof Event) {
       return sanitizeEvent(value)
     }
@@ -239,8 +238,8 @@ function sanitizeEvent(event: Event): sanitizedEvent {
   return {
     type: event.type,
     isTrusted: event.isTrusted,
-    currentTarget: event.currentTarget !== null ? (sanitizeObjects(event.currentTarget) as string) : null,
-    target: event.target !== null ? (sanitizeObjects(event.target) as string) : null,
+    currentTarget: event.currentTarget ? (sanitizeObjects(event.currentTarget) as string) : null,
+    target: event.target ? (sanitizeObjects(event.target) as string) : null,
   }
 }
 
