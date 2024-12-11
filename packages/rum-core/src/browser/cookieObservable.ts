@@ -7,7 +7,6 @@ import {
   ONE_SECOND,
   findCommaSeparatedValue,
   DOM_EVENT,
-  find,
 } from '@datadog/browser-core'
 
 export interface CookieStoreWindow extends Window {
@@ -36,8 +35,8 @@ function listenToCookieStoreChange(configuration: Configuration) {
         // Based on our experimentation, we're assuming that entries for the same cookie cannot be in both the 'changed' and 'deleted' arrays.
         // However, due to ambiguity in the specification, we asked for clarification: https://github.com/WICG/cookie-store/issues/226
         const changeEvent =
-          find(event.changed, (event) => event.name === cookieName) ||
-          find(event.deleted, (event) => event.name === cookieName)
+          event.changed.find((event) => event.name === cookieName) ||
+          event.deleted.find((event) => event.name === cookieName)
         if (changeEvent) {
           callback(changeEvent.value)
         }

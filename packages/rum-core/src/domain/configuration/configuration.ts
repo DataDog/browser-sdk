@@ -1,10 +1,8 @@
 import type { Configuration, InitConfiguration, MatchOption, RawTelemetryConfiguration } from '@datadog/browser-core'
 import {
   getType,
-  arrayFrom,
   isMatchOption,
   serializeConfiguration,
-  assign,
   DefaultPrivacyLevel,
   TraceContextInjection,
   display,
@@ -102,6 +100,7 @@ export interface RumInitConfiguration extends InitConfiguration {
   /**
    * Enables automatic collection of users actions.
    * See [Tracking User Actions](https://docs.datadoghq.com/real_user_monitoring/browser/tracking_user_actions) for further information.
+   * @default true
    */
   trackUserInteractions?: boolean | undefined
   /**
@@ -117,10 +116,12 @@ export interface RumInitConfiguration extends InitConfiguration {
   trackViewsManually?: boolean | undefined
   /**
    * Enables collection of resource events.
+   * @default true
    */
   trackResources?: boolean | undefined
   /**
    * Enables collection of long task events.
+   * @default true
    */
   trackLongTasks?: boolean | undefined
 
@@ -190,38 +191,36 @@ export function validateAndBuildRumConfiguration(
 
   const sessionReplaySampleRate = initConfiguration.sessionReplaySampleRate ?? 0
 
-  return assign(
-    {
-      applicationId: initConfiguration.applicationId,
-      version: initConfiguration.version || undefined,
-      actionNameAttribute: initConfiguration.actionNameAttribute,
-      sessionReplaySampleRate,
-      startSessionReplayRecordingManually:
-        initConfiguration.startSessionReplayRecordingManually !== undefined
-          ? !!initConfiguration.startSessionReplayRecordingManually
-          : sessionReplaySampleRate === 0,
-      traceSampleRate: initConfiguration.traceSampleRate,
-      allowedTracingUrls,
-      excludedActivityUrls: initConfiguration.excludedActivityUrls ?? [],
-      workerUrl: initConfiguration.workerUrl,
-      compressIntakeRequests: !!initConfiguration.compressIntakeRequests,
-      trackUserInteractions: !!initConfiguration.trackUserInteractions,
-      trackViewsManually: !!initConfiguration.trackViewsManually,
-      trackResources: !!initConfiguration.trackResources,
-      trackLongTasks: !!initConfiguration.trackLongTasks,
-      subdomain: initConfiguration.subdomain,
-      defaultPrivacyLevel: objectHasValue(DefaultPrivacyLevel, initConfiguration.defaultPrivacyLevel)
-        ? initConfiguration.defaultPrivacyLevel
-        : DefaultPrivacyLevel.MASK,
-      enablePrivacyForActionName: !!initConfiguration.enablePrivacyForActionName,
-      customerDataTelemetrySampleRate: 1,
-      traceContextInjection: objectHasValue(TraceContextInjection, initConfiguration.traceContextInjection)
-        ? initConfiguration.traceContextInjection
-        : TraceContextInjection.ALL,
-      plugins: initConfiguration.plugins || [],
-    },
-    baseConfiguration
-  )
+  return {
+    applicationId: initConfiguration.applicationId,
+    version: initConfiguration.version || undefined,
+    actionNameAttribute: initConfiguration.actionNameAttribute,
+    sessionReplaySampleRate,
+    startSessionReplayRecordingManually:
+      initConfiguration.startSessionReplayRecordingManually !== undefined
+        ? !!initConfiguration.startSessionReplayRecordingManually
+        : sessionReplaySampleRate === 0,
+    traceSampleRate: initConfiguration.traceSampleRate,
+    allowedTracingUrls,
+    excludedActivityUrls: initConfiguration.excludedActivityUrls ?? [],
+    workerUrl: initConfiguration.workerUrl,
+    compressIntakeRequests: !!initConfiguration.compressIntakeRequests,
+    trackUserInteractions: !!(initConfiguration.trackUserInteractions ?? true),
+    trackViewsManually: !!initConfiguration.trackViewsManually,
+    trackResources: !!(initConfiguration.trackResources ?? true),
+    trackLongTasks: !!(initConfiguration.trackLongTasks ?? true),
+    subdomain: initConfiguration.subdomain,
+    defaultPrivacyLevel: objectHasValue(DefaultPrivacyLevel, initConfiguration.defaultPrivacyLevel)
+      ? initConfiguration.defaultPrivacyLevel
+      : DefaultPrivacyLevel.MASK,
+    enablePrivacyForActionName: !!initConfiguration.enablePrivacyForActionName,
+    customerDataTelemetrySampleRate: 1,
+    traceContextInjection: objectHasValue(TraceContextInjection, initConfiguration.traceContextInjection)
+      ? initConfiguration.traceContextInjection
+      : TraceContextInjection.ALL,
+    plugins: initConfiguration.plugins || [],
+    ...baseConfiguration,
+  }
 }
 
 /**
@@ -274,36 +273,35 @@ function getSelectedTracingPropagators(configuration: RumInitConfiguration): Pro
     })
   }
 
-  return arrayFrom(usedTracingPropagators)
+  return Array.from(usedTracingPropagators)
 }
 
 export function serializeRumConfiguration(configuration: RumInitConfiguration) {
   const baseSerializedConfiguration = serializeConfiguration(configuration)
 
-  return assign(
-    {
-      session_replay_sample_rate: configuration.sessionReplaySampleRate,
-      start_session_replay_recording_manually: configuration.startSessionReplayRecordingManually,
-      trace_sample_rate: configuration.traceSampleRate,
-      trace_context_injection: configuration.traceContextInjection,
-      action_name_attribute: configuration.actionNameAttribute,
-      use_allowed_tracing_urls:
-        Array.isArray(configuration.allowedTracingUrls) && configuration.allowedTracingUrls.length > 0,
-      selected_tracing_propagators: getSelectedTracingPropagators(configuration),
-      default_privacy_level: configuration.defaultPrivacyLevel,
-      enable_privacy_for_action_name: configuration.enablePrivacyForActionName,
-      use_excluded_activity_urls:
-        Array.isArray(configuration.excludedActivityUrls) && configuration.excludedActivityUrls.length > 0,
-      use_worker_url: !!configuration.workerUrl,
-      compress_intake_requests: configuration.compressIntakeRequests,
-      track_views_manually: configuration.trackViewsManually,
-      track_user_interactions: configuration.trackUserInteractions,
-      track_resources: configuration.trackResources,
-      track_long_task: configuration.trackLongTasks,
-      plugins: configuration.plugins?.map((plugin) =>
-        assign({ name: plugin.name }, plugin.getConfigurationTelemetry?.())
-      ),
-    },
-    baseSerializedConfiguration
-  ) satisfies RawTelemetryConfiguration
+  return {
+    session_replay_sample_rate: configuration.sessionReplaySampleRate,
+    start_session_replay_recording_manually: configuration.startSessionReplayRecordingManually,
+    trace_sample_rate: configuration.traceSampleRate,
+    trace_context_injection: configuration.traceContextInjection,
+    action_name_attribute: configuration.actionNameAttribute,
+    use_allowed_tracing_urls:
+      Array.isArray(configuration.allowedTracingUrls) && configuration.allowedTracingUrls.length > 0,
+    selected_tracing_propagators: getSelectedTracingPropagators(configuration),
+    default_privacy_level: configuration.defaultPrivacyLevel,
+    enable_privacy_for_action_name: configuration.enablePrivacyForActionName,
+    use_excluded_activity_urls:
+      Array.isArray(configuration.excludedActivityUrls) && configuration.excludedActivityUrls.length > 0,
+    use_worker_url: !!configuration.workerUrl,
+    compress_intake_requests: configuration.compressIntakeRequests,
+    track_views_manually: configuration.trackViewsManually,
+    track_user_interactions: configuration.trackUserInteractions,
+    track_resources: configuration.trackResources,
+    track_long_task: configuration.trackLongTasks,
+    plugins: configuration.plugins?.map((plugin) => ({
+      name: plugin.name,
+      ...plugin.getConfigurationTelemetry?.(),
+    })),
+    ...baseSerializedConfiguration,
+  } satisfies RawTelemetryConfiguration
 }

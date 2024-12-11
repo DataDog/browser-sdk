@@ -1,7 +1,6 @@
 import type { TrackingConsentState } from '@datadog/browser-core'
 import {
   createBoundedBuffer,
-  assign,
   canUseEventBridge,
   display,
   displayAlreadyInitializedError,
@@ -92,5 +91,5 @@ export function createPreStartStrategy(
 }
 
 function overrideInitConfigurationForBridge(initConfiguration: LogsInitConfiguration): LogsInitConfiguration {
-  return assign({}, initConfiguration, { clientToken: 'empty' })
+  return { ...initConfiguration, clientToken: 'empty' }
 }
