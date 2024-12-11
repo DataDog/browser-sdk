@@ -2,8 +2,6 @@ import {
   objectEntries,
   shallowClone,
   isNumber,
-  assign,
-  find,
   getType,
   isMatchOption,
   matchList,
@@ -115,7 +113,7 @@ function injectHeadersIfTracingAllowed(
     return
   }
 
-  const tracingOption = find(configuration.allowedTracingUrls, (tracingOption: TracingOption) =>
+  const tracingOption = configuration.allowedTracingUrls.find((tracingOption: TracingOption) =>
     matchList([tracingOption.match], context.url!, true)
   )
   if (!tracingOption) {
@@ -154,7 +152,7 @@ function makeTracingHeaders(
   propagatorTypes.forEach((propagatorType) => {
     switch (propagatorType) {
       case 'datadog': {
-        assign(tracingHeaders, {
+        Object.assign(tracingHeaders, {
           'x-datadog-origin': 'rum',
           'x-datadog-parent-id': spanId.toString(),
           'x-datadog-sampling-priority': traceSampled ? '1' : '0',
