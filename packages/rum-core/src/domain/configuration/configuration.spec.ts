@@ -86,20 +86,22 @@ describe('validateAndBuildRumConfiguration', () => {
   })
 
   describe('traceContextInjection', () => {
-    it('defaults to all if no options provided', () => {
-      expect(validateAndBuildRumConfiguration(DEFAULT_INIT_CONFIGURATION)!.traceContextInjection).toBe('all')
+    it('defaults to sampled if no options provided', () => {
+      expect(validateAndBuildRumConfiguration(DEFAULT_INIT_CONFIGURATION)!.traceContextInjection).toBe(
+        TraceContextInjection.SAMPLED
+      )
     })
     it('is set to provided value', () => {
       expect(
-        validateAndBuildRumConfiguration({ ...DEFAULT_INIT_CONFIGURATION, traceContextInjection: 'sampled' })!
+        validateAndBuildRumConfiguration({ ...DEFAULT_INIT_CONFIGURATION, traceContextInjection: 'all' })!
           .traceContextInjection
-      ).toBe('sampled')
+      ).toBe(TraceContextInjection.ALL)
     })
     it('ignores incorrect value', () => {
       expect(
         validateAndBuildRumConfiguration({ ...DEFAULT_INIT_CONFIGURATION, traceContextInjection: 'foo' as any })!
           .traceContextInjection
-      ).toBe(TraceContextInjection.ALL)
+      ).toBe(TraceContextInjection.SAMPLED)
     })
   })
 

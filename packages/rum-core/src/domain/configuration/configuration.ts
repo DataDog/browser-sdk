@@ -65,7 +65,7 @@ export interface RumInitConfiguration extends InitConfiguration {
   traceSampleRate?: number | undefined
   /**
    * If you set a `traceSampleRate`, to ensure backend services' sampling decisions are still applied, configure the `traceContextInjection` initialization parameter to sampled.
-   * @default all
+   * @default sampled
    * See [Connect RUM and Traces](https://docs.datadoghq.com/real_user_monitoring/platform/connect_rum_and_traces/?tab=browserrum) for further information.
    */
   traceContextInjection?: TraceContextInjection | undefined
@@ -217,7 +217,7 @@ export function validateAndBuildRumConfiguration(
     customerDataTelemetrySampleRate: 1,
     traceContextInjection: objectHasValue(TraceContextInjection, initConfiguration.traceContextInjection)
       ? initConfiguration.traceContextInjection
-      : TraceContextInjection.ALL,
+      : TraceContextInjection.SAMPLED,
     plugins: initConfiguration.plugins || [],
     ...baseConfiguration,
   }
