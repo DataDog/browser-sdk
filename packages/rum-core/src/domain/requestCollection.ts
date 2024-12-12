@@ -20,12 +20,13 @@ import type { RumConfiguration } from './configuration'
 import type { LifeCycle } from './lifeCycle'
 import { LifeCycleEventType } from './lifeCycle'
 import { isAllowedRequestUrl } from './resource/resourceUtils'
-import type { TraceIdentifier, Tracer } from './tracing/tracer'
+import type { Tracer } from './tracing/tracer'
 import { startTracer } from './tracing/tracer'
+import type { SpanIdentifier, TraceIdentifier } from './tracing/identifier'
 
 export interface CustomContext {
   requestIndex: number
-  spanId?: TraceIdentifier
+  spanId?: SpanIdentifier
   traceId?: TraceIdentifier
   traceSampled?: boolean
 }
@@ -47,7 +48,7 @@ export interface RequestCompleteEvent {
   responseType?: string
   startClocks: ClocksState
   duration: Duration
-  spanId?: TraceIdentifier
+  spanId?: SpanIdentifier
   traceId?: TraceIdentifier
   traceSampled?: boolean
   xhr?: XMLHttpRequest
