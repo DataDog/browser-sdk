@@ -1,6 +1,6 @@
 import type { Duration, ServerDuration, Observable } from '@datadog/browser-core'
 import { isEmptyObject, mapValues, toServerDuration } from '@datadog/browser-core'
-import { enableFeatureFlagsCollection } from '../collectFeatureFlags'
+import { featureFlagCollection } from '../collectFeatureFlags'
 import { discardNegativeDuration } from '../discardNegativeDuration'
 import type { RecorderApi } from '../../boot/rumPublicApi'
 import type { RawRumViewEvent } from '../../rawRumEvent.types'
@@ -126,7 +126,7 @@ function processViewUpdate(
     )
   }
 
-  enableFeatureFlagsCollection(
+  featureFlagCollection(
     'view',
     view.startClocks.relative,
     configuration.collectFeatureFlagsOn,

@@ -3,7 +3,7 @@ import { includes, isEmptyObject } from '@datadog/browser-core'
 import type { FeatureFlagEvent } from './configuration'
 import type { FeatureFlagContexts } from './contexts/featureFlagContext'
 
-export function enableFeatureFlagsCollection(
+export function featureFlagCollection(
   eventType: FeatureFlagEvent,
   eventStartTime: RelativeTime,
   collectFeatureFlagsOn: FeatureFlagEvent[],

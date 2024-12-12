@@ -11,7 +11,7 @@ import {
   NonErrorPrefix,
   isError,
 } from '@datadog/browser-core'
-import { enableFeatureFlagsCollection } from '../collectFeatureFlags'
+import { featureFlagCollection } from '../collectFeatureFlags'
 import type { FeatureFlagEvent, RumConfiguration } from '../configuration'
 import type { RawRumErrorEvent } from '../../rawRumEvent.types'
 import { RumEventType } from '../../rawRumEvent.types'
@@ -118,13 +118,7 @@ function processError(
     view: { in_foreground: pageStateHistory.wasInPageStateAt(PageState.ACTIVE, error.startClocks.relative) },
   }
 
-  enableFeatureFlagsCollection(
-    'error',
-    error.startClocks.relative,
-    collectFeatureFlagsOn,
-    featureFlagContexts,
-    rawRumEvent
-  )
+  featureFlagCollection('error', error.startClocks.relative, collectFeatureFlagsOn, featureFlagContexts, rawRumEvent)
 
   const domainContext: RumErrorEventDomainContext = {
     error: error.originalError,

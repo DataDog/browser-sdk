@@ -1,6 +1,6 @@
 import type { ClocksState, Duration, Context } from '@datadog/browser-core'
 import { clocksNow, combine, elapsed, generateUUID, toServerDuration } from '@datadog/browser-core'
-import { enableFeatureFlagsCollection } from '../collectFeatureFlags'
+import { featureFlagCollection } from '../collectFeatureFlags'
 import type { LifeCycle, RawRumEventCollectedData } from '../lifeCycle'
 import { LifeCycleEventType } from '../lifeCycle'
 import type { RawRumVitalEvent } from '../../rawRumEvent.types'
@@ -162,13 +162,7 @@ function processVital(
     }
   }
 
-  enableFeatureFlagsCollection(
-    'vital',
-    vital.startClocks.relative,
-    collectFeatureFlagsOn,
-    featureFlagContexts,
-    rawRumEvent
-  )
+  featureFlagCollection('vital', vital.startClocks.relative, collectFeatureFlagsOn, featureFlagContexts, rawRumEvent)
 
   return {
     rawRumEvent,
