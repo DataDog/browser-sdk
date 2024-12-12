@@ -1,6 +1,5 @@
 import { DefaultPrivacyLevel } from '@datadog/browser-core'
-import type { Clock } from '@datadog/browser-core/test'
-import { createNewEvent, mockClock, registerCleanupTask } from '@datadog/browser-core/test'
+import { createNewEvent, registerCleanupTask } from '@datadog/browser-core/test'
 import type { RumConfiguration } from '@datadog/browser-rum-core'
 import { PRIVACY_ATTR_NAME, PRIVACY_ATTR_VALUE_MASK_USER_INPUT } from '@datadog/browser-rum-core'
 import { appendElement } from '../../../../../rum-core/test'
@@ -16,7 +15,6 @@ describe('trackInput', () => {
   let inputTracker: Tracker
   let inputCallbackSpy: jasmine.Spy<InputCallback>
   let input: HTMLInputElement
-  let clock: Clock | undefined
   let configuration: RumConfiguration
 
   beforeEach(() => {
@@ -32,7 +30,6 @@ describe('trackInput', () => {
 
     registerCleanupTask(() => {
       inputTracker.stop()
-      clock?.cleanup()
     })
   })
 
@@ -51,12 +48,11 @@ describe('trackInput', () => {
     })
   })
 
-  it('collects input values when a property setter is used', () => {
-    clock = mockClock()
+  it('collects input values when a property setter is used', async () => {
     inputTracker = trackInput(configuration, inputCallbackSpy)
     input.value = 'foo'
 
-    clock.tick(0)
+    await Promise.resolve()
 
     expect(inputCallbackSpy).toHaveBeenCalledOnceWith({
       type: RecordType.IncrementalSnapshot,
@@ -69,11 +65,10 @@ describe('trackInput', () => {
     })
   })
 
-  it('does not invoke callback when the value does not change', () => {
-    clock = mockClock()
+  it('does not invoke callback when the value does not change', async () => {
     inputTracker = trackInput(configuration, inputCallbackSpy)
     input.value = 'foo'
-    clock.tick(0)
+    await Promise.resolve()
 
     dispatchInputEvent('foo')
 

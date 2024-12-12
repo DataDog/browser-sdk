@@ -1,5 +1,4 @@
-import { mockClock, mockZoneJs, registerCleanupTask } from '../../test'
-import type { Clock, MockZoneJs } from '../../test'
+import { mockZoneJs } from '../../test'
 import type { InstrumentedMethodCall } from './instrumentMethod'
 import { instrumentMethod, instrumentSetter } from './instrumentMethod'
 import { noop } from './utils/functionUtils'
@@ -129,6 +128,38 @@ describe('instrumentMethod', () => {
     )
   })
 
+  it('wraps each method only once even if we instrument it multiple times', () => {
+    const object = { method: () => 1 }
+    expect(object.method()).toBe(1)
+
+    for (let i = 0; i < 10_000; i++) {
+      const { stop: stopOurs } = instrumentMethod(object, 'method', noop)
+      const { stop: stopTheirs } = instrumentMethod(object, 'method', noop)
+      stopOurs()
+      stopTheirs()
+    }
+
+    // If we rewrap the method every time, this will throw `RangeError: Maximum
+    // call stack size exceeded.`
+    expect(object.method()).toBe(1)
+  })
+
+  it('wraps each method only once even if a third party instruments it multiple times', () => {
+    const object = { method: () => 1 }
+    expect(object.method()).toBe(1)
+
+    for (let i = 0; i < 10_000; i++) {
+      const { stop: stopOurs } = instrumentMethod(object, 'method', noop)
+      const { stop: stopTheirs } = thirdPartyInstrumentation(object)
+      stopOurs()
+      stopTheirs()
+    }
+
+    // If we rewrap the method every time, this will throw `RangeError: Maximum
+    // call stack size exceeded.`
+    expect(object.method()).toBe(1)
+  })
+
   describe('stop()', () => {
     it('does not call the instrumentation anymore', () => {
       const object = { method: () => 1 }
@@ -180,36 +211,39 @@ describe('instrumentMethod', () => {
     })
   })
 
-  function thirdPartyInstrumentation(object: { method?: () => number; onevent?: () => void }) {
+  function thirdPartyInstrumentation(object: { method?: () => number; onevent?: () => void }): { stop: () => void } {
     const originalMethod = object.method
+    let methodInstrumentation: (() => number) | undefined
     if (typeof originalMethod === 'function') {
-      object.method = () => {
+      methodInstrumentation = () => {
         originalMethod()
         return THIRD_PARTY_RESULT
       }
+      object.method = methodInstrumentation
     }
 
     const originalOnEvent = object.onevent
-    object.onevent = () => {
+    const onEventInstrumentation = (): void => {
       if (originalOnEvent) {
         originalOnEvent()
       }
+    }
+    object.onevent = onEventInstrumentation
+
+    return {
+      stop: () => {
+        if (methodInstrumentation && object.method === methodInstrumentation) {
+          object.method = originalMethod
+        }
+        if (object.onevent === onEventInstrumentation) {
+          object.onevent = originalOnEvent
+        }
+      },
     }
   }
 })
 
 describe('instrumentSetter', () => {
-  let clock: Clock
-  let zoneJs: MockZoneJs
-
-  beforeEach(() => {
-    clock = mockClock()
-    registerCleanupTask(() => {
-      clock.cleanup()
-    })
-    zoneJs = mockZoneJs()
-  })
-
   it('replaces the original setter', () => {
     const originalSetter = () => {
       // do nothing particular, only used to test if this setter gets replaced
@@ -254,7 +288,7 @@ describe('instrumentSetter', () => {
     expect(originalSetterSpy).toHaveBeenCalledOnceWith(1)
   })
 
-  it('calls the instrumentation asynchronously', () => {
+  it('calls the instrumentation asynchronously', async () => {
     const instrumentationSetterSpy = jasmine.createSpy()
     const object = {} as { foo: number }
     Object.defineProperty(object, 'foo', { set: noop, configurable: true })
@@ -263,12 +297,15 @@ describe('instrumentSetter', () => {
 
     object.foo = 1
     expect(instrumentationSetterSpy).not.toHaveBeenCalled()
-    clock.tick(0)
+    await Promise.resolve()
     expect(instrumentationSetterSpy).toHaveBeenCalledOnceWith(object, 1)
   })
 
-  it('does not use the Zone.js setTimeout function', () => {
+  // Note that this is trivially true, since instrumentSetter now uses promises and not
+  // setTimeout, but it's still worth verifying that we don't accidentally regress.
+  it('does not use the Zone.js setTimeout function', async () => {
     const zoneJsSetTimeoutSpy = jasmine.createSpy()
+    const zoneJs = mockZoneJs()
     zoneJs.replaceProperty(window, 'setTimeout', zoneJsSetTimeoutSpy)
 
     const object = {} as { foo: number }
@@ -277,12 +314,12 @@ describe('instrumentSetter', () => {
     instrumentSetter(object, 'foo', noop)
     object.foo = 2
 
-    clock.tick(0)
+    await Promise.resolve()
 
     expect(zoneJsSetTimeoutSpy).not.toHaveBeenCalled()
   })
 
-  it('allows other instrumentations from third parties', () => {
+  it('allows other instrumentations from third parties', async () => {
     const object = {} as { foo: number }
     Object.defineProperty(object, 'foo', { set: noop, configurable: true })
     const instrumentationSetterSpy = jasmine.createSpy()
@@ -292,7 +329,7 @@ describe('instrumentSetter', () => {
 
     object.foo = 2
     expect(thirdPartyInstrumentationSpy).toHaveBeenCalledOnceWith(2)
-    clock.tick(0)
+    await Promise.resolve()
     expect(instrumentationSetterSpy).toHaveBeenCalledOnceWith(object, 2)
   })
 
@@ -311,7 +348,7 @@ describe('instrumentSetter', () => {
       expect(Object.getOwnPropertyDescriptor(object, 'foo')!.set).toBe(originalSetter)
     })
 
-    it('does not call the instrumentation anymore', () => {
+    it('does not call the instrumentation anymore', async () => {
       const object = {} as { foo: number }
       Object.defineProperty(object, 'foo', { set: noop, configurable: true })
       const instrumentationSetterSpy = jasmine.createSpy()
@@ -320,12 +357,12 @@ describe('instrumentSetter', () => {
       stop()
 
       object.foo = 2
-      clock.tick(0)
+      await Promise.resolve()
 
       expect(instrumentationSetterSpy).not.toHaveBeenCalled()
     })
 
-    it('does not call instrumentation pending in the event loop via setTimeout', () => {
+    it('does not call instrumentation pending in the event loop', async () => {
       const object = {} as { foo: number }
       Object.defineProperty(object, 'foo', { set: noop, configurable: true })
       const instrumentationSetterSpy = jasmine.createSpy()
@@ -333,7 +370,7 @@ describe('instrumentSetter', () => {
 
       object.foo = 2
       stop()
-      clock.tick(0)
+      await Promise.resolve()
 
       expect(instrumentationSetterSpy).not.toHaveBeenCalled()
     })
@@ -352,7 +389,7 @@ describe('instrumentSetter', () => {
         expect(Object.getOwnPropertyDescriptor(object, 'foo')!.set).toBe(thirdPartyInstrumentationSpy)
       })
 
-      it('does not call the instrumentation', () => {
+      it('does not call the instrumentation', async () => {
         const object = {} as { foo: number }
         Object.defineProperty(object, 'foo', { set: noop, configurable: true })
         const instrumentationSetterSpy = jasmine.createSpy()
@@ -363,7 +400,7 @@ describe('instrumentSetter', () => {
         stop()
 
         object.foo = 2
-        clock.tick(0)
+        await Promise.resolve()
 
         expect(instrumentationSetterSpy).not.toHaveBeenCalled()
       })
