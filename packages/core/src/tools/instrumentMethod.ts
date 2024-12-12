@@ -37,26 +37,146 @@ type PostCallCallback<TARGET extends { [key: string]: any }, METHOD extends keyo
   result: ReturnType<TARGET[METHOD]>
 ) => void
 
+/** An instrumentation, as installed by instrumentMethod(). */
+type Instrumentation<TARGET extends { [key: string]: any }, METHOD extends keyof TARGET> = {
+  onPreCall: (this: null, callInfos: InstrumentedMethodCall<TARGET, METHOD>) => void
+  requiresHandlingStack: boolean
+}
+
+/** A hook that intercepts calls to a method and invokes any installed instrumentations. */
+type MethodHook<TARGET extends { [key: string]: any }, METHOD extends keyof TARGET> = {
+  original: TARGET[METHOD]
+  hook: TARGET[METHOD]
+  anyRequireHandlingStack: boolean
+  instrumentations: Array<Instrumentation<TARGET, METHOD>>
+}
+
 /**
- * Instruments a method on a object, calling the given callback before the original method is
- * invoked. The callback receives an object with information about the method call.
+ * A collection of all hooked methods associated with some object and their associated
+ * hooks.
+ */
+type ObjectHooks<TARGET extends { [key: string]: any }> = {
+  [METHOD in keyof TARGET]?: MethodHook<TARGET, METHOD>
+}
+
+/** A map from objects to their collection of hooks. */
+const objectHookMap = new WeakMap<object, ObjectHooks<object>>()
+
+function getOrCreateObjectHooks<TARGET extends { [key: string]: any }>(target: TARGET): ObjectHooks<TARGET> {
+  const existingObjectHooks = objectHookMap.get(target) as ObjectHooks<TARGET> | undefined
+  if (existingObjectHooks) {
+    return existingObjectHooks
+  }
+
+  const objectHooks = {}
+  objectHookMap.set(target, objectHooks)
+  return objectHooks
+}
+
+function getOrInstallMethodHook<TARGET extends { [key: string]: any }, METHOD extends keyof TARGET & string>(
+  objectHooks: ObjectHooks<TARGET>,
+  targetPrototype: TARGET,
+  method: METHOD
+): MethodHook<TARGET, METHOD> | undefined {
+  const existingMethodHook: MethodHook<TARGET, METHOD> | undefined = objectHooks[method]
+  if (existingMethodHook) {
+    return existingMethodHook
+  }
+
+  let original = targetPrototype[method]
+  if (typeof original !== 'function') {
+    if (method in targetPrototype && startsWith(method, 'on')) {
+      original = noop as TARGET[METHOD]
+    } else {
+      return undefined
+    }
+  }
+
+  const methodHook: MethodHook<TARGET, METHOD> = {
+    original,
+    hook: function (this: TARGET): ReturnType<TARGET[METHOD]> {
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+      return invokeHookedMethod(
+        original,
+        this,
+        arrayFrom(arguments) as Parameters<TARGET[METHOD]>,
+        methodHook.anyRequireHandlingStack ? createHandlingStack() : undefined,
+        methodHook.instrumentations,
+        0
+      )
+    } as TARGET[METHOD],
+    anyRequireHandlingStack: false,
+    instrumentations: [],
+  }
+
+  objectHooks[method] = methodHook
+  targetPrototype[method] = methodHook.hook
+  return methodHook
+}
+
+function invokeHookedMethod<TARGET extends { [key: string]: any }, METHOD extends keyof TARGET>(
+  original: TARGET[METHOD],
+  thisArg: TARGET,
+  args: Parameters<TARGET[METHOD]>,
+  handlingStack: string | undefined,
+  instrumentations: Array<Instrumentation<TARGET, METHOD>>,
+  nextInstrumentation: number
+): ReturnType<TARGET[METHOD]> {
+  if (nextInstrumentation >= instrumentations.length) {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-call
+    return original.apply(thisArg, args)
+  }
+
+  const instrumentation = instrumentations[nextInstrumentation]
+
+  let postCallCallback: PostCallCallback<TARGET, METHOD> | undefined
+
+  callMonitored(instrumentation.onPreCall, null, [
+    {
+      target: thisArg,
+      parameters: args,
+      onPostCall: (callback) => {
+        postCallCallback = callback
+      },
+      handlingStack,
+    },
+  ])
+
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-call
+  const result = invokeHookedMethod(original, thisArg, args, handlingStack, instrumentations, nextInstrumentation + 1)
+
+  if (postCallCallback) {
+    callMonitored(postCallCallback, null, [result])
+  }
+
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+  return result
+}
+
+/**
+ * Instruments a method on a object, calling the given callback before the
+ * original method is invoked. The callback receives an object with information
+ * about the method call.
  *
- * This function makes sure that we are "good citizens" regarding third party instrumentations: when
- * removing the instrumentation, the original method is usually restored, but if a third party
- * instrumentation was set after ours, we keep it in place and just replace our instrumentation with
- * a noop.
+ * This function makes sure that we are "good citizens" regarding third party
+ * instrumentations: when removing the instrumentation, the original method is
+ * usually restored, but if a third party instrumentation was set after ours, we
+ * keep it in place and just replace our instrumentation with a noop. The
+ * implementation is designed to ensure that no more than one layer of wrapping
+ * is ever added to each method, preventing stack overflow even in the case of
+ * accidental misuse of this API or buggy behavior by third-party
+ * instrumentation scripts.
  *
- * Note: it is generally better to instrument methods that are "owned" by the object instead of ones
- * that are inherited from the prototype chain. Example:
+ * Note: it is generally better to instrument methods that are "owned" by the
+ * object instead of ones that are inherited from the prototype chain. Example:
  * * do:    `instrumentMethod(Array.prototype, 'push', ...)`
  * * don't: `instrumentMethod([], 'push', ...)`
  *
- * This method is also used to set event handler properties (ex: window.onerror = ...), as it has
- * the same requirements as instrumenting a method:
- * * if the event handler is already set by a third party, we need to call it and not just blindly
- * override it.
- * * if the event handler is set by a third party after us, we need to keep it in place when
- * removing ours.
+ * This method is also used to set event handler properties (ex: window.onerror
+ * = ...), as it has the same requirements as instrumenting a method: * if the
+ * event handler is already set by a third party, we need to call it and not
+ * just blindly override it. * if the event handler is set by a third party
+ * after us, we need to keep it in place when removing ours.
  *
  * @example
  *
@@ -74,58 +194,43 @@ export function instrumentMethod<TARGET extends { [key: string]: any }, METHOD e
   onPreCall: (this: null, callInfos: InstrumentedMethodCall<TARGET, METHOD>) => void,
   { computeHandlingStack }: { computeHandlingStack?: boolean } = {}
 ) {
-  let original = targetPrototype[method]
-
-  if (typeof original !== 'function') {
-    if (method in targetPrototype && startsWith(method, 'on')) {
-      original = noop as TARGET[METHOD]
-    } else {
-      return { stop: noop }
-    }
+  const objectHooks = getOrCreateObjectHooks(targetPrototype)
+  const methodHook = getOrInstallMethodHook(objectHooks, targetPrototype, method)
+  if (!methodHook) {
+    // We can't hook this method (e.g., because it's not actually a function).
+    return { stop: noop }
   }
 
-  let stopped = false
+  // We only generate the handling stack if at least one instrumentation
+  // actually requires it.
+  const requiresHandlingStack = !!computeHandlingStack
+  methodHook.anyRequireHandlingStack = methodHook.anyRequireHandlingStack || requiresHandlingStack
 
-  const instrumentation = function (this: TARGET): ReturnType<TARGET[METHOD]> | undefined {
-    if (stopped) {
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-call
-      return original.apply(this, arguments as unknown as Parameters<TARGET[METHOD]>)
-    }
-
-    const parameters = arrayFrom(arguments) as Parameters<TARGET[METHOD]>
-
-    let postCallCallback: PostCallCallback<TARGET, METHOD> | undefined
-
-    callMonitored(onPreCall, null, [
-      {
-        target: this,
-        parameters,
-        onPostCall: (callback) => {
-          postCallCallback = callback
-        },
-        handlingStack: computeHandlingStack ? createHandlingStack() : undefined,
-      },
-    ])
-
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-call
-    const result = original.apply(this, parameters)
-
-    if (postCallCallback) {
-      callMonitored(postCallCallback, null, [result])
-    }
-
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-    return result
+  // Create the instrumentation requested by the caller, and add it to the
+  // hook's collection of instrumentations. We use 'unshift' so that newly added
+  // instrumentations are invoked before older ones, which approximates the
+  // behavior of a simple function wrapper.
+  const instrumentation: Instrumentation<TARGET, METHOD> = {
+    onPreCall,
+    requiresHandlingStack,
   }
-
-  targetPrototype[method] = instrumentation as TARGET[METHOD]
+  methodHook.instrumentations.unshift(instrumentation)
 
   return {
     stop: () => {
-      stopped = true
-      // If the instrumentation has been removed by a third party, keep the last one
-      if (targetPrototype[method] === instrumentation) {
-        targetPrototype[method] = original
+      // If this instrumentation is still attach to the hook, remove it, and recompute
+      // shared hook state.
+      const index = methodHook.instrumentations.indexOf(instrumentation)
+      if (index > -1) {
+        methodHook.instrumentations.splice(index, 1)
+        methodHook.anyRequireHandlingStack = methodHook.instrumentations.some((item) => item.requiresHandlingStack)
+      }
+
+      // If we have no more instrumentations for this hook, and the underlying method has
+      // not been overridden in the mean time, remove the hook.
+      if (methodHook.instrumentations.length === 0 && targetPrototype[method] === methodHook.hook) {
+        targetPrototype[method] = methodHook.original
+        delete objectHooks[method]
       }
     },
   }
