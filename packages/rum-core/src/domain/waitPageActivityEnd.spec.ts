@@ -48,16 +48,22 @@ describe('createPageActivityObservable', () => {
 
   const lifeCycle = new LifeCycle()
   const domMutationObservable = new Observable<void>()
+  const windowOpenObservable = new Observable<void>()
   let pageActivitySubscription: Subscription
   let notifyPerformanceEntries: (entries: RumPerformanceEntry[]) => void
 
   function startListeningToPageActivities(
     extraConfiguration: Partial<RumConfiguration> = { excludedActivityUrls: [EXCLUDED_FAKE_URL] }
   ) {
-    const pageActivityObservable = createPageActivityObservable(lifeCycle, domMutationObservable, {
-      ...RUM_CONFIGURATION,
-      ...extraConfiguration,
-    })
+    const pageActivityObservable = createPageActivityObservable(
+      lifeCycle,
+      domMutationObservable,
+      windowOpenObservable,
+      {
+        ...RUM_CONFIGURATION,
+        ...extraConfiguration,
+      }
+    )
     pageActivitySubscription = pageActivityObservable.subscribe(pushEvent)
   }
 
@@ -93,7 +99,7 @@ describe('createPageActivityObservable', () => {
   it('emits an activity event when `window.open` is used', () => {
     spyOn(window, 'open')
     startListeningToPageActivities()
-    window.open('toto')
+    windowOpenObservable.notify()
     expect(events).toEqual([{ isBusy: false }])
   })
 

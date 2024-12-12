@@ -21,6 +21,7 @@ import {
   ExperimentalFeature,
 } from '@datadog/browser-core'
 import { createDOMMutationObservable } from '../browser/domMutationObservable'
+import { createWindowOpenObservable } from '../browser/windowOpenObservable'
 import { startRumAssembly } from '../domain/assembly'
 import { startInternalContext } from '../domain/contexts/internalContext'
 import { LifeCycle, LifeCycleEventType } from '../domain/lifeCycle'
@@ -125,6 +126,7 @@ export function startRum(
   }
 
   const domMutationObservable = createDOMMutationObservable()
+  const windowOpenObservable = createWindowOpenObservable()
   const locationChangeObservable = createLocationChangeObservable(configuration, location)
   const pageStateHistory = startPageStateHistory(configuration)
   const {
@@ -141,6 +143,7 @@ export function startRum(
     pageStateHistory,
     locationChangeObservable,
     domMutationObservable,
+    windowOpenObservable,
     getCommonContext,
     reportError
   )
@@ -160,6 +163,7 @@ export function startRum(
     configuration,
     location,
     domMutationObservable,
+    windowOpenObservable,
     locationChangeObservable,
     featureFlagContexts,
     pageStateHistory,
@@ -233,6 +237,7 @@ export function startRumEventCollection(
   pageStateHistory: PageStateHistory,
   locationChangeObservable: Observable<LocationChange>,
   domMutationObservable: Observable<void>,
+  windowOpenObservable: Observable<void>,
   getCommonContext: () => CommonContext,
   reportError: (error: RawError) => void
 ) {
@@ -242,6 +247,7 @@ export function startRumEventCollection(
   const { addAction, actionContexts } = startActionCollection(
     lifeCycle,
     domMutationObservable,
+    windowOpenObservable,
     configuration,
     pageStateHistory
   )
