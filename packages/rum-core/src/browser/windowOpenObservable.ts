@@ -1,10 +1,7 @@
 import { instrumentMethod, Observable } from '@datadog/browser-core'
 
 export function createWindowOpenObservable() {
-  return new Observable<void>((observable) => {
-    const { stop } = instrumentMethod(window, 'open', () => {
-      observable.notify()
-    })
-    return stop
-  })
+  const observable = new Observable<void>()
+  const { stop } = instrumentMethod(window, 'open', () => observable.notify())
+  return { observable, stop }
 }

@@ -126,9 +126,11 @@ export function startRum(
   }
 
   const domMutationObservable = createDOMMutationObservable()
-  const windowOpenObservable = createWindowOpenObservable()
   const locationChangeObservable = createLocationChangeObservable(configuration, location)
   const pageStateHistory = startPageStateHistory(configuration)
+  const { observable: windowOpenObservable, stop: stopWindowOpen } = createWindowOpenObservable()
+  cleanupTasks.push(stopWindowOpen)
+
   const {
     viewHistory,
     urlContexts,
