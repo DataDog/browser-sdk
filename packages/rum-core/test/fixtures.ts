@@ -216,31 +216,29 @@ export function createPerformanceEntry<T extends RumPerformanceEntryType>(
       return { ...entry, toJSON: () => entry }
     }
     case RumPerformanceEntryType.RESOURCE: {
-      const entry = assign(
-        {
-          connectEnd: 200 as RelativeTime,
-          connectStart: 200 as RelativeTime,
-          renderBlockingStatus: 'non-blocking',
-          deliveryType: 'cache',
-          domainLookupEnd: 200 as RelativeTime,
-          domainLookupStart: 200 as RelativeTime,
-          duration: 100 as Duration,
-          entryType: RumPerformanceEntryType.RESOURCE,
-          workerStart: 200 as RelativeTime,
-          fetchStart: 200 as RelativeTime,
-          name: 'https://resource.com/valid',
-          redirectEnd: 200 as RelativeTime,
-          redirectStart: 200 as RelativeTime,
-          requestStart: 200 as RelativeTime,
-          responseEnd: 300 as RelativeTime,
-          responseStart: 200 as RelativeTime,
-          secureConnectionStart: 200 as RelativeTime,
-          startTime: 200 as RelativeTime,
-          responseStatus: 200,
-          nextHopProtocol: 'HTTP/1.0',
-        },
-        overrides
-      ) as EntryTypeToReturnType[T]
+      const entry = {
+        connectEnd: 200 as RelativeTime,
+        connectStart: 200 as RelativeTime,
+        renderBlockingStatus: 'non-blocking',
+        deliveryType: 'cache',
+        domainLookupEnd: 200 as RelativeTime,
+        domainLookupStart: 200 as RelativeTime,
+        duration: 100 as Duration,
+        entryType: RumPerformanceEntryType.RESOURCE,
+        workerStart: 200 as RelativeTime,
+        fetchStart: 200 as RelativeTime,
+        name: 'https://resource.com/valid',
+        redirectEnd: 200 as RelativeTime,
+        redirectStart: 200 as RelativeTime,
+        requestStart: 200 as RelativeTime,
+        responseEnd: 300 as RelativeTime,
+        responseStart: 200 as RelativeTime,
+        secureConnectionStart: 200 as RelativeTime,
+        startTime: 200 as RelativeTime,
+        responseStatus: 200,
+        nextHopProtocol: 'HTTP/1.0',
+        ...overrides,
+      } as EntryTypeToReturnType[T]
 
       return { ...entry, toJSON: () => entry }
     }
