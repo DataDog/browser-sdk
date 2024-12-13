@@ -88,7 +88,7 @@ describe('viewCollection', () => {
       mockRumConfiguration(partialConfiguration),
       location,
       domMutationObservable,
-      pageOpenObserable,
+      windowOpenObservable,
       locationChangeObservable,
       mockFeatureFlagContexts(partialFeatureFlagContexts),
       mockPageStateHistory({
