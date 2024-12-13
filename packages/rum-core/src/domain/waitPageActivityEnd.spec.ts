@@ -97,7 +97,6 @@ describe('createPageActivityObservable', () => {
   })
 
   it('emits an activity event when `window.open` is used', () => {
-    spyOn(window, 'open')
     startListeningToPageActivities()
     windowOpenObservable.notify()
     expect(events).toEqual([{ isBusy: false }])
