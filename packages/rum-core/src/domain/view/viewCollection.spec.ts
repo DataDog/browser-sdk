@@ -80,7 +80,7 @@ describe('viewCollection', () => {
   ) {
     getReplayStatsSpy = jasmine.createSpy()
     const domMutationObservable = new Observable<void>()
-    const pageOpenObserable = new Observable<void>()
+    const windowOpenObservable = new Observable<void>()
     const locationChangeObservable = new Observable<LocationChange>()
 
     const collectionResult = startViewCollection(
