@@ -17,10 +17,12 @@ describe('actionCollection', () => {
 
   beforeEach(() => {
     const domMutationObservable = new Observable<void>()
+    const windowOpenObservable = new Observable<void>()
 
     ;({ addAction } = startActionCollection(
       lifeCycle,
       domMutationObservable,
+      windowOpenObservable,
       mockRumConfiguration(),
       basePageStateHistory
     ))
