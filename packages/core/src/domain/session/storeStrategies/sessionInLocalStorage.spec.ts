@@ -1,5 +1,3 @@
-import { mockExperimentalFeatures } from '../../../../test'
-import { ExperimentalFeature } from '../../../tools/experimentalFeatures'
 import { type SessionState } from '../sessionState'
 import { selectLocalStorageStrategy, initLocalStorageStrategy } from './sessionInLocalStorage'
 import { SESSION_STORE_KEY } from './sessionStoreStrategy'
@@ -7,7 +5,6 @@ import { SESSION_STORE_KEY } from './sessionStoreStrategy'
 describe('session in local storage strategy', () => {
   const sessionState: SessionState = { id: '123', created: '0' }
   beforeEach(() => {
-    mockExperimentalFeatures([ExperimentalFeature.ANONYMOUS_USER_TRACKING])
     spyOn(Math, 'random').and.returnValue(1)
   })
 

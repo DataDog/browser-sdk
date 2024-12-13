@@ -9,7 +9,7 @@ import { processSessionStoreOperations, LOCK_MAX_TRIES, LOCK_RETRY_DELAY } from 
 import { SESSION_STORE_KEY } from './storeStrategies/sessionStoreStrategy'
 
 const cookieOptions: CookieOptions = {}
-const EXPIRED_SESSION: SessionState = { isExpired: '1' }
+const EXPIRED_SESSION: SessionState = { isExpired: '1', anonymousId: '0' }
 
 ;(
   [
@@ -37,6 +37,7 @@ const EXPIRED_SESSION: SessionState = { isExpired: '1' }
     const now = Date.now()
 
     beforeEach(() => {
+      spyOn(Math, 'random').and.callFake(() => 0)
       sessionStoreStrategy.expireSession(initialSession)
       initialSession = { id: '123', created: String(now) }
       otherSession = { id: '456', created: String(now + 100) }
