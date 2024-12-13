@@ -14,6 +14,7 @@ interface ViewTrackingContext {
 
 export function setupViewTest({ lifeCycle, initialLocation }: ViewTrackingContext, initialViewOptions?: ViewOptions) {
   const domMutationObservable = new Observable<void>()
+  const windowOpenObservable = new Observable<void>()
   const configuration = mockRumConfiguration()
   const { locationChangeObservable, changeLocation } = setupLocationObserver(initialLocation)
 
@@ -42,6 +43,7 @@ export function setupViewTest({ lifeCycle, initialLocation }: ViewTrackingContex
     location,
     lifeCycle,
     domMutationObservable,
+    windowOpenObservable,
     configuration,
     locationChangeObservable,
     !configuration.trackViewsManually,

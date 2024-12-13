@@ -62,6 +62,7 @@ export const ACTION_CONTEXT_TIME_OUT_DELAY = 5 * ONE_MINUTE // arbitrary
 export function trackClickActions(
   lifeCycle: LifeCycle,
   domMutationObservable: Observable<void>,
+  windowOpenObservable: Observable<void>,
   configuration: RumConfiguration
 ) {
   const history: ClickActionIdHistory = createValueHistory({ expireDelay: ACTION_CONTEXT_TIME_OUT_DELAY })
@@ -79,12 +80,13 @@ export function trackClickActions(
     hadActivityOnPointerDown: () => boolean
   }>(configuration, {
     onPointerDown: (pointerDownEvent) =>
-      processPointerDown(configuration, lifeCycle, domMutationObservable, pointerDownEvent),
+      processPointerDown(configuration, lifeCycle, domMutationObservable, pointerDownEvent, windowOpenObservable),
     onPointerUp: ({ clickActionBase, hadActivityOnPointerDown }, startEvent, getUserActivity) => {
       startClickAction(
         configuration,
         lifeCycle,
         domMutationObservable,
+        windowOpenObservable,
         history,
         stopObservable,
         appendClickToClickChain,
@@ -129,7 +131,8 @@ function processPointerDown(
   configuration: RumConfiguration,
   lifeCycle: LifeCycle,
   domMutationObservable: Observable<void>,
-  pointerDownEvent: MouseEventOnElement
+  pointerDownEvent: MouseEventOnElement,
+  windowOpenObservable: Observable<void>
 ) {
   const nodePrivacyLevel = configuration.enablePrivacyForActionName
     ? getNodePrivacyLevel(pointerDownEvent.target, configuration.defaultPrivacyLevel)
@@ -146,6 +149,7 @@ function processPointerDown(
   waitPageActivityEnd(
     lifeCycle,
     domMutationObservable,
+    windowOpenObservable,
     configuration,
     (pageActivityEndEvent) => {
       hadActivityOnPointerDown = pageActivityEndEvent.hadActivity
@@ -162,6 +166,7 @@ function startClickAction(
   configuration: RumConfiguration,
   lifeCycle: LifeCycle,
   domMutationObservable: Observable<void>,
+  windowOpenObservable: Observable<void>,
   history: ClickActionIdHistory,
   stopObservable: Observable<void>,
   appendClickToClickChain: (click: Click) => void,
@@ -181,6 +186,7 @@ function startClickAction(
   const { stop: stopWaitPageActivityEnd } = waitPageActivityEnd(
     lifeCycle,
     domMutationObservable,
+    windowOpenObservable,
     configuration,
     (pageActivityEndEvent) => {
       if (pageActivityEndEvent.hadActivity && pageActivityEndEvent.end < click.startClocks.timeStamp) {

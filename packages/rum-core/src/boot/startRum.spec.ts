@@ -61,6 +61,7 @@ function startRumStub(
   sessionManager: RumSessionManager,
   location: Location,
   domMutationObservable: Observable<void>,
+  windowOpenObservable: Observable<void>,
   locationChangeObservable: Observable<LocationChange>,
   pageStateHistory: PageStateHistory,
   reportError: (error: RawError) => void
@@ -73,6 +74,7 @@ function startRumStub(
     pageStateHistory,
     locationChangeObservable,
     domMutationObservable,
+    windowOpenObservable,
     () => ({
       context: {},
       user: {},
@@ -85,6 +87,7 @@ function startRumStub(
     configuration,
     location,
     domMutationObservable,
+    windowOpenObservable,
     locationChangeObservable,
     startFeatureFlagContexts(lifeCycle, createCustomerDataTracker(noop)),
     pageStateHistory,
@@ -109,6 +112,7 @@ describe('rum session', () => {
     lifeCycle = new LifeCycle()
     sessionManager = createRumSessionManagerMock().setId('42')
     const domMutationObservable = new Observable<void>()
+    const windowOpenObservable = new Observable<void>()
     const { locationChangeObservable } = setupLocationObserver()
 
     serverRumEvents = collectServerEvents(lifeCycle)
@@ -118,6 +122,7 @@ describe('rum session', () => {
       sessionManager,
       location,
       domMutationObservable,
+      windowOpenObservable,
       locationChangeObservable,
       mockPageStateHistory(),
       noop
@@ -157,6 +162,7 @@ describe('rum session keep alive', () => {
     clock = mockClock()
     sessionManager = createRumSessionManagerMock().setId('1234')
     const domMutationObservable = new Observable<void>()
+    const windowOpenObservable = new Observable<void>()
     const { locationChangeObservable } = setupLocationObserver()
 
     serverRumEvents = collectServerEvents(lifeCycle)
@@ -166,6 +172,7 @@ describe('rum session keep alive', () => {
       sessionManager,
       location,
       domMutationObservable,
+      windowOpenObservable,
       locationChangeObservable,
       mockPageStateHistory(),
       noop
@@ -221,6 +228,7 @@ describe('rum events url', () => {
   function setupViewUrlTest() {
     const sessionManager = createRumSessionManagerMock().setId('1234')
     const domMutationObservable = new Observable<void>()
+    const windowOpenObservable = new Observable<void>()
     const locationSetupResult = setupLocationObserver('http://foo.com/')
     changeLocation = locationSetupResult.changeLocation
 
@@ -230,6 +238,7 @@ describe('rum events url', () => {
       sessionManager,
       locationSetupResult.fakeLocation,
       domMutationObservable,
+      windowOpenObservable,
       locationSetupResult.locationChangeObservable,
       mockPageStateHistory(),
       noop
