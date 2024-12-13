@@ -403,4 +403,36 @@ describe('action collection', () => {
         expect(browserLogs.length).toEqual(1)
       })
     })
+
+  // We don't use the wdio's `$('button').click()` here because it makes the test slower
+  createTest('dont crash when clicking on a button')
+    .withRum({ trackUserInteractions: true })
+    .withBody(html`
+      <button>click me</button>
+      <script>
+        const button = document.querySelector('button')
+        function click() {
+          const down = new PointerEvent('pointerdown', { isPrimary: true })
+          down.__ddIsTrusted = true
+
+          const up = new PointerEvent('pointerup', { isPrimary: true })
+          up.__ddIsTrusted = true
+
+          button.dispatchEvent(down)
+          button.dispatchEvent(up)
+        }
+
+        for (let i = 0; i < 2_500; i++) {
+          click()
+        }
+
+        window.open('foo')
+      </script>
+    `)
+    .run(async () => {
+      await withBrowserLogs((logs) => {
+        // A failing test would have a log with message "Uncaught RangeError: Maximum call stack size exceeded"
+        expect(logs).toEqual([])
+      })
+    })
 })
