@@ -18,6 +18,17 @@
 
 ---
 
+## v5.34.0
+
+**Public Changes:**
+
+- 🐛 [RUM-6322] Use window.open observable ([#3215](https://github.com/DataDog/browser-sdk/pull/3215)) [RUM] [RUM-REACT] [RUM-SLIM]
+
+**Internal Changes:**
+
+- ⚗️ ✨ [RUM-6868] implement consistent probabilistic trace sampling ([#3186](https://github.com/DataDog/browser-sdk/pull/3186)) [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+- Test anonymous id on staging behind ff ([#3206](https://github.com/DataDog/browser-sdk/pull/3206)) [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+
 ## v5.33.0
 
 **Public Changes:**

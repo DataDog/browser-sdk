@@ -111,7 +111,7 @@ export function createScrollValuesObservable(
 
       return () => {
         throttledNotify.cancel()
-        resizeObserver.unobserve(observerTarget)
+        resizeObserver.disconnect()
         eventListener.stop()
       }
     }
