@@ -87,8 +87,11 @@ describe('tracer', () => {
       expect(xhr.headers).toEqual(tracingHeadersFor(context.traceId!, context.spanId!, '1'))
     })
 
-    it("should trace request with priority '0' when not sampled", () => {
-      const tracer = startTracer({ ...configuration, traceSampleRate: 0 }, sessionManager)
+    it("should trace request with priority '0' when not sampled and config set to all", () => {
+      const tracer = startTracer(
+        { ...configuration, traceSampleRate: 0, traceContextInjection: TraceContextInjection.ALL },
+        sessionManager
+      )
       const context = { ...ALLOWED_DOMAIN_CONTEXT }
       tracer.traceXhr(context, xhr as unknown as XMLHttpRequest)
 
@@ -98,10 +101,11 @@ describe('tracer', () => {
       expect(xhr.headers).toEqual(tracingHeadersFor(context.traceId!, context.spanId!, '0'))
     })
 
-    it("should trace request with sampled set to '0' in OTel headers when not sampled", () => {
+    it("should trace request with sampled set to '0' in OTel headers when not sampled and config set to all", () => {
       const configurationWithAllOtelHeaders = validateAndBuildRumConfiguration({
         ...INIT_CONFIGURATION,
         traceSampleRate: 0,
+        traceContextInjection: TraceContextInjection.ALL,
         allowedTracingUrls: [{ match: window.location.origin, propagatorTypes: ['b3', 'tracecontext', 'b3multi'] }],
       })!
 
@@ -212,7 +216,6 @@ describe('tracer', () => {
       const configurationWithInjectionParam = {
         ...configuration,
         traceSampleRate: 0,
-        traceContextInjection: TraceContextInjection.SAMPLED,
       }
 
       const tracer = startTracer(configurationWithInjectionParam, sessionManager)
@@ -227,7 +230,6 @@ describe('tracer', () => {
       const configurationWithInjectionParam = {
         ...configuration,
         traceSampleRate: 100,
-        traceContextInjection: TraceContextInjection.SAMPLED,
       }
 
       const tracer = startTracer(configurationWithInjectionParam, sessionManager)
@@ -462,10 +464,13 @@ describe('tracer', () => {
       expect(context.init!.headers).toEqual(tracingHeadersAsArrayFor(context.traceId!, context.spanId!, '1'))
     })
 
-    it("should trace request with priority '0' when not sampled", () => {
+    it("should trace request with priority '0' when not sampled and config set to all", () => {
       const context: Partial<RumFetchStartContext> = { ...ALLOWED_DOMAIN_CONTEXT }
 
-      const tracer = startTracer({ ...configuration, traceSampleRate: 0 }, sessionManager)
+      const tracer = startTracer(
+        { ...configuration, traceSampleRate: 0, traceContextInjection: TraceContextInjection.ALL },
+        sessionManager
+      )
       tracer.traceFetch(context)
 
       expect(context.traceSampled).toBe(false)
