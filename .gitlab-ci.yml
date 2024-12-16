@@ -294,6 +294,14 @@ e2e-bs:
   after_script:
     - node ./scripts/test/export-test-result.js e2e-bs
 
+script-tests:
+  extends:
+    - .base-configuration
+    - .test-allowed-branches
+  interruptible: true
+  script:
+    - yarn
+    - yarn test:script
 ########################################################################################################################
 # Deploy
 ########################################################################################################################

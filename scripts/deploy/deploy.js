@@ -1,7 +1,7 @@
 'use strict'
 
 const { printLog, runMain } = require('../lib/executionUtils')
-const { fetchPR, LOCAL_BRANCH } = require('../lib/gitUtils')
+const { fetchPR, getLocalBranch } = require('../lib/gitUtils')
 const { command } = require('../lib/command')
 
 const {
@@ -32,11 +32,17 @@ const AWS_CONFIG = {
  * Usage:
  * node deploy.js staging|prod staging|canary|pull-request|vXXX root,pull-request,us1,eu1,...
  */
-const env = process.argv[2]
-const version = process.argv[3]
-const uploadPathTypes = process.argv[4].split(',')
+if (require.main === module) {
+  const env = process.argv[2]
+  const version = process.argv[3]
+  const uploadPathTypes = process.argv[4].split(',')
 
-runMain(async () => {
+  runMain(async () => {
+    await main(env, version, uploadPathTypes)
+  })
+}
+
+async function main(env, version, uploadPathTypes) {
   const awsConfig = AWS_CONFIG[env]
   let cloudfrontPathsToInvalidate = []
   for (const { packageName } of packages) {
@@ -44,7 +50,7 @@ runMain(async () => {
     for (const uploadPathType of uploadPathTypes) {
       let uploadPath
       if (uploadPathType === 'pull-request') {
-        const pr = await fetchPR(LOCAL_BRANCH)
+        const pr = await fetchPR(getLocalBranch())
         if (!pr) {
           console.log('No pull requests found for the branch')
           return
@@ -57,14 +63,14 @@ runMain(async () => {
       }
       const bundlePath = `${bundleFolder}/${buildBundleFileName(packageName)}`
 
-      uploadToS3(awsConfig, bundlePath, uploadPath)
+      uploadToS3(awsConfig, bundlePath, uploadPath, version)
       cloudfrontPathsToInvalidate.push(`/${uploadPath}`)
     }
   }
   invalidateCloudfront(awsConfig, cloudfrontPathsToInvalidate)
-})
+}
 
-function uploadToS3(awsConfig, bundlePath, uploadPath) {
+function uploadToS3(awsConfig, bundlePath, uploadPath, version) {
   const accessToS3 = generateEnvironmentForRole(awsConfig.accountId, 'build-stable-browser-agent-artifacts-s3-write')
 
   const browserCache =
@@ -101,4 +107,8 @@ function generateEnvironmentForRole(awsAccountId, roleName) {
     AWS_SECRET_ACCESS_KEY: credentials['SecretAccessKey'],
     AWS_SESSION_TOKEN: credentials['SessionToken'],
   }
+}
+
+module.exports = {
+  main,
 }

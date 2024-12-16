@@ -19,8 +19,36 @@ const {
  * Usage:
  * BUILD_MODE=canary|release node upload-source-maps.js staging|canary|vXXX root,us1,eu1,...
  */
-const version = process.argv[2]
-let uploadPathTypes = process.argv[3].split(',')
+
+if (require.main === module) {
+  const version = process.argv[2]
+  let uploadPathTypes = process.argv[3].split(',')
+
+  runMain(() => {
+    main(version, uploadPathTypes)
+  })
+}
+
+function main(version, uploadPathTypes) {
+  for (const { packageName, service } of packages) {
+    const bundleFolder = buildBundleFolder(packageName)
+    for (const uploadPathType of uploadPathTypes) {
+      let sites
+      let uploadPath
+      if (uploadPathType === 'root') {
+        sites = getSitesByVersion(version)
+        uploadPath = buildRootUploadPath(packageName, version)
+        renameFilesWithVersionSuffix(packageName, bundleFolder, version)
+      } else {
+        sites = [siteByDatacenter[uploadPathType]]
+        uploadPath = buildDatacenterUploadPath(uploadPathType, packageName, version)
+      }
+      const prefix = path.dirname(`/${uploadPath}`)
+      uploadSourceMaps(packageName, service, prefix, bundleFolder, sites)
+    }
+  }
+  printLog('Source maps upload done.')
+}
 
 function getSitesByVersion(version) {
   switch (version) {
@@ -33,28 +61,7 @@ function getSitesByVersion(version) {
   }
 }
 
-runMain(() => {
-  for (const { packageName, service } of packages) {
-    const bundleFolder = buildBundleFolder(packageName)
-    for (const uploadPathType of uploadPathTypes) {
-      let sites
-      let uploadPath
-      if (uploadPathType === 'root') {
-        sites = getSitesByVersion(version)
-        uploadPath = buildRootUploadPath(packageName, version)
-        renameFilesWithVersionSuffix(packageName, bundleFolder)
-      } else {
-        sites = [siteByDatacenter[uploadPathType]]
-        uploadPath = buildDatacenterUploadPath(uploadPathType, packageName, version)
-      }
-      const prefix = path.dirname(`/${uploadPath}`)
-      uploadSourceMaps(packageName, service, prefix, bundleFolder, sites)
-    }
-  }
-  printLog('Source maps upload done.')
-})
-
-function renameFilesWithVersionSuffix(packageName, bundleFolder) {
+function renameFilesWithVersionSuffix(packageName, bundleFolder, version) {
   // The datadog-ci CLI is taking a directory as an argument. It will scan every source map files in
   // it and upload those along with the minified bundle. The file names must match the one from the
   // CDN, thus we need to rename the bundles with the right suffix.
@@ -83,4 +90,8 @@ function uploadSourceMaps(packageName, service, prefix, bundleFolder, sites) {
       })
       .run()
   }
+}
+
+module.exports = {
+  main,
 }
