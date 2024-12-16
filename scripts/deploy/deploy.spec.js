@@ -122,7 +122,7 @@ void describe('deploy', () => {
   })
 
   void it('should deploy PR packages', async () => {
-    // mack the PR number fetch
+    // mock the PR number fetch
     fetchPRMock.mock.mockImplementation(() => Promise.resolve({ ['number']: 123 }))
 
     await deploy('staging', 'pull-request', ['pull-request'])
