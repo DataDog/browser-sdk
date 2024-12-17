@@ -1,4 +1,3 @@
-import { startsWith } from '@datadog/browser-core'
 import {
   NodePrivacyLevel,
   PRIVACY_ATTR_NAME,
@@ -64,7 +63,7 @@ export function serializeAttribute(
     }
 
     // mask data-* attributes
-    if (attributeValue && startsWith(attributeName, 'data-')) {
+    if (attributeValue && attributeName.startsWith('data-')) {
       // Exception: it's safe to reveal the `${PRIVACY_ATTR_NAME}` attr
       return CENSORED_STRING_MARK
     }

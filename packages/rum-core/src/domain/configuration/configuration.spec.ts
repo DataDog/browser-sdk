@@ -86,20 +86,22 @@ describe('validateAndBuildRumConfiguration', () => {
   })
 
   describe('traceContextInjection', () => {
-    it('defaults to all if no options provided', () => {
-      expect(validateAndBuildRumConfiguration(DEFAULT_INIT_CONFIGURATION)!.traceContextInjection).toBe('all')
+    it('defaults to sampled if no options provided', () => {
+      expect(validateAndBuildRumConfiguration(DEFAULT_INIT_CONFIGURATION)!.traceContextInjection).toBe(
+        TraceContextInjection.SAMPLED
+      )
     })
     it('is set to provided value', () => {
       expect(
-        validateAndBuildRumConfiguration({ ...DEFAULT_INIT_CONFIGURATION, traceContextInjection: 'sampled' })!
+        validateAndBuildRumConfiguration({ ...DEFAULT_INIT_CONFIGURATION, traceContextInjection: 'all' })!
           .traceContextInjection
-      ).toBe('sampled')
+      ).toBe(TraceContextInjection.ALL)
     })
     it('ignores incorrect value', () => {
       expect(
         validateAndBuildRumConfiguration({ ...DEFAULT_INIT_CONFIGURATION, traceContextInjection: 'foo' as any })!
           .traceContextInjection
-      ).toBe(TraceContextInjection.ALL)
+      ).toBe(TraceContextInjection.SAMPLED)
     })
   })
 
@@ -218,8 +220,8 @@ describe('validateAndBuildRumConfiguration', () => {
   })
 
   describe('trackUserInteractions', () => {
-    it('defaults to false', () => {
-      expect(validateAndBuildRumConfiguration(DEFAULT_INIT_CONFIGURATION)!.trackUserInteractions).toBeFalse()
+    it('defaults to true', () => {
+      expect(validateAndBuildRumConfiguration(DEFAULT_INIT_CONFIGURATION)!.trackUserInteractions).toBeTrue()
     })
 
     it('is set to provided value', () => {
@@ -353,8 +355,8 @@ describe('validateAndBuildRumConfiguration', () => {
   })
 
   describe('trackResources', () => {
-    it('defaults to false', () => {
-      expect(validateAndBuildRumConfiguration(DEFAULT_INIT_CONFIGURATION)!.trackResources).toBeFalse()
+    it('defaults to true', () => {
+      expect(validateAndBuildRumConfiguration(DEFAULT_INIT_CONFIGURATION)!.trackResources).toBeTrue()
     })
 
     it('is set to provided value', () => {
@@ -365,11 +367,18 @@ describe('validateAndBuildRumConfiguration', () => {
         validateAndBuildRumConfiguration({ ...DEFAULT_INIT_CONFIGURATION, trackResources: false })!.trackResources
       ).toBeFalse()
     })
+
+    it('the provided value is cast to boolean', () => {
+      expect(
+        validateAndBuildRumConfiguration({ ...DEFAULT_INIT_CONFIGURATION, trackResources: 'foo' as any })!
+          .trackResources
+      ).toBeTrue()
+    })
   })
 
   describe('trackLongTasks', () => {
     it('defaults to false', () => {
-      expect(validateAndBuildRumConfiguration(DEFAULT_INIT_CONFIGURATION)!.trackLongTasks).toBeFalse()
+      expect(validateAndBuildRumConfiguration(DEFAULT_INIT_CONFIGURATION)!.trackLongTasks).toBeTrue()
     })
 
     it('is set to provided value', () => {
@@ -379,6 +388,13 @@ describe('validateAndBuildRumConfiguration', () => {
       expect(
         validateAndBuildRumConfiguration({ ...DEFAULT_INIT_CONFIGURATION, trackLongTasks: false })!.trackLongTasks
       ).toBeFalse()
+    })
+
+    it('the provided value is cast to boolean', () => {
+      expect(
+        validateAndBuildRumConfiguration({ ...DEFAULT_INIT_CONFIGURATION, trackLongTasks: 'foo' as any })!
+          .trackLongTasks
+      ).toBeTrue()
     })
   })
 

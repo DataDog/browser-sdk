@@ -7,7 +7,6 @@ import {
   display,
   createEventRateLimiter,
   canUseEventBridge,
-  assign,
   round,
   isExperimentalFeatureEnabled,
   ExperimentalFeature,
@@ -78,41 +77,39 @@ export function startRumAssembly(
   reportError: (error: RawError) => void
 ) {
   modifiableFieldPathsByEvent = {
-    [RumEventType.VIEW]: assign({}, USER_CUSTOMIZABLE_FIELD_PATHS, VIEW_MODIFIABLE_FIELD_PATHS),
-    [RumEventType.ERROR]: assign(
-      {
-        'error.message': 'string',
-        'error.stack': 'string',
-        'error.resource.url': 'string',
-        'error.fingerprint': 'string',
-      },
-      USER_CUSTOMIZABLE_FIELD_PATHS,
-      VIEW_MODIFIABLE_FIELD_PATHS,
-      ROOT_MODIFIABLE_FIELD_PATHS
-    ),
-    [RumEventType.RESOURCE]: assign(
-      {
-        'resource.url': 'string',
-      },
-      isExperimentalFeatureEnabled(ExperimentalFeature.WRITABLE_RESOURCE_GRAPHQL)
-        ? {
-            'resource.graphql': 'object',
-          }
-        : {},
-      USER_CUSTOMIZABLE_FIELD_PATHS,
-      VIEW_MODIFIABLE_FIELD_PATHS,
-      ROOT_MODIFIABLE_FIELD_PATHS
-    ),
-    [RumEventType.ACTION]: assign(
-      {
-        'action.target.name': 'string',
-      },
-      USER_CUSTOMIZABLE_FIELD_PATHS,
-      VIEW_MODIFIABLE_FIELD_PATHS,
-      ROOT_MODIFIABLE_FIELD_PATHS
-    ),
-    [RumEventType.LONG_TASK]: assign({}, USER_CUSTOMIZABLE_FIELD_PATHS, VIEW_MODIFIABLE_FIELD_PATHS),
-    [RumEventType.VITAL]: assign({}, USER_CUSTOMIZABLE_FIELD_PATHS, VIEW_MODIFIABLE_FIELD_PATHS),
+    [RumEventType.VIEW]: { ...USER_CUSTOMIZABLE_FIELD_PATHS, ...VIEW_MODIFIABLE_FIELD_PATHS },
+    [RumEventType.ERROR]: {
+      'error.message': 'string',
+      'error.stack': 'string',
+      'error.resource.url': 'string',
+      'error.fingerprint': 'string',
+      ...USER_CUSTOMIZABLE_FIELD_PATHS,
+      ...VIEW_MODIFIABLE_FIELD_PATHS,
+      ...ROOT_MODIFIABLE_FIELD_PATHS,
+    },
+    [RumEventType.RESOURCE]: {
+      'resource.url': 'string',
+      ...(isExperimentalFeatureEnabled(ExperimentalFeature.WRITABLE_RESOURCE_GRAPHQL)
+        ? { 'resource.graphql': 'object' }
+        : {}),
+      ...USER_CUSTOMIZABLE_FIELD_PATHS,
+      ...VIEW_MODIFIABLE_FIELD_PATHS,
+      ...ROOT_MODIFIABLE_FIELD_PATHS,
+    },
+    [RumEventType.ACTION]: {
+      'action.target.name': 'string',
+      ...USER_CUSTOMIZABLE_FIELD_PATHS,
+      ...VIEW_MODIFIABLE_FIELD_PATHS,
+      ...ROOT_MODIFIABLE_FIELD_PATHS,
+    },
+    [RumEventType.LONG_TASK]: {
+      ...USER_CUSTOMIZABLE_FIELD_PATHS,
+      ...VIEW_MODIFIABLE_FIELD_PATHS,
+    },
+    [RumEventType.VITAL]: {
+      ...USER_CUSTOMIZABLE_FIELD_PATHS,
+      ...VIEW_MODIFIABLE_FIELD_PATHS,
+    },
   }
   const eventRateLimiters = {
     [RumEventType.ERROR]: createEventRateLimiter(
