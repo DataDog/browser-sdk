@@ -118,6 +118,7 @@ describe('isShadowHost', () => {
   ]
 
   parameters.forEach(([element, result]) => {
+    // eslint-disable-next-line @typescript-eslint/no-base-to-string
     it(`should return ${String(result)} for "${String(element)}"`, () => {
       expect(isNodeShadowHost(element)).toBe(result)
     })
