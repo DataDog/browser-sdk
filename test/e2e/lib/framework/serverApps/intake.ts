@@ -186,6 +186,7 @@ function readStream(stream: NodeJS.ReadableStream): Promise<Buffer> {
       buffers.push(data)
     })
     stream.on('error', (error) => {
+      // eslint-disable-next-line @typescript-eslint/prefer-promise-reject-errors
       reject(error)
     })
     stream.on('end', () => {
