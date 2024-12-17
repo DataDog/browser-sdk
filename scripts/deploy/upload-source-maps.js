@@ -7,21 +7,13 @@ const { getBuildEnvValue } = require('../lib/buildEnv')
 const { getTelemetryOrgApiKey } = require('../lib/secrets')
 const { siteByDatacenter } = require('../lib/datadogSites')
 const { forEachFile } = require('../lib/filesUtils')
-const {
-  buildRootUploadPath,
-  buildDatacenterUploadPath,
-  buildBundleFolder,
-  buildBundleFileName,
-  packages,
-} = require('./lib/deploymentUtils')
+const { buildRootUploadPath, buildDatacenterUploadPath, buildBundleFolder, packages } = require('./lib/deploymentUtils')
 
 /**
  * Upload source maps to datadog
  * Usage:
  * BUILD_MODE=canary|release node upload-source-maps.js staging|canary|vXXX root,us1,eu1,...
  */
-const version = process.argv[2]
-let uploadPathTypes = process.argv[3].split(',')
 
 function getSitesByVersion(version) {
   switch (version) {
@@ -34,50 +26,51 @@ function getSitesByVersion(version) {
   }
 }
 
-runMain(async () => {
+if (require.main === module) {
+  const version = process.argv[2]
+  let uploadPathTypes = process.argv[3].split(',')
+
+  runMain(async () => {
+    await main(version, uploadPathTypes)
+  })
+}
+
+async function main(version, uploadPathTypes) {
   for (const { packageName, service } of packages) {
-    await uploadSourceMaps(packageName, service)
+    await uploadSourceMaps(packageName, service, version, uploadPathTypes)
   }
   printLog('Source maps upload done.')
-})
+}
 
-async function uploadSourceMaps(packageName, service) {
+async function uploadSourceMaps(packageName, service, version, uploadPathTypes) {
   const bundleFolder = buildBundleFolder(packageName)
 
   for (const uploadPathType of uploadPathTypes) {
-    await forEachFile(bundleFolder, (bundlePath) => {
-      if (!bundlePath.endsWith('.js.map')) {
-        return
-      }
-      const relativeBundlePath = bundlePath.replace(`${bundleFolder}/`, '')
-
-      let sites
-      let uploadPath
-      if (uploadPathType === 'root') {
-        sites = getSitesByVersion(version)
-        uploadPath = buildRootUploadPath(relativeBundlePath, version)
-        renameFilesWithVersionSuffix(relativeBundlePath, bundleFolder)
-      } else {
-        sites = [siteByDatacenter[uploadPathType]]
-        uploadPath = buildDatacenterUploadPath(uploadPathType, packageName, version)
-      }
-      const prefix = path.dirname(`/${uploadPath}`)
-      uploadToDatadog(packageName, service, prefix, bundleFolder, sites)
-    })
+    let sites
+    let uploadPath
+    if (uploadPathType === 'root') {
+      sites = getSitesByVersion(version)
+      uploadPath = buildRootUploadPath(packageName, version)
+      await renameFilesWithVersionSuffix(bundleFolder, version)
+    } else {
+      sites = [siteByDatacenter[uploadPathType]]
+      uploadPath = buildDatacenterUploadPath(uploadPathType, packageName, version)
+    }
+    const prefix = path.dirname(`/${uploadPath}`)
+    uploadToDatadog(packageName, service, prefix, bundleFolder, sites)
   }
 }
 
-function renameFilesWithVersionSuffix(filePath, bundleFolder) {
+async function renameFilesWithVersionSuffix(bundleFolder, version) {
   // The datadog-ci CLI is taking a directory as an argument. It will scan every source map files in
   // it and upload those along with the minified bundle. The file names must match the one from the
   // CDN, thus we need to rename the bundles with the right suffix.
-  for (const extension of ['.js', '.js.map']) {
-    const temp = filePath.replace('.js.map', extension)
-    const bundlePath = `${bundleFolder}/${buildBundleFileName(temp)}`
-    const uploadPath = `${bundleFolder}/${buildRootUploadPath(temp, version)}`
+  await forEachFile(bundleFolder, (bundlePath) => {
+    const uploadPath = buildRootUploadPath(bundlePath, version)
 
+    console.log(`Renaming ${bundlePath} to ${uploadPath}`)
     command`mv ${bundlePath} ${uploadPath}`.run()
-  }
+  })
 }
 
 function uploadToDatadog(packageName, service, prefix, bundleFolder, sites) {
@@ -98,4 +91,8 @@ function uploadToDatadog(packageName, service, prefix, bundleFolder, sites) {
       })
       .run()
   }
+}
+
+module.exports = {
+  main,
 }

@@ -18,6 +18,32 @@
 
 ---
 
+## v5.34.0
+
+**Public Changes:**
+
+- 🐛 [RUM-6322] Use window.open observable ([#3215](https://github.com/DataDog/browser-sdk/pull/3215)) [RUM] [RUM-REACT] [RUM-SLIM]
+
+**Internal Changes:**
+
+- ⚗️ ✨ [RUM-6868] implement consistent probabilistic trace sampling ([#3186](https://github.com/DataDog/browser-sdk/pull/3186)) [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+- Test anonymous id on staging behind ff ([#3206](https://github.com/DataDog/browser-sdk/pull/3206)) [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+
+## v5.33.0
+
+**Public Changes:**
+
+- ✨ [RUM-6182] don't start recording automatically when sample is 0 ([#3162](https://github.com/DataDog/browser-sdk/pull/3162)) [RUM] [RUM-REACT] [RUM-SLIM]
+- ✨ [RUM-6799] Add new delivery type property ([#3166](https://github.com/DataDog/browser-sdk/pull/3166)) [RUM] [RUM-REACT] [RUM-SLIM]
+- 🐛 [RUM-87] AddError should support Error instances coming from other JS contexts ([#3144](https://github.com/DataDog/browser-sdk/pull/3144)) [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+
+**Internal Changes:**
+
+- 👷 Update all non-major dependencies ([#3157](https://github.com/DataDog/browser-sdk/pull/3157)) [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+- ✅ [RUM-6813]Fix recorder tests ([#3191](https://github.com/DataDog/browser-sdk/pull/3191)) [RUM]
+- ♻️ [RUM-6813] Split the recorder API module ([#3181](https://github.com/DataDog/browser-sdk/pull/3181)) [RUM]
+- Adds a prepare script to @datadog/browser-rum-react ([#3182](https://github.com/DataDog/browser-sdk/pull/3182)) [RUM-REACT]
+
 ## v5.32.0
 
 **Public Changes:**

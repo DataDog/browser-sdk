@@ -200,8 +200,15 @@ module.exports = {
       },
     },
     {
-      files: ['scripts/**/*.js', 'packages/*/scripts/**/*.js'],
+      files: ['scripts/**/*.spec.js', 'packages/*/scripts/**/*.spec.js'],
       excludedFiles: ['**/lib/**'],
+      rules: {
+        'unicorn/filename-case': ['error', { case: 'kebabCase' }],
+      },
+    },
+    {
+      files: ['scripts/**/*.js', 'packages/*/scripts/**/*.js'],
+      excludedFiles: ['**/lib/**', '*.spec.js'],
       rules: {
         'unicorn/filename-case': ['error', { case: 'kebabCase' }],
         'local-rules/secure-command-execution': 'error',

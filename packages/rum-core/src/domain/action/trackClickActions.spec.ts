@@ -44,6 +44,7 @@ function eventsCollector<T>() {
 describe('trackClickActions', () => {
   let lifeCycle: LifeCycle
   let domMutationObservable: Observable<void>
+  let windowOpenObservable: Observable<void>
   let clock: Clock
 
   const { events, pushEvent } = eventsCollector<ClickAction>()
@@ -58,6 +59,7 @@ describe('trackClickActions', () => {
     const trackClickActionsResult = trackClickActions(
       lifeCycle,
       domMutationObservable,
+      windowOpenObservable,
       mockRumConfiguration(partialConfig)
     )
 
@@ -72,6 +74,7 @@ describe('trackClickActions', () => {
     lifeCycle = new LifeCycle()
     clock = mockClock()
     domMutationObservable = new Observable<void>()
+    windowOpenObservable = new Observable<void>()
 
     button = document.createElement('button')
     button.type = 'button'

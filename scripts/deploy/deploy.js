@@ -32,21 +32,26 @@ const AWS_CONFIG = {
  * Usage:
  * node deploy.js staging|prod staging|canary|pull-request|vXXX root,pull-request,us1,eu1,...
  */
-const env = process.argv[2]
-const version = process.argv[3]
-const uploadPathTypes = process.argv[4].split(',')
+if (require.main === module) {
+  const env = process.argv[2]
+  const version = process.argv[3]
+  const uploadPathTypes = process.argv[4].split(',')
+  runMain(async () => {
+    await main(env, version, uploadPathTypes)
+  })
+}
 
-runMain(async () => {
+async function main(env, version, uploadPathTypes) {
   const awsConfig = AWS_CONFIG[env]
   let cloudfrontPathsToInvalidate = []
   for (const { packageName } of packages) {
-    const pathsToInvalidate = await uploadPackage(awsConfig, packageName)
+    const pathsToInvalidate = await uploadPackage(awsConfig, packageName, version, uploadPathTypes)
     cloudfrontPathsToInvalidate.push(...pathsToInvalidate)
   }
   invalidateCloudfront(awsConfig, cloudfrontPathsToInvalidate)
-})
+}
 
-async function uploadPackage(awsConfig, packageName) {
+async function uploadPackage(awsConfig, packageName, version, uploadPathTypes) {
   const cloudfrontPathsToInvalidate = []
   const bundleFolder = buildBundleFolder(packageName)
 
@@ -59,7 +64,7 @@ async function uploadPackage(awsConfig, packageName) {
       const relativeBundlePath = bundlePath.replace(`${bundleFolder}/`, '')
       const uploadPath = await generateUploadPath(uploadPathType, relativeBundlePath, version)
 
-      uploadToS3(awsConfig, bundlePath, uploadPath)
+      uploadToS3(awsConfig, bundlePath, uploadPath, version)
       cloudfrontPathsToInvalidate.push(uploadPath)
     })
   }
@@ -86,7 +91,7 @@ async function generateUploadPath(uploadPathType, filePath, version) {
   return uploadPath
 }
 
-function uploadToS3(awsConfig, bundlePath, uploadPath) {
+function uploadToS3(awsConfig, bundlePath, uploadPath, version) {
   const accessToS3 = generateEnvironmentForRole(awsConfig.accountId, 'build-stable-browser-agent-artifacts-s3-write')
 
   const browserCache =
@@ -123,4 +128,8 @@ function generateEnvironmentForRole(awsAccountId, roleName) {
     AWS_SECRET_ACCESS_KEY: credentials['SecretAccessKey'],
     AWS_SESSION_TOKEN: credentials['SessionToken'],
   }
+}
+
+module.exports = {
+  main,
 }

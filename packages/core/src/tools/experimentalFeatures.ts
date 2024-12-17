@@ -19,6 +19,7 @@ export enum ExperimentalFeature {
   LONG_ANIMATION_FRAME = 'long_animation_frame',
   ANONYMOUS_USER_TRACKING = 'anonymous_user_tracking',
   ACTION_NAME_MASKING = 'action_name_masking',
+  CONSISTENT_TRACE_SAMPLING = 'consistent_trace_sampling',
 }
 
 const enabledExperimentalFeatures: Set<ExperimentalFeature> = new Set()
