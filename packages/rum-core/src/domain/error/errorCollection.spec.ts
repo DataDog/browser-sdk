@@ -29,6 +29,11 @@ describe('error collection', () => {
     rawRumEvents = collectAndValidateRawRumEvents(lifeCycle)
   }
 
+  // when calling toString on SubErrorViaPrototype, the results will be '[object Object]'
+  // but the value of 'error instanceof Error' will still be true.
+  function SubErrorViaPrototype(_message: string) {}
+  SubErrorViaPrototype.prototype = new Error
+
   describe('addError', () => {
     ;[
       {
@@ -37,6 +42,13 @@ describe('error collection', () => {
         message: 'foo',
         type: 'Error',
         stack: jasmine.stringMatching('Error: foo'),
+      },
+      {
+        testCase: 'an error subclass via prototype',
+        error: new (SubErrorViaPrototype as any)('bar'),
+        message: 'bar',
+        type: 'Error',
+        stack: jasmine.stringMatching('Error: bar'),
       },
       {
         testCase: 'a string',
