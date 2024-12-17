@@ -38,17 +38,24 @@ export interface SessionStore {
 export const STORAGE_POLL_DELAY = ONE_SECOND
 
 /**
- * Checks if cookies are available as the preferred storage
- * Else, checks if LocalStorage is allowed and available
+ * sessionStorage: "cookie-fallback-to-local-storage" => use cookie, fallback to local storage if cookie is not available
+ * sessionStorage: "cookie" => only use cookie
+ * sessionStorage: "local-storage" => only use local storage
  */
 export function selectSessionStoreStrategyType(
   initConfiguration: InitConfiguration
 ): SessionStoreStrategyType | undefined {
-  let sessionStoreStrategyType = selectCookieStrategy(initConfiguration)
-  if (!sessionStoreStrategyType && initConfiguration.allowFallbackToLocalStorage) {
-    sessionStoreStrategyType = selectLocalStorageStrategy()
+  const sessionStoreConfiguration = initConfiguration.sessionStorage
+
+  if (sessionStoreConfiguration === 'local-storage') {
+    return selectLocalStorageStrategy()
   }
-  return sessionStoreStrategyType
+  if (sessionStoreConfiguration === 'cookie-fallback-to-local-storage') {
+    const cookieStrategy = selectCookieStrategy(initConfiguration)
+    return cookieStrategy || selectLocalStorageStrategy()
+  }
+
+  return selectCookieStrategy(initConfiguration)
 }
 
 /**
