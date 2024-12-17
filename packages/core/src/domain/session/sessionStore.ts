@@ -117,7 +117,8 @@ export function startSessionStore<TrackingType extends string>(
   function watchSession() {
     processSessionStoreOperations(
       {
-        process: (sessionState) => (isSessionInExpiredState(sessionState) ? getExpiredSessionState() : undefined),
+        process: (sessionState) =>
+          isSessionInExpiredState(sessionState) ? getExpiredSessionState(sessionState) : undefined,
         after: synchronizeSession,
       },
       sessionStoreStrategy
@@ -126,7 +127,7 @@ export function startSessionStore<TrackingType extends string>(
 
   function synchronizeSession(sessionState: SessionState) {
     if (isSessionInExpiredState(sessionState)) {
-      sessionState = getExpiredSessionState()
+      sessionState = getExpiredSessionState(sessionState)
     }
     if (hasSessionInCache()) {
       if (isSessionInCacheOutdated(sessionState)) {
@@ -144,7 +145,7 @@ export function startSessionStore<TrackingType extends string>(
       {
         process: (sessionState) => {
           if (isSessionInNotStartedState(sessionState)) {
-            return getExpiredSessionState()
+            return getExpiredSessionState(sessionState)
           }
         },
         after: (sessionState) => {
@@ -178,7 +179,7 @@ export function startSessionStore<TrackingType extends string>(
   }
 
   function expireSessionInCache() {
-    sessionCache = getExpiredSessionState()
+    sessionCache = getExpiredSessionState(sessionCache)
     expireObservable.notify()
   }
 
@@ -207,8 +208,8 @@ export function startSessionStore<TrackingType extends string>(
     restartSession: startSession,
     expire: () => {
       cancelExpandOrRenewSession()
-      expireSession()
-      synchronizeSession(getExpiredSessionState())
+      expireSession(sessionCache)
+      synchronizeSession(getExpiredSessionState(sessionCache))
     },
     stop: () => {
       clearInterval(watchSessionTimeoutId)

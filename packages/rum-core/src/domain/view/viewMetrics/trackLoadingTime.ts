@@ -9,6 +9,7 @@ import { trackFirstHidden } from './trackFirstHidden'
 export function trackLoadingTime(
   lifeCycle: LifeCycle,
   domMutationObservable: Observable<void>,
+  windowOpenObservable: Observable<void>,
   configuration: RumConfiguration,
   loadType: ViewLoadingType,
   viewStart: ClocksState,
@@ -28,15 +29,21 @@ export function trackLoadingTime(
     }
   }
 
-  const { stop } = waitPageActivityEnd(lifeCycle, domMutationObservable, configuration, (event) => {
-    if (isWaitingForActivityLoadingTime) {
-      isWaitingForActivityLoadingTime = false
-      if (event.hadActivity) {
-        loadingTimeCandidates.push(elapsed(viewStart.timeStamp, event.end))
+  const { stop } = waitPageActivityEnd(
+    lifeCycle,
+    domMutationObservable,
+    windowOpenObservable,
+    configuration,
+    (event) => {
+      if (isWaitingForActivityLoadingTime) {
+        isWaitingForActivityLoadingTime = false
+        if (event.hadActivity) {
+          loadingTimeCandidates.push(elapsed(viewStart.timeStamp, event.end))
+        }
+        invokeCallbackIfAllCandidatesAreReceived()
       }
-      invokeCallbackIfAllCandidatesAreReceived()
     }
-  })
+  )
 
   return {
     stop: () => {

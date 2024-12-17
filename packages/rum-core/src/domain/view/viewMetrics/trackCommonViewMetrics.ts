@@ -20,6 +20,7 @@ export interface CommonViewMetrics {
 export function trackCommonViewMetrics(
   lifeCycle: LifeCycle,
   domMutationObservable: Observable<void>,
+  windowOpenObservable: Observable<void>,
   configuration: RumConfiguration,
   scheduleViewUpdate: () => void,
   loadingType: ViewLoadingType,
@@ -30,6 +31,7 @@ export function trackCommonViewMetrics(
   const { stop: stopLoadingTimeTracking, setLoadEvent } = trackLoadingTime(
     lifeCycle,
     domMutationObservable,
+    windowOpenObservable,
     configuration,
     loadingType,
     viewStart,

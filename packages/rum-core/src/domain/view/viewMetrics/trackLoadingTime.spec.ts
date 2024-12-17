@@ -21,6 +21,7 @@ describe('trackLoadingTime', () => {
   const lifeCycle = new LifeCycle()
   let clock: Clock
   let domMutationObservable: Observable<void>
+  let windowOpenObservable: Observable<void>
   let loadingTimeCallback: jasmine.Spy<(loadingTime: Duration) => void>
   let setLoadEvent: (loadEvent: Duration) => void
   let stopLoadingTimeTracking: () => void
@@ -29,6 +30,7 @@ describe('trackLoadingTime', () => {
     const loadingTimeTracking = trackLoadingTime(
       lifeCycle,
       domMutationObservable,
+      windowOpenObservable,
       mockRumConfiguration(),
       loadType,
       clocksOrigin(),
@@ -41,6 +43,7 @@ describe('trackLoadingTime', () => {
   beforeEach(() => {
     clock = mockClock()
     domMutationObservable = new Observable()
+    windowOpenObservable = new Observable()
     loadingTimeCallback = jasmine.createSpy<(loadingTime: Duration) => void>()
   })
 

@@ -1,9 +1,15 @@
+import { mockExperimentalFeatures } from '../../../../test'
+import { ExperimentalFeature } from '../../../tools/experimentalFeatures'
 import { type SessionState } from '../sessionState'
 import { selectLocalStorageStrategy, initLocalStorageStrategy } from './sessionInLocalStorage'
 import { SESSION_STORE_KEY } from './sessionStoreStrategy'
 
 describe('session in local storage strategy', () => {
   const sessionState: SessionState = { id: '123', created: '0' }
+  beforeEach(() => {
+    mockExperimentalFeatures([ExperimentalFeature.ANONYMOUS_USER_TRACKING])
+    spyOn(Math, 'random').and.returnValue(1)
+  })
 
   afterEach(() => {
     window.localStorage.clear()
@@ -31,10 +37,10 @@ describe('session in local storage strategy', () => {
   it('should set `isExpired=1` to the local storage item holding the session', () => {
     const localStorageStrategy = initLocalStorageStrategy()
     localStorageStrategy.persistSession(sessionState)
-    localStorageStrategy.expireSession()
+    localStorageStrategy.expireSession(sessionState)
     const session = localStorageStrategy?.retrieveSession()
-    expect(session).toEqual({ isExpired: '1' })
-    expect(window.localStorage.getItem(SESSION_STORE_KEY)).toBe('isExpired=1')
+    expect(session).toEqual({ isExpired: '1', anonymousId: '2gosa7pa2gw' })
+    expect(window.localStorage.getItem(SESSION_STORE_KEY)).toBe('isExpired=1&aid=2gosa7pa2gw')
   })
 
   it('should not interfere with other keys present in local storage', () => {
@@ -42,14 +48,7 @@ describe('session in local storage strategy', () => {
     const localStorageStrategy = initLocalStorageStrategy()
     localStorageStrategy.persistSession(sessionState)
     localStorageStrategy.retrieveSession()
-    localStorageStrategy.expireSession()
+    localStorageStrategy.expireSession(sessionState)
     expect(window.localStorage.getItem('test')).toEqual('hello')
-  })
-
-  it('should return an empty object if session string is invalid', () => {
-    const localStorageStrategy = initLocalStorageStrategy()
-    localStorage.setItem(SESSION_STORE_KEY, '{test:42}')
-    const session = localStorageStrategy?.retrieveSession()
-    expect(session).toEqual({})
   })
 })

@@ -37,6 +37,7 @@ export function createRumSessionManagerMock(): RumSessionManagerMock {
             : forcedReplay
               ? SessionReplayState.FORCED
               : SessionReplayState.OFF,
+        anonymousId: 'device-123',
       }
     },
     expire() {

@@ -93,6 +93,7 @@ export function trackViews(
   location: Location,
   lifeCycle: LifeCycle,
   domMutationObservable: Observable<void>,
+  windowOpenObservable: Observable<void>,
   configuration: RumConfiguration,
   locationChangeObservable: Observable<LocationChange>,
   areViewsTrackedAutomatically: boolean,
@@ -112,6 +113,7 @@ export function trackViews(
     const newlyCreatedView = newView(
       lifeCycle,
       domMutationObservable,
+      windowOpenObservable,
       configuration,
       location,
       loadingType,
@@ -188,6 +190,7 @@ export function trackViews(
 function newView(
   lifeCycle: LifeCycle,
   domMutationObservable: Observable<void>,
+  windowOpenObservable: Observable<void>,
   configuration: RumConfiguration,
   initialLocation: Location,
   loadingType: ViewLoadingType,
@@ -249,6 +252,7 @@ function newView(
   } = trackCommonViewMetrics(
     lifeCycle,
     domMutationObservable,
+    windowOpenObservable,
     configuration,
     scheduleViewUpdate,
     loadingType,

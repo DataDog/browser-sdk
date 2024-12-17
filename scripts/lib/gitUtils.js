@@ -5,15 +5,13 @@ const { command } = require('../lib/command')
 const { getGithubDeployKey, getGithubAccessToken } = require('./secrets')
 const { fetchHandlingError } = require('./executionUtils')
 
-const GITHUB_TOKEN = getGithubAccessToken()
-
 async function fetchPR(localBranch) {
   const response = await fetchHandlingError(
     `https://api.github.com/repos/DataDog/browser-sdk/pulls?head=DataDog:${localBranch}`,
     {
       method: 'GET',
       headers: {
-        Authorization: `token ${GITHUB_TOKEN}`,
+        Authorization: `token ${getGithubAccessToken()}`,
       },
     }
   )
@@ -54,6 +52,5 @@ module.exports = {
   initGitConfig,
   fetchPR,
   getLastCommonCommit,
-  LOCAL_BRANCH: process.env.CI_COMMIT_REF_NAME,
-  GITHUB_TOKEN,
+  getLocalBranch: () => process.env.CI_COMMIT_REF_NAME,
 }
