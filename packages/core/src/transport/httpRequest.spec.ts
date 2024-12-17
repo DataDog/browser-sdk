@@ -57,7 +57,7 @@ describe('httpRequest', () => {
       }
       let notQueuedFetch: Promise<never>
       interceptor.withFetch(() => {
-        notQueuedFetch = Promise.reject()
+        notQueuedFetch = Promise.reject(new Error())
         return notQueuedFetch
       })
 
@@ -118,7 +118,7 @@ describe('httpRequest', () => {
         pending('no fetch keepalive support')
       }
 
-      interceptor.withFetch(() => Promise.reject())
+      interceptor.withFetch(() => Promise.reject(new Error()))
       interceptor.withMockXhr((xhr) => {
         setTimeout(() => {
           xhr.complete(429)

@@ -118,7 +118,7 @@ export interface LogsPublicApi extends PublicApi {
    *
    * See [Access internal context](https://docs.datadoghq.com/logs/log_collection/javascript/#access-internal-context) for further information.
    */
-  getInternalContext: (startTime?: number | undefined) => InternalContext | undefined
+  getInternalContext: (startTime?: number) => InternalContext | undefined
 
   /**
    * Set user information to all events, stored in `@usr`

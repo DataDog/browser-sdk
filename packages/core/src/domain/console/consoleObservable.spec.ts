@@ -113,7 +113,6 @@ describe('console error observable', () => {
     const error = new Error('foo')
     ;(error as DatadogError).dd_fingerprint = 'my-fingerprint'
 
-    // eslint-disable-next-line no-console
     console.error(error)
 
     const consoleLog = notifyLog.calls.mostRecent().args[0]
@@ -124,7 +123,6 @@ describe('console error observable', () => {
     const error = new Error('foo')
     ;(error as any).dd_fingerprint = 2
 
-    // eslint-disable-next-line no-console
     console.error(error)
 
     const consoleLog = notifyLog.calls.mostRecent().args[0]

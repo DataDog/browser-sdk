@@ -99,7 +99,7 @@ export function switchToAbsoluteUrl(cssText: string, cssHref: string | null): st
 export function makeUrlAbsolute(url: string, baseUrl: string): string {
   try {
     return buildUrl(url, baseUrl).href
-  } catch (_) {
+  } catch {
     return url
   }
 }

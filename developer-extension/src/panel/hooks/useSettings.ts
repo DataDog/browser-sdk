@@ -57,6 +57,7 @@ export function useSettings() {
   // If we don't have settings yet, it means that we are still loading them from the storage. Throw
   // the promise so it'll be caught by the Suspense boundary.
   if (!settings) {
+    // eslint-disable-next-line @typescript-eslint/only-throw-error
     throw storageLoadingPromise
   }
 

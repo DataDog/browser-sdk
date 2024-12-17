@@ -104,7 +104,6 @@ describe('instrumentOnError', () => {
   it('should notify unhandled string', async () => {
     const error = 'foo' as any
     setTimeout(() => {
-      // eslint-disable-next-line no-throw-literal
       throw error
     })
     await collectAsyncCalls(onErrorSpy)
@@ -116,7 +115,6 @@ describe('instrumentOnError', () => {
   it('should notify unhandled object', async () => {
     const error = { a: 'foo' } as any
     setTimeout(() => {
-      // eslint-disable-next-line no-throw-literal
       throw error
     })
     await collectAsyncCalls(onErrorSpy)

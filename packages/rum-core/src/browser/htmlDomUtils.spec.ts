@@ -20,6 +20,7 @@ describe('isTextNode', () => {
   ]
 
   parameters.forEach(([element, result]) => {
+    // eslint-disable-next-line @typescript-eslint/no-base-to-string
     it(`should return ${String(result)} for "${String(element)}"`, () => {
       expect(isTextNode(element)).toBe(result)
     })
@@ -36,6 +37,7 @@ describe('isCommentNode', () => {
   ]
 
   parameters.forEach(([element, result]) => {
+    // eslint-disable-next-line @typescript-eslint/no-base-to-string
     it(`should return ${String(result)} for "${String(element)}"`, () => {
       expect(isCommentNode(element)).toBe(result)
     })
@@ -52,6 +54,7 @@ describe('isElementNode', () => {
   ]
 
   parameters.forEach(([element, result]) => {
+    // eslint-disable-next-line @typescript-eslint/no-base-to-string
     it(`should return ${String(result)} for "${String(element)}"`, () => {
       expect(isElementNode(element)).toBe(result)
     })
@@ -115,6 +118,7 @@ describe('isShadowHost', () => {
   ]
 
   parameters.forEach(([element, result]) => {
+    // eslint-disable-next-line @typescript-eslint/no-base-to-string
     it(`should return ${String(result)} for "${String(element)}"`, () => {
       expect(isNodeShadowHost(element)).toBe(result)
     })
