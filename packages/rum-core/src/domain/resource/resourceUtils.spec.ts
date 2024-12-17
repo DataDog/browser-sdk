@@ -1,4 +1,4 @@
-import { assign, type Duration, type RelativeTime, type ServerDuration } from '@datadog/browser-core'
+import { type Duration, type RelativeTime, type ServerDuration } from '@datadog/browser-core'
 import { RumPerformanceEntryType, type RumPerformanceResourceTiming } from '../../browser/performanceObservable'
 import {
   MAX_ATTRIBUTE_VALUE_CHAR_LENGTH,
@@ -33,7 +33,7 @@ function generateResourceWith(overrides: Partial<RumPerformanceResourceTiming>) 
     decodedBodySize: 0,
     encodedBodySize: 0,
     transferSize: 0,
-    toJSON: () => assign({}, completeTiming, { toJSON: undefined }),
+    toJSON: () => ({ ...completeTiming, toJSON: undefined }),
 
     ...overrides,
   }
