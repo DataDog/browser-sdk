@@ -20,8 +20,8 @@ describe('Session Stores', () => {
 
   describe('Local Storage', () => {
     createTest('Local Storage Initialization')
-      .withLogs({ allowFallbackToLocalStorage: true })
-      .withRum({ allowFallbackToLocalStorage: true })
+      .withLogs({ sessionStorage: 'cookie-fallback-to-local-storage' })
+      .withRum({ sessionStorage: 'cookie-fallback-to-local-storage' })
       // This will force the SDKs to initialize using local storage
       .withHead('<script>Object.defineProperty(Document.prototype, "cookie", { get: () => 42})</script>')
       .run(async () => {
@@ -38,8 +38,8 @@ describe('Session Stores', () => {
 
   describe('No storage available', () => {
     createTest('RUM should fail init / Logs should succeed')
-      .withLogs({ allowFallbackToLocalStorage: true })
-      .withRum({ allowFallbackToLocalStorage: true })
+      .withLogs({ sessionStorage: 'cookie-fallback-to-local-storage' })
+      .withRum({ sessionStorage: 'cookie-fallback-to-local-storage' })
       // This will ensure no storage is available
       .withHead(
         `
