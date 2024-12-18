@@ -308,6 +308,7 @@ script-tests:
   interruptible: true
   script:
     - yarn
+    - yarn build:bundle
     - yarn test:script
 ########################################################################################################################
 # Deploy
