@@ -25,7 +25,9 @@ export function startDisplayContext(configuration: RumConfiguration) {
     get: () => (viewport ? { viewport } : undefined),
     stop: () => {
       unsubscribeViewport()
-      animationFrameId && cancelAnimationFrame(animationFrameId)
+      if (animationFrameId) {
+        cancelAnimationFrame(animationFrameId)
+      }
     },
   }
 }
