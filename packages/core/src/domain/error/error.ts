@@ -88,7 +88,7 @@ export function getFileFromStackTraceString(stack: string) {
 }
 
 export function isError(error: unknown): error is Error {
-  return Object.prototype.toString.call(error) === '[object Error]'
+  return error instanceof Error || Object.prototype.toString.call(error) === '[object Error]'
 }
 
 export function flattenErrorCauses(error: ErrorWithCause, parentSource: ErrorSource): RawErrorCause[] | undefined {
