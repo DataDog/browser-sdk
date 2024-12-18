@@ -31,8 +31,14 @@ describe('error collection', () => {
 
   // when calling toString on SubErrorViaPrototype, the results will be '[object Object]'
   // but the value of 'error instanceof Error' will still be true.
-  function SubErrorViaPrototype(_message: string) {}
-  SubErrorViaPrototype.prototype = new Error
+  function SubErrorViaPrototype(this: Error, _message: string) {
+    Error.call(this, _message)
+    this.name = 'Error'
+    this.message = _message
+    this.stack = `Error: ${_message}\n    at <anonymous>`
+  }
+  SubErrorViaPrototype.prototype = Object.create(Error.prototype)
+  SubErrorViaPrototype.prototype.constructor = SubErrorViaPrototype
 
   describe('addError', () => {
     ;[
@@ -45,7 +51,7 @@ describe('error collection', () => {
       },
       {
         testCase: 'an error subclass via prototype',
-        error: new (SubErrorViaPrototype as any)('bar'),
+        error: new (SubErrorViaPrototype as unknown as { new (message: string): Error })('bar'),
         message: 'bar',
         type: 'Error',
         stack: jasmine.stringMatching('Error: bar'),
