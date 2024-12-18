@@ -24,7 +24,7 @@ export function createHandlingStack(): string {
   if (!error.stack) {
     try {
       throw error
-    } catch (e) {
+    } catch {
       noop()
     }
   }
