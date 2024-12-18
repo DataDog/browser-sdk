@@ -65,7 +65,7 @@ async function uploadPackage(awsConfig, packageName, version, uploadPathTypes) {
       const uploadPath = await generateUploadPath(uploadPathType, relativeBundlePath, version)
 
       uploadToS3(awsConfig, bundlePath, uploadPath, version)
-      cloudfrontPathsToInvalidate.push(uploadPath)
+      cloudfrontPathsToInvalidate.push(`/${uploadPath}`)
     })
   }
 
