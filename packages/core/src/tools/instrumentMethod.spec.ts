@@ -129,6 +129,38 @@ describe('instrumentMethod', () => {
     )
   })
 
+  it('wraps each method only once even if we instrument it multiple times', () => {
+    const object = { method: () => 1 }
+    expect(object.method()).toBe(1)
+
+    for (let i = 0; i < 10_000; i++) {
+      const { stop: stopOurs } = instrumentMethod(object, 'method', noop)
+      const { stop: stopTheirs } = instrumentMethod(object, 'method', noop)
+      stopOurs()
+      stopTheirs()
+    }
+
+    // If we rewrap the method every time, this will throw `RangeError: Maximum
+    // call stack size exceeded.`
+    expect(object.method()).toBe(1)
+  })
+
+  it('wraps each method only once even if a third party instruments it multiple times', () => {
+    const object = { method: () => 1 }
+    expect(object.method()).toBe(1)
+
+    for (let i = 0; i < 10_000; i++) {
+      const { stop: stopOurs } = instrumentMethod(object, 'method', noop)
+      const { stop: stopTheirs } = thirdPartyInstrumentation(object)
+      stopOurs()
+      stopTheirs()
+    }
+
+    // If we rewrap the method every time, this will throw `RangeError: Maximum
+    // call stack size exceeded.`
+    expect(object.method()).toBe(1)
+  })
+
   describe('stop()', () => {
     it('does not call the instrumentation anymore', () => {
       const object = { method: () => 1 }
@@ -180,20 +212,34 @@ describe('instrumentMethod', () => {
     })
   })
 
-  function thirdPartyInstrumentation(object: { method?: () => number; onevent?: () => void }) {
+  function thirdPartyInstrumentation(object: { method?: () => number; onevent?: () => void }): { stop: () => void } {
     const originalMethod = object.method
+    let methodInstrumentation: (() => number) | undefined
     if (typeof originalMethod === 'function') {
-      object.method = () => {
+      methodInstrumentation = () => {
         originalMethod()
         return THIRD_PARTY_RESULT
       }
+      object.method = methodInstrumentation
     }
 
     const originalOnEvent = object.onevent
-    object.onevent = () => {
+    const onEventInstrumentation = (): void => {
       if (originalOnEvent) {
         originalOnEvent()
       }
+    }
+    object.onevent = onEventInstrumentation
+
+    return {
+      stop: () => {
+        if (methodInstrumentation && object.method === methodInstrumentation) {
+          object.method = originalMethod
+        }
+        if (object.onevent === onEventInstrumentation) {
+          object.onevent = originalOnEvent
+        }
+      },
     }
   }
 })
