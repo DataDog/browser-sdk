@@ -51,8 +51,8 @@ void describe('deploy', () => {
         env,
       },
       {
-        // RUM chunks
-        command: `aws s3 cp --cache-control max-age=14400, s-maxage=60 packages/rum/bundle/chunks/recorder-${FAKE_CHUNK_HASH}-datadog-rum.js s3://browser-agent-artifacts-prod/chunks/recorder-${FAKE_CHUNK_HASH}-datadog-rum-v6.js`,
+        // RUM chunks: We don't suffix chunk names as they are referenced by the main bundle. Renaming them would require updates via Webpack, adding unnecessary complexity for minimal value.
+        command: `aws s3 cp --cache-control max-age=14400, s-maxage=60 packages/rum/bundle/chunks/recorder-${FAKE_CHUNK_HASH}-datadog-rum.js s3://browser-agent-artifacts-prod/chunks/recorder-${FAKE_CHUNK_HASH}-datadog-rum.js`,
         env,
       },
       // RUM bundle
@@ -71,7 +71,7 @@ void describe('deploy', () => {
 
     assert.deepEqual(getCloudfrontCommands(), [
       {
-        command: `aws cloudfront create-invalidation --distribution-id EGB08BYCT1DD9 --paths datadog-logs-v6.js,chunks/recorder-${FAKE_CHUNK_HASH}-datadog-rum-v6.js,datadog-rum-v6.js,datadog-rum-slim-v6.js`,
+        command: `aws cloudfront create-invalidation --distribution-id EGB08BYCT1DD9 --paths datadog-logs-v6.js,chunks/recorder-${FAKE_CHUNK_HASH}-datadog-rum.js,datadog-rum-v6.js,datadog-rum-slim-v6.js`,
         env,
       },
     ])
@@ -119,7 +119,7 @@ void describe('deploy', () => {
         env,
       },
       {
-        command: `aws s3 cp --cache-control max-age=900, s-maxage=60 packages/rum/bundle/chunks/recorder-${FAKE_CHUNK_HASH}-datadog-rum.js s3://browser-agent-artifacts-staging/chunks/recorder-${FAKE_CHUNK_HASH}-datadog-rum-staging.js`,
+        command: `aws s3 cp --cache-control max-age=900, s-maxage=60 packages/rum/bundle/chunks/recorder-${FAKE_CHUNK_HASH}-datadog-rum.js s3://browser-agent-artifacts-staging/chunks/recorder-${FAKE_CHUNK_HASH}-datadog-rum.js`,
         env,
       },
       {
@@ -136,7 +136,7 @@ void describe('deploy', () => {
 
     assert.deepEqual(getCloudfrontCommands(), [
       {
-        command: `aws cloudfront create-invalidation --distribution-id E2FP11ZSCFD3EU --paths datadog-logs-staging.js,chunks/recorder-${FAKE_CHUNK_HASH}-datadog-rum-staging.js,datadog-rum-staging.js,datadog-rum-slim-staging.js`,
+        command: `aws cloudfront create-invalidation --distribution-id E2FP11ZSCFD3EU --paths datadog-logs-staging.js,chunks/recorder-${FAKE_CHUNK_HASH}-datadog-rum.js,datadog-rum-staging.js,datadog-rum-slim-staging.js`,
         env,
       },
     ])

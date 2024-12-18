@@ -4,8 +4,13 @@ const packages = [
   { packageName: 'rum-slim', service: 'browser-rum-sdk' },
 ]
 
-// ex: datadog-rum-v4.js, chunks/recorder-8d8a8dfab6958424038f-datadog-rum-v4.js
+// ex: datadog-rum-v4.js, chunks/recorder-8d8a8dfab6958424038f-datadog-rum.js
 const buildRootUploadPath = (filePath, version) => {
+  // We don't suffix chunk names as they are referenced by the main bundle. Renaming them would require updates via Webpack, adding unnecessary complexity for minimal value.
+  if (filePath.includes('chunks')) {
+    return filePath
+  }
+
   const [basePath, ...extensions] = filePath.split('.')
   const ext = extensions.join('.') // allow to handle multiple extensions like `.js.map`
 

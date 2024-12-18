@@ -318,7 +318,7 @@ deploy-feature:
   stage: deploy
   when: manual
   variables:
-    SUFFIX: 'lazy-replay' #/datadog-[product]-${SUFFIX}.js
+    SUFFIX: 'my-feature' #/datadog-[product]-${SUFFIX}.js
   extends:
     - .base-configuration
     - .feature-branches
