@@ -72,7 +72,7 @@ describe('startSessionManager', () => {
 
   function expectSessionIdToNotBeDefined(sessionManager: SessionManager<FakeTrackingType>) {
     expect(sessionManager.findSession()!.id).toBeUndefined()
-    expect(getCookie(SESSION_STORE_KEY)).not.toContain('id=')
+    expect(getCookie(SESSION_STORE_KEY)).not.toContain('&id=')
   }
 
   function expectTrackingTypeToBe(
@@ -592,13 +592,14 @@ describe('startSessionManager', () => {
 
   describe('tracking consent', () => {
     it('expires the session when tracking consent is withdrawn', () => {
+      spyOn(Math, 'random').and.callFake(() => 0)
       const trackingConsentState = createTrackingConsentState(TrackingConsent.GRANTED)
       const sessionManager = startSessionManagerWithDefaults({ trackingConsentState })
 
       trackingConsentState.update(TrackingConsent.NOT_GRANTED)
 
       expectSessionToBeExpired(sessionManager)
-      expect(getCookie(SESSION_STORE_KEY)).toBe('isExpired=1')
+      expect(getCookie(SESSION_STORE_KEY)).toBe('isExpired=1&aid=0')
     })
 
     it('does not renew the session when tracking consent is withdrawn', () => {

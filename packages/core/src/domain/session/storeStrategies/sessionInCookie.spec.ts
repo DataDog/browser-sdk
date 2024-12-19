@@ -1,5 +1,4 @@
-import { ExperimentalFeature, resetExperimentalFeatures } from '../../../tools/experimentalFeatures'
-import { mockExperimentalFeatures } from '../../../../test'
+import { resetExperimentalFeatures } from '../../../tools/experimentalFeatures'
 import { setCookie, deleteCookie, getCookie, getCurrentSite } from '../../../browser/cookie'
 import { type SessionState } from '../sessionState'
 import { buildCookieOptions, selectCookieStrategy, initCookieStrategy } from './sessionInCookie'
@@ -26,11 +25,12 @@ describe('session in cookie strategy', () => {
   })
 
   it('should set `isExpired=1` to the cookie holding the session', () => {
+    spyOn(Math, 'random').and.callFake(() => 0)
     cookieStorageStrategy.persistSession(sessionState)
     cookieStorageStrategy.expireSession(sessionState)
     const session = cookieStorageStrategy.retrieveSession()
-    expect(session).toEqual({ isExpired: '1' })
-    expect(getCookie(SESSION_STORE_KEY)).toBe('isExpired=1')
+    expect(session).toEqual({ isExpired: '1', anonymousId: '0' })
+    expect(getCookie(SESSION_STORE_KEY)).toBe('isExpired=1&aid=0')
   })
 
   it('should return an empty object if session string is invalid', () => {
@@ -105,7 +105,6 @@ describe('session in cookie strategy with anonymous user tracking', () => {
   let cookieStorageStrategy: SessionStoreStrategy
 
   beforeEach(() => {
-    mockExperimentalFeatures([ExperimentalFeature.ANONYMOUS_USER_TRACKING])
     cookieStorageStrategy = initCookieStrategy({})
   })
 
