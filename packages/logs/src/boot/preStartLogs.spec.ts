@@ -1,4 +1,4 @@
-import { type Clock, instrumentationIsAddedTo, mockClock, mockEventBridge } from '@datadog/browser-core/test'
+import { callbackAddsInstrumentation, type Clock, mockClock, mockEventBridge } from '@datadog/browser-core/test'
 import type { TimeStamp, TrackingConsentState } from '@datadog/browser-core'
 import {
   ONE_SECOND,
@@ -218,12 +218,14 @@ describe('preStartLogs', () => {
     describe('basic methods instrumentation', () => {
       it('should instrument fetch even if tracking consent is not granted', () => {
         expect(
-          instrumentationIsAddedTo(window, 'fetch', () => {
+          callbackAddsInstrumentation(() => {
             strategy.init({
               ...DEFAULT_INIT_CONFIGURATION,
               trackingConsent: TrackingConsent.NOT_GRANTED,
             })
           })
+            .toMethod(window, 'fetch')
+            .whenCalled()
         ).toBeTrue()
       })
     })

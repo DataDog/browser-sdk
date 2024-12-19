@@ -15,8 +15,8 @@ import {
 } from '@datadog/browser-core'
 import type { Clock } from '@datadog/browser-core/test'
 import {
+  callbackAddsInstrumentation,
   interceptRequests,
-  instrumentationIsAddedTo,
   mockClock,
   mockEventBridge,
   mockExperimentalFeatures,
@@ -808,7 +808,7 @@ describe('preStartRum', () => {
     describe('basic methods instrumentation', () => {
       it('should instrument fetch even if tracking consent is not granted', () => {
         expect(
-          instrumentationIsAddedTo(window, 'fetch', () => {
+          callbackAddsInstrumentation(() => {
             strategy.init(
               {
                 ...DEFAULT_INIT_CONFIGURATION,
@@ -817,6 +817,8 @@ describe('preStartRum', () => {
               PUBLIC_API
             )
           })
+            .toMethod(window, 'fetch')
+            .whenCalled()
         ).toBeTrue()
       })
     })
