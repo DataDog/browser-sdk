@@ -1,4 +1,4 @@
-import { DefaultPrivacyLevel, isIE } from '@datadog/browser-core'
+import { DefaultPrivacyLevel } from '@datadog/browser-core'
 import type { RumConfiguration } from '@datadog/browser-rum-core'
 import { collectAsyncCalls, registerCleanupTask } from '@datadog/browser-core/test'
 import {
@@ -64,10 +64,6 @@ describe('trackMutation', () => {
   }
 
   beforeEach(() => {
-    if (isIE()) {
-      pending('IE not supported')
-    }
-
     sandbox = appendElement('<div id="sandbox"></div>')
 
     registerCleanupTask(() => {
@@ -96,7 +92,7 @@ describe('trackMutation', () => {
       })
     })
 
-    it('processes mutations asynchronously', (done) => {
+    it('processes mutations asynchronously', async () => {
       serializeDocumentWithDefaults()
       const { mutationCallbackSpy } = startMutationCollection()
 
@@ -104,7 +100,7 @@ describe('trackMutation', () => {
 
       expect(mutationCallbackSpy).not.toHaveBeenCalled()
 
-      collectAsyncCalls(mutationCallbackSpy, 1, () => done())
+      await collectAsyncCalls(mutationCallbackSpy)
     })
 
     it('does not emit a mutation when a node is appended to a unknown node', () => {
