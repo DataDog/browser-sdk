@@ -3,7 +3,6 @@
   "compilerOptions": {
     "baseUrl": ".",
     "declaration": true,
-    "module": "es6",
     "allowJs": true,
     "rootDir": "./src/",
     "outDir": "./esm/"

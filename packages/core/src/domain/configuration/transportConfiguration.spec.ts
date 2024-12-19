@@ -23,9 +23,9 @@ describe('transportConfiguration', () => {
     })
 
     it('should use site value when set', () => {
-      const configuration = computeTransportConfiguration({ clientToken, site: 'foo.com' })
-      expect(configuration.rumEndpointBuilder.build('xhr', DEFAULT_PAYLOAD)).toContain('foo.com')
-      expect(configuration.site).toBe('foo.com')
+      const configuration = computeTransportConfiguration({ clientToken, site: 'datadoghq.com' })
+      expect(configuration.rumEndpointBuilder.build('xhr', DEFAULT_PAYLOAD)).toContain('datadoghq.com')
+      expect(configuration.site).toBe('datadoghq.com')
     })
   })
 
@@ -41,7 +41,7 @@ describe('transportConfiguration', () => {
     it('should not use internal analytics subdomain value when set for other sites', () => {
       const configuration = computeTransportConfiguration({
         clientToken,
-        site: 'foo.bar',
+        site: 'us3.datadoghq.com',
         internalAnalyticsSubdomain,
       })
       expect(configuration.rumEndpointBuilder.build('xhr', DEFAULT_PAYLOAD)).not.toContain(internalAnalyticsSubdomain)

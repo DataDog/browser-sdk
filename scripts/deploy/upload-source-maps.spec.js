@@ -2,7 +2,7 @@ const assert = require('node:assert/strict')
 const path = require('node:path')
 const { beforeEach, before, describe, it, mock } = require('node:test')
 const { siteByDatacenter } = require('../lib/datadogSites')
-const { mockModule, mockCommandImplementation } = require('./lib/testHelpers.js')
+const { mockModule, mockCommandImplementation, replaceChunkHashes, FAKE_CHUNK_HASH } = require('./lib/testHelpers.js')
 
 const FAKE_API_KEY = 'FAKE_API_KEY'
 const ENV_STAGING = {
@@ -20,6 +20,10 @@ void describe('upload-source-maps', () => {
   let uploadSourceMaps
   function getSourceMapCommands() {
     return commands.filter(({ command }) => command.includes('datadog-ci sourcemaps'))
+  }
+
+  function getFileRenamingCommands() {
+    return commands.filter(({ command }) => command.includes('mv')).map(replaceChunkHashes)
   }
 
   before(async () => {
@@ -48,6 +52,36 @@ void describe('upload-source-maps', () => {
       const commandsByDatacenter = commands.filter(({ env }) => env?.DATADOG_SITE === site)
       const env = { DATADOG_API_KEY: FAKE_API_KEY, DATADOG_SITE: site }
 
+      // rename the files with the version suffix
+      assert.deepEqual(getFileRenamingCommands(), [
+        {
+          command: 'mv packages/logs/bundle/datadog-logs.js packages/logs/bundle/datadog-logs-v6.js',
+        },
+        {
+          command: 'mv packages/logs/bundle/datadog-logs.js.map packages/logs/bundle/datadog-logs-v6.js.map',
+        },
+        {
+          command: `mv packages/rum/bundle/chunks/recorder-${FAKE_CHUNK_HASH}-datadog-rum.js packages/rum/bundle/chunks/recorder-${FAKE_CHUNK_HASH}-datadog-rum.js`,
+        },
+        {
+          command: `mv packages/rum/bundle/chunks/recorder-${FAKE_CHUNK_HASH}-datadog-rum.js.map packages/rum/bundle/chunks/recorder-${FAKE_CHUNK_HASH}-datadog-rum.js.map`,
+        },
+        {
+          command: 'mv packages/rum/bundle/datadog-rum.js packages/rum/bundle/datadog-rum-v6.js',
+        },
+        {
+          command: 'mv packages/rum/bundle/datadog-rum.js.map packages/rum/bundle/datadog-rum-v6.js.map',
+        },
+        {
+          command: 'mv packages/rum-slim/bundle/datadog-rum-slim.js packages/rum-slim/bundle/datadog-rum-slim-v6.js',
+        },
+        {
+          command:
+            'mv packages/rum-slim/bundle/datadog-rum-slim.js.map packages/rum-slim/bundle/datadog-rum-slim-v6.js.map',
+        },
+      ])
+
+      // upload the source maps
       assert.deepEqual(commandsByDatacenter, [
         {
           command:
@@ -93,6 +127,36 @@ void describe('upload-source-maps', () => {
   void it('should upload staging packages source maps', async () => {
     await uploadSourceMaps('staging', ['root'])
 
+    // rename the files with the version suffix
+    assert.deepEqual(getFileRenamingCommands(), [
+      {
+        command: 'mv packages/logs/bundle/datadog-logs.js packages/logs/bundle/datadog-logs-staging.js',
+      },
+      {
+        command: 'mv packages/logs/bundle/datadog-logs.js.map packages/logs/bundle/datadog-logs-staging.js.map',
+      },
+      {
+        command: `mv packages/rum/bundle/chunks/recorder-${FAKE_CHUNK_HASH}-datadog-rum.js packages/rum/bundle/chunks/recorder-${FAKE_CHUNK_HASH}-datadog-rum.js`,
+      },
+      {
+        command: `mv packages/rum/bundle/chunks/recorder-${FAKE_CHUNK_HASH}-datadog-rum.js.map packages/rum/bundle/chunks/recorder-${FAKE_CHUNK_HASH}-datadog-rum.js.map`,
+      },
+      {
+        command: 'mv packages/rum/bundle/datadog-rum.js packages/rum/bundle/datadog-rum-staging.js',
+      },
+      {
+        command: 'mv packages/rum/bundle/datadog-rum.js.map packages/rum/bundle/datadog-rum-staging.js.map',
+      },
+      {
+        command: 'mv packages/rum-slim/bundle/datadog-rum-slim.js packages/rum-slim/bundle/datadog-rum-slim-staging.js',
+      },
+      {
+        command:
+          'mv packages/rum-slim/bundle/datadog-rum-slim.js.map packages/rum-slim/bundle/datadog-rum-slim-staging.js.map',
+      },
+    ])
+
+    // upload the source maps
     assert.deepEqual(getSourceMapCommands(), [
       {
         command:
@@ -130,28 +194,36 @@ void describe('upload-source-maps', () => {
   void it('should upload canary packages source maps', async () => {
     await uploadSourceMaps('canary', ['root'])
 
-    assert.deepEqual(getSourceMapCommands(), [
+    // rename the files with the version suffix
+    assert.deepEqual(getFileRenamingCommands(), [
       {
-        command:
-          'datadog-ci sourcemaps upload packages/logs/bundle --service browser-logs-sdk --release-version dev --minified-path-prefix / --project-path @datadog/browser-logs/ --repository-url https://www.github.com/datadog/browser-sdk',
-        env: ENV_PROD,
+        command: 'mv packages/logs/bundle/datadog-logs.js packages/logs/bundle/datadog-logs-canary.js',
+      },
+      {
+        command: 'mv packages/logs/bundle/datadog-logs.js.map packages/logs/bundle/datadog-logs-canary.js.map',
+      },
+      {
+        command: `mv packages/rum/bundle/chunks/recorder-${FAKE_CHUNK_HASH}-datadog-rum.js packages/rum/bundle/chunks/recorder-${FAKE_CHUNK_HASH}-datadog-rum.js`,
+      },
+      {
+        command: `mv packages/rum/bundle/chunks/recorder-${FAKE_CHUNK_HASH}-datadog-rum.js.map packages/rum/bundle/chunks/recorder-${FAKE_CHUNK_HASH}-datadog-rum.js.map`,
+      },
+      {
+        command: 'mv packages/rum/bundle/datadog-rum.js packages/rum/bundle/datadog-rum-canary.js',
+      },
+      {
+        command: 'mv packages/rum/bundle/datadog-rum.js.map packages/rum/bundle/datadog-rum-canary.js.map',
+      },
+      {
+        command: 'mv packages/rum-slim/bundle/datadog-rum-slim.js packages/rum-slim/bundle/datadog-rum-slim-canary.js',
       },
       {
         command:
-          'datadog-ci sourcemaps upload packages/rum/bundle --service browser-rum-sdk --release-version dev --minified-path-prefix / --project-path @datadog/browser-rum/ --repository-url https://www.github.com/datadog/browser-sdk',
-        env: ENV_PROD,
-      },
-      {
-        command:
-          'datadog-ci sourcemaps upload packages/rum-slim/bundle --service browser-rum-sdk --release-version dev --minified-path-prefix / --project-path @datadog/browser-rum-slim/ --repository-url https://www.github.com/datadog/browser-sdk',
-        env: ENV_PROD,
+          'mv packages/rum-slim/bundle/datadog-rum-slim.js.map packages/rum-slim/bundle/datadog-rum-slim-canary.js.map',
       },
     ])
-  })
 
-  void it('should upload canary packages source maps', async () => {
-    await uploadSourceMaps('canary', ['root'])
-
+    // upload the source maps
     assert.deepEqual(getSourceMapCommands(), [
       {
         command:
