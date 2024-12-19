@@ -15,11 +15,8 @@ describe('trackRuntimeError', () => {
     })
     const { stop } = trackRuntimeError(errorObservable)
 
-    setTimeout(() => {
-      callback()
-    })
-
     try {
+      await invokeAndWaitForErrorHandlers(callback)
       return await errorNotification
     } finally {
       stop()
@@ -62,18 +59,8 @@ describe('instrumentOnError', () => {
     const callbackSpy = jasmine.createSpy()
     const { stop } = instrumentOnError(callbackSpy)
 
-    const callbackComplete = new Promise<void>((resolve) => {
-      setTimeout(() => {
-        try {
-          callback()
-        } finally {
-          resolve()
-        }
-      })
-    })
-
     try {
-      await callbackComplete
+      await invokeAndWaitForErrorHandlers(callback)
       expect(onErrorSpy).toHaveBeenCalled()
       return callbackSpy
     } finally {
@@ -298,18 +285,8 @@ describe('instrumentUnhandledRejection', () => {
     const callbackSpy = jasmine.createSpy()
     const { stop } = instrumentUnhandledRejection(callbackSpy)
 
-    const callbackComplete = new Promise<void>((resolve) => {
-      setTimeout(() => {
-        try {
-          callback()
-        } finally {
-          resolve()
-        }
-      })
-    })
-
     try {
-      await callbackComplete
+      await invokeAndWaitForErrorHandlers(callback)
       expect(onUnhandledRejectionSpy).toHaveBeenCalled()
       return callbackSpy
     } finally {
@@ -339,3 +316,26 @@ describe('instrumentUnhandledRejection', () => {
     expect(stack).toBeDefined()
   })
 })
+
+/**
+ * Invokes the given callback, which is expected to be a function that throws or generates
+ * an unhandled promise rejection, and returns a promise that resolves after the callback
+ * has finished running and any global error handlers that run as a result are complete.
+ */
+function invokeAndWaitForErrorHandlers(callback: () => void): Promise<void> {
+  return new Promise<void>((resolve) => {
+    setTimeout(() => {
+      try {
+        // Invoke the callback.
+        callback()
+      } finally {
+        // The callback has generated an error here, but global error handlers
+        // have not yet run. The global unhandledrejection handler will run at
+        // the end of the next microtask checkpoint; the global error handler
+        // will run in a later macrotask. So, schedule a new task to resolve
+        // the promise after both of those things have happened.
+        setTimeout(resolve)
+      }
+    })
+  })
+}
