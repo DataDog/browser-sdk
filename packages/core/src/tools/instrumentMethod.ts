@@ -118,15 +118,32 @@ function getOrInstallMethodHook<TARGET extends { [key: string]: any }, METHOD ex
   const methodHook: MethodHook<TARGET, METHOD> = {
     original,
     hook: function (this: TARGET): ReturnType<TARGET[METHOD]> {
+      const parameters = Array.from(arguments) as Parameters<TARGET[METHOD]>
+      const handlingStack = methodHook.anyRequireHandlingStack ? createHandlingStack() : undefined
+
+      const postCallCallbacks: Array<PostCallCallback<TARGET, METHOD>> = []
+      for (const observer of methodHook.observers) {
+        callMonitored(observer.onPreCall, null, [
+          {
+            target: this,
+            parameters,
+            onPostCall(callback: PostCallCallback<TARGET, METHOD>) {
+              postCallCallbacks.unshift(callback)
+            },
+            handlingStack,
+          },
+        ])
+      }
+
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-call
+      const result = original.apply(this, parameters)
+
+      for (const postCallCallback of postCallCallbacks) {
+        callMonitored(postCallCallback, null, [result])
+      }
+
       // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-      return invokeHookedMethod(
-        original,
-        this,
-        Array.from(arguments) as Parameters<TARGET[METHOD]>,
-        methodHook.anyRequireHandlingStack ? createHandlingStack() : undefined,
-        methodHook.observers,
-        0
-      )
+      return result
     } as TARGET[METHOD],
 
     anyRequireHandlingStack: false,
@@ -269,52 +286,6 @@ export function getObserversForMethod<TARGET extends { [key: string]: any }, MET
 ): Array<MethodObserver<TARGET, METHOD>> {
   const objectHooks = objectHookMap.get(target) as ObjectHooks<TARGET>
   return (objectHooks?.methods?.[method]?.observers ?? []).concat()
-}
-
-/**
- * Invokes every observer for a hooked method in the order they were installed.
- * This is a recursive function; each invocation calls one observer, with the
- * base case being the invocation of the original method. This recursive
- * structure reproduces the same call tree that you'd see if you had wrapped
- * each observer around the original method directly.
- */
-function invokeHookedMethod<TARGET extends { [key: string]: any }, METHOD extends keyof TARGET>(
-  original: TARGET[METHOD],
-  thisArg: TARGET,
-  args: Parameters<TARGET[METHOD]>,
-  handlingStack: string | undefined,
-  observers: Array<MethodObserver<TARGET, METHOD>>,
-  nextObserver: number
-): ReturnType<TARGET[METHOD]> {
-  if (nextObserver >= observers.length) {
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-call
-    return original.apply(thisArg, args)
-  }
-
-  const observer = observers[nextObserver]
-
-  let postCallCallback: PostCallCallback<TARGET, METHOD> | undefined
-
-  callMonitored(observer.onPreCall, null, [
-    {
-      target: thisArg,
-      parameters: args,
-      onPostCall: (callback) => {
-        postCallCallback = callback
-      },
-      handlingStack,
-    },
-  ])
-
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-call
-  const result = invokeHookedMethod(original, thisArg, args, handlingStack, observers, nextObserver + 1)
-
-  if (postCallCallback) {
-    callMonitored(postCallCallback, null, [result])
-  }
-
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-  return result
 }
 
 /**
