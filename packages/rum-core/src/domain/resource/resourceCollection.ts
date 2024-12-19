@@ -6,7 +6,6 @@ import {
   ResourceType,
   toServerDuration,
   relativeToClocks,
-  isNumber,
   createTaskQueue,
 } from '@datadog/browser-core'
 import type { RumConfiguration } from '../configuration'
