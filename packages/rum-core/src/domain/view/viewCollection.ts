@@ -1,5 +1,6 @@
 import type { Duration, ServerDuration, Observable } from '@datadog/browser-core'
 import { isEmptyObject, mapValues, toServerDuration } from '@datadog/browser-core'
+import { featureFlagCollection } from '../collectFeatureFlags'
 import { discardNegativeDuration } from '../discardNegativeDuration'
 import type { RecorderApi } from '../../boot/rumPublicApi'
 import type { RawRumViewEvent } from '../../rawRumEvent.types'
@@ -51,7 +52,6 @@ function processViewUpdate(
   pageStateHistory: PageStateHistory
 ): RawRumEventCollectedData<RawRumViewEvent> {
   const replayStats = recorderApi.getReplayStats(view.id)
-  const featureFlagContext = featureFlagContexts.findFeatureFlagEvaluations(view.startClocks.relative)
   const pageStates = pageStateHistory.findAll(view.startClocks.relative, view.duration)
   const viewEvent: RawRumViewEvent = {
     _dd: {
@@ -103,7 +103,6 @@ function processViewUpdate(
       },
       time_spent: toServerDuration(view.duration),
     },
-    feature_flags: featureFlagContext && !isEmptyObject(featureFlagContext) ? featureFlagContext : undefined,
     display: view.commonViewMetrics.scroll
       ? {
           scroll: {
@@ -128,6 +127,14 @@ function processViewUpdate(
       toServerDuration as (duration: Duration) => ServerDuration
     )
   }
+
+  featureFlagCollection(
+    'view',
+    view.startClocks.relative,
+    configuration.collectFeatureFlagsOn,
+    featureFlagContexts,
+    viewEvent
+  )
 
   return {
     rawRumEvent: viewEvent,

@@ -1,6 +1,5 @@
 import type { Context, RawError, ClocksState } from '@datadog/browser-core'
 import {
-  isEmptyObject,
   assign,
   ErrorSource,
   generateUUID,
@@ -12,7 +11,8 @@ import {
   NonErrorPrefix,
   isError,
 } from '@datadog/browser-core'
-import type { RumConfiguration } from '../configuration'
+import { featureFlagCollection } from '../collectFeatureFlags'
+import type { FeatureFlagEvent, RumConfiguration } from '../configuration'
 import type { RawRumErrorEvent } from '../../rawRumEvent.types'
 import { RumEventType } from '../../rawRumEvent.types'
 import type { LifeCycle, RawRumEventCollectedData } from '../lifeCycle'
@@ -46,13 +46,14 @@ export function startErrorCollection(
 
   errorObservable.subscribe((error) => lifeCycle.notify(LifeCycleEventType.RAW_ERROR_COLLECTED, { error }))
 
-  return doStartErrorCollection(lifeCycle, pageStateHistory, featureFlagContexts)
+  return doStartErrorCollection(lifeCycle, pageStateHistory, featureFlagContexts, configuration)
 }
 
 export function doStartErrorCollection(
   lifeCycle: LifeCycle,
   pageStateHistory: PageStateHistory,
-  featureFlagContexts: FeatureFlagContexts
+  featureFlagContexts: FeatureFlagContexts,
+  configuration: RumConfiguration
 ) {
   lifeCycle.subscribe(LifeCycleEventType.RAW_ERROR_COLLECTED, ({ error, customerContext, savedCommonContext }) => {
     lifeCycle.notify(
@@ -62,7 +63,7 @@ export function doStartErrorCollection(
           customerContext,
           savedCommonContext,
         },
-        processError(error, pageStateHistory, featureFlagContexts)
+        processError(error, pageStateHistory, featureFlagContexts, configuration.collectFeatureFlagsOn)
       )
     )
   })
@@ -95,7 +96,8 @@ export function doStartErrorCollection(
 function processError(
   error: RawError,
   pageStateHistory: PageStateHistory,
-  featureFlagContexts: FeatureFlagContexts
+  featureFlagContexts: FeatureFlagContexts,
+  collectFeatureFlagsOn: FeatureFlagEvent[]
 ): RawRumEventCollectedData<RawRumErrorEvent> {
   const rawRumEvent: RawRumErrorEvent = {
     date: error.startClocks.timeStamp,
@@ -116,10 +118,7 @@ function processError(
     view: { in_foreground: pageStateHistory.wasInPageStateAt(PageState.ACTIVE, error.startClocks.relative) },
   }
 
-  const featureFlagContext = featureFlagContexts.findFeatureFlagEvaluations(error.startClocks.relative)
-  if (featureFlagContext && !isEmptyObject(featureFlagContext)) {
-    rawRumEvent.feature_flags = featureFlagContext
-  }
+  featureFlagCollection('error', error.startClocks.relative, collectFeatureFlagsOn, featureFlagContexts, rawRumEvent)
 
   const domainContext: RumErrorEventDomainContext = {
     error: error.originalError,

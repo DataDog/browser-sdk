@@ -461,8 +461,33 @@ describe('validateAndBuildRumConfiguration', () => {
       expect(configuration!.plugins).toEqual([plugin])
     })
   })
-})
+  describe('collectFeatureFlagsOn', () => {
+    it('defaults to an empty set', () => {
+      const configuration = validateAndBuildRumConfiguration(DEFAULT_INIT_CONFIGURATION)!
+      expect(configuration.collectFeatureFlagsOn).toEqual([])
+    })
 
+    it('accepts valid event types', () => {
+      const configuration = validateAndBuildRumConfiguration({
+        ...DEFAULT_INIT_CONFIGURATION,
+        collectFeatureFlagsOn: ['view', 'error', 'vital'],
+      })!
+      expect(configuration.collectFeatureFlagsOn).toEqual(['view', 'error', 'vital'])
+      expect(displayWarnSpy).not.toHaveBeenCalled()
+    })
+
+    it('ignores invalid event types and displays a warning', () => {
+      const configuration = validateAndBuildRumConfiguration({
+        ...DEFAULT_INIT_CONFIGURATION,
+        collectFeatureFlagsOn: ['view', 'invalid_event' as any, 'error'],
+      })!
+      expect(configuration.collectFeatureFlagsOn).toEqual(['view', 'error'])
+      expect(displayWarnSpy).toHaveBeenCalledOnceWith(
+        "Unknown event type 'invalid_event' in collectFeatureFlagsOn configuration."
+      )
+    })
+  })
+})
 describe('serializeRumConfiguration', () => {
   it('should serialize the configuration', () => {
     const exhaustiveRumInitConfiguration: Required<RumInitConfiguration> = {
@@ -487,6 +512,7 @@ describe('serializeRumConfiguration', () => {
       trackLongTasks: true,
       remoteConfigurationId: '123',
       plugins: [{ name: 'foo', getConfigurationTelemetry: () => ({ bar: true }) }],
+      collectFeatureFlagsOn: ['error'],
     }
 
     type MapRumInitConfigurationKey<Key extends string> = Key extends keyof InitConfiguration
@@ -524,6 +550,7 @@ describe('serializeRumConfiguration', () => {
       use_worker_url: true,
       compress_intake_requests: true,
       plugins: [{ name: 'foo', bar: true }],
+      collect_feature_flags_on: ['error'],
     })
   })
 })

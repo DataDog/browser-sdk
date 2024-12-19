@@ -190,7 +190,13 @@ export function startRum(
 
   startRequestCollection(lifeCycle, configuration, session)
 
-  const vitalCollection = startVitalCollection(lifeCycle, pageStateHistory, customVitalsState)
+  const vitalCollection = startVitalCollection(
+    lifeCycle,
+    pageStateHistory,
+    customVitalsState,
+    featureFlagContexts,
+    configuration.collectFeatureFlagsOn
+  )
   const internalContext = startInternalContext(
     configuration.applicationId,
     session,
