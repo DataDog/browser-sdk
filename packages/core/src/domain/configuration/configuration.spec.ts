@@ -99,39 +99,57 @@ describe('validateAndBuildConfiguration', () => {
   })
 
   describe('sessionStoreStrategyType', () => {
-    it('allowFallbackToLocalStorage should not be enabled by default', () => {
+    it('should return undefined by default when no sessionStorage is defined and no cookies are available', () => {
       spyOnProperty(document, 'cookie', 'get').and.returnValue('')
       const configuration = validateAndBuildConfiguration({ clientToken })
       expect(configuration?.sessionStoreStrategyType).toBeUndefined()
     })
 
-    it('should contain cookie in the configuration by default', () => {
-      const configuration = validateAndBuildConfiguration({ clientToken, allowFallbackToLocalStorage: false })
+    it('should use Cookie strategy by default when no sessionStorage is defined and cookies are available', () => {
+      const configuration = validateAndBuildConfiguration({ clientToken })
       expect(configuration?.sessionStoreStrategyType).toEqual({
         type: 'Cookie',
         cookieOptions: { secure: false, crossSite: false, partitioned: false },
       })
     })
 
-    it('should contain cookie in the configuration when fallback is enabled and cookies are available', () => {
-      const configuration = validateAndBuildConfiguration({ clientToken, allowFallbackToLocalStorage: true })
+    it('should use Cookie strategy when sessionStorage is "cookie-fallback-to-local-storage" and cookies are available', () => {
+      const configuration = validateAndBuildConfiguration({
+        clientToken,
+        sessionStorage: 'cookie-fallback-to-local-storage',
+      })
       expect(configuration?.sessionStoreStrategyType).toEqual({
         type: 'Cookie',
         cookieOptions: { secure: false, crossSite: false, partitioned: false },
       })
     })
 
-    it('should contain local storage in the configuration when fallback is enabled and cookies are not available', () => {
+    it('should use LocalStorage strategy when sessionStorage is "cookie-fallback-to-local-storage" and cookies are not available', () => {
       spyOnProperty(document, 'cookie', 'get').and.returnValue('')
-      const configuration = validateAndBuildConfiguration({ clientToken, allowFallbackToLocalStorage: true })
+      const configuration = validateAndBuildConfiguration({
+        clientToken,
+        sessionStorage: 'cookie-fallback-to-local-storage',
+      })
       expect(configuration?.sessionStoreStrategyType).toEqual({ type: 'LocalStorage' })
     })
 
-    it('should not contain any storage if both cookies and local storage are unavailable', () => {
+    it('should return undefined when sessionStorage is "cookie-fallback-to-local-storage" and no cookies nor localStorage are available', () => {
       spyOnProperty(document, 'cookie', 'get').and.returnValue('')
       spyOn(Storage.prototype, 'getItem').and.throwError('unavailable')
-      const configuration = validateAndBuildConfiguration({ clientToken, allowFallbackToLocalStorage: true })
+      const configuration = validateAndBuildConfiguration({
+        clientToken,
+        sessionStorage: 'cookie-fallback-to-local-storage',
+      })
       expect(configuration?.sessionStoreStrategyType).toBeUndefined()
+    })
+
+    it('should use local storage strategy when sessionStorage is "local-storage"', () => {
+      spyOnProperty(document, 'cookie', 'get').and.returnValue('')
+      const configuration = validateAndBuildConfiguration({
+        clientToken,
+        sessionStorage: 'local-storage',
+      })
+      expect(configuration?.sessionStoreStrategyType).toEqual({ type: 'LocalStorage' })
     })
   })
 
