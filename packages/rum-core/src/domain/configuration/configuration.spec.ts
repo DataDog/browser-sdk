@@ -63,8 +63,8 @@ describe('validateAndBuildRumConfiguration', () => {
   })
 
   describe('traceSampleRate', () => {
-    it('defaults to undefined if the option is not provided', () => {
-      expect(validateAndBuildRumConfiguration(DEFAULT_INIT_CONFIGURATION)!.traceSampleRate).toBeUndefined()
+    it('defaults to 100 if the option is not provided', () => {
+      expect(validateAndBuildRumConfiguration(DEFAULT_INIT_CONFIGURATION)!.traceSampleRate).toBe(100)
     })
 
     it('is set to provided value', () => {
@@ -82,6 +82,18 @@ describe('validateAndBuildRumConfiguration', () => {
       displayErrorSpy.calls.reset()
       expect(validateAndBuildRumConfiguration({ ...DEFAULT_INIT_CONFIGURATION, traceSampleRate: 200 })).toBeUndefined()
       expect(displayErrorSpy).toHaveBeenCalledOnceWith('Trace Sample Rate should be a number between 0 and 100')
+    })
+  })
+
+  describe('rulePsr', () => {
+    it('is set to one hundredth of the traceSampleRate if defined', () => {
+      expect(validateAndBuildRumConfiguration({ ...DEFAULT_INIT_CONFIGURATION, traceSampleRate: 50 })!.rulePsr).toBe(
+        0.5
+      )
+    })
+
+    it('is undefined is no traceSampleRate is defined', () => {
+      expect(validateAndBuildRumConfiguration(DEFAULT_INIT_CONFIGURATION)!.rulePsr).toBeUndefined()
     })
   })
 

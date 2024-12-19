@@ -1,7 +1,6 @@
 import {
   objectEntries,
   shallowClone,
-  isNumber,
   assign,
   find,
   getType,
@@ -122,10 +121,11 @@ function injectHeadersIfTracingAllowed(
     return
   }
   const traceId = createTraceIdentifier()
-  context.traceSampled =
-    !isNumber(configuration.traceSampleRate) || isTraceSampled(traceId, configuration.traceSampleRate)
+  context.traceSampled = isTraceSampled(traceId, configuration.traceSampleRate)
 
-  if (!context.traceSampled && configuration.traceContextInjection !== TraceContextInjection.ALL) {
+  const shouldInjectHeaders = context.traceSampled || configuration.traceContextInjection === TraceContextInjection.ALL
+
+  if (!shouldInjectHeaders) {
     return
   }
 
