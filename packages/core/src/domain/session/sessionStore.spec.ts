@@ -57,28 +57,37 @@ function resetSessionInStore() {
 
 describe('session store', () => {
   describe('getSessionStoreStrategyType', () => {
-    it('should return a type cookie when cookies are available', () => {
+    it('should return a type cookie when sessionStorage is "cookie" and cookies are available', () => {
       const sessionStoreStrategyType = selectSessionStoreStrategyType({
         clientToken: 'abc',
-        allowFallbackToLocalStorage: true,
+        sessionStorage: 'cookie',
       })
       expect(sessionStoreStrategyType).toEqual(jasmine.objectContaining({ type: 'Cookie' }))
     })
 
-    it('should report undefined when cookies are not available, and fallback is not allowed', () => {
+    it('should report undefined when sessionStorage is "cookie" and cookies are not available', () => {
       spyOnProperty(document, 'cookie', 'get').and.returnValue('')
       const sessionStoreStrategyType = selectSessionStoreStrategyType({
         clientToken: 'abc',
-        allowFallbackToLocalStorage: false,
+        sessionStorage: 'cookie',
       })
       expect(sessionStoreStrategyType).toBeUndefined()
     })
 
-    it('should fallback to localStorage when cookies are not available', () => {
+    it('should fallback to localStorage when sessionStorage is "cookie-fallback-to-local-storage" and cookies are not available', () => {
       spyOnProperty(document, 'cookie', 'get').and.returnValue('')
       const sessionStoreStrategyType = selectSessionStoreStrategyType({
         clientToken: 'abc',
-        allowFallbackToLocalStorage: true,
+        sessionStorage: 'cookie-fallback-to-local-storage',
+      })
+      expect(sessionStoreStrategyType).toEqual({ type: 'LocalStorage' })
+    })
+
+    it('should return a type LocalStorage when sessionStorage is "local-storage" and localStorage is available', () => {
+      spyOnProperty(document, 'cookie', 'get').and.returnValue('')
+      const sessionStoreStrategyType = selectSessionStoreStrategyType({
+        clientToken: 'abc',
+        sessionStorage: 'local-storage',
       })
       expect(sessionStoreStrategyType).toEqual({ type: 'LocalStorage' })
     })
@@ -88,7 +97,7 @@ describe('session store', () => {
       spyOn(Storage.prototype, 'getItem').and.throwError('unavailable')
       const sessionStoreStrategyType = selectSessionStoreStrategyType({
         clientToken: 'abc',
-        allowFallbackToLocalStorage: true,
+        sessionStorage: 'cookie-fallback-to-local-storage',
       })
       expect(sessionStoreStrategyType).toBeUndefined()
     })
@@ -111,7 +120,7 @@ describe('session store', () => {
     ) {
       const sessionStoreStrategyType = selectSessionStoreStrategyType({
         clientToken: 'abc',
-        allowFallbackToLocalStorage: false,
+        sessionStorage: 'cookie',
       })
       if (sessionStoreStrategyType?.type !== 'Cookie') {
         fail('Unable to initialize cookie storage')
@@ -488,7 +497,7 @@ describe('session store', () => {
       })
       const sessionStoreStrategyType = selectSessionStoreStrategyType({
         clientToken: 'abc',
-        allowFallbackToLocalStorage: false,
+        sessionStorage: 'cookie',
       })
 
       const sessionStoreManager = startSessionStore(sessionStoreStrategyType!, PRODUCT_KEY, computeSessionState)

@@ -25,6 +25,8 @@ export const TraceContextInjection = {
   SAMPLED: 'sampled',
 } as const
 
+type SessionStorageOption = 'cookie' | 'local-storage' | 'cookie-fallback-to-local-storage'
+
 export type TraceContextInjection = (typeof TraceContextInjection)[keyof typeof TraceContextInjection]
 
 export interface InitConfiguration {
@@ -49,12 +51,6 @@ export interface InitConfiguration {
    */
   silentMultipleInit?: boolean | undefined
   /**
-   * Allows the use of localStorage when cookies cannot be set. This enables the RUM Browser SDK to run in environments that do not provide cookie support.
-   * See [Monitor Electron Applications Using the Browser SDK](https://docs.datadoghq.com/real_user_monitoring/guide/monitor-electron-applications-using-browser-sdk) for further information.
-   * @default false
-   */
-  allowFallbackToLocalStorage?: boolean | undefined
-  /**
    * Allow listening to DOM events dispatched programmatically ([untrusted events](https://developer.mozilla.org/en-US/docs/Web/API/Event/isTrusted)). Enabling this option can be useful if you heavily rely on programmatic events, such as in an automated UI test environment.
    * @default false
    */
@@ -71,6 +67,12 @@ export interface InitConfiguration {
    * @default granted
    */
   trackingConsent?: TrackingConsent | undefined
+
+  /**
+   * Configure the storage strategy for sessions.
+   * Possible values: 'local-storage', 'cookie', or 'cookie-fallback-to-local-storage'.
+   */
+  sessionStorage?: SessionStorageOption | undefined
 
   // transport options
   /**
@@ -294,7 +296,7 @@ export function serializeConfiguration(initConfiguration: InitConfiguration) {
     use_proxy: !!initConfiguration.proxy,
     silent_multiple_init: initConfiguration.silentMultipleInit,
     track_session_across_subdomains: initConfiguration.trackSessionAcrossSubdomains,
-    allow_fallback_to_local_storage: !!initConfiguration.allowFallbackToLocalStorage,
+    session_storage: initConfiguration.sessionStorage,
     store_contexts_across_pages: !!initConfiguration.storeContextsAcrossPages,
     allow_untrusted_events: !!initConfiguration.allowUntrustedEvents,
     tracking_consent: initConfiguration.trackingConsent,
