@@ -1,8 +1,9 @@
 import type { DefaultPrivacyLevel } from '@datadog/browser-core'
-import { display, addEventListener, assign } from '@datadog/browser-core'
+import { display, addEventListener, getSiteShortName, assign } from '@datadog/browser-core'
 import type { RumInitConfiguration } from './configuration'
 
-export const REMOTE_CONFIGURATION_URL = 'https://d3uc069fcn7uxw.cloudfront.net/configuration'
+export const REMOTE_CONFIGURATION_ORIGIN = 'http://dt887evijcmkm.cloudfront.net'
+const REMOTE_CONFIGURATION_VERSION = 'v1'
 
 export interface RumRemoteConfiguration {
   sessionSampleRate?: number
@@ -44,8 +45,12 @@ export function fetchRemoteConfiguration(
     displayRemoteConfigurationFetchingError()
   })
 
-  xhr.open('GET', `${REMOTE_CONFIGURATION_URL}/${encodeURIComponent(configuration.remoteConfigurationId!)}.json`)
+  xhr.open('GET', buildRemoteConfigurationUrl(configuration))
   xhr.send()
+}
+
+function buildRemoteConfigurationUrl(configuration: RumInitConfiguration) {
+  return `${REMOTE_CONFIGURATION_ORIGIN}/${getSiteShortName(configuration.site)}/${REMOTE_CONFIGURATION_VERSION}/${encodeURIComponent(configuration.remoteConfigurationId!)}.json`
 }
 
 function displayRemoteConfigurationFetchingError() {
