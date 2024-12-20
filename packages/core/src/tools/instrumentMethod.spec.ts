@@ -325,12 +325,54 @@ describe('instrumentSetter', () => {
     const instrumentationSetterSpy = jasmine.createSpy()
     instrumentSetter(object, 'foo', instrumentationSetterSpy)
 
-    const thirdPartyInstrumentationSpy = thirdPartyInstrumentation(object)
+    const { spy: thirdPartyInstrumentationSpy } = thirdPartyInstrumentation(object)
 
     object.foo = 2
     expect(thirdPartyInstrumentationSpy).toHaveBeenCalledOnceWith(2)
     await Promise.resolve()
     expect(instrumentationSetterSpy).toHaveBeenCalledOnceWith(object, 2)
+  })
+
+  it('wraps each property only once even if we instrument it multiple times', () => {
+    const object = {} as { foo: number }
+    Object.defineProperty(object, 'foo', { set: noop, configurable: true })
+
+    for (let i = 0; i < 10_000; i++) {
+      const { stop: stopOurs } = instrumentSetter(object, 'foo', noop)
+      const { stop: stopTheirs } = instrumentSetter(object, 'foo', noop)
+      stopOurs()
+      stopTheirs()
+    }
+
+    // If we rewrap the property every time, this will throw `RangeError: Maximum
+    // call stack size exceeded.`
+    expect(
+      (() => {
+        object.foo = 1
+        return true
+      })()
+    ).toBe(true)
+  })
+
+  it('wraps each property only once even if a third party instruments it multiple times', () => {
+    const object = {} as { foo: number }
+    Object.defineProperty(object, 'foo', { set: noop, configurable: true })
+
+    for (let i = 0; i < 10_000; i++) {
+      const { stop: stopOurs } = instrumentSetter(object, 'foo', noop)
+      const { stop: stopTheirs } = thirdPartyInstrumentation(object)
+      stopOurs()
+      stopTheirs()
+    }
+
+    // If we rewrap the property every time, this will throw `RangeError: Maximum
+    // call stack size exceeded.`
+    expect(
+      (() => {
+        object.foo = 1
+        return true
+      })()
+    ).toBe(true)
   })
 
   describe('stop()', () => {
@@ -375,13 +417,13 @@ describe('instrumentSetter', () => {
       expect(instrumentationSetterSpy).not.toHaveBeenCalled()
     })
 
-    describe('when the method has been instrumented by a third party', () => {
+    describe('when the property has been instrumented by a third party', () => {
       it('should not break the third party instrumentation', () => {
         const object = {} as { foo: number }
         Object.defineProperty(object, 'foo', { set: noop, configurable: true })
         const { stop } = instrumentSetter(object, 'foo', noop)
 
-        const thirdPartyInstrumentationSpy = thirdPartyInstrumentation(object)
+        const { spy: thirdPartyInstrumentationSpy } = thirdPartyInstrumentation(object)
 
         stop()
 
@@ -407,15 +449,26 @@ describe('instrumentSetter', () => {
     })
   })
 
-  function thirdPartyInstrumentation(object: { foo: number }) {
+  function thirdPartyInstrumentation(object: { foo: number }): {
+    spy: jasmine.Spy
+    stop: () => void
+  } {
+    const originalDescriptor = Object.getOwnPropertyDescriptor(object, 'foo')
     // eslint-disable-next-line @typescript-eslint/unbound-method
-    const originalSetter = Object.getOwnPropertyDescriptor(object, 'foo')!.set
     const thirdPartyInstrumentationSpy = jasmine.createSpy().and.callFake(function (this: any, value) {
-      if (originalSetter) {
-        originalSetter.call(this, value)
-      }
+      originalDescriptor?.set?.call(this, value)
     })
     Object.defineProperty(object, 'foo', { set: thirdPartyInstrumentationSpy })
-    return thirdPartyInstrumentationSpy
+    return {
+      spy: thirdPartyInstrumentationSpy,
+      stop: () => {
+        if (
+          originalDescriptor &&
+          Object.getOwnPropertyDescriptor(object, 'foo')?.set === thirdPartyInstrumentationSpy
+        ) {
+          Object.defineProperty(object, 'foo', originalDescriptor)
+        }
+      },
+    }
   }
 })
