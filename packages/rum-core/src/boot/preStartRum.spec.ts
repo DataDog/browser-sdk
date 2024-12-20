@@ -15,9 +15,10 @@ import {
 } from '@datadog/browser-core'
 import type { Clock } from '@datadog/browser-core/test'
 import {
-  mockEventBridge,
+  callbackAddsInstrumentation,
   interceptRequests,
   mockClock,
+  mockEventBridge,
   mockExperimentalFeatures,
   mockSyntheticsWorkerValues,
 } from '@datadog/browser-core/test'
@@ -806,17 +807,19 @@ describe('preStartRum', () => {
 
     describe('basic methods instrumentation', () => {
       it('should instrument fetch even if tracking consent is not granted', () => {
-        const originalFetch = window.fetch
-
-        strategy.init(
-          {
-            ...DEFAULT_INIT_CONFIGURATION,
-            trackingConsent: TrackingConsent.NOT_GRANTED,
-          },
-          PUBLIC_API
-        )
-
-        expect(window.fetch).not.toBe(originalFetch)
+        expect(
+          callbackAddsInstrumentation(() => {
+            strategy.init(
+              {
+                ...DEFAULT_INIT_CONFIGURATION,
+                trackingConsent: TrackingConsent.NOT_GRANTED,
+              },
+              PUBLIC_API
+            )
+          })
+            .toMethod(window, 'fetch')
+            .whenCalled()
+        ).toBeTrue()
       })
     })
 

@@ -22,7 +22,6 @@ const CONFIGURATION = {
 describe('network error collection', () => {
   let fetch: MockFetch
   let mockFetchManager: MockFetchManager
-  let stopNetworkErrorCollection: () => void
   let lifeCycle: LifeCycle
   let rawLogsEvents: Array<RawLogsEventCollectedData<RawNetworkLogsEvent>>
   const FAKE_URL = 'http://fake.com/'
@@ -37,10 +36,8 @@ describe('network error collection', () => {
 
   function startCollection(forwardErrorsToLogs = true) {
     mockFetchManager = mockFetch()
-    ;({ stop: stopNetworkErrorCollection } = startNetworkErrorCollection(
-      { ...CONFIGURATION, forwardErrorsToLogs },
-      lifeCycle
-    ))
+    const { stop } = startNetworkErrorCollection({ ...CONFIGURATION, forwardErrorsToLogs }, lifeCycle)
+    registerCleanupTask(stop)
     fetch = window.fetch as MockFetch
   }
 
@@ -50,10 +47,6 @@ describe('network error collection', () => {
     lifeCycle.subscribe(LifeCycleEventType.RAW_LOG_COLLECTED, (rawLogsEvent) =>
       rawLogsEvents.push(rawLogsEvent as RawLogsEventCollectedData<RawNetworkLogsEvent>)
     )
-
-    registerCleanupTask(() => {
-      stopNetworkErrorCollection()
-    })
   })
 
   it('should track server error', (done) => {
