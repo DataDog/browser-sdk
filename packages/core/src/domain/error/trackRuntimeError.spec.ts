@@ -6,7 +6,7 @@ import type { RawError } from './error.types'
 describe('trackRuntimeError', () => {
   const ERROR_MESSAGE = 'foo'
 
-  const withTrackRuntimeError = async (callback: () => void): Promise<RawError> => {
+  const errorViaTrackRuntimeError = async (callback: () => void): Promise<RawError> => {
     disableJasmineUncaughtExceptionTracking()
 
     const errorObservable = new Observable<RawError>()
@@ -24,7 +24,7 @@ describe('trackRuntimeError', () => {
   }
 
   it('should collect unhandled error', async () => {
-    const error = await withTrackRuntimeError(() => {
+    const error = await errorViaTrackRuntimeError(() => {
       throw new Error(ERROR_MESSAGE)
     })
     expect(error.message).toEqual(ERROR_MESSAGE)
@@ -35,7 +35,7 @@ describe('trackRuntimeError', () => {
       pending('onunhandledrejection not supported')
     }
 
-    const error = await withTrackRuntimeError(() => {
+    const error = await errorViaTrackRuntimeError(() => {
       // Reject with a string instead of an Error here because Jasmine forwards the
       // unhandled rejection to the onerror handler with the wrong argument structure if
       // you use an Error. (It uses the argument structure you'd use for
@@ -54,7 +54,7 @@ describe('instrumentOnError', () => {
   const testColNo = 42
   const ERROR_MESSAGE = 'foo'
 
-  const withInstrumentOnError = async (callback: () => void): Promise<jasmine.Spy> => {
+  const spyViaInstrumentOnError = async (callback: () => void): Promise<jasmine.Spy> => {
     const onErrorSpy = spyOn(window as any, 'onerror')
     const callbackSpy = jasmine.createSpy()
     const { stop } = instrumentOnError(callbackSpy)
@@ -71,14 +71,14 @@ describe('instrumentOnError', () => {
   it('should call original error handler', async () => {
     // withInstrumentOnError() asserts that the original error handler has been called for
     // every test, so we don't need an explicit expectation here.
-    await withInstrumentOnError(() => {
+    await spyViaInstrumentOnError(() => {
       throw new Error(ERROR_MESSAGE)
     })
   })
 
   it('should notify unhandled error instance', async () => {
     const error = new Error(ERROR_MESSAGE)
-    const spy = await withInstrumentOnError(() => {
+    const spy = await spyViaInstrumentOnError(() => {
       throw error
     })
 
@@ -89,7 +89,7 @@ describe('instrumentOnError', () => {
 
   it('should notify unhandled string', async () => {
     const error = 'foo' as any
-    const spy = await withInstrumentOnError(() => {
+    const spy = await spyViaInstrumentOnError(() => {
       throw error
     })
 
@@ -100,7 +100,7 @@ describe('instrumentOnError', () => {
 
   it('should notify unhandled object', async () => {
     const error = { a: 'foo' } as any
-    const spy = await withInstrumentOnError(() => {
+    const spy = await spyViaInstrumentOnError(() => {
       throw error
     })
 
@@ -111,7 +111,7 @@ describe('instrumentOnError', () => {
 
   describe('uncaught exception handling', () => {
     it('should not go into an infinite loop', async () => {
-      const spy = await withInstrumentOnError(() => {
+      const spy = await spyViaInstrumentOnError(() => {
         throw new Error('expected error')
       })
 
@@ -122,7 +122,7 @@ describe('instrumentOnError', () => {
 
     it('should get extra arguments (isWindowError and exception)', async () => {
       const exception = new Error('expected error')
-      const spy = await withInstrumentOnError(() => {
+      const spy = await spyViaInstrumentOnError(() => {
         throw exception
       })
 
@@ -137,7 +137,7 @@ describe('instrumentOnError', () => {
   describe('should handle direct onerror calls', () => {
     it('with objects', async () => {
       const error = { foo: 'bar' } as any
-      const spy = await withInstrumentOnError(() => {
+      const spy = await spyViaInstrumentOnError(() => {
         window.onerror!(error)
       })
 
@@ -150,7 +150,7 @@ describe('instrumentOnError', () => {
       it('should pass undefined:undefined', async () => {
         // this is probably not good behavior;  just writing this test to verify
         // that it doesn't change unintentionally
-        const spy = await withInstrumentOnError(() => {
+        const spy = await spyViaInstrumentOnError(() => {
           window.onerror!(undefined!, undefined, testLineNo)
         })
 
@@ -162,7 +162,7 @@ describe('instrumentOnError', () => {
 
     describe('when no 5th argument (error object)', () => {
       it('should separate name, message for default error types (e.g. ReferenceError)', async () => {
-        const spy = await withInstrumentOnError(() => {
+        const spy = await spyViaInstrumentOnError(() => {
           window.onerror!('ReferenceError: foo is undefined', 'http://example.com', testLineNo)
         })
 
@@ -173,7 +173,7 @@ describe('instrumentOnError', () => {
 
       it('should separate name, message for default error types (e.g. Uncaught ReferenceError)', async () => {
         // should work with/without 'Uncaught'
-        const spy = await withInstrumentOnError(() => {
+        const spy = await spyViaInstrumentOnError(() => {
           window.onerror!('Uncaught ReferenceError: foo is undefined', 'http://example.com', testLineNo)
         })
 
@@ -183,7 +183,7 @@ describe('instrumentOnError', () => {
       })
 
       it('should separate name, message for default error types on Opera Mini', async () => {
-        const spy = await withInstrumentOnError(() => {
+        const spy = await spyViaInstrumentOnError(() => {
           window.onerror!(
             'Uncaught exception: ReferenceError: Undefined variable: foo',
             'http://example.com',
@@ -197,7 +197,7 @@ describe('instrumentOnError', () => {
       })
 
       it('should separate name, message for error with multiline message', async () => {
-        const spy = await withInstrumentOnError(() => {
+        const spy = await spyViaInstrumentOnError(() => {
           window.onerror!("TypeError: foo is not a function. (In 'my.function(\n foo)")
         })
 
@@ -207,7 +207,7 @@ describe('instrumentOnError', () => {
       })
 
       it('should ignore unknown error types', async () => {
-        const spy = await withInstrumentOnError(() => {
+        const spy = await spyViaInstrumentOnError(() => {
           window.onerror!('CustomError: woo scary', 'http://example.com', testLineNo)
         })
 
@@ -218,7 +218,7 @@ describe('instrumentOnError', () => {
       })
 
       it('should ignore arbitrary messages passed through onerror', async () => {
-        const spy = await withInstrumentOnError(() => {
+        const spy = await spyViaInstrumentOnError(() => {
           window.onerror!('all work and no play makes homer: something something', 'http://example.com', testLineNo)
         })
 
@@ -228,7 +228,7 @@ describe('instrumentOnError', () => {
       })
 
       it('should handle object message passed through onerror', async () => {
-        const spy = await withInstrumentOnError(() => {
+        const spy = await spyViaInstrumentOnError(() => {
           window.onerror!({ foo: 'bar' } as any)
         })
 
@@ -240,7 +240,7 @@ describe('instrumentOnError', () => {
 
     describe('when 5th argument (errorObj) is not of type Error', () => {
       it('should handle strings', async () => {
-        const spy = await withInstrumentOnError(() => {
+        const spy = await spyViaInstrumentOnError(() => {
           window.onerror!(
             'Any error message',
             'https://example.com',
@@ -257,7 +257,7 @@ describe('instrumentOnError', () => {
       })
 
       it('should handle objects', async () => {
-        const spy = await withInstrumentOnError(() => {
+        const spy = await spyViaInstrumentOnError(() => {
           window.onerror!('Any error message', 'https://example.com', testLineNo, testColNo, {
             message: 'SyntaxError',
             data: 'foo',
@@ -276,7 +276,7 @@ describe('instrumentOnError', () => {
 describe('instrumentUnhandledRejection', () => {
   const ERROR_MESSAGE = 'foo'
 
-  const withInstrumentOnUnhandledRejection = async (callback: () => void) => {
+  const spyViaInstrumentOnUnhandledRejection = async (callback: () => void) => {
     if (!('onunhandledrejection' in window)) {
       pending('onunhandledrejection not supported')
     }
@@ -298,7 +298,7 @@ describe('instrumentUnhandledRejection', () => {
     // withInstrumentOnUnhandledRejection() asserts that the original unhandled
     // rejection handler has been called for every test, so we don't need an
     // explicit expectation here.
-    await withInstrumentOnUnhandledRejection(() => {
+    await spyViaInstrumentOnUnhandledRejection(() => {
       window.onunhandledrejection!({
         reason: new Error(ERROR_MESSAGE),
       } as PromiseRejectionEvent)
@@ -307,7 +307,7 @@ describe('instrumentUnhandledRejection', () => {
 
   it('should notify unhandled rejection', async () => {
     const reason = new Error(ERROR_MESSAGE)
-    const spy = await withInstrumentOnUnhandledRejection(() => {
+    const spy = await spyViaInstrumentOnUnhandledRejection(() => {
       window.onunhandledrejection!({ reason } as PromiseRejectionEvent)
     })
 
