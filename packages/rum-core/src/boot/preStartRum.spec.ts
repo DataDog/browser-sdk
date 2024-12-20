@@ -22,7 +22,12 @@ import {
   mockExperimentalFeatures,
   mockSyntheticsWorkerValues,
 } from '@datadog/browser-core/test'
-import type { HybridInitConfiguration, RumConfiguration, RumInitConfiguration } from '../domain/configuration'
+import type {
+  HybridInitConfiguration,
+  RemoteConfigurationEvent,
+  RumConfiguration,
+  RumInitConfiguration,
+} from '../domain/configuration'
 import type { CommonContext } from '../domain/contexts/commonContext'
 import type { ViewOptions } from '../domain/view/trackViews'
 import { ActionType, VitalType } from '../rawRumEvent.types'
@@ -34,6 +39,12 @@ import type { StartRumResult } from './startRum'
 import { createPreStartStrategy } from './preStartRum'
 
 const DEFAULT_INIT_CONFIGURATION = { applicationId: 'xxx', clientToken: 'xxx' }
+const FAKE_REMOTE_CONFIGURATION_EVENT: RemoteConfigurationEvent = {
+  rum: {
+    application_id: 'remote_application_id',
+    session_sample_rate: 50,
+  },
+}
 const INVALID_INIT_CONFIGURATION = { clientToken: 'yes' } as RumInitConfiguration
 const AUTO_CONFIGURATION = { ...DEFAULT_INIT_CONFIGURATION }
 const MANUAL_CONFIGURATION = { ...AUTO_CONFIGURATION, trackViewsManually: true }
@@ -463,7 +474,7 @@ describe('preStartRum', () => {
           mockExperimentalFeatures([ExperimentalFeature.REMOTE_CONFIGURATION])
 
           interceptor.withMockXhr((xhr) => {
-            xhr.complete(200, '{"sessionSampleRate":50}')
+            xhr.complete(200, JSON.stringify(FAKE_REMOTE_CONFIGURATION_EVENT))
 
             expect(doStartRumSpy.calls.mostRecent().args[0].sessionSampleRate).toEqual(50)
             done()
@@ -636,7 +647,7 @@ describe('preStartRum', () => {
     it('returns the initConfiguration with the remote configuration when a remoteConfigurationId is provided', (done) => {
       addExperimentalFeatures([ExperimentalFeature.REMOTE_CONFIGURATION])
       interceptor.withMockXhr((xhr) => {
-        xhr.complete(200, '{"sessionSampleRate":50}')
+        xhr.complete(200, JSON.stringify(FAKE_REMOTE_CONFIGURATION_EVENT))
 
         expect(strategy.initConfiguration?.sessionSampleRate).toEqual(50)
         done()
