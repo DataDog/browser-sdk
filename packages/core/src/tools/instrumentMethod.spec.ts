@@ -128,36 +128,89 @@ describe('instrumentMethod', () => {
     )
   })
 
-  it('wraps each method only once even if we instrument it multiple times', () => {
-    const object = { method: () => 1 }
-    expect(object.method()).toBe(1)
+  describe('instrumenting a method multiple times', () => {
+    const testMultipleInstrumentations = ({ stopOrder }: { stopOrder: 'normal' | 'reverse' }) => {
+      const object = { method: () => 1 }
 
-    for (let i = 0; i < 10_000; i++) {
-      const { stop: stopOurs } = instrumentMethod(object, 'method', noop)
-      const { stop: stopTheirs } = instrumentMethod(object, 'method', noop)
-      stopOurs()
-      stopTheirs()
+      const calls: number[] = []
+      const observers: Array<{ id: number; isStopped: boolean; stop: () => void }> = []
+      for (let id = 0; id < 3; id++) {
+        const { stop } = instrumentMethod(object, 'method', () => {
+          calls.push(id)
+        })
+        const observer = {
+          id,
+          isStopped: false,
+          stop() {
+            observer.isStopped = true
+            stop()
+          },
+        }
+        observers.unshift(observer)
+      }
+
+      do {
+        calls.length = 0
+        object.method()
+
+        expect(calls).toEqual(observers.filter(({ isStopped }) => !isStopped).map(({ id }) => id))
+
+        const removedSpy = stopOrder === 'normal' ? observers.shift() : observers.pop()
+        if (removedSpy) {
+          removedSpy.stop()
+        }
+      } while (observers.length > 0)
     }
 
-    // If we rewrap the method every time, this will throw `RangeError: Maximum
-    // call stack size exceeded.`
-    expect(object.method()).toBe(1)
-  })
+    it('calls instrumentations in the expected order', () => {
+      testMultipleInstrumentations({ stopOrder: 'normal' })
+    })
 
-  it('wraps each method only once even if a third party instruments it multiple times', () => {
-    const object = { method: () => 1 }
-    expect(object.method()).toBe(1)
+    it('calls instrumentations in the expected order even if stopped out of order', () => {
+      testMultipleInstrumentations({ stopOrder: 'reverse' })
+    })
 
-    for (let i = 0; i < 10_000; i++) {
-      const { stop: stopOurs } = instrumentMethod(object, 'method', noop)
-      const { stop: stopTheirs } = thirdPartyInstrumentation(object)
-      stopOurs()
-      stopTheirs()
-    }
+    it('wraps only once', () => {
+      const object = { method: () => 1 }
+      expect(object.method()).toBe(1)
 
-    // If we rewrap the method every time, this will throw `RangeError: Maximum
-    // call stack size exceeded.`
-    expect(object.method()).toBe(1)
+      for (let i = 0; i < 10_000; i++) {
+        const { stop: stopInner } = instrumentMethod(object, 'method', noop)
+        const { stop: stopOuter } = instrumentMethod(object, 'method', noop)
+
+        // Stop the inner instrumentation before the outer one. In older versions of
+        // instrumentMethod(), each call to instrumentMethod() would rewrap the method,
+        // and stop() could only remove a wrapper if it was the outermost one, so this
+        // pattern would cause wrappers to accumulate.
+        stopInner()
+        stopOuter()
+      }
+
+      // If we rewrap the method every time, this will throw `RangeError: Maximum
+      // call stack size exceeded.`
+      expect(object.method()).toBe(1)
+    })
+
+    it('wraps only once even if a third party instruments it multiple times', () => {
+      const object = { method: () => 1 }
+      expect(object.method()).toBe(1)
+
+      for (let i = 0; i < 10_000; i++) {
+        const { stop: stopInner } = instrumentMethod(object, 'method', noop)
+        const { stop: stopOuter } = thirdPartyInstrumentation(object)
+
+        // Stop the inner instrumentation before the outer one. As in the previous test,
+        // in older versions of instrumentMethod(), this ordering would cause wrappers to
+        // accumulate. The difference here is that one of the wrappers comes from a third
+        // party, instead of from our own code.
+        stopInner()
+        stopOuter()
+      }
+
+      // If we rewrap the method every time, this will throw `RangeError: Maximum
+      // call stack size exceeded.`
+      expect(object.method()).toBe(1)
+    })
   })
 
   describe('stop()', () => {
@@ -333,46 +386,100 @@ describe('instrumentSetter', () => {
     expect(instrumentationSetterSpy).toHaveBeenCalledOnceWith(object, 2)
   })
 
-  it('wraps each property only once even if we instrument it multiple times', () => {
-    const object = {} as { foo: number }
-    Object.defineProperty(object, 'foo', { set: noop, configurable: true })
+  describe('instrumenting a property multiple times', () => {
+    const testMultipleInstrumentations = async ({ stopOrder }: { stopOrder: 'normal' | 'reverse' }) => {
+      const object = {} as { foo: number }
+      Object.defineProperty(object, 'foo', { set: noop, configurable: true })
 
-    for (let i = 0; i < 10_000; i++) {
-      const { stop: stopOurs } = instrumentSetter(object, 'foo', noop)
-      const { stop: stopTheirs } = instrumentSetter(object, 'foo', noop)
-      stopOurs()
-      stopTheirs()
+      const calls: number[] = []
+      const observers: Array<{ id: number; isStopped: boolean; stop: () => void }> = []
+      for (let id = 0; id < 3; id++) {
+        const { stop } = instrumentSetter(object, 'foo', () => {
+          calls.push(id)
+        })
+        const observer = {
+          id,
+          isStopped: false,
+          stop() {
+            observer.isStopped = true
+            stop()
+          },
+        }
+        observers.unshift(observer)
+      }
+
+      do {
+        calls.length = 0
+        object.foo = 1
+        await Promise.resolve()
+
+        expect(calls).toEqual(observers.filter(({ isStopped }) => !isStopped).map(({ id }) => id))
+
+        const removedSpy = stopOrder === 'normal' ? observers.shift() : observers.pop()
+        if (removedSpy) {
+          removedSpy.stop()
+        }
+      } while (observers.length > 0)
     }
 
-    // If we rewrap the property every time, this will throw `RangeError: Maximum
-    // call stack size exceeded.`
-    expect(
-      (() => {
-        object.foo = 1
-        return true
-      })()
-    ).toBe(true)
-  })
+    it('calls instrumentations in the expected order', (): Promise<void> =>
+      testMultipleInstrumentations({ stopOrder: 'normal' }))
 
-  it('wraps each property only once even if a third party instruments it multiple times', () => {
-    const object = {} as { foo: number }
-    Object.defineProperty(object, 'foo', { set: noop, configurable: true })
+    it('calls instrumentations in the expected order even if stopped out of order', (): Promise<void> =>
+      testMultipleInstrumentations({ stopOrder: 'reverse' }))
 
-    for (let i = 0; i < 10_000; i++) {
-      const { stop: stopOurs } = instrumentSetter(object, 'foo', noop)
-      const { stop: stopTheirs } = thirdPartyInstrumentation(object)
-      stopOurs()
-      stopTheirs()
-    }
+    it('wraps only once', () => {
+      const object = {} as { foo: number }
+      Object.defineProperty(object, 'foo', { set: noop, configurable: true })
 
-    // If we rewrap the property every time, this will throw `RangeError: Maximum
-    // call stack size exceeded.`
-    expect(
-      (() => {
-        object.foo = 1
-        return true
-      })()
-    ).toBe(true)
+      for (let i = 0; i < 10_000; i++) {
+        const { stop: stopInner } = instrumentSetter(object, 'foo', noop)
+        const { stop: stopOuter } = instrumentSetter(object, 'foo', noop)
+
+        // Stop the inner instrumentation before the outer one. In older
+        // versions of instrumentSetter(), each call to instrumentSetter() would
+        // rewrap the property, and stop() could only remove a wrapper if it was
+        // the outermost one, so this pattern would cause wrappers to
+        // accumulate.
+        stopInner()
+        stopOuter()
+      }
+
+      // If we rewrap the property every time, this will throw `RangeError:
+      // Maximum call stack size exceeded.`
+      expect(
+        (() => {
+          object.foo = 1
+          return true
+        })()
+      ).toBe(true)
+    })
+
+    it('wraps only once even if a third party instruments it multiple times', () => {
+      const object = {} as { foo: number }
+      Object.defineProperty(object, 'foo', { set: noop, configurable: true })
+
+      for (let i = 0; i < 10_000; i++) {
+        const { stop: stopInner } = instrumentSetter(object, 'foo', noop)
+        const { stop: stopOuter } = thirdPartyInstrumentation(object)
+
+        // Stop the inner instrumentation before the outer one. As in the previous test,
+        // in older versions of instrumentSetter(), this ordering would cause wrappers to
+        // accumulate. The difference here is that one of the wrappers comes from a third
+        // party, instead of from our own code.
+        stopInner()
+        stopOuter()
+      }
+
+      // If we rewrap the property every time, this will throw `RangeError:
+      // Maximum call stack size exceeded.`
+      expect(
+        (() => {
+          object.foo = 1
+          return true
+        })()
+      ).toBe(true)
+    })
   })
 
   describe('stop()', () => {
