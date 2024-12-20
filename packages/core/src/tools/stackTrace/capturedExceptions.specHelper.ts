@@ -37,6 +37,15 @@ export const CHROME_XX_WEBPACK = {
    at TESTTESTTEST.proxiedMethod(webpack:///./~/react-proxy/modules/createPrototypeProxy.js?:44:30)`,
 }
 
+export const ELECTRON = {
+  message: 'Default error',
+  name: 'Error',
+  stack: `Error: Default error
+    at dumpExceptionError (electron://-/file.js:41:27)
+    at HTMLButtonElement.onclick (electron://-/file.js:107:146)
+    at I.e.fn.(anonymous function) [as index] (electron://-/file.js:10:3651)`,
+}
+
 export const FIREFOX_3 = {
   fileName: 'http://127.0.0.1:8000/js/stacktrace.js',
   lineNumber: 44,
