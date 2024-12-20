@@ -48,26 +48,16 @@ type PropertyObserver<TARGET extends { [key: string]: any }, PROPERTY extends ke
 
 /** A hook that intercepts calls to a method and invokes any installed observers. */
 type MethodHook<TARGET extends { [key: string]: any }, METHOD extends keyof TARGET> = {
-  original: TARGET[METHOD]
-  hook: TARGET[METHOD]
-
-  anyRequireHandlingStack: boolean
-  observers: Array<MethodObserver<TARGET, METHOD>>
-
   addObserver: (
     onPreCall: (this: null, callInfos: InstrumentedMethodCall<TARGET, METHOD>) => void,
     computeHandlingStack: boolean
   ) => MethodObserver<TARGET, METHOD>
   removeObserver: (observer: MethodObserver<TARGET, METHOD>) => void
+  getObservers: () => Array<MethodObserver<TARGET, METHOD>>
 }
 
 /** A hook that intercepts mutations to a property and invokes any installed observers. */
 type PropertyHook<TARGET extends { [key: string]: any }, PROPERTY extends keyof TARGET> = {
-  original: PropertyDescriptor
-  hook: PropertyDescriptor
-
-  observers: Array<PropertyObserver<TARGET, PROPERTY>>
-
   addObserver: (after: (target: TARGET, value: TARGET[PROPERTY]) => void) => PropertyObserver<TARGET, PROPERTY>
   removeObserver: (observer: PropertyObserver<TARGET, PROPERTY>) => void
 }
@@ -115,40 +105,39 @@ function getOrInstallMethodHook<TARGET extends { [key: string]: any }, METHOD ex
     }
   }
 
-  const methodHook: MethodHook<TARGET, METHOD> = {
-    original,
-    hook: function (this: TARGET): ReturnType<TARGET[METHOD]> {
-      const parameters = Array.from(arguments) as Parameters<TARGET[METHOD]>
-      const handlingStack = methodHook.anyRequireHandlingStack ? createHandlingStack() : undefined
+  const observers: Array<MethodObserver<TARGET, METHOD>> = []
+  let anyRequireHandlingStack = false
 
-      const postCallCallbacks: Array<PostCallCallback<TARGET, METHOD>> = []
-      for (const observer of methodHook.observers) {
-        callMonitored(observer.onPreCall, null, [
-          {
-            target: this,
-            parameters,
-            onPostCall(callback: PostCallCallback<TARGET, METHOD>) {
-              postCallCallbacks.unshift(callback)
-            },
-            handlingStack,
+  const hookFunction = function (this: TARGET): ReturnType<TARGET[METHOD]> {
+    const parameters = Array.from(arguments) as Parameters<TARGET[METHOD]>
+    const handlingStack = anyRequireHandlingStack ? createHandlingStack() : undefined
+
+    const postCallCallbacks: Array<PostCallCallback<TARGET, METHOD>> = []
+    for (const observer of observers) {
+      callMonitored(observer.onPreCall, null, [
+        {
+          target: this,
+          parameters,
+          onPostCall(callback: PostCallCallback<TARGET, METHOD>) {
+            postCallCallbacks.unshift(callback)
           },
-        ])
-      }
+          handlingStack,
+        },
+      ])
+    }
 
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-call
-      const result = original.apply(this, parameters)
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-call
+    const result = original.apply(this, parameters)
 
-      for (const postCallCallback of postCallCallbacks) {
-        callMonitored(postCallCallback, null, [result])
-      }
+    for (const postCallCallback of postCallCallbacks) {
+      callMonitored(postCallCallback, null, [result])
+    }
 
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-      return result
-    } as TARGET[METHOD],
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+    return result
+  } as TARGET[METHOD]
 
-    anyRequireHandlingStack: false,
-    observers: [],
-
+  const methodHook: MethodHook<TARGET, METHOD> = {
     addObserver(
       onPreCall: (this: null, callInfos: InstrumentedMethodCall<TARGET, METHOD>) => void,
       computeHandlingStack: boolean
@@ -156,7 +145,7 @@ function getOrInstallMethodHook<TARGET extends { [key: string]: any }, METHOD ex
       // We only generate the handling stack if at least one observer actually
       // requires it.
       const requiresHandlingStack = !!computeHandlingStack
-      methodHook.anyRequireHandlingStack = methodHook.anyRequireHandlingStack || requiresHandlingStack
+      anyRequireHandlingStack = anyRequireHandlingStack || requiresHandlingStack
 
       // Create the observer requested by the caller, and add it to the hook's
       // collection of observers. We use 'unshift' so that newly added observers are
@@ -166,35 +155,38 @@ function getOrInstallMethodHook<TARGET extends { [key: string]: any }, METHOD ex
         onPreCall,
         requiresHandlingStack,
       }
-      methodHook.observers.unshift(observer)
+      observers.unshift(observer)
 
       return observer
     },
     removeObserver(observer: MethodObserver<TARGET, METHOD>): void {
       // If this observer is still attached to this hook, remove it, and
       // recompute shared hook state.
-      const index = methodHook.observers.indexOf(observer)
+      const index = observers.indexOf(observer)
       if (index > -1) {
-        methodHook.observers.splice(index, 1)
-        methodHook.anyRequireHandlingStack = methodHook.observers.some((item) => item.requiresHandlingStack)
+        observers.splice(index, 1)
+        anyRequireHandlingStack = observers.some((item) => item.requiresHandlingStack)
       }
 
       // If we still have observers attached to this hook, leave it in place.
-      if (methodHook.observers.length > 0) {
+      if (observers.length > 0) {
         return
       }
 
       // We've removed the last observer. If the underlying method has
       // not been overridden in the meantime, remove the hook.
-      if (targetPrototype[method] === methodHook.hook) {
-        targetPrototype[method] = methodHook.original
+      if (targetPrototype[method] === hookFunction) {
+        targetPrototype[method] = original
         delete objectHooks.methods[method]
       }
+    },
+    getObservers() {
+      return observers.concat()
     },
   }
 
   objectHooks.methods[method] = methodHook
-  targetPrototype[method] = methodHook.hook
+  targetPrototype[method] = hookFunction
   return methodHook
 }
 
@@ -213,66 +205,65 @@ function getOrInstallPropertyHook<TARGET extends { [key: string]: any }, PROPERT
     return undefined
   }
 
-  const propertyHook: PropertyHook<TARGET, PROPERTY> = {
-    original,
-    hook: {
-      set(this: TARGET, value: TARGET[PROPERTY]): void {
-        original.set!.call(this, value)
+  const observers: Array<PropertyObserver<TARGET, PROPERTY>> = []
 
-        if (propertyHook.observers.length === 0) {
-          return
+  const hookDescriptor: PropertyDescriptor = {
+    set(this: TARGET, value: TARGET[PROPERTY]): void {
+      original.set!.call(this, value)
+
+      if (observers.length === 0) {
+        return
+      }
+
+      // Invoke observers in separate microtasks to avoid setter latency.
+      //
+      // Note that we deliberately don't capture the active observers here; as a
+      // design decision, we've chosen to allow changes in the observer list to
+      // take effect immediately, even if they occur between the time a setter is called
+      // and the time at which its observers are invoked.
+      // Context: https://github.com/DataDog/browser-sdk/pull/2598
+      void Promise.resolve().then(() => {
+        for (const { after } of observers) {
+          after(this, value)
         }
-
-        // Invoke observers in separate microtasks to avoid setter latency.
-        //
-        // Note that we deliberately don't capture the active observers here; as a
-        // design decision, we've chosen to allow changes in the observer list to
-        // take effect immediately, even if they occur between the time a setter is called
-        // and the time at which its observers are invoked.
-        // Context: https://github.com/DataDog/browser-sdk/pull/2598
-        void Promise.resolve().then(() => {
-          for (const { after } of propertyHook.observers) {
-            after(this, value)
-          }
-        })
-      },
+      })
     },
+  }
 
-    observers: [],
-
+  const propertyHook: PropertyHook<TARGET, PROPERTY> = {
     addObserver(after: (target: TARGET, value: TARGET[PROPERTY]) => void): PropertyObserver<TARGET, PROPERTY> {
       // Create the observer requested by the caller, and add it to the
       // hook's collection of observers. We use 'unshift' so that newly added
       // observers are invoked before older ones, which approximates the
       // behavior of a simple function wrapper.
       const observer: PropertyObserver<TARGET, PROPERTY> = { after }
-      propertyHook.observers.unshift(observer)
+      observers.unshift(observer)
       return observer
     },
     removeObserver(observer: PropertyObserver<TARGET, PROPERTY>): void {
       // If this observer is still attached to this hook, remove it.
-      const index = propertyHook.observers.indexOf(observer)
+      const index = observers.indexOf(observer)
       if (index > -1) {
-        propertyHook.observers.splice(index, 1)
+        observers.splice(index, 1)
       }
 
       // If we still have observers attached to this hook, leave it in place.
-      if (propertyHook.observers.length > 0) {
+      if (observers.length > 0) {
         return
       }
 
       // We've removed the last observer. If the underlying property has
       // not been overridden in the meantime, remove the hook.
       const current = Object.getOwnPropertyDescriptor(targetPrototype, property)
-      if (current?.set === propertyHook.hook.set) {
-        Object.defineProperty(targetPrototype, property, propertyHook.original)
+      if (current?.set === hookDescriptor.set) {
+        Object.defineProperty(targetPrototype, property, original)
         delete objectHooks.properties[property]
       }
     },
   }
 
   objectHooks.properties[property] = propertyHook
-  Object.defineProperty(targetPrototype, property, propertyHook.hook)
+  Object.defineProperty(targetPrototype, property, hookDescriptor)
   return propertyHook
 }
 
@@ -285,7 +276,7 @@ export function getObserversForMethod<TARGET extends { [key: string]: any }, MET
   method: METHOD
 ): Array<MethodObserver<TARGET, METHOD>> {
   const objectHooks = objectHookMap.get(target) as ObjectHooks<TARGET>
-  return (objectHooks?.methods?.[method]?.observers ?? []).concat()
+  return objectHooks?.methods?.[method]?.getObservers() ?? []
 }
 
 /**
