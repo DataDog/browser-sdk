@@ -1,8 +1,11 @@
 import type { LogsInitConfiguration } from '@datadog/browser-logs'
 import type { RumInitConfiguration } from '@datadog/browser-rum-core'
 import { DefaultPrivacyLevel } from '@datadog/browser-rum'
+import type { BrowserContext, Page } from '@playwright/test'
+import { test, expect } from '@playwright/test'
 import { getRunId } from '../../../envUtils'
-import { deleteAllCookies, getBrowserName, withBrowserLogs } from '../helpers/browser'
+import type { BrowserLog } from '../helpers/browser'
+import { BrowserLogsManager, deleteAllCookies } from '../helpers/browser'
 import { APPLICATION_ID, CLIENT_TOKEN } from '../helpers/configuration'
 import { validateRumFormat } from '../helpers/validation'
 import { IntakeRegistry } from './intakeRegistry'
@@ -43,9 +46,15 @@ interface TestContext {
   crossOriginUrl: string
   intakeRegistry: IntakeRegistry
   servers: Servers
+  page: Page
+  browserContext: BrowserContext
+  withBrowserLogs: (cb: (logs: BrowserLog[]) => void) => void
+  flushBrowserLogs: () => void
+  flushEvents: () => Promise<void>
+  deleteAllCookies: () => Promise<void>
 }
 
-type TestRunner = (testContext: TestContext) => Promise<void>
+type TestRunner = (testContext: TestContext) => Promise<void> | void
 
 class TestBuilder {
   private rumConfiguration: RumInitConfiguration | undefined = undefined
@@ -132,7 +141,7 @@ class TestBuilder {
     }
 
     if (this.alsoRunWithRumSlim) {
-      describe(this.title, () => {
+      test.describe(this.title, () => {
         declareTestsForSetups('rum', setups, setupOptions, runner)
         declareTestsForSetups(
           'rum-slim',
@@ -155,11 +164,6 @@ class TestBuilder {
   }
 }
 
-interface ItResult {
-  getFullName(): string
-}
-declare function it(expectation: string, assertion?: jasmine.ImplementationCallback, timeout?: number): ItResult
-
 function declareTestsForSetups(
   title: string,
   setups: Array<{ factory: SetupFactory; name?: string }>,
@@ -178,53 +182,82 @@ function declareTestsForSetups(
 }
 
 function declareTest(title: string, setupOptions: SetupOptions, factory: SetupFactory, runner: TestRunner) {
-  const spec = it(title, async () => {
-    log(`Start '${spec.getFullName()}' in ${getBrowserName()}`)
-    setupOptions.context.test_name = spec.getFullName()
+  test(title, async ({ page, context, browserName }) => {
+    const title = test.info().titlePath.join(' > ')
+    log(`Start '${title}' in ${browserName}`)
+
+    setupOptions.context.test_name = title
 
     const servers = await getTestServers()
+    const browserLogs = new BrowserLogsManager()
 
-    const testContext = createTestContext(servers, setupOptions)
+    const testContext = createTestContext(servers, page, context, browserLogs, setupOptions)
     servers.intake.bindServerApp(createIntakeServerApp(testContext.intakeRegistry))
 
     const setup = factory(setupOptions, servers)
     servers.base.bindServerApp(createMockServerApp(servers, setup))
     servers.crossOrigin.bindServerApp(createMockServerApp(servers, setup))
 
-    await setUpTest(testContext)
+    await setUpTest(browserLogs, testContext)
 
     try {
       await runner(testContext)
     } finally {
       await tearDownTest(testContext)
-      log(`End '${spec.getFullName()}'`)
+      log(`End '${title}'`)
     }
   })
 }
 
-function createTestContext(servers: Servers, { basePath }: SetupOptions): TestContext {
+function createTestContext(
+  servers: Servers,
+  page: Page,
+  browserContext: BrowserContext,
+  browserLogsManager: BrowserLogsManager,
+  { basePath }: SetupOptions
+): TestContext {
   return {
     baseUrl: servers.base.url + basePath,
     crossOriginUrl: servers.crossOrigin.url,
     intakeRegistry: new IntakeRegistry(),
     servers,
+    page,
+    browserContext,
+    withBrowserLogs: (cb: (logs: BrowserLog[]) => void) => {
+      cb(browserLogsManager.get())
+      browserLogsManager.clear()
+    },
+    flushBrowserLogs: () => {
+      browserLogsManager.clear()
+    },
+    flushEvents: () => flushEvents(page),
+    deleteAllCookies: () => deleteAllCookies(browserContext),
   }
 }
 
-async function setUpTest({ baseUrl }: TestContext) {
-  await browser.url(baseUrl)
+async function setUpTest(browserLogsManager: BrowserLogsManager, { baseUrl, page, browserContext }: TestContext) {
+  browserContext.on('console', (msg) =>
+    browserLogsManager.add({
+      level: msg.type() as BrowserLog['level'],
+      message: msg.text(),
+      source: 'console',
+      timestamp: Date.now(),
+    })
+  )
+
+  await page.goto(baseUrl)
   await waitForServersIdle()
 }
 
-async function tearDownTest({ intakeRegistry }: TestContext) {
+async function tearDownTest({ intakeRegistry, withBrowserLogs, flushEvents, deleteAllCookies }: TestContext) {
   await flushEvents()
   expect(intakeRegistry.telemetryErrorEvents).toEqual([])
   validateRumFormat(intakeRegistry.rumEvents)
-  await withBrowserLogs((logs) => {
+  withBrowserLogs((logs) => {
     logs.forEach((browserLog) => {
       log(`Browser ${browserLog.source}: ${browserLog.level} ${browserLog.message}`)
     })
-    expect(logs.filter((l) => (l as any).level === 'SEVERE')).toEqual([])
+    expect(logs.filter((log) => log.level === 'error')).toEqual([])
   })
   await deleteAllCookies()
 }
