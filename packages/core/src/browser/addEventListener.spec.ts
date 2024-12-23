@@ -1,4 +1,3 @@
-import { isIE } from '../tools/utils/browserDetection'
 import type { Configuration } from '../domain/configuration'
 import { createNewEvent, mockZoneJs, registerCleanupTask } from '../../test'
 import type { MockZoneJs } from '../../test'
@@ -37,10 +36,6 @@ describe('addEventListener', () => {
   })
 
   it('Use the EventTarget.prototype.addEventListener when the eventTarget is an instance of EventTarget', () => {
-    if (isIE()) {
-      pending('EventTarget not supported in IE')
-    }
-
     // eslint-disable-next-line @typescript-eslint/unbound-method
     const originalAddEventListener = EventTarget.prototype.addEventListener
     // eslint-disable-next-line @typescript-eslint/unbound-method

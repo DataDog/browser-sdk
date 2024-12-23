@@ -1,7 +1,6 @@
 import type { Context } from '../../tools/serialisation/context'
 import { display } from '../../tools/display'
 import { getType } from '../../tools/utils/typeUtils'
-import { assign } from '../../tools/utils/polyfills'
 import type { User } from './user.types'
 
 /**
@@ -11,7 +10,7 @@ import type { User } from './user.types'
  */
 export function sanitizeUser(newUser: Context): Context {
   // We shallow clone only to prevent mutation of user data.
-  const user = assign({}, newUser)
+  const user = { ...newUser }
   const keys = ['id', 'name', 'email']
   keys.forEach((key) => {
     if (key in user) {

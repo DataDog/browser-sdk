@@ -1,4 +1,3 @@
-import { isIE } from '@datadog/browser-core'
 import { createNewEvent, registerCleanupTask } from '@datadog/browser-core/test'
 import type { RumConfiguration } from '@datadog/browser-rum-core'
 import { SerializationContextStatus, serializeDocument } from '../serialization'
@@ -15,10 +14,6 @@ describe('trackMove', () => {
   let configuration: RumConfiguration
 
   beforeEach(() => {
-    if (isIE()) {
-      pending('IE not supported')
-    }
-
     configuration = {} as RumConfiguration
     serializeDocument(document, DEFAULT_CONFIGURATION, {
       shadowRootsController: DEFAULT_SHADOW_ROOT_CONTROLLER,

@@ -1,4 +1,3 @@
-import { isIE } from '@datadog/browser-core'
 import { NodePrivacyLevel } from '@datadog/browser-rum-core'
 import {
   getSerializedNodeId,
@@ -37,12 +36,6 @@ describe('serialized Node storage in DOM Nodes', () => {
 })
 
 describe('getElementInputValue', () => {
-  beforeEach(() => {
-    if (isIE()) {
-      pending('IE not supported')
-    }
-  })
-
   it('returns "undefined" for a non-input element', () => {
     expect(getElementInputValue(document.createElement('div'), NodePrivacyLevel.ALLOW)).toBeUndefined()
   })

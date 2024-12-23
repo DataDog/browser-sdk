@@ -2,20 +2,6 @@ import { combine } from '../mergeInto'
 import { Browser, detectBrowser } from './browserDetection'
 
 describe('browserDetection', () => {
-  it('detects IE', () => {
-    expect(
-      detectBrowser(
-        fakeWindowWithDefaults({
-          navigator: {
-            userAgent:
-              'Mozilla/5.0 (Windows NT 10.0; WOW64; Trident/7.0; .NET4.0C; .NET4.0E; .NET CLR 2.0.50727; .NET CLR 3.0.30729; .NET CLR 3.5.30729; rv:11.0) like Gecko',
-          },
-          document: { documentMode: 11 },
-        })
-      )
-    ).toBe(Browser.IE)
-  })
-
   it('detects Safari', () => {
     expect(
       detectBrowser(
