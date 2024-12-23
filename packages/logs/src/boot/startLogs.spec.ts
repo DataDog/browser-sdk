@@ -117,6 +117,9 @@ describe('logs', () => {
           url: 'common_url',
         },
         origin: ErrorSource.LOGGER,
+        usr: {
+          anonymous_id: jasmine.any(String),
+        },
       })
     })
 

@@ -33,6 +33,9 @@ export function startLogsAssembly(
       }
 
       const commonContext = savedCommonContext || getCommonContext()
+      if (session && session.anonymousId && !commonContext.user.anonymous_id) {
+        commonContext.user.anonymous_id = session.anonymousId
+      }
       const log = combine(
         {
           service: configuration.service,

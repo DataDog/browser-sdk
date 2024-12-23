@@ -1,4 +1,3 @@
-import { ExperimentalFeature, isExperimentalFeatureEnabled } from '../../tools/experimentalFeatures'
 import { isEmptyObject } from '../../tools/utils/objectUtils'
 import { objectEntries } from '../../tools/utils/polyfills'
 import { dateNow } from '../../tools/utils/timeUtils'
@@ -16,11 +15,14 @@ export interface SessionState {
   [key: string]: string | undefined
 }
 
-export function getExpiredSessionState(previousSessionState: SessionState | undefined): SessionState {
+export function getExpiredSessionState(
+  previousSessionState: SessionState | undefined,
+  trackAnonymousUser: boolean
+): SessionState {
   const expiredSessionState: SessionState = {
     isExpired: EXPIRED,
   }
-  if (isExperimentalFeatureEnabled(ExperimentalFeature.ANONYMOUS_USER_TRACKING)) {
+  if (trackAnonymousUser) {
     if (previousSessionState?.anonymousId) {
       expiredSessionState.anonymousId = previousSessionState?.anonymousId
     } else {

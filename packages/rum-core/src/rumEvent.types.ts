@@ -1333,6 +1333,10 @@ export interface CommonProperties {
      * Email of the user
      */
     readonly email?: string
+    /**
+     * Identifier of the user across sessions
+     */
+    readonly anonymous_id?: string
     [k: string]: unknown
   }
   /**

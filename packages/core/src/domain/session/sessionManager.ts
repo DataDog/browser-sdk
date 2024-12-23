@@ -44,7 +44,12 @@ export function startSessionManager<TrackingType extends string>(
   const expireObservable = new Observable<void>()
 
   // TODO - Improve configuration type and remove assertion
-  const sessionStore = startSessionStore(configuration.sessionStoreStrategyType!, productKey, computeSessionState)
+  const sessionStore = startSessionStore(
+    configuration.sessionStoreStrategyType!,
+    configuration,
+    productKey,
+    computeSessionState
+  )
   stopCallbacks.push(() => sessionStore.stop())
 
   const sessionContextHistory = createValueHistory<SessionContext<TrackingType>>({
