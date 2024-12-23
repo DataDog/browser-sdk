@@ -7,7 +7,12 @@ import type {
   RumViewEvent,
   RumVitalEvent,
 } from '@datadog/browser-rum'
-import type { TelemetryEvent, TelemetryErrorEvent, TelemetryConfigurationEvent } from '@datadog/browser-core'
+import type {
+  TelemetryEvent,
+  TelemetryErrorEvent,
+  TelemetryConfigurationEvent,
+  TelemetryUsageEvent,
+} from '@datadog/browser-core'
 import type { BrowserSegment } from '@datadog/browser-rum/src/types'
 import type { BrowserSegmentMetadataAndSegmentSizes } from '@datadog/browser-rum/src/domain/segmentCollection'
 
@@ -121,6 +126,10 @@ export class IntakeRegistry {
     return this.telemetryEvents.filter(isTelemetryConfigurationEvent)
   }
 
+  get telemetryUsageEvents() {
+    return this.telemetryEvents.filter(isTelemetryUsageEvent)
+  }
+
   //
   // Replay
   //
@@ -184,4 +193,8 @@ function isTelemetryErrorEvent(event: TelemetryEvent): event is TelemetryErrorEv
 
 function isTelemetryConfigurationEvent(event: TelemetryEvent): event is TelemetryConfigurationEvent {
   return isTelemetryEvent(event) && event.telemetry.type === 'configuration'
+}
+
+function isTelemetryUsageEvent(event: TelemetryEvent): event is TelemetryUsageEvent {
+  return isTelemetryEvent(event) && event.telemetry.type === 'usage'
 }
