@@ -15,14 +15,19 @@ export interface SessionState {
   [key: string]: string | undefined
 }
 
-export function getExpiredSessionState(previousSessionState: SessionState | undefined): SessionState {
+export function getExpiredSessionState(
+  previousSessionState: SessionState | undefined,
+  trackAnonymousUser: boolean
+): SessionState {
   const expiredSessionState: SessionState = {
     isExpired: EXPIRED,
   }
-  if (previousSessionState?.anonymousId) {
-    expiredSessionState.anonymousId = previousSessionState?.anonymousId
-  } else {
-    expiredSessionState.anonymousId = generateAnonymousId()
+  if (trackAnonymousUser) {
+    if (previousSessionState?.anonymousId) {
+      expiredSessionState.anonymousId = previousSessionState?.anonymousId
+    } else {
+      expiredSessionState.anonymousId = generateAnonymousId()
+    }
   }
   return expiredSessionState
 }

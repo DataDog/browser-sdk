@@ -501,6 +501,18 @@ describe('rum assembly', () => {
       expect(serverRumEvents[0].usr).toEqual({ anonymous_id: 'device-123' })
     })
 
+    it('should not contain anonymous id when opt-out', () => {
+      const { lifeCycle, serverRumEvents, commonContext } = setupAssemblyTestWithDefaults({
+        partialConfiguration: { trackAnonymousUser: false },
+      })
+      commonContext.user = {}
+      notifyRawRumEvent(lifeCycle, {
+        rawRumEvent: createRawRumEvent(RumEventType.VIEW),
+      })
+
+      expect(serverRumEvents[0].usr).toBeUndefined()
+    })
+
     it('should ignore the current user when a saved common context user is provided', () => {
       const { lifeCycle, serverRumEvents, commonContext } = setupAssemblyTestWithDefaults()
       commonContext.user = { replacedAttribute: 'b', addedAttribute: 'x' }

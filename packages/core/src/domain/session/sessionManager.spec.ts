@@ -599,7 +599,7 @@ describe('startSessionManager', () => {
       trackingConsentState.update(TrackingConsent.NOT_GRANTED)
 
       expectSessionToBeExpired(sessionManager)
-      expect(getCookie(SESSION_STORE_KEY)).toBe('isExpired=1&aid=0')
+      expect(getCookie(SESSION_STORE_KEY)).toBe('isExpired=1')
     })
 
     it('does not renew the session when tracking consent is withdrawn', () => {

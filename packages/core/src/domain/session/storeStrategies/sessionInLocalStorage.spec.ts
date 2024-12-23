@@ -1,6 +1,8 @@
+import type { Configuration } from '../../configuration'
 import { type SessionState } from '../sessionState'
 import { selectLocalStorageStrategy, initLocalStorageStrategy } from './sessionInLocalStorage'
 import { SESSION_STORE_KEY } from './sessionStoreStrategy'
+const DEFAULT_INIT_CONFIGURATION = { trackAnonymousUser: true } as Configuration
 
 describe('session in local storage strategy', () => {
   const sessionState: SessionState = { id: '123', created: '0' }
@@ -24,7 +26,7 @@ describe('session in local storage strategy', () => {
   })
 
   it('should persist a session in local storage', () => {
-    const localStorageStrategy = initLocalStorageStrategy()
+    const localStorageStrategy = initLocalStorageStrategy(DEFAULT_INIT_CONFIGURATION)
     localStorageStrategy.persistSession(sessionState)
     const session = localStorageStrategy.retrieveSession()
     expect(session).toEqual({ ...sessionState })
@@ -32,7 +34,7 @@ describe('session in local storage strategy', () => {
   })
 
   it('should set `isExpired=1` to the local storage item holding the session', () => {
-    const localStorageStrategy = initLocalStorageStrategy()
+    const localStorageStrategy = initLocalStorageStrategy(DEFAULT_INIT_CONFIGURATION)
     localStorageStrategy.persistSession(sessionState)
     localStorageStrategy.expireSession(sessionState)
     const session = localStorageStrategy?.retrieveSession()
@@ -42,7 +44,7 @@ describe('session in local storage strategy', () => {
 
   it('should not interfere with other keys present in local storage', () => {
     window.localStorage.setItem('test', 'hello')
-    const localStorageStrategy = initLocalStorageStrategy()
+    const localStorageStrategy = initLocalStorageStrategy(DEFAULT_INIT_CONFIGURATION)
     localStorageStrategy.persistSession(sessionState)
     localStorageStrategy.retrieveSession()
     localStorageStrategy.expireSession(sessionState)

@@ -1,6 +1,7 @@
 import type { MockStorage } from '../../../test'
 import { mockClock, mockCookie, mockLocalStorage } from '../../../test'
 import type { CookieOptions } from '../../browser/cookie'
+import type { Configuration } from '../configuration'
 import { initCookieStrategy } from './storeStrategies/sessionInCookie'
 import { initLocalStorageStrategy } from './storeStrategies/sessionInLocalStorage'
 import type { SessionState } from './sessionState'
@@ -10,18 +11,18 @@ import { SESSION_STORE_KEY } from './storeStrategies/sessionStoreStrategy'
 
 const cookieOptions: CookieOptions = {}
 const EXPIRED_SESSION: SessionState = { isExpired: '1', anonymousId: '0' }
-
+const DEFAULT_INIT_CONFIGURATION = { trackAnonymousUser: true } as Configuration
 ;(
   [
     {
       title: 'Cookie Storage',
-      createSessionStoreStrategy: () => initCookieStrategy(cookieOptions),
+      createSessionStoreStrategy: () => initCookieStrategy(DEFAULT_INIT_CONFIGURATION, cookieOptions),
       mockStorage: mockCookie,
       storageKey: SESSION_STORE_KEY,
     },
     {
       title: 'Local Storage',
-      createSessionStoreStrategy: () => initLocalStorageStrategy(),
+      createSessionStoreStrategy: () => initLocalStorageStrategy(DEFAULT_INIT_CONFIGURATION),
       mockStorage: mockLocalStorage,
       storageKey: SESSION_STORE_KEY,
     },
