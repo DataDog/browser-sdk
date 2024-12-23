@@ -100,6 +100,7 @@ export {
   setCookie,
   deleteCookie,
   resetInitCookies,
+  getCurrentSite,
 } from './browser/cookie'
 export { generateAnonymousId } from './domain/user'
 export { CookieStore, WeakRef, WeakRefConstructor } from './browser/browser.types'
