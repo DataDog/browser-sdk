@@ -1,5 +1,4 @@
-import { mockClock, mockZoneJs, registerCleanupTask } from '../../test'
-import type { Clock, MockZoneJs } from '../../test'
+import { mockZoneJs } from '../../test'
 import type { InstrumentedMethodCall } from './instrumentMethod'
 import { instrumentMethod, instrumentSetter } from './instrumentMethod'
 import { noop } from './utils/functionUtils'
@@ -129,6 +128,91 @@ describe('instrumentMethod', () => {
     )
   })
 
+  describe('instrumenting a method multiple times', () => {
+    const testMultipleInstrumentations = ({ stopOrder }: { stopOrder: 'normal' | 'reverse' }) => {
+      const object = { method: () => 1 }
+
+      const calls: number[] = []
+      const observers: Array<{ id: number; isStopped: boolean; stop: () => void }> = []
+      for (let id = 0; id < 3; id++) {
+        const { stop } = instrumentMethod(object, 'method', () => {
+          calls.push(id)
+        })
+        const observer = {
+          id,
+          isStopped: false,
+          stop() {
+            observer.isStopped = true
+            stop()
+          },
+        }
+        observers.unshift(observer)
+      }
+
+      do {
+        calls.length = 0
+        object.method()
+
+        expect(calls).toEqual(observers.filter(({ isStopped }) => !isStopped).map(({ id }) => id))
+
+        const removedSpy = stopOrder === 'normal' ? observers.shift() : observers.pop()
+        if (removedSpy) {
+          removedSpy.stop()
+        }
+      } while (observers.length > 0)
+    }
+
+    it('calls instrumentations in the expected order', () => {
+      testMultipleInstrumentations({ stopOrder: 'normal' })
+    })
+
+    it('calls instrumentations in the expected order even if stopped out of order', () => {
+      testMultipleInstrumentations({ stopOrder: 'reverse' })
+    })
+
+    it('wraps only once', () => {
+      const object = { method: () => 1 }
+      expect(object.method()).toBe(1)
+
+      for (let i = 0; i < 10_000; i++) {
+        const { stop: stopInner } = instrumentMethod(object, 'method', noop)
+        const { stop: stopOuter } = instrumentMethod(object, 'method', noop)
+
+        // Stop the inner instrumentation before the outer one. In older versions of
+        // instrumentMethod(), each call to instrumentMethod() would rewrap the method,
+        // and stop() could only remove a wrapper if it was the outermost one, so this
+        // pattern would cause wrappers to accumulate.
+        stopInner()
+        stopOuter()
+      }
+
+      // If we rewrap the method every time, this will throw `RangeError: Maximum
+      // call stack size exceeded.`
+      expect(object.method()).toBe(1)
+    })
+
+    it('wraps only once even if a third party instruments it multiple times', () => {
+      const object = { method: () => 1 }
+      expect(object.method()).toBe(1)
+
+      for (let i = 0; i < 10_000; i++) {
+        const { stop: stopInner } = instrumentMethod(object, 'method', noop)
+        const { stop: stopOuter } = thirdPartyInstrumentation(object)
+
+        // Stop the inner instrumentation before the outer one. As in the previous test,
+        // in older versions of instrumentMethod(), this ordering would cause wrappers to
+        // accumulate. The difference here is that one of the wrappers comes from a third
+        // party, instead of from our own code.
+        stopInner()
+        stopOuter()
+      }
+
+      // If we rewrap the method every time, this will throw `RangeError: Maximum
+      // call stack size exceeded.`
+      expect(object.method()).toBe(1)
+    })
+  })
+
   describe('stop()', () => {
     it('does not call the instrumentation anymore', () => {
       const object = { method: () => 1 }
@@ -180,36 +264,39 @@ describe('instrumentMethod', () => {
     })
   })
 
-  function thirdPartyInstrumentation(object: { method?: () => number; onevent?: () => void }) {
+  function thirdPartyInstrumentation(object: { method?: () => number; onevent?: () => void }): { stop: () => void } {
     const originalMethod = object.method
+    let methodInstrumentation: (() => number) | undefined
     if (typeof originalMethod === 'function') {
-      object.method = () => {
+      methodInstrumentation = () => {
         originalMethod()
         return THIRD_PARTY_RESULT
       }
+      object.method = methodInstrumentation
     }
 
     const originalOnEvent = object.onevent
-    object.onevent = () => {
+    const onEventInstrumentation = (): void => {
       if (originalOnEvent) {
         originalOnEvent()
       }
+    }
+    object.onevent = onEventInstrumentation
+
+    return {
+      stop: () => {
+        if (methodInstrumentation && object.method === methodInstrumentation) {
+          object.method = originalMethod
+        }
+        if (object.onevent === onEventInstrumentation) {
+          object.onevent = originalOnEvent
+        }
+      },
     }
   }
 })
 
 describe('instrumentSetter', () => {
-  let clock: Clock
-  let zoneJs: MockZoneJs
-
-  beforeEach(() => {
-    clock = mockClock()
-    registerCleanupTask(() => {
-      clock.cleanup()
-    })
-    zoneJs = mockZoneJs()
-  })
-
   it('replaces the original setter', () => {
     const originalSetter = () => {
       // do nothing particular, only used to test if this setter gets replaced
@@ -254,7 +341,7 @@ describe('instrumentSetter', () => {
     expect(originalSetterSpy).toHaveBeenCalledOnceWith(1)
   })
 
-  it('calls the instrumentation asynchronously', () => {
+  it('calls the instrumentation asynchronously', async () => {
     const instrumentationSetterSpy = jasmine.createSpy()
     const object = {} as { foo: number }
     Object.defineProperty(object, 'foo', { set: noop, configurable: true })
@@ -263,12 +350,15 @@ describe('instrumentSetter', () => {
 
     object.foo = 1
     expect(instrumentationSetterSpy).not.toHaveBeenCalled()
-    clock.tick(0)
+    await Promise.resolve()
     expect(instrumentationSetterSpy).toHaveBeenCalledOnceWith(object, 1)
   })
 
-  it('does not use the Zone.js setTimeout function', () => {
+  // Note that this is trivially true, since instrumentSetter now uses promises and not
+  // setTimeout, but it's still worth verifying that we don't accidentally regress.
+  it('does not use the Zone.js setTimeout function', async () => {
     const zoneJsSetTimeoutSpy = jasmine.createSpy()
+    const zoneJs = mockZoneJs()
     zoneJs.replaceProperty(window, 'setTimeout', zoneJsSetTimeoutSpy)
 
     const object = {} as { foo: number }
@@ -277,23 +367,119 @@ describe('instrumentSetter', () => {
     instrumentSetter(object, 'foo', noop)
     object.foo = 2
 
-    clock.tick(0)
+    await Promise.resolve()
 
     expect(zoneJsSetTimeoutSpy).not.toHaveBeenCalled()
   })
 
-  it('allows other instrumentations from third parties', () => {
+  it('allows other instrumentations from third parties', async () => {
     const object = {} as { foo: number }
     Object.defineProperty(object, 'foo', { set: noop, configurable: true })
     const instrumentationSetterSpy = jasmine.createSpy()
     instrumentSetter(object, 'foo', instrumentationSetterSpy)
 
-    const thirdPartyInstrumentationSpy = thirdPartyInstrumentation(object)
+    const { spy: thirdPartyInstrumentationSpy } = thirdPartyInstrumentation(object)
 
     object.foo = 2
     expect(thirdPartyInstrumentationSpy).toHaveBeenCalledOnceWith(2)
-    clock.tick(0)
+    await Promise.resolve()
     expect(instrumentationSetterSpy).toHaveBeenCalledOnceWith(object, 2)
+  })
+
+  describe('instrumenting a property multiple times', () => {
+    const testMultipleInstrumentations = async ({ stopOrder }: { stopOrder: 'normal' | 'reverse' }) => {
+      const object = {} as { foo: number }
+      Object.defineProperty(object, 'foo', { set: noop, configurable: true })
+
+      const calls: number[] = []
+      const observers: Array<{ id: number; isStopped: boolean; stop: () => void }> = []
+      for (let id = 0; id < 3; id++) {
+        const { stop } = instrumentSetter(object, 'foo', () => {
+          calls.push(id)
+        })
+        const observer = {
+          id,
+          isStopped: false,
+          stop() {
+            observer.isStopped = true
+            stop()
+          },
+        }
+        observers.unshift(observer)
+      }
+
+      do {
+        calls.length = 0
+        object.foo = 1
+        await Promise.resolve()
+
+        expect(calls).toEqual(observers.filter(({ isStopped }) => !isStopped).map(({ id }) => id))
+
+        const removedSpy = stopOrder === 'normal' ? observers.shift() : observers.pop()
+        if (removedSpy) {
+          removedSpy.stop()
+        }
+      } while (observers.length > 0)
+    }
+
+    it('calls instrumentations in the expected order', (): Promise<void> =>
+      testMultipleInstrumentations({ stopOrder: 'normal' }))
+
+    it('calls instrumentations in the expected order even if stopped out of order', (): Promise<void> =>
+      testMultipleInstrumentations({ stopOrder: 'reverse' }))
+
+    it('wraps only once', () => {
+      const object = {} as { foo: number }
+      Object.defineProperty(object, 'foo', { set: noop, configurable: true })
+
+      for (let i = 0; i < 10_000; i++) {
+        const { stop: stopInner } = instrumentSetter(object, 'foo', noop)
+        const { stop: stopOuter } = instrumentSetter(object, 'foo', noop)
+
+        // Stop the inner instrumentation before the outer one. In older
+        // versions of instrumentSetter(), each call to instrumentSetter() would
+        // rewrap the property, and stop() could only remove a wrapper if it was
+        // the outermost one, so this pattern would cause wrappers to
+        // accumulate.
+        stopInner()
+        stopOuter()
+      }
+
+      // If we rewrap the property every time, this will throw `RangeError:
+      // Maximum call stack size exceeded.`
+      expect(
+        (() => {
+          object.foo = 1
+          return true
+        })()
+      ).toBe(true)
+    })
+
+    it('wraps only once even if a third party instruments it multiple times', () => {
+      const object = {} as { foo: number }
+      Object.defineProperty(object, 'foo', { set: noop, configurable: true })
+
+      for (let i = 0; i < 10_000; i++) {
+        const { stop: stopInner } = instrumentSetter(object, 'foo', noop)
+        const { stop: stopOuter } = thirdPartyInstrumentation(object)
+
+        // Stop the inner instrumentation before the outer one. As in the previous test,
+        // in older versions of instrumentSetter(), this ordering would cause wrappers to
+        // accumulate. The difference here is that one of the wrappers comes from a third
+        // party, instead of from our own code.
+        stopInner()
+        stopOuter()
+      }
+
+      // If we rewrap the property every time, this will throw `RangeError:
+      // Maximum call stack size exceeded.`
+      expect(
+        (() => {
+          object.foo = 1
+          return true
+        })()
+      ).toBe(true)
+    })
   })
 
   describe('stop()', () => {
@@ -311,7 +497,7 @@ describe('instrumentSetter', () => {
       expect(Object.getOwnPropertyDescriptor(object, 'foo')!.set).toBe(originalSetter)
     })
 
-    it('does not call the instrumentation anymore', () => {
+    it('does not call the instrumentation anymore', async () => {
       const object = {} as { foo: number }
       Object.defineProperty(object, 'foo', { set: noop, configurable: true })
       const instrumentationSetterSpy = jasmine.createSpy()
@@ -320,12 +506,12 @@ describe('instrumentSetter', () => {
       stop()
 
       object.foo = 2
-      clock.tick(0)
+      await Promise.resolve()
 
       expect(instrumentationSetterSpy).not.toHaveBeenCalled()
     })
 
-    it('does not call instrumentation pending in the event loop via setTimeout', () => {
+    it('does not call instrumentation pending in the event loop', async () => {
       const object = {} as { foo: number }
       Object.defineProperty(object, 'foo', { set: noop, configurable: true })
       const instrumentationSetterSpy = jasmine.createSpy()
@@ -333,18 +519,18 @@ describe('instrumentSetter', () => {
 
       object.foo = 2
       stop()
-      clock.tick(0)
+      await Promise.resolve()
 
       expect(instrumentationSetterSpy).not.toHaveBeenCalled()
     })
 
-    describe('when the method has been instrumented by a third party', () => {
+    describe('when the property has been instrumented by a third party', () => {
       it('should not break the third party instrumentation', () => {
         const object = {} as { foo: number }
         Object.defineProperty(object, 'foo', { set: noop, configurable: true })
         const { stop } = instrumentSetter(object, 'foo', noop)
 
-        const thirdPartyInstrumentationSpy = thirdPartyInstrumentation(object)
+        const { spy: thirdPartyInstrumentationSpy } = thirdPartyInstrumentation(object)
 
         stop()
 
@@ -352,7 +538,7 @@ describe('instrumentSetter', () => {
         expect(Object.getOwnPropertyDescriptor(object, 'foo')!.set).toBe(thirdPartyInstrumentationSpy)
       })
 
-      it('does not call the instrumentation', () => {
+      it('does not call the instrumentation', async () => {
         const object = {} as { foo: number }
         Object.defineProperty(object, 'foo', { set: noop, configurable: true })
         const instrumentationSetterSpy = jasmine.createSpy()
@@ -363,22 +549,33 @@ describe('instrumentSetter', () => {
         stop()
 
         object.foo = 2
-        clock.tick(0)
+        await Promise.resolve()
 
         expect(instrumentationSetterSpy).not.toHaveBeenCalled()
       })
     })
   })
 
-  function thirdPartyInstrumentation(object: { foo: number }) {
+  function thirdPartyInstrumentation(object: { foo: number }): {
+    spy: jasmine.Spy
+    stop: () => void
+  } {
+    const originalDescriptor = Object.getOwnPropertyDescriptor(object, 'foo')
     // eslint-disable-next-line @typescript-eslint/unbound-method
-    const originalSetter = Object.getOwnPropertyDescriptor(object, 'foo')!.set
     const thirdPartyInstrumentationSpy = jasmine.createSpy().and.callFake(function (this: any, value) {
-      if (originalSetter) {
-        originalSetter.call(this, value)
-      }
+      originalDescriptor?.set?.call(this, value)
     })
     Object.defineProperty(object, 'foo', { set: thirdPartyInstrumentationSpy })
-    return thirdPartyInstrumentationSpy
+    return {
+      spy: thirdPartyInstrumentationSpy,
+      stop: () => {
+        if (
+          originalDescriptor &&
+          Object.getOwnPropertyDescriptor(object, 'foo')?.set === thirdPartyInstrumentationSpy
+        ) {
+          Object.defineProperty(object, 'foo', originalDescriptor)
+        }
+      },
+    }
   }
 })
