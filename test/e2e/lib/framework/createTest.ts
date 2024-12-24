@@ -48,6 +48,7 @@ interface TestContext {
   servers: Servers
   page: Page
   browserContext: BrowserContext
+  browserName: 'chromium' | 'firefox' | 'webkit'
   withBrowserLogs: (cb: (logs: BrowserLog[]) => void) => void
   flushBrowserLogs: () => void
   flushEvents: () => Promise<void>
@@ -191,7 +192,7 @@ function declareTest(title: string, setupOptions: SetupOptions, factory: SetupFa
     const servers = await getTestServers()
     const browserLogs = new BrowserLogsManager()
 
-    const testContext = createTestContext(servers, page, context, browserLogs, setupOptions)
+    const testContext = createTestContext(servers, page, context, browserLogs, browserName, setupOptions)
     servers.intake.bindServerApp(createIntakeServerApp(testContext.intakeRegistry))
 
     const setup = factory(setupOptions, servers)
@@ -214,6 +215,7 @@ function createTestContext(
   page: Page,
   browserContext: BrowserContext,
   browserLogsManager: BrowserLogsManager,
+  browserName: TestContext['browserName'],
   { basePath }: SetupOptions
 ): TestContext {
   return {
@@ -223,6 +225,7 @@ function createTestContext(
     servers,
     page,
     browserContext,
+    browserName,
     withBrowserLogs: (cb: (logs: BrowserLog[]) => void) => {
       cb(browserLogsManager.get())
       browserLogsManager.clear()
@@ -236,14 +239,23 @@ function createTestContext(
 }
 
 async function setUpTest(browserLogsManager: BrowserLogsManager, { baseUrl, page, browserContext }: TestContext) {
-  browserContext.on('console', (msg) =>
+  browserContext.on('console', (msg) => {
     browserLogsManager.add({
       level: msg.type() as BrowserLog['level'],
       message: msg.text(),
       source: 'console',
       timestamp: Date.now(),
     })
-  )
+  })
+
+  browserContext.on('weberror', (webError) => {
+    browserLogsManager.add({
+      level: 'error',
+      message: webError.error().message,
+      source: 'console',
+      timestamp: Date.now(),
+    })
+  })
 
   await page.goto(baseUrl)
   await waitForServersIdle()
