@@ -192,7 +192,7 @@ describe('error collection', () => {
           handlingStack: 'Error: handling foo',
           startClocks: { relative: 1234 as RelativeTime, timeStamp: 123456789 as TimeStamp },
         },
-        { context: { foo: 'bar' }, user: {}, hasReplay: undefined }
+        { context: { foo: 'bar' }, user: {}, account: {}, hasReplay: undefined }
       )
       expect(rawRumEvents[0].savedCommonContext!.context).toEqual({
         foo: 'bar',
@@ -207,7 +207,7 @@ describe('error collection', () => {
           handlingStack: 'Error: handling foo',
           startClocks: { relative: 1234 as RelativeTime, timeStamp: 123456789 as TimeStamp },
         },
-        { context: {}, user: { id: 'foo' }, hasReplay: undefined }
+        { context: {}, user: { id: 'foo' }, account: {}, hasReplay: undefined }
       )
       expect(rawRumEvents[0].savedCommonContext!.user).toEqual({
         id: 'foo',

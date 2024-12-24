@@ -471,6 +471,7 @@ describe('rum assembly', () => {
         savedCommonContext: {
           context: { replacedContext: 'a' },
           user: {},
+          account: {},
           hasReplay: undefined,
         },
       })
@@ -480,42 +481,68 @@ describe('rum assembly', () => {
     })
   })
 
-  describe('rum user', () => {
+  describe('rum user and account', () => {
     it('should be included in event attributes', () => {
       const { lifeCycle, serverRumEvents, commonContext } = setupAssemblyTestWithDefaults()
       commonContext.user = { id: 'foo' }
+      commonContext.account = { id: 'bar' }
       notifyRawRumEvent(lifeCycle, {
         rawRumEvent: createRawRumEvent(RumEventType.VIEW),
       })
 
       expect(serverRumEvents[0].usr!.id).toEqual('foo')
+      expect(serverRumEvents[0].account!.id).toEqual('bar')
     })
 
     it('should not be included if empty', () => {
       const { lifeCycle, serverRumEvents, commonContext } = setupAssemblyTestWithDefaults()
       commonContext.user = {}
+      commonContext.account = {}
+
       notifyRawRumEvent(lifeCycle, {
         rawRumEvent: createRawRumEvent(RumEventType.VIEW),
       })
 
       expect(serverRumEvents[0].usr).toBe(undefined)
+      expect(serverRumEvents[0].account).toBe(undefined)
     })
 
-    it('should ignore the current user when a saved common context user is provided', () => {
+    it('should not include account if `id` is missing and display a warn', () => {
+      const displaySpy = spyOn(display, 'warn')
+
+      expect(true).toBe(true)
+      const { lifeCycle, serverRumEvents, commonContext } = setupAssemblyTestWithDefaults()
+      commonContext.account = { name: 'foo' }
+      notifyRawRumEvent(lifeCycle, {
+        rawRumEvent: createRawRumEvent(RumEventType.VIEW),
+      })
+
+      expect(serverRumEvents[0].account).toBe(undefined)
+      expect(displaySpy).toHaveBeenCalledWith(
+        "The account object is missing the 'id' property, it will not be sent to the intake."
+      )
+    })
+
+    it('should ignore the current user/account when a saved common context user is provided', () => {
       const { lifeCycle, serverRumEvents, commonContext } = setupAssemblyTestWithDefaults()
       commonContext.user = { replacedAttribute: 'b', addedAttribute: 'x' }
+      commonContext.account = { replacedAttribute: 'c', addedAttribute: 'y' }
 
       notifyRawRumEvent(lifeCycle, {
         rawRumEvent: createRawRumEvent(RumEventType.VIEW),
         savedCommonContext: {
           context: {},
           user: { replacedAttribute: 'a' },
+          account: { id: 'foo', replacedAttribute: 'e' },
           hasReplay: undefined,
         },
       })
 
       expect(serverRumEvents[0].usr!.replacedAttribute).toEqual('a')
       expect(serverRumEvents[0].usr!.addedAttribute).toEqual(undefined)
+
+      expect(serverRumEvents[0].account!.replacedAttribute).toEqual('e')
+      expect(serverRumEvents[0].account!.addedAttribute).toEqual(undefined)
     })
   })
 
@@ -1010,6 +1037,7 @@ function setupAssemblyTestWithDefaults({
   const commonContext = {
     context: {},
     user: {},
+    account: {},
     hasReplay: undefined,
   } as CommonContext
 

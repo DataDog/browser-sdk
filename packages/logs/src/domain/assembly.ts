@@ -1,5 +1,12 @@
 import type { EventRateLimiter, RawError } from '@datadog/browser-core'
-import { ErrorSource, combine, createEventRateLimiter, getRelativeTime, isEmptyObject } from '@datadog/browser-core'
+import {
+  ErrorSource,
+  combine,
+  createEventRateLimiter,
+  display,
+  getRelativeTime,
+  isEmptyObject,
+} from '@datadog/browser-core'
 import type { CommonContext } from '../rawLogsEvent.types'
 import type { LogsConfiguration } from './configuration'
 import type { LifeCycle } from './lifeCycle'
@@ -36,13 +43,25 @@ export function startLogsAssembly(
       }
 
       const commonContext = savedCommonContext || getCommonContext()
+
+      let account
+
+      if (!isEmptyObject(commonContext.account)) {
+        if (commonContext.account.id) {
+          account = commonContext.account
+        } else {
+          display.warn("The account object is missing the 'id' property, it will not be sent to the intake.")
+        }
+      }
+
       const log = combine(
         {
           service: configuration.service,
           session_id: session ? session.id : undefined,
           session: session ? { id: session.id } : undefined,
-          // Insert user first to allow overrides from global context
+          // Insert user and account first to allow overrides from global context
           usr: !isEmptyObject(commonContext.user) ? commonContext.user : undefined,
+          account,
           view: commonContext.view,
         },
         commonContext.context,

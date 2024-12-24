@@ -6,6 +6,7 @@ import {
   getTimeStamp,
   noop,
   createCustomerDataTracker,
+  display,
 } from '@datadog/browser-core'
 import type { Clock } from '@datadog/browser-core/test'
 import { mockClock } from '@datadog/browser-core/test'
@@ -34,11 +35,18 @@ const COMMON_CONTEXT: CommonContext = {
   },
   context: { common_context_key: 'common_context_value' },
   user: {},
+  account: {},
 }
 
-const COMMON_CONTEXT_WITH_USER: CommonContext = {
+const COMMON_CONTEXT_WITH_USER_AND_ACCOUNT: CommonContext = {
   ...COMMON_CONTEXT,
   user: { id: 'id', name: 'name', email: 'test@test.com' },
+  account: { id: 'id', name: 'name' },
+}
+
+const COMMON_CONTEXT_WITH_MISSING_ACCOUNT_ID: CommonContext = {
+  ...COMMON_CONTEXT,
+  account: { name: 'name' },
 }
 
 describe('startLogsAssembly', () => {
@@ -195,6 +203,7 @@ describe('startLogsAssembly', () => {
         },
         context: { foo: 'bar' },
         user: { email: 'test@test.com' },
+        account: { id: '123' },
       }
       lifeCycle.notify(LifeCycleEventType.RAW_LOG_COLLECTED, { rawLogsEvent: DEFAULT_MESSAGE, savedCommonContext })
 
@@ -320,7 +329,7 @@ describe('startLogsAssembly', () => {
   })
 })
 
-describe('user management', () => {
+describe('user and account management', () => {
   const sessionManager: LogsSessionManager = {
     findTrackedSession: () => (sessionIsTracked ? { id: SESSION_ID } : undefined),
     expireObservable: new Observable<void>(),
@@ -347,15 +356,16 @@ describe('user management', () => {
     serverLogs = []
   })
 
-  it('should not output usr key if user is not set', () => {
+  it('should not output usr/account key if user/account is not set', () => {
     startLogsAssembly(sessionManager, configuration, lifeCycle, () => COMMON_CONTEXT, noop)
 
     lifeCycle.notify(LifeCycleEventType.RAW_LOG_COLLECTED, { rawLogsEvent: DEFAULT_MESSAGE })
     expect(serverLogs[0].usr).toBeUndefined()
+    expect(serverLogs[0].account).toBeUndefined()
   })
 
-  it('should include user data when user has been set', () => {
-    startLogsAssembly(sessionManager, configuration, lifeCycle, () => COMMON_CONTEXT_WITH_USER, noop)
+  it('should include user/account data when user/account has been set', () => {
+    startLogsAssembly(sessionManager, configuration, lifeCycle, () => COMMON_CONTEXT_WITH_USER_AND_ACCOUNT, noop)
 
     lifeCycle.notify(LifeCycleEventType.RAW_LOG_COLLECTED, { rawLogsEvent: DEFAULT_MESSAGE })
     expect(serverLogs[0].usr).toEqual({
@@ -363,16 +373,25 @@ describe('user management', () => {
       name: 'name',
       email: 'test@test.com',
     })
+
+    expect(serverLogs[0].account).toEqual({
+      id: 'id',
+      name: 'name',
+    })
   })
 
-  it('should prioritize global context over user context', () => {
+  it('should prioritize global context over user/account context', () => {
     const globalContextWithUser = {
-      ...COMMON_CONTEXT_WITH_USER,
+      ...COMMON_CONTEXT_WITH_USER_AND_ACCOUNT,
       context: {
         ...COMMON_CONTEXT.context,
         usr: {
           id: 4242,
           name: 'solution',
+        },
+        account: {
+          id: 4242,
+          name: 'account',
         },
       },
     }
@@ -384,6 +403,23 @@ describe('user management', () => {
       name: 'solution',
       email: 'test@test.com',
     })
+
+    expect(serverLogs[0].account).toEqual({
+      id: 4242,
+      name: 'account',
+    })
+  })
+
+  it('should not include account if `id` is missing and display a warn', () => {
+    const displaySpy = spyOn(display, 'warn')
+    startLogsAssembly(sessionManager, configuration, lifeCycle, () => COMMON_CONTEXT_WITH_MISSING_ACCOUNT_ID, noop)
+
+    lifeCycle.notify(LifeCycleEventType.RAW_LOG_COLLECTED, { rawLogsEvent: DEFAULT_MESSAGE })
+
+    expect(serverLogs[0].account).toBe(undefined)
+    expect(displaySpy).toHaveBeenCalledWith(
+      "The account object is missing the 'id' property, it will not be sent to the intake."
+    )
   })
 })
 

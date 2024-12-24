@@ -84,6 +84,7 @@ describe('logs entry', () => {
         },
         context: { foo: 'bar' },
         user: {},
+        account: {},
       })
     })
   })
@@ -316,6 +317,144 @@ describe('logs entry', () => {
         logsPublicApi.removeUserProperty('foo')
         const userClone = logsPublicApi.getUser()
         expect(userClone.foo).toBeUndefined()
+      })
+    })
+
+    describe('setAccount', () => {
+      let logsPublicApi: LogsPublicApi
+      let displaySpy: jasmine.Spy<() => void>
+
+      beforeEach(() => {
+        displaySpy = spyOn(display, 'error')
+        logsPublicApi = makeLogsPublicApi(startLogs)
+        logsPublicApi.init(DEFAULT_INIT_CONFIGURATION)
+      })
+
+      it('should store account in common context', () => {
+        const account = { id: 'foo', name: 'bar', foo: { bar: 'qux' } }
+        logsPublicApi.setAccount(account)
+
+        const getCommonContext = startLogs.calls.mostRecent().args[2]
+        expect(getCommonContext().account).toEqual({
+          foo: { bar: 'qux' },
+          id: 'foo',
+          name: 'bar',
+        })
+      })
+
+      it('should sanitize predefined properties', () => {
+        const account = { id: null, name: 2 }
+        logsPublicApi.setAccount(account as any)
+        const getCommonContext = startLogs.calls.mostRecent().args[2]
+        expect(getCommonContext().account).toEqual({
+          id: 'null',
+          name: '2',
+        })
+      })
+
+      it('should clear a previously set account', () => {
+        const account = { id: 'foo', name: 'bar', foo: 'qux' }
+        logsPublicApi.setAccount(account)
+        logsPublicApi.clearAccount()
+
+        const getCommonContext = startLogs.calls.mostRecent().args[2]
+        expect(getCommonContext().account).toEqual({})
+      })
+
+      it('should reject non object input', () => {
+        logsPublicApi.setAccount(2 as any)
+        logsPublicApi.setAccount(null as any)
+        logsPublicApi.setAccount(undefined as any)
+        expect(displaySpy).toHaveBeenCalledTimes(3)
+      })
+    })
+
+    describe('getAccount', () => {
+      let logsPublicApi: LogsPublicApi
+
+      beforeEach(() => {
+        logsPublicApi = makeLogsPublicApi(startLogs)
+        logsPublicApi.init(DEFAULT_INIT_CONFIGURATION)
+      })
+
+      it('should return empty object if no account has been set', () => {
+        const accountClone = logsPublicApi.getAccount()
+        expect(accountClone).toEqual({})
+      })
+
+      it('should return a clone of the original object if set', () => {
+        const account = { id: 'foo', name: 'bar', foo: { bar: 'qux' } }
+        logsPublicApi.setAccount(account)
+        const accountClone = logsPublicApi.getAccount()
+        const accountClone2 = logsPublicApi.getAccount()
+
+        expect(accountClone).not.toBe(account)
+        expect(accountClone).not.toBe(accountClone2)
+        expect(accountClone).toEqual(account)
+      })
+    })
+
+    describe('setAccountProperty', () => {
+      const account = { id: 'foo', name: 'bar', foo: { bar: 'qux' } }
+      const addressAttribute = { city: 'Paris' }
+      let logsPublicApi: LogsPublicApi
+
+      beforeEach(() => {
+        logsPublicApi = makeLogsPublicApi(startLogs)
+        logsPublicApi.init(DEFAULT_INIT_CONFIGURATION)
+      })
+
+      it('should add attribute', () => {
+        logsPublicApi.setAccount(account)
+        logsPublicApi.setAccountProperty('address', addressAttribute)
+        const accountClone = logsPublicApi.getAccount()
+
+        expect(accountClone.address).toEqual(addressAttribute)
+      })
+
+      it('should not contain original reference to object', () => {
+        const accountDetails: { [key: string]: any } = { name: 'john' }
+        logsPublicApi.setAccount(account)
+        logsPublicApi.setAccountProperty('accountDetails', accountDetails)
+        accountDetails.DOB = '11/11/1999'
+        const accountClone = logsPublicApi.getAccount()
+
+        expect(accountClone.accountDetails).not.toBe(accountDetails)
+      })
+
+      it('should override attribute', () => {
+        logsPublicApi.setAccount(account)
+        logsPublicApi.setAccountProperty('foo', addressAttribute)
+        const accountClone = logsPublicApi.getAccount()
+
+        expect(accountClone).toEqual({ ...account, foo: addressAttribute })
+      })
+
+      it('should sanitize properties', () => {
+        logsPublicApi.setAccountProperty('id', 123)
+        logsPublicApi.setAccountProperty('name', ['Adam', 'Smith'])
+        const accountClone = logsPublicApi.getAccount()
+
+        expect(accountClone.id).toEqual('123')
+        expect(accountClone.name).toEqual('Adam,Smith')
+      })
+    })
+
+    describe('removeAccountProperty', () => {
+      let logsPublicApi: LogsPublicApi
+
+      beforeEach(() => {
+        logsPublicApi = makeLogsPublicApi(startLogs)
+        logsPublicApi.init(DEFAULT_INIT_CONFIGURATION)
+      })
+
+      it('should remove property', () => {
+        const account = { id: 'foo', name: 'bar', email: 'qux', foo: { bar: 'qux' } }
+
+        logsPublicApi.setAccount(account)
+        logsPublicApi.removeAccountProperty('foo')
+        const accountClone = logsPublicApi.getAccount()
+        expect(accountClone.foo).toBeUndefined()
       })
     })
   })
