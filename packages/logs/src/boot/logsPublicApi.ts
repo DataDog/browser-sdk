@@ -1,4 +1,4 @@
-import type { Context, TrackingConsent, User, PublicApi } from '@datadog/browser-core'
+import type { Account, Context, TrackingConsent, User, PublicApi } from '@datadog/browser-core'
 import {
   addTelemetryUsage,
   CustomerDataType,
@@ -6,7 +6,6 @@ import {
   createContextManager,
   makePublicApi,
   monitor,
-  checkUser,
   sanitizeUser,
   sanitize,
   createCustomerDataTrackerManager,
@@ -14,6 +13,8 @@ import {
   displayAlreadyInitializedError,
   deepClone,
   createTrackingConsentState,
+  checkContext,
+  sanitizeAccount,
 } from '@datadog/browser-core'
 import type { LogsInitConfiguration } from '../domain/configuration'
 import type { HandlerType } from '../domain/logger'
@@ -158,6 +159,39 @@ export interface LogsPublicApi extends PublicApi {
    * See [User context](https://docs.datadoghq.com/logs/log_collection/javascript/#user-context) for further information.
    */
   clearUser: () => void
+
+  /**
+   * Set account information to all events, stored in `@account`
+   *
+   */
+  setAccount: (newAccount: Account & { id: string }) => void
+
+  /**
+   * Get account information
+   *
+   */
+  getAccount: () => Context
+
+  /**
+   * Set or update the account property, stored in `@account.<key>`
+   *
+   * @param key Key of the property
+   * @param property Value of the property
+   *
+   */
+  setAccountProperty: (key: any, property: any) => void
+
+  /**
+   * Remove a account property
+   *
+   */
+  removeAccountProperty: (key: any) => void
+
+  /**
+   * Clear all account information
+   *
+   */
+  clearAccount: () => void
 }
 
 const LOGS_STORAGE_KEY = 'logs'
@@ -175,16 +209,20 @@ export function makeLogsPublicApi(startLogsImpl: StartLogs): LogsPublicApi {
     customerDataTrackerManager.getOrCreateTracker(CustomerDataType.GlobalContext)
   )
   const userContextManager = createContextManager(customerDataTrackerManager.getOrCreateTracker(CustomerDataType.User))
+  const accountContextManager = createContextManager(
+    customerDataTrackerManager.getOrCreateTracker(CustomerDataType.Account)
+  )
   const trackingConsentState = createTrackingConsentState()
 
   function getCommonContext() {
-    return buildCommonContext(globalContextManager, userContextManager)
+    return buildCommonContext(globalContextManager, userContextManager, accountContextManager)
   }
 
   let strategy = createPreStartStrategy(getCommonContext, trackingConsentState, (initConfiguration, configuration) => {
     if (initConfiguration.storeContextsAcrossPages) {
       storeContextManager(configuration, globalContextManager, LOGS_STORAGE_KEY, CustomerDataType.GlobalContext)
       storeContextManager(configuration, userContextManager, LOGS_STORAGE_KEY, CustomerDataType.User)
+      storeContextManager(configuration, accountContextManager, LOGS_STORAGE_KEY, CustomerDataType.Account)
     }
 
     const startLogsResult = startLogsImpl(initConfiguration, configuration, getCommonContext, trackingConsentState)
@@ -240,7 +278,7 @@ export function makeLogsPublicApi(startLogsImpl: StartLogs): LogsPublicApi {
     getInternalContext: monitor((startTime) => strategy.getInternalContext(startTime)),
 
     setUser: monitor((newUser) => {
-      if (checkUser(newUser)) {
+      if (checkContext(newUser as Context)) {
         userContextManager.setContext(sanitizeUser(newUser as Context))
       }
     }),
@@ -255,6 +293,23 @@ export function makeLogsPublicApi(startLogsImpl: StartLogs): LogsPublicApi {
     removeUserProperty: monitor((key) => userContextManager.removeContextProperty(key)),
 
     clearUser: monitor(() => userContextManager.clearContext()),
+
+    setAccount: monitor((newUser) => {
+      if (checkContext(newUser as Context)) {
+        accountContextManager.setContext(sanitizeAccount(newUser as Context))
+      }
+    }),
+
+    getAccount: monitor(() => accountContextManager.getContext()),
+
+    setAccountProperty: monitor((key, property) => {
+      const sanitizedProperty = sanitizeAccount({ [key]: property })[key]
+      accountContextManager.setContextProperty(key, sanitizedProperty)
+    }),
+
+    removeAccountProperty: monitor((key) => accountContextManager.removeContextProperty(key)),
+
+    clearAccount: monitor(() => accountContextManager.clearContext()),
   })
 }
 

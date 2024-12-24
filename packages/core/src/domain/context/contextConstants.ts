@@ -3,4 +3,5 @@ export const enum CustomerDataType {
   User,
   GlobalContext,
   View,
+  Account,
 }

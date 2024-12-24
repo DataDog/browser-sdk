@@ -51,6 +51,7 @@ const COMMON_CONTEXT = {
   view: { referrer: 'common_referrer', url: 'common_url' },
   context: {},
   user: {},
+  account: {},
 }
 const DEFAULT_PAYLOAD = {} as Payload
 

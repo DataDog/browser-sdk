@@ -84,6 +84,7 @@ describe('logs entry', () => {
         },
         context: { foo: 'bar' },
         user: {},
+        account: {},
       })
     })
   })
