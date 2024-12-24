@@ -186,7 +186,7 @@ describe('rum public api', () => {
           type: ActionType.CUSTOM,
           handlingStack: jasmine.any(String),
         },
-        { context: {}, user: {}, hasReplay: undefined },
+        { context: {}, user: {}, account: {}, hasReplay: undefined },
       ])
     })
 
@@ -240,6 +240,19 @@ describe('rum public api', () => {
         })
       })
 
+      it('stores a deep copy of the account', () => {
+        const account = { id: 'foo' }
+        rumPublicApi.setAccount(account)
+        rumPublicApi.addAction('message')
+        account.id = 'bar'
+
+        rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
+
+        expect(addActionSpy.calls.argsFor(0)[1]!.account).toEqual({
+          id: 'foo',
+        })
+      })
+
       it('stores a deep copy of the action context', () => {
         const context = { foo: 'bar' }
         rumPublicApi.addAction('message', context)
@@ -289,7 +302,7 @@ describe('rum public api', () => {
           handlingStack: jasmine.any(String),
           startClocks: jasmine.any(Object),
         },
-        { context: {}, user: {}, hasReplay: undefined },
+        { context: {}, user: {}, account: {}, hasReplay: undefined },
       ])
     })
 

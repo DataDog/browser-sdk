@@ -3,6 +3,7 @@ import type {
   TimeStamp,
   RelativeTime,
   User,
+  Account,
   DeflateWorker,
   DeflateEncoderStreamId,
   DeflateEncoder,
@@ -21,7 +22,6 @@ import {
   clocksNow,
   callMonitored,
   createHandlingStack,
-  checkUser,
   sanitizeUser,
   sanitize,
   createIdentityEncoder,
@@ -31,6 +31,8 @@ import {
   displayAlreadyInitializedError,
   createTrackingConsentState,
   timeStampToClocks,
+  checkContext,
+  sanitizeAccount,
 } from '@datadog/browser-core'
 import type { LifeCycle } from '../domain/lifeCycle'
 import type { ViewHistory } from '../domain/contexts/viewHistory'
@@ -218,6 +220,39 @@ export interface RumPublicApi extends PublicApi {
   clearUser: () => void
 
   /**
+   * Set account information to all events, stored in `@account`
+   *
+   */
+  setAccount: (newAccount: Account & { id: string }) => void
+
+  /**
+   * Get account information
+   *
+   */
+  getAccount: () => Context
+
+  /**
+   * Set or update the account property, stored in `@account.<key>`
+   *
+   * @param key Key of the property
+   * @param property Value of the property
+   *
+   */
+  setAccountProperty: (key: any, property: any) => void
+
+  /**
+   * Remove a account property
+   *
+   */
+  removeAccountProperty: (key: any) => void
+
+  /**
+   * Clear all account information
+   *
+   */
+  clearAccount: () => void
+
+  /**
    * Start a view manually.
    * Enable to manual start a view, use `trackViewsManually: true` init parameter and call `startView()` to create RUM views and be aligned with how you’ve defined them in your SPA application routing.
    *
@@ -370,11 +405,14 @@ export function makeRumPublicApi(
     customerDataTrackerManager.getOrCreateTracker(CustomerDataType.GlobalContext)
   )
   const userContextManager = createContextManager(customerDataTrackerManager.getOrCreateTracker(CustomerDataType.User))
+  const accountContextManager = createContextManager(
+    customerDataTrackerManager.getOrCreateTracker(CustomerDataType.Account)
+  )
   const trackingConsentState = createTrackingConsentState()
   const customVitalsState = createCustomVitalsState()
 
   function getCommonContext() {
-    return buildCommonContext(globalContextManager, userContextManager, recorderApi)
+    return buildCommonContext(globalContextManager, userContextManager, accountContextManager, recorderApi)
   }
 
   let strategy = createPreStartStrategy(
@@ -386,6 +424,7 @@ export function makeRumPublicApi(
       if (configuration.storeContextsAcrossPages) {
         storeContextManager(configuration, globalContextManager, RUM_STORAGE_KEY, CustomerDataType.GlobalContext)
         storeContextManager(configuration, userContextManager, RUM_STORAGE_KEY, CustomerDataType.User)
+        storeContextManager(configuration, accountContextManager, RUM_STORAGE_KEY, CustomerDataType.Account)
       }
 
       customerDataTrackerManager.setCompressionStatus(
@@ -507,7 +546,7 @@ export function makeRumPublicApi(
     }),
 
     setUser: monitor((newUser) => {
-      if (checkUser(newUser)) {
+      if (checkContext(newUser as Context)) {
         userContextManager.setContext(sanitizeUser(newUser as Context))
       }
       addTelemetryUsage({ feature: 'set-user' })
@@ -524,6 +563,23 @@ export function makeRumPublicApi(
     removeUserProperty: monitor((key) => userContextManager.removeContextProperty(key)),
 
     clearUser: monitor(() => userContextManager.clearContext()),
+
+    setAccount: monitor((newAccount) => {
+      if (checkContext(newAccount as Context)) {
+        accountContextManager.setContext(sanitizeUser(newAccount as Context))
+      }
+    }),
+
+    getAccount: monitor(() => accountContextManager.getContext()),
+
+    setAccountProperty: monitor((key, property) => {
+      const sanitizedProperty = sanitizeAccount({ [key]: property })[key]
+      accountContextManager.setContextProperty(key, sanitizedProperty)
+    }),
+
+    removeAccountProperty: monitor((key) => accountContextManager.removeContextProperty(key)),
+
+    clearAccount: monitor(() => accountContextManager.clearContext()),
 
     startView,
 

@@ -15,18 +15,21 @@ describe('commonContext', () => {
     fakeContext = { foo: 'bar' }
     const globalContextManager: ContextManager = createContextManager(createCustomerDataTracker(noop))
     const userContextManager: ContextManager = createContextManager(createCustomerDataTracker(noop))
+    const accountContextManager: ContextManager = createContextManager(createCustomerDataTracker(noop))
     spyOn(globalContextManager, 'getContext').and.callFake(() => fakeContext)
     spyOn(userContextManager, 'getContext').and.callFake(() => fakeContext)
+    spyOn(accountContextManager, 'getContext').and.callFake(() => fakeContext)
 
     const recorderApi: RecorderApi = { ...noopRecorderApi, isRecording: () => isRecording }
     buildCommonContext = (): CommonContext =>
-      buildCommonContextImpl(globalContextManager, userContextManager, recorderApi)
+      buildCommonContextImpl(globalContextManager, userContextManager, accountContextManager, recorderApi)
   })
 
   it('should return common context', () => {
     expect(buildCommonContext()).toEqual({
       context: fakeContext,
       user: fakeContext,
+      account: fakeContext,
       hasReplay: undefined,
     })
   })
