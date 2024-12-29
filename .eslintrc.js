@@ -331,5 +331,21 @@ module.exports = {
         ],
       },
     },
+    {
+      files: ['scripts/**/*.js'],
+      rules: {
+        'no-restricted-imports': [
+          'error',
+          {
+            patterns: [
+              {
+                group: ['scripts/**/*.js', '!scripts/lib/**/*.js'],
+                message: 'Importing from scripts/**/*.js is not allowed except from scripts/lib/**/*.js',
+              },
+            ],
+          },
+        ],
+      },
+    },
   ],
 }
