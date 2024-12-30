@@ -471,6 +471,7 @@ describe('rum assembly', () => {
         savedCommonContext: {
           context: { replacedContext: 'a' },
           user: {},
+          account: {},
           hasReplay: undefined,
         },
       })
@@ -510,6 +511,7 @@ describe('rum assembly', () => {
         savedCommonContext: {
           context: {},
           user: { replacedAttribute: 'a' },
+          account: {},
           hasReplay: undefined,
         },
       })
@@ -1010,6 +1012,7 @@ function setupAssemblyTestWithDefaults({
   const commonContext = {
     context: {},
     user: {},
+    account: {},
     hasReplay: undefined,
   } as CommonContext
 
