@@ -96,7 +96,7 @@ function FacetValue({
     !facetValuesFilter.facetValues[facet.path] || !facetValuesFilter.facetValues[facet.path].includes(facetValue)
   const isFiltered =
     facetValuesFilter.facetValues[facet.path] && facetValuesFilter.facetValues[facet.path].includes(facetValue)
-  const isOnly = facetValuesFilter.type === 'include' && Object.keys(facetValuesFilter.facetValues).length === 1
+  const isOnly = facetValuesFilter.type === 'include' && facetSelectState === 'selected'
   const value = (
     <Flex justify="space-between" mt={isTopLevel ? 'xs' : SPACE_BETWEEN_CHECKBOX}>
       <Checkbox
@@ -104,21 +104,20 @@ function FacetValue({
         checked={facetSelectState === 'selected'}
         indeterminate={facetSelectState === 'partial-selected'}
         onChange={() => {
-          onExcludedFacetValuesChange(toggleFacetValue(facetValuesFilter.type, facet, facetValuesFilter, facetValue))
+          onExcludedFacetValuesChange(toggleFacetValue('exclude', facet, facetValuesFilter, facetValue))
         }}
       />
       <Text>{facetValueCount}</Text>
       <Button
-        variant={isOnly && isFiltered ? 'filled' : 'light'}
+        variant={isFiltered ? 'filled' : 'light'}
         size="compact-xs"
         w="40px"
-        disabled={isOnly && !isFiltered}
         onClick={() => {
           const filterType = isOnly ? 'exclude' : 'include'
           onExcludedFacetValuesChange(toggleFacetValue(filterType, facet, facetValuesFilter, facetValue))
         }}
       >
-        {isOnly && facetSelectState === 'selected' ? 'all' : 'only'}
+        {isOnly ? 'all' : 'only'}
       </Button>
     </Flex>
   )
@@ -170,11 +169,17 @@ function toggleFacetValue(
   const currentValues = facetValuesFilter.facetValues[facet.path]
   const newFacetValues = { ...facetValuesFilter.facetValues }
 
-  if (type !== facetValuesFilter.type) {
-    // when switching from exclude to include, remove all existing filter values
+  if (type === 'include') { // switch between the only values
     return {
       type,
-      facetValues: type === 'include' ? { [facet.path]: [value] } : {},
+      facetValues: { [facet.path]: [value] },
+    }
+  } else if (type === 'exclude' && facetValuesFilter.type !== type) {
+    // when switching from include to exclude, reset to all included first
+    // consistent with the facet behaviors of datadog web-ui
+    return {
+      type,
+      facetValues: {}
     }
   }
 
