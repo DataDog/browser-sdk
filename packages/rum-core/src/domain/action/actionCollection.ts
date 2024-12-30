@@ -1,5 +1,13 @@
 import type { ClocksState, Context, Observable } from '@datadog/browser-core'
-import { noop, assign, combine, toServerDuration, generateUUID } from '@datadog/browser-core'
+import {
+  noop,
+  assign,
+  combine,
+  toServerDuration,
+  generateUUID,
+  ExperimentalFeature,
+  isExperimentalFeatureEnabled,
+} from '@datadog/browser-core'
 
 import { discardNegativeDuration } from '../discardNegativeDuration'
 import type { RawRumActionEvent } from '../../rawRumEvent.types'
@@ -29,6 +37,7 @@ export type AutoAction = ClickAction
 export function startActionCollection(
   lifeCycle: LifeCycle,
   domMutationObservable: Observable<void>,
+  windowOpenObservable: Observable<void>,
   configuration: RumConfiguration,
   pageStateHistory: PageStateHistory
 ) {
@@ -38,7 +47,12 @@ export function startActionCollection(
 
   let actionContexts: ActionContexts = { findActionId: noop as () => undefined }
   if (configuration.trackUserInteractions) {
-    actionContexts = trackClickActions(lifeCycle, domMutationObservable, configuration).actionContexts
+    actionContexts = trackClickActions(
+      lifeCycle,
+      domMutationObservable,
+      windowOpenObservable,
+      configuration
+    ).actionContexts
   }
 
   return {
@@ -83,6 +97,9 @@ function processAction(
           action: {
             target: action.target,
             position: action.position,
+            name_source: isExperimentalFeatureEnabled(ExperimentalFeature.ACTION_NAME_MASKING)
+              ? action.nameSource
+              : undefined,
           },
         },
       }

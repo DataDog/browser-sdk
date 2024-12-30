@@ -1,19 +1,18 @@
 import type { Payload } from '@datadog/browser-core'
 import { isIE, RequestType } from '@datadog/browser-core'
-import type { MockFetch, MockFetchManager, MockXhrManager } from '@datadog/browser-core/test'
+import type { MockFetch, MockFetchManager } from '@datadog/browser-core/test'
 import { registerCleanupTask, SPEC_ENDPOINTS, mockFetch, mockXhr, withXhr } from '@datadog/browser-core/test'
-import type { RumConfiguration } from './configuration'
-import { validateAndBuildRumConfiguration } from './configuration'
+import { mockRumConfiguration } from '../../test'
 import { LifeCycle, LifeCycleEventType } from './lifeCycle'
 import type { RequestCompleteEvent, RequestStartEvent } from './requestCollection'
 import { trackFetch, trackXhr } from './requestCollection'
 import type { Tracer } from './tracing/tracer'
-import { clearTracingIfNeeded, createTraceIdentifier } from './tracing/tracer'
+import { clearTracingIfNeeded } from './tracing/tracer'
+import { createSpanIdentifier, createTraceIdentifier } from './tracing/identifier'
 
 const DEFAULT_PAYLOAD = {} as Payload
 
 describe('collect fetch', () => {
-  let configuration: RumConfiguration
   const FAKE_URL = 'http://fake-url/'
   let fetch: MockFetch
   let mockFetchManager: MockFetchManager
@@ -24,11 +23,6 @@ describe('collect fetch', () => {
   beforeEach(() => {
     if (isIE()) {
       pending('no fetch support')
-    }
-    configuration = {
-      ...validateAndBuildRumConfiguration({ clientToken: 'xxx', applicationId: 'xxx' })!,
-      ...SPEC_ENDPOINTS,
-      batchMessagesLimit: 1,
     }
     mockFetchManager = mockFetch()
 
@@ -41,16 +35,15 @@ describe('collect fetch', () => {
       clearTracingIfNeeded,
       traceFetch: (context) => {
         context.traceId = createTraceIdentifier()
-        context.spanId = createTraceIdentifier()
+        context.spanId = createSpanIdentifier()
       },
     }
-    ;({ stop: stopFetchTracking } = trackFetch(lifeCycle, configuration, tracerStub as Tracer))
+    ;({ stop: stopFetchTracking } = trackFetch(lifeCycle, tracerStub as Tracer))
 
     fetch = window.fetch as MockFetch
 
     registerCleanupTask(() => {
       stopFetchTracking()
-      mockFetchManager.reset()
     })
   })
 
@@ -186,22 +179,16 @@ describe('collect fetch', () => {
 })
 
 describe('collect xhr', () => {
-  let configuration: RumConfiguration
   let startSpy: jasmine.Spy<(requestStartEvent: RequestStartEvent) => void>
   let completeSpy: jasmine.Spy<(requestCompleteEvent: RequestCompleteEvent) => void>
-  let mockXhrManager: MockXhrManager
   let stopXhrTracking: () => void
 
   beforeEach(() => {
     if (isIE()) {
       pending('no fetch support')
     }
-    configuration = {
-      ...validateAndBuildRumConfiguration({ clientToken: 'xxx', applicationId: 'xxx' })!,
-      ...SPEC_ENDPOINTS,
-      batchMessagesLimit: 1,
-    }
-    mockXhrManager = mockXhr()
+    const configuration = mockRumConfiguration({ batchMessagesLimit: 1 })
+    mockXhr()
     startSpy = jasmine.createSpy('requestStart')
     completeSpy = jasmine.createSpy('requestComplete')
     const lifeCycle = new LifeCycle()
@@ -211,14 +198,13 @@ describe('collect xhr', () => {
       clearTracingIfNeeded,
       traceXhr: (context) => {
         context.traceId = createTraceIdentifier()
-        context.spanId = createTraceIdentifier()
+        context.spanId = createSpanIdentifier()
       },
     }
     ;({ stop: stopXhrTracking } = trackXhr(lifeCycle, configuration, tracerStub as Tracer))
 
     registerCleanupTask(() => {
       stopXhrTracking()
-      mockXhrManager.reset()
     })
   })
 

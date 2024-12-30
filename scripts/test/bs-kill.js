@@ -3,8 +3,8 @@
  * This script stops all BrowserStack workers that are currently running.
  * Useful when troubleshooting BrowserStack issues locally.
  */
-const { printLog, runMain, timeout } = require('../lib/execution-utils')
-const { browserStackRequest } = require('../lib/bs-utils')
+const { printLog, runMain, timeout } = require('../lib/executionUtils')
+const { browserStackRequest } = require('../lib/bsUtils')
 
 const MINIMUM_WORKER_LIFE = 30_000
 

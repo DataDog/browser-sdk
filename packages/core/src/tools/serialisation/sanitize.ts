@@ -4,7 +4,7 @@ import type { Context, ContextArray, ContextValue } from './context'
 import type { ObjectWithToJsonMethod } from './jsonStringify'
 import { detachToJsonMethod } from './jsonStringify'
 
-// eslint-disable-next-line @typescript-eslint/ban-types
+// eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
 type PrimitivesAndFunctions = string | number | boolean | undefined | null | symbol | bigint | Function
 type ExtendedContextValue = PrimitivesAndFunctions | object | ExtendedContext | ExtendedContextArray
 type ExtendedContext = { [key: string]: ExtendedContextValue }

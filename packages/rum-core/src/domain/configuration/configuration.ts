@@ -11,6 +11,7 @@ import {
   objectHasValue,
   validateAndBuildConfiguration,
   isSampleRate,
+  isNumber,
 } from '@datadog/browser-core'
 import type { RumEventDomainContext } from '../../domainContext.types'
 import type { RumEvent } from '../../rumEvent.types'
@@ -90,7 +91,7 @@ export interface RumInitConfiguration extends InitConfiguration {
    */
   sessionReplaySampleRate?: number | undefined
   /**
-   * If the session is sampled for Session Replay, only start the recording when `startSessionReplayRecording()` is called, instead of at the beginning of the session.
+   * If the session is sampled for Session Replay, only start the recording when `startSessionReplayRecording()` is called, instead of at the beginning of the session. Default: if startSessionReplayRecording is 0, true; otherwise, false.
    * See [Session Replay Usage](https://docs.datadoghq.com/real_user_monitoring/session_replay/browser/#usage) for further information.
    */
   startSessionReplayRecordingManually?: boolean | undefined
@@ -129,7 +130,7 @@ export interface RumInitConfiguration extends InitConfiguration {
    * notice. Please use only plugins provided by Datadog matching the version of the SDK you are
    * using.
    */
-  betaPlugins?: RumPlugin[] | undefined
+  plugins?: RumPlugin[] | undefined
 }
 
 export type HybridInitConfiguration = Omit<RumInitConfiguration, 'applicationId' | 'clientToken'>
@@ -137,7 +138,8 @@ export type HybridInitConfiguration = Omit<RumInitConfiguration, 'applicationId'
 export interface RumConfiguration extends Configuration {
   // Built from init configuration
   actionNameAttribute: string | undefined
-  traceSampleRate: number | undefined
+  traceSampleRate: number
+  rulePsr: number | undefined
   allowedTracingUrls: TracingOption[]
   excludedActivityUrls: MatchOption[]
   workerUrl: string | undefined
@@ -188,14 +190,20 @@ export function validateAndBuildRumConfiguration(
     return
   }
 
+  const sessionReplaySampleRate = initConfiguration.sessionReplaySampleRate ?? 0
+
   return assign(
     {
       applicationId: initConfiguration.applicationId,
       version: initConfiguration.version || undefined,
       actionNameAttribute: initConfiguration.actionNameAttribute,
-      sessionReplaySampleRate: initConfiguration.sessionReplaySampleRate ?? 0,
-      startSessionReplayRecordingManually: !!initConfiguration.startSessionReplayRecordingManually,
-      traceSampleRate: initConfiguration.traceSampleRate,
+      sessionReplaySampleRate,
+      startSessionReplayRecordingManually:
+        initConfiguration.startSessionReplayRecordingManually !== undefined
+          ? !!initConfiguration.startSessionReplayRecordingManually
+          : sessionReplaySampleRate === 0,
+      traceSampleRate: initConfiguration.traceSampleRate ?? 100,
+      rulePsr: isNumber(initConfiguration.traceSampleRate) ? initConfiguration.traceSampleRate / 100 : undefined,
       allowedTracingUrls,
       excludedActivityUrls: initConfiguration.excludedActivityUrls ?? [],
       workerUrl: initConfiguration.workerUrl,
@@ -213,7 +221,7 @@ export function validateAndBuildRumConfiguration(
       traceContextInjection: objectHasValue(TraceContextInjection, initConfiguration.traceContextInjection)
         ? initConfiguration.traceContextInjection
         : TraceContextInjection.ALL,
-      plugins: initConfiguration.betaPlugins || [],
+      plugins: initConfiguration.plugins || [],
     },
     baseConfiguration
   )
@@ -295,7 +303,7 @@ export function serializeRumConfiguration(configuration: RumInitConfiguration) {
       track_user_interactions: configuration.trackUserInteractions,
       track_resources: configuration.trackResources,
       track_long_task: configuration.trackLongTasks,
-      plugins: configuration.betaPlugins?.map((plugin) =>
+      plugins: configuration.plugins?.map((plugin) =>
         assign({ name: plugin.name }, plugin.getConfigurationTelemetry?.())
       ),
     },

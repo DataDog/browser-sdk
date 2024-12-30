@@ -1,15 +1,13 @@
 import type { EndpointBuilder } from '../src'
-import { noop } from '../src'
+import { INTAKE_URL_PARAMETERS, noop } from '../src'
 import { mockXhr, MockXhr } from './emulate/mockXhr'
+import { registerCleanupTask } from './registerCleanupTask'
+
+const INTAKE_PARAMS = INTAKE_URL_PARAMETERS.join('&')
 
 export const SPEC_ENDPOINTS = {
-  logsEndpointBuilder: mockEndpointBuilder('https://logs-intake.com/v1/input/abcde?foo=bar'),
-  rumEndpointBuilder: mockEndpointBuilder('https://rum-intake.com/v1/input/abcde?foo=bar'),
-
-  isIntakeUrl: (url: string) => {
-    const intakeUrls = ['https://logs-intake.com/v1/input/', 'https://rum-intake.com/v1/input/']
-    return intakeUrls.some((intakeUrl) => url.indexOf(intakeUrl) === 0)
-  },
+  logsEndpointBuilder: mockEndpointBuilder(`https://mock.com/abcde?${INTAKE_PARAMS}`),
+  rumEndpointBuilder: mockEndpointBuilder(`https://mock.com/abcde?${INTAKE_PARAMS}`),
 }
 
 export function mockEndpointBuilder(url: string) {
@@ -27,7 +25,6 @@ export function interceptRequests() {
   const originalSendBeacon = isSendBeaconSupported() && navigator.sendBeacon.bind(navigator)
   const originalRequest = window.Request
   const originalFetch = window.fetch
-  let xhrManager: { reset(): void } | undefined
 
   spyOn(XMLHttpRequest.prototype, 'open').and.callFake((_, url) => requests.push({ type: 'xhr', url } as Request))
   spyOn(XMLHttpRequest.prototype, 'send').and.callFake((body) => (requests[requests.length - 1].body = body as string))
@@ -52,6 +49,19 @@ export function interceptRequests() {
     return 'fetch' in window && 'keepalive' in new window.Request('')
   }
 
+  registerCleanupTask(() => {
+    if (originalSendBeacon) {
+      navigator.sendBeacon = originalSendBeacon
+    }
+    if (originalRequest) {
+      window.Request = originalRequest
+    }
+    if (originalFetch) {
+      window.fetch = originalFetch
+    }
+    MockXhr.onSend = noop
+  })
+
   return {
     requests,
     isSendBeaconSupported,
@@ -66,23 +76,8 @@ export function interceptRequests() {
       window.fetch = newFetch
     },
     withMockXhr(onSend: (xhr: MockXhr) => void) {
-      xhrManager = mockXhr()
+      mockXhr()
       MockXhr.onSend = onSend
-    },
-    restore() {
-      if (originalSendBeacon) {
-        navigator.sendBeacon = originalSendBeacon
-      }
-      if (originalRequest) {
-        window.Request = originalRequest
-      }
-      if (originalFetch) {
-        window.fetch = originalFetch
-      }
-      if (xhrManager) {
-        xhrManager.reset()
-      }
-      MockXhr.onSend = noop
     },
   }
 }

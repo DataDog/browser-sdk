@@ -20,8 +20,8 @@ import {
   mockClock,
   registerCleanupTask,
 } from '@datadog/browser-core/test'
+import { mockRumConfiguration } from '../../test'
 import type { RumConfiguration } from './configuration'
-import { validateAndBuildRumConfiguration } from './configuration'
 
 import { LifeCycle, LifeCycleEventType } from './lifeCycle'
 import {
@@ -222,14 +222,13 @@ describe('rum session manager', () => {
 
   function startRumSessionManagerWithDefaults({ configuration }: { configuration?: Partial<RumConfiguration> } = {}) {
     return startRumSessionManager(
-      {
-        ...validateAndBuildRumConfiguration({ clientToken: 'xxx', applicationId: 'xxx' })!,
+      mockRumConfiguration({
         sessionSampleRate: 50,
         sessionReplaySampleRate: 50,
         trackResources: true,
         trackLongTasks: true,
         ...configuration,
-      },
+      }),
       lifeCycle,
       createTrackingConsentState(TrackingConsent.GRANTED)
     )

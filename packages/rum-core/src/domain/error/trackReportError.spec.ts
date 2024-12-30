@@ -7,7 +7,9 @@ import {
   mockClock,
   mockCspEventListener,
   mockReportingObserver,
+  registerCleanupTask,
 } from '@datadog/browser-core/test'
+import { mockRumConfiguration } from '../../../test'
 import type { RumConfiguration } from '../configuration'
 import { trackReportError } from './trackReportError'
 
@@ -21,19 +23,20 @@ describe('trackReportError', () => {
   let configuration: RumConfiguration
 
   beforeEach(() => {
-    configuration = {} as RumConfiguration
+    if (!window.ReportingObserver) {
+      pending('ReportingObserver not supported')
+    }
+    configuration = mockRumConfiguration()
     errorObservable = new Observable()
     notifyLog = jasmine.createSpy('notifyLog')
     reportingObserver = mockReportingObserver()
     subscription = errorObservable.subscribe(notifyLog)
-    cspEventListener = mockCspEventListener()
     clock = mockClock()
-  })
-
-  afterEach(() => {
-    subscription.unsubscribe()
-    clock.cleanup()
-    reportingObserver.reset()
+    registerCleanupTask(() => {
+      subscription.unsubscribe()
+      clock.cleanup()
+    })
+    cspEventListener = mockCspEventListener()
   })
 
   it('should track reports', () => {

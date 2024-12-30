@@ -4,6 +4,7 @@ import type { LogsConfiguration } from '../configuration'
 import type { LifeCycle } from '../lifeCycle'
 import { LifeCycleEventType } from '../lifeCycle'
 import { StatusType } from '../logger/isAuthorized'
+import { createErrorFieldFromRawError } from '../createErrorFieldFromRawError'
 
 export interface ProvidedError {
   startClocks: ClocksState
@@ -26,11 +27,7 @@ export function startRuntimeErrorCollection(configuration: LogsConfiguration, li
       rawLogsEvent: {
         message: rawError.message,
         date: rawError.startClocks.timeStamp,
-        error: {
-          kind: rawError.type,
-          stack: rawError.stack,
-          causes: rawError.causes,
-        },
+        error: createErrorFieldFromRawError(rawError),
         origin: ErrorSource.SOURCE,
         status: StatusType.error,
       },

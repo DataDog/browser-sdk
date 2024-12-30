@@ -49,7 +49,7 @@ describe('createRouter', () => {
   it('creates a new view with the fallback route', async () => {
     startViewSpy.calls.reset()
     await router.navigate('/non-existent')
-    expect(startViewSpy).toHaveBeenCalledWith('/*')
+    expect(startViewSpy).toHaveBeenCalledWith('/non-existent')
   })
 
   it('does not create a new view when the router navigates to the same URL', async () => {

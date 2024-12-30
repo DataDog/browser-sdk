@@ -3,8 +3,8 @@
 const fs = require('fs')
 const path = require('path')
 const readline = require('readline')
-const { printLog, printError, runMain } = require('./lib/execution-utils')
-const { findBrowserSdkPackageJsonFiles } = require('./lib/files-utils')
+const { printLog, printError, runMain } = require('./lib/executionUtils')
+const { findBrowserSdkPackageJsonFiles } = require('./lib/filesUtils')
 
 const LICENSE_FILE = 'LICENSE-3rdparty.csv'
 

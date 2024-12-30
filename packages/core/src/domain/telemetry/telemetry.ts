@@ -1,6 +1,6 @@
 import type { Context } from '../../tools/serialisation/context'
 import { ConsoleApiName } from '../../tools/display'
-import { NO_ERROR_STACK_PRESENT_MESSAGE } from '../error/error'
+import { NO_ERROR_STACK_PRESENT_MESSAGE, isError } from '../error/error'
 import { toStackTraceString } from '../../tools/stackTrace/handlingStack'
 import { getExperimentalFeatures } from '../../tools/experimentalFeatures'
 import type { Configuration } from '../configuration'
@@ -29,6 +29,7 @@ import { StatusType, TelemetryType } from './rawTelemetryEvent.types'
 
 // replaced at build time
 declare const __BUILD_ENV__SDK_VERSION__: string
+declare const __BUILD_ENV__SDK_SETUP__: string
 
 const ALLOWED_FRAME_URLS = [
   'https://www.datadoghq-browser-agent.com',
@@ -106,6 +107,7 @@ export function startTelemetry(telemetryService: TelemetryService, configuration
         telemetry: combine(event, {
           runtime_env: runtimeEnvInfo,
           connectivity: getConnectivity(),
+          sdk_setup: __BUILD_ENV__SDK_SETUP__,
         }),
         experimental_features: arrayFrom(getExperimentalFeatures()),
       },
@@ -200,7 +202,7 @@ export function addTelemetryUsage(usage: RawTelemetryUsage) {
 }
 
 export function formatError(e: unknown) {
-  if (e instanceof Error) {
+  if (isError(e)) {
     const stackTrace = computeStackTrace(e)
     return {
       error: {

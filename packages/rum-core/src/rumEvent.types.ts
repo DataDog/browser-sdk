@@ -150,6 +150,16 @@ export type RumActionEvent = CommonProperties &
           readonly height?: number
           [k: string]: unknown
         }
+        /**
+         * The strategy of how the auto click action name is computed
+         */
+        name_source?:
+          | 'custom_attribute'
+          | 'mask_placeholder'
+          | 'standard_attribute'
+          | 'text_content'
+          | 'mask_disallowed'
+          | 'blank'
         [k: string]: unknown
       }
       [k: string]: unknown
@@ -223,7 +233,7 @@ export type RumErrorEvent = CommonProperties &
       /**
        * The specific category of the error. It provides a high-level grouping for different types of errors.
        */
-      readonly category?: 'ANR' | 'App Hang' | 'Exception'
+      readonly category?: 'ANR' | 'App Hang' | 'Exception' | 'Watchdog Termination' | 'Memory Warning'
       /**
        * Whether the error has been handled manually in the source code or not
        */
@@ -444,17 +454,97 @@ export type RumLongTaskEvent = CommonProperties &
      */
     readonly long_task: {
       /**
-       * UUID of the long task
+       * UUID of the long task or long animation frame
        */
       readonly id?: string
       /**
-       * Duration in ns of the long task
+       * Start time of the long animation frame
+       */
+      readonly start_time?: number
+      /**
+       * Type of the event: long task or long animation frame
+       */
+      readonly entry_type?: 'long-task' | 'long-animation-frame'
+      /**
+       * Duration in ns of the long task or long animation frame
        */
       readonly duration: number
+      /**
+       * Duration in ns for which the animation frame was being blocked
+       */
+      readonly blocking_duration?: number
+      /**
+       * Start time of the rendering cycle, which includes requestAnimationFrame callbacks, style and layout calculation, resize observer and intersection observer callbacks
+       */
+      readonly render_start?: number
+      /**
+       * Start time of the time period spent in style and layout calculations
+       */
+      readonly style_and_layout_start?: number
+      /**
+       * Start time of of the first UI event (mouse/keyboard and so on) to be handled during the course of this frame
+       */
+      readonly first_ui_event_timestamp?: number
       /**
        * Whether this long task is considered a frozen frame
        */
       readonly is_frozen_frame?: boolean
+      /**
+       * A list of long scripts that were executed over the course of the long frame
+       */
+      readonly scripts?: {
+        /**
+         * Duration in ns between startTime and when the subsequent microtask queue has finished processing
+         */
+        readonly duration?: number
+        /**
+         * Duration in ns of the total time spent in 'pausing' synchronous operations (alert, synchronous XHR)
+         */
+        readonly pause_duration?: number
+        /**
+         * Duration in ns of the the total time spent processing forced layout and style inside this function
+         */
+        readonly forced_style_and_layout_duration?: number
+        /**
+         * Time the entry function was invoked
+         */
+        readonly start_time?: number
+        /**
+         * Time after compilation
+         */
+        readonly execution_start?: number
+        /**
+         * The script resource name where available (or empty if not found)
+         */
+        readonly source_url?: string
+        /**
+         * The script function name where available (or empty if not found)
+         */
+        readonly source_function_name?: string
+        /**
+         * The script character position where available (or -1 if not found)
+         */
+        readonly source_char_position?: number
+        /**
+         * Information about the invoker of the script
+         */
+        readonly invoker?: string
+        /**
+         * Type of the invoker of the script
+         */
+        readonly invoker_type?:
+          | 'user-callback'
+          | 'event-listener'
+          | 'resolve-promise'
+          | 'reject-promise'
+          | 'classic-script'
+          | 'module-script'
+        /**
+         * The container (the top-level document, or an <iframe>) the long animation frame occurred in
+         */
+        readonly window_attribution?: string
+        [k: string]: unknown
+      }[]
       [k: string]: unknown
     }
     /**
@@ -539,6 +629,20 @@ export type RumResourceEvent = CommonProperties &
        */
       readonly render_blocking_status?: 'blocking' | 'non-blocking'
       /**
+       * Worker phase properties
+       */
+      readonly worker?: {
+        /**
+         * Duration in nanoseconds of the resource worker phase
+         */
+        readonly duration: number
+        /**
+         * Duration in nanoseconds between start of the request and start of the worker phase
+         */
+        readonly start: number
+        [k: string]: unknown
+      }
+      /**
        * Redirect phase properties
        */
       readonly redirect?: {
@@ -622,6 +726,14 @@ export type RumResourceEvent = CommonProperties &
         readonly start: number
         [k: string]: unknown
       }
+      /**
+       * Network protocol used to fetch the resource (e.g., 'http/1.1', 'h2')
+       */
+      readonly protocol?: string
+      /**
+       * Delivery type of the resource
+       */
+      readonly delivery_type?: 'cache' | 'navigational-prefetch' | 'other'
       /**
        * The provider for this resource
        */
@@ -719,6 +831,14 @@ export type RumViewEvent = CommonProperties &
        * Duration in ns to the view is considered loaded
        */
       readonly loading_time?: number
+      /**
+       * Duration in ns from the moment the view was started until all the initial network requests settled
+       */
+      readonly network_settled_time?: number
+      /**
+       * Duration in ns to from the last interaction on previous view to the moment the current view was displayed
+       */
+      readonly interaction_to_next_view_time?: number
       /**
        * Type of the loading of the view
        */
@@ -1166,7 +1286,15 @@ export interface CommonProperties {
   /**
    * The source of this event
    */
-  readonly source?: 'android' | 'ios' | 'browser' | 'flutter' | 'react-native' | 'roku' | 'unity'
+  readonly source?:
+    | 'android'
+    | 'ios'
+    | 'browser'
+    | 'flutter'
+    | 'react-native'
+    | 'roku'
+    | 'unity'
+    | 'kotlin-multiplatform'
   /**
    * View properties
    */
@@ -1423,7 +1551,15 @@ export interface ViewContainerSchema {
     /**
      * Source of the parent view
      */
-    readonly source: 'android' | 'ios' | 'browser' | 'flutter' | 'react-native' | 'roku' | 'unity'
+    readonly source:
+      | 'android'
+      | 'ios'
+      | 'browser'
+      | 'flutter'
+      | 'react-native'
+      | 'roku'
+      | 'unity'
+      | 'kotlin-multiplatform'
     [k: string]: unknown
   }
   [k: string]: unknown

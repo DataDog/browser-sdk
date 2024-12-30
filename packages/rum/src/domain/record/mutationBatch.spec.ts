@@ -1,24 +1,19 @@
-import type { Clock } from '@datadog/browser-core/test'
-import { mockClock } from '@datadog/browser-core/test'
+import type { Clock, RequestIdleCallbackMock } from '@datadog/browser-core/test'
+import { mockClock, mockRequestIdleCallback } from '@datadog/browser-core/test'
 import { MUTATION_PROCESS_MIN_DELAY, createMutationBatch } from './mutationBatch'
 import type { RumMutationRecord } from './trackers'
 
 describe('createMutationBatch', () => {
   let mutationBatch: ReturnType<typeof createMutationBatch>
   let processMutationBatchSpy: jasmine.Spy<(mutations: RumMutationRecord[]) => void>
-  let requestIdleCallbackSpy: jasmine.Spy
   let clock: Clock
+  let requestIdleCallbackMock: RequestIdleCallbackMock
 
   beforeEach(() => {
     clock = mockClock()
+    requestIdleCallbackMock = mockRequestIdleCallback()
     processMutationBatchSpy = jasmine.createSpy()
     mutationBatch = createMutationBatch(processMutationBatchSpy)
-    const requestIdleCallbackMock: any = (callback: () => void) => callback()
-    if ('requestIdleCallback' in window) {
-      requestIdleCallbackSpy = spyOn(window, 'requestIdleCallback').and.callFake(requestIdleCallbackMock)
-    } else {
-      requestIdleCallbackSpy = spyOn(window as Window, 'requestAnimationFrame').and.callFake(requestIdleCallbackMock)
-    }
   })
 
   afterEach(() => {
@@ -30,8 +25,9 @@ describe('createMutationBatch', () => {
     const mutation = { type: 'childList' } as RumMutationRecord
     mutationBatch.addMutations([mutation])
 
-    expect(requestIdleCallbackSpy).toHaveBeenCalled()
+    expect(requestIdleCallbackMock.spy).toHaveBeenCalled()
     expect(processMutationBatchSpy).not.toHaveBeenCalled()
+    requestIdleCallbackMock.idle()
     clock.tick(MUTATION_PROCESS_MIN_DELAY)
     expect(processMutationBatchSpy).toHaveBeenCalledWith([mutation])
   })

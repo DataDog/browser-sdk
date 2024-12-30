@@ -18,6 +18,7 @@ export function startViewCollection(
   configuration: RumConfiguration,
   location: Location,
   domMutationObservable: Observable<void>,
+  pageOpenObserable: Observable<void>,
   locationChangeObservable: Observable<LocationChange>,
   featureFlagContexts: FeatureFlagContexts,
   pageStateHistory: PageStateHistory,
@@ -34,6 +35,7 @@ export function startViewCollection(
     location,
     lifeCycle,
     domMutationObservable,
+    pageOpenObserable,
     configuration,
     locationChangeObservable,
     !configuration.trackViewsManually,
@@ -126,6 +128,7 @@ function processViewUpdate(
       toServerDuration as (duration: Duration) => ServerDuration
     )
   }
+
   return {
     rawRumEvent: viewEvent,
     startTime: view.startClocks.relative,

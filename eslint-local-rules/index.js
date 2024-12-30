@@ -15,5 +15,6 @@ module.exports = {
   'disallow-zone-js-patched-values': require('./disallowZoneJsPatchedValues'),
   'disallow-url-constructor-patched-values': require('./disallowUrlConstructorPatchValues.js'),
   'disallow-generic-utils': require('./disallowGenericUtils'),
+  'disallow-non-scripts': require('./disallowNonScripts'),
   'secure-command-execution': require('./secureCommandExecution'),
 }

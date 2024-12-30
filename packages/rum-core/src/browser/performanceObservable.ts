@@ -1,7 +1,8 @@
 import type { Duration, RelativeTime, TimeoutId } from '@datadog/browser-core'
 import { addEventListener, Observable, setTimeout, clearTimeout, monitor, includes } from '@datadog/browser-core'
 import type { RumConfiguration } from '../domain/configuration'
-import { isAllowedRequestUrl } from '../domain/resource/resourceUtils'
+import { hasValidResourceEntryDuration, isAllowedRequestUrl } from '../domain/resource/resourceUtils'
+import { retrieveFirstInputTiming } from './firstInputPolyfill'
 
 type RumPerformanceObserverConstructor = new (callback: PerformanceObserverCallback) => RumPerformanceObserver
 
@@ -11,7 +12,7 @@ export interface BrowserWindow extends Window {
 }
 
 export interface RumPerformanceObserver extends PerformanceObserver {
-  observe(options?: PerformanceObserverInit & { durationThreshold: number }): void
+  observe(options?: PerformanceObserverInit & { durationThreshold?: number }): void
 }
 
 // We want to use a real enum (i.e. not a const enum) here, to be able to check whether an arbitrary
@@ -23,6 +24,7 @@ export enum RumPerformanceEntryType {
   LARGEST_CONTENTFUL_PAINT = 'largest-contentful-paint',
   LAYOUT_SHIFT = 'layout-shift',
   LONG_TASK = 'longtask',
+  LONG_ANIMATION_FRAME = 'long-animation-frame',
   NAVIGATION = 'navigation',
   PAINT = 'paint',
   RESOURCE = 'resource',
@@ -44,6 +46,7 @@ export interface RumPerformanceResourceTiming {
   startTime: RelativeTime
   duration: Duration
   fetchStart: RelativeTime
+  workerStart: RelativeTime
   domainLookupStart: RelativeTime
   domainLookupEnd: RelativeTime
   connectStart: RelativeTime
@@ -57,8 +60,10 @@ export interface RumPerformanceResourceTiming {
   decodedBodySize: number
   encodedBodySize: number
   transferSize: number
+  nextHopProtocol?: string
   renderBlockingStatus?: string
   traceId?: string
+  deliveryType?: 'cache' | 'navigational-prefetch' | ''
   toJSON(): Omit<PerformanceEntry, 'toJSON'>
 }
 
@@ -68,13 +73,17 @@ export interface RumPerformancePaintTiming {
   startTime: RelativeTime
 }
 
-export interface RumPerformanceNavigationTiming {
+export interface RumPerformanceNavigationTiming extends Omit<RumPerformanceResourceTiming, 'entryType'> {
   entryType: RumPerformanceEntryType.NAVIGATION
+  initiatorType: 'navigation'
+  name: string
+
   domComplete: RelativeTime
   domContentLoadedEventEnd: RelativeTime
   domInteractive: RelativeTime
   loadEventEnd: RelativeTime
-  responseStart: RelativeTime
+
+  toJSON(): Omit<RumPerformanceNavigationTiming, 'toJSON'>
 }
 
 export interface RumLargestContentfulPaintTiming {
@@ -117,9 +126,46 @@ export interface RumLayoutShiftTiming {
   }>
 }
 
+// Documentation https://developer.chrome.com/docs/web-platform/long-animation-frames#better-attribution
+export type RumPerformanceScriptTiming = {
+  duration: Duration
+  entryType: 'script'
+  executionStart: RelativeTime
+  forcedStyleAndLayoutDuration: Duration
+  invoker: string // e.g. "https://static.datadoghq.com/static/c/93085/chunk-bc4db53278fd4c77a637.min.js"
+  invokerType:
+    | 'user-callback'
+    | 'event-listener'
+    | 'resolve-promise'
+    | 'reject-promise'
+    | 'classic-script'
+    | 'module-script'
+  name: 'script'
+  pauseDuration: Duration
+  sourceCharPosition: number
+  sourceFunctionName: string
+  sourceURL: string
+  startTime: RelativeTime
+  window: Window
+  windowAttribution: string
+}
+
+export interface RumPerformanceLongAnimationFrameTiming {
+  blockingDuration: Duration
+  duration: Duration
+  entryType: RumPerformanceEntryType.LONG_ANIMATION_FRAME
+  firstUIEventTimestamp: RelativeTime
+  name: 'long-animation-frame'
+  renderStart: RelativeTime
+  scripts: RumPerformanceScriptTiming[]
+  startTime: RelativeTime
+  styleAndLayoutStart: RelativeTime
+}
+
 export type RumPerformanceEntry =
   | RumPerformanceResourceTiming
   | RumPerformanceLongTaskTiming
+  | RumPerformanceLongAnimationFrameTiming
   | RumPerformancePaintTiming
   | RumPerformanceNavigationTiming
   | RumLargestContentfulPaintTiming
@@ -134,6 +180,7 @@ export type EntryTypeToReturnType = {
   [RumPerformanceEntryType.LAYOUT_SHIFT]: RumLayoutShiftTiming
   [RumPerformanceEntryType.PAINT]: RumPerformancePaintTiming
   [RumPerformanceEntryType.LONG_TASK]: RumPerformanceLongTaskTiming
+  [RumPerformanceEntryType.LONG_ANIMATION_FRAME]: RumPerformanceLongAnimationFrameTiming
   [RumPerformanceEntryType.NAVIGATION]: RumPerformanceNavigationTiming
   [RumPerformanceEntryType.RESOURCE]: RumPerformanceResourceTiming
 }
@@ -148,10 +195,7 @@ export function createPerformanceObservable<T extends RumPerformanceEntryType>(
     }
 
     const handlePerformanceEntries = (entries: PerformanceEntryList) => {
-      const rumPerformanceEntries = filterRumPerformanceEntries(
-        configuration,
-        entries as Array<EntryTypeToReturnType[T]>
-      )
+      const rumPerformanceEntries = filterRumPerformanceEntries(entries as Array<EntryTypeToReturnType[T]>)
       if (rumPerformanceEntries.length > 0) {
         observable.notify(rumPerformanceEntries)
       }
@@ -204,8 +248,21 @@ export function createPerformanceObservable<T extends RumPerformanceEntryType>(
 
     manageResourceTimingBufferFull(configuration)
 
+    let stopFirstInputTiming: (() => void) | undefined
+    if (
+      !supportPerformanceTimingEvent(RumPerformanceEntryType.FIRST_INPUT) &&
+      options.type === RumPerformanceEntryType.FIRST_INPUT
+    ) {
+      ;({ stop: stopFirstInputTiming } = retrieveFirstInputTiming(configuration, (timing) => {
+        handlePerformanceEntries([timing])
+      }))
+    }
+
     return () => {
       observer.disconnect()
+      if (stopFirstInputTiming) {
+        stopFirstInputTiming()
+      }
       clearTimeout(timeoutId)
     }
   })
@@ -236,13 +293,13 @@ export function supportPerformanceTimingEvent(entryType: RumPerformanceEntryType
   )
 }
 
-function filterRumPerformanceEntries<T extends RumPerformanceEntryType>(
-  configuration: RumConfiguration,
-  entries: Array<EntryTypeToReturnType[T]>
-) {
-  return entries.filter((entry) => !isForbiddenResource(configuration, entry))
+function filterRumPerformanceEntries<T extends RumPerformanceEntryType>(entries: Array<EntryTypeToReturnType[T]>) {
+  return entries.filter((entry) => !isForbiddenResource(entry))
 }
 
-function isForbiddenResource(configuration: RumConfiguration, entry: RumPerformanceEntry) {
-  return entry.entryType === RumPerformanceEntryType.RESOURCE && !isAllowedRequestUrl(configuration, entry.name)
+function isForbiddenResource(entry: RumPerformanceEntry) {
+  return (
+    entry.entryType === RumPerformanceEntryType.RESOURCE &&
+    (!isAllowedRequestUrl(entry.name) || !hasValidResourceEntryDuration(entry))
+  )
 }

@@ -1,16 +1,12 @@
 import type { RelativeTime } from '@datadog/browser-core'
 import { DOM_EVENT } from '@datadog/browser-core'
 import { createNewEvent, restorePageVisibility, setPageVisibility } from '@datadog/browser-core/test'
-import type { RumConfiguration } from '../../configuration'
+import { mockRumConfiguration } from '../../../../test'
 import { trackFirstHidden } from './trackFirstHidden'
 
 describe('trackFirstHidden', () => {
-  let configuration: RumConfiguration
+  const configuration = mockRumConfiguration()
   let firstHidden: { timeStamp: RelativeTime; stop: () => void }
-
-  beforeEach(() => {
-    configuration = {} as RumConfiguration
-  })
 
   afterEach(() => {
     restorePageVisibility()
@@ -38,12 +34,6 @@ describe('trackFirstHidden', () => {
   })
 
   describe('the page is initially visible', () => {
-    let configuration: RumConfiguration
-
-    beforeEach(() => {
-      configuration = {} as RumConfiguration
-    })
-
     it('should return Infinity if the page was not hidden yet', () => {
       firstHidden = trackFirstHidden(configuration)
       expect(firstHidden.timeStamp).toBe(Infinity as RelativeTime)

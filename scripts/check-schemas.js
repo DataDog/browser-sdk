@@ -1,4 +1,4 @@
-const { printLog, printError, runMain } = require('./lib/execution-utils')
+const { printLog, printError, runMain } = require('./lib/executionUtils')
 const { command } = require('./lib/command')
 
 runMain(() => {

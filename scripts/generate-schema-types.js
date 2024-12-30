@@ -1,8 +1,13 @@
 const fs = require('fs')
 const path = require('path')
+
+// The json-schema-to-typescript is built on demand (see scripts/cli build_json2type) and is not
+// always available in the node_modules. Skip the import check.
+// eslint-disable-next-line import/no-unresolved
 const { compileFromFile } = require('json-schema-to-typescript')
+
 const prettier = require('prettier')
-const { printLog, runMain } = require('./lib/execution-utils')
+const { printLog, runMain } = require('./lib/executionUtils')
 
 const schemasDirectoryPath = path.join(__dirname, '../rum-events-format/schemas')
 const prettierConfigPath = path.join(__dirname, '../.prettierrc.yml')

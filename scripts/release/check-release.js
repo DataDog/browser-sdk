@@ -1,9 +1,9 @@
 'use strict'
 
 const { version: releaseVersion } = require('../../lerna.json')
-const { printLog, runMain } = require('../lib/execution-utils')
+const { printLog, runMain } = require('../lib/executionUtils')
 const { command } = require('../lib/command')
-const { findBrowserSdkPackageJsonFiles } = require('../lib/files-utils')
+const { findBrowserSdkPackageJsonFiles } = require('../lib/filesUtils')
 
 runMain(() => {
   checkGitTag()

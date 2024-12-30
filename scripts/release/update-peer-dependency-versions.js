@@ -1,8 +1,8 @@
-const { runMain } = require('../lib/execution-utils')
-const { modifyFile } = require('../lib/files-utils')
+const { runMain } = require('../lib/executionUtils')
+const { modifyFile } = require('../lib/filesUtils')
 const { command } = require('../lib/command')
-const { browserSdkVersion } = require('../lib/browser-sdk-version')
-const { packagesDirectoryNames } = require('../lib/packages-directory-names')
+const { browserSdkVersion } = require('../lib/browserSdkVersion')
+const { packagesDirectoryNames } = require('../lib/packagesDirectoryNames')
 
 const JSON_FILES = packagesDirectoryNames.map((packageName) => `./packages/${packageName}/package.json`)
 

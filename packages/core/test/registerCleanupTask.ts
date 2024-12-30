@@ -1,7 +1,7 @@
 const cleanupTasks: Array<() => void> = []
 
 export function registerCleanupTask(task: () => void) {
-  cleanupTasks.push(task)
+  cleanupTasks.unshift(task)
 }
 
 afterEach(() => {

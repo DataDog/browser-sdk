@@ -1,3 +1,4 @@
+import { INTAKE_URL_PARAMETERS } from '@datadog/browser-core'
 import type { LogsInitConfiguration } from '@datadog/browser-logs'
 import type { RumInitConfiguration } from '@datadog/browser-rum-core'
 import type { Servers } from './httpServers'
@@ -183,7 +184,7 @@ function setupEventBridge(servers: Servers) {
   // needs to be similar to the normal Datadog intake (through proxy) to make the SDK completely
   // ignore them.
   const eventBridgeIntake = `${servers.intake.url}/?${new URLSearchParams({
-    ddforward: '/api/v2/rum?',
+    ddforward: `/api/v2/rum?${INTAKE_URL_PARAMETERS.join('&')}`,
     bridge: 'true',
   }).toString()}`
 

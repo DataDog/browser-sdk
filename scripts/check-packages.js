@@ -2,7 +2,7 @@ const fs = require('fs')
 const path = require('path')
 const glob = require('glob')
 const minimatch = require('minimatch')
-const { printLog, printError, runMain } = require('./lib/execution-utils')
+const { printLog, printError, runMain } = require('./lib/executionUtils')
 const { command } = require('./lib/command')
 
 runMain(() => {

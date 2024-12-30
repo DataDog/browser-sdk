@@ -11,6 +11,8 @@ export {
   INTAKE_SITE_US1,
   INTAKE_SITE_US1_FED,
   INTAKE_SITE_EU1,
+  INTAKE_URL_PARAMETERS,
+  isIntakeUrl,
 } from './domain/configuration'
 export { TrackingConsent, TrackingConsentState, createTrackingConsentState } from './domain/trackingConsent'
 export {
@@ -25,7 +27,7 @@ export { trackRuntimeError } from './domain/error/trackRuntimeError'
 export { computeStackTrace, StackTrace } from './tools/stackTrace/computeStackTrace'
 export { defineGlobal, makePublicApi, PublicApi } from './boot/init'
 export { displayAlreadyInitializedError } from './boot/displayAlreadyInitializedError'
-export { initReportObservable, RawReport, RawReportType } from './domain/report/reportObservable'
+export { initReportObservable, RawReportType } from './domain/report/reportObservable'
 export {
   startTelemetry,
   Telemetry,
@@ -83,7 +85,12 @@ export { sendToExtension } from './tools/sendToExtension'
 export { runOnReadyState } from './browser/runOnReadyState'
 export { getZoneJsOriginalValue } from './tools/getZoneJsOriginalValue'
 export { instrumentMethod, instrumentSetter, InstrumentedMethodCall } from './tools/instrumentMethod'
-export { computeRawError, getFileFromStackTraceString, NO_ERROR_STACK_PRESENT_MESSAGE } from './domain/error/error'
+export {
+  computeRawError,
+  getFileFromStackTraceString,
+  isError,
+  NO_ERROR_STACK_PRESENT_MESSAGE,
+} from './domain/error/error'
 export { NonErrorPrefix } from './domain/error/error.types'
 export { Context, ContextArray, ContextValue } from './tools/serialisation/context'
 export {
@@ -94,6 +101,7 @@ export {
   deleteCookie,
   resetInitCookies,
 } from './browser/cookie'
+export { generateAnonymousId } from './domain/user'
 export { CookieStore, WeakRef, WeakRefConstructor } from './browser/browser.types'
 export { initXhrObservable, XhrCompleteContext, XhrStartContext } from './browser/xhrObservable'
 export {
@@ -105,6 +113,8 @@ export {
 } from './browser/fetchObservable'
 export { createPageExitObservable, PageExitEvent, PageExitReason, isPageExitReason } from './browser/pageExitObservable'
 export * from './browser/addEventListener'
+export { requestIdleCallback } from './tools/requestIdleCallback'
+export * from './tools/taskQueue'
 export * from './tools/timer'
 export { initConsoleObservable, resetConsoleObservable, ConsoleLog } from './domain/console/consoleObservable'
 export { createBoundedBuffer, BoundedBuffer } from './tools/boundedBuffer'

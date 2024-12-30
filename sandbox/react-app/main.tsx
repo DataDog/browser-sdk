@@ -8,7 +8,7 @@ import { reactPlugin, ErrorBoundary } from '@datadog/browser-rum-react'
 datadogRum.init({
   applicationId: 'xxx',
   clientToken: 'xxx',
-  betaPlugins: [reactPlugin({ router: true })],
+  plugins: [reactPlugin({ router: true })],
 })
 
 const router = createBrowserRouter(
@@ -28,6 +28,10 @@ const router = createBrowserRouter(
         {
           path: 'test-error-boundary',
           Component: TestErrorBoundaryPage,
+        },
+        {
+          path: '*',
+          Component: WildCardPage,
         },
       ],
     },
@@ -63,6 +67,11 @@ function HomePage() {
 function UserPage() {
   const { id } = useParams()
   return <h1>User {id}</h1>
+}
+
+function WildCardPage() {
+  const path = useParams()['*']
+  return <h1>Wildcard: {path}</h1>
 }
 
 export function TestErrorBoundaryPage() {

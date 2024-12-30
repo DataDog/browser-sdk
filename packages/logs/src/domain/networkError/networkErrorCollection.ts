@@ -11,6 +11,7 @@ import {
   readBytesFromStream,
   tryToClone,
   isServerError,
+  isIntakeUrl,
 } from '@datadog/browser-core'
 import type { LogsConfiguration } from '../configuration'
 import type { LifeCycle } from '../lifeCycle'
@@ -35,7 +36,7 @@ export function startNetworkErrorCollection(configuration: LogsConfiguration, li
   })
 
   function handleResponse(type: RequestType, request: XhrCompleteContext | FetchResolveContext) {
-    if (!configuration.isIntakeUrl(request.url) && (isRejected(request) || isServerError(request.status))) {
+    if (!isIntakeUrl(request.url) && (isRejected(request) || isServerError(request.status))) {
       if ('xhr' in request) {
         computeXhrResponseData(request.xhr, configuration, onResponseDataAvailable)
       } else if (request.response) {
@@ -57,6 +58,8 @@ export function startNetworkErrorCollection(configuration: LogsConfiguration, li
           date: request.startClocks.timeStamp,
           error: {
             stack: (responseData as string) || 'Failed to load',
+            // We don't know if the error was handled or not, so we set it to undefined
+            handling: undefined,
           },
           http: {
             method: request.method as any, // Cast resource method because of case mismatch cf issue RUMF-1152

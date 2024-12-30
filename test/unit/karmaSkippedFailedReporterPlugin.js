@@ -1,9 +1,7 @@
-function KarmaSkippedFailedReporter(baseReporterDecorator, logger) {
+function KarmaSkippedFailedReporter(logger) {
   var log = logger.create('karma-skipped-failed')
 
-  baseReporterDecorator(this)
-
-  this.specSkipped = this.specFailure = (browser, result) => {
+  this.onSpecComplete = (browser, result) => {
     if (result.skipped && !result.success) {
       log.warn('Failing skipped test:')
       log.warn(browser.name)
@@ -13,7 +11,7 @@ function KarmaSkippedFailedReporter(baseReporterDecorator, logger) {
   }
 }
 
-KarmaSkippedFailedReporter.$inject = ['baseReporterDecorator', 'logger']
+KarmaSkippedFailedReporter.$inject = ['logger']
 
 module.exports = {
   'reporter:karma-skipped-failed': ['type', KarmaSkippedFailedReporter],

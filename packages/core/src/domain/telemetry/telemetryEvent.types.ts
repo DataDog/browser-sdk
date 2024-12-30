@@ -134,6 +134,10 @@ export type TelemetryConfigurationEvent = CommonTelemetryProperties & {
        */
       start_session_replay_recording_manually?: boolean
       /**
+       * Whether Session Replay should automatically start a recording when enabled
+       */
+      start_recording_immediately?: boolean
+      /**
        * Whether a proxy is used
        */
       use_proxy?: boolean
@@ -201,6 +205,18 @@ export type TelemetryConfigurationEvent = CommonTelemetryProperties & {
        * Session replay default privacy level
        */
       default_privacy_level?: string
+      /**
+       * Session replay text and input privacy level
+       */
+      text_and_input_privacy_level?: string
+      /**
+       * Session replay image privacy level
+       */
+      image_privacy_level?: string
+      /**
+       * Session replay touch privacy level
+       */
+      touch_privacy_level?: string
       /**
        * Privacy control for action name
        */
@@ -385,7 +401,7 @@ export type TelemetryUsageEvent = CommonTelemetryProperties & {
      * Telemetry type
      */
     type: 'usage'
-    usage: TelemetryCommonFeaturesUsage | TelemetryBrowserFeaturesUsage
+    usage: TelemetryCommonFeaturesUsage | TelemetryBrowserFeaturesUsage | TelemetryMobileFeaturesUsage
     [k: string]: unknown
   }
   [k: string]: unknown
@@ -394,95 +410,26 @@ export type TelemetryUsageEvent = CommonTelemetryProperties & {
  * Schema of features usage common across SDKs
  */
 export type TelemetryCommonFeaturesUsage =
-  | {
-      /**
-       * setTrackingConsent API
-       */
-      feature: 'set-tracking-consent'
-      /**
-       * The tracking consent value set by the user
-       */
-      tracking_consent: 'granted' | 'not-granted' | 'pending'
-      [k: string]: unknown
-    }
-  | {
-      /**
-       * stopSession API
-       */
-      feature: 'stop-session'
-      [k: string]: unknown
-    }
-  | {
-      /**
-       * startView API
-       */
-      feature: 'start-view'
-      [k: string]: unknown
-    }
-  | {
-      /**
-       * addAction API
-       */
-      feature: 'add-action'
-      [k: string]: unknown
-    }
-  | {
-      /**
-       * addError API
-       */
-      feature: 'add-error'
-      [k: string]: unknown
-    }
-  | {
-      /**
-       * setGlobalContext, setGlobalContextProperty, addAttribute APIs
-       */
-      feature: 'set-global-context'
-      [k: string]: unknown
-    }
-  | {
-      /**
-       * setUser, setUserProperty, setUserInfo APIs
-       */
-      feature: 'set-user'
-      [k: string]: unknown
-    }
-  | {
-      /**
-       * addFeatureFlagEvaluation API
-       */
-      feature: 'add-feature-flag-evaluation'
-      [k: string]: unknown
-    }
+  | SetTrackingConsent
+  | StopSession
+  | StartView
+  | AddAction
+  | AddError
+  | SetGlobalContext
+  | SetUser
+  | AddFeatureFlagEvaluation
 /**
  * Schema of browser specific features usage
  */
 export type TelemetryBrowserFeaturesUsage =
-  | {
-      /**
-       * startSessionReplayRecording API
-       */
-      feature: 'start-session-replay-recording'
-      /**
-       * Whether the recording is allowed to start even on sessions sampled out of replay
-       */
-      is_forced?: boolean
-      [k: string]: unknown
-    }
-  | {
-      /**
-       * startDurationVital API
-       */
-      feature: 'start-duration-vital'
-      [k: string]: unknown
-    }
-  | {
-      /**
-       * addDurationVital API
-       */
-      feature: 'add-duration-vital'
-      [k: string]: unknown
-    }
+  | StartSessionReplayRecording
+  | StartDurationVital
+  | StopDurationVital
+  | AddDurationVital
+/**
+ * Schema of mobile specific features usage
+ */
+export type TelemetryMobileFeaturesUsage = AddViewLoadingTime
 
 /**
  * Schema of common properties of Telemetry events
@@ -513,7 +460,7 @@ export interface CommonTelemetryProperties {
   /**
    * The source of this event
    */
-  readonly source: 'android' | 'ios' | 'browser' | 'flutter' | 'react-native' | 'unity'
+  readonly source: 'android' | 'ios' | 'browser' | 'flutter' | 'react-native' | 'unity' | 'kotlin-multiplatform'
   /**
    * The version of the SDK generating the telemetry event
    */
@@ -601,5 +548,116 @@ export interface CommonTelemetryProperties {
     }
     [k: string]: unknown
   }
+  [k: string]: unknown
+}
+export interface SetTrackingConsent {
+  /**
+   * setTrackingConsent API
+   */
+  feature: 'set-tracking-consent'
+  /**
+   * The tracking consent value set by the user
+   */
+  tracking_consent: 'granted' | 'not-granted' | 'pending'
+  [k: string]: unknown
+}
+export interface StopSession {
+  /**
+   * stopSession API
+   */
+  feature: 'stop-session'
+  [k: string]: unknown
+}
+export interface StartView {
+  /**
+   * startView API
+   */
+  feature: 'start-view'
+  [k: string]: unknown
+}
+export interface AddAction {
+  /**
+   * addAction API
+   */
+  feature: 'add-action'
+  [k: string]: unknown
+}
+export interface AddError {
+  /**
+   * addError API
+   */
+  feature: 'add-error'
+  [k: string]: unknown
+}
+export interface SetGlobalContext {
+  /**
+   * setGlobalContext, setGlobalContextProperty, addAttribute APIs
+   */
+  feature: 'set-global-context'
+  [k: string]: unknown
+}
+export interface SetUser {
+  /**
+   * setUser, setUserProperty, setUserInfo APIs
+   */
+  feature: 'set-user'
+  [k: string]: unknown
+}
+export interface AddFeatureFlagEvaluation {
+  /**
+   * addFeatureFlagEvaluation API
+   */
+  feature: 'add-feature-flag-evaluation'
+  [k: string]: unknown
+}
+export interface StartSessionReplayRecording {
+  /**
+   * startSessionReplayRecording API
+   */
+  feature: 'start-session-replay-recording'
+  /**
+   * Whether the recording is allowed to start even on sessions sampled out of replay
+   */
+  is_forced?: boolean
+  [k: string]: unknown
+}
+export interface StartDurationVital {
+  /**
+   * startDurationVital API
+   */
+  feature: 'start-duration-vital'
+  [k: string]: unknown
+}
+export interface StopDurationVital {
+  /**
+   * stopDurationVital API
+   */
+  feature: 'stop-duration-vital'
+  [k: string]: unknown
+}
+export interface AddDurationVital {
+  /**
+   * addDurationVital API
+   */
+  feature: 'add-duration-vital'
+  [k: string]: unknown
+}
+export interface AddViewLoadingTime {
+  /**
+   * addViewLoadingTime API
+   */
+  feature: 'addViewLoadingTime'
+  /**
+   * Whether the view is not available
+   */
+  no_view: boolean
+  /**
+   * Whether the available view is not active
+   */
+  no_active_view: boolean
+  /**
+   * Whether the loading time was overwritten
+   */
+  overwritten: boolean
   [k: string]: unknown
 }

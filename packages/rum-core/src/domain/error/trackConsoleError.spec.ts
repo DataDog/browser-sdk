@@ -37,6 +37,7 @@ describe('trackConsoleError', () => {
       source: ErrorSource.CONSOLE,
       handling: ErrorHandling.HANDLED,
       handlingStack: jasmine.any(String),
+      causes: undefined,
     })
   })
 
@@ -58,6 +59,7 @@ describe('trackConsoleError', () => {
       handling: ErrorHandling.HANDLED,
       handlingStack: jasmine.any(String),
       fingerprint: 'my-fingerprint',
+      causes: undefined,
     })
   })
 })

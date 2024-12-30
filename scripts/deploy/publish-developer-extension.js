@@ -2,7 +2,7 @@
 const webstore = (...args) => import('chrome-webstore-upload').then(({ default: webstore }) => webstore(...args))
 const fs = require('node:fs')
 
-const { printLog, runMain } = require('../lib/execution-utils')
+const { printLog, runMain } = require('../lib/executionUtils')
 const { command } = require('../lib/command')
 const {
   getChromeWebStoreClientId,
@@ -41,8 +41,8 @@ async function uploadAndPublish() {
     printLog('Uploading the archive')
     await api.uploadExisting(zipFile, token)
 
-    printLog('Publishing to trusted testers')
-    await api.publish('trustedTesters')
+    printLog('Publishing')
+    await api.publish()
   } catch (err) {
     const body = err?.response?.body
     if (body) {

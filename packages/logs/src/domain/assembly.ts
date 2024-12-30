@@ -40,6 +40,7 @@ export function startLogsAssembly(
         {
           service: configuration.service,
           session_id: session ? session.id : undefined,
+          session: session ? { id: session.id } : undefined,
           // Insert user first to allow overrides from global context
           usr: !isEmptyObject(commonContext.user) ? commonContext.user : undefined,
           view: commonContext.view,

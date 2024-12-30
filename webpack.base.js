@@ -2,7 +2,7 @@ const path = require('path')
 const webpack = require('webpack')
 const TsconfigPathsPlugin = require('tsconfig-paths-webpack-plugin')
 const TerserPlugin = require('terser-webpack-plugin')
-const { buildEnvKeys, getBuildEnvValue } = require('./scripts/lib/build-env')
+const { buildEnvKeys, getBuildEnvValue } = require('./scripts/lib/buildEnv')
 
 const tsconfigPath = path.join(__dirname, 'tsconfig.webpack.json')
 

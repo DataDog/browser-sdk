@@ -1,5 +1,6 @@
 import type { InterventionReport, ReportType } from '../../src/domain/report/browser.types'
 import { noop } from '../../src/tools/utils/functionUtils'
+import { registerCleanupTask } from '../registerCleanupTask'
 import { createNewEvent } from './createNewEvent'
 
 export type MockReportingObserver = ReturnType<typeof mockReportingObserver>
@@ -32,15 +33,16 @@ export function mockReportingObserver() {
     return reportingObserver
   } as unknown as typeof originalReportingObserver
 
+  registerCleanupTask(() => {
+    window.ReportingObserver = originalReportingObserver
+    callbacks = {}
+  })
+
   return {
     raiseReport(type: ReportType) {
       if (callbacks[type]) {
         callbacks[type].forEach((callback) => callback([{ ...FAKE_REPORT, type }], reportingObserver))
       }
-    },
-    reset() {
-      window.ReportingObserver = originalReportingObserver
-      callbacks = {}
     },
   }
 }
@@ -48,8 +50,16 @@ export function mockReportingObserver() {
 export type MockCspEventListener = ReturnType<typeof mockCspEventListener>
 
 export function mockCspEventListener() {
-  spyOn(document, 'addEventListener').and.callFake((_type: string, listener: EventListener) => {
-    listeners.push(listener)
+  // eslint-disable-next-line @typescript-eslint/unbound-method
+  const originalAddEventListener = EventTarget.prototype.addEventListener
+  EventTarget.prototype.addEventListener = jasmine
+    .createSpy()
+    .and.callFake((_type: string, listener: EventListener) => {
+      listeners.push(listener)
+    })
+
+  registerCleanupTask(() => {
+    EventTarget.prototype.addEventListener = originalAddEventListener
   })
 
   const listeners: EventListener[] = []

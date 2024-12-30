@@ -1,8 +1,8 @@
-import type { RelativeTime, Subscription } from '@datadog/browser-core'
-import { Observable, ONE_SECOND, getTimeStamp } from '@datadog/browser-core'
+import type { Subscription } from '@datadog/browser-core'
+import { Observable, ONE_SECOND } from '@datadog/browser-core'
 import type { Clock } from '@datadog/browser-core/test'
-import { mockClock, SPEC_ENDPOINTS } from '@datadog/browser-core/test'
-import { createPerformanceEntry, mockPerformanceObserver } from '../../test'
+import { mockClock } from '@datadog/browser-core/test'
+import { createPerformanceEntry, mockPerformanceObserver, mockRumConfiguration } from '../../test'
 import type { RumPerformanceEntry } from '../browser/performanceObservable'
 import { RumPerformanceEntryType } from '../browser/performanceObservable'
 import { LifeCycle, LifeCycleEventType } from './lifeCycle'
@@ -15,7 +15,6 @@ import {
   createPageActivityObservable,
 } from './waitPageActivityEnd'
 import type { RumConfiguration } from './configuration'
-import { validateAndBuildRumConfiguration } from './configuration'
 
 // Used to wait some time after the creation of an action
 const BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY = PAGE_ACTIVITY_VALIDATION_DELAY * 0.8
@@ -42,31 +41,29 @@ function eventsCollector<T>() {
   }
 }
 
-const RUM_CONFIGURATION: RumConfiguration = {
-  ...validateAndBuildRumConfiguration({
-    clientToken: 'xxx',
-    applicationId: 'AppId',
-    trackResources: true,
-    trackLongTasks: true,
-  })!,
-  ...SPEC_ENDPOINTS,
-}
+const RUM_CONFIGURATION = mockRumConfiguration()
 
 describe('createPageActivityObservable', () => {
   const { events, pushEvent } = eventsCollector<PageActivityEvent>()
 
   const lifeCycle = new LifeCycle()
   const domMutationObservable = new Observable<void>()
+  const windowOpenObservable = new Observable<void>()
   let pageActivitySubscription: Subscription
   let notifyPerformanceEntries: (entries: RumPerformanceEntry[]) => void
 
   function startListeningToPageActivities(
     extraConfiguration: Partial<RumConfiguration> = { excludedActivityUrls: [EXCLUDED_FAKE_URL] }
   ) {
-    const pageActivityObservable = createPageActivityObservable(lifeCycle, domMutationObservable, {
-      ...RUM_CONFIGURATION,
-      ...extraConfiguration,
-    })
+    const pageActivityObservable = createPageActivityObservable(
+      lifeCycle,
+      domMutationObservable,
+      windowOpenObservable,
+      {
+        ...RUM_CONFIGURATION,
+        ...extraConfiguration,
+      }
+    )
     pageActivitySubscription = pageActivityObservable.subscribe(pushEvent)
   }
 
@@ -93,16 +90,15 @@ describe('createPageActivityObservable', () => {
 
   it('does not emit an activity event when a navigation occurs', () => {
     startListeningToPageActivities()
-    lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [
-      createPerformanceEntry(RumPerformanceEntryType.NAVIGATION),
-    ])
+
+    notifyPerformanceEntries([createPerformanceEntry(RumPerformanceEntryType.NAVIGATION)])
+
     expect(events).toEqual([])
   })
 
   it('emits an activity event when `window.open` is used', () => {
-    spyOn(window, 'open')
     startListeningToPageActivities()
-    window.open('toto')
+    windowOpenObservable.notify()
     expect(events).toEqual([{ isBusy: false }])
   })
 
@@ -228,7 +224,7 @@ describe('doWaitPageActivityEnd', () => {
 
     expect(idlPageActivityCallbackSpy).toHaveBeenCalledOnceWith({
       hadActivity: true,
-      end: getTimeStamp(BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY as RelativeTime),
+      end: clock.timeStamp(BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY),
     })
   })
 
@@ -249,7 +245,7 @@ describe('doWaitPageActivityEnd', () => {
 
       expect(idlPageActivityCallbackSpy).toHaveBeenCalledOnceWith({
         hadActivity: true,
-        end: getTimeStamp((extendCount * BEFORE_PAGE_ACTIVITY_END_DELAY) as RelativeTime),
+        end: clock.timeStamp(extendCount * BEFORE_PAGE_ACTIVITY_END_DELAY),
       })
     })
 
@@ -274,7 +270,7 @@ describe('doWaitPageActivityEnd', () => {
 
       expect(idlPageActivityCallbackSpy).toHaveBeenCalledOnceWith({
         hadActivity: true,
-        end: getTimeStamp(MAX_DURATION as RelativeTime),
+        end: clock.timeStamp(MAX_DURATION),
       })
     })
   })
@@ -294,7 +290,7 @@ describe('doWaitPageActivityEnd', () => {
 
       expect(idlPageActivityCallbackSpy).toHaveBeenCalledOnceWith({
         hadActivity: true,
-        end: getTimeStamp((BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY + PAGE_ACTIVITY_END_DELAY * 2) as RelativeTime),
+        end: clock.timeStamp(BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY + PAGE_ACTIVITY_END_DELAY * 2),
       })
     })
 
@@ -309,7 +305,7 @@ describe('doWaitPageActivityEnd', () => {
 
       expect(idlPageActivityCallbackSpy).toHaveBeenCalledOnceWith({
         hadActivity: true,
-        end: getTimeStamp(MAX_DURATION as RelativeTime),
+        end: clock.timeStamp(MAX_DURATION),
       })
     })
   })

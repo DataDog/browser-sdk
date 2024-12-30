@@ -1,7 +1,6 @@
 import type { Clock } from '../../../test'
 import { mockClock } from '../../../test'
-import type { RelativeTime } from '../../tools/utils/timeUtils'
-import { relativeToClocks, resetNavigationStart, ONE_MINUTE } from '../../tools/utils/timeUtils'
+import { relativeToClocks, ONE_MINUTE } from '../../tools/utils/timeUtils'
 import { noop } from '../../tools/utils/functionUtils'
 import type { RawError } from '../error/error.types'
 import { createEventRateLimiter } from './createEventRateLimiter'
@@ -13,7 +12,6 @@ describe('createEventRateLimiter', () => {
   const limit = 1
   beforeEach(() => {
     clock = mockClock()
-    resetNavigationStart()
   })
 
   afterEach(() => {
@@ -51,7 +49,7 @@ describe('createEventRateLimiter', () => {
     expect(onLimitReachedSpy).toHaveBeenCalledOnceWith({
       message: 'Reached max number of errors by minute: 1',
       source: 'agent',
-      startClocks: relativeToClocks(0 as RelativeTime),
+      startClocks: relativeToClocks(clock.relative(0)),
     })
   })
 

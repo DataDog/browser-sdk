@@ -3,3 +3,10 @@ schema-version: v1
 kind: mergequeue
 team: rum-browser
 to_staging_enable: true
+---
+schema-version: v1
+kind: buildimpactanalysis
+team: ci-platforms
+enabled_strategies:
+  - yarn_berry_strategy
+preprocess: true

@@ -63,8 +63,8 @@ describe('validateAndBuildRumConfiguration', () => {
   })
 
   describe('traceSampleRate', () => {
-    it('defaults to undefined if the option is not provided', () => {
-      expect(validateAndBuildRumConfiguration(DEFAULT_INIT_CONFIGURATION)!.traceSampleRate).toBeUndefined()
+    it('defaults to 100 if the option is not provided', () => {
+      expect(validateAndBuildRumConfiguration(DEFAULT_INIT_CONFIGURATION)!.traceSampleRate).toBe(100)
     })
 
     it('is set to provided value', () => {
@@ -82,6 +82,18 @@ describe('validateAndBuildRumConfiguration', () => {
       displayErrorSpy.calls.reset()
       expect(validateAndBuildRumConfiguration({ ...DEFAULT_INIT_CONFIGURATION, traceSampleRate: 200 })).toBeUndefined()
       expect(displayErrorSpy).toHaveBeenCalledOnceWith('Trace Sample Rate should be a number between 0 and 100')
+    })
+  })
+
+  describe('rulePsr', () => {
+    it('is set to one hundredth of the traceSampleRate if defined', () => {
+      expect(validateAndBuildRumConfiguration({ ...DEFAULT_INIT_CONFIGURATION, traceSampleRate: 50 })!.rulePsr).toBe(
+        0.5
+      )
+    })
+
+    it('is undefined is no traceSampleRate is defined', () => {
+      expect(validateAndBuildRumConfiguration(DEFAULT_INIT_CONFIGURATION)!.rulePsr).toBeUndefined()
     })
   })
 
@@ -266,9 +278,17 @@ describe('validateAndBuildRumConfiguration', () => {
   })
 
   describe('startSessionReplayRecordingManually', () => {
-    it('defaults to false', () => {
+    it('defaults to true if sessionReplaySampleRate is 0', () => {
       expect(
-        validateAndBuildRumConfiguration(DEFAULT_INIT_CONFIGURATION)!.startSessionReplayRecordingManually
+        validateAndBuildRumConfiguration({ ...DEFAULT_INIT_CONFIGURATION, sessionReplaySampleRate: 0 })!
+          .startSessionReplayRecordingManually
+      ).toBeTrue()
+    })
+
+    it('defaults to false if sessionReplaySampleRate is not 0', () => {
+      expect(
+        validateAndBuildRumConfiguration({ ...DEFAULT_INIT_CONFIGURATION, sessionReplaySampleRate: 50 })!
+          .startSessionReplayRecordingManually
       ).toBeFalse()
     })
 
@@ -448,7 +468,7 @@ describe('validateAndBuildRumConfiguration', () => {
       }
       const configuration = validateAndBuildRumConfiguration({
         ...DEFAULT_INIT_CONFIGURATION,
-        betaPlugins: [plugin],
+        plugins: [plugin],
       })
       expect(configuration!.plugins).toEqual([plugin])
     })
@@ -478,7 +498,7 @@ describe('serializeRumConfiguration', () => {
       trackResources: true,
       trackLongTasks: true,
       remoteConfigurationId: '123',
-      betaPlugins: [{ name: 'foo', getConfigurationTelemetry: () => ({ bar: true }) }],
+      plugins: [{ name: 'foo', getConfigurationTelemetry: () => ({ bar: true }) }],
     }
 
     type MapRumInitConfigurationKey<Key extends string> = Key extends keyof InitConfiguration
@@ -489,9 +509,7 @@ describe('serializeRumConfiguration', () => {
           ? 'track_long_task' // oops
           : Key extends 'applicationId' | 'subdomain' | 'remoteConfigurationId'
             ? never
-            : Key extends 'betaPlugins' // renamed during public beta
-              ? 'plugins'
-              : CamelToSnakeCase<Key>
+            : CamelToSnakeCase<Key>
 
     // By specifying the type here, we can ensure that serializeConfiguration is returning an
     // object containing all expected properties.

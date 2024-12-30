@@ -1,4 +1,4 @@
-const { printLog, runMain, timeout } = require('../lib/execution-utils')
+const { printLog, runMain, timeout } = require('../lib/executionUtils')
 const { command } = require('../lib/command')
 
 /**

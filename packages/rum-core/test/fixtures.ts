@@ -10,7 +10,7 @@ import {
 } from '@datadog/browser-core'
 import { RumPerformanceEntryType, type EntryTypeToReturnType } from '../src/browser/performanceObservable'
 import type { RawRumEvent } from '../src/rawRumEvent.types'
-import { VitalType, ActionType, RumEventType, ViewLoadingType } from '../src/rawRumEvent.types'
+import { VitalType, ActionType, RumEventType, ViewLoadingType, RumLongTaskEntryType } from '../src/rawRumEvent.types'
 
 export function createRawRumEvent(type: RumEventType, overrides?: Context): RawRumEvent {
   switch (type) {
@@ -51,6 +51,7 @@ export function createRawRumEvent(type: RumEventType, overrides?: Context): RawR
           long_task: {
             id: generateUUID(),
             duration: 0 as ServerDuration,
+            entry_type: RumLongTaskEntryType.LONG_TASK,
           },
           _dd: {
             discarded: false,
@@ -204,16 +205,52 @@ export function createPerformanceEntry<T extends RumPerformanceEntryType>(
 
       return { ...entry, toJSON: () => entry }
     }
+    case RumPerformanceEntryType.LONG_ANIMATION_FRAME: {
+      const entry = assign(
+        {
+          name: 'long-animation-frame',
+          entryType: RumPerformanceEntryType.LONG_ANIMATION_FRAME,
+          startTime: 1234 as RelativeTime,
+          duration: 82 as Duration,
+          renderStart: 1421.5 as RelativeTime,
+          styleAndLayoutStart: 1428 as RelativeTime,
+          firstUIEventTimestamp: 0 as RelativeTime,
+          blockingDuration: 0 as Duration,
+          scripts: [
+            {
+              name: 'script',
+              entryType: 'script',
+              startTime: 1348 as RelativeTime,
+              duration: 6 as Duration,
+              invoker: 'http://example.com/script.js',
+              invokerType: 'classic-script',
+              windowAttribution: 'self',
+              executionStart: 1348.7 as RelativeTime,
+              forcedStyleAndLayoutDuration: 0 as Duration,
+              pauseDuration: 0 as Duration,
+              sourceURL: 'http://example.com/script.js',
+              sourceFunctionName: '',
+              sourceCharPosition: 9876,
+            },
+          ],
+        },
+        overrides
+      ) as EntryTypeToReturnType[T]
+
+      return { ...entry, toJSON: () => entry }
+    }
     case RumPerformanceEntryType.RESOURCE: {
       const entry = assign(
         {
           connectEnd: 200 as RelativeTime,
           connectStart: 200 as RelativeTime,
           renderBlockingStatus: 'non-blocking',
+          deliveryType: 'cache',
           domainLookupEnd: 200 as RelativeTime,
           domainLookupStart: 200 as RelativeTime,
           duration: 100 as Duration,
           entryType: RumPerformanceEntryType.RESOURCE,
+          workerStart: 200 as RelativeTime,
           fetchStart: 200 as RelativeTime,
           name: 'https://resource.com/valid',
           redirectEnd: 200 as RelativeTime,
@@ -224,6 +261,7 @@ export function createPerformanceEntry<T extends RumPerformanceEntryType>(
           secureConnectionStart: 200 as RelativeTime,
           startTime: 200 as RelativeTime,
           responseStatus: 200,
+          nextHopProtocol: 'HTTP/1.0',
         },
         overrides
       ) as EntryTypeToReturnType[T]

@@ -1,13 +1,5 @@
 import type { Subscription, TimeoutId, TimeStamp } from '@datadog/browser-core'
-import {
-  instrumentMethod,
-  matchList,
-  monitor,
-  Observable,
-  timeStampNow,
-  setTimeout,
-  clearTimeout,
-} from '@datadog/browser-core'
+import { matchList, monitor, Observable, timeStampNow, setTimeout, clearTimeout } from '@datadog/browser-core'
 import { createPerformanceObservable, RumPerformanceEntryType } from '../browser/performanceObservable'
 import type { RumConfiguration } from './configuration'
 import type { LifeCycle } from './lifeCycle'
@@ -57,11 +49,17 @@ export type PageActivityEndEvent = { hadActivity: true; end: TimeStamp } | { had
 export function waitPageActivityEnd(
   lifeCycle: LifeCycle,
   domMutationObservable: Observable<void>,
+  windowOpenObservable: Observable<void>,
   configuration: RumConfiguration,
   pageActivityEndCallback: (event: PageActivityEndEvent) => void,
   maxDuration?: number
 ) {
-  const pageActivityObservable = createPageActivityObservable(lifeCycle, domMutationObservable, configuration)
+  const pageActivityObservable = createPageActivityObservable(
+    lifeCycle,
+    domMutationObservable,
+    windowOpenObservable,
+    configuration
+  )
   return doWaitPageActivityEnd(pageActivityObservable, pageActivityEndCallback, maxDuration)
 }
 
@@ -118,6 +116,7 @@ export function doWaitPageActivityEnd(
 export function createPageActivityObservable(
   lifeCycle: LifeCycle,
   domMutationObservable: Observable<void>,
+  windowOpenObservable: Observable<void>,
   configuration: RumConfiguration
 ): Observable<PageActivityEvent> {
   return new Observable<PageActivityEvent>((observable) => {
@@ -127,6 +126,7 @@ export function createPageActivityObservable(
 
     subscriptions.push(
       domMutationObservable.subscribe(notifyPageActivity),
+      windowOpenObservable.subscribe(notifyPageActivity),
       createPerformanceObservable(configuration, { type: RumPerformanceEntryType.RESOURCE }).subscribe((entries) => {
         if (entries.some((entry) => !isExcludedUrl(configuration, entry.name))) {
           notifyPageActivity()
@@ -156,10 +156,7 @@ export function createPageActivityObservable(
       })
     )
 
-    const { stop: stopTrackingWindowOpen } = trackWindowOpen(notifyPageActivity)
-
     return () => {
-      stopTrackingWindowOpen()
       subscriptions.forEach((s) => s.unsubscribe())
     }
 
@@ -171,8 +168,4 @@ export function createPageActivityObservable(
 
 function isExcludedUrl(configuration: RumConfiguration, requestUrl: string): boolean {
   return matchList(configuration.excludedActivityUrls, requestUrl)
-}
-
-function trackWindowOpen(callback: () => void) {
-  return instrumentMethod(window, 'open', callback)
 }
