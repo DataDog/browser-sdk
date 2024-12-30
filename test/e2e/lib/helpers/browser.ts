@@ -1,4 +1,5 @@
 import * as os from 'os'
+import type { BrowserContext } from '@playwright/test'
 
 // To keep tests sane, ensure we got a fixed list of possible platforms and browser names.
 const validPlatformNames = ['windows', 'macos', 'linux', 'ios', 'android'] as const
@@ -56,39 +57,33 @@ function includes<T>(list: readonly T[], item: unknown): item is T {
   return list.includes(item as any)
 }
 
-interface BrowserLog {
-  level: string
+export interface BrowserLog {
+  level: 'log' | 'debug' | 'info' | 'error' | 'warning'
   message: string
   source: string
   timestamp: number
 }
 
-export async function withBrowserLogs(fn: (logs: BrowserLog[]) => void) {
-  // browser.getLogs is not defined when using a remote webdriver service. We should find an
-  // alternative at some point.
-  // https://github.com/webdriverio/webdriverio/issues/4275
-  if (browser.getLogs) {
-    const logs = (await browser.getLogs('browser')) as BrowserLog[]
-    fn(logs)
+export class BrowserLogsManager {
+  private logs: BrowserLog[] = []
+
+  add(log: BrowserLog) {
+    this.logs.push(log)
+  }
+
+  get() {
+    return this.logs
+  }
+
+  clear() {
+    this.logs = []
   }
 }
 
-export async function flushBrowserLogs() {
-  await withBrowserLogs(() => {
-    // Ignore logs
-  })
-}
-
+// TODO, see if we can use the browser context to clear cookies or we should keep the previous hack
 // wdio method does not work for some browsers
-export function deleteAllCookies() {
-  return browser.execute(() => {
-    const cookies = document.cookie.split(';')
-    for (const cookie of cookies) {
-      const eqPos = cookie.indexOf('=')
-      const name = eqPos > -1 ? cookie.substr(0, eqPos) : cookie
-      document.cookie = `${name}=;expires=Thu, 01 Jan 1970 00:00:00 GMT;samesite=strict`
-    }
-  })
+export function deleteAllCookies(context: BrowserContext) {
+  return context.clearCookies()
 }
 
 export function setCookie(name: string, value: string, expiresDelay: number = 0) {

@@ -1,8 +1,10 @@
 import * as fs from 'fs'
 import { inspect } from 'util'
 
-const logsPath = (browser.options as WebdriverIO.Config & { logsPath: string }).logsPath
-const stream: { write(s: string): void } = logsPath ? fs.createWriteStream(logsPath, { flags: 'a' }) : process.stdout
+const logsPath = undefined // (browser.options as WebdriverIO.Config & { logsPath: string }).logsPath
+const stream: { write(s: string): void } = logsPath
+  ? fs.createWriteStream(logsPath, { flags: 'a' })
+  : { write: () => {} } // TODO: why do we need to log to stdout?
 
 export function log(...args: any[]) {
   const prefix = `[${process.pid}] ${new Date().toISOString()}`
