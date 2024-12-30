@@ -2,6 +2,15 @@ import type { FacetRegistry, FacetValuesFilter } from '../../../hooks/useEvents'
 import type { Facet, FacetValue } from '../../../facets.constants'
 type SelectionState = 'selected' | 'unselected' | 'partial-selected'
 
+function isAllChildrenFiltered(children: string[], filteredFacetValues: string[]) {
+  return children.every((child: FacetValue) => filteredFacetValues.includes(child))
+}
+
+function isAnyChildrenFiltered(children: string[], filteredFacetValues: string[]) {
+  return children.some((child: FacetValue) => filteredFacetValues.includes(child))
+}
+
+// limitation: only populate direct parents
 export function computeSelectionState(
   facetValuesFilter: FacetValuesFilter,
   facetRegistry: FacetRegistry,
@@ -28,11 +37,11 @@ export function computeSelectionState(
     }
 
     // if all children are in the filter, then it should be selected'
-    if (children && children.every((child: FacetValue) => filteredFacetValues.includes(child))) {
+    if (children && isAllChildrenFiltered(children, filteredFacetValues)) {
       return 'selected'
     }
-    // if any of the children of the facet is in the filter, then it should be partial-selected
-    if (children && children.some((child: FacetValue) => filteredFacetValues.includes(child))) {
+    // if any of the direct children of the facet is in the filter, then it should be partial-selected
+    if (children && isAnyChildrenFiltered(children, filteredFacetValues)) {
       return 'partial-selected'
     }
   } else if (facetValuesFilter.type === 'exclude') {
@@ -44,11 +53,11 @@ export function computeSelectionState(
       return 'unselected'
     }
     // if all children are in the filter, then it should be unselected
-    if (children && children.every((child: FacetValue) => filteredFacetValues.includes(child))) {
+    if (children && isAllChildrenFiltered(children, filteredFacetValues)) {
       return 'unselected'
     }
     // if any of the children of the facet is in the filter, then it should be partial-selected
-    if (children && children.some((child: FacetValue) => filteredFacetValues.includes(child))) {
+    if (children && isAnyChildrenFiltered(children, filteredFacetValues)) {
       return 'partial-selected'
     }
     return 'selected'

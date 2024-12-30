@@ -1,7 +1,36 @@
-import { isIE, isSafari } from '@datadog/browser-core'
-import { parseQuery, matchWithWildcard } from './eventFilters'
+import type { RumEvent } from '../../../../../packages/rum-core/src/rumEvent.types'
+import { isIE, isSafari } from '../../../../../packages/core/src/tools/utils/browserDetection'
+import { parseQuery, matchWithWildcard, filterExcludedFacets } from './eventFilters'
+import type { FacetValuesFilter } from './eventFilters'
+import { FacetRegistry } from './facetRegistry'
+const RUM_ERROR_EVENT = { type: 'error' } as RumEvent
+const RUM_ACTION_EVENT = { type: 'action' } as RumEvent
 
 if (!isIE() && !isSafari()) {
+  describe('filterExcludedFacets', () => {
+    const facetRegistry = new FacetRegistry()
+    facetRegistry.addEvent(RUM_ACTION_EVENT)
+    facetRegistry.addEvent(RUM_ERROR_EVENT)
+    it('should exclude selected facets when in exclusion mode', () => {
+      expect(
+        filterExcludedFacets(
+          [RUM_ERROR_EVENT, RUM_ACTION_EVENT],
+          { type: 'exclude', facetValues: { type: ['error'] } } as FacetValuesFilter,
+          facetRegistry
+        )
+      ).toEqual([RUM_ACTION_EVENT])
+    })
+    it('should exclude unselected facets when in inclusion mode', () => {
+      expect(
+        filterExcludedFacets(
+          [RUM_ERROR_EVENT, RUM_ACTION_EVENT],
+          { type: 'include', facetValues: { type: ['error'] } } as FacetValuesFilter,
+          facetRegistry
+        )
+      ).toEqual([RUM_ERROR_EVENT])
+    })
+  })
+
   describe('parseQuery', () => {
     it('return a simple field', () => {
       expect(parseQuery('foo:bar')).toEqual([['foo', 'bar']])

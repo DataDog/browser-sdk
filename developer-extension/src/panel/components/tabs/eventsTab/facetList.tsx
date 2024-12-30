@@ -102,9 +102,9 @@ function FacetValue({
       <Checkbox
         label={facet.values?.[facetValue]?.label ?? facetValue}
         checked={facetSelectState === 'selected'}
-        indeterminate={facetSelectState === 'partial-selected'}
+        indeterminate={facetSelectState === 'partial-selected'} // can only populate direct parents
         onChange={() => {
-          onExcludedFacetValuesChange(toggleFacetValue('exclude', facet, facetValuesFilter, facetValue))
+          onExcludedFacetValuesChange(toggleFacetValue(facetValuesFilter.type, facet, facetValuesFilter, facetValue))
         }}
       />
       <Text>{facetValueCount}</Text>
@@ -169,17 +169,20 @@ function toggleFacetValue(
   const currentValues = facetValuesFilter.facetValues[facet.path]
   const newFacetValues = { ...facetValuesFilter.facetValues }
 
-  if (type === 'include') { // switch between the only values
-    return {
-      type,
-      facetValues: { [facet.path]: [value] },
-    }
-  } else if (type === 'exclude' && facetValuesFilter.type !== type) {
-    // when switching from include to exclude, reset to all included first
-    // consistent with the facet behaviors of datadog web-ui
-    return {
-      type,
-      facetValues: {}
+  if (facetValuesFilter.type !== type) {
+    // handle mode changes
+    if (type === 'exclude') {
+      // reset when change from include to exclude
+      return {
+        type,
+        facetValues: {},
+      }
+    } else if (type === 'include' && currentValues) {
+      // should maintain one and only filter when change from exclude to include
+      return {
+        type,
+        facetValues: currentValues.includes(value) ? newFacetValues : { [facet.path]: [value] },
+      }
     }
   }
 

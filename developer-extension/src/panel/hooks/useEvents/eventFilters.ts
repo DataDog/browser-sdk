@@ -44,7 +44,7 @@ export function applyEventFilters(filters: EventFilters, events: SdkEvent[], fac
   return filteredEvents
 }
 
-function filterExcludedFacets(
+export function filterExcludedFacets(
   events: SdkEvent[],
   facetValuesFilter: FacetValuesFilter,
   facetRegistry: FacetRegistry
