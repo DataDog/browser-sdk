@@ -49,27 +49,13 @@ export function filterExcludedFacets(
   facetValuesFilter: FacetValuesFilter,
   facetRegistry: FacetRegistry
 ): SdkEvent[] {
-  if (facetValuesFilter.type === 'exclude') {
-    const excludedFacetValues = facetValuesFilter.facetValues
-    return events.filter(
-      (event) =>
-        !Object.entries(excludedFacetValues).some(([facetPath, excludedValues]) =>
-          (excludedValues as Array<FieldMultiValue | undefined>).includes(
-            facetRegistry.getFieldValueForEvent(event, facetPath)
-          )
-        )
-    )
-  } else if (facetValuesFilter.type === 'include') {
-    const includedFacetValues = facetValuesFilter.facetValues
-    return events.filter((event) =>
-      Object.entries(includedFacetValues).every(([facetPath, includedValues]) =>
-        (includedValues as Array<FieldMultiValue | undefined>).includes(
-          facetRegistry.getFieldValueForEvent(event, facetPath)
-        )
-      )
-    )
-  }
-  return events
+  return events.filter((event: SdkEvent): boolean =>
+    Object.entries(facetValuesFilter.facetValues).every(([facetPath, filteredValues]) => {
+      const eventValue = facetRegistry.getFieldValueForEvent(event, facetPath)
+      const values = filteredValues as Array<FieldMultiValue | undefined>
+      return facetValuesFilter.type === 'include' ? values.includes(eventValue) : !values.includes(eventValue)
+    })
+  )
 }
 
 function filterOutdatedVersions(events: SdkEvent[]): SdkEvent[] {
