@@ -3,7 +3,7 @@ import { expireCookie, mockClock } from '../../../test'
 import { getCookie, setCookie } from '../../browser/cookie'
 import type { SessionStore } from './sessionStore'
 import { STORAGE_POLL_DELAY, startSessionStore, selectSessionStoreStrategyType } from './sessionStore'
-import { SESSION_EXPIRATION_DELAY, SESSION_TIME_OUT_DELAY } from './sessionConstants'
+import { SESSION_EXPIRATION_DELAY, SESSION_TIME_OUT_DELAY, SessionPersistence } from './sessionConstants'
 import { SESSION_STORE_KEY } from './storeStrategies/sessionStoreStrategy'
 import type { SessionState } from './sessionState'
 
@@ -62,7 +62,7 @@ describe('session store', () => {
         clientToken: 'abc',
         allowFallbackToLocalStorage: true,
       })
-      expect(sessionStoreStrategyType).toEqual(jasmine.objectContaining({ type: 'Cookie' }))
+      expect(sessionStoreStrategyType).toEqual(jasmine.objectContaining({ type: SessionPersistence.COOKIE }))
     })
 
     it('should report undefined when cookies are not available, and fallback is not allowed', () => {
@@ -80,7 +80,7 @@ describe('session store', () => {
         clientToken: 'abc',
         allowFallbackToLocalStorage: true,
       })
-      expect(sessionStoreStrategyType).toEqual({ type: 'LocalStorage' })
+      expect(sessionStoreStrategyType).toEqual({ type: SessionPersistence.LOCAL_STORAGE })
     })
 
     it('should report undefined when no storage is available', () => {
@@ -113,7 +113,7 @@ describe('session store', () => {
         clientToken: 'abc',
         allowFallbackToLocalStorage: false,
       })
-      if (sessionStoreStrategyType?.type !== 'Cookie') {
+      if (sessionStoreStrategyType?.type !== SessionPersistence.COOKIE) {
         fail('Unable to initialize cookie storage')
         return
       }

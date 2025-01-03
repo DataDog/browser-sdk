@@ -7,6 +7,7 @@ import {
   isExperimentalFeatureEnabled,
   resetExperimentalFeatures,
 } from '../../tools/experimentalFeatures'
+import { SessionPersistence } from '../session/sessionConstants'
 import { TrackingConsent } from '../trackingConsent'
 import type { InitConfiguration } from './configuration'
 import { serializeConfiguration, validateAndBuildConfiguration } from './configuration'
@@ -108,7 +109,7 @@ describe('validateAndBuildConfiguration', () => {
     it('should contain cookie in the configuration by default', () => {
       const configuration = validateAndBuildConfiguration({ clientToken, allowFallbackToLocalStorage: false })
       expect(configuration?.sessionStoreStrategyType).toEqual({
-        type: 'Cookie',
+        type: SessionPersistence.COOKIE,
         cookieOptions: { secure: false, crossSite: false, partitioned: false },
       })
     })
@@ -116,7 +117,7 @@ describe('validateAndBuildConfiguration', () => {
     it('should contain cookie in the configuration when fallback is enabled and cookies are available', () => {
       const configuration = validateAndBuildConfiguration({ clientToken, allowFallbackToLocalStorage: true })
       expect(configuration?.sessionStoreStrategyType).toEqual({
-        type: 'Cookie',
+        type: SessionPersistence.COOKIE,
         cookieOptions: { secure: false, crossSite: false, partitioned: false },
       })
     })
@@ -124,7 +125,7 @@ describe('validateAndBuildConfiguration', () => {
     it('should contain local storage in the configuration when fallback is enabled and cookies are not available', () => {
       spyOnProperty(document, 'cookie', 'get').and.returnValue('')
       const configuration = validateAndBuildConfiguration({ clientToken, allowFallbackToLocalStorage: true })
-      expect(configuration?.sessionStoreStrategyType).toEqual({ type: 'LocalStorage' })
+      expect(configuration?.sessionStoreStrategyType).toEqual({ type: SessionPersistence.LOCAL_STORAGE })
     })
 
     it('should not contain any storage if both cookies and local storage are unavailable', () => {

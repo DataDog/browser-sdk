@@ -16,6 +16,7 @@ import {
 import type { SessionState } from './sessionState'
 import { initLocalStorageStrategy, selectLocalStorageStrategy } from './storeStrategies/sessionInLocalStorage'
 import { processSessionStoreOperations } from './sessionStoreOperations'
+import { SessionPersistence } from './sessionConstants'
 
 export interface SessionStore {
   expandOrRenewSession: () => void
@@ -67,7 +68,7 @@ export function startSessionStore<TrackingType extends string>(
   const sessionStateUpdateObservable = new Observable<{ previousState: SessionState; newState: SessionState }>()
 
   const sessionStoreStrategy =
-    sessionStoreStrategyType.type === 'Cookie'
+    sessionStoreStrategyType.type === SessionPersistence.COOKIE
       ? initCookieStrategy(sessionStoreStrategyType.cookieOptions)
       : initLocalStorageStrategy()
   const { expireSession } = sessionStoreStrategy
