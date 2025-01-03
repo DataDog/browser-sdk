@@ -10,6 +10,7 @@ import {
   relativeNow,
   createTrackingConsentState,
   TrackingConsent,
+  SessionPersistence,
 } from '@datadog/browser-core'
 import type { Clock } from '@datadog/browser-core/test'
 import { createNewEvent, expireCookie, mockClock } from '@datadog/browser-core/test'
@@ -128,7 +129,7 @@ describe('logs session manager', () => {
     return startLogsSessionManager(
       {
         sessionSampleRate: 100,
-        sessionStoreStrategyType: { type: 'Cookie', cookieOptions: {} },
+        sessionStoreStrategyType: { type: SessionPersistence.COOKIE, cookieOptions: {} },
         ...configuration,
       } as LogsConfiguration,
       createTrackingConsentState(TrackingConsent.GRANTED)

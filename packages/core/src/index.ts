@@ -57,6 +57,7 @@ export {
 } from './domain/session/sessionManager'
 export {
   SESSION_TIME_OUT_DELAY, // Exposed for tests
+  SessionPersistence,
 } from './domain/session/sessionConstants'
 export {
   HttpRequest,
