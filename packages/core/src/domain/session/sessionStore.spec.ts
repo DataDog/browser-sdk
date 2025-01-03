@@ -36,14 +36,14 @@ function expectTrackedSessionToBeInStore(id?: string) {
 }
 
 function expectNotTrackedSessionToBeInStore() {
-  expect(getCookie(SESSION_STORE_KEY)).not.toContain('&id=')
+  expect(getCookie(SESSION_STORE_KEY)).not.toMatch(/\bid=/)
   expect(getCookie(SESSION_STORE_KEY)).not.toContain('isExpired=1')
   expect(getCookie(SESSION_STORE_KEY)).toContain(`${PRODUCT_KEY}=${FakeTrackingType.NOT_TRACKED}`)
 }
 
 function expectSessionToBeExpiredInStore() {
   expect(getCookie(SESSION_STORE_KEY)).toContain('isExpired=1')
-  expect(getCookie(SESSION_STORE_KEY)).not.toContain('&id=')
+  expect(getCookie(SESSION_STORE_KEY)).not.toMatch(/\bid=/)
   expect(getCookie(SESSION_STORE_KEY)).not.toContain(`${PRODUCT_KEY}=`)
 }
 
