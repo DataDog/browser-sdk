@@ -1,6 +1,6 @@
 import type { Duration, RelativeTime, ServerDuration, TimeStamp } from '@datadog/browser-core'
 import { ExperimentalFeature, Observable } from '@datadog/browser-core'
-import { createNewEvent, mockExperimentalFeatures } from '@datadog/browser-core/test'
+import { createNewEvent, mockExperimentalFeatures, registerCleanupTask } from '@datadog/browser-core/test'
 import type { RawRumActionEvent, RawRumEventCollectedData } from '@datadog/browser-rum-core'
 import { collectAndValidateRawRumEvents, mockPageStateHistory, mockRumConfiguration } from '../../../test'
 import type { RawRumEvent } from '../../rawRumEvent.types'
@@ -19,13 +19,15 @@ describe('actionCollection', () => {
     const domMutationObservable = new Observable<void>()
     const windowOpenObservable = new Observable<void>()
 
-    ;({ addAction } = startActionCollection(
+    const actionCollection = startActionCollection(
       lifeCycle,
       domMutationObservable,
       windowOpenObservable,
       mockRumConfiguration(),
       basePageStateHistory
-    ))
+    )
+    registerCleanupTask(actionCollection.stop)
+    addAction = actionCollection.addAction
 
     rawRumEvents = collectAndValidateRawRumEvents(lifeCycle)
   })

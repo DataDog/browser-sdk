@@ -246,7 +246,7 @@ export function startRumEventCollection(
   const viewHistory = startViewHistory(lifeCycle)
   const urlContexts = startUrlContexts(lifeCycle, locationChangeObservable, location)
 
-  const { addAction, actionContexts } = startActionCollection(
+  const actionCollection = startActionCollection(
     lifeCycle,
     domMutationObservable,
     windowOpenObservable,
@@ -263,7 +263,7 @@ export function startRumEventCollection(
     sessionManager,
     viewHistory,
     urlContexts,
-    actionContexts,
+    actionCollection.actionContexts,
     displayContext,
     ciVisibilityContext,
     getCommonContext,
@@ -274,9 +274,10 @@ export function startRumEventCollection(
     viewHistory,
     pageStateHistory,
     urlContexts,
-    addAction,
-    actionContexts,
+    addAction: actionCollection.addAction,
+    actionContexts: actionCollection.actionContexts,
     stop: () => {
+      actionCollection.stop()
       ciVisibilityContext.stop()
       displayContext.stop()
       urlContexts.stop()
