@@ -39,5 +39,5 @@ function retrieveSessionFromLocalStorage(): SessionState {
 }
 
 function expireSessionFromLocalStorage(previousSessionState: SessionState, configuration: Configuration) {
-  persistInLocalStorage(getExpiredSessionState(previousSessionState, !!configuration.trackAnonymousUser))
+  persistInLocalStorage(getExpiredSessionState(previousSessionState, configuration))
 }

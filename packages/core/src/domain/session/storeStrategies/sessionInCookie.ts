@@ -23,8 +23,7 @@ export function initCookieStrategy(configuration: Configuration, cookieOptions: 
     isLockEnabled: isChromium(),
     persistSession: persistSessionCookie(cookieOptions),
     retrieveSession: retrieveSessionCookie,
-    expireSession: (sessionState: SessionState) =>
-      expireSessionCookie(cookieOptions, sessionState, !!configuration.trackAnonymousUser),
+    expireSession: (sessionState: SessionState) => expireSessionCookie(cookieOptions, sessionState, configuration),
   }
 
   tryOldCookiesMigration(cookieStore)
@@ -38,13 +37,13 @@ function persistSessionCookie(options: CookieOptions) {
   }
 }
 
-function expireSessionCookie(options: CookieOptions, sessionState: SessionState, trackAnonymousUser: boolean) {
-  const expiredSessionState = getExpiredSessionState(sessionState, trackAnonymousUser)
+function expireSessionCookie(options: CookieOptions, sessionState: SessionState, configuration: Configuration) {
+  const expiredSessionState = getExpiredSessionState(sessionState, configuration)
   // we do not extend cookie expiration date
   setCookie(
     SESSION_STORE_KEY,
     toSessionString(expiredSessionState),
-    trackAnonymousUser ? SESSION_COOKIE_EXPIRATION_DELAY : SESSION_TIME_OUT_DELAY,
+    configuration.trackAnonymousUser ? SESSION_COOKIE_EXPIRATION_DELAY : SESSION_TIME_OUT_DELAY,
     options
   )
 }

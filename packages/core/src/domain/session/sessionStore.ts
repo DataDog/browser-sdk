@@ -118,9 +118,7 @@ export function startSessionStore<TrackingType extends string>(
     processSessionStoreOperations(
       {
         process: (sessionState) =>
-          isSessionInExpiredState(sessionState)
-            ? getExpiredSessionState(sessionState, !!configuration.trackAnonymousUser)
-            : undefined,
+          isSessionInExpiredState(sessionState) ? getExpiredSessionState(sessionState, configuration) : undefined,
         after: synchronizeSession,
       },
       sessionStoreStrategy
@@ -129,7 +127,7 @@ export function startSessionStore<TrackingType extends string>(
 
   function synchronizeSession(sessionState: SessionState) {
     if (isSessionInExpiredState(sessionState)) {
-      sessionState = getExpiredSessionState(sessionState, !!configuration.trackAnonymousUser)
+      sessionState = getExpiredSessionState(sessionState, configuration)
     }
     if (hasSessionInCache()) {
       if (isSessionInCacheOutdated(sessionState)) {
@@ -147,7 +145,7 @@ export function startSessionStore<TrackingType extends string>(
       {
         process: (sessionState) => {
           if (isSessionInNotStartedState(sessionState)) {
-            return getExpiredSessionState(sessionState, !!configuration.trackAnonymousUser)
+            return getExpiredSessionState(sessionState, configuration)
           }
         },
         after: (sessionState) => {
@@ -181,7 +179,7 @@ export function startSessionStore<TrackingType extends string>(
   }
 
   function expireSessionInCache() {
-    sessionCache = getExpiredSessionState(sessionCache, !!configuration.trackAnonymousUser)
+    sessionCache = getExpiredSessionState(sessionCache, configuration)
     expireObservable.notify()
   }
 
@@ -211,7 +209,7 @@ export function startSessionStore<TrackingType extends string>(
     expire: () => {
       cancelExpandOrRenewSession()
       expireSession(sessionCache)
-      synchronizeSession(getExpiredSessionState(sessionCache, !!configuration.trackAnonymousUser))
+      synchronizeSession(getExpiredSessionState(sessionCache, configuration))
     },
     stop: () => {
       clearInterval(watchSessionTimeoutId)
