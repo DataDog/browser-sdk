@@ -72,7 +72,7 @@ describe('startSessionManager', () => {
 
   function expectSessionIdToNotBeDefined(sessionManager: SessionManager<FakeTrackingType>) {
     expect(sessionManager.findSession()!.id).toBeUndefined()
-    expect(getCookie(SESSION_STORE_KEY)).not.toContain('id=')
+    expect(getCookie(SESSION_STORE_KEY)).not.toMatch(/\bid=/)
   }
 
   function expectTrackingTypeToBe(

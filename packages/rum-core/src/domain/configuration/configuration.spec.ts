@@ -526,7 +526,6 @@ describe('serializeRumConfiguration', () => {
           : Key extends 'applicationId' | 'subdomain' | 'remoteConfigurationId'
             ? never
             : CamelToSnakeCase<Key>
-
     // By specifying the type here, we can ensure that serializeConfiguration is returning an
     // object containing all expected properties.
     const serializedConfiguration: ExtractTelemetryConfiguration<
