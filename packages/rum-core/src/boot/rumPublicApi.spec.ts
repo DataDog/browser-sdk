@@ -34,6 +34,7 @@ const noopStartRum = (): ReturnType<StartRum> => ({
   stopDurationVital: () => undefined,
   addDurationVital: () => undefined,
   stop: () => undefined,
+  setUser: () => undefined,
 })
 const DEFAULT_INIT_CONFIGURATION = { applicationId: 'xxx', clientToken: 'xxx' }
 const FAKE_WORKER = {} as DeflateWorker
