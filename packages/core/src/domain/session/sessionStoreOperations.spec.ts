@@ -38,7 +38,6 @@ const DEFAULT_INIT_CONFIGURATION = { trackAnonymousUser: true } as Configuration
     const now = Date.now()
 
     beforeEach(() => {
-      spyOn(Math, 'random').and.callFake(() => 0)
       sessionStoreStrategy.expireSession(initialSession)
       initialSession = { id: '123', created: String(now) }
       otherSession = { id: '456', created: String(now + 100) }

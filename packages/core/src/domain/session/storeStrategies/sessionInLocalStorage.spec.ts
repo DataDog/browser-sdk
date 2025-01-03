@@ -7,7 +7,7 @@ const DEFAULT_INIT_CONFIGURATION = { trackAnonymousUser: true } as Configuration
 describe('session in local storage strategy', () => {
   const sessionState: SessionState = { id: '123', created: '0' }
   beforeEach(() => {
-    spyOn(Math, 'random').and.returnValue(1)
+    spyOn(Math, 'random').and.returnValue(0)
   })
 
   afterEach(() => {
@@ -38,8 +38,8 @@ describe('session in local storage strategy', () => {
     localStorageStrategy.persistSession(sessionState)
     localStorageStrategy.expireSession(sessionState)
     const session = localStorageStrategy?.retrieveSession()
-    expect(session).toEqual({ isExpired: '1', anonymousId: '2gosa7pa2gw' })
-    expect(window.localStorage.getItem(SESSION_STORE_KEY)).toBe('isExpired=1&aid=2gosa7pa2gw')
+    expect(session).toEqual({ isExpired: '1', anonymousId: '0000000000' })
+    expect(window.localStorage.getItem(SESSION_STORE_KEY)).toBe('isExpired=1&aid=0000000000')
   })
 
   it('should not interfere with other keys present in local storage', () => {

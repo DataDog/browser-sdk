@@ -592,7 +592,6 @@ describe('startSessionManager', () => {
 
   describe('tracking consent', () => {
     it('expires the session when tracking consent is withdrawn', () => {
-      spyOn(Math, 'random').and.callFake(() => 0) // mock random for anonymous uuid generation
       const trackingConsentState = createTrackingConsentState(TrackingConsent.GRANTED)
       const sessionManager = startSessionManagerWithDefaults({ trackingConsentState })
 

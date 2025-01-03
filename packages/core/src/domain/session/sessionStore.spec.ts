@@ -6,7 +6,6 @@ import type { SessionStore } from './sessionStore'
 import { STORAGE_POLL_DELAY, startSessionStore, selectSessionStoreStrategyType } from './sessionStore'
 import { SESSION_EXPIRATION_DELAY, SESSION_TIME_OUT_DELAY } from './sessionConstants'
 import { SESSION_STORE_KEY } from './storeStrategies/sessionStoreStrategy'
-import type { SessionState } from './sessionState'
 
 const enum FakeTrackingType {
   TRACKED = 'tracked',
@@ -17,7 +16,7 @@ const DURATION = 123456
 const PRODUCT_KEY = 'product'
 const FIRST_ID = 'first'
 const SECOND_ID = 'second'
-const EXPIRED_SESSION: SessionState = { isExpired: '1', anonymousId: '0' }
+const IS_EXPIRED = '1'
 const DEFAULT_INIT_CONFIGURATION = { trackAnonymousUser: true } as Configuration
 
 function setSessionInStore(trackingType: FakeTrackingType = FakeTrackingType.TRACKED, id?: string, expire?: number) {
@@ -142,10 +141,9 @@ describe('session store', () => {
 
     describe('initialize session', () => {
       it('when session not in store, should initialize a new session', () => {
-        spyOn(Math, 'random').and.callFake(() => 0)
         setupSessionStore()
-
-        expect(sessionStoreManager.getSession()).toEqual(EXPIRED_SESSION)
+        expect(sessionStoreManager.getSession().isExpired).toEqual(IS_EXPIRED)
+        expect(sessionStoreManager.getSession().anonymousId).toEqual(jasmine.any(String))
       })
 
       it('when tracked session in store, should do nothing ', () => {
@@ -461,12 +459,12 @@ describe('session store', () => {
 
     describe('reinitialize session', () => {
       it('when session not in store, should reinitialize the store', () => {
-        spyOn(Math, 'random').and.callFake(() => 0)
         setupSessionStore()
 
         sessionStoreManager.restartSession()
 
-        expect(sessionStoreManager.getSession()).toEqual(EXPIRED_SESSION)
+        expect(sessionStoreManager.getSession().isExpired).toEqual(IS_EXPIRED)
+        expect(sessionStoreManager.getSession().anonymousId).toEqual(jasmine.any(String))
       })
 
       it('when session in store, should do nothing', () => {

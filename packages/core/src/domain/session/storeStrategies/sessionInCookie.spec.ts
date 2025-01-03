@@ -33,8 +33,8 @@ describe('session in cookie strategy', () => {
     cookieStorageStrategy.persistSession(sessionState)
     cookieStorageStrategy.expireSession(sessionState)
     const session = cookieStorageStrategy.retrieveSession()
-    expect(session).toEqual({ isExpired: '1', anonymousId: '0' })
-    expect(getCookie(SESSION_STORE_KEY)).toBe('isExpired=1&aid=0')
+    expect(session).toEqual({ isExpired: '1', anonymousId: '0000000000' })
+    expect(getCookie(SESSION_STORE_KEY)).toBe('isExpired=1&aid=0000000000')
   })
 
   it('should return an empty object if session string is invalid', () => {
