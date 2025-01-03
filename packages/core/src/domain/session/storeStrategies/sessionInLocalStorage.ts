@@ -1,5 +1,4 @@
 import { generateUUID } from '../../../tools/utils/stringUtils'
-import type { Configuration } from '../../configuration'
 import type { SessionState } from '../sessionState'
 import { toSessionString, toSessionState, getExpiredSessionState } from '../sessionState'
 import type { SessionStoreStrategy, SessionStoreStrategyType } from './sessionStoreStrategy'
@@ -20,12 +19,12 @@ export function selectLocalStorageStrategy(): SessionStoreStrategyType | undefin
   }
 }
 
-export function initLocalStorageStrategy(configuration: Configuration): SessionStoreStrategy {
+export function initLocalStorageStrategy(): SessionStoreStrategy {
   return {
     isLockEnabled: false,
     persistSession: persistInLocalStorage,
     retrieveSession: retrieveSessionFromLocalStorage,
-    expireSession: (sessionState: SessionState) => expireSessionFromLocalStorage(sessionState, configuration),
+    expireSession: expireSessionFromLocalStorage,
   }
 }
 
@@ -38,6 +37,6 @@ function retrieveSessionFromLocalStorage(): SessionState {
   return toSessionState(sessionString)
 }
 
-function expireSessionFromLocalStorage(previousSessionState: SessionState, configuration: Configuration) {
-  persistInLocalStorage(getExpiredSessionState(previousSessionState, configuration))
+function expireSessionFromLocalStorage(previousSessionState: SessionState) {
+  persistInLocalStorage(getExpiredSessionState(previousSessionState))
 }

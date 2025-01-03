@@ -437,7 +437,7 @@ describe('rum assembly', () => {
       expect((serverRumEvents[0].context as any).bar).toEqual('foo')
     })
 
-    it('should always have anonymous id', () => {
+    it('should not be included if empty', () => {
       const { lifeCycle, serverRumEvents, commonContext } = setupAssemblyTestWithDefaults()
       commonContext.context = {}
       notifyRawRumEvent(lifeCycle, {
@@ -491,26 +491,14 @@ describe('rum assembly', () => {
       expect(serverRumEvents[0].usr!.id).toEqual('foo')
     })
 
-    it('should always contain anonymous id', () => {
+    it('should not be included if empty', () => {
       const { lifeCycle, serverRumEvents, commonContext } = setupAssemblyTestWithDefaults()
       commonContext.user = {}
       notifyRawRumEvent(lifeCycle, {
         rawRumEvent: createRawRumEvent(RumEventType.VIEW),
       })
 
-      expect(serverRumEvents[0].usr).toEqual({ anonymous_id: 'device-123' })
-    })
-
-    it('should not contain anonymous id when opt-out', () => {
-      const { lifeCycle, serverRumEvents, commonContext } = setupAssemblyTestWithDefaults({
-        partialConfiguration: { trackAnonymousUser: false },
-      })
-      commonContext.user = {}
-      notifyRawRumEvent(lifeCycle, {
-        rawRumEvent: createRawRumEvent(RumEventType.VIEW),
-      })
-
-      expect(serverRumEvents[0].usr).toBeUndefined()
+      expect(serverRumEvents[0].usr).toBe(undefined)
     })
 
     it('should ignore the current user when a saved common context user is provided', () => {
@@ -861,6 +849,8 @@ describe('rum assembly', () => {
 
   describe('anonymous user id context', () => {
     it('includes the anonymous user id context', () => {
+      mockExperimentalFeatures([ExperimentalFeature.ANONYMOUS_USER_TRACKING])
+
       const { lifeCycle, serverRumEvents } = setupAssemblyTestWithDefaults()
 
       mockCookie('expired=1&aid=123')

@@ -1,7 +1,6 @@
 import type { MockStorage } from '../../../test'
 import { mockClock, mockCookie, mockLocalStorage } from '../../../test'
 import type { CookieOptions } from '../../browser/cookie'
-import type { Configuration } from '../configuration'
 import { initCookieStrategy } from './storeStrategies/sessionInCookie'
 import { initLocalStorageStrategy } from './storeStrategies/sessionInLocalStorage'
 import type { SessionState } from './sessionState'
@@ -10,19 +9,19 @@ import { processSessionStoreOperations, LOCK_MAX_TRIES, LOCK_RETRY_DELAY } from 
 import { SESSION_STORE_KEY } from './storeStrategies/sessionStoreStrategy'
 
 const cookieOptions: CookieOptions = {}
-const EXPIRED_SESSION: SessionState = { isExpired: '1', anonymousId: '0' }
-const DEFAULT_INIT_CONFIGURATION = { trackAnonymousUser: true } as Configuration
+const EXPIRED_SESSION: SessionState = { isExpired: '1' }
+
 ;(
   [
     {
       title: 'Cookie Storage',
-      createSessionStoreStrategy: () => initCookieStrategy(DEFAULT_INIT_CONFIGURATION, cookieOptions),
+      createSessionStoreStrategy: () => initCookieStrategy(cookieOptions),
       mockStorage: mockCookie,
       storageKey: SESSION_STORE_KEY,
     },
     {
       title: 'Local Storage',
-      createSessionStoreStrategy: () => initLocalStorageStrategy(DEFAULT_INIT_CONFIGURATION),
+      createSessionStoreStrategy: () => initLocalStorageStrategy(),
       mockStorage: mockLocalStorage,
       storageKey: SESSION_STORE_KEY,
     },
@@ -38,7 +37,6 @@ const DEFAULT_INIT_CONFIGURATION = { trackAnonymousUser: true } as Configuration
     const now = Date.now()
 
     beforeEach(() => {
-      spyOn(Math, 'random').and.callFake(() => 0)
       sessionStoreStrategy.expireSession(initialSession)
       initialSession = { id: '123', created: String(now) }
       otherSession = { id: '456', created: String(now + 100) }

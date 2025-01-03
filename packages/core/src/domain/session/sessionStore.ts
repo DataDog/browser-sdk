@@ -3,7 +3,7 @@ import { Observable } from '../../tools/observable'
 import { ONE_SECOND, dateNow } from '../../tools/utils/timeUtils'
 import { throttle } from '../../tools/utils/functionUtils'
 import { generateUUID } from '../../tools/utils/stringUtils'
-import type { InitConfiguration, Configuration } from '../configuration'
+import type { InitConfiguration } from '../configuration'
 import { selectCookieStrategy, initCookieStrategy } from './storeStrategies/sessionInCookie'
 import type { SessionStoreStrategyType } from './storeStrategies/sessionStoreStrategy'
 import {
@@ -58,7 +58,6 @@ export function selectSessionStoreStrategyType(
  */
 export function startSessionStore<TrackingType extends string>(
   sessionStoreStrategyType: SessionStoreStrategyType,
-  configuration: Configuration,
   productKey: string,
   computeSessionState: (rawTrackingType?: string) => { trackingType: TrackingType; isTracked: boolean }
 ): SessionStore {
@@ -68,8 +67,8 @@ export function startSessionStore<TrackingType extends string>(
 
   const sessionStoreStrategy =
     sessionStoreStrategyType.type === 'Cookie'
-      ? initCookieStrategy(configuration, sessionStoreStrategyType.cookieOptions)
-      : initLocalStorageStrategy(configuration)
+      ? initCookieStrategy(sessionStoreStrategyType.cookieOptions)
+      : initLocalStorageStrategy()
   const { expireSession } = sessionStoreStrategy
 
   const watchSessionTimeoutId = setInterval(watchSession, STORAGE_POLL_DELAY)
@@ -118,7 +117,7 @@ export function startSessionStore<TrackingType extends string>(
     processSessionStoreOperations(
       {
         process: (sessionState) =>
-          isSessionInExpiredState(sessionState) ? getExpiredSessionState(sessionState, configuration) : undefined,
+          isSessionInExpiredState(sessionState) ? getExpiredSessionState(sessionState) : undefined,
         after: synchronizeSession,
       },
       sessionStoreStrategy
@@ -127,7 +126,7 @@ export function startSessionStore<TrackingType extends string>(
 
   function synchronizeSession(sessionState: SessionState) {
     if (isSessionInExpiredState(sessionState)) {
-      sessionState = getExpiredSessionState(sessionState, configuration)
+      sessionState = getExpiredSessionState(sessionState)
     }
     if (hasSessionInCache()) {
       if (isSessionInCacheOutdated(sessionState)) {
@@ -145,7 +144,7 @@ export function startSessionStore<TrackingType extends string>(
       {
         process: (sessionState) => {
           if (isSessionInNotStartedState(sessionState)) {
-            return getExpiredSessionState(sessionState, configuration)
+            return getExpiredSessionState(sessionState)
           }
         },
         after: (sessionState) => {
@@ -179,7 +178,7 @@ export function startSessionStore<TrackingType extends string>(
   }
 
   function expireSessionInCache() {
-    sessionCache = getExpiredSessionState(sessionCache, configuration)
+    sessionCache = getExpiredSessionState(sessionCache)
     expireObservable.notify()
   }
 
@@ -209,7 +208,7 @@ export function startSessionStore<TrackingType extends string>(
     expire: () => {
       cancelExpandOrRenewSession()
       expireSession(sessionCache)
-      synchronizeSession(getExpiredSessionState(sessionCache, configuration))
+      synchronizeSession(getExpiredSessionState(sessionCache))
     },
     stop: () => {
       clearInterval(watchSessionTimeoutId)

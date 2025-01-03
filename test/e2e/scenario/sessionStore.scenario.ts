@@ -8,7 +8,7 @@ describe('Session Stores', () => {
       .withRum()
       .run(async () => {
         const [cookie] = await browser.getCookies([SESSION_STORE_KEY])
-        const cookieSessionId = cookie.value.match(/\bid=([\w-]+)/)![1]
+        const cookieSessionId = cookie.value.match(/id=([\w-]+)/)![1]
 
         const logsContext = await browser.execute(() => window.DD_LOGS?.getInternalContext())
         const rumContext = await browser.execute(() => window.DD_RUM?.getInternalContext())
@@ -26,7 +26,7 @@ describe('Session Stores', () => {
       .withHead('<script>Object.defineProperty(Document.prototype, "cookie", { get: () => 42})</script>')
       .run(async () => {
         const sessionStateString = await browser.execute((key) => window.localStorage.getItem(key), SESSION_STORE_KEY)
-        const sessionId = sessionStateString?.match(/\bid=([\w-]+)/)![1]
+        const sessionId = sessionStateString?.match(/id=([\w-]+)/)![1]
 
         const logsContext = await browser.execute(() => window.DD_LOGS?.getInternalContext())
         const rumContext = await browser.execute(() => window.DD_RUM?.getInternalContext())

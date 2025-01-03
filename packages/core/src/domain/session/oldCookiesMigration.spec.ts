@@ -1,5 +1,4 @@
 import { getCookie, resetInitCookies, setCookie } from '../../browser/cookie'
-import type { Configuration } from '../configuration'
 import {
   OLD_LOGS_COOKIE_NAME,
   OLD_RUM_COOKIE_NAME,
@@ -10,13 +9,12 @@ import { SESSION_EXPIRATION_DELAY } from './sessionConstants'
 import { initCookieStrategy } from './storeStrategies/sessionInCookie'
 import type { SessionStoreStrategy } from './storeStrategies/sessionStoreStrategy'
 import { SESSION_STORE_KEY } from './storeStrategies/sessionStoreStrategy'
-const DEFAULT_INIT_CONFIGURATION = { trackAnonymousUser: true } as Configuration
 
 describe('old cookies migration', () => {
   let sessionStoreStrategy: SessionStoreStrategy
 
   beforeEach(() => {
-    sessionStoreStrategy = initCookieStrategy(DEFAULT_INIT_CONFIGURATION, {})
+    sessionStoreStrategy = initCookieStrategy({})
     resetInitCookies()
   })
 

@@ -1,7 +1,8 @@
 import { isChromium } from '../../../tools/utils/browserDetection'
+import { ExperimentalFeature, isExperimentalFeatureEnabled } from '../../../tools/experimentalFeatures'
 import type { CookieOptions } from '../../../browser/cookie'
 import { getCurrentSite, areCookiesAuthorized, getCookie, setCookie } from '../../../browser/cookie'
-import type { InitConfiguration, Configuration } from '../../configuration'
+import type { InitConfiguration } from '../../configuration'
 import { tryOldCookiesMigration } from '../oldCookiesMigration'
 import { SESSION_COOKIE_EXPIRATION_DELAY, SESSION_EXPIRATION_DELAY, SESSION_TIME_OUT_DELAY } from '../sessionConstants'
 import type { SessionState } from '../sessionState'
@@ -14,7 +15,7 @@ export function selectCookieStrategy(initConfiguration: InitConfiguration): Sess
   return areCookiesAuthorized(cookieOptions) ? { type: 'Cookie', cookieOptions } : undefined
 }
 
-export function initCookieStrategy(configuration: Configuration, cookieOptions: CookieOptions): SessionStoreStrategy {
+export function initCookieStrategy(cookieOptions: CookieOptions): SessionStoreStrategy {
   const cookieStore = {
     /**
      * Lock strategy allows mitigating issues due to concurrent access to cookie.
@@ -23,7 +24,7 @@ export function initCookieStrategy(configuration: Configuration, cookieOptions: 
     isLockEnabled: isChromium(),
     persistSession: persistSessionCookie(cookieOptions),
     retrieveSession: retrieveSessionCookie,
-    expireSession: (sessionState: SessionState) => expireSessionCookie(cookieOptions, sessionState, configuration),
+    expireSession: (sessionState: SessionState) => expireSessionCookie(cookieOptions, sessionState),
   }
 
   tryOldCookiesMigration(cookieStore)
@@ -37,13 +38,14 @@ function persistSessionCookie(options: CookieOptions) {
   }
 }
 
-function expireSessionCookie(options: CookieOptions, sessionState: SessionState, configuration: Configuration) {
-  const expiredSessionState = getExpiredSessionState(sessionState, configuration)
-  // we do not extend cookie expiration date
+function expireSessionCookie(options: CookieOptions, sessionState: SessionState) {
+  const expiredSessionState = getExpiredSessionState(sessionState)
   setCookie(
     SESSION_STORE_KEY,
     toSessionString(expiredSessionState),
-    configuration.trackAnonymousUser ? SESSION_COOKIE_EXPIRATION_DELAY : SESSION_TIME_OUT_DELAY,
+    isExperimentalFeatureEnabled(ExperimentalFeature.ANONYMOUS_USER_TRACKING)
+      ? SESSION_COOKIE_EXPIRATION_DELAY
+      : SESSION_TIME_OUT_DELAY,
     options
   )
 }

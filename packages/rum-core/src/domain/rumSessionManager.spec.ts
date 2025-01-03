@@ -84,7 +84,7 @@ describe('rum session manager', () => {
       expect(expireSessionSpy).not.toHaveBeenCalled()
       expect(renewSessionSpy).not.toHaveBeenCalled()
       expect(getCookie(SESSION_STORE_KEY)).toContain(`${RUM_SESSION_KEY}=${RumTrackingType.NOT_TRACKED}`)
-      expect(getCookie(SESSION_STORE_KEY)).not.toContain('&id=')
+      expect(getCookie(SESSION_STORE_KEY)).not.toContain('id=')
       expect(getCookie(SESSION_STORE_KEY)).not.toContain('isExpired=1')
     })
 

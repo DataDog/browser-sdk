@@ -72,7 +72,7 @@ describe('startSessionManager', () => {
 
   function expectSessionIdToNotBeDefined(sessionManager: SessionManager<FakeTrackingType>) {
     expect(sessionManager.findSession()!.id).toBeUndefined()
-    expect(getCookie(SESSION_STORE_KEY)).not.toMatch(/\bid=/)
+    expect(getCookie(SESSION_STORE_KEY)).not.toContain('id=')
   }
 
   function expectTrackingTypeToBe(
@@ -592,7 +592,6 @@ describe('startSessionManager', () => {
 
   describe('tracking consent', () => {
     it('expires the session when tracking consent is withdrawn', () => {
-      spyOn(Math, 'random').and.callFake(() => 0) // mock random for anonymous uuid generation
       const trackingConsentState = createTrackingConsentState(TrackingConsent.GRANTED)
       const sessionManager = startSessionManagerWithDefaults({ trackingConsentState })
 

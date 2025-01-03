@@ -1,7 +1,6 @@
 import type { Clock } from '../../../test'
 import { expireCookie, mockClock } from '../../../test'
 import { getCookie, setCookie } from '../../browser/cookie'
-import type { Configuration } from '../configuration'
 import type { SessionStore } from './sessionStore'
 import { STORAGE_POLL_DELAY, startSessionStore, selectSessionStoreStrategyType } from './sessionStore'
 import { SESSION_EXPIRATION_DELAY, SESSION_TIME_OUT_DELAY } from './sessionConstants'
@@ -17,8 +16,8 @@ const DURATION = 123456
 const PRODUCT_KEY = 'product'
 const FIRST_ID = 'first'
 const SECOND_ID = 'second'
-const EXPIRED_SESSION: SessionState = { isExpired: '1', anonymousId: '0' }
-const DEFAULT_INIT_CONFIGURATION = { trackAnonymousUser: true } as Configuration
+
+const EXPIRED_SESSION: SessionState = { isExpired: '1' }
 
 function setSessionInStore(trackingType: FakeTrackingType = FakeTrackingType.TRACKED, id?: string, expire?: number) {
   setCookie(
@@ -37,14 +36,14 @@ function expectTrackedSessionToBeInStore(id?: string) {
 }
 
 function expectNotTrackedSessionToBeInStore() {
-  expect(getCookie(SESSION_STORE_KEY)).not.toContain('&id=')
+  expect(getCookie(SESSION_STORE_KEY)).not.toContain('id=')
   expect(getCookie(SESSION_STORE_KEY)).not.toContain('isExpired=1')
   expect(getCookie(SESSION_STORE_KEY)).toContain(`${PRODUCT_KEY}=${FakeTrackingType.NOT_TRACKED}`)
 }
 
 function expectSessionToBeExpiredInStore() {
   expect(getCookie(SESSION_STORE_KEY)).toContain('isExpired=1')
-  expect(getCookie(SESSION_STORE_KEY)).not.toContain('&id=')
+  expect(getCookie(SESSION_STORE_KEY)).not.toContain('id=')
   expect(getCookie(SESSION_STORE_KEY)).not.toContain(`${PRODUCT_KEY}=`)
 }
 
@@ -118,12 +117,7 @@ describe('session store', () => {
         fail('Unable to initialize cookie storage')
         return
       }
-      sessionStoreManager = startSessionStore(
-        sessionStoreStrategyType,
-        DEFAULT_INIT_CONFIGURATION,
-        PRODUCT_KEY,
-        computeSessionState
-      )
+      sessionStoreManager = startSessionStore(sessionStoreStrategyType, PRODUCT_KEY, computeSessionState)
       sessionStoreManager.expireObservable.subscribe(expireSpy)
       sessionStoreManager.renewObservable.subscribe(renewSpy)
     }
@@ -142,7 +136,6 @@ describe('session store', () => {
 
     describe('initialize session', () => {
       it('when session not in store, should initialize a new session', () => {
-        spyOn(Math, 'random').and.callFake(() => 0)
         setupSessionStore()
 
         expect(sessionStoreManager.getSession()).toEqual(EXPIRED_SESSION)
@@ -461,7 +454,6 @@ describe('session store', () => {
 
     describe('reinitialize session', () => {
       it('when session not in store, should reinitialize the store', () => {
-        spyOn(Math, 'random').and.callFake(() => 0)
         setupSessionStore()
 
         sessionStoreManager.restartSession()
@@ -499,12 +491,7 @@ describe('session store', () => {
         allowFallbackToLocalStorage: false,
       })
 
-      const sessionStoreManager = startSessionStore(
-        sessionStoreStrategyType!,
-        DEFAULT_INIT_CONFIGURATION,
-        PRODUCT_KEY,
-        computeSessionState
-      )
+      const sessionStoreManager = startSessionStore(sessionStoreStrategyType!, PRODUCT_KEY, computeSessionState)
       sessionStoreManager.sessionStateUpdateObservable.subscribe(updateSpy)
 
       return sessionStoreManager

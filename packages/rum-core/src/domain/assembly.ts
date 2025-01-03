@@ -189,7 +189,11 @@ export function startRumAssembly(
             session.sessionReplay === SessionReplayState.SAMPLED
         }
 
-        if (session.anonymousId && !commonContext.user.anonymous_id && !!configuration.trackAnonymousUser) {
+        if (
+          // TODO: remove ff and should always add anonymous user id
+          isExperimentalFeatureEnabled(ExperimentalFeature.ANONYMOUS_USER_TRACKING) &&
+          !commonContext.user.anonymous_id
+        ) {
           commonContext.user.anonymous_id = session.anonymousId
         }
         if (!isEmptyObject(commonContext.user)) {

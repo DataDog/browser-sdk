@@ -69,7 +69,7 @@ describe('rum sessions', () => {
         })
         await flushEvents()
 
-        expect(await findSessionCookie()).toContain('isExpired=1')
+        expect(await findSessionCookie()).toBe('isExpired=1')
         expect(intakeRegistry.rumActionEvents.length).toBe(0)
       })
 

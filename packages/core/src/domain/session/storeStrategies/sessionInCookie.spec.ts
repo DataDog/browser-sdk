@@ -1,20 +1,17 @@
-import { resetExperimentalFeatures } from '../../../tools/experimentalFeatures'
-import { mockClock } from '../../../../test'
+import { ExperimentalFeature, resetExperimentalFeatures } from '../../../tools/experimentalFeatures'
+import { mockExperimentalFeatures } from '../../../../test'
 import { setCookie, deleteCookie, getCookie, getCurrentSite } from '../../../browser/cookie'
 import { type SessionState } from '../sessionState'
-import type { Configuration } from '../../configuration'
-import { SESSION_TIME_OUT_DELAY } from '../sessionConstants'
 import { buildCookieOptions, selectCookieStrategy, initCookieStrategy } from './sessionInCookie'
 import type { SessionStoreStrategy } from './sessionStoreStrategy'
 import { SESSION_STORE_KEY } from './sessionStoreStrategy'
 
-export const DEFAULT_INIT_CONFIGURATION = { trackAnonymousUser: true } as Configuration
 describe('session in cookie strategy', () => {
   const sessionState: SessionState = { id: '123', created: '0' }
   let cookieStorageStrategy: SessionStoreStrategy
 
   beforeEach(() => {
-    cookieStorageStrategy = initCookieStrategy(DEFAULT_INIT_CONFIGURATION, {})
+    cookieStorageStrategy = initCookieStrategy({})
   })
 
   afterEach(() => {
@@ -28,13 +25,12 @@ describe('session in cookie strategy', () => {
     expect(getCookie(SESSION_STORE_KEY)).toBe('id=123&created=0')
   })
 
-  it('should set `isExpired=1` and `aid` to the cookie holding the session', () => {
-    spyOn(Math, 'random').and.callFake(() => 0)
+  it('should set `isExpired=1` to the cookie holding the session', () => {
     cookieStorageStrategy.persistSession(sessionState)
     cookieStorageStrategy.expireSession(sessionState)
     const session = cookieStorageStrategy.retrieveSession()
-    expect(session).toEqual({ isExpired: '1', anonymousId: '0' })
-    expect(getCookie(SESSION_STORE_KEY)).toBe('isExpired=1&aid=0')
+    expect(session).toEqual({ isExpired: '1' })
+    expect(getCookie(SESSION_STORE_KEY)).toBe('isExpired=1')
   })
 
   it('should return an empty object if session string is invalid', () => {
@@ -103,13 +99,14 @@ describe('session in cookie strategy', () => {
     })
   })
 })
-describe('session in cookie strategy when opt-out anonymous user tracking', () => {
+describe('session in cookie strategy with anonymous user tracking', () => {
   const anonymousId = 'device-123'
   const sessionState: SessionState = { id: '123', created: '0' }
   let cookieStorageStrategy: SessionStoreStrategy
 
   beforeEach(() => {
-    cookieStorageStrategy = initCookieStrategy({ trackAnonymousUser: false } as Configuration, {})
+    mockExperimentalFeatures([ExperimentalFeature.ANONYMOUS_USER_TRACKING])
+    cookieStorageStrategy = initCookieStrategy({})
   })
 
   afterEach(() => {
@@ -117,19 +114,18 @@ describe('session in cookie strategy when opt-out anonymous user tracking', () =
     deleteCookie(SESSION_STORE_KEY)
   })
 
-  it('should not extend cookie expiration time when opt-out', () => {
-    const cookieSetSpy = spyOnProperty(document, 'cookie', 'set')
-    const clock = mockClock()
-    cookieStorageStrategy.expireSession({ ...sessionState, anonymousId })
-    expect(cookieSetSpy.calls.argsFor(0)[0]).toContain(new Date(clock.timeStamp(SESSION_TIME_OUT_DELAY)).toUTCString())
-    clock.cleanup()
+  it('should persist a session with anonymous id in a cookie', () => {
+    cookieStorageStrategy.persistSession({ ...sessionState, anonymousId })
+    const session = cookieStorageStrategy.retrieveSession()
+    expect(session).toEqual({ ...sessionState, anonymousId })
+    expect(getCookie(SESSION_STORE_KEY)).toBe(`id=123&created=0&aid=${anonymousId}`)
   })
 
-  it('should not persist or expire a session with anonymous id when opt-out', () => {
+  it('should expire a session with anonymous id in a cookie', () => {
     cookieStorageStrategy.persistSession({ ...sessionState, anonymousId })
     cookieStorageStrategy.expireSession({ ...sessionState, anonymousId })
     const session = cookieStorageStrategy.retrieveSession()
-    expect(session).toEqual({ isExpired: '1' })
-    expect(getCookie(SESSION_STORE_KEY)).toBe('isExpired=1')
+    expect(session).toEqual({ isExpired: '1', anonymousId })
+    expect(getCookie(SESSION_STORE_KEY)).toBe(`isExpired=1&aid=${anonymousId}`)
   })
 })

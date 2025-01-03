@@ -26,7 +26,6 @@ export const EXHAUSTIVE_INIT_CONFIGURATION: Required<InitConfiguration> = {
   version: 'version',
   usePartitionedCrossSiteSessionCookie: true,
   useSecureSessionCookie: true,
-  trackAnonymousUser: true,
   trackSessionAcrossSubdomains: true,
   enableExperimentalFeatures: ['foo'],
   replica: {
@@ -53,7 +52,6 @@ export const SERIALIZED_EXHAUSTIVE_INIT_CONFIGURATION = {
   store_contexts_across_pages: true,
   allow_untrusted_events: true,
   tracking_consent: 'not-granted' as const,
-  track_anonymous_user: true,
 }
 
 /**

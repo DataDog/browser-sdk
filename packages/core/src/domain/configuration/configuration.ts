@@ -114,11 +114,7 @@ export interface InitConfiguration {
    * @default false
    */
   trackSessionAcrossSubdomains?: boolean | undefined
-  /**
-   * Track anonymous user for the same site and extend cookie expiration date
-   * @default true
-   */
-  trackAnonymousUser?: boolean | undefined
+
   // internal options
   /**
    * [Internal option] Enable experimental features
@@ -177,7 +173,6 @@ export interface Configuration extends TransportConfiguration {
   allowUntrustedEvents: boolean
   trackingConsent: TrackingConsent
   storeContextsAcrossPages: boolean
-  trackAnonymousUser?: boolean
 
   // Event limits
   eventRateLimiterThreshold: number // Limit the maximum number of actions, errors and logs per minutes
@@ -253,7 +248,6 @@ export function validateAndBuildConfiguration(initConfiguration: InitConfigurati
     silentMultipleInit: !!initConfiguration.silentMultipleInit,
     allowUntrustedEvents: !!initConfiguration.allowUntrustedEvents,
     trackingConsent: initConfiguration.trackingConsent ?? TrackingConsent.GRANTED,
-    trackAnonymousUser: initConfiguration.trackAnonymousUser ?? true,
     storeContextsAcrossPages: !!initConfiguration.storeContextsAcrossPages,
     /**
      * beacon payload max queue size implementation is 64kb
@@ -291,7 +285,6 @@ export function serializeConfiguration(initConfiguration: InitConfiguration) {
     use_proxy: !!initConfiguration.proxy,
     silent_multiple_init: initConfiguration.silentMultipleInit,
     track_session_across_subdomains: initConfiguration.trackSessionAcrossSubdomains,
-    track_anonymous_user: initConfiguration.trackAnonymousUser,
     allow_fallback_to_local_storage: !!initConfiguration.allowFallbackToLocalStorage,
     store_contexts_across_pages: !!initConfiguration.storeContextsAcrossPages,
     allow_untrusted_events: !!initConfiguration.allowUntrustedEvents,

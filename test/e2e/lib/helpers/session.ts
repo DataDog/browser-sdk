@@ -12,7 +12,7 @@ export async function renewSession() {
 export async function expireSession() {
   await setCookie(SESSION_STORE_KEY, 'isExpired=1', SESSION_TIME_OUT_DELAY)
 
-  expect(await findSessionCookie()).toContain('isExpired=1')
+  expect(await findSessionCookie()).toBe('isExpired=1')
 
   // Cookies are cached for 1s, wait until the cache expires
   await browser.pause(1100)
