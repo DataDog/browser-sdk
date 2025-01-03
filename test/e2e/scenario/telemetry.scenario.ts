@@ -70,4 +70,34 @@ describe('telemetry', () => {
       expect(event.service).toEqual('browser-rum-sdk')
       expect(event.telemetry.configuration.track_user_interactions).toEqual(true)
     })
+
+  createTest('send usage telemetry for RUM')
+    .withSetup(bundleSetup)
+    .withRum()
+    .run(async ({ intakeRegistry }) => {
+      await browser.execute(() => {
+        window.DD_RUM!.addAction('foo')
+      })
+
+      await flushEvents()
+      expect(intakeRegistry.telemetryUsageEvents.length).toBe(2)
+      const event = intakeRegistry.telemetryUsageEvents[1] // first event is 'set-global-context' done in pageSetup.ts
+      expect(event.service).toEqual('browser-rum-sdk')
+      expect(event.telemetry.usage.feature).toEqual('add-action')
+    })
+
+  createTest('send usage telemetry for logs')
+    .withSetup(bundleSetup)
+    .withLogs()
+    .run(async ({ intakeRegistry }) => {
+      await browser.execute(() => {
+        window.DD_LOGS!.setTrackingConsent('granted')
+      })
+
+      await flushEvents()
+      expect(intakeRegistry.telemetryUsageEvents.length).toBe(1)
+      const event = intakeRegistry.telemetryUsageEvents[0]
+      expect(event.service).toEqual('browser-logs-sdk')
+      expect(event.telemetry.usage.feature).toEqual('set-tracking-consent')
+    })
 })
