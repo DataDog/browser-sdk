@@ -1,4 +1,4 @@
-import { DefaultPrivacyLevel, findLast, isIE } from '@datadog/browser-core'
+import { DefaultPrivacyLevel, findLast } from '@datadog/browser-core'
 import type { RumConfiguration, ViewCreatedEvent } from '@datadog/browser-rum-core'
 import { LifeCycle, LifeCycleEventType } from '@datadog/browser-rum-core'
 import type { Clock } from '@datadog/browser-core/test'
@@ -32,10 +32,6 @@ describe('record', () => {
   const FAKE_VIEW_ID = '123'
 
   beforeEach(() => {
-    if (isIE()) {
-      pending('IE not supported')
-    }
-
     emitSpy = jasmine.createSpy()
 
     registerCleanupTask(() => {
@@ -44,7 +40,7 @@ describe('record', () => {
     })
   })
 
-  it('captures stylesheet rules', (done) => {
+  it('captures stylesheet rules', async () => {
     const styleElement = appendElement('<style></style>') as HTMLStyleElement
 
     startRecording()
@@ -63,66 +59,64 @@ describe('record', () => {
       styleSheet.insertRule('body { color: #ccc; }')
     }, 10)
 
-    collectAsyncCalls(emitSpy, recordsPerFullSnapshot() + 6, () => {
-      const records = getEmittedRecords()
-      let i = 0
+    await collectAsyncCalls(emitSpy, recordsPerFullSnapshot() + 6)
 
-      expect(records[i++].type).toEqual(RecordType.Meta)
-      expect(records[i++].type).toEqual(RecordType.Focus)
-      expect(records[i++].type).toEqual(RecordType.FullSnapshot)
+    const records = getEmittedRecords()
+    let i = 0
 
-      if (window.visualViewport) {
-        expect(records[i++].type).toEqual(RecordType.VisualViewport)
-      }
+    expect(records[i++].type).toEqual(RecordType.Meta)
+    expect(records[i++].type).toEqual(RecordType.Focus)
+    expect(records[i++].type).toEqual(RecordType.FullSnapshot)
 
-      expect(records[i].type).toEqual(RecordType.IncrementalSnapshot)
-      expect((records[i++] as BrowserIncrementalSnapshotRecord).data).toEqual(
-        jasmine.objectContaining({
-          source: IncrementalSource.StyleSheetRule,
-          adds: [{ rule: 'body { background: #000; }', index: undefined }],
-        })
-      )
-      expect(records[i].type).toEqual(RecordType.IncrementalSnapshot)
-      expect((records[i++] as BrowserIncrementalSnapshotRecord).data).toEqual(
-        jasmine.objectContaining({
-          source: IncrementalSource.StyleSheetRule,
-          adds: [{ rule: 'body { background: #111; }', index: undefined }],
-        })
-      )
-      expect(records[i].type).toEqual(RecordType.IncrementalSnapshot)
-      expect((records[i++] as BrowserIncrementalSnapshotRecord).data).toEqual(
-        jasmine.objectContaining({
-          source: IncrementalSource.StyleSheetRule,
-          removes: [{ index: 0 }],
-        })
-      )
-      expect(records[i].type).toEqual(RecordType.IncrementalSnapshot)
-      expect((records[i++] as BrowserIncrementalSnapshotRecord).data).toEqual(
-        jasmine.objectContaining({
-          source: IncrementalSource.StyleSheetRule,
-          adds: [{ rule: 'body { color: #fff; }', index: undefined }],
-        })
-      )
-      expect(records[i].type).toEqual(RecordType.IncrementalSnapshot)
-      expect((records[i++] as BrowserIncrementalSnapshotRecord).data).toEqual(
-        jasmine.objectContaining({
-          source: IncrementalSource.StyleSheetRule,
-          removes: [{ index: 0 }],
-        })
-      )
-      expect(records[i].type).toEqual(RecordType.IncrementalSnapshot)
-      expect((records[i++] as BrowserIncrementalSnapshotRecord).data).toEqual(
-        jasmine.objectContaining({
-          source: IncrementalSource.StyleSheetRule,
-          adds: [{ rule: 'body { color: #ccc; }', index: undefined }],
-        })
-      )
+    if (window.visualViewport) {
+      expect(records[i++].type).toEqual(RecordType.VisualViewport)
+    }
 
-      done()
-    })
+    expect(records[i].type).toEqual(RecordType.IncrementalSnapshot)
+    expect((records[i++] as BrowserIncrementalSnapshotRecord).data).toEqual(
+      jasmine.objectContaining({
+        source: IncrementalSource.StyleSheetRule,
+        adds: [{ rule: 'body { background: #000; }', index: undefined }],
+      })
+    )
+    expect(records[i].type).toEqual(RecordType.IncrementalSnapshot)
+    expect((records[i++] as BrowserIncrementalSnapshotRecord).data).toEqual(
+      jasmine.objectContaining({
+        source: IncrementalSource.StyleSheetRule,
+        adds: [{ rule: 'body { background: #111; }', index: undefined }],
+      })
+    )
+    expect(records[i].type).toEqual(RecordType.IncrementalSnapshot)
+    expect((records[i++] as BrowserIncrementalSnapshotRecord).data).toEqual(
+      jasmine.objectContaining({
+        source: IncrementalSource.StyleSheetRule,
+        removes: [{ index: 0 }],
+      })
+    )
+    expect(records[i].type).toEqual(RecordType.IncrementalSnapshot)
+    expect((records[i++] as BrowserIncrementalSnapshotRecord).data).toEqual(
+      jasmine.objectContaining({
+        source: IncrementalSource.StyleSheetRule,
+        adds: [{ rule: 'body { color: #fff; }', index: undefined }],
+      })
+    )
+    expect(records[i].type).toEqual(RecordType.IncrementalSnapshot)
+    expect((records[i++] as BrowserIncrementalSnapshotRecord).data).toEqual(
+      jasmine.objectContaining({
+        source: IncrementalSource.StyleSheetRule,
+        removes: [{ index: 0 }],
+      })
+    )
+    expect(records[i].type).toEqual(RecordType.IncrementalSnapshot)
+    expect((records[i++] as BrowserIncrementalSnapshotRecord).data).toEqual(
+      jasmine.objectContaining({
+        source: IncrementalSource.StyleSheetRule,
+        adds: [{ rule: 'body { color: #ccc; }', index: undefined }],
+      })
+    )
   })
 
-  it('flushes pending mutation records before taking a full snapshot', (done) => {
+  it('flushes pending mutation records before taking a full snapshot', async () => {
     startRecording()
 
     appendElement('<hr/>')
@@ -130,25 +124,23 @@ describe('record', () => {
     // trigger full snapshot by starting a new view
     newView()
 
-    collectAsyncCalls(emitSpy, 1 + 2 * recordsPerFullSnapshot(), () => {
-      const records = getEmittedRecords()
-      let i = 0
+    await collectAsyncCalls(emitSpy, 1 + 2 * recordsPerFullSnapshot())
 
-      expect(records[i++].type).toEqual(RecordType.Meta)
-      expect(records[i++].type).toEqual(RecordType.Focus)
-      expect(records[i++].type).toEqual(RecordType.FullSnapshot)
+    const records = getEmittedRecords()
+    let i = 0
 
-      if (window.visualViewport) {
-        expect(records[i++].type).toEqual(RecordType.VisualViewport)
-      }
-      expect(records[i].type).toEqual(RecordType.IncrementalSnapshot)
-      expect((records[i++] as BrowserIncrementalSnapshotRecord).data.source).toEqual(IncrementalSource.Mutation)
-      expect(records[i++].type).toEqual(RecordType.Meta)
-      expect(records[i++].type).toEqual(RecordType.Focus)
-      expect(records[i++].type).toEqual(RecordType.FullSnapshot)
+    expect(records[i++].type).toEqual(RecordType.Meta)
+    expect(records[i++].type).toEqual(RecordType.Focus)
+    expect(records[i++].type).toEqual(RecordType.FullSnapshot)
 
-      done()
-    })
+    if (window.visualViewport) {
+      expect(records[i++].type).toEqual(RecordType.VisualViewport)
+    }
+    expect(records[i].type).toEqual(RecordType.IncrementalSnapshot)
+    expect((records[i++] as BrowserIncrementalSnapshotRecord).data.source).toEqual(IncrementalSource.Mutation)
+    expect(records[i++].type).toEqual(RecordType.Meta)
+    expect(records[i++].type).toEqual(RecordType.Focus)
+    expect(records[i++].type).toEqual(RecordType.FullSnapshot)
   })
 
   describe('Shadow dom', () => {

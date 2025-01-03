@@ -1,4 +1,4 @@
-import { isIE, noop } from '@datadog/browser-core'
+import { noop } from '@datadog/browser-core'
 import type { RumConfiguration } from '@datadog/browser-rum-core'
 import { isAdoptedStyleSheetsSupported, registerCleanupTask } from '@datadog/browser-core/test'
 import {
@@ -55,12 +55,6 @@ describe('serializeNodeWithId', () => {
 
   beforeEach(() => {
     addShadowRootSpy = jasmine.createSpy<ShadowRootCallBack>()
-  })
-
-  beforeEach(() => {
-    if (isIE()) {
-      pending('IE not supported')
-    }
   })
 
   describe('document serialization', () => {
@@ -805,10 +799,6 @@ describe('serializeDocumentNode handles', function testAllowDomTree() {
   const toJSONObj = (data: any) => JSON.parse(JSON.stringify(data)) as unknown
 
   beforeEach(() => {
-    if (isIE()) {
-      pending('IE not supported')
-    }
-
     registerCleanupTask(() => {
       if (isAdoptedStyleSheetsSupported()) {
         document.adoptedStyleSheets = []

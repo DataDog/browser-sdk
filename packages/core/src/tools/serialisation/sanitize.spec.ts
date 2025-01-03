@@ -1,6 +1,5 @@
-import { isIE } from '../utils/browserDetection'
 import { display } from '../display'
-import { createNewEvent } from '../../../test'
+import { registerCleanupTask } from '../../../test'
 import { sanitize } from './sanitize'
 
 describe('sanitize', () => {
@@ -30,12 +29,7 @@ describe('sanitize', () => {
       function testFunction() {
         return true
       }
-      if (isIE()) {
-        // IE does not provide access to function name
-        expect(sanitize(testFunction)).toBe('[Function] unknown')
-      } else {
-        expect(sanitize(testFunction)).toBe('[Function] testFunction')
-      }
+      expect(sanitize(testFunction)).toBe('[Function] testFunction')
     })
 
     it('should handle bigint', () => {
@@ -72,18 +66,34 @@ describe('sanitize', () => {
       expect(sanitize(node)).toBe('[HTMLDivElement]')
     })
 
-    it('should serialize events', () => {
-      const event = createNewEvent('click')
+    it('should serialize events', (done) => {
+      const button = document.createElement('button')
+      document.body.appendChild(button)
 
-      expect(sanitize(event)).toEqual({
-        isTrusted: false,
+      registerCleanupTask(() => {
+        document.body.removeChild(button)
       })
+
+      document.addEventListener(
+        'click',
+        (event) => {
+          expect(sanitize(event)).toEqual({
+            type: 'click',
+            isTrusted: false,
+            target: '[HTMLButtonElement]',
+            currentTarget: '[HTMLDocument]',
+          })
+          done()
+        },
+        { once: true }
+      )
+
+      button.click()
     })
 
     it('should serialize errors as JSON.stringify does', () => {
       // Explicitely keep the previous behavior to avoid breaking changes in 4.x
       // Browsers have different behaviors:
-      // IE11 adds a description field
       // Safari IOS12 adds parts of the stack
       const error = new Error('My Error')
       expect(sanitize(error)).toEqual({ ...error })
@@ -102,19 +112,10 @@ describe('sanitize', () => {
         ['a', 13],
         ['b', 37],
       ])
-      if (isIE()) {
-        // IE does not distinguish maps, weakmaps, sets... from generic objects
-        expect(sanitize(map)).toEqual({})
-      } else {
-        expect(sanitize(map)).toBe('[Map]')
-      }
+      expect(sanitize(map)).toBe('[Map]')
     })
 
     it('should survive when toStringTag throws', () => {
-      if (isIE()) {
-        pending('IE does not support Symbols')
-      }
-
       class CannotSerialize {
         get [Symbol.toStringTag]() {
           throw Error('Cannot serialize')
@@ -128,6 +129,11 @@ describe('sanitize', () => {
     it('should handle objects with properties including null or undefined', () => {
       const obj = { a: null, b: undefined }
       expect(sanitize(obj)).toEqual({ a: null, b: undefined })
+    })
+
+    it('should handle regular expression', () => {
+      expect(sanitize(/[a-zA-Z0-9]+/g)).toEqual('[RegExp] /[a-zA-Z0-9]+/g')
+      expect(sanitize(new RegExp('[a-zA-Z0-9]+', 'g'))).toEqual('[RegExp] /[a-zA-Z0-9]+/g')
     })
   })
 
@@ -229,12 +235,7 @@ describe('sanitize', () => {
       const obj = { b: 42, toJSON: faulty }
 
       // Since toJSON throws, sanitize falls back to serialize property by property
-      if (isIE()) {
-        // IE does not provide access to function name
-        expect(sanitize(obj)).toEqual({ b: 42, toJSON: '[Function] unknown' })
-      } else {
-        expect(sanitize(obj)).toEqual({ b: 42, toJSON: '[Function] faulty' })
-      }
+      expect(sanitize(obj)).toEqual({ b: 42, toJSON: '[Function] faulty' })
     })
   })
 

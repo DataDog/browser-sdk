@@ -1,11 +1,10 @@
-import { mockClock, type Clock, mockEventBridge } from '@datadog/browser-core/test'
+import { callbackAddsInstrumentation, type Clock, mockClock, mockEventBridge } from '@datadog/browser-core/test'
 import type { TimeStamp, TrackingConsentState } from '@datadog/browser-core'
 import {
   ONE_SECOND,
   TrackingConsent,
   createTrackingConsentState,
   display,
-  isIE,
   resetFetchObservable,
 } from '@datadog/browser-core'
 import type { CommonContext } from '../rawLogsEvent.types'
@@ -217,21 +216,17 @@ describe('preStartLogs', () => {
     })
 
     describe('basic methods instrumentation', () => {
-      beforeEach(() => {
-        if (isIE()) {
-          pending('No support for IE')
-        }
-      })
-
       it('should instrument fetch even if tracking consent is not granted', () => {
-        const originalFetch = window.fetch
-
-        strategy.init({
-          ...DEFAULT_INIT_CONFIGURATION,
-          trackingConsent: TrackingConsent.NOT_GRANTED,
-        })
-
-        expect(window.fetch).not.toBe(originalFetch)
+        expect(
+          callbackAddsInstrumentation(() => {
+            strategy.init({
+              ...DEFAULT_INIT_CONFIGURATION,
+              trackingConsent: TrackingConsent.NOT_GRANTED,
+            })
+          })
+            .toMethod(window, 'fetch')
+            .whenCalled()
+        ).toBeTrue()
       })
     })
 
