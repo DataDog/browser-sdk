@@ -411,7 +411,7 @@ __metadata:
     "@mantine/core": "npm:7.15.2"
     "@mantine/hooks": "npm:7.15.2"
     "@tabler/icons-react": "npm:3.26.0"
-    "@types/chrome": "npm:0.0.287"
+    "@types/chrome": "npm:0.0.289"
     "@types/react": "npm:18.3.18"
     "@types/react-dom": "npm:18.3.5"
     "@webextension-toolbox/webpack-webextension-plugin": "npm:3.3.1"
@@ -1672,13 +1672,13 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/chrome@npm:0.0.287":
-  version: 0.0.287
-  resolution: "@types/chrome@npm:0.0.287"
+"@types/chrome@npm:0.0.289":
+  version: 0.0.289
+  resolution: "@types/chrome@npm:0.0.289"
   dependencies:
     "@types/filesystem": "npm:*"
     "@types/har-format": "npm:*"
-  checksum: 10c0/3c3c3b9a1e79f0f92f2fc254971985517aba95d8bc1355cbae2309e9cb001cd961a2edde764b6b88a9189d3a496602db3329da6aad0a90aff600fca832bc88e4
+  checksum: 10c0/e8085ec710a4b790a85e3ca7abfa6e0908d39b0362437355ca3859df62ead83036f8793f146abb4b58b6bd176db5598c0e09d67a97eb0267913dac6174032cb1
   languageName: node
   linkType: hard
 
@@ -1937,12 +1937,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/node@npm:*, @types/node@npm:22.10.2, @types/node@npm:>=10.0.0, @types/node@npm:^22.2.0":
-  version: 22.10.2
-  resolution: "@types/node@npm:22.10.2"
+"@types/node@npm:*, @types/node@npm:22.10.5, @types/node@npm:>=10.0.0, @types/node@npm:^22.2.0":
+  version: 22.10.5
+  resolution: "@types/node@npm:22.10.5"
   dependencies:
     undici-types: "npm:~6.20.0"
-  checksum: 10c0/2c7b71a040f1ef5320938eca8ebc946e6905caa9bbf3d5665d9b3774a8d15ea9fab1582b849a6d28c7fc80756a62c5666bc66b69f42f4d5dafd1ccb193cdb4ac
+  checksum: 10c0/6a0e7d1fe6a86ef6ee19c3c6af4c15542e61aea2f4cee655b6252efb356795f1f228bc8299921e82924e80ff8eca29b74d9dd0dd5cc1a90983f892f740b480df
   languageName: node
   linkType: hard
 
@@ -3429,7 +3429,7 @@ __metadata:
   resolution: "browser-sdk@workspace:."
   dependencies:
     "@jsdevtools/coverage-istanbul-loader": "npm:3.0.5"
-    "@types/chrome": "npm:0.0.287"
+    "@types/chrome": "npm:0.0.289"
     "@types/connect-busboy": "npm:1.0.3"
     "@types/cors": "npm:2.8.17"
     "@types/express": "npm:4.17.21"
@@ -10727,7 +10727,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "performances@workspace:performances"
   dependencies:
-    "@types/node": "npm:22.10.2"
+    "@types/node": "npm:22.10.5"
     "@types/node-forge": "npm:1.3.11"
     node-forge: "npm:1.3.1"
     puppeteer: "npm:23.11.1"

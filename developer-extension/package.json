@@ -8,7 +8,7 @@
   },
   "devDependencies": {
     "@tabler/icons-react": "3.26.0",
-    "@types/chrome": "0.0.287",
+    "@types/chrome": "0.0.289",
     "@types/react": "18.3.18",
     "@types/react-dom": "18.3.5",
     "@webextension-toolbox/webpack-webextension-plugin": "3.3.1",
