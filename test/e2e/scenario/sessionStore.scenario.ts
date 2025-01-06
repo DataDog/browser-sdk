@@ -1,6 +1,9 @@
 import { SESSION_STORE_KEY } from '@datadog/browser-core'
 import { createTest } from '../lib/framework'
 
+const DISABLE_LOCAL_STORAGE = '<script>Object.defineProperty(Storage.prototype, "getItem", { get: () => 42});</script>'
+const DISABLE_COOKIES = '<script>Object.defineProperty(Document.prototype, "cookie", { get: () => 42});</script>'
+
 describe('Session Stores', () => {
   describe('Cookies', () => {
     createTest('uses cookies to store the session')
@@ -70,10 +73,6 @@ describe('Session Stores', () => {
       expect(rumContext?.session_id).toBe(sessionId)
     })
 })
-
-const DISABLE_LOCAL_STORAGE = '<script>Object.defineProperty(Storage.prototype, "getItem", { get: () => 42});</script>'
-
-const DISABLE_COOKIES = '<script>Object.defineProperty(Document.prototype, "cookie", { get: () => 42});</script>'
 
 async function getSessionIdFromLocalStorage(): Promise<string | undefined> {
   const sessionStateString = await browser.execute((key) => window.localStorage.getItem(key), SESSION_STORE_KEY)
