@@ -1,8 +1,8 @@
-import { assign, includes } from '../../tools/utils/polyfills'
 import type { InitConfiguration } from './configuration'
 import type { EndpointBuilder } from './endpointBuilder'
 import { createEndpointBuilder } from './endpointBuilder'
 import { buildTags } from './tags'
+import type { Site } from './intakeSites'
 import { INTAKE_SITE_US1, INTAKE_URL_PARAMETERS } from './intakeSites'
 
 export interface TransportConfiguration {
@@ -10,7 +10,7 @@ export interface TransportConfiguration {
   rumEndpointBuilder: EndpointBuilder
   sessionReplayEndpointBuilder: EndpointBuilder
   replica?: ReplicaConfiguration
-  site: string
+  site: Site
 }
 
 export interface ReplicaConfiguration {
@@ -27,13 +27,11 @@ export function computeTransportConfiguration(initConfiguration: InitConfigurati
   const endpointBuilders = computeEndpointBuilders(initConfiguration, tags)
   const replicaConfiguration = computeReplicaConfiguration(initConfiguration, tags)
 
-  return assign(
-    {
-      replica: replicaConfiguration,
-      site,
-    },
-    endpointBuilders
-  )
+  return {
+    replica: replicaConfiguration,
+    site,
+    ...endpointBuilders,
+  }
 }
 
 function computeEndpointBuilders(initConfiguration: InitConfiguration, tags: string[]) {
@@ -52,20 +50,21 @@ function computeReplicaConfiguration(
     return
   }
 
-  const replicaConfiguration: InitConfiguration = assign({}, initConfiguration, {
+  const replicaConfiguration: InitConfiguration = {
+    ...initConfiguration,
     site: INTAKE_SITE_US1,
     clientToken: initConfiguration.replica.clientToken,
-  })
+  }
 
   const replicaEndpointBuilders = {
     logsEndpointBuilder: createEndpointBuilder(replicaConfiguration, 'logs', tags),
     rumEndpointBuilder: createEndpointBuilder(replicaConfiguration, 'rum', tags),
   }
 
-  return assign({ applicationId: initConfiguration.replica.applicationId }, replicaEndpointBuilders)
+  return { applicationId: initConfiguration.replica.applicationId, ...replicaEndpointBuilders }
 }
 
 export function isIntakeUrl(url: string): boolean {
   // check if tags is present in the query string
-  return INTAKE_URL_PARAMETERS.every((param) => includes(url, param))
+  return INTAKE_URL_PARAMETERS.every((param) => url.includes(param))
 }

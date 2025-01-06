@@ -87,6 +87,7 @@ module.exports = {
     'one-var': ['error', 'never'],
     'prefer-rest-params': 'off',
     'prefer-template': 'error',
+    'prefer-object-spread': 'error',
     quotes: ['error', 'single', { avoidEscape: true }],
     radix: 'error',
     'require-await': 'error',
@@ -259,10 +260,6 @@ module.exports = {
           {
             selector: 'ClassDeclaration',
             message: 'Classes are not allowed. Use functions instead.',
-          },
-          {
-            selector: 'ObjectExpression > SpreadElement',
-            message: 'Object spread is not authorized. Please use "assign" from the core package utils instead.',
           },
           {
             selector: 'ArrayExpression > SpreadElement',

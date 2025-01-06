@@ -1,4 +1,4 @@
-import { assign, addEventListeners, DOM_EVENT } from '@datadog/browser-core'
+import { addEventListeners, DOM_EVENT } from '@datadog/browser-core'
 import { getNodePrivacyLevel, NodePrivacyLevel } from '@datadog/browser-rum-core'
 import type { RumConfiguration } from '@datadog/browser-rum-core'
 import type { MouseInteraction, MouseInteractionData, BrowserIncrementalSnapshotRecord } from '../../../types'
@@ -60,10 +60,11 @@ export function trackMouseInteraction(
       interaction = { id, type }
     }
 
-    const record = assign(
-      { id: recordIds.getIdForEvent(event) },
-      assembleIncrementalSnapshot<MouseInteractionData>(IncrementalSource.MouseInteraction, interaction)
-    )
+    const record = {
+      id: recordIds.getIdForEvent(event),
+      ...assembleIncrementalSnapshot<MouseInteractionData>(IncrementalSource.MouseInteraction, interaction),
+    }
+
     mouseInteractionCb(record)
   }
   return addEventListeners(

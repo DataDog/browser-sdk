@@ -6,12 +6,12 @@ import { ONE_SECOND } from '../../tools/utils/timeUtils'
 import { isPercentage } from '../../tools/utils/numberUtils'
 import { ONE_KIBI_BYTE } from '../../tools/utils/byteUtils'
 import { objectHasValue } from '../../tools/utils/objectUtils'
-import { assign } from '../../tools/utils/polyfills'
 import { selectSessionStoreStrategyType } from '../session/sessionStore'
 import type { SessionStoreStrategyType } from '../session/storeStrategies/sessionStoreStrategy'
 import { TrackingConsent } from '../trackingConsent'
 import type { TransportConfiguration } from './transportConfiguration'
 import { computeTransportConfiguration } from './transportConfiguration'
+import type { Site } from './intakeSites'
 
 export const DefaultPrivacyLevel = {
   ALLOW: 'allow',
@@ -82,7 +82,7 @@ export interface InitConfiguration {
    * The Datadog [site](https://docs.datadoghq.com/getting_started/site) parameter of your organization.
    * @default datadoghq.com
    */
-  site?: string | undefined
+  site?: Site | undefined
 
   // tag and context options
   /**
@@ -100,12 +100,6 @@ export interface InitConfiguration {
 
   // cookie options
   /**
-   * Whether a secure cross-site session cookie is used
-   * @default false
-   * @deprecated use usePartitionedCrossSiteSessionCookie instead
-   */
-  useCrossSiteSessionCookie?: boolean | undefined
-  /**
    * Use a partitioned secure cross-site session cookie. This allows the RUM Browser SDK to run when the site is loaded from another one (iframe). Implies `useSecureSessionCookie`.
    * @default false
    */
@@ -120,7 +114,11 @@ export interface InitConfiguration {
    * @default false
    */
   trackSessionAcrossSubdomains?: boolean | undefined
-
+  /**
+   * Track anonymous user for the same site and extend cookie expiration date
+   * @default true
+   */
+  trackAnonymousUser?: boolean | undefined
   // internal options
   /**
    * [Internal option] Enable experimental features
@@ -161,7 +159,7 @@ type GenericBeforeSendCallback = (event: any, context?: any) => unknown
  */
 type ProxyFn = (options: { path: string; parameters: string }) => string
 
-interface ReplicaUserConfiguration {
+export interface ReplicaUserConfiguration {
   applicationId?: string
   clientToken: string
 }
@@ -179,6 +177,7 @@ export interface Configuration extends TransportConfiguration {
   allowUntrustedEvents: boolean
   trackingConsent: TrackingConsent
   storeContextsAcrossPages: boolean
+  trackAnonymousUser?: boolean
 
   // Event limits
   eventRateLimiterThreshold: number // Limit the maximum number of actions, errors and logs per minutes
@@ -242,43 +241,42 @@ export function validateAndBuildConfiguration(initConfiguration: InitConfigurati
     return
   }
 
-  return assign(
-    {
-      beforeSend:
-        initConfiguration.beforeSend && catchUserErrors(initConfiguration.beforeSend, 'beforeSend threw an error:'),
-      sessionStoreStrategyType: selectSessionStoreStrategyType(initConfiguration),
-      sessionSampleRate: initConfiguration.sessionSampleRate ?? 100,
-      telemetrySampleRate: initConfiguration.telemetrySampleRate ?? 20,
-      telemetryConfigurationSampleRate: initConfiguration.telemetryConfigurationSampleRate ?? 5,
-      telemetryUsageSampleRate: initConfiguration.telemetryUsageSampleRate ?? 5,
-      service: initConfiguration.service || undefined,
-      silentMultipleInit: !!initConfiguration.silentMultipleInit,
-      allowUntrustedEvents: !!initConfiguration.allowUntrustedEvents,
-      trackingConsent: initConfiguration.trackingConsent ?? TrackingConsent.GRANTED,
-      storeContextsAcrossPages: !!initConfiguration.storeContextsAcrossPages,
-      /**
-       * beacon payload max queue size implementation is 64kb
-       * ensure that we leave room for logs, rum and potential other users
-       */
-      batchBytesLimit: 16 * ONE_KIBI_BYTE,
+  return {
+    beforeSend:
+      initConfiguration.beforeSend && catchUserErrors(initConfiguration.beforeSend, 'beforeSend threw an error:'),
+    sessionStoreStrategyType: selectSessionStoreStrategyType(initConfiguration),
+    sessionSampleRate: initConfiguration.sessionSampleRate ?? 100,
+    telemetrySampleRate: initConfiguration.telemetrySampleRate ?? 20,
+    telemetryConfigurationSampleRate: initConfiguration.telemetryConfigurationSampleRate ?? 5,
+    telemetryUsageSampleRate: initConfiguration.telemetryUsageSampleRate ?? 5,
+    service: initConfiguration.service || undefined,
+    silentMultipleInit: !!initConfiguration.silentMultipleInit,
+    allowUntrustedEvents: !!initConfiguration.allowUntrustedEvents,
+    trackingConsent: initConfiguration.trackingConsent ?? TrackingConsent.GRANTED,
+    trackAnonymousUser: initConfiguration.trackAnonymousUser ?? true,
+    storeContextsAcrossPages: !!initConfiguration.storeContextsAcrossPages,
+    /**
+     * beacon payload max queue size implementation is 64kb
+     * ensure that we leave room for logs, rum and potential other users
+     */
+    batchBytesLimit: 16 * ONE_KIBI_BYTE,
 
-      eventRateLimiterThreshold: 3000,
-      maxTelemetryEventsPerPage: 15,
+    eventRateLimiterThreshold: 3000,
+    maxTelemetryEventsPerPage: 15,
 
-      /**
-       * flush automatically, aim to be lower than ALB connection timeout
-       * to maximize connection reuse.
-       */
-      flushTimeout: (30 * ONE_SECOND) as Duration,
+    /**
+     * flush automatically, aim to be lower than ALB connection timeout
+     * to maximize connection reuse.
+     */
+    flushTimeout: (30 * ONE_SECOND) as Duration,
 
-      /**
-       * Logs intake limit
-       */
-      batchMessagesLimit: 50,
-      messageBytesLimit: 256 * ONE_KIBI_BYTE,
-    },
-    computeTransportConfiguration(initConfiguration)
-  )
+    /**
+     * Logs intake limit
+     */
+    batchMessagesLimit: 50,
+    messageBytesLimit: 256 * ONE_KIBI_BYTE,
+    ...computeTransportConfiguration(initConfiguration),
+  }
 }
 
 export function serializeConfiguration(initConfiguration: InitConfiguration) {
@@ -288,12 +286,12 @@ export function serializeConfiguration(initConfiguration: InitConfiguration) {
     telemetry_configuration_sample_rate: initConfiguration.telemetryConfigurationSampleRate,
     telemetry_usage_sample_rate: initConfiguration.telemetryUsageSampleRate,
     use_before_send: !!initConfiguration.beforeSend,
-    use_cross_site_session_cookie: initConfiguration.useCrossSiteSessionCookie,
     use_partitioned_cross_site_session_cookie: initConfiguration.usePartitionedCrossSiteSessionCookie,
     use_secure_session_cookie: initConfiguration.useSecureSessionCookie,
     use_proxy: !!initConfiguration.proxy,
     silent_multiple_init: initConfiguration.silentMultipleInit,
     track_session_across_subdomains: initConfiguration.trackSessionAcrossSubdomains,
+    track_anonymous_user: initConfiguration.trackAnonymousUser,
     allow_fallback_to_local_storage: !!initConfiguration.allowFallbackToLocalStorage,
     store_contexts_across_pages: !!initConfiguration.storeContextsAcrossPages,
     allow_untrusted_events: !!initConfiguration.allowUntrustedEvents,
