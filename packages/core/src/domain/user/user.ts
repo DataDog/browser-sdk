@@ -14,6 +14,7 @@ export function sanitizeUser(newUser: Context): Context {
   const keys = ['id', 'name', 'email']
   keys.forEach((key) => {
     if (key in user) {
+      /* eslint-disable @typescript-eslint/no-base-to-string */
       user[key] = String(user[key])
     }
   })

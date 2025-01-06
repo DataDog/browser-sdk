@@ -44,13 +44,15 @@ export function startActionCollection(
   )
 
   let actionContexts: ActionContexts = { findActionId: noop as () => undefined }
+  let stop: () => void = noop
+
   if (configuration.trackUserInteractions) {
-    actionContexts = trackClickActions(
+    ;({ actionContexts, stop } = trackClickActions(
       lifeCycle,
       domMutationObservable,
       windowOpenObservable,
       configuration
-    ).actionContexts
+    ))
   }
 
   return {
@@ -61,6 +63,7 @@ export function startActionCollection(
       })
     },
     actionContexts,
+    stop,
   }
 }
 
