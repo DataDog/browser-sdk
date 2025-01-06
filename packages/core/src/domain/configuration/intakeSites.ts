@@ -25,7 +25,7 @@ export function getSiteShortName(site: string | undefined) {
   }
 
   // Infer short names for subdomain-based datacenters to support for new DCs without code changes.
-  const match = site.match(/^([a-z0-9]+)\.datadoghq\.com$/)
+  const match = /^([a-z0-9]+)\.datadoghq\.com$/.exec(site)
   if (match) {
     return match[1]
   }
