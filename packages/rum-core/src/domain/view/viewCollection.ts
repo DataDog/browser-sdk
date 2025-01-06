@@ -2,7 +2,7 @@ import type { Duration, ServerDuration, Observable } from '@datadog/browser-core
 import { isEmptyObject, mapValues, toServerDuration } from '@datadog/browser-core'
 import { discardNegativeDuration } from '../discardNegativeDuration'
 import type { RecorderApi } from '../../boot/rumPublicApi'
-import type { RawRumViewEvent } from '../../rawRumEvent.types'
+import type { RawRumViewEvent, ViewPerformanceData } from '../../rawRumEvent.types'
 import { RumEventType } from '../../rawRumEvent.types'
 import type { LifeCycle, RawRumEventCollectedData } from '../lifeCycle'
 import { LifeCycleEventType } from '../lifeCycle'
@@ -12,6 +12,10 @@ import type { FeatureFlagContexts } from '../contexts/featureFlagContext'
 import type { PageStateHistory } from '../contexts/pageStateHistory'
 import type { ViewEvent, ViewOptions } from './trackViews'
 import { trackViews } from './trackViews'
+import type { CumulativeLayoutShift } from './viewMetrics/trackCumulativeLayoutShift'
+import type { FirstInput } from './viewMetrics/trackFirstInput'
+import type { InteractionToNextPaint } from './viewMetrics/trackInteractionToNextPaint'
+import type { LargestContentfulPaint } from './viewMetrics/trackLargestContentfulPaint'
 
 export function startViewCollection(
   lifeCycle: LifeCycle,
@@ -114,6 +118,13 @@ function processViewUpdate(
           },
         }
       : undefined,
+    performance: {
+      cls: collectCLS(view.commonViewMetrics.cumulativeLayoutShift),
+      fcp: collectFCP(view.initialViewMetrics.firstContentfulPaint),
+      fid: collectFID(view.initialViewMetrics.firstInput),
+      inp: collectINP(view.commonViewMetrics.interactionToNextPaint),
+      lcp: collectLCP(view.initialViewMetrics.largestContentfulPaint),
+    },
     session: {
       has_replay: replayStats ? true : undefined,
       is_active: view.sessionIsActive ? undefined : false,
@@ -136,4 +147,51 @@ function processViewUpdate(
       location: view.location,
     },
   }
+}
+
+function collectCLS(cls: CumulativeLayoutShift | undefined): ViewPerformanceData['cls'] {
+  return cls
+    ? {
+        score: cls.value,
+        timestamp: toServerDuration(cls.time),
+        target_selector: cls.targetSelector,
+      }
+    : undefined
+}
+
+function collectFCP(fcp: Duration | undefined): ViewPerformanceData['fcp'] {
+  return fcp
+    ? {
+        timestamp: toServerDuration(fcp),
+      }
+    : undefined
+}
+
+function collectFID(fid: FirstInput | undefined): ViewPerformanceData['fid'] {
+  return fid
+    ? {
+        duration: toServerDuration(fid.delay),
+        timestamp: toServerDuration(fid.time),
+        target_selector: fid.targetSelector,
+      }
+    : undefined
+}
+
+function collectINP(inp: InteractionToNextPaint | undefined): ViewPerformanceData['inp'] {
+  return inp
+    ? {
+        duration: toServerDuration(inp.value),
+        timestamp: toServerDuration(inp.time),
+        target_selector: inp.targetSelector,
+      }
+    : undefined
+}
+
+function collectLCP(lcp: LargestContentfulPaint | undefined): ViewPerformanceData['lcp'] {
+  return lcp
+    ? {
+        timestamp: toServerDuration(lcp.value),
+        target_selector: lcp.targetSelector,
+      }
+    : undefined
 }

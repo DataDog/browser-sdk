@@ -174,9 +174,13 @@ export type TelemetryConfigurationEvent = CommonTelemetryProperties & {
        */
       use_secure_session_cookie?: boolean
       /**
-       * Whether it is allowed to use LocalStorage when cookies are not available
+       * Whether it is allowed to use LocalStorage when cookies are not available (deprecated in favor of session_persistence)
        */
       allow_fallback_to_local_storage?: boolean
+      /**
+       * Configure the storage strategy for persisting sessions
+       */
+      session_persistence?: 'local-storage' | 'cookie'
       /**
        * Whether contexts are stored in local storage
        */
