@@ -1,7 +1,7 @@
 'use strict'
 
 const { printLog, runMain } = require('../lib/executionUtils')
-const { fetchPR, getLocalBranch } = require('../lib/gitUtils')
+const { fetchPR, LOCAL_BRANCH } = require('../lib/gitUtils')
 const { command } = require('../lib/command')
 
 const {
@@ -50,7 +50,7 @@ async function main(env, version, uploadPathTypes) {
     for (const uploadPathType of uploadPathTypes) {
       let uploadPath
       if (uploadPathType === 'pull-request') {
-        const pr = await fetchPR(getLocalBranch())
+        const pr = await fetchPR(LOCAL_BRANCH)
         if (!pr) {
           console.log('No pull requests found for the branch')
           return
