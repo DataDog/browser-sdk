@@ -336,6 +336,20 @@ __metadata:
   languageName: unknown
   linkType: soft
 
+"@datadog/browser-rich-error@workspace:packages/rich-error":
+  version: 0.0.0-use.local
+  resolution: "@datadog/browser-rich-error@workspace:packages/rich-error"
+  dependencies:
+    "@datadog/browser-core": "npm:5.34.1"
+    "@datadog/browser-rum-core": "npm:5.34.1"
+  peerDependenciesMeta:
+    "@datadog/browser-rum":
+      optional: true
+    "@datadog/browser-rum-slim":
+      optional: true
+  languageName: unknown
+  linkType: soft
+
 "@datadog/browser-rum-core@npm:5.34.1, @datadog/browser-rum-core@workspace:packages/rum-core":
   version: 0.0.0-use.local
   resolution: "@datadog/browser-rum-core@workspace:packages/rum-core"
