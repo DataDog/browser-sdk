@@ -130,6 +130,7 @@ export interface RawRumViewEvent {
   }
   feature_flags?: Context
   display?: ViewDisplay
+  performance?: ViewPerformanceData
   privacy?: {
     replay_level: DefaultPrivacyLevel
   }
@@ -149,6 +150,31 @@ interface ViewDisplay {
     max_depth_scroll_top?: number
     max_scroll_height?: number
     max_scroll_height_time?: ServerDuration
+  }
+}
+
+export interface ViewPerformanceData {
+  cls?: {
+    score: number
+    timestamp?: ServerDuration
+    target_selector?: string
+  }
+  fcp?: {
+    timestamp: number
+  }
+  fid?: {
+    duration: ServerDuration
+    timestamp: ServerDuration
+    target_selector?: string
+  }
+  inp?: {
+    duration: ServerDuration
+    timestamp?: ServerDuration
+    target_selector?: string
+  }
+  lcp?: {
+    timestamp: ServerDuration
+    target_selector?: string
   }
 }
 
