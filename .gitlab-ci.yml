@@ -352,17 +352,17 @@ deploy-staging:
 #     - node ./scripts/deploy/deploy.js prod canary root
 #     - node ./scripts/deploy/upload-source-maps.js canary root
 
-# deploy-next-major-canary:
-#   stage: deploy
-#   extends:
-#     - .base-configuration
-#     - .next-major-branch
-#   script:
-#     - export BUILD_MODE=canary
-#     - VERSION=$(node -p -e "require('./lerna.json').version")
-#     - yarn
-#     - yarn build:bundle
-#     - node ./scripts/deploy/deploy.js prod v${VERSION%%.*}-canary root
+deploy-next-major-canary:
+  stage: deploy
+  extends:
+    - .base-configuration
+    - .next-major-branch
+  script:
+    - export BUILD_MODE=canary
+    - VERSION=$(node -p -e "require('./lerna.json').version")
+    - yarn
+    - yarn build:bundle
+    - node ./scripts/deploy/deploy.js prod v${VERSION%%.*}-canary root
 
 deploy-manual:
   stage: deploy
