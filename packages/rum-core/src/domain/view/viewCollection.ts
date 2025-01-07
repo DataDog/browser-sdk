@@ -12,10 +12,8 @@ import type { FeatureFlagContexts } from '../contexts/featureFlagContext'
 import type { PageStateHistory } from '../contexts/pageStateHistory'
 import type { ViewEvent, ViewOptions } from './trackViews'
 import { trackViews } from './trackViews'
-import type { CumulativeLayoutShift } from './viewMetrics/trackCumulativeLayoutShift'
-import type { FirstInput } from './viewMetrics/trackFirstInput'
-import type { InteractionToNextPaint } from './viewMetrics/trackInteractionToNextPaint'
-import type { LargestContentfulPaint } from './viewMetrics/trackLargestContentfulPaint'
+import type { CommonViewMetrics } from './viewMetrics/trackCommonViewMetrics'
+import type { InitialViewMetrics } from './viewMetrics/trackInitialViewMetrics'
 
 export function startViewCollection(
   lifeCycle: LifeCycle,
@@ -118,13 +116,7 @@ function processViewUpdate(
           },
         }
       : undefined,
-    performance: {
-      cls: collectCLS(view.commonViewMetrics.cumulativeLayoutShift),
-      fcp: collectFCP(view.initialViewMetrics.firstContentfulPaint),
-      fid: collectFID(view.initialViewMetrics.firstInput),
-      inp: collectINP(view.commonViewMetrics.interactionToNextPaint),
-      lcp: collectLCP(view.initialViewMetrics.largestContentfulPaint),
-    },
+    performance: computeViewPerformanceData(view.commonViewMetrics, view.initialViewMetrics),
     session: {
       has_replay: replayStats ? true : undefined,
       is_active: view.sessionIsActive ? undefined : false,
@@ -149,49 +141,30 @@ function processViewUpdate(
   }
 }
 
-function collectCLS(cls: CumulativeLayoutShift | undefined): ViewPerformanceData['cls'] {
-  return cls
-    ? {
-        score: cls.value,
-        timestamp: toServerDuration(cls.time),
-        target_selector: cls.targetSelector,
-      }
-    : undefined
-}
-
-function collectFCP(fcp: Duration | undefined): ViewPerformanceData['fcp'] {
-  return fcp
-    ? {
-        timestamp: toServerDuration(fcp),
-      }
-    : undefined
-}
-
-function collectFID(fid: FirstInput | undefined): ViewPerformanceData['fid'] {
-  return fid
-    ? {
-        duration: toServerDuration(fid.delay),
-        timestamp: toServerDuration(fid.time),
-        target_selector: fid.targetSelector,
-      }
-    : undefined
-}
-
-function collectINP(inp: InteractionToNextPaint | undefined): ViewPerformanceData['inp'] {
-  return inp
-    ? {
-        duration: toServerDuration(inp.value),
-        timestamp: toServerDuration(inp.time),
-        target_selector: inp.targetSelector,
-      }
-    : undefined
-}
-
-function collectLCP(lcp: LargestContentfulPaint | undefined): ViewPerformanceData['lcp'] {
-  return lcp
-    ? {
-        timestamp: toServerDuration(lcp.value),
-        target_selector: lcp.targetSelector,
-      }
-    : undefined
+function computeViewPerformanceData(
+  { cumulativeLayoutShift, interactionToNextPaint }: CommonViewMetrics,
+  { firstContentfulPaint, firstInput, largestContentfulPaint }: InitialViewMetrics
+): ViewPerformanceData {
+  return {
+    cls: cumulativeLayoutShift && {
+      score: cumulativeLayoutShift.value,
+      timestamp: toServerDuration(cumulativeLayoutShift.time),
+      target_selector: cumulativeLayoutShift.targetSelector,
+    },
+    fcp: firstContentfulPaint && { timestamp: toServerDuration(firstContentfulPaint) },
+    fid: firstInput && {
+      duration: toServerDuration(firstInput.delay),
+      timestamp: toServerDuration(firstInput.time),
+      target_selector: firstInput.targetSelector,
+    },
+    inp: interactionToNextPaint && {
+      duration: toServerDuration(interactionToNextPaint.value),
+      timestamp: toServerDuration(interactionToNextPaint.time),
+      target_selector: interactionToNextPaint.targetSelector,
+    },
+    lcp: largestContentfulPaint && {
+      timestamp: toServerDuration(largestContentfulPaint.value),
+      target_selector: largestContentfulPaint.targetSelector,
+    },
+  }
 }
