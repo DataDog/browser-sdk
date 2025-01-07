@@ -1,4 +1,4 @@
-import type { RelativeTime, Context, DeflateWorker, CustomerDataTrackerManager, TimeStamp } from '@datadog/browser-core'
+import type { RelativeTime, DeflateWorker, CustomerDataTrackerManager, TimeStamp } from '@datadog/browser-core'
 import {
   ONE_SECOND,
   display,
@@ -503,7 +503,7 @@ describe('rum public api', () => {
     })
 
     it('should remove property', () => {
-      const user: Context = { id: 'foo', name: 'bar', email: 'qux', foo: { bar: 'qux' } }
+      const user = { id: 'foo', name: 'bar', email: 'qux', foo: { bar: 'qux' } }
 
       rumPublicApi.setUser(user)
       rumPublicApi.removeUserProperty('foo')
@@ -683,25 +683,25 @@ describe('rum public api', () => {
       expect(rumPublicApi.getGlobalContext()).toEqual({ foo: 'bar' })
       expect(localStorage.getItem('_dd_c_rum_2')).toBeNull()
 
-      rumPublicApi.setUser({ qux: 'qix' })
-      expect(rumPublicApi.getUser()).toEqual({ qux: 'qix' })
+      rumPublicApi.setUser({ id: 'foo', qux: 'qix' })
+      expect(rumPublicApi.getUser()).toEqual({ id: 'foo', qux: 'qix' })
       expect(localStorage.getItem('_dd_c_rum_1')).toBeNull()
     })
 
     it('when enabled, should maintain user context in local storage', () => {
       rumPublicApi.init({ ...DEFAULT_INIT_CONFIGURATION, storeContextsAcrossPages: true })
 
-      rumPublicApi.setUser({ qux: 'qix' })
-      expect(rumPublicApi.getUser()).toEqual({ qux: 'qix' })
-      expect(localStorage.getItem('_dd_c_rum_1')).toBe('{"qux":"qix"}')
+      rumPublicApi.setUser({ id: 'foo', qux: 'qix' })
+      expect(rumPublicApi.getUser()).toEqual({ id: 'foo', qux: 'qix' })
+      expect(localStorage.getItem('_dd_c_rum_1')).toBe('{"id":"foo","qux":"qix"}')
 
       rumPublicApi.setUserProperty('foo', 'bar')
-      expect(rumPublicApi.getUser()).toEqual({ qux: 'qix', foo: 'bar' })
-      expect(localStorage.getItem('_dd_c_rum_1')).toBe('{"qux":"qix","foo":"bar"}')
+      expect(rumPublicApi.getUser()).toEqual({ id: 'foo', qux: 'qix', foo: 'bar' })
+      expect(localStorage.getItem('_dd_c_rum_1')).toBe('{"id":"foo","qux":"qix","foo":"bar"}')
 
       rumPublicApi.removeUserProperty('foo')
-      expect(rumPublicApi.getUser()).toEqual({ qux: 'qix' })
-      expect(localStorage.getItem('_dd_c_rum_1')).toBe('{"qux":"qix"}')
+      expect(rumPublicApi.getUser()).toEqual({ id: 'foo', qux: 'qix' })
+      expect(localStorage.getItem('_dd_c_rum_1')).toBe('{"id":"foo","qux":"qix"}')
 
       rumPublicApi.clearUser()
       expect(rumPublicApi.getUser()).toEqual({})

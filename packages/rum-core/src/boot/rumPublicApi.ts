@@ -184,8 +184,13 @@ export interface RumPublicApi extends PublicApi {
    *
    * See [User session](https://docs.datadoghq.com/real_user_monitoring/browser/advanced_configuration/#user-session) for further information.
    */
-  setUser: (newUser: User) => void
+  setUser(newUser: User & { id: string }): void
 
+  /**
+   * @deprecated Use `setUser` with a user object that requires an `id`.
+   * @see {@link setUser}
+   */
+  setUser(newUser: User): void
   /**
    * Get user information
    *
@@ -507,6 +512,8 @@ export function makeRumPublicApi(
     }),
 
     setUser: monitor((newUser) => {
+      // Wait for https://github.com/DataDog/browser-sdk/pull/3242/
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-call
       if (checkUser(newUser)) {
         userContextManager.setContext(sanitizeUser(newUser as Context))
       }

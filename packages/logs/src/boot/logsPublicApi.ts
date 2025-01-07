@@ -126,7 +126,13 @@ export interface LogsPublicApi extends PublicApi {
    *
    * See [User context](https://docs.datadoghq.com/logs/log_collection/javascript/#user-context) for further information.
    */
-  setUser: (newUser: User) => void
+  setUser(newUser: User & { id: string }): void
+
+  /**
+   * @deprecated Use `setUser` with a user object that requires an `id`.
+   * @see {@link setUser}
+   */
+  setUser(newUser: User): void
 
   /**
    * Get user information
@@ -240,6 +246,8 @@ export function makeLogsPublicApi(startLogsImpl: StartLogs): LogsPublicApi {
     getInternalContext: monitor((startTime) => strategy.getInternalContext(startTime)),
 
     setUser: monitor((newUser) => {
+      // Wait for https://github.com/DataDog/browser-sdk/pull/3242/
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-call
       if (checkUser(newUser)) {
         userContextManager.setContext(sanitizeUser(newUser as Context))
       }
