@@ -119,8 +119,8 @@ function invalidateCloudfront(awsConfig, pathsToInvalidate) {
 
 function generateEnvironmentForRole(awsAccountId, roleName) {
   const rawCredentials = command`
-  aws sts assume-role 
-    --role-arn arn:aws:iam::${awsAccountId}:role/${roleName} 
+  aws sts assume-role
+    --role-arn arn:aws:iam::${awsAccountId}:role/${roleName}
     --role-session-name AWSCLI-Session`.run()
   const credentials = JSON.parse(rawCredentials)['Credentials']
   return {
