@@ -1,4 +1,4 @@
-import type { Duration, ClocksState, RelativeTime, TimeStamp, ValueHistory } from '@datadog/browser-core'
+import type { Duration, ClocksState, RelativeTime, TimeStamp, ValueHistory, User } from '@datadog/browser-core'
 import {
   includes,
   timeStampNow,
@@ -27,6 +27,8 @@ import type { MouseEventOnElement, UserActivity } from './listenActionEvents'
 import { listenActionEvents } from './listenActionEvents'
 import { computeFrustration } from './computeFrustration'
 import { CLICK_ACTION_MAX_DURATION, updateInteractionSelector } from './interactionSelectorCache'
+import type { VocConfig } from './voc/voc.config'
+import { getVocConfig } from './voc/voc.config'
 
 interface ActionCounts {
   errorCount: number
@@ -51,6 +53,10 @@ export interface ClickAction {
   event: MouseEventOnElement
   frustrationTypes: FrustrationType[]
   events: Event[]
+  voc?: {
+    vocAction: VocConfig
+    isUserInSample: boolean
+  }
 }
 
 export interface ActionContexts {
@@ -226,7 +232,7 @@ function startClickAction(
   })
 }
 
-type ClickActionBase = Pick<ClickAction, 'type' | 'name' | 'nameSource' | 'target' | 'position'>
+type ClickActionBase = Pick<ClickAction, 'type' | 'name' | 'nameSource' | 'target' | 'position' | 'voc'>
 
 function computeClickActionBase(
   event: MouseEventOnElement,
@@ -239,6 +245,20 @@ function computeClickActionBase(
     updateInteractionSelector(event.timeStamp, selector)
   }
   const actionName = getActionNameFromElement(event.target, configuration, nodePrivacyLevel)
+
+  // I NEED SPEED
+  const user = window?.DD_RUM?.getUser() as User
+
+  const vocConfig = getVocConfig()
+
+  let voc: ClickActionBase['voc']
+
+  if (vocConfig.has(actionName.name)) {
+    const vocAction = vocConfig.get(actionName.name)!
+    const isUserInSample = !!user.email && vocAction.trackedUserEmails.has(user.email)
+    voc = { vocAction, isUserInSample }
+    // console.log('click', click, 'user', user, 'isUserInSample', isUserInSample)
+  }
 
   return {
     type: ActionType.CLICK,
@@ -254,6 +274,7 @@ function computeClickActionBase(
     },
     name: actionName.name,
     nameSource: actionName.nameSource,
+    voc,
   }
 }
 
@@ -349,6 +370,8 @@ function newClick(
         },
         clickActionBase
       )
+
+      console.log('clickAction', clickAction)
       lifeCycle.notify(LifeCycleEventType.AUTO_ACTION_COMPLETED, clickAction)
       status = ClickStatus.FINALIZED
     },

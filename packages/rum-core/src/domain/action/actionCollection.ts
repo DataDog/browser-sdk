@@ -78,6 +78,7 @@ function processAction(
   action: AutoAction | CustomAction,
   pageStateHistory: PageStateHistory
 ): RawRumEventCollectedData<RawRumActionEvent> {
+  console.log('action', action.voc)
   const autoActionProperties = isAutoAction(action)
     ? {
         action: {
@@ -95,6 +96,7 @@ function processAction(
           resource: {
             count: action.counts.resourceCount,
           },
+          voc: action.voc,
         },
         _dd: {
           action: {
