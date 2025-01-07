@@ -13,6 +13,7 @@ export function sanitizeContext(newContext: Context, keys: string[]): Context {
   const context = assign({}, newContext)
   keys.forEach((key) => {
     if (key in context) {
+      /* eslint-disable @typescript-eslint/no-base-to-string */
       context[key] = String(context[key])
     }
   })

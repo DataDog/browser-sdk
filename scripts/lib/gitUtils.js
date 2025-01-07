@@ -52,5 +52,5 @@ module.exports = {
   initGitConfig,
   fetchPR,
   getLastCommonCommit,
-  getLocalBranch: () => process.env.CI_COMMIT_REF_NAME,
+  LOCAL_BRANCH: process.env.CI_COMMIT_REF_NAME,
 }

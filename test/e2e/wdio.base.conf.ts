@@ -15,7 +15,10 @@ if (testReportDirectory) {
     {
       outputDir: testReportDirectory,
       outputFileFormat(options) {
-        const browserName = 'browserName' in options.capabilities ? String(options.capabilities.browserName) : 'unknown'
+        const browserName =
+          'browserName' in options.capabilities && typeof options.capabilities.browserName === 'string'
+            ? options.capabilities.browserName
+            : 'unknown'
         return `results-${options.cid}.${browserName}.xml`
       },
     },

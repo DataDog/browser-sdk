@@ -1,6 +1,7 @@
 const { command } = require('../../lib/command')
 const { fetchHandlingError } = require('../../lib/executionUtils')
-const { LOCAL_BRANCH, GITHUB_TOKEN, getLastCommonCommit, fetchPR } = require('../../lib/gitUtils')
+const { LOCAL_BRANCH, getLastCommonCommit, fetchPR } = require('../../lib/gitUtils')
+const { getGithubAccessToken } = require('../../lib/secrets')
 const { fetchPerformanceMetrics } = require('./fetchPerformanceMetrics')
 const PR_COMMENT_HEADER = 'Bundles Sizes Evolution'
 const PR_COMMENTER_AUTH_TOKEN = command`authanywhere --raw`.run()
@@ -74,7 +75,7 @@ async function retrieveExistingCommentId(prNumber) {
     {
       method: 'GET',
       headers: {
-        Authorization: `token ${GITHUB_TOKEN}`,
+        Authorization: `token ${getGithubAccessToken()}`,
       },
     }
   )

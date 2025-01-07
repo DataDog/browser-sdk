@@ -317,6 +317,7 @@ export function CopyMenuItem({ value, children }: { value: unknown; children: Re
         if (typeof value === 'object') {
           copy(JSON.stringify(value, null, 2))
         } else {
+          /* eslint-disable @typescript-eslint/no-base-to-string */
           copy(String(value))
         }
       }}
