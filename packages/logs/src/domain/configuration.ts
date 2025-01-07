@@ -1,14 +1,12 @@
 import type { Configuration, InitConfiguration, RawTelemetryConfiguration } from '@datadog/browser-core'
 import {
   serializeConfiguration,
-  assign,
   ONE_KIBI_BYTE,
   validateAndBuildConfiguration,
   display,
   removeDuplicates,
   ConsoleApiName,
   RawReportType,
-  includes,
   objectValues,
 } from '@datadog/browser-core'
 import type { LogsEvent } from '../logsEvent.types'
@@ -41,11 +39,6 @@ export interface LogsInitConfiguration extends InitConfiguration {
    * @default false
    */
   usePciIntake?: boolean
-  /**
-   * Keep sending logs after the session expiration.
-   * @default false
-   */
-  sendLogsAfterSessionExpiration?: boolean | undefined // TODO next major: remove this option and make it the default behaviour
 }
 
 export type HybridInitConfiguration = Omit<LogsInitConfiguration, 'clientToken'>
@@ -55,7 +48,6 @@ export interface LogsConfiguration extends Configuration {
   forwardConsoleLogs: ConsoleApiName[]
   forwardReports: RawReportType[]
   requestErrorResponseLengthLimit: number
-  sendLogsAfterSessionExpiration: boolean
 }
 
 /**
@@ -90,20 +82,17 @@ export function validateAndBuildLogsConfiguration(
     return
   }
 
-  if (initConfiguration.forwardErrorsToLogs && !includes(forwardConsoleLogs, ConsoleApiName.error)) {
+  if (initConfiguration.forwardErrorsToLogs && !forwardConsoleLogs.includes(ConsoleApiName.error)) {
     forwardConsoleLogs.push(ConsoleApiName.error)
   }
 
-  return assign(
-    {
-      forwardErrorsToLogs: initConfiguration.forwardErrorsToLogs !== false,
-      forwardConsoleLogs,
-      forwardReports,
-      requestErrorResponseLengthLimit: DEFAULT_REQUEST_ERROR_RESPONSE_LENGTH_LIMIT,
-      sendLogsAfterSessionExpiration: !!initConfiguration.sendLogsAfterSessionExpiration,
-    },
-    baseConfiguration
-  )
+  return {
+    forwardErrorsToLogs: initConfiguration.forwardErrorsToLogs !== false,
+    forwardConsoleLogs,
+    forwardReports,
+    requestErrorResponseLengthLimit: DEFAULT_REQUEST_ERROR_RESPONSE_LENGTH_LIMIT,
+    ...baseConfiguration,
+  }
 }
 
 export function validateAndBuildForwardOption<T>(
@@ -115,7 +104,7 @@ export function validateAndBuildForwardOption<T>(
     return []
   }
 
-  if (!(option === 'all' || (Array.isArray(option) && option.every((api) => includes(allowedValues, api))))) {
+  if (!(option === 'all' || (Array.isArray(option) && option.every((api) => allowedValues.includes(api))))) {
     display.error(`${label} should be "all" or an array with allowed values "${allowedValues.join('", "')}"`)
     return
   }
@@ -126,14 +115,11 @@ export function validateAndBuildForwardOption<T>(
 export function serializeLogsConfiguration(configuration: LogsInitConfiguration) {
   const baseSerializedInitConfiguration = serializeConfiguration(configuration)
 
-  return assign(
-    {
-      forward_errors_to_logs: configuration.forwardErrorsToLogs,
-      forward_console_logs: configuration.forwardConsoleLogs,
-      forward_reports: configuration.forwardReports,
-      use_pci_intake: configuration.usePciIntake,
-      send_logs_after_session_expiration: configuration.sendLogsAfterSessionExpiration,
-    },
-    baseSerializedInitConfiguration
-  ) satisfies RawTelemetryConfiguration
+  return {
+    forward_errors_to_logs: configuration.forwardErrorsToLogs,
+    forward_console_logs: configuration.forwardConsoleLogs,
+    forward_reports: configuration.forwardReports,
+    use_pci_intake: configuration.usePciIntake,
+    ...baseSerializedInitConfiguration,
+  } satisfies RawTelemetryConfiguration
 }

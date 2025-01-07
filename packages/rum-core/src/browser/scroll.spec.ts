@@ -1,4 +1,4 @@
-import { addEventListener, DOM_EVENT, isIE } from '@datadog/browser-core'
+import { addEventListener, DOM_EVENT } from '@datadog/browser-core'
 import { mockRumConfiguration } from '../../test'
 import { getScrollX, getScrollY } from './scroll'
 
@@ -10,16 +10,10 @@ describe('scroll', () => {
   }
 
   beforeEach(() => {
-    if (isIE()) {
-      pending('IE not supported')
-    }
     shouldWaitForWindowScrollEvent = false
   })
 
   afterEach((done) => {
-    if (isIE()) {
-      return done()
-    }
     document.body.style.removeProperty('margin-bottom')
     window.scrollTo(0, 0)
 
