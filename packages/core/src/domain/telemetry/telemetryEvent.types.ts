@@ -415,6 +415,7 @@ export type TelemetryCommonFeaturesUsage =
   | StartView
   | AddAction
   | AddError
+  | CreateReporter
   | SetGlobalContext
   | SetUser
   | AddFeatureFlagEvaluation
@@ -587,6 +588,13 @@ export interface AddError {
    * addError API
    */
   feature: 'add-error'
+  [k: string]: unknown
+}
+export interface CreateReporter {
+  /**
+   * createReporter API
+   */
+  feature: 'create-reporter'
   [k: string]: unknown
 }
 export interface SetGlobalContext {

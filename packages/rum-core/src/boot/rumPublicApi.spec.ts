@@ -356,6 +356,49 @@ describe('rum public api', () => {
     })
   })
 
+  describe('createReporter', () => {
+    let addErrorSpy: jasmine.Spy<ReturnType<StartRum>['addError']>
+    let addActionSpy: jasmine.Spy<ReturnType<StartRum>['addAction']>
+    let rumPublicApi: RumPublicApi
+
+    beforeEach(() => {
+      addErrorSpy = jasmine.createSpy()
+      addActionSpy = jasmine.createSpy()
+      rumPublicApi = makeRumPublicApi(
+        () => ({
+          ...noopStartRum(),
+          addError: addErrorSpy,
+          addAction: addActionSpy,
+        }),
+        noopRecorderApi
+      )
+    })
+
+    it('sets the component as part of the context', () => {
+      const reporter = rumPublicApi.createReporter('test-component', { context: { team: 'datadog' } })
+      reporter.addError(new Error('Something went wrong'))
+      rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
+      expect(addErrorSpy.calls.argsFor(0)[0].context).toEqual({
+        component: 'test-component',
+        team: 'datadog',
+      })
+    })
+
+    it('appends the stack to the errors being sent', () => {
+      const reporter = rumPublicApi.createReporter('test-component', { handlingStack: 'at here' })
+      reporter.addError(new Error('Something went wrong'))
+      rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
+      expect(addErrorSpy.calls.argsFor(0)[0].handlingStack).toEqual('at here')
+    })
+
+    it('appends the stack to the actions being sent', () => {
+      const reporter = rumPublicApi.createReporter('test-component', { handlingStack: 'at here' })
+      reporter.addAction('click')
+      rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
+      expect(addActionSpy.calls.argsFor(0)[0].handlingStack).toEqual('at here')
+    })
+  })
+
   describe('setUser', () => {
     let addActionSpy: jasmine.Spy<ReturnType<StartRum>['addAction']>
     let displaySpy: jasmine.Spy<() => void>
