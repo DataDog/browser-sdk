@@ -16,6 +16,13 @@ type ContainerElementToProcess = {
   path: string
 }
 
+type sanitizedEvent = {
+  type: string
+  isTrusted: boolean
+  currentTarget: string | null | undefined
+  target: string | null | undefined
+}
+
 // The maximum size of a single event is 256KiB. By default, we ensure that user-provided data
 // going through sanitize fits inside our events, while leaving room for other contexts, metadata, ...
 const SANITIZE_DEFAULT_MAX_CHARACTER_COUNT = 220 * ONE_KIBI_BYTE
@@ -203,17 +210,15 @@ function sanitizePrimitivesAndFunctions(value: PrimitivesAndFunctions) {
  * LIMITATIONS
  * - If a class defines a toStringTag Symbol, it will fall in the catch-all method and prevent enumeration of properties.
  * To avoid this, a toJSON method can be defined.
- * - IE11 does not return a distinct type for objects such as Map, WeakMap, ... These objects will pass through and their
- * properties enumerated if any.
- *
  */
-function sanitizeObjects(value: object) {
+function sanitizeObjects(value: object): string | sanitizedEvent {
   try {
-    // Handle events - Keep a simple implementation to avoid breaking changes
     if (value instanceof Event) {
-      return {
-        isTrusted: value.isTrusted,
-      }
+      return sanitizeEvent(value)
+    }
+
+    if (value instanceof RegExp) {
+      return `[RegExp] ${value.toString()}`
     }
 
     // Handle all remaining object types in a generic way
@@ -227,6 +232,15 @@ function sanitizeObjects(value: object) {
     // Object.prototype.toString, declare the value unserializable
   }
   return '[Unserializable]'
+}
+
+function sanitizeEvent(event: Event): sanitizedEvent {
+  return {
+    type: event.type,
+    isTrusted: event.isTrusted,
+    currentTarget: event.currentTarget ? (sanitizeObjects(event.currentTarget) as string) : null,
+    target: event.target ? (sanitizeObjects(event.target) as string) : null,
+  }
 }
 
 /**

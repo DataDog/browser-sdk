@@ -21,13 +21,13 @@ export const EXHAUSTIVE_INIT_CONFIGURATION: Required<InitConfiguration> = {
   storeContextsAcrossPages: true,
   trackingConsent: 'not-granted',
   proxy: 'proxy',
-  site: 'site',
+  site: 'datadoghq.com',
   service: 'service',
   env: 'env',
   version: 'version',
-  useCrossSiteSessionCookie: true,
   usePartitionedCrossSiteSessionCookie: true,
   useSecureSessionCookie: true,
+  trackAnonymousUser: true,
   trackSessionAcrossSubdomains: true,
   enableExperimentalFeatures: ['foo'],
   replica: {
@@ -45,7 +45,6 @@ export const SERIALIZED_EXHAUSTIVE_INIT_CONFIGURATION = {
   telemetry_configuration_sample_rate: 70,
   telemetry_usage_sample_rate: 80,
   use_before_send: true,
-  use_cross_site_session_cookie: true,
   session_persistence: 'cookie' as const,
   use_partitioned_cross_site_session_cookie: true,
   use_secure_session_cookie: true,
@@ -56,6 +55,7 @@ export const SERIALIZED_EXHAUSTIVE_INIT_CONFIGURATION = {
   store_contexts_across_pages: true,
   allow_untrusted_events: true,
   tracking_consent: 'not-granted' as const,
+  track_anonymous_user: true,
 }
 
 /**

@@ -117,6 +117,9 @@ describe('logs', () => {
           url: 'common_url',
         },
         origin: ErrorSource.LOGGER,
+        usr: {
+          anonymous_id: jasmine.any(String),
+        },
       })
     })
 
@@ -258,7 +261,7 @@ describe('logs', () => {
       setCookie(SESSION_STORE_KEY, 'id=foo&logs=1', ONE_MINUTE)
       ;({ handleLog, stop: stopLogs } = startLogs(
         initConfiguration,
-        { ...baseConfiguration, sendLogsAfterSessionExpiration: true },
+        baseConfiguration,
         () => COMMON_CONTEXT,
         createTrackingConsentState(TrackingConsent.GRANTED)
       ))
@@ -280,30 +283,6 @@ describe('logs', () => {
 
       expect(secondRequest.message).toEqual('message 2')
       expect(secondRequest.session_id).toBeUndefined()
-    })
-
-    it('does not send logs with session id when session is expired and sendLogsAfterSessionExpiration is false', () => {
-      setCookie(SESSION_STORE_KEY, 'id=foo&logs=1', ONE_MINUTE)
-      ;({ handleLog, stop: stopLogs } = startLogs(
-        initConfiguration,
-        baseConfiguration,
-        () => COMMON_CONTEXT,
-        createTrackingConsentState(TrackingConsent.GRANTED)
-      ))
-      registerCleanupTask(stopLogs)
-
-      handleLog({ status: StatusType.info, message: 'message 1' }, logger)
-
-      expireCookie()
-      clock.tick(STORAGE_POLL_DELAY * 2)
-
-      handleLog({ status: StatusType.info, message: 'message 2' }, logger)
-
-      const firstRequest = getLoggedMessage(requests, 0)
-
-      expect(requests.length).toEqual(1)
-      expect(firstRequest.message).toEqual('message 1')
-      expect(firstRequest.session_id).toEqual('foo')
     })
   })
 })

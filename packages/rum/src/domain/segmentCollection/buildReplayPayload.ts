@@ -1,5 +1,4 @@
 import type { Payload } from '@datadog/browser-core'
-import { assign } from '@datadog/browser-core'
 import type { BrowserSegmentMetadata } from '../../types'
 
 export type BrowserSegmentMetadataAndSegmentSizes = BrowserSegmentMetadata & {
@@ -22,13 +21,12 @@ export function buildReplayPayload(
     `${metadata.session.id}-${metadata.start}`
   )
 
-  const metadataAndSegmentSizes: BrowserSegmentMetadataAndSegmentSizes = assign(
-    {
-      raw_segment_size: rawSegmentBytesCount,
-      compressed_segment_size: data.byteLength,
-    },
-    metadata
-  )
+  const metadataAndSegmentSizes: BrowserSegmentMetadataAndSegmentSizes = {
+    raw_segment_size: rawSegmentBytesCount,
+    compressed_segment_size: data.byteLength,
+    ...metadata,
+  }
+
   const serializedMetadataAndSegmentSizes = JSON.stringify(metadataAndSegmentSizes)
   formData.append('event', new Blob([serializedMetadataAndSegmentSizes], { type: 'application/json' }))
 
