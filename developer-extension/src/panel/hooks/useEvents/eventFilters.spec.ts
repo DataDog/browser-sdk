@@ -1,7 +1,55 @@
+import type { RumEvent } from '../../../../../packages/rum-core/src/rumEvent.types'
 import { isIE, isSafari } from '../../../../../packages/core/src/tools/utils/browserDetection'
-import { parseQuery, matchWithWildcard } from './eventFilters'
+import { parseQuery, matchWithWildcard, filterFacets } from './eventFilters'
+import type { FacetValuesFilter } from './eventFilters'
+import { FacetRegistry } from './facetRegistry'
+const RUM_ERROR_EVENT = { type: 'error' } as RumEvent
+const RUM_ACTION_EVENT = { type: 'action' } as RumEvent
+const RUM_XHR_RESOURCE_EVENT = { type: 'resource', resource: { type: 'xhr' } } as RumEvent
 
 if (!isIE() && !isSafari()) {
+  describe('filterFacets', () => {
+    const facetRegistry = new FacetRegistry()
+    facetRegistry.addEvent(RUM_ACTION_EVENT)
+    facetRegistry.addEvent(RUM_ERROR_EVENT)
+    facetRegistry.addEvent(RUM_ERROR_EVENT)
+    facetRegistry.addEvent(RUM_XHR_RESOURCE_EVENT)
+
+    it('should exclude selected facets when in exclusion mode', () => {
+      expect(
+        filterFacets(
+          [RUM_ACTION_EVENT, RUM_ERROR_EVENT, RUM_ERROR_EVENT],
+          { type: 'exclude', facetValues: { type: ['error'] } } as FacetValuesFilter,
+          facetRegistry
+        )
+      ).toEqual([RUM_ACTION_EVENT])
+    })
+    it('should exclude unselected facets when in inclusion mode', () => {
+      expect(
+        filterFacets(
+          [RUM_ACTION_EVENT, RUM_ERROR_EVENT, RUM_ERROR_EVENT],
+          { type: 'include', facetValues: { type: ['error'] } } as FacetValuesFilter,
+          facetRegistry
+        )
+      ).toEqual([RUM_ERROR_EVENT, RUM_ERROR_EVENT])
+    })
+    it('should include selected facets at different levels in inclusion mode', () => {
+      expect(
+        filterFacets(
+          [RUM_ACTION_EVENT, RUM_ERROR_EVENT, RUM_ERROR_EVENT, RUM_XHR_RESOURCE_EVENT],
+          {
+            type: 'include',
+            facetValues: {
+              type: ['action'],
+              'resource.type': ['xhr'],
+            },
+          } as FacetValuesFilter,
+          facetRegistry
+        )
+      ).toEqual([RUM_ACTION_EVENT, RUM_XHR_RESOURCE_EVENT])
+    })
+  })
+
   describe('parseQuery', () => {
     it('return a simple field', () => {
       expect(parseQuery('foo:bar')).toEqual([['foo', 'bar']])
