@@ -856,51 +856,51 @@ export type RumViewEvent = CommonProperties &
        */
       readonly time_spent: number
       /**
-       * Duration in ns to the first rendering
+       * Duration in ns to the first rendering (deprecated in favor of `view.performance.fcp.timestamp`)
        */
       readonly first_contentful_paint?: number
       /**
-       * Duration in ns to the largest contentful paint
+       * Duration in ns to the largest contentful paint (deprecated in favor of `view.performance.lcp.timestamp`)
        */
       readonly largest_contentful_paint?: number
       /**
-       * CSS selector path of the largest contentful paint element
+       * CSS selector path of the largest contentful paint element (deprecated in favor of `view.performance.lcp.target_selector`)
        */
       readonly largest_contentful_paint_target_selector?: string
       /**
-       * Duration in ns of the first input event delay
+       * Duration in ns of the first input event delay (deprecated in favor of `view.performance.fid.duration`)
        */
       readonly first_input_delay?: number
       /**
-       * Duration in ns to the first input
+       * Duration in ns to the first input (deprecated in favor of `view.performance.fid.timestamp`)
        */
       readonly first_input_time?: number
       /**
-       * CSS selector path of the first input target element
+       * CSS selector path of the first input target element (deprecated in favor of `view.performance.fid.target_selector`)
        */
       readonly first_input_target_selector?: string
       /**
-       * Longest duration in ns between an interaction and the next paint
+       * Longest duration in ns between an interaction and the next paint (deprecated in favor of `view.performance.inp.duration`)
        */
       readonly interaction_to_next_paint?: number
       /**
-       * Duration in ns between start of the view and start of the INP
+       * Duration in ns between start of the view and start of the INP (deprecated in favor of `view.performance.inp.timestamp`)
        */
       readonly interaction_to_next_paint_time?: number
       /**
-       * CSS selector path of the interacted element corresponding to INP
+       * CSS selector path of the interacted element corresponding to INP (deprecated in favor of `view.performance.inp.target_selector`)
        */
       readonly interaction_to_next_paint_target_selector?: string
       /**
-       * Total layout shift score that occurred on the view
+       * Total layout shift score that occurred on the view (deprecated in favor of `view.performance.cls.score`)
        */
       readonly cumulative_layout_shift?: number
       /**
-       * Duration in ns between start of the view and start of the largest layout shift contributing to CLS
+       * Duration in ns between start of the view and start of the largest layout shift contributing to CLS (deprecated in favor of `view.performance.cls.timestamp`)
        */
       readonly cumulative_layout_shift_time?: number
       /**
-       * CSS selector path of the first element (in document order) of the largest layout shift contributing to CLS
+       * CSS selector path of the first element (in document order) of the largest layout shift contributing to CLS (deprecated in favor of `view.performance.cls.target_selector`)
        */
       readonly cumulative_layout_shift_target_selector?: string
       /**
@@ -1169,6 +1169,10 @@ export type RumViewEvent = CommonProperties &
       }
       [k: string]: unknown
     }
+    /**
+     * Performance data. (Web Vitals, etc.)
+     */
+    performance?: ViewPerformanceData
     [k: string]: unknown
   }
 /**
@@ -1333,6 +1337,24 @@ export interface CommonProperties {
      * Email of the user
      */
     readonly email?: string
+    /**
+     * Identifier of the user across sessions
+     */
+    readonly anonymous_id?: string
+    [k: string]: unknown
+  }
+  /**
+   * Account properties
+   */
+  readonly account?: {
+    /**
+     * Identifier of the account
+     */
+    readonly id: string
+    /**
+     * Name of the account
+     */
+    readonly name?: string
     [k: string]: unknown
   }
   /**
@@ -1600,5 +1622,119 @@ export interface RumPerfMetric {
    * The maximum possible value we could see for this metric, if such a max is relevant and can vary from session to session.
    */
   readonly metric_max?: number
+  [k: string]: unknown
+}
+/**
+ * Schema for view-level RUM performance data (Web Vitals, etc.)
+ */
+export interface ViewPerformanceData {
+  /**
+   * Cumulative Layout Shift
+   */
+  readonly cls?: {
+    /**
+     * Total layout shift score that occurred on the view
+     */
+    readonly score: number
+    /**
+     * Timestamp in ns of the largest layout shift contributing to CLS
+     */
+    readonly timestamp?: number
+    /**
+     * CSS selector path of the first element (in document order) of the largest layout shift contributing to CLS
+     */
+    readonly target_selector?: string
+    /**
+     * Bounding client rect of the element before the layout shift
+     */
+    previous_rect?: RumRect
+    /**
+     * Bounding client rect of the element after the layout shift
+     */
+    current_rect?: RumRect
+    [k: string]: unknown
+  }
+  /**
+   * First Contentful Paint
+   */
+  readonly fcp?: {
+    /**
+     * Timestamp in ns of the first rendering
+     */
+    readonly timestamp: number
+    [k: string]: unknown
+  }
+  /**
+   * First Input Delay
+   */
+  readonly fid?: {
+    /**
+     * Duration in ns of the first input event delay
+     */
+    readonly duration: number
+    /**
+     * Timestamp in ns of the first input event
+     */
+    readonly timestamp: number
+    /**
+     * CSS selector path of the first input target element
+     */
+    readonly target_selector?: string
+    [k: string]: unknown
+  }
+  /**
+   * Interaction to Next Paint
+   */
+  readonly inp?: {
+    /**
+     * Longest duration in ns between an interaction and the next paint
+     */
+    readonly duration: number
+    /**
+     * Timestamp in ns of the start of the INP interaction
+     */
+    readonly timestamp?: number
+    /**
+     * CSS selector path of the interacted element for the INP interaction
+     */
+    readonly target_selector?: string
+    [k: string]: unknown
+  }
+  /**
+   * Largest Contentful Paint
+   */
+  readonly lcp?: {
+    /**
+     * Timestamp in ns of the largest contentful paint
+     */
+    readonly timestamp: number
+    /**
+     * CSS selector path of the largest contentful paint element
+     */
+    readonly target_selector?: string
+    [k: string]: unknown
+  }
+  [k: string]: unknown
+}
+/**
+ * Schema for DOMRect-like rectangles describing an element's bounding client rect
+ */
+export interface RumRect {
+  /**
+   * The x coordinate of the element's origin
+   */
+  readonly x: number
+  /**
+   * The y coordinate of the element's origin
+   */
+  readonly y: number
+  /**
+   * The element's width
+   */
+  readonly width: number
+  /**
+   * The element's height
+   */
+  readonly height: number
   [k: string]: unknown
 }
