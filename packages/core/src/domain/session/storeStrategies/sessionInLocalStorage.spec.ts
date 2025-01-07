@@ -1,4 +1,5 @@
 import type { Configuration } from '../../configuration'
+import { SessionPersistence } from '../sessionConstants'
 import { type SessionState } from '../sessionState'
 import { selectLocalStorageStrategy, initLocalStorageStrategy } from './sessionInLocalStorage'
 import { SESSION_STORE_KEY } from './sessionStoreStrategy'
@@ -16,7 +17,7 @@ describe('session in local storage strategy', () => {
 
   it('should report local storage as available', () => {
     const available = selectLocalStorageStrategy()
-    expect(available).toEqual({ type: 'LocalStorage' })
+    expect(available).toEqual({ type: SessionPersistence.LOCAL_STORAGE })
   })
 
   it('should report local storage as not available', () => {

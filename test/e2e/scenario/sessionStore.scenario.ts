@@ -1,14 +1,16 @@
 import { SESSION_STORE_KEY } from '@datadog/browser-core'
 import { createTest } from '../lib/framework'
 
+const DISABLE_LOCAL_STORAGE = '<script>Object.defineProperty(Storage.prototype, "getItem", { get: () => 42});</script>'
+const DISABLE_COOKIES = '<script>Object.defineProperty(Document.prototype, "cookie", { get: () => 42});</script>'
+
 describe('Session Stores', () => {
   describe('Cookies', () => {
-    createTest('Cookie Initialization')
+    createTest('uses cookies to store the session')
       .withLogs()
       .withRum()
       .run(async () => {
-        const [cookie] = await browser.getCookies([SESSION_STORE_KEY])
-        const cookieSessionId = cookie.value.match(/\bid=([\w-]+)/)![1]
+        const cookieSessionId = await getSessionIdFromCookie()
 
         const logsContext = await browser.execute(() => window.DD_LOGS?.getInternalContext())
         const rumContext = await browser.execute(() => window.DD_RUM?.getInternalContext())
@@ -16,38 +18,11 @@ describe('Session Stores', () => {
         expect(logsContext?.session_id).toBe(cookieSessionId)
         expect(rumContext?.session_id).toBe(cookieSessionId)
       })
-  })
 
-  describe('Local Storage', () => {
-    createTest('Local Storage Initialization')
-      .withLogs({ allowFallbackToLocalStorage: true })
-      .withRum({ allowFallbackToLocalStorage: true })
-      // This will force the SDKs to initialize using local storage
-      .withHead('<script>Object.defineProperty(Document.prototype, "cookie", { get: () => 42})</script>')
-      .run(async () => {
-        const sessionStateString = await browser.execute((key) => window.localStorage.getItem(key), SESSION_STORE_KEY)
-        const sessionId = sessionStateString?.match(/\bid=([\w-]+)/)![1]
-
-        const logsContext = await browser.execute(() => window.DD_LOGS?.getInternalContext())
-        const rumContext = await browser.execute(() => window.DD_RUM?.getInternalContext())
-
-        expect(logsContext?.session_id).toBe(sessionId)
-        expect(rumContext?.session_id).toBe(sessionId)
-      })
-  })
-
-  describe('No storage available', () => {
-    createTest('RUM should fail init / Logs should succeed')
-      .withLogs({ allowFallbackToLocalStorage: true })
-      .withRum({ allowFallbackToLocalStorage: true })
-      // This will ensure no storage is available
-      .withHead(
-        `
-        <script>
-          Object.defineProperty(Document.prototype, "cookie", { get: () => 42});
-          Object.defineProperty(Storage.prototype, "getItem", { get: () => 42});
-        </script>`
-      )
+    createTest('when cookies are unavailable, Logs should start, but not RUM')
+      .withLogs()
+      .withRum()
+      .withHead(DISABLE_COOKIES)
       .run(async () => {
         const logsContext = await browser.execute(() => window.DD_LOGS?.getInternalContext())
         const rumContext = await browser.execute(() => window.DD_RUM?.getInternalContext())
@@ -56,4 +31,55 @@ describe('Session Stores', () => {
         expect(rumContext).toBeNull()
       })
   })
+
+  describe('Local Storage', () => {
+    createTest('uses localStorage to store the session')
+      .withLogs({ sessionPersistence: 'local-storage' })
+      .withRum({ sessionPersistence: 'local-storage' })
+      .run(async () => {
+        const sessionId = await getSessionIdFromLocalStorage()
+
+        const logsContext = await browser.execute(() => window.DD_LOGS?.getInternalContext())
+        const rumContext = await browser.execute(() => window.DD_RUM?.getInternalContext())
+
+        expect(logsContext?.session_id).toBe(sessionId)
+        expect(rumContext?.session_id).toBe(sessionId)
+      })
+
+    createTest('when localStorage is unavailable, Logs should start, but not RUM')
+      .withLogs({ sessionPersistence: 'local-storage' })
+      .withRum({ sessionPersistence: 'local-storage' })
+      .withHead(DISABLE_LOCAL_STORAGE)
+      .run(async () => {
+        const logsContext = await browser.execute(() => window.DD_LOGS?.getInternalContext())
+        const rumContext = await browser.execute(() => window.DD_RUM?.getInternalContext())
+
+        expect(logsContext).not.toBeNull()
+        expect(rumContext).toBeNull()
+      })
+  })
+
+  createTest('allowFallbackToLocalStorage (deprecated)')
+    .withLogs({ allowFallbackToLocalStorage: true })
+    .withRum({ allowFallbackToLocalStorage: true })
+    .withHead(DISABLE_COOKIES)
+    .run(async () => {
+      const sessionId = await getSessionIdFromLocalStorage()
+
+      const logsContext = await browser.execute(() => window.DD_LOGS?.getInternalContext())
+      const rumContext = await browser.execute(() => window.DD_RUM?.getInternalContext())
+
+      expect(logsContext?.session_id).toBe(sessionId)
+      expect(rumContext?.session_id).toBe(sessionId)
+    })
 })
+
+async function getSessionIdFromLocalStorage(): Promise<string | undefined> {
+  const sessionStateString = await browser.execute((key) => window.localStorage.getItem(key), SESSION_STORE_KEY)
+  return sessionStateString?.match(/id=([\w-]+)/)?.[1]
+}
+
+async function getSessionIdFromCookie(): Promise<string | undefined> {
+  const [cookie] = await browser.getCookies([SESSION_STORE_KEY])
+  return cookie.value.match(/id=([\w-]+)/)?.[1]
+}
