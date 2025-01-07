@@ -10,6 +10,7 @@ import { assign } from '../../tools/utils/polyfills'
 import { selectSessionStoreStrategyType } from '../session/sessionStore'
 import type { SessionStoreStrategyType } from '../session/storeStrategies/sessionStoreStrategy'
 import { TrackingConsent } from '../trackingConsent'
+import type { SessionPersistence } from '../session/sessionConstants'
 import type { TransportConfiguration } from './transportConfiguration'
 import { computeTransportConfiguration } from './transportConfiguration'
 
@@ -48,12 +49,20 @@ export interface InitConfiguration {
    * @default false
    */
   silentMultipleInit?: boolean | undefined
+
+  /**
+   * Which storage strategy to use for persisting sessions. Can be either 'cookie' or 'local-storage'.
+   * @default "cookie"
+   */
+  sessionPersistence?: SessionPersistence | undefined
+
   /**
    * Allows the use of localStorage when cookies cannot be set. This enables the RUM Browser SDK to run in environments that do not provide cookie support.
    * See [Monitor Electron Applications Using the Browser SDK](https://docs.datadoghq.com/real_user_monitoring/guide/monitor-electron-applications-using-browser-sdk) for further information.
-   * @default false
+   * @deprecated use `sessionPersistence: local-storage` where you want to use localStorage instead
    */
   allowFallbackToLocalStorage?: boolean | undefined
+
   /**
    * Allow listening to DOM events dispatched programmatically ([untrusted events](https://developer.mozilla.org/en-US/docs/Web/API/Event/isTrusted)). Enabling this option can be useful if you heavily rely on programmatic events, such as in an automated UI test environment.
    * @default false
@@ -294,6 +303,7 @@ export function serializeConfiguration(initConfiguration: InitConfiguration) {
     use_proxy: !!initConfiguration.proxy,
     silent_multiple_init: initConfiguration.silentMultipleInit,
     track_session_across_subdomains: initConfiguration.trackSessionAcrossSubdomains,
+    session_persistence: initConfiguration.sessionPersistence,
     allow_fallback_to_local_storage: !!initConfiguration.allowFallbackToLocalStorage,
     store_contexts_across_pages: !!initConfiguration.storeContextsAcrossPages,
     allow_untrusted_events: !!initConfiguration.allowUntrustedEvents,
