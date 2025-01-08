@@ -1,13 +1,8 @@
 import { display } from '../src/tools/display'
-import { isIE } from '../src/tools/utils/browserDetection'
 import { getCurrentJasmineSpec } from './getCurrentJasmineSpec'
 import { registerCleanupTask } from './registerCleanupTask'
 
 export function startLeakDetection() {
-  if (isIE()) {
-    return
-  }
-
   let wrappedListeners: {
     [key: string]: Map<EventListenerOrEventListenerObject | null, EventListenerOrEventListenerObject | null>
   } = {}
@@ -36,12 +31,6 @@ export function startLeakDetection() {
     EventTarget.prototype.removeEventListener = originalRemoveEventListener
     wrappedListeners = {}
   })
-}
-
-export function stopLeakDetection() {
-  if (isIE()) {
-    return
-  }
 }
 
 function withLeakDetection(eventName: string, listener: EventListener) {

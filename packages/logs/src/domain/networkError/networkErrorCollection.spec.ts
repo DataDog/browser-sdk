@@ -1,4 +1,4 @@
-import { isIE, ErrorSource } from '@datadog/browser-core'
+import { ErrorSource } from '@datadog/browser-core'
 import type { MockFetch, MockFetchManager } from '@datadog/browser-core/test'
 import { SPEC_ENDPOINTS, MockResponse, mockFetch, registerCleanupTask } from '@datadog/browser-core/test'
 import type { RawNetworkLogsEvent } from '../../rawLogsEvent.types'
@@ -22,7 +22,6 @@ const CONFIGURATION = {
 describe('network error collection', () => {
   let fetch: MockFetch
   let mockFetchManager: MockFetchManager
-  let stopNetworkErrorCollection: () => void
   let lifeCycle: LifeCycle
   let rawLogsEvents: Array<RawLogsEventCollectedData<RawNetworkLogsEvent>>
   const FAKE_URL = 'http://fake.com/'
@@ -37,26 +36,17 @@ describe('network error collection', () => {
 
   function startCollection(forwardErrorsToLogs = true) {
     mockFetchManager = mockFetch()
-    ;({ stop: stopNetworkErrorCollection } = startNetworkErrorCollection(
-      { ...CONFIGURATION, forwardErrorsToLogs },
-      lifeCycle
-    ))
+    const { stop } = startNetworkErrorCollection({ ...CONFIGURATION, forwardErrorsToLogs }, lifeCycle)
+    registerCleanupTask(stop)
     fetch = window.fetch as MockFetch
   }
 
   beforeEach(() => {
-    if (isIE()) {
-      pending('no fetch support')
-    }
     rawLogsEvents = []
     lifeCycle = new LifeCycle()
     lifeCycle.subscribe(LifeCycleEventType.RAW_LOG_COLLECTED, (rawLogsEvent) =>
       rawLogsEvents.push(rawLogsEvent as RawLogsEventCollectedData<RawNetworkLogsEvent>)
     )
-
-    registerCleanupTask(() => {
-      stopNetworkErrorCollection()
-    })
   })
 
   it('should track server error', (done) => {
@@ -186,12 +176,6 @@ describe('computeXhrResponseData', () => {
 })
 
 describe('computeFetchResponseText', () => {
-  beforeEach(() => {
-    if (isIE()) {
-      pending('IE does not support the fetch API')
-    }
-  })
-
   it('computes response text from Response objects', (done) => {
     computeFetchResponseText(new MockResponse({ responseText: 'foo' }), CONFIGURATION, (responseText) => {
       expect(responseText).toBe('foo')

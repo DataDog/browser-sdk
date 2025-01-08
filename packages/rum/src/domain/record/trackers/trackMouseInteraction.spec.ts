@@ -1,4 +1,4 @@
-import { DOM_EVENT, DefaultPrivacyLevel, isIE } from '@datadog/browser-core'
+import { DOM_EVENT, DefaultPrivacyLevel } from '@datadog/browser-core'
 import { createNewEvent, registerCleanupTask } from '@datadog/browser-core/test'
 import type { RumConfiguration } from '@datadog/browser-rum-core'
 import { appendElement } from '../../../../../rum-core/test'
@@ -20,10 +20,6 @@ describe('trackMouseInteraction', () => {
   let configuration: RumConfiguration
 
   beforeEach(() => {
-    if (isIE()) {
-      pending('IE not supported')
-    }
-
     configuration = { defaultPrivacyLevel: DefaultPrivacyLevel.ALLOW } as RumConfiguration
     a = appendElement('<a tabindex="0"></a>') as HTMLAnchorElement // tabindex 0 makes the element focusable
     a.dispatchEvent(createNewEvent(DOM_EVENT.FOCUS))

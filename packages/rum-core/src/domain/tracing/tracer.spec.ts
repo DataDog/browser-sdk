@@ -1,4 +1,4 @@
-import { display, isIE, objectEntries, TraceContextInjection } from '@datadog/browser-core'
+import { display, objectEntries, TraceContextInjection } from '@datadog/browser-core'
 import type { RumSessionManagerMock } from '../../../test'
 import { createRumSessionManagerMock } from '../../../test'
 import type { RumFetchResolveContext, RumFetchStartContext, RumXhrStartContext } from '../requestCollection'
@@ -87,8 +87,11 @@ describe('tracer', () => {
       expect(xhr.headers).toEqual(tracingHeadersFor(context.traceId!, context.spanId!, '1'))
     })
 
-    it("should trace request with priority '0' when not sampled", () => {
-      const tracer = startTracer({ ...configuration, traceSampleRate: 0 }, sessionManager)
+    it("should trace request with priority '0' when not sampled and config set to all", () => {
+      const tracer = startTracer(
+        { ...configuration, traceSampleRate: 0, traceContextInjection: TraceContextInjection.ALL },
+        sessionManager
+      )
       const context = { ...ALLOWED_DOMAIN_CONTEXT }
       tracer.traceXhr(context, xhr as unknown as XMLHttpRequest)
 
@@ -98,10 +101,11 @@ describe('tracer', () => {
       expect(xhr.headers).toEqual(tracingHeadersFor(context.traceId!, context.spanId!, '0'))
     })
 
-    it("should trace request with sampled set to '0' in OTel headers when not sampled", () => {
+    it("should trace request with sampled set to '0' in OTel headers when not sampled and config set to all", () => {
       const configurationWithAllOtelHeaders = validateAndBuildRumConfiguration({
         ...INIT_CONFIGURATION,
         traceSampleRate: 0,
+        traceContextInjection: TraceContextInjection.ALL,
         allowedTracingUrls: [{ match: window.location.origin, propagatorTypes: ['b3', 'tracecontext', 'b3multi'] }],
       })!
 
@@ -113,6 +117,7 @@ describe('tracer', () => {
         jasmine.objectContaining({
           b3: jasmine.stringMatching(/^[0-9a-f]{16}-[0-9a-f]{16}-0$/),
           traceparent: jasmine.stringMatching(/^[0-9a-f]{2}-[0-9a-f]{32}-[0-9a-f]{16}-00$/),
+          tracestate: 'dd=s:0;o:rum',
           'X-B3-Sampled': '0',
         })
       )
@@ -185,6 +190,7 @@ describe('tracer', () => {
         jasmine.objectContaining({
           b3: jasmine.stringMatching(/^[0-9a-f]{16}-[0-9a-f]{16}-1$/),
           traceparent: jasmine.stringMatching(/^[0-9a-f]{2}-[0-9a-f]{32}-[0-9a-f]{16}-01$/),
+          tracestate: 'dd=s:1;o:rum',
         })
       )
     })
@@ -201,6 +207,7 @@ describe('tracer', () => {
 
       expect(xhr.headers['b3']).toBeUndefined()
       expect(xhr.headers['traceparent']).toBeUndefined()
+      expect(xhr.headers['tracestate']).toBeUndefined()
       expect(xhr.headers['x-datadog-trace-id']).toBeUndefined()
       expect(xhr.headers['X-B3-TraceId']).toBeUndefined()
     })
@@ -209,7 +216,6 @@ describe('tracer', () => {
       const configurationWithInjectionParam = {
         ...configuration,
         traceSampleRate: 0,
-        traceContextInjection: TraceContextInjection.SAMPLED,
       }
 
       const tracer = startTracer(configurationWithInjectionParam, sessionManager)
@@ -224,7 +230,6 @@ describe('tracer', () => {
       const configurationWithInjectionParam = {
         ...configuration,
         traceSampleRate: 100,
-        traceContextInjection: TraceContextInjection.SAMPLED,
       }
 
       const tracer = startTracer(configurationWithInjectionParam, sessionManager)
@@ -262,6 +267,7 @@ describe('tracer', () => {
 
       expect(xhr.headers['b3']).toBeUndefined()
       expect(xhr.headers['traceparent']).toBeUndefined()
+      expect(xhr.headers['tracestate']).toBeUndefined()
       expect(xhr.headers['x-datadog-trace-id']).toBeUndefined()
       expect(xhr.headers['X-B3-TraceId']).toBeUndefined()
     })
@@ -286,12 +292,6 @@ describe('tracer', () => {
   })
 
   describe('traceFetch', () => {
-    beforeEach(() => {
-      if (isIE()) {
-        pending('no fetch support')
-      }
-    })
-
     it('should add traceId and spanId to context, and add tracing headers', () => {
       const context: Partial<RumFetchStartContext> = { ...ALLOWED_DOMAIN_CONTEXT }
       const tracer = startTracer(configuration, sessionManager)
@@ -464,10 +464,13 @@ describe('tracer', () => {
       expect(context.init!.headers).toEqual(tracingHeadersAsArrayFor(context.traceId!, context.spanId!, '1'))
     })
 
-    it("should trace request with priority '0' when not sampled", () => {
+    it("should trace request with priority '0' when not sampled and config set to all", () => {
       const context: Partial<RumFetchStartContext> = { ...ALLOWED_DOMAIN_CONTEXT }
 
-      const tracer = startTracer({ ...configuration, traceSampleRate: 0 }, sessionManager)
+      const tracer = startTracer(
+        { ...configuration, traceSampleRate: 0, traceContextInjection: TraceContextInjection.ALL },
+        sessionManager
+      )
       tracer.traceFetch(context)
 
       expect(context.traceSampled).toBe(false)
@@ -544,6 +547,7 @@ describe('tracer', () => {
         jasmine.arrayContaining([
           ['b3', jasmine.stringMatching(/^[0-9a-f]{16}-[0-9a-f]{16}-1$/)],
           ['traceparent', jasmine.stringMatching(/^[0-9a-f]{2}-[0-9a-f]{32}-[0-9a-f]{16}-01$/)],
+          ['tracestate', 'dd=s:1;o:rum'],
         ])
       )
     })
@@ -560,6 +564,7 @@ describe('tracer', () => {
 
       expect(context.init!.headers).not.toContain(jasmine.arrayContaining(['b3']))
       expect(context.init!.headers).not.toContain(jasmine.arrayContaining(['traceparent']))
+      expect(context.init!.headers).not.toContain(jasmine.arrayContaining(['tracestate']))
       expect(context.init!.headers).not.toContain(jasmine.arrayContaining(['x-datadog-trace-id']))
       expect(context.init!.headers).not.toContain(jasmine.arrayContaining(['X-B3-TraceId']))
     })

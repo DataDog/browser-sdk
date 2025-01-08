@@ -1,5 +1,5 @@
 import type { ClocksState, HttpRequest, TimeStamp } from '@datadog/browser-core'
-import { DeflateEncoderStreamId, PageExitReason, isIE } from '@datadog/browser-core'
+import { DeflateEncoderStreamId, PageExitReason } from '@datadog/browser-core'
 import type { ViewHistory, ViewHistoryEntry, RumConfiguration } from '@datadog/browser-rum-core'
 import { LifeCycle, LifeCycleEventType } from '@datadog/browser-rum-core'
 import type { Clock } from '@datadog/browser-core/test'
@@ -58,9 +58,6 @@ describe('startSegmentCollection', () => {
   }
 
   beforeEach(() => {
-    if (isIE()) {
-      pending('IE not supported')
-    }
     configuration = {} as RumConfiguration
     lifeCycle = new LifeCycle()
     worker = new MockWorker()
