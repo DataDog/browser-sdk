@@ -50,6 +50,58 @@ describe('rum sessions', () => {
         expect(intakeRegistry.isEmpty).toBe(true)
       })
   })
+  describe('anonymous user id', () => {
+    createTest('persists when session is expired')
+      .withRum()
+      .run(async () => {
+        const prevSessionCookie = await findSessionCookie()
+        const anonymousId = prevSessionCookie?.match(/aid=[a-z0-9-]+/)
+        expect(anonymousId).not.toBeNull()
+
+        await expireSession()
+        await flushEvents()
+
+        if (anonymousId) {
+          expect(await findSessionCookie()).toContain(anonymousId[0])
+        }
+      })
+
+    createTest('persists when session renewed')
+      .withRum()
+      .run(async () => {
+        const prevSessionCookie = await findSessionCookie()
+        const anonymousId = prevSessionCookie?.match(/aid=[a-z0-9-]+/)
+        expect(anonymousId).not.toBeNull()
+
+        await browser.execute(() => {
+          window.DD_RUM!.stopSession()
+        })
+        await (await $('html')).click()
+
+        // The session is not created right away, let's wait until we see a cookie
+        await browser.waitUntil(async () => Boolean(await findSessionCookie()))
+
+        await browser.execute(() => {
+          window.DD_RUM!.addAction('foo')
+        })
+
+        await flushEvents()
+
+        if (anonymousId) {
+          expect(await findSessionCookie()).toContain(anonymousId[0])
+        }
+      })
+
+    createTest('generated when cookie is cleared')
+      .withRum()
+      .run(async () => {
+        await deleteAllCookies()
+        await renewSession()
+        await flushEvents()
+
+        expect(await findSessionCookie()).toMatch(/aid=[a-z0-9-]+/)
+      })
+  })
 
   describe('manual session expiration', () => {
     createTest('calling stopSession() stops the session')
