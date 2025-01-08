@@ -176,6 +176,10 @@ export function trackViews(
     setViewName: (name: string) => {
       currentView.setViewName(name)
     },
+    getViewContext: () => {
+      const context = currentView.contextManager.getContext()
+      return context ? context : undefined
+    },
 
     stop: () => {
       if (locationChangeSubscription) {

@@ -39,21 +39,23 @@ export function setupViewTest({ lifeCycle, initialLocation }: ViewTrackingContex
   } = spyOnViews<ViewEndedEvent>()
   lifeCycle.subscribe(LifeCycleEventType.VIEW_ENDED, viewEndHandler)
 
-  const { stop, startView, setViewName, setViewContext, setViewContextProperty, addTiming } = trackViews(
-    location,
-    lifeCycle,
-    domMutationObservable,
-    windowOpenObservable,
-    configuration,
-    locationChangeObservable,
-    !configuration.trackViewsManually,
-    initialViewOptions
-  )
+  const { stop, startView, setViewName, setViewContext, setViewContextProperty, getViewContext, addTiming } =
+    trackViews(
+      location,
+      lifeCycle,
+      domMutationObservable,
+      windowOpenObservable,
+      configuration,
+      locationChangeObservable,
+      !configuration.trackViewsManually,
+      initialViewOptions
+    )
   return {
     stop,
     startView,
     setViewContext,
     setViewContextProperty,
+    getViewContext,
     changeLocation,
     setViewName,
     addTiming,

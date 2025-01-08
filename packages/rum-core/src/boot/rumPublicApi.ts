@@ -98,6 +98,12 @@ export interface RumPublicApi extends PublicApi {
    * @param value value of the property
    */
   setViewContextProperty: (key: string, value: any) => void
+
+  /**
+   * Get View Context.
+   */
+  getViewContext: () => Context | undefined
+
   /**
    * Set the global context information to all events, stored in `@context`
    *
@@ -352,6 +358,7 @@ export interface Strategy {
   setViewName: StartRumResult['setViewName']
   setViewContext: StartRumResult['setViewContext']
   setViewContextProperty: StartRumResult['setViewContextProperty']
+  getViewContext: StartRumResult['getViewContext']
   addAction: StartRumResult['addAction']
   addError: StartRumResult['addError']
   addFeatureFlagEvaluation: StartRumResult['addFeatureFlagEvaluation']
@@ -452,6 +459,8 @@ export function makeRumPublicApi(
     setViewContextProperty: monitor((key: string, value: any) => {
       strategy.setViewContextProperty(key, value)
     }),
+
+    getViewContext: monitor(() => strategy.getViewContext()),
 
     setGlobalContext: monitor((context) => {
       globalContextManager.setContext(context)

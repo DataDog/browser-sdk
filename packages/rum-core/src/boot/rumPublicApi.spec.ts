@@ -25,6 +25,7 @@ const noopStartRum = (): ReturnType<StartRum> => ({
   setViewContext: () => undefined,
   setViewContextProperty: () => undefined,
   setViewName: () => undefined,
+  getViewContext: () => undefined,
   getInternalContext: () => undefined,
   lifeCycle: {} as any,
   viewHistory: {} as any,
@@ -889,6 +890,44 @@ describe('rum public api', () => {
       ;(rumPublicApi as any).setViewContextProperty('foo', 'bar')
 
       expect(setViewContextPropertySpy).toHaveBeenCalledWith('foo', 'bar')
+    })
+  })
+
+  describe('getViewContext', () => {
+    let getViewContextSpy: jasmine.Spy<ReturnType<StartRum>['getViewContext']>
+    let rumPublicApi: RumPublicApi
+
+    beforeEach(() => {
+      getViewContextSpy = jasmine.createSpy().and.callFake(() => ({
+        foo: 'bar',
+      }))
+      rumPublicApi = makeRumPublicApi(
+        () => ({
+          ...noopStartRum(),
+          getViewContext: getViewContextSpy,
+        }),
+        noopRecorderApi
+      )
+    })
+
+    it('should return the view context after init', () => {
+      rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
+
+      expect(rumPublicApi.getViewContext()).toEqual({ foo: 'bar' })
+      expect(getViewContextSpy).toHaveBeenCalled()
+    })
+
+    it('should return undefined before init', () => {
+      expect(rumPublicApi.getViewContext()).toBeUndefined()
+      expect(getViewContextSpy).not.toHaveBeenCalled()
+    })
+
+    it('should return undefined if getViewContext returns undefined', () => {
+      getViewContextSpy.and.callFake(() => undefined)
+      rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
+
+      expect(rumPublicApi.getViewContext()).toBeUndefined()
+      expect(getViewContextSpy).toHaveBeenCalled()
     })
   })
 })

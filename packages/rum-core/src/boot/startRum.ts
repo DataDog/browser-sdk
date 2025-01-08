@@ -159,6 +159,7 @@ export function startRum(
     setViewName,
     setViewContext,
     setViewContextProperty,
+    getViewContext,
     stop: stopViewCollection,
   } = startViewCollection(
     lifeCycle,
@@ -207,6 +208,7 @@ export function startRum(
     startView,
     setViewContext,
     setViewContextProperty,
+    getViewContext,
     setViewName,
     lifeCycle,
     viewHistory,

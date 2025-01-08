@@ -932,6 +932,14 @@ describe('view event count', () => {
       setViewContextProperty('foo', 'bar')
       expect(getViewUpdate(1).context).toEqual({ foo: 'bar' })
     })
+
+    it('should get view context with getViewContext', () => {
+      viewTest = setupViewTest({ lifeCycle })
+      const { getViewContext, setViewContextProperty } = viewTest
+
+      setViewContextProperty('foo', 'bar')
+      expect(getViewContext()).toEqual({ foo: 'bar' })
+    })
   })
 
   describe('set view name', () => {
