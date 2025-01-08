@@ -403,6 +403,8 @@ describe('view metrics', () => {
         value: 0.1,
         targetSelector: undefined,
         time: clock.relative(0),
+        previousRect: undefined,
+        currentRect: undefined,
       })
     })
 

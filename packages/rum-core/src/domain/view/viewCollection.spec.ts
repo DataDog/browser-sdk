@@ -172,6 +172,8 @@ describe('viewCollection', () => {
             score: 1,
             timestamp: (100 * 1e6) as ServerDuration,
             target_selector: undefined,
+            previous_rect: undefined,
+            current_rect: undefined,
           },
           fcp: {
             timestamp: (10 * 1e6) as ServerDuration,
