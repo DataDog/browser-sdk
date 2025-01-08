@@ -64,7 +64,7 @@ describe('rum session manager', () => {
       expect(getCookie(SESSION_STORE_KEY)).toContain(
         `${RUM_SESSION_KEY}=${RumTrackingType.TRACKED_WITH_SESSION_REPLAY}`
       )
-      expect(getCookie(SESSION_STORE_KEY)).toMatch(/id=[a-f0-9-]/)
+      expect(getCookie(SESSION_STORE_KEY)).toMatch(/\bid=[a-f0-9-]/)
     })
 
     it('when tracked without session replay should store session type and id', () => {
@@ -75,7 +75,7 @@ describe('rum session manager', () => {
       expect(getCookie(SESSION_STORE_KEY)).toContain(
         `${RUM_SESSION_KEY}=${RumTrackingType.TRACKED_WITHOUT_SESSION_REPLAY}`
       )
-      expect(getCookie(SESSION_STORE_KEY)).toMatch(/id=[a-f0-9-]/)
+      expect(getCookie(SESSION_STORE_KEY)).toMatch(/\bid=[a-f0-9-]/)
     })
 
     it('when not tracked should store session type', () => {
@@ -129,7 +129,7 @@ describe('rum session manager', () => {
       expect(getCookie(SESSION_STORE_KEY)).toContain(
         `${RUM_SESSION_KEY}=${RumTrackingType.TRACKED_WITH_SESSION_REPLAY}`
       )
-      expect(getCookie(SESSION_STORE_KEY)).toMatch(/id=[a-f0-9-]/)
+      expect(getCookie(SESSION_STORE_KEY)).toMatch(/\bid=[a-f0-9-]/)
     })
   })
 

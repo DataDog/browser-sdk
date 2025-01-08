@@ -43,7 +43,7 @@ describe('logs session manager', () => {
     startLogsSessionManagerWithDefaults()
 
     expect(getCookie(SESSION_STORE_KEY)).toContain(`${LOGS_SESSION_KEY}=${LoggerTrackingType.TRACKED}`)
-    expect(getCookie(SESSION_STORE_KEY)).toMatch(/id=[a-f0-9-]+/)
+    expect(getCookie(SESSION_STORE_KEY)).toMatch(/\bid=[a-f0-9-]+/)
   })
 
   it('when not tracked should store tracking type', () => {
@@ -79,7 +79,7 @@ describe('logs session manager', () => {
 
     document.body.dispatchEvent(createNewEvent(DOM_EVENT.CLICK))
 
-    expect(getCookie(SESSION_STORE_KEY)).toMatch(/id=[a-f0-9-]+/)
+    expect(getCookie(SESSION_STORE_KEY)).toMatch(/\bid=[a-f0-9-]+/)
     expect(getCookie(SESSION_STORE_KEY)).toContain(`${LOGS_SESSION_KEY}=${LoggerTrackingType.TRACKED}`)
   })
 

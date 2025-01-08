@@ -61,7 +61,7 @@ describe('startSessionManager', () => {
     expect(sessionManager.findSession()!.id).toMatch(/^[a-f0-9-]+$/)
     expect(sessionManager.findSession()?.isExpired).toBeUndefined()
 
-    expect(getCookie(SESSION_STORE_KEY)).toMatch(/id=[a-f0-9-]+/)
+    expect(getCookie(SESSION_STORE_KEY)).toMatch(/\bid=[a-f0-9-]+/)
     expect(getCookie(SESSION_STORE_KEY)).not.toContain('isExpired=1')
   }
 
