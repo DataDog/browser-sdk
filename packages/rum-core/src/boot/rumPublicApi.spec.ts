@@ -646,10 +646,9 @@ describe('rum public api', () => {
     })
 
     it('should not contain original reference to object', () => {
-      const accountDetails: { [key: string]: any } = { name: 'john' }
+      const accountDetails: { [key: string]: any } = { name: 'company' }
       rumPublicApi.setAccount(account)
       rumPublicApi.setAccountProperty('accountDetails', accountDetails)
-      accountDetails.DOB = '11/11/1999'
       const accountClone = rumPublicApi.getAccount()
 
       expect(accountClone.accountDetails).not.toBe(accountDetails)
@@ -665,11 +664,11 @@ describe('rum public api', () => {
 
     it('should sanitize properties', () => {
       rumPublicApi.setAccountProperty('id', 123)
-      rumPublicApi.setAccountProperty('name', ['Adam', 'Smith'])
+      rumPublicApi.setAccountProperty('name', ['My', 'Company'])
       const accountClone = rumPublicApi.getAccount()
 
       expect(accountClone.id).toEqual('123')
-      expect(accountClone.name).toEqual('Adam,Smith')
+      expect(accountClone.name).toEqual('My,Company')
     })
   })
 

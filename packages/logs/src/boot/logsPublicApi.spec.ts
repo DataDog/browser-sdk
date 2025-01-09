@@ -413,10 +413,9 @@ describe('logs entry', () => {
       })
 
       it('should not contain original reference to object', () => {
-        const accountDetails: { [key: string]: any } = { name: 'john' }
+        const accountDetails: { [key: string]: any } = { name: 'company' }
         logsPublicApi.setAccount(account)
         logsPublicApi.setAccountProperty('accountDetails', accountDetails)
-        accountDetails.DOB = '11/11/1999'
         const accountClone = logsPublicApi.getAccount()
 
         expect(accountClone.accountDetails).not.toBe(accountDetails)
@@ -432,11 +431,11 @@ describe('logs entry', () => {
 
       it('should sanitize properties', () => {
         logsPublicApi.setAccountProperty('id', 123)
-        logsPublicApi.setAccountProperty('name', ['Adam', 'Smith'])
+        logsPublicApi.setAccountProperty('name', ['My', 'Company'])
         const accountClone = logsPublicApi.getAccount()
 
         expect(accountClone.id).toEqual('123')
-        expect(accountClone.name).toEqual('Adam,Smith')
+        expect(accountClone.name).toEqual('My,Company')
       })
     })
 
