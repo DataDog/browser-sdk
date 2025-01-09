@@ -208,7 +208,7 @@ export function startRumAssembly(
             ;(serverRumEvent.account as Mutable<RumEvent['account']>) = commonContext.account as Account &
               Context & { id: string }
           } else {
-            display.warn("The account object is missing the 'id' property, it will not be sent to the intake.")
+            display.warn("The account object is missing the 'id' property; it will not be sent to the intake.")
           }
         }
 

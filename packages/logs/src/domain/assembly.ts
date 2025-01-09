@@ -50,7 +50,7 @@ export function startLogsAssembly(
         if (commonContext.account.id) {
           account = commonContext.account
         } else {
-          display.warn("The account object is missing the 'id' property, it will not be sent to the intake.")
+          display.warn("The account object is missing the 'id' property; it will not be sent to the intake.")
         }
       }
 

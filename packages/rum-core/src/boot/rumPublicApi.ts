@@ -221,13 +221,11 @@ export interface RumPublicApi extends PublicApi {
 
   /**
    * Set account information to all events, stored in `@account`
-   *
    */
   setAccount: (newAccount: Account & { id: string }) => void
 
   /**
    * Get account information
-   *
    */
   getAccount: () => Context
 
@@ -236,19 +234,16 @@ export interface RumPublicApi extends PublicApi {
    *
    * @param key Key of the property
    * @param property Value of the property
-   *
    */
   setAccountProperty: (key: any, property: any) => void
 
   /**
-   * Remove a account property
-   *
+   * Remove an account property
    */
   removeAccountProperty: (key: any) => void
 
   /**
    * Clear all account information
-   *
    */
   clearAccount: () => void
 

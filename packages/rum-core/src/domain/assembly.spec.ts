@@ -519,7 +519,7 @@ describe('rum assembly', () => {
 
       expect(serverRumEvents[0].account).toBe(undefined)
       expect(displaySpy).toHaveBeenCalledWith(
-        "The account object is missing the 'id' property, it will not be sent to the intake."
+        "The account object is missing the 'id' property; it will not be sent to the intake."
       )
     })
 
