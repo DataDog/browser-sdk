@@ -2,7 +2,7 @@ const assert = require('node:assert/strict')
 const path = require('node:path')
 const { beforeEach, before, describe, it, mock } = require('node:test')
 const { siteByDatacenter } = require('../lib/datadogSites')
-const { mockModule, mockCommandImplementation, replaceChunkHashes, FAKE_CHUNK_HASH } = require('./lib/testHelpers.js')
+const { mockModule, mockCommandImplementation, replaceChunkHashes } = require('./lib/testHelpers.js')
 
 const FAKE_API_KEY = 'FAKE_API_KEY'
 const ENV_STAGING = {
@@ -59,12 +59,6 @@ void describe('upload-source-maps', () => {
         },
         {
           command: 'mv packages/logs/bundle/datadog-logs.js.map packages/logs/bundle/datadog-logs-v6.js.map',
-        },
-        {
-          command: `mv packages/rum/bundle/chunks/recorder-${FAKE_CHUNK_HASH}-datadog-rum.js packages/rum/bundle/chunks/recorder-${FAKE_CHUNK_HASH}-datadog-rum.js`,
-        },
-        {
-          command: `mv packages/rum/bundle/chunks/recorder-${FAKE_CHUNK_HASH}-datadog-rum.js.map packages/rum/bundle/chunks/recorder-${FAKE_CHUNK_HASH}-datadog-rum.js.map`,
         },
         {
           command: 'mv packages/rum/bundle/datadog-rum.js packages/rum/bundle/datadog-rum-v6.js',
@@ -136,12 +130,6 @@ void describe('upload-source-maps', () => {
         command: 'mv packages/logs/bundle/datadog-logs.js.map packages/logs/bundle/datadog-logs-staging.js.map',
       },
       {
-        command: `mv packages/rum/bundle/chunks/recorder-${FAKE_CHUNK_HASH}-datadog-rum.js packages/rum/bundle/chunks/recorder-${FAKE_CHUNK_HASH}-datadog-rum.js`,
-      },
-      {
-        command: `mv packages/rum/bundle/chunks/recorder-${FAKE_CHUNK_HASH}-datadog-rum.js.map packages/rum/bundle/chunks/recorder-${FAKE_CHUNK_HASH}-datadog-rum.js.map`,
-      },
-      {
         command: 'mv packages/rum/bundle/datadog-rum.js packages/rum/bundle/datadog-rum-staging.js',
       },
       {
@@ -201,12 +189,6 @@ void describe('upload-source-maps', () => {
       },
       {
         command: 'mv packages/logs/bundle/datadog-logs.js.map packages/logs/bundle/datadog-logs-canary.js.map',
-      },
-      {
-        command: `mv packages/rum/bundle/chunks/recorder-${FAKE_CHUNK_HASH}-datadog-rum.js packages/rum/bundle/chunks/recorder-${FAKE_CHUNK_HASH}-datadog-rum.js`,
-      },
-      {
-        command: `mv packages/rum/bundle/chunks/recorder-${FAKE_CHUNK_HASH}-datadog-rum.js.map packages/rum/bundle/chunks/recorder-${FAKE_CHUNK_HASH}-datadog-rum.js.map`,
       },
       {
         command: 'mv packages/rum/bundle/datadog-rum.js packages/rum/bundle/datadog-rum-canary.js',
