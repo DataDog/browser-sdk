@@ -17,8 +17,6 @@ import {
   addTelemetryDebug,
   CustomerDataType,
   drainPreStartTelemetry,
-  isExperimentalFeatureEnabled,
-  ExperimentalFeature,
 } from '@datadog/browser-core'
 import { createDOMMutationObservable } from '../browser/domMutationObservable'
 import { createWindowOpenObservable } from '../browser/windowOpenObservable'
@@ -29,7 +27,6 @@ import { startViewHistory } from '../domain/contexts/viewHistory'
 import { startRequestCollection } from '../domain/requestCollection'
 import { startActionCollection } from '../domain/action/actionCollection'
 import { startErrorCollection } from '../domain/error/errorCollection'
-import { startLongTaskCollection } from '../domain/longTask/longTaskCollection'
 import { startResourceCollection } from '../domain/resource/resourceCollection'
 import { startViewCollection } from '../domain/view/viewCollection'
 import type { RumSessionManager } from '../domain/rumSessionManager'
@@ -177,13 +174,9 @@ export function startRum(
   const { stop: stopResourceCollection } = startResourceCollection(lifeCycle, configuration, pageStateHistory)
   cleanupTasks.push(stopResourceCollection)
 
-  if (isExperimentalFeatureEnabled(ExperimentalFeature.LONG_ANIMATION_FRAME)) {
-    if (configuration.trackLongTasks) {
-      const { stop: stopLongAnimationFrameCollection } = startLongAnimationFrameCollection(lifeCycle, configuration)
-      cleanupTasks.push(stopLongAnimationFrameCollection)
-    }
-  } else {
-    startLongTaskCollection(lifeCycle, configuration)
+  if (configuration.trackLongTasks) {
+    const { stop: stopLongAnimationFrameCollection } = startLongAnimationFrameCollection(lifeCycle, configuration)
+    cleanupTasks.push(stopLongAnimationFrameCollection)
   }
 
   const { addError } = startErrorCollection(lifeCycle, configuration, pageStateHistory, featureFlagContexts)
