@@ -204,7 +204,7 @@ export function createPreStartStrategy(
       bufferApiCalls.add((startRumResult) => startRumResult.setViewContextProperty(key, value))
     },
 
-    getViewContext: noop as () => undefined,
+    getViewContext: noop as () => {},
 
     addAction(action, commonContext = getCommonContext()) {
       bufferApiCalls.add((startRumResult) => startRumResult.addAction(action, commonContext))

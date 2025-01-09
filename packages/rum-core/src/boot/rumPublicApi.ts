@@ -102,7 +102,7 @@ export interface RumPublicApi extends PublicApi {
   /**
    * Get View Context.
    */
-  getViewContext: () => Context | undefined
+  getViewContext: () => Context
 
   /**
    * Set the global context information to all events, stored in `@context`

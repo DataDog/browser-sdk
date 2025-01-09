@@ -576,7 +576,7 @@ describe('preStartRum', () => {
         createCustomVitalsState(),
         doStartRumSpy
       )
-      expect(strategy.getViewContext()).toBe(undefined)
+      expect(strategy.getViewContext()).toBeUndefined()
     })
   })
 

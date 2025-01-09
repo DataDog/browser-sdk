@@ -25,7 +25,7 @@ const noopStartRum = (): ReturnType<StartRum> => ({
   setViewContext: () => undefined,
   setViewContextProperty: () => undefined,
   setViewName: () => undefined,
-  getViewContext: () => undefined,
+  getViewContext: () => ({}),
   getInternalContext: () => undefined,
   lifeCycle: {} as any,
   viewHistory: {} as any,
@@ -920,14 +920,6 @@ describe('rum public api', () => {
     it('should return undefined before init', () => {
       expect(rumPublicApi.getViewContext()).toBeUndefined()
       expect(getViewContextSpy).not.toHaveBeenCalled()
-    })
-
-    it('should return undefined if getViewContext returns undefined', () => {
-      getViewContextSpy.and.callFake(() => undefined)
-      rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
-
-      expect(rumPublicApi.getViewContext()).toBeUndefined()
-      expect(getViewContextSpy).toHaveBeenCalled()
     })
   })
 })
