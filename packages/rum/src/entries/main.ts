@@ -2,11 +2,9 @@
 import { defineGlobal, getGlobalObject } from '@datadog/browser-core'
 import type { RumPublicApi } from '@datadog/browser-rum-core'
 import { makeRumPublicApi, startRum } from '@datadog/browser-rum-core'
-
-import { startRecording } from '../boot/startRecording'
 import { makeRecorderApi } from '../boot/recorderApi'
 import { createDeflateEncoder, startDeflateWorker } from '../domain/deflate'
-
+import { lazyLoadRecorder } from '../boot/lazyLoadRecorder'
 export {
   CommonProperties,
   RumPublicApi as RumGlobal,
@@ -31,7 +29,8 @@ export {
 } from '@datadog/browser-rum-core'
 export { DefaultPrivacyLevel } from '@datadog/browser-core'
 
-const recorderApi = makeRecorderApi(startRecording)
+const recorderApi = makeRecorderApi(lazyLoadRecorder)
+
 export const datadogRum = makeRumPublicApi(startRum, recorderApi, { startDeflateWorker, createDeflateEncoder })
 
 interface BrowserWindow extends Window {

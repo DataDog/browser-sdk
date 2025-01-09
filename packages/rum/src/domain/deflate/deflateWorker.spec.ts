@@ -1,5 +1,5 @@
 import type { RawTelemetryEvent } from '@datadog/browser-core'
-import { display, isIE, resetTelemetry, startFakeTelemetry } from '@datadog/browser-core'
+import { display, resetTelemetry, startFakeTelemetry } from '@datadog/browser-core'
 import type { RumConfiguration } from '@datadog/browser-rum-core'
 import type { Clock } from '@datadog/browser-core/test'
 import { mockClock, registerCleanupTask } from '@datadog/browser-core/test'
@@ -75,9 +75,6 @@ describe('startDeflateWorker', () => {
     let displaySpy: jasmine.Spy
 
     beforeEach(() => {
-      if (isIE()) {
-        pending('IE does not support CSP blocking worker creation')
-      }
       displaySpy = spyOn(display, 'error')
       telemetryEvents = startFakeTelemetry()
       CSP_ERROR = new DOMException(
