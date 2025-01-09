@@ -6,7 +6,7 @@ variables:
   CI_IMAGE: '$BUILD_STABLE_REGISTRY/ci/$APP:$CURRENT_CI_IMAGE'
   GIT_REPOSITORY: 'git@github.com:DataDog/browser-sdk.git'
   MAIN_BRANCH: 'main'
-  NEXT_MAJOR_BRANCH: 'v6'
+  NEXT_MAJOR_BRANCH: ''
   CHROME_PACKAGE_VERSION: 131.0.6778.69-1
 
 cache:
@@ -487,6 +487,8 @@ merge-into-next-major:
   only:
     refs:
       - main
+    variables:
+      - $NEXT_MAJOR_BRANCH
   except:
     refs:
       - schedules
