@@ -917,8 +917,8 @@ describe('rum public api', () => {
       expect(getViewContextSpy).toHaveBeenCalled()
     })
 
-    it('should return undefined before init', () => {
-      expect(rumPublicApi.getViewContext()).toBeUndefined()
+    it('should return an empty object before init', () => {
+      expect(rumPublicApi.getViewContext()).toEqual({})
       expect(getViewContextSpy).not.toHaveBeenCalled()
     })
   })

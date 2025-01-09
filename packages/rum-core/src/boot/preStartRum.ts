@@ -15,7 +15,7 @@ import {
   addTelemetryConfiguration,
   initFetchObservable,
 } from '@datadog/browser-core'
-import type { TrackingConsentState, DeflateWorker } from '@datadog/browser-core'
+import type { TrackingConsentState, DeflateWorker, Context } from '@datadog/browser-core'
 import {
   validateAndBuildRumConfiguration,
   type RumConfiguration,
@@ -52,6 +52,8 @@ export function createPreStartStrategy(
   let cachedConfiguration: RumConfiguration | undefined
 
   const trackingConsentStateSubscription = trackingConsentState.observable.subscribe(tryStartRum)
+
+  const noopContext: Context = {}
 
   function tryStartRum() {
     if (!cachedInitConfiguration || !cachedConfiguration || !trackingConsentState.isGranted()) {
@@ -204,7 +206,7 @@ export function createPreStartStrategy(
       bufferApiCalls.add((startRumResult) => startRumResult.setViewContextProperty(key, value))
     },
 
-    getViewContext: noop as () => {},
+    getViewContext: () => noopContext,
 
     addAction(action, commonContext = getCommonContext()) {
       bufferApiCalls.add((startRumResult) => startRumResult.addAction(action, commonContext))

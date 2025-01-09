@@ -568,7 +568,7 @@ describe('preStartRum', () => {
   })
 
   describe('getViewContext', () => {
-    it('returns undefined', () => {
+    it('returns empty object', () => {
       const strategy = createPreStartStrategy(
         {},
         getCommonContextSpy,
@@ -576,7 +576,7 @@ describe('preStartRum', () => {
         createCustomVitalsState(),
         doStartRumSpy
       )
-      expect(strategy.getViewContext()).toBeUndefined()
+      expect(strategy.getViewContext()).toEqual({})
     })
   })
 
