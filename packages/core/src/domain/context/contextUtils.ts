@@ -23,10 +23,10 @@ export function sanitizeContext(newContext: Context, keys: string[]): Context {
 /**
  * Simple check to ensure an object is a valid context
  */
-export function checkContext(newContext: Context): boolean {
-  const isValid = getType(newContext) === 'object'
+export function checkContext(maybeContext: unknown): maybeContext is Context {
+  const isValid = getType(maybeContext) === 'object'
   if (!isValid) {
-    display.error('Unsupported context:', newContext)
+    display.error('Unsupported context:', maybeContext)
   }
   return isValid
 }

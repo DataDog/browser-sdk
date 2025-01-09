@@ -541,8 +541,8 @@ export function makeRumPublicApi(
     }),
 
     setUser: monitor((newUser) => {
-      if (checkContext(newUser as Context)) {
-        userContextManager.setContext(sanitizeUser(newUser as Context))
+      if (checkContext(newUser)) {
+        userContextManager.setContext(sanitizeUser(newUser))
       }
       addTelemetryUsage({ feature: 'set-user' })
     }),
@@ -560,8 +560,8 @@ export function makeRumPublicApi(
     clearUser: monitor(() => userContextManager.clearContext()),
 
     setAccount: monitor((newAccount) => {
-      if (checkContext(newAccount as Context)) {
-        accountContextManager.setContext(sanitizeUser(newAccount as Context))
+      if (checkContext(newAccount)) {
+        accountContextManager.setContext(sanitizeAccount(newAccount))
       }
     }),
 

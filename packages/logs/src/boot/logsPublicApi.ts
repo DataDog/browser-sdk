@@ -273,8 +273,8 @@ export function makeLogsPublicApi(startLogsImpl: StartLogs): LogsPublicApi {
     getInternalContext: monitor((startTime) => strategy.getInternalContext(startTime)),
 
     setUser: monitor((newUser) => {
-      if (checkContext(newUser as Context)) {
-        userContextManager.setContext(sanitizeUser(newUser as Context))
+      if (checkContext(newUser)) {
+        userContextManager.setContext(sanitizeUser(newUser))
       }
     }),
 
@@ -290,8 +290,8 @@ export function makeLogsPublicApi(startLogsImpl: StartLogs): LogsPublicApi {
     clearUser: monitor(() => userContextManager.clearContext()),
 
     setAccount: monitor((newUser) => {
-      if (checkContext(newUser as Context)) {
-        accountContextManager.setContext(sanitizeAccount(newUser as Context))
+      if (checkContext(newUser)) {
+        accountContextManager.setContext(sanitizeAccount(newUser))
       }
     }),
 
