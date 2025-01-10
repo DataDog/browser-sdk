@@ -150,18 +150,14 @@ export function makeRecorderApi(
           return
         }
 
-        if (state.status === RecorderStatus.Starting) {
+        if (state.status === RecorderStatus.Starting || state.status === RecorderStatus.Started) {
           return
         }
 
-        if (state.status === RecorderStatus.Started) {
-          if (options && options.force && session.sessionReplay === SessionReplayState.OFF) {
-            flushCachedRecords()
-            sessionManager.setForcedReplay()
-          }
-          return
+        if (options && options.force && session.sessionReplay === SessionReplayState.OFF) {
+          flushCachedRecords()
+          sessionManager.setForcedReplay()
         }
-
         state = { status: RecorderStatus.Starting }
 
         runOnReadyState(configuration, 'interactive', () => {

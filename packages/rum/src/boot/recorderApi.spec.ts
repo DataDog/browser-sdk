@@ -142,6 +142,7 @@ describe('makeRecorderApi', () => {
 
     it('should start recording if session is tracked without session replay when forced', () => {
       const setForcedReplaySpy = jasmine.createSpy()
+      const { triggerOnDomLoaded } = mockDocumentReadyState()
 
       setupRecorderApi({
         sessionManager: {
@@ -152,7 +153,10 @@ describe('makeRecorderApi', () => {
       })
 
       rumInit()
+      triggerOnDomLoaded()
+
       recorderApi.start({ force: true })
+
       expect(startRecordingSpy).toHaveBeenCalledTimes(1)
       expect(setForcedReplaySpy).toHaveBeenCalledTimes(1)
     })
