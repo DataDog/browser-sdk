@@ -69,7 +69,13 @@ export async function withBrowserLogs(fn: (logs: BrowserLog[]) => void) {
   // https://github.com/webdriverio/webdriverio/issues/4275
   if (browser.getLogs) {
     const logs = (await browser.getLogs('browser')) as BrowserLog[]
-    fn(logs)
+
+    const filterdLogs = logs.filter(
+      // Ignore long-animation-frame warning (only happens on Edge)
+      (log) => !log.message.includes("The entry type 'long-animation-frame' does not exist or isn't supported")
+    )
+
+    fn(filterdLogs)
   }
 }
 
