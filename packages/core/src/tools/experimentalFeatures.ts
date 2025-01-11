@@ -20,6 +20,7 @@ export enum ExperimentalFeature {
   ANONYMOUS_USER_TRACKING = 'anonymous_user_tracking',
   ACTION_NAME_MASKING = 'action_name_masking',
   CONSISTENT_TRACE_SAMPLING = 'consistent_trace_sampling',
+  DOM_MUTATION_IGNORING = 'dom_mutation_ignoring'
 }
 
 const enabledExperimentalFeatures: Set<ExperimentalFeature> = new Set()
