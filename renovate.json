@@ -1,11 +1,6 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-  "extends": [
-    ":dependencyDashboard",
-    ":ignoreModulesAndTests",
-    "group:monorepos",
-    "group:recommended"
-  ],
+  "extends": [":dependencyDashboard", ":ignoreModulesAndTests", "group:monorepos", "group:recommended"],
   "labels": ["dependencies"],
   "commitMessagePrefix": "👷 ",
   "prConcurrentLimit": 5,
