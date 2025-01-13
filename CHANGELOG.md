@@ -18,6 +18,285 @@
 
 ---
 
+## v6.0.0
+
+**Public Changes:**
+
+- 💥 [RUM-7704] Remove anonymous user feature flag for v6 ([#3243](https://github.com/DataDog/browser-sdk/pull/3243)) [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+- Revert "💥 [RUM-7704] Remove anonymous user feature flag for v6 ([#3216](https://github.com/DataDog/browser-sdk/pull/3216))" [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+- 💥 [RUM-7704] Remove anonymous user feature flag for v6 ([#3216](https://github.com/DataDog/browser-sdk/pull/3216)) [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+- 💥 default traceContextInjection to sampled ([#3212](https://github.com/DataDog/browser-sdk/pull/3212)) [RUM] [RUM-REACT] [RUM-SLIM]
+- 💥 new default for track\* initialization options ([#3190](https://github.com/DataDog/browser-sdk/pull/3190)) [RUM] [RUM-REACT] [RUM-SLIM]
+- 💥 [RUM-6816] remove sendLogsAfterSessionExpiration ([#3183](https://github.com/DataDog/browser-sdk/pull/3183)) [LOGS]
+- 💥 [RUM 6075] Save anonymous id in session cookie ([#2985](https://github.com/DataDog/browser-sdk/pull/2985)) [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+- 💥 remove useCrossSiteSessionCookie option ([#3179](https://github.com/DataDog/browser-sdk/pull/3179)) [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+- 💥 remove Object.\* Polyfills ([#2908](https://github.com/DataDog/browser-sdk/pull/2908)) [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+- 💥 remove some polyfills ([#2857](https://github.com/DataDog/browser-sdk/pull/2857)) [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+- 💥 build using ES2018 target ([#2882](https://github.com/DataDog/browser-sdk/pull/2882)) [RUM] [RUM-REACT] [RUM-SLIM]
+- 💥 [RUM-5282] Remove ie11 tests ([#2856](https://github.com/DataDog/browser-sdk/pull/2856)) [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+- ✨ Collect long animation frames as long task events ([#3272](https://github.com/DataDog/browser-sdk/pull/3272)) [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+- ✨ [RUM-175] sanitize RegExp and Event ([#3188](https://github.com/DataDog/browser-sdk/pull/3188)) [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+- ✨ [RUM-6814] strongly type site parameter ([#3161](https://github.com/DataDog/browser-sdk/pull/3161)) [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+- ⚡️ [RUM-6813] Lazy load session replay ([#3152](https://github.com/DataDog/browser-sdk/pull/3152)) [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+
+**Internal Changes:**
+
+- 👷 do not rename bundle file when name does not change ([#3273](https://github.com/DataDog/browser-sdk/pull/3273))
+- 👷 skip merge-into-next-major-job if branch don't exist ([#3270](https://github.com/DataDog/browser-sdk/pull/3270))
+- 👷 enable check staging merge ([#3264](https://github.com/DataDog/browser-sdk/pull/3264))
+- Revert "👷 freeze next major canary deploy ([#3237](https://github.com/DataDog/browser-sdk/pull/3237))" ([#3253](https://github.com/DataDog/browser-sdk/pull/3253))
+- 👷 freeze next major canary deploy ([#3237](https://github.com/DataDog/browser-sdk/pull/3237))
+- Revert "👷 freeze next major canary deploy ([#3176](https://github.com/DataDog/browser-sdk/pull/3176))" ([#3202](https://github.com/DataDog/browser-sdk/pull/3202))
+- 👷 fix comment about performance.timing.navigationStart ([#3180](https://github.com/DataDog/browser-sdk/pull/3180)) [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+- 👷 fix comment on browser support for unicode character escape ([#3177](https://github.com/DataDog/browser-sdk/pull/3177)) [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+- 👷 freeze next major canary deploy ([#3176](https://github.com/DataDog/browser-sdk/pull/3176))
+- Revert "👷‍♀️ [RUM-6424] Change webpack chunk config to speed up local unit tests ([#3057](https://github.com/DataDog/browser-sdk/pull/3057))"
+- 👷‍♀️ [RUM-6424] Change webpack chunk config to speed up local unit tests ([#3057](https://github.com/DataDog/browser-sdk/pull/3057))
+- 👷 [RUM-6366] disable browserStack tests ([#3089](https://github.com/DataDog/browser-sdk/pull/3089))
+- 👷 fix next major deploy job config ([#2988](https://github.com/DataDog/browser-sdk/pull/2988))
+- 👷 add canary deploy job for next major ([#2938](https://github.com/DataDog/browser-sdk/pull/2938))
+- 🧪 Update browser matrix for tests ([#2884](https://github.com/DataDog/browser-sdk/pull/2884)) [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+- ✅ fix session store e2e to account for anonymous id ([#3265](https://github.com/DataDog/browser-sdk/pull/3265))
+- ✅ Make tests robust to an instrumentMethod that does not always rewrap ([#3231](https://github.com/DataDog/browser-sdk/pull/3231)) [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+- ✅ [RUM-6813] Use promise in `collectAsyncCalls` instead of a callback ([#3168](https://github.com/DataDog/browser-sdk/pull/3168)) [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+- 👌 capialize type name [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+- 👌 resolve conflit mistake [RUM] [RUM-REACT] [RUM-SLIM]
+- 👌 fix conflict [RUM] [RUM-REACT] [RUM-SLIM]
+- 👌 fix confict [RUM] [RUM-REACT] [RUM-SLIM]
+- 👌 fix after merge conflicts [RUM] [RUM-REACT] [RUM-SLIM]
+- 👌 fix mistake when resolving conflict [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+- Merge pull request #2883 from DataDog/v6
+- [skip ci] Merge branch main into v6
+- Merge remote-tracking branch 'origin/v6' into fix-merge-fc08ba7a64-into-v6
+- [skip ci] main conflicts with v6
+- [skip ci] Merge branch main into v6
+- Merge remote-tracking branch 'origin/v6' into fix-merge-5f995a4bac-into-v6
+- [skip ci] main conflicts with v6
+- [skip ci] Merge branch main into v6
+- Merge remote-tracking branch 'origin/v6' into fix-merge-8faeb6420b-into-v6
+- [skip ci] main conflicts with v6
+- [skip ci] Merge branch main into v6
+- Merge remote-tracking branch 'origin/v6' into fix-merge-6fb4e3cd68-into-v6
+- [skip ci] main conflicts with v6
+- [skip ci] Merge branch main into v6
+- [skip ci] Merge branch main into v6
+- [skip ci] Merge branch main into v6
+- [skip ci] Merge branch main into v6
+- [skip ci] Merge branch main into v6
+- [skip ci] Merge branch main into v6
+- Merge remote-tracking branch 'origin/v6' into fix-merge-a0e447e340-into-v6
+- [skip ci] main conflicts with v6
+- [skip ci] Merge branch main into v6
+- [skip ci] Merge branch main into v6
+- [skip ci] Merge branch main into v6
+- Merge branch 'v6' into fix-merge-db5520fb73-into-v6
+- [skip ci] main conflicts with v6
+- [skip ci] Merge branch main into v6
+- Merge remote-tracking branch 'origin/v6' into fix-merge-b9b2592198-into-v6
+- Merge branch 'main' into v6
+- Merge branch 'main' into v6
+- [skip ci] Merge branch main into v6
+- [skip ci] Merge branch main into v6
+- [skip ci] Merge branch main into v6
+- Merge branch 'v6' into fix-merge-518c07a32e-into-v6
+- [skip ci] main conflicts with v6
+- [skip ci] Merge branch main into v6
+- [skip ci] Merge branch main into v6
+- Merge remote-tracking branch 'origin/v6' into fix-merge-8c093ddc8e-into-v6
+- [skip ci] main conflicts with v6
+- [skip ci] Merge branch main into v6
+- [skip ci] Merge branch main into v6
+- Merge branch 'main' into v6
+- [skip ci] Merge branch main into v6
+- [skip ci] Merge branch main into v6
+- [skip ci] Merge branch main into v6
+- [skip ci] Merge branch main into v6
+- Merge branch 'v6' into fix-merge-0dfe31486c-into-v6
+- [skip ci] main conflicts with v6
+- Add tracestate header when using tracecontext propagator ([#3163](https://github.com/DataDog/browser-sdk/pull/3163)) [RUM] [RUM-REACT] [RUM-SLIM]
+- [skip ci] Merge branch main into v6
+- prettier [RUM] [RUM-REACT] [RUM-SLIM]
+- Merge branch 'v6' into fix-merge-f59df7cb79-into-v6
+- [skip ci] main conflicts with v6
+- [skip ci] Merge branch main into v6
+- [skip ci] Merge branch main into v6
+- Merge remote-tracking branch 'origin/v6' into fix-merge-27f10a597f-into-v6
+- [skip ci] main conflicts with v6
+- [skip ci] Merge branch main into v6
+- Merge branch 'v6' into fix-merge-a46fd38a18-into-v6
+- [skip ci] Merge branch main into v6
+- Merge branch 'v6' into fix-merge-d85a74e07d-into-v6
+- [skip ci] main conflicts with v6
+- [skip ci] main conflicts with v6
+- Revert "Use collectAsyncCalls with promise" [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+- Use collectAsyncCalls with promise [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+- [skip ci] Merge branch main into v6
+- [skip ci] Merge branch main into v6
+- [skip ci] Merge branch main into v6
+- Merge branch 'v6' into fix-merge-ab74ac7869-into-v6
+- fix-merge-ab74ac7869-into-v6 [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+- [skip ci] main conflicts with v6
+- fix assign usage [RUM] [RUM-REACT] [RUM-SLIM]
+- [skip ci] Merge branch main into v6
+- Merge remote-tracking branch 'origin/v6' into fix-merge-82d898a97e-into-v6
+- [skip ci] main conflicts with v6
+- Fix test [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+- [skip ci] Merge branch main into v6
+- fix test [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+- Merge branch 'main' into v6
+- [skip ci] Merge branch main into v6
+- Merge branch 'v6' into fix-merge-0a018d6235-into-v6
+- [skip ci] main conflicts with v6
+- [skip ci] Merge branch main into v6
+- [skip ci] Merge branch main into v6
+- [skip ci] Merge branch main into v6
+- [skip ci] Merge branch main into v6
+- [skip ci] Merge branch main into v6
+- Merge branch 'v6' into fix-merge-021a15c2eb-into-v6
+- [skip ci] main conflicts with v6
+- [skip ci] Merge branch main into v6
+- Merge remote-tracking branch 'origin/v6' into fix-merge-c951eecb5f-into-v6
+- [skip ci] main conflicts with v6
+- [skip ci] Merge branch main into v6
+- Merge branch 'v6' into fix-merge-2c81904f0c-into-v6
+- [skip ci] main conflicts with v6
+- [skip ci] Merge branch main into v6
+- [skip ci] Merge branch main into v6
+- Fix unit bs test ([#3110](https://github.com/DataDog/browser-sdk/pull/3110)) [RUM] [RUM-REACT] [RUM-SLIM]
+- [skip ci] Merge branch main into v6
+- [skip ci] Merge branch main into v6
+- [skip ci] Merge branch main into v6
+- [skip ci] Merge branch main into v6
+- fix yarn lockfile
+- [skip ci] Merge branch main into v6
+- Merge branch 'v6' into fix-merge-84a1fa1708-into-v6
+- [skip ci] main conflicts with v6
+- [skip ci] Merge branch main into v6
+- Merge remote-tracking branch 'origin/v6' into fix-merge-11c1fdd73a-into-v6
+- [skip ci] main conflicts with v6
+- [skip ci] Merge branch main into v6
+- Merge branch 'v6' into fix-merge-20faae1de8-into-v6
+- [skip ci] main conflicts with v6
+- [skip ci] Merge branch main into v6
+- Merge remote-tracking branch 'origin/v6' into fix-merge-2752f59f21-into-v6
+- [skip ci] main conflicts with v6
+- [skip ci] Merge branch main into v6
+- [skip ci] Merge branch main into v6
+- [skip ci] Merge branch main into v6
+- Merge branch 'v6' into fix-merge-cbd3978082-into-v6
+- [skip ci] main conflicts with v6
+- [skip ci] Merge branch main into v6
+- [skip ci] Merge branch main into v6
+- [skip ci] Merge branch main into v6
+- [skip ci] Merge branch main into v6
+- [skip ci] Merge branch main into v6
+- Merge remote-tracking branch 'origin/v6' into fix-merge-c179f58780-into-v6
+- [skip ci] main conflicts with v6
+- [skip ci] Merge branch main into v6
+- [skip ci] Merge branch main into v6
+- Merge branch 'main' into v6
+- [skip ci] Merge branch main into v6
+- [skip ci] Merge branch main into v6
+- [skip ci] Merge branch main into v6
+- [skip ci] Merge branch main into v6
+- [skip ci] Merge branch main into v6
+- [skip ci] Merge branch main into v6
+- [skip ci] Merge branch main into v6
+- Merge branch 'v6' into fix-merge-40246d02fc-into-v6
+- [skip ci] main conflicts with v6
+- [skip ci] Merge branch main into v6
+- [skip ci] Merge branch main into v6
+- [skip ci] Merge branch main into v6
+- Merge remote-tracking branch 'origin/main' into v6
+- [skip ci] Merge branch main into v6
+- [skip ci] Merge branch main into v6
+- [skip ci] Merge branch main into v6
+- [skip ci] Merge branch main into v6
+- [skip ci] Merge branch main into v6
+- [skip ci] Merge branch main into v6
+- [skip ci] Merge branch main into v6
+- [skip ci] Merge branch main into v6
+- Merge remote-tracking branch 'origin/v6' into fix-merge-f37adefdbc-into-v6
+- [skip ci] main conflicts with v6
+- [skip ci] Merge branch main into v6
+- [skip ci] Merge branch main into v6
+- [skip ci] Merge branch main into v6
+- Merge remote-tracking branch 'origin/v6' into fix-merge-8b5833c3dc-into-v6
+- [skip ci] main conflicts with v6
+- [skip ci] Merge branch main into v6
+- [skip ci] Merge branch main into v6
+- [skip ci] Merge branch main into v6
+- Merge branch 'main' into v6
+- [skip ci] Merge branch main into v6
+- Merge branch 'v6' into fix-merge-fbd15c7a3d-into-v6
+- [skip ci] main conflicts with v6
+- [skip ci] Merge branch main into v6
+- [skip ci] Merge branch main into v6
+- Merge remote-tracking branch 'origin/v6' into fix-merge-642be7ab4e-into-v6
+- [skip ci] main conflicts with v6
+- [skip ci] Merge branch main into v6
+- Merge remote-tracking branch 'origin/v6' into fix-merge-6e60bbab28-into-v6
+- [skip ci] main conflicts with v6
+- [skip ci] Merge branch main into v6
+- [skip ci] Merge branch main into v6
+- [skip ci] Merge branch main into v6
+- [skip ci] Merge branch main into v6
+- Merge branch 'v6' into fix-merge-1ef0ec2259-into-v6
+- [skip ci] main conflicts with v6
+- [skip ci] Merge branch main into v6
+- Merge remote-tracking branch 'origin/v6' into fix-merge-f780d02c9d-into-v6
+- [skip ci] main conflicts with v6
+- [skip ci] Merge branch main into v6
+- [skip ci] Merge branch main into v6
+- [skip ci] Merge branch main into v6
+- [skip ci] Merge branch main into v6
+- Merge branch 'v6' into fix-merge-73ae1f5caa-into-v6
+- [skip ci] main conflicts with v6
+- [skip ci] Merge branch main into v6
+- [skip ci] Merge branch main into v6
+- [skip ci] Merge branch main into v6
+- fix confict resolution errors [RUM] [RUM-REACT] [RUM-SLIM]
+- Merge remote-tracking branch 'origin/v6' into fix-merge-c6c0ad6125-into-v6
+- fix function renaming when fixing conflicts [RUM] [RUM-REACT] [RUM-SLIM]
+- [skip ci] main conflicts with v6
+- [skip ci] Merge branch main into v6
+- [skip ci] Merge branch main into v6
+- [skip ci] Merge branch main into v6
+- [skip ci] Merge branch main into v6
+- Merge remote-tracking branch 'origin/v6' into fix-merge-b89d9d1e60-into-v6
+- [skip ci] main conflicts with v6
+- Merge remote-tracking branch 'origin/v6' into fix-merge-02e5c3a286-into-v6
+- [skip ci] main conflicts with v6
+- [skip ci] Merge branch main into v6
+- Merge remote-tracking branch 'origin/v6' into fix-merge-1b77d8c567-into-v6
+- [skip ci] main conflicts with v6
+- [skip ci] Merge branch main into v6
+- Fix Object.assign usage in mockLocation.ts [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+- Merge branch 'v6' into fix-merge-4bc260208b-into-v6
+- [skip ci] main conflicts with v6
+- [skip ci] Merge branch main into v6
+- fix assign polyfill usage [RUM] [RUM-REACT] [RUM-SLIM]
+- Merge branch 'v6' into fix-merge-670d5ce1a2-into-v6
+- [skip ci] main conflicts with v6
+- [skip ci] Merge branch main into v6
+- [skip ci] Merge branch main into v6
+- Merge branch 'v6' into fix-merge-309c8428d2-into-v6
+- [skip ci] main conflicts with v6
+- [skip ci] Merge branch main into v6
+- Merge branch 'v6' into fix-merge-fd8c525df2-into-v6
+- [skip ci] main conflicts with v6
+- [skip ci] Merge branch main into v6
+- [skip ci] Merge branch main into v6
+- Merge branch 'main' into v6
+- Merge branch 'main' into v6
+- Merge branch 'main' into v6
+- Merge branch 'main' into v6
+- skip check-statging-merge for now
+- Merge branch 'main' into v6
+- fix conflict [RUM] [RUM-REACT] [RUM-SLIM]
+- Merge branch 'main' into v6
+- Merge branch 'main' into v6
+
 ## v5.35.0
 
 **Public Changes:**
