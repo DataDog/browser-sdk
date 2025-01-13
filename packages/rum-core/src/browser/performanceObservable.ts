@@ -23,10 +23,19 @@ export enum RumPerformanceEntryType {
   FIRST_INPUT = 'first-input',
   LARGEST_CONTENTFUL_PAINT = 'largest-contentful-paint',
   LAYOUT_SHIFT = 'layout-shift',
+  LONG_TASK = 'longtask',
   LONG_ANIMATION_FRAME = 'long-animation-frame',
   NAVIGATION = 'navigation',
   PAINT = 'paint',
   RESOURCE = 'resource',
+}
+
+export interface RumPerformanceLongTaskTiming {
+  name: string
+  entryType: RumPerformanceEntryType.LONG_TASK
+  startTime: RelativeTime
+  duration: Duration
+  toJSON(): Omit<PerformanceEntry, 'toJSON'>
 }
 
 export interface RumPerformanceResourceTiming {
@@ -155,6 +164,7 @@ export interface RumPerformanceLongAnimationFrameTiming {
 
 export type RumPerformanceEntry =
   | RumPerformanceResourceTiming
+  | RumPerformanceLongTaskTiming
   | RumPerformanceLongAnimationFrameTiming
   | RumPerformancePaintTiming
   | RumPerformanceNavigationTiming
@@ -169,6 +179,7 @@ export type EntryTypeToReturnType = {
   [RumPerformanceEntryType.LARGEST_CONTENTFUL_PAINT]: RumLargestContentfulPaintTiming
   [RumPerformanceEntryType.LAYOUT_SHIFT]: RumLayoutShiftTiming
   [RumPerformanceEntryType.PAINT]: RumPerformancePaintTiming
+  [RumPerformanceEntryType.LONG_TASK]: RumPerformanceLongTaskTiming
   [RumPerformanceEntryType.LONG_ANIMATION_FRAME]: RumPerformanceLongAnimationFrameTiming
   [RumPerformanceEntryType.NAVIGATION]: RumPerformanceNavigationTiming
   [RumPerformanceEntryType.RESOURCE]: RumPerformanceResourceTiming
@@ -212,6 +223,7 @@ export function createPerformanceObservable<T extends RumPerformanceEntryType>(
       const fallbackSupportedEntryTypes = [
         RumPerformanceEntryType.RESOURCE,
         RumPerformanceEntryType.NAVIGATION,
+        RumPerformanceEntryType.LONG_TASK,
         RumPerformanceEntryType.PAINT,
       ]
       if (fallbackSupportedEntryTypes.includes(options.type)) {

@@ -48,6 +48,8 @@ import type { CustomVitalsState } from '../domain/vital/vitalCollection'
 import { startVitalCollection } from '../domain/vital/vitalCollection'
 import { startCiVisibilityContext } from '../domain/contexts/ciVisibilityContext'
 import { startLongAnimationFrameCollection } from '../domain/longAnimationFrame/longAnimationFrameCollection'
+import { RumPerformanceEntryType } from '../browser/performanceObservable'
+import { startLongTaskCollection } from '../domain/longTask/longTaskCollection'
 import type { RecorderApi } from './rumPublicApi'
 
 export type StartRum = typeof startRum
@@ -175,8 +177,12 @@ export function startRum(
   cleanupTasks.push(stopResourceCollection)
 
   if (configuration.trackLongTasks) {
-    const { stop: stopLongAnimationFrameCollection } = startLongAnimationFrameCollection(lifeCycle, configuration)
-    cleanupTasks.push(stopLongAnimationFrameCollection)
+    if (PerformanceObserver.supportedEntryTypes?.includes(RumPerformanceEntryType.LONG_ANIMATION_FRAME)) {
+      const { stop: stopLongAnimationFrameCollection } = startLongAnimationFrameCollection(lifeCycle, configuration)
+      cleanupTasks.push(stopLongAnimationFrameCollection)
+    } else {
+      startLongTaskCollection(lifeCycle, configuration)
+    }
   }
 
   const { addError } = startErrorCollection(lifeCycle, configuration, pageStateHistory, featureFlagContexts)

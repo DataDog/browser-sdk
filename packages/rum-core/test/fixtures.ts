@@ -171,6 +171,18 @@ export function createPerformanceEntry<T extends RumPerformanceEntryType>(
         loadEventEnd: 567 as RelativeTime,
         ...overrides,
       } as EntryTypeToReturnType[T]
+
+    case RumPerformanceEntryType.LONG_TASK: {
+      const entry = {
+        name: 'self',
+        duration: 100 as Duration,
+        entryType: RumPerformanceEntryType.LONG_TASK,
+        startTime: 1234 as RelativeTime,
+        ...overrides,
+      } as EntryTypeToReturnType[T]
+
+      return { ...entry, toJSON: () => entry }
+    }
     case RumPerformanceEntryType.LONG_ANIMATION_FRAME: {
       const entry = {
         name: 'long-animation-frame',
