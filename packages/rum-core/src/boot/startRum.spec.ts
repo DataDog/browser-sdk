@@ -74,6 +74,7 @@ function startRumStub(
     pageStateHistory,
     locationChangeObservable,
     domMutationObservable,
+    startFeatureFlagContexts(lifeCycle, createCustomerDataTracker(noop)),
     () => ({
       context: {},
       user: {},
@@ -92,7 +93,11 @@ function startRumStub(
     noopRecorderApi
   )
 
-  startLongTaskCollection(lifeCycle, configuration)
+  startLongTaskCollection(
+    lifeCycle,
+    configuration,
+    startFeatureFlagContexts(lifeCycle, createCustomerDataTracker(noop))
+  )
   return {
     stop: () => {
       rumEventCollectionStop()

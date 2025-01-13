@@ -2,13 +2,21 @@ import type { Duration, RelativeTime, ServerDuration, TimeStamp } from '@datadog
 import { ExperimentalFeature, Observable } from '@datadog/browser-core'
 import { createNewEvent, mockExperimentalFeatures } from '@datadog/browser-core/test'
 import type { RawRumActionEvent, RawRumEventCollectedData } from '@datadog/browser-rum-core'
-import { collectAndValidateRawRumEvents, mockPageStateHistory, mockRumConfiguration } from '../../../test'
+import {
+  collectAndValidateRawRumEvents,
+  mockPageStateHistory,
+  mockRumConfiguration,
+  mockFeatureFlagContexts,
+} from '../../../test'
 import type { RawRumEvent } from '../../rawRumEvent.types'
 import { RumEventType, ActionType } from '../../rawRumEvent.types'
 import { LifeCycle, LifeCycleEventType } from '../lifeCycle'
+import type { FeatureFlagContexts } from '../contexts/featureFlagContext'
 import { startActionCollection } from './actionCollection'
 
 const basePageStateHistory = mockPageStateHistory({ wasInPageStateAt: () => true })
+const partialFeatureFlagContexts: Partial<FeatureFlagContexts> = {}
+const featureFlagContexts = mockFeatureFlagContexts(partialFeatureFlagContexts)
 
 describe('actionCollection', () => {
   const lifeCycle = new LifeCycle()
@@ -22,7 +30,8 @@ describe('actionCollection', () => {
       lifeCycle,
       domMutationObservable,
       mockRumConfiguration(),
-      basePageStateHistory
+      basePageStateHistory,
+      featureFlagContexts
     ))
 
     rawRumEvents = collectAndValidateRawRumEvents(lifeCycle)
@@ -156,6 +165,23 @@ describe('actionCollection', () => {
 
     expect(rawRumEvents[0].domainContext).toEqual({
       handlingStack: 'Error\n    at foo\n    at bar',
+    })
+  })
+  it('should include feature flags', () => {
+    spyOn(featureFlagContexts, 'findFeatureFlagEvaluations').and.returnValue({
+      'my-feature': 'enabled',
+    })
+
+    addAction({
+      name: 'foo',
+      startClocks: { relative: 1234 as RelativeTime, timeStamp: 123456789 as TimeStamp },
+      type: ActionType.CUSTOM,
+    })
+
+    expect(rawRumEvents.length).toBe(1)
+    const event = rawRumEvents[0].rawRumEvent as RawRumActionEvent
+    expect(event.feature_flags).toEqual({
+      'my-feature': 'enabled',
     })
   })
 })

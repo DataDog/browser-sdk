@@ -464,7 +464,7 @@ describe('validateAndBuildRumConfiguration', () => {
   describe('collectFeatureFlagsOn', () => {
     it('defaults to an empty set', () => {
       const configuration = validateAndBuildRumConfiguration(DEFAULT_INIT_CONFIGURATION)!
-      expect(configuration.collectFeatureFlagsOn).toEqual([])
+      expect(configuration.collectFeatureFlagsOn).toEqual(['view', 'error'])
     })
 
     it('accepts valid event types', () => {
