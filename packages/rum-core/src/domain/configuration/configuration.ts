@@ -21,6 +21,19 @@ import type { PropagatorType, TracingOption } from '../tracing/tracer.types'
 
 export const DEFAULT_PROPAGATOR_TYPES: PropagatorType[] = ['tracecontext', 'datadog']
 
+export const DEFAULT_FEATURE_FLAG_COLLECTION: FeatureFlagEvent[] = ['view', 'error']
+
+export const FeatureFlagEvent = {
+  VIEW: 'view',
+  ERROR: 'error',
+  VITAL: 'vital',
+  ACTION: 'action',
+  RESOURCE: 'resource',
+  LONG_TASK: 'long_task',
+} as const
+
+export type FeatureFlagEvent = (typeof FeatureFlagEvent)[keyof typeof FeatureFlagEvent]
+
 export interface RumInitConfiguration extends InitConfiguration {
   // global options
   /**
@@ -138,8 +151,6 @@ export interface RumInitConfiguration extends InitConfiguration {
   collectFeatureFlagsOn?: FeatureFlagEvent[]
 }
 
-export type FeatureFlagEvent = 'view' | 'error' | 'vital'
-
 export type HybridInitConfiguration = Omit<RumInitConfiguration, 'applicationId' | 'clientToken'>
 
 export interface RumConfiguration extends Configuration {
@@ -170,17 +181,17 @@ export interface RumConfiguration extends Configuration {
 export function validateAndBuildRumConfiguration(
   initConfiguration: RumInitConfiguration
 ): RumConfiguration | undefined {
-  const collectFeatureFlagsOn: FeatureFlagEvent[] = []
+  const collectFeatureFlagsOn: FeatureFlagEvent[] = DEFAULT_FEATURE_FLAG_COLLECTION.concat()
   if (Array.isArray(initConfiguration.collectFeatureFlagsOn)) {
-    const validEventTypes = ['view', 'error', 'vital']
     initConfiguration.collectFeatureFlagsOn.forEach((eventType) => {
-      if (includes(validEventTypes, eventType)) {
+      if (objectHasValue(FeatureFlagEvent, eventType) && !includes(collectFeatureFlagsOn, eventType)) {
         collectFeatureFlagsOn.push(eventType)
-      } else {
-        display.warn(`Unknown event type '${eventType}' in collectFeatureFlagsOn configuration.`)
+      } else if (!objectHasValue(FeatureFlagEvent, eventType)) {
+        display.warn(`Unknown event type '${eventType as any}' in collectFeatureFlagsOn configuration.`)
       }
     })
   }
+
   if (!initConfiguration.applicationId) {
     display.error('Application ID is not configured, no RUM data will be collected.')
     return

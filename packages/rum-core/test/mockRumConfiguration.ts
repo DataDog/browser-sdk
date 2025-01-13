@@ -10,7 +10,7 @@ export function mockRumConfiguration(partialConfig: Partial<RumConfiguration> = 
       applicationId: FAKE_APP_ID,
       trackResources: true,
       trackLongTasks: true,
-      collectFeatureFlagsOn: ['error', 'view'],
+      collectFeatureFlagsOn: ['error', 'view', 'resource', 'action', 'long_task'],
     })!,
     ...SPEC_ENDPOINTS,
   }

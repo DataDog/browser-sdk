@@ -41,6 +41,7 @@ import { createLocationChangeObservable } from '../browser/locationChangeObserva
 import type { RumConfiguration } from '../domain/configuration'
 import type { ViewOptions } from '../domain/view/trackViews'
 import { startFeatureFlagContexts } from '../domain/contexts/featureFlagContext'
+import type { FeatureFlagContexts } from '../domain/contexts/featureFlagContext'
 import { startCustomerDataTelemetry } from '../domain/startCustomerDataTelemetry'
 import type { PageStateHistory } from '../domain/contexts/pageStateHistory'
 import { startPageStateHistory } from '../domain/contexts/pageStateHistory'
@@ -141,6 +142,7 @@ export function startRum(
     pageStateHistory,
     locationChangeObservable,
     domMutationObservable,
+    featureFlagContexts,
     getCommonContext,
     reportError
   )
@@ -168,7 +170,12 @@ export function startRum(
   )
   cleanupTasks.push(stopViewCollection)
 
-  const { stop: stopResourceCollection } = startResourceCollection(lifeCycle, configuration, pageStateHistory)
+  const { stop: stopResourceCollection } = startResourceCollection(
+    lifeCycle,
+    configuration,
+    pageStateHistory,
+    featureFlagContexts
+  )
   cleanupTasks.push(stopResourceCollection)
 
   if (isExperimentalFeatureEnabled(ExperimentalFeature.LONG_ANIMATION_FRAME)) {
@@ -177,7 +184,7 @@ export function startRum(
       cleanupTasks.push(stopLongAnimationFrameCollection)
     }
   } else {
-    startLongTaskCollection(lifeCycle, configuration)
+    startLongTaskCollection(lifeCycle, configuration, featureFlagContexts)
   }
 
   const { addError } = startErrorCollection(lifeCycle, configuration, pageStateHistory, featureFlagContexts)
@@ -239,6 +246,7 @@ export function startRumEventCollection(
   pageStateHistory: PageStateHistory,
   locationChangeObservable: Observable<LocationChange>,
   domMutationObservable: Observable<void>,
+  featureFlagContexts: FeatureFlagContexts,
   getCommonContext: () => CommonContext,
   reportError: (error: RawError) => void
 ) {
@@ -249,7 +257,8 @@ export function startRumEventCollection(
     lifeCycle,
     domMutationObservable,
     configuration,
-    pageStateHistory
+    pageStateHistory,
+    featureFlagContexts
   )
 
   const displayContext = startDisplayContext(configuration)
