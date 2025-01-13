@@ -1,6 +1,13 @@
-import { monitor, noop, Observable, getZoneJsOriginalValue, ExperimentalFeature, isExperimentalFeatureEnabled } from '@datadog/browser-core'
+import {
+  monitor,
+  noop,
+  Observable,
+  getZoneJsOriginalValue,
+  ExperimentalFeature,
+  isExperimentalFeatureEnabled,
+} from '@datadog/browser-core'
 
-export const IGNORE_MUTATIONS_ELEMENT_IDENTIFIER = "dd-ignore-mutations"
+export const IGNORE_MUTATIONS_ELEMENT_IDENTIFIER = 'dd-ignore-mutations'
 
 type MutationNotifier = (mutations: MutationRecord[]) => void
 
@@ -15,7 +22,7 @@ export function createDOMMutationObservable() {
     let mutationNotifier: MutationNotifier = () => observable.notify()
     if (isExperimentalFeatureEnabled(ExperimentalFeature.DOM_MUTATION_IGNORING)) {
       mutationNotifier = (mutations: MutationRecord[]) => {
-        if (mutations.every(mutation => shouldIgnore(mutation))) {
+        if (mutations.every((mutation) => shouldIgnore(mutation))) {
           return
         }
         return observable.notify()
@@ -33,7 +40,7 @@ export function createDOMMutationObservable() {
   })
 }
 
-function shouldIgnore (mutation: MutationRecord): boolean {
+function shouldIgnore(mutation: MutationRecord): boolean {
   switch (mutation.type) {
     case 'attributes':
     case 'childList':

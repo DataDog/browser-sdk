@@ -1,7 +1,11 @@
 import { isIE, ExperimentalFeature } from '@datadog/browser-core'
 import type { MockZoneJs } from '@datadog/browser-core/test'
 import { registerCleanupTask, mockZoneJs, mockExperimentalFeatures } from '@datadog/browser-core/test'
-import { createDOMMutationObservable, getMutationObserverConstructor, IGNORE_MUTATIONS_ELEMENT_IDENTIFIER} from './domMutationObservable'
+import {
+  createDOMMutationObservable,
+  getMutationObserverConstructor,
+  IGNORE_MUTATIONS_ELEMENT_IDENTIFIER,
+} from './domMutationObservable'
 
 // The MutationObserver invokes its callback in an event loop microtask, making this asynchronous.
 // We want to wait for a few event loop executions to potentially collect multiple mutation events.
@@ -14,7 +18,11 @@ describe('domMutationObservable', () => {
     }
   })
 
-  function domMutationSpec(mutate: (root: HTMLElement) => void, { expectedMutations }: { expectedMutations: number }, isRootIgnored?: boolean) {
+  function domMutationSpec(
+    mutate: (root: HTMLElement) => void,
+    { expectedMutations }: { expectedMutations: number },
+    isRootIgnored?: boolean
+  ) {
     return (done: DoneFn) => {
       const root = document.createElement('div')
       root.setAttribute('data-test', 'foo')
@@ -136,7 +144,7 @@ describe('domMutationObservable', () => {
         true
       )
     )
-  
+
     it(
       'collects DOM mutation when a text node is added',
       domMutationSpec(
@@ -157,7 +165,7 @@ describe('domMutationObservable', () => {
         true
       )
     )
-  
+
     it(
       'collects DOM mutation on attribute creation',
       domMutationSpec(
@@ -178,7 +186,7 @@ describe('domMutationObservable', () => {
         true
       )
     )
-  
+
     it(
       'collects DOM mutation on attribute change',
       domMutationSpec(
@@ -199,7 +207,7 @@ describe('domMutationObservable', () => {
         true
       )
     )
-  
+
     it(
       'collects DOM mutation when an element is removed',
       domMutationSpec(
@@ -220,7 +228,7 @@ describe('domMutationObservable', () => {
         true
       )
     )
-  
+
     it(
       'collects DOM mutation when an element is moved',
       domMutationSpec(
@@ -230,7 +238,7 @@ describe('domMutationObservable', () => {
         { expectedMutations: 1 }
       )
     )
-    
+
     it(
       'does not collect DOM mutation when an element is moved and parent element is ignored',
       domMutationSpec(
@@ -241,7 +249,7 @@ describe('domMutationObservable', () => {
         true
       )
     )
-  
+
     it(
       'collects DOM mutation when text node content changes',
       domMutationSpec(
