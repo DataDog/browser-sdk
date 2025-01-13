@@ -17,6 +17,7 @@ import {
   findAllFrustrationRecords,
   findMouseInteractionRecords,
   findElementWithTagName,
+  getAllrecords,
 } from '@datadog/browser-rum/test'
 import { SESSION_STORE_KEY } from '@datadog/browser-core'
 import { flushEvents, createTest, bundleSetup, html } from '../../lib/framework'
@@ -483,36 +484,34 @@ describe('recorder', () => {
 
         await flushEvents()
 
-        expect(intakeRegistry.replaySegments.length).toBe(1)
+        const segments = intakeRegistry.replaySegments
 
-        const segment = intakeRegistry.replaySegments[0]
-
-        const textInputRecords = filterRecordsByIdAttribute(segment, 'text-input')
+        const textInputRecords = filterRecordsByIdAttribute(segments, 'text-input')
         expect(textInputRecords.length).toBeGreaterThanOrEqual(4)
         expect((textInputRecords[textInputRecords.length - 1].data as { text?: string }).text).toBe('test')
 
-        const radioInputRecords = filterRecordsByIdAttribute(segment, 'radio-input')
+        const radioInputRecords = filterRecordsByIdAttribute(segments, 'radio-input')
         expect(radioInputRecords.length).toBe(1)
         expect((radioInputRecords[0].data as { text?: string }).text).toBe(undefined)
         expect((radioInputRecords[0].data as { isChecked?: boolean }).isChecked).toBe(true)
 
-        const checkboxInputRecords = filterRecordsByIdAttribute(segment, 'checkbox-input')
+        const checkboxInputRecords = filterRecordsByIdAttribute(segments, 'checkbox-input')
         expect(checkboxInputRecords.length).toBe(1)
         expect((checkboxInputRecords[0].data as { text?: string }).text).toBe(undefined)
         expect((checkboxInputRecords[0].data as { isChecked?: boolean }).isChecked).toBe(true)
 
-        const textareaRecords = filterRecordsByIdAttribute(segment, 'textarea')
+        const textareaRecords = filterRecordsByIdAttribute(segments, 'textarea')
         expect(textareaRecords.length).toBeGreaterThanOrEqual(4)
         expect((textareaRecords[textareaRecords.length - 1].data as { text?: string }).text).toBe('textarea test')
 
-        const selectRecords = filterRecordsByIdAttribute(segment, 'select')
+        const selectRecords = filterRecordsByIdAttribute(segments, 'select')
         expect(selectRecords.length).toBe(1)
         expect((selectRecords[0].data as { text?: string }).text).toBe('2')
 
-        function filterRecordsByIdAttribute(segment: BrowserSegment, idAttribute: string) {
-          const fullSnapshot = findFullSnapshot(segment)!
+        function filterRecordsByIdAttribute(segments: BrowserSegment[], idAttribute: string) {
+          const fullSnapshot = findFullSnapshot({ records: getAllrecords(segments) })!
           const id = findElementWithIdAttribute(fullSnapshot.data.node, idAttribute)!.id
-          const records = findAllIncrementalSnapshots(segment, IncrementalSource.Input) as Array<{ data: InputData }>
+          const records = findAllIncrementalSnapshots(segments, IncrementalSource.Input) as Array<{ data: InputData }>
           return records.filter((record) => record.data.id === id)
         }
       })
@@ -543,11 +542,7 @@ describe('recorder', () => {
 
         await flushEvents()
 
-        expect(intakeRegistry.replaySegments.length).toBe(1)
-
-        const segment = intakeRegistry.replaySegments[0]
-
-        const inputRecords = findAllIncrementalSnapshots(segment, IncrementalSource.Input)
+        const inputRecords = findAllIncrementalSnapshots(intakeRegistry.replaySegments, IncrementalSource.Input)
 
         expect(inputRecords.length).toBeGreaterThanOrEqual(3) // 4 on Safari, 3 on others
         expect((inputRecords[inputRecords.length - 1].data as { text?: string }).text).toBe('***')
