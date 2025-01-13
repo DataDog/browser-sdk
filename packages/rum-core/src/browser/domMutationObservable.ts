@@ -7,7 +7,7 @@ import {
   isExperimentalFeatureEnabled,
 } from '@datadog/browser-core'
 
-export const IGNORE_MUTATIONS_ELEMENT_IDENTIFIER = 'dd-ignore-mutations'
+export const IGNORE_MUTATIONS_ATTRIBUTE = 'dd-ignore-mutations'
 
 type MutationNotifier = (mutations: MutationRecord[]) => void
 
@@ -22,7 +22,7 @@ export function createDOMMutationObservable() {
     let mutationNotifier: MutationNotifier = () => observable.notify()
     if (isExperimentalFeatureEnabled(ExperimentalFeature.DOM_MUTATION_IGNORING)) {
       mutationNotifier = (mutations: MutationRecord[]) => {
-        if (mutations.every((mutation) => shouldIgnore(mutation))) {
+        if (mutations.every((mutation) => isIgnored(mutation))) {
           return
         }
         return observable.notify()
@@ -40,13 +40,13 @@ export function createDOMMutationObservable() {
   })
 }
 
-function shouldIgnore(mutation: MutationRecord): boolean {
+function isIgnored(mutation: MutationRecord): boolean {
   switch (mutation.type) {
     case 'attributes':
     case 'childList':
-      return (mutation.target as Element).hasAttribute(IGNORE_MUTATIONS_ELEMENT_IDENTIFIER) === true
+      return (mutation.target as Element).hasAttribute(IGNORE_MUTATIONS_ATTRIBUTE) === true
     case 'characterData':
-      return mutation.target.parentElement?.hasAttribute(IGNORE_MUTATIONS_ELEMENT_IDENTIFIER) === true
+      return mutation.target.parentElement?.hasAttribute(IGNORE_MUTATIONS_ATTRIBUTE) === true
   }
 }
 

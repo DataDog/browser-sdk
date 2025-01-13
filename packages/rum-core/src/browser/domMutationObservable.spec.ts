@@ -4,7 +4,7 @@ import { registerCleanupTask, mockZoneJs, mockExperimentalFeatures } from '@data
 import {
   createDOMMutationObservable,
   getMutationObserverConstructor,
-  IGNORE_MUTATIONS_ELEMENT_IDENTIFIER,
+  IGNORE_MUTATIONS_ATTRIBUTE,
 } from './domMutationObservable'
 
 // The MutationObserver invokes its callback in an event loop microtask, making this asynchronous.
@@ -15,13 +15,13 @@ describe('domMutationObservable', () => {
   function domMutationSpec(
     mutate: (root: HTMLElement) => void,
     { expectedMutations }: { expectedMutations: number },
-    isRootIgnored?: boolean
+    isRootMutationsIgnored?: boolean
   ) {
     return (done: DoneFn) => {
       const root = document.createElement('div')
       root.setAttribute('data-test', 'foo')
-      if (isRootIgnored) {
-        root.setAttribute(IGNORE_MUTATIONS_ELEMENT_IDENTIFIER, '')
+      if (isRootMutationsIgnored) {
+        root.setAttribute(IGNORE_MUTATIONS_ATTRIBUTE, '')
       }
       root.appendChild(document.createElement('span'))
       root.appendChild(document.createTextNode('foo'))
