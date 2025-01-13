@@ -3,12 +3,11 @@
   "extends": [
     ":dependencyDashboard",
     ":ignoreModulesAndTests",
-    ":autodetectPinVersions",
     "group:monorepos",
     "group:recommended"
   ],
   "labels": ["dependencies"],
-  "commitMessagePrefix": "\uD83D\uDC77 ",
+  "commitMessagePrefix": "👷 ",
   "prConcurrentLimit": 5,
   "prHourlyLimit": 1,
   "schedule": ["every weekend"],
@@ -18,7 +17,7 @@
       "groupName": "all non-major dependencies",
       "groupSlug": "all-minor-patch",
       "matchUpdateTypes": ["minor", "patch"],
-      "excludePackageNames": ["karma-webpack"]
+      "matchPackageNames": ["!karma-webpack"]
     }
   ]
 }
