@@ -18,6 +18,37 @@
 
 ---
 
+## v5.35.0
+
+**Public Changes:**
+
+- ✨ [RUM-5001] introduce a `sessionPersistence` config option to force using local storage ([#3244](https://github.com/DataDog/browser-sdk/pull/3244)) [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+- feat: support custom schema on Electron ([#3204](https://github.com/DataDog/browser-sdk/pull/3204)) [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+
+**Internal Changes:**
+
+- Revert "👷 freeze canary deploy ([#3238](https://github.com/DataDog/browser-sdk/pull/3238))" ([#3252](https://github.com/DataDog/browser-sdk/pull/3252))
+- 👷 Update all non-major dependencies ([#3240](https://github.com/DataDog/browser-sdk/pull/3240)) [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+- 👷 Update dependency webpack-cli to v6 ([#3241](https://github.com/DataDog/browser-sdk/pull/3241))
+- 👷 freeze canary deploy ([#3238](https://github.com/DataDog/browser-sdk/pull/3238))
+- ✅ fix leak detection issues ([#3245](https://github.com/DataDog/browser-sdk/pull/3245)) [RUM] [RUM-REACT] [RUM-SLIM]
+- 💚 fix CI PR comment ([#3250](https://github.com/DataDog/browser-sdk/pull/3250))
+- ♻️ move traceSampleRate default to config validation ([#3197](https://github.com/DataDog/browser-sdk/pull/3197)) [RUM] [RUM-REACT] [RUM-SLIM]
+
+## v5.34.1
+
+**Public Changes:**
+
+- 🐛 AddError should support all instances of type Error ([#3228](https://github.com/DataDog/browser-sdk/pull/3228)) [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+- 🐛 Fix unobserve error for non-Element parameter ([#3218](https://github.com/DataDog/browser-sdk/pull/3218)) [RUM] [RUM-REACT] [RUM-SLIM]
+
+**Internal Changes:**
+
+- ⚗️ ⚡️ [RUM-7650] Delay the viewport dimension collection ([#3209](https://github.com/DataDog/browser-sdk/pull/3209)) [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+- 👷 Update all non-major dependencies ([#3200](https://github.com/DataDog/browser-sdk/pull/3200)) [RUM-REACT] [WORKER]
+- 👷 [RUM-7634] Add deploy and source maps upload scripts tests ([#3211](https://github.com/DataDog/browser-sdk/pull/3211))
+- 📦️ update typescript-eslint ([#3192](https://github.com/DataDog/browser-sdk/pull/3192)) [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+
 ## v5.34.0
 
 **Public Changes:**
@@ -194,6 +225,16 @@
 - 🔥 cleanup unused Experimental Features ([#2996](https://github.com/DataDog/browser-sdk/pull/2996)) [LOGS] [RUM] [RUM-SLIM] [WORKER]
 - ♻️ [RUM-6180] Use performanceObserver for long-task entries ([#2989](https://github.com/DataDog/browser-sdk/pull/2989)) [RUM] [RUM-SLIM]
 - ⚗️✨ [RUM 5983] Add set view context apis ([#2967](https://github.com/DataDog/browser-sdk/pull/2967)) [LOGS] [RUM] [RUM-SLIM] [WORKER]
+
+## v6.0.0-alpha.0
+
+**Internal Changes:**
+
+- 💥 remove Object.\* Polyfills ([#2908](https://github.com/DataDog/browser-sdk/pull/2908)) [LOGS] [RUM] [RUM-SLIM] [WORKER]
+- 💥 remove some polyfills ([#2857](https://github.com/DataDog/browser-sdk/pull/2857)) [LOGS] [RUM] [RUM-SLIM] [WORKER]
+- 💥 build using ES2018 target ([#2882](https://github.com/DataDog/browser-sdk/pull/2882)) [RUM] [RUM-SLIM]
+- 💥 [RUM-5282] Remove ie11 tests ([#2856](https://github.com/DataDog/browser-sdk/pull/2856)) [LOGS] [RUM] [RUM-SLIM] [WORKER]
+- 🧪 Update browser matrix for tests ([#2884](https://github.com/DataDog/browser-sdk/pull/2884)) [LOGS] [RUM] [RUM-SLIM] [WORKER] [RUM-REACT]
 
 ## v5.26.0
 

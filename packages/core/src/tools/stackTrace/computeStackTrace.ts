@@ -4,8 +4,6 @@
  * Reference implementation: https://github.com/csnover/TraceKit/blob/04530298073c3823de72deb0b97e7b38ca7bcb59/tracekit.js
  */
 
-import { startsWith } from '../utils/polyfills'
-
 export interface StackFrame {
   url?: string
   func?: string
@@ -33,7 +31,7 @@ export function computeStackTrace(ex: unknown): StackTrace {
 
   let stackProperty = tryToGetString(ex, 'stack')
   const exString = String(ex)
-  if (stackProperty && startsWith(stackProperty, exString)) {
+  if (stackProperty && stackProperty.startsWith(exString)) {
     stackProperty = stackProperty.slice(exString.length)
   }
   if (stackProperty) {
@@ -56,7 +54,8 @@ export function computeStackTrace(ex: unknown): StackTrace {
     stack,
   }
 }
-const fileUrl = '((?:file|https?|blob|chrome-extension|native|eval|webpack|snippet|<anonymous>|\\w+\\.|\\/).*?)'
+const fileUrl =
+  '((?:file|https?|blob|chrome-extension|electron|native|eval|webpack|snippet|<anonymous>|\\w+\\.|\\/).*?)'
 const filePosition = '(?::(\\d+))'
 const CHROME_LINE_RE = new RegExp(`^\\s*at (.*?) ?\\(${fileUrl}${filePosition}?${filePosition}?\\)?\\s*$`, 'i')
 

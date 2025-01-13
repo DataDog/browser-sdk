@@ -47,7 +47,7 @@ export {
   addTelemetryUsage,
   drainPreStartTelemetry,
 } from './domain/telemetry'
-export { monitored, monitor, callMonitored, setDebugMode } from './tools/monitor'
+export { monitored, monitor, callMonitored, setDebugMode, monitorError } from './tools/monitor'
 export { Observable, Subscription } from './tools/observable'
 export {
   startSessionManager,
@@ -57,6 +57,7 @@ export {
 } from './domain/session/sessionManager'
 export {
   SESSION_TIME_OUT_DELAY, // Exposed for tests
+  SessionPersistence,
 } from './domain/session/sessionConstants'
 export {
   HttpRequest,
@@ -82,7 +83,7 @@ export { AbstractLifeCycle } from './tools/abstractLifeCycle'
 export * from './domain/eventRateLimiter/createEventRateLimiter'
 export * from './tools/utils/browserDetection'
 export { sendToExtension } from './tools/sendToExtension'
-export { runOnReadyState } from './browser/runOnReadyState'
+export { runOnReadyState, asyncRunOnReadyState } from './browser/runOnReadyState'
 export { getZoneJsOriginalValue } from './tools/getZoneJsOriginalValue'
 export { instrumentMethod, instrumentSetter, InstrumentedMethodCall } from './tools/instrumentMethod'
 export {

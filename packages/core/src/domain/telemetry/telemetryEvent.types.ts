@@ -174,9 +174,13 @@ export type TelemetryConfigurationEvent = CommonTelemetryProperties & {
        */
       use_secure_session_cookie?: boolean
       /**
-       * Whether it is allowed to use LocalStorage when cookies are not available
+       * Whether it is allowed to use LocalStorage when cookies are not available (deprecated in favor of session_persistence)
        */
       allow_fallback_to_local_storage?: boolean
+      /**
+       * Configure the storage strategy for persisting sessions
+       */
+      session_persistence?: 'local-storage' | 'cookie'
       /**
        * Whether contexts are stored in local storage
        */
@@ -383,6 +387,18 @@ export type TelemetryConfigurationEvent = CommonTelemetryProperties & {
         name: string
         [k: string]: unknown
       }[]
+      /**
+       * Whether the SDK is initialised on the application's main or a secondary process
+       */
+      is_main_process?: boolean
+      /**
+       * The list of events that include feature flags collection
+       */
+      collect_feature_flags_on?: ('view' | 'error' | 'vital')[]
+      /**
+       * Whether the anonymous users are tracked
+       */
+      track_anonymous_user?: boolean
       [k: string]: unknown
     }
     [k: string]: unknown
@@ -505,6 +521,10 @@ export interface CommonTelemetryProperties {
     id: string
     [k: string]: unknown
   }
+  /**
+   * The actual percentage of telemetry usage per event
+   */
+  effective_sample_rate?: number
   /**
    * Enabled experimental features
    */
