@@ -23,7 +23,7 @@ describe('rum views', () => {
       .withRum()
       .withBody(html` <button>Hop</button> `)
       .run(async ({ intakeRegistry }) => {
-        await (await $('button')).click()
+        await $('button').click()
         await flushEvents()
         const viewEvent = intakeRegistry.rumViewEvents[0]
         expect(viewEvent).toBeDefined()
@@ -39,7 +39,7 @@ describe('rum views', () => {
         <div id="test-anchor"></div>
       `)
       .run(async ({ intakeRegistry }) => {
-        await (await $('a')).click()
+        await $('a').click()
 
         await flushEvents()
         const viewEvents = intakeRegistry.rumViewEvents
