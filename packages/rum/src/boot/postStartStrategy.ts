@@ -37,7 +37,7 @@ export function createPostStartStrategy(
   lifeCycle: LifeCycle,
   sessionManager: RumSessionManager,
   viewHistory: ViewHistory,
-  loadRecorder: () => Promise<StartRecording>,
+  loadRecorder: () => Promise<StartRecording | undefined>,
   getOrCreateDeflateEncoder: () => DeflateEncoder | undefined
 ): Strategy {
   let status = RecorderStatus.Stopped
@@ -71,7 +71,7 @@ export function createPostStartStrategy(
     }
 
     const deflateEncoder = getOrCreateDeflateEncoder()
-    if (!deflateEncoder) {
+    if (!deflateEncoder || !startRecordingImpl) {
       status = RecorderStatus.Stopped
       return
     }
