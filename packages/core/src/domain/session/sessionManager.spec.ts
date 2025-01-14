@@ -8,7 +8,6 @@ import {
 } from '../../../test'
 import type { Clock } from '../../../test'
 import { getCookie, setCookie } from '../../browser/cookie'
-import { isIE } from '../../tools/utils/browserDetection'
 import { DOM_EVENT } from '../../browser/addEventListener'
 import { ONE_HOUR, ONE_SECOND } from '../../tools/utils/timeUtils'
 import type { Configuration } from '../configuration'
@@ -16,7 +15,7 @@ import type { TrackingConsentState } from '../trackingConsent'
 import { TrackingConsent, createTrackingConsentState } from '../trackingConsent'
 import type { SessionManager } from './sessionManager'
 import { startSessionManager, stopSessionManager, VISIBILITY_CHECK_DELAY } from './sessionManager'
-import { SESSION_EXPIRATION_DELAY, SESSION_TIME_OUT_DELAY } from './sessionConstants'
+import { SESSION_EXPIRATION_DELAY, SESSION_TIME_OUT_DELAY, SessionPersistence } from './sessionConstants'
 import type { SessionStoreStrategyType } from './storeStrategies/sessionStoreStrategy'
 import { SESSION_STORE_KEY } from './storeStrategies/sessionStoreStrategy'
 import { STORAGE_POLL_DELAY } from './sessionStore'
@@ -40,7 +39,7 @@ describe('startSessionManager', () => {
   const DURATION = 123456
   const FIRST_PRODUCT_KEY = 'first'
   const SECOND_PRODUCT_KEY = 'second'
-  const STORE_TYPE: SessionStoreStrategyType = { type: 'Cookie', cookieOptions: {} }
+  const STORE_TYPE: SessionStoreStrategyType = { type: SessionPersistence.COOKIE, cookieOptions: {} }
   let clock: Clock
 
   function expireSessionCookie() {
@@ -73,7 +72,7 @@ describe('startSessionManager', () => {
 
   function expectSessionIdToNotBeDefined(sessionManager: SessionManager<FakeTrackingType>) {
     expect(sessionManager.findSession()!.id).toBeUndefined()
-    expect(getCookie(SESSION_STORE_KEY)).not.toContain('id=')
+    expect(getCookie(SESSION_STORE_KEY)).not.toMatch(/\bid=/)
   }
 
   function expectTrackingTypeToBe(
@@ -91,9 +90,6 @@ describe('startSessionManager', () => {
   }
 
   beforeEach(() => {
-    if (isIE()) {
-      pending('no full rum support')
-    }
     clock = mockClock()
 
     registerCleanupTask(() => {

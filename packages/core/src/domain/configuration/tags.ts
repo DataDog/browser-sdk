@@ -44,7 +44,8 @@ export function buildTag(key: string, rawValue: string) {
 
 function hasForbiddenCharacters(rawValue: string) {
   // Unicode property escapes is not supported in all browsers, so we use a try/catch.
-  // Todo: Remove the try/catch when dropping IE11.
+  // Todo: Remove the try/catch when dropping support for Chrome 63 and Firefox 67
+  // see: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Regular_expressions/Unicode_character_class_escape#browser_compatibility
   if (!supportUnicodePropertyEscapes()) {
     return false
   }

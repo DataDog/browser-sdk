@@ -18,6 +18,8 @@ const FAKE_AWS_ENV_CREDENTIALS = {
   AWS_SESSION_TOKEN: 'FAKESESSIONTOKEN123456',
 }
 
+const FAKE_CHUNK_HASH = 'FAKEHASHd7628536637b074ddc3b'
+
 function mockCommandImplementation(mock) {
   const commands = []
 
@@ -58,8 +60,17 @@ function rebuildStringTemplate(template, ...values) {
   return normalizedString
 }
 
+function replaceChunkHashes(commandDetail) {
+  return {
+    ...commandDetail,
+    command: commandDetail.command.replace(/-[a-f0-9]+-datadog-rum/g, `-${FAKE_CHUNK_HASH}-datadog-rum`),
+  }
+}
+
 module.exports = {
   mockModule,
   mockCommandImplementation,
+  replaceChunkHashes,
   FAKE_AWS_ENV_CREDENTIALS,
+  FAKE_CHUNK_HASH,
 }

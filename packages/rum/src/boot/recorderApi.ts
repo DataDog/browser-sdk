@@ -28,7 +28,7 @@ import { createPostStartStrategy } from './postStartStrategy'
 import { createPreStartStrategy } from './preStartStrategy'
 
 export function makeRecorderApi(
-  startRecordingImpl: StartRecording,
+  loadRecorder: () => Promise<StartRecording | undefined>,
   createDeflateWorkerImpl?: CreateDeflateWorker
 ): RecorderApi {
   if ((canUseEventBridge() && !bridgeSupports(BridgeCapability.RECORDS)) || !isBrowserSupported()) {
@@ -111,7 +111,7 @@ export function makeRecorderApi(
       lifeCycle,
       sessionManager,
       viewHistory,
-      startRecordingImpl,
+      loadRecorder,
       getOrCreateDeflateEncoder
     )
 
