@@ -174,9 +174,13 @@ export type TelemetryConfigurationEvent = CommonTelemetryProperties & {
        */
       use_secure_session_cookie?: boolean
       /**
-       * Whether it is allowed to use LocalStorage when cookies are not available
+       * Whether it is allowed to use LocalStorage when cookies are not available (deprecated in favor of session_persistence)
        */
       allow_fallback_to_local_storage?: boolean
+      /**
+       * Configure the storage strategy for persisting sessions
+       */
+      session_persistence?: 'local-storage' | 'cookie'
       /**
        * Whether contexts are stored in local storage
        */
@@ -388,9 +392,13 @@ export type TelemetryConfigurationEvent = CommonTelemetryProperties & {
        */
       is_main_process?: boolean
       /**
-       * The list of events that include feature flags collection
+       * The list of events that include feature flags collection. The tracking is always enabled for views and errors.
        */
-      collect_feature_flags_on?: ('view' | 'error' | 'vital')[]
+      track_feature_flags_for_events?: ('vital' | 'resource' | 'action' | 'long_task')[]
+      /**
+       * Whether the anonymous users are tracked
+       */
+      track_anonymous_user?: boolean
       [k: string]: unknown
     }
     [k: string]: unknown
@@ -425,6 +433,7 @@ export type TelemetryCommonFeaturesUsage =
   | AddError
   | SetGlobalContext
   | SetUser
+  | SetAccount
   | AddFeatureFlagEvaluation
 /**
  * Schema of browser specific features usage
@@ -613,6 +622,13 @@ export interface SetUser {
    * setUser, setUserProperty, setUserInfo APIs
    */
   feature: 'set-user'
+  [k: string]: unknown
+}
+export interface SetAccount {
+  /**
+   * setAccount, setAccountProperty APIs
+   */
+  feature: 'set-account'
   [k: string]: unknown
 }
 export interface AddFeatureFlagEvaluation {

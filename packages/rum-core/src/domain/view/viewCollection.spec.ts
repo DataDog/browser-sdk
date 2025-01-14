@@ -125,7 +125,6 @@ describe('viewCollection', () => {
           start_session_replay_recording_manually: jasmine.any(Boolean),
         },
       },
-      feature_flags: undefined,
       date: jasmine.any(Number),
       type: RumEventType.VIEW,
       view: {
@@ -175,6 +174,7 @@ describe('viewCollection', () => {
         has_replay: undefined,
         is_active: undefined,
       },
+      feature_flags: undefined,
       display: {
         scroll: {
           max_depth: 2000,
