@@ -100,6 +100,7 @@ function processViewUpdate(
       long_task: {
         count: view.eventCounts.longTaskCount,
       },
+      performance: computeViewPerformanceData(view.commonViewMetrics, view.initialViewMetrics),
       resource: {
         count: view.eventCounts.resourceCount,
       },
@@ -116,7 +117,6 @@ function processViewUpdate(
           },
         }
       : undefined,
-    performance: computeViewPerformanceData(view.commonViewMetrics, view.initialViewMetrics),
     session: {
       has_replay: replayStats ? true : undefined,
       is_active: view.sessionIsActive ? undefined : false,

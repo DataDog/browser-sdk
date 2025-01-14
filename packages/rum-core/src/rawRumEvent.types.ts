@@ -123,6 +123,7 @@ export interface RawRumViewEvent {
     long_task: Count
     resource: Count
     frustration: Count
+    performance?: ViewPerformanceData
   }
   session: {
     has_replay: true | undefined
@@ -130,7 +131,6 @@ export interface RawRumViewEvent {
   }
   feature_flags?: Context
   display?: ViewDisplay
-  performance?: ViewPerformanceData
   privacy?: {
     replay_level: DefaultPrivacyLevel
   }
