@@ -37,10 +37,10 @@ export function findIncrementalSnapshot(
 
 // Returns all the IncrementalSnapshotRecord of a given source in a Segment, if any.
 export function findAllIncrementalSnapshots(
-  segments: BrowserSegment | BrowserSegment[],
+  { records }: { records: BrowserRecord[] },
   source: IncrementalSource
 ): BrowserIncrementalSnapshotRecord[] {
-  return getAllrecords(segments).filter(
+  return records.filter(
     (record) => record.type === RecordType.IncrementalSnapshot && record.data.source === source
   ) as BrowserIncrementalSnapshotRecord[]
 }
@@ -58,8 +58,4 @@ export function findMouseInteractionRecords(
   return findAllIncrementalSnapshots(segment, IncrementalSource.MouseInteraction).filter(
     (record) => 'type' in record.data && record.data.type === source
   )
-}
-
-export function getAllrecords(segments: BrowserSegment | BrowserSegment[]): BrowserRecord[] {
-  return Array.isArray(segments) ? segments.flatMap((segment) => segment.records) : segments.records
 }
