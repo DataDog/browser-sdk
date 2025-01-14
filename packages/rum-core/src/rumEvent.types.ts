@@ -1057,6 +1057,10 @@ export type RumViewEvent = CommonProperties &
        * The JavaScript refresh rate for React Native
        */
       js_refresh_rate?: RumPerfMetric
+      /**
+       * Performance data. (Web Vitals, etc.)
+       */
+      performance?: ViewPerformanceData
       [k: string]: unknown
     }
     /**
@@ -1169,10 +1173,6 @@ export type RumViewEvent = CommonProperties &
       }
       [k: string]: unknown
     }
-    /**
-     * Performance data. (Web Vitals, etc.)
-     */
-    performance?: ViewPerformanceData
     [k: string]: unknown
   }
 /**
