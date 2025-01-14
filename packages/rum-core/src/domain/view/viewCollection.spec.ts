@@ -167,6 +167,30 @@ describe('viewCollection', () => {
         long_task: {
           count: 10,
         },
+        performance: {
+          cls: {
+            score: 1,
+            timestamp: (100 * 1e6) as ServerDuration,
+            target_selector: undefined,
+          },
+          fcp: {
+            timestamp: (10 * 1e6) as ServerDuration,
+          },
+          fid: {
+            duration: (12 * 1e6) as ServerDuration,
+            timestamp: (10 * 1e6) as ServerDuration,
+            target_selector: undefined,
+          },
+          inp: {
+            duration: (10 * 1e6) as ServerDuration,
+            timestamp: (100 * 1e6) as ServerDuration,
+            target_selector: undefined,
+          },
+          lcp: {
+            timestamp: (10 * 1e6) as ServerDuration,
+            target_selector: undefined,
+          },
+        },
         resource: {
           count: 10,
         },
