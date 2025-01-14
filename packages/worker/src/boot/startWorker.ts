@@ -1,4 +1,3 @@
-/* eslint-disable local-rules/disallow-zone-js-patched-values */
 import type { DeflateWorkerAction, DeflateWorkerResponse } from '@datadog/browser-core'
 import { concatBuffers } from '@datadog/browser-core'
 import { Deflate, constants, string2buf } from '../domain/deflate'

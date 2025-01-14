@@ -1,8 +1,0 @@
-bundle
-cjs
-esm
-dist
-test/app/dist
-sandbox
-coverage
-rum-events-format

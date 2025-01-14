@@ -3,12 +3,12 @@
 const { printLog, runMain } = require('../lib/executionUtils')
 const { fetchPR, LOCAL_BRANCH } = require('../lib/gitUtils')
 const { command } = require('../lib/command')
+const { forEachFile } = require('../lib/filesUtils')
 
 const {
   buildRootUploadPath,
   buildDatacenterUploadPath,
   buildBundleFolder,
-  buildBundleFileName,
   buildPullRequestUploadPath,
   packages,
 } = require('./lib/deploymentUtils')
@@ -36,7 +36,6 @@ if (require.main === module) {
   const env = process.argv[2]
   const version = process.argv[3]
   const uploadPathTypes = process.argv[4].split(',')
-
   runMain(async () => {
     await main(env, version, uploadPathTypes)
   })
@@ -46,28 +45,50 @@ async function main(env, version, uploadPathTypes) {
   const awsConfig = AWS_CONFIG[env]
   let cloudfrontPathsToInvalidate = []
   for (const { packageName } of packages) {
-    const bundleFolder = buildBundleFolder(packageName)
-    for (const uploadPathType of uploadPathTypes) {
-      let uploadPath
-      if (uploadPathType === 'pull-request') {
-        const pr = await fetchPR(LOCAL_BRANCH)
-        if (!pr) {
-          console.log('No pull requests found for the branch')
-          return
-        }
-        uploadPath = buildPullRequestUploadPath(packageName, pr.number)
-      } else if (uploadPathType === 'root') {
-        uploadPath = buildRootUploadPath(packageName, version)
-      } else {
-        uploadPath = buildDatacenterUploadPath(uploadPathType, packageName, version)
+    const pathsToInvalidate = await uploadPackage(awsConfig, packageName, version, uploadPathTypes)
+    cloudfrontPathsToInvalidate.push(...pathsToInvalidate)
+  }
+  invalidateCloudfront(awsConfig, cloudfrontPathsToInvalidate)
+}
+
+async function uploadPackage(awsConfig, packageName, version, uploadPathTypes) {
+  const cloudfrontPathsToInvalidate = []
+  const bundleFolder = buildBundleFolder(packageName)
+
+  for (const uploadPathType of uploadPathTypes) {
+    await forEachFile(bundleFolder, async (bundlePath) => {
+      if (!bundlePath.endsWith('.js')) {
+        return
       }
-      const bundlePath = `${bundleFolder}/${buildBundleFileName(packageName)}`
+
+      const relativeBundlePath = bundlePath.replace(`${bundleFolder}/`, '')
+      const uploadPath = await generateUploadPath(uploadPathType, relativeBundlePath, version)
 
       uploadToS3(awsConfig, bundlePath, uploadPath, version)
       cloudfrontPathsToInvalidate.push(`/${uploadPath}`)
-    }
+    })
   }
-  invalidateCloudfront(awsConfig, cloudfrontPathsToInvalidate)
+
+  return cloudfrontPathsToInvalidate
+}
+
+async function generateUploadPath(uploadPathType, filePath, version) {
+  let uploadPath
+
+  if (uploadPathType === 'pull-request') {
+    const pr = await fetchPR(LOCAL_BRANCH)
+    if (!pr) {
+      console.log('No pull requests found for the branch')
+      process.exit(0)
+    }
+    uploadPath = buildPullRequestUploadPath(filePath, pr.number)
+  } else if (uploadPathType === 'root') {
+    uploadPath = buildRootUploadPath(filePath, version)
+  } else {
+    uploadPath = buildDatacenterUploadPath(uploadPathType, filePath, version)
+  }
+
+  return uploadPath
 }
 
 function uploadToS3(awsConfig, bundlePath, uploadPath, version) {
@@ -98,8 +119,8 @@ function invalidateCloudfront(awsConfig, pathsToInvalidate) {
 
 function generateEnvironmentForRole(awsAccountId, roleName) {
   const rawCredentials = command`
-  aws sts assume-role 
-    --role-arn arn:aws:iam::${awsAccountId}:role/${roleName} 
+  aws sts assume-role
+    --role-arn arn:aws:iam::${awsAccountId}:role/${roleName}
     --role-session-name AWSCLI-Session`.run()
   const credentials = JSON.parse(rawCredentials)['Credentials']
   return {

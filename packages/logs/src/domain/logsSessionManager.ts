@@ -11,6 +11,7 @@ export interface LogsSessionManager {
 
 export type LogsSession = {
   id?: string // session can be tracked without id
+  anonymousId?: string // device id lasts across session
 }
 
 export const enum LoggerTrackingType {
@@ -34,6 +35,7 @@ export function startLogsSessionManager(
       return session && session.trackingType === LoggerTrackingType.TRACKED
         ? {
             id: session.id,
+            anonymousId: session.anonymousId,
           }
         : undefined
     },

@@ -1,9 +1,6 @@
 const fs = require('fs')
 const path = require('path')
 
-// The json-schema-to-typescript is built on demand (see scripts/cli build_json2type) and is not
-// always available in the node_modules. Skip the import check.
-// eslint-disable-next-line import/no-unresolved
 const { compileFromFile } = require('json-schema-to-typescript')
 
 const prettier = require('prettier')

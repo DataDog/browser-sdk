@@ -1,4 +1,4 @@
-import pako from 'pako'
+import { inflate } from 'pako'
 
 import type { Payload } from '@datadog/browser-core'
 import type { BrowserSegment } from '../src/types'
@@ -30,7 +30,7 @@ function readJsonBlob(blob: Blob, { decompress = false }: { decompress?: boolean
     const reader = new FileReader()
     reader.addEventListener('loadend', () => {
       const buffer = reader.result as ArrayBuffer
-      const decompressed = decompress ? pako.inflate(buffer) : buffer
+      const decompressed = decompress ? inflate(buffer) : buffer
       const decoded = new TextDecoder().decode(decompressed)
       const deserialized = JSON.parse(decoded)
       resolve(deserialized)

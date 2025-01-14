@@ -10,7 +10,7 @@ module.exports = {
   create(context) {
     return {
       'Program:exit'(node) {
-        const globalScope = context.getScope(node)
+        const globalScope = context.sourceCode.getScope(node)
         const variable = globalScope.set.get('URL')
 
         if (variable && variable.defs.length === 0) {

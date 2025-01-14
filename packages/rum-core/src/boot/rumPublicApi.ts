@@ -13,7 +13,6 @@ import type {
 import {
   addTelemetryUsage,
   CustomerDataType,
-  assign,
   createContextManager,
   deepClone,
   makePublicApi,
@@ -578,13 +577,11 @@ export function makeRumPublicApi(
 }
 
 function createPostStartStrategy(preStartStrategy: Strategy, startRumResult: StartRumResult): Strategy {
-  return assign(
-    {
-      init: (initConfiguration: RumInitConfiguration) => {
-        displayAlreadyInitializedError('DD_RUM', initConfiguration)
-      },
-      initConfiguration: preStartStrategy.initConfiguration,
+  return {
+    init: (initConfiguration: RumInitConfiguration) => {
+      displayAlreadyInitializedError('DD_RUM', initConfiguration)
     },
-    startRumResult
-  )
+    initConfiguration: preStartStrategy.initConfiguration,
+    ...startRumResult,
+  }
 }

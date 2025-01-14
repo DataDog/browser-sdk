@@ -1,5 +1,5 @@
 import type { BuildEnvWindow } from './buildEnv'
-import { startLeakDetection, stopLeakDetection } from './leakDetection'
+import { startLeakDetection } from './leakDetection'
 
 beforeEach(() => {
   ;(window as unknown as BuildEnvWindow).__BUILD_ENV__SDK_VERSION__ = 'test'
@@ -13,10 +13,6 @@ beforeEach(() => {
   // cases the test patches the `document.cookie` getter (ex: `spyOnProperty(document, 'cookie',
   // 'get')`), which would prevent the `clearAllCookies` function from working properly.
   clearAllCookies()
-})
-
-afterEach(() => {
-  stopLeakDetection()
 })
 
 function clearAllCookies() {

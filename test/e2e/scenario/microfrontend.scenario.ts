@@ -34,6 +34,7 @@ describe('microfrontend', () => {
     .withRumInit((configuration) => {
       window.DD_RUM!.init(configuration)
 
+      // eslint-disable-next-line @typescript-eslint/no-empty-function
       const noop = () => {}
       function testHandlingStack() {
         fetch('/ok').then(noop, noop)

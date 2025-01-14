@@ -1,9 +1,18 @@
 import { ExperimentalFeature } from '@datadog/browser-core'
 import { mockExperimentalFeatures } from '../../../../core/test'
 import { getCrypto } from '../../browser/crypto'
-import { createSpanIdentifier, createTraceIdentifier, toPaddedHexadecimalString } from './identifier'
+import {
+  createSpanIdentifier,
+  createTraceIdentifier,
+  toPaddedHexadecimalString,
+  clearIdentifierImplementationCache,
+} from './identifier'
 
 describe('identifier', () => {
+  beforeEach(() => {
+    clearIdentifierImplementationCache()
+  })
+
   describe('TraceIdentifier', () => {
     it('generates a random id', () => {
       const identifier = createTraceIdentifier()

@@ -13,7 +13,7 @@ module.exports = (_env, argv) => {
       plugins: [
         new WebextensionPlugin({
           manifestDefaults: {
-            version: require('./package.json').version,
+            ...getVersion(),
           },
         }),
         new CopyPlugin({
@@ -99,5 +99,14 @@ module.exports = (_env, argv) => {
 
       plugins,
     }
+  }
+}
+
+function getVersion() {
+  const version = require('./package.json').version
+
+  return {
+    version: version.replace(/-(alpha|beta)/, ''),
+    version_name: version,
   }
 }

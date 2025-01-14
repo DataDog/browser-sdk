@@ -21,5 +21,6 @@ export const config: Options.Testrunner = {
     },
   ],
 
+  // eslint-disable-next-line @typescript-eslint/no-empty-function
   onPrepare() {},
 }

@@ -25,6 +25,9 @@ module.exports = {
       },
     ],
   },
+  /**
+   * @returns {Record<string, Function>}
+   */
   create(context) {
     return moduleVisitor((source) => {
       const protectedDirectory = getFirstProtectedDirectory(source.value, context)

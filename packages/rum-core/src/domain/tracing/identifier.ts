@@ -25,6 +25,10 @@ export function createSpanIdentifier() {
 
 let createIdentifierImplementationCache: ((bits: 63 | 64) => BaseIdentifier) | undefined
 
+export function clearIdentifierImplementationCache() {
+  createIdentifierImplementationCache = undefined
+}
+
 function createIdentifier(bits: 63 | 64): BaseIdentifier {
   if (!createIdentifierImplementationCache) {
     createIdentifierImplementationCache =

@@ -13,7 +13,6 @@ const COMMA_SEPARATED_KEY_VALUE = /([\w-]+)\s*=\s*([^;]+)/g
 
 export function findCommaSeparatedValue(rawString: string, name: string): string | undefined {
   COMMA_SEPARATED_KEY_VALUE.lastIndex = 0
-  // eslint-disable-next-line no-constant-condition
   while (true) {
     const match = COMMA_SEPARATED_KEY_VALUE.exec(rawString)
     if (match) {
@@ -29,7 +28,6 @@ export function findCommaSeparatedValue(rawString: string, name: string): string
 export function findCommaSeparatedValues(rawString: string): Map<string, string> {
   const result = new Map<string, string>()
   COMMA_SEPARATED_KEY_VALUE.lastIndex = 0
-  // eslint-disable-next-line no-constant-condition
   while (true) {
     const match = COMMA_SEPARATED_KEY_VALUE.exec(rawString)
     if (match) {
