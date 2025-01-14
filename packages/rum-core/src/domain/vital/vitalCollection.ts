@@ -1,5 +1,8 @@
 import type { ClocksState, Duration, Context } from '@datadog/browser-core'
 import { clocksNow, combine, elapsed, generateUUID, toServerDuration } from '@datadog/browser-core'
+import { featureFlagCollection } from '../collectFeatureFlags'
+import type { FeatureFlagContexts } from '../contexts/featureFlagContext'
+import type { FeatureFlagsForEvents } from '../configuration'
 import type { LifeCycle, RawRumEventCollectedData } from '../lifeCycle'
 import { LifeCycleEventType } from '../lifeCycle'
 import type { RawRumVitalEvent } from '../../rawRumEvent.types'
@@ -46,7 +49,9 @@ export function createCustomVitalsState() {
 export function startVitalCollection(
   lifeCycle: LifeCycle,
   pageStateHistory: PageStateHistory,
-  customVitalsState: CustomVitalsState
+  customVitalsState: CustomVitalsState,
+  featureFlagContexts: FeatureFlagContexts,
+  trackFeatureFlagsForEvents: FeatureFlagsForEvents[]
 ) {
   function isValid(vital: DurationVital) {
     return !pageStateHistory.wasInPageStateDuringPeriod(PageState.FROZEN, vital.startClocks.relative, vital.duration)
@@ -54,7 +59,10 @@ export function startVitalCollection(
 
   function addDurationVital(vital: DurationVital) {
     if (isValid(vital)) {
-      lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, processVital(vital, true))
+      lifeCycle.notify(
+        LifeCycleEventType.RAW_RUM_EVENT_COLLECTED,
+        processVital(vital, true, featureFlagContexts, trackFeatureFlagsForEvents)
+      )
     }
   }
 
@@ -128,7 +136,12 @@ function buildDurationVital(
   }
 }
 
-function processVital(vital: DurationVital, valueComputedBySdk: boolean): RawRumEventCollectedData<RawRumVitalEvent> {
+function processVital(
+  vital: DurationVital,
+  valueComputedBySdk: boolean,
+  featureFlagContexts: FeatureFlagContexts,
+  trackFeatureFlagsForEvents: FeatureFlagsForEvents[]
+): RawRumEventCollectedData<RawRumVitalEvent> {
   const rawRumEvent: RawRumVitalEvent = {
     date: vital.startClocks.timeStamp,
     vital: {
@@ -148,6 +161,14 @@ function processVital(vital: DurationVital, valueComputedBySdk: boolean): RawRum
       },
     }
   }
+
+  featureFlagCollection(
+    'vital',
+    vital.startClocks.relative,
+    trackFeatureFlagsForEvents,
+    featureFlagContexts,
+    rawRumEvent
+  )
 
   return {
     rawRumEvent,

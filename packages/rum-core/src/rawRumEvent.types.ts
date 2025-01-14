@@ -52,6 +52,7 @@ export interface RawRumResourceEvent {
     protocol?: string
     delivery_type?: DeliveryType
   }
+  feature_flags?: Context
   _dd: {
     trace_id?: string
     span_id?: string // not available for initial document tracing
@@ -216,6 +217,7 @@ export interface RawRumLongTaskEvent {
     entry_type: RumLongTaskEntryType.LONG_TASK
     duration: ServerDuration
   }
+  feature_flags?: Context
   _dd: {
     discarded: boolean
   }
@@ -257,6 +259,7 @@ export interface RawRumLongAnimationFrameEvent {
       window_attribution: string
     }>
   }
+  feature_flags?: Context
   _dd: {
     discarded: boolean
   }
@@ -282,6 +285,7 @@ export interface RawRumActionEvent {
   view?: {
     in_foreground: boolean
   }
+  feature_flags?: Context
   _dd?: {
     action?: {
       target?: {
@@ -320,6 +324,7 @@ export interface RawRumVitalEvent {
     description?: string
     duration: number
   }
+  feature_flags?: Context
   _dd?: {
     vital: {
       computed_value: true

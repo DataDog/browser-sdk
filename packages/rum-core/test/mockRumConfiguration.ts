@@ -11,6 +11,7 @@ export function mockRumConfiguration(partialConfig: Partial<RumConfiguration> = 
       trackResources: true,
       trackLongTasks: true,
       trackAnonymousUser: true,
+      trackFeatureFlagsForEvents: ['resource', 'action', 'long_task', 'vital'],
     })!,
     ...SPEC_ENDPOINTS,
   }

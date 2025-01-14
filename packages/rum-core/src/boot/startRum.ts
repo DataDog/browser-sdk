@@ -42,6 +42,7 @@ import { startFeatureFlagContexts } from '../domain/contexts/featureFlagContext'
 import { startCustomerDataTelemetry } from '../domain/startCustomerDataTelemetry'
 import type { PageStateHistory } from '../domain/contexts/pageStateHistory'
 import { startPageStateHistory } from '../domain/contexts/pageStateHistory'
+import type { FeatureFlagContexts } from '../domain/contexts/featureFlagContext'
 import type { CommonContext } from '../domain/contexts/commonContext'
 import { startDisplayContext } from '../domain/contexts/displayContext'
 import type { CustomVitalsState } from '../domain/vital/vitalCollection'
@@ -144,6 +145,7 @@ export function startRum(
     pageStateHistory,
     locationChangeObservable,
     domMutationObservable,
+    featureFlagContexts,
     windowOpenObservable,
     getCommonContext,
     reportError
@@ -174,7 +176,12 @@ export function startRum(
   )
   cleanupTasks.push(stopViewCollection)
 
-  const { stop: stopResourceCollection } = startResourceCollection(lifeCycle, configuration, pageStateHistory)
+  const { stop: stopResourceCollection } = startResourceCollection(
+    lifeCycle,
+    configuration,
+    pageStateHistory,
+    featureFlagContexts
+  )
   cleanupTasks.push(stopResourceCollection)
 
   if (configuration.trackLongTasks) {
@@ -182,7 +189,7 @@ export function startRum(
       const { stop: stopLongAnimationFrameCollection } = startLongAnimationFrameCollection(lifeCycle, configuration)
       cleanupTasks.push(stopLongAnimationFrameCollection)
     } else {
-      startLongTaskCollection(lifeCycle, configuration)
+      startLongTaskCollection(lifeCycle, configuration, featureFlagContexts)
     }
   }
 
@@ -190,7 +197,13 @@ export function startRum(
 
   startRequestCollection(lifeCycle, configuration, session)
 
-  const vitalCollection = startVitalCollection(lifeCycle, pageStateHistory, customVitalsState)
+  const vitalCollection = startVitalCollection(
+    lifeCycle,
+    pageStateHistory,
+    customVitalsState,
+    featureFlagContexts,
+    configuration.trackFeatureFlagsForEvents
+  )
   const internalContext = startInternalContext(
     configuration.applicationId,
     session,
@@ -240,6 +253,7 @@ export function startRumEventCollection(
   pageStateHistory: PageStateHistory,
   locationChangeObservable: Observable<LocationChange>,
   domMutationObservable: Observable<void>,
+  featureFlagContexts: FeatureFlagContexts,
   windowOpenObservable: Observable<void>,
   getCommonContext: () => CommonContext,
   reportError: (error: RawError) => void
@@ -252,7 +266,8 @@ export function startRumEventCollection(
     domMutationObservable,
     windowOpenObservable,
     configuration,
-    pageStateHistory
+    pageStateHistory,
+    featureFlagContexts
   )
 
   const displayContext = startDisplayContext(configuration)

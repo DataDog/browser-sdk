@@ -8,6 +8,8 @@ import {
   relativeToClocks,
   createTaskQueue,
 } from '@datadog/browser-core'
+import type { FeatureFlagContexts } from '../contexts/featureFlagContext'
+import { featureFlagCollection } from '../collectFeatureFlags'
 import type { RumConfiguration } from '../configuration'
 import {
   RumPerformanceEntryType,
@@ -41,11 +43,12 @@ export function startResourceCollection(
   lifeCycle: LifeCycle,
   configuration: RumConfiguration,
   pageStateHistory: PageStateHistory,
+  featureFlagContexts: FeatureFlagContexts,
   taskQueue = createTaskQueue(),
   retrieveInitialDocumentResourceTimingImpl = retrieveInitialDocumentResourceTiming
 ) {
   lifeCycle.subscribe(LifeCycleEventType.REQUEST_COMPLETED, (request: RequestCompleteEvent) => {
-    handleResource(() => processRequest(request, configuration, pageStateHistory))
+    handleResource(() => processRequest(request, configuration, pageStateHistory, featureFlagContexts))
   })
 
   const performanceResourceSubscription = createPerformanceObservable(configuration, {
@@ -54,13 +57,13 @@ export function startResourceCollection(
   }).subscribe((entries) => {
     for (const entry of entries) {
       if (!isResourceEntryRequestType(entry)) {
-        handleResource(() => processResourceEntry(entry, configuration))
+        handleResource(() => processResourceEntry(entry, configuration, featureFlagContexts))
       }
     }
   })
 
   retrieveInitialDocumentResourceTimingImpl(configuration, (timing) => {
-    handleResource(() => processResourceEntry(timing, configuration))
+    handleResource(() => processResourceEntry(timing, configuration, featureFlagContexts))
   })
 
   function handleResource(computeRawEvent: () => RawRumEventCollectedData<RawRumResourceEvent> | undefined) {
@@ -82,7 +85,8 @@ export function startResourceCollection(
 function processRequest(
   request: RequestCompleteEvent,
   configuration: RumConfiguration,
-  pageStateHistory: PageStateHistory
+  pageStateHistory: PageStateHistory,
+  featureFlagContexts: FeatureFlagContexts
 ): RawRumEventCollectedData<RawRumResourceEvent> | undefined {
   const matchingTiming = matchRequestResourceEntry(request)
   const startClocks = matchingTiming ? relativeToClocks(matchingTiming.startTime) : request.startClocks
@@ -111,12 +115,21 @@ function processRequest(
         delivery_type: matchingTiming && computeResourceEntryDeliveryType(matchingTiming),
       },
       type: RumEventType.RESOURCE as const,
+      feature_flags: undefined,
       _dd: {
         discarded: !configuration.trackResources,
       },
     },
     tracingInfo,
     correspondingTimingOverrides
+  )
+
+  featureFlagCollection(
+    'resource',
+    startClocks.relative,
+    configuration.trackFeatureFlagsForEvents,
+    featureFlagContexts,
+    resourceEvent
   )
 
   return {
@@ -137,7 +150,8 @@ function processRequest(
 
 function processResourceEntry(
   entry: RumPerformanceResourceTiming,
-  configuration: RumConfiguration
+  configuration: RumConfiguration,
+  featureFlagContexts: FeatureFlagContexts
 ): RawRumEventCollectedData<RawRumResourceEvent> | undefined {
   const startClocks = relativeToClocks(entry.startTime)
   const tracingInfo = computeResourceEntryTracingInfo(entry, configuration)
@@ -160,6 +174,7 @@ function processResourceEntry(
         delivery_type: computeResourceEntryDeliveryType(entry),
       },
       type: RumEventType.RESOURCE as const,
+      feature_flags: undefined,
       _dd: {
         discarded: !configuration.trackResources,
       },
@@ -167,6 +182,15 @@ function processResourceEntry(
     tracingInfo,
     entryMetrics
   )
+
+  featureFlagCollection(
+    'resource',
+    startClocks.relative,
+    configuration.trackFeatureFlagsForEvents,
+    featureFlagContexts,
+    resourceEvent
+  )
+
   return {
     startTime: startClocks.relative,
     rawRumEvent: resourceEvent,
