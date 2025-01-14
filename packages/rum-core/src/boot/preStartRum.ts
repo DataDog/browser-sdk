@@ -53,7 +53,7 @@ export function createPreStartStrategy(
 
   const trackingConsentStateSubscription = trackingConsentState.observable.subscribe(tryStartRum)
 
-  const noopContext: Context = {}
+  const emptyContext: Context = {}
 
   function tryStartRum() {
     if (!cachedInitConfiguration || !cachedConfiguration || !trackingConsentState.isGranted()) {
@@ -206,7 +206,7 @@ export function createPreStartStrategy(
       bufferApiCalls.add((startRumResult) => startRumResult.setViewContextProperty(key, value))
     },
 
-    getViewContext: () => noopContext,
+    getViewContext: () => emptyContext,
 
     addAction(action, commonContext = getCommonContext()) {
       bufferApiCalls.add((startRumResult) => startRumResult.addAction(action, commonContext))
