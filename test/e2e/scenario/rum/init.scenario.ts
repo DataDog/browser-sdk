@@ -145,7 +145,6 @@ describe('API calls and events around init', () => {
 
       const initialView = intakeRegistry.rumViewEvents[0]
       const nextView = intakeRegistry.rumViewEvents[1]
-
       expect(initialView.context).toEqual(jasmine.objectContaining({ foo: 'bar', bar: 'foo' }))
       expect(nextView.context!.foo).toBeUndefined()
 
@@ -173,6 +172,17 @@ describe('API calls and events around init', () => {
           viewId: nextView.view.id,
         }
       )
+    })
+
+  createTest('get the view context')
+    .withRum()
+    .withRumInit((configuration) => {
+      window.DD_RUM!.init(configuration)
+      window.DD_RUM!.setViewContext({ foo: 'bar' })
+    })
+    .run(async () => {
+      const viewContext = await browser.execute(() => window.DD_RUM?.getViewContext())
+      expect(viewContext).toEqual({ foo: 'bar' })
     })
 })
 
