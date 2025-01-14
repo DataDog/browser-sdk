@@ -128,7 +128,7 @@ function processRequest(
   featureFlagCollection(
     'resource',
     startClocks.relative,
-    configuration.collectFeatureFlagsOn,
+    configuration.trackFeatureFlagsForEvents,
     featureFlagContexts,
     resourceEvent
   )
@@ -187,7 +187,7 @@ function processResourceEntry(
   featureFlagCollection(
     'resource',
     startClocks.relative,
-    configuration.collectFeatureFlagsOn,
+    configuration.trackFeatureFlagsForEvents,
     featureFlagContexts,
     resourceEvent
   )

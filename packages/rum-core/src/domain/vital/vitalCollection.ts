@@ -8,7 +8,7 @@ import { RumEventType, VitalType } from '../../rawRumEvent.types'
 import type { PageStateHistory } from '../contexts/pageStateHistory'
 import { PageState } from '../contexts/pageStateHistory'
 import type { FeatureFlagContexts } from '../contexts/featureFlagContext'
-import type { FeatureFlagEvent } from '../configuration'
+import type { FeatureFlagsForEvents } from '../configuration'
 
 export interface DurationVitalOptions {
   context?: Context
@@ -51,7 +51,7 @@ export function startVitalCollection(
   pageStateHistory: PageStateHistory,
   customVitalsState: CustomVitalsState,
   featureFlagContexts: FeatureFlagContexts,
-  collectFeatureFlagsOn: FeatureFlagEvent[]
+  trackFeatureFlagsForEvents: FeatureFlagsForEvents[]
 ) {
   function isValid(vital: DurationVital) {
     return !pageStateHistory.wasInPageStateDuringPeriod(PageState.FROZEN, vital.startClocks.relative, vital.duration)
@@ -61,7 +61,7 @@ export function startVitalCollection(
     if (isValid(vital)) {
       lifeCycle.notify(
         LifeCycleEventType.RAW_RUM_EVENT_COLLECTED,
-        processVital(vital, true, featureFlagContexts, collectFeatureFlagsOn)
+        processVital(vital, true, featureFlagContexts, trackFeatureFlagsForEvents)
       )
     }
   }
@@ -140,7 +140,7 @@ function processVital(
   vital: DurationVital,
   valueComputedBySdk: boolean,
   featureFlagContexts: FeatureFlagContexts,
-  collectFeatureFlagsOn: FeatureFlagEvent[]
+  trackFeatureFlagsForEvents: FeatureFlagsForEvents[]
 ): RawRumEventCollectedData<RawRumVitalEvent> {
   const rawRumEvent: RawRumVitalEvent = {
     date: vital.startClocks.timeStamp,
@@ -162,7 +162,13 @@ function processVital(
     }
   }
 
-  featureFlagCollection('vital', vital.startClocks.relative, collectFeatureFlagsOn, featureFlagContexts, rawRumEvent)
+  featureFlagCollection(
+    'vital',
+    vital.startClocks.relative,
+    trackFeatureFlagsForEvents,
+    featureFlagContexts,
+    rawRumEvent
+  )
 
   return {
     rawRumEvent,

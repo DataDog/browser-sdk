@@ -6,7 +6,7 @@ import type { RawRumEvent, RawRumVitalEvent } from '../../rawRumEvent.types'
 import { VitalType, RumEventType } from '../../rawRumEvent.types'
 import type { RawRumEventCollectedData } from '../lifeCycle'
 import type { FeatureFlagContexts } from '../contexts/featureFlagContext'
-import type { FeatureFlagEvent } from '../configuration'
+import type { FeatureFlagsForEvents } from '../configuration'
 import { LifeCycle } from '../lifeCycle'
 import { startDurationVital, stopDurationVital, startVitalCollection, createCustomVitalsState } from './vitalCollection'
 
@@ -23,18 +23,18 @@ describe('vitalCollection', () => {
   let vitalCollection: ReturnType<typeof startVitalCollection>
   let wasInPageStateDuringPeriodSpy: jasmine.Spy<jasmine.Func>
   const featureFlagContexts = mockFeatureFlagContexts(partialFeatureFlagContexts)
-  let collectFeatureFlagsOn: FeatureFlagEvent[] = []
+  let trackFeatureFlagsForEvents: FeatureFlagsForEvents[] = []
 
   beforeEach(() => {
     clock = mockClock()
     wasInPageStateDuringPeriodSpy = spyOn(pageStateHistory, 'wasInPageStateDuringPeriod')
-    collectFeatureFlagsOn = []
+    trackFeatureFlagsForEvents = []
     vitalCollection = startVitalCollection(
       lifeCycle,
       pageStateHistory,
       vitalsState,
       featureFlagContexts,
-      collectFeatureFlagsOn
+      trackFeatureFlagsForEvents
     )
 
     rawRumEvents = collectAndValidateRawRumEvents(lifeCycle)
@@ -292,8 +292,8 @@ describe('vitalCollection', () => {
     })
   })
   describe('feature flags integration', () => {
-    it('should include feature flags when "vital" is in collectFeatureFlagsOn', () => {
-      collectFeatureFlagsOn.push('vital')
+    it('should include feature flags when "vital" is in trackFeatureFlagsForEvents', () => {
+      trackFeatureFlagsForEvents.push('vital')
       featureFlagContexts.findFeatureFlagEvaluations = jasmine.createSpy().and.returnValue({
         feature_flag_key: 'feature_flag_value',
       })
@@ -310,7 +310,7 @@ describe('vitalCollection', () => {
       expect(event.feature_flags).toEqual({ feature_flag_key: 'feature_flag_value' })
     })
 
-    it('should not include feature flags when "vital" is not in collectFeatureFlagsOn', () => {
+    it('should not include feature flags when "vital" is not in trackFeatureFlagsForEvents', () => {
       featureFlagContexts.findFeatureFlagEvaluations = jasmine.createSpy().and.returnValue({
         feature_flag_key: 'feature_flag_value',
       })

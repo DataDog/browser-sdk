@@ -21,19 +21,14 @@ import type { PropagatorType, TracingOption } from '../tracing/tracer.types'
 
 export const DEFAULT_PROPAGATOR_TYPES: PropagatorType[] = ['tracecontext', 'datadog']
 
-export const DEFAULT_FEATURE_FLAG_COLLECTION: FeatureFlagEvent[] = ['view', 'error']
-
-export const FeatureFlagEvent = {
-  VIEW: 'view',
-  ERROR: 'error',
-  VITAL: 'vital',
+export const FeatureFlagsForEvents = {
   ACTION: 'action',
   RESOURCE: 'resource',
   LONG_TASK: 'long_task',
+  VITAL: 'vital',
 } as const
 
-export type FeatureFlagEvent = (typeof FeatureFlagEvent)[keyof typeof FeatureFlagEvent]
-
+export type FeatureFlagsForEvents = (typeof FeatureFlagsForEvents)[keyof typeof FeatureFlagsForEvents]
 export interface RumInitConfiguration extends InitConfiguration {
   // global options
   /**
@@ -148,7 +143,7 @@ export interface RumInitConfiguration extends InitConfiguration {
   /**
    * Enables collection of features flags in chosen events.
    */
-  collectFeatureFlagsOn?: FeatureFlagEvent[]
+  trackFeatureFlagsForEvents?: FeatureFlagsForEvents[]
 }
 
 export type HybridInitConfiguration = Omit<RumInitConfiguration, 'applicationId' | 'clientToken'>
@@ -175,19 +170,19 @@ export interface RumConfiguration extends Configuration {
   customerDataTelemetrySampleRate: number
   traceContextInjection: TraceContextInjection
   plugins: RumPlugin[]
-  collectFeatureFlagsOn: FeatureFlagEvent[]
+  trackFeatureFlagsForEvents: FeatureFlagsForEvents[]
 }
 
 export function validateAndBuildRumConfiguration(
   initConfiguration: RumInitConfiguration
 ): RumConfiguration | undefined {
-  const collectFeatureFlagsOn: FeatureFlagEvent[] = DEFAULT_FEATURE_FLAG_COLLECTION.concat()
-  if (Array.isArray(initConfiguration.collectFeatureFlagsOn)) {
-    initConfiguration.collectFeatureFlagsOn.forEach((eventType) => {
-      if (objectHasValue(FeatureFlagEvent, eventType) && !includes(collectFeatureFlagsOn, eventType)) {
-        collectFeatureFlagsOn.push(eventType)
-      } else if (!objectHasValue(FeatureFlagEvent, eventType)) {
-        display.warn(`Unknown event type '${eventType as any}' in collectFeatureFlagsOn configuration.`)
+  const trackFeatureFlagsForEvents: FeatureFlagsForEvents[] = []
+  if (Array.isArray(initConfiguration.trackFeatureFlagsForEvents)) {
+    initConfiguration.trackFeatureFlagsForEvents.forEach((eventType) => {
+      if (objectHasValue(FeatureFlagsForEvents, eventType) && !includes(trackFeatureFlagsForEvents, eventType)) {
+        trackFeatureFlagsForEvents.push(eventType)
+      } else if (!objectHasValue(FeatureFlagsForEvents, eventType)) {
+        display.warn(`Unknown event type '${eventType as any}' in trackFeatureFlagsForEvents configuration.`)
       }
     })
   }
@@ -250,7 +245,7 @@ export function validateAndBuildRumConfiguration(
         ? initConfiguration.traceContextInjection
         : TraceContextInjection.ALL,
       plugins: initConfiguration.plugins || [],
-      collectFeatureFlagsOn,
+      trackFeatureFlagsForEvents,
     },
     baseConfiguration
   )
@@ -335,7 +330,7 @@ export function serializeRumConfiguration(configuration: RumInitConfiguration) {
       plugins: configuration.plugins?.map((plugin) =>
         assign({ name: plugin.name }, plugin.getConfigurationTelemetry?.())
       ),
-      collect_feature_flags_on: configuration.collectFeatureFlagsOn,
+      track_feature_flags_for_events: configuration.trackFeatureFlagsForEvents,
     },
     baseSerializedConfiguration
   ) satisfies RawTelemetryConfiguration

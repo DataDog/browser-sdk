@@ -39,7 +39,7 @@ export function startLongTaskCollection(
       featureFlagCollection(
         'long_task',
         startClocks.relative,
-        configuration.collectFeatureFlagsOn,
+        configuration.trackFeatureFlagsForEvents,
         featureFlagContexts,
         rawRumEvent
       )

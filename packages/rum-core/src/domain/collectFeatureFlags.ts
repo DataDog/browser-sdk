@@ -1,16 +1,16 @@
 import type { Context, RelativeTime } from '@datadog/browser-core'
 import { includes, isEmptyObject } from '@datadog/browser-core'
-import type { FeatureFlagEvent } from './configuration'
+import type { FeatureFlagsForEvents } from './configuration'
 import type { FeatureFlagContexts } from './contexts/featureFlagContext'
 
 export function featureFlagCollection(
-  eventType: FeatureFlagEvent,
+  eventType: FeatureFlagsForEvents,
   eventStartTime: RelativeTime,
-  collectFeatureFlagsOn: FeatureFlagEvent[],
+  trackFeatureFlagsForEvents: FeatureFlagsForEvents[],
   featureFlagContexts: FeatureFlagContexts,
   rawRumEvent: { feature_flags?: Context }
 ) {
-  if (includes(collectFeatureFlagsOn, eventType)) {
+  if (includes(trackFeatureFlagsForEvents, eventType)) {
     const featureFlagContext = featureFlagContexts.findFeatureFlagEvaluations(eventStartTime)
     if (featureFlagContext && !isEmptyObject(featureFlagContext)) {
       rawRumEvent.feature_flags = featureFlagContext

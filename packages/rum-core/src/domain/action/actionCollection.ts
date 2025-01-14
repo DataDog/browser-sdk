@@ -132,7 +132,7 @@ function processAction(
   featureFlagCollection(
     'action',
     action.startClocks.relative,
-    configuration.collectFeatureFlagsOn,
+    configuration.trackFeatureFlagsForEvents,
     featureFlagContexts,
     actionEvent
   )

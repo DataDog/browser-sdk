@@ -196,7 +196,7 @@ export function startRum(
     pageStateHistory,
     customVitalsState,
     featureFlagContexts,
-    configuration.collectFeatureFlagsOn
+    configuration.trackFeatureFlagsForEvents
   )
   const internalContext = startInternalContext(
     configuration.applicationId,
