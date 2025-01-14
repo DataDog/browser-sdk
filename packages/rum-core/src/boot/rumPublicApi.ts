@@ -44,6 +44,7 @@ import type { DurationVitalReference } from '../domain/vital/vitalCollection'
 import { createCustomVitalsState } from '../domain/vital/vitalCollection'
 import { createPreStartStrategy } from './preStartRum'
 import type { StartRum, StartRumResult } from './startRum'
+import { callPluginsMethod } from '../domain/plugins'
 
 export interface StartRecordingOptions {
   force: boolean
@@ -420,6 +421,8 @@ export function makeRumPublicApi(
       )
 
       strategy = createPostStartStrategy(strategy, startRumResult)
+
+      callPluginsMethod(configuration.plugins, 'onRumStart', { strategy })
 
       return startRumResult
     }

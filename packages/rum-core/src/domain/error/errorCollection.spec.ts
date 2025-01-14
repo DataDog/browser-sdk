@@ -91,6 +91,7 @@ describe('error collection', () => {
               source: ErrorSource.CUSTOM,
               stack,
               handling_stack: 'Error: handling foo',
+              component_stack: undefined,
               type,
               handling: ErrorHandling.HANDLED,
               source_type: 'browser',
@@ -273,6 +274,7 @@ describe('error collection', () => {
           type: 'foo',
           originalError: error,
           handlingStack: 'Error: handling foo',
+          componentStack: 'at div',
         },
       })
 
@@ -285,6 +287,7 @@ describe('error collection', () => {
           source: ErrorSource.CUSTOM,
           stack: 'bar',
           handling_stack: 'Error: handling foo',
+          component_stack: 'at div',
           type: 'foo',
           handling: undefined,
           source_type: 'browser',

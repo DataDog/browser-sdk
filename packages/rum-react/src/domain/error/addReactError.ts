@@ -1,13 +1,18 @@
 import type { ErrorInfo } from 'react'
-import type { ErrorWithCause } from '@datadog/browser-core'
-import { onReactPluginInit } from '../reactPlugin'
+import { callMonitored, clocksNow, createHandlingStack } from '@datadog/browser-core'
+import { onRumStart } from '../reactPlugin'
 
 export function addReactError(error: Error, info: ErrorInfo) {
-  const renderingError = new Error(error.message)
-  renderingError.name = 'ReactRenderingError'
-  renderingError.stack = info.componentStack ?? undefined
-  ;(renderingError as ErrorWithCause).cause = error
-  onReactPluginInit((_, rumPublicApi) => {
-    rumPublicApi.addError(renderingError, { framework: 'react' })
+  onRumStart((strategy) => {
+    const handlingStack = createHandlingStack()
+    callMonitored(() => {
+      strategy.addError({
+        error,
+        handlingStack,
+        componentStack: info.componentStack ?? undefined,
+        context: { framework: 'react' },
+        startClocks: clocksNow(),
+      })
+    })
   })
 }

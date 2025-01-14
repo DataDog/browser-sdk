@@ -29,6 +29,7 @@ export interface ProvidedError {
   error: unknown
   context?: Context
   handlingStack: string
+  componentStack?: string
 }
 
 export function startErrorCollection(
@@ -47,7 +48,6 @@ export function startErrorCollection(
 
   return doStartErrorCollection(lifeCycle, pageStateHistory, featureFlagContexts)
 }
-
 export function doStartErrorCollection(
   lifeCycle: LifeCycle,
   pageStateHistory: PageStateHistory,
@@ -63,7 +63,7 @@ export function doStartErrorCollection(
 
   return {
     addError: (
-      { error, handlingStack, startClocks, context: customerContext }: ProvidedError,
+      { error, handlingStack, componentStack, startClocks, context: customerContext }: ProvidedError,
       savedCommonContext?: CommonContext
     ) => {
       const stackTrace = isError(error) ? computeStackTrace(error) : undefined
@@ -71,6 +71,7 @@ export function doStartErrorCollection(
         stackTrace,
         originalError: error,
         handlingStack,
+        componentStack,
         startClocks,
         nonErrorPrefix: NonErrorPrefix.PROVIDED,
         source: ErrorSource.CUSTOM,
@@ -99,6 +100,7 @@ function processError(
       source: error.source,
       stack: error.stack,
       handling_stack: error.handlingStack,
+      component_stack: error.componentStack,
       type: error.type,
       handling: error.handling,
       causes: error.causes,

@@ -137,7 +137,7 @@ export function createPreStartStrategy(
     bufferApiCalls.add((startRumResult) => startRumResult.addDurationVital(vital))
   }
 
-  return {
+  const strategy: Strategy = {
     init(initConfiguration, publicApi) {
       if (!initConfiguration) {
         display.error('Missing configuration')
@@ -229,6 +229,8 @@ export function createPreStartStrategy(
 
     addDurationVital,
   }
+
+  return strategy
 }
 
 function overrideInitConfigurationForBridge(initConfiguration: RumInitConfiguration): RumInitConfiguration {
