@@ -351,8 +351,8 @@ __metadata:
   dependencies:
     "@datadog/browser-core": "npm:6.0.0"
     "@datadog/browser-rum-core": "npm:6.0.0"
-    "@types/react": "npm:19.0.3"
-    "@types/react-dom": "npm:19.0.2"
+    "@types/react": "npm:19.0.7"
+    "@types/react-dom": "npm:19.0.3"
     react: "npm:19.0.0"
     react-dom: "npm:19.0.0"
     react-router-dom: "npm:6.28.1"
@@ -412,8 +412,8 @@ __metadata:
     "@mantine/hooks": "npm:7.16.0"
     "@tabler/icons-react": "npm:3.28.1"
     "@types/chrome": "npm:0.0.294"
-    "@types/react": "npm:19.0.3"
-    "@types/react-dom": "npm:19.0.2"
+    "@types/react": "npm:19.0.7"
+    "@types/react-dom": "npm:19.0.3"
     "@webextension-toolbox/webpack-webextension-plugin": "npm:3.3.1"
     clsx: "npm:2.1.1"
     copy-webpack-plugin: "npm:12.0.2"
@@ -2038,21 +2038,21 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/react-dom@npm:19.0.2":
-  version: 19.0.2
-  resolution: "@types/react-dom@npm:19.0.2"
+"@types/react-dom@npm:19.0.3":
+  version: 19.0.3
+  resolution: "@types/react-dom@npm:19.0.3"
   peerDependencies:
     "@types/react": ^19.0.0
-  checksum: 10c0/3d0c7b78dbe8df64ea769f30af990a5950173a8321c745fe11094d765423f7964c3519dca6e7cd36b4be6521c8efc690bdd3b79b327b229dd1e9d5a8bad677dd
+  checksum: 10c0/3867427b333cbe8cbba496d7cc20ec9676d32c25ae44f4d1263a4129d42e57cf4adf0039ad263432f1215b88075c27d326e7eb4ed646128235d01a76e661d48f
   languageName: node
   linkType: hard
 
-"@types/react@npm:19.0.3":
-  version: 19.0.3
-  resolution: "@types/react@npm:19.0.3"
+"@types/react@npm:19.0.7":
+  version: 19.0.7
+  resolution: "@types/react@npm:19.0.7"
   dependencies:
     csstype: "npm:^3.0.2"
-  checksum: 10c0/90129c45f2f09154d9409964964d0ccbac7f04d5f7fcf73fc146d33887931fbfdfd1e2947514298f94f986cc264aff8ba3201e9a4ea207d3308f20a06d47c805
+  checksum: 10c0/818e546fa03a2a65ac2652fc472891ac96684211e8967bc25e1da6a8a09e2301ad972b1b038d128f8b4cbbd7691f6f57fee274db568169e9b6b01556abbb5bee
   languageName: node
   linkType: hard
 
