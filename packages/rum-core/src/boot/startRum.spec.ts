@@ -75,6 +75,7 @@ function startRumStub(
     locationChangeObservable,
     domMutationObservable,
     windowOpenObservable,
+    startFeatureFlagContexts(lifeCycle, createCustomerDataTracker(noop)),
     () => ({
       context: {},
       user: {},

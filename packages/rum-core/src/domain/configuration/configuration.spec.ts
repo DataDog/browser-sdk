@@ -489,6 +489,31 @@ describe('validateAndBuildRumConfiguration', () => {
       expect(configuration!.plugins).toEqual([plugin])
     })
   })
+  describe('trackFeatureFlagsForEvents', () => {
+    it('defaults to an empty set', () => {
+      const configuration = validateAndBuildRumConfiguration(DEFAULT_INIT_CONFIGURATION)!
+      expect(configuration.trackFeatureFlagsForEvents).toEqual([])
+    })
+
+    it('accepts valid event types', () => {
+      const configuration = validateAndBuildRumConfiguration({
+        ...DEFAULT_INIT_CONFIGURATION,
+        trackFeatureFlagsForEvents: ['resource', 'long_task', 'vital'],
+      })!
+      expect(configuration.trackFeatureFlagsForEvents).toEqual(['resource', 'long_task', 'vital'])
+      expect(displayWarnSpy).not.toHaveBeenCalled()
+    })
+    it('ignores invalid event types and displays a warning', () => {
+      const configuration = validateAndBuildRumConfiguration({
+        ...DEFAULT_INIT_CONFIGURATION,
+        trackFeatureFlagsForEvents: ['invalid_event' as any],
+      })!
+      expect(configuration.trackFeatureFlagsForEvents).toEqual([])
+      expect(displayWarnSpy).toHaveBeenCalledOnceWith(
+        "Unknown event type 'invalid_event' in trackFeatureFlagsForEvents configuration."
+      )
+    })
+  })
 })
 
 describe('serializeRumConfiguration', () => {
@@ -515,6 +540,7 @@ describe('serializeRumConfiguration', () => {
       trackLongTasks: true,
       remoteConfigurationId: '123',
       plugins: [{ name: 'foo', getConfigurationTelemetry: () => ({ bar: true }) }],
+      trackFeatureFlagsForEvents: ['vital'],
     }
 
     type MapRumInitConfigurationKey<Key extends string> = Key extends keyof InitConfiguration
@@ -551,6 +577,7 @@ describe('serializeRumConfiguration', () => {
       use_worker_url: true,
       compress_intake_requests: true,
       plugins: [{ name: 'foo', bar: true }],
+      track_feature_flags_for_events: ['vital'],
     })
   })
 })
