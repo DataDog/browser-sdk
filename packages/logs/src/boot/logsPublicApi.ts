@@ -163,7 +163,7 @@ export interface LogsPublicApi extends PublicApi {
   /**
    * Set account information to all events, stored in `@account`
    */
-  setAccount: (newAccount: Account & { id: string }) => void
+  setAccount: (newAccount: Account) => void
 
   /**
    * Get account information

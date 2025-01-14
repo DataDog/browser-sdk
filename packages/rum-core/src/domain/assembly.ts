@@ -205,8 +205,7 @@ export function startRumAssembly(
 
         if (!isEmptyObject(commonContext.account)) {
           if (commonContext.account.id) {
-            ;(serverRumEvent.account as Mutable<RumEvent['account']>) = commonContext.account as Account &
-              Context & { id: string }
+            ;(serverRumEvent.account as Mutable<RumEvent['account']>) = commonContext.account as Account
           } else {
             display.warn("The account object is missing the 'id' property; it will not be sent to the intake.")
           }
