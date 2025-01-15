@@ -158,6 +158,8 @@ export interface ViewPerformanceData {
     score: number
     timestamp?: ServerDuration
     target_selector?: string
+    previous_rect?: RumRect
+    current_rect?: RumRect
   }
   fcp?: {
     timestamp: number
@@ -176,6 +178,13 @@ export interface ViewPerformanceData {
     timestamp: ServerDuration
     target_selector?: string
   }
+}
+
+export interface RumRect {
+  x: number
+  y: number
+  width: number
+  height: number
 }
 
 export type PageStateServerEntry = { state: PageState; start: ServerDuration }
