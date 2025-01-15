@@ -172,6 +172,16 @@ export interface RumPublicApi extends PublicApi {
   addError: (error: unknown, context?: object) => void
 
   /**
+   * Create an event reporter that will add the provided context to all events sent from it.
+   */
+  createReporter: (component: string, conf?: ReporterConfiguration) => Reporter
+
+  /**
+   * Get a reporter from the list of global reporter
+   */
+  getReporter: (component: string) => Reporter | undefined
+
+  /**
    * Add a custom timing relative to the start of the current view,
    * stored in `@view.custom_timings.<timing_name>`
    *
@@ -347,6 +357,15 @@ export interface RumPublicApiOptions {
 
 const RUM_STORAGE_KEY = 'rum'
 
+export interface Reporter {
+  addAction: RumPublicApi['addAction']
+  addError: RumPublicApi['addError']
+}
+
+export interface ReporterConfiguration {
+  context?: object
+}
+
 export interface Strategy {
   init: (initConfiguration: RumInitConfiguration, publicApi: RumPublicApi) => void
   initConfiguration: RumInitConfiguration | undefined
@@ -383,6 +402,7 @@ export function makeRumPublicApi(
     return buildCommonContext(globalContextManager, userContextManager, recorderApi)
   }
 
+  const customReporters: { [name: string]: Reporter | undefined } = {}
   let strategy = createPreStartStrategy(
     options,
     getCommonContext,
@@ -424,6 +444,38 @@ export function makeRumPublicApi(
       return startRumResult
     }
   )
+
+  const createReporter = (reporterContext: object | undefined): Reporter => {
+    const sanitizedReporterContext = sanitize(reporterContext) as Context
+    return {
+      addError: (error, context) => {
+        const handlingStack = createHandlingStack()
+        callMonitored(() => {
+          strategy.addError({
+            error, // Do not sanitize error here, it is needed unserialized by computeRawError()
+            handlingStack,
+            context: { ...sanitizedReporterContext, ...(sanitize(context) as Context) },
+            startClocks: clocksNow(),
+          })
+          addTelemetryUsage({ feature: 'add-error' })
+        })
+      },
+
+      addAction: (name, context) => {
+        const handlingStack = createHandlingStack()
+        callMonitored(() => {
+          strategy.addAction({
+            name: sanitize(name)!,
+            context: { ...sanitizedReporterContext, ...(sanitize(context) as Context) },
+            startClocks: clocksNow(),
+            type: ActionType.CUSTOM,
+            handlingStack: handlingStack ?? createHandlingStack(),
+          })
+          addTelemetryUsage({ feature: 'add-action' })
+        })
+      },
+    }
+  }
 
   const startView: {
     (name?: string): void
@@ -483,14 +535,13 @@ export function makeRumPublicApi(
 
     addAction: (name, context) => {
       const handlingStack = createHandlingStack()
-
       callMonitored(() => {
         strategy.addAction({
           name: sanitize(name)!,
           context: sanitize(context) as Context,
           startClocks: clocksNow(),
           type: ActionType.CUSTOM,
-          handlingStack,
+          handlingStack: handlingStack ?? createHandlingStack(),
         })
         addTelemetryUsage({ feature: 'add-action' })
       })
@@ -507,6 +558,17 @@ export function makeRumPublicApi(
         })
         addTelemetryUsage({ feature: 'add-error' })
       })
+    },
+
+    createReporter: (component, conf) => {
+      addTelemetryUsage({ feature: 'create-reporter' })
+      customReporters[component] = createReporter({ component, ...conf?.context })
+      return customReporters[component]
+    },
+
+    getReporter: (component) => {
+      addTelemetryUsage({ feature: 'get-reporter' })
+      return customReporters[component]
     },
 
     addTiming: monitor((name, time) => {
