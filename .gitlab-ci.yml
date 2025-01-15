@@ -363,6 +363,7 @@ deploy-next-major-canary:
     - yarn
     - yarn build:bundle
     - node ./scripts/deploy/deploy.js prod v${VERSION%%.*}-canary root
+    - node ./scripts/deploy/upload-source-maps.js v${VERSION%%.*}-canary root
 
 deploy-manual:
   stage: deploy
