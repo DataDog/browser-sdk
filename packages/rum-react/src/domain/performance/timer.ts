@@ -1,6 +1,6 @@
-export function getTimer() {
-  let duration: number
-  let startTime: number
+export function createTimer() {
+  let duration: number | undefined
+  let startTime: number | undefined
 
   function startTimer() {
     const start = performance.now()
@@ -8,11 +8,11 @@ export function getTimer() {
   }
 
   function stopTimer() {
-    duration = performance.timeOrigin + performance.now() - startTime
+    duration = performance.timeOrigin + performance.now() - startTime!
   }
 
   function getDuration() {
-    return duration ? duration : 0
+    return duration
   }
 
   function getStartTime() {

@@ -1,8 +1,9 @@
 import * as React from 'react'
-import { getTimer } from './getTimer'
+import { createTimer } from './timer'
 import { addDurationVital } from './addDurationVital'
 
-export const ReactComponentTracker = ({
+// eslint-disable-next-line
+export const UNSTABLE_ReactComponentTracker = ({
   name: componentName,
   children,
 }: {
@@ -13,33 +14,29 @@ export const ReactComponentTracker = ({
 }) => {
   const isFirstRender = React.useRef(true)
 
-  const renderTimer = getTimer()
-  const effectTimer = getTimer()
-  const layoutEffectTimer = getTimer()
+  const renderTimer = createTimer()
+  const effectTimer = createTimer()
+  const layoutEffectTimer = createTimer()
 
   const onEffectEnd = () => {
-    const renderDuration = renderTimer.getDuration()
-    const effectDuration = effectTimer.getDuration()
-    const layoutEffectDuration = layoutEffectTimer.getDuration()
-
+    const renderDuration = renderTimer.getDuration() ?? 0 
+    const effectDuration = effectTimer.getDuration() ?? 0
+    const layoutEffectDuration = layoutEffectTimer.getDuration() ?? 0
+    
     const totalRenderTime = renderDuration + effectDuration + layoutEffectDuration
 
-    addDurationVital(`${componentName}`, {
-      startTime: renderTimer.getStartTime(),
+    addDurationVital(componentName, {
+      startTime: renderTimer.getStartTime() ?? 0,
       duration: totalRenderTime,
       context: {
-        isFirstRender: isFirstRender.current,
-        renderPhaseDuration: renderDuration,
-        effectPhaseDuration: effectDuration,
-        layoutEffectPhaseDuration: layoutEffectDuration,
-        componentName,
+        s_first_render: isFirstRender.current,
+        render_phase_duration: renderDuration,
+        effect_phase_duration: effectDuration,
+        layout_effect_phase_duration: layoutEffectDuration,
+        component_name: componentName,
         framework: 'react',
       },
     })
-
-    /**
-     * Send a custom vital tracking this duration
-     */
 
     isFirstRender.current = false
   }
@@ -54,24 +51,14 @@ export const ReactComponentTracker = ({
   return (
     <>
       <LifeCycle
-        onRender={() => {
-          renderTimer.startTimer()
-        }}
-        onLayoutEffect={() => {
-          layoutEffectTimer.startTimer()
-        }}
-        onEffect={() => {
-          effectTimer.startTimer()
-        }}
+        onRender={renderTimer.startTimer}
+        onLayoutEffect={layoutEffectTimer.startTimer}
+        onEffect={effectTimer.startTimer}
       />
       {children}
       <LifeCycle
-        onRender={() => {
-          renderTimer.stopTimer()
-        }}
-        onLayoutEffect={() => {
-          layoutEffectTimer.stopTimer()
-        }}
+        onRender={renderTimer.stopTimer}
+        onLayoutEffect={layoutEffectTimer.stopTimer}
         onEffect={() => {
           effectTimer.stopTimer()
           onEffectEnd()
