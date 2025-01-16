@@ -1,21 +1,19 @@
 import React from 'react'
 import { appendComponent } from '../../../test/appendComponent'
 import { initializeReactPlugin } from '../../../test/initializeReactPlugin'
-// eslint-disable-next-line
+// eslint-disable-next-line camelcase
 import { UNSTABLE_ReactComponentTracker } from './reactComponentTracker'
 
-
-describe('UNSTABLE_ReactComponentTracker (simple)', () => {
-
+describe('UNSTABLE_ReactComponentTracker', () => {
   it('calls addDurationVital after the component rendering', () => {
     const addDurationVitalSpy = jasmine.createSpy()
     initializeReactPlugin({
-        publicApi: {
-            addDurationVital: addDurationVitalSpy,
-        },
+      publicApi: {
+        addDurationVital: addDurationVitalSpy,
+      },
     })
     appendComponent(
-    // eslint-disable-next-line
+      // eslint-disable-next-line camelcase
       <UNSTABLE_ReactComponentTracker name="MyTestComponent">
         <div>child</div>
       </UNSTABLE_ReactComponentTracker>

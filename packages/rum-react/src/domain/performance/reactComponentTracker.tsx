@@ -19,10 +19,10 @@ export const UNSTABLE_ReactComponentTracker = ({
   const layoutEffectTimer = createTimer()
 
   const onEffectEnd = () => {
-    const renderDuration = renderTimer.getDuration() ?? 0 
+    const renderDuration = renderTimer.getDuration() ?? 0
     const effectDuration = effectTimer.getDuration() ?? 0
     const layoutEffectDuration = layoutEffectTimer.getDuration() ?? 0
-    
+
     const totalRenderTime = renderDuration + effectDuration + layoutEffectDuration
 
     addDurationVital(componentName, {
