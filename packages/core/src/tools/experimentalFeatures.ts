@@ -19,6 +19,7 @@ export enum ExperimentalFeature {
   ACTION_NAME_MASKING = 'action_name_masking',
   CONSISTENT_TRACE_SAMPLING = 'consistent_trace_sampling',
   DELAY_VIEWPORT_COLLECTION = 'delay_viewport_collection',
+  DOM_MUTATION_IGNORING = 'dom_mutation_ignoring',
 }
 
 const enabledExperimentalFeatures: Set<ExperimentalFeature> = new Set()
