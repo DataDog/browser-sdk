@@ -2,9 +2,9 @@
   "name": "app",
   "version": "0.0.0",
   "scripts": {
-    "build": "webpack --mode=production",
+    "build": "webpack --config ./webpack.web.js",
     "compat:tsc": "tsc -p tsconfig.json",
-    "compat:ssr": "webpack --mode=development && node dist/app.js"
+    "compat:ssr": "webpack --config ./webpack.ssr.js && node dist/app.js"
   },
   "dependencies": {
     "@datadog/browser-core": "portal:../../packages/core",

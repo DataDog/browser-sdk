@@ -1,7 +1,6 @@
 import type { Context } from '../../tools/serialisation/context'
 import { display } from '../../tools/display'
 import { getType } from '../../tools/utils/typeUtils'
-import { assign } from '../../tools/utils/polyfills'
 
 /**
  * Clone input data and ensure known context properties
@@ -10,7 +9,7 @@ import { assign } from '../../tools/utils/polyfills'
  */
 export function sanitizeContext(newContext: Context, keys: string[]): Context {
   // We shallow clone only to prevent mutation of context data.
-  const context = assign({}, newContext)
+  const context = { ...newContext }
   keys.forEach((key) => {
     if (key in context) {
       /* eslint-disable @typescript-eslint/no-base-to-string */

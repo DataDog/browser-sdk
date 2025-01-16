@@ -51,10 +51,11 @@ const COMMON_CONTEXT_WITH_MISSING_ACCOUNT_ID: CommonContext = {
 
 describe('startLogsAssembly', () => {
   const sessionManager: LogsSessionManager = {
-    findTrackedSession: (_startTime, options) =>
-      (sessionIsActive && sessionIsTracked) || options?.returnInactive
-        ? { id: sessionIsTracked ? SESSION_ID : undefined }
-        : undefined,
+    findTrackedSession: (_startTime, options) => {
+      if (sessionIsTracked && (sessionIsActive || options?.returnInactive)) {
+        return { id: SESSION_ID }
+      }
+    },
     expireObservable: new Observable(),
   }
 
@@ -132,14 +133,6 @@ describe('startLogsAssembly', () => {
     })
 
     it('should send log without session id if session has expired', () => {
-      startLogsAssembly(
-        sessionManager,
-        { ...configuration, sendLogsAfterSessionExpiration: true },
-        lifeCycle,
-        () => COMMON_CONTEXT,
-        noop
-      )
-
       sessionIsTracked = true
       sessionIsActive = false
 

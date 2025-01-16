@@ -2,7 +2,6 @@ import type { Account, Context, TrackingConsent, User, PublicApi } from '@datado
 import {
   addTelemetryUsage,
   CustomerDataType,
-  assign,
   createContextManager,
   makePublicApi,
   monitor,
@@ -309,13 +308,11 @@ export function makeLogsPublicApi(startLogsImpl: StartLogs): LogsPublicApi {
 }
 
 function createPostStartStrategy(initConfiguration: LogsInitConfiguration, startLogsResult: StartLogsResult): Strategy {
-  return assign(
-    {
-      init: (initConfiguration: LogsInitConfiguration) => {
-        displayAlreadyInitializedError('DD_LOGS', initConfiguration)
-      },
-      initConfiguration,
+  return {
+    init: (initConfiguration: LogsInitConfiguration) => {
+      displayAlreadyInitializedError('DD_LOGS', initConfiguration)
     },
-    startLogsResult
-  )
+    initConfiguration,
+    ...startLogsResult,
+  }
 }

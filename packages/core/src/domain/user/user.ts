@@ -6,5 +6,7 @@ export function sanitizeUser(newUser: Context) {
 }
 
 export function generateAnonymousId() {
-  return Math.floor(Math.random() * Math.pow(2, 53)).toString(36)
+  return Math.floor(Math.random() * Math.pow(36, 10))
+    .toString(36)
+    .padStart(10, '0')
 }

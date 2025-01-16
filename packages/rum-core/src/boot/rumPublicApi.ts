@@ -14,7 +14,6 @@ import type {
 import {
   addTelemetryUsage,
   CustomerDataType,
-  assign,
   createContextManager,
   deepClone,
   makePublicApi,
@@ -100,6 +99,12 @@ export interface RumPublicApi extends PublicApi {
    * @param value value of the property
    */
   setViewContextProperty: (key: string, value: any) => void
+
+  /**
+   * Get View Context.
+   */
+  getViewContext: () => Context
+
   /**
    * Set the global context information to all events, stored in `@context`
    *
@@ -382,6 +387,7 @@ export interface Strategy {
   setViewName: StartRumResult['setViewName']
   setViewContext: StartRumResult['setViewContext']
   setViewContextProperty: StartRumResult['setViewContextProperty']
+  getViewContext: StartRumResult['getViewContext']
   addAction: StartRumResult['addAction']
   addError: StartRumResult['addError']
   addFeatureFlagEvaluation: StartRumResult['addFeatureFlagEvaluation']
@@ -486,6 +492,8 @@ export function makeRumPublicApi(
     setViewContextProperty: monitor((key: string, value: any) => {
       strategy.setViewContextProperty(key, value)
     }),
+
+    getViewContext: monitor(() => strategy.getViewContext()),
 
     setGlobalContext: monitor((context) => {
       globalContextManager.setContext(context)
@@ -629,13 +637,11 @@ export function makeRumPublicApi(
 }
 
 function createPostStartStrategy(preStartStrategy: Strategy, startRumResult: StartRumResult): Strategy {
-  return assign(
-    {
-      init: (initConfiguration: RumInitConfiguration) => {
-        displayAlreadyInitializedError('DD_RUM', initConfiguration)
-      },
-      initConfiguration: preStartStrategy.initConfiguration,
+  return {
+    init: (initConfiguration: RumInitConfiguration) => {
+      displayAlreadyInitializedError('DD_RUM', initConfiguration)
     },
-    startRumResult
-  )
+    initConfiguration: preStartStrategy.initConfiguration,
+    ...startRumResult,
+  }
 }

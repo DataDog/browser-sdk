@@ -7,7 +7,6 @@ import {
   noop,
   timeStampNow,
   clocksNow,
-  assign,
   getEventBridge,
   ExperimentalFeature,
   isExperimentalFeatureEnabled,
@@ -15,7 +14,7 @@ import {
   addTelemetryConfiguration,
   initFetchObservable,
 } from '@datadog/browser-core'
-import type { TrackingConsentState, DeflateWorker } from '@datadog/browser-core'
+import type { TrackingConsentState, DeflateWorker, Context } from '@datadog/browser-core'
 import {
   validateAndBuildRumConfiguration,
   type RumConfiguration,
@@ -52,6 +51,8 @@ export function createPreStartStrategy(
   let cachedConfiguration: RumConfiguration | undefined
 
   const trackingConsentStateSubscription = trackingConsentState.observable.subscribe(tryStartRum)
+
+  const emptyContext: Context = {}
 
   function tryStartRum() {
     if (!cachedInitConfiguration || !cachedConfiguration || !trackingConsentState.isGranted()) {
@@ -204,6 +205,8 @@ export function createPreStartStrategy(
       bufferApiCalls.add((startRumResult) => startRumResult.setViewContextProperty(key, value))
     },
 
+    getViewContext: () => emptyContext,
+
     addAction(action, commonContext = getCommonContext()) {
       bufferApiCalls.add((startRumResult) => startRumResult.addAction(action, commonContext))
     },
@@ -229,10 +232,11 @@ export function createPreStartStrategy(
 }
 
 function overrideInitConfigurationForBridge(initConfiguration: RumInitConfiguration): RumInitConfiguration {
-  return assign({}, initConfiguration, {
+  return {
+    ...initConfiguration,
     applicationId: '00000000-aaaa-0000-aaaa-000000000000',
     clientToken: 'empty',
     sessionSampleRate: 100,
     defaultPrivacyLevel: initConfiguration.defaultPrivacyLevel ?? getEventBridge()?.getPrivacyLevel(),
-  })
+  }
 }

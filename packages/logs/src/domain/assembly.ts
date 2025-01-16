@@ -33,12 +33,9 @@ export function startLogsAssembly(
     ({ rawLogsEvent, messageContext = undefined, savedCommonContext = undefined, domainContext }) => {
       const startTime = getRelativeTime(rawLogsEvent.date)
       const session = sessionManager.findTrackedSession(startTime)
+      const shouldSendLog = sessionManager.findTrackedSession(startTime, { returnInactive: true })
 
-      if (
-        !session &&
-        (!configuration.sendLogsAfterSessionExpiration ||
-          !sessionManager.findTrackedSession(startTime, { returnInactive: true }))
-      ) {
+      if (!shouldSendLog) {
         return
       }
 
@@ -54,6 +51,9 @@ export function startLogsAssembly(
         }
       }
 
+      if (session && session.anonymousId && !commonContext.user.anonymous_id) {
+        commonContext.user.anonymous_id = session.anonymousId
+      }
       const log = combine(
         {
           service: configuration.service,

@@ -3,6 +3,7 @@ import { createTest } from '../lib/framework'
 
 const DISABLE_LOCAL_STORAGE = '<script>Object.defineProperty(Storage.prototype, "getItem", { get: () => 42});</script>'
 const DISABLE_COOKIES = '<script>Object.defineProperty(Document.prototype, "cookie", { get: () => 42});</script>'
+const SESSION_ID_REGEX = /(?<!a)id=([\w-]+)/ // match `id` but not `aid`
 
 describe('Session Stores', () => {
   describe('Cookies', () => {
@@ -76,10 +77,10 @@ describe('Session Stores', () => {
 
 async function getSessionIdFromLocalStorage(): Promise<string | undefined> {
   const sessionStateString = await browser.execute((key) => window.localStorage.getItem(key), SESSION_STORE_KEY)
-  return sessionStateString?.match(/id=([\w-]+)/)?.[1]
+  return sessionStateString?.match(SESSION_ID_REGEX)?.[1]
 }
 
 async function getSessionIdFromCookie(): Promise<string | undefined> {
   const [cookie] = await browser.getCookies([SESSION_STORE_KEY])
-  return cookie.value.match(/id=([\w-]+)/)?.[1]
+  return cookie.value.match(SESSION_ID_REGEX)?.[1]
 }

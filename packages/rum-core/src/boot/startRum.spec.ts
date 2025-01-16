@@ -6,7 +6,6 @@ import {
   ONE_SECOND,
   findLast,
   noop,
-  isIE,
   relativeNow,
   createIdentityEncoder,
   createCustomerDataTracker,
@@ -39,7 +38,7 @@ import { SESSION_KEEP_ALIVE_INTERVAL, THROTTLE_VIEW_UPDATE_PERIOD } from '../dom
 import { startViewCollection } from '../domain/view/viewCollection'
 import type { RumEvent, RumViewEvent } from '../rumEvent.types'
 import type { LocationChange } from '../browser/locationChangeObservable'
-import { startLongTaskCollection } from '../domain/longTask/longTaskCollection'
+import { startLongAnimationFrameCollection } from '../domain/longAnimationFrame/longAnimationFrameCollection'
 import type { RumSessionManager } from '..'
 import type { RumConfiguration } from '../domain/configuration'
 import { RumEventType } from '../rawRumEvent.types'
@@ -96,7 +95,7 @@ function startRumStub(
     noopRecorderApi
   )
 
-  startLongTaskCollection(lifeCycle, configuration)
+  startLongAnimationFrameCollection(lifeCycle, configuration)
   return {
     stop: () => {
       rumEventCollectionStop()
@@ -111,10 +110,6 @@ describe('rum session', () => {
   let sessionManager: RumSessionManagerMock
 
   beforeEach(() => {
-    if (isIE()) {
-      pending('no full rum support')
-    }
-
     lifeCycle = new LifeCycle()
     sessionManager = createRumSessionManagerMock().setId('42')
     const domMutationObservable = new Observable<void>()
@@ -164,9 +159,6 @@ describe('rum session keep alive', () => {
   let serverRumEvents: RumEvent[]
 
   beforeEach(() => {
-    if (isIE()) {
-      pending('no full rum support')
-    }
     lifeCycle = new LifeCycle()
     clock = mockClock()
     sessionManager = createRumSessionManagerMock().setId('1234')
@@ -288,7 +280,7 @@ describe('rum events url', () => {
     changeLocation('http://foo.com/?bar=qux')
 
     notifyPerformanceEntries([
-      createPerformanceEntry(RumPerformanceEntryType.LONG_TASK, {
+      createPerformanceEntry(RumPerformanceEntryType.LONG_ANIMATION_FRAME, {
         startTime: (relativeNow() - 5) as RelativeTime,
       }),
     ])
