@@ -3,7 +3,7 @@ import React, { useEffect, useState } from 'react'
 import ReactDOM from 'react-dom/client'
 import { datadogRum } from '@datadog/browser-rum'
 import { createBrowserRouter } from '@datadog/browser-rum-react/react-router-v6'
-import { reactPlugin, ErrorBoundary, ReactComponentTracker } from '@datadog/browser-rum-react'
+import { reactPlugin, ErrorBoundary, UNSTABLE_ReactComponentTracker } from '@datadog/browser-rum-react'
 
 datadogRum.init({
   applicationId: 'xxx',
@@ -67,9 +67,9 @@ function HomePage() {
 function UserPage() {
   const { id } = useParams()
   return (
-    <ReactComponentTracker name="UserPage">
+    <UNSTABLE_ReactComponentTracker name="UserPage">
       <h1>User {id}</h1>
-    </ReactComponentTracker>
+    </UNSTABLE_ReactComponentTracker>
   )
 }
 

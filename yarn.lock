@@ -353,11 +353,9 @@ __metadata:
     "@datadog/browser-rum-core": "npm:5.34.1"
     "@types/react": "npm:18.3.17"
     "@types/react-dom": "npm:18.3.5"
-    "@types/uuid": "npm:^10"
     react: "npm:18.3.1"
     react-dom: "npm:18.3.1"
     react-router-dom: "npm:6.28.0"
-    uuid: "npm:10.0.0"
   peerDependencies:
     react: 18
     react-router-dom: 6
@@ -2040,13 +2038,6 @@ __metadata:
   version: 1.3.2
   resolution: "@types/triple-beam@npm:1.3.2"
   checksum: 10c0/2e936cff7cde9df7da854a54a5f63e0a434b2ae1d6c1eb6de5f7a0b1107b023b3c272abecbba28614a54b8831226b29e37a49e3e34a7490a6a24d770a5b44eb9
-  languageName: node
-  linkType: hard
-
-"@types/uuid@npm:^10":
-  version: 10.0.0
-  resolution: "@types/uuid@npm:10.0.0"
-  checksum: 10c0/9a1404bf287164481cb9b97f6bb638f78f955be57c40c6513b7655160beb29df6f84c915aaf4089a1559c216557dc4d2f79b48d978742d3ae10b937420ddac60
   languageName: node
   linkType: hard
 
@@ -13579,21 +13570,21 @@ __metadata:
   languageName: node
   linkType: hard
 
-"uuid@npm:10.0.0, uuid@npm:^10.0.0":
-  version: 10.0.0
-  resolution: "uuid@npm:10.0.0"
-  bin:
-    uuid: dist/bin/uuid
-  checksum: 10c0/eab18c27fe4ab9fb9709a5d5f40119b45f2ec8314f8d4cf12ce27e4c6f4ffa4a6321dc7db6c515068fa373c075b49691ba969f0010bf37f44c37ca40cd6bf7fe
-  languageName: node
-  linkType: hard
-
 "uuid@npm:9.0.1":
   version: 9.0.1
   resolution: "uuid@npm:9.0.1"
   bin:
     uuid: dist/bin/uuid
   checksum: 10c0/1607dd32ac7fc22f2d8f77051e6a64845c9bce5cd3dd8aa0070c074ec73e666a1f63c7b4e0f4bf2bc8b9d59dc85a15e17807446d9d2b17c8485fbc2147b27f9b
+  languageName: node
+  linkType: hard
+
+"uuid@npm:^10.0.0":
+  version: 10.0.0
+  resolution: "uuid@npm:10.0.0"
+  bin:
+    uuid: dist/bin/uuid
+  checksum: 10c0/eab18c27fe4ab9fb9709a5d5f40119b45f2ec8314f8d4cf12ce27e4c6f4ffa4a6321dc7db6c515068fa373c075b49691ba969f0010bf37f44c37ca40cd6bf7fe
   languageName: node
   linkType: hard
 
