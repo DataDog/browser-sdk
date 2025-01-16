@@ -25,7 +25,7 @@ export const UNSTABLE_ReactComponentTracker = ({
 
     const totalRenderTime = renderDuration + effectDuration + layoutEffectDuration
 
-    addDurationVital('React Component Render', {
+    addDurationVital('reactComponentRender', {
       description: componentName,
       startTime: renderTimer.getStartTime() ?? 0,
       duration: totalRenderTime,

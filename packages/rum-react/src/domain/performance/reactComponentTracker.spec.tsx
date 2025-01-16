@@ -14,14 +14,14 @@ describe('UNSTABLE_ReactComponentTracker', () => {
     })
     appendComponent(
       // eslint-disable-next-line camelcase
-      <UNSTABLE_ReactComponentTracker name="MyTestComponent">
+      <UNSTABLE_ReactComponentTracker name="reactComponentRender">
         <div>child</div>
       </UNSTABLE_ReactComponentTracker>
     )
 
     expect(addDurationVitalSpy).toHaveBeenCalledTimes(1)
     const [componentName, payload] = addDurationVitalSpy.calls.mostRecent().args
-    expect(componentName).toBe('MyTestComponent')
+    expect(componentName).toBe('reactComponentRender')
     expect(payload.context.is_first_render).toBe(true)
   })
 })
