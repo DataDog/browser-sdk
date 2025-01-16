@@ -1,7 +1,7 @@
 import { mockClock, registerCleanupTask } from '@datadog/browser-core/test'
 import { createTimer } from './timer'
 
-describe('getTimer', () => {
+describe('createTimer', () => {
   it('is able to measure time', () => {
     const clock = mockClock()
     registerCleanupTask(clock.cleanup)
