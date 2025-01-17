@@ -175,12 +175,12 @@ export interface LogsPublicApi extends PublicApi {
    * @param key Key of the property
    * @param property Value of the property
    */
-  setAccountProperty: (key: any, property: any) => void
+  setAccountProperty: (key: string, property: any) => void
 
   /**
    * Remove an account property
    */
-  removeAccountProperty: (key: any) => void
+  removeAccountProperty: (key: string) => void
 
   /**
    * Clear all account information
