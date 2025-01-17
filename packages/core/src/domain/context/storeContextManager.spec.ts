@@ -95,7 +95,7 @@ describe('storeContextManager', () => {
     productKey?: string
     customerDataType?: CustomerDataType
   } = {}) {
-    const manager = createContextManager(createCustomerDataTracker(noop))
+    const manager = createContextManager({ customerDataTracker: createCustomerDataTracker(noop) })
     if (initialContext) {
       manager.setContext(initialContext)
     }

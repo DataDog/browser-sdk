@@ -45,7 +45,7 @@ export class Logger {
     private level: StatusType = StatusType.debug,
     loggerContext: object = {}
   ) {
-    this.contextManager = createContextManager(customerDataTracker)
+    this.contextManager = createContextManager({ customerDataTracker })
     this.contextManager.setContext(loggerContext as Context)
     if (name) {
       this.contextManager.setContextProperty('logger', { name })
