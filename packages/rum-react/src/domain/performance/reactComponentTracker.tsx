@@ -10,7 +10,7 @@ export const UNSTABLE_ReactComponentTracker = ({
 }: {
   name: string
   context?: object
-  children?: React.ReactNode  
+  children?: React.ReactNode
 }) => {
   const isFirstRender = React.useRef(true)
 
