@@ -5,12 +5,12 @@ import { addDurationVital } from './addDurationVital'
 // eslint-disable-next-line
 export const UNSTABLE_ReactComponentTracker = ({
   name: componentName,
+  context,
   children,
 }: {
   name: string
   context?: object
-  children?: React.ReactNode
-  burstDebounce?: number
+  children?: React.ReactNode  
 }) => {
   const isFirstRender = React.useRef(true)
 
@@ -35,6 +35,7 @@ export const UNSTABLE_ReactComponentTracker = ({
         effect_phase_duration: effectDuration,
         layout_effect_phase_duration: layoutEffectDuration,
         framework: 'react',
+        ...context,
       },
     })
 
