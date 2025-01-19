@@ -90,7 +90,6 @@ function startRumStub(
     domMutationObservable,
     windowOpenObservable,
     locationChangeObservable,
-    startFeatureFlagContexts(lifeCycle, createCustomerDataTracker(noop)),
     pageStateHistory,
     noopRecorderApi
   )
