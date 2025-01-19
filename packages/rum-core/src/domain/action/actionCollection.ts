@@ -12,13 +12,11 @@ import type { RawRumActionEvent } from '../../rawRumEvent.types'
 import { ActionType, RumEventType } from '../../rawRumEvent.types'
 import type { LifeCycle, RawRumEventCollectedData } from '../lifeCycle'
 import { LifeCycleEventType } from '../lifeCycle'
-import { featureFlagCollection } from '../collectFeatureFlags'
 import type { RumConfiguration } from '../configuration'
 import type { CommonContext } from '../contexts/commonContext'
 import type { PageStateHistory } from '../contexts/pageStateHistory'
 import { PageState } from '../contexts/pageStateHistory'
 import type { RumActionEventDomainContext } from '../../domainContext.types'
-import type { FeatureFlagContexts } from '../contexts/featureFlagContext'
 import type { ActionContexts, ClickAction } from './trackClickActions'
 import { trackClickActions } from './trackClickActions'
 
@@ -39,14 +37,10 @@ export function startActionCollection(
   domMutationObservable: Observable<void>,
   windowOpenObservable: Observable<void>,
   configuration: RumConfiguration,
-  pageStateHistory: PageStateHistory,
-  featureFlagContexts: FeatureFlagContexts
+  pageStateHistory: PageStateHistory
 ) {
   lifeCycle.subscribe(LifeCycleEventType.AUTO_ACTION_COMPLETED, (action) =>
-    lifeCycle.notify(
-      LifeCycleEventType.RAW_RUM_EVENT_COLLECTED,
-      processAction(action, pageStateHistory, configuration, featureFlagContexts)
-    )
+    lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, processAction(action, pageStateHistory))
   )
 
   let actionContexts: ActionContexts = { findActionId: noop as () => undefined }
@@ -65,7 +59,7 @@ export function startActionCollection(
     addAction: (action: CustomAction, savedCommonContext?: CommonContext) => {
       lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, {
         savedCommonContext,
-        ...processAction(action, pageStateHistory, configuration, featureFlagContexts),
+        ...processAction(action, pageStateHistory),
       })
     },
     actionContexts,
@@ -75,9 +69,7 @@ export function startActionCollection(
 
 function processAction(
   action: AutoAction | CustomAction,
-  pageStateHistory: PageStateHistory,
-  configuration: RumConfiguration,
-  featureFlagContexts: FeatureFlagContexts
+  pageStateHistory: PageStateHistory
 ): RawRumEventCollectedData<RawRumActionEvent> {
   const autoActionProperties = isAutoAction(action)
     ? {
@@ -130,14 +122,6 @@ function processAction(
   if (!isAutoAction(action) && action.handlingStack) {
     domainContext.handlingStack = action.handlingStack
   }
-
-  featureFlagCollection(
-    'action',
-    action.startClocks.relative,
-    configuration.trackFeatureFlagsForEvents,
-    featureFlagContexts,
-    actionEvent
-  )
 
   return {
     customerContext,

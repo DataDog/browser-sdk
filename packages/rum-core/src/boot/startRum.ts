@@ -169,19 +169,13 @@ export function startRum(
     domMutationObservable,
     windowOpenObservable,
     locationChangeObservable,
-    featureFlagContexts,
     pageStateHistory,
     recorderApi,
     initialViewOptions
   )
   cleanupTasks.push(stopViewCollection)
 
-  const { stop: stopResourceCollection } = startResourceCollection(
-    lifeCycle,
-    configuration,
-    pageStateHistory,
-    featureFlagContexts
-  )
+  const { stop: stopResourceCollection } = startResourceCollection(lifeCycle, configuration, pageStateHistory)
   cleanupTasks.push(stopResourceCollection)
 
   if (configuration.trackLongTasks) {
@@ -189,21 +183,15 @@ export function startRum(
       const { stop: stopLongAnimationFrameCollection } = startLongAnimationFrameCollection(lifeCycle, configuration)
       cleanupTasks.push(stopLongAnimationFrameCollection)
     } else {
-      startLongTaskCollection(lifeCycle, configuration, featureFlagContexts)
+      startLongTaskCollection(lifeCycle, configuration)
     }
   }
 
-  const { addError } = startErrorCollection(lifeCycle, configuration, pageStateHistory, featureFlagContexts)
+  const { addError } = startErrorCollection(lifeCycle, configuration, pageStateHistory)
 
   startRequestCollection(lifeCycle, configuration, session)
 
-  const vitalCollection = startVitalCollection(
-    lifeCycle,
-    pageStateHistory,
-    customVitalsState,
-    featureFlagContexts,
-    configuration.trackFeatureFlagsForEvents
-  )
+  const vitalCollection = startVitalCollection(lifeCycle, pageStateHistory, customVitalsState)
   const internalContext = startInternalContext(
     configuration.applicationId,
     session,
@@ -266,8 +254,7 @@ export function startRumEventCollection(
     domMutationObservable,
     windowOpenObservable,
     configuration,
-    pageStateHistory,
-    featureFlagContexts
+    pageStateHistory
   )
 
   const displayContext = startDisplayContext(configuration)
@@ -282,6 +269,7 @@ export function startRumEventCollection(
     actionCollection.actionContexts,
     displayContext,
     ciVisibilityContext,
+    featureFlagContexts,
     getCommonContext,
     reportError
   )
