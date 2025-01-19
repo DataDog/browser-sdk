@@ -19,6 +19,7 @@ import {
   mockActionContexts,
   mockDisplayContext,
   mockViewHistory,
+  mockFeatureFlagContexts,
 } from '../../test'
 import type { RumEventDomainContext } from '../domainContext.types'
 import type { RawRumActionEvent, RawRumEvent } from '../rawRumEvent.types'
@@ -873,6 +874,134 @@ describe('rum assembly', () => {
     })
   })
 
+  describe('feature flags', () => {
+    it('should always include feature flags for view events', () => {
+      const { lifeCycle, serverRumEvents, featureFlagContexts } = setupAssemblyTestWithDefaults({
+        partialConfiguration: {
+          trackFeatureFlagsForEvents: [],
+        },
+      })
+
+      spyOn(featureFlagContexts, 'findFeatureFlagEvaluations').and.returnValue({
+        'my-view-flag': 'enabled',
+      })
+
+      notifyRawRumEvent(lifeCycle, {
+        rawRumEvent: createRawRumEvent(RumEventType.VIEW),
+      })
+
+      expect(serverRumEvents[0].feature_flags).toEqual({ 'my-view-flag': 'enabled' })
+    })
+
+    it('should always include feature flags for error events', () => {
+      const { lifeCycle, serverRumEvents, featureFlagContexts } = setupAssemblyTestWithDefaults({
+        partialConfiguration: {
+          trackFeatureFlagsForEvents: [],
+        },
+      })
+
+      spyOn(featureFlagContexts, 'findFeatureFlagEvaluations').and.returnValue({
+        'my-error-flag': 'enabled',
+      })
+
+      notifyRawRumEvent(lifeCycle, {
+        rawRumEvent: createRawRumEvent(RumEventType.ERROR),
+      })
+
+      expect(serverRumEvents[0].feature_flags).toEqual({ 'my-error-flag': 'enabled' })
+    })
+
+    it('should include feature flags only if "resource" is in config', () => {
+      const { lifeCycle, serverRumEvents, featureFlagContexts } = setupAssemblyTestWithDefaults({
+        partialConfiguration: {
+          trackFeatureFlagsForEvents: ['resource'],
+        },
+      })
+
+      spyOn(featureFlagContexts, 'findFeatureFlagEvaluations').and.returnValue({
+        'my-resource-flag': 'enabled',
+      })
+
+      notifyRawRumEvent(lifeCycle, {
+        rawRumEvent: createRawRumEvent(RumEventType.RESOURCE),
+      })
+
+      expect(serverRumEvents[0].feature_flags).toEqual({ 'my-resource-flag': 'enabled' })
+    })
+
+    it('should not include feature flags if "resource" is not in config', () => {
+      const { lifeCycle, serverRumEvents, featureFlagContexts } = setupAssemblyTestWithDefaults({
+        partialConfiguration: {
+          trackFeatureFlagsForEvents: ['action'],
+        },
+      })
+
+      spyOn(featureFlagContexts, 'findFeatureFlagEvaluations').and.returnValue({
+        'my-resource-flag': 'enabled',
+      })
+
+      notifyRawRumEvent(lifeCycle, {
+        rawRumEvent: createRawRumEvent(RumEventType.RESOURCE),
+      })
+
+      expect(serverRumEvents[0].feature_flags).toBeUndefined()
+    })
+
+    it('should include feature flags only if "long_task" is in config', () => {
+      const { lifeCycle, serverRumEvents, featureFlagContexts } = setupAssemblyTestWithDefaults({
+        partialConfiguration: {
+          trackFeatureFlagsForEvents: ['long_task'],
+        },
+      })
+
+      spyOn(featureFlagContexts, 'findFeatureFlagEvaluations').and.returnValue({
+        'my-longtask-flag': 'enabled',
+      })
+
+      notifyRawRumEvent(lifeCycle, {
+        rawRumEvent: createRawRumEvent(RumEventType.LONG_TASK),
+      })
+
+      expect(serverRumEvents[0].feature_flags).toEqual({ 'my-longtask-flag': 'enabled' })
+    })
+
+    it('should include feature flags only if "vital" is in config', () => {
+      const { lifeCycle, serverRumEvents, featureFlagContexts } = setupAssemblyTestWithDefaults({
+        partialConfiguration: {
+          trackFeatureFlagsForEvents: ['vital', 'action'],
+        },
+      })
+
+      spyOn(featureFlagContexts, 'findFeatureFlagEvaluations').and.returnValue({
+        'my-vital-flag': 'enabled',
+      })
+
+      notifyRawRumEvent(lifeCycle, {
+        rawRumEvent: createRawRumEvent(RumEventType.VITAL),
+      })
+
+      expect(serverRumEvents[0].feature_flags).toEqual({ 'my-vital-flag': 'enabled' })
+    })
+
+    it('should include feature flags only if "action" is in config', () => {
+      const { lifeCycle, serverRumEvents, featureFlagContexts } = setupAssemblyTestWithDefaults({
+        partialConfiguration: {
+          trackFeatureFlagsForEvents: ['vital', 'action', 'resource'],
+        },
+      })
+
+      spyOn(featureFlagContexts, 'findFeatureFlagEvaluations').and.returnValue({
+        'my-action-flag': 'enabled',
+      })
+
+      notifyRawRumEvent(lifeCycle, {
+        rawRumEvent: createRawRumEvent(RumEventType.ACTION),
+      })
+
+      expect(serverRumEvents[0].feature_flags).toEqual({ 'my-action-flag': 'enabled' })
+    })
+  })
+
   describe('connectivity', () => {
     it('should include the connectivity information', () => {
       setNavigatorOnLine(true)
@@ -1023,6 +1152,8 @@ function setupAssemblyTestWithDefaults({
     hasReplay: undefined,
   } as CommonContext
 
+  const featureFlagContexts = mockFeatureFlagContexts()
+
   const serverRumEvents: RumEvent[] = []
   const subscription = lifeCycle.subscribe(LifeCycleEventType.RUM_EVENT_COLLECTED, (serverRumEvent) => {
     serverRumEvents.push(serverRumEvent)
@@ -1037,6 +1168,7 @@ function setupAssemblyTestWithDefaults({
     mockActionContexts(),
     mockDisplayContext(),
     { get: () => ciVisibilityContext } as CiVisibilityContext,
+    featureFlagContexts,
     () => commonContext,
     reportErrorSpy
   )
@@ -1045,5 +1177,5 @@ function setupAssemblyTestWithDefaults({
     subscription.unsubscribe()
   })
 
-  return { lifeCycle, reportErrorSpy, serverRumEvents, commonContext }
+  return { lifeCycle, reportErrorSpy, featureFlagContexts, serverRumEvents, commonContext }
 }

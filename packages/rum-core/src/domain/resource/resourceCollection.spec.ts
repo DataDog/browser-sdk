@@ -8,9 +8,7 @@ import {
   mockPageStateHistory,
   mockPerformanceObserver,
   mockRumConfiguration,
-  mockFeatureFlagContexts,
 } from '../../../test'
-import type { FeatureFlagContexts } from '../contexts/featureFlagContext'
 import type { RawRumEvent, RawRumResourceEvent } from '../../rawRumEvent.types'
 import { RumEventType } from '../../rawRumEvent.types'
 import type { RawRumEventCollectedData } from '../lifeCycle'
@@ -34,20 +32,15 @@ describe('resourceCollection', () => {
   let rawRumEvents: Array<RawRumEventCollectedData<RawRumEvent>> = []
   let taskQueuePushSpy: jasmine.Spy<TaskQueue['push']>
 
-  function setupResourceCollection(
-    partialConfig: Partial<RumConfiguration> = { trackResources: true },
-    partialFeatureFlagContexts: Partial<FeatureFlagContexts> = {}
-  ) {
+  function setupResourceCollection(partialConfig: Partial<RumConfiguration> = { trackResources: true }) {
     lifeCycle = new LifeCycle()
     const taskQueue = createTaskQueue()
     // Run tasks immediately to simplify general tests
     taskQueuePushSpy = spyOn(taskQueue, 'push').and.callFake((task) => task())
-    const featureFlagContexts = mockFeatureFlagContexts(partialFeatureFlagContexts)
     const startResult = startResourceCollection(
       lifeCycle,
       { ...baseConfiguration, ...partialConfig },
       pageStateHistory,
-      featureFlagContexts,
       taskQueue,
       noop
     )
@@ -97,7 +90,6 @@ describe('resourceCollection', () => {
         render_blocking_status: 'blocking',
       },
       type: RumEventType.RESOURCE,
-      feature_flags: undefined,
       _dd: {
         discarded: false,
       },
@@ -138,7 +130,6 @@ describe('resourceCollection', () => {
         url: 'https://resource.com/valid',
       },
       type: RumEventType.RESOURCE,
-      feature_flags: undefined,
       _dd: {
         discarded: false,
       },
@@ -152,25 +143,6 @@ describe('resourceCollection', () => {
       error: undefined,
       isAborted: false,
       handlingStack: jasmine.stringMatching(HANDLING_STACK_REGEX),
-    })
-  })
-  it('should include feature flags', () => {
-    setupResourceCollection(
-      { trackResources: true },
-      { findFeatureFlagEvaluations: () => ({ 'my-flag': 'foo', 'test-flag': 123 }) }
-    )
-    const performanceEntry = createPerformanceEntry(RumPerformanceEntryType.RESOURCE, {
-      encodedBodySize: 42,
-      decodedBodySize: 51,
-      transferSize: 63,
-      responseStart: 250 as RelativeTime,
-    })
-    notifyPerformanceEntries([performanceEntry])
-
-    const collectedEvent = rawRumEvents[0].rawRumEvent as RawRumResourceEvent
-    expect(collectedEvent.feature_flags).toEqual({
-      'my-flag': 'foo',
-      'test-flag': 123,
     })
   })
 
@@ -270,7 +242,6 @@ describe('resourceCollection', () => {
         url: 'https://resource.com/valid',
       },
       type: RumEventType.RESOURCE,
-      feature_flags: undefined,
       _dd: {
         discarded: false,
       },

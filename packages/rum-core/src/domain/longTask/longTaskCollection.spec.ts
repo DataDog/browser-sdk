@@ -4,9 +4,7 @@ import {
   createPerformanceEntry,
   mockPerformanceObserver,
   mockRumConfiguration,
-  mockFeatureFlagContexts,
 } from '../../../test'
-import type { FeatureFlagContexts } from '../contexts/featureFlagContext'
 import type { RumPerformanceEntry } from '../../browser/performanceObservable'
 import { RumPerformanceEntryType } from '../../browser/performanceObservable'
 import type { RawRumEvent } from '../../rawRumEvent.types'
@@ -19,14 +17,12 @@ describe('long task collection', () => {
   let lifeCycle = new LifeCycle()
   let rawRumEvents: Array<RawRumEventCollectedData<RawRumEvent>> = []
   let notifyPerformanceEntries: (entries: RumPerformanceEntry[]) => void
-  const partialFeatureFlagContexts: Partial<FeatureFlagContexts> = {}
-  const featureFlagContexts = mockFeatureFlagContexts(partialFeatureFlagContexts)
 
   function setupLongTaskCollection(trackLongTasks = true) {
     ;({ notifyPerformanceEntries } = mockPerformanceObserver())
 
     lifeCycle = new LifeCycle()
-    startLongTaskCollection(lifeCycle, mockRumConfiguration({ trackLongTasks }), featureFlagContexts)
+    startLongTaskCollection(lifeCycle, mockRumConfiguration({ trackLongTasks }))
 
     rawRumEvents = collectAndValidateRawRumEvents(lifeCycle)
   }
@@ -83,19 +79,6 @@ describe('long task collection', () => {
         startTime: 1234,
         toJSON: jasmine.any(Function),
       },
-    })
-  })
-  it('should include feature flags', () => {
-    setupLongTaskCollection()
-    spyOn(featureFlagContexts, 'findFeatureFlagEvaluations').and.returnValue({
-      'my-longtask-flag': 'test',
-    })
-
-    notifyPerformanceEntries([createPerformanceEntry(RumPerformanceEntryType.LONG_TASK)])
-    expect(rawRumEvents.length).toBe(1)
-    const event = rawRumEvents[0].rawRumEvent
-    expect(event.feature_flags).toEqual({
-      'my-longtask-flag': 'test',
     })
   })
 })
