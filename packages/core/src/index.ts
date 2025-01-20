@@ -7,6 +7,7 @@ export {
   EndpointBuilder,
   serializeConfiguration,
   isSampleRate,
+  buildEndpointHost,
   INTAKE_SITE_STAGING,
   INTAKE_SITE_US1,
   INTAKE_SITE_US1_FED,

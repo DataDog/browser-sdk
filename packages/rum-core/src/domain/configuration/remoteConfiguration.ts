@@ -1,14 +1,7 @@
-import type { DefaultPrivacyLevel } from '@datadog/browser-core'
-import { display, addEventListener } from '@datadog/browser-core'
+import { display, addEventListener, buildEndpointHost } from '@datadog/browser-core'
 import type { RumInitConfiguration } from './configuration'
 
-export const REMOTE_CONFIGURATION_URL = 'https://d3uc069fcn7uxw.cloudfront.net/configuration'
-
-export interface RumRemoteConfiguration {
-  sessionSampleRate?: number
-  sessionReplaySampleRate?: number
-  defaultPrivacyLevel?: DefaultPrivacyLevel
-}
+const REMOTE_CONFIGURATION_VERSION = 'v1'
 
 export function fetchAndApplyRemoteConfiguration(
   initConfiguration: RumInitConfiguration,
@@ -21,20 +14,21 @@ export function fetchAndApplyRemoteConfiguration(
 
 export function applyRemoteConfiguration(
   initConfiguration: RumInitConfiguration,
-  remoteInitConfiguration: RumRemoteConfiguration
+  remoteInitConfiguration: Partial<RumInitConfiguration>
 ) {
   return { ...initConfiguration, ...remoteInitConfiguration }
 }
 
 export function fetchRemoteConfiguration(
   configuration: RumInitConfiguration,
-  callback: (remoteConfiguration: RumRemoteConfiguration) => void
+  callback: (remoteConfiguration: Partial<RumInitConfiguration>) => void
 ) {
   const xhr = new XMLHttpRequest()
 
   addEventListener(configuration, xhr, 'load', function () {
     if (xhr.status === 200) {
-      callback(JSON.parse(xhr.responseText))
+      const remoteConfiguration = JSON.parse(xhr.responseText)
+      callback(remoteConfiguration.rum)
     } else {
       displayRemoteConfigurationFetchingError()
     }
@@ -44,8 +38,12 @@ export function fetchRemoteConfiguration(
     displayRemoteConfigurationFetchingError()
   })
 
-  xhr.open('GET', `${REMOTE_CONFIGURATION_URL}/${encodeURIComponent(configuration.remoteConfigurationId!)}.json`)
+  xhr.open('GET', buildEndpoint(configuration))
   xhr.send()
+}
+
+export function buildEndpoint(configuration: RumInitConfiguration) {
+  return `https://sdk-configuration.${buildEndpointHost('rum', configuration)}/${REMOTE_CONFIGURATION_VERSION}/${encodeURIComponent(configuration.remoteConfigurationId!)}.json`
 }
 
 function displayRemoteConfigurationFetchingError() {
