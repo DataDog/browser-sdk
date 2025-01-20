@@ -4,6 +4,7 @@ import { onRumStart } from '../reactPlugin'
 
 export function addReactError(error: Error, info: ErrorInfo) {
   const handlingStack = createHandlingStack()
+  const startClocks = clocksNow()
   onRumStart((strategy) => {
     callMonitored(() => {
       strategy.addError({
@@ -11,7 +12,7 @@ export function addReactError(error: Error, info: ErrorInfo) {
         handlingStack,
         componentStack: info.componentStack ?? undefined,
         context: { framework: 'react' },
-        startClocks: clocksNow(),
+        startClocks,
       })
     })
   })
