@@ -176,7 +176,7 @@ export function validateAndBuildRumConfiguration(
     initConfiguration.trackFeatureFlagsForEvents !== undefined &&
     !Array.isArray(initConfiguration.trackFeatureFlagsForEvents)
   ) {
-    display.warn(`trackFeatureFlagsForEvents should be an array`)
+    display.warn('trackFeatureFlagsForEvents should be an array')
   }
 
   if (!initConfiguration.applicationId) {
