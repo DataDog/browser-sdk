@@ -495,7 +495,7 @@ describe('validateAndBuildRumConfiguration', () => {
       expect(configuration.trackFeatureFlagsForEvents).toEqual([])
     })
 
-    it('accepts valid event types', () => {
+    it('should accept valid input', () => {
       const configuration = validateAndBuildRumConfiguration({
         ...DEFAULT_INIT_CONFIGURATION,
         trackFeatureFlagsForEvents: ['resource', 'long_task', 'vital'],
@@ -503,15 +503,12 @@ describe('validateAndBuildRumConfiguration', () => {
       expect(configuration.trackFeatureFlagsForEvents).toEqual(['resource', 'long_task', 'vital'])
       expect(displayWarnSpy).not.toHaveBeenCalled()
     })
-    it('ignores invalid event types and displays a warning', () => {
-      const configuration = validateAndBuildRumConfiguration({
+    it('does not validate the configuration if an incorrect value is provided', () => {
+      validateAndBuildRumConfiguration({
         ...DEFAULT_INIT_CONFIGURATION,
-        trackFeatureFlagsForEvents: ['invalid_event' as any],
+        trackFeatureFlagsForEvents: 123 as any,
       })!
-      expect(configuration.trackFeatureFlagsForEvents).toEqual([])
-      expect(displayWarnSpy).toHaveBeenCalledOnceWith(
-        "Unknown event type 'invalid_event' in trackFeatureFlagsForEvents configuration."
-      )
+      expect(displayWarnSpy).toHaveBeenCalledOnceWith('trackFeatureFlagsForEvents should be an array')
     })
   })
 })

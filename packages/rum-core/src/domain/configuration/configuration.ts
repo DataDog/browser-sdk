@@ -19,15 +19,6 @@ import type { PropagatorType, TracingOption } from '../tracing/tracer.types'
 
 export const DEFAULT_PROPAGATOR_TYPES: PropagatorType[] = ['tracecontext', 'datadog']
 
-export const FeatureFlagsForEvents = {
-  ACTION: 'action',
-  RESOURCE: 'resource',
-  LONG_TASK: 'long_task',
-  VITAL: 'vital',
-} as const
-
-export type FeatureFlagsForEvents = (typeof FeatureFlagsForEvents)[keyof typeof FeatureFlagsForEvents]
-
 export interface RumInitConfiguration extends InitConfiguration {
   // global options
   /**
@@ -150,6 +141,8 @@ export interface RumInitConfiguration extends InitConfiguration {
 
 export type HybridInitConfiguration = Omit<RumInitConfiguration, 'applicationId' | 'clientToken'>
 
+export type FeatureFlagsForEvents = 'vital' | 'action' | 'long_task' | 'resource'
+
 export interface RumConfiguration extends Configuration {
   // Built from init configuration
   actionNameAttribute: string | undefined
@@ -179,16 +172,13 @@ export interface RumConfiguration extends Configuration {
 export function validateAndBuildRumConfiguration(
   initConfiguration: RumInitConfiguration
 ): RumConfiguration | undefined {
-  const trackFeatureFlagsForEvents: FeatureFlagsForEvents[] = []
-  if (Array.isArray(initConfiguration.trackFeatureFlagsForEvents)) {
-    initConfiguration.trackFeatureFlagsForEvents.forEach((eventType) => {
-      if (objectHasValue(FeatureFlagsForEvents, eventType) && !trackFeatureFlagsForEvents.includes(eventType)) {
-        trackFeatureFlagsForEvents.push(eventType)
-      } else if (!objectHasValue(FeatureFlagsForEvents, eventType)) {
-        display.warn(`Unknown event type '${eventType as any}' in trackFeatureFlagsForEvents configuration.`)
-      }
-    })
+  if (
+    initConfiguration.trackFeatureFlagsForEvents !== undefined &&
+    !Array.isArray(initConfiguration.trackFeatureFlagsForEvents)
+  ) {
+    display.warn(`trackFeatureFlagsForEvents should be an array`)
   }
+
   if (!initConfiguration.applicationId) {
     display.error('Application ID is not configured, no RUM data will be collected.')
     return
@@ -247,7 +237,7 @@ export function validateAndBuildRumConfiguration(
       ? initConfiguration.traceContextInjection
       : TraceContextInjection.SAMPLED,
     plugins: initConfiguration.plugins || [],
-    trackFeatureFlagsForEvents,
+    trackFeatureFlagsForEvents: initConfiguration.trackFeatureFlagsForEvents || [],
     ...baseConfiguration,
   }
 }

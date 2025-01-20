@@ -173,7 +173,7 @@ export function startRumAssembly(
             url: urlContext.url,
             referrer: urlContext.referrer,
           },
-          feature_flags: trackFeatureFlags(
+          feature_flags: findFeatureFlagsContext(
             rawRumEvent,
             startTime,
             configuration.trackFeatureFlagsForEvents,
@@ -244,17 +244,17 @@ function needToAssembleWithAction(
   return [RumEventType.ERROR, RumEventType.RESOURCE, RumEventType.LONG_TASK].indexOf(event.type) !== -1
 }
 
-function trackFeatureFlags(
+function findFeatureFlagsContext(
   rawRumEvent: RawRumEvent,
   eventStartTime: RelativeTime,
   trackFeatureFlagsForEvents: FeatureFlagsForEvents[],
   featureFlagContexts: FeatureFlagContexts
 ) {
-  const isdefaultTracking = rawRumEvent.type === RumEventType.VIEW || rawRumEvent.type === RumEventType.ERROR
+  const isTrackingEnforced = rawRumEvent.type === RumEventType.VIEW || rawRumEvent.type === RumEventType.ERROR
 
   const isListedInConfig = trackFeatureFlagsForEvents.includes(rawRumEvent.type as FeatureFlagsForEvents)
 
-  if (isdefaultTracking || isListedInConfig) {
+  if (isTrackingEnforced || isListedInConfig) {
     const featureFlagContext = featureFlagContexts.findFeatureFlagEvaluations(eventStartTime)
     if (featureFlagContext && !isEmptyObject(featureFlagContext)) {
       return featureFlagContext
