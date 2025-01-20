@@ -10,6 +10,7 @@ describe('createErrorFieldFromRawError', () => {
     source: ErrorSource.LOGGER,
     handling: ErrorHandling.HANDLED,
     handlingStack: 'Error\n    at foo (bar)',
+    componentStack: 'at Flex',
     originalError: new Error('baz'),
     type: 'qux',
     message: 'quux',

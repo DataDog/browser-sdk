@@ -1,9 +1,8 @@
-import type { RumInitConfiguration, RumPublicApi, Strategy } from '@datadog/browser-rum-core'
+import type { RumInitConfiguration, RumPublicApi } from '@datadog/browser-rum-core'
 import { onRumInit, reactPlugin, resetReactPlugin } from './reactPlugin'
 
 const PUBLIC_API = {} as RumPublicApi
 const INIT_CONFIGURATION = {} as RumInitConfiguration
-const STRATEGY = {} as Strategy
 
 describe('reactPlugin', () => {
   afterEach(() => {
@@ -30,7 +29,6 @@ describe('reactPlugin', () => {
     reactPlugin(pluginConfiguration).onInit({
       publicApi: PUBLIC_API,
       initConfiguration: INIT_CONFIGURATION,
-      strategy: STRATEGY,
     })
 
     expect(callbackSpy).toHaveBeenCalledTimes(1)
@@ -44,7 +42,6 @@ describe('reactPlugin', () => {
     reactPlugin(pluginConfiguration).onInit({
       publicApi: PUBLIC_API,
       initConfiguration: INIT_CONFIGURATION,
-      strategy: STRATEGY,
     })
 
     onRumInit(callbackSpy)
@@ -56,14 +53,14 @@ describe('reactPlugin', () => {
 
   it('enforce manual view tracking when router is enabled', () => {
     const initConfiguration = { ...INIT_CONFIGURATION }
-    reactPlugin({ router: true }).onInit({ publicApi: PUBLIC_API, initConfiguration, strategy: STRATEGY })
+    reactPlugin({ router: true }).onInit({ publicApi: PUBLIC_API, initConfiguration })
 
     expect(initConfiguration.trackViewsManually).toBe(true)
   })
 
   it('does not enforce manual view tracking when router is disabled', () => {
     const initConfiguration = { ...INIT_CONFIGURATION }
-    reactPlugin({ router: false }).onInit({ publicApi: PUBLIC_API, initConfiguration, strategy: STRATEGY })
+    reactPlugin({ router: false }).onInit({ publicApi: PUBLIC_API, initConfiguration })
 
     expect(initConfiguration.trackViewsManually).toBeUndefined()
   })
