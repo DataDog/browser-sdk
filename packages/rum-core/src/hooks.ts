@@ -6,15 +6,13 @@ export const enum HookNames {
   Assemble,
 }
 
-type RemoveIndexSignature<T> = {
-  [K in keyof T as K extends string ? (string extends K ? never : K) : never]: T[K]
+type RecursivePartialExcept<T, K extends keyof T> = {
+  [P in keyof T as P extends K ? never : P]?: T[P] extends object ? RecursivePartialExcept<T[P], never> : T[P]
+} & {
+  [P in keyof T as P extends K ? P : never]-?: T[P]
 }
 
-type RecursivePartial<T> = {
-  [P in keyof T]?: T[P] extends object ? RecursivePartial<T[P]> : T[P]
-}
-
-export type PartialRumEvent = RecursivePartial<RemoveIndexSignature<RumEvent>>
+export type PartialRumEvent = RecursivePartialExcept<RumEvent, 'type'>
 
 export type HookCallbackMap = {
   [HookNames.Assemble]: (param: { eventType: RumEvent['type']; startTime: RelativeTime }) => PartialRumEvent | undefined

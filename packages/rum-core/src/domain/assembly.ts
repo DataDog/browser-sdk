@@ -22,13 +22,14 @@ import type {
 } from '../rawRumEvent.types'
 import { RumEventType } from '../rawRumEvent.types'
 import type { RumEvent } from '../rumEvent.types'
+import type { Hooks } from '../hooks'
+import { HookNames } from '../hooks'
 import { getSyntheticsContext } from './contexts/syntheticsContext'
 import type { CiVisibilityContext } from './contexts/ciVisibilityContext'
 import type { LifeCycle } from './lifeCycle'
 import { LifeCycleEventType } from './lifeCycle'
 import type { ViewHistory } from './contexts/viewHistory'
 import { SessionReplayState, type RumSessionManager } from './rumSessionManager'
-import type { UrlContexts } from './contexts/urlContexts'
 import type { RumConfiguration } from './configuration'
 import type { ActionContexts } from './action/actionCollection'
 import type { DisplayContext } from './contexts/displayContext'
@@ -67,9 +68,9 @@ type Mutable<T> = { -readonly [P in keyof T]: T[P] }
 export function startRumAssembly(
   configuration: RumConfiguration,
   lifeCycle: LifeCycle,
+  hooks: Hooks,
   sessionManager: RumSessionManager,
   viewHistory: ViewHistory,
-  urlContexts: UrlContexts,
   actionContexts: ActionContexts,
   displayContext: DisplayContext,
   ciVisibilityContext: CiVisibilityContext,
@@ -134,9 +135,9 @@ export function startRumAssembly(
     LifeCycleEventType.RAW_RUM_EVENT_COLLECTED,
     ({ startTime, rawRumEvent, domainContext, savedCommonContext, customerContext }) => {
       const viewHistoryEntry = viewHistory.findView(startTime)
-      const urlContext = urlContexts.findUrl(startTime)
       const session = sessionManager.findTrackedSession(startTime)
-      if (session && viewHistoryEntry && urlContext) {
+
+      if (session && viewHistoryEntry) {
         const commonContext = savedCommonContext || getCommonContext()
         const actionId = actionContexts.findActionId(startTime)
 
@@ -154,8 +155,8 @@ export function startRumAssembly(
             id: configuration.applicationId,
           },
           date: timeStampNow(),
-          service: viewHistoryEntry.service || configuration.service,
-          version: viewHistoryEntry.version || configuration.version,
+          service: configuration.service,
+          version: configuration.version,
           source: 'browser',
           session: {
             id: session.id,
@@ -165,21 +166,22 @@ export function startRumAssembly(
                 ? SessionType.CI_TEST
                 : SessionType.USER,
           },
-          view: {
-            id: viewHistoryEntry.id,
-            name: viewHistoryEntry.name,
-            url: urlContext.url,
-            referrer: urlContext.referrer,
-          },
           action: needToAssembleWithAction(rawRumEvent) && actionId ? { id: actionId } : undefined,
           synthetics: syntheticsContext,
           ci_test: ciVisibilityContext.get(),
           display: displayContext.get(),
           connectivity: getConnectivity(),
+          context: commonContext.context,
         }
 
-        const serverRumEvent = combine(rumContext as RumContext & Context, rawRumEvent) as RumEvent & Context
-        serverRumEvent.context = combine(commonContext.context, viewHistoryEntry.context, customerContext)
+        const serverRumEvent = combine(
+          rumContext,
+          hooks.triggerHook(HookNames.Assemble, { eventType: rawRumEvent.type, startTime }) as RumEvent & Context,
+          { context: customerContext },
+          rawRumEvent
+        ) as RumEvent & Context
+
+        serverRumEvent.context = combine(serverRumEvent.context, customerContext)
 
         if (!('has_replay' in serverRumEvent.session)) {
           ;(serverRumEvent.session as Mutable<RumEvent['session']>).has_replay = commonContext.hasReplay
@@ -197,7 +199,7 @@ export function startRumAssembly(
         }
 
         if (shouldSend(serverRumEvent, configuration.beforeSend, domainContext, eventRateLimiters)) {
-          if (isEmptyObject(serverRumEvent.context)) {
+          if (isEmptyObject(serverRumEvent.context!)) {
             delete serverRumEvent.context
           }
           lifeCycle.notify(LifeCycleEventType.RUM_EVENT_COLLECTED, serverRumEvent)

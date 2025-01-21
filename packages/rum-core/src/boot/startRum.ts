@@ -23,6 +23,7 @@ import { createWindowOpenObservable } from '../browser/windowOpenObservable'
 import { startRumAssembly } from '../domain/assembly'
 import { startInternalContext } from '../domain/contexts/internalContext'
 import { LifeCycle, LifeCycleEventType } from '../domain/lifeCycle'
+import type { ViewHistory } from '../domain/contexts/viewHistory'
 import { startViewHistory } from '../domain/contexts/viewHistory'
 import { startRequestCollection } from '../domain/requestCollection'
 import { startActionCollection } from '../domain/action/actionCollection'
@@ -34,7 +35,6 @@ import { startRumSessionManager, startRumSessionManagerStub } from '../domain/ru
 import { startRumBatch } from '../transport/startRumBatch'
 import { startRumEventBridge } from '../transport/startRumEventBridge'
 import { startUrlContexts } from '../domain/contexts/urlContexts'
-import type { LocationChange } from '../browser/locationChangeObservable'
 import { createLocationChangeObservable } from '../browser/locationChangeObservable'
 import type { RumConfiguration } from '../domain/configuration'
 import type { ViewOptions } from '../domain/view/trackViews'
@@ -50,6 +50,8 @@ import { startCiVisibilityContext } from '../domain/contexts/ciVisibilityContext
 import { startLongAnimationFrameCollection } from '../domain/longAnimationFrame/longAnimationFrameCollection'
 import { RumPerformanceEntryType } from '../browser/performanceObservable'
 import { startLongTaskCollection } from '../domain/longTask/longTaskCollection'
+import type { Hooks } from '../hooks'
+import { startHooks } from '../hooks'
 import type { RecorderApi } from './rumPublicApi'
 
 export type StartRum = typeof startRum
@@ -71,6 +73,7 @@ export function startRum(
 ) {
   const cleanupTasks: Array<() => void> = []
   const lifeCycle = new LifeCycle()
+  const hooks = startHooks()
 
   lifeCycle.subscribe(LifeCycleEventType.RUM_EVENT_COLLECTED, (event) => sendToExtension('rum', event))
 
@@ -127,24 +130,25 @@ export function startRum(
   const domMutationObservable = createDOMMutationObservable()
   const locationChangeObservable = createLocationChangeObservable(configuration, location)
   const pageStateHistory = startPageStateHistory(configuration)
+  const viewHistory = startViewHistory(lifeCycle)
+  const urlContexts = startUrlContexts(lifeCycle, hooks, locationChangeObservable, location)
+
   const { observable: windowOpenObservable, stop: stopWindowOpen } = createWindowOpenObservable()
   cleanupTasks.push(stopWindowOpen)
 
   const {
-    viewHistory,
-    urlContexts,
     actionContexts,
     addAction,
     stop: stopRumEventCollection,
   } = startRumEventCollection(
     lifeCycle,
+    hooks,
     configuration,
-    location,
     session,
     pageStateHistory,
-    locationChangeObservable,
     domMutationObservable,
     windowOpenObservable,
+    viewHistory,
     getCommonContext,
     reportError
   )
@@ -162,6 +166,7 @@ export function startRum(
     stop: stopViewCollection,
   } = startViewCollection(
     lifeCycle,
+    hooks,
     configuration,
     location,
     domMutationObservable,
@@ -170,8 +175,10 @@ export function startRum(
     featureFlagContexts,
     pageStateHistory,
     recorderApi,
+    viewHistory,
     initialViewOptions
   )
+
   cleanupTasks.push(stopViewCollection)
 
   const { stop: stopResourceCollection } = startResourceCollection(lifeCycle, configuration, pageStateHistory)
@@ -234,19 +241,16 @@ function startRumTelemetry(configuration: RumConfiguration) {
 
 export function startRumEventCollection(
   lifeCycle: LifeCycle,
+  hooks: Hooks,
   configuration: RumConfiguration,
-  location: Location,
   sessionManager: RumSessionManager,
   pageStateHistory: PageStateHistory,
-  locationChangeObservable: Observable<LocationChange>,
   domMutationObservable: Observable<void>,
   windowOpenObservable: Observable<void>,
+  viewHistory: ViewHistory,
   getCommonContext: () => CommonContext,
   reportError: (error: RawError) => void
 ) {
-  const viewHistory = startViewHistory(lifeCycle)
-  const urlContexts = startUrlContexts(lifeCycle, locationChangeObservable, location)
-
   const actionCollection = startActionCollection(
     lifeCycle,
     domMutationObservable,
@@ -261,9 +265,9 @@ export function startRumEventCollection(
   startRumAssembly(
     configuration,
     lifeCycle,
+    hooks,
     sessionManager,
     viewHistory,
-    urlContexts,
     actionCollection.actionContexts,
     displayContext,
     ciVisibilityContext,
@@ -272,17 +276,13 @@ export function startRumEventCollection(
   )
 
   return {
-    viewHistory,
     pageStateHistory,
-    urlContexts,
     addAction: actionCollection.addAction,
     actionContexts: actionCollection.actionContexts,
     stop: () => {
       actionCollection.stop()
       ciVisibilityContext.stop()
       displayContext.stop()
-      urlContexts.stop()
-      viewHistory.stop()
       pageStateHistory.stop()
     },
   }
