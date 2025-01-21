@@ -52,11 +52,13 @@ export type MockCspEventListener = ReturnType<typeof mockCspEventListener>
 export function mockCspEventListener() {
   // eslint-disable-next-line @typescript-eslint/unbound-method
   const originalAddEventListener = EventTarget.prototype.addEventListener
-  EventTarget.prototype.addEventListener = jasmine
-    .createSpy()
-    .and.callFake((_type: string, listener: EventListener) => {
+  EventTarget.prototype.addEventListener = jasmine.createSpy().and.callFake(function (this: any, type, listener) {
+    if (type === 'securitypolicyviolation') {
       listeners.push(listener)
-    })
+    } else {
+      originalAddEventListener.call(this, type, listener)
+    }
+  })
 
   registerCleanupTask(() => {
     EventTarget.prototype.addEventListener = originalAddEventListener
