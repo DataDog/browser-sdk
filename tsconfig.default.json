@@ -21,6 +21,7 @@
     "eslint.config.ts",
     "eslint-local-rules",
     "test/unit",
+    "test/unit-vitest/vite.config.ts",
 
     // Files included in ./test/e2e/tsconfig.json
     "test/e2e",
