@@ -25,7 +25,7 @@ export const UNSTABLE_ReactComponentTracker = ({
 
     addDurationVital('reactComponentRender', {
       description: componentName,
-      startTime: renderTimer.getStartTime() ?? 0,
+      startTime: renderTimer.getStartTime()!, // note: renderTimer should have been started at this point, so getStartTime should not return undefined
       duration: totalRenderTime,
       context: {
         is_first_render: isFirstRender.current,
