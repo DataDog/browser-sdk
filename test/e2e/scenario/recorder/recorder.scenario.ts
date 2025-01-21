@@ -683,7 +683,7 @@ describe('recorder', () => {
       })
 
     createTest('should detect a rage click and match it to mouse interaction records')
-      .withRum({ trackUserInteractions: true })
+      .withRum({ trackUserInteractions: true, allowUntrustedEvents: true })
       .withSetup(bundleSetup)
       .withBody(html`
         <div id="main-div" />
@@ -693,8 +693,28 @@ describe('recorder', () => {
         />
       `)
       .run(async ({ intakeRegistry }) => {
-        const button = await $('#my-button')
-        await Promise.all([button.click(), button.click(), button.click(), button.click()])
+        // We don't use the wdio's `$('button').click()` here because the latency of the command is too high and the
+        // clicks won't be recognised as rage clicks.
+        await browser.execute(() => {
+          const button = document.querySelector('button')!
+
+          function click() {
+            const coordinates = { clientX: 12, clientY: 20 }
+
+            button.dispatchEvent(new PointerEvent('pointerdown', { isPrimary: true, ...coordinates }))
+            button.dispatchEvent(new MouseEvent('mousedown', coordinates))
+            button.dispatchEvent(new PointerEvent('pointerup', { isPrimary: true, ...coordinates }))
+            button.dispatchEvent(new MouseEvent('mouseup', coordinates))
+            button.dispatchEvent(new PointerEvent('click', { isPrimary: true, ...coordinates }))
+          }
+
+          // Simulate a rage click
+          click()
+          click()
+          click()
+          click()
+        })
+
         await flushEvents()
 
         expect(intakeRegistry.replaySegments.length).toBe(1)
