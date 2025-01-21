@@ -12,6 +12,7 @@
     "packages/*/cjs",
     "packages/*/esm",
     "packages/*/bundle",
+    "packages/rum-next",
 
     // Files included in ./tsconfig.scripts.json
     "**/webpack.*",

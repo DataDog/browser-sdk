@@ -37,6 +37,8 @@ describe('trackNavigationTimings', () => {
   })
 
   it('notifies navigation timings after the load event', () => {
+    // Make sure our clock is not ahead of the navigation entry
+    clock.tick(FAKE_NAVIGATION_ENTRY.responseStart)
     replaceMockable(getNavigationEntry, () => FAKE_NAVIGATION_ENTRY)
     ;({ stop } = trackNavigationTimings(mockRumConfiguration(), navigationTimingsCallback))
 
