@@ -92,6 +92,17 @@ describe('UNSTABLE_ReactComponentTracker', () => {
 
     expect(addDurationVitalSpy).toHaveBeenCalledTimes(2)
     const options = addDurationVitalSpy.calls.mostRecent().args[1]
-    expect(options.startTime).toBe(clock.timeStamp(TOTAL_DURATION + 1))
+    expect(options).toEqual({
+      description: 'ChildComponent',
+      startTime: clock.timeStamp(TOTAL_DURATION + 1),
+      duration: TOTAL_DURATION,
+      context: {
+        is_first_render: false,
+        render_phase_duration: RENDER_DURATION,
+        effect_phase_duration: EFFECT_DURATION,
+        layout_effect_phase_duration: LAYOUT_EFFECT_DURATION,
+        framework: 'react',
+      },
+    })
   })
 })

@@ -39,13 +39,9 @@ export const UNSTABLE_ReactComponentTracker = ({
     isFirstRender.current = false
   }
 
-  /**
-   * In react, children are rendered sequentially
-   * in the order they are defined. that's why we
-   * can measure perf timings of a component by
-   * starting recordings in the component above
-   * and stopping them in the component below.
-   */
+  // In react, children are rendered sequentially in the order they are defined. that's why we can
+  // measure perf timings of a component by starting recordings in the component above and stopping
+  // them in the component below.
   return (
     <>
       <LifeCycle
