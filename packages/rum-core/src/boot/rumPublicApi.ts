@@ -21,7 +21,6 @@ import {
   callMonitored,
   createHandlingStack,
   checkUser,
-  sanitizeUser,
   sanitize,
   createIdentityEncoder,
   CustomerDataCompressionStatus,
@@ -372,12 +371,16 @@ export function makeRumPublicApi(
   options: RumPublicApiOptions = {}
 ): RumPublicApi {
   const customerDataTrackerManager = createCustomerDataTrackerManager(CustomerDataCompressionStatus.Unknown)
-  const globalContextManager = createContextManager({
+  const globalContextManager = createContextManager('global', {
     customerDataTracker: customerDataTrackerManager.getOrCreateTracker(CustomerDataType.GlobalContext),
   })
-  const userContextManager = createContextManager({
+  const userContextManager = createContextManager('user', {
     customerDataTracker: customerDataTrackerManager.getOrCreateTracker(CustomerDataType.User),
-    contextSanitizer: sanitizeUser,
+    propertiesConfig: {
+      id: { type: 'string' },
+      name: { type: 'string' },
+      email: { type: 'string' },
+    },
   })
   const trackingConsentState = createTrackingConsentState()
   const customVitalsState = createCustomVitalsState()

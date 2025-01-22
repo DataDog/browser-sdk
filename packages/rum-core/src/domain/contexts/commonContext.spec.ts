@@ -13,10 +13,10 @@ describe('commonContext', () => {
   beforeEach(() => {
     isRecording = false
     fakeContext = { foo: 'bar' }
-    const globalContextManager: ContextManager = createContextManager({
+    const globalContextManager: ContextManager = createContextManager('test', {
       customerDataTracker: createCustomerDataTracker(noop),
     })
-    const userContextManager: ContextManager = createContextManager({
+    const userContextManager: ContextManager = createContextManager('test', {
       customerDataTracker: createCustomerDataTracker(noop),
     })
     spyOn(globalContextManager, 'getContext').and.callFake(() => fakeContext)

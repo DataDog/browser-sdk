@@ -140,7 +140,7 @@ export {
   getSyntheticsTestId,
   getSyntheticsResultId,
 } from './domain/synthetics/syntheticsWorkerValues'
-export { User, checkUser, sanitizeUser } from './domain/user'
+export { User, checkUser } from './domain/user'
 export * from './domain/resourceUtils'
 export * from './tools/utils/polyfills'
 export * from './tools/utils/numberUtils'

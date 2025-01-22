@@ -6,7 +6,6 @@ import {
   makePublicApi,
   monitor,
   checkUser,
-  sanitizeUser,
   sanitize,
   createCustomerDataTrackerManager,
   storeContextManager,
@@ -170,12 +169,16 @@ export interface Strategy {
 
 export function makeLogsPublicApi(startLogsImpl: StartLogs): LogsPublicApi {
   const customerDataTrackerManager = createCustomerDataTrackerManager()
-  const globalContextManager = createContextManager({
+  const globalContextManager = createContextManager('global', {
     customerDataTracker: customerDataTrackerManager.getOrCreateTracker(CustomerDataType.GlobalContext),
   })
-  const userContextManager = createContextManager({
+  const userContextManager = createContextManager('user', {
     customerDataTracker: customerDataTrackerManager.getOrCreateTracker(CustomerDataType.User),
-    contextSanitizer: sanitizeUser,
+    propertiesConfig: {
+      id: { type: 'string' },
+      name: { type: 'string' },
+      email: { type: 'string' },
+    },
   })
   const trackingConsentState = createTrackingConsentState()
 

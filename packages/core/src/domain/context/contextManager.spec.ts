@@ -1,9 +1,11 @@
+import { display } from '../../tools/display'
 import { noop } from '../../tools/utils/functionUtils'
+import type { PropertiesConfig } from './contextManager'
 import { createContextManager } from './contextManager'
 import { createCustomerDataTracker } from './customerDataTracker'
 
-function createNoopCustomerDataTracker() {
-  return createContextManager({ customerDataTracker: createCustomerDataTracker(noop) })
+function createNoopCustomerDataTracker(propertiesConfig?: PropertiesConfig) {
+  return createContextManager('test', { customerDataTracker: createCustomerDataTracker(noop), propertiesConfig })
 }
 
 describe('createContextManager', () => {
@@ -84,11 +86,37 @@ describe('createContextManager', () => {
     expect(manager.getContext()).toEqual({})
   })
 
+  it('should enforce specified type on properties', () => {
+    const manager = createNoopCustomerDataTracker({
+      id: { type: 'string' },
+      name: { type: 'string' },
+      email: { type: 'string' },
+    })
+
+    manager.setContext({ id: 42, name: true, email: null })
+
+    expect(manager.getContext()).toEqual({ id: '42', name: 'true', email: 'null' })
+  })
+
+  it('should warn when required property is missing', () => {
+    const displaySpy = spyOn(display, 'warn')
+
+    const manager = createNoopCustomerDataTracker({
+      id: { required: true },
+    })
+
+    manager.setContext({ name: true, email: null })
+
+    expect(displaySpy).toHaveBeenCalledOnceWith(
+      'The property id of test context is required; context will not be sent to the intake.'
+    )
+  })
+
   it('should notify customer data tracker when the context is updated', () => {
     const customerDataTracker = createCustomerDataTracker(noop)
     const updateCustomerDataSpy = spyOn(customerDataTracker, 'updateCustomerData')
     const resetCustomerDataSpy = spyOn(customerDataTracker, 'resetCustomerData')
-    const manager = createContextManager({ customerDataTracker })
+    const manager = createContextManager('test', { customerDataTracker })
 
     manager.setContextProperty('foo', 'bar')
     manager.removeContextProperty('foo')
