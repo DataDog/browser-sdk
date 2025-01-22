@@ -116,14 +116,18 @@ export interface RumPerformanceEventTiming {
   name: string
 }
 
+export interface RumLayoutShiftAttribution {
+  node: Node | null
+  previousRect: DOMRectReadOnly
+  currentRect: DOMRectReadOnly
+}
+
 export interface RumLayoutShiftTiming {
   entryType: RumPerformanceEntryType.LAYOUT_SHIFT
   startTime: RelativeTime
   value: number
   hadRecentInput: boolean
-  sources?: Array<{
-    node?: Node
-  }>
+  sources: RumLayoutShiftAttribution[]
 }
 
 // Documentation https://developer.chrome.com/docs/web-platform/long-animation-frames#better-attribution

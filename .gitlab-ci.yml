@@ -1,5 +1,5 @@
 variables:
-  CURRENT_STAGING: staging-03
+  CURRENT_STAGING: staging-04
   APP: 'browser-sdk'
   CURRENT_CI_IMAGE: 75
   BUILD_STABLE_REGISTRY: 'registry.ddbuild.io'
@@ -363,6 +363,7 @@ deploy-next-major-canary:
     - yarn
     - yarn build:bundle
     - node ./scripts/deploy/deploy.js prod v${VERSION%%.*}-canary root
+    - node ./scripts/deploy/upload-source-maps.js v${VERSION%%.*}-canary root
 
 deploy-manual:
   stage: deploy

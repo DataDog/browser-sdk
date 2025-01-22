@@ -150,6 +150,8 @@ function computeViewPerformanceData(
       score: cumulativeLayoutShift.value,
       timestamp: toServerDuration(cumulativeLayoutShift.time),
       target_selector: cumulativeLayoutShift.targetSelector,
+      previous_rect: cumulativeLayoutShift.previousRect,
+      current_rect: cumulativeLayoutShift.currentRect,
     },
     fcp: firstContentfulPaint && { timestamp: toServerDuration(firstContentfulPaint) },
     fid: firstInput && {
