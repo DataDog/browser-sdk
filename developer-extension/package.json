@@ -9,8 +9,8 @@
   "devDependencies": {
     "@tabler/icons-react": "3.28.1",
     "@types/chrome": "0.0.294",
-    "@types/react": "18.3.18",
-    "@types/react-dom": "18.3.5",
+    "@types/react": "19.0.7",
+    "@types/react-dom": "19.0.3",
     "@webextension-toolbox/webpack-webextension-plugin": "3.3.1",
     "copy-webpack-plugin": "12.0.2",
     "css-loader": "7.1.2",
@@ -25,8 +25,8 @@
     "@mantine/core": "7.16.0",
     "@mantine/hooks": "7.16.0",
     "clsx": "2.1.1",
-    "react": "18.3.1",
-    "react-dom": "18.3.1"
+    "react": "19.0.0",
+    "react-dom": "19.0.0"
   },
   "volta": {
     "extends": "../package.json"
