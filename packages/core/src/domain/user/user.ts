@@ -1,7 +1,6 @@
 import type { Context } from '../../tools/serialisation/context'
 import { display } from '../../tools/display'
 import { getType } from '../../tools/utils/typeUtils'
-import { assign } from '../../tools/utils/polyfills'
 import type { User } from './user.types'
 
 /**
@@ -11,10 +10,11 @@ import type { User } from './user.types'
  */
 export function sanitizeUser(newUser: Context): Context {
   // We shallow clone only to prevent mutation of user data.
-  const user = assign({}, newUser)
+  const user = { ...newUser }
   const keys = ['id', 'name', 'email']
   keys.forEach((key) => {
     if (key in user) {
+      /* eslint-disable @typescript-eslint/no-base-to-string */
       user[key] = String(user[key])
     }
   })
@@ -33,5 +33,7 @@ export function checkUser(newUser: User): boolean {
 }
 
 export function generateAnonymousId() {
-  return Math.floor(Math.random() * Math.pow(2, 53)).toString(36)
+  return Math.floor(Math.random() * Math.pow(36, 10))
+    .toString(36)
+    .padStart(10, '0')
 }

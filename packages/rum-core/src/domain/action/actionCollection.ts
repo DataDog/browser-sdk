@@ -1,14 +1,12 @@
 import type { ClocksState, Context, Observable } from '@datadog/browser-core'
 import {
   noop,
-  assign,
   combine,
   toServerDuration,
   generateUUID,
   ExperimentalFeature,
   isExperimentalFeatureEnabled,
 } from '@datadog/browser-core'
-
 import { discardNegativeDuration } from '../discardNegativeDuration'
 import type { RawRumActionEvent } from '../../rawRumEvent.types'
 import { ActionType, RumEventType } from '../../rawRumEvent.types'
@@ -46,28 +44,26 @@ export function startActionCollection(
   )
 
   let actionContexts: ActionContexts = { findActionId: noop as () => undefined }
+  let stop: () => void = noop
+
   if (configuration.trackUserInteractions) {
-    actionContexts = trackClickActions(
+    ;({ actionContexts, stop } = trackClickActions(
       lifeCycle,
       domMutationObservable,
       windowOpenObservable,
       configuration
-    ).actionContexts
+    ))
   }
 
   return {
     addAction: (action: CustomAction, savedCommonContext?: CommonContext) => {
-      lifeCycle.notify(
-        LifeCycleEventType.RAW_RUM_EVENT_COLLECTED,
-        assign(
-          {
-            savedCommonContext,
-          },
-          processAction(action, pageStateHistory)
-        )
-      )
+      lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, {
+        savedCommonContext,
+        ...processAction(action, pageStateHistory),
+      })
     },
     actionContexts,
+    stop,
   }
 }
 

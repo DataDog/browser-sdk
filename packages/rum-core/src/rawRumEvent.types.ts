@@ -123,6 +123,7 @@ export interface RawRumViewEvent {
     long_task: Count
     resource: Count
     frustration: Count
+    performance?: ViewPerformanceData
   }
   session: {
     has_replay: true | undefined
@@ -150,6 +151,40 @@ interface ViewDisplay {
     max_scroll_height?: number
     max_scroll_height_time?: ServerDuration
   }
+}
+
+export interface ViewPerformanceData {
+  cls?: {
+    score: number
+    timestamp?: ServerDuration
+    target_selector?: string
+    previous_rect?: RumRect
+    current_rect?: RumRect
+  }
+  fcp?: {
+    timestamp: number
+  }
+  fid?: {
+    duration: ServerDuration
+    timestamp: ServerDuration
+    target_selector?: string
+  }
+  inp?: {
+    duration: ServerDuration
+    timestamp?: ServerDuration
+    target_selector?: string
+  }
+  lcp?: {
+    timestamp: ServerDuration
+    target_selector?: string
+  }
+}
+
+export interface RumRect {
+  x: number
+  y: number
+  width: number
+  height: number
 }
 
 export type PageStateServerEntry = { state: PageState; start: ServerDuration }

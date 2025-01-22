@@ -1,12 +1,9 @@
-import { includes } from '@datadog/browser-core'
 import type { Logger, HandlerType } from '../logger'
 
 export function isAuthorized(status: StatusType, handlerType: HandlerType, logger: Logger) {
   const loggerHandler = logger.getHandler()
   const sanitizedHandlerType = Array.isArray(loggerHandler) ? loggerHandler : [loggerHandler]
-  return (
-    STATUS_PRIORITIES[status] >= STATUS_PRIORITIES[logger.getLevel()] && includes(sanitizedHandlerType, handlerType)
-  )
+  return STATUS_PRIORITIES[status] >= STATUS_PRIORITIES[logger.getLevel()] && sanitizedHandlerType.includes(handlerType)
 }
 
 export const StatusType = {
