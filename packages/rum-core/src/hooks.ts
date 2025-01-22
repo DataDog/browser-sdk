@@ -12,8 +12,8 @@ type RecursivePartialExcept<T, K extends keyof T> = {
   [P in K]: T[P]
 }
 
-// Define a partially recursive type for RUM events, ensuring the `type` field is always present.
-// This improves type checking, especially in conditional logic in hooks (e.g., `if (eventType === 'VIEW')`).
+// Define a partial RUM event type.
+// Ensuring the `type` field is always present improves type checking, especially in conditional logic in hooks (e.g., `if (eventType === 'view')`).
 export type PartialRumEvent = RecursivePartialExcept<RumEvent, 'type'>
 
 // This is a workaround for an issue occurring when the Browser SDK is included in a TypeScript

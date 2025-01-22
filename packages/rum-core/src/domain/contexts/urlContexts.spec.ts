@@ -136,7 +136,7 @@ describe('urlContexts', () => {
     expect(urlContexts.findUrl()).toBeUndefined()
   })
 
-  describe('assembly hook', () => {
+  describe('assemble hook', () => {
     it('should add url properties from the history', () => {
       lifeCycle.notify(LifeCycleEventType.BEFORE_VIEW_CREATED, {
         startClocks: relativeToClocks(0 as RelativeTime),
