@@ -578,7 +578,8 @@ describe('rum assembly', () => {
       })
       commonContext.context = { foo: 'global context' }
 
-      hooks.register(HookNames.Assemble, () => ({
+      hooks.register(HookNames.Assemble, ({ eventType }) => ({
+        type: eventType,
         service: 'new service',
         version: 'new version',
         context: { foo: 'bar' },
@@ -597,7 +598,8 @@ describe('rum assembly', () => {
     it('should not override customer context', () => {
       const { lifeCycle, hooks, serverRumEvents } = setupAssemblyTestWithDefaults()
 
-      hooks.register(HookNames.Assemble, () => ({
+      hooks.register(HookNames.Assemble, ({ eventType }) => ({
+        type: eventType,
         context: { foo: 'bar' },
       }))
 

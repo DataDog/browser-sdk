@@ -43,8 +43,6 @@ export function startViewCollection(
     const { service, version, id, name, context } = viewHistory.findView(startTime)!
 
     return {
-      // Explicitly set the event type to enhance type checking, especially for cases
-      // where conditional logic depends on the `type` field (e.g., `if (eventType === 'VIEW')`).
       type: eventType,
       service,
       version,

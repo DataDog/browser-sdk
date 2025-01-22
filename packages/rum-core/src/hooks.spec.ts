@@ -22,21 +22,21 @@ describe('startHooks', () => {
 
   describe('assemble hook', () => {
     it('combines results from multiple callbacks', () => {
-      const callback1 = jasmine.createSpy().and.returnValue({ service: 'foo' })
-      const callback2 = jasmine.createSpy().and.returnValue({ version: 'bar' })
+      const callback1 = jasmine.createSpy().and.returnValue({ type: 'action', service: 'foo' })
+      const callback2 = jasmine.createSpy().and.returnValue({ type: 'action', version: 'bar' })
 
       hooks.register(HookNames.Assemble, callback1)
       hooks.register(HookNames.Assemble, callback2)
 
       const result = hooks.triggerHook(HookNames.Assemble, hookParams)
 
-      expect(result).toEqual({ service: 'foo', version: 'bar' })
+      expect(result).toEqual({ type: 'action', service: 'foo', version: 'bar' })
       expect(callback1).toHaveBeenCalled()
       expect(callback2).toHaveBeenCalled()
     })
 
     it('does not combine undefined results from callbacks', () => {
-      const callback1 = jasmine.createSpy().and.returnValue({ service: 'foo' })
+      const callback1 = jasmine.createSpy().and.returnValue({ type: 'action', service: 'foo' })
       const callback2 = jasmine.createSpy().and.returnValue(undefined)
 
       hooks.register(HookNames.Assemble, callback1)
@@ -44,7 +44,7 @@ describe('startHooks', () => {
 
       const result = hooks.triggerHook(HookNames.Assemble, hookParams)
 
-      expect(result).toEqual({ service: 'foo' })
+      expect(result).toEqual({ type: 'action', service: 'foo' })
       expect(callback1).toHaveBeenCalled()
       expect(callback2).toHaveBeenCalled()
     })

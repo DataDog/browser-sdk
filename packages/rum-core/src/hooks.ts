@@ -7,15 +7,27 @@ export const enum HookNames {
 }
 
 type RecursivePartialExcept<T, K extends keyof T> = {
-  [P in keyof T as P extends K ? never : P]?: T[P] extends object ? RecursivePartialExcept<T[P], never> : T[P]
+  [P in keyof T]?: T[P] extends object ? RecursivePartialExcept<T[P], never> : T[P]
 } & {
-  [P in keyof T as P extends K ? P : never]-?: T[P]
+  [P in K]: T[P]
 }
 
+// Define a partially recursive type for RUM events, ensuring the `type` field is always present.
+// This improves type checking, especially in conditional logic in hooks (e.g., `if (eventType === 'VIEW')`).
 export type PartialRumEvent = RecursivePartialExcept<RumEvent, 'type'>
 
+// This is a workaround for an issue occurring when the Browser SDK is included in a TypeScript
+// project configured with `isolatedModules: true`. Even if the const enum is declared in this
+// module, we cannot use it directly to define the EventMap interface keys (TS error: "Cannot access
+// ambient const enums when the '--isolatedModules' flag is provided.").
+declare const HookNamesAsConst: {
+  ASSEMBLE: HookNames.Assemble
+}
 export type HookCallbackMap = {
-  [HookNames.Assemble]: (param: { eventType: RumEvent['type']; startTime: RelativeTime }) => PartialRumEvent | undefined
+  [HookNamesAsConst.ASSEMBLE]: (param: {
+    eventType: RumEvent['type']
+    startTime: RelativeTime
+  }) => PartialRumEvent | undefined
 }
 
 export type Hooks = ReturnType<typeof startHooks>
