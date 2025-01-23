@@ -3,7 +3,7 @@ import { DeflateEncoderStreamId, PageExitReason } from '@datadog/browser-core'
 import type { ViewHistory, ViewHistoryEntry, RumConfiguration } from '@datadog/browser-rum-core'
 import { LifeCycle, LifeCycleEventType } from '@datadog/browser-rum-core'
 import type { Clock } from '@datadog/browser-core/test'
-import { mockClock, registerCleanupTask, restorePageVisibility } from '@datadog/browser-core/test'
+import { mockClock, registerCleanupTask } from '@datadog/browser-core/test'
 import { createRumSessionManagerMock } from '../../../../rum-core/test'
 import type { BrowserRecord, SegmentContext } from '../../types'
 import { RecordType } from '../../types'
@@ -111,10 +111,6 @@ describe('startSegmentCollection', () => {
   })
 
   describe('segment flush strategy', () => {
-    afterEach(() => {
-      restorePageVisibility()
-    })
-
     it('does not flush empty segments', () => {
       emulatePageUnload()
       worker.processAllMessages()

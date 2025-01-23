@@ -1,11 +1,4 @@
-import {
-  createNewEvent,
-  expireCookie,
-  mockClock,
-  registerCleanupTask,
-  restorePageVisibility,
-  setPageVisibility,
-} from '../../../test'
+import { createNewEvent, expireCookie, mockClock, registerCleanupTask, setPageVisibility } from '../../../test'
 import type { Clock } from '../../../test'
 import { getCookie, setCookie } from '../../browser/cookie'
 import { DOM_EVENT } from '../../browser/addEventListener'
@@ -359,10 +352,6 @@ describe('startSessionManager', () => {
   describe('automatic session expiration', () => {
     beforeEach(() => {
       setPageVisibility('hidden')
-    })
-
-    afterEach(() => {
-      restorePageVisibility()
     })
 
     it('should expire the session after expiration delay', () => {
