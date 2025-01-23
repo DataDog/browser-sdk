@@ -37,10 +37,10 @@ export function findIncrementalSnapshot(
 
 // Returns all the IncrementalSnapshotRecord of a given source in a Segment, if any.
 export function findAllIncrementalSnapshots(
-  segment: BrowserSegment,
+  { records }: { records: BrowserRecord[] },
   source: IncrementalSource
 ): BrowserIncrementalSnapshotRecord[] {
-  return segment.records.filter(
+  return records.filter(
     (record) => record.type === RecordType.IncrementalSnapshot && record.data.source === source
   ) as BrowserIncrementalSnapshotRecord[]
 }

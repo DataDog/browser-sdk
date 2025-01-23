@@ -403,6 +403,8 @@ describe('view metrics', () => {
         value: 0.1,
         targetSelector: undefined,
         time: clock.relative(0),
+        previousRect: undefined,
+        currentRect: undefined,
       })
     })
 
@@ -931,6 +933,14 @@ describe('view event count', () => {
 
       setViewContextProperty('foo', 'bar')
       expect(getViewUpdate(1).context).toEqual({ foo: 'bar' })
+    })
+
+    it('should get view context with getViewContext', () => {
+      viewTest = setupViewTest({ lifeCycle })
+      const { getViewContext, setViewContextProperty } = viewTest
+
+      setViewContextProperty('foo', 'bar')
+      expect(getViewContext()).toEqual({ foo: 'bar' })
     })
   })
 

@@ -1,5 +1,5 @@
 import type { Duration, RelativeTime, TimeoutId } from '@datadog/browser-core'
-import { addEventListener, Observable, setTimeout, clearTimeout, monitor, includes } from '@datadog/browser-core'
+import { addEventListener, Observable, setTimeout, clearTimeout, monitor } from '@datadog/browser-core'
 import type { RumConfiguration } from '../domain/configuration'
 import { hasValidResourceEntryDuration, isAllowedRequestUrl } from '../domain/resource/resourceUtils'
 import { retrieveFirstInputTiming } from './firstInputPolyfill'
@@ -116,14 +116,18 @@ export interface RumPerformanceEventTiming {
   name: string
 }
 
+export interface RumLayoutShiftAttribution {
+  node: Node | null
+  previousRect: DOMRectReadOnly
+  currentRect: DOMRectReadOnly
+}
+
 export interface RumLayoutShiftTiming {
   entryType: RumPerformanceEntryType.LAYOUT_SHIFT
   startTime: RelativeTime
   value: number
   hadRecentInput: boolean
-  sources?: Array<{
-    node?: Node
-  }>
+  sources: RumLayoutShiftAttribution[]
 }
 
 // Documentation https://developer.chrome.com/docs/web-platform/long-animation-frames#better-attribution
@@ -226,7 +230,7 @@ export function createPerformanceObservable<T extends RumPerformanceEntryType>(
         RumPerformanceEntryType.LONG_TASK,
         RumPerformanceEntryType.PAINT,
       ]
-      if (includes(fallbackSupportedEntryTypes, options.type)) {
+      if (fallbackSupportedEntryTypes.includes(options.type)) {
         if (options.buffered) {
           timeoutId = setTimeout(() => handlePerformanceEntries(performance.getEntriesByType(options.type)))
         }

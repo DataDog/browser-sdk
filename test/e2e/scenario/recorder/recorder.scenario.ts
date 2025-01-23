@@ -1,4 +1,4 @@
-import type { InputData, StyleSheetRuleData, BrowserSegment, ScrollData } from '@datadog/browser-rum/src/types'
+import type { InputData, StyleSheetRuleData, ScrollData } from '@datadog/browser-rum/src/types'
 import { NodeType, IncrementalSource, MouseInteractionType } from '@datadog/browser-rum/src/types'
 
 // Import from src to have properties of const enums
@@ -483,36 +483,35 @@ describe('recorder', () => {
 
         await flushEvents()
 
-        expect(intakeRegistry.replaySegments.length).toBe(1)
-
-        const segment = intakeRegistry.replaySegments[0]
-
-        const textInputRecords = filterRecordsByIdAttribute(segment, 'text-input')
+        const textInputRecords = filterRecordsByIdAttribute('text-input')
         expect(textInputRecords.length).toBeGreaterThanOrEqual(4)
         expect((textInputRecords[textInputRecords.length - 1].data as { text?: string }).text).toBe('test')
 
-        const radioInputRecords = filterRecordsByIdAttribute(segment, 'radio-input')
+        const radioInputRecords = filterRecordsByIdAttribute('radio-input')
         expect(radioInputRecords.length).toBe(1)
         expect((radioInputRecords[0].data as { text?: string }).text).toBe(undefined)
         expect((radioInputRecords[0].data as { isChecked?: boolean }).isChecked).toBe(true)
 
-        const checkboxInputRecords = filterRecordsByIdAttribute(segment, 'checkbox-input')
+        const checkboxInputRecords = filterRecordsByIdAttribute('checkbox-input')
         expect(checkboxInputRecords.length).toBe(1)
         expect((checkboxInputRecords[0].data as { text?: string }).text).toBe(undefined)
         expect((checkboxInputRecords[0].data as { isChecked?: boolean }).isChecked).toBe(true)
 
-        const textareaRecords = filterRecordsByIdAttribute(segment, 'textarea')
+        const textareaRecords = filterRecordsByIdAttribute('textarea')
         expect(textareaRecords.length).toBeGreaterThanOrEqual(4)
         expect((textareaRecords[textareaRecords.length - 1].data as { text?: string }).text).toBe('textarea test')
 
-        const selectRecords = filterRecordsByIdAttribute(segment, 'select')
+        const selectRecords = filterRecordsByIdAttribute('select')
         expect(selectRecords.length).toBe(1)
         expect((selectRecords[0].data as { text?: string }).text).toBe('2')
 
-        function filterRecordsByIdAttribute(segment: BrowserSegment, idAttribute: string) {
-          const fullSnapshot = findFullSnapshot(segment)!
+        function filterRecordsByIdAttribute(idAttribute: string) {
+          const fullSnapshot = findFullSnapshot({ records: intakeRegistry.replayRecords })!
           const id = findElementWithIdAttribute(fullSnapshot.data.node, idAttribute)!.id
-          const records = findAllIncrementalSnapshots(segment, IncrementalSource.Input) as Array<{ data: InputData }>
+          const records = findAllIncrementalSnapshots(
+            { records: intakeRegistry.replayRecords },
+            IncrementalSource.Input
+          ) as Array<{ data: InputData }>
           return records.filter((record) => record.data.id === id)
         }
       })
@@ -543,11 +542,10 @@ describe('recorder', () => {
 
         await flushEvents()
 
-        expect(intakeRegistry.replaySegments.length).toBe(1)
-
-        const segment = intakeRegistry.replaySegments[0]
-
-        const inputRecords = findAllIncrementalSnapshots(segment, IncrementalSource.Input)
+        const inputRecords = findAllIncrementalSnapshots(
+          { records: intakeRegistry.replayRecords },
+          IncrementalSource.Input
+        )
 
         expect(inputRecords.length).toBeGreaterThanOrEqual(3) // 4 on Safari, 3 on others
         expect((inputRecords[inputRecords.length - 1].data as { text?: string }).text).toBe('***')
@@ -695,8 +693,28 @@ describe('recorder', () => {
         />
       `)
       .run(async ({ intakeRegistry }) => {
-        const button = await $('#my-button')
-        await Promise.all([button.click(), button.click(), button.click(), button.click()])
+        // We don't use the wdio's `$('button').click()` here because the latency of the command is too high and the
+        // clicks won't be recognised as rage clicks.
+        await browser.execute(() => {
+          const button = document.querySelector('button')!
+
+          function click() {
+            const coordinates = { clientX: 12, clientY: 20 }
+
+            button.dispatchEvent(new PointerEvent('pointerdown', { isPrimary: true, ...coordinates }))
+            button.dispatchEvent(new MouseEvent('mousedown', coordinates))
+            button.dispatchEvent(new PointerEvent('pointerup', { isPrimary: true, ...coordinates }))
+            button.dispatchEvent(new MouseEvent('mouseup', coordinates))
+            button.dispatchEvent(new PointerEvent('click', { isPrimary: true, ...coordinates }))
+          }
+
+          // Simulate a rage click
+          click()
+          click()
+          click()
+          click()
+        })
+
         await flushEvents()
 
         expect(intakeRegistry.replaySegments.length).toBe(1)
