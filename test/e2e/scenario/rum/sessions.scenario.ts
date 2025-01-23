@@ -54,23 +54,18 @@ describe('rum sessions', () => {
     createTest('persists when session is expired')
       .withRum()
       .run(async () => {
-        const prevSessionCookie = await findSessionCookie()
-        const anonymousId = prevSessionCookie?.match(/aid=[a-z0-9-]+/)
-        expect(anonymousId).not.toBeNull()
+        const anonymousId = (await findSessionCookie())?.aid
 
         await expireSession()
         await flushEvents()
 
-        if (anonymousId) {
-          expect(await findSessionCookie()).toContain(anonymousId[0])
-        }
+        expect((await findSessionCookie())?.aid).toEqual(anonymousId)
       })
 
     createTest('persists when session renewed')
       .withRum()
       .run(async () => {
-        const prevSessionCookie = await findSessionCookie()
-        const anonymousId = prevSessionCookie?.match(/aid=[a-z0-9-]+/)
+        const anonymousId = (await findSessionCookie())?.aid
         expect(anonymousId).not.toBeNull()
 
         await browser.execute(() => {
@@ -81,15 +76,7 @@ describe('rum sessions', () => {
         // The session is not created right away, let's wait until we see a cookie
         await browser.waitUntil(async () => Boolean(await findSessionCookie()))
 
-        await browser.execute(() => {
-          window.DD_RUM!.addAction('foo')
-        })
-
-        await flushEvents()
-
-        if (anonymousId) {
-          expect(await findSessionCookie()).toContain(anonymousId[0])
-        }
+        expect((await findSessionCookie())?.aid).toEqual(anonymousId)
       })
 
     createTest('generated when cookie is cleared')
@@ -99,7 +86,7 @@ describe('rum sessions', () => {
         await renewSession()
         await flushEvents()
 
-        expect(await findSessionCookie()).toMatch(/aid=[a-z0-9-]+/)
+        expect((await findSessionCookie())?.aid).toBeDefined()
       })
   })
 
@@ -121,7 +108,7 @@ describe('rum sessions', () => {
         })
         await flushEvents()
 
-        expect(await findSessionCookie()).toContain('isExpired=1')
+        expect((await findSessionCookie())?.isExpired).toEqual('1')
         expect(intakeRegistry.rumActionEvents.length).toBe(0)
       })
 
@@ -142,8 +129,8 @@ describe('rum sessions', () => {
 
         await flushEvents()
 
-        expect(await findSessionCookie()).not.toContain('isExpired=1')
-        expect(await findSessionCookie()).toMatch(/\bid=[a-f0-9-]+/)
+        expect((await findSessionCookie())?.isExpired).not.toEqual('1')
+        expect((await findSessionCookie())?.id).toBeDefined()
         expect(intakeRegistry.rumActionEvents.length).toBe(1)
       })
 

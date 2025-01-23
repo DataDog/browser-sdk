@@ -1,6 +1,6 @@
 import type { Clock } from '../../../test'
-import { expireCookie, mockClock } from '../../../test'
-import { getCookie, setCookie } from '../../browser/cookie'
+import { expireCookie, mockClock, getSessionState } from '../../../test'
+import { setCookie } from '../../browser/cookie'
 import type { InitConfiguration, Configuration } from '../configuration'
 import { display } from '../../tools/display'
 import type { SessionStore } from './sessionStore'
@@ -32,25 +32,25 @@ function setSessionInStore(trackingType: FakeTrackingType = FakeTrackingType.TRA
 }
 
 function expectTrackedSessionToBeInStore(id?: string) {
-  expect(getCookie(SESSION_STORE_KEY)).toMatch(new RegExp(`id=${id ? id : '[a-f0-9-]+'}`))
-  expect(getCookie(SESSION_STORE_KEY)).not.toContain('isExpired=1')
-  expect(getCookie(SESSION_STORE_KEY)).toContain(`${PRODUCT_KEY}=${FakeTrackingType.TRACKED}`)
+  expect(getSessionState(SESSION_STORE_KEY).id).toEqual(id ? id : jasmine.any(String))
+  expect(getSessionState(SESSION_STORE_KEY).isExpired).toBeUndefined()
+  expect(getSessionState(SESSION_STORE_KEY)[PRODUCT_KEY]).toEqual(FakeTrackingType.TRACKED)
 }
 
 function expectNotTrackedSessionToBeInStore() {
-  expect(getCookie(SESSION_STORE_KEY)).not.toMatch(/\bid=/)
-  expect(getCookie(SESSION_STORE_KEY)).not.toContain('isExpired=1')
-  expect(getCookie(SESSION_STORE_KEY)).toContain(`${PRODUCT_KEY}=${FakeTrackingType.NOT_TRACKED}`)
+  expect(getSessionState(SESSION_STORE_KEY).id).toBeUndefined()
+  expect(getSessionState(SESSION_STORE_KEY).isExpired).toBeUndefined()
+  expect(getSessionState(SESSION_STORE_KEY)[PRODUCT_KEY]).toEqual(FakeTrackingType.NOT_TRACKED)
 }
 
 function expectSessionToBeExpiredInStore() {
-  expect(getCookie(SESSION_STORE_KEY)).toContain('isExpired=1')
-  expect(getCookie(SESSION_STORE_KEY)).not.toMatch(/\bid=/)
-  expect(getCookie(SESSION_STORE_KEY)).not.toContain(`${PRODUCT_KEY}=`)
+  expect(getSessionState(SESSION_STORE_KEY).isExpired).toEqual(IS_EXPIRED)
+  expect(getSessionState(SESSION_STORE_KEY).id).toBeUndefined()
+  expect(getSessionState(SESSION_STORE_KEY)[PRODUCT_KEY]).toBeUndefined()
 }
 
 function getStoreExpiration() {
-  return /expire=(\d+)/.exec(getCookie(SESSION_STORE_KEY)!)?.[1]
+  return getSessionState(SESSION_STORE_KEY).expire
 }
 
 function resetSessionInStore() {

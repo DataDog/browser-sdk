@@ -38,7 +38,7 @@ describe('tracking consent', () => {
         await flushEvents()
 
         expect(intakeRegistry.rumActionEvents).toEqual([])
-        expect(await findSessionCookie()).toContain('isExpired=1')
+        expect((await findSessionCookie())?.isExpired).toEqual('1')
       })
 
     createTest('starts a new session when tracking consent is granted again')
