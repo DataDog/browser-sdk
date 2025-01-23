@@ -23,7 +23,7 @@ import type { RumEventDomainContext } from '../domainContext.types'
 import type { RawRumActionEvent, RawRumEvent } from '../rawRumEvent.types'
 import { RumEventType } from '../rawRumEvent.types'
 import type { RumActionEvent, RumErrorEvent, RumEvent, RumResourceEvent } from '../rumEvent.types'
-import { HookNames, startHooks } from '../hooks'
+import { HookNames, createHooks } from '../hooks'
 import { startRumAssembly } from './assembly'
 import type { RawRumEventCollectedData } from './lifeCycle'
 import { LifeCycle, LifeCycleEventType } from './lifeCycle'
@@ -959,7 +959,7 @@ function setupAssemblyTestWithDefaults({
   findView = () => ({ id: '7890', name: 'view name', startClocks: {} as ClocksState }),
 }: AssemblyTestParams = {}) {
   const lifeCycle = new LifeCycle()
-  const hooks = startHooks()
+  const hooks = createHooks()
   const reportErrorSpy = jasmine.createSpy('reportError')
   const rumSessionManager = sessionManager ?? createRumSessionManagerMock().setId('1234')
   const commonContext = {

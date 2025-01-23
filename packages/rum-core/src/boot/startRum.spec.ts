@@ -45,7 +45,7 @@ import { RumEventType } from '../rawRumEvent.types'
 import { startFeatureFlagContexts } from '../domain/contexts/featureFlagContext'
 import type { PageStateHistory } from '../domain/contexts/pageStateHistory'
 import { createCustomVitalsState } from '../domain/vital/vitalCollection'
-import { startHooks } from '../hooks'
+import { createHooks } from '../hooks'
 import { startUrlContexts } from '../domain/contexts/urlContexts'
 import { startRum, startRumEventCollection } from './startRum'
 
@@ -68,7 +68,7 @@ function startRumStub(
   pageStateHistory: PageStateHistory,
   reportError: (error: RawError) => void
 ) {
-  const hooks = startHooks()
+  const hooks = createHooks()
   const viewHistory = startViewHistory(lifeCycle)
   const urlContexts = startUrlContexts(lifeCycle, hooks, locationChangeObservable, location)
 

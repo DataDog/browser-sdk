@@ -181,8 +181,6 @@ export function startRumAssembly(
           rawRumEvent
         ) as RumEvent & Context
 
-        serverRumEvent.context = combine(serverRumEvent.context, customerContext)
-
         if (!('has_replay' in serverRumEvent.session)) {
           ;(serverRumEvent.session as Mutable<RumEvent['session']>).has_replay = commonContext.hasReplay
         }

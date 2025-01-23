@@ -5,7 +5,7 @@ import { setupLocationObserver } from '../../../test'
 import { LifeCycle, LifeCycleEventType } from '../lifeCycle'
 import type { ViewCreatedEvent, ViewEndedEvent } from '../view/trackViews'
 import type { Hooks } from '../../hooks'
-import { HookNames, startHooks } from '../../hooks'
+import { HookNames, createHooks } from '../../hooks'
 import { startUrlContexts, type UrlContexts } from './urlContexts'
 
 describe('urlContexts', () => {
@@ -17,7 +17,7 @@ describe('urlContexts', () => {
 
   beforeEach(() => {
     clock = mockClock()
-    hooks = startHooks()
+    hooks = createHooks()
     const setupResult = setupLocationObserver('http://fake-url.com')
 
     changeLocation = setupResult.changeLocation

@@ -1,11 +1,11 @@
 import type { RelativeTime } from '@datadog/browser-core'
-import { HookNames, startHooks } from './hooks'
+import { HookNames, createHooks } from './hooks'
 
 describe('startHooks', () => {
-  let hooks: ReturnType<typeof startHooks>
+  let hooks: ReturnType<typeof createHooks>
   const hookParams = { eventType: 'error', startTime: 1011 as RelativeTime } as any
   beforeEach(() => {
-    hooks = startHooks()
+    hooks = createHooks()
   })
 
   it('unregister a hook callback', () => {

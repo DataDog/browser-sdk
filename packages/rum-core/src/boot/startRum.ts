@@ -51,7 +51,7 @@ import { startLongAnimationFrameCollection } from '../domain/longAnimationFrame/
 import { RumPerformanceEntryType } from '../browser/performanceObservable'
 import { startLongTaskCollection } from '../domain/longTask/longTaskCollection'
 import type { Hooks } from '../hooks'
-import { startHooks } from '../hooks'
+import { createHooks } from '../hooks'
 import type { RecorderApi } from './rumPublicApi'
 
 export type StartRum = typeof startRum
@@ -73,7 +73,7 @@ export function startRum(
 ) {
   const cleanupTasks: Array<() => void> = []
   const lifeCycle = new LifeCycle()
-  const hooks = startHooks()
+  const hooks = createHooks()
 
   lifeCycle.subscribe(LifeCycleEventType.RUM_EVENT_COLLECTED, (event) => sendToExtension('rum', event))
 

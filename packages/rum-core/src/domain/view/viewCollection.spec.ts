@@ -19,7 +19,7 @@ import type { RumConfiguration } from '../configuration'
 import type { FeatureFlagContexts } from '../contexts/featureFlagContext'
 import type { LocationChange } from '../../browser/locationChangeObservable'
 import type { Hooks } from '../../hooks'
-import { HookNames, startHooks } from '../../hooks'
+import { HookNames, createHooks } from '../../hooks'
 
 import type { ViewHistoryEntry } from '../contexts/viewHistory'
 import { startViewCollection } from './viewCollection'
@@ -85,7 +85,7 @@ describe('viewCollection', () => {
     partialFeatureFlagContexts: Partial<FeatureFlagContexts> = {},
     viewHistoryEntry?: ViewHistoryEntry
   ) {
-    hooks = startHooks()
+    hooks = createHooks()
     const viewHistory = mockViewHistory(viewHistoryEntry)
     getReplayStatsSpy = jasmine.createSpy()
     const domMutationObservable = new Observable<void>()

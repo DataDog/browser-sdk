@@ -30,9 +30,9 @@ export type HookCallbackMap = {
   }) => PartialRumEvent | undefined
 }
 
-export type Hooks = ReturnType<typeof startHooks>
+export type Hooks = ReturnType<typeof createHooks>
 
-export function startHooks() {
+export function createHooks() {
   const callbacks: { [K in HookNames]?: Array<HookCallbackMap[K]> } = {}
 
   return {
