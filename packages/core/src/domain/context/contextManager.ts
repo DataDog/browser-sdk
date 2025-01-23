@@ -15,24 +15,25 @@ export type PropertiesConfig = {
   }
 }
 
-function enforceTypeProperties(context: Context, propertiesConfig: PropertiesConfig) {
+function ensureProperties(context: Context, propertiesConfig: PropertiesConfig, name: string) {
   const newContext = { ...context }
-  for (const [key, { type }] of Object.entries(propertiesConfig)) {
+
+  for (const [key, { required, type }] of Object.entries(propertiesConfig)) {
+    /**
+     * Ensure specified properties are strings as defined here:
+     * https://docs.datadoghq.com/logs/log_configuration/attributes_naming_convention/#user-related-attributes
+     */
     if (type === 'string' && key in newContext) {
       /* eslint-disable @typescript-eslint/no-base-to-string */
       newContext[key] = String(newContext[key])
     }
-  }
 
-  return newContext
-}
-
-function checkRequiredProperties(context: Context, propertiesConfig: PropertiesConfig, name: string) {
-  for (const [key, { required }] of Object.entries(propertiesConfig)) {
     if (required && !(key in context)) {
       display.warn(`The property ${key} of ${name} context is required; context will not be sent to the intake.`)
     }
   }
+
+  return newContext
 }
 
 export function createContextManager(
@@ -53,26 +54,24 @@ export function createContextManager(
 
     setContext: (newContext: Context) => {
       if (getType(newContext) === 'object') {
-        context = sanitize(enforceTypeProperties(newContext, propertiesConfig))
+        context = sanitize(ensureProperties(newContext, propertiesConfig, name))
         customerDataTracker?.updateCustomerData(context)
       } else {
         contextManager.clearContext()
       }
-      checkRequiredProperties(context, propertiesConfig, name)
       changeObservable.notify()
     },
 
     setContextProperty: (key: string, property: any) => {
-      context[key] = sanitize(enforceTypeProperties({ [key]: property }, propertiesConfig)[key])
+      context[key] = sanitize(ensureProperties({ [key]: property }, propertiesConfig, name)[key])
       customerDataTracker?.updateCustomerData(context)
-      checkRequiredProperties(context, propertiesConfig, name)
       changeObservable.notify()
     },
 
     removeContextProperty: (key: string) => {
       delete context[key]
       customerDataTracker?.updateCustomerData(context)
-      checkRequiredProperties(context, propertiesConfig, name)
+      ensureProperties(context, propertiesConfig, name)
       changeObservable.notify()
     },
 
