@@ -86,8 +86,6 @@ export interface RawRumErrorEvent {
   view?: {
     in_foreground: boolean
   }
-
-  feature_flags?: Context
 }
 
 export interface RawRumViewEvent {
@@ -130,7 +128,6 @@ export interface RawRumViewEvent {
     has_replay: true | undefined
     is_active: false | undefined
   }
-  feature_flags?: Context
   display?: ViewDisplay
   privacy?: {
     replay_level: DefaultPrivacyLevel
@@ -370,6 +367,7 @@ export interface RumContext {
   action?: {
     id: string | string[]
   }
+  feature_flags?: Context
   synthetics?: {
     test_id: string
     result_id: string

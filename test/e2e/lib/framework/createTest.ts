@@ -18,19 +18,23 @@ import { createMockServerApp } from './serverApps/mock'
 const DEFAULT_RUM_CONFIGURATION = {
   applicationId: APPLICATION_ID,
   clientToken: CLIENT_TOKEN,
-  sessionReplaySampleRate: 100,
   defaultPrivacyLevel: DefaultPrivacyLevel.ALLOW,
   trackResources: true,
   trackLongTasks: true,
-  telemetrySampleRate: 100,
-  telemetryConfigurationSampleRate: 100,
   enableExperimentalFeatures: [],
   allowUntrustedEvents: true,
+  // Force All sample rates to 100% to avoid flakiness
+  sessionReplaySampleRate: 100,
+  telemetrySampleRate: 100,
+  telemetryUsageSampleRate: 100,
+  telemetryConfigurationSampleRate: 100,
 }
 
 const DEFAULT_LOGS_CONFIGURATION = {
   clientToken: CLIENT_TOKEN,
+  // Force All sample rates to 100% to avoid flakiness
   telemetrySampleRate: 100,
+  telemetryUsageSampleRate: 100,
   telemetryConfigurationSampleRate: 100,
 }
 
