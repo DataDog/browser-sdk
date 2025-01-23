@@ -41,6 +41,7 @@ export {
   TelemetryErrorEvent,
   TelemetryDebugEvent,
   TelemetryConfigurationEvent,
+  TelemetryUsageEvent,
   TelemetryService,
   isTelemetryReplicationAllowed,
   addTelemetryConfiguration,
