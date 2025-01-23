@@ -535,18 +535,6 @@ describe('rum assembly', () => {
   describe('service and version', () => {
     const extraConfigurationOptions = { service: 'default service', version: 'default version' }
 
-    it('should come from the init configuration by default', () => {
-      const { lifeCycle, serverRumEvents } = setupAssemblyTestWithDefaults({
-        partialConfiguration: extraConfigurationOptions,
-      })
-
-      notifyRawRumEvent(lifeCycle, {
-        rawRumEvent: createRawRumEvent(RumEventType.ACTION),
-      })
-      expect(serverRumEvents[0].service).toEqual('default service')
-      expect(serverRumEvents[0].version).toEqual('default version')
-    })
-
     describe('fields service and version', () => {
       it('it should be modifiable', () => {
         const { lifeCycle, serverRumEvents } = setupAssemblyTestWithDefaults({

@@ -155,8 +155,6 @@ export function startRumAssembly(
             id: configuration.applicationId,
           },
           date: timeStampNow(),
-          service: configuration.service,
-          version: configuration.version,
           source: 'browser',
           session: {
             id: session.id,
