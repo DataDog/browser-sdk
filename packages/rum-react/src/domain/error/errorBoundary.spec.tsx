@@ -86,12 +86,12 @@ describe('ErrorBoundary', () => {
     ;(ComponentSpy as any).displayName = 'ComponentSpy'
 
     appendComponent(
-      <ErrorBoundary fallback={() => null}>
+      <ErrorBoundary fallback={() => null} errorContext={{ id: 1 }}>
         <ComponentSpy />
       </ErrorBoundary>
     )
 
-    expect(addErrorSpy).toHaveBeenCalledOnceWith(jasmine.any(Error), { framework: 'react' })
+    expect(addErrorSpy).toHaveBeenCalledOnceWith(jasmine.any(Error), { id: 1, framework: 'react' })
     const error = addErrorSpy.calls.first().args[0]
     expect(error.message).toBe('error')
     expect(error.name).toBe('ReactRenderingError')

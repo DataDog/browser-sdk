@@ -5,6 +5,7 @@ import { addReactError } from './addReactError'
 interface Props {
   fallback: Fallback
   children: React.ReactNode
+  errorContext?: object
 }
 
 export type Fallback = React.ComponentType<{ error: Error; resetError: () => void }>
@@ -37,7 +38,7 @@ export class ErrorBoundary extends React.Component<Props, State> {
   }
 
   componentDidCatch(error: Error, errorInfo: ErrorInfo) {
-    addReactError(error, errorInfo)
+    addReactError(error, this.props.errorContext, errorInfo)
   }
 
   render() {
