@@ -42,6 +42,7 @@ import { startFeatureFlagContexts } from '../domain/contexts/featureFlagContext'
 import { startCustomerDataTelemetry } from '../domain/startCustomerDataTelemetry'
 import type { PageStateHistory } from '../domain/contexts/pageStateHistory'
 import { startPageStateHistory } from '../domain/contexts/pageStateHistory'
+import type { FeatureFlagContexts } from '../domain/contexts/featureFlagContext'
 import type { CommonContext } from '../domain/contexts/commonContext'
 import { startDisplayContext } from '../domain/contexts/displayContext'
 import type { CustomVitalsState } from '../domain/vital/vitalCollection'
@@ -144,6 +145,7 @@ export function startRum(
     pageStateHistory,
     locationChangeObservable,
     domMutationObservable,
+    featureFlagContexts,
     windowOpenObservable,
     getCommonContext,
     reportError
@@ -167,7 +169,6 @@ export function startRum(
     domMutationObservable,
     windowOpenObservable,
     locationChangeObservable,
-    featureFlagContexts,
     pageStateHistory,
     recorderApi,
     initialViewOptions
@@ -186,7 +187,7 @@ export function startRum(
     }
   }
 
-  const { addError } = startErrorCollection(lifeCycle, configuration, pageStateHistory, featureFlagContexts)
+  const { addError } = startErrorCollection(lifeCycle, configuration, pageStateHistory)
 
   startRequestCollection(lifeCycle, configuration, session)
 
@@ -240,6 +241,7 @@ export function startRumEventCollection(
   pageStateHistory: PageStateHistory,
   locationChangeObservable: Observable<LocationChange>,
   domMutationObservable: Observable<void>,
+  featureFlagContexts: FeatureFlagContexts,
   windowOpenObservable: Observable<void>,
   getCommonContext: () => CommonContext,
   reportError: (error: RawError) => void
@@ -267,6 +269,7 @@ export function startRumEventCollection(
     actionCollection.actionContexts,
     displayContext,
     ciVisibilityContext,
+    featureFlagContexts,
     getCommonContext,
     reportError
   )
