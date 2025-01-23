@@ -4,8 +4,7 @@ import { appendComponent } from '../../../test/appendComponent'
 import { initializeReactPlugin } from '../../../test/initializeReactPlugin'
 import type { Clock } from '../../../../core/test'
 import { mockClock, registerCleanupTask } from '../../../../core/test'
-// eslint-disable-next-line camelcase
-import { UNSTABLE_ReactComponentTracker } from './reactComponentTracker'
+import { UNSTABLE_ReactComponentTracker as ReactComponentTracker } from './reactComponentTracker'
 
 const RENDER_DURATION = 100
 const EFFECT_DURATION = 101
@@ -36,10 +35,9 @@ describe('UNSTABLE_ReactComponentTracker', () => {
     })
 
     appendComponent(
-      // eslint-disable-next-line camelcase
-      <UNSTABLE_ReactComponentTracker name="ChildComponent">
+      <ReactComponentTracker name="ChildComponent">
         <ChildComponent clock={clock} />
-      </UNSTABLE_ReactComponentTracker>
+      </ReactComponentTracker>
     )
 
     expect(addDurationVitalSpy).toHaveBeenCalledTimes(1)
@@ -74,10 +72,9 @@ describe('UNSTABLE_ReactComponentTracker', () => {
       forceUpdate = () => setState((prev) => prev + 1)
       return (
         <>
-          {/* eslint-disable-next-line camelcase */}
-          <UNSTABLE_ReactComponentTracker name="ChildComponent">
+          <ReactComponentTracker name="ChildComponent">
             <ChildComponent clock={clock} />
-          </UNSTABLE_ReactComponentTracker>
+          </ReactComponentTracker>
         </>
       )
     }
