@@ -1,10 +1,13 @@
-import type { RumPlugin, RumPublicApi } from '@datadog/browser-rum-core'
+import type { RumPlugin, RumPublicApi, Strategy } from '@datadog/browser-rum-core'
 
 let globalPublicApi: RumPublicApi | undefined
 let globalConfiguration: ReactPluginConfiguration | undefined
-type Subscriber = (configuration: ReactPluginConfiguration, rumPublicApi: RumPublicApi) => void
+let globalStrategy: Strategy | undefined
+type InitSubscriber = (configuration: ReactPluginConfiguration, rumPublicApi: RumPublicApi) => void
+type StartSubscriber = (strategy: Strategy) => void
 
-const onReactPluginInitSubscribers: Subscriber[] = []
+const onRumInitSubscribers: InitSubscriber[] = []
+const onRumStartSubscribers: StartSubscriber[] = []
 
 export interface ReactPluginConfiguration {
   /**
@@ -19,9 +22,17 @@ export function reactPlugin(configuration: ReactPluginConfiguration = {}) {
     onInit({ publicApi, initConfiguration }) {
       globalPublicApi = publicApi
       globalConfiguration = configuration
-      onReactPluginInitSubscribers.forEach((subscriber) => subscriber(configuration, publicApi))
+      for (const subscriber of onRumInitSubscribers) {
+        subscriber(globalConfiguration, globalPublicApi)
+      }
       if (configuration.router) {
         initConfiguration.trackViewsManually = true
+      }
+    },
+    onRumStart({ strategy }) {
+      globalStrategy = strategy
+      for (const subscriber of onRumStartSubscribers) {
+        subscriber(strategy)
       }
     },
     getConfigurationTelemetry() {
@@ -30,16 +41,26 @@ export function reactPlugin(configuration: ReactPluginConfiguration = {}) {
   } satisfies RumPlugin
 }
 
-export function onReactPluginInit(callback: Subscriber) {
+export function onRumInit(callback: InitSubscriber) {
   if (globalConfiguration && globalPublicApi) {
     callback(globalConfiguration, globalPublicApi)
   } else {
-    onReactPluginInitSubscribers.push(callback)
+    onRumInitSubscribers.push(callback)
+  }
+}
+
+export function onRumStart(callback: StartSubscriber) {
+  if (globalStrategy) {
+    callback(globalStrategy)
+  } else {
+    onRumStartSubscribers.push(callback)
   }
 }
 
 export function resetReactPlugin() {
   globalPublicApi = undefined
   globalConfiguration = undefined
-  onReactPluginInitSubscribers.length = 0
+  globalStrategy = undefined
+  onRumInitSubscribers.length = 0
+  onRumStartSubscribers.length = 0
 }
