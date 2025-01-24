@@ -231,8 +231,11 @@ function createTestContext(
     browserContext,
     browserName,
     withBrowserLogs: (cb: (logs: BrowserLog[]) => void) => {
-      cb(browserLogsManager.get())
-      browserLogsManager.clear()
+      try {
+        cb(browserLogsManager.get())
+      } finally {
+        browserLogsManager.clear()
+      }
     },
     flushBrowserLogs: () => {
       browserLogsManager.clear()
