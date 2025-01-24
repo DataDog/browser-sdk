@@ -1,11 +1,12 @@
 import { bundleSetup, createTest, flushEvents } from '../lib/framework'
+import { test, expect } from '@playwright/test'
 
-describe('telemetry', () => {
+test.describe('telemetry', () => {
   createTest('send errors for logs')
     .withSetup(bundleSetup)
     .withLogs()
-    .run(async ({ intakeRegistry }) => {
-      await browser.execute(() => {
+    .run(async ({ intakeRegistry, page, flushEvents }) => {
+      await page.evaluate(() => {
         const context = {
           get foo() {
             throw new window.Error('expected error')
@@ -26,8 +27,8 @@ describe('telemetry', () => {
   createTest('send errors for RUM')
     .withSetup(bundleSetup)
     .withRum()
-    .run(async ({ intakeRegistry }) => {
-      await browser.execute(() => {
+    .run(async ({ intakeRegistry, flushEvents, page }) => {
+      await page.evaluate(() => {
         const context = {
           get foo() {
             throw new window.Error('expected error')
@@ -50,7 +51,7 @@ describe('telemetry', () => {
     .withLogs({
       forwardErrorsToLogs: true,
     })
-    .run(async ({ intakeRegistry }) => {
+    .run(async ({ intakeRegistry, flushEvents }) => {
       await flushEvents()
       expect(intakeRegistry.telemetryConfigurationEvents.length).toBe(1)
       const event = intakeRegistry.telemetryConfigurationEvents[0]
@@ -63,7 +64,7 @@ describe('telemetry', () => {
     .withRum({
       trackUserInteractions: true,
     })
-    .run(async ({ intakeRegistry }) => {
+    .run(async ({ intakeRegistry, flushEvents }) => {
       await flushEvents()
       expect(intakeRegistry.telemetryConfigurationEvents.length).toBe(1)
       const event = intakeRegistry.telemetryConfigurationEvents[0]
@@ -74,8 +75,8 @@ describe('telemetry', () => {
   createTest('send usage telemetry for RUM')
     .withSetup(bundleSetup)
     .withRum()
-    .run(async ({ intakeRegistry }) => {
-      await browser.execute(() => {
+    .run(async ({ intakeRegistry, flushEvents, page }) => {
+      await page.evaluate(() => {
         window.DD_RUM!.addAction('foo')
       })
 
@@ -89,8 +90,8 @@ describe('telemetry', () => {
   createTest('send usage telemetry for logs')
     .withSetup(bundleSetup)
     .withLogs()
-    .run(async ({ intakeRegistry }) => {
-      await browser.execute(() => {
+    .run(async ({ intakeRegistry, flushEvents, page }) => {
+      await page.evaluate(() => {
         window.DD_LOGS!.setTrackingConsent('granted')
       })
 
