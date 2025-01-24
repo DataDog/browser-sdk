@@ -1,3 +1,8 @@
-export function lazyLoadRecorder() {
-  return import(/* webpackChunkName: "recorder" */ './startRecording').then((module) => module.startRecording)
+export async function lazyLoadRecorder() {
+  try {
+    const module = await import(/* webpackChunkName: "recorder" */ './startRecording')
+    return module.startRecording
+  } catch {
+    /* Prevent collecting the webpack ChunkLoadError as it is already collected as a RUM resource. */
+  }
 }

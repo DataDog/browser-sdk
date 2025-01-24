@@ -392,9 +392,9 @@ export type TelemetryConfigurationEvent = CommonTelemetryProperties & {
        */
       is_main_process?: boolean
       /**
-       * The list of events that include feature flags collection
+       * The list of events that include feature flags collection. The tracking is always enabled for views and errors.
        */
-      collect_feature_flags_on?: ('view' | 'error' | 'vital')[]
+      track_feature_flags_for_events?: ('vital' | 'resource' | 'action' | 'long_task')[]
       /**
        * Whether the anonymous users are tracked
        */
@@ -433,6 +433,7 @@ export type TelemetryCommonFeaturesUsage =
   | AddError
   | SetGlobalContext
   | SetUser
+  | SetAccount
   | AddFeatureFlagEvaluation
 /**
  * Schema of browser specific features usage
@@ -621,6 +622,13 @@ export interface SetUser {
    * setUser, setUserProperty, setUserInfo APIs
    */
   feature: 'set-user'
+  [k: string]: unknown
+}
+export interface SetAccount {
+  /**
+   * setAccount, setAccountProperty APIs
+   */
+  feature: 'set-account'
   [k: string]: unknown
 }
 export interface AddFeatureFlagEvaluation {

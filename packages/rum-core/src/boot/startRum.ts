@@ -17,8 +17,6 @@ import {
   addTelemetryDebug,
   CustomerDataType,
   drainPreStartTelemetry,
-  isExperimentalFeatureEnabled,
-  ExperimentalFeature,
 } from '@datadog/browser-core'
 import { createDOMMutationObservable } from '../browser/domMutationObservable'
 import { createWindowOpenObservable } from '../browser/windowOpenObservable'
@@ -29,7 +27,6 @@ import { startViewHistory } from '../domain/contexts/viewHistory'
 import { startRequestCollection } from '../domain/requestCollection'
 import { startActionCollection } from '../domain/action/actionCollection'
 import { startErrorCollection } from '../domain/error/errorCollection'
-import { startLongTaskCollection } from '../domain/longTask/longTaskCollection'
 import { startResourceCollection } from '../domain/resource/resourceCollection'
 import { startViewCollection } from '../domain/view/viewCollection'
 import type { RumSessionManager } from '../domain/rumSessionManager'
@@ -45,12 +42,15 @@ import { startFeatureFlagContexts } from '../domain/contexts/featureFlagContext'
 import { startCustomerDataTelemetry } from '../domain/startCustomerDataTelemetry'
 import type { PageStateHistory } from '../domain/contexts/pageStateHistory'
 import { startPageStateHistory } from '../domain/contexts/pageStateHistory'
+import type { FeatureFlagContexts } from '../domain/contexts/featureFlagContext'
 import type { CommonContext } from '../domain/contexts/commonContext'
 import { startDisplayContext } from '../domain/contexts/displayContext'
 import type { CustomVitalsState } from '../domain/vital/vitalCollection'
 import { startVitalCollection } from '../domain/vital/vitalCollection'
 import { startCiVisibilityContext } from '../domain/contexts/ciVisibilityContext'
 import { startLongAnimationFrameCollection } from '../domain/longAnimationFrame/longAnimationFrameCollection'
+import { RumPerformanceEntryType } from '../browser/performanceObservable'
+import { startLongTaskCollection } from '../domain/longTask/longTaskCollection'
 import type { RecorderApi } from './rumPublicApi'
 
 export type StartRum = typeof startRum
@@ -145,6 +145,7 @@ export function startRum(
     pageStateHistory,
     locationChangeObservable,
     domMutationObservable,
+    featureFlagContexts,
     windowOpenObservable,
     getCommonContext,
     reportError
@@ -159,6 +160,7 @@ export function startRum(
     setViewName,
     setViewContext,
     setViewContextProperty,
+    getViewContext,
     stop: stopViewCollection,
   } = startViewCollection(
     lifeCycle,
@@ -167,7 +169,6 @@ export function startRum(
     domMutationObservable,
     windowOpenObservable,
     locationChangeObservable,
-    featureFlagContexts,
     pageStateHistory,
     recorderApi,
     initialViewOptions
@@ -177,16 +178,16 @@ export function startRum(
   const { stop: stopResourceCollection } = startResourceCollection(lifeCycle, configuration, pageStateHistory)
   cleanupTasks.push(stopResourceCollection)
 
-  if (isExperimentalFeatureEnabled(ExperimentalFeature.LONG_ANIMATION_FRAME)) {
-    if (configuration.trackLongTasks) {
+  if (configuration.trackLongTasks) {
+    if (PerformanceObserver.supportedEntryTypes?.includes(RumPerformanceEntryType.LONG_ANIMATION_FRAME)) {
       const { stop: stopLongAnimationFrameCollection } = startLongAnimationFrameCollection(lifeCycle, configuration)
       cleanupTasks.push(stopLongAnimationFrameCollection)
+    } else {
+      startLongTaskCollection(lifeCycle, configuration)
     }
-  } else {
-    startLongTaskCollection(lifeCycle, configuration)
   }
 
-  const { addError } = startErrorCollection(lifeCycle, configuration, pageStateHistory, featureFlagContexts)
+  const { addError } = startErrorCollection(lifeCycle, configuration, pageStateHistory)
 
   startRequestCollection(lifeCycle, configuration, session)
 
@@ -207,6 +208,7 @@ export function startRum(
     startView,
     setViewContext,
     setViewContextProperty,
+    getViewContext,
     setViewName,
     lifeCycle,
     viewHistory,
@@ -239,6 +241,7 @@ export function startRumEventCollection(
   pageStateHistory: PageStateHistory,
   locationChangeObservable: Observable<LocationChange>,
   domMutationObservable: Observable<void>,
+  featureFlagContexts: FeatureFlagContexts,
   windowOpenObservable: Observable<void>,
   getCommonContext: () => CommonContext,
   reportError: (error: RawError) => void
@@ -266,6 +269,7 @@ export function startRumEventCollection(
     actionCollection.actionContexts,
     displayContext,
     ciVisibilityContext,
+    featureFlagContexts,
     getCommonContext,
     reportError
   )

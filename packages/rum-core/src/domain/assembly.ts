@@ -1,4 +1,4 @@
-import type { Context, RawError, EventRateLimiter, User } from '@datadog/browser-core'
+import type { Context, RawError, EventRateLimiter, User, RelativeTime } from '@datadog/browser-core'
 import {
   combine,
   isEmptyObject,
@@ -22,6 +22,7 @@ import type {
 } from '../rawRumEvent.types'
 import { RumEventType } from '../rawRumEvent.types'
 import type { RumEvent } from '../rumEvent.types'
+import type { FeatureFlagContexts } from './contexts/featureFlagContext'
 import { getSyntheticsContext } from './contexts/syntheticsContext'
 import type { CiVisibilityContext } from './contexts/ciVisibilityContext'
 import type { LifeCycle } from './lifeCycle'
@@ -29,7 +30,7 @@ import { LifeCycleEventType } from './lifeCycle'
 import type { ViewHistory } from './contexts/viewHistory'
 import { SessionReplayState, type RumSessionManager } from './rumSessionManager'
 import type { UrlContexts } from './contexts/urlContexts'
-import type { RumConfiguration } from './configuration'
+import type { RumConfiguration, FeatureFlagsForEvents } from './configuration'
 import type { ActionContexts } from './action/actionCollection'
 import type { DisplayContext } from './contexts/displayContext'
 import type { CommonContext } from './contexts/commonContext'
@@ -73,6 +74,7 @@ export function startRumAssembly(
   actionContexts: ActionContexts,
   displayContext: DisplayContext,
   ciVisibilityContext: CiVisibilityContext,
+  featureFlagContexts: FeatureFlagContexts,
   getCommonContext: () => CommonContext,
   reportError: (error: RawError) => void
 ) {
@@ -171,6 +173,12 @@ export function startRumAssembly(
             url: urlContext.url,
             referrer: urlContext.referrer,
           },
+          feature_flags: findFeatureFlagsContext(
+            rawRumEvent,
+            startTime,
+            configuration.trackFeatureFlagsForEvents,
+            featureFlagContexts
+          ),
           action: needToAssembleWithAction(rawRumEvent) && actionId ? { id: actionId } : undefined,
           synthetics: syntheticsContext,
           ci_test: ciVisibilityContext.get(),
@@ -234,4 +242,22 @@ function needToAssembleWithAction(
   event: RawRumEvent
 ): event is RawRumErrorEvent | RawRumResourceEvent | RawRumLongTaskEvent {
   return [RumEventType.ERROR, RumEventType.RESOURCE, RumEventType.LONG_TASK].indexOf(event.type) !== -1
+}
+
+function findFeatureFlagsContext(
+  rawRumEvent: RawRumEvent,
+  eventStartTime: RelativeTime,
+  trackFeatureFlagsForEvents: FeatureFlagsForEvents[],
+  featureFlagContexts: FeatureFlagContexts
+) {
+  const isTrackingEnforced = rawRumEvent.type === RumEventType.VIEW || rawRumEvent.type === RumEventType.ERROR
+
+  const isListedInConfig = trackFeatureFlagsForEvents.includes(rawRumEvent.type as FeatureFlagsForEvents)
+
+  if (isTrackingEnforced || isListedInConfig) {
+    const featureFlagContext = featureFlagContexts.findFeatureFlagEvaluations(eventStartTime)
+    if (featureFlagContext && !isEmptyObject(featureFlagContext)) {
+      return featureFlagContext
+    }
+  }
 }

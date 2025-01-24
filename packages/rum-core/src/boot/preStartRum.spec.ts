@@ -567,6 +567,19 @@ describe('preStartRum', () => {
     })
   })
 
+  describe('getViewContext', () => {
+    it('returns empty object', () => {
+      const strategy = createPreStartStrategy(
+        {},
+        getCommonContextSpy,
+        createTrackingConsentState(),
+        createCustomVitalsState(),
+        doStartRumSpy
+      )
+      expect(strategy.getViewContext()).toEqual({})
+    })
+  })
+
   describe('stopSession', () => {
     it('does not buffer the call before starting RUM', () => {
       const strategy = createPreStartStrategy(

@@ -1057,6 +1057,10 @@ export type RumViewEvent = CommonProperties &
        * The JavaScript refresh rate for React Native
        */
       js_refresh_rate?: RumPerfMetric
+      /**
+       * Performance data. (Web Vitals, etc.)
+       */
+      performance?: ViewPerformanceData
       [k: string]: unknown
     }
     /**
@@ -1169,10 +1173,6 @@ export type RumViewEvent = CommonProperties &
       }
       [k: string]: unknown
     }
-    /**
-     * Performance data. (Web Vitals, etc.)
-     */
-    performance?: ViewPerformanceData
     [k: string]: unknown
   }
 /**
@@ -1341,6 +1341,20 @@ export interface CommonProperties {
      * Identifier of the user across sessions
      */
     readonly anonymous_id?: string
+    [k: string]: unknown
+  }
+  /**
+   * Account properties
+   */
+  readonly account?: {
+    /**
+     * Identifier of the account
+     */
+    readonly id: string
+    /**
+     * Name of the account
+     */
+    readonly name?: string
     [k: string]: unknown
   }
   /**
@@ -1630,6 +1644,14 @@ export interface ViewPerformanceData {
      * CSS selector path of the first element (in document order) of the largest layout shift contributing to CLS
      */
     readonly target_selector?: string
+    /**
+     * Bounding client rect of the element before the layout shift
+     */
+    previous_rect?: RumRect
+    /**
+     * Bounding client rect of the element after the layout shift
+     */
+    current_rect?: RumRect
     [k: string]: unknown
   }
   /**
@@ -1692,5 +1714,27 @@ export interface ViewPerformanceData {
     readonly target_selector?: string
     [k: string]: unknown
   }
+  [k: string]: unknown
+}
+/**
+ * Schema for DOMRect-like rectangles describing an element's bounding client rect
+ */
+export interface RumRect {
+  /**
+   * The x coordinate of the element's origin
+   */
+  readonly x: number
+  /**
+   * The y coordinate of the element's origin
+   */
+  readonly y: number
+  /**
+   * The element's width
+   */
+  readonly width: number
+  /**
+   * The element's height
+   */
+  readonly height: number
   [k: string]: unknown
 }

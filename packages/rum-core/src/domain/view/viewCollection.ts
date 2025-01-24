@@ -2,16 +2,17 @@ import type { Duration, ServerDuration, Observable } from '@datadog/browser-core
 import { isEmptyObject, mapValues, toServerDuration } from '@datadog/browser-core'
 import { discardNegativeDuration } from '../discardNegativeDuration'
 import type { RecorderApi } from '../../boot/rumPublicApi'
-import type { RawRumViewEvent } from '../../rawRumEvent.types'
+import type { RawRumViewEvent, ViewPerformanceData } from '../../rawRumEvent.types'
 import { RumEventType } from '../../rawRumEvent.types'
 import type { LifeCycle, RawRumEventCollectedData } from '../lifeCycle'
 import { LifeCycleEventType } from '../lifeCycle'
 import type { LocationChange } from '../../browser/locationChangeObservable'
 import type { RumConfiguration } from '../configuration'
-import type { FeatureFlagContexts } from '../contexts/featureFlagContext'
 import type { PageStateHistory } from '../contexts/pageStateHistory'
 import type { ViewEvent, ViewOptions } from './trackViews'
 import { trackViews } from './trackViews'
+import type { CommonViewMetrics } from './viewMetrics/trackCommonViewMetrics'
+import type { InitialViewMetrics } from './viewMetrics/trackInitialViewMetrics'
 
 export function startViewCollection(
   lifeCycle: LifeCycle,
@@ -20,7 +21,6 @@ export function startViewCollection(
   domMutationObservable: Observable<void>,
   pageOpenObserable: Observable<void>,
   locationChangeObservable: Observable<LocationChange>,
-  featureFlagContexts: FeatureFlagContexts,
   pageStateHistory: PageStateHistory,
   recorderApi: RecorderApi,
   initialViewOptions?: ViewOptions
@@ -28,7 +28,7 @@ export function startViewCollection(
   lifeCycle.subscribe(LifeCycleEventType.VIEW_UPDATED, (view) =>
     lifeCycle.notify(
       LifeCycleEventType.RAW_RUM_EVENT_COLLECTED,
-      processViewUpdate(view, configuration, featureFlagContexts, recorderApi, pageStateHistory)
+      processViewUpdate(view, configuration, recorderApi, pageStateHistory)
     )
   )
   return trackViews(
@@ -46,12 +46,10 @@ export function startViewCollection(
 function processViewUpdate(
   view: ViewEvent,
   configuration: RumConfiguration,
-  featureFlagContexts: FeatureFlagContexts,
   recorderApi: RecorderApi,
   pageStateHistory: PageStateHistory
 ): RawRumEventCollectedData<RawRumViewEvent> {
   const replayStats = recorderApi.getReplayStats(view.id)
-  const featureFlagContext = featureFlagContexts.findFeatureFlagEvaluations(view.startClocks.relative)
   const pageStates = pageStateHistory.findAll(view.startClocks.relative, view.duration)
   const viewEvent: RawRumViewEvent = {
     _dd: {
@@ -98,12 +96,12 @@ function processViewUpdate(
       long_task: {
         count: view.eventCounts.longTaskCount,
       },
+      performance: computeViewPerformanceData(view.commonViewMetrics, view.initialViewMetrics),
       resource: {
         count: view.eventCounts.resourceCount,
       },
       time_spent: toServerDuration(view.duration),
     },
-    feature_flags: featureFlagContext && !isEmptyObject(featureFlagContext) ? featureFlagContext : undefined,
     display: view.commonViewMetrics.scroll
       ? {
           scroll: {
@@ -134,6 +132,36 @@ function processViewUpdate(
     startTime: view.startClocks.relative,
     domainContext: {
       location: view.location,
+    },
+  }
+}
+
+function computeViewPerformanceData(
+  { cumulativeLayoutShift, interactionToNextPaint }: CommonViewMetrics,
+  { firstContentfulPaint, firstInput, largestContentfulPaint }: InitialViewMetrics
+): ViewPerformanceData {
+  return {
+    cls: cumulativeLayoutShift && {
+      score: cumulativeLayoutShift.value,
+      timestamp: toServerDuration(cumulativeLayoutShift.time),
+      target_selector: cumulativeLayoutShift.targetSelector,
+      previous_rect: cumulativeLayoutShift.previousRect,
+      current_rect: cumulativeLayoutShift.currentRect,
+    },
+    fcp: firstContentfulPaint && { timestamp: toServerDuration(firstContentfulPaint) },
+    fid: firstInput && {
+      duration: toServerDuration(firstInput.delay),
+      timestamp: toServerDuration(firstInput.time),
+      target_selector: firstInput.targetSelector,
+    },
+    inp: interactionToNextPaint && {
+      duration: toServerDuration(interactionToNextPaint.value),
+      timestamp: toServerDuration(interactionToNextPaint.time),
+      target_selector: interactionToNextPaint.targetSelector,
+    },
+    lcp: largestContentfulPaint && {
+      timestamp: toServerDuration(largestContentfulPaint.value),
+      target_selector: largestContentfulPaint.targetSelector,
     },
   }
 }

@@ -4,7 +4,6 @@ import { registerCleanupTask } from '@datadog/browser-core/test'
 import type { RecorderApi } from '../../boot/rumPublicApi'
 import {
   collectAndValidateRawRumEvents,
-  mockFeatureFlagContexts,
   mockPageStateHistory,
   mockRumConfiguration,
   noopRecorderApi,
@@ -15,7 +14,6 @@ import type { RawRumEventCollectedData } from '../lifeCycle'
 import { LifeCycle, LifeCycleEventType } from '../lifeCycle'
 import { PageState } from '../contexts/pageStateHistory'
 import type { RumConfiguration } from '../configuration'
-import type { FeatureFlagContexts } from '../contexts/featureFlagContext'
 import type { LocationChange } from '../../browser/locationChangeObservable'
 import type { ViewEvent } from './trackViews'
 import { startViewCollection } from './viewCollection'
@@ -74,10 +72,7 @@ describe('viewCollection', () => {
   let getReplayStatsSpy: jasmine.Spy<RecorderApi['getReplayStats']>
   let rawRumEvents: Array<RawRumEventCollectedData<RawRumEvent>> = []
 
-  function setupViewCollection(
-    partialConfiguration: Partial<RumConfiguration> = {},
-    partialFeatureFlagContexts: Partial<FeatureFlagContexts> = {}
-  ) {
+  function setupViewCollection(partialConfiguration: Partial<RumConfiguration> = {}) {
     getReplayStatsSpy = jasmine.createSpy()
     const domMutationObservable = new Observable<void>()
     const windowOpenObservable = new Observable<void>()
@@ -90,7 +85,6 @@ describe('viewCollection', () => {
       domMutationObservable,
       windowOpenObservable,
       locationChangeObservable,
-      mockFeatureFlagContexts(partialFeatureFlagContexts),
       mockPageStateHistory({
         findAll: () => [
           { start: 0 as ServerDuration, state: PageState.ACTIVE },
@@ -167,6 +161,32 @@ describe('viewCollection', () => {
         long_task: {
           count: 10,
         },
+        performance: {
+          cls: {
+            score: 1,
+            timestamp: (100 * 1e6) as ServerDuration,
+            target_selector: undefined,
+            previous_rect: undefined,
+            current_rect: undefined,
+          },
+          fcp: {
+            timestamp: (10 * 1e6) as ServerDuration,
+          },
+          fid: {
+            duration: (12 * 1e6) as ServerDuration,
+            timestamp: (10 * 1e6) as ServerDuration,
+            target_selector: undefined,
+          },
+          inp: {
+            duration: (10 * 1e6) as ServerDuration,
+            timestamp: (100 * 1e6) as ServerDuration,
+            target_selector: undefined,
+          },
+          lcp: {
+            timestamp: (10 * 1e6) as ServerDuration,
+            target_selector: undefined,
+          },
+        },
         resource: {
           count: 10,
         },
@@ -176,7 +196,6 @@ describe('viewCollection', () => {
         has_replay: undefined,
         is_active: undefined,
       },
-      feature_flags: undefined,
       display: {
         scroll: {
           max_depth: 2000,
@@ -213,16 +232,6 @@ describe('viewCollection', () => {
     expect(rawRumViewEvent.session.has_replay).toBe(true)
   })
 
-  it('should include feature flags', () => {
-    setupViewCollection({}, { findFeatureFlagEvaluations: () => ({ feature: 'foo' }) })
-
-    const view: ViewEvent = { ...VIEW, commonViewMetrics: { loadingTime: -20 as Duration } }
-    lifeCycle.notify(LifeCycleEventType.VIEW_UPDATED, view)
-    const rawRumViewEvent = rawRumEvents[rawRumEvents.length - 1].rawRumEvent as RawRumViewEvent
-
-    expect(rawRumViewEvent.feature_flags).toEqual({ feature: 'foo' })
-  })
-
   it('should discard negative loading time', () => {
     setupViewCollection()
     const view: ViewEvent = { ...VIEW, commonViewMetrics: { loadingTime: -20 as Duration } }
@@ -243,7 +252,7 @@ describe('viewCollection', () => {
   describe('with configuration.start_session_replay_recording_manually set', () => {
     it('should include startSessionReplayRecordingManually false', () => {
       // when configured to false
-      setupViewCollection({ startSessionReplayRecordingManually: false }, {})
+      setupViewCollection({ startSessionReplayRecordingManually: false })
       lifeCycle.notify(LifeCycleEventType.VIEW_UPDATED, VIEW)
 
       expect(
@@ -254,7 +263,7 @@ describe('viewCollection', () => {
 
     it('should include startSessionReplayRecordingManually true', () => {
       // when configured to true
-      setupViewCollection({ startSessionReplayRecordingManually: true }, {})
+      setupViewCollection({ startSessionReplayRecordingManually: true })
       lifeCycle.notify(LifeCycleEventType.VIEW_UPDATED, VIEW)
 
       expect(

@@ -16,7 +16,7 @@ type ContainerElementToProcess = {
   path: string
 }
 
-type sanitizedEvent = {
+type SanitizedEvent = {
   type: string
   isTrusted: boolean
   currentTarget: string | null | undefined
@@ -211,7 +211,7 @@ function sanitizePrimitivesAndFunctions(value: PrimitivesAndFunctions) {
  * - If a class defines a toStringTag Symbol, it will fall in the catch-all method and prevent enumeration of properties.
  * To avoid this, a toJSON method can be defined.
  */
-function sanitizeObjects(value: object): string | sanitizedEvent {
+function sanitizeObjects(value: object): string | SanitizedEvent {
   try {
     if (value instanceof Event) {
       return sanitizeEvent(value)
@@ -234,7 +234,7 @@ function sanitizeObjects(value: object): string | sanitizedEvent {
   return '[Unserializable]'
 }
 
-function sanitizeEvent(event: Event): sanitizedEvent {
+function sanitizeEvent(event: Event): SanitizedEvent {
   return {
     type: event.type,
     isTrusted: event.isTrusted,

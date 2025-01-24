@@ -68,6 +68,10 @@ async function renameFilesWithVersionSuffix(bundleFolder, version) {
   await forEachFile(bundleFolder, (bundlePath) => {
     const uploadPath = buildRootUploadPath(bundlePath, version)
 
+    if (bundlePath === uploadPath) {
+      return
+    }
+
     console.log(`Renaming ${bundlePath} to ${uploadPath}`)
     command`mv ${bundlePath} ${uploadPath}`.run()
   })

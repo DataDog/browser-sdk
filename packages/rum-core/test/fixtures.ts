@@ -1,6 +1,10 @@
 import type { Context, Duration, RelativeTime, ServerDuration, TimeStamp } from '@datadog/browser-core'
 import { combine, ErrorHandling, ErrorSource, generateUUID, relativeNow, ResourceType } from '@datadog/browser-core'
-import { RumPerformanceEntryType, type EntryTypeToReturnType } from '../src/browser/performanceObservable'
+import {
+  type RumLayoutShiftAttribution,
+  RumPerformanceEntryType,
+  type EntryTypeToReturnType,
+} from '../src/browser/performanceObservable'
 import type { RawRumEvent } from '../src/rawRumEvent.types'
 import { VitalType, ActionType, RumEventType, ViewLoadingType, RumLongTaskEntryType } from '../src/rawRumEvent.types'
 
@@ -152,6 +156,7 @@ export function createPerformanceEntry<T extends RumPerformanceEntryType>(
         startTime: relativeNow(),
         hadRecentInput: false,
         value: 0.1,
+        sources: [] as RumLayoutShiftAttribution[],
         ...overrides,
       } as EntryTypeToReturnType[T]
     case RumPerformanceEntryType.PAINT:
