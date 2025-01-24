@@ -1,6 +1,6 @@
 import type { BufferedData, RawError } from '@datadog/browser-core'
 import { ErrorSource, ErrorHandling, Observable, BufferedDataType, clocksNow } from '@datadog/browser-core'
-import { registerCleanupTask } from '../../../../core/test'
+import { registerCleanupTask, disableJasmineUncaughtExceptionTracking } from '../../../../core/test'
 import type { RawRuntimeLogsEvent } from '../../rawLogsEvent.types'
 import type { LogsConfiguration } from '../configuration'
 import { StatusType } from '../logger/isAuthorized'
@@ -43,6 +43,7 @@ describe('runtime error collection', () => {
   let originalOnErrorHandler: OnErrorEventHandler
 
   beforeEach(() => {
+    disableJasmineUncaughtExceptionTracking()
     originalOnErrorHandler = window.onerror
     onErrorSpy = jasmine.createSpy()
     window.onerror = onErrorSpy

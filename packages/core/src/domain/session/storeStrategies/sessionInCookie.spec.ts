@@ -110,7 +110,7 @@ describe('session in cookie strategy', () => {
       },
     ].forEach(({ description, initConfiguration, cookieString }) => {
       it(description, () => {
-        const cookieSetSpy = spyOnProperty(document, 'cookie', 'set')
+        const cookieSetSpy = spyOnProperty(Document.prototype, 'cookie', 'set')
         selectCookieStrategy(initConfiguration)
         expect(cookieSetSpy).toHaveBeenCalled()
         for (const call of cookieSetSpy.calls.all()) {
@@ -205,7 +205,7 @@ describe('session in cookie strategy when opt-out anonymous user tracking', () =
 
   it('should not extend cookie expiration time when opt-out', () => {
     const cookieStorageStrategy = setupCookieStrategy({ trackAnonymousUser: false })
-    const cookieSetSpy = spyOnProperty(document, 'cookie', 'set')
+    const cookieSetSpy = spyOnProperty(Document.prototype, 'cookie', 'set')
     const clock = mockClock()
     cookieStorageStrategy.expireSession({ ...sessionState, anonymousId })
     expect(cookieSetSpy.calls.argsFor(0)[0]).toContain(new Date(clock.timeStamp(SESSION_TIME_OUT_DELAY)).toUTCString())

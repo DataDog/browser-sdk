@@ -4,9 +4,14 @@ import { registerCleanupTask } from '../registerCleanupTask'
 export type Clock = ReturnType<typeof mockClock>
 
 export function mockClock() {
+  const originalPerformanceTiming = performance.timing
+
   jasmine.clock().install()
   jasmine.clock().mockDate()
 
+  // Somehow vitest is overriding `performance.timing` and turns it into a function?? That must be a
+  // bug. Restore it here.
+  performance.timing = originalPerformanceTiming
   const timeOrigin = performance.timing.navigationStart // @see getNavigationStart() in timeUtils.ts
   const timeStampStart = Date.now()
   const relativeStart = timeStampStart - timeOrigin

@@ -82,7 +82,7 @@ describe('session state utilities', () => {
       const session = { ...LIVE_SESSION }
       const now = dateNow()
       expandSessionState(session)
-      expect(session.expire).toBeGreaterThanOrEqual(now + SESSION_EXPIRATION_DELAY)
+      expect(Number(session.expire)).toBeGreaterThanOrEqual(now + SESSION_EXPIRATION_DELAY)
     })
   })
 })

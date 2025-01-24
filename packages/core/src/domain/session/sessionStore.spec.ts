@@ -263,7 +263,7 @@ describe('session store', () => {
     })
 
     function disableCookies() {
-      spyOnProperty(document, 'cookie', 'get').and.returnValue('')
+      spyOnProperty(Document.prototype, 'cookie', 'get').and.returnValue('')
     }
     function disableLocalStorage() {
       spyOn(Storage.prototype, 'getItem').and.throwError('unavailable')
