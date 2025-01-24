@@ -15,6 +15,7 @@ export default defineConfig({
   testDir: './test/e2e/scenario',
   testMatch: [
     '**/actions.scenario.ts',
+    '**/eventBridge.scenario.ts',
     '**/init.scenario.ts',
     '**/logs.scenario.ts',
     '**/microfrontend.scenario.ts',
