@@ -1,6 +1,7 @@
 import type { RumErrorEvent } from '@datadog/browser-rum-core'
-import { createTest, flushEvents, html } from '../../lib/framework'
-import { getBrowserName, getPlatformName, withBrowserLogs } from '../../lib/helpers/browser'
+import { createTest, html } from '../../lib/framework'
+import { getBrowserName, getPlatformName } from '../../lib/helpers/browser'
+import { test, expect } from '@playwright/test'
 
 // Note: using `browser.execute` to throw exceptions may result in "Script error." being reported,
 // because WDIO is evaluating the script in a different context than the page.
@@ -19,12 +20,12 @@ function createBody(errorGenerator: string) {
   `
 }
 
-describe('rum errors', () => {
+test.describe('rum errors', () => {
   createTest('send console.error errors')
     .withRum()
     .withBody(createBody('console.error("oh snap")'))
-    .run(async ({ intakeRegistry, baseUrl }) => {
-      const button = await $('button')
+    .run(async ({ page, intakeRegistry, baseUrl, flushEvents, withBrowserLogs }) => {
+      const button = await page.locator('button')
       await button.click()
 
       await flushEvents()
@@ -43,8 +44,8 @@ describe('rum errors', () => {
   createTest('pass Error instance to console.error')
     .withRum()
     .withBody(createBody('console.error("Foo:", foo())'))
-    .run(async ({ intakeRegistry, baseUrl }) => {
-      const button = await $('button')
+    .run(async ({ page, flushEvents, intakeRegistry, baseUrl, withBrowserLogs }) => {
+      const button = await page.locator('button')
       await button.click()
 
       await flushEvents()
@@ -64,8 +65,8 @@ describe('rum errors', () => {
   createTest('send uncaught exceptions')
     .withRum()
     .withBody(createBody('throw foo()'))
-    .run(async ({ intakeRegistry, baseUrl }) => {
-      const button = await $('button')
+    .run(async ({ page, flushEvents, intakeRegistry, baseUrl, withBrowserLogs }) => {
+      const button = await page.locator('button')
       await button.click()
 
       await flushEvents()
@@ -84,8 +85,8 @@ describe('rum errors', () => {
   createTest('send unhandled rejections')
     .withRum()
     .withBody(createBody('Promise.reject(foo())'))
-    .run(async ({ intakeRegistry, baseUrl }) => {
-      const button = await $('button')
+    .run(async ({ flushEvents, page, intakeRegistry, baseUrl, withBrowserLogs }) => {
+      const button = await page.locator('button')
       await button.click()
 
       await flushEvents()
@@ -104,8 +105,8 @@ describe('rum errors', () => {
   createTest('send custom errors')
     .withRum()
     .withBody(createBody('DD_RUM.addError(foo())'))
-    .run(async ({ intakeRegistry, baseUrl }) => {
-      const button = await $('button')
+    .run(async ({ flushEvents, page, intakeRegistry, baseUrl, withBrowserLogs }) => {
+      const button = await page.locator('button')
       await button.click()
 
       await flushEvents()
@@ -126,40 +127,41 @@ describe('rum errors', () => {
   // - Safari < 15 don't report the property disposition
   // - Firefox < 99 don't report csp violation at all
   // TODO: Remove this condition when upgrading to Safari 15 and Firefox 99 (see: https://datadoghq.atlassian.net/browse/RUM-1063)
-  if (!((getBrowserName() === 'safari' && getPlatformName() === 'macos') || getBrowserName() === 'firefox')) {
-    createTest('send CSP violation errors')
-      .withRum()
-      .withBody(
-        createBody(`
+  createTest('send CSP violation errors')
+    .withRum()
+    .withBody(
+      createBody(`
       const script = document.createElement('script');
       script.src = "https://example.com/foo.js"
       document.body.appendChild(script)
       `)
-      )
-      .run(async ({ intakeRegistry, baseUrl }) => {
-        const button = await $('button')
-        await button.click()
+    )
+    .run(async ({ page, browserName, intakeRegistry, baseUrl, flushEvents, withBrowserLogs }) => {
+      const userAgent = await page.evaluate(() => navigator.userAgent)
+      test.skip(browserName === 'firefox' || (browserName === 'webkit' && userAgent.includes('Mac OS X')))
 
-        await flushEvents()
+      const button = await page.locator('button')
+      await button.click()
 
-        expect(intakeRegistry.rumErrorEvents.length).toBe(1)
-        expectError(intakeRegistry.rumErrorEvents[0].error, {
-          message: /^csp_violation: 'https:\/\/example\.com\/foo\.js' blocked by 'script-src(-elem)?' directive$/,
-          source: 'report',
-          stack: [
-            /^script-src(-elem)?: 'https:\/\/example\.com\/foo\.js' blocked by 'script-src(-elem)?' directive of the policy/,
-            `  at <anonymous> @ ${baseUrl}/:`,
-          ],
-          handling: 'unhandled',
-          csp: {
-            disposition: 'enforce',
-          },
-        })
-        await withBrowserLogs((browserLogs) => {
-          expect(browserLogs.length).toEqual(1)
-        })
+      await flushEvents()
+
+      expect(intakeRegistry.rumErrorEvents.length).toBe(1)
+      expectError(intakeRegistry.rumErrorEvents[0].error, {
+        message: /^csp_violation: 'https:\/\/example\.com\/foo\.js' blocked by 'script-src(-elem)?' directive$/,
+        source: 'report',
+        stack: [
+          /^script-src(-elem)?: 'https:\/\/example\.com\/foo\.js' blocked by 'script-src(-elem)?' directive of the policy/,
+          `  at <anonymous> @ ${baseUrl}/:`,
+        ],
+        handling: 'unhandled',
+        csp: {
+          disposition: 'enforce',
+        },
       })
-  }
+      await withBrowserLogs((browserLogs) => {
+        expect(browserLogs.length).toEqual(1)
+      })
+    })
 })
 
 function expectError(

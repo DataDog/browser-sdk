@@ -28,6 +28,7 @@ export default defineConfig({
     '**/telemetry.scenario.ts',
     '**/resources.scenario.ts',
     '**/recorder.scenario.ts',
+    '**/errors.scenario.ts',
   ],
   /* Run tests in files in parallel */
   fullyParallel: true,
