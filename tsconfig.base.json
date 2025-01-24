@@ -11,6 +11,7 @@
     "target": "ES2018",
     "sourceMap": true,
     "jsx": "react",
+    "skipLibCheck": true,
 
     "types": [],
     "lib": ["ES2020", "DOM"],
