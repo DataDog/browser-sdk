@@ -27,6 +27,7 @@ export default defineConfig({
     '**/trackingConsent.scenario.ts',
     '**/telemetry.scenario.ts',
     '**/resources.scenario.ts',
+    '**/tracing.scenario.ts',
     '**/recorder.scenario.ts',
     '**/errors.scenario.ts',
   ],

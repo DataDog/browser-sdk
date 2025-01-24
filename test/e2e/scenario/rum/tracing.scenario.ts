@@ -1,11 +1,11 @@
+import { test, expect } from '@playwright/test'
 import type { IntakeRegistry } from '../../lib/framework'
-import { flushEvents, createTest } from '../../lib/framework'
-import { sendXhr } from '../../lib/helpers/browser'
+import { createTest } from '../../lib/framework'
 
-describe('tracing', () => {
+test.describe('tracing', () => {
   createTest('trace xhr')
     .withRum({ service: 'service', allowedTracingUrls: ['LOCATION_ORIGIN'] })
-    .run(async ({ intakeRegistry }) => {
+    .run(async ({ intakeRegistry, sendXhr, flushEvents }) => {
       const rawHeaders = await sendXhr('/headers', [
         ['x-foo', 'bar'],
         ['x-foo', 'baz'],
@@ -19,19 +19,22 @@ describe('tracing', () => {
 
   createTest('trace fetch')
     .withRum({ service: 'service', allowedTracingUrls: ['LOCATION_ORIGIN'] })
-    .run(async ({ intakeRegistry }) => {
-      const rawHeaders = await browser.executeAsync<string | Error, []>((done) => {
-        window
-          .fetch('/headers', {
-            headers: [
-              ['x-foo', 'bar'],
-              ['x-foo', 'baz'],
-            ],
+    .run(async ({ intakeRegistry, flushEvents, page }) => {
+      const rawHeaders = await page.evaluate(
+        () =>
+          new Promise<string | Error>((resolve) => {
+            window
+              .fetch('/headers', {
+                headers: [
+                  ['x-foo', 'bar'],
+                  ['x-foo', 'baz'],
+                ],
+              })
+              .then((response) => response.text())
+              .then(resolve)
+              .catch(() => resolve(new Error('Fetch request failed!')))
           })
-          .then((response) => response.text())
-          .then(done)
-          .catch(() => done(new Error('Fetch request failed!')))
-      })
+      )
       const headers = parseHeaders(rawHeaders)
       checkRequestHeaders(headers)
       expect(headers['x-foo']).toBe('bar, baz')
@@ -41,14 +44,17 @@ describe('tracing', () => {
 
   createTest('trace fetch with Request argument')
     .withRum({ service: 'service', allowedTracingUrls: ['LOCATION_ORIGIN'] })
-    .run(async ({ intakeRegistry }) => {
-      const rawHeaders = await browser.executeAsync<string | Error, []>((done) => {
-        window
-          .fetch(new Request('/headers', { headers: { 'x-foo': 'bar, baz' } }))
-          .then((response) => response.text())
-          .then(done)
-          .catch(() => done(new Error('Fetch request failed!')))
-      })
+    .run(async ({ intakeRegistry, flushEvents, page }) => {
+      const rawHeaders = await page.evaluate(
+        () =>
+          new Promise<string | Error>((resolve) => {
+            window
+              .fetch(new Request('/headers', { headers: { 'x-foo': 'bar, baz' } }))
+              .then((response) => response.text())
+              .then(resolve)
+              .catch(() => resolve(new Error('Fetch request failed!')))
+          })
+      )
       const headers = parseHeaders(rawHeaders)
       checkRequestHeaders(headers)
       expect(headers['x-foo']).toBe('bar, baz')
@@ -58,14 +64,17 @@ describe('tracing', () => {
 
   createTest('trace single argument fetch')
     .withRum({ service: 'service', allowedTracingUrls: ['LOCATION_ORIGIN'] })
-    .run(async ({ intakeRegistry }) => {
-      const rawHeaders = await browser.executeAsync<string | Error, []>((done) => {
-        window
-          .fetch('/headers')
-          .then((response) => response.text())
-          .then(done)
-          .catch(() => done(new Error('Fetch request failed!')))
-      })
+    .run(async ({ intakeRegistry, flushEvents, page }) => {
+      const rawHeaders = await page.evaluate(
+        () =>
+          new Promise<string | Error>((resolve) => {
+            window
+              .fetch('/headers')
+              .then((response) => response.text())
+              .then(resolve)
+              .catch(() => resolve(new Error('Fetch request failed!')))
+          })
+      )
       const headers = parseHeaders(rawHeaders)
       checkRequestHeaders(headers)
       await flushEvents()
