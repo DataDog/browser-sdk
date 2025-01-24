@@ -2,7 +2,7 @@ import {
   createBrowserRouter as originalCreateBrowserRouter,
   createHashRouter as originalCreateHashRouter,
   createMemoryRouter as originalCreateMemoryRouter,
-} from 'react-router-6'
+} from 'react-router-7'
 import { startReactRouterView } from './startReactRouterView'
 
 type Router = ReturnType<typeof originalCreateBrowserRouter>

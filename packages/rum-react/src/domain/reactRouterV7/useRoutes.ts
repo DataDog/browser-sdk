@@ -1,5 +1,5 @@
 import { useRef } from 'react'
-import { matchRoutes, useLocation, useRoutes as originalUseRoutes } from 'react-router-6'
+import { matchRoutes, useLocation, useRoutes as originalUseRoutes } from 'react-router-7'
 import { startReactRouterView } from './startReactRouterView'
 
 export const useRoutes: typeof originalUseRoutes = (routes, locationArg) => {

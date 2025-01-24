@@ -1,5 +1,5 @@
-import type { Routes as OriginalRoutes } from 'react-router-6'
-import { createRoutesFromChildren } from 'react-router-6'
+import type { Routes as OriginalRoutes } from 'react-router-7'
+import { createRoutesFromChildren } from 'react-router-7'
 import { useRoutes } from './useRoutes'
 
 // Same as react-router-dom Routes but with our useRoutes instead of the original one
