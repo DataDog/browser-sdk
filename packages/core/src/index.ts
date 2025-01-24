@@ -41,13 +41,14 @@ export {
   TelemetryErrorEvent,
   TelemetryDebugEvent,
   TelemetryConfigurationEvent,
+  TelemetryUsageEvent,
   TelemetryService,
   isTelemetryReplicationAllowed,
   addTelemetryConfiguration,
   addTelemetryUsage,
   drainPreStartTelemetry,
 } from './domain/telemetry'
-export { monitored, monitor, callMonitored, setDebugMode } from './tools/monitor'
+export { monitored, monitor, callMonitored, setDebugMode, monitorError } from './tools/monitor'
 export { Observable, Subscription } from './tools/observable'
 export {
   startSessionManager,
@@ -57,6 +58,7 @@ export {
 } from './domain/session/sessionManager'
 export {
   SESSION_TIME_OUT_DELAY, // Exposed for tests
+  SessionPersistence,
 } from './domain/session/sessionConstants'
 export {
   HttpRequest,
@@ -82,7 +84,7 @@ export { AbstractLifeCycle } from './tools/abstractLifeCycle'
 export * from './domain/eventRateLimiter/createEventRateLimiter'
 export * from './tools/utils/browserDetection'
 export { sendToExtension } from './tools/sendToExtension'
-export { runOnReadyState } from './browser/runOnReadyState'
+export { runOnReadyState, asyncRunOnReadyState } from './browser/runOnReadyState'
 export { getZoneJsOriginalValue } from './tools/getZoneJsOriginalValue'
 export { instrumentMethod, instrumentSetter, InstrumentedMethodCall } from './tools/instrumentMethod'
 export {
@@ -132,6 +134,7 @@ export {
 export { CustomerDataType } from './domain/context/contextConstants'
 export { createValueHistory, ValueHistory, ValueHistoryEntry, CLEAR_OLD_VALUES_INTERVAL } from './tools/valueHistory'
 export { readBytesFromStream } from './tools/readBytesFromStream'
+export type { SessionState } from './domain/session/sessionState'
 export { STORAGE_POLL_DELAY } from './domain/session/sessionStore'
 export { SESSION_STORE_KEY } from './domain/session/storeStrategies/sessionStoreStrategy'
 export {

@@ -18,6 +18,61 @@
 
 ---
 
+## v6.0.0
+
+See our [upgrade guide](https://docs.datadoghq.com/real_user_monitoring/guide/browser-sdk-upgrade/#from-v5-to-v6) for a comprehensive list of breaking changes introduced by this major version.
+
+**Public Changes:**
+
+- 💥 [RUM-7704] Remove anonymous user feature flag for v6 ([#3216](https://github.com/DataDog/browser-sdk/pull/3216)) [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+- 💥 default traceContextInjection to sampled ([#3212](https://github.com/DataDog/browser-sdk/pull/3212)) [RUM] [RUM-REACT] [RUM-SLIM]
+- 💥 new default for track\* initialization options ([#3190](https://github.com/DataDog/browser-sdk/pull/3190)) [RUM] [RUM-REACT] [RUM-SLIM]
+- 💥 [RUM-6816] remove sendLogsAfterSessionExpiration ([#3183](https://github.com/DataDog/browser-sdk/pull/3183)) [LOGS]
+- 💥 [RUM 6075] Save anonymous id in session cookie ([#2985](https://github.com/DataDog/browser-sdk/pull/2985)) [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+- 💥 remove useCrossSiteSessionCookie option ([#3179](https://github.com/DataDog/browser-sdk/pull/3179)) [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+- 💥 remove Object.\* Polyfills ([#2908](https://github.com/DataDog/browser-sdk/pull/2908)) [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+- 💥 remove some polyfills ([#2857](https://github.com/DataDog/browser-sdk/pull/2857)) [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+- 💥 build using ES2018 target ([#2882](https://github.com/DataDog/browser-sdk/pull/2882)) [RUM] [RUM-REACT] [RUM-SLIM]
+- 💥 Collect long animation frames as long task events ([#3272](https://github.com/DataDog/browser-sdk/pull/3272)) [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+- 💥 [RUM-175] sanitize RegExp and Event ([#3188](https://github.com/DataDog/browser-sdk/pull/3188)) [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+- 💥 [RUM-6814] strongly type site parameter ([#3161](https://github.com/DataDog/browser-sdk/pull/3161)) [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+- 💥 [RUM-1919] Add tracestate header when using tracecontext propagator ([#3163](https://github.com/DataDog/browser-sdk/pull/3163)) [RUM] [RUM-REACT] [RUM-SLIM]
+- 🐛 Prevent collecting the webpack ChunkLoadError ([#3280](https://github.com/DataDog/browser-sdk/pull/3280)) [RUM]
+- ⚡️ [RUM-6813] Lazy load session replay ([#3152](https://github.com/DataDog/browser-sdk/pull/3152)) [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+
+**Internal Changes:**
+
+- 👷 [RUM-5282] Remove ie11 tests ([#2856](https://github.com/DataDog/browser-sdk/pull/2856)) [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+- 👷 do not rename bundle file when name does not change ([#3273](https://github.com/DataDog/browser-sdk/pull/3273))
+- 👷 skip merge-into-next-major-job if branch don't exist ([#3270](https://github.com/DataDog/browser-sdk/pull/3270))
+- 👷 enable check staging merge ([#3264](https://github.com/DataDog/browser-sdk/pull/3264))
+- 👷 fix comment about performance.timing.navigationStart ([#3180](https://github.com/DataDog/browser-sdk/pull/3180)) [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+- 👷 fix comment on browser support for unicode character escape ([#3177](https://github.com/DataDog/browser-sdk/pull/3177)) [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+- 👷 [RUM-6366] disable browserStack tests ([#3089](https://github.com/DataDog/browser-sdk/pull/3089))
+- 👷 fix next major deploy job config ([#2988](https://github.com/DataDog/browser-sdk/pull/2988))
+- 👷 add canary deploy job for next major ([#2938](https://github.com/DataDog/browser-sdk/pull/2938))
+- 🧪 Update browser matrix for tests ([#2884](https://github.com/DataDog/browser-sdk/pull/2884)) [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+- ✅ fix session store e2e to account for anonymous id ([#3265](https://github.com/DataDog/browser-sdk/pull/3265))
+- ✅ Make tests robust to an instrumentMethod that does not always rewrap ([#3231](https://github.com/DataDog/browser-sdk/pull/3231)) [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+- ✅ [RUM-6813] Use promise in `collectAsyncCalls` instead of a callback ([#3168](https://github.com/DataDog/browser-sdk/pull/3168)) [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+
+## v5.35.0
+
+**Public Changes:**
+
+- ✨ [RUM-5001] introduce a `sessionPersistence` config option to force using local storage ([#3244](https://github.com/DataDog/browser-sdk/pull/3244)) [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+- feat: support custom schema on Electron ([#3204](https://github.com/DataDog/browser-sdk/pull/3204)) [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+
+**Internal Changes:**
+
+- Revert "👷 freeze canary deploy ([#3238](https://github.com/DataDog/browser-sdk/pull/3238))" ([#3252](https://github.com/DataDog/browser-sdk/pull/3252))
+- 👷 Update all non-major dependencies ([#3240](https://github.com/DataDog/browser-sdk/pull/3240)) [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+- 👷 Update dependency webpack-cli to v6 ([#3241](https://github.com/DataDog/browser-sdk/pull/3241))
+- 👷 freeze canary deploy ([#3238](https://github.com/DataDog/browser-sdk/pull/3238))
+- ✅ fix leak detection issues ([#3245](https://github.com/DataDog/browser-sdk/pull/3245)) [RUM] [RUM-REACT] [RUM-SLIM]
+- 💚 fix CI PR comment ([#3250](https://github.com/DataDog/browser-sdk/pull/3250))
+- ♻️ move traceSampleRate default to config validation ([#3197](https://github.com/DataDog/browser-sdk/pull/3197)) [RUM] [RUM-REACT] [RUM-SLIM]
+
 ## v5.34.1
 
 **Public Changes:**

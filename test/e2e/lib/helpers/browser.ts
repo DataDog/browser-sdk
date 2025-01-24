@@ -3,7 +3,7 @@ import type { BrowserContext } from '@playwright/test'
 
 // To keep tests sane, ensure we got a fixed list of possible platforms and browser names.
 const validPlatformNames = ['windows', 'macos', 'linux', 'ios', 'android'] as const
-const validBrowserNames = ['edge', 'safari', 'chrome', 'firefox', 'ie'] as const
+const validBrowserNames = ['edge', 'safari', 'chrome', 'firefox'] as const
 
 export function getBrowserName(): (typeof validBrowserNames)[number] {
   const capabilities = browser.capabilities

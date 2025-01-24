@@ -1,5 +1,4 @@
-import pako from 'pako'
-import { isIE } from '@datadog/browser-core'
+import { deflate } from 'pako'
 import type { BrowserSegment, BrowserSegmentMetadata } from '../../types'
 import { readReplayPayload } from '../../../test'
 import { buildReplayPayload } from './buildReplayPayload'
@@ -7,7 +6,7 @@ import { buildReplayPayload } from './buildReplayPayload'
 describe('buildReplayPayload', () => {
   const SEGMENT = { foo: 'bar' } as unknown as BrowserSegment
   const SERIALIZED_SEGMENT = JSON.stringify(SEGMENT)
-  const COMPRESSED_SEGMENT = pako.deflate(SERIALIZED_SEGMENT)
+  const COMPRESSED_SEGMENT = deflate(SERIALIZED_SEGMENT)
   const METADATA: BrowserSegmentMetadata = {
     application: { id: 'xxx' },
     session: { id: 'xxx' },
@@ -23,12 +22,6 @@ describe('buildReplayPayload', () => {
     raw_segment_size: SERIALIZED_SEGMENT.length,
     compressed_segment_size: COMPRESSED_SEGMENT.byteLength,
   }
-
-  beforeEach(() => {
-    if (isIE()) {
-      pending('no TextEncoder support')
-    }
-  })
 
   it('adds the segment as a file', async () => {
     const payload = buildReplayPayload(COMPRESSED_SEGMENT, METADATA, SERIALIZED_SEGMENT.length)

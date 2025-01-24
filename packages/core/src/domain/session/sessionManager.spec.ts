@@ -1,6 +1,7 @@
 import {
   createNewEvent,
   expireCookie,
+  getSessionState,
   mockClock,
   registerCleanupTask,
   restorePageVisibility,
@@ -8,7 +9,6 @@ import {
 } from '../../../test'
 import type { Clock } from '../../../test'
 import { getCookie, setCookie } from '../../browser/cookie'
-import { isIE } from '../../tools/utils/browserDetection'
 import { DOM_EVENT } from '../../browser/addEventListener'
 import { ONE_HOUR, ONE_SECOND } from '../../tools/utils/timeUtils'
 import type { Configuration } from '../configuration'
@@ -16,7 +16,7 @@ import type { TrackingConsentState } from '../trackingConsent'
 import { TrackingConsent, createTrackingConsentState } from '../trackingConsent'
 import type { SessionManager } from './sessionManager'
 import { startSessionManager, stopSessionManager, VISIBILITY_CHECK_DELAY } from './sessionManager'
-import { SESSION_EXPIRATION_DELAY, SESSION_TIME_OUT_DELAY } from './sessionConstants'
+import { SESSION_EXPIRATION_DELAY, SESSION_TIME_OUT_DELAY, SessionPersistence } from './sessionConstants'
 import type { SessionStoreStrategyType } from './storeStrategies/sessionStoreStrategy'
 import { SESSION_STORE_KEY } from './storeStrategies/sessionStoreStrategy'
 import { STORAGE_POLL_DELAY } from './sessionStore'
@@ -40,7 +40,7 @@ describe('startSessionManager', () => {
   const DURATION = 123456
   const FIRST_PRODUCT_KEY = 'first'
   const SECOND_PRODUCT_KEY = 'second'
-  const STORE_TYPE: SessionStoreStrategyType = { type: 'Cookie', cookieOptions: {} }
+  const STORE_TYPE: SessionStoreStrategyType = { type: SessionPersistence.COOKIE, cookieOptions: {} }
   let clock: Clock
 
   function expireSessionCookie() {
@@ -55,25 +55,25 @@ describe('startSessionManager', () => {
 
   function expectSessionIdToBe(sessionManager: SessionManager<FakeTrackingType>, sessionId: string) {
     expect(sessionManager.findSession()!.id).toBe(sessionId)
-    expect(getCookie(SESSION_STORE_KEY)).toContain(`id=${sessionId}`)
+    expect(getSessionState(SESSION_STORE_KEY).id).toBe(sessionId)
   }
 
   function expectSessionIdToBeDefined(sessionManager: SessionManager<FakeTrackingType>) {
     expect(sessionManager.findSession()!.id).toMatch(/^[a-f0-9-]+$/)
     expect(sessionManager.findSession()?.isExpired).toBeUndefined()
 
-    expect(getCookie(SESSION_STORE_KEY)).toMatch(/id=[a-f0-9-]+/)
-    expect(getCookie(SESSION_STORE_KEY)).not.toContain('isExpired=1')
+    expect(getSessionState(SESSION_STORE_KEY).id).toMatch(/^[a-f0-9-]+$/)
+    expect(getSessionState(SESSION_STORE_KEY).isExpired).toBeUndefined()
   }
 
   function expectSessionToBeExpired(sessionManager: SessionManager<FakeTrackingType>) {
     expect(sessionManager.findSession()).toBeUndefined()
-    expect(getCookie(SESSION_STORE_KEY)).toContain('isExpired=1')
+    expect(getSessionState(SESSION_STORE_KEY).isExpired).toBe('1')
   }
 
   function expectSessionIdToNotBeDefined(sessionManager: SessionManager<FakeTrackingType>) {
     expect(sessionManager.findSession()!.id).toBeUndefined()
-    expect(getCookie(SESSION_STORE_KEY)).not.toContain('id=')
+    expect(getSessionState(SESSION_STORE_KEY).id).toBeUndefined()
   }
 
   function expectTrackingTypeToBe(
@@ -82,18 +82,15 @@ describe('startSessionManager', () => {
     trackingType: FakeTrackingType
   ) {
     expect(sessionManager.findSession()!.trackingType).toEqual(trackingType)
-    expect(getCookie(SESSION_STORE_KEY)).toContain(`${productKey}=${trackingType}`)
+    expect(getSessionState(SESSION_STORE_KEY)[productKey]).toEqual(trackingType)
   }
 
   function expectTrackingTypeToNotBeDefined(sessionManager: SessionManager<FakeTrackingType>, productKey: string) {
     expect(sessionManager.findSession()?.trackingType).toBeUndefined()
-    expect(getCookie(SESSION_STORE_KEY)).not.toContain(`${productKey}=`)
+    expect(getSessionState(SESSION_STORE_KEY)[productKey]).toBeUndefined()
   }
 
   beforeEach(() => {
-    if (isIE()) {
-      pending('no full rum support')
-    }
     clock = mockClock()
 
     registerCleanupTask(() => {
@@ -273,14 +270,14 @@ describe('startSessionManager', () => {
       startSessionManagerWithDefaults({ productKey: SECOND_PRODUCT_KEY })
 
       // cookie correctly set
-      expect(getCookie(SESSION_STORE_KEY)).toContain('first')
-      expect(getCookie(SESSION_STORE_KEY)).toContain('second')
+      expect(getSessionState(SESSION_STORE_KEY).first).toBeDefined()
+      expect(getSessionState(SESSION_STORE_KEY).second).toBeDefined()
 
       clock.tick(STORAGE_POLL_DELAY / 2)
 
       // scheduled expandOrRenewSession should not use cached value
-      expect(getCookie(SESSION_STORE_KEY)).toContain('first')
-      expect(getCookie(SESSION_STORE_KEY)).toContain('second')
+      expect(getSessionState(SESSION_STORE_KEY).first).toBeDefined()
+      expect(getSessionState(SESSION_STORE_KEY).second).toBeDefined()
     })
 
     it('should have independent tracking types', () => {
@@ -346,7 +343,7 @@ describe('startSessionManager', () => {
       sessionManager.expireObservable.subscribe(expireSessionSpy)
 
       expect(sessionManager.findSession()!.id).not.toBe('abcde')
-      expect(getCookie(SESSION_STORE_KEY)).toContain(`created=${Date.now()}`)
+      expect(getSessionState(SESSION_STORE_KEY).created).toEqual(Date.now().toString())
       expect(expireSessionSpy).not.toHaveBeenCalled() // the session has not been active from the start
     })
 
@@ -356,7 +353,7 @@ describe('startSessionManager', () => {
       const sessionManager = startSessionManagerWithDefaults()
 
       expect(sessionManager.findSession()!.id).toBe('abcde')
-      expect(getCookie(SESSION_STORE_KEY)).not.toContain('created=')
+      expect(getSessionState(SESSION_STORE_KEY).created).toBeUndefined()
     })
   })
 
@@ -602,7 +599,7 @@ describe('startSessionManager', () => {
       trackingConsentState.update(TrackingConsent.NOT_GRANTED)
 
       expectSessionToBeExpired(sessionManager)
-      expect(getCookie(SESSION_STORE_KEY)).toBe('isExpired=1')
+      expect(getSessionState(SESSION_STORE_KEY).isExpired).toBe('1')
     })
 
     it('does not renew the session when tracking consent is withdrawn', () => {

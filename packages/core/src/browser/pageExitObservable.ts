@@ -1,5 +1,5 @@
 import { Observable } from '../tools/observable'
-import { objectValues, includes } from '../tools/utils/polyfills'
+import { objectValues } from '../tools/utils/polyfills'
 import type { Configuration } from '../domain/configuration'
 import { addEventListeners, addEventListener, DOM_EVENT } from './addEventListener'
 
@@ -51,6 +51,6 @@ export function createPageExitObservable(configuration: Configuration): Observab
   })
 }
 
-export function isPageExitReason(reason: string | undefined): reason is PageExitReason {
-  return includes(objectValues(PageExitReason), reason)
+export function isPageExitReason(reason: string): reason is PageExitReason {
+  return objectValues(PageExitReason).includes(reason as PageExitReason)
 }

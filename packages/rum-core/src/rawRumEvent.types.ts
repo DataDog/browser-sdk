@@ -74,6 +74,7 @@ export interface RawRumErrorEvent {
     type?: string
     stack?: string
     handling_stack?: string
+    component_stack?: string
     fingerprint?: string
     source: ErrorSource
     message: string
@@ -85,8 +86,6 @@ export interface RawRumErrorEvent {
   view?: {
     in_foreground: boolean
   }
-
-  feature_flags?: Context
 }
 
 export interface RawRumViewEvent {
@@ -123,12 +122,12 @@ export interface RawRumViewEvent {
     long_task: Count
     resource: Count
     frustration: Count
+    performance?: ViewPerformanceData
   }
   session: {
     has_replay: true | undefined
     is_active: false | undefined
   }
-  feature_flags?: Context
   display?: ViewDisplay
   privacy?: {
     replay_level: DefaultPrivacyLevel
@@ -150,6 +149,40 @@ interface ViewDisplay {
     max_scroll_height?: number
     max_scroll_height_time?: ServerDuration
   }
+}
+
+export interface ViewPerformanceData {
+  cls?: {
+    score: number
+    timestamp?: ServerDuration
+    target_selector?: string
+    previous_rect?: RumRect
+    current_rect?: RumRect
+  }
+  fcp?: {
+    timestamp: number
+  }
+  fid?: {
+    duration: ServerDuration
+    timestamp: ServerDuration
+    target_selector?: string
+  }
+  inp?: {
+    duration: ServerDuration
+    timestamp?: ServerDuration
+    target_selector?: string
+  }
+  lcp?: {
+    timestamp: ServerDuration
+    target_selector?: string
+  }
+}
+
+export interface RumRect {
+  x: number
+  y: number
+  width: number
+  height: number
 }
 
 export type PageStateServerEntry = { state: PageState; start: ServerDuration }
@@ -334,6 +367,7 @@ export interface RumContext {
   action?: {
     id: string | string[]
   }
+  feature_flags?: Context
   synthetics?: {
     test_id: string
     result_id: string

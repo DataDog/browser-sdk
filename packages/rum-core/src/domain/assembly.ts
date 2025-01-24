@@ -1,4 +1,4 @@
-import type { Context, RawError, EventRateLimiter, User } from '@datadog/browser-core'
+import type { Context, RawError, EventRateLimiter, User, RelativeTime } from '@datadog/browser-core'
 import {
   combine,
   isEmptyObject,
@@ -7,7 +7,6 @@ import {
   display,
   createEventRateLimiter,
   canUseEventBridge,
-  assign,
   round,
   isExperimentalFeatureEnabled,
   ExperimentalFeature,
@@ -23,6 +22,7 @@ import type {
 } from '../rawRumEvent.types'
 import { RumEventType } from '../rawRumEvent.types'
 import type { RumEvent } from '../rumEvent.types'
+import type { FeatureFlagContexts } from './contexts/featureFlagContext'
 import { getSyntheticsContext } from './contexts/syntheticsContext'
 import type { CiVisibilityContext } from './contexts/ciVisibilityContext'
 import type { LifeCycle } from './lifeCycle'
@@ -30,7 +30,7 @@ import { LifeCycleEventType } from './lifeCycle'
 import type { ViewHistory } from './contexts/viewHistory'
 import { SessionReplayState, type RumSessionManager } from './rumSessionManager'
 import type { UrlContexts } from './contexts/urlContexts'
-import type { RumConfiguration } from './configuration'
+import type { RumConfiguration, FeatureFlagsForEvents } from './configuration'
 import type { ActionContexts } from './action/actionCollection'
 import type { DisplayContext } from './contexts/displayContext'
 import type { CommonContext } from './contexts/commonContext'
@@ -74,45 +74,44 @@ export function startRumAssembly(
   actionContexts: ActionContexts,
   displayContext: DisplayContext,
   ciVisibilityContext: CiVisibilityContext,
+  featureFlagContexts: FeatureFlagContexts,
   getCommonContext: () => CommonContext,
   reportError: (error: RawError) => void
 ) {
   modifiableFieldPathsByEvent = {
-    [RumEventType.VIEW]: assign({}, USER_CUSTOMIZABLE_FIELD_PATHS, VIEW_MODIFIABLE_FIELD_PATHS),
-    [RumEventType.ERROR]: assign(
-      {
-        'error.message': 'string',
-        'error.stack': 'string',
-        'error.resource.url': 'string',
-        'error.fingerprint': 'string',
-      },
-      USER_CUSTOMIZABLE_FIELD_PATHS,
-      VIEW_MODIFIABLE_FIELD_PATHS,
-      ROOT_MODIFIABLE_FIELD_PATHS
-    ),
-    [RumEventType.RESOURCE]: assign(
-      {
-        'resource.url': 'string',
-      },
-      isExperimentalFeatureEnabled(ExperimentalFeature.WRITABLE_RESOURCE_GRAPHQL)
-        ? {
-            'resource.graphql': 'object',
-          }
-        : {},
-      USER_CUSTOMIZABLE_FIELD_PATHS,
-      VIEW_MODIFIABLE_FIELD_PATHS,
-      ROOT_MODIFIABLE_FIELD_PATHS
-    ),
-    [RumEventType.ACTION]: assign(
-      {
-        'action.target.name': 'string',
-      },
-      USER_CUSTOMIZABLE_FIELD_PATHS,
-      VIEW_MODIFIABLE_FIELD_PATHS,
-      ROOT_MODIFIABLE_FIELD_PATHS
-    ),
-    [RumEventType.LONG_TASK]: assign({}, USER_CUSTOMIZABLE_FIELD_PATHS, VIEW_MODIFIABLE_FIELD_PATHS),
-    [RumEventType.VITAL]: assign({}, USER_CUSTOMIZABLE_FIELD_PATHS, VIEW_MODIFIABLE_FIELD_PATHS),
+    [RumEventType.VIEW]: { ...USER_CUSTOMIZABLE_FIELD_PATHS, ...VIEW_MODIFIABLE_FIELD_PATHS },
+    [RumEventType.ERROR]: {
+      'error.message': 'string',
+      'error.stack': 'string',
+      'error.resource.url': 'string',
+      'error.fingerprint': 'string',
+      ...USER_CUSTOMIZABLE_FIELD_PATHS,
+      ...VIEW_MODIFIABLE_FIELD_PATHS,
+      ...ROOT_MODIFIABLE_FIELD_PATHS,
+    },
+    [RumEventType.RESOURCE]: {
+      'resource.url': 'string',
+      ...(isExperimentalFeatureEnabled(ExperimentalFeature.WRITABLE_RESOURCE_GRAPHQL)
+        ? { 'resource.graphql': 'object' }
+        : {}),
+      ...USER_CUSTOMIZABLE_FIELD_PATHS,
+      ...VIEW_MODIFIABLE_FIELD_PATHS,
+      ...ROOT_MODIFIABLE_FIELD_PATHS,
+    },
+    [RumEventType.ACTION]: {
+      'action.target.name': 'string',
+      ...USER_CUSTOMIZABLE_FIELD_PATHS,
+      ...VIEW_MODIFIABLE_FIELD_PATHS,
+      ...ROOT_MODIFIABLE_FIELD_PATHS,
+    },
+    [RumEventType.LONG_TASK]: {
+      ...USER_CUSTOMIZABLE_FIELD_PATHS,
+      ...VIEW_MODIFIABLE_FIELD_PATHS,
+    },
+    [RumEventType.VITAL]: {
+      ...USER_CUSTOMIZABLE_FIELD_PATHS,
+      ...VIEW_MODIFIABLE_FIELD_PATHS,
+    },
   }
   const eventRateLimiters = {
     [RumEventType.ERROR]: createEventRateLimiter(
@@ -174,6 +173,12 @@ export function startRumAssembly(
             url: urlContext.url,
             referrer: urlContext.referrer,
           },
+          feature_flags: findFeatureFlagsContext(
+            rawRumEvent,
+            startTime,
+            configuration.trackFeatureFlagsForEvents,
+            featureFlagContexts
+          ),
           action: needToAssembleWithAction(rawRumEvent) && actionId ? { id: actionId } : undefined,
           synthetics: syntheticsContext,
           ci_test: ciVisibilityContext.get(),
@@ -192,11 +197,7 @@ export function startRumAssembly(
             session.sessionReplay === SessionReplayState.SAMPLED
         }
 
-        if (
-          // TODO: remove ff and should always add anonymous user id
-          isExperimentalFeatureEnabled(ExperimentalFeature.ANONYMOUS_USER_TRACKING) &&
-          !commonContext.user.anonymous_id
-        ) {
+        if (session.anonymousId && !commonContext.user.anonymous_id && !!configuration.trackAnonymousUser) {
           commonContext.user.anonymous_id = session.anonymousId
         }
         if (!isEmptyObject(commonContext.user)) {
@@ -241,4 +242,22 @@ function needToAssembleWithAction(
   event: RawRumEvent
 ): event is RawRumErrorEvent | RawRumResourceEvent | RawRumLongTaskEvent {
   return [RumEventType.ERROR, RumEventType.RESOURCE, RumEventType.LONG_TASK].indexOf(event.type) !== -1
+}
+
+function findFeatureFlagsContext(
+  rawRumEvent: RawRumEvent,
+  eventStartTime: RelativeTime,
+  trackFeatureFlagsForEvents: FeatureFlagsForEvents[],
+  featureFlagContexts: FeatureFlagContexts
+) {
+  const isTrackingEnforced = rawRumEvent.type === RumEventType.VIEW || rawRumEvent.type === RumEventType.ERROR
+
+  const isListedInConfig = trackFeatureFlagsForEvents.includes(rawRumEvent.type as FeatureFlagsForEvents)
+
+  if (isTrackingEnforced || isListedInConfig) {
+    const featureFlagContext = featureFlagContexts.findFeatureFlagEvaluations(eventStartTime)
+    if (featureFlagContext && !isEmptyObject(featureFlagContext)) {
+      return featureFlagContext
+    }
+  }
 }

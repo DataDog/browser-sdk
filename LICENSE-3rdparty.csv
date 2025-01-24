@@ -10,6 +10,7 @@ prod,@tabler/icons-react,MIT,Copyright (c) 2020-2023 Paweł Kuna
 prod,clsx,MIT,Copyright (c) Luke Edwards <luke.edwards05@gmail.com> (lukeed.com)
 prod,react,MIT,Copyright (c) Facebook, Inc. and its affiliates.
 prod,react-dom,MIT,Copyright (c) Facebook, Inc. and its affiliates.
+dev,@eslint/js,MIT,Copyright OpenJS Foundation and other contributors, <www.openjsf.org>
 dev,@jsdevtools/coverage-istanbul-loader,MIT,Copyright (c) 2015 James Messinger
 dev,@types/chrome,MIT,Copyright Microsoft Corporation
 dev,@types/connect-busboy,MIT,Copyright Microsoft Corporation
@@ -21,8 +22,6 @@ dev,@types/node-forge,MIT,Copyright Microsoft Corporation
 dev,@types/pako,MIT,Copyright Microsoft Corporation
 dev,@types/react,MIT,Copyright Microsoft Corporation
 dev,@types/react-dom,MIT,Copyright Microsoft Corporation
-dev,@typescript-eslint/eslint-plugin,MIT,Copyright JS Foundation and other contributors
-dev,@typescript-eslint/parser,MIT,Copyright JS Foundation and other contributors
 dev,@wdio/browserstack-service,MIT,Copyright JS Foundation and other contributors
 dev,@wdio/cli,MIT,Copyright JS Foundation and other contributors
 dev,@wdio/jasmine-framework,MIT,Copyright JS Foundation and other contributors
@@ -39,16 +38,14 @@ dev,cors,MIT,Copyright 2013 Troy Goode
 dev,css-loader,MIT,Copyright JS Foundation and other contributors
 dev,emoji-name-map,MIT,Copyright 2016-19 Ionică Bizău <bizauionica@gmail.com> (https://ionicabizau.net)
 dev,eslint,MIT,Copyright JS Foundation and other contributors
-dev,eslint-config-prettier,MIT,Copyright (c) 2017, 2018, 2019, 2020 Simon Lydell and contributors
 dev,eslint-module-utils,MIT,Copyright (c) 2015 Ben Mosher
 dev,eslint-plugin-import,MIT,Copyright (c) 2015 Ben Mosher
 dev,eslint-plugin-jasmine,MIT,Copyright (c) 2021 Tom Vincent
 dev,eslint-plugin-jsdoc,BSD-3-Clause,Copyright (c) 2018, Gajus Kuizinas (http://gajus.com/)
-dev,eslint-plugin-local-rules,MIT,Copyright (c) 2017 Clayton Watts
-dev,eslint-plugin-prefer-arrow,MIT,Copyright (c) 2018 Triston Jones
 dev,eslint-plugin-unicorn,MIT,Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (https://sindresorhus.com)
 dev,express,MIT,Copyright 2009-2014 TJ Holowaychuk 2013-2014 Roman Shtylman 2014-2015 Douglas Christopher Wilson
 dev,glob,ISC,Copyright (c) 2009-2022 Isaac Z. Schlueter and Contributors
+dev,globals,MIT,Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
 dev,html-webpack-plugin,MIT,Copyright JS Foundation and other contributors
 dev,jasmine-core,MIT,Copyright 2008-2017 Pivotal Labs
 dev,json-schema-to-typescript,MIT,
@@ -75,6 +72,7 @@ dev,ts-loader,MIT,Copyright 2015 TypeStrong
 dev,ts-node,MIT,Copyright 2014 Blake Embrey
 dev,tsconfig-paths-webpack-plugin,MIT,Copyright 2016 Jonas Kello
 dev,typescript,Apache-2.0,Copyright Microsoft Corporation
+dev,typescript-eslint,MIT,Copyright (c) 2019 typescript-eslint and other contributors
 dev,webdriverio,MIT,Copyright JS Foundation and other contributors
 dev,webpack,MIT,Copyright JS Foundation and other contributors
 dev,webpack-cli,MIT,Copyright JS Foundation and other contributors

@@ -13,7 +13,6 @@ import type {
 import {
   addTelemetryUsage,
   CustomerDataType,
-  assign,
   createContextManager,
   deepClone,
   makePublicApi,
@@ -43,6 +42,7 @@ import { buildCommonContext } from '../domain/contexts/commonContext'
 import type { InternalContext } from '../domain/contexts/internalContext'
 import type { DurationVitalReference } from '../domain/vital/vitalCollection'
 import { createCustomVitalsState } from '../domain/vital/vitalCollection'
+import { callPluginsMethod } from '../domain/plugins'
 import { createPreStartStrategy } from './preStartRum'
 import type { StartRum, StartRumResult } from './startRum'
 
@@ -98,6 +98,12 @@ export interface RumPublicApi extends PublicApi {
    * @param value value of the property
    */
   setViewContextProperty: (key: string, value: any) => void
+
+  /**
+   * Get View Context.
+   */
+  getViewContext: () => Context
+
   /**
    * Set the global context information to all events, stored in `@context`
    *
@@ -352,6 +358,7 @@ export interface Strategy {
   setViewName: StartRumResult['setViewName']
   setViewContext: StartRumResult['setViewContext']
   setViewContextProperty: StartRumResult['setViewContextProperty']
+  getViewContext: StartRumResult['getViewContext']
   addAction: StartRumResult['addAction']
   addError: StartRumResult['addError']
   addFeatureFlagEvaluation: StartRumResult['addFeatureFlagEvaluation']
@@ -415,6 +422,8 @@ export function makeRumPublicApi(
 
       strategy = createPostStartStrategy(strategy, startRumResult)
 
+      callPluginsMethod(configuration.plugins, 'onRumStart', { strategy })
+
       return startRumResult
     }
   )
@@ -452,6 +461,8 @@ export function makeRumPublicApi(
     setViewContextProperty: monitor((key: string, value: any) => {
       strategy.setViewContextProperty(key, value)
     }),
+
+    getViewContext: monitor(() => strategy.getViewContext()),
 
     setGlobalContext: monitor((context) => {
       globalContextManager.setContext(context)
@@ -578,13 +589,11 @@ export function makeRumPublicApi(
 }
 
 function createPostStartStrategy(preStartStrategy: Strategy, startRumResult: StartRumResult): Strategy {
-  return assign(
-    {
-      init: (initConfiguration: RumInitConfiguration) => {
-        displayAlreadyInitializedError('DD_RUM', initConfiguration)
-      },
-      initConfiguration: preStartStrategy.initConfiguration,
+  return {
+    init: (initConfiguration: RumInitConfiguration) => {
+      displayAlreadyInitializedError('DD_RUM', initConfiguration)
     },
-    startRumResult
-  )
+    initConfiguration: preStartStrategy.initConfiguration,
+    ...startRumResult,
+  }
 }

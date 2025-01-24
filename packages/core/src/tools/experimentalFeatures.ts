@@ -16,11 +16,8 @@ import { objectHasValue } from './utils/objectUtils'
 export enum ExperimentalFeature {
   WRITABLE_RESOURCE_GRAPHQL = 'writable_resource_graphql',
   REMOTE_CONFIGURATION = 'remote_configuration',
-  LONG_ANIMATION_FRAME = 'long_animation_frame',
-  ANONYMOUS_USER_TRACKING = 'anonymous_user_tracking',
   ACTION_NAME_MASKING = 'action_name_masking',
   CONSISTENT_TRACE_SAMPLING = 'consistent_trace_sampling',
-  DELAY_VIEWPORT_COLLECTION = 'delay_viewport_collection',
 }
 
 const enabledExperimentalFeatures: Set<ExperimentalFeature> = new Set()

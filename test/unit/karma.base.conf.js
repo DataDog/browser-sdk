@@ -18,6 +18,10 @@ if (testReportDirectory) {
 module.exports = {
   basePath: '../..',
   files: [
+    // Make sure 'forEach.spec' is the first file to be loaded, so its `beforeEach` hook is executed
+    // before all other `beforeEach` hooks, and its `afterEach` hook is executed after all other
+    // `afterEach` hooks.
+    'packages/core/test/forEach.spec.ts',
     'packages/*/@(src|test)/**/*.spec.@(ts|tsx)',
     'developer-extension/@(src|test)/**/*.spec.@(ts|tsx)',
     'packages/rum/test/toto.css',

@@ -19,6 +19,7 @@ import {
   mockActionContexts,
   mockDisplayContext,
   mockViewHistory,
+  mockFeatureFlagContexts,
 } from '../../test'
 import type { RumEventDomainContext } from '../domainContext.types'
 import type { RawRumActionEvent, RawRumEvent } from '../rawRumEvent.types'
@@ -27,7 +28,7 @@ import type { RumActionEvent, RumErrorEvent, RumEvent, RumResourceEvent } from '
 import { startRumAssembly } from './assembly'
 import type { RawRumEventCollectedData } from './lifeCycle'
 import { LifeCycle, LifeCycleEventType } from './lifeCycle'
-import type { RumConfiguration } from './configuration'
+import type { RumConfiguration, FeatureFlagsForEvents } from './configuration'
 import type { ViewHistory } from './contexts/viewHistory'
 import type { CommonContext } from './contexts/commonContext'
 import type { CiVisibilityContext } from './contexts/ciVisibilityContext'
@@ -437,7 +438,7 @@ describe('rum assembly', () => {
       expect((serverRumEvents[0].context as any).bar).toEqual('foo')
     })
 
-    it('should not be included if empty', () => {
+    it('should always have anonymous id', () => {
       const { lifeCycle, serverRumEvents, commonContext } = setupAssemblyTestWithDefaults()
       commonContext.context = {}
       notifyRawRumEvent(lifeCycle, {
@@ -491,14 +492,26 @@ describe('rum assembly', () => {
       expect(serverRumEvents[0].usr!.id).toEqual('foo')
     })
 
-    it('should not be included if empty', () => {
+    it('should always contain anonymous id', () => {
       const { lifeCycle, serverRumEvents, commonContext } = setupAssemblyTestWithDefaults()
       commonContext.user = {}
       notifyRawRumEvent(lifeCycle, {
         rawRumEvent: createRawRumEvent(RumEventType.VIEW),
       })
 
-      expect(serverRumEvents[0].usr).toBe(undefined)
+      expect(serverRumEvents[0].usr).toEqual({ anonymous_id: 'device-123' })
+    })
+
+    it('should not contain anonymous id when opt-out', () => {
+      const { lifeCycle, serverRumEvents, commonContext } = setupAssemblyTestWithDefaults({
+        partialConfiguration: { trackAnonymousUser: false },
+      })
+      commonContext.user = {}
+      notifyRawRumEvent(lifeCycle, {
+        rawRumEvent: createRawRumEvent(RumEventType.VIEW),
+      })
+
+      expect(serverRumEvents[0].usr).toBeUndefined()
     })
 
     it('should ignore the current user when a saved common context user is provided', () => {
@@ -849,8 +862,6 @@ describe('rum assembly', () => {
 
   describe('anonymous user id context', () => {
     it('includes the anonymous user id context', () => {
-      mockExperimentalFeatures([ExperimentalFeature.ANONYMOUS_USER_TRACKING])
-
       const { lifeCycle, serverRumEvents } = setupAssemblyTestWithDefaults()
 
       mockCookie('expired=1&aid=123')
@@ -860,6 +871,36 @@ describe('rum assembly', () => {
       })
 
       expect(serverRumEvents[0].usr!.anonymous_id).toBeDefined()
+    })
+  })
+
+  describe('feature flags', () => {
+    it('should always include feature flags for view events', () => {
+      assertFeatureFlagCollection(RumEventType.VIEW, [], true)
+    })
+
+    it('should always include feature flags for error events', () => {
+      assertFeatureFlagCollection(RumEventType.ERROR, [], true)
+    })
+
+    it('should include feature flags only if "resource" is in config', () => {
+      assertFeatureFlagCollection(RumEventType.RESOURCE, ['resource'], true)
+      assertFeatureFlagCollection(RumEventType.RESOURCE, [], false)
+    })
+
+    it('should include feature flags only if "long_task" is in config', () => {
+      assertFeatureFlagCollection(RumEventType.LONG_TASK, ['long_task'], true)
+      assertFeatureFlagCollection(RumEventType.LONG_TASK, [], false)
+    })
+
+    it('should include feature flags only if "vital" is in config', () => {
+      assertFeatureFlagCollection(RumEventType.VITAL, ['vital'], true)
+      assertFeatureFlagCollection(RumEventType.VITAL, [], false)
+    })
+
+    it('should include feature flags only if "action" is in config', () => {
+      assertFeatureFlagCollection(RumEventType.ACTION, ['action'], true)
+      assertFeatureFlagCollection(RumEventType.ACTION, [], false)
     })
   })
 
@@ -1013,6 +1054,8 @@ function setupAssemblyTestWithDefaults({
     hasReplay: undefined,
   } as CommonContext
 
+  const featureFlagContexts = mockFeatureFlagContexts()
+
   const serverRumEvents: RumEvent[] = []
   const subscription = lifeCycle.subscribe(LifeCycleEventType.RUM_EVENT_COLLECTED, (serverRumEvent) => {
     serverRumEvents.push(serverRumEvent)
@@ -1027,6 +1070,7 @@ function setupAssemblyTestWithDefaults({
     mockActionContexts(),
     mockDisplayContext(),
     { get: () => ciVisibilityContext } as CiVisibilityContext,
+    featureFlagContexts,
     () => commonContext,
     reportErrorSpy
   )
@@ -1035,5 +1079,31 @@ function setupAssemblyTestWithDefaults({
     subscription.unsubscribe()
   })
 
-  return { lifeCycle, reportErrorSpy, serverRumEvents, commonContext }
+  return { lifeCycle, reportErrorSpy, featureFlagContexts, serverRumEvents, commonContext }
+}
+
+function assertFeatureFlagCollection(
+  eventType: RumEventType,
+  trackFeatureFlagsForEvents: FeatureFlagsForEvents[],
+  expectedToTrackFeatureFlags: boolean
+) {
+  const { lifeCycle, serverRumEvents, featureFlagContexts } = setupAssemblyTestWithDefaults({
+    partialConfiguration: {
+      trackFeatureFlagsForEvents,
+    },
+  })
+
+  spyOn(featureFlagContexts, 'findFeatureFlagEvaluations').and.returnValue({
+    'my-flag': 'enabled',
+  })
+
+  notifyRawRumEvent(lifeCycle, {
+    rawRumEvent: createRawRumEvent(eventType),
+  })
+
+  if (expectedToTrackFeatureFlags) {
+    expect(serverRumEvents[0].feature_flags).toEqual({ 'my-flag': 'enabled' })
+  } else {
+    expect(serverRumEvents[0].feature_flags).toBeUndefined()
+  }
 }

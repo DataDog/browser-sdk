@@ -1,4 +1,4 @@
-export { RumPublicApi, makeRumPublicApi, RecorderApi, StartRecordingOptions } from './boot/rumPublicApi'
+export { RumPublicApi, makeRumPublicApi, RecorderApi, StartRecordingOptions, Strategy } from './boot/rumPublicApi'
 export { StartRum } from './boot/startRum'
 export {
   RumEvent,
@@ -33,7 +33,6 @@ export { RumInitConfiguration, RumConfiguration, RumRemoteConfiguration } from '
 export { DEFAULT_PROGRAMMATIC_ACTION_NAME_ATTRIBUTE } from './domain/action/getActionNameFromElement'
 export { STABLE_ATTRIBUTES } from './domain/getSelectorFromElement'
 export * from './browser/htmlDomUtils'
-export * from './browser/polyfills'
 export { getSessionReplayUrl } from './domain/getSessionReplayUrl'
 export { isLongDataUrl, sanitizeDataUrl, MAX_ATTRIBUTE_VALUE_CHAR_LENGTH } from './domain/resource/resourceUtils'
 export * from './domain/privacy'
