@@ -27,6 +27,7 @@ export default defineConfig({
     '**/trackingConsent.scenario.ts',
     '**/telemetry.scenario.ts',
     '**/resources.scenario.ts',
+    '**/recorder.scenario.ts',
   ],
   /* Run tests in files in parallel */
   fullyParallel: true,
