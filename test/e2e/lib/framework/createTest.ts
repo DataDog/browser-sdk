@@ -4,8 +4,8 @@ import { DefaultPrivacyLevel } from '@datadog/browser-rum'
 import type { BrowserContext, Page } from '@playwright/test'
 import { test, expect } from '@playwright/test'
 import { getRunId } from '../../../envUtils'
-import type { BrowserLog } from '../helpers/browser'
-import { BrowserLogsManager, deleteAllCookies } from '../helpers/browser'
+import { BrowserLog } from '../helpers/browser'
+import { BrowserLogsManager, deleteAllCookies, sendXhr } from '../helpers/browser'
 import { APPLICATION_ID, CLIENT_TOKEN } from '../helpers/configuration'
 import { validateRumFormat } from '../helpers/validation'
 import { IntakeRegistry } from './intakeRegistry'
@@ -57,6 +57,7 @@ interface TestContext {
   flushBrowserLogs: () => void
   flushEvents: () => Promise<void>
   deleteAllCookies: () => Promise<void>
+  sendXhr: (url: string, headers: string[][]) => Promise<string>
 }
 
 type TestRunner = (testContext: TestContext) => Promise<void> | void
@@ -242,6 +243,7 @@ function createTestContext(
     },
     flushEvents: () => flushEvents(page),
     deleteAllCookies: () => deleteAllCookies(browserContext),
+    sendXhr: (url: string, headers: string[][]) => sendXhr(page, url, headers),
   }
 }
 

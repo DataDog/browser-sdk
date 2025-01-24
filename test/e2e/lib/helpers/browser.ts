@@ -1,5 +1,7 @@
 import * as os from 'os'
-import type { BrowserContext } from '@playwright/test'
+import type { BrowserContext, Page } from '@playwright/test'
+import { url } from 'inspector'
+import { resolve } from 'dns'
 
 // To keep tests sane, ensure we got a fixed list of possible platforms and browser names.
 const validPlatformNames = ['windows', 'macos', 'linux', 'ios', 'android'] as const
@@ -99,23 +101,23 @@ export function setCookie(name: string, value: string, expiresDelay: number = 0)
   )
 }
 
-export async function sendXhr(url: string, headers: string[][] = []): Promise<string> {
+export async function sendXhr(page: Page, url: string, headers: string[][] = []): Promise<string> {
   type State = { state: 'success'; response: string } | { state: 'error' }
 
-  const result: State = await browser.executeAsync(
-    (url, headers, done) => {
-      const xhr = new XMLHttpRequest()
-      let state: State = { state: 'error' }
-      xhr.addEventListener('load', () => {
-        state = { state: 'success', response: xhr.response as string }
-      })
-      xhr.addEventListener('loadend', () => done(state))
-      xhr.open('GET', url)
-      headers.forEach((header) => xhr.setRequestHeader(header[0], header[1]))
-      xhr.send()
-    },
-    url,
-    headers
+  const result: State = await page.evaluate(
+    ([url, headers]) =>
+      new Promise((resolve) => {
+        const xhr = new XMLHttpRequest()
+        let state: State = { state: 'error' }
+        xhr.addEventListener('load', () => {
+          state = { state: 'success', response: xhr.response as string }
+        })
+        xhr.addEventListener('loadend', () => resolve(state))
+        xhr.open('GET', url)
+        headers.forEach((header) => xhr.setRequestHeader(header[0], header[1]))
+        xhr.send()
+      }),
+    [url, headers] as const
   )
 
   if (result.state === 'error') {
