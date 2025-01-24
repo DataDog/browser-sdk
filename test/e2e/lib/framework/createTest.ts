@@ -57,7 +57,7 @@ interface TestContext {
   flushBrowserLogs: () => void
   flushEvents: () => Promise<void>
   deleteAllCookies: () => Promise<void>
-  sendXhr: (url: string, headers: string[][]) => Promise<string>
+  sendXhr: (url: string, headers?: string[][]) => Promise<string>
 }
 
 type TestRunner = (testContext: TestContext) => Promise<void> | void

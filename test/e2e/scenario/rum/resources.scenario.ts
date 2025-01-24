@@ -249,7 +249,7 @@ test.describe('rum resources', () => {
       )
 
       test.skip(
-        browserName === 'chromium',
+        browserName !== 'chromium',
         'Only Chromium based browsers will emit predictable timings events for concurrent fetches'
       )
 
