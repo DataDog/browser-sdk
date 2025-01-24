@@ -1,6 +1,7 @@
 import * as fs from 'fs'
 import { RUM_BUNDLE } from '../../lib/framework'
 import { APPLICATION_ID, CLIENT_TOKEN } from '../../lib/helpers/configuration'
+import puppeteer from 'puppeteer'
 
 describe('Inject RUM with Puppeteer', () => {
   // S8s tests inject RUM with puppeteer evaluateOnNewDocument
@@ -12,7 +13,7 @@ describe('Inject RUM with Puppeteer', () => {
 
 async function injectRumWithPuppeteer() {
   const ddRUM = fs.readFileSync(RUM_BUNDLE, 'utf8')
-  const puppeteerBrowser = await browser.getPuppeteer()
+  const puppeteerBrowser = await puppeteer.launch({ headless: false, devtools: true })
   let injected = true
 
   await browser.call(async () => {
@@ -35,7 +36,7 @@ async function injectRumWithPuppeteer() {
         injected = false
       }
     })
-    await page.goto('https://webdriver.io')
+    await page.goto('https://example.com')
   })
   return injected
 }
