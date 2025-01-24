@@ -7,7 +7,7 @@ export const config: Options.Testrunner = {
   ...baseConfig,
 
   specFileRetries: 1,
-  exclude: [...baseConfig.exclude!, './scenario/rum/s8sInject.scenario.ts'],
+  exclude: [...baseConfig.exclude!],
   capabilities: browserConfigurations.map((configuration) =>
     // See https://www.browserstack.com/automate/capabilities?tag=selenium-4
     // Make sure to look at the "W3C Protocol" tab

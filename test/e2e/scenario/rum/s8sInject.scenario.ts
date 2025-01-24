@@ -2,10 +2,11 @@ import * as fs from 'fs'
 import { RUM_BUNDLE } from '../../lib/framework'
 import { APPLICATION_ID, CLIENT_TOKEN } from '../../lib/helpers/configuration'
 import puppeteer from 'puppeteer'
+import { test, expect } from '@playwright/test'
 
-describe('Inject RUM with Puppeteer', () => {
+test.describe('Inject RUM with Puppeteer', () => {
   // S8s tests inject RUM with puppeteer evaluateOnNewDocument
-  it('should not throw error in chrome', async () => {
+  test('should not throw error in chrome', async () => {
     const isInjected = await injectRumWithPuppeteer()
     expect(isInjected).toBe(true)
   })
@@ -16,10 +17,9 @@ async function injectRumWithPuppeteer() {
   const puppeteerBrowser = await puppeteer.launch({ headless: false, devtools: true })
   let injected = true
 
-  await browser.call(async () => {
-    const page = await puppeteerBrowser.newPage()
-    await page.evaluateOnNewDocument(
-      `
+  const page = await puppeteerBrowser.newPage()
+  await page.evaluateOnNewDocument(
+    `
         if (location.href !== 'about:blank') {
           ${ddRUM}
           window.DD_RUM._setDebug(true)
@@ -30,13 +30,13 @@ async function injectRumWithPuppeteer() {
           window.DD_RUM.startView()
         }
       `
-    )
-    page.on('console', (msg) => {
-      if (msg.type() === 'error') {
-        injected = false
-      }
-    })
-    await page.goto('https://example.com')
+  )
+  page.on('console', (msg) => {
+    if (msg.type() === 'error') {
+      injected = false
+    }
   })
+  await page.goto('https://example.com')
+
   return injected
 }
