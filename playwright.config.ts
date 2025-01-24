@@ -23,6 +23,7 @@ export default defineConfig({
     '**/views.scenario.ts',
     '**/vitals.scenario.ts',
     '**/s8sInject.scenario.ts',
+    '**/trackingConsent.scenario.ts',
   ],
   /* Run tests in files in parallel */
   fullyParallel: true,
