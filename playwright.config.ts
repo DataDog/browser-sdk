@@ -13,7 +13,7 @@ import { defineConfig, devices } from '@playwright/test'
  */
 export default defineConfig({
   testDir: './test/e2e/scenario',
-  testMatch: ['**/init.scenario.ts', '**/logs.scenario.ts', '**/actions.scenario.ts'],
+  testMatch: ['**/init.scenario.ts', '**/logs.scenario.ts', '**/actions.scenario.ts', '**/vitals.scenario.ts'],
   /* Run tests in files in parallel */
   fullyParallel: true,
   /* Fail the build on CI if you accidentally left test.only in the source code. */
