@@ -14,11 +14,12 @@ import { defineConfig, devices } from '@playwright/test'
 export default defineConfig({
   testDir: './test/e2e/scenario',
   testMatch: [
+    '**/actions.scenario.ts',
     '**/init.scenario.ts',
     '**/logs.scenario.ts',
-    '**/actions.scenario.ts',
-    '**/vitals.scenario.ts',
     '**/microfrontend.scenario.ts',
+    '**/views.scenario.ts',
+    '**/vitals.scenario.ts',
   ],
   /* Run tests in files in parallel */
   fullyParallel: true,
