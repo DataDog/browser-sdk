@@ -20,6 +20,7 @@ export default defineConfig({
     '**/logs.scenario.ts',
     '**/microfrontend.scenario.ts',
     '**/sessionStore.scenario.ts',
+    '**/shadowDom.scenario.ts',
     '**/transport.scenario.ts',
     '**/views.scenario.ts',
     '**/vitals.scenario.ts',
