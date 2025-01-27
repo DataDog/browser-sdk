@@ -31,6 +31,7 @@ export default defineConfig({
     '**/tracing.scenario.ts',
     '**/recorder.scenario.ts',
     '**/errors.scenario.ts',
+    '**/developerExtension.scenario.ts',
     '**/viewports.scenario.ts',
   ],
   /* Run tests in files in parallel */
