@@ -177,7 +177,7 @@ function declareTestsForSetups(
   runner: TestRunner
 ) {
   if (setups.length > 1) {
-    describe(title, () => {
+    test.describe(title, () => {
       for (const { name, factory } of setups) {
         declareTest(name!, setupOptions, factory, runner)
       }
