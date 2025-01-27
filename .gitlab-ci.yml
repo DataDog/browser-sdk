@@ -219,11 +219,13 @@ e2e:
   interruptible: true
   artifacts:
     when: always
-    paths: ['test-report/e2e/specs.log']
+    paths:
+      - 'test-report/e2e/*'
     reports:
       junit: test-report/e2e/*.xml
   script:
     - yarn
+    - yarn playwright install --with-deps
     - FORCE_COLOR=1 yarn test:e2e
   after_script:
     - node ./scripts/test/export-test-result.js e2e

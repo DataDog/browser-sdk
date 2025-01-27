@@ -8,7 +8,7 @@ if (testReportDirectory) {
   reporters.push([
     'junit',
     {
-      outputFile: `${testReportDirectory}/results.xml`,
+      outputFile: `../../${testReportDirectory}/results.xml`,
     },
   ])
 } else {
@@ -26,9 +26,7 @@ export const config: Config = {
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,
   workers: 20,
-  /* Reporter to use. See https://playwright.dev/docs/test-reporters */
   reporter: reporters,
-  /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
   use: {
     trace: 'on-first-retry',
   },
