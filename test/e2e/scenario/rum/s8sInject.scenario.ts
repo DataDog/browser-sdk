@@ -14,7 +14,7 @@ test.describe('Inject RUM with Puppeteer', () => {
 
 async function injectRumWithPuppeteer() {
   const ddRUM = fs.readFileSync(RUM_BUNDLE, 'utf8')
-  const puppeteerBrowser = await puppeteer.launch({ headless: false, devtools: true })
+  const puppeteerBrowser = await puppeteer.launch({ headless: true, devtools: true, args: ['--no-sandbox'] })
   let injected = true
 
   const page = await puppeteerBrowser.newPage()

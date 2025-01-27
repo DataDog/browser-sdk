@@ -21,7 +21,7 @@ if (testReportDirectory) {
 export const config: Config = {
   testDir: './scenario',
   testMatch: ['**/*.scenario.ts'],
-  testIgnore: ['developer-extension/*.scenario.ts', '**/sessions.scenario.ts'],
+  testIgnore: ['**/sessions.scenario.ts'],
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,
