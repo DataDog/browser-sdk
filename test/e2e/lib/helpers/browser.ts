@@ -88,16 +88,14 @@ export function deleteAllCookies(context: BrowserContext) {
   return context.clearCookies()
 }
 
-export function setCookie(name: string, value: string, expiresDelay: number = 0) {
-  return browser.execute(
-    (name, value, expiresDelay) => {
+export function setCookie(page: Page, name: string, value: string, expiresDelay: number = 0) {
+  return page.evaluate(
+    ({ name, value, expiresDelay }: { name: string; value: string; expiresDelay: number }) => {
       const expires = new Date(Date.now() + expiresDelay).toUTCString()
 
       document.cookie = `${name}=${value};expires=${expires};`
     },
-    name,
-    value,
-    expiresDelay
+    { name, value, expiresDelay }
   )
 }
 

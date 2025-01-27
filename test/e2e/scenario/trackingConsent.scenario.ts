@@ -1,6 +1,6 @@
-import { SessionState } from '@datadog/browser-core'
-import { createTest, flushEvents } from '../lib/framework'
-import { test, expect, BrowserContext } from '@playwright/test'
+import { test, expect } from '@playwright/test'
+import { findSessionCookie } from 'lib/helpers/session'
+import { createTest } from '../lib/framework'
 
 test.describe('tracking consent', () => {
   test.describe('RUM', () => {
@@ -99,15 +99,3 @@ test.describe('tracking consent', () => {
       })
   })
 })
-
-// TODO: use lib/helper/session when sessions.scenario is migrated
-export async function findSessionCookie(browserContext: BrowserContext) {
-  const cookies = await browserContext.cookies()
-  // In some case, the session cookie is returned but with an empty value. Let's consider it expired
-  // in this case.
-  const rawValue = cookies[0]?.value
-  if (!rawValue) {
-    return
-  }
-  return Object.fromEntries(rawValue.split('&').map((part: string) => part.split('='))) as SessionState
-}
