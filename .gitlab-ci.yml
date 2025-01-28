@@ -290,7 +290,7 @@ e2e-bs:
   artifacts:
     when: always
     paths:
-      - 'test-report/e2e/index.html'
+      - 'test-report/e2e/*'
     reports:
       junit: test-report/e2e-bs/*.xml
   script:

@@ -7,9 +7,8 @@ import { browserConfigurations } from './browsers.conf'
 // eslint-disable-next-line import/no-default-export
 export default defineConfig({
   ...baseConfig,
-  workers: 5,
-  // The following test won't run in the BrowserStack
-  testIgnore: ['**/developerExtension.scenario.ts', '**/s8sInject.scenario.ts'],
+  workers: 5, // BrowserStack has a limit of 5 parallel sessions
+  testIgnore: ['**/developerExtension.scenario.ts', '**/s8sInject.scenario.ts'], // The following test won't run in the BrowserStack
   projects: browserConfigurations.map((configuration) => ({
     name: configuration.name,
     use: {
@@ -24,6 +23,7 @@ function getEncodedCapabilities(configuration: BrowserConfiguration) {
   return encodeURIComponent(JSON.stringify(getCapabilities(configuration)))
 }
 
+// see: https://www.browserstack.com/docs/automate/playwright/playwright-capabilities
 function getCapabilities(configuration: BrowserConfiguration) {
   return {
     os: configuration.os,
@@ -37,11 +37,11 @@ function getCapabilities(configuration: BrowserConfiguration) {
     build: getBuildInfos(),
     name: configuration.sessionName,
     'browserstack.local': 'true',
-    'browserstack.playwrightVersion': '1.49.0', // TODO fixme
-    'client.playwrightVersion': '1.49.0',
-    'browserstack.debug': 'true', // enabling visual logs
-    'browserstack.console': 'info', // Enabling Console logs for the test
-    'browserstack.networkLogs': 'true', // Enabling network logs for the test
+    'browserstack.playwrightVersion': '1.latest',
+    'client.playwrightVersion': '1.latest',
+    'browserstack.debug': 'false',
+    'browserstack.console': 'info',
+    'browserstack.networkLogs': 'false',
     'browserstack.interactiveDebugging': 'false',
   }
 }

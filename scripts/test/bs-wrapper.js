@@ -24,6 +24,8 @@ const AVAILABILITY_CHECK_DELAY = 30_000
 const NO_OUTPUT_TIMEOUT = 5 * 60_000
 const BS_BUILD_URL = 'https://api.browserstack.com/automate/builds.json?status=running'
 
+const bsLocal = new browserStack.Local()
+
 runMain(async () => {
   if (command`git tag --points-at HEAD`.run()) {
     printLog('Skip bs execution on tags')
@@ -52,8 +54,6 @@ async function waitForAvailability() {
 async function hasRunningBuild() {
   return (await browserStackRequest(BS_BUILD_URL)).length > 0
 }
-
-const bsLocal = new browserStack.Local()
 
 function startBsLocal() {
   printLog('Starting BrowserStackLocal...')
