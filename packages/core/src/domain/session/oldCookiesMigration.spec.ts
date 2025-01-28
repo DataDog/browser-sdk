@@ -1,4 +1,5 @@
 import { getCookie, resetInitCookies, setCookie } from '../../browser/cookie'
+import { getSessionState } from '../../../test'
 import type { Configuration } from '../configuration'
 import {
   OLD_LOGS_COOKIE_NAME,
@@ -39,20 +40,19 @@ describe('old cookies migration', () => {
 
     tryOldCookiesMigration(sessionStoreStrategy)
 
-    expect(getCookie(SESSION_STORE_KEY)).toContain('id=abcde')
-    expect(getCookie(SESSION_STORE_KEY)).toContain('rum=0')
-    expect(getCookie(SESSION_STORE_KEY)).toContain('logs=1')
-    expect(getCookie(SESSION_STORE_KEY)).toMatch(/expire=\d+/)
+    expect(getSessionState(SESSION_STORE_KEY).id).toBe('abcde')
+    expect(getSessionState(SESSION_STORE_KEY).rum).toBe('0')
+    expect(getSessionState(SESSION_STORE_KEY).logs).toBe('1')
+    expect(getSessionState(SESSION_STORE_KEY).expire).toMatch(/\d+/)
   })
 
   it('should create new cookie from a single old cookie', () => {
     setCookie(OLD_RUM_COOKIE_NAME, '0', SESSION_EXPIRATION_DELAY)
 
     tryOldCookiesMigration(sessionStoreStrategy)
-
-    expect(getCookie(SESSION_STORE_KEY)).not.toContain('id=')
-    expect(getCookie(SESSION_STORE_KEY)).toContain('rum=0')
-    expect(getCookie(SESSION_STORE_KEY)).toMatch(/expire=\d+/)
+    expect(getSessionState(SESSION_STORE_KEY).id).not.toBeDefined()
+    expect(getSessionState(SESSION_STORE_KEY).rum).toBe('0')
+    expect(getSessionState(SESSION_STORE_KEY).expire).toMatch(/\d+/)
   })
 
   it('should not create a new cookie if no old cookie is present', () => {
@@ -68,9 +68,9 @@ describe('old cookies migration', () => {
     tryOldCookiesMigration(sessionStoreStrategy)
     tryOldCookiesMigration(sessionStoreStrategy)
 
-    expect(getCookie(SESSION_STORE_KEY)).toContain('id=abcde')
-    expect(getCookie(SESSION_STORE_KEY)).toContain('rum=0')
-    expect(getCookie(SESSION_STORE_KEY)).toContain('logs=1')
-    expect(getCookie(SESSION_STORE_KEY)).toMatch(/expire=\d+/)
+    expect(getSessionState(SESSION_STORE_KEY).id).toBe('abcde')
+    expect(getSessionState(SESSION_STORE_KEY).rum).toBe('0')
+    expect(getSessionState(SESSION_STORE_KEY).logs).toBe('1')
+    expect(getSessionState(SESSION_STORE_KEY).expire).toMatch(/\d+/)
   })
 })

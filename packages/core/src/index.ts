@@ -41,6 +41,7 @@ export {
   TelemetryErrorEvent,
   TelemetryDebugEvent,
   TelemetryConfigurationEvent,
+  TelemetryUsageEvent,
   TelemetryService,
   isTelemetryReplicationAllowed,
   addTelemetryConfiguration,
@@ -133,6 +134,7 @@ export {
 export { CustomerDataType } from './domain/context/contextConstants'
 export { createValueHistory, ValueHistory, ValueHistoryEntry, CLEAR_OLD_VALUES_INTERVAL } from './tools/valueHistory'
 export { readBytesFromStream } from './tools/readBytesFromStream'
+export type { SessionState } from './domain/session/sessionState'
 export { STORAGE_POLL_DELAY } from './domain/session/sessionStore'
 export { SESSION_STORE_KEY } from './domain/session/storeStrategies/sessionStoreStrategy'
 export {

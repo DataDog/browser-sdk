@@ -1,9 +1,9 @@
 import type { RouteMatch } from 'react-router-dom'
 import { display } from '@datadog/browser-core'
-import { onReactPluginInit } from '../reactPlugin'
+import { onRumInit } from '../reactPlugin'
 
 export function startReactRouterView(routeMatches: RouteMatch[]) {
-  onReactPluginInit((configuration, rumPublicApi) => {
+  onRumInit((configuration, rumPublicApi) => {
     if (!configuration.router) {
       display.warn('`router: true` is missing from the react plugin configuration, the view will not be tracked.')
       return

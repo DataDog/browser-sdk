@@ -683,7 +683,7 @@ describe('recorder', () => {
       })
 
     createTest('should detect a rage click and match it to mouse interaction records')
-      .withRum({ trackUserInteractions: true, allowUntrustedEvents: true })
+      .withRum({ trackUserInteractions: true })
       .withSetup(bundleSetup)
       .withBody(html`
         <div id="main-div" />

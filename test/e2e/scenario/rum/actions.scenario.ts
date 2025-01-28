@@ -355,7 +355,7 @@ describe('action collection', () => {
     })
 
   createTest('collect a "rage click"')
-    .withRum({ trackUserInteractions: true, allowUntrustedEvents: true })
+    .withRum({ trackUserInteractions: true })
     .withBody(html`
       <button>click me</button>
       <script>

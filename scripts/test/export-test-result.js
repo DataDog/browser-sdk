@@ -18,6 +18,7 @@ runMain(() => {
     .withEnvironment({
       DATADOG_API_KEY: getOrg2ApiKey(),
     })
+    .withLogs()
     .run()
 
   printLog(`Export ${testType} tests done.`)

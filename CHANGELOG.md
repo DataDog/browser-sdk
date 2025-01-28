@@ -18,6 +18,36 @@
 
 ---
 
+## v6.1.0
+
+**Public Changes:**
+
+- ✨ Report original error from `addReactError` instead of fake rendering error ([#3293](https://github.com/DataDog/browser-sdk/pull/3293)) [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+- ✨ [RUM-6581] Add an init parameter to chose feature flags event collection ([#3283](https://github.com/DataDog/browser-sdk/pull/3283)) [RUM] [RUM-REACT] [RUM-SLIM]
+- ✨ Capture previous and current rects in CLS attribution data ([#3269](https://github.com/DataDog/browser-sdk/pull/3269)) [RUM] [RUM-REACT] [RUM-SLIM]
+- ✨ [RUM-7572] Add get api of view specific context ([#3266](https://github.com/DataDog/browser-sdk/pull/3266)) [RUM] [RUM-REACT] [RUM-SLIM]
+- ✨ [RUM-6567] Generate new web vitals attribution fields ([#3251](https://github.com/DataDog/browser-sdk/pull/3251)) [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+- 🐛 Prevent collecting the webpack ChunkLoadError ([#3280](https://github.com/DataDog/browser-sdk/pull/3280)) [RUM]
+- ⚡️ [RUM-7650] GA delaying the viewport dimension collection ([#3248](https://github.com/DataDog/browser-sdk/pull/3248)) [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+
+**Internal Changes:**
+
+- 👷‍♀️ [RUM-7963] Add anonymous user id e2e test and cleanup ([#3268](https://github.com/DataDog/browser-sdk/pull/3268)) [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+- 👷 fix eslint error on UNSTABLE_ReactComponentTracker case ([#3298](https://github.com/DataDog/browser-sdk/pull/3298)) [RUM-REACT]
+- 👷 Bump chrome to 132.0.6834.110-1 ([#3296](https://github.com/DataDog/browser-sdk/pull/3296))
+- 👷 various tiny fixes ([#3291](https://github.com/DataDog/browser-sdk/pull/3291)) [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+- 👷 Update all non-major dependencies ([#3292](https://github.com/DataDog/browser-sdk/pull/3292)) [RUM-REACT]
+- 👷 upload source maps for next major canary ([#3288](https://github.com/DataDog/browser-sdk/pull/3288))
+- 👷 Update all non-major dependencies ([#3246](https://github.com/DataDog/browser-sdk/pull/3246))
+- 👷 Update dependency puppeteer to v24 ([#3275](https://github.com/DataDog/browser-sdk/pull/3275))
+- 👷: migrate renovate config ([#3279](https://github.com/DataDog/browser-sdk/pull/3279))
+- ✅ Add e2e test for telemetry usage ([#3222](https://github.com/DataDog/browser-sdk/pull/3222)) [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+- ✅ mitigate e2e protocol latency ([#3295](https://github.com/DataDog/browser-sdk/pull/3295))
+- ✅ don't rely on segment counts on e2e tests ([#3278](https://github.com/DataDog/browser-sdk/pull/3278)) [RUM]
+- ✅ clear identifier implementation cache between tests ([#3282](https://github.com/DataDog/browser-sdk/pull/3282)) [RUM] [RUM-REACT] [RUM-SLIM]
+- [React RUM] Add a ReactComponentTracker component ([#3086](https://github.com/DataDog/browser-sdk/pull/3086)) [RUM-REACT]
+- ⬆️ Update eslint to v9 / flat config ([#3259](https://github.com/DataDog/browser-sdk/pull/3259)) [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+
 ## v6.0.0
 
 See our [upgrade guide](https://docs.datadoghq.com/real_user_monitoring/guide/browser-sdk-upgrade/#from-v5-to-v6) for a comprehensive list of breaking changes introduced by this major version.

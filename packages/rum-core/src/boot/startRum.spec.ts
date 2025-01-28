@@ -79,6 +79,7 @@ function startRumStub(
     sessionManager,
     pageStateHistory,
     domMutationObservable,
+    startFeatureFlagContexts(lifeCycle, createCustomerDataTracker(noop)),
     windowOpenObservable,
     viewHistory,
     () => ({
@@ -96,7 +97,6 @@ function startRumStub(
     domMutationObservable,
     windowOpenObservable,
     locationChangeObservable,
-    startFeatureFlagContexts(lifeCycle, createCustomerDataTracker(noop)),
     pageStateHistory,
     noopRecorderApi,
     viewHistory

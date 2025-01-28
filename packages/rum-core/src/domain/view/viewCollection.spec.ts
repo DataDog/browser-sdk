@@ -4,7 +4,6 @@ import { mockClock, registerCleanupTask } from '@datadog/browser-core/test'
 import type { RecorderApi } from '../../boot/rumPublicApi'
 import {
   collectAndValidateRawRumEvents,
-  mockFeatureFlagContexts,
   mockPageStateHistory,
   mockRumConfiguration,
   mockViewHistory,
@@ -16,7 +15,6 @@ import type { RawRumEventCollectedData } from '../lifeCycle'
 import { LifeCycle, LifeCycleEventType } from '../lifeCycle'
 import { PageState } from '../contexts/pageStateHistory'
 import type { RumConfiguration } from '../configuration'
-import type { FeatureFlagContexts } from '../contexts/featureFlagContext'
 import type { LocationChange } from '../../browser/locationChangeObservable'
 import type { Hooks } from '../../hooks'
 import { HookNames, createHooks } from '../../hooks'
@@ -82,7 +80,6 @@ describe('viewCollection', () => {
 
   function setupViewCollection(
     partialConfiguration: Partial<RumConfiguration> = {},
-    partialFeatureFlagContexts: Partial<FeatureFlagContexts> = {},
     viewHistoryEntry?: ViewHistoryEntry
   ) {
     hooks = createHooks()
@@ -101,7 +98,6 @@ describe('viewCollection', () => {
       domMutationObservable,
       windowOpenObservable,
       locationChangeObservable,
-      mockFeatureFlagContexts(partialFeatureFlagContexts),
       mockPageStateHistory({
         findAll: () => [
           { start: 0 as ServerDuration, state: PageState.ACTIVE },
@@ -217,7 +213,6 @@ describe('viewCollection', () => {
         has_replay: undefined,
         is_active: undefined,
       },
-      feature_flags: undefined,
       display: {
         scroll: {
           max_depth: 2000,
@@ -254,16 +249,6 @@ describe('viewCollection', () => {
     expect(rawRumViewEvent.session.has_replay).toBe(true)
   })
 
-  it('should include feature flags', () => {
-    setupViewCollection({}, { findFeatureFlagEvaluations: () => ({ feature: 'foo' }) })
-
-    const view: ViewEvent = { ...VIEW, commonViewMetrics: { loadingTime: -20 as Duration } }
-    lifeCycle.notify(LifeCycleEventType.VIEW_UPDATED, view)
-    const rawRumViewEvent = rawRumEvents[rawRumEvents.length - 1].rawRumEvent as RawRumViewEvent
-
-    expect(rawRumViewEvent.feature_flags).toEqual({ feature: 'foo' })
-  })
-
   it('should discard negative loading time', () => {
     setupViewCollection()
     const view: ViewEvent = { ...VIEW, commonViewMetrics: { loadingTime: -20 as Duration } }
@@ -284,7 +269,7 @@ describe('viewCollection', () => {
   describe('with configuration.start_session_replay_recording_manually set', () => {
     it('should include startSessionReplayRecordingManually false', () => {
       // when configured to false
-      setupViewCollection({ startSessionReplayRecordingManually: false }, {})
+      setupViewCollection({ startSessionReplayRecordingManually: false })
       lifeCycle.notify(LifeCycleEventType.VIEW_UPDATED, VIEW)
 
       expect(
@@ -295,7 +280,7 @@ describe('viewCollection', () => {
 
     it('should include startSessionReplayRecordingManually true', () => {
       // when configured to true
-      setupViewCollection({ startSessionReplayRecordingManually: true }, {})
+      setupViewCollection({ startSessionReplayRecordingManually: true })
       lifeCycle.notify(LifeCycleEventType.VIEW_UPDATED, VIEW)
 
       expect(
@@ -316,7 +301,7 @@ describe('viewCollection', () => {
         startClocks: { relative: 0 as RelativeTime, timeStamp: 0 as TimeStamp },
       }
 
-      setupViewCollection({ trackViewsManually: true }, {}, viewHistoryEntry)
+      setupViewCollection({ trackViewsManually: true }, viewHistoryEntry)
 
       const event = hooks.triggerHook(HookNames.Assemble, { eventType: 'view', startTime: 0 as RelativeTime })
 
