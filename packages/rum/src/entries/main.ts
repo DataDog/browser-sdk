@@ -5,7 +5,7 @@ import { makeRumPublicApi, startRum } from '@datadog/browser-rum-core'
 import { makeRecorderApi } from '../boot/recorderApi'
 import { createDeflateEncoder, startDeflateWorker } from '../domain/deflate'
 import { lazyLoadRecorder } from '../boot/lazyLoadRecorder'
-export {
+export type {
   CommonProperties,
   RumPublicApi as RumGlobal,
   RumInitConfiguration,
