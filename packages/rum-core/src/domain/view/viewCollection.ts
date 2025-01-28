@@ -9,20 +9,25 @@ import { LifeCycleEventType } from '../lifeCycle'
 import type { LocationChange } from '../../browser/locationChangeObservable'
 import type { RumConfiguration } from '../configuration'
 import type { PageStateHistory } from '../contexts/pageStateHistory'
-import type { ViewEvent, ViewOptions } from './trackViews'
+import type { ViewHistory } from '../contexts/viewHistory'
+import type { Hooks, PartialRumEvent } from '../../hooks'
+import { HookNames } from '../../hooks'
 import { trackViews } from './trackViews'
+import type { ViewEvent, ViewOptions } from './trackViews'
 import type { CommonViewMetrics } from './viewMetrics/trackCommonViewMetrics'
 import type { InitialViewMetrics } from './viewMetrics/trackInitialViewMetrics'
 
 export function startViewCollection(
   lifeCycle: LifeCycle,
+  hooks: Hooks,
   configuration: RumConfiguration,
   location: Location,
   domMutationObservable: Observable<void>,
-  pageOpenObserable: Observable<void>,
+  pageOpenObservable: Observable<void>,
   locationChangeObservable: Observable<LocationChange>,
   pageStateHistory: PageStateHistory,
   recorderApi: RecorderApi,
+  viewHistory: ViewHistory,
   initialViewOptions?: ViewOptions
 ) {
   lifeCycle.subscribe(LifeCycleEventType.VIEW_UPDATED, (view) =>
@@ -31,11 +36,27 @@ export function startViewCollection(
       processViewUpdate(view, configuration, recorderApi, pageStateHistory)
     )
   )
+
+  hooks.register(HookNames.Assemble, ({ startTime, eventType }): PartialRumEvent | undefined => {
+    const { service, version, id, name, context } = viewHistory.findView(startTime)!
+
+    return {
+      type: eventType,
+      service,
+      version,
+      context,
+      view: {
+        id,
+        name,
+      },
+    }
+  })
+
   return trackViews(
     location,
     lifeCycle,
     domMutationObservable,
-    pageOpenObserable,
+    pageOpenObservable,
     configuration,
     locationChangeObservable,
     !configuration.trackViewsManually,

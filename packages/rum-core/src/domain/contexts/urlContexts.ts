@@ -3,6 +3,8 @@ import { SESSION_TIME_OUT_DELAY, relativeNow, createValueHistory } from '@datado
 import type { LocationChange } from '../../browser/locationChangeObservable'
 import type { LifeCycle } from '../lifeCycle'
 import { LifeCycleEventType } from '../lifeCycle'
+import type { PartialRumEvent, Hooks } from '../../hooks'
+import { HookNames } from '../../hooks'
 
 /**
  * We want to attach to an event:
@@ -24,6 +26,7 @@ export interface UrlContexts {
 
 export function startUrlContexts(
   lifeCycle: LifeCycle,
+  hooks: Hooks,
   locationChangeObservable: Observable<LocationChange>,
   location: Location
 ) {
@@ -68,6 +71,18 @@ export function startUrlContexts(
       referrer,
     }
   }
+
+  hooks.register(HookNames.Assemble, ({ startTime, eventType }): PartialRumEvent | undefined => {
+    const { url, referrer } = urlContextHistory.find(startTime)!
+
+    return {
+      type: eventType,
+      view: {
+        url,
+        referrer,
+      },
+    }
+  })
 
   return {
     findUrl: (startTime?: RelativeTime) => urlContextHistory.find(startTime),

@@ -357,12 +357,6 @@ export interface RumContext {
       height: number
     }
   }
-  view: {
-    id: string
-    referrer?: string
-    url: string
-    name?: string
-  }
   connectivity: Connectivity
   action?: {
     id: string | string[]
@@ -375,6 +369,7 @@ export interface RumContext {
   ci_test?: {
     test_execution_id: string
   }
+  context: Context
   _dd: {
     format_version: 2
     drift: number
