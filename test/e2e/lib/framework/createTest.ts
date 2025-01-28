@@ -243,7 +243,7 @@ function createTestContext(
     },
     flushEvents: () => flushEvents(page),
     deleteAllCookies: () => deleteAllCookies(browserContext),
-    sendXhr: (url: string, headers: string[][]) => sendXhr(page, url, headers),
+    sendXhr: (url: string, headers?: string[][]) => sendXhr(page, url, headers),
   }
 }
 
