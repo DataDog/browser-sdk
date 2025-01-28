@@ -1,5 +1,5 @@
-import { bundleSetup, createTest, flushEvents } from '../lib/framework'
 import { test, expect } from '@playwright/test'
+import { bundleSetup, createTest } from '../lib/framework'
 
 test.describe('telemetry', () => {
   createTest('send errors for logs')

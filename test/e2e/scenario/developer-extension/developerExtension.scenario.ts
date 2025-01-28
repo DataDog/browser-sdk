@@ -1,12 +1,13 @@
-import { test as base, chromium, Page, type BrowserContext, expect } from '@playwright/test'
 import path from 'path'
+import { test as base, chromium, expect } from '@playwright/test'
+import type { Page, BrowserContext } from '@playwright/test'
 
 const test = base.extend<{
   context: BrowserContext
   extensionId: string
   developerExtension: DeveloperExtensionPage
 }>({
-  context: async ({}, use) => {
+  context: async (_fixture, use) => {
     const pathToExtension = path.join(process.cwd(), 'developer-extension', 'dist')
 
     const context = await chromium.launchPersistentContext('', {
@@ -18,7 +19,9 @@ const test = base.extend<{
   },
   extensionId: async ({ context }, use) => {
     let [background] = context.serviceWorkers()
-    if (!background) background = await context.waitForEvent('serviceworker')
+    if (!background) {
+      background = await context.waitForEvent('serviceworker')
+    }
 
     const extensionId = background.url().split('/')[2]
     await use(extensionId)

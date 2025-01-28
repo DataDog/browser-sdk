@@ -1,6 +1,7 @@
 import { SESSION_STORE_KEY } from '@datadog/browser-core'
+import type { BrowserContext, Page } from '@playwright/test'
+import { test, expect } from '@playwright/test'
 import { createTest } from '../lib/framework'
-import { test, expect, BrowserContext, Page } from '@playwright/test'
 
 const DISABLE_LOCAL_STORAGE = '<script>Object.defineProperty(Storage.prototype, "getItem", { get: () => 42});</script>'
 const DISABLE_COOKIES = '<script>Object.defineProperty(Document.prototype, "cookie", { get: () => 42});</script>'
@@ -24,7 +25,7 @@ test.describe('Session Stores', () => {
       .withLogs()
       .withRum()
       .withHead(DISABLE_COOKIES)
-      .run(async ({ browserContext, page }) => {
+      .run(async ({ page }) => {
         const logsContext = await page.evaluate(() => window.DD_LOGS?.getInternalContext())
         const rumContext = await page.evaluate(() => window.DD_RUM?.getInternalContext())
 

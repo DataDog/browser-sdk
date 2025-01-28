@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test'
-import { findSessionCookie } from 'lib/helpers/session'
+import { findSessionCookie } from '../lib/helpers/session'
 import { createTest } from '../lib/framework'
 
 test.describe('tracking consent', () => {

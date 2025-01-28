@@ -45,7 +45,7 @@ test.describe('recorder', () => {
             findAllIncrementalSnapshots(segment, IncrementalSource.ViewportResize)
           ).data as ViewportResizeData
 
-          const scrollbarThicknessCorrection = await getScrollbarThicknessCorrection(page)
+          const scrollbarThicknessCorrection = getScrollbarThicknessCorrection(page)
 
           expectToBeNearby(lastViewportResizeData.width, innerWidth - scrollbarThicknessCorrection)
           expectToBeNearby(lastViewportResizeData.height, innerHeight - scrollbarThicknessCorrection)

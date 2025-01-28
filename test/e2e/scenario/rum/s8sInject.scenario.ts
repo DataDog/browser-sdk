@@ -1,8 +1,8 @@
 import * as fs from 'fs'
-import { RUM_BUNDLE } from '../../lib/framework'
-import { APPLICATION_ID, CLIENT_TOKEN } from '../../lib/helpers/configuration'
 import puppeteer from 'puppeteer'
 import { test, expect } from '@playwright/test'
+import { RUM_BUNDLE } from '../../lib/framework'
+import { APPLICATION_ID, CLIENT_TOKEN } from '../../lib/helpers/configuration'
 
 test.describe('Inject RUM with Puppeteer', () => {
   // S8s tests inject RUM with puppeteer evaluateOnNewDocument

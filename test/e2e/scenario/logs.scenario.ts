@@ -79,7 +79,7 @@ test.describe('logs', () => {
   createTest('send fetch network errors')
     .withLogs({ forwardErrorsToLogs: true })
     .run(async ({ intakeRegistry, flushEvents, page, withBrowserLogs }) => {
-      await page.evaluate((unreachableUrl) => fetch(unreachableUrl).catch(() => {}), UNREACHABLE_URL)
+      await page.evaluate((unreachableUrl) => fetch(unreachableUrl).catch(() => undefined), UNREACHABLE_URL)
 
       await flushEvents()
       expect(intakeRegistry.logsEvents.length).toBe(1)
@@ -97,7 +97,7 @@ test.describe('logs', () => {
   createTest('keep only the first bytes of the response')
     .withLogs({ forwardErrorsToLogs: true })
     .run(async ({ intakeRegistry, baseUrl, servers, flushEvents, page, withBrowserLogs }) => {
-      await page.evaluate(() => fetch('/throw-large-response').then(() => {}, console.log))
+      await page.evaluate(() => fetch('/throw-large-response').then(() => undefined, console.log))
 
       await flushEvents()
       expect(intakeRegistry.logsEvents.length).toBe(1)

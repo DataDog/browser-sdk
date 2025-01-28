@@ -1,7 +1,6 @@
 import type { RumErrorEvent } from '@datadog/browser-rum-core'
-import { createTest, html } from '../../lib/framework'
-import { getBrowserName, getPlatformName } from '../../lib/helpers/browser'
 import { test, expect } from '@playwright/test'
+import { createTest, html } from '../../lib/framework'
 
 // Note: using `browser.execute` to throw exceptions may result in "Script error." being reported,
 // because WDIO is evaluating the script in a different context than the page.
@@ -25,7 +24,7 @@ test.describe('rum errors', () => {
     .withRum()
     .withBody(createBody('console.error("oh snap")'))
     .run(async ({ page, intakeRegistry, baseUrl, flushEvents, withBrowserLogs }) => {
-      const button = await page.locator('button')
+      const button = page.locator('button')
       await button.click()
 
       await flushEvents()
@@ -36,7 +35,7 @@ test.describe('rum errors', () => {
         handlingStack: ['Error: ', `handler @ ${baseUrl}/:`],
         handling: 'handled',
       })
-      await withBrowserLogs((browserLogs) => {
+      withBrowserLogs((browserLogs) => {
         expect(browserLogs.length).toEqual(1)
       })
     })
@@ -45,7 +44,7 @@ test.describe('rum errors', () => {
     .withRum()
     .withBody(createBody('console.error("Foo:", foo())'))
     .run(async ({ page, flushEvents, intakeRegistry, baseUrl, withBrowserLogs }) => {
-      const button = await page.locator('button')
+      const button = page.locator('button')
       await button.click()
 
       await flushEvents()
@@ -57,7 +56,7 @@ test.describe('rum errors', () => {
         handlingStack: ['Error: ', `handler @ ${baseUrl}/:`],
         handling: 'handled',
       })
-      await withBrowserLogs((browserLogs) => {
+      withBrowserLogs((browserLogs) => {
         expect(browserLogs.length).toEqual(1)
       })
     })
@@ -66,7 +65,7 @@ test.describe('rum errors', () => {
     .withRum()
     .withBody(createBody('throw foo()'))
     .run(async ({ page, flushEvents, intakeRegistry, baseUrl, withBrowserLogs }) => {
-      const button = await page.locator('button')
+      const button = page.locator('button')
       await button.click()
 
       await flushEvents()
@@ -77,7 +76,7 @@ test.describe('rum errors', () => {
         stack: ['Error: oh snap', `at foo @ ${baseUrl}/:`, `handler @ ${baseUrl}/:`],
         handling: 'unhandled',
       })
-      await withBrowserLogs((browserLogs) => {
+      withBrowserLogs((browserLogs) => {
         expect(browserLogs.length).toEqual(1)
       })
     })
@@ -86,7 +85,7 @@ test.describe('rum errors', () => {
     .withRum()
     .withBody(createBody('Promise.reject(foo())'))
     .run(async ({ flushEvents, page, intakeRegistry, baseUrl, withBrowserLogs }) => {
-      const button = await page.locator('button')
+      const button = page.locator('button')
       await button.click()
 
       await flushEvents()
@@ -97,7 +96,7 @@ test.describe('rum errors', () => {
         stack: ['Error: oh snap', `at foo @ ${baseUrl}/:`, `handler @ ${baseUrl}/:`],
         handling: 'unhandled',
       })
-      await withBrowserLogs((browserLogs) => {
+      withBrowserLogs((browserLogs) => {
         expect(browserLogs.length).toEqual(1)
       })
     })
@@ -106,7 +105,7 @@ test.describe('rum errors', () => {
     .withRum()
     .withBody(createBody('DD_RUM.addError(foo())'))
     .run(async ({ flushEvents, page, intakeRegistry, baseUrl, withBrowserLogs }) => {
-      const button = await page.locator('button')
+      const button = page.locator('button')
       await button.click()
 
       await flushEvents()
@@ -118,7 +117,7 @@ test.describe('rum errors', () => {
         handlingStack: ['Error: ', `handler @ ${baseUrl}/:`],
         handling: 'handled',
       })
-      await withBrowserLogs((browserLogs) => {
+      withBrowserLogs((browserLogs) => {
         expect(browserLogs.length).toEqual(0)
       })
     })
@@ -140,7 +139,7 @@ test.describe('rum errors', () => {
       const userAgent = await page.evaluate(() => navigator.userAgent)
       test.skip(browserName === 'firefox' || (browserName === 'webkit' && userAgent.includes('Mac OS X')))
 
-      const button = await page.locator('button')
+      const button = page.locator('button')
       await button.click()
 
       await flushEvents()
@@ -158,7 +157,7 @@ test.describe('rum errors', () => {
           disposition: 'enforce',
         },
       })
-      await withBrowserLogs((browserLogs) => {
+      withBrowserLogs((browserLogs) => {
         expect(browserLogs.length).toEqual(1)
       })
     })
