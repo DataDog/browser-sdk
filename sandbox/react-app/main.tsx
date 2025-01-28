@@ -1,4 +1,4 @@
-import { Link, Outlet, RouterProvider, useParams } from 'react-router-7'
+import { Link, Outlet, RouterProvider, useParams } from 'react-router-dom-7'
 import React, { useEffect, useState } from 'react'
 import ReactDOM from 'react-dom/client'
 import { datadogRum } from '@datadog/browser-rum'

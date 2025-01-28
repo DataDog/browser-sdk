@@ -1,8 +1,8 @@
-import type { RouteMatch } from 'react-router-6'
 import { display } from '@datadog/browser-core'
 import { onRumInit } from '../reactPlugin'
+import type { AnyRouteMatch } from './types'
 
-export function startReactRouterView(routeMatches: RouteMatch[]) {
+export function startReactRouterView(routeMatches: AnyRouteMatch[]) {
   onRumInit((configuration, rumPublicApi) => {
     if (!configuration.router) {
       display.warn('`router: true` is missing from the react plugin configuration, the view will not be tracked.')
@@ -12,7 +12,7 @@ export function startReactRouterView(routeMatches: RouteMatch[]) {
   })
 }
 
-export function computeViewName(routeMatches: RouteMatch[]) {
+export function computeViewName(routeMatches: AnyRouteMatch[]) {
   if (!routeMatches || routeMatches.length === 0) {
     return ''
   }
@@ -54,22 +54,13 @@ export function computeViewName(routeMatches: RouteMatch[]) {
  * substitutePathSplats('/files/*', { '*': 'path/to/file' }, true) // => '/files/path/to/file'
  */
 function substitutePathSplats(path: string, params: Record<string, string | undefined>, isLastMatchingRoute: boolean) {
-  if (
-    !path.includes('*') ||
-    // In some edge cases, react-router does not provide the `*` parameter, so we don't know what to
-    // replace it with. In this case, we keep the asterisk.
-    params['*'] === undefined
-  ) {
+  if (!path.includes('*') || params['*'] === undefined) {
     return path
   }
 
-  // The `*` parameter is only related to the last matching route path.
   if (isLastMatchingRoute) {
     return path.replace(/\*/, params['*'])
   }
 
-  // Intermediary route paths with a `*` are kind of edge cases, and the `*` parameter is not
-  // relevant for them. We remove it from the path (along with a potential slash preceeding it) to
-  // have a coherent view name once everything is concatenated (see examples in spec file).
   return path.replace(/\/?\*/, '')
 }
