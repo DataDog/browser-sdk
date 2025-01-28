@@ -1,7 +1,7 @@
 import type { ReporterDescription, Config } from '@playwright/test'
 import { getTestReportDirectory } from '../envUtils'
 
-const reporters: ReporterDescription[] = [['line'], ['./notice-reporter.ts']]
+const reporters: ReporterDescription[] = [['line'], ['./noticeReporter.ts']]
 
 const testReportDirectory = getTestReportDirectory()
 if (testReportDirectory) {
