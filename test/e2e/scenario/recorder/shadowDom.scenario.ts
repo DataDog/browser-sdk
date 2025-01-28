@@ -337,7 +337,7 @@ function findElementsInShadowDom(node: SerializedNodeWithId, id: string) {
 
   const text = findElementWithIdAttribute(node, `label-${id}`)
   expect(text).toBeTruthy()
-  const textContent = findTextContent(text)
+  const textContent = findTextContent(text!)
   expect(textContent).toBeTruthy()
   return { shadowHost, shadowRoot, input, text, textContent }
 }
