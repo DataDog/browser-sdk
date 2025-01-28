@@ -220,7 +220,7 @@ e2e:
   artifacts:
     when: always
     paths:
-      - 'test-report/e2e/*'
+      - 'test-report/e2e/index.html'
     reports:
       junit: test-report/e2e/*.xml
   script:
@@ -262,6 +262,7 @@ check-schemas:
 
 unit-bs:
   stage: browserstack
+  needs: ['unit']
   extends:
     - .base-configuration
     - .bs-allowed-branches
@@ -278,6 +279,7 @@ unit-bs:
 
 e2e-bs:
   stage: browserstack
+  needs: ['e2e']
   extends:
     - .base-configuration
     - .bs-allowed-branches
@@ -287,7 +289,8 @@ e2e-bs:
   timeout: 35 minutes
   artifacts:
     when: always
-    paths: ['test-report/e2e-bs/specs.log']
+    paths:
+      - 'test-report/e2e/index.html'
     reports:
       junit: test-report/e2e-bs/*.xml
   script:
