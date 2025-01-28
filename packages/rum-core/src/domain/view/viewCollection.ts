@@ -111,7 +111,6 @@ function processViewUpdate(
       name: view.name,
       largest_contentful_paint: toServerDuration(view.initialViewMetrics.largestContentfulPaint?.value),
       largest_contentful_paint_target_selector: view.initialViewMetrics.largestContentfulPaint?.targetSelector,
-      largest_contentful_paint_resource_url: view.initialViewMetrics.largestContentfulPaint?.resourceUrl,
       load_event: toServerDuration(view.initialViewMetrics.navigationTimings?.loadEvent),
       loading_time: discardNegativeDuration(toServerDuration(view.commonViewMetrics.loadingTime)),
       loading_type: view.loadingType,
@@ -184,6 +183,7 @@ function computeViewPerformanceData(
     lcp: largestContentfulPaint && {
       timestamp: toServerDuration(largestContentfulPaint.value),
       target_selector: largestContentfulPaint.targetSelector,
+      resource_url: largestContentfulPaint.resourceUrl,
     },
   }
 }

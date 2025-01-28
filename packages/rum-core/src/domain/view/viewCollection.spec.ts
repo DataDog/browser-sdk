@@ -172,7 +172,6 @@ describe('viewCollection', () => {
         name: undefined,
         largest_contentful_paint: (10 * 1e6) as ServerDuration,
         largest_contentful_paint_target_selector: undefined,
-        largest_contentful_paint_resource_url: undefined,
         load_event: (10 * 1e6) as ServerDuration,
         loading_time: (20 * 1e6) as ServerDuration,
         loading_type: ViewLoadingType.INITIAL_LOAD,
@@ -203,6 +202,7 @@ describe('viewCollection', () => {
           lcp: {
             timestamp: (10 * 1e6) as ServerDuration,
             target_selector: undefined,
+            resource_url: undefined,
           },
         },
         resource: {
