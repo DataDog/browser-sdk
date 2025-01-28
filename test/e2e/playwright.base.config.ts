@@ -1,16 +1,16 @@
+import path from 'path'
 import type { ReporterDescription, Config } from '@playwright/test'
 import { getTestReportDirectory } from '../envUtils'
 
+const testReportDirectory = getTestReportDirectory()
+
 const reporters: ReporterDescription[] = [['line'], ['./noticeReporter.ts']]
 
-const testReportDirectory = getTestReportDirectory()
 if (testReportDirectory) {
-  reporters.push([
-    'junit',
-    {
-      outputFile: `../../${testReportDirectory}/results.xml`,
-    },
-  ])
+  const outputFolder = path.join(process.cwd(), testReportDirectory)
+
+  reporters.push(['html', { outputFolder }])
+  reporters.push(['junit', { outputFile: path.join(outputFolder, 'results.xml') }])
 } else {
   reporters.push(['html'])
 }
@@ -24,7 +24,7 @@ export const config: Config = {
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,
-  workers: 20,
+  workers: 25,
   reporter: reporters,
   use: {
     trace: 'on-first-retry',
