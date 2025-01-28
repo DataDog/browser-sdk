@@ -7,7 +7,8 @@ const test = base.extend<{
   extensionId: string
   developerExtension: DeveloperExtensionPage
 }>({
-  context: async (_fixture, use) => {
+  // eslint-disable-next-line no-empty-pattern
+  context: async ({}, use) => {
     const pathToExtension = path.join(process.cwd(), 'developer-extension', 'dist')
 
     const context = await chromium.launchPersistentContext('', {
