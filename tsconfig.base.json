@@ -4,7 +4,7 @@
     "experimentalDecorators": true,
     "esModuleInterop": true,
     "importHelpers": false,
-    "moduleResolution": "node16",
+    "moduleResolution": "node",
     "module": "ES2020",
     "resolveJsonModule": true,
     "strict": true,
@@ -19,7 +19,8 @@
       "@datadog/browser-core": ["./packages/core/src"],
       "@datadog/browser-rum-core": ["./packages/rum-core/src"],
       "@datadog/browser-rum-react": ["./packages/rum-react/src/entries/main"],
-      "@datadog/browser-rum-react/react-router-v6": ["./packages/rum-react/src/entries/reactRouterV6"]
+      "@datadog/browser-rum-react/react-router-v6": ["./packages/rum-react/src/entries/reactRouterV6"],
+      "@datadog/browser-rum-react/react-router-v7": ["./packages/rum-react/src/entries/reactRouterV7"]
     }
   }
 }

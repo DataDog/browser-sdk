@@ -1,13 +1,13 @@
 import React from 'react'
 import { flushSync } from 'react-dom'
-import { MemoryRouter as MemoryRouterV6, useNavigate as useNavigateV6 } from 'react-router-6'
-import type { RouteObject as RouteObjectV6 } from 'react-router-6'
-import { MemoryRouter as MemoryRouterV7, useNavigate as useNavigateV7 } from 'react-router-7'
-import type { RouteObject as RouteObjectV7 } from 'react-router-7'
+import { MemoryRouter as MemoryRouterV6, useNavigate as useNavigateV6 } from 'react-router-dom-6'
+import type { RouteObject as RouteObjectV6 } from 'react-router-dom-6'
+import { MemoryRouter as MemoryRouterV7, useNavigate as useNavigateV7 } from 'react-router-dom-7'
+import type { RouteObject as RouteObjectV7 } from 'react-router-dom-7'
 import { appendComponent } from '../../../test/appendComponent'
 import { initializeReactPlugin } from '../../../test/initializeReactPlugin'
-import { useRoutes as useRoutesV6 } from '../reactRouterV6'
-import { useRoutes as useRoutesV7 } from '../reactRouterV7'
+import { useRoutes as useRoutesV6 } from '../../entries/reactRouterV6'
+import { useRoutes as useRoutesV7 } from '../../entries/reactRouterV7'
 
 const versions = [
   {
@@ -113,7 +113,6 @@ versions.forEach(({ version, MemoryRouter, useNavigate, useRoutes }) => {
 
       function NavBar() {
         navigate = useNavigate()
-
         return null
       }
 
@@ -150,7 +149,6 @@ versions.forEach(({ version, MemoryRouter, useNavigate, useRoutes }) => {
 
       function NavBar() {
         navigate = useNavigate()
-
         return null
       }
 
@@ -182,7 +180,6 @@ versions.forEach(({ version, MemoryRouter, useNavigate, useRoutes }) => {
 
       function NavBar() {
         navigate = useNavigate()
-
         return null
       }
 

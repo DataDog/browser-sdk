@@ -1,6 +1,6 @@
 import { initializeReactPlugin } from '../../../test/initializeReactPlugin'
-import { createMemoryRouter as createMemoryRouterV6 } from '../reactRouterV6'
-import { createMemoryRouter as createMemoryRouterV7 } from '../reactRouterV7'
+import { createMemoryRouter as createMemoryRouterV6 } from '../../entries/reactRouterV6'
+import { createMemoryRouter as createMemoryRouterV7 } from '../../entries/reactRouterV7'
 
 describe('createRouter', () => {
   const versions = [

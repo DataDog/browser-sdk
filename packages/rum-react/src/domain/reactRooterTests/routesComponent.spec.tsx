@@ -1,11 +1,11 @@
 import React from 'react'
 import { flushSync } from 'react-dom'
-import { MemoryRouter as MemoryRouterV6, Route as RouteV6, useNavigate as useNavigateV6 } from 'react-router-6'
-import { MemoryRouter as MemoryRouterV7, Route as RouteV7, useNavigate as useNavigateV7 } from 'react-router-7'
+import { MemoryRouter as MemoryRouterV6, Route as RouteV6, useNavigate as useNavigateV6 } from 'react-router-dom-6'
+import { MemoryRouter as MemoryRouterV7, Route as RouteV7, useNavigate as useNavigateV7 } from 'react-router-dom-7'
 import { initializeReactPlugin } from '../../../test/initializeReactPlugin'
 import { appendComponent } from '../../../test/appendComponent'
-import { Routes as RoutesV6 } from '../reactRouterV6'
-import { Routes as RoutesV7 } from '../reactRouterV7'
+import { Routes as RoutesV6 } from '../../entries/reactRouterV6'
+import { Routes as RoutesV7 } from '../../entries/reactRouterV7'
 ;[
   {
     version: 'react-router-6',

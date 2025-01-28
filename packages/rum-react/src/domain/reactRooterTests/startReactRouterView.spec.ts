@@ -3,16 +3,16 @@ import {
   createMemoryRouter as createMemoryRouterV6,
   type RouteObject as RouteObjectV6,
   type RouteMatch as RouteMatchV6,
-} from 'react-router-6'
+} from 'react-router-dom-6'
 import {
   createMemoryRouter as createMemoryRouterV7,
   type RouteObject as RouteObjectV7,
   type RouteMatch as RouteMatchV7,
-} from 'react-router-7'
+} from 'react-router-dom-7'
 import { registerCleanupTask } from '../../../../core/test'
 import { initializeReactPlugin } from '../../../test/initializeReactPlugin'
-import * as ViewV6 from '../reactRouterV6'
-import * as ViewV7 from '../reactRouterV7'
+import * as ViewV6 from '../../entries/reactRouterV6'
+import * as ViewV7 from '../../entries/reactRouterV7'
 
 const routerVersions = [
   {
@@ -128,7 +128,7 @@ routerVersions.forEach(({ version, createMemoryRouter, startReactRouterView, com
           const route = routePaths
             .split(' > ')
             .reduceRight(
-              (childRoute, path) => ({ path, children: childRoute ? [childRoute] : undefined }),
+              (childRoute, routePath) => ({ path: routePath, children: childRoute ? [childRoute] : undefined }),
               undefined as RouteObjectV6 | RouteObjectV7 | undefined
             )!
 
