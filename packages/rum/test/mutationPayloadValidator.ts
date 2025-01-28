@@ -1,3 +1,4 @@
+import { getGlobalObject } from '@datadog/browser-core'
 import { NodeType, IncrementalSource } from '../src/types'
 import type {
   SerializedNodeWithId,
@@ -127,7 +128,7 @@ export function createMutationPayloadValidator(initialDocument: SerializedNodeWi
     validate: (
       payload: BrowserMutationPayload,
       expected: ExpectedMutationsPayload,
-      { expect = globalThis.expect }: { expect?: Expect } = {}
+      { expect = getGlobalObject().expect }: { expect?: Expect } = {}
     ) => {
       payload = removeUndefinedValues(payload)
 
