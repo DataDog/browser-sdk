@@ -1,12 +1,12 @@
+export type { Configuration, InitConfiguration } from './configuration'
 export {
-  Configuration,
-  InitConfiguration,
   DefaultPrivacyLevel,
   TraceContextInjection,
   isSampleRate,
   validateAndBuildConfiguration,
   serializeConfiguration,
 } from './configuration'
-export { createEndpointBuilder, EndpointBuilder, TrackType, buildEndpointHost } from './endpointBuilder'
+export type { EndpointBuilder, TrackType } from './endpointBuilder'
+export { createEndpointBuilder, buildEndpointHost } from './endpointBuilder'
 export * from './intakeSites'
 export { computeTransportConfiguration, isIntakeUrl } from './transportConfiguration'

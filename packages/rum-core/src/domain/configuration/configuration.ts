@@ -132,9 +132,16 @@ export interface RumInitConfiguration extends InitConfiguration {
    * using.
    */
   plugins?: RumPlugin[] | undefined
+
+  /**
+   * Enables collection of features flags in chosen events.
+   */
+  trackFeatureFlagsForEvents?: FeatureFlagsForEvents[]
 }
 
 export type HybridInitConfiguration = Omit<RumInitConfiguration, 'applicationId' | 'clientToken'>
+
+export type FeatureFlagsForEvents = 'vital' | 'action' | 'long_task' | 'resource'
 
 export interface RumConfiguration extends Configuration {
   // Built from init configuration
@@ -159,11 +166,19 @@ export interface RumConfiguration extends Configuration {
   customerDataTelemetrySampleRate: number
   traceContextInjection: TraceContextInjection
   plugins: RumPlugin[]
+  trackFeatureFlagsForEvents: FeatureFlagsForEvents[]
 }
 
 export function validateAndBuildRumConfiguration(
   initConfiguration: RumInitConfiguration
 ): RumConfiguration | undefined {
+  if (
+    initConfiguration.trackFeatureFlagsForEvents !== undefined &&
+    !Array.isArray(initConfiguration.trackFeatureFlagsForEvents)
+  ) {
+    display.warn('trackFeatureFlagsForEvents should be an array')
+  }
+
   if (!initConfiguration.applicationId) {
     display.error('Application ID is not configured, no RUM data will be collected.')
     return
@@ -222,6 +237,7 @@ export function validateAndBuildRumConfiguration(
       ? initConfiguration.traceContextInjection
       : TraceContextInjection.SAMPLED,
     plugins: initConfiguration.plugins || [],
+    trackFeatureFlagsForEvents: initConfiguration.trackFeatureFlagsForEvents || [],
     ...baseConfiguration,
   }
 }
@@ -305,6 +321,7 @@ export function serializeRumConfiguration(configuration: RumInitConfiguration) {
       name: plugin.name,
       ...plugin.getConfigurationTelemetry?.(),
     })),
+    track_feature_flags_for_events: configuration.trackFeatureFlagsForEvents,
     ...baseSerializedConfiguration,
   } satisfies RawTelemetryConfiguration
 }

@@ -8,36 +8,55 @@ import type { LifeCycle, RawRumEventCollectedData } from '../lifeCycle'
 import { LifeCycleEventType } from '../lifeCycle'
 import type { LocationChange } from '../../browser/locationChangeObservable'
 import type { RumConfiguration } from '../configuration'
-import type { FeatureFlagContexts } from '../contexts/featureFlagContext'
 import type { PageStateHistory } from '../contexts/pageStateHistory'
-import type { ViewEvent, ViewOptions } from './trackViews'
+import type { ViewHistory } from '../contexts/viewHistory'
+import type { Hooks, PartialRumEvent } from '../../hooks'
+import { HookNames } from '../../hooks'
 import { trackViews } from './trackViews'
+import type { ViewEvent, ViewOptions } from './trackViews'
 import type { CommonViewMetrics } from './viewMetrics/trackCommonViewMetrics'
 import type { InitialViewMetrics } from './viewMetrics/trackInitialViewMetrics'
 
 export function startViewCollection(
   lifeCycle: LifeCycle,
+  hooks: Hooks,
   configuration: RumConfiguration,
   location: Location,
   domMutationObservable: Observable<void>,
-  pageOpenObserable: Observable<void>,
+  pageOpenObservable: Observable<void>,
   locationChangeObservable: Observable<LocationChange>,
-  featureFlagContexts: FeatureFlagContexts,
   pageStateHistory: PageStateHistory,
   recorderApi: RecorderApi,
+  viewHistory: ViewHistory,
   initialViewOptions?: ViewOptions
 ) {
   lifeCycle.subscribe(LifeCycleEventType.VIEW_UPDATED, (view) =>
     lifeCycle.notify(
       LifeCycleEventType.RAW_RUM_EVENT_COLLECTED,
-      processViewUpdate(view, configuration, featureFlagContexts, recorderApi, pageStateHistory)
+      processViewUpdate(view, configuration, recorderApi, pageStateHistory)
     )
   )
+
+  hooks.register(HookNames.Assemble, ({ startTime, eventType }): PartialRumEvent | undefined => {
+    const { service, version, id, name, context } = viewHistory.findView(startTime)!
+
+    return {
+      type: eventType,
+      service,
+      version,
+      context,
+      view: {
+        id,
+        name,
+      },
+    }
+  })
+
   return trackViews(
     location,
     lifeCycle,
     domMutationObservable,
-    pageOpenObserable,
+    pageOpenObservable,
     configuration,
     locationChangeObservable,
     !configuration.trackViewsManually,
@@ -48,12 +67,10 @@ export function startViewCollection(
 function processViewUpdate(
   view: ViewEvent,
   configuration: RumConfiguration,
-  featureFlagContexts: FeatureFlagContexts,
   recorderApi: RecorderApi,
   pageStateHistory: PageStateHistory
 ): RawRumEventCollectedData<RawRumViewEvent> {
   const replayStats = recorderApi.getReplayStats(view.id)
-  const featureFlagContext = featureFlagContexts.findFeatureFlagEvaluations(view.startClocks.relative)
   const pageStates = pageStateHistory.findAll(view.startClocks.relative, view.duration)
   const viewEvent: RawRumViewEvent = {
     _dd: {
@@ -106,7 +123,6 @@ function processViewUpdate(
       },
       time_spent: toServerDuration(view.duration),
     },
-    feature_flags: featureFlagContext && !isEmptyObject(featureFlagContext) ? featureFlagContext : undefined,
     display: view.commonViewMetrics.scroll
       ? {
           scroll: {

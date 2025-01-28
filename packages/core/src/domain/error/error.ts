@@ -13,6 +13,7 @@ type RawErrorParams = {
   originalError: unknown
 
   handlingStack?: string
+  componentStack?: string
   startClocks: ClocksState
   nonErrorPrefix: NonErrorPrefix
   source: ErrorSource
@@ -23,6 +24,7 @@ export function computeRawError({
   stackTrace,
   originalError,
   handlingStack,
+  componentStack,
   startClocks,
   nonErrorPrefix,
   source,
@@ -43,6 +45,7 @@ export function computeRawError({
     source,
     handling,
     handlingStack,
+    componentStack,
     originalError,
     type,
     message,

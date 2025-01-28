@@ -2,7 +2,6 @@ import type { RelativeTime } from '@datadog/browser-core'
 import {
   STORAGE_POLL_DELAY,
   SESSION_STORE_KEY,
-  getCookie,
   setCookie,
   stopSessionManager,
   ONE_SECOND,
@@ -15,6 +14,7 @@ import type { Clock } from '@datadog/browser-core/test'
 import {
   createNewEvent,
   expireCookie,
+  getSessionState,
   mockEventBridge,
   mockClock,
   registerCleanupTask,
@@ -61,10 +61,9 @@ describe('rum session manager', () => {
 
       expect(expireSessionSpy).not.toHaveBeenCalled()
       expect(renewSessionSpy).not.toHaveBeenCalled()
-      expect(getCookie(SESSION_STORE_KEY)).toContain(
-        `${RUM_SESSION_KEY}=${RumTrackingType.TRACKED_WITH_SESSION_REPLAY}`
-      )
-      expect(getCookie(SESSION_STORE_KEY)).toMatch(/id=[a-f0-9-]/)
+
+      expect(getSessionState(SESSION_STORE_KEY).id).toMatch(/[a-f0-9-]/)
+      expect(getSessionState(SESSION_STORE_KEY)[RUM_SESSION_KEY]).toBe(RumTrackingType.TRACKED_WITH_SESSION_REPLAY)
     })
 
     it('when tracked without session replay should store session type and id', () => {
@@ -72,10 +71,8 @@ describe('rum session manager', () => {
 
       expect(expireSessionSpy).not.toHaveBeenCalled()
       expect(renewSessionSpy).not.toHaveBeenCalled()
-      expect(getCookie(SESSION_STORE_KEY)).toContain(
-        `${RUM_SESSION_KEY}=${RumTrackingType.TRACKED_WITHOUT_SESSION_REPLAY}`
-      )
-      expect(getCookie(SESSION_STORE_KEY)).toMatch(/id=[a-f0-9-]/)
+      expect(getSessionState(SESSION_STORE_KEY).id).toMatch(/[a-f0-9-]/)
+      expect(getSessionState(SESSION_STORE_KEY)[RUM_SESSION_KEY]).toBe(RumTrackingType.TRACKED_WITHOUT_SESSION_REPLAY)
     })
 
     it('when not tracked should store session type', () => {
@@ -83,9 +80,9 @@ describe('rum session manager', () => {
 
       expect(expireSessionSpy).not.toHaveBeenCalled()
       expect(renewSessionSpy).not.toHaveBeenCalled()
-      expect(getCookie(SESSION_STORE_KEY)).toContain(`${RUM_SESSION_KEY}=${RumTrackingType.NOT_TRACKED}`)
-      expect(getCookie(SESSION_STORE_KEY)).not.toMatch(/\bid=/)
-      expect(getCookie(SESSION_STORE_KEY)).not.toContain('isExpired=1')
+      expect(getSessionState(SESSION_STORE_KEY)[RUM_SESSION_KEY]).toBe(RumTrackingType.NOT_TRACKED)
+      expect(getSessionState(SESSION_STORE_KEY).id).not.toBeDefined()
+      expect(getSessionState(SESSION_STORE_KEY).isExpired).not.toBeDefined()
     })
 
     it('when tracked should keep existing session type and id', () => {
@@ -95,10 +92,8 @@ describe('rum session manager', () => {
 
       expect(expireSessionSpy).not.toHaveBeenCalled()
       expect(renewSessionSpy).not.toHaveBeenCalled()
-      expect(getCookie(SESSION_STORE_KEY)).toContain(
-        `${RUM_SESSION_KEY}=${RumTrackingType.TRACKED_WITH_SESSION_REPLAY}`
-      )
-      expect(getCookie(SESSION_STORE_KEY)).toContain('id=abcdef')
+      expect(getSessionState(SESSION_STORE_KEY).id).toBe('abcdef')
+      expect(getSessionState(SESSION_STORE_KEY)[RUM_SESSION_KEY]).toBe(RumTrackingType.TRACKED_WITH_SESSION_REPLAY)
     })
 
     it('when not tracked should keep existing session type', () => {
@@ -108,7 +103,7 @@ describe('rum session manager', () => {
 
       expect(expireSessionSpy).not.toHaveBeenCalled()
       expect(renewSessionSpy).not.toHaveBeenCalled()
-      expect(getCookie(SESSION_STORE_KEY)).toContain(`${RUM_SESSION_KEY}=${RumTrackingType.NOT_TRACKED}`)
+      expect(getSessionState(SESSION_STORE_KEY)[RUM_SESSION_KEY]).toBe(RumTrackingType.NOT_TRACKED)
     })
 
     it('should renew on activity after expiration', () => {
@@ -117,7 +112,7 @@ describe('rum session manager', () => {
       startRumSessionManagerWithDefaults({ configuration: { sessionSampleRate: 100, sessionReplaySampleRate: 100 } })
 
       expireCookie()
-      expect(getCookie(SESSION_STORE_KEY)).toEqual('isExpired=1')
+      expect(getSessionState(SESSION_STORE_KEY).isExpired).toBe('1')
       expect(expireSessionSpy).not.toHaveBeenCalled()
       expect(renewSessionSpy).not.toHaveBeenCalled()
       clock.tick(STORAGE_POLL_DELAY)
@@ -126,10 +121,8 @@ describe('rum session manager', () => {
 
       expect(expireSessionSpy).toHaveBeenCalled()
       expect(renewSessionSpy).toHaveBeenCalled()
-      expect(getCookie(SESSION_STORE_KEY)).toContain(
-        `${RUM_SESSION_KEY}=${RumTrackingType.TRACKED_WITH_SESSION_REPLAY}`
-      )
-      expect(getCookie(SESSION_STORE_KEY)).toMatch(/id=[a-f0-9-]/)
+      expect(getSessionState(SESSION_STORE_KEY)[RUM_SESSION_KEY]).toBe(RumTrackingType.TRACKED_WITH_SESSION_REPLAY)
+      expect(getSessionState(SESSION_STORE_KEY).id).toMatch(/[a-f0-9-]/)
     })
   })
 
