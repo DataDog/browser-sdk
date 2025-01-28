@@ -20,7 +20,7 @@ test.describe('rum views', () => {
     .withBody(html` <button>Hop</button> `)
     .run(async ({ browserName, flushEvents, intakeRegistry, page }) => {
       test.skip(
-        browserName === 'webkit',
+        browserName.includes('webkit'),
         `
           // When run via WebDriver, Safari <= 14 (at least) have an issue with 'event.timeStamp',
           // so the 'first-input' polyfill is ignoring it and doesn't send a performance entry.

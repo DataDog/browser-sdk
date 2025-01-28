@@ -36,7 +36,7 @@ test.describe('transport', () => {
       .run(async ({ browserName, flushEvents, intakeRegistry, page, withBrowserLogs }) => {
         const userAgent = await page.evaluate(() => navigator.userAgent)
         test.skip(
-          browserName === 'firefox' || (browserName === 'webkit' && userAgent.includes('Mac OS X')),
+          browserName.includes('firefox') || (browserName.includes('webkit') && userAgent.includes('Mac OS X')),
           `
             // Ignore this test on Safari desktop and Firefox because the Worker actually works even with
             // CSP restriction.

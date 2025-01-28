@@ -137,7 +137,7 @@ test.describe('rum errors', () => {
     )
     .run(async ({ page, browserName, intakeRegistry, baseUrl, flushEvents, withBrowserLogs }) => {
       const userAgent = await page.evaluate(() => navigator.userAgent)
-      test.skip(browserName === 'firefox' || (browserName === 'webkit' && userAgent.includes('Mac OS X')))
+      test.skip(browserName.includes('firefox') || (browserName.includes('webkit') && userAgent.includes('Mac OS X')))
 
       const button = page.locator('button')
       await button.click()
