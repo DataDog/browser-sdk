@@ -225,7 +225,9 @@ e2e:
       junit: test-report/e2e/*.xml
   script:
     - yarn
-    - yarn playwright install --with-deps
+    - yarn build
+    - yarn build:app
+    - yarn playwright install chromium --with-deps
     - FORCE_COLOR=1 yarn test:e2e
   after_script:
     - node ./scripts/test/export-test-result.js e2e
