@@ -81,6 +81,7 @@ function startBsLocal() {
 function stopBsLocal() {
   return new Promise((resolve) => {
     bsLocal.stop(() => {
+      printLog('BrowserStackLocal stopped')
       resolve()
     })
   })

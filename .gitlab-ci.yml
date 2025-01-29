@@ -219,8 +219,6 @@ e2e:
   interruptible: true
   artifacts:
     when: always
-    paths:
-      - 'test-report/e2e/index.html'
     reports:
       junit: test-report/e2e/*.xml
   script:
@@ -289,8 +287,6 @@ e2e-bs:
   timeout: 35 minutes
   artifacts:
     when: always
-    paths:
-      - 'test-report/e2e-bs/*'
     reports:
       junit: test-report/e2e-bs/*.xml
   script:

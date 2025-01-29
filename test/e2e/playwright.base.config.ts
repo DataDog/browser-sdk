@@ -7,10 +7,7 @@ const testReportDirectory = getTestReportDirectory()
 const reporters: ReporterDescription[] = [['line'], ['./noticeReporter.ts']]
 
 if (testReportDirectory) {
-  const outputFolder = path.join(process.cwd(), testReportDirectory)
-
-  reporters.push(['html', { outputFolder }])
-  reporters.push(['junit', { outputFile: path.join(outputFolder, 'results.xml') }])
+  reporters.push(['junit', { outputFile: path.join(process.cwd(), testReportDirectory, 'results.xml') }])
 } else {
   reporters.push(['html'])
 }
@@ -23,10 +20,10 @@ export const config: Config = {
   testMatch: ['**/*.scenario.ts'],
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
-  retries: process.env.CI ? 1 : 0,
+  retries: process.env.CI ? 2 : 0,
   workers: 25,
   reporter: reporters,
   use: {
-    trace: 'on-first-retry',
+    trace: process.env.CI ? 'off' : 'retain-on-failure',
   },
 }
