@@ -175,6 +175,7 @@ export interface ViewPerformanceData {
   lcp?: {
     timestamp: ServerDuration
     target_selector?: string
+    resource_url?: string
   }
 }
 

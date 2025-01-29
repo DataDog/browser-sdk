@@ -183,6 +183,7 @@ function computeViewPerformanceData(
     lcp: largestContentfulPaint && {
       timestamp: toServerDuration(largestContentfulPaint.value),
       target_selector: largestContentfulPaint.targetSelector,
+      resource_url: largestContentfulPaint.resourceUrl,
     },
   }
 }
