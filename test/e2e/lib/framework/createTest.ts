@@ -12,7 +12,6 @@ import { IntakeRegistry } from './intakeRegistry'
 import { flushEvents } from './flushEvents'
 import type { Servers } from './httpServers'
 import { getTestServers, waitForServersIdle } from './httpServers'
-import { log } from './logger'
 import type { SetupFactory, SetupOptions } from './pageSetups'
 import { DEFAULT_SETUPS, npmSetup } from './pageSetups'
 import { createIntakeServerApp } from './serverApps/intake'
@@ -190,7 +189,6 @@ function declareTestsForSetups(
 function declareTest(title: string, setupOptions: SetupOptions, factory: SetupFactory, runner: TestRunner) {
   test(title, async ({ page, context, browserName }) => {
     const title = test.info().titlePath.join(' > ')
-    log(`Start '${title}' in ${browserName}`)
 
     setupOptions.context.test_name = title
 
@@ -210,7 +208,6 @@ function declareTest(title: string, setupOptions: SetupOptions, factory: SetupFa
       await runner(testContext)
     } finally {
       await tearDownTest(testContext)
-      log(`End '${title}'`)
     }
   })
 }
@@ -282,9 +279,6 @@ async function tearDownTest({ intakeRegistry, withBrowserLogs, flushEvents, dele
   expect(intakeRegistry.telemetryErrorEvents).toEqual([])
   validateRumFormat(intakeRegistry.rumEvents)
   withBrowserLogs((logs) => {
-    logs.forEach((browserLog) => {
-      log(`Browser ${browserLog.source}: ${browserLog.level} ${browserLog.message}`)
-    })
     expect(logs.filter((log) => log.level === 'error')).toEqual([])
   })
 }
