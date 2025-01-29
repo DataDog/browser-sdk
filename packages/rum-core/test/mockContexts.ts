@@ -19,6 +19,7 @@ export function mockViewHistory(view?: Partial<ViewHistoryEntry>): ViewHistory {
   return {
     findView: () => view as ViewHistoryEntry,
     stop: noop,
+    getAllEntries: () => [],
   }
 }
 
