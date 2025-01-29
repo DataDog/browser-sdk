@@ -17,6 +17,8 @@ import type { CommonContext } from '../contexts/commonContext'
 import type { PageStateHistory } from '../contexts/pageStateHistory'
 import { PageState } from '../contexts/pageStateHistory'
 import type { RumActionEventDomainContext } from '../../domainContext.types'
+import type { PartialRumEvent, Hooks } from '../../hooks'
+import { HookNames } from '../../hooks'
 import type { ActionContexts, ClickAction } from './trackClickActions'
 import { trackClickActions } from './trackClickActions'
 
@@ -34,6 +36,7 @@ export type AutoAction = ClickAction
 
 export function startActionCollection(
   lifeCycle: LifeCycle,
+  hooks: Hooks,
   domMutationObservable: Observable<void>,
   windowOpenObservable: Observable<void>,
   configuration: RumConfiguration,
@@ -42,6 +45,26 @@ export function startActionCollection(
   lifeCycle.subscribe(LifeCycleEventType.AUTO_ACTION_COMPLETED, (action) =>
     lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, processAction(action, pageStateHistory))
   )
+
+  hooks.register(HookNames.Assemble, ({ startTime, eventType }): PartialRumEvent | undefined => {
+    if (
+      eventType !== RumEventType.ERROR &&
+      eventType !== RumEventType.RESOURCE &&
+      eventType !== RumEventType.LONG_TASK
+    ) {
+      return
+    }
+
+    const actionId = actionContexts.findActionId(startTime)
+    if (!actionId) {
+      return
+    }
+
+    return {
+      type: eventType,
+      action: { id: actionId },
+    }
+  })
 
   let actionContexts: ActionContexts = { findActionId: noop as () => undefined }
   let stop: () => void = noop

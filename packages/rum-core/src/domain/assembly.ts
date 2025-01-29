@@ -13,13 +13,7 @@ import {
   getConnectivity,
 } from '@datadog/browser-core'
 import type { RumEventDomainContext } from '../domainContext.types'
-import type {
-  RawRumErrorEvent,
-  RawRumEvent,
-  RawRumLongTaskEvent,
-  RawRumResourceEvent,
-  RumContext,
-} from '../rawRumEvent.types'
+import type { RawRumEvent, RumContext } from '../rawRumEvent.types'
 import { RumEventType } from '../rawRumEvent.types'
 import type { RumEvent } from '../rumEvent.types'
 import type { Hooks } from '../hooks'
@@ -31,7 +25,6 @@ import { LifeCycleEventType } from './lifeCycle'
 import type { ViewHistory } from './contexts/viewHistory'
 import { SessionReplayState, type RumSessionManager } from './rumSessionManager'
 import type { RumConfiguration, FeatureFlagsForEvents } from './configuration'
-import type { ActionContexts } from './action/actionCollection'
 import type { DisplayContext } from './contexts/displayContext'
 import type { CommonContext } from './contexts/commonContext'
 import type { ModifiableFieldPaths } from './limitModification'
@@ -72,7 +65,6 @@ export function startRumAssembly(
   hooks: Hooks,
   sessionManager: RumSessionManager,
   viewHistory: ViewHistory,
-  actionContexts: ActionContexts,
   displayContext: DisplayContext,
   ciVisibilityContext: CiVisibilityContext,
   featureFlagContexts: FeatureFlagContexts,
@@ -141,7 +133,6 @@ export function startRumAssembly(
 
       if (session && viewHistoryEntry) {
         const commonContext = savedCommonContext || getCommonContext()
-        const actionId = actionContexts.findActionId(startTime)
 
         const rumContext: RumContext = {
           _dd: {
@@ -172,7 +163,6 @@ export function startRumAssembly(
             configuration.trackFeatureFlagsForEvents,
             featureFlagContexts
           ),
-          action: needToAssembleWithAction(rawRumEvent) && actionId ? { id: actionId } : undefined,
           synthetics: syntheticsContext,
           ci_test: ciVisibilityContext.get(),
           display: displayContext.get(),
@@ -234,12 +224,6 @@ function shouldSend(
   const rateLimitReached = eventRateLimiters[event.type]?.isLimitReached()
 
   return !rateLimitReached
-}
-
-function needToAssembleWithAction(
-  event: RawRumEvent
-): event is RawRumErrorEvent | RawRumResourceEvent | RawRumLongTaskEvent {
-  return [RumEventType.ERROR, RumEventType.RESOURCE, RumEventType.LONG_TASK].indexOf(event.type) !== -1
 }
 
 function findFeatureFlagsContext(

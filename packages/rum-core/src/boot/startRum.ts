@@ -255,6 +255,7 @@ export function startRumEventCollection(
 ) {
   const actionCollection = startActionCollection(
     lifeCycle,
+    hooks,
     domMutationObservable,
     windowOpenObservable,
     configuration,
@@ -270,7 +271,6 @@ export function startRumEventCollection(
     hooks,
     sessionManager,
     viewHistory,
-    actionCollection.actionContexts,
     displayContext,
     ciVisibilityContext,
     featureFlagContexts,
