@@ -1,4 +1,4 @@
-import type { RelativeTime, ClocksState, Context, ValueHistoryEntry } from '@datadog/browser-core'
+import type { RelativeTime, ClocksState, Context } from '@datadog/browser-core'
 import { SESSION_TIME_OUT_DELAY, createValueHistory } from '@datadog/browser-core'
 import type { LifeCycle } from '../lifeCycle'
 import { LifeCycleEventType } from '../lifeCycle'

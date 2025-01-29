@@ -79,9 +79,12 @@ export function startUrlContexts(
 
     if (!entry) {
       addTelemetryDebug('Missing URL entry', {
-        startTime,
-        urlContextEntries: urlContextHistory.getAllEntries(),
-        viewContextEntries: viewContexts.getAllEntries(),
+        debug: {
+          eventType,
+          startTime,
+          urlContextEntries: urlContextHistory.getAllEntries(),
+          viewContextEntries: viewContexts.getAllEntries(),
+        },
       })
     }
 

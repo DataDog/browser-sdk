@@ -20,6 +20,7 @@ describe('internal context', () => {
         id: 'abcde',
         name: 'foo',
       }),
+      getAllEntries: () => [],
       stop: noop,
     }
 
