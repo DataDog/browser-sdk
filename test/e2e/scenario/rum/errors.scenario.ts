@@ -190,7 +190,9 @@ function expectStack(stack: string | undefined, expectedLines?: Array<string | R
   } else {
     expect(stack).toBeDefined()
     const actualLines = stack!.split('\n')
-    expect(actualLines.length).toBe(expectedLines.length)
+    expect.soft(actualLines.length).toBeGreaterThanOrEqual(expectedLines.length)
+    expect.soft(actualLines.length).toBeLessThanOrEqual(expectedLines.length + 1) // FF have one more line of stack
+
     expectedLines.forEach((line, i) => {
       if (typeof line !== 'string') {
         return expect(actualLines[i]).toMatch(line)

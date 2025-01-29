@@ -114,12 +114,18 @@ test.describe('rum sessions', () => {
         expect(intakeRegistry.rumActionEvents.length).toBe(0)
       })
 
-    createTest('after calling stopSession(), a user interaction starts a new session')
+    createTest('after calling stopSession(), a user interaction starts a new session @known-flacky')
       .withRum()
       .run(async ({ intakeRegistry, flushEvents, browserContext, page }) => {
         await page.evaluate(() => {
           window.DD_RUM!.stopSession()
         })
+
+        test.info().annotations.push({
+          type: 'known-flacky',
+          description: 'This test is known to be flacky, especially in FF',
+        })
+
         await page.locator('html').click()
 
         // The session is not created right away, let's wait until we see a cookie

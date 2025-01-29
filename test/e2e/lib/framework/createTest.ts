@@ -272,6 +272,13 @@ async function setUpTest(browserLogsManager: BrowserLogsManager, { baseUrl, page
 
 async function tearDownTest({ intakeRegistry, withBrowserLogs, flushEvents, deleteAllCookies }: TestContext) {
   await flushEvents()
+  await deleteAllCookies()
+
+  if (test.info().expectedStatus === 'skipped') {
+    // ignore following expectations if test was skipped
+    return
+  }
+
   expect(intakeRegistry.telemetryErrorEvents).toEqual([])
   validateRumFormat(intakeRegistry.rumEvents)
   withBrowserLogs((logs) => {
@@ -280,5 +287,4 @@ async function tearDownTest({ intakeRegistry, withBrowserLogs, flushEvents, dele
     })
     expect(logs.filter((log) => log.level === 'error')).toEqual([])
   })
-  await deleteAllCookies()
 }

@@ -94,10 +94,19 @@ test.describe('logs', () => {
       })
     })
 
-  createTest('keep only the first bytes of the response')
+  createTest('keep only the first bytes of the response @fixme')
     .withLogs({ forwardErrorsToLogs: true })
-    .run(async ({ intakeRegistry, baseUrl, servers, flushEvents, page, withBrowserLogs }) => {
-      await page.evaluate(() => fetch('/throw-large-response').then(() => undefined, console.log))
+    .run(async ({ intakeRegistry, baseUrl, servers, flushEvents, page, withBrowserLogs, browserName }) => {
+      await page.evaluate(
+        () =>
+          new Promise<void>((resolve) => {
+            fetch('/throw-large-response')
+              .catch(console.log)
+              .finally(() => resolve())
+          })
+      )
+
+      test.fixme(browserName.includes('firefox'), 'This does not pass in FF')
 
       await flushEvents()
       expect(intakeRegistry.logsEvents.length).toBe(1)

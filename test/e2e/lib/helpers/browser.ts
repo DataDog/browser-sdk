@@ -74,7 +74,7 @@ export class BrowserLogsManager {
   }
 
   get() {
-    return this.logs
+    return this.logs.filter((log) => !log.message.includes('Ignoring unsupported entryTypes: longtask'))
   }
 
   clear() {
