@@ -105,7 +105,7 @@ test.describe('tracing', () => {
     const requests = intakeRegistry.rumResourceEvents.filter(
       (event) => event.resource.type === 'xhr' || event.resource.type === 'fetch'
     )
-    expect(requests.length).toBe(1)
+    expect(requests).toHaveLength(1)
     expect(requests[0]._dd.trace_id).toMatch(/\d+/)
     expect(requests[0]._dd.span_id).toMatch(/\d+/)
     expect(requests[0].resource.id).toBeDefined()

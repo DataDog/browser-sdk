@@ -21,7 +21,7 @@ test.describe('bridge present', () => {
       await page.waitForTimeout(1000)
       await flushEvents()
 
-      expect(intakeRegistry.rumActionEvents.length).toBe(1)
+      expect(intakeRegistry.rumActionEvents).toHaveLength(1)
       expect(intakeRegistry.hasOnlyBridgeRequests).toBe(true)
     })
 
@@ -36,7 +36,7 @@ test.describe('bridge present', () => {
       flushBrowserLogs()
       await flushEvents()
 
-      expect(intakeRegistry.rumErrorEvents.length).toBe(1)
+      expect(intakeRegistry.rumErrorEvents).toHaveLength(1)
       expect(intakeRegistry.hasOnlyBridgeRequests).toBe(true)
     })
 
@@ -74,7 +74,7 @@ test.describe('bridge present', () => {
       })
 
       await flushEvents()
-      expect(intakeRegistry.telemetryErrorEvents.length).toBe(1)
+      expect(intakeRegistry.telemetryErrorEvents).toHaveLength(1)
       expect(intakeRegistry.hasOnlyBridgeRequests).toBe(true)
       intakeRegistry.empty()
     })
@@ -88,7 +88,7 @@ test.describe('bridge present', () => {
       })
       await flushEvents()
 
-      expect(intakeRegistry.logsEvents.length).toBe(1)
+      expect(intakeRegistry.logsEvents).toHaveLength(1)
       expect(intakeRegistry.hasOnlyBridgeRequests).toBe(true)
     })
 

@@ -170,7 +170,7 @@ test.describe('recorder with shadow DOM', () => {
     .run(async ({ flushEvents, intakeRegistry }) => {
       await flushEvents()
 
-      expect(intakeRegistry.replaySegments.length).toBe(1)
+      expect(intakeRegistry.replaySegments).toHaveLength(1)
 
       const fullSnapshot = findFullSnapshot(intakeRegistry.replaySegments[0])!
       expect(fullSnapshot).toBeTruthy()
@@ -193,7 +193,7 @@ test.describe('recorder with shadow DOM', () => {
 
       await flushEvents()
 
-      expect(intakeRegistry.replaySegments.length).toBe(1)
+      expect(intakeRegistry.replaySegments).toHaveLength(1)
 
       const fullSnapshot = findFullSnapshot(intakeRegistry.replaySegments[0])!
       expect(fullSnapshot).toBeTruthy()
@@ -216,7 +216,7 @@ test.describe('recorder with shadow DOM', () => {
     .run(async ({ flushEvents, intakeRegistry }) => {
       await flushEvents()
 
-      expect(intakeRegistry.replaySegments.length).toBe(1)
+      expect(intakeRegistry.replaySegments).toHaveLength(1)
 
       const fullSnapshot = findFullSnapshot(intakeRegistry.replaySegments[0])!
       expect(fullSnapshot).toBeTruthy()
@@ -251,7 +251,7 @@ test.describe('recorder with shadow DOM', () => {
       const div = page.locator('my-div div')
       await div.click()
       await flushEvents()
-      expect(intakeRegistry.replaySegments.length).toBe(1)
+      expect(intakeRegistry.replaySegments).toHaveLength(1)
       const fullSnapshot = findFullSnapshot(intakeRegistry.replaySegments[0])!
       const divNode = findElementWithTagName(fullSnapshot.data.node, 'div')!
       const mouseInteraction = findMouseInteractionRecords(
@@ -276,7 +276,7 @@ test.describe('recorder with shadow DOM', () => {
         div.innerText = 'titi'
       })
       await flushEvents()
-      expect(intakeRegistry.replaySegments.length).toBe(1)
+      expect(intakeRegistry.replaySegments).toHaveLength(1)
       const { validate, expectInitialNode, expectNewNode } = createMutationPayloadValidatorFromSegment(
         intakeRegistry.replaySegments[0],
         { expect }
@@ -312,7 +312,7 @@ test.describe('recorder with shadow DOM', () => {
       await button.click()
 
       await flushEvents()
-      expect(intakeRegistry.replaySegments.length).toBe(1)
+      expect(intakeRegistry.replaySegments).toHaveLength(1)
       const scrollRecord = findIncrementalSnapshot(intakeRegistry.replaySegments[0], IncrementalSource.Scroll)
       const fullSnapshot = findFullSnapshot(intakeRegistry.replaySegments[0])!
       const divNode = findElementWithIdAttribute(fullSnapshot.data.node, 'scrollable-div')!

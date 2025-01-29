@@ -49,7 +49,7 @@ test.describe('rum views', () => {
         await flushEvents()
         const viewEvents = intakeRegistry.rumViewEvents
 
-        expect(viewEvents.length).toBe(1)
+        expect(viewEvents).toHaveLength(1)
         expect(viewEvents[0].view.loading_type).toBe('initial_load')
       })
 
@@ -63,7 +63,7 @@ test.describe('rum views', () => {
         await flushEvents()
         const viewEvents = intakeRegistry.rumViewEvents
 
-        expect(viewEvents.length).toBe(2)
+        expect(viewEvents).toHaveLength(2)
         expect(viewEvents[0].view.loading_type).toBe('initial_load')
         expect(viewEvents[1].view.loading_type).toBe('route_change')
       })

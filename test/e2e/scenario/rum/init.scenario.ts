@@ -11,7 +11,7 @@ test.describe('API calls and events around init', () => {
     })
     .run(({ withBrowserLogs }) => {
       withBrowserLogs((logs) => {
-        expect(logs.length).toBe(1)
+        expect(logs).toHaveLength(1)
         expect(logs[0].message).toEqual(expect.stringContaining('Datadog Browser SDK'))
         expect(logs[0].message).toEqual(expect.stringContaining('Missing configuration'))
       })
@@ -232,7 +232,7 @@ function expectToHaveErrors(
   events: IntakeRegistry,
   ...errors: Array<{ message: string; viewId: string; context?: Context }>
 ) {
-  expect(events.rumErrorEvents.length).toBe(errors.length)
+  expect(events.rumErrorEvents).toHaveLength(errors.length)
   for (let i = 0; i < errors.length; i++) {
     const registryError = events.rumErrorEvents[i]
     const expectedError = errors[i]
@@ -248,7 +248,7 @@ function expectToHaveActions(
   events: IntakeRegistry,
   ...actions: Array<{ name: string; viewId: string; viewName?: string; context?: Context }>
 ) {
-  expect(events.rumActionEvents.length).toBe(actions.length)
+  expect(events.rumActionEvents).toHaveLength(actions.length)
   for (let i = 0; i < actions.length; i++) {
     const registryAction = events.rumActionEvents[i]
     const expectedAction = actions[i]

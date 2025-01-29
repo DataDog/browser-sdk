@@ -10,7 +10,7 @@ test.describe('transport', () => {
       .run(async ({ flushEvents, intakeRegistry }) => {
         await flushEvents()
 
-        expect(intakeRegistry.rumRequests.length).toBe(2)
+        expect(intakeRegistry.rumRequests).toHaveLength(2)
 
         const plainRequest = intakeRegistry.rumRequests.find((request) => request.encoding === null)
         const deflateRequest = intakeRegistry.rumRequests.find((request) => request.encoding === 'deflate')
@@ -47,7 +47,7 @@ test.describe('transport', () => {
 
         // Some non-deflate request can still be sent because on some browsers the Worker fails
         // asynchronously
-        expect(intakeRegistry.rumRequests.filter((request) => request.encoding === 'deflate').length).toBe(0)
+        expect(intakeRegistry.rumRequests.filter((request) => request.encoding === 'deflate')).toHaveLength(0)
 
         withBrowserLogs((logs) => {
           const failedToStartLog = logs.find((log) => log.message.includes('Datadog RUM failed to start'))

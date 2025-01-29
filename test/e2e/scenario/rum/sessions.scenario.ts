@@ -28,7 +28,7 @@ test.describe('rum sessions', () => {
 
         await flushEvents()
 
-        expect(intakeRegistry.replaySegments.length).toBe(2)
+        expect(intakeRegistry.replaySegments).toHaveLength(2)
 
         const segment = intakeRegistry.replaySegments.at(-1)!
         expect(segment.creation_reason).toBe('init')
@@ -111,7 +111,7 @@ test.describe('rum sessions', () => {
         await flushEvents()
 
         expect((await findSessionCookie(browserContext))?.isExpired).toEqual('1')
-        expect(intakeRegistry.rumActionEvents.length).toBe(0)
+        expect(intakeRegistry.rumActionEvents).toHaveLength(0)
       })
 
     createTest('after calling stopSession(), a user interaction starts a new session @known-flacky')
@@ -139,16 +139,16 @@ test.describe('rum sessions', () => {
 
         expect((await findSessionCookie(browserContext))?.isExpired).not.toEqual('1')
         expect((await findSessionCookie(browserContext))?.id).toBeDefined()
-        expect(intakeRegistry.rumActionEvents.length).toBe(1)
+        expect(intakeRegistry.rumActionEvents).toHaveLength(1)
       })
 
     createTest('flush events when the session expires')
       .withRum()
       .withLogs()
       .run(async ({ intakeRegistry, page }) => {
-        expect(intakeRegistry.rumViewEvents.length).toBe(0)
-        expect(intakeRegistry.logsEvents.length).toBe(0)
-        expect(intakeRegistry.replaySegments.length).toBe(0)
+        expect(intakeRegistry.rumViewEvents).toHaveLength(0)
+        expect(intakeRegistry.logsEvents).toHaveLength(0)
+        expect(intakeRegistry.replaySegments).toHaveLength(0)
 
         await page.evaluate(() => {
           window.DD_LOGS!.logger.log('foo')
@@ -157,10 +157,10 @@ test.describe('rum sessions', () => {
 
         await waitForRequests(page)
 
-        expect(intakeRegistry.rumViewEvents.length).toBe(1)
+        expect(intakeRegistry.rumViewEvents).toHaveLength(1)
         expect(intakeRegistry.rumViewEvents[0].session.is_active).toBe(false)
-        expect(intakeRegistry.logsEvents.length).toBe(1)
-        expect(intakeRegistry.replaySegments.length).toBe(1)
+        expect(intakeRegistry.logsEvents).toHaveLength(1)
+        expect(intakeRegistry.replaySegments).toHaveLength(1)
       })
   })
 
@@ -184,8 +184,8 @@ test.describe('rum sessions', () => {
         await flushEvents()
 
         expect(await findSessionCookie(browserContext)).toBeUndefined()
-        expect(intakeRegistry.rumActionEvents.length).toBe(0)
-        expect(intakeRegistry.rumViewEvents.length).toBe(1)
+        expect(intakeRegistry.rumActionEvents).toHaveLength(0)
+        expect(intakeRegistry.rumViewEvents).toHaveLength(1)
         expect(intakeRegistry.rumViewEvents[0].session.is_active).toBe(false)
       })
   })

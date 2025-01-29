@@ -19,7 +19,7 @@ test.describe('action collection', () => {
       await flushEvents()
       const actionEvents = intakeRegistry.rumActionEvents
 
-      expect(actionEvents.length).toBe(1)
+      expect(actionEvents).toHaveLength(1)
       expect(actionEvents[0]).toEqual(
         expect.objectContaining({
           action: {
@@ -79,7 +79,7 @@ test.describe('action collection', () => {
       await flushEvents()
       const actionEvents = intakeRegistry.rumActionEvents
 
-      expect(actionEvents.length).toBe(1)
+      expect(actionEvents).toHaveLength(1)
       expect(actionEvents[0].action?.target?.name).toBe('click me')
       expect(actionEvents[0]._dd.action?.target?.selector).toBe('BODY>BUTTON')
     })
@@ -108,7 +108,7 @@ test.describe('action collection', () => {
       await flushEvents()
       const actionEvents = intakeRegistry.rumActionEvents
 
-      expect(actionEvents.length).toBe(1)
+      expect(actionEvents).toHaveLength(1)
       expect(actionEvents[0].action?.target?.name).toBe('click me')
     })
 
@@ -131,7 +131,7 @@ test.describe('action collection', () => {
       const actionEvents = intakeRegistry.rumActionEvents
       const resourceEvents = intakeRegistry.rumResourceEvents.filter((event) => event.resource.type === 'fetch')
 
-      expect(actionEvents.length).toBe(1)
+      expect(actionEvents).toHaveLength(1)
       expect(actionEvents[0].action).toEqual({
         error: {
           count: 0,
@@ -153,9 +153,9 @@ test.describe('action collection', () => {
         },
       })
 
-      expect(resourceEvents.length).toBe(1)
+      expect(resourceEvents).toHaveLength(1)
       // resource action id should contain the collected action id + the discarded rage click id
-      expect(resourceEvents[0].action!.id.length).toBe(2)
+      expect(resourceEvents[0].action!.id).toHaveLength(2)
       expect(resourceEvents[0].action!.id).toContain(actionEvents[0].action.id!)
     })
 
@@ -175,7 +175,7 @@ test.describe('action collection', () => {
       await button.click()
       await flushEvents()
       const actionEvents = intakeRegistry.rumActionEvents
-      expect(actionEvents.length).toBe(1)
+      expect(actionEvents).toHaveLength(1)
 
       const viewEvents = intakeRegistry.rumViewEvents
       const originalViewEvent = viewEvents.find((view) => view.view.url.endsWith('/'))!
@@ -202,7 +202,7 @@ test.describe('action collection', () => {
       await flushEvents()
       const actionEvents = intakeRegistry.rumActionEvents
 
-      expect(actionEvents.length).toBe(1)
+      expect(actionEvents).toHaveLength(1)
       expect(actionEvents[0].action.frustration!.type).toEqual(['error_click'])
       expect(actionEvents[0].action.error!.count).toBe(1)
 
@@ -222,7 +222,7 @@ test.describe('action collection', () => {
       await flushEvents()
       const actionEvents = intakeRegistry.rumActionEvents
 
-      expect(actionEvents.length).toBe(1)
+      expect(actionEvents).toHaveLength(1)
       expect(actionEvents[0].action.frustration!.type).toEqual(['dead_click'])
 
       expect(intakeRegistry.rumViewEvents[0].view.frustration!.count).toBe(1)
@@ -237,7 +237,7 @@ test.describe('action collection', () => {
       await flushEvents()
       const actionEvents = intakeRegistry.rumActionEvents
 
-      expect(actionEvents.length).toBe(1)
+      expect(actionEvents).toHaveLength(1)
       expect(actionEvents[0].action.frustration!.type).toEqual([])
     })
 
@@ -250,7 +250,7 @@ test.describe('action collection', () => {
       await flushEvents()
       const actionEvents = intakeRegistry.rumActionEvents
 
-      expect(actionEvents.length).toBe(1)
+      expect(actionEvents).toHaveLength(1)
       expect(actionEvents[0].action.frustration!.type).toEqual([])
     })
 
@@ -263,7 +263,7 @@ test.describe('action collection', () => {
       await flushEvents()
       const actionEvents = intakeRegistry.rumActionEvents
 
-      expect(actionEvents.length).toBe(1)
+      expect(actionEvents).toHaveLength(1)
       expect(actionEvents[0].action.frustration!.type).toEqual(['dead_click'])
     })
 
@@ -276,7 +276,7 @@ test.describe('action collection', () => {
       await flushEvents()
       const actionEvents = intakeRegistry.rumActionEvents
 
-      expect(actionEvents.length).toBe(1)
+      expect(actionEvents).toHaveLength(1)
       expect(actionEvents[0].action.frustration!.type).toEqual([])
     })
 
@@ -300,7 +300,7 @@ test.describe('action collection', () => {
       await flushEvents()
       const actionEvents = intakeRegistry.rumActionEvents
 
-      expect(actionEvents.length).toBe(1)
+      expect(actionEvents).toHaveLength(1)
       expect(actionEvents[0].action.frustration!.type).toEqual([])
     })
 
@@ -326,7 +326,7 @@ test.describe('action collection', () => {
       await flushEvents()
       const actionEvents = intakeRegistry.rumActionEvents
 
-      expect(actionEvents.length).toBe(3)
+      expect(actionEvents).toHaveLength(3)
       expect(actionEvents[0].action.frustration!.type).toEqual([])
     })
 
@@ -348,7 +348,7 @@ test.describe('action collection', () => {
       await flushEvents()
       const actionEvents = intakeRegistry.rumActionEvents
 
-      expect(actionEvents.length).toBe(1)
+      expect(actionEvents).toHaveLength(1)
       expect(actionEvents[0].action.frustration!.type).toEqual([])
     })
 
@@ -384,7 +384,7 @@ test.describe('action collection', () => {
       await flushEvents()
       const actionEvents = intakeRegistry.rumActionEvents
 
-      expect(actionEvents.length).toBe(1)
+      expect(actionEvents).toHaveLength(1)
       expect(actionEvents[0].action.frustration!.type).toEqual(['rage_click'])
     })
 
@@ -405,7 +405,7 @@ test.describe('action collection', () => {
       await flushEvents()
       const actionEvents = intakeRegistry.rumActionEvents
 
-      expect(actionEvents.length).toBe(1)
+      expect(actionEvents).toHaveLength(1)
       expect(actionEvents[0].action.frustration!.type).toStrictEqual(['error_click', 'dead_click'])
 
       expect(intakeRegistry.rumViewEvents[0].view.frustration!.count).toBe(2)

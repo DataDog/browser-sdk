@@ -16,7 +16,7 @@ test.describe('vital collection', () => {
       })
       await flushEvents()
 
-      expect(intakeRegistry.rumVitalEvents.length).toBe(1)
+      expect(intakeRegistry.rumVitalEvents).toHaveLength(1)
       expect(intakeRegistry.rumVitalEvents[0].vital.name).toEqual('foo')
       expect(intakeRegistry.rumVitalEvents[0].vital.duration).toEqual(expect.any(Number))
     })

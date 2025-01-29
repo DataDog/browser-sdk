@@ -28,7 +28,7 @@ test.describe('rum errors', () => {
       await button.click()
 
       await flushEvents()
-      expect(intakeRegistry.rumErrorEvents.length).toBe(1)
+      expect(intakeRegistry.rumErrorEvents).toHaveLength(1)
       expectError(intakeRegistry.rumErrorEvents[0].error, {
         message: 'oh snap',
         source: 'console',
@@ -48,7 +48,7 @@ test.describe('rum errors', () => {
       await button.click()
 
       await flushEvents()
-      expect(intakeRegistry.rumErrorEvents.length).toBe(1)
+      expect(intakeRegistry.rumErrorEvents).toHaveLength(1)
       expectError(intakeRegistry.rumErrorEvents[0].error, {
         message: 'Foo: Error: oh snap',
         source: 'console',
@@ -69,7 +69,7 @@ test.describe('rum errors', () => {
       await button.click()
 
       await flushEvents()
-      expect(intakeRegistry.rumErrorEvents.length).toBe(1)
+      expect(intakeRegistry.rumErrorEvents).toHaveLength(1)
       expectError(intakeRegistry.rumErrorEvents[0].error, {
         message: 'oh snap',
         source: 'source',
@@ -89,7 +89,7 @@ test.describe('rum errors', () => {
       await button.click()
 
       await flushEvents()
-      expect(intakeRegistry.rumErrorEvents.length).toBe(1)
+      expect(intakeRegistry.rumErrorEvents).toHaveLength(1)
       expectError(intakeRegistry.rumErrorEvents[0].error, {
         message: 'oh snap',
         source: 'source',
@@ -109,7 +109,7 @@ test.describe('rum errors', () => {
       await button.click()
 
       await flushEvents()
-      expect(intakeRegistry.rumErrorEvents.length).toBe(1)
+      expect(intakeRegistry.rumErrorEvents).toHaveLength(1)
       expectError(intakeRegistry.rumErrorEvents[0].error, {
         message: 'oh snap',
         source: 'custom',
@@ -144,7 +144,7 @@ test.describe('rum errors', () => {
 
       await flushEvents()
 
-      expect(intakeRegistry.rumErrorEvents.length).toBe(1)
+      expect(intakeRegistry.rumErrorEvents).toHaveLength(1)
       expectError(intakeRegistry.rumErrorEvents[0].error, {
         message: /^csp_violation: 'https:\/\/example\.com\/foo\.js' blocked by 'script-src(-elem)?' directive$/,
         source: 'report',

@@ -130,7 +130,7 @@ test.describe('microfrontend', () => {
       const event = intakeRegistry.rumErrorEvents[0]
 
       withBrowserLogs((logs) => {
-        expect(logs.length).toBe(1)
+        expect(logs).toHaveLength(1)
         expect(logs[0].message).toMatch(/foo$/) // TODO(playwright migration): it looks like chrome is logging the string without double quotes, but some other browser might
       })
 

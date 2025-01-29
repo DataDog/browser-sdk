@@ -289,7 +289,7 @@ test.describe('rum resources', () => {
 
         const resourceEvents = intakeRegistry.rumResourceEvents.filter((event) => event.resource.type === 'xhr')
         expect(resourceEvents.length).toEqual(2)
-        expect(intakeRegistry.rumErrorEvents.length).toBe(0)
+        expect(intakeRegistry.rumErrorEvents).toHaveLength(0)
         expect(resourceEvents[0].resource.url).toContain('/ok?duration=100&call=1')
         expect(resourceEvents[0].resource.status_code).toEqual(200)
         expect(resourceEvents[1].resource.url).toContain('/ok?duration=100&call=2')

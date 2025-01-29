@@ -13,7 +13,7 @@ test.describe('logs', () => {
         window.DD_LOGS!.logger.log('hello')
       })
       await flushEvents()
-      expect(intakeRegistry.logsEvents.length).toBe(1)
+      expect(intakeRegistry.logsEvents).toHaveLength(1)
       expect(intakeRegistry.logsEvents[0].message).toBe('hello')
     })
 
@@ -25,10 +25,10 @@ test.describe('logs', () => {
         window.DD_LOGS!.logger.warn('hello')
       })
       await flushEvents()
-      expect(intakeRegistry.logsEvents.length).toBe(0)
+      expect(intakeRegistry.logsEvents).toHaveLength(0)
 
       withBrowserLogs((logs) => {
-        expect(logs.length).toBe(1)
+        expect(logs).toHaveLength(1)
         expect(logs[0].level).toBe('warning')
         expect(logs[0].message).not.toEqual(expect.stringContaining('Datadog Browser SDK'))
         expect(logs[0].message).toEqual(expect.stringContaining('hello'))
@@ -42,7 +42,7 @@ test.describe('logs', () => {
         console.error('oh snap')
       })
       await flushEvents()
-      expect(intakeRegistry.logsEvents.length).toBe(1)
+      expect(intakeRegistry.logsEvents).toHaveLength(1)
       expect(intakeRegistry.logsEvents[0].message).toBe('oh snap')
       withBrowserLogs((browserLogs) => {
         expect(browserLogs.length).toEqual(1)
@@ -64,7 +64,7 @@ test.describe('logs', () => {
       )
 
       await flushEvents()
-      expect(intakeRegistry.logsEvents.length).toBe(1)
+      expect(intakeRegistry.logsEvents).toHaveLength(1)
       expect(intakeRegistry.logsEvents[0].message).toBe(`XHR error GET ${UNREACHABLE_URL}`)
       expect(intakeRegistry.logsEvents[0].origin).toBe('network')
 
@@ -82,7 +82,7 @@ test.describe('logs', () => {
       await page.evaluate((unreachableUrl) => fetch(unreachableUrl).catch(() => undefined), UNREACHABLE_URL)
 
       await flushEvents()
-      expect(intakeRegistry.logsEvents.length).toBe(1)
+      expect(intakeRegistry.logsEvents).toHaveLength(1)
       expect(intakeRegistry.logsEvents[0].message).toBe(`Fetch error GET ${UNREACHABLE_URL}`)
       expect(intakeRegistry.logsEvents[0].origin).toBe('network')
 
@@ -109,12 +109,12 @@ test.describe('logs', () => {
       test.fixme(browserName.includes('firefox'), 'This does not pass in FF')
 
       await flushEvents()
-      expect(intakeRegistry.logsEvents.length).toBe(1)
+      expect(intakeRegistry.logsEvents).toHaveLength(1)
       expect(intakeRegistry.logsEvents[0].message).toBe(`Fetch error GET ${baseUrl}/throw-large-response`)
       expect(intakeRegistry.logsEvents[0].origin).toBe('network')
 
       const ellipsisSize = 3
-      expect(intakeRegistry.logsEvents[0].error?.stack?.length).toBe(
+      expect(intakeRegistry.logsEvents[0].error?.stack).toHaveLength(
         DEFAULT_REQUEST_ERROR_RESPONSE_LENGTH_LIMIT + ellipsisSize
       )
 
@@ -183,7 +183,7 @@ test.describe('logs', () => {
         window.DD_LOGS!.logger.log('hello')
       })
       await flushEvents()
-      expect(intakeRegistry.logsEvents.length).toBe(1)
+      expect(intakeRegistry.logsEvents).toHaveLength(1)
       expect(intakeRegistry.logsEvents[0].view.id).toBeDefined()
       expect(intakeRegistry.logsEvents[0].application_id).toBe(APPLICATION_ID)
     })
@@ -200,7 +200,7 @@ test.describe('logs', () => {
         window.DD_LOGS!.logger.log('hello', {})
       })
       await flushEvents()
-      expect(intakeRegistry.logsEvents.length).toBe(1)
+      expect(intakeRegistry.logsEvents).toHaveLength(1)
       expect(intakeRegistry.logsEvents[0].foo).toBe('bar')
     })
 })

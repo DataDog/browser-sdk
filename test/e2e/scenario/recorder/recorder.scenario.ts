@@ -34,7 +34,7 @@ test.describe('recorder', () => {
       await page.locator('html').click()
       await flushEvents()
 
-      expect(intakeRegistry.replaySegments.length).toBe(1)
+      expect(intakeRegistry.replaySegments).toHaveLength(1)
       const {
         segment,
         metadata,
@@ -93,7 +93,7 @@ test.describe('recorder', () => {
       .run(async ({ intakeRegistry, flushEvents }) => {
         await flushEvents()
 
-        expect(intakeRegistry.replaySegments.length).toBe(1)
+        expect(intakeRegistry.replaySegments).toHaveLength(1)
 
         const fullSnapshot = findFullSnapshot(intakeRegistry.replaySegments[0])!
 
@@ -104,13 +104,13 @@ test.describe('recorder', () => {
         const hiddenNodeByAttribute = findElement(fullSnapshot.data.node, (node) => node.tagName === 'p')
         expect(hiddenNodeByAttribute).toBeTruthy()
         expect(hiddenNodeByAttribute!.attributes['data-dd-privacy']).toBe('hidden')
-        expect(hiddenNodeByAttribute!.childNodes.length).toBe(0)
+        expect(hiddenNodeByAttribute!.childNodes).toHaveLength(0)
 
         const hiddenNodeByClassName = findElement(fullSnapshot.data.node, (node) => node.tagName === 'span')
         expect(hiddenNodeByClassName).toBeTruthy()
         expect(hiddenNodeByClassName!.attributes.class).toBeUndefined()
         expect(hiddenNodeByClassName!.attributes['data-dd-privacy']).toBe('hidden')
-        expect(hiddenNodeByClassName!.childNodes.length).toBe(0)
+        expect(hiddenNodeByClassName!.childNodes).toHaveLength(0)
 
         const inputIgnored = findElementWithIdAttribute(fullSnapshot.data.node, 'input-not-obfuscated')
         expect(inputIgnored).toBeTruthy()
@@ -283,7 +283,7 @@ test.describe('recorder', () => {
 
         await flushEvents()
 
-        expect(intakeRegistry.replaySegments.length).toBe(1)
+        expect(intakeRegistry.replaySegments).toHaveLength(1)
         const segment = intakeRegistry.replaySegments[0]
 
         expect(findAllIncrementalSnapshots(segment, IncrementalSource.Mutation)).toEqual([])
@@ -496,12 +496,12 @@ test.describe('recorder', () => {
         expect((textInputRecords[textInputRecords.length - 1].data as { text?: string }).text).toBe('test')
 
         const radioInputRecords = filterRecordsByIdAttribute('radio-input')
-        expect(radioInputRecords.length).toBe(1)
+        expect(radioInputRecords).toHaveLength(1)
         expect((radioInputRecords[0].data as { text?: string }).text).toBe(undefined)
         expect((radioInputRecords[0].data as { isChecked?: boolean }).isChecked).toBe(true)
 
         const checkboxInputRecords = filterRecordsByIdAttribute('checkbox-input')
-        expect(checkboxInputRecords.length).toBe(1)
+        expect(checkboxInputRecords).toHaveLength(1)
         expect((checkboxInputRecords[0].data as { text?: string }).text).toBe(undefined)
         expect((checkboxInputRecords[0].data as { isChecked?: boolean }).isChecked).toBe(true)
 
@@ -510,7 +510,7 @@ test.describe('recorder', () => {
         expect((textareaRecords[textareaRecords.length - 1].data as { text?: string }).text).toBe('textarea test')
 
         const selectRecords = filterRecordsByIdAttribute('select')
-        expect(selectRecords.length).toBe(1)
+        expect(selectRecords).toHaveLength(1)
         expect((selectRecords[0].data as { text?: string }).text).toBe('2')
 
         function filterRecordsByIdAttribute(idAttribute: string) {
@@ -575,7 +575,7 @@ test.describe('recorder', () => {
 
         await flushEvents()
 
-        expect(intakeRegistry.replaySegments.length).toBe(1)
+        expect(intakeRegistry.replaySegments).toHaveLength(1)
 
         const segment = intakeRegistry.replaySegments[0]
 
@@ -609,7 +609,7 @@ test.describe('recorder', () => {
 
         await flushEvents()
 
-        expect(intakeRegistry.replaySegments.length).toBe(1)
+        expect(intakeRegistry.replaySegments).toHaveLength(1)
 
         const segment = intakeRegistry.replaySegments[0]
 
@@ -617,7 +617,7 @@ test.describe('recorder', () => {
           data: StyleSheetRuleData
         }>
 
-        expect(styleSheetRules.length).toBe(2)
+        expect(styleSheetRules).toHaveLength(2)
         expect(styleSheetRules[0].data.removes).toEqual([{ index: 0 }])
         expect(styleSheetRules[1].data.adds).toEqual([{ rule: '.added {}', index: 0 }])
       })
@@ -651,7 +651,7 @@ test.describe('recorder', () => {
 
         await flushEvents()
 
-        expect(intakeRegistry.replaySegments.length).toBe(1)
+        expect(intakeRegistry.replaySegments).toHaveLength(1)
 
         const segment = intakeRegistry.replaySegments[0]
 
@@ -659,7 +659,7 @@ test.describe('recorder', () => {
           data: StyleSheetRuleData
         }>
 
-        expect(styleSheetRules.length).toBe(3)
+        expect(styleSheetRules).toHaveLength(3)
         expect(styleSheetRules[0].data.adds).toEqual([{ rule: '.inserted {}', index: [0, 0] }])
         expect(styleSheetRules[1].data.adds).toEqual([{ rule: '.added {}', index: [0, 1] }])
         expect(styleSheetRules[2].data.removes).toEqual([{ index: [1, 1] }])
@@ -675,15 +675,15 @@ test.describe('recorder', () => {
         await html.click()
         await flushEvents()
 
-        expect(intakeRegistry.replaySegments.length).toBe(1)
+        expect(intakeRegistry.replaySegments).toHaveLength(1)
         const segment = intakeRegistry.replaySegments[0]
 
         const mouseupRecords = findMouseInteractionRecords(segment, MouseInteractionType.MouseUp)
         const frustrationRecords = findAllFrustrationRecords(segment)
 
-        expect(mouseupRecords.length).toBe(1)
+        expect(mouseupRecords).toHaveLength(1)
         expect(mouseupRecords[0].id, 'mouse interaction record should have an id').toBeTruthy()
-        expect(frustrationRecords.length).toBe(1)
+        expect(frustrationRecords).toHaveLength(1)
         expect(frustrationRecords[0].data).toEqual({
           frustrationTypes: [FrustrationType.DEAD_CLICK],
           recordIds: [mouseupRecords[0].id!],
@@ -725,14 +725,14 @@ test.describe('recorder', () => {
 
         await flushEvents()
 
-        expect(intakeRegistry.replaySegments.length).toBe(1)
+        expect(intakeRegistry.replaySegments).toHaveLength(1)
         const segment = intakeRegistry.replaySegments[0]
 
         const mouseupRecords = findMouseInteractionRecords(segment, MouseInteractionType.MouseUp)
         const frustrationRecords = findAllFrustrationRecords(segment)
 
-        expect(mouseupRecords.length).toBe(4)
-        expect(frustrationRecords.length).toBe(1)
+        expect(mouseupRecords).toHaveLength(4)
+        expect(frustrationRecords).toHaveLength(1)
         expect(frustrationRecords[0].data).toEqual({
           frustrationTypes: [FrustrationType.RAGE_CLICK],
           recordIds: mouseupRecords.map((r) => r.id!),
@@ -810,7 +810,7 @@ test.describe('recorder', () => {
 
         await flushEvents()
 
-        expect(intakeRegistry.replaySegments.length).toBe(2)
+        expect(intakeRegistry.replaySegments).toHaveLength(2)
         const firstSegment = intakeRegistry.replaySegments[0]
 
         const firstFullSnapshot = findFullSnapshot(firstSegment)!
@@ -820,7 +820,7 @@ test.describe('recorder', () => {
         expect(containerElement.attributes.rr_scrollLeft).toBe(10)
 
         const scrollRecords = findAllIncrementalSnapshots(firstSegment, IncrementalSource.Scroll)
-        expect(scrollRecords.length).toBe(2)
+        expect(scrollRecords).toHaveLength(2)
         const [windowScrollData, containerScrollData] = scrollRecords.map((record) => record.data as ScrollData)
         expect(windowScrollData.y).toEqual(150)
         expect(containerScrollData.x).toEqual(20)
@@ -844,7 +844,7 @@ test.describe('recorder', () => {
 
         await flushEvents()
 
-        expect(intakeRegistry.replaySegments.length).toBe(0)
+        expect(intakeRegistry.replaySegments).toHaveLength(0)
       })
 
     createTest('should start recording if forced when session is sampled out')
@@ -859,7 +859,7 @@ test.describe('recorder', () => {
 
         await flushEvents()
 
-        expect(intakeRegistry.replaySegments.length).toBe(1)
+        expect(intakeRegistry.replaySegments).toHaveLength(1)
       })
   })
 
@@ -874,7 +874,7 @@ test.describe('recorder', () => {
 
       await flushEvents()
 
-      expect(intakeRegistry.replaySegments.length).toBe(2)
+      expect(intakeRegistry.replaySegments).toHaveLength(2)
 
       const firstSegment = intakeRegistry.replaySegments[0]
       expect(findFullSnapshot(firstSegment), 'first segment have a FullSnapshot record').toBeTruthy()
@@ -890,6 +890,6 @@ test.describe('recorder', () => {
     .run(async ({ intakeRegistry, flushEvents }) => {
       await flushEvents()
 
-      expect(intakeRegistry.replaySegments.length).toBe(1)
+      expect(intakeRegistry.replaySegments).toHaveLength(1)
     })
 })
