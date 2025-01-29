@@ -21,10 +21,7 @@ export interface SetupOptions {
 
 export type SetupFactory = (options: SetupOptions, servers: Servers) => string
 
-const isBrowserStack = false
-// 'services' in browser.options &&
-// browser.options.services &&
-// browser.options.services.some((service) => (Array.isArray(service) ? service[0] : service) === 'browserstack')
+const isBrowserStack = process.env.BS_USERNAME && process.env.BS_ACCESS_KEY
 
 const isContinuousIntegration = Boolean(process.env.CI_JOB_ID)
 
