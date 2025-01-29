@@ -1,6 +1,5 @@
 import type { Context, RawError, ClocksState } from '@datadog/browser-core'
 import {
-  isEmptyObject,
   ErrorSource,
   generateUUID,
   computeRawError,
@@ -16,7 +15,6 @@ import type { RawRumErrorEvent } from '../../rawRumEvent.types'
 import { RumEventType } from '../../rawRumEvent.types'
 import type { LifeCycle, RawRumEventCollectedData } from '../lifeCycle'
 import { LifeCycleEventType } from '../lifeCycle'
-import type { FeatureFlagContexts } from '../contexts/featureFlagContext'
 import type { CommonContext } from '../contexts/commonContext'
 import type { PageStateHistory } from '../contexts/pageStateHistory'
 import { PageState } from '../contexts/pageStateHistory'
@@ -29,13 +27,13 @@ export interface ProvidedError {
   error: unknown
   context?: Context
   handlingStack: string
+  componentStack?: string
 }
 
 export function startErrorCollection(
   lifeCycle: LifeCycle,
   configuration: RumConfiguration,
-  pageStateHistory: PageStateHistory,
-  featureFlagContexts: FeatureFlagContexts
+  pageStateHistory: PageStateHistory
 ) {
   const errorObservable = new Observable<RawError>()
 
@@ -45,25 +43,21 @@ export function startErrorCollection(
 
   errorObservable.subscribe((error) => lifeCycle.notify(LifeCycleEventType.RAW_ERROR_COLLECTED, { error }))
 
-  return doStartErrorCollection(lifeCycle, pageStateHistory, featureFlagContexts)
+  return doStartErrorCollection(lifeCycle, pageStateHistory)
 }
 
-export function doStartErrorCollection(
-  lifeCycle: LifeCycle,
-  pageStateHistory: PageStateHistory,
-  featureFlagContexts: FeatureFlagContexts
-) {
+export function doStartErrorCollection(lifeCycle: LifeCycle, pageStateHistory: PageStateHistory) {
   lifeCycle.subscribe(LifeCycleEventType.RAW_ERROR_COLLECTED, ({ error, customerContext, savedCommonContext }) => {
     lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, {
       customerContext,
       savedCommonContext,
-      ...processError(error, pageStateHistory, featureFlagContexts),
+      ...processError(error, pageStateHistory),
     })
   })
 
   return {
     addError: (
-      { error, handlingStack, startClocks, context: customerContext }: ProvidedError,
+      { error, handlingStack, componentStack, startClocks, context: customerContext }: ProvidedError,
       savedCommonContext?: CommonContext
     ) => {
       const stackTrace = isError(error) ? computeStackTrace(error) : undefined
@@ -71,6 +65,7 @@ export function doStartErrorCollection(
         stackTrace,
         originalError: error,
         handlingStack,
+        componentStack,
         startClocks,
         nonErrorPrefix: NonErrorPrefix.PROVIDED,
         source: ErrorSource.CUSTOM,
@@ -86,11 +81,7 @@ export function doStartErrorCollection(
   }
 }
 
-function processError(
-  error: RawError,
-  pageStateHistory: PageStateHistory,
-  featureFlagContexts: FeatureFlagContexts
-): RawRumEventCollectedData<RawRumErrorEvent> {
+function processError(error: RawError, pageStateHistory: PageStateHistory): RawRumEventCollectedData<RawRumErrorEvent> {
   const rawRumEvent: RawRumErrorEvent = {
     date: error.startClocks.timeStamp,
     error: {
@@ -99,6 +90,7 @@ function processError(
       source: error.source,
       stack: error.stack,
       handling_stack: error.handlingStack,
+      component_stack: error.componentStack,
       type: error.type,
       handling: error.handling,
       causes: error.causes,
@@ -108,11 +100,6 @@ function processError(
     },
     type: RumEventType.ERROR as const,
     view: { in_foreground: pageStateHistory.wasInPageStateAt(PageState.ACTIVE, error.startClocks.relative) },
-  }
-
-  const featureFlagContext = featureFlagContexts.findFeatureFlagEvaluations(error.startClocks.relative)
-  if (featureFlagContext && !isEmptyObject(featureFlagContext)) {
-    rawRumEvent.feature_flags = featureFlagContext
   }
 
   const domainContext: RumErrorEventDomainContext = {

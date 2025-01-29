@@ -33,6 +33,7 @@ export interface RawError {
   originalError?: unknown
   handling?: ErrorHandling
   handlingStack?: string
+  componentStack?: string
   causes?: RawErrorCause[]
   fingerprint?: string
   csp?: Csp

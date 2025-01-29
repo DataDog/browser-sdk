@@ -41,6 +41,7 @@ import { buildCommonContext } from '../domain/contexts/commonContext'
 import type { InternalContext } from '../domain/contexts/internalContext'
 import type { DurationVitalReference } from '../domain/vital/vitalCollection'
 import { createCustomVitalsState } from '../domain/vital/vitalCollection'
+import { callPluginsMethod } from '../domain/plugins'
 import { createPreStartStrategy } from './preStartRum'
 import type { StartRum, StartRumResult } from './startRum'
 
@@ -426,6 +427,8 @@ export function makeRumPublicApi(
       )
 
       strategy = createPostStartStrategy(strategy, startRumResult)
+
+      callPluginsMethod(configuration.plugins, 'onRumStart', { strategy })
 
       return startRumResult
     }
