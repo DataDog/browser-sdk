@@ -189,6 +189,10 @@ function declareTestsForSetups(
 function declareTest(title: string, setupOptions: SetupOptions, factory: SetupFactory, runner: TestRunner) {
   test(title, async ({ page, context, browserName }) => {
     const title = test.info().titlePath.join(' > ')
+    test.info().annotations.push({
+      type: 'dd_tags[test.browser]',
+      description: browserName,
+    })
 
     setupOptions.context.test_name = title
 
