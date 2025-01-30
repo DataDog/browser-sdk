@@ -94,19 +94,10 @@ test.describe('logs', () => {
       })
     })
 
-  createTest('keep only the first bytes of the response @fixme')
+  createTest('keep only the first bytes of the response')
     .withLogs({ forwardErrorsToLogs: true })
     .run(async ({ intakeRegistry, baseUrl, servers, flushEvents, page, withBrowserLogs, browserName }) => {
-      await page.evaluate(
-        () =>
-          new Promise<void>((resolve) => {
-            fetch('/throw-large-response')
-              .catch(console.log)
-              .finally(() => resolve())
-          })
-      )
-
-      test.fixme(browserName.includes('firefox'), 'This does not pass in FF')
+      await page.evaluate(() => fetch('/throw-large-response'))
 
       await flushEvents()
       expect(intakeRegistry.logsEvents).toHaveLength(1)
@@ -123,10 +114,13 @@ test.describe('logs', () => {
       )
 
       withBrowserLogs((browserLogs) => {
-        // Some browser report two errors:
-        // * the server responded with a status of 500
-        // * canceling the body stream is reported as a network error (net::ERR_FAILED)
-        expect(browserLogs.length).toBeGreaterThanOrEqual(1)
+        if (browserName.includes('firefox')) {
+          // Firefox does not report the error message
+          expect(browserLogs).toHaveLength(0)
+        } else {
+          expect(browserLogs).toHaveLength(1)
+          expect(browserLogs[0].message).toContain('the server responded with a status of 500')
+        }
       })
     })
 
