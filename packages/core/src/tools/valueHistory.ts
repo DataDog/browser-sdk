@@ -122,7 +122,7 @@ export function createValueHistory<Value>({
   function getAllEntries() {
     return entries.map(({ startTime, endTime, value }) => ({
       startTime,
-      endTime,
+      endTime: endTime === END_OF_TIMES ? 'Infinity' : endTime,
       value,
     })) as Context[]
   }
