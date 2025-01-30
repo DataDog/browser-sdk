@@ -3,7 +3,6 @@ import { ErrorSource, ExperimentalFeature, ONE_MINUTE, display } from '@datadog/
 import type { Clock } from '@datadog/browser-core/test'
 import {
   mockEventBridge,
-  mockSyntheticsWorkerValues,
   mockExperimentalFeatures,
   setNavigatorOnLine,
   setNavigatorConnection,
@@ -31,7 +30,6 @@ import { LifeCycle, LifeCycleEventType } from './lifeCycle'
 import type { RumConfiguration, FeatureFlagsForEvents } from './configuration'
 import type { ViewHistory } from './contexts/viewHistory'
 import type { CommonContext } from './contexts/commonContext'
-import type { CiVisibilityContext } from './contexts/ciVisibilityContext'
 import type { RumSessionManager } from './rumSessionManager'
 
 describe('rum assembly', () => {
@@ -648,28 +646,6 @@ describe('rum assembly', () => {
       })
     })
 
-    it('should detect synthetics sessions based on synthetics worker values', () => {
-      mockSyntheticsWorkerValues()
-
-      const { lifeCycle, serverRumEvents } = setupAssemblyTestWithDefaults()
-      notifyRawRumEvent(lifeCycle, {
-        rawRumEvent: createRawRumEvent(RumEventType.VIEW),
-      })
-
-      expect(serverRumEvents[0].session.type).toEqual('synthetics')
-    })
-
-    it('should detect ci visibility tests', () => {
-      const ciVisibilityContext = { test_execution_id: 'traceId' }
-      const { lifeCycle, serverRumEvents } = setupAssemblyTestWithDefaults({ ciVisibilityContext })
-
-      notifyRawRumEvent(lifeCycle, {
-        rawRumEvent: createRawRumEvent(RumEventType.VIEW),
-      })
-
-      expect(serverRumEvents[0].session.type).toEqual('ci_test')
-    })
-
     it('should set the session.has_replay attribute if it is defined in the common context', () => {
       const { lifeCycle, serverRumEvents, commonContext } = setupAssemblyTestWithDefaults()
       commonContext.hasReplay = true
@@ -753,18 +729,6 @@ describe('rum assembly', () => {
     })
   })
 
-  describe('synthetics context', () => {
-    it('includes the synthetics context', () => {
-      mockSyntheticsWorkerValues()
-      const { lifeCycle, serverRumEvents } = setupAssemblyTestWithDefaults()
-
-      notifyRawRumEvent(lifeCycle, {
-        rawRumEvent: createRawRumEvent(RumEventType.VIEW),
-      })
-
-      expect(serverRumEvents[0].synthetics).toBeTruthy()
-    })
-  })
   describe('if event bridge detected', () => {
     it('includes the browser sdk version', () => {
       const { lifeCycle, serverRumEvents } = setupAssemblyTestWithDefaults()
@@ -776,19 +740,6 @@ describe('rum assembly', () => {
 
       expect(serverRumEvents[0]._dd.browser_sdk_version).not.toBeDefined()
       expect(serverRumEvents[1]._dd.browser_sdk_version).toBeDefined()
-    })
-  })
-
-  describe('ci visibility context', () => {
-    it('includes the ci visibility context', () => {
-      const ciVisibilityContext = { test_execution_id: 'traceId' }
-      const { lifeCycle, serverRumEvents } = setupAssemblyTestWithDefaults({ ciVisibilityContext })
-
-      notifyRawRumEvent(lifeCycle, {
-        rawRumEvent: createRawRumEvent(RumEventType.VIEW),
-      })
-
-      expect(serverRumEvents[0].ci_test).toBeTruthy()
     })
   })
 
@@ -974,7 +925,6 @@ interface AssemblyTestParams {
 function setupAssemblyTestWithDefaults({
   partialConfiguration,
   sessionManager,
-  ciVisibilityContext,
   findView = () => ({ id: '7890', name: 'view name', startClocks: {} as ClocksState }),
 }: AssemblyTestParams = {}) {
   const lifeCycle = new LifeCycle()
@@ -1002,7 +952,6 @@ function setupAssemblyTestWithDefaults({
     { ...mockViewHistory(), findView: () => findView() },
     mockActionContexts(),
     mockDisplayContext(),
-    { get: () => ciVisibilityContext } as CiVisibilityContext,
     featureFlagContexts,
     () => commonContext,
     reportErrorSpy
