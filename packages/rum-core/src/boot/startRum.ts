@@ -132,7 +132,7 @@ export function startRum(
   const locationChangeObservable = createLocationChangeObservable(configuration, location)
   const pageStateHistory = startPageStateHistory(configuration)
   const viewHistory = startViewHistory(lifeCycle)
-  const urlContexts = startUrlContexts(lifeCycle, hooks, locationChangeObservable, location)
+  const urlContexts = startUrlContexts(lifeCycle, hooks, locationChangeObservable, location, viewHistory)
 
   const { observable: windowOpenObservable, stop: stopWindowOpen } = createWindowOpenObservable()
   cleanupTasks.push(stopWindowOpen)

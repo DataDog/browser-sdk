@@ -1,10 +1,11 @@
 import type { RelativeTime, Observable } from '@datadog/browser-core'
-import { SESSION_TIME_OUT_DELAY, relativeNow, createValueHistory } from '@datadog/browser-core'
+import { SESSION_TIME_OUT_DELAY, relativeNow, createValueHistory, addTelemetryDebug } from '@datadog/browser-core'
 import type { LocationChange } from '../../browser/locationChangeObservable'
 import type { LifeCycle } from '../lifeCycle'
 import { LifeCycleEventType } from '../lifeCycle'
 import type { PartialRumEvent, Hooks } from '../../hooks'
 import { HookNames } from '../../hooks'
+import type { ViewHistory } from './viewHistory'
 
 /**
  * We want to attach to an event:
@@ -28,7 +29,8 @@ export function startUrlContexts(
   lifeCycle: LifeCycle,
   hooks: Hooks,
   locationChangeObservable: Observable<LocationChange>,
-  location: Location
+  location: Location,
+  viewContexts: ViewHistory
 ) {
   const urlContextHistory = createValueHistory<UrlContext>({ expireDelay: URL_CONTEXT_TIME_OUT_DELAY })
 
@@ -73,13 +75,24 @@ export function startUrlContexts(
   }
 
   hooks.register(HookNames.Assemble, ({ startTime, eventType }): PartialRumEvent | undefined => {
-    const { url, referrer } = urlContextHistory.find(startTime)!
+    const entry = urlContextHistory.find(startTime)!
+
+    if (!entry) {
+      addTelemetryDebug('Missing URL entry', {
+        debug: {
+          eventType,
+          startTime,
+          urlContextEntries: urlContextHistory.getAllEntries(),
+          viewContextEntries: viewContexts.getAllEntries(),
+        },
+      })
+    }
 
     return {
       type: eventType,
       view: {
-        url,
-        referrer,
+        url: entry.url,
+        referrer: entry.referrer,
       },
     }
   })

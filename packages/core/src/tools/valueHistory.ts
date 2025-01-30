@@ -1,3 +1,4 @@
+import type { Context } from './serialisation/context'
 import { setInterval, clearInterval } from './timer'
 import type { TimeoutId } from './timer'
 import { removeItem } from './utils/arrayUtils'
@@ -28,6 +29,8 @@ export interface ValueHistory<Value> {
   findAll: (startTime?: RelativeTime, duration?: Duration) => Value[]
   reset: () => void
   stop: () => void
+
+  getAllEntries: () => Context[]
 }
 
 export function createValueHistory<Value>({
@@ -116,6 +119,14 @@ export function createValueHistory<Value>({
       .map((entry) => entry.value)
   }
 
+  function getAllEntries() {
+    return entries.map(({ startTime, endTime, value }) => ({
+      startTime,
+      endTime: endTime === END_OF_TIMES ? 'Infinity' : endTime,
+      value,
+    })) as Context[]
+  }
+
   /**
    * Remove all entries from this collection.
    */
@@ -130,5 +141,5 @@ export function createValueHistory<Value>({
     clearInterval(clearOldValuesInterval)
   }
 
-  return { add, find, closeActive, findAll, reset, stop }
+  return { add, find, closeActive, findAll, reset, stop, getAllEntries }
 }
