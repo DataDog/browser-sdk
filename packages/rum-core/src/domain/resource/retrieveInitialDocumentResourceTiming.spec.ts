@@ -1,4 +1,6 @@
-import { mockDocumentReadyState, mockRumConfiguration } from '../../../test'
+import type { RelativeTime } from '@datadog/browser-core'
+import { createPerformanceEntry, mockDocumentReadyState, mockRumConfiguration } from '../../../test'
+import { RumPerformanceEntryType } from '../../browser/performanceObservable'
 import { FAKE_INITIAL_DOCUMENT } from './resourceUtils'
 import { retrieveInitialDocumentResourceTiming } from './retrieveInitialDocumentResourceTiming'
 
@@ -25,5 +27,20 @@ describe('rum initial document resource', () => {
     expect(spy).not.toHaveBeenCalled()
     triggerOnDomLoaded()
     expect(spy).toHaveBeenCalled()
+  })
+
+  it('uses the responseEnd to define the resource duration', (done) => {
+    retrieveInitialDocumentResourceTiming(
+      mockRumConfiguration(),
+      (timing) => {
+        expect(timing.duration).toBe(100 as RelativeTime)
+        done()
+      },
+      () =>
+        createPerformanceEntry(RumPerformanceEntryType.NAVIGATION, {
+          responseEnd: 100 as RelativeTime,
+          duration: 200 as RelativeTime,
+        })
+    )
   })
 })
