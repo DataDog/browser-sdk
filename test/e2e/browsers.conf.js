@@ -14,16 +14,16 @@ const browserConfigurations = [
   {
     sessionName: 'Firefox',
     name: 'playwright-firefox',
-    version: '132',
+    version: '119',
     os: 'Windows',
     osVersion: '11',
   },
   {
     sessionName: 'Safari desktop',
     name: 'playwright-webkit',
-    version: '18.2',
+    version: '17.4',
     os: 'OS X',
-    osVersion: 'Sequoia',
+    osVersion: 'Big Sur',
   },
   // {
   //   sessionName: 'Chrome mobile',

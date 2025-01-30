@@ -31,12 +31,12 @@ function getCapabilities(configuration: BrowserConfiguration) {
     project: 'browser sdk e2e',
     build: getBuildInfos(),
     name: configuration.sessionName,
-    'browserstack.local': 'true',
+    'browserstack.local': true,
     'browserstack.playwrightVersion': '1.latest',
     'client.playwrightVersion': '1.latest',
-    'browserstack.debug': 'false',
+    'browserstack.debug': false,
     'browserstack.console': 'info',
-    'browserstack.networkLogs': 'false',
-    'browserstack.interactiveDebugging': 'false',
+    'browserstack.networkLogs': false,
+    'browserstack.interactiveDebugging': false,
   }
 }
