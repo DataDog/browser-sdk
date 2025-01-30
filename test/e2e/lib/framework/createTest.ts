@@ -1,13 +1,15 @@
 import type { LogsInitConfiguration } from '@datadog/browser-logs'
 import type { RumInitConfiguration } from '@datadog/browser-rum-core'
 import { DefaultPrivacyLevel } from '@datadog/browser-rum'
-import type { BrowserContext, Page } from '@playwright/test'
+import type { BrowserContext, Page, PlaywrightWorkerOptions } from '@playwright/test'
 import { test, expect } from '@playwright/test'
+import { builDdTags } from '../helpers/buildDdTags'
 import { getRunId } from '../../../envUtils'
 import type { BrowserLog } from '../helpers/browser'
 import { BrowserLogsManager, deleteAllCookies, sendXhr } from '../helpers/browser'
 import { APPLICATION_ID, CLIENT_TOKEN } from '../helpers/configuration'
 import { validateRumFormat } from '../helpers/validation'
+import type { BrowserConfiguration } from '../../../browsers.conf'
 import { IntakeRegistry } from './intakeRegistry'
 import { flushEvents } from './flushEvents'
 import type { Servers } from './httpServers'
@@ -51,7 +53,7 @@ interface TestContext {
   servers: Servers
   page: Page
   browserContext: BrowserContext
-  browserName: 'chromium' | 'firefox' | 'webkit'
+  browserName: PlaywrightWorkerOptions['browserName']
   withBrowserLogs: (cb: (logs: BrowserLog[]) => void) => void
   flushBrowserLogs: () => void
   flushEvents: () => Promise<void>
@@ -188,12 +190,9 @@ function declareTestsForSetups(
 
 function declareTest(title: string, setupOptions: SetupOptions, factory: SetupFactory, runner: TestRunner) {
   test(title, async ({ page, context, browserName }) => {
-    const title = test.info().titlePath.join(' > ')
-    test.info().annotations.push({
-      type: 'dd_tags[test.browser]',
-      description: browserName,
-    })
+    test.info().annotations.push(...builDdTags(browserName, test.info().project.metadata as BrowserConfiguration))
 
+    const title = test.info().titlePath.join(' > ')
     setupOptions.context.test_name = title
 
     const servers = await getTestServers()
@@ -280,9 +279,9 @@ async function tearDownTest({ intakeRegistry, withBrowserLogs, flushEvents, dele
     return
   }
 
-  expect(intakeRegistry.telemetryErrorEvents).toEqual([])
+  expect(intakeRegistry.telemetryErrorEvents).toHaveLength(0)
   validateRumFormat(intakeRegistry.rumEvents)
   withBrowserLogs((logs) => {
-    expect(logs.filter((log) => log.level === 'error')).toEqual([])
+    expect(logs.filter((log) => log.level === 'error')).toHaveLength(0)
   })
 }

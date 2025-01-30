@@ -18,13 +18,13 @@ const browserConfigurations = [
     os: 'Windows',
     osVersion: '11',
   },
-  // {
-  //   sessionName: 'Safari desktop',
-  //   name: 'playwright-webkit',
-  //   version: '15.4',
-  //   os: 'OS X',
-  //   osVersion: 'Big Sur',
-  // },
+  {
+    sessionName: 'Safari desktop',
+    name: 'playwright-webkit',
+    version: '18.2',
+    os: 'OS X',
+    osVersion: 'Sequoia',
+  },
   // {
   //   sessionName: 'Chrome mobile',
   //   name: 'chrome',
