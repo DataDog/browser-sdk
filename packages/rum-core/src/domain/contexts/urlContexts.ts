@@ -1,5 +1,12 @@
 import type { RelativeTime, Observable } from '@datadog/browser-core'
-import { SESSION_TIME_OUT_DELAY, relativeNow, createValueHistory, addTelemetryDebug } from '@datadog/browser-core'
+import {
+  SESSION_TIME_OUT_DELAY,
+  relativeNow,
+  createValueHistory,
+  addTelemetryDebug,
+  isExperimentalFeatureEnabled,
+  ExperimentalFeature,
+} from '@datadog/browser-core'
 import type { LocationChange } from '../../browser/locationChangeObservable'
 import type { LifeCycle } from '../lifeCycle'
 import { LifeCycleEventType } from '../lifeCycle'
@@ -78,16 +85,19 @@ export function startUrlContexts(
     const entry = urlContextHistory.find(startTime)!
 
     if (!entry) {
-      addTelemetryDebug('Missing URL entry', {
-        debug: {
-          eventType,
-          startTime,
-          urlEntries: urlContextHistory.getAllEntries(),
-          urlDeletedEntries: urlContextHistory.getDeletedEntries(),
-          viewEntries: viewContexts.getAllEntries(),
-          viewDeletedEntries: viewContexts.getDeletedEntries(),
-        },
-      })
+      if (isExperimentalFeatureEnabled(ExperimentalFeature.MISSING_URL_CONTEXT_TELEMETRY)) {
+        addTelemetryDebug('Missing URL entry', {
+          debug: {
+            eventType,
+            startTime,
+            urlEntries: urlContextHistory.getAllEntries(),
+            urlDeletedEntries: urlContextHistory.getDeletedEntries(),
+            viewEntries: viewContexts.getAllEntries(),
+            viewDeletedEntries: viewContexts.getDeletedEntries(),
+          },
+        })
+      }
+      return
     }
 
     return {
