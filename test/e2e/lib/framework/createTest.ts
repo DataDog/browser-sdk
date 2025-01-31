@@ -3,7 +3,8 @@ import type { RumInitConfiguration } from '@datadog/browser-rum-core'
 import { DefaultPrivacyLevel } from '@datadog/browser-rum'
 import type { BrowserContext, Page, PlaywrightWorkerOptions } from '@playwright/test'
 import { test, expect } from '@playwright/test'
-import { builDdTags } from '../helpers/buildDdTags'
+import type { Tag } from '../helpers/tags'
+import { addTag, addBrowserConfigurationTags } from '../helpers/tags'
 import { getRunId } from '../../../envUtils'
 import type { BrowserLog } from '../helpers/browser'
 import { BrowserLogsManager, deleteAllCookies, sendXhr } from '../helpers/browser'
@@ -190,7 +191,8 @@ function declareTestsForSetups(
 
 function declareTest(title: string, setupOptions: SetupOptions, factory: SetupFactory, runner: TestRunner) {
   test(title, async ({ page, context, browserName }) => {
-    test.info().annotations.push(...builDdTags(browserName, test.info().project.metadata as BrowserConfiguration))
+    addTag('browserName' as any as Tag, browserName)
+    addBrowserConfigurationTags(test.info().project.metadata as BrowserConfiguration)
 
     const title = test.info().titlePath.join(' > ')
     setupOptions.context.test_name = title
@@ -282,4 +284,14 @@ function tearDownPassedTest({ intakeRegistry, withBrowserLogs }: TestContext) {
 async function tearDownTest({ flushEvents, deleteAllCookies }: TestContext) {
   await flushEvents()
   await deleteAllCookies()
+
+  const skipReason = test.info().annotations.find((annotation) => annotation.type === 'skip')?.description
+  if (skipReason) {
+    addTag('skip', skipReason)
+  }
+
+  const fixmeReason = test.info().annotations.find((annotation) => annotation.type === 'fixme')?.description
+  if (fixmeReason) {
+    addTag('fixme', fixmeReason)
+  }
 }

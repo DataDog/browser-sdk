@@ -1,5 +1,5 @@
 import type { BrowserContext, Page } from '@playwright/test'
-import { test } from '@playwright/test'
+import { addTag } from './tags'
 
 export interface BrowserLog {
   level: 'log' | 'debug' | 'info' | 'error' | 'warning'
@@ -21,10 +21,7 @@ export class BrowserLogsManager {
     if (filteredLogs.length !== this.logs.length) {
       // FIXME: fix this at the perfomance observer level as it is visible to customers
       // It used to pass before because it was only happening in Firefox but wdio io did not support console logs for FF
-      test.info().annotations.push({
-        type: 'dd_tags[test.fixme]',
-        description: 'Unnexpected Console log message: "Ignoring unsupported entryTypes: *"',
-      })
+      addTag('fixme', 'Unnexpected Console log message: "Ignoring unsupported entryTypes: *"')
     }
 
     return filteredLogs
