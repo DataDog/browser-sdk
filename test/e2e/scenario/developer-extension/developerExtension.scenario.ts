@@ -1,30 +1,56 @@
-describe('developer-extension', () => {
-  it('should switch between tabs', async () => {
-    const panel = new DeveloperExtensionPanel()
-    await panel.open()
-    expect(await panel.getSelectedTab()).toEqual('Events')
+import path from 'path'
+import { test as base, chromium, expect } from '@playwright/test'
+import type { Page, BrowserContext } from '@playwright/test'
 
-    await panel.getTab('Infos').click()
-    expect(await panel.getSelectedTab()).toEqual('Infos')
+const test = base.extend<{
+  context: BrowserContext
+  extensionId: string
+  developerExtension: DeveloperExtensionPage
+}>({
+  // eslint-disable-next-line no-empty-pattern
+  context: async ({}, use) => {
+    const pathToExtension = path.join(process.cwd(), 'developer-extension', 'dist')
+
+    const context = await chromium.launchPersistentContext('', {
+      channel: 'chromium',
+      args: [`--disable-extensions-except=${pathToExtension}`, `--load-extension=${pathToExtension}`],
+    })
+    await use(context)
+    await context.close()
+  },
+  extensionId: async ({ context }, use) => {
+    let [background] = context.serviceWorkers()
+    if (!background) {
+      background = await context.waitForEvent('serviceworker')
+    }
+
+    const extensionId = background.url().split('/')[2]
+    await use(extensionId)
+  },
+  developerExtension: async ({ page, extensionId }, use) => {
+    await page.goto(`chrome-extension://${extensionId}/panel.html`)
+
+    await use(new DeveloperExtensionPage(page))
+  },
+})
+
+test.describe('developer-extension', () => {
+  test('should switch between tabs', async ({ developerExtension: page }) => {
+    expect(await page.getSelectedTab().innerText()).toEqual('Events')
+
+    await page.getTab('Infos').click()
+    expect(await page.getSelectedTab().innerText()).toEqual('Infos')
   })
 })
 
-class DeveloperExtensionPanel {
-  async open() {
-    await browser.url('chrome://extensions')
-    // extensions page is built with custom elements, >>> selector to traverse shadow DOM
-    // cf https://webdriver.io/docs/selectors/#deep-selectors
-    const extensionId = await $('>>>extensions-item').getAttribute('id')
-    const url = `chrome-extension://${extensionId}/panel.html`
-    await browser.url(url)
-    expect(await browser.getUrl()).toEqual(url)
+class DeveloperExtensionPage {
+  constructor(public readonly page: Page) {}
+
+  getTab(name: string) {
+    return this.page.getByRole('tab', { name })
   }
 
   getSelectedTab() {
-    return $("button[role='tab'][aria-selected='true']").getText()
-  }
-
-  getTab(content: string) {
-    return $(`button[role='tab']=${content}`)
+    return this.page.getByRole('tab', { selected: true })
   }
 }
