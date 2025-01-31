@@ -339,25 +339,25 @@ describe('logs entry', () => {
       expect(logsPublicApi.getGlobalContext()).toEqual({ foo: 'bar' })
       expect(localStorage.getItem('_dd_c_logs_2')).toBeNull()
 
-      logsPublicApi.setUser({ qux: 'qix' })
-      expect(logsPublicApi.getUser()).toEqual({ qux: 'qix' })
+      logsPublicApi.setUser({ id: 'foo', qux: 'qix' })
+      expect(logsPublicApi.getUser()).toEqual({ id: 'foo', qux: 'qix' })
       expect(localStorage.getItem('_dd_c_logs_1')).toBeNull()
     })
 
     it('when enabled, should maintain user context in local storage', () => {
       logsPublicApi.init({ ...DEFAULT_INIT_CONFIGURATION, storeContextsAcrossPages: true })
 
-      logsPublicApi.setUser({ qux: 'qix' })
-      expect(logsPublicApi.getUser()).toEqual({ qux: 'qix' })
-      expect(localStorage.getItem('_dd_c_logs_1')).toBe('{"qux":"qix"}')
+      logsPublicApi.setUser({ id: 'foo', qux: 'qix' })
+      expect(logsPublicApi.getUser()).toEqual({ id: 'foo', qux: 'qix' })
+      expect(localStorage.getItem('_dd_c_logs_1')).toBe('{"id":"foo","qux":"qix"}')
 
       logsPublicApi.setUserProperty('foo', 'bar')
-      expect(logsPublicApi.getUser()).toEqual({ qux: 'qix', foo: 'bar' })
-      expect(localStorage.getItem('_dd_c_logs_1')).toBe('{"qux":"qix","foo":"bar"}')
+      expect(logsPublicApi.getUser()).toEqual({ id: 'foo', qux: 'qix', foo: 'bar' })
+      expect(localStorage.getItem('_dd_c_logs_1')).toBe('{"id":"foo","qux":"qix","foo":"bar"}')
 
       logsPublicApi.removeUserProperty('foo')
-      expect(logsPublicApi.getUser()).toEqual({ qux: 'qix' })
-      expect(localStorage.getItem('_dd_c_logs_1')).toBe('{"qux":"qix"}')
+      expect(logsPublicApi.getUser()).toEqual({ id: 'foo', qux: 'qix' })
+      expect(localStorage.getItem('_dd_c_logs_1')).toBe('{"id":"foo","qux":"qix"}')
 
       logsPublicApi.clearUser()
       expect(logsPublicApi.getUser()).toEqual({})
