@@ -112,7 +112,6 @@ export default tseslint.config(
       'prefer-rest-params': 'off',
       'prefer-template': 'error',
       'prefer-object-spread': 'error',
-      'prefer-const': ['error', { destructuring: 'all' }],
       quotes: ['error', 'single', { avoidEscape: true }],
       radix: 'error',
       'require-await': 'error',

@@ -42,6 +42,7 @@ export function makeRecorderApi(
     }
   }
 
+  // eslint-disable-next-line prefer-const
   let { strategy, shouldStartImmediately } = createPreStartStrategy()
 
   return {
