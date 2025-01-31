@@ -153,6 +153,7 @@ describe('trackInteractionToNextPaint', () => {
       interactionId: 1,
       entryType: RumPerformanceEntryType.FIRST_INPUT,
       startTime: 1 as RelativeTime,
+      duration: 40 as Duration,
     })
     expect(getInteractionToNextPaint()).toEqual({
       value: 40 as Duration,
