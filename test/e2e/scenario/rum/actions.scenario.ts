@@ -209,7 +209,7 @@ test.describe('action collection', () => {
       expect(intakeRegistry.rumViewEvents[0].view.frustration!.count).toBe(1)
 
       withBrowserLogs((browserLogs) => {
-        expect(browserLogs.length).toEqual(1)
+        expect(browserLogs).toHaveLength(1)
       })
     })
 
@@ -411,7 +411,7 @@ test.describe('action collection', () => {
       expect(intakeRegistry.rumViewEvents[0].view.frustration!.count).toBe(2)
 
       withBrowserLogs((browserLogs) => {
-        expect(browserLogs.length).toEqual(1)
+        expect(browserLogs).toHaveLength(1)
       })
     })
 

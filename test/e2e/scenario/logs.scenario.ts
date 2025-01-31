@@ -45,7 +45,7 @@ test.describe('logs', () => {
       expect(intakeRegistry.logsEvents).toHaveLength(1)
       expect(intakeRegistry.logsEvents[0].message).toBe('oh snap')
       withBrowserLogs((browserLogs) => {
-        expect(browserLogs.length).toEqual(1)
+        expect(browserLogs).toHaveLength(1)
       })
     })
 
@@ -155,7 +155,7 @@ test.describe('logs', () => {
       flushBrowserLogs()
       await flushEvents()
 
-      expect(intakeRegistry.logsEvents.length).toEqual(2)
+      expect(intakeRegistry.logsEvents).toHaveLength(2)
 
       const unreachableRequest = intakeRegistry.logsEvents.find((log) => log.http!.url.includes('/unreachable'))!
       const throwRequest = intakeRegistry.logsEvents.find((log) => log.http!.url.includes('/throw'))!

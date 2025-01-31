@@ -288,7 +288,7 @@ test.describe('rum resources', () => {
         await flushEvents()
 
         const resourceEvents = intakeRegistry.rumResourceEvents.filter((event) => event.resource.type === 'xhr')
-        expect(resourceEvents.length).toEqual(2)
+        expect(resourceEvents).toHaveLength(2)
         expect(intakeRegistry.rumErrorEvents).toHaveLength(0)
         expect(resourceEvents[0].resource.url).toContain('/ok?duration=100&call=1')
         expect(resourceEvents[0].resource.status_code).toEqual(200)

@@ -10,6 +10,8 @@ test.describe('API calls and events around init', () => {
       ;(window.DD_RUM! as unknown as { init(): void }).init()
     })
     .run(({ withBrowserLogs }) => {
+      expect([1, 2, 3]).toHaveLength(1)
+
       withBrowserLogs((logs) => {
         expect(logs).toHaveLength(1)
         expect(logs[0].message).toEqual(expect.stringContaining('Datadog Browser SDK'))

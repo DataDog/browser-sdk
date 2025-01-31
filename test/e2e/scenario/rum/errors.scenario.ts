@@ -36,7 +36,7 @@ test.describe('rum errors', () => {
         handling: 'handled',
       })
       withBrowserLogs((browserLogs) => {
-        expect(browserLogs.length).toEqual(1)
+        expect(browserLogs).toHaveLength(1)
       })
     })
 
@@ -57,7 +57,7 @@ test.describe('rum errors', () => {
         handling: 'handled',
       })
       withBrowserLogs((browserLogs) => {
-        expect(browserLogs.length).toEqual(1)
+        expect(browserLogs).toHaveLength(1)
       })
     })
 
@@ -77,7 +77,7 @@ test.describe('rum errors', () => {
         handling: 'unhandled',
       })
       withBrowserLogs((browserLogs) => {
-        expect(browserLogs.length).toEqual(1)
+        expect(browserLogs).toHaveLength(1)
       })
     })
 
@@ -97,7 +97,7 @@ test.describe('rum errors', () => {
         handling: 'unhandled',
       })
       withBrowserLogs((browserLogs) => {
-        expect(browserLogs.length).toEqual(1)
+        expect(browserLogs).toHaveLength(1)
       })
     })
 
@@ -118,7 +118,7 @@ test.describe('rum errors', () => {
         handling: 'handled',
       })
       withBrowserLogs((browserLogs) => {
-        expect(browserLogs.length).toEqual(0)
+        expect(browserLogs).toHaveLength(0)
       })
     })
 
@@ -158,7 +158,7 @@ test.describe('rum errors', () => {
         },
       })
       withBrowserLogs((browserLogs) => {
-        expect(browserLogs.length).toEqual(1)
+        expect(browserLogs).toHaveLength(1)
       })
     })
 })
