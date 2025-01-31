@@ -10,6 +10,13 @@ export async function renewSession() {
   expect((await findSessionCookie())?.isExpired).not.toEqual('1')
 }
 
+/**
+ * TODO:
+ * After Playwright migration, we should replace this with
+ * `await page.clock.runFor(SESSION_TIME_OUT_DELAY)`, so we can test
+ * the expiration logic fully and avoid manually setting the cookie
+ * to expire status.
+ */
 export async function expireSession() {
   // mock expire session with anonymous id
   const cookies = await browser.getCookies(SESSION_STORE_KEY)

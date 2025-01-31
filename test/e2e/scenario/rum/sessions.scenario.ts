@@ -44,6 +44,7 @@ describe('rum sessions', () => {
       // prevent recording start to generate late events
       .withRum({ startSessionReplayRecordingManually: true })
       .run(async ({ intakeRegistry }) => {
+        // TODO: use `page.clock.runFor` with Playwright
         await expireSession()
         intakeRegistry.empty()
         await sendXhr('/ok')
@@ -57,6 +58,7 @@ describe('rum sessions', () => {
         const anonymousId = (await findSessionCookie())?.aid
 
         await browser.execute(() => {
+          // TODO: use `page.clock.runFor` with Playwright
           window.DD_RUM!.stopSession()
         })
         await flushEvents()
@@ -71,6 +73,7 @@ describe('rum sessions', () => {
         expect(anonymousId).not.toBeNull()
 
         await browser.execute(() => {
+          // TODO: use `page.clock.runFor` with Playwright
           window.DD_RUM!.stopSession()
         })
         await (await $('html')).click()
