@@ -357,6 +357,35 @@ describe('rum public api', () => {
     })
   })
 
+  describe('createReporter', () => {
+    let addErrorSpy: jasmine.Spy<ReturnType<StartRum>['addError']>
+    let addActionSpy: jasmine.Spy<ReturnType<StartRum>['addAction']>
+    let rumPublicApi: RumPublicApi
+
+    beforeEach(() => {
+      addErrorSpy = jasmine.createSpy()
+      addActionSpy = jasmine.createSpy()
+      rumPublicApi = makeRumPublicApi(
+        () => ({
+          ...noopStartRum(),
+          addError: addErrorSpy,
+          addAction: addActionSpy,
+        }),
+        noopRecorderApi
+      )
+    })
+
+    it('sets the component as part of the context', () => {
+      const reporter = rumPublicApi.createReporter('test-component', { context: { team: 'datadog' } })
+      reporter.addError(new Error('Something went wrong'))
+      rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
+      expect(addErrorSpy.calls.argsFor(0)[0].context).toEqual({
+        component: 'test-component',
+        team: 'datadog',
+      })
+    })
+  })
+
   describe('setUser', () => {
     let addActionSpy: jasmine.Spy<ReturnType<StartRum>['addAction']>
     let displaySpy: jasmine.Spy<() => void>
