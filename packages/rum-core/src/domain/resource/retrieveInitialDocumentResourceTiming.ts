@@ -8,12 +8,17 @@ import { FAKE_INITIAL_DOCUMENT } from './resourceUtils'
 
 export function retrieveInitialDocumentResourceTiming(
   configuration: RumConfiguration,
-  callback: (timing: RumPerformanceResourceTiming) => void
+  callback: (timing: RumPerformanceResourceTiming) => void,
+  getNavigationEntryImpl = getNavigationEntry
 ) {
   runOnReadyState(configuration, 'interactive', () => {
-    const entry: RumPerformanceResourceTiming = Object.assign(getNavigationEntry().toJSON(), {
+    const navigationEntry = getNavigationEntryImpl()
+    const entry: RumPerformanceResourceTiming = Object.assign(navigationEntry.toJSON(), {
       entryType: RumPerformanceEntryType.RESOURCE as const,
       initiatorType: FAKE_INITIAL_DOCUMENT,
+      // The ResourceTiming duration entry should be `responseEnd - startTime`. With
+      // NavigationTiming entries, `startTime` is always 0, so set it to `responseEnd`.
+      duration: navigationEntry.responseEnd,
       traceId: getDocumentTraceId(document),
       toJSON: () => ({ ...entry, toJSON: undefined }),
     })
