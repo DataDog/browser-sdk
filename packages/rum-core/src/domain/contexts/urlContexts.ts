@@ -82,8 +82,10 @@ export function startUrlContexts(
         debug: {
           eventType,
           startTime,
-          urlContextEntries: urlContextHistory.getAllEntries(),
-          viewContextEntries: viewContexts.getAllEntries(),
+          urlEntries: urlContextHistory.getAllEntries(),
+          urlDeletedEntries: urlContextHistory.getDeletedEntries(),
+          viewEntries: viewContexts.getAllEntries(),
+          viewDeletedEntries: viewContexts.getDeletedEntries(),
         },
       })
     }

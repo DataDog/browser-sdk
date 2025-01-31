@@ -19,6 +19,7 @@ export interface ViewHistory {
   findView: (startTime?: RelativeTime) => ViewHistoryEntry | undefined
   stop: () => void
   getAllEntries: () => Context[]
+  getDeletedEntries: () => RelativeTime[]
 }
 
 export function startViewHistory(lifeCycle: LifeCycle): ViewHistory {
@@ -60,6 +61,7 @@ export function startViewHistory(lifeCycle: LifeCycle): ViewHistory {
   return {
     findView: (startTime) => viewValueHistory.find(startTime),
     getAllEntries: () => viewValueHistory.getAllEntries(),
+    getDeletedEntries: () => viewValueHistory.getDeletedEntries(),
     stop: () => {
       viewValueHistory.stop()
     },
