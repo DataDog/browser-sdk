@@ -4,7 +4,7 @@ import type { RumPublicApi } from '@datadog/browser-rum-core'
 import { makeRumPublicApi, startRum } from '@datadog/browser-rum-core'
 import { makeRecorderApiStub } from '../boot/stubRecorderApi'
 
-export {
+export type {
   CommonProperties,
   RumPublicApi as RumGlobal,
   RumInitConfiguration,
