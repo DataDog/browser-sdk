@@ -1,5 +1,6 @@
 import { RecordType } from '@datadog/browser-rum/src/types'
 import { test, expect } from '@playwright/test'
+import { addTag } from '../../lib/helpers/tags'
 import { expireSession, findSessionCookie, renewSession } from '../../lib/helpers/session'
 import { bundleSetup, createTest, waitForRequests } from '../../lib/framework'
 
@@ -121,10 +122,7 @@ test.describe('rum sessions', () => {
           window.DD_RUM!.stopSession()
         })
 
-        test.info().annotations.push({
-          type: 'dd_tags[test.flaky]',
-          description: 'This test is known to be flacky, especially in FF',
-        })
+        addTag('flaky', 'This test is known to be flacky, especially in FF')
 
         await page.locator('html').click()
 
