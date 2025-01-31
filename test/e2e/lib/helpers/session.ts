@@ -13,7 +13,7 @@ export async function renewSession() {
 export async function expireSession() {
   // mock expire session with anonymous id
   const cookies = await browser.getCookies(SESSION_STORE_KEY)
-  const anonymousId = cookies[0]?.value.match(/aid=[a-z0-9]+/)
+  const anonymousId = cookies[0]?.value.match(/aid=[a-z0-9-]+/)
   const expireCookie = `isExpired=1&${anonymousId && anonymousId[0]}`
 
   await setCookie(SESSION_STORE_KEY, expireCookie, SESSION_TIME_OUT_DELAY)
