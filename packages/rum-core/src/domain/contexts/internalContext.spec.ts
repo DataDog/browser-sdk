@@ -21,6 +21,7 @@ describe('internal context', () => {
         name: 'foo',
       }),
       getAllEntries: () => [],
+      getDeletedEntries: () => [],
       stop: noop,
     }
 
