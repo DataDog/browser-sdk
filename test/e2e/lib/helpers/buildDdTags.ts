@@ -12,6 +12,7 @@ export function builDdTags(
     },
   ]
 
+  // eslint-disable-next-line prefer-const
   for (let [tag, value] of Object.entries(metadata)) {
     if (tag === 'name') {
       tag = 'browser'
