@@ -209,6 +209,7 @@ function declareTest(title: string, setupOptions: SetupOptions, factory: SetupFa
 
     try {
       await runner(testContext)
+      tearDownPassedTest(testContext)
     } finally {
       await tearDownTest(testContext)
     }
@@ -270,18 +271,15 @@ async function setUpTest(browserLogsManager: BrowserLogsManager, { baseUrl, page
   await waitForServersIdle()
 }
 
-async function tearDownTest({ intakeRegistry, withBrowserLogs, flushEvents, deleteAllCookies }: TestContext) {
-  await flushEvents()
-  await deleteAllCookies()
-
-  if (test.info().expectedStatus === 'skipped') {
-    // ignore following expectations if test was skipped
-    return
-  }
-
+function tearDownPassedTest({ intakeRegistry, withBrowserLogs }: TestContext) {
   expect(intakeRegistry.telemetryErrorEvents).toHaveLength(0)
   validateRumFormat(intakeRegistry.rumEvents)
   withBrowserLogs((logs) => {
     expect(logs.filter((log) => log.level === 'error')).toHaveLength(0)
   })
+}
+
+async function tearDownTest({ flushEvents, deleteAllCookies }: TestContext) {
+  await flushEvents()
+  await deleteAllCookies()
 }
