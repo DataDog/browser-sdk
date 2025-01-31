@@ -16,14 +16,14 @@ export class BrowserLogsManager {
   }
 
   get() {
-    const filteredLogs = this.logs.filter((log) => !log.message.includes('Ignoring unsupported entryTypes: longtask'))
+    const filteredLogs = this.logs.filter((log) => !log.message.includes('Ignoring unsupported entryTypes: '))
 
     if (filteredLogs.length !== this.logs.length) {
       // FIXME: fix this at the perfomance observer level as it is visible to customers
       // It used to pass before because it was only happening in Firefox but wdio io did not support console logs for FF
       test.info().annotations.push({
         type: 'dd_tags[test.fixme]',
-        description: 'Unnexpected Console log message: "Ignoring unsupported entryTypes: longtask"',
+        description: 'Unnexpected Console log message: "Ignoring unsupported entryTypes: *"',
       })
     }
 

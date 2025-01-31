@@ -286,7 +286,7 @@ test.describe('recorder', () => {
         expect(intakeRegistry.replaySegments).toHaveLength(1)
         const segment = intakeRegistry.replaySegments[0]
 
-        expect(findAllIncrementalSnapshots(segment, IncrementalSource.Mutation)).toEqual([])
+        expect(findAllIncrementalSnapshots(segment, IncrementalSource.Mutation)).toHaveLength(0)
       })
 
     createTest('record DOM node movement 1')

@@ -238,7 +238,7 @@ test.describe('action collection', () => {
       const actionEvents = intakeRegistry.rumActionEvents
 
       expect(actionEvents).toHaveLength(1)
-      expect(actionEvents[0].action.frustration!.type).toEqual([])
+      expect(actionEvents[0].action.frustration!.type).toHaveLength(0)
     })
 
   createTest('do not consider a click to change the value of a "range" input as "dead_click"')
@@ -251,7 +251,7 @@ test.describe('action collection', () => {
       const actionEvents = intakeRegistry.rumActionEvents
 
       expect(actionEvents).toHaveLength(1)
-      expect(actionEvents[0].action.frustration!.type).toEqual([])
+      expect(actionEvents[0].action.frustration!.type).toHaveLength(0)
     })
 
   createTest('consider a click on an already checked "radio" input as "dead_click"')
@@ -277,7 +277,7 @@ test.describe('action collection', () => {
       const actionEvents = intakeRegistry.rumActionEvents
 
       expect(actionEvents).toHaveLength(1)
-      expect(actionEvents[0].action.frustration!.type).toEqual([])
+      expect(actionEvents[0].action.frustration!.type).toHaveLength(0)
     })
 
   createTest('do not consider clicks leading to scrolls as "dead_click"')
@@ -301,7 +301,7 @@ test.describe('action collection', () => {
       const actionEvents = intakeRegistry.rumActionEvents
 
       expect(actionEvents).toHaveLength(1)
-      expect(actionEvents[0].action.frustration!.type).toEqual([])
+      expect(actionEvents[0].action.frustration!.type).toHaveLength(0)
     })
 
   createTest('do not consider clicks leading to scrolls as "rage_click"')
@@ -327,7 +327,7 @@ test.describe('action collection', () => {
       const actionEvents = intakeRegistry.rumActionEvents
 
       expect(actionEvents).toHaveLength(3)
-      expect(actionEvents[0].action.frustration!.type).toEqual([])
+      expect(actionEvents[0].action.frustration!.type).toHaveLength(0)
     })
 
   createTest('do not consider a click that open a new window as "dead_click"')
@@ -349,7 +349,7 @@ test.describe('action collection', () => {
       const actionEvents = intakeRegistry.rumActionEvents
 
       expect(actionEvents).toHaveLength(1)
-      expect(actionEvents[0].action.frustration!.type).toEqual([])
+      expect(actionEvents[0].action.frustration!.type).toHaveLength(0)
     })
 
   createTest('collect a "rage click"')
@@ -443,7 +443,7 @@ test.describe('action collection', () => {
     .run(({ withBrowserLogs }) => {
       withBrowserLogs((logs) => {
         // A failing test would have a log with message "Uncaught RangeError: Maximum call stack size exceeded"
-        expect(logs).toEqual([])
+        expect(logs).toHaveLength(0)
       })
     })
 })

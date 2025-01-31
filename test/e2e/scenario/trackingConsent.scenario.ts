@@ -38,7 +38,7 @@ test.describe('tracking consent', () => {
 
         await flushEvents()
 
-        expect(intakeRegistry.rumActionEvents).toEqual([])
+        expect(intakeRegistry.rumActionEvents).toHaveLength(0)
         expect((await findSessionCookie(browserContext))?.isExpired).toEqual('1')
       })
 
