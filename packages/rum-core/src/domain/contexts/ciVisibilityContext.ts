@@ -1,6 +1,9 @@
-import { getInitCookie, type Configuration } from '@datadog/browser-core'
-
+import { getInitCookie } from '@datadog/browser-core'
+import type { Configuration } from '@datadog/browser-core'
 import { createCookieObservable } from '../../browser/cookieObservable'
+import type { Hooks, PartialRumEvent } from '../../hooks'
+import { HookNames } from '../../hooks'
+import { SessionType } from '../rumSessionManager'
 
 export const CI_VISIBILITY_TEST_ID_COOKIE_NAME = 'datadog-ci-visibility-test-execution-id'
 
@@ -14,6 +17,7 @@ export type CiVisibilityContext = ReturnType<typeof startCiVisibilityContext>
 
 export function startCiVisibilityContext(
   configuration: Configuration,
+  hooks: Hooks,
   cookieObservable = createCookieObservable(configuration, CI_VISIBILITY_TEST_ID_COOKIE_NAME)
 ) {
   let testExecutionId =
@@ -23,14 +27,25 @@ export function startCiVisibilityContext(
     testExecutionId = value
   })
 
+  hooks.register(HookNames.Assemble, ({ eventType }): PartialRumEvent | undefined => {
+    if (typeof testExecutionId !== 'string') {
+      return
+    }
+
+    return {
+      type: eventType,
+      session: {
+        type: SessionType.CI_TEST,
+      },
+      ci_test: {
+        test_execution_id: testExecutionId,
+      },
+    }
+  })
+
   return {
-    get: () => {
-      if (typeof testExecutionId === 'string') {
-        return {
-          test_execution_id: testExecutionId,
-        }
-      }
+    stop: () => {
+      cookieObservableSubscription.unsubscribe()
     },
-    stop: () => cookieObservableSubscription.unsubscribe(),
   }
 }
