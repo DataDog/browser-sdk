@@ -265,7 +265,7 @@ function newView(
 
   // Initial view update
   triggerViewUpdate()
-  contextManager.changeObservable.subscribe(triggerViewUpdate)
+  contextManager.changeObservable.subscribe(scheduleViewUpdate)
 
   function triggerViewUpdate() {
     cancelScheduleViewUpdate()
