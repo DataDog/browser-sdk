@@ -98,7 +98,7 @@ describe('ViewHistory', () => {
 
     it('should update the view name for the current context', () => {
       lifeCycle.notify(LifeCycleEventType.BEFORE_VIEW_CREATED, buildViewCreatedEvent({ name: 'foo' }))
-      lifeCycle.notify(LifeCycleEventType.VIEW_UPDATED, {
+      lifeCycle.notify(LifeCycleEventType.BEFORE_VIEW_UPDATED, {
         startClocks,
         name: 'Fake Name',
       } as ViewEvent)
@@ -107,7 +107,7 @@ describe('ViewHistory', () => {
 
     it('should update the view context for the current context', () => {
       lifeCycle.notify(LifeCycleEventType.BEFORE_VIEW_CREATED, buildViewCreatedEvent({ context: { foo: 'bar' } }))
-      lifeCycle.notify(LifeCycleEventType.VIEW_UPDATED, {
+      lifeCycle.notify(LifeCycleEventType.BEFORE_VIEW_UPDATED, {
         startClocks,
         context: { bar: 'foo' } as Context,
       } as ViewEvent)

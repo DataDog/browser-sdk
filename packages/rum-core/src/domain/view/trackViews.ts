@@ -67,6 +67,13 @@ export interface ViewCreatedEvent {
   startClocks: ClocksState
 }
 
+export interface ViewContextEvent {
+  id: string
+  name?: string
+  context?: Context
+  startClocks: ClocksState
+}
+
 export interface ViewEndedEvent {
   endClocks: ClocksState
 }
@@ -265,7 +272,17 @@ function newView(
 
   // Initial view update
   triggerViewUpdate()
-  contextManager.changeObservable.subscribe(scheduleViewUpdate)
+
+  // View context update should always be throttled
+  contextManager.changeObservable.subscribe(() => {
+    lifeCycle.notify(LifeCycleEventType.BEFORE_VIEW_UPDATED, {
+      id,
+      name,
+      context: contextManager.getContext(),
+      startClocks,
+    })
+    scheduleViewUpdate()
+  })
 
   function triggerViewUpdate() {
     cancelScheduleViewUpdate()
