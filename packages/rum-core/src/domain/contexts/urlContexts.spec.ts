@@ -1,11 +1,9 @@
 import { mockClock, registerCleanupTask, type Clock } from '@datadog/browser-core/test'
 import type { RelativeTime } from '@datadog/browser-core'
 import { clocksNow, relativeToClocks } from '@datadog/browser-core'
-import { mockViewHistory, setupLocationObserver } from '../../../test'
+import { setupLocationObserver } from '../../../test'
 import { LifeCycle, LifeCycleEventType } from '../lifeCycle'
 import type { ViewCreatedEvent, ViewEndedEvent } from '../view/trackViews'
-import type { Hooks } from '../../hooks'
-import { HookNames, createHooks } from '../../hooks'
 import { startUrlContexts, type UrlContexts } from './urlContexts'
 
 describe('urlContexts', () => {
@@ -13,21 +11,13 @@ describe('urlContexts', () => {
   let changeLocation: (to: string) => void
   let urlContexts: UrlContexts
   let clock: Clock
-  let hooks: Hooks
 
   beforeEach(() => {
     clock = mockClock()
-    hooks = createHooks()
     const setupResult = setupLocationObserver('http://fake-url.com')
 
     changeLocation = setupResult.changeLocation
-    urlContexts = startUrlContexts(
-      lifeCycle,
-      hooks,
-      setupResult.locationChangeObservable,
-      setupResult.fakeLocation,
-      mockViewHistory()
-    )
+    urlContexts = startUrlContexts(lifeCycle, setupResult.locationChangeObservable, setupResult.fakeLocation)
 
     registerCleanupTask(() => {
       urlContexts.stop()
@@ -140,24 +130,5 @@ describe('urlContexts', () => {
     } as ViewEndedEvent)
 
     expect(urlContexts.findUrl()).toBeUndefined()
-  })
-
-  describe('assemble hook', () => {
-    it('should add url properties from the history', () => {
-      lifeCycle.notify(LifeCycleEventType.BEFORE_VIEW_CREATED, {
-        startClocks: relativeToClocks(0 as RelativeTime),
-      } as ViewCreatedEvent)
-
-      const event = hooks.triggerHook(HookNames.Assemble, { eventType: 'view', startTime: 0 as RelativeTime })
-
-      expect(event).toEqual(
-        jasmine.objectContaining({
-          view: {
-            url: jasmine.any(String),
-            referrer: jasmine.any(String),
-          },
-        })
-      )
-    })
   })
 })

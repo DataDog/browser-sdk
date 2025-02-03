@@ -1,11 +1,8 @@
-import type { RelativeTime, Observable } from '@datadog/browser-core'
-import { SESSION_TIME_OUT_DELAY, relativeNow, createValueHistory, addTelemetryDebug } from '@datadog/browser-core'
+import type { RelativeTime, Observable, Context } from '@datadog/browser-core'
+import { SESSION_TIME_OUT_DELAY, relativeNow, createValueHistory } from '@datadog/browser-core'
 import type { LocationChange } from '../../browser/locationChangeObservable'
 import type { LifeCycle } from '../lifeCycle'
 import { LifeCycleEventType } from '../lifeCycle'
-import type { PartialRumEvent, Hooks } from '../../hooks'
-import { HookNames } from '../../hooks'
-import type { ViewHistory } from './viewHistory'
 
 /**
  * We want to attach to an event:
@@ -22,15 +19,15 @@ export interface UrlContext {
 
 export interface UrlContexts {
   findUrl: (startTime?: RelativeTime) => UrlContext | undefined
+  getAllEntries: () => Context[]
+  getDeletedEntries: () => RelativeTime[]
   stop: () => void
 }
 
 export function startUrlContexts(
   lifeCycle: LifeCycle,
-  hooks: Hooks,
   locationChangeObservable: Observable<LocationChange>,
-  location: Location,
-  viewContexts: ViewHistory
+  location: Location
 ) {
   const urlContextHistory = createValueHistory<UrlContext>({ expireDelay: URL_CONTEXT_TIME_OUT_DELAY })
 
@@ -74,31 +71,10 @@ export function startUrlContexts(
     }
   }
 
-  hooks.register(HookNames.Assemble, ({ startTime, eventType }): PartialRumEvent | undefined => {
-    const entry = urlContextHistory.find(startTime)!
-
-    if (!entry) {
-      addTelemetryDebug('Missing URL entry', {
-        debug: {
-          eventType,
-          startTime,
-          urlContextEntries: urlContextHistory.getAllEntries(),
-          viewContextEntries: viewContexts.getAllEntries(),
-        },
-      })
-    }
-
-    return {
-      type: eventType,
-      view: {
-        url: entry.url,
-        referrer: entry.referrer,
-      },
-    }
-  })
-
   return {
     findUrl: (startTime?: RelativeTime) => urlContextHistory.find(startTime),
+    getAllEntries: () => urlContextHistory.getAllEntries(),
+    getDeletedEntries: () => urlContextHistory.getDeletedEntries(),
     stop: () => {
       locationChangeSubscription.unsubscribe()
       urlContextHistory.stop()

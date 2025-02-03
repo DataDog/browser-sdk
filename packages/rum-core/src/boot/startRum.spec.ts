@@ -39,14 +39,12 @@ import { startViewCollection } from '../domain/view/viewCollection'
 import type { RumEvent, RumViewEvent } from '../rumEvent.types'
 import type { LocationChange } from '../browser/locationChangeObservable'
 import { startLongAnimationFrameCollection } from '../domain/longAnimationFrame/longAnimationFrameCollection'
-import { startViewHistory, type RumSessionManager } from '..'
+import type { RumSessionManager } from '..'
 import type { RumConfiguration } from '../domain/configuration'
 import { RumEventType } from '../rawRumEvent.types'
 import { startFeatureFlagContexts } from '../domain/contexts/featureFlagContext'
 import type { PageStateHistory } from '../domain/contexts/pageStateHistory'
 import { createCustomVitalsState } from '../domain/vital/vitalCollection'
-import { createHooks } from '../hooks'
-import { startUrlContexts } from '../domain/contexts/urlContexts'
 import { startRum, startRumEventCollection } from './startRum'
 
 function collectServerEvents(lifeCycle: LifeCycle) {
@@ -68,20 +66,16 @@ function startRumStub(
   pageStateHistory: PageStateHistory,
   reportError: (error: RawError) => void
 ) {
-  const hooks = createHooks()
-  const viewHistory = startViewHistory(lifeCycle)
-  const urlContexts = startUrlContexts(lifeCycle, hooks, locationChangeObservable, location, viewHistory)
-
   const { stop: rumEventCollectionStop } = startRumEventCollection(
     lifeCycle,
-    hooks,
     configuration,
+    location,
     sessionManager,
     pageStateHistory,
+    locationChangeObservable,
     domMutationObservable,
     startFeatureFlagContexts(lifeCycle, createCustomerDataTracker(noop)),
     windowOpenObservable,
-    viewHistory,
     () => ({
       context: {},
       user: {},
@@ -91,22 +85,18 @@ function startRumStub(
   )
   const { stop: viewCollectionStop } = startViewCollection(
     lifeCycle,
-    hooks,
     configuration,
     location,
     domMutationObservable,
     windowOpenObservable,
     locationChangeObservable,
     pageStateHistory,
-    noopRecorderApi,
-    viewHistory
+    noopRecorderApi
   )
 
   startLongAnimationFrameCollection(lifeCycle, configuration)
   return {
     stop: () => {
-      viewHistory.stop()
-      urlContexts.stop()
       rumEventCollectionStop()
       viewCollectionStop()
     },
