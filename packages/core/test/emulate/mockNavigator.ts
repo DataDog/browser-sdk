@@ -13,7 +13,7 @@ export function setNavigatorOnLine(onLine: boolean) {
   })
 }
 
-export function setNavigatorConnection(connection: NetworkInformation | undefined) {
+export function setNavigatorConnection(connection: Partial<NetworkInformation> | undefined) {
   Object.defineProperty(navigator, 'connection', {
     get() {
       return connection
