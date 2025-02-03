@@ -11,6 +11,12 @@ import type { RumConfiguration } from './configuration'
 import type { LifeCycle } from './lifeCycle'
 import { LifeCycleEventType } from './lifeCycle'
 
+export const enum SessionType {
+  SYNTHETICS = 'synthetics',
+  USER = 'user',
+  CI_TEST = 'ci_test',
+}
+
 export const RUM_SESSION_KEY = 'rum'
 
 export interface RumSessionManager {
