@@ -12,6 +12,7 @@ prod,react,MIT,Copyright (c) Facebook, Inc. and its affiliates.
 prod,react-dom,MIT,Copyright (c) Facebook, Inc. and its affiliates.
 dev,@eslint/js,MIT,Copyright OpenJS Foundation and other contributors, <www.openjsf.org>
 dev,@jsdevtools/coverage-istanbul-loader,MIT,Copyright (c) 2015 James Messinger
+dev,@playwright/test,Apache-2.0,Copyright Microsoft Corporation
 dev,@types/chrome,MIT,Copyright Microsoft Corporation
 dev,@types/connect-busboy,MIT,Copyright Microsoft Corporation
 dev,@types/cors,MIT,Copyright Microsoft Corporation
@@ -22,12 +23,6 @@ dev,@types/node-forge,MIT,Copyright Microsoft Corporation
 dev,@types/pako,MIT,Copyright Microsoft Corporation
 dev,@types/react,MIT,Copyright Microsoft Corporation
 dev,@types/react-dom,MIT,Copyright Microsoft Corporation
-dev,@wdio/browserstack-service,MIT,Copyright JS Foundation and other contributors
-dev,@wdio/cli,MIT,Copyright JS Foundation and other contributors
-dev,@wdio/jasmine-framework,MIT,Copyright JS Foundation and other contributors
-dev,@wdio/junit-reporter,MIT,Copyright (c) OpenJS Foundation and other contributors
-dev,@wdio/local-runner,MIT,Copyright JS Foundation and other contributors
-dev,@wdio/spec-reporter,MIT,Copyright JS Foundation and other contributors
 dev,@webextension-toolbox/webpack-webextension-plugin,MIT,Copyright 2018 Henrik Wenz (handtrix@gmail.com)
 dev,ajv,MIT,Copyright 2015-2017 Evgeny Poberezkin
 dev,browserstack-local,MIT,Copyright 2016 BrowserStack
