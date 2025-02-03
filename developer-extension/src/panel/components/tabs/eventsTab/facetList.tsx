@@ -104,7 +104,8 @@ function FacetValue({
         checked={facetSelectState === 'selected'}
         indeterminate={facetSelectState === 'partial-selected'} // can only populate direct parents
         onChange={() => {
-          onExcludedFacetValuesChange(toggleFacetValue(facetValuesFilter.type, facet, facetValuesFilter, facetValue))
+          const filterType = facetSelectState === 'selected' ? 'exclude' : 'include'
+          onExcludedFacetValuesChange(toggleFacetValue(filterType, facet, facetValuesFilter, facetValue))
         }}
       />
       <Text>{facetValueCount}</Text>
