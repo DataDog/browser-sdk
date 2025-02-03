@@ -13,15 +13,9 @@ import {
   getConnectivity,
 } from '@datadog/browser-core'
 import type { RumEventDomainContext } from '../domainContext.types'
-import type {
-  RawRumErrorEvent,
-  RawRumEvent,
-  RawRumLongTaskEvent,
-  RawRumResourceEvent,
-  RumContext,
-} from '../rawRumEvent.types'
+import type { RawRumErrorEvent, RawRumEvent, RawRumLongTaskEvent, RawRumResourceEvent } from '../rawRumEvent.types'
 import { RumEventType } from '../rawRumEvent.types'
-import type { RumEvent } from '../rumEvent.types'
+import type { CommonProperties, RumEvent } from '../rumEvent.types'
 import type { Hooks } from '../hooks'
 import { HookNames } from '../hooks'
 import { getSyntheticsContext } from './contexts/syntheticsContext'
@@ -143,7 +137,7 @@ export function startRumAssembly(
         const commonContext = savedCommonContext || getCommonContext()
         const actionId = actionContexts.findActionId(startTime)
 
-        const rumContext: RumContext = {
+        const rumContext: Partial<CommonProperties> = {
           _dd: {
             format_version: 2,
             drift: currentDrift(),
@@ -176,7 +170,7 @@ export function startRumAssembly(
           synthetics: syntheticsContext,
           ci_test: ciVisibilityContext.get(),
           display: displayContext.get(),
-          connectivity: getConnectivity(),
+          connectivity: getConnectivity() as CommonProperties['connectivity'],
           context: commonContext.context,
         }
 
