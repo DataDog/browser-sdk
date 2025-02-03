@@ -241,9 +241,7 @@ function createTestContext(
         browserLogsManager.clear()
       }
     },
-    flushBrowserLogs: () => {
-      browserLogsManager.clear()
-    },
+    flushBrowserLogs: () => browserLogsManager.clear(),
     flushEvents: () => flushEvents(page),
     deleteAllCookies: () => deleteAllCookies(browserContext),
     sendXhr: (url: string, headers?: string[][]) => sendXhr(page, url, headers),

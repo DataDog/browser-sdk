@@ -32,8 +32,6 @@ export class BrowserLogsManager {
   }
 }
 
-// TODO, see if we can use the browser context to clear cookies or we should keep the previous hack
-// wdio method does not work for some browsers
 export function deleteAllCookies(context: BrowserContext) {
   return context.clearCookies()
 }
