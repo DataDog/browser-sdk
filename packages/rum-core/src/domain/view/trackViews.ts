@@ -215,13 +215,20 @@ function newView(
   const contextManager = createContextManager()
 
   let sessionIsActive = true
-  let name = viewOptions?.name
-  const service = viewOptions?.service || configuration.service
-  const version = viewOptions?.version || configuration.version
-  const context = viewOptions?.context
+  let name: string | undefined
+  let service: string | undefined
+  let version: string | undefined
+  let context: Context | undefined
 
-  if (context) {
-    contextManager.setContext(context)
+  if (viewOptions) {
+    name = viewOptions.name
+    service = viewOptions.service || undefined
+    version = viewOptions.version || undefined
+    if (viewOptions.context) {
+      context = viewOptions.context
+      // use ContextManager to update the context so we always sanitize it
+      contextManager.setContext(context)
+    }
   }
 
   const viewCreatedEvent = {
