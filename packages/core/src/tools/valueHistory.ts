@@ -31,6 +31,7 @@ export interface ValueHistory<Value> {
   stop: () => void
 
   getAllEntries: () => Context[]
+  getDeletedEntries: () => RelativeTime[]
 }
 
 export function createValueHistory<Value>({
@@ -41,12 +42,16 @@ export function createValueHistory<Value>({
   maxEntries?: number
 }): ValueHistory<Value> {
   let entries: Array<ValueHistoryEntry<Value>> = []
+  const deletedEntries: RelativeTime[] = []
   const clearOldValuesInterval: TimeoutId = setInterval(() => clearOldValues(), CLEAR_OLD_VALUES_INTERVAL)
 
   function clearOldValues() {
     const oldTimeThreshold = relativeNow() - expireDelay
     while (entries.length > 0 && entries[entries.length - 1].endTime < oldTimeThreshold) {
-      entries.pop()
+      const entry = entries.pop()
+      if (entry) {
+        deletedEntries.push(entry.startTime)
+      }
     }
   }
 
@@ -127,6 +132,10 @@ export function createValueHistory<Value>({
     })) as Context[]
   }
 
+  function getDeletedEntries() {
+    return deletedEntries
+  }
+
   /**
    * Remove all entries from this collection.
    */
@@ -141,5 +150,5 @@ export function createValueHistory<Value>({
     clearInterval(clearOldValuesInterval)
   }
 
-  return { add, find, closeActive, findAll, reset, stop, getAllEntries }
+  return { add, find, closeActive, findAll, reset, stop, getAllEntries, getDeletedEntries }
 }
