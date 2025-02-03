@@ -924,6 +924,8 @@ describe('view event count', () => {
       const { getViewUpdate, setViewContext } = viewTest
 
       setViewContext({ foo: 'bar' })
+      clock.tick(3000)
+
       expect(getViewUpdate(1).context).toEqual({ foo: 'bar' })
     })
 
@@ -932,6 +934,8 @@ describe('view event count', () => {
       const { getViewUpdate, setViewContextProperty } = viewTest
 
       setViewContextProperty('foo', 'bar')
+      clock.tick(3000)
+
       expect(getViewUpdate(1).context).toEqual({ foo: 'bar' })
     })
 
