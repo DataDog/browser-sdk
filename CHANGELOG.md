@@ -18,6 +18,20 @@
 
 ---
 
+## v6.2.0
+
+**Public Changes:**
+
+- ✨ [RUM-6563] Attribute ressource URL to LCP ([#3154](https://github.com/DataDog/browser-sdk/pull/3154)) [RUM] [RUM-REACT] [RUM-SLIM]
+- 🐛 fix document resource duration ([#3307](https://github.com/DataDog/browser-sdk/pull/3307)) [RUM] [RUM-REACT] [RUM-SLIM]
+
+**Internal Changes:**
+
+- ✅ fix failing skipped test ([#3309](https://github.com/DataDog/browser-sdk/pull/3309)) [RUM]
+- 🔊 Add telemetry on missing URL context ([#3304](https://github.com/DataDog/browser-sdk/pull/3304)) [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+- ⚗️Update RC to support new format and URL [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+- 🚨 enforce consistent type export ([#3302](https://github.com/DataDog/browser-sdk/pull/3302)) [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+
 ## v6.1.0
 
 **Public Changes:**
