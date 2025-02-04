@@ -49,24 +49,17 @@ export function filterFacets(
   facetValuesFilter: FacetValuesFilter,
   facetRegistry: FacetRegistry
 ): SdkEvent[] {
-  const filteredEvents: SdkEvent[] = []
   const filteredFacetValueEntries = Object.entries(facetValuesFilter.facetValues)
   if (filteredFacetValueEntries.length === 0) {
     return events
   }
-  for (const event of events) {
-    for (const [facetPath, filteredValues] of filteredFacetValueEntries) {
+  const isIncludeType = facetValuesFilter.type === 'include'
+  return events.filter((event) =>
+    filteredFacetValueEntries.some(([facetPath, filteredValues]) => {
       const eventValue = facetRegistry.getFieldValueForEvent(event, facetPath)
-      const values = filteredValues as Array<FieldMultiValue | undefined>
-
-      if (facetValuesFilter.type === 'include' && values.includes(eventValue)) {
-        filteredEvents.push(event)
-      } else if (facetValuesFilter.type === 'exclude' && !values.includes(eventValue)) {
-        filteredEvents.push(event)
-      }
-    }
-  }
-  return filteredEvents
+      return isIncludeType == filteredValues.includes(eventValue as string)
+    })
+  )
 }
 
 function filterOutdatedVersions(events: SdkEvent[]): SdkEvent[] {

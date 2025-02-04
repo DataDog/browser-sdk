@@ -110,7 +110,7 @@ function FacetValue({
       />
       <Text>{facetValueCount}</Text>
       <Button
-        variant={isFiltered ? 'filled' : 'light'}
+        variant={isOnly ? 'filled' : 'light'}
         size="compact-xs"
         w="40px"
         onClick={() => {
