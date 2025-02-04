@@ -1,8 +1,7 @@
 /* eslint-disable no-console */
-import { isIE } from '../../tools/utils/browserDetection'
 import { ConsoleApiName } from '../../tools/display'
 import type { Subscription } from '../../tools/observable'
-import type { ConsoleLog } from './consoleObservable'
+import type { ErrorConsoleLog } from './consoleObservable'
 import { initConsoleObservable } from './consoleObservable'
 
 // prettier: avoid formatting issue
@@ -15,12 +14,12 @@ import { initConsoleObservable } from './consoleObservable'
   { api: ConsoleApiName.error },
 ].forEach(({ api }) => {
   describe(`console ${api} observable`, () => {
-    let consoleStub: jasmine.Spy
+    let consoleSpy: jasmine.Spy
     let consoleSubscription: Subscription
     let notifyLog: jasmine.Spy
 
     beforeEach(() => {
-      consoleStub = spyOn(console, api)
+      consoleSpy = spyOn(console, api)
       notifyLog = jasmine.createSpy('notifyLog')
 
       consoleSubscription = initConsoleObservable([api]).subscribe(notifyLog)
@@ -46,7 +45,7 @@ import { initConsoleObservable } from './consoleObservable'
     it('should keep original behavior', () => {
       console[api]('foo', 'bar')
 
-      expect(consoleStub).toHaveBeenCalledWith('foo', 'bar')
+      expect(consoleSpy).toHaveBeenCalledWith('foo', 'bar')
     })
 
     it('should format error instance', () => {
@@ -79,7 +78,7 @@ import { initConsoleObservable } from './consoleObservable'
 
 describe('console error observable', () => {
   let consoleSubscription: Subscription
-  let notifyLog: jasmine.Spy
+  let notifyLog: jasmine.Spy<(consoleLog: ErrorConsoleLog) => void>
 
   beforeEach(() => {
     spyOn(console, 'error').and.callFake(() => true)
@@ -103,12 +102,8 @@ describe('console error observable', () => {
 
   it('should extract stack from first error', () => {
     console.error(new TypeError('foo'), new TypeError('bar'))
-    const stack = (notifyLog.calls.mostRecent().args[0] as ConsoleLog).stack
-    if (!isIE()) {
-      expect(stack).toMatch(/^TypeError: foo\s+at/)
-    } else {
-      expect(stack).toContain('TypeError: foo')
-    }
+    const stack = notifyLog.calls.mostRecent().args[0].error.stack
+    expect(stack).toContain('TypeError: foo')
   })
 
   it('should retrieve fingerprint from error', () => {
@@ -118,21 +113,19 @@ describe('console error observable', () => {
     const error = new Error('foo')
     ;(error as DatadogError).dd_fingerprint = 'my-fingerprint'
 
-    // eslint-disable-next-line no-console
     console.error(error)
 
     const consoleLog = notifyLog.calls.mostRecent().args[0]
-    expect(consoleLog.fingerprint).toBe('my-fingerprint')
+    expect(consoleLog.error.fingerprint).toBe('my-fingerprint')
   })
 
   it('should sanitize error fingerprint', () => {
     const error = new Error('foo')
     ;(error as any).dd_fingerprint = 2
 
-    // eslint-disable-next-line no-console
     console.error(error)
 
     const consoleLog = notifyLog.calls.mostRecent().args[0]
-    expect(consoleLog.fingerprint).toBe('2')
+    expect(consoleLog.error.fingerprint).toBe('2')
   })
 })

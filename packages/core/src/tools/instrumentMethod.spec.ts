@@ -1,5 +1,5 @@
-import { mockClock, stubZoneJs } from '../../test'
-import type { Clock } from '../../test'
+import { mockClock, mockZoneJs, registerCleanupTask } from '../../test'
+import type { Clock, MockZoneJs } from '../../test'
 import type { InstrumentedMethodCall } from './instrumentMethod'
 import { instrumentMethod, instrumentSetter } from './instrumentMethod'
 import { noop } from './utils/functionUtils'
@@ -37,7 +37,7 @@ describe('instrumentMethod', () => {
   })
 
   it('sets an event handler even if it was originally undefined', () => {
-    const object: { onevent?: () => void } = {}
+    const object: { onevent?: () => void } = { onevent: undefined }
 
     const instrumentationSpy = jasmine.createSpy()
     instrumentMethod(object, 'onevent', instrumentationSpy)
@@ -46,6 +46,15 @@ describe('instrumentMethod', () => {
 
     object.onevent!()
     expect(instrumentationSpy).toHaveBeenCalled()
+  })
+
+  it('do not set an event handler even if the event is not supported (i.e. property does not exist on object)', () => {
+    const object: { onevent?: () => void } = {}
+
+    const instrumentationSpy = jasmine.createSpy()
+    instrumentMethod(object, 'onevent', instrumentationSpy)
+
+    expect('onevent' in object).toBeFalse()
   })
 
   it('calls the instrumentation with method target and parameters', () => {
@@ -191,15 +200,14 @@ describe('instrumentMethod', () => {
 
 describe('instrumentSetter', () => {
   let clock: Clock
-  let zoneJsStub: ReturnType<typeof stubZoneJs>
+  let zoneJs: MockZoneJs
 
   beforeEach(() => {
     clock = mockClock()
-    zoneJsStub = stubZoneJs()
-  })
-  afterEach(() => {
-    zoneJsStub.restore()
-    clock.cleanup()
+    registerCleanupTask(() => {
+      clock.cleanup()
+    })
+    zoneJs = mockZoneJs()
   })
 
   it('replaces the original setter', () => {
@@ -261,7 +269,7 @@ describe('instrumentSetter', () => {
 
   it('does not use the Zone.js setTimeout function', () => {
     const zoneJsSetTimeoutSpy = jasmine.createSpy()
-    zoneJsStub.replaceProperty(window, 'setTimeout', zoneJsSetTimeoutSpy)
+    zoneJs.replaceProperty(window, 'setTimeout', zoneJsSetTimeoutSpy)
 
     const object = {} as { foo: number }
     Object.defineProperty(object, 'foo', { set: noop, configurable: true })

@@ -1,9 +1,10 @@
-const { runMain } = require('../lib/execution-utils')
-const { modifyFile } = require('../lib/files-utils')
+const { runMain } = require('../lib/executionUtils')
+const { modifyFile } = require('../lib/filesUtils')
 const { command } = require('../lib/command')
-const { browserSdkVersion } = require('../lib/browser-sdk-version')
+const { browserSdkVersion } = require('../lib/browserSdkVersion')
+const { packagesDirectoryNames } = require('../lib/packagesDirectoryNames')
 
-const JSON_FILES = ['rum', 'rum-slim', 'logs'].map((packageName) => `./packages/${packageName}/package.json`)
+const JSON_FILES = packagesDirectoryNames.map((packageName) => `./packages/${packageName}/package.json`)
 
 // This script updates the peer dependency versions between rum and logs packages to match the new
 // version during a release.
@@ -24,8 +25,10 @@ runMain(async () => {
 
 function updateJsonPeerDependencies(content) {
   const json = JSON.parse(content)
-  Object.keys(json.peerDependencies).forEach((key) => {
-    json.peerDependencies[key] = browserSdkVersion
-  })
+  Object.keys(json.peerDependencies || [])
+    .filter((key) => key.startsWith('@datadog'))
+    .forEach((key) => {
+      json.peerDependencies[key] = browserSdkVersion
+    })
   return `${JSON.stringify(json, null, 2)}\n`
 }

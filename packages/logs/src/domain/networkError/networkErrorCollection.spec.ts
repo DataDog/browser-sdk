@@ -1,6 +1,6 @@
-import { isIE, ErrorSource } from '@datadog/browser-core'
-import type { FetchStub, FetchStubManager } from '@datadog/browser-core/test'
-import { SPEC_ENDPOINTS, ResponseStub, stubFetch } from '@datadog/browser-core/test'
+import { ErrorSource } from '@datadog/browser-core'
+import type { MockFetch, MockFetchManager } from '@datadog/browser-core/test'
+import { SPEC_ENDPOINTS, MockResponse, mockFetch, registerCleanupTask } from '@datadog/browser-core/test'
 import type { RawNetworkLogsEvent } from '../../rawLogsEvent.types'
 import type { LogsConfiguration } from '../configuration'
 import type { RawLogsEventCollectedData } from '../lifeCycle'
@@ -20,12 +20,10 @@ const CONFIGURATION = {
 } as LogsConfiguration
 
 describe('network error collection', () => {
-  let fetchStub: FetchStub
-  let fetchStubManager: FetchStubManager
-  let stopNetworkErrorCollection: () => void
+  let fetch: MockFetch
+  let mockFetchManager: MockFetchManager
   let lifeCycle: LifeCycle
   let rawLogsEvents: Array<RawLogsEventCollectedData<RawNetworkLogsEvent>>
-
   const FAKE_URL = 'http://fake.com/'
   const DEFAULT_REQUEST = {
     duration: 10,
@@ -37,18 +35,13 @@ describe('network error collection', () => {
   }
 
   function startCollection(forwardErrorsToLogs = true) {
-    fetchStubManager = stubFetch()
-    ;({ stop: stopNetworkErrorCollection } = startNetworkErrorCollection(
-      { ...CONFIGURATION, forwardErrorsToLogs },
-      lifeCycle
-    ))
-    fetchStub = window.fetch as FetchStub
+    mockFetchManager = mockFetch()
+    const { stop } = startNetworkErrorCollection({ ...CONFIGURATION, forwardErrorsToLogs }, lifeCycle)
+    registerCleanupTask(stop)
+    fetch = window.fetch as MockFetch
   }
 
   beforeEach(() => {
-    if (isIE()) {
-      pending('no fetch support')
-    }
     rawLogsEvents = []
     lifeCycle = new LifeCycle()
     lifeCycle.subscribe(LifeCycleEventType.RAW_LOG_COLLECTED, (rawLogsEvent) =>
@@ -56,16 +49,11 @@ describe('network error collection', () => {
     )
   })
 
-  afterEach(() => {
-    stopNetworkErrorCollection()
-    fetchStubManager.reset()
-  })
-
   it('should track server error', (done) => {
     startCollection()
-    fetchStub(FAKE_URL).resolveWith(DEFAULT_REQUEST)
+    fetch(FAKE_URL).resolveWith(DEFAULT_REQUEST)
 
-    fetchStubManager.whenAllComplete(() => {
+    mockFetchManager.whenAllComplete(() => {
       expect(rawLogsEvents[0].rawLogsEvent).toEqual({
         message: 'Fetch error GET http://fake.com/',
         date: jasmine.any(Number),
@@ -73,6 +61,7 @@ describe('network error collection', () => {
         origin: ErrorSource.NETWORK,
         error: {
           stack: 'Server error',
+          handling: undefined,
         },
         http: {
           method: 'GET',
@@ -86,9 +75,9 @@ describe('network error collection', () => {
 
   it('should not track network error when forwardErrorsToLogs is false', (done) => {
     startCollection(false)
-    fetchStub(FAKE_URL).resolveWith(DEFAULT_REQUEST)
+    fetch(FAKE_URL).resolveWith(DEFAULT_REQUEST)
 
-    fetchStubManager.whenAllComplete(() => {
+    mockFetchManager.whenAllComplete(() => {
       expect(rawLogsEvents.length).toEqual(0)
       done()
     })
@@ -96,9 +85,9 @@ describe('network error collection', () => {
 
   it('should not track intake error', (done) => {
     startCollection()
-    fetchStub('https://logs-intake.com/v1/input/send?foo=bar').resolveWith(DEFAULT_REQUEST)
+    fetch('https://logs-intake.com/v1/input/send?ddsource=browser&ddtags=sdk_version').resolveWith(DEFAULT_REQUEST)
 
-    fetchStubManager.whenAllComplete(() => {
+    mockFetchManager.whenAllComplete(() => {
       expect(rawLogsEvents.length).toEqual(0)
       done()
     })
@@ -106,9 +95,9 @@ describe('network error collection', () => {
 
   it('should track aborted requests', (done) => {
     startCollection()
-    fetchStub(FAKE_URL).abort()
+    fetch(FAKE_URL).abort()
 
-    fetchStubManager.whenAllComplete(() => {
+    mockFetchManager.whenAllComplete(() => {
       expect(rawLogsEvents.length).toEqual(1)
       expect(rawLogsEvents[0].domainContext).toEqual({
         isAborted: true,
@@ -120,9 +109,9 @@ describe('network error collection', () => {
 
   it('should track refused request', (done) => {
     startCollection()
-    fetchStub(FAKE_URL).resolveWith({ ...DEFAULT_REQUEST, status: 0 })
+    fetch(FAKE_URL).resolveWith({ ...DEFAULT_REQUEST, status: 0 })
 
-    fetchStubManager.whenAllComplete(() => {
+    mockFetchManager.whenAllComplete(() => {
       expect(rawLogsEvents.length).toEqual(1)
       done()
     })
@@ -130,9 +119,9 @@ describe('network error collection', () => {
 
   it('should not track client error', (done) => {
     startCollection()
-    fetchStub(FAKE_URL).resolveWith({ ...DEFAULT_REQUEST, status: 400 })
+    fetch(FAKE_URL).resolveWith({ ...DEFAULT_REQUEST, status: 400 })
 
-    fetchStubManager.whenAllComplete(() => {
+    mockFetchManager.whenAllComplete(() => {
       expect(rawLogsEvents.length).toEqual(0)
       done()
     })
@@ -140,9 +129,9 @@ describe('network error collection', () => {
 
   it('should not track successful request', (done) => {
     startCollection()
-    fetchStub(FAKE_URL).resolveWith({ ...DEFAULT_REQUEST, status: 200 })
+    fetch(FAKE_URL).resolveWith({ ...DEFAULT_REQUEST, status: 200 })
 
-    fetchStubManager.whenAllComplete(() => {
+    mockFetchManager.whenAllComplete(() => {
       expect(rawLogsEvents.length).toEqual(0)
       done()
     })
@@ -150,9 +139,9 @@ describe('network error collection', () => {
 
   it('uses a fallback when the response text is empty', (done) => {
     startCollection()
-    fetchStub(FAKE_URL).resolveWith({ ...DEFAULT_REQUEST, responseText: '' })
+    fetch(FAKE_URL).resolveWith({ ...DEFAULT_REQUEST, responseText: '' })
 
-    fetchStubManager.whenAllComplete(() => {
+    mockFetchManager.whenAllComplete(() => {
       expect(rawLogsEvents.length).toEqual(1)
       expect(rawLogsEvents[0].rawLogsEvent.error.stack).toEqual('Failed to load')
       done()
@@ -187,23 +176,8 @@ describe('computeXhrResponseData', () => {
 })
 
 describe('computeFetchResponseText', () => {
-  let onunhandledrejectionSpy: jasmine.Spy
-
-  beforeEach(() => {
-    if (isIE()) {
-      pending('IE does not support the fetch API')
-    }
-
-    onunhandledrejectionSpy = jasmine.createSpy()
-    window.onunhandledrejection = onunhandledrejectionSpy
-  })
-
-  afterEach(() => {
-    window.onunhandledrejection = null
-  })
-
   it('computes response text from Response objects', (done) => {
-    computeFetchResponseText(new ResponseStub({ responseText: 'foo' }), CONFIGURATION, (responseText) => {
+    computeFetchResponseText(new MockResponse({ responseText: 'foo' }), CONFIGURATION, (responseText) => {
       expect(responseText).toBe('foo')
       done()
     })
@@ -212,7 +186,7 @@ describe('computeFetchResponseText', () => {
   // https://fetch.spec.whatwg.org/#concept-body-consume-body
   it('computes response text from Response objects failing to retrieve text', (done) => {
     computeFetchResponseText(
-      new ResponseStub({ responseTextError: new Error('locked') }),
+      new MockResponse({ responseTextError: new Error('locked') }),
       CONFIGURATION,
       (responseText) => {
         expect(responseText).toBe('Unable to retrieve response: Error: locked')
@@ -222,7 +196,7 @@ describe('computeFetchResponseText', () => {
   })
 
   it('should return undefined if no response body', (done) => {
-    const response = new ResponseStub({})
+    const response = new MockResponse({})
     computeFetchResponseText(response, CONFIGURATION, (responseText) => {
       expect(responseText).toBeUndefined()
       done()
@@ -230,7 +204,7 @@ describe('computeFetchResponseText', () => {
   })
 
   it('should return undefined if body used by another instrumentation', (done) => {
-    const response = new ResponseStub({ bodyUsed: true })
+    const response = new MockResponse({ bodyUsed: true })
     computeFetchResponseText(response, CONFIGURATION, (responseText) => {
       expect(responseText).toBeUndefined()
       done()
@@ -238,7 +212,7 @@ describe('computeFetchResponseText', () => {
   })
 
   it('should return undefined if body is disturbed', (done) => {
-    const response = new ResponseStub({ bodyDisturbed: true })
+    const response = new MockResponse({ bodyDisturbed: true })
     computeFetchResponseText(response, CONFIGURATION, (responseText) => {
       expect(responseText).toBeUndefined()
       done()
@@ -246,7 +220,7 @@ describe('computeFetchResponseText', () => {
   })
 
   it('does not consume the response body', (done) => {
-    const response = new ResponseStub({ responseText: 'foo' })
+    const response = new MockResponse({ responseText: 'foo' })
     computeFetchResponseText(response, CONFIGURATION, () => {
       expect(response.bodyUsed).toBe(false)
       done()
@@ -256,7 +230,7 @@ describe('computeFetchResponseText', () => {
   it('does not truncate the response if its size is equal to the limit', (done) => {
     const text = 'foo'
     computeFetchResponseText(
-      new ResponseStub({ responseText: text }),
+      new MockResponse({ responseText: text }),
       { ...CONFIGURATION, requestErrorResponseLengthLimit: text.length },
       (responseData) => {
         expect(responseData).toBe(text)
@@ -268,7 +242,7 @@ describe('computeFetchResponseText', () => {
   it('truncates the response if its size is greater than the limit', (done) => {
     const text = 'foobar'
     computeFetchResponseText(
-      new ResponseStub({ responseText: text }),
+      new MockResponse({ responseText: text }),
       { ...CONFIGURATION, requestErrorResponseLengthLimit: text.length - 1 },
       (responseData) => {
         expect(responseData).toBe('fooba...')

@@ -1,35 +1,39 @@
-import {
-  ExperimentalFeature,
-  type Duration,
-  type RelativeTime,
-  type ServerDuration,
-  type TimeStamp,
-} from '@datadog/browser-core'
-import { createNewEvent, mockExperimentalFeatures } from '@datadog/browser-core/test'
-import type { RawRumActionEvent } from '@datadog/browser-rum-core'
-import type { TestSetupBuilder } from '../../../test'
-import { setup } from '../../../test'
+import type { Duration, RelativeTime, ServerDuration, TimeStamp } from '@datadog/browser-core'
+import { ExperimentalFeature, Observable } from '@datadog/browser-core'
+import { createNewEvent, mockExperimentalFeatures, registerCleanupTask } from '@datadog/browser-core/test'
+import type { RawRumActionEvent, RawRumEventCollectedData } from '@datadog/browser-rum-core'
+import { collectAndValidateRawRumEvents, mockPageStateHistory, mockRumConfiguration } from '../../../test'
+import type { RawRumEvent } from '../../rawRumEvent.types'
 import { RumEventType, ActionType } from '../../rawRumEvent.types'
-import { LifeCycleEventType } from '../lifeCycle'
+import { LifeCycle, LifeCycleEventType } from '../lifeCycle'
 import { startActionCollection } from './actionCollection'
 
+const basePageStateHistory = mockPageStateHistory({ wasInPageStateAt: () => true })
+
 describe('actionCollection', () => {
-  let setupBuilder: TestSetupBuilder
+  const lifeCycle = new LifeCycle()
   let addAction: ReturnType<typeof startActionCollection>['addAction']
+  let rawRumEvents: Array<RawRumEventCollectedData<RawRumEvent>>
 
   beforeEach(() => {
-    setupBuilder = setup()
-      .withPageStateHistory({
-        wasInPageStateAt: () => true,
-      })
-      .beforeBuild(({ lifeCycle, configuration, domMutationObservable, pageStateHistory }) => {
-        ;({ addAction } = startActionCollection(lifeCycle, domMutationObservable, configuration, pageStateHistory))
-      })
+    const domMutationObservable = new Observable<void>()
+    const windowOpenObservable = new Observable<void>()
+
+    const actionCollection = startActionCollection(
+      lifeCycle,
+      domMutationObservable,
+      windowOpenObservable,
+      mockRumConfiguration(),
+      basePageStateHistory
+    )
+    registerCleanupTask(actionCollection.stop)
+    addAction = actionCollection.addAction
+
+    rawRumEvents = collectAndValidateRawRumEvents(lifeCycle)
   })
 
-  it('should create action from auto action', () => {
-    const { lifeCycle, rawRumEvents } = setupBuilder.build()
-
+  it('should create action from auto action with name source', () => {
+    mockExperimentalFeatures([ExperimentalFeature.ACTION_NAME_MASKING])
     const event = createNewEvent('pointerup', { target: document.createElement('button') })
     lifeCycle.notify(LifeCycleEventType.AUTO_ACTION_COMPLETED, {
       counts: {
@@ -41,6 +45,7 @@ describe('actionCollection', () => {
       duration: 100 as Duration,
       id: 'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee',
       name: 'foo',
+      nameSource: 'text_content',
       startClocks: { relative: 1234 as RelativeTime, timeStamp: 123456789 as TimeStamp },
       type: ActionType.CLICK,
       event,
@@ -87,6 +92,7 @@ describe('actionCollection', () => {
             width: 1,
             height: 2,
           },
+          name_source: 'text_content',
           position: {
             x: 1,
             y: 2,
@@ -100,7 +106,6 @@ describe('actionCollection', () => {
   })
 
   it('should create action from custom action', () => {
-    const { rawRumEvents } = setupBuilder.build()
     addAction({
       name: 'foo',
       startClocks: { relative: 1234 as RelativeTime, timeStamp: 123456789 as TimeStamp },
@@ -125,7 +130,6 @@ describe('actionCollection', () => {
     expect(rawRumEvents[0].domainContext).toEqual({})
   })
   it('should not set the loading time field of the action', () => {
-    const { lifeCycle, rawRumEvents } = setupBuilder.build()
     const event = createNewEvent('pointerup', { target: document.createElement('button') })
     lifeCycle.notify(LifeCycleEventType.AUTO_ACTION_COMPLETED, {
       counts: {
@@ -139,6 +143,7 @@ describe('actionCollection', () => {
       frustrationTypes: [],
       id: 'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee',
       name: 'foo',
+      nameSource: 'text_content',
       startClocks: { relative: 0 as RelativeTime, timeStamp: 0 as TimeStamp },
       type: ActionType.CLICK,
     })
@@ -146,10 +151,6 @@ describe('actionCollection', () => {
   })
 
   it('should create action with handling stack', () => {
-    const { rawRumEvents } = setupBuilder.build()
-
-    mockExperimentalFeatures([ExperimentalFeature.MICRO_FRONTEND])
-
     addAction({
       name: 'foo',
       startClocks: { relative: 1234 as RelativeTime, timeStamp: 123456789 as TimeStamp },

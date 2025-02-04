@@ -1,47 +1,41 @@
-import { type Duration, type RelativeTime, resetExperimentalFeatures } from '@datadog/browser-core'
-import { restorePageVisibility, setPageVisibility } from '@datadog/browser-core/test'
-import type { TestSetupBuilder } from '../../../../test'
-import { appendElement, appendText, createPerformanceEntry, setup } from '../../../../test'
-import { LifeCycleEventType } from '../../lifeCycle'
-import type { RumConfiguration } from '../../configuration'
-import { RumPerformanceEntryType } from '../../../browser/performanceCollection'
+import { type Duration, type RelativeTime } from '@datadog/browser-core'
+import { registerCleanupTask, restorePageVisibility, setPageVisibility } from '@datadog/browser-core/test'
+import {
+  appendElement,
+  appendText,
+  createPerformanceEntry,
+  mockPerformanceObserver,
+  mockRumConfiguration,
+} from '../../../../test'
+import type { RumPerformanceEntry } from '../../../browser/performanceObservable'
+import { RumPerformanceEntryType } from '../../../browser/performanceObservable'
 import type { FirstInput } from './trackFirstInput'
 import { trackFirstInput } from './trackFirstInput'
 import { trackFirstHidden } from './trackFirstHidden'
 
 describe('firstInputTimings', () => {
-  let setupBuilder: TestSetupBuilder
   let fitCallback: jasmine.Spy<(firstInput: FirstInput) => void>
-  let configuration: RumConfiguration
+  let notifyPerformanceEntries: (entries: RumPerformanceEntry[]) => void
 
-  beforeEach(() => {
-    configuration = {} as RumConfiguration
+  function startFirstInputTracking() {
+    ;({ notifyPerformanceEntries } = mockPerformanceObserver())
+
+    const configuration = mockRumConfiguration()
     fitCallback = jasmine.createSpy()
 
-    setupBuilder = setup().beforeBuild(({ lifeCycle }) => {
-      const firstHidden = trackFirstHidden(configuration)
-      const firstInputTimings = trackFirstInput(lifeCycle, configuration, firstHidden, fitCallback)
+    const firstHidden = trackFirstHidden(configuration)
+    const firstInputTimings = trackFirstInput(configuration, firstHidden, fitCallback)
 
-      return {
-        stop() {
-          firstHidden.stop()
-          firstInputTimings.stop()
-        },
-      }
+    registerCleanupTask(() => {
+      firstHidden.stop()
+      firstInputTimings.stop()
+      restorePageVisibility()
     })
-  })
-
-  afterEach(() => {
-    restorePageVisibility()
-    resetExperimentalFeatures()
-  })
+  }
 
   it('should provide the first input timings', () => {
-    const { lifeCycle } = setupBuilder.build()
-
-    lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [
-      createPerformanceEntry(RumPerformanceEntryType.FIRST_INPUT),
-    ])
+    startFirstInputTracking()
+    notifyPerformanceEntries([createPerformanceEntry(RumPerformanceEntryType.FIRST_INPUT)])
 
     expect(fitCallback).toHaveBeenCalledOnceWith({
       delay: 100 as Duration,
@@ -51,9 +45,8 @@ describe('firstInputTimings', () => {
   })
 
   it('should provide the first input target selector', () => {
-    const { lifeCycle } = setupBuilder.build()
-
-    lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [
+    startFirstInputTracking()
+    notifyPerformanceEntries([
       createPerformanceEntry(RumPerformanceEntryType.FIRST_INPUT, {
         target: appendElement('<button id="fid-target-element"></button>'),
       }),
@@ -67,9 +60,8 @@ describe('firstInputTimings', () => {
   })
 
   it("should not provide the first input target if it's not a DOM element", () => {
-    const { lifeCycle } = setupBuilder.build()
-
-    lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [
+    startFirstInputTracking()
+    notifyPerformanceEntries([
       createPerformanceEntry(RumPerformanceEntryType.FIRST_INPUT, {
         target: appendText('text'),
       }),
@@ -84,19 +76,16 @@ describe('firstInputTimings', () => {
 
   it('should be discarded if the page is hidden', () => {
     setPageVisibility('hidden')
-    const { lifeCycle } = setupBuilder.build()
+    startFirstInputTracking()
 
-    lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [
-      createPerformanceEntry(RumPerformanceEntryType.FIRST_INPUT),
-    ])
+    notifyPerformanceEntries([createPerformanceEntry(RumPerformanceEntryType.FIRST_INPUT)])
 
     expect(fitCallback).not.toHaveBeenCalled()
   })
 
   it('should be adjusted to 0 if the computed value would be negative due to browser timings imprecisions', () => {
-    const { lifeCycle } = setupBuilder.build()
-
-    lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [
+    startFirstInputTracking()
+    notifyPerformanceEntries([
       createPerformanceEntry(RumPerformanceEntryType.FIRST_INPUT, {
         processingStart: 900 as RelativeTime,
         startTime: 1000 as RelativeTime,

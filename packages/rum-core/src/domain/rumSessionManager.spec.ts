@@ -2,8 +2,6 @@ import type { RelativeTime } from '@datadog/browser-core'
 import {
   STORAGE_POLL_DELAY,
   SESSION_STORE_KEY,
-  getCookie,
-  isIE,
   setCookie,
   stopSessionManager,
   ONE_SECOND,
@@ -13,9 +11,16 @@ import {
   BridgeCapability,
 } from '@datadog/browser-core'
 import type { Clock } from '@datadog/browser-core/test'
-import { createNewEvent, expireCookie, initEventBridgeStub, mockClock } from '@datadog/browser-core/test'
+import {
+  createNewEvent,
+  expireCookie,
+  getSessionState,
+  mockEventBridge,
+  mockClock,
+  registerCleanupTask,
+} from '@datadog/browser-core/test'
+import { mockRumConfiguration } from '../../test'
 import type { RumConfiguration } from './configuration'
-import { validateAndBuildRumConfiguration } from './configuration'
 
 import { LifeCycle, LifeCycleEventType } from './lifeCycle'
 import {
@@ -34,23 +39,20 @@ describe('rum session manager', () => {
   let clock: Clock
 
   beforeEach(() => {
-    if (isIE()) {
-      pending('no full rum support')
-    }
     clock = mockClock()
     expireSessionSpy = jasmine.createSpy('expireSessionSpy')
     renewSessionSpy = jasmine.createSpy('renewSessionSpy')
     lifeCycle = new LifeCycle()
     lifeCycle.subscribe(LifeCycleEventType.SESSION_EXPIRED, expireSessionSpy)
     lifeCycle.subscribe(LifeCycleEventType.SESSION_RENEWED, renewSessionSpy)
-  })
 
-  afterEach(() => {
-    // remove intervals first
-    stopSessionManager()
-    // flush pending callbacks to avoid random failures
-    clock.tick(new Date().getTime())
-    clock.cleanup()
+    registerCleanupTask(() => {
+      // remove intervals first
+      stopSessionManager()
+      // flush pending callbacks to avoid random failures
+      clock.tick(new Date().getTime())
+      clock.cleanup()
+    })
   })
 
   describe('cookie storage', () => {
@@ -59,10 +61,9 @@ describe('rum session manager', () => {
 
       expect(expireSessionSpy).not.toHaveBeenCalled()
       expect(renewSessionSpy).not.toHaveBeenCalled()
-      expect(getCookie(SESSION_STORE_KEY)).toContain(
-        `${RUM_SESSION_KEY}=${RumTrackingType.TRACKED_WITH_SESSION_REPLAY}`
-      )
-      expect(getCookie(SESSION_STORE_KEY)).toMatch(/id=[a-f0-9-]/)
+
+      expect(getSessionState(SESSION_STORE_KEY).id).toMatch(/[a-f0-9-]/)
+      expect(getSessionState(SESSION_STORE_KEY)[RUM_SESSION_KEY]).toBe(RumTrackingType.TRACKED_WITH_SESSION_REPLAY)
     })
 
     it('when tracked without session replay should store session type and id', () => {
@@ -70,10 +71,8 @@ describe('rum session manager', () => {
 
       expect(expireSessionSpy).not.toHaveBeenCalled()
       expect(renewSessionSpy).not.toHaveBeenCalled()
-      expect(getCookie(SESSION_STORE_KEY)).toContain(
-        `${RUM_SESSION_KEY}=${RumTrackingType.TRACKED_WITHOUT_SESSION_REPLAY}`
-      )
-      expect(getCookie(SESSION_STORE_KEY)).toMatch(/id=[a-f0-9-]/)
+      expect(getSessionState(SESSION_STORE_KEY).id).toMatch(/[a-f0-9-]/)
+      expect(getSessionState(SESSION_STORE_KEY)[RUM_SESSION_KEY]).toBe(RumTrackingType.TRACKED_WITHOUT_SESSION_REPLAY)
     })
 
     it('when not tracked should store session type', () => {
@@ -81,9 +80,9 @@ describe('rum session manager', () => {
 
       expect(expireSessionSpy).not.toHaveBeenCalled()
       expect(renewSessionSpy).not.toHaveBeenCalled()
-      expect(getCookie(SESSION_STORE_KEY)).toContain(`${RUM_SESSION_KEY}=${RumTrackingType.NOT_TRACKED}`)
-      expect(getCookie(SESSION_STORE_KEY)).not.toContain('id=')
-      expect(getCookie(SESSION_STORE_KEY)).not.toContain('isExpired=1')
+      expect(getSessionState(SESSION_STORE_KEY)[RUM_SESSION_KEY]).toBe(RumTrackingType.NOT_TRACKED)
+      expect(getSessionState(SESSION_STORE_KEY).id).not.toBeDefined()
+      expect(getSessionState(SESSION_STORE_KEY).isExpired).not.toBeDefined()
     })
 
     it('when tracked should keep existing session type and id', () => {
@@ -93,10 +92,8 @@ describe('rum session manager', () => {
 
       expect(expireSessionSpy).not.toHaveBeenCalled()
       expect(renewSessionSpy).not.toHaveBeenCalled()
-      expect(getCookie(SESSION_STORE_KEY)).toContain(
-        `${RUM_SESSION_KEY}=${RumTrackingType.TRACKED_WITH_SESSION_REPLAY}`
-      )
-      expect(getCookie(SESSION_STORE_KEY)).toContain('id=abcdef')
+      expect(getSessionState(SESSION_STORE_KEY).id).toBe('abcdef')
+      expect(getSessionState(SESSION_STORE_KEY)[RUM_SESSION_KEY]).toBe(RumTrackingType.TRACKED_WITH_SESSION_REPLAY)
     })
 
     it('when not tracked should keep existing session type', () => {
@@ -106,7 +103,7 @@ describe('rum session manager', () => {
 
       expect(expireSessionSpy).not.toHaveBeenCalled()
       expect(renewSessionSpy).not.toHaveBeenCalled()
-      expect(getCookie(SESSION_STORE_KEY)).toContain(`${RUM_SESSION_KEY}=${RumTrackingType.NOT_TRACKED}`)
+      expect(getSessionState(SESSION_STORE_KEY)[RUM_SESSION_KEY]).toBe(RumTrackingType.NOT_TRACKED)
     })
 
     it('should renew on activity after expiration', () => {
@@ -115,7 +112,7 @@ describe('rum session manager', () => {
       startRumSessionManagerWithDefaults({ configuration: { sessionSampleRate: 100, sessionReplaySampleRate: 100 } })
 
       expireCookie()
-      expect(getCookie(SESSION_STORE_KEY)).toEqual('isExpired=1')
+      expect(getSessionState(SESSION_STORE_KEY).isExpired).toBe('1')
       expect(expireSessionSpy).not.toHaveBeenCalled()
       expect(renewSessionSpy).not.toHaveBeenCalled()
       clock.tick(STORAGE_POLL_DELAY)
@@ -124,10 +121,8 @@ describe('rum session manager', () => {
 
       expect(expireSessionSpy).toHaveBeenCalled()
       expect(renewSessionSpy).toHaveBeenCalled()
-      expect(getCookie(SESSION_STORE_KEY)).toContain(
-        `${RUM_SESSION_KEY}=${RumTrackingType.TRACKED_WITH_SESSION_REPLAY}`
-      )
-      expect(getCookie(SESSION_STORE_KEY)).toMatch(/id=[a-f0-9-]/)
+      expect(getSessionState(SESSION_STORE_KEY)[RUM_SESSION_KEY]).toBe(RumTrackingType.TRACKED_WITH_SESSION_REPLAY)
+      expect(getSessionState(SESSION_STORE_KEY).id).toMatch(/[a-f0-9-]/)
     })
   })
 
@@ -216,14 +211,13 @@ describe('rum session manager', () => {
 
   function startRumSessionManagerWithDefaults({ configuration }: { configuration?: Partial<RumConfiguration> } = {}) {
     return startRumSessionManager(
-      {
-        ...validateAndBuildRumConfiguration({ clientToken: 'xxx', applicationId: 'xxx' })!,
+      mockRumConfiguration({
         sessionSampleRate: 50,
         sessionReplaySampleRate: 50,
         trackResources: true,
         trackLongTasks: true,
         ...configuration,
-      },
+      }),
       lifeCycle,
       createTrackingConsentState(TrackingConsent.GRANTED)
     )
@@ -232,12 +226,12 @@ describe('rum session manager', () => {
 
 describe('rum session manager stub', () => {
   it('should return a tracked session with replay allowed when the event bridge support records', () => {
-    initEventBridgeStub({ capabilities: [BridgeCapability.RECORDS] })
+    mockEventBridge({ capabilities: [BridgeCapability.RECORDS] })
     expect(startRumSessionManagerStub().findTrackedSession()!.sessionReplay).toEqual(SessionReplayState.SAMPLED)
   })
 
   it('should return a tracked session without replay allowed when the event bridge support records', () => {
-    initEventBridgeStub({ capabilities: [] })
+    mockEventBridge({ capabilities: [] })
     expect(startRumSessionManagerStub().findTrackedSession()!.sessionReplay).toEqual(SessionReplayState.OFF)
   })
 })

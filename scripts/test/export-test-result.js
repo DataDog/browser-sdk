@@ -1,6 +1,6 @@
 'use strict'
 
-const { printLog, runMain } = require('../lib/execution-utils')
+const { printLog, runMain } = require('../lib/executionUtils')
 const { command } = require('../lib/command')
 const { getOrg2ApiKey } = require('../lib/secrets')
 
@@ -18,6 +18,7 @@ runMain(() => {
     .withEnvironment({
       DATADOG_API_KEY: getOrg2ApiKey(),
     })
+    .withLogs()
     .run()
 
   printLog(`Export ${testType} tests done.`)

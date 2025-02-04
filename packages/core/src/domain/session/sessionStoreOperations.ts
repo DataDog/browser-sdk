@@ -1,6 +1,5 @@
 import { setTimeout } from '../../tools/timer'
 import { generateUUID } from '../../tools/utils/stringUtils'
-import { assign } from '../../tools/utils/polyfills'
 import type { SessionStoreStrategy } from './storeStrategies/sessionStoreStrategy'
 import type { SessionState } from './sessionState'
 import { expandSessionState, isSessionInExpiredState } from './sessionState'
@@ -21,7 +20,7 @@ export function processSessionStoreOperations(
   numberOfRetries = 0
 ) {
   const { isLockEnabled, persistSession, expireSession } = sessionStoreStrategy
-  const persistWithLock = (session: SessionState) => persistSession(assign({}, session, { lock: currentLock }))
+  const persistWithLock = (session: SessionState) => persistSession({ ...session, lock: currentLock })
   const retrieveStore = () => {
     const session = sessionStoreStrategy.retrieveSession()
     const lock = session.lock
@@ -76,10 +75,14 @@ export function processSessionStoreOperations(
   }
   if (processedSession) {
     if (isSessionInExpiredState(processedSession)) {
-      expireSession()
+      expireSession(processedSession)
     } else {
       expandSessionState(processedSession)
-      isLockEnabled ? persistWithLock(processedSession) : persistSession(processedSession)
+      if (isLockEnabled) {
+        persistWithLock(processedSession)
+      } else {
+        persistSession(processedSession)
+      }
     }
   }
   if (isLockEnabled) {

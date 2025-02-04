@@ -1,4 +1,3 @@
-/* eslint-disable local-rules/disallow-zone-js-patched-values */
 import type { DeflateWorkerAction, DeflateWorkerResponse } from '@datadog/browser-core'
 import { concatBuffers } from '@datadog/browser-core'
 import { Deflate, constants, string2buf } from '../domain/deflate'
@@ -35,7 +34,7 @@ function sendError(workerScope: WorkerScope, error: unknown, streamId?: number) 
       error: error as Error,
       streamId,
     })
-  } catch (_) {
+  } catch {
     // DATA_CLONE_ERR, cf https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API/Structured_clone_algorithm
     workerScope.postMessage({
       type: 'errored',

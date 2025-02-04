@@ -2,7 +2,6 @@ import type { Context, TrackingConsent, User, PublicApi } from '@datadog/browser
 import {
   addTelemetryUsage,
   CustomerDataType,
-  assign,
   createContextManager,
   makePublicApi,
   monitor,
@@ -119,7 +118,7 @@ export interface LogsPublicApi extends PublicApi {
    *
    * See [Access internal context](https://docs.datadoghq.com/logs/log_collection/javascript/#access-internal-context) for further information.
    */
-  getInternalContext: (startTime?: number | undefined) => InternalContext | undefined
+  getInternalContext: (startTime?: number) => InternalContext | undefined
 
   /**
    * Set user information to all events, stored in `@usr`
@@ -259,13 +258,11 @@ export function makeLogsPublicApi(startLogsImpl: StartLogs): LogsPublicApi {
 }
 
 function createPostStartStrategy(initConfiguration: LogsInitConfiguration, startLogsResult: StartLogsResult): Strategy {
-  return assign(
-    {
-      init: (initConfiguration: LogsInitConfiguration) => {
-        displayAlreadyInitializedError('DD_LOGS', initConfiguration)
-      },
-      initConfiguration,
+  return {
+    init: (initConfiguration: LogsInitConfiguration) => {
+      displayAlreadyInitializedError('DD_LOGS', initConfiguration)
     },
-    startLogsResult
-  )
+    initConfiguration,
+    ...startLogsResult,
+  }
 }

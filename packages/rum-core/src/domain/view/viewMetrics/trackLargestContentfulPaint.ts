@@ -1,10 +1,8 @@
 import type { RelativeTime } from '@datadog/browser-core'
 import { DOM_EVENT, ONE_MINUTE, addEventListeners, findLast } from '@datadog/browser-core'
-import { LifeCycleEventType } from '../../lifeCycle'
-import type { LifeCycle } from '../../lifeCycle'
 import type { RumConfiguration } from '../../configuration'
-import { RumPerformanceEntryType } from '../../../browser/performanceCollection'
-import type { RumLargestContentfulPaintTiming } from '../../../browser/performanceCollection'
+import { createPerformanceObservable, RumPerformanceEntryType } from '../../../browser/performanceObservable'
+import type { RumLargestContentfulPaintTiming } from '../../../browser/performanceObservable'
 import { getSelectorFromElement } from '../../getSelectorFromElement'
 import type { FirstHidden } from './trackFirstHidden'
 
@@ -15,6 +13,7 @@ export const LCP_MAXIMUM_DELAY = 10 * ONE_MINUTE
 export interface LargestContentfulPaint {
   value: RelativeTime
   targetSelector?: string
+  resourceUrl?: string
 }
 
 /**
@@ -24,7 +23,6 @@ export interface LargestContentfulPaint {
  * Reference implementation: https://github.com/GoogleChrome/web-vitals/blob/master/src/onLCP.ts
  */
 export function trackLargestContentfulPaint(
-  lifeCycle: LifeCycle,
   configuration: RumConfiguration,
   firstHidden: FirstHidden,
   eventTarget: Window,
@@ -45,40 +43,40 @@ export function trackLargestContentfulPaint(
   )
 
   let biggestLcpSize = 0
-  const { unsubscribe: unsubscribeLifeCycle } = lifeCycle.subscribe(
-    LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED,
-    (entries) => {
-      const lcpEntry = findLast(
-        entries,
-        (entry): entry is RumLargestContentfulPaintTiming =>
-          entry.entryType === RumPerformanceEntryType.LARGEST_CONTENTFUL_PAINT &&
-          entry.startTime < firstInteractionTimestamp &&
-          entry.startTime < firstHidden.timeStamp &&
-          entry.startTime < LCP_MAXIMUM_DELAY &&
-          // Ensure to get the LCP entry with the biggest size, see
-          // https://bugs.chromium.org/p/chromium/issues/detail?id=1516655
-          entry.size > biggestLcpSize
-      )
-
-      if (lcpEntry) {
-        let lcpTargetSelector
-        if (lcpEntry.element) {
-          lcpTargetSelector = getSelectorFromElement(lcpEntry.element, configuration.actionNameAttribute)
-        }
-
-        callback({
-          value: lcpEntry.startTime,
-          targetSelector: lcpTargetSelector,
-        })
-        biggestLcpSize = lcpEntry.size
+  const performanceLcpSubscription = createPerformanceObservable(configuration, {
+    type: RumPerformanceEntryType.LARGEST_CONTENTFUL_PAINT,
+    buffered: true,
+  }).subscribe((entries) => {
+    const lcpEntry = findLast(
+      entries,
+      (entry): entry is RumLargestContentfulPaintTiming =>
+        entry.entryType === RumPerformanceEntryType.LARGEST_CONTENTFUL_PAINT &&
+        entry.startTime < firstInteractionTimestamp &&
+        entry.startTime < firstHidden.timeStamp &&
+        entry.startTime < LCP_MAXIMUM_DELAY &&
+        // Ensure to get the LCP entry with the biggest size, see
+        // https://bugs.chromium.org/p/chromium/issues/detail?id=1516655
+        entry.size > biggestLcpSize
+    )
+    if (lcpEntry) {
+      let lcpTargetSelector
+      if (lcpEntry.element) {
+        lcpTargetSelector = getSelectorFromElement(lcpEntry.element, configuration.actionNameAttribute)
       }
+
+      callback({
+        value: lcpEntry.startTime,
+        targetSelector: lcpTargetSelector,
+        resourceUrl: lcpEntry.url,
+      })
+      biggestLcpSize = lcpEntry.size
     }
-  )
+  })
 
   return {
     stop: () => {
       stopEventListener()
-      unsubscribeLifeCycle()
+      performanceLcpSubscription.unsubscribe()
     },
   }
 }

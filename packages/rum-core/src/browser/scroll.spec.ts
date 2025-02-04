@@ -1,19 +1,15 @@
-import { addEventListener, DOM_EVENT, isIE } from '@datadog/browser-core'
-import type { RumConfiguration } from '../domain/configuration'
+import { addEventListener, DOM_EVENT } from '@datadog/browser-core'
+import { mockRumConfiguration } from '../../test'
 import { getScrollX, getScrollY } from './scroll'
 
 describe('scroll', () => {
   let shouldWaitForWindowScrollEvent: boolean
-  let configuration: RumConfiguration
+  const configuration = mockRumConfiguration()
   const addVerticalScrollBar = () => {
     document.body.style.setProperty('margin-bottom', '5000px')
   }
 
   beforeEach(() => {
-    if (isIE()) {
-      pending('IE not supported')
-    }
-    configuration = {} as RumConfiguration
     shouldWaitForWindowScrollEvent = false
   })
 

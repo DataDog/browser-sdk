@@ -15,17 +15,15 @@ import { objectHasValue } from './utils/objectUtils'
 // eslint-disable-next-line no-restricted-syntax
 export enum ExperimentalFeature {
   WRITABLE_RESOURCE_GRAPHQL = 'writable_resource_graphql',
-  CUSTOM_VITALS = 'custom_vitals',
-  TOLERANT_RESOURCE_TIMINGS = 'tolerant_resource_timings',
-  ENABLE_PRIVACY_FOR_ACTION_NAME = 'enable_privacy_for_action_name',
-  MICRO_FRONTEND = 'micro_frontend',
   REMOTE_CONFIGURATION = 'remote_configuration',
-  PLUGINS = 'plugins',
+  ACTION_NAME_MASKING = 'action_name_masking',
+  CONSISTENT_TRACE_SAMPLING = 'consistent_trace_sampling',
+  MISSING_URL_CONTEXT_TELEMETRY = 'missing_url_context_telemetry',
 }
 
 const enabledExperimentalFeatures: Set<ExperimentalFeature> = new Set()
 
-export function initFeatureFlags(enableExperimentalFeatures?: string[] | undefined) {
+export function initFeatureFlags(enableExperimentalFeatures: string[] | undefined) {
   if (Array.isArray(enableExperimentalFeatures)) {
     addExperimentalFeatures(
       enableExperimentalFeatures.filter((flag): flag is ExperimentalFeature =>

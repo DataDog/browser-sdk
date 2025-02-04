@@ -1,12 +1,12 @@
-import { instrumentSetter, assign, DOM_EVENT, addEventListeners, forEach, noop } from '@datadog/browser-core'
-import { NodePrivacyLevel, getNodePrivacyLevel, shouldMaskNode, cssEscape } from '@datadog/browser-rum-core'
+import { instrumentSetter, DOM_EVENT, addEventListeners, noop } from '@datadog/browser-core'
+import { NodePrivacyLevel, getNodePrivacyLevel, shouldMaskNode } from '@datadog/browser-rum-core'
 import type { RumConfiguration } from '@datadog/browser-rum-core'
 import { IncrementalSource } from '../../../types'
 import type { BrowserIncrementalSnapshotRecord, InputData, InputState } from '../../../types'
 import { getEventTarget } from '../eventsUtils'
 import { getElementInputValue, getSerializedNodeId, hasSerializedNode } from '../serialization'
 import { assembleIncrementalSnapshot } from '../assembly'
-import type { Tracker } from './types'
+import type { Tracker } from './tracker.types'
 
 export type InputCallback = (incrementalSnapshotRecord: BrowserIncrementalSnapshotRecord) => void
 
@@ -94,7 +94,7 @@ export function trackInput(
     // If a radio was checked, other radios with the same name attribute will be unchecked.
     const name = target.name
     if (type === 'radio' && name && (target as HTMLInputElement).checked) {
-      forEach(document.querySelectorAll(`input[type="radio"][name="${cssEscape(name)}"]`), (el: Element) => {
+      document.querySelectorAll(`input[type="radio"][name="${CSS.escape(name)}"]`).forEach((el: Element) => {
         if (el !== target) {
           // TODO: Consider the privacy implications for various differing input privacy levels
           cbWithDedup(el, { isChecked: false })
@@ -118,15 +118,10 @@ export function trackInput(
     ) {
       lastInputStateMap.set(target, inputState)
       inputCb(
-        assembleIncrementalSnapshot<InputData>(
-          IncrementalSource.Input,
-          assign(
-            {
-              id: getSerializedNodeId(target),
-            },
-            inputState
-          )
-        )
+        assembleIncrementalSnapshot<InputData>(IncrementalSource.Input, {
+          id: getSerializedNodeId(target),
+          ...inputState,
+        })
       )
     }
   }

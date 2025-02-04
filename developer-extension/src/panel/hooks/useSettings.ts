@@ -1,9 +1,9 @@
 import { useEffect, useReducer } from 'react'
-import { SESSION_STORAGE_SETTINGS_KEY } from '../../common/constants'
+import { SESSION_STORAGE_SETTINGS_KEY } from '../../common/sessionKeyConstant'
 import { EventListeners } from '../../common/eventListeners'
 import { createLogger } from '../../common/logger'
 import { evalInWindow } from '../evalInWindow'
-import type { Settings } from '../../common/types'
+import type { Settings } from '../../common/extension.types'
 
 const logger = createLogger('useSettings')
 
@@ -57,6 +57,7 @@ export function useSettings() {
   // If we don't have settings yet, it means that we are still loading them from the storage. Throw
   // the promise so it'll be caught by the Suspense boundary.
   if (!settings) {
+    // eslint-disable-next-line @typescript-eslint/only-throw-error
     throw storageLoadingPromise
   }
 

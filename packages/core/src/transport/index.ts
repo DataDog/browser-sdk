@@ -1,11 +1,7 @@
-export { HttpRequest, createHttpRequest, Payload, RetryInfo } from './httpRequest'
-export {
-  canUseEventBridge,
-  bridgeSupports,
-  getEventBridge,
-  BridgeCapability,
-  BrowserWindowWithEventBridge,
-  DatadogEventBridge,
-} from './eventBridge'
+export type { HttpRequest, Payload, RetryInfo } from './httpRequest'
+export { createHttpRequest } from './httpRequest'
+export type { BrowserWindowWithEventBridge, DatadogEventBridge } from './eventBridge'
+export { canUseEventBridge, bridgeSupports, getEventBridge, BridgeCapability } from './eventBridge'
 export { startBatchWithReplica } from './startBatchWithReplica'
-export { createFlushController, FlushController, FlushEvent, FlushReason } from './flushController'
+export type { FlushController, FlushEvent, FlushReason } from './flushController'
+export { createFlushController } from './flushController'

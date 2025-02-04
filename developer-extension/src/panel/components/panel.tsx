@@ -6,8 +6,8 @@ import { useEvents } from '../hooks/useEvents'
 import { useAutoFlushEvents } from '../hooks/useAutoFlushEvents'
 import { useNetworkRules } from '../hooks/useNetworkRules'
 import { useSettings } from '../hooks/useSettings'
-import { DEFAULT_PANEL_TAB, PanelTabs } from '../../common/constants'
-import type { Settings } from '../../common/types'
+import { DEFAULT_PANEL_TAB, PanelTabs } from '../../common/panelTabConstants'
+import type { Settings } from '../../common/extension.types'
 import { useDebugMode } from '../hooks/useDebugMode'
 import { SettingsTab } from './tabs/settingsTab'
 import { InfosTab } from './tabs/infosTab'
@@ -30,7 +30,7 @@ export function Panel() {
   const [activeTab, setActiveTab] = useState<string | null>(DEFAULT_PANEL_TAB)
   function updateActiveTab(activeTab: string | null) {
     setActiveTab(activeTab)
-    activeTab && datadogRum.startView(activeTab)
+    datadogRum.startView(activeTab!)
   }
 
   return (

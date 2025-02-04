@@ -1,6 +1,5 @@
 import type { ErrorWithCause } from '@datadog/browser-core'
-import { ErrorSource, ExperimentalFeature, noop, objectEntries } from '@datadog/browser-core'
-import { mockExperimentalFeatures } from '@datadog/browser-core/test'
+import { ErrorHandling, ErrorSource, noop, objectEntries } from '@datadog/browser-core'
 import type { RawConsoleLogsEvent } from '../../rawLogsEvent.types'
 import { validateAndBuildLogsConfiguration } from '../configuration'
 import type { RawLogsEventCollectedData } from '../lifeCycle'
@@ -52,23 +51,6 @@ describe('console collection', () => {
         error: whatever(),
       })
 
-      expect(rawLogsEvents[0].domainContext).not.toBeDefined()
-
-      expect(consoleSpies[api]).toHaveBeenCalled()
-    })
-  })
-
-  objectEntries(LogStatusForApi).forEach(([api]) => {
-    it(`should add domainContext to logs from console.${api}`, () => {
-      mockExperimentalFeatures([ExperimentalFeature.MICRO_FRONTEND])
-      ;({ stop: stopConsoleCollection } = startConsoleCollection(
-        validateAndBuildLogsConfiguration({ ...initConfiguration, forwardConsoleLogs: 'all' })!,
-        lifeCycle
-      ))
-
-      /* eslint-disable-next-line no-console */
-      console[api as keyof typeof LogStatusForApi]('foo', 'bar')
-
       expect(rawLogsEvents[0].domainContext).toEqual({
         handlingStack: jasmine.any(String),
       })
@@ -90,6 +72,9 @@ describe('console collection', () => {
       stack: undefined,
       fingerprint: undefined,
       causes: undefined,
+      handling: ErrorHandling.HANDLED,
+      kind: undefined,
+      message: undefined,
     })
   })
 
@@ -111,6 +96,9 @@ describe('console collection', () => {
       stack: jasmine.any(String),
       fingerprint: 'my-fingerprint',
       causes: undefined,
+      handling: ErrorHandling.HANDLED,
+      kind: undefined,
+      message: undefined,
     })
   })
 
@@ -136,7 +124,7 @@ describe('console collection', () => {
 
     expect(rawLogsEvents[0].rawLogsEvent.error).toEqual({
       stack: jasmine.any(String),
-      fingerprint: undefined,
+      handling: ErrorHandling.HANDLED,
       causes: [
         {
           source: ErrorSource.CONSOLE,
@@ -151,6 +139,9 @@ describe('console collection', () => {
           message: 'Low level error',
         },
       ],
+      fingerprint: undefined,
+      kind: undefined,
+      message: undefined,
     })
   })
 })

@@ -1,5 +1,5 @@
-import { DOM_EVENT, DefaultPrivacyLevel, isIE } from '@datadog/browser-core'
-import { createNewEvent } from '@datadog/browser-core/test'
+import { DOM_EVENT, DefaultPrivacyLevel } from '@datadog/browser-core'
+import { createNewEvent, registerCleanupTask } from '@datadog/browser-core/test'
 import type { RumConfiguration } from '@datadog/browser-rum-core'
 import { appendElement } from '../../../../../rum-core/test'
 import { IncrementalSource, MouseInteractionType, RecordType } from '../../../types'
@@ -10,7 +10,7 @@ import { initRecordIds } from '../recordIds'
 import type { MouseInteractionCallback } from './trackMouseInteraction'
 import { trackMouseInteraction } from './trackMouseInteraction'
 import { DEFAULT_CONFIGURATION, DEFAULT_SHADOW_ROOT_CONTROLLER } from './trackers.specHelper'
-import type { Tracker } from './types'
+import type { Tracker } from './tracker.types'
 
 describe('trackMouseInteraction', () => {
   let mouseInteractionCallbackSpy: jasmine.Spy<MouseInteractionCallback>
@@ -20,10 +20,6 @@ describe('trackMouseInteraction', () => {
   let configuration: RumConfiguration
 
   beforeEach(() => {
-    if (isIE()) {
-      pending('IE not supported')
-    }
-
     configuration = { defaultPrivacyLevel: DefaultPrivacyLevel.ALLOW } as RumConfiguration
     a = appendElement('<a tabindex="0"></a>') as HTMLAnchorElement // tabindex 0 makes the element focusable
     a.dispatchEvent(createNewEvent(DOM_EVENT.FOCUS))
@@ -37,10 +33,10 @@ describe('trackMouseInteraction', () => {
     mouseInteractionCallbackSpy = jasmine.createSpy()
     recordIds = initRecordIds()
     mouseInteractionTracker = trackMouseInteraction(configuration, mouseInteractionCallbackSpy, recordIds)
-  })
 
-  afterEach(() => {
-    mouseInteractionTracker.stop()
+    registerCleanupTask(() => {
+      mouseInteractionTracker.stop()
+    })
   })
 
   it('should generate click record', () => {
@@ -120,6 +116,10 @@ describe('trackMouseInteraction', () => {
     })
 
     afterEach(() => {
+      if (!window.visualViewport) {
+        return
+      }
+
       delete (window.visualViewport as any).offsetTop
     })
 

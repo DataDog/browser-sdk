@@ -1,12 +1,15 @@
 import { elapsed, noop, ONE_MINUTE } from '@datadog/browser-core'
 import type { Duration, RelativeTime } from '@datadog/browser-core'
-import { RumPerformanceEntryType, supportPerformanceTimingEvent } from '../../../browser/performanceCollection'
-import type { RumFirstInputTiming, RumPerformanceEventTiming } from '../../../browser/performanceCollection'
-import { LifeCycleEventType } from '../../lifeCycle'
-import type { LifeCycle } from '../../lifeCycle'
+import {
+  createPerformanceObservable,
+  RumPerformanceEntryType,
+  supportPerformanceTimingEvent,
+} from '../../../browser/performanceObservable'
+import type { RumFirstInputTiming, RumPerformanceEventTiming } from '../../../browser/performanceObservable'
 import { ViewLoadingType } from '../../../rawRumEvent.types'
 import { getSelectorFromElement } from '../../getSelectorFromElement'
 import { isElementNode } from '../../../browser/htmlDomUtils'
+import { getInteractionSelector } from '../../action/interactionSelectorCache'
 import type { RumConfiguration } from '../../configuration'
 import { getInteractionCount, initInteractionCountPolyfill } from './interactionCountPolyfill'
 
@@ -29,8 +32,7 @@ export interface InteractionToNextPaint {
 export function trackInteractionToNextPaint(
   configuration: RumConfiguration,
   viewStart: RelativeTime,
-  viewLoadingType: ViewLoadingType,
-  lifeCycle: LifeCycle
+  viewLoadingType: ViewLoadingType
 ) {
   if (!isInteractionToNextPaintSupported()) {
     return {
@@ -49,11 +51,9 @@ export function trackInteractionToNextPaint(
   let interactionToNextPaintTargetSelector: string | undefined
   let interactionToNextPaintStartTime: Duration | undefined
 
-  const { unsubscribe: stop } = lifeCycle.subscribe(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, (entries) => {
+  function handleEntries(entries: Array<RumPerformanceEventTiming | RumFirstInputTiming>) {
     for (const entry of entries) {
       if (
-        (entry.entryType === RumPerformanceEntryType.EVENT ||
-          entry.entryType === RumPerformanceEntryType.FIRST_INPUT) &&
         entry.interactionId &&
         // Check the entry start time is inside the view bounds because some view interactions can be reported after the view end (if long duration).
         entry.startTime >= viewStart &&
@@ -67,17 +67,28 @@ export function trackInteractionToNextPaint(
     if (newInteraction && newInteraction.duration !== interactionToNextPaint) {
       interactionToNextPaint = newInteraction.duration
       interactionToNextPaintStartTime = elapsed(viewStart, newInteraction.startTime)
-
-      if (newInteraction.target && isElementNode(newInteraction.target)) {
+      interactionToNextPaintTargetSelector = getInteractionSelector(newInteraction.startTime)
+      if (!interactionToNextPaintTargetSelector && newInteraction.target && isElementNode(newInteraction.target)) {
         interactionToNextPaintTargetSelector = getSelectorFromElement(
           newInteraction.target,
           configuration.actionNameAttribute
         )
-      } else {
-        interactionToNextPaintTargetSelector = undefined
       }
     }
-  })
+  }
+
+  const firstInputSubscription = createPerformanceObservable(configuration, {
+    type: RumPerformanceEntryType.FIRST_INPUT,
+    buffered: true,
+  }).subscribe(handleEntries)
+
+  const eventSubscription = createPerformanceObservable(configuration, {
+    type: RumPerformanceEntryType.EVENT,
+    // durationThreshold only impact PerformanceEventTiming entries used for INP computation which requires a threshold at 40 (default is 104ms)
+    // cf: https://github.com/GoogleChrome/web-vitals/blob/3806160ffbc93c3c4abf210a167b81228172b31c/src/onINP.ts#L202-L210
+    durationThreshold: 40,
+    buffered: true,
+  }).subscribe(handleEntries)
 
   return {
     getInteractionToNextPaint: (): InteractionToNextPaint | undefined => {
@@ -99,7 +110,10 @@ export function trackInteractionToNextPaint(
       viewEnd = viewEndTime
       stopViewInteractionCount()
     },
-    stop,
+    stop: () => {
+      eventSubscription.unsubscribe()
+      firstInputSubscription.unsubscribe()
+    },
   }
 }
 

@@ -1,13 +1,14 @@
-import { isIE, relativeNow, timeStampNow } from '@datadog/browser-core'
 import type { RawRumActionEvent } from '@datadog/browser-rum-core'
-import { ActionType, LifeCycle, LifeCycleEventType, RumEventType, FrustrationType } from '@datadog/browser-rum-core'
+import { ActionType, LifeCycle, LifeCycleEventType } from '@datadog/browser-rum-core'
 import type { RawRumEventCollectedData } from 'packages/rum-core/src/domain/lifeCycle'
+import { registerCleanupTask } from '@datadog/browser-core/test'
+import { createRumFrustrationEvent } from '../../../../test'
 import { RecordType } from '../../../types'
 import type { RecordIds } from '../recordIds'
 import { initRecordIds } from '../recordIds'
 import type { FrustrationCallback } from './trackFrustration'
 import { trackFrustration } from './trackFrustration'
-import type { Tracker } from './types'
+import type { Tracker } from './tracker.types'
 
 describe('trackFrustration', () => {
   const lifeCycle = new LifeCycle()
@@ -18,35 +19,15 @@ describe('trackFrustration', () => {
   let recordIds: RecordIds
 
   beforeEach(() => {
-    if (isIE()) {
-      pending('IE not supported')
-    }
     mouseEvent = new MouseEvent('pointerup')
     frustrationsCallbackSpy = jasmine.createSpy()
     recordIds = initRecordIds()
 
-    rumData = {
-      startTime: relativeNow(),
-      rawRumEvent: {
-        date: timeStampNow(),
-        type: RumEventType.ACTION,
-        action: {
-          id: '123e4567-e89b-12d3-a456-426614174000',
-          type: ActionType.CLICK,
-          frustration: {
-            type: [FrustrationType.DEAD_CLICK],
-          },
-          target: {
-            name: '123e4567-e89b-12d3-a456-426614174000',
-          },
-        },
-      },
-      domainContext: { events: [mouseEvent] },
-    }
-  })
+    rumData = createRumFrustrationEvent(mouseEvent)
 
-  afterEach(() => {
-    frustrationTracker.stop()
+    registerCleanupTask(() => {
+      frustrationTracker.stop()
+    })
   })
 
   it('calls callback if the raw data inserted is a click action', () => {

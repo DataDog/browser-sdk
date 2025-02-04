@@ -3,7 +3,7 @@ import type { IncomingMessage, ServerResponse } from 'http'
 import { createServer } from 'https'
 import type { AddressInfo } from 'net'
 import { pki, md } from 'node-forge'
-import type { RequestStatsForHost } from './types'
+import type { RequestStatsForHost } from './profiling.types'
 
 export interface Proxy {
   origin: string
@@ -12,40 +12,48 @@ export interface Proxy {
   stats: ProxyStats
 }
 
-class ProxyStats {
-  constructor(private statsByHost = new Map<string, { requestsSize: number; requestsCount: number }>()) {}
+interface ProxyStats {
+  addRequest: (request: IncomingMessage, size: number) => void
+  getStatsByHost: () => RequestStatsForHost[]
+  reset: () => void
+}
 
-  addRequest(request: IncomingMessage, size: number) {
+function createProxyStats(): ProxyStats {
+  const statsByHost = new Map<string, { requestsSize: number; requestsCount: number }>()
+
+  function addRequest(request: IncomingMessage, size: number) {
     const url = new URL(request.url!, 'http://foo')
     const intakeUrl = new URL(url.searchParams.get('ddforward')!)
 
-    let hostStats = this.statsByHost.get(intakeUrl.hostname)
+    let hostStats = statsByHost.get(intakeUrl.hostname)
     if (!hostStats) {
       hostStats = { requestsSize: 0, requestsCount: 0 }
-      this.statsByHost.set(intakeUrl.hostname, hostStats)
+      statsByHost.set(intakeUrl.hostname, hostStats)
     }
 
     hostStats.requestsCount += 1
     hostStats.requestsSize += size
   }
 
-  getStatsByHost(): RequestStatsForHost[] {
-    return Array.from(this.statsByHost, ([host, { requestsSize, requestsCount }]) => ({
+  function getStatsByHost(): RequestStatsForHost[] {
+    return Array.from(statsByHost, ([host, { requestsSize, requestsCount }]) => ({
       host,
       requestsSize,
       requestsCount,
     }))
   }
 
-  reset() {
-    this.statsByHost.clear()
+  function reset() {
+    statsByHost.clear()
   }
+
+  return { addRequest, getStatsByHost, reset }
 }
 
 export function startProxy() {
   return new Promise<Proxy>((resolve, reject) => {
     const { key, cert, spkiFingerprint } = createSelfSignedCertificate()
-    const stats = new ProxyStats()
+    const stats = createProxyStats()
     const server = createServer({ key, cert })
     server.on('error', reject)
     server.on('request', (req: IncomingMessage, res: ServerResponse) => {

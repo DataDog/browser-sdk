@@ -1,21 +1,20 @@
 import type { Context, PageExitEvent, RawError, RelativeTime } from '@datadog/browser-core'
 import { AbstractLifeCycle } from '@datadog/browser-core'
-import type { RumPerformanceEntry } from '../browser/performanceCollection'
 import type { RumEventDomainContext } from '../domainContext.types'
 import type { RawRumEvent } from '../rawRumEvent.types'
 import type { RumEvent } from '../rumEvent.types'
 import type { CommonContext } from './contexts/commonContext'
 import type { RequestCompleteEvent, RequestStartEvent } from './requestCollection'
 import type { AutoAction } from './action/actionCollection'
-import type { ViewEvent, ViewCreatedEvent, ViewEndedEvent } from './view/trackViews'
+import type { ViewEvent, ViewCreatedEvent, ViewEndedEvent, BeforeViewUpdateEvent } from './view/trackViews'
 
 export const enum LifeCycleEventType {
-  // Contexts (like viewContexts) should be opened using prefixed BEFORE_XXX events and closed using prefixed AFTER_XXX events
+  // Contexts (like viewHistory) should be opened using prefixed BEFORE_XXX events and closed using prefixed AFTER_XXX events
   // It ensures the context is available during the non prefixed event callbacks
-  PERFORMANCE_ENTRIES_COLLECTED,
   AUTO_ACTION_COMPLETED,
   BEFORE_VIEW_CREATED,
   VIEW_CREATED,
+  BEFORE_VIEW_UPDATED,
   VIEW_UPDATED,
   VIEW_ENDED,
   AFTER_VIEW_ENDED,
@@ -54,10 +53,10 @@ export const enum LifeCycleEventType {
 // * https://github.com/DataDog/browser-sdk/issues/2208
 // * https://github.com/microsoft/TypeScript/issues/54152
 declare const LifeCycleEventTypeAsConst: {
-  PERFORMANCE_ENTRIES_COLLECTED: LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED
   AUTO_ACTION_COMPLETED: LifeCycleEventType.AUTO_ACTION_COMPLETED
   BEFORE_VIEW_CREATED: LifeCycleEventType.BEFORE_VIEW_CREATED
   VIEW_CREATED: LifeCycleEventType.VIEW_CREATED
+  BEFORE_VIEW_UPDATED: LifeCycleEventType.BEFORE_VIEW_UPDATED
   VIEW_UPDATED: LifeCycleEventType.VIEW_UPDATED
   VIEW_ENDED: LifeCycleEventType.VIEW_ENDED
   AFTER_VIEW_ENDED: LifeCycleEventType.AFTER_VIEW_ENDED
@@ -74,10 +73,10 @@ declare const LifeCycleEventTypeAsConst: {
 // Note: this interface needs to be exported even if it is not used outside of this module, else TS
 // fails to build the rum-core package with error TS4058
 export interface LifeCycleEventMap {
-  [LifeCycleEventTypeAsConst.PERFORMANCE_ENTRIES_COLLECTED]: RumPerformanceEntry[]
   [LifeCycleEventTypeAsConst.AUTO_ACTION_COMPLETED]: AutoAction
   [LifeCycleEventTypeAsConst.BEFORE_VIEW_CREATED]: ViewCreatedEvent
   [LifeCycleEventTypeAsConst.VIEW_CREATED]: ViewCreatedEvent
+  [LifeCycleEventTypeAsConst.BEFORE_VIEW_UPDATED]: BeforeViewUpdateEvent
   [LifeCycleEventTypeAsConst.VIEW_UPDATED]: ViewEvent
   [LifeCycleEventTypeAsConst.VIEW_ENDED]: ViewEndedEvent
   [LifeCycleEventTypeAsConst.AFTER_VIEW_ENDED]: ViewEndedEvent

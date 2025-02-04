@@ -6,14 +6,14 @@ import {
   ResourceType,
   toServerDuration,
   relativeToClocks,
-  assign,
-  isNumber,
-  ExperimentalFeature,
-  isExperimentalFeatureEnabled,
+  createTaskQueue,
 } from '@datadog/browser-core'
 import type { RumConfiguration } from '../configuration'
-import type { RumPerformanceResourceTiming } from '../../browser/performanceCollection'
-import { RumPerformanceEntryType } from '../../browser/performanceCollection'
+import {
+  RumPerformanceEntryType,
+  createPerformanceObservable,
+  type RumPerformanceResourceTiming,
+} from '../../browser/performanceObservable'
 import type { RumXhrResourceEventDomainContext, RumFetchResourceEventDomainContext } from '../../domainContext.types'
 import type { RawRumResourceEvent } from '../../rawRumEvent.types'
 import { RumEventType } from '../../rawRumEvent.types'
@@ -22,39 +22,61 @@ import type { RawRumEventCollectedData, LifeCycle } from '../lifeCycle'
 import type { RequestCompleteEvent } from '../requestCollection'
 import type { PageStateHistory } from '../contexts/pageStateHistory'
 import { PageState } from '../contexts/pageStateHistory'
-import { matchRequestTiming } from './matchRequestTiming'
+import { createSpanIdentifier } from '../tracing/identifier'
+import { matchRequestResourceEntry } from './matchRequestResourceEntry'
 import {
-  computePerformanceResourceDetails,
-  computePerformanceResourceDuration,
-  computeResourceKind,
-  computeSize,
-  isRequestKind,
+  computeResourceEntryDetails,
+  computeResourceEntryDuration,
+  computeResourceEntryType,
+  computeResourceEntrySize,
+  computeResourceEntryProtocol,
+  computeResourceEntryDeliveryType,
+  isResourceEntryRequestType,
   isLongDataUrl,
   sanitizeDataUrl,
 } from './resourceUtils'
+import { retrieveInitialDocumentResourceTiming } from './retrieveInitialDocumentResourceTiming'
 
 export function startResourceCollection(
   lifeCycle: LifeCycle,
   configuration: RumConfiguration,
-  pageStateHistory: PageStateHistory
+  pageStateHistory: PageStateHistory,
+  taskQueue = createTaskQueue(),
+  retrieveInitialDocumentResourceTimingImpl = retrieveInitialDocumentResourceTiming
 ) {
   lifeCycle.subscribe(LifeCycleEventType.REQUEST_COMPLETED, (request: RequestCompleteEvent) => {
-    const rawEvent = processRequest(request, configuration, pageStateHistory)
-    if (rawEvent) {
-      lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, rawEvent)
-    }
+    handleResource(() => processRequest(request, configuration, pageStateHistory))
   })
 
-  lifeCycle.subscribe(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, (entries) => {
+  const performanceResourceSubscription = createPerformanceObservable(configuration, {
+    type: RumPerformanceEntryType.RESOURCE,
+    buffered: true,
+  }).subscribe((entries) => {
     for (const entry of entries) {
-      if (entry.entryType === RumPerformanceEntryType.RESOURCE && !isRequestKind(entry)) {
-        const rawEvent = processResourceEntry(entry, configuration)
-        if (rawEvent) {
-          lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, rawEvent)
-        }
+      if (!isResourceEntryRequestType(entry)) {
+        handleResource(() => processResourceEntry(entry, configuration))
       }
     }
   })
+
+  retrieveInitialDocumentResourceTimingImpl(configuration, (timing) => {
+    handleResource(() => processResourceEntry(timing, configuration))
+  })
+
+  function handleResource(computeRawEvent: () => RawRumEventCollectedData<RawRumResourceEvent> | undefined) {
+    taskQueue.push(() => {
+      const rawEvent = computeRawEvent()
+      if (rawEvent) {
+        lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, rawEvent)
+      }
+    })
+  }
+
+  return {
+    stop: () => {
+      performanceResourceSubscription.unsubscribe()
+    },
+  }
 }
 
 function processRequest(
@@ -62,7 +84,7 @@ function processRequest(
   configuration: RumConfiguration,
   pageStateHistory: PageStateHistory
 ): RawRumEventCollectedData<RawRumResourceEvent> | undefined {
-  const matchingTiming = matchRequestTiming(request)
+  const matchingTiming = matchRequestResourceEntry(request)
   const startClocks = matchingTiming ? relativeToClocks(matchingTiming.startTime) : request.startClocks
   const tracingInfo = computeRequestTracingInfo(request, configuration)
   if (!configuration.trackResources && !tracingInfo) {
@@ -71,7 +93,7 @@ function processRequest(
 
   const type = request.type === RequestType.XHR ? ResourceType.XHR : ResourceType.FETCH
 
-  const correspondingTimingOverrides = matchingTiming ? computePerformanceEntryMetrics(matchingTiming) : undefined
+  const correspondingTimingOverrides = matchingTiming ? computeResourceEntryMetrics(matchingTiming) : undefined
 
   const duration = computeRequestDuration(pageStateHistory, startClocks, request.duration)
 
@@ -84,7 +106,9 @@ function processRequest(
         duration,
         method: request.method,
         status_code: request.status,
+        protocol: matchingTiming && computeResourceEntryProtocol(matchingTiming),
         url: isLongDataUrl(request.url) ? sanitizeDataUrl(request.url) : request.url,
+        delivery_type: matchingTiming && computeResourceEntryDeliveryType(matchingTiming),
       },
       type: RumEventType.RESOURCE as const,
       _dd: {
@@ -94,7 +118,8 @@ function processRequest(
     tracingInfo,
     correspondingTimingOverrides
   )
-  const collectedData = {
+
+  return {
     startTime: startClocks.relative,
     rawRumEvent: resourceEvent,
     domainContext: {
@@ -105,14 +130,9 @@ function processRequest(
       requestInit: request.init,
       error: request.error,
       isAborted: request.isAborted,
+      handlingStack: request.handlingStack,
     } as RumFetchResourceEventDomainContext | RumXhrResourceEventDomainContext,
   }
-
-  if (isExperimentalFeatureEnabled(ExperimentalFeature.MICRO_FRONTEND)) {
-    collectedData.domainContext.handlingStack = request.handlingStack
-  }
-
-  return collectedData
 }
 
 function processResourceEntry(
@@ -120,13 +140,13 @@ function processResourceEntry(
   configuration: RumConfiguration
 ): RawRumEventCollectedData<RawRumResourceEvent> | undefined {
   const startClocks = relativeToClocks(entry.startTime)
-  const tracingInfo = computeEntryTracingInfo(entry, configuration)
+  const tracingInfo = computeResourceEntryTracingInfo(entry, configuration)
   if (!configuration.trackResources && !tracingInfo) {
     return
   }
 
-  const type = computeResourceKind(entry)
-  const entryMetrics = computePerformanceEntryMetrics(entry)
+  const type = computeResourceEntryType(entry)
+  const entryMetrics = computeResourceEntryMetrics(entry)
 
   const resourceEvent = combine(
     {
@@ -136,6 +156,8 @@ function processResourceEntry(
         type,
         url: entry.name,
         status_code: discardZeroStatus(entry.responseStatus),
+        protocol: computeResourceEntryProtocol(entry),
+        delivery_type: computeResourceEntryDeliveryType(entry),
       },
       type: RumEventType.RESOURCE as const,
       _dd: {
@@ -154,17 +176,15 @@ function processResourceEntry(
   }
 }
 
-function computePerformanceEntryMetrics(timing: RumPerformanceResourceTiming) {
-  const { renderBlockingStatus } = timing
+function computeResourceEntryMetrics(entry: RumPerformanceResourceTiming) {
+  const { renderBlockingStatus } = entry
   return {
-    resource: assign(
-      {
-        duration: computePerformanceResourceDuration(timing),
-        render_blocking_status: renderBlockingStatus,
-      },
-      computeSize(timing),
-      computePerformanceResourceDetails(timing)
-    ),
+    resource: {
+      duration: computeResourceEntryDuration(entry),
+      render_blocking_status: renderBlockingStatus,
+      ...computeResourceEntrySize(entry),
+      ...computeResourceEntryDetails(entry),
+    },
   }
 }
 
@@ -175,14 +195,14 @@ function computeRequestTracingInfo(request: RequestCompleteEvent, configuration:
   }
   return {
     _dd: {
-      span_id: request.spanId!.toDecimalString(),
-      trace_id: request.traceId!.toDecimalString(),
-      rule_psr: getRulePsr(configuration),
+      span_id: request.spanId!.toString(),
+      trace_id: request.traceId!.toString(),
+      rule_psr: configuration.rulePsr,
     },
   }
 }
 
-function computeEntryTracingInfo(entry: RumPerformanceResourceTiming, configuration: RumConfiguration) {
+function computeResourceEntryTracingInfo(entry: RumPerformanceResourceTiming, configuration: RumConfiguration) {
   const hasBeenTraced = entry.traceId
   if (!hasBeenTraced) {
     return undefined
@@ -190,16 +210,10 @@ function computeEntryTracingInfo(entry: RumPerformanceResourceTiming, configurat
   return {
     _dd: {
       trace_id: entry.traceId,
-      rule_psr: getRulePsr(configuration),
+      span_id: createSpanIdentifier().toString(),
+      rule_psr: configuration.rulePsr,
     },
   }
-}
-
-/**
- * @returns number between 0 and 1 which represents trace sample rate
- */
-function getRulePsr(configuration: RumConfiguration) {
-  return isNumber(configuration.traceSampleRate) ? configuration.traceSampleRate / 100 : undefined
 }
 
 function computeRequestDuration(pageStateHistory: PageStateHistory, startClocks: ClocksState, duration: Duration) {

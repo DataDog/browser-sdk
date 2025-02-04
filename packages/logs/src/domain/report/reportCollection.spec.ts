@@ -1,5 +1,6 @@
-import { ErrorSource, noop } from '@datadog/browser-core'
-import { stubReportingObserver } from '@datadog/browser-core/test'
+import { ErrorHandling, ErrorSource, noop } from '@datadog/browser-core'
+import type { MockReportingObserver } from '@datadog/browser-core/test'
+import { mockReportingObserver } from '@datadog/browser-core/test'
 import type { RawReportLogsEvent } from '../../rawLogsEvent.types'
 import { validateAndBuildLogsConfiguration } from '../configuration'
 import type { RawLogsEventCollectedData } from '../lifeCycle'
@@ -9,7 +10,7 @@ import { startReportCollection } from './reportCollection'
 
 describe('reports', () => {
   const initConfiguration = { clientToken: 'xxx', service: 'service' }
-  let reportingObserverStub: ReturnType<typeof stubReportingObserver>
+  let reportingObserver: MockReportingObserver
   let stopReportCollection: () => void
   let lifeCycle: LifeCycle
   let rawLogsEvents: Array<RawLogsEventCollectedData<RawReportLogsEvent>>
@@ -21,11 +22,10 @@ describe('reports', () => {
     lifeCycle.subscribe(LifeCycleEventType.RAW_LOG_COLLECTED, (rawLogsEvent) =>
       rawLogsEvents.push(rawLogsEvent as RawLogsEventCollectedData<RawReportLogsEvent>)
     )
-    reportingObserverStub = stubReportingObserver()
+    reportingObserver = mockReportingObserver()
   })
 
   afterEach(() => {
-    reportingObserverStub.reset()
     stopReportCollection()
   })
 
@@ -35,11 +35,15 @@ describe('reports', () => {
       lifeCycle
     ))
 
-    reportingObserverStub.raiseReport('intervention')
+    reportingObserver.raiseReport('intervention')
     expect(rawLogsEvents[0].rawLogsEvent).toEqual({
       error: {
         kind: 'NavigatorVibrate',
         stack: jasmine.any(String),
+        handling: ErrorHandling.UNHANDLED,
+        causes: undefined,
+        fingerprint: undefined,
+        message: undefined,
       },
       date: jasmine.any(Number),
       message: 'intervention: foo bar',
@@ -53,7 +57,7 @@ describe('reports', () => {
       validateAndBuildLogsConfiguration({ ...initConfiguration })!,
       lifeCycle
     ))
-    reportingObserverStub.raiseReport('intervention')
+    reportingObserver.raiseReport('intervention')
 
     expect(rawLogsEvents.length).toEqual(0)
   })
@@ -64,7 +68,7 @@ describe('reports', () => {
       lifeCycle
     ))
 
-    reportingObserverStub.raiseReport('deprecation')
+    reportingObserver.raiseReport('deprecation')
 
     expect(rawLogsEvents[0].rawLogsEvent).toEqual({
       date: jasmine.any(Number),

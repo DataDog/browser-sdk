@@ -1,10 +1,6 @@
 import type { InitConfiguration } from '@datadog/browser-core'
-import { DefaultPrivacyLevel, display, ExperimentalFeature, TraceContextInjection } from '@datadog/browser-core'
-import {
-  EXHAUSTIVE_INIT_CONFIGURATION,
-  mockExperimentalFeatures,
-  SERIALIZED_EXHAUSTIVE_INIT_CONFIGURATION,
-} from '@datadog/browser-core/test'
+import { DefaultPrivacyLevel, display, TraceContextInjection } from '@datadog/browser-core'
+import { EXHAUSTIVE_INIT_CONFIGURATION, SERIALIZED_EXHAUSTIVE_INIT_CONFIGURATION } from '@datadog/browser-core/test'
 import type {
   ExtractTelemetryConfiguration,
   CamelToSnakeCase,
@@ -67,8 +63,8 @@ describe('validateAndBuildRumConfiguration', () => {
   })
 
   describe('traceSampleRate', () => {
-    it('defaults to undefined if the option is not provided', () => {
-      expect(validateAndBuildRumConfiguration(DEFAULT_INIT_CONFIGURATION)!.traceSampleRate).toBeUndefined()
+    it('defaults to 100 if the option is not provided', () => {
+      expect(validateAndBuildRumConfiguration(DEFAULT_INIT_CONFIGURATION)!.traceSampleRate).toBe(100)
     })
 
     it('is set to provided value', () => {
@@ -89,21 +85,35 @@ describe('validateAndBuildRumConfiguration', () => {
     })
   })
 
+  describe('rulePsr', () => {
+    it('is set to one hundredth of the traceSampleRate if defined', () => {
+      expect(validateAndBuildRumConfiguration({ ...DEFAULT_INIT_CONFIGURATION, traceSampleRate: 50 })!.rulePsr).toBe(
+        0.5
+      )
+    })
+
+    it('is undefined is no traceSampleRate is defined', () => {
+      expect(validateAndBuildRumConfiguration(DEFAULT_INIT_CONFIGURATION)!.rulePsr).toBeUndefined()
+    })
+  })
+
   describe('traceContextInjection', () => {
-    it('defaults to all if no options provided', () => {
-      expect(validateAndBuildRumConfiguration(DEFAULT_INIT_CONFIGURATION)!.traceContextInjection).toBe('all')
+    it('defaults to sampled if no options provided', () => {
+      expect(validateAndBuildRumConfiguration(DEFAULT_INIT_CONFIGURATION)!.traceContextInjection).toBe(
+        TraceContextInjection.SAMPLED
+      )
     })
     it('is set to provided value', () => {
       expect(
-        validateAndBuildRumConfiguration({ ...DEFAULT_INIT_CONFIGURATION, traceContextInjection: 'sampled' })!
+        validateAndBuildRumConfiguration({ ...DEFAULT_INIT_CONFIGURATION, traceContextInjection: 'all' })!
           .traceContextInjection
-      ).toBe('sampled')
+      ).toBe(TraceContextInjection.ALL)
     })
     it('ignores incorrect value', () => {
       expect(
         validateAndBuildRumConfiguration({ ...DEFAULT_INIT_CONFIGURATION, traceContextInjection: 'foo' as any })!
           .traceContextInjection
-      ).toBe(TraceContextInjection.ALL)
+      ).toBe(TraceContextInjection.SAMPLED)
     })
   })
 
@@ -222,8 +232,8 @@ describe('validateAndBuildRumConfiguration', () => {
   })
 
   describe('trackUserInteractions', () => {
-    it('defaults to false', () => {
-      expect(validateAndBuildRumConfiguration(DEFAULT_INIT_CONFIGURATION)!.trackUserInteractions).toBeFalse()
+    it('defaults to true', () => {
+      expect(validateAndBuildRumConfiguration(DEFAULT_INIT_CONFIGURATION)!.trackUserInteractions).toBeTrue()
     })
 
     it('is set to provided value', () => {
@@ -270,9 +280,17 @@ describe('validateAndBuildRumConfiguration', () => {
   })
 
   describe('startSessionReplayRecordingManually', () => {
-    it('defaults to false', () => {
+    it('defaults to true if sessionReplaySampleRate is 0', () => {
       expect(
-        validateAndBuildRumConfiguration(DEFAULT_INIT_CONFIGURATION)!.startSessionReplayRecordingManually
+        validateAndBuildRumConfiguration({ ...DEFAULT_INIT_CONFIGURATION, sessionReplaySampleRate: 0 })!
+          .startSessionReplayRecordingManually
+      ).toBeTrue()
+    })
+
+    it('defaults to false if sessionReplaySampleRate is not 0', () => {
+      expect(
+        validateAndBuildRumConfiguration({ ...DEFAULT_INIT_CONFIGURATION, sessionReplaySampleRate: 50 })!
+          .startSessionReplayRecordingManually
       ).toBeFalse()
     })
 
@@ -338,15 +356,8 @@ describe('validateAndBuildRumConfiguration', () => {
     it('defaults to false', () => {
       expect(validateAndBuildRumConfiguration(DEFAULT_INIT_CONFIGURATION)!.enablePrivacyForActionName).toBeFalse()
     })
-    it('is false when the feature is not enabled and the option is true', () => {
-      expect(
-        validateAndBuildRumConfiguration({ ...DEFAULT_INIT_CONFIGURATION, enablePrivacyForActionName: true })!
-          .enablePrivacyForActionName
-      ).toBeFalse()
-    })
 
-    it('is only true when the feature is enabled and the option is true', () => {
-      mockExperimentalFeatures([ExperimentalFeature.ENABLE_PRIVACY_FOR_ACTION_NAME])
+    it('is true when the option is true', () => {
       expect(validateAndBuildRumConfiguration(DEFAULT_INIT_CONFIGURATION)!.enablePrivacyForActionName).toBeFalse()
       expect(
         validateAndBuildRumConfiguration({ ...DEFAULT_INIT_CONFIGURATION, enablePrivacyForActionName: true })!
@@ -356,8 +367,8 @@ describe('validateAndBuildRumConfiguration', () => {
   })
 
   describe('trackResources', () => {
-    it('defaults to false', () => {
-      expect(validateAndBuildRumConfiguration(DEFAULT_INIT_CONFIGURATION)!.trackResources).toBeFalse()
+    it('defaults to true', () => {
+      expect(validateAndBuildRumConfiguration(DEFAULT_INIT_CONFIGURATION)!.trackResources).toBeTrue()
     })
 
     it('is set to provided value', () => {
@@ -368,11 +379,18 @@ describe('validateAndBuildRumConfiguration', () => {
         validateAndBuildRumConfiguration({ ...DEFAULT_INIT_CONFIGURATION, trackResources: false })!.trackResources
       ).toBeFalse()
     })
+
+    it('the provided value is cast to boolean', () => {
+      expect(
+        validateAndBuildRumConfiguration({ ...DEFAULT_INIT_CONFIGURATION, trackResources: 'foo' as any })!
+          .trackResources
+      ).toBeTrue()
+    })
   })
 
   describe('trackLongTasks', () => {
     it('defaults to false', () => {
-      expect(validateAndBuildRumConfiguration(DEFAULT_INIT_CONFIGURATION)!.trackLongTasks).toBeFalse()
+      expect(validateAndBuildRumConfiguration(DEFAULT_INIT_CONFIGURATION)!.trackLongTasks).toBeTrue()
     })
 
     it('is set to provided value', () => {
@@ -382,6 +400,13 @@ describe('validateAndBuildRumConfiguration', () => {
       expect(
         validateAndBuildRumConfiguration({ ...DEFAULT_INIT_CONFIGURATION, trackLongTasks: false })!.trackLongTasks
       ).toBeFalse()
+    })
+
+    it('the provided value is cast to boolean', () => {
+      expect(
+        validateAndBuildRumConfiguration({ ...DEFAULT_INIT_CONFIGURATION, trackLongTasks: 'foo' as any })!
+          .trackLongTasks
+      ).toBeTrue()
     })
   })
 
@@ -453,9 +478,7 @@ describe('validateAndBuildRumConfiguration', () => {
   })
 
   describe('plugins', () => {
-    it('with `plugins` enabled: should be set in the configuration', () => {
-      mockExperimentalFeatures([ExperimentalFeature.PLUGINS])
-
+    it('should be set in the configuration', () => {
       const plugin = {
         name: 'foo',
       }
@@ -465,16 +488,27 @@ describe('validateAndBuildRumConfiguration', () => {
       })
       expect(configuration!.plugins).toEqual([plugin])
     })
+  })
+  describe('trackFeatureFlagsForEvents', () => {
+    it('defaults to an empty set', () => {
+      const configuration = validateAndBuildRumConfiguration(DEFAULT_INIT_CONFIGURATION)!
+      expect(configuration.trackFeatureFlagsForEvents).toEqual([])
+    })
 
-    it('without `plugins` enabled: should not be set in the configuration', () => {
-      const plugin = {
-        name: 'foo',
-      }
+    it('should accept valid input', () => {
       const configuration = validateAndBuildRumConfiguration({
         ...DEFAULT_INIT_CONFIGURATION,
-        plugins: [plugin],
-      })
-      expect(configuration!.plugins).toEqual([])
+        trackFeatureFlagsForEvents: ['resource', 'long_task', 'vital'],
+      })!
+      expect(configuration.trackFeatureFlagsForEvents).toEqual(['resource', 'long_task', 'vital'])
+      expect(displayWarnSpy).not.toHaveBeenCalled()
+    })
+    it('does not validate the configuration if an incorrect value is provided', () => {
+      validateAndBuildRumConfiguration({
+        ...DEFAULT_INIT_CONFIGURATION,
+        trackFeatureFlagsForEvents: 123 as any,
+      })!
+      expect(displayWarnSpy).toHaveBeenCalledOnceWith('trackFeatureFlagsForEvents should be an array')
     })
   })
 })
@@ -503,6 +537,7 @@ describe('serializeRumConfiguration', () => {
       trackLongTasks: true,
       remoteConfigurationId: '123',
       plugins: [{ name: 'foo', getConfigurationTelemetry: () => ({ bar: true }) }],
+      trackFeatureFlagsForEvents: ['vital'],
     }
 
     type MapRumInitConfigurationKey<Key extends string> = Key extends keyof InitConfiguration
@@ -514,7 +549,6 @@ describe('serializeRumConfiguration', () => {
           : Key extends 'applicationId' | 'subdomain' | 'remoteConfigurationId'
             ? never
             : CamelToSnakeCase<Key>
-
     // By specifying the type here, we can ensure that serializeConfiguration is returning an
     // object containing all expected properties.
     const serializedConfiguration: ExtractTelemetryConfiguration<
@@ -540,6 +574,7 @@ describe('serializeRumConfiguration', () => {
       use_worker_url: true,
       compress_intake_requests: true,
       plugins: [{ name: 'foo', bar: true }],
+      track_feature_flags_for_events: ['vital'],
     })
   })
 })

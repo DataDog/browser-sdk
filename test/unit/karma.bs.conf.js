@@ -1,10 +1,15 @@
-const { browserConfigurations } = require('../browsers.conf')
 const { getBuildInfos } = require('../envUtils')
+const { browserConfigurations } = require('./browsers.conf')
 const karmaBaseConf = require('./karma.base.conf')
 
 module.exports = function (config) {
   config.set({
     ...karmaBaseConf,
+    exclude: [
+      // Exclude developer-extension from BrowserStack because it is is only compatible with Chrome
+      // so there is no point to test it on other browsers.
+      'developer-extension/**',
+    ],
     plugins: [...karmaBaseConf.plugins, 'karma-browserstack-launcher'],
     reporters: [...karmaBaseConf.reporters, 'BrowserStack'],
     browsers: browserConfigurations.map((configuration) => configuration.sessionName),

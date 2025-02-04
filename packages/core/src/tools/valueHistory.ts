@@ -1,3 +1,4 @@
+import type { Context } from './serialisation/context'
 import { setInterval, clearInterval } from './timer'
 import type { TimeoutId } from './timer'
 import { removeItem } from './utils/arrayUtils'
@@ -17,42 +18,65 @@ export interface ValueHistoryEntry<T> {
 export const CLEAR_OLD_VALUES_INTERVAL = ONE_MINUTE
 
 /**
- * Store and keep track of values spans. This whole class assumes that values are added in
+ * Store and keep track of values spans. This whole cache assumes that values are added in
  * chronological order (i.e. all entries have an increasing start time).
  */
-export class ValueHistory<Value> {
-  private entries: Array<ValueHistoryEntry<Value>> = []
-  private clearOldValuesInterval: TimeoutId
+export interface ValueHistory<Value> {
+  add: (value: Value, startTime: RelativeTime) => ValueHistoryEntry<Value>
+  find: (startTime?: RelativeTime, options?: { returnInactive: boolean }) => Value | undefined
 
-  constructor(
-    private expireDelay: number,
-    private maxEntries?: number
-  ) {
-    this.clearOldValuesInterval = setInterval(() => this.clearOldValues(), CLEAR_OLD_VALUES_INTERVAL)
+  closeActive: (endTime: RelativeTime) => void
+  findAll: (startTime?: RelativeTime, duration?: Duration) => Value[]
+  reset: () => void
+  stop: () => void
+
+  getAllEntries: () => Context[]
+  getDeletedEntries: () => RelativeTime[]
+}
+
+export function createValueHistory<Value>({
+  expireDelay,
+  maxEntries,
+}: {
+  expireDelay: number
+  maxEntries?: number
+}): ValueHistory<Value> {
+  let entries: Array<ValueHistoryEntry<Value>> = []
+  const deletedEntries: RelativeTime[] = []
+  const clearOldValuesInterval: TimeoutId = setInterval(() => clearOldValues(), CLEAR_OLD_VALUES_INTERVAL)
+
+  function clearOldValues() {
+    const oldTimeThreshold = relativeNow() - expireDelay
+    while (entries.length > 0 && entries[entries.length - 1].endTime < oldTimeThreshold) {
+      const entry = entries.pop()
+      if (entry) {
+        deletedEntries.push(entry.startTime)
+      }
+    }
   }
 
   /**
    * Add a value to the history associated with a start time. Returns a reference to this newly
    * added entry that can be removed or closed.
    */
-  add(value: Value, startTime: RelativeTime): ValueHistoryEntry<Value> {
+  function add(value: Value, startTime: RelativeTime): ValueHistoryEntry<Value> {
     const entry: ValueHistoryEntry<Value> = {
       value,
       startTime,
       endTime: END_OF_TIMES,
       remove: () => {
-        removeItem(this.entries, entry)
+        removeItem(entries, entry)
       },
       close: (endTime: RelativeTime) => {
         entry.endTime = endTime
       },
     }
 
-    if (this.maxEntries && this.entries.length >= this.maxEntries) {
-      this.entries.pop()
+    if (maxEntries && entries.length >= maxEntries) {
+      entries.pop()
     }
 
-    this.entries.unshift(entry)
+    entries.unshift(entry)
 
     return entry
   }
@@ -63,11 +87,11 @@ export class ValueHistory<Value> {
    *
    * If `option.returnInactive` is true, returns the value at `startTime` (active or not).
    */
-  find(
+  function find(
     startTime: RelativeTime = END_OF_TIMES,
     options: { returnInactive: boolean } = { returnInactive: false }
   ): Value | undefined {
-    for (const entry of this.entries) {
+    for (const entry of entries) {
       if (entry.startTime <= startTime) {
         if (options.returnInactive || startTime <= entry.endTime) {
           return entry.value
@@ -81,8 +105,8 @@ export class ValueHistory<Value> {
    * Helper function to close the currently active value, if any. This method assumes that entries
    * are not overlapping.
    */
-  closeActive(endTime: RelativeTime) {
-    const latestEntry = this.entries[0]
+  function closeActive(endTime: RelativeTime) {
+    const latestEntry = entries[0]
     if (latestEntry && latestEntry.endTime === END_OF_TIMES) {
       latestEntry.close(endTime)
     }
@@ -93,31 +117,38 @@ export class ValueHistory<Value> {
    * or all values that were active during `startTime` if no duration is provided,
    * or all currently active values if no `startTime` is provided.
    */
-  findAll(startTime: RelativeTime = END_OF_TIMES, duration = 0 as Duration): Value[] {
+  function findAll(startTime: RelativeTime = END_OF_TIMES, duration = 0 as Duration): Value[] {
     const endTime = addDuration(startTime, duration)
-    return this.entries
+    return entries
       .filter((entry) => entry.startTime <= endTime && startTime <= entry.endTime)
       .map((entry) => entry.value)
+  }
+
+  function getAllEntries() {
+    return entries.map(({ startTime, endTime, value }) => ({
+      startTime,
+      endTime: endTime === END_OF_TIMES ? 'Infinity' : endTime,
+      value,
+    })) as Context[]
+  }
+
+  function getDeletedEntries() {
+    return deletedEntries
   }
 
   /**
    * Remove all entries from this collection.
    */
-  reset() {
-    this.entries = []
+  function reset() {
+    entries = []
   }
 
   /**
    * Stop internal garbage collection of past entries.
    */
-  stop() {
-    clearInterval(this.clearOldValuesInterval)
+  function stop() {
+    clearInterval(clearOldValuesInterval)
   }
 
-  private clearOldValues() {
-    const oldTimeThreshold = relativeNow() - this.expireDelay
-    while (this.entries.length > 0 && this.entries[this.entries.length - 1].endTime < oldTimeThreshold) {
-      this.entries.pop()
-    }
-  }
+  return { add, find, closeActive, findAll, reset, stop, getAllEntries, getDeletedEntries }
 }

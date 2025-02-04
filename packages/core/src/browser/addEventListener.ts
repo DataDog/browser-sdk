@@ -1,12 +1,10 @@
 import { monitor } from '../tools/monitor'
 import { getZoneJsOriginalValue } from '../tools/getZoneJsOriginalValue'
-import type { CookieStore, CookieStoreEventMap, VisualViewport, VisualViewportEventMap } from './types'
+import type { CookieStore, CookieStoreEventMap, VisualViewport, VisualViewportEventMap } from './browser.types'
 
 export type TrustableEvent<E extends Event = Event> = E & { __ddIsTrusted?: boolean }
 
-// We want to use a real enum (i.e. not a const enum) here, to be able to iterate over it to automatically add _ddIsTrusted in e2e tests
-// eslint-disable-next-line no-restricted-syntax
-export enum DOM_EVENT {
+export const enum DOM_EVENT {
   BEFORE_UNLOAD = 'beforeunload',
   CLICK = 'click',
   DBL_CLICK = 'dblclick',
@@ -129,11 +127,15 @@ export function addEventListeners<Target extends EventTarget, EventName extends 
 
   const options = passive ? { capture, passive } : capture
 
-  const add = getZoneJsOriginalValue(eventTarget, 'addEventListener')
+  // Use the window.EventTarget.prototype when possible to avoid wrong overrides (e.g: https://github.com/salesforce/lwc/issues/1824)
+  const listenerTarget =
+    window.EventTarget && eventTarget instanceof EventTarget ? window.EventTarget.prototype : eventTarget
+
+  const add = getZoneJsOriginalValue(listenerTarget, 'addEventListener')
   eventNames.forEach((eventName) => add.call(eventTarget, eventName, listenerWithMonitor, options))
 
   function stop() {
-    const remove = getZoneJsOriginalValue(eventTarget, 'removeEventListener')
+    const remove = getZoneJsOriginalValue(listenerTarget, 'removeEventListener')
     eventNames.forEach((eventName) => remove.call(eventTarget, eventName, listenerWithMonitor, options))
   }
 

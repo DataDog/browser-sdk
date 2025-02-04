@@ -1,11 +1,11 @@
 import type { TrackingConsentState } from '@datadog/browser-core'
 import {
-  BoundedBuffer,
-  assign,
+  createBoundedBuffer,
   canUseEventBridge,
   display,
   displayAlreadyInitializedError,
   initFeatureFlags,
+  initFetchObservable,
   noop,
   timeStampNow,
 } from '@datadog/browser-core'
@@ -23,7 +23,7 @@ export function createPreStartStrategy(
   trackingConsentState: TrackingConsentState,
   doStartLogs: (initConfiguration: LogsInitConfiguration, configuration: LogsConfiguration) => StartLogsResult
 ): Strategy {
-  const bufferApiCalls = new BoundedBuffer<StartLogsResult>()
+  const bufferApiCalls = createBoundedBuffer<StartLogsResult>()
   let cachedInitConfiguration: LogsInitConfiguration | undefined
   let cachedConfiguration: LogsConfiguration | undefined
   const trackingConsentStateSubscription = trackingConsentState.observable.subscribe(tryStartLogs)
@@ -66,6 +66,12 @@ export function createPreStartStrategy(
       }
 
       cachedConfiguration = configuration
+      // Instrumuent fetch to track network requests
+      // This is needed in case the consent is not granted and some cutsomer
+      // library (Apollo Client) is storing uninstrumented fetch to be used later
+      // The subscrption is needed so that the instrumentation process is completed
+      initFetchObservable().subscribe(noop)
+
       trackingConsentState.tryToInit(configuration.trackingConsent)
       tryStartLogs()
     },
@@ -85,5 +91,5 @@ export function createPreStartStrategy(
 }
 
 function overrideInitConfigurationForBridge(initConfiguration: LogsInitConfiguration): LogsInitConfiguration {
-  return assign({}, initConfiguration, { clientToken: 'empty' })
+  return { ...initConfiguration, clientToken: 'empty' }
 }

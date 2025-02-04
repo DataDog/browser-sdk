@@ -20,6 +20,7 @@ export interface CommonViewMetrics {
 export function trackCommonViewMetrics(
   lifeCycle: LifeCycle,
   domMutationObservable: Observable<void>,
+  windowOpenObservable: Observable<void>,
   configuration: RumConfiguration,
   scheduleViewUpdate: () => void,
   loadingType: ViewLoadingType,
@@ -30,6 +31,7 @@ export function trackCommonViewMetrics(
   const { stop: stopLoadingTimeTracking, setLoadEvent } = trackLoadingTime(
     lifeCycle,
     domMutationObservable,
+    windowOpenObservable,
     configuration,
     loadingType,
     viewStart,
@@ -45,7 +47,6 @@ export function trackCommonViewMetrics(
 
   const { stop: stopCLSTracking } = trackCumulativeLayoutShift(
     configuration,
-    lifeCycle,
     viewStart.relative,
     (cumulativeLayoutShift) => {
       commonViewMetrics.cumulativeLayoutShift = cumulativeLayoutShift
@@ -57,7 +58,7 @@ export function trackCommonViewMetrics(
     stop: stopINPTracking,
     getInteractionToNextPaint,
     setViewEnd,
-  } = trackInteractionToNextPaint(configuration, viewStart.relative, loadingType, lifeCycle)
+  } = trackInteractionToNextPaint(configuration, viewStart.relative, loadingType)
 
   return {
     stop: () => {

@@ -1,97 +1,108 @@
 import type { RelativeTime } from '@datadog/browser-core'
-import { DOM_EVENT, resetExperimentalFeatures } from '@datadog/browser-core'
-import { restorePageVisibility, setPageVisibility, createNewEvent } from '@datadog/browser-core/test'
-import { RumPerformanceEntryType } from '../../../browser/performanceCollection'
-import type { TestSetupBuilder } from '../../../../test'
-import { appendElement, createPerformanceEntry, setup } from '../../../../test'
-import { LifeCycleEventType } from '../../lifeCycle'
-import type { RumConfiguration } from '../../configuration'
+import { DOM_EVENT } from '@datadog/browser-core'
+import {
+  setPageVisibility,
+  createNewEvent,
+  restorePageVisibility,
+  registerCleanupTask,
+} from '@datadog/browser-core/test'
+import type { RumPerformanceEntry } from '../../../browser/performanceObservable'
+import { RumPerformanceEntryType } from '../../../browser/performanceObservable'
+import { appendElement, createPerformanceEntry, mockPerformanceObserver, mockRumConfiguration } from '../../../../test'
 import type { LargestContentfulPaint } from './trackLargestContentfulPaint'
 import { LCP_MAXIMUM_DELAY, trackLargestContentfulPaint } from './trackLargestContentfulPaint'
 import { trackFirstHidden } from './trackFirstHidden'
 
 describe('trackLargestContentfulPaint', () => {
-  let setupBuilder: TestSetupBuilder
   let lcpCallback: jasmine.Spy<(lcp: LargestContentfulPaint) => void>
   let eventTarget: Window
-  let configuration: RumConfiguration
+  let notifyPerformanceEntries: (entries: RumPerformanceEntry[]) => void
+
+  function startLCPTracking() {
+    ;({ notifyPerformanceEntries } = mockPerformanceObserver())
+
+    const firstHidden = trackFirstHidden(mockRumConfiguration())
+    const largestContentfulPaint = trackLargestContentfulPaint(
+      mockRumConfiguration(),
+      firstHidden,
+      eventTarget,
+      lcpCallback
+    )
+
+    registerCleanupTask(() => {
+      firstHidden.stop()
+      largestContentfulPaint.stop()
+      restorePageVisibility()
+    })
+  }
 
   beforeEach(() => {
-    configuration = {} as RumConfiguration
     lcpCallback = jasmine.createSpy()
     eventTarget = document.createElement('div') as unknown as Window
-    setupBuilder = setup().beforeBuild(({ lifeCycle }) => {
-      const firstHidden = trackFirstHidden(configuration)
-      const largestContentfulPaint = trackLargestContentfulPaint(
-        lifeCycle,
-        configuration,
-        firstHidden,
-        eventTarget,
-        lcpCallback
-      )
-      return {
-        stop() {
-          firstHidden.stop()
-          largestContentfulPaint.stop()
-        },
-      }
-    })
-  })
-
-  afterEach(() => {
-    restorePageVisibility()
-    resetExperimentalFeatures()
   })
 
   it('should provide the largest contentful paint timing', () => {
-    const { lifeCycle } = setupBuilder.build()
+    startLCPTracking()
+    notifyPerformanceEntries([createPerformanceEntry(RumPerformanceEntryType.LARGEST_CONTENTFUL_PAINT)])
 
-    lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [
-      createPerformanceEntry(RumPerformanceEntryType.LARGEST_CONTENTFUL_PAINT),
-    ])
-
-    expect(lcpCallback).toHaveBeenCalledOnceWith({ value: 789 as RelativeTime, targetSelector: undefined })
+    expect(lcpCallback).toHaveBeenCalledOnceWith({
+      value: 789 as RelativeTime,
+      targetSelector: undefined,
+      resourceUrl: undefined,
+    })
   })
 
   it('should provide the largest contentful paint target selector', () => {
-    const { lifeCycle } = setupBuilder.build()
-
-    lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [
+    startLCPTracking()
+    notifyPerformanceEntries([
       createPerformanceEntry(RumPerformanceEntryType.LARGEST_CONTENTFUL_PAINT, {
         element: appendElement('<button id="lcp-target-element"></button>'),
       }),
     ])
 
-    expect(lcpCallback).toHaveBeenCalledOnceWith({ value: 789 as RelativeTime, targetSelector: '#lcp-target-element' })
+    expect(lcpCallback).toHaveBeenCalledOnceWith({
+      value: 789 as RelativeTime,
+      targetSelector: '#lcp-target-element',
+      resourceUrl: undefined,
+    })
+  })
+
+  it('should provide the largest contentful paint target url', () => {
+    startLCPTracking()
+    notifyPerformanceEntries([
+      createPerformanceEntry(RumPerformanceEntryType.LARGEST_CONTENTFUL_PAINT, {
+        url: 'https://example.com/lcp-resource',
+      }),
+    ])
+
+    expect(lcpCallback).toHaveBeenCalledOnceWith({
+      value: 789 as RelativeTime,
+      targetSelector: undefined,
+      resourceUrl: 'https://example.com/lcp-resource',
+    })
   })
 
   it('should be discarded if it is reported after a user interaction', () => {
-    const { lifeCycle } = setupBuilder.build()
-
+    startLCPTracking()
     eventTarget.dispatchEvent(createNewEvent(DOM_EVENT.KEY_DOWN, { timeStamp: 1 }))
 
-    lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [
-      createPerformanceEntry(RumPerformanceEntryType.LARGEST_CONTENTFUL_PAINT),
-    ])
+    notifyPerformanceEntries([createPerformanceEntry(RumPerformanceEntryType.LARGEST_CONTENTFUL_PAINT)])
 
     expect(lcpCallback).not.toHaveBeenCalled()
   })
 
   it('should be discarded if the page is hidden', () => {
     setPageVisibility('hidden')
-    const { lifeCycle } = setupBuilder.build()
+    startLCPTracking()
 
-    lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [
-      createPerformanceEntry(RumPerformanceEntryType.LARGEST_CONTENTFUL_PAINT),
-    ])
+    notifyPerformanceEntries([createPerformanceEntry(RumPerformanceEntryType.LARGEST_CONTENTFUL_PAINT)])
 
     expect(lcpCallback).not.toHaveBeenCalled()
   })
 
   it('should be discarded if it is reported after a long time', () => {
-    const { lifeCycle } = setupBuilder.build()
-
-    lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [
+    startLCPTracking()
+    notifyPerformanceEntries([
       createPerformanceEntry(RumPerformanceEntryType.LARGEST_CONTENTFUL_PAINT, {
         startTime: LCP_MAXIMUM_DELAY as RelativeTime,
       }),
@@ -101,15 +112,15 @@ describe('trackLargestContentfulPaint', () => {
   })
 
   it('should be discarded if it has a size inferior to the previous LCP entry', () => {
-    const { lifeCycle } = setupBuilder.build()
-    lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [
+    startLCPTracking()
+    notifyPerformanceEntries([
       createPerformanceEntry(RumPerformanceEntryType.LARGEST_CONTENTFUL_PAINT, {
         startTime: 1 as RelativeTime,
         size: 10,
       }),
     ])
 
-    lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [
+    notifyPerformanceEntries([
       createPerformanceEntry(RumPerformanceEntryType.LARGEST_CONTENTFUL_PAINT, {
         startTime: 2 as RelativeTime,
         size: 5,
@@ -120,15 +131,15 @@ describe('trackLargestContentfulPaint', () => {
   })
 
   it('should notify multiple times when the size is bigger than the previous entry', () => {
-    const { lifeCycle } = setupBuilder.build()
-    lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [
+    startLCPTracking()
+    notifyPerformanceEntries([
       createPerformanceEntry(RumPerformanceEntryType.LARGEST_CONTENTFUL_PAINT, {
         startTime: 1 as RelativeTime,
         size: 5,
       }),
     ])
 
-    lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [
+    notifyPerformanceEntries([
       createPerformanceEntry(RumPerformanceEntryType.LARGEST_CONTENTFUL_PAINT, {
         startTime: 2 as RelativeTime,
         size: 10,

@@ -1,6 +1,6 @@
-import { collectAsyncCalls, stubEndpointBuilder, interceptRequests } from '../../test'
+import { collectAsyncCalls, mockEndpointBuilder, interceptRequests, createNewEvent } from '../../test'
 import type { Request } from '../../test'
-import type { EndpointBuilder, Configuration } from '../domain/configuration'
+import type { EndpointBuilder } from '../domain/configuration'
 import { createEndpointBuilder } from '../domain/configuration'
 import { noop } from '../tools/utils/functionUtils'
 import { createHttpRequest, fetchKeepAliveStrategy, sendXHR } from './httpRequest'
@@ -13,18 +13,12 @@ describe('httpRequest', () => {
   let requests: Request[]
   let endpointBuilder: EndpointBuilder
   let request: HttpRequest
-  let configuration: Configuration
 
   beforeEach(() => {
-    configuration = {} as Configuration
     interceptor = interceptRequests()
     requests = interceptor.requests
-    endpointBuilder = stubEndpointBuilder(ENDPOINT_URL)
-    request = createHttpRequest(configuration, endpointBuilder, BATCH_BYTES_LIMIT, noop)
-  })
-
-  afterEach(() => {
-    interceptor.restore()
+    endpointBuilder = mockEndpointBuilder(ENDPOINT_URL)
+    request = createHttpRequest(endpointBuilder, BATCH_BYTES_LIMIT, noop)
   })
 
   describe('send', () => {
@@ -63,7 +57,7 @@ describe('httpRequest', () => {
       }
       let notQueuedFetch: Promise<never>
       interceptor.withFetch(() => {
-        notQueuedFetch = Promise.reject()
+        notQueuedFetch = Promise.reject(new Error())
         return notQueuedFetch
       })
 
@@ -76,7 +70,7 @@ describe('httpRequest', () => {
       })
     })
 
-    it('should use retry strategy', (done) => {
+    it('should use retry strategy', async () => {
       if (!interceptor.isFetchKeepAliveSupported()) {
         pending('no fetch keepalive support')
       }
@@ -96,7 +90,7 @@ describe('httpRequest', () => {
 
       request.send({ data: '{"foo":"bar1"}\n{"foo":"bar2"}', bytesCount: 10 })
 
-      collectAsyncCalls(fetchSpy, 2, () => done())
+      await collectAsyncCalls(fetchSpy, 2)
     })
   })
 
@@ -109,7 +103,6 @@ describe('httpRequest', () => {
       interceptor.withFetch(() => Promise.resolve({ status: 429, type: 'cors' }))
 
       fetchKeepAliveStrategy(
-        configuration,
         endpointBuilder,
         BATCH_BYTES_LIMIT,
         { data: '{"foo":"bar1"}\n{"foo":"bar2"}', bytesCount: 10 },
@@ -125,15 +118,14 @@ describe('httpRequest', () => {
         pending('no fetch keepalive support')
       }
 
-      interceptor.withFetch(() => Promise.reject())
-      interceptor.withStubXhr((xhr) => {
+      interceptor.withFetch(() => Promise.reject(new Error()))
+      interceptor.withMockXhr((xhr) => {
         setTimeout(() => {
           xhr.complete(429)
         })
       })
 
       fetchKeepAliveStrategy(
-        configuration,
         endpointBuilder,
         BATCH_BYTES_LIMIT,
         { data: '{"foo":"bar1"}\n{"foo":"bar2"}', bytesCount: 10 },
@@ -145,14 +137,13 @@ describe('httpRequest', () => {
     })
 
     it('should be called with intake response when fallback to xhr due to size', (done) => {
-      interceptor.withStubXhr((xhr) => {
+      interceptor.withMockXhr((xhr) => {
         setTimeout(() => {
           xhr.complete(429)
         })
       })
 
       fetchKeepAliveStrategy(
-        configuration,
         endpointBuilder,
         BATCH_BYTES_LIMIT,
         { data: '{"foo":"bar1"}\n{"foo":"bar2"}', bytesCount: BATCH_BYTES_LIMIT },
@@ -169,7 +160,7 @@ describe('httpRequest', () => {
       const onResponseSpy = jasmine.createSpy('xhrOnResponse')
       let count = 0
 
-      interceptor.withStubXhr((xhr) => {
+      interceptor.withMockXhr((xhr) => {
         count++
         setTimeout(() => {
           xhr.complete(count === 1 ? 200 : 202)
@@ -181,13 +172,30 @@ describe('httpRequest', () => {
         })
       })
 
-      sendXHR(configuration, 'foo', '', onResponseSpy)
+      sendXHR('foo', '', onResponseSpy)
 
       setTimeout(() => {
         expect(onResponseSpy).toHaveBeenCalledTimes(1)
         expect(onResponseSpy).toHaveBeenCalledWith({
           status: 200,
         })
+        done()
+      }, 100)
+    })
+
+    it('should handle synthetic events', (done) => {
+      const onResponseSpy = jasmine.createSpy('xhrOnResponse')
+
+      interceptor.withMockXhr((xhr) => {
+        const syntheticEvent = createNewEvent('loadend', { __ddIsTrusted: false })
+
+        setTimeout(() => xhr.dispatchEvent(syntheticEvent))
+      })
+
+      sendXHR('foo', '', onResponseSpy)
+
+      setTimeout(() => {
+        expect(onResponseSpy).toHaveBeenCalledTimes(1)
         done()
       }, 100)
     })
@@ -261,18 +269,12 @@ describe('httpRequest intake parameters', () => {
   let requests: Request[]
   let endpointBuilder: EndpointBuilder
   let request: HttpRequest
-  let configuration: Configuration
 
   beforeEach(() => {
-    configuration = {} as Configuration
     interceptor = interceptRequests()
     requests = interceptor.requests
     endpointBuilder = createEndpointBuilder({ clientToken }, 'logs', [])
-    request = createHttpRequest(configuration, endpointBuilder, BATCH_BYTES_LIMIT, noop)
-  })
-
-  afterEach(() => {
-    interceptor.restore()
+    request = createHttpRequest(endpointBuilder, BATCH_BYTES_LIMIT, noop)
   })
 
   it('should have a unique request id', () => {

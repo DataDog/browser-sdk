@@ -7,7 +7,7 @@ import type { CustomerDataTracker } from './customerDataTracker'
 
 export type ContextManager = ReturnType<typeof createContextManager>
 
-export function createContextManager(customerDataTracker: CustomerDataTracker) {
+export function createContextManager(customerDataTracker?: CustomerDataTracker) {
   let context: Context = {}
   const changeObservable = new Observable<void>()
 
@@ -17,7 +17,7 @@ export function createContextManager(customerDataTracker: CustomerDataTracker) {
     setContext: (newContext: Context) => {
       if (getType(newContext) === 'object') {
         context = sanitize(newContext)
-        customerDataTracker.updateCustomerData(context)
+        customerDataTracker?.updateCustomerData(context)
       } else {
         contextManager.clearContext()
       }
@@ -26,19 +26,19 @@ export function createContextManager(customerDataTracker: CustomerDataTracker) {
 
     setContextProperty: (key: string, property: any) => {
       context[key] = sanitize(property)
-      customerDataTracker.updateCustomerData(context)
+      customerDataTracker?.updateCustomerData(context)
       changeObservable.notify()
     },
 
     removeContextProperty: (key: string) => {
       delete context[key]
-      customerDataTracker.updateCustomerData(context)
+      customerDataTracker?.updateCustomerData(context)
       changeObservable.notify()
     },
 
     clearContext: () => {
       context = {}
-      customerDataTracker.resetCustomerData()
+      customerDataTracker?.resetCustomerData()
       changeObservable.notify()
     },
 

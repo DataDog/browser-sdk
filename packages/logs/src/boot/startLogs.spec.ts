@@ -16,9 +16,8 @@ import {
 import type { Clock, Request } from '@datadog/browser-core/test'
 import {
   interceptRequests,
-  stubEndpointBuilder,
-  initEventBridgeStub,
-  cleanupSyntheticsWorkerValues,
+  mockEndpointBuilder,
+  mockEventBridge,
   mockSyntheticsWorkerValues,
   registerCleanupTask,
   mockClock,
@@ -69,7 +68,7 @@ describe('logs', () => {
   beforeEach(() => {
     baseConfiguration = {
       ...validateAndBuildLogsConfiguration(initConfiguration)!,
-      logsEndpointBuilder: stubEndpointBuilder('https://localhost/v1/input/log'),
+      logsEndpointBuilder: mockEndpointBuilder('https://localhost/v1/input/log'),
       batchMessagesLimit: 1,
     }
     logger = new Logger((...params) => handleLog(...params), createCustomerDataTracker(noop))
@@ -82,7 +81,6 @@ describe('logs', () => {
   afterEach(() => {
     delete window.DD_RUM
     stopSessionManager()
-    interceptor.restore()
   })
 
   describe('request', () => {
@@ -110,12 +108,18 @@ describe('logs', () => {
         message: 'message',
         service: 'service',
         session_id: jasmine.any(String),
+        session: {
+          id: jasmine.any(String),
+        },
         status: StatusType.warn,
         view: {
           referrer: 'common_referrer',
           url: 'common_url',
         },
         origin: ErrorSource.LOGGER,
+        usr: {
+          anonymous_id: jasmine.any(String),
+        },
       })
     })
 
@@ -136,7 +140,7 @@ describe('logs', () => {
     })
 
     it('should send bridge event when bridge is present', () => {
-      const sendSpy = spyOn(initEventBridgeStub(), 'send')
+      const sendSpy = spyOn(mockEventBridge(), 'send')
       ;({ handleLog, stop: stopLogs } = startLogs(
         initConfiguration,
         baseConfiguration,
@@ -159,7 +163,7 @@ describe('logs', () => {
 
   describe('sampling', () => {
     it('should be applied when event bridge is present', () => {
-      const sendSpy = spyOn(initEventBridgeStub(), 'send')
+      const sendSpy = spyOn(mockEventBridge(), 'send')
 
       let configuration = { ...baseConfiguration, sessionSampleRate: 0 }
       ;({ handleLog, stop: stopLogs } = startLogs(
@@ -205,10 +209,6 @@ describe('logs', () => {
   })
 
   describe('logs session creation', () => {
-    afterEach(() => {
-      cleanupSyntheticsWorkerValues()
-    })
-
     it('creates a session on normal conditions', () => {
       ;({ handleLog, stop: stopLogs } = startLogs(
         initConfiguration,
@@ -222,7 +222,7 @@ describe('logs', () => {
     })
 
     it('does not create a session if event bridge is present', () => {
-      initEventBridgeStub()
+      mockEventBridge()
       ;({ handleLog, stop: stopLogs } = startLogs(
         initConfiguration,
         baseConfiguration,
@@ -261,7 +261,7 @@ describe('logs', () => {
       setCookie(SESSION_STORE_KEY, 'id=foo&logs=1', ONE_MINUTE)
       ;({ handleLog, stop: stopLogs } = startLogs(
         initConfiguration,
-        { ...baseConfiguration, sendLogsAfterSessionExpiration: true },
+        baseConfiguration,
         () => COMMON_CONTEXT,
         createTrackingConsentState(TrackingConsent.GRANTED)
       ))
@@ -283,30 +283,6 @@ describe('logs', () => {
 
       expect(secondRequest.message).toEqual('message 2')
       expect(secondRequest.session_id).toBeUndefined()
-    })
-
-    it('does not send logs with session id when session is expired and sendLogsAfterSessionExpiration is false', () => {
-      setCookie(SESSION_STORE_KEY, 'id=foo&logs=1', ONE_MINUTE)
-      ;({ handleLog, stop: stopLogs } = startLogs(
-        initConfiguration,
-        baseConfiguration,
-        () => COMMON_CONTEXT,
-        createTrackingConsentState(TrackingConsent.GRANTED)
-      ))
-      registerCleanupTask(stopLogs)
-
-      handleLog({ status: StatusType.info, message: 'message 1' }, logger)
-
-      expireCookie()
-      clock.tick(STORAGE_POLL_DELAY * 2)
-
-      handleLog({ status: StatusType.info, message: 'message 2' }, logger)
-
-      const firstRequest = getLoggedMessage(requests, 0)
-
-      expect(requests.length).toEqual(1)
-      expect(firstRequest.message).toEqual('message 1')
-      expect(firstRequest.session_id).toEqual('foo')
     })
   })
 })

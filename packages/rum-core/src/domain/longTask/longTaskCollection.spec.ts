@@ -1,69 +1,69 @@
 import type { RelativeTime, ServerDuration } from '@datadog/browser-core'
-import type { RumSessionManagerMock, TestSetupBuilder } from '../../../test'
-import { createPerformanceEntry, createRumSessionManagerMock, setup } from '../../../test'
-import { RumPerformanceEntryType, type RumPerformanceEntry } from '../../browser/performanceCollection'
-import { RumEventType } from '../../rawRumEvent.types'
-import { LifeCycleEventType } from '../lifeCycle'
+import {
+  collectAndValidateRawRumEvents,
+  createPerformanceEntry,
+  mockPerformanceObserver,
+  mockRumConfiguration,
+} from '../../../test'
+import type { RumPerformanceEntry } from '../../browser/performanceObservable'
+import { RumPerformanceEntryType } from '../../browser/performanceObservable'
+import type { RawRumEvent } from '../../rawRumEvent.types'
+import { RumEventType, RumLongTaskEntryType } from '../../rawRumEvent.types'
+import type { RawRumEventCollectedData } from '../lifeCycle'
+import { LifeCycle } from '../lifeCycle'
 import { startLongTaskCollection } from './longTaskCollection'
 
 describe('long task collection', () => {
-  let setupBuilder: TestSetupBuilder
-  let sessionManager: RumSessionManagerMock
-  let trackLongTasks: boolean
+  let lifeCycle = new LifeCycle()
+  let rawRumEvents: Array<RawRumEventCollectedData<RawRumEvent>> = []
+  let notifyPerformanceEntries: (entries: RumPerformanceEntry[]) => void
 
-  beforeEach(() => {
-    trackLongTasks = true
-    sessionManager = createRumSessionManagerMock()
-    setupBuilder = setup()
-      .withSessionManager(sessionManager)
-      .beforeBuild(({ lifeCycle, configuration }) => {
-        startLongTaskCollection(lifeCycle, { ...configuration, trackLongTasks })
-      })
-  })
+  function setupLongTaskCollection(trackLongTasks = true) {
+    ;({ notifyPerformanceEntries } = mockPerformanceObserver())
+
+    lifeCycle = new LifeCycle()
+    startLongTaskCollection(lifeCycle, mockRumConfiguration({ trackLongTasks }))
+
+    rawRumEvents = collectAndValidateRawRumEvents(lifeCycle)
+  }
 
   it('should only listen to long task performance entry', () => {
-    const { lifeCycle, rawRumEvents } = setupBuilder.build()
-    lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [
-      createPerformanceEntry(RumPerformanceEntryType.LONG_TASK),
+    setupLongTaskCollection()
+
+    notifyPerformanceEntries([
       createPerformanceEntry(RumPerformanceEntryType.NAVIGATION),
-      createPerformanceEntry(RumPerformanceEntryType.RESOURCE),
+      createPerformanceEntry(RumPerformanceEntryType.LONG_TASK),
       createPerformanceEntry(RumPerformanceEntryType.PAINT),
-    ] as RumPerformanceEntry[])
+    ])
 
     expect(rawRumEvents.length).toBe(1)
   })
 
   it('should collect when trackLongTasks=true', () => {
-    trackLongTasks = true
-    const { lifeCycle, rawRumEvents } = setupBuilder.build()
+    setupLongTaskCollection()
 
-    lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [
-      createPerformanceEntry(RumPerformanceEntryType.LONG_TASK),
-    ])
+    notifyPerformanceEntries([createPerformanceEntry(RumPerformanceEntryType.LONG_TASK)])
     expect(rawRumEvents.length).toBe(1)
   })
 
   it('should not collect when trackLongTasks=false', () => {
-    trackLongTasks = false
-    const { lifeCycle, rawRumEvents } = setupBuilder.build()
+    setupLongTaskCollection(false)
 
-    lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [
-      createPerformanceEntry(RumPerformanceEntryType.LONG_TASK),
-    ])
+    notifyPerformanceEntries([createPerformanceEntry(RumPerformanceEntryType.LONG_TASK)])
+
     expect(rawRumEvents.length).toBe(0)
   })
 
   it('should create raw rum event from performance entry', () => {
-    const { lifeCycle, rawRumEvents } = setupBuilder.build()
-    lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [
-      createPerformanceEntry(RumPerformanceEntryType.LONG_TASK),
-    ])
+    setupLongTaskCollection()
+    notifyPerformanceEntries([createPerformanceEntry(RumPerformanceEntryType.LONG_TASK)])
 
     expect(rawRumEvents[0].startTime).toBe(1234 as RelativeTime)
     expect(rawRumEvents[0].rawRumEvent).toEqual({
       date: jasmine.any(Number),
       long_task: {
         id: jasmine.any(String),
+        entry_type: RumLongTaskEntryType.LONG_TASK,
         duration: (100 * 1e6) as ServerDuration,
       },
       type: RumEventType.LONG_TASK,

@@ -3,12 +3,13 @@ import type { LogsPublicApi } from '../boot/logsPublicApi'
 import { makeLogsPublicApi } from '../boot/logsPublicApi'
 import { startLogs } from '../boot/startLogs'
 
-export { Logger, LogsMessage, HandlerType } from '../domain/logger'
+export type { LogsMessage } from '../domain/logger'
+export { Logger, HandlerType } from '../domain/logger'
 export { StatusType } from '../domain/logger/isAuthorized'
-export { LoggerConfiguration, LogsPublicApi as LogsGlobal } from '../boot/logsPublicApi'
-export { LogsInitConfiguration } from '../domain/configuration'
-export { LogsEvent } from '../logsEvent.types'
-export { LogsEventDomainContext } from '../domainContext.types'
+export type { LoggerConfiguration, LogsPublicApi as LogsGlobal } from '../boot/logsPublicApi'
+export type { LogsInitConfiguration } from '../domain/configuration'
+export type { LogsEvent } from '../logsEvent.types'
+export type { LogsEventDomainContext } from '../domainContext.types'
 
 export const datadogLogs = makeLogsPublicApi(startLogs)
 

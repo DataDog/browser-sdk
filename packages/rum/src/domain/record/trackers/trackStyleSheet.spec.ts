@@ -1,12 +1,11 @@
-import { isIE } from '@datadog/browser-core'
-import { isFirefox } from '@datadog/browser-core/test'
+import { isFirefox, registerCleanupTask } from '@datadog/browser-core/test'
 import { serializeDocument, SerializationContextStatus } from '../serialization'
 import { createElementsScrollPositions } from '../elementsScrollPositions'
 import { IncrementalSource, RecordType } from '../../../types'
 import type { StyleSheetCallback } from './trackStyleSheet'
 import { trackStyleSheet, getPathToNestedCSSRule } from './trackStyleSheet'
 import { DEFAULT_CONFIGURATION, DEFAULT_SHADOW_ROOT_CONTROLLER } from './trackers.specHelper'
-import type { Tracker } from './types'
+import type { Tracker } from './tracker.types'
 
 describe('trackStyleSheet', () => {
   let styleSheetTracker: Tracker
@@ -16,9 +15,6 @@ describe('trackStyleSheet', () => {
   const styleRule = '.selector-1 { color: #fff }'
 
   beforeEach(() => {
-    if (isIE()) {
-      pending('IE not supported')
-    }
     styleSheetCallbackSpy = jasmine.createSpy()
     styleElement = document.createElement('style')
     document.head.appendChild(styleElement)
@@ -29,11 +25,10 @@ describe('trackStyleSheet', () => {
       status: SerializationContextStatus.INITIAL_FULL_SNAPSHOT,
       elementsScrollPositions: createElementsScrollPositions(),
     })
-  })
-
-  afterEach(() => {
-    styleSheetTracker.stop()
-    styleElement.remove()
+    registerCleanupTask(() => {
+      styleSheetTracker?.stop()
+      styleElement.remove()
+    })
   })
 
   describe('observing high level css stylesheet', () => {
@@ -189,9 +184,6 @@ describe('StyleSheetObserver > getPathToNestedCSSRule', () => {
   let styleSheet: CSSStyleSheet
   let styleElement: HTMLStyleElement
   beforeEach(() => {
-    if (isIE()) {
-      pending('IE not supported')
-    }
     styleElement = document.createElement('style')
     document.head.appendChild(styleElement)
     styleSheet = styleElement.sheet!
@@ -200,10 +192,10 @@ describe('StyleSheetObserver > getPathToNestedCSSRule', () => {
     styleSheet.insertRule(firstMediaRule)
     styleSheet.insertRule(secondStyleRule)
     styleSheet.insertRule(firstStyleRule)
-  })
 
-  afterEach(() => {
-    styleElement.remove()
+    registerCleanupTask(() => {
+      styleElement.remove()
+    })
   })
 
   it('should return undefined if the rule is not attached to a parent StyleSheet', () => {

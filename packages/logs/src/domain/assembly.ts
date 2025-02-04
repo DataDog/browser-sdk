@@ -26,20 +26,21 @@ export function startLogsAssembly(
     ({ rawLogsEvent, messageContext = undefined, savedCommonContext = undefined, domainContext }) => {
       const startTime = getRelativeTime(rawLogsEvent.date)
       const session = sessionManager.findTrackedSession(startTime)
+      const shouldSendLog = sessionManager.findTrackedSession(startTime, { returnInactive: true })
 
-      if (
-        !session &&
-        (!configuration.sendLogsAfterSessionExpiration ||
-          !sessionManager.findTrackedSession(startTime, { returnInactive: true }))
-      ) {
+      if (!shouldSendLog) {
         return
       }
 
       const commonContext = savedCommonContext || getCommonContext()
+      if (session && session.anonymousId && !commonContext.user.anonymous_id) {
+        commonContext.user.anonymous_id = session.anonymousId
+      }
       const log = combine(
         {
           service: configuration.service,
-          session_id: session?.id,
+          session_id: session ? session.id : undefined,
+          session: session ? { id: session.id } : undefined,
           // Insert user first to allow overrides from global context
           usr: !isEmptyObject(commonContext.user) ? commonContext.user : undefined,
           view: commonContext.view,

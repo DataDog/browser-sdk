@@ -1,6 +1,6 @@
 const childProcess = require('child_process')
 
-const { printError } = require('./execution-utils')
+const { printError } = require('./executionUtils')
 
 /**
  * Helper to run executables. This has been introduced to work around Shell injections[0] while

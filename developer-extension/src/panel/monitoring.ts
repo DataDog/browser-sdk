@@ -1,7 +1,7 @@
 import { datadogRum } from '@datadog/browser-rum'
 import { datadogLogs } from '@datadog/browser-logs'
 import packageJson from '../../package.json'
-import { DEFAULT_PANEL_TAB } from '../common/constants'
+import { DEFAULT_PANEL_TAB } from '../common/panelTabConstants'
 
 export function initMonitoring() {
   datadogRum.init({
@@ -11,7 +11,7 @@ export function initMonitoring() {
     service: 'browser-sdk-developer-extension',
     env: 'prod',
     version: packageJson.version,
-    allowFallbackToLocalStorage: true,
+    sessionPersistence: 'local-storage',
     sessionSampleRate: 100,
     sessionReplaySampleRate: 100,
     telemetrySampleRate: 100,
@@ -30,7 +30,7 @@ export function initMonitoring() {
     service: 'browser-sdk-developer-extension',
     env: 'prod',
     version: packageJson.version,
-    allowFallbackToLocalStorage: true,
+    sessionPersistence: 'local-storage',
     forwardErrorsToLogs: true,
     forwardConsoleLogs: 'all',
     forwardReports: 'all',

@@ -1,5 +1,3 @@
-import { isIE } from '@datadog/browser-core'
-
 import type { RumConfiguration } from '@datadog/browser-rum-core'
 import {
   STABLE_ATTRIBUTES,
@@ -13,12 +11,6 @@ import { serializeAttribute } from './serializeAttribute'
 const DEFAULT_CONFIGURATION = {} as RumConfiguration
 
 describe('serializeAttribute', () => {
-  beforeEach(() => {
-    if (isIE()) {
-      pending('IE not supported')
-    }
-  })
-
   it('truncates "data:" URIs after long string length', () => {
     const node = document.createElement('p')
 
@@ -104,10 +96,10 @@ describe('serializeAttribute', () => {
   })
 
   describe('image masking', () => {
-    let imageStub: Partial<Element> & { width: number; height: number; naturalWidth: number; naturalHeight: number }
+    let image: Partial<Element> & { width: number; height: number; naturalWidth: number; naturalHeight: number }
 
     beforeEach(() => {
-      imageStub = {
+      image = {
         width: 0,
         height: 0,
         naturalWidth: 0,
@@ -123,23 +115,23 @@ describe('serializeAttribute', () => {
     })
 
     it('should use an image with same natural dimension than the original one', () => {
-      imageStub.naturalWidth = 2000
-      imageStub.naturalHeight = 1000
-      expect(serializeAttribute(imageStub as Element, NodePrivacyLevel.MASK, 'src', DEFAULT_CONFIGURATION)).toBe(
+      image.naturalWidth = 2000
+      image.naturalHeight = 1000
+      expect(serializeAttribute(image as Element, NodePrivacyLevel.MASK, 'src', DEFAULT_CONFIGURATION)).toBe(
         "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='2000' height='1000' style='background-color:silver'%3E%3C/svg%3E"
       )
     })
 
     it('should use an image with same rendering dimension than the original one', () => {
-      imageStub.width = 200
-      imageStub.height = 100
-      expect(serializeAttribute(imageStub as Element, NodePrivacyLevel.MASK, 'src', DEFAULT_CONFIGURATION)).toBe(
+      image.width = 200
+      image.height = 100
+      expect(serializeAttribute(image as Element, NodePrivacyLevel.MASK, 'src', DEFAULT_CONFIGURATION)).toBe(
         "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='100' style='background-color:silver'%3E%3C/svg%3E"
       )
     })
 
     it("should use the censored image when original image size can't be computed", () => {
-      expect(serializeAttribute(imageStub as Element, NodePrivacyLevel.MASK, 'src', DEFAULT_CONFIGURATION)).toBe(
+      expect(serializeAttribute(image as Element, NodePrivacyLevel.MASK, 'src', DEFAULT_CONFIGURATION)).toBe(
         'data:image/gif;base64,R0lGODlhAQABAIAAAMLCwgAAACH5BAAAAAAALAAAAAABAAEAAAICRAEAOw=='
       )
     })

@@ -14,11 +14,13 @@
 // after killing it. There might be a better way of prematurely aborting the test command if we need
 // to in the future.
 
-const { spawnCommand, printLog, runMain, timeout } = require('../lib/execution-utils')
+const spawn = require('child_process').spawn
+const { printLog, runMain, timeout, printError } = require('../lib/executionUtils')
 const { command } = require('../lib/command')
-const { browserStackRequest } = require('../lib/bs-utils')
+const { browserStackRequest } = require('../lib/bsUtils')
 
 const AVAILABILITY_CHECK_DELAY = 30_000
+const NO_OUTPUT_TIMEOUT = 5 * 60_000
 const BS_BUILD_URL = 'https://api.browserstack.com/automate/builds.json?status=running'
 
 runMain(async () => {
@@ -27,8 +29,8 @@ runMain(async () => {
     return
   }
   await waitForAvailability()
-  const exitCode = await runTests()
-  process.exit(exitCode)
+  const isSuccess = await runTests()
+  process.exit(isSuccess ? 0 : 1)
 })
 
 async function waitForAvailability() {
@@ -43,6 +45,46 @@ async function hasRunningBuild() {
 }
 
 function runTests() {
-  const [command, ...args] = process.argv.slice(2)
-  return spawnCommand(command, args)
+  return new Promise((resolve) => {
+    const [command, ...args] = process.argv.slice(2)
+
+    const child = spawn(command, args, {
+      stdio: ['inherit', 'pipe', 'pipe'],
+      env: { ...process.env, FORCE_COLOR: true },
+    })
+
+    let output = ''
+    let timeoutId
+
+    child.stdout.pipe(process.stdout)
+    child.stdout.on('data', onOutput)
+
+    child.stderr.pipe(process.stderr)
+    child.stderr.on('data', onOutput)
+
+    child.on('exit', (code, signal) => {
+      resolve(!signal && code === 0)
+    })
+
+    function onOutput(data) {
+      output += data
+
+      clearTimeout(timeoutId)
+
+      if (hasUnrecoverableFailure(output)) {
+        killIt('unrecoverable failure')
+      } else {
+        timeoutId = setTimeout(() => killIt('no output timeout'), NO_OUTPUT_TIMEOUT)
+      }
+    }
+
+    function killIt(message) {
+      printError(`Killing the browserstack job because of ${message}`)
+      child.kill('SIGTERM')
+    }
+  })
+}
+
+function hasUnrecoverableFailure(stdout) {
+  return stdout.includes('is set to true but local testing through BrowserStack is not connected.')
 }

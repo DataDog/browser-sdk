@@ -3,7 +3,7 @@ import { ActionType, RumEventType, LifeCycleEventType } from '@datadog/browser-r
 import type { FrustrationRecord } from '../../../types'
 import { RecordType } from '../../../types'
 import type { RecordIds } from '../recordIds'
-import type { Tracker } from './types'
+import type { Tracker } from './tracker.types'
 
 export type FrustrationCallback = (record: FrustrationRecord) => void
 
@@ -18,7 +18,8 @@ export function trackFrustration(
       data.rawRumEvent.action.type === ActionType.CLICK &&
       data.rawRumEvent.action.frustration?.type?.length &&
       'events' in data.domainContext &&
-      data.domainContext.events?.length
+      data.domainContext.events &&
+      data.domainContext.events.length
     ) {
       frustrationCb({
         timestamp: data.rawRumEvent.date,

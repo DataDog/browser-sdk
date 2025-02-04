@@ -1,5 +1,5 @@
 import { sendToExtension } from '@datadog/browser-core'
-import type { LifeCycle, RumConfiguration, ViewContexts } from '@datadog/browser-rum-core'
+import type { LifeCycle, RumConfiguration, ViewHistory } from '@datadog/browser-rum-core'
 import type { BrowserRecord } from '../../types'
 import * as replayStats from '../replayStats'
 import type { Tracker } from './trackers'
@@ -15,6 +15,7 @@ import {
   trackStyleSheet,
   trackViewEnd,
   trackViewportResize,
+  trackVisualViewportResize,
 } from './trackers'
 import { createElementsScrollPositions } from './elementsScrollPositions'
 import type { ShadowRootsController } from './shadowRootsController'
@@ -26,7 +27,7 @@ export interface RecordOptions {
   emit?: (record: BrowserRecord) => void
   configuration: RumConfiguration
   lifeCycle: LifeCycle
-  viewContexts: ViewContexts
+  viewHistory: ViewHistory
 }
 
 export interface RecordAPI {
@@ -45,7 +46,7 @@ export function record(options: RecordOptions): RecordAPI {
   const emitAndComputeStats = (record: BrowserRecord) => {
     emit(record)
     sendToExtension('record', { record })
-    const view = options.viewContexts.findView()!
+    const view = options.viewHistory.findView()!
     replayStats.addRecord(view.id)
   }
 
@@ -79,7 +80,7 @@ export function record(options: RecordOptions): RecordAPI {
     trackMediaInteraction(configuration, emitAndComputeStats),
     trackStyleSheet(emitAndComputeStats),
     trackFocus(configuration, emitAndComputeStats),
-    trackViewportResize(configuration, emitAndComputeStats),
+    trackVisualViewportResize(configuration, emitAndComputeStats),
     trackFrustration(lifeCycle, emitAndComputeStats, recordIds),
     trackViewEnd(lifeCycle, (viewEndRecord) => {
       flushMutations()

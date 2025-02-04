@@ -1,4 +1,3 @@
-import { isIE } from '@datadog/browser-core'
 import {
   NodePrivacyLevel,
   PRIVACY_ATTR_NAME,
@@ -12,12 +11,6 @@ import {
 } from './privacy'
 
 describe('getNodePrivacyLevel', () => {
-  beforeEach(() => {
-    if (isIE()) {
-      pending('IE not supported')
-    }
-  })
-
   it('returns the element privacy mode if it has one', () => {
     const node = document.createElement('div')
     node.setAttribute(PRIVACY_ATTR_NAME, PRIVACY_ATTR_VALUE_MASK)
@@ -127,11 +120,6 @@ describe('getNodePrivacyLevel', () => {
 })
 
 describe('getNodeSelfPrivacyLevel', () => {
-  beforeEach(() => {
-    if (isIE()) {
-      pending('IE not supported')
-    }
-  })
   ;[
     {
       msg: 'is not an element',
@@ -173,6 +161,11 @@ describe('getNodeSelfPrivacyLevel', () => {
     {
       msg: 'is an "input" element and has an autocomplete attribute starting with "cc-" (forced override)',
       html: '<input type="text" class="dd-privacy-allow" autocomplete="cc-foo">',
+      expected: NodePrivacyLevel.MASK,
+    },
+    {
+      msg: 'is an "input" element and has an autocomplete attribute ending with "-password" (forced override)',
+      html: '<input type="text" class="dd-privacy-allow" autocomplete="foo-password">',
       expected: NodePrivacyLevel.MASK,
     },
     {

@@ -1,5 +1,5 @@
 import {
-  BoundedBuffer,
+  createBoundedBuffer,
   display,
   canUseEventBridge,
   displayAlreadyInitializedError,
@@ -7,14 +7,14 @@ import {
   noop,
   timeStampNow,
   clocksNow,
-  assign,
   getEventBridge,
   ExperimentalFeature,
   isExperimentalFeatureEnabled,
   initFeatureFlags,
   addTelemetryConfiguration,
+  initFetchObservable,
 } from '@datadog/browser-core'
-import type { TrackingConsentState, DeflateWorker } from '@datadog/browser-core'
+import type { TrackingConsentState, DeflateWorker, Context } from '@datadog/browser-core'
 import {
   validateAndBuildRumConfiguration,
   type RumConfiguration,
@@ -22,6 +22,8 @@ import {
 } from '../domain/configuration'
 import type { CommonContext } from '../domain/contexts/commonContext'
 import type { ViewOptions } from '../domain/view/trackViews'
+import type { DurationVital, CustomVitalsState } from '../domain/vital/vitalCollection'
+import { startDurationVital, stopDurationVital } from '../domain/vital/vitalCollection'
 import { fetchAndApplyRemoteConfiguration, serializeRumConfiguration } from '../domain/configuration'
 import { callPluginsMethod } from '../domain/plugins'
 import type { RumPublicApiOptions, Strategy } from './rumPublicApi'
@@ -31,13 +33,15 @@ export function createPreStartStrategy(
   { ignoreInitIfSyntheticsWillInjectRum, startDeflateWorker }: RumPublicApiOptions,
   getCommonContext: () => CommonContext,
   trackingConsentState: TrackingConsentState,
+  customVitalsState: CustomVitalsState,
   doStartRum: (
     configuration: RumConfiguration,
     deflateWorker: DeflateWorker | undefined,
     initialViewOptions?: ViewOptions
   ) => StartRumResult
 ): Strategy {
-  const bufferApiCalls = new BoundedBuffer<StartRumResult>()
+  const bufferApiCalls = createBoundedBuffer<StartRumResult>()
+
   let firstStartViewCall:
     | { options: ViewOptions | undefined; callback: (startRumResult: StartRumResult) => void }
     | undefined
@@ -47,6 +51,8 @@ export function createPreStartStrategy(
   let cachedConfiguration: RumConfiguration | undefined
 
   const trackingConsentStateSubscription = trackingConsentState.observable.subscribe(tryStartRum)
+
+  const emptyContext: Context = {}
 
   function tryStartRum() {
     if (!cachedInitConfiguration || !cachedConfiguration || !trackingConsentState.isGranted()) {
@@ -117,11 +123,21 @@ export function createPreStartStrategy(
     }
 
     cachedConfiguration = configuration
+    // Instrumuent fetch to track network requests
+    // This is needed in case the consent is not granted and some cutsomer
+    // library (Apollo Client) is storing uninstrumented fetch to be used later
+    // The subscrption is needed so that the instrumentation process is completed
+    initFetchObservable().subscribe(noop)
+
     trackingConsentState.tryToInit(configuration.trackingConsent)
     tryStartRum()
   }
 
-  return {
+  const addDurationVital = (vital: DurationVital) => {
+    bufferApiCalls.add((startRumResult) => startRumResult.addDurationVital(vital))
+  }
+
+  const strategy: Strategy = {
     init(initConfiguration, publicApi) {
       if (!initConfiguration) {
         display.error('Missing configuration')
@@ -141,9 +157,7 @@ export function createPreStartStrategy(
         return
       }
 
-      if (isExperimentalFeatureEnabled(ExperimentalFeature.PLUGINS)) {
-        callPluginsMethod(initConfiguration.plugins, 'onInit', { initConfiguration, publicApi })
-      }
+      callPluginsMethod(initConfiguration.plugins, 'onInit', { initConfiguration, publicApi })
 
       if (
         initConfiguration.remoteConfigurationId &&
@@ -179,6 +193,20 @@ export function createPreStartStrategy(
       }
     },
 
+    setViewName(name) {
+      bufferApiCalls.add((startRumResult) => startRumResult.setViewName(name))
+    },
+
+    setViewContext(context) {
+      bufferApiCalls.add((startRumResult) => startRumResult.setViewContext(context))
+    },
+
+    setViewContextProperty(key, value) {
+      bufferApiCalls.add((startRumResult) => startRumResult.setViewContextProperty(key, value))
+    },
+
+    getViewContext: () => emptyContext,
+
     addAction(action, commonContext = getCommonContext()) {
       bufferApiCalls.add((startRumResult) => startRumResult.addAction(action, commonContext))
     },
@@ -191,21 +219,26 @@ export function createPreStartStrategy(
       bufferApiCalls.add((startRumResult) => startRumResult.addFeatureFlagEvaluation(key, value))
     },
 
-    startDurationVital(vitalStart) {
-      bufferApiCalls.add((startRumResult) => startRumResult.startDurationVital(vitalStart))
+    startDurationVital(name, options) {
+      return startDurationVital(customVitalsState, name, options)
     },
 
-    stopDurationVital(vitalStart) {
-      bufferApiCalls.add((startRumResult) => startRumResult.stopDurationVital(vitalStart))
+    stopDurationVital(name, options) {
+      stopDurationVital(addDurationVital, customVitalsState, name, options)
     },
+
+    addDurationVital,
   }
+
+  return strategy
 }
 
 function overrideInitConfigurationForBridge(initConfiguration: RumInitConfiguration): RumInitConfiguration {
-  return assign({}, initConfiguration, {
+  return {
+    ...initConfiguration,
     applicationId: '00000000-aaaa-0000-aaaa-000000000000',
     clientToken: 'empty',
     sessionSampleRate: 100,
     defaultPrivacyLevel: initConfiguration.defaultPrivacyLevel ?? getEventBridge()?.getPrivacyLevel(),
-  })
+  }
 }

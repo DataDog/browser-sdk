@@ -1,23 +1,16 @@
 import { display } from '../src/tools/display'
-import { isIE } from '../src/tools/utils/browserDetection'
 import { getCurrentJasmineSpec } from './getCurrentJasmineSpec'
-
-let originalAddEventListener: typeof EventTarget.prototype.addEventListener
-let originalRemoveEventListener: typeof EventTarget.prototype.removeEventListener
-let wrappedListeners: {
-  [key: string]: Map<EventListenerOrEventListenerObject | null, EventListenerOrEventListenerObject | null>
-}
+import { registerCleanupTask } from './registerCleanupTask'
 
 export function startLeakDetection() {
-  if (isIE()) {
-    return
-  }
-  wrappedListeners = {}
+  let wrappedListeners: {
+    [key: string]: Map<EventListenerOrEventListenerObject | null, EventListenerOrEventListenerObject | null>
+  } = {}
 
   // eslint-disable-next-line @typescript-eslint/unbound-method
-  originalAddEventListener = EventTarget.prototype.addEventListener
+  const originalAddEventListener = EventTarget.prototype.addEventListener
   // eslint-disable-next-line @typescript-eslint/unbound-method
-  originalRemoveEventListener = EventTarget.prototype.removeEventListener
+  const originalRemoveEventListener = EventTarget.prototype.removeEventListener
 
   EventTarget.prototype.addEventListener = function (event, listener, options) {
     if (!wrappedListeners[event]) {
@@ -32,21 +25,22 @@ export function startLeakDetection() {
     wrappedListeners[event]?.delete(listener)
     return originalRemoveEventListener.call(this, event, wrappedListener || listener, options)
   }
-}
 
-export function stopLeakDetection() {
-  if (isIE()) {
-    return
-  }
-  EventTarget.prototype.addEventListener = originalAddEventListener
-  EventTarget.prototype.removeEventListener = originalRemoveEventListener
-  wrappedListeners = {}
+  registerCleanupTask(() => {
+    EventTarget.prototype.addEventListener = originalAddEventListener
+    EventTarget.prototype.removeEventListener = originalRemoveEventListener
+    wrappedListeners = {}
+  })
 }
 
 function withLeakDetection(eventName: string, listener: EventListener) {
   const specWhenAdded = getCurrentJasmineSpec()
   const stackWhenAdded = new Error().stack
-  if (!specWhenAdded) {
+  if (
+    !specWhenAdded ||
+    // Ignore listeners added by React: React is adding listeners to DOM elements for synthetic events, and there is no way to remove them
+    stackWhenAdded?.includes('listenToAllSupportedEvents')
+  ) {
     return listener
   }
 

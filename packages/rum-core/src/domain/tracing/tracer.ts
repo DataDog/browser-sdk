@@ -1,10 +1,6 @@
 import {
   objectEntries,
   shallowClone,
-  performDraw,
-  isNumber,
-  assign,
-  find,
   getType,
   isMatchOption,
   matchList,
@@ -18,7 +14,11 @@ import type {
   RumXhrStartContext,
 } from '../requestCollection'
 import type { RumSessionManager } from '../rumSessionManager'
+import { getCrypto } from '../../browser/crypto'
 import type { PropagatorType, TracingOption } from './tracer.types'
+import type { SpanIdentifier, TraceIdentifier } from './identifier'
+import { createSpanIdentifier, createTraceIdentifier, toPaddedHexadecimalString } from './identifier'
+import { isTraceSampled } from './sampler'
 
 export interface Tracer {
   traceFetch: (context: Partial<RumFetchStartContext>) => void
@@ -112,20 +112,23 @@ function injectHeadersIfTracingAllowed(
     return
   }
 
-  const tracingOption = find(configuration.allowedTracingUrls, (tracingOption: TracingOption) =>
+  const tracingOption = configuration.allowedTracingUrls.find((tracingOption: TracingOption) =>
     matchList([tracingOption.match], context.url!, true)
   )
   if (!tracingOption) {
     return
   }
-  context.traceSampled = !isNumber(configuration.traceSampleRate) || performDraw(configuration.traceSampleRate)
+  const traceId = createTraceIdentifier()
+  context.traceSampled = isTraceSampled(traceId, configuration.traceSampleRate)
 
-  if (!context.traceSampled && configuration.traceContextInjection !== TraceContextInjection.ALL) {
+  const shouldInjectHeaders = context.traceSampled || configuration.traceContextInjection === TraceContextInjection.ALL
+
+  if (!shouldInjectHeaders) {
     return
   }
 
-  context.traceId = new TraceIdentifier()
-  context.spanId = new TraceIdentifier()
+  context.traceId = traceId
+  context.spanId = createSpanIdentifier()
 
   inject(makeTracingHeaders(context.traceId, context.spanId, context.traceSampled, tracingOption.propagatorTypes))
 }
@@ -134,17 +137,13 @@ export function isTracingSupported() {
   return getCrypto() !== undefined
 }
 
-function getCrypto() {
-  return window.crypto || (window as any).msCrypto
-}
-
 /**
  * When trace is not sampled, set priority to '0' instead of not adding the tracing headers
  * to prepare the implementation for sampling delegation.
  */
 function makeTracingHeaders(
   traceId: TraceIdentifier,
-  spanId: TraceIdentifier,
+  spanId: SpanIdentifier,
   traceSampled: boolean,
   propagatorTypes: PropagatorType[]
 ): TracingHeaders {
@@ -153,36 +152,35 @@ function makeTracingHeaders(
   propagatorTypes.forEach((propagatorType) => {
     switch (propagatorType) {
       case 'datadog': {
-        assign(tracingHeaders, {
+        Object.assign(tracingHeaders, {
           'x-datadog-origin': 'rum',
-          'x-datadog-parent-id': spanId.toDecimalString(),
+          'x-datadog-parent-id': spanId.toString(),
           'x-datadog-sampling-priority': traceSampled ? '1' : '0',
-          'x-datadog-trace-id': traceId.toDecimalString(),
+          'x-datadog-trace-id': traceId.toString(),
         })
         break
       }
       // https://www.w3.org/TR/trace-context/
       case 'tracecontext': {
-        assign(tracingHeaders, {
-          traceparent: `00-0000000000000000${traceId.toPaddedHexadecimalString()}-${spanId.toPaddedHexadecimalString()}-0${
+        Object.assign(tracingHeaders, {
+          traceparent: `00-0000000000000000${toPaddedHexadecimalString(traceId)}-${toPaddedHexadecimalString(spanId)}-0${
             traceSampled ? '1' : '0'
           }`,
+          tracestate: `dd=s:${traceSampled ? '1' : '0'};o:rum`,
         })
         break
       }
       // https://github.com/openzipkin/b3-propagation
       case 'b3': {
-        assign(tracingHeaders, {
-          b3: `${traceId.toPaddedHexadecimalString()}-${spanId.toPaddedHexadecimalString()}-${
-            traceSampled ? '1' : '0'
-          }`,
+        Object.assign(tracingHeaders, {
+          b3: `${toPaddedHexadecimalString(traceId)}-${toPaddedHexadecimalString(spanId)}-${traceSampled ? '1' : '0'}`,
         })
         break
       }
       case 'b3multi': {
-        assign(tracingHeaders, {
-          'X-B3-TraceId': traceId.toPaddedHexadecimalString(),
-          'X-B3-SpanId': spanId.toPaddedHexadecimalString(),
+        Object.assign(tracingHeaders, {
+          'X-B3-TraceId': toPaddedHexadecimalString(traceId),
+          'X-B3-SpanId': toPaddedHexadecimalString(spanId),
           'X-B3-Sampled': traceSampled ? '1' : '0',
         })
         break
@@ -191,53 +189,3 @@ function makeTracingHeaders(
   })
   return tracingHeaders
 }
-
-/* eslint-disable no-bitwise */
-export class TraceIdentifier {
-  private buffer: Uint8Array = new Uint8Array(8)
-
-  constructor() {
-    getCrypto().getRandomValues(this.buffer)
-    this.buffer[0] = this.buffer[0] & 0x7f // force 63-bit
-  }
-
-  toString(radix: number) {
-    let high = this.readInt32(0)
-    let low = this.readInt32(4)
-    let str = ''
-
-    do {
-      const mod = (high % radix) * 4294967296 + low
-      high = Math.floor(high / radix)
-      low = Math.floor(mod / radix)
-      str = (mod % radix).toString(radix) + str
-    } while (high || low)
-
-    return str
-  }
-
-  /**
-   * Format used everywhere except the trace intake
-   */
-  toDecimalString() {
-    return this.toString(10)
-  }
-
-  /**
-   * Format used by OTel headers
-   */
-  toPaddedHexadecimalString() {
-    const traceId = this.toString(16)
-    return Array(17 - traceId.length).join('0') + traceId
-  }
-
-  private readInt32(offset: number) {
-    return (
-      this.buffer[offset] * 16777216 +
-      (this.buffer[offset + 1] << 16) +
-      (this.buffer[offset + 2] << 8) +
-      this.buffer[offset + 3]
-    )
-  }
-}
-/* eslint-enable no-bitwise */

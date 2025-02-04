@@ -1,12 +1,11 @@
 import type { TimeStamp, HttpRequest } from '@datadog/browser-core'
-import { PageExitReason, DefaultPrivacyLevel, noop, isIE, DeflateEncoderStreamId } from '@datadog/browser-core'
-import type { LifeCycle, ViewCreatedEvent, RumConfiguration } from '@datadog/browser-rum-core'
-import { LifeCycleEventType, startViewContexts } from '@datadog/browser-rum-core'
-import type { Clock } from '@datadog/browser-core/test'
-import { collectAsyncCalls, createNewEvent, initEventBridgeStub } from '@datadog/browser-core/test'
+import { PageExitReason, DefaultPrivacyLevel, noop, DeflateEncoderStreamId } from '@datadog/browser-core'
+import type { ViewCreatedEvent } from '@datadog/browser-rum-core'
+import { LifeCycle, LifeCycleEventType, startViewHistory } from '@datadog/browser-rum-core'
+import { collectAsyncCalls, createNewEvent, mockEventBridge, registerCleanupTask } from '@datadog/browser-core/test'
 import type { ViewEndedEvent } from 'packages/rum-core/src/domain/view/trackViews'
-import type { RumSessionManagerMock, TestSetupBuilder } from '../../../rum-core/test'
-import { appendElement, createRumSessionManagerMock, setup } from '../../../rum-core/test'
+import type { RumSessionManagerMock } from '../../../rum-core/test'
+import { appendElement, createRumSessionManagerMock, mockRumConfiguration } from '../../../rum-core/test'
 
 import { recordsPerFullSnapshot, readReplayPayload } from '../../test'
 import { setSegmentBytesLimit } from '../domain/segmentCollection'
@@ -19,70 +18,48 @@ import { startRecording } from './startRecording'
 const VIEW_TIMESTAMP = 1 as TimeStamp
 
 describe('startRecording', () => {
-  let setupBuilder: TestSetupBuilder
+  const lifeCycle = new LifeCycle()
   let sessionManager: RumSessionManagerMock
   let viewId: string
   let textField: HTMLInputElement
   let requestSendSpy: jasmine.Spy<HttpRequest['sendOnExit']>
   let stopRecording: () => void
-  let clock: Clock | undefined
-  let configuration: RumConfiguration
+
+  function setupStartRecording() {
+    const configuration = mockRumConfiguration({ defaultPrivacyLevel: DefaultPrivacyLevel.ALLOW })
+    resetReplayStats()
+    const worker = startDeflateWorker(configuration, 'Session Replay', noop)
+
+    requestSendSpy = jasmine.createSpy()
+    const httpRequest = {
+      send: requestSendSpy,
+      sendOnExit: requestSendSpy,
+    }
+
+    const deflateEncoder = createDeflateEncoder(configuration, worker!, DeflateEncoderStreamId.REPLAY)
+    const viewHistory = startViewHistory(lifeCycle)
+    initialView(lifeCycle)
+
+    const recording = startRecording(lifeCycle, configuration, sessionManager, viewHistory, deflateEncoder, httpRequest)
+    stopRecording = recording ? recording.stop : noop
+
+    registerCleanupTask(() => {
+      stopRecording()
+      deflateEncoder.stop()
+      setSegmentBytesLimit()
+      resetDeflateWorkerState()
+    })
+  }
 
   beforeEach(() => {
-    if (isIE()) {
-      pending('IE not supported')
-    }
-    configuration = {} as RumConfiguration
-    resetReplayStats()
     sessionManager = createRumSessionManagerMock()
     viewId = 'view-id'
 
     textField = appendElement('<input />') as HTMLInputElement
-
-    const worker = startDeflateWorker(configuration, 'Session Replay', noop)
-
-    setupBuilder = setup()
-      .withSessionManager(sessionManager)
-      .withConfiguration({
-        defaultPrivacyLevel: DefaultPrivacyLevel.ALLOW,
-      })
-      .beforeBuild(({ lifeCycle, configuration, sessionManager }) => {
-        requestSendSpy = jasmine.createSpy()
-        const httpRequest = {
-          send: requestSendSpy,
-          sendOnExit: requestSendSpy,
-        }
-
-        const deflateEncoder = createDeflateEncoder(configuration, worker!, DeflateEncoderStreamId.REPLAY)
-        const viewContexts = startViewContexts(lifeCycle)
-        initialView(lifeCycle)
-
-        const recording = startRecording(
-          lifeCycle,
-          configuration,
-          sessionManager,
-          viewContexts,
-          deflateEncoder,
-          httpRequest
-        )
-        stopRecording = recording ? recording.stop : noop
-        return {
-          stop: () => {
-            stopRecording()
-            deflateEncoder.stop()
-          },
-        }
-      })
-  })
-
-  afterEach(() => {
-    setSegmentBytesLimit()
-    clock?.cleanup()
-    resetDeflateWorkerState()
   })
 
   it('sends recorded segments with valid context', async () => {
-    const { lifeCycle } = setupBuilder.build()
+    setupStartRecording()
     flushSegment(lifeCycle)
 
     const requests = await readSentRequests(1)
@@ -110,7 +87,7 @@ describe('startRecording', () => {
   })
 
   it('flushes the segment when its compressed data reaches the segment bytes limit', async () => {
-    setupBuilder.build()
+    setupStartRecording()
     const inputCount = 150
     const inputEvent = createNewEvent('input', { target: textField })
     for (let i = 0; i < inputCount; i += 1) {
@@ -125,7 +102,7 @@ describe('startRecording', () => {
   })
 
   it('stops sending new segment when the session is expired', async () => {
-    const { lifeCycle } = setupBuilder.build()
+    setupStartRecording()
 
     document.body.dispatchEvent(createNewEvent('click', { clientX: 1, clientY: 2 }))
 
@@ -141,7 +118,7 @@ describe('startRecording', () => {
 
   it('restarts sending segments when the session is renewed', async () => {
     sessionManager.setNotTracked()
-    const { lifeCycle } = setupBuilder.build()
+    setupStartRecording()
 
     document.body.dispatchEvent(createNewEvent('click', { clientX: 1, clientY: 2 }))
 
@@ -157,7 +134,7 @@ describe('startRecording', () => {
   })
 
   it('flushes pending mutations before ending the view', async () => {
-    const { lifeCycle } = setupBuilder.build()
+    setupStartRecording()
 
     appendElement('<hr/>')
     changeView(lifeCycle)
@@ -173,7 +150,7 @@ describe('startRecording', () => {
   })
 
   it('flushes pending mutations before ending the view, even after the segment has been flushed', async () => {
-    const { lifeCycle } = setupBuilder.build()
+    setupStartRecording()
 
     // flush segment right before the view change to set the segment collection in the waiting state
     flushSegment(lifeCycle)
@@ -188,7 +165,7 @@ describe('startRecording', () => {
 
   it('does not split Meta, Focus and FullSnapshot records between multiple segments when taking a full snapshot', async () => {
     setSegmentBytesLimit(0)
-    setupBuilder.build()
+    setupStartRecording()
 
     const requests = await readSentRequests(1)
     expect(requests[0].segment.records[0].type).toBe(RecordType.Meta)
@@ -198,7 +175,7 @@ describe('startRecording', () => {
 
   describe('when calling stop()', () => {
     it('stops collecting records', async () => {
-      const { lifeCycle } = setupBuilder.build()
+      setupStartRecording()
 
       document.body.dispatchEvent(createNewEvent('click', { clientX: 1, clientY: 2 }))
       stopRecording()
@@ -210,7 +187,7 @@ describe('startRecording', () => {
     })
 
     it('stops taking full snapshots on view creation', async () => {
-      const { lifeCycle } = setupBuilder.build()
+      setupStartRecording()
 
       stopRecording()
       changeView(lifeCycle)
@@ -222,9 +199,9 @@ describe('startRecording', () => {
   })
 
   it('should send records through the bridge when it is present', () => {
-    const eventBridgeStub = initEventBridgeStub()
-    const { lifeCycle } = setupBuilder.build()
-    const sendSpy = spyOn(eventBridgeStub, 'send')
+    const eventBridge = mockEventBridge()
+    setupStartRecording()
+    const sendSpy = spyOn(eventBridge, 'send')
 
     // send click record
     document.body.dispatchEvent(createNewEvent('click', { clientX: 1, clientY: 2 }))
@@ -275,9 +252,7 @@ describe('startRecording', () => {
   }
 
   async function readSentRequests(expectedSentRequestCount: number) {
-    const calls = await new Promise<jasmine.Calls<HttpRequest['sendOnExit']>>((resolve) =>
-      collectAsyncCalls(requestSendSpy, expectedSentRequestCount, resolve)
-    )
+    const calls = await collectAsyncCalls(requestSendSpy, expectedSentRequestCount)
     return Promise.all(calls.all().map((call) => readReplayPayload(call.args[0])))
   }
 })

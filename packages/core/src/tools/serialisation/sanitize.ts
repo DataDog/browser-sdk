@@ -4,7 +4,7 @@ import type { Context, ContextArray, ContextValue } from './context'
 import type { ObjectWithToJsonMethod } from './jsonStringify'
 import { detachToJsonMethod } from './jsonStringify'
 
-// eslint-disable-next-line @typescript-eslint/ban-types
+// eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
 type PrimitivesAndFunctions = string | number | boolean | undefined | null | symbol | bigint | Function
 type ExtendedContextValue = PrimitivesAndFunctions | object | ExtendedContext | ExtendedContextArray
 type ExtendedContext = { [key: string]: ExtendedContextValue }
@@ -14,6 +14,13 @@ type ContainerElementToProcess = {
   source: ExtendedContextArray | ExtendedContext
   target: ContextArray | Context
   path: string
+}
+
+type SanitizedEvent = {
+  type: string
+  isTrusted: boolean
+  currentTarget: string | null | undefined
+  target: string | null | undefined
 }
 
 // The maximum size of a single event is 256KiB. By default, we ensure that user-provided data
@@ -59,7 +66,9 @@ export function sanitize(source: unknown, maxCharacterCount = SANITIZE_DEFAULT_M
     containerQueue,
     visitedObjectsWithPath
   )
-  let accumulatedCharacterCount = JSON.stringify(sanitizedData)?.length || 0
+  const serializedSanitizedData = JSON.stringify(sanitizedData)
+  let accumulatedCharacterCount = serializedSanitizedData ? serializedSanitizedData.length : 0
+
   if (accumulatedCharacterCount > maxCharacterCount) {
     warnOverCharacterLimit(maxCharacterCount, 'discarded', source)
     return undefined
@@ -201,17 +210,15 @@ function sanitizePrimitivesAndFunctions(value: PrimitivesAndFunctions) {
  * LIMITATIONS
  * - If a class defines a toStringTag Symbol, it will fall in the catch-all method and prevent enumeration of properties.
  * To avoid this, a toJSON method can be defined.
- * - IE11 does not return a distinct type for objects such as Map, WeakMap, ... These objects will pass through and their
- * properties enumerated if any.
- *
  */
-function sanitizeObjects(value: object) {
+function sanitizeObjects(value: object): string | SanitizedEvent {
   try {
-    // Handle events - Keep a simple implementation to avoid breaking changes
     if (value instanceof Event) {
-      return {
-        isTrusted: value.isTrusted,
-      }
+      return sanitizeEvent(value)
+    }
+
+    if (value instanceof RegExp) {
+      return `[RegExp] ${value.toString()}`
     }
 
     // Handle all remaining object types in a generic way
@@ -225,6 +232,15 @@ function sanitizeObjects(value: object) {
     // Object.prototype.toString, declare the value unserializable
   }
   return '[Unserializable]'
+}
+
+function sanitizeEvent(event: Event): SanitizedEvent {
+  return {
+    type: event.type,
+    isTrusted: event.isTrusted,
+    currentTarget: event.currentTarget ? (sanitizeObjects(event.currentTarget) as string) : null,
+    target: event.target ? (sanitizeObjects(event.target) as string) : null,
+  }
 }
 
 /**

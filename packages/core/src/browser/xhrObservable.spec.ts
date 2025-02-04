@@ -1,6 +1,5 @@
 import type { Configuration } from '../domain/configuration'
-import { withXhr, stubXhr } from '../../test'
-import { isIE } from '../tools/utils/browserDetection'
+import { withXhr, mockXhr } from '../../test'
 import type { Subscription } from '../tools/observable'
 import type { XhrCompleteContext, XhrContext } from './xhrObservable'
 import { initXhrObservable } from './xhrObservable'
@@ -9,15 +8,14 @@ describe('xhr observable', () => {
   let requestsTrackingSubscription: Subscription
   let contextEditionSubscription: Subscription | undefined
   let requests: XhrCompleteContext[]
-  let stubXhrManager: { reset(): void }
-  let originalXhrStubSend: XMLHttpRequest['send']
+  let originalMockXhrSend: XMLHttpRequest['send']
   let configuration: Configuration
 
   beforeEach(() => {
-    stubXhrManager = stubXhr()
+    mockXhr()
     configuration = {} as Configuration
     // eslint-disable-next-line @typescript-eslint/unbound-method
-    originalXhrStubSend = XMLHttpRequest.prototype.send
+    originalMockXhrSend = XMLHttpRequest.prototype.send
 
     requests = []
     startTrackingRequests()
@@ -26,7 +24,6 @@ describe('xhr observable', () => {
   afterEach(() => {
     requestsTrackingSubscription.unsubscribe()
     contextEditionSubscription?.unsubscribe()
-    stubXhrManager.reset()
   })
 
   function startTrackingRequests() {
@@ -346,9 +343,6 @@ describe('xhr observable', () => {
   })
 
   it('should track request to URL object', (done) => {
-    if (isIE()) {
-      pending('IE not supported')
-    }
     withXhr({
       setup(xhr) {
         xhr.open('GET', new URL('http://example.com/path'))
@@ -385,7 +379,7 @@ describe('xhr observable', () => {
       requestsTrackingSubscription.unsubscribe()
 
       // eslint-disable-next-line @typescript-eslint/unbound-method
-      expect(XMLHttpRequest.prototype.send).toBe(originalXhrStubSend)
+      expect(XMLHttpRequest.prototype.send).toBe(originalMockXhrSend)
     })
   })
 

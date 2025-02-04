@@ -8,7 +8,6 @@ const HANDLING_STACK_REGEX = /^Error: \n\s+at testHandlingStack @/
 const RUM_CONFIG: Partial<RumInitConfiguration> = {
   service: 'main-service',
   version: '1.0.0',
-  enableExperimentalFeatures: ['micro_frontend'],
   beforeSend: (event: RumEvent, domainContext: RumEventDomainContext) => {
     if ('handlingStack' in domainContext) {
       event.context!.handlingStack = domainContext.handlingStack
@@ -20,7 +19,6 @@ const RUM_CONFIG: Partial<RumInitConfiguration> = {
 
 const LOGS_CONFIG: Partial<LogsInitConfiguration> = {
   forwardConsoleLogs: 'all',
-  enableExperimentalFeatures: ['micro_frontend'],
   beforeSend: (event: LogsEvent, domainContext: LogsEventDomainContext) => {
     if (domainContext && 'handlingStack' in domainContext) {
       event.context = { handlingStack: domainContext.handlingStack }
@@ -36,6 +34,7 @@ describe('microfrontend', () => {
     .withRumInit((configuration) => {
       window.DD_RUM!.init(configuration)
 
+      // eslint-disable-next-line @typescript-eslint/no-empty-function
       const noop = () => {}
       function testHandlingStack() {
         fetch('/ok').then(noop, noop)

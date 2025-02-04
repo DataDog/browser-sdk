@@ -1,0 +1,54 @@
+{
+  "name": "@datadog/browser-rum-react",
+  "version": "6.1.0",
+  "license": "Apache-2.0",
+  "main": "cjs/entries/main.js",
+  "module": "esm/entries/main.js",
+  "types": "cjs/entries/main.d.ts",
+  "scripts": {
+    "build": "run-p build:cjs build:esm",
+    "build:cjs": "rm -rf cjs && tsc -p tsconfig.cjs.json --noCheck",
+    "build:esm": "rm -rf esm && tsc -p tsconfig.esm.json --noCheck",
+    "prepack": "npm run build"
+  },
+  "dependencies": {
+    "@datadog/browser-core": "6.1.0",
+    "@datadog/browser-rum-core": "6.1.0"
+  },
+  "peerDependencies": {
+    "react": "18",
+    "react-router-dom": "6"
+  },
+  "peerDependenciesMeta": {
+    "@datadog/browser-rum": {
+      "optional": true
+    },
+    "@datadog/browser-rum-slim": {
+      "optional": true
+    },
+    "react": {
+      "optional": true
+    },
+    "react-router-dom": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "@types/react": "18.3.18",
+    "@types/react-dom": "18.3.5",
+    "react": "18.3.1",
+    "react-dom": "18.3.1",
+    "react-router-dom": "6.28.2"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/DataDog/browser-sdk.git",
+    "directory": "packages/rum-react"
+  },
+  "volta": {
+    "extends": "../../package.json"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}

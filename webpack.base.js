@@ -2,30 +2,31 @@ const path = require('path')
 const webpack = require('webpack')
 const TsconfigPathsPlugin = require('tsconfig-paths-webpack-plugin')
 const TerserPlugin = require('terser-webpack-plugin')
-const { buildEnvKeys, getBuildEnvValue } = require('./scripts/lib/build-env')
+const { buildEnvKeys, getBuildEnvValue } = require('./scripts/lib/buildEnv')
 
 const tsconfigPath = path.join(__dirname, 'tsconfig.webpack.json')
 
-module.exports = ({ entry, mode, filename, types, keepBuildEnvVariables }) => ({
+module.exports = ({ entry, mode, filename, types, keepBuildEnvVariables, plugins }) => ({
   entry,
   mode,
   output: {
     filename,
+    chunkFilename: `chunks/[name]-[contenthash]-${filename}`,
     path: path.resolve('./bundle'),
   },
-  target: ['web', 'es5'],
+  target: ['web', 'es2018'],
   devtool: false,
   module: {
     rules: [
       {
-        test: /\.(ts|js)$/,
+        test: /\.(ts|tsx|js)$/,
         loader: 'ts-loader',
         exclude: /node_modules/,
         options: {
           configFile: tsconfigPath,
           onlyCompileBundledFiles: true,
           compilerOptions: {
-            module: 'es6',
+            module: 'es2020',
             allowJs: true,
             types: types || [],
           },
@@ -35,7 +36,7 @@ module.exports = ({ entry, mode, filename, types, keepBuildEnvVariables }) => ({
   },
 
   resolve: {
-    extensions: ['.ts', '.js'],
+    extensions: ['.ts', '.js', '.tsx'],
     plugins: [new TsconfigPathsPlugin({ configFile: tsconfigPath })],
     alias: {
       // The default "pako.esm.js" build is not transpiled to es5
@@ -44,6 +45,7 @@ module.exports = ({ entry, mode, filename, types, keepBuildEnvVariables }) => ({
   },
 
   optimization: {
+    chunkIds: 'named',
     minimizer: [
       new TerserPlugin({
         extractComments: false,
@@ -65,6 +67,7 @@ module.exports = ({ entry, mode, filename, types, keepBuildEnvVariables }) => ({
           }
     ),
     createDefinePlugin({ keepBuildEnvVariables }),
+    ...(plugins || []),
   ],
 })
 

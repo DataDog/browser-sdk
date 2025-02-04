@@ -1,11 +1,10 @@
 import { isEmptyObject } from '../../tools/utils/objectUtils'
 import { objectEntries } from '../../tools/utils/polyfills'
 import { dateNow } from '../../tools/utils/timeUtils'
+import { generateAnonymousId } from '../user'
+import type { Configuration } from '../configuration'
 import { SESSION_EXPIRATION_DELAY, SESSION_TIME_OUT_DELAY } from './sessionConstants'
-
-const SESSION_ENTRY_REGEXP = /^([a-zA-Z]+)=([a-z0-9-]+)$/
-const SESSION_ENTRY_SEPARATOR = '&'
-
+import { isValidSessionString, SESSION_ENTRY_REGEXP, SESSION_ENTRY_SEPARATOR } from './sessionStateValidation'
 export const EXPIRED = '1'
 
 export interface SessionState {
@@ -17,10 +16,21 @@ export interface SessionState {
   [key: string]: string | undefined
 }
 
-export function getExpiredSessionState(): SessionState {
-  return {
+export function getExpiredSessionState(
+  previousSessionState: SessionState | undefined,
+  configuration: Configuration
+): SessionState {
+  const expiredSessionState: SessionState = {
     isExpired: EXPIRED,
   }
+  if (configuration.trackAnonymousUser) {
+    if (previousSessionState?.anonymousId) {
+      expiredSessionState.anonymousId = previousSessionState?.anonymousId
+    } else {
+      expiredSessionState.anonymousId = generateAnonymousId()
+    }
+  }
+  return expiredSessionState
 }
 
 export function isSessionInNotStartedState(session: SessionState) {
@@ -50,9 +60,12 @@ export function expandSessionState(session: SessionState) {
 }
 
 export function toSessionString(session: SessionState) {
-  return objectEntries(session)
-    .map(([key, value]) => `${key}=${value}`)
-    .join(SESSION_ENTRY_SEPARATOR)
+  return (
+    objectEntries(session)
+      // we use `aid` as a key for anonymousId
+      .map(([key, value]) => (key === 'anonymousId' ? `aid=${value}` : `${key}=${value}`))
+      .join(SESSION_ENTRY_SEPARATOR)
+  )
 }
 
 export function toSessionState(sessionString: string | undefined | null) {
@@ -62,16 +75,14 @@ export function toSessionState(sessionString: string | undefined | null) {
       const matches = SESSION_ENTRY_REGEXP.exec(entry)
       if (matches !== null) {
         const [, key, value] = matches
-        session[key] = value
+        if (key === 'aid') {
+          // we use `aid` as a key for anonymousId
+          session.anonymousId = value
+        } else {
+          session[key] = value
+        }
       }
     })
   }
   return session
-}
-
-function isValidSessionString(sessionString: string | undefined | null): sessionString is string {
-  return (
-    !!sessionString &&
-    (sessionString.indexOf(SESSION_ENTRY_SEPARATOR) !== -1 || SESSION_ENTRY_REGEXP.test(sessionString))
-  )
 }

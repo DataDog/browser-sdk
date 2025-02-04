@@ -3,7 +3,7 @@ import { unlinkSync, mkdirSync } from 'fs'
 import type { Options, Reporters } from '@wdio/types'
 import { browser, $, $$ } from '@wdio/globals'
 import { getRunId, getTestReportDirectory } from '../envUtils'
-import { APPLICATION_ID } from './lib/helpers/constants'
+import { APPLICATION_ID } from './lib/helpers/configuration'
 
 const reporters: Reporters.ReporterEntry[] = [['spec', { onlyFailures: true }]]
 let logsPath: string | undefined
@@ -15,7 +15,10 @@ if (testReportDirectory) {
     {
       outputDir: testReportDirectory,
       outputFileFormat(options) {
-        const browserName = 'browserName' in options.capabilities ? String(options.capabilities.browserName) : 'unknown'
+        const browserName =
+          'browserName' in options.capabilities && typeof options.capabilities.browserName === 'string'
+            ? options.capabilities.browserName
+            : 'unknown'
         return `results-${options.cid}.${browserName}.xml`
       },
     },

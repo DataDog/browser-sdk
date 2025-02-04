@@ -1,5 +1,5 @@
-import { DefaultPrivacyLevel, isIE } from '@datadog/browser-core'
-import { createNewEvent } from '@datadog/browser-core/test'
+import { DefaultPrivacyLevel } from '@datadog/browser-core'
+import { createNewEvent, registerCleanupTask } from '@datadog/browser-core/test'
 import type { RumConfiguration } from '@datadog/browser-rum-core'
 import { appendElement } from '../../../../../rum-core/test'
 import { serializeDocument, SerializationContextStatus } from '../serialization'
@@ -8,7 +8,7 @@ import { IncrementalSource, MediaInteractionType, RecordType } from '../../../ty
 import type { InputCallback } from './trackInput'
 import { DEFAULT_CONFIGURATION, DEFAULT_SHADOW_ROOT_CONTROLLER } from './trackers.specHelper'
 import { trackMediaInteraction } from './trackMediaInteraction'
-import type { Tracker } from './types'
+import type { Tracker } from './tracker.types'
 
 describe('trackMediaInteraction', () => {
   let mediaInteractionTracker: Tracker
@@ -17,9 +17,6 @@ describe('trackMediaInteraction', () => {
   let configuration: RumConfiguration
 
   beforeEach(() => {
-    if (isIE()) {
-      pending('IE not supported')
-    }
     configuration = { defaultPrivacyLevel: DefaultPrivacyLevel.ALLOW } as RumConfiguration
     mediaInteractionCallback = jasmine.createSpy()
 
@@ -31,10 +28,10 @@ describe('trackMediaInteraction', () => {
       elementsScrollPositions: createElementsScrollPositions(),
     })
     mediaInteractionTracker = trackMediaInteraction(configuration, mediaInteractionCallback)
-  })
 
-  afterEach(() => {
-    mediaInteractionTracker.stop()
+    registerCleanupTask(() => {
+      mediaInteractionTracker.stop()
+    })
   })
 
   it('collects play interactions', () => {

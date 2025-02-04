@@ -1,6 +1,6 @@
-import { DefaultPrivacyLevel, isIE } from '@datadog/browser-core'
+import { DefaultPrivacyLevel } from '@datadog/browser-core'
 import type { Clock } from '@datadog/browser-core/test'
-import { createNewEvent, mockClock } from '@datadog/browser-core/test'
+import { createNewEvent, mockClock, registerCleanupTask } from '@datadog/browser-core/test'
 import type { RumConfiguration } from '@datadog/browser-rum-core'
 import { PRIVACY_ATTR_NAME, PRIVACY_ATTR_VALUE_MASK_USER_INPUT } from '@datadog/browser-rum-core'
 import { appendElement } from '../../../../../rum-core/test'
@@ -10,7 +10,7 @@ import { IncrementalSource, RecordType } from '../../../types'
 import type { InputCallback } from './trackInput'
 import { trackInput } from './trackInput'
 import { DEFAULT_CONFIGURATION, DEFAULT_SHADOW_ROOT_CONTROLLER } from './trackers.specHelper'
-import type { Tracker } from './types'
+import type { Tracker } from './tracker.types'
 
 describe('trackInput', () => {
   let inputTracker: Tracker
@@ -20,9 +20,6 @@ describe('trackInput', () => {
   let configuration: RumConfiguration
 
   beforeEach(() => {
-    if (isIE()) {
-      pending('IE not supported')
-    }
     configuration = { defaultPrivacyLevel: DefaultPrivacyLevel.ALLOW } as RumConfiguration
     inputCallbackSpy = jasmine.createSpy()
     input = appendElement('<div><input target /></div>') as HTMLInputElement
@@ -32,11 +29,11 @@ describe('trackInput', () => {
       status: SerializationContextStatus.INITIAL_FULL_SNAPSHOT,
       elementsScrollPositions: createElementsScrollPositions(),
     })
-  })
 
-  afterEach(() => {
-    inputTracker.stop()
-    clock?.cleanup()
+    registerCleanupTask(() => {
+      inputTracker.stop()
+      clock?.cleanup()
+    })
   })
 
   it('collects input values when an "input" event is dispatched', () => {

@@ -1,5 +1,5 @@
+export type { Telemetry } from './telemetry'
 export {
-  Telemetry,
   TelemetryService,
   addTelemetryDebug,
   addTelemetryError,
@@ -13,4 +13,4 @@ export {
 } from './telemetry'
 
 export * from './rawTelemetryEvent.types'
-export * from './telemetryEvent.types'
+export type * from './telemetryEvent.types'

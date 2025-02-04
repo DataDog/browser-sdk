@@ -150,6 +150,16 @@ export type RumActionEvent = CommonProperties &
           readonly height?: number
           [k: string]: unknown
         }
+        /**
+         * The strategy of how the auto click action name is computed
+         */
+        name_source?:
+          | 'custom_attribute'
+          | 'mask_placeholder'
+          | 'standard_attribute'
+          | 'text_content'
+          | 'mask_disallowed'
+          | 'blank'
         [k: string]: unknown
       }
       [k: string]: unknown
@@ -223,7 +233,7 @@ export type RumErrorEvent = CommonProperties &
       /**
        * The specific category of the error. It provides a high-level grouping for different types of errors.
        */
-      readonly category?: 'ANR' | 'App Hang' | 'Exception'
+      readonly category?: 'ANR' | 'App Hang' | 'Exception' | 'Watchdog Termination' | 'Memory Warning'
       /**
        * Whether the error has been handled manually in the source code or not
        */
@@ -444,17 +454,97 @@ export type RumLongTaskEvent = CommonProperties &
      */
     readonly long_task: {
       /**
-       * UUID of the long task
+       * UUID of the long task or long animation frame
        */
       readonly id?: string
       /**
-       * Duration in ns of the long task
+       * Start time of the long animation frame
+       */
+      readonly start_time?: number
+      /**
+       * Type of the event: long task or long animation frame
+       */
+      readonly entry_type?: 'long-task' | 'long-animation-frame'
+      /**
+       * Duration in ns of the long task or long animation frame
        */
       readonly duration: number
+      /**
+       * Duration in ns for which the animation frame was being blocked
+       */
+      readonly blocking_duration?: number
+      /**
+       * Start time of the rendering cycle, which includes requestAnimationFrame callbacks, style and layout calculation, resize observer and intersection observer callbacks
+       */
+      readonly render_start?: number
+      /**
+       * Start time of the time period spent in style and layout calculations
+       */
+      readonly style_and_layout_start?: number
+      /**
+       * Start time of of the first UI event (mouse/keyboard and so on) to be handled during the course of this frame
+       */
+      readonly first_ui_event_timestamp?: number
       /**
        * Whether this long task is considered a frozen frame
        */
       readonly is_frozen_frame?: boolean
+      /**
+       * A list of long scripts that were executed over the course of the long frame
+       */
+      readonly scripts?: {
+        /**
+         * Duration in ns between startTime and when the subsequent microtask queue has finished processing
+         */
+        readonly duration?: number
+        /**
+         * Duration in ns of the total time spent in 'pausing' synchronous operations (alert, synchronous XHR)
+         */
+        readonly pause_duration?: number
+        /**
+         * Duration in ns of the the total time spent processing forced layout and style inside this function
+         */
+        readonly forced_style_and_layout_duration?: number
+        /**
+         * Time the entry function was invoked
+         */
+        readonly start_time?: number
+        /**
+         * Time after compilation
+         */
+        readonly execution_start?: number
+        /**
+         * The script resource name where available (or empty if not found)
+         */
+        readonly source_url?: string
+        /**
+         * The script function name where available (or empty if not found)
+         */
+        readonly source_function_name?: string
+        /**
+         * The script character position where available (or -1 if not found)
+         */
+        readonly source_char_position?: number
+        /**
+         * Information about the invoker of the script
+         */
+        readonly invoker?: string
+        /**
+         * Type of the invoker of the script
+         */
+        readonly invoker_type?:
+          | 'user-callback'
+          | 'event-listener'
+          | 'resolve-promise'
+          | 'reject-promise'
+          | 'classic-script'
+          | 'module-script'
+        /**
+         * The container (the top-level document, or an <iframe>) the long animation frame occurred in
+         */
+        readonly window_attribution?: string
+        [k: string]: unknown
+      }[]
       [k: string]: unknown
     }
     /**
@@ -539,6 +629,20 @@ export type RumResourceEvent = CommonProperties &
        */
       readonly render_blocking_status?: 'blocking' | 'non-blocking'
       /**
+       * Worker phase properties
+       */
+      readonly worker?: {
+        /**
+         * Duration in nanoseconds of the resource worker phase
+         */
+        readonly duration: number
+        /**
+         * Duration in nanoseconds between start of the request and start of the worker phase
+         */
+        readonly start: number
+        [k: string]: unknown
+      }
+      /**
        * Redirect phase properties
        */
       readonly redirect?: {
@@ -622,6 +726,14 @@ export type RumResourceEvent = CommonProperties &
         readonly start: number
         [k: string]: unknown
       }
+      /**
+       * Network protocol used to fetch the resource (e.g., 'http/1.1', 'h2')
+       */
+      readonly protocol?: string
+      /**
+       * Delivery type of the resource
+       */
+      readonly delivery_type?: 'cache' | 'navigational-prefetch' | 'other'
       /**
        * The provider for this resource
        */
@@ -720,6 +832,14 @@ export type RumViewEvent = CommonProperties &
        */
       readonly loading_time?: number
       /**
+       * Duration in ns from the moment the view was started until all the initial network requests settled
+       */
+      readonly network_settled_time?: number
+      /**
+       * Duration in ns to from the last interaction on previous view to the moment the current view was displayed
+       */
+      readonly interaction_to_next_view_time?: number
+      /**
        * Type of the loading of the view
        */
       readonly loading_type?:
@@ -736,51 +856,51 @@ export type RumViewEvent = CommonProperties &
        */
       readonly time_spent: number
       /**
-       * Duration in ns to the first rendering
+       * Duration in ns to the first rendering (deprecated in favor of `view.performance.fcp.timestamp`)
        */
       readonly first_contentful_paint?: number
       /**
-       * Duration in ns to the largest contentful paint
+       * Duration in ns to the largest contentful paint (deprecated in favor of `view.performance.lcp.timestamp`)
        */
       readonly largest_contentful_paint?: number
       /**
-       * CSS selector path of the largest contentful paint element
+       * CSS selector path of the largest contentful paint element (deprecated in favor of `view.performance.lcp.target_selector`)
        */
       readonly largest_contentful_paint_target_selector?: string
       /**
-       * Duration in ns of the first input event delay
+       * Duration in ns of the first input event delay (deprecated in favor of `view.performance.fid.duration`)
        */
       readonly first_input_delay?: number
       /**
-       * Duration in ns to the first input
+       * Duration in ns to the first input (deprecated in favor of `view.performance.fid.timestamp`)
        */
       readonly first_input_time?: number
       /**
-       * CSS selector path of the first input target element
+       * CSS selector path of the first input target element (deprecated in favor of `view.performance.fid.target_selector`)
        */
       readonly first_input_target_selector?: string
       /**
-       * Longest duration in ns between an interaction and the next paint
+       * Longest duration in ns between an interaction and the next paint (deprecated in favor of `view.performance.inp.duration`)
        */
       readonly interaction_to_next_paint?: number
       /**
-       * Duration in ns between start of the view and start of the INP
+       * Duration in ns between start of the view and start of the INP (deprecated in favor of `view.performance.inp.timestamp`)
        */
       readonly interaction_to_next_paint_time?: number
       /**
-       * CSS selector path of the interacted element corresponding to INP
+       * CSS selector path of the interacted element corresponding to INP (deprecated in favor of `view.performance.inp.target_selector`)
        */
       readonly interaction_to_next_paint_target_selector?: string
       /**
-       * Total layout shift score that occurred on the view
+       * Total layout shift score that occurred on the view (deprecated in favor of `view.performance.cls.score`)
        */
       readonly cumulative_layout_shift?: number
       /**
-       * Duration in ns between start of the view and start of the largest layout shift contributing to CLS
+       * Duration in ns between start of the view and start of the largest layout shift contributing to CLS (deprecated in favor of `view.performance.cls.timestamp`)
        */
       readonly cumulative_layout_shift_time?: number
       /**
-       * CSS selector path of the first element (in document order) of the largest layout shift contributing to CLS
+       * CSS selector path of the first element (in document order) of the largest layout shift contributing to CLS (deprecated in favor of `view.performance.cls.target_selector`)
        */
       readonly cumulative_layout_shift_target_selector?: string
       /**
@@ -937,6 +1057,10 @@ export type RumViewEvent = CommonProperties &
        * The JavaScript refresh rate for React Native
        */
       js_refresh_rate?: RumPerfMetric
+      /**
+       * Performance data. (Web Vitals, etc.)
+       */
+      performance?: ViewPerformanceData
       [k: string]: unknown
     }
     /**
@@ -1166,7 +1290,15 @@ export interface CommonProperties {
   /**
    * The source of this event
    */
-  readonly source?: 'android' | 'ios' | 'browser' | 'flutter' | 'react-native' | 'roku' | 'unity'
+  readonly source?:
+    | 'android'
+    | 'ios'
+    | 'browser'
+    | 'flutter'
+    | 'react-native'
+    | 'roku'
+    | 'unity'
+    | 'kotlin-multiplatform'
   /**
    * View properties
    */
@@ -1205,6 +1337,24 @@ export interface CommonProperties {
      * Email of the user
      */
     readonly email?: string
+    /**
+     * Identifier of the user across sessions
+     */
+    readonly anonymous_id?: string
+    [k: string]: unknown
+  }
+  /**
+   * Account properties
+   */
+  readonly account?: {
+    /**
+     * Identifier of the account
+     */
+    readonly id: string
+    /**
+     * Name of the account
+     */
+    readonly name?: string
     [k: string]: unknown
   }
   /**
@@ -1423,7 +1573,15 @@ export interface ViewContainerSchema {
     /**
      * Source of the parent view
      */
-    readonly source: 'android' | 'ios' | 'browser' | 'flutter' | 'react-native' | 'roku' | 'unity'
+    readonly source:
+      | 'android'
+      | 'ios'
+      | 'browser'
+      | 'flutter'
+      | 'react-native'
+      | 'roku'
+      | 'unity'
+      | 'kotlin-multiplatform'
     [k: string]: unknown
   }
   [k: string]: unknown
@@ -1464,5 +1622,123 @@ export interface RumPerfMetric {
    * The maximum possible value we could see for this metric, if such a max is relevant and can vary from session to session.
    */
   readonly metric_max?: number
+  [k: string]: unknown
+}
+/**
+ * Schema for view-level RUM performance data (Web Vitals, etc.)
+ */
+export interface ViewPerformanceData {
+  /**
+   * Cumulative Layout Shift
+   */
+  readonly cls?: {
+    /**
+     * Total layout shift score that occurred on the view
+     */
+    readonly score: number
+    /**
+     * Timestamp in ns of the largest layout shift contributing to CLS
+     */
+    readonly timestamp?: number
+    /**
+     * CSS selector path of the first element (in document order) of the largest layout shift contributing to CLS
+     */
+    readonly target_selector?: string
+    /**
+     * Bounding client rect of the element before the layout shift
+     */
+    previous_rect?: RumRect
+    /**
+     * Bounding client rect of the element after the layout shift
+     */
+    current_rect?: RumRect
+    [k: string]: unknown
+  }
+  /**
+   * First Contentful Paint
+   */
+  readonly fcp?: {
+    /**
+     * Timestamp in ns of the first rendering
+     */
+    readonly timestamp: number
+    [k: string]: unknown
+  }
+  /**
+   * First Input Delay
+   */
+  readonly fid?: {
+    /**
+     * Duration in ns of the first input event delay
+     */
+    readonly duration: number
+    /**
+     * Timestamp in ns of the first input event
+     */
+    readonly timestamp: number
+    /**
+     * CSS selector path of the first input target element
+     */
+    readonly target_selector?: string
+    [k: string]: unknown
+  }
+  /**
+   * Interaction to Next Paint
+   */
+  readonly inp?: {
+    /**
+     * Longest duration in ns between an interaction and the next paint
+     */
+    readonly duration: number
+    /**
+     * Timestamp in ns of the start of the INP interaction
+     */
+    readonly timestamp?: number
+    /**
+     * CSS selector path of the interacted element for the INP interaction
+     */
+    readonly target_selector?: string
+    [k: string]: unknown
+  }
+  /**
+   * Largest Contentful Paint
+   */
+  readonly lcp?: {
+    /**
+     * Timestamp in ns of the largest contentful paint
+     */
+    readonly timestamp: number
+    /**
+     * CSS selector path of the largest contentful paint element
+     */
+    readonly target_selector?: string
+    /**
+     * URL of the largest contentful paint element
+     */
+    readonly resource_url?: string
+    [k: string]: unknown
+  }
+  [k: string]: unknown
+}
+/**
+ * Schema for DOMRect-like rectangles describing an element's bounding client rect
+ */
+export interface RumRect {
+  /**
+   * The x coordinate of the element's origin
+   */
+  readonly x: number
+  /**
+   * The y coordinate of the element's origin
+   */
+  readonly y: number
+  /**
+   * The element's width
+   */
+  readonly width: number
+  /**
+   * The element's height
+   */
+  readonly height: number
   [k: string]: unknown
 }

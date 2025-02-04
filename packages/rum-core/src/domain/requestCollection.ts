@@ -20,12 +20,13 @@ import type { RumConfiguration } from './configuration'
 import type { LifeCycle } from './lifeCycle'
 import { LifeCycleEventType } from './lifeCycle'
 import { isAllowedRequestUrl } from './resource/resourceUtils'
-import type { TraceIdentifier, Tracer } from './tracing/tracer'
+import type { Tracer } from './tracing/tracer'
 import { startTracer } from './tracing/tracer'
+import type { SpanIdentifier, TraceIdentifier } from './tracing/identifier'
 
 export interface CustomContext {
   requestIndex: number
-  spanId?: TraceIdentifier
+  spanId?: SpanIdentifier
   traceId?: TraceIdentifier
   traceSampled?: boolean
 }
@@ -47,7 +48,7 @@ export interface RequestCompleteEvent {
   responseType?: string
   startClocks: ClocksState
   duration: Duration
-  spanId?: TraceIdentifier
+  spanId?: SpanIdentifier
   traceId?: TraceIdentifier
   traceSampled?: boolean
   xhr?: XMLHttpRequest
@@ -68,13 +69,13 @@ export function startRequestCollection(
 ) {
   const tracer = startTracer(configuration, sessionManager)
   trackXhr(lifeCycle, configuration, tracer)
-  trackFetch(lifeCycle, configuration, tracer)
+  trackFetch(lifeCycle, tracer)
 }
 
 export function trackXhr(lifeCycle: LifeCycle, configuration: RumConfiguration, tracer: Tracer) {
   const subscription = initXhrObservable(configuration).subscribe((rawContext) => {
     const context = rawContext as RumXhrStartContext | RumXhrCompleteContext
-    if (!isAllowedRequestUrl(configuration, context.url)) {
+    if (!isAllowedRequestUrl(context.url)) {
       return
     }
 
@@ -112,10 +113,10 @@ export function trackXhr(lifeCycle: LifeCycle, configuration: RumConfiguration, 
   return { stop: () => subscription.unsubscribe() }
 }
 
-export function trackFetch(lifeCycle: LifeCycle, configuration: RumConfiguration, tracer: Tracer) {
+export function trackFetch(lifeCycle: LifeCycle, tracer: Tracer) {
   const subscription = initFetchObservable().subscribe((rawContext) => {
     const context = rawContext as RumFetchResolveContext | RumFetchStartContext
-    if (!isAllowedRequestUrl(configuration, context.url)) {
+    if (!isAllowedRequestUrl(context.url)) {
       return
     }
 

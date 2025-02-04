@@ -1,26 +1,19 @@
 'use strict'
 
 const path = require('path')
-const { printLog, runMain } = require('../lib/execution-utils')
+const { printLog, runMain } = require('../lib/executionUtils')
 const { command } = require('../lib/command')
-const { getBuildEnvValue } = require('../lib/build-env')
+const { getBuildEnvValue } = require('../lib/buildEnv')
 const { getTelemetryOrgApiKey } = require('../lib/secrets')
-const { siteByDatacenter } = require('../lib/datadog-sites')
-const {
-  buildRootUploadPath,
-  buildDatacenterUploadPath,
-  buildBundleFolder,
-  buildBundleFileName,
-  packages,
-} = require('./lib/deployment-utils')
+const { siteByDatacenter } = require('../lib/datadogSites')
+const { forEachFile } = require('../lib/filesUtils')
+const { buildRootUploadPath, buildDatacenterUploadPath, buildBundleFolder, packages } = require('./lib/deploymentUtils')
 
 /**
  * Upload source maps to datadog
  * Usage:
  * BUILD_MODE=canary|release node upload-source-maps.js staging|canary|vXXX root,us1,eu1,...
  */
-const version = process.argv[2]
-let uploadPathTypes = process.argv[3].split(',')
 
 function getSitesByVersion(version) {
   switch (version) {
@@ -33,39 +26,58 @@ function getSitesByVersion(version) {
   }
 }
 
-runMain(() => {
+if (require.main === module) {
+  const version = process.argv[2]
+  let uploadPathTypes = process.argv[3].split(',')
+
+  runMain(async () => {
+    await main(version, uploadPathTypes)
+  })
+}
+
+async function main(version, uploadPathTypes) {
   for (const { packageName, service } of packages) {
-    const bundleFolder = buildBundleFolder(packageName)
-    for (const uploadPathType of uploadPathTypes) {
-      let sites
-      let uploadPath
-      if (uploadPathType === 'root') {
-        sites = getSitesByVersion(version)
-        uploadPath = buildRootUploadPath(packageName, version)
-        renameFilesWithVersionSuffix(packageName, bundleFolder)
-      } else {
-        sites = [siteByDatacenter[uploadPathType]]
-        uploadPath = buildDatacenterUploadPath(uploadPathType, packageName, version)
-      }
-      const prefix = path.dirname(`/${uploadPath}`)
-      uploadSourceMaps(packageName, service, prefix, bundleFolder, sites)
-    }
+    await uploadSourceMaps(packageName, service, version, uploadPathTypes)
   }
   printLog('Source maps upload done.')
-})
+}
 
-function renameFilesWithVersionSuffix(packageName, bundleFolder) {
-  // The datadog-ci CLI is taking a directory as an argument. It will scan every source map files in
-  // it and upload those along with the minified bundle. The file names must match the one from the
-  // CDN, thus we need to rename the bundles with the right suffix.
-  for (const extension of ['js', 'js.map']) {
-    const bundlePath = `${bundleFolder}/${buildBundleFileName(packageName, extension)}`
-    const uploadPath = `${bundleFolder}/${buildRootUploadPath(packageName, version, extension)}`
-    command`mv ${bundlePath} ${uploadPath}`.run()
+async function uploadSourceMaps(packageName, service, version, uploadPathTypes) {
+  const bundleFolder = buildBundleFolder(packageName)
+
+  for (const uploadPathType of uploadPathTypes) {
+    let sites
+    let uploadPath
+    if (uploadPathType === 'root') {
+      sites = getSitesByVersion(version)
+      uploadPath = buildRootUploadPath(packageName, version)
+      await renameFilesWithVersionSuffix(bundleFolder, version)
+    } else {
+      sites = [siteByDatacenter[uploadPathType]]
+      uploadPath = buildDatacenterUploadPath(uploadPathType, packageName, version)
+    }
+    const prefix = path.dirname(`/${uploadPath}`)
+    uploadToDatadog(packageName, service, prefix, bundleFolder, sites)
   }
 }
 
-function uploadSourceMaps(packageName, service, prefix, bundleFolder, sites) {
+async function renameFilesWithVersionSuffix(bundleFolder, version) {
+  // The datadog-ci CLI is taking a directory as an argument. It will scan every source map files in
+  // it and upload those along with the minified bundle. The file names must match the one from the
+  // CDN, thus we need to rename the bundles with the right suffix.
+  await forEachFile(bundleFolder, (bundlePath) => {
+    const uploadPath = buildRootUploadPath(bundlePath, version)
+
+    if (bundlePath === uploadPath) {
+      return
+    }
+
+    console.log(`Renaming ${bundlePath} to ${uploadPath}`)
+    command`mv ${bundlePath} ${uploadPath}`.run()
+  })
+}
+
+function uploadToDatadog(packageName, service, prefix, bundleFolder, sites) {
   for (const site of sites) {
     printLog(`Uploading ${packageName} source maps with prefix ${prefix} for ${site}...`)
 
@@ -83,4 +95,8 @@ function uploadSourceMaps(packageName, service, prefix, bundleFolder, sites) {
       })
       .run()
   }
+}
+
+module.exports = {
+  main,
 }

@@ -2,7 +2,6 @@ import type { RelativeTime } from '@datadog/browser-core'
 import {
   STORAGE_POLL_DELAY,
   SESSION_STORE_KEY,
-  getCookie,
   setCookie,
   stopSessionManager,
   ONE_SECOND,
@@ -10,9 +9,10 @@ import {
   relativeNow,
   createTrackingConsentState,
   TrackingConsent,
+  SessionPersistence,
 } from '@datadog/browser-core'
 import type { Clock } from '@datadog/browser-core/test'
-import { createNewEvent, expireCookie, mockClock } from '@datadog/browser-core/test'
+import { createNewEvent, expireCookie, getSessionState, mockClock } from '@datadog/browser-core/test'
 
 import type { LogsConfiguration } from './configuration'
 import {
@@ -41,15 +41,15 @@ describe('logs session manager', () => {
   it('when tracked should store tracking type and session id', () => {
     startLogsSessionManagerWithDefaults()
 
-    expect(getCookie(SESSION_STORE_KEY)).toContain(`${LOGS_SESSION_KEY}=${LoggerTrackingType.TRACKED}`)
-    expect(getCookie(SESSION_STORE_KEY)).toMatch(/id=[a-f0-9-]+/)
+    expect(getSessionState(SESSION_STORE_KEY).id).toMatch(/[a-f0-9-]+/)
+    expect(getSessionState(SESSION_STORE_KEY)[LOGS_SESSION_KEY]).toBe(LoggerTrackingType.TRACKED)
   })
 
   it('when not tracked should store tracking type', () => {
     startLogsSessionManagerWithDefaults({ configuration: { sessionSampleRate: 0 } })
 
-    expect(getCookie(SESSION_STORE_KEY)).toContain(`${LOGS_SESSION_KEY}=${LoggerTrackingType.NOT_TRACKED}`)
-    expect(getCookie(SESSION_STORE_KEY)).not.toContain('isExpired=1')
+    expect(getSessionState(SESSION_STORE_KEY)[LOGS_SESSION_KEY]).toBe(LoggerTrackingType.NOT_TRACKED)
+    expect(getSessionState(SESSION_STORE_KEY).isExpired).toBeUndefined()
   })
 
   it('when tracked should keep existing tracking type and session id', () => {
@@ -57,8 +57,8 @@ describe('logs session manager', () => {
 
     startLogsSessionManagerWithDefaults()
 
-    expect(getCookie(SESSION_STORE_KEY)).toContain(`${LOGS_SESSION_KEY}=${LoggerTrackingType.TRACKED}`)
-    expect(getCookie(SESSION_STORE_KEY)).toContain('id=abcdef')
+    expect(getSessionState(SESSION_STORE_KEY).id).toBe('abcdef')
+    expect(getSessionState(SESSION_STORE_KEY)[LOGS_SESSION_KEY]).toBe(LoggerTrackingType.TRACKED)
   })
 
   it('when not tracked should keep existing tracking type', () => {
@@ -66,20 +66,20 @@ describe('logs session manager', () => {
 
     startLogsSessionManagerWithDefaults()
 
-    expect(getCookie(SESSION_STORE_KEY)).toContain(`${LOGS_SESSION_KEY}=${LoggerTrackingType.NOT_TRACKED}`)
+    expect(getSessionState(SESSION_STORE_KEY)[LOGS_SESSION_KEY]).toBe(LoggerTrackingType.NOT_TRACKED)
   })
 
   it('should renew on activity after expiration', () => {
     startLogsSessionManagerWithDefaults()
 
     expireCookie()
-    expect(getCookie(SESSION_STORE_KEY)).toBe('isExpired=1')
+    expect(getSessionState(SESSION_STORE_KEY).isExpired).toBe('1')
     clock.tick(STORAGE_POLL_DELAY)
 
     document.body.dispatchEvent(createNewEvent(DOM_EVENT.CLICK))
 
-    expect(getCookie(SESSION_STORE_KEY)).toMatch(/id=[a-f0-9-]+/)
-    expect(getCookie(SESSION_STORE_KEY)).toContain(`${LOGS_SESSION_KEY}=${LoggerTrackingType.TRACKED}`)
+    expect(getSessionState(SESSION_STORE_KEY).id).toMatch(/[a-f0-9-]+/)
+    expect(getSessionState(SESSION_STORE_KEY)[LOGS_SESSION_KEY]).toBe(LoggerTrackingType.TRACKED)
   })
 
   describe('findTrackedSession', () => {
@@ -128,7 +128,7 @@ describe('logs session manager', () => {
     return startLogsSessionManager(
       {
         sessionSampleRate: 100,
-        sessionStoreStrategyType: { type: 'Cookie', cookieOptions: {} },
+        sessionStoreStrategyType: { type: SessionPersistence.COOKIE, cookieOptions: {} },
         ...configuration,
       } as LogsConfiguration,
       createTrackingConsentState(TrackingConsent.GRANTED)

@@ -1,4 +1,12 @@
-import type { Duration, ClocksState, TimeStamp, Subscription, RelativeTime } from '@datadog/browser-core'
+import type {
+  Duration,
+  ClocksState,
+  TimeStamp,
+  Subscription,
+  RelativeTime,
+  Context,
+  ContextValue,
+} from '@datadog/browser-core'
 import {
   noop,
   PageExitReason,
@@ -16,11 +24,10 @@ import {
   clearInterval,
   setTimeout,
   Observable,
+  createContextManager,
 } from '@datadog/browser-core'
-
 import type { ViewCustomTimings } from '../../rawRumEvent.types'
 import { ViewLoadingType } from '../../rawRumEvent.types'
-
 import type { LifeCycle } from '../lifeCycle'
 import { LifeCycleEventType } from '../lifeCycle'
 import type { EventCounts } from '../trackEventCounts'
@@ -37,6 +44,7 @@ export interface ViewEvent {
   name?: string
   service?: string
   version?: string
+  context?: Context
   location: Readonly<Location>
   commonViewMetrics: CommonViewMetrics
   initialViewMetrics: InitialViewMetrics
@@ -55,6 +63,14 @@ export interface ViewCreatedEvent {
   name?: string
   service?: string
   version?: string
+  context?: Context
+  startClocks: ClocksState
+}
+
+export interface BeforeViewUpdateEvent {
+  id: string
+  name?: string
+  context?: Context
   startClocks: ClocksState
 }
 
@@ -77,12 +93,14 @@ export interface ViewOptions {
   name?: string
   service?: RumInitConfiguration['service']
   version?: RumInitConfiguration['version']
+  context?: Context
 }
 
 export function trackViews(
   location: Location,
   lifeCycle: LifeCycle,
   domMutationObservable: Observable<void>,
+  windowOpenObservable: Observable<void>,
   configuration: RumConfiguration,
   locationChangeObservable: Observable<LocationChange>,
   areViewsTrackedAutomatically: boolean,
@@ -102,6 +120,7 @@ export function trackViews(
     const newlyCreatedView = newView(
       lifeCycle,
       domMutationObservable,
+      windowOpenObservable,
       configuration,
       location,
       loadingType,
@@ -122,6 +141,7 @@ export function trackViews(
         name: currentView.name,
         service: currentView.service,
         version: currentView.version,
+        context: currentView.contextManager.getContext(),
       })
     })
 
@@ -154,8 +174,21 @@ export function trackViews(
       currentView.end({ endClocks: startClocks })
       currentView = startNewView(ViewLoadingType.ROUTE_CHANGE, startClocks, options)
     },
+    setViewContext: (context: Context) => {
+      currentView.contextManager.setContext(context)
+    },
+    setViewContextProperty: (key: string, value: ContextValue) => {
+      currentView.contextManager.setContextProperty(key, value)
+    },
+    setViewName: (name: string) => {
+      currentView.setViewName(name)
+    },
+    getViewContext: () => currentView.contextManager.getContext(),
+
     stop: () => {
-      locationChangeSubscription?.unsubscribe()
+      if (locationChangeSubscription) {
+        locationChangeSubscription.unsubscribe()
+      }
       currentView.end()
       activeViews.forEach((view) => view.stop())
     },
@@ -165,6 +198,7 @@ export function trackViews(
 function newView(
   lifeCycle: LifeCycle,
   domMutationObservable: Observable<void>,
+  windowOpenObservable: Observable<void>,
   configuration: RumConfiguration,
   initialLocation: Location,
   loadingType: ViewLoadingType,
@@ -178,15 +212,23 @@ function newView(
   let documentVersion = 0
   let endClocks: ClocksState | undefined
   const location = shallowClone(initialLocation)
+  const contextManager = createContextManager()
 
   let sessionIsActive = true
   let name: string | undefined
   let service: string | undefined
   let version: string | undefined
+  let context: Context | undefined
+
   if (viewOptions) {
     name = viewOptions.name
     service = viewOptions.service || undefined
     version = viewOptions.version || undefined
+    if (viewOptions.context) {
+      context = viewOptions.context
+      // use ContextManager to update the context so we always sanitize it
+      contextManager.setContext(context)
+    }
   }
 
   const viewCreatedEvent = {
@@ -195,18 +237,15 @@ function newView(
     startClocks,
     service,
     version,
+    context,
   }
   lifeCycle.notify(LifeCycleEventType.BEFORE_VIEW_CREATED, viewCreatedEvent)
   lifeCycle.notify(LifeCycleEventType.VIEW_CREATED, viewCreatedEvent)
 
   // Update the view every time the measures are changing
-  const { throttled: scheduleViewUpdate, cancel: cancelScheduleViewUpdate } = throttle(
-    triggerViewUpdate,
-    THROTTLE_VIEW_UPDATE_PERIOD,
-    {
-      leading: false,
-    }
-  )
+  const { throttled, cancel: cancelScheduleViewUpdate } = throttle(triggerViewUpdate, THROTTLE_VIEW_UPDATE_PERIOD, {
+    leading: false,
+  })
 
   const {
     setLoadEvent,
@@ -217,6 +256,7 @@ function newView(
   } = trackCommonViewMetrics(
     lifeCycle,
     domMutationObservable,
+    windowOpenObservable,
     configuration,
     scheduleViewUpdate,
     loadingType,
@@ -225,7 +265,7 @@ function newView(
 
   const { stop: stopInitialViewMetricsTracking, initialViewMetrics } =
     loadingType === ViewLoadingType.INITIAL_LOAD
-      ? trackInitialViewMetrics(lifeCycle, configuration, setLoadEvent, scheduleViewUpdate)
+      ? trackInitialViewMetrics(configuration, setLoadEvent, scheduleViewUpdate)
       : { stop: noop, initialViewMetrics: {} as InitialViewMetrics }
 
   const { stop: stopEventCountsTracking, eventCounts } = trackViewEventCounts(lifeCycle, id, scheduleViewUpdate)
@@ -236,11 +276,29 @@ function newView(
   // Initial view update
   triggerViewUpdate()
 
+  // View context update should always be throttled
+  contextManager.changeObservable.subscribe(scheduleViewUpdate)
+
+  function triggerBeforeViewUpdate() {
+    lifeCycle.notify(LifeCycleEventType.BEFORE_VIEW_UPDATED, {
+      id,
+      name,
+      context: contextManager.getContext(),
+      startClocks,
+    })
+  }
+
+  function scheduleViewUpdate() {
+    triggerBeforeViewUpdate()
+    throttled()
+  }
+
   function triggerViewUpdate() {
     cancelScheduleViewUpdate()
+    triggerBeforeViewUpdate()
+
     documentVersion += 1
     const currentEnd = endClocks === undefined ? timeStampNow() : endClocks.timeStamp
-
     lifeCycle.notify(LifeCycleEventType.VIEW_UPDATED, {
       customTimings,
       documentVersion,
@@ -248,6 +306,7 @@ function newView(
       name,
       service,
       version,
+      context: contextManager.getContext(),
       loadingType,
       location,
       startClocks,
@@ -261,9 +320,12 @@ function newView(
   }
 
   return {
-    name,
+    get name() {
+      return name
+    },
     service,
     version,
+    contextManager,
     stopObservable,
     end(options: { endClocks?: ClocksState; sessionIsActive?: boolean } = {}) {
       if (endClocks) {
@@ -296,6 +358,10 @@ function newView(
       const relativeTime = looksLikeRelativeTime(time) ? time : elapsed(startClocks.timeStamp, time)
       customTimings[sanitizeTiming(name)] = relativeTime
       scheduleViewUpdate()
+    },
+    setViewName(updatedName: string) {
+      name = updatedName
+      triggerViewUpdate()
     },
   }
 }

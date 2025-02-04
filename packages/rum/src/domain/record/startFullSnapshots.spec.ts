@@ -1,8 +1,8 @@
 import type { RumConfiguration, ViewCreatedEvent } from '@datadog/browser-rum-core'
 import { LifeCycle, LifeCycleEventType } from '@datadog/browser-rum-core'
 import type { TimeStamp } from '@datadog/browser-core'
-import { isIE, noop } from '@datadog/browser-core'
-import type { BrowserRecord } from '../../types'
+import { noop } from '@datadog/browser-core'
+import { RecordType, type BrowserRecord } from '../../types'
 import { startFullSnapshots } from './startFullSnapshots'
 import { createElementsScrollPositions } from './elementsScrollPositions'
 import type { ShadowRootsController } from './shadowRootsController'
@@ -13,10 +13,6 @@ describe('startFullSnapshots', () => {
   let fullSnapshotCallback: jasmine.Spy<(records: BrowserRecord[]) => void>
 
   beforeEach(() => {
-    if (isIE()) {
-      pending('IE not supported')
-    }
-
     lifeCycle = new LifeCycle()
     fullSnapshotCallback = jasmine.createSpy()
     startFullSnapshots(
@@ -50,5 +46,58 @@ describe('startFullSnapshots', () => {
     expect(records[0].timestamp).toEqual(1)
     expect(records[1].timestamp).toEqual(1)
     expect(records[2].timestamp).toEqual(1)
+  })
+
+  it('full snapshot records should contain Meta, Focus, FullSnapshot', () => {
+    const records = fullSnapshotCallback.calls.mostRecent().args[0]
+
+    expect(records).toEqual(
+      jasmine.arrayContaining([
+        {
+          data: {
+            height: jasmine.any(Number),
+            href: window.location.href,
+            width: jasmine.any(Number),
+          },
+          type: RecordType.Meta,
+          timestamp: jasmine.any(Number),
+        },
+        {
+          data: {
+            has_focus: document.hasFocus(),
+          },
+          type: RecordType.Focus,
+          timestamp: jasmine.any(Number),
+        },
+        {
+          data: {
+            node: jasmine.any(Object),
+            initialOffset: {
+              left: jasmine.any(Number),
+              top: jasmine.any(Number),
+            },
+          },
+          type: RecordType.FullSnapshot,
+          timestamp: jasmine.any(Number),
+        },
+      ])
+    )
+  })
+
+  it('full snapshot records should contain visualViewport when supported', () => {
+    if (!window.visualViewport) {
+      pending('visualViewport not supported')
+    }
+    const records = fullSnapshotCallback.calls.mostRecent().args[0]
+
+    expect(records).toEqual(
+      jasmine.arrayContaining([
+        {
+          data: jasmine.any(Object),
+          type: RecordType.VisualViewport,
+          timestamp: jasmine.any(Number),
+        },
+      ])
+    )
   })
 })

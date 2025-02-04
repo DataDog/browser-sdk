@@ -1,20 +1,17 @@
-import { ExperimentalFeature, type Duration, type RelativeTime, type ServerDuration } from '@datadog/browser-core'
-import { SPEC_ENDPOINTS, mockExperimentalFeatures } from '@datadog/browser-core/test'
-import { RumPerformanceEntryType, type RumPerformanceResourceTiming } from '../../browser/performanceCollection'
-import type { RumConfiguration } from '../configuration'
-import { validateAndBuildRumConfiguration } from '../configuration'
+import { type Duration, type RelativeTime, type ServerDuration } from '@datadog/browser-core'
+import { RumPerformanceEntryType, type RumPerformanceResourceTiming } from '../../browser/performanceObservable'
 import {
   MAX_ATTRIBUTE_VALUE_CHAR_LENGTH,
-  computePerformanceResourceDetails,
-  computePerformanceResourceDuration,
-  computeResourceKind,
+  computeResourceEntryDetails,
+  computeResourceEntryDuration,
+  computeResourceEntryType,
   isAllowedRequestUrl,
   isLongDataUrl,
   sanitizeDataUrl,
 } from './resourceUtils'
 
 function generateResourceWith(overrides: Partial<RumPerformanceResourceTiming>) {
-  const completeTiming: Partial<RumPerformanceResourceTiming> = {
+  const completeTiming: RumPerformanceResourceTiming = {
     connectEnd: 17 as RelativeTime,
     connectStart: 15 as RelativeTime,
     domainLookupEnd: 14 as RelativeTime,
@@ -30,12 +27,20 @@ function generateResourceWith(overrides: Partial<RumPerformanceResourceTiming>) 
     responseStart: 50 as RelativeTime,
     secureConnectionStart: 16 as RelativeTime,
     startTime: 10 as RelativeTime,
+    workerStart: 0 as RelativeTime,
+
+    initiatorType: 'script',
+    decodedBodySize: 0,
+    encodedBodySize: 0,
+    transferSize: 0,
+    toJSON: () => ({ ...completeTiming, toJSON: undefined }),
+
     ...overrides,
   }
-  return completeTiming as RumPerformanceResourceTiming
+  return completeTiming
 }
 
-describe('computeResourceKind', () => {
+describe('computeResourceEntryType', () => {
   ;[
     {
       description: 'file extension with query params',
@@ -72,16 +77,16 @@ describe('computeResourceKind', () => {
     }) => {
       it(`should compute resource kind: ${description}`, () => {
         const entry = generateResourceWith({ initiatorType, name })
-        expect(computeResourceKind(entry)).toEqual(expected)
+        expect(computeResourceEntryType(entry)).toEqual(expected)
       })
     }
   )
 })
 
-describe('computePerformanceResourceDetails', () => {
+describe('computeResourceEntryDetails', () => {
   it('should not compute entry without detailed timings', () => {
     expect(
-      computePerformanceResourceDetails(
+      computeResourceEntryDetails(
         generateResourceWith({
           connectEnd: 0 as RelativeTime,
           connectStart: 0 as RelativeTime,
@@ -97,8 +102,8 @@ describe('computePerformanceResourceDetails', () => {
     ).toBeUndefined()
   })
 
-  it('should compute timings from entry', () => {
-    expect(computePerformanceResourceDetails(generateResourceWith({}))).toEqual({
+  it('should compute details from entry', () => {
+    expect(computeResourceEntryDetails(generateResourceWith({}))).toEqual({
       connect: { start: 5e6 as ServerDuration, duration: 2e6 as ServerDuration },
       dns: { start: 3e6 as ServerDuration, duration: 1e6 as ServerDuration },
       download: { start: 40e6 as ServerDuration, duration: 10e6 as ServerDuration },
@@ -108,9 +113,18 @@ describe('computePerformanceResourceDetails', () => {
     })
   })
 
+  it('should compute worker timing when workerStart < fetchStart', () => {
+    const resourceTiming = generateResourceWith({
+      workerStart: 11 as RelativeTime,
+      fetchStart: 12 as RelativeTime,
+    })
+    const details = computeResourceEntryDetails(resourceTiming)
+    expect(details!.worker).toEqual({ start: 1e6 as ServerDuration, duration: 1e6 as ServerDuration })
+  })
+
   it('should not compute redirect timing when no redirect', () => {
     expect(
-      computePerformanceResourceDetails(
+      computeResourceEntryDetails(
         generateResourceWith({
           fetchStart: 10 as RelativeTime,
           redirectEnd: 0 as RelativeTime,
@@ -128,7 +142,7 @@ describe('computePerformanceResourceDetails', () => {
 
   it('should not compute dns timing when persistent connection or cache', () => {
     expect(
-      computePerformanceResourceDetails(
+      computeResourceEntryDetails(
         generateResourceWith({
           domainLookupEnd: 12 as RelativeTime,
           domainLookupStart: 12 as RelativeTime,
@@ -146,7 +160,7 @@ describe('computePerformanceResourceDetails', () => {
 
   it('should not compute ssl timing when no secure connection', () => {
     expect(
-      computePerformanceResourceDetails(
+      computeResourceEntryDetails(
         generateResourceWith({
           secureConnectionStart: 0 as RelativeTime,
         })
@@ -162,7 +176,7 @@ describe('computePerformanceResourceDetails', () => {
 
   it('should not compute ssl timing when persistent connection', () => {
     expect(
-      computePerformanceResourceDetails(
+      computeResourceEntryDetails(
         generateResourceWith({
           connectEnd: 12 as RelativeTime,
           connectStart: 12 as RelativeTime,
@@ -181,7 +195,7 @@ describe('computePerformanceResourceDetails', () => {
 
   it('should not compute connect timing when persistent connection', () => {
     expect(
-      computePerformanceResourceDetails(
+      computeResourceEntryDetails(
         generateResourceWith({
           connectEnd: 12 as RelativeTime,
           connectStart: 12 as RelativeTime,
@@ -199,37 +213,31 @@ describe('computePerformanceResourceDetails', () => {
   })
   ;[
     {
-      timing: 'connect' as const,
       reason: 'connectStart > connectEnd',
       connectEnd: 10 as RelativeTime,
       connectStart: 20 as RelativeTime,
     },
     {
-      timing: 'dns' as const,
       reason: 'domainLookupStart > domainLookupEnd',
       domainLookupEnd: 10 as RelativeTime,
       domainLookupStart: 20 as RelativeTime,
     },
     {
-      timing: 'download' as const,
       reason: 'responseStart > responseEnd',
       responseEnd: 10 as RelativeTime,
       responseStart: 20 as RelativeTime,
     },
     {
-      timing: 'first_byte' as const,
       reason: 'requestStart > responseStart',
       requestStart: 20 as RelativeTime,
       responseStart: 10 as RelativeTime,
     },
     {
-      timing: 'redirect' as const,
       reason: 'redirectStart > redirectEnd',
       redirectEnd: 15 as RelativeTime,
       redirectStart: 20 as RelativeTime,
     },
     {
-      timing: 'ssl' as const,
       connectEnd: 10 as RelativeTime,
       reason: 'secureConnectionStart > connectEnd',
       secureConnectionStart: 20 as RelativeTime,
@@ -240,22 +248,15 @@ describe('computePerformanceResourceDetails', () => {
       fetchStart: 10 as RelativeTime,
       reason: 'negative timing start',
     },
-  ].forEach(({ reason, timing, ...overrides }) => {
-    it(`[without tolerant-resource-timings] should not compute entry when ${reason}`, () => {
-      expect(computePerformanceResourceDetails(generateResourceWith(overrides))).toBeUndefined()
+  ].forEach(({ reason, ...overrides }) => {
+    it(`should not compute entry when ${reason}`, () => {
+      expect(computeResourceEntryDetails(generateResourceWith(overrides))).toBeUndefined()
     })
-
-    if (timing) {
-      it(`[with tolerant-resource-timings] should not include the '${timing}' timing when ${reason}`, () => {
-        mockExperimentalFeatures([ExperimentalFeature.TOLERANT_RESOURCE_TIMINGS])
-        expect(computePerformanceResourceDetails(generateResourceWith(overrides))![timing]).toBeUndefined()
-      })
-    }
   })
 
   it('should allow really fast document resource', () => {
     expect(
-      computePerformanceResourceDetails(
+      computeResourceEntryDetails(
         generateResourceWith({
           connectEnd: 10 as RelativeTime,
           connectStart: 10 as RelativeTime,
@@ -277,38 +278,28 @@ describe('computePerformanceResourceDetails', () => {
   })
 })
 
-describe('computePerformanceResourceDuration', () => {
+describe('computeResourceEntryDuration', () => {
   it('should return the entry duration', () => {
-    expect(computePerformanceResourceDuration(generateResourceWith({}))).toBe(50e6 as ServerDuration)
+    expect(computeResourceEntryDuration(generateResourceWith({}))).toBe(50e6 as ServerDuration)
   })
 
   it('should use other available timing if the duration is 0', () => {
-    expect(computePerformanceResourceDuration(generateResourceWith({ duration: 0 as Duration }))).toBe(
-      50e6 as ServerDuration
-    )
+    expect(computeResourceEntryDuration(generateResourceWith({ duration: 0 as Duration }))).toBe(50e6 as ServerDuration)
   })
 })
 
 describe('shouldTrackResource', () => {
-  let configuration: RumConfiguration
-
-  beforeEach(() => {
-    configuration = {
-      ...validateAndBuildRumConfiguration({ clientToken: 'xxx', applicationId: 'xxx' })!,
-      ...SPEC_ENDPOINTS,
-    }
-  })
-
+  const intakeParameters = 'ddsource=browser&ddtags=sdk_version'
   it('should exclude requests on intakes endpoints', () => {
-    expect(isAllowedRequestUrl(configuration, 'https://rum-intake.com/v1/input/abcde?foo=bar')).toBe(false)
+    expect(isAllowedRequestUrl(`https://rum-intake.com/v1/input/abcde?${intakeParameters}`)).toBe(false)
   })
 
   it('should exclude requests on intakes endpoints with different client parameters', () => {
-    expect(isAllowedRequestUrl(configuration, 'https://rum-intake.com/v1/input/wxyz?foo=qux')).toBe(false)
+    expect(isAllowedRequestUrl(`https://rum-intake.com/v1/input/wxyz?${intakeParameters}`)).toBe(false)
   })
 
   it('should allow requests on non intake domains', () => {
-    expect(isAllowedRequestUrl(configuration, 'https://my-domain.com/hello?a=b')).toBe(true)
+    expect(isAllowedRequestUrl('https://my-domain.com/hello?a=b')).toBe(true)
   })
 })
 

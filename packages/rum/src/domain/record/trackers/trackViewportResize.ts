@@ -5,7 +5,7 @@ import { IncrementalSource, RecordType } from '../../../types'
 import type { BrowserIncrementalSnapshotRecord, ViewportResizeData, VisualViewportRecord } from '../../../types'
 import { getVisualViewport } from '../viewports'
 import { assembleIncrementalSnapshot } from '../assembly'
-import type { Tracker } from './types'
+import type { Tracker } from './tracker.types'
 
 const VISUAL_VIEWPORT_OBSERVER_THRESHOLD = 200
 
@@ -28,7 +28,7 @@ export function trackViewportResize(
   }
 }
 
-export function tackVisualViewportResize(
+export function trackVisualViewportResize(
   configuration: RumConfiguration,
   visualViewportResizeCb: VisualViewportResizeCallback
 ): Tracker {

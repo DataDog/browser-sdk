@@ -1,13 +1,15 @@
 import type { RawError, Subscription } from '@datadog/browser-core'
 import { ErrorHandling, ErrorSource, Observable, clocksNow } from '@datadog/browser-core'
-import type { Clock } from '@datadog/browser-core/test'
+import type { Clock, MockCspEventListener, MockReportingObserver } from '@datadog/browser-core/test'
 import {
   FAKE_CSP_VIOLATION_EVENT,
   FAKE_REPORT,
   mockClock,
-  stubCspEventListener,
-  stubReportingObserver,
+  mockCspEventListener,
+  mockReportingObserver,
+  registerCleanupTask,
 } from '@datadog/browser-core/test'
+import { mockRumConfiguration } from '../../../test'
 import type { RumConfiguration } from '../configuration'
 import { trackReportError } from './trackReportError'
 
@@ -16,29 +18,30 @@ describe('trackReportError', () => {
   let subscription: Subscription
   let notifyLog: jasmine.Spy
   let clock: Clock
-  let reportingObserverStub: { raiseReport(type: string): void; reset(): void }
-  let cspEventListenerStub: ReturnType<typeof stubCspEventListener>
+  let reportingObserver: MockReportingObserver
+  let cspEventListener: MockCspEventListener
   let configuration: RumConfiguration
 
   beforeEach(() => {
-    configuration = {} as RumConfiguration
+    if (!window.ReportingObserver) {
+      pending('ReportingObserver not supported')
+    }
+    configuration = mockRumConfiguration()
     errorObservable = new Observable()
     notifyLog = jasmine.createSpy('notifyLog')
-    reportingObserverStub = stubReportingObserver()
+    reportingObserver = mockReportingObserver()
     subscription = errorObservable.subscribe(notifyLog)
-    cspEventListenerStub = stubCspEventListener()
     clock = mockClock()
-  })
-
-  afterEach(() => {
-    subscription.unsubscribe()
-    clock.cleanup()
-    reportingObserverStub.reset()
+    registerCleanupTask(() => {
+      subscription.unsubscribe()
+      clock.cleanup()
+    })
+    cspEventListener = mockCspEventListener()
   })
 
   it('should track reports', () => {
     trackReportError(configuration, errorObservable)
-    reportingObserverStub.raiseReport('intervention')
+    reportingObserver.raiseReport('intervention')
 
     expect(notifyLog).toHaveBeenCalledWith({
       startClocks: clocksNow(),
@@ -53,7 +56,7 @@ describe('trackReportError', () => {
 
   it('should track securitypolicyviolation', () => {
     trackReportError(configuration, errorObservable)
-    cspEventListenerStub.dispatchEvent()
+    cspEventListener.dispatchEvent()
 
     expect(notifyLog).toHaveBeenCalledWith({
       startClocks: clocksNow(),

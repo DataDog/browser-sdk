@@ -1,14 +1,12 @@
 import type { ClocksState, Context, Observable } from '@datadog/browser-core'
 import {
   noop,
-  assign,
   combine,
   toServerDuration,
   generateUUID,
-  isExperimentalFeatureEnabled,
   ExperimentalFeature,
+  isExperimentalFeatureEnabled,
 } from '@datadog/browser-core'
-
 import { discardNegativeDuration } from '../discardNegativeDuration'
 import type { RawRumActionEvent } from '../../rawRumEvent.types'
 import { ActionType, RumEventType } from '../../rawRumEvent.types'
@@ -37,6 +35,7 @@ export type AutoAction = ClickAction
 export function startActionCollection(
   lifeCycle: LifeCycle,
   domMutationObservable: Observable<void>,
+  windowOpenObservable: Observable<void>,
   configuration: RumConfiguration,
   pageStateHistory: PageStateHistory
 ) {
@@ -45,23 +44,26 @@ export function startActionCollection(
   )
 
   let actionContexts: ActionContexts = { findActionId: noop as () => undefined }
+  let stop: () => void = noop
+
   if (configuration.trackUserInteractions) {
-    actionContexts = trackClickActions(lifeCycle, domMutationObservable, configuration).actionContexts
+    ;({ actionContexts, stop } = trackClickActions(
+      lifeCycle,
+      domMutationObservable,
+      windowOpenObservable,
+      configuration
+    ))
   }
 
   return {
     addAction: (action: CustomAction, savedCommonContext?: CommonContext) => {
-      lifeCycle.notify(
-        LifeCycleEventType.RAW_RUM_EVENT_COLLECTED,
-        assign(
-          {
-            savedCommonContext,
-          },
-          processAction(action, pageStateHistory)
-        )
-      )
+      lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, {
+        savedCommonContext,
+        ...processAction(action, pageStateHistory),
+      })
     },
     actionContexts,
+    stop,
   }
 }
 
@@ -91,6 +93,9 @@ function processAction(
           action: {
             target: action.target,
             position: action.position,
+            name_source: isExperimentalFeatureEnabled(ExperimentalFeature.ACTION_NAME_MASKING)
+              ? action.nameSource
+              : undefined,
           },
         },
       }
@@ -114,11 +119,7 @@ function processAction(
 
   const domainContext: RumActionEventDomainContext = isAutoAction(action) ? { events: action.events } : {}
 
-  if (
-    !isAutoAction(action) &&
-    action.handlingStack &&
-    isExperimentalFeatureEnabled(ExperimentalFeature.MICRO_FRONTEND)
-  ) {
+  if (!isAutoAction(action) && action.handlingStack) {
     domainContext.handlingStack = action.handlingStack
   }
 

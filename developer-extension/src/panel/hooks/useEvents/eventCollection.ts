@@ -1,5 +1,5 @@
-import type { EventCollectionStrategy } from '../../../common/types'
-import { INTAKE_DOMAINS } from '../../../common/constants'
+import type { EventCollectionStrategy } from '../../../common/extension.types'
+import { INTAKE_DOMAINS } from '../../../common/intakeDomainConstants'
 import { onBackgroundMessage } from '../../backgroundScriptConnection'
 import { isRumViewEvent, type SdkEvent } from '../../sdkEvent'
 import { FacetRegistry } from './facetRegistry'

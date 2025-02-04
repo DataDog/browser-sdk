@@ -1,6 +1,7 @@
-import type { Settings } from '../common/types'
+import type { Settings } from '../common/extension.types'
 import { EventListeners } from '../common/eventListeners'
-import { DEV_LOGS_URL, DEV_RUM_URL, SESSION_STORAGE_SETTINGS_KEY } from '../common/constants'
+import { DEV_LOGS_URL, DEV_RUM_URL } from '../common/packagesUrlConstants'
+import { SESSION_STORAGE_SETTINGS_KEY } from '../common/sessionKeyConstant'
 
 declare global {
   interface Window extends EventTarget {

@@ -1,16 +1,13 @@
-import type { Duration, ClocksState, RelativeTime, TimeStamp } from '@datadog/browser-core'
+import type { Duration, ClocksState, RelativeTime, TimeStamp, ValueHistory } from '@datadog/browser-core'
 import {
-  includes,
   timeStampNow,
   Observable,
-  assign,
   getRelativeTime,
   ONE_MINUTE,
-  ValueHistory,
   generateUUID,
   clocksNow,
-  ONE_SECOND,
   elapsed,
+  createValueHistory,
 } from '@datadog/browser-core'
 import type { FrustrationType } from '../../rawRumEvent.types'
 import { ActionType } from '../../rawRumEvent.types'
@@ -27,6 +24,7 @@ import { getActionNameFromElement } from './getActionNameFromElement'
 import type { MouseEventOnElement, UserActivity } from './listenActionEvents'
 import { listenActionEvents } from './listenActionEvents'
 import { computeFrustration } from './computeFrustration'
+import { CLICK_ACTION_MAX_DURATION, updateInteractionSelector } from './interactionSelectorCache'
 
 interface ActionCounts {
   errorCount: number
@@ -38,6 +36,7 @@ export interface ClickAction {
   type: ActionType.CLICK
   id: string
   name: string
+  nameSource: string
   target?: {
     selector: string | undefined
     width: number
@@ -58,16 +57,15 @@ export interface ActionContexts {
 
 type ClickActionIdHistory = ValueHistory<ClickAction['id']>
 
-// Maximum duration for click actions
-export const CLICK_ACTION_MAX_DURATION = 10 * ONE_SECOND
 export const ACTION_CONTEXT_TIME_OUT_DELAY = 5 * ONE_MINUTE // arbitrary
 
 export function trackClickActions(
   lifeCycle: LifeCycle,
   domMutationObservable: Observable<void>,
+  windowOpenObservable: Observable<void>,
   configuration: RumConfiguration
 ) {
-  const history: ClickActionIdHistory = new ValueHistory(ACTION_CONTEXT_TIME_OUT_DELAY)
+  const history: ClickActionIdHistory = createValueHistory({ expireDelay: ACTION_CONTEXT_TIME_OUT_DELAY })
   const stopObservable = new Observable<void>()
   let currentClickChain: ClickChain | undefined
 
@@ -82,12 +80,13 @@ export function trackClickActions(
     hadActivityOnPointerDown: () => boolean
   }>(configuration, {
     onPointerDown: (pointerDownEvent) =>
-      processPointerDown(configuration, lifeCycle, domMutationObservable, pointerDownEvent),
+      processPointerDown(configuration, lifeCycle, domMutationObservable, pointerDownEvent, windowOpenObservable),
     onPointerUp: ({ clickActionBase, hadActivityOnPointerDown }, startEvent, getUserActivity) => {
       startClickAction(
         configuration,
         lifeCycle,
         domMutationObservable,
+        windowOpenObservable,
         history,
         stopObservable,
         appendClickToClickChain,
@@ -132,7 +131,8 @@ function processPointerDown(
   configuration: RumConfiguration,
   lifeCycle: LifeCycle,
   domMutationObservable: Observable<void>,
-  pointerDownEvent: MouseEventOnElement
+  pointerDownEvent: MouseEventOnElement,
+  windowOpenObservable: Observable<void>
 ) {
   const nodePrivacyLevel = configuration.enablePrivacyForActionName
     ? getNodePrivacyLevel(pointerDownEvent.target, configuration.defaultPrivacyLevel)
@@ -149,6 +149,7 @@ function processPointerDown(
   waitPageActivityEnd(
     lifeCycle,
     domMutationObservable,
+    windowOpenObservable,
     configuration,
     (pageActivityEndEvent) => {
       hadActivityOnPointerDown = pageActivityEndEvent.hadActivity
@@ -165,6 +166,7 @@ function startClickAction(
   configuration: RumConfiguration,
   lifeCycle: LifeCycle,
   domMutationObservable: Observable<void>,
+  windowOpenObservable: Observable<void>,
   history: ClickActionIdHistory,
   stopObservable: Observable<void>,
   appendClickToClickChain: (click: Click) => void,
@@ -176,9 +178,15 @@ function startClickAction(
   const click = newClick(lifeCycle, history, getUserActivity, clickActionBase, startEvent)
   appendClickToClickChain(click)
 
+  const selector = clickActionBase?.target?.selector
+  if (selector) {
+    updateInteractionSelector(startEvent.timeStamp, selector)
+  }
+
   const { stop: stopWaitPageActivityEnd } = waitPageActivityEnd(
     lifeCycle,
     domMutationObservable,
+    windowOpenObservable,
     configuration,
     (pageActivityEndEvent) => {
       if (pageActivityEndEvent.hadActivity && pageActivityEndEvent.end < click.startClocks.timeStamp) {
@@ -216,7 +224,7 @@ function startClickAction(
   })
 }
 
-type ClickActionBase = Pick<ClickAction, 'type' | 'name' | 'target' | 'position'>
+type ClickActionBase = Pick<ClickAction, 'type' | 'name' | 'nameSource' | 'target' | 'position'>
 
 function computeClickActionBase(
   event: MouseEventOnElement,
@@ -224,20 +232,26 @@ function computeClickActionBase(
   configuration: RumConfiguration
 ): ClickActionBase {
   const rect = event.target.getBoundingClientRect()
+  const selector = getSelectorFromElement(event.target, configuration.actionNameAttribute)
+  if (selector) {
+    updateInteractionSelector(event.timeStamp, selector)
+  }
+  const actionName = getActionNameFromElement(event.target, configuration, nodePrivacyLevel)
 
   return {
     type: ActionType.CLICK,
     target: {
       width: Math.round(rect.width),
       height: Math.round(rect.height),
-      selector: getSelectorFromElement(event.target, configuration.actionNameAttribute),
+      selector,
     },
     position: {
       // Use clientX and Y because for SVG element offsetX and Y are relatives to the <svg> element
       x: Math.round(event.clientX - rect.left),
       y: Math.round(event.clientY - rect.top),
     },
-    name: getActionNameFromElement(event.target, configuration, nodePrivacyLevel),
+    name: actionName.name,
+    nameSource: actionName.nameSource,
   }
 }
 
@@ -266,7 +280,7 @@ function newClick(
     lifeCycle,
     isChildEvent: (event) =>
       event.action !== undefined &&
-      (Array.isArray(event.action.id) ? includes(event.action.id, id) : event.action.id === id),
+      (Array.isArray(event.action.id) ? event.action.id.includes(id) : event.action.id === id),
   })
   let status = ClickStatus.ONGOING
   let activityEndTime: undefined | TimeStamp
@@ -316,23 +330,21 @@ function newClick(
       }
 
       const { resourceCount, errorCount, longTaskCount } = eventCountsSubscription.eventCounts
-      const clickAction: ClickAction = assign(
-        {
-          type: ActionType.CLICK as const,
-          duration: activityEndTime && elapsed(startClocks.timeStamp, activityEndTime),
-          startClocks,
-          id,
-          frustrationTypes,
-          counts: {
-            resourceCount,
-            errorCount,
-            longTaskCount,
-          },
-          events: domEvents ?? [startEvent],
-          event: startEvent,
+      const clickAction: ClickAction = {
+        duration: activityEndTime && elapsed(startClocks.timeStamp, activityEndTime),
+        startClocks,
+        id,
+        frustrationTypes,
+        counts: {
+          resourceCount,
+          errorCount,
+          longTaskCount,
         },
-        clickActionBase
-      )
+        events: domEvents ?? [startEvent],
+        event: startEvent,
+        ...clickActionBase,
+      }
+
       lifeCycle.notify(LifeCycleEventType.AUTO_ACTION_COMPLETED, clickAction)
       status = ClickStatus.FINALIZED
     },

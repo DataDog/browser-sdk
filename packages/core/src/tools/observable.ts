@@ -2,6 +2,7 @@ export interface Subscription {
   unsubscribe: () => void
 }
 
+// eslint-disable-next-line no-restricted-syntax
 export class Observable<T> {
   private observers: Array<(data: T) => void> = []
   private onLastUnsubscribe?: () => void
@@ -9,10 +10,10 @@ export class Observable<T> {
   constructor(private onFirstSubscribe?: (observable: Observable<T>) => (() => void) | void) {}
 
   subscribe(f: (data: T) => void): Subscription {
-    if (!this.observers.length && this.onFirstSubscribe) {
+    this.observers.push(f)
+    if (this.observers.length === 1 && this.onFirstSubscribe) {
       this.onLastUnsubscribe = this.onFirstSubscribe(this) || undefined
     }
-    this.observers.push(f)
     return {
       unsubscribe: () => {
         this.observers = this.observers.filter((other) => f !== other)

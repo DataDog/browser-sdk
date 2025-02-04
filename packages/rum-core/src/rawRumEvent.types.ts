@@ -22,6 +22,11 @@ export const enum RumEventType {
   VITAL = 'vital',
 }
 
+export const enum RumLongTaskEntryType {
+  LONG_TASK = 'long-task',
+  LONG_ANIMATION_FRAME = 'long-animation-frame',
+}
+
 export interface RawRumResourceEvent {
   date: TimeStamp
   type: RumEventType.RESOURCE
@@ -37,12 +42,15 @@ export interface RawRumResourceEvent {
     decoded_body_size?: number
     transfer_size?: number
     render_blocking_status?: string
-    redirect?: PerformanceResourceDetailsElement
-    dns?: PerformanceResourceDetailsElement
-    connect?: PerformanceResourceDetailsElement
-    ssl?: PerformanceResourceDetailsElement
-    first_byte?: PerformanceResourceDetailsElement
-    download?: PerformanceResourceDetailsElement
+    redirect?: ResourceEntryDetailsElement
+    dns?: ResourceEntryDetailsElement
+    connect?: ResourceEntryDetailsElement
+    ssl?: ResourceEntryDetailsElement
+    worker?: ResourceEntryDetailsElement
+    first_byte?: ResourceEntryDetailsElement
+    download?: ResourceEntryDetailsElement
+    protocol?: string
+    delivery_type?: DeliveryType
   }
   _dd: {
     trace_id?: string
@@ -53,7 +61,7 @@ export interface RawRumResourceEvent {
   }
 }
 
-export interface PerformanceResourceDetailsElement {
+export interface ResourceEntryDetailsElement {
   duration: ServerDuration
   start: ServerDuration
 }
@@ -66,6 +74,7 @@ export interface RawRumErrorEvent {
     type?: string
     stack?: string
     handling_stack?: string
+    component_stack?: string
     fingerprint?: string
     source: ErrorSource
     message: string
@@ -77,8 +86,6 @@ export interface RawRumErrorEvent {
   view?: {
     in_foreground: boolean
   }
-
-  feature_flags?: Context
 }
 
 export interface RawRumViewEvent {
@@ -115,12 +122,12 @@ export interface RawRumViewEvent {
     long_task: Count
     resource: Count
     frustration: Count
+    performance?: ViewPerformanceData
   }
   session: {
     has_replay: true | undefined
     is_active: false | undefined
   }
-  feature_flags?: Context
   display?: ViewDisplay
   privacy?: {
     replay_level: DefaultPrivacyLevel
@@ -142,6 +149,41 @@ interface ViewDisplay {
     max_scroll_height?: number
     max_scroll_height_time?: ServerDuration
   }
+}
+
+export interface ViewPerformanceData {
+  cls?: {
+    score: number
+    timestamp?: ServerDuration
+    target_selector?: string
+    previous_rect?: RumRect
+    current_rect?: RumRect
+  }
+  fcp?: {
+    timestamp: number
+  }
+  fid?: {
+    duration: ServerDuration
+    timestamp: ServerDuration
+    target_selector?: string
+  }
+  inp?: {
+    duration: ServerDuration
+    timestamp?: ServerDuration
+    target_selector?: string
+  }
+  lcp?: {
+    timestamp: ServerDuration
+    target_selector?: string
+    resource_url?: string
+  }
+}
+
+export interface RumRect {
+  x: number
+  y: number
+  width: number
+  height: number
 }
 
 export type PageStateServerEntry = { state: PageState; start: ServerDuration }
@@ -170,7 +212,49 @@ export interface RawRumLongTaskEvent {
   type: RumEventType.LONG_TASK
   long_task: {
     id: string
+    entry_type: RumLongTaskEntryType.LONG_TASK
     duration: ServerDuration
+  }
+  _dd: {
+    discarded: boolean
+  }
+}
+
+export type DeliveryType = 'cache' | 'navigational-prefetch' | 'other'
+
+export type InvokerType =
+  | 'user-callback'
+  | 'event-listener'
+  | 'resolve-promise'
+  | 'reject-promise'
+  | 'classic-script'
+  | 'module-script'
+
+export interface RawRumLongAnimationFrameEvent {
+  date: TimeStamp
+  type: RumEventType.LONG_TASK // LoAF are ingested as Long Task
+  long_task: {
+    id: string
+    entry_type: RumLongTaskEntryType.LONG_ANIMATION_FRAME
+    duration: ServerDuration
+    blocking_duration: ServerDuration
+    first_ui_event_timestamp: ServerDuration
+    render_start: ServerDuration
+    style_and_layout_start: ServerDuration
+    start_time: ServerDuration
+    scripts: Array<{
+      duration: ServerDuration
+      pause_duration: ServerDuration
+      forced_style_and_layout_duration: ServerDuration
+      start_time: ServerDuration
+      execution_start: ServerDuration
+      source_url: string
+      source_function_name: string
+      source_char_position: number
+      invoker: string
+      invoker_type: InvokerType
+      window_attribution: string
+    }>
   }
   _dd: {
     discarded: boolean
@@ -204,6 +288,7 @@ export interface RawRumActionEvent {
         width?: number
         height?: number
       }
+      name_source?: string
       position?: {
         x: number
         y: number
@@ -231,9 +316,8 @@ export interface RawRumVitalEvent {
     id: string
     name: string
     type: VitalType
-    custom: {
-      [key: string]: number
-    }
+    description?: string
+    duration: number
   }
   _dd?: {
     vital: {
@@ -251,6 +335,7 @@ export type RawRumEvent =
   | RawRumResourceEvent
   | RawRumViewEvent
   | RawRumLongTaskEvent
+  | RawRumLongAnimationFrameEvent
   | RawRumActionEvent
   | RawRumVitalEvent
 
@@ -283,6 +368,7 @@ export interface RumContext {
   action?: {
     id: string | string[]
   }
+  feature_flags?: Context
   synthetics?: {
     test_id: string
     result_id: string

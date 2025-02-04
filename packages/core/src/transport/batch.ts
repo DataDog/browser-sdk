@@ -1,45 +1,83 @@
-import { DOCS_ORIGIN, display } from '../tools/display'
+import { DOCS_TROUBLESHOOTING, MORE_DETAILS, display } from '../tools/display'
 import type { Context } from '../tools/serialisation/context'
 import { objectValues } from '../tools/utils/polyfills'
 import { isPageExitReason } from '../browser/pageExitObservable'
 import { jsonStringify } from '../tools/serialisation/jsonStringify'
-import type { Subscription } from '../tools/observable'
 import type { Encoder, EncoderResult } from '../tools/encoder'
 import { computeBytesCount } from '../tools/utils/byteUtils'
 import type { HttpRequest, Payload } from './httpRequest'
 import type { FlushController, FlushEvent } from './flushController'
 
-export class Batch {
-  private upsertBuffer: { [key: string]: string } = {}
-  private flushSubscription: Subscription
+export interface Batch {
+  flushController: FlushController
+  add: (message: Context) => void
+  upsert: (message: Context, key: string) => void
+  stop: () => void
+}
 
-  constructor(
-    private encoder: Encoder,
-    private request: HttpRequest,
-    public flushController: FlushController,
-    private messageBytesLimit: number
-  ) {
-    this.flushSubscription = this.flushController.flushObservable.subscribe((event) => this.flush(event))
+export function createBatch({
+  encoder,
+  request,
+  flushController,
+  messageBytesLimit,
+}: {
+  encoder: Encoder
+  request: HttpRequest
+  flushController: FlushController
+  messageBytesLimit: number
+}): Batch {
+  let upsertBuffer: { [key: string]: string } = {}
+  const flushSubscription = flushController.flushObservable.subscribe((event) => flush(event))
+
+  function push(serializedMessage: string, estimatedMessageBytesCount: number, key?: string) {
+    flushController.notifyBeforeAddMessage(estimatedMessageBytesCount)
+
+    if (key !== undefined) {
+      upsertBuffer[key] = serializedMessage
+      flushController.notifyAfterAddMessage()
+    } else {
+      encoder.write(encoder.isEmpty ? serializedMessage : `\n${serializedMessage}`, (realMessageBytesCount) => {
+        flushController.notifyAfterAddMessage(realMessageBytesCount - estimatedMessageBytesCount)
+      })
+    }
   }
 
-  add(message: Context) {
-    this.addOrUpdate(message)
+  function hasMessageFor(key?: string): key is string {
+    return key !== undefined && upsertBuffer[key] !== undefined
   }
 
-  upsert(message: Context, key: string) {
-    this.addOrUpdate(message, key)
+  function remove(key: string) {
+    const removedMessage = upsertBuffer[key]
+    delete upsertBuffer[key]
+    const messageBytesCount = encoder.estimateEncodedBytesCount(removedMessage)
+    flushController.notifyAfterRemoveMessage(messageBytesCount)
   }
 
-  stop() {
-    this.flushSubscription.unsubscribe()
+  function addOrUpdate(message: Context, key?: string) {
+    const serializedMessage = jsonStringify(message)!
+
+    const estimatedMessageBytesCount = encoder.estimateEncodedBytesCount(serializedMessage)
+
+    if (estimatedMessageBytesCount >= messageBytesLimit) {
+      display.warn(
+        `Discarded a message whose size was bigger than the maximum allowed size ${messageBytesLimit}KB. ${MORE_DETAILS} ${DOCS_TROUBLESHOOTING}/#technical-limitations`
+      )
+      return
+    }
+
+    if (hasMessageFor(key)) {
+      remove(key)
+    }
+
+    push(serializedMessage, estimatedMessageBytesCount, key)
   }
 
-  private flush(event: FlushEvent) {
-    const upsertMessages = objectValues(this.upsertBuffer).join('\n')
-    this.upsertBuffer = {}
+  function flush(event: FlushEvent) {
+    const upsertMessages = objectValues(upsertBuffer).join('\n')
+    upsertBuffer = {}
 
     const isPageExit = isPageExitReason(event.reason)
-    const send = isPageExit ? this.request.sendOnExit : this.request.send
+    const send = isPageExit ? request.sendOnExit : request.send
 
     if (
       isPageExit &&
@@ -47,9 +85,9 @@ export class Batch {
       // if the encoder is async we need to send two requests in some cases (one for encoded data
       // and the other for non-encoded data). But if it's not async, we don't have to worry about
       // it and always send a single request.
-      this.encoder.isAsync
+      encoder.isAsync
     ) {
-      const encoderResult = this.encoder.finishSync()
+      const encoderResult = encoder.finishSync()
 
       // Send encoded messages
       if (encoderResult.outputBytesCount) {
@@ -66,58 +104,19 @@ export class Batch {
       }
     } else {
       if (upsertMessages) {
-        this.encoder.write(this.encoder.isEmpty ? upsertMessages : `\n${upsertMessages}`)
+        encoder.write(encoder.isEmpty ? upsertMessages : `\n${upsertMessages}`)
       }
-      this.encoder.finish((encoderResult) => {
+      encoder.finish((encoderResult) => {
         send(formatPayloadFromEncoder(encoderResult))
       })
     }
   }
 
-  private addOrUpdate(message: Context, key?: string) {
-    const serializedMessage = jsonStringify(message)!
-
-    const estimatedMessageBytesCount = this.encoder.estimateEncodedBytesCount(serializedMessage)
-
-    if (estimatedMessageBytesCount >= this.messageBytesLimit) {
-      display.warn(
-        `Discarded a message whose size was bigger than the maximum allowed size ${this.messageBytesLimit}KB. More details: ${DOCS_ORIGIN}/real_user_monitoring/browser/troubleshooting/#technical-limitations`
-      )
-      return
-    }
-
-    if (this.hasMessageFor(key)) {
-      this.remove(key)
-    }
-
-    this.push(serializedMessage, estimatedMessageBytesCount, key)
-  }
-
-  private push(serializedMessage: string, estimatedMessageBytesCount: number, key?: string) {
-    this.flushController.notifyBeforeAddMessage(estimatedMessageBytesCount)
-
-    if (key !== undefined) {
-      this.upsertBuffer[key] = serializedMessage
-      this.flushController.notifyAfterAddMessage()
-    } else {
-      this.encoder.write(
-        this.encoder.isEmpty ? serializedMessage : `\n${serializedMessage}`,
-        (realMessageBytesCount) => {
-          this.flushController.notifyAfterAddMessage(realMessageBytesCount - estimatedMessageBytesCount)
-        }
-      )
-    }
-  }
-
-  private remove(key: string) {
-    const removedMessage = this.upsertBuffer[key]
-    delete this.upsertBuffer[key]
-    const messageBytesCount = this.encoder.estimateEncodedBytesCount(removedMessage)
-    this.flushController.notifyAfterRemoveMessage(messageBytesCount)
-  }
-
-  private hasMessageFor(key?: string): key is string {
-    return key !== undefined && this.upsertBuffer[key] !== undefined
+  return {
+    flushController,
+    add: addOrUpdate,
+    upsert: addOrUpdate,
+    stop: flushSubscription.unsubscribe,
   }
 }
 

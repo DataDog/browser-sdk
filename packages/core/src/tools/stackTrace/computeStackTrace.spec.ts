@@ -124,12 +124,7 @@ Error: foo
     }
 
     function baz() {
-      try {
-        // Throw error for IE
-        throw new Error()
-      } catch (ex) {
-        return computeStackTrace(ex)
-      }
+      return computeStackTrace(new Error())
     }
 
     const trace = foo()
@@ -620,6 +615,33 @@ Error: foo
       func: 'TESTTESTTEST.proxiedMethod',
       line: 44,
       url: 'webpack:///./~/react-proxy/modules/createPrototypeProxy.js?',
+    })
+  })
+
+  it('should parse Electron schema with Chrome error', () => {
+    const stackFrames = computeStackTrace(CapturedExceptions.ELECTRON)
+
+    expect(stackFrames.stack.length).toEqual(3)
+    expect(stackFrames.stack[0]).toEqual({
+      args: [],
+      column: 27,
+      func: 'dumpExceptionError',
+      line: 41,
+      url: 'electron://-/file.js',
+    })
+    expect(stackFrames.stack[1]).toEqual({
+      args: [],
+      column: 146,
+      func: 'HTMLButtonElement.onclick',
+      line: 107,
+      url: 'electron://-/file.js',
+    })
+    expect(stackFrames.stack[2]).toEqual({
+      args: [],
+      column: 3651,
+      func: 'I.e.fn.(anonymous function) [as index]',
+      line: 10,
+      url: 'electron://-/file.js',
     })
   })
 

@@ -1,6 +1,5 @@
 import { DefaultPrivacyLevel } from '@datadog/browser-core'
 import { isElementNode, getParentNode, isTextNode } from '../browser/htmlDomUtils'
-import { elementMatches } from '../browser/polyfills'
 
 export const NodePrivacyLevel = {
   IGNORE: 'ignore',
@@ -115,26 +114,26 @@ export function getNodeSelfPrivacyLevel(node: Node): NodePrivacyLevel | undefine
       return NodePrivacyLevel.MASK
     }
     const autocomplete = inputElement.getAttribute('autocomplete')
-    // Handle input[autocomplete=cc-number/cc-csc/cc-exp/cc-exp-month/cc-exp-year]
-    if (autocomplete && autocomplete.indexOf('cc-') === 0) {
+    // Handle input[autocomplete=cc-number/cc-csc/cc-exp/cc-exp-month/cc-exp-year/new-password/current-password]
+    if (autocomplete && (autocomplete.startsWith('cc-') || autocomplete.endsWith('-password'))) {
       return NodePrivacyLevel.MASK
     }
   }
 
   // Check HTML privacy attributes and classes
-  if (elementMatches(node, getPrivacySelector(NodePrivacyLevel.HIDDEN))) {
+  if (node.matches(getPrivacySelector(NodePrivacyLevel.HIDDEN))) {
     return NodePrivacyLevel.HIDDEN
   }
 
-  if (elementMatches(node, getPrivacySelector(NodePrivacyLevel.MASK))) {
+  if (node.matches(getPrivacySelector(NodePrivacyLevel.MASK))) {
     return NodePrivacyLevel.MASK
   }
 
-  if (elementMatches(node, getPrivacySelector(NodePrivacyLevel.MASK_USER_INPUT))) {
+  if (node.matches(getPrivacySelector(NodePrivacyLevel.MASK_USER_INPUT))) {
     return NodePrivacyLevel.MASK_USER_INPUT
   }
 
-  if (elementMatches(node, getPrivacySelector(NodePrivacyLevel.ALLOW))) {
+  if (node.matches(getPrivacySelector(NodePrivacyLevel.ALLOW))) {
     return NodePrivacyLevel.ALLOW
   }
 

@@ -102,14 +102,16 @@ export function createScrollValuesObservable(
 
       const observerTarget = document.scrollingElement || document.documentElement
       const resizeObserver = new ResizeObserver(monitor(throttledNotify.throttled))
-      resizeObserver.observe(observerTarget)
+      if (observerTarget) {
+        resizeObserver.observe(observerTarget)
+      }
       const eventListener = addEventListener(configuration, window, DOM_EVENT.SCROLL, throttledNotify.throttled, {
         passive: true,
       })
 
       return () => {
         throttledNotify.cancel()
-        resizeObserver.unobserve(observerTarget)
+        resizeObserver.disconnect()
         eventListener.stop()
       }
     }

@@ -1,3 +1,4 @@
+// eslint-disable-next-line no-restricted-syntax
 export class Deflate {
   chunks: Uint8Array[]
   result: Uint8Array

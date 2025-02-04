@@ -3,7 +3,7 @@ import { createTest, flushEvents, html, waitForServersIdle } from '../../lib/fra
 
 describe('action collection', () => {
   createTest('track a click action')
-    .withRum({ trackUserInteractions: true })
+    .withRum({ trackUserInteractions: true, enableExperimentalFeatures: ['action_name_masking'] })
     .withBody(html`
       <button>click me</button>
       <script>
@@ -49,6 +49,7 @@ describe('action collection', () => {
                 width: jasmine.any(Number),
                 height: jasmine.any(Number),
               }),
+              name_source: 'text_content',
               position: {
                 x: jasmine.any(Number),
                 y: jasmine.any(Number),
@@ -365,8 +366,23 @@ describe('action collection', () => {
       </script>
     `)
     .run(async ({ intakeRegistry }) => {
-      const button = await $('button')
-      await Promise.all([button.click(), button.click(), button.click()])
+      // We don't use the wdio's `$('button').click()` here because the latency of the command is too high and the
+      // clicks won't be recognised as rage clicks.
+      await browser.execute(() => {
+        const button = document.querySelector('button')!
+
+        function click() {
+          button.dispatchEvent(new PointerEvent('pointerdown', { isPrimary: true }))
+          button.dispatchEvent(new PointerEvent('pointerup', { isPrimary: true }))
+          button.dispatchEvent(new PointerEvent('click', { isPrimary: true }))
+        }
+
+        // Simulate a rage click
+        click()
+        click()
+        click()
+      })
+
       await flushEvents()
       const actionEvents = intakeRegistry.rumActionEvents
 
@@ -400,6 +416,38 @@ describe('action collection', () => {
 
       await withBrowserLogs((browserLogs) => {
         expect(browserLogs.length).toEqual(1)
+      })
+    })
+
+  // We don't use the wdio's `$('button').click()` here because it makes the test slower
+  createTest('dont crash when clicking on a button')
+    .withRum({ trackUserInteractions: true })
+    .withBody(html`
+      <button>click me</button>
+      <script>
+        const button = document.querySelector('button')
+        function click() {
+          const down = new PointerEvent('pointerdown', { isPrimary: true })
+          down.__ddIsTrusted = true
+
+          const up = new PointerEvent('pointerup', { isPrimary: true })
+          up.__ddIsTrusted = true
+
+          button.dispatchEvent(down)
+          button.dispatchEvent(up)
+        }
+
+        for (let i = 0; i < 2_500; i++) {
+          click()
+        }
+
+        window.open('foo')
+      </script>
+    `)
+    .run(async () => {
+      await withBrowserLogs((logs) => {
+        // A failing test would have a log with message "Uncaught RangeError: Maximum call stack size exceeded"
+        expect(logs).toEqual([])
       })
     })
 })

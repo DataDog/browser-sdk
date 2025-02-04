@@ -1,6 +1,6 @@
 import type { Context } from '../../tools/serialisation/context'
 import { ConsoleApiName } from '../../tools/display'
-import { NO_ERROR_STACK_PRESENT_MESSAGE } from '../error/error'
+import { NO_ERROR_STACK_PRESENT_MESSAGE, isError } from '../error/error'
 import { toStackTraceString } from '../../tools/stackTrace/handlingStack'
 import { getExperimentalFeatures } from '../../tools/experimentalFeatures'
 import type { Configuration } from '../configuration'
@@ -9,7 +9,6 @@ import { Observable } from '../../tools/observable'
 import { timeStampNow } from '../../tools/utils/timeUtils'
 import { displayIfDebugEnabled, startMonitorErrorCollection } from '../../tools/monitor'
 import { sendToExtension } from '../../tools/sendToExtension'
-import { startsWith, arrayFrom, includes, assign } from '../../tools/utils/polyfills'
 import { performDraw } from '../../tools/utils/numberUtils'
 import { jsonStringify } from '../../tools/serialisation/jsonStringify'
 import { combine } from '../../tools/mergeInto'
@@ -17,7 +16,7 @@ import { NonErrorPrefix } from '../error/error.types'
 import type { StackTrace } from '../../tools/stackTrace/computeStackTrace'
 import { computeStackTrace } from '../../tools/stackTrace/computeStackTrace'
 import { getConnectivity } from '../connectivity'
-import { BoundedBuffer } from '../../tools/boundedBuffer'
+import { createBoundedBuffer } from '../../tools/boundedBuffer'
 import type { TelemetryEvent } from './telemetryEvent.types'
 import type {
   RawTelemetryConfiguration,
@@ -29,6 +28,7 @@ import { StatusType, TelemetryType } from './rawTelemetryEvent.types'
 
 // replaced at build time
 declare const __BUILD_ENV__SDK_VERSION__: string
+declare const __BUILD_ENV__SDK_SETUP__: string
 
 const ALLOWED_FRAME_URLS = [
   'https://www.datadoghq-browser-agent.com',
@@ -53,7 +53,7 @@ export interface Telemetry {
 const TELEMETRY_EXCLUDED_SITES: string[] = [INTAKE_SITE_US1_FED]
 
 // eslint-disable-next-line local-rules/disallow-side-effects
-let preStartTelemetryBuffer = new BoundedBuffer()
+let preStartTelemetryBuffer = createBoundedBuffer()
 let onRawTelemetryEventCollected = (event: RawTelemetryEvent) => {
   preStartTelemetryBuffer.add(() => onRawTelemetryEventCollected(event))
 }
@@ -64,7 +64,7 @@ export function startTelemetry(telemetryService: TelemetryService, configuration
   const alreadySentEvents = new Set<string>()
 
   const telemetryEnabled =
-    !includes(TELEMETRY_EXCLUDED_SITES, configuration.site) && performDraw(configuration.telemetrySampleRate)
+    !TELEMETRY_EXCLUDED_SITES.includes(configuration.site) && performDraw(configuration.telemetrySampleRate)
 
   const telemetryEnabledPerType = {
     [TelemetryType.log]: telemetryEnabled,
@@ -106,8 +106,9 @@ export function startTelemetry(telemetryService: TelemetryService, configuration
         telemetry: combine(event, {
           runtime_env: runtimeEnvInfo,
           connectivity: getConnectivity(),
+          sdk_setup: __BUILD_ENV__SDK_SETUP__,
         }),
-        experimental_features: arrayFrom(getExperimentalFeatures()),
+        experimental_features: Array.from(getExperimentalFeatures()),
       },
       contextProvider !== undefined ? contextProvider() : {}
     ) as TelemetryEvent & Context
@@ -144,7 +145,7 @@ export function drainPreStartTelemetry() {
 }
 
 export function resetTelemetry() {
-  preStartTelemetryBuffer = new BoundedBuffer()
+  preStartTelemetryBuffer = createBoundedBuffer()
   onRawTelemetryEventCollected = (event: RawTelemetryEvent) => {
     preStartTelemetryBuffer.add(() => onRawTelemetryEventCollected(event))
   }
@@ -160,29 +161,21 @@ export function isTelemetryReplicationAllowed(configuration: Configuration) {
 
 export function addTelemetryDebug(message: string, context?: Context) {
   displayIfDebugEnabled(ConsoleApiName.debug, message, context)
-  onRawTelemetryEventCollected(
-    assign(
-      {
-        type: TelemetryType.log,
-        message,
-        status: StatusType.debug,
-      },
-      context
-    )
-  )
+  onRawTelemetryEventCollected({
+    type: TelemetryType.log,
+    message,
+    status: StatusType.debug,
+    ...context,
+  })
 }
 
 export function addTelemetryError(e: unknown, context?: Context) {
-  onRawTelemetryEventCollected(
-    assign(
-      {
-        type: TelemetryType.log,
-        status: StatusType.error,
-      },
-      formatError(e),
-      context
-    )
-  )
+  onRawTelemetryEventCollected({
+    type: TelemetryType.log,
+    status: StatusType.error,
+    ...formatError(e),
+    ...context,
+  })
 }
 
 export function addTelemetryConfiguration(configuration: RawTelemetryConfiguration) {
@@ -200,7 +193,7 @@ export function addTelemetryUsage(usage: RawTelemetryUsage) {
 }
 
 export function formatError(e: unknown) {
-  if (e instanceof Error) {
+  if (isError(e)) {
     const stackTrace = computeStackTrace(e)
     return {
       error: {
@@ -220,7 +213,7 @@ export function formatError(e: unknown) {
 
 export function scrubCustomerFrames(stackTrace: StackTrace) {
   stackTrace.stack = stackTrace.stack.filter(
-    (frame) => !frame.url || ALLOWED_FRAME_URLS.some((allowedFrameUrl) => startsWith(frame.url!, allowedFrameUrl))
+    (frame) => !frame.url || ALLOWED_FRAME_URLS.some((allowedFrameUrl) => frame.url!.startsWith(allowedFrameUrl))
   )
   return stackTrace
 }

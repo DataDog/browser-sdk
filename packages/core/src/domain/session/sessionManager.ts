@@ -1,6 +1,6 @@
 import { Observable } from '../../tools/observable'
 import type { Context } from '../../tools/serialisation/context'
-import { ValueHistory } from '../../tools/valueHistory'
+import { createValueHistory } from '../../tools/valueHistory'
 import type { RelativeTime } from '../../tools/utils/timeUtils'
 import { relativeNow, clocksOrigin, ONE_MINUTE } from '../../tools/utils/timeUtils'
 import { DOM_EVENT, addEventListener, addEventListeners } from '../../browser/addEventListener'
@@ -27,6 +27,7 @@ export interface SessionContext<TrackingType extends string> extends Context {
   id: string
   trackingType: TrackingType
   isReplayForced: boolean
+  anonymousId: string | undefined
 }
 
 export const VISIBILITY_CHECK_DELAY = ONE_MINUTE
@@ -43,10 +44,17 @@ export function startSessionManager<TrackingType extends string>(
   const expireObservable = new Observable<void>()
 
   // TODO - Improve configuration type and remove assertion
-  const sessionStore = startSessionStore(configuration.sessionStoreStrategyType!, productKey, computeSessionState)
+  const sessionStore = startSessionStore(
+    configuration.sessionStoreStrategyType!,
+    configuration,
+    productKey,
+    computeSessionState
+  )
   stopCallbacks.push(() => sessionStore.stop())
 
-  const sessionContextHistory = new ValueHistory<SessionContext<TrackingType>>(SESSION_CONTEXT_TIMEOUT_DELAY)
+  const sessionContextHistory = createValueHistory<SessionContext<TrackingType>>({
+    expireDelay: SESSION_CONTEXT_TIMEOUT_DELAY,
+  })
   stopCallbacks.push(() => sessionContextHistory.stop())
 
   sessionStore.renewObservable.subscribe(() => {
@@ -84,6 +92,7 @@ export function startSessionManager<TrackingType extends string>(
       id: sessionStore.getSession().id!,
       trackingType: sessionStore.getSession()[productKey] as TrackingType,
       isReplayForced: !!sessionStore.getSession().forcedReplay,
+      anonymousId: sessionStore.getSession().anonymousId,
     }
   }
 
