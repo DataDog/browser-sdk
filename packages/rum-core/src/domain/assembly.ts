@@ -14,15 +14,9 @@ import {
   addTelemetryDebug,
 } from '@datadog/browser-core'
 import type { RumEventDomainContext } from '../domainContext.types'
-import type {
-  RawRumErrorEvent,
-  RawRumEvent,
-  RawRumLongTaskEvent,
-  RawRumResourceEvent,
-  RumContext,
-} from '../rawRumEvent.types'
+import type { RawRumErrorEvent, RawRumEvent, RawRumLongTaskEvent, RawRumResourceEvent } from '../rawRumEvent.types'
 import { RumEventType } from '../rawRumEvent.types'
-import type { RumEvent } from '../rumEvent.types'
+import type { CommonProperties, RumEvent } from '../rumEvent.types'
 import type { FeatureFlagContexts } from './contexts/featureFlagContext'
 import { getSyntheticsContext } from './contexts/syntheticsContext'
 import type { CiVisibilityContext } from './contexts/ciVisibilityContext'
@@ -162,7 +156,7 @@ export function startRumAssembly(
         const commonContext = savedCommonContext || getCommonContext()
         const actionId = actionContexts.findActionId(startTime)
 
-        const rumContext: RumContext = {
+        const rumContext: CommonProperties = {
           _dd: {
             format_version: 2,
             drift: currentDrift(),
@@ -206,7 +200,7 @@ export function startRumAssembly(
           connectivity: getConnectivity(),
         }
 
-        const serverRumEvent = combine(rumContext as RumContext & Context, rawRumEvent) as RumEvent & Context
+        const serverRumEvent = combine(rumContext, rawRumEvent) as RumEvent & Context
         serverRumEvent.context = combine(commonContext.context, viewHistoryEntry.context, customerContext)
 
         if (!('has_replay' in serverRumEvent.session)) {
