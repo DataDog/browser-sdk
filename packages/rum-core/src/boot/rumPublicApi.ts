@@ -452,17 +452,23 @@ export function makeRumPublicApi(
 
     setViewName: monitor((name: string) => {
       strategy.setViewName(name)
+      addTelemetryUsage({ feature: 'set-view-name' })
     }),
 
     setViewContext: monitor((context: Context) => {
       strategy.setViewContext(context)
+      addTelemetryUsage({ feature: 'set-view-context' })
     }),
 
     setViewContextProperty: monitor((key: string, value: any) => {
       strategy.setViewContextProperty(key, value)
+      addTelemetryUsage({ feature: 'set-view-context-property' })
     }),
 
-    getViewContext: monitor(() => strategy.getViewContext()),
+    getViewContext: monitor(() => {
+      addTelemetryUsage({ feature: 'set-view-context-property' })
+      return strategy.getViewContext()
+    }),
 
     setGlobalContext: monitor((context) => {
       globalContextManager.setContext(context)
