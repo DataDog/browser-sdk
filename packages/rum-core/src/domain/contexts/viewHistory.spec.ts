@@ -3,7 +3,7 @@ import { relativeToClocks, CLEAR_OLD_VALUES_INTERVAL } from '@datadog/browser-co
 import type { Clock } from '@datadog/browser-core/test'
 import { mockClock, registerCleanupTask } from '@datadog/browser-core/test'
 import { LifeCycle, LifeCycleEventType } from '../lifeCycle'
-import type { ViewContextEvent, ViewCreatedEvent } from '../view/trackViews'
+import type { BeforeViewUpdateEvent, ViewCreatedEvent } from '../view/trackViews'
 import type { ViewHistory } from './viewHistory'
 import { startViewHistory, VIEW_CONTEXT_TIME_OUT_DELAY } from './viewHistory'
 
@@ -101,7 +101,7 @@ describe('ViewHistory', () => {
       lifeCycle.notify(LifeCycleEventType.BEFORE_VIEW_UPDATED, {
         startClocks,
         name: 'Fake Name',
-      } as ViewContextEvent)
+      } as BeforeViewUpdateEvent)
       expect(viewHistory.findView()!.name).toBe('Fake Name')
     })
 
@@ -110,7 +110,7 @@ describe('ViewHistory', () => {
       lifeCycle.notify(LifeCycleEventType.BEFORE_VIEW_UPDATED, {
         startClocks,
         context: { bar: 'foo' } as Context,
-      } as ViewContextEvent)
+      } as BeforeViewUpdateEvent)
       expect(viewHistory.findView()!.context).toEqual({ bar: 'foo' })
     })
   })
