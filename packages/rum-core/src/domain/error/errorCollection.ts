@@ -9,6 +9,7 @@ import {
   trackRuntimeError,
   NonErrorPrefix,
   isError,
+  combine,
 } from '@datadog/browser-core'
 import type { RumConfiguration } from '../configuration'
 import type { RawRumErrorEvent } from '../../rawRumEvent.types'
@@ -48,6 +49,7 @@ export function startErrorCollection(
 
 export function doStartErrorCollection(lifeCycle: LifeCycle, pageStateHistory: PageStateHistory) {
   lifeCycle.subscribe(LifeCycleEventType.RAW_ERROR_COLLECTED, ({ error, customerContext, savedCommonContext }) => {
+    customerContext = combine(tryToGetErrorContext(error.originalError), customerContext) as Context
     lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, {
       customerContext,
       savedCommonContext,
@@ -112,4 +114,11 @@ function processError(error: RawError, pageStateHistory: PageStateHistory): RawR
     startTime: error.startClocks.relative,
     domainContext,
   }
+}
+
+function tryToGetErrorContext(originalError: unknown) {
+  if (isError(originalError) && 'dd_context' in originalError) {
+    return originalError.dd_context as Context
+  }
+  return undefined
 }
