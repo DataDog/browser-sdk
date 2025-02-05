@@ -18,7 +18,8 @@ export function computeSelectionState(
   facetValue: FacetValue,
   parentList: string[]
 ): SelectionState {
-  const childrenFacets = getAllChildren(facet, facetValue)
+  const childrenFacets = facet.values?.[facetValue]?.facets
+
   // we cannot know how many children in total there are, so we need to have facetRegistry
   const children =
     childrenFacets && childrenFacets.flatMap((child: Facet) => facetRegistry.getFacetChildrenValues(child.path))
@@ -64,21 +65,4 @@ export function computeSelectionState(
   }
 
   return 'unselected'
-}
-
-export const getAllChildren = (facet: Facet, facetValue: FacetValue): Facet[] => {
-  const children =
-    facet.values && Object.keys(facet.values).includes(facetValue)
-      ? Object.values(facet.values).flatMap((value) => {
-          if (value?.facets) {
-            for (const childFacet of value.facets) {
-              if (childFacet.path.includes(facetValue)) {
-                return [childFacet]
-              }
-            }
-          }
-          return []
-        })
-      : []
-  return children.concat(children.flatMap((f: Facet) => getAllChildren(f, facetValue)))
 }
