@@ -34,6 +34,14 @@ export interface ValueHistory<Value> {
   getDeletedEntries: () => RelativeTime[]
 }
 
+let cleanupHistoriesInterval: TimeoutId | null = null
+
+const cleanupTasks: Set<() => void> = new Set()
+
+function cleanupHistories() {
+  cleanupTasks.forEach((task) => task())
+}
+
 export function createValueHistory<Value>({
   expireDelay,
   maxEntries,
@@ -43,9 +51,12 @@ export function createValueHistory<Value>({
 }): ValueHistory<Value> {
   let entries: Array<ValueHistoryEntry<Value>> = []
   const deletedEntries: RelativeTime[] = []
-  const clearOldValuesInterval: TimeoutId = setInterval(() => clearOldValues(), CLEAR_OLD_VALUES_INTERVAL)
 
-  function clearOldValues() {
+  if (!cleanupHistoriesInterval) {
+    cleanupHistoriesInterval = setInterval(() => cleanupHistories(), CLEAR_OLD_VALUES_INTERVAL)
+  }
+
+  const clearExpiredValues = () => {
     const oldTimeThreshold = relativeNow() - expireDelay
     while (entries.length > 0 && entries[entries.length - 1].endTime < oldTimeThreshold) {
       const entry = entries.pop()
@@ -54,6 +65,8 @@ export function createValueHistory<Value>({
       }
     }
   }
+
+  cleanupTasks.add(clearExpiredValues)
 
   /**
    * Add a value to the history associated with a start time. Returns a reference to this newly
@@ -147,7 +160,11 @@ export function createValueHistory<Value>({
    * Stop internal garbage collection of past entries.
    */
   function stop() {
-    clearInterval(clearOldValuesInterval)
+    cleanupTasks.delete(clearExpiredValues)
+    if (cleanupTasks.size === 0 && cleanupHistoriesInterval) {
+      clearInterval(cleanupHistoriesInterval)
+      cleanupHistoriesInterval = null
+    }
   }
 
   return { add, find, closeActive, findAll, reset, stop, getAllEntries, getDeletedEntries }
