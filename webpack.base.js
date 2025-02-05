@@ -11,7 +11,12 @@ module.exports = ({ entry, mode, filename, types, keepBuildEnvVariables, plugins
   mode,
   output: {
     filename,
-    chunkFilename: `chunks/[name]-[contenthash]-${filename}`,
+    chunkFilename:
+      mode === 'development'
+        ? // Use a fixed name for each chunk during development.
+          `chunks/[name]-${filename}`
+        : // Include a content hash in chunk names in production.
+          `chunks/[name]-[contenthash]-${filename}`,
     path: path.resolve('./bundle'),
   },
   target: ['web', 'es2018'],
