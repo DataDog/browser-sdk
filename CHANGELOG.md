@@ -18,6 +18,12 @@
 
 ---
 
+## v6.2.1
+
+**Public Changes:**
+
+- 🐛 [RUM-7694] - Keep more ReplayStats history to avoid wrongly marking views as having no replay ([#3318](https://github.com/DataDog/browser-sdk/pull/3318)) [RUM]
+
 ## v6.2.0
 
 **Public Changes:**

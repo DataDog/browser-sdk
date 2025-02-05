@@ -1,6 +1,6 @@
 {
   "name": "@datadog/browser-rum",
-  "version": "6.2.0",
+  "version": "6.2.1",
   "license": "Apache-2.0",
   "main": "cjs/entries/main.js",
   "module": "esm/entries/main.js",
@@ -13,11 +13,11 @@
     "replace-build-env": "node ../../scripts/build/replace-build-env.js"
   },
   "dependencies": {
-    "@datadog/browser-core": "6.2.0",
-    "@datadog/browser-rum-core": "6.2.0"
+    "@datadog/browser-core": "6.2.1",
+    "@datadog/browser-rum-core": "6.2.1"
   },
   "peerDependencies": {
-    "@datadog/browser-logs": "6.2.0"
+    "@datadog/browser-logs": "6.2.1"
   },
   "peerDependenciesMeta": {
     "@datadog/browser-logs": {
