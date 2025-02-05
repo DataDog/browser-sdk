@@ -1,8 +1,23 @@
-export async function lazyLoadRecorder() {
-  try {
+import { reportScriptLoadingError } from '../domain/scriptLoadingError'
+import type { startRecording } from './startRecording'
+
+export function lazyLoadRecorder() {
+  return lazyLoadRecorderFrom(async () => {
     const module = await import(/* webpackChunkName: "recorder" */ './startRecording')
     return module.startRecording
-  } catch {
-    /* Prevent collecting the webpack ChunkLoadError as it is already collected as a RUM resource. */
+  })
+}
+
+export async function lazyLoadRecorderFrom(
+  importer: () => Promise<typeof startRecording>
+): Promise<typeof startRecording | undefined> {
+  try {
+    return await importer()
+  } catch (error: unknown) {
+    reportScriptLoadingError({
+      error,
+      source: 'Recorder',
+      scriptType: 'module',
+    })
   }
 }
