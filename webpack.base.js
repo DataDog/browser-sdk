@@ -13,7 +13,8 @@ module.exports = ({ entry, mode, filename, types, keepBuildEnvVariables, plugins
     filename,
     chunkFilename:
       mode === 'development'
-        ? // Use a fixed name for each chunk during development.
+        ? // Use a fixed name for each chunk during development so that the developer extension
+          // can redirect requests for them reliably.
           `chunks/[name]-${filename}`
         : // Include a content hash in chunk names in production.
           `chunks/[name]-[contenthash]-${filename}`,
