@@ -17,6 +17,7 @@ cache:
     - .yarn/cache
 
 stages:
+  - build
   - task
   - ci-image
   - test
@@ -125,6 +126,30 @@ ci-image:
 # Tests
 ########################################################################################################################
 
+build-artifacts:
+  stage: build
+  extends:
+    - .base-configuration
+  script:
+    - yarn
+    - yarn build
+  artifacts:
+    paths:
+      - packages/core/esm
+      - packages/core/cjs
+      - packages/rum/esm
+      - packages/rum/cjs
+      - packages/rum-core/esm
+      - packages/rum-core/cjs
+      - packages/logs/esm
+      - packages/logs/cjs
+      - developer-extension/**/dist
+      - packages/rum/bundle
+      - packages/logs/bundle
+      - packages/rum-slim/bundle
+      - packages/worker/bundle
+    expire_in: 1 day
+
 format:
   extends:
     - .base-configuration
@@ -216,6 +241,9 @@ e2e:
   extends:
     - .base-configuration
     - .test-allowed-branches
+  stage: test
+  needs:
+    - build-artifacts
   interruptible: true
   artifacts:
     when: always
@@ -224,7 +252,7 @@ e2e:
       junit: test-report/e2e/*.xml
   script:
     - yarn
-    - FORCE_COLOR=1 yarn test:e2e
+    - FORCE_COLOR=1 yarn test:e2e:only
   after_script:
     - node ./scripts/test/export-test-result.js e2e
 
