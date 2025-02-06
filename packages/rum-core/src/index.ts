@@ -1,6 +1,7 @@
-export { RumPublicApi, makeRumPublicApi, RecorderApi, StartRecordingOptions } from './boot/rumPublicApi'
-export { StartRum } from './boot/startRum'
-export {
+export type { RumPublicApi, RecorderApi, StartRecordingOptions, Strategy } from './boot/rumPublicApi'
+export { makeRumPublicApi } from './boot/rumPublicApi'
+export type { StartRum } from './boot/startRum'
+export type {
   RumEvent,
   RumActionEvent,
   CommonProperties,
@@ -10,7 +11,7 @@ export {
   RumLongTaskEvent,
   RumVitalEvent,
 } from './rumEvent.types'
-export {
+export type {
   RumLongTaskEventDomainContext,
   RumErrorEventDomainContext,
   RumOtherResourceEventDomainContext,
@@ -20,16 +21,20 @@ export {
   RumViewEventDomainContext,
   RumEventDomainContext,
 } from './domainContext.types'
-export { ReplayStats, ActionType, RumEventType, FrustrationType, RawRumActionEvent } from './rawRumEvent.types'
+export type { ReplayStats, RawRumActionEvent } from './rawRumEvent.types'
+export { ActionType, RumEventType, FrustrationType } from './rawRumEvent.types'
 export { startRum } from './boot/startRum'
-export { LifeCycle, LifeCycleEventType, RawRumEventCollectedData } from './domain/lifeCycle'
-export { ViewCreatedEvent } from './domain/view/trackViews'
-export { ViewHistoryEntry, ViewHistory, startViewHistory } from './domain/contexts/viewHistory'
-export { RumSessionManager, RumSession } from './domain/rumSessionManager'
+export type { RawRumEventCollectedData } from './domain/lifeCycle'
+export { LifeCycle, LifeCycleEventType } from './domain/lifeCycle'
+export type { ViewCreatedEvent } from './domain/view/trackViews'
+export type { ViewHistoryEntry, ViewHistory } from './domain/contexts/viewHistory'
+export { startViewHistory } from './domain/contexts/viewHistory'
+export type { RumSessionManager, RumSession } from './domain/rumSessionManager'
 export { getMutationObserverConstructor } from './browser/domMutationObservable'
-export { initViewportObservable, getViewportDimension, ViewportDimension } from './browser/viewportObservable'
+export type { ViewportDimension } from './browser/viewportObservable'
+export { initViewportObservable, getViewportDimension } from './browser/viewportObservable'
 export { getScrollX, getScrollY } from './browser/scroll'
-export { RumInitConfiguration, RumConfiguration, RumRemoteConfiguration } from './domain/configuration'
+export type { RumInitConfiguration, RumConfiguration } from './domain/configuration'
 export { DEFAULT_PROGRAMMATIC_ACTION_NAME_ATTRIBUTE } from './domain/action/getActionNameFromElement'
 export { STABLE_ATTRIBUTES } from './domain/getSelectorFromElement'
 export * from './browser/htmlDomUtils'

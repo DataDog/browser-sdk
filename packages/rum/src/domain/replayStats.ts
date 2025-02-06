@@ -1,6 +1,6 @@
 import type { ReplayStats } from '@datadog/browser-rum-core'
 
-export const MAX_STATS_HISTORY = 10
+export const MAX_STATS_HISTORY = 1000
 let statsPerView: Map<string, ReplayStats> | undefined
 
 export function getSegmentsCount(viewId: string) {

@@ -5,7 +5,6 @@ import {
   createContextManager,
   makePublicApi,
   monitor,
-  sanitizeUser,
   sanitize,
   createCustomerDataTrackerManager,
   storeContextManager,
@@ -199,13 +198,24 @@ export interface Strategy {
 
 export function makeLogsPublicApi(startLogsImpl: StartLogs): LogsPublicApi {
   const customerDataTrackerManager = createCustomerDataTrackerManager()
-  const globalContextManager = createContextManager(
-    customerDataTrackerManager.getOrCreateTracker(CustomerDataType.GlobalContext)
-  )
-  const userContextManager = createContextManager(customerDataTrackerManager.getOrCreateTracker(CustomerDataType.User))
-  const accountContextManager = createContextManager(
-    customerDataTrackerManager.getOrCreateTracker(CustomerDataType.Account)
-  )
+  const globalContextManager = createContextManager('global', {
+    customerDataTracker: customerDataTrackerManager.getOrCreateTracker(CustomerDataType.GlobalContext),
+  })
+  const userContextManager = createContextManager('user', {
+    customerDataTracker: customerDataTrackerManager.getOrCreateTracker(CustomerDataType.User),
+    propertiesConfig: {
+      id: { type: 'string' },
+      name: { type: 'string' },
+      email: { type: 'string' },
+    },
+  })
+  const accountContextManager = createContextManager('user', {
+    customerDataTracker: customerDataTrackerManager.getOrCreateTracker(CustomerDataType.User),
+    propertiesConfig: {
+      id: { type: 'string' },
+      name: { type: 'string' },
+    },
+  })
   const trackingConsentState = createTrackingConsentState()
 
   function getCommonContext() {
@@ -273,15 +283,14 @@ export function makeLogsPublicApi(startLogsImpl: StartLogs): LogsPublicApi {
 
     setUser: monitor((newUser) => {
       if (checkContext(newUser)) {
-        userContextManager.setContext(sanitizeUser(newUser))
+        userContextManager.setContext(newUser)
       }
     }),
 
     getUser: monitor(() => userContextManager.getContext()),
 
     setUserProperty: monitor((key, property) => {
-      const sanitizedProperty = sanitizeUser({ [key]: property })[key]
-      userContextManager.setContextProperty(key, sanitizedProperty)
+      userContextManager.setContextProperty(key, property)
     }),
 
     removeUserProperty: monitor((key) => userContextManager.removeContextProperty(key)),

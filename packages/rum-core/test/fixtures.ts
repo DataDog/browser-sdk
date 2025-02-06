@@ -1,9 +1,10 @@
 import type { Context, Duration, RelativeTime, ServerDuration, TimeStamp } from '@datadog/browser-core'
 import { combine, ErrorHandling, ErrorSource, generateUUID, relativeNow, ResourceType } from '@datadog/browser-core'
 import {
+  type RumPerformanceEntry,
   type RumLayoutShiftAttribution,
-  RumPerformanceEntryType,
   type EntryTypeToReturnType,
+  RumPerformanceEntryType,
 } from '../src/browser/performanceObservable'
 import type { RawRumEvent } from '../src/rawRumEvent.types'
 import { VitalType, ActionType, RumEventType, ViewLoadingType, RumLongTaskEntryType } from '../src/rawRumEvent.types'
@@ -124,72 +125,68 @@ export function createPerformanceEntry<T extends RumPerformanceEntryType>(
   entryType: T,
   overrides?: Partial<EntryTypeToReturnType[T]>
 ): EntryTypeToReturnType[T] {
+  type OmitToJSON<T> = T extends any ? Omit<T, 'toJSON'> : never
+  let entry: OmitToJSON<RumPerformanceEntry>
+
   switch (entryType) {
     case RumPerformanceEntryType.EVENT:
-      return {
+      entry = {
         entryType: RumPerformanceEntryType.EVENT,
-        processingStart: relativeNow(),
-        startTime: relativeNow(),
-        duration: 40 as Duration,
-        ...overrides,
-      } as EntryTypeToReturnType[T]
-    case RumPerformanceEntryType.FIRST_INPUT:
-      return {
-        entryType: RumPerformanceEntryType.FIRST_INPUT,
-        processingStart: 1100 as RelativeTime,
         startTime: 1000 as RelativeTime,
-        duration: 40 as Duration,
-        ...overrides,
-      } as EntryTypeToReturnType[T]
-    case RumPerformanceEntryType.LARGEST_CONTENTFUL_PAINT: {
-      const entry = {
+        processingStart: 1100 as RelativeTime,
+        processingEnd: 1200 as RelativeTime,
+        duration: 200 as Duration,
+        name: 'click',
+      }
+      break
+
+    case RumPerformanceEntryType.FIRST_INPUT:
+      entry = {
+        entryType: RumPerformanceEntryType.FIRST_INPUT,
+        startTime: 1000 as RelativeTime,
+        processingStart: 1100 as RelativeTime,
+        processingEnd: 1200 as RelativeTime,
+        duration: 200 as Duration,
+      }
+      break
+
+    case RumPerformanceEntryType.LARGEST_CONTENTFUL_PAINT:
+      entry = {
         entryType: RumPerformanceEntryType.LARGEST_CONTENTFUL_PAINT,
         startTime: 789 as RelativeTime,
         size: 10,
-        ...overrides,
-      } as EntryTypeToReturnType[T]
-      return { ...entry, toJSON: () => entry }
-    }
+      }
+      break
+
     case RumPerformanceEntryType.LAYOUT_SHIFT:
-      return {
+      entry = {
         entryType: RumPerformanceEntryType.LAYOUT_SHIFT,
         startTime: relativeNow(),
         hadRecentInput: false,
         value: 0.1,
         sources: [] as RumLayoutShiftAttribution[],
-        ...overrides,
-      } as EntryTypeToReturnType[T]
+      }
+      break
+
     case RumPerformanceEntryType.PAINT:
-      return {
+      entry = {
         entryType: RumPerformanceEntryType.PAINT,
         name: 'first-contentful-paint',
         startTime: 123 as RelativeTime,
-        ...overrides,
-      } as EntryTypeToReturnType[T]
-    case RumPerformanceEntryType.NAVIGATION:
-      return {
-        entryType: RumPerformanceEntryType.NAVIGATION,
-        responseStart: 123 as RelativeTime,
-        domComplete: 456 as RelativeTime,
-        domContentLoadedEventEnd: 345 as RelativeTime,
-        domInteractive: 234 as RelativeTime,
-        loadEventEnd: 567 as RelativeTime,
-        ...overrides,
-      } as EntryTypeToReturnType[T]
+      }
+      break
 
-    case RumPerformanceEntryType.LONG_TASK: {
-      const entry = {
+    case RumPerformanceEntryType.LONG_TASK:
+      entry = {
         name: 'self',
         duration: 100 as Duration,
         entryType: RumPerformanceEntryType.LONG_TASK,
         startTime: 1234 as RelativeTime,
-        ...overrides,
-      } as EntryTypeToReturnType[T]
+      }
+      break
 
-      return { ...entry, toJSON: () => entry }
-    }
-    case RumPerformanceEntryType.LONG_ANIMATION_FRAME: {
-      const entry = {
+    case RumPerformanceEntryType.LONG_ANIMATION_FRAME:
+      entry = {
         name: 'long-animation-frame',
         entryType: RumPerformanceEntryType.LONG_ANIMATION_FRAME,
         startTime: 1234 as RelativeTime,
@@ -213,41 +210,71 @@ export function createPerformanceEntry<T extends RumPerformanceEntryType>(
             sourceURL: 'http://example.com/script.js',
             sourceFunctionName: '',
             sourceCharPosition: 9876,
+            window,
           },
         ],
-        ...overrides,
-      } as EntryTypeToReturnType[T]
+      }
+      break
 
-      return { ...entry, toJSON: () => entry }
-    }
-    case RumPerformanceEntryType.RESOURCE: {
-      const entry = {
-        connectEnd: 200 as RelativeTime,
-        connectStart: 200 as RelativeTime,
-        renderBlockingStatus: 'non-blocking',
-        deliveryType: 'cache',
-        domainLookupEnd: 200 as RelativeTime,
-        domainLookupStart: 200 as RelativeTime,
-        duration: 100 as Duration,
-        entryType: RumPerformanceEntryType.RESOURCE,
-        workerStart: 200 as RelativeTime,
-        fetchStart: 200 as RelativeTime,
-        name: 'https://resource.com/valid',
-        redirectEnd: 200 as RelativeTime,
-        redirectStart: 200 as RelativeTime,
-        requestStart: 200 as RelativeTime,
-        responseEnd: 300 as RelativeTime,
-        responseStart: 200 as RelativeTime,
-        secureConnectionStart: 200 as RelativeTime,
-        startTime: 200 as RelativeTime,
-        responseStatus: 200,
-        nextHopProtocol: 'HTTP/1.0',
-        ...overrides,
-      } as EntryTypeToReturnType[T]
+    case RumPerformanceEntryType.NAVIGATION:
+    case RumPerformanceEntryType.RESOURCE:
+      {
+        const baseEntry = {
+          connectEnd: 200 as RelativeTime,
+          connectStart: 200 as RelativeTime,
+          renderBlockingStatus: 'non-blocking',
+          deliveryType: 'cache' as const,
+          domainLookupEnd: 200 as RelativeTime,
+          domainLookupStart: 200 as RelativeTime,
+          workerStart: 200 as RelativeTime,
+          fetchStart: 200 as RelativeTime,
+          name: 'https://resource.com/valid',
+          redirectEnd: 200 as RelativeTime,
+          redirectStart: 200 as RelativeTime,
+          requestStart: 200 as RelativeTime,
+          responseEnd: 300 as RelativeTime,
+          responseStart: 200 as RelativeTime,
+          secureConnectionStart: 200 as RelativeTime,
+          responseStatus: 200,
+          nextHopProtocol: 'HTTP/1.0',
+          decodedBodySize: 1000,
+          encodedBodySize: 500,
+          transferSize: 500,
+        }
+        if (entryType === RumPerformanceEntryType.NAVIGATION) {
+          entry = {
+            ...baseEntry,
+            entryType: RumPerformanceEntryType.NAVIGATION,
+            initiatorType: 'navigation' as const,
+            startTime: 0 as RelativeTime,
+            responseStart: 123 as RelativeTime,
+            domComplete: 456 as RelativeTime,
+            domContentLoadedEventEnd: 345 as RelativeTime,
+            domInteractive: 234 as RelativeTime,
+            loadEventEnd: 567 as RelativeTime,
+            duration: 567 as Duration,
+          }
+        } else {
+          entry = {
+            ...baseEntry,
+            entryType: RumPerformanceEntryType.RESOURCE,
+            initiatorType: 'img' as const,
+            startTime: 200 as RelativeTime,
+            duration: 100 as Duration,
+          }
+        }
+      }
+      break
 
-      return { ...entry, toJSON: () => entry }
-    }
     default:
       throw new Error(`Unsupported entryType fixture: ${entryType}`)
   }
+
+  Object.assign(entry, overrides)
+
+  const fullEntry = {
+    ...entry,
+    toJSON: () => entry,
+  }
+  return fullEntry as EntryTypeToReturnType[T]
 }

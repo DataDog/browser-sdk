@@ -58,7 +58,10 @@ function createEndpointUrlWithParametersBuilder(
   return (parameters) => `https://${host}${path}?${parameters}`
 }
 
-function buildEndpointHost(trackType: TrackType, initConfiguration: InitConfiguration & { usePciIntake?: boolean }) {
+export function buildEndpointHost(
+  trackType: TrackType,
+  initConfiguration: InitConfiguration & { usePciIntake?: boolean }
+) {
   const { site = INTAKE_SITE_US1, internalAnalyticsSubdomain } = initConfiguration
 
   if (trackType === 'logs' && initConfiguration.usePciIntake && site === INTAKE_SITE_US1) {

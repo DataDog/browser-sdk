@@ -71,6 +71,7 @@ export interface RumPerformancePaintTiming {
   entryType: RumPerformanceEntryType.PAINT
   name: 'first-paint' | 'first-contentful-paint'
   startTime: RelativeTime
+  toJSON(): Omit<RumPerformancePaintTiming, 'toJSON'>
 }
 
 export interface RumPerformanceNavigationTiming extends Omit<RumPerformanceResourceTiming, 'entryType'> {
@@ -91,6 +92,7 @@ export interface RumLargestContentfulPaintTiming {
   startTime: RelativeTime
   size: number
   element?: Element
+  url?: string
   toJSON(): Omit<RumLargestContentfulPaintTiming, 'toJSON'>
 }
 
@@ -102,7 +104,7 @@ export interface RumFirstInputTiming {
   duration: Duration
   target?: Node
   interactionId?: number
-  name: string
+  toJSON(): Omit<RumFirstInputTiming, 'toJSON'>
 }
 
 export interface RumPerformanceEventTiming {
@@ -114,6 +116,7 @@ export interface RumPerformanceEventTiming {
   interactionId?: number
   target?: Node
   name: string
+  toJSON(): Omit<RumPerformanceEventTiming, 'toJSON'>
 }
 
 export interface RumLayoutShiftAttribution {
@@ -128,6 +131,7 @@ export interface RumLayoutShiftTiming {
   value: number
   hadRecentInput: boolean
   sources: RumLayoutShiftAttribution[]
+  toJSON(): Omit<RumLayoutShiftTiming, 'toJSON'>
 }
 
 // Documentation https://developer.chrome.com/docs/web-platform/long-animation-frames#better-attribution
@@ -164,6 +168,7 @@ export interface RumPerformanceLongAnimationFrameTiming {
   scripts: RumPerformanceScriptTiming[]
   startTime: RelativeTime
   styleAndLayoutStart: RelativeTime
+  toJSON(): Omit<RumPerformanceLongAnimationFrameTiming, 'toJSON'>
 }
 
 export type RumPerformanceEntry =

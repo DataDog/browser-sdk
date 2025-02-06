@@ -463,7 +463,7 @@ describe('preStartRum', () => {
           mockExperimentalFeatures([ExperimentalFeature.REMOTE_CONFIGURATION])
 
           interceptor.withMockXhr((xhr) => {
-            xhr.complete(200, '{"sessionSampleRate":50}')
+            xhr.complete(200, '{"rum":{"sessionSampleRate":50}}')
 
             expect(doStartRumSpy.calls.mostRecent().args[0].sessionSampleRate).toEqual(50)
             done()
@@ -649,7 +649,7 @@ describe('preStartRum', () => {
     it('returns the initConfiguration with the remote configuration when a remoteConfigurationId is provided', (done) => {
       addExperimentalFeatures([ExperimentalFeature.REMOTE_CONFIGURATION])
       interceptor.withMockXhr((xhr) => {
-        xhr.complete(200, '{"sessionSampleRate":50}')
+        xhr.complete(200, '{"rum":{"sessionSampleRate":50}}')
 
         expect(strategy.initConfiguration?.sessionSampleRate).toEqual(50)
         done()

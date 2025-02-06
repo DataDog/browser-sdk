@@ -14,9 +14,9 @@ import { startLongAnimationFrameCollection } from './longAnimationFrameCollectio
 describe('long animation frames collection', () => {
   it('should create raw rum event from long animation frame performance entry', () => {
     const { notifyPerformanceEntries, rawRumEvents } = setupLongAnimationFrameCollection()
-    const PerformanceLongAnimationFrameTiming = createPerformanceEntry(RumPerformanceEntryType.LONG_ANIMATION_FRAME)
+    const performanceLongAnimationFrameTiming = createPerformanceEntry(RumPerformanceEntryType.LONG_ANIMATION_FRAME)
 
-    notifyPerformanceEntries([PerformanceLongAnimationFrameTiming])
+    notifyPerformanceEntries([performanceLongAnimationFrameTiming])
 
     expect(rawRumEvents[0].startTime).toBe(1234 as RelativeTime)
     expect(rawRumEvents[0].rawRumEvent).toEqual({
@@ -52,34 +52,7 @@ describe('long animation frames collection', () => {
       },
     })
     expect(rawRumEvents[0].domainContext).toEqual({
-      performanceEntry: {
-        name: 'long-animation-frame',
-        duration: 82,
-        entryType: 'long-animation-frame',
-        startTime: 1234,
-        renderStart: 1421.5,
-        styleAndLayoutStart: 1428,
-        firstUIEventTimestamp: 0,
-        blockingDuration: 0,
-        scripts: [
-          {
-            name: 'script',
-            entryType: 'script',
-            startTime: 1348,
-            duration: 6,
-            invoker: 'http://example.com/script.js',
-            invokerType: 'classic-script',
-            windowAttribution: 'self',
-            executionStart: 1348.7,
-            forcedStyleAndLayoutDuration: 0,
-            pauseDuration: 0,
-            sourceURL: 'http://example.com/script.js',
-            sourceFunctionName: '',
-            sourceCharPosition: 9876,
-          },
-        ],
-        toJSON: jasmine.any(Function),
-      },
+      performanceEntry: performanceLongAnimationFrameTiming,
     })
   })
 })

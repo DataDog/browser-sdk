@@ -13,9 +13,15 @@ describe('commonContext', () => {
   beforeEach(() => {
     isRecording = false
     fakeContext = { foo: 'bar' }
-    const globalContextManager: ContextManager = createContextManager(createCustomerDataTracker(noop))
-    const userContextManager: ContextManager = createContextManager(createCustomerDataTracker(noop))
-    const accountContextManager: ContextManager = createContextManager(createCustomerDataTracker(noop))
+    const globalContextManager: ContextManager = createContextManager('test', {
+      customerDataTracker: createCustomerDataTracker(noop),
+    })
+    const userContextManager: ContextManager = createContextManager('test', {
+      customerDataTracker: createCustomerDataTracker(noop),
+    })
+    const accountContextManager: ContextManager = createContextManager('test', {
+      customerDataTracker: createCustomerDataTracker(noop),
+    })
     spyOn(globalContextManager, 'getContext').and.callFake(() => fakeContext)
     spyOn(userContextManager, 'getContext').and.callFake(() => fakeContext)
     spyOn(accountContextManager, 'getContext').and.callFake(() => fakeContext)

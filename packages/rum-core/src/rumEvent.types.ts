@@ -1382,7 +1382,7 @@ export interface CommonProperties {
     /**
      * Cellular connection type reflecting the measured network performance
      */
-    readonly effective_type?: 'slow_2g' | '2g' | '3g' | '4g'
+    readonly effective_type?: 'slow-2g' | '2g' | '3g' | '4g'
     /**
      * Cellular connectivity properties
      */
@@ -1712,6 +1712,10 @@ export interface ViewPerformanceData {
      * CSS selector path of the largest contentful paint element
      */
     readonly target_selector?: string
+    /**
+     * URL of the largest contentful paint element
+     */
+    readonly resource_url?: string
     [k: string]: unknown
   }
   [k: string]: unknown

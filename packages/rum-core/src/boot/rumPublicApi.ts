@@ -21,7 +21,6 @@ import {
   clocksNow,
   callMonitored,
   createHandlingStack,
-  sanitizeUser,
   sanitize,
   createIdentityEncoder,
   CustomerDataCompressionStatus,
@@ -44,6 +43,7 @@ import { buildCommonContext } from '../domain/contexts/commonContext'
 import type { InternalContext } from '../domain/contexts/internalContext'
 import type { DurationVitalReference } from '../domain/vital/vitalCollection'
 import { createCustomVitalsState } from '../domain/vital/vitalCollection'
+import { callPluginsMethod } from '../domain/plugins'
 import { createPreStartStrategy } from './preStartRum'
 import type { StartRum, StartRumResult } from './startRum'
 
@@ -402,13 +402,24 @@ export function makeRumPublicApi(
   options: RumPublicApiOptions = {}
 ): RumPublicApi {
   const customerDataTrackerManager = createCustomerDataTrackerManager(CustomerDataCompressionStatus.Unknown)
-  const globalContextManager = createContextManager(
-    customerDataTrackerManager.getOrCreateTracker(CustomerDataType.GlobalContext)
-  )
-  const userContextManager = createContextManager(customerDataTrackerManager.getOrCreateTracker(CustomerDataType.User))
-  const accountContextManager = createContextManager(
-    customerDataTrackerManager.getOrCreateTracker(CustomerDataType.Account)
-  )
+  const globalContextManager = createContextManager('global', {
+    customerDataTracker: customerDataTrackerManager.getOrCreateTracker(CustomerDataType.GlobalContext),
+  })
+  const userContextManager = createContextManager('user', {
+    customerDataTracker: customerDataTrackerManager.getOrCreateTracker(CustomerDataType.User),
+    propertiesConfig: {
+      id: { type: 'string' },
+      name: { type: 'string' },
+      email: { type: 'string' },
+    },
+  })
+  const accountContextManager = createContextManager('user', {
+    customerDataTracker: customerDataTrackerManager.getOrCreateTracker(CustomerDataType.User),
+    propertiesConfig: {
+      id: { type: 'string' },
+      name: { type: 'string' },
+    },
+  })
   const trackingConsentState = createTrackingConsentState()
   const customVitalsState = createCustomVitalsState()
 
@@ -455,6 +466,8 @@ export function makeRumPublicApi(
 
       strategy = createPostStartStrategy(strategy, startRumResult)
 
+      callPluginsMethod(configuration.plugins, 'onRumStart', { strategy })
+
       return startRumResult
     }
   )
@@ -483,17 +496,23 @@ export function makeRumPublicApi(
 
     setViewName: monitor((name: string) => {
       strategy.setViewName(name)
+      addTelemetryUsage({ feature: 'set-view-name' })
     }),
 
     setViewContext: monitor((context: Context) => {
       strategy.setViewContext(context)
+      addTelemetryUsage({ feature: 'set-view-context' })
     }),
 
     setViewContextProperty: monitor((key: string, value: any) => {
       strategy.setViewContextProperty(key, value)
+      addTelemetryUsage({ feature: 'set-view-context-property' })
     }),
 
-    getViewContext: monitor(() => strategy.getViewContext()),
+    getViewContext: monitor(() => {
+      addTelemetryUsage({ feature: 'set-view-context-property' })
+      return strategy.getViewContext()
+    }),
 
     setGlobalContext: monitor((context) => {
       globalContextManager.setContext(context)
@@ -550,7 +569,7 @@ export function makeRumPublicApi(
 
     setUser: monitor((newUser) => {
       if (checkContext(newUser)) {
-        userContextManager.setContext(sanitizeUser(newUser))
+        userContextManager.setContext(newUser)
       }
       addTelemetryUsage({ feature: 'set-user' })
     }),
@@ -558,8 +577,7 @@ export function makeRumPublicApi(
     getUser: monitor(() => userContextManager.getContext()),
 
     setUserProperty: monitor((key, property) => {
-      const sanitizedProperty = sanitizeUser({ [key]: property })[key]
-      userContextManager.setContextProperty(key, sanitizedProperty)
+      userContextManager.setContextProperty(key, property)
       addTelemetryUsage({ feature: 'set-user' })
     }),
 

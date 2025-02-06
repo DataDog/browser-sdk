@@ -18,7 +18,7 @@ export enum ExperimentalFeature {
   REMOTE_CONFIGURATION = 'remote_configuration',
   ACTION_NAME_MASKING = 'action_name_masking',
   CONSISTENT_TRACE_SAMPLING = 'consistent_trace_sampling',
-  DELAY_VIEWPORT_COLLECTION = 'delay_viewport_collection',
+  MISSING_URL_CONTEXT_TELEMETRY = 'missing_url_context_telemetry',
 }
 
 const enabledExperimentalFeatures: Set<ExperimentalFeature> = new Set()
