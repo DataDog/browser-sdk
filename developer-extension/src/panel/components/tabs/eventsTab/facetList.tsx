@@ -1,26 +1,28 @@
-import { Box, Card, Checkbox, Collapse, Flex, Text } from '@mantine/core'
+import { Box, Button, Card, Checkbox, Collapse, Flex, Text } from '@mantine/core'
 import React from 'react'
-import type { ExcludedFacetValues, FacetRegistry } from '../../../hooks/useEvents'
+import type { FacetValuesFilter, FacetRegistry } from '../../../hooks/useEvents'
 import type { Facet } from '../../../facets.constants'
 import { FACET_ROOT, FacetValue } from '../../../facets.constants'
 import * as classes from './facetList.module.css'
+import { computeSelectionState } from './computeFacetState'
 
 export function FacetList({
   facetRegistry,
-  excludedFacetValues,
+  facetValuesFilter,
   onExcludedFacetValuesChange,
 }: {
   facetRegistry: FacetRegistry
-  excludedFacetValues: ExcludedFacetValues
-  onExcludedFacetValuesChange: (newExcludedFacetValues: ExcludedFacetValues) => void
+  facetValuesFilter: FacetValuesFilter
+  onExcludedFacetValuesChange: (newExcludedFacetValues: FacetValuesFilter) => void
 }) {
   return (
     <FacetField
       facet={FACET_ROOT}
       depth={0}
       facetRegistry={facetRegistry}
-      excludedFacetValues={excludedFacetValues}
+      facetValuesFilter={facetValuesFilter}
       onExcludedFacetValuesChange={onExcludedFacetValuesChange}
+      parentList={[]}
     />
   )
 }
@@ -29,14 +31,16 @@ function FacetField({
   facet,
   depth,
   facetRegistry,
-  excludedFacetValues,
+  facetValuesFilter,
+  parentList,
   onExcludedFacetValuesChange,
 }: {
   facet: Facet
   depth: number
   facetRegistry: FacetRegistry
-  excludedFacetValues: ExcludedFacetValues
-  onExcludedFacetValuesChange: (newExcludedFacetValues: ExcludedFacetValues) => void
+  facetValuesFilter: FacetValuesFilter
+  parentList: string[]
+  onExcludedFacetValuesChange: (newExcludedFacetValues: FacetValuesFilter) => void
 }) {
   const facetValueCounts = facetRegistry.getFacetValueCounts(facet.path)
 
@@ -56,7 +60,8 @@ function FacetField({
           facetValueCount={facetValueCount}
           depth={depth}
           facetRegistry={facetRegistry}
-          excludedFacetValues={excludedFacetValues}
+          facetValuesFilter={facetValuesFilter}
+          parentList={parentList.includes(facetValue) ? parentList : [...parentList, facetValue]}
           onExcludedFacetValuesChange={onExcludedFacetValuesChange}
         />
       ))}
@@ -72,7 +77,8 @@ function FacetValue({
   facetValueCount,
   depth,
   facetRegistry,
-  excludedFacetValues,
+  facetValuesFilter,
+  parentList,
   onExcludedFacetValuesChange,
 }: {
   facet: Facet
@@ -80,27 +86,46 @@ function FacetValue({
   facetValueCount: number
   depth: number
   facetRegistry: FacetRegistry
-  excludedFacetValues: ExcludedFacetValues
-  onExcludedFacetValuesChange: (newExcludedFacetValues: ExcludedFacetValues) => void
+  facetValuesFilter: FacetValuesFilter
+  parentList: string[]
+  onExcludedFacetValuesChange: (newExcludedFacetValues: FacetValuesFilter) => void
 }) {
   const isTopLevel = depth === 0
-  const isSelected = !excludedFacetValues[facet.path] || !excludedFacetValues[facet.path].includes(facetValue)
+  const facetSelectState = computeSelectionState(facetValuesFilter, facetRegistry, facet, facetValue, parentList)
+  const isCollapsed =
+    !facetValuesFilter.facetValues[facet.path] || !facetValuesFilter.facetValues[facet.path].includes(facetValue)
+  const isFiltered =
+    facetValuesFilter.facetValues[facet.path] && facetValuesFilter.facetValues[facet.path].includes(facetValue)
+  const isOnly = facetValuesFilter.type === 'include' && facetSelectState === 'selected'
   const value = (
     <Flex justify="space-between" mt={isTopLevel ? 'xs' : SPACE_BETWEEN_CHECKBOX}>
       <Checkbox
         label={facet.values?.[facetValue]?.label ?? facetValue}
-        checked={isSelected}
+        checked={facetSelectState === 'selected'}
+        indeterminate={facetSelectState === 'partial-selected'} // can only populate direct parents
         onChange={() => {
-          onExcludedFacetValuesChange(toggleExcludedFacetValue(facet, excludedFacetValues, facetValue))
+          const filterType = facetSelectState === 'selected' ? 'exclude' : 'include'
+          onExcludedFacetValuesChange(toggleFacetValue(filterType, facet, facetValuesFilter, facetValue))
         }}
       />
       <Text>{facetValueCount}</Text>
+      <Button
+        variant={isOnly ? 'filled' : 'light'}
+        size="compact-xs"
+        w="40px"
+        onClick={() => {
+          const filterType = isOnly ? 'exclude' : 'include'
+          onExcludedFacetValuesChange(toggleFacetValue(filterType, facet, facetValuesFilter, facetValue))
+        }}
+      >
+        {isOnly ? 'all' : 'only'}
+      </Button>
     </Flex>
   )
 
   const childFacets = facet.values?.[facetValue]?.facets
   const children = childFacets && (
-    <Collapse in={isSelected}>
+    <Collapse in={isCollapsed || isOnly}>
       <Box className={classes.facetChildren} data-top-level={isTopLevel ? true : undefined}>
         {childFacets.map((facet) => (
           <FacetField
@@ -108,7 +133,8 @@ function FacetValue({
             facet={facet}
             facetRegistry={facetRegistry}
             depth={depth + 1}
-            excludedFacetValues={excludedFacetValues}
+            facetValuesFilter={facetValuesFilter}
+            parentList={parentList.includes(facetValue) ? parentList : [...parentList, facetValue]}
             onExcludedFacetValuesChange={onExcludedFacetValuesChange}
           />
         ))}
@@ -119,7 +145,7 @@ function FacetValue({
   if (isTopLevel) {
     return (
       <Card shadow="sm" padding="sm" radius="md" withBorder mb="md">
-        <Card.Section withBorder={isSelected} inheritPadding pb="xs">
+        <Card.Section withBorder={isFiltered} inheritPadding pb="xs">
           {value}
         </Card.Section>
         <Card.Section inheritPadding>{children}</Card.Section>
@@ -135,28 +161,45 @@ function FacetValue({
   )
 }
 
-function toggleExcludedFacetValue(
+function toggleFacetValue(
+  type: 'include' | 'exclude',
   facet: Facet,
-  excludedFacetValues: ExcludedFacetValues,
+  facetValuesFilter: FacetValuesFilter,
   value: FacetValue
-): ExcludedFacetValues {
-  const currentExcludedValues = excludedFacetValues[facet.path]
+): FacetValuesFilter {
+  const currentValues = facetValuesFilter.facetValues[facet.path]
+  const newFacetValues = { ...facetValuesFilter.facetValues }
 
-  const newExcludedFacetValues = { ...excludedFacetValues }
-
-  if (!currentExcludedValues) {
-    // Add exclusion. Nothing was excluded yet, create a new list
-    newExcludedFacetValues[facet.path] = [value]
-  } else if (!currentExcludedValues.includes(value)) {
-    // Add exclusion. Some other values are already excluded, add it to the list
-    newExcludedFacetValues[facet.path] = currentExcludedValues.concat(value)
-  } else if (currentExcludedValues.length === 1) {
-    // Remove exclusion. If it's the only value, delete the list altogether.
-    delete newExcludedFacetValues[facet.path]
-  } else {
-    // Remove exclusion. Filter out the the value from the existing list.
-    newExcludedFacetValues[facet.path] = currentExcludedValues.filter((other) => other !== value)
+  if (facetValuesFilter.type !== type) {
+    // handle mode changes
+    if (type === 'exclude') {
+      // reset when change from include to exclude
+      return {
+        type,
+        facetValues: {},
+      }
+    } else if (type === 'include' && currentValues) {
+      // should maintain one and only filter when change from exclude to include
+      return {
+        type,
+        facetValues: currentValues.includes(value) ? newFacetValues : { [facet.path]: [value] },
+      }
+    }
   }
 
-  return newExcludedFacetValues
+  if (!currentValues) {
+    // Add exclusion or inclusion. Nothing was excluded yet, create a new list
+    newFacetValues[facet.path] = [value]
+  } else if (!currentValues.includes(value)) {
+    // Add exclusion or inclusion. Some other values are already added, add it to the list
+    newFacetValues[facet.path] = currentValues.concat(value)
+  } else if (currentValues.length === 1) {
+    // Remove exclusion or inclusion. If it's the only value, delete the list altogether.
+    delete newFacetValues[facet.path]
+  } else {
+    // Remove exclusion or inclusion. Filter out the the value from the existing list.
+    newFacetValues[facet.path] = currentValues.filter((other) => other !== value)
+  }
+
+  return { type, facetValues: newFacetValues }
 }

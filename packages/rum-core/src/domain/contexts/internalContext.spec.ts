@@ -21,6 +21,7 @@ describe('internal context', () => {
         name: 'foo',
       }),
       getAllEntries: () => [],
+      getDeletedEntries: () => [],
       stop: noop,
     }
 
@@ -35,6 +36,8 @@ describe('internal context', () => {
         url: fakeLocation.href,
         referrer: document.referrer,
       }),
+      getAllEntries: () => [],
+      getDeletedEntries: () => [],
       stop: noop,
     }
     findSessionSpy = spyOn(sessionManager, 'findTrackedSession').and.callThrough()

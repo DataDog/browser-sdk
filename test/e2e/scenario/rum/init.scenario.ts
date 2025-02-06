@@ -122,7 +122,7 @@ test.describe('API calls and events around init', () => {
     })
 
   createTest('should be able to set view context')
-    .withRum({ enableExperimentalFeatures: ['view_specific_context'] })
+    .withRum()
     .withRumSlim()
     .withRumInit((configuration) => {
       window.DD_RUM!.init(configuration)
