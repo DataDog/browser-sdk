@@ -16,108 +16,52 @@ export function limitModification<T extends Context, Result>(
   const clone = deepClone(object)
   const result = modifier(clone)
 
-  // Validate the modified fields and assign them back to 'original' if they match the expected type.
-  objectEntries(modifiableFieldPaths).forEach(([fieldPath, fieldType]) => {
-    const pathSegments = fieldPath.split(/\.|(?=\[\])/)
-    const newValue = getValueFromPath(clone, pathSegments)
-    const newType = getTypes(newValue)
-
-    if (isValidType(newType, fieldType)) {
-      setValueAtPath(object, pathSegments, sanitizeValues(newValue))
-    } else if (fieldType === 'object' && (newType === 'undefined' || newType === 'null')) {
-      setValueAtPath(object, pathSegments, {})
-    }
-  })
+  objectEntries(modifiableFieldPaths).forEach(([fieldPath, fieldType]) =>
+    // Traverse both object and clone simultaneously up to the path and apply the modification from the clone to the original object when the type is valid
+    setValueAtPath(object, clone, fieldPath.split(/\.|(?=\[\])/), fieldType)
+  )
 
   return result
 }
 
-function getValueFromPath(object: unknown, pathSegments: string[]): unknown {
+function setValueAtPath(object: unknown, clone: unknown, pathSegments: string[], fieldType: 'string' | 'object') {
   const [field, ...restPathSegments] = pathSegments
 
   if (field === '[]') {
-    if (!Array.isArray(object)) {
+    if (!Array.isArray(object) || !Array.isArray(clone)) {
       return
     }
 
-    return object.map((item) => getValueFromPath(item, restPathSegments))
+    object.forEach((item, i) => setValueAtPath(item, clone[i], restPathSegments, fieldType))
+    return
   }
 
-  return getNestedValue(object, pathSegments)
+  if (!isValidObject(object) || !isValidObject(clone)) {
+    return
+  }
+
+  if (restPathSegments.length > 0) {
+    return setValueAtPath(object[field], clone[field], restPathSegments, fieldType)
+  }
+
+  setNestedValue(object, field, clone[field], fieldType)
 }
 
-function getNestedValue(object: unknown, pathSegments: string[]): unknown {
-  const [field, ...restPathSegments] = pathSegments
+function setNestedValue(
+  object: Record<string, unknown>,
+  field: string,
+  value: unknown,
+  fieldType: 'string' | 'object'
+) {
+  const newType = getType(value)
 
-  if (!isValidObjectContaining(object, field)) {
-    return
+  if (newType === fieldType) {
+    object[field] = sanitize(value)
+  } else if (fieldType === 'object' && (newType === 'undefined' || newType === 'null')) {
+    object[field] = {}
   }
-
-  if (restPathSegments.length === 0) {
-    return object[field]
-  }
-
-  return getValueFromPath(object[field], restPathSegments)
-}
-
-function setValueAtPath(object: unknown, pathSegments: string[], value: unknown) {
-  const [field, ...restPathSegments] = pathSegments
-
-  if (field === '[]') {
-    if (!Array.isArray(object) || !Array.isArray(value)) {
-      return
-    }
-
-    object.forEach((item, i) => setValueAtPath(item, restPathSegments, value[i]))
-    return
-  }
-
-  setNestedValue(object, pathSegments, value)
-}
-
-function setNestedValue(object: unknown, pathSegments: string[], value: unknown) {
-  const [field, ...restPathSegments] = pathSegments
-
-  if (!isValidObject(object)) {
-    return
-  }
-
-  if (restPathSegments.length === 0) {
-    object[field] = value
-    return
-  }
-
-  setValueAtPath(object[field], restPathSegments, value)
 }
 
 function isValidObject(object: unknown): object is Record<string, unknown> {
   return getType(object) === 'object'
-}
-
-function isValidObjectContaining(object: unknown, field: string): object is Record<string, unknown> {
-  return isValidObject(object) && Object.prototype.hasOwnProperty.call(object, field)
-}
-
-function isValidType(actualType: string | string[], expectedType: 'string' | 'object'): boolean {
-  if (Array.isArray(actualType)) {
-    return actualType.length > 0 && actualType.every((type) => type === expectedType)
-  }
-
-  return actualType === expectedType
-}
-
-function sanitizeValues(thing: unknown) {
-  if (Array.isArray(thing)) {
-    return thing.map((item) => sanitize(item))
-  }
-
-  return sanitize(thing)
-}
-
-function getTypes(thing: unknown) {
-  if (Array.isArray(thing)) {
-    return thing.map((item) => getType(item))
-  }
-
-  return getType(thing)
 }
