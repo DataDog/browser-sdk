@@ -6,7 +6,6 @@ import {
   getTimeStamp,
   noop,
   createCustomerDataTracker,
-  display,
 } from '@datadog/browser-core'
 import type { Clock } from '@datadog/browser-core/test'
 import { mockClock } from '@datadog/browser-core/test'

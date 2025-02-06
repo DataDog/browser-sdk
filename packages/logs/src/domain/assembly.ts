@@ -1,12 +1,5 @@
 import type { EventRateLimiter, RawError } from '@datadog/browser-core'
-import {
-  ErrorSource,
-  combine,
-  createEventRateLimiter,
-  display,
-  getRelativeTime,
-  isEmptyObject,
-} from '@datadog/browser-core'
+import { ErrorSource, combine, createEventRateLimiter, getRelativeTime, isEmptyObject } from '@datadog/browser-core'
 import type { CommonContext } from '../rawLogsEvent.types'
 import type { LogsConfiguration } from './configuration'
 import type { LifeCycle } from './lifeCycle'
