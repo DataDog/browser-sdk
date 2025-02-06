@@ -43,12 +43,8 @@ export function startLogsAssembly(
 
       let account
 
-      if (!isEmptyObject(commonContext.account)) {
-        if (commonContext.account.id) {
-          account = commonContext.account
-        } else {
-          display.warn("The account object is missing the 'id' property; it will not be sent to the intake.")
-        }
+      if (!isEmptyObject(commonContext.account) && commonContext.account.id) {
+        account = commonContext.account
       }
 
       if (session && session.anonymousId && !commonContext.user.anonymous_id) {

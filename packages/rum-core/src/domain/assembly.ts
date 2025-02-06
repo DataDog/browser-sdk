@@ -218,12 +218,8 @@ export function startRumAssembly(
           ;(serverRumEvent.usr as Mutable<RumEvent['usr']>) = commonContext.user as User & Context
         }
 
-        if (!isEmptyObject(commonContext.account)) {
-          if (commonContext.account.id) {
-            ;(serverRumEvent.account as Mutable<RumEvent['account']>) = commonContext.account as Account
-          } else {
-            display.warn("The account object is missing the 'id' property; it will not be sent to the intake.")
-          }
+        if (!isEmptyObject(commonContext.account) && commonContext.account.id) {
+          ;(serverRumEvent.account as Mutable<RumEvent['account']>) = commonContext.account as Account
         }
 
         if (shouldSend(serverRumEvent, configuration.beforeSend, domainContext, eventRateLimiters)) {

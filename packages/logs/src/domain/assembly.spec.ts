@@ -404,15 +404,11 @@ describe('user and account management', () => {
   })
 
   it('should not include account if `id` is missing and display a warn', () => {
-    const displaySpy = spyOn(display, 'warn')
     startLogsAssembly(sessionManager, configuration, lifeCycle, () => COMMON_CONTEXT_WITH_MISSING_ACCOUNT_ID, noop)
 
     lifeCycle.notify(LifeCycleEventType.RAW_LOG_COLLECTED, { rawLogsEvent: DEFAULT_MESSAGE })
 
     expect(serverLogs[0].account).toBe(undefined)
-    expect(displaySpy).toHaveBeenCalledWith(
-      "The account object is missing the 'id' property; it will not be sent to the intake."
-    )
   })
 })
 

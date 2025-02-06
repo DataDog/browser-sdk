@@ -521,8 +521,6 @@ describe('rum assembly', () => {
     })
 
     it('should not include account if `id` is missing and display a warn', () => {
-      const displaySpy = spyOn(display, 'warn')
-
       expect(true).toBe(true)
       const { lifeCycle, serverRumEvents, commonContext } = setupAssemblyTestWithDefaults()
       commonContext.account = { name: 'foo' }
@@ -531,9 +529,6 @@ describe('rum assembly', () => {
       })
 
       expect(serverRumEvents[0].account).toBe(undefined)
-      expect(displaySpy).toHaveBeenCalledWith(
-        "The account object is missing the 'id' property; it will not be sent to the intake."
-      )
     })
 
     it('should ignore the current user/account when a saved common context user is provided', () => {
