@@ -1,8 +1,9 @@
 import type { LogsInitConfiguration } from '@datadog/browser-logs'
 import type { RumInitConfiguration } from '@datadog/browser-rum-core'
 import { DefaultPrivacyLevel } from '@datadog/browser-rum'
-import type { BrowserContext, Page, PlaywrightWorkerOptions } from '@playwright/test'
+import type { AndroidDevice, BrowserContext, Page, PlaywrightWorkerOptions } from '@playwright/test'
 import { test, expect } from '@playwright/test'
+import { connectToAndroidDevice } from '../helpers/playwright'
 import type { Tag } from '../helpers/tags'
 import { addTag, addBrowserConfigurationTags } from '../helpers/tags'
 import { getRunId } from '../../../envUtils'
@@ -190,9 +191,11 @@ function declareTestsForSetups(
 }
 
 function declareTest(title: string, setupOptions: SetupOptions, factory: SetupFactory, runner: TestRunner) {
-  test(title, async ({ page, context, browserName }) => {
+  test(title, async ({ page, context, browserName, playwright }) => {
+    const projectMetadata = test.info().project.metadata as BrowserConfiguration
+
     addTag('browserName' as any as Tag, browserName)
-    addBrowserConfigurationTags(test.info().project.metadata as BrowserConfiguration)
+    addBrowserConfigurationTags(projectMetadata)
 
     const title = test.info().titlePath.join(' > ')
     setupOptions.context.test_name = title
@@ -200,7 +203,18 @@ function declareTest(title: string, setupOptions: SetupOptions, factory: SetupFa
     const servers = await getTestServers()
     const browserLogs = new BrowserLogsManager()
 
-    const testContext = createTestContext(servers, page, context, browserLogs, browserName, setupOptions)
+    let _page = page
+    let _context = context
+    let _device: AndroidDevice | undefined
+
+    if (projectMetadata.device) {
+      const { page, context, device } = await connectToAndroidDevice(playwright._android, projectMetadata)
+      _page = page
+      _context = context
+      _device = device
+    }
+
+    const testContext = createTestContext(servers, _page, _context, browserLogs, browserName, setupOptions)
     servers.intake.bindServerApp(createIntakeServerApp(testContext.intakeRegistry))
 
     const setup = factory(setupOptions, servers)
@@ -213,7 +227,7 @@ function declareTest(title: string, setupOptions: SetupOptions, factory: SetupFa
       await runner(testContext)
       tearDownPassedTest(testContext)
     } finally {
-      await tearDownTest(testContext)
+      await tearDownTest(testContext, _device)
     }
   })
 }
@@ -279,9 +293,14 @@ function tearDownPassedTest({ intakeRegistry, withBrowserLogs }: TestContext) {
   })
 }
 
-async function tearDownTest({ flushEvents, deleteAllCookies }: TestContext) {
+async function tearDownTest({ flushEvents, deleteAllCookies, page }: TestContext, device?: AndroidDevice) {
   await flushEvents()
   await deleteAllCookies()
+
+  if (device) {
+    await page.close()
+    await device.close()
+  }
 
   const skipReason = test.info().annotations.find((annotation) => annotation.type === 'skip')?.description
   if (skipReason) {
