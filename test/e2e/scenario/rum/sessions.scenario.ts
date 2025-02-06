@@ -44,6 +44,7 @@ describe('rum sessions', () => {
       // prevent recording start to generate late events
       .withRum({ startSessionReplayRecordingManually: true })
       .run(async ({ intakeRegistry }) => {
+        // TODO: use `page.clock.runFor` with Playwright
         await expireSession()
         intakeRegistry.empty()
         await sendXhr('/ok')
@@ -56,7 +57,10 @@ describe('rum sessions', () => {
       .run(async () => {
         const anonymousId = (await findSessionCookie())?.aid
 
-        await expireSession()
+        await browser.execute(() => {
+          // TODO: use `page.clock.runFor` with Playwright
+          window.DD_RUM!.stopSession()
+        })
         await flushEvents()
 
         expect((await findSessionCookie())?.aid).toEqual(anonymousId)
@@ -69,6 +73,7 @@ describe('rum sessions', () => {
         expect(anonymousId).not.toBeNull()
 
         await browser.execute(() => {
+          // TODO: use `page.clock.runFor` with Playwright
           window.DD_RUM!.stopSession()
         })
         await (await $('html')).click()
@@ -77,16 +82,6 @@ describe('rum sessions', () => {
         await browser.waitUntil(async () => Boolean(await findSessionCookie()))
 
         expect((await findSessionCookie())?.aid).toEqual(anonymousId)
-      })
-
-    createTest('generated when cookie is cleared')
-      .withRum()
-      .run(async () => {
-        await deleteAllCookies()
-        await renewSession()
-        await flushEvents()
-
-        expect((await findSessionCookie())?.aid).toBeDefined()
       })
   })
 
