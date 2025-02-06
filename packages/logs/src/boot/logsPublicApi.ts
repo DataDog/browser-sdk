@@ -6,7 +6,6 @@ import {
   makePublicApi,
   monitor,
   checkUser,
-  sanitizeUser,
   sanitize,
   createCustomerDataTrackerManager,
   storeContextManager,
@@ -170,10 +169,17 @@ export interface Strategy {
 
 export function makeLogsPublicApi(startLogsImpl: StartLogs): LogsPublicApi {
   const customerDataTrackerManager = createCustomerDataTrackerManager()
-  const globalContextManager = createContextManager(
-    customerDataTrackerManager.getOrCreateTracker(CustomerDataType.GlobalContext)
-  )
-  const userContextManager = createContextManager(customerDataTrackerManager.getOrCreateTracker(CustomerDataType.User))
+  const globalContextManager = createContextManager('global', {
+    customerDataTracker: customerDataTrackerManager.getOrCreateTracker(CustomerDataType.GlobalContext),
+  })
+  const userContextManager = createContextManager('user', {
+    customerDataTracker: customerDataTrackerManager.getOrCreateTracker(CustomerDataType.User),
+    propertiesConfig: {
+      id: { type: 'string' },
+      name: { type: 'string' },
+      email: { type: 'string' },
+    },
+  })
   const trackingConsentState = createTrackingConsentState()
 
   function getCommonContext() {
@@ -240,15 +246,14 @@ export function makeLogsPublicApi(startLogsImpl: StartLogs): LogsPublicApi {
 
     setUser: monitor((newUser) => {
       if (checkUser(newUser)) {
-        userContextManager.setContext(sanitizeUser(newUser as Context))
+        userContextManager.setContext(newUser as Context)
       }
     }),
 
     getUser: monitor(() => userContextManager.getContext()),
 
     setUserProperty: monitor((key, property) => {
-      const sanitizedProperty = sanitizeUser({ [key]: property })[key]
-      userContextManager.setContextProperty(key, sanitizedProperty)
+      userContextManager.setContextProperty(key, property)
     }),
 
     removeUserProperty: monitor((key) => userContextManager.removeContextProperty(key)),

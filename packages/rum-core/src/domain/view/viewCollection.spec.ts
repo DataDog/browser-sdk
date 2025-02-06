@@ -1,12 +1,11 @@
 import { Observable } from '@datadog/browser-core'
 import type { Duration, RelativeTime, ServerDuration, TimeStamp } from '@datadog/browser-core'
-import { mockClock, registerCleanupTask } from '@datadog/browser-core/test'
+import { registerCleanupTask } from '@datadog/browser-core/test'
 import type { RecorderApi } from '../../boot/rumPublicApi'
 import {
   collectAndValidateRawRumEvents,
   mockPageStateHistory,
   mockRumConfiguration,
-  mockViewHistory,
   noopRecorderApi,
 } from '../../../test'
 import type { RawRumEvent, RawRumViewEvent } from '../../rawRumEvent.types'
@@ -16,12 +15,8 @@ import { LifeCycle, LifeCycleEventType } from '../lifeCycle'
 import { PageState } from '../contexts/pageStateHistory'
 import type { RumConfiguration } from '../configuration'
 import type { LocationChange } from '../../browser/locationChangeObservable'
-import type { Hooks } from '../../hooks'
-import { HookNames, createHooks } from '../../hooks'
-
-import type { ViewHistoryEntry } from '../contexts/viewHistory'
-import { startViewCollection } from './viewCollection'
 import type { ViewEvent } from './trackViews'
+import { startViewCollection } from './viewCollection'
 
 const VIEW: ViewEvent = {
   customTimings: {
@@ -74,25 +69,17 @@ const VIEW: ViewEvent = {
 
 describe('viewCollection', () => {
   const lifeCycle = new LifeCycle()
-  let hooks: Hooks
   let getReplayStatsSpy: jasmine.Spy<RecorderApi['getReplayStats']>
   let rawRumEvents: Array<RawRumEventCollectedData<RawRumEvent>> = []
 
-  function setupViewCollection(
-    partialConfiguration: Partial<RumConfiguration> = {},
-    viewHistoryEntry?: ViewHistoryEntry
-  ) {
-    hooks = createHooks()
-    const viewHistory = mockViewHistory(viewHistoryEntry)
+  function setupViewCollection(partialConfiguration: Partial<RumConfiguration> = {}) {
     getReplayStatsSpy = jasmine.createSpy()
     const domMutationObservable = new Observable<void>()
     const windowOpenObservable = new Observable<void>()
     const locationChangeObservable = new Observable<LocationChange>()
-    const clock = mockClock()
 
     const collectionResult = startViewCollection(
       lifeCycle,
-      hooks,
       mockRumConfiguration(partialConfiguration),
       location,
       domMutationObservable,
@@ -107,18 +94,14 @@ describe('viewCollection', () => {
       {
         ...noopRecorderApi,
         getReplayStats: getReplayStatsSpy,
-      },
-      viewHistory
+      }
     )
 
     rawRumEvents = collectAndValidateRawRumEvents(lifeCycle)
 
     registerCleanupTask(() => {
       collectionResult.stop()
-      viewHistory.stop()
-      clock.cleanup()
     })
-    return collectionResult
   }
 
   it('should create view from view update', () => {
@@ -288,35 +271,6 @@ describe('viewCollection', () => {
         (rawRumEvents[rawRumEvents.length - 1].rawRumEvent as RawRumViewEvent)._dd.configuration
           .start_session_replay_recording_manually
       ).toBe(true)
-    })
-  })
-
-  describe('assembly hook', () => {
-    it('should add view properties from the history', () => {
-      const viewHistoryEntry: ViewHistoryEntry = {
-        service: 'service',
-        version: 'version',
-        context: { myContext: 'foo' },
-        id: 'id',
-        name: 'name',
-        startClocks: { relative: 0 as RelativeTime, timeStamp: 0 as TimeStamp },
-      }
-
-      setupViewCollection({ trackViewsManually: true }, viewHistoryEntry)
-
-      const event = hooks.triggerHook(HookNames.Assemble, { eventType: 'view', startTime: 0 as RelativeTime })
-
-      expect(event).toEqual(
-        jasmine.objectContaining({
-          service: 'service',
-          version: 'version',
-          context: { myContext: 'foo' },
-          view: {
-            id: 'id',
-            name: 'name',
-          },
-        })
-      )
     })
   })
 })

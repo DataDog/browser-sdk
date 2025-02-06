@@ -2,7 +2,7 @@ import { noop } from '@datadog/browser-core'
 import type { ActionContexts } from '../src/domain/action/trackClickActions'
 import type { DisplayContext } from '../src/domain/contexts/displayContext'
 import type { UrlContexts } from '../src/domain/contexts/urlContexts'
-import type { ViewHistory, ViewHistoryEntry } from '../src/domain/contexts/viewHistory'
+import type { ViewHistory } from '../src/domain/contexts/viewHistory'
 import type { FeatureFlagContexts } from '../src/domain/contexts/featureFlagContext'
 
 export function mockUrlContexts(fakeLocation: Location = location): UrlContexts {
@@ -11,15 +11,18 @@ export function mockUrlContexts(fakeLocation: Location = location): UrlContexts 
       url: fakeLocation.href,
       referrer: document.referrer,
     }),
+    getAllEntries: () => [],
+    getDeletedEntries: () => [],
     stop: noop,
   }
 }
 
-export function mockViewHistory(view?: Partial<ViewHistoryEntry>): ViewHistory {
+export function mockViewHistory(): ViewHistory {
   return {
-    findView: () => view as ViewHistoryEntry,
+    findView: () => undefined,
     stop: noop,
     getAllEntries: () => [],
+    getDeletedEntries: () => [],
   }
 }
 

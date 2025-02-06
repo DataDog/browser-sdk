@@ -5,7 +5,7 @@ import { combine } from '@datadog/browser-core'
 import type { CommonProperties } from '@datadog/browser-rum-core'
 import type { LifeCycle, RawRumEventCollectedData } from '../src/domain/lifeCycle'
 import { LifeCycleEventType } from '../src/domain/lifeCycle'
-import type { RawRumEvent, RumContext } from '../src/rawRumEvent.types'
+import type { RawRumEvent } from '../src/rawRumEvent.types'
 import { allJsonSchemas } from './allJsonSchemas'
 
 export function collectAndValidateRawRumEvents(lifeCycle: LifeCycle) {
@@ -23,7 +23,7 @@ export function collectAndValidateRawRumEvents(lifeCycle: LifeCycle) {
 
 function validateRumEventFormat(rawRumEvent: RawRumEvent) {
   const fakeId = '00000000-aaaa-0000-aaaa-000000000000'
-  const fakeContext: Partial<CommonProperties> = {
+  const fakeContext: CommonProperties = {
     _dd: {
       format_version: 2,
       drift: 0,
@@ -51,9 +51,8 @@ function validateRumEventFormat(rawRumEvent: RawRumEvent) {
       interfaces: ['wifi'],
       effective_type: '4g',
     },
-    context: {},
   }
-  validateRumFormat(combine(fakeContext as RumContext & Context, rawRumEvent))
+  validateRumFormat(combine(fakeContext as CommonProperties & Context, rawRumEvent))
 }
 
 function validateRumFormat(rumEvent: Context) {

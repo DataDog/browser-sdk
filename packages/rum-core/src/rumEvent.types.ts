@@ -1382,7 +1382,7 @@ export interface CommonProperties {
     /**
      * Cellular connection type reflecting the measured network performance
      */
-    readonly effective_type?: 'slow_2g' | '2g' | '3g' | '4g'
+    readonly effective_type?: 'slow-2g' | '2g' | '3g' | '4g'
     /**
      * Cellular connectivity properties
      */

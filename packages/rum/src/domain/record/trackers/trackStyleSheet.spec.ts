@@ -26,7 +26,7 @@ describe('trackStyleSheet', () => {
       elementsScrollPositions: createElementsScrollPositions(),
     })
     registerCleanupTask(() => {
-      styleSheetTracker.stop()
+      styleSheetTracker?.stop()
       styleElement.remove()
     })
   })
