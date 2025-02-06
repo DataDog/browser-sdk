@@ -18,7 +18,7 @@ export function limitModification<T extends Context, Result>(
 
   // Validate the modified fields and assign them back to 'original' if they match the expected type.
   objectEntries(modifiableFieldPaths).forEach(([fieldPath, fieldType]) => {
-    const pathSegments = fieldPath.split('.')
+    const pathSegments = fieldPath.split(/\.|(?=\[\])/)
     const newValue = getValueFromPath(clone, pathSegments)
     const newType = getTypes(newValue)
 
@@ -33,17 +33,14 @@ export function limitModification<T extends Context, Result>(
 }
 
 function getValueFromPath(object: unknown, pathSegments: string[]): unknown {
-  let [field, ...restPathSegments] = pathSegments // eslint-disable-line prefer-const
+  const [field, ...restPathSegments] = pathSegments
 
-  // Handle array-access notation "something[]"
-  if (field.endsWith('[]')) {
-    field = field.slice(0, -2)
-
-    if (!isValidObjectContaining(object, field) || !Array.isArray(object[field])) {
+  if (field === '[]') {
+    if (!Array.isArray(object)) {
       return
     }
 
-    return (object[field] as unknown[]).map((item) => getValueFromPath(item, restPathSegments))
+    return object.map((item) => getValueFromPath(item, restPathSegments))
   }
 
   return getNestedValue(object, pathSegments)
@@ -64,17 +61,14 @@ function getNestedValue(object: unknown, pathSegments: string[]): unknown {
 }
 
 function setValueAtPath(object: unknown, pathSegments: string[], value: unknown) {
-  let [field, ...restPathSegments] = pathSegments // eslint-disable-line prefer-const
+  const [field, ...restPathSegments] = pathSegments
 
-  // Handle array-access notation "something[]"
-  if (field.endsWith('[]')) {
-    field = field.slice(0, -2)
-
-    if (!isValidObjectContaining(object, field) || !Array.isArray(object[field]) || !Array.isArray(value)) {
+  if (field === '[]') {
+    if (!Array.isArray(object) || !Array.isArray(value)) {
       return
     }
 
-    ;(object[field] as unknown[]).forEach((item, i) => setValueAtPath(item, restPathSegments, value[i]))
+    object.forEach((item, i) => setValueAtPath(item, restPathSegments, value[i]))
     return
   }
 
