@@ -101,6 +101,7 @@ export function startRumAssembly(
     },
     [RumEventType.LONG_TASK]: {
       'long_task.scripts[].source_url': 'string',
+      'long_task.scripts[].invoker': 'string',
       ...USER_CUSTOMIZABLE_FIELD_PATHS,
       ...VIEW_MODIFIABLE_FIELD_PATHS,
     },
