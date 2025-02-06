@@ -30,7 +30,6 @@ import {
   createTrackingConsentState,
   timeStampToClocks,
   checkContext,
-  sanitizeAccount,
 } from '@datadog/browser-core'
 import type { LifeCycle } from '../domain/lifeCycle'
 import type { ViewHistory } from '../domain/contexts/viewHistory'
@@ -587,15 +586,14 @@ export function makeRumPublicApi(
 
     setAccount: monitor((newAccount) => {
       if (checkContext(newAccount)) {
-        accountContextManager.setContext(sanitizeAccount(newAccount))
+        accountContextManager.setContext(newAccount)
       }
     }),
 
     getAccount: monitor(() => accountContextManager.getContext()),
 
     setAccountProperty: monitor((key, property) => {
-      const sanitizedProperty = sanitizeAccount({ [key]: property })[key]
-      accountContextManager.setContextProperty(key, sanitizedProperty)
+      accountContextManager.setContextProperty(key, property)
     }),
 
     removeAccountProperty: monitor((key) => accountContextManager.removeContextProperty(key)),

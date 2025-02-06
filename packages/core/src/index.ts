@@ -143,7 +143,7 @@ export {
   getSyntheticsResultId,
 } from './domain/synthetics/syntheticsWorkerValues'
 export type { User } from './domain/user'
-export { Account, sanitizeAccount } from './domain/account'
+export type { Account } from './domain/account'
 export { checkContext } from './domain/context/contextUtils'
 export * from './domain/resourceUtils'
 export * from './tools/utils/polyfills'

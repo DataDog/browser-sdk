@@ -12,7 +12,6 @@ import {
   deepClone,
   createTrackingConsentState,
   checkContext,
-  sanitizeAccount,
 } from '@datadog/browser-core'
 import type { LogsInitConfiguration } from '../domain/configuration'
 import type { HandlerType } from '../domain/logger'
@@ -299,15 +298,14 @@ export function makeLogsPublicApi(startLogsImpl: StartLogs): LogsPublicApi {
 
     setAccount: monitor((newUser) => {
       if (checkContext(newUser)) {
-        accountContextManager.setContext(sanitizeAccount(newUser))
+        accountContextManager.setContext(newUser)
       }
     }),
 
     getAccount: monitor(() => accountContextManager.getContext()),
 
     setAccountProperty: monitor((key, property) => {
-      const sanitizedProperty = sanitizeAccount({ [key]: property })[key]
-      accountContextManager.setContextProperty(key, sanitizedProperty)
+      accountContextManager.setContextProperty(key, property)
     }),
 
     removeAccountProperty: monitor((key) => accountContextManager.removeContextProperty(key)),
