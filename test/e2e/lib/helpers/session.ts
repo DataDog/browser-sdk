@@ -16,7 +16,7 @@ export async function renewSession(page: Page, browserContext: BrowserContext) {
 export async function expireSession(page: Page, browserContext: BrowserContext) {
   // mock expire session with anonymous id
   const cookies = await browserContext.cookies()
-  const anonymousId = cookies[0]?.value.match(/aid=[a-z0-9]+/)
+  const anonymousId = cookies[0]?.value.match(/aid=[a-z0-9-]+/)
   const expireCookie = `isExpired=1&${anonymousId && anonymousId[0]}`
 
   await setCookie(page, SESSION_STORE_KEY, expireCookie, SESSION_TIME_OUT_DELAY)

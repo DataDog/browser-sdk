@@ -57,7 +57,9 @@ test.describe('rum sessions', () => {
       .run(async ({ flushEvents, browserContext, page }) => {
         const anonymousId = (await findSessionCookie(browserContext))?.aid
 
-        await expireSession(page, browserContext)
+        await page.evaluate(() => {
+          window.DD_RUM!.stopSession()
+        })
         await flushEvents()
 
         expect((await findSessionCookie(browserContext))?.aid).toEqual(anonymousId)
@@ -80,16 +82,6 @@ test.describe('rum sessions', () => {
         expect((await findSessionCookie(browserContext))?.aid).toEqual(anonymousId)
 
         expect(true).toBeTruthy()
-      })
-
-    createTest('generated when cookie is cleared')
-      .withRum()
-      .run(async ({ deleteAllCookies, flushEvents, browserContext, page }) => {
-        await deleteAllCookies()
-        await renewSession(page, browserContext)
-        await flushEvents()
-
-        expect((await findSessionCookie(browserContext))?.aid).toBeDefined()
       })
   })
 

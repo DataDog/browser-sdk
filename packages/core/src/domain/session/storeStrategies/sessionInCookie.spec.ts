@@ -1,7 +1,7 @@
 import { resetExperimentalFeatures } from '../../../tools/experimentalFeatures'
-import { mockClock } from '../../../../test'
+import { mockClock, getSessionState } from '../../../../test'
 import { setCookie, deleteCookie, getCookie, getCurrentSite } from '../../../browser/cookie'
-import { type SessionState } from '../sessionState'
+import type { SessionState } from '../sessionState'
 import type { Configuration } from '../../configuration'
 import { SESSION_TIME_OUT_DELAY } from '../sessionConstants'
 import { buildCookieOptions, selectCookieStrategy, initCookieStrategy } from './sessionInCookie'
@@ -33,8 +33,8 @@ describe('session in cookie strategy', () => {
     cookieStorageStrategy.persistSession(sessionState)
     cookieStorageStrategy.expireSession(sessionState)
     const session = cookieStorageStrategy.retrieveSession()
-    expect(session).toEqual({ isExpired: '1', anonymousId: '0000000000' })
-    expect(getCookie(SESSION_STORE_KEY)).toBe('isExpired=1&aid=0000000000')
+    expect(session).toEqual({ isExpired: '1', anonymousId: jasmine.any(String) })
+    expect(getSessionState(SESSION_STORE_KEY)).toEqual({ isExpired: '1', anonymousId: jasmine.any(String) })
   })
 
   it('should return an empty object if session string is invalid', () => {

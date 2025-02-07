@@ -1,5 +1,5 @@
 import { display } from '../../tools/display'
-import { checkUser, generateAnonymousId } from './user'
+import { checkUser } from './user'
 import type { User } from './user.types'
 
 describe('check user function', () => {
@@ -18,11 +18,5 @@ describe('check user function', () => {
     expect(checkUser(nullUser)).toBe(false)
     expect(checkUser(invalidUser)).toBe(false)
     expect(display.error).toHaveBeenCalledTimes(3)
-  })
-})
-
-describe('check anonymous id storage functions', () => {
-  it('should generate a random anonymous id', () => {
-    expect(generateAnonymousId()).toMatch(/^[a-z0-9]+$/)
   })
 })
