@@ -1,7 +1,7 @@
 import { test } from '@playwright/test'
 import type { BrowserConfiguration } from '../../../browsers.conf'
 
-export type Tag = 'skip' | 'fixme' | 'flaky'
+export type Tag = 'skip' | 'fixme'
 
 export function addTag(name: Tag, value: string) {
   test.info().annotations.push({

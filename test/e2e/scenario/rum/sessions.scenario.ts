@@ -110,14 +110,12 @@ test.describe('rum sessions', () => {
         expect(intakeRegistry.rumActionEvents).toHaveLength(0)
       })
 
-    createTest('after calling stopSession(), a user interaction starts a new session @flaky')
+    createTest('after calling stopSession(), a user interaction starts a new session')
       .withRum()
       .run(async ({ intakeRegistry, flushEvents, browserContext, page }) => {
         await page.evaluate(() => {
           window.DD_RUM!.stopSession()
         })
-
-        addTag('flaky', 'This test is known to be flacky, especially in FF')
 
         await page.locator('html').click()
 
