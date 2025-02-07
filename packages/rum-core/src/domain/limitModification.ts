@@ -28,11 +28,10 @@ function setValueAtPath(object: unknown, clone: unknown, pathSegments: string[],
   const [field, ...restPathSegments] = pathSegments
 
   if (field === '[]') {
-    if (!Array.isArray(object) || !Array.isArray(clone)) {
-      return
+    if (Array.isArray(object) && Array.isArray(clone)) {
+      object.forEach((item, i) => setValueAtPath(item, clone[i], restPathSegments, fieldType))
     }
 
-    object.forEach((item, i) => setValueAtPath(item, clone[i], restPathSegments, fieldType))
     return
   }
 
