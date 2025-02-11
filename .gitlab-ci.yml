@@ -293,7 +293,6 @@ e2e-bs:
     - yarn
     - yarn build
     - yarn build:app
-    - yarn playwright install chromium-headless-shell --with-deps
     - FORCE_COLOR=1 ./scripts/test/ci-bs.sh test:e2e
   after_script:
     - node ./scripts/test/export-test-result.js e2e-bs

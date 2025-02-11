@@ -25,12 +25,13 @@ const browserConfigurations = [
     os: 'OS X',
     osVersion: 'Big Sur',
   },
-  {
-    sessionName: 'Chrome mobile',
-    name: 'chrome',
-    osVersion: '12.0',
-    device: 'Google Pixel 6 Pro',
-  },
+  // {
+  //   sessionName: 'Chrome mobile',
+  //   name: 'chrome',
+  //   os: 'android',
+  //   osVersion: '12.0',
+  //   device: 'Google Pixel 6 Pro',
+  // },
 ]
 
 module.exports = {

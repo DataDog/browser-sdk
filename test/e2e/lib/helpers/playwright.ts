@@ -1,4 +1,4 @@
-import type { Android, PlaywrightWorkerOptions } from '@playwright/test'
+import type { PlaywrightWorkerOptions } from '@playwright/test'
 import type { BrowserConfiguration } from '../../../browsers.conf'
 import { getBuildInfos } from '../../../envUtils'
 
@@ -20,11 +20,12 @@ export function getEncodedCapabilities(configuration: BrowserConfiguration) {
 
 // see: https://www.browserstack.com/docs/automate/playwright/playwright-capabilities
 function getCapabilities(configuration: BrowserConfiguration) {
-  const capabilities: Record<string, any> = {
+  return {
     os: configuration.os,
     os_version: configuration.osVersion,
     browser: configuration.name,
     browser_version: configuration.version,
+    ...(configuration.device ? { deviceName: configuration.device } : {}),
     'browserstack.username': process.env.BS_USERNAME,
     'browserstack.accessKey': process.env.BS_ACCESS_KEY,
     project: 'browser sdk e2e',
@@ -38,22 +39,4 @@ function getCapabilities(configuration: BrowserConfiguration) {
     'browserstack.networkLogs': false,
     'browserstack.interactiveDebugging': false,
   }
-
-  if (configuration.device) {
-    capabilities.deviceName = configuration.device
-    capabilities.realMobile = true
-  }
-
-  return capabilities
-}
-
-export async function connectToAndroidDevice(android: Android, configuration: BrowserConfiguration) {
-  const device = await android.connect(
-    `wss://cdp.browserstack.com/playwright?caps=${getEncodedCapabilities(configuration)}`
-  )
-  await device.shell('am force-stop com.android.chrome')
-  const context = await device.launchBrowser()
-  const page = await context.newPage()
-
-  return { page, context, device }
 }
