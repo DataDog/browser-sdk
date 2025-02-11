@@ -1,6 +1,5 @@
 import { RecordType } from '@datadog/browser-rum/src/types'
 import { test, expect } from '@playwright/test'
-import { addTag } from '../../lib/helpers/tags'
 import { expireSession, findSessionCookie, renewSession } from '../../lib/helpers/session'
 import { bundleSetup, createTest, waitForRequests } from '../../lib/framework'
 

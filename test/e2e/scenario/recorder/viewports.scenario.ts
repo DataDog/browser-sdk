@@ -7,6 +7,7 @@ import { test, expect } from '@playwright/test'
 import { wait } from '@datadog/browser-core/test/wait'
 import type { IntakeRegistry } from '../../lib/framework'
 import { createTest, bundleSetup, html } from '../../lib/framework'
+import type { BrowserConfiguration } from '../../../browsers.conf'
 
 const NAVBAR_HEIGHT_CHANGE_UPPER_BOUND = 30
 const VIEWPORT_META_TAGS = `
@@ -18,39 +19,37 @@ const VIEWPORT_META_TAGS = `
 `
 
 test.describe('recorder', () => {
-  test.beforeEach(({ hasTouch, browserName }, testInfo) => {
-    testInfo.skip(!hasTouch, 'no touch gesture support')
+  test.beforeEach(({ browserName }, testInfo) => {
     testInfo.skip(browserName !== 'chromium', 'only chromium supports touch gestures emulation for now (via CDP)')
   })
 
   test.describe('layout viewport properties', () => {
-    test.describe('', () => {
-      createTest('getWindowWidth/Height should not be affected by pinch zoom')
-        .withRum()
-        .withSetup(bundleSetup)
-        .withBody(html`${VIEWPORT_META_TAGS}`)
-        .run(async ({ intakeRegistry, page, flushEvents }) => {
-          await buildScrollablePage(page)
+    createTest('getWindowWidth/Height should not be affected by pinch zoom')
+      .withRum()
+      .withSetup(bundleSetup)
+      .withBody(html`${VIEWPORT_META_TAGS}`)
+      .run(async ({ intakeRegistry, page, flushEvents }) => {
+        const { sessionName } = test.info().project.metadata as BrowserConfiguration
+        test.fixme(sessionName === 'Edge', 'In Edge, the ViewportResize record data is off by almost 20px')
 
-          const { innerWidth, innerHeight } = await getWindowInnerDimensions(page)
+        await buildScrollablePage(page)
 
-          await performSignificantZoom(page)
+        const { innerWidth, innerHeight } = await getWindowInnerDimensions(page)
 
-          await page.evaluate(() => {
-            window.dispatchEvent(new Event('resize'))
-          })
+        await performSignificantZoom(page)
 
-          await flushEvents()
-          const lastViewportResizeData = getLastRecord(intakeRegistry, (segment) =>
-            findAllIncrementalSnapshots(segment, IncrementalSource.ViewportResize)
-          ).data as ViewportResizeData
-
-          const scrollbarThicknessCorrection = getScrollbarThicknessCorrection(page)
-
-          expectToBeNearby(lastViewportResizeData.width, innerWidth - scrollbarThicknessCorrection)
-          expectToBeNearby(lastViewportResizeData.height, innerHeight - scrollbarThicknessCorrection)
+        await page.evaluate(() => {
+          window.dispatchEvent(new Event('resize'))
         })
-    })
+
+        await flushEvents()
+        const lastViewportResizeData = getLastRecord(intakeRegistry, (segment) =>
+          findAllIncrementalSnapshots(segment, IncrementalSource.ViewportResize)
+        ).data as ViewportResizeData
+
+        expectToBeNearby(lastViewportResizeData.width, innerWidth)
+        expectToBeNearby(lastViewportResizeData.height, innerHeight)
+      })
 
     /**
      * window.ScrollX/Y on some devices/browsers are changed by pinch zoom
@@ -152,7 +151,7 @@ async function pinchZoom(page: Page, xChange: number) {
       { x: xBase + xOffsetFingerTwo, y: yBase, id: 1 },
     ],
   })
-  await wait(pauseDurationMs)
+  await page.waitForTimeout(pauseDurationMs)
   await cdp.send('Input.dispatchTouchEvent', {
     type: 'touchMove',
     touchPoints: [
@@ -175,7 +174,7 @@ async function performSignificantZoom(page: Page) {
   await pinchZoom(page, 150)
   const nextVisualViewport = await getVisualViewport(page)
   // Test the test: ensure pinch zoom was applied
-  expect(initialVisualViewport.scale < nextVisualViewport.scale).toBeTruthy()
+  expect(nextVisualViewport.scale).toBeGreaterThan(initialVisualViewport.scale)
 }
 
 async function visualScrollVerticallyDown(page: Page, yChange: number) {
@@ -247,40 +246,6 @@ function getWindowScroll(page: Page) {
     scrollX: window.scrollX,
     scrollY: window.scrollY,
   })) as Promise<{ scrollX: number; scrollY: number }>
-}
-
-// TODO(playwright migration): I'm not sure if this is still needed?
-// function getScrollbarThickness(page: Page): Promise<number> {
-//  // https://stackoverflow.com/questions/13382516/getting-scroll-bar-width-using-javascript#answer-13382873
-//  return page.evaluate(() => {
-//    // Creating invisible container
-//    const outer = document.createElement('div')
-//    outer.style.visibility = 'hidden'
-//    outer.style.overflow = 'scroll' // forcing scrollbar to appear
-//    ;(outer.style as any).msOverflowStyle = 'scrollbar' // needed for WinJS apps
-//    document.body.appendChild(outer)
-//    // Creating inner element and placing it in the container
-//    const inner = document.createElement('div')
-//    outer.appendChild(inner)
-//    // Calculating difference between container's full width and the child width
-//    const scrollbarThickness = outer.offsetWidth - inner.offsetWidth
-//    // Removing temporary elements from the DOM
-//    document.body.removeChild(outer)
-//    return scrollbarThickness
-//  })
-// }
-
-// Mac OS X Chrome scrollbars are included here (~15px) which seems to be against spec
-// Scrollbar edge-case handling not considered right now, further investigation needed
-function getScrollbarThicknessCorrection(_page: Page): number {
-  const scrollbarThickness = 0
-
-  // TODO(playwright migration): I'm not sure if this is still needed?
-  // if (getBrowserName() === 'chrome' && getPlatformName() === 'macos') {
-  //  scrollbarThickness = await getScrollbarThickness(page)
-  // }
-
-  return scrollbarThickness
 }
 
 function getLastRecord<T>(intakeRegistry: IntakeRegistry, filterMethod: (segment: any) => T[]): T {
