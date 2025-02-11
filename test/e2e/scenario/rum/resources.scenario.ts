@@ -239,6 +239,8 @@ test.describe('rum resources', () => {
     .withRum()
     .withSetup(bundleSetup)
     .run(async ({ intakeRegistry, flushEvents, page, browserName }) => {
+      test.skip(browserName === 'webkit', 'Safari does not emit predictable timings events for concurrent fetches')
+
       await page.evaluate(
         () =>
           new Promise<void>((resolve) => {
@@ -246,11 +248,6 @@ test.describe('rum resources', () => {
               .then(() => resolve())
               .catch(() => resolve())
           })
-      )
-
-      test.skip(
-        browserName !== 'chromium',
-        'Only Chromium based browsers will emit predictable timings events for concurrent fetches'
       )
 
       await flushEvents()

@@ -33,15 +33,10 @@ test.describe('transport', () => {
         compressIntakeRequests: true,
       })
       .withBasePath('/no-blob-worker-csp')
-      .run(async ({ browserName, flushEvents, intakeRegistry, page, withBrowserLogs }) => {
-        const userAgent = await page.evaluate(() => navigator.userAgent)
-        test.skip(
-          browserName.includes('firefox') || (browserName.includes('webkit') && userAgent.includes('Mac OS X')),
-          `
-            // Ignore this test on Safari desktop and Firefox because the Worker actually works even with
-            // CSP restriction.
-            // TODO: Remove this condition when upgrading to Safari 15 and Firefox 99
-            `
+      .run(async ({ browserName, flushEvents, intakeRegistry, withBrowserLogs }) => {
+        test.fixme(
+          browserName === 'webkit',
+          'The worker fails but does not trigger the CSP documentation log on Safari'
         )
         await flushEvents()
 

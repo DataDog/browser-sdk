@@ -20,12 +20,8 @@ test.describe('rum views', () => {
     .withBody(html` <button>Hop</button> `)
     .run(async ({ browserName, flushEvents, intakeRegistry, page }) => {
       test.skip(
-        browserName.includes('webkit'),
-        `
-          // When run via WebDriver, Safari <= 14 (at least) have an issue with 'event.timeStamp',
-          // so the 'first-input' polyfill is ignoring it and doesn't send a performance entry.
-          // See https://bugs.webkit.org/show_bug.cgi?id=211101
-         `
+        browserName === 'webkit',
+        "Safari have an issue with 'event.timeStamp', so the 'first-input' polyfill is ignoring it and doesn't send a performance entry. See https://bugs.webkit.org/show_bug.cgi?id=211101"
       )
       const button = page.locator('button')
       await button.click()

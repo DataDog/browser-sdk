@@ -122,10 +122,6 @@ test.describe('rum errors', () => {
       })
     })
 
-  // Ignore this test on Safari and firefox untill we upgrade because:
-  // - Safari < 15 don't report the property disposition
-  // - Firefox < 99 don't report csp violation at all
-  // TODO: Remove this condition when upgrading to Safari 15 and Firefox 99 (see: https://datadoghq.atlassian.net/browse/RUM-1063)
   createTest('send CSP violation errors')
     .withRum()
     .withBody(
@@ -136,9 +132,6 @@ test.describe('rum errors', () => {
       `)
     )
     .run(async ({ page, browserName, intakeRegistry, baseUrl, flushEvents, withBrowserLogs }) => {
-      const userAgent = await page.evaluate(() => navigator.userAgent)
-      test.skip(browserName.includes('firefox') || (browserName.includes('webkit') && userAgent.includes('Mac OS X')))
-
       const button = page.locator('button')
       await button.click()
 
@@ -158,7 +151,12 @@ test.describe('rum errors', () => {
         },
       })
       withBrowserLogs((browserLogs) => {
-        expect(browserLogs).toHaveLength(1)
+        if (browserName === 'firefox') {
+          // Firefox has an additional Warning log: "Loading failed for the <script> with source 'https://example.com/foo.js'"
+          expect(browserLogs).toHaveLength(2)
+        } else {
+          expect(browserLogs).toHaveLength(1)
+        }
       })
     })
 })

@@ -97,12 +97,7 @@ test.describe('action collection', () => {
         })
       </script>
     `)
-    .run(async ({ intakeRegistry, flushEvents, browserName, page }) => {
-      test.skip(
-        browserName.includes('firefox'),
-        'When the target element changes between mousedown and mouseup, Firefox does not dispatch a click event.'
-      )
-
+    .run(async ({ intakeRegistry, flushEvents, page }) => {
       const button = page.locator('button')
       await button.click()
       await flushEvents()
