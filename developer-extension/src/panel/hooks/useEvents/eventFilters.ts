@@ -81,7 +81,7 @@ function filterOutdatedVersions(events: SdkEvent[]): SdkEvent[] {
 
 export function parseQuery(query: string) {
   const queryParts = query
-    .split(/(?<!\\)\s/g) // Hack it to escape whitespace with backslashes
+    .split(new RegExp('(?<!\\\\)\\s', 'g')) // Hack it to escape whitespace with backslashes
     .filter((queryPart) => queryPart)
     .map((queryPart) => queryPart.split(':'))
 
