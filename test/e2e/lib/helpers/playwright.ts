@@ -25,7 +25,6 @@ function getCapabilities(configuration: BrowserConfiguration) {
     os_version: configuration.osVersion,
     browser: configuration.name,
     browser_version: configuration.version,
-    ...(configuration.device ? { deviceName: configuration.device } : {}),
     'browserstack.username': process.env.BS_USERNAME,
     'browserstack.accessKey': process.env.BS_ACCESS_KEY,
     project: 'browser sdk e2e',

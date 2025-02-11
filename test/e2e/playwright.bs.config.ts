@@ -10,7 +10,7 @@ export default defineConfig({
   testIgnore: ['**/developerExtension.scenario.ts', '**/s8sInject.scenario.ts'], // The following test won't run in the BrowserStack
   // maxFailures: process.env.CI ? 1 : 0,
   projects: browserConfigurations.map((configuration) => ({
-    name: configuration.name,
+    name: configuration.sessionName,
     metadata: configuration,
     use: {
       browserName: getBrowserName(configuration.name),
