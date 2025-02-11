@@ -8,8 +8,6 @@ import {
   timeStampNow,
   clocksNow,
   getEventBridge,
-  ExperimentalFeature,
-  isExperimentalFeatureEnabled,
   initFeatureFlags,
   addTelemetryConfiguration,
   initFetchObservable,
@@ -159,10 +157,7 @@ export function createPreStartStrategy(
 
       callPluginsMethod(initConfiguration.plugins, 'onInit', { initConfiguration, publicApi })
 
-      if (
-        initConfiguration.remoteConfigurationId &&
-        isExperimentalFeatureEnabled(ExperimentalFeature.REMOTE_CONFIGURATION)
-      ) {
+      if (initConfiguration.remoteConfigurationId) {
         fetchAndApplyRemoteConfiguration(initConfiguration, doInit)
       } else {
         doInit(initConfiguration)
