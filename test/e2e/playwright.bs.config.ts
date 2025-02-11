@@ -7,8 +7,7 @@ import { browserConfigurations } from './browsers.conf'
 export default defineConfig({
   ...baseConfig,
   workers: 5, // BrowserStack has a limit of 5 parallel sessions
-  testIgnore: ['**/developerExtension.scenario.ts', '**/s8sInject.scenario.ts'], // The following test won't run in the BrowserStack
-  // maxFailures: process.env.CI ? 1 : 0,
+  testIgnore: ['**/developerExtension.scenario.ts', '**/s8sInject.scenario.ts'], // These test won't run in the BrowserStack
   projects: browserConfigurations.map((configuration) => ({
     name: configuration.sessionName,
     metadata: configuration,
