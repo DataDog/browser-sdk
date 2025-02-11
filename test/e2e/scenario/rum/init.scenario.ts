@@ -73,14 +73,12 @@ test.describe('API calls and events around init', () => {
       window.DD_RUM!.addError('before init')
       window.DD_RUM!.addAction('before init')
       window.DD_RUM!.addTiming('before init')
-      // global.updateViewName('before init') TODO uncomment when the api is not behind a ff anymore
 
       setTimeout(() => window.DD_RUM!.init(configuration), 10)
       setTimeout(() => {
         window.DD_RUM!.addError('before manual view')
         window.DD_RUM!.addAction('before manual view')
         window.DD_RUM!.addTiming('before manual view')
-        // global.updateViewName('before manual view') TODO uncomment when the api is not behind a ff anymore
       }, 20)
 
       setTimeout(() => window.DD_RUM!.startView('manual view'), 30)

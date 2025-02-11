@@ -131,7 +131,7 @@ test.describe('microfrontend', () => {
 
       withBrowserLogs((logs) => {
         expect(logs).toHaveLength(1)
-        expect(logs[0].message).toMatch(/foo$/) // TODO(playwright migration): it looks like chrome is logging the string without double quotes, but some other browser might
+        expect(logs[0].message).toMatch(/foo$/)
       })
 
       expect(event).toBeTruthy()
