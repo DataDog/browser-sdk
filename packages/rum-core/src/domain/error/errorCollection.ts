@@ -117,7 +117,7 @@ function processError(error: RawError, pageStateHistory: PageStateHistory): RawR
 }
 
 function tryToGetErrorContext(originalError: unknown) {
-  if (isError(originalError) && 'dd_context' in originalError) {
+  if (originalError !== null && typeof originalError === 'object' && 'dd_context' in originalError) {
     return originalError.dd_context as Context
   }
   return undefined
