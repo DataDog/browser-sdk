@@ -49,7 +49,7 @@ export function startErrorCollection(
 
 export function doStartErrorCollection(lifeCycle: LifeCycle, pageStateHistory: PageStateHistory) {
   lifeCycle.subscribe(LifeCycleEventType.RAW_ERROR_COLLECTED, ({ error, customerContext, savedCommonContext }) => {
-    customerContext = combine(tryToGetErrorContext(error.originalError), customerContext) as Context
+    customerContext = combine(error.context, customerContext)
     lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, {
       customerContext,
       savedCommonContext,
@@ -114,11 +114,4 @@ function processError(error: RawError, pageStateHistory: PageStateHistory): RawR
     startTime: error.startClocks.relative,
     domainContext,
   }
-}
-
-function tryToGetErrorContext(originalError: unknown) {
-  if (originalError !== null && typeof originalError === 'object' && 'dd_context' in originalError) {
-    return originalError.dd_context as Context
-  }
-  return undefined
 }
