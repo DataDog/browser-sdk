@@ -41,7 +41,7 @@ export function getSelectorFromElement(
   targetElement: Element,
   actionNameAttribute: string | undefined
 ): string | undefined {
-  if (!isConnected(targetElement)) {
+  if (!targetElement.isConnected) {
     // We cannot compute a selector for a detached element, as we don't have access to all of its
     // parents, and we cannot determine if it's unique in the document.
     return
@@ -265,19 +265,4 @@ export function isSelectorUniqueAmongSiblings(
 
 function combineSelector(parent: string, child: string | undefined): string {
   return child ? `${parent}>${child}` : parent
-}
-
-/**
- * Polyfill-utility for the `isConnected` property not supported in Edge <=18
- */
-function isConnected(element: Element): boolean {
-  if (
-    'isConnected' in
-    // cast is to make sure `element` is not inferred as `never` after the check
-    (element as { isConnected?: boolean })
-  ) {
-    return element.isConnected
-  }
-
-  return element.ownerDocument.documentElement.contains(element)
 }
