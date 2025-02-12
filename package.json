@@ -9,7 +9,7 @@
   ],
   "scripts": {
     "postinstall": "scripts/cli init_submodule",
-    "build": "lerna run build --stream",
+    "build": "lerna run build --stream && lerna run pack --stream",
     "build:bundle": "lerna run build:bundle --stream",
     "build:app": "cd test/app && rm -rf node_modules && yarn && yarn build",
     "format": "prettier --check .",
