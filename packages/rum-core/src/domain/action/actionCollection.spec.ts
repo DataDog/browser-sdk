@@ -1,6 +1,6 @@
 import type { Duration, RelativeTime, ServerDuration, TimeStamp } from '@datadog/browser-core'
-import { ExperimentalFeature, Observable } from '@datadog/browser-core'
-import { createNewEvent, mockExperimentalFeatures, registerCleanupTask } from '@datadog/browser-core/test'
+import { Observable } from '@datadog/browser-core'
+import { createNewEvent, registerCleanupTask } from '@datadog/browser-core/test'
 import type { RawRumActionEvent, RawRumEventCollectedData } from '@datadog/browser-rum-core'
 import { collectAndValidateRawRumEvents, mockPageStateHistory, mockRumConfiguration } from '../../../test'
 import type { RawRumEvent } from '../../rawRumEvent.types'
@@ -33,7 +33,6 @@ describe('actionCollection', () => {
   })
 
   it('should create action from auto action with name source', () => {
-    mockExperimentalFeatures([ExperimentalFeature.ACTION_NAME_MASKING])
     const event = createNewEvent('pointerup', { target: document.createElement('button') })
     lifeCycle.notify(LifeCycleEventType.AUTO_ACTION_COMPLETED, {
       counts: {
