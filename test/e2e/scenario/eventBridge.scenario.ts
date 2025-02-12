@@ -1,7 +1,7 @@
-import { flushBrowserLogs } from '../lib/helpers/browser'
-import { createTest, flushEvents, html } from '../lib/framework'
+import { test, expect } from '@playwright/test'
+import { createTest, html } from '../lib/framework'
 
-describe('bridge present', () => {
+test.describe('bridge present', () => {
   createTest('send action')
     .withRum({ trackUserInteractions: true })
     .withEventBridge()
@@ -14,36 +14,36 @@ describe('bridge present', () => {
         })
       </script>
     `)
-    .run(async ({ intakeRegistry }) => {
-      const button = await $('button')
+    .run(async ({ flushEvents, intakeRegistry, page }) => {
+      const button = page.locator('button')
       await button.click()
       // wait for click chain to close
-      await browser.pause(1000)
+      await page.waitForTimeout(1000)
       await flushEvents()
 
-      expect(intakeRegistry.rumActionEvents.length).toBe(1)
+      expect(intakeRegistry.rumActionEvents).toHaveLength(1)
       expect(intakeRegistry.hasOnlyBridgeRequests).toBe(true)
     })
 
   createTest('send error')
     .withRum()
     .withEventBridge()
-    .run(async ({ intakeRegistry }) => {
-      await browser.execute(() => {
+    .run(async ({ flushBrowserLogs, flushEvents, intakeRegistry, page }) => {
+      await page.evaluate(() => {
         console.error('oh snap')
       })
 
-      await flushBrowserLogs()
+      flushBrowserLogs()
       await flushEvents()
 
-      expect(intakeRegistry.rumErrorEvents.length).toBe(1)
+      expect(intakeRegistry.rumErrorEvents).toHaveLength(1)
       expect(intakeRegistry.hasOnlyBridgeRequests).toBe(true)
     })
 
   createTest('send resource')
     .withRum()
     .withEventBridge()
-    .run(async ({ intakeRegistry }) => {
+    .run(async ({ flushEvents, intakeRegistry }) => {
       await flushEvents()
 
       expect(intakeRegistry.rumResourceEvents.length).toBeGreaterThan(0)
@@ -53,7 +53,7 @@ describe('bridge present', () => {
   createTest('send view')
     .withRum()
     .withEventBridge()
-    .run(async ({ intakeRegistry }) => {
+    .run(async ({ flushEvents, intakeRegistry }) => {
       await flushEvents()
 
       expect(intakeRegistry.rumViewEvents.length).toBeGreaterThan(0)
@@ -63,8 +63,8 @@ describe('bridge present', () => {
   createTest('forward telemetry to the bridge')
     .withLogs()
     .withEventBridge()
-    .run(async ({ intakeRegistry }) => {
-      await browser.execute(() => {
+    .run(async ({ flushEvents, intakeRegistry, page }) => {
+      await page.evaluate(() => {
         const context = {
           get foo() {
             throw new window.Error('bar')
@@ -74,7 +74,7 @@ describe('bridge present', () => {
       })
 
       await flushEvents()
-      expect(intakeRegistry.telemetryErrorEvents.length).toBe(1)
+      expect(intakeRegistry.telemetryErrorEvents).toHaveLength(1)
       expect(intakeRegistry.hasOnlyBridgeRequests).toBe(true)
       intakeRegistry.empty()
     })
@@ -82,20 +82,20 @@ describe('bridge present', () => {
   createTest('forward logs to the bridge')
     .withLogs()
     .withEventBridge()
-    .run(async ({ intakeRegistry }) => {
-      await browser.execute(() => {
+    .run(async ({ flushEvents, intakeRegistry, page }) => {
+      await page.evaluate(() => {
         window.DD_LOGS!.logger.log('hello')
       })
       await flushEvents()
 
-      expect(intakeRegistry.logsEvents.length).toBe(1)
+      expect(intakeRegistry.logsEvents).toHaveLength(1)
       expect(intakeRegistry.hasOnlyBridgeRequests).toBe(true)
     })
 
   createTest('send records to the bridge')
     .withRum()
     .withEventBridge()
-    .run(async ({ intakeRegistry }) => {
+    .run(async ({ flushEvents, intakeRegistry }) => {
       await flushEvents()
 
       expect(intakeRegistry.replayRecords.length).toBeGreaterThan(0)
@@ -105,12 +105,12 @@ describe('bridge present', () => {
   createTest('do not send records when the recording is stopped')
     .withRum()
     .withEventBridge()
-    .run(async ({ intakeRegistry }) => {
+    .run(async ({ flushEvents, intakeRegistry, page }) => {
       // wait for recorder to be properly started
-      await browser.pause(200)
+      await page.waitForTimeout(200)
 
       const preStopRecordsCount = intakeRegistry.replayRecords.length
-      await browser.execute(() => {
+      await page.evaluate(() => {
         window.DD_RUM!.stopSessionReplayRecording()
 
         // trigger a new record
