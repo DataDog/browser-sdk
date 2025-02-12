@@ -137,6 +137,13 @@ export interface RumInitConfiguration extends InitConfiguration {
    * Enables collection of features flags in chosen events.
    */
   trackFeatureFlagsForEvents?: FeatureFlagsForEvents[]
+
+  /**
+   * @experimental Not ready for production.
+   * The percentage of users profiled. A value between 0 and 100.
+   * @default 0
+   */
+  profilingSampleRate?: number | undefined
 }
 
 export type HybridInitConfiguration = Omit<RumInitConfiguration, 'applicationId' | 'clientToken'>
@@ -167,6 +174,7 @@ export interface RumConfiguration extends Configuration {
   traceContextInjection: TraceContextInjection
   plugins: RumPlugin[]
   trackFeatureFlagsForEvents: FeatureFlagsForEvents[]
+  profilingSampleRate: number;
 }
 
 export function validateAndBuildRumConfiguration(
@@ -238,6 +246,7 @@ export function validateAndBuildRumConfiguration(
       : TraceContextInjection.SAMPLED,
     plugins: initConfiguration.plugins || [],
     trackFeatureFlagsForEvents: initConfiguration.trackFeatureFlagsForEvents || [],
+    profilingSampleRate: initConfiguration.profilingSampleRate ?? 0,
     ...baseConfiguration,
   }
 }
@@ -322,6 +331,7 @@ export function serializeRumConfiguration(configuration: RumInitConfiguration) {
       ...plugin.getConfigurationTelemetry?.(),
     })),
     track_feature_flags_for_events: configuration.trackFeatureFlagsForEvents,
+    profiling_sample_rate: configuration.profilingSampleRate,
     ...baseSerializedConfiguration,
   } satisfies RawTelemetryConfiguration
 }
