@@ -9,9 +9,10 @@
   ],
   "scripts": {
     "postinstall": "scripts/cli init_submodule",
+    "pack:all": "lerna run pack --stream",
     "build": "lerna run build --stream",
     "build:bundle": "lerna run build:bundle --stream",
-    "build:app": "cd test/app && rm -rf node_modules && yarn && yarn build",
+    "build:app": "cd test/app && rm -rf node_modules && yarn && yarn build && yarn pack:all",
     "format": "prettier --check .",
     "lint": "scripts/cli lint .",
     "typecheck": "scripts/cli typecheck . && scripts/cli typecheck developer-extension",
