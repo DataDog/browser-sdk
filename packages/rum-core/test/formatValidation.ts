@@ -5,7 +5,7 @@ import { combine } from '@datadog/browser-core'
 import type { CommonProperties } from '@datadog/browser-rum-core'
 import type { LifeCycle, RawRumEventCollectedData } from '../src/domain/lifeCycle'
 import { LifeCycleEventType } from '../src/domain/lifeCycle'
-import type { RawRumEvent, RumContext } from '../src/rawRumEvent.types'
+import type { RawRumEvent } from '../src/rawRumEvent.types'
 import { allJsonSchemas } from './allJsonSchemas'
 
 export function collectAndValidateRawRumEvents(lifeCycle: LifeCycle) {
@@ -53,7 +53,7 @@ function validateRumEventFormat(rawRumEvent: RawRumEvent) {
     },
     context: {},
   }
-  validateRumFormat(combine(fakeContext as RumContext & Context, rawRumEvent))
+  validateRumFormat(combine(fakeContext as CommonProperties & Context, rawRumEvent))
 }
 
 function validateRumFormat(rumEvent: Context) {

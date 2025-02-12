@@ -11,6 +11,8 @@ export function mockUrlContexts(fakeLocation: Location = location): UrlContexts 
       url: fakeLocation.href,
       referrer: document.referrer,
     }),
+    getAllEntries: () => [],
+    getDeletedEntries: () => [],
     stop: noop,
   }
 }
@@ -19,6 +21,8 @@ export function mockViewHistory(view?: Partial<ViewHistoryEntry>): ViewHistory {
   return {
     findView: () => view as ViewHistoryEntry,
     stop: noop,
+    getAllEntries: () => [],
+    getDeletedEntries: () => [],
   }
 }
 

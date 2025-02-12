@@ -6,7 +6,7 @@ import type { RumEvent } from '../rumEvent.types'
 import type { CommonContext } from './contexts/commonContext'
 import type { RequestCompleteEvent, RequestStartEvent } from './requestCollection'
 import type { AutoAction } from './action/actionCollection'
-import type { ViewEvent, ViewCreatedEvent, ViewEndedEvent } from './view/trackViews'
+import type { ViewEvent, ViewCreatedEvent, ViewEndedEvent, BeforeViewUpdateEvent } from './view/trackViews'
 
 export const enum LifeCycleEventType {
   // Contexts (like viewHistory) should be opened using prefixed BEFORE_XXX events and closed using prefixed AFTER_XXX events
@@ -14,6 +14,7 @@ export const enum LifeCycleEventType {
   AUTO_ACTION_COMPLETED,
   BEFORE_VIEW_CREATED,
   VIEW_CREATED,
+  BEFORE_VIEW_UPDATED,
   VIEW_UPDATED,
   VIEW_ENDED,
   AFTER_VIEW_ENDED,
@@ -55,6 +56,7 @@ declare const LifeCycleEventTypeAsConst: {
   AUTO_ACTION_COMPLETED: LifeCycleEventType.AUTO_ACTION_COMPLETED
   BEFORE_VIEW_CREATED: LifeCycleEventType.BEFORE_VIEW_CREATED
   VIEW_CREATED: LifeCycleEventType.VIEW_CREATED
+  BEFORE_VIEW_UPDATED: LifeCycleEventType.BEFORE_VIEW_UPDATED
   VIEW_UPDATED: LifeCycleEventType.VIEW_UPDATED
   VIEW_ENDED: LifeCycleEventType.VIEW_ENDED
   AFTER_VIEW_ENDED: LifeCycleEventType.AFTER_VIEW_ENDED
@@ -74,6 +76,7 @@ export interface LifeCycleEventMap {
   [LifeCycleEventTypeAsConst.AUTO_ACTION_COMPLETED]: AutoAction
   [LifeCycleEventTypeAsConst.BEFORE_VIEW_CREATED]: ViewCreatedEvent
   [LifeCycleEventTypeAsConst.VIEW_CREATED]: ViewCreatedEvent
+  [LifeCycleEventTypeAsConst.BEFORE_VIEW_UPDATED]: BeforeViewUpdateEvent
   [LifeCycleEventTypeAsConst.VIEW_UPDATED]: ViewEvent
   [LifeCycleEventTypeAsConst.VIEW_ENDED]: ViewEndedEvent
   [LifeCycleEventTypeAsConst.AFTER_VIEW_ENDED]: ViewEndedEvent

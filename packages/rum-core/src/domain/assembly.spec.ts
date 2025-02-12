@@ -18,6 +18,7 @@ import {
   mockDisplayContext,
   mockViewHistory,
   mockFeatureFlagContexts,
+  mockUrlContexts,
 } from '../../test'
 import type { RumEventDomainContext } from '../domainContext.types'
 import type { RawRumEvent } from '../rawRumEvent.types'
@@ -973,6 +974,7 @@ function setupAssemblyTestWithDefaults({
     hooks,
     rumSessionManager,
     { ...mockViewHistory(), findView: () => findView() },
+    mockUrlContexts(),
     mockDisplayContext(),
     { get: () => ciVisibilityContext } as CiVisibilityContext,
     featureFlagContexts,

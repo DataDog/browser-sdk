@@ -11,11 +11,16 @@ import {
   isExperimentalFeatureEnabled,
   ExperimentalFeature,
   getConnectivity,
+  addTelemetryDebug,
 } from '@datadog/browser-core'
 import type { RumEventDomainContext } from '../domainContext.types'
+<<<<<<< HEAD
 import type { RawRumEvent, RumContext } from '../rawRumEvent.types'
+=======
+import type { RawRumErrorEvent, RawRumEvent, RawRumLongTaskEvent, RawRumResourceEvent } from '../rawRumEvent.types'
+>>>>>>> main
 import { RumEventType } from '../rawRumEvent.types'
-import type { RumEvent } from '../rumEvent.types'
+import type { CommonProperties, RumEvent } from '../rumEvent.types'
 import type { Hooks } from '../hooks'
 import { HookNames } from '../hooks'
 import { getSyntheticsContext } from './contexts/syntheticsContext'
@@ -30,6 +35,7 @@ import type { CommonContext } from './contexts/commonContext'
 import type { ModifiableFieldPaths } from './limitModification'
 import { limitModification } from './limitModification'
 import type { FeatureFlagContexts } from './contexts/featureFlagContext'
+import type { UrlContexts } from './contexts/urlContexts'
 
 // replaced at build time
 declare const __BUILD_ENV__SDK_VERSION__: string
@@ -65,6 +71,7 @@ export function startRumAssembly(
   hooks: Hooks,
   sessionManager: RumSessionManager,
   viewHistory: ViewHistory,
+  urlContexts: UrlContexts,
   displayContext: DisplayContext,
   ciVisibilityContext: CiVisibilityContext,
   featureFlagContexts: FeatureFlagContexts,
@@ -98,6 +105,8 @@ export function startRumAssembly(
       ...ROOT_MODIFIABLE_FIELD_PATHS,
     },
     [RumEventType.LONG_TASK]: {
+      'long_task.scripts[].source_url': 'string',
+      'long_task.scripts[].invoker': 'string',
       ...USER_CUSTOMIZABLE_FIELD_PATHS,
       ...VIEW_MODIFIABLE_FIELD_PATHS,
     },
@@ -129,12 +138,31 @@ export function startRumAssembly(
     LifeCycleEventType.RAW_RUM_EVENT_COLLECTED,
     ({ startTime, rawRumEvent, domainContext, savedCommonContext, customerContext }) => {
       const viewHistoryEntry = viewHistory.findView(startTime)
+      const urlContext = urlContexts.findUrl(startTime)
       const session = sessionManager.findTrackedSession(startTime)
 
-      if (session && viewHistoryEntry) {
+      if (
+        session &&
+        viewHistoryEntry &&
+        !urlContext &&
+        isExperimentalFeatureEnabled(ExperimentalFeature.MISSING_URL_CONTEXT_TELEMETRY)
+      ) {
+        addTelemetryDebug('Missing URL entry', {
+          debug: {
+            eventType: rawRumEvent.type,
+            startTime,
+            urlEntries: urlContexts.getAllEntries(),
+            urlDeletedEntries: urlContexts.getDeletedEntries(),
+            viewEntries: viewHistory.getAllEntries(),
+            viewDeletedEntries: viewHistory.getDeletedEntries(),
+          },
+        })
+      }
+
+      if (session && viewHistoryEntry && urlContext) {
         const commonContext = savedCommonContext || getCommonContext()
 
-        const rumContext: RumContext = {
+        const rumContext: Partial<CommonProperties> = {
           _dd: {
             format_version: 2,
             drift: currentDrift(),

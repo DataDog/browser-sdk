@@ -80,7 +80,7 @@ describe('resourceCollection', () => {
         encoded_body_size: 42,
         decoded_body_size: 51,
         transfer_size: 63,
-        type: ResourceType.OTHER,
+        type: ResourceType.IMAGE,
         url: 'https://resource.com/valid',
         download: jasmine.any(Object),
         first_byte: jasmine.any(Object),

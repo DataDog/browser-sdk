@@ -34,6 +34,7 @@ import type { RumSessionManager } from '../domain/rumSessionManager'
 import { startRumSessionManager, startRumSessionManagerStub } from '../domain/rumSessionManager'
 import { startRumBatch } from '../transport/startRumBatch'
 import { startRumEventBridge } from '../transport/startRumEventBridge'
+import type { UrlContexts } from '../domain/contexts/urlContexts'
 import { startUrlContexts } from '../domain/contexts/urlContexts'
 import { createLocationChangeObservable } from '../browser/locationChangeObservable'
 import type { RumConfiguration } from '../domain/configuration'
@@ -150,6 +151,7 @@ export function startRum(
     domMutationObservable,
     featureFlagContexts,
     windowOpenObservable,
+    urlContexts,
     viewHistory,
     getCommonContext,
     reportError
@@ -249,6 +251,7 @@ export function startRumEventCollection(
   domMutationObservable: Observable<void>,
   featureFlagContexts: FeatureFlagContexts,
   windowOpenObservable: Observable<void>,
+  urlContexts: UrlContexts,
   viewHistory: ViewHistory,
   getCommonContext: () => CommonContext,
   reportError: (error: RawError) => void
@@ -271,6 +274,7 @@ export function startRumEventCollection(
     hooks,
     sessionManager,
     viewHistory,
+    urlContexts,
     displayContext,
     ciVisibilityContext,
     featureFlagContexts,

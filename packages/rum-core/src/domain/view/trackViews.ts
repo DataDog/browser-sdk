@@ -67,6 +67,13 @@ export interface ViewCreatedEvent {
   startClocks: ClocksState
 }
 
+export interface BeforeViewUpdateEvent {
+  id: string
+  name?: string
+  context?: Context
+  startClocks: ClocksState
+}
+
 export interface ViewEndedEvent {
   endClocks: ClocksState
 }
@@ -229,13 +236,9 @@ function newView(
   lifeCycle.notify(LifeCycleEventType.VIEW_CREATED, viewCreatedEvent)
 
   // Update the view every time the measures are changing
-  const { throttled: scheduleViewUpdate, cancel: cancelScheduleViewUpdate } = throttle(
-    triggerViewUpdate,
-    THROTTLE_VIEW_UPDATE_PERIOD,
-    {
-      leading: false,
-    }
-  )
+  const { throttled, cancel: cancelScheduleViewUpdate } = throttle(triggerViewUpdate, THROTTLE_VIEW_UPDATE_PERIOD, {
+    leading: false,
+  })
 
   const {
     setLoadEvent,
@@ -265,10 +268,28 @@ function newView(
 
   // Initial view update
   triggerViewUpdate()
-  contextManager.changeObservable.subscribe(triggerViewUpdate)
+
+  // View context update should always be throttled
+  contextManager.changeObservable.subscribe(scheduleViewUpdate)
+
+  function triggerBeforeViewUpdate() {
+    lifeCycle.notify(LifeCycleEventType.BEFORE_VIEW_UPDATED, {
+      id,
+      name,
+      context: contextManager.getContext(),
+      startClocks,
+    })
+  }
+
+  function scheduleViewUpdate() {
+    triggerBeforeViewUpdate()
+    throttled()
+  }
 
   function triggerViewUpdate() {
     cancelScheduleViewUpdate()
+    triggerBeforeViewUpdate()
+
     documentVersion += 1
     const currentEnd = endClocks === undefined ? timeStampNow() : endClocks.timeStamp
     lifeCycle.notify(LifeCycleEventType.VIEW_UPDATED, {

@@ -202,6 +202,7 @@ describe('viewCollection', () => {
           lcp: {
             timestamp: (10 * 1e6) as ServerDuration,
             target_selector: undefined,
+            resource_url: undefined,
           },
         },
         resource: {

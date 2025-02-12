@@ -1,6 +1,6 @@
 {
   "name": "@datadog/browser-sdk-developer-extension",
-  "version": "6.1.0",
+  "version": "6.2.1",
   "private": true,
   "scripts": {
     "build": "rm -rf dist && webpack --mode production",
@@ -8,7 +8,7 @@
   },
   "devDependencies": {
     "@tabler/icons-react": "3.29.0",
-    "@types/chrome": "0.0.299",
+    "@types/chrome": "0.0.301",
     "@types/react": "18.3.18",
     "@types/react-dom": "18.3.5",
     "@webextension-toolbox/webpack-webextension-plugin": "3.3.1",
@@ -22,8 +22,8 @@
     "@datadog/browser-core": "workspace:*",
     "@datadog/browser-logs": "workspace:*",
     "@datadog/browser-rum": "workspace:*",
-    "@mantine/core": "7.16.1",
-    "@mantine/hooks": "7.16.1",
+    "@mantine/core": "7.16.2",
+    "@mantine/hooks": "7.16.2",
     "clsx": "2.1.1",
     "react": "18.3.1",
     "react-dom": "18.3.1"

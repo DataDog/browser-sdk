@@ -81,6 +81,7 @@ function startRumStub(
     domMutationObservable,
     startFeatureFlagContexts(lifeCycle, createCustomerDataTracker(noop)),
     windowOpenObservable,
+    urlContexts,
     viewHistory,
     () => ({
       context: {},
