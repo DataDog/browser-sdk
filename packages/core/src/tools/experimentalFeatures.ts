@@ -17,6 +17,7 @@ export enum ExperimentalFeature {
   WRITABLE_RESOURCE_GRAPHQL = 'writable_resource_graphql',
   CONSISTENT_TRACE_SAMPLING = 'consistent_trace_sampling',
   MISSING_URL_CONTEXT_TELEMETRY = 'missing_url_context_telemetry',
+  PROFILING_FEATURE = 'profiling_feature',
 }
 
 const enabledExperimentalFeatures: Set<ExperimentalFeature> = new Set()

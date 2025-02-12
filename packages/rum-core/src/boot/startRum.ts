@@ -55,6 +55,7 @@ import { startLongTaskCollection } from '../domain/longTask/longTaskCollection'
 import type { Hooks } from '../hooks'
 import { createHooks } from '../hooks'
 import { startSyntheticsContext } from '../domain/contexts/syntheticsContext'
+import { startProfilingCollection } from '../domain/profiling/profilingCollection'
 import type { RecorderApi } from './rumPublicApi'
 
 export type StartRum = typeof startRum
@@ -188,8 +189,10 @@ export function startRum(
   const { stop: stopResourceCollection } = startResourceCollection(lifeCycle, configuration, pageStateHistory)
   cleanupTasks.push(stopResourceCollection)
 
+  const isLongAnimationFrameEnabled = PerformanceObserver.supportedEntryTypes?.includes(RumPerformanceEntryType.LONG_ANIMATION_FRAME);
+
   if (configuration.trackLongTasks) {
-    if (PerformanceObserver.supportedEntryTypes?.includes(RumPerformanceEntryType.LONG_ANIMATION_FRAME)) {
+    if (isLongAnimationFrameEnabled) {
       const { stop: stopLongAnimationFrameCollection } = startLongAnimationFrameCollection(lifeCycle, configuration)
       cleanupTasks.push(stopLongAnimationFrameCollection)
     } else {
@@ -210,6 +213,10 @@ export function startRum(
     urlContexts
   )
 
+  // Profiling collection
+  const { stop: stopProfilingCollection } = startProfilingCollection(configuration, lifeCycle, session, isLongAnimationFrameEnabled);
+  cleanupTasks.push(stopProfilingCollection)
+  
   return {
     addAction,
     addError,
