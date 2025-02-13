@@ -19,18 +19,15 @@ const VIEWPORT_META_TAGS = `
 `
 
 test.describe('recorder', () => {
-  test.beforeEach(({ browserName }, testInfo) => {
-    testInfo.skip(browserName !== 'chromium', 'only chromium supports touch gestures emulation for now (via CDP)')
-  })
-
   test.describe('layout viewport properties', () => {
     createTest('getWindowWidth/Height should not be affected by pinch zoom')
       .withRum()
       .withSetup(bundleSetup)
       .withBody(html`${VIEWPORT_META_TAGS}`)
-      .run(async ({ intakeRegistry, page, flushEvents }) => {
+      .run(async ({ intakeRegistry, page, flushEvents, browserName }) => {
         const { sessionName } = test.info().project.metadata as BrowserConfiguration
         test.fixme(sessionName === 'Edge', 'In Edge, the ViewportResize record data is off by almost 20px')
+        test.skip(browserName !== 'chromium', 'only chromium supports touch gestures emulation for now (via CDP)')
 
         await buildScrollablePage(page)
 
@@ -59,7 +56,9 @@ test.describe('recorder', () => {
       .withRum()
       .withSetup(bundleSetup)
       .withBody(html`${VIEWPORT_META_TAGS}`)
-      .run(async ({ intakeRegistry, flushEvents, page }) => {
+      .run(async ({ intakeRegistry, flushEvents, page, browserName }) => {
+        test.skip(browserName !== 'chromium', 'only chromium supports touch gestures emulation for now (via CDP)')
+
         const VISUAL_SCROLL_DOWN_PX = 60
         const LAYOUT_SCROLL_AMOUNT = 20
 
@@ -101,7 +100,9 @@ test.describe('recorder', () => {
       .withRum()
       .withSetup(bundleSetup)
       .withBody(html`${VIEWPORT_META_TAGS}`)
-      .run(async ({ intakeRegistry, page, flushEvents }) => {
+      .run(async ({ intakeRegistry, page, flushEvents, browserName }) => {
+        test.skip(browserName !== 'chromium', 'only chromium supports touch gestures emulation for now (via CDP)')
+
         const VISUAL_SCROLL_DOWN_PX = 100
         await buildScrollablePage(page)
         await performSignificantZoom(page)
@@ -112,11 +113,13 @@ test.describe('recorder', () => {
         expectToBeNearby(lastVisualViewportRecord.data.pageTop, nextVisualViewportDimension.pageTop)
       })
 
-    createTest('pinch zoom "resize" event reports visual viewport scale')
+    createTest('pinch zoom "resize" event reports visual viewport scale @here')
       .withRum()
       .withSetup(bundleSetup)
       .withBody(html`${VIEWPORT_META_TAGS}`)
-      .run(async ({ intakeRegistry, page, flushEvents }) => {
+      .run(async ({ intakeRegistry, page, flushEvents, browserName }) => {
+        test.skip(browserName !== 'chromium', 'only chromium supports touch gestures emulation for now (via CDP)')
+
         await performSignificantZoom(page)
         const nextVisualViewportDimension = await getVisualViewport(page)
         await flushEvents()
