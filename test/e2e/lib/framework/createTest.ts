@@ -191,7 +191,7 @@ function declareTestsForSetups(
 
 function declareTest(title: string, setupOptions: SetupOptions, factory: SetupFactory, runner: TestRunner) {
   test(title, async ({ page, context, browserName }) => {
-    addTag('browserName' as any as Tag, browserName)
+    addTag('test.browserName', browserName)
     addBrowserConfigurationTags(test.info().project.metadata as BrowserConfiguration)
 
     const title = test.info().titlePath.join(' > ')
@@ -285,11 +285,11 @@ async function tearDownTest({ flushEvents, deleteAllCookies }: TestContext) {
 
   const skipReason = test.info().annotations.find((annotation) => annotation.type === 'skip')?.description
   if (skipReason) {
-    addTag('skip', skipReason)
+    addTag('test.skip', skipReason)
   }
 
   const fixmeReason = test.info().annotations.find((annotation) => annotation.type === 'fixme')?.description
   if (fixmeReason) {
-    addTag('fixme', fixmeReason)
+    addTag('test.fixme', fixmeReason)
   }
 }
