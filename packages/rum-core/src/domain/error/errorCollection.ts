@@ -9,6 +9,7 @@ import {
   trackRuntimeError,
   NonErrorPrefix,
   isError,
+  combine,
 } from '@datadog/browser-core'
 import type { RumConfiguration } from '../configuration'
 import type { RawRumErrorEvent } from '../../rawRumEvent.types'
@@ -48,6 +49,7 @@ export function startErrorCollection(
 
 export function doStartErrorCollection(lifeCycle: LifeCycle, pageStateHistory: PageStateHistory) {
   lifeCycle.subscribe(LifeCycleEventType.RAW_ERROR_COLLECTED, ({ error, customerContext, savedCommonContext }) => {
+    customerContext = combine(error.context, customerContext)
     lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, {
       customerContext,
       savedCommonContext,
