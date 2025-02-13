@@ -3,8 +3,7 @@ import type { RumInitConfiguration } from '@datadog/browser-rum-core'
 import { DefaultPrivacyLevel } from '@datadog/browser-rum'
 import type { BrowserContext, Page, PlaywrightWorkerOptions } from '@playwright/test'
 import { test, expect } from '@playwright/test'
-import type { Tag } from '../helpers/tags'
-import { addTag, addBrowserConfigurationTags } from '../helpers/tags'
+import { addTag, addTestOptimizationTags } from '../helpers/tags'
 import { getRunId } from '../../../envUtils'
 import type { BrowserLog } from '../helpers/browser'
 import { BrowserLogsManager, deleteAllCookies, sendXhr } from '../helpers/browser'
@@ -191,8 +190,8 @@ function declareTestsForSetups(
 
 function declareTest(title: string, setupOptions: SetupOptions, factory: SetupFactory, runner: TestRunner) {
   test(title, async ({ page, context, browserName }) => {
-    addTag('browserName' as any as Tag, browserName)
-    addBrowserConfigurationTags(test.info().project.metadata as BrowserConfiguration)
+    addTag('test.browserName', browserName)
+    addTestOptimizationTags(test.info().project.metadata as BrowserConfiguration)
 
     const title = test.info().titlePath.join(' > ')
     setupOptions.context.test_name = title
@@ -285,11 +284,11 @@ async function tearDownTest({ flushEvents, deleteAllCookies }: TestContext) {
 
   const skipReason = test.info().annotations.find((annotation) => annotation.type === 'skip')?.description
   if (skipReason) {
-    addTag('skip', skipReason)
+    addTag('test.skip', skipReason)
   }
 
   const fixmeReason = test.info().annotations.find((annotation) => annotation.type === 'fixme')?.description
   if (fixmeReason) {
-    addTag('fixme', fixmeReason)
+    addTag('test.fixme', fixmeReason)
   }
 }
