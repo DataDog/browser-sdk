@@ -31,6 +31,15 @@ export interface ValueHistory<Value> {
   stop: () => void
 
   getAllEntries: () => Context[]
+  getDeletedEntries: () => RelativeTime[]
+}
+
+let cleanupHistoriesInterval: TimeoutId | null = null
+
+const cleanupTasks: Set<() => void> = new Set()
+
+function cleanupHistories() {
+  cleanupTasks.forEach((task) => task())
 }
 
 export function createValueHistory<Value>({
@@ -41,14 +50,23 @@ export function createValueHistory<Value>({
   maxEntries?: number
 }): ValueHistory<Value> {
   let entries: Array<ValueHistoryEntry<Value>> = []
-  const clearOldValuesInterval: TimeoutId = setInterval(() => clearOldValues(), CLEAR_OLD_VALUES_INTERVAL)
+  const deletedEntries: RelativeTime[] = []
 
-  function clearOldValues() {
+  if (!cleanupHistoriesInterval) {
+    cleanupHistoriesInterval = setInterval(() => cleanupHistories(), CLEAR_OLD_VALUES_INTERVAL)
+  }
+
+  const clearExpiredValues = () => {
     const oldTimeThreshold = relativeNow() - expireDelay
     while (entries.length > 0 && entries[entries.length - 1].endTime < oldTimeThreshold) {
-      entries.pop()
+      const entry = entries.pop()
+      if (entry) {
+        deletedEntries.push(entry.startTime)
+      }
     }
   }
+
+  cleanupTasks.add(clearExpiredValues)
 
   /**
    * Add a value to the history associated with a start time. Returns a reference to this newly
@@ -127,6 +145,10 @@ export function createValueHistory<Value>({
     })) as Context[]
   }
 
+  function getDeletedEntries() {
+    return deletedEntries
+  }
+
   /**
    * Remove all entries from this collection.
    */
@@ -138,8 +160,12 @@ export function createValueHistory<Value>({
    * Stop internal garbage collection of past entries.
    */
   function stop() {
-    clearInterval(clearOldValuesInterval)
+    cleanupTasks.delete(clearExpiredValues)
+    if (cleanupTasks.size === 0 && cleanupHistoriesInterval) {
+      clearInterval(cleanupHistoriesInterval)
+      cleanupHistoriesInterval = null
+    }
   }
 
-  return { add, find, closeActive, findAll, reset, stop, getAllEntries }
+  return { add, find, closeActive, findAll, reset, stop, getAllEntries, getDeletedEntries }
 }

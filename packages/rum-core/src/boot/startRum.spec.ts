@@ -70,7 +70,7 @@ function startRumStub(
 ) {
   const hooks = createHooks()
   const viewHistory = startViewHistory(lifeCycle)
-  const urlContexts = startUrlContexts(lifeCycle, hooks, locationChangeObservable, location, viewHistory)
+  const urlContexts = startUrlContexts(lifeCycle, hooks, locationChangeObservable, location)
 
   const { stop: rumEventCollectionStop } = startRumEventCollection(
     lifeCycle,
@@ -81,6 +81,7 @@ function startRumStub(
     domMutationObservable,
     startFeatureFlagContexts(lifeCycle, createCustomerDataTracker(noop)),
     windowOpenObservable,
+    urlContexts,
     viewHistory,
     () => ({
       context: {},

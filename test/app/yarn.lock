@@ -15,9 +15,9 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@datadog/browser-logs@portal:../../packages/logs::locator=app%40workspace%3A."
   dependencies:
-    "@datadog/browser-core": "npm:6.1.0"
+    "@datadog/browser-core": "npm:6.3.0"
   peerDependencies:
-    "@datadog/browser-rum": 6.1.0
+    "@datadog/browser-rum": 6.3.0
   peerDependenciesMeta:
     "@datadog/browser-rum":
       optional: true
@@ -28,7 +28,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@datadog/browser-rum-core@portal:../../packages/rum-core::locator=app%40workspace%3A."
   dependencies:
-    "@datadog/browser-core": "npm:6.1.0"
+    "@datadog/browser-core": "npm:6.3.0"
   languageName: node
   linkType: soft
 
@@ -36,10 +36,10 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@datadog/browser-rum@portal:../../packages/rum::locator=app%40workspace%3A."
   dependencies:
-    "@datadog/browser-core": "npm:6.1.0"
-    "@datadog/browser-rum-core": "npm:6.1.0"
+    "@datadog/browser-core": "npm:6.3.0"
+    "@datadog/browser-rum-core": "npm:6.3.0"
   peerDependencies:
-    "@datadog/browser-logs": 6.1.0
+    "@datadog/browser-logs": 6.3.0
   peerDependenciesMeta:
     "@datadog/browser-logs":
       optional: true

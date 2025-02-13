@@ -1,7 +1,7 @@
 import { mockClock, registerCleanupTask, type Clock } from '@datadog/browser-core/test'
 import type { RelativeTime } from '@datadog/browser-core'
 import { clocksNow, relativeToClocks } from '@datadog/browser-core'
-import { mockViewHistory, setupLocationObserver } from '../../../test'
+import { setupLocationObserver } from '../../../test'
 import { LifeCycle, LifeCycleEventType } from '../lifeCycle'
 import type { ViewCreatedEvent, ViewEndedEvent } from '../view/trackViews'
 import type { Hooks } from '../../hooks'
@@ -21,13 +21,7 @@ describe('urlContexts', () => {
     const setupResult = setupLocationObserver('http://fake-url.com')
 
     changeLocation = setupResult.changeLocation
-    urlContexts = startUrlContexts(
-      lifeCycle,
-      hooks,
-      setupResult.locationChangeObservable,
-      setupResult.fakeLocation,
-      mockViewHistory()
-    )
+    urlContexts = startUrlContexts(lifeCycle, hooks, setupResult.locationChangeObservable, setupResult.fakeLocation)
 
     registerCleanupTask(() => {
       urlContexts.stop()

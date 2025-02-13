@@ -14,15 +14,15 @@ import {
   createRumSessionManagerMock,
   createRawRumEvent,
   mockRumConfiguration,
-  mockActionContexts,
   mockDisplayContext,
   mockViewHistory,
   mockFeatureFlagContexts,
+  mockUrlContexts,
 } from '../../test'
 import type { RumEventDomainContext } from '../domainContext.types'
-import type { RawRumActionEvent, RawRumEvent } from '../rawRumEvent.types'
+import type { RawRumEvent } from '../rawRumEvent.types'
 import { RumEventType } from '../rawRumEvent.types'
-import type { RumActionEvent, RumErrorEvent, RumEvent, RumResourceEvent } from '../rumEvent.types'
+import type { RumErrorEvent, RumEvent, RumResourceEvent } from '../rumEvent.types'
 import { HookNames, createHooks } from '../hooks'
 import { startRumAssembly } from './assembly'
 import type { RawRumEventCollectedData } from './lifeCycle'
@@ -505,32 +505,6 @@ describe('rum assembly', () => {
     })
   })
 
-  describe('action context', () => {
-    it('should be added on some event categories', () => {
-      const { lifeCycle, serverRumEvents } = setupAssemblyTestWithDefaults()
-      ;[RumEventType.RESOURCE, RumEventType.LONG_TASK, RumEventType.ERROR].forEach((category) => {
-        notifyRawRumEvent(lifeCycle, {
-          rawRumEvent: createRawRumEvent(category),
-        })
-        expect(serverRumEvents[0].action).toEqual({ id: '7890' })
-        serverRumEvents.length = 0
-      })
-
-      notifyRawRumEvent(lifeCycle, {
-        rawRumEvent: createRawRumEvent(RumEventType.VIEW),
-      })
-      expect(serverRumEvents[0].action).not.toBeDefined()
-      serverRumEvents.length = 0
-
-      const generatedRawRumActionEvent = createRawRumEvent(RumEventType.ACTION) as RawRumActionEvent
-      notifyRawRumEvent(lifeCycle, {
-        rawRumEvent: generatedRawRumActionEvent,
-      })
-      expect((serverRumEvents[0] as RumActionEvent).action.id).toEqual(generatedRawRumActionEvent.action.id)
-      serverRumEvents.length = 0
-    })
-  })
-
   describe('service and version', () => {
     const extraConfigurationOptions = { service: 'default service', version: 'default version' }
 
@@ -950,7 +924,7 @@ function setupAssemblyTestWithDefaults({
     hooks,
     rumSessionManager,
     { ...mockViewHistory(), findView: () => findView() },
-    mockActionContexts(),
+    mockUrlContexts(),
     mockDisplayContext(),
     featureFlagContexts,
     () => commonContext,

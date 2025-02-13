@@ -11,17 +11,12 @@ import {
   isExperimentalFeatureEnabled,
   ExperimentalFeature,
   getConnectivity,
+  addTelemetryDebug,
 } from '@datadog/browser-core'
 import type { RumEventDomainContext } from '../domainContext.types'
-import type {
-  RawRumErrorEvent,
-  RawRumEvent,
-  RawRumLongTaskEvent,
-  RawRumResourceEvent,
-  RumContext,
-} from '../rawRumEvent.types'
+import type { RawRumEvent } from '../rawRumEvent.types'
 import { RumEventType } from '../rawRumEvent.types'
-import type { RumEvent } from '../rumEvent.types'
+import type { CommonProperties, RumEvent } from '../rumEvent.types'
 import type { Hooks } from '../hooks'
 import { HookNames } from '../hooks'
 import type { LifeCycle } from './lifeCycle'
@@ -29,12 +24,12 @@ import { LifeCycleEventType } from './lifeCycle'
 import type { ViewHistory } from './contexts/viewHistory'
 import { SessionReplayState, SessionType, type RumSessionManager } from './rumSessionManager'
 import type { RumConfiguration, FeatureFlagsForEvents } from './configuration'
-import type { ActionContexts } from './action/actionCollection'
 import type { DisplayContext } from './contexts/displayContext'
 import type { CommonContext } from './contexts/commonContext'
 import type { ModifiableFieldPaths } from './limitModification'
 import { limitModification } from './limitModification'
 import type { FeatureFlagContexts } from './contexts/featureFlagContext'
+import type { UrlContexts } from './contexts/urlContexts'
 
 // replaced at build time
 declare const __BUILD_ENV__SDK_VERSION__: string
@@ -64,7 +59,7 @@ export function startRumAssembly(
   hooks: Hooks,
   sessionManager: RumSessionManager,
   viewHistory: ViewHistory,
-  actionContexts: ActionContexts,
+  urlContexts: UrlContexts,
   displayContext: DisplayContext,
   featureFlagContexts: FeatureFlagContexts,
   getCommonContext: () => CommonContext,
@@ -97,6 +92,8 @@ export function startRumAssembly(
       ...ROOT_MODIFIABLE_FIELD_PATHS,
     },
     [RumEventType.LONG_TASK]: {
+      'long_task.scripts[].source_url': 'string',
+      'long_task.scripts[].invoker': 'string',
       ...USER_CUSTOMIZABLE_FIELD_PATHS,
       ...VIEW_MODIFIABLE_FIELD_PATHS,
     },
@@ -127,13 +124,31 @@ export function startRumAssembly(
     LifeCycleEventType.RAW_RUM_EVENT_COLLECTED,
     ({ startTime, rawRumEvent, domainContext, savedCommonContext, customerContext }) => {
       const viewHistoryEntry = viewHistory.findView(startTime)
+      const urlContext = urlContexts.findUrl(startTime)
       const session = sessionManager.findTrackedSession(startTime)
 
-      if (session && viewHistoryEntry) {
-        const commonContext = savedCommonContext || getCommonContext()
-        const actionId = actionContexts.findActionId(startTime)
+      if (
+        session &&
+        viewHistoryEntry &&
+        !urlContext &&
+        isExperimentalFeatureEnabled(ExperimentalFeature.MISSING_URL_CONTEXT_TELEMETRY)
+      ) {
+        addTelemetryDebug('Missing URL entry', {
+          debug: {
+            eventType: rawRumEvent.type,
+            startTime,
+            urlEntries: urlContexts.getAllEntries(),
+            urlDeletedEntries: urlContexts.getDeletedEntries(),
+            viewEntries: viewHistory.getAllEntries(),
+            viewDeletedEntries: viewHistory.getDeletedEntries(),
+          },
+        })
+      }
 
-        const rumContext: RumContext = {
+      if (session && viewHistoryEntry && urlContext) {
+        const commonContext = savedCommonContext || getCommonContext()
+
+        const rumContext: Partial<CommonProperties> = {
           _dd: {
             format_version: 2,
             drift: currentDrift(),
@@ -158,7 +173,6 @@ export function startRumAssembly(
             configuration.trackFeatureFlagsForEvents,
             featureFlagContexts
           ),
-          action: needToAssembleWithAction(rawRumEvent) && actionId ? { id: actionId } : undefined,
           display: displayContext.get(),
           connectivity: getConnectivity(),
           context: commonContext.context,
@@ -218,12 +232,6 @@ function shouldSend(
   const rateLimitReached = eventRateLimiters[event.type]?.isLimitReached()
 
   return !rateLimitReached
-}
-
-function needToAssembleWithAction(
-  event: RawRumEvent
-): event is RawRumErrorEvent | RawRumResourceEvent | RawRumLongTaskEvent {
-  return [RumEventType.ERROR, RumEventType.RESOURCE, RumEventType.LONG_TASK].indexOf(event.type) !== -1
 }
 
 function findFeatureFlagsContext(

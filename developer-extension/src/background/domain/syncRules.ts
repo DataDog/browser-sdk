@@ -1,5 +1,10 @@
 import type { NetRequestRulesOptions } from '../../common/extension.types'
-import { DEV_LOGS_URL, DEV_RUM_SLIM_URL, DEV_RUM_URL } from '../../common/packagesUrlConstants'
+import {
+  DEV_LOGS_URL,
+  DEV_RUM_RECORDER_CHUNK_URL,
+  DEV_RUM_SLIM_URL,
+  DEV_RUM_URL,
+} from '../../common/packagesUrlConstants'
 import { INTAKE_DOMAINS } from '../../common/intakeDomainConstants'
 import { createLogger } from '../../common/logger'
 import { onDevtoolsDisconnection, onDevtoolsMessage } from '../devtoolsPanelConnection'
@@ -67,6 +72,9 @@ function buildRules(
         url: DEV_RUM_SLIM_URL,
       }),
       createRedirectRule(/^https:\/\/.*\/datadog-logs(-[\w-]+)?\.js$/, { url: DEV_LOGS_URL }),
+      createRedirectRule(/^https:\/\/.*\/chunks\/recorder(-[\w-]+)?-datadog-rum.js$/, {
+        url: DEV_RUM_RECORDER_CHUNK_URL,
+      }),
       createRedirectRule('https://localhost:8443/static/datadog-rum-hotdog.js', { url: devRumUrl })
     )
   } else if (useRumSlim) {

@@ -18,6 +18,50 @@
 
 ---
 
+## v6.3.0
+
+**Public Changes:**
+
+- ✨ Allow to modify source_url and invoker properties in LoAF script attributions ([#3325](https://github.com/DataDog/browser-sdk/pull/3325)) [RUM] [RUM-REACT] [RUM-SLIM]
+- ✨ GA remote configuration ([#3329](https://github.com/DataDog/browser-sdk/pull/3329)) [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+- ✨ [RUM-4908] Add `only` Link to Facet List in Developer Extension ([#2830](https://github.com/DataDog/browser-sdk/pull/2830))
+- 🐛 [RUM-8428] Make developer extension compatible with lazy loaded recorder module ([#3324](https://github.com/DataDog/browser-sdk/pull/3324))
+- 🐛 Fix missing URL context ([#3323](https://github.com/DataDog/browser-sdk/pull/3323)) [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+
+**Internal Changes:**
+
+- 👷‍♀️ [RUM-8295] Change anonymous id format to uuid ([#3306](https://github.com/DataDog/browser-sdk/pull/3306)) [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+- 👷 Update all non-major dependencies ([#3300](https://github.com/DataDog/browser-sdk/pull/3300)) [RUM-REACT]
+- 👷 Bump chrome to 133.0.6943.53-1 ([#3321](https://github.com/DataDog/browser-sdk/pull/3321))
+- 🔧✅ enable splitChunk for tests again ([#3308](https://github.com/DataDog/browser-sdk/pull/3308))
+- 👷‍♀️ Remove ff for action name masking ([#3334](https://github.com/DataDog/browser-sdk/pull/3334)) [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+- ♻️ [RUM-8123] Introduce a hook to assemble events ([#3330](https://github.com/DataDog/browser-sdk/pull/3330)) [RUM] [RUM-REACT] [RUM-SLIM]
+- ♻️ Custom sanitizer for Context Manager ([#3290](https://github.com/DataDog/browser-sdk/pull/3290)) [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+- 🔥 Remove RumContext type ([#3319](https://github.com/DataDog/browser-sdk/pull/3319)) [RUM] [RUM-REACT] [RUM-SLIM]
+
+## v6.2.1
+
+**Public Changes:**
+
+- 🐛 [RUM-7694] - Keep more ReplayStats history to avoid wrongly marking views as having no replay ([#3318](https://github.com/DataDog/browser-sdk/pull/3318)) [RUM]
+
+## v6.2.0
+
+**Public Changes:**
+
+- ✨ [RUM-6563] Attribute ressource URL to LCP ([#3154](https://github.com/DataDog/browser-sdk/pull/3154)) [RUM] [RUM-REACT] [RUM-SLIM]
+- 🐛 [RUM-8353] Throttle view context update ([#3314](https://github.com/DataDog/browser-sdk/pull/3314)) [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+- 🐛 fix document resource duration ([#3307](https://github.com/DataDog/browser-sdk/pull/3307)) [RUM] [RUM-REACT] [RUM-SLIM]
+
+**Internal Changes:**
+
+- ✅ fix failing skipped test ([#3309](https://github.com/DataDog/browser-sdk/pull/3309)) [RUM]
+- 🔊 Revert hooks and add missing URL context telemetry ([#3313](https://github.com/DataDog/browser-sdk/pull/3313)) [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+- 🔊 Add telemetry on missing URL context ([#3304](https://github.com/DataDog/browser-sdk/pull/3304)) [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+- ⚗️Update RC to support new format and URL [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+- 🚨 enforce consistent type export ([#3302](https://github.com/DataDog/browser-sdk/pull/3302)) [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+- ♻️ [RUM-8123] Introduce a hook to assemble events ([#3289](https://github.com/DataDog/browser-sdk/pull/3289)) [RUM] [RUM-REACT] [RUM-SLIM]
+
 ## v6.1.0
 
 **Public Changes:**

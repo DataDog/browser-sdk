@@ -1,12 +1,5 @@
 import type { ClocksState, Context, Observable } from '@datadog/browser-core'
-import {
-  noop,
-  combine,
-  toServerDuration,
-  generateUUID,
-  ExperimentalFeature,
-  isExperimentalFeatureEnabled,
-} from '@datadog/browser-core'
+import { noop, combine, toServerDuration, generateUUID } from '@datadog/browser-core'
 import { discardNegativeDuration } from '../discardNegativeDuration'
 import type { RawRumActionEvent } from '../../rawRumEvent.types'
 import { ActionType, RumEventType } from '../../rawRumEvent.types'
@@ -17,6 +10,8 @@ import type { CommonContext } from '../contexts/commonContext'
 import type { PageStateHistory } from '../contexts/pageStateHistory'
 import { PageState } from '../contexts/pageStateHistory'
 import type { RumActionEventDomainContext } from '../../domainContext.types'
+import type { PartialRumEvent, Hooks } from '../../hooks'
+import { HookNames } from '../../hooks'
 import type { ActionContexts, ClickAction } from './trackClickActions'
 import { trackClickActions } from './trackClickActions'
 
@@ -34,6 +29,7 @@ export type AutoAction = ClickAction
 
 export function startActionCollection(
   lifeCycle: LifeCycle,
+  hooks: Hooks,
   domMutationObservable: Observable<void>,
   windowOpenObservable: Observable<void>,
   configuration: RumConfiguration,
@@ -42,6 +38,26 @@ export function startActionCollection(
   lifeCycle.subscribe(LifeCycleEventType.AUTO_ACTION_COMPLETED, (action) =>
     lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, processAction(action, pageStateHistory))
   )
+
+  hooks.register(HookNames.Assemble, ({ startTime, eventType }): PartialRumEvent | undefined => {
+    if (
+      eventType !== RumEventType.ERROR &&
+      eventType !== RumEventType.RESOURCE &&
+      eventType !== RumEventType.LONG_TASK
+    ) {
+      return
+    }
+
+    const actionId = actionContexts.findActionId(startTime)
+    if (!actionId) {
+      return
+    }
+
+    return {
+      type: eventType,
+      action: { id: actionId },
+    }
+  })
 
   let actionContexts: ActionContexts = { findActionId: noop as () => undefined }
   let stop: () => void = noop
@@ -93,9 +109,7 @@ function processAction(
           action: {
             target: action.target,
             position: action.position,
-            name_source: isExperimentalFeatureEnabled(ExperimentalFeature.ACTION_NAME_MASKING)
-              ? action.nameSource
-              : undefined,
+            name_source: action.nameSource,
           },
         },
       }
