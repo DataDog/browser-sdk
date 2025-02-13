@@ -7,8 +7,8 @@
     "dev": "webpack --mode development --watch"
   },
   "devDependencies": {
-    "@tabler/icons-react": "3.29.0",
-    "@types/chrome": "0.0.301",
+    "@tabler/icons-react": "3.30.0",
+    "@types/chrome": "0.0.304",
     "@types/react": "18.3.18",
     "@types/react-dom": "18.3.5",
     "@webextension-toolbox/webpack-webextension-plugin": "3.3.1",
@@ -16,14 +16,14 @@
     "css-loader": "7.1.2",
     "html-webpack-plugin": "5.6.3",
     "style-loader": "4.0.0",
-    "webpack": "5.97.1"
+    "webpack": "5.98.0"
   },
   "dependencies": {
     "@datadog/browser-core": "workspace:*",
     "@datadog/browser-logs": "workspace:*",
     "@datadog/browser-rum": "workspace:*",
-    "@mantine/core": "7.16.2",
-    "@mantine/hooks": "7.16.2",
+    "@mantine/core": "7.16.3",
+    "@mantine/hooks": "7.16.3",
     "clsx": "2.1.1",
     "react": "18.3.1",
     "react-dom": "18.3.1"
