@@ -18,6 +18,27 @@
 
 ---
 
+## v6.3.0
+
+**Public Changes:**
+
+- ✨ Allow to modify source_url and invoker properties in LoAF script attributions ([#3325](https://github.com/DataDog/browser-sdk/pull/3325)) [RUM] [RUM-REACT] [RUM-SLIM]
+- ✨ GA remote configuration ([#3329](https://github.com/DataDog/browser-sdk/pull/3329)) [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+- ✨ [RUM-4908] Add `only` Link to Facet List in Developer Extension ([#2830](https://github.com/DataDog/browser-sdk/pull/2830))
+- 🐛 [RUM-8428] Make developer extension compatible with lazy loaded recorder module ([#3324](https://github.com/DataDog/browser-sdk/pull/3324))
+- 🐛 Fix missing URL context ([#3323](https://github.com/DataDog/browser-sdk/pull/3323)) [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+
+**Internal Changes:**
+
+- 👷‍♀️ [RUM-8295] Change anonymous id format to uuid ([#3306](https://github.com/DataDog/browser-sdk/pull/3306)) [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+- 👷 Update all non-major dependencies ([#3300](https://github.com/DataDog/browser-sdk/pull/3300)) [RUM-REACT]
+- 👷 Bump chrome to 133.0.6943.53-1 ([#3321](https://github.com/DataDog/browser-sdk/pull/3321))
+- 🔧✅ enable splitChunk for tests again ([#3308](https://github.com/DataDog/browser-sdk/pull/3308))
+- 👷‍♀️ Remove ff for action name masking ([#3334](https://github.com/DataDog/browser-sdk/pull/3334)) [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+- ♻️ [RUM-8123] Introduce a hook to assemble events ([#3330](https://github.com/DataDog/browser-sdk/pull/3330)) [RUM] [RUM-REACT] [RUM-SLIM]
+- ♻️ Custom sanitizer for Context Manager ([#3290](https://github.com/DataDog/browser-sdk/pull/3290)) [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+- 🔥 Remove RumContext type ([#3319](https://github.com/DataDog/browser-sdk/pull/3319)) [RUM] [RUM-REACT] [RUM-SLIM]
+
 ## v6.2.1
 
 **Public Changes:**
