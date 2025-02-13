@@ -14,11 +14,7 @@ import {
   addTelemetryDebug,
 } from '@datadog/browser-core'
 import type { RumEventDomainContext } from '../domainContext.types'
-<<<<<<< HEAD
-import type { RawRumEvent, RumContext } from '../rawRumEvent.types'
-=======
-import type { RawRumErrorEvent, RawRumEvent, RawRumLongTaskEvent, RawRumResourceEvent } from '../rawRumEvent.types'
->>>>>>> main
+import type { RawRumEvent } from '../rawRumEvent.types'
 import { RumEventType } from '../rawRumEvent.types'
 import type { CommonProperties, RumEvent } from '../rumEvent.types'
 import type { Hooks } from '../hooks'
