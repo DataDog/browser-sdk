@@ -1,5 +1,5 @@
 import { appendElement } from '../../test'
-import { getSelectorFromElement, isSelectorUniqueAmongSiblings, supportScopeSelector } from './getSelectorFromElement'
+import { getSelectorFromElement, isSelectorUniqueAmongSiblings } from './getSelectorFromElement'
 
 describe('getSelectorFromElement', () => {
   afterEach(() => {
@@ -83,15 +83,7 @@ describe('getSelectorFromElement', () => {
             <div><button target></button></div>
           </main>
         `)
-      ).toBe(
-        supportScopeSelector()
-          ? 'BODY>MAIN>DIV>BUTTON'
-          : // Degraded support for browsers not supporting scoped selector: the selector is still
-            // correct, but its quality is a bit worse, as using a `nth-of-type` selector is a bit
-            // too specific and might not match if an element is conditionally inserted before the
-            // target.
-            'BODY>MAIN>DIV:nth-of-type(2)>BUTTON'
-      )
+      ).toBe('BODY>MAIN>DIV>BUTTON')
     })
   })
 
@@ -215,10 +207,6 @@ describe('isSelectorUniqueAmongSiblings', () => {
   })
 
   it('the selector should not consider elements deep in the tree', () => {
-    if (!supportScopeSelector()) {
-      pending('This test is only relevant for browsers supporting scoped selectors')
-    }
-
     const element = appendElement(`
       <div target>
         <hr>

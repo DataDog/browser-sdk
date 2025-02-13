@@ -41,7 +41,7 @@ export function getSelectorFromElement(
   targetElement: Element,
   actionNameAttribute: string | undefined
 ): string | undefined {
-  if (!isConnected(targetElement)) {
+  if (!targetElement.isConnected) {
     // We cannot compute a selector for a detached element, as we don't have access to all of its
     // parents, and we cannot determine if it's unique in the document.
     return
@@ -218,12 +218,6 @@ function isSelectorUniqueGlobally(
  * To avoid this, we can use the `:scope` selector to make sure the selector starts from the current
  * sibling (i.e. `sibling.querySelector('DIV:scope > SPAN')` will only match the first span).
  *
- * The result will be less accurate on browsers that don't support :scope (i. e. IE): it will check
- * for any element matching the selector contained in the parent (in other words,
- * "ELEMENT_PARENT CHILD_SELECTOR" returns a single element), regardless of whether the selector is
- * a direct descendant of the element parent. This should not impact results too much: if it
- * inaccurately returns false, we'll just fall back to another strategy.
- *
  * [1]: https://developer.mozilla.org/fr/docs/Web/CSS/:scope
  *
  * # Performance considerations
@@ -253,9 +247,7 @@ export function isSelectorUniqueAmongSiblings(
     // as `querySelector` only returns a descendant of the element.
     isSiblingMatching = (sibling) => sibling.matches(currentElementSelector)
   } else {
-    const scopedSelector = supportScopeSelector()
-      ? combineSelector(`${currentElementSelector}:scope`, childSelector)
-      : combineSelector(currentElementSelector, childSelector)
+    const scopedSelector = combineSelector(`${currentElementSelector}:scope`, childSelector)
     isSiblingMatching = (sibling) => sibling.querySelector(scopedSelector) !== null
   }
 
@@ -273,32 +265,4 @@ export function isSelectorUniqueAmongSiblings(
 
 function combineSelector(parent: string, child: string | undefined): string {
   return child ? `${parent}>${child}` : parent
-}
-
-let supportScopeSelectorCache: boolean | undefined
-export function supportScopeSelector() {
-  if (supportScopeSelectorCache === undefined) {
-    try {
-      document.querySelector(':scope')
-      supportScopeSelectorCache = true
-    } catch {
-      supportScopeSelectorCache = false
-    }
-  }
-  return supportScopeSelectorCache
-}
-
-/**
- * Polyfill-utility for the `isConnected` property not supported in Edge <=18
- */
-function isConnected(element: Element): boolean {
-  if (
-    'isConnected' in
-    // cast is to make sure `element` is not inferred as `never` after the check
-    (element as { isConnected?: boolean })
-  ) {
-    return element.isConnected
-  }
-
-  return element.ownerDocument.documentElement.contains(element)
 }
