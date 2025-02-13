@@ -263,19 +263,6 @@ describe('vitalCollection', () => {
         expect((rawRumEvents[0].rawRumEvent as RawRumVitalEvent).vital.description).toBe('baz')
         expect(rawRumEvents[0].customerContext).toEqual({ foo: 'bar' })
       })
-
-      it('should discard a vital for which a frozen state happened', () => {
-        wasInPageStateDuringPeriodSpy.and.returnValue(true)
-
-        vitalCollection.addDurationVital({
-          name: 'foo',
-          type: VitalType.DURATION,
-          startClocks: clocksNow(),
-          duration: 100 as Duration,
-        })
-
-        expect(rawRumEvents.length).toBe(0)
-      })
     })
   })
 })

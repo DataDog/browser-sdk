@@ -71,7 +71,7 @@ describe('internal context', () => {
     expect(internalContext.get()).toEqual(undefined)
   })
 
-  it('should return internal context corresponding to startTime', () => {
+  it("should return internal context corresponding to 'startTime'", () => {
     const sessionManager = createRumSessionManagerMock().setId('456')
     const internalContext = setupInternalContext(sessionManager)
 
