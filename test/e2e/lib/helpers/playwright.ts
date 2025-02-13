@@ -1,6 +1,16 @@
 import type { PlaywrightWorkerOptions } from '@playwright/test'
 import type { BrowserConfiguration } from '../../../browsers.conf'
-import { getBuildInfos } from '../../../envUtils'
+import { getBuildInfos, getRunId } from '../../../envUtils'
+import { APPLICATION_ID } from './configuration'
+
+export function getRumUrl() {
+  return {
+    rum: `https://app.datadoghq.com/rum/explorer?query=${encodeURIComponent(
+      `@application.id:${APPLICATION_ID} @context.run_id:"${getRunId()}"`
+    )}`,
+    logs: `https://app.datadoghq.com/logs?query=${encodeURIComponent(`@run_id:"${getRunId()}"`)}`,
+  }
+}
 
 export function getBrowserName(name: string): PlaywrightWorkerOptions['browserName'] {
   if (name.includes('firefox')) {

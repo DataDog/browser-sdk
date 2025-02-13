@@ -1,5 +1,6 @@
 import { test } from '@playwright/test'
 import type { BrowserConfiguration } from '../../../browsers.conf'
+import { getRumUrl } from './playwright'
 
 export function addTag(tag: string, value: string) {
   test.info().annotations.push({
@@ -11,6 +12,11 @@ export function addTag(tag: string, value: string) {
 // Add test configuration tags used for test optimization features
 // https://docs.datadoghq.com/tests/#test-configuration-attributes
 export function addTestOptimizationTags(metadata: BrowserConfiguration | Record<any, never>) {
+  const { rum, logs } = getRumUrl()
+
+  addTag('test.rum', rum)
+  addTag('test.logs', logs)
+
   // eslint-disable-next-line prefer-const
   for (let [tag, value] of Object.entries(metadata)) {
     switch (tag) {
