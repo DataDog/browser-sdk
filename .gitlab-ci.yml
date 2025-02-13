@@ -197,6 +197,21 @@ compatibility:
     - yarn test:compat:tsc
     - yarn test:compat:ssr
 
+unit:
+  extends:
+    - .base-configuration
+    - .test-allowed-branches
+  interruptible: true
+  artifacts:
+    reports:
+      junit: test-report/unit/*.xml
+  script:
+    - yarn
+    - yarn test:unit
+    - ./scripts/test/codecov.sh
+  after_script:
+    - node ./scripts/test/export-test-result.js unit
+
 e2e:
   extends:
     - .base-configuration
@@ -242,6 +257,23 @@ check-schemas:
   script:
     - yarn
     - node scripts/check-schemas.js
+
+unit-bs:
+  stage: browserstack
+  needs: ['unit']
+  extends:
+    - .base-configuration
+    - .bs-allowed-branches
+  interruptible: true
+  resource_group: browserstack
+  artifacts:
+    reports:
+      junit: test-report/unit-bs/*.xml
+  script:
+    - yarn
+    - ./scripts/test/ci-bs.sh test:unit
+  after_script:
+    - node ./scripts/test/export-test-result.js unit-bs
 
 e2e-bs:
   stage: browserstack
