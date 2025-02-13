@@ -434,8 +434,8 @@ describe('logs limitation', () => {
       messageContext: { status: 'unknown' }, // overrides the rawLogsEvent status
       message: 'Reached max number of customs by minute: 1',
     },
-  ].forEach(({ status, message, messageContext }) => {
-    it(`stops sending ${status} logs when reaching the limit`, () => {
+  ].forEach(({ status, message, messageContext }, i) => {
+    it(`stops sending ${status} logs when reaching the limit (${i})`, () => {
       lifeCycle.notify(LifeCycleEventType.RAW_LOG_COLLECTED, {
         rawLogsEvent: { ...DEFAULT_MESSAGE, message: 'foo', status },
         messageContext,
@@ -456,7 +456,7 @@ describe('logs limitation', () => {
       )
     })
 
-    it(`does not take discarded ${status} logs into account`, () => {
+    it(`does not take discarded ${status} logs into account (${i})`, () => {
       beforeSend = (event) => {
         if (event.message === 'discard me') {
           return false
@@ -484,7 +484,7 @@ describe('logs limitation', () => {
       expect(serverLogs[0].message).toBe('foo')
     })
 
-    it(`allows to send new ${status}s after a minute`, () => {
+    it(`allows to send new ${status}s after a minute (${i})`, () => {
       lifeCycle.notify(LifeCycleEventType.RAW_LOG_COLLECTED, {
         rawLogsEvent: { ...DEFAULT_MESSAGE, message: 'foo', status },
         messageContext,
@@ -510,7 +510,7 @@ describe('logs limitation', () => {
       )
     })
 
-    it('allows to send logs with a different status when reaching the limit', () => {
+    it(`allows to send logs with a different status when reaching the limit (${i})`, () => {
       const otherLogStatus = status === StatusType.error ? StatusType.info : StatusType.error
       lifeCycle.notify(LifeCycleEventType.RAW_LOG_COLLECTED, {
         rawLogsEvent: { ...DEFAULT_MESSAGE, message: 'foo', status },

@@ -1,14 +1,14 @@
 import { RecordType } from '@datadog/browser-rum/src/types'
+import { test, expect } from '@playwright/test'
 import { expireSession, findSessionCookie, renewSession } from '../../lib/helpers/session'
-import { bundleSetup, createTest, flushEvents, waitForRequests } from '../../lib/framework'
-import { deleteAllCookies, sendXhr } from '../../lib/helpers/browser'
+import { bundleSetup, createTest, waitForRequests } from '../../lib/framework'
 
-describe('rum sessions', () => {
-  describe('session renewal', () => {
+test.describe('rum sessions', () => {
+  test.describe('session renewal', () => {
     createTest('create a new View when the session is renewed')
       .withRum()
-      .run(async ({ intakeRegistry }) => {
-        await renewSession()
+      .run(async ({ intakeRegistry, flushEvents, browserContext, page }) => {
+        await renewSession(page, browserContext)
         await flushEvents()
         const viewEvents = intakeRegistry.rumViewEvents
         const firstViewEvent = viewEvents[0]
@@ -23,12 +23,12 @@ describe('rum sessions', () => {
     createTest('a single fullSnapshot is taken when the session is renewed')
       .withRum()
       .withSetup(bundleSetup)
-      .run(async ({ intakeRegistry }) => {
-        await renewSession()
+      .run(async ({ intakeRegistry, flushEvents, browserContext, page }) => {
+        await renewSession(page, browserContext)
 
         await flushEvents()
 
-        expect(intakeRegistry.replaySegments.length).toBe(2)
+        expect(intakeRegistry.replaySegments).toHaveLength(2)
 
         const segment = intakeRegistry.replaySegments.at(-1)!
         expect(segment.creation_reason).toBe('init')
@@ -39,140 +39,143 @@ describe('rum sessions', () => {
       })
   })
 
-  describe('session expiration', () => {
+  test.describe('session expiration', () => {
     createTest("don't send events when session is expired")
       // prevent recording start to generate late events
       .withRum({ startSessionReplayRecordingManually: true })
-      .run(async ({ intakeRegistry }) => {
-        // TODO: use `page.clock.runFor` with Playwright
-        await expireSession()
+      .run(async ({ intakeRegistry, sendXhr, browserContext, page }) => {
+        await expireSession(page, browserContext)
         intakeRegistry.empty()
         await sendXhr('/ok')
         expect(intakeRegistry.isEmpty).toBe(true)
       })
   })
-  describe('anonymous user id', () => {
+  test.describe('anonymous user id', () => {
     createTest('persists when session is expired')
       .withRum()
-      .run(async () => {
-        const anonymousId = (await findSessionCookie())?.aid
+      .run(async ({ flushEvents, browserContext, page }) => {
+        const anonymousId = (await findSessionCookie(browserContext))?.aid
 
-        await browser.execute(() => {
-          // TODO: use `page.clock.runFor` with Playwright
+        await page.evaluate(() => {
           window.DD_RUM!.stopSession()
         })
         await flushEvents()
 
-        expect((await findSessionCookie())?.aid).toEqual(anonymousId)
+        expect((await findSessionCookie(browserContext))?.aid).toEqual(anonymousId)
       })
 
     createTest('persists when session renewed')
       .withRum()
-      .run(async () => {
-        const anonymousId = (await findSessionCookie())?.aid
+      .run(async ({ browserContext, page }) => {
+        const anonymousId = (await findSessionCookie(browserContext))?.aid
         expect(anonymousId).not.toBeNull()
 
-        await browser.execute(() => {
-          // TODO: use `page.clock.runFor` with Playwright
+        await page.evaluate(() => {
           window.DD_RUM!.stopSession()
         })
-        await (await $('html')).click()
+        await page.locator('html').click()
 
         // The session is not created right away, let's wait until we see a cookie
-        await browser.waitUntil(async () => Boolean(await findSessionCookie()))
+        await page.waitForTimeout(1000)
 
-        expect((await findSessionCookie())?.aid).toEqual(anonymousId)
+        expect((await findSessionCookie(browserContext))?.aid).toEqual(anonymousId)
+
+        expect(true).toBeTruthy()
       })
   })
 
-  describe('manual session expiration', () => {
+  test.describe('manual session expiration', () => {
     createTest('calling stopSession() stops the session')
       .withRum()
-      .run(async ({ intakeRegistry }) => {
-        await browser.executeAsync((done) => {
-          window.DD_RUM!.stopSession()
-          setTimeout(() => {
-            // If called directly after `stopSession`, the action start time may be the same as the
-            // session end time. In this case, the sopped session is used, and the action is
-            // collected.
-            // We might want to improve this by having a strict comparison between the event start
-            // time and session end time.
-            window.DD_RUM!.addAction('foo')
-            done()
-          }, 5)
-        })
+      .run(async ({ intakeRegistry, flushEvents, browserContext, page }) => {
+        await page.evaluate(
+          () =>
+            new Promise<void>((resolve) => {
+              window.DD_RUM!.stopSession()
+              setTimeout(() => {
+                // If called directly after `stopSession`, the action start time may be the same as the
+                // session end time. In this case, the sopped session is used, and the action is
+                // collected.
+                // We might want to improve this by having a strict comparison between the event start
+                // time and session end time.
+                window.DD_RUM!.addAction('foo')
+                resolve()
+              }, 5)
+            })
+        )
         await flushEvents()
 
-        expect((await findSessionCookie())?.isExpired).toEqual('1')
-        expect(intakeRegistry.rumActionEvents.length).toBe(0)
+        expect((await findSessionCookie(browserContext))?.isExpired).toEqual('1')
+        expect(intakeRegistry.rumActionEvents).toHaveLength(0)
       })
 
     createTest('after calling stopSession(), a user interaction starts a new session')
       .withRum()
-      .run(async ({ intakeRegistry }) => {
-        await browser.execute(() => {
+      .run(async ({ intakeRegistry, flushEvents, browserContext, page }) => {
+        await page.evaluate(() => {
           window.DD_RUM!.stopSession()
         })
-        await (await $('html')).click()
+
+        await page.locator('html').click()
 
         // The session is not created right away, let's wait until we see a cookie
-        await browser.waitUntil(async () => Boolean(await findSessionCookie()))
+        await page.waitForTimeout(1000)
 
-        await browser.execute(() => {
+        await page.evaluate(() => {
           window.DD_RUM!.addAction('foo')
         })
 
         await flushEvents()
 
-        expect((await findSessionCookie())?.isExpired).not.toEqual('1')
-        expect((await findSessionCookie())?.id).toBeDefined()
-        expect(intakeRegistry.rumActionEvents.length).toBe(1)
+        expect((await findSessionCookie(browserContext))?.isExpired).not.toEqual('1')
+        expect((await findSessionCookie(browserContext))?.id).toBeDefined()
+        expect(intakeRegistry.rumActionEvents).toHaveLength(1)
       })
 
     createTest('flush events when the session expires')
       .withRum()
       .withLogs()
-      .run(async ({ intakeRegistry }) => {
-        expect(intakeRegistry.rumViewEvents.length).toBe(0)
-        expect(intakeRegistry.logsEvents.length).toBe(0)
-        expect(intakeRegistry.replaySegments.length).toBe(0)
+      .run(async ({ intakeRegistry, page }) => {
+        expect(intakeRegistry.rumViewEvents).toHaveLength(0)
+        expect(intakeRegistry.logsEvents).toHaveLength(0)
+        expect(intakeRegistry.replaySegments).toHaveLength(0)
 
-        await browser.execute(() => {
+        await page.evaluate(() => {
           window.DD_LOGS!.logger.log('foo')
           window.DD_RUM!.stopSession()
         })
 
-        await waitForRequests()
+        await waitForRequests(page)
 
-        expect(intakeRegistry.rumViewEvents.length).toBe(1)
+        expect(intakeRegistry.rumViewEvents).toHaveLength(1)
         expect(intakeRegistry.rumViewEvents[0].session.is_active).toBe(false)
-        expect(intakeRegistry.logsEvents.length).toBe(1)
-        expect(intakeRegistry.replaySegments.length).toBe(1)
+        expect(intakeRegistry.logsEvents).toHaveLength(1)
+        expect(intakeRegistry.replaySegments).toHaveLength(1)
       })
   })
 
-  describe('third party cookie clearing', () => {
+  test.describe('third party cookie clearing', () => {
     createTest('after a 3rd party clears the cookies, do not restart a session on user interaction')
       .withRum()
-      .run(async ({ intakeRegistry }) => {
+      .run(async ({ intakeRegistry, deleteAllCookies, flushEvents, browserContext, page }) => {
         await deleteAllCookies()
 
         // Cookies are cached for 1s, wait until the cache expires
-        await browser.pause(1100)
+        await page.waitForTimeout(1100)
 
-        await (await $('html')).click()
+        await page.locator('html').click()
 
-        await browser.pause(1100)
+        await page.waitForTimeout(1100)
 
-        await browser.execute(() => {
+        await page.evaluate(() => {
           window.DD_RUM!.addAction('foo')
         })
 
         await flushEvents()
 
-        expect(await findSessionCookie()).toBeUndefined()
-        expect(intakeRegistry.rumActionEvents.length).toBe(0)
-        expect(intakeRegistry.rumViewEvents.length).toBe(1)
+        expect(await findSessionCookie(browserContext)).toBeUndefined()
+        expect(intakeRegistry.rumActionEvents).toHaveLength(0)
+        expect(intakeRegistry.rumViewEvents).toHaveLength(1)
         expect(intakeRegistry.rumViewEvents[0].session.is_active).toBe(false)
       })
   })

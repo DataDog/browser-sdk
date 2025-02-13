@@ -1,8 +1,9 @@
+import type { Page } from '@playwright/test'
 import { getTestServers, waitForServersIdle } from './httpServers'
 import { waitForRequests } from './waitForRequests'
 
-export async function flushEvents() {
-  await waitForRequests()
+export async function flushEvents(page: Page) {
+  await waitForRequests(page)
 
   const servers = await getTestServers()
 
@@ -20,6 +21,6 @@ export async function flushEvents() {
   // The issue mainly occurs with local e2e tests (not browserstack), because the network latency is
   // very low (same machine), so the request resolves very quickly. In real life conditions, this
   // issue is mitigated, because requests will likely take a few milliseconds to reach the server.
-  await browser.url(`${servers.base.url}/ok?duration=200`)
+  await page.goto(`${servers.base.url}/ok?duration=200`)
   await waitForServersIdle()
 }
