@@ -18,10 +18,6 @@ const VIEWPORT_META_TAGS = `
 `
 
 test.describe('recorder', () => {
-  test.beforeEach(({ browserName }, testInfo) => {
-    testInfo.skip(browserName !== 'chromium', 'only chromium supports touch gestures emulation for now (via CDP)')
-  })
-
   test.describe('layout viewport properties', () => {
     createTest('getWindowWidth/Height should not be affected by pinch zoom')
       .withRum()
@@ -57,7 +53,9 @@ test.describe('recorder', () => {
       .withRum()
       .withSetup(bundleSetup)
       .withBody(html`${VIEWPORT_META_TAGS}`)
-      .run(async ({ intakeRegistry, flushEvents, page }) => {
+      .run(async ({ intakeRegistry, flushEvents, page, browserName }) => {
+        test.skip(browserName !== 'chromium', 'only chromium supports touch gestures emulation for now (via CDP)')
+
         const VISUAL_SCROLL_DOWN_PX = 60
         const LAYOUT_SCROLL_AMOUNT = 20
 
@@ -99,7 +97,9 @@ test.describe('recorder', () => {
       .withRum()
       .withSetup(bundleSetup)
       .withBody(html`${VIEWPORT_META_TAGS}`)
-      .run(async ({ intakeRegistry, page, flushEvents }) => {
+      .run(async ({ intakeRegistry, page, flushEvents, browserName }) => {
+        test.skip(browserName !== 'chromium', 'only chromium supports touch gestures emulation for now (via CDP)')
+
         const VISUAL_SCROLL_DOWN_PX = 100
         await buildScrollablePage(page)
         await performSignificantZoom(page)
@@ -114,7 +114,9 @@ test.describe('recorder', () => {
       .withRum()
       .withSetup(bundleSetup)
       .withBody(html`${VIEWPORT_META_TAGS}`)
-      .run(async ({ intakeRegistry, page, flushEvents }) => {
+      .run(async ({ intakeRegistry, page, flushEvents, browserName }) => {
+        test.skip(browserName !== 'chromium', 'only chromium supports touch gestures emulation for now (via CDP)')
+
         await performSignificantZoom(page)
         const nextVisualViewportDimension = await getVisualViewport(page)
         await flushEvents()
