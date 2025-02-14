@@ -87,7 +87,7 @@ versions.forEach(({ version, MemoryRouter, useNavigate, useRoutes }) => {
 
       function App() {
         const [, setState] = React.useState(0)
-        forceUpdate = () => setState(s => s + 1)
+        forceUpdate = () => setState((s) => s + 1)
         return (
           <MemoryRouter initialEntries={['/foo']}>
             <RoutesRenderer
@@ -153,11 +153,7 @@ versions.forEach(({ version, MemoryRouter, useNavigate, useRoutes }) => {
       appendComponent(
         <MemoryRouter initialEntries={['/foo']}>
           <NavBar />
-          <RoutesRenderer
-            routes={[
-              { path: '/foo', element: null },
-            ]}
-          />
+          <RoutesRenderer routes={[{ path: '/foo', element: null }]} />
         </MemoryRouter>
       )
 
@@ -181,11 +177,7 @@ versions.forEach(({ version, MemoryRouter, useNavigate, useRoutes }) => {
       appendComponent(
         <MemoryRouter initialEntries={['/foo']}>
           <NavBar />
-          <RoutesRenderer
-            routes={[
-              { path: '/foo', element: null },
-            ]}
-          />
+          <RoutesRenderer routes={[{ path: '/foo', element: null }]} />
         </MemoryRouter>
       )
 
@@ -204,9 +196,7 @@ versions.forEach(({ version, MemoryRouter, useNavigate, useRoutes }) => {
 
       appendComponent(
         <MemoryRouter>
-          <RoutesRenderer
-            routes={[{ path: '/bar', element: null }]}
-          />
+          <RoutesRenderer routes={[{ path: '/bar', element: null }]} />
         </MemoryRouter>
       )
 
@@ -216,12 +206,7 @@ versions.forEach(({ version, MemoryRouter, useNavigate, useRoutes }) => {
     it('allows passing a location object', () => {
       appendComponent(
         <MemoryRouter>
-          <RoutesRenderer
-            routes={[
-              { path: '/foo', element: null },
-            ]}
-            location={{ pathname: '/foo' }}
-          />
+          <RoutesRenderer routes={[{ path: '/foo', element: null }]} location={{ pathname: '/foo' }} />
         </MemoryRouter>
       )
 
@@ -233,9 +218,9 @@ versions.forEach(({ version, MemoryRouter, useNavigate, useRoutes }) => {
         <MemoryRouter>
           <RoutesRenderer
             routes={[
-              { 
+              {
                 path: '/foo',
-               element: null 
+                element: null,
               },
             ]}
             location="/foo"
