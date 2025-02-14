@@ -329,14 +329,14 @@ __metadata:
   dependencies:
     "@datadog/browser-core": "npm:5.35.0"
   peerDependencies:
-    "@datadog/browser-rum": 5.35.0
+    "@datadog/browser-rum": 5.35.1
   peerDependenciesMeta:
     "@datadog/browser-rum":
       optional: true
   languageName: unknown
   linkType: soft
 
-"@datadog/browser-rum-core@npm:5.35.0, @datadog/browser-rum-core@workspace:packages/rum-core":
+"@datadog/browser-rum-core@npm:5.35.1, @datadog/browser-rum-core@workspace:packages/rum-core":
   version: 0.0.0-use.local
   resolution: "@datadog/browser-rum-core@workspace:packages/rum-core"
   dependencies:
@@ -350,7 +350,7 @@ __metadata:
   resolution: "@datadog/browser-rum-react@workspace:packages/rum-react"
   dependencies:
     "@datadog/browser-core": "npm:5.35.0"
-    "@datadog/browser-rum-core": "npm:5.35.0"
+    "@datadog/browser-rum-core": "npm:5.35.1"
     "@types/react": "npm:18.3.18"
     "@types/react-dom": "npm:18.3.5"
     react: "npm:18.3.1"
@@ -376,9 +376,9 @@ __metadata:
   resolution: "@datadog/browser-rum-slim@workspace:packages/rum-slim"
   dependencies:
     "@datadog/browser-core": "npm:5.35.0"
-    "@datadog/browser-rum-core": "npm:5.35.0"
+    "@datadog/browser-rum-core": "npm:5.35.1"
   peerDependencies:
-    "@datadog/browser-logs": 5.35.0
+    "@datadog/browser-logs": 5.35.1
   peerDependenciesMeta:
     "@datadog/browser-logs":
       optional: true
@@ -390,11 +390,11 @@ __metadata:
   resolution: "@datadog/browser-rum@workspace:packages/rum"
   dependencies:
     "@datadog/browser-core": "npm:5.35.0"
-    "@datadog/browser-rum-core": "npm:5.35.0"
+    "@datadog/browser-rum-core": "npm:5.35.1"
     "@types/pako": "npm:2.0.3"
     pako: "npm:2.1.0"
   peerDependencies:
-    "@datadog/browser-logs": 5.35.0
+    "@datadog/browser-logs": 5.35.1
   peerDependenciesMeta:
     "@datadog/browser-logs":
       optional: true

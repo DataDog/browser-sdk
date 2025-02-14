@@ -17,7 +17,7 @@ __metadata:
   dependencies:
     "@datadog/browser-core": "npm:5.35.0"
   peerDependencies:
-    "@datadog/browser-rum": 5.35.0
+    "@datadog/browser-rum": 5.35.1
   peerDependenciesMeta:
     "@datadog/browser-rum":
       optional: true
@@ -37,9 +37,9 @@ __metadata:
   resolution: "@datadog/browser-rum@portal:../../packages/rum::locator=app%40workspace%3A."
   dependencies:
     "@datadog/browser-core": "npm:5.35.0"
-    "@datadog/browser-rum-core": "npm:5.35.0"
+    "@datadog/browser-rum-core": "npm:5.35.1"
   peerDependencies:
-    "@datadog/browser-logs": 5.35.0
+    "@datadog/browser-logs": 5.35.1
   peerDependenciesMeta:
     "@datadog/browser-logs":
       optional: true
