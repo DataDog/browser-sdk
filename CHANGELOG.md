@@ -18,6 +18,16 @@
 
 ---
 
+## v5.35.1
+
+**Public Changes:**
+
+- ⚡ [RUM-8353] throttle view update in set view context ([#3338](https://github.com/DataDog/browser-sdk/pull/3338)) [RUM] [RUM-REACT] [RUM-SLIM]
+
+**Internal Changes:**
+
+- 🔧 do not merge v5 on staging
+
 ## v5.35.0
 
 **Public Changes:**
