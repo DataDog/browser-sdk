@@ -1,4 +1,15 @@
-export type AnyRouteObject = { path?: string | undefined }
+// Those types are used by our instrumentation functions to make them work with any react-router
+// version we support. We should not import react-router types as we don't know which version
+// will be used by the customer.
+//
+// Those types should be:
+// * compatible with all react-router-dom versions we support
+// * include the minimal set of attributes used by our instrumentation functions.
+
+export type AnyRouteObject = {
+  path?: string | undefined
+  element?: React.ReactNode
+}
 export type AnyUseRoute<Location extends AnyLocation> = (
   routes: AnyRouteObject[],
   location?: Location

@@ -62,5 +62,9 @@ function substitutePathSplats(path: string, params: Record<string, string | unde
     return path.replace(/\*/, params['*'])
   }
 
+  // Intermediary route paths with a `*` are kind of edge cases, and the `*` parameter is not
+  // relevant for them. We remove it from the path (along with a potential slash preceeding it) to
+  // have a coherent view name once everything is concatenated (see examples in spec file).
+
   return path.replace(/\/?\*/, '')
 }

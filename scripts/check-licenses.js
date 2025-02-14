@@ -8,6 +8,11 @@ const { findBrowserSdkPackageJsonFiles } = require('./lib/filesUtils')
 
 const LICENSE_FILE = 'LICENSE-3rdparty.csv'
 
+const aliasMapping = {
+  'react-router-dom-6': 'react-router-dom',
+  'react-router-dom-7': 'react-router-dom',
+}
+
 runMain(async () => {
   const packageJsonFiles = findBrowserSdkPackageJsonFiles()
 
@@ -36,9 +41,16 @@ runMain(async () => {
 })
 
 function retrievePackageDependencies(packageJsonFile) {
-  return Object.keys(packageJsonFile.content.dependencies || {})
+  const deps = Object.keys(packageJsonFile.content.dependencies || {})
     .concat(Object.keys(packageJsonFile.content.devDependencies || {}))
     .filter((dependency) => !dependency.includes('@datadog'))
+  return deps.map((dependency) => {
+    let packageName = dependency
+    if (aliasMapping[packageName]) {
+      packageName = aliasMapping[packageName]
+    }
+    return packageName
+  })
 }
 
 function withoutDuplicates(a) {

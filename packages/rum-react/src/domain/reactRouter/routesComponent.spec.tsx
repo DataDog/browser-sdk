@@ -1,31 +1,27 @@
-import React from 'react'
-import { flushSync } from 'react-dom'
-import { MemoryRouter as MemoryRouterV6, useNavigate as useNavigateV6 } from 'react-router-dom-6'
-import type { RouteObject as RouteObjectV6 } from 'react-router-dom-6'
-import { MemoryRouter as MemoryRouterV7, useNavigate as useNavigateV7 } from 'react-router-dom-7'
-import type { RouteObject as RouteObjectV7 } from 'react-router-dom-7'
-import { appendComponent } from '../../../test/appendComponent'
+import React,{act} from 'react'
+import { MemoryRouter as MemoryRouterV6, Route as RouteV6, useNavigate as useNavigateV6 } from 'react-router-dom-6'
+import { MemoryRouter as MemoryRouterV7, Route as RouteV7, useNavigate as useNavigateV7 } from 'react-router-dom-7'
 import { initializeReactPlugin } from '../../../test/initializeReactPlugin'
-import { useRoutes as useRoutesV6 } from '../../entries/reactRouterV6'
-import { useRoutes as useRoutesV7 } from '../../entries/reactRouterV7'
-
-const versions = [
+import { appendComponent } from '../../../test/appendComponent'
+import { Routes as RoutesV6 } from '../../entries/reactRouterV6'
+import { Routes as RoutesV7 } from '../../entries/reactRouterV7'
+;[
   {
     version: 'react-router-6',
     MemoryRouter: MemoryRouterV6,
+    Route: RouteV6,
     useNavigate: useNavigateV6,
-    useRoutes: useRoutesV6,
+    Routes: RoutesV6,
   },
   {
     version: 'react-router-7',
     MemoryRouter: MemoryRouterV7,
+    Route: RouteV7,
     useNavigate: useNavigateV7,
-    useRoutes: useRoutesV7,
+    Routes: RoutesV7,
   },
-]
-
-versions.forEach(({ version, MemoryRouter, useNavigate, useRoutes }) => {
-  describe(`useRoutes (${version})`, () => {
+].forEach(({ version, MemoryRouter, Route, useNavigate, Routes }) => {
+  describe(`Routes component (${version})`, () => {
     let startViewSpy: jasmine.Spy<(name?: string | object) => void>
 
     beforeEach(() => {
@@ -43,15 +39,9 @@ versions.forEach(({ version, MemoryRouter, useNavigate, useRoutes }) => {
     it('starts a new view as soon as it is rendered', () => {
       appendComponent(
         <MemoryRouter initialEntries={['/foo']}>
-          <RoutesRenderer
-            routes={[
-              {
-                path: '/foo',
-                element: null,
-              },
-            ]}
-            useRoutes={useRoutes}
-          />
+          <Routes>
+            <Route path="/foo" element={null} />
+          </Routes>
         </MemoryRouter>
       )
 
@@ -61,15 +51,9 @@ versions.forEach(({ version, MemoryRouter, useNavigate, useRoutes }) => {
     it('renders the matching route', () => {
       const container = appendComponent(
         <MemoryRouter initialEntries={['/foo']}>
-          <RoutesRenderer
-            routes={[
-              {
-                path: '/foo',
-                element: 'foo',
-              },
-            ]}
-            useRoutes={useRoutes}
-          />
+          <Routes>
+            <Route path="/foo" element="foo" />
+          </Routes>
         </MemoryRouter>
       )
 
@@ -84,15 +68,9 @@ versions.forEach(({ version, MemoryRouter, useNavigate, useRoutes }) => {
         forceUpdate = () => setState((s) => s + 1)
         return (
           <MemoryRouter initialEntries={['/foo']}>
-            <RoutesRenderer
-              routes={[
-                {
-                  path: '/foo',
-                  element: null,
-                },
-              ]}
-              useRoutes={useRoutes}
-            />
+            <Routes>
+              <Route path="/foo" element={null} />
+            </Routes>
           </MemoryRouter>
         )
       }
@@ -101,14 +79,14 @@ versions.forEach(({ version, MemoryRouter, useNavigate, useRoutes }) => {
 
       expect(startViewSpy).toHaveBeenCalledTimes(1)
 
-      flushSync(() => {
+      act(() => {
         forceUpdate!()
       })
 
       expect(startViewSpy).toHaveBeenCalledTimes(1)
     })
 
-    it('starts a new view on navigation', async () => {
+    it('starts a new view on navigation', () => {
       let navigate: (path: string) => void
 
       function NavBar() {
@@ -119,28 +97,17 @@ versions.forEach(({ version, MemoryRouter, useNavigate, useRoutes }) => {
       appendComponent(
         <MemoryRouter initialEntries={['/foo']}>
           <NavBar />
-          <RoutesRenderer
-            routes={[
-              {
-                path: '/foo',
-                element: null,
-              },
-              {
-                path: '/bar',
-                element: null,
-              },
-            ]}
-            useRoutes={useRoutes}
-          />
+          <Routes>
+            <Route path="/foo" element={null} />
+            <Route path="/bar" element={null} />
+          </Routes>
         </MemoryRouter>
       )
 
       startViewSpy.calls.reset()
-      flushSync(() => {
+      act(() => {
         navigate!('/bar')
       })
-
-      await new Promise((resolve) => setTimeout(resolve, 0))
       expect(startViewSpy).toHaveBeenCalledOnceWith('/bar')
     })
 
@@ -155,20 +122,14 @@ versions.forEach(({ version, MemoryRouter, useNavigate, useRoutes }) => {
       appendComponent(
         <MemoryRouter initialEntries={['/foo']}>
           <NavBar />
-          <RoutesRenderer
-            routes={[
-              {
-                path: '/foo',
-                element: null,
-              },
-            ]}
-            useRoutes={useRoutes}
-          />
+          <Routes>
+            <Route path="/foo" element={null} />
+          </Routes>
         </MemoryRouter>
       )
 
       startViewSpy.calls.reset()
-      flushSync(() => {
+      act(() => {
         navigate!('/foo')
       })
 
@@ -186,20 +147,14 @@ versions.forEach(({ version, MemoryRouter, useNavigate, useRoutes }) => {
       appendComponent(
         <MemoryRouter initialEntries={['/foo']}>
           <NavBar />
-          <RoutesRenderer
-            routes={[
-              {
-                path: '/foo',
-                element: null,
-              },
-            ]}
-            useRoutes={useRoutes}
-          />
+          <Routes>
+            <Route path="/foo" element={null} />
+          </Routes>
         </MemoryRouter>
       )
 
       startViewSpy.calls.reset()
-      flushSync(() => {
+      act(() => {
         navigate!('/foo?bar=baz')
       })
 
@@ -212,7 +167,9 @@ versions.forEach(({ version, MemoryRouter, useNavigate, useRoutes }) => {
 
       appendComponent(
         <MemoryRouter>
-          <RoutesRenderer routes={[{ path: '/bar', element: null }]} useRoutes={useRoutes} />
+          <Routes>
+            <Route path="/bar" element={null} />
+          </Routes>
         </MemoryRouter>
       )
 
@@ -222,16 +179,9 @@ versions.forEach(({ version, MemoryRouter, useNavigate, useRoutes }) => {
     it('allows passing a location object', () => {
       appendComponent(
         <MemoryRouter>
-          <RoutesRenderer
-            routes={[
-              {
-                path: '/foo',
-                element: null,
-              },
-            ]}
-            location={{ pathname: '/foo' }}
-            useRoutes={useRoutes}
-          />
+          <Routes location={{ pathname: '/foo' }}>
+            <Route path="/foo" element={null} />
+          </Routes>
         </MemoryRouter>
       )
 
@@ -241,16 +191,9 @@ versions.forEach(({ version, MemoryRouter, useNavigate, useRoutes }) => {
     it('allows passing a location string', () => {
       appendComponent(
         <MemoryRouter>
-          <RoutesRenderer
-            routes={[
-              {
-                path: '/foo',
-                element: null,
-              },
-            ]}
-            location="/foo"
-            useRoutes={useRoutes}
-          />
+          <Routes location="/foo">
+            <Route path="/foo" element={null} />
+          </Routes>
         </MemoryRouter>
       )
 
@@ -258,15 +201,3 @@ versions.forEach(({ version, MemoryRouter, useNavigate, useRoutes }) => {
     })
   })
 })
-
-function RoutesRenderer({
-  routes,
-  location,
-  useRoutes,
-}: {
-  routes: RouteObjectV6[] & RouteObjectV7[]
-  location?: { pathname: string } | string
-  useRoutes: typeof useRoutesV6 | typeof useRoutesV7
-}) {
-  return useRoutes(routes, location)
-}

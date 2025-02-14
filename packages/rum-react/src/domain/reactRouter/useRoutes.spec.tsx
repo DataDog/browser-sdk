@@ -1,28 +1,39 @@
-import React from 'react'
-import { flushSync } from 'react-dom'
-import { MemoryRouter as MemoryRouterV6, Route as RouteV6, useNavigate as useNavigateV6 } from 'react-router-dom-6'
-import { MemoryRouter as MemoryRouterV7, Route as RouteV7, useNavigate as useNavigateV7 } from 'react-router-dom-7'
-import { initializeReactPlugin } from '../../../test/initializeReactPlugin'
+import React, { act } from 'react'
+import { MemoryRouter as MemoryRouterV6, useNavigate as useNavigateV6 } from 'react-router-dom-6'
+import { MemoryRouter as MemoryRouterV7, useNavigate as useNavigateV7 } from 'react-router-dom-7'
 import { appendComponent } from '../../../test/appendComponent'
-import { Routes as RoutesV6 } from '../../entries/reactRouterV6'
-import { Routes as RoutesV7 } from '../../entries/reactRouterV7'
-;[
+import { initializeReactPlugin } from '../../../test/initializeReactPlugin'
+import { useRoutes as useRoutesV6 } from '../../entries/reactRouterV6'
+import { useRoutes as useRoutesV7 } from '../../entries/reactRouterV7'
+import type { AnyRouteObject } from './types'
+
+const versions = [
   {
     version: 'react-router-6',
     MemoryRouter: MemoryRouterV6,
-    Route: RouteV6,
     useNavigate: useNavigateV6,
-    Routes: RoutesV6,
+    useRoutes: useRoutesV6,
   },
   {
     version: 'react-router-7',
     MemoryRouter: MemoryRouterV7,
-    Route: RouteV7,
     useNavigate: useNavigateV7,
-    Routes: RoutesV7,
+    useRoutes: useRoutesV7,
   },
-].forEach(({ version, MemoryRouter, Route, useNavigate, Routes }) => {
-  describe(`Routes component (${version})`, () => {
+]
+
+versions.forEach(({ version, MemoryRouter, useNavigate, useRoutes }) => {
+  function RoutesRenderer({
+    routes,
+    location,
+  }: {
+    routes: AnyRouteObject[]
+    location?: { pathname: string } | string
+  }) {
+    return useRoutes(routes, location)
+  }
+
+  describe(`useRoutes (${version})`, () => {
     let startViewSpy: jasmine.Spy<(name?: string | object) => void>
 
     beforeEach(() => {
@@ -40,9 +51,14 @@ import { Routes as RoutesV7 } from '../../entries/reactRouterV7'
     it('starts a new view as soon as it is rendered', () => {
       appendComponent(
         <MemoryRouter initialEntries={['/foo']}>
-          <Routes>
-            <Route path="/foo" element={null} />
-          </Routes>
+          <RoutesRenderer
+            routes={[
+              {
+                path: '/foo',
+                element: null,
+              },
+            ]}
+          />
         </MemoryRouter>
       )
 
@@ -52,9 +68,14 @@ import { Routes as RoutesV7 } from '../../entries/reactRouterV7'
     it('renders the matching route', () => {
       const container = appendComponent(
         <MemoryRouter initialEntries={['/foo']}>
-          <Routes>
-            <Route path="/foo" element="foo" />
-          </Routes>
+          <RoutesRenderer
+            routes={[
+              {
+                path: '/foo',
+                element: 'foo',
+              },
+            ]}
+          />
         </MemoryRouter>
       )
 
@@ -66,12 +87,17 @@ import { Routes as RoutesV7 } from '../../entries/reactRouterV7'
 
       function App() {
         const [, setState] = React.useState(0)
-        forceUpdate = () => setState((s) => s + 1)
+        forceUpdate = () => setState(s => s + 1)
         return (
           <MemoryRouter initialEntries={['/foo']}>
-            <Routes>
-              <Route path="/foo" element={null} />
-            </Routes>
+            <RoutesRenderer
+              routes={[
+                {
+                  path: '/foo',
+                  element: null,
+                },
+              ]}
+            />
           </MemoryRouter>
         )
       }
@@ -80,14 +106,14 @@ import { Routes as RoutesV7 } from '../../entries/reactRouterV7'
 
       expect(startViewSpy).toHaveBeenCalledTimes(1)
 
-      flushSync(() => {
+      act(() => {
         forceUpdate!()
       })
 
       expect(startViewSpy).toHaveBeenCalledTimes(1)
     })
 
-    it('starts a new view on navigation', async () => {
+    it('starts a new view on navigation', () => {
       let navigate: (path: string) => void
 
       function NavBar() {
@@ -98,18 +124,21 @@ import { Routes as RoutesV7 } from '../../entries/reactRouterV7'
       appendComponent(
         <MemoryRouter initialEntries={['/foo']}>
           <NavBar />
-          <Routes>
-            <Route path="/foo" element={null} />
-            <Route path="/bar" element={null} />
-          </Routes>
+          <RoutesRenderer
+            routes={[
+              { path: '/foo', element: null },
+              { path: '/bar', element: null },
+            ]}
+          />
         </MemoryRouter>
       )
 
       startViewSpy.calls.reset()
-      flushSync(() => {
+
+      act(() => {
         navigate!('/bar')
       })
-      await new Promise((resolve) => setTimeout(resolve, 0))
+
       expect(startViewSpy).toHaveBeenCalledOnceWith('/bar')
     })
 
@@ -124,14 +153,17 @@ import { Routes as RoutesV7 } from '../../entries/reactRouterV7'
       appendComponent(
         <MemoryRouter initialEntries={['/foo']}>
           <NavBar />
-          <Routes>
-            <Route path="/foo" element={null} />
-          </Routes>
+          <RoutesRenderer
+            routes={[
+              { path: '/foo', element: null },
+            ]}
+          />
         </MemoryRouter>
       )
 
       startViewSpy.calls.reset()
-      flushSync(() => {
+
+      act(() => {
         navigate!('/foo')
       })
 
@@ -149,14 +181,17 @@ import { Routes as RoutesV7 } from '../../entries/reactRouterV7'
       appendComponent(
         <MemoryRouter initialEntries={['/foo']}>
           <NavBar />
-          <Routes>
-            <Route path="/foo" element={null} />
-          </Routes>
+          <RoutesRenderer
+            routes={[
+              { path: '/foo', element: null },
+            ]}
+          />
         </MemoryRouter>
       )
 
       startViewSpy.calls.reset()
-      flushSync(() => {
+
+      act(() => {
         navigate!('/foo?bar=baz')
       })
 
@@ -164,14 +199,14 @@ import { Routes as RoutesV7 } from '../../entries/reactRouterV7'
     })
 
     it('does not start a new view if it does not match any route', () => {
-      // Prevent react router from showing a warning in the console when a route does not match
+      // On empêche react-router d'afficher un avertissement dans la console si aucune route ne correspond
       spyOn(console, 'warn')
 
       appendComponent(
         <MemoryRouter>
-          <Routes>
-            <Route path="/bar" element={null} />
-          </Routes>
+          <RoutesRenderer
+            routes={[{ path: '/bar', element: null }]}
+          />
         </MemoryRouter>
       )
 
@@ -181,9 +216,12 @@ import { Routes as RoutesV7 } from '../../entries/reactRouterV7'
     it('allows passing a location object', () => {
       appendComponent(
         <MemoryRouter>
-          <Routes location={{ pathname: '/foo' }}>
-            <Route path="/foo" element={null} />
-          </Routes>
+          <RoutesRenderer
+            routes={[
+              { path: '/foo', element: null },
+            ]}
+            location={{ pathname: '/foo' }}
+          />
         </MemoryRouter>
       )
 
@@ -193,9 +231,15 @@ import { Routes as RoutesV7 } from '../../entries/reactRouterV7'
     it('allows passing a location string', () => {
       appendComponent(
         <MemoryRouter>
-          <Routes location="/foo">
-            <Route path="/foo" element={null} />
-          </Routes>
+          <RoutesRenderer
+            routes={[
+              { 
+                path: '/foo',
+               element: null 
+              },
+            ]}
+            location="/foo"
+          />
         </MemoryRouter>
       )
 

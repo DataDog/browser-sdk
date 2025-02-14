@@ -13,6 +13,7 @@ import { registerCleanupTask } from '../../../../core/test'
 import { initializeReactPlugin } from '../../../test/initializeReactPlugin'
 import * as ViewV6 from '../../entries/reactRouterV6'
 import * as ViewV7 from '../../entries/reactRouterV7'
+import type { AnyRouteMatch } from './types'
 
 const routerVersions = [
   {
@@ -47,7 +48,7 @@ routerVersions.forEach(({ version, createMemoryRouter, startReactRouterView, com
           { route: { path: '/' } },
           { route: { path: 'user' } },
           { route: { path: ':id' } },
-        ] as unknown as RouteMatchV6[] & RouteMatchV7[])
+        ] as unknown as AnyRouteMatch[])
 
         expect(startViewSpy).toHaveBeenCalledOnceWith('/user/:id')
       })
