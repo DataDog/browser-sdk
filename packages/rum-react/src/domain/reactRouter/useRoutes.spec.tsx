@@ -191,7 +191,7 @@ versions.forEach(({ version, MemoryRouter, useNavigate, useRoutes }) => {
     })
 
     it('does not start a new view if it does not match any route', () => {
-      // On empêche react-router d'afficher un avertissement dans la console si aucune route ne correspond
+      // Prevent react router from showing a warning in the console when a route does not match
       spyOn(console, 'warn')
 
       appendComponent(
