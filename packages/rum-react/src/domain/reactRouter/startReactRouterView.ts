@@ -55,9 +55,12 @@ export function computeViewName(routeMatches: AnyRouteMatch[]) {
  */
 function substitutePathSplats(path: string, params: Record<string, string | undefined>, isLastMatchingRoute: boolean) {
   if (!path.includes('*') || params['*'] === undefined) {
+    // In some edge cases, react-router does not provide the `*` parameter, so we don't know what to
+    // replace it with. In this case, we keep the asterisk.
     return path
   }
 
+  // The `*` parameter is only related to the last matching route path.
   if (isLastMatchingRoute) {
     return path.replace(/\*/, params['*'])
   }

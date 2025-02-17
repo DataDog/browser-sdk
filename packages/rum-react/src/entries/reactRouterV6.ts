@@ -22,5 +22,3 @@ export const useRoutes = wrapUseRoutes({
 })
 
 export const Routes = createRoutesComponent(useRoutes, createRoutesFromChildren)
-
-export * from '../domain/reactRouter'

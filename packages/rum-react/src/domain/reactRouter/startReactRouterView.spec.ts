@@ -11,26 +11,21 @@ import {
 } from 'react-router-dom-7'
 import { registerCleanupTask } from '../../../../core/test'
 import { initializeReactPlugin } from '../../../test/initializeReactPlugin'
-import * as ViewV6 from '../../entries/reactRouterV6'
-import * as ViewV7 from '../../entries/reactRouterV7'
+import { startReactRouterView, computeViewName } from './startReactRouterView'
 import type { AnyRouteMatch } from './types'
 
 const routerVersions = [
   {
     version: 'react-router-6',
     createMemoryRouter: createMemoryRouterV6,
-    startReactRouterView: ViewV6.startReactRouterView,
-    computeViewName: ViewV6.computeViewName,
   },
   {
     version: 'react-router-7',
     createMemoryRouter: createMemoryRouterV7,
-    startReactRouterView: ViewV7.startReactRouterView,
-    computeViewName: ViewV7.computeViewName,
   },
 ]
 
-routerVersions.forEach(({ version, createMemoryRouter, startReactRouterView, computeViewName }) => {
+routerVersions.forEach(({ version, createMemoryRouter }) => {
   describe(`startReactRouterView (${version})`, () => {
     describe('startReactRouterView', () => {
       it('creates a new view with the computed view name', () => {
