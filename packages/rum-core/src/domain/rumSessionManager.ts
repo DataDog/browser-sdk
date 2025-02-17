@@ -46,7 +46,7 @@ export function startRumSessionManager(
   const sessionManager = startSessionManager(
     configuration,
     RUM_SESSION_KEY,
-    (rawTrackingType) => computeSessionState(configuration, rawTrackingType),
+    (rawTrackingType) => computeSessionTrackingState(configuration, rawTrackingType),
     trackingConsentState
   )
 
@@ -105,7 +105,7 @@ export function startRumSessionManagerStub(): RumSessionManager {
   }
 }
 
-function computeSessionState(configuration: RumConfiguration, rawTrackingType?: string) {
+function computeSessionTrackingState(configuration: RumConfiguration, rawTrackingType?: string) {
   let trackingType: RumTrackingType
   if (hasValidRumSession(rawTrackingType)) {
     trackingType = rawTrackingType

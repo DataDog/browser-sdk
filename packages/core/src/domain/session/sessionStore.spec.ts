@@ -173,7 +173,7 @@ describe('session store', () => {
     let clock: Clock
 
     function setupSessionStore(
-      computeSessionState: (rawTrackingType?: string) => {
+      computeSessionTrackingState: (rawTrackingType?: string) => {
         trackingType: FakeTrackingType
         isTracked: boolean
       } = () => ({
@@ -190,7 +190,7 @@ describe('session store', () => {
         sessionStoreStrategyType,
         DEFAULT_CONFIGURATION,
         PRODUCT_KEY,
-        computeSessionState
+        computeSessionTrackingState
       )
       sessionStoreManager.expireObservable.subscribe(expireSpy)
       sessionStoreManager.renewObservable.subscribe(renewSpy)
@@ -554,7 +554,7 @@ describe('session store', () => {
     let clock: Clock
 
     function setupSessionStore(updateSpy: () => void) {
-      const computeSessionState: (rawTrackingType?: string) => {
+      const computeSessionTrackingState: (rawTrackingType?: string) => {
         trackingType: FakeTrackingType
         isTracked: boolean
       } = () => ({
@@ -567,7 +567,7 @@ describe('session store', () => {
         sessionStoreStrategyType!,
         DEFAULT_CONFIGURATION,
         PRODUCT_KEY,
-        computeSessionState
+        computeSessionTrackingState
       )
       sessionStoreManager.sessionStateUpdateObservable.subscribe(updateSpy)
 

@@ -26,7 +26,7 @@ export function startLogsSessionManager(
   const sessionManager = startSessionManager(
     configuration,
     LOGS_SESSION_KEY,
-    (rawTrackingType) => computeSessionState(configuration, rawTrackingType),
+    (rawTrackingType) => computeSessionTrackingState(configuration, rawTrackingType),
     trackingConsentState
   )
   return {
@@ -59,7 +59,7 @@ function computeTrackingType(configuration: LogsConfiguration) {
   return LoggerTrackingType.TRACKED
 }
 
-function computeSessionState(configuration: LogsConfiguration, rawSessionType?: string) {
+function computeSessionTrackingState(configuration: LogsConfiguration, rawSessionType?: string) {
   const trackingType = hasValidLoggerSession(rawSessionType) ? rawSessionType : computeTrackingType(configuration)
   return {
     trackingType,
