@@ -54,6 +54,7 @@ import { RumPerformanceEntryType } from '../browser/performanceObservable'
 import { startLongTaskCollection } from '../domain/longTask/longTaskCollection'
 import type { Hooks } from '../hooks'
 import { createHooks } from '../hooks'
+import { startSyntheticsContext } from '../domain/contexts/syntheticsContext'
 import type { RecorderApi } from './rumPublicApi'
 
 export type StartRum = typeof startRum
@@ -266,7 +267,8 @@ export function startRumEventCollection(
   )
 
   const displayContext = startDisplayContext(configuration)
-  const ciVisibilityContext = startCiVisibilityContext(configuration)
+  const ciVisibilityContext = startCiVisibilityContext(configuration, hooks)
+  startSyntheticsContext(hooks)
 
   startRumAssembly(
     configuration,
@@ -276,7 +278,6 @@ export function startRumEventCollection(
     viewHistory,
     urlContexts,
     displayContext,
-    ciVisibilityContext,
     featureFlagContexts,
     getCommonContext,
     reportError
