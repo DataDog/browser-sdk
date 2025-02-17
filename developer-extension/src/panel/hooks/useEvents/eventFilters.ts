@@ -1,21 +1,21 @@
 import type { SdkEvent } from '../../sdkEvent'
 import type { RumViewEvent } from '../../../../../packages/rum-core/src/rumEvent.types'
 import { isRumViewEvent } from '../../sdkEvent'
-import type { FieldMultiValue } from '../../facets.constants'
 import type { FacetRegistry } from './facetRegistry'
 
 export interface EventFilters {
-  excludedFacetValues: ExcludedFacetValues
+  facetValuesFilter: FacetValuesFilter
   query: string
   outdatedVersions: boolean
 }
 
-export interface ExcludedFacetValues {
+export type FacetValuesFilter = { type: 'include' | 'exclude'; facetValues: FacetValues }
+export interface FacetValues {
   [facetPath: string]: string[]
 }
 
 export const DEFAULT_FILTERS: EventFilters = {
-  excludedFacetValues: {},
+  facetValuesFilter: { type: 'exclude', facetValues: {} },
   query: '',
   outdatedVersions: false,
 }
@@ -23,7 +23,7 @@ export const DEFAULT_FILTERS: EventFilters = {
 export function applyEventFilters(filters: EventFilters, events: SdkEvent[], facetRegistry: FacetRegistry) {
   let filteredEvents = events
 
-  filteredEvents = filterExcludedFacets(filteredEvents, filters.excludedFacetValues, facetRegistry)
+  filteredEvents = filterFacets(filteredEvents, filters.facetValuesFilter, facetRegistry)
 
   if (filters.query) {
     const queryParts: string[][] = parseQuery(filters.query)
@@ -43,18 +43,21 @@ export function applyEventFilters(filters: EventFilters, events: SdkEvent[], fac
   return filteredEvents
 }
 
-function filterExcludedFacets(
+export function filterFacets(
   events: SdkEvent[],
-  excludedFacetValues: ExcludedFacetValues,
+  facetValuesFilter: FacetValuesFilter,
   facetRegistry: FacetRegistry
 ): SdkEvent[] {
-  return events.filter(
-    (event) =>
-      !Object.entries(excludedFacetValues).some(([facetPath, excludedValues]) =>
-        (excludedValues as Array<FieldMultiValue | undefined>).includes(
-          facetRegistry.getFieldValueForEvent(event, facetPath)
-        )
-      )
+  const filteredFacetValueEntries = Object.entries(facetValuesFilter.facetValues)
+  if (filteredFacetValueEntries.length === 0) {
+    return events
+  }
+  const isIncludeType = facetValuesFilter.type === 'include'
+  return events.filter((event) =>
+    filteredFacetValueEntries[isIncludeType ? 'some' : 'every'](([facetPath, filteredValues]) => {
+      const eventValue = facetRegistry.getFieldValueForEvent(event, facetPath)
+      return isIncludeType === filteredValues.includes(eventValue as string)
+    })
   )
 }
 
@@ -81,7 +84,7 @@ function filterOutdatedVersions(events: SdkEvent[]): SdkEvent[] {
 
 export function parseQuery(query: string) {
   const queryParts = query
-    .split(/(?<!\\)\s/g) // Hack it to escape whitespace with backslashes
+    .split(new RegExp('(?<!\\\\)\\s', 'g')) // Hack it to escape whitespace with backslashes
     .filter((queryPart) => queryPart)
     .map((queryPart) => queryPart.split(':'))
 

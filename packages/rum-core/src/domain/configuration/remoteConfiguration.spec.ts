@@ -1,7 +1,7 @@
-import { DefaultPrivacyLevel, display } from '@datadog/browser-core'
+import { DefaultPrivacyLevel, display, INTAKE_SITE_US1 } from '@datadog/browser-core'
 import { interceptRequests } from '@datadog/browser-core/test'
 import type { RumInitConfiguration } from './configuration'
-import { applyRemoteConfiguration, fetchRemoteConfiguration } from './remoteConfiguration'
+import { applyRemoteConfiguration, buildEndpoint, fetchRemoteConfiguration } from './remoteConfiguration'
 
 const DEFAULT_INIT_CONFIGURATION = {
   clientToken: 'xxx',
@@ -30,7 +30,7 @@ describe('remoteConfiguration', () => {
 
     it('should fetch the remote configuration', (done) => {
       interceptor.withMockXhr((xhr) => {
-        xhr.complete(200, '{"sessionSampleRate":50,"sessionReplaySampleRate":50,"defaultPrivacyLevel":"allow"}')
+        xhr.complete(200, '{"rum":{"sessionSampleRate":50,"sessionReplaySampleRate":50,"defaultPrivacyLevel":"allow"}}')
 
         expect(remoteConfigurationCallback).toHaveBeenCalledWith({
           sessionSampleRate: 50,
@@ -63,6 +63,15 @@ describe('remoteConfiguration', () => {
       }
       expect(applyRemoteConfiguration(DEFAULT_INIT_CONFIGURATION, remoteConfiguration)).toEqual(
         jasmine.objectContaining(remoteConfiguration)
+      )
+    })
+  })
+
+  describe('buildEndpoint', () => {
+    it('should return the remote configuration endpoint', () => {
+      const remoteConfigurationId = '0e008b1b-8600-4709-9d1d-f4edcfdf5587'
+      expect(buildEndpoint({ site: INTAKE_SITE_US1, remoteConfigurationId } as RumInitConfiguration)).toEqual(
+        `https://sdk-configuration.browser-intake-datadoghq.com/v1/${remoteConfigurationId}.json`
       )
     })
   })

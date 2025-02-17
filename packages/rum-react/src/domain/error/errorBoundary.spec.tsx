@@ -29,7 +29,14 @@ describe('ErrorBoundary', () => {
         <ComponentSpy />
       </ErrorBoundary>
     )
-    expect(fallbackSpy).toHaveBeenCalledWith({ error: new Error('error'), resetError: jasmine.any(Function) }, {})
+    expect(fallbackSpy).toHaveBeenCalled()
+    // React calls the component multiple times while rendering
+    fallbackSpy.calls.all().forEach(({ args }) => {
+      expect(args[0]).toEqual({
+        error: new Error('error'),
+        resetError: jasmine.any(Function),
+      })
+    })
     expect(container.innerHTML).toBe('fallback')
   })
 

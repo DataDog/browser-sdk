@@ -22,7 +22,7 @@ export function getNavigationEntry(): RumPerformanceNavigationTiming {
     initiatorType: 'navigation' as const,
     name: window.location.href,
     startTime: 0 as RelativeTime,
-    duration: timings.responseEnd,
+    duration: timings.loadEventEnd,
     decodedBodySize: 0,
     encodedBodySize: 0,
     transferSize: 0,

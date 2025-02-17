@@ -4,38 +4,57 @@ import type { ModifiableFieldPaths } from './limitModification'
 import { limitModification } from './limitModification'
 
 describe('limitModification', () => {
+  let object: unknown
+
+  beforeEach(() => {
+    object = {
+      foo: { bar: 'bar' },
+      arr: [{ foo: 'foo' }],
+      qux: 'qux',
+    }
+  })
+
   it('should allow modifications on modifiable field', () => {
-    const object = { foo: { bar: 'bar' }, qux: 'qux' }
     const modifier = (candidate: any) => {
       candidate.foo.bar = 'modified1'
       candidate.qux = 'modified2'
+      candidate.arr[0].foo = 'modified3'
     }
 
-    limitModification(object, { 'foo.bar': 'string', qux: 'string' }, modifier)
+    limitModification(
+      object,
+      {
+        'foo.bar': 'string',
+        qux: 'string',
+        'arr[].foo': 'string',
+      },
+      modifier
+    )
 
     expect(object).toEqual({
       foo: { bar: 'modified1' },
       qux: 'modified2',
+      arr: [{ foo: 'modified3' }],
     })
   })
 
   it('should not allow modifications on non modifiable field', () => {
-    const object = { foo: { bar: 'bar' }, qux: 'qux' }
     const modifier = (candidate: any) => {
       candidate.foo.bar = 'modified1'
       candidate.qux = 'modified2'
+      candidate.arr[0].foo = 'modified3'
     }
 
     limitModification(object, { 'foo.bar': 'string' }, modifier)
 
     expect(object).toEqual({
       foo: { bar: 'modified1' },
+      arr: [{ foo: 'foo' }],
       qux: 'qux',
     })
   })
 
   it('should allow to add a modifiable fields not present on the original object', () => {
-    const object = { foo: { bar: 'bar' }, qux: 'qux' }
     const modifier = (candidate: any) => {
       candidate.foo.bar = 'modified1'
       candidate.qux = 'modified2'
@@ -46,13 +65,13 @@ describe('limitModification', () => {
 
     expect(object as any).toEqual({
       foo: { bar: 'modified1' },
+      arr: [{ foo: 'foo' }],
       qux: 'modified2',
       qix: 'modified3',
     })
   })
 
   it('should not allow to add a non modifiable fields not present on the original object', () => {
-    const object = { foo: { bar: 'bar' }, qux: 'qux' }
     const modifier = (candidate: any) => {
       candidate.foo.bar = 'modified1'
       candidate.qux = 'modified2'
@@ -63,6 +82,7 @@ describe('limitModification', () => {
 
     expect(object).toEqual({
       foo: { bar: 'modified1' },
+      arr: [{ foo: 'foo' }],
       qux: 'modified2',
     })
   })
@@ -119,11 +139,11 @@ describe('limitModification', () => {
   })
 
   it('should not allow structural change of the object', () => {
-    const object = { foo: { bar: 'bar' }, qux: 'qux' }
     const modifier = (candidate: any) => {
       candidate.foo.bar = { qux: 'qux' }
       candidate.bar = 'bar'
       delete candidate.qux
+      ;(candidate.arr as Array<Record<string, string>>).push({ bar: 'baz' })
     }
 
     limitModification(object, { 'foo.bar': 'string', qux: 'string' }, modifier)
@@ -131,6 +151,7 @@ describe('limitModification', () => {
     expect(object).toEqual({
       foo: { bar: 'bar' },
       qux: 'qux',
+      arr: [{ foo: 'foo' }],
     })
   })
 

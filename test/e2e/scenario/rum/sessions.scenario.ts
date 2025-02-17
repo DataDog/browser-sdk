@@ -44,10 +44,44 @@ describe('rum sessions', () => {
       // prevent recording start to generate late events
       .withRum({ startSessionReplayRecordingManually: true })
       .run(async ({ intakeRegistry }) => {
+        // TODO: use `page.clock.runFor` with Playwright
         await expireSession()
         intakeRegistry.empty()
         await sendXhr('/ok')
         expect(intakeRegistry.isEmpty).toBe(true)
+      })
+  })
+  describe('anonymous user id', () => {
+    createTest('persists when session is expired')
+      .withRum()
+      .run(async () => {
+        const anonymousId = (await findSessionCookie())?.aid
+
+        await browser.execute(() => {
+          // TODO: use `page.clock.runFor` with Playwright
+          window.DD_RUM!.stopSession()
+        })
+        await flushEvents()
+
+        expect((await findSessionCookie())?.aid).toEqual(anonymousId)
+      })
+
+    createTest('persists when session renewed')
+      .withRum()
+      .run(async () => {
+        const anonymousId = (await findSessionCookie())?.aid
+        expect(anonymousId).not.toBeNull()
+
+        await browser.execute(() => {
+          // TODO: use `page.clock.runFor` with Playwright
+          window.DD_RUM!.stopSession()
+        })
+        await (await $('html')).click()
+
+        // The session is not created right away, let's wait until we see a cookie
+        await browser.waitUntil(async () => Boolean(await findSessionCookie()))
+
+        expect((await findSessionCookie())?.aid).toEqual(anonymousId)
       })
   })
 
@@ -69,7 +103,7 @@ describe('rum sessions', () => {
         })
         await flushEvents()
 
-        expect(await findSessionCookie()).toContain('isExpired=1')
+        expect((await findSessionCookie())?.isExpired).toEqual('1')
         expect(intakeRegistry.rumActionEvents.length).toBe(0)
       })
 
@@ -90,8 +124,8 @@ describe('rum sessions', () => {
 
         await flushEvents()
 
-        expect(await findSessionCookie()).not.toContain('isExpired=1')
-        expect(await findSessionCookie()).toMatch(/id=[a-f0-9-]+/)
+        expect((await findSessionCookie())?.isExpired).not.toEqual('1')
+        expect((await findSessionCookie())?.id).toBeDefined()
         expect(intakeRegistry.rumActionEvents.length).toBe(1)
       })
 

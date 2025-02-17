@@ -1,5 +1,4 @@
 import type {
-  Context,
   Duration,
   ErrorSource,
   ErrorHandling,
@@ -8,7 +7,6 @@ import type {
   TimeStamp,
   RawErrorCause,
   DefaultPrivacyLevel,
-  Connectivity,
   Csp,
 } from '@datadog/browser-core'
 import type { PageState } from './domain/contexts/pageStateHistory'
@@ -175,6 +173,7 @@ export interface ViewPerformanceData {
   lcp?: {
     timestamp: ServerDuration
     target_selector?: string
+    resource_url?: string
   }
 }
 
@@ -337,51 +336,3 @@ export type RawRumEvent =
   | RawRumLongAnimationFrameEvent
   | RawRumActionEvent
   | RawRumVitalEvent
-
-export interface RumContext {
-  date: TimeStamp
-  application: {
-    id: string
-  }
-  service?: string
-  version?: string
-  source: 'browser'
-  session: {
-    id: string
-    type: string
-    has_replay?: boolean
-  }
-  display?: {
-    viewport: {
-      width: number
-      height: number
-    }
-  }
-  view: {
-    id: string
-    referrer?: string
-    url: string
-    name?: string
-  }
-  connectivity: Connectivity
-  action?: {
-    id: string | string[]
-  }
-  feature_flags?: Context
-  synthetics?: {
-    test_id: string
-    result_id: string
-  }
-  ci_test?: {
-    test_execution_id: string
-  }
-  _dd: {
-    format_version: 2
-    drift: number
-    configuration: {
-      session_sample_rate: number
-      session_replay_sample_rate: number
-    }
-    browser_sdk_version?: string
-  }
-}
