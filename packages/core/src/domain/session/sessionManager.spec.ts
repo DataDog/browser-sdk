@@ -21,6 +21,13 @@ import type { SessionStoreStrategyType } from './storeStrategies/sessionStoreStr
 import { SESSION_STORE_KEY } from './storeStrategies/sessionStoreStrategy'
 import { STORAGE_POLL_DELAY } from './sessionStore'
 
+type FakeSessionContext = {
+  id?: string
+  extra: string | undefined
+  isExpired: '1' | undefined
+  trackingType: FakeTrackingType | undefined
+}
+
 const enum FakeTrackingType {
   NOT_TRACKED = 'not-tracked',
   TRACKED = 'tracked',
@@ -53,12 +60,12 @@ describe('startSessionManager', () => {
     clock.tick(STORAGE_POLL_DELAY)
   }
 
-  function expectSessionIdToBe(sessionManager: SessionManager<FakeTrackingType>, sessionId: string) {
+  function expectSessionIdToBe(sessionManager: SessionManager<FakeSessionContext>, sessionId: string) {
     expect(sessionManager.findSession()!.id).toBe(sessionId)
     expect(getSessionState(SESSION_STORE_KEY).id).toBe(sessionId)
   }
 
-  function expectSessionIdToBeDefined(sessionManager: SessionManager<FakeTrackingType>) {
+  function expectSessionIdToBeDefined(sessionManager: SessionManager<FakeSessionContext>) {
     expect(sessionManager.findSession()!.id).toMatch(/^[a-f0-9-]+$/)
     expect(sessionManager.findSession()?.isExpired).toBeUndefined()
 
@@ -66,18 +73,18 @@ describe('startSessionManager', () => {
     expect(getSessionState(SESSION_STORE_KEY).isExpired).toBeUndefined()
   }
 
-  function expectSessionToBeExpired(sessionManager: SessionManager<FakeTrackingType>) {
+  function expectSessionToBeExpired(sessionManager: SessionManager<FakeSessionContext>) {
     expect(sessionManager.findSession()).toBeUndefined()
     expect(getSessionState(SESSION_STORE_KEY).isExpired).toBe('1')
   }
 
-  function expectSessionIdToNotBeDefined(sessionManager: SessionManager<FakeTrackingType>) {
+  function expectSessionIdToNotBeDefined(sessionManager: SessionManager<FakeSessionContext>) {
     expect(sessionManager.findSession()!.id).toBeUndefined()
     expect(getSessionState(SESSION_STORE_KEY).id).toBeUndefined()
   }
 
   function expectTrackingTypeToBe(
-    sessionManager: SessionManager<FakeTrackingType>,
+    sessionManager: SessionManager<FakeSessionContext>,
     productKey: string,
     trackingType: FakeTrackingType
   ) {
@@ -85,7 +92,7 @@ describe('startSessionManager', () => {
     expect(getSessionState(SESSION_STORE_KEY)[productKey]).toEqual(trackingType)
   }
 
-  function expectTrackingTypeToNotBeDefined(sessionManager: SessionManager<FakeTrackingType>, productKey: string) {
+  function expectTrackingTypeToNotBeDefined(sessionManager: SessionManager<FakeSessionContext>, productKey: string) {
     expect(sessionManager.findSession()?.trackingType).toBeUndefined()
     expect(getSessionState(SESSION_STORE_KEY)[productKey]).toBeUndefined()
   }
@@ -641,18 +648,14 @@ describe('startSessionManager', () => {
 
   describe('session state update', () => {
     it('should notify session manager update observable', () => {
-      const sessionStateUpdateSpy = jasmine.createSpy()
       const sessionManager = startSessionManagerWithDefaults()
-      sessionManager.sessionStateUpdateObservable.subscribe(sessionStateUpdateSpy)
 
       sessionManager.updateSessionState({ extra: 'extra' })
 
       expectSessionIdToBeDefined(sessionManager)
-      expect(sessionStateUpdateSpy).toHaveBeenCalledTimes(1)
 
-      const callArgs = sessionStateUpdateSpy.calls.argsFor(0)[0]
-      expect(callArgs.previousState.extra).toBeUndefined()
-      expect(callArgs.newState.extra).toBe('extra')
+      expect(sessionManager.findSession()!.extra).toBe('extra')
+      expect(getSessionState(SESSION_STORE_KEY).extra).toBe('extra')
     })
   })
 
@@ -667,13 +670,19 @@ describe('startSessionManager', () => {
     computeSessionTrackingState?: () => { trackingType: FakeTrackingType; isTracked: boolean }
     trackingConsentState?: TrackingConsentState
   } = {}) {
-    return startSessionManager(
+    return startSessionManager<FakeSessionContext>(
       {
         sessionStoreStrategyType: STORE_TYPE,
         ...configuration,
       } as Configuration,
       productKey,
       computeSessionTrackingState,
+      (sessionState) => ({
+        id: sessionState.id,
+        extra: sessionState.extra,
+        isExpired: sessionState.isExpired,
+        trackingType: sessionState[productKey] as FakeTrackingType | undefined,
+      }),
       trackingConsentState
     )
   }

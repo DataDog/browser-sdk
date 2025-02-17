@@ -1,5 +1,4 @@
 import { Observable } from '../../tools/observable'
-import type { Context } from '../../tools/serialisation/context'
 import { createValueHistory } from '../../tools/valueHistory'
 import type { RelativeTime } from '../../tools/utils/timeUtils'
 import { relativeNow, clocksOrigin, ONE_MINUTE } from '../../tools/utils/timeUtils'
@@ -11,35 +10,25 @@ import { SESSION_TIME_OUT_DELAY } from './sessionConstants'
 import { startSessionStore } from './sessionStore'
 import type { SessionState } from './sessionState'
 
-export interface SessionManager<TrackingType extends string> {
-  findSession: (
-    startTime?: RelativeTime,
-    options?: { returnInactive: boolean }
-  ) => SessionContext<TrackingType> | undefined
+export interface SessionManager<SessionContext> {
+  findSession: (startTime?: RelativeTime, options?: { returnInactive: boolean }) => SessionContext | undefined
   renewObservable: Observable<void>
   expireObservable: Observable<void>
-  sessionStateUpdateObservable: Observable<{ previousState: SessionState; newState: SessionState }>
   expire: () => void
   updateSessionState: (state: Partial<SessionState>) => void
-}
-
-export interface SessionContext<TrackingType extends string> extends Context {
-  id: string
-  trackingType: TrackingType
-  isReplayForced: boolean
-  anonymousId: string | undefined
 }
 
 export const VISIBILITY_CHECK_DELAY = ONE_MINUTE
 const SESSION_CONTEXT_TIMEOUT_DELAY = SESSION_TIME_OUT_DELAY
 let stopCallbacks: Array<() => void> = []
 
-export function startSessionManager<TrackingType extends string>(
+export function startSessionManager<SessionContext>(
   configuration: Configuration,
   productKey: string,
-  computeSessionTrackingState: (rawTrackingType?: string) => { trackingType: TrackingType; isTracked: boolean },
+  computeSessionTrackingState: (rawTrackingType?: string) => { trackingType: string; isTracked: boolean },
+  buildSessionContext: (sessionState: SessionState) => SessionContext,
   trackingConsentState: TrackingConsentState
-): SessionManager<TrackingType> {
+): SessionManager<SessionContext> {
   const renewObservable = new Observable<void>()
   const expireObservable = new Observable<void>()
 
@@ -52,24 +41,30 @@ export function startSessionManager<TrackingType extends string>(
   )
   stopCallbacks.push(() => sessionStore.stop())
 
-  const sessionContextHistory = createValueHistory<SessionContext<TrackingType>>({
+  const sessionContextHistory = createValueHistory<SessionContext>({
     expireDelay: SESSION_CONTEXT_TIMEOUT_DELAY,
   })
   stopCallbacks.push(() => sessionContextHistory.stop())
 
   sessionStore.renewObservable.subscribe(() => {
-    sessionContextHistory.add(buildSessionContext(), relativeNow())
+    sessionContextHistory.add(buildSessionContext(sessionStore.getSession()), relativeNow())
     renewObservable.notify()
   })
   sessionStore.expireObservable.subscribe(() => {
     expireObservable.notify()
     sessionContextHistory.closeActive(relativeNow())
   })
+  sessionStore.sessionStateUpdateObservable.subscribe(() => {
+    const activeEntry = sessionContextHistory.find()
+    if (activeEntry) {
+      Object.assign(activeEntry, buildSessionContext(sessionStore.getSession()))
+    }
+  })
 
   // We expand/renew session unconditionally as tracking consent is always granted when the session
   // manager is started.
   sessionStore.expandOrRenewSession()
-  sessionContextHistory.add(buildSessionContext(), clocksOrigin().relative)
+  sessionContextHistory.add(buildSessionContext(sessionStore.getSession()), clocksOrigin().relative)
 
   trackingConsentState.observable.subscribe(() => {
     if (trackingConsentState.isGranted()) {
@@ -87,20 +82,10 @@ export function startSessionManager<TrackingType extends string>(
   trackVisibility(configuration, () => sessionStore.expandSession())
   trackResume(configuration, () => sessionStore.restartSession())
 
-  function buildSessionContext() {
-    return {
-      id: sessionStore.getSession().id!,
-      trackingType: sessionStore.getSession()[productKey] as TrackingType,
-      isReplayForced: !!sessionStore.getSession().forcedReplay,
-      anonymousId: sessionStore.getSession().anonymousId,
-    }
-  }
-
   return {
     findSession: (startTime, options) => sessionContextHistory.find(startTime, options),
     renewObservable,
     expireObservable,
-    sessionStateUpdateObservable: sessionStore.sessionStateUpdateObservable,
     expire: sessionStore.expire,
     updateSessionState: sessionStore.updateSessionState,
   }

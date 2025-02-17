@@ -1,4 +1,4 @@
-import type { RelativeTime, TrackingConsentState } from '@datadog/browser-core'
+import type { RelativeTime, SessionState, TrackingConsentState } from '@datadog/browser-core'
 import {
   BridgeCapability,
   Observable,
@@ -47,6 +47,7 @@ export function startRumSessionManager(
     configuration,
     RUM_SESSION_KEY,
     (rawTrackingType) => computeSessionTrackingState(configuration, rawTrackingType),
+    buildSessionContext,
     trackingConsentState
   )
 
@@ -58,31 +59,8 @@ export function startRumSessionManager(
     lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED)
   })
 
-  sessionManager.sessionStateUpdateObservable.subscribe(({ previousState, newState }) => {
-    if (!previousState.forcedReplay && newState.forcedReplay) {
-      const sessionEntity = sessionManager.findSession()
-      if (sessionEntity) {
-        sessionEntity.isReplayForced = true
-      }
-    }
-  })
   return {
-    findTrackedSession: (startTime) => {
-      const session = sessionManager.findSession(startTime)
-      if (!session || !isTypeTracked(session.trackingType)) {
-        return
-      }
-      return {
-        id: session.id,
-        sessionReplay:
-          session.trackingType === RumTrackingType.TRACKED_WITH_SESSION_REPLAY
-            ? SessionReplayState.SAMPLED
-            : session.isReplayForced
-              ? SessionReplayState.FORCED
-              : SessionReplayState.OFF,
-        anonymousId: session.anonymousId,
-      }
-    },
+    findTrackedSession: sessionManager.findSession,
     expire: sessionManager.expire,
     expireObservable: sessionManager.expireObservable,
     setForcedReplay: () => sessionManager.updateSessionState({ forcedReplay: '1' }),
@@ -119,6 +97,28 @@ function computeSessionTrackingState(configuration: RumConfiguration, rawTrackin
   return {
     trackingType,
     isTracked: isTypeTracked(trackingType),
+  }
+}
+
+function buildSessionContext(sessionState: SessionState): RumSession | undefined {
+  const trackingType = sessionState[RUM_SESSION_KEY] as RumTrackingType
+  if (!isTypeTracked(trackingType) || !sessionState.id) {
+    return // We don't care about untracked sessions
+  }
+
+  let sessionReplay: SessionReplayState
+  if (trackingType === RumTrackingType.TRACKED_WITH_SESSION_REPLAY) {
+    sessionReplay = SessionReplayState.SAMPLED
+  } else if (sessionState.forcedReplay) {
+    sessionReplay = SessionReplayState.FORCED
+  } else {
+    sessionReplay = SessionReplayState.OFF
+  }
+
+  return {
+    id: sessionState.id,
+    anonymousId: sessionState.anonymousId,
+    sessionReplay,
   }
 }
 

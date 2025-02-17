@@ -599,14 +599,12 @@ describe('session store', () => {
       sessionStoreManager.updateSessionState({ extra: 'extra' })
 
       expect(updateSpy).toHaveBeenCalledTimes(1)
-
-      const callArgs = updateSpy.calls.argsFor(0)[0]
-      expect(callArgs!.previousState.extra).toBeUndefined()
-      expect(callArgs.newState.extra).toBe('extra')
+      expect(sessionStoreManager.getSession().extra).toBe('extra')
 
       // Need to wait until watch is triggered
       clock.tick(STORAGE_POLL_DELAY)
-      expect(otherUpdateSpy).toHaveBeenCalled()
+      expect(otherUpdateSpy).toHaveBeenCalledTimes(1)
+      expect(otherSessionStoreManager.getSession().extra).toBe('extra')
     })
   })
 })

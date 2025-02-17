@@ -25,7 +25,7 @@ export interface SessionStore {
   restartSession: () => void
   renewObservable: Observable<void>
   expireObservable: Observable<void>
-  sessionStateUpdateObservable: Observable<{ previousState: SessionState; newState: SessionState }>
+  sessionStateUpdateObservable: Observable<void>
   expire: () => void
   stop: () => void
   updateSessionState: (state: Partial<SessionState>) => void
@@ -79,7 +79,7 @@ export function startSessionStore<TrackingType extends string>(
 ): SessionStore {
   const renewObservable = new Observable<void>()
   const expireObservable = new Observable<void>()
-  const sessionStateUpdateObservable = new Observable<{ previousState: SessionState; newState: SessionState }>()
+  const sessionStateUpdateObservable = new Observable<void>()
 
   const sessionStoreStrategy =
     sessionStoreStrategyType.type === SessionPersistence.COOKIE
@@ -148,8 +148,8 @@ export function startSessionStore<TrackingType extends string>(
       if (isSessionInCacheOutdated(sessionState)) {
         expireSessionInCache()
       } else {
-        sessionStateUpdateObservable.notify({ previousState: sessionCache, newState: sessionState })
         sessionCache = sessionState
+        sessionStateUpdateObservable.notify()
       }
     }
     return sessionState
