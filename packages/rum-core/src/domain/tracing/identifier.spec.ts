@@ -15,7 +15,7 @@ describe('identifier', () => {
     })
 
     it('should generate a max value of 64 bits', () => {
-      mockRandomValues((buffer) => fill(buffer, 0xff))
+      mockRandomValues((buffer) => buffer.fill(0xff))
       const identifier = createTraceIdentifier()
       expect(identifier.toString(16)).toEqual('ffffffffffffffff')
     })
@@ -23,7 +23,7 @@ describe('identifier', () => {
 
   describe('SpanIdentifier', () => {
     it('generates a max value of 63 bits', () => {
-      mockRandomValues((buffer) => fill(buffer, 0xff))
+      mockRandomValues((buffer) => buffer.fill(0xff))
       const identifier = createSpanIdentifier()
       expect(identifier.toString(16)).toEqual('7fffffffffffffff')
     })
@@ -43,11 +43,4 @@ function mockRandomValues(cb: (buffer: Uint8Array) => void) {
     cb(new Uint8Array(bufferView!.buffer))
     return bufferView
   })
-}
-
-// TODO: replace with `buffer.fill(value)` when we drop support for IE11
-function fill(buffer: Uint8Array, value: number) {
-  for (let i = 0; i < buffer.length; i++) {
-    buffer[i] = value
-  }
 }

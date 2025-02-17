@@ -67,7 +67,5 @@ function createIdentifier(bits: 63 | 64): BaseIdentifier {
 }
 
 export function toPaddedHexadecimalString(id: BaseIdentifier) {
-  const traceId = id.toString(16)
-  // TODO: replace with String.prototype.padStart when we drop IE11 support
-  return Array(17 - traceId.length).join('0') + traceId
+  return id.toString(16).padStart(16, '0')
 }
