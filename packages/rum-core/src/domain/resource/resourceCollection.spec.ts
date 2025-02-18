@@ -2,9 +2,11 @@ import type { Duration, RelativeTime, ServerDuration, TaskQueue, TimeStamp } fro
 import { createTaskQueue, noop, RequestType, ResourceType } from '@datadog/browser-core'
 import { registerCleanupTask } from '@datadog/browser-core/test'
 import type { RumFetchResourceEventDomainContext, RumXhrResourceEventDomainContext } from '../../domainContext.types'
+import type { GlobalPerformanceBufferMock } from '../../../test'
 import {
   collectAndValidateRawRumEvents,
   createPerformanceEntry,
+  mockGlobalPerformanceBuffer,
   mockPageStateHistory,
   mockPerformanceObserver,
   mockRumConfiguration,
@@ -29,6 +31,7 @@ describe('resourceCollection', () => {
   let lifeCycle: LifeCycle
   let wasInPageStateDuringPeriodSpy: jasmine.Spy<jasmine.Func>
   let notifyPerformanceEntries: (entries: RumPerformanceEntry[]) => void
+  let globalPerformanceObjectMock: GlobalPerformanceBufferMock
   let rawRumEvents: Array<RawRumEventCollectedData<RawRumEvent>> = []
   let taskQueuePushSpy: jasmine.Spy<TaskQueue['push']>
 
@@ -54,6 +57,8 @@ describe('resourceCollection', () => {
 
   beforeEach(() => {
     ;({ notifyPerformanceEntries } = mockPerformanceObserver())
+    globalPerformanceObjectMock = mockGlobalPerformanceBuffer()
+    globalPerformanceObjectMock.addPerformanceEntry(createPerformanceEntry(RumPerformanceEntryType.RESOURCE))
     wasInPageStateDuringPeriodSpy = spyOn(pageStateHistory, 'wasInPageStateDuringPeriod')
   })
 
@@ -439,7 +444,7 @@ function createCompletedRequest(details?: Partial<RequestCompleteEvent>): Reques
   const request: Partial<RequestCompleteEvent> = {
     duration: 100 as Duration,
     method: 'GET',
-    startClocks: { relative: 1234 as RelativeTime, timeStamp: 123456789 as TimeStamp },
+    startClocks: { relative: 200 as RelativeTime, timeStamp: 123456789 as TimeStamp },
     status: 200,
     type: RequestType.XHR,
     url: 'https://resource.com/valid',
