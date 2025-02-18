@@ -49,7 +49,7 @@
     "chrome-webstore-upload": "3.1.4",
     "connect-busboy": "1.0.0",
     "cors": "2.8.5",
-    "emoji-name-map": "1.2.9",
+    "emoji-name-map": "2.0.1",
     "eslint": "9.20.1",
     "eslint-module-utils": "2.12.0",
     "eslint-plugin-import": "2.31.0",
