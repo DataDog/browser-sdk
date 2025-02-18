@@ -13,7 +13,6 @@ import type {
 import {
   addTelemetryUsage,
   CustomerDataType,
-  assign,
   createContextManager,
   deepClone,
   makePublicApi,
@@ -22,7 +21,6 @@ import {
   callMonitored,
   createHandlingStack,
   checkUser,
-  sanitizeUser,
   sanitize,
   createIdentityEncoder,
   CustomerDataCompressionStatus,
@@ -43,6 +41,7 @@ import { buildCommonContext } from '../domain/contexts/commonContext'
 import type { InternalContext } from '../domain/contexts/internalContext'
 import type { DurationVitalReference } from '../domain/vital/vitalCollection'
 import { createCustomVitalsState } from '../domain/vital/vitalCollection'
+import { callPluginsMethod } from '../domain/plugins'
 import { createPreStartStrategy } from './preStartRum'
 import type { StartRum, StartRumResult } from './startRum'
 
@@ -98,6 +97,12 @@ export interface RumPublicApi extends PublicApi {
    * @param value value of the property
    */
   setViewContextProperty: (key: string, value: any) => void
+
+  /**
+   * Get View Context.
+   */
+  getViewContext: () => Context
+
   /**
    * Set the global context information to all events, stored in `@context`
    *
@@ -357,6 +362,7 @@ export interface Strategy {
   setViewName: StartRumResult['setViewName']
   setViewContext: StartRumResult['setViewContext']
   setViewContextProperty: StartRumResult['setViewContextProperty']
+  getViewContext: StartRumResult['getViewContext']
   addAction: StartRumResult['addAction']
   addError: StartRumResult['addError']
   addFeatureFlagEvaluation: StartRumResult['addFeatureFlagEvaluation']
@@ -371,10 +377,17 @@ export function makeRumPublicApi(
   options: RumPublicApiOptions = {}
 ): RumPublicApi {
   const customerDataTrackerManager = createCustomerDataTrackerManager(CustomerDataCompressionStatus.Unknown)
-  const globalContextManager = createContextManager(
-    customerDataTrackerManager.getOrCreateTracker(CustomerDataType.GlobalContext)
-  )
-  const userContextManager = createContextManager(customerDataTrackerManager.getOrCreateTracker(CustomerDataType.User))
+  const globalContextManager = createContextManager('global', {
+    customerDataTracker: customerDataTrackerManager.getOrCreateTracker(CustomerDataType.GlobalContext),
+  })
+  const userContextManager = createContextManager('user', {
+    customerDataTracker: customerDataTrackerManager.getOrCreateTracker(CustomerDataType.User),
+    propertiesConfig: {
+      id: { type: 'string' },
+      name: { type: 'string' },
+      email: { type: 'string' },
+    },
+  })
   const trackingConsentState = createTrackingConsentState()
   const customVitalsState = createCustomVitalsState()
 
@@ -420,6 +433,8 @@ export function makeRumPublicApi(
 
       strategy = createPostStartStrategy(strategy, startRumResult)
 
+      callPluginsMethod(configuration.plugins, 'onRumStart', { strategy })
+
       return startRumResult
     }
   )
@@ -448,14 +463,22 @@ export function makeRumPublicApi(
 
     setViewName: monitor((name: string) => {
       strategy.setViewName(name)
+      addTelemetryUsage({ feature: 'set-view-name' })
     }),
 
     setViewContext: monitor((context: Context) => {
       strategy.setViewContext(context)
+      addTelemetryUsage({ feature: 'set-view-context' })
     }),
 
     setViewContextProperty: monitor((key: string, value: any) => {
       strategy.setViewContextProperty(key, value)
+      addTelemetryUsage({ feature: 'set-view-context-property' })
+    }),
+
+    getViewContext: monitor(() => {
+      addTelemetryUsage({ feature: 'set-view-context-property' })
+      return strategy.getViewContext()
     }),
 
     setGlobalContext: monitor((context) => {
@@ -515,7 +538,7 @@ export function makeRumPublicApi(
       // Wait for https://github.com/DataDog/browser-sdk/pull/3242/
       // eslint-disable-next-line @typescript-eslint/no-unsafe-call
       if (checkUser(newUser)) {
-        userContextManager.setContext(sanitizeUser(newUser as Context))
+        userContextManager.setContext(newUser as Context)
       }
       addTelemetryUsage({ feature: 'set-user' })
     }),
@@ -523,8 +546,7 @@ export function makeRumPublicApi(
     getUser: monitor(() => userContextManager.getContext()),
 
     setUserProperty: monitor((key, property) => {
-      const sanitizedProperty = sanitizeUser({ [key]: property })[key]
-      userContextManager.setContextProperty(key, sanitizedProperty)
+      userContextManager.setContextProperty(key, property)
       addTelemetryUsage({ feature: 'set-user' })
     }),
 
@@ -585,13 +607,11 @@ export function makeRumPublicApi(
 }
 
 function createPostStartStrategy(preStartStrategy: Strategy, startRumResult: StartRumResult): Strategy {
-  return assign(
-    {
-      init: (initConfiguration: RumInitConfiguration) => {
-        displayAlreadyInitializedError('DD_RUM', initConfiguration)
-      },
-      initConfiguration: preStartStrategy.initConfiguration,
+  return {
+    init: (initConfiguration: RumInitConfiguration) => {
+      displayAlreadyInitializedError('DD_RUM', initConfiguration)
     },
-    startRumResult
-  )
+    initConfiguration: preStartStrategy.initConfiguration,
+    ...startRumResult,
+  }
 }

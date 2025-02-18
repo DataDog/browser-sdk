@@ -11,9 +11,16 @@ module.exports = ({ entry, mode, filename, types, keepBuildEnvVariables, plugins
   mode,
   output: {
     filename,
+    chunkFilename:
+      mode === 'development'
+        ? // Use a fixed name for each chunk during development so that the developer extension
+          // can redirect requests for them reliably.
+          `chunks/[name]-${filename}`
+        : // Include a content hash in chunk names in production.
+          `chunks/[name]-[contenthash]-${filename}`,
     path: path.resolve('./bundle'),
   },
-  target: ['web', 'es5'],
+  target: ['web', 'es2018'],
   devtool: false,
   module: {
     rules: [
@@ -25,7 +32,7 @@ module.exports = ({ entry, mode, filename, types, keepBuildEnvVariables, plugins
           configFile: tsconfigPath,
           onlyCompileBundledFiles: true,
           compilerOptions: {
-            module: 'es6',
+            module: 'es2020',
             allowJs: true,
             types: types || [],
           },
@@ -35,7 +42,7 @@ module.exports = ({ entry, mode, filename, types, keepBuildEnvVariables, plugins
   },
 
   resolve: {
-    extensions: ['.ts', '.js'],
+    extensions: ['.ts', '.js', '.tsx'],
     plugins: [new TsconfigPathsPlugin({ configFile: tsconfigPath })],
     alias: {
       // The default "pako.esm.js" build is not transpiled to es5
@@ -44,6 +51,7 @@ module.exports = ({ entry, mode, filename, types, keepBuildEnvVariables, plugins
   },
 
   optimization: {
+    chunkIds: 'named',
     minimizer: [
       new TerserPlugin({
         extractComments: false,

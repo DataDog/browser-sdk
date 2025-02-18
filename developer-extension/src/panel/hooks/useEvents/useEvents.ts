@@ -18,7 +18,7 @@ export function useEvents({
   const [events, setEvents] = useState<SdkEvent[]>([])
   const [filters, setFilters] = useState<EventFilters>(DEFAULT_FILTERS)
 
-  const eventCollectionRef = useRef<EventCollection>()
+  const eventCollectionRef = useRef<EventCollection>(null)
 
   function clearEvents() {
     eventCollectionRef.current?.clear()

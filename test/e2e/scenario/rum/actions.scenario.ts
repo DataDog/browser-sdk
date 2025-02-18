@@ -3,7 +3,7 @@ import { createTest, flushEvents, html, waitForServersIdle } from '../../lib/fra
 
 describe('action collection', () => {
   createTest('track a click action')
-    .withRum({ trackUserInteractions: true, enableExperimentalFeatures: ['action_name_masking'] })
+    .withRum({ trackUserInteractions: true })
     .withBody(html`
       <button>click me</button>
       <script>
@@ -366,8 +366,23 @@ describe('action collection', () => {
       </script>
     `)
     .run(async ({ intakeRegistry }) => {
-      const button = await $('button')
-      await Promise.all([button.click(), button.click(), button.click()])
+      // We don't use the wdio's `$('button').click()` here because the latency of the command is too high and the
+      // clicks won't be recognised as rage clicks.
+      await browser.execute(() => {
+        const button = document.querySelector('button')!
+
+        function click() {
+          button.dispatchEvent(new PointerEvent('pointerdown', { isPrimary: true }))
+          button.dispatchEvent(new PointerEvent('pointerup', { isPrimary: true }))
+          button.dispatchEvent(new PointerEvent('click', { isPrimary: true }))
+        }
+
+        // Simulate a rage click
+        click()
+        click()
+        click()
+      })
+
       await flushEvents()
       const actionEvents = intakeRegistry.rumActionEvents
 

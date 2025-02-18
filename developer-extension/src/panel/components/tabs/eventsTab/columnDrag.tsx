@@ -15,7 +15,7 @@ export function ColumnDrag({
   columns,
   onColumnsChange,
 }: {
-  headerRowRef: RefObject<HTMLDivElement>
+  headerRowRef: RefObject<HTMLDivElement | null>
   columns: EventListColumn[]
   onColumnsChange: (columns: EventListColumn[]) => void
 }) {

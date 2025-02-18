@@ -2,12 +2,10 @@ import type { Context, TrackingConsent, User, PublicApi } from '@datadog/browser
 import {
   addTelemetryUsage,
   CustomerDataType,
-  assign,
   createContextManager,
   makePublicApi,
   monitor,
   checkUser,
-  sanitizeUser,
   sanitize,
   createCustomerDataTrackerManager,
   storeContextManager,
@@ -177,10 +175,17 @@ export interface Strategy {
 
 export function makeLogsPublicApi(startLogsImpl: StartLogs): LogsPublicApi {
   const customerDataTrackerManager = createCustomerDataTrackerManager()
-  const globalContextManager = createContextManager(
-    customerDataTrackerManager.getOrCreateTracker(CustomerDataType.GlobalContext)
-  )
-  const userContextManager = createContextManager(customerDataTrackerManager.getOrCreateTracker(CustomerDataType.User))
+  const globalContextManager = createContextManager('global', {
+    customerDataTracker: customerDataTrackerManager.getOrCreateTracker(CustomerDataType.GlobalContext),
+  })
+  const userContextManager = createContextManager('user', {
+    customerDataTracker: customerDataTrackerManager.getOrCreateTracker(CustomerDataType.User),
+    propertiesConfig: {
+      id: { type: 'string' },
+      name: { type: 'string' },
+      email: { type: 'string' },
+    },
+  })
   const trackingConsentState = createTrackingConsentState()
 
   function getCommonContext() {
@@ -249,15 +254,14 @@ export function makeLogsPublicApi(startLogsImpl: StartLogs): LogsPublicApi {
       // Wait for https://github.com/DataDog/browser-sdk/pull/3242/
       // eslint-disable-next-line @typescript-eslint/no-unsafe-call
       if (checkUser(newUser)) {
-        userContextManager.setContext(sanitizeUser(newUser as Context))
+        userContextManager.setContext(newUser as Context)
       }
     }),
 
     getUser: monitor(() => userContextManager.getContext()),
 
     setUserProperty: monitor((key, property) => {
-      const sanitizedProperty = sanitizeUser({ [key]: property })[key]
-      userContextManager.setContextProperty(key, sanitizedProperty)
+      userContextManager.setContextProperty(key, property)
     }),
 
     removeUserProperty: monitor((key) => userContextManager.removeContextProperty(key)),
@@ -267,13 +271,11 @@ export function makeLogsPublicApi(startLogsImpl: StartLogs): LogsPublicApi {
 }
 
 function createPostStartStrategy(initConfiguration: LogsInitConfiguration, startLogsResult: StartLogsResult): Strategy {
-  return assign(
-    {
-      init: (initConfiguration: LogsInitConfiguration) => {
-        displayAlreadyInitializedError('DD_LOGS', initConfiguration)
-      },
-      initConfiguration,
+  return {
+    init: (initConfiguration: LogsInitConfiguration) => {
+      displayAlreadyInitializedError('DD_LOGS', initConfiguration)
     },
-    startLogsResult
-  )
+    initConfiguration,
+    ...startLogsResult,
+  }
 }

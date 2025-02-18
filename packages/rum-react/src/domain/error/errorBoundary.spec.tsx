@@ -29,7 +29,14 @@ describe('ErrorBoundary', () => {
         <ComponentSpy />
       </ErrorBoundary>
     )
-    expect(fallbackSpy).toHaveBeenCalledWith({ error: new Error('error'), resetError: jasmine.any(Function) }, {})
+    expect(fallbackSpy).toHaveBeenCalled()
+    // React calls the component multiple times while rendering
+    fallbackSpy.calls.all().forEach(({ args }) => {
+      expect(args[0]).toEqual({
+        error: new Error('error'),
+        resetError: jasmine.any(Function),
+      })
+    })
     expect(container.innerHTML).toBe('fallback')
   })
 
@@ -77,7 +84,7 @@ describe('ErrorBoundary', () => {
   it('reports the error to the SDK', () => {
     const addErrorSpy = jasmine.createSpy()
     initializeReactPlugin({
-      publicApi: {
+      strategy: {
         addError: addErrorSpy,
       },
     })
@@ -91,11 +98,16 @@ describe('ErrorBoundary', () => {
       </ErrorBoundary>
     )
 
-    expect(addErrorSpy).toHaveBeenCalledOnceWith(jasmine.any(Error), { framework: 'react' })
-    const error = addErrorSpy.calls.first().args[0]
-    expect(error.message).toBe('error')
-    expect(error.name).toBe('ReactRenderingError')
-    expect(error.stack).toContain('ComponentSpy')
-    expect(error.cause).toBe(originalError)
+    expect(addErrorSpy).toHaveBeenCalledOnceWith({
+      error: jasmine.any(Error),
+      handlingStack: jasmine.any(String),
+      componentStack: jasmine.stringContaining('ComponentSpy'),
+      context: { framework: 'react' },
+      startClocks: jasmine.anything(),
+    })
+    const { error } = addErrorSpy.calls.first().args[0]
+    expect(error.message).toBe(originalError.message)
+    expect(error.name).toBe(originalError.name)
+    expect(error.cause).toBe(undefined)
   })
 })

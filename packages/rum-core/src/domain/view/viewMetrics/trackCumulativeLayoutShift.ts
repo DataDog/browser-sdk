@@ -1,7 +1,7 @@
-import { round, find, ONE_SECOND, noop, elapsed } from '@datadog/browser-core'
+import { round, ONE_SECOND, noop, elapsed } from '@datadog/browser-core'
 import type { Duration, RelativeTime, WeakRef, WeakRefConstructor } from '@datadog/browser-core'
 import { isElementNode } from '../../../browser/htmlDomUtils'
-import type { RumLayoutShiftTiming } from '../../../browser/performanceObservable'
+import type { RumLayoutShiftAttribution, RumLayoutShiftTiming } from '../../../browser/performanceObservable'
 import {
   supportPerformanceTimingEvent,
   RumPerformanceEntryType,
@@ -9,14 +9,24 @@ import {
 } from '../../../browser/performanceObservable'
 import { getSelectorFromElement } from '../../getSelectorFromElement'
 import type { RumConfiguration } from '../../configuration'
+import type { RumRect } from '../../../rumEvent.types'
+
+declare const WeakRef: WeakRefConstructor
 
 export interface CumulativeLayoutShift {
   value: number
   targetSelector?: string
   time?: Duration
+  previousRect?: RumRect
+  currentRect?: RumRect
 }
 
-declare const WeakRef: WeakRefConstructor
+interface LayoutShiftInstance {
+  target: WeakRef<Element> | undefined
+  time: Duration
+  previousRect: DOMRectReadOnly | undefined
+  currentRect: DOMRectReadOnly | undefined
+}
 
 /**
  * Track the cumulative layout shifts (CLS).
@@ -47,8 +57,7 @@ export function trackCumulativeLayoutShift(
   }
 
   let maxClsValue = 0
-  let maxClsTarget: WeakRef<HTMLElement> | undefined
-  let maxClsStartTime: Duration | undefined
+  let biggestShift: LayoutShiftInstance | undefined
 
   // if no layout shift happen the value should be reported as 0
   callback({
@@ -68,19 +77,25 @@ export function trackCumulativeLayoutShift(
       const { cumulatedValue, isMaxValue } = window.update(entry)
 
       if (isMaxValue) {
-        const target = getTargetFromSource(entry.sources)
-        maxClsTarget = target ? new WeakRef(target) : undefined
-        maxClsStartTime = elapsed(viewStart, entry.startTime)
+        const attribution = getFirstElementAttribution(entry.sources)
+        biggestShift = {
+          target: attribution?.node ? new WeakRef(attribution.node) : undefined,
+          time: elapsed(viewStart, entry.startTime),
+          previousRect: attribution?.previousRect,
+          currentRect: attribution?.currentRect,
+        }
       }
 
       if (cumulatedValue > maxClsValue) {
         maxClsValue = cumulatedValue
-        const target = maxClsTarget?.deref()
+        const target = biggestShift?.target?.deref()
 
         callback({
           value: round(maxClsValue, 4),
           targetSelector: target && getSelectorFromElement(target, configuration.actionNameAttribute),
-          time: maxClsStartTime,
+          time: biggestShift?.time,
+          previousRect: biggestShift?.previousRect ? asRumRect(biggestShift.previousRect) : undefined,
+          currentRect: biggestShift?.currentRect ? asRumRect(biggestShift.currentRect) : undefined,
         })
       }
     }
@@ -93,12 +108,16 @@ export function trackCumulativeLayoutShift(
   }
 }
 
-function getTargetFromSource(sources?: Array<{ node?: Node }>) {
-  if (!sources) {
-    return
-  }
+function getFirstElementAttribution(
+  sources: RumLayoutShiftAttribution[]
+): (RumLayoutShiftAttribution & { node: Element }) | undefined {
+  return sources.find(
+    (source): source is RumLayoutShiftAttribution & { node: Element } => !!source.node && isElementNode(source.node)
+  )
+}
 
-  return find(sources, (source): source is { node: HTMLElement } => !!source.node && isElementNode(source.node))?.node
+function asRumRect({ x, y, width, height }: DOMRectReadOnly): RumRect {
+  return { x, y, width, height }
 }
 
 export const MAX_WINDOW_DURATION = 5 * ONE_SECOND

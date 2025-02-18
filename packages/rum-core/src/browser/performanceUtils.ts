@@ -1,5 +1,5 @@
 import type { RelativeTime, TimeStamp } from '@datadog/browser-core'
-import { assign, getRelativeTime, isNumber } from '@datadog/browser-core'
+import { getRelativeTime, isNumber } from '@datadog/browser-core'
 import {
   RumPerformanceEntryType,
   supportPerformanceTimingEvent,
@@ -17,21 +17,20 @@ export function getNavigationEntry(): RumPerformanceNavigationTiming {
   }
 
   const timings = computeTimingsFromDeprecatedPerformanceTiming()
-  const entry = assign(
-    {
-      entryType: RumPerformanceEntryType.NAVIGATION as const,
-      initiatorType: 'navigation' as const,
-      name: window.location.href,
-      startTime: 0 as RelativeTime,
-      duration: timings.responseEnd,
-      decodedBodySize: 0,
-      encodedBodySize: 0,
-      transferSize: 0,
-      workerStart: 0 as RelativeTime,
-      toJSON: () => assign({}, entry, { toJSON: undefined }),
-    },
-    timings
-  )
+  const entry: RumPerformanceNavigationTiming = {
+    entryType: RumPerformanceEntryType.NAVIGATION as const,
+    initiatorType: 'navigation' as const,
+    name: window.location.href,
+    startTime: 0 as RelativeTime,
+    duration: timings.loadEventEnd,
+    decodedBodySize: 0,
+    encodedBodySize: 0,
+    transferSize: 0,
+    workerStart: 0 as RelativeTime,
+    toJSON: () => ({ ...entry, toJSON: undefined }),
+    ...timings,
+  }
+
   return entry
 }
 

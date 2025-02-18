@@ -6,7 +6,6 @@ import {
   ONE_SECOND,
   findLast,
   noop,
-  isIE,
   relativeNow,
   createIdentityEncoder,
   createCustomerDataTracker,
@@ -39,13 +38,15 @@ import { SESSION_KEEP_ALIVE_INTERVAL, THROTTLE_VIEW_UPDATE_PERIOD } from '../dom
 import { startViewCollection } from '../domain/view/viewCollection'
 import type { RumEvent, RumViewEvent } from '../rumEvent.types'
 import type { LocationChange } from '../browser/locationChangeObservable'
-import { startLongTaskCollection } from '../domain/longTask/longTaskCollection'
-import type { RumSessionManager } from '..'
+import { startLongAnimationFrameCollection } from '../domain/longAnimationFrame/longAnimationFrameCollection'
+import { startViewHistory, type RumSessionManager } from '..'
 import type { RumConfiguration } from '../domain/configuration'
 import { RumEventType } from '../rawRumEvent.types'
 import { startFeatureFlagContexts } from '../domain/contexts/featureFlagContext'
 import type { PageStateHistory } from '../domain/contexts/pageStateHistory'
 import { createCustomVitalsState } from '../domain/vital/vitalCollection'
+import { createHooks } from '../hooks'
+import { startUrlContexts } from '../domain/contexts/urlContexts'
 import { startRum, startRumEventCollection } from './startRum'
 
 function collectServerEvents(lifeCycle: LifeCycle) {
@@ -67,15 +68,21 @@ function startRumStub(
   pageStateHistory: PageStateHistory,
   reportError: (error: RawError) => void
 ) {
+  const hooks = createHooks()
+  const viewHistory = startViewHistory(lifeCycle)
+  const urlContexts = startUrlContexts(lifeCycle, hooks, locationChangeObservable, location)
+
   const { stop: rumEventCollectionStop } = startRumEventCollection(
     lifeCycle,
+    hooks,
     configuration,
-    location,
     sessionManager,
     pageStateHistory,
-    locationChangeObservable,
     domMutationObservable,
+    startFeatureFlagContexts(lifeCycle, createCustomerDataTracker(noop)),
     windowOpenObservable,
+    urlContexts,
+    viewHistory,
     () => ({
       context: {},
       user: {},
@@ -85,19 +92,22 @@ function startRumStub(
   )
   const { stop: viewCollectionStop } = startViewCollection(
     lifeCycle,
+    hooks,
     configuration,
     location,
     domMutationObservable,
     windowOpenObservable,
     locationChangeObservable,
-    startFeatureFlagContexts(lifeCycle, createCustomerDataTracker(noop)),
     pageStateHistory,
-    noopRecorderApi
+    noopRecorderApi,
+    viewHistory
   )
 
-  startLongTaskCollection(lifeCycle, configuration)
+  startLongAnimationFrameCollection(lifeCycle, configuration)
   return {
     stop: () => {
+      viewHistory.stop()
+      urlContexts.stop()
       rumEventCollectionStop()
       viewCollectionStop()
     },
@@ -110,10 +120,6 @@ describe('rum session', () => {
   let sessionManager: RumSessionManagerMock
 
   beforeEach(() => {
-    if (isIE()) {
-      pending('no full rum support')
-    }
-
     lifeCycle = new LifeCycle()
     sessionManager = createRumSessionManagerMock().setId('42')
     const domMutationObservable = new Observable<void>()
@@ -163,9 +169,6 @@ describe('rum session keep alive', () => {
   let serverRumEvents: RumEvent[]
 
   beforeEach(() => {
-    if (isIE()) {
-      pending('no full rum support')
-    }
     lifeCycle = new LifeCycle()
     clock = mockClock()
     sessionManager = createRumSessionManagerMock().setId('1234')
@@ -287,7 +290,7 @@ describe('rum events url', () => {
     changeLocation('http://foo.com/?bar=qux')
 
     notifyPerformanceEntries([
-      createPerformanceEntry(RumPerformanceEntryType.LONG_TASK, {
+      createPerformanceEntry(RumPerformanceEntryType.LONG_ANIMATION_FRAME, {
         startTime: (relativeNow() - 5) as RelativeTime,
       }),
     ])

@@ -5,9 +5,10 @@
     "esModuleInterop": true,
     "importHelpers": false,
     "moduleResolution": "node",
+    "module": "ES2020",
     "resolveJsonModule": true,
     "strict": true,
-    "target": "es5",
+    "target": "ES2018",
     "sourceMap": true,
     "jsx": "react",
 

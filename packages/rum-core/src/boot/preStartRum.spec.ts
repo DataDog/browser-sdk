@@ -8,18 +8,15 @@ import {
   TrackingConsent,
   createTrackingConsentState,
   DefaultPrivacyLevel,
-  addExperimentalFeatures,
-  ExperimentalFeature,
   resetExperimentalFeatures,
   resetFetchObservable,
-  isIE,
 } from '@datadog/browser-core'
 import type { Clock } from '@datadog/browser-core/test'
 import {
-  mockEventBridge,
+  callbackAddsInstrumentation,
   interceptRequests,
   mockClock,
-  mockExperimentalFeatures,
+  mockEventBridge,
   mockSyntheticsWorkerValues,
 } from '@datadog/browser-core/test'
 import type { HybridInitConfiguration, RumConfiguration, RumInitConfiguration } from '../domain/configuration'
@@ -458,52 +455,28 @@ describe('preStartRum', () => {
         interceptor = interceptRequests()
       })
 
-      describe('when remote_configuration ff is enabled', () => {
-        it('should start with the remote configuration when a remoteConfigurationId is provided', (done) => {
-          mockExperimentalFeatures([ExperimentalFeature.REMOTE_CONFIGURATION])
+      it('should start with the remote configuration when a remoteConfigurationId is provided', (done) => {
+        interceptor.withMockXhr((xhr) => {
+          xhr.complete(200, '{"rum":{"sessionSampleRate":50}}')
 
-          interceptor.withMockXhr((xhr) => {
-            xhr.complete(200, '{"sessionSampleRate":50}')
-
-            expect(doStartRumSpy.calls.mostRecent().args[0].sessionSampleRate).toEqual(50)
-            done()
-          })
-
-          const strategy = createPreStartStrategy(
-            {},
-            getCommonContextSpy,
-            createTrackingConsentState(),
-            createCustomVitalsState(),
-            doStartRumSpy
-          )
-          strategy.init(
-            {
-              ...DEFAULT_INIT_CONFIGURATION,
-              remoteConfigurationId: '123',
-            },
-            PUBLIC_API
-          )
+          expect(doStartRumSpy.calls.mostRecent().args[0].sessionSampleRate).toEqual(50)
+          done()
         })
-      })
 
-      describe('when remote_configuration ff is disabled', () => {
-        it('should start without the remote configuration when a remoteConfigurationId is provided', () => {
-          const strategy = createPreStartStrategy(
-            {},
-            getCommonContextSpy,
-            createTrackingConsentState(),
-            createCustomVitalsState(),
-            doStartRumSpy
-          )
-          strategy.init(
-            {
-              ...DEFAULT_INIT_CONFIGURATION,
-              remoteConfigurationId: '123',
-            },
-            PUBLIC_API
-          )
-          expect(doStartRumSpy.calls.mostRecent().args[0].sessionSampleRate).toEqual(100)
-        })
+        const strategy = createPreStartStrategy(
+          {},
+          getCommonContextSpy,
+          createTrackingConsentState(),
+          createCustomVitalsState(),
+          doStartRumSpy
+        )
+        strategy.init(
+          {
+            ...DEFAULT_INIT_CONFIGURATION,
+            remoteConfigurationId: '123',
+          },
+          PUBLIC_API
+        )
       })
     })
 
@@ -564,6 +537,19 @@ describe('preStartRum', () => {
         doStartRumSpy
       )
       expect(strategy.getInternalContext()).toBe(undefined)
+    })
+  })
+
+  describe('getViewContext', () => {
+    it('returns empty object', () => {
+      const strategy = createPreStartStrategy(
+        {},
+        getCommonContextSpy,
+        createTrackingConsentState(),
+        createCustomVitalsState(),
+        doStartRumSpy
+      )
+      expect(strategy.getViewContext()).toEqual({})
     })
   })
 
@@ -634,9 +620,8 @@ describe('preStartRum', () => {
     })
 
     it('returns the initConfiguration with the remote configuration when a remoteConfigurationId is provided', (done) => {
-      addExperimentalFeatures([ExperimentalFeature.REMOTE_CONFIGURATION])
       interceptor.withMockXhr((xhr) => {
-        xhr.complete(200, '{"sessionSampleRate":50}')
+        xhr.complete(200, '{"rum":{"sessionSampleRate":50}}')
 
         expect(strategy.initConfiguration?.sessionSampleRate).toEqual(50)
         done()
@@ -806,24 +791,20 @@ describe('preStartRum', () => {
     })
 
     describe('basic methods instrumentation', () => {
-      beforeEach(() => {
-        if (isIE()) {
-          pending('No support for IE')
-        }
-      })
-
       it('should instrument fetch even if tracking consent is not granted', () => {
-        const originalFetch = window.fetch
-
-        strategy.init(
-          {
-            ...DEFAULT_INIT_CONFIGURATION,
-            trackingConsent: TrackingConsent.NOT_GRANTED,
-          },
-          PUBLIC_API
-        )
-
-        expect(window.fetch).not.toBe(originalFetch)
+        expect(
+          callbackAddsInstrumentation(() => {
+            strategy.init(
+              {
+                ...DEFAULT_INIT_CONFIGURATION,
+                trackingConsent: TrackingConsent.NOT_GRANTED,
+              },
+              PUBLIC_API
+            )
+          })
+            .toMethod(window, 'fetch')
+            .whenCalled()
+        ).toBeTrue()
       })
     })
 

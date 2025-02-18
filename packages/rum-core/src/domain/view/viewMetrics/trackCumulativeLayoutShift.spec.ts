@@ -77,6 +77,8 @@ describe('trackCumulativeLayoutShift', () => {
       value: 0.3,
       time: 2 as RelativeTime,
       targetSelector: undefined,
+      previousRect: undefined,
+      currentRect: undefined,
     })
   })
 
@@ -139,6 +141,8 @@ describe('trackCumulativeLayoutShift', () => {
       value: 0.3,
       time: 1 as RelativeTime,
       targetSelector: undefined,
+      previousRect: undefined,
+      currentRect: undefined,
     })
   })
 
@@ -158,6 +162,8 @@ describe('trackCumulativeLayoutShift', () => {
       value: 0.6,
       time: 999 as RelativeTime,
       targetSelector: undefined,
+      previousRect: undefined,
+      currentRect: undefined,
     })
   })
 
@@ -210,6 +216,8 @@ describe('trackCumulativeLayoutShift', () => {
       value: 0.5,
       time: 5002 as RelativeTime,
       targetSelector: undefined,
+      previousRect: undefined,
+      currentRect: undefined,
     })
   })
 
@@ -237,7 +245,23 @@ describe('trackCumulativeLayoutShift', () => {
 
       notifyPerformanceEntries([
         createPerformanceEntry(RumPerformanceEntryType.LAYOUT_SHIFT, {
-          sources: [{ node: textNode }, { node: divElement }, { node: textNode }],
+          sources: [
+            {
+              node: textNode,
+              previousRect: DOMRectReadOnly.fromRect({ x: 0, y: 0, width: 10, height: 10 }),
+              currentRect: DOMRectReadOnly.fromRect({ x: 0, y: 0, width: 10, height: 10 }),
+            },
+            {
+              node: divElement,
+              previousRect: DOMRectReadOnly.fromRect({ x: 0, y: 0, width: 10, height: 10 }),
+              currentRect: DOMRectReadOnly.fromRect({ x: 0, y: 0, width: 10, height: 10 }),
+            },
+            {
+              node: textNode,
+              previousRect: DOMRectReadOnly.fromRect({ x: 0, y: 0, width: 10, height: 10 }),
+              currentRect: DOMRectReadOnly.fromRect({ x: 0, y: 0, width: 10, height: 10 }),
+            },
+          ],
         }),
       ])
 
@@ -265,7 +289,13 @@ describe('trackCumulativeLayoutShift', () => {
         createPerformanceEntry(RumPerformanceEntryType.LAYOUT_SHIFT, {
           value: 0.2,
           startTime: 1001 as RelativeTime,
-          sources: [{ node: divElement }],
+          sources: [
+            {
+              node: divElement,
+              previousRect: DOMRectReadOnly.fromRect({ x: 0, y: 0, width: 10, height: 10 }),
+              currentRect: DOMRectReadOnly.fromRect({ x: 0, y: 0, width: 10, height: 10 }),
+            },
+          ],
         }),
       ])
 
@@ -273,7 +303,7 @@ describe('trackCumulativeLayoutShift', () => {
       expect(clsCallback.calls.mostRecent().args[0].targetSelector).toEqual(undefined)
     })
 
-    it('should get the target element and time of the largest layout shift', () => {
+    it('should get the target element, time, and rects of the largest layout shift', () => {
       startCLSTracking()
       const divElement = appendElement('<div id="div-element"></div>')
 
@@ -285,7 +315,13 @@ describe('trackCumulativeLayoutShift', () => {
         createPerformanceEntry(RumPerformanceEntryType.LAYOUT_SHIFT, {
           value: 0.2,
           startTime: 1 as RelativeTime,
-          sources: [{ node: divElement }],
+          sources: [
+            {
+              node: divElement,
+              previousRect: DOMRectReadOnly.fromRect({ x: 0, y: 0, width: 10, height: 10 }),
+              currentRect: DOMRectReadOnly.fromRect({ x: 50, y: 50, width: 10, height: 10 }),
+            },
+          ],
         }),
       ])
       notifyPerformanceEntries([
@@ -311,6 +347,8 @@ describe('trackCumulativeLayoutShift', () => {
         value: 0.5,
         time: 1 as RelativeTime,
         targetSelector: '#div-element',
+        previousRect: { x: 0, y: 0, width: 10, height: 10 },
+        currentRect: { x: 50, y: 50, width: 10, height: 10 },
       })
     })
   })

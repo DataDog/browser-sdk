@@ -1,17 +1,20 @@
-import { ExperimentalFeature, resetExperimentalFeatures } from '../../../tools/experimentalFeatures'
-import { mockExperimentalFeatures } from '../../../../test'
+import { resetExperimentalFeatures } from '../../../tools/experimentalFeatures'
+import { mockClock, getSessionState } from '../../../../test'
 import { setCookie, deleteCookie, getCookie, getCurrentSite } from '../../../browser/cookie'
-import { type SessionState } from '../sessionState'
+import type { SessionState } from '../sessionState'
+import type { Configuration } from '../../configuration'
+import { SESSION_TIME_OUT_DELAY } from '../sessionConstants'
 import { buildCookieOptions, selectCookieStrategy, initCookieStrategy } from './sessionInCookie'
 import type { SessionStoreStrategy } from './sessionStoreStrategy'
 import { SESSION_STORE_KEY } from './sessionStoreStrategy'
 
+export const DEFAULT_INIT_CONFIGURATION = { trackAnonymousUser: true } as Configuration
 describe('session in cookie strategy', () => {
   const sessionState: SessionState = { id: '123', created: '0' }
   let cookieStorageStrategy: SessionStoreStrategy
 
   beforeEach(() => {
-    cookieStorageStrategy = initCookieStrategy({})
+    cookieStorageStrategy = initCookieStrategy(DEFAULT_INIT_CONFIGURATION, {})
   })
 
   afterEach(() => {
@@ -25,12 +28,13 @@ describe('session in cookie strategy', () => {
     expect(getCookie(SESSION_STORE_KEY)).toBe('id=123&created=0')
   })
 
-  it('should set `isExpired=1` to the cookie holding the session', () => {
+  it('should set `isExpired=1` and `aid` to the cookie holding the session', () => {
+    spyOn(Math, 'random').and.callFake(() => 0)
     cookieStorageStrategy.persistSession(sessionState)
     cookieStorageStrategy.expireSession(sessionState)
     const session = cookieStorageStrategy.retrieveSession()
-    expect(session).toEqual({ isExpired: '1' })
-    expect(getCookie(SESSION_STORE_KEY)).toBe('isExpired=1')
+    expect(session).toEqual({ isExpired: '1', anonymousId: jasmine.any(String) })
+    expect(getSessionState(SESSION_STORE_KEY)).toEqual({ isExpired: '1', anonymousId: jasmine.any(String) })
   })
 
   it('should return an empty object if session string is invalid', () => {
@@ -50,11 +54,6 @@ describe('session in cookie strategy', () => {
     it('should be secure when `useSecureSessionCookie` is truthy', () => {
       const cookieOptions = buildCookieOptions({ clientToken, useSecureSessionCookie: true })
       expect(cookieOptions).toEqual({ secure: true, crossSite: false, partitioned: false })
-    })
-
-    it('should be secure and crossSite when `useCrossSiteSessionCookie` is truthy', () => {
-      const cookieOptions = buildCookieOptions({ clientToken, useCrossSiteSessionCookie: true })
-      expect(cookieOptions).toEqual({ secure: true, crossSite: true, partitioned: false })
     })
 
     it('should be secure, crossSite and partitioned when `usePartitionedCrossSiteSessionCookie` is truthy', () => {
@@ -82,12 +81,6 @@ describe('session in cookie strategy', () => {
         description: 'should set samesite to strict by default',
       },
       {
-        initConfiguration: { clientToken: 'abc', useCrossSiteSessionCookie: true },
-        cookieOptions: { crossSite: true, secure: true },
-        cookieString: /^dd_cookie_test_[\w-]+=[^;]*;expires=[^;]+;path=\/;samesite=none;secure$/,
-        description: 'should set samesite to none and secure to true for crossSite',
-      },
-      {
         initConfiguration: { clientToken: 'abc', useSecureSessionCookie: true },
         cookieOptions: { secure: true },
         cookieString: /^dd_cookie_test_[\w-]+=[^;]*;expires=[^;]+;path=\/;samesite=strict;secure$/,
@@ -110,14 +103,13 @@ describe('session in cookie strategy', () => {
     })
   })
 })
-describe('session in cookie strategy with anonymous user tracking', () => {
+describe('session in cookie strategy when opt-out anonymous user tracking', () => {
   const anonymousId = 'device-123'
   const sessionState: SessionState = { id: '123', created: '0' }
   let cookieStorageStrategy: SessionStoreStrategy
 
   beforeEach(() => {
-    mockExperimentalFeatures([ExperimentalFeature.ANONYMOUS_USER_TRACKING])
-    cookieStorageStrategy = initCookieStrategy({})
+    cookieStorageStrategy = initCookieStrategy({ trackAnonymousUser: false } as Configuration, {})
   })
 
   afterEach(() => {
@@ -125,18 +117,19 @@ describe('session in cookie strategy with anonymous user tracking', () => {
     deleteCookie(SESSION_STORE_KEY)
   })
 
-  it('should persist a session with anonymous id in a cookie', () => {
-    cookieStorageStrategy.persistSession({ ...sessionState, anonymousId })
-    const session = cookieStorageStrategy.retrieveSession()
-    expect(session).toEqual({ ...sessionState, anonymousId })
-    expect(getCookie(SESSION_STORE_KEY)).toBe(`id=123&created=0&aid=${anonymousId}`)
+  it('should not extend cookie expiration time when opt-out', () => {
+    const cookieSetSpy = spyOnProperty(document, 'cookie', 'set')
+    const clock = mockClock()
+    cookieStorageStrategy.expireSession({ ...sessionState, anonymousId })
+    expect(cookieSetSpy.calls.argsFor(0)[0]).toContain(new Date(clock.timeStamp(SESSION_TIME_OUT_DELAY)).toUTCString())
+    clock.cleanup()
   })
 
-  it('should expire a session with anonymous id in a cookie', () => {
+  it('should not persist or expire a session with anonymous id when opt-out', () => {
     cookieStorageStrategy.persistSession({ ...sessionState, anonymousId })
     cookieStorageStrategy.expireSession({ ...sessionState, anonymousId })
     const session = cookieStorageStrategy.retrieveSession()
-    expect(session).toEqual({ isExpired: '1', anonymousId })
-    expect(getCookie(SESSION_STORE_KEY)).toBe(`isExpired=1&aid=${anonymousId}`)
+    expect(session).toEqual({ isExpired: '1' })
+    expect(getCookie(SESSION_STORE_KEY)).toBe('isExpired=1')
   })
 })

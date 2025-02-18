@@ -1,13 +1,13 @@
 variables:
-  CURRENT_STAGING: staging-02
+  CURRENT_STAGING: staging-08
   APP: 'browser-sdk'
-  CURRENT_CI_IMAGE: 75
+  CURRENT_CI_IMAGE: 77
   BUILD_STABLE_REGISTRY: 'registry.ddbuild.io'
   CI_IMAGE: '$BUILD_STABLE_REGISTRY/ci/$APP:$CURRENT_CI_IMAGE'
   GIT_REPOSITORY: 'git@github.com:DataDog/browser-sdk.git'
   MAIN_BRANCH: 'main'
-  NEXT_MAJOR_BRANCH: 'v6'
-  CHROME_PACKAGE_VERSION: 131.0.6778.69-1
+  NEXT_MAJOR_BRANCH: ''
+  CHROME_PACKAGE_VERSION: 133.0.6943.53-1
 
 cache:
   key:
@@ -64,6 +64,13 @@ stages:
       - /^staging-[0-9]+$/
       - /^release\//
       - schedules
+    variables:
+      - $CI_COMMIT_REF_NAME == $NEXT_MAJOR_BRANCH
+
+.next-major-branch:
+  only:
+    variables:
+      - $CI_COMMIT_REF_NAME == $NEXT_MAJOR_BRANCH
 
 .staging:
   only:
@@ -301,6 +308,7 @@ script-tests:
   interruptible: true
   script:
     - yarn
+    - yarn build:bundle
     - yarn test:script
 ########################################################################################################################
 # Deploy
@@ -343,6 +351,19 @@ deploy-prod-canary:
     - yarn build:bundle
     - node ./scripts/deploy/deploy.js prod canary root
     - node ./scripts/deploy/upload-source-maps.js canary root
+
+deploy-next-major-canary:
+  stage: deploy
+  extends:
+    - .base-configuration
+    - .next-major-branch
+  script:
+    - export BUILD_MODE=canary
+    - VERSION=$(node -p -e "require('./lerna.json').version")
+    - yarn
+    - yarn build:bundle
+    - node ./scripts/deploy/deploy.js prod v${VERSION%%.*}-canary root
+    - node ./scripts/deploy/upload-source-maps.js v${VERSION%%.*}-canary root
 
 deploy-manual:
   stage: deploy
@@ -467,6 +488,8 @@ merge-into-next-major:
   only:
     refs:
       - main
+    variables:
+      - $NEXT_MAJOR_BRANCH
   except:
     refs:
       - schedules

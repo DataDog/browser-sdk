@@ -1,12 +1,12 @@
 import { Observable } from '@datadog/browser-core'
 import type { Duration, RelativeTime, ServerDuration, TimeStamp } from '@datadog/browser-core'
-import { registerCleanupTask } from '@datadog/browser-core/test'
+import { mockClock, registerCleanupTask } from '@datadog/browser-core/test'
 import type { RecorderApi } from '../../boot/rumPublicApi'
 import {
   collectAndValidateRawRumEvents,
-  mockFeatureFlagContexts,
   mockPageStateHistory,
   mockRumConfiguration,
+  mockViewHistory,
   noopRecorderApi,
 } from '../../../test'
 import type { RawRumEvent, RawRumViewEvent } from '../../rawRumEvent.types'
@@ -15,10 +15,13 @@ import type { RawRumEventCollectedData } from '../lifeCycle'
 import { LifeCycle, LifeCycleEventType } from '../lifeCycle'
 import { PageState } from '../contexts/pageStateHistory'
 import type { RumConfiguration } from '../configuration'
-import type { FeatureFlagContexts } from '../contexts/featureFlagContext'
 import type { LocationChange } from '../../browser/locationChangeObservable'
-import type { ViewEvent } from './trackViews'
+import type { Hooks } from '../../hooks'
+import { HookNames, createHooks } from '../../hooks'
+
+import type { ViewHistoryEntry } from '../contexts/viewHistory'
 import { startViewCollection } from './viewCollection'
+import type { ViewEvent } from './trackViews'
 
 const VIEW: ViewEvent = {
   customTimings: {
@@ -71,26 +74,30 @@ const VIEW: ViewEvent = {
 
 describe('viewCollection', () => {
   const lifeCycle = new LifeCycle()
+  let hooks: Hooks
   let getReplayStatsSpy: jasmine.Spy<RecorderApi['getReplayStats']>
   let rawRumEvents: Array<RawRumEventCollectedData<RawRumEvent>> = []
 
   function setupViewCollection(
     partialConfiguration: Partial<RumConfiguration> = {},
-    partialFeatureFlagContexts: Partial<FeatureFlagContexts> = {}
+    viewHistoryEntry?: ViewHistoryEntry
   ) {
+    hooks = createHooks()
+    const viewHistory = mockViewHistory(viewHistoryEntry)
     getReplayStatsSpy = jasmine.createSpy()
     const domMutationObservable = new Observable<void>()
     const windowOpenObservable = new Observable<void>()
     const locationChangeObservable = new Observable<LocationChange>()
+    const clock = mockClock()
 
     const collectionResult = startViewCollection(
       lifeCycle,
+      hooks,
       mockRumConfiguration(partialConfiguration),
       location,
       domMutationObservable,
       windowOpenObservable,
       locationChangeObservable,
-      mockFeatureFlagContexts(partialFeatureFlagContexts),
       mockPageStateHistory({
         findAll: () => [
           { start: 0 as ServerDuration, state: PageState.ACTIVE },
@@ -100,14 +107,18 @@ describe('viewCollection', () => {
       {
         ...noopRecorderApi,
         getReplayStats: getReplayStatsSpy,
-      }
+      },
+      viewHistory
     )
 
     rawRumEvents = collectAndValidateRawRumEvents(lifeCycle)
 
     registerCleanupTask(() => {
       collectionResult.stop()
+      viewHistory.stop()
+      clock.cleanup()
     })
+    return collectionResult
   }
 
   it('should create view from view update', () => {
@@ -167,6 +178,33 @@ describe('viewCollection', () => {
         long_task: {
           count: 10,
         },
+        performance: {
+          cls: {
+            score: 1,
+            timestamp: (100 * 1e6) as ServerDuration,
+            target_selector: undefined,
+            previous_rect: undefined,
+            current_rect: undefined,
+          },
+          fcp: {
+            timestamp: (10 * 1e6) as ServerDuration,
+          },
+          fid: {
+            duration: (12 * 1e6) as ServerDuration,
+            timestamp: (10 * 1e6) as ServerDuration,
+            target_selector: undefined,
+          },
+          inp: {
+            duration: (10 * 1e6) as ServerDuration,
+            timestamp: (100 * 1e6) as ServerDuration,
+            target_selector: undefined,
+          },
+          lcp: {
+            timestamp: (10 * 1e6) as ServerDuration,
+            target_selector: undefined,
+            resource_url: undefined,
+          },
+        },
         resource: {
           count: 10,
         },
@@ -176,7 +214,6 @@ describe('viewCollection', () => {
         has_replay: undefined,
         is_active: undefined,
       },
-      feature_flags: undefined,
       display: {
         scroll: {
           max_depth: 2000,
@@ -213,16 +250,6 @@ describe('viewCollection', () => {
     expect(rawRumViewEvent.session.has_replay).toBe(true)
   })
 
-  it('should include feature flags', () => {
-    setupViewCollection({}, { findFeatureFlagEvaluations: () => ({ feature: 'foo' }) })
-
-    const view: ViewEvent = { ...VIEW, commonViewMetrics: { loadingTime: -20 as Duration } }
-    lifeCycle.notify(LifeCycleEventType.VIEW_UPDATED, view)
-    const rawRumViewEvent = rawRumEvents[rawRumEvents.length - 1].rawRumEvent as RawRumViewEvent
-
-    expect(rawRumViewEvent.feature_flags).toEqual({ feature: 'foo' })
-  })
-
   it('should discard negative loading time', () => {
     setupViewCollection()
     const view: ViewEvent = { ...VIEW, commonViewMetrics: { loadingTime: -20 as Duration } }
@@ -243,7 +270,7 @@ describe('viewCollection', () => {
   describe('with configuration.start_session_replay_recording_manually set', () => {
     it('should include startSessionReplayRecordingManually false', () => {
       // when configured to false
-      setupViewCollection({ startSessionReplayRecordingManually: false }, {})
+      setupViewCollection({ startSessionReplayRecordingManually: false })
       lifeCycle.notify(LifeCycleEventType.VIEW_UPDATED, VIEW)
 
       expect(
@@ -254,13 +281,42 @@ describe('viewCollection', () => {
 
     it('should include startSessionReplayRecordingManually true', () => {
       // when configured to true
-      setupViewCollection({ startSessionReplayRecordingManually: true }, {})
+      setupViewCollection({ startSessionReplayRecordingManually: true })
       lifeCycle.notify(LifeCycleEventType.VIEW_UPDATED, VIEW)
 
       expect(
         (rawRumEvents[rawRumEvents.length - 1].rawRumEvent as RawRumViewEvent)._dd.configuration
           .start_session_replay_recording_manually
       ).toBe(true)
+    })
+  })
+
+  describe('assembly hook', () => {
+    it('should add view properties from the history', () => {
+      const viewHistoryEntry: ViewHistoryEntry = {
+        service: 'service',
+        version: 'version',
+        context: { myContext: 'foo' },
+        id: 'id',
+        name: 'name',
+        startClocks: { relative: 0 as RelativeTime, timeStamp: 0 as TimeStamp },
+      }
+
+      setupViewCollection({ trackViewsManually: true }, viewHistoryEntry)
+
+      const event = hooks.triggerHook(HookNames.Assemble, { eventType: 'view', startTime: 0 as RelativeTime })
+
+      expect(event).toEqual(
+        jasmine.objectContaining({
+          service: 'service',
+          version: 'version',
+          context: { myContext: 'foo' },
+          view: {
+            id: 'id',
+            name: 'name',
+          },
+        })
+      )
     })
   })
 })

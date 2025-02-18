@@ -1,23 +1,6 @@
 import { display } from '../../tools/display'
-import { checkUser, generateAnonymousId, sanitizeUser } from './user'
+import { checkUser } from './user'
 import type { User } from './user.types'
-
-describe('sanitize user function', () => {
-  it('should sanitize a user object', () => {
-    const obj = { id: 42, name: true, email: null }
-    const user = sanitizeUser(obj)
-
-    expect(user).toEqual({ id: '42', name: 'true', email: 'null' })
-  })
-
-  it('should not mutate the original data', () => {
-    const obj = { id: 42, name: 'test', email: null }
-    const user = sanitizeUser(obj)
-
-    expect(user.id).toEqual('42')
-    expect(obj.id).toEqual(42)
-  })
-})
 
 describe('check user function', () => {
   it('should only accept valid user objects', () => {
@@ -35,11 +18,5 @@ describe('check user function', () => {
     expect(checkUser(nullUser)).toBe(false)
     expect(checkUser(invalidUser)).toBe(false)
     expect(display.error).toHaveBeenCalledTimes(3)
-  })
-})
-
-describe('check anonymous id storage functions', () => {
-  it('should generate a random anonymous id', () => {
-    expect(generateAnonymousId()).toMatch(/^[a-z0-9]+$/)
   })
 })

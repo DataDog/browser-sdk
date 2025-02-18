@@ -1,5 +1,5 @@
 import type { Duration, RelativeTime, ServerDuration, TaskQueue, TimeStamp } from '@datadog/browser-core'
-import { createTaskQueue, isIE, noop, RequestType, ResourceType } from '@datadog/browser-core'
+import { createTaskQueue, noop, RequestType, ResourceType } from '@datadog/browser-core'
 import { registerCleanupTask } from '@datadog/browser-core/test'
 import type { RumFetchResourceEventDomainContext, RumXhrResourceEventDomainContext } from '../../domainContext.types'
 import {
@@ -80,7 +80,7 @@ describe('resourceCollection', () => {
         encoded_body_size: 42,
         decoded_body_size: 51,
         transfer_size: 63,
-        type: ResourceType.OTHER,
+        type: ResourceType.IMAGE,
         url: 'https://resource.com/valid',
         download: jasmine.any(Object),
         first_byte: jasmine.any(Object),
@@ -210,9 +210,6 @@ describe('resourceCollection', () => {
   })
 
   it('should create resource from completed fetch request', () => {
-    if (isIE()) {
-      pending('No IE support')
-    }
     setupResourceCollection()
     const response = new Response()
     lifeCycle.notify(
@@ -264,9 +261,6 @@ describe('resourceCollection', () => {
     it(`should support ${
       typeof input === 'object' ? JSON.stringify(input) : String(input)
     } as fetch input parameter`, () => {
-      if (isIE()) {
-        pending('No IE support')
-      }
       setupResourceCollection()
       lifeCycle.notify(
         LifeCycleEventType.REQUEST_COMPLETED,
@@ -401,10 +395,6 @@ describe('resourceCollection', () => {
   })
 
   it('should collect handlingStack from completed fetch request', () => {
-    if (isIE()) {
-      pending('No IE support')
-    }
-
     setupResourceCollection()
     const response = new Response()
     lifeCycle.notify(LifeCycleEventType.REQUEST_COMPLETED, createCompletedRequest({ response }))
