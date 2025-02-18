@@ -66,7 +66,11 @@ export function startRumAssembly(
   reportError: (error: RawError) => void
 ) {
   modifiableFieldPathsByEvent = {
-    [RumEventType.VIEW]: { ...USER_CUSTOMIZABLE_FIELD_PATHS, ...VIEW_MODIFIABLE_FIELD_PATHS },
+    [RumEventType.VIEW]: {
+      'view.performance.lcp.resource_url': 'string',
+      ...USER_CUSTOMIZABLE_FIELD_PATHS,
+      ...VIEW_MODIFIABLE_FIELD_PATHS,
+    },
     [RumEventType.ERROR]: {
       'error.message': 'string',
       'error.stack': 'string',

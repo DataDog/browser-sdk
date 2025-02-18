@@ -64,6 +64,22 @@ describe('rum assembly', () => {
           expect(serverRumEvents[0].view.name).toBe('added')
         })
 
+        it('should allow modification of view.performance.lcp.resource_url', () => {
+          const { lifeCycle, serverRumEvents } = setupAssemblyTestWithDefaults({
+            partialConfiguration: {
+              beforeSend: (event) => (event.view.performance.lcp.resource_url = 'modified_url'),
+            },
+          })
+
+          notifyRawRumEvent(lifeCycle, {
+            rawRumEvent: createRawRumEvent(RumEventType.VIEW, {
+              view: { performance: { lcp: { resource_url: 'original_url' } } },
+            }),
+          })
+
+          expect((serverRumEvents[0].view as any).performance.lcp.resource_url).toBe('modified_url')
+        })
+
         describe('field resource.graphql on Resource events', () => {
           it('by default, it should not be modifiable', () => {
             const { lifeCycle, serverRumEvents } = setupAssemblyTestWithDefaults({
