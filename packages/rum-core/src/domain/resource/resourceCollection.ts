@@ -54,13 +54,13 @@ export function startResourceCollection(
   }).subscribe((entries) => {
     for (const entry of entries) {
       if (!isResourceEntryRequestType(entry)) {
-        handleResource(() => processResourceEntry(entry, configuration))
+        handleResource(() => processResourceEntry(entry, configuration, pageStateHistory))
       }
     }
   })
 
   retrieveInitialDocumentResourceTimingImpl(configuration, (timing) => {
-    handleResource(() => processResourceEntry(timing, configuration))
+    handleResource(() => processResourceEntry(timing, configuration, pageStateHistory))
   })
 
   function handleResource(computeRawEvent: () => RawRumEventCollectedData<RawRumResourceEvent> | undefined) {
@@ -93,7 +93,9 @@ function processRequest(
 
   const type = request.type === RequestType.XHR ? ResourceType.XHR : ResourceType.FETCH
 
-  const correspondingTimingOverrides = matchingTiming ? computeResourceEntryMetrics(matchingTiming) : undefined
+  const correspondingTimingOverrides = matchingTiming
+    ? computeResourceEntryMetrics(matchingTiming, pageStateHistory)
+    : undefined
 
   const duration = computeRequestDuration(pageStateHistory, startClocks, request.duration)
 
@@ -137,7 +139,8 @@ function processRequest(
 
 function processResourceEntry(
   entry: RumPerformanceResourceTiming,
-  configuration: RumConfiguration
+  configuration: RumConfiguration,
+  pageStateHistory: PageStateHistory
 ): RawRumEventCollectedData<RawRumResourceEvent> | undefined {
   const startClocks = relativeToClocks(entry.startTime)
   const tracingInfo = computeResourceEntryTracingInfo(entry, configuration)
@@ -146,7 +149,7 @@ function processResourceEntry(
   }
 
   const type = computeResourceEntryType(entry)
-  const entryMetrics = computeResourceEntryMetrics(entry)
+  const entryMetrics = computeResourceEntryMetrics(entry, pageStateHistory)
 
   const resourceEvent = combine(
     {
@@ -176,16 +179,26 @@ function processResourceEntry(
   }
 }
 
-function computeResourceEntryMetrics(entry: RumPerformanceResourceTiming) {
+function computeResourceEntryMetrics(entry: RumPerformanceResourceTiming, pageStateHistory: PageStateHistory) {
   const { renderBlockingStatus } = entry
-  return {
+
+  const resourceEntryMetrics = {
     resource: {
-      duration: computeResourceEntryDuration(entry),
       render_blocking_status: renderBlockingStatus,
       ...computeResourceEntrySize(entry),
-      ...computeResourceEntryDetails(entry),
     },
   }
+
+  if (pageStateHistory.wasInPageStateDuringPeriod(PageState.FROZEN, entry.startTime, entry.duration)) {
+    return resourceEntryMetrics
+  }
+
+  return combine(resourceEntryMetrics, {
+    resource: {
+      duration: computeResourceEntryDuration(entry),
+      ...computeResourceEntryDetails(entry),
+    },
+  })
 }
 
 function computeRequestTracingInfo(request: RequestCompleteEvent, configuration: RumConfiguration) {
