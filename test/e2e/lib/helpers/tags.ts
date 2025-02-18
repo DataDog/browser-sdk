@@ -19,9 +19,6 @@ export function addBrowserConfigurationTags(metadata: BrowserConfiguration | Rec
       tag = 'browserVersion'
     }
 
-    test.info().annotations.push({
-      type: `dd_tags[test.${tag}]`,
-      description: value,
-    })
+    addTag(tag as Tag, value)
   }
 }

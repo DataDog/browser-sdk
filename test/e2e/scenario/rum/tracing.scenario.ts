@@ -20,20 +20,16 @@ test.describe('tracing', () => {
   createTest('trace fetch')
     .withRum({ service: 'service', allowedTracingUrls: ['LOCATION_ORIGIN'] })
     .run(async ({ intakeRegistry, flushEvents, page }) => {
-      const rawHeaders = await page.evaluate(
-        () =>
-          new Promise<string | Error>((resolve) => {
-            window
-              .fetch('/headers', {
-                headers: [
-                  ['x-foo', 'bar'],
-                  ['x-foo', 'baz'],
-                ],
-              })
-              .then((response) => response.text())
-              .then(resolve)
-              .catch(() => resolve(new Error('Fetch request failed!')))
+      const rawHeaders = await page.evaluate(() =>
+        window
+          .fetch('/headers', {
+            headers: [
+              ['x-foo', 'bar'],
+              ['x-foo', 'baz'],
+            ],
           })
+          .then((response) => response.text())
+          .catch(() => new Error('Fetch request failed!'))
       )
       const headers = parseHeaders(rawHeaders)
       checkRequestHeaders(headers)
@@ -45,15 +41,11 @@ test.describe('tracing', () => {
   createTest('trace fetch with Request argument')
     .withRum({ service: 'service', allowedTracingUrls: ['LOCATION_ORIGIN'] })
     .run(async ({ intakeRegistry, flushEvents, page }) => {
-      const rawHeaders = await page.evaluate(
-        () =>
-          new Promise<string | Error>((resolve) => {
-            window
-              .fetch(new Request('/headers', { headers: { 'x-foo': 'bar, baz' } }))
-              .then((response) => response.text())
-              .then(resolve)
-              .catch(() => resolve(new Error('Fetch request failed!')))
-          })
+      const rawHeaders = await page.evaluate(() =>
+        window
+          .fetch(new Request('/headers', { headers: { 'x-foo': 'bar, baz' } }))
+          .then((response) => response.text())
+          .catch(() => new Error('Fetch request failed!'))
       )
       const headers = parseHeaders(rawHeaders)
       checkRequestHeaders(headers)
@@ -65,15 +57,11 @@ test.describe('tracing', () => {
   createTest('trace single argument fetch')
     .withRum({ service: 'service', allowedTracingUrls: ['LOCATION_ORIGIN'] })
     .run(async ({ intakeRegistry, flushEvents, page }) => {
-      const rawHeaders = await page.evaluate(
-        () =>
-          new Promise<string | Error>((resolve) => {
-            window
-              .fetch('/headers')
-              .then((response) => response.text())
-              .then(resolve)
-              .catch(() => resolve(new Error('Fetch request failed!')))
-          })
+      const rawHeaders = await page.evaluate(() =>
+        window
+          .fetch('/headers')
+          .then((response) => response.text())
+          .catch(() => new Error('Fetch request failed!'))
       )
       const headers = parseHeaders(rawHeaders)
       checkRequestHeaders(headers)

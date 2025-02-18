@@ -4,19 +4,19 @@ import { config as baseConfig } from './playwright.base.config'
 const projects = [
   {
     name: 'chromium',
-    use: { ...devices['Desktop Chrome'] },
+    use: devices['Desktop Chrome'],
   },
   {
     name: 'firefox',
-    use: { ...devices['Desktop Firefox'] },
+    use: devices['Desktop Firefox'],
   },
   {
     name: 'webkit',
-    use: { ...devices['Desktop Safari'] },
+    use: devices['Desktop Safari'],
   },
   {
     name: 'android',
-    use: { ...devices['Pixel 7'] },
+    use: devices['Pixel 7'],
   },
 ]
 

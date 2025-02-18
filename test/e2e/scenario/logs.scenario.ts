@@ -114,7 +114,7 @@ test.describe('logs', () => {
       )
 
       withBrowserLogs((browserLogs) => {
-        if (browserName.includes('firefox')) {
+        if (browserName === 'firefox') {
           // Firefox does not report the error message
           expect(browserLogs).toHaveLength(0)
         } else {
