@@ -52,7 +52,7 @@ export function createContextManager(
   const contextManager = {
     getContext: () => deepClone(context),
 
-    setContext: (newContext: any) => {
+    setContext: (newContext: unknown) => {
       if (checkContext(newContext)) {
         context = sanitize(ensureProperties(newContext, propertiesConfig, name))
         customerDataTracker?.updateCustomerData(context)
