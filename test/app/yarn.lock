@@ -12,6 +12,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@datadog/browser-core@npm:6.2.1":
+  version: 6.2.1
+  resolution: "@datadog/browser-core@npm:6.2.1"
+  checksum: 10c0/78217a2f0e2202145ad51eefa96d5851300c2d232283a9fc24b8f31bdd6f84872959264ae529b8481c2b8c2bba6ce6c7b3d293efbe1d98ed9198b2b5bdab9ac2
+  languageName: node
+  linkType: hard
+
 "@datadog/browser-logs@file:../../packages/logs/package.tgz::locator=app%40workspace%3A.":
   version: 6.2.1
   resolution: "@datadog/browser-logs@file:../../packages/logs/package.tgz#../../packages/logs/package.tgz::hash=1763ea&locator=app%40workspace%3A."
@@ -32,6 +39,15 @@ __metadata:
   dependencies:
     "@datadog/browser-core": "npm:6.2.1"
   checksum: 10c0/6c570e4948d4fe711252e17559902c7088b057d22b6f01cb57eaba99949dc3c015c95a561480efd8e0932aaaaf1a2b888088ff2d10a46d52904f58c29c32d85f
+  languageName: node
+  linkType: hard
+
+"@datadog/browser-rum-core@npm:6.2.1":
+  version: 6.2.1
+  resolution: "@datadog/browser-rum-core@npm:6.2.1"
+  dependencies:
+    "@datadog/browser-core": "npm:6.2.1"
+  checksum: 10c0/68f0807c75b898c9253c19aa9023796ec5115120c833f460fc3de4c02b809153e7ebdff301e41f0c0952361a3e058a0a7f1bc311f5e6ac73c0532221b75d9075
   languageName: node
   linkType: hard
 
