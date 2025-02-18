@@ -296,21 +296,15 @@ export function makeLogsPublicApi(startLogsImpl: StartLogs): LogsPublicApi {
 
     clearUser: monitor(() => userContextManager.clearContext()),
 
-    setAccount: monitor((newUser) => {
-      if (checkContext(newUser)) {
-        accountContextManager.setContext(newUser)
-      }
-    }),
+    setAccount: monitor(accountContextManager.setContext),
 
-    getAccount: monitor(() => accountContextManager.getContext()),
+    getAccount: monitor(accountContextManager.getContext),
 
-    setAccountProperty: monitor((key, property) => {
-      accountContextManager.setContextProperty(key, property)
-    }),
+    setAccountProperty: monitor(accountContextManager.setContextProperty),
 
-    removeAccountProperty: monitor((key) => accountContextManager.removeContextProperty(key)),
+    removeAccountProperty: monitor(accountContextManager.removeContextProperty),
 
-    clearAccount: monitor(() => accountContextManager.clearContext()),
+    clearAccount: monitor(accountContextManager.clearContext),
   })
 }
 

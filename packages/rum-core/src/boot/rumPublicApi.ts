@@ -584,21 +584,15 @@ export function makeRumPublicApi(
 
     clearUser: monitor(() => userContextManager.clearContext()),
 
-    setAccount: monitor((newAccount) => {
-      if (checkContext(newAccount)) {
-        accountContextManager.setContext(newAccount)
-      }
-    }),
+    setAccount: monitor(accountContextManager.setContext),
 
-    getAccount: monitor(() => accountContextManager.getContext()),
+    getAccount: monitor(accountContextManager.getContext),
 
-    setAccountProperty: monitor((key, property) => {
-      accountContextManager.setContextProperty(key, property)
-    }),
+    setAccountProperty: monitor(accountContextManager.setContextProperty),
 
-    removeAccountProperty: monitor((key) => accountContextManager.removeContextProperty(key)),
+    removeAccountProperty: monitor(accountContextManager.removeContextProperty),
 
-    clearAccount: monitor(() => accountContextManager.clearContext()),
+    clearAccount: monitor(accountContextManager.clearContext),
 
     startView,
 
