@@ -54,9 +54,12 @@ export function computeViewName(routeMatches: AnyRouteMatch[]) {
  * substitutePathSplats('/files/*', { '*': 'path/to/file' }, true) // => '/files/path/to/file'
  */
 function substitutePathSplats(path: string, params: Record<string, string | undefined>, isLastMatchingRoute: boolean) {
-  if (!path.includes('*') || params['*'] === undefined) {
+  if (
+    !path.includes('*') ||
     // In some edge cases, react-router does not provide the `*` parameter, so we don't know what to
     // replace it with. In this case, we keep the asterisk.
+    params['*'] === undefined
+  ) {
     return path
   }
 
@@ -68,6 +71,5 @@ function substitutePathSplats(path: string, params: Record<string, string | unde
   // Intermediary route paths with a `*` are kind of edge cases, and the `*` parameter is not
   // relevant for them. We remove it from the path (along with a potential slash preceeding it) to
   // have a coherent view name once everything is concatenated (see examples in spec file).
-
   return path.replace(/\/?\*/, '')
 }
