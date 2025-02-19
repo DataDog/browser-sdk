@@ -15,7 +15,7 @@ export function validateRumFormat(events: RumEvent[]) {
   events.forEach((rumEvent) => {
     void instance.validate('rum-events-schema.json', rumEvent)
     if (instance.errors) {
-      instance.errors.map((error) => fail(`${error.dataPath || 'event'} ${error.message!}`))
+      instance.errors.map((error) => fail(`event/${error.instancePath || ''} ${error.message!}`))
     }
   })
 }

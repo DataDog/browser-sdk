@@ -70,11 +70,18 @@ function validateRumFormat(rumEvent: Context) {
       .map((error) => {
         let message = error.message
         if (error.keyword === 'const') {
-          message += ` '${(error.params as { allowedValue: string }).allowedValue}'`
+          message += ` ${formatAllowedValues([error.params.allowedValue])}`
         }
-        return `  ${error.dataPath || 'event'} ${message}`
+        if (error.keyword === 'enum') {
+          message += ` ${formatAllowedValues(error.params.allowedValues)}`
+        }
+        return `  event${error.instancePath || ''} ${message}`
       })
       .join('\n')
     fail(`Invalid RUM event format:\n${errors}`)
   }
+}
+
+function formatAllowedValues(allowedValues: string[]) {
+  return allowedValues.map((v) => `'${v}'`).join(', ')
 }
