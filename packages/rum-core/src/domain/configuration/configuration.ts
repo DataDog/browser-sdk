@@ -142,11 +142,7 @@ export interface RumInitConfiguration extends InitConfiguration {
 
 export type HybridInitConfiguration = Omit<RumInitConfiguration, 'applicationId' | 'clientToken'>
 
-export type FeatureFlagsForEvents =
-  | RumEventType.VITAL
-  | RumEventType.ACTION
-  | RumEventType.LONG_TASK
-  | RumEventType.RESOURCE
+export type FeatureFlagsForEvents = 'vital' | 'action' | 'long_task' | 'resource'
 
 export interface RumConfiguration extends Configuration {
   // Built from init configuration
