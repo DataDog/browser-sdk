@@ -1,5 +1,5 @@
 import { defineConfig } from '@playwright/test'
-import { getBrowserName, getEncodedCapabilities } from './lib/helpers/playwright'
+import { getPlaywrightConfigBrowserName, getEncodedCapabilities } from './lib/helpers/playwright'
 import { config as baseConfig } from './playwright.base.config'
 import { browserConfigurations } from './browsers.conf'
 
@@ -12,7 +12,7 @@ export default defineConfig({
     name: configuration.sessionName,
     metadata: configuration,
     use: {
-      browserName: getBrowserName(configuration.name),
+      browserName: getPlaywrightConfigBrowserName(configuration.name),
       connectOptions: {
         wsEndpoint: `wss://cdp.browserstack.com/playwright?caps=${getEncodedCapabilities(configuration)}`,
       },

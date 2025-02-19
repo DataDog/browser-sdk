@@ -1,13 +1,13 @@
 import type { LogsInitConfiguration } from '@datadog/browser-logs'
 import type { RumInitConfiguration } from '@datadog/browser-rum-core'
 import { DefaultPrivacyLevel } from '@datadog/browser-rum'
-import type { BrowserContext, Page, PlaywrightWorkerOptions } from '@playwright/test'
+import type { BrowserContext, Page } from '@playwright/test'
 import { test, expect } from '@playwright/test'
 import type { Tag } from '../helpers/tags'
 import { addTag, addBrowserConfigurationTags } from '../helpers/tags'
 import { getRunId } from '../../../envUtils'
 import type { BrowserLog } from '../helpers/browser'
-import { BrowserLogsManager, deleteAllCookies, sendXhr } from '../helpers/browser'
+import { BrowserLogsManager, deleteAllCookies, getBrowserName, sendXhr } from '../helpers/browser'
 import { APPLICATION_ID, CLIENT_TOKEN } from '../helpers/configuration'
 import { validateRumFormat } from '../helpers/validation'
 import type { BrowserConfiguration } from '../../../browsers.conf'
@@ -54,7 +54,7 @@ interface TestContext {
   servers: Servers
   page: Page
   browserContext: BrowserContext
-  browserName: PlaywrightWorkerOptions['browserName']
+  browserName: 'chromium' | 'firefox' | 'webkit' | 'msedge'
   withBrowserLogs: (cb: (logs: BrowserLog[]) => void) => void
   flushBrowserLogs: () => void
   flushEvents: () => Promise<void>
@@ -190,7 +190,8 @@ function declareTestsForSetups(
 }
 
 function declareTest(title: string, setupOptions: SetupOptions, factory: SetupFactory, runner: TestRunner) {
-  test(title, async ({ page, context, browserName }) => {
+  test(title, async ({ page, context }) => {
+    const browserName = getBrowserName(test.info().project.name)
     addTag('browserName' as any as Tag, browserName)
     addBrowserConfigurationTags(test.info().project.metadata as BrowserConfiguration)
 

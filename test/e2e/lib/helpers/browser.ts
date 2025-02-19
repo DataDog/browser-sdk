@@ -1,6 +1,24 @@
 import type { BrowserContext, Page } from '@playwright/test'
 import { addTag } from './tags'
 
+export function getBrowserName(name: string) {
+  const lowerCaseName = name.toLowerCase()
+
+  if (lowerCaseName.includes('firefox')) {
+    return 'firefox'
+  }
+
+  if (lowerCaseName.includes('edge')) {
+    return 'msedge'
+  }
+
+  if (name.includes('webkit')) {
+    return 'webkit'
+  }
+
+  return 'chromium'
+}
+
 export interface BrowserLog {
   level: 'log' | 'debug' | 'info' | 'error' | 'warning'
   message: string

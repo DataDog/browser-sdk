@@ -19,7 +19,7 @@ const browserConfigurations = [
     osVersion: '11',
   },
   {
-    sessionName: 'Safari desktop',
+    sessionName: 'Webkit',
     name: 'playwright-webkit',
     version: '17.4',
     os: 'OS X',

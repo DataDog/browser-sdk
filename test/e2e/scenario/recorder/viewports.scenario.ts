@@ -7,7 +7,6 @@ import { test, expect } from '@playwright/test'
 import { wait } from '@datadog/browser-core/test/wait'
 import type { IntakeRegistry } from '../../lib/framework'
 import { createTest, bundleSetup, html } from '../../lib/framework'
-import type { BrowserConfiguration } from '../../../browsers.conf'
 
 const NAVBAR_HEIGHT_CHANGE_UPPER_BOUND = 30
 const VIEWPORT_META_TAGS = `
@@ -28,9 +27,8 @@ test.describe('recorder', () => {
       .withRum()
       .withSetup(bundleSetup)
       .withBody(html`${VIEWPORT_META_TAGS}`)
-      .run(async ({ intakeRegistry, page, flushEvents }) => {
-        const { sessionName } = test.info().project.metadata as BrowserConfiguration
-        test.fixme(sessionName === 'Edge', 'In Edge, the ViewportResize record data is off by almost 20px')
+      .run(async ({ intakeRegistry, page, flushEvents, browserName }) => {
+        test.fixme(browserName === 'msedge', 'In Edge, the ViewportResize record data is off by almost 20px')
 
         await buildScrollablePage(page)
 

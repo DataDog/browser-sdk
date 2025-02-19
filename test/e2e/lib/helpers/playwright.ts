@@ -2,7 +2,7 @@ import type { PlaywrightWorkerOptions } from '@playwright/test'
 import type { BrowserConfiguration } from '../../../browsers.conf'
 import { getBuildInfos } from '../../../envUtils'
 
-export function getBrowserName(name: string): PlaywrightWorkerOptions['browserName'] {
+export function getPlaywrightConfigBrowserName(name: string): PlaywrightWorkerOptions['browserName'] {
   if (name.includes('firefox')) {
     return 'firefox'
   }
