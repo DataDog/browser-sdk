@@ -1,4 +1,4 @@
-import type { Context, RawError, EventRateLimiter, User, RelativeTime } from '@datadog/browser-core'
+import type { Context, RawError, EventRateLimiter, User, Account, RelativeTime } from '@datadog/browser-core'
 import {
   combine,
   isEmptyObject,
@@ -198,6 +198,10 @@ export function startRumAssembly(
         }
         if (!isEmptyObject(commonContext.user)) {
           ;(serverRumEvent.usr as Mutable<RumEvent['usr']>) = commonContext.user as User & Context
+        }
+
+        if (!isEmptyObject(commonContext.account) && commonContext.account.id) {
+          ;(serverRumEvent.account as Mutable<RumEvent['account']>) = commonContext.account as Account
         }
 
         if (shouldSend(serverRumEvent, configuration.beforeSend, domainContext, eventRateLimiters)) {

@@ -14,7 +14,6 @@ import type {
   RumXhrStartContext,
 } from '../requestCollection'
 import type { RumSessionManager } from '../rumSessionManager'
-import { getCrypto } from '../../browser/crypto'
 import type { PropagatorType, TracingOption } from './tracer.types'
 import type { SpanIdentifier, TraceIdentifier } from './identifier'
 import { createSpanIdentifier, createTraceIdentifier, toPaddedHexadecimalString } from './identifier'
@@ -108,7 +107,7 @@ function injectHeadersIfTracingAllowed(
   sessionManager: RumSessionManager,
   inject: (tracingHeaders: TracingHeaders) => void
 ) {
-  if (!isTracingSupported() || !sessionManager.findTrackedSession()) {
+  if (!sessionManager.findTrackedSession()) {
     return
   }
 
@@ -131,10 +130,6 @@ function injectHeadersIfTracingAllowed(
   context.spanId = createSpanIdentifier()
 
   inject(makeTracingHeaders(context.traceId, context.spanId, context.traceSampled, tracingOption.propagatorTypes))
-}
-
-export function isTracingSupported() {
-  return getCrypto() !== undefined
 }
 
 /**
