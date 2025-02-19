@@ -3,7 +3,7 @@ import { createTest, html, waitForServersIdle } from '../../lib/framework'
 
 test.describe('action collection', () => {
   createTest('track a click action')
-    .withRum({ trackUserInteractions: true, enableExperimentalFeatures: ['action_name_masking'] })
+    .withRum({ trackUserInteractions: true })
     .withBody(html`
       <button>click me</button>
       <script>

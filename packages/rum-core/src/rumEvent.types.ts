@@ -516,7 +516,7 @@ export type RumLongTaskEvent = CommonProperties &
         /**
          * The script resource name where available (or empty if not found)
          */
-        readonly source_url?: string
+        source_url?: string
         /**
          * The script function name where available (or empty if not found)
          */
@@ -528,7 +528,7 @@ export type RumLongTaskEvent = CommonProperties &
         /**
          * Information about the invoker of the script
          */
-        readonly invoker?: string
+        invoker?: string
         /**
          * Type of the invoker of the script
          */
