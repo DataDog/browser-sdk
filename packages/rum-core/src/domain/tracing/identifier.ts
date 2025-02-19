@@ -1,5 +1,4 @@
 import { ExperimentalFeature, isExperimentalFeatureEnabled } from '@datadog/browser-core'
-import { getCrypto } from '../../browser/crypto'
 
 interface BaseIdentifier {
   toString(radix?: number): string
@@ -59,7 +58,7 @@ function createIdentifierUsingBigInt(bits: 63 | 64): BaseIdentifier {
 
 // TODO: remove this when all browser we support have BigInt support
 function createIdentifierUsingUint32Array(bits: 63 | 64): BaseIdentifier {
-  const buffer = getCrypto().getRandomValues(new Uint32Array(2))
+  const buffer = window.crypto.getRandomValues(new Uint32Array(2))
   if (bits === 63) {
     // eslint-disable-next-line no-bitwise
     buffer[buffer.length - 1] >>>= 1 // force 63-bit
