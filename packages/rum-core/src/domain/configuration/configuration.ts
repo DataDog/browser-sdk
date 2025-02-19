@@ -16,6 +16,7 @@ import type { RumEvent } from '../../rumEvent.types'
 import type { RumPlugin } from '../plugins'
 import { isTracingOption } from '../tracing/tracer'
 import type { PropagatorType, TracingOption } from '../tracing/tracer.types'
+import type { RumEventType } from '../../rawRumEvent.types'
 
 export const DEFAULT_PROPAGATOR_TYPES: PropagatorType[] = ['tracecontext', 'datadog']
 
@@ -141,7 +142,11 @@ export interface RumInitConfiguration extends InitConfiguration {
 
 export type HybridInitConfiguration = Omit<RumInitConfiguration, 'applicationId' | 'clientToken'>
 
-export type FeatureFlagsForEvents = 'vital' | 'action' | 'long_task' | 'resource'
+export type FeatureFlagsForEvents =
+  | RumEventType.VITAL
+  | RumEventType.ACTION
+  | RumEventType.LONG_TASK
+  | RumEventType.RESOURCE
 
 export interface RumConfiguration extends Configuration {
   // Built from init configuration

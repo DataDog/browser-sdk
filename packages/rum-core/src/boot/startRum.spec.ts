@@ -8,7 +8,6 @@ import {
   noop,
   relativeNow,
   createIdentityEncoder,
-  createCustomerDataTracker,
   createTrackingConsentState,
   TrackingConsent,
   createCustomerDataTrackerManager,
@@ -42,7 +41,6 @@ import { startLongAnimationFrameCollection } from '../domain/longAnimationFrame/
 import { startViewHistory, type RumSessionManager } from '..'
 import type { RumConfiguration } from '../domain/configuration'
 import { RumEventType } from '../rawRumEvent.types'
-import { startFeatureFlagContexts } from '../domain/contexts/featureFlagContext'
 import type { PageStateHistory } from '../domain/contexts/pageStateHistory'
 import { createCustomVitalsState } from '../domain/vital/vitalCollection'
 import { createHooks } from '../hooks'
@@ -79,7 +77,6 @@ function startRumStub(
     sessionManager,
     pageStateHistory,
     domMutationObservable,
-    startFeatureFlagContexts(lifeCycle, createCustomerDataTracker(noop)),
     windowOpenObservable,
     urlContexts,
     viewHistory,

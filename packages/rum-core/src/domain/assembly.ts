@@ -1,4 +1,4 @@
-import type { Context, RawError, EventRateLimiter, User, RelativeTime } from '@datadog/browser-core'
+import type { Context, RawError, EventRateLimiter, User } from '@datadog/browser-core'
 import {
   combine,
   isEmptyObject,
@@ -14,7 +14,6 @@ import {
   addTelemetryDebug,
 } from '@datadog/browser-core'
 import type { RumEventDomainContext } from '../domainContext.types'
-import type { RawRumEvent } from '../rawRumEvent.types'
 import { RumEventType } from '../rawRumEvent.types'
 import type { CommonProperties, RumEvent } from '../rumEvent.types'
 import type { Hooks } from '../hooks'
@@ -23,12 +22,11 @@ import type { LifeCycle } from './lifeCycle'
 import { LifeCycleEventType } from './lifeCycle'
 import type { ViewHistory } from './contexts/viewHistory'
 import { SessionReplayState, SessionType, type RumSessionManager } from './rumSessionManager'
-import type { RumConfiguration, FeatureFlagsForEvents } from './configuration'
+import type { RumConfiguration } from './configuration'
 import type { DisplayContext } from './contexts/displayContext'
 import type { CommonContext } from './contexts/commonContext'
 import type { ModifiableFieldPaths } from './limitModification'
 import { limitModification } from './limitModification'
-import type { FeatureFlagContexts } from './contexts/featureFlagContext'
 import type { UrlContexts } from './contexts/urlContexts'
 
 // replaced at build time
@@ -61,7 +59,6 @@ export function startRumAssembly(
   viewHistory: ViewHistory,
   urlContexts: UrlContexts,
   displayContext: DisplayContext,
-  featureFlagContexts: FeatureFlagContexts,
   getCommonContext: () => CommonContext,
   reportError: (error: RawError) => void
 ) {
@@ -167,12 +164,6 @@ export function startRumAssembly(
             id: session.id,
             type: SessionType.USER,
           },
-          feature_flags: findFeatureFlagsContext(
-            rawRumEvent,
-            startTime,
-            configuration.trackFeatureFlagsForEvents,
-            featureFlagContexts
-          ),
           display: displayContext.get(),
           connectivity: getConnectivity(),
           context: commonContext.context,
@@ -232,22 +223,4 @@ function shouldSend(
   const rateLimitReached = eventRateLimiters[event.type]?.isLimitReached()
 
   return !rateLimitReached
-}
-
-function findFeatureFlagsContext(
-  rawRumEvent: RawRumEvent,
-  eventStartTime: RelativeTime,
-  trackFeatureFlagsForEvents: FeatureFlagsForEvents[],
-  featureFlagContexts: FeatureFlagContexts
-) {
-  const isTrackingEnforced = rawRumEvent.type === RumEventType.VIEW || rawRumEvent.type === RumEventType.ERROR
-
-  const isListedInConfig = trackFeatureFlagsForEvents.includes(rawRumEvent.type as FeatureFlagsForEvents)
-
-  if (isTrackingEnforced || isListedInConfig) {
-    const featureFlagContext = featureFlagContexts.findFeatureFlagEvaluations(eventStartTime)
-    if (featureFlagContext && !isEmptyObject(featureFlagContext)) {
-      return featureFlagContext
-    }
-  }
 }
