@@ -575,16 +575,16 @@ export function makeRumPublicApi(
       addTelemetryUsage({ feature: 'set-user' })
     }),
 
-    getUser: monitor(() => userContextManager.getContext()),
+    getUser: monitor(userContextManager.getContext),
 
     setUserProperty: monitor((key, property) => {
       userContextManager.setContextProperty(key, property)
       addTelemetryUsage({ feature: 'set-user' })
     }),
 
-    removeUserProperty: monitor((key) => userContextManager.removeContextProperty(key)),
+    removeUserProperty: monitor(userContextManager.removeContextProperty),
 
-    clearUser: monitor(() => userContextManager.clearContext()),
+    clearUser: monitor(userContextManager.clearContext),
 
     setAccount: monitor(accountContextManager.setContext),
 

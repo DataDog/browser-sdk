@@ -285,19 +285,15 @@ export function makeLogsPublicApi(startLogsImpl: StartLogs): LogsPublicApi {
 
     getInternalContext: monitor((startTime) => strategy.getInternalContext(startTime)),
 
-    setUser: monitor((newUser) => {
-      userContextManager.setContext(newUser)
-    }),
+    setUser: monitor(userContextManager.setContext),
 
-    getUser: monitor(() => userContextManager.getContext()),
+    getUser: monitor(userContextManager.getContext),
 
-    setUserProperty: monitor((key, property) => {
-      userContextManager.setContextProperty(key, property)
-    }),
+    setUserProperty: monitor(userContextManager.setContextProperty),
 
-    removeUserProperty: monitor((key) => userContextManager.removeContextProperty(key)),
+    removeUserProperty: monitor(userContextManager.removeContextProperty),
 
-    clearUser: monitor(() => userContextManager.clearContext()),
+    clearUser: monitor(userContextManager.clearContext),
 
     setAccount: monitor(accountContextManager.setContext),
 
