@@ -1,6 +1,5 @@
 import { ExperimentalFeature } from '@datadog/browser-core'
 import { mockExperimentalFeatures } from '../../../../core/test'
-import { getCrypto } from '../../browser/crypto'
 import {
   createSpanIdentifier,
   createTraceIdentifier,
@@ -85,7 +84,7 @@ describe('toPaddedHexadecimalString', () => {
 })
 
 function mockRandomValues(cb: (buffer: Uint8Array) => void) {
-  spyOn(getCrypto(), 'getRandomValues').and.callFake((bufferView) => {
+  spyOn(window.crypto, 'getRandomValues').and.callFake((bufferView) => {
     cb(new Uint8Array(bufferView!.buffer))
     return bufferView
   })
