@@ -93,7 +93,11 @@ function runTests() {
 
     const child = spawn(command, args, {
       stdio: ['inherit', 'pipe', 'pipe'],
-      env: { ...process.env, FORCE_COLOR: true },
+      env: {
+        ...process.env,
+        FORCE_COLOR: true,
+        BROWSER_STACK: true,
+      },
     })
 
     let output = ''
