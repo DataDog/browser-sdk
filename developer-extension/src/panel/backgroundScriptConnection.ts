@@ -10,9 +10,7 @@ export const onBackgroundDisconnection = new EventListeners<void>()
 
 let backgroundScriptConnection: chrome.runtime.Port | undefined
 
-connectToBackgroundScript()
-
-function connectToBackgroundScript() {
+export function connectToBackgroundScript() {
   try {
     backgroundScriptConnection = chrome.runtime.connect({
       name: `devtools-panel-for-tab-${chrome.devtools.inspectedWindow.tabId}`,

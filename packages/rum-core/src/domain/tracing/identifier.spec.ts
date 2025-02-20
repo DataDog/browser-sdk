@@ -1,4 +1,3 @@
-import { getCrypto } from '../../browser/crypto'
 import { createSpanIdentifier, createTraceIdentifier, toPaddedHexadecimalString } from './identifier'
 
 describe('identifier', () => {
@@ -39,7 +38,7 @@ describe('toPaddedHexadecimalString', () => {
 })
 
 function mockRandomValues(cb: (buffer: Uint8Array) => void) {
-  spyOn(getCrypto(), 'getRandomValues').and.callFake((bufferView) => {
+  spyOn(window.crypto, 'getRandomValues').and.callFake((bufferView) => {
     cb(new Uint8Array(bufferView!.buffer))
     return bufferView
   })

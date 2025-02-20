@@ -1,4 +1,4 @@
-import type { Context, RawError, EventRateLimiter, User, RelativeTime } from '@datadog/browser-core'
+import type { Context, RawError, EventRateLimiter, User, Account, RelativeTime } from '@datadog/browser-core'
 import {
   combine,
   isEmptyObject,
@@ -66,7 +66,11 @@ export function startRumAssembly(
   reportError: (error: RawError) => void
 ) {
   modifiableFieldPathsByEvent = {
-    [RumEventType.VIEW]: { ...USER_CUSTOMIZABLE_FIELD_PATHS, ...VIEW_MODIFIABLE_FIELD_PATHS },
+    [RumEventType.VIEW]: {
+      'view.performance.lcp.resource_url': 'string',
+      ...USER_CUSTOMIZABLE_FIELD_PATHS,
+      ...VIEW_MODIFIABLE_FIELD_PATHS,
+    },
     [RumEventType.ERROR]: {
       'error.message': 'string',
       'error.stack': 'string',
@@ -198,6 +202,10 @@ export function startRumAssembly(
         }
         if (!isEmptyObject(commonContext.user)) {
           ;(serverRumEvent.usr as Mutable<RumEvent['usr']>) = commonContext.user as User & Context
+        }
+
+        if (!isEmptyObject(commonContext.account) && commonContext.account.id) {
+          ;(serverRumEvent.account as Mutable<RumEvent['account']>) = commonContext.account as Account
         }
 
         if (shouldSend(serverRumEvent, configuration.beforeSend, domainContext, eventRateLimiters)) {

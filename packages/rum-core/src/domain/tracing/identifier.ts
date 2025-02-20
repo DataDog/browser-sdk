@@ -1,5 +1,3 @@
-import { getCrypto } from '../../browser/crypto'
-
 interface BaseIdentifier {
   toString(radix?: number): string
 }
@@ -23,7 +21,7 @@ export function createSpanIdentifier() {
 }
 
 function createIdentifier(bits: 63 | 64): BaseIdentifier {
-  const buffer = getCrypto().getRandomValues(new Uint32Array(2))
+  const buffer = crypto.getRandomValues(new Uint32Array(2))
   if (bits === 63) {
     // eslint-disable-next-line no-bitwise
     buffer[buffer.length - 1] >>>= 1 // force 63-bit

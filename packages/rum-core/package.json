@@ -15,7 +15,7 @@
     "@datadog/browser-core": "6.3.0"
   },
   "devDependencies": {
-    "ajv": "6.12.6"
+    "ajv": "8.17.1"
   },
   "repository": {
     "type": "git",

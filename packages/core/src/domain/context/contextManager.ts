@@ -1,10 +1,10 @@
 import { deepClone } from '../../tools/mergeInto'
-import { getType } from '../../tools/utils/typeUtils'
 import { sanitize } from '../../tools/serialisation/sanitize'
 import type { Context } from '../../tools/serialisation/context'
 import { Observable } from '../../tools/observable'
 import { display } from '../../tools/display'
 import type { CustomerDataTracker } from './customerDataTracker'
+import { checkContext } from './contextUtils'
 
 export type ContextManager = ReturnType<typeof createContextManager>
 
@@ -52,8 +52,8 @@ export function createContextManager(
   const contextManager = {
     getContext: () => deepClone(context),
 
-    setContext: (newContext: Context) => {
-      if (getType(newContext) === 'object') {
+    setContext: (newContext: unknown) => {
+      if (checkContext(newContext)) {
         context = sanitize(ensureProperties(newContext, propertiesConfig, name))
         customerDataTracker?.updateCustomerData(context)
       } else {
