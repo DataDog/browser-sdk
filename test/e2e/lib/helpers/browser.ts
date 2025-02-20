@@ -12,7 +12,7 @@ export function getBrowserName(name: string) {
     return 'msedge'
   }
 
-  if (name.includes('webkit')) {
+  if (lowerCaseName.includes('webkit')) {
     return 'webkit'
   }
 
