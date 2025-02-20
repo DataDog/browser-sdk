@@ -7,7 +7,7 @@ import type { ViewHistory } from '../contexts/viewHistory'
 import type { createRumProfiler as CreateRumProfilerType } from './profiler';
 import { lazyLoadProfiler } from './lazyLoadProfiler';
 
-const DUMMY_STOP = { stop: () => { /* Nothing to stop */ } };
+const NOOP_STOP = { stop: () => { /* Nothing to stop */ } };
 
 export const startProfilingCollection = (
     configuration: RumConfiguration, 
@@ -21,7 +21,7 @@ export const startProfilingCollection = (
     const sampleRate = configuration.profilingSampleRate;
     if (!performDraw(sampleRate)) {
         // User is not lucky, no profiling!
-        return DUMMY_STOP;
+        return NOOP_STOP;
     }
     
     const endpointBuilder = configuration.profilingEndpointBuilder;
