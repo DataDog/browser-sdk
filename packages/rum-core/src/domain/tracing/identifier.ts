@@ -33,7 +33,7 @@ function createIdentifier(bits: 63 | 64): BaseIdentifier {
   // represent a 64 bits identifier. But BigInts don't have this limitation and can represent larger
   // integer values.
   //
-  // In the future, when we drop browsers without BigInts support, we could use BigInts to directly
+  // In the future, when we drop browsers without BigInts support, we could use BigInts directly
   // represent identifiers by simply returning a BigInt from this function (as all we need is a
   // value with a `.toString` method).
   //
