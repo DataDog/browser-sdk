@@ -1,7 +1,7 @@
-import type { EndpointBuilder } from '@datadog/browser-core';
-import type { RumConfiguration, RumSessionManager } from '@datadog/browser-rum-core';
-import type { HttpResponse } from 'packages/core/src/transport/httpRequest';
+import type { EndpointBuilder, HttpResponse } from '@datadog/browser-core';å
 import type { LifeCycle } from '../../lifeCycle';
+import type { RumConfiguration } from '../../configuration';
+import type { RumSessionManager } from '../../rumSessionManager';
 import type { ProfilerTrace, Profiler } from './profilerApi.types';
 
 /**

@@ -1,7 +1,9 @@
 import { monitorError, performDraw } from '@datadog/browser-core';
-import type { RumSessionManager, ViewHistory } from '@datadog/browser-rum-core';
+
 import type { RumConfiguration } from '../configuration';
 import type { LifeCycle} from '../lifeCycle';
+import type { RumSessionManager } from '../rumSessionManager'
+import type { ViewHistory } from '../contexts/viewHistory'
 import type { createRumProfiler as CreateRumProfilerType } from './profiler';
 import { lazyLoadProfiler } from './lazyLoadProfiler';
 
