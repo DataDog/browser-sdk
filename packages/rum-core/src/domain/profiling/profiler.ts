@@ -89,23 +89,23 @@ export function createRumProfiler({
     // Don't wait for data collection to start next instance
     collectProfilerInstance()
 
+    const profiler = new globalThisProfiler({
+        sampleInterval: SAMPLE_INTERVAL_MS,
+        // Keep buffer size at 1.5 times of minimum required to collect data for a profiling instance
+        maxBufferSize: Math.round((COLLECT_INTERVAL_MS * 1.5) / SAMPLE_INTERVAL_MS),
+      });
+
     instance = {
       state: 'running',
       startTime: performance.now(),
       // We have to create new Profiler instance for each instance
-      profiler: new globalThisProfiler({
-        sampleInterval: SAMPLE_INTERVAL_MS,
-        // Keep buffer size at 1.5 times of minimum required to collect data for a profiling instance
-        maxBufferSize: Math.round((COLLECT_INTERVAL_MS * 1.5) / SAMPLE_INTERVAL_MS),
-      }),
-      timeoutId: setTimeout(startNextProfilerInstance, COLLECT_INTERVAL_MS) as unknown as number, // NodeJS types collision
+      profiler,
+      timeoutId: setTimeout(startNextProfilerInstance, COLLECT_INTERVAL_MS), // NodeJS types collision
       longTasks: [],
       measures: [],
       events: [],
       navigation: [],
     }
-
-    const profiler: typeof globalThisProfiler = instance.profiler
 
     // Add event handler case we overflow the buffer
     profiler.addEventListener('samplebufferfull', handleSampleBufferFull)
