@@ -538,6 +538,7 @@ describe('serializeRumConfiguration', () => {
       remoteConfigurationId: '123',
       plugins: [{ name: 'foo', getConfigurationTelemetry: () => ({ bar: true }) }],
       trackFeatureFlagsForEvents: ['vital'],
+      profilingSampleRate: 0,
     }
 
     type MapRumInitConfigurationKey<Key extends string> = Key extends keyof InitConfiguration
@@ -575,6 +576,7 @@ describe('serializeRumConfiguration', () => {
       compress_intake_requests: true,
       plugins: [{ name: 'foo', bar: true }],
       track_feature_flags_for_events: ['vital'],
+      profiling_sample_rate: 0,
     })
   })
 })
