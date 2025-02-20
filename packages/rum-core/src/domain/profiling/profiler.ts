@@ -105,7 +105,7 @@ export function createRumProfiler({
       navigation: [],
     }
 
-    const profiler: typeof globalThisProfiler = instance.profiler;
+    const profiler: typeof globalThisProfiler = instance.profiler
 
     // Add event handler case we overflow the buffer
     profiler.addEventListener('samplebufferfull', handleSampleBufferFull)
