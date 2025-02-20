@@ -38,9 +38,13 @@ describe('isTraceSampled', () => {
 
       it('a session id with a low hash value should be sampled with a rate close to 0%', () => {
         expect(isTraceSampled(LOW_HASH_UUID, 0.1)).toBeTrue()
+        resetSampleDecisionCache()
         expect(isTraceSampled(LOW_HASH_UUID, 0.01)).toBeTrue()
+        resetSampleDecisionCache()
         expect(isTraceSampled(LOW_HASH_UUID, 0.001)).toBeTrue()
+        resetSampleDecisionCache()
         expect(isTraceSampled(LOW_HASH_UUID, 0.0001)).toBeTrue()
+        resetSampleDecisionCache()
         // At some point the sample rate is so low that the session is not sampled even if the hash
         // is low. This is not an error: we can probably find a UUID with an even lower hash.
         expect(isTraceSampled(LOW_HASH_UUID, 0.0000000001)).toBeFalse()
@@ -48,9 +52,13 @@ describe('isTraceSampled', () => {
 
       it('a session id with a high hash value should not be sampled even if the rate is close to 100%', () => {
         expect(isTraceSampled(HIGH_HASH_UUID, 99.9)).toBeFalse()
+        resetSampleDecisionCache()
         expect(isTraceSampled(HIGH_HASH_UUID, 99.99)).toBeFalse()
+        resetSampleDecisionCache()
         expect(isTraceSampled(HIGH_HASH_UUID, 99.999)).toBeFalse()
+        resetSampleDecisionCache()
         expect(isTraceSampled(HIGH_HASH_UUID, 99.9999)).toBeFalse()
+        resetSampleDecisionCache()
         // At some point the sample rate is so high that the session is sampled even if the hash is
         // high. This is not an error: we can probably find a UUID with an even higher hash.
         expect(isTraceSampled(HIGH_HASH_UUID, 99.9999999999)).toBeTrue()

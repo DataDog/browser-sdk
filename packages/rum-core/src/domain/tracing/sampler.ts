@@ -1,6 +1,6 @@
 import { ExperimentalFeature, isExperimentalFeatureEnabled, performDraw } from '@datadog/browser-core'
 
-let sampleDecisionCache: { sessionId: string; sampleRate: number; decision: boolean } | undefined
+let sampleDecisionCache: { sessionId: string; decision: boolean } | undefined
 
 export function isTraceSampled(sessionId: string, sampleRate: number) {
   // Shortcuts for common cases. This is not strictly necessary, but it makes the code faster for
@@ -17,11 +17,7 @@ export function isTraceSampled(sessionId: string, sampleRate: number) {
     return performDraw(sampleRate)
   }
 
-  if (
-    sampleDecisionCache &&
-    sessionId === sampleDecisionCache.sessionId &&
-    sampleRate === sampleDecisionCache.sampleRate
-  ) {
+  if (sampleDecisionCache && sessionId === sampleDecisionCache.sessionId) {
     return sampleDecisionCache.decision
   }
 
@@ -34,7 +30,7 @@ export function isTraceSampled(sessionId: string, sampleRate: number) {
     // TODO: remove this when all browser we support have BigInt support
     decision = performDraw(sampleRate)
   }
-  sampleDecisionCache = { sessionId, sampleRate, decision }
+  sampleDecisionCache = { sessionId, decision }
   return decision
 }
 
