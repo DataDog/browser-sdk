@@ -392,6 +392,14 @@ export type TelemetryConfigurationEvent = CommonTelemetryProperties & {
        */
       is_main_process?: boolean
       /**
+       * Interval in milliseconds when the last action is considered as the action that created the next view. Only sent if a time based strategy has been used
+       */
+      inv_time_threshold_ms?: number
+      /**
+       * The interval in milliseconds during which all network requests will be considered as initial, i.e. caused by the creation of this view. Only sent if a time based strategy has been used
+       */
+      tns_time_threshold_ms?: number
+      /**
        * The list of events that include feature flags collection. The tracking is always enabled for views and errors.
        */
       track_feature_flags_for_events?: ('vital' | 'resource' | 'action' | 'long_task')[]
