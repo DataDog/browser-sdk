@@ -97,7 +97,7 @@ describe('console error observable', () => {
     }
     triggerError()
     const consoleLog = notifyLog.calls.mostRecent().args[0]
-    expect(consoleLog.handlingStack).toMatch(/^Error:\s+at triggerError (.|\n)*$/)
+    expect(consoleLog.handlingStack).toMatch(/^SDKHandling: Received console error\s+at triggerError (.|\n)*$/)
   })
 
   it('should extract stack from first error', () => {
