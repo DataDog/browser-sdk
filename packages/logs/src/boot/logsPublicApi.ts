@@ -126,7 +126,9 @@ export interface LogsPublicApi extends PublicApi {
   setUser(newUser: User & { id: string }): void
 
   /**
-   * @deprecated Use `setUser` with a user object that requires an `id`.
+   * Set user information to all events, stored in `@usr`
+   *
+   * @deprecated You must specified a user id
    * @see {@link setUser}
    */
   setUser(newUser: User): void
