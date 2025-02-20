@@ -176,7 +176,7 @@ export interface RumConfiguration extends Configuration {
   traceContextInjection: TraceContextInjection
   plugins: RumPlugin[]
   trackFeatureFlagsForEvents: FeatureFlagsForEvents[]
-  profilingSampleRate: number;
+  profilingSampleRate: number
 }
 
 export function validateAndBuildRumConfiguration(
@@ -216,7 +216,7 @@ export function validateAndBuildRumConfiguration(
     return
   }
 
-  const profilingEnabled = isExperimentalFeatureEnabled(ExperimentalFeature.PROFILING);
+  const profilingEnabled = isExperimentalFeatureEnabled(ExperimentalFeature.PROFILING)
 
   const sessionReplaySampleRate = initConfiguration.sessionReplaySampleRate ?? 0
 
@@ -250,7 +250,7 @@ export function validateAndBuildRumConfiguration(
       : TraceContextInjection.SAMPLED,
     plugins: initConfiguration.plugins || [],
     trackFeatureFlagsForEvents: initConfiguration.trackFeatureFlagsForEvents || [],
-    profilingSampleRate: profilingEnabled ? initConfiguration.profilingSampleRate ?? 0 : 0, // Enforce 0 if profiling is not enabled, and set 0 as default when not set.
+    profilingSampleRate: profilingEnabled ? (initConfiguration.profilingSampleRate ?? 0) : 0, // Enforce 0 if profiling is not enabled, and set 0 as default when not set.
     ...baseConfiguration,
   }
 }
