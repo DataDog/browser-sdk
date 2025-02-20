@@ -1,5 +1,5 @@
-import { ExperimentalFeature, isExperimentalFeatureEnabled,performDraw } from '@datadog/browser-core';
-import type { RumSessionManager } from '@datadog/browser-rum-core';
+import { monitorError, performDraw } from '@datadog/browser-core';
+import type { RumSessionManager, ViewHistory } from '@datadog/browser-rum-core';
 import type { RumConfiguration } from '../configuration';
 import type { LifeCycle} from '../lifeCycle';
 import type { createRumProfiler as CreateRumProfilerType } from './profiler';
@@ -11,15 +11,10 @@ export const startProfilingCollection = (
     configuration: RumConfiguration, 
     lifeCycle: LifeCycle,
     session: RumSessionManager,
-    isLongAnimationFrameEnabled: boolean
+    isLongAnimationFrameEnabled: boolean,
+    viewHistory: ViewHistory,
 ) => {
-    if (!isExperimentalFeatureEnabled(ExperimentalFeature.PROFILING_FEATURE)) {
-        // Profiling is not enabled.
-        return DUMMY_STOP;
-    }
-
     // TODO Deobfuscation / SCI
-    // const { commitHash, repositoryUrl } = configuration;
 
     const sampleRate = configuration.profilingSampleRate;
     if (!performDraw(sampleRate)) {
@@ -37,18 +32,17 @@ export const startProfilingCollection = (
         }
         
         profiler = createRumProfiler({
+            configuration,
             endpointBuilder,
             isLongAnimationFrameEnabled,
             lifeCycle,
             session,
         });
 
-        profiler.start(configuration);
+        profiler.start(viewHistory?.findView()?.id);
 
 
-    }).catch(() => {
-        // Nothing to really do if the profiler was not loaded properly.
-    });
+    }).catch(monitorError);
 
     return { stop: () => { profiler?.stop() }  };
 };
