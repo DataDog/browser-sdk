@@ -1,6 +1,5 @@
-import type { HttpResponse, Payload} from 'packages/core/src/transport/httpRequest';
-import { sendXHR } from 'packages/core/src/transport/httpRequest';
-import type { EndpointBuilder, InitConfiguration } from '@datadog/browser-core';
+
+import { sendXHR, type EndpointBuilder, type HttpResponse, type InitConfiguration, type Payload} from '@datadog/browser-core';
 import type {
     RumProfilerTraceExporter,
     RumProfilerTrace,

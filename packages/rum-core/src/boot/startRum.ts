@@ -213,7 +213,7 @@ export function startRum(
   )
 
   // Profiling collection
-  const { stop: stopProfilingCollection } = startProfilingCollection(configuration, lifeCycle, session, isLongAnimationFrameEnabled, getViewContext());
+  const { stop: stopProfilingCollection } = startProfilingCollection(configuration, lifeCycle, session, isLongAnimationFrameEnabled, viewHistory);
   cleanupTasks.push(stopProfilingCollection)
   
   return {

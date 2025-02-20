@@ -1,15 +1,14 @@
 import type { EndpointBuilder, InitConfiguration } from '@datadog/browser-core';
 import { fakeInitConfig } from '../test-utils/fakeConfig';
-import { mockFetch } from '../test-utils/mockFetch';
-import { mockUserAgent } from '../test-utils/mockUserAgent';
+import { mockFetch } from '../test-utils/mockFetch.specHelper';
 import type { RumProfilerTrace } from '../types';
 import {
     disableLongTaskRegistry,
     enableLongTaskRegistry,
 } from '../utils/longTaskRegistry';
 
-import { trace as playgroundTrace } from './__fixtures__/playground-trace';
-import { trace as zeroIndexTrace } from './__fixtures__/zero-index-trace';
+import { trace as playgroundTrace } from './__fixtures__/playgroundTrace';
+import { trace as zeroIndexTrace } from './__fixtures__/zeroIndexTrace';
 import { exportToJSONIntake } from './exportToJsonIntake';
 
 const UUID_PATTERN =
@@ -17,7 +16,7 @@ const UUID_PATTERN =
 
 describe('exportToJSONIntake', () => {
     const { extractIntakeUrlAndFormDataFromFetch } = mockFetch();
-    mockUserAgent();
+
     const endpointBuilder: EndpointBuilder = {
         build: () => new URL('https://example.com').href,
         rawParameters: {
