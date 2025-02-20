@@ -189,7 +189,9 @@ export function startRum(
   const { stop: stopResourceCollection } = startResourceCollection(lifeCycle, configuration, pageStateHistory)
   cleanupTasks.push(stopResourceCollection)
 
-  const isLongAnimationFrameEnabled = PerformanceObserver.supportedEntryTypes?.includes(RumPerformanceEntryType.LONG_ANIMATION_FRAME);
+  const isLongAnimationFrameEnabled = PerformanceObserver.supportedEntryTypes?.includes(
+    RumPerformanceEntryType.LONG_ANIMATION_FRAME
+  )
 
   if (configuration.trackLongTasks) {
     if (isLongAnimationFrameEnabled) {
@@ -214,9 +216,15 @@ export function startRum(
   )
 
   // Profiling collection
-  const { stop: stopProfilingCollection } = startProfilingCollection(configuration, lifeCycle, session, isLongAnimationFrameEnabled, viewHistory);
+  const { stop: stopProfilingCollection } = startProfilingCollection(
+    configuration,
+    lifeCycle,
+    session,
+    isLongAnimationFrameEnabled,
+    viewHistory
+  )
   cleanupTasks.push(stopProfilingCollection)
-  
+
   return {
     addAction,
     addError,
