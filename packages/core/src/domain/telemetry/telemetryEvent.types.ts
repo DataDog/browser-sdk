@@ -106,10 +106,6 @@ export type TelemetryConfigurationEvent = CommonTelemetryProperties & {
        */
       telemetry_usage_sample_rate?: number
       /**
-       * The percentage of sessions profiled.
-       */
-      profiling_sample_rate?: number
-      /**
        * The percentage of requests traced
        */
       trace_sample_rate?: number
