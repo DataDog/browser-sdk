@@ -24,6 +24,7 @@ const MIN_PROFILE_DURATION_MS = 5000; // Require at least 5 seconds of profile d
 const MIN_NUMBER_OF_SAMPLES = 50; // Require at least 50 samples (~500 ms) to report a profile to reduce noise and cost
 
 export function createRumProfiler({
+    configuration, 
     endpointBuilder,
     isLongAnimationFrameEnabled, 
     lifeCycle,
@@ -31,14 +32,14 @@ export function createRumProfiler({
 }: RumProfilerConfig) {
     let observer: PerformanceObserver;
     let instance: RumProfilerInstance = { state: 'stopped' };
-    let listeners: Array<{ stop: () => void }> = [];
+    let cleanupTasks: Array<() => void> = [];
     let applicationId: string;
 
     function supported(): boolean {
         return globalThisProfiler !== undefined;
     }
 
-    function start(configuration: RumConfiguration): void {
+    function start(viewId: string |undefined): void {
         if (instance.state === 'running') {
             return;
         }
@@ -50,22 +51,26 @@ export function createRumProfiler({
             entryTypes: [getLongTaskEntryType(), 'measure', 'event'],
         });
 
-        listeners = [
-            addEventListener(configuration, window, DOM_EVENT.VISIBILITY_CHANGE, handleVisibilityChange),
-            addEventListener(configuration, window, DOM_EVENT.BEFORE_UNLOAD, handleBeforeUnload),
+        cleanupTasks = [
+            () => observer.disconnect(),
+            addEventListener(configuration, window, DOM_EVENT.VISIBILITY_CHANGE, handleVisibilityChange).stop,
+            addEventListener(configuration, window, DOM_EVENT.BEFORE_UNLOAD, handleBeforeUnload).stop,
         ];
 
         // Whenever an Event is collected, when it's a Long Task, we may store the long task id for profiler correlation.
         const rawEventCollectedSubscription = lifeCycle.subscribe(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, (data) => {
             mayStoreLongTaskIdForProfilerCorrelation(data)
         });
-        listeners.push({ stop: () => rawEventCollectedSubscription.unsubscribe() });
+        cleanupTasks.push(rawEventCollectedSubscription.unsubscribe);
 
         // Whenever the View is updated, we add a navigation entry to the profiler instance.
-        const viewUpdatedSubscription = lifeCycle.subscribe(LifeCycleEventType.VIEW_UPDATED, (view) => {
-            handleNavigate(view.name ??'')
+        const viewUpdatedSubscription = lifeCycle.subscribe(LifeCycleEventType.VIEW_CREATED, (view) => {
+            handleNavigate(view.id)
         });
-        listeners.push({ stop: () => viewUpdatedSubscription.unsubscribe() });
+        cleanupTasks.push(viewUpdatedSubscription.unsubscribe);
+
+        // Add initial navigation entry
+        handleNavigate(viewId);
 
         // Start profiler instance
         startNextProfilerInstance();
@@ -78,9 +83,8 @@ export function createRumProfiler({
         // Stop current profiler instance
         stopProfilerInstance('stopped');
 
-        // Cleanup event listeners
-        observer.disconnect();
-        listeners.forEach((listener) => listener.stop());
+        // Cleanup tasks
+        cleanupTasks.forEach((cleanupTask) => cleanupTask());
 
         // Disable Long Task Registry as we no longer need to correlate them with RUM
         disableLongTaskRegistry();
@@ -168,7 +172,7 @@ export function createRumProfiler({
         instance = { state: nextState };
     }
 
-    function collectStartNavigationEntry(viewName: string |undefined): void {
+    function collectStartNavigationEntry(viewId: string |undefined): void {
         if (instance.state !== 'running') {
             return;
         }
@@ -176,25 +180,17 @@ export function createRumProfiler({
         // Add entry to navigation
         instance.navigation.push({
             startTime: performance.now(),
-            name: viewName || document.location.pathname,
+            viewId: viewId || '',
         });
     }
 
     function handleProfilerTrace(trace: RumProfilerTrace): void {
-        performance.mark('rum.profiler.export_time_ms.start');
 
         // Find current session to assign it to the Profile.
         const sessionId = session.findTrackedSession()?.id;
 
         // Send JSON Profile to intake.
-        exportToJSONIntake(trace, endpointBuilder, applicationId, sessionId).catch(() => undefined);
-
-        performance.mark('rum.profiler.export_time_ms.end');
-        performance.measure(
-            'rum.profiler.export_time_ms', 
-            'rum.profiler.export_time_ms.start', 
-            'rum.profiler.export_time_ms.end'
-        );
+        exportToJSONIntake(trace, endpointBuilder, applicationId, sessionId, configuration.site).catch(() => undefined);
     }
 
     function handleSampleBufferFull(): void {
@@ -230,8 +226,8 @@ export function createRumProfiler({
         }
     }
 
-    function handleNavigate(viewName: string |undefined): void {
-        collectStartNavigationEntry(viewName);
+    function handleNavigate(viewId: string |undefined): void {
+        collectStartNavigationEntry(viewId);
     }
 
     function handleVisibilityChange(): void {

@@ -1,5 +1,6 @@
 import type { EndpointBuilder } from '@datadog/browser-core';
-import type { RumSessionManager } from '@datadog/browser-rum-core';
+import type { RumConfiguration, RumSessionManager } from '@datadog/browser-rum-core';
+import type { HttpResponse } from 'packages/core/src/transport/httpRequest';
 import type { LifeCycle } from '../../lifeCycle';
 import type { ProfilerTrace, Profiler } from './profilerApi.types';
 
@@ -7,6 +8,7 @@ import type { ProfilerTrace, Profiler } from './profilerApi.types';
  * Configuration based on init options (with resolved defaults)
  */
 export interface RumProfilerConfig {
+    configuration: RumConfiguration;
     endpointBuilder: EndpointBuilder;
     isLongAnimationFrameEnabled: boolean | undefined;
     lifeCycle: LifeCycle;
@@ -16,8 +18,8 @@ export interface RumProfilerConfig {
 export interface RumNavigationEntry {
     /** Detected start time of navigation */
     readonly startTime: DOMHighResTimeStamp;
-    /** RUM view name or pathname. */
-    readonly name: string;
+    /** RUM view id */
+    readonly viewId: string;
 }
 
 /**
@@ -87,6 +89,7 @@ export type RumProfilerTraceExporter = (
     trace: RumProfilerTrace,
     endpointBuilder: EndpointBuilder,
     applicationId: string,
-    sessionId: string | undefined
-) => Promise<void>;
+    sessionId: string | undefined,
+    site: string | undefined,
+) => Promise<HttpResponse>;
 
