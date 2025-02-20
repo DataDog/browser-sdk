@@ -418,10 +418,10 @@ export function makeRumPublicApi(
       email: { type: 'string' },
     },
   })
-  const accountContextManager = createContextManager('user', {
+  const accountContextManager = createContextManager('account', {
     customerDataTracker: customerDataTrackerManager.getOrCreateTracker(CustomerDataType.User),
     propertiesConfig: {
-      id: { type: 'string' },
+      id: { type: 'string', required: true },
       name: { type: 'string' },
     },
   })
