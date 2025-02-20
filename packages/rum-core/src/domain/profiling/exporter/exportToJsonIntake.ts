@@ -1,4 +1,4 @@
-import type { Payload} from 'packages/core/src/transport/httpRequest';
+import type { HttpResponse, Payload} from 'packages/core/src/transport/httpRequest';
 import { sendXHR } from 'packages/core/src/transport/httpRequest';
 import type { EndpointBuilder, InitConfiguration } from '@datadog/browser-core';
 import type {
@@ -7,12 +7,10 @@ import type {
 } from '../types';
 import { getLongTaskId } from '../utils/longTaskRegistry';
 
-import { getEmptyPprofBlob } from './emptyPprof';
-
 interface ProfileEventAttributes {
     application: { id: string };
     session?: { id: string };
-    view?: { name: string[] };
+    view?: { ids: string[] };
     context?: { profile_long_task_id: string[] };
 }
 interface ProfileEvent extends ProfileEventAttributes{
@@ -31,33 +29,35 @@ export const exportToJSONIntake: RumProfilerTraceExporter = (
     endpointBuilder,
     applicationId,
     sessionId,
+    site
 ) => {
-    const event = createProfileEvent(profilerTrace, endpointBuilder, applicationId, sessionId);
+    const event = createProfileEvent(profilerTrace, endpointBuilder, applicationId, sessionId, site);
     const payload = createProfilePayload(profilerTrace, event)
 
     // Sends profile to public profiling intake.
     const xhrUrl = endpointBuilder.build('xhr', payload)
 
     // Send everything.
-    return new Promise((resolve) =>  sendXHR(xhrUrl, payload.data, resolve));
+    return new Promise<HttpResponse>((resolve) => sendXHR(xhrUrl, payload.data, resolve));
 };
 
 function createProfileEvent(
     profilerTrace: RumProfilerTrace, 
     endpointBuilder: EndpointBuilder, 
     applicationId: string ,
-    sessionId: string | undefined
+    sessionId: string | undefined,
+    site: string |undefined
 ): ProfileEvent {
     const rawParameters = endpointBuilder.rawParameters;
     const profileAttributes = extractProfileEventAttributes(profilerTrace, applicationId, sessionId);
-    const profileEventTags = extractProfileEventTags(rawParameters.configurationTags, rawParameters.initConfiguration)
+    const profileEventTags = extractProfileEventTags(rawParameters.configurationTags, rawParameters.initConfiguration, site)
 
     const start = new Date(profilerTrace.timeOrigin + profilerTrace.startTime)
     const end = new Date(profilerTrace.timeOrigin + profilerTrace.endTime)
     
     const profileEvent: ProfileEvent = {
         ...profileAttributes,
-        attachments: ['wall-time.pprof', 'wall-time.json'],
+        attachments: ['wall-time.json'],
         start: start.toISOString(),
         end: end.toISOString(),
         family: 'chrome',
@@ -67,7 +67,7 @@ function createProfileEvent(
     return profileEvent;
 }
 
-function extractProfileEventTags(configurationTags: string[], initConfiguration: InitConfiguration): string[] {
+function extractProfileEventTags(configurationTags: string[], initConfiguration: InitConfiguration, site: string | undefined): string[] {
 
     const profileEventTags = configurationTags.concat([
         `service:${initConfiguration.service}`,
@@ -78,16 +78,8 @@ function extractProfileEventTags(configurationTags: string[], initConfiguration:
         'family:chrome',
         'format:json',
         // TODO: replace with RUM device id in the future
-        `host:${normalizeTag(navigator.userAgent).slice(0, 200)}`,
+        `host:${site}`,
     ]);
-
-    // TODO deobfuscation is not supported yet
-    // if (config.commitHash) {
-    //     eventTags.push(`git.commit.sha:${config.commitHash}`);
-    // }
-    // if (config.repositoryUrl) {
-    //     eventTags.push(`git.repository_url:${config.repositoryUrl}`);
-    // }
 
     return profileEventTags;
 }
@@ -103,9 +95,6 @@ function createProfilePayload (profilerTrace:RumProfilerTrace, profileEvent: Pro
         'event.json',
     );
     formData.append('wall-time.json', profilerTraceBlob, 'wall-time.json');
-
-    // Temporary workaround. Alongside the JSON with actual data, we always send an empty PPROF file, until our system is fully compatible with JSON.
-    formData.append('wall-time.pprof', getEmptyPprofBlob(), 'wall-time.pprof');
 
     return { data:formData, retry:undefined, encoding:undefined, bytesCount:0};
 }
@@ -132,12 +121,12 @@ function extractProfileEventAttributes(
             id: sessionId,
         };
     }
-    const viewNames = Array.from(
-        new Set(profilerTrace.navigation.map((entry) => entry.name)),
+    const viewIds = Array.from(
+        new Set(profilerTrace.navigation.map((entry) => entry.viewId)),
     );
-    if (viewNames.length) {
+    if (viewIds.length) {
         attributes.view = {
-            name: viewNames,
+            ids: viewIds,
         };
     }
     const longTaskIds: string[] = profilerTrace.longTasks.map((longTask) =>
@@ -150,16 +139,4 @@ function extractProfileEventAttributes(
         };
     }
     return attributes;
-}
-
-/**
- * Replaces unsupported characters with underscores.
- * @param tag Tag value to normalize
- * @returns Normalized tag value
- */
-function normalizeTag(tag: string): string {
-    return tag
-        .replace(/[^a-zA-Z0-9_\-:./]/g, '_')
-        .replace(/__/g, '_')
-        .toLowerCase();
 }

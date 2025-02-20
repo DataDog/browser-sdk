@@ -1,7 +1,6 @@
 import type { EndpointBuilder, InitConfiguration } from '@datadog/browser-core';
 import { fakeInitConfig } from '../test-utils/fakeConfig';
 import { mockFetch } from '../test-utils/mockFetch';
-import { mockSendBeacon } from '../test-utils/mockSendBeacon';
 import { mockUserAgent } from '../test-utils/mockUserAgent';
 import type { RumProfilerTrace } from '../types';
 import {
@@ -17,7 +16,6 @@ const UUID_PATTERN =
     /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/;
 
 describe('exportToJSONIntake', () => {
-    const { extractIntakeUrlAndFormDataFromSendBeacon } = mockSendBeacon(false);
     const { extractIntakeUrlAndFormDataFromFetch } = mockFetch();
     mockUserAgent();
     const endpointBuilder: EndpointBuilder = {
@@ -42,6 +40,7 @@ describe('exportToJSONIntake', () => {
             endpointBuilder,
             'my-application-id',
             'my-session-id',
+            'my-site',
         );
 
         const { intakeUrl: intakeUrlFromFetch, formData: formDataFromFetch } =
@@ -72,7 +71,7 @@ describe('exportToJSONIntake', () => {
         expect(eventBlob.type).toBe('application/json');
         expect(eventBlob.size).toBeGreaterThan(0);
         expect(JSON.parse(await eventBlob.text())).toEqual({
-            attachments: ['wall-time.pprof', 'wall-time.json'],
+            attachments: ['wall-time.json'],
             start: '2001-09-09T01:46:40.000Z',
             end: '2001-09-09T01:46:40.012Z',
             family: 'chrome',
@@ -115,9 +114,12 @@ describe('exportToJSONIntake', () => {
             endpointBuilder,
             'my-application-id',
             'my-session-id',
+            'my-site',
         );
 
-        const { formData } = extractIntakeUrlAndFormDataFromSendBeacon();
+        const { formData } =
+            extractIntakeUrlAndFormDataFromFetch();
+
 
         const wallTimeBlob = formData.get('wall-time.json') as Blob;
         expect(wallTimeBlob).toBeDefined();
