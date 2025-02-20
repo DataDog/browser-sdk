@@ -110,6 +110,10 @@ export type TelemetryConfigurationEvent = CommonTelemetryProperties & {
        */
       trace_sample_rate?: number
       /**
+       * The percentage of users profiled
+       */
+      profiling_sample_rate?: number
+      /**
        * The opt-in configuration to add trace context
        */
       trace_context_injection?: 'all' | 'sampled'
