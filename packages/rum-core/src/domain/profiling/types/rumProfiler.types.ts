@@ -1,4 +1,4 @@
-import type { EndpointBuilder, HttpResponse } from '@datadog/browser-core'
+import type { EndpointBuilder, HttpResponse, TimeoutId } from '@datadog/browser-core'
 import type { LifeCycle } from '../../lifeCycle'
 import type { RumConfiguration } from '../../configuration'
 import type { RumSessionManager } from '../../rumSessionManager'
@@ -72,7 +72,7 @@ export interface RumProfilerRunningInstance extends RumProfilerEnrichmentData {
   /** High resolution time when profiler session started */
   readonly startTime: DOMHighResTimeStamp
   /** Timeout id to stop current session */
-  readonly timeoutId: number
+  readonly timeoutId: TimeoutId
 }
 
 export type RumProfilerInstance = RumProfilerStoppedInstance | RumProfilerPausedInstance | RumProfilerRunningInstance
