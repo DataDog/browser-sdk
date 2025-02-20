@@ -24,6 +24,9 @@ export type SetupFactory = (options: SetupOptions, servers: Servers) => string
 const isBrowserStack = process.env.BROWSER_STACK
 const isContinuousIntegration = Boolean(process.env.CI_JOB_ID)
 
+console.log('isBrowserStack', isBrowserStack)
+console.log('isContinuousIntegration', isContinuousIntegration)
+
 // By default, run tests only with the 'bundle' setup outside of the CI (to run faster on the
 // developer laptop) or with Browser Stack (to limit flakiness).
 export const DEFAULT_SETUPS =

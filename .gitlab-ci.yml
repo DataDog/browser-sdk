@@ -276,8 +276,6 @@ unit-bs:
     - node ./scripts/test/export-test-result.js unit-bs
 
 e2e-bs:
-  stage: browserstack
-  needs: ['e2e']
   extends:
     - .base-configuration
     - .bs-allowed-branches
