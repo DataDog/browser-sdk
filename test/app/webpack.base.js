@@ -1,7 +1,7 @@
 const path = require('path')
 
 const filename = 'app.js'
-module.exports = ({ target, optimization, mode }) => ({
+module.exports = ({ target, optimization, mode, types }) => ({
   mode,
   entry: './app.ts',
   target,
@@ -10,6 +10,14 @@ module.exports = ({ target, optimization, mode }) => ({
       {
         test: /\.ts$/,
         use: 'ts-loader',
+        options: {
+          onlyCompileBundledFiles: true,
+          compilerOptions: {
+            module: 'es2020',
+            allowJs: true,
+            types: types || [],
+          },
+        },
       },
     ],
   },
