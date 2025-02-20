@@ -1,10 +1,12 @@
-import type { Duration } from '@datadog/browser-core'
+import type { Duration, RelativeTime } from '@datadog/browser-core'
 import type { RumConfiguration } from '../../configuration'
+import { measureRestoredFCP, measureRestoredLCP, measureRestoredFID } from './cwvPolyfill'
 import { trackFirstContentfulPaint } from './trackFirstContentfulPaint'
 import type { FirstInput } from './trackFirstInput'
 import { trackFirstInput } from './trackFirstInput'
 import type { NavigationTimings } from './trackNavigationTimings'
 import { trackNavigationTimings } from './trackNavigationTimings'
+import { onBFCacheRestore } from './bfCacheSupport'
 import type { LargestContentfulPaint } from './trackLargestContentfulPaint'
 import { trackLargestContentfulPaint } from './trackLargestContentfulPaint'
 import { trackFirstHidden } from './trackFirstHidden'
@@ -48,6 +50,23 @@ export function trackInitialViewMetrics(
   const { stop: stopFIDTracking } = trackFirstInput(configuration, firstHidden, (firstInput) => {
     initialViewMetrics.firstInput = firstInput
     scheduleViewUpdate()
+  })
+
+  onBFCacheRestore((pageshowEvent) => {
+    measureRestoredFCP(pageshowEvent, (restoredFCP) => {
+      initialViewMetrics.firstContentfulPaint = restoredFCP
+      measureRestoredLCP(pageshowEvent, (restoredLCP) => {
+        initialViewMetrics.largestContentfulPaint = { value: restoredLCP } as LargestContentfulPaint
+        measureRestoredFID(pageshowEvent, (restoredFID) => {
+          initialViewMetrics.firstInput = {
+            delay: restoredFID.delay,
+            time: restoredFID.time as RelativeTime,
+            targetSelector: undefined,
+          }
+          scheduleViewUpdate()
+        })
+      })
+    })
   })
 
   function stop() {
