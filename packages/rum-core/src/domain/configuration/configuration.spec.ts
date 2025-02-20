@@ -547,7 +547,7 @@ describe('serializeRumConfiguration', () => {
         ? `use_${CamelToSnakeCase<Key>}`
         : Key extends 'trackLongTasks'
           ? 'track_long_task' // oops
-          : Key extends 'applicationId' | 'subdomain' | 'remoteConfigurationId'
+          : Key extends 'applicationId' | 'subdomain' | 'remoteConfigurationId'  | 'profilingSampleRate'
             ? never
             : CamelToSnakeCase<Key>
     // By specifying the type here, we can ensure that serializeConfiguration is returning an
@@ -575,8 +575,7 @@ describe('serializeRumConfiguration', () => {
       use_worker_url: true,
       compress_intake_requests: true,
       plugins: [{ name: 'foo', bar: true }],
-      track_feature_flags_for_events: ['vital'],
-      profiling_sample_rate: 0,
+      track_feature_flags_for_events: ['vital']
     })
   })
 })
