@@ -534,7 +534,7 @@ export function makeRumPublicApi(
     getInitConfiguration: monitor(() => deepClone(strategy.initConfiguration)),
 
     addAction: (name, context) => {
-      const handlingStack = createHandlingStack()
+      const handlingStack = createHandlingStack('action')
 
       callMonitored(() => {
         strategy.addAction({
@@ -549,7 +549,7 @@ export function makeRumPublicApi(
     },
 
     addError: (error, context) => {
-      const handlingStack = createHandlingStack()
+      const handlingStack = createHandlingStack('error')
       callMonitored(() => {
         strategy.addError({
           error, // Do not sanitize error here, it is needed unserialized by computeRawError()

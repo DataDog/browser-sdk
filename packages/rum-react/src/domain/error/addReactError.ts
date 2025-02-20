@@ -3,7 +3,7 @@ import { callMonitored, clocksNow, createHandlingStack } from '@datadog/browser-
 import { onRumStart } from '../reactPlugin'
 
 export function addReactError(error: Error, info: ErrorInfo) {
-  const handlingStack = createHandlingStack()
+  const handlingStack = createHandlingStack('react error')
   const startClocks = clocksNow()
   onRumStart((strategy) => {
     callMonitored(() => {
