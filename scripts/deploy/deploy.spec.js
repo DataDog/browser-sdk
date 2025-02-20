@@ -166,7 +166,7 @@ void describe('deploy', () => {
 
     assert.deepEqual(getCloudfrontCommands(), [
       {
-        command: `aws cloudfront create-invalidation --distribution-id E2FP11ZSCFD3EU --paths /datadog-logs-staging.js,/chunks/profiler-${FAKE_CHUNK_HASH}-datadog-rum.js,/chunks/recorder-${FAKE_CHUNK_HASH}-datadog-rum.js,/datadog-rum-staging.js,/chunks/profiler-${FAKE_CHUNK_HASH}-datadog-rum.js,/datadog-rum-slim-staging.js`,
+        command: `aws cloudfront create-invalidation --distribution-id E2FP11ZSCFD3EU --paths /datadog-logs-staging.js,/chunks/profiler-${FAKE_CHUNK_HASH}-datadog-rum.js,/chunks/recorder-${FAKE_CHUNK_HASH}-datadog-rum.js,/datadog-rum-staging.js,/chunks/profiler-${FAKE_CHUNK_HASH}-datadog-rum-slim.js,/datadog-rum-slim-staging.js`,
         env,
       },
     ])
