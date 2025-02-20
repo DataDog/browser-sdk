@@ -1,4 +1,4 @@
-import { addEventListener, clearTimeout, DOM_EVENT } from '@datadog/browser-core'
+import { addEventListener, clearTimeout, setTimeout, DOM_EVENT } from '@datadog/browser-core'
 import { LifeCycleEventType } from '../lifeCycle'
 import { exportToJSONIntake } from './exporter/exportToJsonIntake'
 import type { RumProfilerTrace, RumProfilerInstance, RumProfilerConfig, Profiler } from './types'
