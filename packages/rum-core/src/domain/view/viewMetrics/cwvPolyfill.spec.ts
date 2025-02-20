@@ -7,7 +7,7 @@ describe('cwvPolyfill', () => {
 
   beforeEach(() => {
     originalRAF = window.requestAnimationFrame
-    originalPerformanceNow = performance.now
+    originalPerformanceNow = performance.now.bind(performance)
 
     window.requestAnimationFrame = (cb: FrameRequestCallback): number => {
       cb(performance.now())

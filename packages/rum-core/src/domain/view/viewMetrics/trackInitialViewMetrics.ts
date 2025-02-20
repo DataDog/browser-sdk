@@ -16,6 +16,7 @@ export interface InitialViewMetrics {
   navigationTimings?: NavigationTimings
   largestContentfulPaint?: LargestContentfulPaint
   firstInput?: FirstInput
+  bfCache?: boolean
 }
 
 export function trackInitialViewMetrics(
@@ -53,6 +54,7 @@ export function trackInitialViewMetrics(
   })
 
   onBFCacheRestore((pageshowEvent) => {
+    initialViewMetrics.bfCache = true
     measureRestoredFCP(pageshowEvent, (restoredFCP) => {
       initialViewMetrics.firstContentfulPaint = restoredFCP
       measureRestoredLCP(pageshowEvent, (restoredLCP) => {
