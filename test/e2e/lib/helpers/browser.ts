@@ -39,7 +39,7 @@ export class BrowserLogsManager {
     if (this.logs.some((log) => log.message.includes('Ignoring unsupported entryTypes: '))) {
       // FIXME: fix this at the perfomance observer level as it is visible to customers
       // It used to pass before because it was only happening in Firefox but wdio io did not support console logs for FF
-      addTag('fixme', 'Unnexpected Console log message: "Ignoring unsupported entryTypes: *"')
+      addTag('test.fixme', 'Unnexpected Console log message: "Ignoring unsupported entryTypes: *"')
     }
 
     return filteredLogs
