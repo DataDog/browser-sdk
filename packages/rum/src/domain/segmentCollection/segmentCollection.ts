@@ -1,6 +1,12 @@
 import type { DeflateEncoder, HttpRequest, TimeoutId } from '@datadog/browser-core'
 import { isPageExitReason, ONE_SECOND, clearTimeout, setTimeout } from '@datadog/browser-core'
-import type { LifeCycle, ViewHistory, RumSessionManager, RumConfiguration } from '@datadog/browser-rum-core'
+import type {
+  LifeCycle,
+  ViewHistory,
+  RumSessionManager,
+  RumConfiguration,
+  ReplayStatsHistory,
+} from '@datadog/browser-rum-core'
 import { LifeCycleEventType } from '@datadog/browser-rum-core'
 import type { BrowserRecord, CreationReason, SegmentContext } from '../../types'
 import { buildReplayPayload } from './buildReplayPayload'
@@ -43,6 +49,7 @@ export function startSegmentCollection(
   lifeCycle: LifeCycle,
   configuration: RumConfiguration,
   sessionManager: RumSessionManager,
+  replayStatsHistory: ReplayStatsHistory,
   viewHistory: ViewHistory,
   httpRequest: HttpRequest,
   encoder: DeflateEncoder
@@ -50,6 +57,7 @@ export function startSegmentCollection(
   return doStartSegmentCollection(
     lifeCycle,
     () => computeSegmentContext(configuration.applicationId, sessionManager, viewHistory),
+    replayStatsHistory,
     httpRequest,
     encoder
   )
@@ -77,6 +85,7 @@ type SegmentCollectionState =
 export function doStartSegmentCollection(
   lifeCycle: LifeCycle,
   getSegmentContext: () => SegmentContext | undefined,
+  replayStatsHistory: ReplayStatsHistory,
   httpRequest: HttpRequest,
   encoder: DeflateEncoder
 ) {
@@ -136,7 +145,12 @@ export function doStartSegmentCollection(
 
         state = {
           status: SegmentCollectionStatus.SegmentPending,
-          segment: createSegment({ encoder, context, creationReason: state.nextSegmentCreationReason }),
+          segment: createSegment({
+            encoder,
+            context,
+            creationReason: state.nextSegmentCreationReason,
+            replayStatsHistory,
+          }),
           expirationTimeoutId: setTimeout(() => {
             flushSegment('segment_duration_limit')
           }, SEGMENT_DURATION_LIMIT),

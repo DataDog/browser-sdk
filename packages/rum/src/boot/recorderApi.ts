@@ -13,8 +13,9 @@ import type {
   RecorderApi,
   RumConfiguration,
   StartRecordingOptions,
+  ReplayStatsHistory,
 } from '@datadog/browser-rum-core'
-import { getReplayStats as getReplayStatsImpl } from '../domain/replayStats'
+import { startReplayStatsHistory } from '@datadog/browser-rum-core'
 import type { CreateDeflateWorker } from '../domain/deflate'
 import {
   createDeflateEncoder,
@@ -44,6 +45,8 @@ export function makeRecorderApi(
 
   // eslint-disable-next-line prefer-const
   let { strategy, shouldStartImmediately } = createPreStartStrategy()
+
+  let replayStatsHistory: ReplayStatsHistory | undefined
 
   return {
     start: (options?: StartRecordingOptions) => strategy.start(options),
@@ -76,7 +79,9 @@ export function makeRecorderApi(
       getDeflateWorkerStatus() === DeflateWorkerStatus.Initialized && strategy.isRecording(),
 
     getReplayStats: (viewId) =>
-      getDeflateWorkerStatus() === DeflateWorkerStatus.Initialized ? getReplayStatsImpl(viewId) : undefined,
+      getDeflateWorkerStatus() === DeflateWorkerStatus.Initialized
+        ? replayStatsHistory?.getReplayStats(viewId)
+        : undefined,
   }
 
   function onRumStart(
@@ -106,10 +111,13 @@ export function makeRecorderApi(
       return cachedDeflateEncoder
     }
 
+    replayStatsHistory = startReplayStatsHistory(lifeCycle)
+
     strategy = createPostStartStrategy(
       configuration,
       lifeCycle,
       sessionManager,
+      replayStatsHistory,
       viewHistory,
       loadRecorder,
       getOrCreateDeflateEncoder
