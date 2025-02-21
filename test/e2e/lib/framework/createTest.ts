@@ -274,7 +274,7 @@ async function setUpTest(browserLogsManager: BrowserLogsManager, { baseUrl, page
 
 function tearDownPassedTest({ intakeRegistry, withBrowserLogs }: TestContext) {
   expect(intakeRegistry.telemetryErrorEvents).toHaveLength(0)
-  validateRumFormat(intakeRegistry.rumEvents)
+  expect(() => validateRumFormat(intakeRegistry.rumEvents)).not.toThrow()
   withBrowserLogs((logs) => {
     expect(logs.filter((log) => log.level === 'error')).toHaveLength(0)
   })
