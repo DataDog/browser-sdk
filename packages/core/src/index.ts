@@ -61,7 +61,7 @@ export {
   SESSION_TIME_OUT_DELAY, // Exposed for tests
   SessionPersistence,
 } from './domain/session/sessionConstants'
-export type { HttpRequest, Payload, FlushEvent, FlushReason } from './transport'
+export type { HttpRequest, Payload, FlushEvent, FlushReason, HttpResponse } from './transport'
 export {
   createHttpRequest,
   canUseEventBridge,
@@ -70,6 +70,7 @@ export {
   BridgeCapability,
   startBatchWithReplica,
   createFlushController,
+  sendXHR,
 } from './transport'
 export * from './tools/display'
 export type { Encoder, EncoderResult } from './tools/encoder'
