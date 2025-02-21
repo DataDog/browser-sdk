@@ -17,6 +17,13 @@ const VIEWPORT_META_TAGS = `
 >
 `
 
+function hasNoTouchGestureEmulationSupportViaCDP(browserName: string) {
+  return [
+    browserName !== 'chromium' && browserName !== 'msedge',
+    'only chromium based browser supports touch gestures emulation for now (via CDP)',
+  ] as const
+}
+
 test.describe('recorder', () => {
   test.describe('layout viewport properties', () => {
     createTest('getWindowWidth/Height should not be affected by pinch zoom')
@@ -25,6 +32,7 @@ test.describe('recorder', () => {
       .withBody(html`${VIEWPORT_META_TAGS}`)
       .run(async ({ intakeRegistry, page, flushEvents, browserName }) => {
         test.fixme(browserName === 'msedge', 'In Edge, the ViewportResize record data is off by almost 20px')
+        test.skip(...hasNoTouchGestureEmulationSupportViaCDP(browserName))
 
         await buildScrollablePage(page)
 
@@ -54,7 +62,7 @@ test.describe('recorder', () => {
       .withSetup(bundleSetup)
       .withBody(html`${VIEWPORT_META_TAGS}`)
       .run(async ({ intakeRegistry, flushEvents, page, browserName }) => {
-        test.skip(browserName !== 'chromium', 'only chromium supports touch gestures emulation for now (via CDP)')
+        test.skip(...hasNoTouchGestureEmulationSupportViaCDP(browserName))
 
         const VISUAL_SCROLL_DOWN_PX = 60
         const LAYOUT_SCROLL_AMOUNT = 20
@@ -98,7 +106,7 @@ test.describe('recorder', () => {
       .withSetup(bundleSetup)
       .withBody(html`${VIEWPORT_META_TAGS}`)
       .run(async ({ intakeRegistry, page, flushEvents, browserName }) => {
-        test.skip(browserName !== 'chromium', 'only chromium supports touch gestures emulation for now (via CDP)')
+        test.skip(...hasNoTouchGestureEmulationSupportViaCDP(browserName))
 
         const VISUAL_SCROLL_DOWN_PX = 100
         await buildScrollablePage(page)
@@ -115,7 +123,7 @@ test.describe('recorder', () => {
       .withSetup(bundleSetup)
       .withBody(html`${VIEWPORT_META_TAGS}`)
       .run(async ({ intakeRegistry, page, flushEvents, browserName }) => {
-        test.skip(browserName !== 'chromium', 'only chromium supports touch gestures emulation for now (via CDP)')
+        test.skip(...hasNoTouchGestureEmulationSupportViaCDP(browserName))
 
         await performSignificantZoom(page)
         const nextVisualViewportDimension = await getVisualViewport(page)
