@@ -31,6 +31,7 @@ export function startRuntimeErrorCollection(configuration: LogsConfiguration, li
         origin: ErrorSource.SOURCE,
         status: StatusType.error,
       },
+      messageContext: rawError.context,
     })
   })
 

@@ -313,3 +313,24 @@ describe('isError', () => {
     expect(isError(new iframeWindow.Error())).toBe(true)
   })
 })
+
+describe('tryToGetContext', () => {
+  it('should extract dd_context from an error object', () => {
+    const context = { key: 'value' }
+    const error = new Error('Test error') as any
+    error.dd_context = context
+
+    const rawError = computeRawError({
+      stackTrace: undefined,
+      originalError: error,
+      handlingStack: undefined,
+      componentStack: undefined,
+      startClocks: clocksNow(),
+      nonErrorPrefix: NonErrorPrefix.UNCAUGHT,
+      source: ErrorSource.CUSTOM,
+      handling: ErrorHandling.HANDLED,
+    })
+
+    expect(rawError.context).toEqual(context)
+  })
+})

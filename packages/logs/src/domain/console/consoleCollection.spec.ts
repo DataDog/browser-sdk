@@ -1,4 +1,4 @@
-import type { ErrorWithCause } from '@datadog/browser-core'
+import type { Context, ErrorWithCause } from '@datadog/browser-core'
 import { ErrorHandling, ErrorSource, noop, objectEntries } from '@datadog/browser-core'
 import type { RawConsoleLogsEvent } from '../../rawLogsEvent.types'
 import { validateAndBuildLogsConfiguration } from '../configuration'
@@ -100,6 +100,23 @@ describe('console collection', () => {
       kind: undefined,
       message: undefined,
     })
+  })
+
+  it('should retrieve dd_context from console', () => {
+    ;({ stop: stopConsoleCollection } = startConsoleCollection(
+      validateAndBuildLogsConfiguration({ ...initConfiguration, forwardErrorsToLogs: true })!,
+      lifeCycle
+    ))
+    interface DatadogError extends Error {
+      dd_context?: Context
+    }
+    const error = new Error('foo')
+    ;(error as DatadogError).dd_context = { foo: 'bar' }
+
+    // eslint-disable-next-line no-console
+    console.error(error)
+
+    expect(rawLogsEvents[0].messageContext).toEqual({ foo: 'bar' })
   })
 
   it('should retrieve causes from console error', () => {

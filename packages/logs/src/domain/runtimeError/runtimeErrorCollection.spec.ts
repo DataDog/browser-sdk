@@ -121,4 +121,22 @@ describe('runtime error collection', () => {
       done()
     }, 10)
   })
+
+  it('should retrieve dd_context from runtime errors', (done) => {
+    interface DatadogError extends Error {
+      dd_context?: Record<string, unknown>
+    }
+
+    const error = new Error('Error with dd_context') as DatadogError
+    error.dd_context = { foo: 'barr' }
+    ;({ stop: stopRuntimeErrorCollection } = startRuntimeErrorCollection(configuration, lifeCycle))
+    setTimeout(() => {
+      throw error
+    })
+
+    setTimeout(() => {
+      expect(rawLogsEvents[0].messageContext).toEqual({ foo: 'barr' })
+      done()
+    }, 10)
+  })
 })

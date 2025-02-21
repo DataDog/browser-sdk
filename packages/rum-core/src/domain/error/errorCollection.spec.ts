@@ -301,5 +301,23 @@ describe('error collection', () => {
 
       expect((rawRumEvents[0].rawRumEvent as RawRumErrorEvent).error.csp?.disposition).toEqual('enforce')
     })
+
+    it('should merge dd_context from the original error with addError context', () => {
+      setupErrorCollection()
+      const error = new Error('foo')
+      ;(error as any).dd_context = { component: 'Menu', param: 123 }
+
+      addError({
+        error,
+        context: { user: 'john' },
+        handlingStack: 'Error: handling dd_context',
+        startClocks: { relative: 500 as RelativeTime, timeStamp: 500000 as TimeStamp },
+      })
+      expect(rawRumEvents[0].customerContext).toEqual({
+        component: 'Menu',
+        param: 123,
+        user: 'john',
+      })
+    })
   })
 })
