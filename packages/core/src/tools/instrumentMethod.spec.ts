@@ -125,7 +125,7 @@ describe('instrumentMethod', () => {
     foo()
 
     expect(instrumentationSpy.calls.mostRecent().args[0].handlingStack).toEqual(
-      jasmine.stringMatching(/^HandlingStack: Received instrumented method\n {2}at foo @/)
+      jasmine.stringMatching(/^HandlingStack: instrumented method\n {2}at foo @/)
     )
   })
 

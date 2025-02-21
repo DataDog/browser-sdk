@@ -18,7 +18,7 @@ export function createHandlingStack(
    * in order to keep only the user calls
    */
   const internalFramesToSkip = 2
-  const error = new Error(`Received ${type}`)
+  const error = new Error(type)
   error.name = 'HandlingStack'
   let formattedStack: string
 
