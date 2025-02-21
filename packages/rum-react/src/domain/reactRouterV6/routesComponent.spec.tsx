@@ -1,4 +1,4 @@
-import React,{ act }  from 'react'
+import React, { act } from 'react'
 
 import { MemoryRouter, Route, useNavigate } from 'react-router-dom'
 import { initializeReactPlugin } from '../../../test/initializeReactPlugin'

@@ -1,5 +1,4 @@
-import React, {act} from 'react'
-
+import React, { act } from 'react'
 
 import { disableJasmineUncaughtExceptionTracking } from '../../../../core/test'
 import { appendComponent } from '../../../test/appendComponent'

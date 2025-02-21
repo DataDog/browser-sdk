@@ -1,4 +1,4 @@
-import React, { useEffect, useLayoutEffect,act } from 'react'
+import React, { useEffect, useLayoutEffect, act } from 'react'
 import { appendComponent } from '../../../test/appendComponent'
 import { initializeReactPlugin } from '../../../test/initializeReactPlugin'
 import type { Clock } from '../../../../core/test'

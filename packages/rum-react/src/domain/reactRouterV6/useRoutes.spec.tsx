@@ -1,4 +1,4 @@
-import React, {act} from 'react'
+import React, { act } from 'react'
 
 import type { RouteObject } from 'react-router-dom'
 import { MemoryRouter, useNavigate } from 'react-router-dom'
