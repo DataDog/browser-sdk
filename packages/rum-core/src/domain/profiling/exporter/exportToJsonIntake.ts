@@ -1,10 +1,5 @@
-import {
-  sendXHR,
-  type EndpointBuilder,
-  type HttpResponse,
-  type InitConfiguration,
-  type Payload,
-} from '@datadog/browser-core'
+import type { EndpointBuilder, HttpResponse, InitConfiguration, Payload } from '@datadog/browser-core'
+import { sendXHR } from '@datadog/browser-core'
 import type { RumProfilerTraceExporter, RumProfilerTrace } from '../types'
 import { getLongTaskId } from '../utils/longTaskRegistry'
 
