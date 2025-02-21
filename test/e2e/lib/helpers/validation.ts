@@ -2,6 +2,7 @@ import fs from 'fs'
 import type { RumEvent } from '@datadog/browser-rum'
 import ajv from 'ajv'
 import { globSync } from 'glob'
+import { expect } from '@playwright/test'
 
 export function validateRumFormat(events: RumEvent[]) {
   const instance = new ajv({
@@ -14,8 +15,6 @@ export function validateRumFormat(events: RumEvent[]) {
 
   events.forEach((rumEvent) => {
     void instance.validate('rum-events-schema.json', rumEvent)
-    if (instance.errors) {
-      instance.errors.map((error) => fail(`event/${error.instancePath || ''} ${error.message!}`))
-    }
+    expect(instance.errors).toBe(null)
   })
 }

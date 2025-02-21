@@ -1,3 +1,4 @@
+import type { Page } from '@playwright/test'
 import { waitForServersIdle } from './httpServers'
 
 /**
@@ -10,11 +11,14 @@ import { waitForServersIdle } from './httpServers'
  * As a workaround, this function delays the `waitForServersIdle()` call by doing a browser
  * roundtrip, ensuring requests have plenty of time to reach the local server.
  */
-export async function waitForRequests() {
-  await browser.executeAsync((done) =>
-    setTimeout(() => {
-      done(undefined)
-    }, 200)
+export async function waitForRequests(page: Page) {
+  await page.evaluate(
+    () =>
+      new Promise((resolve) => {
+        setTimeout(() => {
+          resolve(undefined)
+        }, 200)
+      })
   )
   await waitForServersIdle()
 }
