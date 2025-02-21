@@ -349,15 +349,20 @@ function LongTaskDescription({ event }: { event: RumLongTaskEvent }) {
 function VitalDescription({ event }: { event: RumVitalEvent }) {
   const vitalName = event.vital.name
   const vitalValue = event.vital.duration
-  const vitalDetails = event.vital.details
+  const vitalDescription = event.vital.description
   return (
     <>
       Custom <Emphasis>{event.vital.type}</Emphasis> vital:{' '}
       <Emphasis>
         {vitalName}
-        {vitalDetails && ` - ${vitalDetails}`}
-      </Emphasis>{' '}
-      of <Emphasis>{vitalValue}</Emphasis>
+        {vitalDescription && ` - ${vitalDescription}`}
+      </Emphasis>
+      {vitalValue !== undefined && (
+        <>
+          {' '}
+          of <Emphasis>{formatDuration(vitalValue)}</Emphasis>
+        </>
+      )}
     </>
   )
 }
