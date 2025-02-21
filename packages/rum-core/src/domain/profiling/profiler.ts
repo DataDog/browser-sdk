@@ -90,10 +90,10 @@ export function createRumProfiler({
     collectProfilerInstance()
 
     const profiler = new globalThisProfiler({
-        sampleInterval: SAMPLE_INTERVAL_MS,
-        // Keep buffer size at 1.5 times of minimum required to collect data for a profiling instance
-        maxBufferSize: Math.round((COLLECT_INTERVAL_MS * 1.5) / SAMPLE_INTERVAL_MS),
-      });
+      sampleInterval: SAMPLE_INTERVAL_MS,
+      // Keep buffer size at 1.5 times of minimum required to collect data for a profiling instance
+      maxBufferSize: Math.round((COLLECT_INTERVAL_MS * 1.5) / SAMPLE_INTERVAL_MS),
+    })
 
     instance = {
       state: 'running',
