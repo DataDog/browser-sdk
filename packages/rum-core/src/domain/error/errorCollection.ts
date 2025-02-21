@@ -16,8 +16,6 @@ import { RumEventType } from '../../rawRumEvent.types'
 import type { LifeCycle, RawRumEventCollectedData } from '../lifeCycle'
 import { LifeCycleEventType } from '../lifeCycle'
 import type { CommonContext } from '../contexts/commonContext'
-import type { PageStateHistory } from '../contexts/pageStateHistory'
-import { PageState } from '../contexts/pageStateHistory'
 import type { RumErrorEventDomainContext } from '../../domainContext.types'
 import { trackConsoleError } from './trackConsoleError'
 import { trackReportError } from './trackReportError'
@@ -30,11 +28,7 @@ export interface ProvidedError {
   componentStack?: string
 }
 
-export function startErrorCollection(
-  lifeCycle: LifeCycle,
-  configuration: RumConfiguration,
-  pageStateHistory: PageStateHistory
-) {
+export function startErrorCollection(lifeCycle: LifeCycle, configuration: RumConfiguration) {
   const errorObservable = new Observable<RawError>()
 
   trackConsoleError(errorObservable)
@@ -43,15 +37,15 @@ export function startErrorCollection(
 
   errorObservable.subscribe((error) => lifeCycle.notify(LifeCycleEventType.RAW_ERROR_COLLECTED, { error }))
 
-  return doStartErrorCollection(lifeCycle, pageStateHistory)
+  return doStartErrorCollection(lifeCycle)
 }
 
-export function doStartErrorCollection(lifeCycle: LifeCycle, pageStateHistory: PageStateHistory) {
+export function doStartErrorCollection(lifeCycle: LifeCycle) {
   lifeCycle.subscribe(LifeCycleEventType.RAW_ERROR_COLLECTED, ({ error, customerContext, savedCommonContext }) => {
     lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, {
       customerContext,
       savedCommonContext,
-      ...processError(error, pageStateHistory),
+      ...processError(error),
     })
   })
 
@@ -81,7 +75,7 @@ export function doStartErrorCollection(lifeCycle: LifeCycle, pageStateHistory: P
   }
 }
 
-function processError(error: RawError, pageStateHistory: PageStateHistory): RawRumEventCollectedData<RawRumErrorEvent> {
+function processError(error: RawError): RawRumEventCollectedData<RawRumErrorEvent> {
   const rawRumEvent: RawRumErrorEvent = {
     date: error.startClocks.timeStamp,
     error: {
@@ -99,7 +93,6 @@ function processError(error: RawError, pageStateHistory: PageStateHistory): RawR
       csp: error.csp,
     },
     type: RumEventType.ERROR as const,
-    view: { in_foreground: pageStateHistory.wasInPageStateAt(PageState.ACTIVE, error.startClocks.relative) },
   }
 
   const domainContext: RumErrorEventDomainContext = {

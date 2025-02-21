@@ -1,14 +1,12 @@
 import type { RelativeTime, TimeStamp, ErrorWithCause } from '@datadog/browser-core'
 import { ErrorHandling, ErrorSource, NO_ERROR_STACK_PRESENT_MESSAGE } from '@datadog/browser-core'
 import { FAKE_CSP_VIOLATION_EVENT } from '@datadog/browser-core/test'
-import { collectAndValidateRawRumEvents, mockPageStateHistory } from '../../../test'
+import { collectAndValidateRawRumEvents } from '../../../test'
 import type { RawRumErrorEvent, RawRumEvent } from '../../rawRumEvent.types'
 import { RumEventType } from '../../rawRumEvent.types'
 import type { RawRumEventCollectedData } from '../lifeCycle'
 import { LifeCycle, LifeCycleEventType } from '../lifeCycle'
 import { doStartErrorCollection } from './errorCollection'
-
-const basePageStateHistory = mockPageStateHistory({ wasInPageStateAt: () => true })
 
 describe('error collection', () => {
   let lifeCycle: LifeCycle
@@ -17,7 +15,7 @@ describe('error collection', () => {
 
   function setupErrorCollection() {
     lifeCycle = new LifeCycle()
-    ;({ addError } = doStartErrorCollection(lifeCycle, basePageStateHistory))
+    ;({ addError } = doStartErrorCollection(lifeCycle))
 
     rawRumEvents = collectAndValidateRawRumEvents(lifeCycle)
   }
@@ -93,9 +91,6 @@ describe('error collection', () => {
               csp: undefined,
             },
             type: RumEventType.ERROR,
-            view: {
-              in_foreground: true,
-            },
           },
           savedCommonContext: undefined,
           startTime: 1234 as RelativeTime,
@@ -269,9 +264,6 @@ describe('error collection', () => {
           causes: undefined,
           fingerprint: undefined,
           csp: undefined,
-        },
-        view: {
-          in_foreground: true,
         },
         type: RumEventType.ERROR,
       })

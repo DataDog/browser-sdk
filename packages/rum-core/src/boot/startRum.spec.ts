@@ -99,7 +99,6 @@ function startRumStub(
     domMutationObservable,
     windowOpenObservable,
     locationChangeObservable,
-    pageStateHistory,
     noopRecorderApi,
     viewHistory
   )

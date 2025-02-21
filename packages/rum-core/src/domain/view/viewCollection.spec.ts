@@ -2,18 +2,11 @@ import { Observable } from '@datadog/browser-core'
 import type { Duration, RelativeTime, ServerDuration, TimeStamp } from '@datadog/browser-core'
 import { mockClock, registerCleanupTask } from '@datadog/browser-core/test'
 import type { RecorderApi } from '../../boot/rumPublicApi'
-import {
-  collectAndValidateRawRumEvents,
-  mockPageStateHistory,
-  mockRumConfiguration,
-  mockViewHistory,
-  noopRecorderApi,
-} from '../../../test'
+import { collectAndValidateRawRumEvents, mockRumConfiguration, mockViewHistory, noopRecorderApi } from '../../../test'
 import type { RawRumEvent, RawRumViewEvent } from '../../rawRumEvent.types'
 import { RumEventType, ViewLoadingType } from '../../rawRumEvent.types'
 import type { RawRumEventCollectedData } from '../lifeCycle'
 import { LifeCycle, LifeCycleEventType } from '../lifeCycle'
-import { PageState } from '../contexts/pageStateHistory'
 import type { RumConfiguration } from '../configuration'
 import type { LocationChange } from '../../browser/locationChangeObservable'
 import type { Hooks } from '../../hooks'
@@ -98,12 +91,6 @@ describe('viewCollection', () => {
       domMutationObservable,
       windowOpenObservable,
       locationChangeObservable,
-      mockPageStateHistory({
-        findAll: () => [
-          { start: 0 as ServerDuration, state: PageState.ACTIVE },
-          { start: 10 as ServerDuration, state: PageState.PASSIVE },
-        ],
-      }),
       {
         ...noopRecorderApi,
         getReplayStats: getReplayStatsSpy,
@@ -130,10 +117,6 @@ describe('viewCollection', () => {
       _dd: {
         document_version: 3,
         replay_stats: undefined,
-        page_states: [
-          { start: 0 as ServerDuration, state: PageState.ACTIVE },
-          { start: 10 as ServerDuration, state: PageState.PASSIVE },
-        ],
         configuration: {
           start_session_replay_recording_manually: jasmine.any(Boolean),
         },
