@@ -219,23 +219,13 @@ e2e:
   interruptible: true
   artifacts:
     when: always
-    paths: ['test-report/e2e/specs.log']
     reports:
       junit: test-report/e2e/*.xml
   script:
     - yarn
-    - FORCE_COLOR=1 yarn test:e2e
+    - FORCE_COLOR=1 yarn test:e2e:ci
   after_script:
     - node ./scripts/test/export-test-result.js e2e
-
-e2e-developer-extension:
-  extends:
-    - .base-configuration
-    - .test-allowed-branches
-  interruptible: true
-  script:
-    - yarn
-    - yarn test:e2e:developer-extension
 
 check-licenses:
   extends:
@@ -267,6 +257,7 @@ check-schemas:
 
 unit-bs:
   stage: browserstack
+  needs: ['unit']
   extends:
     - .base-configuration
     - .bs-allowed-branches
@@ -283,6 +274,7 @@ unit-bs:
 
 e2e-bs:
   stage: browserstack
+  needs: ['e2e']
   extends:
     - .base-configuration
     - .bs-allowed-branches
@@ -292,12 +284,11 @@ e2e-bs:
   timeout: 35 minutes
   artifacts:
     when: always
-    paths: ['test-report/e2e-bs/specs.log']
     reports:
       junit: test-report/e2e-bs/*.xml
   script:
     - yarn
-    - FORCE_COLOR=1 ./scripts/test/ci-bs.sh test:e2e
+    - FORCE_COLOR=1 ./scripts/test/ci-bs.sh test:e2e:ci
   after_script:
     - node ./scripts/test/export-test-result.js e2e-bs
 

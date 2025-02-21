@@ -8,7 +8,7 @@
     "moduleResolution": "node",
     "resolveJsonModule": true,
     "target": "ES2015",
-    "types": ["node", "jasmine", "@wdio/globals/types", "ajv"],
+    "types": ["node", "ajv"],
     "allowJs": true
   },
   "ts-node": {

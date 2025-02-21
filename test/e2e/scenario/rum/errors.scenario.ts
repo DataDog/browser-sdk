@@ -1,6 +1,6 @@
 import type { RumErrorEvent } from '@datadog/browser-rum-core'
-import { createTest, flushEvents, html } from '../../lib/framework'
-import { getBrowserName, getPlatformName, withBrowserLogs } from '../../lib/helpers/browser'
+import { test, expect } from '@playwright/test'
+import { createTest, html } from '../../lib/framework'
 
 // Note: using `browser.execute` to throw exceptions may result in "Script error." being reported,
 // because WDIO is evaluating the script in a different context than the page.
@@ -19,36 +19,36 @@ function createBody(errorGenerator: string) {
   `
 }
 
-describe('rum errors', () => {
+test.describe('rum errors', () => {
   createTest('send console.error errors')
     .withRum()
     .withBody(createBody('console.error("oh snap")'))
-    .run(async ({ intakeRegistry, baseUrl }) => {
-      const button = await $('button')
+    .run(async ({ page, intakeRegistry, baseUrl, flushEvents, withBrowserLogs }) => {
+      const button = page.locator('button')
       await button.click()
 
       await flushEvents()
-      expect(intakeRegistry.rumErrorEvents.length).toBe(1)
+      expect(intakeRegistry.rumErrorEvents).toHaveLength(1)
       expectError(intakeRegistry.rumErrorEvents[0].error, {
         message: 'oh snap',
         source: 'console',
         handlingStack: ['Error: ', `handler @ ${baseUrl}/:`],
         handling: 'handled',
       })
-      await withBrowserLogs((browserLogs) => {
-        expect(browserLogs.length).toEqual(1)
+      withBrowserLogs((browserLogs) => {
+        expect(browserLogs).toHaveLength(1)
       })
     })
 
   createTest('pass Error instance to console.error')
     .withRum()
     .withBody(createBody('console.error("Foo:", foo())'))
-    .run(async ({ intakeRegistry, baseUrl }) => {
-      const button = await $('button')
+    .run(async ({ page, flushEvents, intakeRegistry, baseUrl, withBrowserLogs }) => {
+      const button = page.locator('button')
       await button.click()
 
       await flushEvents()
-      expect(intakeRegistry.rumErrorEvents.length).toBe(1)
+      expect(intakeRegistry.rumErrorEvents).toHaveLength(1)
       expectError(intakeRegistry.rumErrorEvents[0].error, {
         message: 'Foo: Error: oh snap',
         source: 'console',
@@ -56,60 +56,60 @@ describe('rum errors', () => {
         handlingStack: ['Error: ', `handler @ ${baseUrl}/:`],
         handling: 'handled',
       })
-      await withBrowserLogs((browserLogs) => {
-        expect(browserLogs.length).toEqual(1)
+      withBrowserLogs((browserLogs) => {
+        expect(browserLogs).toHaveLength(1)
       })
     })
 
   createTest('send uncaught exceptions')
     .withRum()
     .withBody(createBody('throw foo()'))
-    .run(async ({ intakeRegistry, baseUrl }) => {
-      const button = await $('button')
+    .run(async ({ page, flushEvents, intakeRegistry, baseUrl, withBrowserLogs }) => {
+      const button = page.locator('button')
       await button.click()
 
       await flushEvents()
-      expect(intakeRegistry.rumErrorEvents.length).toBe(1)
+      expect(intakeRegistry.rumErrorEvents).toHaveLength(1)
       expectError(intakeRegistry.rumErrorEvents[0].error, {
         message: 'oh snap',
         source: 'source',
         stack: ['Error: oh snap', `at foo @ ${baseUrl}/:`, `handler @ ${baseUrl}/:`],
         handling: 'unhandled',
       })
-      await withBrowserLogs((browserLogs) => {
-        expect(browserLogs.length).toEqual(1)
+      withBrowserLogs((browserLogs) => {
+        expect(browserLogs).toHaveLength(1)
       })
     })
 
   createTest('send unhandled rejections')
     .withRum()
     .withBody(createBody('Promise.reject(foo())'))
-    .run(async ({ intakeRegistry, baseUrl }) => {
-      const button = await $('button')
+    .run(async ({ flushEvents, page, intakeRegistry, baseUrl, withBrowserLogs }) => {
+      const button = page.locator('button')
       await button.click()
 
       await flushEvents()
-      expect(intakeRegistry.rumErrorEvents.length).toBe(1)
+      expect(intakeRegistry.rumErrorEvents).toHaveLength(1)
       expectError(intakeRegistry.rumErrorEvents[0].error, {
         message: 'oh snap',
         source: 'source',
         stack: ['Error: oh snap', `at foo @ ${baseUrl}/:`, `handler @ ${baseUrl}/:`],
         handling: 'unhandled',
       })
-      await withBrowserLogs((browserLogs) => {
-        expect(browserLogs.length).toEqual(1)
+      withBrowserLogs((browserLogs) => {
+        expect(browserLogs).toHaveLength(1)
       })
     })
 
   createTest('send custom errors')
     .withRum()
     .withBody(createBody('DD_RUM.addError(foo())'))
-    .run(async ({ intakeRegistry, baseUrl }) => {
-      const button = await $('button')
+    .run(async ({ flushEvents, page, intakeRegistry, baseUrl, withBrowserLogs }) => {
+      const button = page.locator('button')
       await button.click()
 
       await flushEvents()
-      expect(intakeRegistry.rumErrorEvents.length).toBe(1)
+      expect(intakeRegistry.rumErrorEvents).toHaveLength(1)
       expectError(intakeRegistry.rumErrorEvents[0].error, {
         message: 'oh snap',
         source: 'custom',
@@ -117,49 +117,48 @@ describe('rum errors', () => {
         handlingStack: ['Error: ', `handler @ ${baseUrl}/:`],
         handling: 'handled',
       })
-      await withBrowserLogs((browserLogs) => {
-        expect(browserLogs.length).toEqual(0)
+      withBrowserLogs((browserLogs) => {
+        expect(browserLogs).toHaveLength(0)
       })
     })
 
-  // Ignore this test on Safari and firefox untill we upgrade because:
-  // - Safari < 15 don't report the property disposition
-  // - Firefox < 99 don't report csp violation at all
-  // TODO: Remove this condition when upgrading to Safari 15 and Firefox 99 (see: https://datadoghq.atlassian.net/browse/RUM-1063)
-  if (!((getBrowserName() === 'safari' && getPlatformName() === 'macos') || getBrowserName() === 'firefox')) {
-    createTest('send CSP violation errors')
-      .withRum()
-      .withBody(
-        createBody(`
+  createTest('send CSP violation errors')
+    .withRum()
+    .withBody(
+      createBody(`
       const script = document.createElement('script');
       script.src = "https://example.com/foo.js"
       document.body.appendChild(script)
       `)
-      )
-      .run(async ({ intakeRegistry, baseUrl }) => {
-        const button = await $('button')
-        await button.click()
+    )
+    .run(async ({ page, browserName, intakeRegistry, baseUrl, flushEvents, withBrowserLogs }) => {
+      const button = page.locator('button')
+      await button.click()
 
-        await flushEvents()
+      await flushEvents()
 
-        expect(intakeRegistry.rumErrorEvents.length).toBe(1)
-        expectError(intakeRegistry.rumErrorEvents[0].error, {
-          message: /^csp_violation: 'https:\/\/example\.com\/foo\.js' blocked by 'script-src(-elem)?' directive$/,
-          source: 'report',
-          stack: [
-            /^script-src(-elem)?: 'https:\/\/example\.com\/foo\.js' blocked by 'script-src(-elem)?' directive of the policy/,
-            `  at <anonymous> @ ${baseUrl}/:`,
-          ],
-          handling: 'unhandled',
-          csp: {
-            disposition: 'enforce',
-          },
-        })
-        await withBrowserLogs((browserLogs) => {
-          expect(browserLogs.length).toEqual(1)
-        })
+      expect(intakeRegistry.rumErrorEvents).toHaveLength(1)
+      expectError(intakeRegistry.rumErrorEvents[0].error, {
+        message: /^csp_violation: 'https:\/\/example\.com\/foo\.js' blocked by 'script-src(-elem)?' directive$/,
+        source: 'report',
+        stack: [
+          /^script-src(-elem)?: 'https:\/\/example\.com\/foo\.js' blocked by 'script-src(-elem)?' directive of the policy/,
+          `  at <anonymous> @ ${baseUrl}/:`,
+        ],
+        handling: 'unhandled',
+        csp: {
+          disposition: 'enforce',
+        },
       })
-  }
+      withBrowserLogs((browserLogs) => {
+        if (browserName === 'firefox') {
+          // Firefox has an additional Warning log: "Loading failed for the <script> with source 'https://example.com/foo.js'"
+          expect(browserLogs).toHaveLength(2)
+        } else {
+          expect(browserLogs).toHaveLength(1)
+        }
+      })
+    })
 })
 
 function expectError(
@@ -189,7 +188,9 @@ function expectStack(stack: string | undefined, expectedLines?: Array<string | R
   } else {
     expect(stack).toBeDefined()
     const actualLines = stack!.split('\n')
-    expect(actualLines.length).toBe(expectedLines.length)
+    expect.soft(actualLines.length).toBeGreaterThanOrEqual(expectedLines.length)
+    expect.soft(actualLines.length).toBeLessThanOrEqual(expectedLines.length + 1) // FF have one more line of stack
+
     expectedLines.forEach((line, i) => {
       if (typeof line !== 'string') {
         return expect(actualLines[i]).toMatch(line)

@@ -62,7 +62,10 @@ cmd_build_json2type () {
 
 cmd_release () {
   [[ `git branch --show-current` != "main" ]] || fail 'please do not release from `main` branch'
-  yarn lerna version --exact
+  # We should publish all packages regardless of if there are changes in each.
+  # --force-publish will skip the `lerna changed` check for changed packages
+  # https://github.com/lerna/lerna/tree/main/libs/commands/version#--force-publish
+  yarn lerna version --exact --force-publish
 }
 
 cmd_version () {

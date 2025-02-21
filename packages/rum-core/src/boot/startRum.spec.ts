@@ -83,6 +83,7 @@ function startRumStub(
     () => ({
       context: {},
       user: {},
+      account: {},
       hasReplay: undefined,
     }),
     reportError
@@ -332,7 +333,7 @@ describe('view events', () => {
       mockRumConfiguration(),
       noopRecorderApi,
       createCustomerDataTrackerManager(),
-      () => ({ user: {}, context: {}, hasReplay: undefined }),
+      () => ({ user: {}, context: {}, account: {}, hasReplay: undefined }),
       undefined,
       createIdentityEncoder,
       createTrackingConsentState(TrackingConsent.GRANTED),

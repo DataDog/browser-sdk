@@ -1,126 +1,87 @@
-import * as os from 'os'
+import type { BrowserContext, Page } from '@playwright/test'
+import { addTag } from './tags'
 
-// To keep tests sane, ensure we got a fixed list of possible platforms and browser names.
-const validPlatformNames = ['windows', 'macos', 'linux', 'ios', 'android'] as const
-const validBrowserNames = ['edge', 'safari', 'chrome', 'firefox'] as const
+export function getBrowserName(name: string) {
+  const lowerCaseName = name.toLowerCase()
 
-export function getBrowserName(): (typeof validBrowserNames)[number] {
-  const capabilities = browser.capabilities
-
-  // Look for the browser name in capabilities. It should always be there as long as we don't change
-  // the browser capabilities format.
-  if (!('browserName' in capabilities) || typeof capabilities.browserName !== 'string') {
-    throw new Error("Can't get browser name (no browser name)")
-  }
-  let browserName = capabilities.browserName.toLowerCase()
-  if (browserName === 'msedge') {
-    browserName = 'edge'
-  } else if (browserName === 'chrome-headless-shell') {
-    browserName = 'chrome'
-  }
-  if (!includes(validBrowserNames, browserName)) {
-    throw new Error(`Can't get browser name (invalid browser name ${browserName})`)
+  if (lowerCaseName.includes('firefox')) {
+    return 'firefox'
   }
 
-  return browserName
+  if (lowerCaseName.includes('edge')) {
+    return 'msedge'
+  }
+
+  if (lowerCaseName.includes('webkit')) {
+    return 'webkit'
+  }
+
+  return 'chromium'
 }
 
-export function getPlatformName(): (typeof validPlatformNames)[number] {
-  const capabilities = browser.capabilities
-
-  let platformName: string
-  if ('bstack:options' in capabilities && capabilities['bstack:options']) {
-    // Look for the platform name in browserstack options. It might not be always there, for example
-    // when we run the test locally. This should be adjusted when we are changing the browser
-    // capabilities format.
-    platformName = (capabilities['bstack:options'] as any).os
-  } else {
-    // The test is run locally, use the local os name
-    platformName = os.type()
-  }
-
-  platformName = platformName.toLowerCase()
-  if (/^(mac ?os|os ?x|mac ?os ?x|darwin)$/.test(platformName)) {
-    platformName = 'macos'
-  } else if (platformName === 'windows_nt') {
-    platformName = 'windows'
-  }
-  if (!includes(validPlatformNames, platformName)) {
-    throw new Error(`Can't get platform name (invalid platform name ${platformName})`)
-  }
-
-  return platformName
-}
-
-function includes<T>(list: readonly T[], item: unknown): item is T {
-  return list.includes(item as any)
-}
-
-interface BrowserLog {
-  level: string
+export interface BrowserLog {
+  level: 'log' | 'debug' | 'info' | 'error' | 'warning'
   message: string
   source: string
   timestamp: number
 }
 
-export async function withBrowserLogs(fn: (logs: BrowserLog[]) => void) {
-  // browser.getLogs is not defined when using a remote webdriver service. We should find an
-  // alternative at some point.
-  // https://github.com/webdriverio/webdriverio/issues/4275
-  if (browser.getLogs) {
-    const logs = (await browser.getLogs('browser')) as BrowserLog[]
-    fn(logs)
+export class BrowserLogsManager {
+  private logs: BrowserLog[] = []
+
+  add(log: BrowserLog) {
+    this.logs.push(log)
+  }
+
+  get() {
+    const filteredLogs = this.logs.filter((log) => !log.message.includes('Ignoring unsupported entryTypes: '))
+
+    if (this.logs.some((log) => log.message.includes('Ignoring unsupported entryTypes: '))) {
+      // FIXME: fix this at the perfomance observer level as it is visible to customers
+      // It used to pass before because it was only happening in Firefox but wdio io did not support console logs for FF
+      addTag('fixme', 'Unnexpected Console log message: "Ignoring unsupported entryTypes: *"')
+    }
+
+    return filteredLogs
+  }
+
+  clear() {
+    this.logs = []
   }
 }
 
-export async function flushBrowserLogs() {
-  await withBrowserLogs(() => {
-    // Ignore logs
-  })
+export function deleteAllCookies(context: BrowserContext) {
+  return context.clearCookies()
 }
 
-// wdio method does not work for some browsers
-export function deleteAllCookies() {
-  return browser.execute(() => {
-    const cookies = document.cookie.split(';')
-    for (const cookie of cookies) {
-      const eqPos = cookie.indexOf('=')
-      const name = eqPos > -1 ? cookie.substr(0, eqPos) : cookie
-      document.cookie = `${name}=;expires=Thu, 01 Jan 1970 00:00:00 GMT;samesite=strict`
-    }
-  })
-}
-
-export function setCookie(name: string, value: string, expiresDelay: number = 0) {
-  return browser.execute(
-    (name, value, expiresDelay) => {
+export function setCookie(page: Page, name: string, value: string, expiresDelay: number = 0) {
+  return page.evaluate(
+    ({ name, value, expiresDelay }: { name: string; value: string; expiresDelay: number }) => {
       const expires = new Date(Date.now() + expiresDelay).toUTCString()
 
       document.cookie = `${name}=${value};expires=${expires};`
     },
-    name,
-    value,
-    expiresDelay
+    { name, value, expiresDelay }
   )
 }
 
-export async function sendXhr(url: string, headers: string[][] = []): Promise<string> {
+export async function sendXhr(page: Page, url: string, headers: string[][] = []): Promise<string> {
   type State = { state: 'success'; response: string } | { state: 'error' }
 
-  const result: State = await browser.executeAsync(
-    (url, headers, done) => {
-      const xhr = new XMLHttpRequest()
-      let state: State = { state: 'error' }
-      xhr.addEventListener('load', () => {
-        state = { state: 'success', response: xhr.response as string }
-      })
-      xhr.addEventListener('loadend', () => done(state))
-      xhr.open('GET', url)
-      headers.forEach((header) => xhr.setRequestHeader(header[0], header[1]))
-      xhr.send()
-    },
-    url,
-    headers
+  const result: State = await page.evaluate(
+    ([url, headers]) =>
+      new Promise((resolve) => {
+        const xhr = new XMLHttpRequest()
+        let state: State = { state: 'error' }
+        xhr.addEventListener('load', () => {
+          state = { state: 'success', response: xhr.response as string }
+        })
+        xhr.addEventListener('loadend', () => resolve(state))
+        xhr.open('GET', url)
+        headers.forEach((header) => xhr.setRequestHeader(header[0], header[1]))
+        xhr.send()
+      }),
+    [url, headers] as const
   )
 
   if (result.state === 'error') {

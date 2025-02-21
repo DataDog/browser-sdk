@@ -2,7 +2,7 @@ import { Button, MantineProvider } from '@mantine/core'
 import type { ReactNode } from 'react'
 import React, { Suspense, useEffect, useState } from 'react'
 import { isDisconnectError } from '../../common/isDisconnectError'
-import { onBackgroundDisconnection } from '../backgroundScriptConnection'
+import { onBackgroundDisconnection, connectToBackgroundScript } from '../backgroundScriptConnection'
 import { Alert } from './alert'
 import { Panel } from './panel'
 
@@ -10,6 +10,8 @@ export function App() {
   const [isDisconnected, setIsDisconnected] = useState(false)
 
   useEffect(() => {
+    connectToBackgroundScript()
+
     const subscription = onBackgroundDisconnection.subscribe(() => setIsDisconnected(true))
     return () => subscription.unsubscribe()
   }, [])

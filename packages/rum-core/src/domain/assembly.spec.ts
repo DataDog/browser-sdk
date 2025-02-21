@@ -63,6 +63,22 @@ describe('rum assembly', () => {
           expect(serverRumEvents[0].view.name).toBe('added')
         })
 
+        it('should allow modification of view.performance.lcp.resource_url', () => {
+          const { lifeCycle, serverRumEvents } = setupAssemblyTestWithDefaults({
+            partialConfiguration: {
+              beforeSend: (event) => (event.view.performance.lcp.resource_url = 'modified_url'),
+            },
+          })
+
+          notifyRawRumEvent(lifeCycle, {
+            rawRumEvent: createRawRumEvent(RumEventType.VIEW, {
+              view: { performance: { lcp: { resource_url: 'original_url' } } },
+            }),
+          })
+
+          expect((serverRumEvents[0].view as any).performance.lcp.resource_url).toBe('modified_url')
+        })
+
         describe('field resource.graphql on Resource events', () => {
           it('by default, it should not be modifiable', () => {
             const { lifeCycle, serverRumEvents } = setupAssemblyTestWithDefaults({
@@ -432,6 +448,7 @@ describe('rum assembly', () => {
         savedCommonContext: {
           context: { replacedContext: 'a' },
           user: {},
+          account: {},
           hasReplay: undefined,
         },
       })
@@ -441,20 +458,24 @@ describe('rum assembly', () => {
     })
   })
 
-  describe('rum user', () => {
+  describe('rum user and account', () => {
     it('should be included in event attributes', () => {
       const { lifeCycle, serverRumEvents, commonContext } = setupAssemblyTestWithDefaults()
       commonContext.user = { id: 'foo' }
+      commonContext.account = { id: 'bar' }
       notifyRawRumEvent(lifeCycle, {
         rawRumEvent: createRawRumEvent(RumEventType.VIEW),
       })
 
       expect(serverRumEvents[0].usr!.id).toEqual('foo')
+      expect(serverRumEvents[0].account!.id).toEqual('bar')
     })
 
     it('should always contain anonymous id', () => {
       const { lifeCycle, serverRumEvents, commonContext } = setupAssemblyTestWithDefaults()
       commonContext.user = {}
+      commonContext.account = {}
+
       notifyRawRumEvent(lifeCycle, {
         rawRumEvent: createRawRumEvent(RumEventType.VIEW),
       })
@@ -472,23 +493,40 @@ describe('rum assembly', () => {
       })
 
       expect(serverRumEvents[0].usr).toBeUndefined()
+      expect(serverRumEvents[0].account).toBe(undefined)
     })
 
-    it('should ignore the current user when a saved common context user is provided', () => {
+    it('should not include account if `id` is missing and display a warn', () => {
+      expect(true).toBe(true)
+      const { lifeCycle, serverRumEvents, commonContext } = setupAssemblyTestWithDefaults()
+      commonContext.account = { name: 'foo' }
+      notifyRawRumEvent(lifeCycle, {
+        rawRumEvent: createRawRumEvent(RumEventType.VIEW),
+      })
+
+      expect(serverRumEvents[0].account).toBe(undefined)
+    })
+
+    it('should ignore the current user/account when a saved common context user is provided', () => {
       const { lifeCycle, serverRumEvents, commonContext } = setupAssemblyTestWithDefaults()
       commonContext.user = { replacedAttribute: 'b', addedAttribute: 'x' }
+      commonContext.account = { replacedAttribute: 'c', addedAttribute: 'y' }
 
       notifyRawRumEvent(lifeCycle, {
         rawRumEvent: createRawRumEvent(RumEventType.VIEW),
         savedCommonContext: {
           context: {},
           user: { replacedAttribute: 'a' },
+          account: { id: 'foo', replacedAttribute: 'e' },
           hasReplay: undefined,
         },
       })
 
       expect(serverRumEvents[0].usr!.replacedAttribute).toEqual('a')
       expect(serverRumEvents[0].usr!.addedAttribute).toEqual(undefined)
+
+      expect(serverRumEvents[0].account!.replacedAttribute).toEqual('e')
+      expect(serverRumEvents[0].account!.addedAttribute).toEqual(undefined)
     })
   })
 
@@ -877,6 +915,7 @@ function setupAssemblyTestWithDefaults({
   const commonContext = {
     context: {},
     user: {},
+    account: {},
     hasReplay: undefined,
   } as CommonContext
 
