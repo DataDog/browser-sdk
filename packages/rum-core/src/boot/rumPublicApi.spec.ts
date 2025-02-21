@@ -28,6 +28,7 @@ const noopStartRum = (): ReturnType<StartRum> => ({
   getViewContext: () => ({}),
   getInternalContext: () => undefined,
   lifeCycle: {} as any,
+  replayStatsHistory: {} as any,
   viewHistory: {} as any,
   session: {} as any,
   stopSession: () => undefined,

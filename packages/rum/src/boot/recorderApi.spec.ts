@@ -1,6 +1,12 @@
 import type { DeflateEncoder, DeflateWorker, DeflateWorkerAction } from '@datadog/browser-core'
 import { BridgeCapability, PageExitReason, display } from '@datadog/browser-core'
-import type { RecorderApi, RumSessionManager } from '@datadog/browser-rum-core'
+import type {
+  RecorderApi,
+  ReplayStatsHistory,
+  RumConfiguration,
+  RumSessionManager,
+  ViewHistory,
+} from '@datadog/browser-rum-core'
 import { LifeCycle, LifeCycleEventType } from '@datadog/browser-rum-core'
 import { collectAsyncCalls, mockEventBridge, registerCleanupTask } from '@datadog/browser-core/test'
 import type { RumSessionManagerMock } from '../../../rum-core/test'
@@ -13,12 +19,13 @@ import {
 import type { CreateDeflateWorker } from '../domain/deflate'
 import { MockWorker } from '../../test'
 import { resetDeflateWorkerState } from '../domain/deflate'
-import * as replayStats from '../domain/replayStats'
 import { makeRecorderApi } from './recorderApi'
 import type { StartRecording } from './postStartStrategy'
 
 describe('makeRecorderApi', () => {
   let lifeCycle: LifeCycle
+  let replayStatsHistory: ReplayStatsHistory
+  let deflateEncoder: DeflateEncoder
   let recorderApi: RecorderApi
   let startRecordingSpy: jasmine.Spy
   let loadRecorderSpy: jasmine.Spy<() => Promise<StartRecording>>
@@ -40,12 +47,32 @@ describe('makeRecorderApi', () => {
     startRecordingSpy = jasmine.createSpy('startRecording')
 
     // Workaround because using resolveTo(startRecordingSpy) was not working
-    loadRecorderSpy = jasmine.createSpy('loadRecorder').and.resolveTo((...args: any) => {
-      startRecordingSpy(...args)
-      return {
-        stop: stopRecordingSpy,
-      }
-    })
+    loadRecorderSpy = jasmine
+      .createSpy('loadRecorder')
+      .and.resolveTo(
+        (
+          lifeCycle: LifeCycle,
+          configuration: RumConfiguration,
+          sessionManager: RumSessionManager,
+          newReplayStatsHistory: ReplayStatsHistory,
+          viewHistory: ViewHistory,
+          newDeflateEncoder: DeflateEncoder
+        ) => {
+          replayStatsHistory = newReplayStatsHistory
+          deflateEncoder = newDeflateEncoder
+          startRecordingSpy(
+            lifeCycle,
+            configuration,
+            sessionManager,
+            newReplayStatsHistory,
+            viewHistory,
+            newDeflateEncoder
+          )
+          return {
+            stop: stopRecordingSpy,
+          }
+        }
+      )
 
     recorderApi = makeRecorderApi(loadRecorderSpy, createDeflateWorkerSpy)
     rumInit = ({ worker } = {}) => {
@@ -60,7 +87,7 @@ describe('makeRecorderApi', () => {
 
     registerCleanupTask(() => {
       resetDeflateWorkerState()
-      replayStats.resetReplayStats()
+      replayStatsHistory?.stop()
     })
   }
 
@@ -220,15 +247,13 @@ describe('makeRecorderApi', () => {
 
       await collectAsyncCalls(startRecordingSpy, 1)
 
-      const firstCallDeflateEncoder: DeflateEncoder = startRecordingSpy.calls.mostRecent().args[4]
-      firstCallDeflateEncoder.write('foo')
+      deflateEncoder.write('foo')
 
       recorderApi.stop()
       recorderApi.start()
       await collectAsyncCalls(startRecordingSpy, 2)
 
-      const secondCallDeflateEncoder: DeflateEncoder = startRecordingSpy.calls.mostRecent().args[4]
-      secondCallDeflateEncoder.write('foo')
+      deflateEncoder.write('foo')
 
       const writeMessages = mockWorker.pendingMessages.filter(
         (message): message is Extract<DeflateWorkerAction, { action: 'write' }> => message.action === 'write'
@@ -598,7 +623,7 @@ describe('makeRecorderApi', () => {
       setupRecorderApi({ startSessionReplayRecordingManually: true })
       rumInit()
 
-      replayStats.addSegment(VIEW_ID)
+      replayStatsHistory?.addSegment(VIEW_ID)
       mockWorker.processAllMessages()
 
       expect(recorderApi.getReplayStats(VIEW_ID)).toBeUndefined()
@@ -609,7 +634,7 @@ describe('makeRecorderApi', () => {
       rumInit()
       await collectAsyncCalls(startRecordingSpy, 1)
 
-      replayStats.addSegment(VIEW_ID)
+      replayStatsHistory?.addSegment(VIEW_ID)
       expect(recorderApi.getReplayStats(VIEW_ID)).toBeUndefined()
     })
 
@@ -618,7 +643,7 @@ describe('makeRecorderApi', () => {
       rumInit()
       await collectAsyncCalls(startRecordingSpy, 1)
 
-      replayStats.addSegment(VIEW_ID)
+      replayStatsHistory?.addSegment(VIEW_ID)
       mockWorker.dispatchErrorEvent()
 
       expect(recorderApi.getReplayStats(VIEW_ID)).toBeUndefined()
@@ -629,7 +654,7 @@ describe('makeRecorderApi', () => {
       rumInit()
       await collectAsyncCalls(startRecordingSpy, 1)
 
-      replayStats.addSegment(VIEW_ID)
+      replayStatsHistory.addSegment(VIEW_ID)
       mockWorker.processAllMessages()
 
       expect(recorderApi.getReplayStats(VIEW_ID)).toEqual({

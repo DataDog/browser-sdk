@@ -1,7 +1,7 @@
 import type { TimeStamp, HttpRequest } from '@datadog/browser-core'
 import { PageExitReason, DefaultPrivacyLevel, noop, DeflateEncoderStreamId } from '@datadog/browser-core'
-import type { ViewCreatedEvent } from '@datadog/browser-rum-core'
-import { LifeCycle, LifeCycleEventType, startViewHistory } from '@datadog/browser-rum-core'
+import type { ReplayStatsHistory, ViewCreatedEvent } from '@datadog/browser-rum-core'
+import { LifeCycle, LifeCycleEventType, startReplayStatsHistory, startViewHistory } from '@datadog/browser-rum-core'
 import { collectAsyncCalls, createNewEvent, mockEventBridge, registerCleanupTask } from '@datadog/browser-core/test'
 import type { ViewEndedEvent } from 'packages/rum-core/src/domain/view/trackViews'
 import type { RumSessionManagerMock } from '../../../rum-core/test'
@@ -11,7 +11,6 @@ import { recordsPerFullSnapshot, readReplayPayload } from '../../test'
 import { setSegmentBytesLimit } from '../domain/segmentCollection'
 
 import { RecordType } from '../types'
-import { resetReplayStats } from '../domain/replayStats'
 import { createDeflateEncoder, resetDeflateWorkerState, startDeflateWorker } from '../domain/deflate'
 import { startRecording } from './startRecording'
 
@@ -19,6 +18,7 @@ const VIEW_TIMESTAMP = 1 as TimeStamp
 
 describe('startRecording', () => {
   const lifeCycle = new LifeCycle()
+  let replayStatsHistory: ReplayStatsHistory
   let sessionManager: RumSessionManagerMock
   let viewId: string
   let textField: HTMLInputElement
@@ -27,7 +27,6 @@ describe('startRecording', () => {
 
   function setupStartRecording() {
     const configuration = mockRumConfiguration({ defaultPrivacyLevel: DefaultPrivacyLevel.ALLOW })
-    resetReplayStats()
     const worker = startDeflateWorker(configuration, 'Session Replay', noop)
 
     requestSendSpy = jasmine.createSpy()
@@ -37,10 +36,19 @@ describe('startRecording', () => {
     }
 
     const deflateEncoder = createDeflateEncoder(configuration, worker!, DeflateEncoderStreamId.REPLAY)
+    replayStatsHistory = startReplayStatsHistory(lifeCycle)
     const viewHistory = startViewHistory(lifeCycle)
     initialView(lifeCycle)
 
-    const recording = startRecording(lifeCycle, configuration, sessionManager, viewHistory, deflateEncoder, httpRequest)
+    const recording = startRecording(
+      lifeCycle,
+      configuration,
+      sessionManager,
+      replayStatsHistory,
+      viewHistory,
+      deflateEncoder,
+      httpRequest
+    )
     stopRecording = recording ? recording.stop : noop
 
     registerCleanupTask(() => {
@@ -48,6 +56,7 @@ describe('startRecording', () => {
       deflateEncoder.stop()
       setSegmentBytesLimit()
       resetDeflateWorkerState()
+      replayStatsHistory.stop()
     })
   }
 

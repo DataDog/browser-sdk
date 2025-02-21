@@ -1,7 +1,6 @@
 import { sendToExtension } from '@datadog/browser-core'
-import type { LifeCycle, RumConfiguration, ViewHistory } from '@datadog/browser-rum-core'
+import type { LifeCycle, ReplayStatsHistory, RumConfiguration, ViewHistory } from '@datadog/browser-rum-core'
 import type { BrowserRecord } from '../../types'
-import * as replayStats from '../replayStats'
 import type { Tracker } from './trackers'
 import {
   trackFocus,
@@ -27,6 +26,7 @@ export interface RecordOptions {
   emit?: (record: BrowserRecord) => void
   configuration: RumConfiguration
   lifeCycle: LifeCycle
+  replayStatsHistory: ReplayStatsHistory
   viewHistory: ViewHistory
 }
 
@@ -47,7 +47,7 @@ export function record(options: RecordOptions): RecordAPI {
     emit(record)
     sendToExtension('record', { record })
     const view = options.viewHistory.findView()!
-    replayStats.addRecord(view.id)
+    options.replayStatsHistory.addRecord(view.id)
   }
 
   const elementsScrollPositions = createElementsScrollPositions()

@@ -5,6 +5,7 @@ import type {
   StartRecordingOptions,
   ViewHistory,
   RumSession,
+  ReplayStatsHistory,
 } from '@datadog/browser-rum-core'
 import { LifeCycleEventType, SessionReplayState } from '@datadog/browser-rum-core'
 import { asyncRunOnReadyState, monitorError, PageExitReason, type DeflateEncoder } from '@datadog/browser-core'
@@ -36,6 +37,7 @@ export function createPostStartStrategy(
   configuration: RumConfiguration,
   lifeCycle: LifeCycle,
   sessionManager: RumSessionManager,
+  replayStatsHistory: ReplayStatsHistory,
   viewHistory: ViewHistory,
   loadRecorder: () => Promise<StartRecording | undefined>,
   getOrCreateDeflateEncoder: () => DeflateEncoder | undefined
@@ -80,6 +82,7 @@ export function createPostStartStrategy(
       lifeCycle,
       configuration,
       sessionManager,
+      replayStatsHistory,
       viewHistory,
       deflateEncoder
     ))
