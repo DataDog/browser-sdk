@@ -1,4 +1,4 @@
-import type { Context, RawError, EventRateLimiter, User, RelativeTime } from '@datadog/browser-core'
+import type { Context, RawError, EventRateLimiter, User, Account, RelativeTime } from '@datadog/browser-core'
 import {
   combine,
   isEmptyObject,
@@ -19,12 +19,10 @@ import { RumEventType } from '../rawRumEvent.types'
 import type { CommonProperties, RumEvent } from '../rumEvent.types'
 import type { Hooks } from '../hooks'
 import { HookNames } from '../hooks'
-import { getSyntheticsContext } from './contexts/syntheticsContext'
-import type { CiVisibilityContext } from './contexts/ciVisibilityContext'
 import type { LifeCycle } from './lifeCycle'
 import { LifeCycleEventType } from './lifeCycle'
 import type { ViewHistory } from './contexts/viewHistory'
-import { SessionReplayState, type RumSessionManager } from './rumSessionManager'
+import { SessionReplayState, SessionType, type RumSessionManager } from './rumSessionManager'
 import type { RumConfiguration, FeatureFlagsForEvents } from './configuration'
 import type { DisplayContext } from './contexts/displayContext'
 import type { CommonContext } from './contexts/commonContext'
@@ -35,12 +33,6 @@ import type { UrlContexts } from './contexts/urlContexts'
 
 // replaced at build time
 declare const __BUILD_ENV__SDK_VERSION__: string
-
-const enum SessionType {
-  SYNTHETICS = 'synthetics',
-  USER = 'user',
-  CI_TEST = 'ci_test',
-}
 
 const VIEW_MODIFIABLE_FIELD_PATHS: ModifiableFieldPaths = {
   'view.name': 'string',
@@ -69,13 +61,16 @@ export function startRumAssembly(
   viewHistory: ViewHistory,
   urlContexts: UrlContexts,
   displayContext: DisplayContext,
-  ciVisibilityContext: CiVisibilityContext,
   featureFlagContexts: FeatureFlagContexts,
   getCommonContext: () => CommonContext,
   reportError: (error: RawError) => void
 ) {
   modifiableFieldPathsByEvent = {
-    [RumEventType.VIEW]: { ...USER_CUSTOMIZABLE_FIELD_PATHS, ...VIEW_MODIFIABLE_FIELD_PATHS },
+    [RumEventType.VIEW]: {
+      'view.performance.lcp.resource_url': 'string',
+      ...USER_CUSTOMIZABLE_FIELD_PATHS,
+      ...VIEW_MODIFIABLE_FIELD_PATHS,
+    },
     [RumEventType.ERROR]: {
       'error.message': 'string',
       'error.stack': 'string',
@@ -129,7 +124,6 @@ export function startRumAssembly(
     ),
   }
 
-  const syntheticsContext = getSyntheticsContext()
   lifeCycle.subscribe(
     LifeCycleEventType.RAW_RUM_EVENT_COLLECTED,
     ({ startTime, rawRumEvent, domainContext, savedCommonContext, customerContext }) => {
@@ -175,11 +169,7 @@ export function startRumAssembly(
           source: 'browser',
           session: {
             id: session.id,
-            type: syntheticsContext
-              ? SessionType.SYNTHETICS
-              : ciVisibilityContext.get()
-                ? SessionType.CI_TEST
-                : SessionType.USER,
+            type: SessionType.USER,
           },
           feature_flags: findFeatureFlagsContext(
             rawRumEvent,
@@ -187,8 +177,6 @@ export function startRumAssembly(
             configuration.trackFeatureFlagsForEvents,
             featureFlagContexts
           ),
-          synthetics: syntheticsContext,
-          ci_test: ciVisibilityContext.get(),
           display: displayContext.get(),
           connectivity: getConnectivity(),
           context: commonContext.context,
@@ -214,6 +202,10 @@ export function startRumAssembly(
         }
         if (!isEmptyObject(commonContext.user)) {
           ;(serverRumEvent.usr as Mutable<RumEvent['usr']>) = commonContext.user as User & Context
+        }
+
+        if (!isEmptyObject(commonContext.account) && commonContext.account.id) {
+          ;(serverRumEvent.account as Mutable<RumEvent['account']>) = commonContext.account as Account
         }
 
         if (shouldSend(serverRumEvent, configuration.beforeSend, domainContext, eventRateLimiters)) {

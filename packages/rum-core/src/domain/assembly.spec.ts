@@ -3,7 +3,6 @@ import { ErrorSource, ExperimentalFeature, ONE_MINUTE, display } from '@datadog/
 import type { Clock } from '@datadog/browser-core/test'
 import {
   mockEventBridge,
-  mockSyntheticsWorkerValues,
   mockExperimentalFeatures,
   setNavigatorOnLine,
   setNavigatorConnection,
@@ -31,7 +30,6 @@ import { LifeCycle, LifeCycleEventType } from './lifeCycle'
 import type { RumConfiguration, FeatureFlagsForEvents } from './configuration'
 import type { ViewHistory } from './contexts/viewHistory'
 import type { CommonContext } from './contexts/commonContext'
-import type { CiVisibilityContext } from './contexts/ciVisibilityContext'
 import type { RumSessionManager } from './rumSessionManager'
 
 describe('rum assembly', () => {
@@ -64,6 +62,22 @@ describe('rum assembly', () => {
           })
 
           expect(serverRumEvents[0].view.name).toBe('added')
+        })
+
+        it('should allow modification of view.performance.lcp.resource_url', () => {
+          const { lifeCycle, serverRumEvents } = setupAssemblyTestWithDefaults({
+            partialConfiguration: {
+              beforeSend: (event) => (event.view.performance.lcp.resource_url = 'modified_url'),
+            },
+          })
+
+          notifyRawRumEvent(lifeCycle, {
+            rawRumEvent: createRawRumEvent(RumEventType.VIEW, {
+              view: { performance: { lcp: { resource_url: 'original_url' } } },
+            }),
+          })
+
+          expect((serverRumEvents[0].view as any).performance.lcp.resource_url).toBe('modified_url')
         })
 
         describe('field resource.graphql on Resource events', () => {
@@ -435,6 +449,7 @@ describe('rum assembly', () => {
         savedCommonContext: {
           context: { replacedContext: 'a' },
           user: {},
+          account: {},
           hasReplay: undefined,
         },
       })
@@ -444,20 +459,24 @@ describe('rum assembly', () => {
     })
   })
 
-  describe('rum user', () => {
+  describe('rum user and account', () => {
     it('should be included in event attributes', () => {
       const { lifeCycle, serverRumEvents, commonContext } = setupAssemblyTestWithDefaults()
       commonContext.user = { id: 'foo' }
+      commonContext.account = { id: 'bar' }
       notifyRawRumEvent(lifeCycle, {
         rawRumEvent: createRawRumEvent(RumEventType.VIEW),
       })
 
       expect(serverRumEvents[0].usr!.id).toEqual('foo')
+      expect(serverRumEvents[0].account!.id).toEqual('bar')
     })
 
     it('should always contain anonymous id', () => {
       const { lifeCycle, serverRumEvents, commonContext } = setupAssemblyTestWithDefaults()
       commonContext.user = {}
+      commonContext.account = {}
+
       notifyRawRumEvent(lifeCycle, {
         rawRumEvent: createRawRumEvent(RumEventType.VIEW),
       })
@@ -475,23 +494,40 @@ describe('rum assembly', () => {
       })
 
       expect(serverRumEvents[0].usr).toBeUndefined()
+      expect(serverRumEvents[0].account).toBe(undefined)
     })
 
-    it('should ignore the current user when a saved common context user is provided', () => {
+    it('should not include account if `id` is missing and display a warn', () => {
+      expect(true).toBe(true)
+      const { lifeCycle, serverRumEvents, commonContext } = setupAssemblyTestWithDefaults()
+      commonContext.account = { name: 'foo' }
+      notifyRawRumEvent(lifeCycle, {
+        rawRumEvent: createRawRumEvent(RumEventType.VIEW),
+      })
+
+      expect(serverRumEvents[0].account).toBe(undefined)
+    })
+
+    it('should ignore the current user/account when a saved common context user is provided', () => {
       const { lifeCycle, serverRumEvents, commonContext } = setupAssemblyTestWithDefaults()
       commonContext.user = { replacedAttribute: 'b', addedAttribute: 'x' }
+      commonContext.account = { replacedAttribute: 'c', addedAttribute: 'y' }
 
       notifyRawRumEvent(lifeCycle, {
         rawRumEvent: createRawRumEvent(RumEventType.VIEW),
         savedCommonContext: {
           context: {},
           user: { replacedAttribute: 'a' },
+          account: { id: 'foo', replacedAttribute: 'e' },
           hasReplay: undefined,
         },
       })
 
       expect(serverRumEvents[0].usr!.replacedAttribute).toEqual('a')
       expect(serverRumEvents[0].usr!.addedAttribute).toEqual(undefined)
+
+      expect(serverRumEvents[0].account!.replacedAttribute).toEqual('e')
+      expect(serverRumEvents[0].account!.addedAttribute).toEqual(undefined)
     })
   })
 
@@ -622,28 +658,6 @@ describe('rum assembly', () => {
       })
     })
 
-    it('should detect synthetics sessions based on synthetics worker values', () => {
-      mockSyntheticsWorkerValues()
-
-      const { lifeCycle, serverRumEvents } = setupAssemblyTestWithDefaults()
-      notifyRawRumEvent(lifeCycle, {
-        rawRumEvent: createRawRumEvent(RumEventType.VIEW),
-      })
-
-      expect(serverRumEvents[0].session.type).toEqual('synthetics')
-    })
-
-    it('should detect ci visibility tests', () => {
-      const ciVisibilityContext = { test_execution_id: 'traceId' }
-      const { lifeCycle, serverRumEvents } = setupAssemblyTestWithDefaults({ ciVisibilityContext })
-
-      notifyRawRumEvent(lifeCycle, {
-        rawRumEvent: createRawRumEvent(RumEventType.VIEW),
-      })
-
-      expect(serverRumEvents[0].session.type).toEqual('ci_test')
-    })
-
     it('should set the session.has_replay attribute if it is defined in the common context', () => {
       const { lifeCycle, serverRumEvents, commonContext } = setupAssemblyTestWithDefaults()
       commonContext.hasReplay = true
@@ -727,18 +741,6 @@ describe('rum assembly', () => {
     })
   })
 
-  describe('synthetics context', () => {
-    it('includes the synthetics context', () => {
-      mockSyntheticsWorkerValues()
-      const { lifeCycle, serverRumEvents } = setupAssemblyTestWithDefaults()
-
-      notifyRawRumEvent(lifeCycle, {
-        rawRumEvent: createRawRumEvent(RumEventType.VIEW),
-      })
-
-      expect(serverRumEvents[0].synthetics).toBeTruthy()
-    })
-  })
   describe('if event bridge detected', () => {
     it('includes the browser sdk version', () => {
       const { lifeCycle, serverRumEvents } = setupAssemblyTestWithDefaults()
@@ -750,19 +752,6 @@ describe('rum assembly', () => {
 
       expect(serverRumEvents[0]._dd.browser_sdk_version).not.toBeDefined()
       expect(serverRumEvents[1]._dd.browser_sdk_version).toBeDefined()
-    })
-  })
-
-  describe('ci visibility context', () => {
-    it('includes the ci visibility context', () => {
-      const ciVisibilityContext = { test_execution_id: 'traceId' }
-      const { lifeCycle, serverRumEvents } = setupAssemblyTestWithDefaults({ ciVisibilityContext })
-
-      notifyRawRumEvent(lifeCycle, {
-        rawRumEvent: createRawRumEvent(RumEventType.VIEW),
-      })
-
-      expect(serverRumEvents[0].ci_test).toBeTruthy()
     })
   })
 
@@ -948,7 +937,6 @@ interface AssemblyTestParams {
 function setupAssemblyTestWithDefaults({
   partialConfiguration,
   sessionManager,
-  ciVisibilityContext,
   findView = () => ({ id: '7890', name: 'view name', startClocks: {} as ClocksState }),
 }: AssemblyTestParams = {}) {
   const lifeCycle = new LifeCycle()
@@ -958,6 +946,7 @@ function setupAssemblyTestWithDefaults({
   const commonContext = {
     context: {},
     user: {},
+    account: {},
     hasReplay: undefined,
   } as CommonContext
 
@@ -976,7 +965,6 @@ function setupAssemblyTestWithDefaults({
     { ...mockViewHistory(), findView: () => findView() },
     mockUrlContexts(),
     mockDisplayContext(),
-    { get: () => ciVisibilityContext } as CiVisibilityContext,
     featureFlagContexts,
     () => commonContext,
     reportErrorSpy

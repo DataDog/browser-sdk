@@ -3,6 +3,7 @@ import type {
   TimeStamp,
   RelativeTime,
   User,
+  Account,
   DeflateWorker,
   DeflateEncoderStreamId,
   DeflateEncoder,
@@ -20,7 +21,6 @@ import {
   clocksNow,
   callMonitored,
   createHandlingStack,
-  checkUser,
   sanitize,
   createIdentityEncoder,
   CustomerDataCompressionStatus,
@@ -189,8 +189,15 @@ export interface RumPublicApi extends PublicApi {
    *
    * See [User session](https://docs.datadoghq.com/real_user_monitoring/browser/advanced_configuration/#user-session) for further information.
    */
-  setUser: (newUser: User) => void
+  setUser(newUser: User & { id: string }): void
 
+  /**
+   * Set user information to all events, stored in `@usr`
+   *
+   * @deprecated You must specify a user id
+   * @see {@link setUser}
+   */
+  setUser(newUser: User): void
   /**
    * Get user information
    *
@@ -221,6 +228,34 @@ export interface RumPublicApi extends PublicApi {
    * See [User session](https://docs.datadoghq.com/real_user_monitoring/browser/advanced_configuration/#user-session) for further information.
    */
   clearUser: () => void
+
+  /**
+   * Set account information to all events, stored in `@account`
+   */
+  setAccount: (newAccount: Account) => void
+
+  /**
+   * Get account information
+   */
+  getAccount: () => Context
+
+  /**
+   * Set or update the account property, stored in `@account.<key>`
+   *
+   * @param key Key of the property
+   * @param property Value of the property
+   */
+  setAccountProperty: (key: string, property: any) => void
+
+  /**
+   * Remove an account property
+   */
+  removeAccountProperty: (key: string) => void
+
+  /**
+   * Clear all account information
+   */
+  clearAccount: () => void
 
   /**
    * Start a view manually.
@@ -372,7 +407,7 @@ export function makeRumPublicApi(
   options: RumPublicApiOptions = {}
 ): RumPublicApi {
   const customerDataTrackerManager = createCustomerDataTrackerManager(CustomerDataCompressionStatus.Unknown)
-  const globalContextManager = createContextManager('global', {
+  const globalContextManager = createContextManager('global context', {
     customerDataTracker: customerDataTrackerManager.getOrCreateTracker(CustomerDataType.GlobalContext),
   })
   const userContextManager = createContextManager('user', {
@@ -383,11 +418,18 @@ export function makeRumPublicApi(
       email: { type: 'string' },
     },
   })
+  const accountContextManager = createContextManager('account', {
+    customerDataTracker: customerDataTrackerManager.getOrCreateTracker(CustomerDataType.User),
+    propertiesConfig: {
+      id: { type: 'string', required: true },
+      name: { type: 'string' },
+    },
+  })
   const trackingConsentState = createTrackingConsentState()
   const customVitalsState = createCustomVitalsState()
 
   function getCommonContext() {
-    return buildCommonContext(globalContextManager, userContextManager, recorderApi)
+    return buildCommonContext(globalContextManager, userContextManager, accountContextManager, recorderApi)
   }
 
   let strategy = createPreStartStrategy(
@@ -399,6 +441,7 @@ export function makeRumPublicApi(
       if (configuration.storeContextsAcrossPages) {
         storeContextManager(configuration, globalContextManager, RUM_STORAGE_KEY, CustomerDataType.GlobalContext)
         storeContextManager(configuration, userContextManager, RUM_STORAGE_KEY, CustomerDataType.User)
+        storeContextManager(configuration, accountContextManager, RUM_STORAGE_KEY, CustomerDataType.Account)
       }
 
       customerDataTrackerManager.setCompressionStatus(
@@ -530,22 +573,30 @@ export function makeRumPublicApi(
     }),
 
     setUser: monitor((newUser) => {
-      if (checkUser(newUser)) {
-        userContextManager.setContext(newUser as Context)
-      }
+      userContextManager.setContext(newUser)
       addTelemetryUsage({ feature: 'set-user' })
     }),
 
-    getUser: monitor(() => userContextManager.getContext()),
+    getUser: monitor(userContextManager.getContext),
 
     setUserProperty: monitor((key, property) => {
       userContextManager.setContextProperty(key, property)
       addTelemetryUsage({ feature: 'set-user' })
     }),
 
-    removeUserProperty: monitor((key) => userContextManager.removeContextProperty(key)),
+    removeUserProperty: monitor(userContextManager.removeContextProperty),
 
-    clearUser: monitor(() => userContextManager.clearContext()),
+    clearUser: monitor(userContextManager.clearContext),
+
+    setAccount: monitor(accountContextManager.setContext),
+
+    getAccount: monitor(accountContextManager.getContext),
+
+    setAccountProperty: monitor(accountContextManager.setContextProperty),
+
+    removeAccountProperty: monitor(accountContextManager.removeContextProperty),
+
+    clearAccount: monitor(accountContextManager.clearContext),
 
     startView,
 

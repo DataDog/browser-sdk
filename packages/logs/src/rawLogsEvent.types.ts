@@ -68,4 +68,5 @@ export interface CommonContext {
   }
   context: Context
   user: User
+  account: Context
 }
