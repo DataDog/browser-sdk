@@ -48,12 +48,11 @@ export function startLongAnimationFrameCollection(lifeCycle: LifeCycle, configur
       lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, {
         rawRumEvent,
         startTime: startClocks.relative,
+        duration: entry.duration,
         domainContext: { performanceEntry: entry },
       })
     }
   })
 
-  return {
-    stop: () => performanceResourceSubscription.unsubscribe(),
-  }
+  return { stop: () => performanceResourceSubscription.unsubscribe() }
 }

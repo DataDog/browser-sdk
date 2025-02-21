@@ -33,6 +33,7 @@ export function startLongTaskCollection(lifeCycle: LifeCycle, configuration: Rum
       lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, {
         rawRumEvent,
         startTime: startClocks.relative,
+        duration: entry.duration,
         domainContext: { performanceEntry: entry },
       })
     }

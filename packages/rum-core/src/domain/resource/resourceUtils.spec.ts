@@ -280,11 +280,11 @@ describe('computeResourceEntryDetails', () => {
 
 describe('computeResourceEntryDuration', () => {
   it('should return the entry duration', () => {
-    expect(computeResourceEntryDuration(generateResourceWith({}))).toBe(50e6 as ServerDuration)
+    expect(computeResourceEntryDuration(generateResourceWith({}))).toBe(50 as Duration)
   })
 
   it('should use other available timing if the duration is 0', () => {
-    expect(computeResourceEntryDuration(generateResourceWith({ duration: 0 as Duration }))).toBe(50e6 as ServerDuration)
+    expect(computeResourceEntryDuration(generateResourceWith({ duration: 0 as Duration }))).toBe(50 as Duration)
   })
 })
 

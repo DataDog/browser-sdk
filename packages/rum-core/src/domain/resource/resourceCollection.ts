@@ -95,7 +95,9 @@ function processRequest(
 
   const correspondingTimingOverrides = matchingTiming ? computeResourceEntryMetrics(matchingTiming) : undefined
 
-  const duration = computeRequestDuration(pageStateHistory, startClocks, request.duration)
+  const duration = matchingTiming
+    ? computeResourceEntryDuration(matchingTiming)
+    : computeRequestDuration(pageStateHistory, startClocks, request.duration)
 
   const resourceEvent = combine(
     {
@@ -103,7 +105,7 @@ function processRequest(
       resource: {
         id: generateUUID(),
         type,
-        duration,
+        duration: toServerDuration(duration),
         method: request.method,
         status_code: request.status,
         protocol: matchingTiming && computeResourceEntryProtocol(matchingTiming),
@@ -121,6 +123,7 @@ function processRequest(
 
   return {
     startTime: startClocks.relative,
+    duration,
     rawRumEvent: resourceEvent,
     domainContext: {
       performanceEntry: matchingTiming,
@@ -147,6 +150,7 @@ function processResourceEntry(
 
   const type = computeResourceEntryType(entry)
   const entryMetrics = computeResourceEntryMetrics(entry)
+  const duration = computeResourceEntryDuration(entry)
 
   const resourceEvent = combine(
     {
@@ -154,6 +158,7 @@ function processResourceEntry(
       resource: {
         id: generateUUID(),
         type,
+        duration: toServerDuration(duration),
         url: entry.name,
         status_code: discardZeroStatus(entry.responseStatus),
         protocol: computeResourceEntryProtocol(entry),
@@ -169,6 +174,7 @@ function processResourceEntry(
   )
   return {
     startTime: startClocks.relative,
+    duration,
     rawRumEvent: resourceEvent,
     domainContext: {
       performanceEntry: entry,
@@ -180,7 +186,6 @@ function computeResourceEntryMetrics(entry: RumPerformanceResourceTiming) {
   const { renderBlockingStatus } = entry
   return {
     resource: {
-      duration: computeResourceEntryDuration(entry),
       render_blocking_status: renderBlockingStatus,
       ...computeResourceEntrySize(entry),
       ...computeResourceEntryDetails(entry),
@@ -218,7 +223,7 @@ function computeResourceEntryTracingInfo(entry: RumPerformanceResourceTiming, co
 
 function computeRequestDuration(pageStateHistory: PageStateHistory, startClocks: ClocksState, duration: Duration) {
   return !pageStateHistory.wasInPageStateDuringPeriod(PageState.FROZEN, startClocks.relative, duration)
-    ? toServerDuration(duration)
+    ? duration
     : undefined
 }
 

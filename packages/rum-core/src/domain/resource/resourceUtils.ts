@@ -1,4 +1,4 @@
-import type { RelativeTime, ServerDuration } from '@datadog/browser-core'
+import type { Duration, RelativeTime } from '@datadog/browser-core'
 import {
   addTelemetryDebug,
   elapsed,
@@ -73,15 +73,15 @@ export function isResourceEntryRequestType(entry: RumPerformanceResourceTiming) 
   return entry.initiatorType === 'xmlhttprequest' || entry.initiatorType === 'fetch'
 }
 
-export function computeResourceEntryDuration(entry: RumPerformanceResourceTiming): ServerDuration {
+export function computeResourceEntryDuration(entry: RumPerformanceResourceTiming): Duration {
   const { duration, startTime, responseEnd } = entry
 
   // Safari duration is always 0 on timings blocked by cross origin policies.
   if (duration === 0 && startTime < responseEnd) {
-    return toServerDuration(elapsed(startTime, responseEnd))
+    return elapsed(startTime, responseEnd)
   }
 
-  return toServerDuration(duration)
+  return duration
 }
 
 export function computeResourceEntryDetails(entry: RumPerformanceResourceTiming): ResourceEntryDetails | undefined {

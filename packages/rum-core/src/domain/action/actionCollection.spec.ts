@@ -2,7 +2,7 @@ import type { Duration, RelativeTime, ServerDuration, TimeStamp } from '@datadog
 import { Observable } from '@datadog/browser-core'
 import { createNewEvent, registerCleanupTask } from '@datadog/browser-core/test'
 import type { RawRumActionEvent, RawRumEventCollectedData } from '@datadog/browser-rum-core'
-import { collectAndValidateRawRumEvents, mockPageStateHistory, mockRumConfiguration } from '../../../test'
+import { collectAndValidateRawRumEvents, mockRumConfiguration } from '../../../test'
 import type { RawRumEvent } from '../../rawRumEvent.types'
 import { RumEventType, ActionType } from '../../rawRumEvent.types'
 import { LifeCycle, LifeCycleEventType } from '../lifeCycle'
@@ -10,8 +10,6 @@ import type { Hooks } from '../../hooks'
 import { createHooks, HookNames } from '../../hooks'
 import type { ActionContexts } from './actionCollection'
 import { startActionCollection } from './actionCollection'
-
-const basePageStateHistory = mockPageStateHistory({ wasInPageStateAt: () => true })
 
 describe('actionCollection', () => {
   const lifeCycle = new LifeCycle()
@@ -30,8 +28,7 @@ describe('actionCollection', () => {
       hooks,
       domMutationObservable,
       windowOpenObservable,
-      mockRumConfiguration(),
-      basePageStateHistory
+      mockRumConfiguration()
     )
     registerCleanupTask(actionCollection.stop)
     addAction = actionCollection.addAction
@@ -89,9 +86,6 @@ describe('actionCollection', () => {
       },
       date: jasmine.any(Number),
       type: RumEventType.ACTION,
-      view: {
-        in_foreground: true,
-      },
       _dd: {
         action: {
           target: {
@@ -130,11 +124,8 @@ describe('actionCollection', () => {
       },
       date: jasmine.any(Number),
       type: RumEventType.ACTION,
-      view: {
-        in_foreground: true,
-      },
     })
-    expect(rawRumEvents[0].domainContext).toEqual({})
+    expect(rawRumEvents[0].domainContext).toEqual({ handlingStack: undefined })
   })
   it('should not set the loading time field of the action', () => {
     const event = createNewEvent('pointerup', { target: document.createElement('button') })

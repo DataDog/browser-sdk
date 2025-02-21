@@ -9,7 +9,9 @@ import {
   DOM_EVENT,
 } from '@datadog/browser-core'
 import type { RumConfiguration } from '../configuration'
-import type { PageStateServerEntry } from '../../rawRumEvent.types'
+import { RumEventType, type PageStateServerEntry } from '../../rawRumEvent.types'
+import { HookNames } from '../../hooks'
+import type { Hooks, PartialRumEvent } from '../../hooks'
 
 // Arbitrary value to cap number of element for memory consumption in the browser
 export const MAX_PAGE_STATE_ENTRIES = 4000
@@ -29,14 +31,13 @@ export const enum PageState {
 export type PageStateEntry = { state: PageState; startTime: RelativeTime }
 
 export interface PageStateHistory {
-  findAll: (startTime: RelativeTime, duration: Duration) => PageStateServerEntry[] | undefined
-  wasInPageStateAt: (state: PageState, startTime: RelativeTime) => boolean
   wasInPageStateDuringPeriod: (state: PageState, startTime: RelativeTime, duration: Duration) => boolean
   addPageState(nextPageState: PageState, startTime?: RelativeTime): void
   stop: () => void
 }
 
 export function startPageStateHistory(
+  hooks: Hooks,
   configuration: RumConfiguration,
   maxPageStateEntriesSelectable = MAX_PAGE_STATE_ENTRIES_SELECTABLE
 ): PageStateHistory {
@@ -76,43 +77,60 @@ export function startPageStateHistory(
     pageStateEntryHistory.add({ state: currentPageState, startTime }, startTime)
   }
 
-  const pageStateHistory = {
-    findAll: (eventStartTime: RelativeTime, duration: Duration): PageStateServerEntry[] | undefined => {
-      const pageStateEntries = pageStateEntryHistory.findAll(eventStartTime, duration)
+  function wasInPageStateDuringPeriod(state: PageState, startTime: RelativeTime, duration: Duration) {
+    return pageStateEntryHistory.findAll(startTime, duration).some((pageState) => pageState.state === state)
+  }
 
-      if (pageStateEntries.length === 0) {
-        return
+  function wasInPageStateAt(state: PageState, startTime: RelativeTime) {
+    return wasInPageStateDuringPeriod(state, startTime, 0 as Duration)
+  }
+
+  hooks.register(
+    HookNames.Assemble,
+    ({ startTime, duration = 0 as Duration, eventType }): PartialRumEvent | undefined => {
+      if (eventType === RumEventType.VIEW) {
+        const pageStates = pageStateEntryHistory.findAll(startTime, duration)
+        return {
+          type: eventType,
+          _dd: { page_states: processPageStates(pageStates, startTime, maxPageStateEntriesSelectable) },
+        }
       }
 
-      const pageStateServerEntries = []
-      // limit the number of entries to return
-      const limit = Math.max(0, pageStateEntries.length - maxPageStateEntriesSelectable)
-
-      // loop page state entries backward to return the selected ones in desc order
-      for (let index = pageStateEntries.length - 1; index >= limit; index--) {
-        const pageState = pageStateEntries[index]
-        // compute the start time relative to the event start time (ex: to be relative to the view start time)
-        const relativeStartTime = elapsed(eventStartTime, pageState.startTime)
-
-        pageStateServerEntries.push({
-          state: pageState.state,
-          start: toServerDuration(relativeStartTime),
-        })
+      if (eventType === RumEventType.ACTION || eventType === RumEventType.ERROR) {
+        return {
+          type: eventType,
+          view: { in_foreground: wasInPageStateAt(PageState.ACTIVE, startTime) },
+        }
       }
+    }
+  )
 
-      return pageStateServerEntries
-    },
-    wasInPageStateAt: (state: PageState, startTime: RelativeTime) =>
-      pageStateHistory.wasInPageStateDuringPeriod(state, startTime, 0 as Duration),
-    wasInPageStateDuringPeriod: (state: PageState, startTime: RelativeTime, duration: Duration) =>
-      pageStateEntryHistory.findAll(startTime, duration).some((pageState) => pageState.state === state),
+  return {
+    wasInPageStateDuringPeriod,
     addPageState,
     stop: () => {
       stopEventListeners()
       pageStateEntryHistory.stop()
     },
   }
-  return pageStateHistory
+}
+
+function processPageStates(
+  pageStateEntries: PageStateEntry[],
+  eventStartTime: RelativeTime,
+  maxPageStateEntriesSelectable: number
+): PageStateServerEntry[] | undefined {
+  if (pageStateEntries.length === 0) {
+    return
+  }
+
+  return pageStateEntries
+    .slice(-maxPageStateEntriesSelectable)
+    .reverse()
+    .map(({ state, startTime }) => ({
+      state,
+      start: toServerDuration(elapsed(eventStartTime, startTime)),
+    }))
 }
 
 function computePageState(event: Event & { type: DOM_EVENT }) {

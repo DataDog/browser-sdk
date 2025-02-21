@@ -152,6 +152,7 @@ function processVital(vital: DurationVital, valueComputedBySdk: boolean): RawRum
   return {
     rawRumEvent,
     startTime: vital.startClocks.relative,
+    duration: vital.duration,
     customerContext: vital.context,
     domainContext: {},
   }
