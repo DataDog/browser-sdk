@@ -15,6 +15,6 @@ describe('createHandlingStack', () => {
   it('should create handling stack trace without internal calls', () => {
     userCallOne()
 
-    expect(handlingStack).toMatch(/^SDKHandling: Received error\n\s+at userCallTwo @ (.*)\n\s+at userCallOne @ (.*)/)
+    expect(handlingStack).toMatch(/^HandlingStack: Received error\n\s+at userCallTwo @ (.*)\n\s+at userCallOne @ (.*)/)
   })
 })

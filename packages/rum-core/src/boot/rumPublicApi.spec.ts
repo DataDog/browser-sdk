@@ -202,7 +202,7 @@ describe('rum public api', () => {
 
       expect(addActionSpy).toHaveBeenCalledTimes(1)
       const stacktrace = addActionSpy.calls.argsFor(0)[0].handlingStack
-      expect(stacktrace).toMatch(/^SDKHandling: Received action\s+at triggerAction @/)
+      expect(stacktrace).toMatch(/^HandlingStack: Received action\s+at triggerAction @/)
     })
 
     describe('save context when sending an action', () => {
@@ -317,7 +317,7 @@ describe('rum public api', () => {
       triggerError()
       expect(addErrorSpy).toHaveBeenCalledTimes(1)
       const stacktrace = addErrorSpy.calls.argsFor(0)[0].handlingStack
-      expect(stacktrace).toMatch(/^SDKHandling: Received error\s+at triggerError (.|\n)*$/)
+      expect(stacktrace).toMatch(/^HandlingStack: Received error\s+at triggerError (.|\n)*$/)
     })
 
     describe('save context when capturing an error', () => {

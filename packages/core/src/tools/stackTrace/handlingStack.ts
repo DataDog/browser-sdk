@@ -19,7 +19,7 @@ export function createHandlingStack(
    */
   const internalFramesToSkip = 2
   const error = new Error(`Received ${type}`)
-  error.name = 'SDKHandling'
+  error.name = 'HandlingStack'
   let formattedStack: string
 
   callMonitored(() => {
