@@ -194,7 +194,7 @@ export interface RumPublicApi extends PublicApi {
   /**
    * Set user information to all events, stored in `@usr`
    *
-   * @deprecated You must specified a user id
+   * @deprecated You must specify a user id
    * @see {@link setUser}
    */
   setUser(newUser: User): void
