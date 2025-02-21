@@ -1,5 +1,5 @@
-import React from 'react'
-import { flushSync } from 'react-dom'
+import React, {act} from 'react'
+
 
 import { disableJasmineUncaughtExceptionTracking } from '../../../../core/test'
 import { appendComponent } from '../../../test/appendComponent'
@@ -74,7 +74,7 @@ describe('ErrorBoundary', () => {
     ComponentSpy.and.returnValue('bar')
 
     const { resetError } = fallbackSpy.calls.mostRecent().args[0]
-    flushSync(() => {
+    act(() => {
       resetError()
     })
 
