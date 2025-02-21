@@ -36,8 +36,16 @@ runMain(async () => {
 })
 
 function retrievePackageDependencies(packageJsonFile) {
-  return Object.keys(packageJsonFile.content.dependencies || {})
-    .concat(Object.keys(packageJsonFile.content.devDependencies || {}))
+  return Object.entries(packageJsonFile.content.dependencies || {})
+    .concat(Object.entries(packageJsonFile.content.devDependencies || {}))
+    .map(([dependency, version]) => {
+      if (version.startsWith('npm:')) {
+        // Extract the original dependency name from the npm protocol version string. Example:
+        // npm:react@17  ->  react
+        return version.slice(4).split('@')[0]
+      }
+      return dependency
+    })
     .filter((dependency) => !dependency.includes('@datadog'))
 }
 
