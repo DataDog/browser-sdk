@@ -74,6 +74,7 @@ export function createMockServerApp(servers: Servers, setup: string): MockServer
   })
 
   app.get('/ok', (req, res) => {
+    res.header('Content-Type', 'text/plain')
     if (req.query['timing-allow-origin'] === 'true') {
       res.set('Timing-Allow-Origin', '*')
     }

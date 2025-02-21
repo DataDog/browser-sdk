@@ -29,7 +29,7 @@ function ensureProperties(context: Context, propertiesConfig: PropertiesConfig, 
     }
 
     if (required && !(key in context)) {
-      display.warn(`The property ${key} of ${name} context is required; context will not be sent to the intake.`)
+      display.warn(`The property ${key} of ${name} is required; context will not be sent to the intake.`)
     }
   }
 

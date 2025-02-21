@@ -1,5 +1,5 @@
 import { createRoot } from 'react-dom/client'
-import { flushSync } from 'react-dom'
+import { act } from 'react'
 import { noop } from '@datadog/browser-core'
 import { appendElement } from '../../rum-core/test'
 import { registerCleanupTask } from '../../core/test'
@@ -10,11 +10,13 @@ export function appendComponent(component: React.ReactNode) {
     // Do nothing by default when an error occurs
     onRecoverableError: noop,
   })
-  flushSync(() => {
+  act(() => {
     root.render(component)
   })
   registerCleanupTask(() => {
-    root.unmount()
+    act(() => {
+      root.unmount()
+    })
   })
   return container
 }
