@@ -3,7 +3,7 @@ import { createHandlingStack } from './handlingStack'
 describe('createHandlingStack', () => {
   let handlingStack: string
   function internalCall() {
-    handlingStack = createHandlingStack()
+    handlingStack = createHandlingStack('error')
   }
   function userCallTwo() {
     internalCall()
@@ -15,6 +15,6 @@ describe('createHandlingStack', () => {
   it('should create handling stack trace without internal calls', () => {
     userCallOne()
 
-    expect(handlingStack).toMatch(/^Error: \n\s+at userCallTwo @ (.*)\n\s+at userCallOne @ (.*)/)
+    expect(handlingStack).toMatch(/^HandlingStack: error\n\s+at userCallTwo @ (.*)\n\s+at userCallOne @ (.*)/)
   })
 })
