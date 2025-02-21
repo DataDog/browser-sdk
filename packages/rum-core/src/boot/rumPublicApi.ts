@@ -407,7 +407,7 @@ export function makeRumPublicApi(
   options: RumPublicApiOptions = {}
 ): RumPublicApi {
   const customerDataTrackerManager = createCustomerDataTrackerManager(CustomerDataCompressionStatus.Unknown)
-  const globalContextManager = createContextManager('global', {
+  const globalContextManager = createContextManager('global context', {
     customerDataTracker: customerDataTrackerManager.getOrCreateTracker(CustomerDataType.GlobalContext),
   })
   const userContextManager = createContextManager('user', {
