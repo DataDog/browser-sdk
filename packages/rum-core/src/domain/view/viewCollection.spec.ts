@@ -208,6 +208,7 @@ describe('viewCollection', () => {
         resource: {
           count: 10,
         },
+        bf_cache: undefined,
         time_spent: (100 * 1e6) as ServerDuration,
       },
       session: {
@@ -231,6 +232,17 @@ describe('viewCollection', () => {
     lifeCycle.notify(LifeCycleEventType.VIEW_UPDATED, { ...VIEW, sessionIsActive: false })
 
     expect((rawRumEvents[rawRumEvents.length - 1].rawRumEvent as RawRumViewEvent).session.is_active).toBe(false)
+  })
+
+  it('should include bf_cache when bfcache is set to true', () => {
+    setupViewCollection()
+    const viewWithBfcache = {
+      ...VIEW,
+      initialViewMetrics: { ...VIEW.initialViewMetrics, bfCache: true },
+    }
+    lifeCycle.notify(LifeCycleEventType.VIEW_UPDATED, viewWithBfcache)
+    const rawRumViewEvent = rawRumEvents[rawRumEvents.length - 1].rawRumEvent as RawRumViewEvent
+    expect(rawRumViewEvent.view.bf_cache).toBe(true)
   })
 
   it('should include replay information if available', () => {

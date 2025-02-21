@@ -122,6 +122,7 @@ function processViewUpdate(
         count: view.eventCounts.resourceCount,
       },
       time_spent: toServerDuration(view.duration),
+      bf_cache: view.initialViewMetrics.bfCache,
     },
     display: view.commonViewMetrics.scroll
       ? {

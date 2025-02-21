@@ -121,6 +121,7 @@ export interface RawRumViewEvent {
     resource: Count
     frustration: Count
     performance?: ViewPerformanceData
+    bf_cache?: boolean
   }
   session: {
     has_replay: true | undefined
