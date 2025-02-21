@@ -1,5 +1,4 @@
-import React from 'react'
-import { flushSync } from 'react-dom'
+import React, { act } from 'react'
 
 import { MemoryRouter, Route, useNavigate } from 'react-router-dom'
 import { initializeReactPlugin } from '../../../test/initializeReactPlugin'
@@ -64,7 +63,7 @@ describe('Routes component', () => {
 
     expect(startViewSpy).toHaveBeenCalledTimes(1)
 
-    flushSync(() => {
+    act(() => {
       forceUpdate!()
     })
 
@@ -91,7 +90,7 @@ describe('Routes component', () => {
     )
 
     startViewSpy.calls.reset()
-    flushSync(() => {
+    act(() => {
       navigate!('/bar')
     })
 
@@ -117,7 +116,7 @@ describe('Routes component', () => {
     )
 
     startViewSpy.calls.reset()
-    flushSync(() => {
+    act(() => {
       navigate!('/foo')
     })
 
@@ -143,7 +142,7 @@ describe('Routes component', () => {
     )
 
     startViewSpy.calls.reset()
-    flushSync(() => {
+    act(() => {
       navigate!('/foo?bar=baz')
     })
 
