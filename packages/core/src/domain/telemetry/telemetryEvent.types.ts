@@ -443,6 +443,8 @@ export type TelemetryCommonFeaturesUsage =
   | GetViewContext
   | AddAction
   | AddError
+  | CreateReporter
+  | GetReporter
   | SetGlobalContext
   | SetUser
   | SetAccount
@@ -648,6 +650,20 @@ export interface AddError {
    * addError API
    */
   feature: 'add-error'
+  [k: string]: unknown
+}
+export interface CreateReporter {
+  /**
+   * createReporter API
+   */
+  feature: 'create-reporter'
+  [k: string]: unknown
+}
+export interface GetReporter {
+  /**
+   * getReporter API
+   */
+  feature: 'get-reporter'
   [k: string]: unknown
 }
 export interface SetGlobalContext {
