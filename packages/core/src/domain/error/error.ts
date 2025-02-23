@@ -92,7 +92,6 @@ export function tryToGetErrorContext(originalError: unknown) {
   if (originalError !== null && typeof originalError === 'object' && 'dd_context' in originalError) {
     return originalError.dd_context as Context
   }
-  return undefined
 }
 
 export function getFileFromStackTraceString(stack: string) {

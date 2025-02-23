@@ -33,7 +33,6 @@ export function startReportCollection(configuration: LogsConfiguration, lifeCycl
         error,
         status,
       },
-      messageContext: rawError.context,
     })
   })
 
