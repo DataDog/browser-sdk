@@ -77,7 +77,7 @@ export function trackCumulativeLayoutShift(
       const { cumulatedValue, isMaxValue } = window.update(entry)
 
       if (isMaxValue) {
-        const attribution = getFirstElementAttribution(entry.sources)
+        const attribution = getBiggestElementAttribution(entry.sources)
         biggestShift = {
           target: attribution?.node ? new WeakRef(attribution.node) : undefined,
           time: elapsed(viewStart, entry.startTime),
@@ -108,12 +108,20 @@ export function trackCumulativeLayoutShift(
   }
 }
 
-function getFirstElementAttribution(
+function getBiggestElementAttribution(
   sources: RumLayoutShiftAttribution[]
 ): (RumLayoutShiftAttribution & { node: Element }) | undefined {
-  return sources.find(
+  const elementNodeSources = sources.filter(
     (source): source is RumLayoutShiftAttribution & { node: Element } => !!source.node && isElementNode(source.node)
   )
+  if (elementNodeSources.length > 0) {
+    return elementNodeSources.reduce(function (a, b) {
+      return a.node && a.previousRect?.width * a.previousRect?.height > b.previousRect?.width * b.previousRect?.height
+        ? a
+        : b
+    })
+  }
+  return undefined
 }
 
 function asRumRect({ x, y, width, height }: DOMRectReadOnly): RumRect {
