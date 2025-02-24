@@ -117,7 +117,7 @@ function getBiggestElementAttribution(
     (source): source is RumLayoutShiftAttribution & { node: Element } => !!source.node && isElementNode(source.node)
   )
   if (elementNodeSources.length > 0) {
-    return elementNodeSources.reduce((a, b) => {
+    return elementNodeSources.reduce(function (a, b) {
       return a.node && a.previousRect?.width * a.previousRect?.height > b.previousRect?.width * b.previousRect?.height
         ? a
         : b
