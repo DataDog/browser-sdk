@@ -6,18 +6,68 @@ import type { RumEvent } from '../rumEvent.types'
 import type { CommonContext } from './contexts/commonContext'
 import type { RequestCompleteEvent, RequestStartEvent } from './requestCollection'
 import type { AutoAction } from './action/actionCollection'
-import type { ViewEvent, ViewCreatedEvent, ViewEndedEvent, BeforeViewUpdateEvent } from './view/trackViews'
+import type {
+  ViewEvent,
+  ViewCreatedEvent,
+  ViewDestroyedEvent,
+  ViewEndedEvent,
+  BeforeViewUpdateEvent,
+} from './view/trackViews'
 
 export const enum LifeCycleEventType {
-  // Contexts (like viewHistory) should be opened using prefixed BEFORE_XXX events and closed using prefixed AFTER_XXX events
-  // It ensures the context is available during the non prefixed event callbacks
+  // Some LifeCycle events have BEFORE_ or AFTER_ variants. When these variants exist,
+  // they are dispatched in sequence, in the following order:
+  //  - BEFORE_EVENT
+  //  - EVENT
+  //  - AFTER_EVENT
+  // The convention is that global contextual data structures should be created in BEFORE_
+  // handlers and destroyed in AFTER_ handlers. This ensures that these contexts are
+  // available to all handlers for the non-prefixed version of the event. Events typically
+  // only have these variants if there are existing handlers that require them; if you're
+  // adding a new handler of this kind, you may need to add a new prefixed variant of an
+  // existing event as well.
+
   AUTO_ACTION_COMPLETED,
+
+  /** We are preparing to transition to a new view. */
   BEFORE_VIEW_CREATED,
+
+  /** We have transitioned to a new view. All BEFORE_VIEW_CREATED handlers have run. */
   VIEW_CREATED,
+
+  /**
+   * Something about the current view (e.g. its context) has changed, so we're preparing
+   * to generate a new view update to send to the intake.
+   */
   BEFORE_VIEW_UPDATED,
+
+  /**
+   * We've generated a new view update to send to the intake. All BEFORE_VIEW_UPDATED
+   * handlers have run.
+   */
   VIEW_UPDATED,
+
+  /**
+   * The view is conceptually over, but we're still continuing to track trailing events;
+   * we do this for a period of time controlled by KEEP_TRACKING_AFTER_VIEW_DELAY.
+   * (Note that this means that BEFORE_VIEW_UPDATED and VIEW_UPDATED can be delivered
+   * *after* VIEW_ENDED and AFTER_VIEW_ENDED.)
+   */
   VIEW_ENDED,
+
+  /**
+   * We've conceptually ended the view, although we're still continuing to track
+   * trailing events. All VIEW_ENDED handlers have run.
+   */
   AFTER_VIEW_ENDED,
+
+  /**
+   * We've stopped listening for trailing events for this view, and any final updates
+   * have been sent to the intake, It's now safe to tear down any data structures
+   * associated with this view.
+   */
+  VIEW_DESTROYED,
+
   REQUEST_STARTED,
   REQUEST_COMPLETED,
 
@@ -60,6 +110,7 @@ declare const LifeCycleEventTypeAsConst: {
   VIEW_UPDATED: LifeCycleEventType.VIEW_UPDATED
   VIEW_ENDED: LifeCycleEventType.VIEW_ENDED
   AFTER_VIEW_ENDED: LifeCycleEventType.AFTER_VIEW_ENDED
+  VIEW_DESTROYED: LifeCycleEventType.VIEW_DESTROYED
   REQUEST_STARTED: LifeCycleEventType.REQUEST_STARTED
   REQUEST_COMPLETED: LifeCycleEventType.REQUEST_COMPLETED
   SESSION_EXPIRED: LifeCycleEventType.SESSION_EXPIRED
@@ -80,6 +131,7 @@ export interface LifeCycleEventMap {
   [LifeCycleEventTypeAsConst.VIEW_UPDATED]: ViewEvent
   [LifeCycleEventTypeAsConst.VIEW_ENDED]: ViewEndedEvent
   [LifeCycleEventTypeAsConst.AFTER_VIEW_ENDED]: ViewEndedEvent
+  [LifeCycleEventTypeAsConst.VIEW_DESTROYED]: ViewDestroyedEvent
   [LifeCycleEventTypeAsConst.REQUEST_STARTED]: RequestStartEvent
   [LifeCycleEventTypeAsConst.REQUEST_COMPLETED]: RequestCompleteEvent
   [LifeCycleEventTypeAsConst.SESSION_EXPIRED]: void

@@ -6,6 +6,7 @@ import type {
   RelativeTime,
   Context,
   ContextValue,
+  Observable,
 } from '@datadog/browser-core'
 import {
   noop,
@@ -23,7 +24,6 @@ import {
   setInterval,
   clearInterval,
   setTimeout,
-  Observable,
   createContextManager,
 } from '@datadog/browser-core'
 import type { ViewCustomTimings } from '../../rawRumEvent.types'
@@ -78,6 +78,11 @@ export interface ViewEndedEvent {
   endClocks: ClocksState
 }
 
+export interface ViewDestroyedEvent {
+  /** The id of the view that was destroyed. */
+  id: string
+}
+
 export const THROTTLE_VIEW_UPDATE_PERIOD = 3000
 export const SESSION_KEEP_ALIVE_INTERVAL = 5 * ONE_MINUTE
 
@@ -106,7 +111,7 @@ export function trackViews(
   areViewsTrackedAutomatically: boolean,
   initialViewOptions?: ViewOptions
 ) {
-  const activeViews: Set<ReturnType<typeof newView>> = new Set()
+  const activeViews: Map<string, ReturnType<typeof newView>> = new Map()
   let currentView = startNewView(ViewLoadingType.INITIAL_LOAD, clocksOrigin(), initialViewOptions)
 
   startViewLifeCycle()
@@ -127,10 +132,7 @@ export function trackViews(
       startClocks,
       viewOptions
     )
-    activeViews.add(newlyCreatedView)
-    newlyCreatedView.stopObservable.subscribe(() => {
-      activeViews.delete(newlyCreatedView)
-    })
+    activeViews.set(newlyCreatedView.id, newlyCreatedView)
     return newlyCreatedView
   }
 
@@ -154,6 +156,10 @@ export function trackViews(
       if (pageExitEvent.reason === PageExitReason.UNLOADING) {
         currentView.end()
       }
+    })
+
+    lifeCycle.subscribe(LifeCycleEventType.VIEW_DESTROYED, ({ id }) => {
+      activeViews.delete(id)
     })
   }
 
@@ -190,7 +196,9 @@ export function trackViews(
         locationChangeSubscription.unsubscribe()
       }
       currentView.end()
-      activeViews.forEach((view) => view.stop())
+      for (const view of activeViews.values()) {
+        view.stop()
+      }
     },
   }
 }
@@ -207,7 +215,6 @@ function newView(
 ) {
   // Setup initial values
   const id = generateUUID()
-  const stopObservable = new Observable<void>()
   const customTimings: ViewCustomTimings = {}
   let documentVersion = 0
   let endClocks: ClocksState | undefined
@@ -313,13 +320,15 @@ function newView(
   }
 
   return {
+    get id() {
+      return id
+    },
     get name() {
       return name
     },
     service,
     version,
     contextManager,
-    stopObservable,
     end(options: { endClocks?: ClocksState; sessionIsActive?: boolean } = {}) {
       if (endClocks) {
         // view already ended
@@ -342,7 +351,7 @@ function newView(
       stopInitialViewMetricsTracking()
       stopEventCountsTracking()
       stopINPTracking()
-      stopObservable.notify()
+      lifeCycle.notify(LifeCycleEventType.VIEW_DESTROYED, { id })
     },
     addTiming(name: string, time: RelativeTime | TimeStamp) {
       if (endClocks) {

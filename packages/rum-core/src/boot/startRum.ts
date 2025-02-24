@@ -52,6 +52,7 @@ import { startCiVisibilityContext } from '../domain/contexts/ciVisibilityContext
 import { startLongAnimationFrameCollection } from '../domain/longAnimationFrame/longAnimationFrameCollection'
 import { RumPerformanceEntryType } from '../browser/performanceObservable'
 import { startLongTaskCollection } from '../domain/longTask/longTaskCollection'
+import { startReplayStatsHistory } from '../domain/view/replayStatsHistory'
 import type { Hooks } from '../hooks'
 import { createHooks } from '../hooks'
 import { startSyntheticsContext } from '../domain/contexts/syntheticsContext'
@@ -135,6 +136,9 @@ export function startRum(
   const pageStateHistory = startPageStateHistory(configuration)
   const viewHistory = startViewHistory(lifeCycle)
   const urlContexts = startUrlContexts(lifeCycle, hooks, locationChangeObservable, location)
+
+  const replayStatsHistory = startReplayStatsHistory(lifeCycle)
+  cleanupTasks.push(() => replayStatsHistory.stop())
 
   const { observable: windowOpenObservable, stop: stopWindowOpen } = createWindowOpenObservable()
   cleanupTasks.push(stopWindowOpen)
@@ -221,6 +225,7 @@ export function startRum(
     getViewContext,
     setViewName,
     lifeCycle,
+    replayStatsHistory,
     viewHistory,
     session,
     stopSession: () => session.expire(),
