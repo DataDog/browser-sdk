@@ -128,7 +128,7 @@ export function createMutationPayloadValidator(initialDocument: SerializedNodeWi
     validate: (
       payload: BrowserMutationPayload,
       expected: ExpectedMutationsPayload,
-      { expect = getGlobalObject().expect }: { expect?: Expect } = {}
+      { expect = getGlobalObject<{ expect: Expect }>().expect }: { expect?: Expect } = {}
     ) => {
       payload = removeUndefinedValues(payload)
 
