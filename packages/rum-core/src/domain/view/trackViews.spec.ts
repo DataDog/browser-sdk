@@ -405,6 +405,7 @@ describe('view metrics', () => {
         time: clock.relative(0),
         previousRect: undefined,
         currentRect: undefined,
+        devicePixelRatio: 2
       })
     })
 
