@@ -28,6 +28,12 @@ export const TraceContextInjection = {
 
 export type TraceContextInjection = (typeof TraceContextInjection)[keyof typeof TraceContextInjection]
 
+export type TraceContextDetails = {
+  traceId: string,
+  spanId: string,
+  traceSampled: boolean,
+  // TODO
+}
 export interface InitConfiguration {
   /**
    * The client token for Datadog. Required for authenticating your application with Datadog.

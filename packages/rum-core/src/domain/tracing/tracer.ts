@@ -16,7 +16,7 @@ import type {
 import type { RumSessionManager } from '../rumSessionManager'
 import type { PropagatorType, TracingOption } from './tracer.types'
 import type { SpanIdentifier, TraceIdentifier } from './identifier'
-import { createSpanIdentifier, createTraceIdentifier, toPaddedHexadecimalString } from './identifier'
+import { createSpanIdentifier, createTraceIdentifier, fromString, toPaddedHexadecimalString } from './identifier'
 import { isTraceSampled } from './sampler'
 
 export interface Tracer {
@@ -117,17 +117,23 @@ function injectHeadersIfTracingAllowed(
   if (!tracingOption) {
     return
   }
-  const traceId = createTraceIdentifier()
-  context.traceSampled = isTraceSampled(traceId, configuration.traceSampleRate)
+  if (configuration.traceContextDetails) {
+    context.traceId = fromString(configuration.traceContextDetails.traceId) as TraceIdentifier
+    context.spanId = fromString(configuration.traceContextDetails.spanId) as SpanIdentifier
+    context.traceSampled = configuration.traceContextDetails.traceSampled
+  } else {
+    const traceId = createTraceIdentifier()
+    context.traceSampled = isTraceSampled(traceId, configuration.traceSampleRate)
 
-  const shouldInjectHeaders = context.traceSampled || configuration.traceContextInjection === TraceContextInjection.ALL
+    const shouldInjectHeaders = context.traceSampled || configuration.traceContextInjection === TraceContextInjection.ALL
 
-  if (!shouldInjectHeaders) {
-    return
+    if (!shouldInjectHeaders) {
+      return
+    }
+
+    context.traceId = traceId
+    context.spanId = createSpanIdentifier()
   }
-
-  context.traceId = traceId
-  context.spanId = createSpanIdentifier()
 
   inject(makeTracingHeaders(context.traceId, context.spanId, context.traceSampled, tracingOption.propagatorTypes))
 }

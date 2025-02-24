@@ -87,3 +87,11 @@ export function toPaddedHexadecimalString(id: BaseIdentifier) {
   // TODO: replace with String.prototype.padStart when we drop IE11 support
   return Array(17 - traceId.length).join('0') + traceId
 }
+
+export function fromString(str: string): BaseIdentifier {
+  return {
+    toString(radix = 10) {
+      return str
+    },
+  }
+}
