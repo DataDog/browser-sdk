@@ -19,6 +19,7 @@ export interface CumulativeLayoutShift {
   time?: Duration
   previousRect?: RumRect
   currentRect?: RumRect
+  devicePixelRatio?: number
 }
 
 interface LayoutShiftInstance {
@@ -74,7 +75,7 @@ export function trackCumulativeLayoutShift(
         continue
       }
 
-      const { cumulatedValue, isMaxValue } = window.update(entry)
+      const { cumulatedValue, isMaxValue, devicePixelRatio } = window.update(entry)
 
       if (isMaxValue) {
         const attribution = getBiggestElementAttribution(entry.sources)
@@ -83,6 +84,7 @@ export function trackCumulativeLayoutShift(
           time: elapsed(viewStart, entry.startTime),
           previousRect: attribution?.previousRect,
           currentRect: attribution?.currentRect,
+          devicePixelRatio,
         }
       }
 
@@ -96,6 +98,7 @@ export function trackCumulativeLayoutShift(
           time: biggestShift?.time,
           previousRect: biggestShift?.previousRect ? asRumRect(biggestShift.previousRect) : undefined,
           currentRect: biggestShift?.currentRect ? asRumRect(biggestShift.currentRect) : undefined,
+          devicePixelRatio,
         })
       }
     }
@@ -163,6 +166,7 @@ function slidingSessionWindow() {
       return {
         cumulatedValue,
         isMaxValue,
+        devicePixelRatio: window.devicePixelRatio,
       }
     },
   }
