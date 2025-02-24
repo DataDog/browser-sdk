@@ -6,6 +6,7 @@ import type {
   ViewHistory,
   RumSession,
   ReplayStatsHistory,
+  ReplayStats,
 } from '@datadog/browser-rum-core'
 import { LifeCycleEventType, SessionReplayState } from '@datadog/browser-rum-core'
 import { asyncRunOnReadyState, monitorError, PageExitReason, type DeflateEncoder } from '@datadog/browser-core'
@@ -30,6 +31,7 @@ export interface Strategy {
   start: (options?: StartRecordingOptions) => void
   stop: () => void
   isRecording: () => boolean
+  getReplayStats: (viewId: string) => ReplayStats | undefined
   getSessionReplayLink: () => string | undefined
 }
 
@@ -37,11 +39,11 @@ export function createPostStartStrategy(
   configuration: RumConfiguration,
   lifeCycle: LifeCycle,
   sessionManager: RumSessionManager,
-  replayStatsHistory: ReplayStatsHistory,
   viewHistory: ViewHistory,
   loadRecorder: () => Promise<StartRecording | undefined>,
   getOrCreateDeflateEncoder: () => DeflateEncoder | undefined
 ): Strategy {
+  const cleanupTasks: Array<() => void> = []
   let status = RecorderStatus.Stopped
   let stopRecording: () => void
 
@@ -65,6 +67,9 @@ export function createPostStartStrategy(
     }
   })
 
+  let replayStatsHistory: ReplayStatsHistory | undefined
+  cleanupTasks.push(() => replayStatsHistory?.stop())
+
   const doStart = async () => {
     const [startRecordingImpl] = await Promise.all([loadRecorder(), asyncRunOnReadyState(configuration, 'interactive')])
 
@@ -78,11 +83,10 @@ export function createPostStartStrategy(
       return
     }
 
-    ;({ stop: stopRecording } = startRecordingImpl(
+    ;({ replayStatsHistory, stop: stopRecording } = startRecordingImpl(
       lifeCycle,
       configuration,
       sessionManager,
-      replayStatsHistory,
       viewHistory,
       deflateEncoder
     ))
@@ -116,12 +120,17 @@ export function createPostStartStrategy(
       stopRecording?.()
     }
 
+    cleanupTasks.forEach((task) => task())
+
     status = RecorderStatus.Stopped
   }
 
   return {
     start,
     stop,
+    getReplayStats(viewId: string): ReplayStats | undefined {
+      return replayStatsHistory?.getReplayStats(viewId)
+    },
     getSessionReplayLink() {
       return getSessionReplayLink(configuration, sessionManager, viewHistory, status !== RecorderStatus.Stopped)
     },

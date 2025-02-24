@@ -7,7 +7,7 @@ import type {
   RumSessionManager,
   ViewHistory,
 } from '@datadog/browser-rum-core'
-import { LifeCycle, LifeCycleEventType } from '@datadog/browser-rum-core'
+import { LifeCycle, LifeCycleEventType, startReplayStatsHistory } from '@datadog/browser-rum-core'
 import { collectAsyncCalls, mockEventBridge, registerCleanupTask } from '@datadog/browser-core/test'
 import type { RumSessionManagerMock } from '../../../rum-core/test'
 import {
@@ -54,21 +54,14 @@ describe('makeRecorderApi', () => {
           lifeCycle: LifeCycle,
           configuration: RumConfiguration,
           sessionManager: RumSessionManager,
-          newReplayStatsHistory: ReplayStatsHistory,
           viewHistory: ViewHistory,
           newDeflateEncoder: DeflateEncoder
         ) => {
-          replayStatsHistory = newReplayStatsHistory
           deflateEncoder = newDeflateEncoder
-          startRecordingSpy(
-            lifeCycle,
-            configuration,
-            sessionManager,
-            newReplayStatsHistory,
-            viewHistory,
-            newDeflateEncoder
-          )
+          replayStatsHistory = startReplayStatsHistory(lifeCycle)
+          startRecordingSpy(lifeCycle, configuration, sessionManager, viewHistory, newDeflateEncoder)
           return {
+            replayStatsHistory,
             stop: stopRecordingSpy,
           }
         }
