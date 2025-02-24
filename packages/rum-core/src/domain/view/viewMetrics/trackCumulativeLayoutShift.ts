@@ -97,7 +97,7 @@ export function trackCumulativeLayoutShift(
           time: biggestShift?.time,
           previousRect: biggestShift?.previousRect ? asRumRect(biggestShift.previousRect) : undefined,
           currentRect: biggestShift?.currentRect ? asRumRect(biggestShift.currentRect) : undefined,
-          devicePixelRatio
+          devicePixelRatio,
         })
       }
     }
@@ -118,9 +118,10 @@ function getBiggestElementAttribution(
   )
   if (elementNodeSources.length > 0) {
     return elementNodeSources.reduce((a, b) => {
-      return a.node && a.previousRect?.width * a.previousRect?.height >
-        b.previousRect?.width * b.previousRect?.height ? a : b;
-    });
+      return a.node && a.previousRect?.width * a.previousRect?.height > b.previousRect?.width * b.previousRect?.height
+        ? a
+        : b
+    })
   }
   return undefined
 }

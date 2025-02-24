@@ -27,7 +27,7 @@ describe('trackCumulativeLayoutShift', () => {
     viewStart = 0 as RelativeTime,
     isLayoutShiftSupported = true,
   }: Partial<StartCLSTrackingArgs> = {}) {
-    ; ({ notifyPerformanceEntries } = mockPerformanceObserver())
+    ;({ notifyPerformanceEntries } = mockPerformanceObserver())
 
     clsCallback = jasmine.createSpy()
     originalSupportedEntryTypes = Object.getOwnPropertyDescriptor(PerformanceObserver, 'supportedEntryTypes')
