@@ -128,4 +128,15 @@ describe('console error observable', () => {
     const consoleLog = notifyLog.calls.mostRecent().args[0]
     expect(consoleLog.error.fingerprint).toBe('2')
   })
+
+  it('should retrieve context from error', () => {
+    interface DatadogError extends Error {
+      dd_context?: Record<string, unknown>
+    }
+    const error = new Error('foo')
+    ;(error as DatadogError).dd_context = { foo: 'bar' }
+    console.error(error)
+    const consoleLog = notifyLog.calls.mostRecent().args[0]
+    expect(consoleLog.error.context).toEqual({ foo: 'bar' })
+  })
 })
