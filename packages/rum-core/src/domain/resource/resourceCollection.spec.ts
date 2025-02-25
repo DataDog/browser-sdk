@@ -2,9 +2,11 @@ import type { Duration, RelativeTime, ServerDuration, TaskQueue, TimeStamp } fro
 import { createTaskQueue, noop, RequestType, ResourceType } from '@datadog/browser-core'
 import { registerCleanupTask } from '@datadog/browser-core/test'
 import type { RumFetchResourceEventDomainContext, RumXhrResourceEventDomainContext } from '../../domainContext.types'
+import type { GlobalPerformanceBufferMock } from '../../../test'
 import {
   collectAndValidateRawRumEvents,
   createPerformanceEntry,
+  mockGlobalPerformanceBuffer,
   mockPageStateHistory,
   mockPerformanceObserver,
   mockRumConfiguration,
@@ -29,6 +31,7 @@ describe('resourceCollection', () => {
   let lifeCycle: LifeCycle
   let wasInPageStateDuringPeriodSpy: jasmine.Spy<jasmine.Func>
   let notifyPerformanceEntries: (entries: RumPerformanceEntry[]) => void
+  let globalPerformanceObjectMock: GlobalPerformanceBufferMock
   let rawRumEvents: Array<RawRumEventCollectedData<RawRumEvent>> = []
   let taskQueuePushSpy: jasmine.Spy<TaskQueue['push']>
 
@@ -54,6 +57,12 @@ describe('resourceCollection', () => {
 
   beforeEach(() => {
     ;({ notifyPerformanceEntries } = mockPerformanceObserver())
+    globalPerformanceObjectMock = mockGlobalPerformanceBuffer()
+    globalPerformanceObjectMock.addPerformanceEntry(
+      createPerformanceEntry(RumPerformanceEntryType.RESOURCE, {
+        responseStart: 250 as RelativeTime,
+      })
+    )
     wasInPageStateDuringPeriodSpy = spyOn(pageStateHistory, 'wasInPageStateDuringPeriod')
   })
 
@@ -105,18 +114,12 @@ describe('resourceCollection', () => {
     lifeCycle.notify(
       LifeCycleEventType.REQUEST_COMPLETED,
       createCompletedRequest({
-        duration: 100 as Duration,
-        method: 'GET',
-        startClocks: { relative: 1234 as RelativeTime, timeStamp: 123456789 as TimeStamp },
-        status: 200,
-        type: RequestType.XHR,
-        url: 'https://resource.com/valid',
         xhr,
         isAborted: false,
       })
     )
 
-    expect(rawRumEvents[0].startTime).toBe(1234 as RelativeTime)
+    expect(rawRumEvents[0].startTime).toBe(200 as RelativeTime)
     expect(rawRumEvents[0].rawRumEvent).toEqual({
       date: jasmine.any(Number),
       resource: {
@@ -124,10 +127,17 @@ describe('resourceCollection', () => {
         duration: (100 * 1e6) as ServerDuration,
         method: 'GET',
         status_code: 200,
-        delivery_type: undefined,
-        protocol: undefined,
+        delivery_type: 'cache',
+        protocol: 'HTTP/1.0',
         type: ResourceType.XHR,
         url: 'https://resource.com/valid',
+        render_blocking_status: 'non-blocking',
+        size: 1000,
+        encoded_body_size: 500,
+        decoded_body_size: 1000,
+        transfer_size: 500,
+        download: Object({ duration: 50_000_000, start: 50_000_000 }),
+        first_byte: Object({ duration: 50_000_000, start: 0 }),
       },
       type: RumEventType.RESOURCE,
       _dd: {
@@ -136,7 +146,7 @@ describe('resourceCollection', () => {
     })
     expect(rawRumEvents[0].domainContext).toEqual({
       xhr,
-      performanceEntry: undefined,
+      performanceEntry: jasmine.any(Object),
       response: undefined,
       requestInput: undefined,
       requestInit: undefined,
@@ -197,7 +207,7 @@ describe('resourceCollection', () => {
     })
   })
 
-  it('should not have a duration if a frozen state happens during the request and no performance entry matches', () => {
+  it('should not have any duration properties if a frozen state happens during the request and no performance entry matches', () => {
     setupResourceCollection()
     const mockXHR = createCompletedRequest()
 
@@ -205,8 +215,28 @@ describe('resourceCollection', () => {
 
     lifeCycle.notify(LifeCycleEventType.REQUEST_COMPLETED, mockXHR)
 
-    const rawRumResourceEventFetch = rawRumEvents[0].rawRumEvent as RawRumResourceEvent
-    expect(rawRumResourceEventFetch.resource.duration).toBeUndefined()
+    expect(rawRumEvents[0].rawRumEvent).toEqual({
+      date: jasmine.any(Number),
+      resource: {
+        id: jasmine.any(String),
+        duration: undefined,
+        method: 'GET',
+        status_code: 200,
+        delivery_type: 'cache',
+        protocol: 'HTTP/1.0',
+        type: ResourceType.XHR,
+        url: 'https://resource.com/valid',
+        render_blocking_status: 'non-blocking',
+        size: 1000,
+        encoded_body_size: 500,
+        decoded_body_size: 1000,
+        transfer_size: 500,
+      },
+      type: RumEventType.RESOURCE,
+      _dd: {
+        discarded: false,
+      },
+    })
   })
 
   it('should create resource from completed fetch request', () => {
@@ -215,10 +245,6 @@ describe('resourceCollection', () => {
     lifeCycle.notify(
       LifeCycleEventType.REQUEST_COMPLETED,
       createCompletedRequest({
-        duration: 100 as Duration,
-        method: 'GET',
-        startClocks: { relative: 1234 as RelativeTime, timeStamp: 123456789 as TimeStamp },
-        status: 200,
         type: RequestType.FETCH,
         url: 'https://resource.com/valid',
         response,
@@ -228,7 +254,7 @@ describe('resourceCollection', () => {
       })
     )
 
-    expect(rawRumEvents[0].startTime).toBe(1234 as RelativeTime)
+    expect(rawRumEvents[0].startTime).toBe(200 as RelativeTime)
     expect(rawRumEvents[0].rawRumEvent).toEqual({
       date: jasmine.any(Number),
       resource: {
@@ -236,10 +262,17 @@ describe('resourceCollection', () => {
         duration: (100 * 1e6) as ServerDuration,
         method: 'GET',
         status_code: 200,
-        delivery_type: undefined,
-        protocol: undefined,
+        delivery_type: 'cache',
+        protocol: 'HTTP/1.0',
         type: ResourceType.FETCH,
         url: 'https://resource.com/valid',
+        render_blocking_status: 'non-blocking',
+        size: 1000,
+        encoded_body_size: 500,
+        decoded_body_size: 1000,
+        transfer_size: 500,
+        download: Object({ duration: 50_000_000, start: 50_000_000 }),
+        first_byte: Object({ duration: 50_000_000, start: 0 }),
       },
       type: RumEventType.RESOURCE,
       _dd: {
@@ -247,7 +280,7 @@ describe('resourceCollection', () => {
       },
     })
     expect(rawRumEvents[0].domainContext).toEqual({
-      performanceEntry: undefined,
+      performanceEntry: jasmine.any(Object),
       xhr: undefined,
       response,
       requestInput: 'https://resource.com/valid',
@@ -439,7 +472,7 @@ function createCompletedRequest(details?: Partial<RequestCompleteEvent>): Reques
   const request: Partial<RequestCompleteEvent> = {
     duration: 100 as Duration,
     method: 'GET',
-    startClocks: { relative: 1234 as RelativeTime, timeStamp: 123456789 as TimeStamp },
+    startClocks: { relative: 200 as RelativeTime, timeStamp: 123456789 as TimeStamp },
     status: 200,
     type: RequestType.XHR,
     url: 'https://resource.com/valid',
