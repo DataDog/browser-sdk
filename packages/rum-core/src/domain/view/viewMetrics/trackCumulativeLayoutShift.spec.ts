@@ -310,9 +310,8 @@ describe('trackCumulativeLayoutShift', () => {
     it('should get the target element, time, and rects of the largest layout shift', () => {
       startCLSTracking()
       const divElement = appendElement('<div id="div-element"></div>')
-      const spanElement = appendElement('<span id="span-element"></span>')
+      const largerElement = appendElement('<span id="larger-element"></span>')
 
-      // first session window:  { value: 0.5, time: 1, targetSelector: '#div-element' }
       notifyPerformanceEntries([
         createPerformanceEntry(RumPerformanceEntryType.LAYOUT_SHIFT, { value: 0.1, startTime: 0 as RelativeTime }),
       ])
@@ -327,7 +326,7 @@ describe('trackCumulativeLayoutShift', () => {
               currentRect: DOMRectReadOnly.fromRect({ x: 50, y: 50, width: 10, height: 10 }),
             },
             {
-              node: spanElement,
+              node: largerElement,
               previousRect: DOMRectReadOnly.fromRect({ x: 0, y: 0, width: 40, height: 40 }),
               currentRect: DOMRectReadOnly.fromRect({ x: 50, y: 50, width: 40, height: 40 }),
             },
@@ -356,7 +355,7 @@ describe('trackCumulativeLayoutShift', () => {
       expect(clsCallback.calls.mostRecent().args[0]).toEqual({
         value: 0.5,
         time: 1 as RelativeTime,
-        targetSelector: '#span-element',
+        targetSelector: '#larger-element',
         previousRect: { x: 0, y: 0, width: 40, height: 40 },
         currentRect: { x: 50, y: 50, width: 40, height: 40 },
         devicePixelRatio: jasmine.any(Number),

@@ -116,14 +116,12 @@ function getBiggestElementAttribution(
   const elementNodeSources = sources.filter(
     (source): source is RumLayoutShiftAttribution & { node: Element } => !!source.node && isElementNode(source.node)
   )
-  if (elementNodeSources.length > 0) {
-    return elementNodeSources.reduce(function (a, b) {
-      return a.node && a.previousRect?.width * a.previousRect?.height > b.previousRect?.width * b.previousRect?.height
-        ? a
-        : b
-    })
+  if (elementNodeSources.length <= 0) {
+    return
   }
-  return undefined
+  return elementNodeSources.reduce(function (a, b) {
+    return a.previousRect?.width * a.previousRect?.height > b.previousRect?.width * b.previousRect?.height ? a : b
+  })
 }
 
 function asRumRect({ x, y, width, height }: DOMRectReadOnly): RumRect {
