@@ -32,7 +32,7 @@ test.describe('rum errors', () => {
       expectError(intakeRegistry.rumErrorEvents[0].error, {
         message: 'oh snap',
         source: 'console',
-        handlingStack: ['HandlingStack: error', `handler @ ${baseUrl}/:`],
+        handlingStack: ['HandlingStack: console error', `handler @ ${baseUrl}/:`],
         handling: 'handled',
       })
       withBrowserLogs((browserLogs) => {
@@ -53,7 +53,7 @@ test.describe('rum errors', () => {
         message: 'Foo: Error: oh snap',
         source: 'console',
         stack: ['Error: oh snap', `at foo @ ${baseUrl}/:`, `handler @ ${baseUrl}/:`],
-        handlingStack: ['HandlingStack: error', `handler @ ${baseUrl}/:`],
+        handlingStack: ['HandlingStack: console error', `handler @ ${baseUrl}/:`],
         handling: 'handled',
       })
       withBrowserLogs((browserLogs) => {

@@ -3,7 +3,7 @@ import type { LogsEvent, LogsInitConfiguration, LogsEventDomainContext } from '@
 import { test, expect } from '@playwright/test'
 import { createTest } from '../lib/framework'
 
-const HANDLING_STACK_REGEX = /^Error: \n\s+at testHandlingStack @/
+const HANDLING_STACK_REGEX = /^HandlingStack: .*\n\s+at testHandlingStack @/
 
 const RUM_CONFIG: Partial<RumInitConfiguration> = {
   service: 'main-service',
