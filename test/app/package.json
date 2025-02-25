@@ -7,16 +7,10 @@
     "compat:ssr": "webpack --config ./webpack.ssr.js && node dist/app.js"
   },
   "dependencies": {
-    "@datadog/browser-core": "portal:../../packages/core",
-    "@datadog/browser-logs": "portal:../../packages/logs",
-    "@datadog/browser-rum": "portal:../../packages/rum",
-    "@datadog/browser-rum-core": "portal:../../packages/rum-core"
-  },
-  "resolutions": {
-    "@datadog/browser-core": "portal:../../packages/core",
-    "@datadog/browser-rum-core": "portal:../../packages/rum-core",
-    "@datadog/browser-rum": "portal:../../packages/rum",
-    "@datadog/browser-worker": "portal:../../packages/worker"
+    "@datadog/browser-core": "file:../../packages/core/package.tgz",
+    "@datadog/browser-logs": "file:../../packages/logs/package.tgz",
+    "@datadog/browser-rum": "file:../../packages/rum/package.tgz",
+    "@datadog/browser-rum-core": "file:../../packages/rum-core/package.tgz"
   },
   "devDependencies": {
     "ts-loader": "6.2.1",
