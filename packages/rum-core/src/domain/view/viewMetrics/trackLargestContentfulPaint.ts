@@ -67,7 +67,7 @@ export function trackLargestContentfulPaint(
       callback({
         value: lcpEntry.startTime,
         targetSelector: lcpTargetSelector,
-        resourceUrl: lcpEntry.url,
+        resourceUrl: computeLcpEntryUrl(lcpEntry),
       })
       biggestLcpSize = lcpEntry.size
     }
@@ -79,4 +79,9 @@ export function trackLargestContentfulPaint(
       performanceLcpSubscription.unsubscribe()
     },
   }
+}
+
+// The property url report an empty string if the value is not available, we shouldn't report it in this case.
+function computeLcpEntryUrl(entry: RumLargestContentfulPaintTiming) {
+  return entry.url === '' ? undefined : entry.url
 }
