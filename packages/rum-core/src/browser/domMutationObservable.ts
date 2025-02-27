@@ -1,4 +1,15 @@
-import { monitor, noop, Observable, getZoneJsOriginalValue } from '@datadog/browser-core'
+import {
+  monitor,
+  noop,
+  Observable,
+  getZoneJsOriginalValue,
+  ExperimentalFeature,
+  isExperimentalFeatureEnabled,
+} from '@datadog/browser-core'
+
+export const IGNORE_MUTATIONS_ATTRIBUTE = 'dd-ignore-mutations'
+
+type MutationNotifier = (mutations: MutationRecord[]) => void
 
 export function createDOMMutationObservable() {
   const MutationObserver = getMutationObserverConstructor()
@@ -7,7 +18,18 @@ export function createDOMMutationObservable() {
     if (!MutationObserver) {
       return
     }
-    const observer = new MutationObserver(monitor(() => observable.notify()))
+
+    let mutationNotifier: MutationNotifier = () => observable.notify()
+    if (isExperimentalFeatureEnabled(ExperimentalFeature.DOM_MUTATION_IGNORING)) {
+      mutationNotifier = (mutations: MutationRecord[]) => {
+        if (mutations.every((mutation) => isIgnored(mutation))) {
+          return
+        }
+        return observable.notify()
+      }
+    }
+
+    const observer = new MutationObserver(monitor(mutationNotifier))
     observer.observe(document, {
       attributes: true,
       characterData: true,
@@ -16,6 +38,16 @@ export function createDOMMutationObservable() {
     })
     return () => observer.disconnect()
   })
+}
+
+function isIgnored(mutation: MutationRecord): boolean {
+  switch (mutation.type) {
+    case 'attributes':
+    case 'childList':
+      return (mutation.target as Element).hasAttribute(IGNORE_MUTATIONS_ATTRIBUTE) === true
+    case 'characterData':
+      return mutation.target.parentElement?.hasAttribute(IGNORE_MUTATIONS_ATTRIBUTE) === true
+  }
 }
 
 type MutationObserverConstructor = new (callback: MutationCallback) => MutationObserver
