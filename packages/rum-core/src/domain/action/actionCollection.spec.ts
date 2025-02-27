@@ -1,39 +1,43 @@
 import type { Duration, RelativeTime, ServerDuration, TimeStamp } from '@datadog/browser-core'
-import { ExperimentalFeature, Observable } from '@datadog/browser-core'
-import { createNewEvent, mockExperimentalFeatures, registerCleanupTask } from '@datadog/browser-core/test'
+import { Observable } from '@datadog/browser-core'
+import { createNewEvent, registerCleanupTask } from '@datadog/browser-core/test'
 import type { RawRumActionEvent, RawRumEventCollectedData } from '@datadog/browser-rum-core'
-import { collectAndValidateRawRumEvents, mockPageStateHistory, mockRumConfiguration } from '../../../test'
+import { collectAndValidateRawRumEvents, mockRumConfiguration } from '../../../test'
 import type { RawRumEvent } from '../../rawRumEvent.types'
 import { RumEventType, ActionType } from '../../rawRumEvent.types'
 import { LifeCycle, LifeCycleEventType } from '../lifeCycle'
+import type { Hooks } from '../../hooks'
+import { createHooks, HookNames } from '../../hooks'
+import type { ActionContexts } from './actionCollection'
 import { startActionCollection } from './actionCollection'
-
-const basePageStateHistory = mockPageStateHistory({ wasInPageStateAt: () => true })
 
 describe('actionCollection', () => {
   const lifeCycle = new LifeCycle()
+  let hooks: Hooks
   let addAction: ReturnType<typeof startActionCollection>['addAction']
   let rawRumEvents: Array<RawRumEventCollectedData<RawRumEvent>>
+  let actionContexts: ActionContexts
 
   beforeEach(() => {
     const domMutationObservable = new Observable<void>()
     const windowOpenObservable = new Observable<void>()
+    hooks = createHooks()
 
     const actionCollection = startActionCollection(
       lifeCycle,
+      hooks,
       domMutationObservable,
       windowOpenObservable,
-      mockRumConfiguration(),
-      basePageStateHistory
+      mockRumConfiguration()
     )
     registerCleanupTask(actionCollection.stop)
     addAction = actionCollection.addAction
+    actionContexts = actionCollection.actionContexts
 
     rawRumEvents = collectAndValidateRawRumEvents(lifeCycle)
   })
 
   it('should create action from auto action with name source', () => {
-    mockExperimentalFeatures([ExperimentalFeature.ACTION_NAME_MASKING])
     const event = createNewEvent('pointerup', { target: document.createElement('button') })
     lifeCycle.notify(LifeCycleEventType.AUTO_ACTION_COMPLETED, {
       counts: {
@@ -82,9 +86,6 @@ describe('actionCollection', () => {
       },
       date: jasmine.any(Number),
       type: RumEventType.ACTION,
-      view: {
-        in_foreground: true,
-      },
       _dd: {
         action: {
           target: {
@@ -123,11 +124,8 @@ describe('actionCollection', () => {
       },
       date: jasmine.any(Number),
       type: RumEventType.ACTION,
-      view: {
-        in_foreground: true,
-      },
     })
-    expect(rawRumEvents[0].domainContext).toEqual({})
+    expect(rawRumEvents[0].domainContext).toEqual({ handlingStack: undefined })
   })
   it('should not set the loading time field of the action', () => {
     const event = createNewEvent('pointerup', { target: document.createElement('button') })
@@ -160,6 +158,27 @@ describe('actionCollection', () => {
 
     expect(rawRumEvents[0].domainContext).toEqual({
       handlingStack: 'Error\n    at foo\n    at bar',
+    })
+  })
+
+  describe('assembly hook', () => {
+    ;[RumEventType.RESOURCE, RumEventType.LONG_TASK, RumEventType.ERROR].forEach((eventType) => {
+      it(`should add action properties on ${eventType} from the context`, () => {
+        const actionId = '1'
+        spyOn(actionContexts, 'findActionId').and.returnValue(actionId)
+        const event = hooks.triggerHook(HookNames.Assemble, { eventType, startTime: 0 as RelativeTime })
+
+        expect(event).toEqual({ type: eventType, action: { id: actionId } })
+      })
+    })
+    ;[RumEventType.VIEW, RumEventType.VITAL].forEach((eventType) => {
+      it(`should not add action properties on ${eventType} from the context`, () => {
+        const actionId = '1'
+        spyOn(actionContexts, 'findActionId').and.returnValue(actionId)
+        const event = hooks.triggerHook(HookNames.Assemble, { eventType, startTime: 0 as RelativeTime })
+
+        expect(event).toEqual(undefined)
+      })
     })
   })
 })

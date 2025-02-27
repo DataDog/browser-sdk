@@ -4,6 +4,7 @@ import type { RumConfiguration } from '../domain/configuration'
 export interface ViewportDimension {
   height: number
   width: number
+  [k: string]: unknown
 }
 
 let viewportObservable: Observable<ViewportDimension> | undefined

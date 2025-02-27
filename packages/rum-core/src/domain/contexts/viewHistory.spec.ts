@@ -3,7 +3,7 @@ import { relativeToClocks, CLEAR_OLD_VALUES_INTERVAL } from '@datadog/browser-co
 import type { Clock } from '@datadog/browser-core/test'
 import { mockClock, registerCleanupTask } from '@datadog/browser-core/test'
 import { LifeCycle, LifeCycleEventType } from '../lifeCycle'
-import type { ViewCreatedEvent, ViewEvent } from '../view/trackViews'
+import type { BeforeViewUpdateEvent, ViewCreatedEvent } from '../view/trackViews'
 import type { ViewHistory } from './viewHistory'
 import { startViewHistory, VIEW_CONTEXT_TIME_OUT_DELAY } from './viewHistory'
 
@@ -98,19 +98,19 @@ describe('ViewHistory', () => {
 
     it('should update the view name for the current context', () => {
       lifeCycle.notify(LifeCycleEventType.BEFORE_VIEW_CREATED, buildViewCreatedEvent({ name: 'foo' }))
-      lifeCycle.notify(LifeCycleEventType.VIEW_UPDATED, {
+      lifeCycle.notify(LifeCycleEventType.BEFORE_VIEW_UPDATED, {
         startClocks,
         name: 'Fake Name',
-      } as ViewEvent)
+      } as BeforeViewUpdateEvent)
       expect(viewHistory.findView()!.name).toBe('Fake Name')
     })
 
     it('should update the view context for the current context', () => {
       lifeCycle.notify(LifeCycleEventType.BEFORE_VIEW_CREATED, buildViewCreatedEvent({ context: { foo: 'bar' } }))
-      lifeCycle.notify(LifeCycleEventType.VIEW_UPDATED, {
+      lifeCycle.notify(LifeCycleEventType.BEFORE_VIEW_UPDATED, {
         startClocks,
         context: { bar: 'foo' } as Context,
-      } as ViewEvent)
+      } as BeforeViewUpdateEvent)
       expect(viewHistory.findView()!.context).toEqual({ bar: 'foo' })
     })
   })

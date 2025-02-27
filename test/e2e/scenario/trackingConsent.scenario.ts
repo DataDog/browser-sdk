@@ -1,52 +1,53 @@
-import { createTest, flushEvents } from '../lib/framework'
+import { test, expect } from '@playwright/test'
 import { findSessionCookie } from '../lib/helpers/session'
+import { createTest } from '../lib/framework'
 
-describe('tracking consent', () => {
-  describe('RUM', () => {
+test.describe('tracking consent', () => {
+  test.describe('RUM', () => {
     createTest('does not start the SDK if tracking consent is not given at init')
       .withRum({ trackingConsent: 'not-granted' })
-      .run(async ({ intakeRegistry }) => {
+      .run(async ({ intakeRegistry, flushEvents, browserContext }) => {
         await flushEvents()
 
         expect(intakeRegistry.isEmpty).toBe(true)
-        expect(await findSessionCookie()).toBeUndefined()
+        expect(await findSessionCookie(browserContext)).toBeUndefined()
       })
 
     createTest('starts the SDK once tracking consent is granted')
       .withRum({ trackingConsent: 'not-granted' })
-      .run(async ({ intakeRegistry }) => {
-        await browser.execute(() => {
+      .run(async ({ intakeRegistry, flushEvents, browserContext, page }) => {
+        await page.evaluate(() => {
           window.DD_RUM!.setTrackingConsent('granted')
         })
 
         await flushEvents()
 
         expect(intakeRegistry.isEmpty).toBe(false)
-        expect(await findSessionCookie()).toBeDefined()
+        expect(await findSessionCookie(browserContext)).toBeDefined()
       })
 
     createTest('stops sending events if tracking consent is revoked')
       .withRum({ trackUserInteractions: true })
-      .run(async ({ intakeRegistry }) => {
-        await browser.execute(() => {
+      .run(async ({ intakeRegistry, flushEvents, browserContext, page }) => {
+        await page.evaluate(() => {
           window.DD_RUM!.setTrackingConsent('not-granted')
         })
 
-        const htmlElement = await $('html')
+        const htmlElement = page.locator('html')
         await htmlElement.click()
 
         await flushEvents()
 
-        expect(intakeRegistry.rumActionEvents).toEqual([])
-        expect(await findSessionCookie()).toContain('isExpired=1')
+        expect(intakeRegistry.rumActionEvents).toHaveLength(0)
+        expect((await findSessionCookie(browserContext))?.isExpired).toEqual('1')
       })
 
     createTest('starts a new session when tracking consent is granted again')
       .withRum()
-      .run(async ({ intakeRegistry }) => {
-        const initialSessionId = await findSessionCookie()
+      .run(async ({ intakeRegistry, flushEvents, browserContext, page }) => {
+        const initialSessionId = await findSessionCookie(browserContext)
 
-        await browser.execute(() => {
+        await page.evaluate(() => {
           window.DD_RUM!.setTrackingConsent('not-granted')
           window.DD_RUM!.setTrackingConsent('granted')
         })
@@ -57,7 +58,7 @@ describe('tracking consent', () => {
         const lastView = intakeRegistry.rumViewEvents.at(-1)!
         expect(firstView.session.id).not.toEqual(lastView.session.id)
         expect(firstView.view.id).not.toEqual(lastView.view.id)
-        expect(await findSessionCookie()).not.toEqual(initialSessionId)
+        expect(await findSessionCookie(browserContext)).not.toEqual(initialSessionId)
       })
 
     createTest('using setTrackingConsent before init overrides the init parameter')
@@ -66,35 +67,35 @@ describe('tracking consent', () => {
         window.DD_RUM!.setTrackingConsent('granted')
         window.DD_RUM!.init(configuration)
       })
-      .run(async ({ intakeRegistry }) => {
+      .run(async ({ intakeRegistry, flushEvents, browserContext }) => {
         await flushEvents()
 
         expect(intakeRegistry.isEmpty).toBe(false)
-        expect(await findSessionCookie()).toBeDefined()
+        expect(await findSessionCookie(browserContext)).toBeDefined()
       })
   })
 
-  describe('Logs', () => {
+  test.describe('Logs', () => {
     createTest('does not start the SDK if tracking consent is not given at init')
       .withLogs({ trackingConsent: 'not-granted' })
-      .run(async ({ intakeRegistry }) => {
+      .run(async ({ intakeRegistry, flushEvents, browserContext }) => {
         await flushEvents()
 
         expect(intakeRegistry.isEmpty).toBe(true)
-        expect(await findSessionCookie()).toBeUndefined()
+        expect(await findSessionCookie(browserContext)).toBeUndefined()
       })
 
     createTest('starts the SDK once tracking consent is granted')
       .withLogs({ trackingConsent: 'not-granted' })
-      .run(async ({ intakeRegistry }) => {
-        await browser.execute(() => {
+      .run(async ({ intakeRegistry, flushEvents, browserContext, page }) => {
+        await page.evaluate(() => {
           window.DD_LOGS!.setTrackingConsent('granted')
         })
 
         await flushEvents()
 
         expect(intakeRegistry.isEmpty).toBe(false)
-        expect(await findSessionCookie()).toBeDefined()
+        expect(await findSessionCookie(browserContext)).toBeDefined()
       })
   })
 })

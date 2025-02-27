@@ -516,7 +516,7 @@ export type RumLongTaskEvent = CommonProperties &
         /**
          * The script resource name where available (or empty if not found)
          */
-        readonly source_url?: string
+        source_url?: string
         /**
          * The script function name where available (or empty if not found)
          */
@@ -528,7 +528,7 @@ export type RumLongTaskEvent = CommonProperties &
         /**
          * Information about the invoker of the script
          */
-        readonly invoker?: string
+        invoker?: string
         /**
          * Type of the invoker of the script
          */
@@ -1057,6 +1057,10 @@ export type RumViewEvent = CommonProperties &
        * The JavaScript refresh rate for React Native
        */
       js_refresh_rate?: RumPerfMetric
+      /**
+       * Performance data. (Web Vitals, etc.)
+       */
+      performance?: ViewPerformanceData
       [k: string]: unknown
     }
     /**
@@ -1169,10 +1173,6 @@ export type RumViewEvent = CommonProperties &
       }
       [k: string]: unknown
     }
-    /**
-     * Performance data. (Web Vitals, etc.)
-     */
-    performance?: ViewPerformanceData
     [k: string]: unknown
   }
 /**
@@ -1201,9 +1201,9 @@ export type RumVitalEvent = CommonProperties &
        */
       readonly name?: string
       /**
-       * Details of the vital. It can be used as a secondary identifier (URL, React component name...)
+       * Description of the vital. It can be used as a secondary identifier (URL, React component name...)
        */
-      readonly details?: string
+      readonly description?: string
       /**
        * Duration of the vital in nanoseconds
        */
@@ -1344,6 +1344,20 @@ export interface CommonProperties {
     [k: string]: unknown
   }
   /**
+   * Account properties
+   */
+  readonly account?: {
+    /**
+     * Identifier of the account
+     */
+    readonly id: string
+    /**
+     * Name of the account
+     */
+    readonly name?: string
+    [k: string]: unknown
+  }
+  /**
    * Device connectivity properties
    */
   connectivity?: {
@@ -1368,7 +1382,7 @@ export interface CommonProperties {
     /**
      * Cellular connection type reflecting the measured network performance
      */
-    readonly effective_type?: 'slow_2g' | '2g' | '3g' | '4g'
+    readonly effective_type?: 'slow-2g' | '2g' | '3g' | '4g'
     /**
      * Cellular connectivity properties
      */
@@ -1623,13 +1637,21 @@ export interface ViewPerformanceData {
      */
     readonly score: number
     /**
-     * Timestamp in ns of the largest layout shift contributing to CLS
+     * The time of the largest layout shift contributing to CLS, in ns since view start.
      */
     readonly timestamp?: number
     /**
      * CSS selector path of the first element (in document order) of the largest layout shift contributing to CLS
      */
     readonly target_selector?: string
+    /**
+     * Bounding client rect of the element before the layout shift
+     */
+    previous_rect?: RumRect
+    /**
+     * Bounding client rect of the element after the layout shift
+     */
+    current_rect?: RumRect
     [k: string]: unknown
   }
   /**
@@ -1637,7 +1659,7 @@ export interface ViewPerformanceData {
    */
   readonly fcp?: {
     /**
-     * Timestamp in ns of the first rendering
+     * The time of the first rendering, in ns since view start.
      */
     readonly timestamp: number
     [k: string]: unknown
@@ -1651,7 +1673,7 @@ export interface ViewPerformanceData {
      */
     readonly duration: number
     /**
-     * Timestamp in ns of the first input event
+     * Time of the first input event, in ns since view start.
      */
     readonly timestamp: number
     /**
@@ -1669,7 +1691,7 @@ export interface ViewPerformanceData {
      */
     readonly duration: number
     /**
-     * Timestamp in ns of the start of the INP interaction
+     * Time of the start of the INP interaction, in ns since view start.
      */
     readonly timestamp?: number
     /**
@@ -1683,14 +1705,50 @@ export interface ViewPerformanceData {
    */
   readonly lcp?: {
     /**
-     * Timestamp in ns of the largest contentful paint
+     * Time of the largest contentful paint, in ns since view start.
      */
     readonly timestamp: number
     /**
      * CSS selector path of the largest contentful paint element
      */
     readonly target_selector?: string
+    /**
+     * URL of the largest contentful paint element
+     */
+    resource_url?: string
     [k: string]: unknown
   }
+  /**
+   * First Build Complete (Flutter)
+   */
+  readonly fbc?: {
+    /**
+     * Time of all completed `build` methods after a route change, in ns since view start.
+     */
+    readonly timestamp: number
+    [k: string]: unknown
+  }
+  [k: string]: unknown
+}
+/**
+ * Schema for DOMRect-like rectangles describing an element's bounding client rect
+ */
+export interface RumRect {
+  /**
+   * The x coordinate of the element's origin
+   */
+  readonly x: number
+  /**
+   * The y coordinate of the element's origin
+   */
+  readonly y: number
+  /**
+   * The element's width
+   */
+  readonly width: number
+  /**
+   * The element's height
+   */
+  readonly height: number
   [k: string]: unknown
 }

@@ -13,6 +13,7 @@ export const LCP_MAXIMUM_DELAY = 10 * ONE_MINUTE
 export interface LargestContentfulPaint {
   value: RelativeTime
   targetSelector?: string
+  resourceUrl?: string
 }
 
 /**
@@ -57,7 +58,6 @@ export function trackLargestContentfulPaint(
         // https://bugs.chromium.org/p/chromium/issues/detail?id=1516655
         entry.size > biggestLcpSize
     )
-
     if (lcpEntry) {
       let lcpTargetSelector
       if (lcpEntry.element) {
@@ -67,6 +67,7 @@ export function trackLargestContentfulPaint(
       callback({
         value: lcpEntry.startTime,
         targetSelector: lcpTargetSelector,
+        resourceUrl: computeLcpEntryUrl(lcpEntry),
       })
       biggestLcpSize = lcpEntry.size
     }
@@ -78,4 +79,9 @@ export function trackLargestContentfulPaint(
       performanceLcpSubscription.unsubscribe()
     },
   }
+}
+
+// The property url report an empty string if the value is not available, we shouldn't report it in this case.
+function computeLcpEntryUrl(entry: RumLargestContentfulPaintTiming) {
+  return entry.url === '' ? undefined : entry.url
 }

@@ -1,4 +1,4 @@
-import type { RelativeTime, Context, DeflateWorker, CustomerDataTrackerManager, TimeStamp } from '@datadog/browser-core'
+import type { RelativeTime, DeflateWorker, CustomerDataTrackerManager, TimeStamp } from '@datadog/browser-core'
 import {
   ONE_SECOND,
   display,
@@ -25,6 +25,7 @@ const noopStartRum = (): ReturnType<StartRum> => ({
   setViewContext: () => undefined,
   setViewContextProperty: () => undefined,
   setViewName: () => undefined,
+  getViewContext: () => ({}),
   getInternalContext: () => undefined,
   lifeCycle: {} as any,
   viewHistory: {} as any,
@@ -186,7 +187,7 @@ describe('rum public api', () => {
           type: ActionType.CUSTOM,
           handlingStack: jasmine.any(String),
         },
-        { context: {}, user: {}, hasReplay: undefined },
+        { context: {}, user: {}, account: {}, hasReplay: undefined },
       ])
     })
 
@@ -201,7 +202,7 @@ describe('rum public api', () => {
 
       expect(addActionSpy).toHaveBeenCalledTimes(1)
       const stacktrace = addActionSpy.calls.argsFor(0)[0].handlingStack
-      expect(stacktrace).toMatch(/^Error:\s+at triggerAction @/)
+      expect(stacktrace).toMatch(/^HandlingStack: action\s+at triggerAction @/)
     })
 
     describe('save context when sending an action', () => {
@@ -236,6 +237,19 @@ describe('rum public api', () => {
         rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
 
         expect(addActionSpy.calls.argsFor(0)[1]!.user).toEqual({
+          id: 'foo',
+        })
+      })
+
+      it('stores a deep copy of the account', () => {
+        const account = { id: 'foo' }
+        rumPublicApi.setAccount(account)
+        rumPublicApi.addAction('message')
+        account.id = 'bar'
+
+        rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
+
+        expect(addActionSpy.calls.argsFor(0)[1]!.account).toEqual({
           id: 'foo',
         })
       })
@@ -289,7 +303,7 @@ describe('rum public api', () => {
           handlingStack: jasmine.any(String),
           startClocks: jasmine.any(Object),
         },
-        { context: {}, user: {}, hasReplay: undefined },
+        { context: {}, user: {}, account: {}, hasReplay: undefined },
       ])
     })
 
@@ -303,7 +317,7 @@ describe('rum public api', () => {
       triggerError()
       expect(addErrorSpy).toHaveBeenCalledTimes(1)
       const stacktrace = addErrorSpy.calls.argsFor(0)[0].handlingStack
-      expect(stacktrace).toMatch(/^Error:\s+at triggerError (.|\n)*$/)
+      expect(stacktrace).toMatch(/^HandlingStack: error\s+at triggerError (.|\n)*$/)
     })
 
     describe('save context when capturing an error', () => {
@@ -338,6 +352,19 @@ describe('rum public api', () => {
         rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
 
         expect(addErrorSpy.calls.argsFor(0)[1]!.user).toEqual({
+          id: 'foo',
+        })
+      })
+
+      it('stores a deep copy of the account', () => {
+        const account = { id: 'foo' }
+        rumPublicApi.setAccount(account)
+        rumPublicApi.addError(new Error('message'))
+        account.id = 'bar'
+
+        rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
+
+        expect(addErrorSpy.calls.argsFor(0)[1]!.account).toEqual({
           id: 'foo',
         })
       })
@@ -503,12 +530,162 @@ describe('rum public api', () => {
     })
 
     it('should remove property', () => {
-      const user: Context = { id: 'foo', name: 'bar', email: 'qux', foo: { bar: 'qux' } }
+      const user = { id: 'foo', name: 'bar', email: 'qux', foo: { bar: 'qux' } }
 
       rumPublicApi.setUser(user)
       rumPublicApi.removeUserProperty('foo')
       const userClone = rumPublicApi.getUser()
       expect(userClone.foo).toBeUndefined()
+    })
+  })
+
+  describe('setAccount', () => {
+    let addActionSpy: jasmine.Spy<ReturnType<StartRum>['addAction']>
+    let displaySpy: jasmine.Spy<() => void>
+    let rumPublicApi: RumPublicApi
+
+    beforeEach(() => {
+      addActionSpy = jasmine.createSpy()
+      displaySpy = spyOn(display, 'error')
+      rumPublicApi = makeRumPublicApi(
+        () => ({
+          ...noopStartRum(),
+          addAction: addActionSpy,
+        }),
+        noopRecorderApi
+      )
+    })
+
+    it('should attach valid objects', () => {
+      const account = { id: 'foo', name: 'bar', foo: { bar: 'qux' } }
+      rumPublicApi.setAccount(account)
+      rumPublicApi.addAction('message')
+
+      rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
+
+      expect(addActionSpy.calls.argsFor(0)[1]!.account).toEqual({
+        foo: { bar: 'qux' },
+        id: 'foo',
+        name: 'bar',
+      })
+      expect(displaySpy).not.toHaveBeenCalled()
+    })
+
+    it('should sanitize predefined properties', () => {
+      const account = { id: null, name: 2 }
+      rumPublicApi.setAccount(account as any)
+      rumPublicApi.addAction('message')
+
+      rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
+
+      expect(addActionSpy.calls.argsFor(0)[1]!.account).toEqual({
+        id: 'null',
+        name: '2',
+      })
+      expect(displaySpy).not.toHaveBeenCalled()
+    })
+
+    it('should remove the account', () => {
+      const account = { id: 'foo', name: 'bar' }
+      rumPublicApi.setAccount(account)
+      rumPublicApi.clearAccount()
+      rumPublicApi.addAction('message')
+
+      rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
+
+      expect(addActionSpy.calls.argsFor(0)[1]!.account).toEqual({})
+      expect(displaySpy).not.toHaveBeenCalled()
+    })
+
+    it('should reject non object input', () => {
+      rumPublicApi.setAccount(2 as any)
+      rumPublicApi.setAccount(null as any)
+      rumPublicApi.setAccount(undefined as any)
+      expect(displaySpy).toHaveBeenCalledTimes(3)
+    })
+  })
+
+  describe('getAccount', () => {
+    let rumPublicApi: RumPublicApi
+
+    beforeEach(() => {
+      rumPublicApi = makeRumPublicApi(noopStartRum, noopRecorderApi)
+    })
+
+    it('should return empty object if no account has been set', () => {
+      const accountClone = rumPublicApi.getAccount()
+      expect(accountClone).toEqual({})
+    })
+
+    it('should return a clone of the original object if set', () => {
+      const account = { id: 'foo', name: 'bar', foo: { bar: 'qux' } }
+      rumPublicApi.setAccount(account)
+      const accountClone = rumPublicApi.getAccount()
+      const accountClone2 = rumPublicApi.getAccount()
+
+      expect(accountClone).not.toBe(account)
+      expect(accountClone).not.toBe(accountClone2)
+      expect(accountClone).toEqual(account)
+    })
+  })
+
+  describe('setAccountProperty', () => {
+    const account = { id: 'foo', name: 'bar', foo: { bar: 'qux' } }
+    const addressAttribute = { city: 'Paris' }
+    let rumPublicApi: RumPublicApi
+
+    beforeEach(() => {
+      rumPublicApi = makeRumPublicApi(noopStartRum, noopRecorderApi)
+    })
+
+    it('should add attribute', () => {
+      rumPublicApi.setAccount(account)
+      rumPublicApi.setAccountProperty('address', addressAttribute)
+      const accountClone = rumPublicApi.getAccount()
+
+      expect(accountClone.address).toEqual(addressAttribute)
+    })
+
+    it('should not contain original reference to object', () => {
+      const accountDetails: { [key: string]: any } = { name: 'company' }
+      rumPublicApi.setAccount(account)
+      rumPublicApi.setAccountProperty('accountDetails', accountDetails)
+      const accountClone = rumPublicApi.getAccount()
+
+      expect(accountClone.accountDetails).not.toBe(accountDetails)
+    })
+
+    it('should override attribute', () => {
+      rumPublicApi.setAccount(account)
+      rumPublicApi.setAccountProperty('foo', addressAttribute)
+      const accountClone = rumPublicApi.getAccount()
+
+      expect(accountClone).toEqual({ ...account, foo: addressAttribute })
+    })
+
+    it('should sanitize properties', () => {
+      rumPublicApi.setAccountProperty('id', 123)
+      rumPublicApi.setAccountProperty('name', ['My', 'Company'])
+      const accountClone = rumPublicApi.getAccount()
+
+      expect(accountClone.id).toEqual('123')
+      expect(accountClone.name).toEqual('My,Company')
+    })
+  })
+
+  describe('removeAccountProperty', () => {
+    let rumPublicApi: RumPublicApi
+
+    beforeEach(() => {
+      rumPublicApi = makeRumPublicApi(noopStartRum, noopRecorderApi)
+    })
+    it('should remove property', () => {
+      const account = { id: 'foo', name: 'bar', email: 'qux', foo: { bar: 'qux' } }
+
+      rumPublicApi.setAccount(account)
+      rumPublicApi.removeAccountProperty('foo')
+      const accountClone = rumPublicApi.getAccount()
+      expect(accountClone.foo).toBeUndefined()
     })
   })
 
@@ -683,25 +860,25 @@ describe('rum public api', () => {
       expect(rumPublicApi.getGlobalContext()).toEqual({ foo: 'bar' })
       expect(localStorage.getItem('_dd_c_rum_2')).toBeNull()
 
-      rumPublicApi.setUser({ qux: 'qix' })
-      expect(rumPublicApi.getUser()).toEqual({ qux: 'qix' })
+      rumPublicApi.setUser({ id: 'foo', qux: 'qix' })
+      expect(rumPublicApi.getUser()).toEqual({ id: 'foo', qux: 'qix' })
       expect(localStorage.getItem('_dd_c_rum_1')).toBeNull()
     })
 
     it('when enabled, should maintain user context in local storage', () => {
       rumPublicApi.init({ ...DEFAULT_INIT_CONFIGURATION, storeContextsAcrossPages: true })
 
-      rumPublicApi.setUser({ qux: 'qix' })
-      expect(rumPublicApi.getUser()).toEqual({ qux: 'qix' })
-      expect(localStorage.getItem('_dd_c_rum_1')).toBe('{"qux":"qix"}')
+      rumPublicApi.setUser({ id: 'foo', qux: 'qix' })
+      expect(rumPublicApi.getUser()).toEqual({ id: 'foo', qux: 'qix' })
+      expect(localStorage.getItem('_dd_c_rum_1')).toBe('{"id":"foo","qux":"qix"}')
 
       rumPublicApi.setUserProperty('foo', 'bar')
-      expect(rumPublicApi.getUser()).toEqual({ qux: 'qix', foo: 'bar' })
-      expect(localStorage.getItem('_dd_c_rum_1')).toBe('{"qux":"qix","foo":"bar"}')
+      expect(rumPublicApi.getUser()).toEqual({ id: 'foo', qux: 'qix', foo: 'bar' })
+      expect(localStorage.getItem('_dd_c_rum_1')).toBe('{"id":"foo","qux":"qix","foo":"bar"}')
 
       rumPublicApi.removeUserProperty('foo')
-      expect(rumPublicApi.getUser()).toEqual({ qux: 'qix' })
-      expect(localStorage.getItem('_dd_c_rum_1')).toBe('{"qux":"qix"}')
+      expect(rumPublicApi.getUser()).toEqual({ id: 'foo', qux: 'qix' })
+      expect(localStorage.getItem('_dd_c_rum_1')).toBe('{"id":"foo","qux":"qix"}')
 
       rumPublicApi.clearUser()
       expect(rumPublicApi.getUser()).toEqual({})
@@ -889,6 +1066,36 @@ describe('rum public api', () => {
       ;(rumPublicApi as any).setViewContextProperty('foo', 'bar')
 
       expect(setViewContextPropertySpy).toHaveBeenCalledWith('foo', 'bar')
+    })
+  })
+
+  describe('getViewContext', () => {
+    let getViewContextSpy: jasmine.Spy<ReturnType<StartRum>['getViewContext']>
+    let rumPublicApi: RumPublicApi
+
+    beforeEach(() => {
+      getViewContextSpy = jasmine.createSpy().and.callFake(() => ({
+        foo: 'bar',
+      }))
+      rumPublicApi = makeRumPublicApi(
+        () => ({
+          ...noopStartRum(),
+          getViewContext: getViewContextSpy,
+        }),
+        noopRecorderApi
+      )
+    })
+
+    it('should return the view context after init', () => {
+      rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
+
+      expect(rumPublicApi.getViewContext()).toEqual({ foo: 'bar' })
+      expect(getViewContextSpy).toHaveBeenCalled()
+    })
+
+    it('should return an empty object before init', () => {
+      expect(rumPublicApi.getViewContext()).toEqual({})
+      expect(getViewContextSpy).not.toHaveBeenCalled()
     })
   })
 })

@@ -24,7 +24,7 @@ describe('report observable', () => {
   })
 
   afterEach(() => {
-    consoleSubscription.unsubscribe()
+    consoleSubscription?.unsubscribe()
   })
   ;[RawReportType.deprecation, RawReportType.intervention].forEach((type) => {
     it(`should notify ${type} reports`, () => {

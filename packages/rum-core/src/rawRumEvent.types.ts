@@ -1,5 +1,4 @@
 import type {
-  Context,
   Duration,
   ErrorSource,
   ErrorHandling,
@@ -8,7 +7,6 @@ import type {
   TimeStamp,
   RawErrorCause,
   DefaultPrivacyLevel,
-  Connectivity,
   Csp,
 } from '@datadog/browser-core'
 import type { PageState } from './domain/contexts/pageStateHistory'
@@ -74,6 +72,7 @@ export interface RawRumErrorEvent {
     type?: string
     stack?: string
     handling_stack?: string
+    component_stack?: string
     fingerprint?: string
     source: ErrorSource
     message: string
@@ -85,8 +84,6 @@ export interface RawRumErrorEvent {
   view?: {
     in_foreground: boolean
   }
-
-  feature_flags?: Context
 }
 
 export interface RawRumViewEvent {
@@ -123,12 +120,12 @@ export interface RawRumViewEvent {
     long_task: Count
     resource: Count
     frustration: Count
+    performance?: ViewPerformanceData
   }
   session: {
     has_replay: true | undefined
     is_active: false | undefined
   }
-  feature_flags?: Context
   display?: ViewDisplay
   privacy?: {
     replay_level: DefaultPrivacyLevel
@@ -150,6 +147,41 @@ interface ViewDisplay {
     max_scroll_height?: number
     max_scroll_height_time?: ServerDuration
   }
+}
+
+export interface ViewPerformanceData {
+  cls?: {
+    score: number
+    timestamp?: ServerDuration
+    target_selector?: string
+    previous_rect?: RumRect
+    current_rect?: RumRect
+  }
+  fcp?: {
+    timestamp: number
+  }
+  fid?: {
+    duration: ServerDuration
+    timestamp: ServerDuration
+    target_selector?: string
+  }
+  inp?: {
+    duration: ServerDuration
+    timestamp?: ServerDuration
+    target_selector?: string
+  }
+  lcp?: {
+    timestamp: ServerDuration
+    target_selector?: string
+    resource_url?: string
+  }
+}
+
+export interface RumRect {
+  x: number
+  y: number
+  width: number
+  height: number
 }
 
 export type PageStateServerEntry = { state: PageState; start: ServerDuration }
@@ -304,50 +336,3 @@ export type RawRumEvent =
   | RawRumLongAnimationFrameEvent
   | RawRumActionEvent
   | RawRumVitalEvent
-
-export interface RumContext {
-  date: TimeStamp
-  application: {
-    id: string
-  }
-  service?: string
-  version?: string
-  source: 'browser'
-  session: {
-    id: string
-    type: string
-    has_replay?: boolean
-  }
-  display?: {
-    viewport: {
-      width: number
-      height: number
-    }
-  }
-  view: {
-    id: string
-    referrer?: string
-    url: string
-    name?: string
-  }
-  connectivity: Connectivity
-  action?: {
-    id: string | string[]
-  }
-  synthetics?: {
-    test_id: string
-    result_id: string
-  }
-  ci_test?: {
-    test_execution_id: string
-  }
-  _dd: {
-    format_version: 2
-    drift: number
-    configuration: {
-      session_sample_rate: number
-      session_replay_sample_rate: number
-    }
-    browser_sdk_version?: string
-  }
-}

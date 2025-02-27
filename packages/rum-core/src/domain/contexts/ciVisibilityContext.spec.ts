@@ -1,60 +1,95 @@
-import type { Configuration } from '@datadog/browser-core'
+import type { Configuration, RelativeTime } from '@datadog/browser-core'
 import { Observable } from '@datadog/browser-core'
 import { mockCiVisibilityValues } from '../../../test'
 import type { CookieObservable } from '../../browser/cookieObservable'
-import type { CiVisibilityContext } from './ciVisibilityContext'
+import { createHooks, HookNames } from '../../hooks'
+import type { Hooks } from '../../hooks'
+import { SessionType } from '../rumSessionManager'
 import { startCiVisibilityContext } from './ciVisibilityContext'
 
 describe('startCiVisibilityContext', () => {
-  let ciVisibilityContext: CiVisibilityContext
   let cookieObservable: CookieObservable
+  let stopCiVisibility: () => void
+  let hooks: Hooks
+
   beforeEach(() => {
     cookieObservable = new Observable()
+    hooks = createHooks()
   })
 
   afterEach(() => {
-    ciVisibilityContext.stop()
+    stopCiVisibility?.()
   })
 
-  it('sets the ci visibility context defined by Cypress global variables', () => {
-    mockCiVisibilityValues('trace_id_value')
-    ciVisibilityContext = startCiVisibilityContext({} as Configuration, cookieObservable)
+  describe('assemble hook', () => {
+    it('should set ci visibility context defined by Cypress global variables', () => {
+      mockCiVisibilityValues('trace_id_value')
+      ;({ stop: stopCiVisibility } = startCiVisibilityContext({} as Configuration, hooks, cookieObservable))
 
-    expect(ciVisibilityContext.get()).toEqual({
-      test_execution_id: 'trace_id_value',
+      const event = hooks.triggerHook(HookNames.Assemble, { eventType: 'view', startTime: 0 as RelativeTime })
+
+      expect(event).toEqual({
+        type: 'view',
+        session: {
+          type: SessionType.CI_TEST,
+        },
+        ci_test: {
+          test_execution_id: 'trace_id_value',
+        },
+      })
     })
-  })
 
-  it('sets the ci visibility context defined by global cookie', () => {
-    mockCiVisibilityValues('trace_id_value', 'cookies')
-    ciVisibilityContext = startCiVisibilityContext({} as Configuration, cookieObservable)
+    it('should add the ci visibility context defined by global cookie', () => {
+      mockCiVisibilityValues('trace_id_value', 'cookies')
+      ;({ stop: stopCiVisibility } = startCiVisibilityContext({} as Configuration, hooks, cookieObservable))
 
-    expect(ciVisibilityContext.get()).toEqual({
-      test_execution_id: 'trace_id_value',
+      const event = hooks.triggerHook(HookNames.Assemble, { eventType: 'view', startTime: 0 as RelativeTime })
+
+      expect(event).toEqual({
+        type: 'view',
+        session: {
+          type: SessionType.CI_TEST,
+        },
+        ci_test: {
+          test_execution_id: 'trace_id_value',
+        },
+      })
     })
-  })
 
-  it('update the ci visibility context when global cookie is updated', () => {
-    mockCiVisibilityValues('trace_id_value', 'cookies')
-    ciVisibilityContext = startCiVisibilityContext({} as Configuration, cookieObservable)
-    cookieObservable.notify('trace_id_value_updated')
+    it('should update the ci visibility context when global cookie is updated', () => {
+      mockCiVisibilityValues('trace_id_value', 'cookies')
+      ;({ stop: stopCiVisibility } = startCiVisibilityContext({} as Configuration, hooks, cookieObservable))
+      cookieObservable.notify('trace_id_value_updated')
 
-    expect(ciVisibilityContext.get()).toEqual({
-      test_execution_id: 'trace_id_value_updated',
+      const event = hooks.triggerHook(HookNames.Assemble, { eventType: 'view', startTime: 0 as RelativeTime })
+
+      expect(event).toEqual({
+        type: 'view',
+        session: {
+          type: SessionType.CI_TEST,
+        },
+        ci_test: {
+          test_execution_id: 'trace_id_value_updated',
+        },
+      })
     })
-  })
 
-  it('does not set ci visibility context if the Cypress global variable is undefined', () => {
-    mockCiVisibilityValues(undefined)
-    ciVisibilityContext = startCiVisibilityContext({} as Configuration, cookieObservable)
+    it('should not set ci visibility context if the Cypress global variable is undefined', () => {
+      mockCiVisibilityValues(undefined)
+      ;({ stop: stopCiVisibility } = startCiVisibilityContext({} as Configuration, hooks, cookieObservable))
 
-    expect(ciVisibilityContext.get()).toBeUndefined()
-  })
+      const event = hooks.triggerHook(HookNames.Assemble, { eventType: 'view', startTime: 0 as RelativeTime })
 
-  it('does not set ci visibility context if it is not a string', () => {
-    mockCiVisibilityValues({ key: 'value' })
-    ciVisibilityContext = startCiVisibilityContext({} as Configuration, cookieObservable)
+      expect(event).toBeUndefined()
+    })
 
-    expect(ciVisibilityContext.get()).toBeUndefined()
+    it('should not set ci visibility context if it is not a string', () => {
+      mockCiVisibilityValues({ key: 'value' })
+      ;({ stop: stopCiVisibility } = startCiVisibilityContext({} as Configuration, hooks, cookieObservable))
+
+      const event = hooks.triggerHook(HookNames.Assemble, { eventType: 'view', startTime: 0 as RelativeTime })
+
+      expect(event).toBeUndefined()
+    })
   })
 })

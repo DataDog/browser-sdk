@@ -1,4 +1,4 @@
-import { flattenErrorCauses, isError, tryToGetFingerprint } from '../error/error'
+import { flattenErrorCauses, isError, tryToGetFingerprint, tryToGetErrorContext } from '../error/error'
 import { mergeObservables, Observable } from '../../tools/observable'
 import { ConsoleApiName, globalConsole } from '../../tools/display'
 import { callMonitored } from '../../tools/monitor'
@@ -55,7 +55,7 @@ function createConsoleObservable(api: ConsoleApiName) {
 
     globalConsole[api] = (...params: unknown[]) => {
       originalConsoleApi.apply(console, params)
-      const handlingStack = createHandlingStack()
+      const handlingStack = createHandlingStack('console error')
 
       callMonitored(() => {
         observable.notify(buildConsoleLog(params, api, handlingStack))
@@ -84,6 +84,7 @@ function buildConsoleLog(params: unknown[], api: ConsoleApiName, handlingStack: 
       source: ErrorSource.CONSOLE,
       handling: ErrorHandling.HANDLED,
       handlingStack,
+      context: tryToGetErrorContext(firstErrorParam),
     }
   }
 

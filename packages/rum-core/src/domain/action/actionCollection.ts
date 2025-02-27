@@ -1,12 +1,5 @@
 import type { ClocksState, Context, Observable } from '@datadog/browser-core'
-import {
-  noop,
-  combine,
-  toServerDuration,
-  generateUUID,
-  ExperimentalFeature,
-  isExperimentalFeatureEnabled,
-} from '@datadog/browser-core'
+import { noop, combine, toServerDuration, generateUUID } from '@datadog/browser-core'
 import { discardNegativeDuration } from '../discardNegativeDuration'
 import type { RawRumActionEvent } from '../../rawRumEvent.types'
 import { ActionType, RumEventType } from '../../rawRumEvent.types'
@@ -14,9 +7,9 @@ import type { LifeCycle, RawRumEventCollectedData } from '../lifeCycle'
 import { LifeCycleEventType } from '../lifeCycle'
 import type { RumConfiguration } from '../configuration'
 import type { CommonContext } from '../contexts/commonContext'
-import type { PageStateHistory } from '../contexts/pageStateHistory'
-import { PageState } from '../contexts/pageStateHistory'
 import type { RumActionEventDomainContext } from '../../domainContext.types'
+import type { PartialRumEvent, Hooks } from '../../hooks'
+import { HookNames } from '../../hooks'
 import type { ActionContexts, ClickAction } from './trackClickActions'
 import { trackClickActions } from './trackClickActions'
 
@@ -34,14 +27,34 @@ export type AutoAction = ClickAction
 
 export function startActionCollection(
   lifeCycle: LifeCycle,
+  hooks: Hooks,
   domMutationObservable: Observable<void>,
   windowOpenObservable: Observable<void>,
-  configuration: RumConfiguration,
-  pageStateHistory: PageStateHistory
+  configuration: RumConfiguration
 ) {
   lifeCycle.subscribe(LifeCycleEventType.AUTO_ACTION_COMPLETED, (action) =>
-    lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, processAction(action, pageStateHistory))
+    lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, processAction(action))
   )
+
+  hooks.register(HookNames.Assemble, ({ startTime, eventType }): PartialRumEvent | undefined => {
+    if (
+      eventType !== RumEventType.ERROR &&
+      eventType !== RumEventType.RESOURCE &&
+      eventType !== RumEventType.LONG_TASK
+    ) {
+      return
+    }
+
+    const actionId = actionContexts.findActionId(startTime)
+    if (!actionId) {
+      return
+    }
+
+    return {
+      type: eventType,
+      action: { id: actionId },
+    }
+  })
 
   let actionContexts: ActionContexts = { findActionId: noop as () => undefined }
   let stop: () => void = noop
@@ -59,7 +72,7 @@ export function startActionCollection(
     addAction: (action: CustomAction, savedCommonContext?: CommonContext) => {
       lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, {
         savedCommonContext,
-        ...processAction(action, pageStateHistory),
+        ...processAction(action),
       })
     },
     actionContexts,
@@ -67,10 +80,7 @@ export function startActionCollection(
   }
 }
 
-function processAction(
-  action: AutoAction | CustomAction,
-  pageStateHistory: PageStateHistory
-): RawRumEventCollectedData<RawRumActionEvent> {
+function processAction(action: AutoAction | CustomAction): RawRumEventCollectedData<RawRumActionEvent> {
   const autoActionProperties = isAutoAction(action)
     ? {
         action: {
@@ -93,39 +103,30 @@ function processAction(
           action: {
             target: action.target,
             position: action.position,
-            name_source: isExperimentalFeatureEnabled(ExperimentalFeature.ACTION_NAME_MASKING)
-              ? action.nameSource
-              : undefined,
+            name_source: action.nameSource,
           },
         },
       }
     : undefined
-  const customerContext = !isAutoAction(action) ? action.context : undefined
   const actionEvent: RawRumActionEvent = combine(
     {
-      action: {
-        id: generateUUID(),
-        target: {
-          name: action.name,
-        },
-        type: action.type,
-      },
+      action: { id: generateUUID(), target: { name: action.name }, type: action.type },
       date: action.startClocks.timeStamp,
       type: RumEventType.ACTION as const,
-      view: { in_foreground: pageStateHistory.wasInPageStateAt(PageState.ACTIVE, action.startClocks.relative) },
     },
     autoActionProperties
   )
 
-  const domainContext: RumActionEventDomainContext = isAutoAction(action) ? { events: action.events } : {}
-
-  if (!isAutoAction(action) && action.handlingStack) {
-    domainContext.handlingStack = action.handlingStack
-  }
+  const duration = isAutoAction(action) ? action.duration : undefined
+  const customerContext = !isAutoAction(action) ? action.context : undefined
+  const domainContext: RumActionEventDomainContext = isAutoAction(action)
+    ? { events: action.events }
+    : { handlingStack: action.handlingStack }
 
   return {
     customerContext,
     rawRumEvent: actionEvent,
+    duration,
     startTime: action.startClocks.relative,
     domainContext,
   }

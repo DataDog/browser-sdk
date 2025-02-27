@@ -33,6 +33,13 @@ export function startLogsAssembly(
       }
 
       const commonContext = savedCommonContext || getCommonContext()
+
+      let account
+
+      if (!isEmptyObject(commonContext.account) && commonContext.account.id) {
+        account = commonContext.account
+      }
+
       if (session && session.anonymousId && !commonContext.user.anonymous_id) {
         commonContext.user.anonymous_id = session.anonymousId
       }
@@ -41,8 +48,9 @@ export function startLogsAssembly(
           service: configuration.service,
           session_id: session ? session.id : undefined,
           session: session ? { id: session.id } : undefined,
-          // Insert user first to allow overrides from global context
+          // Insert user and account first to allow overrides from global context
           usr: !isEmptyObject(commonContext.user) ? commonContext.user : undefined,
+          account,
           view: commonContext.view,
         },
         commonContext.context,

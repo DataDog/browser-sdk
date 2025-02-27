@@ -1,10 +1,12 @@
 import type { ViewportResizeData, ScrollData } from '@datadog/browser-rum/cjs/types'
 import { IncrementalSource } from '@datadog/browser-rum/cjs/types'
 
-import { findAllIncrementalSnapshots, findAllVisualViewports } from '@datadog/browser-rum/test'
+import { findAllIncrementalSnapshots, findAllVisualViewports } from '@datadog/browser-rum/test/segments'
+import type { Page } from '@playwright/test'
+import { test, expect } from '@playwright/test'
+import { wait } from '@datadog/browser-core/test/wait'
 import type { IntakeRegistry } from '../../lib/framework'
-import { flushEvents, createTest, bundleSetup, html } from '../../lib/framework'
-import { getBrowserName, getPlatformName } from '../../lib/helpers/browser'
+import { createTest, bundleSetup, html } from '../../lib/framework'
 
 const NAVBAR_HEIGHT_CHANGE_UPPER_BOUND = 30
 const VIEWPORT_META_TAGS = `
@@ -15,38 +17,36 @@ const VIEWPORT_META_TAGS = `
 >
 `
 
-describe('recorder', () => {
-  beforeEach(() => {
-    if (isGestureUnsupported()) {
-      pending('no touch gesture support')
-    }
+test.describe('recorder', () => {
+  test.beforeEach(({ browserName }, testInfo) => {
+    testInfo.skip(browserName !== 'chromium', 'only chromium supports touch gestures emulation for now (via CDP)')
   })
 
-  describe('layout viewport properties', () => {
+  test.describe('layout viewport properties', () => {
     createTest('getWindowWidth/Height should not be affected by pinch zoom')
       .withRum()
       .withSetup(bundleSetup)
       .withBody(html`${VIEWPORT_META_TAGS}`)
-      .run(async ({ intakeRegistry }) => {
-        await buildScrollablePage()
+      .run(async ({ intakeRegistry, page, flushEvents, browserName }) => {
+        test.fixme(browserName === 'msedge', 'In Edge, the ViewportResize record data is off by almost 20px')
 
-        const { innerWidth, innerHeight } = await getWindowInnerDimensions()
-        await performSignificantZoom()
+        await buildScrollablePage(page)
 
-        await browser.execute(() => {
+        const { innerWidth, innerHeight } = await getWindowInnerDimensions(page)
+
+        await performSignificantZoom(page)
+
+        await page.evaluate(() => {
           window.dispatchEvent(new Event('resize'))
         })
 
-        const lastViewportResizeData = (
-          await getLastRecord(intakeRegistry, (segment) =>
-            findAllIncrementalSnapshots(segment, IncrementalSource.ViewportResize)
-          )
+        await flushEvents()
+        const lastViewportResizeData = getLastRecord(intakeRegistry, (segment) =>
+          findAllIncrementalSnapshots(segment, IncrementalSource.ViewportResize)
         ).data as ViewportResizeData
 
-        const scrollbarThicknessCorrection = await getScrollbarThicknessCorrection()
-
-        expectToBeNearby(lastViewportResizeData.width, innerWidth - scrollbarThicknessCorrection)
-        expectToBeNearby(lastViewportResizeData.height, innerHeight - scrollbarThicknessCorrection)
+        expectToBeNearby(lastViewportResizeData.width, innerWidth)
+        expectToBeNearby(lastViewportResizeData.height, innerHeight)
       })
 
     /**
@@ -57,30 +57,29 @@ describe('recorder', () => {
       .withRum()
       .withSetup(bundleSetup)
       .withBody(html`${VIEWPORT_META_TAGS}`)
-      .run(async ({ intakeRegistry }) => {
+      .run(async ({ intakeRegistry, flushEvents, page }) => {
         const VISUAL_SCROLL_DOWN_PX = 60
         const LAYOUT_SCROLL_AMOUNT = 20
 
-        await buildScrollablePage()
-        await performSignificantZoom()
-        await resetWindowScroll()
+        await buildScrollablePage(page)
+        await performSignificantZoom(page)
+        await resetWindowScroll(page)
 
-        const initialVisualViewport = await getVisualViewport()
-        const { scrollX: initialScrollX, scrollY: initialScrollY } = await getWindowScroll()
+        const initialVisualViewport = await getVisualViewport(page)
+        const { scrollX: initialScrollX, scrollY: initialScrollY } = await getWindowScroll(page)
 
         // Add Visual Viewport Scroll
-        await visualScrollVerticallyDown(VISUAL_SCROLL_DOWN_PX)
+        await visualScrollVerticallyDown(page, VISUAL_SCROLL_DOWN_PX)
 
         // Add Layout Viewport Scroll
-        await layoutScrollTo(LAYOUT_SCROLL_AMOUNT, LAYOUT_SCROLL_AMOUNT)
+        await layoutScrollTo(page, LAYOUT_SCROLL_AMOUNT, LAYOUT_SCROLL_AMOUNT)
 
-        const nextVisualViewport = await getVisualViewport()
-        const { scrollX: nextScrollX, scrollY: nextScrollY } = await getWindowScroll()
+        const nextVisualViewport = await getVisualViewport(page)
+        const { scrollX: nextScrollX, scrollY: nextScrollY } = await getWindowScroll(page)
 
-        const lastScrollData = (
-          await getLastRecord(intakeRegistry, (segment) =>
-            findAllIncrementalSnapshots(segment, IncrementalSource.Scroll)
-          )
+        await flushEvents()
+        const lastScrollData = getLastRecord(intakeRegistry, (segment) =>
+          findAllIncrementalSnapshots(segment, IncrementalSource.Scroll)
         ).data as ScrollData
 
         // Height changes because URL address bar changes due to scrolling
@@ -95,18 +94,19 @@ describe('recorder', () => {
       })
   })
 
-  describe('visual viewport properties', () => {
+  test.describe('visual viewport properties', () => {
     createTest('pinch zoom "scroll" event reports visual viewport position')
       .withRum()
       .withSetup(bundleSetup)
       .withBody(html`${VIEWPORT_META_TAGS}`)
-      .run(async ({ intakeRegistry }) => {
+      .run(async ({ intakeRegistry, page, flushEvents }) => {
         const VISUAL_SCROLL_DOWN_PX = 100
-        await buildScrollablePage()
-        await performSignificantZoom()
-        await visualScrollVerticallyDown(VISUAL_SCROLL_DOWN_PX)
-        const nextVisualViewportDimension = await getVisualViewport()
-        const lastVisualViewportRecord = await getLastRecord(intakeRegistry, findAllVisualViewports)
+        await buildScrollablePage(page)
+        await performSignificantZoom(page)
+        await visualScrollVerticallyDown(page, VISUAL_SCROLL_DOWN_PX)
+        const nextVisualViewportDimension = await getVisualViewport(page)
+        await flushEvents()
+        const lastVisualViewportRecord = getLastRecord(intakeRegistry, findAllVisualViewports)
         expectToBeNearby(lastVisualViewportRecord.data.pageTop, nextVisualViewportDimension.pageTop)
       })
 
@@ -114,17 +114,15 @@ describe('recorder', () => {
       .withRum()
       .withSetup(bundleSetup)
       .withBody(html`${VIEWPORT_META_TAGS}`)
-      .run(async ({ intakeRegistry }) => {
-        await performSignificantZoom()
-        const nextVisualViewportDimension = await getVisualViewport()
-        const lastVisualViewportRecord = await getLastRecord(intakeRegistry, findAllVisualViewports)
+      .run(async ({ intakeRegistry, page, flushEvents }) => {
+        await performSignificantZoom(page)
+        const nextVisualViewportDimension = await getVisualViewport(page)
+        await flushEvents()
+        const lastVisualViewportRecord = getLastRecord(intakeRegistry, findAllVisualViewports)
         expectToBeNearby(lastVisualViewportRecord.data.scale, nextVisualViewportDimension.scale)
       })
   })
 })
-
-const isGestureUnsupported = () =>
-  /firefox|safari|edge/.test(getBrowserName()) || /windows|linux/.test(getPlatformName())
 
 // Flakiness: Working with viewport sizes has variations per device of a few pixels
 function expectToBeNearby(numA: number, numB: number) {
@@ -135,54 +133,49 @@ function expectToBeNearby(numA: number, numB: number) {
   }
 }
 
-async function pinchZoom(xChange: number) {
+async function pinchZoom(page: Page, xChange: number) {
   // Cannot exceed the bounds of a device's screen, at start or end positions.
   // So pick a midpoint on small devices, roughly 180px.
   const xBase = 180
   const yBase = 180
   const xOffsetFingerTwo = 25
-  // Scrolling too fast can show or hide the address bar on some device browsers.
-  const moveDurationMs = 400
   const pauseDurationMs = 150
-  const actions = [
-    {
-      type: 'pointer',
-      id: 'finger1',
-      parameters: { pointerType: 'touch' },
-      actions: [
-        { type: 'pointerMove', duration: 0, x: xBase, y: yBase },
-        { type: 'pointerDown', button: 0 },
-        { type: 'pause', duration: pauseDurationMs },
-        { type: 'pointerMove', duration: moveDurationMs, origin: 'pointer', x: -xChange, y: 0 },
-        { type: 'pointerUp', button: 0 },
-      ],
-    },
-    {
-      type: 'pointer',
-      id: 'finger2',
-      parameters: { pointerType: 'touch' },
-      actions: [
-        { type: 'pointerMove', duration: 0, x: xBase + xOffsetFingerTwo, y: yBase },
-        { type: 'pointerDown', button: 0 },
-        { type: 'pause', duration: pauseDurationMs },
-        { type: 'pointerMove', duration: moveDurationMs, origin: 'pointer', x: +xChange, y: 0 },
-        { type: 'pointerUp', button: 0 },
-      ],
-    },
-  ]
-  await browser.performActions(actions)
+
+  const cdp = await page.context().newCDPSession(page)
+  await cdp.send('Input.dispatchTouchEvent', {
+    type: 'touchStart',
+    touchPoints: [
+      { x: xBase, y: yBase, id: 0 },
+      { x: xBase + xOffsetFingerTwo, y: yBase, id: 1 },
+    ],
+  })
+  await page.waitForTimeout(pauseDurationMs)
+  await cdp.send('Input.dispatchTouchEvent', {
+    type: 'touchMove',
+    touchPoints: [
+      { x: xBase, y: yBase, id: 0 },
+      { x: xBase + xChange, y: yBase, id: 1 },
+    ],
+  })
+  await cdp.send('Input.dispatchTouchEvent', {
+    type: 'touchEnd',
+    touchPoints: [
+      { x: xBase, y: yBase, id: 0 },
+      { x: xBase + xChange, y: yBase, id: 1 },
+    ],
+  })
 }
 
-async function performSignificantZoom() {
-  const initialVisualViewport = await getVisualViewport()
-  await pinchZoom(150)
-  await pinchZoom(150)
-  const nextVisualViewport = await getVisualViewport()
+async function performSignificantZoom(page: Page) {
+  const initialVisualViewport = await getVisualViewport(page)
+  await pinchZoom(page, 150)
+  await pinchZoom(page, 150)
+  const nextVisualViewport = await getVisualViewport(page)
   // Test the test: ensure pinch zoom was applied
-  expect(initialVisualViewport.scale < nextVisualViewport.scale).toBeTruthy()
+  expect(nextVisualViewport.scale).toBeGreaterThan(initialVisualViewport.scale)
 }
 
-async function visualScrollVerticallyDown(yChange: number) {
+async function visualScrollVerticallyDown(page: Page, yChange: number) {
   // Providing a negative offset value will scroll up.
   // NOTE: Some devices may invert scroll direction
   // Cannot exceed the bounds of a device's screen, at start or end positions.
@@ -190,28 +183,26 @@ async function visualScrollVerticallyDown(yChange: number) {
   const xBase = 180
   const yBase = 180
   // Scrolling too fast can show or hide the address bar on some device browsers.
-  const moveDurationMs = 800
   const pauseDurationMs = 150
 
-  const actions = [
-    {
-      type: 'pointer',
-      id: 'finger1',
-      parameters: { pointerType: 'touch' },
-      actions: [
-        { type: 'pointerMove', duration: 0, x: xBase, y: yBase },
-        { type: 'pointerDown', button: 0 },
-        { type: 'pause', duration: pauseDurationMs },
-        { type: 'pointerMove', duration: moveDurationMs, origin: 'pointer', x: 0, y: -yChange },
-        { type: 'pointerUp', button: 0 },
-      ],
-    },
-  ]
-  await browser.performActions(actions)
+  const cdp = await page.context().newCDPSession(page)
+  await cdp.send('Input.dispatchTouchEvent', {
+    type: 'touchStart',
+    touchPoints: [{ x: xBase, y: yBase, id: 0 }],
+  })
+  await wait(pauseDurationMs)
+  await cdp.send('Input.dispatchTouchEvent', {
+    type: 'touchMove',
+    touchPoints: [{ x: xBase, y: yBase - yChange, id: 0 }],
+  })
+  await cdp.send('Input.dispatchTouchEvent', {
+    type: 'touchEnd',
+    touchPoints: [{ x: xBase, y: yBase - yChange, id: 0 }],
+  })
 }
 
-async function buildScrollablePage() {
-  await browser.execute(() => {
+async function buildScrollablePage(page: Page) {
+  await page.evaluate(() => {
     document.documentElement.style.setProperty('width', '5000px')
     document.documentElement.style.setProperty('height', '5000px')
     document.documentElement.style.setProperty('margin', '0px')
@@ -233,8 +224,8 @@ interface VisualViewportData {
   pageTop: number
 }
 
-function getVisualViewport(): Promise<VisualViewportData> {
-  return browser.execute(() => {
+function getVisualViewport(page: Page): Promise<VisualViewportData> {
+  return page.evaluate(() => {
     const visual = window.visualViewport || ({} as Record<string, undefined>)
     return {
       scale: visual.scale,
@@ -248,76 +239,44 @@ function getVisualViewport(): Promise<VisualViewportData> {
   }) as Promise<VisualViewportData>
 }
 
-function getWindowScroll() {
-  return browser.execute(() => ({
+function getWindowScroll(page: Page) {
+  return page.evaluate(() => ({
     scrollX: window.scrollX,
     scrollY: window.scrollY,
   })) as Promise<{ scrollX: number; scrollY: number }>
 }
 
-function getScrollbarThickness(): Promise<number> {
-  // https://stackoverflow.com/questions/13382516/getting-scroll-bar-width-using-javascript#answer-13382873
-  return browser.execute(() => {
-    // Creating invisible container
-    const outer = document.createElement('div')
-    outer.style.visibility = 'hidden'
-    outer.style.overflow = 'scroll' // forcing scrollbar to appear
-    ;(outer.style as any).msOverflowStyle = 'scrollbar' // needed for WinJS apps
-    document.body.appendChild(outer)
-    // Creating inner element and placing it in the container
-    const inner = document.createElement('div')
-    outer.appendChild(inner)
-    // Calculating difference between container's full width and the child width
-    const scrollbarThickness = outer.offsetWidth - inner.offsetWidth
-    // Removing temporary elements from the DOM
-    document.body.removeChild(outer)
-    return scrollbarThickness
-  })
-}
-
-// Mac OS X Chrome scrollbars are included here (~15px) which seems to be against spec
-// Scrollbar edge-case handling not considered right now, further investigation needed
-async function getScrollbarThicknessCorrection(): Promise<number> {
-  let scrollbarThickness = 0
-  if (getBrowserName() === 'chrome' && getPlatformName() === 'macos') {
-    scrollbarThickness = await getScrollbarThickness()
-  }
-  return scrollbarThickness
-}
-
-async function getLastRecord<T>(intakeRegistry: IntakeRegistry, filterMethod: (segment: any) => T[]): Promise<T> {
-  await flushEvents()
+function getLastRecord<T>(intakeRegistry: IntakeRegistry, filterMethod: (segment: any) => T[]): T {
   const segment = intakeRegistry.replaySegments.at(-1)
   const foundRecords = filterMethod(segment)
   return foundRecords[foundRecords.length - 1]
 }
 
-function getWindowInnerDimensions() {
-  return browser.execute(() => ({
+function getWindowInnerDimensions(page: Page) {
+  return page.evaluate(() => ({
     innerWidth: window.innerWidth,
     innerHeight: window.innerHeight,
   })) as Promise<{ innerWidth: number; innerHeight: number }>
 }
 
-async function resetWindowScroll() {
-  await browser.execute(() => {
+async function resetWindowScroll(page: Page) {
+  await page.evaluate(() => {
     window.scrollTo(-500, -500)
   })
-  const { scrollX: nextScrollX, scrollY: nextScrollY } = await getWindowScroll()
+  const { scrollX: nextScrollX, scrollY: nextScrollY } = await getWindowScroll(page)
   // Ensure our methods are applied correctly
   expect(nextScrollX).toBe(0)
   expect(nextScrollY).toBe(0)
 }
 
-async function layoutScrollTo(scrollX: number, scrollY: number) {
-  await browser.execute(
-    (x, y) => {
-      window.scrollTo(x, y)
+async function layoutScrollTo(page: Page, scrollX: number, scrollY: number) {
+  await page.evaluate(
+    ({ scrollX, scrollY }) => {
+      window.scrollTo(scrollX, scrollY)
     },
-    scrollX,
-    scrollY
+    { scrollX, scrollY }
   )
-  const { scrollX: nextScrollX, scrollY: nextScrollY } = await getWindowScroll()
+  const { scrollX: nextScrollX, scrollY: nextScrollY } = await getWindowScroll(page)
   // Ensure our methods are applied correctly
   expect(scrollX).toBe(nextScrollX)
   expect(scrollY).toBe(nextScrollY)

@@ -8,13 +8,11 @@ import {
   timeStampNow,
   clocksNow,
   getEventBridge,
-  ExperimentalFeature,
-  isExperimentalFeatureEnabled,
   initFeatureFlags,
   addTelemetryConfiguration,
   initFetchObservable,
 } from '@datadog/browser-core'
-import type { TrackingConsentState, DeflateWorker } from '@datadog/browser-core'
+import type { TrackingConsentState, DeflateWorker, Context } from '@datadog/browser-core'
 import {
   validateAndBuildRumConfiguration,
   type RumConfiguration,
@@ -51,6 +49,8 @@ export function createPreStartStrategy(
   let cachedConfiguration: RumConfiguration | undefined
 
   const trackingConsentStateSubscription = trackingConsentState.observable.subscribe(tryStartRum)
+
+  const emptyContext: Context = {}
 
   function tryStartRum() {
     if (!cachedInitConfiguration || !cachedConfiguration || !trackingConsentState.isGranted()) {
@@ -135,7 +135,7 @@ export function createPreStartStrategy(
     bufferApiCalls.add((startRumResult) => startRumResult.addDurationVital(vital))
   }
 
-  return {
+  const strategy: Strategy = {
     init(initConfiguration, publicApi) {
       if (!initConfiguration) {
         display.error('Missing configuration')
@@ -157,10 +157,7 @@ export function createPreStartStrategy(
 
       callPluginsMethod(initConfiguration.plugins, 'onInit', { initConfiguration, publicApi })
 
-      if (
-        initConfiguration.remoteConfigurationId &&
-        isExperimentalFeatureEnabled(ExperimentalFeature.REMOTE_CONFIGURATION)
-      ) {
+      if (initConfiguration.remoteConfigurationId) {
         fetchAndApplyRemoteConfiguration(initConfiguration, doInit)
       } else {
         doInit(initConfiguration)
@@ -203,6 +200,8 @@ export function createPreStartStrategy(
       bufferApiCalls.add((startRumResult) => startRumResult.setViewContextProperty(key, value))
     },
 
+    getViewContext: () => emptyContext,
+
     addAction(action, commonContext = getCommonContext()) {
       bufferApiCalls.add((startRumResult) => startRumResult.addAction(action, commonContext))
     },
@@ -225,6 +224,8 @@ export function createPreStartStrategy(
 
     addDurationVital,
   }
+
+  return strategy
 }
 
 function overrideInitConfigurationForBridge(initConfiguration: RumInitConfiguration): RumInitConfiguration {

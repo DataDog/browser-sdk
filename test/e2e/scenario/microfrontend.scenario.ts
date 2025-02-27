@@ -1,9 +1,9 @@
 import type { RumEvent, RumEventDomainContext, RumInitConfiguration } from '@datadog/browser-rum-core'
 import type { LogsEvent, LogsInitConfiguration, LogsEventDomainContext } from '@datadog/browser-logs'
-import { flushBrowserLogs, withBrowserLogs } from '../lib/helpers/browser'
-import { flushEvents, createTest } from '../lib/framework'
+import { test, expect } from '@playwright/test'
+import { createTest } from '../lib/framework'
 
-const HANDLING_STACK_REGEX = /^Error: \n\s+at testHandlingStack @/
+const HANDLING_STACK_REGEX = /^HandlingStack: .*\n\s+at testHandlingStack @/
 
 const RUM_CONFIG: Partial<RumInitConfiguration> = {
   service: 'main-service',
@@ -28,12 +28,13 @@ const LOGS_CONFIG: Partial<LogsInitConfiguration> = {
   },
 }
 
-describe('microfrontend', () => {
+test.describe('microfrontend', () => {
   createTest('expose handling stack for fetch requests')
     .withRum(RUM_CONFIG)
     .withRumInit((configuration) => {
       window.DD_RUM!.init(configuration)
 
+      // eslint-disable-next-line @typescript-eslint/no-empty-function
       const noop = () => {}
       function testHandlingStack() {
         fetch('/ok').then(noop, noop)
@@ -41,7 +42,7 @@ describe('microfrontend', () => {
 
       testHandlingStack()
     })
-    .run(async ({ intakeRegistry }) => {
+    .run(async ({ intakeRegistry, flushEvents }) => {
       await flushEvents()
 
       const event = intakeRegistry.rumResourceEvents.find((event) => event.resource.type === 'fetch')
@@ -63,7 +64,7 @@ describe('microfrontend', () => {
 
       testHandlingStack()
     })
-    .run(async ({ intakeRegistry }) => {
+    .run(async ({ intakeRegistry, flushEvents }) => {
       await flushEvents()
 
       const event = intakeRegistry.rumResourceEvents.find((event) => event.resource.type === 'xhr')
@@ -83,7 +84,7 @@ describe('microfrontend', () => {
 
       testHandlingStack()
     })
-    .run(async ({ intakeRegistry }) => {
+    .run(async ({ intakeRegistry, flushEvents }) => {
       await flushEvents()
 
       const event = intakeRegistry.rumActionEvents[0]
@@ -103,7 +104,7 @@ describe('microfrontend', () => {
 
       testHandlingStack()
     })
-    .run(async ({ intakeRegistry }) => {
+    .run(async ({ intakeRegistry, flushEvents }) => {
       await flushEvents()
 
       const event = intakeRegistry.rumErrorEvents[0]
@@ -123,21 +124,21 @@ describe('microfrontend', () => {
 
       testHandlingStack()
     })
-    .run(async ({ intakeRegistry }) => {
+    .run(async ({ intakeRegistry, flushEvents, withBrowserLogs }) => {
       await flushEvents()
 
       const event = intakeRegistry.rumErrorEvents[0]
 
-      await withBrowserLogs((logs) => {
-        expect(logs.length).toBe(1)
-        expect(logs[0].message).toMatch(/"foo"$/)
+      withBrowserLogs((logs) => {
+        expect(logs).toHaveLength(1)
+        expect(logs[0].message).toMatch(/foo$/)
       })
 
       expect(event).toBeTruthy()
       expect(event?.context?.handlingStack).toMatch(HANDLING_STACK_REGEX)
     })
 
-  describe('console apis', () => {
+  test.describe('console apis', () => {
     createTest('expose handling stack for console.log')
       .withLogs(LOGS_CONFIG)
       .withLogsInit((configuration) => {
@@ -149,21 +150,21 @@ describe('microfrontend', () => {
 
         testHandlingStack()
       })
-      .run(async ({ intakeRegistry }) => {
+      .run(async ({ intakeRegistry, flushEvents, flushBrowserLogs }) => {
         await flushEvents()
 
         const event = intakeRegistry.logsEvents[0]
 
-        await flushBrowserLogs()
+        flushBrowserLogs()
 
         expect(event).toBeTruthy()
         expect(event?.context).toEqual({
-          handlingStack: jasmine.stringMatching(HANDLING_STACK_REGEX),
+          handlingStack: expect.stringMatching(HANDLING_STACK_REGEX),
         })
       })
   })
 
-  describe('logger apis', () => {
+  test.describe('logger apis', () => {
     createTest('expose handling stack for DD_LOGS.logger.log')
       .withLogs(LOGS_CONFIG)
       .withLogsInit((configuration) => {
@@ -175,16 +176,16 @@ describe('microfrontend', () => {
 
         testHandlingStack()
       })
-      .run(async ({ intakeRegistry }) => {
+      .run(async ({ intakeRegistry, flushEvents, flushBrowserLogs }) => {
         await flushEvents()
 
         const event = intakeRegistry.logsEvents[0]
 
-        await flushBrowserLogs()
+        flushBrowserLogs()
 
         expect(event).toBeTruthy()
         expect(event?.context).toEqual({
-          handlingStack: jasmine.stringMatching(HANDLING_STACK_REGEX),
+          handlingStack: expect.stringMatching(HANDLING_STACK_REGEX),
         })
       })
   })
@@ -204,7 +205,7 @@ describe('microfrontend', () => {
         },
       })
     })
-    .run(async ({ intakeRegistry }) => {
+    .run(async ({ intakeRegistry, flushEvents }) => {
       await flushEvents()
 
       const viewEvent = intakeRegistry.rumViewEvents[0]

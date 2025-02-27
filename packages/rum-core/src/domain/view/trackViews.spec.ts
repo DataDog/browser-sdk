@@ -403,6 +403,8 @@ describe('view metrics', () => {
         value: 0.1,
         targetSelector: undefined,
         time: clock.relative(0),
+        previousRect: undefined,
+        currentRect: undefined,
       })
     })
 
@@ -529,7 +531,7 @@ describe('view metrics', () => {
           jasmine.objectContaining({
             firstContentfulPaint: 123 as Duration,
             navigationTimings: jasmine.any(Object),
-            largestContentfulPaint: { value: 789 as Duration, targetSelector: undefined },
+            largestContentfulPaint: { value: 789 as Duration, targetSelector: undefined, resourceUrl: undefined },
           })
         )
       })
@@ -922,6 +924,8 @@ describe('view event count', () => {
       const { getViewUpdate, setViewContext } = viewTest
 
       setViewContext({ foo: 'bar' })
+      clock.tick(THROTTLE_VIEW_UPDATE_PERIOD)
+
       expect(getViewUpdate(1).context).toEqual({ foo: 'bar' })
     })
 
@@ -930,7 +934,17 @@ describe('view event count', () => {
       const { getViewUpdate, setViewContextProperty } = viewTest
 
       setViewContextProperty('foo', 'bar')
+      clock.tick(THROTTLE_VIEW_UPDATE_PERIOD)
+
       expect(getViewUpdate(1).context).toEqual({ foo: 'bar' })
+    })
+
+    it('should get view context with getViewContext', () => {
+      viewTest = setupViewTest({ lifeCycle })
+      const { getViewContext, setViewContextProperty } = viewTest
+
+      setViewContextProperty('foo', 'bar')
+      expect(getViewContext()).toEqual({ foo: 'bar' })
     })
   })
 
@@ -954,5 +968,45 @@ describe('view event count', () => {
       setViewName('foo')
       expect(getViewUpdate(3).name).toEqual('foo')
     })
+  })
+})
+
+describe('service and version', () => {
+  const lifeCycle = new LifeCycle()
+  let clock: Clock
+  let viewTest: ViewTest
+
+  beforeEach(() => {
+    clock = mockClock()
+
+    registerCleanupTask(() => {
+      viewTest.stop()
+      clock.cleanup()
+      resetExperimentalFeatures()
+    })
+  })
+
+  it('should come from the init configuration by default', () => {
+    viewTest = setupViewTest({ lifeCycle, partialConfig: { service: 'service', version: 'version' } })
+
+    const { getViewUpdate } = viewTest
+
+    expect(getViewUpdate(0).service).toEqual('service')
+    expect(getViewUpdate(0).version).toEqual('version')
+  })
+
+  it('should come from the view option if defined', () => {
+    viewTest = setupViewTest(
+      { lifeCycle, partialConfig: { service: 'service', version: 'version' } },
+      {
+        service: 'view service',
+        version: 'view version',
+      }
+    )
+
+    const { getViewUpdate } = viewTest
+
+    expect(getViewUpdate(0).service).toEqual('view service')
+    expect(getViewUpdate(0).version).toEqual('view version')
   })
 })

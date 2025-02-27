@@ -3,6 +3,7 @@ import type {
   TimeStamp,
   RelativeTime,
   User,
+  Account,
   DeflateWorker,
   DeflateEncoderStreamId,
   DeflateEncoder,
@@ -20,8 +21,6 @@ import {
   clocksNow,
   callMonitored,
   createHandlingStack,
-  checkUser,
-  sanitizeUser,
   sanitize,
   createIdentityEncoder,
   CustomerDataCompressionStatus,
@@ -42,6 +41,7 @@ import { buildCommonContext } from '../domain/contexts/commonContext'
 import type { InternalContext } from '../domain/contexts/internalContext'
 import type { DurationVitalReference } from '../domain/vital/vitalCollection'
 import { createCustomVitalsState } from '../domain/vital/vitalCollection'
+import { callPluginsMethod } from '../domain/plugins'
 import { createPreStartStrategy } from './preStartRum'
 import type { StartRum, StartRumResult } from './startRum'
 
@@ -97,6 +97,12 @@ export interface RumPublicApi extends PublicApi {
    * @param value value of the property
    */
   setViewContextProperty: (key: string, value: any) => void
+
+  /**
+   * Get View Context.
+   */
+  getViewContext: () => Context
+
   /**
    * Set the global context information to all events, stored in `@context`
    *
@@ -183,8 +189,15 @@ export interface RumPublicApi extends PublicApi {
    *
    * See [User session](https://docs.datadoghq.com/real_user_monitoring/browser/advanced_configuration/#user-session) for further information.
    */
-  setUser: (newUser: User) => void
+  setUser(newUser: User & { id: string }): void
 
+  /**
+   * Set user information to all events, stored in `@usr`
+   *
+   * @deprecated You must specify a user id
+   * @see {@link setUser}
+   */
+  setUser(newUser: User): void
   /**
    * Get user information
    *
@@ -215,6 +228,34 @@ export interface RumPublicApi extends PublicApi {
    * See [User session](https://docs.datadoghq.com/real_user_monitoring/browser/advanced_configuration/#user-session) for further information.
    */
   clearUser: () => void
+
+  /**
+   * Set account information to all events, stored in `@account`
+   */
+  setAccount: (newAccount: Account) => void
+
+  /**
+   * Get account information
+   */
+  getAccount: () => Context
+
+  /**
+   * Set or update the account property, stored in `@account.<key>`
+   *
+   * @param key Key of the property
+   * @param property Value of the property
+   */
+  setAccountProperty: (key: string, property: any) => void
+
+  /**
+   * Remove an account property
+   */
+  removeAccountProperty: (key: string) => void
+
+  /**
+   * Clear all account information
+   */
+  clearAccount: () => void
 
   /**
    * Start a view manually.
@@ -351,6 +392,7 @@ export interface Strategy {
   setViewName: StartRumResult['setViewName']
   setViewContext: StartRumResult['setViewContext']
   setViewContextProperty: StartRumResult['setViewContextProperty']
+  getViewContext: StartRumResult['getViewContext']
   addAction: StartRumResult['addAction']
   addError: StartRumResult['addError']
   addFeatureFlagEvaluation: StartRumResult['addFeatureFlagEvaluation']
@@ -365,15 +407,29 @@ export function makeRumPublicApi(
   options: RumPublicApiOptions = {}
 ): RumPublicApi {
   const customerDataTrackerManager = createCustomerDataTrackerManager(CustomerDataCompressionStatus.Unknown)
-  const globalContextManager = createContextManager(
-    customerDataTrackerManager.getOrCreateTracker(CustomerDataType.GlobalContext)
-  )
-  const userContextManager = createContextManager(customerDataTrackerManager.getOrCreateTracker(CustomerDataType.User))
+  const globalContextManager = createContextManager('global context', {
+    customerDataTracker: customerDataTrackerManager.getOrCreateTracker(CustomerDataType.GlobalContext),
+  })
+  const userContextManager = createContextManager('user', {
+    customerDataTracker: customerDataTrackerManager.getOrCreateTracker(CustomerDataType.User),
+    propertiesConfig: {
+      id: { type: 'string' },
+      name: { type: 'string' },
+      email: { type: 'string' },
+    },
+  })
+  const accountContextManager = createContextManager('account', {
+    customerDataTracker: customerDataTrackerManager.getOrCreateTracker(CustomerDataType.User),
+    propertiesConfig: {
+      id: { type: 'string', required: true },
+      name: { type: 'string' },
+    },
+  })
   const trackingConsentState = createTrackingConsentState()
   const customVitalsState = createCustomVitalsState()
 
   function getCommonContext() {
-    return buildCommonContext(globalContextManager, userContextManager, recorderApi)
+    return buildCommonContext(globalContextManager, userContextManager, accountContextManager, recorderApi)
   }
 
   let strategy = createPreStartStrategy(
@@ -385,6 +441,7 @@ export function makeRumPublicApi(
       if (configuration.storeContextsAcrossPages) {
         storeContextManager(configuration, globalContextManager, RUM_STORAGE_KEY, CustomerDataType.GlobalContext)
         storeContextManager(configuration, userContextManager, RUM_STORAGE_KEY, CustomerDataType.User)
+        storeContextManager(configuration, accountContextManager, RUM_STORAGE_KEY, CustomerDataType.Account)
       }
 
       customerDataTrackerManager.setCompressionStatus(
@@ -414,6 +471,8 @@ export function makeRumPublicApi(
 
       strategy = createPostStartStrategy(strategy, startRumResult)
 
+      callPluginsMethod(configuration.plugins, 'onRumStart', { strategy })
+
       return startRumResult
     }
   )
@@ -442,14 +501,22 @@ export function makeRumPublicApi(
 
     setViewName: monitor((name: string) => {
       strategy.setViewName(name)
+      addTelemetryUsage({ feature: 'set-view-name' })
     }),
 
     setViewContext: monitor((context: Context) => {
       strategy.setViewContext(context)
+      addTelemetryUsage({ feature: 'set-view-context' })
     }),
 
     setViewContextProperty: monitor((key: string, value: any) => {
       strategy.setViewContextProperty(key, value)
+      addTelemetryUsage({ feature: 'set-view-context-property' })
+    }),
+
+    getViewContext: monitor(() => {
+      addTelemetryUsage({ feature: 'set-view-context-property' })
+      return strategy.getViewContext()
     }),
 
     setGlobalContext: monitor((context) => {
@@ -473,7 +540,7 @@ export function makeRumPublicApi(
     getInitConfiguration: monitor(() => deepClone(strategy.initConfiguration)),
 
     addAction: (name, context) => {
-      const handlingStack = createHandlingStack()
+      const handlingStack = createHandlingStack('action')
 
       callMonitored(() => {
         strategy.addAction({
@@ -488,7 +555,7 @@ export function makeRumPublicApi(
     },
 
     addError: (error, context) => {
-      const handlingStack = createHandlingStack()
+      const handlingStack = createHandlingStack('error')
       callMonitored(() => {
         strategy.addError({
           error, // Do not sanitize error here, it is needed unserialized by computeRawError()
@@ -506,23 +573,30 @@ export function makeRumPublicApi(
     }),
 
     setUser: monitor((newUser) => {
-      if (checkUser(newUser)) {
-        userContextManager.setContext(sanitizeUser(newUser as Context))
-      }
+      userContextManager.setContext(newUser)
       addTelemetryUsage({ feature: 'set-user' })
     }),
 
-    getUser: monitor(() => userContextManager.getContext()),
+    getUser: monitor(userContextManager.getContext),
 
     setUserProperty: monitor((key, property) => {
-      const sanitizedProperty = sanitizeUser({ [key]: property })[key]
-      userContextManager.setContextProperty(key, sanitizedProperty)
+      userContextManager.setContextProperty(key, property)
       addTelemetryUsage({ feature: 'set-user' })
     }),
 
-    removeUserProperty: monitor((key) => userContextManager.removeContextProperty(key)),
+    removeUserProperty: monitor(userContextManager.removeContextProperty),
 
-    clearUser: monitor(() => userContextManager.clearContext()),
+    clearUser: monitor(userContextManager.clearContext),
+
+    setAccount: monitor(accountContextManager.setContext),
+
+    getAccount: monitor(accountContextManager.getContext),
+
+    setAccountProperty: monitor(accountContextManager.setContextProperty),
+
+    removeAccountProperty: monitor(accountContextManager.removeContextProperty),
+
+    clearAccount: monitor(accountContextManager.clearContext),
 
     startView,
 

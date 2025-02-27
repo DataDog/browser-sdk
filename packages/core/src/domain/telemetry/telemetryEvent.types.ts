@@ -392,9 +392,17 @@ export type TelemetryConfigurationEvent = CommonTelemetryProperties & {
        */
       is_main_process?: boolean
       /**
-       * The list of events that include feature flags collection
+       * Interval in milliseconds when the last action is considered as the action that created the next view. Only sent if a time based strategy has been used
        */
-      collect_feature_flags_on?: ('view' | 'error' | 'vital')[]
+      inv_time_threshold_ms?: number
+      /**
+       * The interval in milliseconds during which all network requests will be considered as initial, i.e. caused by the creation of this view. Only sent if a time based strategy has been used
+       */
+      tns_time_threshold_ms?: number
+      /**
+       * The list of events that include feature flags collection. The tracking is always enabled for views and errors.
+       */
+      track_feature_flags_for_events?: ('vital' | 'resource' | 'action' | 'long_task')[]
       /**
        * Whether the anonymous users are tracked
        */
@@ -429,10 +437,15 @@ export type TelemetryCommonFeaturesUsage =
   | SetTrackingConsent
   | StopSession
   | StartView
+  | SetViewContext
+  | SetViewContextProperty
+  | SetViewName
+  | GetViewContext
   | AddAction
   | AddError
   | SetGlobalContext
   | SetUser
+  | SetAccount
   | AddFeatureFlagEvaluation
 /**
  * Schema of browser specific features usage
@@ -595,6 +608,34 @@ export interface StartView {
   feature: 'start-view'
   [k: string]: unknown
 }
+export interface SetViewContext {
+  /**
+   * setViewContext API
+   */
+  feature: 'set-view-context'
+  [k: string]: unknown
+}
+export interface SetViewContextProperty {
+  /**
+   * setViewContextProperty API
+   */
+  feature: 'set-view-context-property'
+  [k: string]: unknown
+}
+export interface SetViewName {
+  /**
+   * setViewName API
+   */
+  feature: 'set-view-name'
+  [k: string]: unknown
+}
+export interface GetViewContext {
+  /**
+   * getViewContext API
+   */
+  feature: 'get-view-context'
+  [k: string]: unknown
+}
 export interface AddAction {
   /**
    * addAction API
@@ -621,6 +662,13 @@ export interface SetUser {
    * setUser, setUserProperty, setUserInfo APIs
    */
   feature: 'set-user'
+  [k: string]: unknown
+}
+export interface SetAccount {
+  /**
+   * setAccount, setAccountProperty APIs
+   */
+  feature: 'set-account'
   [k: string]: unknown
 }
 export interface AddFeatureFlagEvaluation {

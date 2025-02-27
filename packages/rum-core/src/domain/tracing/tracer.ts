@@ -14,7 +14,6 @@ import type {
   RumXhrStartContext,
 } from '../requestCollection'
 import type { RumSessionManager } from '../rumSessionManager'
-import { getCrypto } from '../../browser/crypto'
 import type { PropagatorType, TracingOption } from './tracer.types'
 import type { SpanIdentifier, TraceIdentifier } from './identifier'
 import { createSpanIdentifier, createTraceIdentifier, toPaddedHexadecimalString } from './identifier'
@@ -108,33 +107,30 @@ function injectHeadersIfTracingAllowed(
   sessionManager: RumSessionManager,
   inject: (tracingHeaders: TracingHeaders) => void
 ) {
-  if (!isTracingSupported() || !sessionManager.findTrackedSession()) {
+  const session = sessionManager.findTrackedSession()
+  if (!session) {
     return
   }
 
-  const tracingOption = configuration.allowedTracingUrls.find((tracingOption: TracingOption) =>
+  const tracingOption = configuration.allowedTracingUrls.find((tracingOption) =>
     matchList([tracingOption.match], context.url!, true)
   )
   if (!tracingOption) {
     return
   }
-  const traceId = createTraceIdentifier()
-  context.traceSampled = isTraceSampled(traceId, configuration.traceSampleRate)
 
-  const shouldInjectHeaders = context.traceSampled || configuration.traceContextInjection === TraceContextInjection.ALL
+  const traceSampled = isTraceSampled(session.id, configuration.traceSampleRate)
 
+  const shouldInjectHeaders = traceSampled || configuration.traceContextInjection === TraceContextInjection.ALL
   if (!shouldInjectHeaders) {
     return
   }
 
-  context.traceId = traceId
+  context.traceSampled = traceSampled
+  context.traceId = createTraceIdentifier()
   context.spanId = createSpanIdentifier()
 
   inject(makeTracingHeaders(context.traceId, context.spanId, context.traceSampled, tracingOption.propagatorTypes))
-}
-
-export function isTracingSupported() {
-  return getCrypto() !== undefined
 }
 
 /**

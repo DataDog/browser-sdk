@@ -3,7 +3,6 @@ import { ErrorSource, ExperimentalFeature, ONE_MINUTE, display } from '@datadog/
 import type { Clock } from '@datadog/browser-core/test'
 import {
   mockEventBridge,
-  mockSyntheticsWorkerValues,
   mockExperimentalFeatures,
   setNavigatorOnLine,
   setNavigatorConnection,
@@ -15,22 +14,21 @@ import {
   createRumSessionManagerMock,
   createRawRumEvent,
   mockRumConfiguration,
-  mockUrlContexts,
-  mockActionContexts,
   mockDisplayContext,
   mockViewHistory,
+  mockUrlContexts,
 } from '../../test'
 import type { RumEventDomainContext } from '../domainContext.types'
-import type { RawRumActionEvent, RawRumEvent } from '../rawRumEvent.types'
+import type { RawRumEvent } from '../rawRumEvent.types'
 import { RumEventType } from '../rawRumEvent.types'
-import type { RumActionEvent, RumErrorEvent, RumEvent, RumResourceEvent } from '../rumEvent.types'
+import type { RumErrorEvent, RumEvent, RumResourceEvent } from '../rumEvent.types'
+import { HookNames, createHooks } from '../hooks'
 import { startRumAssembly } from './assembly'
 import type { RawRumEventCollectedData } from './lifeCycle'
 import { LifeCycle, LifeCycleEventType } from './lifeCycle'
 import type { RumConfiguration } from './configuration'
 import type { ViewHistory } from './contexts/viewHistory'
 import type { CommonContext } from './contexts/commonContext'
-import type { CiVisibilityContext } from './contexts/ciVisibilityContext'
 import type { RumSessionManager } from './rumSessionManager'
 
 describe('rum assembly', () => {
@@ -63,6 +61,22 @@ describe('rum assembly', () => {
           })
 
           expect(serverRumEvents[0].view.name).toBe('added')
+        })
+
+        it('should allow modification of view.performance.lcp.resource_url', () => {
+          const { lifeCycle, serverRumEvents } = setupAssemblyTestWithDefaults({
+            partialConfiguration: {
+              beforeSend: (event) => (event.view.performance.lcp.resource_url = 'modified_url'),
+            },
+          })
+
+          notifyRawRumEvent(lifeCycle, {
+            rawRumEvent: createRawRumEvent(RumEventType.VIEW, {
+              view: { performance: { lcp: { resource_url: 'original_url' } } },
+            }),
+          })
+
+          expect((serverRumEvents[0].view as any).performance.lcp.resource_url).toBe('modified_url')
         })
 
         describe('field resource.graphql on Resource events', () => {
@@ -389,43 +403,6 @@ describe('rum assembly', () => {
     })
   })
 
-  describe('priority of rum context', () => {
-    it('should prioritize view customer context over global context', () => {
-      const { lifeCycle, serverRumEvents, commonContext } = setupAssemblyTestWithDefaults({
-        findView: () => ({
-          id: '7890',
-          name: 'view name',
-          startClocks: {} as ClocksState,
-          context: { foo: 'baz' },
-        }),
-      })
-      commonContext.context = { foo: 'bar' }
-
-      notifyRawRumEvent(lifeCycle, {
-        rawRumEvent: createRawRumEvent(RumEventType.VIEW),
-      })
-
-      expect(serverRumEvents[0].context!.foo).toBe('baz')
-    })
-
-    it('should prioritize child customer context over inherited view context', () => {
-      const { lifeCycle, serverRumEvents } = setupAssemblyTestWithDefaults({
-        findView: () => ({
-          id: '7890',
-          name: 'view name',
-          startClocks: {} as ClocksState,
-          context: { foo: 'bar' },
-        }),
-      })
-      notifyRawRumEvent(lifeCycle, {
-        customerContext: { foo: 'baz' },
-        rawRumEvent: createRawRumEvent(RumEventType.ACTION),
-      })
-
-      expect(serverRumEvents[0].context!.foo).toBe('baz')
-    })
-  })
-
   describe('rum global context', () => {
     it('should be merged with event attributes', () => {
       const { lifeCycle, serverRumEvents, commonContext } = setupAssemblyTestWithDefaults()
@@ -471,6 +448,7 @@ describe('rum assembly', () => {
         savedCommonContext: {
           context: { replacedContext: 'a' },
           user: {},
+          account: {},
           hasReplay: undefined,
         },
       })
@@ -480,20 +458,24 @@ describe('rum assembly', () => {
     })
   })
 
-  describe('rum user', () => {
+  describe('rum user and account', () => {
     it('should be included in event attributes', () => {
       const { lifeCycle, serverRumEvents, commonContext } = setupAssemblyTestWithDefaults()
       commonContext.user = { id: 'foo' }
+      commonContext.account = { id: 'bar' }
       notifyRawRumEvent(lifeCycle, {
         rawRumEvent: createRawRumEvent(RumEventType.VIEW),
       })
 
       expect(serverRumEvents[0].usr!.id).toEqual('foo')
+      expect(serverRumEvents[0].account!.id).toEqual('bar')
     })
 
     it('should always contain anonymous id', () => {
       const { lifeCycle, serverRumEvents, commonContext } = setupAssemblyTestWithDefaults()
       commonContext.user = {}
+      commonContext.account = {}
+
       notifyRawRumEvent(lifeCycle, {
         rawRumEvent: createRawRumEvent(RumEventType.VIEW),
       })
@@ -511,23 +493,40 @@ describe('rum assembly', () => {
       })
 
       expect(serverRumEvents[0].usr).toBeUndefined()
+      expect(serverRumEvents[0].account).toBe(undefined)
     })
 
-    it('should ignore the current user when a saved common context user is provided', () => {
+    it('should not include account if `id` is missing and display a warn', () => {
+      expect(true).toBe(true)
+      const { lifeCycle, serverRumEvents, commonContext } = setupAssemblyTestWithDefaults()
+      commonContext.account = { name: 'foo' }
+      notifyRawRumEvent(lifeCycle, {
+        rawRumEvent: createRawRumEvent(RumEventType.VIEW),
+      })
+
+      expect(serverRumEvents[0].account).toBe(undefined)
+    })
+
+    it('should ignore the current user/account when a saved common context user is provided', () => {
       const { lifeCycle, serverRumEvents, commonContext } = setupAssemblyTestWithDefaults()
       commonContext.user = { replacedAttribute: 'b', addedAttribute: 'x' }
+      commonContext.account = { replacedAttribute: 'c', addedAttribute: 'y' }
 
       notifyRawRumEvent(lifeCycle, {
         rawRumEvent: createRawRumEvent(RumEventType.VIEW),
         savedCommonContext: {
           context: {},
           user: { replacedAttribute: 'a' },
+          account: { id: 'foo', replacedAttribute: 'e' },
           hasReplay: undefined,
         },
       })
 
       expect(serverRumEvents[0].usr!.replacedAttribute).toEqual('a')
       expect(serverRumEvents[0].usr!.addedAttribute).toEqual(undefined)
+
+      expect(serverRumEvents[0].account!.replacedAttribute).toEqual('e')
+      expect(serverRumEvents[0].account!.addedAttribute).toEqual(undefined)
     })
   })
 
@@ -543,94 +542,8 @@ describe('rum assembly', () => {
     })
   })
 
-  describe('action context', () => {
-    it('should be added on some event categories', () => {
-      const { lifeCycle, serverRumEvents } = setupAssemblyTestWithDefaults()
-      ;[RumEventType.RESOURCE, RumEventType.LONG_TASK, RumEventType.ERROR].forEach((category) => {
-        notifyRawRumEvent(lifeCycle, {
-          rawRumEvent: createRawRumEvent(category),
-        })
-        expect(serverRumEvents[0].action).toEqual({ id: '7890' })
-        serverRumEvents.length = 0
-      })
-
-      notifyRawRumEvent(lifeCycle, {
-        rawRumEvent: createRawRumEvent(RumEventType.VIEW),
-      })
-      expect(serverRumEvents[0].action).not.toBeDefined()
-      serverRumEvents.length = 0
-
-      const generatedRawRumActionEvent = createRawRumEvent(RumEventType.ACTION) as RawRumActionEvent
-      notifyRawRumEvent(lifeCycle, {
-        rawRumEvent: generatedRawRumActionEvent,
-      })
-      expect((serverRumEvents[0] as RumActionEvent).action.id).toEqual(generatedRawRumActionEvent.action.id)
-      serverRumEvents.length = 0
-    })
-  })
-
-  describe('view context', () => {
-    it('should be merged with event attributes', () => {
-      const { lifeCycle, serverRumEvents } = setupAssemblyTestWithDefaults()
-      notifyRawRumEvent(lifeCycle, {
-        rawRumEvent: createRawRumEvent(RumEventType.ACTION),
-      })
-      expect(serverRumEvents[0].view).toEqual(
-        jasmine.objectContaining({
-          id: '7890',
-          name: 'view name',
-        })
-      )
-    })
-
-    it('child event should have view customer context', () => {
-      const { lifeCycle, serverRumEvents } = setupAssemblyTestWithDefaults({
-        findView: () => ({
-          id: '7890',
-          name: 'view name',
-          startClocks: {} as ClocksState,
-          context: { foo: 'bar' },
-        }),
-      })
-      notifyRawRumEvent(lifeCycle, {
-        rawRumEvent: createRawRumEvent(RumEventType.ACTION),
-      })
-      expect(serverRumEvents[0].context).toEqual({ foo: 'bar' })
-    })
-  })
-
   describe('service and version', () => {
     const extraConfigurationOptions = { service: 'default service', version: 'default version' }
-
-    it('should come from the init configuration by default', () => {
-      const { lifeCycle, serverRumEvents } = setupAssemblyTestWithDefaults({
-        partialConfiguration: extraConfigurationOptions,
-      })
-
-      notifyRawRumEvent(lifeCycle, {
-        rawRumEvent: createRawRumEvent(RumEventType.ACTION),
-      })
-      expect(serverRumEvents[0].service).toEqual('default service')
-      expect(serverRumEvents[0].version).toEqual('default version')
-    })
-
-    it('should be overridden by the view context', () => {
-      const { lifeCycle, serverRumEvents } = setupAssemblyTestWithDefaults({
-        partialConfiguration: extraConfigurationOptions,
-        findView: () => ({
-          service: 'new service',
-          version: 'new version',
-          id: '1234',
-          startClocks: {} as ClocksState,
-        }),
-      })
-
-      notifyRawRumEvent(lifeCycle, {
-        rawRumEvent: createRawRumEvent(RumEventType.ACTION),
-      })
-      expect(serverRumEvents[0].service).toEqual('new service')
-      expect(serverRumEvents[0].version).toEqual('new version')
-    })
 
     describe('fields service and version', () => {
       it('it should be modifiable', () => {
@@ -656,14 +569,43 @@ describe('rum assembly', () => {
     })
   })
 
-  describe('url context', () => {
-    it('should be merged with event attributes', () => {
-      const { lifeCycle, serverRumEvents } = setupAssemblyTestWithDefaults()
+  describe('assemble hook', () => {
+    it('should add and override common properties', () => {
+      const { lifeCycle, hooks, serverRumEvents, commonContext } = setupAssemblyTestWithDefaults({
+        partialConfiguration: { service: 'default service', version: 'default version' },
+      })
+      commonContext.context = { foo: 'global context' }
+
+      hooks.register(HookNames.Assemble, ({ eventType }) => ({
+        type: eventType,
+        service: 'new service',
+        version: 'new version',
+        context: { foo: 'bar' },
+        view: { id: 'new view id', url: '' },
+      }))
+
       notifyRawRumEvent(lifeCycle, {
         rawRumEvent: createRawRumEvent(RumEventType.ACTION),
       })
-      expect(serverRumEvents[0].view.url).toBe(location.href)
-      expect(serverRumEvents[0].view.referrer).toBe(document.referrer)
+      expect(serverRumEvents[0].service).toEqual('new service')
+      expect(serverRumEvents[0].version).toEqual('new version')
+      expect(serverRumEvents[0].context).toEqual({ foo: 'bar' })
+      expect(serverRumEvents[0].view.id).toEqual('new view id')
+    })
+
+    it('should not override customer context', () => {
+      const { lifeCycle, hooks, serverRumEvents } = setupAssemblyTestWithDefaults()
+
+      hooks.register(HookNames.Assemble, ({ eventType }) => ({
+        type: eventType,
+        context: { foo: 'bar' },
+      }))
+
+      notifyRawRumEvent(lifeCycle, {
+        rawRumEvent: createRawRumEvent(RumEventType.ACTION),
+        customerContext: { foo: 'customer context' },
+      })
+      expect(serverRumEvents[0].context).toEqual({ foo: 'customer context' })
     })
   })
 
@@ -713,28 +655,6 @@ describe('rum assembly', () => {
         id: '1234',
         type: 'user',
       })
-    })
-
-    it('should detect synthetics sessions based on synthetics worker values', () => {
-      mockSyntheticsWorkerValues()
-
-      const { lifeCycle, serverRumEvents } = setupAssemblyTestWithDefaults()
-      notifyRawRumEvent(lifeCycle, {
-        rawRumEvent: createRawRumEvent(RumEventType.VIEW),
-      })
-
-      expect(serverRumEvents[0].session.type).toEqual('synthetics')
-    })
-
-    it('should detect ci visibility tests', () => {
-      const ciVisibilityContext = { test_execution_id: 'traceId' }
-      const { lifeCycle, serverRumEvents } = setupAssemblyTestWithDefaults({ ciVisibilityContext })
-
-      notifyRawRumEvent(lifeCycle, {
-        rawRumEvent: createRawRumEvent(RumEventType.VIEW),
-      })
-
-      expect(serverRumEvents[0].session.type).toEqual('ci_test')
     })
 
     it('should set the session.has_replay attribute if it is defined in the common context', () => {
@@ -820,18 +740,6 @@ describe('rum assembly', () => {
     })
   })
 
-  describe('synthetics context', () => {
-    it('includes the synthetics context', () => {
-      mockSyntheticsWorkerValues()
-      const { lifeCycle, serverRumEvents } = setupAssemblyTestWithDefaults()
-
-      notifyRawRumEvent(lifeCycle, {
-        rawRumEvent: createRawRumEvent(RumEventType.VIEW),
-      })
-
-      expect(serverRumEvents[0].synthetics).toBeTruthy()
-    })
-  })
   describe('if event bridge detected', () => {
     it('includes the browser sdk version', () => {
       const { lifeCycle, serverRumEvents } = setupAssemblyTestWithDefaults()
@@ -843,19 +751,6 @@ describe('rum assembly', () => {
 
       expect(serverRumEvents[0]._dd.browser_sdk_version).not.toBeDefined()
       expect(serverRumEvents[1]._dd.browser_sdk_version).toBeDefined()
-    })
-  })
-
-  describe('ci visibility context', () => {
-    it('includes the ci visibility context', () => {
-      const ciVisibilityContext = { test_execution_id: 'traceId' }
-      const { lifeCycle, serverRumEvents } = setupAssemblyTestWithDefaults({ ciVisibilityContext })
-
-      notifyRawRumEvent(lifeCycle, {
-        rawRumEvent: createRawRumEvent(RumEventType.VIEW),
-      })
-
-      expect(serverRumEvents[0].ci_test).toBeTruthy()
     })
   })
 
@@ -1011,15 +906,16 @@ interface AssemblyTestParams {
 function setupAssemblyTestWithDefaults({
   partialConfiguration,
   sessionManager,
-  ciVisibilityContext,
   findView = () => ({ id: '7890', name: 'view name', startClocks: {} as ClocksState }),
 }: AssemblyTestParams = {}) {
   const lifeCycle = new LifeCycle()
+  const hooks = createHooks()
   const reportErrorSpy = jasmine.createSpy('reportError')
   const rumSessionManager = sessionManager ?? createRumSessionManagerMock().setId('1234')
   const commonContext = {
     context: {},
     user: {},
+    account: {},
     hasReplay: undefined,
   } as CommonContext
 
@@ -1031,12 +927,11 @@ function setupAssemblyTestWithDefaults({
   startRumAssembly(
     mockRumConfiguration(partialConfiguration),
     lifeCycle,
+    hooks,
     rumSessionManager,
     { ...mockViewHistory(), findView: () => findView() },
     mockUrlContexts(),
-    mockActionContexts(),
     mockDisplayContext(),
-    { get: () => ciVisibilityContext } as CiVisibilityContext,
     () => commonContext,
     reportErrorSpy
   )
@@ -1045,5 +940,5 @@ function setupAssemblyTestWithDefaults({
     subscription.unsubscribe()
   })
 
-  return { lifeCycle, reportErrorSpy, serverRumEvents, commonContext }
+  return { lifeCycle, hooks, reportErrorSpy, serverRumEvents, commonContext }
 }

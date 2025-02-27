@@ -1,5 +1,5 @@
 import type { RumInitConfiguration, RumPublicApi } from '@datadog/browser-rum-core'
-import { onReactPluginInit, reactPlugin, resetReactPlugin } from './reactPlugin'
+import { onRumInit, reactPlugin, resetReactPlugin } from './reactPlugin'
 
 const PUBLIC_API = {} as RumPublicApi
 const INIT_CONFIGURATION = {} as RumInitConfiguration
@@ -22,11 +22,14 @@ describe('reactPlugin', () => {
   it('calls callbacks registered with onReactPluginInit during onInit', () => {
     const callbackSpy = jasmine.createSpy()
     const pluginConfiguration = {}
-    onReactPluginInit(callbackSpy)
+    onRumInit(callbackSpy)
 
     expect(callbackSpy).not.toHaveBeenCalled()
 
-    reactPlugin(pluginConfiguration).onInit({ publicApi: PUBLIC_API, initConfiguration: INIT_CONFIGURATION })
+    reactPlugin(pluginConfiguration).onInit({
+      publicApi: PUBLIC_API,
+      initConfiguration: INIT_CONFIGURATION,
+    })
 
     expect(callbackSpy).toHaveBeenCalledTimes(1)
     expect(callbackSpy.calls.mostRecent().args[0]).toBe(pluginConfiguration)
@@ -36,9 +39,12 @@ describe('reactPlugin', () => {
   it('calls callbacks immediately if onInit was already invoked', () => {
     const callbackSpy = jasmine.createSpy()
     const pluginConfiguration = {}
-    reactPlugin(pluginConfiguration).onInit({ publicApi: PUBLIC_API, initConfiguration: INIT_CONFIGURATION })
+    reactPlugin(pluginConfiguration).onInit({
+      publicApi: PUBLIC_API,
+      initConfiguration: INIT_CONFIGURATION,
+    })
 
-    onReactPluginInit(callbackSpy)
+    onRumInit(callbackSpy)
 
     expect(callbackSpy).toHaveBeenCalledTimes(1)
     expect(callbackSpy.calls.mostRecent().args[0]).toBe(pluginConfiguration)

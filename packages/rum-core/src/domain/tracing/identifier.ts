@@ -1,6 +1,3 @@
-import { ExperimentalFeature, isExperimentalFeatureEnabled } from '@datadog/browser-core'
-import { getCrypto } from '../../browser/crypto'
-
 interface BaseIdentifier {
   toString(radix?: number): string
 }
@@ -23,44 +20,32 @@ export function createSpanIdentifier() {
   return createIdentifier(63) as SpanIdentifier
 }
 
-let createIdentifierImplementationCache: ((bits: 63 | 64) => BaseIdentifier) | undefined
-
 function createIdentifier(bits: 63 | 64): BaseIdentifier {
-  if (!createIdentifierImplementationCache) {
-    createIdentifierImplementationCache =
-      isExperimentalFeatureEnabled(ExperimentalFeature.CONSISTENT_TRACE_SAMPLING) && areBigIntIdentifiersSupported()
-        ? createIdentifierUsingBigInt
-        : createIdentifierUsingUint32Array
-  }
-  return createIdentifierImplementationCache(bits)
-}
-
-export function areBigIntIdentifiersSupported() {
-  try {
-    crypto.getRandomValues(new BigUint64Array(1))
-    return true
-  } catch {
-    return false
-  }
-}
-
-function createIdentifierUsingBigInt(bits: 63 | 64): BaseIdentifier {
-  let id = crypto.getRandomValues(new BigUint64Array(1))[0]
-  if (bits === 63) {
-    // eslint-disable-next-line no-bitwise
-    id >>= BigInt('1')
-  }
-  return id
-}
-
-// TODO: remove this when all browser we support have BigInt support
-function createIdentifierUsingUint32Array(bits: 63 | 64): BaseIdentifier {
-  const buffer = getCrypto().getRandomValues(new Uint32Array(2))
+  const buffer = crypto.getRandomValues(new Uint32Array(2))
   if (bits === 63) {
     // eslint-disable-next-line no-bitwise
     buffer[buffer.length - 1] >>>= 1 // force 63-bit
   }
 
+  // The `.toString` function is intentionally similar to Number and BigInt `.toString` method.
+  //
+  // JavaScript numbers can represent integers up to 48 bits, this is why we need two of them to
+  // represent a 64 bits identifier. But BigInts don't have this limitation and can represent larger
+  // integer values.
+  //
+  // In the future, when we drop browsers without BigInts support, we could use BigInts directly
+  // represent identifiers by simply returning a BigInt from this function (as all we need is a
+  // value with a `.toString` method).
+  //
+  // Examples:
+  //   const buffer = getCrypto().getRandomValues(new Uint32Array(2))
+  //   return BigInt(buffer[0]) + BigInt(buffer[1]) << 32n
+  //
+  //   // Alternative with BigUint64Array (different Browser support than plain bigints!):
+  //   return crypto.getRandomValues(new BigUint64Array(1))[0]
+  //
+  // For now, let's keep using two plain numbers as having two different implementations (one for
+  // browsers with BigInt support and one for older browsers) don't bring much value.
   return {
     toString(radix = 10) {
       let high = buffer[1]
@@ -80,7 +65,5 @@ function createIdentifierUsingUint32Array(bits: 63 | 64): BaseIdentifier {
 }
 
 export function toPaddedHexadecimalString(id: BaseIdentifier) {
-  const traceId = id.toString(16)
-  // TODO: replace with String.prototype.padStart when we drop IE11 support
-  return Array(17 - traceId.length).join('0') + traceId
+  return id.toString(16).padStart(16, '0')
 }

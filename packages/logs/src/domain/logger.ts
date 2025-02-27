@@ -45,7 +45,7 @@ export class Logger {
     private level: StatusType = StatusType.debug,
     loggerContext: object = {}
   ) {
-    this.contextManager = createContextManager(customerDataTracker)
+    this.contextManager = createContextManager('logger', { customerDataTracker })
     this.contextManager.setContext(loggerContext as Context)
     if (name) {
       this.contextManager.setContextProperty('logger', { name })
@@ -98,7 +98,7 @@ export class Logger {
     let handlingStack: string | undefined
 
     if (isAuthorized(status, HandlerType.http, this)) {
-      handlingStack = createHandlingStack()
+      handlingStack = createHandlingStack('log')
     }
 
     this.logImplementation(message, messageContext, status, error, handlingStack)
@@ -172,7 +172,7 @@ function createLoggerMethod(status: StatusType) {
     let handlingStack: string | undefined
 
     if (isAuthorized(status, HandlerType.http, this)) {
-      handlingStack = createHandlingStack()
+      handlingStack = createHandlingStack('log')
     }
 
     this.logImplementation(message, messageContext, status, error, handlingStack)

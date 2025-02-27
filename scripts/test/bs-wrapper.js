@@ -15,6 +15,7 @@
 // to in the future.
 
 const spawn = require('child_process').spawn
+const browserStack = require('browserstack-local')
 const { printLog, runMain, timeout, printError } = require('../lib/executionUtils')
 const { command } = require('../lib/command')
 const { browserStackRequest } = require('../lib/bsUtils')
@@ -23,13 +24,23 @@ const AVAILABILITY_CHECK_DELAY = 30_000
 const NO_OUTPUT_TIMEOUT = 5 * 60_000
 const BS_BUILD_URL = 'https://api.browserstack.com/automate/builds.json?status=running'
 
+const bsLocal = new browserStack.Local()
+
 runMain(async () => {
   if (command`git tag --points-at HEAD`.run()) {
     printLog('Skip bs execution on tags')
     return
   }
+
+  if (!process.env.BS_USERNAME || !process.env.BS_ACCESS_KEY) {
+    printError('Missing Browserstack credentials (BS_ACCESS_KEY and BS_USERNAME env variables)')
+    return
+  }
+
   await waitForAvailability()
+  await startBsLocal()
   const isSuccess = await runTests()
+  await stopBsLocal()
   process.exit(isSuccess ? 0 : 1)
 })
 
@@ -44,13 +55,49 @@ async function hasRunningBuild() {
   return (await browserStackRequest(BS_BUILD_URL)).length > 0
 }
 
+function startBsLocal() {
+  printLog('Starting BrowserStackLocal...')
+
+  return new Promise((resolve) => {
+    bsLocal.start(
+      {
+        key: process.env.BS_ACCESS_KEY,
+        forceLocal: true,
+        forceKill: true,
+        onlyAutomate: true,
+      },
+      (error) => {
+        if (error) {
+          printError('Failed to start BrowserStackLocal:', error)
+          process.exit(1)
+        }
+        printLog('BrowserStackLocal started', bsLocal.isRunning())
+        resolve()
+      }
+    )
+  })
+}
+
+function stopBsLocal() {
+  return new Promise((resolve) => {
+    bsLocal.stop(() => {
+      printLog('BrowserStackLocal stopped')
+      resolve()
+    })
+  })
+}
+
 function runTests() {
   return new Promise((resolve) => {
     const [command, ...args] = process.argv.slice(2)
 
     const child = spawn(command, args, {
       stdio: ['inherit', 'pipe', 'pipe'],
-      env: { ...process.env, FORCE_COLOR: true },
+      env: {
+        ...process.env,
+        FORCE_COLOR: true,
+        BROWSER_STACK: true,
+      },
     })
 
     let output = ''

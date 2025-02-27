@@ -6,19 +6,22 @@ import type {
 } from '@datadog/browser-rum/src/types'
 import { IncrementalSource, MouseInteractionType, NodeType } from '@datadog/browser-rum/src/types'
 
+import { createMutationPayloadValidatorFromSegment } from '@datadog/browser-rum/test/mutationPayloadValidator'
 import {
-  createMutationPayloadValidatorFromSegment,
   findElementWithIdAttribute,
   findElementWithTagName,
-  findFullSnapshot,
-  findIncrementalSnapshot,
-  findMouseInteractionRecords,
   findNode,
   findTextContent,
   findTextNode,
-} from '@datadog/browser-rum/test'
+} from '@datadog/browser-rum/test/nodes'
+import {
+  findFullSnapshot,
+  findIncrementalSnapshot,
+  findMouseInteractionRecords,
+} from '@datadog/browser-rum/test/segments'
 
-import { flushEvents, createTest, bundleSetup, html } from '../../lib/framework'
+import { test, expect } from '@playwright/test'
+import { createTest, bundleSetup, html } from '../../lib/framework'
 
 /** Will generate the following HTML
  * ```html
@@ -156,7 +159,7 @@ class DivWithStyle extends HTMLElement {
 </script>
 `
 
-describe('recorder with shadow DOM', () => {
+test.describe('recorder with shadow DOM', () => {
   createTest('can record fullsnapshot with the detail inside the shadow root')
     .withRum({ defaultPrivacyLevel: 'allow' })
     .withSetup(bundleSetup)
@@ -164,10 +167,10 @@ describe('recorder with shadow DOM', () => {
       ${divShadowDom}
       <my-div />
     `)
-    .run(async ({ intakeRegistry }) => {
+    .run(async ({ flushEvents, intakeRegistry }) => {
       await flushEvents()
 
-      expect(intakeRegistry.replaySegments.length).toBe(1)
+      expect(intakeRegistry.replaySegments).toHaveLength(1)
 
       const fullSnapshot = findFullSnapshot(intakeRegistry.replaySegments[0])!
       expect(fullSnapshot).toBeTruthy()
@@ -184,13 +187,13 @@ describe('recorder with shadow DOM', () => {
       ${divWithStyleShadowDom}
       <div-with-style />
     `)
-    .run(async ({ intakeRegistry }) => {
-      if (!(await isAdoptedStyleSheetsSupported())) {
-        return pending('adoptedStyleSheets is not supported in this browser')
-      }
+    .run(async ({ flushEvents, intakeRegistry, page }) => {
+      const isAdoptedStyleSheetsSupported = await page.evaluate(() => document.adoptedStyleSheets !== undefined)
+      test.skip(!isAdoptedStyleSheetsSupported, 'adoptedStyleSheets is not supported in this browser')
+
       await flushEvents()
 
-      expect(intakeRegistry.replaySegments.length).toBe(1)
+      expect(intakeRegistry.replaySegments).toHaveLength(1)
 
       const fullSnapshot = findFullSnapshot(intakeRegistry.replaySegments[0])!
       expect(fullSnapshot).toBeTruthy()
@@ -210,10 +213,10 @@ describe('recorder with shadow DOM', () => {
       <div data-dd-privacy="mask-user-input"><my-input-field id="privacy-set-outside" /></div>
       <my-input-field privacy="mask-user-input" id="privacy-set-inside" />
     `)
-    .run(async ({ intakeRegistry }) => {
+    .run(async ({ flushEvents, intakeRegistry }) => {
       await flushEvents()
 
-      expect(intakeRegistry.replaySegments.length).toBe(1)
+      expect(intakeRegistry.replaySegments).toHaveLength(1)
 
       const fullSnapshot = findFullSnapshot(intakeRegistry.replaySegments[0])!
       expect(fullSnapshot).toBeTruthy()
@@ -223,7 +226,7 @@ describe('recorder with shadow DOM', () => {
         shadowRoot: outsideShadowRoot,
         textContent: outsideTextContent,
       } = findElementsInShadowDom(fullSnapshot.data.node, 'privacy-set-outside')
-      expect(outsideShadowRoot?.isShadowRoot).toBeTrue()
+      expect(outsideShadowRoot?.isShadowRoot).toBe(true)
       expect(outsideInput?.attributes.value).toBe('***')
       expect(outsideTextContent).toBe('field privacy-set-outside: ')
 
@@ -232,7 +235,7 @@ describe('recorder with shadow DOM', () => {
         shadowRoot: insideShadowRoot,
         textContent: insideTextContent,
       } = findElementsInShadowDom(fullSnapshot.data.node, 'privacy-set-inside')
-      expect(insideShadowRoot?.isShadowRoot).toBeTrue()
+      expect(insideShadowRoot?.isShadowRoot).toBe(true)
       expect(insideInput?.attributes.value).toBe('***')
       expect(insideTextContent).toBe('field privacy-set-inside: ')
     })
@@ -244,11 +247,11 @@ describe('recorder with shadow DOM', () => {
       ${divShadowDom}
       <my-div />
     `)
-    .run(async ({ intakeRegistry }) => {
-      const div = await getNodeInsideShadowDom('my-div', 'div')
+    .run(async ({ flushEvents, intakeRegistry, page }) => {
+      const div = page.locator('my-div div')
       await div.click()
       await flushEvents()
-      expect(intakeRegistry.replaySegments.length).toBe(1)
+      expect(intakeRegistry.replaySegments).toHaveLength(1)
       const fullSnapshot = findFullSnapshot(intakeRegistry.replaySegments[0])!
       const divNode = findElementWithTagName(fullSnapshot.data.node, 'div')!
       const mouseInteraction = findMouseInteractionRecords(
@@ -266,16 +269,17 @@ describe('recorder with shadow DOM', () => {
       ${divShadowDom}
       <my-div id="host" />
     `)
-    .run(async ({ intakeRegistry }) => {
-      await browser.execute(() => {
+    .run(async ({ flushEvents, intakeRegistry, page }) => {
+      await page.evaluate(() => {
         const host = document.body.querySelector('#host') as HTMLElement
         const div = host.shadowRoot!.querySelector('div') as HTMLElement
         div.innerText = 'titi'
       })
       await flushEvents()
-      expect(intakeRegistry.replaySegments.length).toBe(1)
+      expect(intakeRegistry.replaySegments).toHaveLength(1)
       const { validate, expectInitialNode, expectNewNode } = createMutationPayloadValidatorFromSegment(
-        intakeRegistry.replaySegments[0]
+        intakeRegistry.replaySegments[0],
+        { expect }
       )
       validate({
         adds: [
@@ -300,15 +304,15 @@ describe('recorder with shadow DOM', () => {
       ${scrollableDivShadowDom}
       <my-scrollable-div id="host" />
     `)
-    .run(async ({ intakeRegistry }) => {
-      const button = await getNodeInsideShadowDom('my-scrollable-div', 'button')
+    .run(async ({ flushEvents, intakeRegistry, page }) => {
+      const button = page.locator('my-scrollable-div button')
 
       // Triggering scrollTo from the test itself is not allowed
       // Thus, a callback to scroll the div was added to the button 'click' event
       await button.click()
 
       await flushEvents()
-      expect(intakeRegistry.replaySegments.length).toBe(1)
+      expect(intakeRegistry.replaySegments).toHaveLength(1)
       const scrollRecord = findIncrementalSnapshot(intakeRegistry.replaySegments[0], IncrementalSource.Scroll)
       const fullSnapshot = findFullSnapshot(intakeRegistry.replaySegments[0])!
       const divNode = findElementWithIdAttribute(fullSnapshot.data.node, 'scrollable-div')!
@@ -336,13 +340,4 @@ function findElementsInShadowDom(node: SerializedNodeWithId, id: string) {
   const textContent = findTextContent(text!)
   expect(textContent).toBeTruthy()
   return { shadowHost, shadowRoot, input, text, textContent }
-}
-
-async function getNodeInsideShadowDom(hostTag: string, selector: string) {
-  const host = await $(hostTag)
-  return host.shadow$(selector)
-}
-
-function isAdoptedStyleSheetsSupported(): Promise<boolean> {
-  return browser.execute(() => document.adoptedStyleSheets !== undefined)
 }

@@ -1,9 +1,9 @@
-import { Link, Outlet, RouterProvider, useParams } from 'react-router-dom'
+import { Link, Outlet, RouterProvider, useParams } from 'react-router-dom-7'
 import React, { useEffect, useState } from 'react'
 import ReactDOM from 'react-dom/client'
 import { datadogRum } from '@datadog/browser-rum'
-import { createBrowserRouter } from '@datadog/browser-rum-react/react-router-v6'
-import { reactPlugin, ErrorBoundary } from '@datadog/browser-rum-react'
+import { createBrowserRouter } from '@datadog/browser-rum-react/react-router-v7'
+import { reactPlugin, ErrorBoundary, UNSTABLE_ReactComponentTracker } from '@datadog/browser-rum-react'
 
 datadogRum.init({
   applicationId: 'xxx',
@@ -66,7 +66,11 @@ function HomePage() {
 
 function UserPage() {
   const { id } = useParams()
-  return <h1>User {id}</h1>
+  return (
+    <UNSTABLE_ReactComponentTracker name="UserPage">
+      <h1>User {id}</h1>
+    </UNSTABLE_ReactComponentTracker>
+  )
 }
 
 function WildCardPage() {

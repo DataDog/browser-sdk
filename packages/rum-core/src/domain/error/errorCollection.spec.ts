@@ -1,30 +1,21 @@
 import type { RelativeTime, TimeStamp, ErrorWithCause } from '@datadog/browser-core'
-import { ErrorHandling, ErrorSource, NO_ERROR_STACK_PRESENT_MESSAGE, noop } from '@datadog/browser-core'
+import { ErrorHandling, ErrorSource, NO_ERROR_STACK_PRESENT_MESSAGE } from '@datadog/browser-core'
 import { FAKE_CSP_VIOLATION_EVENT } from '@datadog/browser-core/test'
-import { collectAndValidateRawRumEvents, mockPageStateHistory } from '../../../test'
+import { collectAndValidateRawRumEvents } from '../../../test'
 import type { RawRumErrorEvent, RawRumEvent } from '../../rawRumEvent.types'
 import { RumEventType } from '../../rawRumEvent.types'
 import type { RawRumEventCollectedData } from '../lifeCycle'
 import { LifeCycle, LifeCycleEventType } from '../lifeCycle'
-import type { FeatureFlagContexts } from '../contexts/featureFlagContext'
 import { doStartErrorCollection } from './errorCollection'
-
-const baseFeatureFlagContexts: FeatureFlagContexts = {
-  findFeatureFlagEvaluations: () => undefined,
-  addFeatureFlagEvaluation: noop,
-  stop: noop,
-}
-
-const basePageStateHistory = mockPageStateHistory({ wasInPageStateAt: () => true })
 
 describe('error collection', () => {
   let lifeCycle: LifeCycle
   let rawRumEvents: Array<RawRumEventCollectedData<RawRumEvent>> = []
   let addError: ReturnType<typeof doStartErrorCollection>['addError']
 
-  function setupErrorCollection(featureFlagContexts: FeatureFlagContexts = baseFeatureFlagContexts) {
+  function setupErrorCollection() {
     lifeCycle = new LifeCycle()
-    ;({ addError } = doStartErrorCollection(lifeCycle, basePageStateHistory, featureFlagContexts))
+    ;({ addError } = doStartErrorCollection(lifeCycle))
 
     rawRumEvents = collectAndValidateRawRumEvents(lifeCycle)
   }
@@ -91,6 +82,7 @@ describe('error collection', () => {
               source: ErrorSource.CUSTOM,
               stack,
               handling_stack: 'Error: handling foo',
+              component_stack: undefined,
               type,
               handling: ErrorHandling.HANDLED,
               source_type: 'browser',
@@ -99,9 +91,6 @@ describe('error collection', () => {
               csp: undefined,
             },
             type: RumEventType.ERROR,
-            view: {
-              in_foreground: true,
-            },
           },
           savedCommonContext: undefined,
           startTime: 1234 as RelativeTime,
@@ -192,7 +181,7 @@ describe('error collection', () => {
           handlingStack: 'Error: handling foo',
           startClocks: { relative: 1234 as RelativeTime, timeStamp: 123456789 as TimeStamp },
         },
-        { context: { foo: 'bar' }, user: {}, hasReplay: undefined }
+        { context: { foo: 'bar' }, user: {}, account: {}, hasReplay: undefined }
       )
       expect(rawRumEvents[0].savedCommonContext!.context).toEqual({
         foo: 'bar',
@@ -207,7 +196,7 @@ describe('error collection', () => {
           handlingStack: 'Error: handling foo',
           startClocks: { relative: 1234 as RelativeTime, timeStamp: 123456789 as TimeStamp },
         },
-        { context: {}, user: { id: 'foo' }, hasReplay: undefined }
+        { context: {}, user: { id: 'foo' }, account: {}, hasReplay: undefined }
       )
       expect(rawRumEvents[0].savedCommonContext!.user).toEqual({
         id: 'foo',
@@ -225,24 +214,6 @@ describe('error collection', () => {
         error: { foo: 'bar' },
         handlingStack: 'Error: handling foo',
       })
-    })
-
-    it('should include feature flags', () => {
-      const featureFlagContexts: FeatureFlagContexts = {
-        ...baseFeatureFlagContexts,
-        findFeatureFlagEvaluations: () => ({ feature: 'foo' }),
-      }
-      setupErrorCollection(featureFlagContexts)
-
-      addError({
-        error: { foo: 'bar' },
-        handlingStack: 'Error: handling foo',
-        startClocks: { relative: 1234 as RelativeTime, timeStamp: 123456789 as TimeStamp },
-      })
-
-      const rawRumErrorEvent = rawRumEvents[0].rawRumEvent as RawRumErrorEvent
-
-      expect(rawRumErrorEvent.feature_flags).toEqual({ feature: 'foo' })
     })
 
     it('should include handling stack', () => {
@@ -273,6 +244,7 @@ describe('error collection', () => {
           type: 'foo',
           originalError: error,
           handlingStack: 'Error: handling foo',
+          componentStack: 'at div',
         },
       })
 
@@ -285,15 +257,13 @@ describe('error collection', () => {
           source: ErrorSource.CUSTOM,
           stack: 'bar',
           handling_stack: 'Error: handling foo',
+          component_stack: 'at div',
           type: 'foo',
           handling: undefined,
           source_type: 'browser',
           causes: undefined,
           fingerprint: undefined,
           csp: undefined,
-        },
-        view: {
-          in_foreground: true,
         },
         type: RumEventType.ERROR,
       })
@@ -322,6 +292,24 @@ describe('error collection', () => {
       })
 
       expect((rawRumEvents[0].rawRumEvent as RawRumErrorEvent).error.csp?.disposition).toEqual('enforce')
+    })
+
+    it('should merge dd_context from the original error with addError context', () => {
+      setupErrorCollection()
+      const error = new Error('foo')
+      ;(error as any).dd_context = { component: 'Menu', param: 123 }
+
+      addError({
+        error,
+        context: { user: 'john' },
+        handlingStack: 'Error: handling dd_context',
+        startClocks: { relative: 500 as RelativeTime, timeStamp: 500000 as TimeStamp },
+      })
+      expect(rawRumEvents[0].customerContext).toEqual({
+        component: 'Menu',
+        param: 123,
+        user: 'john',
+      })
     })
   })
 })
