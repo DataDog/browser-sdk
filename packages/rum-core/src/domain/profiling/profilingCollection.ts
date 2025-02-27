@@ -4,8 +4,9 @@ import type { RumConfiguration } from '../configuration'
 import type { LifeCycle } from '../lifeCycle'
 import type { RumSessionManager } from '../rumSessionManager'
 import type { ViewHistory } from '../contexts/viewHistory'
-import type { createRumProfiler as CreateRumProfilerType } from './profiler'
 import { lazyLoadProfiler } from './lazyLoadProfiler'
+import { isProfilingSupported } from './profilingSupported'
+import type { RUMProfiler } from './types'
 
 const NOOP_STOP = {
   stop: () => {
@@ -20,17 +21,17 @@ export const startProfilingCollection = (
   isLongAnimationFrameEnabled: boolean,
   viewHistory: ViewHistory
 ) => {
-  // TODO Deobfuscation / SCI
+  // Check if Browser is supporting the JS Self-Profiling API
+  if (!isProfilingSupported()) {
+    return NOOP_STOP
+  }
 
-  const sampleRate = configuration.profilingSampleRate
-  if (!performDraw(sampleRate)) {
+  if (!performDraw(configuration.profilingSampleRate)) {
     // User is not lucky, no profiling!
     return NOOP_STOP
   }
 
-  const endpointBuilder = configuration.profilingEndpointBuilder
-
-  let profiler: ReturnType<typeof CreateRumProfilerType>
+  let profiler: RUMProfiler
 
   lazyLoadProfiler()
     .then((createRumProfiler) => {
@@ -40,7 +41,6 @@ export const startProfilingCollection = (
 
       profiler = createRumProfiler({
         configuration,
-        endpointBuilder,
         isLongAnimationFrameEnabled,
         lifeCycle,
         session,
