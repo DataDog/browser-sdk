@@ -1,10 +1,10 @@
-import { addEventListener, clearTimeout, setTimeout, DOM_EVENT } from '@datadog/browser-core'
+import { addEventListener, clearTimeout, setTimeout, DOM_EVENT, monitorError } from '@datadog/browser-core'
 import { LifeCycleEventType } from '../lifeCycle'
-import { exportToJSONIntake } from './exporter/exportToJsonIntake'
-import type { RumProfilerTrace, RumProfilerInstance, RumProfilerConfig, Profiler } from './types'
+import type { RumProfilerTrace, RumProfilerInstance, RumProfilerConfig, Profiler, RUMProfiler } from './types'
 import { getNumberOfSamples } from './utils/getNumberOfSamples'
 import { disableLongTaskRegistry, enableLongTaskRegistry } from './utils/longTaskRegistry'
 import { mayStoreLongTaskIdForProfilerCorrelation } from './profilingCorrelation'
+import { sendProfile } from './transport/sendProfile'
 
 // These APIs might be unavailable in some browsers
 const globalThisProfiler: Profiler | undefined = (globalThis as any).Profiler
@@ -16,43 +16,48 @@ const MIN_NUMBER_OF_SAMPLES = 50 // Require at least 50 samples (~500 ms) to rep
 
 export function createRumProfiler({
   configuration,
-  endpointBuilder,
   isLongAnimationFrameEnabled,
   lifeCycle,
   session,
-}: RumProfilerConfig) {
+}: RumProfilerConfig): RUMProfiler {
   let observer: PerformanceObserver
   let instance: RumProfilerInstance = { state: 'stopped' }
   let cleanupTasks: Array<() => void> = []
-  let applicationId: string
-
-  function supported(): boolean {
-    return globalThisProfiler !== undefined
-  }
 
   function start(viewId: string | undefined): void {
     if (instance.state === 'running') {
       return
     }
-    applicationId = configuration.applicationId
 
-    // Setup event listeners
-    observer = new PerformanceObserver(handlePerformance)
-    observer.observe({
-      entryTypes: [getLongTaskEntryType(), 'measure', 'event'],
-    })
+    // Reset clean-up tasks.
+    cleanupTasks = []
 
-    cleanupTasks = [
-      () => observer.disconnect(),
-      addEventListener(configuration, window, DOM_EVENT.VISIBILITY_CHANGE, handleVisibilityChange).stop,
-      addEventListener(configuration, window, DOM_EVENT.BEFORE_UNLOAD, handleBeforeUnload).stop,
-    ]
+    // Register everything linked to Long Tasks correlations with RUM, when enabled.
+    if (configuration.trackLongTasks) {
+      // Setup event listeners, and since we only listen to Long Tasks for now, we activate the Performance Observer only when they are tracked.
+      observer = new PerformanceObserver(handlePerformance)
+      observer.observe({
+        entryTypes: [getLongTaskEntryType()],
+      })
 
-    // Whenever an Event is collected, when it's a Long Task, we may store the long task id for profiler correlation.
-    const rawEventCollectedSubscription = lifeCycle.subscribe(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, (data) => {
-      mayStoreLongTaskIdForProfilerCorrelation(data)
-    })
-    cleanupTasks.push(rawEventCollectedSubscription.unsubscribe)
+      // Whenever an Event is collected, when it's a Long Task, we may store the long task id for profiler correlation.
+      const rawEventCollectedSubscription = lifeCycle.subscribe(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, (data) => {
+        mayStoreLongTaskIdForProfilerCorrelation(data)
+      })
+
+      // Enable Long Task registry so we can correlate them with RUM
+      enableLongTaskRegistry()
+
+      cleanupTasks.push(() => observer.disconnect())
+      cleanupTasks.push(rawEventCollectedSubscription.unsubscribe)
+    }
+
+    cleanupTasks.push(
+      ...[
+        addEventListener(configuration, window, DOM_EVENT.VISIBILITY_CHANGE, handleVisibilityChange).stop,
+        addEventListener(configuration, window, DOM_EVENT.BEFORE_UNLOAD, handleBeforeUnload).stop,
+      ]
+    )
 
     // Whenever the View is updated, we add a navigation entry to the profiler instance.
     const viewUpdatedSubscription = lifeCycle.subscribe(LifeCycleEventType.VIEW_CREATED, (view) => {
@@ -65,9 +70,6 @@ export function createRumProfiler({
 
     // Start profiler instance
     startNextProfilerInstance()
-
-    // Enable Long Task registry so we can correlate them with RUM
-    enableLongTaskRegistry()
   }
 
   function stop(): void {
@@ -89,21 +91,32 @@ export function createRumProfiler({
     // Don't wait for data collection to start next instance
     collectProfilerInstance()
 
-    const profiler = new globalThisProfiler({
-      sampleInterval: SAMPLE_INTERVAL_MS,
-      // Keep buffer size at 1.5 times of minimum required to collect data for a profiling instance
-      maxBufferSize: Math.round((COLLECT_INTERVAL_MS * 1.5) / SAMPLE_INTERVAL_MS),
-    })
+    let profiler: Profiler
+
+    try {
+      // We have to create new Profiler each time we start a new instance
+      profiler = new globalThisProfiler({
+        sampleInterval: SAMPLE_INTERVAL_MS,
+        // Keep buffer size at 1.5 times of minimum required to collect data for a profiling instance
+        maxBufferSize: Math.round((COLLECT_INTERVAL_MS * 1.5) / SAMPLE_INTERVAL_MS),
+      })
+    } catch (e) {
+      // If we fail to create a profiler, it's likely due to the missing Response Header (`js-profiling`) that is required to enable the profiler.
+      // We should suggest the user to enable the Response Header in their server configuration.
+      // eslint-disable-next-line no-console
+      console.warn(
+        '[DD_RUM] Failed to start the Profiler. Make sure your server is configured to send the `js-profiling` Response Header.',
+        e
+      )
+      return
+    }
 
     instance = {
       state: 'running',
       startTime: performance.now(),
-      // We have to create new Profiler instance for each instance
       profiler,
       timeoutId: setTimeout(startNextProfilerInstance, COLLECT_INTERVAL_MS), // NodeJS types collision
       longTasks: [],
-      measures: [],
-      events: [],
       navigation: [],
     }
 
@@ -120,7 +133,7 @@ export function createRumProfiler({
     handleEntries(observer.takeRecords())
 
     // Store instance data snapshot in local variables to use in async callback
-    const { startTime, longTasks, measures, events, navigation } = instance
+    const { startTime, longTasks, navigation } = instance
 
     // Stop current profiler to get trace
     instance.profiler
@@ -145,14 +158,12 @@ export function createRumProfiler({
             endTime,
             timeOrigin: performance.timeOrigin,
             longTasks,
-            measures,
-            events,
             navigation,
             sampleInterval: SAMPLE_INTERVAL_MS,
           })
         )
       })
-      .catch(() => undefined)
+      .catch(monitorError)
 
     // Cleanup instance
     clearTimeout(instance.timeoutId)
@@ -185,7 +196,9 @@ export function createRumProfiler({
     const sessionId = session.findTrackedSession()?.id
 
     // Send JSON Profile to intake.
-    exportToJSONIntake(trace, endpointBuilder, applicationId, sessionId, configuration.site).catch(() => undefined)
+    sendProfile(trace, configuration.profilingEndpointBuilder, configuration.applicationId, sessionId).catch(
+      monitorError
+    )
   }
 
   function handleSampleBufferFull(): void {
@@ -210,12 +223,6 @@ export function createRumProfiler({
       switch (entry.entryType) {
         case getLongTaskEntryType():
           instance.longTasks.push(entry)
-          break
-        case 'measure':
-          instance.measures.push(entry as PerformanceMeasure)
-          break
-        case 'event':
-          instance.events.push(entry as PerformanceEventTiming)
           break
       }
     }
@@ -246,5 +253,5 @@ export function createRumProfiler({
     return isLongAnimationFrameEnabled ? 'long-animation-frame' : 'longtask'
   }
 
-  return { start, stop, supported }
+  return { start, stop }
 }

@@ -1,4 +1,4 @@
-import type { EndpointBuilder, HttpResponse, TimeoutId } from '@datadog/browser-core'
+import type { TimeoutId } from '@datadog/browser-core'
 import type { LifeCycle } from '../../lifeCycle'
 import type { RumConfiguration } from '../../configuration'
 import type { RumSessionManager } from '../../rumSessionManager'
@@ -9,7 +9,6 @@ import type { ProfilerTrace, Profiler } from './profilerApi.types'
  */
 export interface RumProfilerConfig {
   configuration: RumConfiguration
-  endpointBuilder: EndpointBuilder
   isLongAnimationFrameEnabled: boolean | undefined
   lifeCycle: LifeCycle
   session: RumSessionManager
@@ -28,10 +27,6 @@ export interface RumNavigationEntry {
 export interface RumProfilerEnrichmentData {
   /** List of detected long tasks */
   readonly longTasks: PerformanceEntry[]
-  /** List of detected measures */
-  readonly measures: PerformanceMeasure[]
-  /** List of detected events */
-  readonly events: PerformanceEventTiming[]
   /** List of detected navigation entries */
   readonly navigation: RumNavigationEntry[]
 }
@@ -77,13 +72,7 @@ export interface RumProfilerRunningInstance extends RumProfilerEnrichmentData {
 
 export type RumProfilerInstance = RumProfilerStoppedInstance | RumProfilerPausedInstance | RumProfilerRunningInstance
 
-/**
- * Interface for exporting profiler traces.
- */
-export type RumProfilerTraceExporter = (
-  trace: RumProfilerTrace,
-  endpointBuilder: EndpointBuilder,
-  applicationId: string,
-  sessionId: string | undefined,
-  site: string | undefined
-) => Promise<HttpResponse>
+export interface RUMProfiler {
+  start: (viewId: string | undefined) => void
+  stop: () => void
+}

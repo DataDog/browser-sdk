@@ -1,11 +1,10 @@
-import { createLruCache } from './lruCache/lruCache'
-
 type PerformanceEntryStartTimeMs = number
-// Maps PerformanceEntry start-time to the corresponding long task ID
+
+// Maps PerformanceEntry start-time to the corresponding long task id (from RUM LongTaskEvent),
 // We need this to link RUM Long Tasks with RUM Profiler stack traces
 // Given that long task takes at least 50ms and we export profile at least every 60 seconds, we can have up to 1200 entries (60s / 50ms = 1200).
-// eslint-disable-next-line local-rules/disallow-side-effects
-const registry = createLruCache<PerformanceEntryStartTimeMs, string>(1200)
+const registry = new Map<PerformanceEntryStartTimeMs, string>()
+
 // Enable Long Task Registry only if RUM Profiler has been activated
 let enabledTime: false | number = false
 

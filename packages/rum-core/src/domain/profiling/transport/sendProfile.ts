@@ -1,6 +1,5 @@
-import type { EndpointBuilder, HttpResponse, InitConfiguration, Payload } from '@datadog/browser-core'
-import { sendXHR } from '@datadog/browser-core'
-import type { RumProfilerTraceExporter, RumProfilerTrace } from '../types'
+import type { EndpointBuilder, Payload } from '@datadog/browser-core'
+import type { RumProfilerTrace } from '../types'
 import { getLongTaskId } from '../utils/longTaskRegistry'
 
 interface ProfileEventAttributes {
@@ -17,40 +16,39 @@ interface ProfileEvent extends ProfileEventAttributes {
   tags_profiler: string
 }
 
+type SendProfileFunction = (
+  trace: RumProfilerTrace,
+  endpointBuilder: EndpointBuilder,
+  applicationId: string,
+  sessionId: string | undefined
+) => Promise<unknown>
+
 /**
  * Exports RUM profile as JSON to public profiling intake.
  */
-export const exportToJSONIntake: RumProfilerTraceExporter = (
-  profilerTrace,
-  endpointBuilder,
-  applicationId,
-  sessionId,
-  site
-) => {
-  const event = createProfileEvent(profilerTrace, endpointBuilder, applicationId, sessionId, site)
-  const payload = createProfilePayload(profilerTrace, event)
+export const sendProfile: SendProfileFunction = (profilerTrace, endpointBuilder, applicationId, sessionId) => {
+  const event = buildProfileEvent(profilerTrace, endpointBuilder, applicationId, sessionId)
+  const payload = buildProfilingPayload(profilerTrace, event)
 
-  // Sends profile to public profiling intake.
-  const xhrUrl = endpointBuilder.build('xhr', payload)
+  // Create URL, public profiling intake.
+  const profilingIntakeURL = endpointBuilder.build('xhr', payload)
 
-  // Send everything.
-  return new Promise<HttpResponse>((resolve) => sendXHR(xhrUrl, payload.data, resolve))
+  // Send payload (event + profile as attachment).
+  return fetch(profilingIntakeURL, {
+    body: payload.data,
+    method: 'POST',
+  })
 }
 
-function createProfileEvent(
+function buildProfileEvent(
   profilerTrace: RumProfilerTrace,
   endpointBuilder: EndpointBuilder,
   applicationId: string,
-  sessionId: string | undefined,
-  site: string | undefined
+  sessionId: string | undefined
 ): ProfileEvent {
-  const rawParameters = endpointBuilder.rawParameters
-  const profileAttributes = extractProfileEventAttributes(profilerTrace, applicationId, sessionId)
-  const profileEventTags = extractProfileEventTags(
-    rawParameters.configurationTags,
-    rawParameters.initConfiguration,
-    site
-  )
+  const tags = endpointBuilder.tags
+  const profileAttributes = buildProfileEventAttributes(profilerTrace, applicationId, sessionId)
+  const profileEventTags = buildProfileEventTags(tags)
 
   const start = new Date(profilerTrace.timeOrigin + profilerTrace.startTime)
   const end = new Date(profilerTrace.timeOrigin + profilerTrace.endTime)
@@ -67,27 +65,32 @@ function createProfileEvent(
   return profileEvent
 }
 
-function extractProfileEventTags(
-  configurationTags: string[],
-  initConfiguration: InitConfiguration,
-  site: string | undefined
-): string[] {
-  const profileEventTags = configurationTags.concat([
-    `service:${initConfiguration.service}`,
-    `version:${initConfiguration.version}`,
-    `env:${initConfiguration.env || 'unknown'}`,
+/**
+ * Builds tags for the Profile Event.
+ * @param tags RUM tags
+ * @returns Combined tags for the Profile Event.
+ */
+function buildProfileEventTags(tags: string[]): string[] {
+  // Tags already contains the common tags for all events. (service, env, version, etc.)
+  // Here we are adding some specific-to-profiling tags.
+  const profileEventTags = tags.concat([
     'language:javascript',
     'runtime:chrome',
     'family:chrome',
     'format:json',
-    // TODO: replace with RUM device id in the future
-    `host:${site}`,
+    'host:browser',
   ])
 
   return profileEventTags
 }
 
-function createProfilePayload(profilerTrace: RumProfilerTrace, profileEvent: ProfileEvent): Payload {
+/**
+ * Builds payload for Profiling intake. It includes the profile event and the profiler trace as attachment.
+ * @param profilerTrace Profiler trace
+ * @param profileEvent Profiling event.
+ * @returns Payload to be sent to the intake.
+ */
+function buildProfilingPayload(profilerTrace: RumProfilerTrace, profileEvent: ProfileEvent): Payload {
   const profilerTraceBlob = new Blob([JSON.stringify(profilerTrace)], {
     type: 'application/json',
   })
@@ -95,17 +98,17 @@ function createProfilePayload(profilerTrace: RumProfilerTrace, profileEvent: Pro
   formData.append('event', new Blob([JSON.stringify(profileEvent)], { type: 'application/json' }), 'event.json')
   formData.append('wall-time.json', profilerTraceBlob, 'wall-time.json')
 
-  return { data: formData, retry: undefined, encoding: undefined, bytesCount: 0 }
+  return { data: formData, bytesCount: 0 }
 }
 
 /**
- * Extract additional attributes from the trace.
- * @param trace Profiler trace
+ * Builds attributes for the Profile Event.
+ * @param profilerTrace Profiler trace
  * @param applicationId application id.
  * @param sessionId session id.
- * @returns Additional attributes
+ * @returns Additional attributes.
  */
-function extractProfileEventAttributes(
+function buildProfileEventAttributes(
   profilerTrace: RumProfilerTrace,
   applicationId: string,
   sessionId: string | undefined
