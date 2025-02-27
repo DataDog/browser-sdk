@@ -81,10 +81,6 @@ export function startPageStateHistory(
     return pageStateEntryHistory.findAll(startTime, duration).some((pageState) => pageState.state === state)
   }
 
-  function wasInPageStateAt(state: PageState, startTime: RelativeTime) {
-    return wasInPageStateDuringPeriod(state, startTime, 0 as Duration)
-  }
-
   hooks.register(
     HookNames.Assemble,
     ({ startTime, duration = 0 as Duration, eventType }): PartialRumEvent | undefined => {
@@ -99,7 +95,7 @@ export function startPageStateHistory(
       if (eventType === RumEventType.ACTION || eventType === RumEventType.ERROR) {
         return {
           type: eventType,
-          view: { in_foreground: wasInPageStateAt(PageState.ACTIVE, startTime) },
+          view: { in_foreground: wasInPageStateDuringPeriod(PageState.ACTIVE, startTime, 0 as Duration) },
         }
       }
     }
