@@ -1,5 +1,5 @@
 variables:
-  CURRENT_STAGING: staging-08
+  CURRENT_STAGING: staging-09
   APP: 'browser-sdk'
   CURRENT_CI_IMAGE: 77
   BUILD_STABLE_REGISTRY: 'registry.ddbuild.io'
@@ -223,10 +223,7 @@ e2e:
       junit: test-report/e2e/*.xml
   script:
     - yarn
-    - yarn build
-    - yarn build:app
-    - yarn playwright install chromium --with-deps
-    - FORCE_COLOR=1 yarn test:e2e
+    - FORCE_COLOR=1 yarn test:e2e:ci
   after_script:
     - node ./scripts/test/export-test-result.js e2e
 
@@ -291,9 +288,7 @@ e2e-bs:
       junit: test-report/e2e-bs/*.xml
   script:
     - yarn
-    - yarn build
-    - yarn build:app
-    - FORCE_COLOR=1 ./scripts/test/ci-bs.sh test:e2e
+    - FORCE_COLOR=1 ./scripts/test/ci-bs.sh test:e2e:ci
   after_script:
     - node ./scripts/test/export-test-result.js e2e-bs
 

@@ -8,7 +8,9 @@ import { computeStackTrace } from './computeStackTrace'
  * - Has to be called at the utmost position of the call stack.
  * - No monitored function should encapsulate it, that is why we need to use callMonitored inside it.
  */
-export function createHandlingStack(): string {
+export function createHandlingStack(
+  type: 'console error' | 'action' | 'error' | 'instrumented method' | 'log' | 'react error'
+): string {
   /**
    * Skip the two internal frames:
    * - SDK API (console.error, ...)
@@ -16,7 +18,8 @@ export function createHandlingStack(): string {
    * in order to keep only the user calls
    */
   const internalFramesToSkip = 2
-  const error = new Error()
+  const error = new Error(type)
+  error.name = 'HandlingStack'
   let formattedStack: string
 
   callMonitored(() => {

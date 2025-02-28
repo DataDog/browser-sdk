@@ -108,7 +108,7 @@ describe('createContextManager', () => {
     manager.setContext({ name: true, email: null })
 
     expect(displaySpy).toHaveBeenCalledOnceWith(
-      'The property id of test context is required; context will not be sent to the intake.'
+      'The property id of test is required; context will not be sent to the intake.'
     )
   })
 

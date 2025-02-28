@@ -1,3 +1,4 @@
+import type { Context } from '../../tools/serialisation/context'
 import type { ClocksState } from '../../tools/utils/timeUtils'
 
 // TS v4.6 introduced Error.cause[1] typed as `Error`. TS v4.8 changed Error.cause to be
@@ -37,6 +38,7 @@ export interface RawError {
   causes?: RawErrorCause[]
   fingerprint?: string
   csp?: Csp
+  context?: Context
 }
 
 export const ErrorSource = {

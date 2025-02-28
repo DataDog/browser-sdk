@@ -6,6 +6,7 @@ beforeEach(() => {
   // reset globals
   ;(window as any).DD_LOGS = {}
   ;(window as any).DD_RUM = {}
+  ;(window as any).IS_REACT_ACT_ENVIRONMENT = true
   // prevent 'Some of your tests did a full page reload!' issue
   window.onbeforeunload = () => 'stop'
   startLeakDetection()

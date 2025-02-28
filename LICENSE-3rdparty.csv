@@ -68,7 +68,8 @@ dev,ts-node,MIT,Copyright 2014 Blake Embrey
 dev,tsconfig-paths-webpack-plugin,MIT,Copyright 2016 Jonas Kello
 dev,typescript,Apache-2.0,Copyright Microsoft Corporation
 dev,typescript-eslint,MIT,Copyright (c) 2019 typescript-eslint and other contributors
-dev,webdriverio,MIT,Copyright JS Foundation and other contributors
 dev,webpack,MIT,Copyright JS Foundation and other contributors
 dev,webpack-cli,MIT,Copyright JS Foundation and other contributors
 dev,webpack-dev-middleware,MIT,Copyright JS Foundation and other contributors
+dev,@swc/core,Apache-2.0,Copyright (c) SWC Contributors
+dev,swc-loader,MIT,Copyright (c) SWC Contributors

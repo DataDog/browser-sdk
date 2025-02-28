@@ -701,8 +701,8 @@ test.describe('recorder', () => {
         />
       `)
       .run(async ({ intakeRegistry, page, flushEvents }) => {
-        // We don't use the wdio's `$('button').click()` here because the latency of the command is too high and the
-        // clicks won't be recognised as rage clicks.
+        // We don't use the playwright's `page.locator('button').click()` here because the latency of the command is
+        // too high and the clicks won't be recognised as rage clicks.
         await page.evaluate(() => {
           const button = document.querySelector('button')!
 

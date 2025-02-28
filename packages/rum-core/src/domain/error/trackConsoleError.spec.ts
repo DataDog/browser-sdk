@@ -33,11 +33,12 @@ describe('trackConsoleError', () => {
       startClocks: clocksNow(),
       message: jasmine.any(String),
       stack: jasmine.any(String),
-      fingerprint: undefined,
       source: ErrorSource.CONSOLE,
       handling: ErrorHandling.HANDLED,
       handlingStack: jasmine.any(String),
+      fingerprint: undefined,
       causes: undefined,
+      context: undefined,
     })
   })
 
@@ -60,6 +61,7 @@ describe('trackConsoleError', () => {
       handlingStack: jasmine.any(String),
       fingerprint: 'my-fingerprint',
       causes: undefined,
+      context: undefined,
     })
   })
 })

@@ -74,8 +74,9 @@ test.describe('tracing', () => {
   }
 
   function parseHeaders(rawHeaders: string | Error): ParsedHeaders {
+    expect(rawHeaders).not.toBeInstanceOf(Error)
+
     if (rawHeaders instanceof Error) {
-      fail(rawHeaders)
       return {}
     }
     // eslint-disable-next-line @typescript-eslint/no-unsafe-return
