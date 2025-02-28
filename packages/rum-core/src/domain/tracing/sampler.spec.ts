@@ -1,5 +1,3 @@
-import { ExperimentalFeature } from '@datadog/browser-core'
-import { mockExperimentalFeatures } from '../../../../core/test'
 import { isTraceSampled, resetSampleDecisionCache, sampleUsingKnuthFactor } from './sampler'
 
 // UUID known to yield a low hash value using the Knuth formula, making it more likely to be sampled
@@ -16,79 +14,62 @@ describe('isTraceSampled', () => {
     resetSampleDecisionCache()
   })
 
-  describe('with CONSISTENT_TRACE_SAMPLING enabled', () => {
+  it('returns true when sampleRate is 100', () => {
+    expect(isTraceSampled(ARBITRARY_UUID, 100)).toBeTrue()
+  })
+
+  it('returns false when sampleRate is 0', () => {
+    expect(isTraceSampled(ARBITRARY_UUID, 0)).toBeFalse()
+  })
+
+  describe('with bigint support', () => {
     beforeEach(() => {
-      mockExperimentalFeatures([ExperimentalFeature.CONSISTENT_TRACE_SAMPLING])
+      if (!window.BigInt) {
+        pending('BigInt is not supported')
+      }
     })
 
-    it('returns true when sampleRate is 100', () => {
-      expect(isTraceSampled(ARBITRARY_UUID, 100)).toBeTrue()
+    it('a session id with a low hash value should be sampled with a rate close to 0%', () => {
+      expect(isTraceSampled(LOW_HASH_UUID, 0.1)).toBeTrue()
+      resetSampleDecisionCache()
+      expect(isTraceSampled(LOW_HASH_UUID, 0.01)).toBeTrue()
+      resetSampleDecisionCache()
+      expect(isTraceSampled(LOW_HASH_UUID, 0.001)).toBeTrue()
+      resetSampleDecisionCache()
+      expect(isTraceSampled(LOW_HASH_UUID, 0.0001)).toBeTrue()
+      resetSampleDecisionCache()
+      // At some point the sample rate is so low that the session is not sampled even if the hash
+      // is low. This is not an error: we can probably find a UUID with an even lower hash.
+      expect(isTraceSampled(LOW_HASH_UUID, 0.0000000001)).toBeFalse()
     })
 
-    it('returns false when sampleRate is 0', () => {
-      expect(isTraceSampled(ARBITRARY_UUID, 0)).toBeFalse()
-    })
-
-    describe('with bigint support', () => {
-      beforeEach(() => {
-        if (!window.BigInt) {
-          pending('BigInt is not supported')
-        }
-      })
-
-      it('a session id with a low hash value should be sampled with a rate close to 0%', () => {
-        expect(isTraceSampled(LOW_HASH_UUID, 0.1)).toBeTrue()
-        resetSampleDecisionCache()
-        expect(isTraceSampled(LOW_HASH_UUID, 0.01)).toBeTrue()
-        resetSampleDecisionCache()
-        expect(isTraceSampled(LOW_HASH_UUID, 0.001)).toBeTrue()
-        resetSampleDecisionCache()
-        expect(isTraceSampled(LOW_HASH_UUID, 0.0001)).toBeTrue()
-        resetSampleDecisionCache()
-        // At some point the sample rate is so low that the session is not sampled even if the hash
-        // is low. This is not an error: we can probably find a UUID with an even lower hash.
-        expect(isTraceSampled(LOW_HASH_UUID, 0.0000000001)).toBeFalse()
-      })
-
-      it('a session id with a high hash value should not be sampled even if the rate is close to 100%', () => {
-        expect(isTraceSampled(HIGH_HASH_UUID, 99.9)).toBeFalse()
-        resetSampleDecisionCache()
-        expect(isTraceSampled(HIGH_HASH_UUID, 99.99)).toBeFalse()
-        resetSampleDecisionCache()
-        expect(isTraceSampled(HIGH_HASH_UUID, 99.999)).toBeFalse()
-        resetSampleDecisionCache()
-        expect(isTraceSampled(HIGH_HASH_UUID, 99.9999)).toBeFalse()
-        resetSampleDecisionCache()
-        // At some point the sample rate is so high that the session is sampled even if the hash is
-        // high. This is not an error: we can probably find a UUID with an even higher hash.
-        expect(isTraceSampled(HIGH_HASH_UUID, 99.9999999999)).toBeTrue()
-      })
-    })
-
-    describe('without bigint support', () => {
-      beforeEach(() => {
-        // @ts-expect-error BigInt might not be defined depending on the browser where we execute
-        // the tests
-        if (window.BigInt) {
-          pending('BigInt is supported')
-        }
-      })
-
-      it('sampling decision should be cached', () => {
-        spyOn(Math, 'random').and.returnValues(0.2, 0.8)
-        expect(isTraceSampled(ARBITRARY_UUID, 50)).toBeTrue()
-        expect(isTraceSampled(ARBITRARY_UUID, 50)).toBeTrue()
-      })
+    it('a session id with a high hash value should not be sampled even if the rate is close to 100%', () => {
+      expect(isTraceSampled(HIGH_HASH_UUID, 99.9)).toBeFalse()
+      resetSampleDecisionCache()
+      expect(isTraceSampled(HIGH_HASH_UUID, 99.99)).toBeFalse()
+      resetSampleDecisionCache()
+      expect(isTraceSampled(HIGH_HASH_UUID, 99.999)).toBeFalse()
+      resetSampleDecisionCache()
+      expect(isTraceSampled(HIGH_HASH_UUID, 99.9999)).toBeFalse()
+      resetSampleDecisionCache()
+      // At some point the sample rate is so high that the session is sampled even if the hash is
+      // high. This is not an error: we can probably find a UUID with an even higher hash.
+      expect(isTraceSampled(HIGH_HASH_UUID, 99.9999999999)).toBeTrue()
     })
   })
 
-  describe('without CONSISTENT_TRACE_SAMPLING enabled', () => {
-    it('sampling should be random', () => {
-      spyOn(Math, 'random').and.returnValues(0.2, 0.8, 0.2, 0.8, 0.2)
+  describe('without bigint support', () => {
+    beforeEach(() => {
+      // @ts-expect-error BigInt might not be defined depending on the browser where we execute
+      // the tests
+      if (window.BigInt) {
+        pending('BigInt is supported')
+      }
+    })
+
+    it('sampling decision should be cached', () => {
+      spyOn(Math, 'random').and.returnValues(0.2, 0.8)
       expect(isTraceSampled(ARBITRARY_UUID, 50)).toBeTrue()
-      expect(isTraceSampled(ARBITRARY_UUID, 50)).toBeFalse()
-      expect(isTraceSampled(ARBITRARY_UUID, 50)).toBeTrue()
-      expect(isTraceSampled(ARBITRARY_UUID, 50)).toBeFalse()
       expect(isTraceSampled(ARBITRARY_UUID, 50)).toBeTrue()
     })
   })

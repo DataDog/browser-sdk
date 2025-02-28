@@ -1,4 +1,4 @@
-import { ExperimentalFeature, isExperimentalFeatureEnabled, performDraw } from '@datadog/browser-core'
+import { performDraw } from '@datadog/browser-core'
 
 let sampleDecisionCache: { sessionId: string; decision: boolean } | undefined
 
@@ -11,10 +11,6 @@ export function isTraceSampled(sessionId: string, sampleRate: number) {
 
   if (sampleRate === 0) {
     return false
-  }
-
-  if (!isExperimentalFeatureEnabled(ExperimentalFeature.CONSISTENT_TRACE_SAMPLING)) {
-    return performDraw(sampleRate)
   }
 
   if (sampleDecisionCache && sessionId === sampleDecisionCache.sessionId) {
