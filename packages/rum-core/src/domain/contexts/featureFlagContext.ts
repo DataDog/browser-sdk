@@ -68,7 +68,7 @@ export function startFeatureFlagContexts(
   return {
     addFeatureFlagEvaluation: (key: string, value: ContextValue) => {
       const currentContext = featureFlagContexts.find()
-      if (currentContext) {
+      if (currentContext && currentContext[key] !== value) {
         currentContext[key] = value
         customerDataTracker.updateCustomerData(currentContext)
       }
