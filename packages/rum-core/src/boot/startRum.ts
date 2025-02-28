@@ -4,7 +4,6 @@ import type {
   RawError,
   DeflateEncoderStreamId,
   Encoder,
-  CustomerDataTrackerManager,
   TrackingConsentState,
 } from '@datadog/browser-core'
 import {
@@ -15,7 +14,6 @@ import {
   canUseEventBridge,
   getEventBridge,
   addTelemetryDebug,
-  CustomerDataType,
   drainPreStartTelemetry,
 } from '@datadog/browser-core'
 import { createDOMMutationObservable } from '../browser/domMutationObservable'
@@ -62,7 +60,6 @@ export type StartRumResult = ReturnType<StartRum>
 export function startRum(
   configuration: RumConfiguration,
   recorderApi: RecorderApi,
-  customerDataTrackerManager: CustomerDataTrackerManager,
   getCommonContext: () => CommonContext,
   initialViewOptions: ViewOptions | undefined,
   createEncoder: (streamId: DeflateEncoderStreamId) => Encoder,
@@ -120,7 +117,7 @@ export function startRum(
       createEncoder
     )
     cleanupTasks.push(() => batch.stop())
-    startCustomerDataTelemetry(configuration, telemetry, lifeCycle, customerDataTrackerManager, batch.flushObservable)
+    startCustomerDataTelemetry(configuration, telemetry, lifeCycle, batch.flushObservable)
   } else {
     startRumEventBridge(lifeCycle)
   }
@@ -130,13 +127,7 @@ export function startRum(
   const pageStateHistory = startPageStateHistory(configuration)
   const viewHistory = startViewHistory(lifeCycle)
   const urlContexts = startUrlContexts(lifeCycle, hooks, locationChangeObservable, location)
-  const featureFlagContexts = startFeatureFlagContexts(
-    lifeCycle,
-    hooks,
-    configuration,
-    customerDataTrackerManager.getOrCreateTracker(CustomerDataType.FeatureFlag)
-  )
-  cleanupTasks.push(() => featureFlagContexts.stop())
+  const featureFlagContexts = startFeatureFlagContexts(lifeCycle, hooks, configuration)
   const { observable: windowOpenObservable, stop: stopWindowOpen } = createWindowOpenObservable()
   cleanupTasks.push(stopWindowOpen)
 

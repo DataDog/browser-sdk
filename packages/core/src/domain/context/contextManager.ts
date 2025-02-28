@@ -3,7 +3,6 @@ import { sanitize } from '../../tools/serialisation/sanitize'
 import type { Context } from '../../tools/serialisation/context'
 import { Observable } from '../../tools/observable'
 import { display } from '../../tools/display'
-import type { CustomerDataTracker } from './customerDataTracker'
 import { checkContext } from './contextUtils'
 
 export type ContextManager = ReturnType<typeof createContextManager>
@@ -39,10 +38,8 @@ function ensureProperties(context: Context, propertiesConfig: PropertiesConfig, 
 export function createContextManager(
   name: string = '',
   {
-    customerDataTracker,
     propertiesConfig = {},
   }: {
-    customerDataTracker?: CustomerDataTracker
     propertiesConfig?: PropertiesConfig
   } = {}
 ) {
@@ -55,7 +52,6 @@ export function createContextManager(
     setContext: (newContext: unknown) => {
       if (checkContext(newContext)) {
         context = sanitize(ensureProperties(newContext, propertiesConfig, name))
-        customerDataTracker?.updateCustomerData(context)
       } else {
         contextManager.clearContext()
       }
@@ -64,20 +60,17 @@ export function createContextManager(
 
     setContextProperty: (key: string, property: any) => {
       context[key] = sanitize(ensureProperties({ [key]: property }, propertiesConfig, name)[key])
-      customerDataTracker?.updateCustomerData(context)
       changeObservable.notify()
     },
 
     removeContextProperty: (key: string) => {
       delete context[key]
-      customerDataTracker?.updateCustomerData(context)
       ensureProperties(context, propertiesConfig, name)
       changeObservable.notify()
     },
 
     clearContext: () => {
       context = {}
-      customerDataTracker?.resetCustomerData()
       changeObservable.notify()
     },
 

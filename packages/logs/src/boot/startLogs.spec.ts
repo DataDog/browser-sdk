@@ -5,8 +5,6 @@ import {
   stopSessionManager,
   getCookie,
   SESSION_STORE_KEY,
-  createCustomerDataTracker,
-  noop,
   createTrackingConsentState,
   TrackingConsent,
   setCookie,
@@ -72,7 +70,7 @@ describe('logs', () => {
       logsEndpointBuilder: mockEndpointBuilder('https://localhost/v1/input/log'),
       batchMessagesLimit: 1,
     }
-    logger = new Logger((...params) => handleLog(...params), createCustomerDataTracker(noop))
+    logger = new Logger((...params) => handleLog(...params))
     interceptor = interceptRequests()
     requests = interceptor.requests
     consoleLogSpy = spyOn(console, 'log')

@@ -1,4 +1,4 @@
-import type { Context, ContextManager, CustomerDataTracker } from '@datadog/browser-core'
+import type { Context, ContextManager } from '@datadog/browser-core'
 import {
   clocksNow,
   computeRawError,
@@ -39,13 +39,12 @@ export class Logger {
 
   constructor(
     private handleLogStrategy: (logsMessage: LogsMessage, logger: Logger, handlingStack?: string) => void,
-    customerDataTracker: CustomerDataTracker,
     name?: string,
     private handlerType: HandlerType | HandlerType[] = HandlerType.http,
     private level: StatusType = StatusType.debug,
     loggerContext: object = {}
   ) {
-    this.contextManager = createContextManager('logger', { customerDataTracker })
+    this.contextManager = createContextManager('logger')
     this.contextManager.setContext(loggerContext as Context)
     if (name) {
       this.contextManager.setContextProperty('logger', { name })
