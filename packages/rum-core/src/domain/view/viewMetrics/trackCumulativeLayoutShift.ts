@@ -19,6 +19,7 @@ export interface CumulativeLayoutShift {
   time?: Duration
   previousRect?: RumRect
   currentRect?: RumRect
+  devicePixelRatio?: number
 }
 
 interface LayoutShiftInstance {
@@ -74,10 +75,10 @@ export function trackCumulativeLayoutShift(
         continue
       }
 
-      const { cumulatedValue, isMaxValue } = window.update(entry)
+      const { cumulatedValue, isMaxValue, devicePixelRatio } = window.update(entry)
 
       if (isMaxValue) {
-        const attribution = getFirstElementAttribution(entry.sources)
+        const attribution = getBiggestElementAttribution(entry.sources)
         biggestShift = {
           target: attribution?.node ? new WeakRef(attribution.node) : undefined,
           time: elapsed(viewStart, entry.startTime),
@@ -96,6 +97,7 @@ export function trackCumulativeLayoutShift(
           time: biggestShift?.time,
           previousRect: biggestShift?.previousRect ? asRumRect(biggestShift.previousRect) : undefined,
           currentRect: biggestShift?.currentRect ? asRumRect(biggestShift.currentRect) : undefined,
+          devicePixelRatio,
         })
       }
     }
@@ -108,12 +110,18 @@ export function trackCumulativeLayoutShift(
   }
 }
 
-function getFirstElementAttribution(
+function getBiggestElementAttribution(
   sources: RumLayoutShiftAttribution[]
 ): (RumLayoutShiftAttribution & { node: Element }) | undefined {
-  return sources.find(
+  const elementNodeSources = sources.filter(
     (source): source is RumLayoutShiftAttribution & { node: Element } => !!source.node && isElementNode(source.node)
   )
+  if (elementNodeSources.length <= 0) {
+    return
+  }
+  return elementNodeSources.reduce(function (a, b) {
+    return a.previousRect?.width * a.previousRect?.height > b.previousRect?.width * b.previousRect?.height ? a : b
+  })
 }
 
 function asRumRect({ x, y, width, height }: DOMRectReadOnly): RumRect {
@@ -155,6 +163,7 @@ function slidingSessionWindow() {
       return {
         cumulatedValue,
         isMaxValue,
+        devicePixelRatio: window.devicePixelRatio,
       }
     },
   }
