@@ -89,8 +89,8 @@ describe('computeViewName', () => {
       ['*/*',                 '/foo/1',       '/*/*'],
     ] as const
 
-  cases.forEach(([routePaths, path, expectedViewName], i) => {
-    it(`compute the right view name for paths ${routePaths} (${i})`, () => {
+  cases.forEach(([routePaths, path, expectedViewName]) => {
+    it(`returns "${expectedViewName}" for route "${path}" and config "${routePaths}"`, () => {
       // Convert the routePaths representing nested routes paths delimited by ' > ' to an actual
       // react-router route object. Example: '/foo > bar > :p' would be turned into
       // { path: '/foo', children: [{ path: 'bar', children: [{ path: ':p' }] }] }
