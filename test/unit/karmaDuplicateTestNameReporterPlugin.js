@@ -19,16 +19,18 @@ function KarmaDuplicateTestNameReporter(logger) {
     }
   }
 
-  this.onSpecComplete = (_browser, { fullName }) => {
-    if (testNames.has(fullName)) {
-      if (!duplicatedTestNames.has(fullName)) {
-        duplicatedTestNames.set(fullName, 2)
+  this.onSpecComplete = (browser, result) => {
+    const testName = `[${browser.name}] ${result.fullName}`
+
+    if (testNames.has(testName)) {
+      if (!duplicatedTestNames.has(testName)) {
+        duplicatedTestNames.set(testName, 2)
       } else {
-        duplicatedTestNames.set(fullName, duplicatedTestNames.get(fullName) + 1)
+        duplicatedTestNames.set(testName, duplicatedTestNames.get(testName) + 1)
       }
     }
 
-    testNames.add(fullName)
+    testNames.add(testName)
   }
 }
 
