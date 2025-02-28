@@ -117,7 +117,7 @@ routerVersions.forEach(({ version, createMemoryRouter }) => {
       ] as const
 
       cases.forEach(([routePaths, path, expectedViewName]) => {
-        it(`compute the right view name for paths ${routePaths}`, () => {
+        it(`returns "${expectedViewName}" for route "${path}" and config "${routePaths}"`, () => {
           // Convert the routePaths representing nested routes paths delimited by ' > ' to an actual
           // react-router route object. Example: '/foo > bar > :p' would be turned into
           // { path: '/foo', children: [{ path: 'bar', children: [{ path: ':p' }] }] }

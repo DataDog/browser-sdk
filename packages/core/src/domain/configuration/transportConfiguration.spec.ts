@@ -98,13 +98,13 @@ describe('transportConfiguration', () => {
       { site: 'datad0g.com', intakeDomain: 'browser-intake-datad0g.com' },
       { site: 'dd0g-gov.com', intakeDomain: 'http-intake.logs.dd0g-gov.com' },
     ].forEach(({ site, intakeDomain }) => {
-      it(`should detect intake request for ${site} site`, () => {
+      it(`should detect intake request to ${intakeDomain} for site ${site}`, () => {
         expect(isIntakeUrl(`https://${intakeDomain}/api/v2/rum?${intakeParameters}`)).toBe(true)
         expect(isIntakeUrl(`https://${intakeDomain}/api/v2/logs?${intakeParameters}`)).toBe(true)
         expect(isIntakeUrl(`https://${intakeDomain}/api/v2/replay?${intakeParameters}`)).toBe(true)
       })
 
-      it(`should detect older versions of the ${site} site`, () => {
+      it(`should detect older versions of the ${site} site for intake domain ${intakeDomain}`, () => {
         // v4 intake endpoints
         expect(isIntakeUrl(`https://rum.${intakeDomain}/api/v2/rum?${intakeParameters}`)).toBe(true)
         expect(isIntakeUrl(`https://logs.${intakeDomain}/api/v2/logs?${intakeParameters}`)).toBe(true)

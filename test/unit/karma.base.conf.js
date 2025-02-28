@@ -7,8 +7,9 @@ const webpackConfig = require('../../webpack.base')({
 const { getTestReportDirectory } = require('../envUtils')
 const jasmineSeedReporterPlugin = require('./jasmineSeedReporterPlugin')
 const karmaSkippedFailedReporterPlugin = require('./karmaSkippedFailedReporterPlugin')
+const karmaDuplicateTestNameReporterPlugin = require('./karmaDuplicateTestNameReporterPlugin')
 
-const reporters = ['spec', 'jasmine-seed', 'karma-skipped-failed']
+const reporters = ['spec', 'jasmine-seed', 'karma-skipped-failed', 'karma-duplicate-test-name']
 
 const testReportDirectory = getTestReportDirectory()
 if (testReportDirectory) {
@@ -71,7 +72,12 @@ module.exports = {
     stats: 'errors-only',
     logLevel: 'warn',
   },
-  plugins: ['karma-*', jasmineSeedReporterPlugin, karmaSkippedFailedReporterPlugin],
+  plugins: [
+    'karma-*',
+    jasmineSeedReporterPlugin,
+    karmaSkippedFailedReporterPlugin,
+    karmaDuplicateTestNameReporterPlugin,
+  ],
 
   // Running tests on low performance environments (ex: BrowserStack) can block JS execution for a
   // few seconds. We need to increase those two timeout values to make sure Karma (and underlying

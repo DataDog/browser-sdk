@@ -1,24 +1,39 @@
 import { test } from '@playwright/test'
 import type { BrowserConfiguration } from '../../../browsers.conf'
 
-export type Tag = 'skip' | 'fixme'
-
-export function addTag(name: Tag, value: string) {
+export function addTag(tag: string, value: string) {
   test.info().annotations.push({
-    type: `dd_tags[test.${name}]`,
+    type: `dd_tags[${tag}]`,
     description: value,
   })
 }
 
-export function addBrowserConfigurationTags(metadata: BrowserConfiguration | Record<any, never>) {
+// Add test configuration tags used for test optimization features
+// https://docs.datadoghq.com/tests/#test-configuration-attributes
+export function addTestOptimizationTags(metadata: BrowserConfiguration | Record<any, never>) {
   // eslint-disable-next-line prefer-const
   for (let [tag, value] of Object.entries(metadata)) {
-    if (tag === 'name') {
-      tag = 'browser'
-    } else if (tag === 'version') {
-      tag = 'browserVersion'
+    switch (tag) {
+      case 'name':
+        tag = 'runtime.name'
+        break
+      case 'version':
+        tag = 'runtime.version'
+        break
+      case 'os':
+        tag = 'os.platform'
+        break
+      case 'osVersion':
+        tag = 'os.version'
+        break
+      case 'device':
+        tag = 'device.name'
+        break
+      default:
+        // Note: Nested test.configuration tags, such as test.configuration.cpu.memory, are not supported.
+        tag = `test.configuration.${tag}`
     }
 
-    addTag(tag as Tag, value)
+    addTag(tag, value)
   }
 }
