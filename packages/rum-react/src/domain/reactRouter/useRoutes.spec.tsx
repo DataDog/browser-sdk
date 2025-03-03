@@ -7,6 +7,7 @@ import { useRoutes as useRoutesV6 } from '../../entries/reactRouterV6'
 import { useRoutes as useRoutesV7 } from '../../entries/reactRouterV7'
 import { ignoreConsoleLogs } from '../../../../core/test'
 import type { AnyRouteObject } from './types'
+import { ignoreReactRouterDeprecationWarnings } from './reactRouter.specHelper'
 
 const versions = [
   {
@@ -38,6 +39,7 @@ versions.forEach(({ version, MemoryRouter, useNavigate, useRoutes }) => {
     let startViewSpy: jasmine.Spy<(name?: string | object) => void>
 
     beforeEach(() => {
+      ignoreReactRouterDeprecationWarnings()
       startViewSpy = jasmine.createSpy()
       initializeReactPlugin({
         configuration: {

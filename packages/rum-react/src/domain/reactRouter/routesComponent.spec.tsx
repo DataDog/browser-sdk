@@ -6,6 +6,7 @@ import { initializeReactPlugin } from '../../../test/initializeReactPlugin'
 import { appendComponent } from '../../../test/appendComponent'
 import { Routes as RoutesV6 } from '../../entries/reactRouterV6'
 import { Routes as RoutesV7 } from '../../entries/reactRouterV7'
+import { ignoreReactRouterDeprecationWarnings } from './reactRouter.specHelper'
 ;[
   {
     version: 'react-router-6',
@@ -26,6 +27,7 @@ import { Routes as RoutesV7 } from '../../entries/reactRouterV7'
     let startViewSpy: jasmine.Spy<(name?: string | object) => void>
 
     beforeEach(() => {
+      ignoreReactRouterDeprecationWarnings()
       startViewSpy = jasmine.createSpy()
       initializeReactPlugin({
         configuration: {
