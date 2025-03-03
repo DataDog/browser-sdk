@@ -19,6 +19,7 @@ export interface CumulativeLayoutShift {
   time?: Duration
   previousRect?: RumRect
   currentRect?: RumRect
+  devicePixelRatio?: number
 }
 
 interface LayoutShiftInstance {
@@ -26,6 +27,7 @@ interface LayoutShiftInstance {
   time: Duration
   previousRect: DOMRectReadOnly | undefined
   currentRect: DOMRectReadOnly | undefined
+  devicePixelRatio: number
 }
 
 /**
@@ -64,7 +66,7 @@ export function trackCumulativeLayoutShift(
     value: 0,
   })
 
-  const window = slidingSessionWindow()
+  const slidingWindow = slidingSessionWindow()
   const performanceSubscription = createPerformanceObservable(configuration, {
     type: RumPerformanceEntryType.LAYOUT_SHIFT,
     buffered: true,
@@ -74,7 +76,7 @@ export function trackCumulativeLayoutShift(
         continue
       }
 
-      const { cumulatedValue, isMaxValue } = window.update(entry)
+      const { cumulatedValue, isMaxValue } = slidingWindow.update(entry)
 
       if (isMaxValue) {
         const attribution = getFirstElementAttribution(entry.sources)
@@ -83,6 +85,7 @@ export function trackCumulativeLayoutShift(
           time: elapsed(viewStart, entry.startTime),
           previousRect: attribution?.previousRect,
           currentRect: attribution?.currentRect,
+          devicePixelRatio: window.devicePixelRatio,
         }
       }
 
@@ -96,6 +99,7 @@ export function trackCumulativeLayoutShift(
           time: biggestShift?.time,
           previousRect: biggestShift?.previousRect ? asRumRect(biggestShift.previousRect) : undefined,
           currentRect: biggestShift?.currentRect ? asRumRect(biggestShift.currentRect) : undefined,
+          devicePixelRatio: biggestShift?.devicePixelRatio,
         })
       }
     }
