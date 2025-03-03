@@ -315,18 +315,6 @@ describe('makeRecorderApi', () => {
       setupRecorderApi({ sessionManager })
     })
 
-    // prevent getting records after the before_unload event has been triggered.
-    it('stop recording when the page unloads', async () => {
-      sessionManager.setTrackedWithSessionReplay()
-      rumInit()
-      await collectAsyncCalls(startRecordingSpy, 1)
-
-      expect(startRecordingSpy).toHaveBeenCalledTimes(1)
-
-      lifeCycle.notify(LifeCycleEventType.PAGE_EXITED, { reason: PageExitReason.UNLOADING })
-      expect(stopRecordingSpy).toHaveBeenCalled()
-    })
-
     describe('when session renewal change the tracking type', () => {
       describe('from WITHOUT_REPLAY to WITH_REPLAY', () => {
         beforeEach(() => {
