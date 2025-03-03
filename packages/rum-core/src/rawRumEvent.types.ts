@@ -134,6 +134,9 @@ export interface RawRumViewEvent {
     document_version: number
     replay_stats?: ReplayStats
     page_states?: PageStateServerEntry[]
+    cls?: {
+      device_pixel_ratio: number
+    }
     configuration: {
       start_session_replay_recording_manually: boolean
     }
@@ -175,6 +178,7 @@ export interface ViewPerformanceData {
     target_selector?: string
     resource_url?: string
   }
+  cls_device_pixel_ratio?: number
 }
 
 export interface RumRect {
