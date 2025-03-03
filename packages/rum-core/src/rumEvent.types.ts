@@ -1132,6 +1132,12 @@ export type RumViewEvent = CommonProperties &
          */
         segments_total_raw_size?: number
         [k: string]: unknown
+        /**
+         * Device pixel ratio of the device when the cumulative layout shift was reported
+         */
+        cls?: {
+          device_pixel_ratio: number
+        }
       }
       /**
        * Subset of the SDK configuration options in use during its execution
