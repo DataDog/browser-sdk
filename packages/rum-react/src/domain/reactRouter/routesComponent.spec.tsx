@@ -1,6 +1,7 @@
 import React, { act } from 'react'
 import { MemoryRouter as MemoryRouterV6, Route as RouteV6, useNavigate as useNavigateV6 } from 'react-router-dom-6'
 import { MemoryRouter as MemoryRouterV7, Route as RouteV7, useNavigate as useNavigateV7 } from 'react-router-dom-7'
+import { ignoreConsoleLogs } from '../../../../core/test'
 import { initializeReactPlugin } from '../../../test/initializeReactPlugin'
 import { appendComponent } from '../../../test/appendComponent'
 import { Routes as RoutesV6 } from '../../entries/reactRouterV6'
@@ -163,7 +164,7 @@ import { Routes as RoutesV7 } from '../../entries/reactRouterV7'
 
     it('does not start a new view if it does not match any route', () => {
       // Prevent react router from showing a warning in the console when a route does not match
-      spyOn(console, 'warn')
+      ignoreConsoleLogs('warn', 'No routes matched location')
 
       appendComponent(
         <MemoryRouter>
