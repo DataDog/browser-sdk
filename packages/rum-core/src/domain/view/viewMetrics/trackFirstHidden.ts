@@ -8,7 +8,8 @@ export function trackFirstHidden(configuration: RumConfiguration, eventTarget: W
   let timeStamp: RelativeTime = Infinity as RelativeTime
   let stopListeners: () => void | undefined
   let earliestHidden = Infinity
-  if (typeof performance !== 'undefined' && 'getEntriesByType' in performance) {
+
+  if (typeof performance !== 'undefined' && 'getEntriesByType' in performance && supportsVisibilityStateEntries()) {
     const visibilityEntries = performance.getEntriesByType('visibility-state')
     if (visibilityEntries && visibilityEntries.length > 0) {
       for (const entry of visibilityEntries) {
@@ -45,5 +46,13 @@ export function trackFirstHidden(configuration: RumConfiguration, eventTarget: W
     stop() {
       stopListeners?.()
     },
+  }
+
+  function supportsVisibilityStateEntries() {
+    return (
+      typeof PerformanceObserver !== 'undefined' &&
+      PerformanceObserver.supportedEntryTypes &&
+      PerformanceObserver.supportedEntryTypes.includes('visibility-state')
+    )
   }
 }

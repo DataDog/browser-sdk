@@ -85,8 +85,16 @@ describe('trackFirstHidden', () => {
   })
 
   describe('using visibilityState entries', () => {
+    let originalSupportedEntryTypes: string[] | undefined
     beforeEach(() => {
       performanceBufferMock = mockGlobalPerformanceBuffer()
+      if (typeof PerformanceObserver !== 'undefined') {
+        originalSupportedEntryTypes = PerformanceObserver.supportedEntryTypes as string[]
+        Object.defineProperty(PerformanceObserver, 'supportedEntryTypes', {
+          get: () => [...(originalSupportedEntryTypes || []), 'visibility-state'],
+          configurable: true,
+        })
+      }
     })
     it('should set timestamp to earliest hidden event from performance entries', () => {
       setPageVisibility('visible')
