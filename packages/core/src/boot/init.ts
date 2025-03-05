@@ -3,7 +3,7 @@ import { setDebugMode } from '../tools/monitor'
 import { display } from '../tools/display'
 
 // replaced at build time
-declare const __BUILD_ENV__SDK_VERSION__: string
+// declare const __BUILD_ENV__SDK_VERSION__: string
 
 export interface PublicApi {
   /**
@@ -21,7 +21,7 @@ export interface PublicApi {
 
 export function makePublicApi<T extends PublicApi>(stub: Omit<T, keyof PublicApi>): T {
   const publicApi = {
-    version: __BUILD_ENV__SDK_VERSION__,
+    version: 'env',
     // This API method is intentionally not monitored, since the only thing executed is the
     // user-provided 'callback'.  All SDK usages executed in the callback should be monitored, and
     // we don't want to interfere with the user uncaught exceptions.
