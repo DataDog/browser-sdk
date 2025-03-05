@@ -63,7 +63,7 @@ export function createContextManager(
     },
 
     setContextProperty: (key: string, property: any) => {
-      context[key] = sanitize(ensureProperties({ [key]: property }, propertiesConfig, name)[key])
+      context = sanitize(ensureProperties({ ...context, [key]: property }, propertiesConfig, name))
       customerDataTracker?.updateCustomerData(context)
       changeObservable.notify()
     },
