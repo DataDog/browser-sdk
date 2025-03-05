@@ -65,10 +65,16 @@ function processViewUpdate(
   recorderApi: RecorderApi
 ): RawRumEventCollectedData<RawRumViewEvent> {
   const replayStats = recorderApi.getReplayStats(view.id)
+  const clsDevicePixelRatio = view.commonViewMetrics?.cumulativeLayoutShift?.devicePixelRatio
   const viewEvent: RawRumViewEvent = {
     _dd: {
       document_version: view.documentVersion,
       replay_stats: replayStats,
+      cls: clsDevicePixelRatio
+        ? {
+            device_pixel_ratio: clsDevicePixelRatio,
+          }
+        : undefined,
       configuration: {
         start_session_replay_recording_manually: configuration.startSessionReplayRecordingManually,
       },
