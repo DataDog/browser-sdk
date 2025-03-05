@@ -178,7 +178,6 @@ export interface ViewPerformanceData {
     target_selector?: string
     resource_url?: string
   }
-  cls_device_pixel_ratio?: number
 }
 
 export interface RumRect {
