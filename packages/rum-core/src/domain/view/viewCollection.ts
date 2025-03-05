@@ -65,10 +65,7 @@ function processViewUpdate(
   recorderApi: RecorderApi
 ): RawRumEventCollectedData<RawRumViewEvent> {
   const replayStats = recorderApi.getReplayStats(view.id)
-  const { cls_device_pixel_ratio: clsDevicePixelRatio, ...viewPerformanceData } = computeViewPerformanceData(
-    view.commonViewMetrics,
-    view.initialViewMetrics
-  )
+  const clsDevicePixelRatio = view.commonViewMetrics?.cumulativeLayoutShift?.devicePixelRatio
   const viewEvent: RawRumViewEvent = {
     _dd: {
       document_version: view.documentVersion,
@@ -118,7 +115,7 @@ function processViewUpdate(
       long_task: {
         count: view.eventCounts.longTaskCount,
       },
-      performance: viewPerformanceData,
+      performance: computeViewPerformanceData(view.commonViewMetrics, view.initialViewMetrics),
       resource: {
         count: view.eventCounts.resourceCount,
       },
@@ -187,6 +184,5 @@ function computeViewPerformanceData(
       target_selector: largestContentfulPaint.targetSelector,
       resource_url: largestContentfulPaint.resourceUrl,
     },
-    cls_device_pixel_ratio: cumulativeLayoutShift && cumulativeLayoutShift.devicePixelRatio,
   }
 }
