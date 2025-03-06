@@ -68,5 +68,5 @@ export interface CommonContext {
   }
   context: Context
   user: User
-  account: Context
+  account: Context // use Context for internal Account type
 }

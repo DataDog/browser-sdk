@@ -1,13 +1,9 @@
 import type { Context, ContextManager, User } from '@datadog/browser-core'
 import type { RecorderApi } from '../../boot/rumPublicApi'
 
-interface Account extends Context {
-  id?: string
-  name?: string
-}
 export interface CommonContext {
   user: User
-  account: Account
+  account: Context // Use Context as internal Account type
   context: Context
   hasReplay: true | undefined
 }

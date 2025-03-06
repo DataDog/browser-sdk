@@ -193,6 +193,8 @@ function makeTracingHeaders(
            * We should only enable this feature after the decoding service is available
            */
           const userIdEncoded = encodeToUtf8Base64(getCommonContext().user.id?.toString())
+          // we use Context type for account internally but account id should not be an object
+          /* eslint-disable-next-line @typescript-eslint/no-base-to-string */
           const accountIdEncoded = encodeToUtf8Base64(getCommonContext().account.id?.toString())
           userAccountTraceHeader = `${userIdEncoded ? `t.usr.id:${userIdEncoded};` : ''}${accountIdEncoded ? `t.account.id:${accountIdEncoded};` : ''}`
         }
