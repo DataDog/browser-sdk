@@ -6,7 +6,7 @@ import type { RumFetchResolveContext, RumFetchStartContext, RumXhrStartContext }
 import type { RumConfiguration, RumInitConfiguration } from '../configuration'
 import { validateAndBuildRumConfiguration } from '../configuration'
 import type { CommonContext } from '../contexts/commonContext'
-import { startTracer } from './tracer'
+import { encodeToUtf8Base64, startTracer } from './tracer'
 import type { SpanIdentifier, TraceIdentifier } from './identifier'
 import { createSpanIdentifier, createTraceIdentifier } from './identifier'
 
@@ -35,7 +35,6 @@ describe('tracer', () => {
   }
 
   beforeEach(() => {
-    mockExperimentalFeatures([ExperimentalFeature.USER_ACCOUNT_TRACE_HEADER])
     configuration = validateAndBuildRumConfiguration(INIT_CONFIGURATION)!
     sessionManager = createRumSessionManagerMock()
   })
@@ -113,6 +112,8 @@ describe('tracer', () => {
     })
 
     it("should trace request with sampled set to '0' in OTel headers when not sampled and config set to all", () => {
+      mockExperimentalFeatures([ExperimentalFeature.USER_ACCOUNT_TRACE_HEADER])
+
       const configurationWithAllOtelHeaders = validateAndBuildRumConfiguration({
         ...INIT_CONFIGURATION,
         traceSampleRate: 0,
@@ -128,7 +129,7 @@ describe('tracer', () => {
         jasmine.objectContaining({
           b3: jasmine.stringMatching(/^[0-9a-f]{16}-[0-9a-f]{16}-0$/),
           traceparent: jasmine.stringMatching(/^[0-9a-f]{2}-[0-9a-f]{32}-[0-9a-f]{16}-00$/),
-          tracestate: 'dd=t.usr.id:1234;t.account.id:5678;s:0;o:rum',
+          tracestate: 'dd=t.usr.id:MTIzNA==;t.account.id:NTY3OA==;s:0;o:rum',
           'X-B3-Sampled': '0',
         })
       )
@@ -188,6 +189,8 @@ describe('tracer', () => {
     })
 
     it('should add headers for B3 (single) and tracecontext propagators', () => {
+      mockExperimentalFeatures([ExperimentalFeature.USER_ACCOUNT_TRACE_HEADER])
+
       const configurationWithB3andTracecontext = validateAndBuildRumConfiguration({
         ...INIT_CONFIGURATION,
         allowedTracingUrls: [{ match: window.location.origin, propagatorTypes: ['b3', 'tracecontext'] }],
@@ -201,7 +204,24 @@ describe('tracer', () => {
         jasmine.objectContaining({
           b3: jasmine.stringMatching(/^[0-9a-f]{16}-[0-9a-f]{16}-1$/),
           traceparent: jasmine.stringMatching(/^[0-9a-f]{2}-[0-9a-f]{32}-[0-9a-f]{16}-01$/),
-          tracestate: 'dd=t.usr.id:1234;t.account.id:5678;s:1;o:rum',
+          tracestate: 'dd=t.usr.id:MTIzNA==;t.account.id:NTY3OA==;s:1;o:rum',
+        })
+      )
+    })
+    it('should not add usr.id and account.id to tracestate when feature is disabled', () => {
+      const configurationWithB3andTracecontext = validateAndBuildRumConfiguration({
+        ...INIT_CONFIGURATION,
+        allowedTracingUrls: [{ match: window.location.origin, propagatorTypes: ['b3', 'tracecontext'] }],
+      })!
+
+      const tracer = startTracer(configurationWithB3andTracecontext, sessionManager, mockGetCommonContext)
+      const context = { ...ALLOWED_DOMAIN_CONTEXT }
+      tracer.traceXhr(context, xhr as unknown as XMLHttpRequest)
+      expect(xhr.headers).toEqual(
+        jasmine.objectContaining({
+          b3: jasmine.stringMatching(/^[0-9a-f]{16}-[0-9a-f]{16}-1$/),
+          traceparent: jasmine.stringMatching(/^[0-9a-f]{2}-[0-9a-f]{32}-[0-9a-f]{16}-01$/),
+          tracestate: 'dd=s:1;o:rum',
         })
       )
     })
@@ -546,6 +566,8 @@ describe('tracer', () => {
     })
 
     it('should add headers for b3 (single) and tracecontext propagators', () => {
+      mockExperimentalFeatures([ExperimentalFeature.USER_ACCOUNT_TRACE_HEADER])
+
       const configurationWithB3andTracecontext = validateAndBuildRumConfiguration({
         ...INIT_CONFIGURATION,
         allowedTracingUrls: [{ match: window.location.origin, propagatorTypes: ['b3', 'tracecontext'] }],
@@ -559,7 +581,7 @@ describe('tracer', () => {
         jasmine.arrayContaining([
           ['b3', jasmine.stringMatching(/^[0-9a-f]{16}-[0-9a-f]{16}-1$/)],
           ['traceparent', jasmine.stringMatching(/^[0-9a-f]{2}-[0-9a-f]{32}-[0-9a-f]{16}-01$/)],
-          ['tracestate', 'dd=t.usr.id:1234;t.account.id:5678;s:1;o:rum'],
+          ['tracestate', 'dd=t.usr.id:MTIzNA==;t.account.id:NTY3OA==;s:1;o:rum'],
         ])
       )
     })
@@ -656,6 +678,20 @@ describe('tracer', () => {
 
       expect(context.traceId).toBeDefined()
       expect(context.spanId).toBeDefined()
+    })
+  })
+
+  describe('encodeToUtf8Base64', () => {
+    it('should return undefined when input is undefined', () => {
+      expect(encodeToUtf8Base64(undefined)).toBeUndefined()
+    })
+    it('should return undefined when input is empty', () => {
+      expect(encodeToUtf8Base64('')).toBeUndefined()
+    })
+    it('should encode non-ascii to base64 in utf8', () => {
+      // https://developer.mozilla.org/en-US/docs/Web/API/Window/btoa
+      const encoded = encodeToUtf8Base64('a Ā 𐀀 文 🦄')
+      expect(encoded).toBe('YSDEgCDwkICAIOaWhyDwn6aE')
     })
   })
 })

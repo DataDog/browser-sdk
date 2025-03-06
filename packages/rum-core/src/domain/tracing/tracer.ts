@@ -187,13 +187,21 @@ function makeTracingHeaders(
       }
       // https://www.w3.org/TR/trace-context/
       case 'tracecontext': {
-        const userAccountTraceHeader = `t.usr.id:${getCommonContext().user.id?.toString()};t.account.id:${getCommonContext().account.id?.toString()};`
+        let userAccountTraceHeader: string | undefined
+        if (isExperimentalFeatureEnabled(ExperimentalFeature.USER_ACCOUNT_TRACE_HEADER)) {
+          /**
+           * We should only enable this feature after the decoding service is available
+           */
+          const userIdEncoded = encodeToUtf8Base64(getCommonContext().user.id?.toString())
+          const accountIdEncoded = encodeToUtf8Base64(getCommonContext().account.id?.toString())
+          userAccountTraceHeader = `${userIdEncoded ? `t.usr.id:${userIdEncoded};` : ''}${accountIdEncoded ? `t.account.id:${accountIdEncoded};` : ''}`
+        }
 
         Object.assign(tracingHeaders, {
           traceparent: `00-0000000000000000${toPaddedHexadecimalString(traceId)}-${toPaddedHexadecimalString(spanId)}-0${
             traceSampled ? '1' : '0'
           }`,
-          tracestate: `dd=${isExperimentalFeatureEnabled(ExperimentalFeature.USER_ACCOUNT_TRACE_HEADER) ? userAccountTraceHeader : ''}s:${traceSampled ? '1' : '0'};o:rum`,
+          tracestate: `dd=${userAccountTraceHeader ?? ''}s:${traceSampled ? '1' : '0'};o:rum`,
         })
         break
       }
@@ -215,4 +223,19 @@ function makeTracingHeaders(
     }
   })
   return tracingHeaders
+}
+
+/**
+ *
+ * Helper function to encode a string to base64 in UTF-8
+ * Comply with the `_dd.p.usr` standard and avoid non-ASCII characters
+ * https://developer.mozilla.org/en-US/docs/Web/API/Window/btoa
+ */
+export function encodeToUtf8Base64(plainText: string | undefined) {
+  if (!plainText || plainText === '') {
+    return undefined
+  }
+  const bytes = new TextEncoder().encode(plainText)
+  const binString = Array.from(bytes, (byte) => String.fromCodePoint(byte)).join('')
+  return btoa(binString)
 }
