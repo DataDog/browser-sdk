@@ -1,24 +1,34 @@
-import { addEventListener, clearTimeout, setTimeout, DOM_EVENT, monitorError } from '@datadog/browser-core'
+import { addEventListener, clearTimeout, setTimeout, DOM_EVENT, monitorError, display } from '@datadog/browser-core'
 import { LifeCycleEventType } from '../lifeCycle'
-import type { RumProfilerTrace, RumProfilerInstance, RumProfilerConfig, Profiler, RUMProfiler } from './types'
+import type {
+  RumProfilerTrace,
+  RumProfilerInstance,
+  RumProfilerConfig,
+  Profiler,
+  RUMProfiler,
+  RUMProfilerConfiguration,
+} from './types'
 import { getNumberOfSamples } from './utils/getNumberOfSamples'
 import { disableLongTaskRegistry, enableLongTaskRegistry } from './utils/longTaskRegistry'
 import { mayStoreLongTaskIdForProfilerCorrelation } from './profilingCorrelation'
-import { sendProfile } from './transport/sendProfile'
+import { transport } from './transport/transport'
 
 // These APIs might be unavailable in some browsers
 const globalThisProfiler: Profiler | undefined = (globalThis as any).Profiler
 
-const SAMPLE_INTERVAL_MS = 10 // Sample stack trace every 10ms
-const COLLECT_INTERVAL_MS = 60000 // Collect data every minute
-const MIN_PROFILE_DURATION_MS = 5000 // Require at least 5 seconds of profile data to reduce noise and cost
-const MIN_NUMBER_OF_SAMPLES = 50 // Require at least 50 samples (~500 ms) to report a profile to reduce noise and cost
+export const DEFAULT_RUM_PROFILER_CONFIGURATION: RUMProfilerConfiguration = {
+  sampleIntervalMs: 10, // Sample stack trace every 10ms
+  collectIntervalMs: 60000, // Collect data every minute
+  minProfileDurationMs: 5000, // Require at least 5 seconds of profile data to reduce noise and cost
+  minNumberOfSamples: 50, // Require at least 50 samples (~500 ms) to report a profile to reduce noise and cost
+}
 
 export function createRumProfiler({
   configuration,
   isLongAnimationFrameEnabled,
   lifeCycle,
   session,
+  profilerConfiguration = DEFAULT_RUM_PROFILER_CONFIGURATION,
 }: RumProfilerConfig): RUMProfiler {
   let observer: PerformanceObserver
   let instance: RumProfilerInstance = { state: 'stopped' }
@@ -53,10 +63,8 @@ export function createRumProfiler({
     }
 
     cleanupTasks.push(
-      ...[
-        addEventListener(configuration, window, DOM_EVENT.VISIBILITY_CHANGE, handleVisibilityChange).stop,
-        addEventListener(configuration, window, DOM_EVENT.BEFORE_UNLOAD, handleBeforeUnload).stop,
-      ]
+      addEventListener(configuration, window, DOM_EVENT.VISIBILITY_CHANGE, handleVisibilityChange).stop,
+      addEventListener(configuration, window, DOM_EVENT.BEFORE_UNLOAD, handleBeforeUnload).stop
     )
 
     // Whenever the View is updated, we add a navigation entry to the profiler instance.
@@ -72,9 +80,9 @@ export function createRumProfiler({
     startNextProfilerInstance()
   }
 
-  function stop(): void {
+  async function stop() {
     // Stop current profiler instance
-    stopProfilerInstance('stopped')
+    await stopProfilerInstance('stopped')
 
     // Cleanup tasks
     cleanupTasks.forEach((cleanupTask) => cleanupTask())
@@ -89,22 +97,23 @@ export function createRumProfiler({
     }
 
     // Don't wait for data collection to start next instance
-    collectProfilerInstance()
+    collectProfilerInstance().catch(monitorError)
 
     let profiler: Profiler
 
     try {
       // We have to create new Profiler each time we start a new instance
       profiler = new globalThisProfiler({
-        sampleInterval: SAMPLE_INTERVAL_MS,
+        sampleInterval: profilerConfiguration.sampleIntervalMs,
         // Keep buffer size at 1.5 times of minimum required to collect data for a profiling instance
-        maxBufferSize: Math.round((COLLECT_INTERVAL_MS * 1.5) / SAMPLE_INTERVAL_MS),
+        maxBufferSize: Math.round(
+          (profilerConfiguration.collectIntervalMs * 1.5) / profilerConfiguration.sampleIntervalMs
+        ),
       })
     } catch (e) {
       // If we fail to create a profiler, it's likely due to the missing Response Header (`js-profiling`) that is required to enable the profiler.
       // We should suggest the user to enable the Response Header in their server configuration.
-      // eslint-disable-next-line no-console
-      console.warn(
+      display.warn(
         '[DD_RUM] Failed to start the Profiler. Make sure your server is configured to send the `js-profiling` Response Header.',
         e
       )
@@ -115,7 +124,7 @@ export function createRumProfiler({
       state: 'running',
       startTime: performance.now(),
       profiler,
-      timeoutId: setTimeout(startNextProfilerInstance, COLLECT_INTERVAL_MS), // NodeJS types collision
+      timeoutId: setTimeout(startNextProfilerInstance, profilerConfiguration.collectIntervalMs), // NodeJS types collision
       longTasks: [],
       navigation: [],
     }
@@ -124,7 +133,7 @@ export function createRumProfiler({
     profiler.addEventListener('samplebufferfull', handleSampleBufferFull)
   }
 
-  function collectProfilerInstance(): void {
+  async function collectProfilerInstance() {
     if (instance.state !== 'running') {
       return
     }
@@ -136,17 +145,17 @@ export function createRumProfiler({
     const { startTime, longTasks, navigation } = instance
 
     // Stop current profiler to get trace
-    instance.profiler
+    await instance.profiler
       .stop()
       .then((trace) => {
         const endTime = performance.now()
 
-        if (endTime - startTime < MIN_PROFILE_DURATION_MS) {
+        if (endTime - startTime < profilerConfiguration.minProfileDurationMs) {
           // Skip very short profiles to reduce noise and cost
           return
         }
 
-        if (getNumberOfSamples(trace.samples) < MIN_NUMBER_OF_SAMPLES) {
+        if (getNumberOfSamples(trace.samples) < profilerConfiguration.minNumberOfSamples) {
           // Skip idle profiles to reduce noise and cost
           return
         }
@@ -159,7 +168,7 @@ export function createRumProfiler({
             timeOrigin: performance.timeOrigin,
             longTasks,
             navigation,
-            sampleInterval: SAMPLE_INTERVAL_MS,
+            sampleInterval: profilerConfiguration.sampleIntervalMs,
           })
         )
       })
@@ -170,12 +179,13 @@ export function createRumProfiler({
     instance.profiler.removeEventListener('samplebufferfull', handleSampleBufferFull)
   }
 
-  function stopProfilerInstance(nextState: 'paused' | 'stopped') {
+  async function stopProfilerInstance(nextState: 'paused' | 'stopped') {
     if (instance.state !== 'running') {
       return
     }
 
-    collectProfilerInstance()
+    await collectProfilerInstance()
+
     instance = { state: nextState }
   }
 
@@ -196,9 +206,9 @@ export function createRumProfiler({
     const sessionId = session.findTrackedSession()?.id
 
     // Send JSON Profile to intake.
-    sendProfile(trace, configuration.profilingEndpointBuilder, configuration.applicationId, sessionId).catch(
-      monitorError
-    )
+    transport
+      .sendProfile(trace, configuration.profilingEndpointBuilder, configuration.applicationId, sessionId)
+      .catch(monitorError)
   }
 
   function handleSampleBufferFull(): void {
@@ -215,7 +225,7 @@ export function createRumProfiler({
     }
 
     for (const entry of entries) {
-      if (entry.duration < SAMPLE_INTERVAL_MS) {
+      if (entry.duration < profilerConfiguration.sampleIntervalMs) {
         // Skip entries shorter than sample interval to reduce noise and size of profile
         continue
       }
@@ -238,7 +248,7 @@ export function createRumProfiler({
       // paused by visibility change and stopped by user.
       // If profiler is paused by the visibility change, we should resume when
       // tab becomes visible again. That's not the case when user stops the profiler.
-      stopProfilerInstance('paused')
+      stopProfilerInstance('paused').catch(monitorError)
     } else if (document.visibilityState === 'visible' && instance.state === 'paused') {
       // Resume when tab becomes visible again
       startNextProfilerInstance()
@@ -246,12 +256,20 @@ export function createRumProfiler({
   }
 
   function handleBeforeUnload(): void {
-    stopProfilerInstance('stopped')
+    stopProfilerInstance('stopped').catch(monitorError)
   }
 
   function getLongTaskEntryType(): 'long-animation-frame' | 'longtask' {
     return isLongAnimationFrameEnabled ? 'long-animation-frame' : 'longtask'
   }
 
-  return { start, stop }
+  function isStopped() {
+    return instance.state === 'stopped'
+  }
+
+  function isStarted() {
+    return instance.state === 'running'
+  }
+
+  return { start, stop, isStopped, isStarted }
 }

@@ -24,9 +24,10 @@ type SendProfileFunction = (
 ) => Promise<unknown>
 
 /**
- * Exports RUM profile as JSON to public profiling intake.
+ * Send RUM profile as JSON to public profiling intake.
  */
-export const sendProfile: SendProfileFunction = (profilerTrace, endpointBuilder, applicationId, sessionId) => {
+const sendProfile: SendProfileFunction = (profilerTrace, endpointBuilder, applicationId, sessionId) => {
+  console.log('this is the original send profiles')
   const event = buildProfileEvent(profilerTrace, endpointBuilder, applicationId, sessionId)
   const payload = buildProfilingPayload(profilerTrace, event)
 
@@ -139,4 +140,8 @@ function buildProfileEventAttributes(
     }
   }
   return attributes
+}
+
+export const transport = {
+  sendProfile,
 }
