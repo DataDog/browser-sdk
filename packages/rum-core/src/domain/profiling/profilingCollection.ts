@@ -58,7 +58,7 @@ export const startProfilingCollection = (
         profilerConfiguration: customProfilerConfiguration,
       })
 
-      profiler.start(viewHistory?.findView()?.id)
+      profiler.start(viewHistory.findView()?.id)
     })
     .catch(monitorError)
 
