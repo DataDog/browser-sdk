@@ -2,6 +2,7 @@ import { addEventListener, DOM_EVENT } from '../../browser/addEventListener'
 import type { Context } from '../../tools/serialisation/context'
 import type { Configuration } from '../configuration'
 import { combine } from '../../tools/mergeInto'
+import { isEmptyObject } from '../../tools/utils/objectUtils'
 import type { ContextManager } from './contextManager'
 import type { CustomerDataType } from './contextConstants'
 
@@ -26,7 +27,10 @@ export function storeContextManager(
   )
   contextManager.changeObservable.subscribe(dumpToStorage)
 
-  contextManager.setContext(combine(getFromStorage(), contextManager.getContext()))
+  const contextFromStorage = combine(getFromStorage(), contextManager.getContext())
+  if (!isEmptyObject(contextFromStorage)) {
+    contextManager.setContext(contextFromStorage)
+  }
 
   function synchronizeWithStorage() {
     contextManager.setContext(getFromStorage())
@@ -38,7 +42,7 @@ export function storeContextManager(
 
   function getFromStorage() {
     const rawContext = localStorage.getItem(storageKey)
-    return rawContext !== null ? (JSON.parse(rawContext) as Context) : {}
+    return rawContext ? (JSON.parse(rawContext) as Context) : {}
   }
 }
 

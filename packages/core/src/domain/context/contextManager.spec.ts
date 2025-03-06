@@ -77,6 +77,7 @@ describe('createContextManager', () => {
   })
 
   it('should prevent setting non object values', () => {
+    spyOn(display, 'error')
     const manager = createNoopCustomerDataTracker()
     manager.setContext(null as any)
     expect(manager.getContext()).toEqual({})

@@ -33,7 +33,6 @@ describe('logger collection', () => {
     lifeCycle.subscribe(LifeCycleEventType.RAW_LOG_COLLECTED, (rawLogsEvent) =>
       rawLogsEvents.push(rawLogsEvent as RawLogsEventCollectedData<RawLoggerLogsEvent>)
     )
-    spyOn(console, 'error').and.callFake(() => true)
     logger = new Logger((...params) => handleLog(...params), createCustomerDataTracker(noop))
     ;({ handleLog: handleLog } = startLoggerCollection(lifeCycle))
     clock = mockClock()

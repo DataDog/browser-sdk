@@ -5,7 +5,9 @@ import { appendComponent } from '../../../test/appendComponent'
 import { initializeReactPlugin } from '../../../test/initializeReactPlugin'
 import { useRoutes as useRoutesV6 } from '../../entries/reactRouterV6'
 import { useRoutes as useRoutesV7 } from '../../entries/reactRouterV7'
+import { ignoreConsoleLogs } from '../../../../core/test'
 import type { AnyRouteObject } from './types'
+import { ignoreReactRouterDeprecationWarnings } from './reactRouter.specHelper'
 
 const versions = [
   {
@@ -37,6 +39,7 @@ versions.forEach(({ version, MemoryRouter, useNavigate, useRoutes }) => {
     let startViewSpy: jasmine.Spy<(name?: string | object) => void>
 
     beforeEach(() => {
+      ignoreReactRouterDeprecationWarnings()
       startViewSpy = jasmine.createSpy()
       initializeReactPlugin({
         configuration: {
@@ -192,7 +195,7 @@ versions.forEach(({ version, MemoryRouter, useNavigate, useRoutes }) => {
 
     it('does not start a new view if it does not match any route', () => {
       // Prevent react router from showing a warning in the console when a route does not match
-      spyOn(console, 'warn')
+      ignoreConsoleLogs('warn', 'No routes matched location')
 
       appendComponent(
         <MemoryRouter>
