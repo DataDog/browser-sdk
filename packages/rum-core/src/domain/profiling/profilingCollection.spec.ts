@@ -14,7 +14,6 @@ describe('profiling collection', () => {
   let lifeCycle = new LifeCycle()
 
   function setupProfilingCollection() {
-    // ;({ notifyPerformanceEntries } = mockPerformanceObserver())
     const sessionManager = createRumSessionManagerMock().setId('session-id-1')
     const viewHistory = mockViewHistory({
       id: 'view-id-1',
