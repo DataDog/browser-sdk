@@ -29,7 +29,6 @@ describe('profiling collection', () => {
       mockRumConfiguration({ trackLongTasks: true, profilingSampleRate: 100 }),
       lifeCycle,
       sessionManager,
-      true,
       viewHistory,
       // Overrides default configuration for testing purpose.
       {
