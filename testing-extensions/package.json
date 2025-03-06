@@ -4,15 +4,12 @@
   "description": "",
   "main": "dist/index.js",
   "scripts": {
-    "build": "esbuild src/rum_init.js --bundle --outfile=dist/rum_init.js --define:process.env.__BUILD_ENV__SDK_VERSION__='env'"
+    "build": "esbuild src/content-scripts.js --bundle --outfile=dist/content-script.js"
   },
   "dependencies": {
-    "@datadog/browser-core": "workspace:*",
-    "@datadog/browser-logs": "workspace:*",
-    "@datadog/browser-rum": "workspace:*"
+    "@datadog/browser-rum": "^6.3.0"
   },
   "devDependencies": {
-    "cross-env": "7.0.3",
     "esbuild": "^0.25.0",
     "typescript": "^5.5.3"
   },
