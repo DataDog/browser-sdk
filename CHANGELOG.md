@@ -18,6 +18,21 @@
 
 ---
 
+## v6.5.0
+
+**Public Changes:**
+
+- ✨ [RUM-8622] introduce session-consistent trace sample rate ([#3381](https://github.com/DataDog/browser-sdk/pull/3381)) [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+- 🐛 [RUM-8744] CLS tracking: provide cls `devicePixelRatio` to adjust cls rect scale ([#3389](https://github.com/DataDog/browser-sdk/pull/3389)) [RUM] [RUM-REACT] [RUM-SLIM]
+
+**Internal Changes:**
+
+- 👷 Update all non-major dependencies ([#3386](https://github.com/DataDog/browser-sdk/pull/3386)) [RUM-REACT]
+- 👷 fix tags to match the test optimisation configuration attributes ([#3337](https://github.com/DataDog/browser-sdk/pull/3337)) [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+- ✅ Clean logs in unit tests ([#3390](https://github.com/DataDog/browser-sdk/pull/3390)) [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+- Bump serialize-javascript from 6.0.1 to 6.0.2 in /test/app ([#3383](https://github.com/DataDog/browser-sdk/pull/3383))
+- ♻️ [RUM-8716] Use assembly hook for page states ([#3362](https://github.com/DataDog/browser-sdk/pull/3362)) [RUM] [RUM-REACT] [RUM-SLIM]
+
 ## v6.4.0
 
 **Public Changes:**
