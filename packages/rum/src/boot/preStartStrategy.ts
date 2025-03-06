@@ -22,6 +22,7 @@ export function createPreStartStrategy(): {
         status = PreStartRecorderStatus.HadManualStop
       },
       isRecording: () => false,
+      getReplayStats: noop as (_viewId: string) => undefined,
       getSessionReplayLink: noop as () => string | undefined,
     },
     shouldStartImmediately(configuration) {

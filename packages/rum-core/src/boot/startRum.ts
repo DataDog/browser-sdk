@@ -51,6 +51,7 @@ import { startCiVisibilityContext } from '../domain/contexts/ciVisibilityContext
 import { startLongAnimationFrameCollection } from '../domain/longAnimationFrame/longAnimationFrameCollection'
 import { RumPerformanceEntryType } from '../browser/performanceObservable'
 import { startLongTaskCollection } from '../domain/longTask/longTaskCollection'
+import { startReplayStatsHistory } from '../domain/view/replayStatsHistory'
 import type { Hooks } from '../hooks'
 import { createHooks } from '../hooks'
 import { startSyntheticsContext } from '../domain/contexts/syntheticsContext'
@@ -137,6 +138,10 @@ export function startRum(
     customerDataTrackerManager.getOrCreateTracker(CustomerDataType.FeatureFlag)
   )
   cleanupTasks.push(() => featureFlagContexts.stop())
+
+  const replayStatsHistory = startReplayStatsHistory()
+  cleanupTasks.push(() => replayStatsHistory.stop())
+
   const { observable: windowOpenObservable, stop: stopWindowOpen } = createWindowOpenObservable()
   cleanupTasks.push(stopWindowOpen)
 
@@ -220,6 +225,7 @@ export function startRum(
     getViewContext,
     setViewName,
     lifeCycle,
+    replayStatsHistory,
     viewHistory,
     session,
     stopSession: () => session.expire(),

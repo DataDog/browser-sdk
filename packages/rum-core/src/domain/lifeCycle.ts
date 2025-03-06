@@ -9,15 +9,56 @@ import type { AutoAction } from './action/actionCollection'
 import type { ViewEvent, ViewCreatedEvent, ViewEndedEvent, BeforeViewUpdateEvent } from './view/trackViews'
 
 export const enum LifeCycleEventType {
-  // Contexts (like viewHistory) should be opened using prefixed BEFORE_XXX events and closed using prefixed AFTER_XXX events
-  // It ensures the context is available during the non prefixed event callbacks
+  // Some LifeCycle events have BEFORE_ or AFTER_ variants. When these variants exist,
+  // they are dispatched in sequence, in the following order:
+  //  - BEFORE_EVENT
+  //  - EVENT
+  //  - AFTER_EVENT
+  // The convention is that global contextual data structures should be created in BEFORE_
+  // handlers and destroyed in AFTER_ handlers. This ensures that these contexts are
+  // available to all handlers for the non-prefixed version of the event. Events typically
+  // only have these variants if there are existing handlers that require them; if you're
+  // adding a new handler of this kind, you may need to add a new prefixed variant of an
+  // existing event as well.
+
   AUTO_ACTION_COMPLETED,
+
+  /** We are preparing to transition to a new view. */
   BEFORE_VIEW_CREATED,
+
+  /** We have transitioned to a new view. All BEFORE_VIEW_CREATED handlers have run. */
   VIEW_CREATED,
+
+  /**
+   * Something about the current view (e.g. its context) has changed, so we're preparing
+   * to generate a new view update to send to the intake.
+   */
   BEFORE_VIEW_UPDATED,
+
+  /**
+   * We've generated a new view update to send to the intake. All BEFORE_VIEW_UPDATED
+   * handlers have run.
+   */
   VIEW_UPDATED,
+
+  /**
+   * The view is conceptually over, but we're still continuing to track trailing events;
+   * we do this for a period of time controlled by KEEP_TRACKING_AFTER_VIEW_DELAY.
+   * Even after that, we can continue to generate new events for older views when
+   * long-running tasks that started during those views finish (e.g. fetched resources),
+   * when the view's context is retroactively updated, or when the customer retroactively
+   * adds an event manually using an API like addDurationVital(). Note that this means
+   * that BEFORE_VIEW_UPDATED and VIEW_UPDATED can be delivered *after* VIEW_ENDED and
+   * AFTER_VIEW_ENDED. An "ended" view has been superseded, but it isn't truly "over".
+   */
   VIEW_ENDED,
+
+  /**
+   * We've conceptually ended the view, although we're still continuing to track
+   * trailing events. All VIEW_ENDED handlers have run.
+   */
   AFTER_VIEW_ENDED,
+
   REQUEST_STARTED,
   REQUEST_COMPLETED,
 

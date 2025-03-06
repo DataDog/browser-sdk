@@ -1,7 +1,7 @@
 import type { ClocksState, HttpRequest, TimeStamp } from '@datadog/browser-core'
 import { DeflateEncoderStreamId, PageExitReason } from '@datadog/browser-core'
 import type { ViewHistory, ViewHistoryEntry, RumConfiguration } from '@datadog/browser-rum-core'
-import { LifeCycle, LifeCycleEventType } from '@datadog/browser-rum-core'
+import { LifeCycle, LifeCycleEventType, startReplayStatsHistory } from '@datadog/browser-rum-core'
 import type { Clock } from '@datadog/browser-core/test'
 import { mockClock, registerCleanupTask, restorePageVisibility } from '@datadog/browser-core/test'
 import { createRumSessionManagerMock } from '../../../../rum-core/test'
@@ -65,10 +65,12 @@ describe('startSegmentCollection', () => {
       sendOnExit: jasmine.createSpy(),
       send: jasmine.createSpy(),
     }
+    const replayStatsHistory = startReplayStatsHistory()
     context = CONTEXT
     ;({ stop: stopSegmentCollection, addRecord } = doStartSegmentCollection(
       lifeCycle,
       () => context,
+      replayStatsHistory,
       httpRequestSpy,
       createDeflateEncoder(configuration, worker, DeflateEncoderStreamId.REPLAY)
     ))
@@ -76,6 +78,7 @@ describe('startSegmentCollection', () => {
     registerCleanupTask(() => {
       clock?.cleanup()
       stopSegmentCollection()
+      replayStatsHistory.stop()
     })
   })
 

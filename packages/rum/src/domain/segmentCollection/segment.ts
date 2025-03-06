@@ -1,7 +1,7 @@
 import type { Encoder, EncoderResult } from '@datadog/browser-core'
+import type { ReplayStatsHistory } from '@datadog/browser-rum-core'
 import type { BrowserRecord, BrowserSegmentMetadata, CreationReason, SegmentContext } from '../../types'
 import { RecordType } from '../../types'
-import * as replayStats from '../replayStats'
 
 export type FlushReason = Exclude<CreationReason, 'init'> | 'stop'
 export type FlushCallback = (metadata: BrowserSegmentMetadata, encoderResult: EncoderResult<Uint8Array>) => void
@@ -16,10 +16,12 @@ export function createSegment({
   context,
   creationReason,
   encoder,
+  replayStatsHistory,
 }: {
   context: SegmentContext
   creationReason: CreationReason
   encoder: Encoder<Uint8Array>
+  replayStatsHistory: ReplayStatsHistory
 }): Segment {
   let encodedBytesCount = 0
   const viewId = context.view.id
@@ -29,12 +31,12 @@ export function createSegment({
     creation_reason: creationReason,
     records_count: 0,
     has_full_snapshot: false,
-    index_in_view: replayStats.getSegmentsCount(viewId),
+    index_in_view: replayStatsHistory.getSegmentsCount(viewId),
     source: 'browser' as const,
     ...context,
   }
 
-  replayStats.addSegment(viewId)
+  replayStatsHistory.addSegment(viewId)
 
   function addRecord(record: BrowserRecord, callback: AddRecordCallback): void {
     metadata.start = Math.min(metadata.start, record.timestamp)
@@ -56,7 +58,7 @@ export function createSegment({
 
     encoder.write(`],${JSON.stringify(metadata).slice(1)}\n`)
     encoder.finish((encoderResult) => {
-      replayStats.addWroteData(metadata.view.id, encoderResult.rawBytesCount)
+      replayStatsHistory.addWroteData(metadata.view.id, encoderResult.rawBytesCount)
       callback(metadata, encoderResult)
     })
   }
