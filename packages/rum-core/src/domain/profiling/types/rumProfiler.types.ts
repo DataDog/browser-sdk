@@ -15,8 +15,8 @@ export interface RumProfilerConfig {
   profilerConfiguration?: RUMProfilerConfiguration
 }
 
-export interface RumNavigationEntry {
-  /** Detected start time of navigation */
+export interface RumViewEntry {
+  /** Detected start time of view */
   readonly startTime: DOMHighResTimeStamp
   /** RUM view id */
   readonly viewId: string
@@ -29,7 +29,7 @@ export interface RumProfilerEnrichmentData {
   /** List of detected long tasks */
   readonly longTasks: PerformanceEntry[]
   /** List of detected navigation entries */
-  readonly navigation: RumNavigationEntry[]
+  readonly views: RumViewEntry[]
 }
 
 export interface RumProfilerTrace extends ProfilerTrace, RumProfilerEnrichmentData {
@@ -69,6 +69,10 @@ export interface RumProfilerRunningInstance extends RumProfilerEnrichmentData {
   readonly startTime: DOMHighResTimeStamp
   /** Timeout id to stop current session */
   readonly timeoutId: TimeoutId
+  /** Clean-up tasks to execute after running the Profiler */
+  readonly cleanupTasks: Array<() => void>
+  /** Performance observer to detect long tasks */
+  readonly observer: PerformanceObserver | undefined;
 }
 
 export type RumProfilerInstance = RumProfilerStoppedInstance | RumProfilerPausedInstance | RumProfilerRunningInstance

@@ -27,7 +27,6 @@ type SendProfileFunction = (
  * Send RUM profile as JSON to public profiling intake.
  */
 const sendProfile: SendProfileFunction = (profilerTrace, endpointBuilder, applicationId, sessionId) => {
-  console.log('this is the original send profiles')
   const event = buildProfileEvent(profilerTrace, endpointBuilder, applicationId, sessionId)
   const payload = buildProfilingPayload(profilerTrace, event)
 
@@ -124,7 +123,7 @@ function buildProfileEventAttributes(
       id: sessionId,
     }
   }
-  const viewIds = Array.from(new Set(profilerTrace.navigation.map((entry) => entry.viewId)))
+  const viewIds = Array.from(new Set(profilerTrace.views.map((viewEntry) => viewEntry.viewId)))
   if (viewIds.length) {
     attributes.view = {
       ids: viewIds,
