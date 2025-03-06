@@ -72,7 +72,7 @@ export interface RumProfilerRunningInstance extends RumProfilerEnrichmentData {
   /** Clean-up tasks to execute after running the Profiler */
   readonly cleanupTasks: Array<() => void>
   /** Performance observer to detect long tasks */
-  readonly observer: PerformanceObserver | undefined;
+  readonly observer: PerformanceObserver | undefined
 }
 
 export type RumProfilerInstance = RumProfilerStoppedInstance | RumProfilerPausedInstance | RumProfilerRunningInstance
