@@ -4,6 +4,7 @@ import type { RumConfiguration } from '../configuration'
 import type { LifeCycle } from '../lifeCycle'
 import type { RumSessionManager } from '../rumSessionManager'
 import type { ViewHistory } from '../contexts/viewHistory'
+import { RumPerformanceEntryType, supportPerformanceTimingEvent } from '../../browser/performanceObservable'
 import { lazyLoadProfiler } from './lazyLoadProfiler'
 import { isProfilingSupported } from './profilingSupported'
 import type { RUMProfiler, RUMProfilerConfiguration } from './types'
@@ -26,7 +27,6 @@ export const startProfilingCollection = (
   configuration: RumConfiguration,
   lifeCycle: LifeCycle,
   session: RumSessionManager,
-  isLongAnimationFrameEnabled: boolean,
   viewHistory: ViewHistory,
   customProfilerConfiguration?: RUMProfilerConfiguration
 ): ProfilingCollector => {
@@ -47,6 +47,8 @@ export const startProfilingCollection = (
       if (!createRumProfiler) {
         return
       }
+
+      const isLongAnimationFrameEnabled = supportPerformanceTimingEvent(RumPerformanceEntryType.LONG_ANIMATION_FRAME)
 
       profiler = createRumProfiler({
         configuration,
