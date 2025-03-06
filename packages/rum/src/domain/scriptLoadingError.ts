@@ -9,10 +9,9 @@ export function reportScriptLoadingError({
   configuredUrl?: string | undefined
   error: unknown
   source: string
-  scriptType: 'module' | 'Worker'
+  scriptType: 'module' | 'worker'
 }) {
-  const verb = scriptType === 'Worker' ? 'creating' : 'importing'
-  display.error(`${source} failed to start: an error occurred while ${verb} the ${scriptType}:`, error)
+  display.error(`${source} failed to start: an error occurred while initializing the ${scriptType}:`, error)
   if (error instanceof Event || (error instanceof Error && isMessageCspRelated(error.message))) {
     let baseMessage
     if (configuredUrl) {
@@ -23,7 +22,7 @@ export function reportScriptLoadingError({
     display.error(
       `${baseMessage} See documentation at ${DOCS_ORIGIN}/integrations/content_security_policy_logs/#use-csp-with-real-user-monitoring-and-session-replay`
     )
-  } else {
+  } else if (scriptType === 'worker') {
     addTelemetryError(error)
   }
 }

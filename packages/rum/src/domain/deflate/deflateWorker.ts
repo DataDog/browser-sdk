@@ -142,7 +142,7 @@ function onError(configuration: RumConfiguration, source: string, error: unknown
       configuredUrl: configuration.workerUrl,
       error,
       source,
-      scriptType: 'Worker',
+      scriptType: 'worker',
     })
     if (state.status === DeflateWorkerStatus.Loading) {
       state.initializationFailureCallbacks.forEach((callback) => callback())

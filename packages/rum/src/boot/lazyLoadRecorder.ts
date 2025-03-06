@@ -1,18 +1,11 @@
 import { reportScriptLoadingError } from '../domain/scriptLoadingError'
 import type { startRecording } from './startRecording'
 
-export function lazyLoadRecorder() {
-  return lazyLoadRecorderFrom(async () => {
-    const module = await import(/* webpackChunkName: "recorder" */ './startRecording')
-    return module.startRecording
-  })
-}
-
-export async function lazyLoadRecorderFrom(
-  importer: () => Promise<typeof startRecording>
+export async function lazyLoadRecorder(
+  importRecorderImpl = importRecorder
 ): Promise<typeof startRecording | undefined> {
   try {
-    return await importer()
+    return await importRecorderImpl()
   } catch (error: unknown) {
     reportScriptLoadingError({
       error,
@@ -20,4 +13,9 @@ export async function lazyLoadRecorderFrom(
       scriptType: 'module',
     })
   }
+}
+
+async function importRecorder() {
+  const module = await import(/* webpackChunkName: "recorder" */ './startRecording')
+  return module.startRecording
 }
