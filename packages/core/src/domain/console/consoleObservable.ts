@@ -85,6 +85,7 @@ function buildConsoleLog(params: unknown[], api: ConsoleApiName, handlingStack: 
       handling: ErrorHandling.HANDLED,
       handlingStack,
       context: tryToGetErrorContext(firstErrorParam),
+      originalError: firstErrorParam,
     }
   }
 
