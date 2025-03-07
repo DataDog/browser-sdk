@@ -1,4 +1,4 @@
-import type { EndpointBuilder, Payload } from '@datadog/browser-core'
+import { addTelemetryDebug, type EndpointBuilder, type Payload } from '@datadog/browser-core'
 import type { RumProfilerTrace } from '../types'
 import { getLongTaskId } from '../utils/longTaskRegistry'
 
@@ -32,6 +32,8 @@ const sendProfile: SendProfileFunction = (profilerTrace, endpointBuilder, applic
 
   // Create URL, public profiling intake.
   const profilingIntakeURL = endpointBuilder.build('xhr', payload)
+
+  addTelemetryDebug('Sending profile to public profiling intake', { profilingIntakeURL, applicationId, sessionId })
 
   // Send payload (event + profile as attachment).
   return fetch(profilingIntakeURL, {
