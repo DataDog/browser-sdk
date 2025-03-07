@@ -1,7 +1,9 @@
 import { registerCleanupTask } from '@datadog/browser-core/test'
+import { getGlobalObject } from '@datadog/browser-core'
 import type { Profiler, ProfilerInitOptions, ProfilerTrace } from '../../src/domain/profiling/types'
 
 export function mockProfiler(mockedTrace: ProfilerTrace) {
+  const globalThis = getGlobalObject()
   // Save original Profiler class to restore it during cleanup.
   const originalProfiler = (globalThis as any).Profiler
 
