@@ -8,7 +8,7 @@ import {
   useLocation,
   matchRoutes,
   createRoutesFromChildren,
-} from 'react-router-dom-6'
+} from 'react-router-dom'
 import { wrapCreateRouter, createRoutesComponent, wrapUseRoutes } from '../domain/reactRouter'
 
 export const createBrowserRouter = wrapCreateRouter(originalCreateBrowserRouter)

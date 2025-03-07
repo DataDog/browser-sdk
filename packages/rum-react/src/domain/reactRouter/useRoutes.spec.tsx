@@ -1,26 +1,33 @@
 import React, { act } from 'react'
-import { MemoryRouter as MemoryRouterV6, useNavigate as useNavigateV6 } from 'react-router-dom-6'
-import { MemoryRouter as MemoryRouterV7, useNavigate as useNavigateV7 } from 'react-router-dom-7'
+import * as rrdom6 from 'react-router-dom-6'
+import * as rrdom7 from 'react-router-dom'
 import { appendComponent } from '../../../test/appendComponent'
 import { initializeReactPlugin } from '../../../test/initializeReactPlugin'
-import { useRoutes as useRoutesV6 } from '../../entries/reactRouterV6'
-import { useRoutes as useRoutesV7 } from '../../entries/reactRouterV7'
 import { ignoreConsoleLogs } from '../../../../core/test'
 import type { AnyRouteObject } from './types'
 import { ignoreReactRouterDeprecationWarnings } from './reactRouter.specHelper'
+import { wrapUseRoutes } from './useRoutes'
 
 const versions = [
   {
     version: 'react-router-6',
-    MemoryRouter: MemoryRouterV6,
-    useNavigate: useNavigateV6,
-    useRoutes: useRoutesV6,
+    MemoryRouter: rrdom6.MemoryRouter,
+    useNavigate: rrdom6.useNavigate,
+    useRoutes: wrapUseRoutes({
+      useRoutes: rrdom6.useRoutes,
+      useLocation: rrdom6.useLocation,
+      matchRoutes: rrdom6.matchRoutes,
+    }),
   },
   {
     version: 'react-router-7',
-    MemoryRouter: MemoryRouterV7,
-    useNavigate: useNavigateV7,
-    useRoutes: useRoutesV7,
+    MemoryRouter: rrdom7.MemoryRouter,
+    useNavigate: rrdom7.useNavigate,
+    useRoutes: wrapUseRoutes({
+      useRoutes: rrdom7.useRoutes,
+      useLocation: rrdom7.useLocation,
+      matchRoutes: rrdom7.matchRoutes,
+    }),
   },
 ]
 
