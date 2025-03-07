@@ -3,6 +3,7 @@
 
   "compilerOptions": {
     "baseUrl": ".",
+    "composite": true,
     "module": "ES6",
     "target": "esnext",
     "jsx": "react",

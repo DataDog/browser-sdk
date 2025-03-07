@@ -2,7 +2,9 @@
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
     "baseUrl": ".",
+    "composite": true,
     "declaration": true,
+    "allowJs": true,
     "rootDir": "./src/",
     "outDir": "./esm/"
   },

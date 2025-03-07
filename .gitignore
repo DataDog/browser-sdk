@@ -8,6 +8,7 @@ local.log
 specs.log
 /test-report/
 browserstack.err
+tsconfig.tsbuildinfo
 
 # https://yarnpkg.com/getting-started/qa#which-files-should-be-gitignored
 .pnp.*

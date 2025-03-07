@@ -2,10 +2,14 @@
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
     "baseUrl": ".",
+    "composite": true,
     "declaration": true,
     "rootDir": "./src/",
     "outDir": "./esm/"
   },
   "include": ["./src/**/*.ts"],
-  "exclude": ["./src/**/*.spec.ts", "./src/**/*.specHelper.ts"]
+  "exclude": ["./src/**/*.spec.ts", "./src/**/*.specHelper.ts"],
+  "references": [
+    { "path": "../core" },
+  ]
 }

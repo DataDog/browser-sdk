@@ -29,7 +29,7 @@
     "test:e2e:ci:bs": "yarn build && yarn build:app && yarn test:e2e:bs",
     "test:compat:tsc": "scripts/cli check_typescript_compatibility",
     "test:compat:ssr": "scripts/cli check_server_side_rendering_compatibility",
-    "rum-events-format:sync": "scripts/cli update_submodule && scripts/cli build_json2type && node scripts/generate-schema-types.js",
+    "rum-events-format:sync": "scripts/cli update_submodule && scripts/cli build_json2type && node scripts/generate-schema-types.ts",
     "woke": "scripts/cli woke"
   },
   "devDependencies": {

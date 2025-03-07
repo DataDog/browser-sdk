@@ -1,9 +1,36 @@
 // This tsconfig is only used for tooling (ex: typecheck in code editors / lint)
+//{
+//  "extends": "./tsconfig.base.json",
+//  "compilerOptions": {
+//    "types": ["jasmine"]
+//  },
+//  "include": ["packages", "scripts", "test", "eslint.config.mjs", "eslint-local-rules"],
+//  "exclude": ["packages/*/cjs", "packages/*/esm", "packages/*/bundle", "test/e2e", "test/app", "developer-extension"]
+//}
 {
-  "extends": "./tsconfig.base.json",
+  "references": [
+    //{ "path": "./developer-extension" },
+    { "path": "./packages/core" },
+    { "path": "./packages/logs" },
+    { "path": "./packages/rum" },
+    { "path": "./packages/rum-core" },
+    { "path": "./packages/rum-react" },
+    { "path": "./packages/rum-slim" },
+    { "path": "./packages/worker" },
+    //{ "path": "./scripts" },
+  ],
   "compilerOptions": {
-    "types": ["jasmine"]
+    "composite": true,
+    "paths": {
+      "@datadog/browser-core": ["./packages/core/src"],
+      "@datadog/browser-logs": ["./packages/logs/src"],
+      "@datadog/browser-rum": ["./packages/rum/src"],
+      "@datadog/browser-rum-core": ["./packages/rum-core/src"],
+      "@datadog/browser-rum-react": ["./packages/rum-react/src"],
+      "@datadog/browser-rum-slim": ["./packages/rum-slim/src"],
+      "@datadog/browser-sdk-developer-extension": ["./developer-extension/src"],
+      "@datadog/browser-worker": ["./packages/worker/src"],
+    }
   },
-  "include": ["packages", "scripts", "test", "eslint.config.mjs", "eslint-local-rules"],
-  "exclude": ["packages/*/cjs", "packages/*/esm", "packages/*/bundle", "test/e2e", "test/app", "developer-extension"]
+  "include": []
 }

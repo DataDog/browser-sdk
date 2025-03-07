@@ -2,11 +2,12 @@
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
     "baseUrl": ".",
+    "composite": true,
     "declaration": true,
-    "allowJs": true,
+    "module": "es6",
     "rootDir": "./src/",
     "outDir": "./esm/"
   },
-  "include": ["./src"],
+  "include": ["./src/**/*.ts"],
   "exclude": ["./src/**/*.spec.ts", "./src/**/*.specHelper.ts"]
 }

@@ -22,8 +22,7 @@ cmd_help () {
 }
 
 cmd_typecheck () {
-  local project_path="${1}"
-  tsc -p "$project_path" --noEmit true
+  tsc --build --noEmit
 }
 
 cmd_lint () {

@@ -16,12 +16,25 @@
     "types": [],
     "lib": ["ES2020", "DOM"],
 
+    //"paths": {
+    //  "@datadog/browser-core": ["./packages/core/src"],
+    //  "@datadog/browser-rum-core": ["./packages/rum-core/src"],
+    //  "@datadog/browser-rum-react": ["./packages/rum-react/src/entries/main"],
+    //  "@datadog/browser-rum-react/react-router-v6": ["./packages/rum-react/src/entries/reactRouterV6"],
+    //  "@datadog/browser-rum-react/react-router-v7": ["./packages/rum-react/src/entries/reactRouterV7"]
+    //}
+
     "paths": {
       "@datadog/browser-core": ["./packages/core/src"],
+      "@datadog/browser-logs": ["./packages/logs/src"],
+      "@datadog/browser-rum": ["./packages/rum/src"],
       "@datadog/browser-rum-core": ["./packages/rum-core/src"],
-      "@datadog/browser-rum-react": ["./packages/rum-react/src/entries/main"],
-      "@datadog/browser-rum-react/react-router-v6": ["./packages/rum-react/src/entries/reactRouterV6"],
-      "@datadog/browser-rum-react/react-router-v7": ["./packages/rum-react/src/entries/reactRouterV7"]
+      "@datadog/browser-rum-react": ["./packages/rum-react/src"],
+      "@datadog/browser-rum-slim": ["./packages/rum-slim/src"],
+      "@datadog/browser-sdk-developer-extension": ["./developer-extension/src"],
+      "@datadog/browser-worker": ["./packages/worker/src"],
     }
-  }
+  },
+
+  "include": []
 }
