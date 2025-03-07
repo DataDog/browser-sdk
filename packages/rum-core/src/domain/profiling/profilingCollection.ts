@@ -45,7 +45,7 @@ export const startProfilingCollection = (
   lazyLoadProfiler()
     .then((createRumProfiler) => {
       if (!createRumProfiler) {
-        return
+        throw new Error('[DD_RUM] Failed to lazy load the RUM Profiler') // will be caught by the catch block below.
       }
 
       const isLongAnimationFrameEnabled = supportPerformanceTimingEvent(RumPerformanceEntryType.LONG_ANIMATION_FRAME)
