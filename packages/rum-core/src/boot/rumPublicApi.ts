@@ -29,6 +29,7 @@ import {
   displayAlreadyInitializedError,
   createTrackingConsentState,
   timeStampToClocks,
+  isUnsupportedExtensionEnvironment,
 } from '@datadog/browser-core'
 import type { LifeCycle } from '../domain/lifeCycle'
 import type { ViewHistory } from '../domain/contexts/viewHistory'
@@ -406,6 +407,9 @@ export function makeRumPublicApi(
   recorderApi: RecorderApi,
   options: RumPublicApiOptions = {}
 ): RumPublicApi {
+  if (isUnsupportedExtensionEnvironment()) {
+    return {} as RumPublicApi
+  }
   const customerDataTrackerManager = createCustomerDataTrackerManager(CustomerDataCompressionStatus.Unknown)
   const globalContextManager = createContextManager('global context', {
     customerDataTracker: customerDataTrackerManager.getOrCreateTracker(CustomerDataType.GlobalContext),
