@@ -1,6 +1,6 @@
 import { DefaultPrivacyLevel, findLast } from '@datadog/browser-core'
-import type { RumConfiguration, ViewCreatedEvent } from '@datadog/browser-rum-core'
-import { LifeCycle, LifeCycleEventType } from '@datadog/browser-rum-core'
+import type { ReplayStatsHistory, RumConfiguration, ViewCreatedEvent } from '@datadog/browser-rum-core'
+import { LifeCycle, LifeCycleEventType, startReplayStatsHistory } from '@datadog/browser-rum-core'
 import type { Clock } from '@datadog/browser-core/test'
 import { createNewEvent, collectAsyncCalls, registerCleanupTask } from '@datadog/browser-core/test'
 import {
@@ -20,13 +20,13 @@ import type {
 } from '../../types'
 import { NodeType, RecordType, IncrementalSource } from '../../types'
 import { appendElement } from '../../../../rum-core/test'
-import { getReplayStats, resetReplayStats } from '../replayStats'
 import type { RecordAPI } from './record'
 import { record } from './record'
 
 describe('record', () => {
   let recordApi: RecordAPI
   let lifeCycle: LifeCycle
+  let replayStatsHistory: ReplayStatsHistory
   let emitSpy: jasmine.Spy<(record: BrowserRecord) => void>
   let clock: Clock | undefined
   const FAKE_VIEW_ID = '123'
@@ -37,6 +37,7 @@ describe('record', () => {
     registerCleanupTask(() => {
       clock?.cleanup()
       recordApi?.stop()
+      replayStatsHistory?.stop()
     })
   })
 
@@ -353,11 +354,11 @@ describe('record', () => {
 
   describe('updates record replay stats', () => {
     it('when recording new records', () => {
-      resetReplayStats()
       startRecording()
 
       const records = getEmittedRecords()
-      expect(getReplayStats(FAKE_VIEW_ID)?.records_count).toEqual(records.length)
+      const replayStats = replayStatsHistory.getReplayStats(FAKE_VIEW_ID)
+      expect(replayStats?.records_count).toEqual(records.length)
     })
   })
 
@@ -452,10 +453,12 @@ describe('record', () => {
 
   function startRecording() {
     lifeCycle = new LifeCycle()
+    replayStatsHistory = startReplayStatsHistory()
     recordApi = record({
       emit: emitSpy,
       configuration: { defaultPrivacyLevel: DefaultPrivacyLevel.ALLOW } as RumConfiguration,
       lifeCycle,
+      replayStatsHistory,
       viewHistory: {
         findView: () => ({ id: FAKE_VIEW_ID, startClocks: {} }),
       } as any,

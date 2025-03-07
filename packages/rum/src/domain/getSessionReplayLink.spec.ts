@@ -1,17 +1,27 @@
-import type { RumConfiguration, ViewHistory } from '@datadog/browser-rum-core'
+import {
+  startReplayStatsHistory,
+  type ReplayStatsHistory,
+  type RumConfiguration,
+  type ViewHistory,
+} from '@datadog/browser-rum-core'
 import { registerCleanupTask } from '@datadog/browser-core/test'
 import { createRumSessionManagerMock } from '../../../rum-core/test'
 import { getSessionReplayLink } from './getSessionReplayLink'
-import { addRecord, resetReplayStats } from './replayStats'
 
 const DEFAULT_CONFIGURATION = {
   site: 'datadoghq.com',
 } as RumConfiguration
 
 describe('getReplayLink', () => {
-  afterEach(() => {
-    resetReplayStats()
+  let replayStatsHistory: ReplayStatsHistory
+
+  beforeEach(() => {
+    replayStatsHistory = startReplayStatsHistory()
+    registerCleanupTask(() => {
+      replayStatsHistory.stop()
+    })
   })
+
   it('should return url without query param if no view', () => {
     const sessionManager = createRumSessionManagerMock().setId('session-id-1')
     const viewHistory = { findView: () => undefined } as ViewHistory
@@ -31,7 +41,7 @@ describe('getReplayLink', () => {
         },
       }),
     } as ViewHistory
-    addRecord('view-id-1')
+    replayStatsHistory.addRecord('view-id-1')
 
     const link = getSessionReplayLink(
       { ...DEFAULT_CONFIGURATION, subdomain: 'toto' },
@@ -57,7 +67,7 @@ describe('getReplayLink', () => {
         },
       }),
     } as ViewHistory
-    addRecord('view-id-1')
+    replayStatsHistory.addRecord('view-id-1')
 
     const link = getSessionReplayLink(
       { ...DEFAULT_CONFIGURATION, subdomain: 'toto' },

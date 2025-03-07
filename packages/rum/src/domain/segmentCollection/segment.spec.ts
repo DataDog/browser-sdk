@@ -1,11 +1,11 @@
 import type { DeflateEncoder, TimeStamp } from '@datadog/browser-core'
 import { noop, setDebugMode, DeflateEncoderStreamId } from '@datadog/browser-core'
-import type { RumConfiguration } from '@datadog/browser-rum-core'
+import { startReplayStatsHistory } from '@datadog/browser-rum-core'
+import type { ReplayStatsHistory, RumConfiguration } from '@datadog/browser-rum-core'
 import { registerCleanupTask } from '@datadog/browser-core/test'
 import { MockWorker } from '../../../test'
 import type { CreationReason, BrowserRecord, SegmentContext, BrowserSegment, BrowserSegmentMetadata } from '../../types'
 import { RecordType } from '../../types'
-import { getReplayStats, resetReplayStats } from '../replayStats'
 import { createDeflateEncoder } from '../deflate'
 import type { AddRecordCallback, FlushCallback, Segment } from './segment'
 import { createSegment } from './segment'
@@ -25,16 +25,18 @@ const TRAILER_BYTES_COUNT = 1
 
 describe('Segment', () => {
   const configuration = {} as RumConfiguration
-  let worker: MockWorker
   let encoder: DeflateEncoder
+  let replayStatsHistory: ReplayStatsHistory
+  let worker: MockWorker
 
   beforeEach(() => {
     worker = new MockWorker()
     encoder = createDeflateEncoder(configuration, worker, DeflateEncoderStreamId.REPLAY)
+    replayStatsHistory = startReplayStatsHistory()
     setDebugMode(true)
-    resetReplayStats()
 
     registerCleanupTask(() => {
+      replayStatsHistory.stop()
       setDebugMode(false)
     })
   })
@@ -223,14 +225,10 @@ describe('Segment', () => {
   })
 
   describe('updates segment replay stats', () => {
-    beforeEach(() => {
-      resetReplayStats()
-    })
-
     it('when creating a segment', () => {
       createTestSegment()
       worker.processAllMessages()
-      expect(getReplayStats('b')).toEqual(
+      expect(replayStatsHistory.getReplayStats('b')).toEqual(
         jasmine.objectContaining({
           segments_count: 1,
           records_count: 0,
@@ -244,7 +242,7 @@ describe('Segment', () => {
       segment.addRecord(RECORD, noop)
       segment.flush(noop)
       worker.processAllMessages()
-      expect(getReplayStats('b')).toEqual(
+      expect(replayStatsHistory.getReplayStats('b')).toEqual(
         jasmine.objectContaining({
           segments_count: 1,
           segments_total_raw_size:
@@ -261,7 +259,7 @@ describe('Segment', () => {
     context?: SegmentContext
     creationReason?: CreationReason
   } = {}) {
-    return createSegment({ encoder, context, creationReason })
+    return createSegment({ context, creationReason, encoder, replayStatsHistory })
   }
 })
 

@@ -14,7 +14,6 @@ import type {
   RumConfiguration,
   StartRecordingOptions,
 } from '@datadog/browser-rum-core'
-import { getReplayStats as getReplayStatsImpl } from '../domain/replayStats'
 import type { CreateDeflateWorker } from '../domain/deflate'
 import {
   createDeflateEncoder,
@@ -76,7 +75,7 @@ export function makeRecorderApi(
       getDeflateWorkerStatus() === DeflateWorkerStatus.Initialized && strategy.isRecording(),
 
     getReplayStats: (viewId) =>
-      getDeflateWorkerStatus() === DeflateWorkerStatus.Initialized ? getReplayStatsImpl(viewId) : undefined,
+      getDeflateWorkerStatus() === DeflateWorkerStatus.Initialized ? strategy.getReplayStats(viewId) : undefined,
   }
 
   function onRumStart(
