@@ -1,4 +1,5 @@
 /* eslint-disable no-console */
+import { ignoreConsoleLogs } from '../../../test'
 import { ConsoleApiName } from '../../tools/display'
 import type { Subscription } from '../../tools/observable'
 import type { ErrorConsoleLog } from './consoleObservable'
@@ -81,7 +82,8 @@ describe('console error observable', () => {
   let notifyLog: jasmine.Spy<(consoleLog: ErrorConsoleLog) => void>
 
   beforeEach(() => {
-    spyOn(console, 'error').and.callFake(() => true)
+    ignoreConsoleLogs('error', 'Error: foo')
+    ignoreConsoleLogs('error', 'foo bar')
     notifyLog = jasmine.createSpy('notifyLog')
 
     consoleSubscription = initConsoleObservable([ConsoleApiName.error]).subscribe(notifyLog)

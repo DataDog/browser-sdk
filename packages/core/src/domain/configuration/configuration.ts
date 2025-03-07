@@ -33,6 +33,9 @@ export interface InitConfiguration {
    * The client token for Datadog. Required for authenticating your application with Datadog.
    */
   clientToken: string
+  /**
+   * A callback function that can be used to modify events before they are sent to Datadog.
+   */
   beforeSend?: GenericBeforeSendCallback | undefined
   /**
    * The percentage of sessions tracked. A value between 0 and 100.

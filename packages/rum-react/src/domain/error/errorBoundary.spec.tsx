@@ -1,6 +1,6 @@
 import React, { act } from 'react'
 
-import { disableJasmineUncaughtExceptionTracking } from '../../../../core/test'
+import { disableJasmineUncaughtExceptionTracking, ignoreConsoleLogs } from '../../../../core/test'
 import { appendComponent } from '../../../test/appendComponent'
 import { initializeReactPlugin } from '../../../test/initializeReactPlugin'
 import type { Fallback } from './errorBoundary'
@@ -11,7 +11,8 @@ type FallbackFunctionComponent = Extract<Fallback, (...args: any[]) => any>
 describe('ErrorBoundary', () => {
   beforeEach(() => {
     // Prevent React from displaying the error in the console
-    spyOn(console, 'error')
+    ignoreConsoleLogs('error', 'Error: error')
+
     disableJasmineUncaughtExceptionTracking()
   })
 
