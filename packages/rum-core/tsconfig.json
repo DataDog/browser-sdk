@@ -5,7 +5,8 @@
     "composite": true,
     "declaration": true,
     "rootDir": "./src/",
-    "outDir": "./esm/"
+    "outDir": "./esm/",
+    "declarationDir": "./types/"
   },
   "include": ["./src/**/*.ts"],
   "exclude": ["./src/**/*.spec.ts", "./src/**/*.specHelper.ts"],

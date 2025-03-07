@@ -19,18 +19,5 @@
     { "path": "./packages/worker" },
     //{ "path": "./scripts" },
   ],
-  "compilerOptions": {
-    "composite": true,
-    "paths": {
-      "@datadog/browser-core": ["./packages/core/src"],
-      "@datadog/browser-logs": ["./packages/logs/src"],
-      "@datadog/browser-rum": ["./packages/rum/src"],
-      "@datadog/browser-rum-core": ["./packages/rum-core/src"],
-      "@datadog/browser-rum-react": ["./packages/rum-react/src"],
-      "@datadog/browser-rum-slim": ["./packages/rum-slim/src"],
-      "@datadog/browser-sdk-developer-extension": ["./developer-extension/src"],
-      "@datadog/browser-worker": ["./packages/worker/src"],
-    }
-  },
   "include": []
 }

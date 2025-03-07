@@ -4,7 +4,7 @@
   "license": "Apache-2.0",
   "main": "cjs/entries/main.js",
   "module": "esm/entries/main.js",
-  "types": "cjs/entries/main.d.ts",
+  "types": "types/entries/main.d.ts",
   "scripts": {
     "build": "run-p build:cjs build:esm",
     "build:cjs": "rm -rf cjs && tsc -p tsconfig.cjs.json --noCheck",

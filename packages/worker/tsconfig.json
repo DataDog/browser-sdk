@@ -4,7 +4,9 @@
     "baseUrl": ".",
     "composite": true,
     "declaration": true,
-    "rootDir": "./src/"
+    "rootDir": "./src/",
+    "outDir": "./esm/",
+    "declarationDir": "./types/"
   },
   "include": ["./src/**/*.ts"],
   "exclude": ["./src/**/*.spec.ts", "./src/**/*.specHelper.ts"]
