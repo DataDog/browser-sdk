@@ -217,9 +217,10 @@ function makeTracingHeaders(
 }
 
 function getTraceStateDatadogItems(traceSampled: boolean, getCommonContext: () => CommonContext): string[] {
-  const traceStateDatadogItems: string[] = []
-  traceStateDatadogItems.push(`s:${traceSampled ? '1' : '0'}`)
-  traceStateDatadogItems.push('o:rum')
+  const traceStateDatadogItems: string[] = [
+    `s:${traceSampled ? '1' : '0'}`,
+    'o:rum'
+  ]
   if (isExperimentalFeatureEnabled(ExperimentalFeature.USER_ACCOUNT_TRACE_HEADER)) {
     /**
      * We should only enable this feature after the decoding service is available
