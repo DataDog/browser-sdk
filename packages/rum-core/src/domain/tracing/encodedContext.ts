@@ -1,14 +1,14 @@
-export const encodedContextCache: { [key: string]: string } = {}
+export const encodedContextCache: Map<unknown, string> = new Map()
 
-export function getEncodedContext(key: unknown, encoder: (plainText: string) => string): string | undefined {
+export function getEncodedContext(key: unknown): string | undefined {
   if (!key || typeof key !== 'string') {
     return undefined
   }
-  if (encodedContextCache[key]) {
-    return encodedContextCache[key]
+  if (encodedContextCache.has(key)) {
+    return encodedContextCache.get(key)
   }
-  const encoded = encoder(key)
-  encodedContextCache[key] = encoded
+  const encoded = encodeToUtf8Base64(key)
+  encodedContextCache.set(key, encoded)
   return encoded
 }
 

@@ -21,7 +21,7 @@ import type { PropagatorType, TracingOption } from './tracer.types'
 import type { SpanIdentifier, TraceIdentifier } from './identifier'
 import { createSpanIdentifier, createTraceIdentifier, toPaddedHexadecimalString } from './identifier'
 import { isTraceSampled } from './sampler'
-import { encodeToUtf8Base64, getEncodedContext } from './encodedContextCache'
+import { getEncodedContext } from './encodedContext'
 
 export interface Tracer {
   traceFetch: (context: Partial<RumFetchStartContext>) => void
@@ -217,16 +217,13 @@ function makeTracingHeaders(
 }
 
 function getTraceStateDatadogItems(traceSampled: boolean, getCommonContext: () => CommonContext): string[] {
-  const traceStateDatadogItems: string[] = [
-    `s:${traceSampled ? '1' : '0'}`,
-    'o:rum'
-  ]
+  const traceStateDatadogItems: string[] = [`s:${traceSampled ? '1' : '0'}`, 'o:rum']
   if (isExperimentalFeatureEnabled(ExperimentalFeature.USER_ACCOUNT_TRACE_HEADER)) {
     /**
      * We should only enable this feature after the decoding service is available
      */
-    const userIdEncoded = getEncodedContext(getCommonContext().user.id, encodeToUtf8Base64)
-    const accountIdEncoded = getEncodedContext(getCommonContext().account.id, encodeToUtf8Base64)
+    const userIdEncoded = getEncodedContext(getCommonContext().user.id)
+    const accountIdEncoded = getEncodedContext(getCommonContext().account.id)
     if (userIdEncoded) {
       traceStateDatadogItems.push(`t.usr.id:${userIdEncoded}`)
     }
