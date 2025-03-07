@@ -1,4 +1,10 @@
-import { createRumSessionManagerMock, mockProfiler, mockRumConfiguration, mockViewHistory } from '../../../test'
+import {
+  createRumSessionManagerMock,
+  mockPerformanceObserver,
+  mockProfiler,
+  mockRumConfiguration,
+  mockViewHistory,
+} from '../../../test'
 import { LifeCycle } from '../lifeCycle'
 import { startProfilingCollection } from './profilingCollection'
 import { mockedTrace } from './test-utils/mockedTrace'
@@ -19,6 +25,8 @@ describe('profiling collection', () => {
       id: 'view-id-1',
     })
     lifeCycle = new LifeCycle()
+
+    mockPerformanceObserver()
 
     // Replace Browser's Profiler with a mock for testing purpose.
     mockProfiler(mockedTrace)
