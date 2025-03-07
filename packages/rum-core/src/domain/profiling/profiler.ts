@@ -1,4 +1,12 @@
-import { addEventListener, clearTimeout, setTimeout, DOM_EVENT, monitorError, display } from '@datadog/browser-core'
+import {
+  addEventListener,
+  clearTimeout,
+  setTimeout,
+  DOM_EVENT,
+  monitorError,
+  display,
+  getGlobalObject,
+} from '@datadog/browser-core'
 import { LifeCycleEventType } from '../lifeCycle'
 import type {
   RumProfilerTrace,
@@ -12,9 +20,6 @@ import { getNumberOfSamples } from './utils/getNumberOfSamples'
 import { disableLongTaskRegistry, enableLongTaskRegistry } from './utils/longTaskRegistry'
 import { mayStoreLongTaskIdForProfilerCorrelation } from './profilingCorrelation'
 import { transport } from './transport/transport'
-
-// These APIs might be unavailable in some browsers
-const globalThisProfiler: Profiler | undefined = (globalThis as any).Profiler
 
 export const DEFAULT_RUM_PROFILER_CONFIGURATION: RUMProfilerConfiguration = {
   sampleIntervalMs: 10, // Sample stack trace every 10ms
@@ -107,6 +112,9 @@ export function createRumProfiler({
   }
 
   function startNextProfilerInstance(): void {
+    // These APIs might be unavailable in some browsers
+    const globalThisProfiler: Profiler | undefined = getGlobalObject<any>().Profiler
+
     if (!globalThisProfiler) {
       throw new Error('RUM Profiler is not supported in this browser.')
     }
