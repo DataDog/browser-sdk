@@ -21,6 +21,7 @@ import type { PropagatorType, TracingOption } from './tracer.types'
 import type { SpanIdentifier, TraceIdentifier } from './identifier'
 import { createSpanIdentifier, createTraceIdentifier, toPaddedHexadecimalString } from './identifier'
 import { isTraceSampled } from './sampler'
+import { encodeToUtf8Base64, getEncodedContext } from './encodedContextCache'
 
 export interface Tracer {
   traceFetch: (context: Partial<RumFetchStartContext>) => void
@@ -187,23 +188,11 @@ function makeTracingHeaders(
       }
       // https://www.w3.org/TR/trace-context/
       case 'tracecontext': {
-        let userAccountTraceHeader: string | undefined
-        if (isExperimentalFeatureEnabled(ExperimentalFeature.USER_ACCOUNT_TRACE_HEADER)) {
-          /**
-           * We should only enable this feature after the decoding service is available
-           */
-          const userIdEncoded = encodeToUtf8Base64(getCommonContext().user.id?.toString())
-          // we use Context type for account internally but account id should not be an object
-          /* eslint-disable-next-line @typescript-eslint/no-base-to-string */
-          const accountIdEncoded = encodeToUtf8Base64(getCommonContext().account.id?.toString())
-          userAccountTraceHeader = `${userIdEncoded ? `t.usr.id:${userIdEncoded};` : ''}${accountIdEncoded ? `t.account.id:${accountIdEncoded};` : ''}`
-        }
-
         Object.assign(tracingHeaders, {
           traceparent: `00-0000000000000000${toPaddedHexadecimalString(traceId)}-${toPaddedHexadecimalString(spanId)}-0${
             traceSampled ? '1' : '0'
           }`,
-          tracestate: `dd=${userAccountTraceHeader ?? ''}s:${traceSampled ? '1' : '0'};o:rum`,
+          tracestate: `dd=${getTraceStateDatadogItems(traceSampled, getCommonContext).join(';')}`,
         })
         break
       }
@@ -227,17 +216,22 @@ function makeTracingHeaders(
   return tracingHeaders
 }
 
-/**
- *
- * Helper function to encode a string to base64 in UTF-8
- * Comply with the `_dd.p.usr` standard and avoid non-ASCII characters
- * https://developer.mozilla.org/en-US/docs/Web/API/Window/btoa
- */
-export function encodeToUtf8Base64(plainText: string | undefined) {
-  if (!plainText || plainText === '') {
-    return undefined
+function getTraceStateDatadogItems(traceSampled: boolean, getCommonContext: () => CommonContext): string[] {
+  const traceStateDatadogItems: string[] = []
+  traceStateDatadogItems.push(`s:${traceSampled ? '1' : '0'}`)
+  traceStateDatadogItems.push('o:rum')
+  if (isExperimentalFeatureEnabled(ExperimentalFeature.USER_ACCOUNT_TRACE_HEADER)) {
+    /**
+     * We should only enable this feature after the decoding service is available
+     */
+    const userIdEncoded = getEncodedContext(getCommonContext().user.id, encodeToUtf8Base64)
+    const accountIdEncoded = getEncodedContext(getCommonContext().account.id, encodeToUtf8Base64)
+    if (userIdEncoded) {
+      traceStateDatadogItems.push(`t.usr.id:${userIdEncoded}`)
+    }
+    if (accountIdEncoded) {
+      traceStateDatadogItems.push(`t.account.id:${accountIdEncoded}`)
+    }
   }
-  const bytes = new TextEncoder().encode(plainText)
-  const binString = Array.from(bytes, (byte) => String.fromCodePoint(byte)).join('')
-  return btoa(binString)
+  return traceStateDatadogItems
 }

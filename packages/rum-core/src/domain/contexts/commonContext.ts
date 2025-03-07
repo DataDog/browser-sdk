@@ -3,7 +3,8 @@ import type { RecorderApi } from '../../boot/rumPublicApi'
 
 export interface CommonContext {
   user: User
-  account: Context // Use Context as internal Account type
+  // We don't want to enforce id internally so use Context as internal type
+  account: Context
   context: Context
   hasReplay: true | undefined
 }
