@@ -49,11 +49,12 @@ import type { CustomVitalsState } from '../domain/vital/vitalCollection'
 import { startVitalCollection } from '../domain/vital/vitalCollection'
 import { startCiVisibilityContext } from '../domain/contexts/ciVisibilityContext'
 import { startLongAnimationFrameCollection } from '../domain/longAnimationFrame/longAnimationFrameCollection'
-import { RumPerformanceEntryType } from '../browser/performanceObservable'
+import { RumPerformanceEntryType, supportPerformanceTimingEvent } from '../browser/performanceObservable'
 import { startLongTaskCollection } from '../domain/longTask/longTaskCollection'
 import type { Hooks } from '../hooks'
 import { createHooks } from '../hooks'
 import { startSyntheticsContext } from '../domain/contexts/syntheticsContext'
+import { startProfilingCollection } from '../domain/profiling/profilingCollection'
 import type { RecorderApi } from './rumPublicApi'
 
 export type StartRum = typeof startRum
@@ -188,7 +189,7 @@ export function startRum(
   cleanupTasks.push(stopResourceCollection)
 
   if (configuration.trackLongTasks) {
-    if (PerformanceObserver.supportedEntryTypes?.includes(RumPerformanceEntryType.LONG_ANIMATION_FRAME)) {
+    if (supportPerformanceTimingEvent(RumPerformanceEntryType.LONG_ANIMATION_FRAME)) {
       const { stop: stopLongAnimationFrameCollection } = startLongAnimationFrameCollection(lifeCycle, configuration)
       cleanupTasks.push(stopLongAnimationFrameCollection)
     } else {
@@ -208,6 +209,10 @@ export function startRum(
     actionContexts,
     urlContexts
   )
+
+  // Profiling collection
+  const { stop: stopProfilingCollection } = startProfilingCollection(configuration, lifeCycle, session, viewHistory)
+  cleanupTasks.push(stopProfilingCollection)
 
   return {
     addAction,
