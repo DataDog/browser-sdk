@@ -102,12 +102,13 @@ describe('trackFirstHidden', () => {
       performanceBufferMock.addPerformanceEntry({
         entryType: 'visibility-state',
         name: 'hidden',
-        startTime: 23219031,
+        startTime: 23,
       } as PerformanceEntry)
+
       performanceBufferMock.addPerformanceEntry({
         entryType: 'visibility-state',
         name: 'hidden',
-        startTime: 23,
+        startTime: 23219031,
       } as PerformanceEntry)
 
       firstHidden = trackFirstHidden(configuration)

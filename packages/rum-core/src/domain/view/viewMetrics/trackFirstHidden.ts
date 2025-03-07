@@ -1,58 +1,41 @@
 import type { RelativeTime } from '@datadog/browser-core'
-import { addEventListeners, DOM_EVENT } from '@datadog/browser-core'
+import { addEventListeners, DOM_EVENT, noop } from '@datadog/browser-core'
 import type { RumConfiguration } from '../../configuration'
+import { supportPerformanceTimingEvent, RumPerformanceEntryType } from '../../../browser/performanceObservable'
 
 export type FirstHidden = ReturnType<typeof trackFirstHidden>
 
 export function trackFirstHidden(configuration: RumConfiguration, eventTarget: Window = window) {
-  let timeStamp: RelativeTime = Infinity as RelativeTime
-  let stopListeners: () => void | undefined
-  let earliestHidden = Infinity
+  if (document.visibilityState === 'hidden') {
+    return { timeStamp: 0 as RelativeTime, stop: noop }
+  }
 
-  if (typeof performance !== 'undefined' && 'getEntriesByType' in performance && supportsVisibilityStateEntries()) {
-    const visibilityEntries = performance.getEntriesByType('visibility-state')
-    if (visibilityEntries && visibilityEntries.length > 0) {
-      for (const entry of visibilityEntries) {
-        if (entry.name === 'hidden') {
-          earliestHidden = Math.min(earliestHidden, entry.startTime)
-        }
-      }
+  if (supportPerformanceTimingEvent(RumPerformanceEntryType.VISIBILITY_STATE)) {
+    const firstHiddenEntry = performance.getEntriesByType('visibility-state').find((entry) => entry.name === 'hidden')
+    if (firstHiddenEntry) {
+      return { timeStamp: firstHiddenEntry.startTime as RelativeTime, stop: noop }
     }
   }
-  if (document.visibilityState === 'hidden') {
-    timeStamp = 0 as RelativeTime
-  } else if (earliestHidden < Infinity) {
-    timeStamp = earliestHidden as RelativeTime
-  } else {
-    timeStamp = Infinity as RelativeTime
-    ;({ stop: stopListeners } = addEventListeners(
-      configuration,
-      eventTarget,
-      [DOM_EVENT.PAGE_HIDE, DOM_EVENT.VISIBILITY_CHANGE],
-      (event) => {
-        if (event.type === DOM_EVENT.PAGE_HIDE || document.visibilityState === 'hidden') {
-          timeStamp = event.timeStamp as RelativeTime
-          stopListeners()
-        }
-      },
-      { capture: true }
-    ))
-  }
+
+  let timeStamp: RelativeTime = Infinity as RelativeTime
+
+  const { stop } = addEventListeners(
+    configuration,
+    eventTarget,
+    [DOM_EVENT.PAGE_HIDE, DOM_EVENT.VISIBILITY_CHANGE],
+    (event) => {
+      if (event.type === DOM_EVENT.PAGE_HIDE || document.visibilityState === 'hidden') {
+        timeStamp = event.timeStamp as RelativeTime
+        stop()
+      }
+    },
+    { capture: true }
+  )
 
   return {
     get timeStamp() {
       return timeStamp
     },
-    stop() {
-      stopListeners?.()
-    },
-  }
-
-  function supportsVisibilityStateEntries() {
-    return (
-      typeof PerformanceObserver !== 'undefined' &&
-      PerformanceObserver.supportedEntryTypes &&
-      PerformanceObserver.supportedEntryTypes.includes('visibility-state')
-    )
+    stop,
   }
 }
