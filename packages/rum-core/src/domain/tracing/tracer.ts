@@ -84,7 +84,7 @@ export function startTracer(
           if (context.input instanceof Request && !context.init?.headers) {
             context.input = new Request(context.input)
             Object.keys(tracingHeaders).forEach((key) => {
-              ;(context.input as Request).headers.append(key, tracingHeaders[key])
+              ; (context.input as Request).headers.append(key, tracingHeaders[key])
             })
           } else {
             context.init = shallowClone(context.init)
@@ -156,6 +156,7 @@ function injectHeadersIfTracingAllowed(
       context.traceId,
       context.spanId,
       context.traceSampled,
+      session.id,
       tracingOption.propagatorTypes,
       getCommonContext
     )
@@ -170,6 +171,7 @@ function makeTracingHeaders(
   traceId: TraceIdentifier,
   spanId: SpanIdentifier,
   traceSampled: boolean,
+  sessionId: string,
   propagatorTypes: PropagatorType[],
   getCommonContext: () => CommonContext
 ): TracingHeaders {
@@ -183,16 +185,16 @@ function makeTracingHeaders(
           'x-datadog-parent-id': spanId.toString(),
           'x-datadog-sampling-priority': traceSampled ? '1' : '0',
           'x-datadog-trace-id': traceId.toString(),
+          'x-datadog-tags': `_dd.p.rsid=${sessionId}`,
         })
         break
       }
       // https://www.w3.org/TR/trace-context/
       case 'tracecontext': {
         Object.assign(tracingHeaders, {
-          traceparent: `00-0000000000000000${toPaddedHexadecimalString(traceId)}-${toPaddedHexadecimalString(spanId)}-0${
-            traceSampled ? '1' : '0'
-          }`,
-          tracestate: `dd=${getTraceStateDatadogItems(traceSampled, getCommonContext).join(';')}`,
+          traceparent: `00-0000000000000000${toPaddedHexadecimalString(traceId)}-${toPaddedHexadecimalString(spanId)}-0${traceSampled ? '1' : '0'
+            }`,
+          tracestate: `dd=${getTraceStateDatadogItems(traceSampled, sessionId, getCommonContext).join(';')}`,
         })
         break
       }
@@ -216,7 +218,7 @@ function makeTracingHeaders(
   return tracingHeaders
 }
 
-function getTraceStateDatadogItems(traceSampled: boolean, getCommonContext: () => CommonContext): string[] {
+function getTraceStateDatadogItems(traceSampled: boolean, sessionId: string, getCommonContext: () => CommonContext): string[] {
   const traceStateDatadogItems: string[] = [`s:${traceSampled ? '1' : '0'}`, 'o:rum']
   if (isExperimentalFeatureEnabled(ExperimentalFeature.USER_ACCOUNT_TRACE_HEADER)) {
     /**
@@ -231,5 +233,6 @@ function getTraceStateDatadogItems(traceSampled: boolean, getCommonContext: () =
       traceStateDatadogItems.push(`t.account.id:${accountIdEncoded}`)
     }
   }
+  traceStateDatadogItems.push(`t.rsid:${sessionId}`)
   return traceStateDatadogItems
 }
