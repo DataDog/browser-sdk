@@ -1,5 +1,12 @@
 {
+  "extends": "../tsconfig.node.json",
   "compilerOptions": {
-    "composite": true,
+    "allowJs": true,
+    "noEmit": true,
+    "rootDir": ".",
+    "outDir": "./esm/",
+    "declarationDir": "./types/"
   },
+  "include": ["./**/*.ts", "./**/*.js"],
+  "exclude": ["./esm/**/*", "./types/**/*", "dev-server.js"],
 }

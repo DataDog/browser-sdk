@@ -1,7 +1,10 @@
+const path = require('path')
 const HtmlWebpackPlugin = require('html-webpack-plugin')
 const { default: WebextensionPlugin } = require('@webextension-toolbox/webpack-webextension-plugin')
 const CopyPlugin = require('copy-webpack-plugin')
 const { createDefinePlugin } = require('../webpack.base')
+
+const tsconfigPath = path.join(__dirname, '../tsconfig.webpack.json')
 
 module.exports = (_env, argv) => {
   return [
@@ -71,6 +74,7 @@ module.exports = (_env, argv) => {
             loader: 'ts-loader',
             exclude: /node_modules/,
             options: {
+              configFile: tsconfigPath,
               onlyCompileBundledFiles: true,
             },
           },

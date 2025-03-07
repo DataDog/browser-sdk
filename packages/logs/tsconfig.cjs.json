@@ -1,8 +1,6 @@
 {
-  "extends": "../../tsconfig.base.json",
+  "extends": "../../tsconfig.browser.json",
   "compilerOptions": {
-    "baseUrl": ".",
-    "declaration": true,
     "module": "commonjs",
     "rootDir": "./src/",
     "outDir": "./cjs/"

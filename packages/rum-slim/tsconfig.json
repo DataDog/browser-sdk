@@ -1,13 +1,14 @@
 {
-  "extends": "../../tsconfig.base.json",
+  "extends": "../../tsconfig.browser.json",
   "compilerOptions": {
-    "baseUrl": ".",
-    "composite": true,
-    "declaration": true,
     "rootDir": "./src/",
     "outDir": "./esm/",
     "declarationDir": "./types/"
   },
   "include": ["./src/**/*.ts"],
-  "exclude": ["./src/**/*.spec.ts", "./src/**/*.specHelper.ts"]
+  "exclude": ["./src/**/*.spec.ts", "./src/**/*.specHelper.ts"],
+  "references": [
+    { "path": "../core" },
+    { "path": "../rum-core" },
+  ]
 }

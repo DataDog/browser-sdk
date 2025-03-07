@@ -8,7 +8,7 @@
   "scripts": {
     "build": "run-p build:cjs build:esm",
     "build:cjs": "rm -rf cjs && tsc -p tsconfig.cjs.json && yarn replace-build-env cjs",
-    "build:esm": "rm -rf esm && tsc -p tsconfig.esm.json && yarn replace-build-env esm",
+    "build:esm": "rm -rf esm && tsc -p tsconfig.json && yarn replace-build-env esm",
     "replace-build-env": "node ../../scripts/build/replace-build-env.js"
   },
   "dependencies": {

@@ -9,7 +9,7 @@
 //}
 {
   "references": [
-    //{ "path": "./developer-extension" },
+    { "path": "./developer-extension" },
     { "path": "./packages/core" },
     { "path": "./packages/logs" },
     { "path": "./packages/rum" },
@@ -17,7 +17,7 @@
     { "path": "./packages/rum-react" },
     { "path": "./packages/rum-slim" },
     { "path": "./packages/worker" },
-    //{ "path": "./scripts" },
+    { "path": "./scripts" },
   ],
   "include": []
 }

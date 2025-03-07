@@ -5,6 +5,7 @@ const TerserPlugin = require('terser-webpack-plugin')
 const { buildEnvKeys, getBuildEnvValue } = require('./scripts/lib/buildEnv')
 
 const tsconfigPath = path.join(__dirname, 'tsconfig.webpack.json')
+const baseTsconfigPath = path.join(__dirname, 'tsconfig.base.json')
 
 module.exports = ({ entry, mode, filename, types, keepBuildEnvVariables, plugins }) => ({
   entry,
@@ -29,13 +30,15 @@ module.exports = ({ entry, mode, filename, types, keepBuildEnvVariables, plugins
         loader: 'ts-loader',
         exclude: /node_modules/,
         options: {
-          configFile: tsconfigPath,
-          onlyCompileBundledFiles: true,
-          compilerOptions: {
-            module: 'es2020',
-            allowJs: true,
-            types: types || [],
-          },
+          //configFile: tsconfigPath,
+          //onlyCompileBundledFiles: true,
+          projectReferences: true,
+          //compilerOptions: {
+          //module: 'es2020',
+          //allowJs: true,
+          //types: types || [],
+          //composite: false,
+          //},
         },
       },
     ],
@@ -43,12 +46,28 @@ module.exports = ({ entry, mode, filename, types, keepBuildEnvVariables, plugins
 
   resolve: {
     extensions: ['.ts', '.js', '.tsx'],
-    plugins: [new TsconfigPathsPlugin({ configFile: tsconfigPath })],
+    //plugins: [new TsconfigPathsPlugin({ configFile: baseTsconfigPath })],
     alias: {
       // The default "pako.esm.js" build is not transpiled to es5
       pako: 'pako/dist/pako.es5.js',
+      '@datadog/browser-core': path.join(__dirname, './packages/core/src'),
+      '@datadog/browser-logs': path.join(__dirname, './packages/logs/src'),
+      '@datadog/browser-rum': path.join(__dirname, './packages/rum/src'),
+      '@datadog/browser-rum-core': path.join(__dirname, './packages/rum-core/src'),
+      '@datadog/browser-rum-react': path.join(__dirname, './packages/rum-react/src'),
+      '@datadog/browser-rum-slim': path.join(__dirname, './packages/rum-slim/src'),
+      '@datadog/browser-sdk-developer-extension': path.join(__dirname, './developer-extension/src'),
+      '@datadog/browser-worker': path.join(__dirname, './packages/worker/src'),
     },
   },
+
+  //resolve: {
+  //  extensions: ['.ts', '.tsx', '.js'],
+  //  alias: {
+  //    // The default "pako.esm.js" build is not transpiled to es5
+  //    pako: 'pako/dist/pako.es5.js',
+  //  },
+  //},
 
   optimization: {
     chunkIds: 'named',

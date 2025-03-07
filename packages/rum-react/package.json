@@ -8,7 +8,7 @@
   "scripts": {
     "build": "run-p build:cjs build:esm",
     "build:cjs": "rm -rf cjs && tsc -p tsconfig.cjs.json --noCheck",
-    "build:esm": "rm -rf esm && tsc -p tsconfig.esm.json --noCheck",
+    "build:esm": "rm -rf esm && tsc -p tsconfig.json --noCheck",
     "prepack": "npm run build"
   },
   "dependencies": {

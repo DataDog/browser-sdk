@@ -1,8 +1,7 @@
 {
-  "extends": "../tsconfig.base.json",
+  "extends": "../tsconfig.node.json",
 
   "compilerOptions": {
-    "baseUrl": ".",
     "target": "es6",
     "lib": ["ES2019"],
     "types": ["node", "node-forge"]
