@@ -1,6 +1,6 @@
 import React, { act } from 'react'
 import { MemoryRouter as MemoryRouterV6, useNavigate as useNavigateV6 } from 'react-router-dom-6'
-import { MemoryRouter as MemoryRouterV7, useNavigate as useNavigateV7 } from 'react-router-dom-7'
+import { MemoryRouter as MemoryRouterV7, useNavigate as useNavigateV7 } from 'react-router-dom'
 import { appendComponent } from '../../../test/appendComponent'
 import { initializeReactPlugin } from '../../../test/initializeReactPlugin'
 import { useRoutes as useRoutesV6 } from '../../entries/reactRouterV6'
