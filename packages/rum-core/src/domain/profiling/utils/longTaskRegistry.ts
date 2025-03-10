@@ -30,7 +30,17 @@ export function getLongTaskId(longTaskEntry: PerformanceEntry): string | undefin
     return undefined
   }
 
-  const id = registry.get(longTaskEntry.startTime)
+  return registry.get(longTaskEntry.startTime)
+}
 
-  return id
+export function deleteLongTaskIdsBefore(collectionTime: number) {
+  if (enabledTime === false || collectionTime < enabledTime) {
+    return undefined
+  }
+
+  for (const performanceEntryStartTime of registry.keys()) {
+    if (performanceEntryStartTime < collectionTime) {
+      registry.delete(performanceEntryStartTime)
+    }
+  }
 }
