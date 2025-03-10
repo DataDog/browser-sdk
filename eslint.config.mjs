@@ -288,6 +288,15 @@ export default tseslint.config(
     },
   },
 
+  // All "production files" = files that are used by Browser SDK users
+  {
+    files: ['packages/*/src/**/*', 'developer-extension/src/**/*'],
+    ignores: [SPEC_FILES],
+    rules: {
+      'local-rules/enforce-prod-deps-imports': ['error'],
+    },
+  },
+
   {
     files: ['packages/*/src/**/*.ts', 'developer-extension/src/**/*.{tsx,ts}'],
     rules: {
