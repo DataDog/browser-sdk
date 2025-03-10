@@ -23,7 +23,6 @@ describe('trackInitialViewMetrics', () => {
     registerCleanupTask(clock.cleanup)
 
     trackInitialViewMetricsResult = trackInitialViewMetrics(configuration, setLoadEventSpy, scheduleViewUpdateSpy)
-
     registerCleanupTask(trackInitialViewMetricsResult.stop)
   })
 
@@ -57,5 +56,32 @@ describe('trackInitialViewMetrics', () => {
     clock.tick(0)
 
     expect(setLoadEventSpy).toHaveBeenCalledOnceWith(jasmine.any(Number))
+  })
+})
+
+describe('trackInitialViewMetrics - bfCache restore', () => {
+  let clock: ReturnType<typeof mockClock>
+  let scheduleViewUpdateSpy: jasmine.Spy<() => void>
+  let setLoadEventSpy: jasmine.Spy<(loadEvent: Duration) => void>
+  let trackResult: ReturnType<typeof trackInitialViewMetrics>
+
+  beforeEach(() => {
+    scheduleViewUpdateSpy = jasmine.createSpy()
+    setLoadEventSpy = jasmine.createSpy()
+    const configuration = mockRumConfiguration()
+    clock = mockClock()
+    registerCleanupTask(clock.cleanup)
+
+    trackResult = trackInitialViewMetrics(configuration, setLoadEventSpy, scheduleViewUpdateSpy)
+    registerCleanupTask(trackResult.stop)
+  })
+
+  it('should update metrics with bfCache restore values', () => {
+    const fakePageshowEvent = new PageTransitionEvent('pageshow', {
+      persisted: true,
+    })
+    window.dispatchEvent(fakePageshowEvent)
+    const { initialViewMetrics } = trackResult
+    expect(initialViewMetrics.bfCache).toBe(true)
   })
 })
