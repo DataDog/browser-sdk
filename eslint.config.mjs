@@ -259,7 +259,7 @@ export default tseslint.config(
   },
 
   {
-    files: ['scripts/**/*.spec.js', 'packages/*/scripts/**/*.spec.js'],
+    files: ['scripts/**/*.js', 'packages/*/scripts/**/*.js'],
     ignores: ['**/lib/**'],
     rules: {
       'unicorn/filename-case': ['error', { case: 'kebabCase' }],
@@ -270,7 +270,6 @@ export default tseslint.config(
     files: ['scripts/**/*.js', 'packages/*/scripts/**/*.js'],
     ignores: ['**/lib/**', '**/*.spec.js'],
     rules: {
-      'unicorn/filename-case': ['error', { case: 'kebabCase' }],
       'local-rules/secure-command-execution': 'error',
       'local-rules/disallow-non-scripts': 'error',
     },
