@@ -17,7 +17,7 @@ import type {
   RUMProfilerConfiguration,
 } from './types'
 import { getNumberOfSamples } from './utils/getNumberOfSamples'
-import { disableLongTaskRegistry, enableLongTaskRegistry } from './utils/longTaskRegistry'
+import { disableLongTaskRegistry, enableLongTaskRegistry, deleteLongTaskIdsBefore } from './utils/longTaskRegistry'
 import { mayStoreLongTaskIdForProfilerCorrelation } from './profilingCorrelation'
 import { transport } from './transport/transport'
 
@@ -138,7 +138,7 @@ export function createRumProfiler({
       // If we fail to create a profiler, it's likely due to the missing Response Header (`js-profiling`) that is required to enable the profiler.
       // We should suggest the user to enable the Response Header in their server configuration.
       display.warn(
-        '[DD_RUM] Failed to start the Profiler. Make sure your server is configured to send the `js-profiling` Response Header.',
+        '[DD_RUM] Profiler startup failed. Ensure your server includes the `Document-Policy: js-profiling` response header when serving HTML pages.',
         e
       )
       return
@@ -174,6 +174,9 @@ export function createRumProfiler({
 
     // Store instance data snapshot in local variables to use in async callback
     const { startTime, longTasks, views } = instance
+
+    // Clear long task registry, remove entries that we collected already (it's stored in `longTasks` already and we need to clean-up for next instance, eg. avoid slowly growing memory usage by keeping outdated entries)
+    deleteLongTaskIdsBefore(performance.now())
 
     // Stop current profiler to get trace
     await instance.profiler
