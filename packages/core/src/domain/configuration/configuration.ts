@@ -28,6 +28,18 @@ export const TraceContextInjection = {
 
 export type TraceContextInjection = (typeof TraceContextInjection)[keyof typeof TraceContextInjection]
 
+/**
+ * Important, if you are using the RUM and Logs Browser SDKs, the following options
+ * must be configured with identical values :
+ *
+ * - sessionPersistence
+ * - trackSessionAcrossSubdomains
+ * - useSecureSessionCookie
+ * - usePartitionedCrossSiteSessionCookie
+ * - allowFallbackToLocalStorage (deprecated)
+ *
+ * Mismatching these options between RUM and Logs can cause inconsistent session behavior.
+ */
 export interface InitConfiguration {
   /**
    * The client token for Datadog. Required for authenticating your application with Datadog.
