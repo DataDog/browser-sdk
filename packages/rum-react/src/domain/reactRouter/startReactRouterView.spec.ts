@@ -8,7 +8,7 @@ import {
   createMemoryRouter as createMemoryRouterV7,
   type RouteObject as RouteObjectV7,
   type RouteMatch as RouteMatchV7,
-} from 'react-router-dom-7'
+} from 'react-router-dom'
 import { registerCleanupTask } from '../../../../core/test'
 import { initializeReactPlugin } from '../../../test/initializeReactPlugin'
 import { startReactRouterView, computeViewName } from './startReactRouterView'

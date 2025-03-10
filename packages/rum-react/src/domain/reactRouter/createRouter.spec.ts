@@ -1,11 +1,12 @@
+import { createMemoryRouter as createMemoryRouterV7 } from 'react-router-dom'
+import { createMemoryRouter as createMemoryRouterV6 } from 'react-router-dom-6'
 import { initializeReactPlugin } from '../../../test/initializeReactPlugin'
-import { createMemoryRouter as createMemoryRouterV6 } from '../../entries/reactRouterV6'
-import { createMemoryRouter as createMemoryRouterV7 } from '../../entries/reactRouterV7'
+import { wrapCreateRouter } from './createRouter'
 
 describe('createRouter', () => {
   const versions = [
-    { label: 'react-router v6', createMemoryRouter: createMemoryRouterV6 },
-    { label: 'react-router v7', createMemoryRouter: createMemoryRouterV7 },
+    { label: 'react-router v6', createMemoryRouter: wrapCreateRouter(createMemoryRouterV6) },
+    { label: 'react-router v7', createMemoryRouter: wrapCreateRouter(createMemoryRouterV7) },
   ]
 
   for (const { label, createMemoryRouter } of versions) {
