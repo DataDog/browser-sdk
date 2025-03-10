@@ -20,6 +20,9 @@ describe('createErrorFieldFromRawError', () => {
     csp: {
       disposition: 'enforce',
     },
+    context: {
+      foo: 'bar',
+    },
   }
 
   it('creates an error field from a raw error', () => {

@@ -1134,6 +1134,16 @@ export type RumViewEvent = CommonProperties &
         [k: string]: unknown
       }
       /**
+       * Additional information of the reported Cumulative Layout Shift
+       */
+      readonly cls?: {
+        /**
+         * Pixel ratio of the device where the layout shift was reported
+         */
+        readonly device_pixel_ratio?: number
+        [k: string]: unknown
+      }
+      /**
        * Subset of the SDK configuration options in use during its execution
        */
       readonly configuration?: {
@@ -1201,9 +1211,9 @@ export type RumVitalEvent = CommonProperties &
        */
       readonly name?: string
       /**
-       * Details of the vital. It can be used as a secondary identifier (URL, React component name...)
+       * Description of the vital. It can be used as a secondary identifier (URL, React component name...)
        */
-      readonly details?: string
+      readonly description?: string
       /**
        * Duration of the vital in nanoseconds
        */

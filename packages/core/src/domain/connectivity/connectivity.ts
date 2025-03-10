@@ -8,6 +8,7 @@ interface BrowserNavigator extends Navigator {
 export interface NetworkInformation {
   type?: NetworkInterface
   effectiveType?: EffectiveType
+  saveData: boolean
 }
 
 export interface Connectivity {

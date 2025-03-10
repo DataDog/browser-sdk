@@ -419,7 +419,7 @@ export function makeRumPublicApi(
     },
   })
   const accountContextManager = createContextManager('account', {
-    customerDataTracker: customerDataTrackerManager.getOrCreateTracker(CustomerDataType.User),
+    customerDataTracker: customerDataTrackerManager.getOrCreateTracker(CustomerDataType.Account),
     propertiesConfig: {
       id: { type: 'string', required: true },
       name: { type: 'string' },
@@ -540,7 +540,7 @@ export function makeRumPublicApi(
     getInitConfiguration: monitor(() => deepClone(strategy.initConfiguration)),
 
     addAction: (name, context) => {
-      const handlingStack = createHandlingStack()
+      const handlingStack = createHandlingStack('action')
 
       callMonitored(() => {
         strategy.addAction({
@@ -555,7 +555,7 @@ export function makeRumPublicApi(
     },
 
     addError: (error, context) => {
-      const handlingStack = createHandlingStack()
+      const handlingStack = createHandlingStack('error')
       callMonitored(() => {
         strategy.addError({
           error, // Do not sanitize error here, it is needed unserialized by computeRawError()

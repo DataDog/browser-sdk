@@ -1,13 +1,7 @@
 import type { DeflateWorker, DeflateWorkerResponse } from '@datadog/browser-core'
-import {
-  addTelemetryError,
-  display,
-  addEventListener,
-  setTimeout,
-  ONE_SECOND,
-  DOCS_ORIGIN,
-} from '@datadog/browser-core'
+import { addTelemetryError, display, addEventListener, setTimeout, ONE_SECOND } from '@datadog/browser-core'
 import type { RumConfiguration } from '@datadog/browser-rum-core'
+import { reportScriptLoadingError } from '../scriptLoadingError'
 
 export const INITIALIZATION_TIME_OUT_DELAY = 30 * ONE_SECOND
 
@@ -144,20 +138,12 @@ function onInitialized(version: string) {
 
 function onError(configuration: RumConfiguration, source: string, error: unknown, streamId?: number) {
   if (state.status === DeflateWorkerStatus.Loading || state.status === DeflateWorkerStatus.Nil) {
-    display.error(`${source} failed to start: an error occurred while creating the Worker:`, error)
-    if (error instanceof Event || (error instanceof Error && isMessageCspRelated(error.message))) {
-      let baseMessage
-      if (configuration.workerUrl) {
-        baseMessage = `Please make sure the Worker URL ${configuration.workerUrl} is correct and CSP is correctly configured.`
-      } else {
-        baseMessage = 'Please make sure CSP is correctly configured.'
-      }
-      display.error(
-        `${baseMessage} See documentation at ${DOCS_ORIGIN}/integrations/content_security_policy_logs/#use-csp-with-real-user-monitoring-and-session-replay`
-      )
-    } else {
-      addTelemetryError(error)
-    }
+    reportScriptLoadingError({
+      configuredUrl: configuration.workerUrl,
+      error,
+      source,
+      scriptType: 'worker',
+    })
     if (state.status === DeflateWorkerStatus.Loading) {
       state.initializationFailureCallbacks.forEach((callback) => callback())
     }
@@ -168,12 +154,4 @@ function onError(configuration: RumConfiguration, source: string, error: unknown
       stream_id: streamId,
     })
   }
-}
-
-function isMessageCspRelated(message: string) {
-  return (
-    message.includes('Content Security Policy') ||
-    // Related to `require-trusted-types-for` CSP: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Security-Policy/require-trusted-types-for
-    message.includes("requires 'TrustedScriptURL'")
-  )
 }

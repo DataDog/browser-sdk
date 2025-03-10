@@ -2,7 +2,7 @@ import { Link, Outlet, RouterProvider, useParams } from 'react-router-dom'
 import React, { useEffect, useState } from 'react'
 import ReactDOM from 'react-dom/client'
 import { datadogRum } from '@datadog/browser-rum'
-import { createBrowserRouter } from '@datadog/browser-rum-react/react-router-v6'
+import { createBrowserRouter } from '@datadog/browser-rum-react/react-router-v7'
 import { reactPlugin, ErrorBoundary, UNSTABLE_ReactComponentTracker } from '@datadog/browser-rum-react'
 
 datadogRum.init({

@@ -102,7 +102,7 @@ export function instrumentMethod<TARGET extends { [key: string]: any }, METHOD e
         onPostCall: (callback) => {
           postCallCallback = callback
         },
-        handlingStack: computeHandlingStack ? createHandlingStack() : undefined,
+        handlingStack: computeHandlingStack ? createHandlingStack('instrumented method') : undefined,
       },
     ])
 

@@ -158,7 +158,12 @@ describe('Logger', () => {
               message: 'High level error',
               handling: ErrorHandling.HANDLED,
               causes: [
-                { message: 'Mid level error', source: 'logger', type: 'Error', stack: 'Error: Mid level error' },
+                {
+                  message: 'Mid level error',
+                  source: 'logger',
+                  type: 'Error',
+                  stack: 'Error: Mid level error',
+                },
                 {
                   message: 'Low level error',
                   source: 'logger',

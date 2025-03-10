@@ -1,5 +1,5 @@
 import { combine } from '@datadog/browser-core'
-import type { RelativeTime } from '@datadog/browser-core'
+import type { Duration, RelativeTime } from '@datadog/browser-core'
 import type { RumEvent } from './rumEvent.types'
 
 export const enum HookNames {
@@ -27,6 +27,7 @@ export type HookCallbackMap = {
   [HookNamesAsConst.ASSEMBLE]: (param: {
     eventType: RumEvent['type']
     startTime: RelativeTime
+    duration?: Duration | undefined
   }) => PartialRumEvent | undefined
 }
 

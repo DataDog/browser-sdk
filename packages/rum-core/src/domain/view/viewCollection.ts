@@ -8,7 +8,6 @@ import type { LifeCycle, RawRumEventCollectedData } from '../lifeCycle'
 import { LifeCycleEventType } from '../lifeCycle'
 import type { LocationChange } from '../../browser/locationChangeObservable'
 import type { RumConfiguration } from '../configuration'
-import type { PageStateHistory } from '../contexts/pageStateHistory'
 import type { ViewHistory } from '../contexts/viewHistory'
 import type { Hooks, PartialRumEvent } from '../../hooks'
 import { HookNames } from '../../hooks'
@@ -25,16 +24,12 @@ export function startViewCollection(
   domMutationObservable: Observable<void>,
   pageOpenObservable: Observable<void>,
   locationChangeObservable: Observable<LocationChange>,
-  pageStateHistory: PageStateHistory,
   recorderApi: RecorderApi,
   viewHistory: ViewHistory,
   initialViewOptions?: ViewOptions
 ) {
   lifeCycle.subscribe(LifeCycleEventType.VIEW_UPDATED, (view) =>
-    lifeCycle.notify(
-      LifeCycleEventType.RAW_RUM_EVENT_COLLECTED,
-      processViewUpdate(view, configuration, recorderApi, pageStateHistory)
-    )
+    lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, processViewUpdate(view, configuration, recorderApi))
   )
 
   hooks.register(HookNames.Assemble, ({ startTime, eventType }): PartialRumEvent | undefined => {
@@ -67,16 +62,19 @@ export function startViewCollection(
 function processViewUpdate(
   view: ViewEvent,
   configuration: RumConfiguration,
-  recorderApi: RecorderApi,
-  pageStateHistory: PageStateHistory
+  recorderApi: RecorderApi
 ): RawRumEventCollectedData<RawRumViewEvent> {
   const replayStats = recorderApi.getReplayStats(view.id)
-  const pageStates = pageStateHistory.findAll(view.startClocks.relative, view.duration)
+  const clsDevicePixelRatio = view.commonViewMetrics?.cumulativeLayoutShift?.devicePixelRatio
   const viewEvent: RawRumViewEvent = {
     _dd: {
       document_version: view.documentVersion,
       replay_stats: replayStats,
-      page_states: pageStates,
+      cls: clsDevicePixelRatio
+        ? {
+            device_pixel_ratio: clsDevicePixelRatio,
+          }
+        : undefined,
       configuration: {
         start_session_replay_recording_manually: configuration.startSessionReplayRecordingManually,
       },
@@ -151,6 +149,7 @@ function processViewUpdate(
   return {
     rawRumEvent: viewEvent,
     startTime: view.startClocks.relative,
+    duration: view.duration,
     domainContext: {
       location: view.location,
     },

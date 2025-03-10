@@ -1,7 +1,8 @@
 import { performDraw } from '@datadog/browser-core'
-import type { TraceIdentifier } from './identifier'
 
-export function isTraceSampled(identifier: TraceIdentifier, sampleRate: number) {
+let sampleDecisionCache: { sessionId: string; decision: boolean } | undefined
+
+export function isTraceSampled(sessionId: string, sampleRate: number) {
   // Shortcuts for common cases. This is not strictly necessary, but it makes the code faster for
   // customers willing to ingest all traces.
   if (sampleRate === 100) {
@@ -12,13 +13,37 @@ export function isTraceSampled(identifier: TraceIdentifier, sampleRate: number) 
     return false
   }
 
-  // For simplicity, we don't use consistent sampling for browser that don't support BigInt
-  // TODO: remove this when all browser we support have BigInt support
-  if (typeof identifier !== 'bigint') {
-    return performDraw(sampleRate)
+  if (sampleDecisionCache && sessionId === sampleDecisionCache.sessionId) {
+    return sampleDecisionCache.decision
   }
 
-  // Offer consistent sampling for the same trace id across different environments. The rule is:
+  let decision: boolean
+  // @ts-expect-error BigInt might not be defined in every browser we support
+  if (window.BigInt) {
+    decision = sampleUsingKnuthFactor(BigInt(`0x${sessionId.split('-')[4]}`), sampleRate)
+  } else {
+    // For simplicity, we don't use consistent sampling for browser without BigInt support
+    // TODO: remove this when all browser we support have BigInt support
+    decision = performDraw(sampleRate)
+  }
+  sampleDecisionCache = { sessionId, decision }
+  return decision
+}
+
+// Exported for tests
+export function resetSampleDecisionCache() {
+  sampleDecisionCache = undefined
+}
+
+/**
+ * Perform sampling using the Knuth factor method. This method offer consistent sampling result
+ * based on the provided identifier.
+ *
+ * @param identifier The identifier to use for sampling.
+ * @param sampleRate The sample rate in percentage between 0 and 100.
+ */
+export function sampleUsingKnuthFactor(identifier: bigint, sampleRate: number) {
+  // The formula is:
   //
   //   (identifier * knuthFactor) % 2^64 < sampleRate * 2^64
   //

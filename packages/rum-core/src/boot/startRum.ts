@@ -43,7 +43,6 @@ import { startFeatureFlagContexts } from '../domain/contexts/featureFlagContext'
 import { startCustomerDataTelemetry } from '../domain/startCustomerDataTelemetry'
 import type { PageStateHistory } from '../domain/contexts/pageStateHistory'
 import { startPageStateHistory } from '../domain/contexts/pageStateHistory'
-import type { FeatureFlagContexts } from '../domain/contexts/featureFlagContext'
 import type { CommonContext } from '../domain/contexts/commonContext'
 import { startDisplayContext } from '../domain/contexts/displayContext'
 import type { CustomVitalsState } from '../domain/vital/vitalCollection'
@@ -101,10 +100,6 @@ export function startRum(
     lifeCycle.notify(LifeCycleEventType.RAW_ERROR_COLLECTED, { error })
     addTelemetryDebug('Error reported to customer', { 'error.message': error.message })
   }
-  const featureFlagContexts = startFeatureFlagContexts(
-    lifeCycle,
-    customerDataTrackerManager.getOrCreateTracker(CustomerDataType.FeatureFlag)
-  )
 
   const pageExitObservable = createPageExitObservable(configuration)
   const pageExitSubscription = pageExitObservable.subscribe((event) => {
@@ -133,10 +128,16 @@ export function startRum(
 
   const domMutationObservable = createDOMMutationObservable()
   const locationChangeObservable = createLocationChangeObservable(configuration, location)
-  const pageStateHistory = startPageStateHistory(configuration)
+  const pageStateHistory = startPageStateHistory(hooks, configuration)
   const viewHistory = startViewHistory(lifeCycle)
   const urlContexts = startUrlContexts(lifeCycle, hooks, locationChangeObservable, location)
-
+  const featureFlagContexts = startFeatureFlagContexts(
+    lifeCycle,
+    hooks,
+    configuration,
+    customerDataTrackerManager.getOrCreateTracker(CustomerDataType.FeatureFlag)
+  )
+  cleanupTasks.push(() => featureFlagContexts.stop())
   const { observable: windowOpenObservable, stop: stopWindowOpen } = createWindowOpenObservable()
   cleanupTasks.push(stopWindowOpen)
 
@@ -151,7 +152,6 @@ export function startRum(
     session,
     pageStateHistory,
     domMutationObservable,
-    featureFlagContexts,
     windowOpenObservable,
     urlContexts,
     viewHistory,
@@ -178,7 +178,6 @@ export function startRum(
     domMutationObservable,
     windowOpenObservable,
     locationChangeObservable,
-    pageStateHistory,
     recorderApi,
     viewHistory,
     initialViewOptions
@@ -198,9 +197,9 @@ export function startRum(
     }
   }
 
-  const { addError } = startErrorCollection(lifeCycle, configuration, pageStateHistory)
+  const { addError } = startErrorCollection(lifeCycle, configuration)
 
-  startRequestCollection(lifeCycle, configuration, session)
+  startRequestCollection(lifeCycle, configuration, session, getCommonContext)
 
   const vitalCollection = startVitalCollection(lifeCycle, pageStateHistory, customVitalsState)
   const internalContext = startInternalContext(
@@ -255,7 +254,6 @@ export function startRumEventCollection(
   sessionManager: RumSessionManager,
   pageStateHistory: PageStateHistory,
   domMutationObservable: Observable<void>,
-  featureFlagContexts: FeatureFlagContexts,
   windowOpenObservable: Observable<void>,
   urlContexts: UrlContexts,
   viewHistory: ViewHistory,
@@ -267,8 +265,7 @@ export function startRumEventCollection(
     hooks,
     domMutationObservable,
     windowOpenObservable,
-    configuration,
-    pageStateHistory
+    configuration
   )
 
   const displayContext = startDisplayContext(configuration)
@@ -283,7 +280,6 @@ export function startRumEventCollection(
     viewHistory,
     urlContexts,
     displayContext,
-    featureFlagContexts,
     getCommonContext,
     reportError
   )
@@ -296,7 +292,9 @@ export function startRumEventCollection(
       actionCollection.stop()
       ciVisibilityContext.stop()
       displayContext.stop()
+      viewHistory.stop()
       pageStateHistory.stop()
+      urlContexts.stop()
     },
   }
 }

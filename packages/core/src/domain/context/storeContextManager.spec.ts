@@ -47,7 +47,7 @@ describe('storeContextManager', () => {
 
   it('should update local storage on context updates', () => {
     const manager = createStoredContextManager()
-    expect(localStorage.getItem(STORAGE_KEY)).toBe('{}')
+    expect(localStorage.getItem(STORAGE_KEY)).toBe(null)
 
     manager.setContext({ bar: 'foo' })
     expect(localStorage.getItem(STORAGE_KEY)).toBe('{"bar":"foo"}')

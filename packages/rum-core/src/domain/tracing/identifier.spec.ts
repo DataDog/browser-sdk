@@ -1,17 +1,6 @@
-import { ExperimentalFeature } from '@datadog/browser-core'
-import { mockExperimentalFeatures } from '../../../../core/test'
-import {
-  createSpanIdentifier,
-  createTraceIdentifier,
-  toPaddedHexadecimalString,
-  clearIdentifierImplementationCache,
-} from './identifier'
+import { createSpanIdentifier, createTraceIdentifier, toPaddedHexadecimalString } from './identifier'
 
 describe('identifier', () => {
-  beforeEach(() => {
-    clearIdentifierImplementationCache()
-  })
-
   describe('TraceIdentifier', () => {
     it('generates a random id', () => {
       const identifier = createTraceIdentifier()
@@ -25,7 +14,7 @@ describe('identifier', () => {
     })
 
     it('should generate a max value of 64 bits', () => {
-      mockRandomValues((buffer) => fill(buffer, 0xff))
+      mockRandomValues((buffer) => buffer.fill(0xff))
       const identifier = createTraceIdentifier()
       expect(identifier.toString(16)).toEqual('ffffffffffffffff')
     })
@@ -33,44 +22,9 @@ describe('identifier', () => {
 
   describe('SpanIdentifier', () => {
     it('generates a max value of 63 bits', () => {
-      mockRandomValues((buffer) => fill(buffer, 0xff))
+      mockRandomValues((buffer) => buffer.fill(0xff))
       const identifier = createSpanIdentifier()
       expect(identifier.toString(16)).toEqual('7fffffffffffffff')
-    })
-  })
-
-  // Run the same tests again with consistent trace sampling enabled, which uses the BigInt
-  // implementation
-  describe('with CONSISTENT_TRACE_SAMPLING enabled', () => {
-    beforeEach(() => {
-      mockExperimentalFeatures([ExperimentalFeature.CONSISTENT_TRACE_SAMPLING])
-    })
-
-    describe('TraceIdentifier', () => {
-      it('generates a random id', () => {
-        const identifier = createTraceIdentifier()
-        expect(identifier.toString()).toMatch(/^\d+$/)
-      })
-
-      it('formats using base 16', () => {
-        mockRandomValues((buffer) => (buffer[0] = 0xff))
-        const identifier = createTraceIdentifier()
-        expect(identifier.toString(16)).toEqual('ff')
-      })
-
-      it('should generate a max value of 64 bits', () => {
-        mockRandomValues((buffer) => fill(buffer, 0xff))
-        const identifier = createTraceIdentifier()
-        expect(identifier.toString(16)).toEqual('ffffffffffffffff')
-      })
-    })
-
-    describe('SpanIdentifier', () => {
-      it('generates a max value of 63 bits', () => {
-        mockRandomValues((buffer) => fill(buffer, 0xff))
-        const identifier = createSpanIdentifier()
-        expect(identifier.toString(16)).toEqual('7fffffffffffffff')
-      })
     })
   })
 })
@@ -88,11 +42,4 @@ function mockRandomValues(cb: (buffer: Uint8Array) => void) {
     cb(new Uint8Array(bufferView!.buffer))
     return bufferView
   })
-}
-
-// TODO: replace with `buffer.fill(value)` when we drop support for IE11
-function fill(buffer: Uint8Array, value: number) {
-  for (let i = 0; i < buffer.length; i++) {
-    buffer[i] = value
-  }
 }

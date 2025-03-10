@@ -149,4 +149,19 @@ describe('trackLargestContentfulPaint', () => {
     expect(lcpCallback.calls.first().args[0]).toEqual(jasmine.objectContaining({ value: 1 }))
     expect(lcpCallback.calls.mostRecent().args[0]).toEqual(jasmine.objectContaining({ value: 2 }))
   })
+
+  it('should return undefined when LCP entry has an empty string as url', () => {
+    startLCPTracking()
+    notifyPerformanceEntries([
+      createPerformanceEntry(RumPerformanceEntryType.LARGEST_CONTENTFUL_PAINT, {
+        url: '',
+      }),
+    ])
+
+    expect(lcpCallback).toHaveBeenCalledOnceWith({
+      value: 789 as RelativeTime,
+      targetSelector: undefined,
+      resourceUrl: undefined,
+    })
+  })
 })

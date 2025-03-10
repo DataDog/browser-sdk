@@ -79,6 +79,7 @@ describe('trackCumulativeLayoutShift', () => {
       targetSelector: undefined,
       previousRect: undefined,
       currentRect: undefined,
+      devicePixelRatio: jasmine.any(Number),
     })
   })
 
@@ -143,6 +144,7 @@ describe('trackCumulativeLayoutShift', () => {
       targetSelector: undefined,
       previousRect: undefined,
       currentRect: undefined,
+      devicePixelRatio: jasmine.any(Number),
     })
   })
 
@@ -164,6 +166,7 @@ describe('trackCumulativeLayoutShift', () => {
       targetSelector: undefined,
       previousRect: undefined,
       currentRect: undefined,
+      devicePixelRatio: jasmine.any(Number),
     })
   })
 
@@ -218,6 +221,7 @@ describe('trackCumulativeLayoutShift', () => {
       targetSelector: undefined,
       previousRect: undefined,
       currentRect: undefined,
+      devicePixelRatio: jasmine.any(Number),
     })
   })
 
@@ -349,6 +353,7 @@ describe('trackCumulativeLayoutShift', () => {
         targetSelector: '#div-element',
         previousRect: { x: 0, y: 0, width: 10, height: 10 },
         currentRect: { x: 50, y: 50, width: 10, height: 10 },
+        devicePixelRatio: jasmine.any(Number),
       })
     })
   })

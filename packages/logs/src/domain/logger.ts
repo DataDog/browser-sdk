@@ -98,7 +98,7 @@ export class Logger {
     let handlingStack: string | undefined
 
     if (isAuthorized(status, HandlerType.http, this)) {
-      handlingStack = createHandlingStack()
+      handlingStack = createHandlingStack('log')
     }
 
     this.logImplementation(message, messageContext, status, error, handlingStack)
@@ -172,7 +172,7 @@ function createLoggerMethod(status: StatusType) {
     let handlingStack: string | undefined
 
     if (isAuthorized(status, HandlerType.http, this)) {
-      handlingStack = createHandlingStack()
+      handlingStack = createHandlingStack('log')
     }
 
     this.logImplementation(message, messageContext, status, error, handlingStack)
