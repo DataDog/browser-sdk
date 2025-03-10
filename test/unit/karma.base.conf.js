@@ -104,7 +104,7 @@ function overrideTsLoaderRule(module) {
   // We use swc-loader to transpile some dependencies that are using syntax not compatible with browsers we use for testing
   module.rules.push({
     test: /\.m?js$/,
-    include: /node_modules\/(react-router-dom-7|turbo-stream)/,
+    include: /node_modules\/(react-router-dom|turbo-stream)/,
     use: {
       loader: 'swc-loader',
       options: {
