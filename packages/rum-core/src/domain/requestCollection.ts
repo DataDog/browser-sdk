@@ -23,6 +23,7 @@ import { isAllowedRequestUrl } from './resource/resourceUtils'
 import type { Tracer } from './tracing/tracer'
 import { startTracer } from './tracing/tracer'
 import type { SpanIdentifier, TraceIdentifier } from './tracing/identifier'
+import type { CommonContext } from './contexts/commonContext'
 
 export interface CustomContext {
   requestIndex: number
@@ -65,9 +66,10 @@ let nextRequestIndex = 1
 export function startRequestCollection(
   lifeCycle: LifeCycle,
   configuration: RumConfiguration,
-  sessionManager: RumSessionManager
+  sessionManager: RumSessionManager,
+  getCommonContext: () => CommonContext
 ) {
-  const tracer = startTracer(configuration, sessionManager)
+  const tracer = startTracer(configuration, sessionManager, getCommonContext)
   trackXhr(lifeCycle, configuration, tracer)
   trackFetch(lifeCycle, tracer)
 }

@@ -198,7 +198,7 @@ export function startRum(
 
   const { addError } = startErrorCollection(lifeCycle, configuration)
 
-  startRequestCollection(lifeCycle, configuration, session)
+  startRequestCollection(lifeCycle, configuration, session, getCommonContext)
 
   const vitalCollection = startVitalCollection(lifeCycle, pageStateHistory, customVitalsState)
   const internalContext = startInternalContext(
