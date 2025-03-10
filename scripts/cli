@@ -83,6 +83,7 @@ cmd_woke () {
 }
 
 cmd_check_typescript_compatibility () {
+  yarn install --no-immutable
   yarn build
   cd test/app
   rm -rf node_modules
