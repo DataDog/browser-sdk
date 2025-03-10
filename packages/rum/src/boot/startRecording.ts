@@ -1,7 +1,7 @@
 import type { RawError, HttpRequest, DeflateEncoder } from '@datadog/browser-core'
 import { createHttpRequest, addTelemetryDebug, canUseEventBridge } from '@datadog/browser-core'
 import type { LifeCycle, ViewHistory, RumConfiguration, RumSessionManager } from '@datadog/browser-rum-core'
-import { LifeCycleEventType } from '@datadog/browser-rum-core'
+import { LifeCycleEventType, startReplayStatsHistory } from '@datadog/browser-rum-core'
 
 import { record } from '../domain/record'
 import { startSegmentCollection, SEGMENT_BYTES_LIMIT } from '../domain/segmentCollection'
@@ -26,6 +26,8 @@ export function startRecording(
   const replayRequest =
     httpRequest || createHttpRequest(configuration.sessionReplayEndpointBuilder, SEGMENT_BYTES_LIMIT, reportError)
 
+  const replayStatsHistory = startReplayStatsHistory()
+
   let addRecord: (record: BrowserRecord) => void
 
   if (!canUseEventBridge()) {
@@ -33,6 +35,7 @@ export function startRecording(
       lifeCycle,
       configuration,
       sessionManager,
+      replayStatsHistory,
       viewHistory,
       replayRequest,
       encoder
@@ -47,11 +50,13 @@ export function startRecording(
     emit: addRecord,
     configuration,
     lifeCycle,
+    replayStatsHistory,
     viewHistory,
   })
   cleanupTasks.push(stopRecording)
 
   return {
+    replayStatsHistory,
     stop: () => {
       cleanupTasks.forEach((task) => task())
     },
