@@ -6,7 +6,7 @@ interface ProfileEventAttributes {
   application: { id: string }
   session?: { id: string }
   view?: { ids: string[] }
-  context?: { profile_long_task_id: string[] }
+  context?: { long_task: { id: string[] } }
 }
 interface ProfileEvent extends ProfileEventAttributes {
   attachments: string[]
@@ -137,7 +137,7 @@ function buildProfileEventAttributes(
 
   if (longTaskIds.length) {
     attributes.context = {
-      profile_long_task_id: longTaskIds,
+      long_task: { id: longTaskIds },
     }
   }
   return attributes
