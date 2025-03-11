@@ -1,8 +1,10 @@
-import { deepClone } from '../../tools/mergeInto'
 import { sanitize } from '../../tools/serialisation/sanitize'
 import type { Context } from '../../tools/serialisation/context'
 import { Observable } from '../../tools/observable'
 import { display } from '../../tools/display'
+import type { RelativeTime } from '../../tools/utils/timeUtils'
+import { dateNow } from '../../tools/utils/timeUtils'
+import { computeBytesCount } from '../../tools/utils/byteUtils'
 import type { CustomerDataTracker } from './customerDataTracker'
 import { checkContext } from './contextUtils'
 
@@ -36,6 +38,11 @@ function ensureProperties(context: Context, propertiesConfig: PropertiesConfig, 
   return newContext
 }
 
+type ContextLogEntry = {
+  timestamp: number
+  change: Partial<Context> | undefined
+}
+
 export function createContextManager(
   name: string = '',
   {
@@ -48,13 +55,38 @@ export function createContextManager(
 ) {
   let context: Context = {}
   const changeObservable = new Observable<void>()
+  const logs: ContextLogEntry[] = []
+  if (!(window as any)._dd_logs) {
+    ;(window as any)._dd_logs = { size: {} }
+  }
+  ;(window as any)._dd_logs[name] = logs
+
+  // eslint-disable-next-line local-rules/disallow-zone-js-patched-values
+  setInterval(() => {
+    ;(window as any)._dd_logs['size'][name] = computeBytesCount(JSON.stringify(logs))
+  }, 1000)
 
   const contextManager = {
-    getContext: () => deepClone(context),
+    getContext: (timestamp?: RelativeTime) => {
+      if (!timestamp) {
+        return context
+      }
+
+      const reconstructedContext: Context = {}
+      for (const entry of logs) {
+        if (entry.timestamp > timestamp) {
+          break
+        }
+        Object.assign(reconstructedContext, entry.change)
+      }
+
+      return reconstructedContext
+    },
 
     setContext: (newContext: unknown) => {
       if (checkContext(newContext)) {
         context = sanitize(ensureProperties(newContext, propertiesConfig, name))
+        logs.push({ timestamp: dateNow(), change: context })
         customerDataTracker?.updateCustomerData(context)
       } else {
         contextManager.clearContext()
@@ -64,12 +96,14 @@ export function createContextManager(
 
     setContextProperty: (key: string, property: any) => {
       context = sanitize(ensureProperties({ ...context, [key]: property }, propertiesConfig, name))
+      logs.push({ timestamp: dateNow(), change: { [key]: property } })
       customerDataTracker?.updateCustomerData(context)
       changeObservable.notify()
     },
 
     removeContextProperty: (key: string) => {
       delete context[key]
+      logs.push({ timestamp: dateNow(), change: { [key]: undefined } })
       customerDataTracker?.updateCustomerData(context)
       ensureProperties(context, propertiesConfig, name)
       changeObservable.notify()
@@ -77,11 +111,13 @@ export function createContextManager(
 
     clearContext: () => {
       context = {}
+      logs.push({ timestamp: dateNow(), change: undefined })
       customerDataTracker?.resetCustomerData()
       changeObservable.notify()
     },
 
     changeObservable,
   }
+
   return contextManager
 }

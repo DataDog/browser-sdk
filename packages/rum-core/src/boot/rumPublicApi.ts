@@ -29,6 +29,7 @@ import {
   displayAlreadyInitializedError,
   createTrackingConsentState,
   timeStampToClocks,
+  display,
 } from '@datadog/browser-core'
 import type { LifeCycle } from '../domain/lifeCycle'
 import type { ViewHistory } from '../domain/contexts/viewHistory'
@@ -401,7 +402,41 @@ export interface Strategy {
   addDurationVital: StartRumResult['addDurationVital']
 }
 
+// eslint-disable-next-line local-rules/disallow-side-effects
+;(window as any).apiCallCounter = {} as Record<string, number>
+// eslint-disable-next-line local-rules/disallow-side-effects
+display.log('Public API calls counter initialized')
+// eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
+function wrapWithCounter<T extends Function>(methodName: string, method: T): T {
+  return ((...args: any[]) => {
+    ;(window as any).apiCallCounter[methodName] = ((window as any).apiCallCounter[methodName] || 0) + 1
+    // display.log(`Public API '${methodName}' called ${(window as any).apiCallCounter[methodName]} times`)
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-call
+    return method(...args)
+  }) as unknown as T
+}
+
 export function makeRumPublicApi(
+  startRumImpl: StartRum,
+  recorderApi: RecorderApi,
+  options: RumPublicApiOptions = {}
+): RumPublicApi {
+  const rumPublicApi = makeRumPublicApi2(startRumImpl, recorderApi, options)
+
+  const wrappedApi: Partial<RumPublicApi> = {}
+
+  for (const key in rumPublicApi) {
+    if (typeof rumPublicApi[key as keyof RumPublicApi] === 'function') {
+      wrappedApi[key as keyof RumPublicApi] = wrapWithCounter(key, rumPublicApi[key as keyof RumPublicApi] as any)
+    } else {
+      wrappedApi[key as keyof RumPublicApi] = rumPublicApi[key as keyof RumPublicApi] as any
+    }
+  }
+
+  return wrappedApi as RumPublicApi
+}
+
+export function makeRumPublicApi2(
   startRumImpl: StartRum,
   recorderApi: RecorderApi,
   options: RumPublicApiOptions = {}
