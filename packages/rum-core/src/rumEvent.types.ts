@@ -988,6 +988,20 @@ export type RumViewEvent = CommonProperties &
         [k: string]: unknown
       }
       /**
+       * List of slow frames during the view’s lifetime
+       */
+      readonly slow_frames?: {
+        /**
+         * Duration in ns between start of the view and the start of the slow frame
+         */
+        readonly start: number
+        /**
+         * Duration in ns of the slow frame
+         */
+        readonly duration: number
+        [k: string]: unknown
+      }[]
+      /**
        * Properties of the resources of the view
        */
       readonly resource: {
@@ -1045,6 +1059,14 @@ export type RumViewEvent = CommonProperties &
        * Minimum refresh rate during the view’s lifetime (in frames per second)
        */
       readonly refresh_rate_min?: number
+      /**
+       * Rate of slow frames during the view’s lifetime (in milliseconds per second)
+       */
+      readonly slow_frames_rate?: number
+      /**
+       * Rate of freezes during the view’s lifetime (in seconds per hour)
+       */
+      readonly freeze_rate?: number
       /**
        * Time taken for Flutter 'build' methods.
        */
