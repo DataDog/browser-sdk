@@ -1,10 +1,13 @@
 {
   "name": "RUM-8783",
   "version": "1.0.0",
-  "description": "",
+  "description": "Chrome extension that intercepts and redirects RUM telemetry",
   "main": "dist/index.js",
   "scripts": {
-    "build": "esbuild src/content-scripts.js --bundle --outfile=dist/content-script.js --define:__BUILD_ENV__SDK_VERSION__=\\\"env\\\""
+    "build": "npm run build:content && npm run build:popup && npm run copy:html",
+    "build:content": "esbuild src/content-scripts.js --bundle --outfile=dist/content-script.js --define:__BUILD_ENV__SDK_VERSION__=\\\"env\\\"",
+    "build:popup": "esbuild src/popup.js --bundle --outfile=dist/popup.js",
+    "copy:html": "cp src/popup.html dist/popup.html"
   },
   "dependencies": {
     "@datadog/browser-core": "workspace:*",

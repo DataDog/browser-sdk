@@ -5,11 +5,34 @@ import { datadogRum } from '@datadog/browser-rum'
 import { createBrowserRouter } from '@datadog/browser-rum-react/react-router-v7'
 import { reactPlugin, ErrorBoundary, UNSTABLE_ReactComponentTracker } from '@datadog/browser-rum-react'
 
-datadogRum.init({
-  applicationId: 'xxx',
-  clientToken: 'xxx',
-  plugins: [reactPlugin({ router: true })],
-})
+setTimeout(() => {
+  console.log('Page now initializing RUM...');
+
+  datadogRum.init({
+    applicationId: '852318c5-66ae-4d14-a3a5-7d243dc2f9bf',
+    clientToken: 'pube7fb7f0aeea62016911e3dcb42474fab',
+    site: 'datad0g.com' as any,
+    service: 'browser-sdk-playground-2',
+    env: 'dev_WP',
+    sessionSampleRate: 100,
+    sessionReplaySampleRate: 20,
+    defaultPrivacyLevel: 'mask-user-input',
+  });
+
+  // Add a custom action to verify the page's RUM is working
+  datadogRum.addAction('page_rum_initialized', {
+    source: 'page',
+    timestamp: Date.now()
+  });
+
+  datadogRum.setUser({
+    id: '1',
+    name: 'Web Page User',
+    email: 'WPU@mail.com',
+  });
+
+  console.log('Page RUM initialization complete');
+}, 5000); // 5-second delay
 
 const router = createBrowserRouter(
   [

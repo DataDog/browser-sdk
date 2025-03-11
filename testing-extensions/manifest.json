@@ -2,22 +2,29 @@
   "name": "Datadog RUM Extension",
   "version": "1.0",
   "manifest_version": 3,
-  "description": "Injects Datadog RUM into every page to inspect data being sent.",
+  "description": "Injects Datadog RUM into every page to inspect data being sent. Intercepts and redirects telemetry to the extension's RUM instance.",
   "permissions": [
     "scripting",
-    "activeTab"
+    "activeTab",
+    "tabs"
   ],
   "host_permissions": ["<all_urls>"],
   "content_scripts": [
     {
-      "matches": ["*://developer.chrome.com/docs/*"],
+      "matches": ["<all_urls>"],
       "js": ["dist/content-script.js"],
       "run_at": "document_start"
     }
   ],
   "action": {
     "default_title": "Datadog RUM Extension",
-    "default_popup": "src/popup.html",
+    "default_popup": "dist/popup.html",
     "default_icon": "rum.png"
-  }
+  },
+  "web_accessible_resources": [
+    {
+      "resources": ["dist/content-script.js"],
+      "matches": ["<all_urls>"]
+    }
+  ]
 }

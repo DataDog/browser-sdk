@@ -9,8 +9,7 @@ import type {
   DeflateEncoder,
   TrackingConsent,
   PublicApi,
-  Duration,
-} from '@datadog/browser-core'
+  Duration} from '@datadog/browser-core';
 import {
   addTelemetryUsage,
   CustomerDataType,
@@ -29,7 +28,7 @@ import {
   displayAlreadyInitializedError,
   createTrackingConsentState,
   timeStampToClocks,
-  isUnsupportedExtensionEnvironment,
+  isUnsupportedExtensionEnvironment
 } from '@datadog/browser-core'
 import type { LifeCycle } from '../domain/lifeCycle'
 import type { ViewHistory } from '../domain/contexts/viewHistory'
@@ -260,7 +259,7 @@ export interface RumPublicApi extends PublicApi {
 
   /**
    * Start a view manually.
-   * Enable to manual start a view, use `trackViewsManually: true` init parameter and call `startView()` to create RUM views and be aligned with how you’ve defined them in your SPA application routing.
+   * Enable to manual start a view, use `trackViewsManually: true` init parameter and call `startView()` to create RUM views and be aligned with how you've defined them in your SPA application routing.
    *
    * @param options.name name of the view
    * @param options.service service of the view
@@ -350,6 +349,16 @@ export interface RumPublicApi extends PublicApi {
     nameOrRef: string | DurationVitalReference,
     options?: { context?: object; description?: string }
   ) => void
+
+  /**
+   * [Internal API] Set debug mode for the RUM SDK.
+   * This is used by official Datadog extensions to override RUM.
+   * 
+   * @param enabled Whether to enable debug mode
+   * @returns Whether debug mode was successfully set
+   * @internal
+   */
+  _setDebugMode: (enabled: boolean) => boolean
 }
 
 export interface RecorderApi {
@@ -408,8 +417,10 @@ export function makeRumPublicApi(
   options: RumPublicApiOptions = {}
 ): RumPublicApi {
   if (isUnsupportedExtensionEnvironment()) {
+    console.log('Unsupported extension environment detected, RUM is disabled.')
     return {} as RumPublicApi
   }
+  console.log('escaped')
   const customerDataTrackerManager = createCustomerDataTrackerManager(CustomerDataCompressionStatus.Unknown)
   const globalContextManager = createContextManager('global context', {
     customerDataTracker: customerDataTrackerManager.getOrCreateTracker(CustomerDataType.GlobalContext),
@@ -649,6 +660,16 @@ export function makeRumPublicApi(
         description: sanitize(options && options.description) as string | undefined,
       })
     }),
+
+    // Internal method for debugging and extension use
+    _setDebugMode: (enabled: boolean) => {
+      if (enabled) {
+        // This is just a marker method that our extension can detect
+        // The actual override happens in extensionUtils.ts
+        return true;
+      }
+      return false;
+    }
   })
 
   return rumPublicApi

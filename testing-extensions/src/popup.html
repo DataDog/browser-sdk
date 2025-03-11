@@ -2,11 +2,77 @@
 <html>
 <head>
     <meta charset="UTF-8">
-    <title>Extension Popup</title>
+    <title>Datadog RUM Extension</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            width: 350px;
+            padding: 15px;
+        }
+        h1 {
+            font-size: 18px;
+            color: #632CA6;
+            margin-top: 0;
+        }
+        .status {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+            background-color: #f5f5f5;
+        }
+        .status-active {
+            background-color: #e6f7e6;
+            border-left: 4px solid #4CAF50;
+        }
+        .status-inactive {
+            background-color: #fff0f0;
+            border-left: 4px solid #f44336;
+        }
+        button {
+            background-color: #632CA6;
+            color: white;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-right: 5px;
+            margin-top: 10px;
+        }
+        button:hover {
+            background-color: #4A1E8A;
+        }
+        .stats {
+            margin-top: 15px;
+            font-size: 14px;
+        }
+        .stats div {
+            margin-bottom: 5px;
+        }
+        .label {
+            font-weight: bold;
+            display: inline-block;
+            width: 150px;
+        }
+    </style>
 </head>
 <body>
-<h1>Extension Popup</h1>
-<p>Click below to open the login/register page.</p>
-<a href="form.html" target="_blank">Open Form Page</a>
+    <h1>Datadog RUM Extension</h1>
+    
+    <div id="status" class="status">
+        Checking status...
+    </div>
+    
+    <div class="stats">
+        <div><span class="label">Intercepted Events:</span> <span id="event-count">0</span></div>
+        <div><span class="label">Last Event Type:</span> <span id="last-event-type">None</span></div>
+        <div><span class="label">Active Page:</span> <span id="active-page">Unknown</span></div>
+    </div>
+    
+    <div>
+        <button id="toggle-rum">Disable Interception</button>
+        <button id="view-session">View Session Replay</button>
+    </div>
+
+    <script src="../dist/popup.js"></script>
 </body>
 </html>
