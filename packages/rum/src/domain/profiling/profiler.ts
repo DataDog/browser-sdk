@@ -7,7 +7,8 @@ import {
   display,
   getGlobalObject,
 } from '@datadog/browser-core'
-import { LifeCycleEventType } from '../lifeCycle'
+
+import { LifeCycleEventType } from '@datadog/browser-rum-core'
 import type {
   RumProfilerTrace,
   RumProfilerInstance,

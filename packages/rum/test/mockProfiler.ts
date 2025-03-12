@@ -1,6 +1,6 @@
 import { registerCleanupTask } from '@datadog/browser-core/test'
 import { getGlobalObject } from '@datadog/browser-core'
-import type { Profiler, ProfilerInitOptions, ProfilerTrace } from '../../src/domain/profiling/types'
+import type { Profiler, ProfilerTrace, ProfilerInitOptions } from '../src/domain/profiling/types'
 
 export function mockProfiler(mockedTrace: ProfilerTrace) {
   const globalThis = getGlobalObject()

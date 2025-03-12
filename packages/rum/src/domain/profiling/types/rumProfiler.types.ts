@@ -1,7 +1,5 @@
 import type { TimeoutId } from '@datadog/browser-core'
-import type { LifeCycle } from '../../lifeCycle'
-import type { RumConfiguration } from '../../configuration'
-import type { RumSessionManager } from '../../rumSessionManager'
+import type { LifeCycle, RumConfiguration, RumSessionManager } from '@datadog/browser-rum-core'
 import type { ProfilerTrace, Profiler } from './profilerApi.types'
 
 /**

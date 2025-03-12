@@ -1,4 +1,4 @@
-export type { RumPublicApi, RecorderApi, StartRecordingOptions, Strategy } from './boot/rumPublicApi'
+export type { RumPublicApi, RecorderApi, ProfilerApi, StartRecordingOptions, Strategy } from './boot/rumPublicApi'
 export { makeRumPublicApi } from './boot/rumPublicApi'
 export type { StartRum } from './boot/startRum'
 export type {
@@ -21,7 +21,7 @@ export type {
   RumViewEventDomainContext,
   RumEventDomainContext,
 } from './domainContext.types'
-export type { ReplayStats, RawRumActionEvent } from './rawRumEvent.types'
+export type { ReplayStats, RawRumActionEvent, RawRumEvent } from './rawRumEvent.types'
 export { ActionType, RumEventType, FrustrationType } from './rawRumEvent.types'
 export { startRum } from './boot/startRum'
 export type { RawRumEventCollectedData } from './domain/lifeCycle'
@@ -44,3 +44,5 @@ export * from './domain/privacy'
 export { SessionReplayState } from './domain/rumSessionManager'
 export type { RumPlugin } from './domain/plugins'
 export type { MouseEventOnElement } from './domain/action/listenActionEvents'
+export { supportPerformanceTimingEvent } from './browser/performanceObservable'
+export { RumPerformanceEntryType } from './browser/performanceObservable'
