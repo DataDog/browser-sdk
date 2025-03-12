@@ -1,5 +1,5 @@
 import type { LifeCycle, ViewHistory, RumSessionManager, RumConfiguration } from '@datadog/browser-rum-core'
-import { addTelemetryDebug, monitorError, noop, performDraw } from '@datadog/browser-core'
+import { addTelemetryDebug, monitorError, performDraw } from '@datadog/browser-core'
 import type { RUMProfiler } from '../domain/profiling/types'
 import { isProfilingSupported } from '../domain/profiling/profilingSupported'
 import { lazyLoadProfiler } from '../domain/profiling/lazyLoadProfiler'
@@ -30,12 +30,12 @@ export function makeProfilerApi(): ProfilerApi {
   ) {
     // Check if Browser is supporting the JS Self-Profiling API
     if (!isProfilingSupported()) {
-      return noop
+      return
     }
 
     if (!performDraw(configuration.profilingSampleRate)) {
       // User is not lucky, no profiling!
-      return noop
+      return
     }
 
     let profiler: RUMProfiler
@@ -52,7 +52,7 @@ export function makeProfilerApi(): ProfilerApi {
         profiler.start(viewHistory.findView()?.id)
 
         cleanupTasks.push(() => {
-          profiler?.stop().catch(monitorError)
+          profiler.stop().catch(monitorError)
         })
       })
       .catch(monitorError)
