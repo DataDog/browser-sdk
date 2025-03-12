@@ -28,7 +28,6 @@ import {
   displayAlreadyInitializedError,
   createTrackingConsentState,
   timeStampToClocks,
-  isUnsupportedExtensionEnvironment
 } from '@datadog/browser-core'
 import type { LifeCycle } from '../domain/lifeCycle'
 import type { ViewHistory } from '../domain/contexts/viewHistory'
@@ -349,16 +348,6 @@ export interface RumPublicApi extends PublicApi {
     nameOrRef: string | DurationVitalReference,
     options?: { context?: object; description?: string }
   ) => void
-
-  /**
-   * [Internal API] Set debug mode for the RUM SDK.
-   * This is used by official Datadog extensions to override RUM.
-   * 
-   * @param enabled Whether to enable debug mode
-   * @returns Whether debug mode was successfully set
-   * @internal
-   */
-  _setDebugMode: (enabled: boolean) => boolean
 }
 
 export interface RecorderApi {
@@ -416,11 +405,11 @@ export function makeRumPublicApi(
   recorderApi: RecorderApi,
   options: RumPublicApiOptions = {}
 ): RumPublicApi {
-  if (isUnsupportedExtensionEnvironment()) {
-    console.log('Unsupported extension environment detected, RUM is disabled.')
-    return {} as RumPublicApi
-  }
-  console.log('escaped')
+  // if (isUnsupportedExtensionEnvironment()) {
+  //   console.log('Unsupported extension environment detected, RUM is disabled.')
+  //   return {} as RumPublicApi
+  // }
+  // console.log('escaped')
   const customerDataTrackerManager = createCustomerDataTrackerManager(CustomerDataCompressionStatus.Unknown)
   const globalContextManager = createContextManager('global context', {
     customerDataTracker: customerDataTrackerManager.getOrCreateTracker(CustomerDataType.GlobalContext),
@@ -660,16 +649,6 @@ export function makeRumPublicApi(
         description: sanitize(options && options.description) as string | undefined,
       })
     }),
-
-    // Internal method for debugging and extension use
-    _setDebugMode: (enabled: boolean) => {
-      if (enabled) {
-        // This is just a marker method that our extension can detect
-        // The actual override happens in extensionUtils.ts
-        return true;
-      }
-      return false;
-    }
   })
 
   return rumPublicApi
