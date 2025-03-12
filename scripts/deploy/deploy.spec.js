@@ -66,11 +66,6 @@ void describe('deploy', () => {
           'aws s3 cp --cache-control max-age=14400, s-maxage=60 packages/rum/bundle/datadog-rum.js s3://browser-agent-artifacts-prod/datadog-rum-v6.js',
         env,
       },
-      // RUM slim Profiler chunk
-      {
-        command: `aws s3 cp --cache-control max-age=14400, s-maxage=60 packages/rum-slim/bundle/chunks/profiler-${FAKE_CHUNK_HASH}-datadog-rum-slim.js s3://browser-agent-artifacts-prod/chunks/profiler-${FAKE_CHUNK_HASH}-datadog-rum-slim.js`,
-        env,
-      },
       // RUM slim bundle
       {
         command:
@@ -110,11 +105,6 @@ void describe('deploy', () => {
           'aws s3 cp --cache-control max-age=14400, s-maxage=60 packages/rum/bundle/datadog-rum.js s3://browser-agent-artifacts-prod/us1/v6/datadog-rum.js',
         env,
       },
-      // RUM Slim Profiler Chunk
-      {
-        command: `aws s3 cp --cache-control max-age=14400, s-maxage=60 packages/rum-slim/bundle/chunks/profiler-${FAKE_CHUNK_HASH}-datadog-rum-slim.js s3://browser-agent-artifacts-prod/us1/v6/chunks/profiler-${FAKE_CHUNK_HASH}-datadog-rum-slim.js`,
-        env,
-      },
       {
         command:
           'aws s3 cp --cache-control max-age=14400, s-maxage=60 packages/rum-slim/bundle/datadog-rum-slim.js s3://browser-agent-artifacts-prod/us1/v6/datadog-rum-slim.js',
@@ -150,11 +140,6 @@ void describe('deploy', () => {
       {
         command:
           'aws s3 cp --cache-control max-age=900, s-maxage=60 packages/rum/bundle/datadog-rum.js s3://browser-agent-artifacts-staging/datadog-rum-staging.js',
-        env,
-      },
-      // RUM Slim Profiler Chunk
-      {
-        command: `aws s3 cp --cache-control max-age=900, s-maxage=60 packages/rum-slim/bundle/chunks/profiler-${FAKE_CHUNK_HASH}-datadog-rum-slim.js s3://browser-agent-artifacts-staging/chunks/profiler-${FAKE_CHUNK_HASH}-datadog-rum-slim.js`,
         env,
       },
       {
@@ -196,11 +181,6 @@ void describe('deploy', () => {
       {
         command:
           'aws s3 cp --cache-control max-age=900, s-maxage=60 packages/rum/bundle/datadog-rum.js s3://browser-agent-artifacts-staging/pull-request/123/datadog-rum.js',
-        env,
-      },
-      // RUM Slim Profiler Chunk
-      {
-        command: `aws s3 cp --cache-control max-age=900, s-maxage=60 packages/rum-slim/bundle/chunks/profiler-${FAKE_CHUNK_HASH}-datadog-rum-slim.js s3://browser-agent-artifacts-staging/pull-request/123/chunks/profiler-${FAKE_CHUNK_HASH}-datadog-rum-slim.js`,
         env,
       },
       {
