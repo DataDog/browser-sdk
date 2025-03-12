@@ -6,7 +6,6 @@ export async function lazyLoadProfiler() {
     return module.createRumProfiler
   } catch (err) {
     /* Prevent collecting the webpack ChunkLoadError as it is already collected as a RUM resource. */
-
     display.error('[DD_RUM] Failed to load createRumProfiler', err)
   }
 }

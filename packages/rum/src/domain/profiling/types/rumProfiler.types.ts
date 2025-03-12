@@ -1,17 +1,5 @@
 import type { TimeoutId } from '@datadog/browser-core'
-import type { LifeCycle, RumConfiguration, RumSessionManager } from '@datadog/browser-rum-core'
 import type { ProfilerTrace, Profiler } from './profilerApi.types'
-
-/**
- * Configuration based on init options (with resolved defaults)
- */
-export interface RumProfilerConfig {
-  configuration: RumConfiguration
-  isLongAnimationFrameEnabled: boolean | undefined
-  lifeCycle: LifeCycle
-  session: RumSessionManager
-  profilerConfiguration?: RUMProfilerConfiguration
-}
 
 export interface RumViewEntry {
   /** Detected start time of view */
