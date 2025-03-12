@@ -1,9 +1,16 @@
-import { collectAsyncCalls, mockEndpointBuilder, interceptRequests, createNewEvent } from '../../test'
+import {
+  collectAsyncCalls,
+  mockEndpointBuilder,
+  interceptRequests,
+  DEFAULT_FETCH_MOCK,
+  TOO_MANY_REQUESTS_FETCH_MOCK,
+  NETWORK_ERROR_FETCH_MOCK,
+} from '../../test'
 import type { Request } from '../../test'
 import type { EndpointBuilder } from '../domain/configuration'
 import { createEndpointBuilder } from '../domain/configuration'
 import { noop } from '../tools/utils/functionUtils'
-import { createHttpRequest, fetchKeepAliveStrategy, sendXHR } from './httpRequest'
+import { createHttpRequest, fetchKeepAliveStrategy } from './httpRequest'
 import type { HttpRequest } from './httpRequest'
 
 describe('httpRequest', () => {
@@ -22,52 +29,51 @@ describe('httpRequest', () => {
   })
 
   describe('send', () => {
-    it('should use xhr when fetch keepalive is not available', () => {
+    it('should use fetch when fetch keepalive is not available', async () => {
       interceptor.withRequest(false)
 
       request.send({ data: '{"foo":"bar1"}\n{"foo":"bar2"}', bytesCount: 10 })
+      await interceptor.waitForAllFetchCalls()
 
       expect(requests.length).toEqual(1)
-      expect(requests[0].type).toBe('xhr')
+      expect(requests[0].type).toBe('fetch')
       expect(requests[0].url).toContain(ENDPOINT_URL)
       expect(requests[0].body).toEqual('{"foo":"bar1"}\n{"foo":"bar2"}')
     })
 
-    it('should use fetch keepalive when the bytes count is correct', () => {
+    it('should use fetch keepalive when the bytes count is correct', async () => {
       if (!interceptor.isFetchKeepAliveSupported()) {
         pending('no fetch keepalive support')
       }
 
       request.send({ data: '{"foo":"bar1"}\n{"foo":"bar2"}', bytesCount: 10 })
+      await interceptor.waitForAllFetchCalls()
+
+      expect(requests.length).toEqual(1)
+      expect(requests[0].type).toBe('fetch-keepalive')
+    })
+
+    it('should use fetch over fetch keepalive when the bytes count is too high', async () => {
+      request.send({ data: '{"foo":"bar1"}\n{"foo":"bar2"}', bytesCount: BATCH_BYTES_LIMIT })
+      await interceptor.waitForAllFetchCalls()
 
       expect(requests.length).toEqual(1)
       expect(requests[0].type).toBe('fetch')
     })
 
-    it('should use xhr over fetch keepalive when the bytes count is too high', () => {
-      request.send({ data: '{"foo":"bar1"}\n{"foo":"bar2"}', bytesCount: BATCH_BYTES_LIMIT })
-
-      expect(requests.length).toEqual(1)
-      expect(requests[0].type).toBe('xhr')
-    })
-
-    it('should fallback to xhr when fetch keepalive is not queued', (done) => {
+    it('should fallback to fetch when fetch keepalive is not queued', async () => {
       if (!interceptor.isFetchKeepAliveSupported()) {
         pending('no fetch keepalive support')
       }
-      let notQueuedFetch: Promise<never>
-      interceptor.withFetch(() => {
-        notQueuedFetch = Promise.reject(new Error())
-        return notQueuedFetch
-      })
+
+      const fetchSpy = interceptor.withFetch(NETWORK_ERROR_FETCH_MOCK, DEFAULT_FETCH_MOCK)
 
       request.send({ data: '{"foo":"bar1"}\n{"foo":"bar2"}', bytesCount: 10 })
 
-      notQueuedFetch!.catch(() => {
-        expect(requests.length).toEqual(1)
-        expect(requests[0].type).toBe('xhr')
-        done()
-      })
+      await interceptor.waitForAllFetchCalls()
+      await collectAsyncCalls(fetchSpy, 2)
+      expect(requests.length).toEqual(1)
+      expect(requests[0].type).toBe('fetch')
     })
 
     it('should use retry strategy', async () => {
@@ -75,21 +81,11 @@ describe('httpRequest', () => {
         pending('no fetch keepalive support')
       }
 
-      let calls = 0
-      const fetchSpy = jasmine.createSpy().and.callFake(() => {
-        calls++
-        if (calls === 1) {
-          return Promise.resolve({ status: 408 })
-        }
-        if (calls === 2) {
-          return Promise.resolve({ status: 200 })
-        }
-      })
-
-      interceptor.withFetch(fetchSpy)
+      const fetchSpy = interceptor.withFetch(TOO_MANY_REQUESTS_FETCH_MOCK, DEFAULT_FETCH_MOCK)
 
       request.send({ data: '{"foo":"bar1"}\n{"foo":"bar2"}', bytesCount: 10 })
 
+      await interceptor.waitForAllFetchCalls()
       await collectAsyncCalls(fetchSpy, 2)
     })
   })
@@ -100,7 +96,7 @@ describe('httpRequest', () => {
         pending('no fetch keepalive support')
       }
 
-      interceptor.withFetch(() => Promise.resolve({ status: 429, type: 'cors' }))
+      interceptor.withFetch(TOO_MANY_REQUESTS_FETCH_MOCK)
 
       fetchKeepAliveStrategy(
         endpointBuilder,
@@ -113,102 +109,49 @@ describe('httpRequest', () => {
       )
     })
 
-    it('should be called with intake response when fallback to xhr due fetch not queued', (done) => {
+    it('should be called with intake response when fallback to fetch due fetch keepalive not queued', (done) => {
       if (!interceptor.isFetchKeepAliveSupported()) {
         pending('no fetch keepalive support')
       }
 
-      interceptor.withFetch(() => Promise.reject(new Error()))
-      interceptor.withMockXhr((xhr) => {
-        setTimeout(() => {
-          xhr.complete(429)
-        })
-      })
+      interceptor.withFetch(NETWORK_ERROR_FETCH_MOCK, TOO_MANY_REQUESTS_FETCH_MOCK)
 
       fetchKeepAliveStrategy(
         endpointBuilder,
         BATCH_BYTES_LIMIT,
         { data: '{"foo":"bar1"}\n{"foo":"bar2"}', bytesCount: 10 },
         (response) => {
-          expect(response).toEqual({ status: 429 })
+          expect(response).toEqual({ status: 429, type: 'cors' })
           done()
         }
       )
     })
 
-    it('should be called with intake response when fallback to xhr due to size', (done) => {
-      interceptor.withMockXhr((xhr) => {
-        setTimeout(() => {
-          xhr.complete(429)
-        })
-      })
+    it('should be called with intake response when fallback to fetch due to size', (done) => {
+      interceptor.withFetch(TOO_MANY_REQUESTS_FETCH_MOCK)
 
       fetchKeepAliveStrategy(
         endpointBuilder,
         BATCH_BYTES_LIMIT,
         { data: '{"foo":"bar1"}\n{"foo":"bar2"}', bytesCount: BATCH_BYTES_LIMIT },
         (response) => {
-          expect(response).toEqual({ status: 429 })
+          expect(response).toEqual({ status: 429, type: 'cors' })
           done()
         }
       )
     })
   })
 
-  describe('sendXhr', () => {
-    it('should prevent third party to trigger callback multiple times', (done) => {
-      const onResponseSpy = jasmine.createSpy('xhrOnResponse')
-      let count = 0
-
-      interceptor.withMockXhr((xhr) => {
-        count++
-        setTimeout(() => {
-          xhr.complete(count === 1 ? 200 : 202)
-          if (count === 1) {
-            // reuse the xhr instance to send another request
-            xhr.open('POST', 'foo')
-            xhr.send()
-          }
-        })
-      })
-
-      sendXHR('foo', '', onResponseSpy)
-
-      setTimeout(() => {
-        expect(onResponseSpy).toHaveBeenCalledTimes(1)
-        expect(onResponseSpy).toHaveBeenCalledWith({
-          status: 200,
-        })
-        done()
-      }, 100)
-    })
-
-    it('should handle synthetic events', (done) => {
-      const onResponseSpy = jasmine.createSpy('xhrOnResponse')
-
-      interceptor.withMockXhr((xhr) => {
-        const syntheticEvent = createNewEvent('loadend', { __ddIsTrusted: false })
-
-        setTimeout(() => xhr.dispatchEvent(syntheticEvent))
-      })
-
-      sendXHR('foo', '', onResponseSpy)
-
-      setTimeout(() => {
-        expect(onResponseSpy).toHaveBeenCalledTimes(1)
-        done()
-      }, 100)
-    })
-  })
-
   describe('sendOnExit', () => {
-    it('should use xhr when sendBeacon is not defined', () => {
+    it('should use fetch when sendBeacon is not defined', async () => {
       interceptor.withSendBeacon(false)
 
       request.sendOnExit({ data: '{"foo":"bar1"}\n{"foo":"bar2"}', bytesCount: 10 })
 
+      await interceptor.waitForAllFetchCalls()
+
       expect(requests.length).toEqual(1)
-      expect(requests[0].type).toBe('xhr')
+      expect(requests[0].type).toBe('fetch')
       expect(requests[0].url).toContain(ENDPOINT_URL)
       expect(requests[0].body).toEqual('{"foo":"bar1"}\n{"foo":"bar2"}')
     })
@@ -224,14 +167,16 @@ describe('httpRequest', () => {
       expect(requests[0].type).toBe('sendBeacon')
     })
 
-    it('should use xhr over sendBeacon when the bytes count is too high', () => {
+    it('should use fetch over sendBeacon when the bytes count is too high', async () => {
       request.sendOnExit({ data: '{"foo":"bar1"}\n{"foo":"bar2"}', bytesCount: BATCH_BYTES_LIMIT })
 
+      await interceptor.waitForAllFetchCalls()
+
       expect(requests.length).toEqual(1)
-      expect(requests[0].type).toBe('xhr')
+      expect(requests[0].type).toBe('fetch')
     })
 
-    it('should fallback to xhr when sendBeacon is not queued', () => {
+    it('should fallback to fetch when sendBeacon is not queued', async () => {
       if (!interceptor.isSendBeaconSupported()) {
         pending('no sendBeacon support')
       }
@@ -239,25 +184,29 @@ describe('httpRequest', () => {
 
       request.sendOnExit({ data: '{"foo":"bar1"}\n{"foo":"bar2"}', bytesCount: 10 })
 
+      await interceptor.waitForAllFetchCalls()
+
       expect(requests.length).toEqual(1)
-      expect(requests[0].type).toBe('xhr')
+      expect(requests[0].type).toBe('fetch')
     })
 
-    it('should fallback to xhr when sendBeacon throws', () => {
+    it('should fallback to fetch when sendBeacon throws', async () => {
       if (!interceptor.isSendBeaconSupported()) {
         pending('no sendBeacon support')
       }
       let sendBeaconCalled = false
       interceptor.withSendBeacon(() => {
         sendBeaconCalled = true
-        throw new TypeError()
+        throw new Error('mock sendBeacon error')
       })
 
       request.sendOnExit({ data: '{"foo":"bar1"}\n{"foo":"bar2"}', bytesCount: 10 })
 
+      await interceptor.waitForAllFetchCalls()
+
       expect(sendBeaconCalled).toBe(true)
       expect(requests.length).toEqual(1)
-      expect(requests[0].type).toBe('xhr')
+      expect(requests[0].type).toBe('fetch')
     })
   })
 })
@@ -277,9 +226,13 @@ describe('httpRequest intake parameters', () => {
     request = createHttpRequest(endpointBuilder, BATCH_BYTES_LIMIT, noop)
   })
 
-  it('should have a unique request id', () => {
+  it('should have a unique request id', async () => {
+    interceptor.withFetch(DEFAULT_FETCH_MOCK, DEFAULT_FETCH_MOCK)
+
     request.send({ data: '{"foo":"bar1"}\n{"foo":"bar2"}', bytesCount: 10 })
     request.send({ data: '{"foo":"bar1"}\n{"foo":"bar2"}', bytesCount: 10 })
+
+    await interceptor.waitForAllFetchCalls()
 
     const search = /dd-request-id=([^&]*)/
     const requestId1 = search.exec(requests[0].url)?.[1]
