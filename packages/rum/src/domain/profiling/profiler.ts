@@ -171,8 +171,8 @@ export function createRumProfiler(
     // Store instance data snapshot in local variables to use in async callback
     const { startTime, longTasks, views } = instance
 
-    // Clear long task registry, remove entries that we collected already (it's stored in `longTasks` already and we need to clean-up for next instance, eg. avoid slowly growing memory usage by keeping outdated entries)
-    deleteLongTaskIdsBefore(performance.now())
+    // Capturing when we stop the profiler so we use this time as a reference to clean-up long task registry, eg. remove the long tasks that we collected already
+    const collectTime = performance.now()
 
     // Stop current profiler to get trace
     await instance.profiler
@@ -201,6 +201,9 @@ export function createRumProfiler(
             sampleInterval: profilerConfiguration.sampleIntervalMs,
           })
         )
+
+        // Clear long task registry, remove entries that we collected already (eg. avoid slowly growing memory usage by keeping outdated entries)
+        deleteLongTaskIdsBefore(collectTime)
       })
       .catch(monitorError)
   }
