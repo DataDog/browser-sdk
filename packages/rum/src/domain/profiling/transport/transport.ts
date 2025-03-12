@@ -33,6 +33,8 @@ const sendProfile: SendProfileFunction = (profilerTrace, endpointBuilder, applic
   // Create URL, public profiling intake.
   const profilingIntakeURL = endpointBuilder.build('xhr', payload)
 
+  console.log('Sending profile to public profiling intake', { profilingIntakeURL, applicationId, sessionId })
+
   addTelemetryDebug('Sending profile to public profiling intake', { profilingIntakeURL, applicationId, sessionId })
 
   // Send payload (event + profile as attachment).
