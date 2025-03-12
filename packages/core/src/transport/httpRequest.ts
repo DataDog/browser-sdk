@@ -110,7 +110,10 @@ export function fetchStrategy(
 
   fetch(fetchUrl, { method: 'POST', body: payload.data, mode: 'cors' })
     .then(monitor((response: Response) => onResponse?.({ status: response.status, type: response.type })))
-    .catch((error) => monitorError(error))
+    .catch((error) => {
+      monitorError(error)
+      onResponse?.({ status: 0 })
+    })
 }
 
 function isKeepAliveSupported() {
