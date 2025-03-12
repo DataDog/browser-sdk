@@ -1,11 +1,7 @@
-import {
-  createRumSessionManagerMock,
-  mockPerformanceObserver,
-  mockProfiler,
-  mockRumConfiguration,
-  mockViewHistory,
-} from '../../../test'
-import { LifeCycle } from '../lifeCycle'
+
+import { LifeCycle } from '@datadog/browser-rum-core'
+import { createRumSessionManagerMock, mockViewHistory, mockPerformanceObserver, mockRumConfiguration } from '../../../../rum-core/test'
+import { mockProfiler } from '../../../test'
 import { startProfilingCollection } from './profilingCollection'
 import { mockedTrace } from './test-utils/mockedTrace'
 import { transport } from './transport/transport'
