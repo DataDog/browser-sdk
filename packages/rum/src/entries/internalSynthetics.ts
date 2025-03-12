@@ -17,5 +17,7 @@ export { DefaultPrivacyLevel } from '@datadog/browser-core'
 /* eslint-disable local-rules/disallow-side-effects */
 const recorderApi = makeRecorderApi(lazyLoadRecorder)
 const profilerApi = makeProfilerApi()
-export const datadogRum = makeRumPublicApi(startRum, recorderApi, profilerApi, { ignoreInitIfSyntheticsWillInjectRum: false })
+export const datadogRum = makeRumPublicApi(startRum, recorderApi, profilerApi, {
+  ignoreInitIfSyntheticsWillInjectRum: false,
+})
 /* eslint-enable local-rules/disallow-side-effects */
