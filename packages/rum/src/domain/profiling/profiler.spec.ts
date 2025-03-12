@@ -42,6 +42,8 @@ describe('profiler', () => {
   it('should start profiling collection and collect data on stop', async () => {
     const profiler = setupProfiler()
 
+    profiler.start('view-id-1')
+
     // Wait for start of collection.
     await waitForBoolean(() => profiler.isStarted())
 
