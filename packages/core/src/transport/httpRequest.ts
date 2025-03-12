@@ -1,8 +1,6 @@
 import type { EndpointBuilder } from '../domain/configuration'
-import { addTelemetryError } from '../domain/telemetry'
 import type { Context } from '../tools/serialisation/context'
-import { monitor } from '../tools/monitor'
-import { addEventListener } from '../browser/addEventListener'
+import { monitor, monitorError } from '../tools/monitor'
 import type { RawError } from '../domain/error/error.types'
 import { newRetryState, sendWithRetryStrategy } from './sendWithRetryStrategy'
 
@@ -72,8 +70,7 @@ function sendBeaconStrategy(endpointBuilder: EndpointBuilder, bytesLimit: number
     }
   }
 
-  const xhrUrl = endpointBuilder.build('xhr', payload)
-  sendXHR(xhrUrl, payload.data)
+  fetchStrategy(endpointBuilder, payload)
 }
 
 let hasReportedBeaconError = false
@@ -81,7 +78,7 @@ let hasReportedBeaconError = false
 function reportBeaconError(e: unknown) {
   if (!hasReportedBeaconError) {
     hasReportedBeaconError = true
-    addTelemetryError(e)
+    monitorError(e)
   }
 }
 
@@ -92,20 +89,31 @@ export function fetchKeepAliveStrategy(
   onResponse?: (r: HttpResponse) => void
 ) {
   const canUseKeepAlive = isKeepAliveSupported() && payload.bytesCount < bytesLimit
+
   if (canUseKeepAlive) {
-    const fetchUrl = endpointBuilder.build('fetch', payload)
-    fetch(fetchUrl, { method: 'POST', body: payload.data, keepalive: true, mode: 'cors' }).then(
-      monitor((response: Response) => onResponse?.({ status: response.status, type: response.type })),
-      monitor(() => {
-        const xhrUrl = endpointBuilder.build('xhr', payload)
-        // failed to queue the request
-        sendXHR(xhrUrl, payload.data, onResponse)
-      })
-    )
+    const fetchUrl = endpointBuilder.build('fetch-keepalive', payload)
+
+    fetch(fetchUrl, { method: 'POST', body: payload.data, keepalive: true, mode: 'cors' })
+      .then(monitor((response: Response) => onResponse?.({ status: response.status, type: response.type })))
+      .catch(monitor(() => fetchStrategy(endpointBuilder, payload, onResponse)))
   } else {
-    const xhrUrl = endpointBuilder.build('xhr', payload)
-    sendXHR(xhrUrl, payload.data, onResponse)
+    fetchStrategy(endpointBuilder, payload, onResponse)
   }
+}
+
+export function fetchStrategy(
+  endpointBuilder: EndpointBuilder,
+  payload: Payload,
+  onResponse?: (r: HttpResponse) => void
+) {
+  const fetchUrl = endpointBuilder.build('fetch', payload)
+
+  fetch(fetchUrl, { method: 'POST', body: payload.data, mode: 'cors' })
+    .then(monitor((response: Response) => onResponse?.({ status: response.status, type: response.type })))
+    .catch((error) => {
+      monitorError(error)
+      onResponse?.({ status: 0 })
+    })
 }
 
 function isKeepAliveSupported() {
@@ -115,30 +123,4 @@ function isKeepAliveSupported() {
   } catch {
     return false
   }
-}
-
-export function sendXHR(url: string, data: Payload['data'], onResponse?: (r: HttpResponse) => void) {
-  const request = new XMLHttpRequest()
-  request.open('POST', url, true)
-  if (data instanceof Blob) {
-    // When using a Blob instance, IE does not use its 'type' to define the 'Content-Type' header
-    // automatically, so the intake request ends up being rejected with an HTTP status 415
-    // Defining the header manually fixes this issue.
-    request.setRequestHeader('Content-Type', data.type)
-  }
-  addEventListener(
-    // allow untrusted event to acount for synthetic event dispatched by third party xhr wrapper
-    { allowUntrustedEvents: true },
-    request,
-    'loadend',
-    () => {
-      onResponse?.({ status: request.status })
-    },
-    {
-      // prevent multiple onResponse callbacks
-      // if the xhr instance is reused by a third party
-      once: true,
-    }
-  )
-  request.send(data)
 }
