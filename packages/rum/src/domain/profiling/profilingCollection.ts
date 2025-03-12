@@ -1,6 +1,6 @@
 import { monitorError, performDraw } from '@datadog/browser-core'
 
-import type { LifeCycle, ViewHistory, RumSessionManager, RumConfiguration , } from '@datadog/browser-rum-core'
+import type { LifeCycle, ViewHistory, RumSessionManager, RumConfiguration } from '@datadog/browser-rum-core'
 
 import { supportPerformanceTimingEvent, RumPerformanceEntryType } from '@datadog/browser-rum-core'
 import { lazyLoadProfiler } from './lazyLoadProfiler'
