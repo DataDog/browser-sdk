@@ -54,8 +54,7 @@ import { startLongTaskCollection } from '../domain/longTask/longTaskCollection'
 import type { Hooks } from '../hooks'
 import { createHooks } from '../hooks'
 import { startSyntheticsContext } from '../domain/contexts/syntheticsContext'
-import { startProfilingCollection } from '../domain/profiling/profilingCollection'
-import type { RecorderApi } from './rumPublicApi'
+import type { RecorderApi, ProfilerApi } from './rumPublicApi'
 
 export type StartRum = typeof startRum
 export type StartRumResult = ReturnType<StartRum>
@@ -63,6 +62,7 @@ export type StartRumResult = ReturnType<StartRum>
 export function startRum(
   configuration: RumConfiguration,
   recorderApi: RecorderApi,
+  profilerApi: ProfilerApi,
   customerDataTrackerManager: CustomerDataTrackerManager,
   getCommonContext: () => CommonContext,
   initialViewOptions: ViewOptions | undefined,
@@ -210,9 +210,8 @@ export function startRum(
     urlContexts
   )
 
-  // Profiling collection
-  const { stop: stopProfilingCollection } = startProfilingCollection(configuration, lifeCycle, session, viewHistory)
-  cleanupTasks.push(stopProfilingCollection)
+  // Add Clean-up tasks for Profiler API.
+  cleanupTasks.push(() => profilerApi.stop())
 
   return {
     addAction,

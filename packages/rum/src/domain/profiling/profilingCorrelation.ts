@@ -1,5 +1,6 @@
-import type { RawRumEvent } from '../../rawRumEvent.types'
-import { RumEventType } from '../../rawRumEvent.types'
+import type { RawRumEvent } from '@datadog/browser-rum-core'
+import { RumEventType } from '@datadog/browser-rum-core'
+
 import { setLongTaskId } from './utils/longTaskRegistry'
 
 /**
