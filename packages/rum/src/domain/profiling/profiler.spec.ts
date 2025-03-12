@@ -1,16 +1,11 @@
 import { LifeCycle } from '@datadog/browser-rum-core'
-import {
-  createRumSessionManagerMock,
-  mockViewHistory,
-  mockPerformanceObserver,
-  mockRumConfiguration,
-} from '../../../../rum-core/test'
+import { createRumSessionManagerMock, mockPerformanceObserver, mockRumConfiguration } from '../../../../rum-core/test'
 import { mockProfiler } from '../../../test'
-import { startProfilingCollection } from './profilingCollection'
 import { mockedTrace } from './test-utils/mockedTrace'
 import { transport } from './transport/transport'
+import { createRumProfiler } from './profiler'
 
-describe('profiling collection', () => {
+describe('profiler', () => {
   let sendProfileSpy: jasmine.Spy
   beforeEach(() => {
     // Spy on transport.sendProfile to avoid sending data to the server, and check what's sent.
@@ -19,11 +14,8 @@ describe('profiling collection', () => {
 
   let lifeCycle = new LifeCycle()
 
-  function setupProfilingCollection() {
+  function setupProfiler() {
     const sessionManager = createRumSessionManagerMock().setId('session-id-1')
-    const viewHistory = mockViewHistory({
-      id: 'view-id-1',
-    })
     lifeCycle = new LifeCycle()
 
     mockPerformanceObserver()
@@ -32,11 +24,10 @@ describe('profiling collection', () => {
     mockProfiler(mockedTrace)
 
     // Start collection of profile.
-    const collector = startProfilingCollection(
+    const profiler = createRumProfiler(
       mockRumConfiguration({ trackLongTasks: true, profilingSampleRate: 100 }),
       lifeCycle,
       sessionManager,
-      viewHistory,
       // Overrides default configuration for testing purpose.
       {
         sampleIntervalMs: 10,
@@ -45,21 +36,20 @@ describe('profiling collection', () => {
         minProfileDurationMs: 0,
       }
     )
-
-    return collector
+    return profiler
   }
 
   it('should start profiling collection and collect data on stop', async () => {
-    const collector = setupProfilingCollection()
+    const profiler = setupProfiler()
 
     // Wait for start of collection.
-    await waitForBoolean(() => collector.isStarted())
+    await waitForBoolean(() => profiler.isStarted())
 
     // Stop collection of profile.
-    collector.stop()
+    await profiler.stop()
 
     // Wait for stop of collection.
-    await waitForBoolean(() => collector.isStopped())
+    await waitForBoolean(() => profiler.isStopped())
 
     expect(sendProfileSpy).toHaveBeenCalledTimes(1)
 

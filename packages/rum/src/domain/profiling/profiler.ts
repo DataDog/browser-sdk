@@ -8,15 +8,9 @@ import {
   getGlobalObject,
 } from '@datadog/browser-core'
 
-import { LifeCycleEventType } from '@datadog/browser-rum-core'
-import type {
-  RumProfilerTrace,
-  RumProfilerInstance,
-  RumProfilerConfig,
-  Profiler,
-  RUMProfiler,
-  RUMProfilerConfiguration,
-} from './types'
+import type { LifeCycle, RumConfiguration, RumSessionManager } from '@datadog/browser-rum-core'
+import { LifeCycleEventType, RumPerformanceEntryType, supportPerformanceTimingEvent } from '@datadog/browser-rum-core'
+import type { RumProfilerTrace, RumProfilerInstance, Profiler, RUMProfiler, RUMProfilerConfiguration } from './types'
 import { getNumberOfSamples } from './utils/getNumberOfSamples'
 import { disableLongTaskRegistry, enableLongTaskRegistry, deleteLongTaskIdsBefore } from './utils/longTaskRegistry'
 import { mayStoreLongTaskIdForProfilerCorrelation } from './profilingCorrelation'
@@ -29,13 +23,14 @@ export const DEFAULT_RUM_PROFILER_CONFIGURATION: RUMProfilerConfiguration = {
   minNumberOfSamples: 50, // Require at least 50 samples (~500 ms) to report a profile to reduce noise and cost
 }
 
-export function createRumProfiler({
-  configuration,
-  isLongAnimationFrameEnabled,
-  lifeCycle,
-  session,
-  profilerConfiguration = DEFAULT_RUM_PROFILER_CONFIGURATION,
-}: RumProfilerConfig): RUMProfiler {
+export function createRumProfiler(
+  configuration: RumConfiguration,
+  lifeCycle: LifeCycle,
+  session: RumSessionManager,
+  profilerConfiguration: RUMProfilerConfiguration = DEFAULT_RUM_PROFILER_CONFIGURATION
+): RUMProfiler {
+  const isLongAnimationFrameEnabled = supportPerformanceTimingEvent(RumPerformanceEntryType.LONG_ANIMATION_FRAME)
+
   let instance: RumProfilerInstance = { state: 'stopped' }
 
   function start(viewId: string | undefined): void {
