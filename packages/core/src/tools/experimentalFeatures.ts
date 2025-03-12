@@ -16,8 +16,8 @@ import { objectHasValue } from './utils/objectUtils'
 export enum ExperimentalFeature {
   WRITABLE_RESOURCE_GRAPHQL = 'writable_resource_graphql',
   MISSING_URL_CONTEXT_TELEMETRY = 'missing_url_context_telemetry',
-  PROFILING = 'profiling',
   USER_ACCOUNT_TRACE_HEADER = 'user_account_trace_header',
+  PROFILING = 'profiling',
 }
 
 const enabledExperimentalFeatures: Set<ExperimentalFeature> = new Set()
