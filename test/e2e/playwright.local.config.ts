@@ -10,6 +10,11 @@ export default defineConfig({
     getConfig('webkit', 'Desktop Safari'),
     getConfig('android', 'Pixel 7'),
   ],
+  webServer: {
+    command: 'yarn dev',
+    url: 'http://localhost:8080',
+    reuseExistingServer: true,
+  },
 })
 
 function getConfig(browser: string, device: string) {

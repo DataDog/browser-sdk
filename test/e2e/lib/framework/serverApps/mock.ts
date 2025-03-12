@@ -2,7 +2,7 @@ import type { ServerResponse } from 'http'
 import * as url from 'url'
 import cors from 'cors'
 import express from 'express'
-import * as sdkBuilds from '../sdkBuilds'
+import { getSdkBundlePath, getTestAppBundlePath } from '../sdkBuilds'
 import type { MockServerApp, Servers } from '../httpServers'
 
 export const LARGE_RESPONSE_MIN_BYTE_SIZE = 100_000
@@ -116,34 +116,27 @@ export function createMockServerApp(servers: Servers, setup: string): MockServer
     res.end()
   })
 
-  app.get('/datadog-logs.js', (_req, res) => {
-    res.sendFile(sdkBuilds.LOGS_BUNDLE)
+  app.get(/datadog-(?<packageName>[a-z-]*)\.js/, (req, res) => {
+    const { originalUrl, params } = req
+
+    if (process.env.CI) {
+      res.sendFile(getSdkBundlePath(params.packageName, originalUrl))
+    } else {
+      forwardToDevServer(req.originalUrl, res)
+    }
   })
 
-  app.get('/datadog-rum.js', (_req, res) => {
-    res.sendFile(sdkBuilds.RUM_BUNDLE)
+  app.get('/worker.js', (req, res) => {
+    if (process.env.CI) {
+      res.sendFile(getSdkBundlePath('worker', req.originalUrl))
+    } else {
+      forwardToDevServer(req.originalUrl, res)
+    }
   })
 
-  app.get('/chunks/:name-:hash-datadog-rum.js', (req, res) => {
-    const { name, hash } = req.params
-    res.sendFile(sdkBuilds.rumBundleRecorderChunk(name, hash))
-  })
-
-  app.get('/datadog-rum-slim.js', (_req, res) => {
-    res.sendFile(sdkBuilds.RUM_SLIM_BUNDLE)
-  })
-
-  app.get('/worker.js', (_req, res) => {
-    res.sendFile(sdkBuilds.WORKER_BUNDLE)
-  })
-
-  app.get('/app.js', (_req, res) => {
-    res.sendFile(sdkBuilds.NPM_BUNDLE)
-  })
-
-  app.get('/chunks/:name-:hash-app.js', (req, res) => {
-    const { name, hash } = req.params
-    res.sendFile(sdkBuilds.npmBundleChunks(name, hash))
+  app.get(/(?<appName>app).js$/, (req, res) => {
+    const { originalUrl, params } = req
+    res.sendFile(getTestAppBundlePath(params.appName, originalUrl))
   })
 
   return Object.assign(app, {
@@ -151,4 +144,28 @@ export function createMockServerApp(servers: Servers, setup: string): MockServer
       return largeResponseBytesWritten
     },
   })
+}
+
+// We fetch and pipe the file content instead of redirecting to avoid creating different behavior between CI and local dev
+// This way both environments serve the files from the same origin with the same CSP rules
+function forwardToDevServer(originalUrl: string, res: ServerResponse) {
+  const url = `http://localhost:8080${originalUrl}`
+
+  fetch(url)
+    .then(({ body, headers }) => {
+      void body?.pipeTo(
+        new WritableStream({
+          start() {
+            headers.forEach((value, key) => res.setHeader(key, value))
+          },
+          write(chunk) {
+            res.write(chunk)
+          },
+          close() {
+            res.end()
+          },
+        })
+      )
+    })
+    .catch(() => console.error(`Error fetching ${url}, did you run 'yarn dev'?`))
 }
