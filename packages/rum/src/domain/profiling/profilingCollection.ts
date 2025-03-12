@@ -1,10 +1,8 @@
 import { monitorError, performDraw } from '@datadog/browser-core'
 
-import type { RumConfiguration } from '../configuration'
-import type { LifeCycle } from '../lifeCycle'
-import type { RumSessionManager } from '../rumSessionManager'
-import type { ViewHistory } from '../contexts/viewHistory'
-import { RumPerformanceEntryType, supportPerformanceTimingEvent } from '../../browser/performanceObservable'
+import type { LifeCycle, ViewHistory, RumSessionManager, RumConfiguration , } from '@datadog/browser-rum-core'
+
+import { supportPerformanceTimingEvent, RumPerformanceEntryType } from '@datadog/browser-rum-core'
 import { lazyLoadProfiler } from './lazyLoadProfiler'
 import { isProfilingSupported } from './profilingSupported'
 import type { RUMProfiler, RUMProfilerConfiguration } from './types'
