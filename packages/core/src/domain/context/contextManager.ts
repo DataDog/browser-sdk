@@ -43,6 +43,20 @@ type ContextLogEntry = {
   change: Partial<Context> | undefined
 }
 
+function computeDiff(prev: Context, next: Context): Partial<Context> | undefined {
+  const diff: Partial<Context> = {}
+  let hasChanges = false
+  const keys = Object.keys(prev).concat(Object.keys(next))
+  for (const key of keys) {
+    if (prev[key] !== next[key]) {
+      diff[key] = next[key]
+      hasChanges = true
+    }
+  }
+
+  return hasChanges ? diff : undefined
+}
+
 export function createContextManager(
   name: string = '',
   {
@@ -56,6 +70,8 @@ export function createContextManager(
   let context: Context = {}
   const changeObservable = new Observable<void>()
   const logs: ContextLogEntry[] = []
+  const changes: ContextLogEntry[] = []
+
   if (!(window as any)._dd_logs) {
     ;(window as any)._dd_logs = { size: {} }
   }
@@ -66,6 +82,16 @@ export function createContextManager(
     ;(window as any)._dd_logs['size'][name] = computeBytesCount(JSON.stringify(logs))
   }, 1000)
 
+  if (!(window as any)._dd_changes) {
+    ;(window as any)._dd_changes = { size: {} }
+  }
+  ;(window as any)._dd_changes[name] = changes
+
+  // eslint-disable-next-line local-rules/disallow-zone-js-patched-values
+  setInterval(() => {
+    ;(window as any)._dd_changes['size'][name] = computeBytesCount(JSON.stringify(changes))
+  }, 1000)
+
   const contextManager = {
     getContext: (timestamp?: RelativeTime) => {
       if (!timestamp) {
@@ -73,7 +99,7 @@ export function createContextManager(
       }
 
       const reconstructedContext: Context = {}
-      for (const entry of logs) {
+      for (const entry of changes) {
         if (entry.timestamp > timestamp) {
           break
         }
@@ -85,8 +111,14 @@ export function createContextManager(
 
     setContext: (newContext: unknown) => {
       if (checkContext(newContext)) {
-        context = sanitize(ensureProperties(newContext, propertiesConfig, name))
         logs.push({ timestamp: dateNow(), change: context })
+        const diff = computeDiff(context, newContext)
+        context = sanitize(ensureProperties(newContext, propertiesConfig, name))
+
+        if (diff) {
+          changes.push({ timestamp: dateNow(), change: diff })
+        }
+
         customerDataTracker?.updateCustomerData(context)
       } else {
         contextManager.clearContext()
@@ -95,15 +127,31 @@ export function createContextManager(
     },
 
     setContextProperty: (key: string, property: any) => {
-      context = sanitize(ensureProperties({ ...context, [key]: property }, propertiesConfig, name))
+      const propertyEnsured = ensureProperties({ [key]: property }, propertiesConfig, name)
+      const sanitizedProperty = sanitize(propertyEnsured[key])
+      context[key] = sanitizedProperty
+
       logs.push({ timestamp: dateNow(), change: { [key]: property } })
+
+      const diff = computeDiff((context[key] as Context) || {}, property)
+      context = sanitize(ensureProperties({ ...context, [key]: property }, propertiesConfig, name))
+
+      display.log(`Setting context property ${key}`, diff, context[key], property)
+      if (diff) {
+        changes.push({ timestamp: dateNow(), change: { [key]: property } })
+      }
       customerDataTracker?.updateCustomerData(context)
       changeObservable.notify()
     },
 
     removeContextProperty: (key: string) => {
+      if (context[key]) {
+        changes.push({ timestamp: dateNow(), change: { [key]: undefined } })
+      }
+
       delete context[key]
       logs.push({ timestamp: dateNow(), change: { [key]: undefined } })
+
       customerDataTracker?.updateCustomerData(context)
       ensureProperties(context, propertiesConfig, name)
       changeObservable.notify()
@@ -112,6 +160,8 @@ export function createContextManager(
     clearContext: () => {
       context = {}
       logs.push({ timestamp: dateNow(), change: undefined })
+      changes.push({ timestamp: dateNow(), change: undefined })
+
       customerDataTracker?.resetCustomerData()
       changeObservable.notify()
     },
