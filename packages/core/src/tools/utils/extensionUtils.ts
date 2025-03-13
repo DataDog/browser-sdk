@@ -33,11 +33,6 @@ declare global {
  * @returns {boolean} true if running in an unsupported browser extension environment
  */
 export function isUnsupportedExtensionEnvironment(): boolean {
-  // If the extension override flag is set, allow RUM to run
-  // This is used by our official extension to deliberately override RUM
-  if (window._DATADOG_EXTENSION_OVERRIDE === true) {
-    return false;
-  }
 
   // Get error stack and window location
   const errorStack = new Error().stack || ''

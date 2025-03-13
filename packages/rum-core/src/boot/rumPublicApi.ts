@@ -27,7 +27,7 @@ import {
   storeContextManager,
   displayAlreadyInitializedError,
   createTrackingConsentState,
-  timeStampToClocks,
+  timeStampToClocks
 } from '@datadog/browser-core'
 import type { LifeCycle } from '../domain/lifeCycle'
 import type { ViewHistory } from '../domain/contexts/viewHistory'

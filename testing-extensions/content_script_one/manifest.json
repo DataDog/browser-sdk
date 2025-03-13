@@ -10,7 +10,7 @@
   "host_permissions": ["<all_urls>"],
   "content_scripts": [
     {
-      "matches": ["*://developer.chrome.com/docs/*"],
+      "matches": ["<all_urls>"],
       "js": ["dist/content-script.js"],
       "run_at": "document_start"
     }
