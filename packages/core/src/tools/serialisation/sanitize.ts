@@ -66,7 +66,7 @@ export function sanitize(source: unknown, maxCharacterCount = SANITIZE_DEFAULT_M
     containerQueue,
     visitedObjectsWithPath
   )
-  const serializedSanitizedData = JSON.stringify(sanitizedData)
+  let serializedSanitizedData = JSON.stringify(sanitizedData)
   let accumulatedCharacterCount = serializedSanitizedData ? serializedSanitizedData.length : 0
 
   if (accumulatedCharacterCount > maxCharacterCount) {
@@ -91,7 +91,9 @@ export function sanitize(source: unknown, maxCharacterCount = SANITIZE_DEFAULT_M
         )
 
         if (targetData !== undefined) {
-          accumulatedCharacterCount += JSON.stringify(targetData).length
+          const targetDataSerialized = JSON.stringify(targetData)
+          serializedSanitizedData += targetDataSerialized
+          accumulatedCharacterCount += targetDataSerialized.length
         } else {
           // When an element of an Array (targetData) is undefined, it is serialized as null:
           // JSON.stringify([undefined]) => '[null]' - This accounts for 4 characters
@@ -118,8 +120,11 @@ export function sanitize(source: unknown, maxCharacterCount = SANITIZE_DEFAULT_M
           // When a property of an object has an undefined value, it will be dropped during serialization:
           // JSON.stringify({a:undefined}) => '{}'
           if (targetData !== undefined) {
+            const targetDataSerialized = JSON.stringify(targetData)
+            serializedSanitizedData += targetDataSerialized
+
             accumulatedCharacterCount +=
-              JSON.stringify(targetData).length + separatorLength + key.length + KEY_DECORATION_LENGTH
+              targetDataSerialized.length + separatorLength + key.length + KEY_DECORATION_LENGTH
             separatorLength = 1
           }
           if (accumulatedCharacterCount > maxCharacterCount) {

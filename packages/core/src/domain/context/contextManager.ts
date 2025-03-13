@@ -1,3 +1,4 @@
+import { deepEqual } from '@datadog/browser-core'
 import { sanitize } from '../../tools/serialisation/sanitize'
 import type { Context } from '../../tools/serialisation/context'
 import { Observable } from '../../tools/observable'
@@ -5,6 +6,8 @@ import { display } from '../../tools/display'
 import type { RelativeTime } from '../../tools/utils/timeUtils'
 import { dateNow } from '../../tools/utils/timeUtils'
 import { computeBytesCount } from '../../tools/utils/byteUtils'
+
+import { combine } from '../../tools/mergeInto'
 import type { CustomerDataTracker } from './customerDataTracker'
 import { checkContext } from './contextUtils'
 
@@ -98,27 +101,28 @@ export function createContextManager(
         return context
       }
 
-      const reconstructedContext: Context = {}
-      for (const entry of changes) {
-        if (entry.timestamp > timestamp) {
+      const changeToApply = []
+      for (let i = logs.length - 1; i >= 0; i--) {
+        if (changes[i].timestamp > timestamp) {
+          continue
+        }
+        if (changes[i].change === undefined) {
           break
         }
-        Object.assign(reconstructedContext, entry.change)
+        changeToApply.push(changes[i].change)
       }
 
-      return reconstructedContext
+      return combine(...(changeToApply as [object, object])) as Context
     },
 
     setContext: (newContext: unknown) => {
       if (checkContext(newContext)) {
         logs.push({ timestamp: dateNow(), change: context })
-        const diff = computeDiff(context, newContext)
-        context = sanitize(ensureProperties(newContext, propertiesConfig, name))
-
-        if (diff) {
-          changes.push({ timestamp: dateNow(), change: diff })
+        const sanitizedContext = sanitize(ensureProperties(newContext, propertiesConfig, name))
+        if (!deepEqual(context, sanitizedContext)) {
+          changes.push({ timestamp: dateNow(), change: sanitizedContext })
         }
-
+        context = sanitizedContext
         customerDataTracker?.updateCustomerData(context)
       } else {
         contextManager.clearContext()
@@ -129,17 +133,15 @@ export function createContextManager(
     setContextProperty: (key: string, property: any) => {
       const propertyEnsured = ensureProperties({ [key]: property }, propertiesConfig, name)
       const sanitizedProperty = sanitize(propertyEnsured[key])
+
+      if (!deepEqual(context[key], sanitizedProperty)) {
+        changes.push({ timestamp: dateNow(), change: { [key]: sanitizedProperty } })
+      }
+
       context[key] = sanitizedProperty
 
       logs.push({ timestamp: dateNow(), change: { [key]: property } })
 
-      const diff = computeDiff((context[key] as Context) || {}, property)
-      context = sanitize(ensureProperties({ ...context, [key]: property }, propertiesConfig, name))
-
-      display.log(`Setting context property ${key}`, diff, context[key], property)
-      if (diff) {
-        changes.push({ timestamp: dateNow(), change: { [key]: property } })
-      }
       customerDataTracker?.updateCustomerData(context)
       changeObservable.notify()
     },
