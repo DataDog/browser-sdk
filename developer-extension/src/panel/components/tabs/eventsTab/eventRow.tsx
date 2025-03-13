@@ -305,7 +305,11 @@ export const EventDescription = React.memo(({ event }: { event: SdkEvent }) => {
 })
 
 function LogDescription({ event }: { event: LogsEvent }) {
-  return <>{event.message}</>
+  if (typeof event.message === 'string') {
+    return <>{event.message}</>
+  }
+
+  return <Json value={event.message} defaultCollapseLevel={0} />
 }
 
 function TelemetryDescription({ event }: { event: TelemetryEvent }) {
