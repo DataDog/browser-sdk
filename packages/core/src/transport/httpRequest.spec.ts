@@ -102,6 +102,7 @@ describe('httpRequest', () => {
         endpointBuilder,
         BATCH_BYTES_LIMIT,
         { data: '{"foo":"bar1"}\n{"foo":"bar2"}', bytesCount: 10 },
+        {},
         (response) => {
           expect(response).toEqual({ status: 429, type: 'cors' })
           done()
@@ -120,6 +121,7 @@ describe('httpRequest', () => {
         endpointBuilder,
         BATCH_BYTES_LIMIT,
         { data: '{"foo":"bar1"}\n{"foo":"bar2"}', bytesCount: 10 },
+        {},
         (response) => {
           expect(response).toEqual({ status: 429, type: 'cors' })
           done()
@@ -134,6 +136,7 @@ describe('httpRequest', () => {
         endpointBuilder,
         BATCH_BYTES_LIMIT,
         { data: '{"foo":"bar1"}\n{"foo":"bar2"}', bytesCount: BATCH_BYTES_LIMIT },
+        {},
         (response) => {
           expect(response).toEqual({ status: 429, type: 'cors' })
           done()
@@ -146,7 +149,7 @@ describe('httpRequest', () => {
     it('should be called with intake response', (done) => {
       interceptor.withFetch(DEFAULT_FETCH_MOCK)
 
-      fetchStrategy(endpointBuilder, { data: '{"foo":"bar1"}\n{"foo":"bar2"}', bytesCount: 10 }, (response) => {
+      fetchStrategy(endpointBuilder, { data: '{"foo":"bar1"}\n{"foo":"bar2"}', bytesCount: 10 }, {}, (response) => {
         expect(response).toEqual({ status: 200, type: 'cors' })
         done()
       })
@@ -155,7 +158,7 @@ describe('httpRequest', () => {
     it('should be called with status 0 when fetch fails', (done) => {
       interceptor.withFetch(NETWORK_ERROR_FETCH_MOCK)
 
-      fetchStrategy(endpointBuilder, { data: '{"foo":"bar1"}\n{"foo":"bar2"}', bytesCount: 10 }, (response) => {
+      fetchStrategy(endpointBuilder, { data: '{"foo":"bar1"}\n{"foo":"bar2"}', bytesCount: 10 }, {}, (response) => {
         expect(response).toEqual({ status: 0 })
         done()
       })

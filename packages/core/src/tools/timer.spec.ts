@@ -63,7 +63,7 @@ import { noop } from './utils/functionUtils'
       })
       clock.tick(0)
 
-      expect(onMonitorErrorCollectedSpy).toHaveBeenCalledOnceWith(new Error('foo'))
+      expect(onMonitorErrorCollectedSpy).toHaveBeenCalledOnceWith(new Error('foo'), undefined)
     })
 
     it('can be canceled', () => {
