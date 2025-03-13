@@ -38,25 +38,26 @@ export function createHttpRequest(
   reportError: (error: RawError) => void
 ) {
   const retryState = newRetryState()
-  const sendStrategyForRetry = (payload: Payload, onResponse: (r: HttpResponse) => void) =>
-    fetchKeepAliveStrategy(
-      endpointBuilder,
-      bytesLimit,
-      payload,
-      {
-        transportStatus: retryState.transportStatus,
-        currentBackoffTime: retryState.currentBackoffTime,
-        ongoingRequestCount: retryState.bandwidthMonitor.ongoingRequestCount,
-        ongoingByteCount: retryState.bandwidthMonitor.ongoingByteCount,
-        queuedPayloads: retryState.queuedPayloads.size(),
-        queuedPayloadsBytesCount: retryState.queuedPayloads.bytesCount,
-        bytesLimit,
-      },
-      onResponse
-    )
 
   return {
-    send: (payload: Payload) => {
+    send: (payload: Payload, context?: Context) => {
+      const sendStrategyForRetry = (payload: Payload, onResponse: (r: HttpResponse) => void) =>
+        fetchKeepAliveStrategy(
+          endpointBuilder,
+          bytesLimit,
+          payload,
+          {
+            transportStatus: retryState.transportStatus,
+            currentBackoffTime: retryState.currentBackoffTime,
+            ongoingRequestCount: retryState.bandwidthMonitor.ongoingRequestCount,
+            ongoingByteCount: retryState.bandwidthMonitor.ongoingByteCount,
+            queuedPayloads: retryState.queuedPayloads.size(),
+            queuedPayloadsBytesCount: retryState.queuedPayloads.bytesCount,
+            bytesLimit,
+            ...context,
+          },
+          onResponse
+        )
       sendWithRetryStrategy(payload, retryState, sendStrategyForRetry, endpointBuilder.trackType, reportError)
     },
     /**
@@ -127,7 +128,9 @@ export function fetchStrategy(
   fetch(fetchUrl, { method: 'POST', body: payload.data, mode: 'cors' })
     .then(monitor((response: Response) => onResponse?.({ status: response.status, type: response.type })))
     .catch((error) => {
+      const url = new URL(fetchUrl) // eslint-disable-line local-rules/disallow-url-constructor-patched-values
       monitorError(error, {
+        fetchUrl: url.origin,
         trackType: endpointBuilder.trackType,
         payloadBytesCount: payload.bytesCount,
         ...context,
