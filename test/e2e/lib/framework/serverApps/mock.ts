@@ -96,7 +96,7 @@ export function createMockServerApp(servers: Servers, setup: string): MockServer
       'Content-Security-Policy',
       [
         `connect-src ${servers.intake.url} ${servers.base.url} ${servers.crossOrigin.url}`,
-        "script-src 'self' 'unsafe-inline'",
+        "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
         'worker-src blob:',
       ].join(';')
     )
@@ -139,6 +139,15 @@ export function createMockServerApp(servers: Servers, setup: string): MockServer
 
   app.get('/app.js', (_req, res) => {
     res.sendFile(sdkBuilds.NPM_BUNDLE)
+  })
+
+  app.get('/react-app.js', (_req, res) => {
+    res.sendFile(sdkBuilds.NPM_REACT_BUNDLE)
+  })
+
+  app.get('/chunks/:name-:hash-react-app.js', (req, res) => {
+    const { name, hash } = req.params
+    res.sendFile(sdkBuilds.npmBundleChunksReact(name, hash))
   })
 
   app.get('/chunks/:name-:hash-app.js', (req, res) => {

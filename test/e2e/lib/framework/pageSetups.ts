@@ -10,6 +10,7 @@ export interface SetupOptions {
   logsInit: (initConfiguration: LogsInitConfiguration) => void
   rumInit: (initConfiguration: RumInitConfiguration) => void
   eventBridge: boolean
+  useReact: boolean
   head?: string
   body?: string
   basePath: string
@@ -136,17 +137,31 @@ export function npmSetup(options: SetupOptions, servers: Servers) {
   }
 
   if (options.rum) {
-    header += html`
-      <script type="text/javascript">
-        window.RUM_INIT = () => {
-          window.DD_RUM.setGlobalContext(${JSON.stringify(options.context)})
-          ;(${options.rumInit.toString()})(${formatConfiguration(options.rum, servers)})
-        }
-      </script>
-    `
+    if (options.useReact) {
+      header += html`
+        <script type="text/javascript">
+          window.RUM_CONFIGURATION = ${formatConfiguration(options.rum, servers)}
+        </script>
+      `
+    } else {
+      header += html`
+        <script type="text/javascript">
+          window.RUM_INIT = () => {
+            window.DD_RUM.setGlobalContext(${JSON.stringify(options.context)})
+            ;(${options.rumInit.toString()})(${formatConfiguration(options.rum, servers)})
+          }
+        </script>
+      `
+    }
   }
-
-  header += html` <script type="text/javascript" src="./app.js"></script> `
+  if (options.useReact) {
+    header += html`
+      <div id="root"></div>
+      <script type="text/javascript" src="./react-app.js"></script>
+    `
+  } else {
+    header += html` <script type="text/javascript" src="./app.js"></script> `
+  }
 
   return basePage({
     header,

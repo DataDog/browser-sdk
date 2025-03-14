@@ -71,6 +71,7 @@ class TestBuilder {
   private body = ''
   private basePath = ''
   private eventBridge = false
+  private useReact = false
   private setups: Array<{ factory: SetupFactory; name?: string }> = []
 
   constructor(private title: string) {}
@@ -115,6 +116,11 @@ class TestBuilder {
     return this
   }
 
+  withUseReact() {
+    this.useReact = true
+    return this
+  }
+
   withBasePath(newBasePath: string) {
     this.basePath = newBasePath
     return this
@@ -140,6 +146,7 @@ class TestBuilder {
       logsInit: this.logsInit,
       useRumSlim: false,
       eventBridge: this.eventBridge,
+      useReact: this.useReact,
       basePath: this.basePath,
       context: {
         run_id: getRunId(),

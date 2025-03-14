@@ -1,0 +1,28 @@
+{
+  "name": "react-app",
+  "version": "0.0.0",
+  "scripts": {
+    "build": "webpack --config ./webpack.web.js",
+    "start": "webpack serve --config ./webpack.web.js --mode development"
+  },
+  "dependencies": {
+    "@datadog/browser-core": "portal:../../packages/core",
+    "@datadog/browser-rum": "portal:../../packages/rum",
+    "@datadog/browser-rum-core": "portal:../../packages/rum-core",
+    "@datadog/browser-rum-react": "portal:../../packages/rum-react"
+  },
+  "resolutions": {
+    "@datadog/browser-core": "portal:../../packages/core",
+    "@datadog/browser-rum-core": "portal:../../packages/rum-core",
+    "@datadog/browser-rum": "portal:../../packages/rum",
+    "@datadog/browser-rum-react": "portal:../../packages/rum-react"
+  },
+  "devDependencies": {
+    "ts-loader": "^9.5.1",
+    "typescript": "^4.5.5",
+    "webpack": "5.94.0"
+  },
+  "volta": {
+    "extends": "../../package.json"
+  }
+}
