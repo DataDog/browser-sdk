@@ -38,11 +38,26 @@ export function createHttpRequest(
   reportError: (error: RawError) => void
 ) {
   const retryState = newRetryState()
-  const sendStrategyForRetry = (payload: Payload, onResponse: (r: HttpResponse) => void) =>
-    fetchKeepAliveStrategy(endpointBuilder, bytesLimit, payload, onResponse)
 
   return {
-    send: (payload: Payload) => {
+    send: (payload: Payload, context?: Context) => {
+      const sendStrategyForRetry = (payload: Payload, onResponse: (r: HttpResponse) => void) =>
+        fetchKeepAliveStrategy(
+          endpointBuilder,
+          bytesLimit,
+          payload,
+          {
+            transportStatus: retryState.transportStatus,
+            currentBackoffTime: retryState.currentBackoffTime,
+            ongoingRequestCount: retryState.bandwidthMonitor.ongoingRequestCount,
+            ongoingByteCount: retryState.bandwidthMonitor.ongoingByteCount,
+            queuedPayloads: retryState.queuedPayloads.size(),
+            queuedPayloadsBytesCount: retryState.queuedPayloads.bytesCount,
+            bytesLimit,
+            ...context,
+          },
+          onResponse
+        )
       sendWithRetryStrategy(payload, retryState, sendStrategyForRetry, endpointBuilder.trackType, reportError)
     },
     /**
@@ -86,6 +101,7 @@ export function fetchKeepAliveStrategy(
   endpointBuilder: EndpointBuilder,
   bytesLimit: number,
   payload: Payload,
+  context?: Context,
   onResponse?: (r: HttpResponse) => void
 ) {
   const canUseKeepAlive = isKeepAliveSupported() && payload.bytesCount < bytesLimit
@@ -95,15 +111,16 @@ export function fetchKeepAliveStrategy(
 
     fetch(fetchUrl, { method: 'POST', body: payload.data, keepalive: true, mode: 'cors' })
       .then(monitor((response: Response) => onResponse?.({ status: response.status, type: response.type })))
-      .catch(monitor(() => fetchStrategy(endpointBuilder, payload, onResponse)))
+      .catch(monitor(() => fetchStrategy(endpointBuilder, payload, { canUseKeepAlive, ...context }, onResponse)))
   } else {
-    fetchStrategy(endpointBuilder, payload, onResponse)
+    fetchStrategy(endpointBuilder, payload, { canUseKeepAlive, ...context }, onResponse)
   }
 }
 
 export function fetchStrategy(
   endpointBuilder: EndpointBuilder,
   payload: Payload,
+  context?: Context,
   onResponse?: (r: HttpResponse) => void
 ) {
   const fetchUrl = endpointBuilder.build('fetch', payload)

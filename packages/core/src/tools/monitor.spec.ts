@@ -1,8 +1,9 @@
 import { display } from './display'
 import { callMonitored, monitor, monitored, startMonitorErrorCollection, resetMonitor, setDebugMode } from './monitor'
+import type { Context } from './serialisation/context'
 
 describe('monitor', () => {
-  let onMonitorErrorCollectedSpy: jasmine.Spy<(error: unknown) => void>
+  let onMonitorErrorCollectedSpy: jasmine.Spy<(error: unknown, context?: Context) => void>
 
   beforeEach(() => {
     onMonitorErrorCollectedSpy = jasmine.createSpy()
@@ -70,19 +71,19 @@ describe('monitor', () => {
       it('should report error', () => {
         candidate.monitoredThrowing()
 
-        expect(onMonitorErrorCollectedSpy).toHaveBeenCalledOnceWith(new Error('monitored'))
+        expect(onMonitorErrorCollectedSpy).toHaveBeenCalledOnceWith(new Error('monitored'), undefined)
       })
 
       it('should report string error', () => {
         candidate.monitoredStringErrorThrowing()
 
-        expect(onMonitorErrorCollectedSpy).toHaveBeenCalledOnceWith('string error')
+        expect(onMonitorErrorCollectedSpy).toHaveBeenCalledOnceWith('string error', undefined)
       })
 
       it('should report object error', () => {
         candidate.monitoredObjectErrorThrowing()
 
-        expect(onMonitorErrorCollectedSpy).toHaveBeenCalledOnceWith({ foo: 'bar' })
+        expect(onMonitorErrorCollectedSpy).toHaveBeenCalledOnceWith({ foo: 'bar' }, undefined)
       })
     })
   })
@@ -109,7 +110,7 @@ describe('monitor', () => {
       it('should report error', () => {
         callMonitored(throwing)
 
-        expect(onMonitorErrorCollectedSpy).toHaveBeenCalledOnceWith(new Error('error'))
+        expect(onMonitorErrorCollectedSpy).toHaveBeenCalledOnceWith(new Error('error'), undefined)
       })
     })
 
@@ -127,7 +128,7 @@ describe('monitor', () => {
       it('should report error', () => {
         monitor(throwing)()
 
-        expect(onMonitorErrorCollectedSpy).toHaveBeenCalledOnceWith(new Error('error'))
+        expect(onMonitorErrorCollectedSpy).toHaveBeenCalledOnceWith(new Error('error'), undefined)
       })
     })
   })
@@ -154,7 +155,7 @@ describe('monitor', () => {
         throw new Error('message')
       })
 
-      expect(displaySpy).toHaveBeenCalledOnceWith('[MONITOR]', new Error('message'))
+      expect(displaySpy).toHaveBeenCalledOnceWith('[MONITOR]', new Error('message'), undefined)
     })
 
     it('displays errors thrown by the onMonitorErrorCollected callback', () => {
@@ -165,7 +166,7 @@ describe('monitor', () => {
       callMonitored(() => {
         throw new Error('message')
       })
-      expect(displaySpy).toHaveBeenCalledWith('[MONITOR]', new Error('message'))
+      expect(displaySpy).toHaveBeenCalledWith('[MONITOR]', new Error('message'), undefined)
       expect(displaySpy).toHaveBeenCalledWith('[MONITOR]', new Error('unexpected'))
     })
   })

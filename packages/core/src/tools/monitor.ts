@@ -1,9 +1,10 @@
 import { display } from './display'
+import type { Context } from './serialisation/context'
 
-let onMonitorErrorCollected: undefined | ((error: unknown) => void)
+let onMonitorErrorCollected: undefined | ((error: unknown, context?: Context) => void)
 let debugMode = false
 
-export function startMonitorErrorCollection(newOnMonitorErrorCollected: (error: unknown) => void) {
+export function startMonitorErrorCollection(newOnMonitorErrorCollected: (error: unknown, context?: Context) => void) {
   onMonitorErrorCollected = newOnMonitorErrorCollected
 }
 
@@ -54,11 +55,11 @@ export function callMonitored<T extends (...args: any[]) => any>(
   }
 }
 
-export function monitorError(e: unknown) {
-  displayIfDebugEnabled(e)
+export function monitorError(e: unknown, context?: Context) {
+  displayIfDebugEnabled(e, context)
   if (onMonitorErrorCollected) {
     try {
-      onMonitorErrorCollected(e)
+      onMonitorErrorCollected(e, context)
     } catch (e) {
       displayIfDebugEnabled(e)
     }
