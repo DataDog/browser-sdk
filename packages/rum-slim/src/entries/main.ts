@@ -3,6 +3,7 @@ import { defineGlobal, getGlobalObject } from '@datadog/browser-core'
 import type { RumPublicApi } from '@datadog/browser-rum-core'
 import { makeRumPublicApi, startRum } from '@datadog/browser-rum-core'
 import { makeRecorderApiStub } from '../boot/stubRecorderApi'
+import { makeProfilerApiStub } from '../boot/stubProfilerApi'
 
 export type {
   CommonProperties,
@@ -27,7 +28,7 @@ export type {
 } from '@datadog/browser-rum-core'
 export { DefaultPrivacyLevel } from '@datadog/browser-core'
 
-export const datadogRum = makeRumPublicApi(startRum, makeRecorderApiStub())
+export const datadogRum = makeRumPublicApi(startRum, makeRecorderApiStub(), makeProfilerApiStub())
 
 interface BrowserWindow extends Window {
   DD_RUM?: RumPublicApi

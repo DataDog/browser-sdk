@@ -49,12 +49,12 @@ import type { CustomVitalsState } from '../domain/vital/vitalCollection'
 import { startVitalCollection } from '../domain/vital/vitalCollection'
 import { startCiVisibilityContext } from '../domain/contexts/ciVisibilityContext'
 import { startLongAnimationFrameCollection } from '../domain/longAnimationFrame/longAnimationFrameCollection'
-import { RumPerformanceEntryType } from '../browser/performanceObservable'
+import { RumPerformanceEntryType, supportPerformanceTimingEvent } from '../browser/performanceObservable'
 import { startLongTaskCollection } from '../domain/longTask/longTaskCollection'
 import type { Hooks } from '../hooks'
 import { createHooks } from '../hooks'
 import { startSyntheticsContext } from '../domain/contexts/syntheticsContext'
-import type { RecorderApi } from './rumPublicApi'
+import type { RecorderApi, ProfilerApi } from './rumPublicApi'
 
 export type StartRum = typeof startRum
 export type StartRumResult = ReturnType<StartRum>
@@ -62,6 +62,7 @@ export type StartRumResult = ReturnType<StartRum>
 export function startRum(
   configuration: RumConfiguration,
   recorderApi: RecorderApi,
+  profilerApi: ProfilerApi,
   customerDataTrackerManager: CustomerDataTrackerManager,
   getCommonContext: () => CommonContext,
   initialViewOptions: ViewOptions | undefined,
@@ -188,7 +189,7 @@ export function startRum(
   cleanupTasks.push(stopResourceCollection)
 
   if (configuration.trackLongTasks) {
-    if (PerformanceObserver.supportedEntryTypes?.includes(RumPerformanceEntryType.LONG_ANIMATION_FRAME)) {
+    if (supportPerformanceTimingEvent(RumPerformanceEntryType.LONG_ANIMATION_FRAME)) {
       const { stop: stopLongAnimationFrameCollection } = startLongAnimationFrameCollection(lifeCycle, configuration)
       cleanupTasks.push(stopLongAnimationFrameCollection)
     } else {
@@ -208,6 +209,9 @@ export function startRum(
     actionContexts,
     urlContexts
   )
+
+  // Add Clean-up tasks for Profiler API.
+  cleanupTasks.push(() => profilerApi.stop())
 
   return {
     addAction,
