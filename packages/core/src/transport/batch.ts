@@ -91,26 +91,23 @@ export function createBatch({
 
       // Send encoded messages
       if (encoderResult.outputBytesCount) {
-        send(formatPayloadFromEncoder(encoderResult), { flushReason: event.reason })
+        send(formatPayloadFromEncoder(encoderResult))
       }
 
       // Send messages that are not yet encoded at this point
       const pendingMessages = [encoderResult.pendingData, upsertMessages].filter(Boolean).join('\n')
       if (pendingMessages) {
-        send(
-          {
-            data: pendingMessages,
-            bytesCount: computeBytesCount(pendingMessages),
-          },
-          { flushReason: event.reason }
-        )
+        send({
+          data: pendingMessages,
+          bytesCount: computeBytesCount(pendingMessages),
+        })
       }
     } else {
       if (upsertMessages) {
         encoder.write(encoder.isEmpty ? upsertMessages : `\n${upsertMessages}`)
       }
       encoder.finish((encoderResult) => {
-        send(formatPayloadFromEncoder(encoderResult), { flushReason: event.reason })
+        send(formatPayloadFromEncoder(encoderResult))
       })
     }
   }
