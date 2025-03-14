@@ -1,7 +1,7 @@
 import { RecordType } from '@datadog/browser-rum/src/types'
 import { test, expect } from '@playwright/test'
 import { expireSession, findSessionCookie, renewSession } from '../../lib/helpers/session'
-import { bundleSetup, createTest, waitForRequests } from '../../lib/framework'
+import { createTest, waitForRequests } from '../../lib/framework'
 
 test.describe('rum sessions', () => {
   test.describe('session renewal', () => {
@@ -22,7 +22,6 @@ test.describe('rum sessions', () => {
 
     createTest('a single fullSnapshot is taken when the session is renewed')
       .withRum()
-      .withSetup(bundleSetup)
       .run(async ({ intakeRegistry, flushEvents, browserContext, page }) => {
         await renewSession(page, browserContext)
 

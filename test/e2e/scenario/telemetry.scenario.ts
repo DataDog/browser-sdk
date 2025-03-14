@@ -1,9 +1,8 @@
 import { test, expect } from '@playwright/test'
-import { bundleSetup, createTest } from '../lib/framework'
+import { createTest } from '../lib/framework'
 
 test.describe('telemetry', () => {
   createTest('send errors for logs')
-    .withSetup(bundleSetup)
     .withLogs()
     .run(async ({ intakeRegistry, page, flushEvents }) => {
       await page.evaluate(() => {
@@ -25,7 +24,6 @@ test.describe('telemetry', () => {
     })
 
   createTest('send errors for RUM')
-    .withSetup(bundleSetup)
     .withRum()
     .run(async ({ intakeRegistry, flushEvents, page }) => {
       await page.evaluate(() => {
@@ -47,7 +45,6 @@ test.describe('telemetry', () => {
     })
 
   createTest('send init configuration for logs')
-    .withSetup(bundleSetup)
     .withLogs({
       forwardErrorsToLogs: true,
     })
@@ -60,7 +57,6 @@ test.describe('telemetry', () => {
     })
 
   createTest('send init configuration for RUM')
-    .withSetup(bundleSetup)
     .withRum({
       trackUserInteractions: true,
     })
@@ -73,7 +69,6 @@ test.describe('telemetry', () => {
     })
 
   createTest('send usage telemetry for RUM')
-    .withSetup(bundleSetup)
     .withRum()
     .run(async ({ intakeRegistry, flushEvents, page }) => {
       await page.evaluate(() => {
@@ -88,7 +83,6 @@ test.describe('telemetry', () => {
     })
 
   createTest('send usage telemetry for logs')
-    .withSetup(bundleSetup)
     .withLogs()
     .run(async ({ intakeRegistry, flushEvents, page }) => {
       await page.evaluate(() => {

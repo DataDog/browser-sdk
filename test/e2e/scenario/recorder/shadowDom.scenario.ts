@@ -21,7 +21,7 @@ import {
 } from '@datadog/browser-rum/test/segments'
 
 import { test, expect } from '@playwright/test'
-import { createTest, bundleSetup, html } from '../../lib/framework'
+import { createTest, html } from '../../lib/framework'
 
 /** Will generate the following HTML
  * ```html
@@ -162,7 +162,6 @@ class DivWithStyle extends HTMLElement {
 test.describe('recorder with shadow DOM', () => {
   createTest('can record fullsnapshot with the detail inside the shadow root')
     .withRum({ defaultPrivacyLevel: 'allow' })
-    .withSetup(bundleSetup)
     .withBody(html`
       ${divShadowDom}
       <my-div />
@@ -182,7 +181,6 @@ test.describe('recorder with shadow DOM', () => {
 
   createTest('can record fullsnapshot with adoptedStylesheet')
     .withRum()
-    .withSetup(bundleSetup)
     .withBody(html`
       ${divWithStyleShadowDom}
       <div-with-style />
@@ -207,7 +205,6 @@ test.describe('recorder with shadow DOM', () => {
 
   createTest('can apply privacy level set from outside or inside the shadow DOM')
     .withRum({ defaultPrivacyLevel: 'allow' })
-    .withSetup(bundleSetup)
     .withBody(html`
       ${inputShadowDom}
       <div data-dd-privacy="mask-user-input"><my-input-field id="privacy-set-outside" /></div>
@@ -242,7 +239,6 @@ test.describe('recorder with shadow DOM', () => {
 
   createTest('can record click with target from inside the shadow root')
     .withRum()
-    .withSetup(bundleSetup)
     .withBody(html`
       ${divShadowDom}
       <my-div />
@@ -264,7 +260,6 @@ test.describe('recorder with shadow DOM', () => {
 
   createTest('can record mutation from inside the shadow root')
     .withRum({ defaultPrivacyLevel: 'allow' })
-    .withSetup(bundleSetup)
     .withBody(html`
       ${divShadowDom}
       <my-div id="host" />
@@ -299,7 +294,6 @@ test.describe('recorder with shadow DOM', () => {
 
   createTest('can record scroll from inside the shadow root')
     .withRum({})
-    .withSetup(bundleSetup)
     .withBody(html`
       ${scrollableDivShadowDom}
       <my-scrollable-div id="host" />
