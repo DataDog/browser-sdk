@@ -8,16 +8,10 @@
     "activeTab"
   ],
   "host_permissions": ["<all_urls>"],
-  "content_scripts": [
-    {
-      "matches": ["<all_urls>"],
-      "js": ["dist/content-script.js"],
-      "run_at": "document_start"
-    }
-  ],
+  "options_page": "src/form.html",
   "action": {
     "default_title": "Datadog RUM Extension",
     "default_popup": "src/popup.html",
-    "default_icon": "rum.png"
+    "default_icon": "../rum.png"
   }
 }
