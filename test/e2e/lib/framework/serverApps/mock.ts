@@ -4,6 +4,7 @@ import cors from 'cors'
 import express from 'express'
 import { getSdkBundlePath, getTestAppBundlePath } from '../sdkBuilds'
 import type { MockServerApp, Servers } from '../httpServers'
+import { DEV_SERVER_BASE_URL } from '../../helpers/playwright'
 
 export const LARGE_RESPONSE_MIN_BYTE_SIZE = 100_000
 
@@ -149,7 +150,7 @@ export function createMockServerApp(servers: Servers, setup: string): MockServer
 // We fetch and pipe the file content instead of redirecting to avoid creating different behavior between CI and local dev
 // This way both environments serve the files from the same origin with the same CSP rules
 function forwardToDevServer(originalUrl: string, res: ServerResponse) {
-  const url = `http://localhost:8080${originalUrl}`
+  const url = `${DEV_SERVER_BASE_URL}${originalUrl}`
 
   fetch(url)
     .then(({ body, headers }) => {
