@@ -62,6 +62,7 @@ module.exports = ({ entry, mode, filename, types, keepBuildEnvVariables, plugins
           module: true,
           compress: {
             passes: 4,
+            unsafe: true,
             unsafe_methods: true,
           },
         },
