@@ -50,13 +50,6 @@ export function createPostStartStrategy(
     }
   })
 
-  // Stop the recorder on page unload to avoid sending records after the page is ended.
-  lifeCycle.subscribe(LifeCycleEventType.PAGE_EXITED, (pageExitEvent) => {
-    if (pageExitEvent.reason === PageExitReason.UNLOADING) {
-      stop()
-    }
-  })
-
   lifeCycle.subscribe(LifeCycleEventType.SESSION_RENEWED, () => {
     if (status === RecorderStatus.IntentToStart) {
       start()
