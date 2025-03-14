@@ -25,6 +25,7 @@ export default tseslint.config(
       'packages/*/esm',
       'developer-extension/dist',
       'test/app/dist',
+      'test/react-app/dist',
       'sandbox',
       'coverage',
       'rum-events-format',
@@ -45,6 +46,7 @@ export default tseslint.config(
         project: [
           './tsconfig.json',
           './test/app/tsconfig.json',
+          './test/react-app/tsconfig.json',
           './test/e2e/tsconfig.json',
           './developer-extension/tsconfig.json',
           './performances/tsconfig.json',
