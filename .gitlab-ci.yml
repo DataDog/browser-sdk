@@ -95,7 +95,6 @@ stages:
 ###########################################################################################################################
 # Resource allocation
 ###########################################################################################################################
-
 .resource-allocation-4-cpus:
   variables:
     WORKERS: 2
@@ -170,6 +169,9 @@ test-performance:
   extends:
     - .base-configuration
     - .test-allowed-branches
+  except:
+    variables:
+      - $CI_COMMIT_REF_NAME == $CURRENT_STAGING
   interruptible: true
   allow_failure: true
   script:
