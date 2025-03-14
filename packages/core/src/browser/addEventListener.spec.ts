@@ -33,6 +33,51 @@ describe('addEventListener', () => {
       stop()
       expect(zoneJsPatchedRemoveEventListener).not.toHaveBeenCalled()
     })
+
+    it('uses the custom event target instead of the original event target when result of an illegal invocation', () => {
+      const zoneJsPatchedAddEventListener = jasmine.createSpy('zoneJsPatchedAddEventListener')
+      const zoneJsPatchedRemoveEventListener = jasmine.createSpy('zoneJsPatchedRemoveEventListener')
+      const originalAddEventListener = jasmine.createSpy('originalAddEventListener')
+      const originalRemoveEventListener = jasmine.createSpy('originalRemoveEventListener')
+
+      class CustomXMLHttpRequest extends XMLHttpRequest {
+        __zone_symbol__addEventListener: jasmine.Spy | undefined
+
+        constructor() {
+          super()
+
+          return {
+            ...this,
+            addEventListener: zoneJsPatchedAddEventListener,
+            removeEventListener: zoneJsPatchedRemoveEventListener,
+            __zone_symbol__addEventListener: originalAddEventListener.and.callFake(
+              super.addEventListener // eslint-disable-line @typescript-eslint/unbound-method
+            ),
+            __zone_symbol__removeEventListener: originalRemoveEventListener.and.callFake(
+              super.removeEventListener // eslint-disable-line @typescript-eslint/unbound-method
+            ),
+          }
+        }
+      }
+
+      const originalXMLHttpRequest = window.XMLHttpRequest
+      registerCleanupTask(() => {
+        window.XMLHttpRequest = originalXMLHttpRequest
+      })
+      window.XMLHttpRequest = CustomXMLHttpRequest
+
+      const xhr = new XMLHttpRequest()
+
+      const { stop } = addEventListener(configuration, xhr, 'loadend', noop)
+
+      expect(originalAddEventListener).toHaveBeenCalled()
+      expect(zoneJsPatchedAddEventListener).toHaveBeenCalled()
+
+      stop()
+
+      expect(originalRemoveEventListener).toHaveBeenCalled()
+      expect(zoneJsPatchedRemoveEventListener).toHaveBeenCalled()
+    })
   })
 
   it('Use the EventTarget.prototype.addEventListener when the eventTarget is an instance of EventTarget', () => {

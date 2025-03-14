@@ -127,19 +127,57 @@ export function addEventListeners<Target extends EventTarget, EventName extends 
 
   const options = passive ? { capture, passive } : capture
 
-  // Use the window.EventTarget.prototype when possible to avoid wrong overrides (e.g: https://github.com/salesforce/lwc/issues/1824)
-  const listenerTarget =
-    window.EventTarget && eventTarget instanceof EventTarget ? window.EventTarget.prototype : eventTarget
-
-  const add = getZoneJsOriginalValue(listenerTarget, 'addEventListener')
-  eventNames.forEach((eventName) => add.call(eventTarget, eventName, listenerWithMonitor, options))
+  eventNames.forEach((eventName) =>
+    withOriginalOrZoneJsPatchedMethod(eventTarget, 'addEventListener', (method) =>
+      method.call(eventTarget, eventName, listenerWithMonitor, options)
+    )
+  )
 
   function stop() {
-    const remove = getZoneJsOriginalValue(listenerTarget, 'removeEventListener')
-    eventNames.forEach((eventName) => remove.call(eventTarget, eventName, listenerWithMonitor, options))
+    eventNames.forEach((eventName) =>
+      withOriginalOrZoneJsPatchedMethod(eventTarget, 'removeEventListener', (method) =>
+        method.call(eventTarget, eventName, listenerWithMonitor, options)
+      )
+    )
   }
 
   return {
     stop,
+  }
+}
+
+function isIllegalInvocationError(error: unknown, methodName: string) {
+  if (!(error instanceof Error)) {
+    return false
+  }
+
+  return (
+    error.message.includes('Illegal invocation') || // chrome
+    error.message.includes(`'${methodName}' called on an object that does not implement interface EventTarget.`) || // firefox
+    error.message.includes(`Can only call EventTarget.${methodName} on instances of EventTarget`) // safari
+  )
+}
+
+function withOriginalOrZoneJsPatchedMethod<Target extends EventTarget, MethodName extends keyof EventTarget>(
+  eventTarget: Target,
+  methodName: MethodName,
+  cb: (method: (typeof eventTarget)[MethodName]) => void
+) {
+  // Use the window.EventTarget.prototype when possible to avoid wrong overrides (e.g: https://github.com/salesforce/lwc/issues/1824)
+  const listenerTarget =
+    window.EventTarget && eventTarget instanceof EventTarget ? window.EventTarget.prototype : eventTarget
+
+  const originalMethod = getZoneJsOriginalValue(listenerTarget, methodName)
+
+  try {
+    // In some cases this call fails with an Illegal invocation error, we then catch the error and use the zone.js
+    // patched method
+    cb(originalMethod as (typeof eventTarget)[MethodName])
+  } catch (error) {
+    if (isIllegalInvocationError(error, methodName)) {
+      return cb(eventTarget[methodName])
+    }
+
+    throw error
   }
 }
