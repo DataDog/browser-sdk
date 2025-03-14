@@ -5,7 +5,8 @@
   "workspaces": [
     "packages/*",
     "developer-extension",
-    "performances"
+    "performances",
+    "testing-extensions"
   ],
   "scripts": {
     "postinstall": "scripts/cli init_submodule",
