@@ -16,5 +16,6 @@ module.exports = {
   'disallow-url-constructor-patched-values': require('./disallowUrlConstructorPatchValues.js'),
   'disallow-generic-utils': require('./disallowGenericUtils'),
   'disallow-non-scripts': require('./disallowNonScripts'),
+  'enforce-prod-deps-imports': require('./enforceProdDepsImports.js'),
   'secure-command-execution': require('./secureCommandExecution'),
 }
