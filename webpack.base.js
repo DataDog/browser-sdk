@@ -18,6 +18,8 @@ module.exports = ({ entry, mode, filename, types, keepBuildEnvVariables, plugins
           `chunks/[name]-${filename}`
         : // Include a content hash in chunk names in production.
           `chunks/[name]-[contenthash]-${filename}`,
+    chunkLoading: 'import',
+    chunkFormat: 'module',
     path: path.resolve('./bundle'),
   },
   target: ['web', 'es2018'],
@@ -55,6 +57,15 @@ module.exports = ({ entry, mode, filename, types, keepBuildEnvVariables, plugins
     minimizer: [
       new TerserPlugin({
         extractComments: false,
+        terserOptions: {
+          ecma: 2018,
+          module: true,
+          compress: {
+            passes: 4,
+            unsafe: true,
+            unsafe_methods: true,
+          },
+        },
       }),
     ],
   },

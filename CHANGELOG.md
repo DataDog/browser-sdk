@@ -18,6 +18,20 @@
 
 ---
 
+## v6.5.1
+
+**Public Changes:**
+
+- 🐛 fix `@datadog/browser-rum-react/react-router-vX` import ([#3405](https://github.com/DataDog/browser-sdk/pull/3405)) [RUM-REACT]
+- 🐛 [RUM-8429] Report an error when lazy loading the recorder module fails ([#3326](https://github.com/DataDog/browser-sdk/pull/3326)) [RUM]
+
+**Internal Changes:**
+
+- 👷 Update dependency copy-webpack-plugin to v13 ([#3387](https://github.com/DataDog/browser-sdk/pull/3387))
+- 👷 filter out "Layout was forced..." console warning in e2e tests on Firefox ([#3397](https://github.com/DataDog/browser-sdk/pull/3397))
+- 🔧 update volta config ([#3403](https://github.com/DataDog/browser-sdk/pull/3403))
+- docs: add missing JSDoc comment for beforeSend configuration option ([#3404](https://github.com/DataDog/browser-sdk/pull/3404)) [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+
 ## v6.5.0
 
 **Public Changes:**
