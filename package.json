@@ -27,7 +27,7 @@
     "test:e2e": "playwright test --config test/e2e/playwright.local.config.ts --project chromium",
     "test:e2e:bs": "node ./scripts/test/bs-wrapper.js playwright test --config test/e2e/playwright.bs.config.ts",
     "test:e2e:ci": "yarn build && yarn build:app && yarn build:react-app && yarn playwright install chromium --with-deps && yarn test:e2e",
-    "test:e2e:ci:bs": "yarn build && yarn build:app && yarn test:e2e:bs",
+    "test:e2e:ci:bs": "yarn build && yarn build:app && yarn build:react-app && yarn test:e2e:bs",
     "test:compat:tsc": "scripts/cli check_typescript_compatibility",
     "test:compat:ssr": "scripts/cli check_server_side_rendering_compatibility",
     "rum-events-format:sync": "scripts/cli update_submodule && scripts/cli build_json2type && node scripts/generate-schema-types.js",
