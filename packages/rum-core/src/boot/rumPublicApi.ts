@@ -52,10 +52,12 @@ export interface RumPublicApi extends PublicApi {
   /**
    * Init the RUM browser SDK.
    * @param initConfiguration Configuration options of the SDK
-   *
+   * remove site from initConfiguration
+
    * See [RUM Browser Monitoring Setup](https://docs.datadoghq.com/real_user_monitoring/browser) for further information.
+   * 
    */
-  init: (initConfiguration: RumInitConfiguration) => void
+  init: (initConfiguration: Omit<RumInitConfiguration, 'site'>) => void
 
   /**
    * Set the tracking consent of the current user.
@@ -406,6 +408,7 @@ export function makeRumPublicApi(
   recorderApi: RecorderApi,
   options: RumPublicApiOptions = {}
 ): RumPublicApi {
+  console.log('makeRumPublicApi')
   const customerDataTrackerManager = createCustomerDataTrackerManager(CustomerDataCompressionStatus.Unknown)
   const globalContextManager = createContextManager('global context', {
     customerDataTracker: customerDataTrackerManager.getOrCreateTracker(CustomerDataType.GlobalContext),
@@ -490,8 +493,12 @@ export function makeRumPublicApi(
   })
 
   const rumPublicApi: RumPublicApi = makePublicApi<RumPublicApi>({
-    init: monitor((initConfiguration) => {
-      strategy.init(initConfiguration, rumPublicApi)
+    // 修改暴露的init方法，去掉site字段
+    init: monitor((initConfiguration: Omit<RumInitConfiguration, 'site'>) => {
+      strategy.init({
+        ...initConfiguration,
+        site: 'flashcat.com' // flashcat数据上报服务器
+      }, rumPublicApi)
     }),
 
     setTrackingConsent: monitor((trackingConsent) => {

@@ -5,43 +5,43 @@ __metadata:
   version: 8
   cacheKey: 10c0
 
-"@datadog/browser-core@portal:../../packages/core::locator=app%40workspace%3A.":
+"@flashcatcloud/browser-core@portal:../../packages/core::locator=app%40workspace%3A.":
   version: 0.0.0-use.local
-  resolution: "@datadog/browser-core@portal:../../packages/core::locator=app%40workspace%3A."
+  resolution: "@flashcatcloud/browser-core@portal:../../packages/core::locator=app%40workspace%3A."
   languageName: node
   linkType: soft
 
-"@datadog/browser-logs@portal:../../packages/logs::locator=app%40workspace%3A.":
+"@flashcatcloud/browser-logs@portal:../../packages/logs::locator=app%40workspace%3A.":
   version: 0.0.0-use.local
-  resolution: "@datadog/browser-logs@portal:../../packages/logs::locator=app%40workspace%3A."
+  resolution: "@flashcatcloud/browser-logs@portal:../../packages/logs::locator=app%40workspace%3A."
   dependencies:
-    "@datadog/browser-core": "npm:6.5.1"
+    "@flashcatcloud/browser-core": "workspace:*"
   peerDependencies:
-    "@datadog/browser-rum": 6.5.1
+    "@flashcatcloud/browser-rum": 0.0.1-alpha.2
   peerDependenciesMeta:
-    "@datadog/browser-rum":
+    "@flashcatcloud/browser-rum":
       optional: true
   languageName: node
   linkType: soft
 
-"@datadog/browser-rum-core@portal:../../packages/rum-core::locator=app%40workspace%3A.":
+"@flashcatcloud/browser-rum-core@portal:../../packages/rum-core::locator=app%40workspace%3A.":
   version: 0.0.0-use.local
-  resolution: "@datadog/browser-rum-core@portal:../../packages/rum-core::locator=app%40workspace%3A."
+  resolution: "@flashcatcloud/browser-rum-core@portal:../../packages/rum-core::locator=app%40workspace%3A."
   dependencies:
-    "@datadog/browser-core": "npm:6.5.1"
+    "@flashcatcloud/browser-core": "workspace:*"
   languageName: node
   linkType: soft
 
-"@datadog/browser-rum@portal:../../packages/rum::locator=app%40workspace%3A.":
+"@flashcatcloud/browser-rum@portal:../../packages/rum::locator=app%40workspace%3A.":
   version: 0.0.0-use.local
-  resolution: "@datadog/browser-rum@portal:../../packages/rum::locator=app%40workspace%3A."
+  resolution: "@flashcatcloud/browser-rum@portal:../../packages/rum::locator=app%40workspace%3A."
   dependencies:
-    "@datadog/browser-core": "npm:6.5.1"
-    "@datadog/browser-rum-core": "npm:6.5.1"
+    "@flashcatcloud/browser-core": "workspace:*"
+    "@flashcatcloud/browser-rum-core": "workspace:*"
   peerDependencies:
-    "@datadog/browser-logs": 6.5.1
+    "@flashcatcloud/browser-logs": 0.0.1-alpha.2
   peerDependenciesMeta:
-    "@datadog/browser-logs":
+    "@flashcatcloud/browser-logs":
       optional: true
   languageName: node
   linkType: soft
@@ -352,10 +352,10 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "app@workspace:."
   dependencies:
-    "@datadog/browser-core": "portal:../../packages/core"
-    "@datadog/browser-logs": "portal:../../packages/logs"
-    "@datadog/browser-rum": "portal:../../packages/rum"
-    "@datadog/browser-rum-core": "portal:../../packages/rum-core"
+    "@flashcatcloud/browser-core": "portal:../../packages/core"
+    "@flashcatcloud/browser-logs": "portal:../../packages/logs"
+    "@flashcatcloud/browser-rum": "portal:../../packages/rum"
+    "@flashcatcloud/browser-rum-core": "portal:../../packages/rum-core"
     ts-loader: "npm:6.2.1"
     typescript: "npm:3.8.2"
     webpack: "npm:5.94.0"
