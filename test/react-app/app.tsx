@@ -11,7 +11,7 @@ declare global {
   }
 }
 
-datadogRum.init({ ...window.RUM_CONFIGURATION,plugins: [reactPlugin({ router: true } )] })
+datadogRum.init({ ...window.RUM_CONFIGURATION, plugins: [reactPlugin({ router: true })] })
 
 function HomePage() {
   return (
@@ -46,36 +46,33 @@ function Layout() {
 }
 
 function TrackedPage() {
-
   return (
-      <ReactComponentTracker name="TrackedPage">
-          <h1>Component Tracker</h1>
-      </ReactComponentTracker>
+    <ReactComponentTracker name="TrackedPage">
+      <h1>Component Tracker</h1>
+    </ReactComponentTracker>
   )
 }
 
-const router = createBrowserRouter(
-  [
-    {
-      path: '/',
-      Component: Layout,
-      children: [
-        {
-          index: true,
-          Component: HomePage,
-        },
-        {
-          path: 'user/:id',
-          Component: UserPage,
-        },
-        {
-          path: 'tracked',
-          Component: TrackedPage,
-        },
-      ],
-    },
-  ],
-)
+const router = createBrowserRouter([
+  {
+    path: '/',
+    Component: Layout,
+    children: [
+      {
+        index: true,
+        Component: HomePage,
+      },
+      {
+        path: 'user/:id',
+        Component: UserPage,
+      },
+      {
+        path: 'tracked',
+        Component: TrackedPage,
+      },
+    ],
+  },
+])
 
 const rootElement = document.createElement('div')
 document.body.appendChild(rootElement)

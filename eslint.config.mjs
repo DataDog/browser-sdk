@@ -358,7 +358,7 @@ export default tseslint.config(
   },
 
   {
-    files: ['test/e2e/**/*.ts'],
+    files: ['test/e2e/**/*.ts', 'test/react-app/app.tsx'],
     rules: {
       // E2E codebase is importing @datadog/browser-* packages referenced by tsconfig.
       'import/no-extraneous-dependencies': 'off',

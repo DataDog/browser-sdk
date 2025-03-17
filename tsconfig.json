@@ -5,5 +5,13 @@
     "types": ["jasmine"]
   },
   "include": ["packages", "scripts", "test", "eslint.config.mjs", "eslint-local-rules"],
-  "exclude": ["packages/*/cjs", "packages/*/esm", "packages/*/bundle", "test/e2e", "test/app", "test/react-app","developer-extension"]
+  "exclude": [
+    "packages/*/cjs",
+    "packages/*/esm",
+    "packages/*/bundle",
+    "test/e2e",
+    "test/app",
+    "test/react-app",
+    "developer-extension"
+  ]
 }

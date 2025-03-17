@@ -10,8 +10,5 @@
       "@datadog/browser-rum-react/react-router-v7": ["packages/rum-react/src/entries/reactRouterV7"]
     }
   },
-  "include": [
-    ".",
-    "../../packages/rum-react/src/entries/main.ts"
-  ]
+  "include": [".", "../../packages/rum-react/src/entries/main.ts"]
 }
