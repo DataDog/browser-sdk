@@ -11,7 +11,9 @@ export function trackFirstHidden(configuration: RumConfiguration, eventTarget: W
   }
 
   if (supportPerformanceTimingEvent(RumPerformanceEntryType.VISIBILITY_STATE)) {
-    const firstHiddenEntry = performance.getEntriesByType('visibility-state').find((entry) => entry.name === 'hidden')
+    const firstHiddenEntry = performance
+      .getEntriesByType(RumPerformanceEntryType.VISIBILITY_STATE)
+      .find((entry) => entry.name === 'hidden')
     if (firstHiddenEntry) {
       return { timeStamp: firstHiddenEntry.startTime as RelativeTime, stop: noop }
     }

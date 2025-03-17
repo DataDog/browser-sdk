@@ -174,7 +174,7 @@ export interface RumPerformanceLongAnimationFrameTiming {
 
 export interface RumFirstHiddenTiming {
   entryType: RumPerformanceEntryType.VISIBILITY_STATE
-  name: 'hidden'
+  name: 'hidden' | 'visible'
   startTime: RelativeTime
   toJSON(): Omit<RumFirstHiddenTiming, 'toJSON'>
 }
