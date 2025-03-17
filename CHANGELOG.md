@@ -18,12 +18,6 @@
 
 ---
 
-## v0.0.1-alpha.2
-
-**Internal Changes:**
-
-- remove site validation [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
-
 ## v0.0.1-alpha.1
 
 - init version v0.0.1-alpha.1 from @datadog/browser-rum@6.5.1
