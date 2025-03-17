@@ -1,5 +1,5 @@
-import type { RelativeTime, ClocksState, Context } from '@datadog/browser-core'
-import { SESSION_TIME_OUT_DELAY, createValueHistory } from '@datadog/browser-core'
+import type { RelativeTime, ClocksState, Context } from '@flashcatcloud/browser-core'
+import { SESSION_TIME_OUT_DELAY, createValueHistory } from '@flashcatcloud/browser-core'
 import type { LifeCycle } from '../lifeCycle'
 import { LifeCycleEventType } from '../lifeCycle'
 import type { BeforeViewUpdateEvent, ViewCreatedEvent } from '../view/trackViews'

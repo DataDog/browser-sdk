@@ -1,4 +1,4 @@
-import type { Context, RelativeTime, TimeStamp } from '@datadog/browser-core'
+import type { Context, RelativeTime, TimeStamp } from '@flashcatcloud/browser-core'
 import {
   Observable,
   ErrorSource,
@@ -6,9 +6,9 @@ import {
   getTimeStamp,
   noop,
   createCustomerDataTracker,
-} from '@datadog/browser-core'
-import type { Clock } from '@datadog/browser-core/test'
-import { mockClock } from '@datadog/browser-core/test'
+} from '@flashcatcloud/browser-core'
+import type { Clock } from '@flashcatcloud/browser-core/test'
+import { mockClock } from '@flashcatcloud/browser-core/test'
 import type { LogsEvent } from '../logsEvent.types'
 import type { CommonContext } from '../rawLogsEvent.types'
 import { startLogsAssembly } from './assembly'

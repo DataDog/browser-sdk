@@ -1,5 +1,5 @@
-import type { Context, ContextManager } from '@datadog/browser-core'
-import { createContextManager, createCustomerDataTracker, noop } from '@datadog/browser-core'
+import type { Context, ContextManager } from '@flashcatcloud/browser-core'
+import { createContextManager, createCustomerDataTracker, noop } from '@flashcatcloud/browser-core'
 import type { RecorderApi } from '../../boot/rumPublicApi'
 import { noopRecorderApi } from '../../../test'
 import type { CommonContext } from './commonContext'

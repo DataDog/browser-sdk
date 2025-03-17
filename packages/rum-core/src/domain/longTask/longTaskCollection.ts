@@ -1,4 +1,4 @@
-import { toServerDuration, relativeToClocks, generateUUID } from '@datadog/browser-core'
+import { toServerDuration, relativeToClocks, generateUUID } from '@flashcatcloud/browser-core'
 import type { RawRumLongTaskEvent } from '../../rawRumEvent.types'
 import { RumEventType, RumLongTaskEntryType } from '../../rawRumEvent.types'
 import type { LifeCycle } from '../lifeCycle'

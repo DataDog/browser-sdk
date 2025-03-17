@@ -1,4 +1,4 @@
-import type { LogsEvent } from '@datadog/browser-logs'
+import type { LogsEvent } from '@flashcatcloud/browser-logs'
 import type {
   RumEvent,
   RumActionEvent,
@@ -6,15 +6,15 @@ import type {
   RumResourceEvent,
   RumViewEvent,
   RumVitalEvent,
-} from '@datadog/browser-rum'
+} from '@flashcatcloud/browser-rum'
 import type {
   TelemetryEvent,
   TelemetryErrorEvent,
   TelemetryConfigurationEvent,
   TelemetryUsageEvent,
-} from '@datadog/browser-core'
-import type { BrowserSegment } from '@datadog/browser-rum/src/types'
-import type { BrowserSegmentMetadataAndSegmentSizes } from '@datadog/browser-rum/src/domain/segmentCollection'
+} from '@flashcatcloud/browser-core'
+import type { BrowserSegment } from '@flashcatcloud/browser-rum/src/types'
+import type { BrowserSegmentMetadataAndSegmentSizes } from '@flashcatcloud/browser-rum/src/domain/segmentCollection'
 
 type BaseIntakeRequest = {
   isBridge: boolean

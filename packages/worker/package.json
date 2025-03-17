@@ -1,17 +1,17 @@
 {
-  "name": "@datadog/browser-worker",
-  "version": "6.5.1",
+  "name": "@flashcatcloud/browser-worker",
+  "version": "0.0.1-alpha.1",
   "license": "Apache-2.0",
   "main": "bundle/worker.js",
   "scripts": {
     "build": "rm -rf bundle && webpack --mode=production"
   },
   "dependencies": {
-    "@datadog/browser-core": "6.5.1"
+    "@flashcatcloud/browser-core": "workspace:*"
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/DataDog/browser-sdk.git",
+    "url": "https://github.com/flashcatcloud/browser-sdk",
     "directory": "packages/worker"
   },
   "volta": {

@@ -79,17 +79,17 @@ void describe('upload-source-maps', () => {
       assert.deepEqual(commandsByDatacenter, [
         {
           command:
-            'datadog-ci sourcemaps upload packages/logs/bundle --service browser-logs-sdk --release-version dev --minified-path-prefix / --project-path @datadog/browser-logs/ --repository-url https://www.github.com/datadog/browser-sdk',
+            'datadog-ci sourcemaps upload packages/logs/bundle --service browser-logs-sdk --release-version dev --minified-path-prefix / --project-path @flashcatcloud/browser-logs/ --repository-url https://www.github.com/datadog/browser-sdk',
           env,
         },
         {
           command:
-            'datadog-ci sourcemaps upload packages/rum/bundle --service browser-rum-sdk --release-version dev --minified-path-prefix / --project-path @datadog/browser-rum/ --repository-url https://www.github.com/datadog/browser-sdk',
+            'datadog-ci sourcemaps upload packages/rum/bundle --service browser-rum-sdk --release-version dev --minified-path-prefix / --project-path @flashcatcloud/browser-rum/ --repository-url https://www.github.com/datadog/browser-sdk',
           env,
         },
         {
           command:
-            'datadog-ci sourcemaps upload packages/rum-slim/bundle --service browser-rum-sdk --release-version dev --minified-path-prefix / --project-path @datadog/browser-rum-slim/ --repository-url https://www.github.com/datadog/browser-sdk',
+            'datadog-ci sourcemaps upload packages/rum-slim/bundle --service browser-rum-sdk --release-version dev --minified-path-prefix / --project-path @flashcatcloud/browser-rum-slim/ --repository-url https://www.github.com/datadog/browser-sdk',
           env,
         },
       ])
@@ -102,17 +102,17 @@ void describe('upload-source-maps', () => {
     assert.deepEqual(commands, [
       {
         command:
-          'datadog-ci sourcemaps upload packages/logs/bundle --service browser-logs-sdk --release-version dev --minified-path-prefix /us1/v6 --project-path @datadog/browser-logs/ --repository-url https://www.github.com/datadog/browser-sdk',
+          'datadog-ci sourcemaps upload packages/logs/bundle --service browser-logs-sdk --release-version dev --minified-path-prefix /us1/v6 --project-path @flashcatcloud/browser-logs/ --repository-url https://www.github.com/datadog/browser-sdk',
         env: ENV_PROD,
       },
       {
         command:
-          'datadog-ci sourcemaps upload packages/rum/bundle --service browser-rum-sdk --release-version dev --minified-path-prefix /us1/v6 --project-path @datadog/browser-rum/ --repository-url https://www.github.com/datadog/browser-sdk',
+          'datadog-ci sourcemaps upload packages/rum/bundle --service browser-rum-sdk --release-version dev --minified-path-prefix /us1/v6 --project-path @flashcatcloud/browser-rum/ --repository-url https://www.github.com/datadog/browser-sdk',
         env: ENV_PROD,
       },
       {
         command:
-          'datadog-ci sourcemaps upload packages/rum-slim/bundle --service browser-rum-sdk --release-version dev --minified-path-prefix /us1/v6 --project-path @datadog/browser-rum-slim/ --repository-url https://www.github.com/datadog/browser-sdk',
+          'datadog-ci sourcemaps upload packages/rum-slim/bundle --service browser-rum-sdk --release-version dev --minified-path-prefix /us1/v6 --project-path @flashcatcloud/browser-rum-slim/ --repository-url https://www.github.com/datadog/browser-sdk',
         env: ENV_PROD,
       },
     ])
@@ -148,32 +148,32 @@ void describe('upload-source-maps', () => {
     assert.deepEqual(getSourceMapCommands(), [
       {
         command:
-          'datadog-ci sourcemaps upload packages/logs/bundle --service browser-logs-sdk --release-version dev --minified-path-prefix / --project-path @datadog/browser-logs/ --repository-url https://www.github.com/datadog/browser-sdk',
+          'datadog-ci sourcemaps upload packages/logs/bundle --service browser-logs-sdk --release-version dev --minified-path-prefix / --project-path @flashcatcloud/browser-logs/ --repository-url https://www.github.com/datadog/browser-sdk',
         env: ENV_STAGING,
       },
       {
         command:
-          'datadog-ci sourcemaps upload packages/logs/bundle --service browser-logs-sdk --release-version dev --minified-path-prefix / --project-path @datadog/browser-logs/ --repository-url https://www.github.com/datadog/browser-sdk',
+          'datadog-ci sourcemaps upload packages/logs/bundle --service browser-logs-sdk --release-version dev --minified-path-prefix / --project-path @flashcatcloud/browser-logs/ --repository-url https://www.github.com/datadog/browser-sdk',
         env: ENV_PROD,
       },
       {
         command:
-          'datadog-ci sourcemaps upload packages/rum/bundle --service browser-rum-sdk --release-version dev --minified-path-prefix / --project-path @datadog/browser-rum/ --repository-url https://www.github.com/datadog/browser-sdk',
+          'datadog-ci sourcemaps upload packages/rum/bundle --service browser-rum-sdk --release-version dev --minified-path-prefix / --project-path @flashcatcloud/browser-rum/ --repository-url https://www.github.com/datadog/browser-sdk',
         env: ENV_STAGING,
       },
       {
         command:
-          'datadog-ci sourcemaps upload packages/rum/bundle --service browser-rum-sdk --release-version dev --minified-path-prefix / --project-path @datadog/browser-rum/ --repository-url https://www.github.com/datadog/browser-sdk',
+          'datadog-ci sourcemaps upload packages/rum/bundle --service browser-rum-sdk --release-version dev --minified-path-prefix / --project-path @flashcatcloud/browser-rum/ --repository-url https://www.github.com/datadog/browser-sdk',
         env: ENV_PROD,
       },
       {
         command:
-          'datadog-ci sourcemaps upload packages/rum-slim/bundle --service browser-rum-sdk --release-version dev --minified-path-prefix / --project-path @datadog/browser-rum-slim/ --repository-url https://www.github.com/datadog/browser-sdk',
+          'datadog-ci sourcemaps upload packages/rum-slim/bundle --service browser-rum-sdk --release-version dev --minified-path-prefix / --project-path @flashcatcloud/browser-rum-slim/ --repository-url https://www.github.com/datadog/browser-sdk',
         env: ENV_STAGING,
       },
       {
         command:
-          'datadog-ci sourcemaps upload packages/rum-slim/bundle --service browser-rum-sdk --release-version dev --minified-path-prefix / --project-path @datadog/browser-rum-slim/ --repository-url https://www.github.com/datadog/browser-sdk',
+          'datadog-ci sourcemaps upload packages/rum-slim/bundle --service browser-rum-sdk --release-version dev --minified-path-prefix / --project-path @flashcatcloud/browser-rum-slim/ --repository-url https://www.github.com/datadog/browser-sdk',
         env: ENV_PROD,
       },
     ])
@@ -209,17 +209,17 @@ void describe('upload-source-maps', () => {
     assert.deepEqual(getSourceMapCommands(), [
       {
         command:
-          'datadog-ci sourcemaps upload packages/logs/bundle --service browser-logs-sdk --release-version dev --minified-path-prefix / --project-path @datadog/browser-logs/ --repository-url https://www.github.com/datadog/browser-sdk',
+          'datadog-ci sourcemaps upload packages/logs/bundle --service browser-logs-sdk --release-version dev --minified-path-prefix / --project-path @flashcatcloud/browser-logs/ --repository-url https://www.github.com/datadog/browser-sdk',
         env: ENV_PROD,
       },
       {
         command:
-          'datadog-ci sourcemaps upload packages/rum/bundle --service browser-rum-sdk --release-version dev --minified-path-prefix / --project-path @datadog/browser-rum/ --repository-url https://www.github.com/datadog/browser-sdk',
+          'datadog-ci sourcemaps upload packages/rum/bundle --service browser-rum-sdk --release-version dev --minified-path-prefix / --project-path @flashcatcloud/browser-rum/ --repository-url https://www.github.com/datadog/browser-sdk',
         env: ENV_PROD,
       },
       {
         command:
-          'datadog-ci sourcemaps upload packages/rum-slim/bundle --service browser-rum-sdk --release-version dev --minified-path-prefix / --project-path @datadog/browser-rum-slim/ --repository-url https://www.github.com/datadog/browser-sdk',
+          'datadog-ci sourcemaps upload packages/rum-slim/bundle --service browser-rum-sdk --release-version dev --minified-path-prefix / --project-path @flashcatcloud/browser-rum-slim/ --repository-url https://www.github.com/datadog/browser-sdk',
         env: ENV_PROD,
       },
     ])

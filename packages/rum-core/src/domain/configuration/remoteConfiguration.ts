@@ -1,4 +1,4 @@
-import { display, addEventListener, buildEndpointHost } from '@datadog/browser-core'
+import { display, addEventListener, buildEndpointHost } from '@flashcatcloud/browser-core'
 import type { RumInitConfiguration } from './configuration'
 
 const REMOTE_CONFIGURATION_VERSION = 'v1'

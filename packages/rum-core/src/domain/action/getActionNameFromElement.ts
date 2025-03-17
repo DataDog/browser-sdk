@@ -1,4 +1,4 @@
-import { safeTruncate } from '@datadog/browser-core'
+import { safeTruncate } from '@flashcatcloud/browser-core'
 import { NodePrivacyLevel, getPrivacySelector } from '../privacy'
 import type { RumConfiguration } from '../configuration'
 

@@ -1,5 +1,5 @@
-import { datadogRum } from '@datadog/browser-rum'
-import { datadogLogs } from '@datadog/browser-logs'
+import { datadogRum } from '@flashcatcloud/browser-rum'
+import { datadogLogs } from '@flashcatcloud/browser-logs'
 import packageJson from '../../package.json'
 import { DEFAULT_PANEL_TAB } from '../common/panelTabConstants'
 

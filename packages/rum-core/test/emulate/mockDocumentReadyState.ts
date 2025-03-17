@@ -1,4 +1,4 @@
-import { DOM_EVENT } from '@datadog/browser-core'
+import { DOM_EVENT } from '@flashcatcloud/browser-core'
 import { createNewEvent } from '../../../core/test'
 
 export function mockDocumentReadyState() {

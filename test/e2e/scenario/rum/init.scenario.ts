@@ -1,4 +1,4 @@
-import type { Context } from '@datadog/browser-core'
+import type { Context } from '@flashcatcloud/browser-core'
 import { test, expect } from '@playwright/test'
 import type { IntakeRegistry } from '../../lib/framework'
 import { createTest } from '../../lib/framework'

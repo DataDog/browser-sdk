@@ -1,6 +1,6 @@
-import { INTAKE_URL_PARAMETERS } from '@datadog/browser-core'
-import type { LogsInitConfiguration } from '@datadog/browser-logs'
-import type { RumInitConfiguration } from '@datadog/browser-rum-core'
+import { INTAKE_URL_PARAMETERS } from '@flashcatcloud/browser-core'
+import type { LogsInitConfiguration } from '@flashcatcloud/browser-logs'
+import type { RumInitConfiguration } from '@flashcatcloud/browser-rum-core'
 import type { Servers } from './httpServers'
 
 export interface SetupOptions {

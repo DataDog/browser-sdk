@@ -1,4 +1,4 @@
-import { registerCleanupTask } from '@datadog/browser-core/test'
+import { registerCleanupTask } from '@flashcatcloud/browser-core/test'
 import { getCssRulesString } from './serializeAttributes'
 
 const CSS_FILE_URL = '/base/packages/rum/test/toto.css'

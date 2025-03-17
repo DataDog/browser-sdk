@@ -1,4 +1,4 @@
-import { addEventListener, DOM_EVENT } from '@datadog/browser-core'
+import { addEventListener, DOM_EVENT } from '@flashcatcloud/browser-core'
 import { mockRumConfiguration } from '../../test'
 import { getScrollX, getScrollY } from './scroll'
 

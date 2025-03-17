@@ -4,9 +4,9 @@ import type {
   DeflateEncoderStreamId,
   DeflateWorker,
   EncoderResult,
-} from '@datadog/browser-core'
-import type { RumConfiguration } from '@datadog/browser-rum-core'
-import { addEventListener, addTelemetryDebug, concatBuffers } from '@datadog/browser-core'
+} from '@flashcatcloud/browser-core'
+import type { RumConfiguration } from '@flashcatcloud/browser-rum-core'
+import { addEventListener, addTelemetryDebug, concatBuffers } from '@flashcatcloud/browser-core'
 
 export function createDeflateEncoder(
   configuration: RumConfiguration,

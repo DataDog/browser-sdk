@@ -1,5 +1,5 @@
-import type { RumEvent, RumEventDomainContext, RumInitConfiguration } from '@datadog/browser-rum-core'
-import type { LogsEvent, LogsInitConfiguration, LogsEventDomainContext } from '@datadog/browser-logs'
+import type { RumEvent, RumEventDomainContext, RumInitConfiguration } from '@flashcatcloud/browser-rum-core'
+import type { LogsEvent, LogsInitConfiguration, LogsEventDomainContext } from '@flashcatcloud/browser-logs'
 import { test, expect } from '@playwright/test'
 import { createTest } from '../lib/framework'
 

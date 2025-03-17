@@ -1,5 +1,5 @@
-import { sanitize, deepClone, getType, objectEntries } from '@datadog/browser-core'
-import type { Context } from '@datadog/browser-core'
+import { sanitize, deepClone, getType, objectEntries } from '@flashcatcloud/browser-core'
+import type { Context } from '@flashcatcloud/browser-core'
 
 export type ModifiableFieldPaths = Record<string, 'string' | 'object'>
 

@@ -1,4 +1,4 @@
-import type { RumPlugin, RumPublicApi, Strategy } from '@datadog/browser-rum-core'
+import type { RumPlugin, RumPublicApi, Strategy } from '@flashcatcloud/browser-rum-core'
 
 let globalPublicApi: RumPublicApi | undefined
 let globalConfiguration: ReactPluginConfiguration | undefined

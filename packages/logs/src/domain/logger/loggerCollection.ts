@@ -1,4 +1,4 @@
-import type { Context, TimeStamp } from '@datadog/browser-core'
+import type { Context, TimeStamp } from '@flashcatcloud/browser-core'
 import {
   combine,
   ErrorSource,
@@ -6,7 +6,7 @@ import {
   originalConsoleMethods,
   globalConsole,
   ConsoleApiName,
-} from '@datadog/browser-core'
+} from '@flashcatcloud/browser-core'
 import type { CommonContext, RawLogsEvent } from '../../rawLogsEvent.types'
 import type { LifeCycle, RawLogsEventCollectedData } from '../lifeCycle'
 import { LifeCycleEventType } from '../lifeCycle'

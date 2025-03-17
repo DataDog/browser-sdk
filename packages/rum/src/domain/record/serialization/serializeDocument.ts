@@ -1,4 +1,4 @@
-import type { RumConfiguration } from '@datadog/browser-rum-core'
+import type { RumConfiguration } from '@flashcatcloud/browser-rum-core'
 import type { SerializedNodeWithId } from '../../../types'
 import type { SerializationContext } from './serialization.types'
 import { serializeNodeWithId } from './serializeNode'

@@ -1,13 +1,13 @@
-import { DefaultPrivacyLevel } from '@datadog/browser-core'
-import type { RumConfiguration } from '@datadog/browser-rum-core'
-import { collectAsyncCalls, registerCleanupTask } from '@datadog/browser-core/test'
+import { DefaultPrivacyLevel } from '@flashcatcloud/browser-core'
+import type { RumConfiguration } from '@flashcatcloud/browser-rum-core'
+import { collectAsyncCalls, registerCleanupTask } from '@flashcatcloud/browser-core/test'
 import {
   NodePrivacyLevel,
   PRIVACY_ATTR_NAME,
   PRIVACY_ATTR_VALUE_ALLOW,
   PRIVACY_ATTR_VALUE_MASK,
   PRIVACY_ATTR_VALUE_MASK_USER_INPUT,
-} from '@datadog/browser-rum-core'
+} from '@flashcatcloud/browser-rum-core'
 import { createMutationPayloadValidator } from '../../../../test'
 import type { AttributeMutation, Attributes, BrowserMutationPayload } from '../../../types'
 import { NodeType } from '../../../types'

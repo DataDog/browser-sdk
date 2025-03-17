@@ -1,4 +1,4 @@
-import type { ContextManager } from '@datadog/browser-core'
+import type { ContextManager } from '@flashcatcloud/browser-core'
 import type { CommonContext } from '../../rawLogsEvent.types'
 
 export function buildCommonContext(

@@ -7,7 +7,7 @@ import {
   TraceContextInjection,
   isExperimentalFeatureEnabled,
   ExperimentalFeature,
-} from '@datadog/browser-core'
+} from '@flashcatcloud/browser-core'
 import type { RumConfiguration } from '../configuration'
 import type {
   RumFetchResolveContext,

@@ -1,5 +1,5 @@
-import type { Observable, RawError } from '@datadog/browser-core'
-import { initConsoleObservable, ConsoleApiName } from '@datadog/browser-core'
+import type { Observable, RawError } from '@flashcatcloud/browser-core'
+import { initConsoleObservable, ConsoleApiName } from '@flashcatcloud/browser-core'
 
 export function trackConsoleError(errorObservable: Observable<RawError>) {
   const subscription = initConsoleObservable([ConsoleApiName.error]).subscribe((consoleLog) =>

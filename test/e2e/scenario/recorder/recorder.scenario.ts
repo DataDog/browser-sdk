@@ -1,16 +1,16 @@
-import type { InputData, StyleSheetRuleData, ScrollData } from '@datadog/browser-rum/src/types'
-import { NodeType, IncrementalSource, MouseInteractionType } from '@datadog/browser-rum/src/types'
+import type { InputData, StyleSheetRuleData, ScrollData } from '@flashcatcloud/browser-rum/src/types'
+import { NodeType, IncrementalSource, MouseInteractionType } from '@flashcatcloud/browser-rum/src/types'
 
 // Import from src to have properties of const enums
-import { FrustrationType } from '@datadog/browser-rum-core/src/rawRumEvent.types'
-import { DefaultPrivacyLevel } from '@datadog/browser-rum'
+import { FrustrationType } from '@flashcatcloud/browser-rum-core/src/rawRumEvent.types'
+import { DefaultPrivacyLevel } from '@flashcatcloud/browser-rum'
 
 import {
   findElement,
   findElementWithIdAttribute,
   findTextContent,
   findElementWithTagName,
-} from '@datadog/browser-rum/test/nodes'
+} from '@flashcatcloud/browser-rum/test/nodes'
 import {
   findFullSnapshot,
   findIncrementalSnapshot,
@@ -18,10 +18,10 @@ import {
   findMeta,
   findAllFrustrationRecords,
   findMouseInteractionRecords,
-} from '@datadog/browser-rum/test/segments'
-import { createMutationPayloadValidatorFromSegment } from '@datadog/browser-rum/test/mutationPayloadValidator'
+} from '@flashcatcloud/browser-rum/test/segments'
+import { createMutationPayloadValidatorFromSegment } from '@flashcatcloud/browser-rum/test/mutationPayloadValidator'
 import { test, expect } from '@playwright/test'
-import { wait } from '@datadog/browser-core/test/wait'
+import { wait } from '@flashcatcloud/browser-core/test/wait'
 import { createTest, bundleSetup, html } from '../../lib/framework'
 
 const UUID_RE = /^[0-9a-f]{8}-([0-9a-f]{4}-){3}[0-9a-f]{12}$/

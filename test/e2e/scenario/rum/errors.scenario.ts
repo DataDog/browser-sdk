@@ -1,4 +1,4 @@
-import type { RumErrorEvent } from '@datadog/browser-rum-core'
+import type { RumErrorEvent } from '@flashcatcloud/browser-rum-core'
 import { test, expect } from '@playwright/test'
 import { createTest, html } from '../../lib/framework'
 

@@ -1,4 +1,4 @@
-import type { StackTrace } from '@datadog/browser-core'
+import type { StackTrace } from '@flashcatcloud/browser-core'
 import { NO_ERROR_STACK_PRESENT_MESSAGE } from '../error/error'
 import { callMonitored } from '../../tools/monitor'
 import type { ExperimentalFeature } from '../../tools/experimentalFeatures'

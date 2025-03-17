@@ -1,5 +1,5 @@
-import type { ClocksState, Duration, Observable } from '@datadog/browser-core'
-import { elapsed } from '@datadog/browser-core'
+import type { ClocksState, Duration, Observable } from '@flashcatcloud/browser-core'
+import { elapsed } from '@flashcatcloud/browser-core'
 import { waitPageActivityEnd } from '../../waitPageActivityEnd'
 import type { RumConfiguration } from '../../configuration'
 import type { LifeCycle } from '../../lifeCycle'

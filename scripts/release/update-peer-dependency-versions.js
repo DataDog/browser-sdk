@@ -26,7 +26,7 @@ runMain(async () => {
 function updateJsonPeerDependencies(content) {
   const json = JSON.parse(content)
   Object.keys(json.peerDependencies || [])
-    .filter((key) => key.startsWith('@datadog'))
+    .filter((key) => key.startsWith('@flashcatcloud'))
     .forEach((key) => {
       json.peerDependencies[key] = browserSdkVersion
     })

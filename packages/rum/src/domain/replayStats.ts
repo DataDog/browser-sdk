@@ -1,4 +1,4 @@
-import type { ReplayStats } from '@datadog/browser-rum-core'
+import type { ReplayStats } from '@flashcatcloud/browser-rum-core'
 
 export const MAX_STATS_HISTORY = 1000
 let statsPerView: Map<string, ReplayStats> | undefined

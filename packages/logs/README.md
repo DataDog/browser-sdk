@@ -6,10 +6,10 @@ See the [dedicated datadog documentation][1] for more details.
 
 ## Usage
 
-After adding [`@datadog/browser-logs`][2] to your `package.json` file, initialize it with:
+After adding [`@flashcatcloud/browser-logs`][2] to your `package.json` file, initialize it with:
 
 ```javascript
-import { datadogLogs } from '@datadog/browser-logs'
+import { datadogLogs } from '@flashcatcloud/browser-logs'
 
 datadogLogs.init({
   clientToken: '<DATADOG_CLIENT_TOKEN>',
@@ -22,7 +22,7 @@ datadogLogs.init({
 After the Datadog browser logs SDK is initialized, send custom log entries directly to Datadog:
 
 ```javascript
-import { datadogLogs } from '@datadog/browser-logs'
+import { datadogLogs } from '@flashcatcloud/browser-logs'
 
 datadogLogs.logger.info('Button clicked', { name: 'buttonName', id: 123 })
 
@@ -38,4 +38,4 @@ try {
 <!-- Note: all URLs should be absolute -->
 
 [1]: https://docs.datadoghq.com/logs/log_collection/javascript
-[2]: https://www.npmjs.com/package/@datadog/browser-logs
+[2]: https://www.npmjs.com/package/@flashcatcloud/browser-logs

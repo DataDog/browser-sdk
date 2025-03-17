@@ -1,6 +1,6 @@
-import type { TelemetryEvent } from '@datadog/browser-core'
-import { startTelemetry, TelemetryService } from '@datadog/browser-core'
-import { mockSyntheticsWorkerValues } from '@datadog/browser-core/test'
+import type { TelemetryEvent } from '@flashcatcloud/browser-core'
+import { startTelemetry, TelemetryService } from '@flashcatcloud/browser-core'
+import { mockSyntheticsWorkerValues } from '@flashcatcloud/browser-core/test'
 import { validateAndBuildLogsConfiguration } from '../configuration'
 import { resetRUMInternalContext, getRUMInternalContext } from './rumInternalContext'
 

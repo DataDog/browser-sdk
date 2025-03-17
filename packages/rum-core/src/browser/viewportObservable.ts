@@ -1,4 +1,4 @@
-import { Observable, throttle, addEventListener, DOM_EVENT } from '@datadog/browser-core'
+import { Observable, throttle, addEventListener, DOM_EVENT } from '@flashcatcloud/browser-core'
 import type { RumConfiguration } from '../domain/configuration'
 
 export interface ViewportDimension {

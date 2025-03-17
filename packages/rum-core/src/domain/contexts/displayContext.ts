@@ -1,4 +1,4 @@
-import { monitor } from '@datadog/browser-core'
+import { monitor } from '@flashcatcloud/browser-core'
 import type { RumConfiguration } from '../configuration'
 import type { ViewportDimension } from '../../browser/viewportObservable'
 import { getViewportDimension, initViewportObservable } from '../../browser/viewportObservable'

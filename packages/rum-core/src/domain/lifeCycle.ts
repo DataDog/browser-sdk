@@ -1,5 +1,5 @@
-import type { Context, Duration, PageExitEvent, RawError, RelativeTime } from '@datadog/browser-core'
-import { AbstractLifeCycle } from '@datadog/browser-core'
+import type { Context, Duration, PageExitEvent, RawError, RelativeTime } from '@flashcatcloud/browser-core'
+import { AbstractLifeCycle } from '@flashcatcloud/browser-core'
 import type { RumEventDomainContext } from '../domainContext.types'
 import type { RawRumEvent } from '../rawRumEvent.types'
 import type { RumEvent } from '../rumEvent.types'

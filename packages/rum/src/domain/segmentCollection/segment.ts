@@ -1,4 +1,4 @@
-import type { Encoder, EncoderResult } from '@datadog/browser-core'
+import type { Encoder, EncoderResult } from '@flashcatcloud/browser-core'
 import type { BrowserRecord, BrowserSegmentMetadata, CreationReason, SegmentContext } from '../../types'
 import { RecordType } from '../../types'
 import * as replayStats from '../replayStats'

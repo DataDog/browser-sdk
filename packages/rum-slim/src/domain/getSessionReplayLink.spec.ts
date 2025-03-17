@@ -1,4 +1,4 @@
-import type { RumConfiguration } from '@datadog/browser-rum-core'
+import type { RumConfiguration } from '@flashcatcloud/browser-rum-core'
 import { getSessionReplayLink } from './getSessionReplayLink'
 
 const DEFAULT_CONFIGURATION = {

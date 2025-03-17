@@ -1,4 +1,4 @@
-import { SESSION_STORE_KEY } from '@datadog/browser-core'
+import { SESSION_STORE_KEY } from '@flashcatcloud/browser-core'
 import type { BrowserContext, Page } from '@playwright/test'
 import { test, expect } from '@playwright/test'
 import { createTest } from '../lib/framework'

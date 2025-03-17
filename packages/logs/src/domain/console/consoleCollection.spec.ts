@@ -1,5 +1,5 @@
-import type { Context, ErrorWithCause } from '@datadog/browser-core'
-import { ErrorHandling, ErrorSource, noop, objectEntries } from '@datadog/browser-core'
+import type { Context, ErrorWithCause } from '@flashcatcloud/browser-core'
+import { ErrorHandling, ErrorSource, noop, objectEntries } from '@flashcatcloud/browser-core'
 import type { RawConsoleLogsEvent } from '../../rawLogsEvent.types'
 import { validateAndBuildLogsConfiguration } from '../configuration'
 import type { RawLogsEventCollectedData } from '../lifeCycle'

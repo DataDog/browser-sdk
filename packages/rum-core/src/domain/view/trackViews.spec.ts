@@ -1,4 +1,4 @@
-import type { Context, Duration, RelativeTime } from '@datadog/browser-core'
+import type { Context, Duration, RelativeTime } from '@flashcatcloud/browser-core'
 import {
   PageExitReason,
   timeStampNow,
@@ -6,10 +6,10 @@ import {
   relativeToClocks,
   relativeNow,
   resetExperimentalFeatures,
-} from '@datadog/browser-core'
+} from '@flashcatcloud/browser-core'
 
-import type { Clock } from '@datadog/browser-core/test'
-import { mockClock, registerCleanupTask } from '@datadog/browser-core/test'
+import type { Clock } from '@flashcatcloud/browser-core/test'
+import { mockClock, registerCleanupTask } from '@flashcatcloud/browser-core/test'
 import { createPerformanceEntry, mockPerformanceObserver } from '../../../test'
 import { RumEventType, ViewLoadingType } from '../../rawRumEvent.types'
 import type { RumEvent } from '../../rumEvent.types'

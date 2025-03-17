@@ -10,7 +10,7 @@ import type {
   TrackingConsent,
   PublicApi,
   Duration,
-} from '@datadog/browser-core'
+} from '@flashcatcloud/browser-core'
 import {
   addTelemetryUsage,
   CustomerDataType,
@@ -29,7 +29,7 @@ import {
   displayAlreadyInitializedError,
   createTrackingConsentState,
   timeStampToClocks,
-} from '@datadog/browser-core'
+} from '@flashcatcloud/browser-core'
 import type { LifeCycle } from '../domain/lifeCycle'
 import type { ViewHistory } from '../domain/contexts/viewHistory'
 import type { RumSessionManager } from '../domain/rumSessionManager'

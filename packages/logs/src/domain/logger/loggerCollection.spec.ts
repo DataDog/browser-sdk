@@ -1,4 +1,4 @@
-import type { TimeStamp } from '@datadog/browser-core'
+import type { TimeStamp } from '@flashcatcloud/browser-core'
 import {
   ConsoleApiName,
   timeStampNow,
@@ -6,9 +6,9 @@ import {
   originalConsoleMethods,
   createCustomerDataTracker,
   noop,
-} from '@datadog/browser-core'
-import type { Clock } from '@datadog/browser-core/test'
-import { mockClock } from '@datadog/browser-core/test'
+} from '@flashcatcloud/browser-core'
+import type { Clock } from '@flashcatcloud/browser-core/test'
+import { mockClock } from '@flashcatcloud/browser-core/test'
 import type { CommonContext, RawLoggerLogsEvent } from '../../rawLogsEvent.types'
 import type { RawLogsEventCollectedData } from '../lifeCycle'
 import { LifeCycle, LifeCycleEventType } from '../lifeCycle'

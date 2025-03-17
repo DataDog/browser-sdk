@@ -1,4 +1,4 @@
-import type { Context, ErrorSource, RawErrorCause, TimeStamp, User, ErrorHandling } from '@datadog/browser-core'
+import type { Context, ErrorSource, RawErrorCause, TimeStamp, User, ErrorHandling } from '@flashcatcloud/browser-core'
 import type { StatusType } from './domain/logger/isAuthorized'
 
 export type RawLogsEvent =

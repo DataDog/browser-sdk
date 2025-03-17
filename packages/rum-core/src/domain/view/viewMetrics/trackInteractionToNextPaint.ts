@@ -1,5 +1,5 @@
-import { elapsed, noop, ONE_MINUTE } from '@datadog/browser-core'
-import type { Duration, RelativeTime } from '@datadog/browser-core'
+import { elapsed, noop, ONE_MINUTE } from '@flashcatcloud/browser-core'
+import type { Duration, RelativeTime } from '@flashcatcloud/browser-core'
 import {
   createPerformanceObservable,
   RumPerformanceEntryType,

@@ -1,5 +1,5 @@
 import type { ErrorInfo } from 'react'
-import { callMonitored, clocksNow, createHandlingStack } from '@datadog/browser-core'
+import { callMonitored, clocksNow, createHandlingStack } from '@flashcatcloud/browser-core'
 import { onRumStart } from '../reactPlugin'
 
 export function addReactError(error: Error, info: ErrorInfo) {

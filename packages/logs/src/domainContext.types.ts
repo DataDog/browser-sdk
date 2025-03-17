@@ -1,4 +1,4 @@
-import type { ErrorSource } from '@datadog/browser-core'
+import type { ErrorSource } from '@flashcatcloud/browser-core'
 
 export type LogsEventDomainContext<T extends ErrorSource = any> = T extends typeof ErrorSource.NETWORK
   ? NetworkLogsEventDomainContext

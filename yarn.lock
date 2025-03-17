@@ -297,125 +297,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@datadog/browser-core@npm:6.5.1, @datadog/browser-core@workspace:*, @datadog/browser-core@workspace:packages/core":
-  version: 0.0.0-use.local
-  resolution: "@datadog/browser-core@workspace:packages/core"
-  languageName: unknown
-  linkType: soft
-
-"@datadog/browser-logs@workspace:*, @datadog/browser-logs@workspace:packages/logs":
-  version: 0.0.0-use.local
-  resolution: "@datadog/browser-logs@workspace:packages/logs"
-  dependencies:
-    "@datadog/browser-core": "npm:6.5.1"
-  peerDependencies:
-    "@datadog/browser-rum": 6.5.1
-  peerDependenciesMeta:
-    "@datadog/browser-rum":
-      optional: true
-  languageName: unknown
-  linkType: soft
-
-"@datadog/browser-rum-core@npm:6.5.1, @datadog/browser-rum-core@workspace:packages/rum-core":
-  version: 0.0.0-use.local
-  resolution: "@datadog/browser-rum-core@workspace:packages/rum-core"
-  dependencies:
-    "@datadog/browser-core": "npm:6.5.1"
-    ajv: "npm:8.17.1"
-  languageName: unknown
-  linkType: soft
-
-"@datadog/browser-rum-react@workspace:packages/rum-react":
-  version: 0.0.0-use.local
-  resolution: "@datadog/browser-rum-react@workspace:packages/rum-react"
-  dependencies:
-    "@datadog/browser-core": "npm:6.5.1"
-    "@datadog/browser-rum-core": "npm:6.5.1"
-    "@types/react": "npm:19.0.10"
-    "@types/react-dom": "npm:19.0.4"
-    react: "npm:19.0.0"
-    react-dom: "npm:19.0.0"
-    react-router-dom: "npm:7.2.0"
-    react-router-dom-6: "npm:react-router-dom@6.30.0"
-  peerDependencies:
-    react: 18 || 19
-    react-router-dom: 6 || 7
-  peerDependenciesMeta:
-    "@datadog/browser-rum":
-      optional: true
-    "@datadog/browser-rum-slim":
-      optional: true
-    react:
-      optional: true
-    react-router-dom:
-      optional: true
-  languageName: unknown
-  linkType: soft
-
-"@datadog/browser-rum-slim@workspace:packages/rum-slim":
-  version: 0.0.0-use.local
-  resolution: "@datadog/browser-rum-slim@workspace:packages/rum-slim"
-  dependencies:
-    "@datadog/browser-core": "npm:6.5.1"
-    "@datadog/browser-rum-core": "npm:6.5.1"
-  peerDependencies:
-    "@datadog/browser-logs": 6.5.1
-  peerDependenciesMeta:
-    "@datadog/browser-logs":
-      optional: true
-  languageName: unknown
-  linkType: soft
-
-"@datadog/browser-rum@workspace:*, @datadog/browser-rum@workspace:packages/rum":
-  version: 0.0.0-use.local
-  resolution: "@datadog/browser-rum@workspace:packages/rum"
-  dependencies:
-    "@datadog/browser-core": "npm:6.5.1"
-    "@datadog/browser-rum-core": "npm:6.5.1"
-    "@types/pako": "npm:2.0.3"
-    pako: "npm:2.1.0"
-  peerDependencies:
-    "@datadog/browser-logs": 6.5.1
-  peerDependenciesMeta:
-    "@datadog/browser-logs":
-      optional: true
-  languageName: unknown
-  linkType: soft
-
-"@datadog/browser-sdk-developer-extension@workspace:developer-extension":
-  version: 0.0.0-use.local
-  resolution: "@datadog/browser-sdk-developer-extension@workspace:developer-extension"
-  dependencies:
-    "@datadog/browser-core": "workspace:*"
-    "@datadog/browser-logs": "workspace:*"
-    "@datadog/browser-rum": "workspace:*"
-    "@mantine/core": "npm:7.17.1"
-    "@mantine/hooks": "npm:7.17.1"
-    "@tabler/icons-react": "npm:3.31.0"
-    "@types/chrome": "npm:0.0.308"
-    "@types/react": "npm:19.0.10"
-    "@types/react-dom": "npm:19.0.4"
-    "@webextension-toolbox/webpack-webextension-plugin": "npm:3.3.1"
-    clsx: "npm:2.1.1"
-    copy-webpack-plugin: "npm:13.0.0"
-    css-loader: "npm:7.1.2"
-    html-webpack-plugin: "npm:5.6.3"
-    react: "npm:19.0.0"
-    react-dom: "npm:19.0.0"
-    style-loader: "npm:4.0.0"
-    webpack: "npm:5.98.0"
-  languageName: unknown
-  linkType: soft
-
-"@datadog/browser-worker@workspace:packages/worker":
-  version: 0.0.0-use.local
-  resolution: "@datadog/browser-worker@workspace:packages/worker"
-  dependencies:
-    "@datadog/browser-core": "npm:6.5.1"
-    webpack: "npm:5.98.0"
-  languageName: unknown
-  linkType: soft
-
 "@discoveryjs/json-ext@npm:^0.6.1":
   version: 0.6.3
   resolution: "@discoveryjs/json-ext@npm:0.6.3"
@@ -540,6 +421,125 @@ __metadata:
   checksum: 10c0/0a1aff1ad63e72aca923217e556c6dfd67d7cd121870eb7686355d7d1475d569773528a8b2111b9176f3d91d2ea81f7413c34600e8e5b73d59e005d70780b633
   languageName: node
   linkType: hard
+
+"@flashcatcloud/browser-core@workspace:*, @flashcatcloud/browser-core@workspace:packages/core":
+  version: 0.0.0-use.local
+  resolution: "@flashcatcloud/browser-core@workspace:packages/core"
+  languageName: unknown
+  linkType: soft
+
+"@flashcatcloud/browser-logs@workspace:*, @flashcatcloud/browser-logs@workspace:packages/logs":
+  version: 0.0.0-use.local
+  resolution: "@flashcatcloud/browser-logs@workspace:packages/logs"
+  dependencies:
+    "@flashcatcloud/browser-core": "workspace:*"
+  peerDependencies:
+    "@flashcatcloud/browser-rum": "workspace:*"
+  peerDependenciesMeta:
+    "@flashcatcloud/browser-rum":
+      optional: true
+  languageName: unknown
+  linkType: soft
+
+"@flashcatcloud/browser-rum-core@workspace:*, @flashcatcloud/browser-rum-core@workspace:packages/rum-core":
+  version: 0.0.0-use.local
+  resolution: "@flashcatcloud/browser-rum-core@workspace:packages/rum-core"
+  dependencies:
+    "@flashcatcloud/browser-core": "workspace:*"
+    ajv: "npm:8.17.1"
+  languageName: unknown
+  linkType: soft
+
+"@flashcatcloud/browser-rum-react@workspace:packages/rum-react":
+  version: 0.0.0-use.local
+  resolution: "@flashcatcloud/browser-rum-react@workspace:packages/rum-react"
+  dependencies:
+    "@flashcatcloud/browser-core": "workspace:*"
+    "@flashcatcloud/browser-rum-core": "workspace:*"
+    "@types/react": "npm:19.0.10"
+    "@types/react-dom": "npm:19.0.4"
+    react: "npm:19.0.0"
+    react-dom: "npm:19.0.0"
+    react-router-dom: "npm:7.2.0"
+    react-router-dom-6: "npm:react-router-dom@6.30.0"
+  peerDependencies:
+    react: 18 || 19
+    react-router-dom: 6 || 7
+  peerDependenciesMeta:
+    "@flashcatcloud/browser-rum":
+      optional: true
+    "@flashcatcloud/browser-rum-slim":
+      optional: true
+    react:
+      optional: true
+    react-router-dom:
+      optional: true
+  languageName: unknown
+  linkType: soft
+
+"@flashcatcloud/browser-rum-slim@workspace:packages/rum-slim":
+  version: 0.0.0-use.local
+  resolution: "@flashcatcloud/browser-rum-slim@workspace:packages/rum-slim"
+  dependencies:
+    "@flashcatcloud/browser-core": "workspace:*"
+    "@flashcatcloud/browser-rum-core": "workspace:*"
+  peerDependencies:
+    "@flashcatcloud/browser-logs": "workspace:*"
+  peerDependenciesMeta:
+    "@flashcatcloud/browser-logs":
+      optional: true
+  languageName: unknown
+  linkType: soft
+
+"@flashcatcloud/browser-rum@workspace:*, @flashcatcloud/browser-rum@workspace:packages/rum":
+  version: 0.0.0-use.local
+  resolution: "@flashcatcloud/browser-rum@workspace:packages/rum"
+  dependencies:
+    "@flashcatcloud/browser-core": "workspace:*"
+    "@flashcatcloud/browser-rum-core": "workspace:*"
+    "@types/pako": "npm:2.0.3"
+    pako: "npm:2.1.0"
+  peerDependencies:
+    "@flashcatcloud/browser-logs": "workspace:*"
+  peerDependenciesMeta:
+    "@flashcatcloud/browser-logs":
+      optional: true
+  languageName: unknown
+  linkType: soft
+
+"@flashcatcloud/browser-sdk-developer-extension@workspace:developer-extension":
+  version: 0.0.0-use.local
+  resolution: "@flashcatcloud/browser-sdk-developer-extension@workspace:developer-extension"
+  dependencies:
+    "@flashcatcloud/browser-core": "workspace:*"
+    "@flashcatcloud/browser-logs": "workspace:*"
+    "@flashcatcloud/browser-rum": "workspace:*"
+    "@mantine/core": "npm:7.17.1"
+    "@mantine/hooks": "npm:7.17.1"
+    "@tabler/icons-react": "npm:3.31.0"
+    "@types/chrome": "npm:0.0.308"
+    "@types/react": "npm:19.0.10"
+    "@types/react-dom": "npm:19.0.4"
+    "@webextension-toolbox/webpack-webextension-plugin": "npm:3.3.1"
+    clsx: "npm:2.1.1"
+    copy-webpack-plugin: "npm:13.0.0"
+    css-loader: "npm:7.1.2"
+    html-webpack-plugin: "npm:5.6.3"
+    react: "npm:19.0.0"
+    react-dom: "npm:19.0.0"
+    style-loader: "npm:4.0.0"
+    webpack: "npm:5.98.0"
+  languageName: unknown
+  linkType: soft
+
+"@flashcatcloud/browser-worker@workspace:packages/worker":
+  version: 0.0.0-use.local
+  resolution: "@flashcatcloud/browser-worker@workspace:packages/worker"
+  dependencies:
+    "@flashcatcloud/browser-core": "workspace:*"
+    webpack: "npm:5.98.0"
+  languageName: unknown
+  linkType: soft
 
 "@floating-ui/core@npm:^1.6.0":
   version: 1.6.8

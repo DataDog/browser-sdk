@@ -1,4 +1,4 @@
-import { noop, throttle, requestIdleCallback } from '@datadog/browser-core'
+import { noop, throttle, requestIdleCallback } from '@flashcatcloud/browser-core'
 import type { RumMutationRecord } from './trackers'
 
 /**

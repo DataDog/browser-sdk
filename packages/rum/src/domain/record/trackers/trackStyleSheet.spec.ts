@@ -1,4 +1,4 @@
-import { isFirefox, registerCleanupTask } from '@datadog/browser-core/test'
+import { isFirefox, registerCleanupTask } from '@flashcatcloud/browser-core/test'
 import { serializeDocument, SerializationContextStatus } from '../serialization'
 import { createElementsScrollPositions } from '../elementsScrollPositions'
 import { IncrementalSource, RecordType } from '../../../types'

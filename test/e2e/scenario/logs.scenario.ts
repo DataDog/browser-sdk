@@ -1,4 +1,4 @@
-import { DEFAULT_REQUEST_ERROR_RESPONSE_LENGTH_LIMIT } from '@datadog/browser-logs/cjs/domain/configuration'
+import { DEFAULT_REQUEST_ERROR_RESPONSE_LENGTH_LIMIT } from '@flashcatcloud/browser-logs/cjs/domain/configuration'
 import { test, expect } from '@playwright/test'
 import { createTest } from '../lib/framework'
 import { APPLICATION_ID } from '../lib/helpers/configuration'

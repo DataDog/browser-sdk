@@ -1,6 +1,6 @@
 import { createRoot } from 'react-dom/client'
 import { act } from 'react'
-import { noop } from '@datadog/browser-core'
+import { noop } from '@flashcatcloud/browser-core'
 import { appendElement } from '../../rum-core/test'
 import { registerCleanupTask } from '../../core/test'
 

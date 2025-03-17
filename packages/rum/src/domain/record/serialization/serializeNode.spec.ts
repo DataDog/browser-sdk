@@ -1,6 +1,6 @@
-import { noop } from '@datadog/browser-core'
-import type { RumConfiguration } from '@datadog/browser-rum-core'
-import { isAdoptedStyleSheetsSupported, registerCleanupTask } from '@datadog/browser-core/test'
+import { noop } from '@flashcatcloud/browser-core'
+import type { RumConfiguration } from '@flashcatcloud/browser-rum-core'
+import { isAdoptedStyleSheetsSupported, registerCleanupTask } from '@flashcatcloud/browser-core/test'
 import {
   NodePrivacyLevel,
   PRIVACY_ATTR_NAME,
@@ -8,7 +8,7 @@ import {
   PRIVACY_ATTR_VALUE_HIDDEN,
   PRIVACY_ATTR_VALUE_MASK,
   PRIVACY_ATTR_VALUE_MASK_USER_INPUT,
-} from '@datadog/browser-rum-core'
+} from '@flashcatcloud/browser-rum-core'
 import type { ElementNode, SerializedNodeWithId } from '../../../types'
 import { NodeType } from '../../../types'
 import { appendElement } from '../../../../../rum-core/test'

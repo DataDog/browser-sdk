@@ -1,5 +1,5 @@
-import type { RelativeTime, Observable, Context } from '@datadog/browser-core'
-import { SESSION_TIME_OUT_DELAY, relativeNow, createValueHistory } from '@datadog/browser-core'
+import type { RelativeTime, Observable, Context } from '@flashcatcloud/browser-core'
+import { SESSION_TIME_OUT_DELAY, relativeNow, createValueHistory } from '@flashcatcloud/browser-core'
 import type { LocationChange } from '../../browser/locationChangeObservable'
 import type { LifeCycle } from '../lifeCycle'
 import { LifeCycleEventType } from '../lifeCycle'

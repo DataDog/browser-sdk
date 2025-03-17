@@ -1,8 +1,8 @@
-import type { DeflateEncoder, DeflateWorker, DeflateWorkerAction } from '@datadog/browser-core'
-import { BridgeCapability, PageExitReason, display } from '@datadog/browser-core'
-import type { RecorderApi, RumSessionManager } from '@datadog/browser-rum-core'
-import { LifeCycle, LifeCycleEventType } from '@datadog/browser-rum-core'
-import { collectAsyncCalls, mockEventBridge, registerCleanupTask } from '@datadog/browser-core/test'
+import type { DeflateEncoder, DeflateWorker, DeflateWorkerAction } from '@flashcatcloud/browser-core'
+import { BridgeCapability, PageExitReason, display } from '@flashcatcloud/browser-core'
+import type { RecorderApi, RumSessionManager } from '@flashcatcloud/browser-rum-core'
+import { LifeCycle, LifeCycleEventType } from '@flashcatcloud/browser-rum-core'
+import { collectAsyncCalls, mockEventBridge, registerCleanupTask } from '@flashcatcloud/browser-core/test'
 import type { RumSessionManagerMock } from '../../../rum-core/test'
 import {
   createRumSessionManagerMock,

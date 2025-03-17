@@ -1,6 +1,6 @@
-import type { Duration, RelativeTime } from '@datadog/browser-core'
-import { elapsed, relativeNow, resetExperimentalFeatures } from '@datadog/browser-core'
-import { registerCleanupTask } from '@datadog/browser-core/test'
+import type { Duration, RelativeTime } from '@flashcatcloud/browser-core'
+import { elapsed, relativeNow, resetExperimentalFeatures } from '@flashcatcloud/browser-core'
+import { registerCleanupTask } from '@flashcatcloud/browser-core/test'
 import {
   appendElement,
   appendText,

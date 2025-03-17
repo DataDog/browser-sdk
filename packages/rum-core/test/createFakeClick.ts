@@ -1,5 +1,5 @@
-import { clocksNow, Observable, timeStampNow } from '@datadog/browser-core'
-import { createNewEvent } from '@datadog/browser-core/test'
+import { clocksNow, Observable, timeStampNow } from '@flashcatcloud/browser-core'
+import { createNewEvent } from '@flashcatcloud/browser-core/test'
 import type { Click } from '../src/domain/action/trackClickActions'
 import type { MouseEventOnElement, UserActivity } from '../src/domain/action/listenActionEvents'
 

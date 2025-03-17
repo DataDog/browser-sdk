@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import { Tabs, Text, Anchor } from '@mantine/core'
-import { datadogRum } from '@datadog/browser-rum'
+import { datadogRum } from '@flashcatcloud/browser-rum'
 
 import { useEvents } from '../hooks/useEvents'
 import { useAutoFlushEvents } from '../hooks/useAutoFlushEvents'

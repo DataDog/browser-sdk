@@ -1,4 +1,4 @@
-import type { Configuration, InitConfiguration, RawTelemetryConfiguration } from '@datadog/browser-core'
+import type { Configuration, InitConfiguration, RawTelemetryConfiguration } from '@flashcatcloud/browser-core'
 import {
   serializeConfiguration,
   ONE_KIBI_BYTE,
@@ -8,7 +8,7 @@ import {
   ConsoleApiName,
   RawReportType,
   objectValues,
-} from '@datadog/browser-core'
+} from '@flashcatcloud/browser-core'
 import type { LogsEvent } from '../logsEvent.types'
 import type { LogsEventDomainContext } from '../domainContext.types'
 

@@ -1,5 +1,5 @@
-import { getInitCookie } from '@datadog/browser-core'
-import type { Configuration } from '@datadog/browser-core'
+import { getInitCookie } from '@flashcatcloud/browser-core'
+import type { Configuration } from '@flashcatcloud/browser-core'
 import { createCookieObservable } from '../../browser/cookieObservable'
 import type { Hooks, PartialRumEvent } from '../../hooks'
 import { HookNames } from '../../hooks'

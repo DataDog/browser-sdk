@@ -1,5 +1,5 @@
-import type { InitConfiguration } from '@datadog/browser-core'
-import { display } from '@datadog/browser-core'
+import type { InitConfiguration } from '@flashcatcloud/browser-core'
+import { display } from '@flashcatcloud/browser-core'
 import {
   EXHAUSTIVE_INIT_CONFIGURATION,
   type CamelToSnakeCase,

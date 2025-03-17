@@ -1,4 +1,4 @@
-import type { Account, Context, TrackingConsent, User, PublicApi } from '@datadog/browser-core'
+import type { Account, Context, TrackingConsent, User, PublicApi } from '@flashcatcloud/browser-core'
 import {
   addTelemetryUsage,
   CustomerDataType,
@@ -11,7 +11,7 @@ import {
   displayAlreadyInitializedError,
   deepClone,
   createTrackingConsentState,
-} from '@datadog/browser-core'
+} from '@flashcatcloud/browser-core'
 import type { LogsInitConfiguration } from '../domain/configuration'
 import type { HandlerType } from '../domain/logger'
 import type { StatusType } from '../domain/logger/isAuthorized'

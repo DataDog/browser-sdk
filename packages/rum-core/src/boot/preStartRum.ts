@@ -11,8 +11,8 @@ import {
   initFeatureFlags,
   addTelemetryConfiguration,
   initFetchObservable,
-} from '@datadog/browser-core'
-import type { TrackingConsentState, DeflateWorker, Context } from '@datadog/browser-core'
+} from '@flashcatcloud/browser-core'
+import type { TrackingConsentState, DeflateWorker, Context } from '@flashcatcloud/browser-core'
 import {
   validateAndBuildRumConfiguration,
   type RumConfiguration,

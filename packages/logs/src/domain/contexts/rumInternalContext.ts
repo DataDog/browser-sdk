@@ -1,10 +1,10 @@
-import type { RelativeTime, Context } from '@datadog/browser-core'
+import type { RelativeTime, Context } from '@flashcatcloud/browser-core'
 import {
   willSyntheticsInjectRum,
   addTelemetryDebug,
   getSyntheticsTestId,
   getSyntheticsResultId,
-} from '@datadog/browser-core'
+} from '@flashcatcloud/browser-core'
 
 interface Rum {
   getInternalContext?: (startTime?: RelativeTime) => Context | undefined

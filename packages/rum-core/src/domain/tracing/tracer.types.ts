@@ -1,4 +1,4 @@
-import type { MatchOption } from '@datadog/browser-core'
+import type { MatchOption } from '@flashcatcloud/browser-core'
 
 /**
  * datadog: Datadog (x-datadog-*)

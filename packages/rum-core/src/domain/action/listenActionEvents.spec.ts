@@ -1,4 +1,4 @@
-import { createNewEvent } from '@datadog/browser-core/test'
+import { createNewEvent } from '@flashcatcloud/browser-core/test'
 import { mockRumConfiguration } from '../../../test'
 import type { ActionEventsHooks } from './listenActionEvents'
 import { listenActionEvents } from './listenActionEvents'

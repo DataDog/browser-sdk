@@ -1,5 +1,5 @@
-import type { Context, Observable, PageExitEvent, RawError } from '@datadog/browser-core'
-import { createIdentityEncoder, startBatchWithReplica } from '@datadog/browser-core'
+import type { Context, Observable, PageExitEvent, RawError } from '@flashcatcloud/browser-core'
+import { createIdentityEncoder, startBatchWithReplica } from '@flashcatcloud/browser-core'
 import type { LogsConfiguration } from '../domain/configuration'
 import type { LifeCycle } from '../domain/lifeCycle'
 import { LifeCycleEventType } from '../domain/lifeCycle'

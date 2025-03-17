@@ -1,5 +1,5 @@
-import type { Duration, RelativeTime } from '@datadog/browser-core'
-import { relativeToClocks } from '@datadog/browser-core'
+import type { Duration, RelativeTime } from '@flashcatcloud/browser-core'
+import { relativeToClocks } from '@flashcatcloud/browser-core'
 import type { GlobalPerformanceBufferMock } from '../../../test'
 import { createPerformanceEntry, mockGlobalPerformanceBuffer } from '../../../test'
 import type { RumPerformanceResourceTiming } from '../../browser/performanceObservable'
