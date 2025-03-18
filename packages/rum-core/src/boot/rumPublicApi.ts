@@ -14,7 +14,6 @@ import type {
 import {
   addTelemetryUsage,
   CustomerDataType,
-  createContextManager,
   deepClone,
   makePublicApi,
   monitor,
@@ -25,7 +24,6 @@ import {
   createIdentityEncoder,
   CustomerDataCompressionStatus,
   createCustomerDataTrackerManager,
-  storeContextManager,
   displayAlreadyInitializedError,
   createTrackingConsentState,
   timeStampToClocks,
@@ -37,7 +35,6 @@ import type { ReplayStats } from '../rawRumEvent.types'
 import { ActionType, VitalType } from '../rawRumEvent.types'
 import type { RumConfiguration, RumInitConfiguration } from '../domain/configuration'
 import type { ViewOptions } from '../domain/view/trackViews'
-import { buildCommonContext } from '../domain/contexts/commonContext'
 import type { InternalContext } from '../domain/contexts/internalContext'
 import type { DurationVitalReference } from '../domain/vital/vitalCollection'
 import { createCustomVitalsState } from '../domain/vital/vitalCollection'
@@ -380,8 +377,6 @@ export interface RumPublicApiOptions {
   ) => DeflateEncoder
 }
 
-const RUM_STORAGE_KEY = 'rum'
-
 export interface Strategy {
   init: (initConfiguration: RumInitConfiguration, publicApi: RumPublicApi) => void
   initConfiguration: RumInitConfiguration | undefined
@@ -390,9 +385,29 @@ export interface Strategy {
   addTiming: StartRumResult['addTiming']
   startView: StartRumResult['startView']
   setViewName: StartRumResult['setViewName']
+
   setViewContext: StartRumResult['setViewContext']
   setViewContextProperty: StartRumResult['setViewContextProperty']
   getViewContext: StartRumResult['getViewContext']
+
+  getGlobalContext: StartRumResult['getGlobalContext']
+  setGlobalContext: StartRumResult['setGlobalContext']
+  setGlobalContextProperty: StartRumResult['setGlobalContextProperty']
+  removeGlobalContextProperty: StartRumResult['removeGlobalContextProperty']
+  clearGlobalContext: StartRumResult['clearGlobalContext']
+
+  getUser: StartRumResult['getUser']
+  setUser: StartRumResult['setUser']
+  setUserProperty: StartRumResult['setUserProperty']
+  removeUserProperty: StartRumResult['removeUserProperty']
+  clearUser: StartRumResult['clearUser']
+
+  getAccount: StartRumResult['getAccount']
+  setAccount: StartRumResult['setAccount']
+  setAccountProperty: StartRumResult['setAccountProperty']
+  removeAccountProperty: StartRumResult['removeAccountProperty']
+  clearAccount: StartRumResult['clearAccount']
+
   addAction: StartRumResult['addAction']
   addError: StartRumResult['addError']
   addFeatureFlagEvaluation: StartRumResult['addFeatureFlagEvaluation']
@@ -407,43 +422,15 @@ export function makeRumPublicApi(
   options: RumPublicApiOptions = {}
 ): RumPublicApi {
   const customerDataTrackerManager = createCustomerDataTrackerManager(CustomerDataCompressionStatus.Unknown)
-  const globalContextManager = createContextManager('global context', {
-    customerDataTracker: customerDataTrackerManager.getOrCreateTracker(CustomerDataType.GlobalContext),
-  })
-  const userContextManager = createContextManager('user', {
-    customerDataTracker: customerDataTrackerManager.getOrCreateTracker(CustomerDataType.User),
-    propertiesConfig: {
-      id: { type: 'string' },
-      name: { type: 'string' },
-      email: { type: 'string' },
-    },
-  })
-  const accountContextManager = createContextManager('account', {
-    customerDataTracker: customerDataTrackerManager.getOrCreateTracker(CustomerDataType.Account),
-    propertiesConfig: {
-      id: { type: 'string', required: true },
-      name: { type: 'string' },
-    },
-  })
+
   const trackingConsentState = createTrackingConsentState()
   const customVitalsState = createCustomVitalsState()
 
-  function getCommonContext() {
-    return buildCommonContext(globalContextManager, userContextManager, accountContextManager, recorderApi)
-  }
-
   let strategy = createPreStartStrategy(
     options,
-    getCommonContext,
     trackingConsentState,
     customVitalsState,
     (configuration, deflateWorker, initialViewOptions) => {
-      if (configuration.storeContextsAcrossPages) {
-        storeContextManager(configuration, globalContextManager, RUM_STORAGE_KEY, CustomerDataType.GlobalContext)
-        storeContextManager(configuration, userContextManager, RUM_STORAGE_KEY, CustomerDataType.User)
-        storeContextManager(configuration, accountContextManager, RUM_STORAGE_KEY, CustomerDataType.Account)
-      }
-
       customerDataTrackerManager.setCompressionStatus(
         deflateWorker ? CustomerDataCompressionStatus.Enabled : CustomerDataCompressionStatus.Disabled
       )
@@ -452,7 +439,6 @@ export function makeRumPublicApi(
         configuration,
         recorderApi,
         customerDataTrackerManager,
-        getCommonContext,
         initialViewOptions,
         deflateWorker && options.createDeflateEncoder
           ? (streamId) => options.createDeflateEncoder!(configuration, deflateWorker, streamId)
@@ -520,20 +506,20 @@ export function makeRumPublicApi(
     }),
 
     setGlobalContext: monitor((context) => {
-      globalContextManager.setContext(context)
+      strategy.setGlobalContext(context)
       addTelemetryUsage({ feature: 'set-global-context' })
     }),
 
-    getGlobalContext: monitor(() => globalContextManager.getContext()),
+    getGlobalContext: monitor(() => strategy.getGlobalContext()),
 
     setGlobalContextProperty: monitor((key, value) => {
-      globalContextManager.setContextProperty(key, value)
+      strategy.setGlobalContextProperty(key, value)
       addTelemetryUsage({ feature: 'set-global-context' })
     }),
 
-    removeGlobalContextProperty: monitor((key) => globalContextManager.removeContextProperty(key)),
+    removeGlobalContextProperty: monitor((key) => strategy.removeGlobalContextProperty(key)),
 
-    clearGlobalContext: monitor(() => globalContextManager.clearContext()),
+    clearGlobalContext: monitor(() => strategy.clearGlobalContext()),
 
     getInternalContext: monitor((startTime) => strategy.getInternalContext(startTime)),
 
@@ -573,30 +559,42 @@ export function makeRumPublicApi(
     }),
 
     setUser: monitor((newUser) => {
-      userContextManager.setContext(newUser)
+      strategy.setUser(newUser)
       addTelemetryUsage({ feature: 'set-user' })
     }),
 
-    getUser: monitor(userContextManager.getContext),
+    getUser: monitor(() => strategy.getUser()),
 
     setUserProperty: monitor((key, property) => {
-      userContextManager.setContextProperty(key, property)
+      strategy.setUserProperty(key, property)
       addTelemetryUsage({ feature: 'set-user' })
     }),
 
-    removeUserProperty: monitor(userContextManager.removeContextProperty),
+    removeUserProperty: monitor((key) => {
+      strategy.removeUserProperty(key)
+    }),
 
-    clearUser: monitor(userContextManager.clearContext),
+    clearUser: monitor(() => {
+      strategy.clearUser()
+    }),
 
-    setAccount: monitor(accountContextManager.setContext),
+    setAccount: monitor((account) => {
+      strategy.setAccount(account)
+    }),
 
-    getAccount: monitor(accountContextManager.getContext),
+    getAccount: monitor(() => strategy.getAccount()),
 
-    setAccountProperty: monitor(accountContextManager.setContextProperty),
+    setAccountProperty: monitor((key, property) => {
+      strategy.setAccountProperty(key, property)
+    }),
 
-    removeAccountProperty: monitor(accountContextManager.removeContextProperty),
+    removeAccountProperty: monitor((key) => {
+      strategy.removeAccountProperty(key)
+    }),
 
-    clearAccount: monitor(accountContextManager.clearContext),
+    clearAccount: monitor(() => {
+      strategy.clearAccount()
+    }),
 
     startView,
 
@@ -611,6 +609,7 @@ export function makeRumPublicApi(
     }),
 
     getSessionReplayLink: monitor(() => recorderApi.getSessionReplayLink()),
+
     startSessionReplayRecording: monitor((options?: StartRecordingOptions) => {
       recorderApi.start(options)
       addTelemetryUsage({ feature: 'start-session-replay-recording', force: options && options.force })

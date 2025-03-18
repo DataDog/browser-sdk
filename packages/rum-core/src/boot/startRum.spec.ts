@@ -332,7 +332,6 @@ describe('view events', () => {
       mockRumConfiguration(),
       noopRecorderApi,
       createCustomerDataTrackerManager(),
-      () => ({ user: {}, context: {}, account: {}, hasReplay: undefined }),
       undefined,
       createIdentityEncoder,
       createTrackingConsentState(TrackingConsent.GRANTED),
