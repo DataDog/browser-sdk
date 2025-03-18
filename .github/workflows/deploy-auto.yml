@@ -45,7 +45,7 @@ jobs:
           OSS_SECRET_KEY: ${{ secrets.OSS_SECRET_KEY }}
 
   publish-npm:
-    # needs: deploy-prod
+    needs: deploy-prod
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -83,12 +83,16 @@ jobs:
         uses: zcong1993/actions-ding@master
         with:
           dingToken: ${{ secrets.DING_TALK_TOKEN }}
+          secret: ${{ secrets.DING_TALK_SECRET }}
           body: |
             {
               "msgtype": "markdown",
-              "markdown": {
-                "title": "✅ RUM sdk 部署成功",
-                 "text": "- 🔖 分支: ${{ github.ref }}\n- 📝 提交信息: ${{ github.event.head_commit.message }}\n- 👨‍💻 提交者: ${{ github.actor }}\n- 🔗 Commit: [${{ github.sha }}](https://github.com/${{ github.repository }}/commit/${{ github.sha }})\n- 🚀 [查看部署详情](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})"
+               "markdown": {
+                "title": "RUM sdk 部署通知",
+                "text": "### ✅ RUM sdk 部署成功\n\n- 🔖 分支: ${{ github.ref }}\n- 📝 提交信息: ${{ github.event.head_commit.message }}\n- 👨‍💻 提交者: ${{ github.actor }}\n- 🔗 Commit: [${{ github.sha }}](https://github.com/${{ github.repository }}/commit/${{ github.sha }})\n- 🚀 [查看部署详情](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})"
+              },
+              "at": {
+                "isAtAll": true
               }
             }
 
@@ -110,11 +114,12 @@ jobs:
         uses: zcong1993/actions-ding@master
         with:
           dingToken: ${{ secrets.DING_TALK_TOKEN }}
+          secret: ${{ secrets.DING_TALK_SECRET }}
           body: |
             {
               "msgtype": "markdown",
               "markdown": {
-                "title": "❌ RUM sdk 部署失败",
-                "text": "- 🔖 分支: ${{ github.ref }}\n- 📝 提交信息: ${{ github.event.head_commit.message }}\n- 👨‍💻 提交者: ${{ github.actor }}\n- 🔗 Commit: [${{ github.sha }}](https://github.com/${{ github.repository }}/commit/${{ github.sha }})\n- 🚀 [查看部署详情](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})"
+                "title": "RUM sdk 部署通知",
+                "text": "### ❌ RUM sdk 部署失败 \n\n- 🔖 分支: ${{ github.ref }}\n- 📝 提交信息: ${{ github.event.head_commit.message }}\n- 👨‍💻 提交者: ${{ github.actor }}\n- 🔗 Commit: [${{ github.sha }}](https://github.com/${{ github.repository }}/commit/${{ github.sha }})\n- 🚀 [查看部署详情](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})"
               }
             }
