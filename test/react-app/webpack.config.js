@@ -1,10 +1,9 @@
 const path = require('path')
 
-const filename = 'react-app.js'
-module.exports = ({ target, optimization, mode }) => ({
-  mode,
+module.exports = {
+  mode: 'production',
   entry: './app.tsx',
-  target,
+  target: ['web', 'es2018'],
   module: {
     rules: [
       {
@@ -16,10 +15,12 @@ module.exports = ({ target, optimization, mode }) => ({
   resolve: {
     extensions: ['.ts', '.tsx', '.js', '.jsx'],
   },
-  optimization,
+  optimization: {
+    chunkIds: 'named',
+  },
   output: {
     path: path.resolve(__dirname, 'dist'),
-    filename,
-    chunkFilename: `chunks/[name]-[contenthash]-${filename}`,
+    filename: 'react-app.js',
+    chunkFilename: 'chunks/[name]-[contenthash]-react-app.js',
   },
-})
+}

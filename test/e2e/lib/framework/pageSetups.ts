@@ -173,10 +173,7 @@ export function reactSetup(options: SetupOptions, servers: Servers) {
     `
   }
 
-  body += html`
-    <div id="root"></div>
-    <script type="text/javascript" src="./react-app.js"></script>
-  `
+  body += html` <script type="text/javascript" src="./react-app.js"></script> `
 
   return basePage({
     header,
