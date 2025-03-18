@@ -16,7 +16,6 @@ import type { RawRumErrorEvent } from '../../rawRumEvent.types'
 import { RumEventType } from '../../rawRumEvent.types'
 import type { LifeCycle, RawRumEventCollectedData } from '../lifeCycle'
 import { LifeCycleEventType } from '../lifeCycle'
-import type { CommonContext } from '../contexts/commonContext'
 import type { RumErrorEventDomainContext } from '../../domainContext.types'
 import { trackConsoleError } from './trackConsoleError'
 import { trackReportError } from './trackReportError'
@@ -42,20 +41,16 @@ export function startErrorCollection(lifeCycle: LifeCycle, configuration: RumCon
 }
 
 export function doStartErrorCollection(lifeCycle: LifeCycle) {
-  lifeCycle.subscribe(LifeCycleEventType.RAW_ERROR_COLLECTED, ({ error, customerContext, savedCommonContext }) => {
+  lifeCycle.subscribe(LifeCycleEventType.RAW_ERROR_COLLECTED, ({ error, customerContext }) => {
     customerContext = combine(error.context, customerContext)
     lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, {
       customerContext,
-      savedCommonContext,
       ...processError(error),
     })
   })
 
   return {
-    addError: (
-      { error, handlingStack, componentStack, startClocks, context: customerContext }: ProvidedError,
-      savedCommonContext?: CommonContext
-    ) => {
+    addError: ({ error, handlingStack, componentStack, startClocks, context: customerContext }: ProvidedError) => {
       const stackTrace = isError(error) ? computeStackTrace(error) : undefined
       const rawError = computeRawError({
         stackTrace,
@@ -70,7 +65,6 @@ export function doStartErrorCollection(lifeCycle: LifeCycle) {
 
       lifeCycle.notify(LifeCycleEventType.RAW_ERROR_COLLECTED, {
         customerContext,
-        savedCommonContext,
         error: rawError,
       })
     },
