@@ -6,7 +6,7 @@ import type { Page } from '@playwright/test'
 import { test, expect } from '@playwright/test'
 import { wait } from '@datadog/browser-core/test/wait'
 import type { IntakeRegistry } from '../../lib/framework'
-import { createTest, bundleSetup, html } from '../../lib/framework'
+import { createTest, html } from '../../lib/framework'
 
 const NAVBAR_HEIGHT_CHANGE_UPPER_BOUND = 30
 const VIEWPORT_META_TAGS = `
@@ -28,7 +28,6 @@ test.describe('recorder', () => {
   test.describe('layout viewport properties', () => {
     createTest('getWindowWidth/Height should not be affected by pinch zoom')
       .withRum()
-      .withSetup(bundleSetup)
       .withBody(html`${VIEWPORT_META_TAGS}`)
       .run(async ({ intakeRegistry, page, flushEvents, browserName }) => {
         test.fixme(browserName === 'msedge', 'In Edge, the ViewportResize record data is off by almost 20px')
@@ -59,7 +58,6 @@ test.describe('recorder', () => {
      */
     createTest('getScrollX/Y should not be affected by pinch scroll')
       .withRum()
-      .withSetup(bundleSetup)
       .withBody(html`${VIEWPORT_META_TAGS}`)
       .run(async ({ intakeRegistry, flushEvents, page, browserName }) => {
         test.skip(...hasNoTouchGestureEmulationSupportViaCDP(browserName))
@@ -103,7 +101,6 @@ test.describe('recorder', () => {
   test.describe('visual viewport properties', () => {
     createTest('pinch zoom "scroll" event reports visual viewport position')
       .withRum()
-      .withSetup(bundleSetup)
       .withBody(html`${VIEWPORT_META_TAGS}`)
       .run(async ({ intakeRegistry, page, flushEvents, browserName }) => {
         test.skip(...hasNoTouchGestureEmulationSupportViaCDP(browserName))
@@ -120,7 +117,6 @@ test.describe('recorder', () => {
 
     createTest('pinch zoom "resize" event reports visual viewport scale')
       .withRum()
-      .withSetup(bundleSetup)
       .withBody(html`${VIEWPORT_META_TAGS}`)
       .run(async ({ intakeRegistry, page, flushEvents, browserName }) => {
         test.skip(...hasNoTouchGestureEmulationSupportViaCDP(browserName))

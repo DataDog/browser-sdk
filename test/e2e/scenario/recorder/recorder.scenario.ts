@@ -22,7 +22,7 @@ import {
 import { createMutationPayloadValidatorFromSegment } from '@datadog/browser-rum/test/mutationPayloadValidator'
 import { test, expect } from '@playwright/test'
 import { wait } from '@datadog/browser-core/test/wait'
-import { createTest, bundleSetup, html } from '../../lib/framework'
+import { createTest, html } from '../../lib/framework'
 
 const UUID_RE = /^[0-9a-f]{8}-([0-9a-f]{4}-){3}[0-9a-f]{12}$/
 
@@ -82,7 +82,6 @@ test.describe('recorder', () => {
   test.describe('full snapshot', () => {
     createTest('obfuscate elements')
       .withRum()
-      .withSetup(bundleSetup)
       .withBody(html`
         <div id="not-obfuscated">displayed</div>
         <p id="hidden-by-attribute" data-dd-privacy="hidden">hidden</p>
@@ -125,7 +124,6 @@ test.describe('recorder', () => {
   test.describe('mutations observer', () => {
     createTest('record mutations')
       .withRum()
-      .withSetup(bundleSetup)
       .withBody(html`
         <p>mutation observer</p>
         <ul>
@@ -170,7 +168,6 @@ test.describe('recorder', () => {
 
     createTest('record character data mutations')
       .withRum()
-      .withSetup(bundleSetup)
       .withBody(html`
         <p>mutation observer</p>
         <ul>
@@ -221,7 +218,6 @@ test.describe('recorder', () => {
 
     createTest('record attributes mutations')
       .withRum()
-      .withSetup(bundleSetup)
       .withBody(html`
         <p>mutation observer</p>
         <ul>
@@ -266,7 +262,6 @@ test.describe('recorder', () => {
 
     createTest("don't record hidden elements mutations")
       .withRum()
-      .withSetup(bundleSetup)
       .withBody(html`
         <div data-dd-privacy="hidden">
           <ul>
@@ -291,7 +286,6 @@ test.describe('recorder', () => {
 
     createTest('record DOM node movement 1')
       .withRum()
-      .withSetup(bundleSetup)
       .withBody(
         // prettier-ignore
         html`
@@ -342,7 +336,6 @@ test.describe('recorder', () => {
 
     createTest('record DOM node movement 2')
       .withRum()
-      .withSetup(bundleSetup)
       .withBody(
         // prettier-ignore
         html`
@@ -394,7 +387,6 @@ test.describe('recorder', () => {
 
     createTest('serialize node before record')
       .withRum()
-      .withSetup(bundleSetup)
       .withBody(
         // prettier-ignore
         html`
@@ -450,7 +442,6 @@ test.describe('recorder', () => {
       .withRum({
         defaultPrivacyLevel: DefaultPrivacyLevel.ALLOW,
       })
-      .withSetup(bundleSetup)
       .withBody(html`
         <form>
           <label for="text">
@@ -528,7 +519,6 @@ test.describe('recorder', () => {
       .withRum({
         defaultPrivacyLevel: DefaultPrivacyLevel.ALLOW,
       })
-      .withSetup(bundleSetup)
       .withBody(html`
         <input type="text" id="first" name="first" />
         <input type="text" id="second" name="second" data-dd-privacy="input-ignored" />
@@ -561,7 +551,6 @@ test.describe('recorder', () => {
 
     createTest('replace masked values by asterisks')
       .withRum()
-      .withSetup(bundleSetup)
       .withBody(html`
         <input type="text" id="by-data-attribute" data-dd-privacy="mask" />
         <input type="text" id="by-classname" class="dd-privacy-mask" />
@@ -592,7 +581,6 @@ test.describe('recorder', () => {
   test.describe('stylesheet rules observer', () => {
     createTest('record dynamic CSS changes')
       .withRum()
-      .withSetup(bundleSetup)
       .withBody(html`
         <style>
           .foo {
@@ -624,7 +612,6 @@ test.describe('recorder', () => {
 
     createTest('record nested css rules changes')
       .withRum()
-      .withSetup(bundleSetup)
       .withBody(html`
         <style>
           @supports (display: grid) {
@@ -669,7 +656,6 @@ test.describe('recorder', () => {
   test.describe('frustration records', () => {
     createTest('should detect a dead click and match it to mouse interaction record')
       .withRum({ trackUserInteractions: true })
-      .withSetup(bundleSetup)
       .run(async ({ intakeRegistry, flushEvents, page }) => {
         const html = page.locator('html')
         await html.click()
@@ -692,7 +678,6 @@ test.describe('recorder', () => {
 
     createTest('should detect a rage click and match it to mouse interaction records')
       .withRum({ trackUserInteractions: true })
-      .withSetup(bundleSetup)
       .withBody(html`
         <div id="main-div" />
         <button
@@ -744,7 +729,6 @@ test.describe('recorder', () => {
     createTest('should be recorded across navigation')
       // to control initial position before recording
       .withRum({ startSessionReplayRecordingManually: true })
-      .withSetup(bundleSetup)
       .withBody(html`
         <style>
           #container {
@@ -836,7 +820,6 @@ test.describe('recorder', () => {
   test.describe('recording of sampled out sessions', () => {
     createTest('should not start recording when session is sampled out')
       .withRum({ sessionReplaySampleRate: 0 })
-      .withSetup(bundleSetup)
       .run(async ({ intakeRegistry, page, flushEvents }) => {
         await page.evaluate(() => {
           window.DD_RUM!.startSessionReplayRecording()
@@ -849,7 +832,6 @@ test.describe('recorder', () => {
 
     createTest('should start recording if forced when session is sampled out')
       .withRum({ sessionReplaySampleRate: 0 })
-      .withSetup(bundleSetup)
       .run(async ({ intakeRegistry, page, flushEvents, browserContext }) => {
         await page.evaluate(() => {
           window.DD_RUM!.startSessionReplayRecording({ force: true })
@@ -865,7 +847,6 @@ test.describe('recorder', () => {
 
   createTest('restarting recording should send a new full snapshot')
     .withRum()
-    .withSetup(bundleSetup)
     .run(async ({ intakeRegistry, page, flushEvents }) => {
       await page.evaluate(() => {
         window.DD_RUM!.stopSessionReplayRecording()
@@ -885,7 +866,6 @@ test.describe('recorder', () => {
 
   createTest('workerUrl initialization parameter')
     .withRum({ workerUrl: '/worker.js' })
-    .withSetup(bundleSetup)
     .withBasePath('/no-blob-worker-csp')
     .run(async ({ intakeRegistry, flushEvents }) => {
       await flushEvents()
