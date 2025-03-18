@@ -27,7 +27,8 @@ function getTelemetryOrgApplicationKey(site) {
 }
 
 function getNpmToken() {
-  return getSecretKey('ci.browser-sdk.npm_token')
+  // return getSecretKey('ci.browser-sdk.npm_token')
+  return process.env.NPM_TOKEN || ''
 }
 
 function getChromeWebStoreClientId() {

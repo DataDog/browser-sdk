@@ -27,9 +27,9 @@ export type {
 } from '@flashcatcloud/browser-rum-core'
 export { DefaultPrivacyLevel } from '@flashcatcloud/browser-core'
 
-export const datadogRum = makeRumPublicApi(startRum, makeRecorderApiStub())
+export const flashcatRum = makeRumPublicApi(startRum, makeRecorderApiStub())
 
 interface BrowserWindow extends Window {
-  DD_RUM?: RumPublicApi
+  FC_RUM?: RumPublicApi
 }
-defineGlobal(getGlobalObject<BrowserWindow>(), 'DD_RUM', datadogRum)
+defineGlobal(getGlobalObject<BrowserWindow>(), 'FC_RUM', flashcatRum)

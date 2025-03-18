@@ -9,9 +9,9 @@ See the [dedicated datadog documentation][1] for more details.
 To start collecting events, add [`@flashcatcloud/browser-rum`][2] to your `package.json` file, then initialize it with:
 
 ```javascript
-import { datadogRum } from '@flashcatcloud/browser-rum'
+import { flashcatRum } from '@flashcatcloud/browser-rum'
 
-datadogRum.init({
+flashcatRum.init({
   applicationId: '<DATADOG_APPLICATION_ID>',
   clientToken: '<DATADOG_CLIENT_TOKEN>',
   site: '<DATADOG_SITE>',

@@ -163,11 +163,11 @@ class TestBuilder {
   }
 
   private rumInit: (configuration: RumInitConfiguration) => void = (configuration) => {
-    window.DD_RUM!.init(configuration)
+    window.FC_RUM!.init(configuration)
   }
 
   private logsInit: (configuration: LogsInitConfiguration) => void = (configuration) => {
-    window.DD_LOGS!.init(configuration)
+    window.FC_LOGS!.init(configuration)
   }
 }
 

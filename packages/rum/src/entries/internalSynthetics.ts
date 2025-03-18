@@ -15,5 +15,5 @@ export { DefaultPrivacyLevel } from '@flashcatcloud/browser-core'
 // have side effects.
 /* eslint-disable local-rules/disallow-side-effects */
 const recorderApi = makeRecorderApi(lazyLoadRecorder)
-export const datadogRum = makeRumPublicApi(startRum, recorderApi, { ignoreInitIfSyntheticsWillInjectRum: false })
+export const flashcatRum = makeRumPublicApi(startRum, recorderApi, { ignoreInitIfSyntheticsWillInjectRum: false })
 /* eslint-enable local-rules/disallow-side-effects */

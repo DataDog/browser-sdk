@@ -41,7 +41,7 @@ interface Rum {
 }
 declare global {
   interface Window {
-    DD_RUM?: Rum
+    FC_RUM?: Rum
     DD_RUM_SYNTHETICS?: Rum
   }
 }
@@ -80,7 +80,7 @@ describe('logs', () => {
   })
 
   afterEach(() => {
-    delete window.DD_RUM
+    delete window.FC_RUM
     stopSessionManager()
   })
 

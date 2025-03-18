@@ -57,7 +57,7 @@ test.describe('rum sessions', () => {
         const anonymousId = (await findSessionCookie(browserContext))?.aid
 
         await page.evaluate(() => {
-          window.DD_RUM!.stopSession()
+          window.FC_RUM!.stopSession()
         })
         await flushEvents()
 
@@ -71,7 +71,7 @@ test.describe('rum sessions', () => {
         expect(anonymousId).not.toBeNull()
 
         await page.evaluate(() => {
-          window.DD_RUM!.stopSession()
+          window.FC_RUM!.stopSession()
         })
         await page.locator('html').click()
 
@@ -91,14 +91,14 @@ test.describe('rum sessions', () => {
         await page.evaluate(
           () =>
             new Promise<void>((resolve) => {
-              window.DD_RUM!.stopSession()
+              window.FC_RUM!.stopSession()
               setTimeout(() => {
                 // If called directly after `stopSession`, the action start time may be the same as the
                 // session end time. In this case, the sopped session is used, and the action is
                 // collected.
                 // We might want to improve this by having a strict comparison between the event start
                 // time and session end time.
-                window.DD_RUM!.addAction('foo')
+                window.FC_RUM!.addAction('foo')
                 resolve()
               }, 5)
             })
@@ -113,7 +113,7 @@ test.describe('rum sessions', () => {
       .withRum()
       .run(async ({ intakeRegistry, flushEvents, browserContext, page }) => {
         await page.evaluate(() => {
-          window.DD_RUM!.stopSession()
+          window.FC_RUM!.stopSession()
         })
 
         await page.locator('html').click()
@@ -122,7 +122,7 @@ test.describe('rum sessions', () => {
         await page.waitForTimeout(1000)
 
         await page.evaluate(() => {
-          window.DD_RUM!.addAction('foo')
+          window.FC_RUM!.addAction('foo')
         })
 
         await flushEvents()
@@ -141,8 +141,8 @@ test.describe('rum sessions', () => {
         expect(intakeRegistry.replaySegments).toHaveLength(0)
 
         await page.evaluate(() => {
-          window.DD_LOGS!.logger.log('foo')
-          window.DD_RUM!.stopSession()
+          window.FC_LOGS!.logger.log('foo')
+          window.FC_RUM!.stopSession()
         })
 
         await waitForRequests(page)
@@ -168,7 +168,7 @@ test.describe('rum sessions', () => {
         await page.waitForTimeout(1100)
 
         await page.evaluate(() => {
-          window.DD_RUM!.addAction('foo')
+          window.FC_RUM!.addAction('foo')
         })
 
         await flushEvents()

@@ -11,7 +11,7 @@ interface Rum {
 }
 
 interface BrowserWindow {
-  DD_RUM?: Rum
+  FC_RUM?: Rum
   DD_RUM_SYNTHETICS?: Rum
 }
 
@@ -32,7 +32,7 @@ export function getRUMInternalContext(startTime?: RelativeTime): Context | undef
     return context
   }
 
-  return getInternalContextFromRumGlobal(browserWindow.DD_RUM)
+  return getInternalContextFromRumGlobal(browserWindow.FC_RUM)
 
   function getInternalContextFromRumGlobal(rumGlobal?: Rum): Context | undefined {
     if (rumGlobal && rumGlobal.getInternalContext) {

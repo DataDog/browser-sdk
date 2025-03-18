@@ -6,10 +6,10 @@ test.describe('vital collection', () => {
     .withRum()
     .run(async ({ flushEvents, intakeRegistry, page }) => {
       await page.evaluate(() => {
-        const vital = window.DD_RUM!.startDurationVital('foo')
+        const vital = window.FC_RUM!.startDurationVital('foo')
         return new Promise<void>((resolve) => {
           setTimeout(() => {
-            window.DD_RUM!.stopDurationVital(vital)
+            window.FC_RUM!.stopDurationVital(vital)
             resolve()
           }, 5)
         })

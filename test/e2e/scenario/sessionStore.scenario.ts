@@ -14,8 +14,8 @@ test.describe('Session Stores', () => {
       .withRum()
       .run(async ({ browserContext, page }) => {
         const cookieSessionId = await getSessionIdFromCookie(browserContext)
-        const logsContext = await page.evaluate(() => window.DD_LOGS?.getInternalContext())
-        const rumContext = await page.evaluate(() => window.DD_RUM?.getInternalContext())
+        const logsContext = await page.evaluate(() => window.FC_LOGS?.getInternalContext())
+        const rumContext = await page.evaluate(() => window.FC_RUM?.getInternalContext())
 
         expect(logsContext?.session_id).toBe(cookieSessionId)
         expect(rumContext?.session_id).toBe(cookieSessionId)
@@ -26,8 +26,8 @@ test.describe('Session Stores', () => {
       .withRum()
       .withHead(DISABLE_COOKIES)
       .run(async ({ page }) => {
-        const logsContext = await page.evaluate(() => window.DD_LOGS?.getInternalContext())
-        const rumContext = await page.evaluate(() => window.DD_RUM?.getInternalContext())
+        const logsContext = await page.evaluate(() => window.FC_LOGS?.getInternalContext())
+        const rumContext = await page.evaluate(() => window.FC_RUM?.getInternalContext())
 
         expect(logsContext).not.toBeUndefined()
         expect(rumContext).toBeUndefined()
@@ -41,8 +41,8 @@ test.describe('Session Stores', () => {
       .run(async ({ page }) => {
         const sessionId = await getSessionIdFromLocalStorage(page)
 
-        const logsContext = await page.evaluate(() => window.DD_LOGS?.getInternalContext())
-        const rumContext = await page.evaluate(() => window.DD_RUM?.getInternalContext())
+        const logsContext = await page.evaluate(() => window.FC_LOGS?.getInternalContext())
+        const rumContext = await page.evaluate(() => window.FC_RUM?.getInternalContext())
 
         expect(logsContext?.session_id).toBe(sessionId)
         expect(rumContext?.session_id).toBe(sessionId)
@@ -53,8 +53,8 @@ test.describe('Session Stores', () => {
       .withRum({ sessionPersistence: 'local-storage' })
       .withHead(DISABLE_LOCAL_STORAGE)
       .run(async ({ page }) => {
-        const logsContext = await page.evaluate(() => window.DD_LOGS?.getInternalContext())
-        const rumContext = await page.evaluate(() => window.DD_RUM?.getInternalContext())
+        const logsContext = await page.evaluate(() => window.FC_LOGS?.getInternalContext())
+        const rumContext = await page.evaluate(() => window.FC_RUM?.getInternalContext())
 
         expect(logsContext).not.toBeUndefined()
         expect(rumContext).toBeUndefined()
@@ -68,8 +68,8 @@ test.describe('Session Stores', () => {
     .run(async ({ page }) => {
       const sessionId = await getSessionIdFromLocalStorage(page)
 
-      const logsContext = await page.evaluate(() => window.DD_LOGS?.getInternalContext())
-      const rumContext = await page.evaluate(() => window.DD_RUM?.getInternalContext())
+      const logsContext = await page.evaluate(() => window.FC_LOGS?.getInternalContext())
+      const rumContext = await page.evaluate(() => window.FC_RUM?.getInternalContext())
 
       expect(logsContext?.session_id).toBe(sessionId)
       expect(rumContext?.session_id).toBe(sessionId)

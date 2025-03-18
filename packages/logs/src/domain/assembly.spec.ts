@@ -78,13 +78,13 @@ describe('startLogsAssembly', () => {
     beforeSend = noop
     mainLogger = new Logger(() => noop, createCustomerDataTracker(noop))
     startLogsAssembly(sessionManager, configuration, lifeCycle, () => COMMON_CONTEXT, noop)
-    window.DD_RUM = {
+    window.FC_RUM = {
       getInternalContext: noop,
     }
   })
 
   afterEach(() => {
-    delete window.DD_RUM
+    delete window.FC_RUM
     serverLogs = []
   })
 
@@ -164,7 +164,7 @@ describe('startLogsAssembly', () => {
 
   describe('contexts inclusion', () => {
     it('should include message context', () => {
-      spyOn(window.DD_RUM!, 'getInternalContext').and.returnValue({
+      spyOn(window.FC_RUM!, 'getInternalContext').and.returnValue({
         view: { url: 'http://from-rum-context.com', id: 'view-id' },
       })
 
@@ -216,7 +216,7 @@ describe('startLogsAssembly', () => {
     })
 
     it('should include rum internal context related to the error time', () => {
-      window.DD_RUM = {
+      window.FC_RUM = {
         getInternalContext(startTime) {
           return { foo: startTime === 1234 ? 'b' : 'a' }
         },
@@ -230,7 +230,7 @@ describe('startLogsAssembly', () => {
     })
 
     it('should include RUM context', () => {
-      window.DD_RUM = {
+      window.FC_RUM = {
         getInternalContext() {
           return { view: { url: 'http://from-rum-context.com', id: 'view-id' } }
         },
@@ -267,7 +267,7 @@ describe('startLogsAssembly', () => {
     })
 
     it('RUM context should take precedence over common context', () => {
-      spyOn(window.DD_RUM!, 'getInternalContext').and.returnValue({ view: { url: 'from-rum-context' } })
+      spyOn(window.FC_RUM!, 'getInternalContext').and.returnValue({ view: { url: 'from-rum-context' } })
 
       lifeCycle.notify(LifeCycleEventType.RAW_LOG_COLLECTED, { rawLogsEvent: DEFAULT_MESSAGE })
 
@@ -275,7 +275,7 @@ describe('startLogsAssembly', () => {
     })
 
     it('raw log should take precedence over RUM context', () => {
-      spyOn(window.DD_RUM!, 'getInternalContext').and.returnValue({ message: 'from-rum-context' })
+      spyOn(window.FC_RUM!, 'getInternalContext').and.returnValue({ message: 'from-rum-context' })
 
       lifeCycle.notify(LifeCycleEventType.RAW_LOG_COLLECTED, { rawLogsEvent: DEFAULT_MESSAGE })
 
@@ -344,7 +344,7 @@ describe('user and account management', () => {
   })
 
   afterEach(() => {
-    delete window.DD_RUM
+    delete window.FC_RUM
     serverLogs = []
   })
 

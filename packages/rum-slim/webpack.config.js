@@ -6,5 +6,5 @@ module.exports = (_env, argv) =>
   webpackBase({
     mode: argv.mode,
     entry: path.resolve(__dirname, 'src/entries/main.ts'),
-    filename: 'datadog-rum-slim.js',
+    filename: 'flashcat-rum-slim.js',
   })

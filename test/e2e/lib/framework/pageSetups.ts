@@ -54,9 +54,9 @@ n=o.getElementsByTagName(u)[0];n.parentNode.insertBefore(d,n)
   if (options.logs) {
     body += html`
       <script>
-        ${formatSnippet('./datadog-logs.js', 'DD_LOGS')}
-        DD_LOGS.onReady(function () {
-          DD_LOGS.setGlobalContext(${JSON.stringify(options.context)})
+        ${formatSnippet('./datadog-logs.js', 'FC_LOGS')}
+        FC_LOGS.onReady(function () {
+          FC_LOGS.setGlobalContext(${JSON.stringify(options.context)})
           ;(${options.logsInit.toString()})(${formatConfiguration(options.logs, servers)})
         })
       </script>
@@ -66,9 +66,9 @@ n=o.getElementsByTagName(u)[0];n.parentNode.insertBefore(d,n)
   if (options.rum) {
     body += html`
       <script type="text/javascript">
-        ${formatSnippet(options.useRumSlim ? './datadog-rum-slim.js' : './datadog-rum.js', 'DD_RUM')}
-        DD_RUM.onReady(function () {
-          DD_RUM.setGlobalContext(${JSON.stringify(options.context)})
+        ${formatSnippet(options.useRumSlim ? './datadog-rum-slim.js' : './datadog-rum.js', 'FC_RUM')}
+        FC_RUM.onReady(function () {
+          FC_RUM.setGlobalContext(${JSON.stringify(options.context)})
           ;(${options.rumInit.toString()})(${formatConfiguration(options.rum, servers)})
         })
       </script>
@@ -92,7 +92,7 @@ export function bundleSetup(options: SetupOptions, servers: Servers) {
     header += html`
       <script type="text/javascript" src="./datadog-logs.js"></script>
       <script type="text/javascript">
-        DD_LOGS.setGlobalContext(${JSON.stringify(options.context)})
+        FC_LOGS.setGlobalContext(${JSON.stringify(options.context)})
         ;(${options.logsInit.toString()})(${formatConfiguration(options.logs, servers)})
       </script>
     `
@@ -105,7 +105,7 @@ export function bundleSetup(options: SetupOptions, servers: Servers) {
         src="${options.useRumSlim ? './datadog-rum-slim.js' : './datadog-rum.js'}"
       ></script>
       <script type="text/javascript">
-        DD_RUM.setGlobalContext(${JSON.stringify(options.context)})
+        FC_RUM.setGlobalContext(${JSON.stringify(options.context)})
         ;(${options.rumInit.toString()})(${formatConfiguration(options.rum, servers)})
       </script>
     `
@@ -128,7 +128,7 @@ export function npmSetup(options: SetupOptions, servers: Servers) {
     header += html`
       <script type="text/javascript">
         window.LOGS_INIT = () => {
-          window.DD_LOGS.setGlobalContext(${JSON.stringify(options.context)})
+          window.FC_LOGS.setGlobalContext(${JSON.stringify(options.context)})
           ;(${options.logsInit.toString()})(${formatConfiguration(options.logs, servers)})
         }
       </script>
@@ -139,7 +139,7 @@ export function npmSetup(options: SetupOptions, servers: Servers) {
     header += html`
       <script type="text/javascript">
         window.RUM_INIT = () => {
-          window.DD_RUM.setGlobalContext(${JSON.stringify(options.context)})
+          window.FC_RUM.setGlobalContext(${JSON.stringify(options.context)})
           ;(${options.rumInit.toString()})(${formatConfiguration(options.rum, servers)})
         }
       </script>

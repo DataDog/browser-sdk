@@ -93,7 +93,7 @@ export interface LogsPublicApi extends PublicApi {
   clearGlobalContext: () => void
 
   /**
-   * The Datadog browser logs SDK contains a default logger `DD_LOGS.logger`, but this API allows to create different ones.
+   * The Datadog browser logs SDK contains a default logger `FC_LOGS.logger`, but this API allows to create different ones.
    *
    * See [Define multiple loggers](https://docs.datadoghq.com/logs/log_collection/javascript/#define-multiple-loggers) for further information.
    */
@@ -312,7 +312,7 @@ export function makeLogsPublicApi(startLogsImpl: StartLogs): LogsPublicApi {
 function createPostStartStrategy(initConfiguration: LogsInitConfiguration, startLogsResult: StartLogsResult): Strategy {
   return {
     init: (initConfiguration: LogsInitConfiguration) => {
-      displayAlreadyInitializedError('DD_LOGS', initConfiguration)
+      displayAlreadyInitializedError('FC_LOGS', initConfiguration)
     },
     initConfiguration,
     ...startLogsResult,

@@ -91,7 +91,7 @@ export function createPreStartStrategy(
     addTelemetryConfiguration(serializeRumConfiguration(initConfiguration))
 
     if (cachedConfiguration) {
-      displayAlreadyInitializedError('DD_RUM', initConfiguration)
+      displayAlreadyInitializedError('FC_RUM', initConfiguration)
       return
     }
 

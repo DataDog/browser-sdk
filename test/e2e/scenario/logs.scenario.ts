@@ -10,7 +10,7 @@ test.describe('logs', () => {
     .withLogs()
     .run(async ({ intakeRegistry, flushEvents, page }) => {
       await page.evaluate(() => {
-        window.DD_LOGS!.logger.log('hello')
+        window.FC_LOGS!.logger.log('hello')
       })
       await flushEvents()
       expect(intakeRegistry.logsEvents).toHaveLength(1)
@@ -21,8 +21,8 @@ test.describe('logs', () => {
     .withLogs()
     .run(async ({ intakeRegistry, flushEvents, page, withBrowserLogs }) => {
       await page.evaluate(() => {
-        window.DD_LOGS!.logger.setHandler('console')
-        window.DD_LOGS!.logger.warn('hello')
+        window.FC_LOGS!.logger.setHandler('console')
+        window.FC_LOGS!.logger.warn('hello')
       })
       await flushEvents()
       expect(intakeRegistry.logsEvents).toHaveLength(0)
@@ -174,7 +174,7 @@ test.describe('logs', () => {
     .withLogs()
     .run(async ({ intakeRegistry, flushEvents, page }) => {
       await page.evaluate(() => {
-        window.DD_LOGS!.logger.log('hello')
+        window.FC_LOGS!.logger.log('hello')
       })
       await flushEvents()
       expect(intakeRegistry.logsEvents).toHaveLength(1)
@@ -191,7 +191,7 @@ test.describe('logs', () => {
     })
     .run(async ({ intakeRegistry, flushEvents, page }) => {
       await page.evaluate(() => {
-        window.DD_LOGS!.logger.log('hello', {})
+        window.FC_LOGS!.logger.log('hello', {})
       })
       await flushEvents()
       expect(intakeRegistry.logsEvents).toHaveLength(1)

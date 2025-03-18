@@ -12,13 +12,13 @@ npm install @flashcatcloud/browser-rum @flashcatcloud/browser-rum-react
 
 ### Initialization
 
-To enable the React integration, pass the `reactPlugin` to the `plugins` option of the `datadogRum.init` method:
+To enable the React integration, pass the `reactPlugin` to the `plugins` option of the `flashcatRum.init` method:
 
 ```javascript
-import { datadogRum } from '@flashcatcloud/browser-rum'
+import { flashcatRum } from '@flashcatcloud/browser-rum'
 import { reactPlugin } from '@flashcatcloud/browser-rum-react'
 
-datadogRum.init({
+flashcatRum.init({
   applicationId: ...,
   clientToken: ...,
   ...
@@ -84,12 +84,12 @@ To track route changes with the Datadog RUM Browser SDK, first initialize the `r
 
 ```javascript
 import { RouterProvider } from 'react-router-dom'
-import { datadogRum } from '@flashcatcloud/browser-rum'
+import { flashcatRum } from '@flashcatcloud/browser-rum'
 import { reactPlugin } from '@flashcatcloud/browser-rum-react'
 // Use "createBrowserRouter" from @flashcatcloud/browser-rum-react/react-router-v6 instead of react-router-dom:
 import { createBrowserRouter } from '@flashcatcloud/browser-rum-react/react-router-v6'
 
-datadogRum.init({
+flashcatRum.init({
   ...
   plugins: [reactPlugin({ router: true })],
 })

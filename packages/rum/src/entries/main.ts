@@ -31,9 +31,9 @@ export { DefaultPrivacyLevel } from '@flashcatcloud/browser-core'
 
 const recorderApi = makeRecorderApi(lazyLoadRecorder)
 
-export const datadogRum = makeRumPublicApi(startRum, recorderApi, { startDeflateWorker, createDeflateEncoder })
+export const flashcatRum = makeRumPublicApi(startRum, recorderApi, { startDeflateWorker, createDeflateEncoder })
 
 interface BrowserWindow extends Window {
-  DD_RUM?: RumPublicApi
+  FC_RUM?: RumPublicApi
 }
-defineGlobal(getGlobalObject<BrowserWindow>(), 'DD_RUM', datadogRum)
+defineGlobal(getGlobalObject<BrowserWindow>(), 'FC_RUM', flashcatRum)

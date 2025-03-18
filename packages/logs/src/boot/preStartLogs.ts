@@ -56,7 +56,7 @@ export function createPreStartStrategy(
       cachedInitConfiguration = initConfiguration
 
       if (cachedConfiguration) {
-        displayAlreadyInitializedError('DD_LOGS', initConfiguration)
+        displayAlreadyInitializedError('FC_LOGS', initConfiguration)
         return
       }
 
