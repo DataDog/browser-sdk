@@ -120,6 +120,7 @@ export function bundleSetup(options: SetupOptions, servers: Servers) {
 
 export function npmSetup(options: SetupOptions, servers: Servers) {
   let header = options.head || ''
+  const body = options.body || ''
 
   if (options.eventBridge) {
     header += setupEventBridge(servers)
@@ -137,35 +138,49 @@ export function npmSetup(options: SetupOptions, servers: Servers) {
   }
 
   if (options.rum) {
-    if (options.useReact) {
-      header += html`
-        <script type="text/javascript">
-          window.RUM_CONFIGURATION = ${formatConfiguration(options.rum, servers)}
-        </script>
-      `
-    } else {
-      header += html`
-        <script type="text/javascript">
-          window.RUM_INIT = () => {
-            window.DD_RUM.setGlobalContext(${JSON.stringify(options.context)})
-            ;(${options.rumInit.toString()})(${formatConfiguration(options.rum, servers)})
-          }
-        </script>
-      `
-    }
-  }
-  if (options.useReact) {
     header += html`
-      <div id="root"></div>
-      <script type="text/javascript" src="./react-app.js"></script>
+      <script type="text/javascript">
+        window.RUM_INIT = () => {
+          window.DD_RUM.setGlobalContext(${JSON.stringify(options.context)})
+          ;(${options.rumInit.toString()})(${formatConfiguration(options.rum, servers)})
+        }
+      </script>
     `
-  } else {
-    header += html` <script type="text/javascript" src="./app.js"></script> `
   }
+
+  header += html` <script type="text/javascript" src="./app.js"></script> `
 
   return basePage({
     header,
-    body: options.body,
+    body,
+  })
+}
+
+export function reactSetup(options: SetupOptions, servers: Servers) {
+  let header = options.head || ''
+  let body = options.body || ''
+
+  if (options.eventBridge) {
+    header += setupEventBridge(servers)
+  }
+
+  if (options.rum) {
+    header += html`
+      <script type="text/javascript">
+        window.RUM_CONFIGURATION = ${formatConfiguration(options.rum, servers)}
+        window.RUM_CONTEXT = ${JSON.stringify(options.context)}
+      </script>
+    `
+  }
+
+  body += html`
+    <div id="root"></div>
+    <script type="text/javascript" src="./react-app.js"></script>
+  `
+
+  return basePage({
+    header,
+    body,
   })
 }
 

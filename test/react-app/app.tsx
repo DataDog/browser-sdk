@@ -8,10 +8,14 @@ import { reactPlugin, UNSTABLE_ReactComponentTracker as ReactComponentTracker } 
 declare global {
   interface Window {
     RUM_CONFIGURATION?: any
+    RUM_CONTEXT?: any
   }
 }
 
 datadogRum.init({ ...window.RUM_CONFIGURATION, plugins: [reactPlugin({ router: true })] })
+if (window.RUM_CONTEXT) {
+  datadogRum.setGlobalContext(window.RUM_CONTEXT)
+}
 
 function HomePage() {
   return (

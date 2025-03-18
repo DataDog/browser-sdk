@@ -15,7 +15,7 @@ import { flushEvents } from './flushEvents'
 import type { Servers } from './httpServers'
 import { getTestServers, waitForServersIdle } from './httpServers'
 import type { SetupFactory, SetupOptions } from './pageSetups'
-import { DEFAULT_SETUPS, npmSetup } from './pageSetups'
+import { DEFAULT_SETUPS, npmSetup, reactSetup } from './pageSetups'
 import { createIntakeServerApp } from './serverApps/intake'
 import { createMockServerApp } from './serverApps/mock'
 
@@ -116,7 +116,7 @@ class TestBuilder {
     return this
   }
 
-  withUseReact() {
+  withReact() {
     this.useReact = true
     return this
   }
@@ -159,7 +159,7 @@ class TestBuilder {
         declareTestsForSetups('rum', setups, setupOptions, runner)
         declareTestsForSetups(
           'rum-slim',
-          setups.filter((setup) => setup.factory !== npmSetup),
+          setups.filter((setup) => setup.factory !== npmSetup && setup.factory !== reactSetup),
           { ...setupOptions, useRumSlim: true },
           runner
         )
