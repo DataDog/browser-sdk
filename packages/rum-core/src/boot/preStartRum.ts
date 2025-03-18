@@ -11,6 +11,8 @@ import {
   initFeatureFlags,
   addTelemetryConfiguration,
   initFetchObservable,
+  CustomerDataCompressionStatus,
+  createCustomerDataTrackerManager,
 } from '@datadog/browser-core'
 import type { TrackingConsentState, DeflateWorker, Context } from '@datadog/browser-core'
 import {
@@ -18,18 +20,19 @@ import {
   type RumConfiguration,
   type RumInitConfiguration,
 } from '../domain/configuration'
-import type { CommonContext } from '../domain/contexts/commonContext'
 import type { ViewOptions } from '../domain/view/trackViews'
 import type { DurationVital, CustomVitalsState } from '../domain/vital/vitalCollection'
 import { startDurationVital, stopDurationVital } from '../domain/vital/vitalCollection'
 import { fetchAndApplyRemoteConfiguration, serializeRumConfiguration } from '../domain/configuration'
 import { callPluginsMethod } from '../domain/plugins'
-import type { RumPublicApiOptions, Strategy } from './rumPublicApi'
+import { buildGlobalContextManager } from '../domain/contexts/globalContext'
+import { buildUserContextManager } from '../domain/contexts/userContext'
+import { buildAccountContextManager } from '../domain/contexts/accountContext'
 import type { StartRumResult } from './startRum'
+import type { RumPublicApiOptions, Strategy } from './rumPublicApi'
 
 export function createPreStartStrategy(
   { ignoreInitIfSyntheticsWillInjectRum, startDeflateWorker }: RumPublicApiOptions,
-  getCommonContext: () => CommonContext,
   trackingConsentState: TrackingConsentState,
   customVitalsState: CustomVitalsState,
   doStartRum: (
@@ -39,6 +42,12 @@ export function createPreStartStrategy(
   ) => StartRumResult
 ): Strategy {
   const bufferApiCalls = createBoundedBuffer<StartRumResult>()
+  const customerDataTrackerManager = createCustomerDataTrackerManager(CustomerDataCompressionStatus.Unknown)
+
+  // TODO next major: remove the globalContextManager, userContextManager and accountContextManager from preStartStrategy and use an empty context instead
+  const globalContextManager = buildGlobalContextManager(customerDataTrackerManager)
+  const userContextManager = buildUserContextManager(customerDataTrackerManager)
+  const accountContextManager = buildAccountContextManager(customerDataTrackerManager)
 
   let firstStartViewCall:
     | { options: ViewOptions | undefined; callback: (startRumResult: StartRumResult) => void }
@@ -121,10 +130,10 @@ export function createPreStartStrategy(
     }
 
     cachedConfiguration = configuration
-    // Instrumuent fetch to track network requests
-    // This is needed in case the consent is not granted and some cutsomer
+    // Instrument fetch to track network requests
+    // This is needed in case the consent is not granted and some customer
     // library (Apollo Client) is storing uninstrumented fetch to be used later
-    // The subscrption is needed so that the instrumentation process is completed
+    // The subscription is needed so that the instrumentation process is completed
     initFetchObservable().subscribe(noop)
 
     trackingConsentState.tryToInit(configuration.trackingConsent)
@@ -192,6 +201,8 @@ export function createPreStartStrategy(
       bufferApiCalls.add((startRumResult) => startRumResult.setViewName(name))
     },
 
+    // View context APIs
+
     setViewContext(context) {
       bufferApiCalls.add((startRumResult) => startRumResult.setViewContext(context))
     },
@@ -202,12 +213,81 @@ export function createPreStartStrategy(
 
     getViewContext: () => emptyContext,
 
-    addAction(action, commonContext = getCommonContext()) {
-      bufferApiCalls.add((startRumResult) => startRumResult.addAction(action, commonContext))
+    // Global context APIs
+    getGlobalContext: () => globalContextManager.getContext(),
+
+    setGlobalContext(context) {
+      globalContextManager.setContext(context)
+      bufferApiCalls.add((startRumResult) => startRumResult.setGlobalContext(context))
     },
 
-    addError(providedError, commonContext = getCommonContext()) {
-      bufferApiCalls.add((startRumResult) => startRumResult.addError(providedError, commonContext))
+    setGlobalContextProperty(key, value) {
+      globalContextManager.setContextProperty(key, value)
+      bufferApiCalls.add((startRumResult) => startRumResult.setGlobalContextProperty(key, value))
+    },
+
+    removeGlobalContextProperty(key) {
+      globalContextManager.removeContextProperty(key)
+      bufferApiCalls.add((startRumResult) => startRumResult.removeGlobalContextProperty(key))
+    },
+
+    clearGlobalContext() {
+      globalContextManager.clearContext()
+      bufferApiCalls.add((startRumResult) => startRumResult.clearGlobalContext())
+    },
+
+    // User APIs
+    getUser: () => userContextManager.getContext(),
+
+    setUser(user) {
+      userContextManager.setContext(user)
+      bufferApiCalls.add((startRumResult) => startRumResult.setUser(user))
+    },
+
+    setUserProperty(key, value) {
+      userContextManager.setContextProperty(key, value)
+      bufferApiCalls.add((startRumResult) => startRumResult.setUserProperty(key, value))
+    },
+
+    removeUserProperty(key) {
+      userContextManager.removeContextProperty(key)
+      bufferApiCalls.add((startRumResult) => startRumResult.removeUserProperty(key))
+    },
+
+    clearUser() {
+      userContextManager.clearContext()
+      bufferApiCalls.add((startRumResult) => startRumResult.clearUser())
+    },
+
+    // Account APIs
+    getAccount: () => accountContextManager.getContext(),
+
+    setAccount(account) {
+      accountContextManager.setContext(account)
+      bufferApiCalls.add((startRumResult) => startRumResult.setAccount(account))
+    },
+
+    setAccountProperty(key, value) {
+      accountContextManager.setContextProperty(key, value)
+      bufferApiCalls.add((startRumResult) => startRumResult.setAccountProperty(key, value))
+    },
+
+    removeAccountProperty(key) {
+      accountContextManager.removeContextProperty(key)
+      bufferApiCalls.add((startRumResult) => startRumResult.removeAccountProperty(key))
+    },
+
+    clearAccount() {
+      accountContextManager.clearContext()
+      bufferApiCalls.add((startRumResult) => startRumResult.clearAccount())
+    },
+
+    addAction(action) {
+      bufferApiCalls.add((startRumResult) => startRumResult.addAction(action))
+    },
+
+    addError(providedError) {
+      bufferApiCalls.add((startRumResult) => startRumResult.addError(providedError))
     },
 
     addFeatureFlagEvaluation(key, value) {
