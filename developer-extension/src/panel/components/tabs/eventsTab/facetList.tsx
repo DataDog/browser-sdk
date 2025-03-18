@@ -1,6 +1,7 @@
 import { Box, Button, Card, Checkbox, Collapse, Flex, Text } from '@mantine/core'
 import React from 'react'
-import type { FacetValuesFilter, FacetRegistry } from '../../../hooks/useEvents'
+import type { FacetValuesFilter, EventFilters, FacetRegistry } from '../../../hooks/useEvents'
+import { generateQueryFromFacetValues, DEFAULT_FILTERS } from '../../../hooks/useEvents'
 import type { Facet } from '../../../facets.constants'
 import { FACET_ROOT, FacetValue } from '../../../facets.constants'
 import * as classes from './facetList.module.css'
@@ -8,21 +9,22 @@ import { computeSelectionState } from './computeFacetState'
 
 export function FacetList({
   facetRegistry,
-  facetValuesFilter,
-  onExcludedFacetValuesChange,
+  filters,
+  onFiltersChange,
 }: {
   facetRegistry: FacetRegistry
-  facetValuesFilter: FacetValuesFilter
-  onExcludedFacetValuesChange: (newExcludedFacetValues: FacetValuesFilter) => void
+  filters: EventFilters
+  onFiltersChange: (newFilters: EventFilters) => void
 }) {
   return (
     <FacetField
       facet={FACET_ROOT}
       depth={0}
       facetRegistry={facetRegistry}
-      facetValuesFilter={facetValuesFilter}
-      onExcludedFacetValuesChange={onExcludedFacetValuesChange}
+      facetValuesFilter={filters.facetValuesFilter}
+      onFiltersChange={onFiltersChange}
       parentList={[]}
+      currentFilters={filters}
     />
   )
 }
@@ -33,14 +35,16 @@ function FacetField({
   facetRegistry,
   facetValuesFilter,
   parentList,
-  onExcludedFacetValuesChange,
+  onFiltersChange,
+  currentFilters,
 }: {
   facet: Facet
   depth: number
   facetRegistry: FacetRegistry
   facetValuesFilter: FacetValuesFilter
   parentList: string[]
-  onExcludedFacetValuesChange: (newExcludedFacetValues: FacetValuesFilter) => void
+  onFiltersChange: (newFilters: EventFilters) => void
+  currentFilters: EventFilters
 }) {
   const facetValueCounts = facetRegistry.getFacetValueCounts(facet.path)
 
@@ -62,7 +66,8 @@ function FacetField({
           facetRegistry={facetRegistry}
           facetValuesFilter={facetValuesFilter}
           parentList={parentList.includes(facetValue) ? parentList : [...parentList, facetValue]}
-          onExcludedFacetValuesChange={onExcludedFacetValuesChange}
+          onFiltersChange={onFiltersChange}
+          currentFilters={currentFilters}
         />
       ))}
     </Box>
@@ -79,7 +84,8 @@ function FacetValue({
   facetRegistry,
   facetValuesFilter,
   parentList,
-  onExcludedFacetValuesChange,
+  onFiltersChange,
+  currentFilters,
 }: {
   facet: Facet
   facetValue: FacetValue
@@ -88,7 +94,8 @@ function FacetValue({
   facetRegistry: FacetRegistry
   facetValuesFilter: FacetValuesFilter
   parentList: string[]
-  onExcludedFacetValuesChange: (newExcludedFacetValues: FacetValuesFilter) => void
+  onFiltersChange: (newFilters: EventFilters) => void
+  currentFilters: EventFilters
 }) {
   const isTopLevel = depth === 0
   const facetSelectState = computeSelectionState(facetValuesFilter, facetRegistry, facet, facetValue, parentList)
@@ -105,7 +112,13 @@ function FacetValue({
         indeterminate={facetSelectState === 'partial-selected'} // can only populate direct parents
         onChange={() => {
           const filterType = facetSelectState === 'selected' ? 'exclude' : 'include'
-          onExcludedFacetValuesChange(toggleFacetValue(filterType, facet, facetValuesFilter, facetValue))
+          const newFacetValuesFilter = toggleFacetValue(filterType, facet, facetValuesFilter, facetValue)
+          onFiltersChange({
+            ...DEFAULT_FILTERS,
+            ...currentFilters,
+            facetValuesFilter: newFacetValuesFilter,
+            query: generateQueryFromFacetValues(newFacetValuesFilter),
+          })
         }}
       />
       <Text>{facetValueCount}</Text>
@@ -115,7 +128,13 @@ function FacetValue({
         w="40px"
         onClick={() => {
           const filterType = isOnly ? 'exclude' : 'include'
-          onExcludedFacetValuesChange(toggleFacetValue(filterType, facet, facetValuesFilter, facetValue))
+          const newFacetValuesFilter = toggleFacetValue(filterType, facet, facetValuesFilter, facetValue)
+          onFiltersChange({
+            ...DEFAULT_FILTERS,
+            ...currentFilters,
+            facetValuesFilter: newFacetValuesFilter,
+            query: generateQueryFromFacetValues(newFacetValuesFilter),
+          })
         }}
       >
         {isOnly ? 'all' : 'only'}
@@ -135,7 +154,8 @@ function FacetValue({
             depth={depth + 1}
             facetValuesFilter={facetValuesFilter}
             parentList={parentList.includes(facetValue) ? parentList : [...parentList, facetValue]}
-            onExcludedFacetValuesChange={onExcludedFacetValuesChange}
+            onFiltersChange={onFiltersChange}
+            currentFilters={currentFilters}
           />
         ))}
       </Box>

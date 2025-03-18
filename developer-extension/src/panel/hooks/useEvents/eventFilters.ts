@@ -27,12 +27,30 @@ export function applyEventFilters(filters: EventFilters, events: SdkEvent[], fac
 
   if (filters.query) {
     const queryParts: string[][] = parseQuery(filters.query)
-    const matchQuery = (event: SdkEvent) =>
-      queryParts.every((queryPart) => {
-        // Hack it to restore the whitespace
-        const searchTerm = queryPart.length > 1 ? queryPart[1].replaceAll(/\\\s+/gm, ' ') : ''
-        return matchQueryPart(event, queryPart[0], searchTerm)
+    const matchQuery = (event: SdkEvent) => {
+      const includeParts = queryParts.filter((part) => part[0] === 'include')
+      const excludeParts = queryParts.filter((part) => part[0] === 'exclude')
+
+      // Check if event matches any exclude condition
+      const isExcluded = excludeParts.some(([_, searchKey, searchTerm]) => {
+        const restoredSearchTerm = searchTerm ? searchTerm.replaceAll(/\\\s+/gm, ' ') : ''
+        return matchQueryPart(event, searchKey, restoredSearchTerm)
       })
+
+      if (isExcluded) {
+        return false
+      }
+
+      // If no include conditions, event passes
+      if (includeParts.length === 0) {
+        return true
+      }
+      // Check if event matches any include condition
+      return includeParts.some(([_, searchKey, searchTerm]) => {
+        const restoredSearchTerm = searchTerm ? searchTerm.replaceAll(/\\\s+/gm, ' ') : ''
+        return matchQueryPart(event, searchKey, restoredSearchTerm)
+      })
+    }
     filteredEvents = filteredEvents.filter(matchQuery)
   }
 
@@ -56,7 +74,10 @@ export function filterFacets(
   return events.filter((event) =>
     filteredFacetValueEntries[isIncludeType ? 'some' : 'every'](([facetPath, filteredValues]) => {
       const eventValue = facetRegistry.getFieldValueForEvent(event, facetPath)
-      return isIncludeType === filteredValues.includes(eventValue as string)
+      if (isIncludeType) {
+        return filteredValues.includes(eventValue as string)
+      }
+      return !filteredValues.includes(eventValue as string)
     })
   )
 }
@@ -86,7 +107,14 @@ export function parseQuery(query: string) {
   const queryParts = query
     .split(new RegExp('(?<!\\\\)\\s', 'g')) // Hack it to escape whitespace with backslashes
     .filter((queryPart) => queryPart)
-    .map((queryPart) => queryPart.split(':'))
+    .map((queryPart) => {
+      // Handle minus sign prefix for exclude mode
+      const isExclude = queryPart.startsWith('-')
+      const part = isExclude ? queryPart.slice(1) : queryPart
+      const [key, ...valueParts] = part.split(':')
+      const value = valueParts.join(':') // Rejoin in case there are colons in the value
+      return [isExclude ? 'exclude' : 'include', key, value]
+    })
 
   return queryParts
 }
@@ -110,17 +138,39 @@ export function matchWithWildcard(value: string, searchTerm: string): boolean {
 }
 
 function matchQueryPart(json: unknown, searchKey: string, searchTerm: string, jsonPath = ''): boolean {
+  // Handle special case for description field
   if (searchKey.toLowerCase() === 'description') {
     return matchWithWildcard(JSON.stringify(json), searchTerm)
   }
-  if (jsonPath.endsWith(searchKey) && matchWithWildcard(String(json), searchTerm)) {
-    return true
+
+  // Handle special case for $eventSource field
+  if (searchKey === '$eventSource') {
+    const event = json as SdkEvent
+    // Check for all RUM event types
+    const isLogEvent = event.origin === 'logger'
+    if (isLogEvent) {
+      return searchTerm === 'logs'
+    }
+    return !isLogEvent && searchTerm === 'rum'
   }
 
-  if (typeof json !== 'object') {
+  // Handle direct path match
+  if (jsonPath.endsWith(searchKey)) {
+    const value = String(json)
+    return matchWithWildcard(value, searchTerm)
+  }
+
+  // Handle nested object traversal
+  if (typeof json !== 'object' || json === null) {
     return false
   }
 
+  // For arrays, check if any element matches
+  if (Array.isArray(json)) {
+    return json.some((item) => matchQueryPart(item, searchKey, searchTerm, jsonPath))
+  }
+
+  // For objects, check all properties
   for (const key in json) {
     if (
       Object.prototype.hasOwnProperty.call(json, key) &&
@@ -131,4 +181,24 @@ function matchQueryPart(json: unknown, searchKey: string, searchTerm: string, js
   }
 
   return false
+}
+
+export function generateQueryFromFacetValues(facetValuesFilter: FacetValuesFilter): string {
+  if (!facetValuesFilter.facetValues || Object.keys(facetValuesFilter.facetValues).length === 0) {
+    return ''
+  }
+
+  const queryParts: string[] = []
+  Object.entries(facetValuesFilter.facetValues).forEach(([facetPath, values]) => {
+    values.forEach((value) => {
+      // Escape whitespace in both facet path and value
+      const escapedPath = facetPath.replace(/\s+/g, '\\$&')
+      const escapedValue = value.replace(/\s+/g, '\\$&')
+      // Add minus sign prefix for exclude mode
+      const prefix = facetValuesFilter.type === 'exclude' ? '-' : ''
+      queryParts.push(`${prefix}${escapedPath}:${escapedValue}`)
+    })
+  })
+
+  return queryParts.join(' ')
 }
