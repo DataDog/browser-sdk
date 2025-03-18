@@ -6,7 +6,6 @@ import {
 } from '@datadog/browser-core'
 import { registerCleanupTask } from '@datadog/browser-core/test'
 import { mockRumConfiguration } from '../../../test'
-import { createHooks } from '../../hooks'
 import type { UserContext } from './userContext'
 import { startUserContext } from './userContext'
 

@@ -1,4 +1,4 @@
-import type { CustomerDataTrackerManager, RelativeTime } from '@datadog/browser-core'
+import type { CustomerDataTrackerManager } from '@datadog/browser-core'
 import {
   createCustomerDataTrackerManager,
   CustomerDataCompressionStatus,
@@ -6,8 +6,6 @@ import {
 } from '@datadog/browser-core'
 import { registerCleanupTask } from '@datadog/browser-core/test'
 import { mockRumConfiguration } from '../../../test'
-import type { Hooks } from '../../hooks'
-import { createHooks, HookNames } from '../../hooks'
 import type { GlobalContext } from './globalContext'
 import { startGlobalContext } from './globalContext'
 
