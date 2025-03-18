@@ -6,7 +6,6 @@ import { ActionType, RumEventType } from '../../rawRumEvent.types'
 import type { LifeCycle, RawRumEventCollectedData } from '../lifeCycle'
 import { LifeCycleEventType } from '../lifeCycle'
 import type { RumConfiguration } from '../configuration'
-import type { CommonContext } from '../contexts/commonContext'
 import type { RumActionEventDomainContext } from '../../domainContext.types'
 import type { PartialRumEvent, Hooks } from '../../hooks'
 import { HookNames } from '../../hooks'
@@ -69,11 +68,8 @@ export function startActionCollection(
   }
 
   return {
-    addAction: (action: CustomAction, savedCommonContext?: CommonContext) => {
-      lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, {
-        savedCommonContext,
-        ...processAction(action),
-      })
+    addAction: (action: CustomAction) => {
+      lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, processAction(action))
     },
     actionContexts,
     stop,
