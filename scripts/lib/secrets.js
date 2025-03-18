@@ -1,7 +1,4 @@
 const { command } = require('../lib/command')
-const dotenv = require('dotenv')
-
-dotenv.config()
 
 function getGithubDeployKey() {
   return getSecretKey('ci.browser-sdk.github_deploy_key')
@@ -30,8 +27,7 @@ function getTelemetryOrgApplicationKey(site) {
 }
 
 function getNpmToken() {
-  // return getSecretKey('ci.browser-sdk.npm_token')
-  return process.env.NPM_TOKEN || ''
+  return getSecretKey('ci.browser-sdk.npm_token')
 }
 
 function getChromeWebStoreClientId() {

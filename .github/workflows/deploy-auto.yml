@@ -45,7 +45,7 @@ jobs:
           OSS_SECRET_KEY: ${{ secrets.OSS_SECRET_KEY }}
 
   publish-npm:
-    needs: deploy-prod
+    # needs: deploy-prod
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -59,11 +59,6 @@ jobs:
 
       - name: Install dependencies
         run: yarn
-
-      - name: Debug NPM token
-        run: |
-          echo "Token prefix: ${NODE_AUTH_TOKEN:0:4}..."
-          npm whoami
 
       - name: Publish to NPM
         run: node ./scripts/deploy/publish-npm.js
