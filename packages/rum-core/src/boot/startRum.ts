@@ -4,8 +4,8 @@ import type {
   RawError,
   DeflateEncoderStreamId,
   Encoder,
-  CustomerDataTrackerManager,
   TrackingConsentState,
+  CustomerDataTrackerManager,
 } from '@datadog/browser-core'
 import {
   sendToExtension,
@@ -20,7 +20,6 @@ import {
 } from '@datadog/browser-core'
 import { createDOMMutationObservable } from '../browser/domMutationObservable'
 import { createWindowOpenObservable } from '../browser/windowOpenObservable'
-import { startRumAssembly } from '../domain/assembly'
 import { startInternalContext } from '../domain/contexts/internalContext'
 import { LifeCycle, LifeCycleEventType } from '../domain/lifeCycle'
 import type { ViewHistory } from '../domain/contexts/viewHistory'
@@ -43,7 +42,6 @@ import { startFeatureFlagContexts } from '../domain/contexts/featureFlagContext'
 import { startCustomerDataTelemetry } from '../domain/startCustomerDataTelemetry'
 import type { PageStateHistory } from '../domain/contexts/pageStateHistory'
 import { startPageStateHistory } from '../domain/contexts/pageStateHistory'
-import type { CommonContext } from '../domain/contexts/commonContext'
 import { startDisplayContext } from '../domain/contexts/displayContext'
 import type { CustomVitalsState } from '../domain/vital/vitalCollection'
 import { startVitalCollection } from '../domain/vital/vitalCollection'
@@ -54,6 +52,10 @@ import { startLongTaskCollection } from '../domain/longTask/longTaskCollection'
 import type { Hooks } from '../hooks'
 import { createHooks } from '../hooks'
 import { startSyntheticsContext } from '../domain/contexts/syntheticsContext'
+import { startGlobalContext } from '../domain/contexts/globalContext'
+import { startUserContext } from '../domain/contexts/userContext'
+import { startAccountContext } from '../domain/contexts/accountContext'
+import { startRumAssembly } from '../domain/assembly'
 import type { RecorderApi } from './rumPublicApi'
 
 export type StartRum = typeof startRum
@@ -63,7 +65,7 @@ export function startRum(
   configuration: RumConfiguration,
   recorderApi: RecorderApi,
   customerDataTrackerManager: CustomerDataTrackerManager,
-  getCommonContext: () => CommonContext,
+
   initialViewOptions: ViewOptions | undefined,
   createEncoder: (streamId: DeflateEncoderStreamId) => Encoder,
 
@@ -140,6 +142,10 @@ export function startRum(
   const { observable: windowOpenObservable, stop: stopWindowOpen } = createWindowOpenObservable()
   cleanupTasks.push(stopWindowOpen)
 
+  const globalContext = startGlobalContext(customerDataTrackerManager, hooks, configuration)
+  const userContext = startUserContext(customerDataTrackerManager, hooks, session, configuration)
+  const accountContext = startAccountContext(customerDataTrackerManager, hooks, configuration)
+
   const {
     actionContexts,
     addAction,
@@ -154,7 +160,7 @@ export function startRum(
     windowOpenObservable,
     urlContexts,
     viewHistory,
-    getCommonContext,
+    recorderApi,
     reportError
   )
   cleanupTasks.push(stopRumEventCollection)
@@ -198,7 +204,7 @@ export function startRum(
 
   const { addError } = startErrorCollection(lifeCycle, configuration)
 
-  startRequestCollection(lifeCycle, configuration, session, getCommonContext)
+  startRequestCollection(lifeCycle, configuration, session, userContext, accountContext)
 
   const vitalCollection = startVitalCollection(lifeCycle, pageStateHistory, customVitalsState)
   const internalContext = startInternalContext(
@@ -227,6 +233,9 @@ export function startRum(
     startDurationVital: vitalCollection.startDurationVital,
     stopDurationVital: vitalCollection.stopDurationVital,
     addDurationVital: vitalCollection.addDurationVital,
+    ...globalContext,
+    ...userContext,
+    ...accountContext,
     stop: () => {
       cleanupTasks.forEach((task) => task())
     },
@@ -252,7 +261,7 @@ export function startRumEventCollection(
   windowOpenObservable: Observable<void>,
   urlContexts: UrlContexts,
   viewHistory: ViewHistory,
-  getCommonContext: () => CommonContext,
+  recorderApi: RecorderApi,
   reportError: (error: RawError) => void
 ) {
   const actionCollection = startActionCollection(
@@ -265,6 +274,7 @@ export function startRumEventCollection(
 
   const displayContext = startDisplayContext(configuration)
   const ciVisibilityContext = startCiVisibilityContext(configuration, hooks)
+
   startSyntheticsContext(hooks)
 
   startRumAssembly(
@@ -275,7 +285,7 @@ export function startRumEventCollection(
     viewHistory,
     urlContexts,
     displayContext,
-    getCommonContext,
+    recorderApi,
     reportError
   )
 

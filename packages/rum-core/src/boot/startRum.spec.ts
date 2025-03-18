@@ -80,12 +80,7 @@ function startRumStub(
     windowOpenObservable,
     urlContexts,
     viewHistory,
-    () => ({
-      context: {},
-      user: {},
-      account: {},
-      hasReplay: undefined,
-    }),
+    noopRecorderApi,
     reportError
   )
   const { stop: viewCollectionStop } = startViewCollection(
@@ -332,7 +327,6 @@ describe('view events', () => {
       mockRumConfiguration(),
       noopRecorderApi,
       createCustomerDataTrackerManager(),
-      () => ({ user: {}, context: {}, account: {}, hasReplay: undefined }),
       undefined,
       createIdentityEncoder,
       createTrackingConsentState(TrackingConsent.GRANTED),
