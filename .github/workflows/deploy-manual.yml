@@ -60,29 +60,6 @@ jobs:
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
-  # publish-developer-extension:
-  #   needs: publish-npm
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #     - name: Checkout code
-  #       uses: actions/checkout@v4
-
-  #     - name: Setup Node.js
-  #       uses: actions/setup-node@v4
-  #       with:
-  #         node-version: '18'
-
-  #     - name: Install dependencies
-  #       run: yarn
-
-  #     - name: Publish developer extension
-  #       run: node ./scripts/deploy/publish-developer-extension.js
-  #       env:
-  #         CHROME_EXTENSION_ID: ${{ secrets.CHROME_EXTENSION_ID }}
-  #         CHROME_CLIENT_ID: ${{ secrets.CHROME_CLIENT_ID }}
-  #         CHROME_CLIENT_SECRET: ${{ secrets.CHROME_CLIENT_SECRET }}
-  #         CHROME_REFRESH_TOKEN: ${{ secrets.CHROME_REFRESH_TOKEN }}
-
   post-notify-success:
     runs-on: ubuntu-latest
     if: success()

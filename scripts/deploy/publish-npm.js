@@ -9,6 +9,6 @@ runMain(() => {
 
   printLog('Publishing')
   // eslint-disable-next-line no-template-curly-in-string
-  fs.writeFileSync('.npmrc', '//registry.npmjs.org/:_authToken=${NPM_TOKEN}')
+  // fs.writeFileSync('.npmrc', '//registry.npmjs.org/:_authToken=${NPM_TOKEN}')
   command`yarn lerna publish from-package --yes`.withEnvironment({ NPM_TOKEN: getNpmToken() }).run()
 })

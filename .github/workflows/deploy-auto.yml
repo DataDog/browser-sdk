@@ -6,7 +6,7 @@ on:
       - 'v*' # 当推送带有 v 前缀的标签时触发
 
 jobs:
-  pre-notify:
+  deploy-prod:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -17,26 +17,35 @@ jobs:
         with:
           node-version: '18'
 
-      - name: Prepare notification
-        run: |
-          COMMIT_MESSAGE=$(git show-branch --no-name HEAD)
-          echo "COMMIT_MESSAGE=$COMMIT_MESSAGE" >> $GITHUB_ENV
-          echo "BUILD_URL=https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}" >> $GITHUB_ENV
-          echo "COMMIT_URL=https://github.com/${{ github.repository }}/commit/${{ github.sha }}" >> $GITHUB_ENV
+      - name: Install dependencies
+        run: yarn
 
-      - name: Notify deployment ready
-        if: success()
-        uses: slackapi/slack-github-action@v1.25.0
-        with:
-          channel-id: 'rum'
-          payload: |
-            {
-              "text": ":i: ${{ github.repository }} <${{ env.BUILD_URL }}|${{ env.COMMIT_MESSAGE }}> ready to be deployed *automatically* to :flashcatcloud:"
-            }
+      - name: Export BUILD_MODE
+        run: export BUILD_MODE=release
+
+      - name: Get version
+        run: |
+          FULL_VERSION=$(node -p -e "require('./lerna.json').version")
+          MAJOR_VERSION=$(echo $FULL_VERSION | cut -d. -f1)
+          echo "VERSION=$MAJOR_VERSION" >> $GITHUB_ENV
+          echo "version=$MAJOR_VERSION" >> $GITHUB_OUTPUT
         env:
-          SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
+          BUILD_MODE: release
+
+      - name: Build bundle
+        run: yarn build:bundle
+
+      - name: Deploy to prod
+        run: node ./scripts/deploy/deploy-oss.js prod v${VERSION}
+        env:
+          OSS_ENDPOINT: ${{ secrets.OSS_ENDPOINT }}
+          OSS_REGION: ${{ secrets.OSS_REGION }}
+          OSS_ACCESS_KEY: ${{ secrets.OSS_ACCESS_KEY }}
+          OSS_BUCKET: ${{ secrets.OSS_BUCKET }}
+          OSS_SECRET_KEY: ${{ secrets.OSS_SECRET_KEY }}
 
   publish-npm:
+    needs: deploy-prod
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -54,32 +63,10 @@ jobs:
       - name: Publish to NPM
         run: node ./scripts/deploy/publish-npm.js
         env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-
-  # publish-developer-extension:
-  #   needs: publish-npm
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #     - name: Checkout code
-  #       uses: actions/checkout@v4
-
-  #     - name: Setup Node.js
-  #       uses: actions/setup-node@v4
-  #       with:
-  #         node-version: '18'
-
-  #     - name: Install dependencies
-  #       run: yarn
-
-  #     - name: Publish developer extension
-  #       run: node ./scripts/deploy/publish-developer-extension.js
-  #       env:
-  #         CHROME_EXTENSION_ID: ${{ secrets.CHROME_EXTENSION_ID }}
-  #         CHROME_CLIENT_ID: ${{ secrets.CHROME_CLIENT_ID }}
-  #         CHROME_CLIENT_SECRET: ${{ secrets.CHROME_CLIENT_SECRET }}
-  #         CHROME_REFRESH_TOKEN: ${{ secrets.CHROME_REFRESH_TOKEN }}
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
 
   post-notify-success:
+    needs: publish-npm
     runs-on: ubuntu-latest
     if: success()
     steps:
@@ -103,18 +90,8 @@ jobs:
         env:
           SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
 
-      # - name: Notify ops team
-      #   uses: slackapi/slack-github-action@v1.25.0
-      #   with:
-      #     channel-id: 'rum-browser-sdk-ops'
-      #     payload: |
-      #       {
-      #         "text": ":rocket: ${{ github.repository }} <${{ env.COMMIT_URL }}|${{ env.COMMIT_MESSAGE }}> *automatically* deployed to :earth_americas:."
-      #       }
-      #   env:
-      #     SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
-
   post-notify-failure:
+    needs: publish-npm
     runs-on: ubuntu-latest
     if: failure()
     steps:

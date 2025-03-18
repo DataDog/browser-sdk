@@ -1,4 +1,7 @@
 const { command } = require('../lib/command')
+const dotenv = require('dotenv')
+
+dotenv.config()
 
 function getGithubDeployKey() {
   return getSecretKey('ci.browser-sdk.github_deploy_key')

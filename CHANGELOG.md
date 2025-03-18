@@ -18,6 +18,14 @@
 
 ---
 
+## v0.0.1-alpha.3
+
+**Internal Changes:**
+
+- add ali-oss deploy
+- 全局替换window.FC_RUM + window.FC_LOGS [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+- add workflow
+
 ## v0.0.1-alpha.2
 
 **Internal Changes:**
