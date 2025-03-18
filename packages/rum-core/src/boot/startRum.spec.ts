@@ -28,6 +28,7 @@ import {
   mockPageStateHistory,
   mockPerformanceObserver,
   mockRumConfiguration,
+  noopProfilerApi,
   noopRecorderApi,
   setupLocationObserver,
 } from '../../test'
@@ -331,6 +332,7 @@ describe('view events', () => {
     const startResult = startRum(
       mockRumConfiguration(),
       noopRecorderApi,
+      noopProfilerApi,
       createCustomerDataTrackerManager(),
       () => ({ user: {}, context: {}, account: {}, hasReplay: undefined }),
       undefined,
