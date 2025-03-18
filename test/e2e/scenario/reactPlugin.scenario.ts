@@ -1,10 +1,9 @@
 import { test, expect } from '@playwright/test'
-import { createTest, reactSetup } from '../lib/framework'
+import { createTest } from '../lib/framework'
 
 test.describe('react plugin', () => {
   createTest('should define a view name with createBrowserRouter')
     .withReact()
-    .withSetup(reactSetup)
     .withRum()
     .run(async ({ page, flushEvents, intakeRegistry }) => {
       await page.click('text=Go to User')
@@ -18,7 +17,6 @@ test.describe('react plugin', () => {
   createTest('should send a react component render vital event')
     .withRum()
     .withReact()
-    .withSetup(reactSetup)
     .run(async ({ flushEvents, intakeRegistry, page }) => {
       await page.click('text=Go to Tracked')
 

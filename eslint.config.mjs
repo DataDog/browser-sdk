@@ -11,6 +11,8 @@ import globals from 'globals'
 // eslint-disable-next-line local-rules/disallow-protected-directory-import
 import eslintLocalRules from './eslint-local-rules/index.js'
 
+const SPEC_FILES = '**/*.{spec,specHelper}.{ts,tsx,js}'
+
 // eslint-disable-next-line import/no-default-export
 export default tseslint.config(
   eslint.configs.recommended,
@@ -260,7 +262,7 @@ export default tseslint.config(
   },
 
   {
-    files: ['scripts/**/*.spec.js', 'packages/*/scripts/**/*.spec.js'],
+    files: ['scripts/**/*.js', 'packages/*/scripts/**/*.js'],
     ignores: ['**/lib/**'],
     rules: {
       'unicorn/filename-case': ['error', { case: 'kebabCase' }],
@@ -269,9 +271,8 @@ export default tseslint.config(
 
   {
     files: ['scripts/**/*.js', 'packages/*/scripts/**/*.js'],
-    ignores: ['**/lib/**', '**/*.spec.js'],
+    ignores: ['**/lib/**', SPEC_FILES],
     rules: {
-      'unicorn/filename-case': ['error', { case: 'kebabCase' }],
       'local-rules/secure-command-execution': 'error',
       'local-rules/disallow-non-scripts': 'error',
     },
@@ -288,6 +289,15 @@ export default tseslint.config(
     },
   },
 
+  // All "production files" = files that are used by Browser SDK users
+  {
+    files: ['packages/*/src/**/*', 'developer-extension/src/**/*'],
+    ignores: [SPEC_FILES],
+    rules: {
+      'local-rules/enforce-prod-deps-imports': ['error'],
+    },
+  },
+
   {
     files: ['packages/*/src/**/*.ts', 'developer-extension/src/**/*.{tsx,ts}'],
     rules: {
@@ -297,7 +307,7 @@ export default tseslint.config(
 
   {
     files: ['packages/*/src/**/*.ts'],
-    ignores: ['**/*.spec.ts'],
+    ignores: [SPEC_FILES],
     rules: {
       'local-rules/disallow-side-effects': 'error',
       'local-rules/disallow-zone-js-patched-values': 'error',

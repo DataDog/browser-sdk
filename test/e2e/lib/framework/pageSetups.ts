@@ -10,7 +10,6 @@ export interface SetupOptions {
   logsInit: (initConfiguration: LogsInitConfiguration) => void
   rumInit: (initConfiguration: RumInitConfiguration) => void
   eventBridge: boolean
-  useReact: boolean
   head?: string
   body?: string
   basePath: string

@@ -28,6 +28,7 @@ export enum RumPerformanceEntryType {
   NAVIGATION = 'navigation',
   PAINT = 'paint',
   RESOURCE = 'resource',
+  VISIBILITY_STATE = 'visibility-state',
 }
 
 export interface RumPerformanceLongTaskTiming {
@@ -171,6 +172,13 @@ export interface RumPerformanceLongAnimationFrameTiming {
   toJSON(): Omit<RumPerformanceLongAnimationFrameTiming, 'toJSON'>
 }
 
+export interface RumFirstHiddenTiming {
+  entryType: RumPerformanceEntryType.VISIBILITY_STATE
+  name: 'hidden' | 'visible'
+  startTime: RelativeTime
+  toJSON(): Omit<RumFirstHiddenTiming, 'toJSON'>
+}
+
 export type RumPerformanceEntry =
   | RumPerformanceResourceTiming
   | RumPerformanceLongTaskTiming
@@ -181,6 +189,7 @@ export type RumPerformanceEntry =
   | RumFirstInputTiming
   | RumPerformanceEventTiming
   | RumLayoutShiftTiming
+  | RumFirstHiddenTiming
 
 export type EntryTypeToReturnType = {
   [RumPerformanceEntryType.EVENT]: RumPerformanceEventTiming
@@ -192,6 +201,7 @@ export type EntryTypeToReturnType = {
   [RumPerformanceEntryType.LONG_ANIMATION_FRAME]: RumPerformanceLongAnimationFrameTiming
   [RumPerformanceEntryType.NAVIGATION]: RumPerformanceNavigationTiming
   [RumPerformanceEntryType.RESOURCE]: RumPerformanceResourceTiming
+  [RumPerformanceEntryType.VISIBILITY_STATE]: RumFirstHiddenTiming
 }
 
 export function createPerformanceObservable<T extends RumPerformanceEntryType>(

@@ -58,8 +58,12 @@ module.exports = ({ entry, mode, filename, types, keepBuildEnvVariables, plugins
       new TerserPlugin({
         extractComments: false,
         terserOptions: {
+          ecma: 2018,
+          module: true,
           compress: {
             passes: 4,
+            unsafe: true,
+            unsafe_methods: true,
           },
         },
       }),

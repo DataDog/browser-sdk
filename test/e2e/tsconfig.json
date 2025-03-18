@@ -7,7 +7,8 @@
     "esModuleInterop": true,
     "moduleResolution": "node",
     "resolveJsonModule": true,
-    "target": "ES2015",
+    "target": "ES2018",
+    "module": "ES2020",
     "types": ["node", "ajv"],
     "allowJs": true
   },
