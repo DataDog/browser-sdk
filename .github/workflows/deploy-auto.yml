@@ -60,12 +60,17 @@ jobs:
       - name: Install dependencies
         run: yarn
 
+      - name: Debug NPM token
+        run: |
+          echo "Token prefix: ${NODE_AUTH_TOKEN:0:4}..."
+          npm whoami
+
       - name: Publish to NPM
         run: node ./scripts/deploy/publish-npm.js
         env:
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
 
-  post-notify-success:
+  notify-success:
     needs: publish-npm
     runs-on: ubuntu-latest
     if: success()
@@ -80,17 +85,19 @@ jobs:
           echo "COMMIT_URL=https://github.com/${{ github.repository }}/commit/${{ github.sha }}" >> $GITHUB_ENV
 
       - name: Notify deployment success
-        uses: slackapi/slack-github-action@v1.25.0
+        uses: zcong1993/actions-ding@master
         with:
-          channel-id: 'rum'
-          payload: |
+          dingToken: ${{ secrets.DING_TALK_TOKEN }}
+          body: |
             {
-              "text": ":rocket: ${{ github.repository }} <${{ env.COMMIT_URL }}|${{ env.COMMIT_MESSAGE }}> *automatically* deployed to :earth_americas:."
+              "msgtype": "markdown",
+              "markdown": {
+                "title": "✅ RUM sdk 部署成功",
+                 "text": "- 🔖 分支: ${{ github.ref }}\n- 📝 提交信息: ${{ github.event.head_commit.message }}\n- 👨‍💻 提交者: ${{ github.actor }}\n- 🔗 Commit: [${{ github.sha }}](https://github.com/${{ github.repository }}/commit/${{ github.sha }})\n- 🚀 [查看部署详情](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})"
+              }
             }
-        env:
-          SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
 
-  post-notify-failure:
+  notify-failure:
     needs: publish-npm
     runs-on: ubuntu-latest
     if: failure()
@@ -105,12 +112,14 @@ jobs:
           echo "BUILD_URL=https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}" >> $GITHUB_ENV
 
       - name: Notify deployment failure
-        uses: slackapi/slack-github-action@v1.25.0
+        uses: zcong1993/actions-ding@master
         with:
-          channel-id: 'rum'
-          payload: |
+          dingToken: ${{ secrets.DING_TALK_TOKEN }}
+          body: |
             {
-              "text": ":host-red: ${{ github.repository }} *automatic* deployment of <${{ env.BUILD_URL }}|${{ env.COMMIT_MESSAGE }}> failed."
+              "msgtype": "markdown",
+              "markdown": {
+                "title": "❌ RUM sdk 部署失败",
+                "text": "- 🔖 分支: ${{ github.ref }}\n- 📝 提交信息: ${{ github.event.head_commit.message }}\n- 👨‍💻 提交者: ${{ github.actor }}\n- 🔗 Commit: [${{ github.sha }}](https://github.com/${{ github.repository }}/commit/${{ github.sha }})\n- 🚀 [查看部署详情](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})"
+              }
             }
-        env:
-          SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
