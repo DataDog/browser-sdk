@@ -23,7 +23,8 @@ import { isAllowedRequestUrl } from './resource/resourceUtils'
 import type { Tracer } from './tracing/tracer'
 import { startTracer } from './tracing/tracer'
 import type { SpanIdentifier, TraceIdentifier } from './tracing/identifier'
-import type { CommonContext } from './contexts/commonContext'
+import type { UserContext } from './contexts/userContext'
+import type { AccountContext } from './contexts/accountContext'
 
 export interface CustomContext {
   requestIndex: number
@@ -67,9 +68,10 @@ export function startRequestCollection(
   lifeCycle: LifeCycle,
   configuration: RumConfiguration,
   sessionManager: RumSessionManager,
-  getCommonContext: () => CommonContext
+  userContext: UserContext,
+  accountContext: AccountContext
 ) {
-  const tracer = startTracer(configuration, sessionManager, getCommonContext)
+  const tracer = startTracer(configuration, sessionManager, userContext, accountContext)
   trackXhr(lifeCycle, configuration, tracer)
   trackFetch(lifeCycle, tracer)
 }
