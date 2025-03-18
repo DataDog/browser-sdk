@@ -6,12 +6,12 @@
     "start": "webpack serve --mode development"
   },
   "dependencies": {
-    "@datadog/browser-rum": "portal:../../packages/rum",
-    "@datadog/browser-rum-react": "portal:../../packages/rum-react"
+    "@datadog/browser-rum": "portal:../../../packages/rum",
+    "@datadog/browser-rum-react": "portal:../../../packages/rum-react"
   },
   "resolutions": {
-    "@datadog/browser-rum": "portal:../../packages/rum",
-    "@datadog/browser-rum-react": "portal:../../packages/rum-react"
+    "@datadog/browser-rum": "portal:../../../packages/rum",
+    "@datadog/browser-rum-react": "portal:../../../packages/rum-react"
   },
   "devDependencies": {
     "ts-loader": "^9.5.2",
@@ -19,6 +19,6 @@
     "webpack": "5.98.0"
   },
   "volta": {
-    "extends": "../../package.json"
+    "extends": "../../../package.json"
   }
 }

@@ -46,8 +46,7 @@ export default tseslint.config(
       parserOptions: {
         project: [
           './tsconfig.json',
-          './test/app/tsconfig.json',
-          './test/react-app/tsconfig.json',
+          './test/apps/**/tsconfig.json',
           './test/e2e/tsconfig.json',
           './developer-extension/tsconfig.json',
           './performances/tsconfig.json',
@@ -367,7 +366,7 @@ export default tseslint.config(
   },
 
   {
-    files: ['test/e2e/**/*.ts', 'test/react-app/app.tsx'],
+    files: ['test/e2e/**/*.ts', 'test/apps/react/app.tsx'],
     rules: {
       // E2E codebase is importing @datadog/browser-* packages referenced by tsconfig.
       'import/no-extraneous-dependencies': 'off',

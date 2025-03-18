@@ -21,9 +21,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@datadog/browser-rum-react@portal:../../packages/rum-react::locator=react-app%40workspace%3A.":
+"@datadog/browser-rum-react@portal:../../../packages/rum-react::locator=react-app%40workspace%3A.":
   version: 0.0.0-use.local
-  resolution: "@datadog/browser-rum-react@portal:../../packages/rum-react::locator=react-app%40workspace%3A."
+  resolution: "@datadog/browser-rum-react@portal:../../../packages/rum-react::locator=react-app%40workspace%3A."
   dependencies:
     "@datadog/browser-core": "npm:6.5.1"
     "@datadog/browser-rum-core": "npm:6.5.1"
@@ -42,9 +42,9 @@ __metadata:
   languageName: node
   linkType: soft
 
-"@datadog/browser-rum@portal:../../packages/rum::locator=react-app%40workspace%3A.":
+"@datadog/browser-rum@portal:../../../packages/rum::locator=react-app%40workspace%3A.":
   version: 0.0.0-use.local
-  resolution: "@datadog/browser-rum@portal:../../packages/rum::locator=react-app%40workspace%3A."
+  resolution: "@datadog/browser-rum@portal:../../../packages/rum::locator=react-app%40workspace%3A."
   dependencies:
     "@datadog/browser-core": "npm:6.5.1"
     "@datadog/browser-rum-core": "npm:6.5.1"
@@ -676,8 +676,8 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "react-app@workspace:."
   dependencies:
-    "@datadog/browser-rum": "portal:../../packages/rum"
-    "@datadog/browser-rum-react": "portal:../../packages/rum-react"
+    "@datadog/browser-rum": "portal:../../../packages/rum"
+    "@datadog/browser-rum-react": "portal:../../../packages/rum-react"
     ts-loader: "npm:^9.5.2"
     typescript: "npm:^5.8.2"
     webpack: "npm:5.98.0"

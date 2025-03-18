@@ -1,0 +1,30 @@
+{
+  "name": "app",
+  "version": "0.0.0",
+  "scripts": {
+    "build": "webpack --config ./webpack.web.js",
+    "compat:tsc": "tsc -p tsconfig.json",
+    "compat:ssr": "webpack --config ./webpack.ssr.js && node dist/app.js"
+  },
+  "dependencies": {
+    "@datadog/browser-core": "portal:../../../packages/core",
+    "@datadog/browser-logs": "portal:../../../packages/logs",
+    "@datadog/browser-rum": "portal:../../../packages/rum",
+    "@datadog/browser-rum-core": "portal:../../../packages/rum-core"
+  },
+  "resolutions": {
+    "@datadog/browser-core": "portal:../../../packages/core",
+    "@datadog/browser-rum-core": "portal:../../../packages/rum-core",
+    "@datadog/browser-rum": "portal:../../../packages/rum",
+    "@datadog/browser-worker": "portal:../../../packages/worker"
+  },
+  "devDependencies": {
+    "ts-loader": "6.2.1",
+    "typescript": "3.8.2",
+    "webpack": "5.94.0"
+  },
+  "volta": {
+    "extends": "../../../package.json"
+  },
+  "packageManager": "yarn@3.5.1"
+}

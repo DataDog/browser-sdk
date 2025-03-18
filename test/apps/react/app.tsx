@@ -1,9 +1,13 @@
 import { createBrowserRouter } from '@datadog/browser-rum-react/react-router-v7'
 import { RouterProvider, Link, useParams, Outlet } from 'react-router-dom'
-import React from 'react'
+import React, { useState } from 'react'
 import ReactDOM from 'react-dom/client'
 import { datadogRum } from '@datadog/browser-rum'
-import { reactPlugin, UNSTABLE_ReactComponentTracker as ReactComponentTracker } from '@datadog/browser-rum-react'
+import {
+  reactPlugin,
+  UNSTABLE_ReactComponentTracker as ReactComponentTracker,
+  ErrorBoundary,
+} from '@datadog/browser-rum-react'
 
 declare global {
   interface Window {
@@ -24,6 +28,8 @@ function HomePage() {
       <Link to="/user/42">Go to User</Link>
       <br />
       <Link to="/tracked">Go to Tracked</Link>
+      <br />
+      <Link to="/error">Go to Error Component</Link>
     </div>
   )
 }
@@ -57,6 +63,42 @@ function TrackedPage() {
   )
 }
 
+function ComponentWithErrorButton() {
+  const [shouldError, setShouldError] = useState(false)
+
+  if (shouldError) {
+    throw new Error('Error triggered by button click')
+  }
+
+  return (
+    <div>
+      <h1>Component with Error Button</h1>
+      <button id="error-button" onClick={() => setShouldError(true)}>
+        Trigger Error
+      </button>
+    </div>
+  )
+}
+
+function ErrorPage() {
+  return (
+    <div>
+      <h1>Error Page</h1>
+      <ErrorBoundary
+        fallback={({ error, resetError }) => (
+          <div>
+            <h2>Something went wrong</h2>
+            <p>{error.message}</p>
+            <button onClick={resetError}>Try again</button>
+          </div>
+        )}
+      >
+        <ComponentWithErrorButton />
+      </ErrorBoundary>
+    </div>
+  )
+}
+
 const router = createBrowserRouter([
   {
     path: '/',
@@ -73,6 +115,10 @@ const router = createBrowserRouter([
       {
         path: 'tracked',
         Component: TrackedPage,
+      },
+      {
+        path: 'error',
+        Component: ErrorPage,
       },
     ],
   },

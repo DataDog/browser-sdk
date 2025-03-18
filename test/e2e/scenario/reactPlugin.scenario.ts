@@ -3,8 +3,8 @@ import { createTest } from '../lib/framework'
 
 test.describe('react plugin', () => {
   createTest('should define a view name with createBrowserRouter')
-    .withReact()
     .withRum()
+    .withReact()
     .run(async ({ page, flushEvents, intakeRegistry }) => {
       await page.click('text=Go to User')
       await flushEvents()
@@ -24,5 +24,27 @@ test.describe('react plugin', () => {
       const vitalEvents = intakeRegistry.rumVitalEvents[0]
       expect(vitalEvents.vital.description).toBe('TrackedPage')
       expect(vitalEvents.vital.duration).toEqual(expect.any(Number))
+    })
+
+  createTest('should capture react error from error boundary')
+    .withRum()
+    .withReact()
+    .run(async ({ page, flushEvents, intakeRegistry, withBrowserLogs }) => {
+      await page.click('text=Go to Error')
+      await page.click('#error-button')
+      await page.waitForSelector('text=Something went wrong')
+
+      await flushEvents()
+      expect(intakeRegistry.rumErrorEvents.length).toBeGreaterThan(0)
+      const errorEvent = intakeRegistry.rumErrorEvents[1]
+
+      expect(errorEvent.error.message).toBe('Error triggered by button click')
+      expect(errorEvent.error.source).toBe('custom')
+      expect(errorEvent.error.stack).toBeDefined()
+      expect(errorEvent.context?.framework).toBe('react')
+      expect(errorEvent.error.component_stack).toBeDefined()
+      withBrowserLogs((browserLogs) => {
+        expect(browserLogs.length).toBeGreaterThan(0)
+      })
     })
 })
