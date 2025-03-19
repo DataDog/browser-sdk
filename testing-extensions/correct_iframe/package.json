@@ -1,10 +1,10 @@
 {
-  "name": "RUM-8783",
+  "name": "correct_iframe",
   "version": "1.0.0",
   "description": "Chrome extension with RUM and iframe login",
   "main": "dist/content-script.js",
   "scripts": {
-    "build": "esbuild src/content-scripts.js --bundle --outfile=dist/content-script.js --define:__BUILD_ENV__SDK_VERSION__='\"env\"' && esbuild src/iframe.js --bundle --outfile=dist/iframe.js --define:__BUILD_ENV__SDK_VERSION__='\"env\"'"
+    "build": "esbuild src/iframe.js --bundle --outfile=dist/iframe.js --define:__BUILD_ENV__SDK_VERSION__='\"env\"'"
   },
   "dependencies": {
     "@datadog/browser-core": "workspace:*",

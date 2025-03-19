@@ -1,5 +1,5 @@
 {
-  "name": "RUM-8783",
+  "name": "v2_extension",
   "version": "1.0.0",
   "description": "Chrome extension with RUM and iframe login",
   "main": "dist/content-script.js",
