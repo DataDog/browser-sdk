@@ -114,7 +114,6 @@ function FacetValue({
           const filterType = facetSelectState === 'selected' ? 'exclude' : 'include'
           const newFacetValuesFilter = toggleFacetValue(filterType, facet, facetValuesFilter, facetValue)
           onFiltersChange({
-            ...DEFAULT_FILTERS,
             ...currentFilters,
             facetValuesFilter: newFacetValuesFilter,
             query: generateQueryFromFacetValues(newFacetValuesFilter),
