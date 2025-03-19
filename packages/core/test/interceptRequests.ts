@@ -19,7 +19,7 @@ export function mockEndpointBuilder(url: string) {
 }
 
 export interface Request {
-  type: 'sendBeacon' | 'fetch' | 'fetch-keepalive' // TODO remove xhr
+  type: 'sendBeacon' | 'fetch' | 'fetch-keepalive'
   url: string
   body: string
 }
@@ -51,16 +51,13 @@ export function interceptRequests() {
       throw new Error('No fetch mock provided')
     }
 
+    requests.push({
+      type: config?.keepalive ? 'fetch-keepalive' : 'fetch',
+      url: url as string,
+      body: config!.body as string,
+    })
     return fetchPromise()
-      .then((response) => {
-        requests.push({
-          type: config?.keepalive ? 'fetch-keepalive' : 'fetch',
-          url: url as string,
-          body: config!.body as string,
-        })
-
-        return response as Response
-      })
+      .then((response) => response as Response)
       .finally(() => {
         if (fetchMocks.length === 0) {
           resolveFetchCallReturns?.()

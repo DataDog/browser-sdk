@@ -72,8 +72,9 @@ describe('httpRequest', () => {
 
       await interceptor.waitForAllFetchCalls()
       await collectAsyncCalls(fetchSpy, 2)
-      expect(requests.length).toEqual(1)
-      expect(requests[0].type).toBe('fetch')
+      expect(requests.length).toEqual(2)
+      expect(requests[0].type).toBe('fetch-keepalive')
+      expect(requests[1].type).toBe('fetch')
     })
 
     it('should use retry strategy', async () => {
