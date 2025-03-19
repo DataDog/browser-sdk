@@ -1,0 +1,20 @@
+{
+  "name": "rum-firefox-extension",
+  "version": "1.0.0",
+  "description": "Firefox extension with RUM in manifest v2 with background worker",
+  "main": "dist/background.js",
+  "scripts": {
+    "build": "esbuild src/background.js --bundle --outfile=dist/background.js --define:__BUILD_ENV__SDK_VERSION__='\"env\"'"
+  },
+  "dependencies": {
+    "@datadog/browser-core": "workspace:*",
+    "@datadog/browser-logs": "workspace:*",
+    "@datadog/browser-rum": "workspace:*"
+  },
+  "devDependencies": {
+    "esbuild": "^0.25.0",
+    "typescript": "^5.5.3",
+    "web-ext": "^7.11.0"
+  },
+  "private": true
+}

@@ -1,0 +1,19 @@
+{
+  "name": "RUM-8783",
+  "version": "1.0.0",
+  "description": "Chrome extension with RUM and iframe login",
+  "main": "../dist/content-script.js",
+  "scripts": {
+    "build": "esbuild content-scripts.js --bundle --outfile=dist/content-script.js --define:__BUILD_ENV__SDK_VERSION__='\"env\"' && esbuild src/iframe.js --bundle --outfile=dist/iframe.js --define:__BUILD_ENV__SDK_VERSION__='\"env\"'"
+  },
+  "dependencies": {
+    "@datadog/browser-core": "workspace:*",
+    "@datadog/browser-logs": "workspace:*",
+    "@datadog/browser-rum": "workspace:*"
+  },
+  "devDependencies": {
+    "esbuild": "^0.25.0",
+    "typescript": "^5.5.3"
+  },
+  "private": true
+}

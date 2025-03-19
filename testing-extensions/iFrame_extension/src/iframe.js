@@ -16,14 +16,12 @@ datadogRum.init({
 
 datadogRum.startSessionReplayRecording();
 
-// Log error stack information
 const errorStack = new Error().stack || "";
 console.log(">>> [iFrame] Error stack:", errorStack);
 console.log("Does the error stack include chrome-extension://?", errorStack.includes("chrome-extension://"));
 console.log("Current URL:", window.location.href);
 console.log("Document title:", document.title);
 
-// Handle form submission
 document.addEventListener('DOMContentLoaded', () => {
   const loginForm = document.getElementById('loginForm');
   
@@ -36,7 +34,6 @@ document.addEventListener('DOMContentLoaded', () => {
       
       console.log('[iFrame] Login attempt:', { username });
       
-      // You could send a message to the background script or parent page here
       if (chrome.runtime && chrome.runtime.sendMessage) {
         chrome.runtime.sendMessage({
           action: 'login',
@@ -46,7 +43,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
       }
       
-      // For testing purposes, just log the credentials
       console.log('[iFrame] Login successful');
     });
   } else {

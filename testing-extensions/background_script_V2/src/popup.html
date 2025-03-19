@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Datadog RUM Extension</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+            width: 300px;
+            padding: 15px;
+            color: #333;
+        }
+        h1 {
+            color: #632CA6;
+            font-size: 18px;
+            margin-top: 0;
+        }
+        .description {
+            font-size: 14px;
+            line-height: 1.4;
+            margin-bottom: 15px;
+        }
+        button {
+            background-color: #632CA6;
+            color: white;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            width: 100%;
+        }
+        .status {
+            font-size: 12px;
+            margin-top: 15px;
+            padding: 8px;
+            background-color: #f5f5f5;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Datadog RUM Firefox Extension</h1>
+    <div class="description">
+        Testing RUM with manifest v2 in Firefox.
+        The background script initializes RUM and sends periodic events.
+    </div>
+    
+    <button id="openDebug">Open Debug Page</button>
+    
+    <div id="status" class="status">
+        Background worker status: Checking...
+    </div>
+    
+    <script>
+        document.getElementById('openDebug').addEventListener('click', () => {
+            chrome.tabs.create({
+                url: chrome.runtime.getURL('src/debug.html')
+            });
+            window.close();
+        });
+        
+        chrome.runtime.sendMessage({ action: 'debug_page_loaded' }, response => {
+            if (response && response.status === 'ok') {
+                document.getElementById('status').textContent = 
+                    `Background worker status: Active${response.rumInitialized ? ', RUM initialized' : ''}`;
+            } else {
+                document.getElementById('status').textContent = 
+                    'Background worker status: Error communicating';
+            }
+        });
+    </script>
+</body>
+</html>

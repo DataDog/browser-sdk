@@ -1,0 +1,30 @@
+{
+  "name": "Datadog RUM Extension for Firefox",
+  "version": "1.0",
+  "manifest_version": 2,
+  "description": "Tests Datadog RUM in a Firefox extension using manifest v2 with a background script.",
+  "permissions": [
+    "activeTab",
+    "storage",
+    "<all_urls>"
+  ],
+  "background": {
+    "scripts": ["dist/background.js"],
+    "persistent": true
+  },
+  "web_accessible_resources": [
+    "src/debug.html",
+    "src/iframe-form.html"
+  ],
+  "browser_action": {
+    "default_title": "Datadog RUM Firefox Test",
+    "default_popup": "src/popup.html",
+    "default_icon": "rum.png"
+  },
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "rum-firefox-extension@datadog.com",
+      "strict_min_version": "68.0"
+    }
+  }
+}

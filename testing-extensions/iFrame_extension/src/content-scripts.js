@@ -29,7 +29,6 @@ console.log('Content script loaded. Initializing RUM...');
 // Function to inject the iframe
 function injectIframe() {
   try {
-    // Create a container to host the UI
     const container = document.createElement('div');
     container.id = 'extension-ui-container';
     container.style.position = 'fixed';
@@ -42,10 +41,8 @@ function injectIframe() {
     container.style.borderRadius = '5px';
     container.style.overflow = 'hidden';
 
-    // Create an iframe that loads the login form
     const iframe = document.createElement('iframe');
     
-    // Use the full URL with chrome.runtime.getURL
     const iframeUrl = chrome.runtime.getURL('src/iframe.html');
     console.log('Loading iframe from:', iframeUrl);
     
@@ -55,14 +52,12 @@ function injectIframe() {
     iframe.style.border = 'none';
     iframe.style.borderRadius = '5px';
 
-    // Append the iframe to the container and the container to the body
     container.appendChild(iframe);
     
     if (document.body) {
       document.body.appendChild(container);
       console.log('Iframe injected successfully');
     } else {
-      // In case the DOM is not ready, wait for it
       console.log('Document body not available, waiting for DOMContentLoaded');
       document.addEventListener('DOMContentLoaded', () => {
         if (document.body) {
@@ -79,7 +74,6 @@ function injectIframe() {
   }
 }
 
-// Log test information in the isolated world
 console.log('[Testing] Running test code. ------------------------------------');
 
 const isolatedErrorStack = new Error().stack || "";
@@ -92,7 +86,6 @@ console.log("Current URL:", window.location.href);
 console.log("Document title:", document.title);
 console.log("Extension ID (if available):", chrome.runtime.id || "Unknown");
 
-// Listen for messages from the iframe
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   console.log('[Content Script] Received message:', message);
   
@@ -101,11 +94,9 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     sendResponse({ success: true });
   }
   
-  return true; // Keep the message channel open for async responses
+  return true;
 });
 
-// Inject the iframe after a short delay to ensure the page has loaded
 setTimeout(injectIframe, 1000);
 
-// Start RUM session replay recording
 datadogRum.startSessionReplayRecording();
