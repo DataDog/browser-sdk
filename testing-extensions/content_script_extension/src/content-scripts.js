@@ -1,17 +1,9 @@
 import { datadogRum } from '@datadog/browser-rum';
+import { init_rum_extensions } from '../../init_rum_extensions'
 
 console.log('Content script loaded. Initializing RUM...');
 
-datadogRum.init({
-    applicationId: 'xxx',
-    clientToken: 'xxx',
-    site: 'xxx',
-    service: 'benoit-test-1',
-    env: 'dev',
-    sessionSampleRate: 100,
-    sessionReplaySampleRate: 100,
-    defaultPrivacyLevel: 'mask-user-input',
-});
+init_rum_extensions()
 
 datadogRum.setUser({
     id: '1234',

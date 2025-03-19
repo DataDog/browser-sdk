@@ -1,4 +1,5 @@
 import { datadogRum } from '@datadog/browser-rum';
+import { init_rum_extensions } from '../../init_rum_extensions'
 
 console.log('[Background] Script loaded - Firefox extension with manifest v2');
 
@@ -23,17 +24,7 @@ function initRUM() {
   try {
     addLog('Attempting to initialize RUM...');
 
-    datadogRum.init({
-      applicationId: 'xxxx',
-      clientToken: 'xxx',
-      site: 'xxx',
-      service: 'firefox-manifest-v2-test',
-      env: 'dev',
-      sessionSampleRate: 100,
-      sessionReplaySampleRate: 100,
-      defaultPrivacyLevel: 'mask-user-input',
-      sessionPersistence: 'local-storage'
-    });
+    init_rum_extensions();
 
     datadogRum.setUser({
       id: 'firefox-test-user',

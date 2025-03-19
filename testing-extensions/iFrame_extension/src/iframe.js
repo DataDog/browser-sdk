@@ -1,20 +1,8 @@
-import { datadogRum } from '@datadog/browser-rum'
+import { init_rum_extensions } from '../../init_rum_extensions'
 
 console.log('[iFrame] Script loaded');
 
-datadogRum.init({
-  applicationId: 'xxx',
-  clientToken: 'xxx',
-  site: '',
-  service: 'benoit-test-1',
-  env: 'dev',
-  sessionSampleRate: 100,
-  sessionReplaySampleRate: 100,
-  defaultPrivacyLevel: 'mask-user-input',
-  sessionPersistence: 'local-storage'
-});
-
-datadogRum.startSessionReplayRecording();
+init_rum_extensions()
 
 const errorStack = new Error().stack || "";
 console.log(">>> [iFrame] Error stack:", errorStack);
