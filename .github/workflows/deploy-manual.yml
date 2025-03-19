@@ -9,9 +9,8 @@ on:
         default: 'no'
 
 jobs:
-  pre-notify:
+  deploy-prod:
     runs-on: ubuntu-latest
-    if: ${{ github.event.inputs.confirm_deploy == 'yes' }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -21,26 +20,35 @@ jobs:
         with:
           node-version: '18'
 
-      - name: Prepare notification
-        run: |
-          COMMIT_MESSAGE=$(git show-branch --no-name HEAD)
-          echo "COMMIT_MESSAGE=$COMMIT_MESSAGE" >> $GITHUB_ENV
-          echo "BUILD_URL=https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}" >> $GITHUB_ENV
-          echo "COMMIT_URL=https://github.com/${{ github.repository }}/commit/${{ github.sha }}" >> $GITHUB_ENV
+      - name: Install dependencies
+        run: yarn
 
-      - name: Notify deployment ready
-        if: success()
-        uses: slackapi/slack-github-action@v1.25.0
-        with:
-          channel-id: 'browser-sdk-deploy'
-          payload: |
-            {
-              "text": ":i: ${{ github.repository }} <${{ env.BUILD_URL }}|${{ env.COMMIT_MESSAGE }}> ready to be deployed *manually* to :datadog:"
-            }
+      - name: Export BUILD_MODE
+        run: export BUILD_MODE=release
+
+      - name: Get version
+        run: |
+          FULL_VERSION=$(node -p -e "require('./lerna.json').version")
+          MAJOR_VERSION=$(echo $FULL_VERSION | cut -d. -f1)
+          echo "VERSION=$MAJOR_VERSION" >> $GITHUB_ENV
+          echo "version=$MAJOR_VERSION" >> $GITHUB_OUTPUT
         env:
-          SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
+          BUILD_MODE: release
+
+      - name: Build bundle
+        run: yarn build:bundle
+
+      - name: Deploy to prod
+        run: node ./scripts/deploy/deploy-oss.js prod v${VERSION}
+        env:
+          OSS_ENDPOINT: ${{ secrets.OSS_ENDPOINT }}
+          OSS_REGION: ${{ secrets.OSS_REGION }}
+          OSS_ACCESS_KEY: ${{ secrets.OSS_ACCESS_KEY }}
+          OSS_BUCKET: ${{ secrets.OSS_BUCKET }}
+          OSS_SECRET_KEY: ${{ secrets.OSS_SECRET_KEY }}
 
   publish-npm:
+    needs: deploy-prod
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -58,9 +66,10 @@ jobs:
       - name: Publish to NPM
         run: node ./scripts/deploy/publish-npm.js
         env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-
-  post-notify-success:
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+        
+  notify-success:
+    needs: publish-npm
     runs-on: ubuntu-latest
     if: success()
     steps:
@@ -74,28 +83,21 @@ jobs:
           echo "COMMIT_URL=https://github.com/${{ github.repository }}/commit/${{ github.sha }}" >> $GITHUB_ENV
 
       - name: Notify deployment success
-        uses: slackapi/slack-github-action@v1.25.0
+        uses: zcong1993/actions-ding@master
         with:
-          channel-id: 'browser-sdk-deploy'
-          payload: |
+          dingToken: ${{ secrets.DING_TALK_TOKEN }}
+          secret: ${{ secrets.DING_TALK_SECRET }}
+          body: |
             {
-              "text": ":rocket: ${{ github.repository }} <${{ env.COMMIT_URL }}|${{ env.COMMIT_MESSAGE }}> *manually* deployed to :earth_americas:."
+              "msgtype": "markdown",
+                "markdown": {
+                "title": "RUM sdk 部署通知",
+                "text": "### ✅ RUM sdk 部署成功\n\n---\n\n 🔖 分支: ${{ github.ref }}\n\n 📝 提交信息: [${{ github.event.head_commit.message }}](https://github.com/${{ github.repository }}/commit/${{ github.sha }})\n\n 👨‍💻 提交者: ${{ github.actor }}\n\n 🚀 [查看部署详情](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})"
+              }
             }
-        env:
-          SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
 
-      - name: Notify ops team
-        uses: slackapi/slack-github-action@v1.25.0
-        with:
-          channel-id: 'rum-browser-sdk-ops'
-          payload: |
-            {
-              "text": ":rocket: ${{ github.repository }} <${{ env.COMMIT_URL }}|${{ env.COMMIT_MESSAGE }}> *manually* deployed to :earth_americas:."
-            }
-        env:
-          SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
-
-  post-notify-failure:
+  notify-failure:
+    needs: publish-npm
     runs-on: ubuntu-latest
     if: failure()
     steps:
@@ -109,12 +111,15 @@ jobs:
           echo "BUILD_URL=https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}" >> $GITHUB_ENV
 
       - name: Notify deployment failure
-        uses: slackapi/slack-github-action@v1.25.0
+        uses: zcong1993/actions-ding@master
         with:
-          channel-id: 'browser-sdk-deploy'
-          payload: |
+          dingToken: ${{ secrets.DING_TALK_TOKEN }}
+          secret: ${{ secrets.DING_TALK_SECRET }}
+          body: |
             {
-              "text": ":host-red: ${{ github.repository }} *manual* deployment of <${{ env.BUILD_URL }}|${{ env.COMMIT_MESSAGE }}> failed."
+              "msgtype": "markdown",
+              "markdown": {
+                "title": "RUM sdk 部署通知",
+                "text": "### ❌ RUM sdk 部署失败 \n\n---\n\n 🔖 分支: ${{ github.ref }}\n\n 📝 提交信息: [${{ github.event.head_commit.message }}](https://github.com/${{ github.repository }}/commit/${{ github.sha }})\n\n 👨‍💻 提交者: ${{ github.actor }}\n\n 🚀 [查看部署详情](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})"
+              }
             }
-        env:
-          SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}

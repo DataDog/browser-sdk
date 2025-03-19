@@ -89,7 +89,7 @@ jobs:
               "msgtype": "markdown",
                "markdown": {
                 "title": "RUM sdk 部署通知",
-                "text": "### ✅ RUM sdk 部署成功\n\n---\n\n 🔖 分支: ${{ github.ref }}\n 📝 提交信息: [${{ github.event.head_commit.message }}](https://github.com/${{ github.repository }}/commit/${{ github.sha }})\n 👨‍💻 提交者: ${{ github.actor }}\n 🚀 [查看部署详情](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})"
+                "text": "### ✅ RUM sdk 部署成功\n\n---\n\n 🔖 分支: ${{ github.ref }}\n\n 📝 提交信息: [${{ github.event.head_commit.message }}](https://github.com/${{ github.repository }}/commit/${{ github.sha }})\n\n 👨‍💻 提交者: ${{ github.actor }}\n\n 🚀 [查看部署详情](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})"
               }
             }
 
@@ -117,6 +117,6 @@ jobs:
               "msgtype": "markdown",
               "markdown": {
                 "title": "RUM sdk 部署通知",
-                "text": "### ❌ RUM sdk 部署失败 \n\n---\n\n 🔖 分支: ${{ github.ref }}\n 📝 提交信息: [${{ github.event.head_commit.message }}](https://github.com/${{ github.repository }}/commit/${{ github.sha }})\n 👨‍💻 提交者: ${{ github.actor }}\n 🚀 [查看部署详情](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})"
+                "text": "### ❌ RUM sdk 部署失败 \n\n---\n\n 🔖 分支: ${{ github.ref }}\n\n 📝 提交信息: [${{ github.event.head_commit.message }}](https://github.com/${{ github.repository }}/commit/${{ github.sha }})\n\n 👨‍💻 提交者: ${{ github.actor }}\n\n 🚀 [查看部署详情](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})"
               }
             }
