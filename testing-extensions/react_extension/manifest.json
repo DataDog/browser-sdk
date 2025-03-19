@@ -1,0 +1,25 @@
+{
+  "manifest_version": 3,
+  "name": "My React Extension",
+  "version": "1.0",
+  "description": "A basic Chrome extension with a popup and options page built with React",
+  "action": {
+    "default_popup": "public/popup.html",
+    "default_icon": "rum.png"
+  },
+  "options_ui": {
+    "page": "public/options.html",
+    "open_in_tab": true
+  },
+  "background": {
+    "service_worker": "dist/background.js"
+  },
+  "permissions": [
+    "storage",
+    "scripting",
+    "activeTab"
+  ],
+    "host_permissions": [
+      "<all_urls>"
+    ]
+}

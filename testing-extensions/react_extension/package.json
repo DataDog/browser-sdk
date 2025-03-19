@@ -1,0 +1,20 @@
+{
+  "name": "react-extension",
+  "version": "1.0.0",
+  "private": true,
+  "dependencies": {
+    "@datadog/browser-core": "workspace:*",
+    "@datadog/browser-logs": "workspace:*",
+    "@datadog/browser-rum": "workspace:*",
+    "react": "^17.0.2",
+    "react-dom": "^17.0.2"
+  },
+  "devDependencies": {
+    "@types/react": "^17.0.2",
+    "@types/react-dom": "^17.0.2",
+    "esbuild": "^0.19.5"
+  },
+  "scripts": {
+    "build": "esbuild src/pages/PopupPage.jsx --bundle --outfile=dist/PopupPage.js --define:__BUILD_ENV__SDK_VERSION__='\"env\"' && esbuild src/pages/OptionsPage.jsx --bundle --outfile=dist/OptionsPage.js --define:__BUILD_ENV__SDK_VERSION__='\"env\"' && esbuild public/background.js --bundle --outfile=dist/background.js --define:__BUILD_ENV__SDK_VERSION__='\"env\"'"
+  }
+}

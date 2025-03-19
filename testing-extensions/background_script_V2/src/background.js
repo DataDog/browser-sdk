@@ -24,9 +24,9 @@ function initRUM() {
     addLog('Attempting to initialize RUM...');
 
     datadogRum.init({
-      applicationId: 'bd3472ea-efc2-45e1-8dff-be4cea9429b3',
-      clientToken: 'pub7216f8a2d1091e263c95c1205882474e',
-      site: 'datad0g.com',
+      applicationId: 'xxxx',
+      clientToken: 'xxx',
+      site: 'xxx',
       service: 'firefox-manifest-v2-test',
       env: 'dev',
       sessionSampleRate: 100,
