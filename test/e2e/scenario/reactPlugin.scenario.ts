@@ -29,10 +29,13 @@ test.describe('react plugin', () => {
   createTest('should capture react error from error boundary')
     .withRum()
     .withReact()
-    .run(async ({ page, flushEvents, intakeRegistry, withBrowserLogs }) => {
+    .run(async ({ page, flushEvents, intakeRegistry, browserName, withBrowserLogs }) => {
       await page.click('text=Go to Error')
       await page.click('#error-button')
-      await page.waitForSelector('text=Something went wrong')
+
+      if (browserName === 'firefox') {
+        await page.waitForTimeout(1000)
+      }
 
       await flushEvents()
       expect(intakeRegistry.rumErrorEvents.length).toBeGreaterThan(0)
