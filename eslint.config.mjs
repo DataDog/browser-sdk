@@ -26,7 +26,7 @@ export default tseslint.config(
       'packages/*/cjs',
       'packages/*/esm',
       'developer-extension/dist',
-      'test/app/dist',
+      'test/**/dist',
       'sandbox',
       'coverage',
       'rum-events-format',
@@ -46,7 +46,7 @@ export default tseslint.config(
       parserOptions: {
         project: [
           './tsconfig.json',
-          './test/app/tsconfig.json',
+          './test/apps/**/tsconfig.json',
           './test/e2e/tsconfig.json',
           './developer-extension/tsconfig.json',
           './performances/tsconfig.json',

@@ -7,5 +7,11 @@ export function getSdkBundlePath(packageName: string, originalUrl: string) {
 }
 
 export function getTestAppBundlePath(appName: string, originalUrl: string) {
-  return path.join(ROOT, `test/${appName}/dist${originalUrl}`)
+  const appNameMapping: Record<string, string> = {
+    app: 'apps/vanilla',
+    'react-app': 'apps/react',
+  }
+
+  const targetAppPath = appNameMapping[appName] || appName
+  return path.join(ROOT, `test/${targetAppPath}/dist${originalUrl}`)
 }

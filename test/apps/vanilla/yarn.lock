@@ -5,15 +5,15 @@ __metadata:
   version: 8
   cacheKey: 10c0
 
-"@datadog/browser-core@portal:../../packages/core::locator=app%40workspace%3A.":
+"@datadog/browser-core@portal:../../../packages/core::locator=app%40workspace%3A.":
   version: 0.0.0-use.local
-  resolution: "@datadog/browser-core@portal:../../packages/core::locator=app%40workspace%3A."
+  resolution: "@datadog/browser-core@portal:../../../packages/core::locator=app%40workspace%3A."
   languageName: node
   linkType: soft
 
-"@datadog/browser-logs@portal:../../packages/logs::locator=app%40workspace%3A.":
+"@datadog/browser-logs@portal:../../../packages/logs::locator=app%40workspace%3A.":
   version: 0.0.0-use.local
-  resolution: "@datadog/browser-logs@portal:../../packages/logs::locator=app%40workspace%3A."
+  resolution: "@datadog/browser-logs@portal:../../../packages/logs::locator=app%40workspace%3A."
   dependencies:
     "@datadog/browser-core": "npm:6.5.1"
   peerDependencies:
@@ -24,17 +24,17 @@ __metadata:
   languageName: node
   linkType: soft
 
-"@datadog/browser-rum-core@portal:../../packages/rum-core::locator=app%40workspace%3A.":
+"@datadog/browser-rum-core@portal:../../../packages/rum-core::locator=app%40workspace%3A.":
   version: 0.0.0-use.local
-  resolution: "@datadog/browser-rum-core@portal:../../packages/rum-core::locator=app%40workspace%3A."
+  resolution: "@datadog/browser-rum-core@portal:../../../packages/rum-core::locator=app%40workspace%3A."
   dependencies:
     "@datadog/browser-core": "npm:6.5.1"
   languageName: node
   linkType: soft
 
-"@datadog/browser-rum@portal:../../packages/rum::locator=app%40workspace%3A.":
+"@datadog/browser-rum@portal:../../../packages/rum::locator=app%40workspace%3A.":
   version: 0.0.0-use.local
-  resolution: "@datadog/browser-rum@portal:../../packages/rum::locator=app%40workspace%3A."
+  resolution: "@datadog/browser-rum@portal:../../../packages/rum::locator=app%40workspace%3A."
   dependencies:
     "@datadog/browser-core": "npm:6.5.1"
     "@datadog/browser-rum-core": "npm:6.5.1"
@@ -352,10 +352,10 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "app@workspace:."
   dependencies:
-    "@datadog/browser-core": "portal:../../packages/core"
-    "@datadog/browser-logs": "portal:../../packages/logs"
-    "@datadog/browser-rum": "portal:../../packages/rum"
-    "@datadog/browser-rum-core": "portal:../../packages/rum-core"
+    "@datadog/browser-core": "portal:../../../packages/core"
+    "@datadog/browser-logs": "portal:../../../packages/logs"
+    "@datadog/browser-rum": "portal:../../../packages/rum"
+    "@datadog/browser-rum-core": "portal:../../../packages/rum-core"
     ts-loader: "npm:6.2.1"
     typescript: "npm:3.8.2"
     webpack: "npm:5.94.0"

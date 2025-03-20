@@ -151,7 +151,7 @@ typecheck:
     - yarn
     - yarn build
     - yarn typecheck
-    - scripts/cli typecheck test/app
+    - scripts/cli typecheck test/apps/vanilla
     - scripts/cli typecheck test/e2e
 
 build-and-lint:
