@@ -71,6 +71,7 @@ cmd_release () {
 cmd_version () {
   node ./scripts/release/generate-changelog
   node ./scripts/release/update-peer-dependency-versions.js
+  lerna run pack --stream
   # keep test app lockfile up to date
   cd test/app
   yarn up
@@ -84,9 +85,10 @@ cmd_woke () {
 
 cmd_check_typescript_compatibility () {
   yarn build
+  yarn lerna run pack --stream
   cd test/app
   rm -rf node_modules
-  yarn
+  yarn install --no-immutable
   check_typescript_isolated_modules_compatibility || fail 'typescript isolated modules compatibility broken'
   check_typescript_3_compatibility || fail 'typescript@3.8.2 compatibility broken'
   check_typescript_latest_compatibility || fail 'typescript@latest compatibility broken'
@@ -136,9 +138,10 @@ insert_line_in_file () {
 
 cmd_check_server_side_rendering_compatibility () {
   yarn build
+  yarn lerna run pack --stream
   cd test/app
   rm -rf node_modules
-  yarn
+  yarn install --no-immutable
   yarn compat:ssr || fail 'server side rendering compatibility broken'
 }
 
