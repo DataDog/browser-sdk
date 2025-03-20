@@ -8,6 +8,7 @@ import {
   clocksNow,
   elapsed,
   createValueHistory,
+  PageExitReason,
 } from '@datadog/browser-core'
 import type { FrustrationType } from '../../rawRumEvent.types'
 import { ActionType } from '../../rawRumEvent.types'
@@ -74,6 +75,11 @@ export function trackClickActions(
   })
 
   lifeCycle.subscribe(LifeCycleEventType.VIEW_ENDED, stopClickChain)
+  lifeCycle.subscribe(LifeCycleEventType.PAGE_EXITED, (event) => {
+    if (event.reason === PageExitReason.UNLOADING) {
+      stopClickChain()
+    }
+  })
 
   const { stop: stopActionEventsListener } = listenActionEvents<{
     clickActionBase: ClickActionBase

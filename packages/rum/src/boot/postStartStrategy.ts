@@ -7,7 +7,7 @@ import type {
   RumSession,
 } from '@datadog/browser-rum-core'
 import { LifeCycleEventType, SessionReplayState } from '@datadog/browser-rum-core'
-import { asyncRunOnReadyState, monitorError, PageExitReason, type DeflateEncoder } from '@datadog/browser-core'
+import { asyncRunOnReadyState, monitorError, type DeflateEncoder } from '@datadog/browser-core'
 import { getSessionReplayLink } from '../domain/getSessionReplayLink'
 import type { startRecording } from './startRecording'
 
@@ -47,13 +47,6 @@ export function createPostStartStrategy(
     if (status === RecorderStatus.Starting || status === RecorderStatus.Started) {
       stop()
       status = RecorderStatus.IntentToStart
-    }
-  })
-
-  // Stop the recorder on page unload to avoid sending records after the page is ended.
-  lifeCycle.subscribe(LifeCycleEventType.PAGE_EXITED, (pageExitEvent) => {
-    if (pageExitEvent.reason === PageExitReason.UNLOADING) {
-      stop()
     }
   })
 
