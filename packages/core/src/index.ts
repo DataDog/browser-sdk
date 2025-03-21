@@ -122,13 +122,6 @@ export { catchUserErrors } from './tools/catchUserErrors'
 export type { ContextManager } from './domain/context/contextManager'
 export { createContextManager } from './domain/context/contextManager'
 export { storeContextManager, removeStorageListeners } from './domain/context/storeContextManager'
-export type { CustomerDataTracker, CustomerDataTrackerManager } from './domain/context/customerDataTracker'
-export {
-  createCustomerDataTrackerManager,
-  createCustomerDataTracker,
-  CUSTOMER_DATA_BYTES_LIMIT,
-  CustomerDataCompressionStatus,
-} from './domain/context/customerDataTracker'
 export { CustomerDataType } from './domain/context/contextConstants'
 export type { ValueHistory, ValueHistoryEntry } from './tools/valueHistory'
 export { createValueHistory, CLEAR_OLD_VALUES_INTERVAL } from './tools/valueHistory'

@@ -1,5 +1,5 @@
-import type { CustomerDataTracker, RelativeTime } from '@datadog/browser-core'
-import { relativeToClocks, createCustomerDataTracker, noop } from '@datadog/browser-core'
+import type { RelativeTime } from '@datadog/browser-core'
+import { relativeToClocks } from '@datadog/browser-core'
 import type { Clock } from '@datadog/browser-core/test'
 import { mockClock, registerCleanupTask } from '@datadog/browser-core/test'
 import { LifeCycle, LifeCycleEventType } from '../lifeCycle'
@@ -14,7 +14,6 @@ import { startFeatureFlagContexts } from './featureFlagContext'
 describe('featureFlagContexts', () => {
   const lifeCycle = new LifeCycle()
   let clock: Clock
-  let customerDataTracker: CustomerDataTracker
   let featureFlagContexts: FeatureFlagContexts
   let hooks: Hooks
   let trackFeatureFlagsForEvents: any[]
@@ -22,32 +21,13 @@ describe('featureFlagContexts', () => {
   beforeEach(() => {
     clock = mockClock()
     hooks = createHooks()
-    customerDataTracker = createCustomerDataTracker(noop)
     trackFeatureFlagsForEvents = []
-    featureFlagContexts = startFeatureFlagContexts(
-      lifeCycle,
-      hooks,
-      { trackFeatureFlagsForEvents } as unknown as RumConfiguration,
-      customerDataTracker
-    )
+    featureFlagContexts = startFeatureFlagContexts(lifeCycle, hooks, {
+      trackFeatureFlagsForEvents,
+    } as unknown as RumConfiguration)
 
     registerCleanupTask(() => {
       clock.cleanup()
-      featureFlagContexts.stop()
-    })
-  })
-
-  describe('addFeatureFlagEvaluation', () => {
-    it('should notify the customer data tracker on feature flag evaluation', () => {
-      const updateCustomerDataSpy = spyOn(customerDataTracker, 'updateCustomerData')
-
-      lifeCycle.notify(LifeCycleEventType.BEFORE_VIEW_CREATED, {
-        startClocks: relativeToClocks(0 as RelativeTime),
-      } as ViewCreatedEvent)
-
-      featureFlagContexts.addFeatureFlagEvaluation('feature', 'foo')
-
-      expect(updateCustomerDataSpy).toHaveBeenCalledWith({ feature: 'foo' })
     })
   })
 
