@@ -23,10 +23,6 @@ describe('isTraceSampled', () => {
   })
 
   describe('with bigint support', () => {
-    beforeEach(() => {
-      mockExperimentalFeatures([ExperimentalFeature.CONSISTENT_TRACE_SAMPLING])
-    })
-
     it('a session id with a low hash value should be sampled with a rate close to 0%', () => {
       expect(isTraceSampled(LOW_HASH_UUID, 0.1)).toBeTrue()
       resetSampleDecisionCache()
