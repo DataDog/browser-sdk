@@ -12,12 +12,14 @@
     "open_in_tab": true
   },
   "background": {
-    "service_worker": "dist/background.js"
+    "service_worker": "dist/service_worker.js",
+    "type": "module"
   },
   "permissions": [
     "storage",
     "scripting",
-    "activeTab"
+    "activeTab",
+    "cookies"
   ],
     "host_permissions": [
       "<all_urls>"
