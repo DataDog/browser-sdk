@@ -26,6 +26,8 @@ export interface BrowserLog {
   timestamp: number
 }
 
+const IGNORE_LOG_MESSAGES = ['Ignoring unsupported entryTypes:', 'Layout was forced before the page was fully loaded.']
+
 export class BrowserLogsManager {
   private logs: BrowserLog[] = []
 
@@ -34,15 +36,14 @@ export class BrowserLogsManager {
   }
 
   get() {
-    const filteredLogs = this.logs.filter((log) => !log.message.includes('Ignoring unsupported entryTypes: '))
+    return this.logs.filter((log) => {
+      if (IGNORE_LOG_MESSAGES.some((message) => log.message.includes(message))) {
+        addTag('test.fixme', `Unnexpected Console log message: "${log.message}"`)
+        return false
+      }
 
-    if (this.logs.some((log) => log.message.includes('Ignoring unsupported entryTypes: '))) {
-      // FIXME: fix this at the perfomance observer level as it is visible to customers
-      // It used to pass before because it was only happening in Firefox but wdio io did not support console logs for FF
-      addTag('fixme', 'Unnexpected Console log message: "Ignoring unsupported entryTypes: *"')
-    }
-
-    return filteredLogs
+      return true
+    })
   }
 
   clear() {

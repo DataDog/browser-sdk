@@ -364,6 +364,16 @@ export interface RecorderApi {
   getSessionReplayLink: () => string | undefined
 }
 
+export interface ProfilerApi {
+  stop: () => void
+  onRumStart: (
+    lifeCycle: LifeCycle,
+    configuration: RumConfiguration,
+    sessionManager: RumSessionManager,
+    viewHistory: ViewHistory
+  ) => void
+}
+
 export interface RumPublicApiOptions {
   ignoreInitIfSyntheticsWillInjectRum?: boolean
   startDeflateWorker?: (
@@ -402,6 +412,7 @@ export interface Strategy {
 export function makeRumPublicApi(
   startRumImpl: StartRum,
   recorderApi: RecorderApi,
+  profilerApi: ProfilerApi,
   options: RumPublicApiOptions = {}
 ): RumPublicApi {
   const globalContextManager = createContextManager('global context')
@@ -440,6 +451,7 @@ export function makeRumPublicApi(
       const startRumResult = startRumImpl(
         configuration,
         recorderApi,
+        profilerApi,
         getCommonContext,
         initialViewOptions,
         deflateWorker && options.createDeflateEncoder
@@ -455,6 +467,13 @@ export function makeRumPublicApi(
         startRumResult.session,
         startRumResult.viewHistory,
         deflateWorker
+      )
+
+      profilerApi.onRumStart(
+        startRumResult.lifeCycle,
+        configuration,
+        startRumResult.session,
+        startRumResult.viewHistory
       )
 
       strategy = createPostStartStrategy(strategy, startRumResult)

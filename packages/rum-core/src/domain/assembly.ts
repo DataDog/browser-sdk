@@ -123,7 +123,7 @@ export function startRumAssembly(
 
   lifeCycle.subscribe(
     LifeCycleEventType.RAW_RUM_EVENT_COLLECTED,
-    ({ startTime, rawRumEvent, domainContext, savedCommonContext, customerContext }) => {
+    ({ startTime, duration, rawRumEvent, domainContext, savedCommonContext, customerContext }) => {
       const viewHistoryEntry = viewHistory.findView(startTime)
       const urlContext = urlContexts.findUrl(startTime)
       const session = sessionManager.findTrackedSession(startTime)
@@ -175,7 +175,11 @@ export function startRumAssembly(
 
         const serverRumEvent = combine(
           rumContext,
-          hooks.triggerHook(HookNames.Assemble, { eventType: rawRumEvent.type, startTime }) as RumEvent & Context,
+          hooks.triggerHook(HookNames.Assemble, {
+            eventType: rawRumEvent.type,
+            startTime,
+            duration,
+          }) as RumEvent & Context,
           { context: customerContext },
           rawRumEvent
         ) as RumEvent & Context

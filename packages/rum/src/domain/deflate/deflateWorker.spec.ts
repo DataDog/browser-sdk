@@ -151,7 +151,7 @@ describe('startDeflateWorker', () => {
         mockWorker.dispatchErrorEvent()
         expect(displaySpy).toHaveBeenCalledWith(
           jasmine.stringContaining(
-            'Please make sure the Worker URL /worker.js is correct and CSP is correctly configured.'
+            'Please make sure the worker URL /worker.js is correct and CSP is correctly configured.'
           )
         )
       })
@@ -218,7 +218,7 @@ describe('startDeflateWorker', () => {
       createDeflateWorkerSpy.and.throwError(UNKNOWN_ERROR)
       startDeflateWorkerWithDefaults()
       expect(displaySpy).toHaveBeenCalledOnceWith(
-        'Session Replay failed to start: an error occurred while creating the Worker:',
+        'Session Replay failed to start: an error occurred while initializing the worker:',
         UNKNOWN_ERROR
       )
     })
@@ -227,7 +227,7 @@ describe('startDeflateWorker', () => {
       createDeflateWorkerSpy.and.throwError(UNKNOWN_ERROR)
       startDeflateWorkerWithDefaults({ source: 'Foo' })
       expect(displaySpy).toHaveBeenCalledOnceWith(
-        'Foo failed to start: an error occurred while creating the Worker:',
+        'Foo failed to start: an error occurred while initializing the worker:',
         UNKNOWN_ERROR
       )
     })

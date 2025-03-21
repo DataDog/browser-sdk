@@ -3,8 +3,7 @@ import type { RumInitConfiguration } from '@datadog/browser-rum-core'
 import { DefaultPrivacyLevel } from '@datadog/browser-rum'
 import type { BrowserContext, Page } from '@playwright/test'
 import { test, expect } from '@playwright/test'
-import type { Tag } from '../helpers/tags'
-import { addTag, addBrowserConfigurationTags } from '../helpers/tags'
+import { addTag, addTestOptimizationTags } from '../helpers/tags'
 import { getRunId } from '../../../envUtils'
 import type { BrowserLog } from '../helpers/browser'
 import { BrowserLogsManager, deleteAllCookies, getBrowserName, sendXhr } from '../helpers/browser'
@@ -72,7 +71,7 @@ class TestBuilder {
   private body = ''
   private basePath = ''
   private eventBridge = false
-  private setups: Array<{ factory: SetupFactory; name?: string }> = []
+  private setups: Array<{ factory: SetupFactory; name?: string }> = DEFAULT_SETUPS
 
   constructor(private title: string) {}
 
@@ -121,17 +120,7 @@ class TestBuilder {
     return this
   }
 
-  withSetup(factory: SetupFactory, name?: string) {
-    this.setups.push({ factory, name })
-    if (this.setups.length > 1 && this.setups.some((item) => !item.name)) {
-      throw new Error('Tests with multiple setups need to give a name to each setups')
-    }
-    return this
-  }
-
   run(runner: TestRunner) {
-    const setups = this.setups.length ? this.setups : DEFAULT_SETUPS
-
     const setupOptions: SetupOptions = {
       body: this.body,
       head: this.head,
@@ -150,16 +139,16 @@ class TestBuilder {
 
     if (this.alsoRunWithRumSlim) {
       test.describe(this.title, () => {
-        declareTestsForSetups('rum', setups, setupOptions, runner)
+        declareTestsForSetups('rum', this.setups, setupOptions, runner)
         declareTestsForSetups(
           'rum-slim',
-          setups.filter((setup) => setup.factory !== npmSetup),
+          this.setups.filter((setup) => setup.factory !== npmSetup),
           { ...setupOptions, useRumSlim: true },
           runner
         )
       })
     } else {
-      declareTestsForSetups(this.title, setups, setupOptions, runner)
+      declareTestsForSetups(this.title, this.setups, setupOptions, runner)
     }
   }
 
@@ -192,8 +181,8 @@ function declareTestsForSetups(
 function declareTest(title: string, setupOptions: SetupOptions, factory: SetupFactory, runner: TestRunner) {
   test(title, async ({ page, context }) => {
     const browserName = getBrowserName(test.info().project.name)
-    addTag('browserName' as any as Tag, browserName)
-    addBrowserConfigurationTags(test.info().project.metadata as BrowserConfiguration)
+    addTag('test.browserName', browserName)
+    addTestOptimizationTags(test.info().project.metadata as BrowserConfiguration)
 
     const title = test.info().titlePath.join(' > ')
     setupOptions.context.test_name = title
@@ -284,13 +273,17 @@ async function tearDownTest({ flushEvents, deleteAllCookies }: TestContext) {
   await flushEvents()
   await deleteAllCookies()
 
+  if (test.info().status === 'passed' && test.info().retry > 0) {
+    addTag('test.flaky', 'true')
+  }
+
   const skipReason = test.info().annotations.find((annotation) => annotation.type === 'skip')?.description
   if (skipReason) {
-    addTag('skip', skipReason)
+    addTag('test.skip', skipReason)
   }
 
   const fixmeReason = test.info().annotations.find((annotation) => annotation.type === 'fixme')?.description
   if (fixmeReason) {
-    addTag('fixme', fixmeReason)
+    addTag('test.fixme', fixmeReason)
   }
 }

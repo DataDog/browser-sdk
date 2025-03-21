@@ -8,7 +8,7 @@ import {
 } from '@datadog/browser-core'
 import type { Clock } from '@datadog/browser-core/test'
 import { mockClock, registerCleanupTask } from '@datadog/browser-core/test'
-import { noopRecorderApi } from '../../test'
+import { noopRecorderApi, noopProfilerApi } from '../../test'
 import { ActionType, VitalType } from '../rawRumEvent.types'
 import type { DurationVitalReference } from '../domain/vital/vitalCollection'
 import type { RumPublicApi, RecorderApi } from './rumPublicApi'
@@ -59,6 +59,7 @@ describe('rum public api', () => {
             ...noopRecorderApi,
             onRumStart: recorderApiOnRumStartSpy,
           },
+          noopProfilerApi,
           {
             startDeflateWorker: () => FAKE_WORKER,
           }
@@ -89,7 +90,8 @@ describe('rum public api', () => {
           ...noopStartRum(),
           getInternalContext: getInternalContextSpy,
         }),
-        noopRecorderApi
+        noopRecorderApi,
+        noopProfilerApi
       )
     })
 
@@ -111,7 +113,7 @@ describe('rum public api', () => {
 
   describe('getInitConfiguration', () => {
     it('clones the init configuration', () => {
-      const rumPublicApi = makeRumPublicApi(noopStartRum, noopRecorderApi)
+      const rumPublicApi = makeRumPublicApi(noopStartRum, noopRecorderApi, noopProfilerApi)
 
       rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
 
@@ -132,7 +134,8 @@ describe('rum public api', () => {
           ...noopStartRum(),
           addAction: addActionSpy,
         }),
-        noopRecorderApi
+        noopRecorderApi,
+        noopProfilerApi
       )
       clock = mockClock()
 
@@ -249,7 +252,8 @@ describe('rum public api', () => {
           ...noopStartRum(),
           addError: addErrorSpy,
         }),
-        noopRecorderApi
+        noopRecorderApi,
+        noopProfilerApi
       )
       clock = mockClock()
 
@@ -365,7 +369,8 @@ describe('rum public api', () => {
           ...noopStartRum(),
           addAction: addActionSpy,
         }),
-        noopRecorderApi
+        noopRecorderApi,
+        noopProfilerApi
       )
     })
 
@@ -424,7 +429,7 @@ describe('rum public api', () => {
     let rumPublicApi: RumPublicApi
 
     beforeEach(() => {
-      rumPublicApi = makeRumPublicApi(noopStartRum, noopRecorderApi)
+      rumPublicApi = makeRumPublicApi(noopStartRum, noopRecorderApi, noopProfilerApi)
     })
 
     it('should return empty object if no user has been set', () => {
@@ -450,7 +455,7 @@ describe('rum public api', () => {
     let rumPublicApi: RumPublicApi
 
     beforeEach(() => {
-      rumPublicApi = makeRumPublicApi(noopStartRum, noopRecorderApi)
+      rumPublicApi = makeRumPublicApi(noopStartRum, noopRecorderApi, noopProfilerApi)
     })
 
     it('should add attribute', () => {
@@ -495,7 +500,7 @@ describe('rum public api', () => {
     let rumPublicApi: RumPublicApi
 
     beforeEach(() => {
-      rumPublicApi = makeRumPublicApi(noopStartRum, noopRecorderApi)
+      rumPublicApi = makeRumPublicApi(noopStartRum, noopRecorderApi, noopProfilerApi)
     })
 
     it('should remove property', () => {
@@ -521,7 +526,8 @@ describe('rum public api', () => {
           ...noopStartRum(),
           addAction: addActionSpy,
         }),
-        noopRecorderApi
+        noopRecorderApi,
+        noopProfilerApi
       )
     })
 
@@ -578,7 +584,7 @@ describe('rum public api', () => {
     let rumPublicApi: RumPublicApi
 
     beforeEach(() => {
-      rumPublicApi = makeRumPublicApi(noopStartRum, noopRecorderApi)
+      rumPublicApi = makeRumPublicApi(noopStartRum, noopRecorderApi, noopProfilerApi)
     })
 
     it('should return empty object if no account has been set', () => {
@@ -604,7 +610,7 @@ describe('rum public api', () => {
     let rumPublicApi: RumPublicApi
 
     beforeEach(() => {
-      rumPublicApi = makeRumPublicApi(noopStartRum, noopRecorderApi)
+      rumPublicApi = makeRumPublicApi(noopStartRum, noopRecorderApi, noopProfilerApi)
     })
 
     it('should add attribute', () => {
@@ -646,7 +652,7 @@ describe('rum public api', () => {
     let rumPublicApi: RumPublicApi
 
     beforeEach(() => {
-      rumPublicApi = makeRumPublicApi(noopStartRum, noopRecorderApi)
+      rumPublicApi = makeRumPublicApi(noopStartRum, noopRecorderApi, noopProfilerApi)
     })
     it('should remove property', () => {
       const account = { id: 'foo', name: 'bar', email: 'qux', foo: { bar: 'qux' } }
@@ -671,7 +677,8 @@ describe('rum public api', () => {
           ...noopStartRum(),
           addTiming: addTimingSpy,
         }),
-        noopRecorderApi
+        noopRecorderApi,
+        noopProfilerApi
       )
     })
 
@@ -709,7 +716,8 @@ describe('rum public api', () => {
           ...noopStartRum(),
           addFeatureFlagEvaluation: addFeatureFlagEvaluationSpy,
         }),
-        noopRecorderApi
+        noopRecorderApi,
+        noopProfilerApi
       )
     })
 
@@ -726,7 +734,11 @@ describe('rum public api', () => {
   describe('stopSession', () => {
     it('calls stopSession on the startRum result', () => {
       const stopSessionSpy = jasmine.createSpy()
-      const rumPublicApi = makeRumPublicApi(() => ({ ...noopStartRum(), stopSession: stopSessionSpy }), noopRecorderApi)
+      const rumPublicApi = makeRumPublicApi(
+        () => ({ ...noopStartRum(), stopSession: stopSessionSpy }),
+        noopRecorderApi,
+        noopProfilerApi
+      )
       rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
       rumPublicApi.stopSession()
       expect(stopSessionSpy).toHaveBeenCalled()
@@ -736,7 +748,11 @@ describe('rum public api', () => {
   describe('startView', () => {
     it('should call RUM results startView with the view name', () => {
       const startViewSpy = jasmine.createSpy()
-      const rumPublicApi = makeRumPublicApi(() => ({ ...noopStartRum(), startView: startViewSpy }), noopRecorderApi)
+      const rumPublicApi = makeRumPublicApi(
+        () => ({ ...noopStartRum(), startView: startViewSpy }),
+        noopRecorderApi,
+        noopProfilerApi
+      )
       rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
       rumPublicApi.startView('foo')
       expect(startViewSpy.calls.argsFor(0)[0]).toEqual({ name: 'foo' })
@@ -744,7 +760,11 @@ describe('rum public api', () => {
 
     it('should call RUM results startView with the view options', () => {
       const startViewSpy = jasmine.createSpy()
-      const rumPublicApi = makeRumPublicApi(() => ({ ...noopStartRum(), startView: startViewSpy }), noopRecorderApi)
+      const rumPublicApi = makeRumPublicApi(
+        () => ({ ...noopStartRum(), startView: startViewSpy }),
+        noopRecorderApi,
+        noopProfilerApi
+      )
       rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
       rumPublicApi.startView({ name: 'foo', service: 'bar', version: 'baz', context: { foo: 'bar' } })
       expect(startViewSpy.calls.argsFor(0)[0]).toEqual({
@@ -764,7 +784,7 @@ describe('rum public api', () => {
     beforeEach(() => {
       recorderApiOnRumStartSpy = jasmine.createSpy('recorderApiOnRumStart')
       recorderApi = { ...noopRecorderApi, onRumStart: recorderApiOnRumStartSpy }
-      rumPublicApi = makeRumPublicApi(noopStartRum, recorderApi)
+      rumPublicApi = makeRumPublicApi(noopStartRum, recorderApi, noopProfilerApi)
     })
 
     it('is started with the default defaultPrivacyLevel', () => {
@@ -814,7 +834,7 @@ describe('rum public api', () => {
     let rumPublicApi: RumPublicApi
 
     beforeEach(() => {
-      rumPublicApi = makeRumPublicApi(noopStartRum, noopRecorderApi)
+      rumPublicApi = makeRumPublicApi(noopStartRum, noopRecorderApi, noopProfilerApi)
 
       registerCleanupTask(() => {
         localStorage.clear()
@@ -898,7 +918,8 @@ describe('rum public api', () => {
           ...noopStartRum(),
           startDurationVital: startDurationVitalSpy,
         }),
-        noopRecorderApi
+        noopRecorderApi,
+        noopProfilerApi
       )
       rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
       rumPublicApi.startDurationVital('foo', { context: { foo: 'bar' }, description: 'description-value' })
@@ -917,7 +938,8 @@ describe('rum public api', () => {
           ...noopStartRum(),
           stopDurationVital: stopDurationVitalSpy,
         }),
-        noopRecorderApi
+        noopRecorderApi,
+        noopProfilerApi
       )
       rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
       rumPublicApi.startDurationVital('foo', { context: { foo: 'bar' }, description: 'description-value' })
@@ -935,7 +957,8 @@ describe('rum public api', () => {
           ...noopStartRum(),
           stopDurationVital: stopDurationVitalSpy,
         }),
-        noopRecorderApi
+        noopRecorderApi,
+        noopProfilerApi
       )
       rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
       const ref = rumPublicApi.startDurationVital('foo', { context: { foo: 'bar' }, description: 'description-value' })
@@ -955,7 +978,8 @@ describe('rum public api', () => {
           ...noopStartRum(),
           addDurationVital: addDurationVitalSpy,
         }),
-        noopRecorderApi
+        noopRecorderApi,
+        noopProfilerApi
       )
       const startTime = 1707755888000 as TimeStamp
       rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
@@ -977,7 +1001,7 @@ describe('rum public api', () => {
   })
 
   it('should provide sdk version', () => {
-    const rumPublicApi = makeRumPublicApi(noopStartRum, noopRecorderApi)
+    const rumPublicApi = makeRumPublicApi(noopStartRum, noopRecorderApi, noopProfilerApi)
     expect(rumPublicApi.version).toBe('test')
   })
 
@@ -992,7 +1016,8 @@ describe('rum public api', () => {
           ...noopStartRum(),
           setViewName: setViewNameSpy,
         }),
-        noopRecorderApi
+        noopRecorderApi,
+        noopProfilerApi
       )
     })
 
@@ -1017,7 +1042,8 @@ describe('rum public api', () => {
           setViewContext: setViewContextSpy,
           setViewContextProperty: setViewContextPropertySpy,
         }),
-        noopRecorderApi
+        noopRecorderApi,
+        noopProfilerApi
       )
     })
 
@@ -1051,7 +1077,8 @@ describe('rum public api', () => {
           ...noopStartRum(),
           getViewContext: getViewContextSpy,
         }),
-        noopRecorderApi
+        noopRecorderApi,
+        noopProfilerApi
       )
     })
 

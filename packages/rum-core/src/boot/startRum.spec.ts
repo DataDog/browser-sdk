@@ -27,6 +27,7 @@ import {
   mockPageStateHistory,
   mockPerformanceObserver,
   mockRumConfiguration,
+  noopProfilerApi,
   noopRecorderApi,
   setupLocationObserver,
 } from '../../test'
@@ -95,7 +96,6 @@ function startRumStub(
     domMutationObservable,
     windowOpenObservable,
     locationChangeObservable,
-    pageStateHistory,
     noopRecorderApi,
     viewHistory
   )
@@ -331,6 +331,7 @@ describe('view events', () => {
     const startResult = startRum(
       mockRumConfiguration(),
       noopRecorderApi,
+      noopProfilerApi,
       () => ({ user: {}, context: {}, account: {}, hasReplay: undefined }),
       undefined,
       createIdentityEncoder,

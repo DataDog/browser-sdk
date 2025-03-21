@@ -1,13 +1,13 @@
 variables:
-  CURRENT_STAGING: staging-09
+  CURRENT_STAGING: staging-12
   APP: 'browser-sdk'
-  CURRENT_CI_IMAGE: 77
+  CURRENT_CI_IMAGE: 78
   BUILD_STABLE_REGISTRY: 'registry.ddbuild.io'
   CI_IMAGE: '$BUILD_STABLE_REGISTRY/ci/$APP:$CURRENT_CI_IMAGE'
   GIT_REPOSITORY: 'git@github.com:DataDog/browser-sdk.git'
   MAIN_BRANCH: 'main'
   NEXT_MAJOR_BRANCH: ''
-  CHROME_PACKAGE_VERSION: 133.0.6943.53-1
+  CHROME_PACKAGE_VERSION: 134.0.6998.35-1
 
 cache:
   key:
@@ -95,7 +95,6 @@ stages:
 ###########################################################################################################################
 # Resource allocation
 ###########################################################################################################################
-
 .resource-allocation-4-cpus:
   variables:
     WORKERS: 2
@@ -170,6 +169,9 @@ test-performance:
   extends:
     - .base-configuration
     - .test-allowed-branches
+  except:
+    variables:
+      - $CI_COMMIT_REF_NAME == $CURRENT_STAGING
   interruptible: true
   allow_failure: true
   script:

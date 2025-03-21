@@ -1,30 +1,47 @@
 import React, { act } from 'react'
-import { MemoryRouter as MemoryRouterV6, Route as RouteV6, useNavigate as useNavigateV6 } from 'react-router-dom-6'
-import { MemoryRouter as MemoryRouterV7, Route as RouteV7, useNavigate as useNavigateV7 } from 'react-router-dom-7'
+import * as rrdom6 from 'react-router-dom-6'
+import * as rrdom7 from 'react-router-dom'
+import { ignoreConsoleLogs } from '../../../../core/test'
 import { initializeReactPlugin } from '../../../test/initializeReactPlugin'
 import { appendComponent } from '../../../test/appendComponent'
-import { Routes as RoutesV6 } from '../../entries/reactRouterV6'
-import { Routes as RoutesV7 } from '../../entries/reactRouterV7'
+import { createRoutesComponent } from './routesComponent'
+import { ignoreReactRouterDeprecationWarnings } from './reactRouter.specHelper'
+import { wrapUseRoutes } from './useRoutes'
 ;[
   {
     version: 'react-router-6',
-    MemoryRouter: MemoryRouterV6,
-    Route: RouteV6,
-    useNavigate: useNavigateV6,
-    Routes: RoutesV6,
+    MemoryRouter: rrdom6.MemoryRouter,
+    Route: rrdom6.Route,
+    useNavigate: rrdom6.useNavigate,
+    Routes: createRoutesComponent(
+      wrapUseRoutes({
+        useRoutes: rrdom6.useRoutes,
+        useLocation: rrdom6.useLocation,
+        matchRoutes: rrdom6.matchRoutes,
+      }),
+      rrdom6.createRoutesFromChildren
+    ),
   },
   {
     version: 'react-router-7',
-    MemoryRouter: MemoryRouterV7,
-    Route: RouteV7,
-    useNavigate: useNavigateV7,
-    Routes: RoutesV7,
+    MemoryRouter: rrdom7.MemoryRouter,
+    Route: rrdom7.Route,
+    useNavigate: rrdom7.useNavigate,
+    Routes: createRoutesComponent(
+      wrapUseRoutes({
+        useRoutes: rrdom7.useRoutes,
+        useLocation: rrdom7.useLocation,
+        matchRoutes: rrdom7.matchRoutes,
+      }),
+      rrdom7.createRoutesFromChildren
+    ),
   },
 ].forEach(({ version, MemoryRouter, Route, useNavigate, Routes }) => {
   describe(`Routes component (${version})`, () => {
     let startViewSpy: jasmine.Spy<(name?: string | object) => void>
 
     beforeEach(() => {
+      ignoreReactRouterDeprecationWarnings()
       startViewSpy = jasmine.createSpy()
       initializeReactPlugin({
         configuration: {
@@ -163,7 +180,7 @@ import { Routes as RoutesV7 } from '../../entries/reactRouterV7'
 
     it('does not start a new view if it does not match any route', () => {
       // Prevent react router from showing a warning in the console when a route does not match
-      spyOn(console, 'warn')
+      ignoreConsoleLogs('warn', 'No routes matched location')
 
       appendComponent(
         <MemoryRouter>

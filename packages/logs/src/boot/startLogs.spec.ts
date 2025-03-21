@@ -20,6 +20,7 @@ import {
   registerCleanupTask,
   mockClock,
   expireCookie,
+  DEFAULT_FETCH_MOCK,
 } from '@datadog/browser-core/test'
 
 import type { LogsConfiguration } from '../domain/configuration'
@@ -83,7 +84,7 @@ describe('logs', () => {
   })
 
   describe('request', () => {
-    it('should send the needed data', () => {
+    it('should send the needed data', async () => {
       ;({ handleLog, stop: stopLogs } = startLogs(
         initConfiguration,
         baseConfiguration,
@@ -99,8 +100,10 @@ describe('logs', () => {
         COMMON_CONTEXT
       )
 
+      await interceptor.waitForAllFetchCalls()
+
       expect(requests.length).toEqual(1)
-      expect(requests[0].url).toContain(baseConfiguration.logsEndpointBuilder.build('xhr', DEFAULT_PAYLOAD))
+      expect(requests[0].url).toContain(baseConfiguration.logsEndpointBuilder.build('fetch', DEFAULT_PAYLOAD))
       expect(getLoggedMessage(requests, 0)).toEqual({
         date: jasmine.any(Number),
         foo: 'bar',
@@ -122,7 +125,7 @@ describe('logs', () => {
       })
     })
 
-    it('should all use the same batch', () => {
+    it('should all use the same batch', async () => {
       ;({ handleLog, stop: stopLogs } = startLogs(
         initConfiguration,
         { ...baseConfiguration, batchMessagesLimit: 3 },
@@ -134,6 +137,8 @@ describe('logs', () => {
       handleLog(DEFAULT_MESSAGE, logger)
       handleLog(DEFAULT_MESSAGE, logger)
       handleLog(DEFAULT_MESSAGE, logger)
+
+      await interceptor.waitForAllFetchCalls()
 
       expect(requests.length).toEqual(1)
     })
@@ -256,7 +261,7 @@ describe('logs', () => {
       clock.cleanup()
     })
 
-    it('sends logs without session id when the session expires ', () => {
+    it('sends logs without session id when the session expires ', async () => {
       setCookie(SESSION_STORE_KEY, 'id=foo&logs=1', ONE_MINUTE)
       ;({ handleLog, stop: stopLogs } = startLogs(
         initConfiguration,
@@ -266,12 +271,16 @@ describe('logs', () => {
       ))
       registerCleanupTask(stopLogs)
 
+      interceptor.withFetch(DEFAULT_FETCH_MOCK, DEFAULT_FETCH_MOCK)
+
       handleLog({ status: StatusType.info, message: 'message 1' }, logger)
 
       expireCookie()
       clock.tick(STORAGE_POLL_DELAY * 2)
 
       handleLog({ status: StatusType.info, message: 'message 2' }, logger)
+
+      await interceptor.waitForAllFetchCalls()
 
       const firstRequest = getLoggedMessage(requests, 0)
       const secondRequest = getLoggedMessage(requests, 1)

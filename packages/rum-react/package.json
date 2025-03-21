@@ -1,6 +1,6 @@
 {
   "name": "@datadog/browser-rum-react",
-  "version": "6.3.0",
+  "version": "6.6.0",
   "license": "Apache-2.0",
   "main": "cjs/entries/main.js",
   "module": "esm/entries/main.js",
@@ -12,8 +12,8 @@
     "prepack": "npm run build"
   },
   "dependencies": {
-    "@datadog/browser-core": "6.3.0",
-    "@datadog/browser-rum-core": "6.3.0"
+    "@datadog/browser-core": "6.6.0",
+    "@datadog/browser-rum-core": "6.6.0"
   },
   "peerDependencies": {
     "react": "18 || 19",
@@ -38,8 +38,8 @@
     "@types/react-dom": "19.0.4",
     "react": "19.0.0",
     "react-dom": "19.0.0",
-    "react-router-dom-6": "npm:react-router-dom@6.29.0",
-    "react-router-dom-7": "npm:react-router-dom@7.1.3"
+    "react-router-dom": "7.3.0",
+    "react-router-dom-6": "npm:react-router-dom@6.30.0"
   },
   "repository": {
     "type": "git",

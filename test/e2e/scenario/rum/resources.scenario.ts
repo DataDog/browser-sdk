@@ -1,7 +1,7 @@
 import { test, expect } from '@playwright/test'
 import type { RumResourceEvent } from '@datadog/browser-rum'
 import type { IntakeRegistry } from '../../lib/framework'
-import { bundleSetup, createTest, html } from '../../lib/framework'
+import { createTest, html } from '../../lib/framework'
 
 const REQUEST_DURATION = 200
 
@@ -80,7 +80,6 @@ test.describe('rum resources', () => {
   test.describe('XHR abort support', () => {
     createTest('track aborted XHR')
       .withRum()
-      .withSetup(bundleSetup)
       .run(async ({ intakeRegistry, flushEvents, page }) => {
         await page.evaluate(
           () =>
@@ -102,7 +101,6 @@ test.describe('rum resources', () => {
 
     createTest('aborting an unsent XHR should be ignored')
       .withRum()
-      .withSetup(bundleSetup)
       .run(async ({ intakeRegistry, flushEvents, page }) => {
         await page.evaluate(
           () =>
@@ -122,7 +120,6 @@ test.describe('rum resources', () => {
 
     createTest('aborting an XHR when state becomes DONE and before the loadend event should be ignored')
       .withRum()
-      .withSetup(bundleSetup)
       .run(async ({ intakeRegistry, flushEvents, page }) => {
         await page.evaluate(
           () =>
@@ -146,7 +143,6 @@ test.describe('rum resources', () => {
 
     createTest('aborting an XHR after the loadend event should be ignored')
       .withRum()
-      .withSetup(bundleSetup)
       .run(async ({ intakeRegistry, flushEvents, page }) => {
         await page.evaluate(
           () =>
@@ -187,7 +183,6 @@ test.describe('rum resources', () => {
   test.describe('fetch abort support', () => {
     createTest('track aborted fetch')
       .withRum()
-      .withSetup(bundleSetup)
       .run(async ({ intakeRegistry, flushEvents, page }) => {
         await page.evaluate(
           () =>
@@ -237,7 +232,6 @@ test.describe('rum resources', () => {
 
   createTest('track concurrent fetch to same resource')
     .withRum()
-    .withSetup(bundleSetup)
     .run(async ({ intakeRegistry, flushEvents, page, browserName }) => {
       test.skip(browserName === 'webkit', 'Safari does not emit predictable timings events for concurrent fetches')
 
@@ -264,7 +258,6 @@ test.describe('rum resources', () => {
   test.describe('support XHRs with same XMLHttpRequest instance', () => {
     createTest('track XHRs when calling requests one after another')
       .withRum()
-      .withSetup(bundleSetup)
       .run(async ({ intakeRegistry, flushEvents, page }) => {
         await page.evaluate(
           () =>

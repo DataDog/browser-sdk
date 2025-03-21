@@ -47,12 +47,12 @@ import type { CustomVitalsState } from '../domain/vital/vitalCollection'
 import { startVitalCollection } from '../domain/vital/vitalCollection'
 import { startCiVisibilityContext } from '../domain/contexts/ciVisibilityContext'
 import { startLongAnimationFrameCollection } from '../domain/longAnimationFrame/longAnimationFrameCollection'
-import { RumPerformanceEntryType } from '../browser/performanceObservable'
+import { RumPerformanceEntryType, supportPerformanceTimingEvent } from '../browser/performanceObservable'
 import { startLongTaskCollection } from '../domain/longTask/longTaskCollection'
 import type { Hooks } from '../hooks'
 import { createHooks } from '../hooks'
 import { startSyntheticsContext } from '../domain/contexts/syntheticsContext'
-import type { RecorderApi } from './rumPublicApi'
+import type { RecorderApi, ProfilerApi } from './rumPublicApi'
 
 export type StartRum = typeof startRum
 export type StartRumResult = ReturnType<StartRum>
@@ -60,6 +60,7 @@ export type StartRumResult = ReturnType<StartRum>
 export function startRum(
   configuration: RumConfiguration,
   recorderApi: RecorderApi,
+  profilerApi: ProfilerApi,
   getCommonContext: () => CommonContext,
   initialViewOptions: ViewOptions | undefined,
   createEncoder: (streamId: DeflateEncoderStreamId) => Encoder,
@@ -124,7 +125,7 @@ export function startRum(
 
   const domMutationObservable = createDOMMutationObservable()
   const locationChangeObservable = createLocationChangeObservable(configuration, location)
-  const pageStateHistory = startPageStateHistory(configuration)
+  const pageStateHistory = startPageStateHistory(hooks, configuration)
   const viewHistory = startViewHistory(lifeCycle)
   const urlContexts = startUrlContexts(lifeCycle, hooks, locationChangeObservable, location)
   const featureFlagContexts = startFeatureFlagContexts(lifeCycle, hooks, configuration)
@@ -168,7 +169,6 @@ export function startRum(
     domMutationObservable,
     windowOpenObservable,
     locationChangeObservable,
-    pageStateHistory,
     recorderApi,
     viewHistory,
     initialViewOptions
@@ -180,7 +180,7 @@ export function startRum(
   cleanupTasks.push(stopResourceCollection)
 
   if (configuration.trackLongTasks) {
-    if (PerformanceObserver.supportedEntryTypes?.includes(RumPerformanceEntryType.LONG_ANIMATION_FRAME)) {
+    if (supportPerformanceTimingEvent(RumPerformanceEntryType.LONG_ANIMATION_FRAME)) {
       const { stop: stopLongAnimationFrameCollection } = startLongAnimationFrameCollection(lifeCycle, configuration)
       cleanupTasks.push(stopLongAnimationFrameCollection)
     } else {
@@ -188,9 +188,9 @@ export function startRum(
     }
   }
 
-  const { addError } = startErrorCollection(lifeCycle, configuration, pageStateHistory)
+  const { addError } = startErrorCollection(lifeCycle, configuration)
 
-  startRequestCollection(lifeCycle, configuration, session)
+  startRequestCollection(lifeCycle, configuration, session, getCommonContext)
 
   const vitalCollection = startVitalCollection(lifeCycle, pageStateHistory, customVitalsState)
   const internalContext = startInternalContext(
@@ -200,6 +200,9 @@ export function startRum(
     actionContexts,
     urlContexts
   )
+
+  // Add Clean-up tasks for Profiler API.
+  cleanupTasks.push(() => profilerApi.stop())
 
   return {
     addAction,
@@ -252,8 +255,7 @@ export function startRumEventCollection(
     hooks,
     domMutationObservable,
     windowOpenObservable,
-    configuration,
-    pageStateHistory
+    configuration
   )
 
   const displayContext = startDisplayContext(configuration)
@@ -282,6 +284,7 @@ export function startRumEventCollection(
       displayContext.stop()
       viewHistory.stop()
       pageStateHistory.stop()
+      urlContexts.stop()
     },
   }
 }
