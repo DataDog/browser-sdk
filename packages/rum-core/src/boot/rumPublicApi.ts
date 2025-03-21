@@ -9,8 +9,7 @@ import type {
   DeflateEncoder,
   TrackingConsent,
   PublicApi,
-  Duration,
-} from '@datadog/browser-core'
+  Duration} from '@datadog/browser-core';
 import {
   addTelemetryUsage,
   CustomerDataType,
@@ -28,7 +27,7 @@ import {
   storeContextManager,
   displayAlreadyInitializedError,
   createTrackingConsentState,
-  timeStampToClocks,
+  timeStampToClocks
 } from '@datadog/browser-core'
 import type { LifeCycle } from '../domain/lifeCycle'
 import type { ViewHistory } from '../domain/contexts/viewHistory'
@@ -259,7 +258,7 @@ export interface RumPublicApi extends PublicApi {
 
   /**
    * Start a view manually.
-   * Enable to manual start a view, use `trackViewsManually: true` init parameter and call `startView()` to create RUM views and be aligned with how you’ve defined them in your SPA application routing.
+   * Enable to manual start a view, use `trackViewsManually: true` init parameter and call `startView()` to create RUM views and be aligned with how you've defined them in your SPA application routing.
    *
    * @param options.name name of the view
    * @param options.service service of the view
@@ -417,6 +416,11 @@ export function makeRumPublicApi(
   profilerApi: ProfilerApi,
   options: RumPublicApiOptions = {}
 ): RumPublicApi {
+  // if (isUnsupportedExtensionEnvironment()) {
+  //   console.log('Unsupported extension environment detected, RUM is disabled.')
+  //   return {} as RumPublicApi
+  // }
+  // console.log('escaped')
   const customerDataTrackerManager = createCustomerDataTrackerManager(CustomerDataCompressionStatus.Unknown)
   const globalContextManager = createContextManager('global context', {
     customerDataTracker: customerDataTrackerManager.getOrCreateTracker(CustomerDataType.GlobalContext),
