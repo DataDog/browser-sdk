@@ -12,6 +12,7 @@ export {
   INTAKE_SITE_EU1,
   INTAKE_URL_PARAMETERS,
   isIntakeUrl,
+  Site
 } from './domain/configuration'
 export type { TrackingConsentState } from './domain/trackingConsent'
 export { TrackingConsent, createTrackingConsentState } from './domain/trackingConsent'
