@@ -18,6 +18,36 @@
 
 ---
 
+## v6.6.1
+
+**Public Changes:**
+
+- Revert "⚡️ use `import()` for lazy loading chunks ([#3399](https://github.com/DataDog/browser-sdk/pull/3399))" ([#3440](https://github.com/DataDog/browser-sdk/pull/3440))
+- 📝 [RUM-7705] Add js doc about option that need to be aligned ([#3410](https://github.com/DataDog/browser-sdk/pull/3410)) [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+
+## v6.6.0
+
+**Public Changes:**
+
+- ✨ [RUM-7387] Add user id and account id to trace header ([#3395](https://github.com/DataDog/browser-sdk/pull/3395)) [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+- 🐛 [RUM-8606] Track First Hidden before init ([#3391](https://github.com/DataDog/browser-sdk/pull/3391)) [RUM] [RUM-REACT] [RUM-SLIM]
+- 🐛 [devex] fix non-string log message ([#3426](https://github.com/DataDog/browser-sdk/pull/3426))
+- ⚡️ use `import()` for lazy loading chunks ([#3399](https://github.com/DataDog/browser-sdk/pull/3399))
+- ⚡️ [RUM-8664] do not update customer data when value does not changes ([#3384](https://github.com/DataDog/browser-sdk/pull/3384)) [RUM] [RUM-REACT] [RUM-SLIM]
+
+**Internal Changes:**
+
+- 👷 [RUM-105] use local dev server for local e2e tests ([#3420](https://github.com/DataDog/browser-sdk/pull/3420))
+- 👷 Enable the Terser 'unsafe' option ([#3418](https://github.com/DataDog/browser-sdk/pull/3418))
+- 👷 Update all non-major dependencies ([#3408](https://github.com/DataDog/browser-sdk/pull/3408)) [RUM-REACT]
+- 👷 Enable Terser's unsafe_methods option ([#3416](https://github.com/DataDog/browser-sdk/pull/3416))
+- 👷 Use four Terser passes ([#3414](https://github.com/DataDog/browser-sdk/pull/3414))
+- 👷 Bump chrome to 134.0.6998.35-1 with signed commit ([#3392](https://github.com/DataDog/browser-sdk/pull/3392))
+- 🔧 Update GitLab CI configuration to exclude current staging branch from performance tests ([#3425](https://github.com/DataDog/browser-sdk/pull/3425))
+- ♻️ [RUM-8795] Replace XHR with Fetch for HTTP requests ([#3417](https://github.com/DataDog/browser-sdk/pull/3417)) [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+- ⚗️[RUM Profiler] Integrate Profiler into SDK ([#3340](https://github.com/DataDog/browser-sdk/pull/3340)) [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+- 🚨 [RUM-8945] add a rule to make sure we don't import dev deps in prod files ([#3412](https://github.com/DataDog/browser-sdk/pull/3412))
+
 ## v6.5.1
 
 **Public Changes:**

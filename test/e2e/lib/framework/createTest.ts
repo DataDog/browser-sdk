@@ -71,7 +71,7 @@ class TestBuilder {
   private body = ''
   private basePath = ''
   private eventBridge = false
-  private setups: Array<{ factory: SetupFactory; name?: string }> = []
+  private setups: Array<{ factory: SetupFactory; name?: string }> = DEFAULT_SETUPS
 
   constructor(private title: string) {}
 
@@ -120,17 +120,7 @@ class TestBuilder {
     return this
   }
 
-  withSetup(factory: SetupFactory, name?: string) {
-    this.setups.push({ factory, name })
-    if (this.setups.length > 1 && this.setups.some((item) => !item.name)) {
-      throw new Error('Tests with multiple setups need to give a name to each setups')
-    }
-    return this
-  }
-
   run(runner: TestRunner) {
-    const setups = this.setups.length ? this.setups : DEFAULT_SETUPS
-
     const setupOptions: SetupOptions = {
       body: this.body,
       head: this.head,
@@ -149,16 +139,16 @@ class TestBuilder {
 
     if (this.alsoRunWithRumSlim) {
       test.describe(this.title, () => {
-        declareTestsForSetups('rum', setups, setupOptions, runner)
+        declareTestsForSetups('rum', this.setups, setupOptions, runner)
         declareTestsForSetups(
           'rum-slim',
-          setups.filter((setup) => setup.factory !== npmSetup),
+          this.setups.filter((setup) => setup.factory !== npmSetup),
           { ...setupOptions, useRumSlim: true },
           runner
         )
       })
     } else {
-      declareTestsForSetups(this.title, setups, setupOptions, runner)
+      declareTestsForSetups(this.title, this.setups, setupOptions, runner)
     }
   }
 

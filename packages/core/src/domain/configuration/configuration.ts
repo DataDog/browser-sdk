@@ -55,12 +55,16 @@ export interface InitConfiguration {
 
   /**
    * Which storage strategy to use for persisting sessions. Can be either 'cookie' or 'local-storage'.
+   *
+   * Important: If you are using the RUM and Logs Browser SDKs, this option must be configured with identical values
    * @default "cookie"
    */
   sessionPersistence?: SessionPersistence | undefined
 
   /**
    * Allows the use of localStorage when cookies cannot be set. This enables the RUM Browser SDK to run in environments that do not provide cookie support.
+   *
+   * Important: If you are using the RUM and Logs Browser SDKs, this option must be configured with identical values
    * See [Monitor Electron Applications Using the Browser SDK](https://docs.datadoghq.com/real_user_monitoring/guide/monitor-electron-applications-using-browser-sdk) for further information.
    * @deprecated use `sessionPersistence: local-storage` where you want to use localStorage instead
    */
@@ -113,16 +117,22 @@ export interface InitConfiguration {
   // cookie options
   /**
    * Use a partitioned secure cross-site session cookie. This allows the RUM Browser SDK to run when the site is loaded from another one (iframe). Implies `useSecureSessionCookie`.
+   *
+   * Important: If you are using the RUM and Logs Browser SDKs, this option must be configured with identical values
    * @default false
    */
   usePartitionedCrossSiteSessionCookie?: boolean | undefined
   /**
    * Use a secure session cookie. This disables RUM events sent on insecure (non-HTTPS) connections.
+   *
+   * Important: If you are using the RUM and Logs Browser SDKs, this option must be configured with identical values
    * @default false
    */
   useSecureSessionCookie?: boolean | undefined
   /**
    * Preserve the session across subdomains for the same site.
+   *
+   * Important: If you are using the RUM and Logs Browser SDKs, this option must be configured with identical values
    * @default false
    */
   trackSessionAcrossSubdomains?: boolean | undefined
