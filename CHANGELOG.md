@@ -18,6 +18,13 @@
 
 ---
 
+## v6.6.1
+
+**Public Changes:**
+
+- Revert "⚡️ use `import()` for lazy loading chunks ([#3399](https://github.com/DataDog/browser-sdk/pull/3399))" ([#3440](https://github.com/DataDog/browser-sdk/pull/3440))
+- 📝 [RUM-7705] Add js doc about option that need to be aligned ([#3410](https://github.com/DataDog/browser-sdk/pull/3410)) [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+
 ## v6.6.0
 
 **Public Changes:**
