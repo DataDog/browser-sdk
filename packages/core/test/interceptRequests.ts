@@ -5,6 +5,10 @@ import { registerCleanupTask } from './registerCleanupTask'
 
 const INTAKE_PARAMS = INTAKE_URL_PARAMETERS.join('&')
 
+export const DEFAULT_FETCH_MOCK = () => Promise.resolve({ status: 200, type: 'cors' })
+export const TOO_MANY_REQUESTS_FETCH_MOCK = () => Promise.resolve({ status: 429, type: 'cors' })
+export const NETWORK_ERROR_FETCH_MOCK = () => Promise.reject(new Error('Network request failed'))
+
 export const SPEC_ENDPOINTS = {
   logsEndpointBuilder: mockEndpointBuilder(`https://mock.com/abcde?${INTAKE_PARAMS}`),
   rumEndpointBuilder: mockEndpointBuilder(`https://mock.com/abcde?${INTAKE_PARAMS}`),
@@ -15,7 +19,7 @@ export function mockEndpointBuilder(url: string) {
 }
 
 export interface Request {
-  type: 'xhr' | 'sendBeacon' | 'fetch'
+  type: 'sendBeacon' | 'fetch' | 'fetch-keepalive'
   url: string
   body: string
 }
@@ -26,27 +30,47 @@ export function interceptRequests() {
   const originalRequest = window.Request
   const originalFetch = window.fetch
 
-  spyOn(XMLHttpRequest.prototype, 'open').and.callFake((_, url) => requests.push({ type: 'xhr', url } as Request))
-  spyOn(XMLHttpRequest.prototype, 'send').and.callFake((body) => (requests[requests.length - 1].body = body as string))
   if (isSendBeaconSupported()) {
     spyOn(navigator, 'sendBeacon').and.callFake((url, body) => {
       requests.push({ type: 'sendBeacon', url: url as string, body: body as string })
       return true
     })
   }
-  if (isFetchKeepAliveSupported()) {
-    spyOn(window, 'fetch').and.callFake((url, config) => {
-      requests.push({ type: 'fetch', url: url as string, body: config!.body as string })
-      return new Promise<Response>(() => undefined)
+
+  let fetchMocks: Array<() => Promise<unknown>> = [DEFAULT_FETCH_MOCK]
+
+  let resolveFetchCallReturns: (() => void) | undefined
+  const endAllPromises = new Promise<void>((resolve) => {
+    resolveFetchCallReturns = resolve
+  })
+
+  const fetchSpy = spyOn(window, 'fetch').and.callFake((url, config) => {
+    const fetchPromise = fetchMocks.shift()
+
+    if (!fetchPromise) {
+      throw new Error('No fetch mock provided')
+    }
+
+    requests.push({
+      type: config?.keepalive ? 'fetch-keepalive' : 'fetch',
+      url: url as string,
+      body: config!.body as string,
     })
-  }
+    return fetchPromise()
+      .then((response) => response as Response)
+      .finally(() => {
+        if (fetchMocks.length === 0) {
+          resolveFetchCallReturns?.()
+        }
+      })
+  })
 
   function isSendBeaconSupported() {
     return !!navigator.sendBeacon
   }
 
   function isFetchKeepAliveSupported() {
-    return 'fetch' in window && 'keepalive' in new window.Request('')
+    return window.Request && 'keepalive' in new window.Request('')
   }
 
   registerCleanupTask(() => {
@@ -66,14 +90,16 @@ export function interceptRequests() {
     requests,
     isSendBeaconSupported,
     isFetchKeepAliveSupported,
+    waitForAllFetchCalls: () => endAllPromises,
     withSendBeacon(newSendBeacon: any) {
       navigator.sendBeacon = newSendBeacon
     },
     withRequest(newRequest: any) {
       window.Request = newRequest
     },
-    withFetch(newFetch: any) {
-      window.fetch = newFetch
+    withFetch(...responses: Array<() => Promise<unknown>>) {
+      fetchMocks = responses
+      return fetchSpy
     },
     withMockXhr(onSend: (xhr: MockXhr) => void) {
       mockXhr()
