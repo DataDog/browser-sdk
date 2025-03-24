@@ -9,7 +9,7 @@ import type {
 } from '@datadog/browser-core'
 import {
   sendToExtension,
-  createPageExitObservable,
+  createPageMayExitObservable,
   TelemetryService,
   startTelemetry,
   canUseEventBridge,
@@ -100,11 +100,11 @@ export function startRum(
     addTelemetryDebug('Error reported to customer', { 'error.message': error.message })
   }
 
-  const pageExitObservable = createPageExitObservable(configuration)
-  const pageExitSubscription = pageExitObservable.subscribe((event) => {
-    lifeCycle.notify(LifeCycleEventType.PAGE_EXITED, event)
+  const pageMayExitObservable = createPageMayExitObservable(configuration)
+  const pageMayExitSubscription = pageMayExitObservable.subscribe((event) => {
+    lifeCycle.notify(LifeCycleEventType.PAGE_MAY_EXIT, event)
   })
-  cleanupTasks.push(() => pageExitSubscription.unsubscribe())
+  cleanupTasks.push(() => pageMayExitSubscription.unsubscribe())
 
   const session = !canUseEventBridge()
     ? startRumSessionManager(configuration, lifeCycle, trackingConsentState)
@@ -115,7 +115,7 @@ export function startRum(
       lifeCycle,
       telemetry.observable,
       reportError,
-      pageExitObservable,
+      pageMayExitObservable,
       session.expireObservable,
       createEncoder
     )

@@ -1,4 +1,4 @@
-import type { PageExitEvent, PageExitReason } from '../browser/pageExitObservable'
+import type { PageMayExitEvent, PageExitReason } from '../browser/pageMayExitObservable'
 import { Observable } from '../tools/observable'
 import type { TimeoutId } from '../tools/timer'
 import { clearTimeout, setTimeout } from '../tools/timer'
@@ -17,7 +17,7 @@ interface FlushControllerOptions {
   messagesLimit: number
   bytesLimit: number
   durationLimit: Duration
-  pageExitObservable: Observable<PageExitEvent>
+  pageMayExitObservable: Observable<PageMayExitEvent>
   sessionExpireObservable: Observable<void>
 }
 
@@ -30,14 +30,14 @@ export function createFlushController({
   messagesLimit,
   bytesLimit,
   durationLimit,
-  pageExitObservable,
+  pageMayExitObservable,
   sessionExpireObservable,
 }: FlushControllerOptions) {
-  const pageExitSubscription = pageExitObservable.subscribe((event) => flush(event.reason))
+  const pageMayExitSubscription = pageMayExitObservable.subscribe((event) => flush(event.reason))
   const sessionExpireSubscription = sessionExpireObservable.subscribe(() => flush('session_expire'))
 
   const flushObservable = new Observable<FlushEvent>(() => () => {
-    pageExitSubscription.unsubscribe()
+    pageMayExitSubscription.unsubscribe()
     sessionExpireSubscription.unsubscribe()
   })
 

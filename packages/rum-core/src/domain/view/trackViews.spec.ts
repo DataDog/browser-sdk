@@ -301,7 +301,7 @@ describe('view lifecycle', () => {
 
         expect(getViewEndCount()).toEqual(0)
 
-        lifeCycle.notify(LifeCycleEventType.PAGE_EXITED, { reason: exitReason })
+        lifeCycle.notify(LifeCycleEventType.PAGE_MAY_EXIT, { reason: exitReason })
 
         expect(getViewEndCount()).toEqual(0)
       })
@@ -312,7 +312,7 @@ describe('view lifecycle', () => {
 
       expect(getViewUpdate(getViewUpdateCount() - 1).isActive).toBe(true)
 
-      lifeCycle.notify(LifeCycleEventType.PAGE_EXITED, { reason: PageExitReason.UNLOADING })
+      lifeCycle.notify(LifeCycleEventType.PAGE_MAY_EXIT, { reason: PageExitReason.UNLOADING })
 
       expect(getViewUpdate(getViewUpdateCount() - 1).isActive).toBe(false)
     })
@@ -322,7 +322,7 @@ describe('view lifecycle', () => {
 
       expect(getViewCreateCount()).toEqual(1)
 
-      lifeCycle.notify(LifeCycleEventType.PAGE_EXITED, { reason: PageExitReason.UNLOADING })
+      lifeCycle.notify(LifeCycleEventType.PAGE_MAY_EXIT, { reason: PageExitReason.UNLOADING })
 
       expect(getViewCreateCount()).toEqual(1)
     })

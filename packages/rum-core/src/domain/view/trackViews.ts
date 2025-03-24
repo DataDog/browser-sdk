@@ -149,8 +149,8 @@ export function trackViews(
       currentView.end({ sessionIsActive: false })
     })
 
-    lifeCycle.subscribe(LifeCycleEventType.PAGE_EXITED, (pageExitEvent) => {
-      if (pageExitEvent.reason === PageExitReason.UNLOADING) {
+    lifeCycle.subscribe(LifeCycleEventType.PAGE_MAY_EXIT, (pageMayExitEvent) => {
+      if (pageMayExitEvent.reason === PageExitReason.UNLOADING) {
         currentView.setInactive()
       }
     })

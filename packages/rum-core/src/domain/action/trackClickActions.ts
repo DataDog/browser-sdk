@@ -75,7 +75,7 @@ export function trackClickActions(
   })
 
   lifeCycle.subscribe(LifeCycleEventType.VIEW_ENDED, stopClickChain)
-  lifeCycle.subscribe(LifeCycleEventType.PAGE_EXITED, (event) => {
+  lifeCycle.subscribe(LifeCycleEventType.PAGE_MAY_EXIT, (event) => {
     if (event.reason === PageExitReason.UNLOADING) {
       stopClickChain()
     }
