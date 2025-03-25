@@ -12,12 +12,12 @@ export const PageExitReason = {
 
 export type PageExitReason = (typeof PageExitReason)[keyof typeof PageExitReason]
 
-export interface PageExitEvent {
+export interface PageMayExitEvent {
   reason: PageExitReason
 }
 
-export function createPageExitObservable(configuration: Configuration): Observable<PageExitEvent> {
-  return new Observable<PageExitEvent>((observable) => {
+export function createPageMayExitObservable(configuration: Configuration): Observable<PageMayExitEvent> {
+  return new Observable<PageMayExitEvent>((observable) => {
     const { stop: stopListeners } = addEventListeners(
       configuration,
       window,

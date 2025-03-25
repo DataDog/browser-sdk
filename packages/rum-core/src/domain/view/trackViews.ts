@@ -149,10 +149,9 @@ export function trackViews(
       currentView.end({ sessionIsActive: false })
     })
 
-    // End the current view on page unload
-    lifeCycle.subscribe(LifeCycleEventType.PAGE_EXITED, (pageExitEvent) => {
-      if (pageExitEvent.reason === PageExitReason.UNLOADING) {
-        currentView.end()
+    lifeCycle.subscribe(LifeCycleEventType.PAGE_MAY_EXIT, (pageMayExitEvent) => {
+      if (pageMayExitEvent.reason === PageExitReason.UNLOADING) {
+        currentView.setInactive()
       }
     })
   }
@@ -211,6 +210,7 @@ function newView(
   const customTimings: ViewCustomTimings = {}
   let documentVersion = 0
   let endClocks: ClocksState | undefined
+  let isActive = true
   const location = shallowClone(initialLocation)
   const contextManager = createContextManager()
 
@@ -306,7 +306,7 @@ function newView(
       commonViewMetrics: getCommonViewMetrics(),
       initialViewMetrics,
       duration: elapsed(startClocks.timeStamp, currentEnd),
-      isActive: endClocks === undefined,
+      isActive,
       sessionIsActive,
       eventCounts,
     })
@@ -320,6 +320,10 @@ function newView(
     version,
     contextManager,
     stopObservable,
+    setInactive() {
+      isActive = false
+      triggerViewUpdate()
+    },
     end(options: { endClocks?: ClocksState; sessionIsActive?: boolean } = {}) {
       if (endClocks) {
         // view already ended
@@ -327,6 +331,7 @@ function newView(
       }
       endClocks = options.endClocks ?? clocksNow()
       sessionIsActive = options.sessionIsActive ?? true
+      isActive = false
 
       lifeCycle.notify(LifeCycleEventType.VIEW_ENDED, { endClocks })
       lifeCycle.notify(LifeCycleEventType.AFTER_VIEW_ENDED, { endClocks })

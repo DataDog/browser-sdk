@@ -1,7 +1,7 @@
 import type { Configuration, EndpointBuilder } from '../domain/configuration'
 import type { Context } from '../tools/serialisation/context'
 import type { Observable } from '../tools/observable'
-import type { PageExitEvent } from '../browser/pageExitObservable'
+import type { PageMayExitEvent } from '../browser/pageMayExitObservable'
 import type { RawError } from '../domain/error/error.types'
 import type { Encoder } from '../tools/encoder'
 import { createBatch } from './batch'
@@ -22,7 +22,7 @@ export function startBatchWithReplica<T extends Context>(
   primary: BatchConfiguration,
   replica: ReplicaBatchConfiguration<T> | undefined,
   reportError: (error: RawError) => void,
-  pageExitObservable: Observable<PageExitEvent>,
+  pageMayExitObservable: Observable<PageMayExitEvent>,
   sessionExpireObservable: Observable<void>,
   batchFactoryImp = createBatch
 ) {
@@ -37,7 +37,7 @@ export function startBatchWithReplica<T extends Context>(
         messagesLimit: configuration.batchMessagesLimit,
         bytesLimit: configuration.batchBytesLimit,
         durationLimit: configuration.flushTimeout,
-        pageExitObservable,
+        pageMayExitObservable,
         sessionExpireObservable,
       }),
       messageBytesLimit: configuration.messageBytesLimit,
