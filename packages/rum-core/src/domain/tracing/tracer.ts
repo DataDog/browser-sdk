@@ -224,7 +224,7 @@ function makeTracingHeaders(
     const baggageItems: string[] = []
 
     if (typeof userId === 'string') {
-      baggageItems.push(`user.id=${encodeURIComponent(userId)}`)
+      baggageItems.push(`usr.id=${encodeURIComponent(userId)}`)
     }
     if (typeof accountId === 'string') {
       baggageItems.push(`account.id=${encodeURIComponent(accountId)}`)

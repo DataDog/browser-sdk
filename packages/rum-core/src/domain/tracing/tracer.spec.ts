@@ -280,7 +280,7 @@ describe('tracer', () => {
         jasmine.objectContaining({
           traceparent: jasmine.stringMatching(/^[0-9a-f]{2}-[0-9a-f]{32}-[0-9a-f]{16}-01$/),
           tracestate: 'dd=s:1;o:rum',
-          baggage: 'user.id=1234,account.id=5678',
+          baggage: 'usr.id=1234,account.id=5678',
         })
       )
     })
