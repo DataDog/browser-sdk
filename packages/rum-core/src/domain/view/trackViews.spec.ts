@@ -307,14 +307,14 @@ describe('view lifecycle', () => {
       })
     })
 
-    it('should set the view inactive when the page is exiting', () => {
-      const { getViewUpdate, getViewUpdateCount } = viewTest
+    it('should trigger a view update on page exit', () => {
+      const { getViewUpdateCount } = viewTest
 
-      expect(getViewUpdate(getViewUpdateCount() - 1).isActive).toBe(true)
+      expect(getViewUpdateCount()).toEqual(1)
 
       lifeCycle.notify(LifeCycleEventType.PAGE_MAY_EXIT, { reason: PageExitReason.UNLOADING })
 
-      expect(getViewUpdate(getViewUpdateCount() - 1).isActive).toBe(false)
+      expect(getViewUpdateCount()).toEqual(2)
     })
 
     it('should not create a new view when ending the view on page exit', () => {

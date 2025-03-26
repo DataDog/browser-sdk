@@ -148,12 +148,6 @@ export function trackViews(
     lifeCycle.subscribe(LifeCycleEventType.SESSION_EXPIRED, () => {
       currentView.end({ sessionIsActive: false })
     })
-
-    lifeCycle.subscribe(LifeCycleEventType.PAGE_MAY_EXIT, (pageMayExitEvent) => {
-      if (pageMayExitEvent.reason === PageExitReason.UNLOADING) {
-        currentView.setInactive()
-      }
-    })
   }
 
   function renewViewOnLocationChange(locationChangeObservable: Observable<LocationChange>) {
@@ -210,7 +204,6 @@ function newView(
   const customTimings: ViewCustomTimings = {}
   let documentVersion = 0
   let endClocks: ClocksState | undefined
-  let isActive = true
   const location = shallowClone(initialLocation)
   const contextManager = createContextManager()
 
@@ -266,6 +259,12 @@ function newView(
   // Session keep alive
   const keepAliveIntervalId = setInterval(triggerViewUpdate, SESSION_KEEP_ALIVE_INTERVAL)
 
+  const pageMayExitSubscription = lifeCycle.subscribe(LifeCycleEventType.PAGE_MAY_EXIT, (pageMayExitEvent) => {
+    if (pageMayExitEvent.reason === PageExitReason.UNLOADING) {
+      triggerViewUpdate()
+    }
+  })
+
   // Initial view update
   triggerViewUpdate()
 
@@ -306,7 +305,7 @@ function newView(
       commonViewMetrics: getCommonViewMetrics(),
       initialViewMetrics,
       duration: elapsed(startClocks.timeStamp, currentEnd),
-      isActive,
+      isActive: endClocks === undefined,
       sessionIsActive,
       eventCounts,
     })
@@ -320,10 +319,6 @@ function newView(
     version,
     contextManager,
     stopObservable,
-    setInactive() {
-      isActive = false
-      triggerViewUpdate()
-    },
     end(options: { endClocks?: ClocksState; sessionIsActive?: boolean } = {}) {
       if (endClocks) {
         // view already ended
@@ -331,13 +326,13 @@ function newView(
       }
       endClocks = options.endClocks ?? clocksNow()
       sessionIsActive = options.sessionIsActive ?? true
-      isActive = false
 
       lifeCycle.notify(LifeCycleEventType.VIEW_ENDED, { endClocks })
       lifeCycle.notify(LifeCycleEventType.AFTER_VIEW_ENDED, { endClocks })
       clearInterval(keepAliveIntervalId)
       setViewEnd(endClocks.relative)
       stopCommonViewMetricsTracking()
+      pageMayExitSubscription.unsubscribe()
       triggerViewUpdate()
       setTimeout(() => {
         this.stop()
