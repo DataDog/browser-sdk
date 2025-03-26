@@ -22,8 +22,7 @@ function runMain(mainFunction) {
     // callback that will catch both thrown errors and rejected promises
     .then(() => mainFunction())
     .catch((error) => {
-      printError('\nScript exited with error:')
-      printErrorWithCause(error)
+      printError('\nScript exited with error:', error)
       process.exit(1)
     })
 }
@@ -33,14 +32,6 @@ const resetColor = '\x1b[0m'
 function printError(...params) {
   const redColor = '\x1b[31;1m'
   console.log(redColor, ...params, resetColor)
-}
-
-function printErrorWithCause(error) {
-  printError(error)
-  if (error.cause) {
-    printError('Caused by:')
-    printErrorWithCause(error.cause)
-  }
 }
 
 function printLog(...params) {
