@@ -11,7 +11,7 @@
     "postinstall": "scripts/cli init_submodule",
     "build": "lerna run build --stream",
     "build:bundle": "lerna run build:bundle --stream",
-    "build:app": "cd test/app && rm -rf node_modules && yarn && yarn build",
+    "build:app": "lerna run pack --stream && cd test/app && rm -rf node_modules && yarn install --no-immutable && yarn build",
     "format": "prettier --check .",
     "lint": "scripts/cli lint .",
     "typecheck": "scripts/cli typecheck . && scripts/cli typecheck developer-extension",
