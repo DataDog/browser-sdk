@@ -21,7 +21,6 @@ import type { PropagatorType, TracingOption } from './tracer.types'
 import type { SpanIdentifier, TraceIdentifier } from './identifier'
 import { createSpanIdentifier, createTraceIdentifier, toPaddedHexadecimalString } from './identifier'
 import { isTraceSampled } from './sampler'
-import { getEncodedContext } from './encodedContext'
 
 export interface Tracer {
   traceFetch: (context: Partial<RumFetchStartContext>) => void
@@ -192,7 +191,7 @@ function makeTracingHeaders(
           traceparent: `00-0000000000000000${toPaddedHexadecimalString(traceId)}-${toPaddedHexadecimalString(spanId)}-0${
             traceSampled ? '1' : '0'
           }`,
-          tracestate: `dd=${getTraceStateDatadogItems(traceSampled, getCommonContext).join(';')}`,
+          tracestate: `dd=s:${traceSampled ? '1' : '0'};o:rum`,
         })
         break
       }
@@ -213,23 +212,23 @@ function makeTracingHeaders(
       }
     }
   })
-  return tracingHeaders
-}
 
-function getTraceStateDatadogItems(traceSampled: boolean, getCommonContext: () => CommonContext): string[] {
-  const traceStateDatadogItems: string[] = [`s:${traceSampled ? '1' : '0'}`, 'o:rum']
   if (isExperimentalFeatureEnabled(ExperimentalFeature.USER_ACCOUNT_TRACE_HEADER)) {
-    /**
-     * We should only enable this feature after the decoding service is available
-     */
-    const userIdEncoded = getEncodedContext(getCommonContext().user.id)
-    const accountIdEncoded = getEncodedContext(getCommonContext().account.id)
-    if (userIdEncoded) {
-      traceStateDatadogItems.push(`t.usr.id:${userIdEncoded}`)
+    const userId = getCommonContext().user.id
+    const accountId = getCommonContext().account.id
+    const baggageItems: string[] = []
+
+    if (typeof userId === 'string') {
+      baggageItems.push(`user.id=${encodeURIComponent(userId)}`)
     }
-    if (accountIdEncoded) {
-      traceStateDatadogItems.push(`t.account.id:${accountIdEncoded}`)
+    if (typeof accountId === 'string') {
+      baggageItems.push(`account.id=${encodeURIComponent(accountId)}`)
+    }
+
+    if (baggageItems.length > 0) {
+      tracingHeaders['baggage'] = baggageItems.join(',')
     }
   }
-  return traceStateDatadogItems
+
+  return tracingHeaders
 }

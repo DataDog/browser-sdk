@@ -265,7 +265,7 @@ describe('tracer', () => {
       expect(xhr.headers['x-datadog-sampling-priority']).toBeDefined()
     })
 
-    it('should add usr.id and account.id to tracestate when feature is disabled', () => {
+    it('should add usr.id and account.id to baggage when feature is enabled', () => {
       mockExperimentalFeatures([ExperimentalFeature.USER_ACCOUNT_TRACE_HEADER])
       const configurationWithB3andTracecontext = validateAndBuildRumConfiguration({
         ...INIT_CONFIGURATION,
@@ -278,7 +278,8 @@ describe('tracer', () => {
       expect(xhr.headers).toEqual(
         jasmine.objectContaining({
           traceparent: jasmine.stringMatching(/^[0-9a-f]{2}-[0-9a-f]{32}-[0-9a-f]{16}-01$/),
-          tracestate: 'dd=s:1;o:rum;t.usr.id:MTIzNA==;t.account.id:NTY3OA==',
+          tracestate: 'dd=s:1;o:rum',
+          baggage: 'user.id=1234,account.id=5678',
         })
       )
     })
