@@ -156,7 +156,8 @@ function injectHeadersIfTracingAllowed(
       context.spanId,
       context.traceSampled,
       tracingOption.propagatorTypes,
-      getCommonContext
+      getCommonContext,
+      configuration
     )
   )
 }
@@ -170,7 +171,8 @@ function makeTracingHeaders(
   spanId: SpanIdentifier,
   traceSampled: boolean,
   propagatorTypes: PropagatorType[],
-  getCommonContext: () => CommonContext
+  getCommonContext: () => CommonContext,
+  configuration: RumConfiguration
 ): TracingHeaders {
   const tracingHeaders: TracingHeaders = {}
 
@@ -213,7 +215,10 @@ function makeTracingHeaders(
     }
   })
 
-  if (isExperimentalFeatureEnabled(ExperimentalFeature.USER_ACCOUNT_TRACE_HEADER)) {
+  if (
+    isExperimentalFeatureEnabled(ExperimentalFeature.USER_ACCOUNT_TRACE_HEADER) &&
+    configuration.propagateTraceBaggage
+  ) {
     const userId = getCommonContext().user.id
     const accountId = getCommonContext().account.id
     const baggageItems: string[] = []
