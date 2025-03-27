@@ -18,6 +18,19 @@
 
 ---
 
+## v6.6.2
+
+**Public Changes:**
+
+- 🐛 fix TypeScript 4 compatibility ([#3448](https://github.com/DataDog/browser-sdk/pull/3448)) [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+- 🐛 [RUM-99] don't stop RUM/Replay on beforeunload ([#3406](https://github.com/DataDog/browser-sdk/pull/3406)) [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+
+**Internal Changes:**
+
+- ✨ Update TypeScript configuration for e2e tests to include 'noEmit' option ([#3437](https://github.com/DataDog/browser-sdk/pull/3437))
+- 👷 Update all non-major dependencies ([#3438](https://github.com/DataDog/browser-sdk/pull/3438)) [RUM-REACT]
+- 👌 [RUM-99] don't set views as inactive when the page is exiting ([#3446](https://github.com/DataDog/browser-sdk/pull/3446)) [RUM] [RUM-REACT] [RUM-SLIM]
+
 ## v6.6.1
 
 **Public Changes:**
