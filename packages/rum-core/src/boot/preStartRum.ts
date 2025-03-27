@@ -1,3 +1,4 @@
+import type { TrackingConsentState, DeflateWorker, Context, ContextManager, BoundedBuffer } from '@datadog/browser-core'
 import {
   createBoundedBuffer,
   display,
@@ -13,8 +14,8 @@ import {
   initFetchObservable,
   CustomerDataCompressionStatus,
   createCustomerDataTrackerManager,
+  CustomerContextKey,
 } from '@datadog/browser-core'
-import type { TrackingConsentState, DeflateWorker, Context } from '@datadog/browser-core'
 import {
   validateAndBuildRumConfiguration,
   type RumConfiguration,
@@ -45,9 +46,14 @@ export function createPreStartStrategy(
   const customerDataTrackerManager = createCustomerDataTrackerManager(CustomerDataCompressionStatus.Unknown)
 
   // TODO next major: remove the globalContextManager, userContextManager and accountContextManager from preStartStrategy and use an empty context instead
-  const globalContextManager = buildGlobalContextManager(customerDataTrackerManager)
-  const userContextManager = buildUserContextManager(customerDataTrackerManager)
-  const accountContextManager = buildAccountContextManager(customerDataTrackerManager)
+  const globalContext = buildGlobalContextManager(customerDataTrackerManager)
+  bufferContextCalls(globalContext, CustomerContextKey.accountContext, bufferApiCalls)
+
+  const userContext = buildUserContextManager(customerDataTrackerManager)
+  bufferContextCalls(userContext, CustomerContextKey.userContext, bufferApiCalls)
+
+  const accountContext = buildAccountContextManager(customerDataTrackerManager)
+  bufferContextCalls(accountContext, CustomerContextKey.accountContext, bufferApiCalls)
 
   let firstStartViewCall:
     | { options: ViewOptions | undefined; callback: (startRumResult: StartRumResult) => void }
@@ -213,74 +219,9 @@ export function createPreStartStrategy(
 
     getViewContext: () => emptyContext,
 
-    // Global context APIs
-    getGlobalContext: () => globalContextManager.getContext(),
-
-    setGlobalContext(context) {
-      globalContextManager.setContext(context)
-      bufferApiCalls.add((startRumResult) => startRumResult.setGlobalContext(context))
-    },
-
-    setGlobalContextProperty(key, value) {
-      globalContextManager.setContextProperty(key, value)
-      bufferApiCalls.add((startRumResult) => startRumResult.setGlobalContextProperty(key, value))
-    },
-
-    removeGlobalContextProperty(key) {
-      globalContextManager.removeContextProperty(key)
-      bufferApiCalls.add((startRumResult) => startRumResult.removeGlobalContextProperty(key))
-    },
-
-    clearGlobalContext() {
-      globalContextManager.clearContext()
-      bufferApiCalls.add((startRumResult) => startRumResult.clearGlobalContext())
-    },
-
-    // User APIs
-    getUser: () => userContextManager.getContext(),
-
-    setUser(user) {
-      userContextManager.setContext(user)
-      bufferApiCalls.add((startRumResult) => startRumResult.setUser(user))
-    },
-
-    setUserProperty(key, value) {
-      userContextManager.setContextProperty(key, value)
-      bufferApiCalls.add((startRumResult) => startRumResult.setUserProperty(key, value))
-    },
-
-    removeUserProperty(key) {
-      userContextManager.removeContextProperty(key)
-      bufferApiCalls.add((startRumResult) => startRumResult.removeUserProperty(key))
-    },
-
-    clearUser() {
-      userContextManager.clearContext()
-      bufferApiCalls.add((startRumResult) => startRumResult.clearUser())
-    },
-
-    // Account APIs
-    getAccount: () => accountContextManager.getContext(),
-
-    setAccount(account) {
-      accountContextManager.setContext(account)
-      bufferApiCalls.add((startRumResult) => startRumResult.setAccount(account))
-    },
-
-    setAccountProperty(key, value) {
-      accountContextManager.setContextProperty(key, value)
-      bufferApiCalls.add((startRumResult) => startRumResult.setAccountProperty(key, value))
-    },
-
-    removeAccountProperty(key) {
-      accountContextManager.removeContextProperty(key)
-      bufferApiCalls.add((startRumResult) => startRumResult.removeAccountProperty(key))
-    },
-
-    clearAccount() {
-      accountContextManager.clearContext()
-      bufferApiCalls.add((startRumResult) => startRumResult.clearAccount())
-    },
+    globalContext,
+    userContext,
+    accountContext,
 
     addAction(action) {
       bufferApiCalls.add((startRumResult) => startRumResult.addAction(action))
@@ -316,4 +257,15 @@ function overrideInitConfigurationForBridge(initConfiguration: RumInitConfigurat
     sessionSampleRate: 100,
     defaultPrivacyLevel: initConfiguration.defaultPrivacyLevel ?? getEventBridge()?.getPrivacyLevel(),
   }
+}
+
+function bufferContextCalls(
+  preStartContextManager: ContextManager,
+  name: CustomerContextKey,
+  bufferApiCalls: BoundedBuffer<StartRumResult>
+) {
+  preStartContextManager.changeObservable.subscribe(() => {
+    const context = preStartContextManager.getContext()
+    bufferApiCalls.add((startRumResult) => startRumResult[name].setContext(context))
+  })
 }

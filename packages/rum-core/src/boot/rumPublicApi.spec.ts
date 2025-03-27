@@ -34,24 +34,9 @@ const noopStartRum = (): ReturnType<StartRum> => ({
   stopDurationVital: () => undefined,
   addDurationVital: () => undefined,
   stop: () => undefined,
-
-  setAccount: () => undefined,
-  setAccountProperty: () => undefined,
-  getAccount: () => ({}),
-  clearAccount: () => undefined,
-  removeAccountProperty: () => undefined,
-
-  setGlobalContext: () => undefined,
-  setGlobalContextProperty: () => undefined,
-  getGlobalContext: () => ({}),
-  clearGlobalContext: () => undefined,
-  removeGlobalContextProperty: () => undefined,
-
-  setUser: () => undefined,
-  setUserProperty: () => undefined,
-  getUser: () => ({}),
-  clearUser: () => undefined,
-  removeUserProperty: () => undefined,
+  globalContext: {} as any,
+  userContext: {} as any,
+  accountContext: {} as any,
 })
 const DEFAULT_INIT_CONFIGURATION = { applicationId: 'xxx', clientToken: 'xxx' }
 const FAKE_WORKER = {} as DeflateWorker

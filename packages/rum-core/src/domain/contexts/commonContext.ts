@@ -1,8 +1,5 @@
-import type { Context, User } from '@datadog/browser-core'
+import type { Context, ContextManager, User } from '@datadog/browser-core'
 import type { RecorderApi } from '../../boot/rumPublicApi'
-import type { GlobalContext } from './globalContext'
-import type { UserContext } from './userContext'
-import type { AccountContext } from './accountContext'
 
 export interface CommonContext {
   user: User
@@ -13,15 +10,15 @@ export interface CommonContext {
 }
 
 export function buildCommonContext(
-  globalContextManager: GlobalContext,
-  userContextManager: UserContext,
-  accountContextManager: AccountContext,
+  globalContextManager: ContextManager,
+  userContextManager: ContextManager,
+  accountContextManager: ContextManager,
   recorderApi: RecorderApi
 ): CommonContext {
   return {
-    context: globalContextManager.getGlobalContext(),
-    user: userContextManager.getUser(),
-    account: accountContextManager.getAccount(),
+    context: globalContextManager.getContext(),
+    user: userContextManager.getContext(),
+    account: accountContextManager.getContext(),
     hasReplay: recorderApi.isRecording() ? true : undefined,
   }
 }

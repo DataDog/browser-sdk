@@ -236,9 +236,9 @@ export function startRum(
     startDurationVital: vitalCollection.startDurationVital,
     stopDurationVital: vitalCollection.stopDurationVital,
     addDurationVital: vitalCollection.addDurationVital,
-    ...globalContext,
-    ...userContext,
-    ...accountContext,
+    globalContext,
+    userContext,
+    accountContext,
     stop: () => {
       cleanupTasks.forEach((task) => task())
     },

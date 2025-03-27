@@ -1,4 +1,4 @@
-import type { CustomerDataTrackerManager } from '@datadog/browser-core'
+import type { ContextManager, CustomerDataTrackerManager } from '@datadog/browser-core'
 import {
   createCustomerDataTrackerManager,
   CustomerDataCompressionStatus,
@@ -6,11 +6,10 @@ import {
 } from '@datadog/browser-core'
 import { registerCleanupTask } from '@datadog/browser-core/test'
 import { mockRumConfiguration } from '../../../test'
-import type { UserContext } from './userContext'
 import { startUserContext } from './userContext'
 
 describe('user context', () => {
-  let userContext: UserContext
+  let userContext: ContextManager
   let customerDataTrackerManager: CustomerDataTrackerManager
 
   beforeEach(() => {
@@ -19,31 +18,31 @@ describe('user context', () => {
   })
 
   it('should get user', () => {
-    userContext.setUser({ id: '123' })
-    expect(userContext.getUser()).toEqual({ id: '123' })
+    userContext.setContext({ id: '123' })
+    expect(userContext.getContext()).toEqual({ id: '123' })
   })
 
   it('should set user property', () => {
-    userContext.setUserProperty('foo', 'bar')
-    expect(userContext.getUser()).toEqual({ foo: 'bar' })
+    userContext.setContextProperty('foo', 'bar')
+    expect(userContext.getContext()).toEqual({ foo: 'bar' })
   })
 
   it('should remove user property', () => {
-    userContext.setUser({ id: '123', foo: 'bar' })
-    userContext.removeUserProperty('foo')
-    expect(userContext.getUser()).toEqual({ id: '123' })
+    userContext.setContext({ id: '123', foo: 'bar' })
+    userContext.removeContextProperty('foo')
+    expect(userContext.getContext()).toEqual({ id: '123' })
   })
 
   it('should clear user', () => {
-    userContext.setUser({ id: '123' })
-    userContext.clearUser()
-    expect(userContext.getUser()).toEqual({})
+    userContext.setContext({ id: '123' })
+    userContext.clearContext()
+    expect(userContext.getContext()).toEqual({})
   })
 
   it('should sanitize predefined properties', () => {
-    userContext.setUser({ id: null, name: 2, email: { bar: 'qux' } })
+    userContext.setContext({ id: null, name: 2, email: { bar: 'qux' } })
 
-    expect(userContext.getUser()).toEqual({
+    expect(userContext.getContext()).toEqual({
       email: '[object Object]',
       id: 'null',
       name: '2',
@@ -52,7 +51,7 @@ describe('user context', () => {
 })
 
 describe('user context across pages', () => {
-  let userContext: UserContext
+  let userContext: ContextManager
   let customerDataTrackerManager: CustomerDataTrackerManager
 
   beforeEach(() => {
@@ -69,29 +68,29 @@ describe('user context across pages', () => {
       customerDataTrackerManager,
       mockRumConfiguration({ storeContextsAcrossPages: false })
     )
-    userContext.setUser({ id: '123' })
+    userContext.setContext({ id: '123' })
 
-    expect(userContext.getUser()).toEqual({ id: '123' })
+    expect(userContext.getContext()).toEqual({ id: '123' })
     expect(localStorage.getItem('_dd_c_rum_1')).toBeNull()
   })
 
   it('when enabled, should maintain the user in local storage', () => {
     userContext = startUserContext(customerDataTrackerManager, mockRumConfiguration({ storeContextsAcrossPages: true }))
 
-    userContext.setUser({ id: 'foo', qux: 'qix' })
-    expect(userContext.getUser()).toEqual({ id: 'foo', qux: 'qix' })
+    userContext.setContext({ id: 'foo', qux: 'qix' })
+    expect(userContext.getContext()).toEqual({ id: 'foo', qux: 'qix' })
     expect(localStorage.getItem('_dd_c_rum_1')).toBe('{"id":"foo","qux":"qix"}')
 
-    userContext.setUserProperty('foo', 'bar')
-    expect(userContext.getUser()).toEqual({ id: 'foo', qux: 'qix', foo: 'bar' })
+    userContext.setContextProperty('foo', 'bar')
+    expect(userContext.getContext()).toEqual({ id: 'foo', qux: 'qix', foo: 'bar' })
     expect(localStorage.getItem('_dd_c_rum_1')).toBe('{"id":"foo","qux":"qix","foo":"bar"}')
 
-    userContext.removeUserProperty('foo')
-    expect(userContext.getUser()).toEqual({ id: 'foo', qux: 'qix' })
+    userContext.removeContextProperty('foo')
+    expect(userContext.getContext()).toEqual({ id: 'foo', qux: 'qix' })
     expect(localStorage.getItem('_dd_c_rum_1')).toBe('{"id":"foo","qux":"qix"}')
 
-    userContext.clearUser()
-    expect(userContext.getUser()).toEqual({})
+    userContext.clearContext()
+    expect(userContext.getContext()).toEqual({})
     expect(localStorage.getItem('_dd_c_rum_1')).toBe('{}')
   })
 })

@@ -1,4 +1,4 @@
-import type { CustomerDataTrackerManager } from '@datadog/browser-core'
+import type { ContextManager, CustomerDataTrackerManager } from '@datadog/browser-core'
 import {
   createCustomerDataTrackerManager,
   CustomerDataCompressionStatus,
@@ -6,11 +6,10 @@ import {
 } from '@datadog/browser-core'
 import { registerCleanupTask } from '@datadog/browser-core/test'
 import { mockRumConfiguration } from '../../../test'
-import type { GlobalContext } from './globalContext'
 import { startGlobalContext } from './globalContext'
 
 describe('global context', () => {
-  let globalContext: GlobalContext
+  let globalContext: ContextManager
 
   beforeEach(() => {
     const customerDataTrackerManager = createCustomerDataTrackerManager(CustomerDataCompressionStatus.Disabled)
@@ -18,30 +17,30 @@ describe('global context', () => {
   })
 
   it('should get context', () => {
-    globalContext.setGlobalContext({ id: '123' })
-    expect(globalContext.getGlobalContext()).toEqual({ id: '123' })
+    globalContext.setContext({ id: '123' })
+    expect(globalContext.getContext()).toEqual({ id: '123' })
   })
 
   it('should set context property', () => {
-    globalContext.setGlobalContextProperty('foo', 'bar')
-    expect(globalContext.getGlobalContext()).toEqual({ foo: 'bar' })
+    globalContext.setContextProperty('foo', 'bar')
+    expect(globalContext.getContext()).toEqual({ foo: 'bar' })
   })
 
   it('should remove context property', () => {
-    globalContext.setGlobalContext({ id: '123', foo: 'bar' })
-    globalContext.removeGlobalContextProperty('foo')
-    expect(globalContext.getGlobalContext()).toEqual({ id: '123' })
+    globalContext.setContext({ id: '123', foo: 'bar' })
+    globalContext.removeContextProperty('foo')
+    expect(globalContext.getContext()).toEqual({ id: '123' })
   })
 
   it('should clear context', () => {
-    globalContext.setGlobalContext({ id: '123' })
-    globalContext.clearGlobalContext()
-    expect(globalContext.getGlobalContext()).toEqual({})
+    globalContext.setContext({ id: '123' })
+    globalContext.clearContext()
+    expect(globalContext.getContext()).toEqual({})
   })
 })
 
 describe('global context across pages', () => {
-  let globalContext: GlobalContext
+  let globalContext: ContextManager
   let customerDataTrackerManager: CustomerDataTrackerManager
 
   beforeEach(() => {
@@ -58,9 +57,9 @@ describe('global context across pages', () => {
       customerDataTrackerManager,
       mockRumConfiguration({ storeContextsAcrossPages: false })
     )
-    globalContext.setGlobalContext({ id: '123' })
+    globalContext.setContext({ id: '123' })
 
-    expect(globalContext.getGlobalContext()).toEqual({ id: '123' })
+    expect(globalContext.getContext()).toEqual({ id: '123' })
     expect(localStorage.getItem('_dd_c_rum_2')).toBeNull()
   })
 
@@ -70,20 +69,20 @@ describe('global context across pages', () => {
       mockRumConfiguration({ storeContextsAcrossPages: true })
     )
 
-    globalContext.setGlobalContext({ id: 'foo', qux: 'qix' })
-    expect(globalContext.getGlobalContext()).toEqual({ id: 'foo', qux: 'qix' })
+    globalContext.setContext({ id: 'foo', qux: 'qix' })
+    expect(globalContext.getContext()).toEqual({ id: 'foo', qux: 'qix' })
     expect(localStorage.getItem('_dd_c_rum_2')).toBe('{"id":"foo","qux":"qix"}')
 
-    globalContext.setGlobalContextProperty('foo', 'bar')
-    expect(globalContext.getGlobalContext()).toEqual({ id: 'foo', qux: 'qix', foo: 'bar' })
+    globalContext.setContextProperty('foo', 'bar')
+    expect(globalContext.getContext()).toEqual({ id: 'foo', qux: 'qix', foo: 'bar' })
     expect(localStorage.getItem('_dd_c_rum_2')).toBe('{"id":"foo","qux":"qix","foo":"bar"}')
 
-    globalContext.removeGlobalContextProperty('foo')
-    expect(globalContext.getGlobalContext()).toEqual({ id: 'foo', qux: 'qix' })
+    globalContext.removeContextProperty('foo')
+    expect(globalContext.getContext()).toEqual({ id: 'foo', qux: 'qix' })
     expect(localStorage.getItem('_dd_c_rum_2')).toBe('{"id":"foo","qux":"qix"}')
 
-    globalContext.clearGlobalContext()
-    expect(globalContext.getGlobalContext()).toEqual({})
+    globalContext.clearContext()
+    expect(globalContext.getContext()).toEqual({})
     expect(localStorage.getItem('_dd_c_rum_2')).toBe('{}')
   })
 })

@@ -1,4 +1,4 @@
-import type { CustomerDataTrackerManager } from '@datadog/browser-core'
+import type { ContextManager, CustomerDataTrackerManager } from '@datadog/browser-core'
 import {
   createCustomerDataTrackerManager,
   CustomerDataCompressionStatus,
@@ -7,11 +7,10 @@ import {
 } from '@datadog/browser-core'
 import { registerCleanupTask } from '@datadog/browser-core/test'
 import { mockRumConfiguration } from '../../../test'
-import type { AccountContext } from './accountContext'
 import { startAccountContext } from './accountContext'
 
 describe('account context', () => {
-  let accountContext: AccountContext
+  let accountContext: ContextManager
   let displaySpy: jasmine.Spy
 
   beforeEach(() => {
@@ -22,35 +21,35 @@ describe('account context', () => {
   })
 
   it('should get account', () => {
-    accountContext.setAccount({ id: '123' })
-    expect(accountContext.getAccount()).toEqual({ id: '123' })
+    accountContext.setContext({ id: '123' })
+    expect(accountContext.getContext()).toEqual({ id: '123' })
   })
 
   it('should set account property', () => {
-    accountContext.setAccountProperty('foo', 'bar')
-    expect(accountContext.getAccount()).toEqual({ foo: 'bar' })
+    accountContext.setContextProperty('foo', 'bar')
+    expect(accountContext.getContext()).toEqual({ foo: 'bar' })
   })
 
   it('should remove account property', () => {
-    accountContext.setAccount({ id: '123', foo: 'bar' })
-    accountContext.removeAccountProperty('foo')
-    expect(accountContext.getAccount()).toEqual({ id: '123' })
+    accountContext.setContext({ id: '123', foo: 'bar' })
+    accountContext.removeContextProperty('foo')
+    expect(accountContext.getContext()).toEqual({ id: '123' })
   })
 
   it('should clear account', () => {
-    accountContext.setAccount({ id: '123' })
-    accountContext.clearAccount()
-    expect(accountContext.getAccount()).toEqual({})
+    accountContext.setContext({ id: '123' })
+    accountContext.clearContext()
+    expect(accountContext.getContext()).toEqual({})
   })
 
   it('should warn when the account.id is missing', () => {
-    accountContext.setAccount({ foo: 'bar' })
+    accountContext.setContext({ foo: 'bar' })
     expect(displaySpy).toHaveBeenCalled()
   })
 
   it('should sanitize predefined properties', () => {
-    accountContext.setAccount({ id: null, name: 2 })
-    expect(accountContext.getAccount()).toEqual({
+    accountContext.setContext({ id: null, name: 2 })
+    expect(accountContext.getContext()).toEqual({
       id: 'null',
       name: '2',
     })
@@ -58,7 +57,7 @@ describe('account context', () => {
 })
 
 describe('account context across pages', () => {
-  let accountContext: AccountContext
+  let accountContext: ContextManager
   let customerDataTrackerManager: CustomerDataTrackerManager
 
   beforeEach(() => {
@@ -75,9 +74,9 @@ describe('account context across pages', () => {
       customerDataTrackerManager,
       mockRumConfiguration({ storeContextsAcrossPages: false })
     )
-    accountContext.setAccount({ id: '123' })
+    accountContext.setContext({ id: '123' })
 
-    expect(accountContext.getAccount()).toEqual({ id: '123' })
+    expect(accountContext.getContext()).toEqual({ id: '123' })
     expect(localStorage.getItem('_dd_c_rum_4')).toBeNull()
   })
 
@@ -87,20 +86,20 @@ describe('account context across pages', () => {
       mockRumConfiguration({ storeContextsAcrossPages: true })
     )
 
-    accountContext.setAccount({ id: 'foo', qux: 'qix' })
-    expect(accountContext.getAccount()).toEqual({ id: 'foo', qux: 'qix' })
+    accountContext.setContext({ id: 'foo', qux: 'qix' })
+    expect(accountContext.getContext()).toEqual({ id: 'foo', qux: 'qix' })
     expect(localStorage.getItem('_dd_c_rum_4')).toBe('{"id":"foo","qux":"qix"}')
 
-    accountContext.setAccountProperty('foo', 'bar')
-    expect(accountContext.getAccount()).toEqual({ id: 'foo', qux: 'qix', foo: 'bar' })
+    accountContext.setContextProperty('foo', 'bar')
+    expect(accountContext.getContext()).toEqual({ id: 'foo', qux: 'qix', foo: 'bar' })
     expect(localStorage.getItem('_dd_c_rum_4')).toBe('{"id":"foo","qux":"qix","foo":"bar"}')
 
-    accountContext.removeAccountProperty('foo')
-    expect(accountContext.getAccount()).toEqual({ id: 'foo', qux: 'qix' })
+    accountContext.removeContextProperty('foo')
+    expect(accountContext.getContext()).toEqual({ id: 'foo', qux: 'qix' })
     expect(localStorage.getItem('_dd_c_rum_4')).toBe('{"id":"foo","qux":"qix"}')
 
-    accountContext.clearAccount()
-    expect(accountContext.getAccount()).toEqual({})
+    accountContext.clearContext()
+    expect(accountContext.getContext()).toEqual({})
     expect(localStorage.getItem('_dd_c_rum_4')).toBe('{}')
   })
 })
