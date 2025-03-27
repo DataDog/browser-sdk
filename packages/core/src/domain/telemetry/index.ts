@@ -13,4 +13,10 @@ export {
 } from './telemetry'
 
 export * from './rawTelemetryEvent.types'
-export type * from './telemetryEvent.types'
+export type {
+  TelemetryEvent,
+  TelemetryErrorEvent,
+  TelemetryDebugEvent,
+  TelemetryConfigurationEvent,
+  TelemetryUsageEvent,
+} from './telemetryEvent.types'
