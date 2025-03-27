@@ -44,6 +44,7 @@ export type {
 } from './domain/telemetry'
 export {
   startTelemetry,
+  startTelemetryTransport,
   addTelemetryDebug,
   addTelemetryError,
   startFakeTelemetry,
