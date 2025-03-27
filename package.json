@@ -6,7 +6,7 @@
     "packages/*",
     "developer-extension",
     "performances",
-    "testing-extensions/react_extension"
+    "testing-extensions/testing_logs_in_extension"
   ],
   "scripts": {
     "postinstall": "scripts/cli init_submodule",
