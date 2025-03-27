@@ -1,13 +1,9 @@
-import type { RawError, Observable, PageMayExitEvent, TelemetryEvent, Context } from '@datadog/browser-core'
+import type { RawError, Observable, PageMayExitEvent, Context } from '@datadog/browser-core'
 import {
   startTelemetry,
   TelemetryService,
-  canUseEventBridge,
-  getEventBridge,
-  startBatchWithReplica,
-  createIdentityEncoder,
-  isTelemetryReplicationAllowed,
   drainPreStartTelemetry,
+  startTelemetryTransport,
 } from '@datadog/browser-core'
 import type { LogsConfiguration } from './configuration'
 import type { LogsSessionManager } from './logsSessionManager'
@@ -34,37 +30,16 @@ export function startLogsTelemetry(
       id: (getRUMInternalContext()?.user_action as Context)?.id,
     },
   }))
-  const cleanupTasks: Array<() => void> = []
-  if (canUseEventBridge()) {
-    const bridge = getEventBridge<'internal_telemetry', TelemetryEvent>()!
-    const telemetrySubscription = telemetry.observable.subscribe((event) => bridge.send('internal_telemetry', event))
-    cleanupTasks.push(() => telemetrySubscription.unsubscribe())
-  } else {
-    const telemetryBatch = startBatchWithReplica(
-      configuration,
-      {
-        endpoint: configuration.rumEndpointBuilder,
-        encoder: createIdentityEncoder(),
-      },
-      configuration.replica && {
-        endpoint: configuration.replica.rumEndpointBuilder,
-        encoder: createIdentityEncoder(),
-      },
-      reportError,
-      pageMayExitObservable,
-      session.expireObservable
-    )
-    cleanupTasks.push(() => telemetryBatch.stop())
-    const telemetrySubscription = telemetry.observable.subscribe((event) =>
-      telemetryBatch.add(event, isTelemetryReplicationAllowed(configuration))
-    )
-    cleanupTasks.push(() => telemetrySubscription.unsubscribe())
-  }
+
+  const { stop } = startTelemetryTransport(
+    configuration,
+    reportError,
+    pageMayExitObservable,
+    session.expireObservable,
+    telemetry.observable
+  )
   drainPreStartTelemetry()
   return {
-    telemetry,
-    stop: () => {
-      cleanupTasks.forEach((task) => task())
-    },
+    stop,
   }
 }

@@ -6,6 +6,7 @@ export {
   startFakeTelemetry,
   resetTelemetry,
   startTelemetry,
+  startTelemetryTransport,
   isTelemetryReplicationAllowed,
   addTelemetryConfiguration,
   addTelemetryUsage,

@@ -12,11 +12,15 @@ import { sendToExtension } from '../../tools/sendToExtension'
 import { performDraw } from '../../tools/utils/numberUtils'
 import { jsonStringify } from '../../tools/serialisation/jsonStringify'
 import { combine } from '../../tools/mergeInto'
+import type { RawError } from '../error/error.types'
 import { NonErrorPrefix } from '../error/error.types'
 import type { StackTrace } from '../../tools/stackTrace/computeStackTrace'
 import { computeStackTrace } from '../../tools/stackTrace/computeStackTrace'
 import { getConnectivity } from '../connectivity'
 import { createBoundedBuffer } from '../../tools/boundedBuffer'
+import { canUseEventBridge, getEventBridge, startBatchWithReplica } from '../../transport'
+import { createIdentityEncoder } from '../../tools/encoder'
+import type { PageMayExitEvent } from '../../browser/pageMayExitObservable'
 import type { TelemetryEvent } from './telemetryEvent.types'
 import type {
   RawTelemetryConfiguration,
@@ -122,6 +126,46 @@ export function startTelemetry(telemetryService: TelemetryService, configuration
     enabled: telemetryEnabled,
   }
 }
+
+export function startTelemetryTransport(
+  configuration: Configuration,
+  reportError: (error: RawError) => void,
+  pageMayExitObservable: Observable<PageMayExitEvent>,
+  expireObservable: Observable<void>,
+  telemetryObservable: Observable<TelemetryEvent & Context>
+) {
+  const cleanupTasks: Array<() => void> = []
+  if (canUseEventBridge()) {
+    const bridge = getEventBridge<'internal_telemetry', TelemetryEvent>()!
+    const telemetrySubscription = telemetryObservable.subscribe((event) => bridge.send('internal_telemetry', event))
+    cleanupTasks.push(() => telemetrySubscription.unsubscribe())
+  } else {
+    const telemetryBatch = startBatchWithReplica(
+      configuration,
+      {
+        endpoint: configuration.rumEndpointBuilder,
+        encoder: createIdentityEncoder(),
+      },
+      configuration.replica && {
+        endpoint: configuration.replica.rumEndpointBuilder,
+        encoder: createIdentityEncoder(),
+      },
+      reportError,
+      pageMayExitObservable,
+      expireObservable
+    )
+    cleanupTasks.push(() => telemetryBatch.stop())
+    const telemetrySubscription = telemetryObservable.subscribe((event) =>
+      telemetryBatch.add(event, isTelemetryReplicationAllowed(configuration))
+    )
+    cleanupTasks.push(() => telemetrySubscription.unsubscribe())
+  }
+
+  return {
+    stop: () => cleanupTasks.forEach((task) => task()),
+  }
+}
+
 function getRuntimeEnvInfo(): RuntimeEnvInfo {
   return {
     is_local_file: window.location.protocol === 'file:',
