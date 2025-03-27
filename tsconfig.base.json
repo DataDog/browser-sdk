@@ -1,6 +1,7 @@
 {
   "compilerOptions": {
     "baseUrl": ".",
+    "declarationMap": true,
     "experimentalDecorators": true,
     "esModuleInterop": true,
     "importHelpers": false,
