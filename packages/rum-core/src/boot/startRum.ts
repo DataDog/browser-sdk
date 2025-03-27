@@ -9,7 +9,7 @@ import type {
 } from '@datadog/browser-core'
 import {
   sendToExtension,
-  createPageExitObservable,
+  createPageMayExitObservable,
   TelemetryService,
   startTelemetry,
   canUseEventBridge,
@@ -47,7 +47,7 @@ import type { CustomVitalsState } from '../domain/vital/vitalCollection'
 import { startVitalCollection } from '../domain/vital/vitalCollection'
 import { startCiVisibilityContext } from '../domain/contexts/ciVisibilityContext'
 import { startLongAnimationFrameCollection } from '../domain/longAnimationFrame/longAnimationFrameCollection'
-import { RumPerformanceEntryType } from '../browser/performanceObservable'
+import { RumPerformanceEntryType, supportPerformanceTimingEvent } from '../browser/performanceObservable'
 import { startLongTaskCollection } from '../domain/longTask/longTaskCollection'
 import type { Hooks } from '../hooks'
 import { createHooks } from '../hooks'
@@ -58,7 +58,7 @@ import { startAccountContext } from '../domain/contexts/accountContext'
 import { startRumAssembly } from '../domain/assembly'
 import type { CommonContext } from '../domain/contexts/commonContext'
 import { buildCommonContext } from '../domain/contexts/commonContext'
-import type { RecorderApi } from './rumPublicApi'
+import type { RecorderApi, ProfilerApi } from './rumPublicApi'
 
 export type StartRum = typeof startRum
 export type StartRumResult = ReturnType<StartRum>
@@ -66,6 +66,7 @@ export type StartRumResult = ReturnType<StartRum>
 export function startRum(
   configuration: RumConfiguration,
   recorderApi: RecorderApi,
+  profilerApi: ProfilerApi,
   customerDataTrackerManager: CustomerDataTrackerManager,
   initialViewOptions: ViewOptions | undefined,
   createEncoder: (streamId: DeflateEncoderStreamId) => Encoder,
@@ -103,11 +104,11 @@ export function startRum(
     addTelemetryDebug('Error reported to customer', { 'error.message': error.message })
   }
 
-  const pageExitObservable = createPageExitObservable(configuration)
-  const pageExitSubscription = pageExitObservable.subscribe((event) => {
-    lifeCycle.notify(LifeCycleEventType.PAGE_EXITED, event)
+  const pageMayExitObservable = createPageMayExitObservable(configuration)
+  const pageMayExitSubscription = pageMayExitObservable.subscribe((event) => {
+    lifeCycle.notify(LifeCycleEventType.PAGE_MAY_EXIT, event)
   })
-  cleanupTasks.push(() => pageExitSubscription.unsubscribe())
+  cleanupTasks.push(() => pageMayExitSubscription.unsubscribe())
 
   const session = !canUseEventBridge()
     ? startRumSessionManager(configuration, lifeCycle, trackingConsentState)
@@ -118,7 +119,7 @@ export function startRum(
       lifeCycle,
       telemetry.observable,
       reportError,
-      pageExitObservable,
+      pageMayExitObservable,
       session.expireObservable,
       createEncoder
     )
@@ -197,7 +198,7 @@ export function startRum(
   cleanupTasks.push(stopResourceCollection)
 
   if (configuration.trackLongTasks) {
-    if (PerformanceObserver.supportedEntryTypes?.includes(RumPerformanceEntryType.LONG_ANIMATION_FRAME)) {
+    if (supportPerformanceTimingEvent(RumPerformanceEntryType.LONG_ANIMATION_FRAME)) {
       const { stop: stopLongAnimationFrameCollection } = startLongAnimationFrameCollection(lifeCycle, configuration)
       cleanupTasks.push(stopLongAnimationFrameCollection)
     } else {
@@ -217,6 +218,9 @@ export function startRum(
     actionContexts,
     urlContexts
   )
+
+  // Add Clean-up tasks for Profiler API.
+  cleanupTasks.push(() => profilerApi.stop())
 
   return {
     addAction,

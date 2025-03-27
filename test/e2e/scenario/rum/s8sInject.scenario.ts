@@ -1,7 +1,7 @@
 import * as fs from 'fs'
 import puppeteer from 'puppeteer'
 import { test, expect } from '@playwright/test'
-import { RUM_BUNDLE } from '../../lib/framework'
+import { getSdkBundlePath } from '../../lib/framework'
 import { APPLICATION_ID, CLIENT_TOKEN } from '../../lib/helpers/configuration'
 
 test.describe('Inject RUM with Puppeteer', () => {
@@ -13,7 +13,7 @@ test.describe('Inject RUM with Puppeteer', () => {
 })
 
 async function injectRumWithPuppeteer() {
-  const ddRUM = fs.readFileSync(RUM_BUNDLE, 'utf8')
+  const ddRUM = fs.readFileSync(getSdkBundlePath('rum', '/datadog-rum.js'), 'utf8')
   const puppeteerBrowser = await puppeteer.launch({ headless: true, devtools: true, args: ['--no-sandbox'] })
   let injected = true
 

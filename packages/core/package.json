@@ -1,6 +1,6 @@
 {
   "name": "@datadog/browser-core",
-  "version": "6.5.1",
+  "version": "6.6.2",
   "license": "Apache-2.0",
   "main": "cjs/index.js",
   "module": "esm/index.js",

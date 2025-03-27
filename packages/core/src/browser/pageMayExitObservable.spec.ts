@@ -1,16 +1,16 @@
 import type { Configuration } from '../domain/configuration'
 import { createNewEvent, restorePageVisibility, setPageVisibility, registerCleanupTask } from '../../test'
-import type { PageExitEvent } from './pageExitObservable'
-import { PageExitReason, createPageExitObservable } from './pageExitObservable'
+import type { PageMayExitEvent } from './pageMayExitObservable'
+import { PageExitReason, createPageMayExitObservable } from './pageMayExitObservable'
 
-describe('createPageExitObservable', () => {
-  let onExitSpy: jasmine.Spy<(event: PageExitEvent) => void>
+describe('createPageMayExitObservable', () => {
+  let onExitSpy: jasmine.Spy<(event: PageMayExitEvent) => void>
   let configuration: Configuration
 
   beforeEach(() => {
     onExitSpy = jasmine.createSpy()
     configuration = {} as Configuration
-    registerCleanupTask(createPageExitObservable(configuration).subscribe(onExitSpy).unsubscribe)
+    registerCleanupTask(createPageMayExitObservable(configuration).subscribe(onExitSpy).unsubscribe)
   })
 
   afterEach(() => {

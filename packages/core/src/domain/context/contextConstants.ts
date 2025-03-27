@@ -6,20 +6,22 @@ export const enum CustomerDataType {
   Account,
 }
 
-// We want to use a real enum (i.e. not a const enum) to avoid inlining the enum values in the bundle and save bytes
-// eslint-disable-next-line no-restricted-syntax
-export enum CustomerContextKey {
-  userContext = 'userContext',
-  globalContext = 'globalContext',
-  accountContext = 'accountContext',
-}
+// Use a const instead of const enum to avoid inlining the enum values in the bundle and save bytes
+export const CustomerContextKey = {
+  userContext: 'userContext',
+  globalContext: 'globalContext',
+  accountContext: 'accountContext',
+} as const
 
-// We want to use a real enum (i.e. not a const enum) to avoid inlining the enum values in the bundle and save bytes
-// eslint-disable-next-line no-restricted-syntax
-export enum ContextManagerMethod {
-  getContext = 'getContext',
-  setContext = 'setContext',
-  setContextProperty = 'setContextProperty',
-  removeContextProperty = 'removeContextProperty',
-  clearContext = 'clearContext',
-}
+export type CustomerContextKey = (typeof CustomerContextKey)[keyof typeof CustomerContextKey]
+
+// Use a const instead of const enum to avoid inlining the enum values in the bundle and save bytes
+export const ContextManagerMethod = {
+  getContext: 'getContext',
+  setContext: 'setContext',
+  setContextProperty: 'setContextProperty',
+  removeContextProperty: 'removeContextProperty',
+  clearContext: 'clearContext',
+} as const
+
+export type ContextManagerMethod = (typeof ContextManagerMethod)[keyof typeof ContextManagerMethod]

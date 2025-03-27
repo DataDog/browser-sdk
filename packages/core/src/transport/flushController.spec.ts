@@ -1,6 +1,6 @@
 import type { Clock } from '../../test'
 import { mockClock } from '../../test'
-import type { PageExitEvent } from '../browser/pageExitObservable'
+import type { PageMayExitEvent } from '../browser/pageMayExitObservable'
 import { Observable } from '../tools/observable'
 import type { Duration } from '../tools/utils/timeUtils'
 import type { FlushController, FlushEvent } from './flushController'
@@ -16,18 +16,18 @@ describe('flushController', () => {
   let clock: Clock
   let flushController: FlushController
   let flushSpy: jasmine.Spy<(event: FlushEvent) => void>
-  let pageExitObservable: Observable<PageExitEvent>
+  let pageMayExitObservable: Observable<PageMayExitEvent>
   let sessionExpireObservable: Observable<void>
 
   beforeEach(() => {
     clock = mockClock()
-    pageExitObservable = new Observable()
+    pageMayExitObservable = new Observable()
     sessionExpireObservable = new Observable()
     flushController = createFlushController({
       bytesLimit: BYTES_LIMIT,
       messagesLimit: MESSAGES_LIMIT,
       durationLimit: DURATION_LIMIT,
-      pageExitObservable,
+      pageMayExitObservable,
       sessionExpireObservable,
     })
     flushSpy = jasmine.createSpy()
@@ -45,7 +45,7 @@ describe('flushController', () => {
       flushController.notifyAfterAddMessage()
     }
 
-    pageExitObservable.notify({ reason: 'before_unload' })
+    pageMayExitObservable.notify({ reason: 'before_unload' })
 
     expect(flushSpy).toHaveBeenCalledOnceWith({
       reason: jasmine.any(String),
@@ -58,25 +58,25 @@ describe('flushController', () => {
     it('notifies when the page is exiting', () => {
       flushController.notifyBeforeAddMessage(SMALL_MESSAGE_BYTE_COUNT)
       flushController.notifyAfterAddMessage()
-      pageExitObservable.notify({ reason: 'before_unload' })
+      pageMayExitObservable.notify({ reason: 'before_unload' })
       expect(flushSpy).toHaveBeenCalled()
     })
 
     it('flush reason should be the page exit reason', () => {
       flushController.notifyBeforeAddMessage(SMALL_MESSAGE_BYTE_COUNT)
       flushController.notifyAfterAddMessage()
-      pageExitObservable.notify({ reason: 'before_unload' })
+      pageMayExitObservable.notify({ reason: 'before_unload' })
       expect(flushSpy.calls.first().args[0].reason).toBe('before_unload')
     })
 
     it('does not notify if no message was added', () => {
-      pageExitObservable.notify({ reason: 'before_unload' })
+      pageMayExitObservable.notify({ reason: 'before_unload' })
       expect(flushSpy).not.toHaveBeenCalled()
     })
 
     it('notifies when the page is exiting even if no message have been fully added yet', () => {
       flushController.notifyBeforeAddMessage(SMALL_MESSAGE_BYTE_COUNT)
-      pageExitObservable.notify({ reason: 'before_unload' })
+      pageMayExitObservable.notify({ reason: 'before_unload' })
       expect(flushSpy).toHaveBeenCalled()
     })
   })
