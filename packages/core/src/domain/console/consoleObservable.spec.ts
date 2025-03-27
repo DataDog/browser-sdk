@@ -141,4 +141,11 @@ describe('console error observable', () => {
     const consoleLog = notifyLog.calls.mostRecent().args[0]
     expect(consoleLog.error.context).toEqual({ foo: 'bar' })
   })
+
+  it('should report original error', () => {
+    const error = new Error('foo')
+    console.error(error)
+    const consoleLog = notifyLog.calls.mostRecent().args[0]
+    expect(consoleLog.error.originalError).toBe(error)
+  })
 })
