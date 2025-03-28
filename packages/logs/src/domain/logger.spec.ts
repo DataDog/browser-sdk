@@ -1,5 +1,5 @@
 import type { ErrorWithCause } from '@datadog/browser-core'
-import { ErrorHandling, NO_ERROR_STACK_PRESENT_MESSAGE, createCustomerDataTracker, noop } from '@datadog/browser-core'
+import { ErrorHandling, NO_ERROR_STACK_PRESENT_MESSAGE } from '@datadog/browser-core'
 import type { LogsMessage } from './logger'
 import { HandlerType, Logger, STATUSES } from './logger'
 import { StatusType } from './logger/isAuthorized'
@@ -22,7 +22,7 @@ describe('Logger', () => {
 
   beforeEach(() => {
     handleLogSpy = jasmine.createSpy()
-    logger = new Logger(handleLogSpy, createCustomerDataTracker(noop))
+    logger = new Logger(handleLogSpy)
   })
 
   describe('log methods', () => {
@@ -182,14 +182,7 @@ describe('Logger', () => {
   describe('context methods', () => {
     beforeEach(() => {
       const loggerContext = { foo: 'bar' }
-      logger = new Logger(
-        handleLogSpy,
-        createCustomerDataTracker(noop),
-        undefined,
-        HandlerType.http,
-        StatusType.debug,
-        loggerContext
-      )
+      logger = new Logger(handleLogSpy, undefined, HandlerType.http, StatusType.debug, loggerContext)
     })
 
     it('getContext should return the context', () => {
@@ -220,14 +213,7 @@ describe('Logger', () => {
   describe('contexts', () => {
     it('logger context should be deep copied', () => {
       const loggerContext = { foo: 'bar' }
-      logger = new Logger(
-        handleLogSpy,
-        createCustomerDataTracker(noop),
-        undefined,
-        HandlerType.http,
-        StatusType.debug,
-        loggerContext
-      )
+      logger = new Logger(handleLogSpy, undefined, HandlerType.http, StatusType.debug, loggerContext)
       loggerContext.foo = 'baz'
 
       expect(logger.getContext()).toEqual({ foo: 'bar' })

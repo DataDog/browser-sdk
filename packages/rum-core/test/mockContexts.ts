@@ -42,7 +42,6 @@ export function mockDisplayContext(): DisplayContext {
 export function mockFeatureFlagContexts(partialContext: Partial<FeatureFlagContexts> = {}): FeatureFlagContexts {
   return {
     addFeatureFlagEvaluation: noop,
-    stop: noop,
     ...partialContext,
   }
 }

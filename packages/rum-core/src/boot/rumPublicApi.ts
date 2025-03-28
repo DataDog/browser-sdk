@@ -23,8 +23,6 @@ import {
   createHandlingStack,
   sanitize,
   createIdentityEncoder,
-  CustomerDataCompressionStatus,
-  createCustomerDataTrackerManager,
   storeContextManager,
   displayAlreadyInitializedError,
   createTrackingConsentState,
@@ -417,12 +415,8 @@ export function makeRumPublicApi(
   profilerApi: ProfilerApi,
   options: RumPublicApiOptions = {}
 ): RumPublicApi {
-  const customerDataTrackerManager = createCustomerDataTrackerManager(CustomerDataCompressionStatus.Unknown)
-  const globalContextManager = createContextManager('global context', {
-    customerDataTracker: customerDataTrackerManager.getOrCreateTracker(CustomerDataType.GlobalContext),
-  })
+  const globalContextManager = createContextManager('global context')
   const userContextManager = createContextManager('user', {
-    customerDataTracker: customerDataTrackerManager.getOrCreateTracker(CustomerDataType.User),
     propertiesConfig: {
       id: { type: 'string' },
       name: { type: 'string' },
@@ -430,7 +424,6 @@ export function makeRumPublicApi(
     },
   })
   const accountContextManager = createContextManager('account', {
-    customerDataTracker: customerDataTrackerManager.getOrCreateTracker(CustomerDataType.Account),
     propertiesConfig: {
       id: { type: 'string', required: true },
       name: { type: 'string' },
@@ -455,15 +448,10 @@ export function makeRumPublicApi(
         storeContextManager(configuration, accountContextManager, RUM_STORAGE_KEY, CustomerDataType.Account)
       }
 
-      customerDataTrackerManager.setCompressionStatus(
-        deflateWorker ? CustomerDataCompressionStatus.Enabled : CustomerDataCompressionStatus.Disabled
-      )
-
       const startRumResult = startRumImpl(
         configuration,
         recorderApi,
         profilerApi,
-        customerDataTrackerManager,
         getCommonContext,
         initialViewOptions,
         deflateWorker && options.createDeflateEncoder
@@ -501,9 +489,6 @@ export function makeRumPublicApi(
     (options: ViewOptions): void
   } = monitor((options?: string | ViewOptions) => {
     const sanitizedOptions = typeof options === 'object' ? options : { name: options }
-    if (sanitizedOptions.context) {
-      customerDataTrackerManager.getOrCreateTracker(CustomerDataType.View).updateCustomerData(sanitizedOptions.context)
-    }
     strategy.startView(sanitizedOptions)
     addTelemetryUsage({ feature: 'start-view' })
   })
