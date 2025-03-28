@@ -5,7 +5,7 @@ import { getLongTaskId } from '../utils/longTaskRegistry'
 interface ProfileEventAttributes {
   application: { id: string }
   session?: { id: string }
-  view?: { ids: string[] }
+  view?: { id: string[] }
   long_task?: { id: string[] }
 }
 interface ProfileEvent extends ProfileEventAttributes {
@@ -128,7 +128,7 @@ function buildProfileEventAttributes(
   const viewIds = Array.from(new Set(profilerTrace.views.map((viewEntry) => viewEntry.viewId)))
   if (viewIds.length) {
     attributes.view = {
-      ids: viewIds,
+      id: viewIds,
     }
   }
   const longTaskIds: string[] = profilerTrace.longTasks
