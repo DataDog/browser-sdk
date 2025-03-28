@@ -24,7 +24,7 @@ export function setLongTaskId(longTaskId: string, performanceEntryStartTime: num
   registry.set(performanceEntryStartTime, longTaskId)
 }
 
-export function getLongTaskId(longTaskEntry: PerformanceEntry): string | undefined {
+export function getLongTaskId(longTaskEntry: { startTime: DOMHighResTimeStamp }): string | undefined {
   // Don't return if it's not enabled or the long task has been reported before the activation
   if (enabledTime === false || longTaskEntry.startTime < enabledTime) {
     return undefined
