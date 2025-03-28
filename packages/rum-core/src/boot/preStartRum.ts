@@ -47,7 +47,7 @@ export function createPreStartStrategy(
 
   // TODO next major: remove the globalContextManager, userContextManager and accountContextManager from preStartStrategy and use an empty context instead
   const globalContext = buildGlobalContextManager(customerDataTrackerManager)
-  bufferContextCalls(globalContext, CustomerContextKey.accountContext, bufferApiCalls)
+  bufferContextCalls(globalContext, CustomerContextKey.globalContext, bufferApiCalls)
 
   const userContext = buildUserContextManager(customerDataTrackerManager)
   bufferContextCalls(userContext, CustomerContextKey.userContext, bufferApiCalls)

@@ -492,10 +492,7 @@ export function makeRumPublicApi(
     usage: RawTelemetryUsageFeature
   ) {
     return monitor((...args: any[]) => {
-      if (usage) {
-        addTelemetryUsage({ feature: usage } as RawTelemetryUsage)
-      }
-
+      addTelemetryUsage({ feature: usage } as RawTelemetryUsage)
       return (strategy[contextName][methodName] as (...args: unknown[]) => unknown)(...args)
     }) as ContextManager[MethodName]
   }
