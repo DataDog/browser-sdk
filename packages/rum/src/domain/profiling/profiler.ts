@@ -8,7 +8,7 @@ import {
   getGlobalObject,
 } from '@datadog/browser-core'
 
-import type { LifeCycle, RumConfiguration, RumSessionManager } from '@datadog/browser-rum-core'
+import type { LifeCycle, RumConfiguration, RumSessionManager, ViewHistoryEntry } from '@datadog/browser-rum-core'
 import { LifeCycleEventType, RumPerformanceEntryType, supportPerformanceTimingEvent } from '@datadog/browser-rum-core'
 import type {
   RumProfilerTrace,
@@ -19,7 +19,12 @@ import type {
   RumViewEntry,
 } from './types'
 import { getNumberOfSamples } from './utils/getNumberOfSamples'
-import { disableLongTaskRegistry, enableLongTaskRegistry, deleteLongTaskIdsBefore, getLongTaskId } from './utils/longTaskRegistry'
+import {
+  disableLongTaskRegistry,
+  enableLongTaskRegistry,
+  deleteLongTaskIdsBefore,
+  getLongTaskId,
+} from './utils/longTaskRegistry'
 import { mayStoreLongTaskIdForProfilerCorrelation } from './profilingCorrelation'
 import { transport } from './transport/transport'
 
@@ -42,13 +47,15 @@ export function createRumProfiler(
 
   let instance: RumProfilerInstance = { state: 'stopped' }
 
-  function start(viewId: string | undefined): void {
+  function start(viewEntry: ViewHistoryEntry | undefined): void {
     if (instance.state === 'running') {
       return
     }
 
     // Add initial view
-    lastViewEntry = viewId ? { startTime: performance.now(), viewId } : undefined
+    lastViewEntry = viewEntry
+      ? { startTime: performance.now(), viewId: viewEntry.id, viewName: viewEntry.name }
+      : undefined
 
     // Start profiler instance
     startNextProfilerInstance()
@@ -106,7 +113,7 @@ export function createRumProfiler(
 
     // Whenever the View is updated, we add a views entry to the profiler instance.
     const viewUpdatedSubscription = lifeCycle.subscribe(LifeCycleEventType.VIEW_CREATED, (view) => {
-      collectViewEntry({ viewId: view.id, startTime: performance.now() })
+      collectViewEntry({ viewId: view.id, viewName: view.name, startTime: performance.now() })
     })
     cleanupTasks.push(viewUpdatedSubscription.unsubscribe)
 
@@ -271,7 +278,13 @@ export function createRumProfiler(
         continue
       }
 
-      instance.longTasks.push({...entry, id: getLongTaskId(entry)})
+      // Store Long Task entry, which is a lightweight version of the PerformanceEntry
+      instance.longTasks.push({
+        id: getLongTaskId(entry),
+        duration: entry.duration,
+        entryType: entry.entryType,
+        startTime: entry.startTime,
+      })
     }
   }
 
