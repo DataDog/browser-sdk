@@ -92,7 +92,6 @@ describe('error collection', () => {
             },
             type: RumEventType.ERROR,
           },
-          savedCommonContext: undefined,
           startTime: 1234 as RelativeTime,
           domainContext: {
             error,
@@ -170,36 +169,6 @@ describe('error collection', () => {
       })
       expect(rawRumEvents[0].customerContext).toEqual({
         foo: 'bar',
-      })
-    })
-
-    it('should save the global context', () => {
-      setupErrorCollection()
-      addError(
-        {
-          error: new Error('foo'),
-          handlingStack: 'Error: handling foo',
-          startClocks: { relative: 1234 as RelativeTime, timeStamp: 123456789 as TimeStamp },
-        },
-        { context: { foo: 'bar' }, user: {}, account: {}, hasReplay: undefined }
-      )
-      expect(rawRumEvents[0].savedCommonContext!.context).toEqual({
-        foo: 'bar',
-      })
-    })
-
-    it('should save the user', () => {
-      setupErrorCollection()
-      addError(
-        {
-          error: new Error('foo'),
-          handlingStack: 'Error: handling foo',
-          startClocks: { relative: 1234 as RelativeTime, timeStamp: 123456789 as TimeStamp },
-        },
-        { context: {}, user: { id: 'foo' }, account: {}, hasReplay: undefined }
-      )
-      expect(rawRumEvents[0].savedCommonContext!.user).toEqual({
-        id: 'foo',
       })
     })
 

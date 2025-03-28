@@ -19,3 +19,4 @@ export interface RuntimeEnvInfo {
 export type RawTelemetryEvent = TelemetryEvent['telemetry']
 export type RawTelemetryConfiguration = TelemetryConfigurationEvent['telemetry']['configuration']
 export type RawTelemetryUsage = TelemetryUsageEvent['telemetry']['usage']
+export type RawTelemetryUsageFeature = TelemetryUsageEvent['telemetry']['usage']['feature']

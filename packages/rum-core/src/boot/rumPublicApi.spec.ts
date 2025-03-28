@@ -3,7 +3,6 @@ import {
   ONE_SECOND,
   display,
   DefaultPrivacyLevel,
-  removeStorageListeners,
   CustomerDataCompressionStatus,
   timeStampToClocks,
 } from '@datadog/browser-core'
@@ -35,6 +34,9 @@ const noopStartRum = (): ReturnType<StartRum> => ({
   stopDurationVital: () => undefined,
   addDurationVital: () => undefined,
   stop: () => undefined,
+  globalContext: {} as any,
+  userContext: {} as any,
+  accountContext: {} as any,
 })
 const DEFAULT_INIT_CONFIGURATION = { applicationId: 'xxx', clientToken: 'xxx' }
 const FAKE_WORKER = {} as DeflateWorker
@@ -190,7 +192,6 @@ describe('rum public api', () => {
           type: ActionType.CUSTOM,
           handlingStack: jasmine.any(String),
         },
-        { context: {}, user: {}, account: {}, hasReplay: undefined },
       ])
     })
 
@@ -206,68 +207,6 @@ describe('rum public api', () => {
       expect(addActionSpy).toHaveBeenCalledTimes(1)
       const stacktrace = addActionSpy.calls.argsFor(0)[0].handlingStack
       expect(stacktrace).toMatch(/^HandlingStack: action\s+at triggerAction @/)
-    })
-
-    describe('save context when sending an action', () => {
-      it('saves the date', () => {
-        clock.tick(ONE_SECOND)
-        rumPublicApi.addAction('foo')
-
-        clock.tick(ONE_SECOND)
-        rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
-
-        expect(addActionSpy.calls.argsFor(0)[0].startClocks.relative as number).toEqual(clock.relative(ONE_SECOND))
-      })
-
-      it('stores a deep copy of the global context', () => {
-        rumPublicApi.setGlobalContextProperty('foo', 'bar')
-        rumPublicApi.addAction('message')
-        rumPublicApi.setGlobalContextProperty('foo', 'baz')
-
-        rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
-
-        expect(addActionSpy.calls.argsFor(0)[1]!.context).toEqual({
-          foo: 'bar',
-        })
-      })
-
-      it('stores a deep copy of the user', () => {
-        const user = { id: 'foo' }
-        rumPublicApi.setUser(user)
-        rumPublicApi.addAction('message')
-        user.id = 'bar'
-
-        rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
-
-        expect(addActionSpy.calls.argsFor(0)[1]!.user).toEqual({
-          id: 'foo',
-        })
-      })
-
-      it('stores a deep copy of the account', () => {
-        const account = { id: 'foo' }
-        rumPublicApi.setAccount(account)
-        rumPublicApi.addAction('message')
-        account.id = 'bar'
-
-        rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
-
-        expect(addActionSpy.calls.argsFor(0)[1]!.account).toEqual({
-          id: 'foo',
-        })
-      })
-
-      it('stores a deep copy of the action context', () => {
-        const context = { foo: 'bar' }
-        rumPublicApi.addAction('message', context)
-        context.foo = 'baz'
-
-        rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
-
-        expect(addActionSpy.calls.argsFor(0)[0].context).toEqual({
-          foo: 'bar',
-        })
-      })
     })
   })
 
@@ -307,7 +246,6 @@ describe('rum public api', () => {
           handlingStack: jasmine.any(String),
           startClocks: jasmine.any(Object),
         },
-        { context: {}, user: {}, account: {}, hasReplay: undefined },
       ])
     })
 
@@ -334,56 +272,6 @@ describe('rum public api', () => {
 
         expect(addErrorSpy.calls.argsFor(0)[0].startClocks.relative as number).toEqual(clock.relative(ONE_SECOND))
       })
-
-      it('stores a deep copy of the global context', () => {
-        rumPublicApi.setGlobalContextProperty('foo', 'bar')
-        rumPublicApi.addError(new Error('message'))
-        rumPublicApi.setGlobalContextProperty('foo', 'baz')
-
-        rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
-
-        expect(addErrorSpy.calls.argsFor(0)[1]!.context).toEqual({
-          foo: 'bar',
-        })
-      })
-
-      it('stores a deep copy of the user', () => {
-        const user = { id: 'foo' }
-        rumPublicApi.setUser(user)
-        rumPublicApi.addError(new Error('message'))
-        user.id = 'bar'
-
-        rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
-
-        expect(addErrorSpy.calls.argsFor(0)[1]!.user).toEqual({
-          id: 'foo',
-        })
-      })
-
-      it('stores a deep copy of the account', () => {
-        const account = { id: 'foo' }
-        rumPublicApi.setAccount(account)
-        rumPublicApi.addError(new Error('message'))
-        account.id = 'bar'
-
-        rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
-
-        expect(addErrorSpy.calls.argsFor(0)[1]!.account).toEqual({
-          id: 'foo',
-        })
-      })
-
-      it('stores a deep copy of the error context', () => {
-        const context = { foo: 'bar' }
-        rumPublicApi.addError(new Error('message'), context)
-        context.foo = 'baz'
-
-        rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
-
-        expect(addErrorSpy.calls.argsFor(0)[0].context).toEqual({
-          foo: 'bar',
-        })
-      })
     })
   })
 
@@ -408,11 +296,8 @@ describe('rum public api', () => {
     it('should attach valid objects', () => {
       const user = { id: 'foo', name: 'bar', email: 'qux', foo: { bar: 'qux' } }
       rumPublicApi.setUser(user)
-      rumPublicApi.addAction('message')
 
-      rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
-
-      expect(addActionSpy.calls.argsFor(0)[1]!.user).toEqual({
+      expect(rumPublicApi.getUser()).toEqual({
         email: 'qux',
         foo: { bar: 'qux' },
         id: 'foo',
@@ -426,9 +311,7 @@ describe('rum public api', () => {
       rumPublicApi.setUser(user as any)
       rumPublicApi.addAction('message')
 
-      rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
-
-      expect(addActionSpy.calls.argsFor(0)[1]!.user).toEqual({
+      expect(rumPublicApi.getUser()).toEqual({
         email: '[object Object]',
         id: 'null',
         name: '2',
@@ -442,9 +325,7 @@ describe('rum public api', () => {
       rumPublicApi.clearUser()
       rumPublicApi.addAction('message')
 
-      rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
-
-      expect(addActionSpy.calls.argsFor(0)[1]!.user).toEqual({})
+      expect(rumPublicApi.getUser()).toEqual({})
       expect(displaySpy).not.toHaveBeenCalled()
     })
 
@@ -567,9 +448,7 @@ describe('rum public api', () => {
       rumPublicApi.setAccount(account)
       rumPublicApi.addAction('message')
 
-      rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
-
-      expect(addActionSpy.calls.argsFor(0)[1]!.account).toEqual({
+      expect(rumPublicApi.getAccount()).toEqual({
         foo: { bar: 'qux' },
         id: 'foo',
         name: 'bar',
@@ -582,9 +461,7 @@ describe('rum public api', () => {
       rumPublicApi.setAccount(account as any)
       rumPublicApi.addAction('message')
 
-      rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
-
-      expect(addActionSpy.calls.argsFor(0)[1]!.account).toEqual({
+      expect(rumPublicApi.getAccount()).toEqual({
         id: 'null',
         name: '2',
       })
@@ -597,9 +474,7 @@ describe('rum public api', () => {
       rumPublicApi.clearAccount()
       rumPublicApi.addAction('message')
 
-      rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
-
-      expect(addActionSpy.calls.argsFor(0)[1]!.account).toEqual({})
+      expect(rumPublicApi.getAccount()).toEqual({})
       expect(displaySpy).not.toHaveBeenCalled()
     })
 
@@ -858,86 +733,6 @@ describe('rum public api', () => {
         startSessionReplayRecordingManually: false,
       })
       expect(recorderApiOnRumStartSpy.calls.mostRecent().args[1].startSessionReplayRecordingManually).toBe(false)
-    })
-  })
-
-  describe('storeContextsAcrossPages', () => {
-    let rumPublicApi: RumPublicApi
-
-    beforeEach(() => {
-      rumPublicApi = makeRumPublicApi(noopStartRum, noopRecorderApi, noopProfilerApi)
-
-      registerCleanupTask(() => {
-        localStorage.clear()
-        removeStorageListeners()
-      })
-    })
-
-    it('when disabled, should store contexts only in memory', () => {
-      rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
-
-      rumPublicApi.setGlobalContext({ foo: 'bar' })
-      expect(rumPublicApi.getGlobalContext()).toEqual({ foo: 'bar' })
-      expect(localStorage.getItem('_dd_c_rum_2')).toBeNull()
-
-      rumPublicApi.setUser({ id: 'foo', qux: 'qix' })
-      expect(rumPublicApi.getUser()).toEqual({ id: 'foo', qux: 'qix' })
-      expect(localStorage.getItem('_dd_c_rum_1')).toBeNull()
-    })
-
-    it('when enabled, should maintain user context in local storage', () => {
-      rumPublicApi.init({ ...DEFAULT_INIT_CONFIGURATION, storeContextsAcrossPages: true })
-
-      rumPublicApi.setUser({ id: 'foo', qux: 'qix' })
-      expect(rumPublicApi.getUser()).toEqual({ id: 'foo', qux: 'qix' })
-      expect(localStorage.getItem('_dd_c_rum_1')).toBe('{"id":"foo","qux":"qix"}')
-
-      rumPublicApi.setUserProperty('foo', 'bar')
-      expect(rumPublicApi.getUser()).toEqual({ id: 'foo', qux: 'qix', foo: 'bar' })
-      expect(localStorage.getItem('_dd_c_rum_1')).toBe('{"id":"foo","qux":"qix","foo":"bar"}')
-
-      rumPublicApi.removeUserProperty('foo')
-      expect(rumPublicApi.getUser()).toEqual({ id: 'foo', qux: 'qix' })
-      expect(localStorage.getItem('_dd_c_rum_1')).toBe('{"id":"foo","qux":"qix"}')
-
-      rumPublicApi.clearUser()
-      expect(rumPublicApi.getUser()).toEqual({})
-      expect(localStorage.getItem('_dd_c_rum_1')).toBe('{}')
-    })
-
-    it('when enabled, should maintain global context in local storage', () => {
-      rumPublicApi.init({ ...DEFAULT_INIT_CONFIGURATION, storeContextsAcrossPages: true })
-
-      rumPublicApi.setGlobalContext({ qux: 'qix' })
-      expect(rumPublicApi.getGlobalContext()).toEqual({ qux: 'qix' })
-      expect(localStorage.getItem('_dd_c_rum_2')).toBe('{"qux":"qix"}')
-
-      rumPublicApi.setGlobalContextProperty('foo', 'bar')
-      expect(rumPublicApi.getGlobalContext()).toEqual({ qux: 'qix', foo: 'bar' })
-      expect(localStorage.getItem('_dd_c_rum_2')).toBe('{"qux":"qix","foo":"bar"}')
-
-      rumPublicApi.removeGlobalContextProperty('foo')
-      expect(rumPublicApi.getGlobalContext()).toEqual({ qux: 'qix' })
-      expect(localStorage.getItem('_dd_c_rum_2')).toBe('{"qux":"qix"}')
-
-      rumPublicApi.clearGlobalContext()
-      expect(rumPublicApi.getGlobalContext()).toEqual({})
-      expect(localStorage.getItem('_dd_c_rum_2')).toBe('{}')
-    })
-
-    // TODO in next major, buffer context calls to correctly apply before init set/remove/clear
-    it('when enabled, before init context values should override local storage values', () => {
-      localStorage.setItem('_dd_c_rum_1', '{"foo":"bar","qux":"qix"}')
-      localStorage.setItem('_dd_c_rum_2', '{"foo":"bar","qux":"qix"}')
-      rumPublicApi.setUserProperty('foo', 'user')
-      rumPublicApi.setGlobalContextProperty('foo', 'global')
-
-      rumPublicApi.init({ ...DEFAULT_INIT_CONFIGURATION, storeContextsAcrossPages: true })
-
-      expect(rumPublicApi.getUser()).toEqual({ foo: 'user', qux: 'qix' })
-      expect(rumPublicApi.getGlobalContext()).toEqual({ foo: 'global', qux: 'qix' })
-      expect(localStorage.getItem('_dd_c_rum_1')).toBe('{"foo":"user","qux":"qix"}')
-      expect(localStorage.getItem('_dd_c_rum_2')).toBe('{"foo":"global","qux":"qix"}')
     })
   })
 

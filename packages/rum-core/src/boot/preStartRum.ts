@@ -1,3 +1,4 @@
+import type { TrackingConsentState, DeflateWorker, Context, ContextManager, BoundedBuffer } from '@datadog/browser-core'
 import {
   createBoundedBuffer,
   display,
@@ -11,25 +12,28 @@ import {
   initFeatureFlags,
   addTelemetryConfiguration,
   initFetchObservable,
+  CustomerDataCompressionStatus,
+  createCustomerDataTrackerManager,
+  CustomerContextKey,
 } from '@datadog/browser-core'
-import type { TrackingConsentState, DeflateWorker, Context } from '@datadog/browser-core'
 import {
   validateAndBuildRumConfiguration,
   type RumConfiguration,
   type RumInitConfiguration,
 } from '../domain/configuration'
-import type { CommonContext } from '../domain/contexts/commonContext'
 import type { ViewOptions } from '../domain/view/trackViews'
 import type { DurationVital, CustomVitalsState } from '../domain/vital/vitalCollection'
 import { startDurationVital, stopDurationVital } from '../domain/vital/vitalCollection'
 import { fetchAndApplyRemoteConfiguration, serializeRumConfiguration } from '../domain/configuration'
 import { callPluginsMethod } from '../domain/plugins'
-import type { RumPublicApiOptions, Strategy } from './rumPublicApi'
+import { buildGlobalContextManager } from '../domain/contexts/globalContext'
+import { buildUserContextManager } from '../domain/contexts/userContext'
+import { buildAccountContextManager } from '../domain/contexts/accountContext'
 import type { StartRumResult } from './startRum'
+import type { RumPublicApiOptions, Strategy } from './rumPublicApi'
 
 export function createPreStartStrategy(
   { ignoreInitIfSyntheticsWillInjectRum, startDeflateWorker }: RumPublicApiOptions,
-  getCommonContext: () => CommonContext,
   trackingConsentState: TrackingConsentState,
   customVitalsState: CustomVitalsState,
   doStartRum: (
@@ -39,6 +43,17 @@ export function createPreStartStrategy(
   ) => StartRumResult
 ): Strategy {
   const bufferApiCalls = createBoundedBuffer<StartRumResult>()
+  const customerDataTrackerManager = createCustomerDataTrackerManager(CustomerDataCompressionStatus.Unknown)
+
+  // TODO next major: remove the globalContextManager, userContextManager and accountContextManager from preStartStrategy and use an empty context instead
+  const globalContext = buildGlobalContextManager(customerDataTrackerManager)
+  bufferContextCalls(globalContext, CustomerContextKey.globalContext, bufferApiCalls)
+
+  const userContext = buildUserContextManager(customerDataTrackerManager)
+  bufferContextCalls(userContext, CustomerContextKey.userContext, bufferApiCalls)
+
+  const accountContext = buildAccountContextManager(customerDataTrackerManager)
+  bufferContextCalls(accountContext, CustomerContextKey.accountContext, bufferApiCalls)
 
   let firstStartViewCall:
     | { options: ViewOptions | undefined; callback: (startRumResult: StartRumResult) => void }
@@ -121,10 +136,10 @@ export function createPreStartStrategy(
     }
 
     cachedConfiguration = configuration
-    // Instrumuent fetch to track network requests
-    // This is needed in case the consent is not granted and some cutsomer
+    // Instrument fetch to track network requests
+    // This is needed in case the consent is not granted and some customer
     // library (Apollo Client) is storing uninstrumented fetch to be used later
-    // The subscrption is needed so that the instrumentation process is completed
+    // The subscription is needed so that the instrumentation process is completed
     initFetchObservable().subscribe(noop)
 
     trackingConsentState.tryToInit(configuration.trackingConsent)
@@ -192,6 +207,8 @@ export function createPreStartStrategy(
       bufferApiCalls.add((startRumResult) => startRumResult.setViewName(name))
     },
 
+    // View context APIs
+
     setViewContext(context) {
       bufferApiCalls.add((startRumResult) => startRumResult.setViewContext(context))
     },
@@ -202,12 +219,16 @@ export function createPreStartStrategy(
 
     getViewContext: () => emptyContext,
 
-    addAction(action, commonContext = getCommonContext()) {
-      bufferApiCalls.add((startRumResult) => startRumResult.addAction(action, commonContext))
+    globalContext,
+    userContext,
+    accountContext,
+
+    addAction(action) {
+      bufferApiCalls.add((startRumResult) => startRumResult.addAction(action))
     },
 
-    addError(providedError, commonContext = getCommonContext()) {
-      bufferApiCalls.add((startRumResult) => startRumResult.addError(providedError, commonContext))
+    addError(providedError) {
+      bufferApiCalls.add((startRumResult) => startRumResult.addError(providedError))
     },
 
     addFeatureFlagEvaluation(key, value) {
@@ -236,4 +257,15 @@ function overrideInitConfigurationForBridge(initConfiguration: RumInitConfigurat
     sessionSampleRate: 100,
     defaultPrivacyLevel: initConfiguration.defaultPrivacyLevel ?? getEventBridge()?.getPrivacyLevel(),
   }
+}
+
+function bufferContextCalls(
+  preStartContextManager: ContextManager,
+  name: CustomerContextKey,
+  bufferApiCalls: BoundedBuffer<StartRumResult>
+) {
+  preStartContextManager.changeObservable.subscribe(() => {
+    const context = preStartContextManager.getContext()
+    bufferApiCalls.add((startRumResult) => startRumResult[name].setContext(context))
+  })
 }

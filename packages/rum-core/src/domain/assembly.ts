@@ -123,7 +123,7 @@ export function startRumAssembly(
 
   lifeCycle.subscribe(
     LifeCycleEventType.RAW_RUM_EVENT_COLLECTED,
-    ({ startTime, duration, rawRumEvent, domainContext, savedCommonContext, customerContext }) => {
+    ({ startTime, duration, rawRumEvent, domainContext, customerContext }) => {
       const viewHistoryEntry = viewHistory.findView(startTime)
       const urlContext = urlContexts.findUrl(startTime)
       const session = sessionManager.findTrackedSession(startTime)
@@ -147,7 +147,7 @@ export function startRumAssembly(
       }
 
       if (session && viewHistoryEntry && urlContext) {
-        const commonContext = savedCommonContext || getCommonContext()
+        const commonContext = getCommonContext()
 
         const rumContext: Partial<CommonProperties> = {
           _dd: {

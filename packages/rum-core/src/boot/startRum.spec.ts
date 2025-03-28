@@ -334,7 +334,6 @@ describe('view events', () => {
       noopRecorderApi,
       noopProfilerApi,
       createCustomerDataTrackerManager(),
-      () => ({ user: {}, context: {}, account: {}, hasReplay: undefined }),
       undefined,
       createIdentityEncoder,
       createTrackingConsentState(TrackingConsent.GRANTED),
