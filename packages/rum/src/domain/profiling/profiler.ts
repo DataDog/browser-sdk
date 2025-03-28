@@ -19,7 +19,7 @@ import type {
   RumViewEntry,
 } from './types'
 import { getNumberOfSamples } from './utils/getNumberOfSamples'
-import { disableLongTaskRegistry, enableLongTaskRegistry, deleteLongTaskIdsBefore } from './utils/longTaskRegistry'
+import { disableLongTaskRegistry, enableLongTaskRegistry, deleteLongTaskIdsBefore, getLongTaskId } from './utils/longTaskRegistry'
 import { mayStoreLongTaskIdForProfilerCorrelation } from './profilingCorrelation'
 import { transport } from './transport/transport'
 
@@ -271,7 +271,7 @@ export function createRumProfiler(
         continue
       }
 
-      instance.longTasks.push(entry)
+      instance.longTasks.push({...entry, id: getLongTaskId(entry)})
     }
   }
 

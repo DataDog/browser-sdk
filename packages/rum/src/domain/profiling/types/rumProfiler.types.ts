@@ -8,12 +8,17 @@ export interface RumViewEntry {
   readonly viewId: string
 }
 
+export interface RUMProfilerPerformanceEntry extends PerformanceEntry {
+  /** RUM Long Task id */
+  readonly id: string | undefined;
+}
+
 /**
  * Additional data recorded during profiling session
  */
 export interface RumProfilerEnrichmentData {
   /** List of detected long tasks */
-  readonly longTasks: PerformanceEntry[]
+  readonly longTasks: RUMProfilerPerformanceEntry[]
   /** List of detected navigation entries */
   readonly views: RumViewEntry[]
 }
