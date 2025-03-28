@@ -131,7 +131,6 @@ export {
   CUSTOMER_DATA_BYTES_LIMIT,
   CustomerDataCompressionStatus,
 } from './domain/context/customerDataTracker'
-// export type { CustomerContextKeyType, ContextManagerMethodType } from './domain/context/contextConstants'
 export { CustomerDataType, CustomerContextKey, ContextManagerMethod } from './domain/context/contextConstants'
 export type { ValueHistory, ValueHistoryEntry } from './tools/valueHistory'
 export { createValueHistory, CLEAR_OLD_VALUES_INTERVAL } from './tools/valueHistory'
