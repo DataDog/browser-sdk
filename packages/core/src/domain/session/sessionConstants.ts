@@ -7,5 +7,6 @@ export const SESSION_COOKIE_EXPIRATION_DELAY = ONE_YEAR
 export const SessionPersistence = {
   COOKIE: 'cookie',
   LOCAL_STORAGE: 'local-storage',
+  SERVICE_WORKER: 'service-worker',
 } as const
 export type SessionPersistence = (typeof SessionPersistence)[keyof typeof SessionPersistence]
