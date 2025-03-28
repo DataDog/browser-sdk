@@ -2,25 +2,25 @@ import { display } from '../../tools/display'
 import type { PropertiesConfig } from './contextManager'
 import { createContextManager } from './contextManager'
 
-function mockContextManager(propertiesConfig?: PropertiesConfig) {
+function createContextManagerWithDefaults(propertiesConfig?: PropertiesConfig) {
   return createContextManager('test', { propertiesConfig })
 }
 
 describe('createContextManager', () => {
   it('starts with an empty context', () => {
-    const manager = mockContextManager()
+    const manager = createContextManagerWithDefaults()
     expect(manager.getContext()).toEqual({})
   })
 
   it('updates the context', () => {
-    const manager = mockContextManager()
+    const manager = createContextManagerWithDefaults()
     manager.setContext({ bar: 'foo' })
 
     expect(manager.getContext()).toEqual({ bar: 'foo' })
   })
 
   it('completely replaces the context', () => {
-    const manager = mockContextManager()
+    const manager = createContextManagerWithDefaults()
     manager.setContext({ a: 'foo' })
     expect(manager.getContext()).toEqual({ a: 'foo' })
     manager.setContext({ b: 'foo' })
@@ -28,13 +28,13 @@ describe('createContextManager', () => {
   })
 
   it('sets a context value', () => {
-    const manager = mockContextManager()
+    const manager = createContextManagerWithDefaults()
     manager.setContextProperty('foo', 'bar')
     expect(manager.getContext()).toEqual({ foo: 'bar' })
   })
 
   it('removes a context value', () => {
-    const manager = mockContextManager()
+    const manager = createContextManagerWithDefaults()
     manager.setContext({ a: 'foo', b: 'bar' })
     manager.removeContextProperty('a')
     expect(manager.getContext()).toEqual({ b: 'bar' })
@@ -43,7 +43,7 @@ describe('createContextManager', () => {
   })
 
   it('should get a clone of the context from getContext', () => {
-    const manager = mockContextManager()
+    const manager = createContextManagerWithDefaults()
     expect(manager.getContext()).toEqual(manager.getContext())
     expect(manager.getContext()).not.toBe(manager.getContext())
   })
@@ -51,7 +51,7 @@ describe('createContextManager', () => {
   it('should set a clone of context via setContext', () => {
     const nestedObject = { foo: 'bar' }
     const context = { nested: nestedObject }
-    const manager = mockContextManager()
+    const manager = createContextManagerWithDefaults()
     manager.setContext(context)
     expect(manager.getContext().nested).toEqual(nestedObject)
     expect(manager.getContext().nested).not.toBe(nestedObject)
@@ -59,7 +59,7 @@ describe('createContextManager', () => {
 
   it('should set a clone of the property via setContextProperty', () => {
     const nestedObject = { foo: 'bar' }
-    const manager = mockContextManager()
+    const manager = createContextManagerWithDefaults()
     manager.setContextProperty('nested', nestedObject)
     expect(manager.getContext().nested).toEqual(nestedObject)
     expect(manager.getContext().nested).not.toBe(nestedObject)
@@ -67,7 +67,7 @@ describe('createContextManager', () => {
 
   it('should clear context object via clearContext', () => {
     const context = { foo: 'bar' }
-    const manager = mockContextManager()
+    const manager = createContextManagerWithDefaults()
     manager.setContext(context)
     expect(manager.getContext()).toEqual(context)
     manager.clearContext()
@@ -75,7 +75,7 @@ describe('createContextManager', () => {
   })
 
   it('should prevent setting non object values', () => {
-    const manager = mockContextManager()
+    const manager = createContextManagerWithDefaults()
     manager.setContext(null as any)
     expect(manager.getContext()).toEqual({})
     manager.setContext(undefined as any)
@@ -85,7 +85,7 @@ describe('createContextManager', () => {
   })
 
   it('should enforce specified type on properties', () => {
-    const manager = mockContextManager({
+    const manager = createContextManagerWithDefaults({
       id: { type: 'string' },
       name: { type: 'string' },
       email: { type: 'string' },
@@ -99,7 +99,7 @@ describe('createContextManager', () => {
   it('should warn when required property is missing', () => {
     const displaySpy = spyOn(display, 'warn')
 
-    const manager = mockContextManager({
+    const manager = createContextManagerWithDefaults({
       id: { required: true },
     })
 
@@ -113,7 +113,7 @@ describe('createContextManager', () => {
   describe('changeObservable', () => {
     it('should notify on context changes', () => {
       const changeSpy = jasmine.createSpy('change')
-      const manager = mockContextManager()
+      const manager = createContextManagerWithDefaults()
       manager.changeObservable.subscribe(changeSpy)
 
       manager.getContext()

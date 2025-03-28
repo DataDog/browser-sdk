@@ -65,7 +65,7 @@ export function startFeatureFlagContexts(
   return {
     addFeatureFlagEvaluation: (key: string, value: ContextValue) => {
       const currentContext = featureFlagContexts.find()
-      if (currentContext && currentContext[key] !== value) {
+      if (currentContext) {
         currentContext[key] = value
       }
     },
