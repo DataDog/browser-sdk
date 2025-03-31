@@ -161,6 +161,7 @@ describe('session store', () => {
     function disableCookies() {
       spyOnProperty(document, 'cookie', 'get').and.returnValue('')
     }
+
     function disableLocalStorage() {
       spyOn(Storage.prototype, 'getItem').and.throwError('unavailable')
     }
@@ -608,5 +609,100 @@ describe('session store', () => {
       clock.tick(STORAGE_POLL_DELAY)
       expect(otherUpdateSpy).toHaveBeenCalled()
     })
+  })
+
+  describe('session store with service worker persistence', () => {
+    let sessionStoreManager: SessionStore
+    let fakeCacheStore: Record<string, string>
+    let originalCaches: any
+
+    beforeEach(() => {
+      fakeCacheStore = {}
+      originalCaches = Object.getOwnPropertyDescriptor(window, 'caches')
+
+      const mockCaches = {
+        open: jasmine.createSpy('open').and.callFake(() => {
+          return Promise.resolve({
+            match: jasmine.createSpy('match').and.callFake((key: string) => {
+              if (fakeCacheStore[key]) {
+                return Promise.resolve(new Response(fakeCacheStore[key]))
+              }
+              return Promise.resolve(undefined)
+            }),
+            put: jasmine.createSpy('put').and.callFake((key: string, response: Response) => {
+              return response.text().then((text: string) => {
+                fakeCacheStore[key] = text
+              })
+            }),
+          })
+        }),
+      }
+
+      Object.defineProperty(window, 'caches', {
+        get: () => mockCaches,
+        configurable: true,
+      })
+    })
+
+    afterEach(() => {
+      if (originalCaches) {
+        Object.defineProperty(window, 'caches', originalCaches)
+      } else {
+        delete (window as any).caches
+      }
+      sessionStoreManager?.stop()
+    })
+
+    it('should select service worker strategy type', () => {
+      const strategyType = selectSessionStoreStrategyType({
+        ...DEFAULT_INIT_CONFIGURATION,
+        sessionPersistence: SessionPersistence.SERVICE_WORKER,
+      })
+      expect(strategyType).toEqual(jasmine.objectContaining({ type: SessionPersistence.SERVICE_WORKER }))
+    })
+
+    it('should initialize session store using service worker strategy', async () => {
+      const strategyType = selectSessionStoreStrategyType({
+        ...DEFAULT_INIT_CONFIGURATION,
+        sessionPersistence: SessionPersistence.SERVICE_WORKER,
+      })
+      expect(strategyType).toBeDefined()
+
+      sessionStoreManager = startSessionStore(strategyType!, DEFAULT_CONFIGURATION, PRODUCT_KEY, () => ({
+        isTracked: true,
+        trackingType: FakeTrackingType.TRACKED,
+      }))
+      await new Promise((resolve) => setTimeout(resolve, 20))
+
+      const session = sessionStoreManager.getSession()
+      expect(session.isExpired).toEqual(IS_EXPIRED)
+      expect(session.anonymousId).toEqual(jasmine.any(String))
+    })
+
+    it('should update session state using service worker strategy', async () => {
+      const strategyType = selectSessionStoreStrategyType({
+        ...DEFAULT_INIT_CONFIGURATION,
+        sessionPersistence: SessionPersistence.SERVICE_WORKER,
+      });
+      sessionStoreManager = startSessionStore(
+        strategyType!,
+        DEFAULT_CONFIGURATION,
+        PRODUCT_KEY,
+        () => ({
+          isTracked: true,
+          trackingType: FakeTrackingType.TRACKED,
+        })
+      );
+      await new Promise(resolve => setTimeout(resolve, 20));
+
+      sessionStoreManager.expandOrRenewSession();
+      await new Promise(resolve => setTimeout(resolve, 20));
+
+      sessionStoreManager.updateSessionState({ extra: 'value' });
+      await new Promise(resolve => setTimeout(resolve, 20));
+
+      const session = sessionStoreManager.getSession();
+      expect(session.extra).toEqual('value');
+    });
   })
 })

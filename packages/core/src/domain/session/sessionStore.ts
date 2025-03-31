@@ -17,6 +17,9 @@ import type { SessionState } from './sessionState'
 import { initLocalStorageStrategy, selectLocalStorageStrategy } from './storeStrategies/sessionInLocalStorage'
 import { processSessionStoreOperations } from './sessionStoreOperations'
 import { SessionPersistence } from './sessionConstants'
+import { initServiceWorkerStrategy, selectServiceWorkerStrategy } from './storeStrategies/sessionInServiceWorker'
+import type { CookieOptions } from '../../browser/cookie'
+import type { SessionStoreStrategy } from './storeStrategies/sessionStoreStrategy'
 
 export interface SessionStore {
   expandOrRenewSession: () => void
@@ -52,6 +55,9 @@ export function selectSessionStoreStrategyType(
     case SessionPersistence.LOCAL_STORAGE:
       return selectLocalStorageStrategy()
 
+    case SessionPersistence.SERVICE_WORKER:
+      return selectServiceWorkerStrategy()
+
     case undefined: {
       let sessionStoreStrategyType = selectCookieStrategy(initConfiguration)
       if (!sessionStoreStrategyType && initConfiguration.allowFallbackToLocalStorage) {
@@ -81,10 +87,16 @@ export function startSessionStore<TrackingType extends string>(
   const expireObservable = new Observable<void>()
   const sessionStateUpdateObservable = new Observable<{ previousState: SessionState; newState: SessionState }>()
 
-  const sessionStoreStrategy =
-    sessionStoreStrategyType.type === SessionPersistence.COOKIE
-      ? initCookieStrategy(configuration, sessionStoreStrategyType.cookieOptions)
-      : initLocalStorageStrategy(configuration)
+  const strategyInitializers: Record<SessionPersistence, (configuration: Configuration, options?: CookieOptions) => SessionStoreStrategy> = {
+    [SessionPersistence.COOKIE]: (configuration, cookieOptions) => initCookieStrategy(configuration, cookieOptions!),
+    [SessionPersistence.LOCAL_STORAGE]: (configuration) => initLocalStorageStrategy(configuration),
+    [SessionPersistence.SERVICE_WORKER]: (configuration) => initServiceWorkerStrategy(configuration),
+  }
+
+  const sessionStoreStrategy = strategyInitializers[sessionStoreStrategyType.type](
+    configuration,
+    'cookieOptions' in sessionStoreStrategyType ? sessionStoreStrategyType.cookieOptions : undefined
+  )
   const { expireSession } = sessionStoreStrategy
 
   const watchSessionTimeoutId = setInterval(watchSession, STORAGE_POLL_DELAY)
