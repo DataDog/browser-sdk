@@ -2,8 +2,6 @@ import type { CustomerDataTrackerManager } from '@datadog/browser-core'
 import { createContextManager, CustomerDataType, storeContextManager } from '@datadog/browser-core'
 import type { RumConfiguration } from '../configuration'
 
-// export type UserContext = ReturnType<typeof startUserContext>
-
 export function startUserContext(
   customerDataTrackerManager: CustomerDataTrackerManager,
   configuration: RumConfiguration

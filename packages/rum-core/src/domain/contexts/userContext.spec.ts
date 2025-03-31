@@ -14,7 +14,7 @@ describe('user context', () => {
 
   beforeEach(() => {
     customerDataTrackerManager = createCustomerDataTrackerManager(CustomerDataCompressionStatus.Disabled)
-    userContext = startUserContext(customerDataTrackerManager, mockRumConfiguration({ trackAnonymousUser: false }))
+    userContext = startUserContext(customerDataTrackerManager, mockRumConfiguration())
   })
 
   it('should get user', () => {
