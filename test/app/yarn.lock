@@ -16,9 +16,9 @@ __metadata:
   version: 6.6.1
   resolution: "@datadog/browser-logs@file:../../packages/logs/package.tgz#../../packages/logs/package.tgz::hash=023a48&locator=app%40workspace%3A."
   dependencies:
-    "@datadog/browser-core": "npm:6.6.1"
+    "@datadog/browser-core": "npm:6.6.2"
   peerDependencies:
-    "@datadog/browser-rum": 6.6.1
+    "@datadog/browser-rum": 6.6.2
   peerDependenciesMeta:
     "@datadog/browser-rum":
       optional: true
@@ -30,7 +30,7 @@ __metadata:
   version: 6.6.1
   resolution: "@datadog/browser-rum-core@file:../../packages/rum-core/package.tgz#../../packages/rum-core/package.tgz::hash=4ac9a4&locator=app%40workspace%3A."
   dependencies:
-    "@datadog/browser-core": "npm:6.6.1"
+    "@datadog/browser-core": "npm:6.6.2"
   checksum: 10c0/8601fd77a757bebb2d4ee1d11f043e591c50f3f7464187606c73d72d0888f0811649b87625e38d09b978bb54fde3f512fd36e75495d0c86638fa21d33efde6ba
   languageName: node
   linkType: hard
@@ -39,10 +39,10 @@ __metadata:
   version: 6.6.1
   resolution: "@datadog/browser-rum@file:../../packages/rum/package.tgz#../../packages/rum/package.tgz::hash=b720b9&locator=app%40workspace%3A."
   dependencies:
-    "@datadog/browser-core": "npm:6.6.1"
-    "@datadog/browser-rum-core": "npm:6.6.1"
+    "@datadog/browser-core": "npm:6.6.2"
+    "@datadog/browser-rum-core": "npm:6.6.2"
   peerDependencies:
-    "@datadog/browser-logs": 6.6.1
+    "@datadog/browser-logs": 6.6.2
   peerDependenciesMeta:
     "@datadog/browser-logs":
       optional: true

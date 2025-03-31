@@ -108,8 +108,8 @@ export type { XhrCompleteContext, XhrStartContext } from './browser/xhrObservabl
 export { initXhrObservable } from './browser/xhrObservable'
 export type { FetchResolveContext, FetchStartContext, FetchContext } from './browser/fetchObservable'
 export { initFetchObservable, resetFetchObservable } from './browser/fetchObservable'
-export type { PageExitEvent } from './browser/pageExitObservable'
-export { createPageExitObservable, PageExitReason, isPageExitReason } from './browser/pageExitObservable'
+export type { PageMayExitEvent } from './browser/pageMayExitObservable'
+export { createPageMayExitObservable, PageExitReason, isPageExitReason } from './browser/pageMayExitObservable'
 export * from './browser/addEventListener'
 export { requestIdleCallback } from './tools/requestIdleCallback'
 export * from './tools/taskQueue'
@@ -141,8 +141,8 @@ export {
   getSyntheticsTestId,
   getSyntheticsResultId,
 } from './domain/synthetics/syntheticsWorkerValues'
-export type { User } from './domain/user'
-export type { Account } from './domain/account'
+export type { User } from './domain/user.types'
+export type { Account } from './domain/account.types'
 export { checkContext } from './domain/context/contextUtils'
 export * from './domain/resourceUtils'
 export * from './tools/utils/polyfills'

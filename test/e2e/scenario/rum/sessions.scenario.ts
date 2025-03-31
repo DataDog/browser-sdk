@@ -174,8 +174,7 @@ test.describe('rum sessions', () => {
 
         expect(await findSessionCookie(browserContext)).toBeUndefined()
         expect(intakeRegistry.rumActionEvents).toHaveLength(0)
-        expect(intakeRegistry.rumViewEvents).toHaveLength(1)
-        expect(intakeRegistry.rumViewEvents[0].session.is_active).toBe(false)
+        expect(intakeRegistry.rumViewEvents.at(-1)!.session.is_active).toBe(false)
       })
   })
 })

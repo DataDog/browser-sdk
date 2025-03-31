@@ -1,7 +1,7 @@
 import type { TrackingConsentState } from '@datadog/browser-core'
 import {
   sendToExtension,
-  createPageExitObservable,
+  createPageMayExitObservable,
   willSyntheticsInjectRum,
   canUseEventBridge,
 } from '@datadog/browser-core'
@@ -40,7 +40,7 @@ export function startLogs(
   lifeCycle.subscribe(LifeCycleEventType.LOG_COLLECTED, (log) => sendToExtension('logs', log))
 
   const reportError = startReportError(lifeCycle)
-  const pageExitObservable = createPageExitObservable(configuration)
+  const pageMayExitObservable = createPageMayExitObservable(configuration)
 
   const session =
     configuration.sessionStoreStrategyType && !canUseEventBridge() && !willSyntheticsInjectRum()
@@ -51,7 +51,7 @@ export function startLogs(
     initConfiguration,
     configuration,
     reportError,
-    pageExitObservable,
+    pageMayExitObservable,
     session
   )
   cleanupTasks.push(() => stopLogsTelemetry())
@@ -65,7 +65,13 @@ export function startLogs(
   startLogsAssembly(session, configuration, lifeCycle, getCommonContext, reportError)
 
   if (!canUseEventBridge()) {
-    const { stop: stopLogsBatch } = startLogsBatch(configuration, lifeCycle, reportError, pageExitObservable, session)
+    const { stop: stopLogsBatch } = startLogsBatch(
+      configuration,
+      lifeCycle,
+      reportError,
+      pageMayExitObservable,
+      session
+    )
     cleanupTasks.push(() => stopLogsBatch())
   } else {
     startLogsBridge(lifeCycle)
