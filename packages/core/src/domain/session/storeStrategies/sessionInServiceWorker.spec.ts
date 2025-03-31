@@ -52,7 +52,6 @@ describe('session in service worker strategy', () => {
     if (originalCaches) {
       Object.defineProperty(window, 'caches', originalCaches)
     } else {
-      // If we removed the property, restore it
       Object.defineProperty(window, 'caches', {
         get: () => undefined,
         configurable: true
@@ -178,7 +177,6 @@ describe('session in service worker strategy', () => {
 
   describe('when caches API is not available', () => {
     beforeEach(() => {
-      // Remove caches from window completely
       delete (window as any).caches
     })
 
@@ -191,7 +189,6 @@ describe('session in service worker strategy', () => {
       serviceWorkerStrategy = initNewStrategy(DEFAULT_INIT_CONFIGURATION)
       await new Promise(resolve => setTimeout(resolve, 10))
       
-      // These operations should not throw errors
       serviceWorkerStrategy.persistSession(sessionState)
       const session = serviceWorkerStrategy.retrieveSession()
       expect(session).toEqual({ ...sessionState })
