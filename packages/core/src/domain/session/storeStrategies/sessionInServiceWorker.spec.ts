@@ -1,8 +1,8 @@
-import { selectNewStrategy, initNewStrategy } from './sessionInServiceWorker'
 import { SESSION_STORE_KEY, SessionStoreStrategy } from './sessionStoreStrategy'
 import { SessionState, toSessionString } from '../sessionState'
 import { SessionPersistence } from '../sessionConstants'
 import type { Configuration } from '../../configuration'
+import { initServiceWorkerStrategy, selectServiceWorkerStrategy } from './sessionInServiceWorker'
 
 describe('session in service worker strategy', () => {
   const DEFAULT_INIT_CONFIGURATION = { trackAnonymousUser: true } as Configuration
@@ -44,7 +44,7 @@ describe('session in service worker strategy', () => {
       configurable: true
     })
 
-    serviceWorkerStrategy = initNewStrategy(DEFAULT_INIT_CONFIGURATION)
+    serviceWorkerStrategy = initServiceWorkerStrategy(DEFAULT_INIT_CONFIGURATION)
     await new Promise(resolve => setTimeout(resolve, 10))
   })
 
@@ -61,7 +61,7 @@ describe('session in service worker strategy', () => {
 
   describe('when caches API is available', () => {
     it('should report service worker strategy as available', () => {
-      const available = selectNewStrategy()
+      const available = selectServiceWorkerStrategy()
       expect(available).toEqual({ type: SessionPersistence.SERVICE_WORKER })
     })
 
@@ -85,7 +85,7 @@ describe('session in service worker strategy', () => {
 
     it('should return an empty object if session string is invalid', async () => {
       fakeCacheStore[SESSION_STORE_KEY] = '{test:42}'
-      serviceWorkerStrategy = initNewStrategy(DEFAULT_INIT_CONFIGURATION)
+      serviceWorkerStrategy = initServiceWorkerStrategy(DEFAULT_INIT_CONFIGURATION)
       await new Promise(resolve => setTimeout(resolve, 10))
       const session = serviceWorkerStrategy.retrieveSession()
       expect(session).toEqual({})
@@ -111,9 +111,9 @@ describe('session in service worker strategy', () => {
         configurable: true
       })
 
-      serviceWorkerStrategy = initNewStrategy(DEFAULT_INIT_CONFIGURATION)
+      serviceWorkerStrategy = initServiceWorkerStrategy(DEFAULT_INIT_CONFIGURATION)
       await new Promise(resolve => setTimeout(resolve, 10))
-      expect(consoleSpy).toHaveBeenCalledWith('Failed to load session from Cache API', jasmine.any(Error))
+      expect(consoleSpy).toHaveBeenCalledWith('Failed to load session from Cache API:', jasmine.any(Error))
     })
 
     it('should handle persist operation errors gracefully', async () => {
@@ -137,7 +137,7 @@ describe('session in service worker strategy', () => {
         configurable: true
       })
 
-      serviceWorkerStrategy = initNewStrategy(DEFAULT_INIT_CONFIGURATION)
+      serviceWorkerStrategy = initServiceWorkerStrategy(DEFAULT_INIT_CONFIGURATION)
       await new Promise(resolve => setTimeout(resolve, 10))
       
       serviceWorkerStrategy.persistSession(sessionState)
@@ -166,7 +166,7 @@ describe('session in service worker strategy', () => {
         configurable: true
       })
 
-      serviceWorkerStrategy = initNewStrategy(DEFAULT_INIT_CONFIGURATION)
+      serviceWorkerStrategy = initServiceWorkerStrategy(DEFAULT_INIT_CONFIGURATION)
       await new Promise(resolve => setTimeout(resolve, 10))
       
       serviceWorkerStrategy.expireSession(sessionState)
@@ -181,12 +181,12 @@ describe('session in service worker strategy', () => {
     })
 
     it('should return undefined when selecting strategy', () => {
-      const available = selectNewStrategy()
+      const available = selectServiceWorkerStrategy()
       expect(available).toBeUndefined()
     })
 
     it('should handle operations without caches API', async () => {
-      serviceWorkerStrategy = initNewStrategy(DEFAULT_INIT_CONFIGURATION)
+      serviceWorkerStrategy = initServiceWorkerStrategy(DEFAULT_INIT_CONFIGURATION)
       await new Promise(resolve => setTimeout(resolve, 10))
       
       serviceWorkerStrategy.persistSession(sessionState)

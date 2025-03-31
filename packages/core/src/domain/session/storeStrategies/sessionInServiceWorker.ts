@@ -3,106 +3,77 @@ import { SessionState, toSessionString, toSessionState, getExpiredSessionState }
 import { SessionPersistence } from '../sessionConstants'
 import type { Configuration } from '../../configuration'
 
-const CACHE_NAME = 'session-cache'
+const CACHE_NAME = 'session-cache-v1'
 
-// In-memory copy of the session string. This enables us to return a session synchronously.
+// In-memory copy of the session string for synchronous access
 let inMemorySessionString: string | null = null
 
-/**
- * Attempts to load the session from the Cache API asynchronously.
- * This is invoked during initialization so that subsequent calls to retrieveSession
- * return the cached session data if available.
- */
-function loadSessionFromCache(): void {
-  if (!('caches' in window)) {
-    return
-  }
-  caches
-    .open(CACHE_NAME)
-    .then((cache) => cache.match(SESSION_STORE_KEY))
-    .then((response) => {
-      if (response) {
-        return response.text()
-      }
-      return null
-    })
-    .then((sessionStr) => {
-      inMemorySessionString = sessionStr
-    })
-    .catch((error) => {
-      console.error('Failed to load session from Cache API', error)
-    })
-}
-
-/**
- * Persists the given session state.
- * The session is converted to a string (using toSessionString) and stored
- * in-memory for synchronous access while the Cache API is updated asynchronously.
- */
-function persistInCache(sessionState: SessionState): void {
-  inMemorySessionString = toSessionString(sessionState)
-  if (!('caches' in window)) {
-    return
-  }
-  caches
-    .open(CACHE_NAME)
-    .then((cache) => cache.put(SESSION_STORE_KEY, new Response(inMemorySessionString!)))
-    .catch((error) => {
-      console.error('Failed to persist session to Cache API', error)
-    })
-}
-
-/**
- * Retrieves the session state.
- * Returns the session from the in-memory copy. If none is available, toSessionState
- * will convert a null/empty value into a default session state.
- */
-function retrieveFromCache(): SessionState {
-  return toSessionState(inMemorySessionString)
-}
-
-/**
- * Expires the current session by calculating the expired session state
- * (using getExpiredSessionState) and then updating both the in-memory copy and
- * the Cache API asynchronously.
- */
-function expireInCache(sessionState: SessionState, configuration: Configuration): void {
-  const expiredSession = getExpiredSessionState(sessionState, configuration)
-  inMemorySessionString = toSessionString(expiredSession)
-  if (!('caches' in window)) {
-    return
-  }
-  caches
-    .open(CACHE_NAME)
-    .then((cache) => cache.put(SESSION_STORE_KEY, new Response(inMemorySessionString!)))
-    .catch((error) => {
-      console.error('Failed to expire session in Cache API', error)
-    })
-}
-
-/**
- * Checks if the Cache API is available in the current environment.
- * Returns a strategy type if available.
- */
-export function selectNewStrategy(): SessionStoreStrategyType | undefined {
+export function selectServiceWorkerStrategy(): SessionStoreStrategyType | undefined {
   if ('caches' in window) {
     return { type: SessionPersistence.SERVICE_WORKER }
   }
   return undefined
 }
 
-/**
- * Initializes the new Service Worker (Cache API) session storage strategy.
- * It loads any pre-existing session from the Cache API into an in-memory variable,
- * then returns an object implementing SessionStoreStrategy.
- */
-export function initNewStrategy(configuration: Configuration): SessionStoreStrategy {
+
+export function initServiceWorkerStrategy(configuration: Configuration): SessionStoreStrategy {
+  // Load existing session asynchronously
   loadSessionFromCache()
 
   return {
     isLockEnabled: false,
-    persistSession: persistInCache,
+    persistSession: (sessionState: SessionState) => {
+      persistInCache(sessionState)
+    },
     retrieveSession: retrieveFromCache,
-    expireSession: (sessionState: SessionState) => expireInCache(sessionState, configuration),
+    expireSession: (sessionState: SessionState) => {
+      expireInCache(sessionState, configuration)
+    },
   }
+}
+
+/**
+ * Attempts to load the session from the Cache API asynchronously.
+ * This is invoked during initialization so that subsequent calls to retrieveSession
+ * return the cached session data if available.
+ */
+async function loadSessionFromCache(): Promise<void> {
+  if (!('caches' in window)) {
+    return
+  }
+
+  try {
+    const cache = await caches.open(CACHE_NAME)
+    const response = await cache.match(SESSION_STORE_KEY)
+    if (response) {
+      inMemorySessionString = await response.text()
+    }
+  } catch (error) {
+    console.error('Failed to load session from Cache API:', error)
+  }
+}
+
+async function persistInCache(sessionState: SessionState): Promise<void> {
+  const sessionString = toSessionString(sessionState)
+  inMemorySessionString = sessionString
+
+  if (!('caches' in window)) {
+    return
+  }
+
+  try {
+    const cache = await caches.open(CACHE_NAME)
+    await cache.put(SESSION_STORE_KEY, new Response(sessionString))
+  } catch (error) {
+    console.error('Failed to persist session to Cache API:', error)
+  }
+}
+
+function retrieveFromCache(): SessionState {
+  return toSessionState(inMemorySessionString)
+}
+
+async function expireInCache(sessionState: SessionState, configuration: Configuration): Promise<void> {
+  const expiredSession = getExpiredSessionState(sessionState, configuration)
+  await persistInCache(expiredSession)
 }
