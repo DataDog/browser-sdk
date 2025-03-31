@@ -8,11 +8,23 @@ import {
   getGlobalObject,
 } from '@datadog/browser-core'
 
-import type { LifeCycle, RumConfiguration, RumSessionManager } from '@datadog/browser-rum-core'
+import type { LifeCycle, RumConfiguration, RumSessionManager, ViewHistoryEntry } from '@datadog/browser-rum-core'
 import { LifeCycleEventType, RumPerformanceEntryType, supportPerformanceTimingEvent } from '@datadog/browser-rum-core'
-import type { RumProfilerTrace, RumProfilerInstance, Profiler, RUMProfiler, RUMProfilerConfiguration } from './types'
+import type {
+  RumProfilerTrace,
+  RumProfilerInstance,
+  Profiler,
+  RUMProfiler,
+  RUMProfilerConfiguration,
+  RumViewEntry,
+} from './types'
 import { getNumberOfSamples } from './utils/getNumberOfSamples'
-import { disableLongTaskRegistry, enableLongTaskRegistry, deleteLongTaskIdsBefore } from './utils/longTaskRegistry'
+import {
+  disableLongTaskRegistry,
+  enableLongTaskRegistry,
+  deleteLongTaskIdsBefore,
+  getLongTaskId,
+} from './utils/longTaskRegistry'
 import { mayStoreLongTaskIdForProfilerCorrelation } from './profilingCorrelation'
 import { transport } from './transport/transport'
 
@@ -31,15 +43,19 @@ export function createRumProfiler(
 ): RUMProfiler {
   const isLongAnimationFrameEnabled = supportPerformanceTimingEvent(RumPerformanceEntryType.LONG_ANIMATION_FRAME)
 
+  let lastViewEntry: RumViewEntry | undefined
+
   let instance: RumProfilerInstance = { state: 'stopped' }
 
-  function start(viewId: string | undefined): void {
+  function start(viewEntry: ViewHistoryEntry | undefined): void {
     if (instance.state === 'running') {
       return
     }
 
     // Add initial view
-    collectViewEntry(viewId)
+    lastViewEntry = viewEntry
+      ? { startTime: performance.now(), viewId: viewEntry.id, viewName: viewEntry.name }
+      : undefined
 
     // Start profiler instance
     startNextProfilerInstance()
@@ -97,7 +113,7 @@ export function createRumProfiler(
 
     // Whenever the View is updated, we add a views entry to the profiler instance.
     const viewUpdatedSubscription = lifeCycle.subscribe(LifeCycleEventType.VIEW_CREATED, (view) => {
-      collectViewEntry(view.id)
+      collectViewEntry({ viewId: view.id, viewName: view.name, startTime: performance.now() })
     })
     cleanupTasks.push(viewUpdatedSubscription.unsubscribe)
 
@@ -116,7 +132,7 @@ export function createRumProfiler(
     }
 
     // Don't wait for data collection to start next instance
-    collectProfilerInstance().catch(monitorError)
+    collectProfilerInstance(instance).catch(monitorError)
 
     const { cleanupTasks, observer } = addEventListeners(instance)
 
@@ -152,30 +168,33 @@ export function createRumProfiler(
       observer,
     }
 
+    // Add last view entry
+    collectViewEntry(lastViewEntry)
+
     // Add event handler case we overflow the buffer
     profiler.addEventListener('samplebufferfull', handleSampleBufferFull)
   }
 
-  async function collectProfilerInstance() {
-    if (instance.state !== 'running') {
+  async function collectProfilerInstance(lastInstance: RumProfilerInstance) {
+    if (lastInstance.state !== 'running') {
       return
     }
 
     // Empty the performance observer buffer
-    handleLongTaskEntries(instance.observer?.takeRecords() ?? [])
+    handleLongTaskEntries(lastInstance.observer?.takeRecords() ?? [])
 
     // Cleanup instance
-    clearTimeout(instance.timeoutId)
-    instance.profiler.removeEventListener('samplebufferfull', handleSampleBufferFull)
+    clearTimeout(lastInstance.timeoutId)
+    lastInstance.profiler.removeEventListener('samplebufferfull', handleSampleBufferFull)
 
     // Store instance data snapshot in local variables to use in async callback
-    const { startTime, longTasks, views } = instance
+    const { startTime, longTasks, views } = lastInstance
 
     // Capturing when we stop the profiler so we use this time as a reference to clean-up long task registry, eg. remove the long tasks that we collected already
     const collectTime = performance.now()
 
     // Stop current profiler to get trace
-    await instance.profiler
+    await lastInstance.profiler
       .stop()
       .then((trace) => {
         const endTime = performance.now()
@@ -216,21 +235,18 @@ export function createRumProfiler(
     // Cleanup tasks
     instance.cleanupTasks.forEach((cleanupTask) => cleanupTask())
 
-    await collectProfilerInstance()
+    await collectProfilerInstance(instance)
 
     instance = { state: nextState }
   }
 
-  function collectViewEntry(viewId: string | undefined): void {
-    if (instance.state !== 'running') {
+  function collectViewEntry(viewEntry: RumViewEntry | undefined): void {
+    if (instance.state !== 'running' || !viewEntry) {
       return
     }
 
     // Add entry to views
-    instance.views.push({
-      startTime: performance.now(),
-      viewId: viewId || '',
-    })
+    instance.views.push(viewEntry)
   }
 
   function handleProfilerTrace(trace: RumProfilerTrace): void {
@@ -262,7 +278,13 @@ export function createRumProfiler(
         continue
       }
 
-      instance.longTasks.push(entry)
+      // Store Long Task entry, which is a lightweight version of the PerformanceEntry
+      instance.longTasks.push({
+        id: getLongTaskId(entry),
+        duration: entry.duration,
+        entryType: entry.entryType,
+        startTime: entry.startTime,
+      })
     }
   }
 
