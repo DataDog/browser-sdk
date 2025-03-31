@@ -8,6 +8,11 @@ import { reactPlugin, ErrorBoundary, UNSTABLE_ReactComponentTracker } from '@dat
 datadogRum.init({
   applicationId: 'xxx',
   clientToken: 'xxx',
+  site: 'xxx' as any,
+  service: 'xxx',
+  env: 'dev_WP',
+  sessionSampleRate: 100,
+  sessionReplaySampleRate: 20,
   plugins: [reactPlugin({ router: true })],
 })
 
