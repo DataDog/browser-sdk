@@ -26,8 +26,10 @@ describe('trackConsoleError', () => {
   })
 
   it('should track console error', () => {
+    const error = new TypeError('foo')
+
     // eslint-disable-next-line no-console
-    console.error(new TypeError('foo'))
+    console.error(error)
 
     expect(notifyLog).toHaveBeenCalledWith({
       startClocks: clocksNow(),
@@ -39,6 +41,7 @@ describe('trackConsoleError', () => {
       fingerprint: undefined,
       causes: undefined,
       context: undefined,
+      originalError: error,
     })
   })
 
@@ -62,6 +65,7 @@ describe('trackConsoleError', () => {
       fingerprint: 'my-fingerprint',
       causes: undefined,
       context: undefined,
+      originalError: error,
     })
   })
 })
