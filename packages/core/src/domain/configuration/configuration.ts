@@ -54,7 +54,7 @@ export interface InitConfiguration {
   silentMultipleInit?: boolean | undefined
 
   /**
-   * Which storage strategy to use for persisting sessions. Can be either 'cookie' or 'local-storage'.
+   * Which storage strategy to use for persisting sessions. Can be either 'cookie', 'local-storage', or 'service-worker'.
    *
    * Important: If you are using the RUM and Logs Browser SDKs, this option must be configured with identical values
    * @default "cookie"
