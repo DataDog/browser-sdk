@@ -1,4 +1,4 @@
-import type { Context, RawError, EventRateLimiter, User, Account } from '@datadog/browser-core'
+import type { Context, RawError, EventRateLimiter } from '@datadog/browser-core'
 import {
   combine,
   isEmptyObject,
@@ -18,13 +18,14 @@ import { RumEventType } from '../rawRumEvent.types'
 import type { CommonProperties, RumEvent } from '../rumEvent.types'
 import type { Hooks } from '../hooks'
 import { HookNames } from '../hooks'
+import type { RecorderApi } from '../boot/rumPublicApi'
 import type { LifeCycle } from './lifeCycle'
 import { LifeCycleEventType } from './lifeCycle'
 import type { ViewHistory } from './contexts/viewHistory'
-import { SessionReplayState, SessionType, type RumSessionManager } from './rumSessionManager'
+import { SessionReplayState, SessionType } from './rumSessionManager'
+import type { RumSessionManager } from './rumSessionManager'
 import type { RumConfiguration } from './configuration'
 import type { DisplayContext } from './contexts/displayContext'
-import type { CommonContext } from './contexts/commonContext'
 import type { ModifiableFieldPaths } from './limitModification'
 import { limitModification } from './limitModification'
 import type { UrlContexts } from './contexts/urlContexts'
@@ -59,7 +60,7 @@ export function startRumAssembly(
   viewHistory: ViewHistory,
   urlContexts: UrlContexts,
   displayContext: DisplayContext,
-  getCommonContext: () => CommonContext,
+  recorderApi: RecorderApi,
   reportError: (error: RawError) => void
 ) {
   modifiableFieldPathsByEvent = {
@@ -147,8 +148,6 @@ export function startRumAssembly(
       }
 
       if (session && viewHistoryEntry && urlContext) {
-        const commonContext = getCommonContext()
-
         const rumContext: Partial<CommonProperties> = {
           _dd: {
             format_version: 2,
@@ -170,7 +169,6 @@ export function startRumAssembly(
           },
           display: displayContext.get(),
           connectivity: getConnectivity(),
-          context: commonContext.context,
         }
 
         const serverRumEvent = combine(
@@ -185,22 +183,14 @@ export function startRumAssembly(
         ) as RumEvent & Context
 
         if (!('has_replay' in serverRumEvent.session)) {
-          ;(serverRumEvent.session as Mutable<RumEvent['session']>).has_replay = commonContext.hasReplay
+          ;(serverRumEvent.session as Mutable<RumEvent['session']>).has_replay = recorderApi.isRecording()
+            ? true
+            : undefined
         }
+
         if (serverRumEvent.type === 'view') {
           ;(serverRumEvent.session as Mutable<RumEvent['session']>).sampled_for_replay =
             session.sessionReplay === SessionReplayState.SAMPLED
-        }
-
-        if (session.anonymousId && !commonContext.user.anonymous_id && !!configuration.trackAnonymousUser) {
-          commonContext.user.anonymous_id = session.anonymousId
-        }
-        if (!isEmptyObject(commonContext.user)) {
-          ;(serverRumEvent.usr as Mutable<RumEvent['usr']>) = commonContext.user as User & Context
-        }
-
-        if (!isEmptyObject(commonContext.account) && commonContext.account.id) {
-          ;(serverRumEvent.account as Mutable<RumEvent['account']>) = commonContext.account as Account
         }
 
         if (shouldSend(serverRumEvent, configuration.beforeSend, domainContext, eventRateLimiters)) {

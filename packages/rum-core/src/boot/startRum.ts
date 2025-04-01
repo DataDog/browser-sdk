@@ -56,8 +56,6 @@ import { startGlobalContext } from '../domain/contexts/globalContext'
 import { startUserContext } from '../domain/contexts/userContext'
 import { startAccountContext } from '../domain/contexts/accountContext'
 import { startRumAssembly } from '../domain/assembly'
-import type { CommonContext } from '../domain/contexts/commonContext'
-import { buildCommonContext } from '../domain/contexts/commonContext'
 import type { RecorderApi, ProfilerApi } from './rumPublicApi'
 
 export type StartRum = typeof startRum
@@ -144,11 +142,9 @@ export function startRum(
   const { observable: windowOpenObservable, stop: stopWindowOpen } = createWindowOpenObservable()
   cleanupTasks.push(stopWindowOpen)
 
-  const globalContext = startGlobalContext(customerDataTrackerManager, configuration)
-  const userContext = startUserContext(customerDataTrackerManager, configuration)
-  const accountContext = startAccountContext(customerDataTrackerManager, configuration)
-
-  const getCommonContext = () => buildCommonContext(globalContext, userContext, accountContext, recorderApi)
+  const globalContext = startGlobalContext(hooks, customerDataTrackerManager, configuration)
+  const userContext = startUserContext(hooks, customerDataTrackerManager, configuration, session)
+  const accountContext = startAccountContext(hooks, customerDataTrackerManager, configuration)
 
   const {
     actionContexts,
@@ -164,7 +160,7 @@ export function startRum(
     windowOpenObservable,
     urlContexts,
     viewHistory,
-    getCommonContext,
+    recorderApi,
     reportError
   )
   cleanupTasks.push(stopRumEventCollection)
@@ -208,7 +204,7 @@ export function startRum(
 
   const { addError } = startErrorCollection(lifeCycle, configuration)
 
-  startRequestCollection(lifeCycle, configuration, session, getCommonContext)
+  startRequestCollection(lifeCycle, configuration, session, userContext, accountContext)
 
   const vitalCollection = startVitalCollection(lifeCycle, pageStateHistory, customVitalsState)
   const internalContext = startInternalContext(
@@ -268,7 +264,7 @@ export function startRumEventCollection(
   windowOpenObservable: Observable<void>,
   urlContexts: UrlContexts,
   viewHistory: ViewHistory,
-  getCommonContext: () => CommonContext,
+  recorderApi: RecorderApi,
   reportError: (error: RawError) => void
 ) {
   const actionCollection = startActionCollection(
@@ -291,7 +287,7 @@ export function startRumEventCollection(
     viewHistory,
     urlContexts,
     displayContext,
-    getCommonContext,
+    recorderApi,
     reportError
   )
 

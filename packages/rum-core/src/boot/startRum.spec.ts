@@ -81,12 +81,7 @@ function startRumStub(
     windowOpenObservable,
     urlContexts,
     viewHistory,
-    () => ({
-      context: {},
-      user: {},
-      account: {},
-      hasReplay: undefined,
-    }),
+    noopRecorderApi,
     reportError
   )
   const { stop: viewCollectionStop } = startViewCollection(
