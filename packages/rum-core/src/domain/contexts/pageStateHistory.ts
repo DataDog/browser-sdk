@@ -54,8 +54,6 @@ export function startPageStateHistory(
       RumPerformanceEntryType.VISIBILITY_STATE
     ) as PerformanceEntry[]
 
-    visibilityEntries.sort((a, b) => a.startTime - b.startTime)
-
     visibilityEntries.forEach((entry) => {
       const state = entry.name === 'hidden' ? PageState.HIDDEN : PageState.ACTIVE
       addPageState(state, entry.startTime as RelativeTime)
