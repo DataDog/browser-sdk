@@ -8,7 +8,7 @@ import type {
 } from '@datadog/browser-core'
 import {
   sendToExtension,
-  createPageExitObservable,
+  createPageMayExitObservable,
   TelemetryService,
   startTelemetry,
   canUseEventBridge,
@@ -18,7 +18,6 @@ import {
 } from '@datadog/browser-core'
 import { createDOMMutationObservable } from '../browser/domMutationObservable'
 import { createWindowOpenObservable } from '../browser/windowOpenObservable'
-import { startRumAssembly } from '../domain/assembly'
 import { startInternalContext } from '../domain/contexts/internalContext'
 import { LifeCycle, LifeCycleEventType } from '../domain/lifeCycle'
 import type { ViewHistory } from '../domain/contexts/viewHistory'
@@ -41,7 +40,6 @@ import { startFeatureFlagContexts } from '../domain/contexts/featureFlagContext'
 import { startCustomerDataTelemetry } from '../domain/startCustomerDataTelemetry'
 import type { PageStateHistory } from '../domain/contexts/pageStateHistory'
 import { startPageStateHistory } from '../domain/contexts/pageStateHistory'
-import type { CommonContext } from '../domain/contexts/commonContext'
 import { startDisplayContext } from '../domain/contexts/displayContext'
 import type { CustomVitalsState } from '../domain/vital/vitalCollection'
 import { startVitalCollection } from '../domain/vital/vitalCollection'
@@ -52,6 +50,12 @@ import { startLongTaskCollection } from '../domain/longTask/longTaskCollection'
 import type { Hooks } from '../hooks'
 import { createHooks } from '../hooks'
 import { startSyntheticsContext } from '../domain/contexts/syntheticsContext'
+import { startGlobalContext } from '../domain/contexts/globalContext'
+import { startUserContext } from '../domain/contexts/userContext'
+import { startAccountContext } from '../domain/contexts/accountContext'
+import { startRumAssembly } from '../domain/assembly'
+import type { CommonContext } from '../domain/contexts/commonContext'
+import { buildCommonContext } from '../domain/contexts/commonContext'
 import type { RecorderApi, ProfilerApi } from './rumPublicApi'
 
 export type StartRum = typeof startRum
@@ -61,7 +65,6 @@ export function startRum(
   configuration: RumConfiguration,
   recorderApi: RecorderApi,
   profilerApi: ProfilerApi,
-  getCommonContext: () => CommonContext,
   initialViewOptions: ViewOptions | undefined,
   createEncoder: (streamId: DeflateEncoderStreamId) => Encoder,
 
@@ -98,11 +101,11 @@ export function startRum(
     addTelemetryDebug('Error reported to customer', { 'error.message': error.message })
   }
 
-  const pageExitObservable = createPageExitObservable(configuration)
-  const pageExitSubscription = pageExitObservable.subscribe((event) => {
-    lifeCycle.notify(LifeCycleEventType.PAGE_EXITED, event)
+  const pageMayExitObservable = createPageMayExitObservable(configuration)
+  const pageMayExitSubscription = pageMayExitObservable.subscribe((event) => {
+    lifeCycle.notify(LifeCycleEventType.PAGE_MAY_EXIT, event)
   })
-  cleanupTasks.push(() => pageExitSubscription.unsubscribe())
+  cleanupTasks.push(() => pageMayExitSubscription.unsubscribe())
 
   const session = !canUseEventBridge()
     ? startRumSessionManager(configuration, lifeCycle, trackingConsentState)
@@ -113,7 +116,7 @@ export function startRum(
       lifeCycle,
       telemetry.observable,
       reportError,
-      pageExitObservable,
+      pageMayExitObservable,
       session.expireObservable,
       createEncoder
     )
@@ -131,6 +134,12 @@ export function startRum(
   const featureFlagContexts = startFeatureFlagContexts(lifeCycle, hooks, configuration)
   const { observable: windowOpenObservable, stop: stopWindowOpen } = createWindowOpenObservable()
   cleanupTasks.push(stopWindowOpen)
+
+  const globalContext = startGlobalContext(configuration)
+  const userContext = startUserContext(configuration)
+  const accountContext = startAccountContext(configuration)
+
+  const getCommonContext = () => buildCommonContext(globalContext, userContext, accountContext, recorderApi)
 
   const {
     actionContexts,
@@ -222,6 +231,9 @@ export function startRum(
     startDurationVital: vitalCollection.startDurationVital,
     stopDurationVital: vitalCollection.stopDurationVital,
     addDurationVital: vitalCollection.addDurationVital,
+    globalContext,
+    userContext,
+    accountContext,
     stop: () => {
       cleanupTasks.forEach((task) => task())
     },

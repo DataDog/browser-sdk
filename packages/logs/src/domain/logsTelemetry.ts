@@ -1,4 +1,4 @@
-import type { RawError, Observable, PageExitEvent, TelemetryEvent, Context } from '@datadog/browser-core'
+import type { RawError, Observable, PageMayExitEvent, TelemetryEvent, Context } from '@datadog/browser-core'
 import {
   startTelemetry,
   TelemetryService,
@@ -19,7 +19,7 @@ export function startLogsTelemetry(
   initConfiguration: LogsInitConfiguration,
   configuration: LogsConfiguration,
   reportError: (error: RawError) => void,
-  pageExitObservable: Observable<PageExitEvent>,
+  pageMayExitObservable: Observable<PageMayExitEvent>,
   session: LogsSessionManager
 ) {
   const telemetry = startTelemetry(TelemetryService.LOGS, configuration)
@@ -54,7 +54,7 @@ export function startLogsTelemetry(
         encoder: createIdentityEncoder(),
       },
       reportError,
-      pageExitObservable,
+      pageMayExitObservable,
       session.expireObservable
     )
     cleanupTasks.push(() => telemetryBatch.stop())

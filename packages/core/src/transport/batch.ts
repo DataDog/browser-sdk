@@ -1,7 +1,7 @@
 import { DOCS_TROUBLESHOOTING, MORE_DETAILS, display } from '../tools/display'
 import type { Context } from '../tools/serialisation/context'
 import { objectValues } from '../tools/utils/polyfills'
-import { isPageExitReason } from '../browser/pageExitObservable'
+import { isPageExitReason } from '../browser/pageMayExitObservable'
 import { jsonStringify } from '../tools/serialisation/jsonStringify'
 import type { Encoder, EncoderResult } from '../tools/encoder'
 import { computeBytesCount } from '../tools/utils/byteUtils'
@@ -76,11 +76,11 @@ export function createBatch({
     const upsertMessages = objectValues(upsertBuffer).join('\n')
     upsertBuffer = {}
 
-    const isPageExit = isPageExitReason(event.reason)
-    const send = isPageExit ? request.sendOnExit : request.send
+    const pageMightExit = isPageExitReason(event.reason)
+    const send = pageMightExit ? request.sendOnExit : request.send
 
     if (
-      isPageExit &&
+      pageMightExit &&
       // Note: checking that the encoder is async is not strictly needed, but it's an optimization:
       // if the encoder is async we need to send two requests in some cases (one for encoded data
       // and the other for non-encoded data). But if it's not async, we don't have to worry about

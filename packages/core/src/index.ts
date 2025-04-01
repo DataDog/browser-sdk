@@ -39,6 +39,8 @@ export type {
   TelemetryDebugEvent,
   TelemetryConfigurationEvent,
   TelemetryUsageEvent,
+  RawTelemetryUsage,
+  RawTelemetryUsageFeature,
 } from './domain/telemetry'
 export {
   startTelemetry,
@@ -108,8 +110,8 @@ export type { XhrCompleteContext, XhrStartContext } from './browser/xhrObservabl
 export { initXhrObservable } from './browser/xhrObservable'
 export type { FetchResolveContext, FetchStartContext, FetchContext } from './browser/fetchObservable'
 export { initFetchObservable, resetFetchObservable } from './browser/fetchObservable'
-export type { PageExitEvent } from './browser/pageExitObservable'
-export { createPageExitObservable, PageExitReason, isPageExitReason } from './browser/pageExitObservable'
+export type { PageMayExitEvent } from './browser/pageMayExitObservable'
+export { createPageMayExitObservable, PageExitReason, isPageExitReason } from './browser/pageMayExitObservable'
 export * from './browser/addEventListener'
 export { requestIdleCallback } from './tools/requestIdleCallback'
 export * from './tools/taskQueue'
@@ -122,7 +124,7 @@ export { catchUserErrors } from './tools/catchUserErrors'
 export type { ContextManager } from './domain/context/contextManager'
 export { createContextManager } from './domain/context/contextManager'
 export { storeContextManager, removeStorageListeners } from './domain/context/storeContextManager'
-export { CustomerDataType } from './domain/context/contextConstants'
+export { CustomerDataType, CustomerContextKey, ContextManagerMethod } from './domain/context/contextConstants'
 export type { ValueHistory, ValueHistoryEntry } from './tools/valueHistory'
 export { createValueHistory, CLEAR_OLD_VALUES_INTERVAL } from './tools/valueHistory'
 export { readBytesFromStream } from './tools/readBytesFromStream'
@@ -134,8 +136,8 @@ export {
   getSyntheticsTestId,
   getSyntheticsResultId,
 } from './domain/synthetics/syntheticsWorkerValues'
-export type { User } from './domain/user'
-export type { Account } from './domain/account'
+export type { User } from './domain/user.types'
+export type { Account } from './domain/account.types'
 export { checkContext } from './domain/context/contextUtils'
 export * from './domain/resourceUtils'
 export * from './tools/utils/polyfills'

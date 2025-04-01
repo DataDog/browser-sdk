@@ -148,13 +148,6 @@ export function trackViews(
     lifeCycle.subscribe(LifeCycleEventType.SESSION_EXPIRED, () => {
       currentView.end({ sessionIsActive: false })
     })
-
-    // End the current view on page unload
-    lifeCycle.subscribe(LifeCycleEventType.PAGE_EXITED, (pageExitEvent) => {
-      if (pageExitEvent.reason === PageExitReason.UNLOADING) {
-        currentView.end()
-      }
-    })
   }
 
   function renewViewOnLocationChange(locationChangeObservable: Observable<LocationChange>) {
@@ -266,6 +259,12 @@ function newView(
   // Session keep alive
   const keepAliveIntervalId = setInterval(triggerViewUpdate, SESSION_KEEP_ALIVE_INTERVAL)
 
+  const pageMayExitSubscription = lifeCycle.subscribe(LifeCycleEventType.PAGE_MAY_EXIT, (pageMayExitEvent) => {
+    if (pageMayExitEvent.reason === PageExitReason.UNLOADING) {
+      triggerViewUpdate()
+    }
+  })
+
   // Initial view update
   triggerViewUpdate()
 
@@ -333,6 +332,7 @@ function newView(
       clearInterval(keepAliveIntervalId)
       setViewEnd(endClocks.relative)
       stopCommonViewMetricsTracking()
+      pageMayExitSubscription.unsubscribe()
       triggerViewUpdate()
       setTimeout(() => {
         this.stop()
