@@ -13,6 +13,9 @@ interface ProfileEvent extends ProfileEventAttributes {
   start: string // ISO date
   end: string // ISO date
   family: 'chrome'
+  runtime: 'chrome'
+  format: 'json'
+  version: 4
   tags_profiler: string
 }
 
@@ -61,6 +64,9 @@ function buildProfileEvent(
     start: start.toISOString(),
     end: end.toISOString(),
     family: 'chrome',
+    runtime: 'chrome',
+    format: 'json',
+    version: 4, // Ingestion event version (not the version application tag)
     tags_profiler: profileEventTags.join(','),
   }
 
@@ -75,13 +81,7 @@ function buildProfileEvent(
 function buildProfileEventTags(tags: string[]): string[] {
   // Tags already contains the common tags for all events. (service, env, version, etc.)
   // Here we are adding some specific-to-profiling tags.
-  const profileEventTags = tags.concat([
-    'language:javascript',
-    'runtime:chrome',
-    'family:chrome',
-    'format:json',
-    'host:browser',
-  ])
+  const profileEventTags = tags.concat(['language:javascript', 'runtime:chrome', 'family:chrome', 'host:browser'])
 
   return profileEventTags
 }
