@@ -7,17 +7,15 @@ export interface CookieStoreWindow extends Window {
 
 export type CookieObservable = ReturnType<typeof createCookieObservable>
 
-export function createCookieObservable(cookieName: string) {
-  // NOTE: we don't use cookiestore.addEventListner('change', handler) as it seems to me more prone to bugs
-  // and cause our tests to be flaky (and probably in production as well)
-  const detectCookieChangeStrategy = watchCookieStrategy
+export const WATCH_COOKIE_INTERVAL_DELAY = ONE_SECOND
 
+export function createCookieObservable(cookieName: string) {
   return new Observable<string | undefined>((observable) =>
-    detectCookieChangeStrategy(cookieName, (event) => observable.notify(event))
+    // NOTE: we don't use cookiestore.addEventListner('change', handler) as it seems to me more prone to bugs
+    // and cause our tests to be flaky (and probably in production as well)
+    watchCookieStrategy(cookieName, (event) => observable.notify(event))
   )
 }
-
-export const WATCH_COOKIE_INTERVAL_DELAY = ONE_SECOND
 
 function watchCookieStrategy(cookieName: string, callback: (event: string | undefined) => void) {
   const previousCookieValue = findCommaSeparatedValue(document.cookie, cookieName)
@@ -28,7 +26,5 @@ function watchCookieStrategy(cookieName: string, callback: (event: string | unde
     }
   }, WATCH_COOKIE_INTERVAL_DELAY)
 
-  return () => {
-    clearInterval(watchCookieIntervalId)
-  }
+  return () => clearInterval(watchCookieIntervalId)
 }

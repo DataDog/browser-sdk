@@ -37,7 +37,7 @@ describe('cookieObservable', () => {
     clock.tick(WATCH_COOKIE_INTERVAL_DELAY)
   })
 
-  it('should not notify observers on cookie change when the cookie value as not changed', () => {
+  it('should not notify observers on cookie change when the cookie value has not changed', () => {
     const observable = createCookieObservable(COOKIE_NAME)
 
     setCookie(COOKIE_NAME, 'foo', COOKIE_DURATION)
