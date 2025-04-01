@@ -1,6 +1,6 @@
 export type { HttpRequest, Payload, RetryInfo } from './httpRequest'
 export { createHttpRequest } from './httpRequest'
-export type { BrowserWindowWithEventBridge, DatadogEventBridge } from './eventBridge'
+export type { GlobalWithEventBridge, DatadogEventBridge } from './eventBridge'
 export { canUseEventBridge, bridgeSupports, getEventBridge, BridgeCapability } from './eventBridge'
 export { startBatchWithReplica } from './startBatchWithReplica'
 export type { FlushController, FlushEvent, FlushReason } from './flushController'

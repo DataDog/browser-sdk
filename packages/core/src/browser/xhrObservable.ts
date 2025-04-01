@@ -7,6 +7,7 @@ import { normalizeUrl } from '../tools/utils/urlPolyfill'
 import { shallowClone } from '../tools/utils/objectUtils'
 import type { Configuration } from '../domain/configuration'
 import { addEventListener } from './addEventListener'
+import { getGlobalObject } from '../tools/getGlobalObject'
 
 export interface XhrOpenContext {
   state: 'open'
@@ -42,6 +43,11 @@ export function initXhrObservable(configuration: Configuration) {
 
 function createXhrObservable(configuration: Configuration) {
   return new Observable<XhrContext>((observable) => {
+    const globalObject = getGlobalObject<typeof globalThis>()
+    if (!('XMLHttpRequest' in globalObject)) {
+      return
+    }
+    
     const { stop: stopInstrumentingStart } = instrumentMethod(XMLHttpRequest.prototype, 'open', openXhr)
 
     const { stop: stopInstrumentingSend } = instrumentMethod(

@@ -21,8 +21,11 @@ export function timeStampToClocks(timeStamp: TimeStamp) {
 }
 
 function getCorrectedTimeStamp(relativeTime: RelativeTime) {
+  if (typeof performance === 'undefined' || typeof performance.now !== 'function') {
+    return (dateNow() + relativeTime) as TimeStamp
+  }
+  
   const correctedOrigin = (dateNow() - performance.now()) as TimeStamp
-  // apply correction only for positive drift
   if (correctedOrigin > getNavigationStart()) {
     return Math.round(addDuration(correctedOrigin, relativeTime)) as TimeStamp
   }
@@ -30,6 +33,10 @@ function getCorrectedTimeStamp(relativeTime: RelativeTime) {
 }
 
 export function currentDrift() {
+  if (typeof performance === 'undefined' || typeof performance.now !== 'function') {
+    return 0
+  }
+  
   return Math.round(dateNow() - addDuration(getNavigationStart(), performance.now() as Duration))
 }
 
@@ -56,6 +63,9 @@ export function timeStampNow() {
 }
 
 export function relativeNow() {
+  if (typeof performance === 'undefined' || typeof performance.now !== 'function') {
+    return 0 as RelativeTime
+  }
   return performance.now() as RelativeTime
 }
 
@@ -106,7 +116,17 @@ let navigationStart: TimeStamp | undefined
  */
 function getNavigationStart() {
   if (navigationStart === undefined) {
-    navigationStart = performance.timing.navigationStart as TimeStamp
+    const isServiceWorker = typeof self !== 'undefined' && 'ServiceWorkerGlobalScope' in self
+    
+    if (isServiceWorker || !performance.timing) {
+      if (typeof performance.timeOrigin === 'number') {
+        navigationStart = performance.timeOrigin as TimeStamp
+      } else {
+        navigationStart = (dateNow() - performance.now()) as TimeStamp
+      }
+    } else {
+      navigationStart = performance.timing.navigationStart as TimeStamp
+    }
   }
   return navigationStart
 }

@@ -73,26 +73,73 @@ export function startTelemetry(telemetryService: TelemetryService, configuration
   }
 
   const runtimeEnvInfo = getRuntimeEnvInfo()
-  onRawTelemetryEventCollected = (rawEvent: RawTelemetryEvent) => {
-    const stringifiedEvent = jsonStringify(rawEvent)!
-    if (
-      telemetryEnabledPerType[rawEvent.type!] &&
-      alreadySentEvents.size < configuration.maxTelemetryEventsPerPage &&
-      !alreadySentEvents.has(stringifiedEvent)
-    ) {
-      const event = toTelemetryEvent(telemetryService, rawEvent, runtimeEnvInfo)
-      observable.notify(event)
-      sendToExtension('telemetry', event)
-      alreadySentEvents.add(stringifiedEvent)
+  
+  // Create a safe error handling function that won't crash in Service Worker environments
+  const handleTelemetryError = (e: unknown) => {
+    try {
+      if (!runtimeEnvInfo.is_worker) {
+        addTelemetryError(e);
+      } else {
+        console.error("[Datadog]", "Service Worker telemetry error:", e);
+      }
+    } catch (innerError) {
+      console.error("[Datadog]", "Failed to handle telemetry error:", innerError);
     }
+  };
+  
+  if (runtimeEnvInfo.is_worker) {
+    onRawTelemetryEventCollected = (rawEvent: RawTelemetryEvent) => {
+      try {
+        const stringifiedEvent = jsonStringify(rawEvent)!
+        if (
+          telemetryEnabledPerType[rawEvent.type!] &&
+          alreadySentEvents.size < configuration.maxTelemetryEventsPerPage &&
+          !alreadySentEvents.has(stringifiedEvent)
+        ) {
+          const event = toTelemetryEvent(telemetryService, rawEvent, runtimeEnvInfo)
+          observable.notify(event)
+          alreadySentEvents.add(stringifiedEvent)
+        }
+      } catch (error) {
+        console.error("[Datadog]", "Error collecting telemetry in Service Worker:", error);
+      }
+    }
+    
+    startMonitorErrorCollection(handleTelemetryError)
+  } else {
+    onRawTelemetryEventCollected = (rawEvent: RawTelemetryEvent) => {
+      const stringifiedEvent = jsonStringify(rawEvent)!
+      if (
+        telemetryEnabledPerType[rawEvent.type!] &&
+        alreadySentEvents.size < configuration.maxTelemetryEventsPerPage &&
+        !alreadySentEvents.has(stringifiedEvent)
+      ) {
+        const event = toTelemetryEvent(telemetryService, rawEvent, runtimeEnvInfo)
+        observable.notify(event)
+        sendToExtension('telemetry', event)
+        alreadySentEvents.add(stringifiedEvent)
+      }
+    }
+    
+    startMonitorErrorCollection(addTelemetryError)
   }
-  startMonitorErrorCollection(addTelemetryError)
 
   function toTelemetryEvent(
     telemetryService: TelemetryService,
     event: RawTelemetryEvent,
     runtimeEnvInfo: RuntimeEnvInfo
   ): TelemetryEvent & Context {
+    let connectivity;
+    try {
+      connectivity = getConnectivity();
+    } catch (e) {
+      connectivity = { status: 'not_connected' };
+      
+      if (!runtimeEnvInfo.is_worker) {
+        console.warn('Failed to get connectivity information:', e);
+      }
+    }
+    
     return combine(
       {
         type: 'telemetry' as const,
@@ -105,7 +152,7 @@ export function startTelemetry(telemetryService: TelemetryService, configuration
         },
         telemetry: combine(event, {
           runtime_env: runtimeEnvInfo,
-          connectivity: getConnectivity(),
+          connectivity,
           sdk_setup: __BUILD_ENV__SDK_SETUP__,
         }),
         experimental_features: Array.from(getExperimentalFeatures()),
@@ -122,10 +169,20 @@ export function startTelemetry(telemetryService: TelemetryService, configuration
     enabled: telemetryEnabled,
   }
 }
+
 function getRuntimeEnvInfo(): RuntimeEnvInfo {
+  const isWorker = typeof self !== 'undefined' && 'WorkerGlobalScope' in self
+  
+  if (isWorker && typeof window === 'undefined') {
+    return {
+      is_local_file: false,
+      is_worker: true,
+    }
+  }
+  
   return {
     is_local_file: window.location.protocol === 'file:',
-    is_worker: 'WorkerGlobalScope' in self,
+    is_worker: isWorker,
   }
 }
 

@@ -9,15 +9,24 @@ const CACHE_NAME = 'session-cache-v1'
 let inMemorySessionString: string | null = null
 
 export function selectServiceWorkerStrategy(): SessionStoreStrategyType | undefined {
-  if ('caches' in window) {
+  const isServiceWorker = typeof self !== 'undefined' && 'ServiceWorkerGlobalScope' in self
+  
+  if (typeof caches !== 'undefined') {
     return { type: SessionPersistence.SERVICE_WORKER }
   }
+  
+  if (isServiceWorker && typeof self.caches !== 'undefined') {
+    return { type: SessionPersistence.SERVICE_WORKER }
+  }
+  
+  if (typeof window !== 'undefined' && typeof window.caches !== 'undefined') {
+    return { type: SessionPersistence.SERVICE_WORKER }
+  }
+  
   return undefined
 }
 
-
 export function initServiceWorkerStrategy(configuration: Configuration): SessionStoreStrategy {
-  // Load existing session asynchronously
   loadSessionFromCache()
 
   return {
@@ -38,7 +47,7 @@ export function initServiceWorkerStrategy(configuration: Configuration): Session
  * return the cached session data if available.
  */
 async function loadSessionFromCache(): Promise<void> {
-  if (!('caches' in window)) {
+  if (typeof caches === 'undefined') {
     return
   }
 
@@ -57,7 +66,7 @@ async function persistInCache(sessionState: SessionState): Promise<void> {
   const sessionString = toSessionString(sessionState)
   inMemorySessionString = sessionString
 
-  if (!('caches' in window)) {
+  if (typeof caches === 'undefined') {
     return
   }
 

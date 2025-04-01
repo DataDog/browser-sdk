@@ -1,6 +1,6 @@
 import { DefaultPrivacyLevel } from '../../src/domain/configuration'
-import { BridgeCapability } from '../../src/transport'
-import type { BrowserWindowWithEventBridge, DatadogEventBridge } from '../../src/transport'
+import { BridgeCapability, GlobalWithEventBridge } from '../../src/transport'
+import type { DatadogEventBridge } from '../../src/transport'
 import { registerCleanupTask } from '../registerCleanupTask'
 
 export function mockEventBridge({
@@ -15,10 +15,10 @@ export function mockEventBridge({
     getPrivacyLevel: () => privacyLevel,
   }
 
-  ;(window as BrowserWindowWithEventBridge).DatadogEventBridge = eventBridge
+  ;(window as GlobalWithEventBridge).DatadogEventBridge = eventBridge
 
   registerCleanupTask(() => {
-    delete (window as BrowserWindowWithEventBridge).DatadogEventBridge
+    delete (window as GlobalWithEventBridge).DatadogEventBridge
   })
   return eventBridge
 }

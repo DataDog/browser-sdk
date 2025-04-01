@@ -6,6 +6,7 @@ import { computeStackTrace, computeStackTraceFromOnErrorMessage } from '../../to
 import { computeRawError, isError } from './error'
 import type { RawError } from './error.types'
 import { ErrorHandling, ErrorSource, NonErrorPrefix } from './error.types'
+import { getGlobalObject } from '../../tools/getGlobalObject'
 
 export type UnhandledErrorCallback = (stackTrace: StackTrace, originalError?: any) => any
 
@@ -33,7 +34,13 @@ export function trackRuntimeError(errorObservable: Observable<RawError>) {
 }
 
 export function instrumentOnError(callback: UnhandledErrorCallback) {
-  return instrumentMethod(window, 'onerror', ({ parameters: [messageObj, url, line, column, errorObj] }) => {
+  const globalObject = getGlobalObject()
+  
+  if (!('onerror' in globalObject)) {
+    return { stop: () => {} }
+  }
+
+  return instrumentMethod(globalObject, 'onerror', ({ parameters: [messageObj, url, line, column, errorObj] }) => {
     let stackTrace
     if (isError(errorObj)) {
       stackTrace = computeStackTrace(errorObj)
@@ -45,7 +52,13 @@ export function instrumentOnError(callback: UnhandledErrorCallback) {
 }
 
 export function instrumentUnhandledRejection(callback: UnhandledErrorCallback) {
-  return instrumentMethod(window, 'onunhandledrejection', ({ parameters: [e] }) => {
+  const globalObject = getGlobalObject()
+  
+  if (!('onunhandledrejection' in globalObject)) {
+    return { stop: () => {} }
+  }
+  
+  return instrumentMethod(globalObject, 'onunhandledrejection', ({ parameters: [e] }) => {
     const reason = e.reason || 'Empty reason'
     const stack = computeStackTrace(reason)
     callback(stack, reason)

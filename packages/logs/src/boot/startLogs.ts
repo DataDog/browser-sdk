@@ -4,6 +4,8 @@ import {
   createPageMayExitObservable,
   willSyntheticsInjectRum,
   canUseEventBridge,
+  display,
+  Observable,
 } from '@datadog/browser-core'
 import { startLogsSessionManager, startLogsSessionManagerStub } from '../domain/logsSessionManager'
 import type { LogsConfiguration, LogsInitConfiguration } from '../domain/configuration'
@@ -20,9 +22,17 @@ import { startInternalContext } from '../domain/contexts/internalContext'
 import { startReportError } from '../domain/reportError'
 import { startLogsTelemetry } from '../domain/logsTelemetry'
 import type { CommonContext } from '../rawLogsEvent.types'
+import type { PageMayExitEvent } from '@datadog/browser-core'
 
 export type StartLogs = typeof startLogs
 export type StartLogsResult = ReturnType<StartLogs>
+
+/**
+ * Detects if running in a Service Worker environment
+ */
+function isServiceWorkerEnvironment(): boolean {
+  return typeof self !== 'undefined' && 'ServiceWorkerGlobalScope' in self;
+}
 
 export function startLogs(
   initConfiguration: LogsInitConfiguration,
@@ -36,14 +46,33 @@ export function startLogs(
 ) {
   const lifeCycle = new LifeCycle()
   const cleanupTasks: Array<() => void> = []
+  const isServiceWorker = isServiceWorkerEnvironment();
+  
+  if (isServiceWorker) {
+    display.info('Logs SDK initialized in Service Worker environment');
+  }
 
-  lifeCycle.subscribe(LifeCycleEventType.LOG_COLLECTED, (log) => sendToExtension('logs', log))
+  lifeCycle.subscribe(LifeCycleEventType.LOG_COLLECTED, (log) => {
+    try {
+      if (!isServiceWorker) {
+        sendToExtension('logs', log);
+      }
+    } catch (e) {
+      // Silently fail if extension communication fails
+    }
+  })
 
   const reportError = startReportError(lifeCycle)
-  const pageMayExitObservable = createPageMayExitObservable(configuration)
+  
+  const pageMayExitObservable = isServiceWorker
+    ? new Observable<PageMayExitEvent>() // Empty observable for Service Workers
+    : createPageMayExitObservable(configuration)
 
-  const session =
-    configuration.sessionStoreStrategyType && !canUseEventBridge() && !willSyntheticsInjectRum()
+  const shouldUseServiceWorkerStrategy = isServiceWorker &&
+      configuration.sessionStoreStrategyType?.type === 'service-worker';
+  
+  const session = shouldUseServiceWorkerStrategy || 
+      (configuration.sessionStoreStrategyType && !canUseEventBridge() && !willSyntheticsInjectRum())
       ? startLogsSessionManager(configuration, trackingConsentState)
       : startLogsSessionManagerStub(configuration)
 
@@ -56,10 +85,36 @@ export function startLogs(
   )
   cleanupTasks.push(() => stopLogsTelemetry())
 
-  startNetworkErrorCollection(configuration, lifeCycle)
-  startRuntimeErrorCollection(configuration, lifeCycle)
+  // Safely wrap components that might depend on browser features
+  try {
+    startNetworkErrorCollection(configuration, lifeCycle)
+  } catch (e) {
+    if (!isServiceWorker) {
+      throw e;
+    }
+    display.info('Network error collection unavailable in this Service Worker environment');
+  }
+  
+  try {
+    startRuntimeErrorCollection(configuration, lifeCycle)
+  } catch (e) {
+    if (!isServiceWorker) {
+      throw e;
+    }
+    display.info('Runtime error collection unavailable in this Service Worker environment');
+  }
+  
   startConsoleCollection(configuration, lifeCycle)
-  startReportCollection(configuration, lifeCycle)
+  
+  try {
+    startReportCollection(configuration, lifeCycle)
+  } catch (e) {
+    if (!isServiceWorker) {
+      throw e;
+    }
+    display.info('Report collection unavailable in this Service Worker environment');
+  }
+  
   const { handleLog } = startLoggerCollection(lifeCycle)
 
   startLogsAssembly(session, configuration, lifeCycle, getCommonContext, reportError)
@@ -73,7 +128,7 @@ export function startLogs(
       session
     )
     cleanupTasks.push(() => stopLogsBatch())
-  } else {
+  } else if (!isServiceWorker) {
     startLogsBridge(lifeCycle)
   }
 

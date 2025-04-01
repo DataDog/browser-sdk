@@ -1,30 +1,27 @@
 <!doctype html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <title>Sandbox</title>
-    <script src="http://localhost:8080/datadog-rum.js"></script>
-    <script src="http://localhost:8080/datadog-logs.js"></script>
-    <script>
-      DD_RUM.init({
-        clientToken: 'xxx',
-        applicationId: 'xxx',
-        sessionReplaySampleRate: 100,
-        trackResources: true,
-        trackLongTasks: true,
-        telemetrySampleRate: 100,
-        telemetryConfigurationSampleRate: 100,
-        telemetryUsageSampleRate: 100,
-        enableExperimentalFeatures: [],
-      })
-      DD_LOGS.init({
-        clientToken: 'xxx',
-        telemetrySampleRate: 100,
-        telemetryConfigurationSampleRate: 100,
-        telemetryUsageSampleRate: 100,
-        enableExperimentalFeatures: [],
-      })
-    </script>
-  </head>
-  <body></body>
+<head>
+  <meta charset="UTF-8" />
+  <title>Sandbox</title>
+  <script>
+    // Register the service worker
+    if ('serviceWorker' in navigator) {
+      console.log('Service Worker is supported in this browser.', navigator);
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./service_worker.js')
+          .then(registration => {
+            console.log('Service Worker registered with scope:a', registration.scope);
+          })
+          .catch(error => {
+            console.error('Service Worker registration failed:', error);
+          });
+      });
+    }
+  </script>
+</head>
+<body>
+<h1>Sandbox with Service Worker</h1>
+<p>Check the console for service worker logs.</p>
+<p>Telemetry and logs are being sent from the service worker context.</p>
+</body>
 </html>

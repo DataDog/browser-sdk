@@ -112,6 +112,10 @@ export function stopSessionManager() {
 }
 
 function trackActivity(configuration: Configuration, expandOrRenewSession: () => void) {
+  if (typeof window === 'undefined') {
+    return
+  }
+  
   const { stop } = addEventListeners(
     configuration,
     window,
@@ -123,6 +127,10 @@ function trackActivity(configuration: Configuration, expandOrRenewSession: () =>
 }
 
 function trackVisibility(configuration: Configuration, expandSession: () => void) {
+  if (typeof document === 'undefined') {
+    return
+  }
+  
   const expandSessionWhenVisible = () => {
     if (document.visibilityState === 'visible') {
       expandSession()
@@ -139,6 +147,10 @@ function trackVisibility(configuration: Configuration, expandSession: () => void
 }
 
 function trackResume(configuration: Configuration, cb: () => void) {
+  if (typeof window === 'undefined') {
+    return
+  }
+  
   const { stop } = addEventListener(configuration, window, DOM_EVENT.RESUME, cb, { capture: true })
   stopCallbacks.push(stop)
 }

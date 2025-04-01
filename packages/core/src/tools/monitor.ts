@@ -51,16 +51,69 @@ export function callMonitored<T extends (...args: any[]) => any>(
     return fn.apply(context, args)
   } catch (e) {
     monitorError(e)
+    
+    const isServiceWorker = typeof self !== 'undefined' && 'ServiceWorkerGlobalScope' in self;
+    
+    if (isServiceWorker &&
+        e instanceof Error && 
+        (e.message.includes('window is not defined') || 
+         e.message.includes('document is not defined'))) {
+      if (typeof console !== 'undefined' && console.warn) {
+        console.warn('Service Worker environment: Ignored window/document reference error:', e.message);
+      }
+      return undefined;
+    }
+    
+    if (!isServiceWorker) {
+      throw e;
+    }
+    
+    if (typeof console !== 'undefined' && console.error) {
+      console.error('Error in Service Worker execution:', e);
+    }
+    return undefined;
   }
 }
 
 export function monitorError(e: unknown) {
+  const isServiceWorker = typeof self !== 'undefined' && 'ServiceWorkerGlobalScope' in self;
+  const isWindowNotDefinedError = e instanceof Error && 
+    (e.message.includes('window is not defined') || 
+     e.message.includes('document is not defined'));
+  
+  if (isServiceWorker && isWindowNotDefinedError) {
+    if (typeof console !== 'undefined') {
+      console.warn('[Datadog] Browser SDK using window/document in Service Worker:', e);
+    }
+    
+    if (onMonitorErrorCollected) {
+      try {
+        const simplifiedError = new Error(`Service Worker environment error: ${e.message}`);
+        if (e.stack) {
+          simplifiedError.stack = e.stack;
+        }
+        onMonitorErrorCollected(simplifiedError);
+      } catch (innerError) {
+        // If even this fails, just log it
+        if (typeof console !== 'undefined') {
+          console.error('[Datadog] Failed to collect monitor error:', innerError);
+        }
+      }
+    }
+    
+    return;
+  }
+  
   displayIfDebugEnabled(e)
   if (onMonitorErrorCollected) {
     try {
       onMonitorErrorCollected(e)
-    } catch (e) {
-      displayIfDebugEnabled(e)
+    } catch (innerError) {
+      displayIfDebugEnabled(innerError)
+      
+      if (typeof console !== 'undefined') {
+        console.error('[Datadog] Error in error collection:', innerError);
+      }
     }
   }
 }
