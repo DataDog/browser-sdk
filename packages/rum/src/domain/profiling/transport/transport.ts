@@ -15,6 +15,7 @@ interface ProfileEvent extends ProfileEventAttributes {
   family: 'chrome'
   runtime: 'chrome'
   format: 'json'
+  version: 4
   tags_profiler: string
 }
 
@@ -65,6 +66,7 @@ function buildProfileEvent(
     family: 'chrome',
     runtime: 'chrome',
     format: 'json',
+    version: 4, // Ingestion event version (not the version application tag)
     tags_profiler: profileEventTags.join(','),
   }
 
