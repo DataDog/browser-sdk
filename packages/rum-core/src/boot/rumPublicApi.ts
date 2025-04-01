@@ -421,7 +421,6 @@ export function makeRumPublicApi(
   profilerApi: ProfilerApi,
   options: RumPublicApiOptions = {}
 ): RumPublicApi {
-
   const trackingConsentState = createTrackingConsentState()
   const customVitalsState = createCustomVitalsState()
 
