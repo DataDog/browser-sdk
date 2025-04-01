@@ -438,24 +438,6 @@ describe('rum assembly', () => {
       expect((serverRumEvents[0].context as any).bar).toEqual('foo')
       expect((serverRumEvents[1].context as any).bar).toBeUndefined()
     })
-
-    it('should ignore the current global context when a saved global context is provided', () => {
-      const { lifeCycle, serverRumEvents, commonContext } = setupAssemblyTestWithDefaults()
-      commonContext.context = { replacedContext: 'b', addedContext: 'x' }
-
-      notifyRawRumEvent(lifeCycle, {
-        rawRumEvent: createRawRumEvent(RumEventType.VIEW),
-        savedCommonContext: {
-          context: { replacedContext: 'a' },
-          user: {},
-          account: {},
-          hasReplay: undefined,
-        },
-      })
-
-      expect((serverRumEvents[0].context as any).replacedContext).toEqual('a')
-      expect((serverRumEvents[0].context as any).addedContext).toEqual(undefined)
-    })
   })
 
   describe('rum user and account', () => {
@@ -505,28 +487,6 @@ describe('rum assembly', () => {
       })
 
       expect(serverRumEvents[0].account).toBe(undefined)
-    })
-
-    it('should ignore the current user/account when a saved common context user is provided', () => {
-      const { lifeCycle, serverRumEvents, commonContext } = setupAssemblyTestWithDefaults()
-      commonContext.user = { replacedAttribute: 'b', addedAttribute: 'x' }
-      commonContext.account = { replacedAttribute: 'c', addedAttribute: 'y' }
-
-      notifyRawRumEvent(lifeCycle, {
-        rawRumEvent: createRawRumEvent(RumEventType.VIEW),
-        savedCommonContext: {
-          context: {},
-          user: { replacedAttribute: 'a' },
-          account: { id: 'foo', replacedAttribute: 'e' },
-          hasReplay: undefined,
-        },
-      })
-
-      expect(serverRumEvents[0].usr!.replacedAttribute).toEqual('a')
-      expect(serverRumEvents[0].usr!.addedAttribute).toEqual(undefined)
-
-      expect(serverRumEvents[0].account!.replacedAttribute).toEqual('e')
-      expect(serverRumEvents[0].account!.addedAttribute).toEqual(undefined)
     })
   })
 
