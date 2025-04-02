@@ -30,7 +30,7 @@ import { transport } from './transport/transport'
 
 export const DEFAULT_RUM_PROFILER_CONFIGURATION: RUMProfilerConfiguration = {
   sampleIntervalMs: 10, // Sample stack trace every 10ms
-  collectIntervalMs: 60000, // Collect data every minute
+  collectIntervalMs: 10000, // Collect data every minute
   minProfileDurationMs: 5000, // Require at least 5 seconds of profile data to reduce noise and cost
   minNumberOfSamples: 50, // Require at least 50 samples (~500 ms) to report a profile to reduce noise and cost
 }
@@ -45,6 +45,9 @@ export function createRumProfiler(
 
   let lastViewEntry: RumViewEntry | undefined
 
+  // Global clean-up tasks for listeners that are not specific to a profiler instance (eg. visibility change, before unload)
+  const globalCleanupTasks: Array<() => void> = []
+
   let instance: RumProfilerInstance = { state: 'stopped' }
 
   function start(viewEntry: ViewHistoryEntry | undefined): void {
@@ -58,6 +61,12 @@ export function createRumProfiler(
       ? { startTime: viewEntry.startClocks.relative, viewId: viewEntry.id, viewName: viewEntry.name }
       : undefined
 
+    // Add global clean-up tasks for listeners that are not specific to a profiler instance (eg. visibility change, before unload)
+    globalCleanupTasks.push(
+      addEventListener(configuration, window, DOM_EVENT.VISIBILITY_CHANGE, handleVisibilityChange).stop,
+      addEventListener(configuration, window, DOM_EVENT.BEFORE_UNLOAD, handleBeforeUnload).stop
+    )
+
     // Start profiler instance
     startNextProfilerInstance()
   }
@@ -68,6 +77,9 @@ export function createRumProfiler(
 
     // Disable Long Task Registry as we no longer need to correlate them with RUM
     disableLongTaskRegistry()
+
+    // Cleanup global listeners
+    globalCleanupTasks.forEach((task) => task())
   }
 
   /**
@@ -106,11 +118,6 @@ export function createRumProfiler(
       cleanupTasks.push(() => observer?.disconnect())
       cleanupTasks.push(rawEventCollectedSubscription.unsubscribe)
     }
-
-    cleanupTasks.push(
-      addEventListener(configuration, window, DOM_EVENT.VISIBILITY_CHANGE, handleVisibilityChange).stop,
-      addEventListener(configuration, window, DOM_EVENT.BEFORE_UNLOAD, handleBeforeUnload).stop
-    )
 
     // Whenever the View is updated, we add a views entry to the profiler instance.
     const viewUpdatedSubscription = lifeCycle.subscribe(LifeCycleEventType.VIEW_CREATED, (view) => {
@@ -318,9 +325,13 @@ export function createRumProfiler(
     return instance.state === 'stopped'
   }
 
-  function isStarted() {
+  function isRunning() {
     return instance.state === 'running'
   }
 
-  return { start, stop, isStopped, isStarted }
+  function isPaused() {
+    return instance.state === 'paused'
+  }
+
+  return { start, stop, isStopped, isRunning, isPaused }
 }
