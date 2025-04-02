@@ -2,7 +2,7 @@ import type { LifeCycle, ViewHistory, RumSessionManager, RumConfiguration } from
 import { addTelemetryDebug, monitorError, performDraw } from '@datadog/browser-core'
 import type { RUMProfiler } from '../domain/profiling/types'
 import { isProfilingSupported } from '../domain/profiling/profilingSupported'
-import { lazyLoadProfiler } from '../domain/profiling/lazyLoadProfiler'
+import { lazyLoadProfiler } from './lazyLoadProfiler'
 
 interface ProfilerApi {
   onRumStart: (
@@ -15,12 +15,7 @@ interface ProfilerApi {
 }
 
 export function makeProfilerApi(): ProfilerApi {
-  const cleanupTasks: Array<() => void> = []
-
-  function stop() {
-    cleanupTasks.forEach((task) => task())
-    cleanupTasks.length = 0
-  }
+  let profiler: RUMProfiler | undefined
 
   function onRumStart(
     lifeCycle: LifeCycle,
@@ -28,17 +23,9 @@ export function makeProfilerApi(): ProfilerApi {
     sessionManager: RumSessionManager,
     viewHistory: ViewHistory
   ) {
-    // Check if Browser is supporting the JS Self-Profiling API
-    if (!isProfilingSupported()) {
+    if (!isProfilingSupported() || !performDraw(configuration.profilingSampleRate)) {
       return
     }
-
-    if (!performDraw(configuration.profilingSampleRate)) {
-      // User is not lucky, no profiling!
-      return
-    }
-
-    let profiler: RUMProfiler
 
     lazyLoadProfiler()
       .then((createRumProfiler) => {
@@ -48,18 +35,15 @@ export function makeProfilerApi(): ProfilerApi {
         }
 
         profiler = createRumProfiler(configuration, lifeCycle, sessionManager)
-
         profiler.start(viewHistory.findView()?.id)
-
-        cleanupTasks.push(() => {
-          profiler.stop().catch(monitorError)
-        })
       })
       .catch(monitorError)
   }
 
   return {
     onRumStart,
-    stop,
+    stop: () => {
+      profiler?.stop().catch(monitorError)
+    },
   }
 }
