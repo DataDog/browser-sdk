@@ -10,9 +10,10 @@ const TEST_APP_DIR = path.join(__dirname, '..', 'test', 'app')
 runMain(() => {
   printLog('Building project...')
   command`yarn build`.run()
+  command`lerna run pack --stream`.run()
 
   printLog('Setting up test environment...')
-  command`yarn`.withCurrentWorkingDirectory(TEST_APP_DIR).run()
+  command`yarn install --no-immutable`.withCurrentWorkingDirectory(TEST_APP_DIR).run()
 
   const checks = [
     {
