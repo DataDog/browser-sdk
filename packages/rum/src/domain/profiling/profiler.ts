@@ -53,8 +53,9 @@ export function createRumProfiler(
     }
 
     // Add initial view
+    // Note: `viewEntry.name` is only filled when users use manual view creation via `startView` method.
     lastViewEntry = viewEntry
-      ? { startTime: performance.now(), viewId: viewEntry.id, viewName: viewEntry.name }
+      ? { startTime: viewEntry.startClocks.relative, viewId: viewEntry.id, viewName: viewEntry.name }
       : undefined
 
     // Start profiler instance
@@ -113,7 +114,8 @@ export function createRumProfiler(
 
     // Whenever the View is updated, we add a views entry to the profiler instance.
     const viewUpdatedSubscription = lifeCycle.subscribe(LifeCycleEventType.VIEW_CREATED, (view) => {
-      collectViewEntry({ viewId: view.id, viewName: view.name, startTime: performance.now() })
+      // Note: `view.name` is only filled when users use manual view creation via `startView` method.
+      collectViewEntry({ viewId: view.id, viewName: view.name, startTime: view.startClocks.relative })
     })
     cleanupTasks.push(viewUpdatedSubscription.unsubscribe)
 
