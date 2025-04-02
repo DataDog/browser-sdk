@@ -1,5 +1,6 @@
 import { LifeCycle } from '@datadog/browser-rum-core'
 import { relativeNow, timeStampNow } from '@datadog/browser-core'
+import { setPageVisibility, restorePageVisibility, createNewEvent } from '@datadog/browser-core/test'
 import { createRumSessionManagerMock, mockPerformanceObserver, mockRumConfiguration } from '../../../../rum-core/test'
 import { mockProfiler } from '../../../test'
 import { mockedTrace } from './test-utils/mockedTrace'
@@ -14,9 +15,8 @@ describe('profiler', () => {
     sendProfileSpy = spyOn(transport, 'sendProfile')
   })
 
-  afterAll(() => {
-    // Restore original visibility state
-    setVisibilityState('visible')
+  afterEach(() => {
+    restorePageVisibility()
   })
 
   let lifeCycle = new LifeCycle()
@@ -131,9 +131,6 @@ function waitForBoolean(booleanCallback: () => boolean) {
 }
 
 function setVisibilityState(state: 'hidden' | 'visible') {
-  Object.defineProperty(window, 'visibilityState', {
-    configurable: true,
-    get: () => state,
-  })
-  window.dispatchEvent(new Event('visibilitychange'))
+  setPageVisibility(state)
+  window.dispatchEvent(createNewEvent('visibilitychange'))
 }
