@@ -1,10 +1,5 @@
-import type { ContextManager, CustomerDataTrackerManager } from '@datadog/browser-core'
-import {
-  createCustomerDataTrackerManager,
-  CustomerDataCompressionStatus,
-  display,
-  removeStorageListeners,
-} from '@datadog/browser-core'
+import type { ContextManager } from '@datadog/browser-core'
+import { display, removeStorageListeners } from '@datadog/browser-core'
 import { registerCleanupTask } from '@datadog/browser-core/test'
 import { mockRumConfiguration } from '../../../test'
 import { startAccountContext } from './accountContext'
@@ -14,10 +9,9 @@ describe('account context', () => {
   let displaySpy: jasmine.Spy
 
   beforeEach(() => {
-    const customerDataTrackerManager = createCustomerDataTrackerManager(CustomerDataCompressionStatus.Disabled)
     displaySpy = spyOn(display, 'warn')
 
-    accountContext = startAccountContext(customerDataTrackerManager, mockRumConfiguration())
+    accountContext = startAccountContext(mockRumConfiguration())
   })
 
   it('should get account', () => {
@@ -58,11 +52,8 @@ describe('account context', () => {
 
 describe('account context across pages', () => {
   let accountContext: ContextManager
-  let customerDataTrackerManager: CustomerDataTrackerManager
 
   beforeEach(() => {
-    customerDataTrackerManager = createCustomerDataTrackerManager(CustomerDataCompressionStatus.Disabled)
-
     registerCleanupTask(() => {
       localStorage.clear()
       removeStorageListeners()
@@ -70,10 +61,7 @@ describe('account context across pages', () => {
   })
 
   it('when disabled, should store contexts only in memory', () => {
-    accountContext = startAccountContext(
-      customerDataTrackerManager,
-      mockRumConfiguration({ storeContextsAcrossPages: false })
-    )
+    accountContext = startAccountContext(mockRumConfiguration({ storeContextsAcrossPages: false }))
     accountContext.setContext({ id: '123' })
 
     expect(accountContext.getContext()).toEqual({ id: '123' })
@@ -81,10 +69,7 @@ describe('account context across pages', () => {
   })
 
   it('when enabled, should maintain the account in local storage', () => {
-    accountContext = startAccountContext(
-      customerDataTrackerManager,
-      mockRumConfiguration({ storeContextsAcrossPages: true })
-    )
+    accountContext = startAccountContext(mockRumConfiguration({ storeContextsAcrossPages: true }))
 
     accountContext.setContext({ id: 'foo', qux: 'qix' })
     expect(accountContext.getContext()).toEqual({ id: 'foo', qux: 'qix' })

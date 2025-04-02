@@ -5,7 +5,6 @@ import type {
   DeflateEncoderStreamId,
   Encoder,
   TrackingConsentState,
-  CustomerDataTrackerManager,
 } from '@datadog/browser-core'
 import {
   sendToExtension,
@@ -15,7 +14,6 @@ import {
   canUseEventBridge,
   getEventBridge,
   addTelemetryDebug,
-  CustomerDataType,
   drainPreStartTelemetry,
 } from '@datadog/browser-core'
 import { createDOMMutationObservable } from '../browser/domMutationObservable'
@@ -67,7 +65,6 @@ export function startRum(
   configuration: RumConfiguration,
   recorderApi: RecorderApi,
   profilerApi: ProfilerApi,
-  customerDataTrackerManager: CustomerDataTrackerManager,
   initialViewOptions: ViewOptions | undefined,
   createEncoder: (streamId: DeflateEncoderStreamId) => Encoder,
 
@@ -124,7 +121,7 @@ export function startRum(
       createEncoder
     )
     cleanupTasks.push(() => batch.stop())
-    startCustomerDataTelemetry(configuration, telemetry, lifeCycle, customerDataTrackerManager, batch.flushObservable)
+    startCustomerDataTelemetry(configuration, telemetry, lifeCycle, batch.flushObservable)
   } else {
     startRumEventBridge(lifeCycle)
   }
@@ -134,19 +131,13 @@ export function startRum(
   const pageStateHistory = startPageStateHistory(hooks, configuration)
   const viewHistory = startViewHistory(lifeCycle)
   const urlContexts = startUrlContexts(lifeCycle, hooks, locationChangeObservable, location)
-  const featureFlagContexts = startFeatureFlagContexts(
-    lifeCycle,
-    hooks,
-    configuration,
-    customerDataTrackerManager.getOrCreateTracker(CustomerDataType.FeatureFlag)
-  )
-  cleanupTasks.push(() => featureFlagContexts.stop())
+  const featureFlagContexts = startFeatureFlagContexts(lifeCycle, hooks, configuration)
   const { observable: windowOpenObservable, stop: stopWindowOpen } = createWindowOpenObservable()
   cleanupTasks.push(stopWindowOpen)
 
-  const globalContext = startGlobalContext(customerDataTrackerManager, configuration)
-  const userContext = startUserContext(customerDataTrackerManager, configuration)
-  const accountContext = startAccountContext(customerDataTrackerManager, configuration)
+  const globalContext = startGlobalContext(configuration)
+  const userContext = startUserContext(configuration)
+  const accountContext = startAccountContext(configuration)
 
   const getCommonContext = () => buildCommonContext(globalContext, userContext, accountContext, recorderApi)
 

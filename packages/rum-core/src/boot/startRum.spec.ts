@@ -10,7 +10,6 @@ import {
   createIdentityEncoder,
   createTrackingConsentState,
   TrackingConsent,
-  createCustomerDataTrackerManager,
 } from '@datadog/browser-core'
 import type { Clock } from '@datadog/browser-core/test'
 import {
@@ -333,7 +332,6 @@ describe('view events', () => {
       mockRumConfiguration(),
       noopRecorderApi,
       noopProfilerApi,
-      createCustomerDataTrackerManager(),
       undefined,
       createIdentityEncoder,
       createTrackingConsentState(TrackingConsent.GRANTED),
