@@ -5,46 +5,50 @@ __metadata:
   version: 8
   cacheKey: 10c0
 
-"@datadog/browser-core@portal:../../../packages/core::locator=app%40workspace%3A.":
-  version: 0.0.0-use.local
-  resolution: "@datadog/browser-core@portal:../../../packages/core::locator=app%40workspace%3A."
+"@datadog/browser-core@file:../../../packages/core/package.tgz::locator=app%40workspace%3A.":
+  version: 6.6.2
+  resolution: "@datadog/browser-core@file:../../../packages/core/package.tgz#../../../packages/core/package.tgz::hash=761a84&locator=app%40workspace%3A."
+  checksum: 10c0/aa64b2d7d0de849d23052cadd29adae8203786777369ba07d7e5f7e1d904fcf8a3bc7a4653576b6154d39b6440064e7f11a0a478c42a229b0d593785b60d0d07
   languageName: node
-  linkType: soft
+  linkType: hard
 
-"@datadog/browser-logs@portal:../../../packages/logs::locator=app%40workspace%3A.":
-  version: 0.0.0-use.local
-  resolution: "@datadog/browser-logs@portal:../../../packages/logs::locator=app%40workspace%3A."
+"@datadog/browser-logs@file:../../../packages/logs/package.tgz::locator=app%40workspace%3A.":
+  version: 6.6.2
+  resolution: "@datadog/browser-logs@file:../../../packages/logs/package.tgz#../../../packages/logs/package.tgz::hash=1e75ad&locator=app%40workspace%3A."
   dependencies:
-    "@datadog/browser-core": "npm:6.5.1"
+    "@datadog/browser-core": "npm:6.6.2"
   peerDependencies:
-    "@datadog/browser-rum": 6.5.1
+    "@datadog/browser-rum": 6.6.2
   peerDependenciesMeta:
     "@datadog/browser-rum":
       optional: true
+  checksum: 10c0/468ad9bd187d3046e4e623f3e63cb7c6b7a3374b3d636c7840c1720ffe0d6dde82d36cce9a606cec2b4f4ffcfdd7492323e143a56eb1d4f0d89168de107d23f2
   languageName: node
-  linkType: soft
+  linkType: hard
 
-"@datadog/browser-rum-core@portal:../../../packages/rum-core::locator=app%40workspace%3A.":
-  version: 0.0.0-use.local
-  resolution: "@datadog/browser-rum-core@portal:../../../packages/rum-core::locator=app%40workspace%3A."
+"@datadog/browser-rum-core@file:../../../packages/rum-core/package.tgz::locator=app%40workspace%3A.":
+  version: 6.6.2
+  resolution: "@datadog/browser-rum-core@file:../../../packages/rum-core/package.tgz#../../../packages/rum-core/package.tgz::hash=648e29&locator=app%40workspace%3A."
   dependencies:
-    "@datadog/browser-core": "npm:6.5.1"
+    "@datadog/browser-core": "npm:6.6.2"
+  checksum: 10c0/f6ac4a1fdc582e8d3a4f7ebfaf244347d87bb942a01106289e5fa769a64dbb93ae49ffbebffbce12e623d8b2a6d470297c25372a9a5d74974fdc562732233f4b
   languageName: node
-  linkType: soft
+  linkType: hard
 
-"@datadog/browser-rum@portal:../../../packages/rum::locator=app%40workspace%3A.":
-  version: 0.0.0-use.local
-  resolution: "@datadog/browser-rum@portal:../../../packages/rum::locator=app%40workspace%3A."
+"@datadog/browser-rum@file:../../../packages/rum/package.tgz::locator=app%40workspace%3A.":
+  version: 6.6.2
+  resolution: "@datadog/browser-rum@file:../../../packages/rum/package.tgz#../../../packages/rum/package.tgz::hash=da1ccd&locator=app%40workspace%3A."
   dependencies:
-    "@datadog/browser-core": "npm:6.5.1"
-    "@datadog/browser-rum-core": "npm:6.5.1"
+    "@datadog/browser-core": "npm:6.6.2"
+    "@datadog/browser-rum-core": "npm:6.6.2"
   peerDependencies:
-    "@datadog/browser-logs": 6.5.1
+    "@datadog/browser-logs": 6.6.2
   peerDependenciesMeta:
     "@datadog/browser-logs":
       optional: true
+  checksum: 10c0/f4c112480456a7b36697a4a62d5918ba8da2432f85494e030764ba5de5a4392176520400df48102a2d3fbe9c4e88714efa55d15ebcd910ac2a9073ddfac09243
   languageName: node
-  linkType: soft
+  linkType: hard
 
 "@jridgewell/gen-mapping@npm:^0.3.5":
   version: 0.3.5
@@ -352,10 +356,8 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "app@workspace:."
   dependencies:
-    "@datadog/browser-core": "portal:../../../packages/core"
-    "@datadog/browser-logs": "portal:../../../packages/logs"
-    "@datadog/browser-rum": "portal:../../../packages/rum"
-    "@datadog/browser-rum-core": "portal:../../../packages/rum-core"
+    "@datadog/browser-logs": "file:../../../packages/logs/package.tgz"
+    "@datadog/browser-rum": "file:../../../packages/rum/package.tgz"
     ts-loader: "npm:6.2.1"
     typescript: "npm:3.8.2"
     webpack: "npm:5.94.0"

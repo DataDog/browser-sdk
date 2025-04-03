@@ -1,5 +1,5 @@
 import type { DeflateEncoder, DeflateWorker, DeflateWorkerAction } from '@datadog/browser-core'
-import { BridgeCapability, PageExitReason, display } from '@datadog/browser-core'
+import { BridgeCapability, display } from '@datadog/browser-core'
 import type { RecorderApi, RumSessionManager } from '@datadog/browser-rum-core'
 import { LifeCycle, LifeCycleEventType } from '@datadog/browser-rum-core'
 import { collectAsyncCalls, mockEventBridge, registerCleanupTask } from '@datadog/browser-core/test'
@@ -313,18 +313,6 @@ describe('makeRecorderApi', () => {
     beforeEach(() => {
       sessionManager = createRumSessionManagerMock()
       setupRecorderApi({ sessionManager })
-    })
-
-    // prevent getting records after the before_unload event has been triggered.
-    it('stop recording when the page unloads', async () => {
-      sessionManager.setTrackedWithSessionReplay()
-      rumInit()
-      await collectAsyncCalls(startRecordingSpy, 1)
-
-      expect(startRecordingSpy).toHaveBeenCalledTimes(1)
-
-      lifeCycle.notify(LifeCycleEventType.PAGE_EXITED, { reason: PageExitReason.UNLOADING })
-      expect(stopRecordingSpy).toHaveBeenCalled()
     })
 
     describe('when session renewal change the tracking type', () => {

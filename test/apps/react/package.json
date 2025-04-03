@@ -6,17 +6,19 @@
     "start": "webpack serve --mode development"
   },
   "dependencies": {
-    "@datadog/browser-rum": "portal:../../../packages/rum",
-    "@datadog/browser-rum-react": "portal:../../../packages/rum-react",
+    "@datadog/browser-rum": "file:../../../packages/rum/package.tgz",
+    "@datadog/browser-rum-react": "file:../../../packages/rum-react/package.tgz",
     "react": "19.0.0",
     "react-dom": "19.0.0",
     "react-router-dom": "7.3.0"
   },
   "resolutions": {
-    "@datadog/browser-rum": "portal:../../../packages/rum",
-    "@datadog/browser-rum-react": "portal:../../../packages/rum-react",
-    "@datadog/browser-rum-core": "portal:../../../packages/rum-core",
-    "@datadog/browser-core": "portal:../../../packages/core"
+    "@datadog/browser-rum": "file:../../../packages/rum/package.tgz",
+    "@datadog/browser-rum-react": "file:../../../packages/rum-react/package.tgz",
+    "@datadog/browser-rum-core": "file:../../../packages/rum-core/package.tgz",
+    "@datadog/browser-core": "file:../../../packages/core/package.tgz",
+    "@datadog/browser-rum-slim": "file:../../../packages/rum-slim/package.tgz",
+    "@datadog/browser-worker": "file:../../../packages/worker/package.tgz"
   },
   "devDependencies": {
     "@types/react": "19.0.10",

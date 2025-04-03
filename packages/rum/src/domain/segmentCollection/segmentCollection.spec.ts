@@ -50,7 +50,7 @@ describe('startSegmentCollection', () => {
   }
 
   function emulatePageUnload() {
-    lifeCycle.notify(LifeCycleEventType.PAGE_EXITED, { reason: PageExitReason.UNLOADING })
+    lifeCycle.notify(LifeCycleEventType.PAGE_MAY_EXIT, { reason: PageExitReason.UNLOADING })
   }
 
   function readMostRecentMetadata(spy: jasmine.Spy<HttpRequest['send']>) {
@@ -137,7 +137,7 @@ describe('startSegmentCollection', () => {
 
     describe('flush when the page exits because it gets hidden', () => {
       function emulatePageHidden() {
-        lifeCycle.notify(LifeCycleEventType.PAGE_EXITED, { reason: PageExitReason.HIDDEN })
+        lifeCycle.notify(LifeCycleEventType.PAGE_MAY_EXIT, { reason: PageExitReason.HIDDEN })
       }
 
       it('uses `httpRequest.sendOnExit` when sending the segment', () => {
@@ -154,7 +154,7 @@ describe('startSegmentCollection', () => {
 
     describe('flush when the page exits because it gets frozen', () => {
       function emulatePageFrozen() {
-        lifeCycle.notify(LifeCycleEventType.PAGE_EXITED, { reason: PageExitReason.FROZEN })
+        lifeCycle.notify(LifeCycleEventType.PAGE_MAY_EXIT, { reason: PageExitReason.FROZEN })
       }
 
       it('uses `httpRequest.sendOnExit` when sending the segment', () => {

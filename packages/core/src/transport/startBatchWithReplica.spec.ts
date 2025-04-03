@@ -1,5 +1,5 @@
 import { mockEndpointBuilder } from '../../test'
-import type { PageExitEvent } from '../browser/pageExitObservable'
+import type { PageMayExitEvent } from '../browser/pageMayExitObservable'
 import type { Configuration } from '../domain/configuration'
 import type { RawError } from '../domain/error/error.types'
 import { createIdentityEncoder } from '../tools/encoder'
@@ -13,7 +13,7 @@ import { startBatchWithReplica } from './startBatchWithReplica'
 describe('startBatchWithReplica', () => {
   const DEFAULT_CONFIGURATION: Configuration = {} as Configuration
   const reportError: (error: RawError) => void = noop
-  let pageExitObservable: Observable<PageExitEvent>
+  let pageMayExitObservable: Observable<PageMayExitEvent>
   let sessionExpireObservable: Observable<void>
   let batchConfiguration: BatchConfiguration
   let batchFactoryAddSpy: jasmine.Spy
@@ -21,7 +21,7 @@ describe('startBatchWithReplica', () => {
   let batchFactoryFakeImpl: typeof createBatch
 
   beforeEach(() => {
-    pageExitObservable = new Observable()
+    pageMayExitObservable = new Observable()
     sessionExpireObservable = new Observable()
     batchConfiguration = {
       endpoint: mockEndpointBuilder('https://example.com'),
@@ -44,7 +44,7 @@ describe('startBatchWithReplica', () => {
       batchConfiguration,
       batchConfiguration,
       reportError,
-      pageExitObservable,
+      pageMayExitObservable,
       sessionExpireObservable,
       batchFactoryFakeImpl
     )
@@ -62,7 +62,7 @@ describe('startBatchWithReplica', () => {
       batchConfiguration,
       undefined,
       reportError,
-      pageExitObservable,
+      pageMayExitObservable,
       sessionExpireObservable,
       batchFactoryFakeImpl
     )
@@ -77,7 +77,7 @@ describe('startBatchWithReplica', () => {
       batchConfiguration,
       batchConfiguration,
       reportError,
-      pageExitObservable,
+      pageMayExitObservable,
       sessionExpireObservable,
       batchFactoryFakeImpl
     )
@@ -92,7 +92,7 @@ describe('startBatchWithReplica', () => {
       batchConfiguration,
       batchConfiguration,
       reportError,
-      pageExitObservable,
+      pageMayExitObservable,
       sessionExpireObservable,
       batchFactoryFakeImpl
     )
@@ -113,7 +113,7 @@ describe('startBatchWithReplica', () => {
         transformMessage: (message) => ({ ...message, bar: true }),
       },
       reportError,
-      pageExitObservable,
+      pageMayExitObservable,
       sessionExpireObservable,
       batchFactoryFakeImpl
     )
@@ -132,7 +132,7 @@ describe('startBatchWithReplica', () => {
         transformMessage: (message) => ({ ...message, bar: true }),
       },
       reportError,
-      pageExitObservable,
+      pageMayExitObservable,
       sessionExpireObservable,
       batchFactoryFakeImpl
     )

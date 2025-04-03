@@ -1,4 +1,5 @@
 import type { TimeoutId } from '@datadog/browser-core'
+import type { ViewHistoryEntry } from '@datadog/browser-rum-core'
 import type { ProfilerTrace, Profiler } from './profilerApi.types'
 
 export interface RumViewEntry {
@@ -6,6 +7,19 @@ export interface RumViewEntry {
   readonly startTime: DOMHighResTimeStamp
   /** RUM view id */
   readonly viewId: string
+  /** RUM view name */
+  readonly viewName: string | undefined
+}
+
+export interface RUMProfilerLongTaskEntry {
+  /** RUM Long Task id */
+  readonly id: string | undefined
+  /** RUM Long Task duration */
+  readonly duration: number
+  /** RUM Long Task entry type */
+  readonly entryType: string
+  /** RUM Long Task start time */
+  readonly startTime: DOMHighResTimeStamp
 }
 
 /**
@@ -13,7 +27,7 @@ export interface RumViewEntry {
  */
 export interface RumProfilerEnrichmentData {
   /** List of detected long tasks */
-  readonly longTasks: PerformanceEntry[]
+  readonly longTasks: RUMProfilerLongTaskEntry[]
   /** List of detected navigation entries */
   readonly views: RumViewEntry[]
 }
@@ -64,7 +78,7 @@ export interface RumProfilerRunningInstance extends RumProfilerEnrichmentData {
 export type RumProfilerInstance = RumProfilerStoppedInstance | RumProfilerPausedInstance | RumProfilerRunningInstance
 
 export interface RUMProfiler {
-  start: (viewId: string | undefined) => void
+  start: (viewEntry: ViewHistoryEntry | undefined) => void
   stop: () => Promise<void>
   isStopped: () => boolean
   isStarted: () => boolean
