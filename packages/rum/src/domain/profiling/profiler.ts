@@ -30,7 +30,7 @@ import { transport } from './transport/transport'
 
 export const DEFAULT_RUM_PROFILER_CONFIGURATION: RUMProfilerConfiguration = {
   sampleIntervalMs: 10, // Sample stack trace every 10ms
-  collectIntervalMs: 10000, // Collect data every minute
+  collectIntervalMs: 60000, // Collect data every minute
   minProfileDurationMs: 5000, // Require at least 5 seconds of profile data to reduce noise and cost
   minNumberOfSamples: 50, // Require at least 50 samples (~500 ms) to report a profile to reduce noise and cost
 }
