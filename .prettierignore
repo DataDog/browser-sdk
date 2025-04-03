@@ -5,5 +5,5 @@ coverage
 rum-events-format
 .yarn
 developer-extension/dist
-test/app/dist
+test/**/dist
 yarn.lock
