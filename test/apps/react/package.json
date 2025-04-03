@@ -8,9 +8,9 @@
   "dependencies": {
     "@datadog/browser-rum": "file:../../../packages/rum/package.tgz",
     "@datadog/browser-rum-react": "file:../../../packages/rum-react/package.tgz",
-    "react": "19.0.0",
-    "react-dom": "19.0.0",
-    "react-router-dom": "7.3.0"
+    "react": "19.1.0",
+    "react-dom": "19.1.0",
+    "react-router-dom": "6.30.0"
   },
   "resolutions": {
     "@datadog/browser-rum": "file:../../../packages/rum/package.tgz",
@@ -21,11 +21,10 @@
     "@datadog/browser-worker": "file:../../../packages/worker/package.tgz"
   },
   "devDependencies": {
-    "@types/react": "19.0.10",
-    "@types/react-dom": "19.0.4",
     "ts-loader": "^9.5.2",
     "typescript": "^5.8.2",
-    "webpack": "5.98.0"
+    "webpack": "5.98.0",
+    "webpack-dev-server": "5.2.1"
   },
   "volta": {
     "extends": "../../../package.json"

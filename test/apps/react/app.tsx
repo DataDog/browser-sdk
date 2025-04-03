@@ -1,4 +1,4 @@
-import { createBrowserRouter } from '@datadog/browser-rum-react/react-router-v7'
+import { createBrowserRouter } from '@datadog/browser-rum-react/react-router-v6'
 import { RouterProvider, Link, useParams, Outlet } from 'react-router-dom'
 import React, { useState } from 'react'
 import ReactDOM from 'react-dom/client'

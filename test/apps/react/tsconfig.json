@@ -1,3 +1,13 @@
 {
-  "extends": "../../../tsconfig.base.json"
+  "compilerOptions": {
+    "outDir": "./dist/",
+    "strict": true,
+    "module": "commonjs",
+    "moduleResolution": "node",
+    "esModuleInterop": true,
+    "jsx": "react",
+    "target": "es5",
+    "lib": ["ES2015", "DOM"],
+    "types": []
+  }
 }
