@@ -1,4 +1,5 @@
 import { LifeCycle } from '@datadog/browser-rum-core'
+import { relativeNow, timeStampNow } from '@datadog/browser-core'
 import { createRumSessionManagerMock, mockPerformanceObserver, mockRumConfiguration } from '../../../../rum-core/test'
 import { mockProfiler } from '../../../test'
 import { mockedTrace } from './test-utils/mockedTrace'
@@ -42,7 +43,14 @@ describe('profiler', () => {
   it('should start profiling collection and collect data on stop', async () => {
     const profiler = setupProfiler()
 
-    profiler.start('view-id-1')
+    profiler.start({
+      id: 'view-id-1',
+      name: 'view-name-1',
+      startClocks: {
+        relative: relativeNow(),
+        timeStamp: timeStampNow(),
+      },
+    })
 
     // Wait for start of collection.
     await waitForBoolean(() => profiler.isStarted())
