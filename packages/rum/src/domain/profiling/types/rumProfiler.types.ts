@@ -81,7 +81,8 @@ export interface RUMProfiler {
   start: (viewEntry: ViewHistoryEntry | undefined) => void
   stop: () => Promise<void>
   isStopped: () => boolean
-  isStarted: () => boolean
+  isRunning: () => boolean
+  isPaused: () => boolean
 }
 
 export interface RUMProfilerConfiguration {
