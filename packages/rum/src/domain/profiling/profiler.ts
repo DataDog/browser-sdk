@@ -208,13 +208,12 @@ export function createRumProfiler(
       .then((trace) => {
         const endTime = performance.now()
 
-        if (endTime - startTime < profilerConfiguration.minProfileDurationMs) {
-          // Skip very short profiles to reduce noise and cost
-          return
-        }
+        const hasLongTasks = longTasks.length > 0
+        const isBelowDurationThreshold = endTime - startTime < profilerConfiguration.minProfileDurationMs
+        const isBelowSampleThreshold = getNumberOfSamples(trace.samples) < profilerConfiguration.minNumberOfSamples
 
-        if (getNumberOfSamples(trace.samples) < profilerConfiguration.minNumberOfSamples) {
-          // Skip idle profiles to reduce noise and cost
+        if (!hasLongTasks && (isBelowDurationThreshold || isBelowSampleThreshold)) {
+          // Skip very short profiles to reduce noise and cost, but keep them if they contain long tasks.
           return
         }
 
