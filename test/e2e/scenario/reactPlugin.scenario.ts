@@ -33,6 +33,8 @@ test.describe('react plugin', () => {
       await page.click('text=Go to Error')
       await page.click('#error-button')
 
+      // Firefox may delay dispatching error events from React error boundaries,
+      // causing flushEvents() to miss them, this timeout ensures the RUM event is captured.
       if (browserName === 'firefox') {
         await page.waitForTimeout(1000)
       }

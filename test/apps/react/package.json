@@ -2,8 +2,7 @@
   "name": "react-app",
   "version": "0.0.0",
   "scripts": {
-    "build": "webpack",
-    "start": "webpack serve --mode development"
+    "build": "webpack"
   },
   "dependencies": {
     "@datadog/browser-rum": "file:../../../packages/rum/package.tgz",
@@ -13,8 +12,6 @@
     "react-router-dom": "6.30.0"
   },
   "resolutions": {
-    "@datadog/browser-rum": "file:../../../packages/rum/package.tgz",
-    "@datadog/browser-rum-react": "file:../../../packages/rum-react/package.tgz",
     "@datadog/browser-rum-core": "file:../../../packages/rum-core/package.tgz",
     "@datadog/browser-core": "file:../../../packages/core/package.tgz",
     "@datadog/browser-rum-slim": "file:../../../packages/rum-slim/package.tgz",
