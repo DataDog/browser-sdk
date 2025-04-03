@@ -71,9 +71,9 @@ cmd_release () {
 cmd_version () {
   node ./scripts/release/generate-changelog
   node ./scripts/release/update-peer-dependency-versions.js
+  lerna run pack --stream
   # keep test apps lockfiles up to date
   for app_dir in test/apps/*; do
-    lerna run pack --stream
     cd "$app_dir"
     yarn up
     git add yarn.lock
@@ -89,7 +89,7 @@ cmd_woke () {
 cmd_check_server_side_rendering_compatibility () {
   yarn build
   yarn lerna run pack --stream
-  cd cd test/apps/vanilla
+  cd test/apps/vanilla
   rm -rf node_modules
   yarn install --no-immutable
   yarn compat:ssr || fail 'server side rendering compatibility broken'

@@ -5,7 +5,7 @@ const path = require('path')
 const { printLog, runMain } = require('./lib/executionUtils')
 const { command } = require('./lib/command')
 
-const TEST_APP_DIR = path.join(__dirname, '..', 'test', 'app')
+const TEST_APP_DIR = path.join(__dirname, '..', 'test', 'apps', 'vanilla')
 
 runMain(() => {
   printLog('Building project...')
