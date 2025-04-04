@@ -6,27 +6,27 @@ __metadata:
   cacheKey: 10c0
 
 "@datadog/browser-core@file:../../../packages/core/package.tgz::locator=react-app%40workspace%3A.":
-  version: 6.6.2
-  resolution: "@datadog/browser-core@file:../../../packages/core/package.tgz#../../../packages/core/package.tgz::hash=761a84&locator=react-app%40workspace%3A."
-  checksum: 10c0/aa64b2d7d0de849d23052cadd29adae8203786777369ba07d7e5f7e1d904fcf8a3bc7a4653576b6154d39b6440064e7f11a0a478c42a229b0d593785b60d0d07
+  version: 6.6.3
+  resolution: "@datadog/browser-core@file:../../../packages/core/package.tgz#../../../packages/core/package.tgz::hash=fadbc3&locator=react-app%40workspace%3A."
+  checksum: 10c0/547023b93fd8118fc587578a0e9542ab46db271d6d6b804401fdaad5b9a88a047dd5394ffc15d10f406dd78d1a55184b3b2b5f399d8e0c9b5e4c7e025cac424c
   languageName: node
   linkType: hard
 
 "@datadog/browser-rum-core@file:../../../packages/rum-core/package.tgz::locator=react-app%40workspace%3A.":
-  version: 6.6.2
-  resolution: "@datadog/browser-rum-core@file:../../../packages/rum-core/package.tgz#../../../packages/rum-core/package.tgz::hash=648e29&locator=react-app%40workspace%3A."
+  version: 6.6.3
+  resolution: "@datadog/browser-rum-core@file:../../../packages/rum-core/package.tgz#../../../packages/rum-core/package.tgz::hash=8c527f&locator=react-app%40workspace%3A."
   dependencies:
-    "@datadog/browser-core": "npm:6.6.2"
-  checksum: 10c0/f6ac4a1fdc582e8d3a4f7ebfaf244347d87bb942a01106289e5fa769a64dbb93ae49ffbebffbce12e623d8b2a6d470297c25372a9a5d74974fdc562732233f4b
+    "@datadog/browser-core": "npm:6.6.3"
+  checksum: 10c0/82e3d1a049b61ee15950bc9bfb4d9971c401e7dad22d22286e521be7b825cfc66f6508c7d493558eb184cdb6db2702dc6d5da175ea54f245c86fa4a0cb982354
   languageName: node
   linkType: hard
 
 "@datadog/browser-rum-react@file:../../../packages/rum-react/package.tgz::locator=react-app%40workspace%3A.":
-  version: 6.6.2
-  resolution: "@datadog/browser-rum-react@file:../../../packages/rum-react/package.tgz#../../../packages/rum-react/package.tgz::hash=212fe0&locator=react-app%40workspace%3A."
+  version: 6.6.3
+  resolution: "@datadog/browser-rum-react@file:../../../packages/rum-react/package.tgz#../../../packages/rum-react/package.tgz::hash=8dee82&locator=react-app%40workspace%3A."
   dependencies:
-    "@datadog/browser-core": "npm:6.6.2"
-    "@datadog/browser-rum-core": "npm:6.6.2"
+    "@datadog/browser-core": "npm:6.6.3"
+    "@datadog/browser-rum-core": "npm:6.6.3"
   peerDependencies:
     react: 18 || 19
     react-router-dom: 6 || 7
@@ -39,22 +39,22 @@ __metadata:
       optional: true
     react-router-dom:
       optional: true
-  checksum: 10c0/78aa6c2957ee9e0a931e164cf7a179cedb7dfbdf0951520a887daab89e64e3a4022ba7a1401c516539374a9af3b2cd643e011e051b5363258da6498ab58c2cbc
+  checksum: 10c0/e945da8ec9f71e4b18b4f420693e9706503feee96e4855221f529b39513143732b8b2da6e50e0337ca96d1f350316132c8e0b478c2ab4ed59e73cbf593fa6293
   languageName: node
   linkType: hard
 
 "@datadog/browser-rum@file:../../../packages/rum/package.tgz::locator=react-app%40workspace%3A.":
-  version: 6.6.2
-  resolution: "@datadog/browser-rum@file:../../../packages/rum/package.tgz#../../../packages/rum/package.tgz::hash=da1ccd&locator=react-app%40workspace%3A."
+  version: 6.6.3
+  resolution: "@datadog/browser-rum@file:../../../packages/rum/package.tgz#../../../packages/rum/package.tgz::hash=2ce3e2&locator=react-app%40workspace%3A."
   dependencies:
-    "@datadog/browser-core": "npm:6.6.2"
-    "@datadog/browser-rum-core": "npm:6.6.2"
+    "@datadog/browser-core": "npm:6.6.3"
+    "@datadog/browser-rum-core": "npm:6.6.3"
   peerDependencies:
-    "@datadog/browser-logs": 6.6.2
+    "@datadog/browser-logs": 6.6.3
   peerDependenciesMeta:
     "@datadog/browser-logs":
       optional: true
-  checksum: 10c0/f4c112480456a7b36697a4a62d5918ba8da2432f85494e030764ba5de5a4392176520400df48102a2d3fbe9c4e88714efa55d15ebcd910ac2a9073ddfac09243
+  checksum: 10c0/2659ae285fcb2e94feed7589d9403714f4583c199d1d6fc7d4bce5522a76c5d911cde5ecb09c51982ae494d2d6dad74a6a0b9093e36b29ea8a2d9747600c121b
   languageName: node
   linkType: hard
 
