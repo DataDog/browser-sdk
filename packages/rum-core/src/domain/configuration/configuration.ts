@@ -28,6 +28,11 @@ export interface RumInitConfiguration extends InitConfiguration {
    */
   applicationId: string
   /**
+   * Whether to propagate user and account IDs in the baggage header of trace requests.
+   * @default false
+   */
+  propagateTraceBaggage?: boolean | undefined
+  /**
    * Access to every event collected by the RUM SDK before they are sent to Datadog.
    * It allows:
    * - Enrich your RUM events with additional context attributes
@@ -177,6 +182,7 @@ export interface RumConfiguration extends Configuration {
   plugins: RumPlugin[]
   trackFeatureFlagsForEvents: FeatureFlagsForEvents[]
   profilingSampleRate: number
+  propagateTraceBaggage: boolean
 }
 
 export function validateAndBuildRumConfiguration(
@@ -251,6 +257,7 @@ export function validateAndBuildRumConfiguration(
     plugins: initConfiguration.plugins || [],
     trackFeatureFlagsForEvents: initConfiguration.trackFeatureFlagsForEvents || [],
     profilingSampleRate: profilingEnabled ? (initConfiguration.profilingSampleRate ?? 0) : 0, // Enforce 0 if profiling is not enabled, and set 0 as default when not set.
+    propagateTraceBaggage: !!initConfiguration.propagateTraceBaggage,
     ...baseConfiguration,
   }
 }
