@@ -169,7 +169,13 @@ export function startRumAssembly(
             type: SessionType.USER,
           },
           display: displayContext.get(),
-          connectivity: getConnectivity(),
+          connectivity: (() => {
+            try {
+              return getConnectivity();
+            } catch (e) {
+              return { status: 'not_connected' as const };
+            }
+          })(),
           context: commonContext.context,
         }
 

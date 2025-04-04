@@ -10,6 +10,10 @@ export interface CookieOptions {
 }
 
 export function setCookie(name: string, value: string, expireDelay: number = 0, options?: CookieOptions) {
+  if (typeof document === 'undefined') {
+    return
+  }
+
   const date = new Date()
   date.setTime(date.getTime() + expireDelay)
   const expires = `expires=${date.toUTCString()}`
@@ -21,6 +25,10 @@ export function setCookie(name: string, value: string, expireDelay: number = 0, 
 }
 
 export function getCookie(name: string) {
+  if (typeof document === 'undefined') {
+    return undefined
+  }
+  
   return findCommaSeparatedValue(document.cookie, name)
 }
 
@@ -31,6 +39,10 @@ let initCookieParsed: Map<string, string> | undefined
  * to avoid accessing document.cookie multiple times.
  */
 export function getInitCookie(name: string) {
+  if (typeof document === 'undefined' || !document.cookie) {
+    return undefined
+  }
+
   if (!initCookieParsed) {
     initCookieParsed = findCommaSeparatedValues(document.cookie)
   }
@@ -46,6 +58,10 @@ export function deleteCookie(name: string, options?: CookieOptions) {
 }
 
 export function areCookiesAuthorized(options: CookieOptions): boolean {
+  if (typeof document === 'undefined') {
+    return false
+  }
+
   if (document.cookie === undefined || document.cookie === null) {
     return false
   }
@@ -71,6 +87,10 @@ export function areCookiesAuthorized(options: CookieOptions): boolean {
  */
 let getCurrentSiteCache: string | undefined
 export function getCurrentSite() {
+  if (typeof document === 'undefined' || typeof window === 'undefined' || !window.location) {
+    return ''
+  }
+
   if (getCurrentSiteCache === undefined) {
     // Use a unique cookie name to avoid issues when the SDK is initialized multiple times during
     // the test cookie lifetime

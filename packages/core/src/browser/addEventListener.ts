@@ -128,8 +128,10 @@ export function addEventListeners<Target extends EventTarget, EventName extends 
   const options = passive ? { capture, passive } : capture
 
   // Use the window.EventTarget.prototype when possible to avoid wrong overrides (e.g: https://github.com/salesforce/lwc/issues/1824)
-  const listenerTarget =
-    window.EventTarget && eventTarget instanceof EventTarget ? window.EventTarget.prototype : eventTarget
+  const listenerTarget = 
+    typeof window !== 'undefined' && window.EventTarget && eventTarget instanceof EventTarget
+      ? window.EventTarget.prototype 
+      : eventTarget
 
   const add = getZoneJsOriginalValue(listenerTarget, 'addEventListener')
   eventNames.forEach((eventName) => add.call(eventTarget, eventName, listenerWithMonitor, options))

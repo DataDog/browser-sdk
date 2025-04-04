@@ -11,29 +11,71 @@ export class Observable<T> {
 
   subscribe(f: (data: T) => void): Subscription {
     this.observers.push(f)
+    
     if (this.observers.length === 1 && this.onFirstSubscribe) {
-      this.onLastUnsubscribe = this.onFirstSubscribe(this) || undefined
+      try {
+        this.onLastUnsubscribe = this.onFirstSubscribe(this) || undefined
+      } catch (error) {
+        if (typeof console !== 'undefined' && console.error) {
+          console.error('Error in Observable.onFirstSubscribe:', error);
+        }
+        
+        this.onLastUnsubscribe = undefined;
+      }
     }
+    
     return {
       unsubscribe: () => {
         this.observers = this.observers.filter((other) => f !== other)
         if (!this.observers.length && this.onLastUnsubscribe) {
-          this.onLastUnsubscribe()
+          try {
+            this.onLastUnsubscribe()
+          } catch (error) {
+            if (typeof console !== 'undefined' && console.error) {
+              console.error('Error in Observable.onLastUnsubscribe:', error);
+            }
+          }
         }
       },
     }
   }
 
   notify(data: T) {
-    this.observers.forEach((observer) => observer(data))
+    this.observers.forEach((observer) => {
+      try {
+        observer(data)
+      } catch (error) {
+        if (typeof console !== 'undefined' && console.error) {
+          console.error('Error in Observable.notify observer:', error);
+        }
+      }
+    })
   }
 }
 
 export function mergeObservables<T>(...observables: Array<Observable<T>>) {
   return new Observable<T>((globalObservable) => {
-    const subscriptions: Subscription[] = observables.map((observable) =>
-      observable.subscribe((data) => globalObservable.notify(data))
-    )
-    return () => subscriptions.forEach((subscription) => subscription.unsubscribe())
+    const subscriptions: Subscription[] = [];
+    
+    observables.forEach((observable) => {
+      try {
+        const subscription = observable.subscribe((data) => globalObservable.notify(data));
+        subscriptions.push(subscription);
+      } catch (error) {
+        if (typeof console !== 'undefined' && console.error) {
+          console.error('Error subscribing to merged observable:', error);
+        }
+      }
+    });
+    
+    return () => subscriptions.forEach((subscription) => {
+      try {
+        subscription.unsubscribe();
+      } catch (error) {
+        if (typeof console !== 'undefined' && console.error) {
+          console.error('Error unsubscribing from merged observable:', error);
+        }
+      }
+    });
   })
 }

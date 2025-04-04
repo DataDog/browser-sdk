@@ -116,8 +116,8 @@ export function computeFetchResponseText(
   if (!clonedResponse || !clonedResponse.body) {
     // if the clone failed or if the body is null, let's not try to read it.
     callback()
-  } else if (!window.TextDecoder) {
-    // If the browser doesn't support TextDecoder, let's read the whole response then truncate it.
+  } else if (typeof TextDecoder === 'undefined') {
+    // If the environment doesn't support TextDecoder, let's read the whole response then truncate it.
     //
     // This should only be the case on early versions of Edge (before they migrated to Chromium).
     // Even if it could be possible to implement a workaround for the missing TextDecoder API (using
