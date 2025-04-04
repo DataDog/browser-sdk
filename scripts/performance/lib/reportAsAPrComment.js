@@ -1,4 +1,5 @@
 const { command } = require('../../lib/command')
+const { formatSize } = require('../../lib/computeBundleSize')
 const { fetchHandlingError } = require('../../lib/executionUtils')
 const { LOCAL_BRANCH, getLastCommonCommit, fetchPR } = require('../../lib/gitUtils')
 const { getGithubAccessToken } = require('../../lib/secrets')
@@ -187,14 +188,6 @@ function formatBundleName(bundleName) {
     .split('_')
     .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
     .join(' ')
-}
-
-function formatSize(bytes) {
-  if (bytes < 1024) {
-    return `${Math.round(bytes)} B`
-  }
-
-  return `${(bytes / 1024).toFixed(2)} KiB`
 }
 
 function markdownArray({ headers, rows }) {
