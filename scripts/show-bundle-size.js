@@ -5,13 +5,12 @@ const COL_WIDTH = 12
 
 runMain(() => {
   const bundleSizes = calculateBundleSizes()
-  const bundleSizesGzip = calculateBundleSizes(true)
 
   printRow('Bundle', 'Size', 'Gzip')
   printRow('-'.repeat(COL_WIDTH), '-'.repeat(COL_WIDTH), '-'.repeat(COL_WIDTH))
 
-  for (const [key, value] of Object.entries(bundleSizes)) {
-    printRow(key, formatSize(value), formatSize(bundleSizesGzip[key]))
+  for (const [key, size] of Object.entries(bundleSizes)) {
+    printRow(key, formatSize(size.uncompressed), formatSize(size.gzipped))
   }
 })
 

@@ -29,7 +29,7 @@ function getGzippedBundleSize(filePath) {
   }
 }
 
-function getBundleSize(filePath) {
+function getUncompressedBundleSize(filePath) {
   try {
     const file = fs.statSync(filePath)
 
@@ -39,9 +39,8 @@ function getBundleSize(filePath) {
   }
 }
 
-function getPackageSize(packageName, gzip = true) {
+function getPackageSize(packageName) {
   const bundleSizes = {}
-  const bundleSizesCalculator = gzip ? getGzippedBundleSize : getBundleSize
   const packagePath = path.join(__dirname, `../../packages/${packageName}/bundle/`)
 
   for (const file of glob.sync('**/*.js', { cwd: packagePath })) {
@@ -51,20 +50,22 @@ function getPackageSize(packageName, gzip = true) {
       continue
     }
 
-    bundleSizes[name] = bundleSizesCalculator(path.join(packagePath, file))
+    const filePath = path.join(packagePath, file)
+
+    bundleSizes[name] = {
+      uncompressed: getUncompressedBundleSize(filePath),
+      gzipped: getGzippedBundleSize(filePath),
+    }
   }
 
   return bundleSizes
 }
 
-function calculateBundleSizes(gzip = false) {
-  let bundleSizes = {}
+function calculateBundleSizes() {
+  const bundleSizes = {}
 
   for (const package of packages) {
-    bundleSizes = {
-      ...bundleSizes,
-      ...getPackageSize(package, gzip),
-    }
+    Object.assign(bundleSizes, getPackageSize(package))
   }
 
   return bundleSizes
