@@ -35,7 +35,7 @@ export function makeProfilerApi(): ProfilerApi {
         }
 
         profiler = createRumProfiler(configuration, lifeCycle, sessionManager)
-        profiler.start(viewHistory.findView()?.id)
+        profiler.start(viewHistory.findView())
       })
       .catch(monitorError)
   }
