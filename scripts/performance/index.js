@@ -1,7 +1,7 @@
 const { runMain } = require('../lib/executionUtils')
+const { calculateBundleSizes } = require('../lib/computeBundleSize')
 const { reportAsPrComment } = require('./lib/reportAsAPrComment')
 const { reportToDatadog } = require('./lib/reportToDatadog')
-const { calculateBundleSizes } = require('./lib/computeBundleSize')
 const { computeCpuPerformance } = require('./lib/computeCpuPerformance')
 const { computeMemoryPerformance } = require('./lib/computeMemoryPerformance')
 
