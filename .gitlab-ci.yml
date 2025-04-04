@@ -1,13 +1,13 @@
 variables:
-  CURRENT_STAGING: staging-13
+  CURRENT_STAGING: staging-14
   APP: 'browser-sdk'
-  CURRENT_CI_IMAGE: 78
+  CURRENT_CI_IMAGE: 79
   BUILD_STABLE_REGISTRY: 'registry.ddbuild.io'
   CI_IMAGE: '$BUILD_STABLE_REGISTRY/ci/$APP:$CURRENT_CI_IMAGE'
   GIT_REPOSITORY: 'git@github.com:DataDog/browser-sdk.git'
   MAIN_BRANCH: 'main'
   NEXT_MAJOR_BRANCH: ''
-  CHROME_PACKAGE_VERSION: 134.0.6998.35-1
+  CHROME_PACKAGE_VERSION: 135.0.7049.52-1
 
 cache:
   key:
@@ -151,7 +151,7 @@ typecheck:
     - yarn
     - yarn build
     - yarn typecheck
-    - scripts/cli typecheck test/app
+    - scripts/cli typecheck test/apps/vanilla
     - scripts/cli typecheck test/e2e
 
 build-and-lint:
