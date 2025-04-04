@@ -45,6 +45,9 @@ export function createRumProfiler(
 
   let lastViewEntry: RumViewEntry | undefined
 
+  // Global clean-up tasks for listeners that are not specific to a profiler instance (eg. visibility change, before unload)
+  const globalCleanupTasks: Array<() => void> = []
+
   let instance: RumProfilerInstance = { state: 'stopped' }
 
   function start(viewEntry: ViewHistoryEntry | undefined): void {
@@ -58,6 +61,12 @@ export function createRumProfiler(
       ? { startTime: viewEntry.startClocks.relative, viewId: viewEntry.id, viewName: viewEntry.name }
       : undefined
 
+    // Add global clean-up tasks for listeners that are not specific to a profiler instance (eg. visibility change, before unload)
+    globalCleanupTasks.push(
+      addEventListener(configuration, window, DOM_EVENT.VISIBILITY_CHANGE, handleVisibilityChange).stop,
+      addEventListener(configuration, window, DOM_EVENT.BEFORE_UNLOAD, handleBeforeUnload).stop
+    )
+
     // Start profiler instance
     startNextProfilerInstance()
   }
@@ -68,6 +77,9 @@ export function createRumProfiler(
 
     // Disable Long Task Registry as we no longer need to correlate them with RUM
     disableLongTaskRegistry()
+
+    // Cleanup global listeners
+    globalCleanupTasks.forEach((task) => task())
   }
 
   /**
@@ -106,11 +118,6 @@ export function createRumProfiler(
       cleanupTasks.push(() => observer?.disconnect())
       cleanupTasks.push(rawEventCollectedSubscription.unsubscribe)
     }
-
-    cleanupTasks.push(
-      addEventListener(configuration, window, DOM_EVENT.VISIBILITY_CHANGE, handleVisibilityChange).stop,
-      addEventListener(configuration, window, DOM_EVENT.BEFORE_UNLOAD, handleBeforeUnload).stop
-    )
 
     // Whenever the View is updated, we add a views entry to the profiler instance.
     const viewUpdatedSubscription = lifeCycle.subscribe(LifeCycleEventType.VIEW_CREATED, (view) => {
@@ -201,13 +208,12 @@ export function createRumProfiler(
       .then((trace) => {
         const endTime = performance.now()
 
-        if (endTime - startTime < profilerConfiguration.minProfileDurationMs) {
-          // Skip very short profiles to reduce noise and cost
-          return
-        }
+        const hasLongTasks = longTasks.length > 0
+        const isBelowDurationThreshold = endTime - startTime < profilerConfiguration.minProfileDurationMs
+        const isBelowSampleThreshold = getNumberOfSamples(trace.samples) < profilerConfiguration.minNumberOfSamples
 
-        if (getNumberOfSamples(trace.samples) < profilerConfiguration.minNumberOfSamples) {
-          // Skip idle profiles to reduce noise and cost
+        if (!hasLongTasks && (isBelowDurationThreshold || isBelowSampleThreshold)) {
+          // Skip very short profiles to reduce noise and cost, but keep them if they contain long tasks.
           return
         }
 
@@ -318,9 +324,13 @@ export function createRumProfiler(
     return instance.state === 'stopped'
   }
 
-  function isStarted() {
+  function isRunning() {
     return instance.state === 'running'
   }
 
-  return { start, stop, isStopped, isStarted }
+  function isPaused() {
+    return instance.state === 'paused'
+  }
+
+  return { start, stop, isStopped, isRunning, isPaused }
 }
