@@ -9,6 +9,7 @@ import {
   DOM_EVENT,
 } from '@datadog/browser-core'
 import type { RumConfiguration } from '../configuration'
+import { supportPerformanceTimingEvent, RumPerformanceEntryType } from '../../browser/performanceObservable'
 import { RumEventType, type PageStateServerEntry } from '../../rawRumEvent.types'
 import { HookNames } from '../../hooks'
 import type { Hooks, PartialRumEvent } from '../../hooks'
@@ -47,6 +48,18 @@ export function startPageStateHistory(
   })
 
   let currentPageState: PageState
+
+  if (supportPerformanceTimingEvent(RumPerformanceEntryType.VISIBILITY_STATE)) {
+    const visibilityEntries = performance.getEntriesByType(
+      RumPerformanceEntryType.VISIBILITY_STATE
+    ) as PerformanceEntry[]
+
+    visibilityEntries.forEach((entry) => {
+      const state = entry.name === 'hidden' ? PageState.HIDDEN : PageState.ACTIVE
+      addPageState(state, entry.startTime as RelativeTime)
+    })
+  }
+
   addPageState(getPageState(), relativeNow())
 
   const { stop: stopEventListeners } = addEventListeners(

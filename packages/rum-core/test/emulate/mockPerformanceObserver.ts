@@ -2,13 +2,17 @@ import { registerCleanupTask } from '@datadog/browser-core/test'
 import { objectValues } from '@datadog/browser-core'
 import { RumPerformanceEntryType, type RumPerformanceEntry } from '../../src/browser/performanceObservable'
 
-export function mockPerformanceObserver({ typeSupported = true, emulateAllEntryTypesUnsupported = false } = {}) {
+export function mockPerformanceObserver({
+  typeSupported = true,
+  emulateAllEntryTypesUnsupported = false,
+  supportedEntryTypes = objectValues(RumPerformanceEntryType),
+} = {}) {
   const originalPerformanceObserver = window.PerformanceObserver
   const instances = new Set<MockPerformanceObserver>()
   let bufferedEntries: RumPerformanceEntry[] = []
 
   class MockPerformanceObserver {
-    static supportedEntryTypes = objectValues(RumPerformanceEntryType)
+    static supportedEntryTypes = supportedEntryTypes
 
     public entryTypes: string[] = []
 
