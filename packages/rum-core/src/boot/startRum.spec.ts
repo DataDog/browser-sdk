@@ -97,7 +97,8 @@ function startRumStub(
     windowOpenObservable,
     locationChangeObservable,
     noopRecorderApi,
-    viewHistory
+    viewHistory,
+    pageStateHistory
   )
 
   startLongAnimationFrameCollection(lifeCycle, configuration)

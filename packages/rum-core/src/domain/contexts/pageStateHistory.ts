@@ -32,6 +32,7 @@ export type PageStateEntry = { state: PageState; startTime: RelativeTime }
 
 export interface PageStateHistory {
   wasInPageStateDuringPeriod: (state: PageState, startTime: RelativeTime, duration: Duration) => boolean
+  getDurationInStateDuringPeriod: (state: PageState, startTime: RelativeTime, duration: Duration) => Duration
   addPageState(nextPageState: PageState, startTime?: RelativeTime): void
   stop: () => void
 }
@@ -77,6 +78,42 @@ export function startPageStateHistory(
     pageStateEntryHistory.add({ state: currentPageState, startTime }, startTime)
   }
 
+  function getDurationInStateDuringPeriod(
+    targetState: PageState,
+    periodStartTime: RelativeTime,
+    duration: Duration
+  ): Duration {
+    let totalDuration = 0 as Duration
+    const periodEndTime = (periodStartTime + duration) as RelativeTime
+
+    const historyEntries = pageStateEntryHistory.getAllEntries() as Array<{
+      startTime: RelativeTime
+      endTime: RelativeTime | 'Infinity'
+      value: PageStateEntry
+    }>
+
+    if (!historyEntries) {
+      return totalDuration
+    }
+
+    historyEntries.forEach((entry) => {
+      if (entry.value.state === targetState) {
+        const entryStartTime = entry.startTime
+        const entryEndTime = entry.endTime === 'Infinity' ? periodEndTime : entry.endTime
+
+        const effectiveStartTime = Math.max(entryStartTime, periodStartTime) as RelativeTime
+        const effectiveEndTime = Math.min(entryEndTime, periodEndTime) as RelativeTime
+
+        if (effectiveEndTime > effectiveStartTime) {
+          const overlapDuration = elapsed(effectiveStartTime, effectiveEndTime)
+          totalDuration = (totalDuration + overlapDuration) as Duration
+        }
+      }
+    })
+
+    return totalDuration
+  }
+
   function wasInPageStateDuringPeriod(state: PageState, startTime: RelativeTime, duration: Duration) {
     return pageStateEntryHistory.findAll(startTime, duration).some((pageState) => pageState.state === state)
   }
@@ -103,6 +140,7 @@ export function startPageStateHistory(
 
   return {
     wasInPageStateDuringPeriod,
+    getDurationInStateDuringPeriod,
     addPageState,
     stop: () => {
       stopEventListeners()
