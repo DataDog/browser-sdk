@@ -163,6 +163,71 @@ describe('pageStateHistory', () => {
       })
     })
   })
+
+  describe('getDurationInStateDuringPeriod', () => {
+    it('should return 0 if the state never occurred during the period', () => {
+      pageStateHistory.addPageState(PageState.PASSIVE)
+      clock.tick(10)
+      pageStateHistory.addPageState(PageState.HIDDEN)
+      clock.tick(10)
+
+      const duration = pageStateHistory.getDurationInStateDuringPeriod(
+        PageState.ACTIVE,
+        clock.relative(0),
+        20 as Duration
+      )
+      expect(duration).toBe(0 as Duration)
+    })
+
+    it('should return the correct duration if the state occurred during the whole period', () => {
+      pageStateHistory.addPageState(PageState.ACTIVE, clock.relative(0))
+
+      clock.tick(20)
+      pageStateHistory.addPageState(PageState.PASSIVE)
+
+      const duration = pageStateHistory.getDurationInStateDuringPeriod(
+        PageState.ACTIVE,
+        clock.relative(0),
+        15 as Duration
+      )
+      expect(duration).toBe(15 as Duration)
+    })
+
+    it('should return the correct duration if the state occurred partially during the period', () => {
+      pageStateHistory.addPageState(PageState.PASSIVE)
+      clock.tick(10)
+      pageStateHistory.addPageState(PageState.ACTIVE)
+      clock.tick(10)
+      pageStateHistory.addPageState(PageState.HIDDEN)
+      clock.tick(10)
+
+      const duration = pageStateHistory.getDurationInStateDuringPeriod(
+        PageState.ACTIVE,
+        clock.relative(5),
+        20 as Duration
+      )
+      expect(duration).toBe(10 as Duration)
+    })
+
+    it('should handle multiple occurrences of the state within the period', () => {
+      pageStateHistory.addPageState(PageState.ACTIVE)
+      clock.tick(5)
+      pageStateHistory.addPageState(PageState.PASSIVE)
+      clock.tick(5)
+      pageStateHistory.addPageState(PageState.ACTIVE)
+      clock.tick(5)
+      pageStateHistory.addPageState(PageState.HIDDEN)
+      clock.tick(5)
+      pageStateHistory.addPageState(PageState.ACTIVE)
+
+      const duration = pageStateHistory.getDurationInStateDuringPeriod(
+        PageState.ACTIVE,
+        clock.relative(0),
+        30 as Duration
+      )
+      expect(duration).toBe((5 + 5 + 10) as Duration)
+    })
+  })
   ;[RumEventType.ACTION, RumEventType.ERROR].forEach((eventType) => {
     describe(`for ${eventType} events`, () => {
       it('should add in_foreground: true when the page is active', () => {

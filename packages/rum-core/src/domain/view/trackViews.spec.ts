@@ -349,6 +349,18 @@ describe('view lifecycle', () => {
     expect(notifySpy.calls.argsFor(callsCount)[0]).toEqual(LifeCycleEventType.VIEW_ENDED)
     expect(notifySpy.calls.argsFor(callsCount + 1)[0]).toEqual(LifeCycleEventType.AFTER_VIEW_ENDED)
   })
+
+  describe('page state tracking', () => {
+    it('should include foreground duration in view updates', () => {
+      const { getViewUpdate, getViewUpdateCount } = viewTest
+
+      clock.tick(SESSION_KEEP_ALIVE_INTERVAL)
+
+      const latestViewUpdate = getViewUpdate(getViewUpdateCount() - 1)
+      expect(latestViewUpdate.timeSpentInForeground).toEqual(jasmine.any(Number))
+      expect(latestViewUpdate.timeSpentInForeground).toBe(0 as Duration)
+    })
+  })
 })
 
 describe('view loading type', () => {
@@ -358,7 +370,6 @@ describe('view loading type', () => {
 
   beforeEach(() => {
     clock = mockClock()
-
     viewTest = setupViewTest({ lifeCycle })
 
     registerCleanupTask(() => {

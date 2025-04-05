@@ -2,9 +2,15 @@ import { Observable } from '@datadog/browser-core'
 import type { Duration, RelativeTime, ServerDuration, TimeStamp } from '@datadog/browser-core'
 import { mockClock, registerCleanupTask } from '@datadog/browser-core/test'
 import type { RecorderApi } from '../../boot/rumPublicApi'
-import { collectAndValidateRawRumEvents, mockRumConfiguration, mockViewHistory, noopRecorderApi } from '../../../test'
+import {
+  collectAndValidateRawRumEvents,
+  mockRumConfiguration,
+  mockViewHistory,
+  noopRecorderApi,
+  mockPageStateHistory,
+} from '../../../test'
 import type { RawRumEvent, RawRumViewEvent } from '../../rawRumEvent.types'
-import { RumEventType, ViewLoadingType } from '../../rawRumEvent.types'
+import { ViewLoadingType, RumEventType } from '../../rawRumEvent.types'
 import type { RawRumEventCollectedData } from '../lifeCycle'
 import { LifeCycle, LifeCycleEventType } from '../lifeCycle'
 import type { RumConfiguration } from '../configuration'
@@ -63,6 +69,7 @@ const VIEW: ViewEvent = {
     },
   },
   sessionIsActive: true,
+  timeSpentInForeground: 50 as Duration,
 }
 
 describe('viewCollection', () => {
@@ -95,7 +102,8 @@ describe('viewCollection', () => {
         ...noopRecorderApi,
         getReplayStats: getReplayStatsSpy,
       },
-      viewHistory
+      viewHistory,
+      mockPageStateHistory()
     )
 
     rawRumEvents = collectAndValidateRawRumEvents(lifeCycle)
@@ -193,6 +201,7 @@ describe('viewCollection', () => {
           count: 10,
         },
         time_spent: (100 * 1e6) as ServerDuration,
+        time_spent_in_foreground: (50 * 1e6) as ServerDuration,
       },
       session: {
         has_replay: undefined,
@@ -302,5 +311,12 @@ describe('viewCollection', () => {
         })
       )
     })
+  })
+
+  it('should include foreground time if available', () => {
+    setupViewCollection()
+    lifeCycle.notify(LifeCycleEventType.VIEW_UPDATED, VIEW)
+    const rawRumViewEvent = rawRumEvents[rawRumEvents.length - 1].rawRumEvent as RawRumViewEvent
+    expect(rawRumViewEvent.view.time_spent_in_foreground).toBe((50 * 1e6) as ServerDuration)
   })
 })
