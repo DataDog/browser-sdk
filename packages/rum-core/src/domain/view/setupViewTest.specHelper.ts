@@ -17,7 +17,7 @@ interface ViewTrackingContext {
 }
 
 export function setupViewTest(
-  { lifeCycle, pageStateHistory, initialLocation, partialConfig }: ViewTrackingContext,
+  { lifeCycle, initialLocation, partialConfig }: ViewTrackingContext,
   initialViewOptions?: ViewOptions
 ) {
   const domMutationObservable = new Observable<void>()
@@ -25,7 +25,7 @@ export function setupViewTest(
   const configuration = mockRumConfiguration(partialConfig)
   const { locationChangeObservable, changeLocation } = setupLocationObserver(initialLocation)
 
-  const resolvedPageStateHistory = pageStateHistory ?? mockPageStateHistory()
+  const pageStateHistory = mockPageStateHistory()
 
   const {
     handler: viewUpdateHandler,
@@ -57,7 +57,7 @@ export function setupViewTest(
       configuration,
       locationChangeObservable,
       !configuration.trackViewsManually,
-      resolvedPageStateHistory,
+      pageStateHistory,
       initialViewOptions
     )
   return {
