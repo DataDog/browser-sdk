@@ -23,12 +23,12 @@ function ensureProperties(context: Context, propertiesConfig: PropertiesConfig, 
      * https://docs.datadoghq.com/logs/log_configuration/attributes_naming_convention/#user-related-attributes
      */
 
-    if (type === 'string' && !isNullish(newContext[key])) {
+    if (type === 'string' && !isDefined(newContext[key])) {
       /* eslint-disable @typescript-eslint/no-base-to-string */
       newContext[key] = String(newContext[key])
     }
 
-    if (required && isNullish(newContext[key])) {
+    if (required && isDefined(newContext[key])) {
       display.warn(`The property ${key} of ${name} is required; context will not be sent to the intake.`)
     }
   }
@@ -36,7 +36,7 @@ function ensureProperties(context: Context, propertiesConfig: PropertiesConfig, 
   return newContext
 }
 
-function isNullish(value: unknown) {
+function isDefined(value: unknown) {
   return value === undefined || value === null || value === ''
 }
 
