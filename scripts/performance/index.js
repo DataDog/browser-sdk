@@ -10,7 +10,7 @@ runMain(async () => {
   const localMemoryPerformance = await computeMemoryPerformance()
   await computeCpuPerformance()
   await reportToDatadog(localMemoryPerformance, 'memoryPerformance')
-  await reportToDatadog({ localBundleSizes }, 'bundleSizes')
+  await reportToDatadog(localBundleSizes, 'bundleSizes')
   await reportAsPrComment(localBundleSizes, localMemoryPerformance)
 })
 
