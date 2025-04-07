@@ -32,6 +32,7 @@
     "test:compat:tsc": "node scripts/check-typescript-compatibility.js",
     "test:compat:ssr": "scripts/cli check_server_side_rendering_compatibility",
     "rum-events-format:sync": "scripts/cli update_submodule && scripts/cli build_json2type && node scripts/generate-schema-types.js",
+    "size": "node scripts/show-bundle-size.js",
     "woke": "scripts/cli woke"
   },
   "devDependencies": {
