@@ -6,10 +6,25 @@ export function buildCommonContext(
   userContextManager: ContextManager,
   accountContextManager: ContextManager
 ): CommonContext {
+  let referrer: string = ''
+  let url: string = ''
+
+  const isServiceWorker = typeof self !== 'undefined' && 'ServiceWorkerGlobalScope' in self
+
+  if (!isServiceWorker && typeof document !== 'undefined') {
+    referrer = document.referrer
+  }
+
+  if (isServiceWorker) {
+    url = self.location.href
+  } else if (typeof window !== 'undefined' && window.location) {
+    url = window.location.href
+  }
+
   return {
     view: {
-      referrer: document.referrer,
-      url: window.location.href,
+      referrer,
+      url,
     },
     context: globalContextManager.getContext(),
     user: userContextManager.getContext(),

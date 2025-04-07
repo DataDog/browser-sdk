@@ -40,6 +40,11 @@ export type TimingsFromDeprecatedPerformanceTiming = {
 
 export function computeTimingsFromDeprecatedPerformanceTiming() {
   const result: Partial<TimingsFromDeprecatedPerformanceTiming> = {}
+  
+  if (typeof performance.timing === 'undefined') {
+    return result as TimingsFromDeprecatedPerformanceTiming
+  }
+  
   const timing = performance.timing
 
   for (const key in timing) {

@@ -1,10 +1,6 @@
 import { getGlobalObject } from '../tools/getGlobalObject'
 import type { DefaultPrivacyLevel } from '../domain/configuration'
 
-export interface BrowserWindowWithEventBridge extends Window {
-  DatadogEventBridge?: DatadogEventBridge
-}
-
 export interface DatadogEventBridge {
   getCapabilities?(): string
   getPrivacyLevel?(): DefaultPrivacyLevel
@@ -16,6 +12,9 @@ export const enum BridgeCapability {
   RECORDS = 'records',
 }
 
+/**
+ * Returns an object to interact with the event bridge, if available.
+ */
 export function getEventBridge<T, E>() {
   const eventBridgeGlobal = getEventBridgeGlobal()
 
@@ -40,12 +39,28 @@ export function getEventBridge<T, E>() {
   }
 }
 
+/**
+ * Checks if the event bridge supports a given capability.
+ */
 export function bridgeSupports(capability: BridgeCapability): boolean {
   const bridge = getEventBridge()
   return !!bridge && bridge.getCapabilities().includes(capability)
 }
 
-export function canUseEventBridge(currentHost = getGlobalObject<Window>().location?.hostname): boolean {
+/**
+ * Returns true if the event bridge is available and the current host is allowed.
+ * In a Service Worker context, self.location is used instead of window.location.
+ */
+export function canUseEventBridge(currentHost?: string): boolean {
+  if (!currentHost) {
+    if (typeof window !== 'undefined' && window.location && window.location.hostname) {
+      currentHost = window.location.hostname
+    } else if (typeof self !== 'undefined' && self.location && self.location.hostname) {
+      currentHost = self.location.hostname
+    } else {
+      currentHost = ''
+    }
+  }
   const bridge = getEventBridge()
   return (
     !!bridge &&
@@ -55,6 +70,18 @@ export function canUseEventBridge(currentHost = getGlobalObject<Window>().locati
   )
 }
 
+/**
+ * We define a generic global interface so that getGlobalObject works in both
+ * browser and Service Worker contexts.
+ */
+export interface GlobalWithEventBridge {
+  DatadogEventBridge?: DatadogEventBridge
+}
+
+/**
+ * Retrieves the global DatadogEventBridge, whether on window or in a Service Worker.
+ */
 function getEventBridgeGlobal() {
-  return getGlobalObject<BrowserWindowWithEventBridge>().DatadogEventBridge
+  const globalObject = getGlobalObject<GlobalWithEventBridge>()
+  return globalObject.DatadogEventBridge
 }
