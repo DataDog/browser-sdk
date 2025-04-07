@@ -1,12 +1,5 @@
 import type { ClocksState, RelativeTime, TimeStamp } from '@datadog/browser-core'
-import {
-  CustomerDataCompressionStatus,
-  ErrorSource,
-  ExperimentalFeature,
-  ONE_MINUTE,
-  createCustomerDataTrackerManager,
-  display,
-} from '@datadog/browser-core'
+import { ErrorSource, ExperimentalFeature, ONE_MINUTE, display } from '@datadog/browser-core'
 import type { Clock } from '@datadog/browser-core/test'
 import {
   mockEventBridge,
@@ -783,11 +776,7 @@ function setupAssemblyTestWithDefaults({
   })
   const recorderApi = noopRecorderApi
 
-  startGlobalContext(
-    hooks,
-    createCustomerDataTrackerManager(CustomerDataCompressionStatus.Disabled),
-    mockRumConfiguration()
-  )
+  startGlobalContext(hooks, mockRumConfiguration())
   startRumAssembly(
     mockRumConfiguration(partialConfiguration),
     lifeCycle,

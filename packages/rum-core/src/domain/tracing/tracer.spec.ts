@@ -294,7 +294,7 @@ describe('tracer', () => {
         propagateTraceBaggage: false,
       })!
 
-      const tracer = startTracer(configurationWithB3andTracecontext, sessionManager, mockGetCommonContext)
+      const tracer = startTracer(configurationWithB3andTracecontext, sessionManager, userContext, accountContext)
       const context = { ...ALLOWED_DOMAIN_CONTEXT }
       tracer.traceXhr(context, xhr as unknown as XMLHttpRequest)
 
