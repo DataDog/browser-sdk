@@ -22,17 +22,22 @@ function ensureProperties(context: Context, propertiesConfig: PropertiesConfig, 
      * Ensure specified properties are strings as defined here:
      * https://docs.datadoghq.com/logs/log_configuration/attributes_naming_convention/#user-related-attributes
      */
-    if (type === 'string' && key in newContext) {
+
+    if (type === 'string' && !isNullish(newContext[key])) {
       /* eslint-disable @typescript-eslint/no-base-to-string */
       newContext[key] = String(newContext[key])
     }
 
-    if (required && !(key in context)) {
+    if (required && isNullish(newContext[key])) {
       display.warn(`The property ${key} of ${name} is required; context will not be sent to the intake.`)
     }
   }
 
   return newContext
+}
+
+function isNullish(value: unknown) {
+  return value === undefined || value === null || value === ''
 }
 
 export function createContextManager(

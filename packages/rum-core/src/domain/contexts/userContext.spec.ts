@@ -34,11 +34,11 @@ describe('user context', () => {
   })
 
   it('should sanitize predefined properties', () => {
-    userContext.setContext({ id: null, name: 2, email: { bar: 'qux' } })
+    userContext.setContext({ id: false, name: 2, email: { bar: 'qux' } })
 
     expect(userContext.getContext()).toEqual({
       email: '[object Object]',
-      id: 'null',
+      id: 'false',
       name: '2',
     })
   })
