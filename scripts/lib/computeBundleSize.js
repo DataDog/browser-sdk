@@ -9,7 +9,7 @@ function getPackageName(file) {
   if (file.includes('chunk')) {
     const { chunkName, packageName } =
       file.match(/chunks\/(?<chunkName>[a-z0-9]*)-[a-z0-9]*-datadog-(?<packageName>[a-z-]*)\.js/)?.groups ?? {}
-    return `${packageName}.${chunkName}`
+    return `${packageName}-${chunkName}`
   }
 
   return file
