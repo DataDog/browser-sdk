@@ -16,7 +16,7 @@ export function startAccountContext(
   }
 
   hooks.register(HookNames.Assemble, ({ eventType }): PartialRumEvent | undefined => {
-    const account = accountContextManager.getContext()
+    const account = accountContextManager.getContext() as Account
 
     if (isEmptyObject(account) || !account.id) {
       return
@@ -24,7 +24,7 @@ export function startAccountContext(
 
     return {
       type: eventType,
-      account: accountContextManager.getContext() as Account,
+      account,
     }
   })
 

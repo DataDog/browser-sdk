@@ -50,7 +50,7 @@ describe('user context', () => {
       })
     })
 
-    it('should set the user.anonymous_id when trackAnonymousUser is true', () => {
+    it('should set anonymous_id when trackAnonymousUser is true', () => {
       userContext = startUserContext(
         hooks,
         customerDataTrackerManager,
