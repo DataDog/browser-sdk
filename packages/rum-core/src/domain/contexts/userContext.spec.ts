@@ -1,9 +1,5 @@
-import type { ContextManager, CustomerDataTrackerManager, RelativeTime } from '@datadog/browser-core'
-import {
-  createCustomerDataTrackerManager,
-  CustomerDataCompressionStatus,
-  removeStorageListeners,
-} from '@datadog/browser-core'
+import type { ContextManager, RelativeTime } from '@datadog/browser-core'
+import { removeStorageListeners } from '@datadog/browser-core'
 import { registerCleanupTask } from '@datadog/browser-core/test'
 import { createRumSessionManagerMock, mockRumConfiguration } from '../../../test'
 import type { Hooks } from '../../hooks'
@@ -12,15 +8,12 @@ import { startUserContext } from './userContext'
 
 describe('user context', () => {
   let userContext: ContextManager
-  let customerDataTrackerManager: CustomerDataTrackerManager
   let hooks: Hooks
 
   beforeEach(() => {
     hooks = createHooks()
-    customerDataTrackerManager = createCustomerDataTrackerManager(CustomerDataCompressionStatus.Disabled)
     userContext = startUserContext(
       hooks,
-      customerDataTrackerManager,
       mockRumConfiguration({ trackAnonymousUser: false }),
       createRumSessionManagerMock()
     )
@@ -53,7 +46,6 @@ describe('user context', () => {
     it('should set anonymous_id when trackAnonymousUser is true', () => {
       userContext = startUserContext(
         hooks,
-        customerDataTrackerManager,
         mockRumConfiguration({ trackAnonymousUser: true }),
         createRumSessionManagerMock()
       )
@@ -72,7 +64,6 @@ describe('user context', () => {
     it('should not override customer provided anonymous_id when trackAnonymousUser is true', () => {
       userContext = startUserContext(
         hooks,
-        customerDataTrackerManager,
         mockRumConfiguration({ trackAnonymousUser: true }),
         createRumSessionManagerMock()
       )
@@ -92,12 +83,10 @@ describe('user context', () => {
 
 describe('user context across pages', () => {
   let userContext: ContextManager
-  let customerDataTrackerManager: CustomerDataTrackerManager
   let hooks: Hooks
 
   beforeEach(() => {
     hooks = createHooks()
-    customerDataTrackerManager = createCustomerDataTrackerManager(CustomerDataCompressionStatus.Disabled)
 
     registerCleanupTask(() => {
       localStorage.clear()
@@ -108,7 +97,6 @@ describe('user context across pages', () => {
   it('when disabled, should store contexts only in memory', () => {
     userContext = startUserContext(
       hooks,
-      customerDataTrackerManager,
       mockRumConfiguration({ storeContextsAcrossPages: false }),
       createRumSessionManagerMock()
     )
@@ -121,7 +109,6 @@ describe('user context across pages', () => {
   it('when enabled, should maintain the user in local storage', () => {
     userContext = startUserContext(
       hooks,
-      customerDataTrackerManager,
       mockRumConfiguration({ storeContextsAcrossPages: true }),
       createRumSessionManagerMock()
     )

@@ -1,10 +1,5 @@
-import type { ContextManager, CustomerDataTrackerManager, RelativeTime } from '@datadog/browser-core'
-import {
-  createCustomerDataTrackerManager,
-  CustomerDataCompressionStatus,
-  display,
-  removeStorageListeners,
-} from '@datadog/browser-core'
+import type { ContextManager, RelativeTime } from '@datadog/browser-core'
+import { display, removeStorageListeners } from '@datadog/browser-core'
 import { registerCleanupTask } from '@datadog/browser-core/test'
 import { mockRumConfiguration } from '../../../test'
 import type { Hooks } from '../../hooks'
@@ -19,10 +14,9 @@ describe('account context', () => {
   beforeEach(() => {
     hooks = createHooks()
 
-    const customerDataTrackerManager = createCustomerDataTrackerManager(CustomerDataCompressionStatus.Disabled)
     displaySpy = spyOn(display, 'warn')
 
-    accountContext = startAccountContext(hooks, customerDataTrackerManager, mockRumConfiguration())
+    accountContext = startAccountContext(hooks, mockRumConfiguration())
   })
 
   it('should warn when the account.id is missing', () => {
@@ -64,11 +58,9 @@ describe('account context', () => {
 
 describe('account context across pages', () => {
   let accountContext: ContextManager
-  let customerDataTrackerManager: CustomerDataTrackerManager
   let hooks: Hooks
   beforeEach(() => {
     hooks = createHooks()
-    customerDataTrackerManager = createCustomerDataTrackerManager(CustomerDataCompressionStatus.Disabled)
 
     registerCleanupTask(() => {
       localStorage.clear()
@@ -77,11 +69,7 @@ describe('account context across pages', () => {
   })
 
   it('when disabled, should store contexts only in memory', () => {
-    accountContext = startAccountContext(
-      hooks,
-      customerDataTrackerManager,
-      mockRumConfiguration({ storeContextsAcrossPages: false })
-    )
+    accountContext = startAccountContext(hooks, mockRumConfiguration({ storeContextsAcrossPages: false }))
     accountContext.setContext({ id: '123' })
 
     expect(accountContext.getContext()).toEqual({ id: '123' })
@@ -89,11 +77,7 @@ describe('account context across pages', () => {
   })
 
   it('when enabled, should maintain the account in local storage', () => {
-    accountContext = startAccountContext(
-      hooks,
-      customerDataTrackerManager,
-      mockRumConfiguration({ storeContextsAcrossPages: true })
-    )
+    accountContext = startAccountContext(hooks, mockRumConfiguration({ storeContextsAcrossPages: true }))
 
     accountContext.setContext({ id: 'foo', qux: 'qix' })
     expect(accountContext.getContext()).toEqual({ id: 'foo', qux: 'qix' })

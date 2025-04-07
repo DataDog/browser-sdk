@@ -12,8 +12,6 @@ import {
   initFeatureFlags,
   addTelemetryConfiguration,
   initFetchObservable,
-  CustomerDataCompressionStatus,
-  createCustomerDataTrackerManager,
   CustomerContextKey,
 } from '@datadog/browser-core'
 import {
@@ -43,16 +41,15 @@ export function createPreStartStrategy(
   ) => StartRumResult
 ): Strategy {
   const bufferApiCalls = createBoundedBuffer<StartRumResult>()
-  const customerDataTrackerManager = createCustomerDataTrackerManager(CustomerDataCompressionStatus.Unknown)
 
   // TODO next major: remove the globalContextManager, userContextManager and accountContextManager from preStartStrategy and use an empty context instead
-  const globalContext = buildGlobalContextManager(customerDataTrackerManager)
+  const globalContext = buildGlobalContextManager()
   bufferContextCalls(globalContext, CustomerContextKey.globalContext, bufferApiCalls)
 
-  const userContext = buildUserContextManager(customerDataTrackerManager)
+  const userContext = buildUserContextManager()
   bufferContextCalls(userContext, CustomerContextKey.userContext, bufferApiCalls)
 
-  const accountContext = buildAccountContextManager(customerDataTrackerManager)
+  const accountContext = buildAccountContextManager()
   bufferContextCalls(accountContext, CustomerContextKey.accountContext, bufferApiCalls)
 
   let firstStartViewCall:

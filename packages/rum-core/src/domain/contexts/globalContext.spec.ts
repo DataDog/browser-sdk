@@ -1,9 +1,5 @@
-import type { ContextManager, CustomerDataTrackerManager, RelativeTime } from '@datadog/browser-core'
-import {
-  createCustomerDataTrackerManager,
-  CustomerDataCompressionStatus,
-  removeStorageListeners,
-} from '@datadog/browser-core'
+import type { ContextManager, RelativeTime } from '@datadog/browser-core'
+import { removeStorageListeners } from '@datadog/browser-core'
 import { registerCleanupTask } from '@datadog/browser-core/test'
 import { mockRumConfiguration } from '../../../test'
 import type { Hooks } from '../../hooks'
@@ -16,8 +12,7 @@ describe('global context', () => {
 
   beforeEach(() => {
     hooks = createHooks()
-    const customerDataTrackerManager = createCustomerDataTrackerManager(CustomerDataCompressionStatus.Disabled)
-    globalContext = startGlobalContext(hooks, customerDataTrackerManager, mockRumConfiguration())
+    globalContext = startGlobalContext(hooks, mockRumConfiguration())
   })
 
   describe('assemble hook', () => {
@@ -38,12 +33,10 @@ describe('global context', () => {
 
 describe('global context across pages', () => {
   let globalContext: ContextManager
-  let customerDataTrackerManager: CustomerDataTrackerManager
   let hooks: Hooks
 
   beforeEach(() => {
     hooks = createHooks()
-    customerDataTrackerManager = createCustomerDataTrackerManager(CustomerDataCompressionStatus.Disabled)
 
     registerCleanupTask(() => {
       localStorage.clear()
@@ -52,11 +45,7 @@ describe('global context across pages', () => {
   })
 
   it('when disabled, should store contexts only in memory', () => {
-    globalContext = startGlobalContext(
-      hooks,
-      customerDataTrackerManager,
-      mockRumConfiguration({ storeContextsAcrossPages: false })
-    )
+    globalContext = startGlobalContext(hooks, mockRumConfiguration({ storeContextsAcrossPages: false }))
     globalContext.setContext({ id: '123' })
 
     expect(globalContext.getContext()).toEqual({ id: '123' })
@@ -64,11 +53,7 @@ describe('global context across pages', () => {
   })
 
   it('when enabled, should maintain the global context in local storage', () => {
-    globalContext = startGlobalContext(
-      hooks,
-      customerDataTrackerManager,
-      mockRumConfiguration({ storeContextsAcrossPages: true })
-    )
+    globalContext = startGlobalContext(hooks, mockRumConfiguration({ storeContextsAcrossPages: true }))
 
     globalContext.setContext({ id: 'foo', qux: 'qix' })
     expect(globalContext.getContext()).toEqual({ id: 'foo', qux: 'qix' })

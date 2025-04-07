@@ -135,7 +135,7 @@ export function createMockServerApp(servers: Servers, setup: string): MockServer
     }
   })
 
-  app.get(/(?<appName>app).js$/, (req, res) => {
+  app.get(/(?<appName>app|react-app).js$/, (req, res) => {
     const { originalUrl, params } = req
     res.sendFile(getTestAppBundlePath(params.appName, originalUrl))
   })

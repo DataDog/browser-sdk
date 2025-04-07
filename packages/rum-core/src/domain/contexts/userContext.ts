@@ -1,17 +1,11 @@
-import type { CustomerDataTrackerManager } from '@datadog/browser-core'
 import { createContextManager, CustomerDataType, isEmptyObject, storeContextManager } from '@datadog/browser-core'
 import type { RumConfiguration } from '../configuration'
 import type { Hooks, PartialRumEvent } from '../../hooks'
 import { HookNames } from '../../hooks'
 import type { RumSessionManager } from '../rumSessionManager'
 
-export function startUserContext(
-  hooks: Hooks,
-  customerDataTrackerManager: CustomerDataTrackerManager,
-  configuration: RumConfiguration,
-  sessionManager: RumSessionManager
-) {
-  const userContextManager = buildUserContextManager(customerDataTrackerManager)
+export function startUserContext(hooks: Hooks, configuration: RumConfiguration, sessionManager: RumSessionManager) {
+  const userContextManager = buildUserContextManager()
 
   if (configuration.storeContextsAcrossPages) {
     storeContextManager(configuration, userContextManager, 'rum', CustomerDataType.User)
@@ -38,9 +32,8 @@ export function startUserContext(
   return userContextManager
 }
 
-export function buildUserContextManager(customerDataTrackerManager: CustomerDataTrackerManager) {
+export function buildUserContextManager() {
   return createContextManager('user', {
-    customerDataTracker: customerDataTrackerManager.getOrCreateTracker(CustomerDataType.User),
     propertiesConfig: {
       id: { type: 'string' },
       name: { type: 'string' },

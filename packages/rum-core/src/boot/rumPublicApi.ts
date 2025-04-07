@@ -17,7 +17,6 @@ import type {
 import {
   ContextManagerMethod,
   addTelemetryUsage,
-  CustomerDataType,
   deepClone,
   makePublicApi,
   monitor,
@@ -26,8 +25,6 @@ import {
   createHandlingStack,
   sanitize,
   createIdentityEncoder,
-  CustomerDataCompressionStatus,
-  createCustomerDataTrackerManager,
   displayAlreadyInitializedError,
   createTrackingConsentState,
   timeStampToClocks,
@@ -424,8 +421,6 @@ export function makeRumPublicApi(
   profilerApi: ProfilerApi,
   options: RumPublicApiOptions = {}
 ): RumPublicApi {
-  const customerDataTrackerManager = createCustomerDataTrackerManager(CustomerDataCompressionStatus.Unknown)
-
   const trackingConsentState = createTrackingConsentState()
   const customVitalsState = createCustomVitalsState()
 
@@ -434,15 +429,10 @@ export function makeRumPublicApi(
     trackingConsentState,
     customVitalsState,
     (configuration, deflateWorker, initialViewOptions) => {
-      customerDataTrackerManager.setCompressionStatus(
-        deflateWorker ? CustomerDataCompressionStatus.Enabled : CustomerDataCompressionStatus.Disabled
-      )
-
       const startRumResult = startRumImpl(
         configuration,
         recorderApi,
         profilerApi,
-        customerDataTrackerManager,
         initialViewOptions,
         deflateWorker && options.createDeflateEncoder
           ? (streamId) => options.createDeflateEncoder!(configuration, deflateWorker, streamId)
@@ -479,9 +469,6 @@ export function makeRumPublicApi(
     (options: ViewOptions): void
   } = monitor((options?: string | ViewOptions) => {
     const sanitizedOptions = typeof options === 'object' ? options : { name: options }
-    if (sanitizedOptions.context) {
-      customerDataTrackerManager.getOrCreateTracker(CustomerDataType.View).updateCustomerData(sanitizedOptions.context)
-    }
     strategy.startView(sanitizedOptions)
     addTelemetryUsage({ feature: 'start-view' })
   })
