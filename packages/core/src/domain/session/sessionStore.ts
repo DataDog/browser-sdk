@@ -17,6 +17,7 @@ import type { SessionState } from './sessionState'
 import { initLocalStorageStrategy, selectLocalStorageStrategy } from './storeStrategies/sessionInLocalStorage'
 import { processSessionStoreOperations } from './sessionStoreOperations'
 import { SessionPersistence } from './sessionConstants'
+import { selectInMemorySessionStoreStrategy } from './storeStrategies/sessionInMemory'
 
 export interface SessionStore {
   expandOrRenewSession: () => void
@@ -51,6 +52,9 @@ export function selectSessionStoreStrategyType(
 
     case SessionPersistence.LOCAL_STORAGE:
       return selectLocalStorageStrategy()
+
+    case SessionPersistence.IN_MEMORY:
+      return selectInMemorySessionStoreStrategy()
 
     case undefined: {
       let sessionStoreStrategyType = selectCookieStrategy(initConfiguration)
