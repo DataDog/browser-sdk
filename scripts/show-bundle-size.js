@@ -1,7 +1,7 @@
 const { calculateBundleSizes, formatSize } = require('./lib/computeBundleSize.js')
 const { printLog, runMain } = require('./lib/executionUtils')
 
-const COL_WIDTH = 12
+const COL_WIDTH = 14
 
 runMain(() => {
   const bundleSizes = calculateBundleSizes()

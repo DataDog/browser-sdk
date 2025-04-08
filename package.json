@@ -11,6 +11,7 @@
     "postinstall": "scripts/cli init_submodule",
     "build": "lerna run build --stream",
     "build:bundle": "lerna run build:bundle --stream",
+    "build:xs": "lerna run build --scope @datadog/browser-rum-extra-slim",
     "build:app": "lerna run pack --stream && cd test/apps/vanilla && rm -rf node_modules && yarn install --no-immutable && yarn build",
     "build:react-app": "lerna run pack --stream && cd test/apps/react && rm -rf node_modules && yarn install --no-immutable && yarn build",
     "build:apps": "yarn build:app && yarn build:react-app",

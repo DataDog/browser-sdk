@@ -341,9 +341,16 @@ export default tseslint.config(
   },
 
   {
-    files: ['packages/{rum,logs,rum-slim}/src/entries/*.ts'],
+    files: ['packages/{rum,logs,rum-slim,rum-extra-slim}/src/entries/*.ts'],
     rules: {
       'local-rules/disallow-enum-exports': 'error',
+    },
+  },
+
+  {
+    files: ['packages/rum-extra-slim/**/*.ts'],
+    rules: {
+      'local-rules/disallow-side-effects': 'off',
     },
   },
 

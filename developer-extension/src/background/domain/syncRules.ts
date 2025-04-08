@@ -71,6 +71,9 @@ function buildRules(
       createRedirectRule(/^https:\/\/.*\/datadog-rum-slim(-[\w-]+)?\.js$/, {
         url: DEV_RUM_SLIM_URL,
       }),
+      createRedirectRule(/^https:\/\/.*\/datadog-rum-extra-slim(-[\w-]+)?\.js$/, {
+        url: DEV_RUM_SLIM_URL,
+      }),
       createRedirectRule(/^https:\/\/.*\/datadog-logs(-[\w-]+)?\.js$/, { url: DEV_LOGS_URL }),
       createRedirectRule(/^https:\/\/.*\/chunks\/recorder(-[\w-]+)?-datadog-rum.js$/, {
         url: DEV_RUM_RECORDER_CHUNK_URL,
