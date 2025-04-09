@@ -11,7 +11,7 @@ import {
 } from '@datadog/browser-core'
 import { createBatch } from '@datadog/browser-core/src/transport/batch'
 import type { SessionManager } from './sessionManager'
-import type { Event } from './event'
+import type { BrowserEvent } from './event'
 
 const BASE_URL = 'https://d1vqwqwipxy36n.cloudfront.net'
 
@@ -52,7 +52,7 @@ export function startTransportManager(sessionManager: SessionManager) {
     messageBytesLimit: MESSAGE_BYTES_LIMIT,
   })
 
-  function send(data: Event) {
+  function send(data: BrowserEvent) {
     const { clientId, contextId } = sessionManager
 
     batch.add({
@@ -60,7 +60,7 @@ export function startTransportManager(sessionManager: SessionManager) {
       contextId,
       timestamp: dateNow(),
       data,
-    } as any as Context)
+    } as Context)
   }
 
   return {

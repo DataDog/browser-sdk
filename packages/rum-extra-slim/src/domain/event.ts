@@ -1,3 +1,4 @@
+import type { ContextValue } from '@datadog/browser-core'
 import type {
   RumPerformanceEventTiming,
   RumPerformanceNavigationTiming,
@@ -7,6 +8,26 @@ import type {
 export type UrlEvent = {
   type: EVENT.URL
   url: string
+}
+
+export type ErrorEvent = {
+  type: EVENT.ERROR
+  error?: {
+    stack?: string
+    message?: string
+    handlingStack?: string
+    fingerprint?: ContextValue
+    context?: ContextValue
+  }
+}
+
+export type UncaughtErrorEvent = {
+  type: EVENT.UNCAUGHT_ERROR
+  message?: string | Event
+  source?: string
+  lineno?: number
+  colno?: number
+  error?: ErrorEvent['error']
 }
 
 export type PerformanceNavigationTimingsEvent = {
@@ -24,14 +45,18 @@ export type PerformanceEventTimingsEvent = {
   entry: Omit<RumPerformanceEventTiming, 'toJSON'>
 }
 
-export type Event =
+export type BrowserEvent =
   | UrlEvent
+  | ErrorEvent
+  | UncaughtErrorEvent
   | PerformanceNavigationTimingsEvent
   | PerformanceResourceTimingsEvent
   | PerformanceEventTimingsEvent
 
 export const enum EVENT {
   URL = 'url',
+  UNCAUGHT_ERROR = 'uncaughtError',
+  ERROR = 'error',
   NAVIGATION_TIMING = 'navigationTiming',
   RESOURCE_TIMING = 'resourceTiming',
   EVENT_TIMING = 'eventTiming',
