@@ -5,7 +5,7 @@ import type { TransportManager } from '../transportManager'
 
 type Stoppable = { stop: () => void }
 
-export function trackUrlChange(transportManager: TransportManager) {
+export function trackUrls(transportManager: TransportManager) {
   function onUrlChange() {
     const url = window.location.href
     const data: UrlEvent = {

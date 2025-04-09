@@ -2,8 +2,9 @@ import { setDebugMode } from '@datadog/browser-core'
 import { startSessionManager } from '../domain/sessionManager'
 import { trackPerformanceNavigationTimings } from '../domain/collection/trackPerformanceNavigationTimings'
 import { startTransportManager } from '../domain/transportManager'
-import { trackUrlChange } from '../domain/collection/trackUrls'
+import { trackUrls } from '../domain/collection/trackUrls'
 import { trackPerformanceResourceTimings } from '../domain/collection/trackPerformanceResourceTimings'
+import { trackPerformanceEventTimings } from '../domain/collection/trackPerformanceEventTimings'
 
 export function start() {
   const sessionManager = startSessionManager()
@@ -13,9 +14,10 @@ export function start() {
 
   function init() {
     trackers.push(
-      trackUrlChange(transportManager),
+      trackUrls(transportManager),
       trackPerformanceResourceTimings(transportManager),
-      trackPerformanceNavigationTimings(transportManager)
+      trackPerformanceNavigationTimings(transportManager),
+      trackPerformanceEventTimings(transportManager)
     )
   }
 
