@@ -18,7 +18,7 @@ export function trackPerformanceResourceTimings(transportManager: TransportManag
 
       const data: PerformanceResourceTimingsEvent = {
         type: EVENT.RESOURCE_TIMING,
-        ...entry.toJSON(),
+        entry: entry.toJSON(),
       }
 
       transportManager.send(data)

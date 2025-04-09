@@ -13,7 +13,7 @@ export function trackPerformanceNavigationTimings(transportManager: TransportMan
     for (const entry of entries) {
       const data: PerformanceNavigationTimingsEvent = {
         type: EVENT.NAVIGATION_TIMING,
-        ...entry.toJSON(),
+        entry: entry.toJSON(),
       }
 
       transportManager.send(data)

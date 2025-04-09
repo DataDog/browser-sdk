@@ -14,7 +14,7 @@ export function trackPerformanceEventTimings(transportManager: TransportManager)
     for (const entry of entries) {
       const data: PerformanceEventTimingsEvent = {
         type: EVENT.EVENT_TIMING,
-        ...entry.toJSON(),
+        entry: entry.toJSON(),
       }
 
       transportManager.send(data)

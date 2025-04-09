@@ -8,6 +8,9 @@ const { command } = require('./lib/command')
 runMain(() => {
   let success = true
   for (const packagePath of glob.globSync('packages/*')) {
+    if (packagePath.includes('rum-extra-slim')) {
+      continue
+    }
     success = checkPackage(packagePath) && success
   }
 

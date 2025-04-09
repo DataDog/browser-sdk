@@ -11,15 +11,18 @@ export type UrlEvent = {
 
 export type PerformanceNavigationTimingsEvent = {
   type: EVENT.NAVIGATION_TIMING
-} & Omit<RumPerformanceNavigationTiming, 'toJSON'>
+  entry: Omit<RumPerformanceNavigationTiming, 'toJSON'>
+}
 
 export type PerformanceResourceTimingsEvent = {
   type: EVENT.RESOURCE_TIMING
-} & Omit<RumPerformanceResourceTiming, 'toJSON'>
+  entry: Omit<RumPerformanceResourceTiming, 'toJSON'>
+}
 
 export type PerformanceEventTimingsEvent = {
   type: EVENT.EVENT_TIMING
-} & Omit<RumPerformanceEventTiming, 'toJSON'>
+  entry: Omit<RumPerformanceEventTiming, 'toJSON'>
+}
 
 export type Event =
   | UrlEvent
@@ -29,7 +32,7 @@ export type Event =
 
 export const enum EVENT {
   URL = 'url',
-  NAVIGATION_TIMING = 'navigation_timing',
-  RESOURCE_TIMING = 'resource_timing',
-  EVENT_TIMING = 'event_timing',
+  NAVIGATION_TIMING = 'navigationTiming',
+  RESOURCE_TIMING = 'resourceTiming',
+  EVENT_TIMING = 'eventTiming',
 }
