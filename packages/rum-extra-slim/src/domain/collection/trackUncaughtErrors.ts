@@ -1,5 +1,5 @@
 import { instrumentMethod, sanitize } from '@datadog/browser-core'
-import { EVENT, type UncaughtErrorEvent } from '../event'
+import { EVENT, type ErrorEvent } from '../event'
 import type { TransportManager } from '../transportManager'
 
 type Stoppable = { stop: () => void }
@@ -18,8 +18,8 @@ export function trackUncaughtErrors(transportManager: TransportManager) {
     colno?: number
     error?: Error & Record<string, unknown>
   }): void {
-    const data: UncaughtErrorEvent = {
-      type: EVENT.UNCAUGHT_ERROR,
+    const data: ErrorEvent = {
+      type: EVENT.ERROR,
       message,
       source,
       lineno,

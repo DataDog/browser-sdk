@@ -12,6 +12,10 @@ export type UrlEvent = {
 
 export type ErrorEvent = {
   type: EVENT.ERROR
+  message?: string | Event
+  source?: string
+  lineno?: number
+  colno?: number
   error?: {
     stack?: string
     message?: string
@@ -19,15 +23,6 @@ export type ErrorEvent = {
     fingerprint?: ContextValue
     context?: ContextValue
   }
-}
-
-export type UncaughtErrorEvent = {
-  type: EVENT.UNCAUGHT_ERROR
-  message?: string | Event
-  source?: string
-  lineno?: number
-  colno?: number
-  error?: ErrorEvent['error']
 }
 
 export type PerformanceNavigationTimingsEvent = {
@@ -48,7 +43,6 @@ export type PerformanceEventTimingsEvent = {
 export type BrowserEvent =
   | UrlEvent
   | ErrorEvent
-  | UncaughtErrorEvent
   | PerformanceNavigationTimingsEvent
   | PerformanceResourceTimingsEvent
   | PerformanceEventTimingsEvent
