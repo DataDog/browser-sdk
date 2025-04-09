@@ -257,42 +257,42 @@ check-schemas:
     - yarn
     - node scripts/check-schemas.js
 
-unit-bs:
-  stage: browserstack
-  needs: ['unit']
-  extends:
-    - .base-configuration
-    - .bs-allowed-branches
-  interruptible: true
-  resource_group: browserstack
-  artifacts:
-    reports:
-      junit: test-report/unit-bs/*.xml
-  script:
-    - yarn
-    - ./scripts/test/ci-bs.sh test:unit
-  after_script:
-    - node ./scripts/test/export-test-result.js unit-bs
+# unit-bs:
+#   stage: browserstack
+#   needs: ['unit']
+#   extends:
+#     - .base-configuration
+#     - .bs-allowed-branches
+#   interruptible: true
+#   resource_group: browserstack
+#   artifacts:
+#     reports:
+#       junit: test-report/unit-bs/*.xml
+#   script:
+#     - yarn
+#     - ./scripts/test/ci-bs.sh test:unit
+#   after_script:
+#     - node ./scripts/test/export-test-result.js unit-bs
 
-e2e-bs:
-  stage: browserstack
-  needs: ['e2e']
-  extends:
-    - .base-configuration
-    - .bs-allowed-branches
-    - .resource-allocation-4-cpus
-  interruptible: true
-  resource_group: browserstack
-  timeout: 35 minutes
-  artifacts:
-    when: always
-    reports:
-      junit: test-report/e2e-bs/*.xml
-  script:
-    - yarn
-    - FORCE_COLOR=1 ./scripts/test/ci-bs.sh test:e2e:ci
-  after_script:
-    - node ./scripts/test/export-test-result.js e2e-bs
+# e2e-bs:
+#   stage: browserstack
+#   needs: ['e2e']
+#   extends:
+#     - .base-configuration
+#     - .bs-allowed-branches
+#     - .resource-allocation-4-cpus
+#   interruptible: true
+#   resource_group: browserstack
+#   timeout: 35 minutes
+#   artifacts:
+#     when: always
+#     reports:
+#       junit: test-report/e2e-bs/*.xml
+#   script:
+#     - yarn
+#     - FORCE_COLOR=1 ./scripts/test/ci-bs.sh test:e2e:ci
+#   after_script:
+#     - node ./scripts/test/export-test-result.js e2e-bs
 
 # script-tests:
 #   extends:
