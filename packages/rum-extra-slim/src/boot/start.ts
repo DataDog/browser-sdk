@@ -1,4 +1,4 @@
-import { createHandlingStack, instrumentMethod, setDebugMode } from '@datadog/browser-core'
+import { instrumentMethod, setDebugMode } from '@datadog/browser-core'
 import { startSessionManager } from '../domain/sessionManager'
 import { trackPerformanceNavigationTimings } from '../domain/collection/trackPerformanceNavigationTimings'
 import { startTransportManager } from '../domain/transportManager'
