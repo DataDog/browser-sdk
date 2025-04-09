@@ -25,7 +25,8 @@ export function start() {
   }
 
   // reroute DD_RUM.add* methods to the extra slim sdk
-  if (window.DD_RUM) {
+
+  if ('DD_RUM' in window) {
     instrumentMethod(window.DD_RUM as any, 'addError', ({ parameters }) => addError(transportManager, ...parameters))
   }
 
