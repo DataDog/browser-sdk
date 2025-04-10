@@ -29,6 +29,7 @@ import {
   createTrackingConsentState,
   timeStampToClocks,
   CustomerContextKey,
+  isUnsupportedExtensionEnvironment,
 } from '@datadog/browser-core'
 
 import type { LifeCycle } from '../domain/lifeCycle'
@@ -44,6 +45,7 @@ import { createCustomVitalsState } from '../domain/vital/vitalCollection'
 import { callPluginsMethod } from '../domain/plugins'
 import { createPreStartStrategy } from './preStartRum'
 import type { StartRum, StartRumResult } from './startRum'
+import { createNoopRumPublicApi } from './noopRumPublicApi'
 
 export interface StartRecordingOptions {
   force: boolean
@@ -421,6 +423,10 @@ export function makeRumPublicApi(
   profilerApi: ProfilerApi,
   options: RumPublicApiOptions = {}
 ): RumPublicApi {
+  if (isUnsupportedExtensionEnvironment()) {
+    return createNoopRumPublicApi()
+  }
+
   const trackingConsentState = createTrackingConsentState()
   const customVitalsState = createCustomVitalsState()
 
