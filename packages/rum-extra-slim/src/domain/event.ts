@@ -1,4 +1,4 @@
-import type { ContextValue } from '@datadog/browser-core'
+import type { ConsoleApiName, ContextArray, ContextValue } from '@datadog/browser-core'
 import type {
   RumPerformanceEventTiming,
   RumPerformanceNavigationTiming,
@@ -16,13 +16,21 @@ export type ErrorEvent = {
   source?: string
   lineno?: number
   colno?: number
-  error?: {
+  error: {
+    name?: string
     stack?: string
     message?: string
+    cause?: ErrorEvent['error'] | ContextValue
     handlingStack?: string
     fingerprint?: ContextValue
     context?: ContextValue
   }
+}
+
+export type ConsoleEvent = {
+  type: EVENT.CONSOLE
+  method: ConsoleApiName
+  args: ContextValue[]
 }
 
 export type PerformanceNavigationTimingsEvent = {
@@ -43,14 +51,15 @@ export type PerformanceEventTimingsEvent = {
 export type BrowserEvent =
   | UrlEvent
   | ErrorEvent
+  | ConsoleEvent
   | PerformanceNavigationTimingsEvent
   | PerformanceResourceTimingsEvent
   | PerformanceEventTimingsEvent
 
 export const enum EVENT {
   URL = 'url',
-  UNCAUGHT_ERROR = 'uncaughtError',
   ERROR = 'error',
+  CONSOLE = 'console',
   NAVIGATION_TIMING = 'navigationTiming',
   RESOURCE_TIMING = 'resourceTiming',
   EVENT_TIMING = 'eventTiming',

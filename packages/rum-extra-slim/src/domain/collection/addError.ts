@@ -1,28 +1,24 @@
-import { combine, sanitize } from '@datadog/browser-core'
+import { combine, isError, sanitize } from '@datadog/browser-core'
 import type { ErrorEvent } from '../event'
 import { EVENT } from '../event'
 import type { TransportManager } from '../transportManager'
+import { createHandlingStack, serializeError } from '../../tools/errors'
 
-export function addError(transportManager: TransportManager, error?: unknown, context?: unknown) {
+export function addError(transportManager: TransportManager, error: unknown, context?: unknown) {
+  if (!isError(error)) {
+    return
+  }
+
   const data: ErrorEvent = {
     type: EVENT.ERROR,
+    error: serializeError(error),
   }
 
-  if (error) {
-    const err = error as Error & Record<string, unknown>
-
-    data.error = {
-      stack: err.stack,
-      message: err.message,
-      handlingStack: createHandlingStack(),
-      fingerprint: sanitize(err.dd_fingerprint),
-      context: combine(sanitize(err.dd_context), sanitize(context)),
-    }
+  if (context) {
+    data.error!.context = combine(data.error?.context, sanitize(context))
   }
+
+  data.error.handlingStack = createHandlingStack()
 
   transportManager.send(data)
-}
-
-function createHandlingStack() {
-  return new Error().stack
 }

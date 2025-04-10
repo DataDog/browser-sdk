@@ -7,6 +7,7 @@ import { trackPerformanceResourceTimings } from '../domain/collection/trackPerfo
 import { trackPerformanceEventTimings } from '../domain/collection/trackPerformanceEventTimings'
 import { trackUncaughtErrors } from '../domain/collection/trackUncaughtErrors'
 import { addError } from '../domain/collection/addError'
+import { trackConsoleMethods } from '../domain/collection/trackConsoleMethods'
 
 export function start() {
   const sessionManager = startSessionManager()
@@ -20,14 +21,16 @@ export function start() {
       trackUncaughtErrors(transportManager),
       trackPerformanceResourceTimings(transportManager),
       trackPerformanceNavigationTimings(transportManager),
-      trackPerformanceEventTimings(transportManager)
+      trackPerformanceEventTimings(transportManager),
+      trackConsoleMethods(transportManager)
     )
   }
 
-  // reroute DD_RUM.add* methods to the extra slim sdk
-
+  // reroute DD_RUM methods to the extra slim sdk
   if ('DD_RUM' in window) {
-    instrumentMethod(window.DD_RUM as any, 'addError', ({ parameters }) => addError(transportManager, ...parameters))
+    instrumentMethod(window.DD_RUM as any, 'addError', ({ parameters }) =>
+      addError(transportManager, parameters[0], parameters[1])
+    )
   }
 
   return {
