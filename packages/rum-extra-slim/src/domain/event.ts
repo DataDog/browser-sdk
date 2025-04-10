@@ -3,6 +3,7 @@ import type {
   RumPerformanceEventTiming,
   RumPerformanceNavigationTiming,
   RumPerformanceResourceTiming,
+  RumPerformanceLongAnimationFrameTiming,
 } from '@datadog/browser-rum-core/src/browser/performanceObservable'
 import type { ContextType } from './collection/setContext'
 
@@ -57,7 +58,7 @@ export type PerformanceEventTimingsEvent = {
 
 export type PerformanceLongTaskTimingEvent = {
   type: EVENT.LONG_TASK_TIMING
-  entry: Omit<PerformanceEntry, 'toJSON'>
+  entry: Omit<RumPerformanceLongAnimationFrameTiming, 'toJSON'>
 }
 
 export type BrowserEvent =
@@ -78,5 +79,5 @@ export const enum EVENT {
   NAVIGATION_TIMING = 'navigationTiming',
   RESOURCE_TIMING = 'resourceTiming',
   EVENT_TIMING = 'eventTiming',
-  LONG_TASK_TIMING = 'longTaskTiming',
+  LONG_TASK_TIMING = 'longAnimationFrameTiming',
 }

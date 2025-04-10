@@ -8,7 +8,7 @@ import type { PerformanceLongTaskTimingEvent } from '../event'
 
 export function trackLongTasks(transportManager: TransportManager): () => void {
   const observable = createPerformanceObservable({} as any, {
-    type: RumPerformanceEntryType.LONG_TASK,
+    type: RumPerformanceEntryType.LONG_ANIMATION_FRAME,
     buffered: true,
   })
 
