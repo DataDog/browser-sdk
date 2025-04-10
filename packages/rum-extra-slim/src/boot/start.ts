@@ -10,6 +10,7 @@ import { addError } from '../domain/collection/addError'
 import { trackConsoleMethods } from '../domain/collection/trackConsoleMethods'
 import { trackDDRumMethods } from '../domain/collection/trackDdRumMethods'
 import { setContext } from '../domain/collection/setContext'
+import { trackLongTasks } from '../domain/collection/trackLongTasks'
 
 export function start() {
   const sessionManager = startSessionManager()
@@ -25,7 +26,15 @@ export function start() {
       trackPerformanceNavigationTimings(transportManager),
       trackPerformanceEventTimings(transportManager),
       trackConsoleMethods(transportManager),
-      trackDDRumMethods(transportManager)
+      trackDDRumMethods(transportManager),
+      trackLongTasks(transportManager)
+    )
+  }
+
+  // reroute DD_RUM methods to the extra slim sdk
+  if ('DD_RUM' in window) {
+    instrumentMethod(window.DD_RUM as any, 'addError', ({ parameters }) =>
+      addError(transportManager, parameters[0], parameters[1])
     )
   }
 

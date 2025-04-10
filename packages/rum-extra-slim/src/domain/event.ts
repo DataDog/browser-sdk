@@ -55,6 +55,11 @@ export type PerformanceEventTimingsEvent = {
   entry: Omit<RumPerformanceEventTiming, 'toJSON'>
 }
 
+export type PerformanceLongTaskTimingEvent = {
+  type: EVENT.LONG_TASK_TIMING
+  entry: Omit<PerformanceEntry, 'toJSON'>
+}
+
 export type BrowserEvent =
   | UrlEvent
   | ErrorEvent
@@ -63,6 +68,7 @@ export type BrowserEvent =
   | PerformanceNavigationTimingsEvent
   | PerformanceResourceTimingsEvent
   | PerformanceEventTimingsEvent
+  | PerformanceLongTaskTimingEvent
 
 export const enum EVENT {
   URL = 'url',
@@ -72,4 +78,5 @@ export const enum EVENT {
   NAVIGATION_TIMING = 'navigationTiming',
   RESOURCE_TIMING = 'resourceTiming',
   EVENT_TIMING = 'eventTiming',
+  LONG_TASK_TIMING = 'longTaskTiming',
 }
