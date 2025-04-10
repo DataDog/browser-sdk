@@ -15,7 +15,7 @@ export function addError(transportManager: TransportManager, error: unknown, con
   }
 
   if (context) {
-    data.error!.context = combine(data.error?.context, sanitize(context))
+    data.error.context = combine(data.error?.context, sanitize(context))
   }
 
   data.error.handlingStack = createHandlingStack()

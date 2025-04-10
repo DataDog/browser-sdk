@@ -1,5 +1,3 @@
-/* eslint-disable local-rules/disallow-side-effects */
-
 import { defineGlobal, getGlobalObject, makePublicApi } from '@datadog/browser-core'
 import { start } from '../boot/start'
 
