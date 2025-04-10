@@ -1,4 +1,4 @@
-import type { ConsoleApiName, ContextArray, ContextValue } from '@datadog/browser-core'
+import type { ConsoleApiName, ContextValue } from '@datadog/browser-core'
 import type {
   RumPerformanceEventTiming,
   RumPerformanceNavigationTiming,
