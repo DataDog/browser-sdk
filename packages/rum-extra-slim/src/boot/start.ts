@@ -1,4 +1,4 @@
-import { instrumentMethod, setDebugMode } from '@datadog/browser-core'
+import { setDebugMode } from '@datadog/browser-core'
 import { startSessionManager } from '../domain/sessionManager'
 import { trackPerformanceNavigationTimings } from '../domain/collection/trackPerformanceNavigationTimings'
 import { startTransportManager } from '../domain/transportManager'
@@ -8,6 +8,8 @@ import { trackPerformanceEventTimings } from '../domain/collection/trackPerforma
 import { trackUncaughtErrors } from '../domain/collection/trackUncaughtErrors'
 import { addError } from '../domain/collection/addError'
 import { trackConsoleMethods } from '../domain/collection/trackConsoleMethods'
+import { trackDDRumMethods } from '../domain/collection/trackDdRumMethods'
+import { setContext } from '../domain/collection/setContext'
 
 export function start() {
   const sessionManager = startSessionManager()
@@ -22,20 +24,18 @@ export function start() {
       trackPerformanceResourceTimings(transportManager),
       trackPerformanceNavigationTimings(transportManager),
       trackPerformanceEventTimings(transportManager),
-      trackConsoleMethods(transportManager)
-    )
-  }
-
-  // reroute DD_RUM methods to the extra slim sdk
-  if ('DD_RUM' in window) {
-    instrumentMethod(window.DD_RUM as any, 'addError', ({ parameters }) =>
-      addError(transportManager, parameters[0], parameters[1])
+      trackConsoleMethods(transportManager),
+      trackDDRumMethods(transportManager)
     )
   }
 
   return {
     init,
     addError: addError.bind(null, transportManager),
+    setGlobalContext: setContext.bind(null, transportManager, 'global'),
+    setViewContext: setContext.bind(null, transportManager, 'view'),
+    setUser: setContext.bind(null, transportManager, 'user'),
+    setAccount: setContext.bind(null, transportManager, 'account'),
     stop: () => trackers.forEach((tracker) => tracker()),
     _setDebug: setDebugMode,
   }

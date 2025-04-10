@@ -4,6 +4,7 @@ import type {
   RumPerformanceNavigationTiming,
   RumPerformanceResourceTiming,
 } from '@datadog/browser-rum-core/src/browser/performanceObservable'
+import type { ContextType } from './collection/setContext'
 
 export type UrlEvent = {
   type: EVENT.URL
@@ -33,6 +34,12 @@ export type ConsoleEvent = {
   args: ContextValue[]
 }
 
+export type ContextEvent = {
+  type: EVENT.CONTEXT
+  contextType: ContextType
+  context: ContextValue
+}
+
 export type PerformanceNavigationTimingsEvent = {
   type: EVENT.NAVIGATION_TIMING
   entry: Omit<RumPerformanceNavigationTiming, 'toJSON'>
@@ -52,6 +59,7 @@ export type BrowserEvent =
   | UrlEvent
   | ErrorEvent
   | ConsoleEvent
+  | ContextEvent
   | PerformanceNavigationTimingsEvent
   | PerformanceResourceTimingsEvent
   | PerformanceEventTimingsEvent
@@ -60,6 +68,7 @@ export const enum EVENT {
   URL = 'url',
   ERROR = 'error',
   CONSOLE = 'console',
+  CONTEXT = 'context',
   NAVIGATION_TIMING = 'navigationTiming',
   RESOURCE_TIMING = 'resourceTiming',
   EVENT_TIMING = 'eventTiming',
