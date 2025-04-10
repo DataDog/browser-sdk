@@ -104,9 +104,9 @@ test.describe('Extension Environment Tests', () => {
   })
 
   test('containsExtensionUrl works correctly', () => {
-    expect(containsExtensionUrl('chrome-extension://dummy/route')).toBe(true)
-    expect(containsExtensionUrl('moz-extension://dummy/route')).toBe(true)
-    expect(containsExtensionUrl('safari-extension://dummy/route')).toBe(true)
+    expect(containsExtensionUrl('chrome-extension://sample/route')).toBe(true)
+    expect(containsExtensionUrl('moz-extension://sample/route')).toBe(true)
+    expect(containsExtensionUrl('safari-extension://sample/route')).toBe(true)
     expect(containsExtensionUrl('https://example.com')).toBe(false)
   })
 })
