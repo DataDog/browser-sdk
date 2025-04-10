@@ -1,5 +1,5 @@
 import path from 'path'
-import { test as base, chromium, expect, type BrowserContext } from '@playwright/test'
+import { type BrowserContext, chromium, expect, test as base } from '@playwright/test'
 
 const test = base.extend<{
   context: BrowserContext
@@ -93,25 +93,11 @@ test.describe('Extension Environment Tests', () => {
       }
 
       function isUnsupportedExtensionEnvironment(): boolean {
-        // For testing, use a hardcoded error stack that contains a chrome-extension URL
         const errorStack = 'Error: test\n    at chrome-extension://npndlchcnpnbmmmhbgpgonapiegdkkge/background.js:1:1'
         const windowLocation = window.location.href || ''
-
-        console.log('windowLocation1', windowLocation)
-        console.log('errorStack1', errorStack)
-
-        const notInExtensionLocation = !containsExtensionUrl(windowLocation)
-        const hasExtensionInStack = containsExtensionUrl(errorStack)
-
-        console.log('!containsExtensionUrl(windowLocation):', notInExtensionLocation)
-        console.log('containsExtensionUrl(errorStack):', hasExtensionInStack)
-
-        return notInExtensionLocation && hasExtensionInStack
+        return !containsExtensionUrl(windowLocation) && containsExtensionUrl(errorStack)
       }
-
-      const res = isUnsupportedExtensionEnvironment()
-      console.log('Final result:', res)
-      return res
+      return isUnsupportedExtensionEnvironment()
     })
 
     expect(result).toBe(true)
