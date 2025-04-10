@@ -11,7 +11,9 @@
     "postinstall": "scripts/cli init_submodule",
     "build": "lerna run build --stream",
     "build:bundle": "lerna run build:bundle --stream",
-    "build:app": "cd test/app && rm -rf node_modules && yarn && yarn build",
+    "build:app": "lerna run pack --stream && cd test/apps/vanilla && rm -rf node_modules && yarn install --no-immutable && yarn build",
+    "build:react-app": "lerna run pack --stream && cd test/apps/react && rm -rf node_modules && yarn install --no-immutable && yarn build",
+    "build:apps": "yarn build:app && yarn build:react-app",
     "format": "prettier --check .",
     "lint": "scripts/cli lint .",
     "typecheck": "scripts/cli typecheck . && scripts/cli typecheck developer-extension",
@@ -25,11 +27,12 @@
     "test:unit:bs": "node ./scripts/test/bs-wrapper.js karma start test/unit/karma.bs.conf.js",
     "test:e2e": "playwright test --config test/e2e/playwright.local.config.ts --project chromium",
     "test:e2e:bs": "node ./scripts/test/bs-wrapper.js playwright test --config test/e2e/playwright.bs.config.ts",
-    "test:e2e:ci": "yarn build && yarn build:app && yarn playwright install chromium --with-deps && yarn test:e2e",
-    "test:e2e:ci:bs": "yarn build && yarn build:app && yarn test:e2e:bs",
-    "test:compat:tsc": "scripts/cli check_typescript_compatibility",
+    "test:e2e:ci": "yarn build && yarn build:apps && yarn playwright install chromium --with-deps && yarn test:e2e",
+    "test:e2e:ci:bs": "yarn build && yarn build:apps && yarn test:e2e:bs",
+    "test:compat:tsc": "node scripts/check-typescript-compatibility.js",
     "test:compat:ssr": "scripts/cli check_server_side_rendering_compatibility",
     "rum-events-format:sync": "scripts/cli update_submodule && scripts/cli build_json2type && node scripts/generate-schema-types.js",
+    "size": "node scripts/show-bundle-size.js",
     "woke": "scripts/cli woke"
   },
   "devDependencies": {
@@ -37,12 +40,12 @@
     "@jsdevtools/coverage-istanbul-loader": "3.0.5",
     "@playwright/test": "1.51.1",
     "@swc/core": "1.11.13",
-    "@types/chrome": "0.0.310",
+    "@types/chrome": "0.0.313",
     "@types/connect-busboy": "1.0.3",
     "@types/cors": "2.8.17",
     "@types/express": "4.17.21",
     "@types/jasmine": "3.10.18",
-    "@types/node": "22.13.13",
+    "@types/node": "22.13.14",
     "ajv": "8.17.1",
     "browserstack-local": "1.5.6",
     "chrome-webstore-upload": "3.1.4",
@@ -54,7 +57,7 @@
     "eslint-plugin-import": "2.31.0",
     "eslint-plugin-jasmine": "4.2.2",
     "eslint-plugin-jsdoc": "50.6.9",
-    "eslint-plugin-unicorn": "57.0.0",
+    "eslint-plugin-unicorn": "58.0.0",
     "express": "4.21.2",
     "glob": "11.0.1",
     "globals": "16.0.0",
@@ -81,7 +84,7 @@
     "ts-node": "10.9.2",
     "tsconfig-paths-webpack-plugin": "4.2.0",
     "typescript": "5.8.2",
-    "typescript-eslint": "8.27.0",
+    "typescript-eslint": "8.28.0",
     "webpack": "5.98.0",
     "webpack-cli": "6.0.1",
     "webpack-dev-middleware": "7.4.2"
@@ -93,5 +96,5 @@
     "node": "23.10.0",
     "yarn": "1.22.22"
   },
-  "packageManager": "yarn@4.7.0"
+  "packageManager": "yarn@4.8.1"
 }

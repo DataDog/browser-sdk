@@ -265,11 +265,12 @@ describe('tracer', () => {
       expect(xhr.headers['x-datadog-sampling-priority']).toBeDefined()
     })
 
-    it('should add usr.id and account.id to tracestate when feature is disabled', () => {
+    it('should add usr.id and account.id to baggage header when feature is enabled and propagateTraceBaggage is true', () => {
       mockExperimentalFeatures([ExperimentalFeature.USER_ACCOUNT_TRACE_HEADER])
       const configurationWithB3andTracecontext = validateAndBuildRumConfiguration({
         ...INIT_CONFIGURATION,
         allowedTracingUrls: [{ match: window.location.origin, propagatorTypes: ['tracecontext'] }],
+        propagateTraceBaggage: true,
       })!
 
       const tracer = startTracer(configurationWithB3andTracecontext, sessionManager, mockGetCommonContext)
@@ -278,9 +279,25 @@ describe('tracer', () => {
       expect(xhr.headers).toEqual(
         jasmine.objectContaining({
           traceparent: jasmine.stringMatching(/^[0-9a-f]{2}-[0-9a-f]{32}-[0-9a-f]{16}-01$/),
-          tracestate: 'dd=s:1;o:rum;t.usr.id:MTIzNA==;t.account.id:NTY3OA==',
+          tracestate: 'dd=s:1;o:rum',
+          baggage: 'usr.id=1234,account.id=5678',
         })
       )
+    })
+
+    it('should not add baggage header when propagateTraceBaggage is false', () => {
+      mockExperimentalFeatures([ExperimentalFeature.USER_ACCOUNT_TRACE_HEADER])
+      const configurationWithB3andTracecontext = validateAndBuildRumConfiguration({
+        ...INIT_CONFIGURATION,
+        allowedTracingUrls: [{ match: window.location.origin, propagatorTypes: ['tracecontext'] }],
+        propagateTraceBaggage: false,
+      })!
+
+      const tracer = startTracer(configurationWithB3andTracecontext, sessionManager, mockGetCommonContext)
+      const context = { ...ALLOWED_DOMAIN_CONTEXT }
+      tracer.traceXhr(context, xhr as unknown as XMLHttpRequest)
+
+      expect(xhr.headers['baggage']).toBeUndefined()
     })
 
     it('should ignore wrong propagator types', () => {

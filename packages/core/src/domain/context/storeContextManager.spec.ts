@@ -1,11 +1,9 @@
 import type { Configuration } from '../configuration'
 import { createNewEvent } from '../../../test'
 import { DOM_EVENT } from '../../browser/addEventListener'
-import { noop } from '../../tools/utils/functionUtils'
 import type { Context } from '../../tools/serialisation/context'
 import { storeContextManager, buildStorageKey, removeStorageListeners } from './storeContextManager'
 import { CustomerDataType } from './contextConstants'
-import { createCustomerDataTracker } from './customerDataTracker'
 import { createContextManager } from './contextManager'
 
 describe('storeContextManager', () => {
@@ -95,7 +93,7 @@ describe('storeContextManager', () => {
     productKey?: string
     customerDataType?: CustomerDataType
   } = {}) {
-    const manager = createContextManager('test', { customerDataTracker: createCustomerDataTracker(noop) })
+    const manager = createContextManager('test')
     if (initialContext) {
       manager.setContext(initialContext)
     }

@@ -71,10 +71,14 @@ cmd_release () {
 cmd_version () {
   node ./scripts/release/generate-changelog
   node ./scripts/release/update-peer-dependency-versions.js
-  # keep test app lockfile up to date
-  cd test/app
-  yarn up
-  git add yarn.lock
+  lerna run pack --stream
+  # keep test apps lockfiles up to date
+  for app_dir in test/apps/*; do
+    cd "$app_dir"
+    yarn up
+    git add yarn.lock
+    cd - > /dev/null
+  done
 }
 
 cmd_woke () {
@@ -82,63 +86,12 @@ cmd_woke () {
   woke --exit-1-on-failure
 }
 
-cmd_check_typescript_compatibility () {
-  yarn build
-  cd test/app
-  rm -rf node_modules
-  yarn
-  check_typescript_isolated_modules_compatibility || fail 'typescript isolated modules compatibility broken'
-  check_typescript_3_compatibility || fail 'typescript@3.8.2 compatibility broken'
-  check_typescript_latest_compatibility || fail 'typescript@latest compatibility broken'
-}
-
-check_typescript_3_compatibility () {
-  yarn compat:tsc
-}
-
-check_typescript_latest_compatibility () {
-  # Add typescript options only supported in newer versions
-  insert_line_in_file tsconfig.json 3 '"exactOptionalPropertyTypes": true,'
-  sed -i '' 's/es2015/esnext/i' tsconfig.json
-
-  yarn add --dev typescript@latest
-  local succeeded=true
-  if ! yarn compat:tsc; then
-    succeeded=false
-  fi
-
-  # Revert all changes
-  git checkout .
-
-  $succeeded
-}
-
-check_typescript_isolated_modules_compatibility () {
-  insert_line_in_file tsconfig.json 3 '"isolatedModules": true,'
-
-  local succeeded=true
-  if ! yarn compat:tsc; then
-    succeeded=false
-  fi
-
-  # Revert all changes
-  git checkout .
-
-  $succeeded
-}
-
-insert_line_in_file () {
-  local file="$1"
-  local line_number="$2"
-  local line_content="$3"
-  perl -i -l -p -e "print '${line_content}' if \$. == ${line_number}" "$file"
-}
-
 cmd_check_server_side_rendering_compatibility () {
   yarn build
-  cd test/app
+  yarn lerna run pack --stream
+  cd test/apps/vanilla
   rm -rf node_modules
-  yarn
+  yarn install --no-immutable
   yarn compat:ssr || fail 'server side rendering compatibility broken'
 }
 

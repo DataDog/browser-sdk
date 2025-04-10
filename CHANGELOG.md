@@ -18,6 +18,42 @@
 
 ---
 
+## v6.6.3
+
+**Public Changes:**
+
+- 🐛 Add missing original error for beforeSend context ([#3442](https://github.com/DataDog/browser-sdk/pull/3442)) [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+- ⚡️ Remove customer data track for perf and bundle size ([#3393](https://github.com/DataDog/browser-sdk/pull/3393)) [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+
+**Internal Changes:**
+
+- 👷 Filter out package.json files from test/apps directory in release check script ([#3466](https://github.com/DataDog/browser-sdk/pull/3466))
+- 👷 [RUM-8159] E2E test for the react integration ([#3428](https://github.com/DataDog/browser-sdk/pull/3428))
+- 👷 Bump chrome to 135.0.7049.52-1 ([#3458](https://github.com/DataDog/browser-sdk/pull/3458))
+- 👷 [RUM-259] update test/app to use local tarballs ([#3335](https://github.com/DataDog/browser-sdk/pull/3335)) [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+- 👷 Update dependency eslint-plugin-unicorn to v58 ([#3452](https://github.com/DataDog/browser-sdk/pull/3452))
+- 👷 Update all non-major dependencies ([#3451](https://github.com/DataDog/browser-sdk/pull/3451)) [RUM-REACT]
+- use baggage for user.id / account.id forwarding ([#3445](https://github.com/DataDog/browser-sdk/pull/3445)) [RUM] [RUM-REACT] [RUM-SLIM]
+- Lazy load profiler error handling + simplify profilerAPI ([#3460](https://github.com/DataDog/browser-sdk/pull/3460)) [RUM]
+- 🐛 Update .npmignore to include react-router 7 ([#3464](https://github.com/DataDog/browser-sdk/pull/3464)) [RUM-REACT]
+- [RUM Profiler] Fix collection of profiles after visibility change ([#3459](https://github.com/DataDog/browser-sdk/pull/3459)) [RUM]
+- ♻️ Refactor cookieObservable to not rely on cookieStore ([#3456](https://github.com/DataDog/browser-sdk/pull/3456)) [RUM] [RUM-REACT] [RUM-SLIM]
+- [RUM Profiler] Improvements around Views and Long Tasks ([#3450](https://github.com/DataDog/browser-sdk/pull/3450)) [RUM]
+- ♻️ [RUM-9126] Decouple common contexts from rumPublicApi ([#3432](https://github.com/DataDog/browser-sdk/pull/3432)) [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+
+## v6.6.2
+
+**Public Changes:**
+
+- 🐛 fix TypeScript 4 compatibility ([#3448](https://github.com/DataDog/browser-sdk/pull/3448)) [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+- 🐛 [RUM-99] don't stop RUM/Replay on beforeunload ([#3406](https://github.com/DataDog/browser-sdk/pull/3406)) [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+
+**Internal Changes:**
+
+- ✨ Update TypeScript configuration for e2e tests to include 'noEmit' option ([#3437](https://github.com/DataDog/browser-sdk/pull/3437))
+- 👷 Update all non-major dependencies ([#3438](https://github.com/DataDog/browser-sdk/pull/3438)) [RUM-REACT]
+- 👌 [RUM-99] don't set views as inactive when the page is exiting ([#3446](https://github.com/DataDog/browser-sdk/pull/3446)) [RUM] [RUM-REACT] [RUM-SLIM]
+
 ## v6.6.1
 
 **Public Changes:**

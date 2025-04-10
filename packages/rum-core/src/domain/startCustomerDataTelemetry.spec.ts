@@ -1,11 +1,5 @@
-import type { FlushEvent, Context, TelemetryEvent, CustomerDataTracker } from '@datadog/browser-core'
-import {
-  Observable,
-  startTelemetry,
-  TelemetryService,
-  resetExperimentalFeatures,
-  createCustomerDataTrackerManager,
-} from '@datadog/browser-core'
+import type { FlushEvent, Context, TelemetryEvent } from '@datadog/browser-core'
+import { Observable, startTelemetry, TelemetryService, resetExperimentalFeatures } from '@datadog/browser-core'
 import type { Clock } from '@datadog/browser-core/test'
 import { mockClock } from '@datadog/browser-core/test'
 import { mockRumConfiguration } from '../../test'
@@ -57,19 +51,12 @@ describe('customerDataTelemetry', () => {
     batchFlushObservable = new Observable()
     lifeCycle = new LifeCycle()
     fakeContextBytesCount = 1
-    const customerDataTrackerManager = createCustomerDataTrackerManager()
-    spyOn(customerDataTrackerManager, 'getOrCreateTracker').and.callFake(
-      () =>
-        ({
-          getBytesCount: () => fakeContextBytesCount,
-        }) as CustomerDataTracker
-    )
 
     telemetryEvents = []
     const telemetry = startTelemetry(TelemetryService.RUM, configuration)
     telemetry.observable.subscribe((telemetryEvent) => telemetryEvents.push(telemetryEvent))
 
-    startCustomerDataTelemetry(configuration, telemetry, lifeCycle, customerDataTrackerManager, batchFlushObservable)
+    startCustomerDataTelemetry(configuration, telemetry, lifeCycle, batchFlushObservable)
   }
 
   beforeEach(() => {
@@ -96,25 +83,6 @@ describe('customerDataTelemetry', () => {
         batchCount: 2,
         batchBytesCount: { min: 1, max: 10, sum: 11 },
         batchMessagesCount: { min: 1, max: 10, sum: 11 },
-        globalContextBytes: { min: 1, max: 10, sum: 101 },
-        userContextBytes: { min: 1, max: 10, sum: 101 },
-        featureFlagBytes: { min: 1, max: 10, sum: 101 },
-      })
-    )
-  })
-
-  it('should collect empty contexts telemetry', () => {
-    setupCustomerTlemertyCollection()
-
-    generateBatch({ eventNumber: 1, contextBytesCount: 0, context: {} })
-
-    clock.tick(MEASURES_PERIOD_DURATION)
-
-    expect(telemetryEvents[0].telemetry).toEqual(
-      jasmine.objectContaining({
-        globalContextBytes: { min: 0, max: 0, sum: 0 },
-        userContextBytes: { min: 0, max: 0, sum: 0 },
-        featureFlagBytes: { min: 0, max: 0, sum: 0 },
       })
     )
   })
@@ -138,9 +106,6 @@ describe('customerDataTelemetry', () => {
     clock.tick(MEASURES_PERIOD_DURATION)
 
     expect(telemetryEvents[0].telemetry.batchMessagesCount).toEqual(jasmine.objectContaining({ sum: 1 }))
-    expect(telemetryEvents[0].telemetry.globalContextBytes).toEqual(jasmine.objectContaining({ sum: 1 }))
-    expect(telemetryEvents[0].telemetry.userContextBytes).toEqual(jasmine.objectContaining({ sum: 1 }))
-    expect(telemetryEvents[0].telemetry.featureFlagBytes).toEqual(jasmine.objectContaining({ sum: 1 }))
   })
 
   it('should not collect customer data telemetry when telemetry disabled', () => {
