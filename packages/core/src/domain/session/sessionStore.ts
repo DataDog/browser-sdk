@@ -17,7 +17,7 @@ import {
 import { initLocalStorageStrategy, selectLocalStorageStrategy } from './storeStrategies/sessionInLocalStorage'
 import { processSessionStoreOperations } from './sessionStoreOperations'
 import { SESSION_NOT_TRACKED, SessionPersistence } from './sessionConstants'
-import { selectInMemorySessionStoreStrategy } from './storeStrategies/sessionInMemory'
+import { initInMemorySessionStoreStrategy, selectInMemorySessionStoreStrategy } from './storeStrategies/sessionInMemory'
 
 export interface SessionStore {
   expandOrRenewSession: () => void
@@ -75,7 +75,9 @@ export function getSessionStoreStrategy(
 ) {
   return sessionStoreStrategyType.type === SessionPersistence.COOKIE
     ? initCookieStrategy(configuration, sessionStoreStrategyType.cookieOptions)
-    : initLocalStorageStrategy(configuration)
+    : sessionStoreStrategyType.type === SessionPersistence.IN_MEMORY
+      ? initInMemorySessionStoreStrategy()
+      : initLocalStorageStrategy(configuration)
 }
 
 /**
