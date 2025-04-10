@@ -1,11 +1,5 @@
-import type { RelativeTime, DeflateWorker, CustomerDataTrackerManager, TimeStamp } from '@datadog/browser-core'
-import {
-  ONE_SECOND,
-  display,
-  DefaultPrivacyLevel,
-  CustomerDataCompressionStatus,
-  timeStampToClocks,
-} from '@datadog/browser-core'
+import type { RelativeTime, DeflateWorker, TimeStamp } from '@datadog/browser-core'
+import { ONE_SECOND, display, DefaultPrivacyLevel, timeStampToClocks } from '@datadog/browser-core'
 import type { Clock } from '@datadog/browser-core/test'
 import { mockClock, registerCleanupTask } from '@datadog/browser-core/test'
 import { noopRecorderApi, noopProfilerApi } from '../../test'
@@ -75,36 +69,6 @@ describe('rum public api', () => {
           compressIntakeRequests: true,
         })
         expect(recorderApiOnRumStartSpy.calls.mostRecent().args[4]).toBe(FAKE_WORKER)
-      })
-    })
-
-    describe('customer data trackers', () => {
-      it('should set the compression status to disabled if `compressIntakeRequests` is false', () => {
-        const rumPublicApi = makeRumPublicApi(startRumSpy, noopRecorderApi, noopProfilerApi, {
-          startDeflateWorker: () => FAKE_WORKER,
-        })
-
-        rumPublicApi.init({
-          ...DEFAULT_INIT_CONFIGURATION,
-          compressIntakeRequests: false,
-        })
-
-        const customerDataTrackerManager: CustomerDataTrackerManager = startRumSpy.calls.mostRecent().args[3]
-        expect(customerDataTrackerManager.getCompressionStatus()).toBe(CustomerDataCompressionStatus.Disabled)
-      })
-
-      it('should set the compression status to enabled if `compressIntakeRequests` is true', () => {
-        const rumPublicApi = makeRumPublicApi(startRumSpy, noopRecorderApi, noopProfilerApi, {
-          startDeflateWorker: () => FAKE_WORKER,
-        })
-
-        rumPublicApi.init({
-          ...DEFAULT_INIT_CONFIGURATION,
-          compressIntakeRequests: true,
-        })
-
-        const customerDataTrackerManager: CustomerDataTrackerManager = startRumSpy.calls.mostRecent().args[3]
-        expect(customerDataTrackerManager.getCompressionStatus()).toBe(CustomerDataCompressionStatus.Enabled)
       })
     })
   })

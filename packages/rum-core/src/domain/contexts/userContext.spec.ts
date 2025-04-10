@@ -1,20 +1,14 @@
-import type { ContextManager, CustomerDataTrackerManager } from '@datadog/browser-core'
-import {
-  createCustomerDataTrackerManager,
-  CustomerDataCompressionStatus,
-  removeStorageListeners,
-} from '@datadog/browser-core'
+import type { ContextManager } from '@datadog/browser-core'
+import { removeStorageListeners } from '@datadog/browser-core'
 import { registerCleanupTask } from '@datadog/browser-core/test'
 import { mockRumConfiguration } from '../../../test'
 import { startUserContext } from './userContext'
 
 describe('user context', () => {
   let userContext: ContextManager
-  let customerDataTrackerManager: CustomerDataTrackerManager
 
   beforeEach(() => {
-    customerDataTrackerManager = createCustomerDataTrackerManager(CustomerDataCompressionStatus.Disabled)
-    userContext = startUserContext(customerDataTrackerManager, mockRumConfiguration())
+    userContext = startUserContext(mockRumConfiguration())
   })
 
   it('should get user', () => {
@@ -52,11 +46,8 @@ describe('user context', () => {
 
 describe('user context across pages', () => {
   let userContext: ContextManager
-  let customerDataTrackerManager: CustomerDataTrackerManager
 
   beforeEach(() => {
-    customerDataTrackerManager = createCustomerDataTrackerManager(CustomerDataCompressionStatus.Disabled)
-
     registerCleanupTask(() => {
       localStorage.clear()
       removeStorageListeners()
@@ -64,10 +55,7 @@ describe('user context across pages', () => {
   })
 
   it('when disabled, should store contexts only in memory', () => {
-    userContext = startUserContext(
-      customerDataTrackerManager,
-      mockRumConfiguration({ storeContextsAcrossPages: false })
-    )
+    userContext = startUserContext(mockRumConfiguration({ storeContextsAcrossPages: false }))
     userContext.setContext({ id: '123' })
 
     expect(userContext.getContext()).toEqual({ id: '123' })
@@ -75,7 +63,7 @@ describe('user context across pages', () => {
   })
 
   it('when enabled, should maintain the user in local storage', () => {
-    userContext = startUserContext(customerDataTrackerManager, mockRumConfiguration({ storeContextsAcrossPages: true }))
+    userContext = startUserContext(mockRumConfiguration({ storeContextsAcrossPages: true }))
 
     userContext.setContext({ id: 'foo', qux: 'qix' })
     expect(userContext.getContext()).toEqual({ id: 'foo', qux: 'qix' })
