@@ -6,7 +6,10 @@ import type { RumPublicApi } from './rumPublicApi'
  */
 export function createNoopRumPublicApi(): RumPublicApi {
   const noop = () => undefined
-  const noopReturn = <T>(defaultValue?: T) => () => defaultValue as T
+  const noopReturn =
+    <T>(defaultValue?: T) =>
+    () =>
+      defaultValue as T
 
   return {
     init: noop,
@@ -49,6 +52,6 @@ export function createNoopRumPublicApi(): RumPublicApi {
         callback()
       }
     },
-    version: 'noop'
+    version: 'noop',
   }
 }

@@ -3,10 +3,7 @@
   "version": "1.0",
   "manifest_version": 3,
   "description": "Injects Datadog RUM into every page to inspect data being sent.",
-  "permissions": [
-    "scripting",
-    "activeTab"
-  ],
+  "permissions": ["scripting", "activeTab"],
   "host_permissions": ["<all_urls>"],
   "content_scripts": [
     {

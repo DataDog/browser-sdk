@@ -32,7 +32,7 @@ import {
   createTrackingConsentState,
   timeStampToClocks,
   CustomerContextKey,
-  isUnsupportedExtensionEnvironment
+  isUnsupportedExtensionEnvironment,
 } from '@datadog/browser-core'
 
 import type { LifeCycle } from '../domain/lifeCycle'
