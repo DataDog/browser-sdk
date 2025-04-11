@@ -271,13 +271,13 @@ describe('rum public api', () => {
     })
 
     it('should sanitize predefined properties', () => {
-      const user = { id: null, name: 2, email: { bar: 'qux' } }
+      const user = { id: false, name: 2, email: { bar: 'qux' } }
       rumPublicApi.setUser(user as any)
       rumPublicApi.addAction('message')
 
       expect(rumPublicApi.getUser()).toEqual({
         email: '[object Object]',
-        id: 'null',
+        id: 'false',
         name: '2',
       })
       expect(displaySpy).not.toHaveBeenCalled()
@@ -421,12 +421,12 @@ describe('rum public api', () => {
     })
 
     it('should sanitize predefined properties', () => {
-      const account = { id: null, name: 2 }
+      const account = { id: false, name: 2 }
       rumPublicApi.setAccount(account as any)
       rumPublicApi.addAction('message')
 
       expect(rumPublicApi.getAccount()).toEqual({
-        id: 'null',
+        id: 'false',
         name: '2',
       })
       expect(displaySpy).not.toHaveBeenCalled()

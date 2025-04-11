@@ -84,30 +84,46 @@ describe('createContextManager', () => {
     expect(manager.getContext()).toEqual({})
   })
 
-  it('should enforce specified type on properties', () => {
-    const manager = createContextManagerWithDefaults({
-      id: { type: 'string' },
-      name: { type: 'string' },
-      email: { type: 'string' },
+  describe('type enforcement', () => {
+    const NULLISH_VALUES = [undefined, null, '']
+
+    it('should enforce specified type on properties', () => {
+      const manager = createContextManagerWithDefaults({
+        id: { type: 'string' },
+        name: { type: 'string' },
+        email: { type: 'string' },
+      })
+
+      manager.setContext({ id: 42, name: true, email: {} })
+
+      expect(manager.getContext()).toEqual({ id: '42', name: 'true', email: '[object Object]' })
     })
 
-    manager.setContext({ id: 42, name: true, email: null })
+    it('should not enforce specified type on null or undefined properties', () => {
+      const manager = createContextManagerWithDefaults({
+        id: { type: 'string' },
+        name: { type: 'string' },
+      })
 
-    expect(manager.getContext()).toEqual({ id: '42', name: 'true', email: 'null' })
-  })
-
-  it('should warn when required property is missing', () => {
-    const displaySpy = spyOn(display, 'warn')
-
-    const manager = createContextManagerWithDefaults({
-      id: { required: true },
+      manager.setContext({ id: undefined, name: null })
+      expect(manager.getContext()).toEqual({ id: undefined, name: null })
     })
 
-    manager.setContext({ name: true, email: null })
+    NULLISH_VALUES.forEach((value) => {
+      it(`should warn when required property is  ${value}`, () => {
+        const displaySpy = spyOn(display, 'warn')
 
-    expect(displaySpy).toHaveBeenCalledOnceWith(
-      'The property id of test is required; context will not be sent to the intake.'
-    )
+        const manager = createContextManagerWithDefaults({
+          id: { required: true },
+        })
+
+        manager.setContext({ id: value })
+
+        expect(displaySpy).toHaveBeenCalledOnceWith(
+          'The property id of test is required; context will not be sent to the intake.'
+        )
+      })
+    })
   })
 
   describe('changeObservable', () => {

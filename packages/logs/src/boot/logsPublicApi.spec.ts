@@ -202,12 +202,12 @@ describe('logs entry', () => {
       })
 
       it('should sanitize predefined properties', () => {
-        const user = { id: null, name: 2, email: { bar: 'qux' } }
+        const user = { id: false, name: 2, email: { bar: 'qux' } }
         logsPublicApi.setUser(user as any)
         const getCommonContext = startLogs.calls.mostRecent().args[2]
         expect(getCommonContext().user).toEqual({
           email: '[object Object]',
-          id: 'null',
+          id: 'false',
           name: '2',
         })
       })
@@ -343,11 +343,11 @@ describe('logs entry', () => {
       })
 
       it('should sanitize predefined properties', () => {
-        const account = { id: null, name: 2 }
+        const account = { id: false, name: 2 }
         logsPublicApi.setAccount(account as any)
         const getCommonContext = startLogs.calls.mostRecent().args[2]
         expect(getCommonContext().account).toEqual({
-          id: 'null',
+          id: 'false',
           name: '2',
         })
       })

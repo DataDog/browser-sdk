@@ -25,9 +25,9 @@ describe('account context', () => {
   })
 
   it('should sanitize predefined properties', () => {
-    accountContext.setContext({ id: null, name: 2 })
+    accountContext.setContext({ id: false, name: 2 })
     expect(accountContext.getContext()).toEqual({
-      id: 'null',
+      id: 'false',
       name: '2',
     })
   })
