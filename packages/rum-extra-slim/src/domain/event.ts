@@ -5,7 +5,6 @@ import type {
   RumPerformanceResourceTiming,
   RumPerformanceLongAnimationFrameTiming,
 } from '@datadog/browser-rum-core/src/browser/performanceObservable'
-import type { ContextType } from './collection/setContext'
 
 export type UrlEvent = {
   type: EVENT.URL
@@ -36,8 +35,7 @@ export type ConsoleEvent = {
 }
 
 export type ContextEvent = {
-  type: EVENT.CONTEXT
-  contextType: ContextType
+  type: EVENT.GLOBAL_CONTEXT | EVENT.VIEW_CONTEXT | EVENT.USER | EVENT.ACCOUNT
   context: ContextValue
 }
 
@@ -80,4 +78,8 @@ export const enum EVENT {
   RESOURCE_TIMING = 'resourceTiming',
   EVENT_TIMING = 'eventTiming',
   LONG_TASK_TIMING = 'longAnimationFrameTiming',
+  GLOBAL_CONTEXT = 'globalContext',
+  VIEW_CONTEXT = 'viewContext',
+  USER = 'user',
+  ACCOUNT = 'account',
 }

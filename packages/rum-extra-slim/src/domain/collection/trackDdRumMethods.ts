@@ -32,5 +32,5 @@ export function trackDDRumMethods(transportManager: TransportManager) {
 }
 
 function getContextMethod(contextType: ContextType) {
-  return `set${contextType.charAt(0).toUpperCase() + contextType.slice(1)}${['account', 'user'].includes(contextType) ? '' : 'Context'}`
+  return `set${contextType.charAt(0).toUpperCase() + contextType.slice(1)}`
 }

@@ -4,19 +4,27 @@ import type { ContextEvent } from '../event'
 import { EVENT } from '../event'
 import type { TransportManager } from '../transportManager'
 
+type ValueOf<T> = T[keyof T]
+
 export const CONTEXT_TYPE = {
-  global: 'global',
-  view: 'view',
+  global: 'globalContext',
+  view: 'viewContext',
   user: 'user',
   account: 'account',
 } as const
+
+const eventTypeByContextType: Record<ValueOf<typeof CONTEXT_TYPE>, ContextEvent['type']> = {
+  globalContext: EVENT.GLOBAL_CONTEXT,
+  viewContext: EVENT.VIEW_CONTEXT,
+  user: EVENT.USER,
+  account: EVENT.ACCOUNT,
+}
 
 export type ContextType = (typeof CONTEXT_TYPE)[keyof typeof CONTEXT_TYPE]
 
 export function setContext(transportManager: TransportManager, type: ContextType, context: Context) {
   const data: ContextEvent = {
-    type: EVENT.CONTEXT,
-    contextType: type,
+    type: eventTypeByContextType[type],
     context: sanitize(context),
   }
 

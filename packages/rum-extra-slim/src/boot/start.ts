@@ -34,8 +34,8 @@ export function start() {
   return {
     init,
     addError: addError.bind(null, transportManager),
-    setGlobalContext: setContext.bind(null, transportManager, 'global'),
-    setViewContext: setContext.bind(null, transportManager, 'view'),
+    setGlobalContext: setContext.bind(null, transportManager, 'globalContext'),
+    setViewContext: setContext.bind(null, transportManager, 'viewContext'),
     setUser: setContext.bind(null, transportManager, 'user'),
     setAccount: setContext.bind(null, transportManager, 'account'),
     stop: () => trackers.forEach((tracker) => tracker()),
