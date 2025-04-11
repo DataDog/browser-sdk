@@ -2,6 +2,7 @@ const packages = [
   { packageName: 'logs', service: 'browser-logs-sdk' },
   { packageName: 'rum', service: 'browser-rum-sdk' },
   { packageName: 'rum-slim', service: 'browser-rum-sdk' },
+  { packageName: 'rum-extra-slim', service: 'browser-rum-sdk' },
 ]
 
 // ex: datadog-rum-v4.js, chunks/recorder-8d8a8dfab6958424038f-datadog-rum.js
