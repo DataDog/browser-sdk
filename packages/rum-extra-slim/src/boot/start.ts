@@ -11,6 +11,8 @@ import { trackConsoleMethods } from '../domain/collection/trackConsoleMethods'
 import { trackDDRumMethods } from '../domain/collection/trackDdRumMethods'
 import { setContext } from '../domain/collection/setContext'
 import { trackPerformanceLongAnimationFrameTimings } from '../domain/collection/trackPerformanceLongAnimationFrameTimings'
+import { addAction } from '../domain/collection/addAction'
+import { addFeatureFlagEvaluation } from '../domain/collection/addFeatureFlagEvaluation'
 
 export function start() {
   const sessionManager = startSessionManager()
@@ -33,12 +35,18 @@ export function start() {
 
   return {
     init,
+
     addError: addError.bind(null, transportManager),
+    addAction: addAction.bind(null, transportManager),
+    addFeatureFlagEvaluation: addFeatureFlagEvaluation.bind(null, transportManager),
+
     setGlobalContext: setContext.bind(null, transportManager, 'globalContext'),
     setViewContext: setContext.bind(null, transportManager, 'viewContext'),
     setUser: setContext.bind(null, transportManager, 'user'),
     setAccount: setContext.bind(null, transportManager, 'account'),
+
     stop: () => trackers.forEach((tracker) => tracker()),
+
     _setDebug: setDebugMode,
   }
 }

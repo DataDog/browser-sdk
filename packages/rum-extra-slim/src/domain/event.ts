@@ -34,6 +34,18 @@ export type ConsoleEvent = {
   args: ContextValue[]
 }
 
+export type ActionEvent = {
+  type: EVENT.ACTION
+  key: string
+  value: ContextValue
+}
+
+export type FeatureFlagEvent = {
+  type: EVENT.FEATURE_FLAG
+  key: string
+  value: ContextValue
+}
+
 export type ContextEvent = {
   type: EVENT.GLOBAL_CONTEXT | EVENT.VIEW_CONTEXT | EVENT.USER | EVENT.ACCOUNT
   context: ContextValue
@@ -62,8 +74,10 @@ export type PerformanceLongAnimationFrameTimingEvent = {
 export type BrowserEvent =
   | UrlEvent
   | ErrorEvent
+  | ActionEvent
   | ConsoleEvent
   | ContextEvent
+  | FeatureFlagEvent
   | PerformanceNavigationTimingsEvent
   | PerformanceResourceTimingsEvent
   | PerformanceEventTimingsEvent
@@ -71,6 +85,7 @@ export type BrowserEvent =
 
 export const enum EVENT {
   URL = 'url',
+  ACTION = 'action',
   ERROR = 'error',
   CONSOLE = 'console',
   CONTEXT = 'context',
@@ -78,7 +93,7 @@ export const enum EVENT {
   RESOURCE_TIMING = 'resourceTiming',
   EVENT_TIMING = 'eventTiming',
   LONG_ANIMATION_FRAME_TIMING = 'longAnimationFrameTiming',
-  FEATURE_FLAG_EVALUATION = 'featureFlagEvaluation',
+  FEATURE_FLAG = 'featureFlag',
   GLOBAL_CONTEXT = 'globalContext',
   VIEW_CONTEXT = 'viewContext',
   USER = 'user',

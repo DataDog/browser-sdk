@@ -4,6 +4,8 @@ import type { TransportManager } from '../transportManager'
 import { addError } from './addError'
 import type { ContextType } from './setContext'
 import { CONTEXT_TYPE, setContext } from './setContext'
+import { addAction } from './addAction'
+import { addFeatureFlagEvaluation } from './addFeatureFlagEvaluation'
 
 type Stoppable = { stop: () => void }
 
@@ -25,7 +27,13 @@ export function trackDDRumMethods(transportManager: TransportManager) {
   subscriptions.push(
     instrumentMethod(window.DD_RUM as any, 'addError', ({ parameters }) =>
       addError(transportManager, parameters[0], parameters[1])
-    )
+    ),
+    instrumentMethod(window.DD_RUM as any, 'addFeatureFlagEvaluation', ({ parameters }) => {
+      addFeatureFlagEvaluation(transportManager, parameters[0], parameters[1])
+    }),
+    instrumentMethod(window.DD_RUM as any, 'addAction', ({ parameters }) => {
+      addAction(transportManager, parameters[0], parameters[1])
+    })
   )
 
   return () => subscriptions.forEach((subscription) => subscription.stop())
