@@ -36,14 +36,13 @@ export function SettingsTab() {
 
   const [currentOverrideOrgAndApp, setCurrentOverrideOrgAndApp] = useState(overrideOrgAndApp)
 
-  const needsPageRefresh = () => (
+  const needsPageRefresh = () =>
     currentOverrideOrgAndApp !== overrideOrgAndApp ||
     (currentOverrideOrgAndApp && (currentApplicationId !== applicationId || currentClientToken !== clientToken))
-  )
 
   const reloadInPage = () => {
     setCurrentOverrideOrgAndApp(overrideOrgAndApp)
-    evalInWindow('window.location.reload()').catch((error) => logger.error('Error while reloading the page:', error));
+    evalInWindow('window.location.reload()').catch((error) => logger.error('Error while reloading the page:', error))
   }
 
   return (
