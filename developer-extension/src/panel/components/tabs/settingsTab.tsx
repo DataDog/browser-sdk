@@ -10,7 +10,7 @@ import type { DevBundlesOverride, EventCollectionStrategy, Settings } from '../.
 import * as classes from './settingsTab.module.css'
 
 export function SettingsTab() {
-  const devServerStatus = useDevServerStatus();
+  const devServerStatus = useDevServerStatus()
   const [
     {
       useDevBundles,
@@ -27,23 +27,22 @@ export function SettingsTab() {
     setSetting,
   ] = useSettings()
 
-  const config = useSdkInfos()?.rum?.config as { clientToken: string, applicationId: string } | undefined
+  const config = useSdkInfos()?.rum?.config as { clientToken: string; applicationId: string } | undefined
   const currentApplicationId = config?.applicationId
   const currentClientToken = config?.clientToken
 
-  const [ currentOverrideOrgAndApp, setCurrentOverrideOrgAndApp ] = useState(overrideOrgAndApp)
+  const [currentOverrideOrgAndApp, setCurrentOverrideOrgAndApp] = useState(overrideOrgAndApp)
 
   const needsPageRefresh = () => {
-    return currentOverrideOrgAndApp !== overrideOrgAndApp || (
-      currentOverrideOrgAndApp && (
-        currentApplicationId !== applicationId || currentClientToken !== clientToken
-      )
-    );
+    return (
+      currentOverrideOrgAndApp !== overrideOrgAndApp ||
+      (currentOverrideOrgAndApp && (currentApplicationId !== applicationId || currentClientToken !== clientToken))
+    )
   }
 
   const reloadInPage = () => {
-    setCurrentOverrideOrgAndApp(overrideOrgAndApp); 
-    evalInWindow('window.location.reload()');
+    setCurrentOverrideOrgAndApp(overrideOrgAndApp)
+    evalInWindow('window.location.reload()')
   }
 
   return (
@@ -186,35 +185,43 @@ export function SettingsTab() {
 
             <SettingItem
               input={
-                <Group className={ classes.groupWithButton}>
+                <Group className={classes.groupWithButton}>
                   <Checkbox
                     label="Override Organization & App"
                     checked={overrideOrgAndApp}
                     onChange={(e) => setSetting('overrideOrgAndApp', isChecked(e.target))}
                     color="violet"
                   />
-                  {needsPageRefresh() && <Button onClick={reloadInPage} size="compact-xs" color="orange">Click to refresh & apply the changes</Button>}
+                  {needsPageRefresh() && (
+                    <Button onClick={reloadInPage} size="compact-xs" color="orange">
+                      Click to refresh & apply the changes
+                    </Button>
+                  )}
                 </Group>
               }
             />
             <SettingItem
-              input={     
-                <Group>                 
+              input={
+                <Group>
                   <TextInput
                     label="ApplicationId"
                     onChange={(e) => setSetting('applicationId', e.target.value)}
-                    value={ applicationId as string }
+                    value={applicationId as string}
                   />
                   <TextInput
                     label="clientToken"
                     onChange={(e) => setSetting('clientToken', e.target.value)}
-                    value={ clientToken as string }
+                    value={clientToken as string}
                   />
                 </Group>
               }
-              description={<>Override the application where data is being stored. You will need to reload the page to apply any changes</>}
+              description={
+                <>
+                  Override the application where data is being stored. You will need to reload the page to apply any
+                  changes
+                </>
+              }
             />
-
           </Columns.Column>
         </Columns>
       </div>

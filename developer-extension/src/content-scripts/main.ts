@@ -46,7 +46,10 @@ function main() {
     }
 
     if (settings.overrideOrgAndApp) {
-      overrideInitConfiguration(ddRumGlobal, { clientToken:settings.clientToken, applicationId: settings.applicationId })
+      overrideInitConfiguration(ddRumGlobal, {
+        clientToken: settings.clientToken,
+        applicationId: settings.applicationId,
+      })
     }
 
     if (settings.useDevBundles === 'npm') {
