@@ -8,6 +8,7 @@ variables:
   MAIN_BRANCH: 'main'
   NEXT_MAJOR_BRANCH: ''
   CHROME_PACKAGE_VERSION: 135.0.7049.52-1
+  FF_TIMESTAMPS: 'true' # Enable timestamps for gitlab-ci logs
 
 cache:
   key:
