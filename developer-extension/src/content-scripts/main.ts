@@ -45,6 +45,10 @@ function main() {
       overrideInitConfiguration(ddLogsGlobal, settings.logsConfigurationOverride)
     }
 
+    if (settings.overrideOrgAndApp) {
+      overrideInitConfiguration(ddRumGlobal, { clientToken:settings.clientToken, applicationId: settings.applicationId })
+    }
+
     if (settings.useDevBundles === 'npm') {
       injectDevBundle(DEV_RUM_URL, ddRumGlobal)
       injectDevBundle(DEV_LOGS_URL, ddLogsGlobal)

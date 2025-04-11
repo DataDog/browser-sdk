@@ -1,13 +1,16 @@
-import { Badge, Box, Checkbox, Code, Group, Space, Text, SegmentedControl } from '@mantine/core'
-import React from 'react'
+import { Badge, Box, Button, Checkbox, Code, Group, Space, Text, TextInput, SegmentedControl } from '@mantine/core'
+import React, { useState, ChangeEventHandler } from 'react'
+import { evalInWindow } from '../../evalInWindow'
 import { DevServerStatus, useDevServerStatus } from '../../hooks/useDevServerStatus'
 import { useSettings } from '../../hooks/useSettings'
+import { useSdkInfos } from '../../hooks/useSdkInfos'
 import { Columns } from '../columns'
 import { TabBase } from '../tabBase'
-import type { DevBundlesOverride, EventCollectionStrategy } from '../../../common/extension.types'
+import type { DevBundlesOverride, EventCollectionStrategy, Settings } from '../../../common/extension.types'
+import * as classes from './settingsTab.module.css'
 
 export function SettingsTab() {
-  const devServerStatus = useDevServerStatus()
+  const devServerStatus = useDevServerStatus();
   const [
     {
       useDevBundles,
@@ -17,9 +20,31 @@ export function SettingsTab() {
       eventCollectionStrategy,
       autoFlush,
       debugMode: debug,
+      applicationId,
+      clientToken,
+      overrideOrgAndApp,
     },
     setSetting,
   ] = useSettings()
+
+  const config = useSdkInfos()?.rum?.config as { clientToken: string, applicationId: string } | undefined
+  const currentApplicationId = config?.applicationId
+  const currentClientToken = config?.clientToken
+
+  const [ currentOverrideOrgAndApp, setCurrentOverrideOrgAndApp ] = useState(overrideOrgAndApp)
+
+  const needsPageRefresh = () => {
+    return currentOverrideOrgAndApp !== overrideOrgAndApp || (
+      currentOverrideOrgAndApp && (
+        currentApplicationId !== applicationId || currentClientToken !== clientToken
+      )
+    );
+  }
+
+  const reloadInPage = () => {
+    setCurrentOverrideOrgAndApp(overrideOrgAndApp); 
+    evalInWindow('window.location.reload()');
+  }
 
   return (
     <TabBase>
@@ -158,6 +183,38 @@ export function SettingsTab() {
               }
               description={<>Enable the SDK logs in the developer console</>}
             />
+
+            <SettingItem
+              input={
+                <Group className={ classes.groupWithButton}>
+                  <Checkbox
+                    label="Override Organization & App"
+                    checked={overrideOrgAndApp}
+                    onChange={(e) => setSetting('overrideOrgAndApp', isChecked(e.target))}
+                    color="violet"
+                  />
+                  {needsPageRefresh() && <Button onClick={reloadInPage} size="compact-xs" color="orange">Click to refresh & apply the changes</Button>}
+                </Group>
+              }
+            />
+            <SettingItem
+              input={     
+                <Group>                 
+                  <TextInput
+                    label="ApplicationId"
+                    onChange={(e) => setSetting('applicationId', e.target.value)}
+                    value={ applicationId as string }
+                  />
+                  <TextInput
+                    label="clientToken"
+                    onChange={(e) => setSetting('clientToken', e.target.value)}
+                    value={ clientToken as string }
+                  />
+                </Group>
+              }
+              description={<>Override the application where data is being stored. You will need to reload the page to apply any changes</>}
+            />
+
           </Columns.Column>
         </Columns>
       </div>

@@ -17,6 +17,9 @@ const DEFAULT_SETTINGS: Readonly<Settings> = {
   rumConfigurationOverride: null,
   logsConfigurationOverride: null,
   debugMode: false,
+  overrideOrgAndApp: false,
+  applicationId: null,
+  clientToken: null,
 }
 
 let settings: Settings | undefined
