@@ -10,7 +10,7 @@ import { addError } from '../domain/collection/addError'
 import { trackConsoleMethods } from '../domain/collection/trackConsoleMethods'
 import { trackDDRumMethods } from '../domain/collection/trackDdRumMethods'
 import { setContext } from '../domain/collection/setContext'
-import { trackLongTasks } from '../domain/collection/trackLongTasks'
+import { trackPerformanceLongAnimationFrameTimings } from '../domain/collection/trackPerformanceLongAnimationFrameTimings'
 
 export function start() {
   const sessionManager = startSessionManager()
@@ -27,7 +27,7 @@ export function start() {
       trackPerformanceEventTimings(transportManager),
       trackConsoleMethods(transportManager),
       trackDDRumMethods(transportManager),
-      trackLongTasks(transportManager)
+      trackPerformanceLongAnimationFrameTimings(transportManager)
     )
   }
 

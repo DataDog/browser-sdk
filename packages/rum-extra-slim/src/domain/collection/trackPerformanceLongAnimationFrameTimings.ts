@@ -4,9 +4,9 @@ import {
 } from '@datadog/browser-rum-core/src/browser/performanceObservable'
 import type { TransportManager } from '../transportManager'
 import { EVENT } from '../event'
-import type { PerformanceLongTaskTimingEvent } from '../event'
+import type { PerformanceLongAnimationFrameTimingEvent } from '../event'
 
-export function trackLongTasks(transportManager: TransportManager): () => void {
+export function trackPerformanceLongAnimationFrameTimings(transportManager: TransportManager): () => void {
   const observable = createPerformanceObservable({} as any, {
     type: RumPerformanceEntryType.LONG_ANIMATION_FRAME,
     buffered: true,
@@ -14,8 +14,8 @@ export function trackLongTasks(transportManager: TransportManager): () => void {
 
   const subscription = observable.subscribe((entries) => {
     for (const entry of entries) {
-      const data: PerformanceLongTaskTimingEvent = {
-        type: EVENT.LONG_TASK_TIMING,
+      const data: PerformanceLongAnimationFrameTimingEvent = {
+        type: EVENT.LONG_ANIMATION_FRAME_TIMING,
         entry: entry.toJSON(),
       }
 
