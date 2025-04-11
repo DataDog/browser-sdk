@@ -1,13 +1,16 @@
 import { Badge, Box, Button, Checkbox, Code, Group, Space, Text, TextInput, SegmentedControl } from '@mantine/core'
-import React, { useState, ChangeEventHandler } from 'react'
+import React, { useState } from 'react'
 import { evalInWindow } from '../../evalInWindow'
 import { DevServerStatus, useDevServerStatus } from '../../hooks/useDevServerStatus'
 import { useSettings } from '../../hooks/useSettings'
 import { useSdkInfos } from '../../hooks/useSdkInfos'
+import { createLogger } from '../../../common/logger'
 import { Columns } from '../columns'
 import { TabBase } from '../tabBase'
-import type { DevBundlesOverride, EventCollectionStrategy, Settings } from '../../../common/extension.types'
+import type { DevBundlesOverride, EventCollectionStrategy } from '../../../common/extension.types'
 import * as classes from './settingsTab.module.css'
+
+const logger = createLogger('settingsTab')
 
 export function SettingsTab() {
   const devServerStatus = useDevServerStatus()
@@ -33,16 +36,14 @@ export function SettingsTab() {
 
   const [currentOverrideOrgAndApp, setCurrentOverrideOrgAndApp] = useState(overrideOrgAndApp)
 
-  const needsPageRefresh = () => {
-    return (
-      currentOverrideOrgAndApp !== overrideOrgAndApp ||
-      (currentOverrideOrgAndApp && (currentApplicationId !== applicationId || currentClientToken !== clientToken))
-    )
-  }
+  const needsPageRefresh = () => (
+    currentOverrideOrgAndApp !== overrideOrgAndApp ||
+    (currentOverrideOrgAndApp && (currentApplicationId !== applicationId || currentClientToken !== clientToken))
+  )
 
   const reloadInPage = () => {
     setCurrentOverrideOrgAndApp(overrideOrgAndApp)
-    evalInWindow('window.location.reload()')
+    evalInWindow('window.location.reload()').catch((error) => logger.error('Error while reloading the page:', error));
   }
 
   return (
