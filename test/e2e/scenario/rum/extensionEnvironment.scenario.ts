@@ -6,7 +6,9 @@ const test = base.extend<{
   extensionId: string
 }>({
   // eslint-disable-next-line no-empty-pattern
-  context: async ({}, use) => {
+  context: async ({}, use, testInfo) => {
+    testInfo.skip(testInfo.project.name !== 'chromium', 'Extension tests only run in Chromium')
+
     const pathToExtension = path.join(__dirname, '../../../../sandbox/testing-extension')
     const context = await chromium.launchPersistentContext('', {
       channel: 'chromium',
