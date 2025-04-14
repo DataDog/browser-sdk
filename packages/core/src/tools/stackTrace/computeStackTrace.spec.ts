@@ -90,11 +90,7 @@ Error: foo
   })
 
   it('should handle a native error object stack from Chrome', () => {
-    const mockErr = {
-      message: 'foo',
-      name: 'Error',
-      stack: stackStr,
-    }
+    const mockErr = { message: 'foo', name: 'Error', stack: stackStr }
     const stackFrames = computeStackTrace(mockErr)
 
     expect(stackFrames.stack[0].url).toEqual('<anonymous>')
@@ -173,20 +169,8 @@ Error: foo
     const stackFrames = computeStackTrace(CapturedExceptions.SAFARI_7)
 
     expect(stackFrames.stack.length).toEqual(3)
-    expect(stackFrames.stack[0]).toEqual({
-      args: [],
-      column: 22,
-      func: '?',
-      line: 48,
-      url: 'http://path/to/file.js',
-    })
-    expect(stackFrames.stack[1]).toEqual({
-      args: [],
-      column: 15,
-      func: 'foo',
-      line: 52,
-      url: 'http://path/to/file.js',
-    })
+    expect(stackFrames.stack[0]).toEqual({ args: [], column: 22, func: '?', line: 48, url: 'http://path/to/file.js' })
+    expect(stackFrames.stack[1]).toEqual({ args: [], column: 15, func: 'foo', line: 52, url: 'http://path/to/file.js' })
     expect(stackFrames.stack[2]).toEqual({
       args: [],
       column: 107,
@@ -200,20 +184,8 @@ Error: foo
     const stackFrames = computeStackTrace(CapturedExceptions.SAFARI_8)
 
     expect(stackFrames.stack.length).toEqual(3)
-    expect(stackFrames.stack[0]).toEqual({
-      args: [],
-      column: 22,
-      func: '?',
-      line: 47,
-      url: 'http://path/to/file.js',
-    })
-    expect(stackFrames.stack[1]).toEqual({
-      args: [],
-      column: 15,
-      func: 'foo',
-      line: 52,
-      url: 'http://path/to/file.js',
-    })
+    expect(stackFrames.stack[0]).toEqual({ args: [], column: 22, func: '?', line: 47, url: 'http://path/to/file.js' })
+    expect(stackFrames.stack[1]).toEqual({ args: [], column: 15, func: 'foo', line: 52, url: 'http://path/to/file.js' })
     expect(stackFrames.stack[2]).toEqual({
       args: [],
       column: 23,
@@ -236,13 +208,7 @@ Error: foo
       line: undefined,
       url: '[native code]',
     })
-    expect(stackFrames.stack[1]).toEqual({
-      args: [],
-      column: 21,
-      func: 'foo',
-      line: 58,
-      url: 'http://path/to/file.js',
-    })
+    expect(stackFrames.stack[1]).toEqual({ args: [], column: 21, func: 'foo', line: 58, url: 'http://path/to/file.js' })
     expect(stackFrames.stack[2]).toEqual({
       args: [],
       column: 91,
@@ -393,20 +359,8 @@ Error: foo
     const stackFrames = computeStackTrace(CapturedExceptions.FIREFOX_31)
 
     expect(stackFrames.stack.length).toEqual(3)
-    expect(stackFrames.stack[0]).toEqual({
-      args: [],
-      column: 13,
-      func: 'foo',
-      line: 41,
-      url: 'http://path/to/file.js',
-    })
-    expect(stackFrames.stack[1]).toEqual({
-      args: [],
-      column: 1,
-      func: 'bar',
-      line: 1,
-      url: 'http://path/to/file.js',
-    })
+    expect(stackFrames.stack[0]).toEqual({ args: [], column: 13, func: 'foo', line: 41, url: 'http://path/to/file.js' })
+    expect(stackFrames.stack[1]).toEqual({ args: [], column: 1, func: 'bar', line: 1, url: 'http://path/to/file.js' })
     expect(stackFrames.stack[2]).toEqual({
       args: [],
       column: 1,
@@ -434,13 +388,7 @@ Error: foo
       line: 15,
       url: 'file:///path/to/file.js',
     })
-    expect(stackFrames.stack[2]).toEqual({
-      args: [],
-      column: 3,
-      func: 'bar',
-      line: 20,
-      url: 'file:///path/to/file.js',
-    })
+    expect(stackFrames.stack[2]).toEqual({ args: [], column: 3, func: 'bar', line: 20, url: 'file:///path/to/file.js' })
     expect(stackFrames.stack[3]).toEqual({
       args: [],
       column: 1,
@@ -485,13 +433,7 @@ Error: foo
       line: 128,
       url: 'std_interceptors.js',
     })
-    expect(stackFrames.stack[2]).toEqual({
-      args: [],
-      column: 29,
-      func: 'eval',
-      line: 132,
-      url: 'std_interceptors.jsx',
-    })
+    expect(stackFrames.stack[2]).toEqual({ args: [], column: 29, func: 'eval', line: 132, url: 'std_interceptors.jsx' })
   })
 
   it('should not include error message into stacktrace ', () => {
@@ -527,34 +469,10 @@ Error: foo
     const stackFrames = computeStackTrace(CapturedExceptions.CHROME_15 as any)
 
     expect(stackFrames.stack.length).toEqual(4)
-    expect(stackFrames.stack[0]).toEqual({
-      args: [],
-      column: 17,
-      func: 'bar',
-      line: 13,
-      url: 'http://path/to/file.js',
-    })
-    expect(stackFrames.stack[1]).toEqual({
-      args: [],
-      column: 5,
-      func: 'bar',
-      line: 16,
-      url: 'http://path/to/file.js',
-    })
-    expect(stackFrames.stack[2]).toEqual({
-      args: [],
-      column: 5,
-      func: 'foo',
-      line: 20,
-      url: 'http://path/to/file.js',
-    })
-    expect(stackFrames.stack[3]).toEqual({
-      args: [],
-      column: 4,
-      func: '?',
-      line: 24,
-      url: 'http://path/to/file.js',
-    })
+    expect(stackFrames.stack[0]).toEqual({ args: [], column: 17, func: 'bar', line: 13, url: 'http://path/to/file.js' })
+    expect(stackFrames.stack[1]).toEqual({ args: [], column: 5, func: 'bar', line: 16, url: 'http://path/to/file.js' })
+    expect(stackFrames.stack[2]).toEqual({ args: [], column: 5, func: 'foo', line: 20, url: 'http://path/to/file.js' })
+    expect(stackFrames.stack[3]).toEqual({ args: [], column: 4, func: '?', line: 24, url: 'http://path/to/file.js' })
   })
 
   it('should parse Chrome 36 error with port numbers', () => {
@@ -738,13 +656,7 @@ Error: foo
     const stackFrames = computeStackTrace(CapturedExceptions.CHROME_111_SNIPPET)
 
     expect(stackFrames.stack.length).toEqual(1)
-    expect(stackFrames.stack[0]).toEqual({
-      args: [],
-      column: 13,
-      func: '?',
-      line: 1,
-      url: 'snippet:///snippet_file',
-    })
+    expect(stackFrames.stack[0]).toEqual({ args: [], column: 13, func: '?', line: 1, url: 'snippet:///snippet_file' })
   })
 
   it('should parse empty IE 9 error', () => {
@@ -767,20 +679,8 @@ Error: foo
       line: 48,
       url: 'http://path/to/file.js',
     })
-    expect(stackFrames.stack[1]).toEqual({
-      args: [],
-      column: 9,
-      func: 'foo',
-      line: 46,
-      url: 'http://path/to/file.js',
-    })
-    expect(stackFrames.stack[2]).toEqual({
-      args: [],
-      column: 1,
-      func: 'bar',
-      line: 82,
-      url: 'http://path/to/file.js',
-    })
+    expect(stackFrames.stack[1]).toEqual({ args: [], column: 9, func: 'foo', line: 46, url: 'http://path/to/file.js' })
+    expect(stackFrames.stack[2]).toEqual({ args: [], column: 1, func: 'bar', line: 82, url: 'http://path/to/file.js' })
   })
 
   it('should parse IE 11 error', () => {
@@ -795,67 +695,25 @@ Error: foo
       line: 47,
       url: 'http://path/to/file.js',
     })
-    expect(stackFrames.stack[1]).toEqual({
-      args: [],
-      column: 13,
-      func: 'foo',
-      line: 45,
-      url: 'http://path/to/file.js',
-    })
-    expect(stackFrames.stack[2]).toEqual({
-      args: [],
-      column: 1,
-      func: 'bar',
-      line: 108,
-      url: 'http://path/to/file.js',
-    })
+    expect(stackFrames.stack[1]).toEqual({ args: [], column: 13, func: 'foo', line: 45, url: 'http://path/to/file.js' })
+    expect(stackFrames.stack[2]).toEqual({ args: [], column: 1, func: 'bar', line: 108, url: 'http://path/to/file.js' })
   })
 
   it('should parse IE 11 eval error', () => {
     const stackFrames = computeStackTrace(CapturedExceptions.IE_11_EVAL)
 
     expect(stackFrames.stack.length).toEqual(3)
-    expect(stackFrames.stack[0]).toEqual({
-      args: [],
-      column: 1,
-      func: 'eval code',
-      line: 1,
-      url: 'eval code',
-    })
-    expect(stackFrames.stack[1]).toEqual({
-      args: [],
-      column: 17,
-      func: 'foo',
-      line: 58,
-      url: 'http://path/to/file.js',
-    })
-    expect(stackFrames.stack[2]).toEqual({
-      args: [],
-      column: 1,
-      func: 'bar',
-      line: 109,
-      url: 'http://path/to/file.js',
-    })
+    expect(stackFrames.stack[0]).toEqual({ args: [], column: 1, func: 'eval code', line: 1, url: 'eval code' })
+    expect(stackFrames.stack[1]).toEqual({ args: [], column: 17, func: 'foo', line: 58, url: 'http://path/to/file.js' })
+    expect(stackFrames.stack[2]).toEqual({ args: [], column: 1, func: 'bar', line: 109, url: 'http://path/to/file.js' })
   })
 
   it('should parse Opera 25 error', () => {
     const stackFrames = computeStackTrace(CapturedExceptions.OPERA_25)
 
     expect(stackFrames.stack.length).toEqual(3)
-    expect(stackFrames.stack[0]).toEqual({
-      args: [],
-      column: 22,
-      func: '?',
-      line: 47,
-      url: 'http://path/to/file.js',
-    })
-    expect(stackFrames.stack[1]).toEqual({
-      args: [],
-      column: 15,
-      func: 'foo',
-      line: 52,
-      url: 'http://path/to/file.js',
-    })
+    expect(stackFrames.stack[0]).toEqual({ args: [], column: 22, func: '?', line: 47, url: 'http://path/to/file.js' })
+    expect(stackFrames.stack[1]).toEqual({ args: [], column: 15, func: 'foo', line: 52, url: 'http://path/to/file.js' })
     expect(stackFrames.stack[2]).toEqual({
       args: [],
       column: 168,
@@ -1010,6 +868,38 @@ Error: foo
       func: 'r',
       line: 34,
       url: 'capacitor://localhost/media/dist/bundle.js',
+    })
+  })
+
+  it('should parse Safari WebAssembly stack frames', () => {
+    const wasmStack = `
+  RuntimeError: Out of bounds memory access
+      myModule.wasm-function[crashHandler]@[wasm code]
+      handleError@https://example.com/app.js:123:45
+      @https://example.com/app.js:150:30
+    `
+    const mockErr = { message: 'Out of bounds memory access', name: 'RuntimeError', stack: wasmStack }
+
+    const stackFrames = computeStackTrace(mockErr)
+
+    expect(stackFrames.stack.length).toBe(3)
+
+    expect(stackFrames.stack[0]).toEqual({ func: 'myModule.wasm-function.crashHandler', url: '[wasm code]', args: [] })
+
+    expect(stackFrames.stack[1]).toEqual({
+      func: 'handleError',
+      url: 'https://example.com/app.js',
+      line: 123,
+      column: 45,
+      args: [],
+    })
+
+    expect(stackFrames.stack[2]).toEqual({
+      func: '?',
+      url: 'https://example.com/app.js',
+      line: 150,
+      column: 30,
+      args: [],
     })
   })
 })

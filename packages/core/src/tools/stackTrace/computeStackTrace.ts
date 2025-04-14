@@ -37,7 +37,11 @@ export function computeStackTrace(ex: unknown): StackTrace {
   if (stackProperty) {
     stackProperty.split('\n').forEach((line) => {
       const stackFrame =
-        parseChromeLine(line) || parseChromeAnonymousLine(line) || parseWinLine(line) || parseGeckoLine(line)
+        parseChromeLine(line) ||
+        parseChromeAnonymousLine(line) ||
+        parseWinLine(line) ||
+        parseGeckoLine(line) ||
+        parseSafariWasmLine(line)
       if (stackFrame) {
         if (!stackFrame.func && stackFrame.line) {
           stackFrame.func = UNKNOWN_FUNCTION
@@ -48,11 +52,7 @@ export function computeStackTrace(ex: unknown): StackTrace {
     })
   }
 
-  return {
-    message: tryToGetString(ex, 'message'),
-    name: tryToGetString(ex, 'name'),
-    stack,
-  }
+  return { message: tryToGetString(ex, 'message'), name: tryToGetString(ex, 'name'), stack }
 }
 const fileUrl =
   '((?:file|https?|blob|chrome-extension|electron|native|eval|webpack|snippet|<anonymous>|\\w+\\.|\\/).*?)'
@@ -153,6 +153,15 @@ function parseGeckoLine(line: string): StackFrame | undefined {
   }
 }
 
+const SAFARI_WASM_RE = /^(\S+)\[(\S+)\]@\[wasm code\]$/i
+
+function parseSafariWasmLine(line: string): StackFrame | undefined {
+  const match = SAFARI_WASM_RE.exec(line.trim())
+  if (!match) return
+
+  return { func: `${match[1]}.${match[2]}`, url: '[wasm code]', args: [] }
+}
+
 function tryToGetString(candidate: unknown, property: string) {
   if (typeof candidate !== 'object' || !candidate || !(property in candidate)) {
     return undefined
@@ -164,11 +173,7 @@ function tryToGetString(candidate: unknown, property: string) {
 export function computeStackTraceFromOnErrorMessage(messageObj: unknown, url?: string, line?: number, column?: number) {
   const stack = [{ url, column, line }]
   const { name, message } = tryToParseMessage(messageObj)
-  return {
-    name,
-    message,
-    stack,
-  }
+  return { name, message, stack }
 }
 
 // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Error#Error_types
