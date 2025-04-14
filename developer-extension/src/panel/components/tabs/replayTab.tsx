@@ -1,4 +1,4 @@
-import { Button, Flex } from '@mantine/core'
+import { Button, Flex, Checkbox } from '@mantine/core'
 import React, { useEffect, useRef, useState } from 'react'
 import type { BrowserRecord } from '@datadog/browser-rum/src/types'
 import { TabBase } from '../tabBase'
@@ -38,19 +38,27 @@ function Player() {
   const [playerStatus, setPlayerStatus] = useState<SessionReplayPlayerStatus>('loading')
   const [recordCount, setRecordCount] = useState(0)
   const [getRecords, setGetRecords] = useState<(() => BrowserRecord[]) | null>(null)
+  const [excludeMouseMovements, setExcludeMouseMovements] = useState(false)
+  const excludeMouseMovementsRef = useRef(false)
+
+  // Keep the ref in sync with the state
+  useEffect(() => {
+    excludeMouseMovementsRef.current = excludeMouseMovements
+  }, [excludeMouseMovements])
 
   useEffect(() => {
     startSessionReplayPlayer(
       frameRef.current!,
       setPlayerStatus,
       setRecordCount,
-      (getRecordsFn) => setGetRecords(() => getRecordsFn)
+      (getRecordsFn) => setGetRecords(() => getRecordsFn),
+      excludeMouseMovementsRef
     )
   }, [])
 
   const downloadRecords = () => {
     if (!getRecords) {
-      return;
+      return
     }
 
     const records = getRecords()
@@ -58,7 +66,7 @@ function Player() {
     const segment = { records, source: 'browser', records_count: records.length, view: { id: 'xxx' } }
     const segmentStr = JSON.stringify(segment, null, 2)
     const dataUri = `data:application/json;charset=utf-8,${encodeURIComponent(segmentStr)}`
-    
+
     const downloadLink = document.createElement('a')
     downloadLink.setAttribute('href', dataUri)
     downloadLink.setAttribute('download', `session-replay-records-${Date.now()}.json`)
@@ -71,7 +79,16 @@ function Player() {
     <TabBase
       top={
         <Flex justify="space-between" align="center" w="100%">
-          <Button onClick={generateFullSnapshot} color="orange">Force Full Snapshot</Button>
+          <Flex align="center" gap="md">
+            <Button onClick={generateFullSnapshot} color="orange">
+              Force Full Snapshot
+            </Button>
+            <Checkbox
+              label="Exclude mouse movements"
+              checked={excludeMouseMovements}
+              onChange={(event) => setExcludeMouseMovements(event.currentTarget.checked)}
+            />
+          </Flex>
           <Flex align="center" gap="xs">
             <div>Records applied: {recordCount}</div>
             <Button

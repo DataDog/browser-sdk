@@ -31,7 +31,8 @@ export function startSessionReplayPlayer(
   iframe: HTMLIFrameElement,
   onStatusChange: (status: SessionReplayPlayerStatus) => void,
   onRecordCountChange: (count: number) => void,
-  onGetRecords: (getRecordsFn: () => BrowserRecord[]) => void
+  onGetRecords: (getRecordsFn: () => BrowserRecord[]) => void,
+  shouldExcludeMouseMovements: { current: boolean }
 ) {
   let status: SessionReplayPlayerStatus = 'loading'
   const bufferedRecords = createRecordBuffer()
@@ -56,7 +57,15 @@ export function startSessionReplayPlayer(
     }
     const record = backgroundMessage.message.payload.record
 
-    // Always add record to buffer regardless of status
+    // Check if this is a mouse movement that should be excluded
+    const isMouseMovement =
+      record.type === RecordType.IncrementalSnapshot && record.data.source === IncrementalSource.MouseMove
+
+    if (shouldExcludeMouseMovements.current && isMouseMovement) {
+      return // Skip adding this record entirely
+    }
+
+    // Add record to buffer
     bufferedRecords.add(record)
     onRecordCountChange(bufferedRecords.getCount())
 
