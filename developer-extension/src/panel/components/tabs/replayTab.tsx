@@ -1,8 +1,7 @@
 import { Button, Flex, Checkbox } from '@mantine/core'
 import React, { useEffect, useRef, useState } from 'react'
-import type { BrowserRecord } from '@datadog/browser-rum/src/types'
 import { TabBase } from '../tabBase'
-import type { SessionReplayPlayerStatus } from '../../sessionReplayPlayer/startSessionReplayPlayer'
+import type { SessionReplayPlayerState } from '../../sessionReplayPlayer/startSessionReplayPlayer'
 import { startSessionReplayPlayer } from '../../sessionReplayPlayer/startSessionReplayPlayer'
 import { evalInWindow } from '../../evalInWindow'
 import { createLogger } from '../../../common/logger'
@@ -35,33 +34,23 @@ export function ReplayTab() {
 
 function Player() {
   const frameRef = useRef<HTMLIFrameElement | null>(null)
-  const [playerStatus, setPlayerStatus] = useState<SessionReplayPlayerStatus>('loading')
-  const [recordCount, setRecordCount] = useState(0)
-  const [getRecords, setGetRecords] = useState<(() => BrowserRecord[]) | null>(null)
-  const [excludeMouseMovements, setExcludeMouseMovements] = useState(false)
-  const excludeMouseMovementsRef = useRef(false)
-
-  // Keep the ref in sync with the state
-  useEffect(() => {
-    excludeMouseMovementsRef.current = excludeMouseMovements
-  }, [excludeMouseMovements])
+  const [playerState, setPlayerState] = useState<SessionReplayPlayerState>({
+    status: 'loading',
+    recordCount: 0,
+    excludeMouseMovements: false,
+  })
+  const playerRef = useRef<ReturnType<typeof startSessionReplayPlayer>>(null)
 
   useEffect(() => {
-    startSessionReplayPlayer(
-      frameRef.current!,
-      setPlayerStatus,
-      setRecordCount,
-      (getRecordsFn) => setGetRecords(() => getRecordsFn),
-      excludeMouseMovementsRef
-    )
+    playerRef.current = startSessionReplayPlayer(frameRef.current!, setPlayerState)
   }, [])
 
   const downloadRecords = () => {
-    if (!getRecords) {
+    if (!playerRef.current?.getRecords) {
       return
     }
 
-    const records = getRecords()
+    const records = playerRef.current.getRecords()
     // Create a segment that contains enough information to be compatible with the Replay Playground Static App
     const segment = { records, source: 'browser', records_count: records.length, view: { id: 'xxx' } }
     const segmentStr = JSON.stringify(segment, null, 2)
@@ -85,16 +74,16 @@ function Player() {
             </Button>
             <Checkbox
               label="Exclude mouse movements"
-              checked={excludeMouseMovements}
-              onChange={(event) => setExcludeMouseMovements(event.currentTarget.checked)}
+              checked={playerState.excludeMouseMovements}
+              onChange={(event) => playerRef.current?.setExcludeMouseMovements(event.currentTarget.checked)}
             />
           </Flex>
           <Flex align="center" gap="xs">
-            <div>Records applied: {recordCount}</div>
+            <div>Records applied: {playerState.recordCount}</div>
             <Button
               onClick={downloadRecords}
               variant="subtle"
-              disabled={recordCount === 0}
+              disabled={playerState.recordCount === 0}
               title="Download records as JSON"
               p="xs"
             >
@@ -104,8 +93,8 @@ function Player() {
         </Flex>
       }
     >
-      <iframe ref={frameRef} className={classes.iframe} data-status={playerStatus} />
-      {playerStatus === 'waiting-for-full-snapshot' && <WaitingForFullSnapshot />}
+      <iframe ref={frameRef} className={classes.iframe} data-status={playerState.status} />
+      {playerState.status === 'waiting-for-full-snapshot' && <WaitingForFullSnapshot />}
     </TabBase>
   )
 }

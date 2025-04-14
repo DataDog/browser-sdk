@@ -8,6 +8,11 @@ import { MessageBridgeDownType, MessageBridgeUpLogLevel, MessageBridgeUpType } f
 const sandboxLogger = createLogger('sandbox')
 
 export type SessionReplayPlayerStatus = 'loading' | 'waiting-for-full-snapshot' | 'ready'
+export type SessionReplayPlayerState = {
+  status: SessionReplayPlayerStatus
+  recordCount: number
+  excludeMouseMovements: boolean
+}
 
 const sandboxOrigin = 'https://session-replay-datadoghq.com'
 // To follow web-ui development, this version will need to be manually updated from time to time.
@@ -29,26 +34,25 @@ const sandboxUrl = `${sandboxOrigin}/${sandboxVersion}/index.html?${String(sandb
 
 export function startSessionReplayPlayer(
   iframe: HTMLIFrameElement,
-  onStatusChange: (status: SessionReplayPlayerStatus) => void,
-  onRecordCountChange: (count: number) => void,
-  onGetRecords: (getRecordsFn: () => BrowserRecord[]) => void,
-  shouldExcludeMouseMovements: { current: boolean }
+  setPlayerState: (state: SessionReplayPlayerState) => void
 ) {
   let status: SessionReplayPlayerStatus = 'loading'
   const bufferedRecords = createRecordBuffer()
-
-  onGetRecords(() => bufferedRecords.getRecords())
+  let excludeMouseMovements = false
 
   const messageBridge = createMessageBridge(iframe, () => {
     const records = bufferedRecords.getRecords()
     if (records.length > 0) {
       status = 'ready'
-      onStatusChange(status)
       records.forEach((record) => messageBridge.sendRecord(record))
     } else {
       status = 'waiting-for-full-snapshot'
-      onStatusChange(status)
     }
+    setPlayerState({
+      status,
+      recordCount: bufferedRecords.getCount(),
+      excludeMouseMovements,
+    })
   })
 
   const backgroundMessageSubscription = onBackgroundMessage.subscribe((backgroundMessage) => {
@@ -61,21 +65,23 @@ export function startSessionReplayPlayer(
     const isMouseMovement =
       record.type === RecordType.IncrementalSnapshot && record.data.source === IncrementalSource.MouseMove
 
-    if (shouldExcludeMouseMovements.current && isMouseMovement) {
+    if (excludeMouseMovements && isMouseMovement) {
       return // Skip adding this record entirely
     }
 
     // Add record to buffer
     bufferedRecords.add(record)
-    onRecordCountChange(bufferedRecords.getCount())
-
     if (status === 'ready') {
       messageBridge.sendRecord(record)
     } else if (status === 'waiting-for-full-snapshot' && isFullSnapshotStart(record)) {
       status = 'ready'
-      onStatusChange(status)
       messageBridge.sendRecord(record)
     }
+    setPlayerState({
+      status,
+      recordCount: bufferedRecords.getCount(),
+      excludeMouseMovements,
+    })
   })
 
   iframe.src = sandboxUrl
@@ -84,6 +90,17 @@ export function startSessionReplayPlayer(
     stop() {
       messageBridge.stop()
       backgroundMessageSubscription.unsubscribe()
+    },
+    getRecords() {
+      return bufferedRecords.getRecords()
+    },
+    setExcludeMouseMovements(shouldExcludeMouseMovements: boolean) {
+      excludeMouseMovements = shouldExcludeMouseMovements
+      setPlayerState({
+        status,
+        recordCount: bufferedRecords.getCount(),
+        excludeMouseMovements,
+      })
     },
   }
 }
