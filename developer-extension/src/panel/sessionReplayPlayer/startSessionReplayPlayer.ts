@@ -30,10 +30,13 @@ const sandboxUrl = `${sandboxOrigin}/${sandboxVersion}/index.html?${String(sandb
 export function startSessionReplayPlayer(
   iframe: HTMLIFrameElement,
   onStatusChange: (status: SessionReplayPlayerStatus) => void,
-  onRecordCountChange?: (count: number) => void
+  onRecordCountChange: (count: number) => void,
+  onGetRecords: (getRecordsFn: () => BrowserRecord[]) => void
 ) {
   let status: SessionReplayPlayerStatus = 'loading'
   const bufferedRecords = createRecordBuffer()
+
+  onGetRecords(() => bufferedRecords.getRecords())
 
   const messageBridge = createMessageBridge(iframe, () => {
     const records = bufferedRecords.getRecords()
@@ -55,7 +58,7 @@ export function startSessionReplayPlayer(
 
     // Always add record to buffer regardless of status
     bufferedRecords.add(record)
-    onRecordCountChange?.(bufferedRecords.getCount())
+    onRecordCountChange(bufferedRecords.getCount())
 
     if (status === 'ready') {
       messageBridge.sendRecord(record)

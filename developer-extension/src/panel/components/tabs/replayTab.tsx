@@ -1,5 +1,6 @@
 import { Button, Flex } from '@mantine/core'
 import React, { useEffect, useRef, useState } from 'react'
+import type { BrowserRecord } from '@datadog/browser-rum/src/types'
 import { TabBase } from '../tabBase'
 import type { SessionReplayPlayerStatus } from '../../sessionReplayPlayer/startSessionReplayPlayer'
 import { startSessionReplayPlayer } from '../../sessionReplayPlayer/startSessionReplayPlayer'
@@ -36,17 +37,53 @@ function Player() {
   const frameRef = useRef<HTMLIFrameElement | null>(null)
   const [playerStatus, setPlayerStatus] = useState<SessionReplayPlayerStatus>('loading')
   const [recordCount, setRecordCount] = useState(0)
+  const [getRecords, setGetRecords] = useState<(() => BrowserRecord[]) | null>(null)
 
   useEffect(() => {
-    startSessionReplayPlayer(frameRef.current!, setPlayerStatus, setRecordCount)
+    startSessionReplayPlayer(
+      frameRef.current!,
+      setPlayerStatus,
+      setRecordCount,
+      (getRecordsFn) => setGetRecords(() => getRecordsFn)
+    )
   }, [])
+
+  const downloadRecords = () => {
+    if (!getRecords) {
+      return;
+    }
+
+    const records = getRecords()
+    // Create a segment that contains enough information to be compatible with the Replay Playground Static App
+    const segment = { records, source: 'browser', records_count: records.length, view: { id: 'xxx' } }
+    const segmentStr = JSON.stringify(segment, null, 2)
+    const dataUri = `data:application/json;charset=utf-8,${encodeURIComponent(segmentStr)}`
+    
+    const downloadLink = document.createElement('a')
+    downloadLink.setAttribute('href', dataUri)
+    downloadLink.setAttribute('download', `session-replay-records-${Date.now()}.json`)
+    document.body.appendChild(downloadLink)
+    downloadLink.click()
+    document.body.removeChild(downloadLink)
+  }
 
   return (
     <TabBase
       top={
         <Flex justify="space-between" align="center" w="100%">
           <Button onClick={generateFullSnapshot} color="orange">Force Full Snapshot</Button>
-          <div>Records applied: {recordCount}</div>
+          <Flex align="center" gap="xs">
+            <div>Records applied: {recordCount}</div>
+            <Button
+              onClick={downloadRecords}
+              variant="subtle"
+              disabled={recordCount === 0}
+              title="Download records as JSON"
+              p="xs"
+            >
+              📥
+            </Button>
+          </Flex>
         </Flex>
       }
     >
