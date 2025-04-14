@@ -157,8 +157,9 @@ const SAFARI_WASM_RE = /^(\S+)\[(\S+)\]@\[wasm code\]$/i
 
 function parseSafariWasmLine(line: string): StackFrame | undefined {
   const match = SAFARI_WASM_RE.exec(line.trim())
-  if (!match) return
-
+  if (!match) {
+    return
+  }
   return { func: `${match[1]}.${match[2]}`, url: '[wasm code]', args: [] }
 }
 
