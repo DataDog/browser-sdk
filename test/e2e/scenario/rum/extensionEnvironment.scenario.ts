@@ -15,10 +15,16 @@ const test = base.extend<{
     await use(context)
     await context.close()
   },
-  // eslint-disable-next-line no-empty-pattern
-  extensionId: async ({}, use) => {
-    // Use the known extension ID to avoid waiting for background/service worker events.
-    await use('npndlchcnpnbmmmhbgpgonapiegdkkge')
+  extensionId: async ({ context }, use) => {
+    const workers = context.serviceWorkers()
+    const extensionId = workers[0]?.url().split('/')[2]
+    if (!extensionId) {
+      const worker = await context.waitForEvent('serviceworker')
+      const id = worker.url().split('/')[2]
+      await use(id)
+    } else {
+      await use(extensionId)
+    }
   },
 })
 
