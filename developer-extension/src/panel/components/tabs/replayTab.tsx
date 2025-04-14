@@ -41,7 +41,9 @@ function Player() {
   }, [])
 
   return (
-    <TabBase>
+    <TabBase
+      top={<Button onClick={generateFullSnapshot} color="orange">Force Full Snapshot</Button>}
+    >
       <iframe ref={frameRef} className={classes.iframe} data-status={playerStatus} />
       {playerStatus === 'waiting-for-full-snapshot' && <WaitingForFullSnapshot />}
     </TabBase>
@@ -52,12 +54,7 @@ function WaitingForFullSnapshot() {
   return (
     <Alert
       level="warning"
-      message="Waiting for a full snapshot to be generated..."
-      button={
-        <Button onClick={generateFullSnapshot} color="orange">
-          Generate Full Snapshot
-        </Button>
-      }
+      message="⚠️ Waiting for a full snapshot to be generated. Navigate to another view, or press the button above to force a full snapshot."
     />
   )
 }
