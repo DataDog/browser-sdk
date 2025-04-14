@@ -29,13 +29,14 @@ const sandboxUrl = `${sandboxOrigin}/${sandboxVersion}/index.html?${String(sandb
 
 export function startSessionReplayPlayer(
   iframe: HTMLIFrameElement,
-  onStatusChange: (status: SessionReplayPlayerStatus) => void
+  onStatusChange: (status: SessionReplayPlayerStatus) => void,
+  onRecordCountChange?: (count: number) => void
 ) {
   let status: SessionReplayPlayerStatus = 'loading'
   const bufferedRecords = createRecordBuffer()
 
   const messageBridge = createMessageBridge(iframe, () => {
-    const records = bufferedRecords.consume()
+    const records = bufferedRecords.getRecords()
     if (records.length > 0) {
       status = 'ready'
       onStatusChange(status)
@@ -51,15 +52,16 @@ export function startSessionReplayPlayer(
       return
     }
     const record = backgroundMessage.message.payload.record
-    if (status === 'loading') {
-      bufferedRecords.add(record)
-    } else if (status === 'waiting-for-full-snapshot') {
-      if (isFullSnapshotStart(record)) {
-        status = 'ready'
-        onStatusChange(status)
-        messageBridge.sendRecord(record)
-      }
-    } else {
+
+    // Always add record to buffer regardless of status
+    bufferedRecords.add(record)
+    onRecordCountChange?.(bufferedRecords.getCount())
+
+    if (status === 'ready') {
+      messageBridge.sendRecord(record)
+    } else if (status === 'waiting-for-full-snapshot' && isFullSnapshotStart(record)) {
+      status = 'ready'
+      onStatusChange(status)
       messageBridge.sendRecord(record)
     }
   })
@@ -87,8 +89,11 @@ function createRecordBuffer() {
         records.push(record)
       }
     },
-    consume(): BrowserRecord[] {
-      return records.splice(0, records.length)
+    getRecords(): BrowserRecord[] {
+      return [...records]
+    },
+    getCount(): number {
+      return records.length
     },
   }
 }

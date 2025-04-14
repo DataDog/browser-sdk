@@ -1,4 +1,4 @@
-import { Button } from '@mantine/core'
+import { Button, Flex } from '@mantine/core'
 import React, { useEffect, useRef, useState } from 'react'
 import { TabBase } from '../tabBase'
 import type { SessionReplayPlayerStatus } from '../../sessionReplayPlayer/startSessionReplayPlayer'
@@ -35,14 +35,20 @@ export function ReplayTab() {
 function Player() {
   const frameRef = useRef<HTMLIFrameElement | null>(null)
   const [playerStatus, setPlayerStatus] = useState<SessionReplayPlayerStatus>('loading')
+  const [recordCount, setRecordCount] = useState(0)
 
   useEffect(() => {
-    startSessionReplayPlayer(frameRef.current!, setPlayerStatus)
+    startSessionReplayPlayer(frameRef.current!, setPlayerStatus, setRecordCount)
   }, [])
 
   return (
     <TabBase
-      top={<Button onClick={generateFullSnapshot} color="orange">Force Full Snapshot</Button>}
+      top={
+        <Flex justify="space-between" align="center" w="100%">
+          <Button onClick={generateFullSnapshot} color="orange">Force Full Snapshot</Button>
+          <div>Records applied: {recordCount}</div>
+        </Flex>
+      }
     >
       <iframe ref={frameRef} className={classes.iframe} data-status={playerStatus} />
       {playerStatus === 'waiting-for-full-snapshot' && <WaitingForFullSnapshot />}
