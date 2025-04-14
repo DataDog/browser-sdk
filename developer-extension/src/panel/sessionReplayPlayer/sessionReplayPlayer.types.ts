@@ -17,7 +17,7 @@ export enum MessageBridgeUpType {
 }
 
 export enum MessageBridgeDownType {
-  RECORDS = 'records',
+  RECORD = 'record',
   RESET = 'reset',
   ELEMENT_POSITION = 'element_position',
 }
@@ -191,8 +191,8 @@ export type MessageBridgeDownReset = {
 } & MessageBridgeMetadata
 
 export type MessageBridgeDownRecords = {
-  type: MessageBridgeDownType.RECORDS
-  records: RecordWithMetadata[]
+  type: MessageBridgeDownType.RECORD
+  record: RecordWithMetadata
 } & MessageBridgeMetadata
 
 export type MessageBridgeDownElementPosition = {

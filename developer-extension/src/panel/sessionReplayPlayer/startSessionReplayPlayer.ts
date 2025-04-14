@@ -12,7 +12,7 @@ export type SessionReplayPlayerStatus = 'loading' | 'waiting-for-full-snapshot' 
 const sandboxOrigin = 'https://session-replay-datadoghq.com'
 // To follow web-ui development, this version will need to be manually updated from time to time.
 // When doing that, be sure to update types and implement any protocol changes.
-const sandboxVersion = '0.68.0'
+const sandboxVersion = '0.116.0'
 const sandboxParams = new URLSearchParams({
   staticContext: JSON.stringify({
     tabId: 'xxx',
@@ -20,11 +20,7 @@ const sandboxParams = new URLSearchParams({
     featureFlags: {
       // Allows to easily inspect the DOM in the sandbox
       rum_session_replay_iframe_interactive: true,
-
-      // Use the service worker
-      rum_session_replay_service_worker: true,
       rum_session_replay_service_worker_debug: false,
-
       rum_session_replay_disregard_origin: true,
     },
   }),
@@ -146,20 +142,18 @@ function createMessageBridge(iframe: HTMLIFrameElement, onReady: () => void) {
       window.removeEventListener('message', globalMessageListener)
     },
 
-    sendRecord(record: BrowserRecord) {
+    sendRecord: (record: BrowserRecord) => {
       iframe.contentWindow!.postMessage(
         {
-          type: MessageBridgeDownType.RECORDS,
-          records: [
-            {
-              ...normalizeRecord(record),
-              viewId: 'xxx',
-              orderId: nextMessageOrderId,
-              isSeeking: false,
-              shouldWaitForIt: false,
-              segmentSource: 'browser',
-            },
-          ],
+          type: MessageBridgeDownType.RECORD,
+          record: {
+            ...normalizeRecord(record),
+            viewId: 'xxx',
+            orderId: nextMessageOrderId,
+            isSeeking: false,
+            shouldWaitForIt: false,
+            segmentSource: 'browser',
+          },
           sentAt: Date.now(),
         },
         sandboxOrigin
