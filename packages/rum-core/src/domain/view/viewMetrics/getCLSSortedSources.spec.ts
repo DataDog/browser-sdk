@@ -1,10 +1,10 @@
 import type { RumLayoutShiftAttribution } from '../../../browser/performanceObservable'
-import { getCLSSortedSources } from './getCLSSortedSources'
+import { getClsSortedSources } from './getClsSortedSources'
 
-describe('getCLSSortedSources', () => {
+describe('getClsSortedSources', () => {
   it('should return an empty array when sources is empty', () => {
     const sources: RumLayoutShiftAttribution[] = []
-    expect(getCLSSortedSources(sources)).toEqual([])
+    expect(getClsSortedSources(sources)).toEqual([])
   })
 
   it('should sort sources by impacted area in descending order', () => {
@@ -30,7 +30,7 @@ describe('getCLSSortedSources', () => {
       createSource(0, 0, 50, 50), // Area: 2500
     ]
 
-    const sortedSources = getCLSSortedSources(sources)
+    const sortedSources = getClsSortedSources(sources)
     expect(sortedSources.length).toBe(3)
     expect(sortedSources[0].currentRect.width).toBe(200) // Largest area first
     expect(sortedSources[1].currentRect.width).toBe(100) // Second largest
@@ -66,7 +66,7 @@ describe('getCLSSortedSources', () => {
 
     const sources: RumLayoutShiftAttribution[] = [createNonIntersectingSource()]
 
-    const sortedSources = getCLSSortedSources(sources)
+    const sortedSources = getClsSortedSources(sources)
     expect(sortedSources.length).toBe(1)
     // The impacted area should be the sum of both rectangles since they don't intersect
     expect(sortedSources[0].currentRect.width).toBe(100)
@@ -101,7 +101,7 @@ describe('getCLSSortedSources', () => {
 
     const sources: RumLayoutShiftAttribution[] = [createPartiallyIntersectingSource()]
 
-    const sortedSources = getCLSSortedSources(sources)
+    const sortedSources = getClsSortedSources(sources)
     expect(sortedSources.length).toBe(1)
     // The impacted area should be less than the sum of both rectangles since they intersect
     expect(sortedSources[0].currentRect.width).toBe(100)

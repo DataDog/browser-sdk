@@ -40,7 +40,7 @@ const getImpactedArea = (source: RumLayoutShiftAttribution): number => {
  * Sorts layout shift sources by their impacted area in descending order
  * @returns A new sorted array of layout shift sources
  */
-export function getCLSSortedSources(sources: RumLayoutShiftAttribution[]): RumLayoutShiftAttribution[] {
+export function getClsSortedSources(sources: RumLayoutShiftAttribution[]): RumLayoutShiftAttribution[] {
   if (!sources.length) {
     return sources
   }

@@ -10,7 +10,7 @@ import {
 import { getSelectorFromElement } from '../../getSelectorFromElement'
 import type { RumConfiguration } from '../../configuration'
 import type { RumRect } from '../../../rumEvent.types'
-import { getCLSSortedSources } from './getCLSSortedSources'
+import { getClsSortedSources } from './getClsSortedSources'
 
 declare const WeakRef: WeakRefConstructor
 
@@ -116,7 +116,7 @@ export function trackCumulativeLayoutShift(
 function getFirstElementAttribution(
   sources: RumLayoutShiftAttribution[]
 ): (RumLayoutShiftAttribution & { node: Element }) | undefined {
-  const sortedSources = getCLSSortedSources(sources)
+  const sortedSources = getClsSortedSources(sources)
   return sortedSources.find(
     (source): source is RumLayoutShiftAttribution & { node: Element } => !!source.node && isElementNode(source.node)
   )
