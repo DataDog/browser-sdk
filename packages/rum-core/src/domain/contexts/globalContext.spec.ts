@@ -1,43 +1,43 @@
-import type { ContextManager } from '@datadog/browser-core'
+import type { ContextManager, RelativeTime } from '@datadog/browser-core'
 import { removeStorageListeners } from '@datadog/browser-core'
 import { registerCleanupTask } from '@datadog/browser-core/test'
 import { mockRumConfiguration } from '../../../test'
+import type { Hooks } from '../../hooks'
+import { HookNames, createHooks } from '../../hooks'
 import { startGlobalContext } from './globalContext'
 
 describe('global context', () => {
   let globalContext: ContextManager
+  let hooks: Hooks
 
   beforeEach(() => {
-    globalContext = startGlobalContext(mockRumConfiguration())
+    hooks = createHooks()
+    globalContext = startGlobalContext(hooks, mockRumConfiguration())
   })
 
-  it('should get context', () => {
-    globalContext.setContext({ id: '123' })
-    expect(globalContext.getContext()).toEqual({ id: '123' })
-  })
+  describe('assemble hook', () => {
+    it('should set the context', () => {
+      globalContext.setContext({ id: '123', foo: 'bar' })
+      const event = hooks.triggerHook(HookNames.Assemble, { eventType: 'view', startTime: 0 as RelativeTime })
 
-  it('should set context property', () => {
-    globalContext.setContextProperty('foo', 'bar')
-    expect(globalContext.getContext()).toEqual({ foo: 'bar' })
-  })
-
-  it('should remove context property', () => {
-    globalContext.setContext({ id: '123', foo: 'bar' })
-    globalContext.removeContextProperty('foo')
-    expect(globalContext.getContext()).toEqual({ id: '123' })
-  })
-
-  it('should clear context', () => {
-    globalContext.setContext({ id: '123' })
-    globalContext.clearContext()
-    expect(globalContext.getContext()).toEqual({})
+      expect(event).toEqual({
+        type: 'view',
+        context: {
+          id: '123',
+          foo: 'bar',
+        },
+      })
+    })
   })
 })
 
 describe('global context across pages', () => {
   let globalContext: ContextManager
+  let hooks: Hooks
 
   beforeEach(() => {
+    hooks = createHooks()
+
     registerCleanupTask(() => {
       localStorage.clear()
       removeStorageListeners()
@@ -45,7 +45,7 @@ describe('global context across pages', () => {
   })
 
   it('when disabled, should store contexts only in memory', () => {
-    globalContext = startGlobalContext(mockRumConfiguration({ storeContextsAcrossPages: false }))
+    globalContext = startGlobalContext(hooks, mockRumConfiguration({ storeContextsAcrossPages: false }))
     globalContext.setContext({ id: '123' })
 
     expect(globalContext.getContext()).toEqual({ id: '123' })
@@ -53,22 +53,10 @@ describe('global context across pages', () => {
   })
 
   it('when enabled, should maintain the global context in local storage', () => {
-    globalContext = startGlobalContext(mockRumConfiguration({ storeContextsAcrossPages: true }))
+    globalContext = startGlobalContext(hooks, mockRumConfiguration({ storeContextsAcrossPages: true }))
 
     globalContext.setContext({ id: 'foo', qux: 'qix' })
     expect(globalContext.getContext()).toEqual({ id: 'foo', qux: 'qix' })
     expect(localStorage.getItem('_dd_c_rum_2')).toBe('{"id":"foo","qux":"qix"}')
-
-    globalContext.setContextProperty('foo', 'bar')
-    expect(globalContext.getContext()).toEqual({ id: 'foo', qux: 'qix', foo: 'bar' })
-    expect(localStorage.getItem('_dd_c_rum_2')).toBe('{"id":"foo","qux":"qix","foo":"bar"}')
-
-    globalContext.removeContextProperty('foo')
-    expect(globalContext.getContext()).toEqual({ id: 'foo', qux: 'qix' })
-    expect(localStorage.getItem('_dd_c_rum_2')).toBe('{"id":"foo","qux":"qix"}')
-
-    globalContext.clearContext()
-    expect(globalContext.getContext()).toEqual({})
-    expect(localStorage.getItem('_dd_c_rum_2')).toBe('{}')
   })
 })

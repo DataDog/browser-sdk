@@ -3,7 +3,6 @@ import { AbstractLifeCycle } from '@datadog/browser-core'
 import type { RumEventDomainContext } from '../domainContext.types'
 import type { RawRumEvent } from '../rawRumEvent.types'
 import type { RumEvent } from '../rumEvent.types'
-import type { CommonContext } from './contexts/commonContext'
 import type { RequestCompleteEvent, RequestStartEvent } from './requestCollection'
 import type { AutoAction } from './action/actionCollection'
 import type { ViewEvent, ViewCreatedEvent, ViewEndedEvent, BeforeViewUpdateEvent } from './view/trackViews'
@@ -89,7 +88,6 @@ export interface LifeCycleEventMap {
   [LifeCycleEventTypeAsConst.RUM_EVENT_COLLECTED]: RumEvent & Context
   [LifeCycleEventTypeAsConst.RAW_ERROR_COLLECTED]: {
     error: RawError
-    savedCommonContext?: CommonContext
     customerContext?: Context
   }
 }
@@ -97,7 +95,6 @@ export interface LifeCycleEventMap {
 export interface RawRumEventCollectedData<E extends RawRumEvent = RawRumEvent> {
   startTime: RelativeTime
   duration?: Duration
-  savedCommonContext?: CommonContext
   customerContext?: Context
   rawRumEvent: E
   domainContext: RumEventDomainContext<E['type']>

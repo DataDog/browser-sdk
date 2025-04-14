@@ -1,3 +1,4 @@
+import type { ContextManager } from '@datadog/browser-core'
 import {
   objectEntries,
   shallowClone,
@@ -15,7 +16,6 @@ import type {
   RumXhrCompleteContext,
   RumXhrStartContext,
 } from '../requestCollection'
-import type { CommonContext } from '../contexts/commonContext'
 import type { RumSessionManager } from '../rumSessionManager'
 import type { PropagatorType, TracingOption } from './tracer.types'
 import type { SpanIdentifier, TraceIdentifier } from './identifier'
@@ -69,7 +69,8 @@ export function clearTracingIfNeeded(context: RumFetchResolveContext | RumXhrCom
 export function startTracer(
   configuration: RumConfiguration,
   sessionManager: RumSessionManager,
-  getCommonContext: () => CommonContext
+  userContext: ContextManager,
+  accountContext: ContextManager
 ): Tracer {
   return {
     clearTracingIfNeeded,
@@ -78,7 +79,8 @@ export function startTracer(
         configuration,
         context,
         sessionManager,
-        getCommonContext,
+        userContext,
+        accountContext,
         (tracingHeaders: TracingHeaders) => {
           if (context.input instanceof Request && !context.init?.headers) {
             context.input = new Request(context.input)
@@ -110,7 +112,8 @@ export function startTracer(
         configuration,
         context,
         sessionManager,
-        getCommonContext,
+        userContext,
+        accountContext,
         (tracingHeaders: TracingHeaders) => {
           Object.keys(tracingHeaders).forEach((name) => {
             xhr.setRequestHeader(name, tracingHeaders[name])
@@ -124,7 +127,8 @@ function injectHeadersIfTracingAllowed(
   configuration: RumConfiguration,
   context: Partial<RumFetchStartContext | RumXhrStartContext>,
   sessionManager: RumSessionManager,
-  getCommonContext: () => CommonContext,
+  userContext: ContextManager,
+  accountContext: ContextManager,
   inject: (tracingHeaders: TracingHeaders) => void
 ) {
   const session = sessionManager.findTrackedSession()
@@ -156,7 +160,8 @@ function injectHeadersIfTracingAllowed(
       context.spanId,
       context.traceSampled,
       tracingOption.propagatorTypes,
-      getCommonContext,
+      userContext,
+      accountContext,
       configuration
     )
   )
@@ -171,7 +176,8 @@ function makeTracingHeaders(
   spanId: SpanIdentifier,
   traceSampled: boolean,
   propagatorTypes: PropagatorType[],
-  getCommonContext: () => CommonContext,
+  userContext: ContextManager,
+  accountContext: ContextManager,
   configuration: RumConfiguration
 ): TracingHeaders {
   const tracingHeaders: TracingHeaders = {}
@@ -219,8 +225,8 @@ function makeTracingHeaders(
     isExperimentalFeatureEnabled(ExperimentalFeature.USER_ACCOUNT_TRACE_HEADER) &&
     configuration.propagateTraceBaggage
   ) {
-    const userId = getCommonContext().user.id
-    const accountId = getCommonContext().account.id
+    const userId = userContext.getContext().id
+    const accountId = accountContext.getContext().id
     const baggageItems: string[] = []
 
     if (typeof userId === 'string') {
