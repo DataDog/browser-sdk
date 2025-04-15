@@ -1,0 +1,14 @@
+{
+  "compilerOptions": {
+    "outDir": "./dist/",
+    "strict": true,
+    "module": "commonjs",
+    "moduleResolution": "node",
+    "esModuleInterop": true,
+    "target": "es5",
+    "lib": ["ES2015", "DOM"],
+    "types": ["chrome"]
+  },
+  "include": ["src/**/*"],
+  "exclude": ["dist"]
+}
