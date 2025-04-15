@@ -7,6 +7,7 @@ const cors = require('cors')
 
 const logsConfig = require('../packages/logs/webpack.config')
 const rumSlimConfig = require('../packages/rum-slim/webpack.config')
+const rumExtraSlimConfig = require('../packages/rum-extra-slim/webpack.config')
 const rumConfig = require('../packages/rum/webpack.config')
 const workerConfig = require('../packages/worker/webpack.config')
 const webpackBase = require('../webpack.base')
@@ -26,7 +27,7 @@ function createStaticSandboxApp() {
   const app = express()
   app.use(cors())
   app.use(express.static(sandboxPath))
-  for (const config of [rumConfig, logsConfig, rumSlimConfig, workerConfig]) {
+  for (const config of [rumConfig, logsConfig, rumSlimConfig, rumExtraSlimConfig, workerConfig]) {
     // eslint-disable-next-line @typescript-eslint/no-misused-promises
     app.use(middleware(webpack(config(null, { mode: 'development' }))))
   }

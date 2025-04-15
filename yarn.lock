@@ -325,6 +325,20 @@ __metadata:
   languageName: unknown
   linkType: soft
 
+"@datadog/browser-rum-extra-slim@workspace:packages/rum-extra-slim":
+  version: 0.0.0-use.local
+  resolution: "@datadog/browser-rum-extra-slim@workspace:packages/rum-extra-slim"
+  dependencies:
+    "@datadog/browser-core": "npm:6.6.3"
+    "@datadog/browser-rum-core": "npm:6.6.3"
+  peerDependencies:
+    "@datadog/browser-logs": 6.6.3
+  peerDependenciesMeta:
+    "@datadog/browser-logs":
+      optional: true
+  languageName: unknown
+  linkType: soft
+
 "@datadog/browser-rum-react@workspace:packages/rum-react":
   version: 0.0.0-use.local
   resolution: "@datadog/browser-rum-react@workspace:packages/rum-react"

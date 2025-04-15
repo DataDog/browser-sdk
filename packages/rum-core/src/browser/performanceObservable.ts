@@ -65,7 +65,7 @@ export interface RumPerformanceResourceTiming {
   renderBlockingStatus?: string
   traceId?: string
   deliveryType?: 'cache' | 'navigational-prefetch' | ''
-  toJSON(): Omit<PerformanceEntry, 'toJSON'>
+  toJSON(): Omit<RumPerformanceResourceTiming, 'toJSON'>
 }
 
 export interface RumPerformancePaintTiming {
@@ -75,7 +75,7 @@ export interface RumPerformancePaintTiming {
   toJSON(): Omit<RumPerformancePaintTiming, 'toJSON'>
 }
 
-export interface RumPerformanceNavigationTiming extends Omit<RumPerformanceResourceTiming, 'entryType'> {
+export interface RumPerformanceNavigationTiming extends Omit<RumPerformanceResourceTiming, 'entryType' | 'toJSON'> {
   entryType: RumPerformanceEntryType.NAVIGATION
   initiatorType: 'navigation'
   name: string
