@@ -11,6 +11,5 @@
     "@datadog/browser-logs": "workspace:*",
     "@datadog/browser-rum": "workspace:*"
   },
-  "devDependencies": {},
   "private": true
 }

@@ -66,6 +66,6 @@ test.describe('Extension Environment Tests', () => {
     const regularResult = await page.evaluate(() => (window.DD_RUM ? window.DD_RUM.version : ''))
     expect(regularResult).not.toBe('')
 
-    expect(consoleMessages).toContain('Extension context DD_RUM.version: env')
+    expect(consoleMessages).toContain('Extension context DD_RUM.version: dev')
   })
 })
