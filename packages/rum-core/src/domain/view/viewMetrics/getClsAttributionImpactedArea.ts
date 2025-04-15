@@ -8,14 +8,11 @@ const calculateArea = (width: number, height: number): number => width * height
 /**
  * Calculates the intersection area between two rectangles
  */
-const calculateIntersectionArea = (
-  rect1: { x: number; y: number; width: number; height: number },
-  rect2: { x: number; y: number; width: number; height: number }
-): number => {
-  const left = Math.max(rect1.x, rect2.x)
-  const top = Math.max(rect1.y, rect2.y)
-  const right = Math.min(rect1.x + rect1.width, rect2.x + rect2.width)
-  const bottom = Math.min(rect1.y + rect1.height, rect2.y + rect2.height)
+const calculateIntersectionArea = (rect1: DOMRectReadOnly, rect2: DOMRectReadOnly): number => {
+  const left = Math.max(rect1.left, rect2.left)
+  const top = Math.max(rect1.top, rect2.top)
+  const right = Math.min(rect1.right, rect2.right)
+  const bottom = Math.min(rect1.bottom, rect2.bottom)
 
   if (left >= right || top >= bottom) {
     return 0
