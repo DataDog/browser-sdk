@@ -45,6 +45,15 @@ export function getClsSortedSources(sources: RumLayoutShiftAttribution[]): RumLa
     return sources
   }
 
-  // Create a new array to avoid mutating the original
-  return ([] as RumLayoutShiftAttribution[]).concat(sources).sort((a, b) => getImpactedArea(b) - getImpactedArea(a))
+  // Create a new array with sources and their pre-calculated impacted areas
+  const sourcesWithImpactedAreas = sources.map((source) => ({
+    source,
+    impactedArea: getImpactedArea(source),
+  }))
+
+  // Sort by impacted area in descending order
+  sourcesWithImpactedAreas.sort((a, b) => b.impactedArea - a.impactedArea)
+
+  // Return just the sorted sources
+  return sourcesWithImpactedAreas.map(({ source }) => source)
 }
