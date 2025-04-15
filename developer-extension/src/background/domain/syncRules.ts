@@ -62,10 +62,10 @@ function buildRules(
     const devRumUrl = useRumSlim ? DEV_RUM_SLIM_URL : DEV_RUM_URL
     logger.log('add redirect to dev bundles rules')
     rules.push(
-      createRedirectRule(/^https:\/\/.*\/datadog-(:?rum|rum-slim|logs)(:?-[\w-]+)?\.js$/, {
+      createRedirectRule(/^https:\/\/.*\/datadog-(rum|rum-slim|logs)(-[\w-]+)?\.js$/, {
         regexSubstitution: `${DEV_SERVER_ORIGIN}/datadog-\\1.js`,
       }),
-      createRedirectRule(/^https:\/\/.*\/chunks\/(\w+)(:?-\w+)?-datadog-rum.js$/, {
+      createRedirectRule(/^https:\/\/.*\/chunks\/(\w+)(-\w+)?-datadog-rum.js$/, {
         regexSubstitution: `${DEV_SERVER_ORIGIN}/chunks/\\1-datadog-rum.js`,
       }),
       createRedirectRule('https://localhost:8443/static/datadog-rum-hotdog.js', { url: devRumUrl })
