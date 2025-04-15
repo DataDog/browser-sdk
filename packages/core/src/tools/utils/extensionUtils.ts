@@ -8,10 +8,7 @@ export function containsExtensionUrl(str: string): boolean {
  * Utility function to detect if the current environment is a browser extension
  * @returns {boolean} true if running in an unsupported browser extension environment
  */
-export function isUnsupportedExtensionEnvironment(): boolean {
-  const errorStack = new Error().stack || ''
-  const windowLocation =
-    typeof window !== 'undefined' && window.location && window.location.href ? window.location.href : ''
+export function isUnsupportedExtensionEnvironment(errorStack: string, windowLocation: string): boolean {
   // If we're on a regular web page but the error stack shows extension URLs,
   // or we have access to extension APIs, then an extension is injecting RUM.
   return !containsExtensionUrl(windowLocation) && containsExtensionUrl(errorStack)

@@ -1,3 +1,4 @@
+import { display } from '@datadog/browser-core'
 import type { RumPublicApi } from './rumPublicApi'
 
 /**
@@ -11,6 +12,7 @@ export function createNoopRumPublicApi(): RumPublicApi {
     () =>
       defaultValue as T
 
+  display.warn('SDK is being initialized in an unsupported environment. SDK will not work as expected.')
   return {
     init: noop,
     addAction: noop,

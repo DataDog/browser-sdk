@@ -423,7 +423,11 @@ export function makeRumPublicApi(
   profilerApi: ProfilerApi,
   options: RumPublicApiOptions = {}
 ): RumPublicApi {
-  if (isUnsupportedExtensionEnvironment()) {
+  const errorStack = new Error().stack || ''
+  const windowLocation =
+    typeof window !== 'undefined' && window.location && window.location.href ? window.location.href : ''
+
+  if (isUnsupportedExtensionEnvironment(errorStack, windowLocation)) {
     return createNoopRumPublicApi()
   }
 

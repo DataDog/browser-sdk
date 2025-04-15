@@ -12,6 +12,7 @@
     "@datadog/browser-rum": "workspace:*"
   },
   "devDependencies": {
+    "esbuild": "^0.25.0",
     "typescript": "^5.5.3"
   },
   "private": true

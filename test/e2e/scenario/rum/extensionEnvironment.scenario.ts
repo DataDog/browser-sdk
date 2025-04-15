@@ -9,7 +9,7 @@ const test = base.extend<{
   context: async ({}, use, testInfo) => {
     testInfo.skip(testInfo.project.name !== 'chromium', 'Extension tests only run in Chromium')
 
-    const pathToExtension = path.join(__dirname, '../../../../sandbox/testing-extension')
+    const pathToExtension = path.join(__dirname, '../../../../test/apps/extension')
     const context = await chromium.launchPersistentContext('', {
       channel: 'chromium',
       args: [`--disable-extensions-except=${pathToExtension}`, `--load-extension=${pathToExtension}`],
@@ -30,91 +30,42 @@ const test = base.extend<{
   },
 })
 
-const EXTENSION_PREFIXES = ['chrome-extension://', 'moz-extension://', 'safari-extension://']
-
-function containsExtensionUrl(str: string): boolean {
-  return EXTENSION_PREFIXES.some((prefix) => str.includes(prefix))
-}
-
 test.describe('Extension Environment Tests', () => {
   test('popup page should load extension popup and display expected content', async ({ page, extensionId }) => {
     await page.goto(`chrome-extension://${extensionId}/src/popup.html`)
     await expect(page.locator('body')).toHaveText(/Extension Popup/)
   })
 
-  test('isUnsupportedExtensionEnvironment returns false in real extension environment', async ({
-    page,
-    extensionId,
-  }) => {
+  test('SDK is initialized in an unsupported environment', async ({ page, extensionId }) => {
+    const consoleMessages: string[] = []
+    page.on('console', (msg) => consoleMessages.push(msg.text()))
+
     await page.goto(`chrome-extension://${extensionId}/src/popup.html`)
-    const result = await page.evaluate(() => {
-      function containsExtensionUrl(str: string): boolean {
-        return ['chrome-extension://', 'moz-extension://', 'safari-extension://'].some((prefix) => str.includes(prefix))
-      }
-      function isUnsupportedExtensionEnvironment(): boolean {
-        const errorStack = new Error().stack || ''
-        const windowLocation = window.location.href || ''
-        return !containsExtensionUrl(windowLocation) && containsExtensionUrl(errorStack)
-      }
-      return isUnsupportedExtensionEnvironment()
-    })
-    expect(result).toBe(false)
+    const extensionResult = await page.evaluate(() => (window.DD_RUM ? window.DD_RUM.version : ''))
+    expect(extensionResult).toBe('env')
+
+    await page.goto('https://www.datadoghq.com/')
+    const regularResult = await page.evaluate(() => (window.DD_RUM ? window.DD_RUM.version : ''))
+    expect(regularResult).not.toBe('')
+
+    expect(consoleMessages).toContain('Extension context DD_RUM.version: noop')
+    expect(consoleMessages).toContain(
+      'Datadog Browser SDK: SDK is being initialized in an unsupported environment. SDK will not work as expected.'
+    )
   })
 
-  test('isUnsupportedExtensionEnvironment returns false in normal environment with no extension in error stack', async ({
-    page,
-  }) => {
-    await page.goto('https://example.com')
-    const result = await page.evaluate(() => {
-      function containsExtensionUrl(str: string): boolean {
-        return ['chrome-extension://', 'moz-extension://', 'safari-extension://'].some((prefix) => str.includes(prefix))
-      }
-      function isUnsupportedExtensionEnvironment(): boolean {
-        const errorStack = new Error().stack || ''
-        const windowLocation = window.location.href || ''
-        return !containsExtensionUrl(windowLocation) && containsExtensionUrl(errorStack)
-      }
-      const originalStackDescriptor = Object.getOwnPropertyDescriptor(Error.prototype, 'stack')
-      Object.defineProperty(Error.prototype, 'stack', {
-        configurable: true,
-        get() {
-          return 'Error: test\n    at https://example.com/script.js:1:1'
-        },
-      })
-      const res = isUnsupportedExtensionEnvironment()
-      if (originalStackDescriptor) {
-        Object.defineProperty(Error.prototype, 'stack', originalStackDescriptor)
-      }
-      return res
-    })
-    expect(result).toBe(false)
-  })
+  test('SDK is initialized in a supported environment', async ({ page, extensionId }) => {
+    const consoleMessages: string[] = []
+    page.on('console', (msg) => consoleMessages.push(msg.text()))
 
-  test('isUnsupportedExtensionEnvironment returns true in normal environment with extension error stack', async ({
-    page,
-  }) => {
-    await page.goto('https://example.com')
-    const result = await page.evaluate(() => {
-      function containsExtensionUrl(str: string): boolean {
-        console.log(`Checking if "${str}" contains extension URL`)
-        return ['chrome-extension://', 'moz-extension://', 'safari-extension://'].some((prefix) => str.includes(prefix))
-      }
+    await page.goto(`chrome-extension://${extensionId}/src/popup.html`)
+    const extensionResult = await page.evaluate(() => (window.DD_RUM ? window.DD_RUM.version : ''))
+    expect(extensionResult).toBe('env')
 
-      function isUnsupportedExtensionEnvironment(): boolean {
-        const errorStack = 'Error: test\n    at chrome-extension://npndlchcnpnbmmmhbgpgonapiegdkkge/background.js:1:1'
-        const windowLocation = window.location.href || ''
-        return !containsExtensionUrl(windowLocation) && containsExtensionUrl(errorStack)
-      }
-      return isUnsupportedExtensionEnvironment()
-    })
+    await page.goto('http://localhost:8080/')
+    const regularResult = await page.evaluate(() => (window.DD_RUM ? window.DD_RUM.version : ''))
+    expect(regularResult).not.toBe('')
 
-    expect(result).toBe(true)
-  })
-
-  test('containsExtensionUrl works correctly', () => {
-    expect(containsExtensionUrl('chrome-extension://sample/route')).toBe(true)
-    expect(containsExtensionUrl('moz-extension://sample/route')).toBe(true)
-    expect(containsExtensionUrl('safari-extension://sample/route')).toBe(true)
-    expect(containsExtensionUrl('https://example.com')).toBe(false)
+    expect(consoleMessages).toContain('Extension context DD_RUM.version: env')
   })
 })
