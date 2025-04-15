@@ -4,16 +4,13 @@
   "description": "",
   "main": "dist/index.js",
   "scripts": {
-    "build": "esbuild src/contentScript.js --bundle --outfile=dist/content-script.js --define:__BUILD_ENV__SDK_VERSION__=\\\"env\\\""
+    "build": "webpack --mode production"
   },
   "dependencies": {
     "@datadog/browser-core": "workspace:*",
     "@datadog/browser-logs": "workspace:*",
     "@datadog/browser-rum": "workspace:*"
   },
-  "devDependencies": {
-    "esbuild": "^0.25.0",
-    "typescript": "^5.5.3"
-  },
+  "devDependencies": {},
   "private": true
 }
