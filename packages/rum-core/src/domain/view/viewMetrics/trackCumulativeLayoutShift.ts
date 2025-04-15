@@ -80,7 +80,7 @@ export function trackCumulativeLayoutShift(
       const { cumulatedValue, isMaxValue } = slidingWindow.update(entry)
 
       if (isMaxValue) {
-        const attribution = getFirstElementAttribution(entry.sources)
+        const attribution = getTopImpactedElement(entry.sources)
         biggestShift = {
           target: attribution?.node ? new WeakRef(attribution.node) : undefined,
           time: elapsed(viewStart, entry.startTime),
@@ -113,7 +113,7 @@ export function trackCumulativeLayoutShift(
   }
 }
 
-function getFirstElementAttribution(
+function getTopImpactedElement(
   sources: RumLayoutShiftAttribution[]
 ): (RumLayoutShiftAttribution & { node: Element }) | undefined {
   const sortedSources = getClsSortedSources(sources)
