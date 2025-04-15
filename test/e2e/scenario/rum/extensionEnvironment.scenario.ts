@@ -42,7 +42,7 @@ test.describe('Extension Environment Tests', () => {
 
     await page.goto(`chrome-extension://${extensionId}/src/popup.html`)
     const extensionResult = await page.evaluate(() => (window.DD_RUM ? window.DD_RUM.version : ''))
-    expect(extensionResult).toBe('env')
+    expect(extensionResult).toBe('dev')
 
     await page.goto('https://www.datadoghq.com/')
     const regularResult = await page.evaluate(() => (window.DD_RUM ? window.DD_RUM.version : ''))
@@ -60,7 +60,7 @@ test.describe('Extension Environment Tests', () => {
 
     await page.goto(`chrome-extension://${extensionId}/src/popup.html`)
     const extensionResult = await page.evaluate(() => (window.DD_RUM ? window.DD_RUM.version : ''))
-    expect(extensionResult).toBe('env')
+    expect(extensionResult).toBe('dev')
 
     await page.goto('http://localhost:8080/')
     const regularResult = await page.evaluate(() => (window.DD_RUM ? window.DD_RUM.version : ''))
