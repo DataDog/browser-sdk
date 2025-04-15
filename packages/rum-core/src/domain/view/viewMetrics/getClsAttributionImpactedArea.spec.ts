@@ -1,7 +1,13 @@
 import type { RumLayoutShiftAttribution } from '../../../browser/performanceObservable'
 import { getClsAttributionImpactedArea } from './getClsAttributionImpactedArea'
+import { isLayoutShiftSupported } from './trackCumulativeLayoutShift'
 
 describe('getClsAttributionImpactedArea', () => {
+  beforeEach(() => {
+    if (!isLayoutShiftSupported()) {
+      pending('No LayoutShift API support')
+    }
+  })
   it('should calculate the impacted area when rectangles do not overlap', () => {
     const source: RumLayoutShiftAttribution = {
       node: null,
