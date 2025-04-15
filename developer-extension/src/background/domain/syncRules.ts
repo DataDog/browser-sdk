@@ -1,6 +1,7 @@
 import type { NetRequestRulesOptions } from '../../common/extension.types'
 import {
   DEV_LOGS_URL,
+  DEV_RUM_PROFILER_CHUNK_URL,
   DEV_RUM_RECORDER_CHUNK_URL,
   DEV_RUM_SLIM_URL,
   DEV_RUM_URL,
@@ -67,13 +68,16 @@ function buildRules(
     const devRumUrl = useRumSlim ? DEV_RUM_SLIM_URL : DEV_RUM_URL
     logger.log('add redirect to dev bundles rules')
     rules.push(
-      createRedirectRule(/^https:\/\/.*\/datadog-rum(-[\w-]+)?\.js$/, { url: devRumUrl }),
       createRedirectRule(/^https:\/\/.*\/datadog-rum-slim(-[\w-]+)?\.js$/, {
         url: DEV_RUM_SLIM_URL,
       }),
+      createRedirectRule(/^https:\/\/.*\/datadog-rum(-[\w-]+)?\.js$/, { url: devRumUrl }),
       createRedirectRule(/^https:\/\/.*\/datadog-logs(-[\w-]+)?\.js$/, { url: DEV_LOGS_URL }),
       createRedirectRule(/^https:\/\/.*\/chunks\/recorder(-[\w-]+)?-datadog-rum.js$/, {
         url: DEV_RUM_RECORDER_CHUNK_URL,
+      }),
+      createRedirectRule(/^https:\/\/.*\/chunks\/profiler(-[\w-]+)?-datadog-rum.js$/, {
+        url: DEV_RUM_PROFILER_CHUNK_URL,
       }),
       createRedirectRule('https://localhost:8443/static/datadog-rum-hotdog.js', { url: devRumUrl })
     )
