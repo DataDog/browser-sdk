@@ -28,32 +28,10 @@ const calculateIntersectionArea = (
  * Calculates the total impacted area of a layout shift source
  * This is the sum of the previous and current areas minus their intersection
  */
-const getImpactedArea = (source: RumLayoutShiftAttribution): number => {
+export const getClsAttributionImpactedArea = (source: RumLayoutShiftAttribution): number => {
   const previousArea = calculateArea(source.previousRect.width, source.previousRect.height)
   const currentArea = calculateArea(source.currentRect.width, source.currentRect.height)
   const intersectionArea = calculateIntersectionArea(source.previousRect, source.currentRect)
 
   return previousArea + currentArea - intersectionArea
-}
-
-/**
- * Sorts layout shift sources by their impacted area in descending order
- * @returns A new sorted array of layout shift sources
- */
-export function getClsSortedSources(sources: RumLayoutShiftAttribution[]): RumLayoutShiftAttribution[] {
-  if (!sources.length) {
-    return sources
-  }
-
-  // Create a new array with sources and their pre-calculated impacted areas
-  const sourcesWithImpactedAreas = sources.map((source) => ({
-    source,
-    impactedArea: getImpactedArea(source),
-  }))
-
-  // Sort by impacted area in descending order
-  sourcesWithImpactedAreas.sort((a, b) => b.impactedArea - a.impactedArea)
-
-  // Return just the sorted sources
-  return sourcesWithImpactedAreas.map(({ source }) => source)
 }
