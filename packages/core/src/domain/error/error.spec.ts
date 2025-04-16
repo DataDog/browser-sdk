@@ -77,6 +77,19 @@ describe('computeRawError', () => {
     expect(formatted.stack).toEqual(NO_ERROR_STACK_PRESENT_MESSAGE)
   })
 
+  it('does not define the stack if useFallbackStack is false', () => {
+    const error = 'foo is undefined'
+
+    const formatted = computeRawError({
+      ...DEFAULT_RAW_ERROR_PARAMS,
+      originalError: error,
+      handling: ErrorHandling.HANDLED,
+      useFallbackStack: false,
+    })
+
+    expect(formatted.stack).toEqual(undefined)
+  })
+
   it('uses the provided stack trace object', () => {
     const stackTrace: StackTrace = {
       message: 'oh snap!',

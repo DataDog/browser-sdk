@@ -16,6 +16,7 @@ type RawErrorParams = {
   componentStack?: string
   startClocks: ClocksState
   nonErrorPrefix: NonErrorPrefix
+  useFallbackStack?: boolean
   source: ErrorSource
   handling: ErrorHandling
 }
@@ -27,6 +28,7 @@ export function computeRawError({
   componentStack,
   startClocks,
   nonErrorPrefix,
+  useFallbackStack = true,
   source,
   handling,
 }: RawErrorParams): RawError {
@@ -38,7 +40,9 @@ export function computeRawError({
   const message = computeMessage(stackTrace, isErrorInstance, nonErrorPrefix, originalError)
   const stack = hasUsableStack(isErrorInstance, stackTrace)
     ? toStackTraceString(stackTrace)
-    : NO_ERROR_STACK_PRESENT_MESSAGE
+    : useFallbackStack
+      ? NO_ERROR_STACK_PRESENT_MESSAGE
+      : undefined
   const causes = isErrorInstance ? flattenErrorCauses(originalError as ErrorWithCause, source) : undefined
   const type = stackTrace ? stackTrace.name : undefined
   const fingerprint = tryToGetFingerprint(originalError)
