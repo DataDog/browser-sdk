@@ -38,12 +38,12 @@ export function computeRawError({
   }
 
   const message = computeMessage(stackTrace, isErrorInstance, nonErrorPrefix, originalError)
-  const stack = hasUsableStack(isErrorInstance, stackTrace)
+  const causes = isErrorInstance ? flattenErrorCauses(originalError as ErrorWithCause, source) : undefined
+  const stack = stackTrace
     ? toStackTraceString(stackTrace)
     : useFallbackStack
       ? NO_ERROR_STACK_PRESENT_MESSAGE
       : undefined
-  const causes = isErrorInstance ? flattenErrorCauses(originalError as ErrorWithCause, source) : undefined
   const type = stackTrace ? stackTrace.name : undefined
   const fingerprint = tryToGetFingerprint(originalError)
   const context = tryToGetErrorContext(originalError)
@@ -77,18 +77,6 @@ function computeMessage(
     : !isErrorInstance
       ? `${nonErrorPrefix} ${jsonStringify(sanitize(originalError))!}`
       : 'Empty message'
-}
-
-function hasUsableStack(isErrorInstance: boolean, stackTrace?: StackTrace): stackTrace is StackTrace {
-  if (stackTrace === undefined) {
-    return false
-  }
-  if (isErrorInstance) {
-    return true
-  }
-  // handle cases where tracekit return stack = [] or stack = [{url: undefined, line: undefined, column: undefined}]
-  // TODO rework tracekit integration to avoid generating those unusable stack
-  return stackTrace.stack.length > 0 && (stackTrace.stack.length > 1 || stackTrace.stack[0].url !== undefined)
 }
 
 export function tryToGetFingerprint(originalError: unknown) {

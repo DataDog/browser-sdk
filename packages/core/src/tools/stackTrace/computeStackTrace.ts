@@ -161,13 +161,20 @@ function tryToGetString(candidate: unknown, property: string) {
   return typeof value === 'string' ? value : undefined
 }
 
-export function computeStackTraceFromOnErrorMessage(messageObj: unknown, url?: string, line?: number, column?: number) {
-  const stack = [{ url, column, line }]
+export function computeStackTraceFromOnErrorMessage(
+  messageObj: unknown,
+  url?: string,
+  line?: number,
+  column?: number
+): StackTrace | undefined {
+  if (url === undefined) {
+    return
+  }
   const { name, message } = tryToParseMessage(messageObj)
   return {
     name,
     message,
-    stack,
+    stack: [{ url, column, line }],
   }
 }
 

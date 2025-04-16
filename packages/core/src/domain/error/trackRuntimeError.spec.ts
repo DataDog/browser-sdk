@@ -139,7 +139,7 @@ describe('instrumentOnError', () => {
     it('with objects', async () => {
       const error = { foo: 'bar' } as any
       const spy = await spyViaInstrumentOnError(() => {
-        window.onerror!(error)
+        window.onerror!(error, 'http://example.com', testLineNo, testColNo)
       })
 
       const [originalError, stack] = spy.calls.mostRecent().args
@@ -148,7 +148,7 @@ describe('instrumentOnError', () => {
     })
 
     describe('with undefined arguments', () => {
-      it('should pass undefined:undefined', async () => {
+      it('discards the stack', async () => {
         // this is probably not good behavior;  just writing this test to verify
         // that it doesn't change unintentionally
         const spy = await spyViaInstrumentOnError(() => {
@@ -156,8 +156,7 @@ describe('instrumentOnError', () => {
         })
 
         const [, stack] = spy.calls.mostRecent().args
-        expect(stack!.name).toBeUndefined()
-        expect(stack!.message).toBeUndefined()
+        expect(stack).toBeUndefined()
       })
     })
 
@@ -199,7 +198,11 @@ describe('instrumentOnError', () => {
 
       it('should separate name, message for error with multiline message', async () => {
         const spy = await spyViaInstrumentOnError(() => {
-          window.onerror!("TypeError: foo is not a function. (In 'my.function(\n foo)")
+          window.onerror!(
+            "TypeError: foo is not a function. (In 'my.function(\n foo)",
+            'http://example.com',
+            testLineNo
+          )
         })
 
         const [, stack] = spy.calls.mostRecent().args
@@ -230,7 +233,7 @@ describe('instrumentOnError', () => {
 
       it('should handle object message passed through onerror', async () => {
         const spy = await spyViaInstrumentOnError(() => {
-          window.onerror!({ foo: 'bar' } as any)
+          window.onerror!({ foo: 'bar' } as any, 'http://example.com', testLineNo, testColNo)
         })
 
         const [error, stack] = spy.calls.mostRecent().args

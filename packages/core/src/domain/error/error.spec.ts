@@ -134,21 +134,6 @@ describe('computeRawError', () => {
     expect(formatted.type).toEqual('TypeError')
   })
 
-  it('discards unusable stack traces', () => {
-    const stackTrace: StackTrace = { name: undefined, message: undefined, stack: [] } as any
-
-    const formatted = computeRawError({
-      ...DEFAULT_RAW_ERROR_PARAMS,
-      originalError: 'toto',
-      handling: ErrorHandling.HANDLED,
-      stackTrace,
-    })
-
-    expect(formatted.message).toEqual('Uncaught "toto"')
-    expect(formatted.stack).toEqual(NO_ERROR_STACK_PRESENT_MESSAGE)
-    expect(formatted.type).toEqual(undefined)
-  })
-
   it('should set handling according to given parameter', () => {
     const error = { foo: 'bar' }
 
