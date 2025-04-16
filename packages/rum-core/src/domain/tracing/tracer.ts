@@ -159,6 +159,7 @@ function injectHeadersIfTracingAllowed(
       context.traceId,
       context.spanId,
       context.traceSampled,
+      session.id,
       tracingOption.propagatorTypes,
       userContext,
       accountContext,
@@ -175,6 +176,7 @@ function makeTracingHeaders(
   traceId: TraceIdentifier,
   spanId: SpanIdentifier,
   traceSampled: boolean,
+  sessionId: string,
   propagatorTypes: PropagatorType[],
   userContext: ContextManager,
   accountContext: ContextManager,
@@ -225,7 +227,9 @@ function makeTracingHeaders(
     isExperimentalFeatureEnabled(ExperimentalFeature.USER_ACCOUNT_TRACE_HEADER) &&
     configuration.propagateTraceBaggage
   ) {
-    const baggageItems: Record<string, string> = {}
+    const baggageItems: Record<string, string> = {
+      'session.id': sessionId,
+    }
 
     const userId = userContext.getContext().id
     if (typeof userId === 'string') {
