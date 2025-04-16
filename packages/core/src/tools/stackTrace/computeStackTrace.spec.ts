@@ -875,21 +875,29 @@ Error: foo
     const wasmStack = `
   RuntimeError: Out of bounds memory access
       myModule.wasm-function[crashHandler]@[wasm code]
-      handleError@https://example.com/app.js:123:45
-      @https://example.com/app.js:150:30
+      myModule.wasm-function[42]@[wasm code]
+      handleError@http://192.168.1.113:3000/:98:25
+      @http://192.168.1.113:3000/:113:32
     `
     const mockErr = { message: 'Out of bounds memory access', name: 'RuntimeError', stack: wasmStack }
-
     const stackFrames = computeStackTrace(mockErr)
 
-    expect(stackFrames.stack.length).toBe(3)
+    expect(stackFrames.stack.length).toBe(4)
 
     expect(stackFrames.stack[0]).toEqual({
+      args: [],
       func: 'myModule.wasm-function[crashHandler]',
       url: '[wasm code]',
       column: undefined,
       line: undefined,
+    })
+
+    expect(stackFrames.stack[1]).toEqual({
       args: [],
+      func: 'myModule.wasm-function[42]', // test case if have numeric index instead of the name
+      url: '[wasm code]',
+      column: undefined,
+      line: undefined,
     })
   })
 
