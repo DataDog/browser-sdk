@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "build": "webpack --config ./webpack.web.js"
+    "build": "webpack"
   },
   "dependencies": {
     "@datadog/browser-rum": "file:../../../packages/rum/package.tgz"

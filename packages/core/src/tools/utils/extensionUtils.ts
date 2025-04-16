@@ -8,7 +8,7 @@ export function containsExtensionUrl(str: string): boolean {
  * Utility function to detect if the SDK is being initialized in an unsupported browser extension environment.
  * @returns {boolean} true if running in an unsupported browser extension environment
  */
-export function isUnsupportedExtensionEnvironment(windowLocation = location.href, stack = new Error().stack) {
+export function isUnsupportedExtensionEnvironment(windowLocation = typeof location !== 'undefined' ? location.href : '', stack = new Error().stack) {
   // If we're on a regular web page but the error stack shows extension URLs,
   // or we have access to extension APIs, then an extension is injecting RUM.
   return !containsExtensionUrl(windowLocation) && containsExtensionUrl(stack || '')
