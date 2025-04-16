@@ -1,4 +1,4 @@
-import type { ContextManager } from '@datadog/browser-core'
+import type { ContextManager, ContextValue } from '@datadog/browser-core'
 import { display, ExperimentalFeature, objectEntries, TraceContextInjection } from '@datadog/browser-core'
 import { mockExperimentalFeatures } from '../../../../core/test'
 import type { RumSessionManagerMock } from '../../../test'
@@ -21,7 +21,12 @@ describe('tracer', () => {
   function startTracerWithDefaults({
     initConfiguration,
     sessionManager = createRumSessionManagerMock(),
-  }: { initConfiguration?: Partial<RumInitConfiguration>; sessionManager?: RumSessionManagerMock } = {}) {
+    userId = '1234',
+  }: {
+    initConfiguration?: Partial<RumInitConfiguration>
+    sessionManager?: RumSessionManagerMock
+    userId?: ContextValue
+  } = {}) {
     const configuration = validateAndBuildRumConfiguration({
       clientToken: 'xxx',
       applicationId: 'xxx',
@@ -29,7 +34,7 @@ describe('tracer', () => {
       allowedTracingUrls: [{ match: window.location.origin, propagatorTypes: ['datadog'] }],
       ...initConfiguration,
     })!
-    const userContext = { getContext: () => ({ id: '1234' }) } as unknown as ContextManager
+    const userContext = { getContext: () => ({ id: userId }) } as unknown as ContextManager
     const accountContext = { getContext: () => ({ id: '5678' }) } as unknown as ContextManager
     const tracer = startTracer(configuration, sessionManager, userContext, accountContext)
     return tracer
@@ -255,37 +260,64 @@ describe('tracer', () => {
       expect(xhr.headers['x-datadog-sampling-priority']).toBeDefined()
     })
 
-    it('should add usr.id and account.id to baggage header when feature is enabled and propagateTraceBaggage is true', () => {
-      mockExperimentalFeatures([ExperimentalFeature.USER_ACCOUNT_TRACE_HEADER])
-      const tracer = startTracerWithDefaults({
-        initConfiguration: {
-          allowedTracingUrls: [{ match: window.location.origin, propagatorTypes: ['tracecontext'] }],
-          propagateTraceBaggage: true,
-        },
+    describe('baggage propagation header', () => {
+      beforeEach(() => {
+        mockExperimentalFeatures([ExperimentalFeature.USER_ACCOUNT_TRACE_HEADER])
       })
-      const context = { ...ALLOWED_DOMAIN_CONTEXT }
-      tracer.traceXhr(context, xhr as unknown as XMLHttpRequest)
-      expect(xhr.headers).toEqual(
-        jasmine.objectContaining({
-          traceparent: jasmine.stringMatching(/^[0-9a-f]{2}-[0-9a-f]{32}-[0-9a-f]{16}-01$/),
-          tracestate: 'dd=s:1;o:rum',
-          baggage: 'usr.id=1234,account.id=5678',
+
+      function traceRequestAndGetBaggageHeader({
+        initConfiguration,
+        userId,
+      }: {
+        initConfiguration: Partial<RumInitConfiguration>
+        userId?: ContextValue
+      }) {
+        const tracer = startTracerWithDefaults({
+          initConfiguration,
+          userId,
         })
-      )
-    })
+        const context = { ...ALLOWED_DOMAIN_CONTEXT }
+        tracer.traceXhr(context, xhr as unknown as XMLHttpRequest)
+        return xhr.headers.baggage
+      }
 
-    it('should not add baggage header when propagateTraceBaggage is false', () => {
-      mockExperimentalFeatures([ExperimentalFeature.USER_ACCOUNT_TRACE_HEADER])
-      const tracer = startTracerWithDefaults({
-        initConfiguration: {
-          allowedTracingUrls: [{ match: window.location.origin, propagatorTypes: ['tracecontext'] }],
-          propagateTraceBaggage: false,
-        },
+      it('should add usr.id and account.id to baggage header when feature is enabled and propagateTraceBaggage is true', () => {
+        const baggage = traceRequestAndGetBaggageHeader({
+          initConfiguration: {
+            propagateTraceBaggage: true,
+          },
+        })
+        expect(baggage).toEqual('usr.id=1234,account.id=5678')
       })
-      const context = { ...ALLOWED_DOMAIN_CONTEXT }
-      tracer.traceXhr(context, xhr as unknown as XMLHttpRequest)
 
-      expect(xhr.headers['baggage']).toBeUndefined()
+      it('should not add baggage header when propagateTraceBaggage is false', () => {
+        const baggage = traceRequestAndGetBaggageHeader({
+          initConfiguration: {
+            propagateTraceBaggage: false,
+          },
+        })
+        expect(baggage).toBeUndefined()
+      })
+
+      it('url-encodes baggage values', () => {
+        const baggage = traceRequestAndGetBaggageHeader({
+          initConfiguration: {
+            propagateTraceBaggage: true,
+          },
+          userId: '1234, 😀',
+        })
+        expect(baggage).toBe('usr.id=1234%2C%20%F0%9F%98%80,account.id=5678')
+      })
+
+      it('skips non-string context values', () => {
+        const baggage = traceRequestAndGetBaggageHeader({
+          initConfiguration: {
+            propagateTraceBaggage: true,
+          },
+          userId: 1234,
+        })
+        expect(baggage).toBe('account.id=5678')
+      })
     })
 
     it('should ignore wrong propagator types', () => {
