@@ -159,6 +159,7 @@ function injectHeadersIfTracingAllowed(
       context.traceId,
       context.spanId,
       context.traceSampled,
+      session.id,
       tracingOption.propagatorTypes,
       userContext,
       accountContext,
@@ -175,6 +176,7 @@ function makeTracingHeaders(
   traceId: TraceIdentifier,
   spanId: SpanIdentifier,
   traceSampled: boolean,
+  sessionId: string,
   propagatorTypes: PropagatorType[],
   userContext: ContextManager,
   accountContext: ContextManager,
@@ -225,19 +227,25 @@ function makeTracingHeaders(
     isExperimentalFeatureEnabled(ExperimentalFeature.USER_ACCOUNT_TRACE_HEADER) &&
     configuration.propagateTraceBaggage
   ) {
+    const baggageItems: Record<string, string> = {
+      'session.id': sessionId,
+    }
+
     const userId = userContext.getContext().id
-    const accountId = accountContext.getContext().id
-    const baggageItems: string[] = []
-
     if (typeof userId === 'string') {
-      baggageItems.push(`usr.id=${encodeURIComponent(userId)}`)
-    }
-    if (typeof accountId === 'string') {
-      baggageItems.push(`account.id=${encodeURIComponent(accountId)}`)
+      baggageItems['usr.id'] = userId
     }
 
-    if (baggageItems.length > 0) {
-      tracingHeaders['baggage'] = baggageItems.join(',')
+    const accountId = accountContext.getContext().id
+    if (typeof accountId === 'string') {
+      baggageItems['account.id'] = accountId
+    }
+
+    const baggageHeader = Object.entries(baggageItems)
+      .map(([key, value]) => `${key}=${encodeURIComponent(value)}`)
+      .join(',')
+    if (baggageHeader) {
+      tracingHeaders['baggage'] = baggageHeader
     }
   }
 
