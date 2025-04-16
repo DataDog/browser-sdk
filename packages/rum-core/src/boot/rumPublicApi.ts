@@ -13,6 +13,7 @@ import type {
   ContextManager,
   RawTelemetryUsage,
   RawTelemetryUsageFeature,
+  InitConfiguration,
 } from '@datadog/browser-core'
 import {
   ContextManagerMethod,
@@ -45,7 +46,6 @@ import { createCustomVitalsState } from '../domain/vital/vitalCollection'
 import { callPluginsMethod } from '../domain/plugins'
 import { createPreStartStrategy } from './preStartRum'
 import type { StartRum, StartRumResult } from './startRum'
-import { createNoopRumPublicApi } from './noopRumPublicApi'
 
 export interface StartRecordingOptions {
   force: boolean
@@ -423,12 +423,9 @@ export function makeRumPublicApi(
   profilerApi: ProfilerApi,
   options: RumPublicApiOptions = {}
 ): RumPublicApi {
-  const errorStack = new Error().stack || ''
-  const windowLocation =
-    typeof window !== 'undefined' && window.location && window.location.href ? window.location.href : ''
-
-  if (isUnsupportedExtensionEnvironment(errorStack, windowLocation)) {
-    return createNoopRumPublicApi()
+  if (isUnsupportedExtensionEnvironment()) {
+    displayAlreadyInitializedError('DD_RUM', {} as InitConfiguration)
+    return {} as RumPublicApi
   }
 
   const trackingConsentState = createTrackingConsentState()
