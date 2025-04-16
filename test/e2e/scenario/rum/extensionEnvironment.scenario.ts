@@ -48,10 +48,7 @@ test.describe('Extension Environment Tests', () => {
     const regularResult = await page.evaluate(() => (window.DD_RUM ? window.DD_RUM.version : ''))
     expect(regularResult).not.toBe('')
 
-    expect(consoleMessages).toContain('Extension context DD_RUM.version: noop')
-    expect(consoleMessages).toContain(
-      'Datadog Browser SDK: SDK is being initialized in an unsupported environment. SDK will not work as expected.'
-    )
+    expect(consoleMessages).toContain('Datadog Browser SDK: DD_RUM is already initialized.')
   })
 
   test('SDK is initialized in a supported environment', async ({ page, extensionId }) => {
