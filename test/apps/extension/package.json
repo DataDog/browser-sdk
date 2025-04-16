@@ -1,15 +1,15 @@
 {
   "name": "content-script-extension",
   "version": "1.0.0",
-  "description": "",
-  "main": "dist/index.js",
+  "private": true,
   "scripts": {
-    "build": "webpack --mode production"
+    "build": "webpack --config ./webpack.web.js"
   },
   "dependencies": {
-    "@datadog/browser-core": "workspace:*",
-    "@datadog/browser-logs": "workspace:*",
-    "@datadog/browser-rum": "workspace:*"
+    "@datadog/browser-rum": "file:../../../packages/rum/package.tgz"
   },
-  "private": true
+  "devDependencies": {
+    "webpack": "5.94.0",
+    "webpack-cli": "6.0.1"
+  }
 }

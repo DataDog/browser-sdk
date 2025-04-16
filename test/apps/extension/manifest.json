@@ -19,11 +19,5 @@
   "action": {
     "default_title": "Datadog RUM Extension",
     "default_popup": "src/popup.html"
-  },
-  "web_accessible_resources": [
-    {
-      "resources": ["dist/content-script.jss"],
-      "matches": ["<all_urls>"]
-    }
-  ]
+  }
 }
