@@ -31,6 +31,9 @@ export function computeRawError({
   handling,
 }: RawErrorParams): RawError {
   const isErrorInstance = isError(originalError)
+  if (!stackTrace && isErrorInstance) {
+    stackTrace = computeStackTrace(originalError)
+  }
 
   const message = computeMessage(stackTrace, isErrorInstance, nonErrorPrefix, originalError)
   const stack = hasUsableStack(isErrorInstance, stackTrace)

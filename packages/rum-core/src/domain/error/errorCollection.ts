@@ -4,11 +4,9 @@ import {
   generateUUID,
   computeRawError,
   ErrorHandling,
-  computeStackTrace,
   Observable,
   trackRuntimeError,
   NonErrorPrefix,
-  isError,
   combine,
 } from '@datadog/browser-core'
 import type { RumConfiguration } from '../configuration'
@@ -51,9 +49,7 @@ export function doStartErrorCollection(lifeCycle: LifeCycle) {
 
   return {
     addError: ({ error, handlingStack, componentStack, startClocks, context: customerContext }: ProvidedError) => {
-      const stackTrace = isError(error) ? computeStackTrace(error) : undefined
       const rawError = computeRawError({
-        stackTrace,
         originalError: error,
         handlingStack,
         componentStack,

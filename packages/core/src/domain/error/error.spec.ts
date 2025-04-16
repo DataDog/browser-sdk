@@ -1,156 +1,139 @@
 import { clocksNow } from '../../tools/utils/timeUtils'
 import type { StackTrace } from '../../tools/stackTrace/computeStackTrace'
 import { registerCleanupTask } from '../../../test'
-import { computeRawError, getFileFromStackTraceString, flattenErrorCauses, isError } from './error'
+import {
+  computeRawError,
+  getFileFromStackTraceString,
+  flattenErrorCauses,
+  isError,
+  NO_ERROR_STACK_PRESENT_MESSAGE,
+} from './error'
 import type { RawErrorCause, ErrorWithCause } from './error.types'
 import { ErrorHandling, ErrorSource, NonErrorPrefix } from './error.types'
 
 describe('computeRawError', () => {
-  const ERROR_INSTANCE = new TypeError('oh snap!')
-  const DEFAULT_STACK = [
-    {
-      args: ['1', 'bar'],
-      column: 15,
-      func: 'foo',
-      line: 52,
-      url: 'http://path/to/file.js',
-    },
-    {
-      args: [],
-      column: undefined,
-      func: '?',
-      line: 12,
-      url: 'http://path/to/file.js',
-    },
-    {
-      args: ['baz'],
-      column: undefined,
-      func: '?',
-      line: undefined,
-      url: 'http://path/to/file.js',
-    },
-  ]
-  const NOT_COMPUTED_STACK_TRACE: StackTrace = { name: undefined, message: undefined, stack: [] } as any
   const DEFAULT_RAW_ERROR_PARAMS = {
     startClocks: clocksNow(),
     nonErrorPrefix: NonErrorPrefix.UNCAUGHT,
     source: ErrorSource.CUSTOM,
   }
 
-  describe('when stackTrace', () => {
-    describe('from an error instance', () => {
-      it('should format', () => {
-        const stackTrace: StackTrace = {
-          message: 'oh snap!',
-          name: 'TypeError',
-          stack: DEFAULT_STACK,
-        }
+  it('should format an error instance', () => {
+    const error = new TypeError('oh snap!')
+    // This stack was generated in Chrome.
+    error.stack = `TypeError: Oh snap!
+  at foo (http://path/to/file.js:52:15)
+  at <anonymous>:3:1`
 
-        const formatted = computeRawError({
-          ...DEFAULT_RAW_ERROR_PARAMS,
-          stackTrace,
-          originalError: ERROR_INSTANCE,
-          handling: ErrorHandling.HANDLED,
-        })
+    const formatted = computeRawError({
+      ...DEFAULT_RAW_ERROR_PARAMS,
+      originalError: error,
+      handling: ErrorHandling.HANDLED,
+    })
 
-        expect(formatted.message).toEqual('oh snap!')
-        expect(formatted.type).toEqual('TypeError')
-        expect(formatted.stack).toEqual(`TypeError: oh snap!
+    expect(formatted.message).toEqual('oh snap!')
+    expect(formatted.type).toEqual('TypeError')
+    expect(formatted.stack).toEqual(`TypeError: oh snap!
+  at foo @ http://path/to/file.js:52:15
+  at <anonymous> @ <anonymous>:3:1`)
+  })
+
+  it('should format an error instance with an empty message', () => {
+    const error = new TypeError('oh snap!')
+    error.message = ''
+
+    const formatted = computeRawError({
+      ...DEFAULT_RAW_ERROR_PARAMS,
+      originalError: error,
+      handling: ErrorHandling.HANDLED,
+    })
+
+    expect(formatted.message).toEqual('Empty message')
+  })
+
+  it('should format a string error', () => {
+    const error = 'oh snap!'
+
+    const formatted = computeRawError({
+      ...DEFAULT_RAW_ERROR_PARAMS,
+      originalError: error,
+      handling: ErrorHandling.HANDLED,
+    })
+
+    expect(formatted.message).toEqual('Uncaught "oh snap!"')
+    expect(formatted.stack).toEqual(NO_ERROR_STACK_PRESENT_MESSAGE)
+  })
+
+  it('should format an object error', () => {
+    const error = { foo: 'bar' }
+
+    const formatted = computeRawError({
+      ...DEFAULT_RAW_ERROR_PARAMS,
+      originalError: error,
+      handling: ErrorHandling.HANDLED,
+    })
+
+    expect(formatted.message).toEqual('Uncaught {"foo":"bar"}')
+    expect(formatted.stack).toEqual(NO_ERROR_STACK_PRESENT_MESSAGE)
+  })
+
+  it('uses the provided stack trace object', () => {
+    const stackTrace: StackTrace = {
+      message: 'oh snap!',
+      name: 'TypeError',
+      stack: [
+        {
+          args: ['1', 'bar'],
+          column: 15,
+          func: 'foo',
+          line: 52,
+          url: 'http://path/to/file.js',
+        },
+        {
+          args: [],
+          column: undefined,
+          func: '?',
+          line: 12,
+          url: 'http://path/to/file.js',
+        },
+        {
+          args: ['baz'],
+          column: undefined,
+          func: '?',
+          line: undefined,
+          url: 'http://path/to/file.js',
+        },
+      ],
+    }
+
+    const formatted = computeRawError({
+      ...DEFAULT_RAW_ERROR_PARAMS,
+      originalError: 'toto',
+      handling: ErrorHandling.HANDLED,
+      stackTrace,
+    })
+
+    expect(formatted.message).toEqual('oh snap!')
+    expect(formatted.stack).toEqual(`TypeError: oh snap!
   at foo(1, bar) @ http://path/to/file.js:52:15
   at <anonymous> @ http://path/to/file.js:12
   at <anonymous>(baz) @ http://path/to/file.js`)
-      })
-
-      it('should format with an empty message', () => {
-        const stackTrace: StackTrace = {
-          message: '',
-          name: 'TypeError',
-          stack: DEFAULT_STACK,
-        }
-
-        const formatted = computeRawError({
-          ...DEFAULT_RAW_ERROR_PARAMS,
-          stackTrace,
-          originalError: ERROR_INSTANCE,
-          handling: ErrorHandling.HANDLED,
-        })
-
-        expect(formatted.message).toEqual('Empty message')
-      })
-    })
-
-    describe('from a string', () => {
-      it('should format with stack message', () => {
-        const error = 'Uncaught ReferenceError: foo is undefined'
-        const stackTrace = {
-          name: 'ReferenceError',
-          message: 'foo is undefined',
-          stack: [{ url: undefined, line: undefined, column: undefined }],
-        }
-
-        const formatted = computeRawError({
-          ...DEFAULT_RAW_ERROR_PARAMS,
-          stackTrace,
-          originalError: error,
-          handling: ErrorHandling.HANDLED,
-        })
-
-        expect(formatted.type).toEqual('ReferenceError')
-        expect(formatted.message).toEqual('foo is undefined')
-      })
-
-      it('should format without stack message', () => {
-        const error = 'oh snap!'
-
-        const formatted = computeRawError({
-          ...DEFAULT_RAW_ERROR_PARAMS,
-          stackTrace: NOT_COMPUTED_STACK_TRACE,
-          originalError: error,
-          handling: ErrorHandling.HANDLED,
-        })
-
-        expect(formatted.message).toEqual('Uncaught "oh snap!"')
-      })
-    })
-
-    it('should format an object error', () => {
-      const error = { foo: 'bar' }
-
-      const formatted = computeRawError({
-        ...DEFAULT_RAW_ERROR_PARAMS,
-        stackTrace: NOT_COMPUTED_STACK_TRACE,
-        originalError: error,
-        handling: ErrorHandling.HANDLED,
-      })
-
-      expect(formatted.message).toEqual('Uncaught {"foo":"bar"}')
-    })
+    expect(formatted.type).toEqual('TypeError')
   })
 
-  describe('when no stackTrace', () => {
-    it('should format a string', () => {
-      const error = 'foo is undefined'
+  it('discards unusable stack traces', () => {
+    const stackTrace: StackTrace = { name: undefined, message: undefined, stack: [] } as any
 
-      const formatted = computeRawError({
-        ...DEFAULT_RAW_ERROR_PARAMS,
-        originalError: error,
-        handling: ErrorHandling.HANDLED,
-      })
-
-      expect(formatted.message).toEqual('Uncaught "foo is undefined"')
+    const formatted = computeRawError({
+      ...DEFAULT_RAW_ERROR_PARAMS,
+      originalError: 'toto',
+      handling: ErrorHandling.HANDLED,
+      stackTrace,
     })
 
-    it('should format an object', () => {
-      const error = { foo: 'bar' }
-
-      const formatted = computeRawError({
-        ...DEFAULT_RAW_ERROR_PARAMS,
-        originalError: error,
-        handling: ErrorHandling.HANDLED,
-      })
-
-      expect(formatted.message).toEqual('Uncaught {"foo":"bar"}')
-    })
+    expect(formatted.message).toEqual('Uncaught "toto"')
+    expect(formatted.stack).toEqual(NO_ERROR_STACK_PRESENT_MESSAGE)
+    expect(formatted.type).toEqual(undefined)
   })
 
   it('should set handling according to given parameter', () => {
@@ -159,7 +142,6 @@ describe('computeRawError', () => {
     expect(
       computeRawError({
         ...DEFAULT_RAW_ERROR_PARAMS,
-        stackTrace: NOT_COMPUTED_STACK_TRACE,
         originalError: error,
         handling: ErrorHandling.HANDLED,
       }).handling
@@ -168,7 +150,6 @@ describe('computeRawError', () => {
     expect(
       computeRawError({
         ...DEFAULT_RAW_ERROR_PARAMS,
-        stackTrace: NOT_COMPUTED_STACK_TRACE,
         originalError: error,
         handling: ErrorHandling.UNHANDLED,
       }).handling
@@ -176,18 +157,6 @@ describe('computeRawError', () => {
   })
 
   it('should compute an object error with causes', () => {
-    const stackTrace: StackTrace = {
-      message: 'some typeError message',
-      name: 'TypeError',
-      stack: [
-        {
-          url: '<fake url>',
-          line: 1,
-          column: 2,
-        },
-      ],
-    }
-
     const error = new Error('foo: bar') as ErrorWithCause
     error.stack = 'Error: foo: bar\n    at <anonymous>:1:15'
 
@@ -202,16 +171,15 @@ describe('computeRawError', () => {
 
     const formatted = computeRawError({
       ...DEFAULT_RAW_ERROR_PARAMS,
-      stackTrace,
       originalError: error,
       handling: ErrorHandling.HANDLED,
       source: ErrorSource.SOURCE,
     })
 
-    expect(formatted?.type).toEqual('TypeError')
-    expect(formatted?.message).toEqual('some typeError message')
-    expect(formatted.causes?.length).toBe(2)
-    expect(formatted.stack).toContain('TypeError: some typeError message')
+    expect(formatted.type).toEqual('Error')
+    expect(formatted.message).toEqual('foo: bar')
+    expect(formatted.causes!.length).toBe(2)
+    expect(formatted.stack).toContain('Error: foo: bar')
 
     const causes = formatted.causes as RawErrorCause[]
 
@@ -228,22 +196,15 @@ describe('computeRawError', () => {
 
   it('should propagate the original error without modifications', () => {
     const error = { description: 'syntax error' }
-    const stackTrace: StackTrace = {
-      message: 'some syntax message',
-      name: 'SyntaxError',
-      stack: [],
-    }
 
     const formattedWithoutStackTrace = computeRawError({
       ...DEFAULT_RAW_ERROR_PARAMS,
-      stackTrace: NOT_COMPUTED_STACK_TRACE,
       originalError: error,
       handling: ErrorHandling.HANDLED,
     })
 
     const formattedWithStackTrace = computeRawError({
       ...DEFAULT_RAW_ERROR_PARAMS,
-      stackTrace,
       originalError: error,
       handling: ErrorHandling.HANDLED,
     })
@@ -321,7 +282,6 @@ describe('tryToGetContext', () => {
     error.dd_context = context
 
     const rawError = computeRawError({
-      stackTrace: undefined,
       originalError: error,
       handlingStack: undefined,
       componentStack: undefined,
