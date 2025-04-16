@@ -37,11 +37,7 @@ export function computeStackTrace(ex: unknown): StackTrace {
   if (stackProperty) {
     stackProperty.split('\n').forEach((line) => {
       const stackFrame =
-        parseChromeLine(line) ||
-        parseChromeAnonymousLine(line) ||
-        parseWinLine(line) ||
-        parseGeckoLine(line) ||
-        parseSafariWasmLine(line)
+        parseChromeLine(line) || parseChromeAnonymousLine(line) || parseWinLine(line) || parseGeckoLine(line)
       if (stackFrame) {
         if (!stackFrame.func && stackFrame.line) {
           stackFrame.func = UNKNOWN_FUNCTION
@@ -125,7 +121,7 @@ function parseWinLine(line: string): StackFrame | undefined {
 }
 
 const GECKO_LINE_RE =
-  /^\s*(.*?)(?:\((.*?)\))?(?:^|@)((?:file|https?|blob|chrome|webpack|resource|capacitor|\[native).*?|[^@]*bundle)(?::(\d+))?(?::(\d+))?\s*$/i
+  /^\s*(.*?)(?:\((.*?)\))?(?:^|@)((?:file|https?|blob|chrome|webpack|resource|capacitor|\[native).*?|[^@]*bundle|\[wasm code\])(?::(\d+))?(?::(\d+))?\s*$/i
 const GECKO_EVAL_RE = /(\S+) line (\d+)(?: > eval line \d+)* > eval/i
 
 function parseGeckoLine(line: string): StackFrame | undefined {
@@ -151,16 +147,6 @@ function parseGeckoLine(line: string): StackFrame | undefined {
     line: parts[4] ? +parts[4] : undefined,
     url: parts[3],
   }
-}
-
-const SAFARI_WASM_RE = /^(\S+)\[(\S+)\]@\[wasm code\]$/i
-
-function parseSafariWasmLine(line: string): StackFrame | undefined {
-  const match = SAFARI_WASM_RE.exec(line.trim())
-  if (!match) {
-    return
-  }
-  return { func: `${match[1]}.${match[2]}`, url: '[wasm code]', args: [] }
 }
 
 function tryToGetString(candidate: unknown, property: string) {

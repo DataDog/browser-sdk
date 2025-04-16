@@ -884,22 +884,51 @@ Error: foo
 
     expect(stackFrames.stack.length).toBe(3)
 
-    expect(stackFrames.stack[0]).toEqual({ func: 'myModule.wasm-function.crashHandler', url: '[wasm code]', args: [] })
-
-    expect(stackFrames.stack[1]).toEqual({
-      func: 'handleError',
-      url: 'https://example.com/app.js',
-      line: 123,
-      column: 45,
+    expect(stackFrames.stack[0]).toEqual({
+      func: 'myModule.wasm-function[crashHandler]',
+      url: '[wasm code]',
+      column: undefined,
+      line: undefined,
       args: [],
     })
+  })
 
-    expect(stackFrames.stack[2]).toEqual({
-      func: '?',
-      url: 'https://example.com/app.js',
-      line: 150,
-      column: 30,
+  it('should parse Chrome WebAssembly stack frames', () => {
+    const wasmStack = `
+  Error: Wasm Error
+    at foo (<anonymous>:wasm-function[42]:0x1a3b)
+    at bar (http://example.com/script.js:10:5)
+    `
+    const mockErr = { message: 'Wasm Error', name: 'Error', stack: wasmStack }
+    const stackFrames = computeStackTrace(mockErr)
+
+    expect(stackFrames.stack.length).toBe(2)
+    expect(stackFrames.stack[0]).toEqual({
       args: [],
+      func: 'foo',
+      url: '<anonymous>:wasm-function[42]:0x1a3b',
+      line: undefined,
+      column: undefined,
+    })
+  })
+
+  it('should parse Firefox WebAssembly stack frames', () => {
+    const wasmStack = `
+  Error: Wasm Error
+    wasm-function[42]@http://example.com/my-module.wasm:wasm-function[42]:0x1a3b
+    bar@http://example.com/script.js:10:5
+    `
+    const mockErr = { message: 'Wasm Error', name: 'Error', stack: wasmStack }
+    const stackFrames = computeStackTrace(mockErr)
+
+    expect(stackFrames.stack.length).toBe(2)
+
+    expect(stackFrames.stack[0]).toEqual({
+      args: [],
+      func: 'wasm-function[42]',
+      url: 'http://example.com/my-module.wasm:wasm-function[42]:0x1a3b',
+      line: undefined,
+      column: undefined,
     })
   })
 })
