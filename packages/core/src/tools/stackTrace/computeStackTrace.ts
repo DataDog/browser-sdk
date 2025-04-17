@@ -48,7 +48,11 @@ export function computeStackTrace(ex: unknown): StackTrace {
     })
   }
 
-  return { message: tryToGetString(ex, 'message'), name: tryToGetString(ex, 'name'), stack }
+  return {
+    message: tryToGetString(ex, 'message'),
+    name: tryToGetString(ex, 'name'),
+    stack,
+  }
 }
 const fileUrl =
   '((?:file|https?|blob|chrome-extension|electron|native|eval|webpack|snippet|<anonymous>|\\w+\\.|\\/).*?)'
@@ -75,15 +79,13 @@ function parseChromeLine(line: string): StackFrame | undefined {
     parts[4] = submatch[3] // column
   }
 
-  const frame = {
+  return {
     args: isNative ? [parts[2]] : [],
     column: parts[4] ? +parts[4] : undefined,
     func: parts[1] || UNKNOWN_FUNCTION,
     line: parts[3] ? +parts[3] : undefined,
     url: !isNative ? parts[2] : undefined,
   }
-
-  return frame
 }
 
 const CHROME_ANONYMOUS_FUNCTION_RE = new RegExp(`^\\s*at ?${fileUrl}${filePosition}?${filePosition}??\\s*$`, 'i')
@@ -142,15 +144,13 @@ function parseGeckoLine(line: string): StackFrame | undefined {
     parts[5] = undefined! // no column when eval
   }
 
-  const frame = {
+  return {
     args: parts[2] ? parts[2].split(',') : [],
     column: parts[5] ? +parts[5] : undefined,
     func: parts[1] || UNKNOWN_FUNCTION,
     line: parts[4] ? +parts[4] : undefined,
     url: parts[3],
   }
-
-  return frame
 }
 
 function tryToGetString(candidate: unknown, property: string) {
@@ -164,7 +164,11 @@ function tryToGetString(candidate: unknown, property: string) {
 export function computeStackTraceFromOnErrorMessage(messageObj: unknown, url?: string, line?: number, column?: number) {
   const stack = [{ url, column, line }]
   const { name, message } = tryToParseMessage(messageObj)
-  return { name, message, stack }
+  return {
+    name,
+    message,
+    stack,
+  }
 }
 
 // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Error#Error_types
