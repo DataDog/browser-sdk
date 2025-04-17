@@ -84,7 +84,6 @@ function parseChromeLine(line: string): StackFrame | undefined {
   }
 
   tryToParseWasmUrl(frame)
-
   return frame
 }
 
