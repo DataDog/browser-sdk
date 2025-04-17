@@ -901,6 +901,25 @@ Error: foo
     })
   })
 
+  it('should parse Safari Wasm stack frames from file URL', () => {
+    const wasmStack = `
+  RuntimeError: Some Wasm Error
+      myModule.wasm-function[crashFunc]@http://example.com/myModule.wasm
+      regularJsFunc@http://example.com/script.js:10:5
+    `
+    const mockErr = { message: 'Some Wasm Error', name: 'RuntimeError', stack: wasmStack }
+    const stackFrames = computeStackTrace(mockErr)
+
+    expect(stackFrames.stack.length).toBe(2)
+    expect(stackFrames.stack[0]).toEqual({
+      args: [],
+      func: 'myModule.wasm-function[crashFunc]',
+      url: 'http://example.com/myModule.wasm',
+      line: undefined,
+      column: undefined,
+    })
+  })
+
   it('should parse Chrome WebAssembly stack frames', () => {
     const wasmStack = `
   Error: Wasm Error
@@ -914,7 +933,7 @@ Error: foo
     expect(stackFrames.stack[0]).toEqual({
       args: [],
       func: 'foo',
-      url: '<anonymous>:wasm-function[42]:0x1a3b',
+      url: '<anonymous>',
       line: undefined,
       column: undefined,
     })
@@ -934,7 +953,7 @@ Error: foo
     expect(stackFrames.stack[0]).toEqual({
       args: [],
       func: 'wasm-function[42]',
-      url: 'http://example.com/my-module.wasm:wasm-function[42]:0x1a3b',
+      url: 'http://example.com/my-module.wasm',
       line: undefined,
       column: undefined,
     })

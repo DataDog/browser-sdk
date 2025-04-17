@@ -75,13 +75,17 @@ function parseChromeLine(line: string): StackFrame | undefined {
     parts[4] = submatch[3] // column
   }
 
-  return {
+  const frame = {
     args: isNative ? [parts[2]] : [],
     column: parts[4] ? +parts[4] : undefined,
     func: parts[1] || UNKNOWN_FUNCTION,
     line: parts[3] ? +parts[3] : undefined,
     url: !isNative ? parts[2] : undefined,
   }
+
+  tryToParseWasmUrl(frame)
+
+  return frame
 }
 
 const CHROME_ANONYMOUS_FUNCTION_RE = new RegExp(`^\\s*at ?${fileUrl}${filePosition}?${filePosition}??\\s*$`, 'i')
@@ -140,13 +144,16 @@ function parseGeckoLine(line: string): StackFrame | undefined {
     parts[5] = undefined! // no column when eval
   }
 
-  return {
+  const frame = {
     args: parts[2] ? parts[2].split(',') : [],
     column: parts[5] ? +parts[5] : undefined,
     func: parts[1] || UNKNOWN_FUNCTION,
     line: parts[4] ? +parts[4] : undefined,
     url: parts[3],
   }
+
+  tryToParseWasmUrl(frame)
+  return frame
 }
 
 function tryToGetString(candidate: unknown, property: string) {
@@ -174,4 +181,17 @@ function tryToParseMessage(messageObj: unknown) {
     ;[, name, message] = ERROR_TYPES_RE.exec(messageObj as string)!
   }
   return { name, message }
+}
+
+const WASM_STANDARD_URL_RE = /^(.+?):wasm-function\[.+?\]:0x[a-fA-F0-9]+$/
+
+function tryToParseWasmUrl(frame: StackFrame): void {
+  if (frame.url) {
+    const wasmUrlMatch = WASM_STANDARD_URL_RE.exec(frame.url)
+    if (wasmUrlMatch) {
+      frame.url = wasmUrlMatch[1]
+      frame.line = undefined
+      frame.column = undefined
+    }
+  }
 }
