@@ -1,34 +1,10 @@
 import path from 'path'
-import { type BrowserContext, chromium, expect, test as base } from '@playwright/test'
+import { expect } from '@playwright/test'
+import { createExtensionTest } from '../utils/extensionFixture'
+import { DEFAULT_RUM_CONFIGURATION } from '../../lib/framework'
 
-const test = base.extend<{
-  context: BrowserContext
-  extensionId: string
-}>({
-  // eslint-disable-next-line no-empty-pattern
-  context: async ({}, use, testInfo) => {
-    testInfo.skip(testInfo.project.name !== 'chromium', 'Extension tests only run in Chromium')
-
-    const pathToExtension = path.join(__dirname, '../../../../test/apps/extension')
-    const context = await chromium.launchPersistentContext('', {
-      channel: 'chromium',
-      args: [`--disable-extensions-except=${pathToExtension}`, `--load-extension=${pathToExtension}`],
-    })
-    await use(context)
-    await context.close()
-  },
-  extensionId: async ({ context }, use) => {
-    const workers = context.serviceWorkers()
-    const extensionId = workers[0]?.url().split('/')[2]
-    if (!extensionId) {
-      const worker = await context.waitForEvent('serviceworker')
-      const id = worker.url().split('/')[2]
-      await use(id)
-    } else {
-      await use(extensionId)
-    }
-  },
-})
+const pathToExtension = path.join(__dirname, '../../../../test/apps/extension')
+const test = createExtensionTest(pathToExtension)
 
 test.describe('Extension Environment Tests', () => {
   test('popup page should load extension popup and display expected content', async ({ page, extensionId }) => {
@@ -41,14 +17,26 @@ test.describe('Extension Environment Tests', () => {
     page.on('console', (msg) => consoleMessages.push(msg.text()))
 
     await page.goto(`chrome-extension://${extensionId}/src/popup.html`)
-    const extensionResult = await page.evaluate(() => (window.DD_RUM ? window.DD_RUM.version : ''))
-    expect(extensionResult).toBe('dev')
+    const extensionResult = await page.evaluate(
+      () =>
+        window.DD_RUM?.getInitConfiguration() ?? {
+          applicationId: '',
+        }
+    )
+    expect(extensionResult.applicationId).toBe(DEFAULT_RUM_CONFIGURATION.applicationId)
 
     await page.goto('https://www.datadoghq.com/')
-    const regularResult = await page.evaluate(() => (window.DD_RUM ? window.DD_RUM.version : ''))
-    expect(regularResult).not.toBe('')
+    const regularResult = await page.evaluate(
+      () =>
+        window.DD_RUM?.getInitConfiguration() ?? {
+          applicationId: '',
+        }
+    )
+    expect(regularResult.applicationId).not.toBe(DEFAULT_RUM_CONFIGURATION.applicationId)
 
-    expect(consoleMessages).toContain('Datadog Browser SDK: DD_RUM is already initialized.')
+    expect(consoleMessages).toContain(
+      'Datadog Browser SDK: SDK is being initialized from an extension. This is not supported for now.'
+    )
   })
 
   test('SDK is initialized in a supported environment', async ({ page, extensionId }) => {
@@ -56,13 +44,20 @@ test.describe('Extension Environment Tests', () => {
     page.on('console', (msg) => consoleMessages.push(msg.text()))
 
     await page.goto(`chrome-extension://${extensionId}/src/popup.html`)
-    const extensionResult = await page.evaluate(() => (window.DD_RUM ? window.DD_RUM.version : ''))
-    expect(extensionResult).toBe('dev')
+    const extensionResult = await page.evaluate(
+      () =>
+        window.DD_RUM?.getInitConfiguration() ?? {
+          applicationId: '',
+        }
+    )
+    expect(extensionResult.applicationId).toBe(DEFAULT_RUM_CONFIGURATION.applicationId)
 
-    await page.goto('http://localhost:8080/')
-    const regularResult = await page.evaluate(() => (window.DD_RUM ? window.DD_RUM.version : ''))
-    expect(regularResult).not.toBe('')
+    await page.goto('https://developer.chrome.com/docs/extensions/reference/api/printing')
+    const regularResult = await page.evaluate(() => window.DD_RUM)
+    expect(regularResult).toBeUndefined()
 
-    expect(consoleMessages).toContain('Extension context DD_RUM.version: dev')
+    expect(consoleMessages).toContain(
+      'Datadog Browser SDK: SDK is being initialized from an extension. This is not supported for now.'
+    )
   })
 })

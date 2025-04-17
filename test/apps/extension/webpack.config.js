@@ -1,5 +1,4 @@
 const path = require('path')
-const webpack = require('webpack')
 
 module.exports = {
   mode: 'production',
@@ -13,9 +12,4 @@ module.exports = {
   optimization: {
     chunkIds: 'named',
   },
-  plugins: [
-    new webpack.DefinePlugin({
-      __BUILD_ENV__SDK_VERSION__: JSON.stringify('env'),
-    }),
-  ],
 }

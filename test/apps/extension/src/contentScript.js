@@ -1,4 +1,3 @@
-/* global window */
 import { datadogRum } from '@datadog/browser-rum'
 
 datadogRum.init({

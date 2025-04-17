@@ -13,7 +13,6 @@ import type {
   ContextManager,
   RawTelemetryUsage,
   RawTelemetryUsageFeature,
-  InitConfiguration,
 } from '@datadog/browser-core'
 import {
   ContextManagerMethod,
@@ -31,6 +30,7 @@ import {
   timeStampToClocks,
   CustomerContextKey,
   isUnsupportedExtensionEnvironment,
+  display,
 } from '@datadog/browser-core'
 
 import type { LifeCycle } from '../domain/lifeCycle'
@@ -261,7 +261,7 @@ export interface RumPublicApi extends PublicApi {
 
   /**
    * Start a view manually.
-   * Enable to manual start a view, use `trackViewsManually: true` init parameter and call `startView()` to create RUM views and be aligned with how you’ve defined them in your SPA application routing.
+   * Enable to manual start a view, use `trackViewsManually: true` init parameter and call `startView()` to create RUM views and be aligned with how you've defined them in your SPA application routing.
    *
    * @param options.name name of the view
    * @param options.service service of the view
@@ -424,7 +424,7 @@ export function makeRumPublicApi(
   options: RumPublicApiOptions = {}
 ): RumPublicApi {
   if (isUnsupportedExtensionEnvironment()) {
-    displayAlreadyInitializedError('DD_RUM', {} as InitConfiguration)
+    display.warn('SDK is being initialized from an extension. This is not supported for now.')
     return {} as RumPublicApi
   }
 
