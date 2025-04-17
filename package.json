@@ -14,7 +14,7 @@
     "build:app": "lerna run pack --stream && cd test/apps/vanilla && rm -rf node_modules && yarn install --no-immutable && yarn build",
     "build:react-app": "lerna run pack --stream && cd test/apps/react && rm -rf node_modules && yarn install --no-immutable && yarn build",
     "build:test-extension": "lerna run pack --stream && cd test/apps/extension && rm -rf node_modules && yarn install --no-immutable && yarn build",
-    "build:apps": "yarn build:app && yarn build:react-app",
+    "build:apps": "yarn build:app && yarn build:react-app && yarn build:test-extension",
     "format": "prettier --check .",
     "lint": "scripts/cli lint .",
     "typecheck": "scripts/cli typecheck . && scripts/cli typecheck developer-extension",
