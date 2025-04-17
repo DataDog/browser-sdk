@@ -18,6 +18,7 @@ export enum ExperimentalFeature {
   MISSING_URL_CONTEXT_TELEMETRY = 'missing_url_context_telemetry',
   USER_ACCOUNT_TRACE_HEADER = 'user_account_trace_header',
   PROFILING = 'profiling',
+  SELF_REGULATE_EXTENSION = 'self_regulate_extension',
 }
 
 const enabledExperimentalFeatures: Set<ExperimentalFeature> = new Set()
