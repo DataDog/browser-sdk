@@ -389,7 +389,6 @@ describe('rum assembly', () => {
 
       expect(serverRumEvents[0].view.id).toBeDefined()
       expect(serverRumEvents[0].date).toBeDefined()
-      expect(serverRumEvents[0].session.id).toBeDefined()
       expect(serverRumEvents[0].source).toBe('browser')
     })
 
@@ -509,76 +508,6 @@ describe('rum assembly', () => {
       })
 
       expect(sessionManager.findTrackedSession).toHaveBeenCalledWith(123 as RelativeTime)
-    })
-  })
-
-  describe('session context', () => {
-    it('should include the session type and id', () => {
-      const { lifeCycle, serverRumEvents } = setupAssemblyTestWithDefaults()
-      notifyRawRumEvent(lifeCycle, {
-        rawRumEvent: createRawRumEvent(RumEventType.VIEW),
-      })
-      expect(serverRumEvents[0].session).toEqual({
-        has_replay: undefined,
-        sampled_for_replay: jasmine.any(Boolean),
-        is_active: undefined,
-        id: '1234',
-        type: 'user',
-      })
-    })
-
-    it('should use recorderApi.isRecording() to set hasReplay on events', () => {
-      const { lifeCycle, serverRumEvents, recorderApi } = setupAssemblyTestWithDefaults()
-      spyOn(recorderApi, 'isRecording').and.returnValue(true)
-
-      notifyRawRumEvent(lifeCycle, {
-        rawRumEvent: createRawRumEvent(RumEventType.ERROR),
-      })
-      expect(recorderApi.isRecording).toHaveBeenCalled()
-      expect(serverRumEvents[0].session.has_replay).toBe(true)
-    })
-
-    it('should not use recorderApi.isRecording() to set hasReplay on view events', () => {
-      const { lifeCycle, serverRumEvents, recorderApi } = setupAssemblyTestWithDefaults()
-      spyOn(recorderApi, 'isRecording')
-
-      notifyRawRumEvent(lifeCycle, {
-        rawRumEvent: createRawRumEvent(RumEventType.VIEW),
-      })
-      expect(recorderApi.isRecording).not.toHaveBeenCalled()
-      expect(serverRumEvents[0].session.has_replay).toBe(undefined)
-    })
-
-    it('should set sampled_for_replay on view events when tracked with replay', () => {
-      const sessionManager = createRumSessionManagerMock().setTrackedWithSessionReplay()
-      const { lifeCycle, serverRumEvents } = setupAssemblyTestWithDefaults({ sessionManager })
-
-      notifyRawRumEvent(lifeCycle, {
-        rawRumEvent: createRawRumEvent(RumEventType.VIEW),
-      })
-
-      expect(serverRumEvents[0].session.sampled_for_replay).toBe(true)
-    })
-
-    it('should set sampled_for_replay on view events when tracked without replay', () => {
-      const sessionManager = createRumSessionManagerMock().setTrackedWithoutSessionReplay()
-      const { lifeCycle, serverRumEvents } = setupAssemblyTestWithDefaults({ sessionManager })
-
-      notifyRawRumEvent(lifeCycle, {
-        rawRumEvent: createRawRumEvent(RumEventType.VIEW),
-      })
-
-      expect(serverRumEvents[0].session.sampled_for_replay).toBe(false)
-    })
-
-    it('should not set sampled_for_replay on other events', () => {
-      const { lifeCycle, serverRumEvents } = setupAssemblyTestWithDefaults()
-
-      notifyRawRumEvent(lifeCycle, {
-        rawRumEvent: createRawRumEvent(RumEventType.ERROR),
-      })
-
-      expect(serverRumEvents[0].session.sampled_for_replay).not.toBeDefined()
     })
   })
 
@@ -764,7 +693,7 @@ interface AssemblyTestParams {
 function setupAssemblyTestWithDefaults({
   partialConfiguration,
   sessionManager,
-  findView = () => ({ id: '7890', name: 'view name', startClocks: {} as ClocksState }),
+  findView = () => ({ id: '7890', name: 'view name', startClocks: {} as ClocksState, sessionIsActive: false }),
 }: AssemblyTestParams = {}) {
   const lifeCycle = new LifeCycle()
   const hooks = createHooks()
@@ -785,7 +714,6 @@ function setupAssemblyTestWithDefaults({
     { ...mockViewHistory(), findView: () => findView() },
     mockUrlContexts(),
     mockDisplayContext(),
-    recorderApi,
     reportErrorSpy
   )
 

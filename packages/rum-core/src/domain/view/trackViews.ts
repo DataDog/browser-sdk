@@ -72,6 +72,7 @@ export interface BeforeViewUpdateEvent {
   name?: string
   context?: Context
   startClocks: ClocksState
+  sessionIsActive: boolean
 }
 
 export interface ViewEndedEvent {
@@ -277,6 +278,7 @@ function newView(
       name,
       context: contextManager.getContext(),
       startClocks,
+      sessionIsActive,
     })
   }
 

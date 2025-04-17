@@ -131,14 +131,11 @@ function processViewUpdate(
           },
         }
       : undefined,
-    session: {
-      has_replay: replayStats ? true : undefined,
-      is_active: view.sessionIsActive ? undefined : false,
-    },
     privacy: {
       replay_level: configuration.defaultPrivacyLevel,
     },
   }
+
   if (!isEmptyObject(view.customTimings)) {
     viewEvent.view.custom_timings = mapValues(
       view.customTimings,

@@ -54,6 +54,7 @@ import { startGlobalContext } from '../domain/contexts/globalContext'
 import { startUserContext } from '../domain/contexts/userContext'
 import { startAccountContext } from '../domain/contexts/accountContext'
 import { startRumAssembly } from '../domain/assembly'
+import { startSessionContext } from '../domain/contexts/sessionContext'
 import type { RecorderApi, ProfilerApi } from './rumPublicApi'
 
 export type StartRum = typeof startRum
@@ -133,6 +134,7 @@ export function startRum(
   const { observable: windowOpenObservable, stop: stopWindowOpen } = createWindowOpenObservable()
   cleanupTasks.push(stopWindowOpen)
 
+  startSessionContext(hooks, session, recorderApi, viewHistory)
   const globalContext = startGlobalContext(hooks, configuration)
   const userContext = startUserContext(hooks, configuration, session)
   const accountContext = startAccountContext(hooks, configuration)
@@ -151,7 +153,6 @@ export function startRum(
     windowOpenObservable,
     urlContexts,
     viewHistory,
-    recorderApi,
     reportError
   )
   cleanupTasks.push(stopRumEventCollection)
@@ -255,7 +256,6 @@ export function startRumEventCollection(
   windowOpenObservable: Observable<void>,
   urlContexts: UrlContexts,
   viewHistory: ViewHistory,
-  recorderApi: RecorderApi,
   reportError: (error: RawError) => void
 ) {
   const actionCollection = startActionCollection(
@@ -278,7 +278,6 @@ export function startRumEventCollection(
     viewHistory,
     urlContexts,
     displayContext,
-    recorderApi,
     reportError
   )
 
