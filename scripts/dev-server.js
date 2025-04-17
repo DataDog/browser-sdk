@@ -13,13 +13,15 @@ const webpackBase = require('../webpack.base')
 const { printLog, runMain } = require('./lib/executionUtils')
 
 const sandboxPath = path.join(__dirname, '../sandbox')
-const port = 8080
+
+// Development server configuration
+const DEFAULT_DEVELOPMENT_PORT = 8080
 
 runMain(() => {
   const app = express()
   app.use(createStaticSandboxApp())
   app.use('/react-app', createReactApp())
-  app.listen(port, () => printLog(`Server listening on port ${port}.`))
+  app.listen(DEFAULT_DEVELOPMENT_PORT, () => printLog(`Server listening on port ${DEFAULT_DEVELOPMENT_PORT}.`))
 })
 
 function createStaticSandboxApp() {
@@ -27,7 +29,12 @@ function createStaticSandboxApp() {
   app.use(cors())
   app.use(express.static(sandboxPath))
   for (const config of [rumConfig, logsConfig, rumSlimConfig, workerConfig]) {
-    app.use(middleware(webpack(config(null, { mode: 'development' }))))
+    app.use(
+      // eslint-disable-next-line @typescript-eslint/no-misused-promises
+      middleware(
+        webpack(config(null, { mode: 'development', publicPath: `http://localhost:${DEFAULT_DEVELOPMENT_PORT}/` }))
+      )
+    )
   }
 
   // Redirect suffixed files
@@ -61,6 +68,7 @@ function createReactApp() {
           entry: `${sandboxPath}/react-app/main.tsx`,
           plugins: [new HtmlWebpackPlugin({ publicPath: '/react-app/' })],
           mode: 'development',
+          publicPath: `http://localhost:${DEFAULT_DEVELOPMENT_PORT}/`,
         })
       )
     )
