@@ -83,7 +83,6 @@ function parseChromeLine(line: string): StackFrame | undefined {
     url: !isNative ? parts[2] : undefined,
   }
 
-  tryToParseWasmUrl(frame)
   return frame
 }
 
@@ -151,7 +150,6 @@ function parseGeckoLine(line: string): StackFrame | undefined {
     url: parts[3],
   }
 
-  tryToParseWasmUrl(frame)
   return frame
 }
 
@@ -180,17 +178,4 @@ function tryToParseMessage(messageObj: unknown) {
     ;[, name, message] = ERROR_TYPES_RE.exec(messageObj as string)!
   }
   return { name, message }
-}
-
-const WASM_STANDARD_URL_RE = /^(.+?):wasm-function\[.+?\]:0x[a-fA-F0-9]+$/
-
-function tryToParseWasmUrl(frame: StackFrame): void {
-  if (frame.url) {
-    const wasmUrlMatch = WASM_STANDARD_URL_RE.exec(frame.url)
-    if (wasmUrlMatch) {
-      frame.url = wasmUrlMatch[1]
-      frame.line = undefined
-      frame.column = undefined
-    }
-  }
 }

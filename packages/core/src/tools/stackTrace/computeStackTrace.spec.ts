@@ -875,7 +875,7 @@ Error: foo
     const wasmStack = `
   RuntimeError: Out of bounds memory access
       myModule.wasm-function[crashHandler]@[wasm code]
-      myModule.wasm-function[42]@[wasm code]
+      <?>.wasm-function[42]@[wasm code]
       handleError@http://192.168.1.113:3000/:98:25
       @http://192.168.1.113:3000/:113:32
     `
@@ -894,7 +894,7 @@ Error: foo
 
     expect(stackFrames.stack[1]).toEqual({
       args: [],
-      func: 'myModule.wasm-function[42]', // test case if have numeric index instead of the name
+      func: '<?>.wasm-function[42]',
       url: '[wasm code]',
       column: undefined,
       line: undefined,
@@ -904,7 +904,7 @@ Error: foo
   it('should parse Safari Wasm stack frames from file URL', () => {
     const wasmStack = `
   RuntimeError: Some Wasm Error
-      myModule.wasm-function[crashFunc]@http://example.com/myModule.wasm
+      myModule.wasm-function[crashFunc]@[wasm code]
       regularJsFunc@http://example.com/script.js:10:5
     `
     const mockErr = { message: 'Some Wasm Error', name: 'RuntimeError', stack: wasmStack }
@@ -914,7 +914,7 @@ Error: foo
     expect(stackFrames.stack[0]).toEqual({
       args: [],
       func: 'myModule.wasm-function[crashFunc]',
-      url: 'http://example.com/myModule.wasm',
+      url: '[wasm code]',
       line: undefined,
       column: undefined,
     })
@@ -923,7 +923,7 @@ Error: foo
   it('should parse Chrome WebAssembly stack frames', () => {
     const wasmStack = `
   Error: Wasm Error
-    at foo (<anonymous>:wasm-function[42]:0x1a3b)
+    at myModule.foo (http://example.com/myModule.wasm:wasm-function[42]:0x1a3b)
     at bar (http://example.com/script.js:10:5)
     `
     const mockErr = { message: 'Wasm Error', name: 'Error', stack: wasmStack }
@@ -932,8 +932,8 @@ Error: foo
     expect(stackFrames.stack.length).toBe(2)
     expect(stackFrames.stack[0]).toEqual({
       args: [],
-      func: 'foo',
-      url: '<anonymous>',
+      func: 'myModule.foo',
+      url: 'http://example.com/myModule.wasm:wasm-function[42]:0x1a3b',
       line: undefined,
       column: undefined,
     })
@@ -942,7 +942,7 @@ Error: foo
   it('should parse Firefox WebAssembly stack frames', () => {
     const wasmStack = `
   Error: Wasm Error
-    wasm-function[42]@http://example.com/my-module.wasm:wasm-function[42]:0x1a3b
+    myModule.foo@http://example.com/my-module.wasm:wasm-function[42]:0x1a3b
     bar@http://example.com/script.js:10:5
     `
     const mockErr = { message: 'Wasm Error', name: 'Error', stack: wasmStack }
@@ -952,8 +952,8 @@ Error: foo
 
     expect(stackFrames.stack[0]).toEqual({
       args: [],
-      func: 'wasm-function[42]',
-      url: 'http://example.com/my-module.wasm',
+      func: 'myModule.foo',
+      url: 'http://example.com/my-module.wasm:wasm-function[42]:0x1a3b',
       line: undefined,
       column: undefined,
     })
