@@ -20,13 +20,15 @@ export function createExtensionTest(extensionPath: string) {
       await context.close()
     },
     extensionId: async ({ context }, use) => {
-      let [background] = context.serviceWorkers()
-      if (!background) {
-        background = await context.waitForEvent('serviceworker')
+      const workers = context.serviceWorkers()
+      const extensionId = workers[0]?.url().split('/')[2]
+      if (!extensionId) {
+        const worker = await context.waitForEvent('serviceworker')
+        const id = worker.url().split('/')[2]
+        await use(id)
+      } else {
+        await use(extensionId)
       }
-
-      const extensionId = background.url().split('/')[2]
-      await use(extensionId)
     },
   })
 }
