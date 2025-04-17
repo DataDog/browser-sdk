@@ -11,7 +11,6 @@ import type { RumConfiguration } from '../configuration'
 import type { LocationChange } from '../../browser/locationChangeObservable'
 import type { Hooks } from '../../hooks'
 import { HookNames, createHooks } from '../../hooks'
-
 import type { ViewHistoryEntry } from '../contexts/viewHistory'
 import { startViewCollection } from './viewCollection'
 import type { ViewEvent } from './trackViews'
@@ -70,7 +69,6 @@ describe('viewCollection', () => {
   let hooks: Hooks
   let getReplayStatsSpy: jasmine.Spy<RecorderApi['getReplayStats']>
   let rawRumEvents: Array<RawRumEventCollectedData<RawRumEvent>> = []
-
   function setupViewCollection(
     partialConfiguration: Partial<RumConfiguration> = {},
     viewHistoryEntry?: ViewHistoryEntry
@@ -194,10 +192,6 @@ describe('viewCollection', () => {
         },
         time_spent: (100 * 1e6) as ServerDuration,
       },
-      session: {
-        has_replay: undefined,
-        is_active: undefined,
-      },
       display: {
         scroll: {
           max_depth: 2000,
@@ -208,30 +202,6 @@ describe('viewCollection', () => {
       },
       privacy: { replay_level: 'mask' },
     })
-  })
-
-  it('should set session.is_active to false if the session is inactive', () => {
-    setupViewCollection()
-    lifeCycle.notify(LifeCycleEventType.VIEW_UPDATED, { ...VIEW, sessionIsActive: false })
-
-    expect((rawRumEvents[rawRumEvents.length - 1].rawRumEvent as RawRumViewEvent).session.is_active).toBe(false)
-  })
-
-  it('should include replay information if available', () => {
-    setupViewCollection()
-    getReplayStatsSpy.and.returnValue({ segments_count: 4, records_count: 10, segments_total_raw_size: 1000 })
-
-    lifeCycle.notify(LifeCycleEventType.VIEW_UPDATED, VIEW)
-
-    expect(getReplayStatsSpy).toHaveBeenCalledWith(VIEW.id)
-    expect(rawRumEvents[rawRumEvents.length - 1].startTime).toBe(1234 as RelativeTime)
-    const rawRumViewEvent = rawRumEvents[rawRumEvents.length - 1].rawRumEvent as RawRumViewEvent
-    expect(rawRumViewEvent._dd.replay_stats).toEqual({
-      segments_count: 4,
-      records_count: 10,
-      segments_total_raw_size: 1000,
-    })
-    expect(rawRumViewEvent.session.has_replay).toBe(true)
   })
 
   it('should discard negative loading time', () => {

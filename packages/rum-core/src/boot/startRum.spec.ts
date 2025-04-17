@@ -38,13 +38,15 @@ import { startViewCollection } from '../domain/view/viewCollection'
 import type { RumEvent, RumViewEvent } from '../rumEvent.types'
 import type { LocationChange } from '../browser/locationChangeObservable'
 import { startLongAnimationFrameCollection } from '../domain/longAnimationFrame/longAnimationFrameCollection'
-import { startViewHistory, type RumSessionManager } from '..'
+import { startViewHistory } from '..'
+import type { RumSessionManager } from '..'
 import type { RumConfiguration } from '../domain/configuration'
 import { RumEventType } from '../rawRumEvent.types'
 import type { PageStateHistory } from '../domain/contexts/pageStateHistory'
 import { createCustomVitalsState } from '../domain/vital/vitalCollection'
 import { createHooks } from '../hooks'
 import { startUrlContexts } from '../domain/contexts/urlContexts'
+import { startSessionContext } from '../domain/contexts/sessionContext'
 import { startRum, startRumEventCollection } from './startRum'
 
 function collectServerEvents(lifeCycle: LifeCycle) {
@@ -69,7 +71,7 @@ function startRumStub(
   const hooks = createHooks()
   const viewHistory = startViewHistory(lifeCycle)
   const urlContexts = startUrlContexts(lifeCycle, hooks, locationChangeObservable, location)
-
+  startSessionContext(hooks, sessionManager, noopRecorderApi, viewHistory)
   const { stop: rumEventCollectionStop } = startRumEventCollection(
     lifeCycle,
     hooks,
@@ -80,7 +82,6 @@ function startRumStub(
     windowOpenObservable,
     urlContexts,
     viewHistory,
-    noopRecorderApi,
     reportError
   )
   const { stop: viewCollectionStop } = startViewCollection(

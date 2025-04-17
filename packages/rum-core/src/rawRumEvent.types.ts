@@ -122,10 +122,6 @@ export interface RawRumViewEvent {
     frustration: Count
     performance?: ViewPerformanceData
   }
-  session: {
-    has_replay: true | undefined
-    is_active: false | undefined
-  }
   display?: ViewDisplay
   privacy?: {
     replay_level: DefaultPrivacyLevel
