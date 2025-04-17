@@ -1,14 +1,18 @@
 import { datadogRum } from '@datadog/browser-rum'
 
 datadogRum.init({
-  applicationId: 'xxx',
-  clientToken: 'xxx',
-  site: 'xxx',
-  service: 'benoit-test',
-  env: 'dev',
-  sessionSampleRate: 100,
-  sessionReplaySampleRate: 0,
-  defaultPrivacyLevel: 'mask-user-input',
+  applicationId: '37fe52bf-b3d5-4ac7-ad9b-44882d479ec8',
+  clientToken: 'pubf2099de38f9c85797d20d64c7d632a69',
+  defaultPrivacyLevel: 'allow',
+  trackResources: true,
+  trackLongTasks: true,
+  enableExperimentalFeatures: [],
+  allowUntrustedEvents: true,
+  // Force All sample rates to 100% to avoid flakiness
+  sessionReplaySampleRate: 100,
+  telemetrySampleRate: 100,
+  telemetryUsageSampleRate: 100,
+  telemetryConfigurationSampleRate: 100,
 })
 
 datadogRum.startSessionReplayRecording()
