@@ -1,14 +1,7 @@
 import type { ClocksState, RelativeTime, TimeStamp } from '@datadog/browser-core'
 import { ErrorSource, ExperimentalFeature, ONE_MINUTE, display } from '@datadog/browser-core'
 import type { Clock } from '@datadog/browser-core/test'
-import {
-  mockEventBridge,
-  mockExperimentalFeatures,
-  setNavigatorOnLine,
-  setNavigatorConnection,
-  registerCleanupTask,
-  mockClock,
-} from '@datadog/browser-core/test'
+import { mockEventBridge, mockExperimentalFeatures, registerCleanupTask, mockClock } from '@datadog/browser-core/test'
 import {
   createRumSessionManagerMock,
   createRawRumEvent,
@@ -623,23 +616,6 @@ describe('rum assembly', () => {
 
       expect(serverRumEvents[0]._dd.browser_sdk_version).not.toBeDefined()
       expect(serverRumEvents[1]._dd.browser_sdk_version).toBeDefined()
-    })
-  })
-
-  describe('connectivity', () => {
-    it('should include the connectivity information', () => {
-      setNavigatorOnLine(true)
-      setNavigatorConnection({ effectiveType: '2g' })
-
-      const { lifeCycle, serverRumEvents } = setupAssemblyTestWithDefaults()
-      const rawRumEvent = createRawRumEvent(RumEventType.VIEW)
-      notifyRawRumEvent(lifeCycle, { rawRumEvent })
-
-      expect(serverRumEvents[0].connectivity).toEqual({
-        status: 'connected',
-        effective_type: '2g',
-        interfaces: undefined,
-      })
     })
   })
   ;[
