@@ -5,8 +5,7 @@ const TerserPlugin = require('terser-webpack-plugin')
 const { buildEnvKeys, getBuildEnvValue } = require('./scripts/lib/buildEnv')
 
 const tsconfigPath = path.join(__dirname, 'tsconfig.webpack.json')
-
-module.exports = ({ entry, mode, filename, types, keepBuildEnvVariables, plugins }) => ({
+module.exports = ({ entry, mode, publicPath, filename, types, keepBuildEnvVariables, plugins }) => ({
   entry,
   mode,
   output: {
@@ -19,6 +18,7 @@ module.exports = ({ entry, mode, filename, types, keepBuildEnvVariables, plugins
         : // Include a content hash in chunk names in production.
           `chunks/[name]-[contenthash]-${filename}`,
     path: path.resolve('./bundle'),
+    publicPath,
   },
   target: ['web', 'es2018'],
   devtool: false,
