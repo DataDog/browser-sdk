@@ -18,8 +18,7 @@ module.exports = ({ entry, mode, publicPath, filename, types, keepBuildEnvVariab
         : // Include a content hash in chunk names in production.
           `chunks/[name]-[contenthash]-${filename}`,
     path: path.resolve('./bundle'),
-    // Set explicit publicPath for development mode when using the developer extension with NPM package override
-    publicPath: mode === 'development' ? publicPath : 'auto',
+    publicPath,
   },
   target: ['web', 'es2018'],
   devtool: false,
