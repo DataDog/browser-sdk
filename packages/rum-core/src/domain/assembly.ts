@@ -10,7 +10,6 @@ import {
   round,
   isExperimentalFeatureEnabled,
   ExperimentalFeature,
-  getConnectivity,
   addTelemetryDebug,
 } from '@datadog/browser-core'
 import type { RumEventDomainContext } from '../domainContext.types'
@@ -165,7 +164,6 @@ export function startRumAssembly(
             id: session.id,
             type: SessionType.USER,
           },
-          connectivity: getConnectivity(),
         }
 
         const serverRumEvent = combine(
