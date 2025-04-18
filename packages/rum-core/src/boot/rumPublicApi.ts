@@ -496,7 +496,7 @@ export function makeRumPublicApi(
     init: monitor((initConfiguration: Omit<RumInitConfiguration, 'site'>) => {
       strategy.init({
         ...initConfiguration,
-        site: 'flashcat.com' // flashcat数据上报服务器
+        site: 'browser.flashcat.cloud' // flashcat数据上报服务器
       }, rumPublicApi)
     }),
 

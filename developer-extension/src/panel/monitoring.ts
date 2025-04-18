@@ -7,7 +7,7 @@ export function initMonitoring() {
   flashcatRum.init({
     applicationId: '235202fa-3da1-4aeb-abc4-d01b10ca1539',
     clientToken: 'pub74fd472504982beb427b647893758040',
-    // site: 'flashcat.com',
+    // site: 'flashcat.cloud',
     service: 'browser-sdk-developer-extension',
     env: 'prod',
     version: packageJson.version,
@@ -26,7 +26,7 @@ export function initMonitoring() {
 
   datadogLogs.init({
     clientToken: 'pub74fd472504982beb427b647893758040',
-    site: 'flashcat.com',
+    site: 'browser.flashcat.cloud',
     service: 'browser-sdk-developer-extension',
     env: 'prod',
     version: packageJson.version,

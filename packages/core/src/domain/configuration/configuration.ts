@@ -276,7 +276,7 @@ export function validateAndBuildConfiguration(initConfiguration: InitConfigurati
     eventRateLimiterThreshold: 3000,
     maxTelemetryEventsPerPage: 15,
 
-    /**
+    /** 
      * flush automatically, aim to be lower than ALB connection timeout
      * to maximize connection reuse.
      */
