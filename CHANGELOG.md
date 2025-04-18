@@ -18,6 +18,12 @@
 
 ---
 
+## v0.0.1-beta.1
+
+**Internal Changes:**
+
+- feat: 去掉site前缀 [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+
 ## v0.0.1-beta.0
 
 **Internal Changes:**

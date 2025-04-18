@@ -1,7 +1,7 @@
 {
   "private": true,
   "name": "performances",
-  "version": "0.0.1-beta.0",
+  "version": "0.0.1-beta.1",
   "scripts": {
     "start": "ts-node ./src/main.ts"
   },
