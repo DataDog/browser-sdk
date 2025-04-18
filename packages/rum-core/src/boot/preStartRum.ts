@@ -13,6 +13,9 @@ import {
   addTelemetryConfiguration,
   initFetchObservable,
   CustomerContextKey,
+  isUnsupportedExtensionEnvironment,
+  isExperimentalFeatureEnabled,
+  ExperimentalFeature,
 } from '@datadog/browser-core'
 import {
   validateAndBuildRumConfiguration,
@@ -96,6 +99,15 @@ export function createPreStartStrategy(
     const eventBridgeAvailable = canUseEventBridge()
     if (eventBridgeAvailable) {
       initConfiguration = overrideInitConfigurationForBridge(initConfiguration)
+    }
+
+    // Check for extension environment after feature flags are initialized
+    if (
+      isExperimentalFeatureEnabled(ExperimentalFeature.SELF_REGULATE_EXTENSION) &&
+      isUnsupportedExtensionEnvironment()
+    ) {
+      display.warn('SDK is being initialized from an extension. This is not supported for now.')
+      return
     }
 
     // Update the exposed initConfiguration to reflect the bridge and remote configuration overrides
