@@ -6,7 +6,7 @@ datadogRum.init({
   defaultPrivacyLevel: 'allow',
   trackResources: true,
   trackLongTasks: true,
-  enableExperimentalFeatures: [],
+  enableExperimentalFeatures: ['self_regulate_extension'],
   allowUntrustedEvents: true,
   // Force All sample rates to 100% to avoid flakiness
   sessionReplaySampleRate: 100,

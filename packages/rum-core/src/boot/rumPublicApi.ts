@@ -29,10 +29,6 @@ import {
   createTrackingConsentState,
   timeStampToClocks,
   CustomerContextKey,
-  isUnsupportedExtensionEnvironment,
-  display,
-  ExperimentalFeature,
-  isExperimentalFeatureEnabled,
 } from '@datadog/browser-core'
 
 import type { LifeCycle } from '../domain/lifeCycle'
@@ -425,14 +421,6 @@ export function makeRumPublicApi(
   profilerApi: ProfilerApi,
   options: RumPublicApiOptions = {}
 ): RumPublicApi {
-  if (
-    isExperimentalFeatureEnabled(ExperimentalFeature.SELF_REGULATE_EXTENSION) &&
-    isUnsupportedExtensionEnvironment()
-  ) {
-    display.warn('SDK is being initialized from an extension. This is not supported.')
-    return {} as RumPublicApi
-  }
-
   const trackingConsentState = createTrackingConsentState()
   const customVitalsState = createCustomVitalsState()
 
