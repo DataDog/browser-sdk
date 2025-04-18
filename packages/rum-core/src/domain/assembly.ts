@@ -25,7 +25,6 @@ import type { ViewHistory } from './contexts/viewHistory'
 import { SessionReplayState, SessionType } from './rumSessionManager'
 import type { RumSessionManager } from './rumSessionManager'
 import type { RumConfiguration } from './configuration'
-import type { DisplayContext } from './contexts/displayContext'
 import type { ModifiableFieldPaths } from './limitModification'
 import { limitModification } from './limitModification'
 import type { UrlContexts } from './contexts/urlContexts'
@@ -59,7 +58,6 @@ export function startRumAssembly(
   sessionManager: RumSessionManager,
   viewHistory: ViewHistory,
   urlContexts: UrlContexts,
-  displayContext: DisplayContext,
   recorderApi: RecorderApi,
   reportError: (error: RawError) => void
 ) {
@@ -167,7 +165,6 @@ export function startRumAssembly(
             id: session.id,
             type: SessionType.USER,
           },
-          display: displayContext.get(),
           connectivity: getConnectivity(),
         }
 

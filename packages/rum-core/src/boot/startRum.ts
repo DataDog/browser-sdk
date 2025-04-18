@@ -266,21 +266,11 @@ export function startRumEventCollection(
     configuration
   )
 
-  const displayContext = startDisplayContext(configuration)
+  const displayContext = startDisplayContext(hooks, configuration)
   const ciVisibilityContext = startCiVisibilityContext(hooks)
   startSyntheticsContext(hooks)
 
-  startRumAssembly(
-    configuration,
-    lifeCycle,
-    hooks,
-    sessionManager,
-    viewHistory,
-    urlContexts,
-    displayContext,
-    recorderApi,
-    reportError
-  )
+  startRumAssembly(configuration, lifeCycle, hooks, sessionManager, viewHistory, urlContexts, recorderApi, reportError)
 
   return {
     pageStateHistory,

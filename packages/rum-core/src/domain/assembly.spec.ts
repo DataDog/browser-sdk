@@ -13,7 +13,6 @@ import {
   createRumSessionManagerMock,
   createRawRumEvent,
   mockRumConfiguration,
-  mockDisplayContext,
   mockViewHistory,
   mockUrlContexts,
   noopRecorderApi,
@@ -784,7 +783,6 @@ function setupAssemblyTestWithDefaults({
     rumSessionManager,
     { ...mockViewHistory(), findView: () => findView() },
     mockUrlContexts(),
-    mockDisplayContext(),
     recorderApi,
     reportErrorSpy
   )
