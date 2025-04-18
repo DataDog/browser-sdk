@@ -18,6 +18,12 @@
 
 ---
 
+## v0.0.1-beta.0
+
+**Internal Changes:**
+
+- feat: update site [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+
 ## v0.0.1-alpha.3
 
 **Internal Changes:**

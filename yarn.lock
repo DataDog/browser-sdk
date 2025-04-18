@@ -643,7 +643,7 @@ __metadata:
   dependencies:
     "@flashcatcloud/browser-core": "workspace:*"
   peerDependencies:
-    "@flashcatcloud/browser-rum": 0.0.1-alpha.3
+    "@flashcatcloud/browser-rum": 0.0.1-beta.0
   peerDependenciesMeta:
     "@flashcatcloud/browser-rum":
       optional: true
@@ -693,7 +693,7 @@ __metadata:
     "@flashcatcloud/browser-core": "workspace:*"
     "@flashcatcloud/browser-rum-core": "workspace:*"
   peerDependencies:
-    "@flashcatcloud/browser-logs": 0.0.1-alpha.3
+    "@flashcatcloud/browser-logs": 0.0.1-beta.0
   peerDependenciesMeta:
     "@flashcatcloud/browser-logs":
       optional: true
@@ -709,7 +709,7 @@ __metadata:
     "@types/pako": "npm:2.0.3"
     pako: "npm:2.1.0"
   peerDependencies:
-    "@flashcatcloud/browser-logs": 0.0.1-alpha.3
+    "@flashcatcloud/browser-logs": 0.0.1-beta.0
   peerDependenciesMeta:
     "@flashcatcloud/browser-logs":
       optional: true
