@@ -33,6 +33,8 @@ import { LifeCycleEventType } from '../lifeCycle'
 import type { EventCounts } from '../trackEventCounts'
 import type { LocationChange } from '../../browser/locationChangeObservable'
 import type { RumConfiguration, RumInitConfiguration } from '../configuration'
+import type { PageStateHistory } from '../contexts/pageStateHistory'
+import { PageState } from '../contexts/pageStateHistory'
 import { trackViewEventCounts } from './trackViewEventCounts'
 import { trackInitialViewMetrics } from './viewMetrics/trackInitialViewMetrics'
 import type { InitialViewMetrics } from './viewMetrics/trackInitialViewMetrics'
@@ -53,6 +55,7 @@ export interface ViewEvent {
   documentVersion: number
   startClocks: ClocksState
   duration: Duration
+  timeSpentInForeground: Duration
   isActive: boolean
   sessionIsActive: boolean
   loadingType: ViewLoadingType
@@ -104,6 +107,7 @@ export function trackViews(
   configuration: RumConfiguration,
   locationChangeObservable: Observable<LocationChange>,
   areViewsTrackedAutomatically: boolean,
+  pageStateHistory: PageStateHistory,
   initialViewOptions?: ViewOptions
 ) {
   const activeViews: Set<ReturnType<typeof newView>> = new Set()
@@ -125,6 +129,7 @@ export function trackViews(
       location,
       loadingType,
       startClocks,
+      pageStateHistory,
       viewOptions
     )
     activeViews.add(newlyCreatedView)
@@ -196,6 +201,7 @@ function newView(
   initialLocation: Location,
   loadingType: ViewLoadingType,
   startClocks: ClocksState = clocksNow(),
+  pageStateHistory: PageStateHistory,
   viewOptions?: ViewOptions
 ) {
   // Setup initial values
@@ -290,7 +296,15 @@ function newView(
     triggerBeforeViewUpdate()
 
     documentVersion += 1
-    const currentEnd = endClocks === undefined ? timeStampNow() : endClocks.timeStamp
+    const currentEndClocks = endClocks === undefined ? clocksNow() : endClocks
+    const duration = elapsed(startClocks.timeStamp, currentEndClocks.timeStamp)
+
+    const timeSpentInForeground = pageStateHistory.getDurationInStateDuringPeriod(
+      PageState.ACTIVE,
+      startClocks.relative,
+      elapsed(startClocks.relative, currentEndClocks.relative)
+    )
+
     lifeCycle.notify(LifeCycleEventType.VIEW_UPDATED, {
       customTimings,
       documentVersion,
@@ -304,7 +318,8 @@ function newView(
       startClocks,
       commonViewMetrics: getCommonViewMetrics(),
       initialViewMetrics,
-      duration: elapsed(startClocks.timeStamp, currentEnd),
+      duration,
+      timeSpentInForeground,
       isActive: endClocks === undefined,
       sessionIsActive,
       eventCounts,
