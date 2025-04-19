@@ -125,7 +125,7 @@ function parseWinLine(line: string): StackFrame | undefined {
 }
 
 const GECKO_LINE_RE =
-  /^\s*(.*?)(?:\((.*?)\))?(?:^|@)((?:file|https?|blob|chrome|webpack|resource|capacitor|\[native).*?|[^@]*bundle)(?::(\d+))?(?::(\d+))?\s*$/i
+  /^\s*(.*?)(?:\((.*?)\))?(?:^|@)((?:file|https?|blob|chrome|webpack|resource|capacitor|\[native).*?|[^@]*bundle|\[wasm code\])(?::(\d+))?(?::(\d+))?\s*$/i
 const GECKO_EVAL_RE = /(\S+) line (\d+)(?: > eval line \d+)* > eval/i
 
 function parseGeckoLine(line: string): StackFrame | undefined {
