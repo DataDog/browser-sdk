@@ -55,4 +55,7 @@ export interface Settings {
   rumConfigurationOverride: object | null
   logsConfigurationOverride: object | null
   debugMode: boolean
+  overrideOrgAndApp: boolean
+  applicationId: string | null
+  clientToken: string | null
 }

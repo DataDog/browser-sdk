@@ -1,3 +1,7 @@
 .select {
   flex: 1;
 }
+
+.groupWithButton {
+  min-height: 2em;
+}
