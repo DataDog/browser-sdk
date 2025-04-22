@@ -10,7 +10,6 @@ import {
   round,
   isExperimentalFeatureEnabled,
   ExperimentalFeature,
-  getConnectivity,
   addTelemetryDebug,
 } from '@datadog/browser-core'
 import type { RumEventDomainContext } from '../domainContext.types'
@@ -23,7 +22,6 @@ import { LifeCycleEventType } from './lifeCycle'
 import type { ViewHistory } from './contexts/viewHistory'
 import type { RumSessionManager } from './rumSessionManager'
 import type { RumConfiguration } from './configuration'
-import type { DisplayContext } from './contexts/displayContext'
 import type { ModifiableFieldPaths } from './limitModification'
 import { limitModification } from './limitModification'
 import type { UrlContexts } from './contexts/urlContexts'
@@ -55,7 +53,6 @@ export function startRumAssembly(
   sessionManager: RumSessionManager,
   viewHistory: ViewHistory,
   urlContexts: UrlContexts,
-  displayContext: DisplayContext,
   reportError: (error: RawError) => void
 ) {
   modifiableFieldPathsByEvent = {
@@ -158,8 +155,6 @@ export function startRumAssembly(
           },
           date: timeStampNow(),
           source: 'browser',
-          display: displayContext.get(),
-          connectivity: getConnectivity(),
         }
 
         const serverRumEvent = combine(

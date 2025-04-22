@@ -8,7 +8,7 @@ const MAX_SERVER_CREATION_RETRY = 5
 const PORT_MIN = 9200
 const PORT_MAX = 9400
 
-export type ServerApp = (req: http.IncomingMessage, res: http.ServerResponse) => void
+export type ServerApp = (req: http.IncomingMessage, res: http.ServerResponse) => any
 
 export type MockServerApp = ServerApp & {
   getLargeResponseWroteSize(): number
