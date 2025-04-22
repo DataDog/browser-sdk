@@ -27,7 +27,6 @@ function createStaticSandboxApp() {
   app.use(cors())
   app.use(express.static(sandboxPath))
   for (const config of [rumConfig, logsConfig, rumSlimConfig, workerConfig]) {
-    // eslint-disable-next-line @typescript-eslint/no-misused-promises
     app.use(middleware(webpack(config(null, { mode: 'development' }))))
   }
 
@@ -56,7 +55,6 @@ function createReactApp() {
   })
 
   app.use(
-    // eslint-disable-next-line @typescript-eslint/no-misused-promises
     middleware(
       webpack(
         webpackBase({
