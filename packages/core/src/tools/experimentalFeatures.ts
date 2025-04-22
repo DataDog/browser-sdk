@@ -15,7 +15,6 @@ import { objectHasValue } from './utils/objectUtils'
 // eslint-disable-next-line no-restricted-syntax
 export enum ExperimentalFeature {
   WRITABLE_RESOURCE_GRAPHQL = 'writable_resource_graphql',
-  MISSING_URL_CONTEXT_TELEMETRY = 'missing_url_context_telemetry',
   USER_ACCOUNT_TRACE_HEADER = 'user_account_trace_header',
   PROFILING = 'profiling',
 }
