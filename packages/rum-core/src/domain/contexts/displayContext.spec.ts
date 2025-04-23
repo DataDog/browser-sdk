@@ -1,11 +1,17 @@
+import type { RelativeTime } from '@datadog/browser-core'
 import { mockRumConfiguration } from '../../../test'
+import type { Hooks } from '../../hooks'
+import { createHooks, HookNames } from '../../hooks'
 import type { DisplayContext } from './displayContext'
 import { startDisplayContext } from './displayContext'
 
 describe('displayContext', () => {
   let displayContext: DisplayContext
   let requestAnimationFrameSpy: jasmine.Spy
+  let hooks: Hooks
+
   beforeEach(() => {
+    hooks = createHooks()
     requestAnimationFrameSpy = spyOn(window, 'requestAnimationFrame').and.callFake((callback) => {
       callback(1)
       return 1
@@ -16,15 +22,22 @@ describe('displayContext', () => {
     displayContext.stop()
   })
 
-  it('should return current display context using requestAnimationFrame if FF enabled', () => {
-    displayContext = startDisplayContext(mockRumConfiguration())
+  describe('assemble hook', () => {
+    it('should set the display context', () => {
+      displayContext = startDisplayContext(hooks, mockRumConfiguration())
 
-    expect(requestAnimationFrameSpy).toHaveBeenCalledTimes(1)
-    expect(displayContext.get()).toEqual({
-      viewport: {
-        width: jasmine.any(Number),
-        height: jasmine.any(Number),
-      },
+      const event = hooks.triggerHook(HookNames.Assemble, { eventType: 'view', startTime: 0 as RelativeTime })
+      expect(requestAnimationFrameSpy).toHaveBeenCalledTimes(1)
+
+      expect(event).toEqual({
+        type: 'view',
+        display: {
+          viewport: {
+            width: jasmine.any(Number),
+            height: jasmine.any(Number),
+          },
+        },
+      })
     })
   })
 })

@@ -54,6 +54,7 @@ import { startGlobalContext } from '../domain/contexts/globalContext'
 import { startUserContext } from '../domain/contexts/userContext'
 import { startAccountContext } from '../domain/contexts/accountContext'
 import { startRumAssembly } from '../domain/assembly'
+import { startConnectivityContext } from '../domain/contexts/connectivityContext'
 import type { RecorderApi, ProfilerApi } from './rumPublicApi'
 
 export type StartRum = typeof startRum
@@ -126,13 +127,13 @@ export function startRum(
 
   const domMutationObservable = createDOMMutationObservable()
   const locationChangeObservable = createLocationChangeObservable(configuration, location)
+  const { observable: windowOpenObservable, stop: stopWindowOpen } = createWindowOpenObservable()
+  cleanupTasks.push(stopWindowOpen)
   const pageStateHistory = startPageStateHistory(hooks, configuration)
   const viewHistory = startViewHistory(lifeCycle)
   const urlContexts = startUrlContexts(lifeCycle, hooks, locationChangeObservable, location)
   const featureFlagContexts = startFeatureFlagContexts(lifeCycle, hooks, configuration)
-  const { observable: windowOpenObservable, stop: stopWindowOpen } = createWindowOpenObservable()
-  cleanupTasks.push(stopWindowOpen)
-
+  startConnectivityContext(hooks)
   const globalContext = startGlobalContext(hooks, configuration)
   const userContext = startUserContext(hooks, configuration, session)
   const accountContext = startAccountContext(hooks, configuration)
@@ -266,21 +267,11 @@ export function startRumEventCollection(
     configuration
   )
 
-  const displayContext = startDisplayContext(configuration)
+  const displayContext = startDisplayContext(hooks, configuration)
   const ciVisibilityContext = startCiVisibilityContext(hooks)
   startSyntheticsContext(hooks)
 
-  startRumAssembly(
-    configuration,
-    lifeCycle,
-    hooks,
-    sessionManager,
-    viewHistory,
-    urlContexts,
-    displayContext,
-    recorderApi,
-    reportError
-  )
+  startRumAssembly(configuration, lifeCycle, hooks, sessionManager, viewHistory, urlContexts, recorderApi, reportError)
 
   return {
     pageStateHistory,

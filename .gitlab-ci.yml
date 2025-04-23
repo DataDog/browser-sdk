@@ -1,5 +1,5 @@
 variables:
-  CURRENT_STAGING: staging-16
+  CURRENT_STAGING: staging-17
   APP: 'browser-sdk'
   CURRENT_CI_IMAGE: 79
   BUILD_STABLE_REGISTRY: 'registry.ddbuild.io'
