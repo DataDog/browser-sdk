@@ -10,7 +10,6 @@ import {
   round,
   isExperimentalFeatureEnabled,
   ExperimentalFeature,
-  addTelemetryDebug,
 } from '@datadog/browser-core'
 import type { RumEventDomainContext } from '../domainContext.types'
 import { RumEventType } from '../rawRumEvent.types'
@@ -125,24 +124,6 @@ export function startRumAssembly(
       const viewHistoryEntry = viewHistory.findView(startTime)
       const urlContext = urlContexts.findUrl(startTime)
       const session = sessionManager.findTrackedSession(startTime)
-
-      if (
-        session &&
-        viewHistoryEntry &&
-        !urlContext &&
-        isExperimentalFeatureEnabled(ExperimentalFeature.MISSING_URL_CONTEXT_TELEMETRY)
-      ) {
-        addTelemetryDebug('Missing URL entry', {
-          debug: {
-            eventType: rawRumEvent.type,
-            startTime,
-            urlEntries: urlContexts.getAllEntries(),
-            urlDeletedEntries: urlContexts.getDeletedEntries(),
-            viewEntries: viewHistory.getAllEntries(),
-            viewDeletedEntries: viewHistory.getDeletedEntries(),
-          },
-        })
-      }
 
       if (session && viewHistoryEntry && urlContext) {
         const rumContext: Partial<CommonProperties> = {
