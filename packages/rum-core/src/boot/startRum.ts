@@ -55,6 +55,7 @@ import { startUserContext } from '../domain/contexts/userContext'
 import { startAccountContext } from '../domain/contexts/accountContext'
 import { startRumAssembly } from '../domain/assembly'
 import { startConnectivityContext } from '../domain/contexts/connectivityContext'
+import { startDefaultContext } from '../domain/contexts/defaultContext'
 import type { RecorderApi, ProfilerApi } from './rumPublicApi'
 
 export type StartRum = typeof startRum
@@ -129,6 +130,8 @@ export function startRum(
   const locationChangeObservable = createLocationChangeObservable(configuration, location)
   const { observable: windowOpenObservable, stop: stopWindowOpen } = createWindowOpenObservable()
   cleanupTasks.push(stopWindowOpen)
+
+  startDefaultContext(hooks, configuration)
   const pageStateHistory = startPageStateHistory(hooks, configuration)
   const viewHistory = startViewHistory(lifeCycle)
   const urlContexts = startUrlContexts(lifeCycle, hooks, locationChangeObservable, location)

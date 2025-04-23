@@ -2,12 +2,8 @@ import type { Context, RawError, EventRateLimiter } from '@datadog/browser-core'
 import {
   combine,
   isEmptyObject,
-  timeStampNow,
-  currentDrift,
   display,
   createEventRateLimiter,
-  canUseEventBridge,
-  round,
   isExperimentalFeatureEnabled,
   ExperimentalFeature,
   addTelemetryDebug,
@@ -27,9 +23,6 @@ import type { RumConfiguration } from './configuration'
 import type { ModifiableFieldPaths } from './limitModification'
 import { limitModification } from './limitModification'
 import type { UrlContexts } from './contexts/urlContexts'
-
-// replaced at build time
-declare const __BUILD_ENV__SDK_VERSION__: string
 
 const VIEW_MODIFIABLE_FIELD_PATHS: ModifiableFieldPaths = {
   'view.name': 'string',
@@ -146,26 +139,11 @@ export function startRumAssembly(
 
       if (session && viewHistoryEntry && urlContext) {
         const rumContext: Partial<CommonProperties> = {
-          _dd: {
-            format_version: 2,
-            drift: currentDrift(),
-            configuration: {
-              session_sample_rate: round(configuration.sessionSampleRate, 3),
-              session_replay_sample_rate: round(configuration.sessionReplaySampleRate, 3),
-            },
-            browser_sdk_version: canUseEventBridge() ? __BUILD_ENV__SDK_VERSION__ : undefined,
-          },
-          application: {
-            id: configuration.applicationId,
-          },
-          date: timeStampNow(),
-          source: 'browser',
           session: {
             id: session.id,
             type: SessionType.USER,
           },
         }
-
         const serverRumEvent = combine(
           rumContext,
           hooks.triggerHook(HookNames.Assemble, {

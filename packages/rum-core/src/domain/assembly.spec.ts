@@ -1,7 +1,7 @@
 import type { ClocksState, RelativeTime, TimeStamp } from '@datadog/browser-core'
 import { ErrorSource, ExperimentalFeature, ONE_MINUTE, display } from '@datadog/browser-core'
 import type { Clock } from '@datadog/browser-core/test'
-import { mockEventBridge, mockExperimentalFeatures, registerCleanupTask, mockClock } from '@datadog/browser-core/test'
+import { mockExperimentalFeatures, registerCleanupTask, mockClock } from '@datadog/browser-core/test'
 import {
   createRumSessionManagerMock,
   createRawRumEvent,
@@ -372,29 +372,6 @@ describe('rum assembly', () => {
     })
   })
 
-  describe('rum context', () => {
-    it('should be merged with event attributes', () => {
-      const { lifeCycle, serverRumEvents } = setupAssemblyTestWithDefaults()
-      notifyRawRumEvent(lifeCycle, {
-        rawRumEvent: createRawRumEvent(RumEventType.VIEW, undefined),
-      })
-
-      expect(serverRumEvents[0].view.id).toBeDefined()
-      expect(serverRumEvents[0].date).toBeDefined()
-      expect(serverRumEvents[0].session.id).toBeDefined()
-      expect(serverRumEvents[0].source).toBe('browser')
-    })
-
-    it('should be overwritten by event attributes', () => {
-      const { lifeCycle, serverRumEvents } = setupAssemblyTestWithDefaults()
-      notifyRawRumEvent(lifeCycle, {
-        rawRumEvent: createRawRumEvent(RumEventType.VIEW, { date: 10 }),
-      })
-
-      expect(serverRumEvents[0].date).toBe(10)
-    })
-  })
-
   describe('customer context', () => {
     it('should be merged with event attributes', () => {
       const { lifeCycle, serverRumEvents } = setupAssemblyTestWithDefaults()
@@ -571,50 +548,6 @@ describe('rum assembly', () => {
       })
 
       expect(serverRumEvents[0].session.sampled_for_replay).not.toBeDefined()
-    })
-  })
-
-  describe('configuration context', () => {
-    it('should include the configured sample rates', () => {
-      const { lifeCycle, serverRumEvents } = setupAssemblyTestWithDefaults()
-      notifyRawRumEvent(lifeCycle, {
-        rawRumEvent: createRawRumEvent(RumEventType.ACTION),
-      })
-      expect(serverRumEvents[0]._dd.configuration).toEqual({
-        session_replay_sample_rate: 0,
-        session_sample_rate: 100,
-      })
-    })
-
-    it('should round sample rates', () => {
-      const { lifeCycle, serverRumEvents } = setupAssemblyTestWithDefaults({
-        partialConfiguration: {
-          sessionSampleRate: 1.2341,
-          sessionReplaySampleRate: 6.7891,
-        },
-      })
-
-      notifyRawRumEvent(lifeCycle, {
-        rawRumEvent: createRawRumEvent(RumEventType.ACTION),
-      })
-      expect(serverRumEvents[0]._dd.configuration).toEqual({
-        session_sample_rate: 1.234,
-        session_replay_sample_rate: 6.789,
-      })
-    })
-  })
-
-  describe('if event bridge detected', () => {
-    it('includes the browser sdk version', () => {
-      const { lifeCycle, serverRumEvents } = setupAssemblyTestWithDefaults()
-      notifyRawRumEvent(lifeCycle, { rawRumEvent: createRawRumEvent(RumEventType.VIEW) })
-
-      mockEventBridge()
-
-      notifyRawRumEvent(lifeCycle, { rawRumEvent: createRawRumEvent(RumEventType.VIEW) })
-
-      expect(serverRumEvents[0]._dd.browser_sdk_version).not.toBeDefined()
-      expect(serverRumEvents[1]._dd.browser_sdk_version).toBeDefined()
     })
   })
   ;[
