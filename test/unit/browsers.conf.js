@@ -1,7 +1,7 @@
 // Capabilities: https://www.browserstack.com/automate/capabilities
 
 /**
- * @type {import('../browsers.conf').BrowserConfigurations}
+ * @type {Array<import('../browsers.conf').BrowserConfiguration>}
  */
 const browserConfigurations = [
   {

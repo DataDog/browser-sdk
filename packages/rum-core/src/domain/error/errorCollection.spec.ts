@@ -1,14 +1,12 @@
 import type { RelativeTime, TimeStamp, ErrorWithCause } from '@datadog/browser-core'
 import { ErrorHandling, ErrorSource, NO_ERROR_STACK_PRESENT_MESSAGE } from '@datadog/browser-core'
 import { FAKE_CSP_VIOLATION_EVENT } from '@datadog/browser-core/test'
-import { collectAndValidateRawRumEvents, mockPageStateHistory } from '../../../test'
+import { collectAndValidateRawRumEvents } from '../../../test'
 import type { RawRumErrorEvent, RawRumEvent } from '../../rawRumEvent.types'
 import { RumEventType } from '../../rawRumEvent.types'
 import type { RawRumEventCollectedData } from '../lifeCycle'
 import { LifeCycle, LifeCycleEventType } from '../lifeCycle'
 import { doStartErrorCollection } from './errorCollection'
-
-const basePageStateHistory = mockPageStateHistory({ wasInPageStateAt: () => true })
 
 describe('error collection', () => {
   let lifeCycle: LifeCycle
@@ -17,7 +15,7 @@ describe('error collection', () => {
 
   function setupErrorCollection() {
     lifeCycle = new LifeCycle()
-    ;({ addError } = doStartErrorCollection(lifeCycle, basePageStateHistory))
+    ;({ addError } = doStartErrorCollection(lifeCycle))
 
     rawRumEvents = collectAndValidateRawRumEvents(lifeCycle)
   }
@@ -93,11 +91,7 @@ describe('error collection', () => {
               csp: undefined,
             },
             type: RumEventType.ERROR,
-            view: {
-              in_foreground: true,
-            },
           },
-          savedCommonContext: undefined,
           startTime: 1234 as RelativeTime,
           domainContext: {
             error,
@@ -178,36 +172,6 @@ describe('error collection', () => {
       })
     })
 
-    it('should save the global context', () => {
-      setupErrorCollection()
-      addError(
-        {
-          error: new Error('foo'),
-          handlingStack: 'Error: handling foo',
-          startClocks: { relative: 1234 as RelativeTime, timeStamp: 123456789 as TimeStamp },
-        },
-        { context: { foo: 'bar' }, user: {}, hasReplay: undefined }
-      )
-      expect(rawRumEvents[0].savedCommonContext!.context).toEqual({
-        foo: 'bar',
-      })
-    })
-
-    it('should save the user', () => {
-      setupErrorCollection()
-      addError(
-        {
-          error: new Error('foo'),
-          handlingStack: 'Error: handling foo',
-          startClocks: { relative: 1234 as RelativeTime, timeStamp: 123456789 as TimeStamp },
-        },
-        { context: {}, user: { id: 'foo' }, hasReplay: undefined }
-      )
-      expect(rawRumEvents[0].savedCommonContext!.user).toEqual({
-        id: 'foo',
-      })
-    })
-
     it('should include non-Error values in domain context', () => {
       setupErrorCollection()
       addError({
@@ -270,9 +234,6 @@ describe('error collection', () => {
           fingerprint: undefined,
           csp: undefined,
         },
-        view: {
-          in_foreground: true,
-        },
         type: RumEventType.ERROR,
       })
       expect(rawRumEvents[0].domainContext).toEqual({
@@ -300,6 +261,24 @@ describe('error collection', () => {
       })
 
       expect((rawRumEvents[0].rawRumEvent as RawRumErrorEvent).error.csp?.disposition).toEqual('enforce')
+    })
+
+    it('should merge dd_context from the original error with addError context', () => {
+      setupErrorCollection()
+      const error = new Error('foo')
+      ;(error as any).dd_context = { component: 'Menu', param: 123 }
+
+      addError({
+        error,
+        context: { user: 'john' },
+        handlingStack: 'Error: handling dd_context',
+        startClocks: { relative: 500 as RelativeTime, timeStamp: 500000 as TimeStamp },
+      })
+      expect(rawRumEvents[0].customerContext).toEqual({
+        component: 'Menu',
+        param: 123,
+        user: 'john',
+      })
     })
   })
 })

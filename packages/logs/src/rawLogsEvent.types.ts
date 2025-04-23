@@ -68,4 +68,6 @@ export interface CommonContext {
   }
   context: Context
   user: User
+  // We don't want to enforce id internally so use Context as internal type
+  account: Context
 }

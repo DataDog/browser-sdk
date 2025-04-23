@@ -8,34 +8,50 @@ import type { LifeCycle, RawRumEventCollectedData } from '../lifeCycle'
 import { LifeCycleEventType } from '../lifeCycle'
 import type { LocationChange } from '../../browser/locationChangeObservable'
 import type { RumConfiguration } from '../configuration'
-import type { PageStateHistory } from '../contexts/pageStateHistory'
-import type { ViewEvent, ViewOptions } from './trackViews'
+import type { ViewHistory } from '../contexts/viewHistory'
+import type { Hooks, PartialRumEvent } from '../../hooks'
+import { HookNames } from '../../hooks'
 import { trackViews } from './trackViews'
+import type { ViewEvent, ViewOptions } from './trackViews'
 import type { CommonViewMetrics } from './viewMetrics/trackCommonViewMetrics'
 import type { InitialViewMetrics } from './viewMetrics/trackInitialViewMetrics'
 
 export function startViewCollection(
   lifeCycle: LifeCycle,
+  hooks: Hooks,
   configuration: RumConfiguration,
   location: Location,
   domMutationObservable: Observable<void>,
-  pageOpenObserable: Observable<void>,
+  pageOpenObservable: Observable<void>,
   locationChangeObservable: Observable<LocationChange>,
-  pageStateHistory: PageStateHistory,
   recorderApi: RecorderApi,
+  viewHistory: ViewHistory,
   initialViewOptions?: ViewOptions
 ) {
   lifeCycle.subscribe(LifeCycleEventType.VIEW_UPDATED, (view) =>
-    lifeCycle.notify(
-      LifeCycleEventType.RAW_RUM_EVENT_COLLECTED,
-      processViewUpdate(view, configuration, recorderApi, pageStateHistory)
-    )
+    lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, processViewUpdate(view, configuration, recorderApi))
   )
+
+  hooks.register(HookNames.Assemble, ({ startTime, eventType }): PartialRumEvent | undefined => {
+    const { service, version, id, name, context } = viewHistory.findView(startTime)!
+
+    return {
+      type: eventType,
+      service,
+      version,
+      context,
+      view: {
+        id,
+        name,
+      },
+    }
+  })
+
   return trackViews(
     location,
     lifeCycle,
     domMutationObservable,
-    pageOpenObserable,
+    pageOpenObservable,
     configuration,
     locationChangeObservable,
     !configuration.trackViewsManually,
@@ -46,16 +62,19 @@ export function startViewCollection(
 function processViewUpdate(
   view: ViewEvent,
   configuration: RumConfiguration,
-  recorderApi: RecorderApi,
-  pageStateHistory: PageStateHistory
+  recorderApi: RecorderApi
 ): RawRumEventCollectedData<RawRumViewEvent> {
   const replayStats = recorderApi.getReplayStats(view.id)
-  const pageStates = pageStateHistory.findAll(view.startClocks.relative, view.duration)
+  const clsDevicePixelRatio = view.commonViewMetrics?.cumulativeLayoutShift?.devicePixelRatio
   const viewEvent: RawRumViewEvent = {
     _dd: {
       document_version: view.documentVersion,
       replay_stats: replayStats,
-      page_states: pageStates,
+      cls: clsDevicePixelRatio
+        ? {
+            device_pixel_ratio: clsDevicePixelRatio,
+          }
+        : undefined,
       configuration: {
         start_session_replay_recording_manually: configuration.startSessionReplayRecordingManually,
       },
@@ -130,6 +149,7 @@ function processViewUpdate(
   return {
     rawRumEvent: viewEvent,
     startTime: view.startClocks.relative,
+    duration: view.duration,
     domainContext: {
       location: view.location,
     },

@@ -8,6 +8,7 @@ local.log
 specs.log
 /test-report/
 browserstack.err
+package.tgz
 
 # https://yarnpkg.com/getting-started/qa#which-files-should-be-gitignored
 .pnp.*
@@ -17,3 +18,7 @@ browserstack.err
 !.yarn/releases
 !.yarn/sdks
 !.yarn/versions
+/test-results/
+/playwright-report/
+/blob-report/
+/playwright/.cache/

@@ -1,7 +1,6 @@
 import * as http from 'http'
 import type { AddressInfo } from 'net'
 import { getIp } from '../../../envUtils'
-import { log } from './logger'
 
 const MAX_SERVER_CREATION_RETRY = 5
 // Not all port are available with BrowserStack, see https://www.browserstack.com/question/664
@@ -9,7 +8,7 @@ const MAX_SERVER_CREATION_RETRY = 5
 const PORT_MIN = 9200
 const PORT_MAX = 9400
 
-export type ServerApp = (req: http.IncomingMessage, res: http.ServerResponse) => void
+export type ServerApp = (req: http.IncomingMessage, res: http.ServerResponse) => any
 
 export type MockServerApp = ServerApp & {
   getLargeResponseWroteSize(): number
@@ -55,17 +54,6 @@ async function createServer<App extends ServerApp>(): Promise<Server<App>> {
     if (serverApp) {
       serverApp(req, res)
     }
-  })
-
-  server.on('request', (req: http.IncomingMessage, res: http.ServerResponse) => {
-    let body = ''
-    req.on('data', (chunk) => {
-      body += chunk
-    })
-    res.on('close', () => {
-      const requestUrl = `${req.headers.host!}${req.url!}`
-      log(`${req.method!} ${requestUrl} ${res.statusCode}${body ? `\n${body}` : ''}`)
-    })
   })
 
   return {

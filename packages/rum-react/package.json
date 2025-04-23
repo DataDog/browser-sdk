@@ -1,23 +1,24 @@
 {
   "name": "@datadog/browser-rum-react",
-  "version": "6.2.1",
+  "version": "6.6.3",
   "license": "Apache-2.0",
   "main": "cjs/entries/main.js",
   "module": "esm/entries/main.js",
   "types": "cjs/entries/main.d.ts",
   "scripts": {
+    "pack": "yarn pack",
     "build": "run-p build:cjs build:esm",
     "build:cjs": "rm -rf cjs && tsc -p tsconfig.cjs.json --noCheck",
     "build:esm": "rm -rf esm && tsc -p tsconfig.esm.json --noCheck",
     "prepack": "npm run build"
   },
   "dependencies": {
-    "@datadog/browser-core": "6.2.1",
-    "@datadog/browser-rum-core": "6.2.1"
+    "@datadog/browser-core": "6.6.3",
+    "@datadog/browser-rum-core": "6.6.3"
   },
   "peerDependencies": {
-    "react": "18",
-    "react-router-dom": "6"
+    "react": "18 || 19",
+    "react-router-dom": "6 || 7"
   },
   "peerDependenciesMeta": {
     "@datadog/browser-rum": {
@@ -34,11 +35,12 @@
     }
   },
   "devDependencies": {
-    "@types/react": "18.3.18",
-    "@types/react-dom": "18.3.5",
-    "react": "18.3.1",
-    "react-dom": "18.3.1",
-    "react-router-dom": "6.29.0"
+    "@types/react": "19.1.2",
+    "@types/react-dom": "19.1.2",
+    "react": "19.1.0",
+    "react-dom": "19.1.0",
+    "react-router-dom": "7.5.1",
+    "react-router-dom-6": "npm:react-router-dom@6.30.0"
   },
   "repository": {
     "type": "git",

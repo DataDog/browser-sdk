@@ -988,6 +988,20 @@ export type RumViewEvent = CommonProperties &
         [k: string]: unknown
       }
       /**
+       * List of slow frames during the view’s lifetime
+       */
+      readonly slow_frames?: {
+        /**
+         * Duration in ns between start of the view and the start of the slow frame
+         */
+        readonly start: number
+        /**
+         * Duration in ns of the slow frame
+         */
+        readonly duration: number
+        [k: string]: unknown
+      }[]
+      /**
        * Properties of the resources of the view
        */
       readonly resource: {
@@ -1045,6 +1059,14 @@ export type RumViewEvent = CommonProperties &
        * Minimum refresh rate during the view’s lifetime (in frames per second)
        */
       readonly refresh_rate_min?: number
+      /**
+       * Rate of slow frames during the view’s lifetime (in milliseconds per second)
+       */
+      readonly slow_frames_rate?: number
+      /**
+       * Rate of freezes during the view’s lifetime (in seconds per hour)
+       */
+      readonly freeze_rate?: number
       /**
        * Time taken for Flutter 'build' methods.
        */
@@ -1134,6 +1156,16 @@ export type RumViewEvent = CommonProperties &
         [k: string]: unknown
       }
       /**
+       * Additional information of the reported Cumulative Layout Shift
+       */
+      readonly cls?: {
+        /**
+         * Pixel ratio of the device where the layout shift was reported
+         */
+        readonly device_pixel_ratio?: number
+        [k: string]: unknown
+      }
+      /**
        * Subset of the SDK configuration options in use during its execution
        */
       readonly configuration?: {
@@ -1201,9 +1233,9 @@ export type RumVitalEvent = CommonProperties &
        */
       readonly name?: string
       /**
-       * Details of the vital. It can be used as a secondary identifier (URL, React component name...)
+       * Description of the vital. It can be used as a secondary identifier (URL, React component name...)
        */
-      readonly details?: string
+      readonly description?: string
       /**
        * Duration of the vital in nanoseconds
        */
@@ -1637,7 +1669,7 @@ export interface ViewPerformanceData {
      */
     readonly score: number
     /**
-     * Timestamp in ns of the largest layout shift contributing to CLS
+     * The time of the largest layout shift contributing to CLS, in ns since view start.
      */
     readonly timestamp?: number
     /**
@@ -1659,7 +1691,7 @@ export interface ViewPerformanceData {
    */
   readonly fcp?: {
     /**
-     * Timestamp in ns of the first rendering
+     * The time of the first rendering, in ns since view start.
      */
     readonly timestamp: number
     [k: string]: unknown
@@ -1673,7 +1705,7 @@ export interface ViewPerformanceData {
      */
     readonly duration: number
     /**
-     * Timestamp in ns of the first input event
+     * Time of the first input event, in ns since view start.
      */
     readonly timestamp: number
     /**
@@ -1691,7 +1723,7 @@ export interface ViewPerformanceData {
      */
     readonly duration: number
     /**
-     * Timestamp in ns of the start of the INP interaction
+     * Time of the start of the INP interaction, in ns since view start.
      */
     readonly timestamp?: number
     /**
@@ -1705,7 +1737,7 @@ export interface ViewPerformanceData {
    */
   readonly lcp?: {
     /**
-     * Timestamp in ns of the largest contentful paint
+     * Time of the largest contentful paint, in ns since view start.
      */
     readonly timestamp: number
     /**
@@ -1715,7 +1747,17 @@ export interface ViewPerformanceData {
     /**
      * URL of the largest contentful paint element
      */
-    readonly resource_url?: string
+    resource_url?: string
+    [k: string]: unknown
+  }
+  /**
+   * First Build Complete (Flutter)
+   */
+  readonly fbc?: {
+    /**
+     * Time of all completed `build` methods after a route change, in ns since view start.
+     */
+    readonly timestamp: number
     [k: string]: unknown
   }
   [k: string]: unknown

@@ -1,7 +1,12 @@
-import type { RelativeTime, ContextValue, Context, CustomerDataTracker } from '@datadog/browser-core'
-import { SESSION_TIME_OUT_DELAY, createValueHistory } from '@datadog/browser-core'
+import type { ContextValue, Context } from '@datadog/browser-core'
+import { SESSION_TIME_OUT_DELAY, createValueHistory, isEmptyObject } from '@datadog/browser-core'
 import type { LifeCycle } from '../lifeCycle'
 import { LifeCycleEventType } from '../lifeCycle'
+import { HookNames } from '../../hooks'
+import type { Hooks, PartialRumEvent } from '../../hooks'
+
+import { RumEventType } from '../../rawRumEvent.types'
+import type { RumConfiguration } from '../configuration'
 
 export const FEATURE_FLAG_CONTEXT_TIME_OUT_DELAY = SESSION_TIME_OUT_DELAY
 export const BYTES_COMPUTATION_THROTTLING_DELAY = 200
@@ -9,9 +14,7 @@ export const BYTES_COMPUTATION_THROTTLING_DELAY = 200
 export type FeatureFlagContext = Context
 
 export interface FeatureFlagContexts {
-  findFeatureFlagEvaluations: (startTime?: RelativeTime) => FeatureFlagContext | undefined
   addFeatureFlagEvaluation: (key: string, value: ContextValue) => void
-  stop: () => void
 }
 
 /**
@@ -24,7 +27,8 @@ export interface FeatureFlagContexts {
  */
 export function startFeatureFlagContexts(
   lifeCycle: LifeCycle,
-  customerDataTracker: CustomerDataTracker
+  hooks: Hooks,
+  configuration: RumConfiguration
 ): FeatureFlagContexts {
   const featureFlagContexts = createValueHistory<FeatureFlagContext>({
     expireDelay: FEATURE_FLAG_CONTEXT_TIME_OUT_DELAY,
@@ -32,22 +36,38 @@ export function startFeatureFlagContexts(
 
   lifeCycle.subscribe(LifeCycleEventType.BEFORE_VIEW_CREATED, ({ startClocks }) => {
     featureFlagContexts.add({}, startClocks.relative)
-    customerDataTracker.resetCustomerData()
   })
 
   lifeCycle.subscribe(LifeCycleEventType.AFTER_VIEW_ENDED, ({ endClocks }) => {
     featureFlagContexts.closeActive(endClocks.relative)
   })
 
+  hooks.register(HookNames.Assemble, ({ startTime, eventType }): PartialRumEvent | undefined => {
+    const trackFeatureFlagsForEvents = (configuration.trackFeatureFlagsForEvents as RumEventType[]).concat([
+      RumEventType.VIEW,
+      RumEventType.ERROR,
+    ])
+    if (!trackFeatureFlagsForEvents.includes(eventType as RumEventType)) {
+      return
+    }
+
+    const featureFlagContext = featureFlagContexts.find(startTime)
+    if (!featureFlagContext || isEmptyObject(featureFlagContext)) {
+      return
+    }
+
+    return {
+      type: eventType,
+      feature_flags: featureFlagContext,
+    }
+  })
+
   return {
-    findFeatureFlagEvaluations: (startTime?: RelativeTime) => featureFlagContexts.find(startTime),
     addFeatureFlagEvaluation: (key: string, value: ContextValue) => {
       const currentContext = featureFlagContexts.find()
       if (currentContext) {
         currentContext[key] = value
-        customerDataTracker.updateCustomerData(currentContext)
       }
     },
-    stop: () => customerDataTracker.stop(),
   }
 }

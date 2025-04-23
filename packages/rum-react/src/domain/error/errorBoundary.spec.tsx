@@ -1,7 +1,6 @@
-import React from 'react'
-import { flushSync } from 'react-dom'
+import React, { act } from 'react'
 
-import { disableJasmineUncaughtExceptionTracking } from '../../../../core/test'
+import { disableJasmineUncaughtExceptionTracking, ignoreConsoleLogs } from '../../../../core/test'
 import { appendComponent } from '../../../test/appendComponent'
 import { initializeReactPlugin } from '../../../test/initializeReactPlugin'
 import type { Fallback } from './errorBoundary'
@@ -12,7 +11,8 @@ type FallbackFunctionComponent = Extract<Fallback, (...args: any[]) => any>
 describe('ErrorBoundary', () => {
   beforeEach(() => {
     // Prevent React from displaying the error in the console
-    spyOn(console, 'error')
+    ignoreConsoleLogs('error', 'Error: error')
+
     disableJasmineUncaughtExceptionTracking()
   })
 
@@ -29,7 +29,14 @@ describe('ErrorBoundary', () => {
         <ComponentSpy />
       </ErrorBoundary>
     )
-    expect(fallbackSpy).toHaveBeenCalledWith({ error: new Error('error'), resetError: jasmine.any(Function) }, {})
+    expect(fallbackSpy).toHaveBeenCalled()
+    // React calls the component multiple times while rendering
+    fallbackSpy.calls.all().forEach(({ args }) => {
+      expect(args[0]).toEqual({
+        error: new Error('error'),
+        resetError: jasmine.any(Function),
+      })
+    })
     expect(container.innerHTML).toBe('fallback')
   })
 
@@ -67,7 +74,7 @@ describe('ErrorBoundary', () => {
     ComponentSpy.and.returnValue('bar')
 
     const { resetError } = fallbackSpy.calls.mostRecent().args[0]
-    flushSync(() => {
+    act(() => {
       resetError()
     })
 

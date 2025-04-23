@@ -7,9 +7,11 @@
     "esModuleInterop": true,
     "moduleResolution": "node",
     "resolveJsonModule": true,
-    "target": "ES2015",
-    "types": ["node", "jasmine", "@wdio/globals/types", "ajv"],
-    "allowJs": true
+    "target": "ES2018",
+    "module": "ES2020",
+    "types": ["node", "ajv"],
+    "allowJs": true,
+    "noEmit": true
   },
   "ts-node": {
     "files": true

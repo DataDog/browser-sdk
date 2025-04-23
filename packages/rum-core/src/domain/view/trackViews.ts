@@ -148,13 +148,6 @@ export function trackViews(
     lifeCycle.subscribe(LifeCycleEventType.SESSION_EXPIRED, () => {
       currentView.end({ sessionIsActive: false })
     })
-
-    // End the current view on page unload
-    lifeCycle.subscribe(LifeCycleEventType.PAGE_EXITED, (pageExitEvent) => {
-      if (pageExitEvent.reason === PageExitReason.UNLOADING) {
-        currentView.end()
-      }
-    })
   }
 
   function renewViewOnLocationChange(locationChangeObservable: Observable<LocationChange>) {
@@ -215,20 +208,13 @@ function newView(
   const contextManager = createContextManager()
 
   let sessionIsActive = true
-  let name: string | undefined
-  let service: string | undefined
-  let version: string | undefined
-  let context: Context | undefined
+  let name = viewOptions?.name
+  const service = viewOptions?.service || configuration.service
+  const version = viewOptions?.version || configuration.version
+  const context = viewOptions?.context
 
-  if (viewOptions) {
-    name = viewOptions.name
-    service = viewOptions.service || undefined
-    version = viewOptions.version || undefined
-    if (viewOptions.context) {
-      context = viewOptions.context
-      // use ContextManager to update the context so we always sanitize it
-      contextManager.setContext(context)
-    }
+  if (context) {
+    contextManager.setContext(context)
   }
 
   const viewCreatedEvent = {
@@ -272,6 +258,12 @@ function newView(
 
   // Session keep alive
   const keepAliveIntervalId = setInterval(triggerViewUpdate, SESSION_KEEP_ALIVE_INTERVAL)
+
+  const pageMayExitSubscription = lifeCycle.subscribe(LifeCycleEventType.PAGE_MAY_EXIT, (pageMayExitEvent) => {
+    if (pageMayExitEvent.reason === PageExitReason.UNLOADING) {
+      triggerViewUpdate()
+    }
+  })
 
   // Initial view update
   triggerViewUpdate()
@@ -340,6 +332,7 @@ function newView(
       clearInterval(keepAliveIntervalId)
       setViewEnd(endClocks.relative)
       stopCommonViewMetricsTracking()
+      pageMayExitSubscription.unsubscribe()
       triggerViewUpdate()
       setTimeout(() => {
         this.stop()

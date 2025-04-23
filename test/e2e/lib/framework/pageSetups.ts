@@ -21,12 +21,8 @@ export interface SetupOptions {
 
 export type SetupFactory = (options: SetupOptions, servers: Servers) => string
 
-const isBrowserStack =
-  'services' in browser.options &&
-  browser.options.services &&
-  browser.options.services.some((service) => (Array.isArray(service) ? service[0] : service) === 'browserstack')
-
-const isContinuousIntegration = Boolean(process.env.CI_JOB_ID)
+const isBrowserStack = process.env.BROWSER_STACK
+const isContinuousIntegration = Boolean(process.env.CI)
 
 // By default, run tests only with the 'bundle' setup outside of the CI (to run faster on the
 // developer laptop) or with Browser Stack (to limit flakiness).
@@ -123,6 +119,7 @@ export function bundleSetup(options: SetupOptions, servers: Servers) {
 
 export function npmSetup(options: SetupOptions, servers: Servers) {
   let header = options.head || ''
+  const body = options.body || ''
 
   if (options.eventBridge) {
     header += setupEventBridge(servers)
@@ -154,7 +151,32 @@ export function npmSetup(options: SetupOptions, servers: Servers) {
 
   return basePage({
     header,
-    body: options.body,
+    body,
+  })
+}
+
+export function reactSetup(options: SetupOptions, servers: Servers) {
+  let header = options.head || ''
+  let body = options.body || ''
+
+  if (options.eventBridge) {
+    header += setupEventBridge(servers)
+  }
+
+  if (options.rum) {
+    header += html`
+      <script type="text/javascript">
+        window.RUM_CONFIGURATION = ${formatConfiguration(options.rum, servers)}
+        window.RUM_CONTEXT = ${JSON.stringify(options.context)}
+      </script>
+    `
+  }
+
+  body += html` <script type="text/javascript" src="./react-app.js"></script> `
+
+  return basePage({
+    header,
+    body,
   })
 }
 

@@ -1,17 +1,21 @@
 import type { LogsInitConfiguration } from '@datadog/browser-logs'
 import type { RumInitConfiguration } from '@datadog/browser-rum-core'
 import { DefaultPrivacyLevel } from '@datadog/browser-rum'
+import type { BrowserContext, Page } from '@playwright/test'
+import { test, expect } from '@playwright/test'
+import { addTag, addTestOptimizationTags } from '../helpers/tags'
 import { getRunId } from '../../../envUtils'
-import { deleteAllCookies, getBrowserName, withBrowserLogs } from '../helpers/browser'
+import type { BrowserLog } from '../helpers/browser'
+import { BrowserLogsManager, deleteAllCookies, getBrowserName, sendXhr } from '../helpers/browser'
 import { APPLICATION_ID, CLIENT_TOKEN } from '../helpers/configuration'
 import { validateRumFormat } from '../helpers/validation'
+import type { BrowserConfiguration } from '../../../browsers.conf'
 import { IntakeRegistry } from './intakeRegistry'
 import { flushEvents } from './flushEvents'
 import type { Servers } from './httpServers'
 import { getTestServers, waitForServersIdle } from './httpServers'
-import { log } from './logger'
 import type { SetupFactory, SetupOptions } from './pageSetups'
-import { DEFAULT_SETUPS, npmSetup } from './pageSetups'
+import { DEFAULT_SETUPS, npmSetup, reactSetup } from './pageSetups'
 import { createIntakeServerApp } from './serverApps/intake'
 import { createMockServerApp } from './serverApps/mock'
 
@@ -47,9 +51,17 @@ interface TestContext {
   crossOriginUrl: string
   intakeRegistry: IntakeRegistry
   servers: Servers
+  page: Page
+  browserContext: BrowserContext
+  browserName: 'chromium' | 'firefox' | 'webkit' | 'msedge'
+  withBrowserLogs: (cb: (logs: BrowserLog[]) => void) => void
+  flushBrowserLogs: () => void
+  flushEvents: () => Promise<void>
+  deleteAllCookies: () => Promise<void>
+  sendXhr: (url: string, headers?: string[][]) => Promise<string>
 }
 
-type TestRunner = (testContext: TestContext) => Promise<void>
+type TestRunner = (testContext: TestContext) => Promise<void> | void
 
 class TestBuilder {
   private rumConfiguration: RumInitConfiguration | undefined = undefined
@@ -59,7 +71,7 @@ class TestBuilder {
   private body = ''
   private basePath = ''
   private eventBridge = false
-  private setups: Array<{ factory: SetupFactory; name?: string }> = []
+  private setups: Array<{ factory: SetupFactory; name?: string }> = DEFAULT_SETUPS
 
   constructor(private title: string) {}
 
@@ -103,22 +115,17 @@ class TestBuilder {
     return this
   }
 
+  withReact() {
+    this.setups = [{ factory: reactSetup }]
+    return this
+  }
+
   withBasePath(newBasePath: string) {
     this.basePath = newBasePath
     return this
   }
 
-  withSetup(factory: SetupFactory, name?: string) {
-    this.setups.push({ factory, name })
-    if (this.setups.length > 1 && this.setups.some((item) => !item.name)) {
-      throw new Error('Tests with multiple setups need to give a name to each setups')
-    }
-    return this
-  }
-
   run(runner: TestRunner) {
-    const setups = this.setups.length ? this.setups : DEFAULT_SETUPS
-
     const setupOptions: SetupOptions = {
       body: this.body,
       head: this.head,
@@ -136,17 +143,17 @@ class TestBuilder {
     }
 
     if (this.alsoRunWithRumSlim) {
-      describe(this.title, () => {
-        declareTestsForSetups('rum', setups, setupOptions, runner)
+      test.describe(this.title, () => {
+        declareTestsForSetups('rum', this.setups, setupOptions, runner)
         declareTestsForSetups(
           'rum-slim',
-          setups.filter((setup) => setup.factory !== npmSetup),
+          this.setups.filter((setup) => setup.factory !== npmSetup && setup.factory !== reactSetup),
           { ...setupOptions, useRumSlim: true },
           runner
         )
       })
     } else {
-      declareTestsForSetups(this.title, setups, setupOptions, runner)
+      declareTestsForSetups(this.title, this.setups, setupOptions, runner)
     }
   }
 
@@ -159,11 +166,6 @@ class TestBuilder {
   }
 }
 
-interface ItResult {
-  getFullName(): string
-}
-declare function it(expectation: string, assertion?: jasmine.ImplementationCallback, timeout?: number): ItResult
-
 function declareTestsForSetups(
   title: string,
   setups: Array<{ factory: SetupFactory; name?: string }>,
@@ -171,7 +173,7 @@ function declareTestsForSetups(
   runner: TestRunner
 ) {
   if (setups.length > 1) {
-    describe(title, () => {
+    test.describe(title, () => {
       for (const { name, factory } of setups) {
         declareTest(name!, setupOptions, factory, runner)
       }
@@ -182,53 +184,111 @@ function declareTestsForSetups(
 }
 
 function declareTest(title: string, setupOptions: SetupOptions, factory: SetupFactory, runner: TestRunner) {
-  const spec = it(title, async () => {
-    log(`Start '${spec.getFullName()}' in ${getBrowserName()}`)
-    setupOptions.context.test_name = spec.getFullName()
+  test(title, async ({ page, context }) => {
+    const browserName = getBrowserName(test.info().project.name)
+    addTag('test.browserName', browserName)
+    addTestOptimizationTags(test.info().project.metadata as BrowserConfiguration)
+
+    const title = test.info().titlePath.join(' > ')
+    setupOptions.context.test_name = title
 
     const servers = await getTestServers()
+    const browserLogs = new BrowserLogsManager()
 
-    const testContext = createTestContext(servers, setupOptions)
+    const testContext = createTestContext(servers, page, context, browserLogs, browserName, setupOptions)
     servers.intake.bindServerApp(createIntakeServerApp(testContext.intakeRegistry))
 
     const setup = factory(setupOptions, servers)
     servers.base.bindServerApp(createMockServerApp(servers, setup))
     servers.crossOrigin.bindServerApp(createMockServerApp(servers, setup))
 
-    await setUpTest(testContext)
+    await setUpTest(browserLogs, testContext)
 
     try {
       await runner(testContext)
+      tearDownPassedTest(testContext)
     } finally {
       await tearDownTest(testContext)
-      log(`End '${spec.getFullName()}'`)
     }
   })
 }
 
-function createTestContext(servers: Servers, { basePath }: SetupOptions): TestContext {
+function createTestContext(
+  servers: Servers,
+  page: Page,
+  browserContext: BrowserContext,
+  browserLogsManager: BrowserLogsManager,
+  browserName: TestContext['browserName'],
+  { basePath }: SetupOptions
+): TestContext {
   return {
     baseUrl: servers.base.url + basePath,
     crossOriginUrl: servers.crossOrigin.url,
     intakeRegistry: new IntakeRegistry(),
     servers,
+    page,
+    browserContext,
+    browserName,
+    withBrowserLogs: (cb: (logs: BrowserLog[]) => void) => {
+      try {
+        cb(browserLogsManager.get())
+      } finally {
+        browserLogsManager.clear()
+      }
+    },
+    flushBrowserLogs: () => browserLogsManager.clear(),
+    flushEvents: () => flushEvents(page),
+    deleteAllCookies: () => deleteAllCookies(browserContext),
+    sendXhr: (url: string, headers?: string[][]) => sendXhr(page, url, headers),
   }
 }
 
-async function setUpTest({ baseUrl }: TestContext) {
-  await browser.url(baseUrl)
+async function setUpTest(browserLogsManager: BrowserLogsManager, { baseUrl, page, browserContext }: TestContext) {
+  browserContext.on('console', (msg) => {
+    browserLogsManager.add({
+      level: msg.type() as BrowserLog['level'],
+      message: msg.text(),
+      source: 'console',
+      timestamp: Date.now(),
+    })
+  })
+
+  browserContext.on('weberror', (webError) => {
+    browserLogsManager.add({
+      level: 'error',
+      message: webError.error().message,
+      source: 'console',
+      timestamp: Date.now(),
+    })
+  })
+
+  await page.goto(baseUrl)
   await waitForServersIdle()
 }
 
-async function tearDownTest({ intakeRegistry }: TestContext) {
-  await flushEvents()
-  expect(intakeRegistry.telemetryErrorEvents).toEqual([])
-  validateRumFormat(intakeRegistry.rumEvents)
-  await withBrowserLogs((logs) => {
-    logs.forEach((browserLog) => {
-      log(`Browser ${browserLog.source}: ${browserLog.level} ${browserLog.message}`)
-    })
-    expect(logs.filter((l) => (l as any).level === 'SEVERE')).toEqual([])
+function tearDownPassedTest({ intakeRegistry, withBrowserLogs }: TestContext) {
+  expect(intakeRegistry.telemetryErrorEvents).toHaveLength(0)
+  expect(() => validateRumFormat(intakeRegistry.rumEvents)).not.toThrow()
+  withBrowserLogs((logs) => {
+    expect(logs.filter((log) => log.level === 'error')).toHaveLength(0)
   })
+}
+
+async function tearDownTest({ flushEvents, deleteAllCookies }: TestContext) {
+  await flushEvents()
   await deleteAllCookies()
+
+  if (test.info().status === 'passed' && test.info().retry > 0) {
+    addTag('test.flaky', 'true')
+  }
+
+  const skipReason = test.info().annotations.find((annotation) => annotation.type === 'skip')?.description
+  if (skipReason) {
+    addTag('test.skip', skipReason)
+  }
+
+  const fixmeReason = test.info().annotations.find((annotation) => annotation.type === 'fixme')?.description
+  if (fixmeReason) {
+    addTag('test.fixme', fixmeReason)
+  }
 }

@@ -8,10 +8,8 @@ import {
   noop,
   relativeNow,
   createIdentityEncoder,
-  createCustomerDataTracker,
   createTrackingConsentState,
   TrackingConsent,
-  createCustomerDataTrackerManager,
 } from '@datadog/browser-core'
 import type { Clock } from '@datadog/browser-core/test'
 import {
@@ -29,6 +27,7 @@ import {
   mockPageStateHistory,
   mockPerformanceObserver,
   mockRumConfiguration,
+  noopProfilerApi,
   noopRecorderApi,
   setupLocationObserver,
 } from '../../test'
@@ -39,12 +38,13 @@ import { startViewCollection } from '../domain/view/viewCollection'
 import type { RumEvent, RumViewEvent } from '../rumEvent.types'
 import type { LocationChange } from '../browser/locationChangeObservable'
 import { startLongAnimationFrameCollection } from '../domain/longAnimationFrame/longAnimationFrameCollection'
-import type { RumSessionManager } from '..'
+import { startViewHistory, type RumSessionManager } from '..'
 import type { RumConfiguration } from '../domain/configuration'
 import { RumEventType } from '../rawRumEvent.types'
-import { startFeatureFlagContexts } from '../domain/contexts/featureFlagContext'
 import type { PageStateHistory } from '../domain/contexts/pageStateHistory'
 import { createCustomVitalsState } from '../domain/vital/vitalCollection'
+import { createHooks } from '../hooks'
+import { startUrlContexts } from '../domain/contexts/urlContexts'
 import { startRum, startRumEventCollection } from './startRum'
 
 function collectServerEvents(lifeCycle: LifeCycle) {
@@ -66,37 +66,40 @@ function startRumStub(
   pageStateHistory: PageStateHistory,
   reportError: (error: RawError) => void
 ) {
+  const hooks = createHooks()
+  const viewHistory = startViewHistory(lifeCycle)
+  const urlContexts = startUrlContexts(lifeCycle, hooks, locationChangeObservable, location)
+
   const { stop: rumEventCollectionStop } = startRumEventCollection(
     lifeCycle,
+    hooks,
     configuration,
-    location,
     sessionManager,
     pageStateHistory,
-    locationChangeObservable,
     domMutationObservable,
-    startFeatureFlagContexts(lifeCycle, createCustomerDataTracker(noop)),
     windowOpenObservable,
-    () => ({
-      context: {},
-      user: {},
-      hasReplay: undefined,
-    }),
+    urlContexts,
+    viewHistory,
+    noopRecorderApi,
     reportError
   )
   const { stop: viewCollectionStop } = startViewCollection(
     lifeCycle,
+    hooks,
     configuration,
     location,
     domMutationObservable,
     windowOpenObservable,
     locationChangeObservable,
-    pageStateHistory,
-    noopRecorderApi
+    noopRecorderApi,
+    viewHistory
   )
 
   startLongAnimationFrameCollection(lifeCycle, configuration)
   return {
     stop: () => {
+      viewHistory.stop()
+      urlContexts.stop()
       rumEventCollectionStop()
       viewCollectionStop()
     },
@@ -323,8 +326,7 @@ describe('view events', () => {
     const startResult = startRum(
       mockRumConfiguration(),
       noopRecorderApi,
-      createCustomerDataTrackerManager(),
-      () => ({ user: {}, context: {}, hasReplay: undefined }),
+      noopProfilerApi,
       undefined,
       createIdentityEncoder,
       createTrackingConsentState(TrackingConsent.GRANTED),

@@ -1,24 +1,25 @@
 import * as fs from 'fs'
-import { RUM_BUNDLE } from '../../lib/framework'
+import puppeteer from 'puppeteer'
+import { test, expect } from '@playwright/test'
+import { getSdkBundlePath } from '../../lib/framework'
 import { APPLICATION_ID, CLIENT_TOKEN } from '../../lib/helpers/configuration'
 
-describe('Inject RUM with Puppeteer', () => {
+test.describe('Inject RUM with Puppeteer', () => {
   // S8s tests inject RUM with puppeteer evaluateOnNewDocument
-  it('should not throw error in chrome', async () => {
+  test('should not throw error in chrome', async () => {
     const isInjected = await injectRumWithPuppeteer()
     expect(isInjected).toBe(true)
   })
 })
 
 async function injectRumWithPuppeteer() {
-  const ddRUM = fs.readFileSync(RUM_BUNDLE, 'utf8')
-  const puppeteerBrowser = await browser.getPuppeteer()
+  const ddRUM = fs.readFileSync(getSdkBundlePath('rum', '/datadog-rum.js'), 'utf8')
+  const puppeteerBrowser = await puppeteer.launch({ headless: true, devtools: true, args: ['--no-sandbox'] })
   let injected = true
 
-  await browser.call(async () => {
-    const page = await puppeteerBrowser.newPage()
-    await page.evaluateOnNewDocument(
-      `
+  const page = await puppeteerBrowser.newPage()
+  await page.evaluateOnNewDocument(
+    `
         if (location.href !== 'about:blank') {
           ${ddRUM}
           window.DD_RUM._setDebug(true)
@@ -29,13 +30,13 @@ async function injectRumWithPuppeteer() {
           window.DD_RUM.startView()
         }
       `
-    )
-    page.on('console', (msg) => {
-      if (msg.type() === 'error') {
-        injected = false
-      }
-    })
-    await page.goto('https://webdriver.io')
+  )
+  page.on('console', (msg) => {
+    if (msg.type() === 'error') {
+      injected = false
+    }
   })
+  await page.goto('https://example.com')
+
   return injected
 }

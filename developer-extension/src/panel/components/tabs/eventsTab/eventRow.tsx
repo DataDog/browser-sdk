@@ -143,15 +143,7 @@ export const EventRow = React.memo(
             case 'type':
               return (
                 <Cell key="type">
-                  {isRumEvent(event) || isTelemetryEvent(event) ? (
-                    <Badge variant="outline" color={RUM_EVENT_TYPE_COLOR[event.type]}>
-                      {event.type}
-                    </Badge>
-                  ) : (
-                    <Badge variant="dot" color={LOG_STATUS_COLOR[event.status]}>
-                      {event.origin as string} {event.status as string}
-                    </Badge>
-                  )}
+                  <EventTypeBadge event={event} />
                 </Cell>
               )
             case 'field': {
@@ -180,6 +172,33 @@ export const EventRow = React.memo(
     )
   }
 )
+
+function EventTypeBadge({ event }: { event: SdkEvent }) {
+  let label: string
+  let variant: string
+  let color: string
+  if (isRumEvent(event) || isTelemetryEvent(event)) {
+    label = event.type
+    variant = 'outline'
+    color = RUM_EVENT_TYPE_COLOR[event.type]
+  } else {
+    label = `${event.origin} ${event.status}`
+    variant = 'dot'
+    color = LOG_STATUS_COLOR[event.status]
+  }
+
+  return (
+    <Badge
+      variant={variant}
+      color={color}
+      styles={{
+        label: { overflow: 'visible' },
+      }}
+    >
+      {label}
+    </Badge>
+  )
+}
 
 function EventMenu({ event }: { event: SdkEvent }) {
   return (
@@ -286,7 +305,11 @@ export const EventDescription = React.memo(({ event }: { event: SdkEvent }) => {
 })
 
 function LogDescription({ event }: { event: LogsEvent }) {
-  return <>{event.message}</>
+  if (typeof event.message === 'string') {
+    return <>{event.message}</>
+  }
+
+  return <Json value={event.message} defaultCollapseLevel={0} />
 }
 
 function TelemetryDescription({ event }: { event: TelemetryEvent }) {
@@ -349,15 +372,20 @@ function LongTaskDescription({ event }: { event: RumLongTaskEvent }) {
 function VitalDescription({ event }: { event: RumVitalEvent }) {
   const vitalName = event.vital.name
   const vitalValue = event.vital.duration
-  const vitalDetails = event.vital.details
+  const vitalDescription = event.vital.description
   return (
     <>
       Custom <Emphasis>{event.vital.type}</Emphasis> vital:{' '}
       <Emphasis>
         {vitalName}
-        {vitalDetails && ` - ${vitalDetails}`}
-      </Emphasis>{' '}
-      of <Emphasis>{vitalValue}</Emphasis>
+        {vitalDescription && ` - ${vitalDescription}`}
+      </Emphasis>
+      {vitalValue !== undefined && (
+        <>
+          {' '}
+          of <Emphasis>{formatDuration(vitalValue)}</Emphasis>
+        </>
+      )}
     </>
   )
 }

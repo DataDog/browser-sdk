@@ -1,19 +1,19 @@
 import type { Context } from '@datadog/browser-core'
+import { test, expect } from '@playwright/test'
 import type { IntakeRegistry } from '../../lib/framework'
-import { flushEvents, createTest } from '../../lib/framework'
-import { withBrowserLogs } from '../../lib/helpers/browser'
+import { createTest } from '../../lib/framework'
 
-describe('API calls and events around init', () => {
+test.describe('API calls and events around init', () => {
   createTest('should display a console log when calling init without configuration')
     .withRum()
     .withRumInit(() => {
       ;(window.DD_RUM! as unknown as { init(): void }).init()
     })
-    .run(async () => {
-      await withBrowserLogs((logs) => {
-        expect(logs.length).toBe(1)
-        expect(logs[0].message).toEqual(jasmine.stringContaining('Datadog Browser SDK'))
-        expect(logs[0].message).toEqual(jasmine.stringContaining('Missing configuration'))
+    .run(({ withBrowserLogs }) => {
+      withBrowserLogs((logs) => {
+        expect(logs).toHaveLength(1)
+        expect(logs[0].message).toEqual(expect.stringContaining('Datadog Browser SDK'))
+        expect(logs[0].message).toEqual(expect.stringContaining('Missing configuration'))
       })
     })
 
@@ -35,19 +35,19 @@ describe('API calls and events around init', () => {
 
       setTimeout(() => window.DD_RUM!.init(configuration), 30)
     })
-    .run(async ({ intakeRegistry }) => {
+    .run(async ({ intakeRegistry, flushEvents }) => {
       await flushEvents()
 
       const initialView = intakeRegistry.rumViewEvents[0]
       expect(initialView.view.name).toBeUndefined()
       expect(initialView.view.custom_timings).toEqual({
-        before_manual_view: jasmine.any(Number),
+        before_manual_view: expect.any(Number),
       })
 
       const manualView = intakeRegistry.rumViewEvents[1]
       expect(manualView.view.name).toBe('manual view')
       expect(manualView.view.custom_timings).toEqual({
-        after_manual_view: jasmine.any(Number),
+        after_manual_view: expect.any(Number),
       })
 
       const documentEvent = intakeRegistry.rumResourceEvents.find((event) => event.resource.type === 'document')!
@@ -73,14 +73,12 @@ describe('API calls and events around init', () => {
       window.DD_RUM!.addError('before init')
       window.DD_RUM!.addAction('before init')
       window.DD_RUM!.addTiming('before init')
-      // global.updateViewName('before init') TODO uncomment when the api is not behind a ff anymore
 
       setTimeout(() => window.DD_RUM!.init(configuration), 10)
       setTimeout(() => {
         window.DD_RUM!.addError('before manual view')
         window.DD_RUM!.addAction('before manual view')
         window.DD_RUM!.addTiming('before manual view')
-        // global.updateViewName('before manual view') TODO uncomment when the api is not behind a ff anymore
       }, 20)
 
       setTimeout(() => window.DD_RUM!.startView('manual view'), 30)
@@ -92,15 +90,15 @@ describe('API calls and events around init', () => {
         window.DD_RUM!.setViewName('after manual view')
       }, 40)
     })
-    .run(async ({ intakeRegistry }) => {
+    .run(async ({ intakeRegistry, flushEvents }) => {
       await flushEvents()
 
       const initialView = intakeRegistry.rumViewEvents[0]
       expect(initialView.view.name).toBe('after manual view')
       expect(initialView.view.custom_timings).toEqual({
-        before_init: jasmine.any(Number),
-        before_manual_view: jasmine.any(Number),
-        after_manual_view: jasmine.any(Number),
+        before_init: expect.any(Number),
+        before_manual_view: expect.any(Number),
+        after_manual_view: expect.any(Number),
       })
 
       const documentEvent = intakeRegistry.rumResourceEvents.find((event) => event.resource.type === 'document')!
@@ -140,12 +138,13 @@ describe('API calls and events around init', () => {
         window.DD_RUM!.addError('after manual view')
       }, 20)
     })
-    .run(async ({ intakeRegistry }) => {
+    .run(async ({ intakeRegistry, flushEvents }) => {
       await flushEvents()
 
       const initialView = intakeRegistry.rumViewEvents[0]
       const nextView = intakeRegistry.rumViewEvents[1]
-      expect(initialView.context).toEqual(jasmine.objectContaining({ foo: 'bar', bar: 'foo' }))
+
+      expect(initialView.context).toEqual(expect.objectContaining({ foo: 'bar', bar: 'foo' }))
       expect(nextView.context!.foo).toBeUndefined()
 
       expectToHaveActions(
@@ -180,13 +179,13 @@ describe('API calls and events around init', () => {
       window.DD_RUM!.init(configuration)
       window.DD_RUM!.setViewContext({ foo: 'bar' })
     })
-    .run(async () => {
-      const viewContext = await browser.execute(() => window.DD_RUM?.getViewContext())
+    .run(async ({ page }) => {
+      const viewContext = await page.evaluate(() => window.DD_RUM?.getViewContext())
       expect(viewContext).toEqual({ foo: 'bar' })
     })
 })
 
-describe('beforeSend', () => {
+test.describe('beforeSend', () => {
   createTest('allows to edit events context with feature flag')
     .withRum({
       beforeSend: (event: any) => {
@@ -195,13 +194,13 @@ describe('beforeSend', () => {
       },
     })
     .withRumSlim()
-    .run(async ({ intakeRegistry }) => {
+    .run(async ({ intakeRegistry, flushEvents }) => {
       await flushEvents()
 
       const initialView = intakeRegistry.rumViewEvents[0]
-      expect(initialView.context).toEqual(jasmine.objectContaining({ foo: 'bar' }))
+      expect(initialView.context).toEqual(expect.objectContaining({ foo: 'bar' }))
       const initialDocument = intakeRegistry.rumResourceEvents[0]
-      expect(initialDocument.context).toEqual(jasmine.objectContaining({ foo: 'bar' }))
+      expect(initialDocument.context).toEqual(expect.objectContaining({ foo: 'bar' }))
     })
 
   createTest('allows to replace events context')
@@ -217,13 +216,13 @@ describe('beforeSend', () => {
       window.DD_RUM!.setGlobalContextProperty('foo', 'baz')
       window.DD_RUM!.setGlobalContextProperty('zig', 'zag')
     })
-    .run(async ({ intakeRegistry }) => {
+    .run(async ({ intakeRegistry, flushEvents }) => {
       await flushEvents()
 
       const initialView = intakeRegistry.rumViewEvents[0]
-      expect(initialView.context).toEqual(jasmine.objectContaining({ foo: 'bar' }))
+      expect(initialView.context).toEqual(expect.objectContaining({ foo: 'bar' }))
       const initialDocument = intakeRegistry.rumResourceEvents[0]
-      expect(initialDocument.context).toEqual(jasmine.objectContaining({ foo: 'bar' }))
+      expect(initialDocument.context).toEqual(expect.objectContaining({ foo: 'bar' }))
     })
 })
 
@@ -231,14 +230,14 @@ function expectToHaveErrors(
   events: IntakeRegistry,
   ...errors: Array<{ message: string; viewId: string; context?: Context }>
 ) {
-  expect(events.rumErrorEvents.length).toBe(errors.length)
+  expect(events.rumErrorEvents).toHaveLength(errors.length)
   for (let i = 0; i < errors.length; i++) {
     const registryError = events.rumErrorEvents[i]
     const expectedError = errors[i]
     expect(registryError.error.message).toBe(expectedError.message)
     expect(registryError.view.id).toBe(expectedError.viewId)
     if (expectedError.context) {
-      expect(registryError.context).toEqual(jasmine.objectContaining(expectedError.context))
+      expect(registryError.context).toEqual(expect.objectContaining(expectedError.context))
     }
   }
 }
@@ -247,7 +246,7 @@ function expectToHaveActions(
   events: IntakeRegistry,
   ...actions: Array<{ name: string; viewId: string; viewName?: string; context?: Context }>
 ) {
-  expect(events.rumActionEvents.length).toBe(actions.length)
+  expect(events.rumActionEvents).toHaveLength(actions.length)
   for (let i = 0; i < actions.length; i++) {
     const registryAction = events.rumActionEvents[i]
     const expectedAction = actions[i]
@@ -257,7 +256,7 @@ function expectToHaveActions(
       expect(registryAction.view.name).toBe(expectedAction.viewName)
     }
     if (expectedAction.context) {
-      expect(registryAction.context).toEqual(jasmine.objectContaining(expectedAction.context))
+      expect(registryAction.context).toEqual(expect.objectContaining(expectedAction.context))
     }
   }
 }

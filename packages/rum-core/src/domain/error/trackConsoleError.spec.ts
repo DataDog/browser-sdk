@@ -1,7 +1,7 @@
 import type { RawError, Subscription } from '@datadog/browser-core'
 import { ErrorHandling, ErrorSource, Observable, clocksNow, resetConsoleObservable } from '@datadog/browser-core'
 import type { Clock } from '@datadog/browser-core/test'
-import { mockClock } from '@datadog/browser-core/test'
+import { ignoreConsoleLogs, mockClock } from '@datadog/browser-core/test'
 import { trackConsoleError } from './trackConsoleError'
 
 describe('trackConsoleError', () => {
@@ -11,7 +11,7 @@ describe('trackConsoleError', () => {
   let clock: Clock
 
   beforeEach(() => {
-    spyOn(console, 'error').and.callFake(() => true)
+    ignoreConsoleLogs('error', 'Error: foo')
     errorObservable = new Observable()
     notifyLog = jasmine.createSpy('notifyLog')
     trackConsoleError(errorObservable)
@@ -26,18 +26,22 @@ describe('trackConsoleError', () => {
   })
 
   it('should track console error', () => {
+    const error = new TypeError('foo')
+
     // eslint-disable-next-line no-console
-    console.error(new TypeError('foo'))
+    console.error(error)
 
     expect(notifyLog).toHaveBeenCalledWith({
       startClocks: clocksNow(),
       message: jasmine.any(String),
       stack: jasmine.any(String),
-      fingerprint: undefined,
       source: ErrorSource.CONSOLE,
       handling: ErrorHandling.HANDLED,
       handlingStack: jasmine.any(String),
+      fingerprint: undefined,
       causes: undefined,
+      context: undefined,
+      originalError: error,
     })
   })
 
@@ -60,6 +64,8 @@ describe('trackConsoleError', () => {
       handlingStack: jasmine.any(String),
       fingerprint: 'my-fingerprint',
       causes: undefined,
+      context: undefined,
+      originalError: error,
     })
   })
 })

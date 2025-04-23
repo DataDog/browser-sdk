@@ -1,4 +1,4 @@
-import type { Context, Observable, PageExitEvent, RawError } from '@datadog/browser-core'
+import type { Context, Observable, PageMayExitEvent, RawError } from '@datadog/browser-core'
 import { createIdentityEncoder, startBatchWithReplica } from '@datadog/browser-core'
 import type { LogsConfiguration } from '../domain/configuration'
 import type { LifeCycle } from '../domain/lifeCycle'
@@ -10,7 +10,7 @@ export function startLogsBatch(
   configuration: LogsConfiguration,
   lifeCycle: LifeCycle,
   reportError: (error: RawError) => void,
-  pageExitObservable: Observable<PageExitEvent>,
+  pageMayExitObservable: Observable<PageMayExitEvent>,
   session: LogsSessionManager
 ) {
   const batch = startBatchWithReplica(
@@ -24,7 +24,7 @@ export function startLogsBatch(
       encoder: createIdentityEncoder(),
     },
     reportError,
-    pageExitObservable,
+    pageMayExitObservable,
     session.expireObservable
   )
 

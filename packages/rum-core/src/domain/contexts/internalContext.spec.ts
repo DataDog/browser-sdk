@@ -20,8 +20,6 @@ describe('internal context', () => {
         id: 'abcde',
         name: 'foo',
       }),
-      getAllEntries: () => [],
-      getDeletedEntries: () => [],
       stop: noop,
     }
 
@@ -36,8 +34,6 @@ describe('internal context', () => {
         url: fakeLocation.href,
         referrer: document.referrer,
       }),
-      getAllEntries: () => [],
-      getDeletedEntries: () => [],
       stop: noop,
     }
     findSessionSpy = spyOn(sessionManager, 'findTrackedSession').and.callThrough()
@@ -71,7 +67,7 @@ describe('internal context', () => {
     expect(internalContext.get()).toEqual(undefined)
   })
 
-  it('should return internal context corresponding to startTime', () => {
+  it("should return internal context corresponding to 'startTime'", () => {
     const sessionManager = createRumSessionManagerMock().setId('456')
     const internalContext = setupInternalContext(sessionManager)
 

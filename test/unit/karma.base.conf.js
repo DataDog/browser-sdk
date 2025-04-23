@@ -7,8 +7,9 @@ const webpackConfig = require('../../webpack.base')({
 const { getTestReportDirectory } = require('../envUtils')
 const jasmineSeedReporterPlugin = require('./jasmineSeedReporterPlugin')
 const karmaSkippedFailedReporterPlugin = require('./karmaSkippedFailedReporterPlugin')
+const karmaDuplicateTestNameReporterPlugin = require('./karmaDuplicateTestNameReporterPlugin')
 
-const reporters = ['spec', 'jasmine-seed', 'karma-skipped-failed']
+const reporters = ['spec', 'jasmine-seed', 'karma-skipped-failed', 'karma-duplicate-test-name']
 
 const testReportDirectory = getTestReportDirectory()
 if (testReportDirectory) {
@@ -60,7 +61,6 @@ module.exports = {
       // with all dependencies shared.  Our test suite does not support sharing dependencies, each
       // spec bundle should include its own copy of dependencies.
       runtimeChunk: false,
-      splitChunks: false,
     },
     ignoreWarnings: [
       // we will see warnings about missing exports in some files
@@ -72,7 +72,12 @@ module.exports = {
     stats: 'errors-only',
     logLevel: 'warn',
   },
-  plugins: ['karma-*', jasmineSeedReporterPlugin, karmaSkippedFailedReporterPlugin],
+  plugins: [
+    'karma-*',
+    jasmineSeedReporterPlugin,
+    karmaSkippedFailedReporterPlugin,
+    karmaDuplicateTestNameReporterPlugin,
+  ],
 
   // Running tests on low performance environments (ex: BrowserStack) can block JS execution for a
   // few seconds. We need to increase those two timeout values to make sure Karma (and underlying
@@ -95,5 +100,22 @@ function overrideTsLoaderRule(module) {
     }
     return rule
   })
+
+  // We use swc-loader to transpile some dependencies that are using syntax not compatible with browsers we use for testing
+  module.rules.push({
+    test: /\.m?js$/,
+    include: /node_modules\/(react-router-dom|turbo-stream)/,
+    use: {
+      loader: 'swc-loader',
+      options: {
+        env: {
+          targets: {
+            chrome: '63',
+          },
+        },
+      },
+    },
+  })
+
   return module
 }

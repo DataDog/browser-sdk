@@ -1,4 +1,5 @@
 /* eslint-disable no-console */
+import { ignoreConsoleLogs } from '../../../test'
 import { ConsoleApiName } from '../../tools/display'
 import type { Subscription } from '../../tools/observable'
 import type { ErrorConsoleLog } from './consoleObservable'
@@ -81,7 +82,8 @@ describe('console error observable', () => {
   let notifyLog: jasmine.Spy<(consoleLog: ErrorConsoleLog) => void>
 
   beforeEach(() => {
-    spyOn(console, 'error').and.callFake(() => true)
+    ignoreConsoleLogs('error', 'Error: foo')
+    ignoreConsoleLogs('error', 'foo bar')
     notifyLog = jasmine.createSpy('notifyLog')
 
     consoleSubscription = initConsoleObservable([ConsoleApiName.error]).subscribe(notifyLog)
@@ -97,7 +99,7 @@ describe('console error observable', () => {
     }
     triggerError()
     const consoleLog = notifyLog.calls.mostRecent().args[0]
-    expect(consoleLog.handlingStack).toMatch(/^Error:\s+at triggerError (.|\n)*$/)
+    expect(consoleLog.handlingStack).toMatch(/^HandlingStack: console error\s+at triggerError (.|\n)*$/)
   })
 
   it('should extract stack from first error', () => {
@@ -127,5 +129,23 @@ describe('console error observable', () => {
 
     const consoleLog = notifyLog.calls.mostRecent().args[0]
     expect(consoleLog.error.fingerprint).toBe('2')
+  })
+
+  it('should retrieve context from error', () => {
+    interface DatadogError extends Error {
+      dd_context?: Record<string, unknown>
+    }
+    const error = new Error('foo')
+    ;(error as DatadogError).dd_context = { foo: 'bar' }
+    console.error(error)
+    const consoleLog = notifyLog.calls.mostRecent().args[0]
+    expect(consoleLog.error.context).toEqual({ foo: 'bar' })
+  })
+
+  it('should report original error', () => {
+    const error = new Error('foo')
+    console.error(error)
+    const consoleLog = notifyLog.calls.mostRecent().args[0]
+    expect(consoleLog.error.originalError).toBe(error)
   })
 })

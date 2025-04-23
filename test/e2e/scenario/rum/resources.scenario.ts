@@ -1,14 +1,14 @@
+import { test, expect } from '@playwright/test'
 import type { RumResourceEvent } from '@datadog/browser-rum'
 import type { IntakeRegistry } from '../../lib/framework'
-import { flushEvents, bundleSetup, createTest, html } from '../../lib/framework'
-import { sendXhr } from '../../lib/helpers/browser'
+import { createTest, html } from '../../lib/framework'
 
 const REQUEST_DURATION = 200
 
-describe('rum resources', () => {
+test.describe('rum resources', () => {
   createTest('track xhr timings')
     .withRum()
-    .run(async ({ intakeRegistry }) => {
+    .run(async ({ intakeRegistry, flushEvents, sendXhr }) => {
       await sendXhr(`/ok?duration=${REQUEST_DURATION}`)
       await flushEvents()
       const resourceEvent = intakeRegistry.rumResourceEvents.find((r) => r.resource.url.includes('/ok'))!
@@ -20,7 +20,7 @@ describe('rum resources', () => {
 
   createTest('track redirect xhr timings')
     .withRum()
-    .run(async ({ intakeRegistry }) => {
+    .run(async ({ intakeRegistry, flushEvents, sendXhr }) => {
       await sendXhr(`/redirect?duration=${REQUEST_DURATION}`)
       await flushEvents()
       const resourceEvent = intakeRegistry.rumResourceEvents.find((r) => r.resource.url.includes('/redirect'))!
@@ -34,7 +34,7 @@ describe('rum resources', () => {
 
   createTest("don't track disallowed cross origin xhr timings")
     .withRum()
-    .run(async ({ crossOriginUrl, intakeRegistry }) => {
+    .run(async ({ crossOriginUrl, intakeRegistry, flushEvents, sendXhr }) => {
       await sendXhr(`${crossOriginUrl}/ok?duration=${REQUEST_DURATION}`)
       await flushEvents()
       const resourceEvent = intakeRegistry.rumResourceEvents.find((r) => r.resource.url.includes('/ok'))!
@@ -47,7 +47,7 @@ describe('rum resources', () => {
 
   createTest('track allowed cross origin xhr timings')
     .withRum()
-    .run(async ({ crossOriginUrl, intakeRegistry }) => {
+    .run(async ({ crossOriginUrl, intakeRegistry, flushEvents, sendXhr }) => {
       await sendXhr(`${crossOriginUrl}/ok?timing-allow-origin=true&duration=${REQUEST_DURATION}`)
       await flushEvents()
       const resourceEvent = intakeRegistry.rumResourceEvents.find((r) => r.resource.url.includes('/ok'))!
@@ -60,7 +60,7 @@ describe('rum resources', () => {
   createTest('retrieve early requests timings')
     .withRum()
     .withHead(html` <link rel="stylesheet" href="/empty.css" /> `)
-    .run(async ({ intakeRegistry }) => {
+    .run(async ({ intakeRegistry, flushEvents }) => {
       await flushEvents()
       const resourceEvent = intakeRegistry.rumResourceEvents.find((event) => event.resource.url.includes('empty.css'))
       expect(resourceEvent).toBeDefined()
@@ -69,7 +69,7 @@ describe('rum resources', () => {
 
   createTest('retrieve initial document timings')
     .withRum()
-    .run(async ({ baseUrl, intakeRegistry }) => {
+    .run(async ({ baseUrl, intakeRegistry, flushEvents }) => {
       await flushEvents()
       const resourceEvent = intakeRegistry.rumResourceEvents.find((event) => event.resource.type === 'document')
       expect(resourceEvent).toBeDefined()
@@ -77,20 +77,22 @@ describe('rum resources', () => {
       expectToHaveValidTimings(resourceEvent!)
     })
 
-  describe('XHR abort support', () => {
+  test.describe('XHR abort support', () => {
     createTest('track aborted XHR')
       .withRum()
-      .withSetup(bundleSetup)
-      .run(async ({ intakeRegistry }) => {
-        await browser.executeAsync((done) => {
-          const xhr = new XMLHttpRequest()
-          xhr.open('GET', '/ok?duration=1000')
-          xhr.send()
-          setTimeout(() => {
-            xhr.abort()
-            done(undefined)
-          }, 100)
-        })
+      .run(async ({ intakeRegistry, flushEvents, page }) => {
+        await page.evaluate(
+          () =>
+            new Promise<void>((resolve) => {
+              const xhr = new XMLHttpRequest()
+              xhr.open('GET', '/ok?duration=1000')
+              xhr.send()
+              setTimeout(() => {
+                xhr.abort()
+                resolve(undefined)
+              }, 100)
+            })
+        )
 
         await flushEvents()
 
@@ -99,15 +101,17 @@ describe('rum resources', () => {
 
     createTest('aborting an unsent XHR should be ignored')
       .withRum()
-      .withSetup(bundleSetup)
-      .run(async ({ intakeRegistry }) => {
-        await browser.executeAsync((done) => {
-          const xhr = new XMLHttpRequest()
-          xhr.open('GET', '/ok')
-          xhr.abort()
-          xhr.send()
-          xhr.addEventListener('loadend', () => done(undefined))
-        })
+      .run(async ({ intakeRegistry, flushEvents, page }) => {
+        await page.evaluate(
+          () =>
+            new Promise<void>((resolve) => {
+              const xhr = new XMLHttpRequest()
+              xhr.open('GET', '/ok')
+              xhr.abort()
+              xhr.send()
+              xhr.addEventListener('loadend', () => resolve(undefined))
+            })
+        )
 
         await flushEvents()
 
@@ -116,19 +120,21 @@ describe('rum resources', () => {
 
     createTest('aborting an XHR when state becomes DONE and before the loadend event should be ignored')
       .withRum()
-      .withSetup(bundleSetup)
-      .run(async ({ intakeRegistry }) => {
-        await browser.executeAsync((done) => {
-          const xhr = new XMLHttpRequest()
-          xhr.open('GET', '/ok')
-          xhr.onreadystatechange = () => {
-            if (xhr.readyState === XMLHttpRequest.DONE) {
-              xhr.abort()
-              done(undefined)
-            }
-          }
-          xhr.send()
-        })
+      .run(async ({ intakeRegistry, flushEvents, page }) => {
+        await page.evaluate(
+          () =>
+            new Promise<void>((resolve) => {
+              const xhr = new XMLHttpRequest()
+              xhr.open('GET', '/ok')
+              xhr.onreadystatechange = () => {
+                if (xhr.readyState === XMLHttpRequest.DONE) {
+                  xhr.abort()
+                  resolve(undefined)
+                }
+              }
+              xhr.send()
+            })
+        )
 
         await flushEvents()
 
@@ -137,19 +143,21 @@ describe('rum resources', () => {
 
     createTest('aborting an XHR after the loadend event should be ignored')
       .withRum()
-      .withSetup(bundleSetup)
-      .run(async ({ intakeRegistry }) => {
-        await browser.executeAsync((done) => {
-          const xhr = new XMLHttpRequest()
-          xhr.open('GET', '/ok')
-          xhr.addEventListener('loadend', () => {
-            setTimeout(() => {
-              xhr.abort()
-              done(undefined)
+      .run(async ({ intakeRegistry, flushEvents, page }) => {
+        await page.evaluate(
+          () =>
+            new Promise<void>((resolve) => {
+              const xhr = new XMLHttpRequest()
+              xhr.open('GET', '/ok')
+              xhr.addEventListener('loadend', () => {
+                setTimeout(() => {
+                  xhr.abort()
+                  resolve(undefined)
+                })
+              })
+              xhr.send()
             })
-          })
-          xhr.send()
-        })
+        )
 
         await flushEvents()
 
@@ -172,21 +180,23 @@ describe('rum resources', () => {
     }
   })
 
-  describe('fetch abort support', () => {
+  test.describe('fetch abort support', () => {
     createTest('track aborted fetch')
       .withRum()
-      .withSetup(bundleSetup)
-      .run(async ({ intakeRegistry }) => {
-        await browser.executeAsync((done) => {
-          const controller = new AbortController()
-          fetch('/ok?duration=1000', { signal: controller.signal }).catch(() => {
-            // ignore abortion error
-            done(undefined)
-          })
-          setTimeout(() => {
-            controller.abort()
-          }, 100)
-        })
+      .run(async ({ intakeRegistry, flushEvents, page }) => {
+        await page.evaluate(
+          () =>
+            new Promise<void>((resolve) => {
+              const controller = new AbortController()
+              fetch('/ok?duration=1000', { signal: controller.signal }).catch(() => {
+                // ignore abortion error
+                resolve(undefined)
+              })
+              setTimeout(() => {
+                controller.abort()
+              }, 100)
+            })
+        )
 
         await flushEvents()
 
@@ -198,15 +208,18 @@ describe('rum resources', () => {
 
   createTest('track redirect fetch timings')
     .withRum()
-    .run(async ({ intakeRegistry }) => {
-      await browser.executeAsync((done) => {
-        fetch('/redirect?duration=200').then(
-          () => done(undefined),
-          () => {
-            throw Error('Issue with fetch call')
-          }
-        )
-      })
+    .run(async ({ intakeRegistry, flushEvents, page }) => {
+      await page.evaluate(
+        () =>
+          new Promise<void>((resolve) => {
+            fetch('/redirect?duration=200').then(
+              () => resolve(undefined),
+              () => {
+                throw Error('Issue with fetch call')
+              }
+            )
+          })
+      )
       await flushEvents()
       const resourceEvent = intakeRegistry.rumResourceEvents.find((r) => r.resource.url.includes('/redirect'))!
       expect(resourceEvent).not.toBeUndefined()
@@ -219,17 +232,17 @@ describe('rum resources', () => {
 
   createTest('track concurrent fetch to same resource')
     .withRum()
-    .withSetup(bundleSetup)
-    .run(async ({ intakeRegistry }) => {
-      await browser.executeAsync((done) => {
-        Promise.all([fetch('/ok'), fetch('/ok')])
-          .then(() => done())
-          .catch(() => done())
-      })
+    .run(async ({ intakeRegistry, flushEvents, page, browserName }) => {
+      test.skip(browserName === 'webkit', 'Safari does not emit predictable timings events for concurrent fetches')
 
-      if (!browser.isChromium) {
-        pending('Only Chromium based browsers will emit predictable timings events for concurrent fetches')
-      }
+      await page.evaluate(
+        () =>
+          new Promise<void>((resolve) => {
+            Promise.all([fetch('/ok'), fetch('/ok')])
+              .then(() => resolve())
+              .catch(() => resolve())
+          })
+      )
 
       await flushEvents()
 
@@ -242,29 +255,31 @@ describe('rum resources', () => {
       expect(resourceEvents[1]?.resource.size).toBeDefined()
     })
 
-  describe('support XHRs with same XMLHttpRequest instance', () => {
+  test.describe('support XHRs with same XMLHttpRequest instance', () => {
     createTest('track XHRs when calling requests one after another')
       .withRum()
-      .withSetup(bundleSetup)
-      .run(async ({ intakeRegistry }) => {
-        await browser.executeAsync((done) => {
-          const xhr = new XMLHttpRequest()
-          const triggerSecondCall = () => {
-            xhr.removeEventListener('loadend', triggerSecondCall)
-            xhr.addEventListener('loadend', () => done(undefined))
-            xhr.open('GET', '/ok?duration=100&call=2')
-            xhr.send()
-          }
-          xhr.addEventListener('loadend', triggerSecondCall)
-          xhr.open('GET', '/ok?duration=100&call=1')
-          xhr.send()
-        })
+      .run(async ({ intakeRegistry, flushEvents, page }) => {
+        await page.evaluate(
+          () =>
+            new Promise<void>((resolve) => {
+              const xhr = new XMLHttpRequest()
+              const triggerSecondCall = () => {
+                xhr.removeEventListener('loadend', triggerSecondCall)
+                xhr.addEventListener('loadend', () => resolve(undefined))
+                xhr.open('GET', '/ok?duration=100&call=2')
+                xhr.send()
+              }
+              xhr.addEventListener('loadend', triggerSecondCall)
+              xhr.open('GET', '/ok?duration=100&call=1')
+              xhr.send()
+            })
+        )
 
         await flushEvents()
 
         const resourceEvents = intakeRegistry.rumResourceEvents.filter((event) => event.resource.type === 'xhr')
-        expect(resourceEvents.length).toEqual(2)
-        expect(intakeRegistry.rumErrorEvents.length).toBe(0)
+        expect(resourceEvents).toHaveLength(2)
+        expect(intakeRegistry.rumErrorEvents).toHaveLength(0)
         expect(resourceEvents[0].resource.url).toContain('/ok?duration=100&call=1')
         expect(resourceEvents[0].resource.status_code).toEqual(200)
         expect(resourceEvents[1].resource.url).toContain('/ok?duration=100&call=2')

@@ -1,4 +1,3 @@
-import type { Context } from './serialisation/context'
 import { setInterval, clearInterval } from './timer'
 import type { TimeoutId } from './timer'
 import { removeItem } from './utils/arrayUtils'
@@ -29,9 +28,6 @@ export interface ValueHistory<Value> {
   findAll: (startTime?: RelativeTime, duration?: Duration) => Value[]
   reset: () => void
   stop: () => void
-
-  getAllEntries: () => Context[]
-  getDeletedEntries: () => RelativeTime[]
 }
 
 let cleanupHistoriesInterval: TimeoutId | null = null
@@ -50,7 +46,6 @@ export function createValueHistory<Value>({
   maxEntries?: number
 }): ValueHistory<Value> {
   let entries: Array<ValueHistoryEntry<Value>> = []
-  const deletedEntries: RelativeTime[] = []
 
   if (!cleanupHistoriesInterval) {
     cleanupHistoriesInterval = setInterval(() => cleanupHistories(), CLEAR_OLD_VALUES_INTERVAL)
@@ -59,10 +54,7 @@ export function createValueHistory<Value>({
   const clearExpiredValues = () => {
     const oldTimeThreshold = relativeNow() - expireDelay
     while (entries.length > 0 && entries[entries.length - 1].endTime < oldTimeThreshold) {
-      const entry = entries.pop()
-      if (entry) {
-        deletedEntries.push(entry.startTime)
-      }
+      entries.pop()
     }
   }
 
@@ -137,18 +129,6 @@ export function createValueHistory<Value>({
       .map((entry) => entry.value)
   }
 
-  function getAllEntries() {
-    return entries.map(({ startTime, endTime, value }) => ({
-      startTime,
-      endTime: endTime === END_OF_TIMES ? 'Infinity' : endTime,
-      value,
-    })) as Context[]
-  }
-
-  function getDeletedEntries() {
-    return deletedEntries
-  }
-
   /**
    * Remove all entries from this collection.
    */
@@ -167,5 +147,5 @@ export function createValueHistory<Value>({
     }
   }
 
-  return { add, find, closeActive, findAll, reset, stop, getAllEntries, getDeletedEntries }
+  return { add, find, closeActive, findAll, reset, stop }
 }

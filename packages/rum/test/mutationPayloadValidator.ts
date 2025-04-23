@@ -1,3 +1,4 @@
+import { getGlobalObject } from '@datadog/browser-core'
 import { NodeType, IncrementalSource } from '../src/types'
 import type {
   SerializedNodeWithId,
@@ -11,6 +12,9 @@ import type {
 } from '../src/types'
 import { findAllIncrementalSnapshots, findFullSnapshot } from './segments'
 import { findTextNode, findElementWithTagName, findElementWithIdAttribute } from './nodes'
+
+// Should match both jasmine and playwright 'expect' functions
+type Expect = (actual: any) => { toEqual(expected: any): void }
 
 interface NodeSelector {
   // Select the first node with the given tag name from the initial full snapshot
@@ -121,7 +125,11 @@ export function createMutationPayloadValidator(initialDocument: SerializedNodeWi
     /**
      * Validates the mutation payload against the expected text, attribute, add and remove mutations.
      */
-    validate: (payload: BrowserMutationPayload, expected: ExpectedMutationsPayload) => {
+    validate: (
+      payload: BrowserMutationPayload,
+      expected: ExpectedMutationsPayload,
+      { expect = getGlobalObject<{ expect: Expect }>().expect }: { expect?: Expect } = {}
+    ) => {
       payload = removeUndefinedValues(payload)
 
       expect(payload.adds).toEqual(
@@ -201,18 +209,23 @@ export function createMutationPayloadValidator(initialDocument: SerializedNodeWi
  * Validate the first and only mutation record of a segment against the expected text, attribute,
  * add and remove mutations.
  */
-export function createMutationPayloadValidatorFromSegment(segment: BrowserSegment) {
+export function createMutationPayloadValidatorFromSegment(segment: BrowserSegment, options?: { expect?: Expect }) {
   const fullSnapshot = findFullSnapshot(segment)!
-  expect(fullSnapshot).toBeTruthy()
+  if (!fullSnapshot) {
+    throw new Error('Full snapshot not found')
+  }
 
   const mutations = findAllIncrementalSnapshots(segment, IncrementalSource.Mutation) as Array<{
     data: BrowserMutationData
   }>
-  expect(mutations.length).toBe(1)
+  if (mutations.length !== 1) {
+    throw new Error(`Expected 1 mutation, found ${mutations.length}`)
+  }
 
   const mutationPayloadValidator = createMutationPayloadValidator(fullSnapshot.data.node)
   return {
     ...mutationPayloadValidator,
-    validate: (expected: ExpectedMutationsPayload) => mutationPayloadValidator.validate(mutations[0].data, expected),
+    validate: (expected: ExpectedMutationsPayload) =>
+      mutationPayloadValidator.validate(mutations[0].data, expected, options),
   }
 }

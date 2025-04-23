@@ -1,9 +1,8 @@
-import type { Context, PageExitEvent, RawError, RelativeTime } from '@datadog/browser-core'
+import type { Context, Duration, PageMayExitEvent, RawError, RelativeTime } from '@datadog/browser-core'
 import { AbstractLifeCycle } from '@datadog/browser-core'
 import type { RumEventDomainContext } from '../domainContext.types'
 import type { RawRumEvent } from '../rawRumEvent.types'
 import type { RumEvent } from '../rumEvent.types'
-import type { CommonContext } from './contexts/commonContext'
 import type { RequestCompleteEvent, RequestStartEvent } from './requestCollection'
 import type { AutoAction } from './action/actionCollection'
 import type { ViewEvent, ViewCreatedEvent, ViewEndedEvent, BeforeViewUpdateEvent } from './view/trackViews'
@@ -33,7 +32,7 @@ export const enum LifeCycleEventType {
   // on the same domain.
   SESSION_EXPIRED,
   SESSION_RENEWED,
-  PAGE_EXITED,
+  PAGE_MAY_EXIT,
   RAW_RUM_EVENT_COLLECTED,
   RUM_EVENT_COLLECTED,
   RAW_ERROR_COLLECTED,
@@ -64,7 +63,7 @@ declare const LifeCycleEventTypeAsConst: {
   REQUEST_COMPLETED: LifeCycleEventType.REQUEST_COMPLETED
   SESSION_EXPIRED: LifeCycleEventType.SESSION_EXPIRED
   SESSION_RENEWED: LifeCycleEventType.SESSION_RENEWED
-  PAGE_EXITED: LifeCycleEventType.PAGE_EXITED
+  PAGE_MAY_EXIT: LifeCycleEventType.PAGE_MAY_EXIT
   RAW_RUM_EVENT_COLLECTED: LifeCycleEventType.RAW_RUM_EVENT_COLLECTED
   RUM_EVENT_COLLECTED: LifeCycleEventType.RUM_EVENT_COLLECTED
   RAW_ERROR_COLLECTED: LifeCycleEventType.RAW_ERROR_COLLECTED
@@ -84,19 +83,18 @@ export interface LifeCycleEventMap {
   [LifeCycleEventTypeAsConst.REQUEST_COMPLETED]: RequestCompleteEvent
   [LifeCycleEventTypeAsConst.SESSION_EXPIRED]: void
   [LifeCycleEventTypeAsConst.SESSION_RENEWED]: void
-  [LifeCycleEventTypeAsConst.PAGE_EXITED]: PageExitEvent
+  [LifeCycleEventTypeAsConst.PAGE_MAY_EXIT]: PageMayExitEvent
   [LifeCycleEventTypeAsConst.RAW_RUM_EVENT_COLLECTED]: RawRumEventCollectedData
   [LifeCycleEventTypeAsConst.RUM_EVENT_COLLECTED]: RumEvent & Context
   [LifeCycleEventTypeAsConst.RAW_ERROR_COLLECTED]: {
     error: RawError
-    savedCommonContext?: CommonContext
     customerContext?: Context
   }
 }
 
 export interface RawRumEventCollectedData<E extends RawRumEvent = RawRumEvent> {
   startTime: RelativeTime
-  savedCommonContext?: CommonContext
+  duration?: Duration
   customerContext?: Context
   rawRumEvent: E
   domainContext: RumEventDomainContext<E['type']>

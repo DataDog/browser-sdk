@@ -1,34 +1,81 @@
-import type { CustomerDataTracker, RelativeTime } from '@datadog/browser-core'
-import { relativeToClocks, createCustomerDataTracker, noop } from '@datadog/browser-core'
+import type { RelativeTime } from '@datadog/browser-core'
+import { relativeToClocks } from '@datadog/browser-core'
 import type { Clock } from '@datadog/browser-core/test'
 import { mockClock, registerCleanupTask } from '@datadog/browser-core/test'
 import { LifeCycle, LifeCycleEventType } from '../lifeCycle'
 import type { ViewCreatedEvent, ViewEndedEvent } from '../view/trackViews'
+import type { Hooks } from '../../hooks'
+import { createHooks, HookNames } from '../../hooks'
+import type { RumConfiguration } from '../configuration'
+import { RumEventType } from '../../rawRumEvent.types'
 import type { FeatureFlagContexts } from './featureFlagContext'
 import { startFeatureFlagContexts } from './featureFlagContext'
 
 describe('featureFlagContexts', () => {
   const lifeCycle = new LifeCycle()
   let clock: Clock
-  let customerDataTracker: CustomerDataTracker
   let featureFlagContexts: FeatureFlagContexts
+  let hooks: Hooks
+  let trackFeatureFlagsForEvents: any[]
 
   beforeEach(() => {
     clock = mockClock()
-    customerDataTracker = createCustomerDataTracker(noop)
-    featureFlagContexts = startFeatureFlagContexts(lifeCycle, customerDataTracker)
+    hooks = createHooks()
+    trackFeatureFlagsForEvents = []
+    featureFlagContexts = startFeatureFlagContexts(lifeCycle, hooks, {
+      trackFeatureFlagsForEvents,
+    } as unknown as RumConfiguration)
 
     registerCleanupTask(() => {
       clock.cleanup()
-      featureFlagContexts.stop()
     })
   })
 
-  it('should return undefined before the initial view', () => {
-    expect(featureFlagContexts.findFeatureFlagEvaluations()).toBeUndefined()
-  })
+  describe('assemble hook', () => {
+    it('should add feature flag evaluations on VIEW and ERROR by default ', () => {
+      lifeCycle.notify(LifeCycleEventType.BEFORE_VIEW_CREATED, {
+        startClocks: relativeToClocks(0 as RelativeTime),
+      } as ViewCreatedEvent)
 
-  describe('addFeatureFlagEvaluation', () => {
+      featureFlagContexts.addFeatureFlagEvaluation('feature', 'foo')
+
+      const vewEvent = hooks.triggerHook(HookNames.Assemble, { eventType: 'view', startTime: 0 as RelativeTime })
+      const errorEvent = hooks.triggerHook(HookNames.Assemble, { eventType: 'error', startTime: 0 as RelativeTime })
+
+      expect(vewEvent).toEqual({
+        type: 'view',
+        feature_flags: {
+          feature: 'foo',
+        },
+      })
+
+      expect(errorEvent).toEqual({
+        type: 'error',
+        feature_flags: {
+          feature: 'foo',
+        },
+      })
+    })
+    ;[RumEventType.VITAL, RumEventType.ACTION, RumEventType.LONG_TASK, RumEventType.RESOURCE].forEach((eventType) => {
+      it(`should add feature flag evaluations on ${eventType} when specified in trackFeatureFlagsForEvents`, () => {
+        trackFeatureFlagsForEvents.push(eventType)
+        lifeCycle.notify(LifeCycleEventType.BEFORE_VIEW_CREATED, {
+          startClocks: relativeToClocks(0 as RelativeTime),
+        } as ViewCreatedEvent)
+
+        featureFlagContexts.addFeatureFlagEvaluation('feature', 'foo')
+
+        const event = hooks.triggerHook(HookNames.Assemble, { eventType, startTime: 0 as RelativeTime })
+
+        expect(event).toEqual({
+          type: eventType,
+          feature_flags: {
+            feature: 'foo',
+          },
+        })
+      })
+    })
+
     it('should add feature flag evaluations of any type', () => {
       lifeCycle.notify(LifeCycleEventType.BEFORE_VIEW_CREATED, {
         startClocks: relativeToClocks(0 as RelativeTime),
@@ -39,69 +86,20 @@ describe('featureFlagContexts', () => {
       featureFlagContexts.addFeatureFlagEvaluation('feature3', true)
       featureFlagContexts.addFeatureFlagEvaluation('feature4', { foo: 'bar' })
 
-      const featureFlagContext = featureFlagContexts.findFeatureFlagEvaluations()!
+      const event = hooks.triggerHook(HookNames.Assemble, { eventType: 'view', startTime: 0 as RelativeTime })
 
-      expect(featureFlagContext).toEqual({
-        feature: 'foo',
-        feature2: 2,
-        feature3: true,
-        feature4: { foo: 'bar' },
+      expect(event).toEqual({
+        type: 'view',
+        feature_flags: {
+          feature: 'foo',
+          feature2: 2,
+          feature3: true,
+          feature4: { foo: 'bar' },
+        },
       })
     })
 
-    it('should replace existing feature flag evaluation to the current context', () => {
-      lifeCycle.notify(LifeCycleEventType.BEFORE_VIEW_CREATED, {
-        startClocks: relativeToClocks(0 as RelativeTime),
-      } as ViewCreatedEvent)
-
-      featureFlagContexts.addFeatureFlagEvaluation('feature', 'foo')
-      featureFlagContexts.addFeatureFlagEvaluation('feature2', 'baz')
-      featureFlagContexts.addFeatureFlagEvaluation('feature', 'bar')
-
-      const featureFlagContext = featureFlagContexts.findFeatureFlagEvaluations()!
-
-      expect(featureFlagContext).toEqual({ feature: 'bar', feature2: 'baz' })
-    })
-
-    it('should notify the customer data tracker on feature flag evaluation', () => {
-      const updateCustomerDataSpy = spyOn(customerDataTracker, 'updateCustomerData')
-
-      lifeCycle.notify(LifeCycleEventType.BEFORE_VIEW_CREATED, {
-        startClocks: relativeToClocks(0 as RelativeTime),
-      } as ViewCreatedEvent)
-
-      featureFlagContexts.addFeatureFlagEvaluation('feature', 'foo')
-
-      expect(updateCustomerDataSpy).toHaveBeenCalledWith({ feature: 'foo' })
-    })
-  })
-
-  describe('findFeatureFlagEvaluations', () => {
-    /**
-     * It could happen if there is an event happening just between view end and view creation
-     * (which seems unlikely) and this event would anyway be rejected by lack of view id
-     */
-    it('should return undefined when no current view', () => {
-      expect(featureFlagContexts.findFeatureFlagEvaluations()).toBeUndefined()
-    })
-
-    it('should clear feature flag context on new view', () => {
-      lifeCycle.notify(LifeCycleEventType.BEFORE_VIEW_CREATED, {
-        startClocks: relativeToClocks(0 as RelativeTime),
-      } as ViewCreatedEvent)
-      featureFlagContexts.addFeatureFlagEvaluation('feature', 'foo')
-      lifeCycle.notify(LifeCycleEventType.AFTER_VIEW_ENDED, {
-        endClocks: relativeToClocks(10 as RelativeTime),
-      } as ViewEndedEvent)
-      lifeCycle.notify(LifeCycleEventType.BEFORE_VIEW_CREATED, {
-        startClocks: relativeToClocks(10 as RelativeTime),
-      } as ViewCreatedEvent)
-
-      const featureFlagContext = featureFlagContexts.findFeatureFlagEvaluations()!
-      expect(featureFlagContext).toEqual({})
-    })
-
-    it('should return the feature flag context corresponding to the start time', () => {
+    it('should add feature flag evaluations corresponding to the view start time', () => {
       lifeCycle.notify(LifeCycleEventType.BEFORE_VIEW_CREATED, {
         startClocks: relativeToClocks(0 as RelativeTime),
       } as ViewCreatedEvent)
@@ -118,8 +116,42 @@ describe('featureFlagContexts', () => {
       clock.tick(10)
       featureFlagContexts.addFeatureFlagEvaluation('feature', 'two')
 
-      expect(featureFlagContexts.findFeatureFlagEvaluations(5 as RelativeTime)).toEqual({ feature: 'one' })
-      expect(featureFlagContexts.findFeatureFlagEvaluations(15 as RelativeTime)).toEqual({ feature: 'two' })
+      const eventOne = hooks.triggerHook(HookNames.Assemble, { eventType: 'view', startTime: 5 as RelativeTime })
+      const eventTwo = hooks.triggerHook(HookNames.Assemble, { eventType: 'view', startTime: 15 as RelativeTime })
+
+      expect(eventOne).toEqual({ type: 'view', feature_flags: { feature: 'one' } })
+      expect(eventTwo).toEqual({ type: 'view', feature_flags: { feature: 'two' } })
+    })
+
+    /**
+     * It could happen if there is an event happening just between view end and view creation
+     * (which seems unlikely) and this event would anyway be rejected by lack of view id
+     */
+    it('should not add feature flag evaluations when no current view', () => {
+      lifeCycle.notify(LifeCycleEventType.BEFORE_VIEW_CREATED, {
+        startClocks: relativeToClocks(0 as RelativeTime),
+      } as ViewCreatedEvent)
+
+      const event = hooks.triggerHook(HookNames.Assemble, {
+        eventType: 'view',
+        startTime: 0 as RelativeTime,
+      })
+
+      expect(event).toBeUndefined()
+    })
+
+    it('should replace existing feature flag evaluations for the current view', () => {
+      lifeCycle.notify(LifeCycleEventType.BEFORE_VIEW_CREATED, {
+        startClocks: relativeToClocks(0 as RelativeTime),
+      } as ViewCreatedEvent)
+
+      featureFlagContexts.addFeatureFlagEvaluation('feature', 'foo')
+      featureFlagContexts.addFeatureFlagEvaluation('feature2', 'baz')
+      featureFlagContexts.addFeatureFlagEvaluation('feature', 'bar')
+
+      const event = hooks.triggerHook(HookNames.Assemble, { eventType: 'view', startTime: 0 as RelativeTime })
+
+      expect(event).toEqual({ type: 'view', feature_flags: { feature: 'bar', feature2: 'baz' } })
     })
   })
 })
