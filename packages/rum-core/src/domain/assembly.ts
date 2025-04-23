@@ -10,7 +10,6 @@ import {
   round,
   isExperimentalFeatureEnabled,
   ExperimentalFeature,
-  addTelemetryDebug,
 } from '@datadog/browser-core'
 import type { RumEventDomainContext } from '../domainContext.types'
 import { RumEventType } from '../rawRumEvent.types'
