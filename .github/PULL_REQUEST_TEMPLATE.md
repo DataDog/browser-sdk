@@ -4,7 +4,7 @@
 
 ## Changes
 
-<!-- What does this change exactly? Who will be affected? Include relevant screenshots, videos, links. -->
+<!-- What does this change exactly? Who will be affected? Include relevant screenshots, videos, links. Please highlight all the changes that you are not sure about (ex: AI agent generated) -->
 
 ## Test instructions
 
@@ -14,10 +14,9 @@
 
 <!-- By submitting this test, you confirm the following: -->
 
-- [ ] I used AI to generate this PR, please review carefully.
-- [ ] I tested on my local environment.
-- [ ] I deployed and tested on staging.
-- [ ] I wrote unit tests for this change.
-- [ ] I wrote integration tests for this change.
+- [ ] Tested locally
+- [ ] Tested on staging
+- [ ] Added unit tests for this change.
+- [ ] Added e2e/integration tests for this change.
 
 <!-- Also, please read the contribution guidelines: https://github.com/DataDog/browser-sdk/blob/main/CONTRIBUTING.md -->
