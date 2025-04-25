@@ -97,7 +97,7 @@ export function createMockServerApp(servers: Servers, setup: string): MockServer
       'Content-Security-Policy',
       [
         `connect-src ${servers.intake.url} ${servers.base.url} ${servers.crossOrigin.url}`,
-        "script-src 'self' 'unsafe-inline'",
+        `script-src 'self' 'unsafe-inline'  ${DEV_SERVER_BASE_URL}`,
         'worker-src blob:',
       ].join(';')
     )
@@ -110,7 +110,7 @@ export function createMockServerApp(servers: Servers, setup: string): MockServer
       'Content-Security-Policy',
       [
         `connect-src ${servers.intake.url} ${servers.base.url} ${servers.crossOrigin.url}`,
-        "script-src 'self' 'unsafe-inline'",
+        `script-src 'self' 'unsafe-inline' ${DEV_SERVER_BASE_URL}`,
       ].join(';')
     )
     res.send(setup)
