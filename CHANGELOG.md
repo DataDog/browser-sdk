@@ -18,6 +18,12 @@
 
 ---
 
+## v0.0.1-beta.2
+
+**Internal Changes:**
+
+- feat: remove dd trace type [RUM] [RUM-REACT] [RUM-SLIM]
+
 ## v0.0.1-beta.1
 
 **Internal Changes:**
