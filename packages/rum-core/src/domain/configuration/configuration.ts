@@ -1,4 +1,9 @@
-import type { Configuration, InitConfiguration, MatchOption, RawTelemetryConfiguration } from '@flashcatcloud/browser-core'
+import type {
+  Configuration,
+  InitConfiguration,
+  MatchOption,
+  RawTelemetryConfiguration,
+} from '@flashcatcloud/browser-core'
 import {
   getType,
   isMatchOption,
@@ -17,7 +22,7 @@ import type { RumPlugin } from '../plugins'
 import { isTracingOption } from '../tracing/tracer'
 import type { PropagatorType, TracingOption } from '../tracing/tracer.types'
 
-export const DEFAULT_PROPAGATOR_TYPES: PropagatorType[] = ['tracecontext', 'datadog']
+export const DEFAULT_PROPAGATOR_TYPES: PropagatorType[] = ['tracecontext']
 
 export interface RumInitConfiguration extends InitConfiguration {
   // global options
