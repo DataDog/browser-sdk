@@ -20,18 +20,15 @@ import { createDOMMutationObservable } from '../browser/domMutationObservable'
 import { createWindowOpenObservable } from '../browser/windowOpenObservable'
 import { startInternalContext } from '../domain/contexts/internalContext'
 import { LifeCycle, LifeCycleEventType } from '../domain/lifeCycle'
-import type { ViewHistory } from '../domain/contexts/viewHistory'
 import { startViewHistory } from '../domain/contexts/viewHistory'
 import { startRequestCollection } from '../domain/requestCollection'
 import { startActionCollection } from '../domain/action/actionCollection'
 import { startErrorCollection } from '../domain/error/errorCollection'
 import { startResourceCollection } from '../domain/resource/resourceCollection'
 import { startViewCollection } from '../domain/view/viewCollection'
-import type { RumSessionManager } from '../domain/rumSessionManager'
 import { startRumSessionManager, startRumSessionManagerStub } from '../domain/rumSessionManager'
 import { startRumBatch } from '../transport/startRumBatch'
 import { startRumEventBridge } from '../transport/startRumEventBridge'
-import type { UrlContexts } from '../domain/contexts/urlContexts'
 import { startUrlContexts } from '../domain/contexts/urlContexts'
 import { createLocationChangeObservable } from '../browser/locationChangeObservable'
 import type { RumConfiguration } from '../domain/configuration'
@@ -110,6 +107,7 @@ export function startRum(
   const session = !canUseEventBridge()
     ? startRumSessionManager(configuration, lifeCycle, trackingConsentState)
     : startRumSessionManagerStub()
+
   if (!canUseEventBridge()) {
     const batch = startRumBatch(
       configuration,
@@ -132,7 +130,9 @@ export function startRum(
   cleanupTasks.push(stopWindowOpen)
   const pageStateHistory = startPageStateHistory(hooks, configuration)
   const viewHistory = startViewHistory(lifeCycle)
+  cleanupTasks.push(() => viewHistory.stop())
   const urlContexts = startUrlContexts(lifeCycle, hooks, locationChangeObservable, location)
+  cleanupTasks.push(() => urlContexts.stop())
   const featureFlagContexts = startFeatureFlagContexts(lifeCycle, hooks, configuration)
   startSessionContext(hooks, session, recorderApi, viewHistory)
   startConnectivityContext(hooks)
@@ -148,12 +148,9 @@ export function startRum(
     lifeCycle,
     hooks,
     configuration,
-    session,
     pageStateHistory,
     domMutationObservable,
     windowOpenObservable,
-    urlContexts,
-    viewHistory,
     reportError
   )
   cleanupTasks.push(stopRumEventCollection)
@@ -251,12 +248,9 @@ export function startRumEventCollection(
   lifeCycle: LifeCycle,
   hooks: Hooks,
   configuration: RumConfiguration,
-  sessionManager: RumSessionManager,
   pageStateHistory: PageStateHistory,
   domMutationObservable: Observable<void>,
   windowOpenObservable: Observable<void>,
-  urlContexts: UrlContexts,
-  viewHistory: ViewHistory,
   reportError: (error: RawError) => void
 ) {
   const actionCollection = startActionCollection(
@@ -271,7 +265,7 @@ export function startRumEventCollection(
   const ciVisibilityContext = startCiVisibilityContext(hooks)
   startSyntheticsContext(hooks)
 
-  startRumAssembly(configuration, lifeCycle, hooks, sessionManager, viewHistory, urlContexts, reportError)
+  startRumAssembly(configuration, lifeCycle, hooks, reportError)
 
   return {
     pageStateHistory,
@@ -281,9 +275,7 @@ export function startRumEventCollection(
       actionCollection.stop()
       ciVisibilityContext.stop()
       displayContext.stop()
-      viewHistory.stop()
       pageStateHistory.stop()
-      urlContexts.stop()
     },
   }
 }

@@ -77,12 +77,9 @@ function startRumStub(
     lifeCycle,
     hooks,
     configuration,
-    sessionManager,
     pageStateHistory,
     domMutationObservable,
     windowOpenObservable,
-    urlContexts,
-    viewHistory,
     reportError
   )
   const { stop: viewCollectionStop } = startViewCollection(
