@@ -10,6 +10,7 @@ import {
 import { getSelectorFromElement } from '../../getSelectorFromElement'
 import type { RumConfiguration } from '../../configuration'
 import type { RumRect } from '../../../rumEvent.types'
+import { getClsAttributionImpactedArea } from './getClsAttributionImpactedArea'
 
 declare const WeakRef: WeakRefConstructor
 
@@ -79,7 +80,7 @@ export function trackCumulativeLayoutShift(
       const { cumulatedValue, isMaxValue } = slidingWindow.update(entry)
 
       if (isMaxValue) {
-        const attribution = getFirstElementAttribution(entry.sources)
+        const attribution = getTopImpactedElement(entry.sources)
         biggestShift = {
           target: attribution?.node ? new WeakRef(attribution.node) : undefined,
           time: elapsed(viewStart, entry.startTime),
@@ -112,12 +113,19 @@ export function trackCumulativeLayoutShift(
   }
 }
 
-function getFirstElementAttribution(
+function getTopImpactedElement(
   sources: RumLayoutShiftAttribution[]
 ): (RumLayoutShiftAttribution & { node: Element }) | undefined {
-  return sources.find(
-    (source): source is RumLayoutShiftAttribution & { node: Element } => !!source.node && isElementNode(source.node)
-  )
+  let topImpactedSource: (RumLayoutShiftAttribution & { node: Element }) | undefined
+  for (const source of sources) {
+    if (source.node && isElementNode(source.node)) {
+      const currentImpactedArea = getClsAttributionImpactedArea(source)
+      if (!topImpactedSource || getClsAttributionImpactedArea(topImpactedSource) < currentImpactedArea) {
+        topImpactedSource = source as RumLayoutShiftAttribution & { node: Element }
+      }
+    }
+  }
+  return topImpactedSource
 }
 
 function asRumRect({ x, y, width, height }: DOMRectReadOnly): RumRect {

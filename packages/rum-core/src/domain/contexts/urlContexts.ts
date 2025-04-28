@@ -1,10 +1,10 @@
-import type { RelativeTime, Observable, Context } from '@datadog/browser-core'
+import type { RelativeTime, Observable } from '@datadog/browser-core'
 import { SESSION_TIME_OUT_DELAY, relativeNow, createValueHistory } from '@datadog/browser-core'
 import type { LocationChange } from '../../browser/locationChangeObservable'
 import type { LifeCycle } from '../lifeCycle'
 import { LifeCycleEventType } from '../lifeCycle'
 import type { PartialRumEvent, Hooks } from '../../hooks'
-import { HookNames } from '../../hooks'
+import { DISCARDED, HookNames } from '../../hooks'
 
 /**
  * We want to attach to an event:
@@ -21,8 +21,6 @@ export interface UrlContext {
 
 export interface UrlContexts {
   findUrl: (startTime?: RelativeTime) => UrlContext | undefined
-  getAllEntries: () => Context[]
-  getDeletedEntries: () => RelativeTime[]
   stop: () => void
 }
 
@@ -74,22 +72,24 @@ export function startUrlContexts(
     }
   }
 
-  hooks.register(HookNames.Assemble, ({ startTime, eventType }): PartialRumEvent | undefined => {
-    const { url, referrer } = urlContextHistory.find(startTime)!
+  hooks.register(HookNames.Assemble, ({ startTime, eventType }): PartialRumEvent | DISCARDED => {
+    const urlContext = urlContextHistory.find(startTime)
+
+    if (!urlContext) {
+      return DISCARDED
+    }
 
     return {
       type: eventType,
       view: {
-        url,
-        referrer,
+        url: urlContext.url,
+        referrer: urlContext.referrer,
       },
     }
   })
 
   return {
     findUrl: (startTime?: RelativeTime) => urlContextHistory.find(startTime),
-    getAllEntries: () => urlContextHistory.getAllEntries(),
-    getDeletedEntries: () => urlContextHistory.getDeletedEntries(),
     stop: () => {
       locationChangeSubscription.unsubscribe()
       urlContextHistory.stop()

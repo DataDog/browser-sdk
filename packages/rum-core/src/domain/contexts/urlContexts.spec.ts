@@ -5,7 +5,7 @@ import { setupLocationObserver } from '../../../test'
 import { LifeCycle, LifeCycleEventType } from '../lifeCycle'
 import type { ViewCreatedEvent, ViewEndedEvent } from '../view/trackViews'
 import type { Hooks } from '../../hooks'
-import { HookNames, createHooks } from '../../hooks'
+import { DISCARDED, HookNames, createHooks } from '../../hooks'
 import { startUrlContexts, type UrlContexts } from './urlContexts'
 
 describe('urlContexts', () => {
@@ -152,6 +152,12 @@ describe('urlContexts', () => {
           },
         })
       )
+    })
+
+    it('should discard the event if no URL', () => {
+      const event = hooks.triggerHook(HookNames.Assemble, { eventType: 'view', startTime: 0 as RelativeTime })
+
+      expect(event).toBe(DISCARDED)
     })
   })
 })

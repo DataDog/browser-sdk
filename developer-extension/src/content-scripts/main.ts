@@ -125,9 +125,25 @@ function loadSdkScriptFromURL(url: string) {
     return
   }
   if (xhr.status === 200) {
+    let sdkCode = xhr.responseText
+
+    // Webpack expects the script to be loaded with a `<script src="...">` tag to get its URL to
+    // know where to load the relative chunks. By loading it with an XHR and evaluating it in an
+    // inline script tag, Webpack does not know where to load the chunks from.
+    //
+    // Let's replace Webpack logic that breaks with our own logic to define the URL. It's not
+    // pretty, but loading the script this way isn't either, so...
+    //
+    // We'll probably have to revisit when using actual `import()` expressions instead of relying on
+    // Webpack runtime to load the chunks.
+    sdkCode = sdkCode.replace(
+      'if (!scriptUrl) throw new Error("Automatic publicPath is not supported in this browser");',
+      `if (!scriptUrl) scriptUrl = ${JSON.stringify(url)};`
+    )
+
     const script = document.createElement('script')
     script.type = 'text/javascript'
-    script.text = xhr.responseText
+    script.text = sdkCode
 
     document.documentElement.prepend(script)
   }

@@ -2,7 +2,7 @@ import type { Clock } from '@datadog/browser-core/test'
 import { mockClock, registerCleanupTask, mockEventBridge } from '@datadog/browser-core/test'
 import { timeStampNow, type RelativeTime } from '@datadog/browser-core'
 import { mockRumConfiguration } from '../../../test'
-import type { Hooks } from '../../hooks'
+import type { Hooks, PartialRumEvent } from '../../hooks'
 import { createHooks, HookNames } from '../../hooks'
 import { startDefaultContext } from './defaultContext'
 
@@ -40,26 +40,29 @@ describe('startDefaultContext', () => {
       const eventWithoutEventBridge = hooks.triggerHook(HookNames.Assemble, {
         eventType: 'view',
         startTime: 0 as RelativeTime,
-      })!
+      }) as PartialRumEvent
 
       mockEventBridge()
 
       const eventWithEventBridge = hooks.triggerHook(HookNames.Assemble, {
         eventType: 'view',
         startTime: 0 as RelativeTime,
-      })!
+      }) as PartialRumEvent
 
-      expect(eventWithEventBridge._dd?.browser_sdk_version).toBeDefined()
-      expect(eventWithoutEventBridge._dd?.browser_sdk_version).toBeUndefined()
+      expect(eventWithEventBridge._dd!.browser_sdk_version).toBeDefined()
+      expect(eventWithoutEventBridge._dd!.browser_sdk_version).toBeUndefined()
     })
 
     it('should set the configured sample rates', () => {
       startDefaultContext(hooks, mockRumConfiguration({ sessionSampleRate: 10, sessionReplaySampleRate: 20 }))
 
-      const event = hooks.triggerHook(HookNames.Assemble, { eventType: 'view', startTime: 0 as RelativeTime })!
+      const event = hooks.triggerHook(HookNames.Assemble, {
+        eventType: 'view',
+        startTime: 0 as RelativeTime,
+      }) as PartialRumEvent
 
-      expect(event._dd?.configuration?.session_sample_rate).toBe(10)
-      expect(event._dd?.configuration?.session_replay_sample_rate).toBe(20)
+      expect(event._dd!.configuration!.session_sample_rate).toBe(10)
+      expect(event._dd!.configuration!.session_replay_sample_rate).toBe(20)
     })
   })
 })

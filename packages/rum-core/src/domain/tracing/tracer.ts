@@ -233,7 +233,7 @@ function makeTracingHeaders(
 
     const userId = userContext.getContext().id
     if (typeof userId === 'string') {
-      baggageItems['usr.id'] = userId
+      baggageItems['user.id'] = userId
     }
 
     const accountId = accountContext.getContext().id
