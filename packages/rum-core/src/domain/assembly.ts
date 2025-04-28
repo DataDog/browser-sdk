@@ -16,7 +16,7 @@ import type { RumEventDomainContext } from '../domainContext.types'
 import { RumEventType } from '../rawRumEvent.types'
 import type { CommonProperties, RumEvent } from '../rumEvent.types'
 import type { Hooks } from '../hooks'
-import { HookNames } from '../hooks'
+import { DISCARDED, HookNames } from '../hooks'
 import type { LifeCycle } from './lifeCycle'
 import { LifeCycleEventType } from './lifeCycle'
 import type { ViewHistory } from './contexts/viewHistory'
@@ -139,41 +139,45 @@ export function startRumAssembly(
         })
       }
 
-      if (session && viewHistoryEntry && urlContext) {
-        const rumContext: Partial<CommonProperties> = {
-          _dd: {
-            format_version: 2,
-            drift: currentDrift(),
-            configuration: {
-              session_sample_rate: round(configuration.sessionSampleRate, 3),
-              session_replay_sample_rate: round(configuration.sessionReplaySampleRate, 3),
-            },
-            browser_sdk_version: canUseEventBridge() ? __BUILD_ENV__SDK_VERSION__ : undefined,
+      const rumContext: Partial<CommonProperties> = {
+        _dd: {
+          format_version: 2,
+          drift: currentDrift(),
+          configuration: {
+            session_sample_rate: round(configuration.sessionSampleRate, 3),
+            session_replay_sample_rate: round(configuration.sessionReplaySampleRate, 3),
           },
-          application: {
-            id: configuration.applicationId,
-          },
-          date: timeStampNow(),
-          source: 'browser',
-        }
+          browser_sdk_version: canUseEventBridge() ? __BUILD_ENV__SDK_VERSION__ : undefined,
+        },
+        application: {
+          id: configuration.applicationId,
+        },
+        date: timeStampNow(),
+        source: 'browser',
+      }
 
-        const serverRumEvent = combine(
-          rumContext,
-          hooks.triggerHook(HookNames.Assemble, {
-            eventType: rawRumEvent.type,
-            startTime,
-            duration,
-          }) as RumEvent & Context,
-          { context: customerContext },
-          rawRumEvent
-        ) as RumEvent & Context
+      const assembledEvent = hooks.triggerHook(HookNames.Assemble, {
+        eventType: rawRumEvent.type,
+        startTime,
+        duration,
+      })
 
-        if (shouldSend(serverRumEvent, configuration.beforeSend, domainContext, eventRateLimiters)) {
-          if (isEmptyObject(serverRumEvent.context!)) {
-            delete serverRumEvent.context
-          }
-          lifeCycle.notify(LifeCycleEventType.RUM_EVENT_COLLECTED, serverRumEvent)
+      if (assembledEvent === DISCARDED) {
+        return
+      }
+
+      const serverRumEvent = combine(
+        rumContext,
+        assembledEvent,
+        { context: customerContext },
+        rawRumEvent
+      ) as RumEvent & Context
+
+      if (shouldSend(serverRumEvent, configuration.beforeSend, domainContext, eventRateLimiters)) {
+        if (isEmptyObject(serverRumEvent.context!)) {
+          delete serverRumEvent.context
         }
+        lifeCycle.notify(LifeCycleEventType.RUM_EVENT_COLLECTED, serverRumEvent)
       }
     }
   )

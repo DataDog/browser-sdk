@@ -10,7 +10,7 @@ import { LifeCycle, LifeCycleEventType } from '../lifeCycle'
 import type { RumConfiguration } from '../configuration'
 import type { LocationChange } from '../../browser/locationChangeObservable'
 import type { Hooks } from '../../hooks'
-import { HookNames, createHooks } from '../../hooks'
+import { DISCARDED, HookNames, createHooks } from '../../hooks'
 import type { ViewHistoryEntry } from '../contexts/viewHistory'
 import { startViewCollection } from './viewCollection'
 import type { ViewEvent } from './trackViews'
@@ -271,6 +271,17 @@ describe('viewCollection', () => {
           },
         })
       )
+    })
+
+    it('should discard the event if no view', () => {
+      const viewHistoryEntry = undefined
+      setupViewCollection({ trackViewsManually: true }, viewHistoryEntry)
+      const event = hooks.triggerHook(HookNames.Assemble, {
+        eventType: 'view',
+        startTime: 0 as RelativeTime,
+      })
+
+      expect(event).toBe(DISCARDED)
     })
   })
 })

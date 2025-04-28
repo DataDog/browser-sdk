@@ -1,5 +1,5 @@
 import type { Hooks, PartialRumEvent } from '../../hooks'
-import { HookNames } from '../../hooks'
+import { DISCARDED, HookNames } from '../../hooks'
 import { SessionReplayState, SessionType } from '../rumSessionManager'
 import type { RumSessionManager } from '../rumSessionManager'
 import { RumEventType } from '../../rawRumEvent.types'
@@ -12,12 +12,12 @@ export function startSessionContext(
   recorderApi: RecorderApi,
   viewHistory: ViewHistory
 ) {
-  hooks.register(HookNames.Assemble, ({ eventType, startTime }): PartialRumEvent | undefined => {
+  hooks.register(HookNames.Assemble, ({ eventType, startTime }): PartialRumEvent | DISCARDED => {
     const session = sessionManager.findTrackedSession(startTime)
     const view = viewHistory.findView(startTime)
 
     if (!session || !view) {
-      return
+      return DISCARDED
     }
 
     let hasReplay

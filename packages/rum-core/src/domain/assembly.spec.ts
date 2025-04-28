@@ -22,6 +22,7 @@ import type { RumConfiguration } from './configuration'
 import type { ViewHistory } from './contexts/viewHistory'
 import type { RumSessionManager } from './rumSessionManager'
 import { startGlobalContext } from './contexts/globalContext'
+import { startSessionContext } from './contexts/sessionContext'
 
 describe('rum assembly', () => {
   describe('beforeSend', () => {
@@ -679,14 +680,15 @@ function setupAssemblyTestWithDefaults({
     serverRumEvents.push(serverRumEvent)
   })
   const recorderApi = noopRecorderApi
-
+  const viewHistory = { ...mockViewHistory(), findView: () => findView() }
   startGlobalContext(hooks, mockRumConfiguration())
+  startSessionContext(hooks, rumSessionManager, recorderApi, viewHistory)
   startRumAssembly(
     mockRumConfiguration(partialConfiguration),
     lifeCycle,
     hooks,
     rumSessionManager,
-    { ...mockViewHistory(), findView: () => findView() },
+    viewHistory,
     mockUrlContexts(),
     reportErrorSpy
   )
