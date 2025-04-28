@@ -69,6 +69,30 @@ test.describe('tracing', () => {
       checkTraceAssociatedToRumEvent(intakeRegistry)
     })
 
+  createTest('propagate trace baggage')
+    .withRum({
+      service: 'service',
+      allowedTracingUrls: ['LOCATION_ORIGIN'],
+      propagateTraceBaggage: true,
+      enableExperimentalFeatures: ['user_account_trace_header'],
+    })
+    .run(async ({ intakeRegistry, flushEvents, page }) => {
+      await page.evaluate(() => {
+        window.DD_RUM!.setUser({ id: 'p1745' })
+        window.DD_RUM!.setAccount({ id: 'c9wpq8xrvd9t' })
+      })
+      const rawHeaders = await page.evaluate(() =>
+        window
+          .fetch('/headers')
+          .then((response) => response.text())
+          .catch(() => new Error('Fetch request failed!'))
+      )
+      const headers = parseHeaders(rawHeaders)
+      checkRequestHeaders(headers, { withBaggage: true })
+      await flushEvents()
+      checkTraceAssociatedToRumEvent(intakeRegistry)
+    })
+
   interface ParsedHeaders {
     [key: string]: string
   }
@@ -84,10 +108,18 @@ test.describe('tracing', () => {
   }
 
   // By default, we send both Datadog and W3C tracecontext headers
-  function checkRequestHeaders(headers: ParsedHeaders) {
+  function checkRequestHeaders(
+    headers: ParsedHeaders,
+    { withBaggage }: { withBaggage: boolean } = { withBaggage: false }
+  ) {
     expect(headers['x-datadog-trace-id']).toMatch(/\d+/)
     expect(headers['x-datadog-origin']).toBe('rum')
     expect(headers['traceparent']).toMatch(/^[0-9a-f]{2}-[0-9a-f]{32}-[0-9a-f]{16}-01$/)
+    if (withBaggage) {
+      expect(headers['baggage']).toMatch(/^session.id=.*,usr.id=.*,account.id=.*$/)
+    } else {
+      expect(headers['baggage']).not.toBeDefined()
+    }
   }
 
   function checkTraceAssociatedToRumEvent(intakeRegistry: IntakeRegistry) {
