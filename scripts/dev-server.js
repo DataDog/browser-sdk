@@ -13,15 +13,13 @@ const webpackBase = require('../webpack.base')
 const { printLog, runMain } = require('./lib/executionUtils')
 
 const sandboxPath = path.join(__dirname, '../sandbox')
-
-// Development server configuration
-const DEFAULT_DEVELOPMENT_PORT = 8080
+const port = 8080
 
 runMain(() => {
   const app = express()
   app.use(createStaticSandboxApp())
   app.use('/react-app', createReactApp())
-  app.listen(DEFAULT_DEVELOPMENT_PORT, () => printLog(`Server listening on port ${DEFAULT_DEVELOPMENT_PORT}.`))
+  app.listen(port, () => printLog(`Server listening on port ${port}.`))
 })
 
 function createStaticSandboxApp() {
@@ -29,12 +27,7 @@ function createStaticSandboxApp() {
   app.use(cors())
   app.use(express.static(sandboxPath))
   for (const config of [rumConfig, logsConfig, rumSlimConfig, workerConfig]) {
-    app.use(
-      middleware(
-        // Set publicPath for development mode. Fixes issue when using the developer extension with NPM package override.
-        webpack(config(null, { mode: 'development', publicPath: `http://localhost:${DEFAULT_DEVELOPMENT_PORT}/` }))
-      )
-    )
+    app.use(middleware(webpack(config(null, { mode: 'development' }))))
   }
 
   // Redirect suffixed files
@@ -68,7 +61,6 @@ function createReactApp() {
           entry: `${sandboxPath}/react-app/main.tsx`,
           plugins: [new HtmlWebpackPlugin({ publicPath: '/react-app/' })],
           mode: 'development',
-          publicPath: `http://localhost:${DEFAULT_DEVELOPMENT_PORT}/`,
         })
       )
     )
