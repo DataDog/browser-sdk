@@ -281,13 +281,13 @@ describe('tracer', () => {
         return xhr.headers.baggage
       }
 
-      it('should add usr.id, account.id and session.id to baggage header when feature is enabled and propagateTraceBaggage is true', () => {
+      it('should add user.id, account.id and session.id to baggage header when feature is enabled and propagateTraceBaggage is true', () => {
         const baggage = traceRequestAndGetBaggageHeader({
           initConfiguration: {
             propagateTraceBaggage: true,
           },
         })
-        expect(baggage).toEqual('session.id=session-id,usr.id=1234,account.id=5678')
+        expect(baggage).toEqual('session.id=session-id,user.id=1234,account.id=5678')
       })
 
       it('should not add baggage header when propagateTraceBaggage is false', () => {
@@ -306,7 +306,7 @@ describe('tracer', () => {
           },
           userId: '1234, 😀',
         })
-        expect(baggage).toBe('session.id=session-id,usr.id=1234%2C%20%F0%9F%98%80,account.id=5678')
+        expect(baggage).toBe('session.id=session-id,user.id=1234%2C%20%F0%9F%98%80,account.id=5678')
       })
 
       it('skips non-string context values', () => {

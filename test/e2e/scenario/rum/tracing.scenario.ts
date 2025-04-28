@@ -116,7 +116,7 @@ test.describe('tracing', () => {
     expect(headers['x-datadog-origin']).toBe('rum')
     expect(headers['traceparent']).toMatch(/^[0-9a-f]{2}-[0-9a-f]{32}-[0-9a-f]{16}-01$/)
     if (withBaggage) {
-      expect(headers['baggage']).toMatch(/^session.id=.*,usr.id=.*,account.id=.*$/)
+      expect(headers['baggage']).toMatch(/^session.id=.*,user.id=.*,account.id=.*$/)
     } else {
       expect(headers['baggage']).not.toBeDefined()
     }
