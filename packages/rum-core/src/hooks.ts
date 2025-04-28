@@ -6,6 +6,9 @@ export const enum HookNames {
   Assemble,
 }
 
+export const DISCARDED = 'DISCARDED'
+export type DISCARDED = typeof DISCARDED
+
 type RecursivePartialExcept<T, K extends keyof T> = {
   [P in keyof T]?: T[P] extends object ? RecursivePartialExcept<T[P], never> : T[P]
 } & {
@@ -28,7 +31,7 @@ export type HookCallbackMap = {
     eventType: RumEvent['type']
     startTime: RelativeTime
     duration?: Duration | undefined
-  }) => PartialRumEvent | undefined
+  }) => PartialRumEvent | undefined | DISCARDED
 }
 
 export type Hooks = ReturnType<typeof createHooks>
@@ -53,8 +56,16 @@ export function createHooks() {
       param: Parameters<HookCallbackMap[K]>[0]
     ): ReturnType<HookCallbackMap[K]> {
       const hookCallbacks = callbacks[hookName] || []
-      const results = hookCallbacks.map((callback) => callback(param))
-      return combine(...(results as [object, object])) as ReturnType<HookCallbackMap[K]>
+      const results: Array<ReturnType<HookCallbackMap[K]>> = []
+
+      for (const callback of hookCallbacks) {
+        const result = callback(param) as ReturnType<HookCallbackMap[K]>
+        if (result === DISCARDED) {
+          return result
+        }
+        results.push(result)
+      }
+      return combine(...(results as unknown as [object, object])) as ReturnType<HookCallbackMap[K]>
     },
   }
 }

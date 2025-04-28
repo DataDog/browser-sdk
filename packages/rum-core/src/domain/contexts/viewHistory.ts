@@ -13,6 +13,7 @@ export interface ViewHistoryEntry {
   id: string
   name?: string
   startClocks: ClocksState
+  sessionIsActive?: boolean
 }
 
 export interface ViewHistory {
@@ -33,12 +34,16 @@ export function startViewHistory(lifeCycle: LifeCycle): ViewHistory {
 
   lifeCycle.subscribe(LifeCycleEventType.BEFORE_VIEW_UPDATED, (viewUpdate: BeforeViewUpdateEvent) => {
     const currentView = viewValueHistory.find(viewUpdate.startClocks.relative)
-    if (currentView && viewUpdate.name) {
+    if (!currentView) {
+      return
+    }
+    if (viewUpdate.name) {
       currentView.name = viewUpdate.name
     }
-    if (currentView && viewUpdate.context) {
+    if (viewUpdate.context) {
       currentView.context = viewUpdate.context
     }
+    currentView.sessionIsActive = viewUpdate.sessionIsActive
   })
 
   lifeCycle.subscribe(LifeCycleEventType.SESSION_RENEWED, () => {

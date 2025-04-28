@@ -15,17 +15,12 @@ import type { RumEventDomainContext } from '../domainContext.types'
 import { RumEventType } from '../rawRumEvent.types'
 import type { CommonProperties, RumEvent } from '../rumEvent.types'
 import type { Hooks } from '../hooks'
-import { HookNames } from '../hooks'
-import type { RecorderApi } from '../boot/rumPublicApi'
+import { DISCARDED, HookNames } from '../hooks'
 import type { LifeCycle } from './lifeCycle'
 import { LifeCycleEventType } from './lifeCycle'
-import type { ViewHistory } from './contexts/viewHistory'
-import { SessionReplayState, SessionType } from './rumSessionManager'
-import type { RumSessionManager } from './rumSessionManager'
 import type { RumConfiguration } from './configuration'
 import type { ModifiableFieldPaths } from './limitModification'
 import { limitModification } from './limitModification'
-import type { UrlContexts } from './contexts/urlContexts'
 
 // replaced at build time
 declare const __BUILD_ENV__SDK_VERSION__: string
@@ -47,16 +42,10 @@ const ROOT_MODIFIABLE_FIELD_PATHS: ModifiableFieldPaths = {
 
 let modifiableFieldPathsByEvent: { [key in RumEventType]: ModifiableFieldPaths }
 
-type Mutable<T> = { -readonly [P in keyof T]: T[P] }
-
 export function startRumAssembly(
   configuration: RumConfiguration,
   lifeCycle: LifeCycle,
   hooks: Hooks,
-  sessionManager: RumSessionManager,
-  viewHistory: ViewHistory,
-  urlContexts: UrlContexts,
-  recorderApi: RecorderApi,
   reportError: (error: RawError) => void
 ) {
   modifiableFieldPathsByEvent = {
@@ -121,60 +110,45 @@ export function startRumAssembly(
   lifeCycle.subscribe(
     LifeCycleEventType.RAW_RUM_EVENT_COLLECTED,
     ({ startTime, duration, rawRumEvent, domainContext, customerContext }) => {
-      const viewHistoryEntry = viewHistory.findView(startTime)
-      const urlContext = urlContexts.findUrl(startTime)
-      const session = sessionManager.findTrackedSession(startTime)
-
-      if (session && viewHistoryEntry && urlContext) {
-        const rumContext: Partial<CommonProperties> = {
-          _dd: {
-            format_version: 2,
-            drift: currentDrift(),
-            configuration: {
-              session_sample_rate: round(configuration.sessionSampleRate, 3),
-              session_replay_sample_rate: round(configuration.sessionReplaySampleRate, 3),
-            },
-            browser_sdk_version: canUseEventBridge() ? __BUILD_ENV__SDK_VERSION__ : undefined,
+      const rumContext: Partial<CommonProperties> = {
+        _dd: {
+          format_version: 2,
+          drift: currentDrift(),
+          configuration: {
+            session_sample_rate: round(configuration.sessionSampleRate, 3),
+            session_replay_sample_rate: round(configuration.sessionReplaySampleRate, 3),
           },
-          application: {
-            id: configuration.applicationId,
-          },
-          date: timeStampNow(),
-          source: 'browser',
-          session: {
-            id: session.id,
-            type: SessionType.USER,
-          },
-        }
+          browser_sdk_version: canUseEventBridge() ? __BUILD_ENV__SDK_VERSION__ : undefined,
+        },
+        application: {
+          id: configuration.applicationId,
+        },
+        date: timeStampNow(),
+        source: 'browser',
+      }
 
-        const serverRumEvent = combine(
-          rumContext,
-          hooks.triggerHook(HookNames.Assemble, {
-            eventType: rawRumEvent.type,
-            startTime,
-            duration,
-          }) as RumEvent & Context,
-          { context: customerContext },
-          rawRumEvent
-        ) as RumEvent & Context
+      const assembledEvent = hooks.triggerHook(HookNames.Assemble, {
+        eventType: rawRumEvent.type,
+        startTime,
+        duration,
+      })
 
-        if (!('has_replay' in serverRumEvent.session)) {
-          ;(serverRumEvent.session as Mutable<RumEvent['session']>).has_replay = recorderApi.isRecording()
-            ? true
-            : undefined
-        }
+      if (assembledEvent === DISCARDED) {
+        return
+      }
 
-        if (serverRumEvent.type === 'view') {
-          ;(serverRumEvent.session as Mutable<RumEvent['session']>).sampled_for_replay =
-            session.sessionReplay === SessionReplayState.SAMPLED
-        }
+      const serverRumEvent = combine(
+        rumContext,
+        assembledEvent,
+        { context: customerContext },
+        rawRumEvent
+      ) as RumEvent & Context
 
-        if (shouldSend(serverRumEvent, configuration.beforeSend, domainContext, eventRateLimiters)) {
-          if (isEmptyObject(serverRumEvent.context!)) {
-            delete serverRumEvent.context
-          }
-          lifeCycle.notify(LifeCycleEventType.RUM_EVENT_COLLECTED, serverRumEvent)
+      if (shouldSend(serverRumEvent, configuration.beforeSend, domainContext, eventRateLimiters)) {
+        if (isEmptyObject(serverRumEvent.context!)) {
+          delete serverRumEvent.context
         }
+        lifeCycle.notify(LifeCycleEventType.RUM_EVENT_COLLECTED, serverRumEvent)
       }
     }
   )

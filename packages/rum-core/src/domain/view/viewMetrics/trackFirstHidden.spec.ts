@@ -37,6 +37,7 @@ describe('trackFirstHidden', () => {
 
   describe('the page is initially visible', () => {
     it('should return Infinity if the page was not hidden yet', () => {
+      setPageVisibility('visible')
       firstHidden = trackFirstHidden(configuration)
       expect(firstHidden.timeStamp).toBe(Infinity as RelativeTime)
     })
