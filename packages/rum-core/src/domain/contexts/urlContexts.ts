@@ -1,4 +1,4 @@
-import type { RelativeTime, Observable, Context } from '@datadog/browser-core'
+import type { RelativeTime, Observable } from '@datadog/browser-core'
 import { SESSION_TIME_OUT_DELAY, relativeNow, createValueHistory } from '@datadog/browser-core'
 import type { LocationChange } from '../../browser/locationChangeObservable'
 import type { LifeCycle } from '../lifeCycle'
@@ -21,8 +21,6 @@ export interface UrlContext {
 
 export interface UrlContexts {
   findUrl: (startTime?: RelativeTime) => UrlContext | undefined
-  getAllEntries: () => Context[]
-  getDeletedEntries: () => RelativeTime[]
   stop: () => void
 }
 
@@ -92,8 +90,6 @@ export function startUrlContexts(
 
   return {
     findUrl: (startTime?: RelativeTime) => urlContextHistory.find(startTime),
-    getAllEntries: () => urlContextHistory.getAllEntries(),
-    getDeletedEntries: () => urlContextHistory.getDeletedEntries(),
     stop: () => {
       locationChangeSubscription.unsubscribe()
       urlContextHistory.stop()

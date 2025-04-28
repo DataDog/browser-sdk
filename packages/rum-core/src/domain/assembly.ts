@@ -10,7 +10,6 @@ import {
   round,
   isExperimentalFeatureEnabled,
   ExperimentalFeature,
-  addTelemetryDebug,
 } from '@datadog/browser-core'
 import type { RumEventDomainContext } from '../domainContext.types'
 import { RumEventType } from '../rawRumEvent.types'
@@ -19,12 +18,9 @@ import type { Hooks } from '../hooks'
 import { DISCARDED, HookNames } from '../hooks'
 import type { LifeCycle } from './lifeCycle'
 import { LifeCycleEventType } from './lifeCycle'
-import type { ViewHistory } from './contexts/viewHistory'
-import type { RumSessionManager } from './rumSessionManager'
 import type { RumConfiguration } from './configuration'
 import type { ModifiableFieldPaths } from './limitModification'
 import { limitModification } from './limitModification'
-import type { UrlContexts } from './contexts/urlContexts'
 
 // replaced at build time
 declare const __BUILD_ENV__SDK_VERSION__: string
@@ -50,9 +46,6 @@ export function startRumAssembly(
   configuration: RumConfiguration,
   lifeCycle: LifeCycle,
   hooks: Hooks,
-  sessionManager: RumSessionManager,
-  viewHistory: ViewHistory,
-  urlContexts: UrlContexts,
   reportError: (error: RawError) => void
 ) {
   modifiableFieldPathsByEvent = {
@@ -117,28 +110,6 @@ export function startRumAssembly(
   lifeCycle.subscribe(
     LifeCycleEventType.RAW_RUM_EVENT_COLLECTED,
     ({ startTime, duration, rawRumEvent, domainContext, customerContext }) => {
-      const viewHistoryEntry = viewHistory.findView(startTime)
-      const urlContext = urlContexts.findUrl(startTime)
-      const session = sessionManager.findTrackedSession(startTime)
-
-      if (
-        session &&
-        viewHistoryEntry &&
-        !urlContext &&
-        isExperimentalFeatureEnabled(ExperimentalFeature.MISSING_URL_CONTEXT_TELEMETRY)
-      ) {
-        addTelemetryDebug('Missing URL entry', {
-          debug: {
-            eventType: rawRumEvent.type,
-            startTime,
-            urlEntries: urlContexts.getAllEntries(),
-            urlDeletedEntries: urlContexts.getDeletedEntries(),
-            viewEntries: viewHistory.getAllEntries(),
-            viewDeletedEntries: viewHistory.getDeletedEntries(),
-          },
-        })
-      }
-
       const rumContext: Partial<CommonProperties> = {
         _dd: {
           format_version: 2,

@@ -4,17 +4,19 @@
 
 ## Changes
 
-<!-- What does this change exactly? Who will be affected? Include relevant screenshots, videos, links. -->
+<!-- What does this change exactly? Who will be affected? Include relevant screenshots, videos, links. Please highlight all the changes that you are not sure about (ex: AI agent generated) -->
 
-## Testing
+## Test instructions
 
-<!-- How can the reviewer confirm these changes do what you say they do? Are there automated tests? -->
+<!-- How can the reviewer test this change? Include relevant steps to reproduce the issue, if any. -->
 
-- [ ] Local
-- [ ] Staging
-- [ ] Unit
-- [ ] End to end
+## Checklist
 
----
+<!-- By submitting this test, you confirm the following: -->
 
-I have gone over the [contributing](https://github.com/DataDog/browser-sdk/blob/main/CONTRIBUTING.md) documentation.
+- [ ] Tested locally
+- [ ] Tested on staging
+- [ ] Added unit tests for this change.
+- [ ] Added e2e/integration tests for this change.
+
+<!-- Also, please read the contribution guidelines: https://github.com/DataDog/browser-sdk/blob/main/CONTRIBUTING.md -->
