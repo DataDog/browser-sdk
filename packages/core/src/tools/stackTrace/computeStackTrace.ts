@@ -125,7 +125,7 @@ function parseWinLine(line: string): StackFrame | undefined {
 }
 
 const GECKO_LINE_RE =
-  /^\s*(.*?)(?:\((.*?)\))?(?:^|@)((?:file|https?|blob|chrome|webpack|resource|capacitor|\[native).*?|[^@]*bundle)(?::(\d+))?(?::(\d+))?\s*$/i
+  /^\s*(.*?)(?:\((.*?)\))?(?:^|@)((?:file|https?|blob|chrome|webpack|resource|capacitor|\[native).*?|[^@]*bundle|\[wasm code\])(?::(\d+))?(?::(\d+))?\s*$/i
 const GECKO_EVAL_RE = /(\S+) line (\d+)(?: > eval line \d+)* > eval/i
 
 function parseGeckoLine(line: string): StackFrame | undefined {
@@ -161,13 +161,20 @@ function tryToGetString(candidate: unknown, property: string) {
   return typeof value === 'string' ? value : undefined
 }
 
-export function computeStackTraceFromOnErrorMessage(messageObj: unknown, url?: string, line?: number, column?: number) {
-  const stack = [{ url, column, line }]
+export function computeStackTraceFromOnErrorMessage(
+  messageObj: unknown,
+  url?: string,
+  line?: number,
+  column?: number
+): StackTrace | undefined {
+  if (url === undefined) {
+    return
+  }
   const { name, message } = tryToParseMessage(messageObj)
   return {
     name,
     message,
-    stack,
+    stack: [{ url, column, line }],
   }
 }
 

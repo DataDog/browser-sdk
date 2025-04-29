@@ -1,3 +1,4 @@
+import type { ContextManager } from '@datadog/browser-core'
 import {
   objectEntries,
   shallowClone,
@@ -5,6 +6,8 @@ import {
   isMatchOption,
   matchList,
   TraceContextInjection,
+  isExperimentalFeatureEnabled,
+  ExperimentalFeature,
 } from '@datadog/browser-core'
 import type { RumConfiguration } from '../configuration'
 import type {
@@ -63,41 +66,60 @@ export function clearTracingIfNeeded(context: RumFetchResolveContext | RumXhrCom
   }
 }
 
-export function startTracer(configuration: RumConfiguration, sessionManager: RumSessionManager): Tracer {
+export function startTracer(
+  configuration: RumConfiguration,
+  sessionManager: RumSessionManager,
+  userContext: ContextManager,
+  accountContext: ContextManager
+): Tracer {
   return {
     clearTracingIfNeeded,
     traceFetch: (context) =>
-      injectHeadersIfTracingAllowed(configuration, context, sessionManager, (tracingHeaders: TracingHeaders) => {
-        if (context.input instanceof Request && !context.init?.headers) {
-          context.input = new Request(context.input)
-          Object.keys(tracingHeaders).forEach((key) => {
-            ;(context.input as Request).headers.append(key, tracingHeaders[key])
-          })
-        } else {
-          context.init = shallowClone(context.init)
-          const headers: Array<[string, string]> = []
-          if (context.init.headers instanceof Headers) {
-            context.init.headers.forEach((value, key) => {
-              headers.push([key, value])
+      injectHeadersIfTracingAllowed(
+        configuration,
+        context,
+        sessionManager,
+        userContext,
+        accountContext,
+        (tracingHeaders: TracingHeaders) => {
+          if (context.input instanceof Request && !context.init?.headers) {
+            context.input = new Request(context.input)
+            Object.keys(tracingHeaders).forEach((key) => {
+              ;(context.input as Request).headers.append(key, tracingHeaders[key])
             })
-          } else if (Array.isArray(context.init.headers)) {
-            context.init.headers.forEach((header) => {
-              headers.push(header)
-            })
-          } else if (context.init.headers) {
-            Object.keys(context.init.headers).forEach((key) => {
-              headers.push([key, (context.init!.headers as Record<string, string>)[key]])
-            })
+          } else {
+            context.init = shallowClone(context.init)
+            const headers: Array<[string, string]> = []
+            if (context.init.headers instanceof Headers) {
+              context.init.headers.forEach((value, key) => {
+                headers.push([key, value])
+              })
+            } else if (Array.isArray(context.init.headers)) {
+              context.init.headers.forEach((header) => {
+                headers.push(header)
+              })
+            } else if (context.init.headers) {
+              Object.keys(context.init.headers).forEach((key) => {
+                headers.push([key, (context.init!.headers as Record<string, string>)[key]])
+              })
+            }
+            context.init.headers = headers.concat(objectEntries(tracingHeaders))
           }
-          context.init.headers = headers.concat(objectEntries(tracingHeaders))
         }
-      }),
+      ),
     traceXhr: (context, xhr) =>
-      injectHeadersIfTracingAllowed(configuration, context, sessionManager, (tracingHeaders: TracingHeaders) => {
-        Object.keys(tracingHeaders).forEach((name) => {
-          xhr.setRequestHeader(name, tracingHeaders[name])
-        })
-      }),
+      injectHeadersIfTracingAllowed(
+        configuration,
+        context,
+        sessionManager,
+        userContext,
+        accountContext,
+        (tracingHeaders: TracingHeaders) => {
+          Object.keys(tracingHeaders).forEach((name) => {
+            xhr.setRequestHeader(name, tracingHeaders[name])
+          })
+        }
+      ),
   }
 }
 
@@ -105,6 +127,8 @@ function injectHeadersIfTracingAllowed(
   configuration: RumConfiguration,
   context: Partial<RumFetchStartContext | RumXhrStartContext>,
   sessionManager: RumSessionManager,
+  userContext: ContextManager,
+  accountContext: ContextManager,
   inject: (tracingHeaders: TracingHeaders) => void
 ) {
   const session = sessionManager.findTrackedSession()
@@ -130,7 +154,18 @@ function injectHeadersIfTracingAllowed(
   context.traceId = createTraceIdentifier()
   context.spanId = createSpanIdentifier()
 
-  inject(makeTracingHeaders(context.traceId, context.spanId, context.traceSampled, tracingOption.propagatorTypes))
+  inject(
+    makeTracingHeaders(
+      context.traceId,
+      context.spanId,
+      context.traceSampled,
+      session.id,
+      tracingOption.propagatorTypes,
+      userContext,
+      accountContext,
+      configuration
+    )
+  )
 }
 
 /**
@@ -141,7 +176,11 @@ function makeTracingHeaders(
   traceId: TraceIdentifier,
   spanId: SpanIdentifier,
   traceSampled: boolean,
-  propagatorTypes: PropagatorType[]
+  sessionId: string,
+  propagatorTypes: PropagatorType[],
+  userContext: ContextManager,
+  accountContext: ContextManager,
+  configuration: RumConfiguration
 ): TracingHeaders {
   const tracingHeaders: TracingHeaders = {}
 
@@ -183,5 +222,32 @@ function makeTracingHeaders(
       }
     }
   })
+
+  if (
+    isExperimentalFeatureEnabled(ExperimentalFeature.USER_ACCOUNT_TRACE_HEADER) &&
+    configuration.propagateTraceBaggage
+  ) {
+    const baggageItems: Record<string, string> = {
+      'session.id': sessionId,
+    }
+
+    const userId = userContext.getContext().id
+    if (typeof userId === 'string') {
+      baggageItems['user.id'] = userId
+    }
+
+    const accountId = accountContext.getContext().id
+    if (typeof accountId === 'string') {
+      baggageItems['account.id'] = accountId
+    }
+
+    const baggageHeader = Object.entries(baggageItems)
+      .map(([key, value]) => `${key}=${encodeURIComponent(value)}`)
+      .join(',')
+    if (baggageHeader) {
+      tracingHeaders['baggage'] = baggageHeader
+    }
+  }
+
   return tracingHeaders
 }

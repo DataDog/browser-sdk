@@ -10,7 +10,7 @@ import type { LocationChange } from '../../browser/locationChangeObservable'
 import type { RumConfiguration } from '../configuration'
 import type { ViewHistory } from '../contexts/viewHistory'
 import type { Hooks, PartialRumEvent } from '../../hooks'
-import { HookNames } from '../../hooks'
+import { DISCARDED, HookNames } from '../../hooks'
 import { trackViews } from './trackViews'
 import type { ViewEvent, ViewOptions } from './trackViews'
 import type { CommonViewMetrics } from './viewMetrics/trackCommonViewMetrics'
@@ -32,17 +32,21 @@ export function startViewCollection(
     lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, processViewUpdate(view, configuration, recorderApi))
   )
 
-  hooks.register(HookNames.Assemble, ({ startTime, eventType }): PartialRumEvent | undefined => {
-    const { service, version, id, name, context } = viewHistory.findView(startTime)!
+  hooks.register(HookNames.Assemble, ({ startTime, eventType }): PartialRumEvent | DISCARDED => {
+    const view = viewHistory.findView(startTime)
+
+    if (!view) {
+      return DISCARDED
+    }
 
     return {
       type: eventType,
-      service,
-      version,
-      context,
+      service: view.service,
+      version: view.version,
+      context: view.context,
       view: {
-        id,
-        name,
+        id: view.id,
+        name: view.name,
       },
     }
   })
@@ -65,10 +69,16 @@ function processViewUpdate(
   recorderApi: RecorderApi
 ): RawRumEventCollectedData<RawRumViewEvent> {
   const replayStats = recorderApi.getReplayStats(view.id)
+  const clsDevicePixelRatio = view.commonViewMetrics?.cumulativeLayoutShift?.devicePixelRatio
   const viewEvent: RawRumViewEvent = {
     _dd: {
       document_version: view.documentVersion,
       replay_stats: replayStats,
+      cls: clsDevicePixelRatio
+        ? {
+            device_pixel_ratio: clsDevicePixelRatio,
+          }
+        : undefined,
       configuration: {
         start_session_replay_recording_manually: configuration.startSessionReplayRecordingManually,
       },
@@ -125,14 +135,11 @@ function processViewUpdate(
           },
         }
       : undefined,
-    session: {
-      has_replay: replayStats ? true : undefined,
-      is_active: view.sessionIsActive ? undefined : false,
-    },
     privacy: {
       replay_level: configuration.defaultPrivacyLevel,
     },
   }
+
   if (!isEmptyObject(view.customTimings)) {
     viewEvent.view.custom_timings = mapValues(
       view.customTimings,

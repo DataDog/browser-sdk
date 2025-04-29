@@ -6,7 +6,7 @@ import type { Page } from '@playwright/test'
 import { test, expect } from '@playwright/test'
 import { wait } from '@datadog/browser-core/test/wait'
 import type { IntakeRegistry } from '../../lib/framework'
-import { createTest, bundleSetup, html } from '../../lib/framework'
+import { createTest, html } from '../../lib/framework'
 
 const NAVBAR_HEIGHT_CHANGE_UPPER_BOUND = 30
 const VIEWPORT_META_TAGS = `
@@ -17,18 +17,21 @@ const VIEWPORT_META_TAGS = `
 >
 `
 
-test.describe('recorder', () => {
-  test.beforeEach(({ browserName }, testInfo) => {
-    testInfo.skip(browserName !== 'chromium', 'only chromium supports touch gestures emulation for now (via CDP)')
-  })
+function hasNoTouchGestureEmulationSupportViaCDP(browserName: string) {
+  return [
+    browserName !== 'chromium' && browserName !== 'msedge',
+    'only chromium based browser supports touch gestures emulation for now (via CDP)',
+  ] as const
+}
 
+test.describe('recorder', () => {
   test.describe('layout viewport properties', () => {
     createTest('getWindowWidth/Height should not be affected by pinch zoom')
       .withRum()
-      .withSetup(bundleSetup)
       .withBody(html`${VIEWPORT_META_TAGS}`)
       .run(async ({ intakeRegistry, page, flushEvents, browserName }) => {
         test.fixme(browserName === 'msedge', 'In Edge, the ViewportResize record data is off by almost 20px')
+        test.skip(...hasNoTouchGestureEmulationSupportViaCDP(browserName))
 
         await buildScrollablePage(page)
 
@@ -55,9 +58,10 @@ test.describe('recorder', () => {
      */
     createTest('getScrollX/Y should not be affected by pinch scroll')
       .withRum()
-      .withSetup(bundleSetup)
       .withBody(html`${VIEWPORT_META_TAGS}`)
-      .run(async ({ intakeRegistry, flushEvents, page }) => {
+      .run(async ({ intakeRegistry, flushEvents, page, browserName }) => {
+        test.skip(...hasNoTouchGestureEmulationSupportViaCDP(browserName))
+
         const VISUAL_SCROLL_DOWN_PX = 60
         const LAYOUT_SCROLL_AMOUNT = 20
 
@@ -97,9 +101,10 @@ test.describe('recorder', () => {
   test.describe('visual viewport properties', () => {
     createTest('pinch zoom "scroll" event reports visual viewport position')
       .withRum()
-      .withSetup(bundleSetup)
       .withBody(html`${VIEWPORT_META_TAGS}`)
-      .run(async ({ intakeRegistry, page, flushEvents }) => {
+      .run(async ({ intakeRegistry, page, flushEvents, browserName }) => {
+        test.skip(...hasNoTouchGestureEmulationSupportViaCDP(browserName))
+
         const VISUAL_SCROLL_DOWN_PX = 100
         await buildScrollablePage(page)
         await performSignificantZoom(page)
@@ -112,9 +117,10 @@ test.describe('recorder', () => {
 
     createTest('pinch zoom "resize" event reports visual viewport scale')
       .withRum()
-      .withSetup(bundleSetup)
       .withBody(html`${VIEWPORT_META_TAGS}`)
-      .run(async ({ intakeRegistry, page, flushEvents }) => {
+      .run(async ({ intakeRegistry, page, flushEvents, browserName }) => {
+        test.skip(...hasNoTouchGestureEmulationSupportViaCDP(browserName))
+
         await performSignificantZoom(page)
         const nextVisualViewportDimension = await getVisualViewport(page)
         await flushEvents()

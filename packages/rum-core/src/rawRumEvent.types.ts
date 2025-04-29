@@ -122,10 +122,6 @@ export interface RawRumViewEvent {
     frustration: Count
     performance?: ViewPerformanceData
   }
-  session: {
-    has_replay: true | undefined
-    is_active: false | undefined
-  }
   display?: ViewDisplay
   privacy?: {
     replay_level: DefaultPrivacyLevel
@@ -134,6 +130,9 @@ export interface RawRumViewEvent {
     document_version: number
     replay_stats?: ReplayStats
     page_states?: PageStateServerEntry[]
+    cls?: {
+      device_pixel_ratio: number
+    }
     configuration: {
       start_session_replay_recording_manually: boolean
     }

@@ -1,5 +1,5 @@
 import type { RelativeTime } from '@datadog/browser-core'
-import { HookNames, createHooks } from './hooks'
+import { DISCARDED, HookNames, createHooks } from './hooks'
 
 describe('startHooks', () => {
   let hooks: ReturnType<typeof createHooks>
@@ -47,6 +47,23 @@ describe('startHooks', () => {
       expect(result).toEqual({ type: 'action', service: 'foo' })
       expect(callback1).toHaveBeenCalled()
       expect(callback2).toHaveBeenCalled()
+    })
+
+    it('returns DISCARDED if one callbacks returns DISCARDED', () => {
+      const callback1 = jasmine.createSpy().and.returnValue({ type: 'action', service: 'foo' })
+      const callback2 = jasmine.createSpy().and.returnValue(DISCARDED)
+      const callback3 = jasmine.createSpy().and.returnValue({ type: 'action', version: 'bar' })
+
+      hooks.register(HookNames.Assemble, callback1)
+      hooks.register(HookNames.Assemble, callback2)
+      hooks.register(HookNames.Assemble, callback3)
+
+      const result = hooks.triggerHook(HookNames.Assemble, hookParams)
+
+      expect(result).toEqual(DISCARDED)
+      expect(callback1).toHaveBeenCalled()
+      expect(callback2).toHaveBeenCalled()
+      expect(callback3).not.toHaveBeenCalled()
     })
   })
 })

@@ -8,9 +8,9 @@ import { INTAKE_SITE_US1, INTAKE_SITE_FED_STAGING, PCI_INTAKE_HOST_US1 } from '.
 // replaced at build time
 declare const __BUILD_ENV__SDK_VERSION__: string
 
-export type TrackType = 'logs' | 'rum' | 'replay'
+export type TrackType = 'logs' | 'rum' | 'replay' | 'profile'
 export type ApiType =
-  | 'xhr'
+  | 'fetch-keepalive'
   | 'fetch'
   | 'beacon'
   // 'manual' reflects that the request have been sent manually, outside of the SDK (ex: via curl or
@@ -31,6 +31,7 @@ export function createEndpointBuilder(
       const parameters = buildEndpointParameters(initConfiguration, trackType, configurationTags, api, payload)
       return buildUrlWithParameters(parameters)
     },
+    tags: configurationTags,
     urlPrefix: buildUrlWithParameters(''),
     trackType,
   }

@@ -538,6 +538,8 @@ describe('serializeRumConfiguration', () => {
       remoteConfigurationId: '123',
       plugins: [{ name: 'foo', getConfigurationTelemetry: () => ({ bar: true }) }],
       trackFeatureFlagsForEvents: ['vital'],
+      profilingSampleRate: 0,
+      propagateTraceBaggage: true,
     }
 
     type MapRumInitConfigurationKey<Key extends string> = Key extends keyof InitConfiguration
@@ -546,7 +548,12 @@ describe('serializeRumConfiguration', () => {
         ? `use_${CamelToSnakeCase<Key>}`
         : Key extends 'trackLongTasks'
           ? 'track_long_task' // oops
-          : Key extends 'applicationId' | 'subdomain' | 'remoteConfigurationId'
+          : Key extends
+                | 'applicationId'
+                | 'subdomain'
+                | 'remoteConfigurationId'
+                | 'profilingSampleRate'
+                | 'propagateTraceBaggage'
             ? never
             : CamelToSnakeCase<Key>
     // By specifying the type here, we can ensure that serializeConfiguration is returning an

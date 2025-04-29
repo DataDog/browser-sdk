@@ -1,9 +1,8 @@
-import type { Context, ContextManager, CustomerDataTracker } from '@datadog/browser-core'
+import type { Context, ContextManager } from '@datadog/browser-core'
 import {
   clocksNow,
   computeRawError,
   ErrorHandling,
-  computeStackTrace,
   combine,
   createContextManager,
   ErrorSource,
@@ -11,7 +10,6 @@ import {
   sanitize,
   NonErrorPrefix,
   createHandlingStack,
-  isError,
 } from '@datadog/browser-core'
 
 import { isAuthorized, StatusType } from './logger/isAuthorized'
@@ -39,13 +37,12 @@ export class Logger {
 
   constructor(
     private handleLogStrategy: (logsMessage: LogsMessage, logger: Logger, handlingStack?: string) => void,
-    customerDataTracker: CustomerDataTracker,
     name?: string,
     private handlerType: HandlerType | HandlerType[] = HandlerType.http,
     private level: StatusType = StatusType.debug,
     loggerContext: object = {}
   ) {
-    this.contextManager = createContextManager('logger', { customerDataTracker })
+    this.contextManager = createContextManager('logger')
     this.contextManager.setContext(loggerContext as Context)
     if (name) {
       this.contextManager.setContextProperty('logger', { name })
@@ -65,7 +62,6 @@ export class Logger {
 
     if (error !== undefined && error !== null) {
       const rawError = computeRawError({
-        stackTrace: isError(error) ? computeStackTrace(error) : undefined,
         originalError: error,
         nonErrorPrefix: NonErrorPrefix.PROVIDED,
         source: ErrorSource.LOGGER,

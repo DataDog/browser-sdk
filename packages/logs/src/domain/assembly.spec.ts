@@ -1,12 +1,5 @@
 import type { Context, RelativeTime, TimeStamp } from '@datadog/browser-core'
-import {
-  Observable,
-  ErrorSource,
-  ONE_MINUTE,
-  getTimeStamp,
-  noop,
-  createCustomerDataTracker,
-} from '@datadog/browser-core'
+import { Observable, ErrorSource, ONE_MINUTE, getTimeStamp, noop } from '@datadog/browser-core'
 import type { Clock } from '@datadog/browser-core/test'
 import { mockClock } from '@datadog/browser-core/test'
 import type { LogsEvent } from '../logsEvent.types'
@@ -76,7 +69,7 @@ describe('startLogsAssembly', () => {
       beforeSend: (x: LogsEvent) => beforeSend(x),
     }
     beforeSend = noop
-    mainLogger = new Logger(() => noop, createCustomerDataTracker(noop))
+    mainLogger = new Logger(() => noop)
     startLogsAssembly(sessionManager, configuration, lifeCycle, () => COMMON_CONTEXT, noop)
     window.DD_RUM = {
       getInternalContext: noop,
@@ -466,7 +459,7 @@ describe('logs limitation', () => {
       message: 'Reached max number of customs by minute: 1',
     },
   ].forEach(({ status, message, messageContext }) => {
-    it(`stops sending ${status} logs when reaching the limit`, () => {
+    it(`stops sending ${status} logs when reaching the limit (message: "${message}")`, () => {
       lifeCycle.notify(LifeCycleEventType.RAW_LOG_COLLECTED, {
         rawLogsEvent: { ...DEFAULT_MESSAGE, message: 'foo', status },
         messageContext,
@@ -487,7 +480,7 @@ describe('logs limitation', () => {
       )
     })
 
-    it(`does not take discarded ${status} logs into account`, () => {
+    it(`does not take discarded ${status} logs into account (message: "${message}")`, () => {
       beforeSend = (event) => {
         if (event.message === 'discard me') {
           return false
@@ -515,7 +508,7 @@ describe('logs limitation', () => {
       expect(serverLogs[0].message).toBe('foo')
     })
 
-    it(`allows to send new ${status}s after a minute`, () => {
+    it(`allows to send new ${status}s after a minute (message: "${message}")`, () => {
       lifeCycle.notify(LifeCycleEventType.RAW_LOG_COLLECTED, {
         rawLogsEvent: { ...DEFAULT_MESSAGE, message: 'foo', status },
         messageContext,
@@ -541,7 +534,7 @@ describe('logs limitation', () => {
       )
     })
 
-    it('allows to send logs with a different status when reaching the limit', () => {
+    it(`allows to send logs with a different status when reaching the limit (message: "${message}")`, () => {
       const otherLogStatus = status === StatusType.error ? StatusType.info : StatusType.error
       lifeCycle.notify(LifeCycleEventType.RAW_LOG_COLLECTED, {
         rawLogsEvent: { ...DEFAULT_MESSAGE, message: 'foo', status },

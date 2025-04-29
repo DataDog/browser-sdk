@@ -1,12 +1,14 @@
 import type { RelativeTime } from '@datadog/browser-core'
 import { DOM_EVENT } from '@datadog/browser-core'
 import { createNewEvent, restorePageVisibility, setPageVisibility } from '@datadog/browser-core/test'
-import { mockRumConfiguration } from '../../../../test'
+import { mockRumConfiguration, mockGlobalPerformanceBuffer } from '../../../../test'
+import type { GlobalPerformanceBufferMock } from '../../../../test'
 import { trackFirstHidden } from './trackFirstHidden'
 
 describe('trackFirstHidden', () => {
   const configuration = mockRumConfiguration()
   let firstHidden: { timeStamp: RelativeTime; stop: () => void }
+  let performanceBufferMock: GlobalPerformanceBufferMock
 
   afterEach(() => {
     restorePageVisibility()
@@ -35,6 +37,7 @@ describe('trackFirstHidden', () => {
 
   describe('the page is initially visible', () => {
     it('should return Infinity if the page was not hidden yet', () => {
+      setPageVisibility('visible')
       firstHidden = trackFirstHidden(configuration)
       expect(firstHidden.timeStamp).toBe(Infinity as RelativeTime)
     })
@@ -79,6 +82,38 @@ describe('trackFirstHidden', () => {
       eventTarget.dispatchEvent(createNewEvent(DOM_EVENT.VISIBILITY_CHANGE, { timeStamp: 200 }))
 
       expect(firstHidden.timeStamp).toBe(100 as RelativeTime)
+    })
+  })
+
+  describe('using visibilityState entries', () => {
+    let originalSupportedEntryTypes: string[] | undefined
+    beforeEach(() => {
+      performanceBufferMock = mockGlobalPerformanceBuffer()
+      if (typeof PerformanceObserver !== 'undefined') {
+        originalSupportedEntryTypes = PerformanceObserver.supportedEntryTypes as string[]
+        Object.defineProperty(PerformanceObserver, 'supportedEntryTypes', {
+          get: () => [...(originalSupportedEntryTypes || []), 'visibility-state'],
+          configurable: true,
+        })
+      }
+    })
+    it('should set timestamp to earliest hidden event from performance entries', () => {
+      setPageVisibility('visible')
+
+      performanceBufferMock.addPerformanceEntry({
+        entryType: 'visibility-state',
+        name: 'hidden',
+        startTime: 23,
+      } as PerformanceEntry)
+
+      performanceBufferMock.addPerformanceEntry({
+        entryType: 'visibility-state',
+        name: 'hidden',
+        startTime: 23219031,
+      } as PerformanceEntry)
+
+      firstHidden = trackFirstHidden(configuration)
+      expect(firstHidden.timeStamp).toBe(23 as RelativeTime)
     })
   })
 

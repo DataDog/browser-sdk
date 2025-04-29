@@ -10,6 +10,7 @@ import {
 import { getSelectorFromElement } from '../../getSelectorFromElement'
 import type { RumConfiguration } from '../../configuration'
 import type { RumRect } from '../../../rumEvent.types'
+import { getClsAttributionImpactedArea } from './getClsAttributionImpactedArea'
 
 declare const WeakRef: WeakRefConstructor
 
@@ -19,6 +20,7 @@ export interface CumulativeLayoutShift {
   time?: Duration
   previousRect?: RumRect
   currentRect?: RumRect
+  devicePixelRatio?: number
 }
 
 interface LayoutShiftInstance {
@@ -26,6 +28,7 @@ interface LayoutShiftInstance {
   time: Duration
   previousRect: DOMRectReadOnly | undefined
   currentRect: DOMRectReadOnly | undefined
+  devicePixelRatio: number
 }
 
 /**
@@ -64,7 +67,7 @@ export function trackCumulativeLayoutShift(
     value: 0,
   })
 
-  const window = slidingSessionWindow()
+  const slidingWindow = slidingSessionWindow()
   const performanceSubscription = createPerformanceObservable(configuration, {
     type: RumPerformanceEntryType.LAYOUT_SHIFT,
     buffered: true,
@@ -74,15 +77,16 @@ export function trackCumulativeLayoutShift(
         continue
       }
 
-      const { cumulatedValue, isMaxValue } = window.update(entry)
+      const { cumulatedValue, isMaxValue } = slidingWindow.update(entry)
 
       if (isMaxValue) {
-        const attribution = getFirstElementAttribution(entry.sources)
+        const attribution = getTopImpactedElement(entry.sources)
         biggestShift = {
           target: attribution?.node ? new WeakRef(attribution.node) : undefined,
           time: elapsed(viewStart, entry.startTime),
           previousRect: attribution?.previousRect,
           currentRect: attribution?.currentRect,
+          devicePixelRatio: window.devicePixelRatio,
         }
       }
 
@@ -96,6 +100,7 @@ export function trackCumulativeLayoutShift(
           time: biggestShift?.time,
           previousRect: biggestShift?.previousRect ? asRumRect(biggestShift.previousRect) : undefined,
           currentRect: biggestShift?.currentRect ? asRumRect(biggestShift.currentRect) : undefined,
+          devicePixelRatio: biggestShift?.devicePixelRatio,
         })
       }
     }
@@ -108,12 +113,19 @@ export function trackCumulativeLayoutShift(
   }
 }
 
-function getFirstElementAttribution(
+function getTopImpactedElement(
   sources: RumLayoutShiftAttribution[]
 ): (RumLayoutShiftAttribution & { node: Element }) | undefined {
-  return sources.find(
-    (source): source is RumLayoutShiftAttribution & { node: Element } => !!source.node && isElementNode(source.node)
-  )
+  let topImpactedSource: (RumLayoutShiftAttribution & { node: Element }) | undefined
+  for (const source of sources) {
+    if (source.node && isElementNode(source.node)) {
+      const currentImpactedArea = getClsAttributionImpactedArea(source)
+      if (!topImpactedSource || getClsAttributionImpactedArea(topImpactedSource) < currentImpactedArea) {
+        topImpactedSource = source as RumLayoutShiftAttribution & { node: Element }
+      }
+    }
+  }
+  return topImpactedSource
 }
 
 function asRumRect({ x, y, width, height }: DOMRectReadOnly): RumRect {

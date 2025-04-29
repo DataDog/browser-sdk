@@ -4,37 +4,31 @@ import type {
   RawError,
   DeflateEncoderStreamId,
   Encoder,
-  CustomerDataTrackerManager,
   TrackingConsentState,
 } from '@datadog/browser-core'
 import {
   sendToExtension,
-  createPageExitObservable,
+  createPageMayExitObservable,
   TelemetryService,
   startTelemetry,
   canUseEventBridge,
   getEventBridge,
   addTelemetryDebug,
-  CustomerDataType,
   drainPreStartTelemetry,
 } from '@datadog/browser-core'
 import { createDOMMutationObservable } from '../browser/domMutationObservable'
 import { createWindowOpenObservable } from '../browser/windowOpenObservable'
-import { startRumAssembly } from '../domain/assembly'
 import { startInternalContext } from '../domain/contexts/internalContext'
 import { LifeCycle, LifeCycleEventType } from '../domain/lifeCycle'
-import type { ViewHistory } from '../domain/contexts/viewHistory'
 import { startViewHistory } from '../domain/contexts/viewHistory'
 import { startRequestCollection } from '../domain/requestCollection'
 import { startActionCollection } from '../domain/action/actionCollection'
 import { startErrorCollection } from '../domain/error/errorCollection'
 import { startResourceCollection } from '../domain/resource/resourceCollection'
 import { startViewCollection } from '../domain/view/viewCollection'
-import type { RumSessionManager } from '../domain/rumSessionManager'
 import { startRumSessionManager, startRumSessionManagerStub } from '../domain/rumSessionManager'
 import { startRumBatch } from '../transport/startRumBatch'
 import { startRumEventBridge } from '../transport/startRumEventBridge'
-import type { UrlContexts } from '../domain/contexts/urlContexts'
 import { startUrlContexts } from '../domain/contexts/urlContexts'
 import { createLocationChangeObservable } from '../browser/locationChangeObservable'
 import type { RumConfiguration } from '../domain/configuration'
@@ -43,18 +37,23 @@ import { startFeatureFlagContexts } from '../domain/contexts/featureFlagContext'
 import { startCustomerDataTelemetry } from '../domain/startCustomerDataTelemetry'
 import type { PageStateHistory } from '../domain/contexts/pageStateHistory'
 import { startPageStateHistory } from '../domain/contexts/pageStateHistory'
-import type { CommonContext } from '../domain/contexts/commonContext'
 import { startDisplayContext } from '../domain/contexts/displayContext'
 import type { CustomVitalsState } from '../domain/vital/vitalCollection'
 import { startVitalCollection } from '../domain/vital/vitalCollection'
 import { startCiVisibilityContext } from '../domain/contexts/ciVisibilityContext'
 import { startLongAnimationFrameCollection } from '../domain/longAnimationFrame/longAnimationFrameCollection'
-import { RumPerformanceEntryType } from '../browser/performanceObservable'
+import { RumPerformanceEntryType, supportPerformanceTimingEvent } from '../browser/performanceObservable'
 import { startLongTaskCollection } from '../domain/longTask/longTaskCollection'
 import type { Hooks } from '../hooks'
 import { createHooks } from '../hooks'
 import { startSyntheticsContext } from '../domain/contexts/syntheticsContext'
-import type { RecorderApi } from './rumPublicApi'
+import { startGlobalContext } from '../domain/contexts/globalContext'
+import { startUserContext } from '../domain/contexts/userContext'
+import { startAccountContext } from '../domain/contexts/accountContext'
+import { startRumAssembly } from '../domain/assembly'
+import { startSessionContext } from '../domain/contexts/sessionContext'
+import { startConnectivityContext } from '../domain/contexts/connectivityContext'
+import type { RecorderApi, ProfilerApi } from './rumPublicApi'
 
 export type StartRum = typeof startRum
 export type StartRumResult = ReturnType<StartRum>
@@ -62,8 +61,7 @@ export type StartRumResult = ReturnType<StartRum>
 export function startRum(
   configuration: RumConfiguration,
   recorderApi: RecorderApi,
-  customerDataTrackerManager: CustomerDataTrackerManager,
-  getCommonContext: () => CommonContext,
+  profilerApi: ProfilerApi,
   initialViewOptions: ViewOptions | undefined,
   createEncoder: (streamId: DeflateEncoderStreamId) => Encoder,
 
@@ -100,45 +98,47 @@ export function startRum(
     addTelemetryDebug('Error reported to customer', { 'error.message': error.message })
   }
 
-  const pageExitObservable = createPageExitObservable(configuration)
-  const pageExitSubscription = pageExitObservable.subscribe((event) => {
-    lifeCycle.notify(LifeCycleEventType.PAGE_EXITED, event)
+  const pageMayExitObservable = createPageMayExitObservable(configuration)
+  const pageMayExitSubscription = pageMayExitObservable.subscribe((event) => {
+    lifeCycle.notify(LifeCycleEventType.PAGE_MAY_EXIT, event)
   })
-  cleanupTasks.push(() => pageExitSubscription.unsubscribe())
+  cleanupTasks.push(() => pageMayExitSubscription.unsubscribe())
 
   const session = !canUseEventBridge()
     ? startRumSessionManager(configuration, lifeCycle, trackingConsentState)
     : startRumSessionManagerStub()
+
   if (!canUseEventBridge()) {
     const batch = startRumBatch(
       configuration,
       lifeCycle,
       telemetry.observable,
       reportError,
-      pageExitObservable,
+      pageMayExitObservable,
       session.expireObservable,
       createEncoder
     )
     cleanupTasks.push(() => batch.stop())
-    startCustomerDataTelemetry(configuration, telemetry, lifeCycle, customerDataTrackerManager, batch.flushObservable)
+    startCustomerDataTelemetry(configuration, telemetry, lifeCycle, batch.flushObservable)
   } else {
     startRumEventBridge(lifeCycle)
   }
 
   const domMutationObservable = createDOMMutationObservable()
   const locationChangeObservable = createLocationChangeObservable(configuration, location)
-  const pageStateHistory = startPageStateHistory(hooks, configuration)
-  const viewHistory = startViewHistory(lifeCycle)
-  const urlContexts = startUrlContexts(lifeCycle, hooks, locationChangeObservable, location)
-  const featureFlagContexts = startFeatureFlagContexts(
-    lifeCycle,
-    hooks,
-    configuration,
-    customerDataTrackerManager.getOrCreateTracker(CustomerDataType.FeatureFlag)
-  )
-  cleanupTasks.push(() => featureFlagContexts.stop())
   const { observable: windowOpenObservable, stop: stopWindowOpen } = createWindowOpenObservable()
   cleanupTasks.push(stopWindowOpen)
+  const pageStateHistory = startPageStateHistory(hooks, configuration)
+  const viewHistory = startViewHistory(lifeCycle)
+  cleanupTasks.push(() => viewHistory.stop())
+  const urlContexts = startUrlContexts(lifeCycle, hooks, locationChangeObservable, location)
+  cleanupTasks.push(() => urlContexts.stop())
+  const featureFlagContexts = startFeatureFlagContexts(lifeCycle, hooks, configuration)
+  startSessionContext(hooks, session, recorderApi, viewHistory)
+  startConnectivityContext(hooks)
+  const globalContext = startGlobalContext(hooks, configuration)
+  const userContext = startUserContext(hooks, configuration, session)
+  const accountContext = startAccountContext(hooks, configuration)
 
   const {
     actionContexts,
@@ -148,13 +148,9 @@ export function startRum(
     lifeCycle,
     hooks,
     configuration,
-    session,
     pageStateHistory,
     domMutationObservable,
     windowOpenObservable,
-    urlContexts,
-    viewHistory,
-    getCommonContext,
     reportError
   )
   cleanupTasks.push(stopRumEventCollection)
@@ -188,7 +184,7 @@ export function startRum(
   cleanupTasks.push(stopResourceCollection)
 
   if (configuration.trackLongTasks) {
-    if (PerformanceObserver.supportedEntryTypes?.includes(RumPerformanceEntryType.LONG_ANIMATION_FRAME)) {
+    if (supportPerformanceTimingEvent(RumPerformanceEntryType.LONG_ANIMATION_FRAME)) {
       const { stop: stopLongAnimationFrameCollection } = startLongAnimationFrameCollection(lifeCycle, configuration)
       cleanupTasks.push(stopLongAnimationFrameCollection)
     } else {
@@ -198,7 +194,7 @@ export function startRum(
 
   const { addError } = startErrorCollection(lifeCycle, configuration)
 
-  startRequestCollection(lifeCycle, configuration, session)
+  startRequestCollection(lifeCycle, configuration, session, userContext, accountContext)
 
   const vitalCollection = startVitalCollection(lifeCycle, pageStateHistory, customVitalsState)
   const internalContext = startInternalContext(
@@ -208,6 +204,9 @@ export function startRum(
     actionContexts,
     urlContexts
   )
+
+  // Add Clean-up tasks for Profiler API.
+  cleanupTasks.push(() => profilerApi.stop())
 
   return {
     addAction,
@@ -227,6 +226,9 @@ export function startRum(
     startDurationVital: vitalCollection.startDurationVital,
     stopDurationVital: vitalCollection.stopDurationVital,
     addDurationVital: vitalCollection.addDurationVital,
+    globalContext,
+    userContext,
+    accountContext,
     stop: () => {
       cleanupTasks.forEach((task) => task())
     },
@@ -246,13 +248,9 @@ export function startRumEventCollection(
   lifeCycle: LifeCycle,
   hooks: Hooks,
   configuration: RumConfiguration,
-  sessionManager: RumSessionManager,
   pageStateHistory: PageStateHistory,
   domMutationObservable: Observable<void>,
   windowOpenObservable: Observable<void>,
-  urlContexts: UrlContexts,
-  viewHistory: ViewHistory,
-  getCommonContext: () => CommonContext,
   reportError: (error: RawError) => void
 ) {
   const actionCollection = startActionCollection(
@@ -263,21 +261,11 @@ export function startRumEventCollection(
     configuration
   )
 
-  const displayContext = startDisplayContext(configuration)
-  const ciVisibilityContext = startCiVisibilityContext(configuration, hooks)
+  const displayContext = startDisplayContext(hooks, configuration)
+  const ciVisibilityContext = startCiVisibilityContext(hooks)
   startSyntheticsContext(hooks)
 
-  startRumAssembly(
-    configuration,
-    lifeCycle,
-    hooks,
-    sessionManager,
-    viewHistory,
-    urlContexts,
-    displayContext,
-    getCommonContext,
-    reportError
-  )
+  startRumAssembly(configuration, lifeCycle, hooks, reportError)
 
   return {
     pageStateHistory,
@@ -287,7 +275,6 @@ export function startRumEventCollection(
       actionCollection.stop()
       ciVisibilityContext.stop()
       displayContext.stop()
-      viewHistory.stop()
       pageStateHistory.stop()
     },
   }

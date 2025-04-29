@@ -5,6 +5,7 @@ import type {
   ClocksState,
   FetchStartContext,
   FetchResolveContext,
+  ContextManager,
 } from '@datadog/browser-core'
 import {
   RequestType,
@@ -65,9 +66,11 @@ let nextRequestIndex = 1
 export function startRequestCollection(
   lifeCycle: LifeCycle,
   configuration: RumConfiguration,
-  sessionManager: RumSessionManager
+  sessionManager: RumSessionManager,
+  userContext: ContextManager,
+  accountContext: ContextManager
 ) {
-  const tracer = startTracer(configuration, sessionManager)
+  const tracer = startTracer(configuration, sessionManager, userContext, accountContext)
   trackXhr(lifeCycle, configuration, tracer)
   trackFetch(lifeCycle, tracer)
 }

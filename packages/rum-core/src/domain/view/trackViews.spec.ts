@@ -159,10 +159,12 @@ describe('view lifecycle', () => {
       expect(getViewCreateCount()).toBe(1)
     })
 
-    it('should not end the view if the view already ended', () => {
+    it('should not end the view again if the view is already ended', () => {
       const { getViewEndCount, getViewUpdateCount } = viewTest
 
-      lifeCycle.notify(LifeCycleEventType.PAGE_EXITED, { reason: PageExitReason.UNLOADING })
+      expect(getViewEndCount()).toBe(0)
+
+      lifeCycle.notify(LifeCycleEventType.SESSION_EXPIRED)
 
       expect(getViewEndCount()).toBe(1)
       expect(getViewUpdateCount()).toBe(2)
@@ -290,31 +292,47 @@ describe('view lifecycle', () => {
 
   describe('page exit', () => {
     ;[
-      { exitReason: PageExitReason.UNLOADING, expectViewEnd: true },
-      { exitReason: PageExitReason.FROZEN, expectViewEnd: false },
-      { exitReason: PageExitReason.HIDDEN, expectViewEnd: false },
-    ].forEach(({ exitReason, expectViewEnd }) => {
-      it(`should ${
-        expectViewEnd ? '' : 'not '
-      }end the current view when the page is exiting for reason ${exitReason}`, () => {
+      { exitReason: PageExitReason.UNLOADING },
+      { exitReason: PageExitReason.FROZEN },
+      { exitReason: PageExitReason.HIDDEN },
+    ].forEach(({ exitReason }) => {
+      it(`should not end the current view when the page is exiting for reason ${exitReason}`, () => {
         const { getViewEndCount } = viewTest
 
         expect(getViewEndCount()).toEqual(0)
 
-        lifeCycle.notify(LifeCycleEventType.PAGE_EXITED, { reason: exitReason })
+        lifeCycle.notify(LifeCycleEventType.PAGE_MAY_EXIT, { reason: exitReason })
 
-        expect(getViewEndCount()).toEqual(expectViewEnd ? 1 : 0)
+        expect(getViewEndCount()).toEqual(0)
       })
     })
 
-    it('should not create a new view when ending the view on page exit', () => {
+    it('should trigger a view update on unloading', () => {
+      const { getViewUpdateCount } = viewTest
+
+      expect(getViewUpdateCount()).toEqual(1)
+
+      lifeCycle.notify(LifeCycleEventType.PAGE_MAY_EXIT, { reason: PageExitReason.UNLOADING })
+
+      expect(getViewUpdateCount()).toEqual(2)
+    })
+
+    it('should not create a new view when ending the view on unloading', () => {
       const { getViewCreateCount } = viewTest
 
       expect(getViewCreateCount()).toEqual(1)
 
-      lifeCycle.notify(LifeCycleEventType.PAGE_EXITED, { reason: PageExitReason.UNLOADING })
+      lifeCycle.notify(LifeCycleEventType.PAGE_MAY_EXIT, { reason: PageExitReason.UNLOADING })
 
       expect(getViewCreateCount()).toEqual(1)
+    })
+
+    it('should not set the view as inactive on unloading', () => {
+      const { getViewUpdate, getViewUpdateCount } = viewTest
+
+      lifeCycle.notify(LifeCycleEventType.PAGE_MAY_EXIT, { reason: PageExitReason.UNLOADING })
+
+      expect(getViewUpdate(getViewUpdateCount() - 1).isActive).toBe(true)
     })
   })
 
@@ -405,6 +423,7 @@ describe('view metrics', () => {
         time: clock.relative(0),
         previousRect: undefined,
         currentRect: undefined,
+        devicePixelRatio: jasmine.any(Number),
       })
     })
 
@@ -838,16 +857,16 @@ describe('view event count', () => {
   })
 
   it('should take child events occurring on view end into account', () => {
-    viewTest = setupViewTest({ lifeCycle })
+    viewTest = setupViewTest({ lifeCycle, initialLocation: 'http://foo.com' })
     const { getViewUpdate, getViewUpdateCount } = viewTest
 
     lifeCycle.subscribe(LifeCycleEventType.VIEW_ENDED, () => {
       lifeCycle.notify(LifeCycleEventType.RUM_EVENT_COLLECTED, createFakeActionEvent())
     })
 
-    lifeCycle.notify(LifeCycleEventType.PAGE_EXITED, { reason: PageExitReason.UNLOADING })
+    viewTest.changeLocation('/bar')
 
-    expect(getViewUpdate(getViewUpdateCount() - 1).eventCounts.actionCount).toBe(1)
+    expect(getViewUpdate(getViewUpdateCount() - 2).eventCounts.actionCount).toBe(1)
   })
 
   it('should be updated for 5 min after view end', () => {

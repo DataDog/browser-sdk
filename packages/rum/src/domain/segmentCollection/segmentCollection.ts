@@ -89,10 +89,10 @@ export function doStartSegmentCollection(
     flushSegment('view_change')
   })
 
-  const { unsubscribe: unsubscribePageExited } = lifeCycle.subscribe(
-    LifeCycleEventType.PAGE_EXITED,
-    (pageExitEvent) => {
-      flushSegment(pageExitEvent.reason as FlushReason)
+  const { unsubscribe: unsubscribePageMayExit } = lifeCycle.subscribe(
+    LifeCycleEventType.PAGE_MAY_EXIT,
+    (pageMayExitEvent) => {
+      flushSegment(pageMayExitEvent.reason as FlushReason)
     }
   )
 
@@ -153,7 +153,7 @@ export function doStartSegmentCollection(
     stop: () => {
       flushSegment('stop')
       unsubscribeViewCreated()
-      unsubscribePageExited()
+      unsubscribePageMayExit()
     },
   }
 }

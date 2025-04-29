@@ -1,4 +1,4 @@
-import type { ContextValue, Context, CustomerDataTracker } from '@datadog/browser-core'
+import type { ContextValue, Context } from '@datadog/browser-core'
 import { SESSION_TIME_OUT_DELAY, createValueHistory, isEmptyObject } from '@datadog/browser-core'
 import type { LifeCycle } from '../lifeCycle'
 import { LifeCycleEventType } from '../lifeCycle'
@@ -15,7 +15,6 @@ export type FeatureFlagContext = Context
 
 export interface FeatureFlagContexts {
   addFeatureFlagEvaluation: (key: string, value: ContextValue) => void
-  stop: () => void
 }
 
 /**
@@ -29,8 +28,7 @@ export interface FeatureFlagContexts {
 export function startFeatureFlagContexts(
   lifeCycle: LifeCycle,
   hooks: Hooks,
-  configuration: RumConfiguration,
-  customerDataTracker: CustomerDataTracker
+  configuration: RumConfiguration
 ): FeatureFlagContexts {
   const featureFlagContexts = createValueHistory<FeatureFlagContext>({
     expireDelay: FEATURE_FLAG_CONTEXT_TIME_OUT_DELAY,
@@ -38,7 +36,6 @@ export function startFeatureFlagContexts(
 
   lifeCycle.subscribe(LifeCycleEventType.BEFORE_VIEW_CREATED, ({ startClocks }) => {
     featureFlagContexts.add({}, startClocks.relative)
-    customerDataTracker.resetCustomerData()
   })
 
   lifeCycle.subscribe(LifeCycleEventType.AFTER_VIEW_ENDED, ({ endClocks }) => {
@@ -70,9 +67,7 @@ export function startFeatureFlagContexts(
       const currentContext = featureFlagContexts.find()
       if (currentContext) {
         currentContext[key] = value
-        customerDataTracker.updateCustomerData(currentContext)
       }
     },
-    stop: () => customerDataTracker.stop(),
   }
 }

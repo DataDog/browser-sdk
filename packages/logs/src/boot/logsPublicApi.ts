@@ -6,7 +6,6 @@ import {
   makePublicApi,
   monitor,
   sanitize,
-  createCustomerDataTrackerManager,
   storeContextManager,
   displayAlreadyInitializedError,
   deepClone,
@@ -203,12 +202,8 @@ export interface Strategy {
 }
 
 export function makeLogsPublicApi(startLogsImpl: StartLogs): LogsPublicApi {
-  const customerDataTrackerManager = createCustomerDataTrackerManager()
-  const globalContextManager = createContextManager('global context', {
-    customerDataTracker: customerDataTrackerManager.getOrCreateTracker(CustomerDataType.GlobalContext),
-  })
+  const globalContextManager = createContextManager('global context')
   const userContextManager = createContextManager('user', {
-    customerDataTracker: customerDataTrackerManager.getOrCreateTracker(CustomerDataType.User),
     propertiesConfig: {
       id: { type: 'string' },
       name: { type: 'string' },
@@ -216,7 +211,6 @@ export function makeLogsPublicApi(startLogsImpl: StartLogs): LogsPublicApi {
     },
   })
   const accountContextManager = createContextManager('account', {
-    customerDataTracker: customerDataTrackerManager.getOrCreateTracker(CustomerDataType.User),
     propertiesConfig: {
       id: { type: 'string', required: true },
       name: { type: 'string' },
@@ -243,10 +237,7 @@ export function makeLogsPublicApi(startLogsImpl: StartLogs): LogsPublicApi {
 
   const customLoggers: { [name: string]: Logger | undefined } = {}
 
-  const mainLogger = new Logger(
-    (...params) => strategy.handleLog(...params),
-    customerDataTrackerManager.createDetachedTracker()
-  )
+  const mainLogger = new Logger((...params) => strategy.handleLog(...params))
 
   return makePublicApi<LogsPublicApi>({
     logger: mainLogger,
@@ -271,7 +262,6 @@ export function makeLogsPublicApi(startLogsImpl: StartLogs): LogsPublicApi {
     createLogger: monitor((name, conf = {}) => {
       customLoggers[name] = new Logger(
         (...params) => strategy.handleLog(...params),
-        customerDataTrackerManager.createDetachedTracker(),
         sanitize(name),
         conf.handler,
         conf.level,

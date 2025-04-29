@@ -1,5 +1,6 @@
 import { disableJasmineUncaughtExceptionTracking, wait } from '../../../test'
 import { Observable } from '../../tools/observable'
+import type { UnhandledErrorCallback } from './trackRuntimeError'
 import { instrumentOnError, instrumentUnhandledRejection, trackRuntimeError } from './trackRuntimeError'
 import type { RawError } from './error.types'
 
@@ -54,9 +55,9 @@ describe('instrumentOnError', () => {
   const testColNo = 42
   const ERROR_MESSAGE = 'foo'
 
-  const spyViaInstrumentOnError = async (callback: () => void): Promise<jasmine.Spy> => {
+  const spyViaInstrumentOnError = async (callback: () => void) => {
     const onErrorSpy = spyOn(window as any, 'onerror')
-    const callbackSpy = jasmine.createSpy()
+    const callbackSpy = jasmine.createSpy<UnhandledErrorCallback>()
     const { stop } = instrumentOnError(callbackSpy)
 
     try {
@@ -82,9 +83,9 @@ describe('instrumentOnError', () => {
       throw error
     })
 
-    const [stack, originalError] = spy.calls.mostRecent().args
+    const [originalError, stack] = spy.calls.mostRecent().args
     expect(originalError).toBe(error)
-    expect(stack).toBeDefined()
+    expect(stack).toBeUndefined()
   })
 
   it('should notify unhandled string', async () => {
@@ -93,7 +94,7 @@ describe('instrumentOnError', () => {
       throw error
     })
 
-    const [stack, originalError] = spy.calls.mostRecent().args
+    const [originalError, stack] = spy.calls.mostRecent().args
     expect(originalError).toBe(error)
     expect(stack).toBeDefined()
   })
@@ -104,7 +105,7 @@ describe('instrumentOnError', () => {
       throw error
     })
 
-    const [stack, originalError] = spy.calls.mostRecent().args
+    const [originalError, stack] = spy.calls.mostRecent().args
     expect(originalError).toBe(error)
     expect(stack).toBeDefined()
   })
@@ -129,7 +130,7 @@ describe('instrumentOnError', () => {
       expect(spy).toHaveBeenCalledTimes(1)
       await wait(1000)
       expect(spy).toHaveBeenCalledTimes(1)
-      const [, reportedError] = spy.calls.mostRecent().args
+      const [reportedError] = spy.calls.mostRecent().args
       expect(reportedError).toEqual(exception)
     })
   })
@@ -138,25 +139,24 @@ describe('instrumentOnError', () => {
     it('with objects', async () => {
       const error = { foo: 'bar' } as any
       const spy = await spyViaInstrumentOnError(() => {
-        window.onerror!(error)
+        window.onerror!(error, 'http://example.com', testLineNo, testColNo)
       })
 
-      const [stack, originalError] = spy.calls.mostRecent().args
+      const [originalError, stack] = spy.calls.mostRecent().args
       expect(originalError).toBe(error)
       expect(stack).toBeDefined()
     })
 
     describe('with undefined arguments', () => {
-      it('should pass undefined:undefined', async () => {
+      it('discards the stack', async () => {
         // this is probably not good behavior;  just writing this test to verify
         // that it doesn't change unintentionally
         const spy = await spyViaInstrumentOnError(() => {
           window.onerror!(undefined!, undefined, testLineNo)
         })
 
-        const [stack] = spy.calls.mostRecent().args
-        expect(stack.name).toBeUndefined()
-        expect(stack.message).toBeUndefined()
+        const [, stack] = spy.calls.mostRecent().args
+        expect(stack).toBeUndefined()
       })
     })
 
@@ -166,9 +166,9 @@ describe('instrumentOnError', () => {
           window.onerror!('ReferenceError: foo is undefined', 'http://example.com', testLineNo)
         })
 
-        const [stack] = spy.calls.mostRecent().args
-        expect(stack.name).toEqual('ReferenceError')
-        expect(stack.message).toEqual('foo is undefined')
+        const [, stack] = spy.calls.mostRecent().args
+        expect(stack!.name).toEqual('ReferenceError')
+        expect(stack!.message).toEqual('foo is undefined')
       })
 
       it('should separate name, message for default error types (e.g. Uncaught ReferenceError)', async () => {
@@ -177,9 +177,9 @@ describe('instrumentOnError', () => {
           window.onerror!('Uncaught ReferenceError: foo is undefined', 'http://example.com', testLineNo)
         })
 
-        const [stack] = spy.calls.mostRecent().args
-        expect(stack.name).toEqual('ReferenceError')
-        expect(stack.message).toEqual('foo is undefined')
+        const [, stack] = spy.calls.mostRecent().args
+        expect(stack!.name).toEqual('ReferenceError')
+        expect(stack!.message).toEqual('foo is undefined')
       })
 
       it('should separate name, message for default error types on Opera Mini', async () => {
@@ -191,19 +191,23 @@ describe('instrumentOnError', () => {
           )
         })
 
-        const [stack] = spy.calls.mostRecent().args
-        expect(stack.name).toEqual('ReferenceError')
-        expect(stack.message).toEqual('Undefined variable: foo')
+        const [, stack] = spy.calls.mostRecent().args
+        expect(stack!.name).toEqual('ReferenceError')
+        expect(stack!.message).toEqual('Undefined variable: foo')
       })
 
       it('should separate name, message for error with multiline message', async () => {
         const spy = await spyViaInstrumentOnError(() => {
-          window.onerror!("TypeError: foo is not a function. (In 'my.function(\n foo)")
+          window.onerror!(
+            "TypeError: foo is not a function. (In 'my.function(\n foo)",
+            'http://example.com',
+            testLineNo
+          )
         })
 
-        const [stack] = spy.calls.mostRecent().args
-        expect(stack.message).toEqual("foo is not a function. (In 'my.function(\n foo)")
-        expect(stack.name).toEqual('TypeError')
+        const [, stack] = spy.calls.mostRecent().args
+        expect(stack!.message).toEqual("foo is not a function. (In 'my.function(\n foo)")
+        expect(stack!.name).toEqual('TypeError')
       })
 
       it('should ignore unknown error types', async () => {
@@ -212,9 +216,9 @@ describe('instrumentOnError', () => {
         })
 
         // TODO: should we attempt to parse this?
-        const [stack] = spy.calls.mostRecent().args
-        expect(stack.name).toEqual(undefined)
-        expect(stack.message).toEqual('CustomError: woo scary')
+        const [, stack] = spy.calls.mostRecent().args
+        expect(stack!.name).toEqual(undefined)
+        expect(stack!.message).toEqual('CustomError: woo scary')
       })
 
       it('should ignore arbitrary messages passed through onerror', async () => {
@@ -222,18 +226,18 @@ describe('instrumentOnError', () => {
           window.onerror!('all work and no play makes homer: something something', 'http://example.com', testLineNo)
         })
 
-        const [stack] = spy.calls.mostRecent().args
-        expect(stack.name).toEqual(undefined)
-        expect(stack.message).toEqual('all work and no play makes homer: something something')
+        const [, stack] = spy.calls.mostRecent().args
+        expect(stack!.name).toEqual(undefined)
+        expect(stack!.message).toEqual('all work and no play makes homer: something something')
       })
 
       it('should handle object message passed through onerror', async () => {
         const spy = await spyViaInstrumentOnError(() => {
-          window.onerror!({ foo: 'bar' } as any)
+          window.onerror!({ foo: 'bar' } as any, 'http://example.com', testLineNo, testColNo)
         })
 
-        const [stack, error] = spy.calls.mostRecent().args
-        expect(stack.message).toBeUndefined()
+        const [error, stack] = spy.calls.mostRecent().args
+        expect(stack!.message).toBeUndefined()
         expect(error).toEqual({ foo: 'bar' }) // consider the message as initial error
       })
     })
@@ -250,9 +254,9 @@ describe('instrumentOnError', () => {
           )
         })
 
-        const [stack, error] = spy.calls.mostRecent().args
-        expect(stack.message).toBe('Any error message')
-        expect(stack.stack).toEqual([{ url: 'https://example.com', column: testColNo, line: testLineNo }])
+        const [error, stack] = spy.calls.mostRecent().args
+        expect(stack!.message).toBe('Any error message')
+        expect(stack!.stack).toEqual([{ url: 'https://example.com', column: testColNo, line: testLineNo }])
         expect(error).toEqual('Actual Error Message')
       })
 
@@ -264,9 +268,9 @@ describe('instrumentOnError', () => {
           } as any)
         })
 
-        const [stack, error] = spy.calls.mostRecent().args
-        expect(stack.message).toBe('Any error message')
-        expect(stack.stack).toEqual([{ url: 'https://example.com', column: testColNo, line: testLineNo }])
+        const [error, stack] = spy.calls.mostRecent().args
+        expect(stack!.message).toBe('Any error message')
+        expect(stack!.stack).toEqual([{ url: 'https://example.com', column: testColNo, line: testLineNo }])
         expect(error).toEqual({ message: 'SyntaxError', data: 'foo' })
       })
     })
@@ -282,7 +286,7 @@ describe('instrumentUnhandledRejection', () => {
     }
 
     const onUnhandledRejectionSpy = spyOn(window as any, 'onunhandledrejection')
-    const callbackSpy = jasmine.createSpy()
+    const callbackSpy = jasmine.createSpy<UnhandledErrorCallback>()
     const { stop } = instrumentUnhandledRejection(callbackSpy)
 
     try {
@@ -311,9 +315,9 @@ describe('instrumentUnhandledRejection', () => {
       window.onunhandledrejection!({ reason } as PromiseRejectionEvent)
     })
 
-    const [stack, originalError] = spy.calls.mostRecent().args
+    const [originalError, stack] = spy.calls.mostRecent().args
     expect(originalError).toBe(reason)
-    expect(stack).toBeDefined()
+    expect(stack).toBeUndefined()
   })
 })
 

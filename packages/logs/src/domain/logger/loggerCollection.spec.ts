@@ -1,12 +1,5 @@
 import type { TimeStamp } from '@datadog/browser-core'
-import {
-  ConsoleApiName,
-  timeStampNow,
-  ErrorSource,
-  originalConsoleMethods,
-  createCustomerDataTracker,
-  noop,
-} from '@datadog/browser-core'
+import { ConsoleApiName, timeStampNow, ErrorSource, originalConsoleMethods } from '@datadog/browser-core'
 import type { Clock } from '@datadog/browser-core/test'
 import { mockClock } from '@datadog/browser-core/test'
 import type { CommonContext, RawLoggerLogsEvent } from '../../rawLogsEvent.types'
@@ -34,7 +27,7 @@ describe('logger collection', () => {
       rawLogsEvents.push(rawLogsEvent as RawLogsEventCollectedData<RawLoggerLogsEvent>)
     )
     spyOn(console, 'error').and.callFake(() => true)
-    logger = new Logger((...params) => handleLog(...params), createCustomerDataTracker(noop))
+    logger = new Logger((...params) => handleLog(...params))
     ;({ handleLog: handleLog } = startLoggerCollection(lifeCycle))
     clock = mockClock()
   })

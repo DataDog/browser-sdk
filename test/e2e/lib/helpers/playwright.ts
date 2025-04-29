@@ -2,6 +2,8 @@ import type { PlaywrightWorkerOptions } from '@playwright/test'
 import type { BrowserConfiguration } from '../../../browsers.conf'
 import { getBuildInfos } from '../../../envUtils'
 
+export const DEV_SERVER_BASE_URL = 'http://localhost:8080'
+
 export function getPlaywrightConfigBrowserName(name: string): PlaywrightWorkerOptions['browserName'] {
   if (name.includes('firefox')) {
     return 'firefox'

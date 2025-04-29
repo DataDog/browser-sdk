@@ -1,15 +1,8 @@
-import type { RelativeTime, DeflateWorker, CustomerDataTrackerManager, TimeStamp } from '@datadog/browser-core'
-import {
-  ONE_SECOND,
-  display,
-  DefaultPrivacyLevel,
-  removeStorageListeners,
-  CustomerDataCompressionStatus,
-  timeStampToClocks,
-} from '@datadog/browser-core'
+import type { RelativeTime, DeflateWorker, TimeStamp } from '@datadog/browser-core'
+import { ONE_SECOND, display, DefaultPrivacyLevel, timeStampToClocks } from '@datadog/browser-core'
 import type { Clock } from '@datadog/browser-core/test'
 import { mockClock, registerCleanupTask } from '@datadog/browser-core/test'
-import { noopRecorderApi } from '../../test'
+import { noopRecorderApi, noopProfilerApi } from '../../test'
 import { ActionType, VitalType } from '../rawRumEvent.types'
 import type { DurationVitalReference } from '../domain/vital/vitalCollection'
 import type { RumPublicApi, RecorderApi } from './rumPublicApi'
@@ -35,6 +28,9 @@ const noopStartRum = (): ReturnType<StartRum> => ({
   stopDurationVital: () => undefined,
   addDurationVital: () => undefined,
   stop: () => undefined,
+  globalContext: {} as any,
+  userContext: {} as any,
+  accountContext: {} as any,
 })
 const DEFAULT_INIT_CONFIGURATION = { applicationId: 'xxx', clientToken: 'xxx' }
 const FAKE_WORKER = {} as DeflateWorker
@@ -60,6 +56,7 @@ describe('rum public api', () => {
             ...noopRecorderApi,
             onRumStart: recorderApiOnRumStartSpy,
           },
+          noopProfilerApi,
           {
             startDeflateWorker: () => FAKE_WORKER,
           }
@@ -72,36 +69,6 @@ describe('rum public api', () => {
           compressIntakeRequests: true,
         })
         expect(recorderApiOnRumStartSpy.calls.mostRecent().args[4]).toBe(FAKE_WORKER)
-      })
-    })
-
-    describe('customer data trackers', () => {
-      it('should set the compression status to disabled if `compressIntakeRequests` is false', () => {
-        const rumPublicApi = makeRumPublicApi(startRumSpy, noopRecorderApi, {
-          startDeflateWorker: () => FAKE_WORKER,
-        })
-
-        rumPublicApi.init({
-          ...DEFAULT_INIT_CONFIGURATION,
-          compressIntakeRequests: false,
-        })
-
-        const customerDataTrackerManager: CustomerDataTrackerManager = startRumSpy.calls.mostRecent().args[2]
-        expect(customerDataTrackerManager.getCompressionStatus()).toBe(CustomerDataCompressionStatus.Disabled)
-      })
-
-      it('should set the compression status to enabled if `compressIntakeRequests` is true', () => {
-        const rumPublicApi = makeRumPublicApi(startRumSpy, noopRecorderApi, {
-          startDeflateWorker: () => FAKE_WORKER,
-        })
-
-        rumPublicApi.init({
-          ...DEFAULT_INIT_CONFIGURATION,
-          compressIntakeRequests: true,
-        })
-
-        const customerDataTrackerManager: CustomerDataTrackerManager = startRumSpy.calls.mostRecent().args[2]
-        expect(customerDataTrackerManager.getCompressionStatus()).toBe(CustomerDataCompressionStatus.Enabled)
       })
     })
   })
@@ -120,7 +87,8 @@ describe('rum public api', () => {
           ...noopStartRum(),
           getInternalContext: getInternalContextSpy,
         }),
-        noopRecorderApi
+        noopRecorderApi,
+        noopProfilerApi
       )
     })
 
@@ -142,7 +110,7 @@ describe('rum public api', () => {
 
   describe('getInitConfiguration', () => {
     it('clones the init configuration', () => {
-      const rumPublicApi = makeRumPublicApi(noopStartRum, noopRecorderApi)
+      const rumPublicApi = makeRumPublicApi(noopStartRum, noopRecorderApi, noopProfilerApi)
 
       rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
 
@@ -163,7 +131,8 @@ describe('rum public api', () => {
           ...noopStartRum(),
           addAction: addActionSpy,
         }),
-        noopRecorderApi
+        noopRecorderApi,
+        noopProfilerApi
       )
       clock = mockClock()
 
@@ -187,7 +156,6 @@ describe('rum public api', () => {
           type: ActionType.CUSTOM,
           handlingStack: jasmine.any(String),
         },
-        { context: {}, user: {}, account: {}, hasReplay: undefined },
       ])
     })
 
@@ -204,68 +172,6 @@ describe('rum public api', () => {
       const stacktrace = addActionSpy.calls.argsFor(0)[0].handlingStack
       expect(stacktrace).toMatch(/^HandlingStack: action\s+at triggerAction @/)
     })
-
-    describe('save context when sending an action', () => {
-      it('saves the date', () => {
-        clock.tick(ONE_SECOND)
-        rumPublicApi.addAction('foo')
-
-        clock.tick(ONE_SECOND)
-        rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
-
-        expect(addActionSpy.calls.argsFor(0)[0].startClocks.relative as number).toEqual(clock.relative(ONE_SECOND))
-      })
-
-      it('stores a deep copy of the global context', () => {
-        rumPublicApi.setGlobalContextProperty('foo', 'bar')
-        rumPublicApi.addAction('message')
-        rumPublicApi.setGlobalContextProperty('foo', 'baz')
-
-        rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
-
-        expect(addActionSpy.calls.argsFor(0)[1]!.context).toEqual({
-          foo: 'bar',
-        })
-      })
-
-      it('stores a deep copy of the user', () => {
-        const user = { id: 'foo' }
-        rumPublicApi.setUser(user)
-        rumPublicApi.addAction('message')
-        user.id = 'bar'
-
-        rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
-
-        expect(addActionSpy.calls.argsFor(0)[1]!.user).toEqual({
-          id: 'foo',
-        })
-      })
-
-      it('stores a deep copy of the account', () => {
-        const account = { id: 'foo' }
-        rumPublicApi.setAccount(account)
-        rumPublicApi.addAction('message')
-        account.id = 'bar'
-
-        rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
-
-        expect(addActionSpy.calls.argsFor(0)[1]!.account).toEqual({
-          id: 'foo',
-        })
-      })
-
-      it('stores a deep copy of the action context', () => {
-        const context = { foo: 'bar' }
-        rumPublicApi.addAction('message', context)
-        context.foo = 'baz'
-
-        rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
-
-        expect(addActionSpy.calls.argsFor(0)[0].context).toEqual({
-          foo: 'bar',
-        })
-      })
-    })
   })
 
   describe('addError', () => {
@@ -280,7 +186,8 @@ describe('rum public api', () => {
           ...noopStartRum(),
           addError: addErrorSpy,
         }),
-        noopRecorderApi
+        noopRecorderApi,
+        noopProfilerApi
       )
       clock = mockClock()
 
@@ -303,7 +210,6 @@ describe('rum public api', () => {
           handlingStack: jasmine.any(String),
           startClocks: jasmine.any(Object),
         },
-        { context: {}, user: {}, account: {}, hasReplay: undefined },
       ])
     })
 
@@ -330,56 +236,6 @@ describe('rum public api', () => {
 
         expect(addErrorSpy.calls.argsFor(0)[0].startClocks.relative as number).toEqual(clock.relative(ONE_SECOND))
       })
-
-      it('stores a deep copy of the global context', () => {
-        rumPublicApi.setGlobalContextProperty('foo', 'bar')
-        rumPublicApi.addError(new Error('message'))
-        rumPublicApi.setGlobalContextProperty('foo', 'baz')
-
-        rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
-
-        expect(addErrorSpy.calls.argsFor(0)[1]!.context).toEqual({
-          foo: 'bar',
-        })
-      })
-
-      it('stores a deep copy of the user', () => {
-        const user = { id: 'foo' }
-        rumPublicApi.setUser(user)
-        rumPublicApi.addError(new Error('message'))
-        user.id = 'bar'
-
-        rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
-
-        expect(addErrorSpy.calls.argsFor(0)[1]!.user).toEqual({
-          id: 'foo',
-        })
-      })
-
-      it('stores a deep copy of the account', () => {
-        const account = { id: 'foo' }
-        rumPublicApi.setAccount(account)
-        rumPublicApi.addError(new Error('message'))
-        account.id = 'bar'
-
-        rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
-
-        expect(addErrorSpy.calls.argsFor(0)[1]!.account).toEqual({
-          id: 'foo',
-        })
-      })
-
-      it('stores a deep copy of the error context', () => {
-        const context = { foo: 'bar' }
-        rumPublicApi.addError(new Error('message'), context)
-        context.foo = 'baz'
-
-        rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
-
-        expect(addErrorSpy.calls.argsFor(0)[0].context).toEqual({
-          foo: 'bar',
-        })
-      })
     })
   })
 
@@ -396,18 +252,16 @@ describe('rum public api', () => {
           ...noopStartRum(),
           addAction: addActionSpy,
         }),
-        noopRecorderApi
+        noopRecorderApi,
+        noopProfilerApi
       )
     })
 
     it('should attach valid objects', () => {
       const user = { id: 'foo', name: 'bar', email: 'qux', foo: { bar: 'qux' } }
       rumPublicApi.setUser(user)
-      rumPublicApi.addAction('message')
 
-      rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
-
-      expect(addActionSpy.calls.argsFor(0)[1]!.user).toEqual({
+      expect(rumPublicApi.getUser()).toEqual({
         email: 'qux',
         foo: { bar: 'qux' },
         id: 'foo',
@@ -417,15 +271,13 @@ describe('rum public api', () => {
     })
 
     it('should sanitize predefined properties', () => {
-      const user = { id: null, name: 2, email: { bar: 'qux' } }
+      const user = { id: false, name: 2, email: { bar: 'qux' } }
       rumPublicApi.setUser(user as any)
       rumPublicApi.addAction('message')
 
-      rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
-
-      expect(addActionSpy.calls.argsFor(0)[1]!.user).toEqual({
+      expect(rumPublicApi.getUser()).toEqual({
         email: '[object Object]',
-        id: 'null',
+        id: 'false',
         name: '2',
       })
       expect(displaySpy).not.toHaveBeenCalled()
@@ -437,9 +289,7 @@ describe('rum public api', () => {
       rumPublicApi.clearUser()
       rumPublicApi.addAction('message')
 
-      rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
-
-      expect(addActionSpy.calls.argsFor(0)[1]!.user).toEqual({})
+      expect(rumPublicApi.getUser()).toEqual({})
       expect(displaySpy).not.toHaveBeenCalled()
     })
 
@@ -455,7 +305,7 @@ describe('rum public api', () => {
     let rumPublicApi: RumPublicApi
 
     beforeEach(() => {
-      rumPublicApi = makeRumPublicApi(noopStartRum, noopRecorderApi)
+      rumPublicApi = makeRumPublicApi(noopStartRum, noopRecorderApi, noopProfilerApi)
     })
 
     it('should return empty object if no user has been set', () => {
@@ -481,7 +331,7 @@ describe('rum public api', () => {
     let rumPublicApi: RumPublicApi
 
     beforeEach(() => {
-      rumPublicApi = makeRumPublicApi(noopStartRum, noopRecorderApi)
+      rumPublicApi = makeRumPublicApi(noopStartRum, noopRecorderApi, noopProfilerApi)
     })
 
     it('should add attribute', () => {
@@ -526,7 +376,7 @@ describe('rum public api', () => {
     let rumPublicApi: RumPublicApi
 
     beforeEach(() => {
-      rumPublicApi = makeRumPublicApi(noopStartRum, noopRecorderApi)
+      rumPublicApi = makeRumPublicApi(noopStartRum, noopRecorderApi, noopProfilerApi)
     })
 
     it('should remove property', () => {
@@ -552,7 +402,8 @@ describe('rum public api', () => {
           ...noopStartRum(),
           addAction: addActionSpy,
         }),
-        noopRecorderApi
+        noopRecorderApi,
+        noopProfilerApi
       )
     })
 
@@ -561,9 +412,7 @@ describe('rum public api', () => {
       rumPublicApi.setAccount(account)
       rumPublicApi.addAction('message')
 
-      rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
-
-      expect(addActionSpy.calls.argsFor(0)[1]!.account).toEqual({
+      expect(rumPublicApi.getAccount()).toEqual({
         foo: { bar: 'qux' },
         id: 'foo',
         name: 'bar',
@@ -572,14 +421,12 @@ describe('rum public api', () => {
     })
 
     it('should sanitize predefined properties', () => {
-      const account = { id: null, name: 2 }
+      const account = { id: false, name: 2 }
       rumPublicApi.setAccount(account as any)
       rumPublicApi.addAction('message')
 
-      rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
-
-      expect(addActionSpy.calls.argsFor(0)[1]!.account).toEqual({
-        id: 'null',
+      expect(rumPublicApi.getAccount()).toEqual({
+        id: 'false',
         name: '2',
       })
       expect(displaySpy).not.toHaveBeenCalled()
@@ -591,9 +438,7 @@ describe('rum public api', () => {
       rumPublicApi.clearAccount()
       rumPublicApi.addAction('message')
 
-      rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
-
-      expect(addActionSpy.calls.argsFor(0)[1]!.account).toEqual({})
+      expect(rumPublicApi.getAccount()).toEqual({})
       expect(displaySpy).not.toHaveBeenCalled()
     })
 
@@ -609,7 +454,7 @@ describe('rum public api', () => {
     let rumPublicApi: RumPublicApi
 
     beforeEach(() => {
-      rumPublicApi = makeRumPublicApi(noopStartRum, noopRecorderApi)
+      rumPublicApi = makeRumPublicApi(noopStartRum, noopRecorderApi, noopProfilerApi)
     })
 
     it('should return empty object if no account has been set', () => {
@@ -635,7 +480,7 @@ describe('rum public api', () => {
     let rumPublicApi: RumPublicApi
 
     beforeEach(() => {
-      rumPublicApi = makeRumPublicApi(noopStartRum, noopRecorderApi)
+      rumPublicApi = makeRumPublicApi(noopStartRum, noopRecorderApi, noopProfilerApi)
     })
 
     it('should add attribute', () => {
@@ -677,7 +522,7 @@ describe('rum public api', () => {
     let rumPublicApi: RumPublicApi
 
     beforeEach(() => {
-      rumPublicApi = makeRumPublicApi(noopStartRum, noopRecorderApi)
+      rumPublicApi = makeRumPublicApi(noopStartRum, noopRecorderApi, noopProfilerApi)
     })
     it('should remove property', () => {
       const account = { id: 'foo', name: 'bar', email: 'qux', foo: { bar: 'qux' } }
@@ -702,7 +547,8 @@ describe('rum public api', () => {
           ...noopStartRum(),
           addTiming: addTimingSpy,
         }),
-        noopRecorderApi
+        noopRecorderApi,
+        noopProfilerApi
       )
     })
 
@@ -740,7 +586,8 @@ describe('rum public api', () => {
           ...noopStartRum(),
           addFeatureFlagEvaluation: addFeatureFlagEvaluationSpy,
         }),
-        noopRecorderApi
+        noopRecorderApi,
+        noopProfilerApi
       )
     })
 
@@ -757,7 +604,11 @@ describe('rum public api', () => {
   describe('stopSession', () => {
     it('calls stopSession on the startRum result', () => {
       const stopSessionSpy = jasmine.createSpy()
-      const rumPublicApi = makeRumPublicApi(() => ({ ...noopStartRum(), stopSession: stopSessionSpy }), noopRecorderApi)
+      const rumPublicApi = makeRumPublicApi(
+        () => ({ ...noopStartRum(), stopSession: stopSessionSpy }),
+        noopRecorderApi,
+        noopProfilerApi
+      )
       rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
       rumPublicApi.stopSession()
       expect(stopSessionSpy).toHaveBeenCalled()
@@ -767,7 +618,11 @@ describe('rum public api', () => {
   describe('startView', () => {
     it('should call RUM results startView with the view name', () => {
       const startViewSpy = jasmine.createSpy()
-      const rumPublicApi = makeRumPublicApi(() => ({ ...noopStartRum(), startView: startViewSpy }), noopRecorderApi)
+      const rumPublicApi = makeRumPublicApi(
+        () => ({ ...noopStartRum(), startView: startViewSpy }),
+        noopRecorderApi,
+        noopProfilerApi
+      )
       rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
       rumPublicApi.startView('foo')
       expect(startViewSpy.calls.argsFor(0)[0]).toEqual({ name: 'foo' })
@@ -775,7 +630,11 @@ describe('rum public api', () => {
 
     it('should call RUM results startView with the view options', () => {
       const startViewSpy = jasmine.createSpy()
-      const rumPublicApi = makeRumPublicApi(() => ({ ...noopStartRum(), startView: startViewSpy }), noopRecorderApi)
+      const rumPublicApi = makeRumPublicApi(
+        () => ({ ...noopStartRum(), startView: startViewSpy }),
+        noopRecorderApi,
+        noopProfilerApi
+      )
       rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
       rumPublicApi.startView({ name: 'foo', service: 'bar', version: 'baz', context: { foo: 'bar' } })
       expect(startViewSpy.calls.argsFor(0)[0]).toEqual({
@@ -795,7 +654,7 @@ describe('rum public api', () => {
     beforeEach(() => {
       recorderApiOnRumStartSpy = jasmine.createSpy('recorderApiOnRumStart')
       recorderApi = { ...noopRecorderApi, onRumStart: recorderApiOnRumStartSpy }
-      rumPublicApi = makeRumPublicApi(noopStartRum, recorderApi)
+      rumPublicApi = makeRumPublicApi(noopStartRum, recorderApi, noopProfilerApi)
     })
 
     it('is started with the default defaultPrivacyLevel', () => {
@@ -841,86 +700,6 @@ describe('rum public api', () => {
     })
   })
 
-  describe('storeContextsAcrossPages', () => {
-    let rumPublicApi: RumPublicApi
-
-    beforeEach(() => {
-      rumPublicApi = makeRumPublicApi(noopStartRum, noopRecorderApi)
-
-      registerCleanupTask(() => {
-        localStorage.clear()
-        removeStorageListeners()
-      })
-    })
-
-    it('when disabled, should store contexts only in memory', () => {
-      rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
-
-      rumPublicApi.setGlobalContext({ foo: 'bar' })
-      expect(rumPublicApi.getGlobalContext()).toEqual({ foo: 'bar' })
-      expect(localStorage.getItem('_dd_c_rum_2')).toBeNull()
-
-      rumPublicApi.setUser({ id: 'foo', qux: 'qix' })
-      expect(rumPublicApi.getUser()).toEqual({ id: 'foo', qux: 'qix' })
-      expect(localStorage.getItem('_dd_c_rum_1')).toBeNull()
-    })
-
-    it('when enabled, should maintain user context in local storage', () => {
-      rumPublicApi.init({ ...DEFAULT_INIT_CONFIGURATION, storeContextsAcrossPages: true })
-
-      rumPublicApi.setUser({ id: 'foo', qux: 'qix' })
-      expect(rumPublicApi.getUser()).toEqual({ id: 'foo', qux: 'qix' })
-      expect(localStorage.getItem('_dd_c_rum_1')).toBe('{"id":"foo","qux":"qix"}')
-
-      rumPublicApi.setUserProperty('foo', 'bar')
-      expect(rumPublicApi.getUser()).toEqual({ id: 'foo', qux: 'qix', foo: 'bar' })
-      expect(localStorage.getItem('_dd_c_rum_1')).toBe('{"id":"foo","qux":"qix","foo":"bar"}')
-
-      rumPublicApi.removeUserProperty('foo')
-      expect(rumPublicApi.getUser()).toEqual({ id: 'foo', qux: 'qix' })
-      expect(localStorage.getItem('_dd_c_rum_1')).toBe('{"id":"foo","qux":"qix"}')
-
-      rumPublicApi.clearUser()
-      expect(rumPublicApi.getUser()).toEqual({})
-      expect(localStorage.getItem('_dd_c_rum_1')).toBe('{}')
-    })
-
-    it('when enabled, should maintain global context in local storage', () => {
-      rumPublicApi.init({ ...DEFAULT_INIT_CONFIGURATION, storeContextsAcrossPages: true })
-
-      rumPublicApi.setGlobalContext({ qux: 'qix' })
-      expect(rumPublicApi.getGlobalContext()).toEqual({ qux: 'qix' })
-      expect(localStorage.getItem('_dd_c_rum_2')).toBe('{"qux":"qix"}')
-
-      rumPublicApi.setGlobalContextProperty('foo', 'bar')
-      expect(rumPublicApi.getGlobalContext()).toEqual({ qux: 'qix', foo: 'bar' })
-      expect(localStorage.getItem('_dd_c_rum_2')).toBe('{"qux":"qix","foo":"bar"}')
-
-      rumPublicApi.removeGlobalContextProperty('foo')
-      expect(rumPublicApi.getGlobalContext()).toEqual({ qux: 'qix' })
-      expect(localStorage.getItem('_dd_c_rum_2')).toBe('{"qux":"qix"}')
-
-      rumPublicApi.clearGlobalContext()
-      expect(rumPublicApi.getGlobalContext()).toEqual({})
-      expect(localStorage.getItem('_dd_c_rum_2')).toBe('{}')
-    })
-
-    // TODO in next major, buffer context calls to correctly apply before init set/remove/clear
-    it('when enabled, before init context values should override local storage values', () => {
-      localStorage.setItem('_dd_c_rum_1', '{"foo":"bar","qux":"qix"}')
-      localStorage.setItem('_dd_c_rum_2', '{"foo":"bar","qux":"qix"}')
-      rumPublicApi.setUserProperty('foo', 'user')
-      rumPublicApi.setGlobalContextProperty('foo', 'global')
-
-      rumPublicApi.init({ ...DEFAULT_INIT_CONFIGURATION, storeContextsAcrossPages: true })
-
-      expect(rumPublicApi.getUser()).toEqual({ foo: 'user', qux: 'qix' })
-      expect(rumPublicApi.getGlobalContext()).toEqual({ foo: 'global', qux: 'qix' })
-      expect(localStorage.getItem('_dd_c_rum_1')).toBe('{"foo":"user","qux":"qix"}')
-      expect(localStorage.getItem('_dd_c_rum_2')).toBe('{"foo":"global","qux":"qix"}')
-    })
-  })
-
   describe('startDurationVital', () => {
     it('should call startDurationVital on the startRum result', () => {
       const startDurationVitalSpy = jasmine.createSpy()
@@ -929,7 +708,8 @@ describe('rum public api', () => {
           ...noopStartRum(),
           startDurationVital: startDurationVitalSpy,
         }),
-        noopRecorderApi
+        noopRecorderApi,
+        noopProfilerApi
       )
       rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
       rumPublicApi.startDurationVital('foo', { context: { foo: 'bar' }, description: 'description-value' })
@@ -948,7 +728,8 @@ describe('rum public api', () => {
           ...noopStartRum(),
           stopDurationVital: stopDurationVitalSpy,
         }),
-        noopRecorderApi
+        noopRecorderApi,
+        noopProfilerApi
       )
       rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
       rumPublicApi.startDurationVital('foo', { context: { foo: 'bar' }, description: 'description-value' })
@@ -966,7 +747,8 @@ describe('rum public api', () => {
           ...noopStartRum(),
           stopDurationVital: stopDurationVitalSpy,
         }),
-        noopRecorderApi
+        noopRecorderApi,
+        noopProfilerApi
       )
       rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
       const ref = rumPublicApi.startDurationVital('foo', { context: { foo: 'bar' }, description: 'description-value' })
@@ -986,7 +768,8 @@ describe('rum public api', () => {
           ...noopStartRum(),
           addDurationVital: addDurationVitalSpy,
         }),
-        noopRecorderApi
+        noopRecorderApi,
+        noopProfilerApi
       )
       const startTime = 1707755888000 as TimeStamp
       rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
@@ -1008,7 +791,7 @@ describe('rum public api', () => {
   })
 
   it('should provide sdk version', () => {
-    const rumPublicApi = makeRumPublicApi(noopStartRum, noopRecorderApi)
+    const rumPublicApi = makeRumPublicApi(noopStartRum, noopRecorderApi, noopProfilerApi)
     expect(rumPublicApi.version).toBe('test')
   })
 
@@ -1023,7 +806,8 @@ describe('rum public api', () => {
           ...noopStartRum(),
           setViewName: setViewNameSpy,
         }),
-        noopRecorderApi
+        noopRecorderApi,
+        noopProfilerApi
       )
     })
 
@@ -1048,7 +832,8 @@ describe('rum public api', () => {
           setViewContext: setViewContextSpy,
           setViewContextProperty: setViewContextPropertySpy,
         }),
-        noopRecorderApi
+        noopRecorderApi,
+        noopProfilerApi
       )
     })
 
@@ -1082,7 +867,8 @@ describe('rum public api', () => {
           ...noopStartRum(),
           getViewContext: getViewContextSpy,
         }),
-        noopRecorderApi
+        noopRecorderApi,
+        noopProfilerApi
       )
     })
 
