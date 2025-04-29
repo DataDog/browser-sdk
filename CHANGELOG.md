@@ -18,6 +18,41 @@
 
 ---
 
+## v6.6.4
+
+**Public Changes:**
+
+- ✨ Add publicPath configuration to webpack setups ([#3488](https://github.com/DataDog/browser-sdk/pull/3488)) [LOGS] [RUM-SLIM] [RUM] [WORKER]
+- ✨ Allow to retrieve records in the developer-extension Replay tab ([#3482](https://github.com/DataDog/browser-sdk/pull/3482))
+- ✨ [RUM-9302] Page state consolidation ([#3454](https://github.com/DataDog/browser-sdk/pull/3454)) [RUM] [RUM-REACT] [RUM-SLIM]
+- 🐛 [devext] fix "Use development bundle on NPM setup" ([#3502](https://github.com/DataDog/browser-sdk/pull/3502)) [LOGS] [RUM-SLIM] [RUM] [WORKER]
+- 🐛 [RUM-9465] Add support for parsing Safari Wasm stack trace ([#3481](https://github.com/DataDog/browser-sdk/pull/3481)) [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+- 🐛 Add profiler chunk URL to redirect rules and constants ([#3485](https://github.com/DataDog/browser-sdk/pull/3485))
+- 🐛 Improve context properties sanitization ([#3475](https://github.com/DataDog/browser-sdk/pull/3475)) [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+
+**Internal Changes:**
+
+- 👷️scripts: extract test:e2e:init ([#3501](https://github.com/DataDog/browser-sdk/pull/3501))
+- 👷 Update PR template ([#3490](https://github.com/DataDog/browser-sdk/pull/3490))
+- 👷 Update dependency express to v5 ([#3473](https://github.com/DataDog/browser-sdk/pull/3473))
+- 👷 Update all non-major dependencies ([#3495](https://github.com/DataDog/browser-sdk/pull/3495)) [RUM-REACT] [WORKER]
+- 👷 Update all non-major dependencies ([#3472](https://github.com/DataDog/browser-sdk/pull/3472)) [RUM-REACT] [WORKER]
+- 👷 Enable timestamps for GitLab CI logs in configuration ([#3462](https://github.com/DataDog/browser-sdk/pull/3462))
+- 👷 Update chunk name formatting to use underscore instead of dash ([#3483](https://github.com/DataDog/browser-sdk/pull/3483))
+- 👷 use dash instead of dot for joining chunk name in size stats ([#3474](https://github.com/DataDog/browser-sdk/pull/3474))
+- 👷 [RUM-9370] Remove unused code ([#3470](https://github.com/DataDog/browser-sdk/pull/3470)) [RUM] [RUM-REACT] [RUM-SLIM]
+- 👷 add lazy loaded bundles sizes ([#3468](https://github.com/DataDog/browser-sdk/pull/3468))
+- ✅ hide unexpected unit test logs ([#3486](https://github.com/DataDog/browser-sdk/pull/3486)) [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+- ⚗️️✨️[RUM-9672] trace baggage: rename `usr` to `user` ([#3505](https://github.com/DataDog/browser-sdk/pull/3505)) [RUM] [RUM-REACT] [RUM-SLIM]
+- ♻️ [RUM-9549] Decouple the session context from assembly using hooks ([#3489](https://github.com/DataDog/browser-sdk/pull/3489)) [RUM] [RUM-REACT] [RUM-SLIM]
+- 🔥 Remove url missing telemetry ([#3497](https://github.com/DataDog/browser-sdk/pull/3497)) [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+- ♻️trackCumulativeLayoutShift: Return the source with the biggest impacting area [RUM] [RUM-REACT] [RUM-SLIM]
+- ♻️ Decouple the connectivity context from assembly using hooks ([#3494](https://github.com/DataDog/browser-sdk/pull/3494)) [RUM] [RUM-REACT] [RUM-SLIM]
+- ♻️ Decouple the display context from assembly using hooks ([#3493](https://github.com/DataDog/browser-sdk/pull/3493)) [RUM] [RUM-REACT] [RUM-SLIM]
+- [RUM-8527] remove react doc ([#3487](https://github.com/DataDog/browser-sdk/pull/3487)) [RUM-REACT]
+- ⚗️ ✨ [RUM-8365] Propagate session id in `baggage` header ([#3430](https://github.com/DataDog/browser-sdk/pull/3430)) [RUM] [RUM-REACT] [RUM-SLIM]
+- ♻️ [RUM-8767] Use assembly hooks for global, user and account context ([#3457](https://github.com/DataDog/browser-sdk/pull/3457)) [RUM] [RUM-REACT] [RUM-SLIM]
+
 ## v6.6.3
 
 **Public Changes:**
