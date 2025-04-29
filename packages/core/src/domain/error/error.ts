@@ -37,17 +37,6 @@ export function computeRawError({
     stackTrace = computeStackTrace(originalError)
   }
 
-  const message = computeMessage(stackTrace, isErrorInstance, nonErrorPrefix, originalError)
-  const causes = isErrorInstance ? flattenErrorCauses(originalError as ErrorWithCause, source) : undefined
-  const stack = stackTrace
-    ? toStackTraceString(stackTrace)
-    : useFallbackStack
-      ? NO_ERROR_STACK_PRESENT_MESSAGE
-      : undefined
-  const type = stackTrace ? stackTrace.name : undefined
-  const fingerprint = tryToGetFingerprint(originalError)
-  const context = tryToGetErrorContext(originalError)
-
   return {
     startClocks,
     source,
@@ -55,12 +44,12 @@ export function computeRawError({
     handlingStack,
     componentStack,
     originalError,
-    type,
-    message,
-    stack,
-    causes,
-    fingerprint,
-    context,
+    type: stackTrace ? stackTrace.name : undefined,
+    message: computeMessage(stackTrace, isErrorInstance, nonErrorPrefix, originalError),
+    stack: stackTrace ? toStackTraceString(stackTrace) : useFallbackStack ? NO_ERROR_STACK_PRESENT_MESSAGE : undefined,
+    causes: isErrorInstance ? flattenErrorCauses(originalError as ErrorWithCause, source) : undefined,
+    fingerprint: tryToGetFingerprint(originalError),
+    context: tryToGetErrorContext(originalError),
   }
 }
 
