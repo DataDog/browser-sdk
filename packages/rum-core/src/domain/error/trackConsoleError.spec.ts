@@ -42,6 +42,8 @@ describe('trackConsoleError', () => {
       causes: undefined,
       context: undefined,
       originalError: error,
+      type: 'TypeError',
+      componentStack: undefined,
     })
   })
 
@@ -66,6 +68,8 @@ describe('trackConsoleError', () => {
       causes: undefined,
       context: undefined,
       originalError: error,
+      type: 'Error',
+      componentStack: undefined,
     })
   })
 })

@@ -97,7 +97,7 @@ describe('console collection', () => {
       fingerprint: 'my-fingerprint',
       causes: undefined,
       handling: ErrorHandling.HANDLED,
-      kind: undefined,
+      kind: 'Error',
       message: undefined,
     })
   })
@@ -157,7 +157,7 @@ describe('console collection', () => {
         },
       ],
       fingerprint: undefined,
-      kind: undefined,
+      kind: 'Error',
       message: undefined,
     })
   })
