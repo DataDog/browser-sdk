@@ -17,7 +17,7 @@ export type SessionReplayPlayerState = {
 const sandboxOrigin = 'https://session-replay-datadoghq.com'
 // To follow web-ui development, this version will need to be manually updated from time to time.
 // When doing that, be sure to update types and implement any protocol changes.
-const sandboxVersion = '0.116.0'
+const sandboxVersion = '0.119.0'
 const sandboxParams = new URLSearchParams({
   staticContext: JSON.stringify({
     tabId: 'xxx',
