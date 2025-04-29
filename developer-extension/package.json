@@ -7,7 +7,7 @@
     "dev": "webpack --mode development --watch"
   },
   "devDependencies": {
-    "@types/chrome": "0.0.315",
+    "@types/chrome": "0.0.317",
     "@types/react": "19.1.2",
     "@types/react-dom": "19.1.2",
     "@webextension-toolbox/webpack-webextension-plugin": "3.3.1",
@@ -15,14 +15,14 @@
     "css-loader": "7.1.2",
     "html-webpack-plugin": "5.6.3",
     "style-loader": "4.0.0",
-    "webpack": "5.99.6"
+    "webpack": "5.99.7"
   },
   "dependencies": {
     "@datadog/browser-core": "workspace:*",
     "@datadog/browser-logs": "workspace:*",
     "@datadog/browser-rum": "workspace:*",
-    "@mantine/core": "7.17.4",
-    "@mantine/hooks": "7.17.4",
+    "@mantine/core": "7.17.5",
+    "@mantine/hooks": "7.17.5",
     "@tabler/icons-react": "3.31.0",
     "clsx": "2.1.1",
     "react": "19.1.0",
