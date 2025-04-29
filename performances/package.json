@@ -1,7 +1,7 @@
 {
   "private": true,
   "name": "performances",
-  "version": "6.6.3",
+  "version": "6.6.4",
   "scripts": {
     "start": "ts-node ./src/main.ts"
   },
