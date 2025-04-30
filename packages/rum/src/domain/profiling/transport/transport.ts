@@ -64,14 +64,11 @@ function buildProfileEvent(
   const profileAttributes = buildProfileEventAttributes(profilerTrace, applicationId, sessionId)
   const profileEventTags = buildProfileEventTags(tags)
 
-  const profilerStartClocks = relativeToClocks(profilerTrace.startTime)
-  const profilerEndClocks = relativeToClocks(profilerTrace.endTime)
-
   const profileEvent: ProfileEvent = {
     ...profileAttributes,
     attachments: ['wall-time.json'],
-    start: new Date(profilerStartClocks.timeStamp).toISOString(),
-    end: new Date(profilerEndClocks.timeStamp).toISOString(),
+    start: new Date(profilerTrace.startClocks.timeStamp).toISOString(),
+    end: new Date(profilerTrace.endClocks.timeStamp).toISOString(),
     family: 'chrome',
     runtime: 'chrome',
     format: 'json',

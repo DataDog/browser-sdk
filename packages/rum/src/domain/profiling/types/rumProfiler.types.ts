@@ -1,10 +1,10 @@
-import type { TimeoutId, RelativeTime } from '@datadog/browser-core'
+import type { TimeoutId, RelativeTime, ClocksState, Duration } from '@datadog/browser-core'
 import type { ViewHistoryEntry } from '@datadog/browser-rum-core'
 import type { ProfilerTrace, Profiler } from './profilerApi.types'
 
 export interface RumViewEntry {
   /** Detected start time of view */
-  readonly startTime: RelativeTime
+  readonly startClocks: ClocksState
   /** RUM view id */
   readonly viewId: string
   /** RUM view name */
@@ -15,11 +15,11 @@ export interface RUMProfilerLongTaskEntry {
   /** RUM Long Task id */
   readonly id: string | undefined
   /** RUM Long Task duration */
-  readonly duration: number
+  readonly duration: Duration
   /** RUM Long Task entry type */
   readonly entryType: string
   /** RUM Long Task start time */
-  readonly startTime: RelativeTime
+  readonly startClocks: ClocksState
 }
 
 /**
@@ -34,11 +34,11 @@ export interface RumProfilerEnrichmentData {
 
 export interface RumProfilerTrace extends ProfilerTrace, RumProfilerEnrichmentData {
   /** High resolution time when profiler trace started, relative to the profiling session's time origin */
-  readonly startTime: RelativeTime
+  readonly startClocks: ClocksState
   /** High resolution time when profiler trace ended, relative to the profiling session's time origin */
-  readonly endTime: RelativeTime
+  readonly endClocks: ClocksState
   /** Time origin of the profiling session */
-  readonly timeOrigin: number
+  readonly clocksOrigin: ClocksState
   /** Sample interval in milliseconds */
   readonly sampleInterval: number
 }
@@ -66,7 +66,7 @@ export interface RumProfilerRunningInstance extends RumProfilerEnrichmentData {
   /** Current profiler instance */
   readonly profiler: Profiler
   /** High resolution time when profiler session started */
-  readonly startTime: RelativeTime
+  readonly startClocks: ClocksState
   /** Timeout id to stop current session */
   readonly timeoutId: TimeoutId
   /** Clean-up tasks to execute after running the Profiler */
