@@ -1,7 +1,6 @@
 import {
   addTelemetryDebug,
   currentDrift,
-  relativeToClocks,
   type EndpointBuilder,
   type Payload,
 } from '@datadog/browser-core'

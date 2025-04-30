@@ -127,7 +127,7 @@ export function createRumProfiler(
     // Whenever the View is updated, we add a views entry to the profiler instance.
     const viewUpdatedSubscription = lifeCycle.subscribe(LifeCycleEventType.VIEW_CREATED, (view) => {
       // Note: `view.name` is only filled when users use manual view creation via `startView` method.
-      collectViewEntry({ viewId: view.id, viewName: view.name, startTime: view.startClocks.relative })
+      collectViewEntry({ viewId: view.id, viewName: view.name, startClocks: view.startClocks })
     })
     cleanupTasks.push(viewUpdatedSubscription.unsubscribe)
 
@@ -205,7 +205,7 @@ export function createRumProfiler(
     const { startClocks, longTasks, views } = lastInstance
 
     // Capturing when we stop the profiler so we use this time as a reference to clean-up long task registry, eg. remove the long tasks that we collected already
-    const collectTime = performance.now()
+    const collectClocks = clocksNow()
 
     // Stop current profiler to get trace
     await lastInstance.profiler
@@ -235,7 +235,7 @@ export function createRumProfiler(
         )
 
         // Clear long task registry, remove entries that we collected already (eg. avoid slowly growing memory usage by keeping outdated entries)
-        deleteLongTaskIdsBefore(collectTime)
+        deleteLongTaskIdsBefore(collectClocks)
       })
       .catch(monitorError)
   }
@@ -291,12 +291,14 @@ export function createRumProfiler(
         continue
       }
 
+      const startClocks = relativeToClocks(entry.startTime as RelativeTime)
+
       // Store Long Task entry, which is a lightweight version of the PerformanceEntry
       instance.longTasks.push({
-        id: getLongTaskId(entry),
+        id: getLongTaskId({ startClocks }),
         duration: entry.duration as Duration,
         entryType: entry.entryType,
-        startClocks: relativeToClocks(entry.startTime as RelativeTime),
+        startClocks,
       })
     }
   }

@@ -1,6 +1,6 @@
 import type { RawRumEvent } from '@datadog/browser-rum-core'
 import { RumEventType } from '@datadog/browser-rum-core'
-
+import type { RelativeTime } from '@datadog/browser-core'
 import { setLongTaskId } from './utils/longTaskRegistry'
 
 /**
@@ -14,7 +14,7 @@ export function mayStoreLongTaskIdForProfilerCorrelation({
   startTime,
 }: {
   rawRumEvent: RawRumEvent
-  startTime: number
+  startTime: RelativeTime
 }) {
   if (rawRumEvent.type !== RumEventType.LONG_TASK) {
     return
