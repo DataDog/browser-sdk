@@ -1,3 +1,4 @@
+import type { RelativeTime } from '@datadog/browser-core'
 import {
   addEventListener,
   clearTimeout,
@@ -6,6 +7,8 @@ import {
   monitorError,
   display,
   getGlobalObject,
+  relativeNow,
+  relativeToClocks,
 } from '@datadog/browser-core'
 
 import type { LifeCycle, RumConfiguration, RumSessionManager, ViewHistoryEntry } from '@datadog/browser-rum-core'
@@ -168,7 +171,7 @@ export function createRumProfiler(
     // Kick-off the new instance
     instance = {
       state: 'running',
-      startTime: performance.now(),
+      startTime: relativeNow(),
       profiler,
       timeoutId: setTimeout(startNextProfilerInstance, profilerConfiguration.collectIntervalMs),
       longTasks: [],
@@ -206,7 +209,7 @@ export function createRumProfiler(
     await lastInstance.profiler
       .stop()
       .then((trace) => {
-        const endTime = performance.now()
+        const endTime = relativeNow()
 
         const hasLongTasks = longTasks.length > 0
         const isBelowDurationThreshold = endTime - startTime < profilerConfiguration.minProfileDurationMs
@@ -291,7 +294,7 @@ export function createRumProfiler(
         id: getLongTaskId(entry),
         duration: entry.duration,
         entryType: entry.entryType,
-        startTime: entry.startTime,
+        startTime: relativeToClocks(entry.startTime as RelativeTime).relative,
       })
     }
   }

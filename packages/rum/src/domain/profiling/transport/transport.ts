@@ -1,4 +1,10 @@
-import { addTelemetryDebug, type EndpointBuilder, type Payload } from '@datadog/browser-core'
+import {
+  addTelemetryDebug,
+  currentDrift,
+  relativeToClocks,
+  type EndpointBuilder,
+  type Payload,
+} from '@datadog/browser-core'
 import type { RumProfilerTrace } from '../types'
 import { getLongTaskId } from '../utils/longTaskRegistry'
 
@@ -17,6 +23,9 @@ interface ProfileEvent extends ProfileEventAttributes {
   format: 'json'
   version: 4
   tags_profiler: string
+  _dd: {
+    clock_drift: number
+  }
 }
 
 type SendProfileFunction = (
@@ -55,19 +64,22 @@ function buildProfileEvent(
   const profileAttributes = buildProfileEventAttributes(profilerTrace, applicationId, sessionId)
   const profileEventTags = buildProfileEventTags(tags)
 
-  const start = new Date(profilerTrace.timeOrigin + profilerTrace.startTime)
-  const end = new Date(profilerTrace.timeOrigin + profilerTrace.endTime)
+  const profilerStartClocks = relativeToClocks(profilerTrace.startTime)
+  const profilerEndClocks = relativeToClocks(profilerTrace.endTime)
 
   const profileEvent: ProfileEvent = {
     ...profileAttributes,
     attachments: ['wall-time.json'],
-    start: start.toISOString(),
-    end: end.toISOString(),
+    start: new Date(profilerStartClocks.timeStamp).toISOString(),
+    end: new Date(profilerEndClocks.timeStamp).toISOString(),
     family: 'chrome',
     runtime: 'chrome',
     format: 'json',
     version: 4, // Ingestion event version (not the version application tag)
     tags_profiler: profileEventTags.join(','),
+    _dd: {
+      clock_drift: currentDrift(),
+    },
   }
 
   return profileEvent
