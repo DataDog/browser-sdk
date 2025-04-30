@@ -1,5 +1,6 @@
 import { type Duration, type RelativeTime, type ServerDuration } from '@datadog/browser-core'
-import { addExperimentalFeatures, ExperimentalFeature, resetExperimentalFeatures } from '@datadog/browser-core'
+import { ExperimentalFeature } from '@datadog/browser-core'
+import { mockExperimentalFeatures } from '@datadog/browser-core/test'
 import { RumPerformanceEntryType, type RumPerformanceResourceTiming } from '../../browser/performanceObservable'
 import {
   MAX_ATTRIBUTE_VALUE_CHAR_LENGTH,
@@ -296,12 +297,8 @@ describe('shouldTrackResource', () => {
   })
 
   it('should allow requests on intake endpoints when TRACK_INTAKE_REQUESTS is enabled', () => {
-    try {
-      addExperimentalFeatures([ExperimentalFeature.TRACK_INTAKE_REQUESTS])
-      expect(isAllowedRequestUrl(`https://rum-intake.com/v1/input/abcde?${intakeParameters}`)).toBe(true)
-    } finally {
-      resetExperimentalFeatures()
-    }
+    mockExperimentalFeatures([ExperimentalFeature.TRACK_INTAKE_REQUESTS])
+    expect(isAllowedRequestUrl(`https://rum-intake.com/v1/input/abcde?${intakeParameters}`)).toBe(true)
   })
 
   it('should exclude requests on intakes endpoints with different client parameters', () => {
