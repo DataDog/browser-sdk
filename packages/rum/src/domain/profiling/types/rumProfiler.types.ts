@@ -1,4 +1,4 @@
-import type { TimeoutId, RelativeTime, ClocksState, Duration } from '@datadog/browser-core'
+import type { TimeoutId, ClocksState, Duration } from '@datadog/browser-core'
 import type { ViewHistoryEntry } from '@datadog/browser-rum-core'
 import type { ProfilerTrace, Profiler } from './profilerApi.types'
 
