@@ -9,6 +9,7 @@ const logger = createLogger('useSettings')
 
 const DEFAULT_SETTINGS: Readonly<Settings> = {
   useDevBundles: false,
+  useDevReplaySandbox: false,
   useRumSlim: false,
   blockIntakeRequests: false,
   autoFlush: false,

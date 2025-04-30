@@ -47,6 +47,7 @@ export type EventCollectionStrategy = 'sdk' | 'requests'
 
 export interface Settings {
   useDevBundles: DevBundlesOverride
+  useDevReplaySandbox: boolean
   useRumSlim: boolean
   blockIntakeRequests: boolean
   autoFlush: boolean
