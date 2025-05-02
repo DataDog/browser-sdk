@@ -1,5 +1,5 @@
 *
-!/bundle/worker.js
+!/bundle/**/*.js
 !/src/**/*
 /src/**/*.spec.ts
 /src/**/*.specHelper.ts

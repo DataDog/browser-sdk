@@ -1,5 +1,5 @@
 *
-!/bundle/datadog-rum-slim.js
+!/bundle/**/*.js
 !/cjs/**/*
 !/esm/**/*
 !/src/**/*
