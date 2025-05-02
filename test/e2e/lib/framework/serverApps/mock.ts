@@ -1,7 +1,6 @@
-import type { ServerResponse } from 'http'
 import * as url from 'url'
 import cors from 'cors'
-import express from 'express'
+import express, { type Response } from 'express'
 import { getSdkBundlePath, getTestAppBundlePath } from '../sdkBuilds'
 import type { MockServerApp, Servers } from '../httpServers'
 import { DEV_SERVER_BASE_URL } from '../../helpers/playwright'
@@ -39,7 +38,7 @@ export function createMockServerApp(servers: Servers, setup: string): MockServer
     generateLargeResponse(res, chunkText)
   })
 
-  function generateLargeResponse(res: ServerResponse, chunkText: string) {
+  function generateLargeResponse(res: Response, chunkText: string) {
     let bytesWritten = 0
     let timeoutId: NodeJS.Timeout
 
@@ -93,26 +92,23 @@ export function createMockServerApp(servers: Servers, setup: string): MockServer
   })
 
   app.get('/', (_req, res) => {
-    res.header(
-      'Content-Security-Policy',
-      [
-        `connect-src ${servers.intake.url} ${servers.base.url} ${servers.crossOrigin.url}`,
-        "script-src 'self' 'unsafe-inline'",
-        'worker-src blob:',
-      ].join(';')
-    )
+    addCspHeader(servers, res)
     res.send(setup)
     res.end()
   })
 
   app.get('/no-blob-worker-csp', (_req, res) => {
-    res.header(
-      'Content-Security-Policy',
-      [
-        `connect-src ${servers.intake.url} ${servers.base.url} ${servers.crossOrigin.url}`,
-        "script-src 'self' 'unsafe-inline'",
-      ].join(';')
-    )
+    addCspHeader(servers, res, { allowBlobWorker: false })
+    res.send(setup)
+    res.end()
+  })
+
+  app.get('/trusted-types-csp', (req, res) => {
+    const policies = ['datadog-chunks', 'datadog-worker']
+    if (typeof req.query['extra-policy'] === 'string') {
+      policies.push(req.query['extra-policy'])
+    }
+    addCspHeader(servers, res, { useTrustedTypes: true })
     res.send(setup)
     res.end()
   })
@@ -149,7 +145,7 @@ export function createMockServerApp(servers: Servers, setup: string): MockServer
 
 // We fetch and pipe the file content instead of redirecting to avoid creating different behavior between CI and local dev
 // This way both environments serve the files from the same origin with the same CSP rules
-function forwardToDevServer(originalUrl: string, res: ServerResponse) {
+function forwardToDevServer(originalUrl: string, res: Response) {
   const url = `${DEV_SERVER_BASE_URL}${originalUrl}`
 
   fetch(url)
@@ -169,4 +165,26 @@ function forwardToDevServer(originalUrl: string, res: ServerResponse) {
       )
     })
     .catch(() => console.error(`Error fetching ${url}, did you run 'yarn dev'?`))
+}
+
+function addCspHeader(
+  servers: Servers,
+  res: Response,
+  { allowBlobWorker = true, useTrustedTypes = false }: { allowBlobWorker?: boolean; useTrustedTypes?: boolean } = {}
+) {
+  const directives = [
+    // Needed to send requests to various servers
+    `connect-src ${servers.intake.url} ${servers.base.url} ${servers.crossOrigin.url}`,
+    // Needed to load scripts from the same origin, and executing inline scripts (SDK setups and
+    // page.evaluate)
+    "script-src 'self' 'unsafe-inline'",
+  ]
+  if (allowBlobWorker) {
+    directives.push("worker-src 'self' blob:")
+  }
+  if (useTrustedTypes) {
+    directives.push("require-trusted-types-for 'script'")
+    directives.push('trusted-types datadog-chunks datadog-worker')
+  }
+  res.header('Content-Security-Policy', directives.join(';'))
 }

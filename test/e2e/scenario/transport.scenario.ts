@@ -51,5 +51,31 @@ test.describe('transport', () => {
           expect(cspDocLog, "'CSP doc' log").toBeTruthy()
         })
       })
+
+    createTest('workerUrl initialization parameter')
+      .withRum({ compressIntakeRequests: true, workerUrl: '/worker.js' })
+      .withBasePath('/no-blob-worker-csp')
+      .run(async ({ intakeRegistry, flushEvents }) => {
+        await flushEvents()
+        expect(intakeRegistry.rumRequests.length).toBeGreaterThan(0)
+      })
+
+    test.describe('Trusted Types CSP', () => {
+      createTest('supports Trusted Types CSP')
+        .withRum({ compressIntakeRequests: true })
+        .withBasePath('/trusted-types-csp')
+        .run(async ({ flushEvents, intakeRegistry }) => {
+          await flushEvents()
+          expect(intakeRegistry.rumRequests.length).toBeGreaterThan(0)
+        })
+
+      createTest('supports Trusted Types CSP with workerUrl')
+        .withRum({ compressIntakeRequests: true, workerUrl: '/worker.js' })
+        .withBasePath('/trusted-types-csp')
+        .run(async ({ intakeRegistry, flushEvents }) => {
+          await flushEvents()
+          expect(intakeRegistry.rumRequests.length).toBeGreaterThan(0)
+        })
+    })
   })
 })
