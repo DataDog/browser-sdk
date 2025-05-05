@@ -2,7 +2,7 @@ import { monitor } from '@datadog/browser-core'
 import type { RumConfiguration } from '../configuration'
 import type { ViewportDimension } from '../../browser/viewportObservable'
 import { getViewportDimension, initViewportObservable } from '../../browser/viewportObservable'
-import type { Hooks, PartialRumEvent } from '../../hooks'
+import type { Hooks, DefaultRumEventAttributes } from '../../hooks'
 import { HookNames } from '../../hooks'
 
 export type DisplayContext = ReturnType<typeof startDisplayContext>
@@ -22,7 +22,7 @@ export function startDisplayContext(hooks: Hooks, configuration: RumConfiguratio
 
   hooks.register(
     HookNames.Assemble,
-    ({ eventType }): PartialRumEvent => ({
+    ({ eventType }): DefaultRumEventAttributes => ({
       type: eventType,
       display: viewport ? { viewport } : undefined,
     })

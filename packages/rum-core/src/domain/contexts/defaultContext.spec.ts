@@ -2,7 +2,7 @@ import type { Clock } from '@datadog/browser-core/test'
 import { mockClock, registerCleanupTask, mockEventBridge } from '@datadog/browser-core/test'
 import { timeStampNow, type RelativeTime } from '@datadog/browser-core'
 import { mockRumConfiguration } from '../../../test'
-import type { Hooks, PartialRumEvent } from '../../hooks'
+import type { Hooks, DefaultRumEventAttributes } from '../../hooks'
 import { createHooks, HookNames } from '../../hooks'
 import { startDefaultContext } from './defaultContext'
 
@@ -19,9 +19,12 @@ describe('startDefaultContext', () => {
 
     it('should set the rum default context', () => {
       startDefaultContext(hooks, mockRumConfiguration({ applicationId: '1' }))
-      const event = hooks.triggerHook(HookNames.Assemble, { eventType: 'view', startTime: 0 as RelativeTime })
+      const defaultRumEventAttributes = hooks.triggerHook(HookNames.Assemble, {
+        eventType: 'view',
+        startTime: 0 as RelativeTime,
+      })
 
-      expect(event).toEqual({
+      expect(defaultRumEventAttributes).toEqual({
         type: 'view',
         application: {
           id: '1',
@@ -40,14 +43,14 @@ describe('startDefaultContext', () => {
       const eventWithoutEventBridge = hooks.triggerHook(HookNames.Assemble, {
         eventType: 'view',
         startTime: 0 as RelativeTime,
-      }) as PartialRumEvent
+      }) as DefaultRumEventAttributes
 
       mockEventBridge()
 
       const eventWithEventBridge = hooks.triggerHook(HookNames.Assemble, {
         eventType: 'view',
         startTime: 0 as RelativeTime,
-      }) as PartialRumEvent
+      }) as DefaultRumEventAttributes
 
       expect(eventWithEventBridge._dd!.browser_sdk_version).toBeDefined()
       expect(eventWithoutEventBridge._dd!.browser_sdk_version).toBeUndefined()
@@ -59,7 +62,7 @@ describe('startDefaultContext', () => {
       const event = hooks.triggerHook(HookNames.Assemble, {
         eventType: 'view',
         startTime: 0 as RelativeTime,
-      }) as PartialRumEvent
+      }) as DefaultRumEventAttributes
 
       expect(event._dd!.configuration!.session_sample_rate).toBe(10)
       expect(event._dd!.configuration!.session_replay_sample_rate).toBe(20)

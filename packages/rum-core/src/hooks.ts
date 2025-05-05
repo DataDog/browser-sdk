@@ -21,7 +21,7 @@ type RecursivePartialExcept<T, K extends keyof T> = {
 
 // Define a partial RUM event type.
 // Ensuring the `type` field is always present improves type checking, especially in conditional logic in hooks (e.g., `if (eventType === 'view')`).
-export type PartialRumEvent = RecursivePartialExcept<RumEvent, 'type'>
+export type DefaultRumEventAttributes = RecursivePartialExcept<RumEvent, 'type'>
 
 // This is a workaround for an issue occurring when the Browser SDK is included in a TypeScript
 // project configured with `isolatedModules: true`. Even if the const enum is declared in this
@@ -35,7 +35,7 @@ export type HookCallbackMap = {
     eventType: RumEvent['type']
     startTime: RelativeTime
     duration?: Duration | undefined
-  }) => PartialRumEvent | SKIPPED | DISCARDED
+  }) => DefaultRumEventAttributes | SKIPPED | DISCARDED
 }
 
 export type Hooks = ReturnType<typeof createHooks>
@@ -58,7 +58,7 @@ export function createHooks() {
     triggerHook<K extends keyof HookCallbackMap>(
       hookName: K,
       param: Parameters<HookCallbackMap[K]>[0]
-    ): PartialRumEvent | DISCARDED {
+    ): DefaultRumEventAttributes | DISCARDED | undefined {
       const hookCallbacks = callbacks[hookName] || []
       const results = []
 
@@ -73,7 +73,9 @@ export function createHooks() {
         results.push(result)
       }
 
-      return (results.length > 0 ? combine(...(results as unknown as [object, object])) : {}) as PartialRumEvent
+      if (results.length !== 0) {
+        return combine(...(results as unknown as [object, object])) as DefaultRumEventAttributes
+      }
     },
   }
 }

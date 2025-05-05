@@ -1,5 +1,5 @@
 import { canUseEventBridge, currentDrift, round, timeStampNow } from '@datadog/browser-core'
-import type { Hooks, PartialRumEvent } from '../../hooks'
+import type { Hooks, DefaultRumEventAttributes } from '../../hooks'
 import { HookNames } from '../../hooks'
 import type { RumConfiguration } from '../configuration'
 
@@ -9,7 +9,7 @@ declare const __BUILD_ENV__SDK_VERSION__: string
 export function startDefaultContext(hooks: Hooks, configuration: RumConfiguration) {
   hooks.register(
     HookNames.Assemble,
-    ({ eventType }): PartialRumEvent => ({
+    ({ eventType }): DefaultRumEventAttributes => ({
       type: eventType,
       _dd: {
         format_version: 2,

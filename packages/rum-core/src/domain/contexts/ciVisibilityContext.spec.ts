@@ -3,7 +3,7 @@ import { Observable } from '@datadog/browser-core'
 import { mockCiVisibilityValues } from '../../../test'
 import type { CookieObservable } from '../../browser/cookieObservable'
 import { createHooks, HookNames } from '../../hooks'
-import type { Hooks, PartialRumEvent } from '../../hooks'
+import type { Hooks } from '../../hooks'
 import { SessionType } from '../rumSessionManager'
 import { startCiVisibilityContext } from './ciVisibilityContext'
 
@@ -26,9 +26,12 @@ describe('startCiVisibilityContext', () => {
       mockCiVisibilityValues('trace_id_value')
       ;({ stop: stopCiVisibility } = startCiVisibilityContext(hooks, cookieObservable))
 
-      const event = hooks.triggerHook(HookNames.Assemble, { eventType: 'view', startTime: 0 as RelativeTime })
+      const defaultRumEventAttributes = hooks.triggerHook(HookNames.Assemble, {
+        eventType: 'view',
+        startTime: 0 as RelativeTime,
+      })
 
-      expect(event).toEqual({
+      expect(defaultRumEventAttributes).toEqual({
         type: 'view',
         session: {
           type: SessionType.CI_TEST,
@@ -43,9 +46,12 @@ describe('startCiVisibilityContext', () => {
       mockCiVisibilityValues('trace_id_value', 'cookies')
       ;({ stop: stopCiVisibility } = startCiVisibilityContext(hooks, cookieObservable))
 
-      const event = hooks.triggerHook(HookNames.Assemble, { eventType: 'view', startTime: 0 as RelativeTime })
+      const defaultRumEventAttributes = hooks.triggerHook(HookNames.Assemble, {
+        eventType: 'view',
+        startTime: 0 as RelativeTime,
+      })
 
-      expect(event).toEqual({
+      expect(defaultRumEventAttributes).toEqual({
         type: 'view',
         session: {
           type: SessionType.CI_TEST,
@@ -61,9 +67,12 @@ describe('startCiVisibilityContext', () => {
       ;({ stop: stopCiVisibility } = startCiVisibilityContext(hooks, cookieObservable))
       cookieObservable.notify('trace_id_value_updated')
 
-      const event = hooks.triggerHook(HookNames.Assemble, { eventType: 'view', startTime: 0 as RelativeTime })
+      const defaultRumEventAttributes = hooks.triggerHook(HookNames.Assemble, {
+        eventType: 'view',
+        startTime: 0 as RelativeTime,
+      })
 
-      expect(event).toEqual({
+      expect(defaultRumEventAttributes).toEqual({
         type: 'view',
         session: {
           type: SessionType.CI_TEST,
@@ -78,18 +87,24 @@ describe('startCiVisibilityContext', () => {
       mockCiVisibilityValues(undefined)
       ;({ stop: stopCiVisibility } = startCiVisibilityContext(hooks, cookieObservable))
 
-      const event = hooks.triggerHook(HookNames.Assemble, { eventType: 'view', startTime: 0 as RelativeTime })
+      const defaultRumEventAttributes = hooks.triggerHook(HookNames.Assemble, {
+        eventType: 'view',
+        startTime: 0 as RelativeTime,
+      })
 
-      expect(event).toEqual({} as PartialRumEvent)
+      expect(defaultRumEventAttributes).toBeUndefined()
     })
 
     it('should not set ci visibility context if it is not a string', () => {
       mockCiVisibilityValues({ key: 'value' })
       ;({ stop: stopCiVisibility } = startCiVisibilityContext(hooks, cookieObservable))
 
-      const event = hooks.triggerHook(HookNames.Assemble, { eventType: 'view', startTime: 0 as RelativeTime })
+      const defaultRumEventAttributes = hooks.triggerHook(HookNames.Assemble, {
+        eventType: 'view',
+        startTime: 0 as RelativeTime,
+      })
 
-      expect(event).toEqual({} as PartialRumEvent)
+      expect(defaultRumEventAttributes).toBeUndefined()
     })
   })
 })

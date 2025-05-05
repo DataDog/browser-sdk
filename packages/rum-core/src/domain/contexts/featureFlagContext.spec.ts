@@ -4,7 +4,7 @@ import type { Clock } from '@datadog/browser-core/test'
 import { mockClock, registerCleanupTask } from '@datadog/browser-core/test'
 import { LifeCycle, LifeCycleEventType } from '../lifeCycle'
 import type { ViewCreatedEvent, ViewEndedEvent } from '../view/trackViews'
-import type { Hooks, PartialRumEvent } from '../../hooks'
+import type { Hooks } from '../../hooks'
 import { createHooks, HookNames } from '../../hooks'
 import type { RumConfiguration } from '../configuration'
 import { RumEventType } from '../../rawRumEvent.types'
@@ -39,17 +39,23 @@ describe('featureFlagContexts', () => {
 
       featureFlagContexts.addFeatureFlagEvaluation('feature', 'foo')
 
-      const vewEvent = hooks.triggerHook(HookNames.Assemble, { eventType: 'view', startTime: 0 as RelativeTime })
-      const errorEvent = hooks.triggerHook(HookNames.Assemble, { eventType: 'error', startTime: 0 as RelativeTime })
+      const defaultViewAttributes = hooks.triggerHook(HookNames.Assemble, {
+        eventType: 'view',
+        startTime: 0 as RelativeTime,
+      })
+      const defaultErrorAttributes = hooks.triggerHook(HookNames.Assemble, {
+        eventType: 'error',
+        startTime: 0 as RelativeTime,
+      })
 
-      expect(vewEvent).toEqual({
+      expect(defaultViewAttributes).toEqual({
         type: 'view',
         feature_flags: {
           feature: 'foo',
         },
       })
 
-      expect(errorEvent).toEqual({
+      expect(defaultErrorAttributes).toEqual({
         type: 'error',
         feature_flags: {
           feature: 'foo',
@@ -65,9 +71,12 @@ describe('featureFlagContexts', () => {
 
         featureFlagContexts.addFeatureFlagEvaluation('feature', 'foo')
 
-        const event = hooks.triggerHook(HookNames.Assemble, { eventType, startTime: 0 as RelativeTime })
+        const defaultRumEventAttributes = hooks.triggerHook(HookNames.Assemble, {
+          eventType,
+          startTime: 0 as RelativeTime,
+        })
 
-        expect(event).toEqual({
+        expect(defaultRumEventAttributes).toEqual({
           type: eventType,
           feature_flags: {
             feature: 'foo',
@@ -86,9 +95,12 @@ describe('featureFlagContexts', () => {
       featureFlagContexts.addFeatureFlagEvaluation('feature3', true)
       featureFlagContexts.addFeatureFlagEvaluation('feature4', { foo: 'bar' })
 
-      const event = hooks.triggerHook(HookNames.Assemble, { eventType: 'view', startTime: 0 as RelativeTime })
+      const defaultRumEventAttributes = hooks.triggerHook(HookNames.Assemble, {
+        eventType: 'view',
+        startTime: 0 as RelativeTime,
+      })
 
-      expect(event).toEqual({
+      expect(defaultRumEventAttributes).toEqual({
         type: 'view',
         feature_flags: {
           feature: 'foo',
@@ -116,11 +128,17 @@ describe('featureFlagContexts', () => {
       clock.tick(10)
       featureFlagContexts.addFeatureFlagEvaluation('feature', 'two')
 
-      const eventOne = hooks.triggerHook(HookNames.Assemble, { eventType: 'view', startTime: 5 as RelativeTime })
-      const eventTwo = hooks.triggerHook(HookNames.Assemble, { eventType: 'view', startTime: 15 as RelativeTime })
+      const defaultEventOneAttributes = hooks.triggerHook(HookNames.Assemble, {
+        eventType: 'view',
+        startTime: 5 as RelativeTime,
+      })
+      const defaultEventTwoAttributes = hooks.triggerHook(HookNames.Assemble, {
+        eventType: 'view',
+        startTime: 15 as RelativeTime,
+      })
 
-      expect(eventOne).toEqual({ type: 'view', feature_flags: { feature: 'one' } })
-      expect(eventTwo).toEqual({ type: 'view', feature_flags: { feature: 'two' } })
+      expect(defaultEventOneAttributes).toEqual({ type: 'view', feature_flags: { feature: 'one' } })
+      expect(defaultEventTwoAttributes).toEqual({ type: 'view', feature_flags: { feature: 'two' } })
     })
 
     /**
@@ -132,12 +150,12 @@ describe('featureFlagContexts', () => {
         startClocks: relativeToClocks(0 as RelativeTime),
       } as ViewCreatedEvent)
 
-      const event = hooks.triggerHook(HookNames.Assemble, {
+      const defaultRumEventAttributes = hooks.triggerHook(HookNames.Assemble, {
         eventType: 'view',
         startTime: 0 as RelativeTime,
       })
 
-      expect(event).toEqual({} as PartialRumEvent)
+      expect(defaultRumEventAttributes).toBeUndefined()
     })
 
     it('should replace existing feature flag evaluations for the current view', () => {
@@ -149,9 +167,12 @@ describe('featureFlagContexts', () => {
       featureFlagContexts.addFeatureFlagEvaluation('feature2', 'baz')
       featureFlagContexts.addFeatureFlagEvaluation('feature', 'bar')
 
-      const event = hooks.triggerHook(HookNames.Assemble, { eventType: 'view', startTime: 0 as RelativeTime })
+      const defaultRumEventAttributes = hooks.triggerHook(HookNames.Assemble, {
+        eventType: 'view',
+        startTime: 0 as RelativeTime,
+      })
 
-      expect(event).toEqual({ type: 'view', feature_flags: { feature: 'bar', feature2: 'baz' } })
+      expect(defaultRumEventAttributes).toEqual({ type: 'view', feature_flags: { feature: 'bar', feature2: 'baz' } })
     })
   })
 })

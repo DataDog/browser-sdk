@@ -1,6 +1,6 @@
 import type { RelativeTime } from '@datadog/browser-core'
 import { mockSyntheticsWorkerValues } from '../../../../core/test'
-import type { Hooks, PartialRumEvent } from '../../hooks'
+import type { Hooks } from '../../hooks'
 import { createHooks, HookNames } from '../../hooks'
 import { SessionType } from '../rumSessionManager'
 import { startSyntheticsContext } from './syntheticsContext'
@@ -16,9 +16,12 @@ describe('getSyntheticsContext', () => {
       mockSyntheticsWorkerValues({ publicId: 'foo', resultId: 'bar' }, 'globals')
       startSyntheticsContext(hooks)
 
-      const event = hooks.triggerHook(HookNames.Assemble, { eventType: 'view', startTime: 0 as RelativeTime })
+      const defaultRumEventAttributes = hooks.triggerHook(HookNames.Assemble, {
+        eventType: 'view',
+        startTime: 0 as RelativeTime,
+      })
 
-      expect(event).toEqual({
+      expect(defaultRumEventAttributes).toEqual({
         type: 'view',
         session: {
           type: SessionType.SYNTHETICS,
@@ -35,9 +38,12 @@ describe('getSyntheticsContext', () => {
       mockSyntheticsWorkerValues({ publicId: 'foo', resultId: 'bar' }, 'cookies')
       startSyntheticsContext(hooks)
 
-      const event = hooks.triggerHook(HookNames.Assemble, { eventType: 'view', startTime: 0 as RelativeTime })
+      const defaultRumEventAttributes = hooks.triggerHook(HookNames.Assemble, {
+        eventType: 'view',
+        startTime: 0 as RelativeTime,
+      })
 
-      expect(event).toEqual({
+      expect(defaultRumEventAttributes).toEqual({
         type: 'view',
         session: {
           type: SessionType.SYNTHETICS,
@@ -54,9 +60,12 @@ describe('getSyntheticsContext', () => {
       mockSyntheticsWorkerValues({ publicId: 'foo', resultId: 'bar', injectsRum: true }, 'globals')
       startSyntheticsContext(hooks)
 
-      const event = hooks.triggerHook(HookNames.Assemble, { eventType: 'view', startTime: 0 as RelativeTime })
+      const defaultRumEventAttributes = hooks.triggerHook(HookNames.Assemble, {
+        eventType: 'view',
+        startTime: 0 as RelativeTime,
+      })
 
-      expect(event).toEqual({
+      expect(defaultRumEventAttributes).toEqual({
         type: 'view',
         session: {
           type: SessionType.SYNTHETICS,
@@ -73,27 +82,36 @@ describe('getSyntheticsContext', () => {
       mockSyntheticsWorkerValues({ publicId: 'foo' }, 'globals')
       startSyntheticsContext(hooks)
 
-      const event = hooks.triggerHook(HookNames.Assemble, { eventType: 'view', startTime: 0 as RelativeTime })
+      const defaultRumEventAttributes = hooks.triggerHook(HookNames.Assemble, {
+        eventType: 'view',
+        startTime: 0 as RelativeTime,
+      })
 
-      expect(event).toEqual({} as PartialRumEvent)
+      expect(defaultRumEventAttributes).toBeUndefined()
     })
 
     it('should not set synthetics context if global variables are not strings', () => {
       mockSyntheticsWorkerValues({ publicId: 1, resultId: 2 }, 'globals')
       startSyntheticsContext(hooks)
 
-      const event = hooks.triggerHook(HookNames.Assemble, { eventType: 'view', startTime: 0 as RelativeTime })
+      const defaultRumEventAttributes = hooks.triggerHook(HookNames.Assemble, {
+        eventType: 'view',
+        startTime: 0 as RelativeTime,
+      })
 
-      expect(event).toEqual({} as PartialRumEvent)
+      expect(defaultRumEventAttributes).toBeUndefined()
     })
 
     it('should not set synthetics context if one cookie is undefined', () => {
       mockSyntheticsWorkerValues({ publicId: 'foo' }, 'cookies')
       startSyntheticsContext(hooks)
 
-      const event = hooks.triggerHook(HookNames.Assemble, { eventType: 'view', startTime: 0 as RelativeTime })
+      const defaultRumEventAttributes = hooks.triggerHook(HookNames.Assemble, {
+        eventType: 'view',
+        startTime: 0 as RelativeTime,
+      })
 
-      expect(event).toEqual({} as PartialRumEvent)
+      expect(defaultRumEventAttributes).toBeUndefined()
     })
   })
 })

@@ -11,7 +11,7 @@ import {
 import type { RumConfiguration } from '../configuration'
 import { supportPerformanceTimingEvent, RumPerformanceEntryType } from '../../browser/performanceObservable'
 import { RumEventType, type PageStateServerEntry } from '../../rawRumEvent.types'
-import type { Hooks, PartialRumEvent } from '../../hooks'
+import type { Hooks, DefaultRumEventAttributes } from '../../hooks'
 import { HookNames, SKIPPED } from '../../hooks'
 
 // Arbitrary value to cap number of element for memory consumption in the browser
@@ -96,7 +96,7 @@ export function startPageStateHistory(
 
   hooks.register(
     HookNames.Assemble,
-    ({ startTime, duration = 0 as Duration, eventType }): PartialRumEvent | SKIPPED => {
+    ({ startTime, duration = 0 as Duration, eventType }): DefaultRumEventAttributes | SKIPPED => {
       if (eventType === RumEventType.VIEW) {
         const pageStates = pageStateEntryHistory.findAll(startTime, duration)
         return {

@@ -1,6 +1,6 @@
 import { getInitCookie } from '@datadog/browser-core'
 import { createCookieObservable } from '../../browser/cookieObservable'
-import type { Hooks, PartialRumEvent } from '../../hooks'
+import type { Hooks, DefaultRumEventAttributes } from '../../hooks'
 import { SKIPPED, HookNames } from '../../hooks'
 import { SessionType } from '../rumSessionManager'
 
@@ -25,7 +25,7 @@ export function startCiVisibilityContext(
     testExecutionId = value
   })
 
-  hooks.register(HookNames.Assemble, ({ eventType }): PartialRumEvent | SKIPPED => {
+  hooks.register(HookNames.Assemble, ({ eventType }): DefaultRumEventAttributes | SKIPPED => {
     if (typeof testExecutionId !== 'string') {
       return SKIPPED
     }

@@ -142,9 +142,12 @@ describe('urlContexts', () => {
         startClocks: relativeToClocks(0 as RelativeTime),
       } as ViewCreatedEvent)
 
-      const event = hooks.triggerHook(HookNames.Assemble, { eventType: 'view', startTime: 0 as RelativeTime })
+      const defaultRumEventAttributes = hooks.triggerHook(HookNames.Assemble, {
+        eventType: 'view',
+        startTime: 0 as RelativeTime,
+      })
 
-      expect(event).toEqual(
+      expect(defaultRumEventAttributes).toEqual(
         jasmine.objectContaining({
           view: {
             url: jasmine.any(String),
@@ -155,9 +158,12 @@ describe('urlContexts', () => {
     })
 
     it('should discard the event if no URL', () => {
-      const event = hooks.triggerHook(HookNames.Assemble, { eventType: 'view', startTime: 0 as RelativeTime })
+      const defaultRumEventAttributes = hooks.triggerHook(HookNames.Assemble, {
+        eventType: 'view',
+        startTime: 0 as RelativeTime,
+      })
 
-      expect(event).toBe(DISCARDED)
+      expect(defaultRumEventAttributes).toBe(DISCARDED)
     })
   })
 })

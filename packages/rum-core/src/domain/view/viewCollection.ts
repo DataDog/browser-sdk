@@ -9,7 +9,7 @@ import { LifeCycleEventType } from '../lifeCycle'
 import type { LocationChange } from '../../browser/locationChangeObservable'
 import type { RumConfiguration } from '../configuration'
 import type { ViewHistory } from '../contexts/viewHistory'
-import type { Hooks, PartialRumEvent } from '../../hooks'
+import type { Hooks, DefaultRumEventAttributes } from '../../hooks'
 import { DISCARDED, HookNames } from '../../hooks'
 import { trackViews } from './trackViews'
 import type { ViewEvent, ViewOptions } from './trackViews'
@@ -32,7 +32,7 @@ export function startViewCollection(
     lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, processViewUpdate(view, configuration, recorderApi))
   )
 
-  hooks.register(HookNames.Assemble, ({ startTime, eventType }): PartialRumEvent | DISCARDED => {
+  hooks.register(HookNames.Assemble, ({ startTime, eventType }): DefaultRumEventAttributes | DISCARDED => {
     const view = viewHistory.findView(startTime)
 
     if (!view) {

@@ -1,5 +1,4 @@
 import type { RelativeTime } from '@datadog/browser-core'
-import type { PartialRumEvent } from './hooks'
 import { DISCARDED, HookNames, createHooks } from './hooks'
 
 describe('startHooks', () => {
@@ -18,7 +17,7 @@ describe('startHooks', () => {
     const result = hooks.triggerHook(HookNames.Assemble, hookParams)
 
     expect(callback).not.toHaveBeenCalled()
-    expect(result).toEqual({} as PartialRumEvent)
+    expect(result).toBeUndefined()
   })
 
   describe('assemble hook', () => {
@@ -29,9 +28,9 @@ describe('startHooks', () => {
       hooks.register(HookNames.Assemble, callback1)
       hooks.register(HookNames.Assemble, callback2)
 
-      const result = hooks.triggerHook(HookNames.Assemble, hookParams)
+      const defaultRumEventAttributes = hooks.triggerHook(HookNames.Assemble, hookParams)
 
-      expect(result).toEqual({ type: 'action', service: 'foo', version: 'bar' })
+      expect(defaultRumEventAttributes).toEqual({ type: 'action', service: 'foo', version: 'bar' })
       expect(callback1).toHaveBeenCalled()
       expect(callback2).toHaveBeenCalled()
     })
@@ -43,9 +42,9 @@ describe('startHooks', () => {
       hooks.register(HookNames.Assemble, callback1)
       hooks.register(HookNames.Assemble, callback2)
 
-      const result = hooks.triggerHook(HookNames.Assemble, hookParams)
+      const defaultRumEventAttributes = hooks.triggerHook(HookNames.Assemble, hookParams)
 
-      expect(result).toEqual({ type: 'action', service: 'foo' })
+      expect(defaultRumEventAttributes).toEqual({ type: 'action', service: 'foo' })
       expect(callback1).toHaveBeenCalled()
       expect(callback2).toHaveBeenCalled()
     })
@@ -59,9 +58,9 @@ describe('startHooks', () => {
       hooks.register(HookNames.Assemble, callback2)
       hooks.register(HookNames.Assemble, callback3)
 
-      const result = hooks.triggerHook(HookNames.Assemble, hookParams)
+      const defaultRumEventAttributes = hooks.triggerHook(HookNames.Assemble, hookParams)
 
-      expect(result).toEqual(DISCARDED)
+      expect(defaultRumEventAttributes).toEqual(DISCARDED)
       expect(callback1).toHaveBeenCalled()
       expect(callback2).toHaveBeenCalled()
       expect(callback3).not.toHaveBeenCalled()
