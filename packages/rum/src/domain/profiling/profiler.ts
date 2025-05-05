@@ -296,7 +296,7 @@ export function createRumProfiler(
 
       // Store Long Task entry, which is a lightweight version of the PerformanceEntry
       instance.longTasks.push({
-        id: getLongTaskId({ startClocks }),
+        id: getLongTaskId(startClocks.relative),
         duration: entry.duration as Duration,
         entryType: entry.entryType,
         startClocks,

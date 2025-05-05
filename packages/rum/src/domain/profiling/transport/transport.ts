@@ -135,7 +135,7 @@ function buildProfileEventAttributes(
     }
   }
   const longTaskIds: string[] = profilerTrace.longTasks
-    .map((longTask) => getLongTaskId(longTask))
+    .map((longTask) => getLongTaskId(longTask.startClocks.relative))
     .filter((id) => id !== undefined)
 
   if (longTaskIds.length) {
