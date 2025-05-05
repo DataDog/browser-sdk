@@ -56,4 +56,5 @@ export interface Settings {
   rumConfigurationOverride: object | null
   logsConfigurationOverride: object | null
   debugMode: boolean
+  datadogMode: boolean
 }

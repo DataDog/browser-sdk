@@ -20,6 +20,7 @@ export function SettingsTab() {
       eventCollectionStrategy,
       autoFlush,
       debugMode: debug,
+      datadogMode,
     },
     setSetting,
   ] = useSettings()
@@ -106,45 +107,47 @@ export function SettingsTab() {
                 </Accordion.Panel>
               </Accordion.Item>
 
-              <Accordion.Item key="replay-sandbox" value="replay-sandbox">
-                <Accordion.Control>
-                  <Group>
-                    <Text>Live replay</Text>
-                    <Box style={{ marginLeft: 'auto' }}>
-                      {replayDevServerStatus === DevServerStatus.AVAILABLE && useDevReplaySandbox ? (
-                        <Badge color="blue">Overridden</Badge>
-                      ) : replayDevServerStatus === DevServerStatus.AVAILABLE ? (
-                        <Badge color="green">Available</Badge>
-                      ) : replayDevServerStatus === DevServerStatus.CHECKING ? (
-                        <Badge color="yellow">Checking...</Badge>
-                      ) : (
-                        <Badge color="red">Unavailable</Badge>
-                      )}
+              {datadogMode && (
+                <Accordion.Item key="replay-sandbox" value="replay-sandbox">
+                  <Accordion.Control>
+                    <Group>
+                      <Text>Live replay</Text>
+                      <Box style={{ marginLeft: 'auto' }}>
+                        {replayDevServerStatus === DevServerStatus.AVAILABLE && useDevReplaySandbox ? (
+                          <Badge color="blue">Overridden</Badge>
+                        ) : replayDevServerStatus === DevServerStatus.AVAILABLE ? (
+                          <Badge color="green">Available</Badge>
+                        ) : replayDevServerStatus === DevServerStatus.CHECKING ? (
+                          <Badge color="yellow">Checking...</Badge>
+                        ) : (
+                          <Badge color="red">Unavailable</Badge>
+                        )}
+                      </Box>
+                    </Group>
+                  </Accordion.Control>
+                  <Accordion.Panel>
+                    <Box>
+                      Use the Datadog-internal local development version of the live replay sandbox. The development
+                      server must be running; to start it, run
+                      <Code>yarn dev</Code>.
                     </Box>
-                  </Group>
-                </Accordion.Control>
-                <Accordion.Panel>
-                  <Box>
-                    Use the Datadog-internal local development version of the live replay sandbox. The development
-                    server must be running; to start it, run
-                    <Code>yarn dev</Code>.
-                  </Box>
 
-                  <Space h="md" />
+                    <Space h="md" />
 
-                  <SettingItem
-                    input={
-                      <Switch
-                        label="Override the live replay sandbox"
-                        checked={!!useDevReplaySandbox}
-                        onChange={(event) => setSetting('useDevReplaySandbox', event.currentTarget.checked)}
-                        color="violet"
-                      />
-                    }
-                    description={<>Activate to use the local development version of the live replay sandbox.</>}
-                  />
-                </Accordion.Panel>
-              </Accordion.Item>
+                    <SettingItem
+                      input={
+                        <Switch
+                          label="Override the live replay sandbox"
+                          checked={!!useDevReplaySandbox}
+                          onChange={(event) => setSetting('useDevReplaySandbox', event.currentTarget.checked)}
+                          color="violet"
+                        />
+                      }
+                      description={<>Activate to use the local development version of the live replay sandbox.</>}
+                    />
+                  </Accordion.Panel>
+                </Accordion.Item>
+              )}
 
               <Accordion.Item key="intake-requests" value="intake-requests">
                 <Accordion.Control>
@@ -244,6 +247,17 @@ export function SettingsTab() {
                 />
               }
               description={<>Enable the SDK logs in the developer console</>}
+            />
+            <SettingItem
+              input={
+                <Checkbox
+                  label="Datadog employee mode"
+                  checked={datadogMode}
+                  onChange={(e) => setSetting('datadogMode', isChecked(e.target))}
+                  color="violet"
+                />
+              }
+              description={<>Enable Datadog-internal debugging features</>}
             />
           </Columns.Column>
         </Columns>

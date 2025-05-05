@@ -18,6 +18,7 @@ const DEFAULT_SETTINGS: Readonly<Settings> = {
   rumConfigurationOverride: null,
   logsConfigurationOverride: null,
   debugMode: false,
+  datadogMode: false,
 }
 
 let settings: Settings | undefined
