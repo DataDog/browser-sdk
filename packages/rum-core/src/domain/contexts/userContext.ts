@@ -1,7 +1,7 @@
 import { createContextManager, CustomerDataType, isEmptyObject, storeContextManager } from '@datadog/browser-core'
 import type { RumConfiguration } from '../configuration'
 import type { Hooks, PartialRumEvent } from '../../hooks'
-import { HookNames } from '../../hooks'
+import { SKIPPED, HookNames } from '../../hooks'
 import type { RumSessionManager } from '../rumSessionManager'
 
 export function startUserContext(hooks: Hooks, configuration: RumConfiguration, sessionManager: RumSessionManager) {
@@ -11,7 +11,7 @@ export function startUserContext(hooks: Hooks, configuration: RumConfiguration, 
     storeContextManager(configuration, userContextManager, 'rum', CustomerDataType.User)
   }
 
-  hooks.register(HookNames.Assemble, ({ eventType, startTime }): PartialRumEvent | undefined => {
+  hooks.register(HookNames.Assemble, ({ eventType, startTime }): PartialRumEvent | SKIPPED => {
     const user = userContextManager.getContext()
     const session = sessionManager.findTrackedSession(startTime)
 
@@ -20,7 +20,7 @@ export function startUserContext(hooks: Hooks, configuration: RumConfiguration, 
     }
 
     if (isEmptyObject(user)) {
-      return
+      return SKIPPED
     }
 
     return {

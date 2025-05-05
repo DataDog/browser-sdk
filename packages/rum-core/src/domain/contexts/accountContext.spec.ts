@@ -2,7 +2,7 @@ import type { ContextManager, RelativeTime } from '@datadog/browser-core'
 import { display, removeStorageListeners } from '@datadog/browser-core'
 import { registerCleanupTask } from '@datadog/browser-core/test'
 import { mockRumConfiguration } from '../../../test'
-import type { Hooks } from '../../hooks'
+import type { Hooks, PartialRumEvent } from '../../hooks'
 import { HookNames, createHooks } from '../../hooks'
 import { startAccountContext } from './accountContext'
 
@@ -51,7 +51,7 @@ describe('account context', () => {
       accountContext.setContext({ foo: 'bar' })
       const event = hooks.triggerHook(HookNames.Assemble, { eventType: 'view', startTime: 0 as RelativeTime })
 
-      expect(event).toEqual(undefined)
+      expect(event).toEqual({} as PartialRumEvent)
     })
   })
 })

@@ -1,4 +1,5 @@
 import type { RelativeTime } from '@datadog/browser-core'
+import type { PartialRumEvent } from './hooks'
 import { DISCARDED, HookNames, createHooks } from './hooks'
 
 describe('startHooks', () => {
@@ -17,7 +18,7 @@ describe('startHooks', () => {
     const result = hooks.triggerHook(HookNames.Assemble, hookParams)
 
     expect(callback).not.toHaveBeenCalled()
-    expect(result).toEqual(undefined)
+    expect(result).toEqual({} as PartialRumEvent)
   })
 
   describe('assemble hook', () => {

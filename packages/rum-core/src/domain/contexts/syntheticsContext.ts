@@ -1,14 +1,14 @@
 import { getSyntheticsResultId, getSyntheticsTestId, willSyntheticsInjectRum } from '@datadog/browser-core'
-import { HookNames } from '../../hooks'
+import { HookNames, SKIPPED } from '../../hooks'
 import type { Hooks, PartialRumEvent } from '../../hooks'
 import { SessionType } from '../rumSessionManager'
 
 export function startSyntheticsContext(hooks: Hooks) {
-  hooks.register(HookNames.Assemble, ({ eventType }): PartialRumEvent | undefined => {
+  hooks.register(HookNames.Assemble, ({ eventType }): PartialRumEvent | SKIPPED => {
     const testId = getSyntheticsTestId()
     const resultId = getSyntheticsResultId()
     if (!testId || !resultId) {
-      return
+      return SKIPPED
     }
 
     return {

@@ -4,7 +4,7 @@ import type { Clock } from '@datadog/browser-core/test'
 import { mockClock, registerCleanupTask } from '@datadog/browser-core/test'
 import { LifeCycle, LifeCycleEventType } from '../lifeCycle'
 import type { ViewCreatedEvent, ViewEndedEvent } from '../view/trackViews'
-import type { Hooks } from '../../hooks'
+import type { Hooks, PartialRumEvent } from '../../hooks'
 import { createHooks, HookNames } from '../../hooks'
 import type { RumConfiguration } from '../configuration'
 import { RumEventType } from '../../rawRumEvent.types'
@@ -137,7 +137,7 @@ describe('featureFlagContexts', () => {
         startTime: 0 as RelativeTime,
       })
 
-      expect(event).toBeUndefined()
+      expect(event).toEqual({} as PartialRumEvent)
     })
 
     it('should replace existing feature flag evaluations for the current view', () => {

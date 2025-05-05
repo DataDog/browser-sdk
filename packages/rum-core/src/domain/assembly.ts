@@ -107,7 +107,7 @@ export function startRumAssembly(
         eventType: rawRumEvent.type,
         startTime,
         duration,
-      })!
+      })
 
       if (assembledEvent === DISCARDED) {
         return

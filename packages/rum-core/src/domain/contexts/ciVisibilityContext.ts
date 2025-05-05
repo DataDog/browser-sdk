@@ -1,7 +1,7 @@
 import { getInitCookie } from '@datadog/browser-core'
 import { createCookieObservable } from '../../browser/cookieObservable'
 import type { Hooks, PartialRumEvent } from '../../hooks'
-import { HookNames } from '../../hooks'
+import { SKIPPED, HookNames } from '../../hooks'
 import { SessionType } from '../rumSessionManager'
 
 export const CI_VISIBILITY_TEST_ID_COOKIE_NAME = 'datadog-ci-visibility-test-execution-id'
@@ -25,9 +25,9 @@ export function startCiVisibilityContext(
     testExecutionId = value
   })
 
-  hooks.register(HookNames.Assemble, ({ eventType }): PartialRumEvent | undefined => {
+  hooks.register(HookNames.Assemble, ({ eventType }): PartialRumEvent | SKIPPED => {
     if (typeof testExecutionId !== 'string') {
-      return
+      return SKIPPED
     }
 
     return {

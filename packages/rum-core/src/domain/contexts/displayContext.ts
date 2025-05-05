@@ -20,10 +20,13 @@ export function startDisplayContext(hooks: Hooks, configuration: RumConfiguratio
     viewport = viewportDimension
   }).unsubscribe
 
-  hooks.register(HookNames.Assemble, ({ eventType }): PartialRumEvent | undefined => ({
-    type: eventType,
-    display: viewport ? { viewport } : undefined,
-  }))
+  hooks.register(
+    HookNames.Assemble,
+    ({ eventType }): PartialRumEvent => ({
+      type: eventType,
+      display: viewport ? { viewport } : undefined,
+    })
+  )
 
   return {
     stop: () => {

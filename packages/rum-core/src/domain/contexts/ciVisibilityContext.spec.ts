@@ -3,7 +3,7 @@ import { Observable } from '@datadog/browser-core'
 import { mockCiVisibilityValues } from '../../../test'
 import type { CookieObservable } from '../../browser/cookieObservable'
 import { createHooks, HookNames } from '../../hooks'
-import type { Hooks } from '../../hooks'
+import type { Hooks, PartialRumEvent } from '../../hooks'
 import { SessionType } from '../rumSessionManager'
 import { startCiVisibilityContext } from './ciVisibilityContext'
 
@@ -80,7 +80,7 @@ describe('startCiVisibilityContext', () => {
 
       const event = hooks.triggerHook(HookNames.Assemble, { eventType: 'view', startTime: 0 as RelativeTime })
 
-      expect(event).toBeUndefined()
+      expect(event).toEqual({} as PartialRumEvent)
     })
 
     it('should not set ci visibility context if it is not a string', () => {
@@ -89,7 +89,7 @@ describe('startCiVisibilityContext', () => {
 
       const event = hooks.triggerHook(HookNames.Assemble, { eventType: 'view', startTime: 0 as RelativeTime })
 
-      expect(event).toBeUndefined()
+      expect(event).toEqual({} as PartialRumEvent)
     })
   })
 })

@@ -2,7 +2,7 @@ import type { Account } from '@datadog/browser-core'
 import { createContextManager, CustomerDataType, isEmptyObject, storeContextManager } from '@datadog/browser-core'
 import type { RumConfiguration } from '../configuration'
 import type { Hooks, PartialRumEvent } from '../../hooks'
-import { HookNames } from '../../hooks'
+import { SKIPPED, HookNames } from '../../hooks'
 
 export function startAccountContext(hooks: Hooks, configuration: RumConfiguration) {
   const accountContextManager = buildAccountContextManager()
@@ -11,11 +11,11 @@ export function startAccountContext(hooks: Hooks, configuration: RumConfiguratio
     storeContextManager(configuration, accountContextManager, 'rum', CustomerDataType.Account)
   }
 
-  hooks.register(HookNames.Assemble, ({ eventType }): PartialRumEvent | undefined => {
+  hooks.register(HookNames.Assemble, ({ eventType }): PartialRumEvent | SKIPPED => {
     const account = accountContextManager.getContext() as Account
 
     if (isEmptyObject(account) || !account.id) {
-      return
+      return SKIPPED
     }
 
     return {

@@ -1,6 +1,6 @@
 import type { RelativeTime } from '@datadog/browser-core'
 import { mockSyntheticsWorkerValues } from '../../../../core/test'
-import type { Hooks } from '../../hooks'
+import type { Hooks, PartialRumEvent } from '../../hooks'
 import { createHooks, HookNames } from '../../hooks'
 import { SessionType } from '../rumSessionManager'
 import { startSyntheticsContext } from './syntheticsContext'
@@ -75,7 +75,7 @@ describe('getSyntheticsContext', () => {
 
       const event = hooks.triggerHook(HookNames.Assemble, { eventType: 'view', startTime: 0 as RelativeTime })
 
-      expect(event).toBeUndefined()
+      expect(event).toEqual({} as PartialRumEvent)
     })
 
     it('should not set synthetics context if global variables are not strings', () => {
@@ -84,7 +84,7 @@ describe('getSyntheticsContext', () => {
 
       const event = hooks.triggerHook(HookNames.Assemble, { eventType: 'view', startTime: 0 as RelativeTime })
 
-      expect(event).toBeUndefined()
+      expect(event).toEqual({} as PartialRumEvent)
     })
 
     it('should not set synthetics context if one cookie is undefined', () => {
@@ -93,7 +93,7 @@ describe('getSyntheticsContext', () => {
 
       const event = hooks.triggerHook(HookNames.Assemble, { eventType: 'view', startTime: 0 as RelativeTime })
 
-      expect(event).toBeUndefined()
+      expect(event).toEqual({} as PartialRumEvent)
     })
   })
 })

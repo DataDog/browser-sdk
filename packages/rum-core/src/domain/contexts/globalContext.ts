@@ -10,10 +10,13 @@ export function startGlobalContext(hooks: Hooks, configuration: RumConfiguration
     storeContextManager(configuration, globalContextManager, 'rum', CustomerDataType.GlobalContext)
   }
 
-  hooks.register(HookNames.Assemble, ({ eventType }): PartialRumEvent | undefined => ({
-    type: eventType,
-    context: globalContextManager.getContext(),
-  }))
+  hooks.register(
+    HookNames.Assemble,
+    ({ eventType }): PartialRumEvent => ({
+      type: eventType,
+      context: globalContextManager.getContext(),
+    })
+  )
 
   return globalContextManager
 }

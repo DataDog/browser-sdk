@@ -6,9 +6,13 @@ export const enum HookNames {
   Assemble,
 }
 
+// Discards the event from being sent
 export const DISCARDED = 'DISCARDED'
-export type DISCARDED = typeof DISCARDED
+// Skips from the assembly of the event
+export const SKIPPED = 'SKIPPED'
 
+export type DISCARDED = typeof DISCARDED
+export type SKIPPED = typeof SKIPPED
 type RecursivePartialExcept<T, K extends keyof T> = {
   [P in keyof T]?: T[P] extends object ? RecursivePartialExcept<T[P], never> : T[P]
 } & {
@@ -31,7 +35,7 @@ export type HookCallbackMap = {
     eventType: RumEvent['type']
     startTime: RelativeTime
     duration?: Duration | undefined
-  }) => PartialRumEvent | undefined | DISCARDED
+  }) => PartialRumEvent | SKIPPED | DISCARDED
 }
 
 export type Hooks = ReturnType<typeof createHooks>
@@ -54,18 +58,22 @@ export function createHooks() {
     triggerHook<K extends keyof HookCallbackMap>(
       hookName: K,
       param: Parameters<HookCallbackMap[K]>[0]
-    ): ReturnType<HookCallbackMap[K]> {
+    ): PartialRumEvent | DISCARDED {
       const hookCallbacks = callbacks[hookName] || []
-      const results: Array<ReturnType<HookCallbackMap[K]>> = []
+      const results = []
 
       for (const callback of hookCallbacks) {
-        const result = callback(param) as ReturnType<HookCallbackMap[K]>
+        const result = callback(param)
         if (result === DISCARDED) {
-          return result
+          return DISCARDED
+        }
+        if (result === SKIPPED) {
+          continue
         }
         results.push(result)
       }
-      return combine(...(results as unknown as [object, object])) as ReturnType<HookCallbackMap[K]>
+
+      return (results.length > 0 ? combine(...(results as unknown as [object, object])) : {}) as PartialRumEvent
     },
   }
 }
