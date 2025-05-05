@@ -1,6 +1,6 @@
 import type { Settings } from '../common/extension.types'
 import { EventListeners } from '../common/eventListeners'
-import { DEV_LOGS_URL, DEV_RUM_URL } from '../common/packagesUrlConstants'
+import { DEV_LOGS_URL, DEV_RUM_SLIM_URL, DEV_RUM_URL } from '../common/packagesUrlConstants'
 import { SESSION_STORAGE_SETTINGS_KEY } from '../common/sessionKeyConstant'
 
 declare global {
@@ -46,7 +46,7 @@ function main() {
     }
 
     if (settings.useDevBundles === 'npm') {
-      injectDevBundle(DEV_RUM_URL, ddRumGlobal)
+      injectDevBundle(settings.useRumSlim ? DEV_RUM_SLIM_URL : DEV_RUM_URL, ddRumGlobal)
       injectDevBundle(DEV_LOGS_URL, ddLogsGlobal)
     }
   }

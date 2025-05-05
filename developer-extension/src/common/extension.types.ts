@@ -47,6 +47,7 @@ export type EventCollectionStrategy = 'sdk' | 'requests'
 
 export interface Settings {
   useDevBundles: DevBundlesOverride
+  useDevReplaySandbox: boolean
   useRumSlim: boolean
   blockIntakeRequests: boolean
   autoFlush: boolean
@@ -55,4 +56,5 @@ export interface Settings {
   rumConfigurationOverride: object | null
   logsConfigurationOverride: object | null
   debugMode: boolean
+  datadogMode: boolean
 }
