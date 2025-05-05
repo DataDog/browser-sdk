@@ -45,6 +45,7 @@ function Player() {
 
   useEffect(() => {
     playerRef.current = startSessionReplayPlayer(frameRef.current!, setPlayerState, useDevReplaySandbox)
+    return () => playerRef.current?.stop()
   }, [useDevReplaySandbox])
 
   const downloadRecords = () => {
