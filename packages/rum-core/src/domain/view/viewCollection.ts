@@ -9,6 +9,7 @@ import { LifeCycleEventType } from '../lifeCycle'
 import type { LocationChange } from '../../browser/locationChangeObservable'
 import type { RumConfiguration } from '../configuration'
 import type { ViewHistory } from '../contexts/viewHistory'
+import type { PageStateHistory } from '../contexts/pageStateHistory'
 import type { Hooks, PartialRumEvent } from '../../hooks'
 import { DISCARDED, HookNames } from '../../hooks'
 import { trackViews } from './trackViews'
@@ -26,6 +27,7 @@ export function startViewCollection(
   locationChangeObservable: Observable<LocationChange>,
   recorderApi: RecorderApi,
   viewHistory: ViewHistory,
+  pageStateHistory: PageStateHistory,
   initialViewOptions?: ViewOptions
 ) {
   lifeCycle.subscribe(LifeCycleEventType.VIEW_UPDATED, (view) =>
@@ -59,6 +61,7 @@ export function startViewCollection(
     configuration,
     locationChangeObservable,
     !configuration.trackViewsManually,
+    pageStateHistory,
     initialViewOptions
   )
 }
@@ -124,6 +127,7 @@ function processViewUpdate(
         count: view.eventCounts.resourceCount,
       },
       time_spent: toServerDuration(view.duration),
+      time_spent_in_foreground: toServerDuration(view.timeSpentInForeground),
     },
     display: view.commonViewMetrics.scroll
       ? {
