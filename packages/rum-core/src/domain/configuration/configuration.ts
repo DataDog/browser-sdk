@@ -78,6 +78,13 @@ export interface RumInitConfiguration extends InitConfiguration {
    */
   traceContextInjection?: TraceContextInjection | undefined
 
+  /**
+   * List of origins where the SDK is allowed to run when used in a browser extension context.
+   * Matches urls against the extensions origin.
+   * If not provided and the SDK is running in a browser extension, a warning will be displayed.
+   */
+  allowedTrackingOrigin?: Array<MatchOption> | undefined
+
   // replay options
   /**
    * Allow to protect end user privacy and prevent sensitive organizational information from being collected.
@@ -183,6 +190,7 @@ export interface RumConfiguration extends Configuration {
   trackFeatureFlagsForEvents: FeatureFlagsForEvents[]
   profilingSampleRate: number
   propagateTraceBaggage: boolean
+  allowedTrackingOrigin?: MatchOption[]
 }
 
 export function validateAndBuildRumConfiguration(
@@ -259,6 +267,7 @@ export function validateAndBuildRumConfiguration(
     profilingSampleRate: profilingEnabled ? (initConfiguration.profilingSampleRate ?? 0) : 0, // Enforce 0 if profiling is not enabled, and set 0 as default when not set.
     propagateTraceBaggage: !!initConfiguration.propagateTraceBaggage,
     ...baseConfiguration,
+    allowedTrackingOrigin: initConfiguration.allowedTrackingOrigin ?? [],
   }
 }
 
