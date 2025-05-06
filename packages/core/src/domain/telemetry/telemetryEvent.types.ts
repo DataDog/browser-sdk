@@ -134,6 +134,10 @@ export type TelemetryConfigurationEvent = CommonTelemetryProperties & {
        */
       start_session_replay_recording_manually?: boolean
       /**
+       * Whether the allowed tracking origins list is used
+       */
+      use_allowed_tracking_origins?: boolean
+      /**
        * Whether Session Replay should automatically start a recording when enabled
        */
       start_recording_immediately?: boolean

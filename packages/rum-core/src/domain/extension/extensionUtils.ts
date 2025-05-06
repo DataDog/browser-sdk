@@ -1,6 +1,5 @@
-import { RumConfiguration } from '@datadog/browser-rum-core'
-import { display } from '../display'
-import { matchList } from '../matchOption'
+import { display, matchList } from '@datadog/browser-core'
+import type { RumInitConfiguration } from '../configuration'
 
 export const EXTENSION_PREFIXES = ['chrome-extension://', 'moz-extension://']
 
@@ -23,18 +22,20 @@ export function isUnsupportedExtensionEnvironment(
   return !containsExtensionUrl(windowLocation) && containsExtensionUrl(stack || '')
 }
 
-export function checkForAllowedTrackingOrigins(configuration: RumConfiguration, windowLocation: string, errorStack: string) {
+export function checkForAllowedTrackingOrigins(
+  configuration: RumInitConfiguration,
+  windowLocation = typeof location !== 'undefined' ? location.href : '',
+  errorStack?: string
+) {
   if (isUnsupportedExtensionEnvironment(windowLocation, errorStack)) {
-    const { allowedTrackingOrigin } = configuration
+    const allowedTrackingOrigins = configuration.allowedTrackingOrigins
 
-    if (!allowedTrackingOrigin) {
-      display.warn(
-        WarnDoesNotHaveAllowedTrackingOrigin
-      )
+    if (!allowedTrackingOrigins) {
+      display.warn(WarnDoesNotHaveAllowedTrackingOrigin)
       return
     }
 
-    const isAllowed = matchList(allowedTrackingOrigin || [], windowLocation, true)
+    const isAllowed = matchList(allowedTrackingOrigins, windowLocation, true)
 
     if (!isAllowed) {
       display.warn(WarnNotAllowedTrackingOrigin)
@@ -43,5 +44,6 @@ export function checkForAllowedTrackingOrigins(configuration: RumConfiguration, 
   }
 }
 
-export const WarnDoesNotHaveAllowedTrackingOrigin = 'Running the Browser SDK in a Web extension content script is discouraged and will be forbidden in a future major release unless the `allowedTrackingUrls` option is provided.'
+export const WarnDoesNotHaveAllowedTrackingOrigin =
+  'Running the Browser SDK in a Web extension content script is discouraged and will be forbidden in a future major release unless the `allowedTrackingOrigins` option is provided.'
 export const WarnNotAllowedTrackingOrigin = 'SDK is being initialized from an extension on a non-allowed domain.'

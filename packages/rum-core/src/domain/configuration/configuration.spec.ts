@@ -540,11 +540,12 @@ describe('serializeRumConfiguration', () => {
       trackFeatureFlagsForEvents: ['vital'],
       profilingSampleRate: 0,
       propagateTraceBaggage: true,
+      allowedTrackingOrigins: [],
     }
 
     type MapRumInitConfigurationKey<Key extends string> = Key extends keyof InitConfiguration
       ? MapInitConfigurationKey<Key>
-      : Key extends 'workerUrl' | 'allowedTracingUrls' | 'excludedActivityUrls'
+      : Key extends 'workerUrl' | 'allowedTracingUrls' | 'excludedActivityUrls' | 'allowedTrackingOrigins'
         ? `use_${CamelToSnakeCase<Key>}`
         : Key extends 'trackLongTasks'
           ? 'track_long_task' // oops
@@ -559,7 +560,9 @@ describe('serializeRumConfiguration', () => {
     // By specifying the type here, we can ensure that serializeConfiguration is returning an
     // object containing all expected properties.
     const serializedConfiguration: ExtractTelemetryConfiguration<
-      MapRumInitConfigurationKey<keyof RumInitConfiguration> | 'selected_tracing_propagators'
+      | MapRumInitConfigurationKey<keyof RumInitConfiguration>
+      | 'selected_tracing_propagators'
+      | 'use_allowed_tracking_origins'
     > = serializeRumConfiguration(exhaustiveRumInitConfiguration)
 
     expect(serializedConfiguration).toEqual({
@@ -582,6 +585,7 @@ describe('serializeRumConfiguration', () => {
       compress_intake_requests: true,
       plugins: [{ name: 'foo', bar: true }],
       track_feature_flags_for_events: ['vital'],
+      use_allowed_tracking_origins: false,
     })
   })
 })
