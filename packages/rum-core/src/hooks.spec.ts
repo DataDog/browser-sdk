@@ -65,5 +65,10 @@ describe('startHooks', () => {
       expect(callback2).toHaveBeenCalled()
       expect(callback3).not.toHaveBeenCalled()
     })
+
+    it('returns undefined when no registered hooks', () => {
+      const result = hooks.triggerHook(HookNames.Assemble, hookParams)
+      expect(result).toBeUndefined()
+    })
   })
 })

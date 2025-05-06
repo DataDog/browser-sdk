@@ -73,9 +73,7 @@ export function createHooks() {
         results.push(result)
       }
 
-      if (results.length !== 0) {
-        return combine(...(results as unknown as [object, object])) as DefaultRumEventAttributes
-      }
+      return combine(...(results as unknown as [object, object])) as DefaultRumEventAttributes
     },
   }
 }
