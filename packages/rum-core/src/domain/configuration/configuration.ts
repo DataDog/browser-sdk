@@ -191,7 +191,7 @@ export interface RumConfiguration extends Configuration {
   trackFeatureFlagsForEvents: FeatureFlagsForEvents[]
   profilingSampleRate: number
   propagateTraceBaggage: boolean
-  allowedTrackingOrigin?: MatchOption[]
+  allowedTrackingOrigins?: MatchOption[]
 }
 
 export function validateAndBuildRumConfiguration(
@@ -270,7 +270,7 @@ export function validateAndBuildRumConfiguration(
     profilingSampleRate: profilingEnabled ? (initConfiguration.profilingSampleRate ?? 0) : 0, // Enforce 0 if profiling is not enabled, and set 0 as default when not set.
     propagateTraceBaggage: !!initConfiguration.propagateTraceBaggage,
     ...baseConfiguration,
-    allowedTrackingOrigin: initConfiguration.allowedTrackingOrigins ?? [],
+    allowedTrackingOrigins: initConfiguration.allowedTrackingOrigins ?? [],
   }
 }
 

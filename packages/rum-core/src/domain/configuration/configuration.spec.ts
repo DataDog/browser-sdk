@@ -410,6 +410,40 @@ describe('validateAndBuildRumConfiguration', () => {
     })
   })
 
+  describe('allowedTrackingOrigins', () => {
+    it('defaults to an empty array', () => {
+      expect(validateAndBuildRumConfiguration(DEFAULT_INIT_CONFIGURATION)!.allowedTrackingOrigins).toEqual([])
+    })
+
+    it('is set to provided value', () => {
+      expect(
+        validateAndBuildRumConfiguration({
+          ...DEFAULT_INIT_CONFIGURATION,
+          allowedTrackingOrigins: ['chrome-extension://example']
+        })!.allowedTrackingOrigins
+      ).toEqual(['chrome-extension://example'])
+    })
+
+    it('accepts functions', () => {
+      const customOriginFunction = (url: string): boolean => url.startsWith('chrome-extension://')
+      expect(
+        validateAndBuildRumConfiguration({
+          ...DEFAULT_INIT_CONFIGURATION,
+          allowedTrackingOrigins: [customOriginFunction]
+        })!.allowedTrackingOrigins
+      ).toEqual([customOriginFunction])
+    })
+
+    it('accepts RegExp', () => {
+      expect(
+        validateAndBuildRumConfiguration({
+          ...DEFAULT_INIT_CONFIGURATION,
+          allowedTrackingOrigins: [/^chrome-extension:\/\//]
+        })!.allowedTrackingOrigins
+      ).toEqual([/^chrome-extension:\/\//])
+    })
+  })
+
   describe('serializeRumConfiguration', () => {
     describe('selected tracing propagators serialization', () => {
       it('should not return any propagator type', () => {
