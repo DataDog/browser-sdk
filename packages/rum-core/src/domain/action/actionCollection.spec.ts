@@ -166,18 +166,24 @@ describe('actionCollection', () => {
       it(`should add action properties on ${eventType} from the context`, () => {
         const actionId = '1'
         spyOn(actionContexts, 'findActionId').and.returnValue(actionId)
-        const event = hooks.triggerHook(HookNames.Assemble, { eventType, startTime: 0 as RelativeTime })
+        const defaultRumEventAttributes = hooks.triggerHook(HookNames.Assemble, {
+          eventType,
+          startTime: 0 as RelativeTime,
+        })
 
-        expect(event).toEqual({ type: eventType, action: { id: actionId } })
+        expect(defaultRumEventAttributes).toEqual({ type: eventType, action: { id: actionId } })
       })
     })
     ;[RumEventType.VIEW, RumEventType.VITAL].forEach((eventType) => {
       it(`should not add action properties on ${eventType} from the context`, () => {
         const actionId = '1'
         spyOn(actionContexts, 'findActionId').and.returnValue(actionId)
-        const event = hooks.triggerHook(HookNames.Assemble, { eventType, startTime: 0 as RelativeTime })
+        const defaultRumEventAttributes = hooks.triggerHook(HookNames.Assemble, {
+          eventType,
+          startTime: 0 as RelativeTime,
+        })
 
-        expect(event).toEqual(undefined)
+        expect(defaultRumEventAttributes).toEqual(undefined)
       })
     })
   })

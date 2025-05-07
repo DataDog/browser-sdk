@@ -2,18 +2,14 @@ import type { Context, RawError, EventRateLimiter } from '@datadog/browser-core'
 import {
   combine,
   isEmptyObject,
-  timeStampNow,
-  currentDrift,
   display,
   createEventRateLimiter,
-  canUseEventBridge,
-  round,
   isExperimentalFeatureEnabled,
   ExperimentalFeature,
 } from '@datadog/browser-core'
 import type { RumEventDomainContext } from '../domainContext.types'
 import { RumEventType } from '../rawRumEvent.types'
-import type { CommonProperties, RumEvent } from '../rumEvent.types'
+import type { RumEvent } from '../rumEvent.types'
 import type { Hooks } from '../hooks'
 import { DISCARDED, HookNames } from '../hooks'
 import type { LifeCycle } from './lifeCycle'
@@ -21,9 +17,6 @@ import { LifeCycleEventType } from './lifeCycle'
 import type { RumConfiguration } from './configuration'
 import type { ModifiableFieldPaths } from './limitModification'
 import { limitModification } from './limitModification'
-
-// replaced at build time
-declare const __BUILD_ENV__SDK_VERSION__: string
 
 const VIEW_MODIFIABLE_FIELD_PATHS: ModifiableFieldPaths = {
   'view.name': 'string',
@@ -110,39 +103,18 @@ export function startRumAssembly(
   lifeCycle.subscribe(
     LifeCycleEventType.RAW_RUM_EVENT_COLLECTED,
     ({ startTime, duration, rawRumEvent, domainContext, customerContext }) => {
-      const rumContext: Partial<CommonProperties> = {
-        _dd: {
-          format_version: 2,
-          drift: currentDrift(),
-          configuration: {
-            session_sample_rate: round(configuration.sessionSampleRate, 3),
-            session_replay_sample_rate: round(configuration.sessionReplaySampleRate, 3),
-          },
-          browser_sdk_version: canUseEventBridge() ? __BUILD_ENV__SDK_VERSION__ : undefined,
-        },
-        application: {
-          id: configuration.applicationId,
-        },
-        date: timeStampNow(),
-        source: 'browser',
-      }
-
-      const assembledEvent = hooks.triggerHook(HookNames.Assemble, {
+      const defaultRumEventAttributes = hooks.triggerHook(HookNames.Assemble, {
         eventType: rawRumEvent.type,
         startTime,
         duration,
-      })
+      })!
 
-      if (assembledEvent === DISCARDED) {
+      if (defaultRumEventAttributes === DISCARDED) {
         return
       }
 
-      const serverRumEvent = combine(
-        rumContext,
-        assembledEvent,
-        { context: customerContext },
-        rawRumEvent
-      ) as RumEvent & Context
+      const serverRumEvent = combine(defaultRumEventAttributes, { context: customerContext }, rawRumEvent) as RumEvent &
+        Context
 
       if (shouldSend(serverRumEvent, configuration.beforeSend, domainContext, eventRateLimiters)) {
         if (isEmptyObject(serverRumEvent.context!)) {

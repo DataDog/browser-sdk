@@ -36,9 +36,12 @@ describe('account context', () => {
     it('should set the account', () => {
       accountContext.setContext({ id: '123', foo: 'bar' })
 
-      const event = hooks.triggerHook(HookNames.Assemble, { eventType: 'view', startTime: 0 as RelativeTime })
+      const defaultRumEventAttributes = hooks.triggerHook(HookNames.Assemble, {
+        eventType: 'view',
+        startTime: 0 as RelativeTime,
+      })
 
-      expect(event).toEqual({
+      expect(defaultRumEventAttributes).toEqual({
         type: 'view',
         account: {
           id: '123',
@@ -49,9 +52,12 @@ describe('account context', () => {
 
     it('should not set the account when account.id is undefined', () => {
       accountContext.setContext({ foo: 'bar' })
-      const event = hooks.triggerHook(HookNames.Assemble, { eventType: 'view', startTime: 0 as RelativeTime })
+      const defaultRumEventAttributes = hooks.triggerHook(HookNames.Assemble, {
+        eventType: 'view',
+        startTime: 0 as RelativeTime,
+      })
 
-      expect(event).toEqual(undefined)
+      expect(defaultRumEventAttributes).toBeUndefined()
     })
   })
 })
