@@ -419,7 +419,7 @@ describe('validateAndBuildRumConfiguration', () => {
       expect(
         validateAndBuildRumConfiguration({
           ...DEFAULT_INIT_CONFIGURATION,
-          allowedTrackingOrigins: ['chrome-extension://example']
+          allowedTrackingOrigins: ['chrome-extension://example'],
         })!.allowedTrackingOrigins
       ).toEqual(['chrome-extension://example'])
     })
@@ -429,7 +429,7 @@ describe('validateAndBuildRumConfiguration', () => {
       expect(
         validateAndBuildRumConfiguration({
           ...DEFAULT_INIT_CONFIGURATION,
-          allowedTrackingOrigins: [customOriginFunction]
+          allowedTrackingOrigins: [customOriginFunction],
         })!.allowedTrackingOrigins
       ).toEqual([customOriginFunction])
     })
@@ -438,7 +438,7 @@ describe('validateAndBuildRumConfiguration', () => {
       expect(
         validateAndBuildRumConfiguration({
           ...DEFAULT_INIT_CONFIGURATION,
-          allowedTrackingOrigins: [/^chrome-extension:\/\//]
+          allowedTrackingOrigins: [/^chrome-extension:\/\//],
         })!.allowedTrackingOrigins
       ).toEqual([/^chrome-extension:\/\//])
     })
