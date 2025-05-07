@@ -8,14 +8,17 @@ datadogRum.init({
   trackLongTasks: true,
   enableExperimentalFeatures: ['self_regulate_extension'],
   allowUntrustedEvents: true,
-  // Force All sample rates to 100% to avoid flakiness
-  sessionReplaySampleRate: 100,
+  // Only enable session replay for non-extension contexts
+  // sessionReplaySampleRate: isExtensionContext ? 0 : 100,
   telemetrySampleRate: 100,
   telemetryUsageSampleRate: 100,
   telemetryConfigurationSampleRate: 100,
 })
 
-datadogRum.startSessionReplayRecording()
+// Only start session replay for non-extension contexts
+// if (!isExtensionContext) {
+//   datadogRum.startSessionReplayRecording()
+// }
 
 if (window.DD_RUM) {
   console.log('Extension context DD_RUM.version:', window.DD_RUM.version)

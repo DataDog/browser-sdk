@@ -1,21 +1,21 @@
 {
-    "name": "rum-testing-extension",
-    "version": "1.0.0",
-    "private": true,
-    "scripts": {
-        "build": "webpack"
-    },
-    "dependencies": {
-        "@datadog/browser-rum": "file:../../../packages/rum/package.tgz"
-    },
-    "resolutions": {
-        "@datadog/browser-rum-core": "file:../../../packages/rum-core/package.tgz",
-        "@datadog/browser-core": "file:../../../packages/core/package.tgz",
-        "@datadog/browser-rum-slim": "file:../../../packages/rum-slim/package.tgz",
-        "@datadog/browser-worker": "file:../../../packages/worker/package.tgz"
-    },
-    "devDependencies": {
-        "webpack": "5.94.0",
-        "webpack-cli": "6.0.1"
-    }
+  "name": "rum-testing-extension",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "build": "webpack"
+  },
+  "dependencies": {
+    "@datadog/browser-rum": "file:../../../packages/rum/package.tgz"
+  },
+  "resolutions": {
+    "@datadog/browser-rum-core": "file:../../../packages/rum-core/package.tgz",
+    "@datadog/browser-core": "file:../../../packages/core/package.tgz",
+    "@datadog/browser-rum-slim": "file:../../../packages/rum-slim/package.tgz",
+    "@datadog/browser-worker": "file:../../../packages/worker/package.tgz"
+  },
+  "devDependencies": {
+    "webpack": "5.94.0",
+    "webpack-cli": "6.0.1"
+  }
 }

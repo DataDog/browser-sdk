@@ -10,6 +10,7 @@ import { BrowserLogsManager, deleteAllCookies, getBrowserName, sendXhr } from '.
 import { APPLICATION_ID, CLIENT_TOKEN } from '../helpers/configuration'
 import { validateRumFormat } from '../helpers/validation'
 import type { BrowserConfiguration } from '../../../browsers.conf'
+import { createExtensionTest } from '../helpers/extensionFixture'
 import { IntakeRegistry } from './intakeRegistry'
 import { flushEvents } from './flushEvents'
 import type { Servers } from './httpServers'
@@ -54,6 +55,7 @@ interface TestContext {
   page: Page
   browserContext: BrowserContext
   browserName: 'chromium' | 'firefox' | 'webkit' | 'msedge'
+  extensionId?: string
   withBrowserLogs: (cb: (logs: BrowserLog[]) => void) => void
   flushBrowserLogs: () => void
   flushEvents: () => Promise<void>
@@ -72,6 +74,7 @@ class TestBuilder {
   private basePath = ''
   private eventBridge = false
   private setups: Array<{ factory: SetupFactory; name?: string }> = DEFAULT_SETUPS
+  private extensionPath: string | undefined = undefined
 
   constructor(private title: string) {}
 
@@ -125,6 +128,11 @@ class TestBuilder {
     return this
   }
 
+  withExtension(extensionPath: string) {
+    this.extensionPath = extensionPath
+    return this
+  }
+
   run(runner: TestRunner) {
     const setupOptions: SetupOptions = {
       body: this.body,
@@ -136,24 +144,43 @@ class TestBuilder {
       useRumSlim: false,
       eventBridge: this.eventBridge,
       basePath: this.basePath,
+      extensionPath: this.extensionPath,
       context: {
         run_id: getRunId(),
         test_name: '<PLACEHOLDER>',
       },
     }
 
-    if (this.alsoRunWithRumSlim) {
-      test.describe(this.title, () => {
-        declareTestsForSetups('rum', this.setups, setupOptions, runner)
-        declareTestsForSetups(
-          'rum-slim',
-          this.setups.filter((setup) => setup.factory !== npmSetup && setup.factory !== reactSetup),
-          { ...setupOptions, useRumSlim: true },
-          runner
-        )
-      })
+    if (this.extensionPath) {
+      const extensionTest = createExtensionTest(this.extensionPath)
+
+      if (this.alsoRunWithRumSlim) {
+        extensionTest.describe(this.title, () => {
+          declareExtensionTestsForSetups('rum', this.setups, setupOptions, runner)
+          declareExtensionTestsForSetups(
+            'rum-slim',
+            this.setups.filter((setup) => setup.factory !== npmSetup && setup.factory !== reactSetup),
+            { ...setupOptions, useRumSlim: true },
+            runner
+          )
+        })
+      } else {
+        declareExtensionTestsForSetups(this.title, this.setups, setupOptions, runner)
+      }
     } else {
-      declareTestsForSetups(this.title, this.setups, setupOptions, runner)
+      if (this.alsoRunWithRumSlim) {
+        test.describe(this.title, () => {
+          declareTestsForSetups('rum', this.setups, setupOptions, runner)
+          declareTestsForSetups(
+            'rum-slim',
+            this.setups.filter((setup) => setup.factory !== npmSetup && setup.factory !== reactSetup),
+            { ...setupOptions, useRumSlim: true },
+            runner
+          )
+        })
+      } else {
+        declareTestsForSetups(this.title, this.setups, setupOptions, runner)
+      }
     }
   }
 
@@ -291,4 +318,57 @@ async function tearDownTest({ flushEvents, deleteAllCookies }: TestContext) {
   if (fixmeReason) {
     addTag('test.fixme', fixmeReason)
   }
+}
+
+function declareExtensionTestsForSetups(
+  title: string,
+  setups: Array<{ factory: SetupFactory; name?: string }>,
+  setupOptions: SetupOptions,
+  runner: TestRunner
+) {
+  const extensionTest = createExtensionTest(setupOptions.extensionPath!)
+
+  if (setups.length > 1) {
+    extensionTest.describe(title, () => {
+      for (const { name, factory } of setups) {
+        declareExtensionTest(name!, setupOptions, factory, runner)
+      }
+    })
+  } else {
+    declareExtensionTest(title, setupOptions, setups[0].factory, runner)
+  }
+}
+
+function declareExtensionTest(title: string, setupOptions: SetupOptions, factory: SetupFactory, runner: TestRunner) {
+  const extensionTest = createExtensionTest(setupOptions.extensionPath!)
+
+  extensionTest(title, async ({ page, context, extensionId }) => {
+    const browserName = getBrowserName(extensionTest.info().project.name)
+    addTag('test.browserName', browserName)
+    addTestOptimizationTags(extensionTest.info().project.metadata as BrowserConfiguration)
+
+    const title = extensionTest.info().titlePath.join(' > ')
+    setupOptions.context.test_name = title
+
+    const servers = await getTestServers()
+    const browserLogs = new BrowserLogsManager()
+
+    const testContext = createTestContext(servers, page, context, browserLogs, browserName, setupOptions)
+    testContext.extensionId = extensionId
+
+    servers.intake.bindServerApp(createIntakeServerApp(testContext.intakeRegistry))
+
+    const setup = factory(setupOptions, servers)
+    servers.base.bindServerApp(createMockServerApp(servers, setup))
+    servers.crossOrigin.bindServerApp(createMockServerApp(servers, setup))
+
+    await setUpTest(browserLogs, testContext)
+
+    try {
+      await runner(testContext)
+      tearDownPassedTest(testContext)
+    } finally {
+      await tearDownTest(testContext)
+    }
+  })
 }
