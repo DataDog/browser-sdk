@@ -20,7 +20,7 @@ import { DEFAULT_SETUPS, npmSetup, reactSetup } from './pageSetups'
 import { createIntakeServerApp } from './serverApps/intake'
 import { createMockServerApp } from './serverApps/mock'
 
-const DEFAULT_RUM_CONFIGURATION = {
+export const DEFAULT_RUM_CONFIGURATION = {
   applicationId: APPLICATION_ID,
   clientToken: CLIENT_TOKEN,
   defaultPrivacyLevel: DefaultPrivacyLevel.ALLOW,
