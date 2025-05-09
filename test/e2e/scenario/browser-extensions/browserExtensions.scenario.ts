@@ -77,7 +77,8 @@ test.describe('browser extensions', () => {
 
   createTest("SDK with app.example.com allowedTrackingOrigins throws a warning")
     .withExtension(pathToExampleExtension)
-    .run(async ({ page, extensionId }) => {
+    .withRum()
+    .run(async ({ page, extensionId, baseUrl }) => {
       const consoleMessages: string[] = []
       page.on('console', (msg) => consoleMessages.push(msg.text()))
 
@@ -89,6 +90,18 @@ test.describe('browser extensions', () => {
             applicationId: '',
           }
       )
+
+      await page.goto(baseUrl)
+
+      const rumResult = await page.evaluate(
+        () =>
+          window.DD_RUM?.getInitConfiguration() ?? {
+            applicationId: '',
+          }
+      )
+      
+      // Check that SDK does not get overwritten by extension
+      expect(rumResult.applicationId).toBe(DEFAULT_RUM_CONFIGURATION.applicationId)
 
       expect(extensionResult.applicationId).toBe('1234')
       expect((extensionResult as any).allowedTrackingOrigins).toEqual(['https://app.example.com'])
