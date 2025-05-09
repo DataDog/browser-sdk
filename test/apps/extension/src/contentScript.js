@@ -14,12 +14,10 @@ datadogRum.init({
   telemetrySampleRate: 100,
   telemetryUsageSampleRate: 100,
   telemetryConfigurationSampleRate: 100,
+  /* EXTENSION_INIT_PARAMETER */
 })
 
-// Only start session replay for non-extension contexts
-// if (!isExtensionContext) {
-//   datadogRum.startSessionReplayRecording()
-// }
+// The above tag is to find and replace on build.
 
 if (window.DD_RUM) {
   console.log('Extension context DD_RUM.version:', window.DD_RUM.version)
