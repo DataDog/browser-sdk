@@ -1,7 +1,6 @@
 import path from 'path'
 import { test, expect } from '@playwright/test'
-import { createTest } from '../../lib/framework'
-import { DEFAULT_RUM_CONFIGURATION } from 'lib/framework/createTest'
+import { DEFAULT_RUM_CONFIGURATION, createTest } from '../../lib/framework'
 
 // Different extension build paths for different configurations
 const pathToDefaultExtension = path.join(__dirname, '../../../../test/apps/extension-default')
@@ -19,15 +18,17 @@ test.describe('browser extensions', () => {
       await expect(page.locator('body')).toHaveText(/Extension Popup/)
     })
 
-  createTest("SDK is initialized in an unsupported environment without allowedTrackingOrigins and warns when used in content script")
+  createTest(
+    'SDK is initialized in an unsupported environment without allowedTrackingOrigins and warns when used in content script'
+  )
     .withExtension(pathToDefaultExtension)
     .withRum()
     .run(async ({ page, extensionId, baseUrl }) => {
       const consoleMessages: string[] = []
       page.on('console', (msg) => consoleMessages.push(msg.text()))
-      
+
       await page.goto(`chrome-extension://${extensionId}/src/popup.html`)
-      
+
       const extensionResult = await page.evaluate(
         () =>
           window.DD_RUM?.getInitConfiguration() ?? {
@@ -45,7 +46,7 @@ test.describe('browser extensions', () => {
             applicationId: '',
           }
       )
-      
+
       // Check that SDK does not get overwritten by extension
       expect(rumResult.applicationId).toBe(DEFAULT_RUM_CONFIGURATION.applicationId)
 
@@ -54,14 +55,14 @@ test.describe('browser extensions', () => {
       )
     })
 
-  createTest("SDK with chrome-extension allowedTrackingOrigins parameter works correctly")
+  createTest('SDK with chrome-extension allowedTrackingOrigins parameter works correctly')
     .withExtension(pathToChromeExtension)
     .run(async ({ page, extensionId }) => {
       const consoleMessages: string[] = []
       page.on('console', (msg) => consoleMessages.push(msg.text()))
-      
+
       await page.goto(`chrome-extension://${extensionId}/src/popup.html`)
-      
+
       const extensionResult = await page.evaluate(
         () =>
           window.DD_RUM?.getInitConfiguration() ?? {
@@ -71,11 +72,13 @@ test.describe('browser extensions', () => {
 
       expect(extensionResult.applicationId).toBe('1234')
       expect((extensionResult as any).allowedTrackingOrigins).toEqual(['chrome-extension://abcdefghijklmno'])
-      expect(consoleMessages).not.toContain('Datadog Browser SDK: Running the Browser SDK in a Web extension content script is discouraged and will be forbidden in a future major release unless the `allowedTrackingOrigins` option is provided.')
+      expect(consoleMessages).not.toContain(
+        'Datadog Browser SDK: Running the Browser SDK in a Web extension content script is discouraged and will be forbidden in a future major release unless the `allowedTrackingOrigins` option is provided.'
+      )
       expect(consoleMessages).not.toContain('SDK is being initialized from an extension on a non-allowed domain.')
     })
 
-  createTest("SDK with app.example.com allowedTrackingOrigins throws a warning")
+  createTest('SDK with app.example.com allowedTrackingOrigins throws a warning')
     .withExtension(pathToExampleExtension)
     .withRum()
     .run(async ({ page, extensionId, baseUrl }) => {
@@ -83,7 +86,7 @@ test.describe('browser extensions', () => {
       page.on('console', (msg) => consoleMessages.push(msg.text()))
 
       await page.goto(`chrome-extension://${extensionId}/src/popup.html`)
-      
+
       const extensionResult = await page.evaluate(
         () =>
           window.DD_RUM?.getInitConfiguration() ?? {
@@ -99,12 +102,14 @@ test.describe('browser extensions', () => {
             applicationId: '',
           }
       )
-      
+
       // Check that SDK does not get overwritten by extension
       expect(rumResult.applicationId).toBe(DEFAULT_RUM_CONFIGURATION.applicationId)
 
       expect(extensionResult.applicationId).toBe('1234')
       expect((extensionResult as any).allowedTrackingOrigins).toEqual(['https://app.example.com'])
-      expect(consoleMessages).toContain('Datadog Browser SDK: SDK is being initialized from an extension on a non-allowed domain.')
+      expect(consoleMessages).toContain(
+        'Datadog Browser SDK: SDK is being initialized from an extension on a non-allowed domain.'
+      )
     })
 })

@@ -258,6 +258,10 @@ export type TelemetryConfigurationEvent = CommonTelemetryProperties & {
        */
       forward_errors_to_logs?: boolean
       /**
+       * The number of displays available to the device
+       */
+      number_of_displays?: number
+      /**
        * The console.* tracked
        */
       forward_console_logs?: string[] | 'all'
@@ -407,6 +411,10 @@ export type TelemetryConfigurationEvent = CommonTelemetryProperties & {
        * Whether the anonymous users are tracked
        */
       track_anonymous_user?: boolean
+      /**
+       * Whether a list of allowed origins is used to control SDK execution in browser extension contexts. When enabled, the SDK will check if the current origin matches the allowed origins list before running.
+       */
+      use_allowed_tracking_origins?: boolean
       [k: string]: unknown
     }
     [k: string]: unknown
