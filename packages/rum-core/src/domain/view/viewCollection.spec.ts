@@ -258,9 +258,12 @@ describe('viewCollection', () => {
 
       setupViewCollection({ trackViewsManually: true }, viewHistoryEntry)
 
-      const event = hooks.triggerHook(HookNames.Assemble, { eventType: 'view', startTime: 0 as RelativeTime })
+      const defaultRumEventAttributes = hooks.triggerHook(HookNames.Assemble, {
+        eventType: 'view',
+        startTime: 0 as RelativeTime,
+      })
 
-      expect(event).toEqual(
+      expect(defaultRumEventAttributes).toEqual(
         jasmine.objectContaining({
           service: 'service',
           version: 'version',
@@ -276,12 +279,12 @@ describe('viewCollection', () => {
     it('should discard the event if no view', () => {
       const viewHistoryEntry = undefined
       setupViewCollection({ trackViewsManually: true }, viewHistoryEntry)
-      const event = hooks.triggerHook(HookNames.Assemble, {
+      const defaultRumEventAttributes = hooks.triggerHook(HookNames.Assemble, {
         eventType: 'view',
         startTime: 0 as RelativeTime,
       })
 
-      expect(event).toBe(DISCARDED)
+      expect(defaultRumEventAttributes).toBe(DISCARDED)
     })
   })
 })

@@ -6,9 +6,13 @@ export const enum HookNames {
   Assemble,
 }
 
+// Discards the event from being sent
 export const DISCARDED = 'DISCARDED'
-export type DISCARDED = typeof DISCARDED
+// Skips from the assembly of the event
+export const SKIPPED = 'SKIPPED'
 
+export type DISCARDED = typeof DISCARDED
+export type SKIPPED = typeof SKIPPED
 type RecursivePartialExcept<T, K extends keyof T> = {
   [P in keyof T]?: T[P] extends object ? RecursivePartialExcept<T[P], never> : T[P]
 } & {
@@ -17,7 +21,7 @@ type RecursivePartialExcept<T, K extends keyof T> = {
 
 // Define a partial RUM event type.
 // Ensuring the `type` field is always present improves type checking, especially in conditional logic in hooks (e.g., `if (eventType === 'view')`).
-export type PartialRumEvent = RecursivePartialExcept<RumEvent, 'type'>
+export type DefaultRumEventAttributes = RecursivePartialExcept<RumEvent, 'type'>
 
 // This is a workaround for an issue occurring when the Browser SDK is included in a TypeScript
 // project configured with `isolatedModules: true`. Even if the const enum is declared in this
@@ -31,7 +35,7 @@ export type HookCallbackMap = {
     eventType: RumEvent['type']
     startTime: RelativeTime
     duration?: Duration | undefined
-  }) => PartialRumEvent | undefined | DISCARDED
+  }) => DefaultRumEventAttributes | SKIPPED | DISCARDED
 }
 
 export type Hooks = ReturnType<typeof createHooks>
@@ -54,18 +58,22 @@ export function createHooks() {
     triggerHook<K extends keyof HookCallbackMap>(
       hookName: K,
       param: Parameters<HookCallbackMap[K]>[0]
-    ): ReturnType<HookCallbackMap[K]> {
+    ): DefaultRumEventAttributes | DISCARDED | undefined {
       const hookCallbacks = callbacks[hookName] || []
-      const results: Array<ReturnType<HookCallbackMap[K]>> = []
+      const results = []
 
       for (const callback of hookCallbacks) {
-        const result = callback(param) as ReturnType<HookCallbackMap[K]>
+        const result = callback(param)
         if (result === DISCARDED) {
-          return result
+          return DISCARDED
+        }
+        if (result === SKIPPED) {
+          continue
         }
         results.push(result)
       }
-      return combine(...(results as unknown as [object, object])) as ReturnType<HookCallbackMap[K]>
+
+      return combine(...(results as unknown as [object, object])) as DefaultRumEventAttributes
     },
   }
 }

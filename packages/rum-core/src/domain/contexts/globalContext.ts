@@ -1,6 +1,6 @@
 import { createContextManager, CustomerDataType, storeContextManager } from '@datadog/browser-core'
 import type { RumConfiguration } from '../configuration'
-import type { Hooks, PartialRumEvent } from '../../hooks'
+import type { Hooks, DefaultRumEventAttributes } from '../../hooks'
 import { HookNames } from '../../hooks'
 
 export function startGlobalContext(hooks: Hooks, configuration: RumConfiguration) {
@@ -10,10 +10,13 @@ export function startGlobalContext(hooks: Hooks, configuration: RumConfiguration
     storeContextManager(configuration, globalContextManager, 'rum', CustomerDataType.GlobalContext)
   }
 
-  hooks.register(HookNames.Assemble, ({ eventType }): PartialRumEvent | undefined => ({
-    type: eventType,
-    context: globalContextManager.getContext(),
-  }))
+  hooks.register(
+    HookNames.Assemble,
+    ({ eventType }): DefaultRumEventAttributes => ({
+      type: eventType,
+      context: globalContextManager.getContext(),
+    })
+  )
 
   return globalContextManager
 }

@@ -96,13 +96,13 @@ describe('pageStateHistory', () => {
       page state time    0     10    20    30    40
       event time                  15<-------->35
       */
-        const event = hooks.triggerHook(HookNames.Assemble, {
+        const defaultRumEventAttributes = hooks.triggerHook(HookNames.Assemble, {
           eventType: 'view',
           startTime: clock.relative(15),
           duration: 20 as Duration,
         })
 
-        expect(event).toEqual({
+        expect(defaultRumEventAttributes).toEqual({
           type: 'view',
           _dd: {
             page_states: [
@@ -124,25 +124,25 @@ describe('pageStateHistory', () => {
       })
 
       it('should add the current state when starting', () => {
-        const event = hooks.triggerHook(HookNames.Assemble, {
+        const defaultRumEventAttributes = hooks.triggerHook(HookNames.Assemble, {
           eventType: 'view',
           startTime: clock.relative(0),
           duration: 10 as Duration,
         })
-        expect(event).toEqual({
+        expect(defaultRumEventAttributes).toEqual({
           type: 'view',
           _dd: { page_states: jasmine.any(Array) },
         })
       })
 
       it('should not add the page state if the time period is out of history bounds', () => {
-        const event = hooks.triggerHook(HookNames.Assemble, {
+        const defaultRumEventAttributes = hooks.triggerHook(HookNames.Assemble, {
           eventType: 'view',
           startTime: clock.relative(-10),
           duration: 0 as Duration,
         })
 
-        expect(event).toEqual({
+        expect(defaultRumEventAttributes).toEqual({
           type: 'view',
           _dd: { page_states: undefined },
         })
@@ -158,13 +158,13 @@ describe('pageStateHistory', () => {
         clock.tick(10)
         pageStateHistory.addPageState(PageState.PASSIVE)
 
-        const event = hooks.triggerHook(HookNames.Assemble, {
+        const defaultRumEventAttributes = hooks.triggerHook(HookNames.Assemble, {
           eventType: 'view',
           startTime: clock.relative(0),
           duration: Infinity as Duration,
         })
 
-        expect(event).toEqual({
+        expect(defaultRumEventAttributes).toEqual({
           type: 'view',
           _dd: {
             page_states: [
@@ -190,13 +190,13 @@ describe('pageStateHistory', () => {
       it('should add in_foreground: true when the page is active', () => {
         pageStateHistory.addPageState(PageState.ACTIVE)
 
-        const event = hooks.triggerHook(HookNames.Assemble, {
+        const defaultRumEventAttributes = hooks.triggerHook(HookNames.Assemble, {
           eventType,
           startTime: clock.relative(0),
           duration: 0 as Duration,
         })
 
-        expect(event).toEqual({
+        expect(defaultRumEventAttributes).toEqual({
           type: eventType,
           view: { in_foreground: true },
         })
@@ -205,13 +205,13 @@ describe('pageStateHistory', () => {
       it('should add in_foreground: false when the page is not active', () => {
         pageStateHistory.addPageState(PageState.HIDDEN)
 
-        const event = hooks.triggerHook(HookNames.Assemble, {
+        const defaultRumEventAttributes = hooks.triggerHook(HookNames.Assemble, {
           eventType,
           startTime: clock.relative(0),
           duration: 0 as Duration,
         })
 
-        expect(event).toEqual({
+        expect(defaultRumEventAttributes).toEqual({
           type: eventType,
           view: { in_foreground: false },
         })

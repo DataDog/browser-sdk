@@ -1,6 +1,6 @@
 import type { RelativeTime } from '@datadog/browser-core'
 import { clocksNow } from '@datadog/browser-core'
-import type { Hooks, PartialRumEvent } from '../../hooks'
+import type { Hooks, DefaultRumEventAttributes } from '../../hooks'
 import { createHooks, DISCARDED, HookNames } from '../../hooks'
 import type { RumSessionManagerMock } from '../../../test'
 import { createRumSessionManagerMock, noopRecorderApi } from '../../../test'
@@ -42,9 +42,12 @@ describe('session context', () => {
   it('should set id and type', () => {
     isRecordingSpy.and.returnValue(true)
 
-    const event = hooks.triggerHook(HookNames.Assemble, { eventType: 'action', startTime: 0 as RelativeTime })
+    const defaultRumEventAttributes = hooks.triggerHook(HookNames.Assemble, {
+      eventType: 'action',
+      startTime: 0 as RelativeTime,
+    })
 
-    expect(event).toEqual({
+    expect(defaultRumEventAttributes).toEqual({
       type: 'action',
       session: jasmine.objectContaining({
         id: jasmine.any(String),
@@ -58,13 +61,13 @@ describe('session context', () => {
     const eventWithHasReplay = hooks.triggerHook(HookNames.Assemble, {
       eventType: 'action',
       startTime: 0 as RelativeTime,
-    }) as PartialRumEvent
+    }) as DefaultRumEventAttributes
 
     isRecordingSpy.and.returnValue(false)
     const eventWithoutHasReplay = hooks.triggerHook(HookNames.Assemble, {
       eventType: 'action',
       startTime: 0 as RelativeTime,
-    }) as PartialRumEvent
+    }) as DefaultRumEventAttributes
 
     expect(getReplayStatsSpy).not.toHaveBeenCalled()
     expect(isRecordingSpy).toHaveBeenCalled()
@@ -77,13 +80,13 @@ describe('session context', () => {
     const eventWithHasReplay = hooks.triggerHook(HookNames.Assemble, {
       eventType: 'view',
       startTime: 0 as RelativeTime,
-    }) as PartialRumEvent
+    }) as DefaultRumEventAttributes
 
     getReplayStatsSpy.and.returnValue(undefined)
     const eventWithoutHasReplay = hooks.triggerHook(HookNames.Assemble, {
       eventType: 'view',
       startTime: 0 as RelativeTime,
-    }) as PartialRumEvent
+    }) as DefaultRumEventAttributes
 
     expect(getReplayStatsSpy).toHaveBeenCalled()
     expect(isRecordingSpy).not.toHaveBeenCalled()
@@ -96,12 +99,12 @@ describe('session context', () => {
     const eventWithActiveSession = hooks.triggerHook(HookNames.Assemble, {
       eventType: 'view',
       startTime: 0 as RelativeTime,
-    }) as PartialRumEvent
+    }) as DefaultRumEventAttributes
     findViewSpy.and.returnValue({ ...fakeView, sessionIsActive: false })
     const eventWithoutActiveSession = hooks.triggerHook(HookNames.Assemble, {
       eventType: 'view',
       startTime: 0 as RelativeTime,
-    }) as PartialRumEvent
+    }) as DefaultRumEventAttributes
 
     expect(eventWithActiveSession.session!.is_active).toBe(undefined)
     expect(eventWithoutActiveSession.session!.is_active).toBe(false)
@@ -112,13 +115,13 @@ describe('session context', () => {
     const eventSampleForReplay = hooks.triggerHook(HookNames.Assemble, {
       eventType: 'view',
       startTime: 0 as RelativeTime,
-    }) as PartialRumEvent
+    }) as DefaultRumEventAttributes
 
     sessionManager.setTrackedWithoutSessionReplay()
     const eventSampledOutForReplay = hooks.triggerHook(HookNames.Assemble, {
       eventType: 'view',
       startTime: 0 as RelativeTime,
-    }) as PartialRumEvent
+    }) as DefaultRumEventAttributes
 
     expect(eventSampleForReplay.session!.sampled_for_replay).toBe(true)
     expect(eventSampledOutForReplay.session!.sampled_for_replay).toBe(false)
@@ -126,21 +129,21 @@ describe('session context', () => {
 
   it('should discard the event if no session', () => {
     sessionManager.setNotTracked()
-    const event = hooks.triggerHook(HookNames.Assemble, {
+    const defaultRumEventAttributes = hooks.triggerHook(HookNames.Assemble, {
       eventType: 'view',
       startTime: 0 as RelativeTime,
     })
 
-    expect(event).toBe(DISCARDED)
+    expect(defaultRumEventAttributes).toBe(DISCARDED)
   })
 
   it('should discard the event if no view', () => {
     findViewSpy.and.returnValue(undefined)
-    const event = hooks.triggerHook(HookNames.Assemble, {
+    const defaultRumEventAttributes = hooks.triggerHook(HookNames.Assemble, {
       eventType: 'view',
       startTime: 0 as RelativeTime,
     })
 
-    expect(event).toBe(DISCARDED)
+    expect(defaultRumEventAttributes).toBe(DISCARDED)
   })
 })

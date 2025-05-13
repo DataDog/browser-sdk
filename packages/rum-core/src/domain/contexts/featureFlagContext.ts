@@ -2,8 +2,8 @@ import type { ContextValue, Context } from '@datadog/browser-core'
 import { SESSION_TIME_OUT_DELAY, createValueHistory, isEmptyObject } from '@datadog/browser-core'
 import type { LifeCycle } from '../lifeCycle'
 import { LifeCycleEventType } from '../lifeCycle'
-import { HookNames } from '../../hooks'
-import type { Hooks, PartialRumEvent } from '../../hooks'
+import type { Hooks, DefaultRumEventAttributes } from '../../hooks'
+import { HookNames, SKIPPED } from '../../hooks'
 
 import { RumEventType } from '../../rawRumEvent.types'
 import type { RumConfiguration } from '../configuration'
@@ -42,18 +42,18 @@ export function startFeatureFlagContexts(
     featureFlagContexts.closeActive(endClocks.relative)
   })
 
-  hooks.register(HookNames.Assemble, ({ startTime, eventType }): PartialRumEvent | undefined => {
+  hooks.register(HookNames.Assemble, ({ startTime, eventType }): DefaultRumEventAttributes | SKIPPED => {
     const trackFeatureFlagsForEvents = (configuration.trackFeatureFlagsForEvents as RumEventType[]).concat([
       RumEventType.VIEW,
       RumEventType.ERROR,
     ])
     if (!trackFeatureFlagsForEvents.includes(eventType as RumEventType)) {
-      return
+      return SKIPPED
     }
 
     const featureFlagContext = featureFlagContexts.find(startTime)
     if (!featureFlagContext || isEmptyObject(featureFlagContext)) {
-      return
+      return SKIPPED
     }
 
     return {
