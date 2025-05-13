@@ -1,12 +1,14 @@
 # flashcatcloud/browser-sdk
 
-收集并发送浏览器数据到 flashcat
+Collect and send browser data to Flashcat.
 
-## 快速开始
+## Getting Started
 
-## npm 包
+See the dedicated [Flashcat Browser RUM Collection documentation][18] to learn how to send RUM data from your browser application to Datadog.
 
-本仓库包含以下几个包：
+## npm packages
+
+This repository contains several packages:
 
 | 包名             | npm                      | 大小                     |
 | ---------------- | ------------------------ | ------------------------ |
@@ -18,9 +20,39 @@
 | browser-core     | [![npm version][41]][42] | [![bundle size][43]][44] |
 
 
-## 许可证信息
+## License Information
 
-本项目基于 Datadog Browser SDK，原始版权归 Datadog, Inc. 所有。
-本项目由 flashcat 在 Apache License 2.0 下进行修改和分发。
+This project is based on Datadog Browser SDK, with original copyright owned by Datadog, Inc.
 
-有关完整的许可证信息，请参阅 [LICENSE](./LICENSE) 文件。
+This project is modified and distributed by flashcat under the Apache License 2.0.
+
+For complete license information, please refer to the [LICENSE](./LICENSE) file.
+
+[18]: https://docs.flashcat.cloud/
+
+[01]: https://badge.fury.io/js/%40flashcatcloud%2Fbrowser-logs.svg
+[02]: https://badge.fury.io/js/%40flashcatcloud%2Fbrowser-logs
+
+[03]: https://deno.bundlejs.com/badge?q=@flashcatcloud/browser-logs&treeshake=[*]
+[04]: https://bundlejs.com/?q=@flashcatcloud/browser-logs&treeshake=[*]
+[11]: https://badge.fury.io/js/%40flashcatcloud%2Fbrowser-rum.svg
+[12]: https://badge.fury.io/js/%40flashcatcloud%2Fbrowser-rum
+[13]: https://deno.bundlejs.com/badge?q=@flashcatcloud/browser-rum&treeshake=[*]
+[14]: https://bundlejs.com/?q=@flashcatcloud/browser-rum&treeshake=[*]
+[21]: https://badge.fury.io/js/%40flashcatcloud%2Fbrowser-rum-slim.svg
+[22]: https://badge.fury.io/js/%40flashcatcloud%2Fbrowser-rum-slim
+[23]: https://deno.bundlejs.com/badge?q=@flashcatcloud/browser-rum-slim&treeshake=[*]
+[24]: https://bundlejs.com/?q=@flashcatcloud/browser-rum-slim&treeshake=[*]
+[41]: https://badge.fury.io/js/%40flashcatcloud%2Fbrowser-core.svg
+[42]: https://badge.fury.io/js/%40flashcatcloud%2Fbrowser-core
+[43]: https://deno.bundlejs.com/badge?q=@flashcatcloud/browser-core&treeshake=[*]
+[44]: https://bundlejs.com/?q=@flashcatcloud/browser-core&treeshake=[*]
+[51]: https://badge.fury.io/js/%40flashcatcloud%2Fbrowser-rum-core.svg
+[52]: https://badge.fury.io/js/%40flashcatcloud%2Fbrowser-rum-core
+[53]: https://deno.bundlejs.com/badge?q=@flashcatcloud/browser-rum-core&treeshake=[*]
+[54]: https://bundlejs.com/?q=@flashcatcloud/browser-rum-core&treeshake=[*]
+[61]: https://badge.fury.io/js/%40flashcatcloud%2Fbrowser-worker.svg
+[62]: https://badge.fury.io/js/%40flashcatcloud%2Fbrowser-worker
+[63]: https://deno.bundlejs.com/badge?q=@flashcatcloud/browser-worker&treeshake=[*]
+[64]: https://bundlejs.com/?q=@flashcatcloud/browser-worker&treeshake=[*]
+[70]: https://docs.flashcatcloudhq.com/getting_started/site/
