@@ -31,6 +31,12 @@ export type { ViewHistoryEntry, ViewHistory } from './domain/contexts/viewHistor
 export { startViewHistory } from './domain/contexts/viewHistory'
 export type { RumSessionManager, RumSession } from './domain/rumSessionManager'
 export { getMutationObserverConstructor } from './browser/domMutationObservable'
+export type {
+  RumMutationRecord,
+  RumAttributesMutationRecord,
+  RumChildListMutationRecord,
+  RumCharacterDataMutationRecord,
+} from './browser/domMutationObservable'
 export type { ViewportDimension } from './browser/viewportObservable'
 export { initViewportObservable, getViewportDimension } from './browser/viewportObservable'
 export { getScrollX, getScrollY } from './browser/scroll'

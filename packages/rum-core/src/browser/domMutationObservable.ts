@@ -11,6 +11,32 @@ export const IGNORE_MUTATIONS_ATTRIBUTE = 'dd-ignore-mutations'
 
 type MutationNotifier = (mutations: MutationRecord[]) => void
 
+// https://dom.spec.whatwg.org/#interface-mutationrecord
+export interface RumCharacterDataMutationRecord {
+  type: 'characterData'
+  target: Node
+  oldValue: string | null
+}
+
+export interface RumAttributesMutationRecord {
+  type: 'attributes'
+  target: Element
+  oldValue: string | null
+  attributeName: string | null
+}
+
+export interface RumChildListMutationRecord {
+  type: 'childList'
+  target: Node
+  addedNodes: NodeList
+  removedNodes: NodeList
+}
+
+export type RumMutationRecord =
+  | RumCharacterDataMutationRecord
+  | RumAttributesMutationRecord
+  | RumChildListMutationRecord
+
 export function createDOMMutationObservable() {
   const MutationObserver = getMutationObserverConstructor()
 
