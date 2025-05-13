@@ -103,6 +103,16 @@ describe('createPageActivityObservable', () => {
         expect(events).toEqual([])
       })
 
+      it('does not collect DOM mutation in a deeply nested child of an ignored element', () => {
+        startListeningToPageActivities()
+        const target = appendElement(
+          `<div ${EXCLUDED_MUTATIONS_ATTRIBUTE}><div><div><button target /></div></div></div>`
+        )
+
+        domMutationObservable.notify([createMutationRecord('childList', { target })])
+        expect(events).toEqual([])
+      })
+
       it('does not collect DOM mutation when a text node is added and the parent is ignored', () => {
         startListeningToPageActivities()
         const container = appendElement(`<div ${EXCLUDED_MUTATIONS_ATTRIBUTE}>foo</div>`)

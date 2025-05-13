@@ -11,6 +11,7 @@ import {
 } from '@datadog/browser-core'
 import { createPerformanceObservable, RumPerformanceEntryType } from '../browser/performanceObservable'
 import type { RumMutationRecord } from '../browser/domMutationObservable'
+import { isElementNode } from '../browser/htmlDomUtils'
 import type { RumConfiguration } from './configuration'
 import type { LifeCycle } from './lifeCycle'
 import { LifeCycleEventType } from './lifeCycle'
@@ -190,11 +191,11 @@ function isExcludedUrl(configuration: RumConfiguration, requestUrl: string): boo
 }
 
 function isExcludedMutation(mutation: RumMutationRecord): boolean {
-  switch (mutation.type) {
-    case 'attributes':
-    case 'childList':
-      return (mutation.target as Element).hasAttribute(EXCLUDED_MUTATIONS_ATTRIBUTE) === true
-    case 'characterData':
-      return mutation.target.parentElement?.hasAttribute(EXCLUDED_MUTATIONS_ATTRIBUTE) === true
-  }
+  const targetElement = mutation.type === 'characterData' ? mutation.target.parentElement : mutation.target
+
+  return Boolean(
+    targetElement &&
+      isElementNode(targetElement) &&
+      targetElement.matches(`[${EXCLUDED_MUTATIONS_ATTRIBUTE}], [${EXCLUDED_MUTATIONS_ATTRIBUTE}] *`)
+  )
 }
