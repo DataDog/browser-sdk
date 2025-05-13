@@ -1,7 +1,7 @@
-import type { RawError, HttpRequest, DeflateEncoder } from '@datadog/browser-core'
-import { createHttpRequest, addTelemetryDebug, canUseEventBridge } from '@datadog/browser-core'
-import type { LifeCycle, ViewHistory, RumConfiguration, RumSessionManager } from '@datadog/browser-rum-core'
-import { LifeCycleEventType } from '@datadog/browser-rum-core'
+import type { RawError, HttpRequest, DeflateEncoder } from '@flashcatcloud/browser-core'
+import { createHttpRequest, addTelemetryDebug, canUseEventBridge } from '@flashcatcloud/browser-core'
+import type { LifeCycle, ViewHistory, RumConfiguration, RumSessionManager } from '@flashcatcloud/browser-rum-core'
+import { LifeCycleEventType } from '@flashcatcloud/browser-rum-core'
 
 import { record } from '../domain/record'
 import { startSegmentCollection, SEGMENT_BYTES_LIMIT } from '../domain/segmentCollection'

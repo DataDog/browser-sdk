@@ -1,4 +1,4 @@
-import type { RumActionEvent, RumResourceEvent } from '@datadog/browser-rum'
+import type { RumActionEvent, RumResourceEvent } from '@flashcatcloud/browser-rum'
 import { FacetRegistry } from '../../../hooks/useEvents'
 import type { FacetValuesFilter } from '../../../hooks/useEvents'
 import { FACET_ROOT } from '../../../facets.constants'

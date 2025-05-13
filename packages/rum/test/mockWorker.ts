@@ -1,4 +1,4 @@
-import type { DeflateWorker, DeflateWorkerAction } from '@datadog/browser-core'
+import type { DeflateWorker, DeflateWorkerAction } from '@flashcatcloud/browser-core'
 import { string2buf } from '../../worker/src/domain/deflate'
 import { createNewEvent, MockEventTarget } from '../../core/test'
 

@@ -1,4 +1,4 @@
-import type { RawError, Duration, RelativeTime } from '@datadog/browser-core'
+import type { RawError, Duration, RelativeTime } from '@flashcatcloud/browser-core'
 import {
   Observable,
   stopSessionManager,
@@ -11,15 +11,15 @@ import {
   createTrackingConsentState,
   TrackingConsent,
   createCustomerDataTrackerManager,
-} from '@datadog/browser-core'
-import type { Clock } from '@datadog/browser-core/test'
+} from '@flashcatcloud/browser-core'
+import type { Clock } from '@flashcatcloud/browser-core/test'
 import {
   createNewEvent,
   interceptRequests,
   mockClock,
   mockEventBridge,
   registerCleanupTask,
-} from '@datadog/browser-core/test'
+} from '@flashcatcloud/browser-core/test'
 import type { RumSessionManagerMock } from '../../test'
 import {
   createPerformanceEntry,

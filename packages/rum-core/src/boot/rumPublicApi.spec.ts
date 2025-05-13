@@ -1,4 +1,4 @@
-import type { RelativeTime, DeflateWorker, CustomerDataTrackerManager, TimeStamp } from '@datadog/browser-core'
+import type { RelativeTime, DeflateWorker, CustomerDataTrackerManager, TimeStamp } from '@flashcatcloud/browser-core'
 import {
   ONE_SECOND,
   display,
@@ -6,9 +6,9 @@ import {
   removeStorageListeners,
   CustomerDataCompressionStatus,
   timeStampToClocks,
-} from '@datadog/browser-core'
-import type { Clock } from '@datadog/browser-core/test'
-import { mockClock, registerCleanupTask } from '@datadog/browser-core/test'
+} from '@flashcatcloud/browser-core'
+import type { Clock } from '@flashcatcloud/browser-core/test'
+import { mockClock, registerCleanupTask } from '@flashcatcloud/browser-core/test'
 import { noopRecorderApi } from '../../test'
 import { ActionType, VitalType } from '../rawRumEvent.types'
 import type { DurationVitalReference } from '../domain/vital/vitalCollection'

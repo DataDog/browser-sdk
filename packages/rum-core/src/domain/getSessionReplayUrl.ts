@@ -1,4 +1,4 @@
-import { INTAKE_SITE_STAGING, INTAKE_SITE_US1, INTAKE_SITE_EU1 } from '@datadog/browser-core'
+import { INTAKE_SITE_STAGING, INTAKE_SITE_US1, INTAKE_SITE_EU1 } from '@flashcatcloud/browser-core'
 import type { RumConfiguration } from './configuration'
 import type { ViewHistoryEntry } from './contexts/viewHistory'
 import type { RumSession } from './rumSessionManager'

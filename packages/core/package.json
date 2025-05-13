@@ -1,6 +1,6 @@
 {
-  "name": "@datadog/browser-core",
-  "version": "6.5.1",
+  "name": "@flashcatcloud/browser-core",
+  "version": "0.0.1-beta.2",
   "license": "Apache-2.0",
   "main": "cjs/index.js",
   "module": "esm/index.js",
@@ -14,7 +14,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/DataDog/browser-sdk.git",
+    "url": "https://github.com/flashcatcloud/browser-sdk",
     "directory": "packages/core"
   },
   "volta": {

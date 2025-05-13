@@ -1,5 +1,5 @@
-import type { Clock, RequestIdleCallbackMock } from '@datadog/browser-core/test'
-import { mockClock, mockRequestIdleCallback } from '@datadog/browser-core/test'
+import type { Clock, RequestIdleCallbackMock } from '@flashcatcloud/browser-core/test'
+import { mockClock, mockRequestIdleCallback } from '@flashcatcloud/browser-core/test'
 import { MUTATION_PROCESS_MIN_DELAY, createMutationBatch } from './mutationBatch'
 import type { RumMutationRecord } from './trackers'
 

@@ -1,5 +1,5 @@
-import { addEventListeners, addTelemetryDebug, DOM_EVENT, throttle } from '@datadog/browser-core'
-import type { RumConfiguration } from '@datadog/browser-rum-core'
+import { addEventListeners, addTelemetryDebug, DOM_EVENT, throttle } from '@flashcatcloud/browser-core'
+import type { RumConfiguration } from '@flashcatcloud/browser-rum-core'
 import { getSerializedNodeId, hasSerializedNode } from '../serialization'
 import type { BrowserIncrementalSnapshotRecord, MousemoveData, MousePosition } from '../../../types'
 import { IncrementalSource } from '../../../types'

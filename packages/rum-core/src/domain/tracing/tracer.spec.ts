@@ -1,4 +1,4 @@
-import { display, ExperimentalFeature, objectEntries, TraceContextInjection } from '@datadog/browser-core'
+import { display, ExperimentalFeature, objectEntries, TraceContextInjection } from '@flashcatcloud/browser-core'
 import { mockExperimentalFeatures } from '../../../../core/test'
 import type { RumSessionManagerMock } from '../../../test'
 import { createRumSessionManagerMock } from '../../../test'

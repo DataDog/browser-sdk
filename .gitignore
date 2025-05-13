@@ -21,3 +21,5 @@ browserstack.err
 /playwright-report/
 /blob-report/
 /playwright/.cache/
+.VSCodeCounter
+.env

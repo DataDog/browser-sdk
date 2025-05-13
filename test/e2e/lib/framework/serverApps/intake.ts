@@ -4,8 +4,8 @@ import connectBusboy from 'connect-busboy'
 import express from 'express'
 
 import cors from 'cors'
-import type { BrowserSegmentMetadataAndSegmentSizes } from '@datadog/browser-rum/src/domain/segmentCollection'
-import type { BrowserSegment } from '@datadog/browser-rum/src/types'
+import type { BrowserSegmentMetadataAndSegmentSizes } from '@flashcatcloud/browser-rum/src/domain/segmentCollection'
+import type { BrowserSegment } from '@flashcatcloud/browser-rum/src/types'
 import type {
   IntakeRegistry,
   IntakeRequest,

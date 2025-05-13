@@ -1,5 +1,5 @@
-import { noop, type RelativeTime } from '@datadog/browser-core'
-import { buildLocation } from '@datadog/browser-core/test'
+import { noop, type RelativeTime } from '@flashcatcloud/browser-core'
+import { buildLocation } from '@flashcatcloud/browser-core/test'
 import { createRumSessionManagerMock } from '../../../test'
 import type { ActionContexts } from '../action/actionCollection'
 import type { RumSessionManager } from '../rumSessionManager'

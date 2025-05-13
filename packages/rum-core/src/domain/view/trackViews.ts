@@ -6,7 +6,7 @@ import type {
   RelativeTime,
   Context,
   ContextValue,
-} from '@datadog/browser-core'
+} from '@flashcatcloud/browser-core'
 import {
   noop,
   PageExitReason,
@@ -25,7 +25,7 @@ import {
   setTimeout,
   Observable,
   createContextManager,
-} from '@datadog/browser-core'
+} from '@flashcatcloud/browser-core'
 import type { ViewCustomTimings } from '../../rawRumEvent.types'
 import { ViewLoadingType } from '../../rawRumEvent.types'
 import type { LifeCycle } from '../lifeCycle'

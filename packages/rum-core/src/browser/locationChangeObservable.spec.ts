@@ -1,5 +1,5 @@
-import { registerCleanupTask } from '@datadog/browser-core/test'
-import type { RumConfiguration } from '@datadog/browser-rum-core'
+import { registerCleanupTask } from '@flashcatcloud/browser-core/test'
+import type { RumConfiguration } from '@flashcatcloud/browser-rum-core'
 import { createLocationChangeObservable } from './locationChangeObservable'
 
 describe('locationChangeObservable', () => {

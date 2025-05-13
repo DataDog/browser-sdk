@@ -3,22 +3,22 @@ import type {
   MouseInteractionData,
   ScrollData,
   SerializedNodeWithId,
-} from '@datadog/browser-rum/src/types'
-import { IncrementalSource, MouseInteractionType, NodeType } from '@datadog/browser-rum/src/types'
+} from '@flashcatcloud/browser-rum/src/types'
+import { IncrementalSource, MouseInteractionType, NodeType } from '@flashcatcloud/browser-rum/src/types'
 
-import { createMutationPayloadValidatorFromSegment } from '@datadog/browser-rum/test/mutationPayloadValidator'
+import { createMutationPayloadValidatorFromSegment } from '@flashcatcloud/browser-rum/test/mutationPayloadValidator'
 import {
   findElementWithIdAttribute,
   findElementWithTagName,
   findNode,
   findTextContent,
   findTextNode,
-} from '@datadog/browser-rum/test/nodes'
+} from '@flashcatcloud/browser-rum/test/nodes'
 import {
   findFullSnapshot,
   findIncrementalSnapshot,
   findMouseInteractionRecords,
-} from '@datadog/browser-rum/test/segments'
+} from '@flashcatcloud/browser-rum/test/segments'
 
 import { test, expect } from '@playwright/test'
 import { createTest, bundleSetup, html } from '../../lib/framework'

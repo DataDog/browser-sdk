@@ -1,6 +1,6 @@
-import type { Duration, RelativeTime, ServerDuration, TaskQueue, TimeStamp } from '@datadog/browser-core'
-import { createTaskQueue, noop, RequestType, ResourceType } from '@datadog/browser-core'
-import { registerCleanupTask } from '@datadog/browser-core/test'
+import type { Duration, RelativeTime, ServerDuration, TaskQueue, TimeStamp } from '@flashcatcloud/browser-core'
+import { createTaskQueue, noop, RequestType, ResourceType } from '@flashcatcloud/browser-core'
+import { registerCleanupTask } from '@flashcatcloud/browser-core/test'
 import type { RumFetchResourceEventDomainContext, RumXhrResourceEventDomainContext } from '../../domainContext.types'
 import {
   collectAndValidateRawRumEvents,

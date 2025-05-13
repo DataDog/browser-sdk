@@ -1,5 +1,5 @@
-import { IncrementalSource, RecordType } from '@datadog/browser-rum/src/types'
-import type { BrowserRecord } from '@datadog/browser-rum/src/types'
+import { IncrementalSource, RecordType } from '@flashcatcloud/browser-rum/src/types'
+import type { BrowserRecord } from '@flashcatcloud/browser-rum/src/types'
 import { createLogger } from '../../common/logger'
 import { onBackgroundMessage } from '../backgroundScriptConnection'
 import type { MessageBridgeUp } from './sessionReplayPlayer.types'

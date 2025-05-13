@@ -1,5 +1,5 @@
-import { SESSION_STORE_KEY, SESSION_TIME_OUT_DELAY } from '@datadog/browser-core'
-import type { SessionState } from '@datadog/browser-core'
+import { SESSION_STORE_KEY, SESSION_TIME_OUT_DELAY } from '@flashcatcloud/browser-core'
+import type { SessionState } from '@flashcatcloud/browser-core'
 import type { BrowserContext, Page } from '@playwright/test'
 import { expect } from '@playwright/test'
 

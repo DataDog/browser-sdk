@@ -6,12 +6,12 @@ See the [dedicated datadog documentation][1] for more details.
 
 ## Usage
 
-To start collecting events, add [`@datadog/browser-rum`][2] to your `package.json` file, then initialize it with:
+To start collecting events, add [`@flashcatcloud/browser-rum`][2] to your `package.json` file, then initialize it with:
 
 ```javascript
-import { datadogRum } from '@datadog/browser-rum'
+import { flashcatRum } from '@flashcatcloud/browser-rum'
 
-datadogRum.init({
+flashcatRum.init({
   applicationId: '<DATADOG_APPLICATION_ID>',
   clientToken: '<DATADOG_CLIENT_TOKEN>',
   site: '<DATADOG_SITE>',
@@ -31,4 +31,4 @@ datadogRum.init({
 <!-- Note: all URLs should be absolute -->
 
 [1]: https://docs.datadoghq.com/real_user_monitoring/browser
-[2]: https://www.npmjs.com/package/@datadog/browser-rum
+[2]: https://www.npmjs.com/package/@flashcatcloud/browser-rum

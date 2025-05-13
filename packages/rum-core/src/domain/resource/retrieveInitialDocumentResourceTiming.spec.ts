@@ -1,4 +1,4 @@
-import type { RelativeTime } from '@datadog/browser-core'
+import type { RelativeTime } from '@flashcatcloud/browser-core'
 import { createPerformanceEntry, mockDocumentReadyState, mockRumConfiguration } from '../../../test'
 import { RumPerformanceEntryType } from '../../browser/performanceObservable'
 import { FAKE_INITIAL_DOCUMENT } from './resourceUtils'

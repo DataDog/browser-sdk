@@ -1,13 +1,13 @@
-import type { FlushEvent, Context, TelemetryEvent, CustomerDataTracker } from '@datadog/browser-core'
+import type { FlushEvent, Context, TelemetryEvent, CustomerDataTracker } from '@flashcatcloud/browser-core'
 import {
   Observable,
   startTelemetry,
   TelemetryService,
   resetExperimentalFeatures,
   createCustomerDataTrackerManager,
-} from '@datadog/browser-core'
-import type { Clock } from '@datadog/browser-core/test'
-import { mockClock } from '@datadog/browser-core/test'
+} from '@flashcatcloud/browser-core'
+import type { Clock } from '@flashcatcloud/browser-core/test'
+import { mockClock } from '@flashcatcloud/browser-core/test'
 import { mockRumConfiguration } from '../../test'
 import { RumEventType } from '../rawRumEvent.types'
 import type { RumEvent } from '../rumEvent.types'

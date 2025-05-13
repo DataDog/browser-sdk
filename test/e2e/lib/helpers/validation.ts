@@ -1,5 +1,5 @@
 import fs from 'fs'
-import type { RumEvent } from '@datadog/browser-rum'
+import type { RumEvent } from '@flashcatcloud/browser-rum'
 import ajv from 'ajv'
 import { globSync } from 'glob'
 

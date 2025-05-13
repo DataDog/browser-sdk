@@ -1,4 +1,4 @@
-import type { RelativeTime } from '@datadog/browser-core'
+import type { RelativeTime } from '@flashcatcloud/browser-core'
 import { mockSyntheticsWorkerValues } from '../../../../core/test'
 import type { Hooks } from '../../hooks'
 import { createHooks, HookNames } from '../../hooks'

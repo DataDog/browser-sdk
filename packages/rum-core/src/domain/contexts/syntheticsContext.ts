@@ -1,4 +1,4 @@
-import { getSyntheticsResultId, getSyntheticsTestId, willSyntheticsInjectRum } from '@datadog/browser-core'
+import { getSyntheticsResultId, getSyntheticsTestId, willSyntheticsInjectRum } from '@flashcatcloud/browser-core'
 import { HookNames } from '../../hooks'
 import type { Hooks, PartialRumEvent } from '../../hooks'
 import { SessionType } from '../rumSessionManager'

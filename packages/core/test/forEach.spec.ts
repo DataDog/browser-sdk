@@ -4,8 +4,8 @@ import { startLeakDetection } from './leakDetection'
 beforeEach(() => {
   ;(window as unknown as BuildEnvWindow).__BUILD_ENV__SDK_VERSION__ = 'test'
   // reset globals
-  ;(window as any).DD_LOGS = {}
-  ;(window as any).DD_RUM = {}
+  ;(window as any).FC_LOGS = {}
+  ;(window as any).FC_RUM = {}
   ;(window as any).IS_REACT_ACT_ENVIRONMENT = true
   // prevent 'Some of your tests did a full page reload!' issue
   window.onbeforeunload = () => 'stop'

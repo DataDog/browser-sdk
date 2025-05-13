@@ -1,5 +1,5 @@
-import { datadogLogs } from '@datadog/browser-logs'
-import { datadogRum } from '@datadog/browser-rum'
+import { datadogLogs } from '@flashcatcloud/browser-logs'
+import { datadogRum } from '@flashcatcloud/browser-rum'
 
 declare global {
   interface Window {

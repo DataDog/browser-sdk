@@ -1,5 +1,5 @@
-import type { RelativeTime } from '@datadog/browser-core'
-import { registerCleanupTask, restorePageVisibility, setPageVisibility } from '@datadog/browser-core/test'
+import type { RelativeTime } from '@flashcatcloud/browser-core'
+import { registerCleanupTask, restorePageVisibility, setPageVisibility } from '@flashcatcloud/browser-core/test'
 import type { RumPerformanceEntry } from '../../../browser/performanceObservable'
 import { RumPerformanceEntryType } from '../../../browser/performanceObservable'
 import { createPerformanceEntry, mockPerformanceObserver, mockRumConfiguration } from '../../../../test'

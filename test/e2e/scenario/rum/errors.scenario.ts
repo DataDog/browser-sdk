@@ -1,4 +1,4 @@
-import type { RumErrorEvent } from '@datadog/browser-rum-core'
+import type { RumErrorEvent } from '@flashcatcloud/browser-rum-core'
 import { test, expect } from '@playwright/test'
 import { createTest, html } from '../../lib/framework'
 
@@ -103,7 +103,7 @@ test.describe('rum errors', () => {
 
   createTest('send custom errors')
     .withRum()
-    .withBody(createBody('DD_RUM.addError(foo())'))
+    .withBody(createBody('FC_RUM.addError(foo())'))
     .run(async ({ flushEvents, page, intakeRegistry, baseUrl, withBrowserLogs }) => {
       const button = page.locator('button')
       await button.click()

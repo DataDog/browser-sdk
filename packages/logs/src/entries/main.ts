@@ -1,4 +1,4 @@
-import { defineGlobal, getGlobalObject } from '@datadog/browser-core'
+import { defineGlobal, getGlobalObject } from '@flashcatcloud/browser-core'
 import type { LogsPublicApi } from '../boot/logsPublicApi'
 import { makeLogsPublicApi } from '../boot/logsPublicApi'
 import { startLogs } from '../boot/startLogs'
@@ -14,6 +14,6 @@ export type { LogsEventDomainContext } from '../domainContext.types'
 export const datadogLogs = makeLogsPublicApi(startLogs)
 
 interface BrowserWindow extends Window {
-  DD_LOGS?: LogsPublicApi
+  FC_LOGS?: LogsPublicApi
 }
-defineGlobal(getGlobalObject<BrowserWindow>(), 'DD_LOGS', datadogLogs)
+defineGlobal(getGlobalObject<BrowserWindow>(), 'FC_LOGS', datadogLogs)

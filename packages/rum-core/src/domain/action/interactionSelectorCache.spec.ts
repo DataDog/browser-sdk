@@ -1,6 +1,6 @@
-import { relativeNow } from '@datadog/browser-core'
-import { mockClock } from '@datadog/browser-core/test'
-import type { Clock } from '@datadog/browser-core/test'
+import { relativeNow } from '@flashcatcloud/browser-core'
+import { mockClock } from '@flashcatcloud/browser-core/test'
+import type { Clock } from '@flashcatcloud/browser-core/test'
 import {
   updateInteractionSelector,
   getInteractionSelector,

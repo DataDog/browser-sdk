@@ -1,6 +1,6 @@
-import { buildUrl } from '@datadog/browser-core'
-import { getParentNode, isNodeShadowRoot, CENSORED_STRING_MARK, shouldMaskNode } from '@datadog/browser-rum-core'
-import type { NodePrivacyLevel } from '@datadog/browser-rum-core'
+import { buildUrl } from '@flashcatcloud/browser-core'
+import { getParentNode, isNodeShadowRoot, CENSORED_STRING_MARK, shouldMaskNode } from '@flashcatcloud/browser-rum-core'
+import type { NodePrivacyLevel } from '@flashcatcloud/browser-rum-core'
 import type { NodeWithSerializedNode } from './serialization.types'
 
 const serializedNodeIds = new WeakMap<Node, number>()

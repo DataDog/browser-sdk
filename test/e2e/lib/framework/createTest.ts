@@ -1,6 +1,6 @@
-import type { LogsInitConfiguration } from '@datadog/browser-logs'
-import type { RumInitConfiguration } from '@datadog/browser-rum-core'
-import { DefaultPrivacyLevel } from '@datadog/browser-rum'
+import type { LogsInitConfiguration } from '@flashcatcloud/browser-logs'
+import type { RumInitConfiguration } from '@flashcatcloud/browser-rum-core'
+import { DefaultPrivacyLevel } from '@flashcatcloud/browser-rum'
 import type { BrowserContext, Page } from '@playwright/test'
 import { test, expect } from '@playwright/test'
 import { addTag, addTestOptimizationTags } from '../helpers/tags'
@@ -163,11 +163,11 @@ class TestBuilder {
   }
 
   private rumInit: (configuration: RumInitConfiguration) => void = (configuration) => {
-    window.DD_RUM!.init(configuration)
+    window.FC_RUM!.init(configuration)
   }
 
   private logsInit: (configuration: LogsInitConfiguration) => void = (configuration) => {
-    window.DD_LOGS!.init(configuration)
+    window.FC_LOGS!.init(configuration)
   }
 }
 

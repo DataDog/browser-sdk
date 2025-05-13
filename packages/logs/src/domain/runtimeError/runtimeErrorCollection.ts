@@ -1,5 +1,5 @@
-import type { Context, RawError, ClocksState } from '@datadog/browser-core'
-import { noop, ErrorSource, trackRuntimeError, Observable } from '@datadog/browser-core'
+import type { Context, RawError, ClocksState } from '@flashcatcloud/browser-core'
+import { noop, ErrorSource, trackRuntimeError, Observable } from '@flashcatcloud/browser-core'
 import type { LogsConfiguration } from '../configuration'
 import type { LifeCycle } from '../lifeCycle'
 import { LifeCycleEventType } from '../lifeCycle'

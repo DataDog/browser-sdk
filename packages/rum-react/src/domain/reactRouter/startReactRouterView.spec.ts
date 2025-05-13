@@ -1,4 +1,4 @@
-import { display } from '@datadog/browser-core'
+import { display } from '@flashcatcloud/browser-core'
 import {
   createMemoryRouter as createMemoryRouterV6,
   type RouteObject as RouteObjectV6,

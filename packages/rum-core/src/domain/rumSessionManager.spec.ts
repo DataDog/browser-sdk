@@ -1,4 +1,4 @@
-import type { RelativeTime } from '@datadog/browser-core'
+import type { RelativeTime } from '@flashcatcloud/browser-core'
 import {
   STORAGE_POLL_DELAY,
   SESSION_STORE_KEY,
@@ -9,8 +9,8 @@ import {
   createTrackingConsentState,
   TrackingConsent,
   BridgeCapability,
-} from '@datadog/browser-core'
-import type { Clock } from '@datadog/browser-core/test'
+} from '@flashcatcloud/browser-core'
+import type { Clock } from '@flashcatcloud/browser-core/test'
 import {
   createNewEvent,
   expireCookie,
@@ -18,7 +18,7 @@ import {
   mockEventBridge,
   mockClock,
   registerCleanupTask,
-} from '@datadog/browser-core/test'
+} from '@flashcatcloud/browser-core/test'
 import { mockRumConfiguration } from '../../test'
 import type { RumConfiguration } from './configuration'
 

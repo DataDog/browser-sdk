@@ -11,8 +11,8 @@ import {
   initFeatureFlags,
   addTelemetryConfiguration,
   initFetchObservable,
-} from '@datadog/browser-core'
-import type { TrackingConsentState, DeflateWorker, Context } from '@datadog/browser-core'
+} from '@flashcatcloud/browser-core'
+import type { TrackingConsentState, DeflateWorker, Context } from '@flashcatcloud/browser-core'
 import {
   validateAndBuildRumConfiguration,
   type RumConfiguration,
@@ -91,7 +91,7 @@ export function createPreStartStrategy(
     addTelemetryConfiguration(serializeRumConfiguration(initConfiguration))
 
     if (cachedConfiguration) {
-      displayAlreadyInitializedError('DD_RUM', initConfiguration)
+      displayAlreadyInitializedError('FC_RUM', initConfiguration)
       return
     }
 

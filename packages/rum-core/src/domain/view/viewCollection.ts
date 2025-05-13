@@ -1,5 +1,5 @@
-import type { Duration, ServerDuration, Observable } from '@datadog/browser-core'
-import { isEmptyObject, mapValues, toServerDuration } from '@datadog/browser-core'
+import type { Duration, ServerDuration, Observable } from '@flashcatcloud/browser-core'
+import { isEmptyObject, mapValues, toServerDuration } from '@flashcatcloud/browser-core'
 import { discardNegativeDuration } from '../discardNegativeDuration'
 import type { RecorderApi } from '../../boot/rumPublicApi'
 import type { RawRumViewEvent, ViewPerformanceData } from '../../rawRumEvent.types'

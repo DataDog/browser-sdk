@@ -1,6 +1,6 @@
-import type { TelemetryEvent } from '@datadog/browser-core'
-import { startTelemetry, TelemetryService } from '@datadog/browser-core'
-import { mockSyntheticsWorkerValues } from '@datadog/browser-core/test'
+import type { TelemetryEvent } from '@flashcatcloud/browser-core'
+import { startTelemetry, TelemetryService } from '@flashcatcloud/browser-core'
+import { mockSyntheticsWorkerValues } from '@flashcatcloud/browser-core/test'
 import { validateAndBuildLogsConfiguration } from '../configuration'
 import { resetRUMInternalContext, getRUMInternalContext } from './rumInternalContext'
 
@@ -8,7 +8,7 @@ const initConfiguration = { clientToken: 'xxx', service: 'service' }
 
 describe('getRUMInternalContext', () => {
   afterEach(() => {
-    delete window.DD_RUM
+    delete window.FC_RUM
     delete window.DD_RUM_SYNTHETICS
     resetRUMInternalContext()
   })
@@ -18,12 +18,12 @@ describe('getRUMInternalContext', () => {
   })
 
   it('returns undefined if the global variable does not have a `getInternalContext` method', () => {
-    window.DD_RUM = {} as any
+    window.FC_RUM = {} as any
     expect(getRUMInternalContext()).toBeUndefined()
   })
 
   it('returns the internal context from the `getInternalContext` method', () => {
-    window.DD_RUM = {
+    window.FC_RUM = {
       getInternalContext: () => ({ foo: 'bar' }),
     }
     expect(getRUMInternalContext()).toEqual({ foo: 'bar' })

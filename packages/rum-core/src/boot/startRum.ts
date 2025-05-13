@@ -6,7 +6,7 @@ import type {
   Encoder,
   CustomerDataTrackerManager,
   TrackingConsentState,
-} from '@datadog/browser-core'
+} from '@flashcatcloud/browser-core'
 import {
   sendToExtension,
   createPageExitObservable,
@@ -17,7 +17,7 @@ import {
   addTelemetryDebug,
   CustomerDataType,
   drainPreStartTelemetry,
-} from '@datadog/browser-core'
+} from '@flashcatcloud/browser-core'
 import { createDOMMutationObservable } from '../browser/domMutationObservable'
 import { createWindowOpenObservable } from '../browser/windowOpenObservable'
 import { startRumAssembly } from '../domain/assembly'

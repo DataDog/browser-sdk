@@ -1,4 +1,4 @@
-import type { RelativeTime, TrackingConsentState } from '@datadog/browser-core'
+import type { RelativeTime, TrackingConsentState } from '@flashcatcloud/browser-core'
 import {
   BridgeCapability,
   Observable,
@@ -6,7 +6,7 @@ import {
   noop,
   performDraw,
   startSessionManager,
-} from '@datadog/browser-core'
+} from '@flashcatcloud/browser-core'
 import type { RumConfiguration } from './configuration'
 import type { LifeCycle } from './lifeCycle'
 import { LifeCycleEventType } from './lifeCycle'

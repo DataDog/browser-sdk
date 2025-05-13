@@ -1,5 +1,5 @@
-import type { Subscription, TimeoutId, TimeStamp } from '@datadog/browser-core'
-import { matchList, monitor, Observable, timeStampNow, setTimeout, clearTimeout } from '@datadog/browser-core'
+import type { Subscription, TimeoutId, TimeStamp } from '@flashcatcloud/browser-core'
+import { matchList, monitor, Observable, timeStampNow, setTimeout, clearTimeout } from '@flashcatcloud/browser-core'
 import { createPerformanceObservable, RumPerformanceEntryType } from '../browser/performanceObservable'
 import type { RumConfiguration } from './configuration'
 import type { LifeCycle } from './lifeCycle'

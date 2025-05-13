@@ -1,5 +1,5 @@
-import type { Context, ClocksState, ConsoleLog } from '@datadog/browser-core'
-import { timeStampNow, ConsoleApiName, ErrorSource, initConsoleObservable } from '@datadog/browser-core'
+import type { Context, ClocksState, ConsoleLog } from '@flashcatcloud/browser-core'
+import { timeStampNow, ConsoleApiName, ErrorSource, initConsoleObservable } from '@flashcatcloud/browser-core'
 import type { LogsConfiguration } from '../configuration'
 import type { LifeCycle, RawLogsEventCollectedData } from '../lifeCycle'
 import { LifeCycleEventType } from '../lifeCycle'

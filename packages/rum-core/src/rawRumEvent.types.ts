@@ -8,7 +8,7 @@ import type {
   RawErrorCause,
   DefaultPrivacyLevel,
   Csp,
-} from '@datadog/browser-core'
+} from '@flashcatcloud/browser-core'
 import type { PageState } from './domain/contexts/pageStateHistory'
 
 export const enum RumEventType {

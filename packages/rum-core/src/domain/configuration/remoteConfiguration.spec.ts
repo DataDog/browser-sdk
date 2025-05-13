@@ -1,5 +1,5 @@
-import { DefaultPrivacyLevel, display, INTAKE_SITE_US1 } from '@datadog/browser-core'
-import { interceptRequests } from '@datadog/browser-core/test'
+import { DefaultPrivacyLevel, display, INTAKE_SITE_US1 } from '@flashcatcloud/browser-core'
+import { interceptRequests } from '@flashcatcloud/browser-core/test'
 import type { RumInitConfiguration } from './configuration'
 import { applyRemoteConfiguration, buildEndpoint, fetchRemoteConfiguration } from './remoteConfiguration'
 

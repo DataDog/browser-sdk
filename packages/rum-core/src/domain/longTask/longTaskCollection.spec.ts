@@ -1,4 +1,4 @@
-import type { RelativeTime, ServerDuration } from '@datadog/browser-core'
+import type { RelativeTime, ServerDuration } from '@flashcatcloud/browser-core'
 import {
   collectAndValidateRawRumEvents,
   createPerformanceEntry,

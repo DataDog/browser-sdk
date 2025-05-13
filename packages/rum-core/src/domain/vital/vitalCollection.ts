@@ -1,5 +1,5 @@
-import type { ClocksState, Duration, Context } from '@datadog/browser-core'
-import { clocksNow, combine, elapsed, generateUUID, toServerDuration } from '@datadog/browser-core'
+import type { ClocksState, Duration, Context } from '@flashcatcloud/browser-core'
+import { clocksNow, combine, elapsed, generateUUID, toServerDuration } from '@flashcatcloud/browser-core'
 import type { LifeCycle, RawRumEventCollectedData } from '../lifeCycle'
 import { LifeCycleEventType } from '../lifeCycle'
 import type { RawRumVitalEvent } from '../../rawRumEvent.types'

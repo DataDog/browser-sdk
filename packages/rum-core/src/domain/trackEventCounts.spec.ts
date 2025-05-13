@@ -1,5 +1,5 @@
-import type { Context } from '@datadog/browser-core'
-import { objectValues } from '@datadog/browser-core'
+import type { Context } from '@flashcatcloud/browser-core'
+import { objectValues } from '@flashcatcloud/browser-core'
 import type { RumEvent } from '../rumEvent.types'
 import { FrustrationType, RumEventType } from '../rawRumEvent.types'
 import { LifeCycle, LifeCycleEventType } from './lifeCycle'

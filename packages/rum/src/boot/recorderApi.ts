@@ -1,11 +1,11 @@
-import type { DeflateEncoder, DeflateWorker } from '@datadog/browser-core'
+import type { DeflateEncoder, DeflateWorker } from '@flashcatcloud/browser-core'
 import {
   canUseEventBridge,
   noop,
   BridgeCapability,
   bridgeSupports,
   DeflateEncoderStreamId,
-} from '@datadog/browser-core'
+} from '@flashcatcloud/browser-core'
 import type {
   LifeCycle,
   ViewHistory,
@@ -13,7 +13,7 @@ import type {
   RecorderApi,
   RumConfiguration,
   StartRecordingOptions,
-} from '@datadog/browser-rum-core'
+} from '@flashcatcloud/browser-rum-core'
 import { getReplayStats as getReplayStatsImpl } from '../domain/replayStats'
 import type { CreateDeflateWorker } from '../domain/deflate'
 import {

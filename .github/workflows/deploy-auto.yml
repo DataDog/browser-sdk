@@ -1,0 +1,122 @@
+name: Automatic Deployment
+
+on:
+  push:
+    tags:
+      - 'v*' # 当推送带有 v 前缀的标签时触发
+
+jobs:
+  deploy-prod:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: Install dependencies
+        run: yarn
+
+      - name: Export BUILD_MODE
+        run: export BUILD_MODE=release
+
+      - name: Get version
+        run: |
+          FULL_VERSION=$(node -p -e "require('./lerna.json').version")
+          MAJOR_VERSION=$(echo $FULL_VERSION | cut -d. -f1)
+          echo "VERSION=$MAJOR_VERSION" >> $GITHUB_ENV
+          echo "version=$MAJOR_VERSION" >> $GITHUB_OUTPUT
+        env:
+          BUILD_MODE: release
+
+      - name: Build bundle
+        run: yarn build:bundle
+
+      - name: Deploy to prod
+        run: node ./scripts/deploy/deploy-oss.js prod v${VERSION}
+        env:
+          OSS_ENDPOINT: ${{ secrets.OSS_ENDPOINT }}
+          OSS_REGION: ${{ secrets.OSS_REGION }}
+          OSS_ACCESS_KEY: ${{ secrets.OSS_ACCESS_KEY }}
+          OSS_BUCKET: ${{ secrets.OSS_BUCKET }}
+          OSS_SECRET_KEY: ${{ secrets.OSS_SECRET_KEY }}
+
+  publish-npm:
+    needs: deploy-prod
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          registry-url: 'https://registry.npmjs.org/'
+
+      - name: Install dependencies
+        run: yarn
+
+      - name: Publish to NPM
+        run: node ./scripts/deploy/publish-npm.js
+        env:
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+  notify-success:
+    needs: publish-npm
+    runs-on: ubuntu-latest
+    if: success()
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Prepare notification
+        run: |
+          COMMIT_MESSAGE=$(git show-branch --no-name HEAD)
+          echo "COMMIT_MESSAGE=$COMMIT_MESSAGE" >> $GITHUB_ENV
+          echo "COMMIT_URL=https://github.com/${{ github.repository }}/commit/${{ github.sha }}" >> $GITHUB_ENV
+
+      - name: Notify deployment success
+        uses: zcong1993/actions-ding@master
+        with:
+          dingToken: ${{ secrets.DING_TALK_TOKEN }}
+          secret: ${{ secrets.DING_TALK_SECRET }}
+          body: |
+            {
+              "msgtype": "markdown",
+               "markdown": {
+                "title": "RUM sdk 部署通知",
+                "text": "### ✅ RUM sdk 部署成功\n\n---\n\n 🔖 分支: ${{ github.ref }}\n\n 📝 提交信息: [${{ github.event.head_commit.message }}](https://github.com/${{ github.repository }}/commit/${{ github.sha }})\n\n 👨‍💻 提交者: ${{ github.actor }}\n\n 🚀 [查看部署详情](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})"
+              }
+            }
+
+  notify-failure:
+    needs: publish-npm
+    runs-on: ubuntu-latest
+    if: failure()
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Prepare notification
+        run: |
+          COMMIT_MESSAGE=$(git show-branch --no-name HEAD)
+          echo "COMMIT_MESSAGE=$COMMIT_MESSAGE" >> $GITHUB_ENV
+          echo "BUILD_URL=https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}" >> $GITHUB_ENV
+
+      - name: Notify deployment failure
+        uses: zcong1993/actions-ding@master
+        with:
+          dingToken: ${{ secrets.DING_TALK_TOKEN }}
+          secret: ${{ secrets.DING_TALK_SECRET }}
+          body: |
+            {
+              "msgtype": "markdown",
+              "markdown": {
+                "title": "RUM sdk 部署通知",
+                "text": "### ❌ RUM sdk 部署失败 \n\n---\n\n 🔖 分支: ${{ github.ref }}\n\n 📝 提交信息: [${{ github.event.head_commit.message }}](https://github.com/${{ github.repository }}/commit/${{ github.sha }})\n\n 👨‍💻 提交者: ${{ github.actor }}\n\n 🚀 [查看部署详情](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})"
+              }
+            }

@@ -1,6 +1,6 @@
-import type { RawTelemetryEvent, EncoderResult } from '@datadog/browser-core'
-import type { RumConfiguration } from '@datadog/browser-rum-core'
-import { noop, startFakeTelemetry, DeflateEncoderStreamId } from '@datadog/browser-core'
+import type { RawTelemetryEvent, EncoderResult } from '@flashcatcloud/browser-core'
+import type { RumConfiguration } from '@flashcatcloud/browser-rum-core'
+import { noop, startFakeTelemetry, DeflateEncoderStreamId } from '@flashcatcloud/browser-core'
 import { MockWorker } from '../../../test'
 import { createDeflateEncoder } from './deflateEncoder'
 

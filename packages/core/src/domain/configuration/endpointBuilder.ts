@@ -76,9 +76,7 @@ export function buildEndpointHost(
     return `http-intake.logs.${site}`
   }
 
-  const domainParts = site.split('.')
-  const extension = domainParts.pop()
-  return `browser-intake-${domainParts.join('-')}.${extension!}`
+  return site
 }
 
 /**

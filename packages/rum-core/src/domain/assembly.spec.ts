@@ -1,6 +1,6 @@
-import type { ClocksState, RelativeTime, TimeStamp } from '@datadog/browser-core'
-import { ErrorSource, ExperimentalFeature, ONE_MINUTE, display } from '@datadog/browser-core'
-import type { Clock } from '@datadog/browser-core/test'
+import type { ClocksState, RelativeTime, TimeStamp } from '@flashcatcloud/browser-core'
+import { ErrorSource, ExperimentalFeature, ONE_MINUTE, display } from '@flashcatcloud/browser-core'
+import type { Clock } from '@flashcatcloud/browser-core/test'
 import {
   mockEventBridge,
   mockExperimentalFeatures,
@@ -9,7 +9,7 @@ import {
   registerCleanupTask,
   mockClock,
   mockCookie,
-} from '@datadog/browser-core/test'
+} from '@flashcatcloud/browser-core/test'
 import {
   createRumSessionManagerMock,
   createRawRumEvent,

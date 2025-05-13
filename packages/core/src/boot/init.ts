@@ -12,7 +12,7 @@ export interface PublicApi {
   version: string
 
   /**
-   * [For CDN async setup] Early RUM API calls must be wrapped in the `window.DD_RUM.onReady()` callback. This ensures the code only gets executed once the SDK is properly loaded.
+   * [For CDN async setup] Early RUM API calls must be wrapped in the `window.FC_RUM.onReady()` callback. This ensures the code only gets executed once the SDK is properly loaded.
    *
    * See [CDN async setup](https://docs.datadoghq.com/real_user_monitoring/browser/#cdn-async) for further information.
    */

@@ -1,4 +1,4 @@
-import type { RumInitConfiguration, RumPublicApi, Strategy } from '@datadog/browser-rum-core'
+import type { RumInitConfiguration, RumPublicApi, Strategy } from '@flashcatcloud/browser-rum-core'
 import type { ReactPluginConfiguration } from '../src/domain/reactPlugin'
 import { reactPlugin, resetReactPlugin } from '../src/domain/reactPlugin'
 import { registerCleanupTask } from '../../core/test'

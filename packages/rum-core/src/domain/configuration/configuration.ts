@@ -1,4 +1,9 @@
-import type { Configuration, InitConfiguration, MatchOption, RawTelemetryConfiguration } from '@datadog/browser-core'
+import type {
+  Configuration,
+  InitConfiguration,
+  MatchOption,
+  RawTelemetryConfiguration,
+} from '@flashcatcloud/browser-core'
 import {
   getType,
   isMatchOption,
@@ -10,14 +15,14 @@ import {
   validateAndBuildConfiguration,
   isSampleRate,
   isNumber,
-} from '@datadog/browser-core'
+} from '@flashcatcloud/browser-core'
 import type { RumEventDomainContext } from '../../domainContext.types'
 import type { RumEvent } from '../../rumEvent.types'
 import type { RumPlugin } from '../plugins'
 import { isTracingOption } from '../tracing/tracer'
 import type { PropagatorType, TracingOption } from '../tracing/tracer.types'
 
-export const DEFAULT_PROPAGATOR_TYPES: PropagatorType[] = ['tracecontext', 'datadog']
+export const DEFAULT_PROPAGATOR_TYPES: PropagatorType[] = ['tracecontext']
 
 export interface RumInitConfiguration extends InitConfiguration {
   // global options

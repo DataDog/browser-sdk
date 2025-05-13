@@ -1,4 +1,4 @@
-import type { TrackingConsentState } from '@datadog/browser-core'
+import type { TrackingConsentState } from '@flashcatcloud/browser-core'
 import {
   createBoundedBuffer,
   canUseEventBridge,
@@ -8,7 +8,7 @@ import {
   initFetchObservable,
   noop,
   timeStampNow,
-} from '@datadog/browser-core'
+} from '@flashcatcloud/browser-core'
 import {
   validateAndBuildLogsConfiguration,
   type LogsConfiguration,
@@ -56,7 +56,7 @@ export function createPreStartStrategy(
       cachedInitConfiguration = initConfiguration
 
       if (cachedConfiguration) {
-        displayAlreadyInitializedError('DD_LOGS', initConfiguration)
+        displayAlreadyInitializedError('FC_LOGS', initConfiguration)
         return
       }
 

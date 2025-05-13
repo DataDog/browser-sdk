@@ -1,4 +1,4 @@
-import type { Duration, ClocksState, RelativeTime, TimeStamp, ValueHistory } from '@datadog/browser-core'
+import type { Duration, ClocksState, RelativeTime, TimeStamp, ValueHistory } from '@flashcatcloud/browser-core'
 import {
   timeStampNow,
   Observable,
@@ -8,7 +8,7 @@ import {
   clocksNow,
   elapsed,
   createValueHistory,
-} from '@datadog/browser-core'
+} from '@flashcatcloud/browser-core'
 import type { FrustrationType } from '../../rawRumEvent.types'
 import { ActionType } from '../../rawRumEvent.types'
 import type { LifeCycle } from '../lifeCycle'

@@ -1,5 +1,5 @@
-import type { TimeoutId } from '@datadog/browser-core'
-import { ONE_SECOND, clearTimeout, setTimeout } from '@datadog/browser-core'
+import type { TimeoutId } from '@flashcatcloud/browser-core'
+import { ONE_SECOND, clearTimeout, setTimeout } from '@flashcatcloud/browser-core'
 import type { Click } from './trackClickActions'
 
 export interface ClickChain {

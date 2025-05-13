@@ -1,12 +1,12 @@
-import { callbackAddsInstrumentation, type Clock, mockClock, mockEventBridge } from '@datadog/browser-core/test'
-import type { TimeStamp, TrackingConsentState } from '@datadog/browser-core'
+import { callbackAddsInstrumentation, type Clock, mockClock, mockEventBridge } from '@flashcatcloud/browser-core/test'
+import type { TimeStamp, TrackingConsentState } from '@flashcatcloud/browser-core'
 import {
   ONE_SECOND,
   TrackingConsent,
   createTrackingConsentState,
   display,
   resetFetchObservable,
-} from '@datadog/browser-core'
+} from '@flashcatcloud/browser-core'
 import type { CommonContext } from '../rawLogsEvent.types'
 import type { HybridInitConfiguration, LogsConfiguration, LogsInitConfiguration } from '../domain/configuration'
 import type { Logger } from '../domain/logger'

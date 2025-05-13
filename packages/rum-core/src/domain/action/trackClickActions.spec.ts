@@ -1,4 +1,4 @@
-import type { Context, Duration } from '@datadog/browser-core'
+import type { Context, Duration } from '@flashcatcloud/browser-core'
 import {
   addDuration,
   clocksNow,
@@ -6,9 +6,9 @@ import {
   relativeNow,
   DefaultPrivacyLevel,
   Observable,
-} from '@datadog/browser-core'
-import type { Clock } from '@datadog/browser-core/test'
-import { createNewEvent, mockClock } from '@datadog/browser-core/test'
+} from '@flashcatcloud/browser-core'
+import type { Clock } from '@flashcatcloud/browser-core/test'
+import { createNewEvent, mockClock } from '@flashcatcloud/browser-core/test'
 import { createFakeClick, mockRumConfiguration } from '../../../test'
 import { RumEventType, ActionType, FrustrationType } from '../../rawRumEvent.types'
 import type { RumEvent } from '../../rumEvent.types'

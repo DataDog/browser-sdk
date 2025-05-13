@@ -1,6 +1,6 @@
-import type { Duration, Subscription } from '@datadog/browser-core'
-import type { Clock } from '@datadog/browser-core/test'
-import { mockClock } from '@datadog/browser-core/test'
+import type { Duration, Subscription } from '@flashcatcloud/browser-core'
+import type { Clock } from '@flashcatcloud/browser-core/test'
+import { mockClock } from '@flashcatcloud/browser-core/test'
 import type { GlobalPerformanceBufferMock } from '../../test'
 import {
   createPerformanceEntry,

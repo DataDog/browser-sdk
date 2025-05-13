@@ -1,5 +1,5 @@
-import type { RawError } from '@datadog/browser-core'
-import { ErrorSource, addTelemetryDebug } from '@datadog/browser-core'
+import type { RawError } from '@flashcatcloud/browser-core'
+import { ErrorSource, addTelemetryDebug } from '@flashcatcloud/browser-core'
 import type { LifeCycle } from './lifeCycle'
 import { LifeCycleEventType } from './lifeCycle'
 import { StatusType } from './logger/isAuthorized'

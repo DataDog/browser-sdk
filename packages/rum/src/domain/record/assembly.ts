@@ -1,4 +1,4 @@
-import { timeStampNow } from '@datadog/browser-core'
+import { timeStampNow } from '@flashcatcloud/browser-core'
 import type { BrowserIncrementalData, BrowserIncrementalSnapshotRecord } from '../../types'
 import { RecordType } from '../../types'
 

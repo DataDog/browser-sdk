@@ -1,6 +1,6 @@
-import type { RawError, Subscription } from '@datadog/browser-core'
-import { ErrorHandling, ErrorSource, Observable, clocksNow } from '@datadog/browser-core'
-import type { Clock, MockCspEventListener, MockReportingObserver } from '@datadog/browser-core/test'
+import type { RawError, Subscription } from '@flashcatcloud/browser-core'
+import { ErrorHandling, ErrorSource, Observable, clocksNow } from '@flashcatcloud/browser-core'
+import type { Clock, MockCspEventListener, MockReportingObserver } from '@flashcatcloud/browser-core/test'
 import {
   FAKE_CSP_VIOLATION_EVENT,
   FAKE_REPORT,
@@ -8,7 +8,7 @@ import {
   mockCspEventListener,
   mockReportingObserver,
   registerCleanupTask,
-} from '@datadog/browser-core/test'
+} from '@flashcatcloud/browser-core/test'
 import { mockRumConfiguration } from '../../../test'
 import type { RumConfiguration } from '../configuration'
 import { trackReportError } from './trackReportError'

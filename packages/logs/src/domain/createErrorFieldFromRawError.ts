@@ -1,4 +1,4 @@
-import type { RawError } from '@datadog/browser-core'
+import type { RawError } from '@flashcatcloud/browser-core'
 import type { RawLoggerLogsEvent } from '../rawLogsEvent.types'
 
 export function createErrorFieldFromRawError(

@@ -44,7 +44,7 @@ RUN set -x \
 RUN apt-get install -y -q --no-install-recommends g++ build-essential
 
 # Datadog CI cli
-RUN yarn global add @datadog/datadog-ci
+RUN yarn global add @flashcatcloud/datadog-ci
 
 # Gihub cli
 RUN curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg -o /usr/share/keyrings/githubcli-archive-keyring.gpg \

@@ -1,4 +1,4 @@
-import { DefaultPrivacyLevel } from '@datadog/browser-core'
+import { DefaultPrivacyLevel } from '@flashcatcloud/browser-core'
 import { isElementNode, getParentNode, isTextNode } from '../browser/htmlDomUtils'
 
 export const NodePrivacyLevel = {

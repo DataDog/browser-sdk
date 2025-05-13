@@ -5,7 +5,7 @@ import type {
   ClocksState,
   FetchStartContext,
   FetchResolveContext,
-} from '@datadog/browser-core'
+} from '@flashcatcloud/browser-core'
 import {
   RequestType,
   initFetchObservable,
@@ -14,7 +14,7 @@ import {
   elapsed,
   timeStampNow,
   tryToClone,
-} from '@datadog/browser-core'
+} from '@flashcatcloud/browser-core'
 import type { RumSessionManager } from '..'
 import type { RumConfiguration } from './configuration'
 import type { LifeCycle } from './lifeCycle'

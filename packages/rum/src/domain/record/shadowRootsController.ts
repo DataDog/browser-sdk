@@ -1,4 +1,4 @@
-import type { RumConfiguration } from '@datadog/browser-rum-core'
+import type { RumConfiguration } from '@flashcatcloud/browser-rum-core'
 import type { BrowserIncrementalSnapshotRecord } from '../../types'
 import { trackInput, trackMutation, trackScroll } from './trackers'
 import type { ElementsScrollPositions } from './elementsScrollPositions'

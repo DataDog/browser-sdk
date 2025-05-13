@@ -1,4 +1,4 @@
-import { performDraw } from '@datadog/browser-core'
+import { performDraw } from '@flashcatcloud/browser-core'
 
 let sampleDecisionCache: { sessionId: string; decision: boolean } | undefined
 
