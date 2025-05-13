@@ -1,6 +1,6 @@
 {
   "name": "@flashcatcloud/browser-rum",
-  "version": "0.0.1-beta.2",
+  "version": "0.0.1",
   "license": "Apache-2.0",
   "main": "cjs/entries/main.js",
   "module": "esm/entries/main.js",
@@ -17,7 +17,7 @@
     "@flashcatcloud/browser-rum-core": "workspace:*"
   },
   "peerDependencies": {
-    "@flashcatcloud/browser-logs": "0.0.1-beta.2"
+    "@flashcatcloud/browser-logs": "0.0.1"
   },
   "peerDependenciesMeta": {
     "@flashcatcloud/browser-logs": {

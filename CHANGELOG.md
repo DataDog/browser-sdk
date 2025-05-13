@@ -18,39 +18,8 @@
 
 ---
 
-## v0.0.1-beta.2
+## v0.0.1
 
 **Internal Changes:**
 
-- feat: remove dd trace type [RUM] [RUM-REACT] [RUM-SLIM]
-
-## v0.0.1-beta.1
-
-**Internal Changes:**
-
-- feat: 去掉site前缀 [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
-
-## v0.0.1-beta.0
-
-**Internal Changes:**
-
-- feat: update site [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
-
-## v0.0.1-alpha.3
-
-**Internal Changes:**
-
-- add ali-oss deploy
-- 全局替换window.FC_RUM + window.FC_LOGS [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
-- add workflow
-
-## v0.0.1-alpha.2
-
-**Internal Changes:**
-
-- update site
-- feat: remove site validation [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
-
-## v0.0.1-alpha.1
-
-- init version v0.0.1-alpha.1 from @datadog/browser-rum@6.5.1
+- init sdk
