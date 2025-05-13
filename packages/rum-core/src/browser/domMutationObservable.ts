@@ -1,15 +1,6 @@
-import {
-  monitor,
-  noop,
-  Observable,
-  getZoneJsOriginalValue,
-  ExperimentalFeature,
-  isExperimentalFeatureEnabled,
-} from '@datadog/browser-core'
+import { monitor, noop, Observable, getZoneJsOriginalValue } from '@datadog/browser-core'
 
 export const IGNORE_MUTATIONS_ATTRIBUTE = 'dd-ignore-mutations'
-
-type MutationNotifier = (mutations: RumMutationRecord[]) => void
 
 // https://dom.spec.whatwg.org/#interface-mutationrecord
 export interface RumCharacterDataMutationRecord {
@@ -45,17 +36,7 @@ export function createDOMMutationObservable() {
       return
     }
 
-    let mutationNotifier: MutationNotifier = (mutations) => observable.notify(mutations)
-    if (isExperimentalFeatureEnabled(ExperimentalFeature.DOM_MUTATION_IGNORING)) {
-      mutationNotifier = (mutations: RumMutationRecord[]) => {
-        if (mutations.every((mutation) => isIgnored(mutation))) {
-          return
-        }
-        return observable.notify(mutations)
-      }
-    }
-
-    const observer = new MutationObserver(monitor(mutationNotifier))
+    const observer = new MutationObserver(monitor((records) => observable.notify(records)))
     observer.observe(document, {
       attributes: true,
       characterData: true,
@@ -64,16 +45,6 @@ export function createDOMMutationObservable() {
     })
     return () => observer.disconnect()
   })
-}
-
-function isIgnored(mutation: RumMutationRecord): boolean {
-  switch (mutation.type) {
-    case 'attributes':
-    case 'childList':
-      return (mutation.target as Element).hasAttribute(IGNORE_MUTATIONS_ATTRIBUTE) === true
-    case 'characterData':
-      return mutation.target.parentElement?.hasAttribute(IGNORE_MUTATIONS_ATTRIBUTE) === true
-  }
 }
 
 type MutationObserverConstructor = new (callback: (records: RumMutationRecord[]) => void) => MutationObserver

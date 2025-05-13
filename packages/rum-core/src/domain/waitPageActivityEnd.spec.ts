@@ -1,8 +1,14 @@
 import type { Subscription } from '@datadog/browser-core'
-import { Observable, ONE_SECOND } from '@datadog/browser-core'
+import { ExperimentalFeature, Observable, ONE_SECOND } from '@datadog/browser-core'
 import type { Clock } from '@datadog/browser-core/test'
-import { mockClock } from '@datadog/browser-core/test'
-import { createMutationRecord, createPerformanceEntry, mockPerformanceObserver, mockRumConfiguration } from '../../test'
+import { mockClock, mockExperimentalFeatures } from '@datadog/browser-core/test'
+import {
+  appendElement,
+  createMutationRecord,
+  createPerformanceEntry,
+  mockPerformanceObserver,
+  mockRumConfiguration,
+} from '../../test'
 import type { RumPerformanceEntry } from '../browser/performanceObservable'
 import { RumPerformanceEntryType } from '../browser/performanceObservable'
 import type { RumMutationRecord } from '../browser/domMutationObservable'
@@ -14,6 +20,7 @@ import {
   PAGE_ACTIVITY_VALIDATION_DELAY,
   doWaitPageActivityEnd,
   createPageActivityObservable,
+  IGNORE_MUTATIONS_ATTRIBUTE,
 } from './waitPageActivityEnd'
 import type { RumConfiguration } from './configuration'
 
@@ -76,10 +83,43 @@ describe('createPageActivityObservable', () => {
     pageActivitySubscription.unsubscribe()
   })
 
-  it('emits an activity event on dom mutation', () => {
-    startListeningToPageActivities()
-    domMutationObservable.notify([createMutationRecord()])
-    expect(events).toEqual([{ isBusy: false }])
+  describe('dom mutation', () => {
+    it('emits an activity event on dom mutation', () => {
+      startListeningToPageActivities()
+      domMutationObservable.notify([createMutationRecord()])
+      expect(events).toEqual([{ isBusy: false }])
+    })
+
+    describe('with DOM_MUTATION_IGNORING enabled', () => {
+      beforeEach(() => {
+        mockExperimentalFeatures([ExperimentalFeature.DOM_MUTATION_IGNORING])
+      })
+
+      it('does not collect DOM mutation when an element is added and the parent is ignored', () => {
+        startListeningToPageActivities()
+        const target = appendElement(`<div ${IGNORE_MUTATIONS_ATTRIBUTE}><button /></div>`)
+
+        domMutationObservable.notify([createMutationRecord('childList', { target })])
+        expect(events).toEqual([])
+      })
+
+      it('does not collect DOM mutation when a text node is added and the parent is ignored', () => {
+        startListeningToPageActivities()
+        const container = appendElement(`<div ${IGNORE_MUTATIONS_ATTRIBUTE}>foo</div>`)
+        const target = container.childNodes[0] as Text
+
+        domMutationObservable.notify([createMutationRecord('characterData', { target })])
+        expect(events).toEqual([])
+      })
+
+      it('does not collect DOM mutation on attribute creation of ignored element', () => {
+        startListeningToPageActivities()
+        const target = appendElement(`<div ${IGNORE_MUTATIONS_ATTRIBUTE}></div>`)
+
+        domMutationObservable.notify([createMutationRecord('attributes', { target })])
+        expect(events).toEqual([])
+      })
+    })
   })
 
   it('emits an activity event on resource collected', () => {

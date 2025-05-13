@@ -1,5 +1,14 @@
 import type { Subscription, TimeoutId, TimeStamp } from '@datadog/browser-core'
-import { matchList, monitor, Observable, timeStampNow, setTimeout, clearTimeout } from '@datadog/browser-core'
+import {
+  matchList,
+  monitor,
+  Observable,
+  timeStampNow,
+  setTimeout,
+  clearTimeout,
+  isExperimentalFeatureEnabled,
+  ExperimentalFeature,
+} from '@datadog/browser-core'
 import { createPerformanceObservable, RumPerformanceEntryType } from '../browser/performanceObservable'
 import type { RumMutationRecord } from '../browser/domMutationObservable'
 import type { RumConfiguration } from './configuration'
@@ -10,6 +19,8 @@ import { LifeCycleEventType } from './lifeCycle'
 export const PAGE_ACTIVITY_VALIDATION_DELAY = 100
 // Delay to wait after a page activity to end the tracking process
 export const PAGE_ACTIVITY_END_DELAY = 100
+
+export const IGNORE_MUTATIONS_ATTRIBUTE = 'dd-ignore-mutations'
 
 export interface PageActivityEvent {
   isBusy: boolean
@@ -126,7 +137,11 @@ export function createPageActivityObservable(
     let pendingRequestsCount = 0
 
     subscriptions.push(
-      domMutationObservable.subscribe(notifyPageActivity),
+      domMutationObservable.subscribe((mutations) => {
+        if (!isExperimentalFeatureEnabled(ExperimentalFeature.DOM_MUTATION_IGNORING) || !mutations.every(isIgnored)) {
+          notifyPageActivity()
+        }
+      }),
       windowOpenObservable.subscribe(notifyPageActivity),
       createPerformanceObservable(configuration, { type: RumPerformanceEntryType.RESOURCE }).subscribe((entries) => {
         if (entries.some((entry) => !isExcludedUrl(configuration, entry.name))) {
@@ -169,4 +184,14 @@ export function createPageActivityObservable(
 
 function isExcludedUrl(configuration: RumConfiguration, requestUrl: string): boolean {
   return matchList(configuration.excludedActivityUrls, requestUrl)
+}
+
+function isIgnored(mutation: RumMutationRecord): boolean {
+  switch (mutation.type) {
+    case 'attributes':
+    case 'childList':
+      return (mutation.target as Element).hasAttribute(IGNORE_MUTATIONS_ATTRIBUTE) === true
+    case 'characterData':
+      return mutation.target.parentElement?.hasAttribute(IGNORE_MUTATIONS_ATTRIBUTE) === true
+  }
 }

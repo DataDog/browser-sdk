@@ -1,28 +1,16 @@
-import { ExperimentalFeature } from '@datadog/browser-core'
 import type { MockZoneJs } from '@datadog/browser-core/test'
-import { registerCleanupTask, mockZoneJs, mockExperimentalFeatures } from '@datadog/browser-core/test'
-import {
-  createDOMMutationObservable,
-  getMutationObserverConstructor,
-  IGNORE_MUTATIONS_ATTRIBUTE,
-} from './domMutationObservable'
+import { registerCleanupTask, mockZoneJs } from '@datadog/browser-core/test'
+import { createDOMMutationObservable, getMutationObserverConstructor } from './domMutationObservable'
 
 // The MutationObserver invokes its callback in an event loop microtask, making this asynchronous.
 // We want to wait for a few event loop executions to potentially collect multiple mutation events.
 const DOM_MUTATION_OBSERVABLE_DURATION = 16
 
 describe('domMutationObservable', () => {
-  function domMutationSpec(
-    mutate: (root: HTMLElement) => void,
-    { expectedMutations }: { expectedMutations: number },
-    isRootMutationsIgnored?: boolean
-  ) {
+  function domMutationSpec(mutate: (root: HTMLElement) => void, { expectedMutations }: { expectedMutations: number }) {
     return (done: DoneFn) => {
       const root = document.createElement('div')
       root.setAttribute('data-test', 'foo')
-      if (isRootMutationsIgnored) {
-        root.setAttribute(IGNORE_MUTATIONS_ATTRIBUTE, '')
-      }
       root.appendChild(document.createElement('span'))
       root.appendChild(document.createTextNode('foo'))
       document.body.appendChild(root)
@@ -112,159 +100,6 @@ describe('domMutationObservable', () => {
       { expectedMutations: 1 }
     )
   )
-
-  describe('with DOM_MUTATION_IGNORING enabled', () => {
-    beforeEach(() => {
-      mockExperimentalFeatures([ExperimentalFeature.DOM_MUTATION_IGNORING])
-    })
-
-    it(
-      'collects DOM mutation when an element is added',
-      domMutationSpec(
-        (root) => {
-          root.appendChild(document.createElement('button'))
-        },
-        { expectedMutations: 1 }
-      )
-    )
-
-    it(
-      'does not collect DOM mutation when an element is added and the parent is ignored',
-      domMutationSpec(
-        (root) => {
-          root.appendChild(document.createElement('button'))
-        },
-        { expectedMutations: 0 },
-        true
-      )
-    )
-
-    it(
-      'collects DOM mutation when a text node is added',
-      domMutationSpec(
-        (root) => {
-          root.appendChild(document.createTextNode('foo'))
-        },
-        { expectedMutations: 1 }
-      )
-    )
-
-    it(
-      'does not collect DOM mutation when a text node is added and the parent is ignored',
-      domMutationSpec(
-        (root) => {
-          root.appendChild(document.createTextNode('foo'))
-        },
-        { expectedMutations: 0 },
-        true
-      )
-    )
-
-    it(
-      'collects DOM mutation on attribute creation',
-      domMutationSpec(
-        (root) => {
-          root.setAttribute('data-test2', 'bar')
-        },
-        { expectedMutations: 1 }
-      )
-    )
-
-    it(
-      'does not collect DOM mutation on attribute creation of ignored element',
-      domMutationSpec(
-        (root) => {
-          root.setAttribute('data-test2', 'bar')
-        },
-        { expectedMutations: 0 },
-        true
-      )
-    )
-
-    it(
-      'collects DOM mutation on attribute change',
-      domMutationSpec(
-        (root) => {
-          root.setAttribute('data-test', 'bar')
-        },
-        { expectedMutations: 1 }
-      )
-    )
-
-    it(
-      'does not collect DOM mutation on attribute change of ignored element',
-      domMutationSpec(
-        (root) => {
-          root.setAttribute('data-test', 'bar')
-        },
-        { expectedMutations: 0 },
-        true
-      )
-    )
-
-    it(
-      'collects DOM mutation when an element is removed',
-      domMutationSpec(
-        (root) => {
-          root.removeChild(root.childNodes[0])
-        },
-        { expectedMutations: 1 }
-      )
-    )
-
-    it(
-      'does not collect DOM mutation when an element is removed and parent is ignored',
-      domMutationSpec(
-        (root) => {
-          root.removeChild(root.childNodes[0])
-        },
-        { expectedMutations: 0 },
-        true
-      )
-    )
-
-    it(
-      'collects DOM mutation when an element is moved',
-      domMutationSpec(
-        (root) => {
-          root.insertBefore(root.childNodes[0], null)
-        },
-        { expectedMutations: 1 }
-      )
-    )
-
-    it(
-      'does not collect DOM mutation when an element is moved and parent element is ignored',
-      domMutationSpec(
-        (root) => {
-          root.insertBefore(root.childNodes[0], null)
-        },
-        { expectedMutations: 0 },
-        true
-      )
-    )
-
-    it(
-      'collects DOM mutation when text node content changes',
-      domMutationSpec(
-        (root) => {
-          ;(root.childNodes[1] as Text).data = 'bar'
-        },
-        { expectedMutations: 1 }
-      )
-    )
-
-    it(
-      'does not collect DOM mutation when text node content changes and parent element is ignored',
-      domMutationSpec(
-        (root) => {
-          ;(root.childNodes[1] as Text).data = 'bar'
-        },
-        { expectedMutations: 0 },
-        true
-      )
-    )
-  })
 
   describe('Zone.js support', () => {
     let zoneJs: MockZoneJs
