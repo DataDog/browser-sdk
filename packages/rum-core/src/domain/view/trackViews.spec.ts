@@ -1029,3 +1029,36 @@ describe('service and version', () => {
     expect(getViewUpdate(0).version).toEqual('view version')
   })
 })
+
+describe('BFCache views', () => {
+  const lifeCycle = new LifeCycle()
+  let clock: Clock
+  let viewTest: ViewTest
+
+  beforeEach(() => {
+    clock = mockClock()
+
+    viewTest = setupViewTest({ lifeCycle, partialConfig: { trackBfcacheViews: true } })
+
+    registerCleanupTask(() => {
+      viewTest.stop()
+      clock.cleanup()
+    })
+  })
+
+  it('should create a new "bf_cache" view when restoring from the BFCache', () => {
+    const { getViewCreateCount, getViewEndCount, getViewUpdate, getViewUpdateCount } = viewTest
+
+    expect(getViewCreateCount()).toBe(1)
+    expect(getViewEndCount()).toBe(0)
+
+    const pageshowEvent = new Event('pageshow') as PageTransitionEvent
+    Object.defineProperty(pageshowEvent, 'persisted', { value: true })
+
+    window.dispatchEvent(pageshowEvent)
+
+    expect(getViewEndCount()).toBe(1)
+    expect(getViewCreateCount()).toBe(2)
+    expect(getViewUpdate(getViewUpdateCount() - 1).loadingType).toBe(ViewLoadingType.BF_CACHE)
+  })
+})
