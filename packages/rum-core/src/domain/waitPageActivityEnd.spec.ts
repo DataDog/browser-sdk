@@ -2,9 +2,10 @@ import type { Subscription } from '@datadog/browser-core'
 import { Observable, ONE_SECOND } from '@datadog/browser-core'
 import type { Clock } from '@datadog/browser-core/test'
 import { mockClock } from '@datadog/browser-core/test'
-import { createPerformanceEntry, mockPerformanceObserver, mockRumConfiguration } from '../../test'
+import { createMutationRecord, createPerformanceEntry, mockPerformanceObserver, mockRumConfiguration } from '../../test'
 import type { RumPerformanceEntry } from '../browser/performanceObservable'
 import { RumPerformanceEntryType } from '../browser/performanceObservable'
+import type { RumMutationRecord } from '../browser/domMutationObservable'
 import { LifeCycle, LifeCycleEventType } from './lifeCycle'
 import type { RequestCompleteEvent, RequestStartEvent } from './requestCollection'
 import type { PageActivityEvent, PageActivityEndEvent } from './waitPageActivityEnd'
@@ -47,7 +48,7 @@ describe('createPageActivityObservable', () => {
   const { events, pushEvent } = eventsCollector<PageActivityEvent>()
 
   const lifeCycle = new LifeCycle()
-  const domMutationObservable = new Observable<void>()
+  const domMutationObservable = new Observable<RumMutationRecord[]>()
   const windowOpenObservable = new Observable<void>()
   let pageActivitySubscription: Subscription
   let notifyPerformanceEntries: (entries: RumPerformanceEntry[]) => void
@@ -77,7 +78,7 @@ describe('createPageActivityObservable', () => {
 
   it('emits an activity event on dom mutation', () => {
     startListeningToPageActivities()
-    domMutationObservable.notify()
+    domMutationObservable.notify([createMutationRecord()])
     expect(events).toEqual([{ isBusy: false }])
   })
 
@@ -104,13 +105,13 @@ describe('createPageActivityObservable', () => {
 
   it('stops emitting activities after calling stop()', () => {
     startListeningToPageActivities()
-    domMutationObservable.notify()
+    domMutationObservable.notify([createMutationRecord()])
     expect(events).toEqual([{ isBusy: false }])
 
     pageActivitySubscription.unsubscribe()
 
-    domMutationObservable.notify()
-    domMutationObservable.notify()
+    domMutationObservable.notify([createMutationRecord()])
+    domMutationObservable.notify([createMutationRecord()])
 
     expect(events).toEqual([{ isBusy: false }])
   })

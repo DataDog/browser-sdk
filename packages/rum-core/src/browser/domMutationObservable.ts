@@ -9,7 +9,7 @@ import {
 
 export const IGNORE_MUTATIONS_ATTRIBUTE = 'dd-ignore-mutations'
 
-type MutationNotifier = (mutations: MutationRecord[]) => void
+type MutationNotifier = (mutations: RumMutationRecord[]) => void
 
 // https://dom.spec.whatwg.org/#interface-mutationrecord
 export interface RumCharacterDataMutationRecord {
@@ -40,18 +40,18 @@ export type RumMutationRecord =
 export function createDOMMutationObservable() {
   const MutationObserver = getMutationObserverConstructor()
 
-  return new Observable<void>((observable) => {
+  return new Observable<RumMutationRecord[]>((observable) => {
     if (!MutationObserver) {
       return
     }
 
-    let mutationNotifier: MutationNotifier = () => observable.notify()
+    let mutationNotifier: MutationNotifier = (mutations) => observable.notify(mutations)
     if (isExperimentalFeatureEnabled(ExperimentalFeature.DOM_MUTATION_IGNORING)) {
-      mutationNotifier = (mutations: MutationRecord[]) => {
+      mutationNotifier = (mutations: RumMutationRecord[]) => {
         if (mutations.every((mutation) => isIgnored(mutation))) {
           return
         }
-        return observable.notify()
+        return observable.notify(mutations)
       }
     }
 
@@ -66,7 +66,7 @@ export function createDOMMutationObservable() {
   })
 }
 
-function isIgnored(mutation: MutationRecord): boolean {
+function isIgnored(mutation: RumMutationRecord): boolean {
   switch (mutation.type) {
     case 'attributes':
     case 'childList':
@@ -76,7 +76,7 @@ function isIgnored(mutation: MutationRecord): boolean {
   }
 }
 
-type MutationObserverConstructor = new (callback: MutationCallback) => MutationObserver
+type MutationObserverConstructor = new (callback: (records: RumMutationRecord[]) => void) => MutationObserver
 
 export interface BrowserWindow extends Window {
   MutationObserver?: MutationObserverConstructor
@@ -85,7 +85,7 @@ export interface BrowserWindow extends Window {
 
 export function getMutationObserverConstructor(): MutationObserverConstructor | undefined {
   let constructor: MutationObserverConstructor | undefined
-  const browserWindow: BrowserWindow = window
+  const browserWindow = window as BrowserWindow
 
   // Angular uses Zone.js to provide a context persisting across async tasks.  Zone.js replaces the
   // global MutationObserver constructor with a patched version to support the context propagation.

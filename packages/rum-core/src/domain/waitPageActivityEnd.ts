@@ -1,6 +1,7 @@
 import type { Subscription, TimeoutId, TimeStamp } from '@datadog/browser-core'
 import { matchList, monitor, Observable, timeStampNow, setTimeout, clearTimeout } from '@datadog/browser-core'
 import { createPerformanceObservable, RumPerformanceEntryType } from '../browser/performanceObservable'
+import type { RumMutationRecord } from '../browser/domMutationObservable'
 import type { RumConfiguration } from './configuration'
 import type { LifeCycle } from './lifeCycle'
 import { LifeCycleEventType } from './lifeCycle'
@@ -48,7 +49,7 @@ export type PageActivityEndEvent = { hadActivity: true; end: TimeStamp } | { had
  */
 export function waitPageActivityEnd(
   lifeCycle: LifeCycle,
-  domMutationObservable: Observable<void>,
+  domMutationObservable: Observable<RumMutationRecord[]>,
   windowOpenObservable: Observable<void>,
   configuration: RumConfiguration,
   pageActivityEndCallback: (event: PageActivityEndEvent) => void,
@@ -115,7 +116,7 @@ export function doWaitPageActivityEnd(
 
 export function createPageActivityObservable(
   lifeCycle: LifeCycle,
-  domMutationObservable: Observable<void>,
+  domMutationObservable: Observable<RumMutationRecord[]>,
   windowOpenObservable: Observable<void>,
   configuration: RumConfiguration
 ): Observable<PageActivityEvent> {
