@@ -9,6 +9,7 @@ const logger = createLogger('useSettings')
 
 const DEFAULT_SETTINGS: Readonly<Settings> = {
   useDevBundles: false,
+  useDevReplaySandbox: false,
   useRumSlim: false,
   blockIntakeRequests: false,
   autoFlush: false,
@@ -17,6 +18,7 @@ const DEFAULT_SETTINGS: Readonly<Settings> = {
   rumConfigurationOverride: null,
   logsConfigurationOverride: null,
   debugMode: false,
+  datadogMode: false,
 }
 
 let settings: Settings | undefined

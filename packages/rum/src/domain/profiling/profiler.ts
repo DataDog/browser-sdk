@@ -1,3 +1,4 @@
+import type { Duration, RelativeTime } from '@datadog/browser-core'
 import {
   addEventListener,
   clearTimeout,
@@ -6,6 +7,10 @@ import {
   monitorError,
   display,
   getGlobalObject,
+  relativeToClocks,
+  clocksOrigin,
+  clocksNow,
+  elapsed,
 } from '@datadog/browser-core'
 
 import type { LifeCycle, RumConfiguration, RumSessionManager, ViewHistoryEntry } from '@datadog/browser-rum-core'
@@ -58,7 +63,7 @@ export function createRumProfiler(
     // Add initial view
     // Note: `viewEntry.name` is only filled when users use manual view creation via `startView` method.
     lastViewEntry = viewEntry
-      ? { startTime: viewEntry.startClocks.relative, viewId: viewEntry.id, viewName: viewEntry.name }
+      ? { startClocks: viewEntry.startClocks, viewId: viewEntry.id, viewName: viewEntry.name }
       : undefined
 
     // Add global clean-up tasks for listeners that are not specific to a profiler instance (eg. visibility change, before unload)
@@ -122,7 +127,7 @@ export function createRumProfiler(
     // Whenever the View is updated, we add a views entry to the profiler instance.
     const viewUpdatedSubscription = lifeCycle.subscribe(LifeCycleEventType.VIEW_CREATED, (view) => {
       // Note: `view.name` is only filled when users use manual view creation via `startView` method.
-      collectViewEntry({ viewId: view.id, viewName: view.name, startTime: view.startClocks.relative })
+      collectViewEntry({ viewId: view.id, viewName: view.name, startClocks: view.startClocks })
     })
     cleanupTasks.push(viewUpdatedSubscription.unsubscribe)
 
@@ -168,7 +173,7 @@ export function createRumProfiler(
     // Kick-off the new instance
     instance = {
       state: 'running',
-      startTime: performance.now(),
+      startClocks: clocksNow(),
       profiler,
       timeoutId: setTimeout(startNextProfilerInstance, profilerConfiguration.collectIntervalMs),
       longTasks: [],
@@ -197,19 +202,20 @@ export function createRumProfiler(
     lastInstance.profiler.removeEventListener('samplebufferfull', handleSampleBufferFull)
 
     // Store instance data snapshot in local variables to use in async callback
-    const { startTime, longTasks, views } = lastInstance
+    const { startClocks, longTasks, views } = lastInstance
 
     // Capturing when we stop the profiler so we use this time as a reference to clean-up long task registry, eg. remove the long tasks that we collected already
-    const collectTime = performance.now()
+    const collectClocks = clocksNow()
 
     // Stop current profiler to get trace
     await lastInstance.profiler
       .stop()
       .then((trace) => {
-        const endTime = performance.now()
+        const endClocks = clocksNow()
 
         const hasLongTasks = longTasks.length > 0
-        const isBelowDurationThreshold = endTime - startTime < profilerConfiguration.minProfileDurationMs
+        const isBelowDurationThreshold =
+          elapsed(startClocks.timeStamp, endClocks.timeStamp) < profilerConfiguration.minProfileDurationMs
         const isBelowSampleThreshold = getNumberOfSamples(trace.samples) < profilerConfiguration.minNumberOfSamples
 
         if (!hasLongTasks && (isBelowDurationThreshold || isBelowSampleThreshold)) {
@@ -220,9 +226,9 @@ export function createRumProfiler(
         handleProfilerTrace(
           // Enrich trace with time and instance data
           Object.assign(trace, {
-            startTime,
-            endTime,
-            timeOrigin: performance.timeOrigin,
+            startClocks,
+            endClocks,
+            clocksOrigin: clocksOrigin(),
             longTasks,
             views,
             sampleInterval: profilerConfiguration.sampleIntervalMs,
@@ -230,7 +236,7 @@ export function createRumProfiler(
         )
 
         // Clear long task registry, remove entries that we collected already (eg. avoid slowly growing memory usage by keeping outdated entries)
-        deleteLongTaskIdsBefore(collectTime)
+        deleteLongTaskIdsBefore(collectClocks)
       })
       .catch(monitorError)
   }
@@ -286,12 +292,14 @@ export function createRumProfiler(
         continue
       }
 
+      const startClocks = relativeToClocks(entry.startTime as RelativeTime)
+
       // Store Long Task entry, which is a lightweight version of the PerformanceEntry
       instance.longTasks.push({
-        id: getLongTaskId(entry),
-        duration: entry.duration,
+        id: getLongTaskId(startClocks.relative),
+        duration: entry.duration as Duration,
         entryType: entry.entryType,
-        startTime: entry.startTime,
+        startClocks,
       })
     }
   }

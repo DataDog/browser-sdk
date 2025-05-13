@@ -2,6 +2,12 @@ import { IncrementalSource, RecordType } from '@datadog/browser-rum/src/types'
 import type { BrowserRecord } from '@datadog/browser-rum/src/types'
 import { createLogger } from '../../common/logger'
 import { onBackgroundMessage } from '../backgroundScriptConnection'
+import {
+  DEV_REPLAY_SANDBOX_ORIGIN,
+  DEV_REPLAY_SANDBOX_URL,
+  PROD_REPLAY_SANDBOX_ORIGIN,
+  PROD_REPLAY_SANDBOX_URL,
+} from '../../common/packagesUrlConstants'
 import type { MessageBridgeUp } from './sessionReplayPlayer.types'
 import { MessageBridgeDownType, MessageBridgeUpLogLevel, MessageBridgeUpType } from './sessionReplayPlayer.types'
 
@@ -14,10 +20,6 @@ export type SessionReplayPlayerState = {
   excludeMouseMovements: boolean
 }
 
-const sandboxOrigin = 'https://session-replay-datadoghq.com'
-// To follow web-ui development, this version will need to be manually updated from time to time.
-// When doing that, be sure to update types and implement any protocol changes.
-const sandboxVersion = '0.119.0'
 const sandboxParams = new URLSearchParams({
   staticContext: JSON.stringify({
     tabId: 'xxx',
@@ -30,17 +32,21 @@ const sandboxParams = new URLSearchParams({
     },
   }),
 })
-const sandboxUrl = `${sandboxOrigin}/${sandboxVersion}/index.html?${String(sandboxParams)}`
+const devSandboxUrl = `${DEV_REPLAY_SANDBOX_URL}?${String(sandboxParams)}`
+const prodSandboxUrl = `${PROD_REPLAY_SANDBOX_URL}?${String(sandboxParams)}`
 
 export function startSessionReplayPlayer(
   iframe: HTMLIFrameElement,
-  setPlayerState: (state: SessionReplayPlayerState) => void
+  setPlayerState: (state: SessionReplayPlayerState) => void,
+  useDevReplaySandbox: boolean
 ) {
   let status: SessionReplayPlayerStatus = 'loading'
   const bufferedRecords = createRecordBuffer()
   let excludeMouseMovements = false
 
-  const messageBridge = createMessageBridge(iframe, () => {
+  const sandboxOrigin = useDevReplaySandbox ? DEV_REPLAY_SANDBOX_ORIGIN : PROD_REPLAY_SANDBOX_ORIGIN
+
+  const messageBridge = createMessageBridge(iframe, sandboxOrigin, () => {
     const records = bufferedRecords.getRecords()
     if (records.length > 0) {
       status = 'ready'
@@ -84,7 +90,7 @@ export function startSessionReplayPlayer(
     })
   })
 
-  iframe.src = sandboxUrl
+  iframe.src = useDevReplaySandbox ? devSandboxUrl : prodSandboxUrl
 
   return {
     stop() {
@@ -145,7 +151,7 @@ function normalizeRecord(record: BrowserRecord) {
   return record
 }
 
-function createMessageBridge(iframe: HTMLIFrameElement, onReady: () => void) {
+function createMessageBridge(iframe: HTMLIFrameElement, sandboxOrigin: string, onReady: () => void) {
   let nextMessageOrderId = 1
 
   function globalMessageListener(event: MessageEvent<MessageBridgeUp>) {

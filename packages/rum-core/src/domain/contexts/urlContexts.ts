@@ -3,7 +3,7 @@ import { SESSION_TIME_OUT_DELAY, relativeNow, createValueHistory } from '@datado
 import type { LocationChange } from '../../browser/locationChangeObservable'
 import type { LifeCycle } from '../lifeCycle'
 import { LifeCycleEventType } from '../lifeCycle'
-import type { PartialRumEvent, Hooks } from '../../hooks'
+import type { DefaultRumEventAttributes, Hooks } from '../../hooks'
 import { DISCARDED, HookNames } from '../../hooks'
 
 /**
@@ -72,7 +72,7 @@ export function startUrlContexts(
     }
   }
 
-  hooks.register(HookNames.Assemble, ({ startTime, eventType }): PartialRumEvent | DISCARDED => {
+  hooks.register(HookNames.Assemble, ({ startTime, eventType }): DefaultRumEventAttributes | DISCARDED => {
     const urlContext = urlContextHistory.find(startTime)
 
     if (!urlContext) {

@@ -1,4 +1,4 @@
-import { Button, Flex, Checkbox } from '@mantine/core'
+import { Button, Flex, Checkbox, Badge } from '@mantine/core'
 import React, { useEffect, useRef, useState } from 'react'
 import { TabBase } from '../tabBase'
 import type { SessionReplayPlayerState } from '../../sessionReplayPlayer/startSessionReplayPlayer'
@@ -7,6 +7,7 @@ import { evalInWindow } from '../../evalInWindow'
 import { createLogger } from '../../../common/logger'
 import { Alert } from '../alert'
 import { useSdkInfos } from '../../hooks/useSdkInfos'
+import { useSettings } from '../../hooks/useSettings'
 import * as classes from './replayTab.module.css'
 
 const logger = createLogger('replayTab')
@@ -33,6 +34,7 @@ export function ReplayTab() {
 }
 
 function Player() {
+  const [{ useDevReplaySandbox }] = useSettings()
   const frameRef = useRef<HTMLIFrameElement | null>(null)
   const [playerState, setPlayerState] = useState<SessionReplayPlayerState>({
     status: 'loading',
@@ -42,8 +44,9 @@ function Player() {
   const playerRef = useRef<ReturnType<typeof startSessionReplayPlayer>>(null)
 
   useEffect(() => {
-    playerRef.current = startSessionReplayPlayer(frameRef.current!, setPlayerState)
-  }, [])
+    playerRef.current = startSessionReplayPlayer(frameRef.current!, setPlayerState, useDevReplaySandbox)
+    return () => playerRef.current?.stop()
+  }, [useDevReplaySandbox])
 
   const downloadRecords = () => {
     if (!playerRef.current?.getRecords) {
@@ -67,29 +70,32 @@ function Player() {
   return (
     <TabBase
       top={
-        <Flex justify="space-between" align="center" w="100%">
-          <Flex align="center" gap="md">
-            <Button onClick={generateFullSnapshot} color="orange">
-              Force Full Snapshot
-            </Button>
-            <Checkbox
-              label="Exclude mouse movements"
-              checked={playerState.excludeMouseMovements}
-              onChange={(event) => playerRef.current?.setExcludeMouseMovements(event.currentTarget.checked)}
-            />
+        <Flex>
+          <Flex justify="space-between" align="center" flex="1">
+            <Flex align="center" gap="md">
+              <Button onClick={generateFullSnapshot} color="orange">
+                Force Full Snapshot
+              </Button>
+              <Checkbox
+                label="Exclude mouse movements"
+                checked={playerState.excludeMouseMovements}
+                onChange={(event) => playerRef.current?.setExcludeMouseMovements(event.currentTarget.checked)}
+              />
+            </Flex>
+            <Flex align="center" gap="xs">
+              <div>Records applied: {playerState.recordCount}</div>
+              <Button
+                onClick={downloadRecords}
+                variant="subtle"
+                disabled={playerState.recordCount === 0}
+                title="Download records as JSON"
+                p="xs"
+              >
+                📥
+              </Button>
+            </Flex>
           </Flex>
-          <Flex align="center" gap="xs">
-            <div>Records applied: {playerState.recordCount}</div>
-            <Button
-              onClick={downloadRecords}
-              variant="subtle"
-              disabled={playerState.recordCount === 0}
-              title="Download records as JSON"
-              p="xs"
-            >
-              📥
-            </Button>
-          </Flex>
+          <Flex align="center">{useDevReplaySandbox ? <Badge color="blue">Dev</Badge> : <></>}</Flex>
         </Flex>
       }
     >

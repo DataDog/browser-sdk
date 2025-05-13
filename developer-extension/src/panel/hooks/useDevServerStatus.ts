@@ -1,5 +1,4 @@
 import { useEffect, useState } from 'react'
-import { DEV_LOGS_URL } from '../../common/packagesUrlConstants'
 
 const REFRESH_DELAY = 2000
 const CHECKING_STATUS_DELAY = 500
@@ -10,14 +9,14 @@ export const enum DevServerStatus {
   UNAVAILABLE,
 }
 
-export function useDevServerStatus() {
+export function useDevServerStatus(url: string) {
   const [status, setStatus] = useState<DevServerStatus>(DevServerStatus.CHECKING)
 
   useEffect(() => {
     const abortController = new AbortController()
     let checkingTimeoutId: number
 
-    void refreshDevServerStatus(abortController.signal, (status) => {
+    void refreshDevServerStatus(url, abortController.signal, (status) => {
       // We don't want to show the CHECKING state to quickly to avoid UI flashing. Delay the actual
       // `setStatus` a little bit.
       if (status === DevServerStatus.CHECKING) {
@@ -37,14 +36,18 @@ export function useDevServerStatus() {
   return status
 }
 
-async function refreshDevServerStatus(abortSignal: AbortSignal, callback: (status: DevServerStatus) => void) {
+async function refreshDevServerStatus(
+  url: string,
+  abortSignal: AbortSignal,
+  callback: (status: DevServerStatus) => void
+) {
   if (abortSignal.aborted) {
     return
   }
 
   callback(DevServerStatus.CHECKING)
 
-  const isAvailable = await isDevServerAvailable(abortSignal)
+  const isAvailable = await isDevServerAvailable(url, abortSignal)
 
   if (abortSignal.aborted) {
     return
@@ -53,13 +56,13 @@ async function refreshDevServerStatus(abortSignal: AbortSignal, callback: (statu
   callback(isAvailable ? DevServerStatus.AVAILABLE : DevServerStatus.UNAVAILABLE)
 
   setTimeout(() => {
-    void refreshDevServerStatus(abortSignal, callback)
+    void refreshDevServerStatus(url, abortSignal, callback)
   }, REFRESH_DELAY)
 }
 
-async function isDevServerAvailable(abortSignal: AbortSignal) {
+async function isDevServerAvailable(url: string, abortSignal: AbortSignal) {
   try {
-    const response = await fetch(DEV_LOGS_URL, { method: 'HEAD', signal: abortSignal })
+    const response = await fetch(url, { method: 'HEAD', signal: abortSignal })
     return response.status === 200
   } catch {
     // The request can fail if nothing is listening on the URL port. In this case, consider the dev

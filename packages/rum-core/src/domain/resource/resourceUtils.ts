@@ -7,6 +7,8 @@ import {
   ResourceType,
   toServerDuration,
   isIntakeUrl,
+  isExperimentalFeatureEnabled,
+  ExperimentalFeature,
 } from '@datadog/browser-core'
 
 import type { RumPerformanceResourceTiming } from '../../browser/performanceObservable'
@@ -221,7 +223,7 @@ export function computeResourceEntrySize(entry: RumPerformanceResourceTiming) {
 }
 
 export function isAllowedRequestUrl(url: string) {
-  return url && !isIntakeUrl(url)
+  return url && (!isIntakeUrl(url) || isExperimentalFeatureEnabled(ExperimentalFeature.TRACK_INTAKE_REQUESTS))
 }
 
 const DATA_URL_REGEX = /data:(.+)?(;base64)?,/g

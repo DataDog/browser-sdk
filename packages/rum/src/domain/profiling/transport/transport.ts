@@ -1,4 +1,4 @@
-import { addTelemetryDebug, type EndpointBuilder, type Payload } from '@datadog/browser-core'
+import { addTelemetryDebug, currentDrift, type EndpointBuilder, type Payload } from '@datadog/browser-core'
 import type { RumProfilerTrace } from '../types'
 import { getLongTaskId } from '../utils/longTaskRegistry'
 
@@ -17,6 +17,9 @@ interface ProfileEvent extends ProfileEventAttributes {
   format: 'json'
   version: 4
   tags_profiler: string
+  _dd: {
+    clock_drift: number
+  }
 }
 
 type SendProfileFunction = (
@@ -55,19 +58,19 @@ function buildProfileEvent(
   const profileAttributes = buildProfileEventAttributes(profilerTrace, applicationId, sessionId)
   const profileEventTags = buildProfileEventTags(tags)
 
-  const start = new Date(profilerTrace.timeOrigin + profilerTrace.startTime)
-  const end = new Date(profilerTrace.timeOrigin + profilerTrace.endTime)
-
   const profileEvent: ProfileEvent = {
     ...profileAttributes,
     attachments: ['wall-time.json'],
-    start: start.toISOString(),
-    end: end.toISOString(),
+    start: new Date(profilerTrace.startClocks.timeStamp).toISOString(),
+    end: new Date(profilerTrace.endClocks.timeStamp).toISOString(),
     family: 'chrome',
     runtime: 'chrome',
     format: 'json',
     version: 4, // Ingestion event version (not the version application tag)
     tags_profiler: profileEventTags.join(','),
+    _dd: {
+      clock_drift: currentDrift(),
+    },
   }
 
   return profileEvent
@@ -132,7 +135,7 @@ function buildProfileEventAttributes(
     }
   }
   const longTaskIds: string[] = profilerTrace.longTasks
-    .map((longTask) => getLongTaskId(longTask))
+    .map((longTask) => getLongTaskId(longTask.startClocks.relative))
     .filter((id) => id !== undefined)
 
   if (longTaskIds.length) {

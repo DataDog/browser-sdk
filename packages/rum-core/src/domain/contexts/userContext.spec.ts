@@ -32,9 +32,12 @@ describe('user context', () => {
   describe('assemble hook', () => {
     it('should set the user', () => {
       userContext.setContext({ id: '123', foo: 'bar' })
-      const event = hooks.triggerHook(HookNames.Assemble, { eventType: 'view', startTime: 0 as RelativeTime })
+      const defaultRumEventAttributes = hooks.triggerHook(HookNames.Assemble, {
+        eventType: 'view',
+        startTime: 0 as RelativeTime,
+      })
 
-      expect(event).toEqual({
+      expect(defaultRumEventAttributes).toEqual({
         type: 'view',
         usr: {
           id: '123',
@@ -50,9 +53,12 @@ describe('user context', () => {
         createRumSessionManagerMock()
       )
       userContext.setContext({ id: '123' })
-      const event = hooks.triggerHook(HookNames.Assemble, { eventType: 'view', startTime: 0 as RelativeTime })
+      const defaultRumEventAttributes = hooks.triggerHook(HookNames.Assemble, {
+        eventType: 'view',
+        startTime: 0 as RelativeTime,
+      })
 
-      expect(event).toEqual({
+      expect(defaultRumEventAttributes).toEqual({
         type: 'view',
         usr: {
           id: '123',
@@ -68,9 +74,12 @@ describe('user context', () => {
         createRumSessionManagerMock()
       )
       userContext.setContext({ id: '123', anonymous_id: 'foo' })
-      const event = hooks.triggerHook(HookNames.Assemble, { eventType: 'view', startTime: 0 as RelativeTime })
+      const defaultRumEventAttributes = hooks.triggerHook(HookNames.Assemble, {
+        eventType: 'view',
+        startTime: 0 as RelativeTime,
+      })
 
-      expect(event).toEqual({
+      expect(defaultRumEventAttributes).toEqual({
         type: 'view',
         usr: {
           id: '123',

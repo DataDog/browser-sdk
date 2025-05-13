@@ -7,8 +7,8 @@ import type { LifeCycle, RawRumEventCollectedData } from '../lifeCycle'
 import { LifeCycleEventType } from '../lifeCycle'
 import type { RumConfiguration } from '../configuration'
 import type { RumActionEventDomainContext } from '../../domainContext.types'
-import type { PartialRumEvent, Hooks } from '../../hooks'
-import { HookNames } from '../../hooks'
+import type { DefaultRumEventAttributes, Hooks } from '../../hooks'
+import { HookNames, SKIPPED } from '../../hooks'
 import type { ActionContexts, ClickAction } from './trackClickActions'
 import { trackClickActions } from './trackClickActions'
 
@@ -35,18 +35,18 @@ export function startActionCollection(
     lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, processAction(action))
   )
 
-  hooks.register(HookNames.Assemble, ({ startTime, eventType }): PartialRumEvent | undefined => {
+  hooks.register(HookNames.Assemble, ({ startTime, eventType }): DefaultRumEventAttributes | SKIPPED => {
     if (
       eventType !== RumEventType.ERROR &&
       eventType !== RumEventType.RESOURCE &&
       eventType !== RumEventType.LONG_TASK
     ) {
-      return
+      return SKIPPED
     }
 
     const actionId = actionContexts.findActionId(startTime)
     if (!actionId) {
-      return
+      return SKIPPED
     }
 
     return {
