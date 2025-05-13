@@ -27,7 +27,7 @@ export default tseslint.config(
       'packages/*/esm',
       'developer-extension/dist',
       'test/**/dist',
-      'test/apps/extension/**',
+      'test/apps/extensions/**',
       'sandbox',
       'coverage',
       'rum-events-format',

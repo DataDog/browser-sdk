@@ -1,6 +1,5 @@
 import { datadogRum } from '@datadog/browser-rum'
 
-// Initialize RUM without allowedTrackingOrigins to trigger the warning
 datadogRum.init({
   applicationId: '1234',
   clientToken: 'pubf2099de38f9c85797d20d64c7d632a69',

@@ -3,11 +3,11 @@ import { test, expect } from '@playwright/test'
 import { DEFAULT_RUM_CONFIGURATION, createTest } from '../../lib/framework'
 
 // Different extension build paths for different configurations
-const pathToDefaultExtension = path.join(__dirname, '../../../../test/apps/extension-default')
+const pathToDefaultExtension = path.join(__dirname, '../../../../test/apps/extensions/extension-default')
 // Contains allowedTrackingOrigins parameter with chrome-extension origin
-const pathToChromeExtension = path.join(__dirname, '../../../../test/apps/extension-chrome')
+const pathToChromeExtension = path.join(__dirname, '../../../../test/apps/extensions/extension-chrome')
 // Contains allowedTrackingOrigins parameter with app.example.com origin
-const pathToExampleExtension = path.join(__dirname, '../../../../test/apps/extension-example')
+const pathToExampleExtension = path.join(__dirname, '../../../../test/apps/extensions/extension-example')
 
 test.describe('browser extensions', () => {
   console.log('test')

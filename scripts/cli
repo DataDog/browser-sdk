@@ -64,10 +64,10 @@ cmd_build_extensions () {
   echo "Building extensions with different configurations..."
   
   # Base extension directory
-  local base_ext_dir="test/apps/extension"
-  local default_ext_dir="test/apps/extension-default"
-  local chrome_ext_dir="test/apps/extension-chrome"
-  local example_ext_dir="test/apps/extension-example"
+  local base_ext_dir="test/apps/extensions/extension"
+  local default_ext_dir="test/apps/extensions/extension-default"
+  local chrome_ext_dir="test/apps/extensions/extension-chrome"
+  local example_ext_dir="test/apps/extensions/extension-example"
   
   # Clean up existing extension directories
   rm -rf "$default_ext_dir" "$chrome_ext_dir" "$example_ext_dir"
@@ -77,7 +77,7 @@ cmd_build_extensions () {
   cp -r "$base_ext_dir" "$default_ext_dir"
   # Build the default extension
   echo "Building default extension..."
-  cd "$default_ext_dir" && yarn install && yarn build && cd - > /dev/null
+  cd "$default_ext_dir" && yarn install --no-immutable && yarn build && cd - > /dev/null
   
   # 2. Create and build extension with chrome-extension allowedTrackingOrigins
   echo "Creating chrome-extension extension..."
@@ -87,7 +87,7 @@ cmd_build_extensions () {
   rm -f "$chrome_ext_dir/src/contentScript.js.bak"
   # Build the chrome extension
   echo "Building chrome-extension extension..."
-  cd "$chrome_ext_dir" && yarn install && yarn build && cd - > /dev/null
+  cd "$chrome_ext_dir" && yarn install --no-immutable && yarn build && cd - > /dev/null
   
   # 3. Create and build extension with app.example.com allowedTrackingOrigins
   echo "Creating app.example.com extension..."
@@ -97,7 +97,7 @@ cmd_build_extensions () {
   rm -f "$example_ext_dir/src/contentScript.js.bak"
   # Build the example extension
   echo "Building app.example.com extension..."
-  cd "$example_ext_dir" && yarn install && yarn build && cd - > /dev/null
+  cd "$example_ext_dir" && yarn install --no-immutable && yarn build && cd - > /dev/null
   
   echo "Extension builds completed successfully."
   echo "Available extensions:"
