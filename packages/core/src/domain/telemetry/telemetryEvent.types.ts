@@ -162,6 +162,10 @@ export type TelemetryConfigurationEvent = CommonTelemetryProperties & {
        */
       track_long_task?: boolean
       /**
+       * Whether views loaded from the bfcache are tracked
+       */
+      track_bfcache_views?: boolean
+      /**
        * Whether a secure cross-site session cookie is used (deprecated)
        */
       use_cross_site_session_cookie?: boolean
