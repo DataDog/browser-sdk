@@ -20,7 +20,7 @@ import {
   PAGE_ACTIVITY_VALIDATION_DELAY,
   doWaitPageActivityEnd,
   createPageActivityObservable,
-  IGNORE_MUTATIONS_ATTRIBUTE,
+  EXCLUDED_MUTATIONS_ATTRIBUTE,
 } from './waitPageActivityEnd'
 import type { RumConfiguration } from './configuration'
 
@@ -97,7 +97,7 @@ describe('createPageActivityObservable', () => {
 
       it('does not collect DOM mutation when an element is added and the parent is ignored', () => {
         startListeningToPageActivities()
-        const target = appendElement(`<div ${IGNORE_MUTATIONS_ATTRIBUTE}><button /></div>`)
+        const target = appendElement(`<div ${EXCLUDED_MUTATIONS_ATTRIBUTE}><button /></div>`)
 
         domMutationObservable.notify([createMutationRecord('childList', { target })])
         expect(events).toEqual([])
@@ -105,7 +105,7 @@ describe('createPageActivityObservable', () => {
 
       it('does not collect DOM mutation when a text node is added and the parent is ignored', () => {
         startListeningToPageActivities()
-        const container = appendElement(`<div ${IGNORE_MUTATIONS_ATTRIBUTE}>foo</div>`)
+        const container = appendElement(`<div ${EXCLUDED_MUTATIONS_ATTRIBUTE}>foo</div>`)
         const target = container.childNodes[0] as Text
 
         domMutationObservable.notify([createMutationRecord('characterData', { target })])
@@ -114,7 +114,7 @@ describe('createPageActivityObservable', () => {
 
       it('does not collect DOM mutation on attribute creation of ignored element', () => {
         startListeningToPageActivities()
-        const target = appendElement(`<div ${IGNORE_MUTATIONS_ATTRIBUTE}></div>`)
+        const target = appendElement(`<div ${EXCLUDED_MUTATIONS_ATTRIBUTE}></div>`)
 
         domMutationObservable.notify([createMutationRecord('attributes', { target })])
         expect(events).toEqual([])

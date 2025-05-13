@@ -20,7 +20,7 @@ export const PAGE_ACTIVITY_VALIDATION_DELAY = 100
 // Delay to wait after a page activity to end the tracking process
 export const PAGE_ACTIVITY_END_DELAY = 100
 
-export const IGNORE_MUTATIONS_ATTRIBUTE = 'dd-ignore-mutations'
+export const EXCLUDED_MUTATIONS_ATTRIBUTE = 'data-dd-excluded-activity-mutations'
 
 export interface PageActivityEvent {
   isBusy: boolean
@@ -138,7 +138,10 @@ export function createPageActivityObservable(
 
     subscriptions.push(
       domMutationObservable.subscribe((mutations) => {
-        if (!isExperimentalFeatureEnabled(ExperimentalFeature.DOM_MUTATION_IGNORING) || !mutations.every(isIgnored)) {
+        if (
+          !isExperimentalFeatureEnabled(ExperimentalFeature.DOM_MUTATION_IGNORING) ||
+          !mutations.every(isExcludedMutation)
+        ) {
           notifyPageActivity()
         }
       }),
@@ -186,12 +189,12 @@ function isExcludedUrl(configuration: RumConfiguration, requestUrl: string): boo
   return matchList(configuration.excludedActivityUrls, requestUrl)
 }
 
-function isIgnored(mutation: RumMutationRecord): boolean {
+function isExcludedMutation(mutation: RumMutationRecord): boolean {
   switch (mutation.type) {
     case 'attributes':
     case 'childList':
-      return (mutation.target as Element).hasAttribute(IGNORE_MUTATIONS_ATTRIBUTE) === true
+      return (mutation.target as Element).hasAttribute(EXCLUDED_MUTATIONS_ATTRIBUTE) === true
     case 'characterData':
-      return mutation.target.parentElement?.hasAttribute(IGNORE_MUTATIONS_ATTRIBUTE) === true
+      return mutation.target.parentElement?.hasAttribute(EXCLUDED_MUTATIONS_ATTRIBUTE) === true
   }
 }
