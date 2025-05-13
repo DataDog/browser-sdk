@@ -1,1 +1,1 @@
-Basic extension with Manifest v3 to use in e2e tests regarding isExtensionEnvironment
+Basic Manifest v3 extension used in end-to-end tests for isExtensionEnvironment.
