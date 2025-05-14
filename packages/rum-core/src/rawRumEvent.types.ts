@@ -325,6 +325,32 @@ export interface RawRumVitalEvent {
 
 export const enum VitalType {
   DURATION = 'duration',
+  USER_STORY = 'user_story',
+}
+
+export const enum UserStoryStatus {
+  IN_PROGRESS = 'IN_PROGRESS',
+  SUCCESS = 'SUCCESS',
+  FAILURE = 'FAILURE',
+}
+
+export interface RawRumUserStoryEvent {
+  date: TimeStamp
+  type: RumEventType.VITAL
+  vital: {
+    id: string
+    name: string
+    type: VitalType.USER_STORY
+    description?: string
+    duration: number
+    story_instance_id: string
+    status: UserStoryStatus
+  }
+  _dd?: {
+    vital: {
+      computed_value: true
+    }
+  }
 }
 
 export type RawRumEvent =
@@ -335,3 +361,4 @@ export type RawRumEvent =
   | RawRumLongAnimationFrameEvent
   | RawRumActionEvent
   | RawRumVitalEvent
+  | RawRumUserStoryEvent

@@ -467,6 +467,9 @@ export type TelemetryBrowserFeaturesUsage =
   | StartDurationVital
   | StopDurationVital
   | AddDurationVital
+  | StartStory
+  | StopStory
+  | FailStory
 /**
  * Schema of mobile specific features usage
  */
@@ -804,6 +807,27 @@ export interface AddDurationVital {
    * addDurationVital API
    */
   feature: 'add-duration-vital'
+  [k: string]: unknown
+}
+export interface StartStory {
+  /**
+   * startStory API
+   */
+  feature: 'start-story'
+  [k: string]: unknown
+}
+export interface StopStory {
+  /**
+   * stopStory API
+   */
+  feature: 'stop-story'
+  [k: string]: unknown
+}
+export interface FailStory {
+  /**
+   * failStory API
+   */
+  feature: 'fail-story'
   [k: string]: unknown
 }
 export interface AddViewLoadingTime {

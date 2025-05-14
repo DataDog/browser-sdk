@@ -40,6 +40,7 @@ import type { RumConfiguration, RumInitConfiguration } from '../domain/configura
 import type { ViewOptions } from '../domain/view/trackViews'
 import type { InternalContext } from '../domain/contexts/internalContext'
 import type { DurationVitalReference } from '../domain/vital/vitalCollection'
+import type { StoryReference } from '../domain/vital/storyCollection'
 import { createCustomVitalsState } from '../domain/vital/vitalCollection'
 import { callPluginsMethod } from '../domain/plugins'
 import { createPreStartStrategy } from './preStartRum'
@@ -259,7 +260,7 @@ export interface RumPublicApi extends PublicApi {
 
   /**
    * Start a view manually.
-   * Enable to manual start a view, use `trackViewsManually: true` init parameter and call `startView()` to create RUM views and be aligned with how you’ve defined them in your SPA application routing.
+   * Enable to manual start a view, use `trackViewsManually: true` init parameter and call `startView()` to create RUM views and be aligned with how you've defined them in your SPA application routing.
    *
    * @param options.name name of the view
    * @param options.service service of the view
@@ -349,6 +350,34 @@ export interface RumPublicApi extends PublicApi {
     nameOrRef: string | DurationVitalReference,
     options?: { context?: object; description?: string }
   ) => void
+
+  /**
+   * Start a user story vital.
+   *
+   * @param name name of the user story
+   * @param options.context custom context attached to the story
+   * @param options.description Description of the story
+   * @returns reference to the user story
+   */
+  startStory: (name: string, options?: { context?: object; description?: string }) => StoryReference
+
+  /**
+   * Stop a user story vital
+   *
+   * @param nameOrRef name of the user story or the reference to it
+   * @param options.context custom context attached to the story
+   * @param options.description Description of the story
+   */
+  stopStory: (nameOrRef: string | StoryReference, options?: { context?: object; description?: string }) => void
+
+  /**
+   * Fail a user story vital
+   *
+   * @param nameOrRef name of the user story or the reference to it
+   * @param options.context custom context attached to the story
+   * @param options.description Description of the story
+   */
+  failStory: (nameOrRef: string | StoryReference, options?: { context?: object; description?: string }) => void
 }
 
 export interface RecorderApi {
@@ -413,6 +442,9 @@ export interface Strategy {
   startDurationVital: StartRumResult['startDurationVital']
   stopDurationVital: StartRumResult['stopDurationVital']
   addDurationVital: StartRumResult['addDurationVital']
+  startStory: StartRumResult['startStory']
+  stopStory: StartRumResult['stopStory']
+  failStory: StartRumResult['failStory']
 }
 
 export function makeRumPublicApi(
@@ -653,6 +685,30 @@ export function makeRumPublicApi(
     stopDurationVital: monitor((nameOrRef, options) => {
       addTelemetryUsage({ feature: 'stop-duration-vital' })
       strategy.stopDurationVital(typeof nameOrRef === 'string' ? sanitize(nameOrRef)! : nameOrRef, {
+        context: sanitize(options && options.context) as Context,
+        description: sanitize(options && options.description) as string | undefined,
+      })
+    }),
+
+    startStory: monitor((name, options) => {
+      addTelemetryUsage({ feature: 'start-story' })
+      return strategy.startStory(sanitize(name)!, {
+        context: sanitize(options && options.context) as Context,
+        description: sanitize(options && options.description) as string | undefined,
+      })
+    }),
+
+    stopStory: monitor((nameOrRef: string | StoryReference, options) => {
+      addTelemetryUsage({ feature: 'stop-story' })
+      strategy.stopStory(typeof nameOrRef === 'string' ? sanitize(nameOrRef)! : nameOrRef, {
+        context: sanitize(options && options.context) as Context,
+        description: sanitize(options && options.description) as string | undefined,
+      })
+    }),
+
+    failStory: monitor((nameOrRef: string | StoryReference, options) => {
+      addTelemetryUsage({ feature: 'fail-story' })
+      strategy.failStory(typeof nameOrRef === 'string' ? sanitize(nameOrRef)! : nameOrRef, {
         context: sanitize(options && options.context) as Context,
         description: sanitize(options && options.description) as string | undefined,
       })

@@ -40,6 +40,7 @@ import { startPageStateHistory } from '../domain/contexts/pageStateHistory'
 import { startDisplayContext } from '../domain/contexts/displayContext'
 import type { CustomVitalsState } from '../domain/vital/vitalCollection'
 import { startVitalCollection } from '../domain/vital/vitalCollection'
+import { startStoryCollection, createStoriesState } from '../domain/vital/storyCollection'
 import { startCiVisibilityContext } from '../domain/contexts/ciVisibilityContext'
 import { startLongAnimationFrameCollection } from '../domain/longAnimationFrame/longAnimationFrameCollection'
 import { RumPerformanceEntryType, supportPerformanceTimingEvent } from '../browser/performanceObservable'
@@ -200,6 +201,8 @@ export function startRum(
   startRequestCollection(lifeCycle, configuration, session, userContext, accountContext)
 
   const vitalCollection = startVitalCollection(lifeCycle, pageStateHistory, customVitalsState)
+  const storiesState = createStoriesState()
+  const storyCollection = startStoryCollection(lifeCycle, storiesState)
   const internalContext = startInternalContext(
     configuration.applicationId,
     session,
@@ -229,6 +232,9 @@ export function startRum(
     startDurationVital: vitalCollection.startDurationVital,
     stopDurationVital: vitalCollection.stopDurationVital,
     addDurationVital: vitalCollection.addDurationVital,
+    startStory: storyCollection.startStory,
+    stopStory: storyCollection.stopStory,
+    failStory: storyCollection.failStory,
     globalContext,
     userContext,
     accountContext,

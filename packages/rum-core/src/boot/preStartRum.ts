@@ -27,6 +27,7 @@ import { callPluginsMethod } from '../domain/plugins'
 import { buildGlobalContextManager } from '../domain/contexts/globalContext'
 import { buildUserContextManager } from '../domain/contexts/userContext'
 import { buildAccountContextManager } from '../domain/contexts/accountContext'
+import type { StoryReference } from '../domain/vital/storyCollection'
 import type { StartRumResult } from './startRum'
 import type { RumPublicApiOptions, Strategy } from './rumPublicApi'
 
@@ -241,6 +242,17 @@ export function createPreStartStrategy(
     },
 
     addDurationVital,
+
+    startStory(_name, _options) {
+      // Return a dummy reference before RUM is started
+      return { __dd_story_reference: true } as StoryReference
+    },
+    stopStory(_nameOrRef, _options) {
+      // No-op before RUM is started
+    },
+    failStory(_nameOrRef, _options) {
+      // No-op before RUM is started
+    },
   }
 
   return strategy
