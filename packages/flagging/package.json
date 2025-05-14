@@ -1,5 +1,5 @@
 {
-  "name": "@datadog/browser-logs",
+  "name": "@datadog/browser-flagging",
   "version": "6.6.4",
   "license": "Apache-2.0",
   "main": "cjs/entries/main.js",

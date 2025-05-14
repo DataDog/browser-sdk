@@ -224,6 +224,19 @@ __metadata:
   languageName: unknown
   linkType: soft
 
+"@datadog/browser-flagging@workspace:packages/flagging":
+  version: 0.0.0-use.local
+  resolution: "@datadog/browser-flagging@workspace:packages/flagging"
+  dependencies:
+    "@datadog/browser-core": "npm:6.6.4"
+  peerDependencies:
+    "@datadog/browser-rum": 6.6.4
+  peerDependenciesMeta:
+    "@datadog/browser-rum":
+      optional: true
+  languageName: unknown
+  linkType: soft
+
 "@datadog/browser-logs@workspace:*, @datadog/browser-logs@workspace:packages/logs":
   version: 0.0.0-use.local
   resolution: "@datadog/browser-logs@workspace:packages/logs"
