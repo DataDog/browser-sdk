@@ -67,7 +67,7 @@ test.describe('browser extensions', () => {
         () =>
           window.DD_RUM?.getInitConfiguration() ?? {
             applicationId: '',
-            allowedTrackingOrigins: ''
+            allowedTrackingOrigins: '',
           }
       )
 
