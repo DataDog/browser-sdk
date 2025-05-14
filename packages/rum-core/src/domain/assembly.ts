@@ -46,6 +46,7 @@ export function startRumAssembly(
       'view.performance.lcp.resource_url': 'string',
       ...USER_CUSTOMIZABLE_FIELD_PATHS,
       ...VIEW_MODIFIABLE_FIELD_PATHS,
+      ...ROOT_MODIFIABLE_FIELD_PATHS,
     },
     [RumEventType.ERROR]: {
       'error.message': 'string',
