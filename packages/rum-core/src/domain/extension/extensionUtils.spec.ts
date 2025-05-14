@@ -4,8 +4,8 @@ import {
   containsExtensionUrl,
   EXTENSION_PREFIXES,
   isUnsupportedExtensionEnvironment,
-  WarnDoesNotHaveAllowedTrackingOrigin,
-  WarnNotAllowedTrackingOrigin,
+  WARN_DOES_NOT_HAVE_ALLOWED_TRACKING_ORIGIN,
+  WARN_NOT_ALLOWED_TRACKING_ORIGIN,
 } from './extensionUtils'
 
 const DEFAULT_CONFIG = {
@@ -157,7 +157,7 @@ describe('checkForAllowedTrackingOrigins', () => {
         'https://example.com',
         'Error: at chrome-extension://abcdefghijklmno/content.js:10:15'
       )
-      expect(displayWarnSpy).toHaveBeenCalledWith(WarnNotAllowedTrackingOrigin)
+      expect(displayWarnSpy).toHaveBeenCalledWith(WARN_NOT_ALLOWED_TRACKING_ORIGIN)
     })
 
     it('should warn when extension origin does not match regex pattern', () => {
@@ -169,7 +169,7 @@ describe('checkForAllowedTrackingOrigins', () => {
         'https://example.com',
         'Error: at chrome-extension://abcdefghijklmno/content.js:10:15'
       )
-      expect(displayWarnSpy).toHaveBeenCalledWith(WarnNotAllowedTrackingOrigin)
+      expect(displayWarnSpy).toHaveBeenCalledWith(WARN_NOT_ALLOWED_TRACKING_ORIGIN)
     })
 
     it('should warn when extension origin does not match predicate function', () => {
@@ -181,7 +181,7 @@ describe('checkForAllowedTrackingOrigins', () => {
         'https://example.com',
         'Error: at chrome-extension://abcdefghijklmno/content.js:10:15'
       )
-      expect(displayWarnSpy).toHaveBeenCalledWith(WarnNotAllowedTrackingOrigin)
+      expect(displayWarnSpy).toHaveBeenCalledWith(WARN_NOT_ALLOWED_TRACKING_ORIGIN)
     })
 
     it('should warn when extension origin does not match any of multiple patterns', () => {
@@ -197,7 +197,7 @@ describe('checkForAllowedTrackingOrigins', () => {
         'https://example.com',
         'Error: at chrome-extension://abcdefghijklmno/content.js:10:15'
       )
-      expect(displayWarnSpy).toHaveBeenCalledWith(WarnNotAllowedTrackingOrigin)
+      expect(displayWarnSpy).toHaveBeenCalledWith(WARN_NOT_ALLOWED_TRACKING_ORIGIN)
     })
   })
 
@@ -211,7 +211,7 @@ describe('checkForAllowedTrackingOrigins', () => {
         'https://example.com',
         'Error: at chrome-extension://abcdefghijklmno/content.js:10:15'
       )
-      expect(displayWarnSpy).toHaveBeenCalledWith(WarnDoesNotHaveAllowedTrackingOrigin)
+      expect(displayWarnSpy).toHaveBeenCalledWith(WARN_DOES_NOT_HAVE_ALLOWED_TRACKING_ORIGIN)
     })
 
     it('should warn when in extension environment and allowedTrackingOrigins is an empty array', () => {
@@ -223,7 +223,7 @@ describe('checkForAllowedTrackingOrigins', () => {
         'https://example.com',
         'Error: at chrome-extension://abcdefghijklmno/content.js:10:15'
       )
-      expect(displayWarnSpy).toHaveBeenCalledWith(WarnNotAllowedTrackingOrigin)
+      expect(displayWarnSpy).toHaveBeenCalledWith(WARN_NOT_ALLOWED_TRACKING_ORIGIN)
     })
 
     it('should not warn when not in extension environment and allowedTrackingOrigins is undefined', () => {

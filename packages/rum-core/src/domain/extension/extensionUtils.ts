@@ -31,19 +31,19 @@ export function checkForAllowedTrackingOrigins(
     const allowedTrackingOrigins = configuration.allowedTrackingOrigins
 
     if (!allowedTrackingOrigins) {
-      display.warn(WarnDoesNotHaveAllowedTrackingOrigin)
+      display.warn(WARN_DOES_NOT_HAVE_ALLOWED_TRACKING_ORIGIN)
       return
     }
 
     const isAllowed = matchList(allowedTrackingOrigins, windowLocation, true)
 
     if (!isAllowed) {
-      display.warn(WarnNotAllowedTrackingOrigin)
+      display.warn(WARN_NOT_ALLOWED_TRACKING_ORIGIN)
     }
     return
   }
 }
 
-export const WarnDoesNotHaveAllowedTrackingOrigin =
+export const WARN_DOES_NOT_HAVE_ALLOWED_TRACKING_ORIGIN =
   'Running the Browser SDK in a Web extension content script is discouraged and will be forbidden in a future major release unless the `allowedTrackingOrigins` option is provided.'
-export const WarnNotAllowedTrackingOrigin = 'SDK is being initialized from an extension on a non-allowed domain.'
+export const WARN_NOT_ALLOWED_TRACKING_ORIGIN = 'SDK is being initialized from an extension on a non-allowed domain.'

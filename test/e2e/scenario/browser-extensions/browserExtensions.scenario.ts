@@ -55,7 +55,7 @@ test.describe('browser extensions', () => {
       )
     })
 
-  createTest('SDK with chrome-extension allowedTrackingOrigins parameter works correctly')
+  createTest('SDK with correct allowedTrackingOrigins parameter works correctly')
     .withExtension(pathToChromeExtension)
     .run(async ({ page, extensionId }) => {
       const consoleMessages: string[] = []
@@ -67,11 +67,12 @@ test.describe('browser extensions', () => {
         () =>
           window.DD_RUM?.getInitConfiguration() ?? {
             applicationId: '',
+            allowedTrackingOrigins: ''
           }
       )
 
       expect(extensionResult.applicationId).toBe('1234')
-      expect((extensionResult as any).allowedTrackingOrigins).toEqual(['chrome-extension://abcdefghijklmno'])
+      expect(extensionResult.allowedTrackingOrigins).toEqual(['chrome-extension://abcdefghijklmno'])
       expect(consoleMessages).not.toContain(
         'Datadog Browser SDK: Running the Browser SDK in a Web extension content script is discouraged and will be forbidden in a future major release unless the `allowedTrackingOrigins` option is provided.'
       )
