@@ -1,13 +1,42 @@
 import { monitor, noop, Observable, getZoneJsOriginalValue } from '@datadog/browser-core'
 
+export const IGNORE_MUTATIONS_ATTRIBUTE = 'dd-ignore-mutations'
+
+// https://dom.spec.whatwg.org/#interface-mutationrecord
+export interface RumCharacterDataMutationRecord {
+  type: 'characterData'
+  target: Node
+  oldValue: string | null
+}
+
+export interface RumAttributesMutationRecord {
+  type: 'attributes'
+  target: Element
+  oldValue: string | null
+  attributeName: string | null
+}
+
+export interface RumChildListMutationRecord {
+  type: 'childList'
+  target: Node
+  addedNodes: NodeList
+  removedNodes: NodeList
+}
+
+export type RumMutationRecord =
+  | RumCharacterDataMutationRecord
+  | RumAttributesMutationRecord
+  | RumChildListMutationRecord
+
 export function createDOMMutationObservable() {
   const MutationObserver = getMutationObserverConstructor()
 
-  return new Observable<void>((observable) => {
+  return new Observable<RumMutationRecord[]>((observable) => {
     if (!MutationObserver) {
       return
     }
-    const observer = new MutationObserver(monitor(() => observable.notify()))
+
+    const observer = new MutationObserver(monitor((records) => observable.notify(records)))
     observer.observe(document, {
       attributes: true,
       characterData: true,
@@ -18,7 +47,7 @@ export function createDOMMutationObservable() {
   })
 }
 
-type MutationObserverConstructor = new (callback: MutationCallback) => MutationObserver
+type MutationObserverConstructor = new (callback: (records: RumMutationRecord[]) => void) => MutationObserver
 
 export interface BrowserWindow extends Window {
   MutationObserver?: MutationObserverConstructor
@@ -27,7 +56,7 @@ export interface BrowserWindow extends Window {
 
 export function getMutationObserverConstructor(): MutationObserverConstructor | undefined {
   let constructor: MutationObserverConstructor | undefined
-  const browserWindow: BrowserWindow = window
+  const browserWindow = window as BrowserWindow
 
   // Angular uses Zone.js to provide a context persisting across async tasks.  Zone.js replaces the
   // global MutationObserver constructor with a patched version to support the context propagation.

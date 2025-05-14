@@ -1,5 +1,12 @@
 import { monitor, noop } from '@datadog/browser-core'
-import type { RumConfiguration, NodePrivacyLevelCache } from '@datadog/browser-rum-core'
+import type {
+  RumConfiguration,
+  NodePrivacyLevelCache,
+  RumMutationRecord,
+  RumChildListMutationRecord,
+  RumCharacterDataMutationRecord,
+  RumAttributesMutationRecord,
+} from '@datadog/browser-rum-core'
 import {
   isNodeShadowHost,
   getMutationObserverConstructor,
@@ -37,32 +44,6 @@ export type MutationCallBack = (incrementalSnapshotRecord: BrowserIncrementalSna
 
 type WithSerializedTarget<T> = T & { target: NodeWithSerializedNode }
 
-// https://dom.spec.whatwg.org/#interface-mutationrecord
-interface RumCharacterDataMutationRecord {
-  type: 'characterData'
-  target: Node
-  oldValue: string | null
-}
-
-interface RumAttributesMutationRecord {
-  type: 'attributes'
-  target: Element
-  oldValue: string | null
-  attributeName: string | null
-}
-
-interface RumChildListMutationRecord {
-  type: 'childList'
-  target: Node
-  addedNodes: NodeList
-  removedNodes: NodeList
-}
-
-export type RumMutationRecord =
-  | RumCharacterDataMutationRecord
-  | RumAttributesMutationRecord
-  | RumChildListMutationRecord
-
 export type MutationTracker = Tracker & { flush: () => void }
 
 /**
@@ -88,7 +69,7 @@ export function trackMutation(
     )
   })
 
-  const observer = new MutationObserver(monitor(mutationBatch.addMutations) as (callback: MutationRecord[]) => void)
+  const observer = new MutationObserver(monitor(mutationBatch.addMutations) as (callback: RumMutationRecord[]) => void)
 
   observer.observe(target, {
     attributeOldValue: true,
