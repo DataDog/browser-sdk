@@ -58,10 +58,26 @@ export function startVitalCollection(
     }
   }
 
+  function sendDurationVitalStartEvent(vital: DurationVitalStart) {
+    if(vital) {
+      // temporary hack to send an event when the vital is started
+      vital.context = combine(vital.context, { status: 'in-progress' })
+      if (vital) {
+        const durationVitalStart = buildDurationVital(
+          vital,
+          vital.startClocks,
+          {},
+          clocksNow()
+        )
+        addDurationVital(durationVitalStart)
+      }
+    }
+  }
+
   return {
     addDurationVital,
     startDurationVital: (name: string, options: DurationVitalOptions = {}) =>
-      startDurationVital(customVitalsState, name, options),
+      startDurationVital(customVitalsState, name, options, sendDurationVitalStartEvent),
     stopDurationVital: (nameOrRef: string | DurationVitalReference, options: DurationVitalOptions = {}) => {
       stopDurationVital(addDurationVital, customVitalsState, nameOrRef, options)
     },
@@ -71,7 +87,8 @@ export function startVitalCollection(
 export function startDurationVital(
   { vitalsByName, vitalsByReference }: CustomVitalsState,
   name: string,
-  options: DurationVitalOptions = {}
+  options: DurationVitalOptions = {},
+  sendDurationVitalStart?: (vital: DurationVitalStart) => void
 ) {
   const vital = {
     name,
@@ -83,10 +100,15 @@ export function startDurationVital(
   // To avoid leaking implementation details of the vital, we return a reference to it.
   const reference: DurationVitalReference = { __dd_vital_reference: true }
 
+  vital.context = combine(vital.context, { id: generateUUID() })
   vitalsByName.set(name, vital)
 
   // To avoid memory leaks caused by the creation of numerous references (e.g., from improper useEffect implementations), we use a WeakMap.
   vitalsByReference.set(reference, vital)
+
+  if(sendDurationVitalStart) {
+    sendDurationVitalStart(vital)
+  }
 
   return reference
 }
