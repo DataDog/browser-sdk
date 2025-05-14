@@ -12,6 +12,7 @@ import { trackScrollMetrics } from './trackScrollMetrics'
 
 export interface CommonViewMetrics {
   loadingTime?: Duration
+  wasHiddenDuringLoading?: boolean
   cumulativeLayoutShift?: CumulativeLayoutShift
   interactionToNextPaint?: InteractionToNextPaint
   scroll?: ScrollMetrics
@@ -35,8 +36,12 @@ export function trackCommonViewMetrics(
     configuration,
     loadingType,
     viewStart,
-    (newLoadingTime) => {
-      commonViewMetrics.loadingTime = newLoadingTime
+    (newLoadingTime, wasHiddenDuringLoading) => {
+      if (wasHiddenDuringLoading) {
+        commonViewMetrics.wasHiddenDuringLoading = true
+      } else {
+        commonViewMetrics.loadingTime = newLoadingTime
+      }
       scheduleViewUpdate()
     }
   )

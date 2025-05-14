@@ -13,7 +13,7 @@ export function trackLoadingTime(
   configuration: RumConfiguration,
   loadType: ViewLoadingType,
   viewStart: ClocksState,
-  callback: (loadingTime: Duration) => void
+  callback: (loadingTime: Duration, wasHiddenDuringLoading: boolean) => void
 ) {
   let isWaitingForLoadEvent = loadType === ViewLoadingType.INITIAL_LOAD
   let isWaitingForActivityLoadingTime = true
@@ -23,9 +23,7 @@ export function trackLoadingTime(
   function invokeCallbackIfAllCandidatesAreReceived() {
     if (!isWaitingForActivityLoadingTime && !isWaitingForLoadEvent && loadingTimeCandidates.length > 0) {
       const loadingTime = Math.max(...loadingTimeCandidates)
-      if (loadingTime < firstHidden.timeStamp) {
-        callback(loadingTime as Duration)
-      }
+      callback(loadingTime as Duration, loadingTime < firstHidden.timeStamp)
     }
   }
 
