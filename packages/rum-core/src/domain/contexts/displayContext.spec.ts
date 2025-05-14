@@ -1,7 +1,8 @@
+import { HookNames } from '@datadog/browser-core'
 import type { RelativeTime } from '@datadog/browser-core'
 import { mockRumConfiguration } from '../../../test'
-import type { Hooks } from '../../hooks'
-import { createHooks, HookNames } from '../../hooks'
+import type { Hooks } from '../hooks'
+import { createHooks } from '../hooks'
 import type { DisplayContext } from './displayContext'
 import { startDisplayContext } from './displayContext'
 

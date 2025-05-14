@@ -1,9 +1,9 @@
 import type { ContextManager, RelativeTime } from '@datadog/browser-core'
-import { removeStorageListeners } from '@datadog/browser-core'
+import { HookNames, removeStorageListeners } from '@datadog/browser-core'
 import { registerCleanupTask } from '@datadog/browser-core/test'
 import { createRumSessionManagerMock, mockRumConfiguration } from '../../../test'
-import type { Hooks } from '../../hooks'
-import { createHooks, HookNames } from '../../hooks'
+import type { Hooks } from '../hooks'
+import { createHooks } from '../hooks'
 import { startUserContext } from './userContext'
 
 describe('user context', () => {

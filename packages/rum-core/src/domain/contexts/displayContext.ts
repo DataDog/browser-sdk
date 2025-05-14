@@ -1,9 +1,8 @@
-import { monitor } from '@datadog/browser-core'
+import { HookNames, monitor } from '@datadog/browser-core'
 import type { RumConfiguration } from '../configuration'
 import type { ViewportDimension } from '../../browser/viewportObservable'
 import { getViewportDimension, initViewportObservable } from '../../browser/viewportObservable'
-import type { Hooks, DefaultRumEventAttributes } from '../../hooks'
-import { HookNames } from '../../hooks'
+import type { DefaultRumEventAttributes, Hooks } from '../hooks'
 
 export type DisplayContext = ReturnType<typeof startDisplayContext>
 
