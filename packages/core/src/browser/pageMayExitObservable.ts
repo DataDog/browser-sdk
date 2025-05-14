@@ -18,11 +18,13 @@ export interface PageMayExitEvent {
 
 export function createPageMayExitObservable(configuration: Configuration): Observable<PageMayExitEvent> {
   return new Observable<PageMayExitEvent>((observable) => {
+
     const { stop: stopListeners } = addEventListeners(
       configuration,
       window,
       [DOM_EVENT.VISIBILITY_CHANGE, DOM_EVENT.FREEZE],
       (event) => {
+        console.log('page exit observable', event)
         if (event.type === DOM_EVENT.VISIBILITY_CHANGE && document.visibilityState === 'hidden') {
           /**
            * Only event that guarantee to fire on mobile devices when the page transitions to background state

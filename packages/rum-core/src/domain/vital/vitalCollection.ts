@@ -1,5 +1,5 @@
-import type { ClocksState, Duration, Context } from '@datadog/browser-core'
-import { clocksNow, combine, elapsed, generateUUID, toServerDuration } from '@datadog/browser-core'
+import type { ClocksState, Duration, Context, Observable, PageMayExitEvent } from '@datadog/browser-core'
+import { clocksNow, combine, elapsed, generateUUID, setTimeout, toServerDuration } from '@datadog/browser-core'
 import type { LifeCycle, RawRumEventCollectedData } from '../lifeCycle'
 import { LifeCycleEventType } from '../lifeCycle'
 import type { RawRumVitalEvent } from '../../rawRumEvent.types'
@@ -46,7 +46,8 @@ export function createCustomVitalsState() {
 export function startVitalCollection(
   lifeCycle: LifeCycle,
   pageStateHistory: PageStateHistory,
-  customVitalsState: CustomVitalsState
+  customVitalsState: CustomVitalsState,
+  pageMayExitObservable: Observable<PageMayExitEvent>,
 ) {
   function isValid(vital: DurationVital) {
     return !pageStateHistory.wasInPageStateDuringPeriod(PageState.FROZEN, vital.startClocks.relative, vital.duration)
@@ -58,13 +59,24 @@ export function startVitalCollection(
     }
   }
 
+  pageMayExitObservable.subscribe(() => {
+    console.log('Page may exit, flushing all remaining vitals')
+    flushAllRemainingVitals(customVitalsState, addDurationVital)
+  })
+
+  // use timeout to flush all remaining vitals after a certain duration
+  // setTimeout(() => {
+  //   console.log('Duration limit reached, flushing all remaining vitals')
+  //   flushAllRemainingVitals(customVitalsState, addDurationVital)
+  // }, 30000)
+
   return {
     addDurationVital,
     startDurationVital: (name: string, options: DurationVitalOptions = {}) =>
       startDurationVital(customVitalsState, name, options),
     stopDurationVital: (nameOrRef: string | DurationVitalReference, options: DurationVitalOptions = {}) => {
       stopDurationVital(addDurationVital, customVitalsState, nameOrRef, options)
-    },
+    }
   }
 }
 
@@ -109,6 +121,21 @@ export function stopDurationVital(
     vitalsByName.delete(nameOrRef)
   } else {
     vitalsByReference.delete(nameOrRef)
+  }
+}
+
+function flushAllRemainingVitals(
+  { vitalsByName }: CustomVitalsState,
+  sendDurationVitalCb: (vital: DurationVital) => void,
+) {
+  console.log('Flushing all remaining vitals')
+  if (vitalsByName.size > 0) {
+    const now = clocksNow()
+    vitalsByName.forEach((vitalStart) => {
+      const vital = buildDurationVital(vitalStart, vitalStart.startClocks, {}, now)
+      vitalsByName.delete(vital.name)
+      sendDurationVitalCb(vital)
+    })
   }
 }
 
