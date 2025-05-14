@@ -79,6 +79,10 @@ function processViewUpdate(
             device_pixel_ratio: clsDevicePixelRatio,
           }
         : undefined,
+      loading_time: {
+        was_hidden_during_loading: view.commonViewMetrics.wasHiddenDuringLoading,
+        duration: view.commonViewMetrics.loadingTime,
+      },
       configuration: {
         start_session_replay_recording_manually: configuration.startSessionReplayRecordingManually,
       },
@@ -138,7 +142,7 @@ function processViewUpdate(
     privacy: {
       replay_level: configuration.defaultPrivacyLevel,
     },
-  }
+  } as RawRumViewEvent
 
   if (!isEmptyObject(view.customTimings)) {
     viewEvent.view.custom_timings = mapValues(
