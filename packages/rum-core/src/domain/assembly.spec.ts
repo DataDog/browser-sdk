@@ -73,7 +73,7 @@ describe('rum assembly', () => {
         
         describe('view type modifyable fields', () => {
           it('service and version should be modifiable', () => {
-          const extraConfigurationOptions = { service: 'default service', version: 'default version' }
+            const extraConfigurationOptions = { service: 'default service', version: 'default version' }
             const { lifeCycle, serverRumEvents } = setupAssemblyTestWithDefaults({
               partialConfiguration: {
                 ...extraConfigurationOptions,
