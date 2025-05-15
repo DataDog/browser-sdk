@@ -1,4 +1,4 @@
-import { monitor, noop, Observable, getZoneJsOriginalValue } from '@datadog/browser-core'
+import { monitor, noop, Observable, getZoneJsOriginalValue } from '@flashcatcloud/browser-core'
 
 export function createDOMMutationObservable() {
   const MutationObserver = getMutationObserverConstructor()

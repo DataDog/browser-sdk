@@ -1,4 +1,4 @@
-import { type Duration, type RelativeTime, type ServerDuration } from '@datadog/browser-core'
+import { type Duration, type RelativeTime, type ServerDuration } from '@flashcatcloud/browser-core'
 import { RumPerformanceEntryType, type RumPerformanceResourceTiming } from '../../browser/performanceObservable'
 import {
   MAX_ATTRIBUTE_VALUE_CHAR_LENGTH,

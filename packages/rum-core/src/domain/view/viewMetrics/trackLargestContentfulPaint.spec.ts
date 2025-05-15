@@ -1,11 +1,11 @@
-import type { RelativeTime } from '@datadog/browser-core'
-import { DOM_EVENT } from '@datadog/browser-core'
+import type { RelativeTime } from '@flashcatcloud/browser-core'
+import { DOM_EVENT } from '@flashcatcloud/browser-core'
 import {
   setPageVisibility,
   createNewEvent,
   restorePageVisibility,
   registerCleanupTask,
-} from '@datadog/browser-core/test'
+} from '@flashcatcloud/browser-core/test'
 import type { RumPerformanceEntry } from '../../../browser/performanceObservable'
 import { RumPerformanceEntryType } from '../../../browser/performanceObservable'
 import { appendElement, createPerformanceEntry, mockPerformanceObserver, mockRumConfiguration } from '../../../../test'

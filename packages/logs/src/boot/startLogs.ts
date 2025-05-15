@@ -1,10 +1,10 @@
-import type { TrackingConsentState } from '@datadog/browser-core'
+import type { TrackingConsentState } from '@flashcatcloud/browser-core'
 import {
   sendToExtension,
   createPageExitObservable,
   willSyntheticsInjectRum,
   canUseEventBridge,
-} from '@datadog/browser-core'
+} from '@flashcatcloud/browser-core'
 import { startLogsSessionManager, startLogsSessionManagerStub } from '../domain/logsSessionManager'
 import type { LogsConfiguration, LogsInitConfiguration } from '../domain/configuration'
 import { startLogsAssembly } from '../domain/assembly'

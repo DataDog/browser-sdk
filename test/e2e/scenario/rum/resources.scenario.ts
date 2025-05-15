@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test'
-import type { RumResourceEvent } from '@datadog/browser-rum'
+import type { RumResourceEvent } from '@flashcatcloud/browser-rum'
 import type { IntakeRegistry } from '../../lib/framework'
 import { bundleSetup, createTest, html } from '../../lib/framework'
 

@@ -1,4 +1,4 @@
-import type { Context, RawError, EventRateLimiter, User, Account } from '@datadog/browser-core'
+import type { Context, RawError, EventRateLimiter, User, Account } from '@flashcatcloud/browser-core'
 import {
   combine,
   isEmptyObject,
@@ -12,7 +12,7 @@ import {
   ExperimentalFeature,
   getConnectivity,
   addTelemetryDebug,
-} from '@datadog/browser-core'
+} from '@flashcatcloud/browser-core'
 import type { RumEventDomainContext } from '../domainContext.types'
 import { RumEventType } from '../rawRumEvent.types'
 import type { CommonProperties, RumEvent } from '../rumEvent.types'

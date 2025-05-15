@@ -46,7 +46,7 @@ function retrievePackageDependencies(packageJsonFile) {
       }
       return dependency
     })
-    .filter((dependency) => !dependency.includes('@datadog'))
+    .filter((dependency) => !dependency.includes('@flashcatcloud'))
 }
 
 function withoutDuplicates(a) {

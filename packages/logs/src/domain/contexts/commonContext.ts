@@ -1,10 +1,10 @@
-import type { ContextManager } from '@datadog/browser-core'
+import type { ContextManager } from '@flashcatcloud/browser-core'
 import type { CommonContext } from '../../rawLogsEvent.types'
 
 export function buildCommonContext(
   globalContextManager: ContextManager,
   userContextManager: ContextManager,
-  acccountContextManager: ContextManager
+  accountContextManager: ContextManager
 ): CommonContext {
   return {
     view: {
@@ -13,6 +13,6 @@ export function buildCommonContext(
     },
     context: globalContextManager.getContext(),
     user: userContextManager.getContext(),
-    account: acccountContextManager.getContext(),
+    account: accountContextManager.getContext(),
   }
 }

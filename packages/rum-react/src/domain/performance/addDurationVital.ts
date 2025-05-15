@@ -1,4 +1,4 @@
-import type { RumPublicApi } from '@datadog/browser-rum-core'
+import type { RumPublicApi } from '@flashcatcloud/browser-rum-core'
 import { onRumInit } from '../reactPlugin'
 
 export const addDurationVital: RumPublicApi['addDurationVital'] = (name, options) => {

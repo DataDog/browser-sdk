@@ -1,5 +1,5 @@
-import type { RelativeTime } from '@datadog/browser-core'
-import { ONE_MINUTE } from '@datadog/browser-core'
+import type { RelativeTime } from '@flashcatcloud/browser-core'
+import { ONE_MINUTE } from '@flashcatcloud/browser-core'
 import type { RumPerformancePaintTiming } from '../../../browser/performanceObservable'
 import { createPerformanceObservable, RumPerformanceEntryType } from '../../../browser/performanceObservable'
 import type { RumConfiguration } from '../../configuration'

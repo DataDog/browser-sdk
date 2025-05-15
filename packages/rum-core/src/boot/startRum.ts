@@ -6,7 +6,7 @@ import type {
   Encoder,
   CustomerDataTrackerManager,
   TrackingConsentState,
-} from '@datadog/browser-core'
+} from '@flashcatcloud/browser-core'
 import {
   sendToExtension,
   createPageExitObservable,
@@ -17,7 +17,7 @@ import {
   addTelemetryDebug,
   CustomerDataType,
   drainPreStartTelemetry,
-} from '@datadog/browser-core'
+} from '@flashcatcloud/browser-core'
 import { createDOMMutationObservable } from '../browser/domMutationObservable'
 import { createWindowOpenObservable } from '../browser/windowOpenObservable'
 import { startRumAssembly } from '../domain/assembly'
@@ -198,7 +198,7 @@ export function startRum(
 
   const { addError } = startErrorCollection(lifeCycle, configuration)
 
-  startRequestCollection(lifeCycle, configuration, session)
+  startRequestCollection(lifeCycle, configuration, session, getCommonContext)
 
   const vitalCollection = startVitalCollection(lifeCycle, pageStateHistory, customVitalsState)
   const internalContext = startInternalContext(

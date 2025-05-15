@@ -1,5 +1,5 @@
-import { createNewEvent, registerCleanupTask } from '@datadog/browser-core/test'
-import type { RumConfiguration } from '@datadog/browser-rum-core'
+import { createNewEvent, registerCleanupTask } from '@flashcatcloud/browser-core/test'
+import type { RumConfiguration } from '@flashcatcloud/browser-rum-core'
 import { SerializationContextStatus, serializeDocument } from '../serialization'
 import { createElementsScrollPositions } from '../elementsScrollPositions'
 import { IncrementalSource, RecordType } from '../../../types'

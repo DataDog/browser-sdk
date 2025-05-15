@@ -1,5 +1,5 @@
-import type { TimeStamp } from '@datadog/browser-core'
-import { monitor, display, removeStorageListeners } from '@datadog/browser-core'
+import type { TimeStamp } from '@flashcatcloud/browser-core'
+import { monitor, display, removeStorageListeners } from '@flashcatcloud/browser-core'
 import type { Logger, LogsMessage } from '../domain/logger'
 import { HandlerType } from '../domain/logger'
 import { StatusType } from '../domain/logger/isAuthorized'

@@ -5,7 +5,7 @@ Send logs to Flashcat from web browser pages with the browser logs SDK.
 
 ## Usage
 
-After adding [`@datadog/browser-logs`][2] to your `package.json` file, initialize it with:
+After adding [`@flashcatcloud/browser-logs`][2] to your `package.json` file, initialize it with:
 
 ```javascript
 import { flashcatLogs } from '@flashcatcloud/browser-logs'

@@ -1,5 +1,5 @@
-import type { RelativeTime, TrackingConsentState } from '@datadog/browser-core'
-import { Observable, performDraw, startSessionManager } from '@datadog/browser-core'
+import type { RelativeTime, TrackingConsentState } from '@flashcatcloud/browser-core'
+import { Observable, performDraw, startSessionManager } from '@flashcatcloud/browser-core'
 import type { LogsConfiguration } from './configuration'
 
 export const LOGS_SESSION_KEY = 'logs'

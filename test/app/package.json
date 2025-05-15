@@ -7,16 +7,16 @@
     "compat:ssr": "webpack --config ./webpack.ssr.js && node dist/app.js"
   },
   "dependencies": {
-    "@datadog/browser-core": "portal:../../packages/core",
-    "@datadog/browser-logs": "portal:../../packages/logs",
-    "@datadog/browser-rum": "portal:../../packages/rum",
-    "@datadog/browser-rum-core": "portal:../../packages/rum-core"
+    "@flashcatcloud/browser-core": "portal:../../packages/core",
+    "@flashcatcloud/browser-logs": "portal:../../packages/logs",
+    "@flashcatcloud/browser-rum": "portal:../../packages/rum",
+    "@flashcatcloud/browser-rum-core": "portal:../../packages/rum-core"
   },
   "resolutions": {
-    "@datadog/browser-core": "portal:../../packages/core",
-    "@datadog/browser-rum-core": "portal:../../packages/rum-core",
-    "@datadog/browser-rum": "portal:../../packages/rum",
-    "@datadog/browser-worker": "portal:../../packages/worker"
+    "@flashcatcloud/browser-core": "portal:../../packages/core",
+    "@flashcatcloud/browser-rum-core": "portal:../../packages/rum-core",
+    "@flashcatcloud/browser-rum": "portal:../../packages/rum",
+    "@flashcatcloud/browser-worker": "portal:../../packages/worker"
   },
   "devDependencies": {
     "ts-loader": "6.2.1",

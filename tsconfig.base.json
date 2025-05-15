@@ -17,11 +17,11 @@
     "lib": ["ES2020", "DOM"],
 
     "paths": {
-      "@datadog/browser-core": ["./packages/core/src"],
-      "@datadog/browser-rum-core": ["./packages/rum-core/src"],
-      "@datadog/browser-rum-react": ["./packages/rum-react/src/entries/main"],
-      "@datadog/browser-rum-react/react-router-v6": ["./packages/rum-react/src/entries/reactRouterV6"],
-      "@datadog/browser-rum-react/react-router-v7": ["./packages/rum-react/src/entries/reactRouterV7"]
+      "@flashcatcloud/browser-core": ["./packages/core/src"],
+      "@flashcatcloud/browser-rum-core": ["./packages/rum-core/src"],
+      "@flashcatcloud/browser-rum-react": ["./packages/rum-react/src/entries/main"],
+      "@flashcatcloud/browser-rum-react/react-router-v6": ["./packages/rum-react/src/entries/reactRouter"],
+      "@flashcatcloud/browser-rum-react/react-router-v7": ["./packages/rum-react/src/entries/reactRouter"]
     }
   }
 }

@@ -78,5 +78,5 @@ function checkPackageDependencyVersions(packageJsonFile) {
 }
 
 function isBrowserSdkPublicPackageName(name) {
-  return name?.startsWith('@datadog/')
+  return name?.startsWith('@flashcatcloud/')
 }

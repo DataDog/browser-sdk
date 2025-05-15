@@ -1,6 +1,6 @@
 {
-  "name": "@datadog/browser-rum-react",
-  "version": "6.5.0",
+  "name": "@flashcatcloud/browser-rum-react",
+  "version": "0.0.1",
   "license": "Apache-2.0",
   "main": "cjs/entries/main.js",
   "module": "esm/entries/main.js",
@@ -12,18 +12,18 @@
     "prepack": "npm run build"
   },
   "dependencies": {
-    "@datadog/browser-core": "6.5.0",
-    "@datadog/browser-rum-core": "6.5.0"
+    "@flashcatcloud/browser-core": "workspace:*",
+    "@flashcatcloud/browser-rum-core": "workspace:*"
   },
   "peerDependencies": {
     "react": "18 || 19",
     "react-router-dom": "6 || 7"
   },
   "peerDependenciesMeta": {
-    "@datadog/browser-rum": {
+    "@flashcatcloud/browser-rum": {
       "optional": true
     },
-    "@datadog/browser-rum-slim": {
+    "@flashcatcloud/browser-rum-slim": {
       "optional": true
     },
     "react": {
@@ -38,12 +38,12 @@
     "@types/react-dom": "19.0.4",
     "react": "19.0.0",
     "react-dom": "19.0.0",
-    "react-router-dom-6": "npm:react-router-dom@6.30.0",
-    "react-router-dom-7": "npm:react-router-dom@7.2.0"
+    "react-router-dom": "7.2.0",
+    "react-router-dom-6": "npm:react-router-dom@6.30.0"
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/DataDog/browser-sdk.git",
+    "url": "https://github.com/flashcatcloud/browser-sdk",
     "directory": "packages/rum-react"
   },
   "volta": {

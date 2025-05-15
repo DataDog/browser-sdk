@@ -1,5 +1,5 @@
-import type { Clock } from '@datadog/browser-core/test'
-import { mockClock } from '@datadog/browser-core/test'
+import type { Clock } from '@flashcatcloud/browser-core/test'
+import { mockClock } from '@flashcatcloud/browser-core/test'
 import { createFakeClick } from '../../../test'
 import type { ClickChain } from './clickChain'
 import { MAX_DISTANCE_BETWEEN_CLICKS, MAX_DURATION_BETWEEN_CLICKS, createClickChain } from './clickChain'

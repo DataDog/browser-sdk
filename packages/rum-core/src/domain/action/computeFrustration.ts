@@ -1,4 +1,4 @@
-import { ONE_SECOND } from '@datadog/browser-core'
+import { ONE_SECOND } from '@flashcatcloud/browser-core'
 import { FrustrationType } from '../../rawRumEvent.types'
 import type { Click } from './trackClickActions'
 

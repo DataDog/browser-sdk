@@ -1,4 +1,4 @@
-import { instrumentMethod, Observable } from '@datadog/browser-core'
+import { instrumentMethod, Observable } from '@flashcatcloud/browser-core'
 
 export function createWindowOpenObservable() {
   const observable = new Observable<void>()

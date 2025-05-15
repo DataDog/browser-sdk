@@ -1,4 +1,4 @@
-import type { Context, ContextManager, CustomerDataTracker } from '@datadog/browser-core'
+import type { Context, ContextManager, CustomerDataTracker } from '@flashcatcloud/browser-core'
 import {
   clocksNow,
   computeRawError,
@@ -12,7 +12,7 @@ import {
   NonErrorPrefix,
   createHandlingStack,
   isError,
-} from '@datadog/browser-core'
+} from '@flashcatcloud/browser-core'
 
 import { isAuthorized, StatusType } from './logger/isAuthorized'
 import { createErrorFieldFromRawError } from './createErrorFieldFromRawError'

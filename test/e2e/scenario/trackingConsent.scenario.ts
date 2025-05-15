@@ -17,7 +17,7 @@ test.describe('tracking consent', () => {
       .withRum({ trackingConsent: 'not-granted' })
       .run(async ({ intakeRegistry, flushEvents, browserContext, page }) => {
         await page.evaluate(() => {
-          window.DD_RUM!.setTrackingConsent('granted')
+          window.FC_RUM!.setTrackingConsent('granted')
         })
 
         await flushEvents()
@@ -30,7 +30,7 @@ test.describe('tracking consent', () => {
       .withRum({ trackUserInteractions: true })
       .run(async ({ intakeRegistry, flushEvents, browserContext, page }) => {
         await page.evaluate(() => {
-          window.DD_RUM!.setTrackingConsent('not-granted')
+          window.FC_RUM!.setTrackingConsent('not-granted')
         })
 
         const htmlElement = page.locator('html')
@@ -48,8 +48,8 @@ test.describe('tracking consent', () => {
         const initialSessionId = await findSessionCookie(browserContext)
 
         await page.evaluate(() => {
-          window.DD_RUM!.setTrackingConsent('not-granted')
-          window.DD_RUM!.setTrackingConsent('granted')
+          window.FC_RUM!.setTrackingConsent('not-granted')
+          window.FC_RUM!.setTrackingConsent('granted')
         })
 
         await flushEvents()
@@ -64,8 +64,8 @@ test.describe('tracking consent', () => {
     createTest('using setTrackingConsent before init overrides the init parameter')
       .withRum({ trackingConsent: 'not-granted' })
       .withRumInit((configuration) => {
-        window.DD_RUM!.setTrackingConsent('granted')
-        window.DD_RUM!.init(configuration)
+        window.FC_RUM!.setTrackingConsent('granted')
+        window.FC_RUM!.init(configuration)
       })
       .run(async ({ intakeRegistry, flushEvents, browserContext }) => {
         await flushEvents()
@@ -89,7 +89,7 @@ test.describe('tracking consent', () => {
       .withLogs({ trackingConsent: 'not-granted' })
       .run(async ({ intakeRegistry, flushEvents, browserContext, page }) => {
         await page.evaluate(() => {
-          window.DD_LOGS!.setTrackingConsent('granted')
+          window.FC_LOGS!.setTrackingConsent('granted')
         })
 
         await flushEvents()

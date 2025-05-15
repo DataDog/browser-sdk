@@ -1,5 +1,5 @@
-import type { MockZoneJs } from '@datadog/browser-core/test'
-import { registerCleanupTask, mockZoneJs } from '@datadog/browser-core/test'
+import type { MockZoneJs } from '@flashcatcloud/browser-core/test'
+import { registerCleanupTask, mockZoneJs } from '@flashcatcloud/browser-core/test'
 import { createDOMMutationObservable, getMutationObserverConstructor } from './domMutationObservable'
 
 // The MutationObserver invokes its callback in an event loop microtask, making this asynchronous.

@@ -1,4 +1,4 @@
-import type { RumInitConfiguration, RumPublicApi } from '@datadog/browser-rum-core'
+import type { RumInitConfiguration, RumPublicApi } from '@flashcatcloud/browser-rum-core'
 import { onRumInit, reactPlugin, resetReactPlugin } from './reactPlugin'
 
 const PUBLIC_API = {} as RumPublicApi

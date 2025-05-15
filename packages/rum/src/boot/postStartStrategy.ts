@@ -5,9 +5,9 @@ import type {
   StartRecordingOptions,
   ViewHistory,
   RumSession,
-} from '@datadog/browser-rum-core'
-import { LifeCycleEventType, SessionReplayState } from '@datadog/browser-rum-core'
-import { asyncRunOnReadyState, monitorError, PageExitReason, type DeflateEncoder } from '@datadog/browser-core'
+} from '@flashcatcloud/browser-rum-core'
+import { LifeCycleEventType, SessionReplayState } from '@flashcatcloud/browser-rum-core'
+import { asyncRunOnReadyState, monitorError, PageExitReason, type DeflateEncoder } from '@flashcatcloud/browser-core'
 import { getSessionReplayLink } from '../domain/getSessionReplayLink'
 import type { startRecording } from './startRecording'
 

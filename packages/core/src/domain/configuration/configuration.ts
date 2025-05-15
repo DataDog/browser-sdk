@@ -33,6 +33,9 @@ export interface InitConfiguration {
    * The client token for Datadog. Required for authenticating your application with Datadog.
    */
   clientToken: string
+  /**
+   * A callback function that can be used to modify events before they are sent to Datadog.
+   */
   beforeSend?: GenericBeforeSendCallback | undefined
   /**
    * The percentage of sessions tracked. A value between 0 and 100.
@@ -208,8 +211,8 @@ function isString(tag: unknown, tagName: string): tag is string | undefined | nu
 }
 
 function isDatadogSite(site: unknown) {
-  if (site && typeof site === 'string' && !/(datadog|ddog|datad0g|dd0g)/.test(site)) {
-    display.error(`Site should be a valid Datadog site. ${MORE_DETAILS} ${DOCS_ORIGIN}/getting_started/site/.`)
+  if (site && typeof site === 'string' && !/(flashcat)/.test(site)) {
+    display.error(`Site should be a valid Flashcat site. ${MORE_DETAILS} ${DOCS_ORIGIN}/getting_started/site/.`)
     return false
   }
   return true
@@ -273,7 +276,7 @@ export function validateAndBuildConfiguration(initConfiguration: InitConfigurati
     eventRateLimiterThreshold: 3000,
     maxTelemetryEventsPerPage: 15,
 
-    /**
+    /** 
      * flush automatically, aim to be lower than ALB connection timeout
      * to maximize connection reuse.
      */

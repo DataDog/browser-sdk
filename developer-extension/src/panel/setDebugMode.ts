@@ -6,8 +6,8 @@ const logger = createLogger('setDebug')
 export function setDebugMode(enabled: boolean) {
   evalInWindow(
     `
-      DD_RUM?._setDebug(${enabled})
-      DD_LOGS?._setDebug(${enabled})
+      FC_RUM?._setDebug(${enabled})
+      FC_LOGS?._setDebug(${enabled})
     `
   ).catch((error) => logger.error('Error while setting debug mode:', error))
 }

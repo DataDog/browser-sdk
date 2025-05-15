@@ -1,5 +1,5 @@
-import type { ErrorWithCause } from '@datadog/browser-core'
-import { ErrorSource, ErrorHandling } from '@datadog/browser-core'
+import type { ErrorWithCause } from '@flashcatcloud/browser-core'
+import { ErrorSource, ErrorHandling } from '@flashcatcloud/browser-core'
 import type { RawRuntimeLogsEvent } from '../../rawLogsEvent.types'
 import type { LogsConfiguration } from '../configuration'
 import { StatusType } from '../logger/isAuthorized'

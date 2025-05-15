@@ -6,10 +6,10 @@ See the [dedicated flashcat documentation][1] for more details.
 
 ## Usage
 
-To start collecting events, add [`@datadog/browser-rum`][2] to your `package.json` file, then initialize it with:
+To start collecting events, add [`@flashcatcloud/browser-rum`][2] to your `package.json` file, then initialize it with:
 
 ```javascript
-import { datadogRum } from '@datadog/browser-rum'
+import { flashcatRum } from '@flashcatcloud/browser-rum'
 
 flashcatRum.init({
   applicationId: '<FC_APPLICATION_ID>',

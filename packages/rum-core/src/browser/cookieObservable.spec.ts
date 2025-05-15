@@ -1,7 +1,7 @@
-import type { Subscription } from '@datadog/browser-core'
-import { ONE_MINUTE, deleteCookie, setCookie } from '@datadog/browser-core'
-import type { Clock } from '@datadog/browser-core/test'
-import { mockClock } from '@datadog/browser-core/test'
+import type { Subscription } from '@flashcatcloud/browser-core'
+import { ONE_MINUTE, deleteCookie, setCookie } from '@flashcatcloud/browser-core'
+import type { Clock } from '@flashcatcloud/browser-core/test'
+import { mockClock } from '@flashcatcloud/browser-core/test'
 import { mockRumConfiguration } from '../../test'
 import { WATCH_COOKIE_INTERVAL_DELAY, createCookieObservable } from './cookieObservable'
 

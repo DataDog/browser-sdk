@@ -1,5 +1,5 @@
-import type { Observable, RawError } from '@datadog/browser-core'
-import { initReportObservable, RawReportType } from '@datadog/browser-core'
+import type { Observable, RawError } from '@flashcatcloud/browser-core'
+import { initReportObservable, RawReportType } from '@flashcatcloud/browser-core'
 import type { RumConfiguration } from '../configuration'
 
 export function trackReportError(configuration: RumConfiguration, errorObservable: Observable<RawError>) {

@@ -1,5 +1,5 @@
-import type { Context } from '@datadog/browser-core'
-import { registerCleanupTask } from '@datadog/browser-core/test'
+import type { Context } from '@flashcatcloud/browser-core'
+import { registerCleanupTask } from '@flashcatcloud/browser-core/test'
 import type { RumEvent } from '../../rumEvent.types'
 import { LifeCycle, LifeCycleEventType } from '../lifeCycle'
 import { RumEventType } from '../../rawRumEvent.types'

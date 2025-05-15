@@ -1,5 +1,5 @@
-import { mockClock, registerCleanupTask } from '@datadog/browser-core/test'
-import type { Duration } from '@datadog/browser-core'
+import { mockClock, registerCleanupTask } from '@flashcatcloud/browser-core/test'
+import type { Duration } from '@flashcatcloud/browser-core'
 import { createTimer } from './timer'
 
 describe('createTimer', () => {

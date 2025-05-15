@@ -1,4 +1,4 @@
-import type { RawError, Observable, PageExitEvent, TelemetryEvent, Context } from '@datadog/browser-core'
+import type { RawError, Observable, PageExitEvent, TelemetryEvent, Context } from '@flashcatcloud/browser-core'
 import {
   startTelemetry,
   TelemetryService,
@@ -9,7 +9,7 @@ import {
   isTelemetryReplicationAllowed,
   addTelemetryConfiguration,
   drainPreStartTelemetry,
-} from '@datadog/browser-core'
+} from '@flashcatcloud/browser-core'
 import type { LogsConfiguration, LogsInitConfiguration } from './configuration'
 import { getRUMInternalContext } from './contexts/rumInternalContext'
 import type { LogsSessionManager } from './logsSessionManager'

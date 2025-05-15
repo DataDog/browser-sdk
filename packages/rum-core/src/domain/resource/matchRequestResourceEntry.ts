@@ -1,5 +1,5 @@
-import type { Duration, RelativeTime } from '@datadog/browser-core'
-import { addDuration } from '@datadog/browser-core'
+import type { Duration, RelativeTime } from '@flashcatcloud/browser-core'
+import { addDuration } from '@flashcatcloud/browser-core'
 import type { RumPerformanceResourceTiming } from '../../browser/performanceObservable'
 import type { RequestCompleteEvent } from '../requestCollection'
 import { hasValidResourceEntryDuration, hasValidResourceEntryTimings } from './resourceUtils'

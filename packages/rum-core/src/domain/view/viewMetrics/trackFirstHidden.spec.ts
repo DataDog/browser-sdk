@@ -1,6 +1,6 @@
-import type { RelativeTime } from '@datadog/browser-core'
-import { DOM_EVENT } from '@datadog/browser-core'
-import { createNewEvent, restorePageVisibility, setPageVisibility } from '@datadog/browser-core/test'
+import type { RelativeTime } from '@flashcatcloud/browser-core'
+import { DOM_EVENT } from '@flashcatcloud/browser-core'
+import { createNewEvent, restorePageVisibility, setPageVisibility } from '@flashcatcloud/browser-core/test'
 import { mockRumConfiguration } from '../../../../test'
 import { trackFirstHidden } from './trackFirstHidden'
 

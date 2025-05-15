@@ -1,5 +1,5 @@
-import type { ErrorWithCause } from '@datadog/browser-core'
-import { ErrorHandling, NO_ERROR_STACK_PRESENT_MESSAGE, createCustomerDataTracker, noop } from '@datadog/browser-core'
+import type { ErrorWithCause } from '@flashcatcloud/browser-core'
+import { ErrorHandling, NO_ERROR_STACK_PRESENT_MESSAGE, createCustomerDataTracker, noop } from '@flashcatcloud/browser-core'
 import type { LogsMessage } from './logger'
 import { HandlerType, Logger, STATUSES } from './logger'
 import { StatusType } from './logger/isAuthorized'

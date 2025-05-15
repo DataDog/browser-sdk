@@ -1,4 +1,4 @@
-import { NodePrivacyLevel } from '@datadog/browser-rum-core'
+import { NodePrivacyLevel } from '@flashcatcloud/browser-rum-core'
 import {
   getSerializedNodeId,
   hasSerializedNode,

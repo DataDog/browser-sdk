@@ -1,5 +1,5 @@
-import type { RelativeTime, TimeStamp } from '@datadog/browser-core'
-import { getRelativeTime, isNumber } from '@datadog/browser-core'
+import type { RelativeTime, TimeStamp } from '@flashcatcloud/browser-core'
+import { getRelativeTime, isNumber } from '@flashcatcloud/browser-core'
 import {
   RumPerformanceEntryType,
   supportPerformanceTimingEvent,

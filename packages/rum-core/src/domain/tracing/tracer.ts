@@ -5,7 +5,9 @@ import {
   isMatchOption,
   matchList,
   TraceContextInjection,
-} from '@datadog/browser-core'
+  isExperimentalFeatureEnabled,
+  ExperimentalFeature,
+} from '@flashcatcloud/browser-core'
 import type { RumConfiguration } from '../configuration'
 import type {
   RumFetchResolveContext,
@@ -13,11 +15,13 @@ import type {
   RumXhrCompleteContext,
   RumXhrStartContext,
 } from '../requestCollection'
+import type { CommonContext } from '../contexts/commonContext'
 import type { RumSessionManager } from '../rumSessionManager'
 import type { PropagatorType, TracingOption } from './tracer.types'
 import type { SpanIdentifier, TraceIdentifier } from './identifier'
 import { createSpanIdentifier, createTraceIdentifier, toPaddedHexadecimalString } from './identifier'
 import { isTraceSampled } from './sampler'
+import { getEncodedContext } from './encodedContext'
 
 export interface Tracer {
   traceFetch: (context: Partial<RumFetchStartContext>) => void
@@ -63,41 +67,57 @@ export function clearTracingIfNeeded(context: RumFetchResolveContext | RumXhrCom
   }
 }
 
-export function startTracer(configuration: RumConfiguration, sessionManager: RumSessionManager): Tracer {
+export function startTracer(
+  configuration: RumConfiguration,
+  sessionManager: RumSessionManager,
+  getCommonContext: () => CommonContext
+): Tracer {
   return {
     clearTracingIfNeeded,
     traceFetch: (context) =>
-      injectHeadersIfTracingAllowed(configuration, context, sessionManager, (tracingHeaders: TracingHeaders) => {
-        if (context.input instanceof Request && !context.init?.headers) {
-          context.input = new Request(context.input)
-          Object.keys(tracingHeaders).forEach((key) => {
-            ;(context.input as Request).headers.append(key, tracingHeaders[key])
-          })
-        } else {
-          context.init = shallowClone(context.init)
-          const headers: Array<[string, string]> = []
-          if (context.init.headers instanceof Headers) {
-            context.init.headers.forEach((value, key) => {
-              headers.push([key, value])
+      injectHeadersIfTracingAllowed(
+        configuration,
+        context,
+        sessionManager,
+        getCommonContext,
+        (tracingHeaders: TracingHeaders) => {
+          if (context.input instanceof Request && !context.init?.headers) {
+            context.input = new Request(context.input)
+            Object.keys(tracingHeaders).forEach((key) => {
+              ;(context.input as Request).headers.append(key, tracingHeaders[key])
             })
-          } else if (Array.isArray(context.init.headers)) {
-            context.init.headers.forEach((header) => {
-              headers.push(header)
-            })
-          } else if (context.init.headers) {
-            Object.keys(context.init.headers).forEach((key) => {
-              headers.push([key, (context.init!.headers as Record<string, string>)[key]])
-            })
+          } else {
+            context.init = shallowClone(context.init)
+            const headers: Array<[string, string]> = []
+            if (context.init.headers instanceof Headers) {
+              context.init.headers.forEach((value, key) => {
+                headers.push([key, value])
+              })
+            } else if (Array.isArray(context.init.headers)) {
+              context.init.headers.forEach((header) => {
+                headers.push(header)
+              })
+            } else if (context.init.headers) {
+              Object.keys(context.init.headers).forEach((key) => {
+                headers.push([key, (context.init!.headers as Record<string, string>)[key]])
+              })
+            }
+            context.init.headers = headers.concat(objectEntries(tracingHeaders))
           }
-          context.init.headers = headers.concat(objectEntries(tracingHeaders))
         }
-      }),
+      ),
     traceXhr: (context, xhr) =>
-      injectHeadersIfTracingAllowed(configuration, context, sessionManager, (tracingHeaders: TracingHeaders) => {
-        Object.keys(tracingHeaders).forEach((name) => {
-          xhr.setRequestHeader(name, tracingHeaders[name])
-        })
-      }),
+      injectHeadersIfTracingAllowed(
+        configuration,
+        context,
+        sessionManager,
+        getCommonContext,
+        (tracingHeaders: TracingHeaders) => {
+          Object.keys(tracingHeaders).forEach((name) => {
+            xhr.setRequestHeader(name, tracingHeaders[name])
+          })
+        }
+      ),
   }
 }
 
@@ -105,6 +125,7 @@ function injectHeadersIfTracingAllowed(
   configuration: RumConfiguration,
   context: Partial<RumFetchStartContext | RumXhrStartContext>,
   sessionManager: RumSessionManager,
+  getCommonContext: () => CommonContext,
   inject: (tracingHeaders: TracingHeaders) => void
 ) {
   const session = sessionManager.findTrackedSession()
@@ -130,7 +151,15 @@ function injectHeadersIfTracingAllowed(
   context.traceId = createTraceIdentifier()
   context.spanId = createSpanIdentifier()
 
-  inject(makeTracingHeaders(context.traceId, context.spanId, context.traceSampled, tracingOption.propagatorTypes))
+  inject(
+    makeTracingHeaders(
+      context.traceId,
+      context.spanId,
+      context.traceSampled,
+      tracingOption.propagatorTypes,
+      getCommonContext
+    )
+  )
 }
 
 /**
@@ -141,28 +170,20 @@ function makeTracingHeaders(
   traceId: TraceIdentifier,
   spanId: SpanIdentifier,
   traceSampled: boolean,
-  propagatorTypes: PropagatorType[]
+  propagatorTypes: PropagatorType[],
+  getCommonContext: () => CommonContext
 ): TracingHeaders {
   const tracingHeaders: TracingHeaders = {}
 
   propagatorTypes.forEach((propagatorType) => {
     switch (propagatorType) {
-      case 'datadog': {
-        Object.assign(tracingHeaders, {
-          'x-datadog-origin': 'rum',
-          'x-datadog-parent-id': spanId.toString(),
-          'x-datadog-sampling-priority': traceSampled ? '1' : '0',
-          'x-datadog-trace-id': traceId.toString(),
-        })
-        break
-      }
       // https://www.w3.org/TR/trace-context/
       case 'tracecontext': {
         Object.assign(tracingHeaders, {
           traceparent: `00-0000000000000000${toPaddedHexadecimalString(traceId)}-${toPaddedHexadecimalString(spanId)}-0${
             traceSampled ? '1' : '0'
           }`,
-          tracestate: `dd=s:${traceSampled ? '1' : '0'};o:rum`,
+          tracestate: `dd=${getTraceStateDatadogItems(traceSampled, getCommonContext).join(';')}`,
         })
         break
       }
@@ -184,4 +205,22 @@ function makeTracingHeaders(
     }
   })
   return tracingHeaders
+}
+
+function getTraceStateDatadogItems(traceSampled: boolean, getCommonContext: () => CommonContext): string[] {
+  const traceStateDatadogItems: string[] = [`s:${traceSampled ? '1' : '0'}`, 'o:rum']
+  if (isExperimentalFeatureEnabled(ExperimentalFeature.USER_ACCOUNT_TRACE_HEADER)) {
+    /**
+     * We should only enable this feature after the decoding service is available
+     */
+    const userIdEncoded = getEncodedContext(getCommonContext().user.id)
+    const accountIdEncoded = getEncodedContext(getCommonContext().account.id)
+    if (userIdEncoded) {
+      traceStateDatadogItems.push(`t.usr.id:${userIdEncoded}`)
+    }
+    if (accountIdEncoded) {
+      traceStateDatadogItems.push(`t.account.id:${accountIdEncoded}`)
+    }
+  }
+  return traceStateDatadogItems
 }

@@ -1,4 +1,4 @@
-import type { Account, Context, TrackingConsent, User, PublicApi } from '@datadog/browser-core'
+import type { Account, Context, TrackingConsent, User, PublicApi } from '@flashcatcloud/browser-core'
 import {
   addTelemetryUsage,
   CustomerDataType,
@@ -11,7 +11,7 @@ import {
   displayAlreadyInitializedError,
   deepClone,
   createTrackingConsentState,
-} from '@datadog/browser-core'
+} from '@flashcatcloud/browser-core'
 import type { LogsInitConfiguration } from '../domain/configuration'
 import type { HandlerType } from '../domain/logger'
 import type { StatusType } from '../domain/logger/isAuthorized'
@@ -93,7 +93,7 @@ export interface LogsPublicApi extends PublicApi {
   clearGlobalContext: () => void
 
   /**
-   * The Datadog browser logs SDK contains a default logger `DD_LOGS.logger`, but this API allows to create different ones.
+   * The Datadog browser logs SDK contains a default logger `FC_LOGS.logger`, but this API allows to create different ones.
    *
    * See [Define multiple loggers](https://docs.datadoghq.com/logs/log_collection/javascript/#define-multiple-loggers) for further information.
    */
@@ -312,7 +312,7 @@ export function makeLogsPublicApi(startLogsImpl: StartLogs): LogsPublicApi {
 function createPostStartStrategy(initConfiguration: LogsInitConfiguration, startLogsResult: StartLogsResult): Strategy {
   return {
     init: (initConfiguration: LogsInitConfiguration) => {
-      displayAlreadyInitializedError('DD_LOGS', initConfiguration)
+      displayAlreadyInitializedError('FC_LOGS', initConfiguration)
     },
     initConfiguration,
     ...startLogsResult,

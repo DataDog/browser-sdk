@@ -1,5 +1,5 @@
-import { DOM_EVENT, addEventListeners, timeStampNow } from '@datadog/browser-core'
-import type { RumConfiguration } from '@datadog/browser-rum-core'
+import { DOM_EVENT, addEventListeners, timeStampNow } from '@flashcatcloud/browser-core'
+import type { RumConfiguration } from '@flashcatcloud/browser-rum-core'
 import { RecordType, type FocusRecord } from '../../../types'
 import type { Tracker } from './tracker.types'
 

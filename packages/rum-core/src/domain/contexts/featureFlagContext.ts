@@ -1,5 +1,5 @@
-import type { ContextValue, Context, CustomerDataTracker } from '@datadog/browser-core'
-import { SESSION_TIME_OUT_DELAY, createValueHistory, isEmptyObject } from '@datadog/browser-core'
+import type { ContextValue, Context, CustomerDataTracker } from '@flashcatcloud/browser-core'
+import { SESSION_TIME_OUT_DELAY, createValueHistory, isEmptyObject } from '@flashcatcloud/browser-core'
 import type { LifeCycle } from '../lifeCycle'
 import { LifeCycleEventType } from '../lifeCycle'
 import { HookNames } from '../../hooks'
@@ -68,7 +68,7 @@ export function startFeatureFlagContexts(
   return {
     addFeatureFlagEvaluation: (key: string, value: ContextValue) => {
       const currentContext = featureFlagContexts.find()
-      if (currentContext) {
+      if (currentContext && currentContext[key] !== value) {
         currentContext[key] = value
         customerDataTracker.updateCustomerData(currentContext)
       }

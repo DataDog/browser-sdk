@@ -1,4 +1,4 @@
-import type { Payload } from '@datadog/browser-core'
+import type { Payload } from '@flashcatcloud/browser-core'
 import type { BrowserSegmentMetadata } from '../../types'
 
 export type BrowserSegmentMetadataAndSegmentSizes = BrowserSegmentMetadata & {

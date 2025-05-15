@@ -1,4 +1,4 @@
-import type { EndpointBuilder, InitConfiguration } from '@datadog/browser-core'
+import type { EndpointBuilder, InitConfiguration } from '@flashcatcloud/browser-core'
 import { computeTransportConfiguration } from '../../../../../../packages/core/src/domain/configuration'
 import { copy } from '../../../copy'
 import type { SdkInfos } from '../../../hooks/useSdkInfos'

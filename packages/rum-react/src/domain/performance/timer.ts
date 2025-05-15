@@ -1,5 +1,5 @@
-import type { Duration, RelativeTime, TimeStamp } from '@datadog/browser-core'
-import { elapsed, relativeNow, timeStampNow } from '@datadog/browser-core'
+import type { Duration, RelativeTime, TimeStamp } from '@flashcatcloud/browser-core'
+import { elapsed, relativeNow, timeStampNow } from '@flashcatcloud/browser-core'
 
 export function createTimer() {
   let duration: Duration | undefined

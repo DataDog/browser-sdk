@@ -1,10 +1,10 @@
-import type { Context, TelemetryEvent, Observable, RawError, PageExitEvent, Encoder } from '@datadog/browser-core'
+import type { Context, TelemetryEvent, Observable, RawError, PageExitEvent, Encoder } from '@flashcatcloud/browser-core'
 import {
   DeflateEncoderStreamId,
   combine,
   isTelemetryReplicationAllowed,
   startBatchWithReplica,
-} from '@datadog/browser-core'
+} from '@flashcatcloud/browser-core'
 import type { RumConfiguration } from '../domain/configuration'
 import type { LifeCycle } from '../domain/lifeCycle'
 import { LifeCycleEventType } from '../domain/lifeCycle'

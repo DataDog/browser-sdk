@@ -1,7 +1,7 @@
-import type { RawError, Subscription } from '@datadog/browser-core'
-import { ErrorHandling, ErrorSource, Observable, clocksNow, resetConsoleObservable } from '@datadog/browser-core'
-import type { Clock } from '@datadog/browser-core/test'
-import { ignoreConsoleLogs, mockClock } from '@datadog/browser-core/test'
+import type { RawError, Subscription } from '@flashcatcloud/browser-core'
+import { ErrorHandling, ErrorSource, Observable, clocksNow, resetConsoleObservable } from '@flashcatcloud/browser-core'
+import type { Clock } from '@flashcatcloud/browser-core/test'
+import { ignoreConsoleLogs, mockClock } from '@flashcatcloud/browser-core/test'
 import { trackConsoleError } from './trackConsoleError'
 
 describe('trackConsoleError', () => {

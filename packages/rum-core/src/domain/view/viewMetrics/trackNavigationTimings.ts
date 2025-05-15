@@ -1,5 +1,5 @@
-import type { Duration, TimeoutId } from '@datadog/browser-core'
-import { setTimeout, relativeNow, runOnReadyState, clearTimeout } from '@datadog/browser-core'
+import type { Duration, TimeoutId } from '@flashcatcloud/browser-core'
+import { setTimeout, relativeNow, runOnReadyState, clearTimeout } from '@flashcatcloud/browser-core'
 import type { RumPerformanceNavigationTiming } from '../../../browser/performanceObservable'
 import type { RumConfiguration } from '../../configuration'
 import { getNavigationEntry } from '../../../browser/performanceUtils'

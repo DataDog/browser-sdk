@@ -1,4 +1,4 @@
-import { runOnReadyState } from '@datadog/browser-core'
+import { runOnReadyState } from '@flashcatcloud/browser-core'
 import { RumPerformanceEntryType } from '../../browser/performanceObservable'
 import type { RumPerformanceResourceTiming } from '../../browser/performanceObservable'
 import type { RumConfiguration } from '../configuration'

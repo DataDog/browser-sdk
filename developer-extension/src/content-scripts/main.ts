@@ -5,8 +5,8 @@ import { SESSION_STORAGE_SETTINGS_KEY } from '../common/sessionKeyConstant'
 
 declare global {
   interface Window extends EventTarget {
-    DD_RUM?: SdkPublicApi
-    DD_LOGS?: SdkPublicApi
+    FC_RUM?: SdkPublicApi
+    FC_LOGS?: SdkPublicApi
     __ddBrowserSdkExtensionCallback?: (message: unknown) => void
   }
 }
@@ -29,8 +29,8 @@ function main() {
     // This happens when the page is loaded and then the devtools are opened.
     noBrowserSdkLoaded()
   ) {
-    const ddRumGlobal = instrumentGlobal('DD_RUM')
-    const ddLogsGlobal = instrumentGlobal('DD_LOGS')
+    const ddRumGlobal = instrumentGlobal('FC_RUM')
+    const ddLogsGlobal = instrumentGlobal('FC_LOGS')
 
     if (settings.debugMode) {
       setDebug(ddRumGlobal)
@@ -80,7 +80,7 @@ function getSettings() {
 }
 
 function noBrowserSdkLoaded() {
-  return !window.DD_RUM && !window.DD_LOGS
+  return !window.FC_RUM && !window.FC_LOGS
 }
 
 function injectDevBundle(url: string, global: GlobalInstrumentation) {
@@ -134,7 +134,7 @@ function loadSdkScriptFromURL(url: string) {
 }
 
 type GlobalInstrumentation = ReturnType<typeof instrumentGlobal>
-function instrumentGlobal(global: 'DD_RUM' | 'DD_LOGS') {
+function instrumentGlobal(global: 'FC_RUM' | 'FC_LOGS') {
   const eventListeners = new EventListeners<SdkPublicApi>()
   let returnedInstance: SdkPublicApi | undefined
   let lastInstance: SdkPublicApi | undefined

@@ -6,8 +6,8 @@ import {
   STABLE_ATTRIBUTES,
   isLongDataUrl,
   sanitizeDataUrl,
-} from '@datadog/browser-rum-core'
-import type { RumConfiguration } from '@datadog/browser-rum-core'
+} from '@flashcatcloud/browser-rum-core'
+import type { RumConfiguration } from '@flashcatcloud/browser-rum-core'
 import { censoredImageForSize } from './serializationUtils'
 
 export function serializeAttribute(

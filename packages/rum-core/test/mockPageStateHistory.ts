@@ -1,4 +1,4 @@
-import { noop } from '@datadog/browser-core'
+import { noop } from '@flashcatcloud/browser-core'
 import type { PageStateHistory } from '../src/domain/contexts/pageStateHistory'
 
 export function mockPageStateHistory(partialPageStateHistory?: Partial<PageStateHistory>): PageStateHistory {

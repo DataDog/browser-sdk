@@ -1,4 +1,4 @@
-import type { FetchResolveContext, XhrCompleteContext } from '@datadog/browser-core'
+import type { FetchResolveContext, XhrCompleteContext } from '@flashcatcloud/browser-core'
 import {
   ErrorSource,
   initXhrObservable,
@@ -12,7 +12,7 @@ import {
   tryToClone,
   isServerError,
   isIntakeUrl,
-} from '@datadog/browser-core'
+} from '@flashcatcloud/browser-core'
 import type { LogsConfiguration } from '../configuration'
 import type { LifeCycle } from '../lifeCycle'
 import type { LogsEventDomainContext } from '../../domainContext.types'

@@ -1,5 +1,5 @@
-import type { Configuration, RelativeTime } from '@datadog/browser-core'
-import { Observable } from '@datadog/browser-core'
+import type { Configuration, RelativeTime } from '@flashcatcloud/browser-core'
+import { Observable } from '@flashcatcloud/browser-core'
 import { mockCiVisibilityValues } from '../../../test'
 import type { CookieObservable } from '../../browser/cookieObservable'
 import { createHooks, HookNames } from '../../hooks'

@@ -1,5 +1,5 @@
-import type { RumEvent, RumEventDomainContext, RumInitConfiguration } from '@datadog/browser-rum-core'
-import type { LogsEvent, LogsInitConfiguration, LogsEventDomainContext } from '@datadog/browser-logs'
+import type { RumEvent, RumEventDomainContext, RumInitConfiguration } from '@flashcatcloud/browser-rum-core'
+import type { LogsEvent, LogsInitConfiguration, LogsEventDomainContext } from '@flashcatcloud/browser-logs'
 import { test, expect } from '@playwright/test'
 import { createTest } from '../lib/framework'
 
@@ -32,7 +32,7 @@ test.describe('microfrontend', () => {
   createTest('expose handling stack for fetch requests')
     .withRum(RUM_CONFIG)
     .withRumInit((configuration) => {
-      window.DD_RUM!.init(configuration)
+      window.FC_RUM!.init(configuration)
 
       // eslint-disable-next-line @typescript-eslint/no-empty-function
       const noop = () => {}
@@ -54,7 +54,7 @@ test.describe('microfrontend', () => {
   createTest('expose handling stack for xhr requests')
     .withRum(RUM_CONFIG)
     .withRumInit((configuration) => {
-      window.DD_RUM!.init(configuration)
+      window.FC_RUM!.init(configuration)
 
       function testHandlingStack() {
         const xhr = new XMLHttpRequest()
@@ -73,13 +73,13 @@ test.describe('microfrontend', () => {
       expect(event?.context?.handlingStack).toMatch(HANDLING_STACK_REGEX)
     })
 
-  createTest('expose handling stack for DD_RUM.addAction')
+  createTest('expose handling stack for FC_RUM.addAction')
     .withRum(RUM_CONFIG)
     .withRumInit((configuration) => {
-      window.DD_RUM!.init(configuration)
+      window.FC_RUM!.init(configuration)
 
       function testHandlingStack() {
-        window.DD_RUM!.addAction('foo')
+        window.FC_RUM!.addAction('foo')
       }
 
       testHandlingStack()
@@ -93,13 +93,13 @@ test.describe('microfrontend', () => {
       expect(event?.context?.handlingStack).toMatch(HANDLING_STACK_REGEX)
     })
 
-  createTest('expose handling stack for DD_RUM.addError')
+  createTest('expose handling stack for FC_RUM.addError')
     .withRum(RUM_CONFIG)
     .withRumInit((configuration) => {
-      window.DD_RUM!.init(configuration)
+      window.FC_RUM!.init(configuration)
 
       function testHandlingStack() {
-        window.DD_RUM!.addError(new Error('foo'))
+        window.FC_RUM!.addError(new Error('foo'))
       }
 
       testHandlingStack()
@@ -116,7 +116,7 @@ test.describe('microfrontend', () => {
   createTest('expose handling stack for console errors')
     .withRum(RUM_CONFIG)
     .withRumInit((configuration) => {
-      window.DD_RUM!.init(configuration)
+      window.FC_RUM!.init(configuration)
 
       function testHandlingStack() {
         console.error('foo')
@@ -142,7 +142,7 @@ test.describe('microfrontend', () => {
     createTest('expose handling stack for console.log')
       .withLogs(LOGS_CONFIG)
       .withLogsInit((configuration) => {
-        window.DD_LOGS!.init(configuration)
+        window.FC_LOGS!.init(configuration)
 
         function testHandlingStack() {
           console.log('foo')
@@ -165,13 +165,13 @@ test.describe('microfrontend', () => {
   })
 
   test.describe('logger apis', () => {
-    createTest('expose handling stack for DD_LOGS.logger.log')
+    createTest('expose handling stack for FC_LOGS.logger.log')
       .withLogs(LOGS_CONFIG)
       .withLogsInit((configuration) => {
-        window.DD_LOGS!.init(configuration)
+        window.FC_LOGS!.init(configuration)
 
         function testHandlingStack() {
-          window.DD_LOGS!.logger.log('foo')
+          window.FC_LOGS!.logger.log('foo')
         }
 
         testHandlingStack()
@@ -193,7 +193,7 @@ test.describe('microfrontend', () => {
   createTest('allow to modify service and version')
     .withRum(RUM_CONFIG)
     .withRumInit((configuration) => {
-      window.DD_RUM!.init({
+      window.FC_RUM!.init({
         ...configuration,
         beforeSend: (event: RumEvent) => {
           if (event.type === 'resource') {

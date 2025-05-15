@@ -1,4 +1,4 @@
-import { addEventListener, DOM_EVENT, instrumentMethod, Observable, shallowClone } from '@datadog/browser-core'
+import { addEventListener, DOM_EVENT, instrumentMethod, Observable, shallowClone } from '@flashcatcloud/browser-core'
 import type { RumConfiguration } from '../domain/configuration'
 
 export interface LocationChange {

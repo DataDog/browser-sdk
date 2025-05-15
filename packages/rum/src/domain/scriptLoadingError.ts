@@ -1,4 +1,4 @@
-import { addTelemetryError, display, DOCS_ORIGIN } from '@datadog/browser-core'
+import { addTelemetryError, display, DOCS_ORIGIN } from '@flashcatcloud/browser-core'
 
 export function reportScriptLoadingError({
   configuredUrl,

@@ -60,18 +60,18 @@ async function getInfos(): Promise<SdkInfos> {
         const cookie = cookieRawValue && Object.fromEntries(
           cookieRawValue.split('&').map(value => value.split('='))
         )
-        const rum = window.DD_RUM && {
-          version: window.DD_RUM?.version,
-          config: window.DD_RUM?.getInitConfiguration?.(),
-          internalContext: window.DD_RUM?.getInternalContext?.(),
-          globalContext: window.DD_RUM?.getGlobalContext?.(),
-          user: window.DD_RUM?.getUser?.(),
+        const rum = window.FC_RUM && {
+          version: window.FC_RUM?.version,
+          config: window.FC_RUM?.getInitConfiguration?.(),
+          internalContext: window.FC_RUM?.getInternalContext?.(),
+          globalContext: window.FC_RUM?.getGlobalContext?.(),
+          user: window.FC_RUM?.getUser?.(),
         }
-        const logs = window.DD_LOGS && {
-          version: window.DD_LOGS?.version,
-          config: window.DD_LOGS?.getInitConfiguration?.(),
-          globalContext: window.DD_LOGS?.getGlobalContext?.(),
-          user: window.DD_LOGS?.getUser?.(),
+        const logs = window.FC_LOGS && {
+          version: window.FC_LOGS?.version,
+          config: window.FC_LOGS?.getInitConfiguration?.(),
+          globalContext: window.FC_LOGS?.getGlobalContext?.(),
+          user: window.FC_LOGS?.getUser?.(),
         }
         return { rum, logs, cookie }
       `

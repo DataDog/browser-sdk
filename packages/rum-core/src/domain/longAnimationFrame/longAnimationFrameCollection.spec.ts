@@ -1,5 +1,5 @@
-import { type RelativeTime, type ServerDuration } from '@datadog/browser-core'
-import { registerCleanupTask } from '@datadog/browser-core/test'
+import { type RelativeTime, type ServerDuration } from '@flashcatcloud/browser-core'
+import { registerCleanupTask } from '@flashcatcloud/browser-core/test'
 import {
   collectAndValidateRawRumEvents,
   createPerformanceEntry,

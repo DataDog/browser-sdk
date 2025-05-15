@@ -1,6 +1,6 @@
 {
-  "name": "@datadog/browser-sdk-developer-extension",
-  "version": "6.5.0",
+  "name": "@flashcatcloud/browser-sdk-developer-extension",
+  "version": "0.0.1",
   "private": true,
   "scripts": {
     "build": "rm -rf dist && webpack --mode production",
@@ -19,9 +19,9 @@
     "webpack": "5.98.0"
   },
   "dependencies": {
-    "@datadog/browser-core": "workspace:*",
-    "@datadog/browser-logs": "workspace:*",
-    "@datadog/browser-rum": "workspace:*",
+    "@flashcatcloud/browser-core": "workspace:*",
+    "@flashcatcloud/browser-logs": "workspace:*",
+    "@flashcatcloud/browser-rum": "workspace:*",
     "@mantine/core": "7.17.1",
     "@mantine/hooks": "7.17.1",
     "clsx": "2.1.1",

@@ -1,4 +1,4 @@
-import { noop } from '@datadog/browser-core'
+import { noop } from '@flashcatcloud/browser-core'
 import type { ActionContexts } from '../src/domain/action/trackClickActions'
 import type { DisplayContext } from '../src/domain/contexts/displayContext'
 import type { UrlContexts } from '../src/domain/contexts/urlContexts'

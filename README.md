@@ -1,6 +1,6 @@
-# Datadog Browser SDK
+# flashcatcloud/browser-sdk
 
-Collect and send browser data to Datadog.
+Collect and send browser data to Flashcat.
 
 ## Getting Started
 
@@ -10,7 +10,7 @@ See the dedicated [Flashcat Browser RUM Collection documentation][18] to learn h
 
 This repository contains several packages:
 
-| Package          | npm                      | size                     |
+| 包名             | npm                      | 大小                     |
 | ---------------- | ------------------------ | ------------------------ |
 | browser-logs     | [![npm version][01]][02] | [![bundle size][03]][04] |
 | browser-rum      | [![npm version][11]][12] | [![bundle size][13]][14] |

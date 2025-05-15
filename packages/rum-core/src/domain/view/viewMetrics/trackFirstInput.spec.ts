@@ -1,5 +1,5 @@
-import { type Duration, type RelativeTime } from '@datadog/browser-core'
-import { registerCleanupTask, restorePageVisibility, setPageVisibility } from '@datadog/browser-core/test'
+import { type Duration, type RelativeTime } from '@flashcatcloud/browser-core'
+import { registerCleanupTask, restorePageVisibility, setPageVisibility } from '@flashcatcloud/browser-core/test'
 import {
   appendElement,
   appendText,

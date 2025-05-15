@@ -1,5 +1,5 @@
-import type { TimeStamp } from '@datadog/browser-core'
-import { dateNow, findCommaSeparatedValue, ONE_MINUTE } from '@datadog/browser-core'
+import type { TimeStamp } from '@flashcatcloud/browser-core'
+import { dateNow, findCommaSeparatedValue, ONE_MINUTE } from '@flashcatcloud/browser-core'
 import { isCommentNode, isTextNode } from '../../browser/htmlDomUtils'
 
 interface DocumentTraceData {

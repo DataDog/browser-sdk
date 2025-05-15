@@ -1,4 +1,4 @@
-import type { Duration } from '@datadog/browser-core'
+import type { Duration } from '@flashcatcloud/browser-core'
 import type { RumConfiguration } from '../../configuration'
 import { trackFirstContentfulPaint } from './trackFirstContentfulPaint'
 import type { FirstInput } from './trackFirstInput'

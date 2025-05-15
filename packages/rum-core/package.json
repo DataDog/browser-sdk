@@ -1,6 +1,6 @@
 {
-  "name": "@datadog/browser-rum-core",
-  "version": "6.5.0",
+  "name": "@flashcatcloud/browser-rum-core",
+  "version": "0.0.1",
   "license": "Apache-2.0",
   "main": "cjs/index.js",
   "module": "esm/index.js",
@@ -12,14 +12,14 @@
     "replace-build-env": "node ../../scripts/build/replace-build-env.js"
   },
   "dependencies": {
-    "@datadog/browser-core": "6.5.0"
+    "@flashcatcloud/browser-core": "workspace:*"
   },
   "devDependencies": {
     "ajv": "8.17.1"
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/DataDog/browser-sdk.git",
+    "url": "https://github.com/flashcatcloud/browser-sdk",
     "directory": "packages/rum-core"
   },
   "volta": {

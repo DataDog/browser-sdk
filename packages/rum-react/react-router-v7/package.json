@@ -1,6 +1,6 @@
 {
   "private": true,
-  "main": "../cjs/entries/reactRouterV7.js",
-  "module": "../esm/entries/reactRouterV7.js",
-  "types": "../cjs/entries/reactRouterV7.d.ts"
+  "main": "../cjs/entries/reactRouter.js",
+  "module": "../esm/entries/reactRouter.js",
+  "types": "../cjs/entries/reactRouter.d.ts"
 }

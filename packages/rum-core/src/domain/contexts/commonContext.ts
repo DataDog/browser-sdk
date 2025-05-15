@@ -1,8 +1,9 @@
-import type { Context, ContextManager, User } from '@datadog/browser-core'
+import type { Context, ContextManager, User } from '@flashcatcloud/browser-core'
 import type { RecorderApi } from '../../boot/rumPublicApi'
 
 export interface CommonContext {
   user: User
+  // We don't want to enforce id internally so use Context as internal type
   account: Context
   context: Context
   hasReplay: true | undefined

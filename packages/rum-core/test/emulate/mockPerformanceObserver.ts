@@ -1,5 +1,5 @@
-import { registerCleanupTask } from '@datadog/browser-core/test'
-import { objectValues } from '@datadog/browser-core'
+import { registerCleanupTask } from '@flashcatcloud/browser-core/test'
+import { objectValues } from '@flashcatcloud/browser-core'
 import { RumPerformanceEntryType, type RumPerformanceEntry } from '../../src/browser/performanceObservable'
 
 export function mockPerformanceObserver({ typeSupported = true, emulateAllEntryTypesUnsupported = false } = {}) {

@@ -1,5 +1,5 @@
-import { NodePrivacyLevel, shouldMaskNode } from '@datadog/browser-rum-core'
-import { isSafari } from '@datadog/browser-core'
+import { NodePrivacyLevel, shouldMaskNode } from '@flashcatcloud/browser-rum-core'
+import { isSafari } from '@flashcatcloud/browser-core'
 import { getElementInputValue, switchToAbsoluteUrl, getValidTagName } from './serializationUtils'
 import type { SerializeOptions } from './serialization.types'
 import { SerializationContextStatus } from './serialization.types'

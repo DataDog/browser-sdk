@@ -19,7 +19,7 @@ module.exports = {
             const parent = idNode.parent
 
             if (parent && parent.type === 'NewExpression' && parent.callee === idNode) {
-              context.report(idNode, 'This value might be patched. Use `buildUrl` from @datadog/browser-core instead')
+              context.report(idNode, 'This value might be patched. Use `buildUrl` from @flashcatcloud/browser-core instead')
             }
           })
         }

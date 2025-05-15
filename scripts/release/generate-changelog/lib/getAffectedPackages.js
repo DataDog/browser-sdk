@@ -48,8 +48,8 @@ function isToplevelPackage(packageDirectoryName) {
 }
 
 function getPackageDirectoryNameFromPackageName(packageName) {
-  if (packageName.startsWith('@datadog/browser-')) {
-    return packageName.slice('@datadog/browser-'.length)
+  if (packageName.startsWith('@flashcatcloud/browser-')) {
+    return packageName.slice('@flashcatcloud/browser-'.length)
   }
 }
 

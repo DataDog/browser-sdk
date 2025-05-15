@@ -1,4 +1,4 @@
-import type { ClocksState, Duration } from '@datadog/browser-core'
+import type { ClocksState, Duration } from '@flashcatcloud/browser-core'
 import {
   combine,
   generateUUID,
@@ -7,7 +7,7 @@ import {
   toServerDuration,
   relativeToClocks,
   createTaskQueue,
-} from '@datadog/browser-core'
+} from '@flashcatcloud/browser-core'
 import type { RumConfiguration } from '../configuration'
 import {
   RumPerformanceEntryType,
