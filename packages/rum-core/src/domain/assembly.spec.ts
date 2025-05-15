@@ -70,7 +70,7 @@ describe('rum assembly', () => {
 
           expect((serverRumEvents[0].view as any).performance.lcp.resource_url).toBe('modified_url')
         })
-        
+
         describe('view type modifyable fields', () => {
           it('service and version should be modifiable', () => {
             const extraConfigurationOptions = { service: 'default service', version: 'default version' }
@@ -80,16 +80,16 @@ describe('rum assembly', () => {
                 beforeSend: (event) => {
                   event.service = 'bar'
                   event.version = '0.2.0'
-    
+
                   return true
                 },
               },
             })
-    
+
             notifyRawRumEvent(lifeCycle, {
               rawRumEvent: createRawRumEvent(RumEventType.VIEW, { view: { name: 'raboof', url: '/path?foo=bar' } }),
             })
-    
+
             expect((serverRumEvents[0] as RumResourceEvent).service).toBe('bar')
             expect((serverRumEvents[0] as RumResourceEvent).version).toBe('0.2.0')
           })
