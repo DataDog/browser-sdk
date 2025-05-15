@@ -6,7 +6,7 @@ export const enum CustomerDataType {
   Account,
 }
 
-// Use a const instead of const enum to avoid inlining the enum values in the bundle and save bytes
+// Use a const instead of const enum to avoid inlining the enum values in the bundle and save bytes !
 export const CustomerContextKey = {
   userContext: 'userContext',
   globalContext: 'globalContext',
