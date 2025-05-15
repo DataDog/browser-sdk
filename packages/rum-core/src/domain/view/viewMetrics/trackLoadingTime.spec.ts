@@ -22,7 +22,7 @@ describe('trackLoadingTime', () => {
   let clock: Clock
   let domMutationObservable: Observable<void>
   let windowOpenObservable: Observable<void>
-  let loadingTimeCallback: jasmine.Spy<(loadingTime: Duration | undefined, wasHiddenDuringLoading: boolean) => void>
+  let loadingTimeCallback: jasmine.Spy<(loadingTime?: Duration) => void>
   let setLoadEvent: (loadEvent: Duration) => void
   let stopLoadingTimeTracking: () => void
 
@@ -65,7 +65,7 @@ describe('trackLoadingTime', () => {
     domMutationObservable.notify()
     clock.tick(AFTER_PAGE_ACTIVITY_END_DELAY)
 
-    expect(loadingTimeCallback).toHaveBeenCalledOnceWith(clock.relative(BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY), false)
+    expect(loadingTimeCallback).toHaveBeenCalledOnceWith(clock.relative(BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY))
   })
 
   it('should use loadEventEnd for initial view when having no activity', () => {
@@ -77,7 +77,7 @@ describe('trackLoadingTime', () => {
     setLoadEvent(entry.loadEventEnd)
     clock.tick(PAGE_ACTIVITY_END_DELAY)
 
-    expect(loadingTimeCallback).toHaveBeenCalledOnceWith(entry.loadEventEnd, false)
+    expect(loadingTimeCallback).toHaveBeenCalledOnceWith(entry.loadEventEnd)
   })
 
   it('should use loadEventEnd for initial view when load event is bigger than computed loading time', () => {
@@ -90,7 +90,7 @@ describe('trackLoadingTime', () => {
     domMutationObservable.notify()
     clock.tick(AFTER_PAGE_ACTIVITY_END_DELAY)
 
-    expect(loadingTimeCallback).toHaveBeenCalledOnceWith(clock.relative(LOAD_EVENT_AFTER_ACTIVITY_TIMING), false)
+    expect(loadingTimeCallback).toHaveBeenCalledOnceWith(clock.relative(LOAD_EVENT_AFTER_ACTIVITY_TIMING))
   })
 
   it('should use computed loading time for initial view when load event is smaller than computed loading time', () => {
@@ -104,7 +104,7 @@ describe('trackLoadingTime', () => {
     domMutationObservable.notify()
     clock.tick(AFTER_PAGE_ACTIVITY_END_DELAY)
 
-    expect(loadingTimeCallback).toHaveBeenCalledOnceWith(clock.relative(BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY), false)
+    expect(loadingTimeCallback).toHaveBeenCalledOnceWith(clock.relative(BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY))
   })
 
   it('should use computed loading time from time origin for initial view', () => {
@@ -127,8 +127,7 @@ describe('trackLoadingTime', () => {
     clock.tick(AFTER_PAGE_ACTIVITY_END_DELAY)
 
     expect(loadingTimeCallback).toHaveBeenCalledOnceWith(
-      clock.relative(BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY + CLOCK_GAP),
-      false
+      clock.relative(BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY + CLOCK_GAP)
     )
   })
 
@@ -140,6 +139,6 @@ describe('trackLoadingTime', () => {
     domMutationObservable.notify()
     clock.tick(AFTER_PAGE_ACTIVITY_END_DELAY)
 
-    expect(loadingTimeCallback).toHaveBeenCalledOnceWith(undefined, true)
+    expect(loadingTimeCallback).toHaveBeenCalledOnceWith()
   })
 })
