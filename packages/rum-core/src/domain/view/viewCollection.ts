@@ -79,10 +79,7 @@ function processViewUpdate(
             device_pixel_ratio: clsDevicePixelRatio,
           }
         : undefined,
-      loading_time: {
-        was_hidden_during_loading: view.commonViewMetrics.wasHiddenDuringLoading,
-        duration: view.commonViewMetrics.loadingTime,
-      },
+      was_hidden_during_loading: view.commonViewMetrics.wasHiddenDuringLoading,
       configuration: {
         start_session_replay_recording_manually: configuration.startSessionReplayRecordingManually,
       },
