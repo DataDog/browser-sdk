@@ -12,7 +12,7 @@ import {
 import type { RumEventDomainContext } from '../domainContext.types'
 import type { RawRumEvent } from '../rawRumEvent.types'
 import { RumEventType } from '../rawRumEvent.types'
-import type { RumErrorEvent, RumEvent, RumResourceEvent } from '../rumEvent.types'
+import type { RumErrorEvent, RumEvent, RumResourceEvent, RumViewEvent } from '../rumEvent.types'
 import { HookNames, createHooks } from '../hooks'
 import { startRumAssembly } from './assembly'
 import type { RawRumEventCollectedData } from './lifeCycle'
@@ -69,30 +69,6 @@ describe('rum assembly', () => {
           })
 
           expect((serverRumEvents[0].view as any).performance.lcp.resource_url).toBe('modified_url')
-        })
-
-        describe('view type modifyable fields', () => {
-          it('service and version should be modifiable', () => {
-            const extraConfigurationOptions = { service: 'default service', version: 'default version' }
-            const { lifeCycle, serverRumEvents } = setupAssemblyTestWithDefaults({
-              partialConfiguration: {
-                ...extraConfigurationOptions,
-                beforeSend: (event) => {
-                  event.service = 'bar'
-                  event.version = '0.2.0'
-
-                  return true
-                },
-              },
-            })
-
-            notifyRawRumEvent(lifeCycle, {
-              rawRumEvent: createRawRumEvent(RumEventType.VIEW, { view: { name: 'raboof', url: '/path?foo=bar' } }),
-            })
-
-            expect((serverRumEvents[0] as RumResourceEvent).service).toBe('bar')
-            expect((serverRumEvents[0] as RumResourceEvent).version).toBe('0.2.0')
-          })
         })
 
         describe('field resource.graphql on Resource events', () => {
@@ -426,11 +402,16 @@ describe('rum assembly', () => {
         })
 
         notifyRawRumEvent(lifeCycle, {
-          rawRumEvent: createRawRumEvent(RumEventType.RESOURCE, { resource: { url: '/path?foo=bar' } }),
+          rawRumEvent: createRawRumEvent(RumEventType.RESOURCE),
         })
-
         expect((serverRumEvents[0] as RumResourceEvent).service).toBe('bar')
         expect((serverRumEvents[0] as RumResourceEvent).version).toBe('0.2.0')
+
+        notifyRawRumEvent(lifeCycle, {
+          rawRumEvent: createRawRumEvent(RumEventType.VIEW),
+        })
+        expect((serverRumEvents[1] as RumViewEvent).service).toBe('bar')
+        expect((serverRumEvents[1] as RumViewEvent).version).toBe('0.2.0')
       })
     })
   })
