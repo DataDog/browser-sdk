@@ -115,10 +115,7 @@ describe('viewCollection', () => {
       _dd: {
         document_version: 3,
         replay_stats: undefined,
-        loading_time: {
-          was_hidden_during_loading: undefined,
-          duration: 20,
-        },
+        was_hidden_during_loading: undefined,
         configuration: {
           start_session_replay_recording_manually: jasmine.any(Boolean),
         },
