@@ -1,3 +1,3 @@
 # `rum-core`
 
-Datadog browser RUM core utilities.
+Flashcat browser RUM core utilities.

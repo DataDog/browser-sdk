@@ -11,9 +11,9 @@ export type { LogsInitConfiguration } from '../domain/configuration'
 export type { LogsEvent } from '../logsEvent.types'
 export type { LogsEventDomainContext } from '../domainContext.types'
 
-export const datadogLogs = makeLogsPublicApi(startLogs)
+export const flashcatLogs = makeLogsPublicApi(startLogs)
 
 interface BrowserWindow extends Window {
-  DD_LOGS?: LogsPublicApi
+  FC_LOGS?: LogsPublicApi
 }
-defineGlobal(getGlobalObject<BrowserWindow>(), 'DD_LOGS', datadogLogs)
+defineGlobal(getGlobalObject<BrowserWindow>(), 'FC_LOGS', flashcatLogs)

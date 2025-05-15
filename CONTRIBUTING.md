@@ -63,5 +63,5 @@ label our Commit messages and Pull Request titles:
 
 👌 - Updating code due to code review changes.
 
-[1]: https://docs.datadoghq.com/help/
+[1]: https://flashcat.cloud/contact/
 [2]: https://gitmoji.carloscuesta.me/

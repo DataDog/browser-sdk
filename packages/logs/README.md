@@ -1,41 +1,39 @@
 # Browser Log Collection
 
-Send logs to Datadog from web browser pages with the browser logs SDK.
+Send logs to Flashcat from web browser pages with the browser logs SDK.
 
-See the [dedicated datadog documentation][1] for more details.
 
 ## Usage
 
 After adding [`@datadog/browser-logs`][2] to your `package.json` file, initialize it with:
 
 ```javascript
-import { datadogLogs } from '@datadog/browser-logs'
+import { flashcatLogs } from '@flashcatcloud/browser-logs'
 
-datadogLogs.init({
-  clientToken: '<DATADOG_CLIENT_TOKEN>',
-  site: '<DATADOG_SITE>',
+flashcatLogs.init({
+  clientToken: '<FC_CLIENT_TOKEN>',
+  site: '<FC_SITE>',
   forwardErrorsToLogs: true,
   sessionSampleRate: 100,
 })
 ```
 
-After the Datadog browser logs SDK is initialized, send custom log entries directly to Datadog:
+After the Flashcat browser logs SDK is initialized, send custom log entries directly to Flashcat:
 
 ```javascript
-import { datadogLogs } from '@datadog/browser-logs'
+import { flashcatLogs } from '@flashcatcloud/browser-logs'
 
-datadogLogs.logger.info('Button clicked', { name: 'buttonName', id: 123 })
+flashcatLogs.logger.info('Button clicked', { name: 'buttonName', id: 123 })
 
 try {
   ...
   throw new Error('Wrong behavior')
   ...
 } catch (ex) {
-  datadogLogs.logger.error('Error occurred', { team: 'myTeam' }, ex)
+  flashcatLogs.logger.error('Error occurred', { team: 'myTeam' }, ex)
 }
 ```
 
 <!-- Note: all URLs should be absolute -->
 
-[1]: https://docs.datadoghq.com/logs/log_collection/javascript
-[2]: https://www.npmjs.com/package/@datadog/browser-logs
+[2]: https://www.npmjs.com/package/@flashcatcloud/browser-logs

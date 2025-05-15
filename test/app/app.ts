@@ -1,5 +1,5 @@
-import { datadogLogs } from '@datadog/browser-logs'
-import { datadogRum } from '@datadog/browser-rum'
+import { flashcatLogs } from '@flashcatcloud/browser-logs'
+import { flashcatRum } from '@flashcatcloud/browser-rum'
 
 declare global {
   interface Window {
@@ -18,7 +18,7 @@ if (typeof window !== 'undefined') {
   }
 } else {
   // compat test
-  datadogLogs.init({ clientToken: 'xxx', beforeSend: undefined })
-  datadogRum.init({ clientToken: 'xxx', applicationId: 'xxx', beforeSend: undefined })
-  datadogRum.setUser({ id: undefined })
+  flashcatLogs.init({ clientToken: 'xxx', beforeSend: undefined })
+  flashcatRum.init({ clientToken: 'xxx', applicationId: 'xxx', beforeSend: undefined })
+  flashcatRum.setUser({ id: undefined })
 }

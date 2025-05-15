@@ -6,4 +6,4 @@ labels: enhancement
 assignees: ''
 ---
 
-Please contact [support](https://www.datadoghq.com/support/) to open a feature request.
+Please contact [support](https://flashcat.cloud/about/) to open a feature request.

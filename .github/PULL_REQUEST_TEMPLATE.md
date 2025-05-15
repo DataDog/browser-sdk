@@ -17,4 +17,4 @@
 
 ---
 
-I have gone over the [contributing](https://github.com/DataDog/browser-sdk/blob/main/CONTRIBUTING.md) documentation.
+I have gone over the [contributing](https://github.com/flashcatcloud/browser-sdk/blob/main/CONTRIBUTING.md) documentation.

@@ -4,13 +4,7 @@ Collect and send browser data to Datadog.
 
 ## Getting Started
 
-### Log collection
-
-See the dedicated [Datadog Browser Log Collection documentation][08] to learn how to forward logs from your browser application to Datadog.
-
-### Real User Monitoring
-
-See the dedicated [Datadog Browser RUM Collection documentation][18] to learn how to send RUM data from your browser application to Datadog.
+See the dedicated [Flashcat Browser RUM Collection documentation][18] to learn how to send RUM data from your browser application to Flashcat.
 
 ## npm packages
 
@@ -25,45 +19,43 @@ This repository contains several packages:
 | browser-worker   | [![npm version][61]][62] | [![bundle size][63]][64] |
 | browser-core     | [![npm version][41]][42] | [![bundle size][43]][44] |
 
-## CDN bundles
+## CDN bundle
 
-Datadog provides one CDN bundle per [site][70]:
+https://static.flashcat.cloud/browser-sdk/v0/flashcat-rum.js
 
-| Site    | logs                                                           | rum                                                           | rum-slim                                                           |
-| ------- | -------------------------------------------------------------- | ------------------------------------------------------------- | ------------------------------------------------------------------ |
-| US1     | https://www.datadoghq-browser-agent.com/us1/v5/datadog-logs.js | https://www.datadoghq-browser-agent.com/us1/v5/datadog-rum.js | https://www.datadoghq-browser-agent.com/us1/v5/datadog-rum-slim.js |
-| US3     | https://www.datadoghq-browser-agent.com/us3/v5/datadog-logs.js | https://www.datadoghq-browser-agent.com/us3/v5/datadog-rum.js | https://www.datadoghq-browser-agent.com/us3/v5/datadog-rum-slim.js |
-| US5     | https://www.datadoghq-browser-agent.com/us5/v5/datadog-logs.js | https://www.datadoghq-browser-agent.com/us5/v5/datadog-rum.js | https://www.datadoghq-browser-agent.com/us5/v5/datadog-rum-slim.js |
-| EU1     | https://www.datadoghq-browser-agent.com/eu1/v5/datadog-logs.js | https://www.datadoghq-browser-agent.com/eu1/v5/datadog-rum.js | https://www.datadoghq-browser-agent.com/eu1/v5/datadog-rum-slim.js |
-| US1-FED | https://www.datadoghq-browser-agent.com/datadog-logs-v5.js     | https://www.datadoghq-browser-agent.com/datadog-rum-v5.js     | https://www.datadoghq-browser-agent.com/datadog-rum-slim-v5.js     |
+## License Information
 
-[1]: https://github.githubassets.com/favicons/favicon.png
-[2]: https://imgix.datadoghq.com/img/favicons/favicon-32x32.png
-[01]: https://badge.fury.io/js/%40datadog%2Fbrowser-logs.svg
-[02]: https://badge.fury.io/js/%40datadog%2Fbrowser-logs
+This project is based on Datadog Browser SDK, with original copyright owned by Datadog, Inc.
 
-[03]: https://deno.bundlejs.com/badge?q=@datadog/browser-logs&treeshake=[*]
-[04]: https://bundlejs.com/?q=@datadog/browser-logs&treeshake=[*]
-[08]: https://docs.datadoghq.com/logs/log_collection/javascript
-[11]: https://badge.fury.io/js/%40datadog%2Fbrowser-rum.svg
-[12]: https://badge.fury.io/js/%40datadog%2Fbrowser-rum
-[13]: https://deno.bundlejs.com/badge?q=@datadog/browser-rum&treeshake=[*]
-[14]: https://bundlejs.com/?q=@datadog/browser-rum&treeshake=[*]
-[18]: https://docs.datadoghq.com/real_user_monitoring/browser/
-[21]: https://badge.fury.io/js/%40datadog%2Fbrowser-rum-slim.svg
-[22]: https://badge.fury.io/js/%40datadog%2Fbrowser-rum-slim
-[23]: https://deno.bundlejs.com/badge?q=@datadog/browser-rum-slim&treeshake=[*]
-[24]: https://bundlejs.com/?q=@datadog/browser-rum-slim&treeshake=[*]
-[41]: https://badge.fury.io/js/%40datadog%2Fbrowser-core.svg
-[42]: https://badge.fury.io/js/%40datadog%2Fbrowser-core
-[43]: https://deno.bundlejs.com/badge?q=@datadog/browser-core&treeshake=[*]
-[44]: https://bundlejs.com/?q=@datadog/browser-core&treeshake=[*]
-[51]: https://badge.fury.io/js/%40datadog%2Fbrowser-rum-core.svg
-[52]: https://badge.fury.io/js/%40datadog%2Fbrowser-rum-core
-[53]: https://deno.bundlejs.com/badge?q=@datadog/browser-rum-core&treeshake=[*]
-[54]: https://bundlejs.com/?q=@datadog/browser-rum-core&treeshake=[*]
-[61]: https://badge.fury.io/js/%40datadog%2Fbrowser-worker.svg
-[62]: https://badge.fury.io/js/%40datadog%2Fbrowser-worker
-[63]: https://deno.bundlejs.com/badge?q=@datadog/browser-worker&treeshake=[*]
-[64]: https://bundlejs.com/?q=@datadog/browser-worker&treeshake=[*]
-[70]: https://docs.datadoghq.com/getting_started/site/
+This project is modified and distributed by flashcat under the Apache License 2.0.
+
+For complete license information, please refer to the [LICENSE](./LICENSE) file.
+
+[18]: https://docs.flashcat.cloud/zh/flashduty/rum/introduction
+
+[01]: https://badge.fury.io/js/%40flashcatcloud%2Fbrowser-logs.svg
+[02]: https://badge.fury.io/js/%40flashcatcloud%2Fbrowser-logs
+
+[03]: https://deno.bundlejs.com/badge?q=@flashcatcloud/browser-logs&treeshake=[*]
+[04]: https://bundlejs.com/?q=@flashcatcloud/browser-logs&treeshake=[*]
+[11]: https://badge.fury.io/js/%40flashcatcloud%2Fbrowser-rum.svg
+[12]: https://badge.fury.io/js/%40flashcatcloud%2Fbrowser-rum
+[13]: https://deno.bundlejs.com/badge?q=@flashcatcloud/browser-rum&treeshake=[*]
+[14]: https://bundlejs.com/?q=@flashcatcloud/browser-rum&treeshake=[*]
+[21]: https://badge.fury.io/js/%40flashcatcloud%2Fbrowser-rum-slim.svg
+[22]: https://badge.fury.io/js/%40flashcatcloud%2Fbrowser-rum-slim
+[23]: https://deno.bundlejs.com/badge?q=@flashcatcloud/browser-rum-slim&treeshake=[*]
+[24]: https://bundlejs.com/?q=@flashcatcloud/browser-rum-slim&treeshake=[*]
+[41]: https://badge.fury.io/js/%40flashcatcloud%2Fbrowser-core.svg
+[42]: https://badge.fury.io/js/%40flashcatcloud%2Fbrowser-core
+[43]: https://deno.bundlejs.com/badge?q=@flashcatcloud/browser-core&treeshake=[*]
+[44]: https://bundlejs.com/?q=@flashcatcloud/browser-core&treeshake=[*]
+[51]: https://badge.fury.io/js/%40flashcatcloud%2Fbrowser-rum-core.svg
+[52]: https://badge.fury.io/js/%40flashcatcloud%2Fbrowser-rum-core
+[53]: https://deno.bundlejs.com/badge?q=@flashcatcloud/browser-rum-core&treeshake=[*]
+[54]: https://bundlejs.com/?q=@flashcatcloud/browser-rum-core&treeshake=[*]
+[61]: https://badge.fury.io/js/%40flashcatcloud%2Fbrowser-worker.svg
+[62]: https://badge.fury.io/js/%40flashcatcloud%2Fbrowser-worker
+[63]: https://deno.bundlejs.com/badge?q=@flashcatcloud/browser-worker&treeshake=[*]
+[64]: https://bundlejs.com/?q=@flashcatcloud/browser-worker&treeshake=[*]
+[70]: https://docs.flashcatcloudhq.com/getting_started/site/

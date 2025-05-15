@@ -1,24 +1,24 @@
 # RUM Browser Monitoring - React integration
 
-This package provides React and React ecosystem integrations for Datadog Browser RUM.
+This package provides React and React ecosystem integrations for Flashcat Browser RUM.
 
 ## Installation
 
 ```bash
-npm install @datadog/browser-rum @datadog/browser-rum-react
+npm install @flashcatcloud/browser-rum @flashcatcloud/browser-rum-react
 ```
 
 ## Usage
 
 ### Initialization
 
-To enable the React integration, pass the `reactPlugin` to the `plugins` option of the `datadogRum.init` method:
+To enable the React integration, pass the `reactPlugin` to the `plugins` option of the `flashcatRum.init` method:
 
 ```javascript
-import { datadogRum } from '@datadog/browser-rum'
-import { reactPlugin } from '@datadog/browser-rum-react'
+import { flashcatRum } from '@flashcatcloud/browser-rum'
+import { reactPlugin } from '@flashcatcloud/browser-rum-react'
 
-datadogRum.init({
+flashcatRum.init({
   applicationId: ...,
   clientToken: ...,
   ...
@@ -30,13 +30,13 @@ datadogRum.init({
 
 To track React component rendering errors, use one of the following:
 
-- An `ErrorBoundary` component (see [React documentation][1]) that catches errors and reports them to Datadog.
+- An `ErrorBoundary` component (see [React documentation][1]) that catches errors and reports them to Flashcat.
 - A function that you can use to report errors from your own `ErrorBoundary` component.
 
 #### `ErrorBoundary` usage
 
 ```javascript
-import { ErrorBoundary } from '@datadog/browser-rum-react'
+import { ErrorBoundary } from '@flashcatcloud/browser-rum-react'
 
 function App() {
   return (
@@ -58,7 +58,7 @@ function ErrorFallback({ resetError, error }: { resetError: () => void; error: u
 #### Reporting React errors from your own `ErrorBoundary`
 
 ```javascript
-import { addReactError } from '@datadog/browser-rum-react'
+import { addReactError } from '@flashcatcloud/browser-rum-react'
 
 class MyErrorBoundary extends React.Component {
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
@@ -80,16 +80,16 @@ class MyErrorBoundary extends React.Component {
 - Use the [`useRoutes`][5] hook.
 - Use the [`Routes`][6] component.
 
-To track route changes with the Datadog RUM Browser SDK, first initialize the `reactPlugin` with the `router: true` option, then replace those functions with their equivalent from `@datadog/browser-rum-react/react-router-v6`. Example:
+To track route changes with the Flashcat RUM Browser SDK, first initialize the `reactPlugin` with the `router: true` option, then replace those functions with their equivalent from `@flashcatcloud/browser-rum-react/react-router-v6`. Example:
 
 ```javascript
 import { RouterProvider } from 'react-router-dom'
-import { datadogRum } from '@datadog/browser-rum'
-import { reactPlugin } from '@datadog/browser-rum-react'
-// Use "createBrowserRouter" from @datadog/browser-rum-react/react-router-v6 instead of react-router-dom:
-import { createBrowserRouter } from '@datadog/browser-rum-react/react-router-v6'
+import { flashcatRum } from '@flashcatcloud/browser-rum'
+import { reactPlugin } from '@flashcatcloud/browser-rum-react'
+// Use "createBrowserRouter" from @flashcatcloud/browser-rum-react/react-router-v6 instead of react-router-dom:
+import { createBrowserRouter } from '@flashcatcloud/browser-rum-react/react-router-v6'
 
-datadogRum.init({
+flashcatRum.init({
   ...
   plugins: [reactPlugin({ router: true })],
 })

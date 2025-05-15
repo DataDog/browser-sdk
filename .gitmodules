@@ -1,4 +1,4 @@
 [submodule "rum-events-format"]
 	path = rum-events-format
-	url = https://github.com/DataDog/rum-events-format
+	url = https://github.com/flashcatcloud/rum-events-format
 	branch = master
