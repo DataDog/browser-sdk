@@ -9,6 +9,7 @@ const logsConfig = require('../packages/logs/webpack.config')
 const rumSlimConfig = require('../packages/rum-slim/webpack.config')
 const rumConfig = require('../packages/rum/webpack.config')
 const workerConfig = require('../packages/worker/webpack.config')
+const flaggingConfig = require('../packages/flagging/webpack.config')
 const webpackBase = require('../webpack.base')
 const { printLog, runMain } = require('./lib/executionUtils')
 
@@ -26,7 +27,7 @@ function createStaticSandboxApp() {
   const app = express()
   app.use(cors())
   app.use(express.static(sandboxPath))
-  for (const config of [rumConfig, logsConfig, rumSlimConfig, workerConfig]) {
+  for (const config of [rumConfig, logsConfig, rumSlimConfig, workerConfig, flaggingConfig]) {
     app.use(middleware(webpack(config(null, { mode: 'development' }))))
   }
 

@@ -2,6 +2,7 @@ import { Link, Outlet, RouterProvider, useParams } from 'react-router-dom'
 import React, { useEffect, useState } from 'react'
 import ReactDOM from 'react-dom/client'
 import { datadogRum } from '@datadog/browser-rum'
+import { datadogFlags } from '@datadog/browser-flagging'
 import { createBrowserRouter } from '@datadog/browser-rum-react/react-router-v7'
 import { reactPlugin, ErrorBoundary, UNSTABLE_ReactComponentTracker } from '@datadog/browser-rum-react'
 
@@ -10,6 +11,9 @@ datadogRum.init({
   clientToken: 'xxx',
   plugins: [reactPlugin({ router: true })],
 })
+
+const testFlag = datadogFlags.getBooleanAssignment('test-flag', false)
+console.log('testFlag', testFlag)
 
 const router = createBrowserRouter(
   [
@@ -61,7 +65,12 @@ function Layout() {
 }
 
 function HomePage() {
-  return <h1>Home</h1>
+  return (
+    <>
+      <h1>Home</h1>
+      <p>Test flag: {testFlag ? 'true' : 'false'}</p>
+    </>
+  )
 }
 
 function UserPage() {
