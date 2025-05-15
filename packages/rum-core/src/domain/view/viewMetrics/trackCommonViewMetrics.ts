@@ -36,8 +36,8 @@ export function trackCommonViewMetrics(
     configuration,
     loadingType,
     viewStart,
-    (newLoadingTime, wasHiddenDuringLoading) => {
-      commonViewMetrics.wasHiddenDuringLoading = wasHiddenDuringLoading
+    (newLoadingTime) => {
+      commonViewMetrics.wasHiddenDuringLoading = !newLoadingTime
       commonViewMetrics.loadingTime = newLoadingTime
       scheduleViewUpdate()
     }
