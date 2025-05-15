@@ -162,6 +162,10 @@ export type TelemetryConfigurationEvent = CommonTelemetryProperties & {
        */
       track_long_task?: boolean
       /**
+       * Whether views loaded from the bfcache are tracked
+       */
+      track_bfcache_views?: boolean
+      /**
        * Whether a secure cross-site session cookie is used (deprecated)
        */
       use_cross_site_session_cookie?: boolean
@@ -257,6 +261,10 @@ export type TelemetryConfigurationEvent = CommonTelemetryProperties & {
        * Whether console.error logs, uncaught exceptions and network errors are tracked
        */
       forward_errors_to_logs?: boolean
+      /**
+       * The number of displays available to the device
+       */
+      number_of_displays?: number
       /**
        * The console.* tracked
        */
@@ -407,6 +415,10 @@ export type TelemetryConfigurationEvent = CommonTelemetryProperties & {
        * Whether the anonymous users are tracked
        */
       track_anonymous_user?: boolean
+      /**
+       * Whether a list of allowed origins is used to control SDK execution in browser extension contexts. When enabled, the SDK will check if the current origin matches the allowed origins list before running.
+       */
+      use_allowed_tracking_origins?: boolean
       [k: string]: unknown
     }
     [k: string]: unknown

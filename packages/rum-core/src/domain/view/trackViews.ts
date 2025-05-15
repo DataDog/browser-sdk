@@ -33,11 +33,14 @@ import { LifeCycleEventType } from '../lifeCycle'
 import type { EventCounts } from '../trackEventCounts'
 import type { LocationChange } from '../../browser/locationChangeObservable'
 import type { RumConfiguration, RumInitConfiguration } from '../configuration'
+import type { RumMutationRecord } from '../../browser/domMutationObservable'
 import { trackViewEventCounts } from './trackViewEventCounts'
 import { trackInitialViewMetrics } from './viewMetrics/trackInitialViewMetrics'
 import type { InitialViewMetrics } from './viewMetrics/trackInitialViewMetrics'
 import type { CommonViewMetrics } from './viewMetrics/trackCommonViewMetrics'
 import { trackCommonViewMetrics } from './viewMetrics/trackCommonViewMetrics'
+import { onBFCacheRestore } from './bfCacheSupport'
+import { measureRestoredFCP, measureRestoredLCP, measureRestoredFID } from './viewMetrics/cwvPolyfill'
 
 export interface ViewEvent {
   id: string
@@ -100,7 +103,7 @@ export interface ViewOptions {
 export function trackViews(
   location: Location,
   lifeCycle: LifeCycle,
-  domMutationObservable: Observable<void>,
+  domMutationObservable: Observable<RumMutationRecord[]>,
   windowOpenObservable: Observable<void>,
   configuration: RumConfiguration,
   locationChangeObservable: Observable<LocationChange>,
@@ -115,6 +118,28 @@ export function trackViews(
   let locationChangeSubscription: Subscription
   if (areViewsTrackedAutomatically) {
     locationChangeSubscription = renewViewOnLocationChange(locationChangeObservable)
+  }
+
+  if (configuration.trackBfcacheViews) {
+    onBFCacheRestore((pageshowEvent) => {
+      currentView.end()
+      currentView = startNewView(ViewLoadingType.BF_CACHE)
+
+      measureRestoredFCP(pageshowEvent, (fcp) => {
+        currentView.initialViewMetrics.firstContentfulPaint = fcp
+        measureRestoredLCP(pageshowEvent, (lcp) => {
+          currentView.initialViewMetrics.largestContentfulPaint = { value: lcp as RelativeTime }
+          measureRestoredFID(pageshowEvent, (fid) => {
+            currentView.initialViewMetrics.firstInput = {
+              delay: fid.delay,
+              time: fid.time as RelativeTime,
+              targetSelector: undefined,
+            }
+            currentView.scheduleViewUpdate()
+          })
+        })
+      })
+    })
   }
 
   function startNewView(loadingType: ViewLoadingType, startClocks?: ClocksState, viewOptions?: ViewOptions) {
@@ -191,7 +216,7 @@ export function trackViews(
 
 function newView(
   lifeCycle: LifeCycle,
-  domMutationObservable: Observable<void>,
+  domMutationObservable: Observable<RumMutationRecord[]>,
   windowOpenObservable: Observable<void>,
   configuration: RumConfiguration,
   initialLocation: Location,
@@ -358,6 +383,12 @@ function newView(
       name = updatedName
       triggerViewUpdate()
     },
+    scheduleViewUpdate,
+    /**
+     * we need InitialViewMetrics object so that bfCache logic can update it
+     * with the restored cwv from the polyfill.
+     */
+    initialViewMetrics,
   }
 }
 

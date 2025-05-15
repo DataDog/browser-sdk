@@ -2,6 +2,7 @@ import type { ClocksState, Duration, Observable } from '@datadog/browser-core'
 import type { ViewLoadingType } from '../../../rawRumEvent.types'
 import type { RumConfiguration } from '../../configuration'
 import type { LifeCycle } from '../../lifeCycle'
+import type { RumMutationRecord } from '../../../browser/domMutationObservable'
 import type { CumulativeLayoutShift } from './trackCumulativeLayoutShift'
 import { trackCumulativeLayoutShift } from './trackCumulativeLayoutShift'
 import type { InteractionToNextPaint } from './trackInteractionToNextPaint'
@@ -20,7 +21,7 @@ export interface CommonViewMetrics {
 
 export function trackCommonViewMetrics(
   lifeCycle: LifeCycle,
-  domMutationObservable: Observable<void>,
+  domMutationObservable: Observable<RumMutationRecord[]>,
   windowOpenObservable: Observable<void>,
   configuration: RumConfiguration,
   scheduleViewUpdate: () => void,

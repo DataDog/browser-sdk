@@ -16,6 +16,7 @@ import {
   addTelemetryDebug,
   drainPreStartTelemetry,
 } from '@datadog/browser-core'
+import type { RumMutationRecord } from '../browser/domMutationObservable'
 import { createDOMMutationObservable } from '../browser/domMutationObservable'
 import { createWindowOpenObservable } from '../browser/windowOpenObservable'
 import { startInternalContext } from '../domain/contexts/internalContext'
@@ -252,7 +253,7 @@ export function startRumEventCollection(
   hooks: Hooks,
   configuration: RumConfiguration,
   pageStateHistory: PageStateHistory,
-  domMutationObservable: Observable<void>,
+  domMutationObservable: Observable<RumMutationRecord[]>,
   windowOpenObservable: Observable<void>,
   reportError: (error: RawError) => void
 ) {

@@ -7,6 +7,7 @@
   "prHourlyLimit": 1,
   "schedule": ["every weekend"],
   "postUpdateOptions": ["yarnDedupeHighest"],
+  "lockFileMaintenance": { "enabled": true },
   "packageRules": [
     {
       "groupName": "all non-major dependencies",

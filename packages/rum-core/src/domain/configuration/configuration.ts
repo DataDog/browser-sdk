@@ -18,6 +18,7 @@ import type { RumEvent } from '../../rumEvent.types'
 import type { RumPlugin } from '../plugins'
 import { isTracingOption } from '../tracing/tracer'
 import type { PropagatorType, TracingOption } from '../tracing/tracer.types'
+import { checkForAllowedTrackingOrigins } from '../extension/extensionUtils'
 
 export const DEFAULT_PROPAGATOR_TYPES: PropagatorType[] = ['tracecontext', 'datadog']
 
@@ -78,6 +79,13 @@ export interface RumInitConfiguration extends InitConfiguration {
    */
   traceContextInjection?: TraceContextInjection | undefined
 
+  /**
+   * List of origins where the SDK is allowed to run when used in a browser extension context.
+   * Matches urls against the extensions origin.
+   * If not provided and the SDK is running in a browser extension, a warning will be displayed.
+   */
+  allowedTrackingOrigins?: MatchOption[] | undefined
+
   // replay options
   /**
    * Allow to protect end user privacy and prevent sensitive organizational information from being collected.
@@ -122,6 +130,11 @@ export interface RumInitConfiguration extends InitConfiguration {
    * Allows you to control RUM views creation. See [Override default RUM view names](https://docs.datadoghq.com/real_user_monitoring/browser/advanced_configuration/?tab=npm#override-default-rum-view-names) for further information.
    */
   trackViewsManually?: boolean | undefined
+  /**
+   * Enable the creation of dedicated views for pages restored from the Back-Forward cache.
+   * @default false
+   */
+  trackBfcacheViews?: boolean | undefined
   /**
    * Enables collection of resource events.
    * @default true
@@ -175,6 +188,7 @@ export interface RumConfiguration extends Configuration {
   trackViewsManually: boolean
   trackResources: boolean
   trackLongTasks: boolean
+  trackBfcacheViews: boolean
   version?: string
   subdomain?: string
   customerDataTelemetrySampleRate: number
@@ -183,6 +197,7 @@ export interface RumConfiguration extends Configuration {
   trackFeatureFlagsForEvents: FeatureFlagsForEvents[]
   profilingSampleRate: number
   propagateTraceBaggage: boolean
+  allowedTrackingOrigins?: MatchOption[]
 }
 
 export function validateAndBuildRumConfiguration(
@@ -226,6 +241,8 @@ export function validateAndBuildRumConfiguration(
 
   const sessionReplaySampleRate = initConfiguration.sessionReplaySampleRate ?? 0
 
+  checkForAllowedTrackingOrigins(initConfiguration)
+
   return {
     applicationId: initConfiguration.applicationId,
     version: initConfiguration.version || undefined,
@@ -245,6 +262,7 @@ export function validateAndBuildRumConfiguration(
     trackViewsManually: !!initConfiguration.trackViewsManually,
     trackResources: !!(initConfiguration.trackResources ?? true),
     trackLongTasks: !!(initConfiguration.trackLongTasks ?? true),
+    trackBfcacheViews: !!initConfiguration.trackBfcacheViews,
     subdomain: initConfiguration.subdomain,
     defaultPrivacyLevel: objectHasValue(DefaultPrivacyLevel, initConfiguration.defaultPrivacyLevel)
       ? initConfiguration.defaultPrivacyLevel
@@ -259,6 +277,7 @@ export function validateAndBuildRumConfiguration(
     profilingSampleRate: profilingEnabled ? (initConfiguration.profilingSampleRate ?? 0) : 0, // Enforce 0 if profiling is not enabled, and set 0 as default when not set.
     propagateTraceBaggage: !!initConfiguration.propagateTraceBaggage,
     ...baseConfiguration,
+    allowedTrackingOrigins: initConfiguration.allowedTrackingOrigins ?? [],
   }
 }
 
@@ -337,11 +356,14 @@ export function serializeRumConfiguration(configuration: RumInitConfiguration) {
     track_user_interactions: configuration.trackUserInteractions,
     track_resources: configuration.trackResources,
     track_long_task: configuration.trackLongTasks,
+    track_bfcache_views: configuration.trackBfcacheViews,
     plugins: configuration.plugins?.map((plugin) => ({
       name: plugin.name,
       ...plugin.getConfigurationTelemetry?.(),
     })),
     track_feature_flags_for_events: configuration.trackFeatureFlagsForEvents,
+    use_allowed_tracking_origins:
+      Array.isArray(configuration.allowedTrackingOrigins) && configuration.allowedTrackingOrigins.length > 0,
     ...baseSerializedConfiguration,
   } satisfies RawTelemetryConfiguration
 }

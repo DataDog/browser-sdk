@@ -11,6 +11,7 @@ import type { RumConfiguration } from '../configuration'
 import type { ViewHistory } from '../contexts/viewHistory'
 import type { Hooks, DefaultRumEventAttributes } from '../../hooks'
 import { DISCARDED, HookNames } from '../../hooks'
+import type { RumMutationRecord } from '../../browser/domMutationObservable'
 import { trackViews } from './trackViews'
 import type { ViewEvent, ViewOptions } from './trackViews'
 import type { CommonViewMetrics } from './viewMetrics/trackCommonViewMetrics'
@@ -21,7 +22,7 @@ export function startViewCollection(
   hooks: Hooks,
   configuration: RumConfiguration,
   location: Location,
-  domMutationObservable: Observable<void>,
+  domMutationObservable: Observable<RumMutationRecord[]>,
   pageOpenObservable: Observable<void>,
   locationChangeObservable: Observable<LocationChange>,
   recorderApi: RecorderApi,

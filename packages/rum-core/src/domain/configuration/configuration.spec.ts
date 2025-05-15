@@ -410,6 +410,40 @@ describe('validateAndBuildRumConfiguration', () => {
     })
   })
 
+  describe('allowedTrackingOrigins', () => {
+    it('defaults to an empty array', () => {
+      expect(validateAndBuildRumConfiguration(DEFAULT_INIT_CONFIGURATION)!.allowedTrackingOrigins).toEqual([])
+    })
+
+    it('is set to provided value', () => {
+      expect(
+        validateAndBuildRumConfiguration({
+          ...DEFAULT_INIT_CONFIGURATION,
+          allowedTrackingOrigins: ['chrome-extension://example'],
+        })!.allowedTrackingOrigins
+      ).toEqual(['chrome-extension://example'])
+    })
+
+    it('accepts functions', () => {
+      const customOriginFunction = (url: string): boolean => url.startsWith('chrome-extension://')
+      expect(
+        validateAndBuildRumConfiguration({
+          ...DEFAULT_INIT_CONFIGURATION,
+          allowedTrackingOrigins: [customOriginFunction],
+        })!.allowedTrackingOrigins
+      ).toEqual([customOriginFunction])
+    })
+
+    it('accepts RegExp', () => {
+      expect(
+        validateAndBuildRumConfiguration({
+          ...DEFAULT_INIT_CONFIGURATION,
+          allowedTrackingOrigins: [/^chrome-extension:\/\//],
+        })!.allowedTrackingOrigins
+      ).toEqual([/^chrome-extension:\/\//])
+    })
+  })
+
   describe('serializeRumConfiguration', () => {
     describe('selected tracing propagators serialization', () => {
       it('should not return any propagator type', () => {
@@ -535,16 +569,18 @@ describe('serializeRumConfiguration', () => {
       trackViewsManually: true,
       trackResources: true,
       trackLongTasks: true,
+      trackBfcacheViews: true,
       remoteConfigurationId: '123',
       plugins: [{ name: 'foo', getConfigurationTelemetry: () => ({ bar: true }) }],
       trackFeatureFlagsForEvents: ['vital'],
       profilingSampleRate: 0,
       propagateTraceBaggage: true,
+      allowedTrackingOrigins: [],
     }
 
     type MapRumInitConfigurationKey<Key extends string> = Key extends keyof InitConfiguration
       ? MapInitConfigurationKey<Key>
-      : Key extends 'workerUrl' | 'allowedTracingUrls' | 'excludedActivityUrls'
+      : Key extends 'workerUrl' | 'allowedTracingUrls' | 'excludedActivityUrls' | 'allowedTrackingOrigins'
         ? `use_${CamelToSnakeCase<Key>}`
         : Key extends 'trackLongTasks'
           ? 'track_long_task' // oops
@@ -559,7 +595,9 @@ describe('serializeRumConfiguration', () => {
     // By specifying the type here, we can ensure that serializeConfiguration is returning an
     // object containing all expected properties.
     const serializedConfiguration: ExtractTelemetryConfiguration<
-      MapRumInitConfigurationKey<keyof RumInitConfiguration> | 'selected_tracing_propagators'
+      | MapRumInitConfigurationKey<keyof RumInitConfiguration>
+      | 'selected_tracing_propagators'
+      | 'use_allowed_tracking_origins'
     > = serializeRumConfiguration(exhaustiveRumInitConfiguration)
 
     expect(serializedConfiguration).toEqual({
@@ -578,10 +616,12 @@ describe('serializeRumConfiguration', () => {
       enable_privacy_for_action_name: false,
       track_resources: true,
       track_long_task: true,
+      track_bfcache_views: true,
       use_worker_url: true,
       compress_intake_requests: true,
       plugins: [{ name: 'foo', bar: true }],
       track_feature_flags_for_events: ['vital'],
+      use_allowed_tracking_origins: false,
     })
   })
 })

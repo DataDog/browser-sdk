@@ -1,0 +1,9 @@
+*
+!.gitignore
+!extension/
+!extension/**
+
+extension-default/
+extension-chrome/
+extension-example/
+

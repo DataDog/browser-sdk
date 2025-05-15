@@ -15,6 +15,41 @@ test.describe('rum views', () => {
       expect(viewEvent.view.load_event).toBeGreaterThan(0)
     })
 
+  createTest('has a loading time')
+    .withRum()
+    .run(async ({ flushEvents, intakeRegistry }) => {
+      await flushEvents()
+      const viewEvent = intakeRegistry.rumViewEvents[0]
+      expect(viewEvent).toBeDefined()
+      expect(viewEvent.view.loading_time).toBeGreaterThan(0)
+    })
+
+  createTest('excludes some dom mutation when computing the loading time')
+    .withRum({
+      enableExperimentalFeatures: ['dom_mutation_ignoring'],
+    })
+    .withBody(html`
+      <script type="module">
+        document.body.setAttribute('data-dd-excluded-activity-mutations', 'true')
+
+        const spinner = document.createElement('div')
+        document.body.append(spinner)
+
+        const spinnerChars = ['|', '/', '-', '\\\\']
+        let i = 0
+        setInterval(() => {
+          spinner.innerText = spinnerChars[i]
+          i = (i + 1) % spinnerChars.length
+        }, 10)
+      </script>
+    `)
+    .run(async ({ flushEvents, intakeRegistry }) => {
+      await flushEvents()
+      const viewEvent = intakeRegistry.rumViewEvents[0]
+      expect(viewEvent).toBeDefined()
+      expect(viewEvent.view.loading_time).toBeGreaterThan(0)
+    })
+
   createTest('send performance first input delay')
     .withRum()
     .withBody(html` <button>Hop</button> `)
