@@ -137,7 +137,7 @@ describe('trackLoadingTime', () => {
     startLoadingTimeTracking()
 
     clock.tick(BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY)
-    domMutationObservable.notify()
+    domMutationObservable.notify([createMutationRecord()])
     clock.tick(AFTER_PAGE_ACTIVITY_END_DELAY)
 
     expect(loadingTimeCallback).toHaveBeenCalledOnceWith()
