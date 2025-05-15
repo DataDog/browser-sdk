@@ -3,6 +3,10 @@ import type { RumInitConfiguration } from '../configuration'
 
 export const EXTENSION_PREFIXES = ['chrome-extension://', 'moz-extension://']
 
+export const WARN_DOES_NOT_HAVE_ALLOWED_TRACKING_ORIGIN =
+  'Running the Browser SDK in a Web extension content script is discouraged and will be forbidden in a future major release unless the `allowedTrackingOrigins` option is provided.'
+export const WARN_NOT_ALLOWED_TRACKING_ORIGIN = 'SDK is being initialized from an extension on a non-allowed domain.'
+
 export function containsExtensionUrl(str: string): boolean {
   return EXTENSION_PREFIXES.some((prefix) => str.includes(prefix))
 }
@@ -18,7 +22,7 @@ export function isUnsupportedExtensionEnvironment(
   stack = new Error().stack
 ) {
   // If we're on a regular web page but the error stack shows extension URLs,
-  // or we have access to extension APIs, then an extension is injecting RUM.
+  // then an extension is injecting RUM.
   return !containsExtensionUrl(windowLocation) && containsExtensionUrl(stack || '')
 }
 
@@ -43,7 +47,3 @@ export function checkForAllowedTrackingOrigins(
     return
   }
 }
-
-export const WARN_DOES_NOT_HAVE_ALLOWED_TRACKING_ORIGIN =
-  'Running the Browser SDK in a Web extension content script is discouraged and will be forbidden in a future major release unless the `allowedTrackingOrigins` option is provided.'
-export const WARN_NOT_ALLOWED_TRACKING_ORIGIN = 'SDK is being initialized from an extension on a non-allowed domain.'
