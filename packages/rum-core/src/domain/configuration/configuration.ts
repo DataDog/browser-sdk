@@ -18,6 +18,7 @@ import type { RumEvent } from '../../rumEvent.types'
 import type { RumPlugin } from '../plugins'
 import { isTracingOption } from '../tracing/tracer'
 import type { PropagatorType, TracingOption } from '../tracing/tracer.types'
+import { checkForAllowedTrackingOrigins } from '../extension/extensionUtils'
 
 export const DEFAULT_PROPAGATOR_TYPES: PropagatorType[] = ['tracecontext', 'datadog']
 
@@ -77,6 +78,13 @@ export interface RumInitConfiguration extends InitConfiguration {
    * See [Connect RUM and Traces](https://docs.datadoghq.com/real_user_monitoring/platform/connect_rum_and_traces/?tab=browserrum) for further information.
    */
   traceContextInjection?: TraceContextInjection | undefined
+
+  /**
+   * List of origins where the SDK is allowed to run when used in a browser extension context.
+   * Matches urls against the extensions origin.
+   * If not provided and the SDK is running in a browser extension, a warning will be displayed.
+   */
+  allowedTrackingOrigins?: MatchOption[] | undefined
 
   // replay options
   /**
@@ -189,6 +197,7 @@ export interface RumConfiguration extends Configuration {
   trackFeatureFlagsForEvents: FeatureFlagsForEvents[]
   profilingSampleRate: number
   propagateTraceBaggage: boolean
+  allowedTrackingOrigins?: MatchOption[]
 }
 
 export function validateAndBuildRumConfiguration(
@@ -232,6 +241,8 @@ export function validateAndBuildRumConfiguration(
 
   const sessionReplaySampleRate = initConfiguration.sessionReplaySampleRate ?? 0
 
+  checkForAllowedTrackingOrigins(initConfiguration)
+
   return {
     applicationId: initConfiguration.applicationId,
     version: initConfiguration.version || undefined,
@@ -266,6 +277,7 @@ export function validateAndBuildRumConfiguration(
     profilingSampleRate: profilingEnabled ? (initConfiguration.profilingSampleRate ?? 0) : 0, // Enforce 0 if profiling is not enabled, and set 0 as default when not set.
     propagateTraceBaggage: !!initConfiguration.propagateTraceBaggage,
     ...baseConfiguration,
+    allowedTrackingOrigins: initConfiguration.allowedTrackingOrigins ?? [],
   }
 }
 
@@ -350,6 +362,8 @@ export function serializeRumConfiguration(configuration: RumInitConfiguration) {
       ...plugin.getConfigurationTelemetry?.(),
     })),
     track_feature_flags_for_events: configuration.trackFeatureFlagsForEvents,
+    use_allowed_tracking_origins:
+      Array.isArray(configuration.allowedTrackingOrigins) && configuration.allowedTrackingOrigins.length > 0,
     ...baseSerializedConfiguration,
   } satisfies RawTelemetryConfiguration
 }
