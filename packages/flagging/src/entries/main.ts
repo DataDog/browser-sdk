@@ -1,5 +1,5 @@
-import { defineGlobal, getGlobalObject } from "@datadog/browser-core"
-import { FlaggingPublicApi, makeFlaggingPublicApi } from "../boot/flaggingPublicApi"
+import { defineGlobal, getGlobalObject } from '@datadog/browser-core'
+import { FlaggingPublicApi, makeFlaggingPublicApi } from '../boot/flaggingPublicApi'
 
 export const datadogFlags = makeFlaggingPublicApi()
 
