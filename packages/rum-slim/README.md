@@ -3,7 +3,7 @@
 ## Overview
 
 This package is equivalent to the [RUM package](../rum), but without support for Session Replay
-recording and [`compressIntakeRequests`][1] initialization parameter.
+recording and the [`compressIntakeRequests`][1] initialization parameter.
 
 ## Setup
 
