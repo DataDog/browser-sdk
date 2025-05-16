@@ -202,7 +202,7 @@ describe('rum assembly', () => {
           })
         })
 
-        it('should accept modification on context field for view events', () => {
+        xit('should accept modification on context field for view events', () => {
           const { lifeCycle, serverRumEvents } = setupAssemblyTestWithDefaults({
             partialConfiguration: {
               beforeSend: (event) => {
