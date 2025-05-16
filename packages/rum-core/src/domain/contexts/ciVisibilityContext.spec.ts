@@ -1,10 +1,10 @@
 import type { RelativeTime } from '@datadog/browser-core'
-import { Observable } from '@datadog/browser-core'
+import { HookNames, Observable } from '@datadog/browser-core'
 import { mockCiVisibilityValues } from '../../../test'
 import type { CookieObservable } from '../../browser/cookieObservable'
-import { createHooks, HookNames } from '../../hooks'
-import type { Hooks } from '../../hooks'
 import { SessionType } from '../rumSessionManager'
+import type { Hooks } from '../hooks'
+import { createHooks } from '../hooks'
 import { startCiVisibilityContext } from './ciVisibilityContext'
 
 describe('startCiVisibilityContext', () => {

@@ -1,10 +1,9 @@
 import type { RelativeTime, Observable } from '@datadog/browser-core'
-import { SESSION_TIME_OUT_DELAY, relativeNow, createValueHistory } from '@datadog/browser-core'
+import { SESSION_TIME_OUT_DELAY, relativeNow, createValueHistory, HookNames, DISCARDED } from '@datadog/browser-core'
 import type { LocationChange } from '../../browser/locationChangeObservable'
 import type { LifeCycle } from '../lifeCycle'
 import { LifeCycleEventType } from '../lifeCycle'
-import type { DefaultRumEventAttributes, Hooks } from '../../hooks'
-import { DISCARDED, HookNames } from '../../hooks'
+import type { DefaultRumEventAttributes, Hooks } from '../hooks'
 
 /**
  * We want to attach to an event:

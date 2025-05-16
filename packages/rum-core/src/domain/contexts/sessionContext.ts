@@ -1,9 +1,9 @@
-import type { Hooks, DefaultRumEventAttributes } from '../../hooks'
-import { DISCARDED, HookNames } from '../../hooks'
+import { DISCARDED, HookNames } from '@datadog/browser-core'
 import { SessionReplayState, SessionType } from '../rumSessionManager'
 import type { RumSessionManager } from '../rumSessionManager'
 import { RumEventType } from '../../rawRumEvent.types'
 import type { RecorderApi } from '../../boot/rumPublicApi'
+import type { DefaultRumEventAttributes, Hooks } from '../hooks'
 import type { ViewHistory } from './viewHistory'
 
 export function startSessionContext(

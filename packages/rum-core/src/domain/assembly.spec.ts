@@ -1,5 +1,5 @@
 import type { ClocksState, RelativeTime, TimeStamp } from '@datadog/browser-core'
-import { ErrorSource, ExperimentalFeature, ONE_MINUTE, display } from '@datadog/browser-core'
+import { ErrorSource, ExperimentalFeature, HookNames, ONE_MINUTE, display } from '@datadog/browser-core'
 import type { Clock } from '@datadog/browser-core/test'
 import { mockExperimentalFeatures, registerCleanupTask, mockClock } from '@datadog/browser-core/test'
 import {
@@ -13,7 +13,6 @@ import type { RumEventDomainContext } from '../domainContext.types'
 import type { RawRumEvent } from '../rawRumEvent.types'
 import { RumEventType } from '../rawRumEvent.types'
 import type { RumErrorEvent, RumEvent, RumResourceEvent, RumViewEvent } from '../rumEvent.types'
-import { HookNames, createHooks } from '../hooks'
 import { startRumAssembly } from './assembly'
 import type { RawRumEventCollectedData } from './lifeCycle'
 import { LifeCycle, LifeCycleEventType } from './lifeCycle'
@@ -22,6 +21,7 @@ import type { ViewHistory } from './contexts/viewHistory'
 import type { RumSessionManager } from './rumSessionManager'
 import { startGlobalContext } from './contexts/globalContext'
 import { startSessionContext } from './contexts/sessionContext'
+import { createHooks } from './hooks'
 
 describe('rum assembly', () => {
   describe('beforeSend', () => {

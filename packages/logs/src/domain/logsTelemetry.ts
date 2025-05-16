@@ -11,7 +11,6 @@ import {
   drainPreStartTelemetry,
 } from '@datadog/browser-core'
 import type { LogsConfiguration, LogsInitConfiguration } from './configuration'
-import { getRUMInternalContext } from './contexts/rumInternalContext'
 import type { LogsSessionManager } from './logsSessionManager'
 import { serializeLogsConfiguration } from './configuration'
 
@@ -20,7 +19,8 @@ export function startLogsTelemetry(
   configuration: LogsConfiguration,
   reportError: (error: RawError) => void,
   pageMayExitObservable: Observable<PageMayExitEvent>,
-  session: LogsSessionManager
+  session: LogsSessionManager,
+  getRUMInternalContext: () => Context | undefined
 ) {
   const telemetry = startTelemetry(TelemetryService.LOGS, configuration)
   telemetry.setContextProvider(() => ({

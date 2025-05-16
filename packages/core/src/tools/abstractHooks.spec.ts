@@ -1,9 +1,16 @@
 import type { RelativeTime } from '@datadog/browser-core'
-import { DISCARDED, HookNames, createHooks } from './hooks'
+import { DISCARDED, HookNames, abstractHooks } from './abstractHooks'
 
 describe('startHooks', () => {
   let hooks: ReturnType<typeof createHooks>
   const hookParams = { eventType: 'error', startTime: 1011 as RelativeTime } as any
+  const createHooks = abstractHooks<
+    {
+      [HookNames.Assemble]: (...args: any[]) => any
+    },
+    { [key: string]: any }
+  >
+
   beforeEach(() => {
     hooks = createHooks()
   })

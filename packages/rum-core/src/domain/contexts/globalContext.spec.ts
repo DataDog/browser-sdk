@@ -1,9 +1,9 @@
 import type { ContextManager, RelativeTime } from '@datadog/browser-core'
-import { removeStorageListeners } from '@datadog/browser-core'
+import { HookNames, removeStorageListeners } from '@datadog/browser-core'
 import { registerCleanupTask } from '@datadog/browser-core/test'
 import { mockRumConfiguration } from '../../../test'
-import type { Hooks } from '../../hooks'
-import { HookNames, createHooks } from '../../hooks'
+import type { Hooks } from '../hooks'
+import { createHooks } from '../hooks'
 import { startGlobalContext } from './globalContext'
 
 describe('global context', () => {

@@ -1,10 +1,10 @@
 import type { RelativeTime } from '@datadog/browser-core'
-import { clocksNow } from '@datadog/browser-core'
-import type { Hooks, DefaultRumEventAttributes } from '../../hooks'
-import { createHooks, DISCARDED, HookNames } from '../../hooks'
+import { clocksNow, DISCARDED, HookNames } from '@datadog/browser-core'
 import type { RumSessionManagerMock } from '../../../test'
 import { createRumSessionManagerMock, noopRecorderApi } from '../../../test'
 import { SessionType } from '../rumSessionManager'
+import type { DefaultRumEventAttributes, Hooks } from '../hooks'
+import { createHooks } from '../hooks'
 import { startSessionContext } from './sessionContext'
 import type { ViewHistory } from './viewHistory'
 

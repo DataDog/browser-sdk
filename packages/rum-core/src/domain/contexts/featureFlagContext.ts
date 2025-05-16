@@ -1,12 +1,10 @@
 import type { ContextValue, Context } from '@datadog/browser-core'
-import { SESSION_TIME_OUT_DELAY, createValueHistory, isEmptyObject } from '@datadog/browser-core'
+import { HookNames, SESSION_TIME_OUT_DELAY, SKIPPED, createValueHistory, isEmptyObject } from '@datadog/browser-core'
 import type { LifeCycle } from '../lifeCycle'
 import { LifeCycleEventType } from '../lifeCycle'
-import type { Hooks, DefaultRumEventAttributes } from '../../hooks'
-import { HookNames, SKIPPED } from '../../hooks'
-
 import { RumEventType } from '../../rawRumEvent.types'
 import type { RumConfiguration } from '../configuration'
+import type { DefaultRumEventAttributes, Hooks } from '../hooks'
 
 export const FEATURE_FLAG_CONTEXT_TIME_OUT_DELAY = SESSION_TIME_OUT_DELAY
 export const BYTES_COMPUTATION_THROTTLING_DELAY = 200

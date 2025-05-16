@@ -1,8 +1,14 @@
-import { createContextManager, CustomerDataType, isEmptyObject, storeContextManager } from '@datadog/browser-core'
+import {
+  SKIPPED,
+  createContextManager,
+  CustomerDataType,
+  HookNames,
+  isEmptyObject,
+  storeContextManager,
+} from '@datadog/browser-core'
 import type { RumConfiguration } from '../configuration'
-import type { Hooks, DefaultRumEventAttributes } from '../../hooks'
-import { SKIPPED, HookNames } from '../../hooks'
 import type { RumSessionManager } from '../rumSessionManager'
+import type { DefaultRumEventAttributes, Hooks } from '../hooks'
 
 export function startUserContext(hooks: Hooks, configuration: RumConfiguration, sessionManager: RumSessionManager) {
   const userContextManager = buildUserContextManager()
