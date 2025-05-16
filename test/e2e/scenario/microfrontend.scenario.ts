@@ -190,7 +190,7 @@ test.describe('microfrontend', () => {
       })
   })
 
-  createTest('allow to modify service and version')
+  createTest('resource: allow to modify service and version')
     .withRum(RUM_CONFIG)
     .withRumInit((configuration) => {
       window.DD_RUM!.init({
@@ -218,5 +218,30 @@ test.describe('microfrontend', () => {
       expect(resourceEvent).toBeTruthy()
       expect(resourceEvent.service).toBe('mf-service')
       expect(resourceEvent.version).toBe('0.1.0')
+    })
+
+  createTest('view: allowed to modify service and version')
+    .withRum(RUM_CONFIG)
+    .withRumInit((configuration) => {
+      window.DD_RUM!.init({
+        ...configuration,
+        beforeSend: (event: RumEvent) => {
+          if (event.type === 'view') {
+            event.service = 'mf-service'
+            event.version = '0.1.0'
+          }
+
+          return true
+        },
+      })
+    })
+    .run(async ({ intakeRegistry, flushEvents }) => {
+      await flushEvents()
+
+      const viewEvent = intakeRegistry.rumViewEvents[0]
+
+      expect(viewEvent).toBeTruthy()
+      expect(viewEvent.service).toBe('mf-service')
+      expect(viewEvent.version).toBe('0.1.0')
     })
 })
