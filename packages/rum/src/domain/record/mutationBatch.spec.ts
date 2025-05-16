@@ -1,7 +1,7 @@
 import type { Clock, RequestIdleCallbackMock } from '@datadog/browser-core/test'
 import { mockClock, mockRequestIdleCallback } from '@datadog/browser-core/test'
+import type { RumMutationRecord } from '@datadog/browser-rum-core'
 import { MUTATION_PROCESS_MIN_DELAY, createMutationBatch } from './mutationBatch'
-import type { RumMutationRecord } from './trackers'
 
 describe('createMutationBatch', () => {
   let mutationBatch: ReturnType<typeof createMutationBatch>

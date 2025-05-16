@@ -9,12 +9,13 @@ import {
 } from '@datadog/browser-core'
 import type { Clock } from '@datadog/browser-core/test'
 import { createNewEvent, mockClock } from '@datadog/browser-core/test'
-import { createFakeClick, mockRumConfiguration } from '../../../test'
+import { createFakeClick, createMutationRecord, mockRumConfiguration } from '../../../test'
 import { RumEventType, ActionType, FrustrationType } from '../../rawRumEvent.types'
 import type { RumEvent } from '../../rumEvent.types'
 import { LifeCycle, LifeCycleEventType } from '../lifeCycle'
 import { PAGE_ACTIVITY_VALIDATION_DELAY } from '../waitPageActivityEnd'
 import type { RumConfiguration } from '../configuration'
+import type { RumMutationRecord } from '../../browser/domMutationObservable'
 import type { ActionContexts } from './actionCollection'
 import type { ClickAction } from './trackClickActions'
 import { finalizeClicks, trackClickActions } from './trackClickActions'
@@ -43,7 +44,7 @@ function eventsCollector<T>() {
 
 describe('trackClickActions', () => {
   let lifeCycle: LifeCycle
-  let domMutationObservable: Observable<void>
+  let domMutationObservable: Observable<RumMutationRecord[]>
   let windowOpenObservable: Observable<void>
   let clock: Clock
 
@@ -73,7 +74,7 @@ describe('trackClickActions', () => {
   beforeEach(() => {
     lifeCycle = new LifeCycle()
     clock = mockClock()
-    domMutationObservable = new Observable<void>()
+    domMutationObservable = new Observable<RumMutationRecord[]>()
     windowOpenObservable = new Observable<void>()
 
     button = document.createElement('button')
@@ -152,7 +153,7 @@ describe('trackClickActions', () => {
 
     lifeCycle.notify(LifeCycleEventType.RUM_EVENT_COLLECTED, createFakeErrorEvent())
     clock.tick(BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY)
-    domMutationObservable.notify()
+    domMutationObservable.notify([createMutationRecord()])
     lifeCycle.notify(LifeCycleEventType.RUM_EVENT_COLLECTED, createFakeErrorEvent())
     clock.tick(EXPIRE_DELAY)
     lifeCycle.notify(LifeCycleEventType.RUM_EVENT_COLLECTED, createFakeErrorEvent())
@@ -490,7 +491,7 @@ describe('trackClickActions', () => {
           clock!.tick(delay)
         }
         // Since we don't collect dom mutations for this test, manually dispatch one
-        domMutationObservable.notify()
+        domMutationObservable.notify([createMutationRecord()])
       }
     }
   }

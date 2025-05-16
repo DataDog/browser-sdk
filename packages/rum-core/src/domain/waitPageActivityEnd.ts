@@ -1,6 +1,17 @@
 import type { Subscription, TimeoutId, TimeStamp } from '@datadog/browser-core'
-import { matchList, monitor, Observable, timeStampNow, setTimeout, clearTimeout } from '@datadog/browser-core'
+import {
+  matchList,
+  monitor,
+  Observable,
+  timeStampNow,
+  setTimeout,
+  clearTimeout,
+  isExperimentalFeatureEnabled,
+  ExperimentalFeature,
+} from '@datadog/browser-core'
 import { createPerformanceObservable, RumPerformanceEntryType } from '../browser/performanceObservable'
+import type { RumMutationRecord } from '../browser/domMutationObservable'
+import { isElementNode } from '../browser/htmlDomUtils'
 import type { RumConfiguration } from './configuration'
 import type { LifeCycle } from './lifeCycle'
 import { LifeCycleEventType } from './lifeCycle'
@@ -9,6 +20,8 @@ import { LifeCycleEventType } from './lifeCycle'
 export const PAGE_ACTIVITY_VALIDATION_DELAY = 100
 // Delay to wait after a page activity to end the tracking process
 export const PAGE_ACTIVITY_END_DELAY = 100
+
+export const EXCLUDED_MUTATIONS_ATTRIBUTE = 'data-dd-excluded-activity-mutations'
 
 export interface PageActivityEvent {
   isBusy: boolean
@@ -48,7 +61,7 @@ export type PageActivityEndEvent = { hadActivity: true; end: TimeStamp } | { had
  */
 export function waitPageActivityEnd(
   lifeCycle: LifeCycle,
-  domMutationObservable: Observable<void>,
+  domMutationObservable: Observable<RumMutationRecord[]>,
   windowOpenObservable: Observable<void>,
   configuration: RumConfiguration,
   pageActivityEndCallback: (event: PageActivityEndEvent) => void,
@@ -115,7 +128,7 @@ export function doWaitPageActivityEnd(
 
 export function createPageActivityObservable(
   lifeCycle: LifeCycle,
-  domMutationObservable: Observable<void>,
+  domMutationObservable: Observable<RumMutationRecord[]>,
   windowOpenObservable: Observable<void>,
   configuration: RumConfiguration
 ): Observable<PageActivityEvent> {
@@ -125,7 +138,14 @@ export function createPageActivityObservable(
     let pendingRequestsCount = 0
 
     subscriptions.push(
-      domMutationObservable.subscribe(notifyPageActivity),
+      domMutationObservable.subscribe((mutations) => {
+        if (
+          !isExperimentalFeatureEnabled(ExperimentalFeature.DOM_MUTATION_IGNORING) ||
+          !mutations.every(isExcludedMutation)
+        ) {
+          notifyPageActivity()
+        }
+      }),
       windowOpenObservable.subscribe(notifyPageActivity),
       createPerformanceObservable(configuration, { type: RumPerformanceEntryType.RESOURCE }).subscribe((entries) => {
         if (entries.some((entry) => !isExcludedUrl(configuration, entry.name))) {
@@ -168,4 +188,14 @@ export function createPageActivityObservable(
 
 function isExcludedUrl(configuration: RumConfiguration, requestUrl: string): boolean {
   return matchList(configuration.excludedActivityUrls, requestUrl)
+}
+
+function isExcludedMutation(mutation: RumMutationRecord): boolean {
+  const targetElement = mutation.type === 'characterData' ? mutation.target.parentElement : mutation.target
+
+  return Boolean(
+    targetElement &&
+      isElementNode(targetElement) &&
+      targetElement.matches(`[${EXCLUDED_MUTATIONS_ATTRIBUTE}], [${EXCLUDED_MUTATIONS_ATTRIBUTE}] *`)
+  )
 }

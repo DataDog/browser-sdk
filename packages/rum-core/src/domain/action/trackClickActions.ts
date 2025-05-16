@@ -19,6 +19,7 @@ import { PAGE_ACTIVITY_VALIDATION_DELAY, waitPageActivityEnd } from '../waitPage
 import { getSelectorFromElement } from '../getSelectorFromElement'
 import { getNodePrivacyLevel, NodePrivacyLevel } from '../privacy'
 import type { RumConfiguration } from '../configuration'
+import type { RumMutationRecord } from '../../browser/domMutationObservable'
 import type { ClickChain } from './clickChain'
 import { createClickChain } from './clickChain'
 import { getActionNameFromElement } from './getActionNameFromElement'
@@ -62,7 +63,7 @@ export const ACTION_CONTEXT_TIME_OUT_DELAY = 5 * ONE_MINUTE // arbitrary
 
 export function trackClickActions(
   lifeCycle: LifeCycle,
-  domMutationObservable: Observable<void>,
+  domMutationObservable: Observable<RumMutationRecord[]>,
   windowOpenObservable: Observable<void>,
   configuration: RumConfiguration
 ) {
@@ -136,7 +137,7 @@ export function trackClickActions(
 function processPointerDown(
   configuration: RumConfiguration,
   lifeCycle: LifeCycle,
-  domMutationObservable: Observable<void>,
+  domMutationObservable: Observable<RumMutationRecord[]>,
   pointerDownEvent: MouseEventOnElement,
   windowOpenObservable: Observable<void>
 ) {
@@ -171,7 +172,7 @@ function processPointerDown(
 function startClickAction(
   configuration: RumConfiguration,
   lifeCycle: LifeCycle,
-  domMutationObservable: Observable<void>,
+  domMutationObservable: Observable<RumMutationRecord[]>,
   windowOpenObservable: Observable<void>,
   history: ClickActionIdHistory,
   stopObservable: Observable<void>,

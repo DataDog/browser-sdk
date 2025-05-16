@@ -3,6 +3,7 @@ import { mockRumConfiguration, setupLocationObserver } from '../../../test'
 import type { LifeCycle } from '../lifeCycle'
 import { LifeCycleEventType } from '../lifeCycle'
 import type { RumConfiguration } from '../configuration'
+import type { RumMutationRecord } from '../../browser/domMutationObservable'
 import type { ViewCreatedEvent, ViewEvent, ViewOptions, ViewEndedEvent } from './trackViews'
 import { trackViews } from './trackViews'
 
@@ -18,7 +19,7 @@ export function setupViewTest(
   { lifeCycle, initialLocation, partialConfig }: ViewTrackingContext,
   initialViewOptions?: ViewOptions
 ) {
-  const domMutationObservable = new Observable<void>()
+  const domMutationObservable = new Observable<RumMutationRecord[]>()
   const windowOpenObservable = new Observable<void>()
   const configuration = mockRumConfiguration(partialConfig)
   const { locationChangeObservable, changeLocation } = setupLocationObserver(initialLocation)

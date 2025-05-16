@@ -18,6 +18,7 @@ export enum ExperimentalFeature {
   TRACK_INTAKE_REQUESTS = 'track_intake_requests',
   USER_ACCOUNT_TRACE_HEADER = 'user_account_trace_header',
   WRITABLE_RESOURCE_GRAPHQL = 'writable_resource_graphql',
+  DOM_MUTATION_IGNORING = 'dom_mutation_ignoring',
 }
 
 const enabledExperimentalFeatures: Set<ExperimentalFeature> = new Set()
