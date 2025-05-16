@@ -4,6 +4,20 @@ export const enum HookNames {
   Assemble,
 }
 
+// This is a workaround for an issue occurring when the Browser SDK is included in a TypeScript
+// project configured with `isolatedModules: true`. Even if the const enum is declared in this
+// module, we cannot use it directly to define the EventMap interface keys (TS error: "Cannot access
+// ambient const enums when the '--isolatedModules' flag is provided.").
+export declare const HookNamesAsConst: {
+  ASSEMBLE: HookNames.Assemble
+}
+
+export type RecursivePartialExcept<T, K extends keyof T = never> = {
+  [P in keyof T]?: T[P] extends object ? RecursivePartialExcept<T[P], never> : T[P]
+} & {
+  [P in K]: T[P]
+}
+
 // Discards the event from being sent
 export const DISCARDED = 'DISCARDED'
 // Skips from the assembly of the event

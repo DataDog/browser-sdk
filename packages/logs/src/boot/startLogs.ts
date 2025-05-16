@@ -20,6 +20,8 @@ import { startInternalContext } from '../domain/contexts/internalContext'
 import { startReportError } from '../domain/reportError'
 import { startLogsTelemetry } from '../domain/logsTelemetry'
 import type { CommonContext } from '../rawLogsEvent.types'
+import { createHooks } from '../domain/hooks'
+import { startRUMInternalContext } from '../domain/contexts/rumInternalContext'
 
 export type StartLogs = typeof startLogs
 export type StartLogsResult = ReturnType<StartLogs>
@@ -35,6 +37,7 @@ export function startLogs(
   trackingConsentState: TrackingConsentState
 ) {
   const lifeCycle = new LifeCycle()
+  const hooks = createHooks()
   const cleanupTasks: Array<() => void> = []
 
   lifeCycle.subscribe(LifeCycleEventType.LOG_COLLECTED, (log) => sendToExtension('logs', log))
@@ -47,12 +50,15 @@ export function startLogs(
       ? startLogsSessionManager(configuration, trackingConsentState)
       : startLogsSessionManagerStub(configuration)
 
+  const { stop, getRUMInternalContext } = startRUMInternalContext(hooks)
+
   const { stop: stopLogsTelemetry } = startLogsTelemetry(
     initConfiguration,
     configuration,
     reportError,
     pageMayExitObservable,
-    session
+    session,
+    getRUMInternalContext
   )
   cleanupTasks.push(() => stopLogsTelemetry())
 
@@ -62,7 +68,7 @@ export function startLogs(
   startReportCollection(configuration, lifeCycle)
   const { handleLog } = startLoggerCollection(lifeCycle)
 
-  startLogsAssembly(session, configuration, lifeCycle, getCommonContext, reportError)
+  startLogsAssembly(session, configuration, lifeCycle, hooks, getCommonContext, reportError)
 
   if (!canUseEventBridge()) {
     const { stop: stopLogsBatch } = startLogsBatch(
@@ -84,6 +90,7 @@ export function startLogs(
     getInternalContext: internalContext.get,
     stop: () => {
       cleanupTasks.forEach((task) => task())
+      stop()
     },
   }
 }
