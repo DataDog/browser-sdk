@@ -1,7 +1,5 @@
 import { monitor, noop, Observable, getZoneJsOriginalValue } from '@datadog/browser-core'
 
-export const IGNORE_MUTATIONS_ATTRIBUTE = 'dd-ignore-mutations'
-
 // https://dom.spec.whatwg.org/#interface-mutationrecord
 export interface RumCharacterDataMutationRecord {
   type: 'characterData'
