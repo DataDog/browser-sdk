@@ -10,7 +10,7 @@ import type { Request } from '../../test'
 import type { EndpointBuilder } from '../domain/configuration'
 import { createEndpointBuilder } from '../domain/configuration'
 import { noop } from '../tools/utils/functionUtils'
-import { createHttpRequest, fetchKeepAliveStrategy, fetchStrategy } from './httpRequest'
+import { createHttpRequest, fetchStrategy } from './httpRequest'
 import type { HttpRequest } from './httpRequest'
 
 describe('httpRequest', () => {
@@ -41,105 +41,21 @@ describe('httpRequest', () => {
       expect(requests[0].body).toEqual('{"foo":"bar1"}\n{"foo":"bar2"}')
     })
 
-    it('should use fetch keepalive when the bytes count is correct', async () => {
-      if (!interceptor.isFetchKeepAliveSupported()) {
-        pending('no fetch keepalive support')
-      }
-
+    it('should use fetch when the bytes count is correct', async () => {
       request.send({ data: '{"foo":"bar1"}\n{"foo":"bar2"}', bytesCount: 10 })
-      await interceptor.waitForAllFetchCalls()
-
-      expect(requests.length).toEqual(1)
-      expect(requests[0].type).toBe('fetch-keepalive')
-    })
-
-    it('should use fetch over fetch keepalive when the bytes count is too high', async () => {
-      request.send({ data: '{"foo":"bar1"}\n{"foo":"bar2"}', bytesCount: BATCH_BYTES_LIMIT })
       await interceptor.waitForAllFetchCalls()
 
       expect(requests.length).toEqual(1)
       expect(requests[0].type).toBe('fetch')
     })
 
-    it('should fallback to fetch when fetch keepalive is not queued', async () => {
-      if (!interceptor.isFetchKeepAliveSupported()) {
-        pending('no fetch keepalive support')
-      }
-
-      const fetchSpy = interceptor.withFetch(NETWORK_ERROR_FETCH_MOCK, DEFAULT_FETCH_MOCK)
-
-      request.send({ data: '{"foo":"bar1"}\n{"foo":"bar2"}', bytesCount: 10 })
-
-      await interceptor.waitForAllFetchCalls()
-      await collectAsyncCalls(fetchSpy, 2)
-      expect(requests.length).toEqual(2)
-      expect(requests[0].type).toBe('fetch-keepalive')
-      expect(requests[1].type).toBe('fetch')
-    })
-
     it('should use retry strategy', async () => {
-      if (!interceptor.isFetchKeepAliveSupported()) {
-        pending('no fetch keepalive support')
-      }
-
       const fetchSpy = interceptor.withFetch(TOO_MANY_REQUESTS_FETCH_MOCK, DEFAULT_FETCH_MOCK)
 
       request.send({ data: '{"foo":"bar1"}\n{"foo":"bar2"}', bytesCount: 10 })
 
       await interceptor.waitForAllFetchCalls()
       await collectAsyncCalls(fetchSpy, 2)
-    })
-  })
-
-  describe('fetchKeepAliveStrategy onResponse', () => {
-    it('should be called with intake response when fetch is used', (done) => {
-      if (!interceptor.isFetchKeepAliveSupported()) {
-        pending('no fetch keepalive support')
-      }
-
-      interceptor.withFetch(TOO_MANY_REQUESTS_FETCH_MOCK)
-
-      fetchKeepAliveStrategy(
-        endpointBuilder,
-        BATCH_BYTES_LIMIT,
-        { data: '{"foo":"bar1"}\n{"foo":"bar2"}', bytesCount: 10 },
-        (response) => {
-          expect(response).toEqual({ status: 429, type: 'cors' })
-          done()
-        }
-      )
-    })
-
-    it('should be called with intake response when fallback to fetch due fetch keepalive not queued', (done) => {
-      if (!interceptor.isFetchKeepAliveSupported()) {
-        pending('no fetch keepalive support')
-      }
-
-      interceptor.withFetch(NETWORK_ERROR_FETCH_MOCK, TOO_MANY_REQUESTS_FETCH_MOCK)
-
-      fetchKeepAliveStrategy(
-        endpointBuilder,
-        BATCH_BYTES_LIMIT,
-        { data: '{"foo":"bar1"}\n{"foo":"bar2"}', bytesCount: 10 },
-        (response) => {
-          expect(response).toEqual({ status: 429, type: 'cors' })
-          done()
-        }
-      )
-    })
-
-    it('should be called with intake response when fallback to fetch due to size', (done) => {
-      interceptor.withFetch(TOO_MANY_REQUESTS_FETCH_MOCK)
-
-      fetchKeepAliveStrategy(
-        endpointBuilder,
-        BATCH_BYTES_LIMIT,
-        { data: '{"foo":"bar1"}\n{"foo":"bar2"}', bytesCount: BATCH_BYTES_LIMIT },
-        (response) => {
-          expect(response).toEqual({ status: 429, type: 'cors' })
-          done()
-        }
-      )
     })
   })
 

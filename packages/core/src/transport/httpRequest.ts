@@ -39,7 +39,7 @@ export function createHttpRequest(
 ) {
   const retryState = newRetryState()
   const sendStrategyForRetry = (payload: Payload, onResponse: (r: HttpResponse) => void) =>
-    fetchKeepAliveStrategy(endpointBuilder, bytesLimit, payload, onResponse)
+    fetchStrategy(endpointBuilder, payload, onResponse)
 
   return {
     send: (payload: Payload) => {
@@ -82,25 +82,6 @@ function reportBeaconError(e: unknown) {
   }
 }
 
-export function fetchKeepAliveStrategy(
-  endpointBuilder: EndpointBuilder,
-  bytesLimit: number,
-  payload: Payload,
-  onResponse?: (r: HttpResponse) => void
-) {
-  const canUseKeepAlive = isKeepAliveSupported() && payload.bytesCount < bytesLimit
-
-  if (canUseKeepAlive) {
-    const fetchUrl = endpointBuilder.build('fetch-keepalive', payload)
-
-    fetch(fetchUrl, { method: 'POST', body: payload.data, keepalive: true, mode: 'cors' })
-      .then(monitor((response: Response) => onResponse?.({ status: response.status, type: response.type })))
-      .catch(monitor(() => fetchStrategy(endpointBuilder, payload, onResponse)))
-  } else {
-    fetchStrategy(endpointBuilder, payload, onResponse)
-  }
-}
-
 export function fetchStrategy(
   endpointBuilder: EndpointBuilder,
   payload: Payload,
@@ -111,13 +92,4 @@ export function fetchStrategy(
   fetch(fetchUrl, { method: 'POST', body: payload.data, mode: 'cors' })
     .then(monitor((response: Response) => onResponse?.({ status: response.status, type: response.type })))
     .catch(monitor(() => onResponse?.({ status: 0 })))
-}
-
-function isKeepAliveSupported() {
-  // Request can throw, cf https://developer.mozilla.org/en-US/docs/Web/API/Request/Request#errors
-  try {
-    return window.Request && 'keepalive' in new Request('http://a')
-  } catch {
-    return false
-  }
 }
