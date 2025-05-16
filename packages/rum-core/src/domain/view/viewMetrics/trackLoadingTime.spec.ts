@@ -22,7 +22,7 @@ describe('trackLoadingTime', () => {
   let clock: Clock
   let domMutationObservable: Observable<void>
   let windowOpenObservable: Observable<void>
-  let loadingTimeCallback: jasmine.Spy<(loadingTime: Duration) => void>
+  let loadingTimeCallback: jasmine.Spy<(loadingTime?: Duration) => void>
   let setLoadEvent: (loadEvent: Duration) => void
   let stopLoadingTimeTracking: () => void
 
@@ -44,7 +44,7 @@ describe('trackLoadingTime', () => {
     clock = mockClock()
     domMutationObservable = new Observable()
     windowOpenObservable = new Observable()
-    loadingTimeCallback = jasmine.createSpy<(loadingTime: Duration) => void>()
+    loadingTimeCallback = jasmine.createSpy()
   })
 
   afterEach(() => {
@@ -135,6 +135,10 @@ describe('trackLoadingTime', () => {
     setPageVisibility('hidden')
     startLoadingTimeTracking()
 
-    expect(loadingTimeCallback).not.toHaveBeenCalled()
+    clock.tick(BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY)
+    domMutationObservable.notify()
+    clock.tick(AFTER_PAGE_ACTIVITY_END_DELAY)
+
+    expect(loadingTimeCallback).toHaveBeenCalledOnceWith()
   })
 })

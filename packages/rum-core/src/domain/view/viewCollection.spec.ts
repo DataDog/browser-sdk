@@ -115,6 +115,7 @@ describe('viewCollection', () => {
       _dd: {
         document_version: 3,
         replay_stats: undefined,
+        was_hidden_during_loading: undefined,
         configuration: {
           start_session_replay_recording_manually: jasmine.any(Boolean),
         },
@@ -201,7 +202,7 @@ describe('viewCollection', () => {
         },
       },
       privacy: { replay_level: 'mask' },
-    })
+    } as unknown as RawRumViewEvent) // TODO fixme after updating rum-event-format
   })
 
   it('should discard negative loading time', () => {
