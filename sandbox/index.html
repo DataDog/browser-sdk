@@ -5,6 +5,7 @@
     <title>Sandbox</title>
     <script src="http://localhost:8080/datadog-rum.js"></script>
     <script src="http://localhost:8080/datadog-logs.js"></script>
+
     <script>
       DD_RUM.init({
         clientToken: 'xxx',
@@ -23,6 +24,9 @@
         telemetryConfigurationSampleRate: 100,
         telemetryUsageSampleRate: 100,
         enableExperimentalFeatures: [],
+      })
+      DD_FLAGS.init({
+        clientToken: 'xxx',
       })
     </script>
   </head>
