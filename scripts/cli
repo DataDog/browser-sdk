@@ -60,6 +60,52 @@ cmd_build_json2type () {
   set -e
 }
 
+cmd_build_extensions () {
+  echo "Building extensions with different configurations..."
+  
+  # Base extension directory
+  local base_ext_dir="test/apps/extensions/extension"
+  local default_ext_dir="test/apps/extensions/extension-default"
+  local chrome_ext_dir="test/apps/extensions/extension-chrome"
+  local example_ext_dir="test/apps/extensions/extension-example"
+  
+  # Clean up existing extension directories
+  rm -rf "$default_ext_dir" "$chrome_ext_dir" "$example_ext_dir"
+  
+  # 1. Create and build default extension (no parameter replacement)
+  echo "Creating default extension..."
+  cp -r "$base_ext_dir" "$default_ext_dir"
+  # Build the default extension
+  echo "Building default extension..."
+  cd "$default_ext_dir" && yarn install --no-immutable && yarn build && cd - > /dev/null
+  
+  # 2. Create and build extension with chrome-extension allowedTrackingOrigins
+  echo "Creating chrome-extension extension..."
+  cp -r "$base_ext_dir" "$chrome_ext_dir"
+  # Add the chrome extension parameter
+  sed -i.bak 's|/\* EXTENSION_INIT_PARAMETER \*/|allowedTrackingOrigins: ["chrome-extension://abcdefghijklmno"],|' "$chrome_ext_dir/src/contentScript.js"
+  rm -f "$chrome_ext_dir/src/contentScript.js.bak"
+  # Build the chrome extension
+  echo "Building chrome-extension extension..."
+  cd "$chrome_ext_dir" && yarn install --no-immutable && yarn build && cd - > /dev/null
+  
+  # 3. Create and build extension with app.example.com allowedTrackingOrigins
+  echo "Creating app.example.com extension..."
+  cp -r "$base_ext_dir" "$example_ext_dir"
+  # Add the example site parameter
+  sed -i.bak 's|/\* EXTENSION_INIT_PARAMETER \*/|allowedTrackingOrigins: ["https://app.example.com"],|' "$example_ext_dir/src/contentScript.js"
+  rm -f "$example_ext_dir/src/contentScript.js.bak"
+  # Build the example extension
+  echo "Building app.example.com extension..."
+  cd "$example_ext_dir" && yarn install --no-immutable && yarn build && cd - > /dev/null
+  
+  echo "Extension builds completed successfully."
+  echo "Available extensions:"
+  echo "  - Default: $default_ext_dir"
+  echo "  - Chrome Extension: $chrome_ext_dir"
+  echo "  - Example App: $example_ext_dir"
+}
+
 cmd_release () {
   [[ `git branch --show-current` != "main" ]] || fail 'please do not release from `main` branch'
   # We should publish all packages regardless of if there are changes in each.
