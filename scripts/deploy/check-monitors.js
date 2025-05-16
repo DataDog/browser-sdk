@@ -13,6 +13,7 @@ const monitorIdsByDatacenter = {
   us3: [164368, 160677, 329066],
   us5: [22388, 20646, 96049],
   ap1: [858, 859, 2757030],
+  ap2: false, // no telemetry org yet
 }
 
 const datacenters = process.argv[2].split(',')

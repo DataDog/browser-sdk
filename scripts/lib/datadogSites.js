@@ -4,6 +4,7 @@ const siteByDatacenter = {
   us3: 'us3.datadoghq.com',
   us5: 'us5.datadoghq.com',
   ap1: 'ap1.datadoghq.com',
+  ap2: false, // no telemetry org yet
 }
 
 module.exports = {
