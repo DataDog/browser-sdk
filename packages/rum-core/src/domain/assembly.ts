@@ -117,6 +117,15 @@ export function startRumAssembly(
       const serverRumEvent = combine(defaultRumEventAttributes, { context: customerContext }, rawRumEvent) as RumEvent &
         Context
 
+      // FIXME: Temp hack to get some numbers on staging
+      if (rawRumEvent.type === RumEventType.VIEW) {
+        if (!serverRumEvent.context) {
+          serverRumEvent.context = {}
+        }
+
+        serverRumEvent.context.was_hidden_during_loading = (rawRumEvent as any)._dd?.was_hidden_during_loading
+      }
+
       if (shouldSend(serverRumEvent, configuration.beforeSend, domainContext, eventRateLimiters)) {
         if (isEmptyObject(serverRumEvent.context!)) {
           delete serverRumEvent.context
