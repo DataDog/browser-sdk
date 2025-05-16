@@ -15,20 +15,9 @@ test.describe('rum views', () => {
       expect(viewEvent.view.load_event).toBeGreaterThan(0)
     })
 
-  createTest('has a loading time')
-    .withRum()
-    .run(async ({ flushEvents, intakeRegistry }) => {
-      await flushEvents()
-      const viewEvent = intakeRegistry.rumViewEvents[0]
-      expect(viewEvent).toBeDefined()
-      expect(viewEvent.view.loading_time).toBeGreaterThan(0)
-    })
-
-  createTest('excludes some dom mutation when computing the loading time')
-    .withRum({
-      enableExperimentalFeatures: ['dom_mutation_ignoring'],
-    })
-    .withBody(html`
+  test.describe('loading time', () => {
+    // Simple spinner to test dom mutations.
+    const SPINNER = html`
       <script type="module">
         document.body.setAttribute('data-dd-excluded-activity-mutations', 'true')
 
@@ -42,13 +31,44 @@ test.describe('rum views', () => {
           i = (i + 1) % spinnerChars.length
         }, 10)
       </script>
-    `)
-    .run(async ({ flushEvents, intakeRegistry }) => {
-      await flushEvents()
-      const viewEvent = intakeRegistry.rumViewEvents[0]
-      expect(viewEvent).toBeDefined()
-      expect(viewEvent.view.loading_time).toBeGreaterThan(0)
-    })
+    `
+
+    createTest('has a loading time')
+      .withRum()
+      .run(async ({ flushEvents, intakeRegistry }) => {
+        await flushEvents()
+        const viewEvent = intakeRegistry.rumViewEvents[0]
+        expect(viewEvent).toBeDefined()
+        expect(viewEvent.view.loading_time).toBeGreaterThan(0)
+      })
+
+    createTest('does not have a loading time when DOM mutations are notified continuously')
+      .withRum()
+      .withBody(SPINNER)
+      .run(async ({ flushEvents, intakeRegistry }) => {
+        await flushEvents()
+        const viewEvent = intakeRegistry.rumViewEvents.at(-1)
+        expect(viewEvent).toBeDefined()
+        expect(viewEvent!.view.loading_time).toBeUndefined()
+      })
+
+    createTest('excludes some dom mutation when computing the loading time')
+      .withRum({
+        enableExperimentalFeatures: ['dom_mutation_ignoring'],
+      })
+      .withBody(html`
+        <script type="module">
+          document.body.setAttribute('data-dd-excluded-activity-mutations', 'true')
+        </script>
+        ${SPINNER}
+      `)
+      .run(async ({ flushEvents, intakeRegistry }) => {
+        await flushEvents()
+        const viewEvent = intakeRegistry.rumViewEvents[0]
+        expect(viewEvent).toBeDefined()
+        expect(viewEvent.view.loading_time).toBeGreaterThan(0)
+      })
+  })
 
   createTest('send performance first input delay')
     .withRum()
