@@ -26,7 +26,6 @@ step-1_deploy-prod-minor-dcs:
     UPLOAD_PATH: us3,us5,ap1
 
 step-1bis_deploy-wip-dcs:
-  when: manual
   allow_failure: true
   extends:
     - .base-configuration
