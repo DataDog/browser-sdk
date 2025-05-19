@@ -231,6 +231,9 @@ __metadata:
     "@datadog/browser-core": "npm:6.6.4"
     "@openfeature/core": "npm:1.8.0"
     "@openfeature/web-sdk": "npm:1.5.0"
+    "@types/spark-md5": "npm:^3"
+    js-base64: "npm:3.7.7"
+    spark-md5: "npm:3.0.2"
   peerDependencies:
     "@datadog/browser-rum": 6.6.4
     "@openfeature/core": 1.8.0
@@ -2015,6 +2018,13 @@ __metadata:
     "@types/node": "npm:*"
     "@types/send": "npm:*"
   checksum: 10c0/26ec864d3a626ea627f8b09c122b623499d2221bbf2f470127f4c9ebfe92bd8a6bb5157001372d4c4bd0dd37a1691620217d9dc4df5aa8f779f3fd996b1c60ae
+  languageName: node
+  linkType: hard
+
+"@types/spark-md5@npm:^3":
+  version: 3.0.5
+  resolution: "@types/spark-md5@npm:3.0.5"
+  checksum: 10c0/501b6aa80fc6d8504fb0ad961c28b2f99d7fc3d7769059f113b4060334623b6c8da7f21dac984211d7d819ac7170ee3ce47dba682453b6baff79052fe382d810
   languageName: node
   linkType: hard
 
@@ -7060,6 +7070,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"js-base64@npm:3.7.7":
+  version: 3.7.7
+  resolution: "js-base64@npm:3.7.7"
+  checksum: 10c0/3c905a7e78b601e4751b5e710edd0d6d045ce2d23eb84c9df03515371e1b291edc72808dc91e081cb9855aef6758292a2407006f4608ec3705373dd8baf2f80f
+  languageName: node
+  linkType: hard
+
 "js-tokens@npm:^4.0.0":
   version: 4.0.0
   resolution: "js-tokens@npm:4.0.0"
@@ -10800,6 +10817,13 @@ __metadata:
   version: 0.7.4
   resolution: "source-map@npm:0.7.4"
   checksum: 10c0/dc0cf3768fe23c345ea8760487f8c97ef6fca8a73c83cd7c9bf2fde8bc2c34adb9c0824d6feb14bc4f9e37fb522e18af621543f1289038a66ac7586da29aa7dc
+  languageName: node
+  linkType: hard
+
+"spark-md5@npm:3.0.2":
+  version: 3.0.2
+  resolution: "spark-md5@npm:3.0.2"
+  checksum: 10c0/3fd11735eac5e7d60d6006d99ac0a055f148a89e9baf5f0b51ac103022dec30556b44190b37f6737ca50f81e8e50dc13e724f9edf6290c412ff5ab2101ce7780
   languageName: node
   linkType: hard
 
